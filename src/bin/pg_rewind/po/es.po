@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-29 23:45+0000\n"
+"POT-Creation-Date: 2020-05-16 09:58+0000\n"
 "PO-Revision-Date: 2019-09-29 22:26-0300\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -21,17 +21,17 @@ msgstr ""
 "X-Generator: BlackCAT 1.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "fatal: "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "precaución: "
@@ -87,7 +87,7 @@ msgstr "no se pudo obtener el código de salida del subproceso»: código de err
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: copy_fetch.c:88 filemap.c:187 filemap.c:348
+#: copy_fetch.c:88 filemap.c:201 filemap.c:362
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
@@ -212,32 +212,32 @@ msgstr "no se pudo abrir archivo «%s» para lectura: %m"
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
 
-#: filemap.c:179
+#: filemap.c:193
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
 msgstr "el archivo de datos «%s» en el origen no es un archivo regular"
 
-#: filemap.c:201
+#: filemap.c:215
 #, c-format
 msgid "\"%s\" is not a directory"
 msgstr "«%s» no es un directorio"
 
-#: filemap.c:224
+#: filemap.c:238
 #, c-format
 msgid "\"%s\" is not a symbolic link"
 msgstr "«%s» no es un link simbólico"
 
-#: filemap.c:236
+#: filemap.c:250
 #, c-format
 msgid "\"%s\" is not a regular file"
 msgstr "«%s» no es un archivo regular"
 
-#: filemap.c:360
+#: filemap.c:374
 #, c-format
 msgid "source file list is empty"
 msgstr "el listado de archivos de origen está vacío"
 
-#: filemap.c:475
+#: filemap.c:489
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\""
 msgstr "modificación de página inesperada para el directorio o link simbólico «%s»"
@@ -569,72 +569,72 @@ msgstr "se necesitan copiar %lu MB (tamaño total de directorio de origen es %lu
 msgid "creating backup label and updating control file"
 msgstr "creando etiqueta de respaldo y actualizando archivo de control"
 
-#: pg_rewind.c:394
+#: pg_rewind.c:395
 #, c-format
 msgid "syncing target data directory"
 msgstr "sincronizando directorio de datos de destino"
 
-#: pg_rewind.c:397
+#: pg_rewind.c:398
 #, c-format
 msgid "Done!"
 msgstr "¡Listo!"
 
-#: pg_rewind.c:409
+#: pg_rewind.c:410
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "clusters de origen y destino son de sistemas diferentes"
 
-#: pg_rewind.c:417
+#: pg_rewind.c:418
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "los clusters no son compatibles con esta versión de pg_rewind"
 
-#: pg_rewind.c:427
+#: pg_rewind.c:428
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
 msgstr "el servidor de destino necesita tener sumas de verificación de datos o «wal_log_hints» activados"
 
-#: pg_rewind.c:438
+#: pg_rewind.c:439
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "el directorio de destino debe estar apagado limpiamente"
 
-#: pg_rewind.c:448
+#: pg_rewind.c:449
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "el directorio de origen debe estar apagado limpiamente"
 
-#: pg_rewind.c:497
+#: pg_rewind.c:498
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) copiados"
 
-#: pg_rewind.c:558
+#: pg_rewind.c:559
 #, c-format
 msgid "invalid control file"
 msgstr "archivo de control no válido"
 
-#: pg_rewind.c:642
+#: pg_rewind.c:643
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "no se pudo encontrar un ancestro común en el timeline de los clusters de origen y destino"
 
-#: pg_rewind.c:683
+#: pg_rewind.c:684
 #, c-format
 msgid "backup label buffer too small"
 msgstr "el búfer del backup label es demasiado pequeño"
 
-#: pg_rewind.c:706
+#: pg_rewind.c:707
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "CRC de archivo de control inesperado"
 
-#: pg_rewind.c:716
+#: pg_rewind.c:717
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "tamaño del archivo de control %d inesperado, se esperaba %d"
 
-#: pg_rewind.c:725
+#: pg_rewind.c:726
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
@@ -810,9 +810,3 @@ msgstr "registro con largo no válido en %X/%X"
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "imagen comprimida no válida en %X/%X, bloque %d"
-
-#~ msgid "could not create temporary table: %s"
-#~ msgstr "no se pudo crear tabla temporal: %s"
-
-#~ msgid "could not set up connection context: %s"
-#~ msgstr "no se pudo establecer el contexto de conexión: %s"

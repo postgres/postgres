@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-02-19 12:08+0000\n"
-"PO-Revision-Date: 2020-03-07 18:24\n"
-"Last-Translator: Pavlo Golub <pavlo.golub@cybertec.at>\n"
+"PO-Revision-Date: 2020-07-17 12:35\n"
+"Last-Translator: pasha_golub\n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -12,8 +12,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/plpython.pot\n"
+"X-Crowdin-File-ID: 260\n"
 
 #: plpy_cursorobject.c:78
 #, c-format
@@ -137,7 +139,7 @@ msgstr "помилка PyDict_SetItemString() під час встановлен
 #: plpy_exec.c:468
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
-msgstr "функція, яка повертає запис, викликана в контексті, який не допускає цей тип"
+msgstr "функція, що повертає набір, викликана у контексті, що не приймає тип запис"
 
 #: plpy_exec.c:685
 #, c-format
@@ -411,12 +413,12 @@ msgstr "Щоб побудувати багатовимірний масив, в�
 #: plpy_typeio.c:1347
 #, c-format
 msgid "malformed record literal: \"%s\""
-msgstr "неправильний літерал запису: \"%s\""
+msgstr "невірно сформований літерал запису: \"%s\""
 
 #: plpy_typeio.c:1348
 #, c-format
 msgid "Missing left parenthesis."
-msgstr "Пропущена ліва дужка."
+msgstr "Відсутня ліва дужка."
 
 #: plpy_typeio.c:1349 plpy_typeio.c:1550
 #, c-format

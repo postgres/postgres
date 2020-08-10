@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-02-08 03:40+0000\n"
-"PO-Revision-Date: 2020-03-10 14:29+0100\n"
+"PO-Revision-Date: 2020-06-06 20:14+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -1245,7 +1245,7 @@ msgstr "%s kann nicht leer sein."
 #: access/table/tableamapi.c:122 utils/misc/guc.c:11639
 #, c-format
 msgid "%s is too long (maximum %d characters)."
-msgstr "%s ist zu lang (maximal %d Zeichen)"
+msgstr "%s ist zu lang (maximal %d Zeichen)."
 
 #: access/table/tableamapi.c:145
 #, c-format

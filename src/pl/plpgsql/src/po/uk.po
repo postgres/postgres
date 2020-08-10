@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-02-19 12:08+0000\n"
-"PO-Revision-Date: 2020-03-07 18:31\n"
-"Last-Translator: Pavlo Golub <pavlo.golub@cybertec.at>\n"
+"PO-Revision-Date: 2020-07-17 12:35\n"
+"Last-Translator: pasha_golub\n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -12,8 +12,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/plpgsql.pot\n"
+"X-Crowdin-File-ID: 258\n"
 
 #: pl_comp.c:438 pl_handler.c:461
 #, c-format
@@ -58,7 +60,7 @@ msgstr "компіляція функції PL/pgSQL \"%s\" біля рядка 
 #: pl_comp.c:1020
 #, c-format
 msgid "parameter name \"%s\" used more than once"
-msgstr "ім'я параметру «%s» використано кілька разів"
+msgstr "ім'я параметру «%s» використано декілька разів"
 
 #: pl_comp.c:1132
 #, c-format
@@ -130,7 +132,7 @@ msgstr "під час приведення значення, що поверта
 #: pl_exec.c:616 pl_exec.c:3584
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr "функція з набором даних викликана в контексті, де немає можливості прийняти набір"
+msgstr "функція \"set-valued\" викликана в контексті, де йому немає місця"
 
 #: pl_exec.c:742 pl_exec.c:1016 pl_exec.c:1177
 msgid "during function exit"
@@ -478,7 +480,7 @@ msgstr "запит \"%s\" не є SELECT"
 #: pl_exec.c:6608 pl_exec.c:6648 pl_exec.c:6688
 #, c-format
 msgid "type of parameter %d (%s) does not match that when preparing the plan (%s)"
-msgstr "тип параметру %d (%s) не співпадає з параметром під час планування (%s)"
+msgstr "тип параметру %d (%s) не відповідає тому, з котрим тривала підготовка плану (%s)"
 
 #: pl_exec.c:7099 pl_exec.c:7133 pl_exec.c:7207 pl_exec.c:7233
 #, c-format

@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-29 23:44+0000\n"
+"POT-Creation-Date: 2020-05-16 09:57+0000\n"
 "PO-Revision-Date: 2019-09-29 22:06-0300\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -20,17 +20,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: BlackCAT 1.0\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "fatal: "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "precaución: "
@@ -352,7 +352,6 @@ msgstr "seleccionando el valor para shared_buffers ... "
 
 #: initdb.c:1052
 #, c-format
-#| msgid "selecting default timezone ... "
 msgid "selecting default time zone ... "
 msgstr "seleccionando el huso horario por omisión ... "
 
@@ -794,7 +793,6 @@ msgstr "La codificación por omisión ha sido por lo tanto definida a «%s».\n"
 
 #: initdb.c:2666
 #, c-format
-#| msgid "%s: could not find suitable text search configuration for locale \"%s\"\n"
 msgid "could not find suitable text search configuration for locale \"%s\""
 msgstr ""
 "no se pudo encontrar una configuración para búsqueda en texto apropiada\n"
@@ -802,17 +800,13 @@ msgstr ""
 
 #: initdb.c:2677
 #, c-format
-#| msgid "%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"
 msgid "suitable text search configuration for locale \"%s\" is unknown"
-msgstr ""
-"la configuración de búsqueda en texto apropiada para la configuración regional «%s» es desconocida"
+msgstr "la configuración de búsqueda en texto apropiada para la configuración regional «%s» es desconocida"
 
 #: initdb.c:2682
 #, c-format
-#| msgid "%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"
 msgid "specified text search configuration \"%s\" might not match locale \"%s\""
-msgstr ""
-"la configuración de búsqueda en texto «%s» especificada podría no coincidir con la configuración regional «%s»"
+msgstr "la configuración de búsqueda en texto «%s» especificada podría no coincidir con la configuración regional «%s»"
 
 #: initdb.c:2687
 #, c-format

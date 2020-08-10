@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-29 23:38+0000\n"
+"POT-Creation-Date: 2020-05-16 09:51+0000\n"
 "PO-Revision-Date: 2019-06-06 17:20-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -231,97 +231,97 @@ msgstr "el cursor «%s» fue declarado pero no abierto"
 msgid "could not remove output file \"%s\"\n"
 msgstr "no se pudo eliminar el archivo de salida «%s»\n"
 
-#: pgc.l:472
+#: pgc.l:473
 #, c-format
 msgid "unterminated /* comment"
 msgstr "comentario /* no cerrado"
 
-#: pgc.l:490
+#: pgc.l:491
 #, c-format
 msgid "invalid bit string literal"
 msgstr "cadena de bits no válida"
 
-#: pgc.l:502
+#: pgc.l:503
 #, c-format
 msgid "unterminated bit string literal"
 msgstr "una cadena de bits está inconclusa"
 
-#: pgc.l:518
+#: pgc.l:519
 #, c-format
 msgid "unterminated hexadecimal string literal"
 msgstr "una cadena hexadecimal está inconclusa"
 
-#: pgc.l:614 pgc.l:718
+#: pgc.l:615 pgc.l:719
 #, c-format
 msgid "unterminated quoted string"
 msgstr "una cadena en comillas está inconclusa"
 
-#: pgc.l:665
+#: pgc.l:666
 #, c-format
 msgid "unterminated dollar-quoted string"
 msgstr "una cadena separada por $ está inconclusa"
 
-#: pgc.l:684 pgc.l:697
+#: pgc.l:685 pgc.l:698
 #, c-format
 msgid "zero-length delimited identifier"
 msgstr "identificador delimitado de longitud cero"
 
-#: pgc.l:709
+#: pgc.l:710
 #, c-format
 msgid "unterminated quoted identifier"
 msgstr "un identificador en comillas está inconcluso"
 
-#: pgc.l:1040
+#: pgc.l:1041
 #, c-format
 msgid "nested /* ... */ comments"
 msgstr "comentarios /* ... */ anidados"
 
-#: pgc.l:1133
+#: pgc.l:1134
 #, c-format
 msgid "missing identifier in EXEC SQL UNDEF command"
 msgstr "falta un identificador en la orden EXEC SQL UNDEF"
 
-#: pgc.l:1179 pgc.l:1193
+#: pgc.l:1180 pgc.l:1194
 #, c-format
 msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 msgstr "falta el «EXEC SQL IFDEF» / «EXEC SQL IFNDEF»"
 
-#: pgc.l:1182 pgc.l:1195 pgc.l:1373
+#: pgc.l:1183 pgc.l:1196 pgc.l:1374
 #, c-format
 msgid "missing \"EXEC SQL ENDIF;\""
 msgstr "falta el «EXEC SQL ENDIF;»"
 
-#: pgc.l:1211 pgc.l:1230
+#: pgc.l:1212 pgc.l:1231
 #, c-format
 msgid "more than one EXEC SQL ELSE"
 msgstr "hay más de un EXEC SQL ELSE"
 
-#: pgc.l:1252 pgc.l:1266
+#: pgc.l:1253 pgc.l:1267
 #, c-format
 msgid "unmatched EXEC SQL ENDIF"
 msgstr "EXEC SQL ENDIF sin coincidencia"
 
-#: pgc.l:1286
+#: pgc.l:1287
 #, c-format
 msgid "too many nested EXEC SQL IFDEF conditions"
 msgstr "demasiadas condiciones EXEC SQL IFDEF anidadas"
 
-#: pgc.l:1321
+#: pgc.l:1322
 #, c-format
 msgid "missing identifier in EXEC SQL IFDEF command"
 msgstr "identificador faltante en la orden EXEC SQL IFDEF"
 
-#: pgc.l:1330
+#: pgc.l:1331
 #, c-format
 msgid "missing identifier in EXEC SQL DEFINE command"
 msgstr "identificador faltante en la orden EXEC SQL DEFINE"
 
-#: pgc.l:1363
+#: pgc.l:1364
 #, c-format
 msgid "syntax error in EXEC SQL INCLUDE command"
 msgstr "error de sintaxis en orden EXEC SQL INCLUDE"
 
-#: pgc.l:1413
+#: pgc.l:1414
 #, c-format
 msgid "internal error: unreachable state; please report this to <pgsql-bugs@lists.postgresql.org>"
 msgstr "error interno: estado no esperado; por favor reporte a <pgsql-bugs@lists.postgresql.org>"
@@ -674,6 +674,3 @@ msgstr "los punteros a puntero no están soportados para este tipo de dato"
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
 msgstr "los arrays multidimensionales para estructuras no están soportados"
-
-#~ msgid "declared name %s is already defined"
-#~ msgstr "el cursor «%s» ya está definido"

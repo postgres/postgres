@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-02-19 12:14+0000\n"
-"PO-Revision-Date: 2020-02-23 17:15\n"
-"Last-Translator: Pavlo Golub <pavlo.golub@cybertec.at>\n"
+"PO-Revision-Date: 2020-07-17 12:35\n"
+"Last-Translator: pasha_golub\n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -12,8 +12,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/pg_ctl.pot\n"
+"X-Crowdin-File-ID: 238\n"
 
 #: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
 #, c-format
@@ -38,7 +40,7 @@ msgstr "неможливо знайти \"%s\" для виконання"
 #: ../../common/exec.c:271 ../../common/exec.c:310
 #, c-format
 msgid "could not change directory to \"%s\": %m"
-msgstr "не вдалося змінити каталог в \"%s\": %m"
+msgstr "не вдалося змінити каталог на \"%s\": %m"
 
 #: ../../common/exec.c:288
 #, c-format
@@ -109,7 +111,7 @@ msgstr "%s: директорія \"%s\" не існує\n"
 #: pg_ctl.c:265
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: не вдалося отримати доступ до каталогу \"%s\": %s\n"
+msgstr "%s: немає доступу до каталогу \"%s\": %s\n"
 
 #: pg_ctl.c:278
 #, c-format
@@ -610,7 +612,7 @@ msgstr "  -t, --timeout=СЕК   час очікування при викори
 #: pg_ctl.c:2085
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version          виводити інформацію про версію, потім вийти\n"
+msgstr "  -V, --version            вивести інформацію про версію і вийти\n"
 
 #: pg_ctl.c:2086
 #, c-format
@@ -787,8 +789,9 @@ msgstr "%s: контрольний файл видається пошкодже�
 msgid "%s: cannot be run as root\n"
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
-msgstr "%s: неможливо запустити від імені суперкористувача\n"
-" Будь ласка, увійдіть (за допомогою, наприклад, \"su\"), як (непривілейований) користувач, від імені якого буде запущено серверний процес. \n"
+msgstr "%s: не може бути запущеним від ім'я супер-користувача\n"
+" Будь ласка увійдіть (використовуючи наприклад, \"su\") як (непривілейований) користувач який буде мати\n"
+"свій серверний процес. \n"
 
 #: pg_ctl.c:2427
 #, c-format

@@ -1,9 +1,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-12-04 20:35+0100\n"
-"PO-Revision-Date: 2019-08-10 13:27\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2020-02-19 12:09+0000\n"
+"PO-Revision-Date: 2020-07-17 12:35\n"
 "Last-Translator: pasha_golub\n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -11,10 +11,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
-"X-Generator: crowdin.com\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_11_STABLE/src/interfaces/ecpg/ecpglib/po/ecpglib.pot\n"
+"X-Crowdin-File: /REL_12_STABLE/ecpglib.pot\n"
+"X-Crowdin-File-ID: 222\n"
 
 #: connect.c:237
 msgid "empty message text"
@@ -24,7 +25,7 @@ msgstr "пусте повідомлення"
 msgid "<DEFAULT>"
 msgstr "<ЗА_ЗАМОВЧУВАННЯМ>"
 
-#: descriptor.c:834 misc.c:120
+#: descriptor.c:876 misc.c:120
 msgid "NULL"
 msgstr "NULL"
 
@@ -193,7 +194,7 @@ msgstr "з'єднання із сервером втрачено"
 msgid "SQL error: %s\n"
 msgstr "помилка SQL: %s\n"
 
-#: execute.c:1969
+#: execute.c:2198 execute.c:2205
 msgid "<empty>"
 msgstr "<пусто>"
 

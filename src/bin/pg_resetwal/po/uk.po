@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-02-19 12:15+0000\n"
-"PO-Revision-Date: 2020-02-19 22:42\n"
-"Last-Translator: Pavlo Golub <pavlo.golub@cybertec.at>\n"
+"PO-Revision-Date: 2020-07-17 12:35\n"
+"Last-Translator: pasha_golub\n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -12,8 +12,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/pg_resetwal.pot\n"
+"X-Crowdin-File-ID: 242\n"
 
 #: ../../../src/common/logging.c:188
 #, c-format
@@ -78,7 +80,7 @@ msgstr "неприпустимий аргумент для параметру %s
 #: pg_resetwal.c:284 pg_resetwal.c:310 pg_resetwal.c:323 pg_resetwal.c:331
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
 
 #: pg_resetwal.c:166
 #, c-format
@@ -153,7 +155,7 @@ msgstr "не вдалося прочитати дозволи на катало�
 #: pg_resetwal.c:365
 #, c-format
 msgid "could not change directory to \"%s\": %m"
-msgstr "не вдалося змінити каталог в \"%s\": %m"
+msgstr "не вдалося змінити каталог на \"%s\": %m"
 
 #: pg_resetwal.c:381 pg_resetwal.c:545 pg_resetwal.c:602
 #, c-format

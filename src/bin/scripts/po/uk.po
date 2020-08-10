@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-02-19 12:15+0000\n"
-"PO-Revision-Date: 2020-02-23 18:24\n"
-"Last-Translator: Pavlo Golub <pavlo.golub@cybertec.at>\n"
+"PO-Revision-Date: 2020-07-17 12:35\n"
+"Last-Translator: pasha_golub\n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -12,8 +12,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/pgscripts.pot\n"
+"X-Crowdin-File-ID: 254\n"
 
 #: ../../../src/common/logging.c:188
 #, c-format
@@ -273,7 +275,7 @@ msgstr "запит був: %s"
 msgid "query returned %d row instead of one: %s"
 msgid_plural "query returned %d rows instead of one: %s"
 msgstr[0] "запит повернув %d рядок замість одного: %s"
-msgstr[1] "запит повернув %d рядків замість одного: %s"
+msgstr[1] "запит повернув %d рядки замість одного: %s"
 msgstr[2] "запит повернув %d рядків замість одного: %s"
 msgstr[3] "запит повернув %d рядків замість одного: %s"
 
@@ -711,7 +713,7 @@ msgstr "  -q, --quiet             тихий запуск\n"
 #: pg_isready.c:230
 #, c-format
 msgid "  -V, --version            output version information, then exit\n"
-msgstr "  -V, --version            вивести інофрмацію про версію, потім вийти\n"
+msgstr "  -V, --version            вивести інформацію про версію, потім вийти\n"
 
 #: pg_isready.c:231
 #, c-format

@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-02-19 12:08+0000\n"
-"PO-Revision-Date: 2020-02-23 18:05\n"
-"Last-Translator: Pavlo Golub <pavlo.golub@cybertec.at>\n"
+"PO-Revision-Date: 2020-07-17 12:35\n"
+"Last-Translator: pasha_golub\n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -12,8 +12,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/plperl.pot\n"
+"X-Crowdin-File-ID: 256\n"
 
 #: plperl.c:406
 msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
@@ -111,7 +113,7 @@ msgstr "неможливо конвертувати хеш Perl у нескла�
 #: plperl.c:1385 plperl.c:3306
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
-msgstr "функція, яка повертає запис, викликана в контексті, який не допускає цей тип"
+msgstr "функція, що повертає набір, викликана у контексті, що не приймає тип запис"
 
 #: plperl.c:1444
 #, c-format
@@ -166,7 +168,7 @@ msgstr "не отримано елемент результату з функц�
 #: plperl.c:2444
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr "функція з набором даних викликана в контексті, де немає можливості прийняти набір"
+msgstr "функція \"set-valued\" викликана в контексті, де йому немає місця"
 
 #: plperl.c:2489
 #, c-format
