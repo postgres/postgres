@@ -18,9 +18,9 @@
 #include <unistd.h>
 
 #include "common.h"
+#include "common/connect.h"
 #include "common/logging.h"
 #include "fe_utils/cancel.h"
-#include "fe_utils/connect.h"
 #include "fe_utils/string_utils.h"
 
 #define ERRCODE_UNDEFINED_TABLE  "42P01"

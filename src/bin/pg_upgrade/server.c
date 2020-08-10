@@ -9,7 +9,7 @@
 
 #include "postgres_fe.h"
 
-#include "fe_utils/connect.h"
+#include "common/connect.h"
 #include "fe_utils/string_utils.h"
 #include "pg_upgrade.h"
 

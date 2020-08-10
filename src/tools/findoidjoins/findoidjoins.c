@@ -10,7 +10,7 @@
 #include "access/transam.h"
 #include "catalog/pg_class_d.h"
 
-#include "fe_utils/connect.h"
+#include "common/connect.h"
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 

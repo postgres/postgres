@@ -15,8 +15,8 @@
 #include <unistd.h>
 
 #include "catalog/pg_type_d.h"
+#include "common/connect.h"
 #include "datapagemap.h"
-#include "fe_utils/connect.h"
 #include "fetch.h"
 #include "file_ops.h"
 #include "filemap.h"
