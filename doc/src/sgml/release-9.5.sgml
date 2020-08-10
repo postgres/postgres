@@ -6856,7 +6856,7 @@ Branch: REL9_5_STABLE [3c0e07a46] 2018-05-01 12:02:41 -0400
       one's search path.  Relevant documentation appears in
       <xref linkend="ddl-schemas-patterns"> (for database administrators and users),
       <xref linkend="libpq-connect"> (for application authors),
-      <xref linkend="extend-extensions-style">  (for extension authors), and
+      <xref linkend="extend-extensions-security">  (for extension authors), and
       <xref linkend="sql-createfunction"> (for authors
       of <literal>SECURITY DEFINER</literal> functions).
       (CVE-2018-1058)
