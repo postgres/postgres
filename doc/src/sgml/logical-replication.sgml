@@ -503,10 +503,26 @@
   <title>Security</title>
 
   <para>
+   A user able to modify the schema of subscriber-side tables can execute
+   arbitrary code as a superuser.  Limit ownership
+   and <literal>TRIGGER</literal> privilege on such tables to roles that
+   superusers trust.  Moreover, if untrusted users can create tables, use only
+   publications that list tables explicitly.  That is to say, create a
+   subscription <literal>FOR ALL TABLES</literal> only when superusers trust
+   every user permitted to create a non-temp table on the publisher or the
+   subscriber.
+  </para>
+
+  <para>
    The role used for the replication connection must have
-   the <literal>REPLICATION</literal> attribute (or be a superuser).  Access for the role must be
-   configured in <filename>pg_hba.conf</filename> and it must have the
-   <literal>LOGIN</literal> attribute.
+   the <literal>REPLICATION</literal> attribute (or be a superuser).  If the
+   role lacks <literal>SUPERUSER</literal> and <literal>BYPASSRLS</literal>,
+   publisher row security policies can execute.  If the role does not trust
+   all table owners, include <literal>options=-crow_security=off</literal> in
+   the connection string; if a table owner then adds a row security policy,
+   that setting will cause replication to halt rather than execute the policy.
+   Access for the role must be configured in <filename>pg_hba.conf</filename>
+   and it must have the <literal>LOGIN</literal> attribute.
   </para>
 
   <para>
