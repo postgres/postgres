@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-08-28 07:07+0300\n"
+"POT-Creation-Date: 2020-08-10 10:44+0300\n"
 "PO-Revision-Date: 2019-09-02 12:32+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -277,32 +277,32 @@ msgstr "не удалось получить список файлов: %s"
 msgid "unexpected result set while fetching file list\n"
 msgstr "неожиданный результат при получении списка файлов\n"
 
-#: libpq_fetch.c:288
+#: libpq_fetch.c:293
 #, c-format
 msgid "could not send query: %s"
 msgstr "не удалось отправить запрос: %s"
 
-#: libpq_fetch.c:290
+#: libpq_fetch.c:295
 #, c-format
 msgid "getting file chunks\n"
 msgstr "получение сегментов файлов\n"
 
-#: libpq_fetch.c:293
+#: libpq_fetch.c:298
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
 msgstr "не удалось перевести подключение libpq в однострочный режим\n"
 
-#: libpq_fetch.c:314
+#: libpq_fetch.c:319
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "неожиданный результат при получении файлов с сервера: %s"
 
-#: libpq_fetch.c:320
+#: libpq_fetch.c:325
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "неожиданный размер набора результатов при получении файлов с сервера\n"
 
-#: libpq_fetch.c:326
+#: libpq_fetch.c:331
 #, c-format
 msgid ""
 "unexpected data types in result set while fetching remote files: %u %u %u\n"
@@ -310,63 +310,63 @@ msgstr ""
 "неожиданные типы данных в наборе результатов при получении файлов с сервера: "
 "%u %u %u\n"
 
-#: libpq_fetch.c:334
+#: libpq_fetch.c:339
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "неожиданный формат результата при получении файлов с сервера\n"
 
-#: libpq_fetch.c:340
+#: libpq_fetch.c:345
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr ""
 "неожиданные значения NULL в результате при получении файлов с сервера\n"
 
-#: libpq_fetch.c:344
+#: libpq_fetch.c:349
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "неожиданная длина результата при получении файлов с сервера\n"
 
-#: libpq_fetch.c:369
+#: libpq_fetch.c:374
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "для файла \"%s\" вместо сегмента получено NULL-значение, файл удалён\n"
 
-#: libpq_fetch.c:382
+#: libpq_fetch.c:387
 #, c-format
 msgid "received chunk for file \"%s\", offset %s, size %d\n"
 msgstr "получен сегмент файла \"%s\": смещение %s, размер %d\n"
 
-#: libpq_fetch.c:411
+#: libpq_fetch.c:416
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "не удалось получить с сервера файл \"%s\": %s"
 
-#: libpq_fetch.c:416
+#: libpq_fetch.c:421
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "неожиданный набор результатов при получении файла \"%s\" с сервера\n"
 
-#: libpq_fetch.c:427
+#: libpq_fetch.c:432
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "получен файл \"%s\", длина %d\n"
 
-#: libpq_fetch.c:460
+#: libpq_fetch.c:465
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "не удалось отправить данные COPY: %s"
 
-#: libpq_fetch.c:489
+#: libpq_fetch.c:494
 #, c-format
 msgid "could not send file list: %s"
 msgstr "не удалось отправить список файлов: %s"
 
-#: libpq_fetch.c:531
+#: libpq_fetch.c:536
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "не удалось отправить сообщение о завершении копирования: %s"
 
-#: libpq_fetch.c:537
+#: libpq_fetch.c:542
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "неожиданный результат при передаче списка: %s"
