@@ -110,12 +110,22 @@ ALTER EXTENSION tsearch2 ADD operator class @extschema@.tsquery_ops using btree;
 -- Avert your eyes while we hack the pg_amproc entries to make them link to
 -- the new forms ...
 
+DO LANGUAGE plpgsql
+$$
+DECLARE
+  my_schema_unquoted pg_catalog.text := pg_catalog.current_schema();
+  my_schema pg_catalog.text := pg_catalog.quote_ident(pg_catalog.current_schema());
+  old_path pg_catalog.text := pg_catalog.current_setting('search_path');
+BEGIN
+-- for safety, transiently set search_path to just pg_catalog+pg_temp
+PERFORM pg_catalog.set_config('search_path', 'pg_catalog, pg_temp', true);
+
 UPDATE pg_catalog.pg_amproc
 SET amproc = 'pg_catalog.gin_extract_tsvector(pg_catalog.tsvector,internal,internal)'::pg_catalog.regprocedure
 WHERE amprocfamily =
   (SELECT oid FROM pg_catalog.pg_opfamily WHERE opfname = 'gin_tsvector_ops' AND
      opfnamespace = (SELECT oid FROM pg_catalog.pg_namespace
-                     WHERE nspname = '@extschema@'))
+                     WHERE nspname = my_schema_unquoted))
   AND amproclefttype = 'pg_catalog.tsvector'::pg_catalog.regtype
   AND amprocrighttype = 'pg_catalog.tsvector'::pg_catalog.regtype
   AND amprocnum = 2
@@ -126,7 +136,7 @@ SET amproc = 'pg_catalog.gin_extract_tsquery(pg_catalog.tsquery,internal,smallin
 WHERE amprocfamily =
   (SELECT oid FROM pg_catalog.pg_opfamily WHERE opfname = 'gin_tsvector_ops' AND
      opfnamespace = (SELECT oid FROM pg_catalog.pg_namespace
-                     WHERE nspname = '@extschema@'))
+                     WHERE nspname = my_schema_unquoted))
   AND amproclefttype = 'pg_catalog.tsvector'::pg_catalog.regtype
   AND amprocrighttype = 'pg_catalog.tsvector'::pg_catalog.regtype
   AND amprocnum = 3
@@ -137,8 +147,12 @@ SET amproc = 'pg_catalog.gin_tsquery_consistent(internal,smallint,pg_catalog.tsq
 WHERE amprocfamily =
   (SELECT oid FROM pg_catalog.pg_opfamily WHERE opfname = 'gin_tsvector_ops' AND
      opfnamespace = (SELECT oid FROM pg_catalog.pg_namespace
-                     WHERE nspname = '@extschema@'))
+                     WHERE nspname = my_schema_unquoted))
   AND amproclefttype = 'pg_catalog.tsvector'::pg_catalog.regtype
   AND amprocrighttype = 'pg_catalog.tsvector'::pg_catalog.regtype
   AND amprocnum = 4
   AND amproc = 'pg_catalog.gin_tsquery_consistent(internal,smallint,pg_catalog.tsquery,integer,internal,internal)'::pg_catalog.regprocedure;
+
+PERFORM pg_catalog.set_config('search_path', old_path, true);
+END
+$$;

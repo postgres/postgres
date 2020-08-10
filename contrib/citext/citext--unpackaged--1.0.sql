@@ -89,8 +89,17 @@ ALTER EXTENSION citext ADD function translate(citext,citext,text);
 -- default collation is pinned.
 --
 
+DO LANGUAGE plpgsql
+$$
+DECLARE
+  my_schema pg_catalog.text := pg_catalog.quote_ident(pg_catalog.current_schema());
+  old_path pg_catalog.text := pg_catalog.current_setting('search_path');
+BEGIN
+-- for safety, transiently set search_path to just pg_catalog+pg_temp
+PERFORM pg_catalog.set_config('search_path', 'pg_catalog, pg_temp', true);
+
 WITH RECURSIVE typeoids(typoid) AS
-  ( SELECT 'citext'::pg_catalog.regtype UNION
+  ( SELECT (my_schema || '.citext')::pg_catalog.regtype UNION
     SELECT oid FROM pg_catalog.pg_type, typeoids
       WHERE typelem = typoid OR typbasetype = typoid )
 UPDATE pg_catalog.pg_type SET typcollation = 100
@@ -98,7 +107,7 @@ FROM typeoids
 WHERE oid = typeoids.typoid;
 
 WITH RECURSIVE typeoids(typoid) AS
-  ( SELECT 'citext'::pg_catalog.regtype UNION
+  ( SELECT (my_schema || '.citext')::pg_catalog.regtype UNION
     SELECT oid FROM pg_catalog.pg_type, typeoids
       WHERE typelem = typoid OR typbasetype = typoid )
 UPDATE pg_catalog.pg_attribute SET attcollation = 100
@@ -113,7 +122,7 @@ UPDATE pg_catalog.pg_index SET indcollation =
   pg_catalog.regexp_replace(indcollation::pg_catalog.text, '^0', '100')::pg_catalog.oidvector
 WHERE indclass[0] IN (
   WITH RECURSIVE typeoids(typoid) AS
-    ( SELECT 'citext'::pg_catalog.regtype UNION
+    ( SELECT (my_schema || '.citext')::pg_catalog.regtype UNION
       SELECT oid FROM pg_catalog.pg_type, typeoids
         WHERE typelem = typoid OR typbasetype = typoid )
   SELECT oid FROM pg_catalog.pg_opclass, typeoids
@@ -124,7 +133,7 @@ UPDATE pg_catalog.pg_index SET indcollation =
   pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[1] IN (
   WITH RECURSIVE typeoids(typoid) AS
-    ( SELECT 'citext'::pg_catalog.regtype UNION
+    ( SELECT (my_schema || '.citext')::pg_catalog.regtype UNION
       SELECT oid FROM pg_catalog.pg_type, typeoids
         WHERE typelem = typoid OR typbasetype = typoid )
   SELECT oid FROM pg_catalog.pg_opclass, typeoids
@@ -135,7 +144,7 @@ UPDATE pg_catalog.pg_index SET indcollation =
   pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[2] IN (
   WITH RECURSIVE typeoids(typoid) AS
-    ( SELECT 'citext'::pg_catalog.regtype UNION
+    ( SELECT (my_schema || '.citext')::pg_catalog.regtype UNION
       SELECT oid FROM pg_catalog.pg_type, typeoids
         WHERE typelem = typoid OR typbasetype = typoid )
   SELECT oid FROM pg_catalog.pg_opclass, typeoids
@@ -146,7 +155,7 @@ UPDATE pg_catalog.pg_index SET indcollation =
   pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[3] IN (
   WITH RECURSIVE typeoids(typoid) AS
-    ( SELECT 'citext'::pg_catalog.regtype UNION
+    ( SELECT (my_schema || '.citext')::pg_catalog.regtype UNION
       SELECT oid FROM pg_catalog.pg_type, typeoids
         WHERE typelem = typoid OR typbasetype = typoid )
   SELECT oid FROM pg_catalog.pg_opclass, typeoids
@@ -157,7 +166,7 @@ UPDATE pg_catalog.pg_index SET indcollation =
   pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+ \\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[4] IN (
   WITH RECURSIVE typeoids(typoid) AS
-    ( SELECT 'citext'::pg_catalog.regtype UNION
+    ( SELECT (my_schema || '.citext')::pg_catalog.regtype UNION
       SELECT oid FROM pg_catalog.pg_type, typeoids
         WHERE typelem = typoid OR typbasetype = typoid )
   SELECT oid FROM pg_catalog.pg_opclass, typeoids
@@ -168,7 +177,7 @@ UPDATE pg_catalog.pg_index SET indcollation =
   pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+ \\d+ \\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[5] IN (
   WITH RECURSIVE typeoids(typoid) AS
-    ( SELECT 'citext'::pg_catalog.regtype UNION
+    ( SELECT (my_schema || '.citext')::pg_catalog.regtype UNION
       SELECT oid FROM pg_catalog.pg_type, typeoids
         WHERE typelem = typoid OR typbasetype = typoid )
   SELECT oid FROM pg_catalog.pg_opclass, typeoids
@@ -179,7 +188,7 @@ UPDATE pg_catalog.pg_index SET indcollation =
   pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+ \\d+ \\d+ \\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[6] IN (
   WITH RECURSIVE typeoids(typoid) AS
-    ( SELECT 'citext'::pg_catalog.regtype UNION
+    ( SELECT (my_schema || '.citext')::pg_catalog.regtype UNION
       SELECT oid FROM pg_catalog.pg_type, typeoids
         WHERE typelem = typoid OR typbasetype = typoid )
   SELECT oid FROM pg_catalog.pg_opclass, typeoids
@@ -190,7 +199,7 @@ UPDATE pg_catalog.pg_index SET indcollation =
   pg_catalog.regexp_replace(indcollation::pg_catalog.text, E'^(\\d+ \\d+ \\d+ \\d+ \\d+ \\d+ \\d+) 0', E'\\1 100')::pg_catalog.oidvector
 WHERE indclass[7] IN (
   WITH RECURSIVE typeoids(typoid) AS
-    ( SELECT 'citext'::pg_catalog.regtype UNION
+    ( SELECT (my_schema || '.citext')::pg_catalog.regtype UNION
       SELECT oid FROM pg_catalog.pg_type, typeoids
         WHERE typelem = typoid OR typbasetype = typoid )
   SELECT oid FROM pg_catalog.pg_opclass, typeoids
@@ -198,3 +207,7 @@ WHERE indclass[7] IN (
 );
 
 -- somewhat arbitrarily, we assume no citext indexes have more than 8 columns
+
+PERFORM pg_catalog.set_config('search_path', old_path, true);
+END
+$$;

@@ -31,7 +31,7 @@ CREATE DOMAIN earth AS cube
   CONSTRAINT not_point check(cube_is_point(value))
   CONSTRAINT not_3d check(cube_dim(value) <= 3)
   CONSTRAINT on_surface check(abs(cube_distance(value, '(0)'::cube) /
-  earth() - 1) < '10e-7'::float8);
+  earth() - '1'::float8) < '10e-7'::float8);
 
 CREATE FUNCTION sec_to_gc(float8)
 RETURNS float8
