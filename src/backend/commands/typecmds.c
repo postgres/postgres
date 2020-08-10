@@ -1691,7 +1691,11 @@ static Oid
 findTypeInputFunction(List *procname, Oid typeOid)
 {
 	Oid			argList[3];
+	int			nmatches = 0;
 	Oid			procOid;
+	Oid			procOid2;
+	Oid			procOid3;
+	Oid			procOid4;
 
 	/*
 	 * Input functions can take a single argument of type CSTRING, or three
@@ -1699,32 +1703,45 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	 *
 	 * For backwards compatibility we allow OPAQUE in place of CSTRING; if we
 	 * see this, we issue a warning and fix up the pg_proc entry.
+	 *
+	 * Whine about ambiguity if multiple forms exist.
 	 */
 	argList[0] = CSTRINGOID;
-
-	procOid = LookupFuncName(procname, 1, argList, true);
-	if (OidIsValid(procOid))
-		return procOid;
-
 	argList[1] = OIDOID;
 	argList[2] = INT4OID;
 
-	procOid = LookupFuncName(procname, 3, argList, true);
+	procOid = LookupFuncName(procname, 1, argList, true);
 	if (OidIsValid(procOid))
-		return procOid;
+		nmatches++;
+	procOid2 = LookupFuncName(procname, 3, argList, true);
+	if (OidIsValid(procOid2))
+		nmatches++;
 
-	/* No luck, try it with OPAQUE */
 	argList[0] = OPAQUEOID;
 
-	procOid = LookupFuncName(procname, 1, argList, true);
+	procOid3 = LookupFuncName(procname, 1, argList, true);
+	if (OidIsValid(procOid3))
+		nmatches++;
+	procOid4 = LookupFuncName(procname, 3, argList, true);
+	if (OidIsValid(procOid4))
+		nmatches++;
 
-	if (!OidIsValid(procOid))
-	{
-		argList[1] = OIDOID;
-		argList[2] = INT4OID;
+	if (nmatches > 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+				 errmsg("type input function %s has multiple matches",
+						NameListToString(procname))));
 
-		procOid = LookupFuncName(procname, 3, argList, true);
-	}
+	if (OidIsValid(procOid))
+		return procOid;
+	if (OidIsValid(procOid2))
+		return procOid2;
+
+	/* Cases with OPAQUE need adjustment */
+	if (OidIsValid(procOid3))
+		procOid = procOid3;
+	else
+		procOid = procOid4;
 
 	if (OidIsValid(procOid))
 	{
@@ -1810,24 +1827,32 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 {
 	Oid			argList[3];
 	Oid			procOid;
+	Oid			procOid2;
 
 	/*
 	 * Receive functions can take a single argument of type INTERNAL, or three
-	 * arguments (internal, typioparam OID, typmod).
+	 * arguments (internal, typioparam OID, typmod).  Whine about ambiguity if
+	 * both forms exist.
 	 */
 	argList[0] = INTERNALOID;
-
-	procOid = LookupFuncName(procname, 1, argList, true);
-	if (OidIsValid(procOid))
-		return procOid;
-
 	argList[1] = OIDOID;
 	argList[2] = INT4OID;
 
-	procOid = LookupFuncName(procname, 3, argList, true);
+	procOid = LookupFuncName(procname, 1, argList, true);
+	procOid2 = LookupFuncName(procname, 3, argList, true);
 	if (OidIsValid(procOid))
+	{
+		if (OidIsValid(procOid2))
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("type receive function %s has multiple matches",
+							NameListToString(procname))));
 		return procOid;
+	}
+	else if (OidIsValid(procOid2))
+		return procOid2;
 
+	/* If not found, reference the 1-argument signature in error msg */
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_FUNCTION),
 			 errmsg("function %s does not exist",

@@ -7,23 +7,38 @@
 -- We use to_regprocedure() so that query doesn't fail if run against 9.6beta1 definitions,
 -- wherein the signatures have been updated already.  In that case to_regprocedure() will
 -- return NULL and no updates will happen.
+DO LANGUAGE plpgsql
+$$
+DECLARE
+  my_schema pg_catalog.text := pg_catalog.quote_ident(pg_catalog.current_schema());
+  old_path pg_catalog.text := pg_catalog.current_setting('search_path');
+BEGIN
+-- for safety, transiently set search_path to just pg_catalog+pg_temp
+PERFORM pg_catalog.set_config('search_path', 'pg_catalog, pg_temp', true);
 
 UPDATE pg_catalog.pg_proc SET
   proargtypes = pg_catalog.array_to_string(newtypes::pg_catalog.oid[], ' ')::pg_catalog.oidvector,
   pronargs = pg_catalog.array_length(newtypes, 1)
 FROM (VALUES
-(NULL::pg_catalog.text, NULL::pg_catalog.regtype[]), -- establish column types
+(NULL::pg_catalog.text, NULL::pg_catalog.text[]), -- establish column types
 ('g_int_consistent(internal,_int4,int4,oid,internal)', '{internal,_int4,int2,oid,internal}'),
 ('g_intbig_consistent(internal,internal,int4,oid,internal)', '{internal,_int4,int2,oid,internal}'),
-('g_intbig_same(internal,internal,internal)', '{intbig_gkey,intbig_gkey,internal}'),
+('g_intbig_same(internal,internal,internal)', '{SCH.intbig_gkey,SCH.intbig_gkey,internal}'),
 ('ginint4_queryextract(internal,internal,int2,internal,internal,internal,internal)', '{_int4,internal,int2,internal,internal,internal,internal}'),
 ('ginint4_consistent(internal,int2,internal,int4,internal,internal,internal,internal)', '{internal,int2,_int4,int4,internal,internal,internal,internal}')
-) AS update_data (oldproc, newtypes)
-WHERE oid = pg_catalog.to_regprocedure(oldproc);
+) AS update_data (oldproc, newtypestext),
+LATERAL (
+  SELECT array_agg(replace(typ, 'SCH', my_schema)::regtype) as newtypes FROM unnest(newtypestext) typ
+) ls
+WHERE oid = to_regprocedure(my_schema || '.' || replace(oldproc, 'SCH', my_schema));
 
 UPDATE pg_catalog.pg_proc SET
-  prorettype = 'intbig_gkey'::pg_catalog.regtype
-WHERE oid = pg_catalog.to_regprocedure('g_intbig_union(internal,internal)');
+  prorettype = (my_schema || '.intbig_gkey')::pg_catalog.regtype
+WHERE oid = pg_catalog.to_regprocedure(my_schema || '.g_intbig_union(internal,internal)');
+
+PERFORM pg_catalog.set_config('search_path', old_path, true);
+END
+$$;
 
 ALTER FUNCTION bqarr_in(cstring) PARALLEL SAFE;
 ALTER FUNCTION bqarr_out(query_int) PARALLEL SAFE;

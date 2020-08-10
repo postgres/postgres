@@ -9,10 +9,13 @@
 -- dependent on the extension.
 
 DO LANGUAGE plpgsql
-
 $$
-
+DECLARE
+  my_schema pg_catalog.text := pg_catalog.quote_ident(pg_catalog.current_schema());
+  old_path pg_catalog.text := pg_catalog.current_setting('search_path');
 BEGIN
+-- for safety, transiently set search_path to just pg_catalog+pg_temp
+PERFORM pg_catalog.set_config('search_path', 'pg_catalog, pg_temp', true);
 
    PERFORM 1
    FROM pg_proc p
@@ -27,6 +30,7 @@ BEGIN
 
    IF NOT FOUND
    THEN
+        PERFORM pg_catalog.set_config('search_path', old_path, true);
 
         CREATE FUNCTION hstore_to_json(hstore)
         RETURNS json
@@ -43,6 +47,7 @@ BEGIN
 
    END IF;
 
+PERFORM pg_catalog.set_config('search_path', old_path, true);
 END;
 
 $$;
