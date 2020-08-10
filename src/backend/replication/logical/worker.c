@@ -1590,6 +1590,12 @@ ApplyWorkerMain(Datum main_arg)
 	BackgroundWorkerInitializeConnectionByOid(MyLogicalRepWorker->dbid,
 											  MyLogicalRepWorker->userid);
 
+	/*
+	 * Set always-secure search path, so malicious users can't redirect user
+	 * code (e.g. pg_index.indexprs).
+	 */
+	SetConfigOption("search_path", "", PGC_SUSET, PGC_S_OVERRIDE);
+
 	/* Load the subscription into persistent memory context. */
 	ApplyContext = AllocSetContextCreate(TopMemoryContext,
 										 "ApplyContext",
