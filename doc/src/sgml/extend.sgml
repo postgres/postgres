@@ -540,7 +540,7 @@ RETURNS anycompatible AS ...
 
    <para>
     The extension script may set privileges on objects that are part of the
-    extension via <command>GRANT</command> and <command>REVOKE</command>
+    extension, using <command>GRANT</command> and <command>REVOKE</command>
     statements.  The final set of privileges for each object (if any are set)
     will be stored in the
     <link linkend="catalog-pg-init-privs"><structname>pg_init_privs</structname></link>
@@ -596,32 +596,6 @@ RETURNS anycompatible AS ...
     to the rule that extension member objects cannot be dropped without
     dropping the whole extension.
    </para>
-
-   <sect2 id="extend-extensions-style">
-    <title>Defining Extension Objects</title>
-
-    <!-- XXX It's not enough to use qualified names, because one might write a
-         qualified name to an object that itself uses unqualified names.  Many
-         information_schema functions have that defect, for example.  However,
-         that's a defect in the referenced object, and relatively few queries
-         will be affected.  Also, we direct applications to secure search_path
-         when connecting to an untrusted database; if applications do that,
-         they are immune to known attacks even if some extension refers to a
-         defective object.  Therefore, guide extension authors as though core
-         PostgreSQL contained no such defect. -->
-    <para>
-     Widely-distributed extensions should assume little about the database
-     they occupy.  In particular, unless you issued <literal>SET search_path =
-     pg_temp</literal>, assume each unqualified name could resolve to an
-     object that a malicious user has defined.  Beware of constructs that
-     depend on <varname>search_path</varname> implicitly: <token>IN</token>
-     and <literal>CASE <replaceable>expression</replaceable> WHEN</literal>
-     always select an operator using the search path.  In their place, use
-     <literal>OPERATOR(<replaceable>schema</replaceable>.=) ANY</literal>
-     and <literal>CASE WHEN <replaceable>expression</replaceable></literal>.
-    </para>
-
-   </sect2>
 
    <sect2>
     <title>Extension Files</title>
@@ -740,7 +714,8 @@ RETURNS anycompatible AS ...
        <para>
         If this parameter is <literal>true</literal> (which is the default),
         only superusers can create the extension or update it to a new
-        version.  If it is set to <literal>false</literal>, just the privileges
+        version (but see also <varname>trusted</varname>, below).
+        If it is set to <literal>false</literal>, just the privileges
         required to execute the commands in the installation or update script
         are required.
         This should normally be set to <literal>true</literal> if any of the
@@ -768,6 +743,9 @@ RETURNS anycompatible AS ...
         Generally, this should not be set true for extensions that could
         allow access to otherwise-superuser-only abilities, such as
         file system access.
+        Also, marking an extension trusted requires significant extra effort
+        to write the extension's installation and update script(s) securely;
+        see <xref linkend="extend-extensions-security"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -921,7 +899,7 @@ RETURNS anycompatible AS ...
      schema; that is, <command>CREATE EXTENSION</command> does the equivalent of
      this:
 <programlisting>
-SET LOCAL search_path TO @extschema@;
+SET LOCAL search_path TO @extschema@, pg_temp;
 </programlisting>
      This allows the objects created by the script file to go into the target
      schema.  The script file can change <varname>search_path</varname> if it wishes,
@@ -941,9 +919,15 @@ SET LOCAL search_path TO @extschema@;
 
     <para>
      If any prerequisite extensions are listed in <varname>requires</varname>
-     in the control file, their target schemas are appended to the initial
-     setting of <varname>search_path</varname>.  This allows their objects to be
-     visible to the new extension's script file.
+     in the control file, their target schemas are added to the initial
+     setting of <varname>search_path</varname>, following the new
+     extension's target schema.  This allows their objects to be visible to
+     the new extension's script file.
+    </para>
+
+    <para>
+     For security, <literal>pg_temp</literal> is automatically appended to
+     the end of <varname>search_path</varname> in all cases.
     </para>
 
     <para>
@@ -1170,6 +1154,154 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</replaceabl
     </para>
    </sect2>
 
+   <sect2 id="extend-extensions-security">
+    <title>Security Considerations for Extensions</title>
+
+    <para>
+     Widely-distributed extensions should assume little about the database
+     they occupy.  Therefore, it's appropriate to write functions provided
+     by an extension in a secure style that cannot be compromised by
+     search-path-based attacks.
+    </para>
+
+    <para>
+     An extension that has the <varname>superuser</varname> property set to
+     true must also consider security hazards for the actions taken within
+     its installation and update scripts.  It is not terribly difficult for
+     a malicious user to create trojan-horse objects that will compromise
+     later execution of a carelessly-written extension script, allowing that
+     user to acquire superuser privileges.
+    </para>
+
+    <para>
+     If an extension is marked <varname>trusted</varname>, then its
+     installation schema can be selected by the installing user, who might
+     intentionally use an insecure schema in hopes of gaining superuser
+     privileges.  Therefore, a trusted extension is extremely exposed from a
+     security standpoint, and all its script commands must be carefully
+     examined to ensure that no compromise is possible.
+    </para>
+
+    <para>
+     Advice about writing functions securely is provided in
+     <xref linkend="extend-extensions-security-funcs"/> below, and advice
+     about writing installation scripts securely is provided in
+     <xref linkend="extend-extensions-security-scripts"/>.
+    </para>
+
+    <sect3 id="extend-extensions-security-funcs">
+     <title>Security Considerations for Extension Functions</title>
+
+     <para>
+      SQL-language and PL-language functions provided by extensions are at
+      risk of search-path-based attacks when they are executed, since
+      parsing of these functions occurs at execution time not creation time.
+     </para>
+
+     <para>
+      The <link linkend="sql-createfunction-security"><command>CREATE
+      FUNCTION</command></link> reference page contains advice about
+      writing <literal>SECURITY DEFINER</literal> functions safely.  It's
+      good practice to apply those techniques for any function provided by
+      an extension, since the function might be called by a high-privilege
+      user.
+     </para>
+
+     <!-- XXX It's not enough to use qualified names, because one might write a
+          qualified name to an object that itself uses unqualified names.  Many
+          information_schema functions have that defect, for example.  However,
+          that's a defect in the referenced object, and relatively few queries
+          will be affected.  Also, we direct applications to secure search_path
+          when connecting to an untrusted database; if applications do that,
+          they are immune to known attacks even if some extension refers to a
+          defective object.  Therefore, guide extension authors as though core
+          PostgreSQL contained no such defect. -->
+     <para>
+      If you cannot set the <varname>search_path</varname> to contain only
+      secure schemas, assume that each unqualified name could resolve to an
+      object that a malicious user has defined.  Beware of constructs that
+      depend on <varname>search_path</varname> implicitly; for
+      example, <token>IN</token>
+      and <literal>CASE <replaceable>expression</replaceable> WHEN</literal>
+      always select an operator using the search path.  In their place, use
+      <literal>OPERATOR(<replaceable>schema</replaceable>.=) ANY</literal>
+      and <literal>CASE WHEN <replaceable>expression</replaceable></literal>.
+     </para>
+
+     <para>
+      A general-purpose extension usually should not assume that it's been
+      installed into a secure schema, which means that even schema-qualified
+      references to its own objects are not entirely risk-free.  For
+      example, if the extension has defined a
+      function <literal>myschema.myfunc(bigint)</literal> then a call such
+      as <literal>myschema.myfunc(42)</literal> could be captured by a
+      hostile function <literal>myschema.myfunc(integer)</literal>.  Be
+      careful that the data types of function and operator parameters exactly
+      match the declared argument types, using explicit casts where necessary.
+     </para>
+    </sect3>
+
+    <sect3 id="extend-extensions-security-scripts">
+     <title>Security Considerations for Extension Scripts</title>
+
+     <para>
+      An extension installation or update script should be written to guard
+      against search-path-based attacks occurring when the script executes.
+      If an object reference in the script can be made to resolve to some
+      other object than the script author intended, then a compromise might
+      occur immediately, or later when the mis-defined extension object is
+      used.
+     </para>
+
+     <para>
+      DDL commands such as <command>CREATE FUNCTION</command>
+      and <command>CREATE OPERATOR CLASS</command> are generally secure,
+      but beware of any command having a general-purpose expression as a
+      component.  For example, <command>CREATE VIEW</command> needs to be
+      vetted, as does a <literal>DEFAULT</literal> expression
+      in <command>CREATE FUNCTION</command>.
+     </para>
+
+     <para>
+      Sometimes an extension script might need to execute general-purpose
+      SQL, for example to make catalog adjustments that aren't possible via
+      DDL.  Be careful to execute such commands with a
+      secure <varname>search_path</varname>; do <emphasis>not</emphasis>
+      trust the path provided by <command>CREATE/ALTER EXTENSION</command>
+      to be secure.  Best practice is to temporarily
+      set <varname>search_path</varname> to <literal>'pg_catalog,
+      pg_temp'</literal> and insert references to the extension's
+      installation schema explicitly where needed.  (This practice might
+      also be helpful for creating views.)  Examples can be found in
+      the <filename>contrib</filename> modules in
+      the <productname>PostgreSQL</productname> source code distribution.
+     </para>
+
+     <para>
+      Cross-extension references are extremely difficult to make fully
+      secure, partially because of uncertainty about which schema the other
+      extension is in.  The hazards are reduced if both extensions are
+      installed in the same schema, because then a hostile object cannot be
+      placed ahead of the referenced extension in the installation-time
+      <varname>search_path</varname>.  However, no mechanism currently exists
+      to require that.  For now, best practice is to not mark an extension
+      trusted if it depends on another one, unless that other one is always
+      installed in <literal>pg_catalog</literal>.
+     </para>
+
+     <para>
+      Do <emphasis>not</emphasis> use <command>CREATE OR REPLACE
+      FUNCTION</command>, except in an update script that must change the
+      definition of a function that is known to be an extension member
+      already.  (Likewise for other <literal>OR REPLACE</literal> options.)
+      Using <literal>OR REPLACE</literal> unnecessarily not only has a risk
+      of accidentally overwriting someone else's function, but it creates a
+      security hazard since the overwritten function would still be owned by
+      its original owner, who could modify it.
+     </para>
+    </sect3>
+   </sect2>
+
    <sect2 id="extend-extensions-example">
     <title>Extension Example</title>
 
@@ -1189,18 +1321,18 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</replaceabl
 
 CREATE TYPE pair AS ( k text, v text );
 
-CREATE OR REPLACE FUNCTION pair(text, text)
+CREATE FUNCTION pair(text, text)
 RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::@extschema@.pair;';
 
 CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = text, FUNCTION = pair);
 
 -- "SET search_path" is easy to get right, but qualified names perform better.
-CREATE OR REPLACE FUNCTION lower(pair)
+CREATE FUNCTION lower(pair)
 RETURNS pair LANGUAGE SQL
 AS 'SELECT ROW(lower($1.k), lower($1.v))::@extschema@.pair;'
 SET search_path = pg_temp;
 
-CREATE OR REPLACE FUNCTION pair_concat(pair, pair)
+CREATE FUNCTION pair_concat(pair, pair)
 RETURNS pair LANGUAGE SQL
 AS 'SELECT ROW($1.k OPERATOR(pg_catalog.||) $2.k,
                $1.v OPERATOR(pg_catalog.||) $2.v)::@extschema@.pair;';
@@ -1215,6 +1347,7 @@ AS 'SELECT ROW($1.k OPERATOR(pg_catalog.||) $2.k,
 # pair extension
 comment = 'A key/value pair data type'
 default_version = '1.0'
+# cannot be relocatable because of use of @extschema@
 relocatable = false
 </programlisting>
     </para>
