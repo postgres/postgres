@@ -18,10 +18,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "common/connect.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
 #include "dumputils.h"
-#include "fe_utils/connect.h"
 #include "fe_utils/string_utils.h"
 #include "getopt_long.h"
 #include "pg_backup.h"

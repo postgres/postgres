@@ -22,8 +22,8 @@
 #endif
 
 #include "catalog/pg_class_d.h"
+#include "common/connect.h"
 #include "common/logging.h"
-#include "fe_utils/connect.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "pg_getopt.h"

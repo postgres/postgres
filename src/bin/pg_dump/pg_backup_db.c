@@ -17,8 +17,8 @@
 #include <termios.h>
 #endif
 
+#include "common/connect.h"
 #include "dumputils.h"
-#include "fe_utils/connect.h"
 #include "fe_utils/string_utils.h"
 #include "parallel.h"
 #include "pg_backup_archiver.h"
