@@ -1,0 +1,467 @@
+# LANGUAGE message translation file for pg_verifybackup
+# Copyright (C) 2020 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_verifybackup (PostgreSQL) package.
+# FIRST AUTHOR <zhangjie2@cn.fujitsu.com>, 2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_verifybackup (PostgreSQL) 13\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2020-05-17 02:44+0000\n"
+"PO-Revision-Date: 2020-06-22 16:00+0800\n"
+"Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
+"Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../../src/common/logging.c:236
+#, c-format
+msgid "fatal: "
+msgstr "致命的:"
+
+#: ../../../src/common/logging.c:243
+#, c-format
+msgid "error: "
+msgstr "错误: "
+
+#: ../../../src/common/logging.c:250
+#, c-format
+msgid "warning: "
+msgstr "警告: "
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#, c-format
+msgid "out of memory\n"
+msgstr "内存溢出\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "无法复制空指针 (内部错误)\n"
+
+#: ../../common/jsonapi.c:1064
+#, c-format
+msgid "Escape sequence \"\\%s\" is invalid."
+msgstr "转义序列 \"\\%s\" 无效."
+
+#: ../../common/jsonapi.c:1067
+#, c-format
+msgid "Character with value 0x%02x must be escaped."
+msgstr "值为 0x%02x 的字符必须进行转义处理."
+
+#: ../../common/jsonapi.c:1070
+#, c-format
+msgid "Expected end of input, but found \"%s\"."
+msgstr "期望输入结束，结果发现是\"%s\"."
+
+#: ../../common/jsonapi.c:1073
+#, c-format
+msgid "Expected array element or \"]\", but found \"%s\"."
+msgstr "期望为数组元素或者\"]\"，但发现结果是\"%s\"."
+
+#: ../../common/jsonapi.c:1076
+#, c-format
+msgid "Expected \",\" or \"]\", but found \"%s\"."
+msgstr "期望是\",\" 或 \"]\"，但发现结果是\"%s\"."
+
+#: ../../common/jsonapi.c:1079
+#, c-format
+msgid "Expected \":\", but found \"%s\"."
+msgstr "期望得到 \":\"，但发现结果是\"%s\"."
+
+#: ../../common/jsonapi.c:1082
+#, c-format
+msgid "Expected JSON value, but found \"%s\"."
+msgstr "期望是JSON值, 但结果发现是\"%s\"."
+
+#: ../../common/jsonapi.c:1085
+msgid "The input string ended unexpectedly."
+msgstr "输入字符串意外终止."
+
+#: ../../common/jsonapi.c:1087
+#, c-format
+msgid "Expected string or \"}\", but found \"%s\"."
+msgstr "期望是字符串或\"}\"，但发现结果是\"%s\"."
+
+#: ../../common/jsonapi.c:1090
+#, c-format
+msgid "Expected \",\" or \"}\", but found \"%s\"."
+msgstr "期望是 \",\" 或 \"}\"，但发现结果是\"%s\"."
+
+#: ../../common/jsonapi.c:1093
+#, c-format
+msgid "Expected string, but found \"%s\"."
+msgstr "期望是字符串, 但发现结果是\"%s\"."
+
+#: ../../common/jsonapi.c:1096
+#, c-format
+msgid "Token \"%s\" is invalid."
+msgstr "令牌 \"%s\" 无效."
+
+#: ../../common/jsonapi.c:1099
+msgid "\\u0000 cannot be converted to text."
+msgstr "\\u0000不能被转换为文本。"
+
+#: ../../common/jsonapi.c:1101
+msgid "\"\\u\" must be followed by four hexadecimal digits."
+msgstr "\"\\u\" 后必须紧跟有效的十六进制数数字"
+
+#: ../../common/jsonapi.c:1104
+msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
+msgstr "当编码不是UTF8时，大于007F的码位值不能使用Unicode转义值."
+
+#: ../../common/jsonapi.c:1106
+msgid "Unicode high surrogate must not follow a high surrogate."
+msgstr "Unicode 的高位代理项不能紧随另一个高位代理项."
+
+#: ../../common/jsonapi.c:1108
+msgid "Unicode low surrogate must follow a high surrogate."
+msgstr "Unicode 代位代理项必须紧随一个高位代理项."
+
+#: parse_manifest.c:152
+msgid "manifest ended unexpectedly"
+msgstr "清单意外结束"
+
+#: parse_manifest.c:191
+msgid "unexpected object start"
+msgstr "意外的对象开始"
+
+#: parse_manifest.c:224
+msgid "unexpected object end"
+msgstr "意外的对象结束"
+
+#: parse_manifest.c:251
+msgid "unexpected array start"
+msgstr "意外的数组开始"
+
+#: parse_manifest.c:274
+msgid "unexpected array end"
+msgstr "意外的数组结束"
+
+#: parse_manifest.c:299
+msgid "expected version indicator"
+msgstr "预期的版本指示器"
+
+#: parse_manifest.c:328
+msgid "unknown toplevel field"
+msgstr "未知的顶层字段"
+
+#: parse_manifest.c:347
+msgid "unexpected file field"
+msgstr "意外的文件字段"
+
+#: parse_manifest.c:361
+msgid "unexpected wal range field"
+msgstr "意外的wal范围字段"
+
+#: parse_manifest.c:367
+msgid "unexpected object field"
+msgstr "意外的对象字段"
+
+#: parse_manifest.c:397
+msgid "unexpected manifest version"
+msgstr "意外的清单版本"
+
+#: parse_manifest.c:448
+msgid "unexpected scalar"
+msgstr "意外的标量"
+
+#: parse_manifest.c:472
+msgid "missing pathname"
+msgstr "缺少路径名"
+
+#: parse_manifest.c:475
+msgid "both pathname and encoded pathname"
+msgstr "路径名和编码路径名"
+
+#: parse_manifest.c:477
+msgid "missing size"
+msgstr "缺少大小"
+
+#: parse_manifest.c:480
+msgid "checksum without algorithm"
+msgstr "校验和没有算法"
+
+#: parse_manifest.c:494
+msgid "unable to decode filename"
+msgstr "无法解码文件名"
+
+#: parse_manifest.c:504
+msgid "file size is not an integer"
+msgstr "文件大小不是整数"
+
+#: parse_manifest.c:510
+#, c-format
+msgid "unrecognized checksum algorithm: \"%s\""
+msgstr "无法识别的校验和算法: \"%s\""
+
+#: parse_manifest.c:529
+#, c-format
+msgid "invalid checksum for file \"%s\": \"%s\""
+msgstr "文件\"%s\"的校验和无效: \"%s\""
+
+#: parse_manifest.c:572
+msgid "missing timeline"
+msgstr "缺少时间线"
+
+#: parse_manifest.c:574
+msgid "missing start LSN"
+msgstr "缺少起始LSN"
+
+#: parse_manifest.c:576
+msgid "missing end LSN"
+msgstr "缺少结束LSN"
+
+#: parse_manifest.c:582
+msgid "timeline is not an integer"
+msgstr "时间线不是整数"
+
+#: parse_manifest.c:585
+msgid "unable to parse start LSN"
+msgstr "无法解析起始LSN"
+
+#: parse_manifest.c:588
+msgid "unable to parse end LSN"
+msgstr "无法解析结束LSN"
+
+#: parse_manifest.c:649
+msgid "expected at least 2 lines"
+msgstr "至少需要2行"
+
+#: parse_manifest.c:652
+msgid "last line not newline-terminated"
+msgstr "最后一行未以换行符结尾"
+
+#: parse_manifest.c:661
+#, c-format
+msgid "manifest has no checksum"
+msgstr "清单没有校验和"
+
+#: parse_manifest.c:665
+#, c-format
+msgid "invalid manifest checksum: \"%s\""
+msgstr "清单校验和无效: \"%s\""
+
+#: parse_manifest.c:669
+#, c-format
+msgid "manifest checksum mismatch"
+msgstr "清单校验和不匹配"
+
+#: parse_manifest.c:683
+#, c-format
+msgid "could not parse backup manifest: %s"
+msgstr "清单校验和不匹配: %s"
+
+#: pg_verifybackup.c:255 pg_verifybackup.c:265 pg_verifybackup.c:277
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#: pg_verifybackup.c:264
+#, c-format
+msgid "no backup directory specified"
+msgstr "未指定备份目录"
+
+#: pg_verifybackup.c:275
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "命令行参数太多 (第一个是 \"%s\")"
+
+#: pg_verifybackup.c:298
+#, c-format
+msgid ""
+"The program \"%s\" is needed by %s but was not found in the\n"
+"same directory as \"%s\".\n"
+"Check your installation."
+msgstr ""
+"%2$s需要程序\"%1$s\"\n"
+"但在与\"%3$s\"相同的目录中找不到该程序.\n"
+"检查您的安装."
+
+#: pg_verifybackup.c:303
+#, c-format
+msgid ""
+"The program \"%s\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation."
+msgstr ""
+"程序\"%s\"是由\"%s\"找到的\n"
+"但与%s的版本不同.\n"
+"检查您的安装."
+
+#: pg_verifybackup.c:361
+#, c-format
+msgid "backup successfully verified\n"
+msgstr "备份已成功验证\n"
+
+#: pg_verifybackup.c:387 pg_verifybackup.c:723
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "无法打开文件 \"%s\": %m"
+
+#: pg_verifybackup.c:391
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "无法取文件 \"%s\" 的状态: %m"
+
+#: pg_verifybackup.c:411 pg_verifybackup.c:738
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "无法读取文件 \"%s\": %m"
+
+#: pg_verifybackup.c:414
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "无法读取文件\"%1$s\"：读取了%3$zu中的%2$d"
+
+#: pg_verifybackup.c:474
+#, c-format
+msgid "duplicate pathname in backup manifest: \"%s\""
+msgstr "备份清单中的路径名重复: \"%s\""
+
+#: pg_verifybackup.c:537 pg_verifybackup.c:544
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "无法打开目录 \"%s\": %m"
+
+#: pg_verifybackup.c:576
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "无法关闭目录 \"%s\": %m"
+
+#: pg_verifybackup.c:596
+#, c-format
+msgid "could not stat file or directory \"%s\": %m"
+msgstr "无法统计文件或目录\"%s\": %m"
+
+#: pg_verifybackup.c:619
+#, c-format
+msgid "\"%s\" is not a file or directory"
+msgstr "\"%s\"不是文件或目录"
+
+#: pg_verifybackup.c:629
+#, c-format
+msgid "\"%s\" is present on disk but not in the manifest"
+msgstr "磁盘上有\"%s\"，但清单中没有"
+
+#: pg_verifybackup.c:641
+#, c-format
+msgid "\"%s\" has size %zu on disk but size %zu in the manifest"
+msgstr "\"%s\"在磁盘上有大小%zu，但在清单中有大小%zu"
+
+#: pg_verifybackup.c:668
+#, c-format
+msgid "\"%s\" is present in the manifest but not on disk"
+msgstr "清单中有\"%s\"，但磁盘上没有"
+
+#: pg_verifybackup.c:744
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "无法关闭文件 \"%s\": %m"
+
+#: pg_verifybackup.c:763
+#, c-format
+msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
+msgstr "文件\"%s\"应包含%zu到字节，但读取到%zu字节"
+
+#: pg_verifybackup.c:774
+#, c-format
+msgid "file \"%s\" has checksum of length %d, but expected %d"
+msgstr "文件\"%s\"的校验和长度为%d，但应为%d"
+
+#: pg_verifybackup.c:778
+#, c-format
+msgid "checksum mismatch for file \"%s\""
+msgstr "文件\"%s\"的校验和不匹配"
+
+#: pg_verifybackup.c:804
+#, c-format
+msgid "WAL parsing failed for timeline %u"
+msgstr "时间线%u的WAL解析失败"
+
+#: pg_verifybackup.c:890
+#, c-format
+msgid ""
+"%s verifies a backup against the backup manifest.\n"
+"\n"
+msgstr ""
+"%s 根据备份清单验证备份.\n"
+"\n"
+
+#: pg_verifybackup.c:891
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... BACKUPDIR\n"
+"\n"
+msgstr ""
+"用法:\n"
+"  %s [选项]... BACKUPDIR\n"
+"\n"
+
+#: pg_verifybackup.c:892
+#, c-format
+msgid "Options:\n"
+msgstr "选项:\n"
+
+#: pg_verifybackup.c:893
+#, c-format
+msgid "  -e, --exit-on-error         exit immediately on error\n"
+msgstr "  -e, --exit-on-error         出错时立即退出\n"
+
+#: pg_verifybackup.c:894
+#, c-format
+msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
+msgstr "  -i, --ignore=RELATIVE_PATH  忽略指定的路径\n"
+
+#: pg_verifybackup.c:895
+#, c-format
+msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
+msgstr "  -m, --manifest-path=PATH    使用清单的指定路径\n"
+
+#: pg_verifybackup.c:896
+#, c-format
+msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
+msgstr "  -n, --no-parse-wal          不试图解析WAL文件\n"
+
+#: pg_verifybackup.c:897
+#, c-format
+msgid "  -q, --quiet                 do not print any output, except for errors\n"
+msgstr "  -q, --quiet                 不打印任何输出，错误除外\n"
+
+#: pg_verifybackup.c:898
+#, c-format
+msgid "  -s, --skip-checksums        skip checksum verification\n"
+msgstr "  -s, --skip-checksums        跳过校验和验证\n"
+
+#: pg_verifybackup.c:899
+#, c-format
+msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
+msgstr "  -w, --wal-directory=PATH    对WAL文件使用指定路径\n"
+
+#: pg_verifybackup.c:900
+#, c-format
+msgid "  -V, --version               output version information, then exit\n"
+msgstr "  -V, --version               输出版本信息，然后退出\n"
+
+#: pg_verifybackup.c:901
+#, c-format
+msgid "  -?, --help                  show this help, then exit\n"
+msgstr "  -?, --help                  显示此帮助，然后退出\n"
+
+#: pg_verifybackup.c:902
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"臭虫报告至<%s>.\n"
+
+#: pg_verifybackup.c:903
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 主页: <%s>\n"

@@ -1,0 +1,299 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: postgresql\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2020-06-19 08:47+0000\n"
+"PO-Revision-Date: 2020-07-07 11:17\n"
+"Last-Translator: pasha_golub\n"
+"Language-Team: Ukrainian\n"
+"Language: uk_UA\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
+"X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
+"X-Crowdin-Language: uk\n"
+"X-Crowdin-File: /DEV_13/pg_checksums.pot\n"
+"X-Crowdin-File-ID: 492\n"
+
+#: ../../../src/common/logging.c:236
+#, c-format
+msgid "fatal: "
+msgstr "збій: "
+
+#: ../../../src/common/logging.c:243
+#, c-format
+msgid "error: "
+msgstr "помилка: "
+
+#: ../../../src/common/logging.c:250
+#, c-format
+msgid "warning: "
+msgstr "попередження: "
+
+#: pg_checksums.c:75
+#, c-format
+msgid "%s enables, disables, or verifies data checksums in a PostgreSQL database cluster.\n\n"
+msgstr "%s активує, деактивує або перевіряє контрольні суми даних в кластері бази даних PostgreSQL.\n\n"
+
+#: pg_checksums.c:76
+#, c-format
+msgid "Usage:\n"
+msgstr "Використання:\n"
+
+#: pg_checksums.c:77
+#, c-format
+msgid "  %s [OPTION]... [DATADIR]\n"
+msgstr "  %s [OPTION]... [DATADIR]\n"
+
+#: pg_checksums.c:78
+#, c-format
+msgid "\n"
+"Options:\n"
+msgstr "\n"
+"Параметри:\n"
+
+#: pg_checksums.c:79
+#, c-format
+msgid " [-D, --pgdata=]DATADIR    data directory\n"
+msgstr " [-D, --pgdata=]DATADIR         каталог даних\n"
+
+#: pg_checksums.c:80
+#, c-format
+msgid "  -c, --check              check data checksums (default)\n"
+msgstr "  -c, --check              перевірити контрольні суми даних (за замовчуванням)\n"
+
+#: pg_checksums.c:81
+#, c-format
+msgid "  -d, --disable            disable data checksums\n"
+msgstr "  -d, --disable            вимкнути контрольні суми даних\n"
+
+#: pg_checksums.c:82
+#, c-format
+msgid "  -e, --enable             enable data checksums\n"
+msgstr "  -e, --enable             активувати контрольні суми даних\n"
+
+#: pg_checksums.c:83
+#, c-format
+msgid "  -f, --filenode=FILENODE  check only relation with specified filenode\n"
+msgstr "  -f, --filenode=FILENODE перевіряти відношення лише із вказаним файлом\n"
+
+#: pg_checksums.c:84
+#, c-format
+msgid "  -N, --no-sync            do not wait for changes to be written safely to disk\n"
+msgstr "  -N, --no-sync          не чекати на безпечний запис змін на диск\n"
+
+#: pg_checksums.c:85
+#, c-format
+msgid "  -P, --progress           show progress information\n"
+msgstr "  -P, --progress           показати інформацію про прогрес\n"
+
+#: pg_checksums.c:86
+#, c-format
+msgid "  -v, --verbose            output verbose messages\n"
+msgstr "  -v, --verbose          виводити детальні повідомлення\n"
+
+#: pg_checksums.c:87
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            вивести інформацію про версію, потім вийти\n"
+
+#: pg_checksums.c:88
+#, c-format
+msgid "  -?, --help               show this help, then exit\n"
+msgstr "  -?, --help               показати цю довідку, потім вийти\n"
+
+#: pg_checksums.c:89
+#, c-format
+msgid "\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"is used.\n\n"
+msgstr "\n"
+"Якщо каталог даних не вказано (DATADIR), використовується змінна середовища PGDATA.\n\n"
+
+#: pg_checksums.c:91
+#, c-format
+msgid "Report bugs to <%s>.\n"
+msgstr "Повідомляти про помилки на <%s>.\n"
+
+#: pg_checksums.c:92
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Домашня сторінка %s: <%s>\n"
+
+#: pg_checksums.c:161
+#, c-format
+msgid "%*s/%s MB (%d%%) computed"
+msgstr "%*s/%s MB (%d%%) обчислено"
+
+#: pg_checksums.c:204
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "не можливо відкрити файл \"%s\": %m"
+
+#: pg_checksums.c:220
+#, c-format
+msgid "could not read block %u in file \"%s\": %m"
+msgstr "не вдалося прочитати блок %u в файлі \"%s\": %m"
+
+#: pg_checksums.c:223
+#, c-format
+msgid "could not read block %u in file \"%s\": read %d of %d"
+msgstr "не вдалося прочитати блок %u у файлі \"%s\": прочитано %d з %d"
+
+#: pg_checksums.c:240
+#, c-format
+msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
+msgstr "помилка перевірки контрольних сум у файлі \"%s\", блок %u: обчислена контрольна сума %X, але блок містить %X"
+
+#: pg_checksums.c:255
+#, c-format
+msgid "seek failed for block %u in file \"%s\": %m"
+msgstr "помилка пошуку для блоку %u у файлі \"%s\": %m"
+
+#: pg_checksums.c:264
+#, c-format
+msgid "could not write block %u in file \"%s\": %m"
+msgstr "не вдалося записати блок %u у файл \"%s\": %m"
+
+#: pg_checksums.c:267
+#, c-format
+msgid "could not write block %u in file \"%s\": wrote %d of %d"
+msgstr "не вдалося записати блок %u у файлі \"%s\": записано %d з %d"
+
+#: pg_checksums.c:280
+#, c-format
+msgid "checksums verified in file \"%s\""
+msgstr "контрольні суми у файлі \"%s\" перевірені"
+
+#: pg_checksums.c:282
+#, c-format
+msgid "checksums enabled in file \"%s\""
+msgstr "контрольні суми у файлі \"%s\" активовані"
+
+#: pg_checksums.c:307
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "не вдалося відкрити каталог \"%s\": %m"
+
+#: pg_checksums.c:334 pg_checksums.c:413
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
+
+#: pg_checksums.c:361
+#, c-format
+msgid "invalid segment number %d in file name \"%s\""
+msgstr "неприпустимий номер сегменту %d в імені файлу \"%s\""
+
+#: pg_checksums.c:494
+#, c-format
+msgid "invalid filenode specification, must be numeric: %s"
+msgstr "неприпустима специфікація filenode, повинна бути числовою: %s"
+
+#: pg_checksums.c:512 pg_checksums.c:528 pg_checksums.c:538 pg_checksums.c:547
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+
+#: pg_checksums.c:527
+#, c-format
+msgid "no data directory specified"
+msgstr "каталог даних не вказано"
+
+#: pg_checksums.c:536
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "забагато аргументів у командному рядку (перший \"%s\")"
+
+#: pg_checksums.c:546
+#, c-format
+msgid "option -f/--filenode can only be used with --check"
+msgstr "параметр -f/--filenode може бути використаний тільки з --check"
+
+#: pg_checksums.c:556
+#, c-format
+msgid "pg_control CRC value is incorrect"
+msgstr "значення CRC pg_control неправильне"
+
+#: pg_checksums.c:562
+#, c-format
+msgid "cluster is not compatible with this version of pg_checksums"
+msgstr "кластер не сумісний з цією версією pg_checksum"
+
+#: pg_checksums.c:568
+#, c-format
+msgid "database cluster is not compatible"
+msgstr "кластер бази даних не сумісний"
+
+#: pg_checksums.c:569
+#, c-format
+msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.\n"
+msgstr "Кластер бази даних було ініціалізовано з розміром блоку %u, але pg_checksums було скомпільовано з розміром блоку %u.\n"
+
+#: pg_checksums.c:582
+#, c-format
+msgid "cluster must be shut down"
+msgstr "кластер повинен бути закритий"
+
+#: pg_checksums.c:589
+#, c-format
+msgid "data checksums are not enabled in cluster"
+msgstr "контрольні суми в кластері неактивовані"
+
+#: pg_checksums.c:596
+#, c-format
+msgid "data checksums are already disabled in cluster"
+msgstr "контрольні суми вже неактивовані в кластері"
+
+#: pg_checksums.c:603
+#, c-format
+msgid "data checksums are already enabled in cluster"
+msgstr "контрольні суми вже активовані в кластері"
+
+#: pg_checksums.c:632
+#, c-format
+msgid "Checksum operation completed\n"
+msgstr "Операція контрольної суми завершена\n"
+
+#: pg_checksums.c:633
+#, c-format
+msgid "Files scanned:  %s\n"
+msgstr "Файлів відскановано: %s\n"
+
+#: pg_checksums.c:634
+#, c-format
+msgid "Blocks scanned: %s\n"
+msgstr "Блоків відскановано: %s\n"
+
+#: pg_checksums.c:637
+#, c-format
+msgid "Bad checksums:  %s\n"
+msgstr "Неправильні контрольні суми: %s\n"
+
+#: pg_checksums.c:638 pg_checksums.c:665
+#, c-format
+msgid "Data checksum version: %d\n"
+msgstr "Версія контрольних сум даних: %d\n"
+
+#: pg_checksums.c:657
+#, c-format
+msgid "syncing data directory"
+msgstr "синхронізація даних каталогу"
+
+#: pg_checksums.c:661
+#, c-format
+msgid "updating control file"
+msgstr "оновлення контрольного файлу"
+
+#: pg_checksums.c:667
+#, c-format
+msgid "Checksums enabled in cluster\n"
+msgstr "Контрольні суми активовані в кластері\n"
+
+#: pg_checksums.c:669
+#, c-format
+msgid "Checksums disabled in cluster\n"
+msgstr "Контрольні суми вимкнені у кластері\n"
+

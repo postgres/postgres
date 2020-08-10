@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-08 14:46+0000\n"
-"PO-Revision-Date: 2019-12-20 20:23\n"
+"POT-Creation-Date: 2020-02-19 12:16+0000\n"
+"PO-Revision-Date: 2020-07-07 11:17\n"
 "Last-Translator: pasha_golub\n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -12,8 +12,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_12_STABLE/pg_archivecleanup.pot\n"
+"X-Crowdin-File: /DEV_13/pg_archivecleanup.pot\n"
+"X-Crowdin-File-ID: 228\n"
 
 #: ../../../src/common/logging.c:188
 #, c-format
@@ -64,7 +66,7 @@ msgstr "недійсна назва файла з аргументом"
 #: pg_archivecleanup.c:349 pg_archivecleanup.c:356
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
 
 #: pg_archivecleanup.c:256
 #, c-format
