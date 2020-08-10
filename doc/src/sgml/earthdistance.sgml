@@ -10,9 +10,8 @@
  <para>
   The <filename>earthdistance</filename> module provides two different approaches to
   calculating great circle distances on the surface of the Earth. The one
-  described first depends on the <filename>cube</filename> module (which
-  <emphasis>must</emphasis> be installed before <filename>earthdistance</filename> can be
-  installed). The second one is based on the built-in <type>point</type> data type,
+  described first depends on the <filename>cube</filename> module.
+  The second one is based on the built-in <type>point</type> data type,
   using longitude and latitude for the coordinates.
  </para>
 
@@ -24,10 +23,26 @@
  </para>
 
  <para>
-  This module is considered <quote>trusted</quote>, that is, it can be
-  installed by non-superusers who have <literal>CREATE</literal> privilege
-  on the current database.
+  The <filename>cube</filename> module must be installed
+  before <filename>earthdistance</filename> can be installed
+  (although you can use the <literal>CASCADE</literal> option
+  of <command>CREATE EXTENSION</command> to install both in one command).
  </para>
+
+ <caution>
+  <para>
+   It is strongly recommended that <filename>earthdistance</filename>
+   and <filename>cube</filename> be installed in the same schema, and that
+   that schema be one for which CREATE privilege has not been and will not
+   be granted to any untrusted users.
+   Otherwise there are installation-time security hazards
+   if <filename>earthdistance</filename>'s schema contains objects defined
+   by a hostile user.
+   Furthermore, when using <filename>earthdistance</filename>'s functions
+   after installation, the entire search path should contain only trusted
+   schemas.
+  </para>
+ </caution>
 
  <sect2>
   <title>Cube-Based Earth Distances</title>

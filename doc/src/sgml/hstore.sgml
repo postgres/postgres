@@ -918,10 +918,14 @@ ALTER TABLE tablename ALTER hstorecol TYPE hstore USING hstorecol || '';
    Python dictionaries.
   </para>
 
-  <para>
-   Of these additional extensions, <literal>hstore_plperl</literal> is
-   considered trusted; the rest are not.
-  </para>
+  <caution>
+   <para>
+    It is strongly recommended that the transform extensions be installed in
+    the same schema as <filename>hstore</filename>.  Otherwise there are
+    installation-time security hazards if a transform extension's schema
+    contains objects defined by a hostile user.
+   </para>
+  </caution>
  </sect2>
 
  <sect2>

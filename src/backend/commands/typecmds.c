@@ -1627,21 +1627,31 @@ findTypeInputFunction(List *procname, Oid typeOid)
 {
 	Oid			argList[3];
 	Oid			procOid;
+	Oid			procOid2;
 
 	/*
 	 * Input functions can take a single argument of type CSTRING, or three
-	 * arguments (string, typioparam OID, typmod).  They must return the
-	 * target type.
+	 * arguments (string, typioparam OID, typmod).  Whine about ambiguity if
+	 * both forms exist.
 	 */
 	argList[0] = CSTRINGOID;
+	argList[1] = OIDOID;
+	argList[2] = INT4OID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
-	if (!OidIsValid(procOid))
+	procOid2 = LookupFuncName(procname, 3, argList, true);
+	if (OidIsValid(procOid))
 	{
-		argList[1] = OIDOID;
-		argList[2] = INT4OID;
-
-		procOid = LookupFuncName(procname, 3, argList, true);
+		if (OidIsValid(procOid2))
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("type input function %s has multiple matches",
+							NameListToString(procname))));
+	}
+	else
+	{
+		procOid = procOid2;
+		/* If not found, reference the 1-argument signature in error msg */
 		if (!OidIsValid(procOid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -1649,6 +1659,7 @@ findTypeInputFunction(List *procname, Oid typeOid)
 							func_signature_string(procname, 1, NIL, argList))));
 	}
 
+	/* Input functions must return the target type. */
 	if (get_func_rettype(procOid) != typeOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -1714,21 +1725,31 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 {
 	Oid			argList[3];
 	Oid			procOid;
+	Oid			procOid2;
 
 	/*
 	 * Receive functions can take a single argument of type INTERNAL, or three
-	 * arguments (internal, typioparam OID, typmod).  They must return the
-	 * target type.
+	 * arguments (internal, typioparam OID, typmod).  Whine about ambiguity if
+	 * both forms exist.
 	 */
 	argList[0] = INTERNALOID;
+	argList[1] = OIDOID;
+	argList[2] = INT4OID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
-	if (!OidIsValid(procOid))
+	procOid2 = LookupFuncName(procname, 3, argList, true);
+	if (OidIsValid(procOid))
 	{
-		argList[1] = OIDOID;
-		argList[2] = INT4OID;
-
-		procOid = LookupFuncName(procname, 3, argList, true);
+		if (OidIsValid(procOid2))
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("type receive function %s has multiple matches",
+							NameListToString(procname))));
+	}
+	else
+	{
+		procOid = procOid2;
+		/* If not found, reference the 1-argument signature in error msg */
 		if (!OidIsValid(procOid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -1736,6 +1757,7 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 							func_signature_string(procname, 1, NIL, argList))));
 	}
 
+	/* Receive functions must return the target type. */
 	if (get_func_rettype(procOid) != typeOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
