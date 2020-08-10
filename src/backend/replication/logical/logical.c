@@ -39,6 +39,7 @@
 #include "replication/snapbuild.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 
 /* data for errcontext callback */
@@ -288,6 +289,7 @@ CreateInitDecodingContext(const char *plugin,
 {
 	TransactionId xmin_horizon = InvalidTransactionId;
 	ReplicationSlot *slot;
+	NameData	plugin_name;
 	LogicalDecodingContext *ctx;
 	MemoryContext old_context;
 
@@ -319,9 +321,14 @@ CreateInitDecodingContext(const char *plugin,
 				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
 				 errmsg("cannot create logical replication slot in transaction that has performed writes")));
 
-	/* register output plugin name with slot */
+	/*
+	 * Register output plugin name with slot.  We need the mutex to avoid
+	 * concurrent reading of a partially copied string.  But we don't want any
+	 * complicated code while holding a spinlock, so do namestrcpy() outside.
+	 */
+	namestrcpy(&plugin_name, plugin);
 	SpinLockAcquire(&slot->mutex);
-	StrNCpy(NameStr(slot->data.plugin), plugin, NAMEDATALEN);
+	slot->data.plugin = plugin_name;
 	SpinLockRelease(&slot->mutex);
 
 	if (XLogRecPtrIsInvalid(restart_lsn))

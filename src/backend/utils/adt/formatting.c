@@ -3890,7 +3890,7 @@ DCH_cache_getnew(const char *str, bool std)
 		elog(DEBUG_elog_output, "OLD: '%s' AGE: %d", old->str, old->age);
 #endif
 		old->valid = false;
-		StrNCpy(old->str, str, DCH_CACHE_SIZE + 1);
+		strlcpy(old->str, str, DCH_CACHE_SIZE + 1);
 		old->age = (++DCHCounter);
 		/* caller is expected to fill format, then set valid */
 		return old;
@@ -3904,7 +3904,7 @@ DCH_cache_getnew(const char *str, bool std)
 		DCHCache[n_DCHCache] = ent = (DCHCacheEntry *)
 			MemoryContextAllocZero(TopMemoryContext, sizeof(DCHCacheEntry));
 		ent->valid = false;
-		StrNCpy(ent->str, str, DCH_CACHE_SIZE + 1);
+		strlcpy(ent->str, str, DCH_CACHE_SIZE + 1);
 		ent->std = std;
 		ent->age = (++DCHCounter);
 		/* caller is expected to fill format, then set valid */
@@ -4799,7 +4799,7 @@ NUM_cache_getnew(const char *str)
 		elog(DEBUG_elog_output, "OLD: \"%s\" AGE: %d", old->str, old->age);
 #endif
 		old->valid = false;
-		StrNCpy(old->str, str, NUM_CACHE_SIZE + 1);
+		strlcpy(old->str, str, NUM_CACHE_SIZE + 1);
 		old->age = (++NUMCounter);
 		/* caller is expected to fill format and Num, then set valid */
 		return old;
@@ -4813,7 +4813,7 @@ NUM_cache_getnew(const char *str)
 		NUMCache[n_NUMCache] = ent = (NUMCacheEntry *)
 			MemoryContextAllocZero(TopMemoryContext, sizeof(NUMCacheEntry));
 		ent->valid = false;
-		StrNCpy(ent->str, str, NUM_CACHE_SIZE + 1);
+		strlcpy(ent->str, str, NUM_CACHE_SIZE + 1);
 		ent->age = (++NUMCounter);
 		/* caller is expected to fill format and Num, then set valid */
 		++n_NUMCache;

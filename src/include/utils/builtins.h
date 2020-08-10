@@ -39,8 +39,7 @@ extern uint64 hex_decode(const char *src, size_t len, char *dst);
 extern int2vector *buildint2vector(const int16 *int2s, int n);
 
 /* name.c */
-extern int	namecpy(Name n1, const NameData *n2);
-extern int	namestrcpy(Name name, const char *str);
+extern void	namestrcpy(Name name, const char *str);
 extern int	namestrcmp(Name name, const char *str);
 
 /* numutils.c */

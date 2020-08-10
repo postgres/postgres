@@ -606,7 +606,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * Truncate relname to appropriate length (probably a waste of time, as
 	 * parser should have done this already).
 	 */
-	StrNCpy(relname, stmt->relation->relname, NAMEDATALEN);
+	strlcpy(relname, stmt->relation->relname, NAMEDATALEN);
 
 	/*
 	 * Check consistency of arguments

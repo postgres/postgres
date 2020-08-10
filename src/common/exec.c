@@ -144,7 +144,7 @@ find_my_exec(const char *argv0, char *retpath)
 	if (first_dir_separator(argv0) != NULL)
 	{
 		if (is_absolute_path(argv0))
-			StrNCpy(retpath, argv0, MAXPGPATH);
+			strlcpy(retpath, argv0, MAXPGPATH);
 		else
 			join_path_components(retpath, cwd, argv0);
 		canonicalize_path(retpath);
@@ -184,7 +184,7 @@ find_my_exec(const char *argv0, char *retpath)
 			if (!endp)
 				endp = startp + strlen(startp); /* point to end */
 
-			StrNCpy(test_path, startp, Min(endp - startp + 1, MAXPGPATH));
+			strlcpy(test_path, startp, Min(endp - startp + 1, MAXPGPATH));
 
 			if (is_absolute_path(test_path))
 				join_path_components(retpath, test_path, argv0);

@@ -229,53 +229,13 @@ btnamesortsupport(PG_FUNCTION_ARGS)
  *	 MISCELLANEOUS PUBLIC ROUTINES											 *
  *****************************************************************************/
 
-int
-namecpy(Name n1, const NameData *n2)
-{
-	if (!n1 || !n2)
-		return -1;
-	StrNCpy(NameStr(*n1), NameStr(*n2), NAMEDATALEN);
-	return 0;
-}
-
-#ifdef NOT_USED
-int
-namecat(Name n1, Name n2)
-{
-	return namestrcat(n1, NameStr(*n2));	/* n2 can't be any longer than n1 */
-}
-#endif
-
-int
+void
 namestrcpy(Name name, const char *str)
 {
-	if (!name || !str)
-		return -1;
-	StrNCpy(NameStr(*name), str, NAMEDATALEN);
-	return 0;
+	/* NB: We need to zero-pad the destination. */
+	strncpy(NameStr(*name), str, NAMEDATALEN);
+	NameStr(*name)[NAMEDATALEN-1] = '\0';
 }
-
-#ifdef NOT_USED
-int
-namestrcat(Name name, const char *str)
-{
-	int			i;
-	char	   *p,
-			   *q;
-
-	if (!name || !str)
-		return -1;
-	for (i = 0, p = NameStr(*name); i < NAMEDATALEN && *p; ++i, ++p)
-		;
-	for (q = str; i < NAMEDATALEN; ++i, ++p, ++q)
-	{
-		*p = *q;
-		if (!*q)
-			break;
-	}
-	return 0;
-}
-#endif
 
 /*
  * Compare a NAME to a C string

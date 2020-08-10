@@ -75,16 +75,7 @@
 #endif
 
 #ifdef WIN32
-/*
- * This Windows file defines StrNCpy. We don't need it here, so we undefine
- * it to keep the compiler quiet, and undefine it again after the file is
- * included, so we don't accidentally use theirs.
- */
-#undef StrNCpy
 #include <shlwapi.h>
-#ifdef StrNCpy
-#undef StrNCpy
-#endif
 #endif
 
 #define		MAX_L10N_DATA		80

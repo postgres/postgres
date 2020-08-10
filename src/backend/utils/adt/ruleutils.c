@@ -2489,7 +2489,7 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
 	if (HeapTupleIsValid(roletup))
 	{
 		role_rec = (Form_pg_authid) GETSTRUCT(roletup);
-		StrNCpy(NameStr(*result), NameStr(role_rec->rolname), NAMEDATALEN);
+		*result = role_rec->rolname;
 		ReleaseSysCache(roletup);
 	}
 	else

@@ -252,7 +252,7 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 	 */
 	ctl->shared = shared;
 	ctl->do_fsync = true;		/* default behavior */
-	StrNCpy(ctl->Dir, subdir, sizeof(ctl->Dir));
+	strlcpy(ctl->Dir, subdir, sizeof(ctl->Dir));
 }
 
 /*

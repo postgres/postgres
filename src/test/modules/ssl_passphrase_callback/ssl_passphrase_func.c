@@ -74,7 +74,7 @@ rot13_passphrase(char *buf, int size, int rwflag, void *userdata)
 {
 
 	Assert(ssl_passphrase != NULL);
-	StrNCpy(buf, ssl_passphrase, size);
+	strlcpy(buf, ssl_passphrase, size);
 	for (char *p = buf; *p; p++)
 	{
 		char		c = *p;
