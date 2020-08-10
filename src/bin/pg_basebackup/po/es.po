@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-09-28 11:37+0000\n"
-"PO-Revision-Date: 2017-08-28 11:37+0200\n"
+"POT-Creation-Date: 2020-05-15 23:53+0000\n"
+"PO-Revision-Date: 2020-06-24 13:25-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -213,7 +213,7 @@ msgstr ""
 #: pg_basebackup.c:267 pg_receivexlog.c:80
 #, c-format
 msgid "  -d, --dbname=CONNSTR   connection string\n"
-msgstr "  -s, --dbname=CONSTR      cadena de conexión\n"
+msgstr "  -d, --dbname=CONSTR      cadena de conexión\n"
 
 #: pg_basebackup.c:268 pg_receivexlog.c:81 pg_recvlogical.c:97
 #, c-format

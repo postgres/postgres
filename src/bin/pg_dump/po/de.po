@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2020-05-10 19:43+0000\n"
+"POT-Creation-Date: 2020-08-09 00:42+0000\n"
 "PO-Revision-Date: 2020-05-11 09:08+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
@@ -79,22 +79,17 @@ msgstr "Befehl nicht gefunden"
 msgid "child process exited with exit code %d"
 msgstr "Kindprozess hat mit Code %d beendet"
 
-#: ../../common/wait_error.c:63
+#: ../../common/wait_error.c:64
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "Kindprozess wurde durch Ausnahme 0x%X beendet"
 
-#: ../../common/wait_error.c:73
+#: ../../common/wait_error.c:68
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "Kindprozess wurde von Signal %s beendet"
+msgid "child process was terminated by signal %d: %s"
+msgstr "Kindprozess wurde von Signal %d beendet: %s"
 
-#: ../../common/wait_error.c:77
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "Kindprozess wurde von Signal %d beendet"
-
-#: ../../common/wait_error.c:82
+#: ../../common/wait_error.c:74
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
@@ -331,7 +326,7 @@ msgstr "konnte Komprimierungsbibliothek nicht schließen: %s\n"
 msgid "could not read from input file: %s\n"
 msgstr "konnte nicht aus Eingabedatei lesen: %s\n"
 
-#: compress_io.c:641 pg_backup_custom.c:588 pg_backup_directory.c:552
+#: compress_io.c:641 pg_backup_custom.c:588 pg_backup_directory.c:569
 #: pg_backup_tar.c:809 pg_backup_tar.c:833
 #, c-format
 msgid "could not read from input file: end of file\n"
@@ -588,14 +583,14 @@ msgid "could not find entry for ID %d\n"
 msgstr "konnte Eintrag für ID %d nicht finden\n"
 
 #: pg_backup_archiver.c:1455 pg_backup_directory.c:230
-#: pg_backup_directory.c:601
+#: pg_backup_directory.c:618
 #, c-format
 msgid "could not close TOC file: %s\n"
 msgstr "konnte Inhaltsverzeichnisdatei nicht schließen: %s\n"
 
 #: pg_backup_archiver.c:1569 pg_backup_custom.c:162 pg_backup_directory.c:341
-#: pg_backup_directory.c:587 pg_backup_directory.c:645
-#: pg_backup_directory.c:665
+#: pg_backup_directory.c:604 pg_backup_directory.c:662
+#: pg_backup_directory.c:682
 #, c-format
 msgid "could not open output file \"%s\": %s\n"
 msgstr "konnte Ausgabedatei »%s« nicht öffnen: %s\n"
@@ -673,7 +668,7 @@ msgid "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does 
 msgstr "Verzeichnis »%s« scheint kein gültiges Archiv zu sein (»toc.dat« existiert nicht)\n"
 
 #: pg_backup_archiver.c:2159 pg_backup_custom.c:181 pg_backup_custom.c:770
-#: pg_backup_directory.c:214 pg_backup_directory.c:401
+#: pg_backup_directory.c:214 pg_backup_directory.c:406
 #, c-format
 msgid "could not open input file \"%s\": %s\n"
 msgstr "konnte Eingabedatei »%s« nicht öffnen: %s\n"
@@ -1143,48 +1138,48 @@ msgstr "konnte Verzeichnis »%s« nicht schließen: %s\n"
 msgid "could not create directory \"%s\": %s\n"
 msgstr "konnte Verzeichnis »%s« nicht erzeugen: %s\n"
 
-#: pg_backup_directory.c:360 pg_backup_directory.c:500
-#: pg_backup_directory.c:530
+#: pg_backup_directory.c:365 pg_backup_directory.c:510
+#: pg_backup_directory.c:546
 #, c-format
 msgid "could not write to output file: %s\n"
 msgstr "konnte nicht in Ausgabedatei schreiben: %s\n"
 
-#: pg_backup_directory.c:414
+#: pg_backup_directory.c:419
 #, c-format
 msgid "could not close data file \"%s\": %s\n"
 msgstr "konnte Datendatei »%s« nicht schließen: %s\n"
 
-#: pg_backup_directory.c:455
+#: pg_backup_directory.c:460
 #, c-format
 msgid "could not open large object TOC file \"%s\" for input: %s\n"
 msgstr "konnte Large-Object-Inhaltsverzeichnisdatei »%s« nicht zur Eingabe öffnen: %s\n"
 
-#: pg_backup_directory.c:466
+#: pg_backup_directory.c:471
 #, c-format
 msgid "invalid line in large object TOC file \"%s\": \"%s\"\n"
 msgstr "ungültige Zeile in Large-Object-Inhaltsverzeichnisdatei »%s«: %s\n"
 
-#: pg_backup_directory.c:475
+#: pg_backup_directory.c:480
 #, c-format
 msgid "error reading large object TOC file \"%s\"\n"
 msgstr "Fehler beim Lesen von Large-Object-Inhaltsverzeichnisdatei »%s«\n"
 
-#: pg_backup_directory.c:479
+#: pg_backup_directory.c:484
 #, c-format
 msgid "could not close large object TOC file \"%s\": %s\n"
 msgstr "konnte Large-Object-Inhaltsverzeichnisdatei »%s« nicht schließen: %s\n"
 
-#: pg_backup_directory.c:688
+#: pg_backup_directory.c:705
 #, c-format
 msgid "could not write to blobs TOC file\n"
 msgstr "konnte nicht in Blobs-Inhaltsverzeichnisdatei schreiben\n"
 
-#: pg_backup_directory.c:720
+#: pg_backup_directory.c:737
 #, c-format
 msgid "file name too long: \"%s\"\n"
 msgstr "Dateiname zu lang: »%s«\n"
 
-#: pg_backup_directory.c:806
+#: pg_backup_directory.c:823
 #, c-format
 msgid "error during backup\n"
 msgstr "Fehler bei der Sicherung\n"
@@ -1911,7 +1906,7 @@ msgstr "WARNUNG: Eigentümer der Funktion »%s« scheint ungültig zu sein\n"
 msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "WARNUNG: Eigentümer der Tabelle »%s« scheint ungültig zu sein\n"
 
-#: pg_dump.c:6250 pg_dump.c:16607
+#: pg_dump.c:6250 pg_dump.c:16630
 #, c-format
 msgid "failed sanity check, parent table OID %u of sequence OID %u not found\n"
 msgstr "Sanity-Check fehlgeschlagen, Elterntabelle mit OID %u von Sequenz mit OID %u nicht gefunden\n"
@@ -2073,79 +2068,79 @@ msgstr "unbekannter Objekttyp in den Vorgabeprivilegien: %d\n"
 msgid "could not parse default ACL list (%s)\n"
 msgstr "konnte Vorgabe-ACL-Liste (%s) nicht interpretieren\n"
 
-#: pg_dump.c:14676
+#: pg_dump.c:14681
 #, c-format
 msgid "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "konnte initiale GRANT-ACL-Liste (%s) oder initiale REVOKE-ACL-Liste (%s) für Objekt »%s« (%s) nicht interpretieren\n"
 
-#: pg_dump.c:14685
+#: pg_dump.c:14690
 #, c-format
 msgid "could not parse GRANT ACL list (%s) or REVOKE ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "konnte GRANT-ACL-Liste (%s) oder REVOKE-ACL-Liste (%s) für Objekt »%s« (%s) nicht interpretieren\n"
 
-#: pg_dump.c:15189
+#: pg_dump.c:15212
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data\n"
 msgstr "Anfrage um die Definition der Sicht »%s« zu ermitteln lieferte keine Daten\n"
 
-#: pg_dump.c:15192
+#: pg_dump.c:15215
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
 msgstr "Anfrage um die Definition der Sicht »%s« zu ermitteln lieferte mehr als eine Definition\n"
 
-#: pg_dump.c:15199
+#: pg_dump.c:15222
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "Definition der Sicht »%s« scheint leer zu sein (Länge null)\n"
 
-#: pg_dump.c:16016
+#: pg_dump.c:16039
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "ungültige Spaltennummer %d in Tabelle »%s«\n"
 
-#: pg_dump.c:16152
+#: pg_dump.c:16175
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
 msgstr "fehlender Index für Constraint »%s«\n"
 
-#: pg_dump.c:16353
+#: pg_dump.c:16376
 #, c-format
 msgid "unrecognized constraint type: %c\n"
 msgstr "unbekannter Constraint-Typ: %c\n"
 
-#: pg_dump.c:16508 pg_dump.c:16672
+#: pg_dump.c:16531 pg_dump.c:16695
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
 msgstr[0] "Anfrage nach Daten der Sequenz %s ergab %d Zeile (erwartete 1)\n"
 msgstr[1] "Anfrage nach Daten der Sequenz %s ergab %d Zeilen (erwartete 1)\n"
 
-#: pg_dump.c:16519
+#: pg_dump.c:16542
 #, c-format
 msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
 msgstr "Anfrage nach Daten der Sequenz %s ergab Name »%s«\n"
 
-#: pg_dump.c:16770
+#: pg_dump.c:16793
 #, c-format
 msgid "unexpected tgtype value: %d\n"
 msgstr "unerwarteter tgtype-Wert: %d\n"
 
-#: pg_dump.c:16852
+#: pg_dump.c:16875
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "fehlerhafte Argumentzeichenkette (%s) für Trigger »%s« von Tabelle »%s«\n"
 
-#: pg_dump.c:17098
+#: pg_dump.c:17121
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned\n"
 msgstr "Anfrage nach Regel »%s« der Tabelle »%s« fehlgeschlagen: falsche Anzahl Zeilen zurückgegeben\n"
 
-#: pg_dump.c:17483
+#: pg_dump.c:17506
 #, c-format
 msgid "reading dependency data\n"
 msgstr "lese Abhängigkeitsdaten\n"
 
-#: pg_dump.c:18048
+#: pg_dump.c:18071
 #, c-format
 msgid "WARNING: could not parse reloptions array\n"
 msgstr "WARNUNG: konnte reloptions-Array nicht interpretieren\n"
