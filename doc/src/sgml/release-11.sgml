@@ -35,6 +35,73 @@
 
     <listitem>
 <!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [11da97024] 2020-08-10 09:22:54 -0700
+Branch: REL_13_STABLE [412c5c401] 2020-08-10 09:22:58 -0700
+Branch: REL_12_STABLE [64a71062e] 2020-08-10 09:22:58 -0700
+Branch: REL_11_STABLE [5a936d64c] 2020-08-10 09:22:59 -0700
+Branch: REL_10_STABLE [dd5d99516] 2020-08-10 09:22:59 -0700
+Branch: master [cec57b1a0] 2020-08-10 09:22:54 -0700
+Branch: REL_13_STABLE [b601f24c8] 2020-08-10 09:22:58 -0700
+Branch: REL_12_STABLE [515ee4a7e] 2020-08-10 09:22:58 -0700
+Branch: REL_11_STABLE [613ed8a58] 2020-08-10 09:22:59 -0700
+Branch: REL_10_STABLE [b793d6af9] 2020-08-10 09:22:59 -0700
+-->
+     <para>
+      Set a secure <varname>search_path</varname> in logical replication
+      walsenders and apply workers (Noah Misch)
+     </para>
+
+     <para>
+      A malicious user of either the publisher or subscriber database
+      could potentially cause execution of arbitrary SQL code by the role
+      running replication, which is often a superuser.  Some of the risks
+      here are equivalent to those described in CVE-2018-1058, and are
+      mitigated in this patch by ensuring that the replication sender and
+      receiver execute with empty <varname>search_path</varname> settings.
+      (As with CVE-2018-1058, that change might cause problems for
+      under-qualified names used in replicated tables' DDL.)  Other risks
+      are inherent in replicating objects that belong to untrusted roles;
+      the most we can do is document that there is a hazard to consider.
+      (CVE-2020-14349)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7eeb1d986] 2020-08-10 10:44:42 -0400
+Branch: REL_13_STABLE [98ca64899] 2020-08-10 10:44:42 -0400
+Branch: REL_12_STABLE [3ba967084] 2020-08-10 10:44:42 -0400
+Branch: REL_11_STABLE [afa358786] 2020-08-10 10:44:43 -0400
+Branch: REL_10_STABLE [96cbfe92d] 2020-08-10 10:44:43 -0400
+Branch: REL9_6_STABLE [2ea8a60fc] 2020-08-10 10:44:43 -0400
+Branch: REL9_5_STABLE [6b11a4687] 2020-08-10 10:44:43 -0400
+-->
+     <para>
+      Make contrib modules' installation scripts more secure (Tom Lane)
+     </para>
+
+     <para>
+      Attacks similar to those described in CVE-2018-1058 could be carried
+      out against an extension installation script, if the attacker can
+      create objects in either the extension's target schema or the schema
+      of some prerequisite extension.  Since extensions often require
+      superuser privilege to install, this can open a path to obtaining
+      superuser privilege.  To mitigate this risk, be more careful about
+      the <varname>search_path</varname> used to run an installation
+      script; disable <varname>check_function_bodies</varname> within the
+      script; and fix catalog-adjustment queries used in some contrib
+      modules to ensure they are secure.  Also provide documentation to
+      help third-party extension authors make their installation scripts
+      secure.  This is not a complete solution; extensions that depend on
+      other extensions can still be at risk if installed carelessly.
+      (CVE-2020-14350)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Etsuro Fujita <efujita@postgresql.org>
 Branch: master [13838740f] 2020-07-28 11:00:00 +0900
 Branch: REL_13_STABLE [cebe10a5f] 2020-07-28 11:00:00 +0900
