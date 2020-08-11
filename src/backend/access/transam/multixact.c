@@ -3265,7 +3265,7 @@ multixact_redo(XLogReaderState *record)
 								  xlrec->moff + xlrec->nmembers);
 
 		/*
-		 * Make sure nextFullXid is beyond any XID mentioned in the record.
+		 * Make sure nextXid is beyond any XID mentioned in the record.
 		 * This should be unnecessary, since any XID found here ought to have
 		 * other evidence in the XLOG, but let's be safe.
 		 */

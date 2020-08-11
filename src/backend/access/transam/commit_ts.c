@@ -614,7 +614,7 @@ ZeroCommitTsPage(int pageno, bool writeXlog)
 
 /*
  * This must be called ONCE during postmaster or standalone-backend startup,
- * after StartupXLOG has initialized ShmemVariableCache->nextFullXid.
+ * after StartupXLOG has initialized ShmemVariableCache->nextXid.
  */
 void
 StartupCommitTs(void)
@@ -704,7 +704,7 @@ ActivateCommitTs(void)
 	}
 	LWLockRelease(CommitTsLock);
 
-	xid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
+	xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
 	pageno = TransactionIdToCTsPage(xid);
 
 	/*

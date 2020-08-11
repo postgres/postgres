@@ -250,8 +250,8 @@ main(int argc, char *argv[])
 	printf(_("Latest checkpoint's full_page_writes: %s\n"),
 		   ControlFile->checkPointCopy.fullPageWrites ? _("on") : _("off"));
 	printf(_("Latest checkpoint's NextXID:          %u:%u\n"),
-		   EpochFromFullTransactionId(ControlFile->checkPointCopy.nextFullXid),
-		   XidFromFullTransactionId(ControlFile->checkPointCopy.nextFullXid));
+		   EpochFromFullTransactionId(ControlFile->checkPointCopy.nextXid),
+		   XidFromFullTransactionId(ControlFile->checkPointCopy.nextXid));
 	printf(_("Latest checkpoint's NextOID:          %u\n"),
 		   ControlFile->checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),

@@ -1813,16 +1813,16 @@ restoreTwoPhaseData(void)
  *
  * Scan the shared memory entries of TwoPhaseState and determine the range
  * of valid XIDs present.  This is run during database startup, after we
- * have completed reading WAL.  ShmemVariableCache->nextFullXid has been set to
+ * have completed reading WAL.  ShmemVariableCache->nextXid has been set to
  * one more than the highest XID for which evidence exists in WAL.
  *
- * We throw away any prepared xacts with main XID beyond nextFullXid --- if any
+ * We throw away any prepared xacts with main XID beyond nextXid --- if any
  * are present, it suggests that the DBA has done a PITR recovery to an
  * earlier point in time without cleaning out pg_twophase.  We dare not
  * try to recover such prepared xacts since they likely depend on database
  * state that doesn't exist now.
  *
- * However, we will advance nextFullXid beyond any subxact XIDs belonging to
+ * However, we will advance nextXid beyond any subxact XIDs belonging to
  * valid prepared xacts.  We need to do this since subxact commit doesn't
  * write a WAL entry, and so there might be no evidence in WAL of those
  * subxact XIDs.
@@ -1832,7 +1832,7 @@ restoreTwoPhaseData(void)
  * backup should be rolled in.
  *
  * Our other responsibility is to determine and return the oldest valid XID
- * among the prepared xacts (if none, return ShmemVariableCache->nextFullXid).
+ * among the prepared xacts (if none, return ShmemVariableCache->nextXid).
  * This is needed to synchronize pg_subtrans startup properly.
  *
  * If xids_p and nxids_p are not NULL, pointer to a palloc'd array of all
@@ -1842,8 +1842,8 @@ restoreTwoPhaseData(void)
 TransactionId
 PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 {
-	FullTransactionId nextFullXid = ShmemVariableCache->nextFullXid;
-	TransactionId origNextXid = XidFromFullTransactionId(nextFullXid);
+	FullTransactionId nextXid = ShmemVariableCache->nextXid;
+	TransactionId origNextXid = XidFromFullTransactionId(nextXid);
 	TransactionId result = origNextXid;
 	TransactionId *xids = NULL;
 	int			nxids = 0;
@@ -2059,7 +2059,7 @@ RecoverPreparedTransactions(void)
  *
  * If setParent is true, set up subtransaction parent linkages.
  *
- * If setNextXid is true, set ShmemVariableCache->nextFullXid to the newest
+ * If setNextXid is true, set ShmemVariableCache->nextXid to the newest
  * value scanned.
  */
 static char *
@@ -2068,8 +2068,8 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 					  bool fromdisk,
 					  bool setParent, bool setNextXid)
 {
-	FullTransactionId nextFullXid = ShmemVariableCache->nextFullXid;
-	TransactionId origNextXid = XidFromFullTransactionId(nextFullXid);
+	FullTransactionId nextXid = ShmemVariableCache->nextXid;
+	TransactionId origNextXid = XidFromFullTransactionId(nextXid);
 	TransactionId *subxids;
 	char	   *buf;
 	TwoPhaseFileHeader *hdr;
@@ -2149,7 +2149,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 
 	/*
 	 * Examine subtransaction XIDs ... they should all follow main XID, and
-	 * they may force us to advance nextFullXid.
+	 * they may force us to advance nextXid.
 	 */
 	subxids = (TransactionId *) (buf +
 								 MAXALIGN(sizeof(TwoPhaseFileHeader)) +
@@ -2160,7 +2160,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 
 		Assert(TransactionIdFollows(subxid, xid));
 
-		/* update nextFullXid if needed */
+		/* update nextXid if needed */
 		if (setNextXid)
 			AdvanceNextFullTransactionIdPastXid(subxid);
 

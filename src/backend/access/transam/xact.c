@@ -5791,7 +5791,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 
 	max_xid = TransactionIdLatest(xid, parsed->nsubxacts, parsed->subxacts);
 
-	/* Make sure nextFullXid is beyond any XID mentioned in the record. */
+	/* Make sure nextXid is beyond any XID mentioned in the record. */
 	AdvanceNextFullTransactionIdPastXid(max_xid);
 
 	Assert(((parsed->xinfo & XACT_XINFO_HAS_ORIGIN) == 0) ==
@@ -5931,7 +5931,7 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 
 	Assert(TransactionIdIsValid(xid));
 
-	/* Make sure nextFullXid is beyond any XID mentioned in the record. */
+	/* Make sure nextXid is beyond any XID mentioned in the record. */
 	max_xid = TransactionIdLatest(xid,
 								  parsed->nsubxacts,
 								  parsed->subxacts);

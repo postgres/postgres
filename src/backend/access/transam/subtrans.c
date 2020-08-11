@@ -241,15 +241,15 @@ ZeroSUBTRANSPage(int pageno)
 
 /*
  * This must be called ONCE during postmaster or standalone-backend startup,
- * after StartupXLOG has initialized ShmemVariableCache->nextFullXid.
+ * after StartupXLOG has initialized ShmemVariableCache->nextXid.
  *
- * oldestActiveXID is the oldest XID of any prepared transaction, or nextFullXid
+ * oldestActiveXID is the oldest XID of any prepared transaction, or nextXid
  * if there are none.
  */
 void
 StartupSUBTRANS(TransactionId oldestActiveXID)
 {
-	FullTransactionId nextFullXid;
+	FullTransactionId nextXid;
 	int			startPage;
 	int			endPage;
 
@@ -262,8 +262,8 @@ StartupSUBTRANS(TransactionId oldestActiveXID)
 	LWLockAcquire(SubtransSLRULock, LW_EXCLUSIVE);
 
 	startPage = TransactionIdToPage(oldestActiveXID);
-	nextFullXid = ShmemVariableCache->nextFullXid;
-	endPage = TransactionIdToPage(XidFromFullTransactionId(nextFullXid));
+	nextXid = ShmemVariableCache->nextXid;
+	endPage = TransactionIdToPage(XidFromFullTransactionId(nextXid));
 
 	while (startPage != endPage)
 	{

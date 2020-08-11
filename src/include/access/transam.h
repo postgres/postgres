@@ -175,12 +175,12 @@ typedef struct VariableCacheData
 	/*
 	 * These fields are protected by XidGenLock.
 	 */
-	FullTransactionId nextFullXid;	/* next full XID to assign */
+	FullTransactionId nextXid;	/* next XID to assign */
 
 	TransactionId oldestXid;	/* cluster-wide minimum datfrozenxid */
 	TransactionId xidVacLimit;	/* start forcing autovacuums here */
 	TransactionId xidWarnLimit; /* start complaining here */
-	TransactionId xidStopLimit; /* refuse to advance nextFullXid beyond here */
+	TransactionId xidStopLimit; /* refuse to advance nextXid beyond here */
 	TransactionId xidWrapLimit; /* where the world ends */
 	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
 

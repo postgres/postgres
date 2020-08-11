@@ -601,7 +601,7 @@ typedef struct XLogCtlData
 	/* Protected by info_lck: */
 	XLogwrtRqst LogwrtRqst;
 	XLogRecPtr	RedoRecPtr;		/* a recent copy of Insert->RedoRecPtr */
-	FullTransactionId ckptFullXid;	/* nextFullXid of latest checkpoint */
+	FullTransactionId ckptFullXid;	/* nextXid of latest checkpoint */
 	XLogRecPtr	asyncXactLSN;	/* LSN of newest async commit/abort */
 	XLogRecPtr	replicationSlotMinLSN;	/* oldest LSN needed by any slot */
 
@@ -5239,7 +5239,7 @@ BootStrapXLOG(void)
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
 	checkPoint.PrevTimeLineID = ThisTimeLineID;
 	checkPoint.fullPageWrites = fullPageWrites;
-	checkPoint.nextFullXid =
+	checkPoint.nextXid =
 		FullTransactionIdFromEpochAndXid(0, FirstNormalTransactionId);
 	checkPoint.nextOid = FirstBootstrapObjectId;
 	checkPoint.nextMulti = FirstMultiXactId;
@@ -5253,7 +5253,7 @@ BootStrapXLOG(void)
 	checkPoint.time = (pg_time_t) time(NULL);
 	checkPoint.oldestActiveXid = InvalidTransactionId;
 
-	ShmemVariableCache->nextFullXid = checkPoint.nextFullXid;
+	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
@@ -6741,7 +6741,7 @@ StartupXLOG(void)
 							 wasShutdown ? "true" : "false")));
 	ereport(DEBUG1,
 			(errmsg_internal("next transaction ID: " UINT64_FORMAT "; next OID: %u",
-							 U64FromFullTransactionId(checkPoint.nextFullXid),
+							 U64FromFullTransactionId(checkPoint.nextXid),
 							 checkPoint.nextOid)));
 	ereport(DEBUG1,
 			(errmsg_internal("next MultiXactId: %u; next MultiXactOffset: %u",
@@ -6756,12 +6756,12 @@ StartupXLOG(void)
 			(errmsg_internal("commit timestamp Xid oldest/newest: %u/%u",
 							 checkPoint.oldestCommitTsXid,
 							 checkPoint.newestCommitTsXid)));
-	if (!TransactionIdIsNormal(XidFromFullTransactionId(checkPoint.nextFullXid)))
+	if (!TransactionIdIsNormal(XidFromFullTransactionId(checkPoint.nextXid)))
 		ereport(PANIC,
 				(errmsg("invalid next transaction ID")));
 
 	/* initialize shared memory variables from the checkpoint record */
-	ShmemVariableCache->nextFullXid = checkPoint.nextFullXid;
+	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
@@ -6770,7 +6770,7 @@ StartupXLOG(void)
 	SetMultiXactIdLimit(checkPoint.oldestMulti, checkPoint.oldestMultiDB, true);
 	SetCommitTsLimit(checkPoint.oldestCommitTsXid,
 					 checkPoint.newestCommitTsXid);
-	XLogCtl->ckptFullXid = checkPoint.nextFullXid;
+	XLogCtl->ckptFullXid = checkPoint.nextXid;
 
 	/*
 	 * Initialize replication slots, before there's a chance to remove
@@ -7051,7 +7051,7 @@ StartupXLOG(void)
 			Assert(TransactionIdIsValid(oldestActiveXID));
 
 			/* Tell procarray about the range of xids it has to deal with */
-			ProcArrayInitRecovery(XidFromFullTransactionId(ShmemVariableCache->nextFullXid));
+			ProcArrayInitRecovery(XidFromFullTransactionId(ShmemVariableCache->nextXid));
 
 			/*
 			 * Startup commit log and subtrans only.  MultiXact and commit
@@ -7081,9 +7081,9 @@ StartupXLOG(void)
 				running.xcnt = nxids;
 				running.subxcnt = 0;
 				running.subxid_overflow = false;
-				running.nextXid = XidFromFullTransactionId(checkPoint.nextFullXid);
+				running.nextXid = XidFromFullTransactionId(checkPoint.nextXid);
 				running.oldestRunningXid = oldestActiveXID;
-				latestCompletedXid = XidFromFullTransactionId(checkPoint.nextFullXid);
+				latestCompletedXid = XidFromFullTransactionId(checkPoint.nextXid);
 				TransactionIdRetreat(latestCompletedXid);
 				Assert(TransactionIdIsNormal(latestCompletedXid));
 				running.latestCompletedXid = latestCompletedXid;
@@ -7254,7 +7254,7 @@ StartupXLOG(void)
 				error_context_stack = &errcallback;
 
 				/*
-				 * ShmemVariableCache->nextFullXid must be beyond record's
+				 * ShmemVariableCache->nextXid must be beyond record's
 				 * xid.
 				 */
 				AdvanceNextFullTransactionIdPastXid(record->xl_xid);
@@ -7865,7 +7865,7 @@ StartupXLOG(void)
 
 	/* also initialize latestCompletedXid, to nextXid - 1 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-	ShmemVariableCache->latestCompletedXid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
+	ShmemVariableCache->latestCompletedXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
 	TransactionIdRetreat(ShmemVariableCache->latestCompletedXid);
 	LWLockRelease(ProcArrayLock);
 
@@ -8897,7 +8897,7 @@ CreateCheckPoint(int flags)
 	 * there.
 	 */
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	checkPoint.nextFullXid = ShmemVariableCache->nextFullXid;
+	checkPoint.nextXid = ShmemVariableCache->nextXid;
 	checkPoint.oldestXid = ShmemVariableCache->oldestXid;
 	checkPoint.oldestXidDB = ShmemVariableCache->oldestXidDB;
 	LWLockRelease(XidGenLock);
@@ -9050,7 +9050,7 @@ CreateCheckPoint(int flags)
 
 	/* Update shared-memory copy of checkpoint XID/epoch */
 	SpinLockAcquire(&XLogCtl->info_lck);
-	XLogCtl->ckptFullXid = checkPoint.nextFullXid;
+	XLogCtl->ckptFullXid = checkPoint.nextXid;
 	SpinLockRelease(&XLogCtl->info_lck);
 
 	/*
@@ -9926,7 +9926,7 @@ xlog_redo(XLogReaderState *record)
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 		/* In a SHUTDOWN checkpoint, believe the counters exactly */
 		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-		ShmemVariableCache->nextFullXid = checkPoint.nextFullXid;
+		ShmemVariableCache->nextXid = checkPoint.nextXid;
 		LWLockRelease(XidGenLock);
 		LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
 		ShmemVariableCache->nextOid = checkPoint.nextOid;
@@ -9980,9 +9980,9 @@ xlog_redo(XLogReaderState *record)
 			running.xcnt = nxids;
 			running.subxcnt = 0;
 			running.subxid_overflow = false;
-			running.nextXid = XidFromFullTransactionId(checkPoint.nextFullXid);
+			running.nextXid = XidFromFullTransactionId(checkPoint.nextXid);
 			running.oldestRunningXid = oldestActiveXID;
-			latestCompletedXid = XidFromFullTransactionId(checkPoint.nextFullXid);
+			latestCompletedXid = XidFromFullTransactionId(checkPoint.nextXid);
 			TransactionIdRetreat(latestCompletedXid);
 			Assert(TransactionIdIsNormal(latestCompletedXid));
 			running.latestCompletedXid = latestCompletedXid;
@@ -9995,12 +9995,12 @@ xlog_redo(XLogReaderState *record)
 
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
 		LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
-		ControlFile->checkPointCopy.nextFullXid = checkPoint.nextFullXid;
+		ControlFile->checkPointCopy.nextXid = checkPoint.nextXid;
 		LWLockRelease(ControlFileLock);
 
 		/* Update shared-memory copy of checkpoint XID/epoch */
 		SpinLockAcquire(&XLogCtl->info_lck);
-		XLogCtl->ckptFullXid = checkPoint.nextFullXid;
+		XLogCtl->ckptFullXid = checkPoint.nextXid;
 		SpinLockRelease(&XLogCtl->info_lck);
 
 		/*
@@ -10021,9 +10021,9 @@ xlog_redo(XLogReaderState *record)
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 		/* In an ONLINE checkpoint, treat the XID counter as a minimum */
 		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-		if (FullTransactionIdPrecedes(ShmemVariableCache->nextFullXid,
-									  checkPoint.nextFullXid))
-			ShmemVariableCache->nextFullXid = checkPoint.nextFullXid;
+		if (FullTransactionIdPrecedes(ShmemVariableCache->nextXid,
+									  checkPoint.nextXid))
+			ShmemVariableCache->nextXid = checkPoint.nextXid;
 		LWLockRelease(XidGenLock);
 
 		/*
@@ -10054,12 +10054,12 @@ xlog_redo(XLogReaderState *record)
 								  checkPoint.oldestXidDB);
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
 		LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
-		ControlFile->checkPointCopy.nextFullXid = checkPoint.nextFullXid;
+		ControlFile->checkPointCopy.nextXid = checkPoint.nextXid;
 		LWLockRelease(ControlFileLock);
 
 		/* Update shared-memory copy of checkpoint XID/epoch */
 		SpinLockAcquire(&XLogCtl->info_lck);
-		XLogCtl->ckptFullXid = checkPoint.nextFullXid;
+		XLogCtl->ckptFullXid = checkPoint.nextXid;
 		SpinLockRelease(&XLogCtl->info_lck);
 
 		/* TLI should not change in an on-line checkpoint */
