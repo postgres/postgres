@@ -54,6 +54,8 @@
 #define FullTransactionIdFollowsOrEquals(a, b) ((a).value >= (b).value)
 #define FullTransactionIdIsValid(x)		TransactionIdIsValid(XidFromFullTransactionId(x))
 #define InvalidFullTransactionId		FullTransactionIdFromEpochAndXid(0, InvalidTransactionId)
+#define FirstNormalFullTransactionId	FullTransactionIdFromEpochAndXid(0, FirstNormalTransactionId)
+#define FullTransactionIdIsNormal(x)	FullTransactionIdFollowsOrEquals(x, FirstNormalFullTransactionId)
 
 /*
  * A 64 bit value that contains an epoch and a TransactionId.  This is
@@ -100,6 +102,31 @@ FullTransactionIdAdvance(FullTransactionId *dest)
 	dest->value++;
 	while (XidFromFullTransactionId(*dest) < FirstNormalTransactionId)
 		dest->value++;
+}
+
+/*
+ * Retreat a FullTransactionId variable, stepping over xids that would appear
+ * to be special only when viewed as 32bit XIDs.
+ */
+static inline void
+FullTransactionIdRetreat(FullTransactionId *dest)
+{
+	dest->value--;
+
+	/*
+	 * In contrast to 32bit XIDs don't step over the "actual" special xids.
+	 * For 64bit xids these can't be reached as part of a wraparound as they
+	 * can in the 32bit case.
+	 */
+	if (FullTransactionIdPrecedes(*dest, FirstNormalFullTransactionId))
+		return;
+
+	/*
+	 * But we do need to step over XIDs that'd appear special only for 32bit
+	 * XIDs.
+	 */
+	while (XidFromFullTransactionId(*dest) < FirstNormalTransactionId)
+		dest->value--;
 }
 
 /* back up a transaction ID variable, handling wraparound correctly */
@@ -193,8 +220,8 @@ typedef struct VariableCacheData
 	/*
 	 * These fields are protected by ProcArrayLock.
 	 */
-	TransactionId latestCompletedXid;	/* newest XID that has committed or
-										 * aborted */
+	FullTransactionId latestCompletedXid;	/* newest full XID that has
+											 * committed or aborted */
 
 	/*
 	 * These fields are protected by XactTruncationLock
@@ -243,6 +270,12 @@ extern void SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 extern void AdvanceOldestClogXid(TransactionId oldest_datfrozenxid);
 extern bool ForceTransactionIdLimitUpdate(void);
 extern Oid	GetNewObjectId(void);
+
+#ifdef USE_ASSERT_CHECKING
+extern void AssertTransactionIdInAllowableRange(TransactionId xid);
+#else
+#define AssertTransactionIdInAllowableRange(xid) ((void)true)
+#endif
 
 /*
  * Some frontend programs include this header.  For compilers that emit static

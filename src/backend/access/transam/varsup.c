@@ -569,3 +569,53 @@ GetNewObjectId(void)
 
 	return result;
 }
+
+
+#ifdef USE_ASSERT_CHECKING
+
+/*
+ * Assert that xid is between [oldestXid, nextXid], which is the range we
+ * expect XIDs coming from tables etc to be in.
+ *
+ * As ShmemVariableCache->oldestXid could change just after this call without
+ * further precautions, and as a wrapped-around xid could again fall within
+ * the valid range, this assertion can only detect if something is definitely
+ * wrong, but not establish correctness.
+ *
+ * This intentionally does not expose a return value, to avoid code being
+ * introduced that depends on the return value.
+ */
+void
+AssertTransactionIdInAllowableRange(TransactionId xid)
+{
+	TransactionId oldest_xid;
+	TransactionId next_xid;
+
+	Assert(TransactionIdIsValid(xid));
+
+	/* we may see bootstrap / frozen */
+	if (!TransactionIdIsNormal(xid))
+		return;
+
+	/*
+	 * We can't acquire XidGenLock, as this may be called with XidGenLock
+	 * already held (or with other locks that don't allow XidGenLock to be
+	 * nested). That's ok for our purposes though, since we already rely on
+	 * 32bit reads to be atomic. While nextXid is 64 bit, we only look at
+	 * the lower 32bit, so a skewed read doesn't hurt.
+	 *
+	 * There's no increased danger of falling outside [oldest, next] by
+	 * accessing them without a lock. xid needs to have been created with
+	 * GetNewTransactionId() in the originating session, and the locks there
+	 * pair with the memory barrier below.  We do however accept xid to be <=
+	 * to next_xid, instead of just <, as xid could be from the procarray,
+	 * before we see the updated nextXid value.
+	 */
+	pg_memory_barrier();
+	oldest_xid = ShmemVariableCache->oldestXid;
+	next_xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+
+	Assert(TransactionIdFollowsOrEquals(xid, oldest_xid) ||
+		   TransactionIdPrecedesOrEquals(xid, next_xid));
+}
+#endif

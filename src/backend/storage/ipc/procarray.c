@@ -175,6 +175,11 @@ static void KnownAssignedXidsReset(void);
 static inline void ProcArrayEndTransactionInternal(PGPROC *proc,
 												   PGXACT *pgxact, TransactionId latestXid);
 static void ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid);
+static void MaintainLatestCompletedXid(TransactionId latestXid);
+static void MaintainLatestCompletedXidRecovery(TransactionId latestXid);
+
+static inline FullTransactionId FullXidRelativeTo(FullTransactionId rel,
+												  TransactionId xid);
 
 /*
  * Report shared-memory space needed by CreateSharedProcArray.
@@ -349,9 +354,7 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 		Assert(TransactionIdIsValid(allPgXact[proc->pgprocno].xid));
 
 		/* Advance global latestCompletedXid while holding the lock */
-		if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
-								  latestXid))
-			ShmemVariableCache->latestCompletedXid = latestXid;
+		MaintainLatestCompletedXid(latestXid);
 	}
 	else
 	{
@@ -464,9 +467,7 @@ ProcArrayEndTransactionInternal(PGPROC *proc, PGXACT *pgxact,
 	pgxact->overflowed = false;
 
 	/* Also advance global latestCompletedXid while holding the lock */
-	if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
-							  latestXid))
-		ShmemVariableCache->latestCompletedXid = latestXid;
+	MaintainLatestCompletedXid(latestXid);
 }
 
 /*
@@ -619,6 +620,59 @@ ProcArrayClearTransaction(PGPROC *proc)
 	/* Clear the subtransaction-XID cache too */
 	pgxact->nxids = 0;
 	pgxact->overflowed = false;
+}
+
+/*
+ * Update ShmemVariableCache->latestCompletedXid to point to latestXid if
+ * currently older.
+ */
+static void
+MaintainLatestCompletedXid(TransactionId latestXid)
+{
+	FullTransactionId cur_latest = ShmemVariableCache->latestCompletedXid;
+
+	Assert(FullTransactionIdIsValid(cur_latest));
+	Assert(!RecoveryInProgress());
+	Assert(LWLockHeldByMe(ProcArrayLock));
+
+	if (TransactionIdPrecedes(XidFromFullTransactionId(cur_latest), latestXid))
+	{
+		ShmemVariableCache->latestCompletedXid =
+			FullXidRelativeTo(cur_latest, latestXid);
+	}
+
+	Assert(IsBootstrapProcessingMode() ||
+		   FullTransactionIdIsNormal(ShmemVariableCache->latestCompletedXid));
+}
+
+/*
+ * Same as MaintainLatestCompletedXid, except for use during WAL replay.
+ */
+static void
+MaintainLatestCompletedXidRecovery(TransactionId latestXid)
+{
+	FullTransactionId cur_latest = ShmemVariableCache->latestCompletedXid;
+	FullTransactionId rel;
+
+	Assert(AmStartupProcess() || !IsUnderPostmaster);
+	Assert(LWLockHeldByMe(ProcArrayLock));
+
+	/*
+	 * Need a FullTransactionId to compare latestXid with. Can't rely on
+	 * latestCompletedXid to be initialized in recovery. But in recovery it's
+	 * safe to access nextXid without a lock for the startup process.
+	 */
+	rel = ShmemVariableCache->nextXid;
+	Assert(FullTransactionIdIsValid(ShmemVariableCache->nextXid));
+
+	if (!FullTransactionIdIsValid(cur_latest) ||
+		TransactionIdPrecedes(XidFromFullTransactionId(cur_latest), latestXid))
+	{
+		ShmemVariableCache->latestCompletedXid =
+			FullXidRelativeTo(rel, latestXid);
+	}
+
+	Assert(FullTransactionIdIsNormal(ShmemVariableCache->latestCompletedXid));
 }
 
 /*
@@ -869,12 +923,9 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * If a transaction wrote a commit record in the gap between taking and
 	 * logging the snapshot then latestCompletedXid may already be higher than
 	 * the value from the snapshot, so check before we use the incoming value.
+	 * It also might not yet be set at all.
 	 */
-	if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
-							  running->latestCompletedXid))
-		ShmemVariableCache->latestCompletedXid = running->latestCompletedXid;
-
-	Assert(TransactionIdIsNormal(ShmemVariableCache->latestCompletedXid));
+	MaintainLatestCompletedXidRecovery(running->latestCompletedXid);
 
 	LWLockRelease(ProcArrayLock);
 
@@ -989,6 +1040,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	int			nxids = 0;
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId topxid;
+	TransactionId latestCompletedXid;
 	int			i,
 				j;
 
@@ -1051,7 +1103,9 @@ TransactionIdIsInProgress(TransactionId xid)
 	 * Now that we have the lock, we can check latestCompletedXid; if the
 	 * target Xid is after that, it's surely still running.
 	 */
-	if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid, xid))
+	latestCompletedXid =
+		XidFromFullTransactionId(ShmemVariableCache->latestCompletedXid);
+	if (TransactionIdPrecedes(latestCompletedXid, xid))
 	{
 		LWLockRelease(ProcArrayLock);
 		xc_by_latest_xid_inc();
@@ -1330,9 +1384,9 @@ GetOldestXmin(Relation rel, int flags)
 	 * and so protects us against overestimating the result due to future
 	 * additions.
 	 */
-	result = ShmemVariableCache->latestCompletedXid;
-	Assert(TransactionIdIsNormal(result));
+	result = XidFromFullTransactionId(ShmemVariableCache->latestCompletedXid);
 	TransactionIdAdvance(result);
+	Assert(TransactionIdIsNormal(result));
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
@@ -1511,6 +1565,7 @@ GetSnapshotData(Snapshot snapshot)
 	int			count = 0;
 	int			subcount = 0;
 	bool		suboverflowed = false;
+	FullTransactionId latest_completed;
 	TransactionId replication_slot_xmin = InvalidTransactionId;
 	TransactionId replication_slot_catalog_xmin = InvalidTransactionId;
 
@@ -1554,10 +1609,11 @@ GetSnapshotData(Snapshot snapshot)
 	 */
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
+	latest_completed = ShmemVariableCache->latestCompletedXid;
 	/* xmax is always latestCompletedXid + 1 */
-	xmax = ShmemVariableCache->latestCompletedXid;
-	Assert(TransactionIdIsNormal(xmax));
+	xmax = XidFromFullTransactionId(latest_completed);
 	TransactionIdAdvance(xmax);
+	Assert(TransactionIdIsNormal(xmax));
 
 	/* initialize xmin calculation with xmax */
 	globalxmin = xmin = xmax;
@@ -1984,9 +2040,10 @@ GetRunningTransactionData(void)
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 	LWLockAcquire(XidGenLock, LW_SHARED);
 
-	latestCompletedXid = ShmemVariableCache->latestCompletedXid;
-
-	oldestRunningXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	latestCompletedXid =
+		XidFromFullTransactionId(ShmemVariableCache->latestCompletedXid);
+	oldestRunningXid =
+		XidFromFullTransactionId(ShmemVariableCache->nextXid);
 
 	/*
 	 * Spin over procArray collecting all xids
@@ -3207,9 +3264,7 @@ XidCacheRemoveRunningXids(TransactionId xid,
 		elog(WARNING, "did not find subXID %u in MyProc", xid);
 
 	/* Also advance global latestCompletedXid while holding the lock */
-	if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
-							  latestXid))
-		ShmemVariableCache->latestCompletedXid = latestXid;
+	MaintainLatestCompletedXid(latestXid);
 
 	LWLockRelease(ProcArrayLock);
 }
@@ -3235,6 +3290,32 @@ DisplayXidCache(void)
 			xc_slow_answer);
 }
 #endif							/* XIDCACHE_DEBUG */
+
+/*
+ * Convert a 32 bit transaction id into 64 bit transaction id, by assuming it
+ * is within MaxTransactionId / 2 of XidFromFullTransactionId(rel).
+ *
+ * Be very careful about when to use this function. It can only safely be used
+ * when there is a guarantee that xid is within MaxTransactionId / 2 xids of
+ * rel. That e.g. can be guaranteed if the the caller assures a snapshot is
+ * held by the backend and xid is from a table (where vacuum/freezing ensures
+ * the xid has to be within that range), or if xid is from the procarray and
+ * prevents xid wraparound that way.
+ */
+static inline FullTransactionId
+FullXidRelativeTo(FullTransactionId rel, TransactionId xid)
+{
+	TransactionId rel_xid = XidFromFullTransactionId(rel);
+
+	Assert(TransactionIdIsValid(xid));
+	Assert(TransactionIdIsValid(rel_xid));
+
+	/* not guaranteed to find issues, but likely to catch mistakes */
+	AssertTransactionIdInAllowableRange(xid);
+
+	return FullTransactionIdFromU64(U64FromFullTransactionId(rel)
+									+ (int32) (xid - rel_xid));
+}
 
 
 /* ----------------------------------------------
@@ -3388,9 +3469,7 @@ ExpireTreeKnownAssignedTransactionIds(TransactionId xid, int nsubxids,
 	KnownAssignedXidsRemoveTree(xid, nsubxids, subxids);
 
 	/* As in ProcArrayEndTransaction, advance latestCompletedXid */
-	if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
-							  max_xid))
-		ShmemVariableCache->latestCompletedXid = max_xid;
+	MaintainLatestCompletedXidRecovery(max_xid);
 
 	LWLockRelease(ProcArrayLock);
 }
