@@ -193,6 +193,12 @@ typedef struct SnapshotData
 	uint32		speculativeToken;
 
 	/*
+	 * For SNAPSHOT_NON_VACUUMABLE (and hopefully more in the future) this is
+	 * used to determine whether row could be vacuumed.
+	 */
+	struct GlobalVisState *vistest;
+
+	/*
 	 * Book-keeping information, used by the snapshot manager
 	 */
 	uint32		active_count;	/* refcount on ActiveSnapshot stack */

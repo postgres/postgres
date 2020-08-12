@@ -52,13 +52,12 @@ extern Size SnapMgrShmemSize(void);
 extern void SnapMgrInit(void);
 extern TimestampTz GetSnapshotCurrentTimestamp(void);
 extern TimestampTz GetOldSnapshotThresholdTimestamp(void);
+extern void SnapshotTooOldMagicForTest(void);
 
 extern bool FirstSnapshotSet;
 
 extern PGDLLIMPORT TransactionId TransactionXmin;
 extern PGDLLIMPORT TransactionId RecentXmin;
-extern PGDLLIMPORT TransactionId RecentGlobalXmin;
-extern PGDLLIMPORT TransactionId RecentGlobalDataXmin;
 
 /* Variables representing various special snapshot semantics */
 extern PGDLLIMPORT SnapshotData SnapshotSelfData;
@@ -78,11 +77,12 @@ extern PGDLLIMPORT SnapshotData CatalogSnapshotData;
 
 /*
  * Similarly, some initialization is required for a NonVacuumable snapshot.
- * The caller must supply the xmin horizon to use (e.g., RecentGlobalXmin).
+ * The caller must supply the visibility cutoff state to use (c.f.
+ * GlobalVisTestFor()).
  */
-#define InitNonVacuumableSnapshot(snapshotdata, xmin_horizon)  \
+#define InitNonVacuumableSnapshot(snapshotdata, vistestp)  \
 	((snapshotdata).snapshot_type = SNAPSHOT_NON_VACUUMABLE, \
-	 (snapshotdata).xmin = (xmin_horizon))
+	 (snapshotdata).vistest = (vistestp))
 
 /*
  * Similarly, some initialization is required for SnapshotToast.  We need
@@ -98,6 +98,11 @@ extern PGDLLIMPORT SnapshotData CatalogSnapshotData;
 	((snapshot)->snapshot_type == SNAPSHOT_MVCC || \
 	 (snapshot)->snapshot_type == SNAPSHOT_HISTORIC_MVCC)
 
+static inline bool
+OldSnapshotThresholdActive(void)
+{
+	return old_snapshot_threshold >= 0;
+}
 
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);
@@ -121,8 +126,6 @@ extern void UnregisterSnapshot(Snapshot snapshot);
 extern Snapshot RegisterSnapshotOnOwner(Snapshot snapshot, ResourceOwner owner);
 extern void UnregisterSnapshotFromOwner(Snapshot snapshot, ResourceOwner owner);
 
-extern FullTransactionId GetFullRecentGlobalXmin(void);
-
 extern void AtSubCommit_Snapshot(int level);
 extern void AtSubAbort_Snapshot(int level);
 extern void AtEOXact_Snapshot(bool isCommit, bool resetXmin);
@@ -131,12 +134,28 @@ extern void ImportSnapshot(const char *idstr);
 extern bool XactHasExportedSnapshots(void);
 extern void DeleteAllExportedSnapshotFiles(void);
 extern bool ThereAreNoPriorRegisteredSnapshots(void);
-extern TransactionId TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
-														 Relation relation);
+extern bool TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
+												Relation relation,
+												TransactionId *limit_xid,
+												TimestampTz *limit_ts);
+extern void SetOldSnapshotThresholdTimestamp(TimestampTz ts, TransactionId xlimit);
 extern void MaintainOldSnapshotTimeMapping(TimestampTz whenTaken,
 										   TransactionId xmin);
 
 extern char *ExportSnapshot(Snapshot snapshot);
+
+/*
+ * These live in procarray.c because they're intimately linked to the
+ * procarray contents, but thematically they better fit into snapmgr.h.
+ */
+typedef struct GlobalVisState GlobalVisState;
+extern GlobalVisState *GlobalVisTestFor(Relation rel);
+extern bool GlobalVisTestIsRemovableXid(GlobalVisState *state, TransactionId xid);
+extern bool GlobalVisTestIsRemovableFullXid(GlobalVisState *state, FullTransactionId fxid);
+extern FullTransactionId GlobalVisTestNonRemovableFullHorizon(GlobalVisState *state);
+extern TransactionId GlobalVisTestNonRemovableHorizon(GlobalVisState *state);
+extern bool GlobalVisCheckRemovableXid(Relation rel, TransactionId xid);
+extern bool GlobalVisIsRemovableFullXid(Relation rel, FullTransactionId fxid);
 
 /*
  * Utility functions for implementing visibility routines in table AMs.

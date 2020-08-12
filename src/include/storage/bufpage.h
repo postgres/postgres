@@ -389,12 +389,6 @@ PageValidateSpecialPointer(Page page)
 #define PageClearAllVisible(page) \
 	(((PageHeader) (page))->pd_flags &= ~PD_ALL_VISIBLE)
 
-#define PageIsPrunable(page, oldestxmin) \
-( \
-	AssertMacro(TransactionIdIsNormal(oldestxmin)), \
-	TransactionIdIsValid(((PageHeader) (page))->pd_prune_xid) && \
-	TransactionIdPrecedes(((PageHeader) (page))->pd_prune_xid, oldestxmin) \
-)
 #define PageSetPrunable(page, xid) \
 do { \
 	Assert(TransactionIdIsNormal(xid)); \

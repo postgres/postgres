@@ -948,11 +948,11 @@ btree_xlog_reuse_page(XLogReaderState *record)
 	 * Btree reuse_page records exist to provide a conflict point when we
 	 * reuse pages in the index via the FSM.  That's all they do though.
 	 *
-	 * latestRemovedXid was the page's btpo.xact.  The btpo.xact <
-	 * RecentGlobalXmin test in _bt_page_recyclable() conceptually mirrors the
-	 * pgxact->xmin > limitXmin test in GetConflictingVirtualXIDs().
-	 * Consequently, one XID value achieves the same exclusion effect on
-	 * primary and standby.
+	 * latestRemovedXid was the page's btpo.xact.  The
+	 * GlobalVisCheckRemovableXid test in _bt_page_recyclable() conceptually
+	 * mirrors the pgxact->xmin > limitXmin test in
+	 * GetConflictingVirtualXIDs().  Consequently, one XID value achieves the
+	 * same exclusion effect on primary and standby.
 	 */
 	if (InHotStandby)
 	{

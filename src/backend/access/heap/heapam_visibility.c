@@ -1154,19 +1154,56 @@ HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
  *	we mainly want to know is if a tuple is potentially visible to *any*
  *	running transaction.  If so, it can't be removed yet by VACUUM.
  *
- * OldestXmin is a cutoff XID (obtained from GetOldestXmin()).  Tuples
- * deleted by XIDs >= OldestXmin are deemed "recently dead"; they might
- * still be visible to some open transaction, so we can't remove them,
- * even if we see that the deleting transaction has committed.
+ * OldestXmin is a cutoff XID (obtained from
+ * GetOldestNonRemovableTransactionId()).  Tuples deleted by XIDs >=
+ * OldestXmin are deemed "recently dead"; they might still be visible to some
+ * open transaction, so we can't remove them, even if we see that the deleting
+ * transaction has committed.
  */
 HTSV_Result
 HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
 						 Buffer buffer)
 {
+	TransactionId dead_after = InvalidTransactionId;
+	HTSV_Result res;
+
+	res = HeapTupleSatisfiesVacuumHorizon(htup, buffer, &dead_after);
+
+	if (res == HEAPTUPLE_RECENTLY_DEAD)
+	{
+		Assert(TransactionIdIsValid(dead_after));
+
+		if (TransactionIdPrecedes(dead_after, OldestXmin))
+			res = HEAPTUPLE_DEAD;
+	}
+	else
+		Assert(!TransactionIdIsValid(dead_after));
+
+	return res;
+}
+
+/*
+ * Work horse for HeapTupleSatisfiesVacuum and similar routines.
+ *
+ * In contrast to HeapTupleSatisfiesVacuum this routine, when encountering a
+ * tuple that could still be visible to some backend, stores the xid that
+ * needs to be compared with the horizon in *dead_after, and returns
+ * HEAPTUPLE_RECENTLY_DEAD. The caller then can perform the comparison with
+ * the horizon.  This is e.g. useful when comparing with different horizons.
+ *
+ * Note: HEAPTUPLE_DEAD can still be returned here, e.g. if the inserting
+ * transaction aborted.
+ */
+HTSV_Result
+HeapTupleSatisfiesVacuumHorizon(HeapTuple htup, Buffer buffer, TransactionId *dead_after)
+{
 	HeapTupleHeader tuple = htup->t_data;
 
 	Assert(ItemPointerIsValid(&htup->t_self));
 	Assert(htup->t_tableOid != InvalidOid);
+	Assert(dead_after != NULL);
+
+	*dead_after = InvalidTransactionId;
 
 	/*
 	 * Has inserting transaction committed?
@@ -1323,17 +1360,15 @@ HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
 		else if (TransactionIdDidCommit(xmax))
 		{
 			/*
-			 * The multixact might still be running due to lockers.  If the
-			 * updater is below the xid horizon, we have to return DEAD
-			 * regardless -- otherwise we could end up with a tuple where the
-			 * updater has to be removed due to the horizon, but is not pruned
-			 * away.  It's not a problem to prune that tuple, because any
-			 * remaining lockers will also be present in newer tuple versions.
+			 * The multixact might still be running due to lockers.  Need to
+			 * allow for pruning if below the xid horizon regardless --
+			 * otherwise we could end up with a tuple where the updater has to
+			 * be removed due to the horizon, but is not pruned away.  It's
+			 * not a problem to prune that tuple, because any remaining
+			 * lockers will also be present in newer tuple versions.
 			 */
-			if (!TransactionIdPrecedes(xmax, OldestXmin))
-				return HEAPTUPLE_RECENTLY_DEAD;
-
-			return HEAPTUPLE_DEAD;
+			*dead_after = xmax;
+			return HEAPTUPLE_RECENTLY_DEAD;
 		}
 		else if (!MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), false))
 		{
@@ -1372,14 +1407,11 @@ HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
 	}
 
 	/*
-	 * Deleter committed, but perhaps it was recent enough that some open
-	 * transactions could still see the tuple.
+	 * Deleter committed, allow caller to check if it was recent enough that
+	 * some open transactions could still see the tuple.
 	 */
-	if (!TransactionIdPrecedes(HeapTupleHeaderGetRawXmax(tuple), OldestXmin))
-		return HEAPTUPLE_RECENTLY_DEAD;
-
-	/* Otherwise, it's dead and removable */
-	return HEAPTUPLE_DEAD;
+	*dead_after = HeapTupleHeaderGetRawXmax(tuple);
+	return HEAPTUPLE_RECENTLY_DEAD;
 }
 
 
@@ -1393,14 +1425,28 @@ HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
  *
  *	This is an interface to HeapTupleSatisfiesVacuum that's callable via
  *	HeapTupleSatisfiesSnapshot, so it can be used through a Snapshot.
- *	snapshot->xmin must have been set up with the xmin horizon to use.
+ *	snapshot->vistest must have been set up with the horizon to use.
  */
 static bool
 HeapTupleSatisfiesNonVacuumable(HeapTuple htup, Snapshot snapshot,
 								Buffer buffer)
 {
-	return HeapTupleSatisfiesVacuum(htup, snapshot->xmin, buffer)
-		!= HEAPTUPLE_DEAD;
+	TransactionId dead_after = InvalidTransactionId;
+	HTSV_Result res;
+
+	res = HeapTupleSatisfiesVacuumHorizon(htup, buffer, &dead_after);
+
+	if (res == HEAPTUPLE_RECENTLY_DEAD)
+	{
+		Assert(TransactionIdIsValid(dead_after));
+
+		if (GlobalVisTestIsRemovableXid(snapshot->vistest, dead_after))
+			res = HEAPTUPLE_DEAD;
+	}
+	else
+		Assert(!TransactionIdIsValid(dead_after));
+
+	return res != HEAPTUPLE_DEAD;
 }
 
 
@@ -1418,7 +1464,7 @@ HeapTupleSatisfiesNonVacuumable(HeapTuple htup, Snapshot snapshot,
  *	if the tuple is removable.
  */
 bool
-HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin)
+HeapTupleIsSurelyDead(HeapTuple htup, GlobalVisState *vistest)
 {
 	HeapTupleHeader tuple = htup->t_data;
 
@@ -1459,7 +1505,8 @@ HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin)
 		return false;
 
 	/* Deleter committed, so tuple is dead if the XID is old enough. */
-	return TransactionIdPrecedes(HeapTupleHeaderGetRawXmax(tuple), OldestXmin);
+	return GlobalVisTestIsRemovableXid(vistest,
+									   HeapTupleHeaderGetRawXmax(tuple));
 }
 
 /*

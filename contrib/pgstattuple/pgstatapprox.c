@@ -71,7 +71,7 @@ statapprox_heap(Relation rel, output_type *stat)
 	BufferAccessStrategy bstrategy;
 	TransactionId OldestXmin;
 
-	OldestXmin = GetOldestXmin(rel, PROCARRAY_FLAGS_VACUUM);
+	OldestXmin = GetOldestNonRemovableTransactionId(rel);
 	bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	nblocks = RelationGetNumberOfBlocks(rel);

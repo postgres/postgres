@@ -20,34 +20,6 @@
 #include "utils/snapshot.h"
 
 
-/*
- * These are to implement PROCARRAY_FLAGS_XXX
- *
- * Note: These flags are cloned from PROC_XXX flags in src/include/storage/proc.h
- * to avoid forcing to include proc.h when including procarray.h. So if you modify
- * PROC_XXX flags, you need to modify these flags.
- */
-#define		PROCARRAY_VACUUM_FLAG			0x02	/* currently running lazy
-													 * vacuum */
-#define		PROCARRAY_LOGICAL_DECODING_FLAG 0x10	/* currently doing logical
-													 * decoding outside xact */
-
-#define		PROCARRAY_SLOTS_XMIN			0x20	/* replication slot xmin,
-													 * catalog_xmin */
-/*
- * Only flags in PROCARRAY_PROC_FLAGS_MASK are considered when matching
- * PGXACT->vacuumFlags. Other flags are used for different purposes and
- * have no corresponding PROC flag equivalent.
- */
-#define		PROCARRAY_PROC_FLAGS_MASK	(PROCARRAY_VACUUM_FLAG | \
-										 PROCARRAY_LOGICAL_DECODING_FLAG)
-
-/* Use the following flags as an input "flags" to GetOldestXmin function */
-/* Consider all backends except for logical decoding ones which manage xmin separately */
-#define		PROCARRAY_FLAGS_DEFAULT			PROCARRAY_LOGICAL_DECODING_FLAG
-/* Ignore vacuum backends */
-#define		PROCARRAY_FLAGS_VACUUM			PROCARRAY_FLAGS_DEFAULT | PROCARRAY_VACUUM_FLAG
-
 extern Size ProcArrayShmemSize(void);
 extern void CreateSharedProcArray(void);
 extern void ProcArrayAdd(PGPROC *proc);
@@ -81,9 +53,11 @@ extern RunningTransactions GetRunningTransactionData(void);
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);
-extern TransactionId GetOldestXmin(Relation rel, int flags);
+extern TransactionId GetOldestNonRemovableTransactionId(Relation rel);
+extern TransactionId GetOldestTransactionIdConsideredRunning(void);
 extern TransactionId GetOldestActiveTransactionId(void);
 extern TransactionId GetOldestSafeDecodingTransactionId(bool catalogOnly);
+extern void GetReplicationHorizons(TransactionId *slot_xmin, TransactionId *catalog_xmin);
 
 extern VirtualTransactionId *GetVirtualXIDsDelayingChkpt(int *nvxids);
 extern bool HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids, int nvxids);

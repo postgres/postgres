@@ -12,6 +12,7 @@
 
 #include "access/transam.h"
 #include "storage/block.h"
+#include "storage/bufpage.h"
 #include "storage/itemptr.h"
 #include "storage/off.h"
 
@@ -134,8 +135,7 @@ typedef struct GinMetaPageData
  */
 #define GinPageGetDeleteXid(page) ( ((PageHeader) (page))->pd_prune_xid )
 #define GinPageSetDeleteXid(page, xid) ( ((PageHeader) (page))->pd_prune_xid = xid)
-#define GinPageIsRecyclable(page) ( PageIsNew(page) || (GinPageIsDeleted(page) \
-	&& TransactionIdPrecedes(GinPageGetDeleteXid(page), RecentGlobalXmin)))
+extern bool GinPageIsRecyclable(Page page);
 
 /*
  * We use our own ItemPointerGet(BlockNumber|OffsetNumber)

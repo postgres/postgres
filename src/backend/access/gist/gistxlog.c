@@ -387,11 +387,11 @@ gistRedoPageReuse(XLogReaderState *record)
 	 * PAGE_REUSE records exist to provide a conflict point when we reuse
 	 * pages in the index via the FSM.  That's all they do though.
 	 *
-	 * latestRemovedXid was the page's deleteXid.  The deleteXid <
-	 * RecentGlobalXmin test in gistPageRecyclable() conceptually mirrors the
-	 * pgxact->xmin > limitXmin test in GetConflictingVirtualXIDs().
-	 * Consequently, one XID value achieves the same exclusion effect on
-	 * primary and standby.
+	 * latestRemovedXid was the page's deleteXid.  The
+	 * GlobalVisIsRemovableFullXid(deleteXid) test in gistPageRecyclable()
+	 * conceptually mirrors the pgxact->xmin > limitXmin test in
+	 * GetConflictingVirtualXIDs().  Consequently, one XID value achieves the
+	 * same exclusion effect on primary and standby.
 	 */
 	if (InHotStandby)
 	{

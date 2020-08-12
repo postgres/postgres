@@ -563,16 +563,13 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
 	TransactionId OldestXmin = InvalidTransactionId;
 
-	if (all_visible)
-	{
-		/* Don't pass rel; that will fail in recovery. */
-		OldestXmin = GetOldestXmin(NULL, PROCARRAY_FLAGS_VACUUM);
-	}
-
 	rel = relation_open(relid, AccessShareLock);
 
 	/* Only some relkinds have a visibility map */
 	check_relation_relkind(rel);
+
+	if (all_visible)
+		OldestXmin = GetOldestNonRemovableTransactionId(rel);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
 
@@ -679,11 +676,12 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 				 * From a concurrency point of view, it sort of sucks to
 				 * retake ProcArrayLock here while we're holding the buffer
 				 * exclusively locked, but it should be safe against
-				 * deadlocks, because surely GetOldestXmin() should never take
-				 * a buffer lock. And this shouldn't happen often, so it's
-				 * worth being careful so as to avoid false positives.
+				 * deadlocks, because surely
+				 * GetOldestNonRemovableTransactionId() should never take a
+				 * buffer lock. And this shouldn't happen often, so it's worth
+				 * being careful so as to avoid false positives.
 				 */
-				RecomputedOldestXmin = GetOldestXmin(NULL, PROCARRAY_FLAGS_VACUUM);
+				RecomputedOldestXmin = GetOldestNonRemovableTransactionId(rel);
 
 				if (!TransactionIdPrecedes(OldestXmin, RecomputedOldestXmin))
 					record_corrupt_item(items, &tuple.t_self);

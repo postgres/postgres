@@ -281,7 +281,7 @@ present or the overflow flag is set.)  If a backend released XidGenLock
 before storing its XID into MyPgXact, then it would be possible for another
 backend to allocate and commit a later XID, causing latestCompletedXid to
 pass the first backend's XID, before that value became visible in the
-ProcArray.  That would break GetOldestXmin, as discussed below.
+ProcArray.  That would break ComputeXidHorizons, as discussed below.
 
 We allow GetNewTransactionId to store the XID into MyPgXact->xid (or the
 subxid array) without taking ProcArrayLock.  This was once necessary to
@@ -293,42 +293,50 @@ once, rather than assume they can read it multiple times and get the same
 answer each time.  (Use volatile-qualified pointers when doing this, to
 ensure that the C compiler does exactly what you tell it to.)
 
-Another important activity that uses the shared ProcArray is GetOldestXmin,
-which must determine a lower bound for the oldest xmin of any active MVCC
-snapshot, system-wide.  Each individual backend advertises the smallest
-xmin of its own snapshots in MyPgXact->xmin, or zero if it currently has no
-live snapshots (eg, if it's between transactions or hasn't yet set a
-snapshot for a new transaction).  GetOldestXmin takes the MIN() of the
-valid xmin fields.  It does this with only shared lock on ProcArrayLock,
-which means there is a potential race condition against other backends
-doing GetSnapshotData concurrently: we must be certain that a concurrent
-backend that is about to set its xmin does not compute an xmin less than
-what GetOldestXmin returns.  We ensure that by including all the active
-XIDs into the MIN() calculation, along with the valid xmins.  The rule that
-transactions can't exit without taking exclusive ProcArrayLock ensures that
-concurrent holders of shared ProcArrayLock will compute the same minimum of
-currently-active XIDs: no xact, in particular not the oldest, can exit
-while we hold shared ProcArrayLock.  So GetOldestXmin's view of the minimum
-active XID will be the same as that of any concurrent GetSnapshotData, and
-so it can't produce an overestimate.  If there is no active transaction at
-all, GetOldestXmin returns latestCompletedXid + 1, which is a lower bound
-for the xmin that might be computed by concurrent or later GetSnapshotData
-calls.  (We know that no XID less than this could be about to appear in
-the ProcArray, because of the XidGenLock interlock discussed above.)
+Another important activity that uses the shared ProcArray is
+ComputeXidHorizons, which must determine a lower bound for the oldest xmin
+of any active MVCC snapshot, system-wide.  Each individual backend
+advertises the smallest xmin of its own snapshots in MyPgXact->xmin, or zero
+if it currently has no live snapshots (eg, if it's between transactions or
+hasn't yet set a snapshot for a new transaction).  ComputeXidHorizons takes
+the MIN() of the valid xmin fields.  It does this with only shared lock on
+ProcArrayLock, which means there is a potential race condition against other
+backends doing GetSnapshotData concurrently: we must be certain that a
+concurrent backend that is about to set its xmin does not compute an xmin
+less than what ComputeXidHorizons determines.  We ensure that by including
+all the active XIDs into the MIN() calculation, along with the valid xmins.
+The rule that transactions can't exit without taking exclusive ProcArrayLock
+ensures that concurrent holders of shared ProcArrayLock will compute the
+same minimum of currently-active XIDs: no xact, in particular not the
+oldest, can exit while we hold shared ProcArrayLock.  So
+ComputeXidHorizons's view of the minimum active XID will be the same as that
+of any concurrent GetSnapshotData, and so it can't produce an overestimate.
+If there is no active transaction at all, ComputeXidHorizons uses
+latestCompletedXid + 1, which is a lower bound for the xmin that might
+be computed by concurrent or later GetSnapshotData calls.  (We know that no
+XID less than this could be about to appear in the ProcArray, because of the
+XidGenLock interlock discussed above.)
 
-GetSnapshotData also performs an oldest-xmin calculation (which had better
-match GetOldestXmin's) and stores that into RecentGlobalXmin, which is used
-for some tuple age cutoff checks where a fresh call of GetOldestXmin seems
-too expensive.  Note that while it is certain that two concurrent
-executions of GetSnapshotData will compute the same xmin for their own
-snapshots, as argued above, it is not certain that they will arrive at the
-same estimate of RecentGlobalXmin.  This is because we allow XID-less
-transactions to clear their MyPgXact->xmin asynchronously (without taking
-ProcArrayLock), so one execution might see what had been the oldest xmin,
-and another not.  This is OK since RecentGlobalXmin need only be a valid
-lower bound.  As noted above, we are already assuming that fetch/store
-of the xid fields is atomic, so assuming it for xmin as well is no extra
-risk.
+As GetSnapshotData is performance critical, it does not perform an accurate
+oldest-xmin calculation (it used to, until v13). The contents of a snapshot
+only depend on the xids of other backends, not their xmin. As backend's xmin
+changes much more often than its xid, having GetSnapshotData look at xmins
+can lead to a lot of unnecessary cacheline ping-pong.  Instead
+GetSnapshotData updates approximate thresholds (one that guarantees that all
+deleted rows older than it can be removed, another determining that deleted
+rows newer than it can not be removed). GlobalVisTest* uses those threshold
+to make invisibility decision, falling back to ComputeXidHorizons if
+necessary.
+
+Note that while it is certain that two concurrent executions of
+GetSnapshotData will compute the same xmin for their own snapshots, there is
+no such guarantee for the horizons computed by ComputeXidHorizons.  This is
+because we allow XID-less transactions to clear their MyPgXact->xmin
+asynchronously (without taking ProcArrayLock), so one execution might see
+what had been the oldest xmin, and another not.  This is OK since the
+thresholds need only be a valid lower bound.  As noted above, we are already
+assuming that fetch/store of the xid fields is atomic, so assuming it for
+xmin as well is no extra risk.
 
 
 pg_xact and pg_subtrans

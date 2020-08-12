@@ -5786,14 +5786,15 @@ get_actual_variable_endpoint(Relation heapRel,
 	 * recent); that case motivates not using SnapshotAny here.
 	 *
 	 * A crucial point here is that SnapshotNonVacuumable, with
-	 * RecentGlobalXmin as horizon, yields the inverse of the condition that
-	 * the indexscan will use to decide that index entries are killable (see
-	 * heap_hot_search_buffer()).  Therefore, if the snapshot rejects a tuple
-	 * (or more precisely, all tuples of a HOT chain) and we have to continue
-	 * scanning past it, we know that the indexscan will mark that index entry
-	 * killed.  That means that the next get_actual_variable_endpoint() call
-	 * will not have to re-consider that index entry.  In this way we avoid
-	 * repetitive work when this function is used a lot during planning.
+	 * GlobalVisTestFor(heapRel) as horizon, yields the inverse of the
+	 * condition that the indexscan will use to decide that index entries are
+	 * killable (see heap_hot_search_buffer()).  Therefore, if the snapshot
+	 * rejects a tuple (or more precisely, all tuples of a HOT chain) and we
+	 * have to continue scanning past it, we know that the indexscan will mark
+	 * that index entry killed.  That means that the next
+	 * get_actual_variable_endpoint() call will not have to re-consider that
+	 * index entry.  In this way we avoid repetitive work when this function
+	 * is used a lot during planning.
 	 *
 	 * But using SnapshotNonVacuumable creates a hazard of its own.  In a
 	 * recently-created index, some index entries may point at "broken" HOT
@@ -5805,7 +5806,8 @@ get_actual_variable_endpoint(Relation heapRel,
 	 * or could even be NULL.  We avoid this hazard because we take the data
 	 * from the index entry not the heap.
 	 */
-	InitNonVacuumableSnapshot(SnapshotNonVacuumable, RecentGlobalXmin);
+	InitNonVacuumableSnapshot(SnapshotNonVacuumable,
+							  GlobalVisTestFor(heapRel));
 
 	index_scan = index_beginscan(heapRel, indexRel,
 								 &SnapshotNonVacuumable,

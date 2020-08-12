@@ -501,9 +501,13 @@ vacuumRedirectAndPlaceholder(Relation index, Buffer buffer)
 	OffsetNumber itemToPlaceholder[MaxIndexTuplesPerPage];
 	OffsetNumber itemnos[MaxIndexTuplesPerPage];
 	spgxlogVacuumRedirect xlrec;
+	GlobalVisState *vistest;
 
 	xlrec.nToPlaceholder = 0;
 	xlrec.newestRedirectXid = InvalidTransactionId;
+
+	/* XXX: providing heap relation would allow more pruning */
+	vistest = GlobalVisTestFor(NULL);
 
 	START_CRIT_SECTION();
 
@@ -521,7 +525,7 @@ vacuumRedirectAndPlaceholder(Relation index, Buffer buffer)
 		dt = (SpGistDeadTuple) PageGetItem(page, PageGetItemId(page, i));
 
 		if (dt->tupstate == SPGIST_REDIRECT &&
-			TransactionIdPrecedes(dt->xid, RecentGlobalXmin))
+			GlobalVisTestIsRemovableXid(vistest, dt->xid))
 		{
 			dt->tupstate = SPGIST_PLACEHOLDER;
 			Assert(opaque->nRedirection > 0);

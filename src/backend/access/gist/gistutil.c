@@ -891,15 +891,13 @@ gistPageRecyclable(Page page)
 		 * As long as that can happen, we must keep the deleted page around as
 		 * a tombstone.
 		 *
-		 * Compare the deletion XID with RecentGlobalXmin. If deleteXid <
-		 * RecentGlobalXmin, then no scan that's still in progress could have
+		 * For that check if the deletion XID could still be visible to
+		 * anyone. If not, then no scan that's still in progress could have
 		 * seen its downlink, and we can recycle it.
 		 */
 		FullTransactionId deletexid_full = GistPageGetDeleteXid(page);
-		FullTransactionId recentxmin_full = GetFullRecentGlobalXmin();
 
-		if (FullTransactionIdPrecedes(deletexid_full, recentxmin_full))
-			return true;
+		return GlobalVisIsRemovableFullXid(NULL, deletexid_full);
 	}
 	return false;
 }

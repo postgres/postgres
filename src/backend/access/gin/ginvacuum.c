@@ -793,3 +793,29 @@ ginvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 
 	return stats;
 }
+
+/*
+ * Return whether Page can safely be recycled.
+ */
+bool
+GinPageIsRecyclable(Page page)
+{
+	TransactionId delete_xid;
+
+	if (PageIsNew(page))
+		return true;
+
+	if (!GinPageIsDeleted(page))
+		return false;
+
+	delete_xid = GinPageGetDeleteXid(page);
+
+	if (!TransactionIdIsValid(delete_xid))
+		return true;
+
+	/*
+	 * If no backend still could view delete_xid as in running, all scans
+	 * concurrent with ginDeletePage() must have finished.
+	 */
+	return GlobalVisCheckRemovableXid(NULL, delete_xid);
+}

@@ -395,6 +395,7 @@ CompositeTypeStmt
 CompoundAffixFlag
 CompressionAlgorithm
 CompressorState
+ComputeXidHorizonsResult
 ConditionVariable
 ConditionalStack
 ConfigData
@@ -930,6 +931,7 @@ GistSplitVector
 GistTsVectorOptions
 GistVacState
 GlobalTransaction
+GlobalVisState
 GrantRoleStmt
 GrantStmt
 GrantTargetType

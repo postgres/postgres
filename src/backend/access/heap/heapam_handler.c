@@ -1203,7 +1203,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 
 	/* okay to ignore lazy VACUUMs here */
 	if (!IsBootstrapProcessingMode() && !indexInfo->ii_Concurrent)
-		OldestXmin = GetOldestXmin(heapRelation, PROCARRAY_FLAGS_VACUUM);
+		OldestXmin = GetOldestNonRemovableTransactionId(heapRelation);
 
 	if (!scan)
 	{
@@ -1244,6 +1244,17 @@ heapam_index_build_range_scan(Relation heapRelation,
 
 	hscan = (HeapScanDesc) scan;
 
+	/*
+	 * Must have called GetOldestNonRemovableTransactionId() if using
+	 * SnapshotAny.  Shouldn't have for an MVCC snapshot. (It's especially
+	 * worth checking this for parallel builds, since ambuild routines that
+	 * support parallel builds must work these details out for themselves.)
+	 */
+	Assert(snapshot == SnapshotAny || IsMVCCSnapshot(snapshot));
+	Assert(snapshot == SnapshotAny ? TransactionIdIsValid(OldestXmin) :
+		   !TransactionIdIsValid(OldestXmin));
+	Assert(snapshot == SnapshotAny || !anyvisible);
+
 	/* Publish number of blocks to scan */
 	if (progress)
 	{
@@ -1262,17 +1273,6 @@ heapam_index_build_range_scan(Relation heapRelation,
 		pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_TOTAL,
 									 nblocks);
 	}
-
-	/*
-	 * Must call GetOldestXmin() with SnapshotAny.  Should never call
-	 * GetOldestXmin() with MVCC snapshot. (It's especially worth checking
-	 * this for parallel builds, since ambuild routines that support parallel
-	 * builds must work these details out for themselves.)
-	 */
-	Assert(snapshot == SnapshotAny || IsMVCCSnapshot(snapshot));
-	Assert(snapshot == SnapshotAny ? TransactionIdIsValid(OldestXmin) :
-		   !TransactionIdIsValid(OldestXmin));
-	Assert(snapshot == SnapshotAny || !anyvisible);
 
 	/* set our scan endpoints */
 	if (!allow_sync)

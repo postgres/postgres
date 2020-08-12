@@ -519,7 +519,8 @@ index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 	SCAN_CHECKS;
 	CHECK_SCAN_PROCEDURE(amgettuple);
 
-	Assert(TransactionIdIsValid(RecentGlobalXmin));
+	/* XXX: we should assert that a snapshot is pushed or registered */
+	Assert(TransactionIdIsValid(RecentXmin));
 
 	/*
 	 * The AM's amgettuple proc finds the next index entry matching the scan

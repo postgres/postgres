@@ -95,15 +95,6 @@ FullTransactionIdFromU64(uint64 value)
 			(dest) = FirstNormalTransactionId; \
 	} while(0)
 
-/* advance a FullTransactionId variable, stepping over special XIDs */
-static inline void
-FullTransactionIdAdvance(FullTransactionId *dest)
-{
-	dest->value++;
-	while (XidFromFullTransactionId(*dest) < FirstNormalTransactionId)
-		dest->value++;
-}
-
 /*
  * Retreat a FullTransactionId variable, stepping over xids that would appear
  * to be special only when viewed as 32bit XIDs.
@@ -127,6 +118,23 @@ FullTransactionIdRetreat(FullTransactionId *dest)
 	 */
 	while (XidFromFullTransactionId(*dest) < FirstNormalTransactionId)
 		dest->value--;
+}
+
+/*
+ * Advance a FullTransactionId variable, stepping over xids that would appear
+ * to be special only when viewed as 32bit XIDs.
+ */
+static inline void
+FullTransactionIdAdvance(FullTransactionId *dest)
+{
+	dest->value++;
+
+	/* see FullTransactionIdAdvance() */
+	if (FullTransactionIdPrecedes(*dest, FirstNormalFullTransactionId))
+		return;
+
+	while (XidFromFullTransactionId(*dest) < FirstNormalTransactionId)
+		dest->value++;
 }
 
 /* back up a transaction ID variable, handling wraparound correctly */
@@ -291,6 +299,59 @@ static inline TransactionId
 ReadNewTransactionId(void)
 {
 	return XidFromFullTransactionId(ReadNextFullTransactionId());
+}
+
+/* return transaction ID backed up by amount, handling wraparound correctly */
+static inline TransactionId
+TransactionIdRetreatedBy(TransactionId xid, uint32 amount)
+{
+	xid -= amount;
+
+	while (xid < FirstNormalTransactionId)
+		xid--;
+
+	return xid;
+}
+
+/* return the older of the two IDs */
+static inline TransactionId
+TransactionIdOlder(TransactionId a, TransactionId b)
+{
+	if (!TransactionIdIsValid(a))
+		return b;
+
+	if (!TransactionIdIsValid(b))
+		return a;
+
+	if (TransactionIdPrecedes(a, b))
+		return a;
+	return b;
+}
+
+/* return the older of the two IDs, assuming they're both normal */
+static inline TransactionId
+NormalTransactionIdOlder(TransactionId a, TransactionId b)
+{
+	Assert(TransactionIdIsNormal(a));
+	Assert(TransactionIdIsNormal(b));
+	if (NormalTransactionIdPrecedes(a, b))
+		return a;
+	return b;
+}
+
+/* return the newer of the two IDs */
+static inline FullTransactionId
+FullTransactionIdNewer(FullTransactionId a, FullTransactionId b)
+{
+	if (!FullTransactionIdIsValid(a))
+		return b;
+
+	if (!FullTransactionIdIsValid(b))
+		return a;
+
+	if (FullTransactionIdFollows(a, b))
+		return a;
+	return b;
 }
 
 #endif							/* FRONTEND */

@@ -788,6 +788,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		PROGRESS_VACUUM_MAX_DEAD_TUPLES
 	};
 	int64		initprog_val[3];
+	GlobalVisState *vistest;
 
 	pg_rusage_init(&ru0);
 
@@ -815,6 +816,8 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 	vacrelstats->tupcount_pages = 0;
 	vacrelstats->nonempty_pages = 0;
 	vacrelstats->latestRemovedXid = InvalidTransactionId;
+
+	vistest = GlobalVisTestFor(onerel);
 
 	/*
 	 * Initialize state for a parallel vacuum.  As of now, only one worker can
@@ -1239,7 +1242,8 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		 *
 		 * We count tuples removed by the pruning step as removed by VACUUM.
 		 */
-		tups_vacuumed += heap_page_prune(onerel, buf, OldestXmin, false,
+		tups_vacuumed += heap_page_prune(onerel, buf, vistest, false,
+										 InvalidTransactionId, 0,
 										 &vacrelstats->latestRemovedXid);
 
 		/*
@@ -1596,14 +1600,16 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		}
 
 		/*
-		 * It's possible for the value returned by GetOldestXmin() to move
-		 * backwards, so it's not wrong for us to see tuples that appear to
-		 * not be visible to everyone yet, while PD_ALL_VISIBLE is already
-		 * set. The real safe xmin value never moves backwards, but
-		 * GetOldestXmin() is conservative and sometimes returns a value
-		 * that's unnecessarily small, so if we see that contradiction it just
-		 * means that the tuples that we think are not visible to everyone yet
-		 * actually are, and the PD_ALL_VISIBLE flag is correct.
+		 * It's possible for the value returned by
+		 * GetOldestNonRemovableTransactionId() to move backwards, so it's not
+		 * wrong for us to see tuples that appear to not be visible to
+		 * everyone yet, while PD_ALL_VISIBLE is already set. The real safe
+		 * xmin value never moves backwards, but
+		 * GetOldestNonRemovableTransactionId() is conservative and sometimes
+		 * returns a value that's unnecessarily small, so if we see that
+		 * contradiction it just means that the tuples that we think are not
+		 * visible to everyone yet actually are, and the PD_ALL_VISIBLE flag
+		 * is correct.
 		 *
 		 * There should never be dead tuples on a page with PD_ALL_VISIBLE
 		 * set, however.

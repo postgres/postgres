@@ -955,8 +955,25 @@ vacuum_set_xid_limits(Relation rel,
 	 * working on a particular table at any time, and that each vacuum is
 	 * always an independent transaction.
 	 */
-	*oldestXmin =
-		TransactionIdLimitedForOldSnapshots(GetOldestXmin(rel, PROCARRAY_FLAGS_VACUUM), rel);
+	*oldestXmin = GetOldestNonRemovableTransactionId(rel);
+
+	if (OldSnapshotThresholdActive())
+	{
+		TransactionId limit_xmin;
+		TimestampTz limit_ts;
+
+		if (TransactionIdLimitedForOldSnapshots(*oldestXmin, rel, &limit_xmin, &limit_ts))
+		{
+			/*
+			 * TODO: We should only set the threshold if we are pruning on the
+			 * basis of the increased limits. Not as crucial here as it is for
+			 * opportunistic pruning (which often happens at a much higher
+			 * frequency), but would still be a significant improvement.
+			 */
+			SetOldSnapshotThresholdTimestamp(limit_ts, limit_xmin);
+			*oldestXmin = limit_xmin;
+		}
+	}
 
 	Assert(TransactionIdIsNormal(*oldestXmin));
 
@@ -1345,12 +1362,13 @@ vac_update_datfrozenxid(void)
 	bool		dirty = false;
 
 	/*
-	 * Initialize the "min" calculation with GetOldestXmin, which is a
-	 * reasonable approximation to the minimum relfrozenxid for not-yet-
-	 * committed pg_class entries for new tables; see AddNewRelationTuple().
-	 * So we cannot produce a wrong minimum by starting with this.
+	 * Initialize the "min" calculation with
+	 * GetOldestNonRemovableTransactionId(), which is a reasonable
+	 * approximation to the minimum relfrozenxid for not-yet-committed
+	 * pg_class entries for new tables; see AddNewRelationTuple().  So we
+	 * cannot produce a wrong minimum by starting with this.
 	 */
-	newFrozenXid = GetOldestXmin(NULL, PROCARRAY_FLAGS_VACUUM);
+	newFrozenXid = GetOldestNonRemovableTransactionId(NULL);
 
 	/*
 	 * Similarly, initialize the MultiXact "min" with the value that would be
@@ -1681,8 +1699,9 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	StartTransactionCommand();
 
 	/*
-	 * Functions in indexes may want a snapshot set.  Also, setting a snapshot
-	 * ensures that RecentGlobalXmin is kept truly recent.
+	 * Need to acquire a snapshot to prevent pg_subtrans from being truncated,
+	 * cutoff xids in local memory wrapping around, and to have updated xmin
+	 * horizons.
 	 */
 	PushActiveSnapshot(GetTransactionSnapshot());
 
@@ -1705,8 +1724,8 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 		 *
 		 * Note: these flags remain set until CommitTransaction or
 		 * AbortTransaction.  We don't want to clear them until we reset
-		 * MyPgXact->xid/xmin, else OldestXmin might appear to go backwards,
-		 * which is probably Not Good.
+		 * MyPgXact->xid/xmin, otherwise GetOldestNonRemovableTransactionId()
+		 * might appear to go backwards, which is probably Not Good.
 		 */
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyPgXact->vacuumFlags |= PROC_IN_VACUUM;

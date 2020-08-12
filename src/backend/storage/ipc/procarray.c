@@ -99,6 +99,142 @@ typedef struct ProcArrayStruct
 	int			pgprocnos[FLEXIBLE_ARRAY_MEMBER];
 } ProcArrayStruct;
 
+/*
+ * State for the GlobalVisTest* family of functions. Those functions can
+ * e.g. be used to decide if a deleted row can be removed without violating
+ * MVCC semantics: If the deleted row's xmax is not considered to be running
+ * by anyone, the row can be removed.
+ *
+ * To avoid slowing down GetSnapshotData(), we don't calculate a precise
+ * cutoff XID while building a snapshot (looking at the frequently changing
+ * xmins scales badly). Instead we compute two boundaries while building the
+ * snapshot:
+ *
+ * 1) definitely_needed, indicating that rows deleted by XIDs >=
+ *    definitely_needed are definitely still visible.
+ *
+ * 2) maybe_needed, indicating that rows deleted by XIDs < maybe_needed can
+ *    definitely be removed
+ *
+ * When testing an XID that falls in between the two (i.e. XID >= maybe_needed
+ * && XID < definitely_needed), the boundaries can be recomputed (using
+ * ComputeXidHorizons()) to get a more accurate answer. This is cheaper than
+ * maintaining an accurate value all the time.
+ *
+ * As it is not cheap to compute accurate boundaries, we limit the number of
+ * times that happens in short succession. See GlobalVisTestShouldUpdate().
+ *
+ *
+ * There are three backend lifetime instances of this struct, optimized for
+ * different types of relations. As e.g. a normal user defined table in one
+ * database is inaccessible to backends connected to another database, a test
+ * specific to a relation can be more aggressive than a test for a shared
+ * relation.  Currently we track three different states:
+ *
+ * 1) GlobalVisSharedRels, which only considers an XID's
+ *    effects visible-to-everyone if neither snapshots in any database, nor a
+ *    replication slot's xmin, nor a replication slot's catalog_xmin might
+ *    still consider XID as running.
+ *
+ * 2) GlobalVisCatalogRels, which only considers an XID's
+ *    effects visible-to-everyone if neither snapshots in the current
+ *    database, nor a replication slot's xmin, nor a replication slot's
+ *    catalog_xmin might still consider XID as running.
+ *
+ *    I.e. the difference to GlobalVisSharedRels is that
+ *    snapshot in other databases are ignored.
+ *
+ * 3) GlobalVisCatalogRels, which only considers an XID's
+ *    effects visible-to-everyone if neither snapshots in the current
+ *    database, nor a replication slot's xmin consider XID as running.
+ *
+ *    I.e. the difference to GlobalVisCatalogRels is that
+ *    replication slot's catalog_xmin is not taken into account.
+ *
+ * GlobalVisTestFor(relation) returns the appropriate state
+ * for the relation.
+ *
+ * The boundaries are FullTransactionIds instead of TransactionIds to avoid
+ * wraparound dangers. There e.g. would otherwise exist no procarray state to
+ * prevent maybe_needed to become old enough after the GetSnapshotData()
+ * call.
+ *
+ * The typedef is in the header.
+ */
+struct GlobalVisState
+{
+	/* XIDs >= are considered running by some backend */
+	FullTransactionId definitely_needed;
+
+	/* XIDs < are not considered to be running by any backend */
+	FullTransactionId maybe_needed;
+};
+
+/*
+ * Result of ComputeXidHorizons().
+ */
+typedef struct ComputeXidHorizonsResult
+{
+	/*
+	 * The value of ShmemVariableCache->latestCompletedXid when
+	 * ComputeXidHorizons() held ProcArrayLock.
+	 */
+	FullTransactionId latest_completed;
+
+	/*
+	 * The same for procArray->replication_slot_xmin and.
+	 * procArray->replication_slot_catalog_xmin.
+	 */
+	TransactionId slot_xmin;
+	TransactionId slot_catalog_xmin;
+
+	/*
+	 * Oldest xid that any backend might still consider running. This needs to
+	 * include processes running VACUUM, in contrast to the normal visibility
+	 * cutoffs, as vacuum needs to be able to perform pg_subtrans lookups when
+	 * determining visibility, but doesn't care about rows above its xmin to
+	 * be removed.
+	 *
+	 * This likely should only be needed to determine whether pg_subtrans can
+	 * be truncated. It currently includes the effects of replications slots,
+	 * for historical reasons. But that could likely be changed.
+	 */
+	TransactionId oldest_considered_running;
+
+	/*
+	 * Oldest xid for which deleted tuples need to be retained in shared
+	 * tables.
+	 *
+	 * This includes the effects of replications lots. If that's not desired,
+	 * look at shared_oldest_nonremovable_raw;
+	 */
+	TransactionId shared_oldest_nonremovable;
+
+	/*
+	 * Oldest xid that may be necessary to retain in shared tables. This is
+	 * the same as shared_oldest_nonremovable, except that is not affected by
+	 * replication slot's catalog_xmin.
+	 *
+	 * This is mainly useful to be able to send the catalog_xmin to upstream
+	 * streaming replication servers via hot_standby_feedback, so they can
+	 * apply the limit only when accessing catalog tables.
+	 */
+	TransactionId shared_oldest_nonremovable_raw;
+
+	/*
+	 * Oldest xid for which deleted tuples need to be retained in non-shared
+	 * catalog tables.
+	 */
+	TransactionId catalog_oldest_nonremovable;
+
+	/*
+	 * Oldest xid for which deleted tuples need to be retained in normal user
+	 * defined tables.
+	 */
+	TransactionId data_oldest_nonremovable;
+} ComputeXidHorizonsResult;
+
+
 static ProcArrayStruct *procArray;
 
 static PGPROC *allProcs;
@@ -117,6 +253,22 @@ static TransactionId latestObservedXid = InvalidTransactionId;
  * KnownAssignedXids.
  */
 static TransactionId standbySnapshotPendingXmin;
+
+/*
+ * State for visibility checks on different types of relations. See struct
+ * GlobalVisState for details. As shared, catalog, and user defined
+ * relations can have different horizons, one such state exists for each.
+ */
+static GlobalVisState GlobalVisSharedRels;
+static GlobalVisState GlobalVisCatalogRels;
+static GlobalVisState GlobalVisDataRels;
+
+/*
+ * This backend's RecentXmin at the last time the accurate xmin horizon was
+ * recomputed, or InvalidTransactionId if it has not. Used to limit how many
+ * times accurate horizons are recomputed. See GlobalVisTestShouldUpdate().
+ */
+static TransactionId ComputeXidHorizonsResultLastXmin;
 
 #ifdef XIDCACHE_DEBUG
 
@@ -180,6 +332,7 @@ static void MaintainLatestCompletedXidRecovery(TransactionId latestXid);
 
 static inline FullTransactionId FullXidRelativeTo(FullTransactionId rel,
 												  TransactionId xid);
+static void GlobalVisUpdateApply(ComputeXidHorizonsResult *horizons);
 
 /*
  * Report shared-memory space needed by CreateSharedProcArray.
@@ -1302,81 +1455,77 @@ TransactionIdIsActive(TransactionId xid)
 
 
 /*
- * GetOldestXmin -- returns oldest transaction that was running
- *					when any current transaction was started.
+ * Determine XID horizons.
  *
- * If rel is NULL or a shared relation, all backends are considered, otherwise
- * only backends running in this database are considered.
+ * This is used by wrapper functions like GetOldestNonRemovableTransactionId()
+ * (for VACUUM), GetReplicationHorizons() (for hot_standby_feedback), etc as
+ * well as "internally" by GlobalVisUpdate() (see comment above struct
+ * GlobalVisState).
  *
- * The flags are used to ignore the backends in calculation when any of the
- * corresponding flags is set. Typically, if you want to ignore ones with
- * PROC_IN_VACUUM flag, you can use PROCARRAY_FLAGS_VACUUM.
+ * See the definition of ComputedXidHorizonsResult for the various computed
+ * horizons.
  *
- * PROCARRAY_SLOTS_XMIN causes GetOldestXmin to ignore the xmin and
- * catalog_xmin of any replication slots that exist in the system when
- * calculating the oldest xmin.
+ * For VACUUM separate horizons (used to to decide which deleted tuples must
+ * be preserved), for shared and non-shared tables are computed.  For shared
+ * relations backends in all databases must be considered, but for non-shared
+ * relations that's not required, since only backends in my own database could
+ * ever see the tuples in them. Also, we can ignore concurrently running lazy
+ * VACUUMs because (a) they must be working on other tables, and (b) they
+ * don't need to do snapshot-based lookups.
  *
- * This is used by VACUUM to decide which deleted tuples must be preserved in
- * the passed in table. For shared relations backends in all databases must be
- * considered, but for non-shared relations that's not required, since only
- * backends in my own database could ever see the tuples in them. Also, we can
- * ignore concurrently running lazy VACUUMs because (a) they must be working
- * on other tables, and (b) they don't need to do snapshot-based lookups.
- *
- * This is also used to determine where to truncate pg_subtrans.  For that
- * backends in all databases have to be considered, so rel = NULL has to be
- * passed in.
+ * This also computes a horizon used to truncate pg_subtrans. For that
+ * backends in all databases have to be considered, and concurrently running
+ * lazy VACUUMs cannot be ignored, as they still may perform pg_subtrans
+ * accesses.
  *
  * Note: we include all currently running xids in the set of considered xids.
  * This ensures that if a just-started xact has not yet set its snapshot,
  * when it does set the snapshot it cannot set xmin less than what we compute.
  * See notes in src/backend/access/transam/README.
  *
- * Note: despite the above, it's possible for the calculated value to move
- * backwards on repeated calls. The calculated value is conservative, so that
- * anything older is definitely not considered as running by anyone anymore,
- * but the exact value calculated depends on a number of things. For example,
- * if rel = NULL and there are no transactions running in the current
- * database, GetOldestXmin() returns latestCompletedXid. If a transaction
+ * Note: despite the above, it's possible for the calculated values to move
+ * backwards on repeated calls. The calculated values are conservative, so
+ * that anything older is definitely not considered as running by anyone
+ * anymore, but the exact values calculated depend on a number of things. For
+ * example, if there are no transactions running in the current database, the
+ * horizon for normal tables will be latestCompletedXid. If a transaction
  * begins after that, its xmin will include in-progress transactions in other
  * databases that started earlier, so another call will return a lower value.
  * Nonetheless it is safe to vacuum a table in the current database with the
  * first result.  There are also replication-related effects: a walsender
  * process can set its xmin based on transactions that are no longer running
  * on the primary but are still being replayed on the standby, thus possibly
- * making the GetOldestXmin reading go backwards.  In this case there is a
- * possibility that we lose data that the standby would like to have, but
- * unless the standby uses a replication slot to make its xmin persistent
- * there is little we can do about that --- data is only protected if the
- * walsender runs continuously while queries are executed on the standby.
- * (The Hot Standby code deals with such cases by failing standby queries
- * that needed to access already-removed data, so there's no integrity bug.)
- * The return value is also adjusted with vacuum_defer_cleanup_age, so
- * increasing that setting on the fly is another easy way to make
- * GetOldestXmin() move backwards, with no consequences for data integrity.
+ * making the values go backwards.  In this case there is a possibility that
+ * we lose data that the standby would like to have, but unless the standby
+ * uses a replication slot to make its xmin persistent there is little we can
+ * do about that --- data is only protected if the walsender runs continuously
+ * while queries are executed on the standby.  (The Hot Standby code deals
+ * with such cases by failing standby queries that needed to access
+ * already-removed data, so there's no integrity bug.)  The computed values
+ * are also adjusted with vacuum_defer_cleanup_age, so increasing that setting
+ * on the fly is another easy way to make horizons move backwards, with no
+ * consequences for data integrity.
+ *
+ * Note: the approximate horizons (see definition of GlobalVisState) are
+ * updated by the computations done here. That's currently required for
+ * correctness and a small optimization. Without doing so it's possible that
+ * heap vacuum's call to heap_page_prune() uses a more conservative horizon
+ * than later when deciding which tuples can be removed - which the code
+ * doesn't expect (breaking HOT).
  */
-TransactionId
-GetOldestXmin(Relation rel, int flags)
+static void
+ComputeXidHorizons(ComputeXidHorizonsResult *h)
 {
 	ProcArrayStruct *arrayP = procArray;
-	TransactionId result;
-	int			index;
-	bool		allDbs;
+	TransactionId kaxmin;
+	bool		in_recovery = RecoveryInProgress();
 
-	TransactionId replication_slot_xmin = InvalidTransactionId;
-	TransactionId replication_slot_catalog_xmin = InvalidTransactionId;
-
-	/*
-	 * If we're not computing a relation specific limit, or if a shared
-	 * relation has been passed in, backends in all databases have to be
-	 * considered.
-	 */
-	allDbs = rel == NULL || rel->rd_rel->relisshared;
-
-	/* Cannot look for individual databases during recovery */
-	Assert(allDbs || !RecoveryInProgress());
+	/* inferred after ProcArrayLock is released */
+	h->catalog_oldest_nonremovable = InvalidTransactionId;
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	h->latest_completed = ShmemVariableCache->latestCompletedXid;
 
 	/*
 	 * We initialize the MIN() calculation with latestCompletedXid + 1. This
@@ -1384,77 +1533,113 @@ GetOldestXmin(Relation rel, int flags)
 	 * and so protects us against overestimating the result due to future
 	 * additions.
 	 */
-	result = XidFromFullTransactionId(ShmemVariableCache->latestCompletedXid);
-	TransactionIdAdvance(result);
-	Assert(TransactionIdIsNormal(result));
+	{
+		TransactionId initial;
 
-	for (index = 0; index < arrayP->numProcs; index++)
+		initial = XidFromFullTransactionId(h->latest_completed);
+		Assert(TransactionIdIsValid(initial));
+		TransactionIdAdvance(initial);
+
+		h->oldest_considered_running = initial;
+		h->shared_oldest_nonremovable = initial;
+		h->data_oldest_nonremovable = initial;
+	}
+
+	/*
+	 * Fetch slot horizons while ProcArrayLock is held - the
+	 * LWLockAcquire/LWLockRelease are a barrier, ensuring this happens inside
+	 * the lock.
+	 */
+	h->slot_xmin = procArray->replication_slot_xmin;
+	h->slot_catalog_xmin = procArray->replication_slot_catalog_xmin;
+
+	for (int index = 0; index < arrayP->numProcs; index++)
 	{
 		int			pgprocno = arrayP->pgprocnos[index];
 		PGPROC	   *proc = &allProcs[pgprocno];
 		PGXACT	   *pgxact = &allPgXact[pgprocno];
+		TransactionId xid;
+		TransactionId xmin;
 
-		if (pgxact->vacuumFlags & (flags & PROCARRAY_PROC_FLAGS_MASK))
+		/* Fetch xid just once - see GetNewTransactionId */
+		xid = UINT32_ACCESS_ONCE(pgxact->xid);
+		xmin = UINT32_ACCESS_ONCE(pgxact->xmin);
+
+		/*
+		 * Consider both the transaction's Xmin, and its Xid.
+		 *
+		 * We must check both because a transaction might have an Xmin but not
+		 * (yet) an Xid; conversely, if it has an Xid, that could determine
+		 * some not-yet-set Xmin.
+		 */
+		xmin = TransactionIdOlder(xmin, xid);
+
+		/* if neither is set, this proc doesn't influence the horizon */
+		if (!TransactionIdIsValid(xmin))
 			continue;
 
-		if (allDbs ||
+		/*
+		 * Don't ignore any procs when determining which transactions might be
+		 * considered running.  While slots should ensure logical decoding
+		 * backends are protected even without this check, it can't hurt to
+		 * include them here as well..
+		 */
+		h->oldest_considered_running =
+			TransactionIdOlder(h->oldest_considered_running, xmin);
+
+		/*
+		 * Skip over backends either vacuuming (which is ok with rows being
+		 * removed, as long as pg_subtrans is not truncated) or doing logical
+		 * decoding (which manages xmin separately, check below).
+		 */
+		if (pgxact->vacuumFlags & (PROC_IN_VACUUM | PROC_IN_LOGICAL_DECODING))
+			continue;
+
+		/* shared tables need to take backends in all database into account */
+		h->shared_oldest_nonremovable =
+			TransactionIdOlder(h->shared_oldest_nonremovable, xmin);
+
+		/*
+		 * Normally queries in other databases are ignored for anything but
+		 * the shared horizon. But in recovery we cannot compute an accurate
+		 * per-database horizon as all xids are managed via the
+		 * KnownAssignedXids machinery.
+		 */
+		if (in_recovery ||
 			proc->databaseId == MyDatabaseId ||
 			proc->databaseId == 0)	/* always include WalSender */
 		{
-			/* Fetch xid just once - see GetNewTransactionId */
-			TransactionId xid = UINT32_ACCESS_ONCE(pgxact->xid);
-
-			/* First consider the transaction's own Xid, if any */
-			if (TransactionIdIsNormal(xid) &&
-				TransactionIdPrecedes(xid, result))
-				result = xid;
-
-			/*
-			 * Also consider the transaction's Xmin, if set.
-			 *
-			 * We must check both Xid and Xmin because a transaction might
-			 * have an Xmin but not (yet) an Xid; conversely, if it has an
-			 * Xid, that could determine some not-yet-set Xmin.
-			 */
-			xid = UINT32_ACCESS_ONCE(pgxact->xmin);
-			if (TransactionIdIsNormal(xid) &&
-				TransactionIdPrecedes(xid, result))
-				result = xid;
+			h->data_oldest_nonremovable =
+				TransactionIdOlder(h->data_oldest_nonremovable, xmin);
 		}
 	}
 
 	/*
-	 * Fetch into local variable while ProcArrayLock is held - the
-	 * LWLockRelease below is a barrier, ensuring this happens inside the
-	 * lock.
+	 * If in recovery fetch oldest xid in KnownAssignedXids, will be applied
+	 * after lock is released.
 	 */
-	replication_slot_xmin = procArray->replication_slot_xmin;
-	replication_slot_catalog_xmin = procArray->replication_slot_catalog_xmin;
+	if (in_recovery)
+		kaxmin = KnownAssignedXidsGetOldestXmin();
 
-	if (RecoveryInProgress())
+	/*
+	 * No other information from shared state is needed, release the lock
+	 * immediately. The rest of the computations can be done without a lock.
+	 */
+	LWLockRelease(ProcArrayLock);
+
+	if (in_recovery)
 	{
-		/*
-		 * Check to see whether KnownAssignedXids contains an xid value older
-		 * than the main procarray.
-		 */
-		TransactionId kaxmin = KnownAssignedXidsGetOldestXmin();
-
-		LWLockRelease(ProcArrayLock);
-
-		if (TransactionIdIsNormal(kaxmin) &&
-			TransactionIdPrecedes(kaxmin, result))
-			result = kaxmin;
+		h->oldest_considered_running =
+			TransactionIdOlder(h->oldest_considered_running, kaxmin);
+		h->shared_oldest_nonremovable =
+			TransactionIdOlder(h->shared_oldest_nonremovable, kaxmin);
+		h->data_oldest_nonremovable =
+			TransactionIdOlder(h->data_oldest_nonremovable, kaxmin);
 	}
 	else
 	{
 		/*
-		 * No other information needed, so release the lock immediately.
-		 */
-		LWLockRelease(ProcArrayLock);
-
-		/*
-		 * Compute the cutoff XID by subtracting vacuum_defer_cleanup_age,
-		 * being careful not to generate a "permanent" XID.
+		 * Compute the cutoff XID by subtracting vacuum_defer_cleanup_age.
 		 *
 		 * vacuum_defer_cleanup_age provides some additional "slop" for the
 		 * benefit of hot standby queries on standby servers.  This is quick
@@ -1466,34 +1651,146 @@ GetOldestXmin(Relation rel, int flags)
 		 * in varsup.c.  Also note that we intentionally don't apply
 		 * vacuum_defer_cleanup_age on standby servers.
 		 */
-		result -= vacuum_defer_cleanup_age;
-		if (!TransactionIdIsNormal(result))
-			result = FirstNormalTransactionId;
+		h->oldest_considered_running =
+			TransactionIdRetreatedBy(h->oldest_considered_running,
+									 vacuum_defer_cleanup_age);
+		h->shared_oldest_nonremovable =
+			TransactionIdRetreatedBy(h->shared_oldest_nonremovable,
+									 vacuum_defer_cleanup_age);
+		h->data_oldest_nonremovable =
+			TransactionIdRetreatedBy(h->data_oldest_nonremovable,
+									 vacuum_defer_cleanup_age);
 	}
 
 	/*
 	 * Check whether there are replication slots requiring an older xmin.
 	 */
-	if (!(flags & PROCARRAY_SLOTS_XMIN) &&
-		TransactionIdIsValid(replication_slot_xmin) &&
-		NormalTransactionIdPrecedes(replication_slot_xmin, result))
-		result = replication_slot_xmin;
+	h->shared_oldest_nonremovable =
+		TransactionIdOlder(h->shared_oldest_nonremovable, h->slot_xmin);
+	h->data_oldest_nonremovable =
+		TransactionIdOlder(h->data_oldest_nonremovable, h->slot_xmin);
 
 	/*
-	 * After locks have been released and vacuum_defer_cleanup_age has been
-	 * applied, check whether we need to back up further to make logical
-	 * decoding possible. We need to do so if we're computing the global limit
-	 * (rel = NULL) or if the passed relation is a catalog relation of some
-	 * kind.
+	 * The only difference between catalog / data horizons is that the slot's
+	 * catalog xmin is applied to the catalog one (so catalogs can be accessed
+	 * for logical decoding). Initialize with data horizon, and then back up
+	 * further if necessary. Have to back up the shared horizon as well, since
+	 * that also can contain catalogs.
 	 */
-	if (!(flags & PROCARRAY_SLOTS_XMIN) &&
-		(rel == NULL ||
-		 RelationIsAccessibleInLogicalDecoding(rel)) &&
-		TransactionIdIsValid(replication_slot_catalog_xmin) &&
-		NormalTransactionIdPrecedes(replication_slot_catalog_xmin, result))
-		result = replication_slot_catalog_xmin;
+	h->shared_oldest_nonremovable_raw = h->shared_oldest_nonremovable;
+	h->shared_oldest_nonremovable =
+		TransactionIdOlder(h->shared_oldest_nonremovable,
+						   h->slot_catalog_xmin);
+	h->catalog_oldest_nonremovable = h->data_oldest_nonremovable;
+	h->catalog_oldest_nonremovable =
+		TransactionIdOlder(h->catalog_oldest_nonremovable,
+						   h->slot_catalog_xmin);
 
-	return result;
+	/*
+	 * It's possible that slots / vacuum_defer_cleanup_age backed up the
+	 * horizons further than oldest_considered_running. Fix.
+	 */
+	h->oldest_considered_running =
+		TransactionIdOlder(h->oldest_considered_running,
+						   h->shared_oldest_nonremovable);
+	h->oldest_considered_running =
+		TransactionIdOlder(h->oldest_considered_running,
+						   h->catalog_oldest_nonremovable);
+	h->oldest_considered_running =
+		TransactionIdOlder(h->oldest_considered_running,
+						   h->data_oldest_nonremovable);
+
+	/*
+	 * shared horizons have to be at least as old as the oldest visible in
+	 * current db
+	 */
+	Assert(TransactionIdPrecedesOrEquals(h->shared_oldest_nonremovable,
+										 h->data_oldest_nonremovable));
+	Assert(TransactionIdPrecedesOrEquals(h->shared_oldest_nonremovable,
+										 h->catalog_oldest_nonremovable));
+
+	/*
+	 * Horizons need to ensure that pg_subtrans access is still possible for
+	 * the relevant backends.
+	 */
+	Assert(TransactionIdPrecedesOrEquals(h->oldest_considered_running,
+										 h->shared_oldest_nonremovable));
+	Assert(TransactionIdPrecedesOrEquals(h->oldest_considered_running,
+										 h->catalog_oldest_nonremovable));
+	Assert(TransactionIdPrecedesOrEquals(h->oldest_considered_running,
+										 h->data_oldest_nonremovable));
+	Assert(!TransactionIdIsValid(h->slot_xmin) ||
+		   TransactionIdPrecedesOrEquals(h->oldest_considered_running,
+										 h->slot_xmin));
+	Assert(!TransactionIdIsValid(h->slot_catalog_xmin) ||
+		   TransactionIdPrecedesOrEquals(h->oldest_considered_running,
+										 h->slot_catalog_xmin));
+
+	/* update approximate horizons with the computed horizons */
+	GlobalVisUpdateApply(h);
+}
+
+/*
+ * Return the oldest XID for which deleted tuples must be preserved in the
+ * passed table.
+ *
+ * If rel is not NULL the horizon may be considerably more recent than
+ * otherwise (i.e. fewer tuples will be removable). In the NULL case a horizon
+ * that is correct (but not optimal) for all relations will be returned.
+ *
+ * This is used by VACUUM to decide which deleted tuples must be preserved in
+ * the passed in table.
+ */
+TransactionId
+GetOldestNonRemovableTransactionId(Relation rel)
+{
+	ComputeXidHorizonsResult horizons;
+
+	ComputeXidHorizons(&horizons);
+
+	/* select horizon appropriate for relation */
+	if (rel == NULL || rel->rd_rel->relisshared)
+		return horizons.shared_oldest_nonremovable;
+	else if (RelationIsAccessibleInLogicalDecoding(rel))
+		return horizons.catalog_oldest_nonremovable;
+	else
+		return horizons.data_oldest_nonremovable;
+}
+
+/*
+ * Return the oldest transaction id any currently running backend might still
+ * consider running. This should not be used for visibility / pruning
+ * determinations (see GetOldestNonRemovableTransactionId()), but for
+ * decisions like up to where pg_subtrans can be truncated.
+ */
+TransactionId
+GetOldestTransactionIdConsideredRunning(void)
+{
+	ComputeXidHorizonsResult horizons;
+
+	ComputeXidHorizons(&horizons);
+
+	return horizons.oldest_considered_running;
+}
+
+/*
+ * Return the visibility horizons for a hot standby feedback message.
+ */
+void
+GetReplicationHorizons(TransactionId *xmin, TransactionId *catalog_xmin)
+{
+	ComputeXidHorizonsResult horizons;
+
+	ComputeXidHorizons(&horizons);
+
+	/*
+	 * Don't want to use shared_oldest_nonremovable here, as that contains the
+	 * effect of replication slot's catalog_xmin. We want to send a separate
+	 * feedback for the catalog horizon, so the primary can remove data table
+	 * contents more aggressively.
+	 */
+	*xmin = horizons.shared_oldest_nonremovable_raw;
+	*catalog_xmin = horizons.slot_catalog_xmin;
 }
 
 /*
@@ -1544,12 +1841,9 @@ GetMaxSnapshotSubxidCount(void)
  *			current transaction (this is the same as MyPgXact->xmin).
  *		RecentXmin: the xmin computed for the most recent snapshot.  XIDs
  *			older than this are known not running any more.
- *		RecentGlobalXmin: the global xmin (oldest TransactionXmin across all
- *			running transactions, except those running LAZY VACUUM).  This is
- *			the same computation done by
- *			GetOldestXmin(NULL, PROCARRAY_FLAGS_VACUUM).
- *		RecentGlobalDataXmin: the global xmin for non-catalog tables
- *			>= RecentGlobalXmin
+ *
+ * And try to advance the bounds of GlobalVisSharedRels, GlobalVisCatalogRels,
+ * GlobalVisDataRels for the benefit of theGlobalVisTest* family of functions.
  *
  * Note: this function should probably not be called with an argument that's
  * not statically allocated (see xip allocation below).
@@ -1560,12 +1854,12 @@ GetSnapshotData(Snapshot snapshot)
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId xmin;
 	TransactionId xmax;
-	TransactionId globalxmin;
 	int			index;
 	int			count = 0;
 	int			subcount = 0;
 	bool		suboverflowed = false;
 	FullTransactionId latest_completed;
+	TransactionId oldestxid;
 	TransactionId replication_slot_xmin = InvalidTransactionId;
 	TransactionId replication_slot_catalog_xmin = InvalidTransactionId;
 
@@ -1610,13 +1904,15 @@ GetSnapshotData(Snapshot snapshot)
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
 	latest_completed = ShmemVariableCache->latestCompletedXid;
+	oldestxid = ShmemVariableCache->oldestXid;
+
 	/* xmax is always latestCompletedXid + 1 */
 	xmax = XidFromFullTransactionId(latest_completed);
 	TransactionIdAdvance(xmax);
 	Assert(TransactionIdIsNormal(xmax));
 
 	/* initialize xmin calculation with xmax */
-	globalxmin = xmin = xmax;
+	xmin = xmax;
 
 	snapshot->takenDuringRecovery = RecoveryInProgress();
 
@@ -1644,12 +1940,6 @@ GetSnapshotData(Snapshot snapshot)
 			if (pgxact->vacuumFlags &
 				(PROC_IN_LOGICAL_DECODING | PROC_IN_VACUUM))
 				continue;
-
-			/* Update globalxmin to be the smallest valid xmin */
-			xid = UINT32_ACCESS_ONCE(pgxact->xmin);
-			if (TransactionIdIsNormal(xid) &&
-				NormalTransactionIdPrecedes(xid, globalxmin))
-				globalxmin = xid;
 
 			/* Fetch xid just once - see GetNewTransactionId */
 			xid = UINT32_ACCESS_ONCE(pgxact->xid);
@@ -1766,34 +2056,78 @@ GetSnapshotData(Snapshot snapshot)
 
 	LWLockRelease(ProcArrayLock);
 
-	/*
-	 * Update globalxmin to include actual process xids.  This is a slightly
-	 * different way of computing it than GetOldestXmin uses, but should give
-	 * the same result.
-	 */
-	if (TransactionIdPrecedes(xmin, globalxmin))
-		globalxmin = xmin;
+	/* maintain state for GlobalVis* */
+	{
+		TransactionId def_vis_xid;
+		TransactionId def_vis_xid_data;
+		FullTransactionId def_vis_fxid;
+		FullTransactionId def_vis_fxid_data;
+		FullTransactionId oldestfxid;
 
-	/* Update global variables too */
-	RecentGlobalXmin = globalxmin - vacuum_defer_cleanup_age;
-	if (!TransactionIdIsNormal(RecentGlobalXmin))
-		RecentGlobalXmin = FirstNormalTransactionId;
+		/*
+		 * Converting oldestXid is only safe when xid horizon cannot advance,
+		 * i.e. holding locks. While we don't hold the lock anymore, all the
+		 * necessary data has been gathered with lock held.
+		 */
+		oldestfxid = FullXidRelativeTo(latest_completed, oldestxid);
 
-	/* Check whether there's a replication slot requiring an older xmin. */
-	if (TransactionIdIsValid(replication_slot_xmin) &&
-		NormalTransactionIdPrecedes(replication_slot_xmin, RecentGlobalXmin))
-		RecentGlobalXmin = replication_slot_xmin;
+		/* apply vacuum_defer_cleanup_age */
+		def_vis_xid_data =
+			TransactionIdRetreatedBy(xmin, vacuum_defer_cleanup_age);
 
-	/* Non-catalog tables can be vacuumed if older than this xid */
-	RecentGlobalDataXmin = RecentGlobalXmin;
+		/* Check whether there's a replication slot requiring an older xmin. */
+		def_vis_xid_data =
+			TransactionIdOlder(def_vis_xid_data, replication_slot_xmin);
 
-	/*
-	 * Check whether there's a replication slot requiring an older catalog
-	 * xmin.
-	 */
-	if (TransactionIdIsNormal(replication_slot_catalog_xmin) &&
-		NormalTransactionIdPrecedes(replication_slot_catalog_xmin, RecentGlobalXmin))
-		RecentGlobalXmin = replication_slot_catalog_xmin;
+		/*
+		 * Rows in non-shared, non-catalog tables possibly could be vacuumed
+		 * if older than this xid.
+		 */
+		def_vis_xid = def_vis_xid_data;
+
+		/*
+		 * Check whether there's a replication slot requiring an older catalog
+		 * xmin.
+		 */
+		def_vis_xid =
+			TransactionIdOlder(replication_slot_catalog_xmin, def_vis_xid);
+
+		def_vis_fxid = FullXidRelativeTo(latest_completed, def_vis_xid);
+		def_vis_fxid_data = FullXidRelativeTo(latest_completed, def_vis_xid_data);
+
+		/*
+		 * Check if we can increase upper bound. As a previous
+		 * GlobalVisUpdate() might have computed more aggressive values, don't
+		 * overwrite them if so.
+		 */
+		GlobalVisSharedRels.definitely_needed =
+			FullTransactionIdNewer(def_vis_fxid,
+								   GlobalVisSharedRels.definitely_needed);
+		GlobalVisCatalogRels.definitely_needed =
+			FullTransactionIdNewer(def_vis_fxid,
+								   GlobalVisCatalogRels.definitely_needed);
+		GlobalVisDataRels.definitely_needed =
+			FullTransactionIdNewer(def_vis_fxid_data,
+								   GlobalVisDataRels.definitely_needed);
+
+		/*
+		 * Check if we know that we can initialize or increase the lower
+		 * bound. Currently the only cheap way to do so is to use
+		 * ShmemVariableCache->oldestXid as input.
+		 *
+		 * We should definitely be able to do better. We could e.g. put a
+		 * global lower bound value into ShmemVariableCache.
+		 */
+		GlobalVisSharedRels.maybe_needed =
+			FullTransactionIdNewer(GlobalVisSharedRels.maybe_needed,
+								   oldestfxid);
+		GlobalVisCatalogRels.maybe_needed =
+			FullTransactionIdNewer(GlobalVisCatalogRels.maybe_needed,
+								   oldestfxid);
+		GlobalVisDataRels.maybe_needed =
+			FullTransactionIdNewer(GlobalVisDataRels.maybe_needed,
+								   oldestfxid);
+	}
 
 	RecentXmin = xmin;
 
@@ -3290,6 +3624,255 @@ DisplayXidCache(void)
 			xc_slow_answer);
 }
 #endif							/* XIDCACHE_DEBUG */
+
+/*
+ * If rel != NULL, return test state appropriate for relation, otherwise
+ * return state usable for all relations.  The latter may consider XIDs as
+ * not-yet-visible-to-everyone that a state for a specific relation would
+ * already consider visible-to-everyone.
+ *
+ * This needs to be called while a snapshot is active or registered, otherwise
+ * there are wraparound and other dangers.
+ *
+ * See comment for GlobalVisState for details.
+ */
+GlobalVisState *
+GlobalVisTestFor(Relation rel)
+{
+	bool		need_shared;
+	bool		need_catalog;
+	GlobalVisState *state;
+
+	/* XXX: we should assert that a snapshot is pushed or registered */
+	Assert(RecentXmin);
+
+	if (!rel)
+		need_shared = need_catalog = true;
+	else
+	{
+		/*
+		 * Other kinds currently don't contain xids, nor always the necessary
+		 * logical decoding markers.
+		 */
+		Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
+			   rel->rd_rel->relkind == RELKIND_MATVIEW ||
+			   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
+
+		need_shared = rel->rd_rel->relisshared || RecoveryInProgress();
+		need_catalog = IsCatalogRelation(rel) || RelationIsAccessibleInLogicalDecoding(rel);
+	}
+
+	if (need_shared)
+		state = &GlobalVisSharedRels;
+	else if (need_catalog)
+		state = &GlobalVisCatalogRels;
+	else
+		state = &GlobalVisDataRels;
+
+	Assert(FullTransactionIdIsValid(state->definitely_needed) &&
+		   FullTransactionIdIsValid(state->maybe_needed));
+
+	return state;
+}
+
+/*
+ * Return true if it's worth updating the accurate maybe_needed boundary.
+ *
+ * As it is somewhat expensive to determine xmin horizons, we don't want to
+ * repeatedly do so when there is a low likelihood of it being beneficial.
+ *
+ * The current heuristic is that we update only if RecentXmin has changed
+ * since the last update. If the oldest currently running transaction has not
+ * finished, it is unlikely that recomputing the horizon would be useful.
+ */
+static bool
+GlobalVisTestShouldUpdate(GlobalVisState *state)
+{
+	/* hasn't been updated yet */
+	if (!TransactionIdIsValid(ComputeXidHorizonsResultLastXmin))
+		return true;
+
+	/*
+	 * If the maybe_needed/definitely_needed boundaries are the same, it's
+	 * unlikely to be beneficial to refresh boundaries.
+	 */
+	if (FullTransactionIdFollowsOrEquals(state->maybe_needed,
+										 state->definitely_needed))
+		return false;
+
+	/* does the last snapshot built have a different xmin? */
+	return RecentXmin != ComputeXidHorizonsResultLastXmin;
+}
+
+static void
+GlobalVisUpdateApply(ComputeXidHorizonsResult *horizons)
+{
+	GlobalVisSharedRels.maybe_needed =
+		FullXidRelativeTo(horizons->latest_completed,
+						  horizons->shared_oldest_nonremovable);
+	GlobalVisCatalogRels.maybe_needed =
+		FullXidRelativeTo(horizons->latest_completed,
+						  horizons->catalog_oldest_nonremovable);
+	GlobalVisDataRels.maybe_needed =
+		FullXidRelativeTo(horizons->latest_completed,
+						  horizons->data_oldest_nonremovable);
+
+	/*
+	 * In longer running transactions it's possible that transactions we
+	 * previously needed to treat as running aren't around anymore. So update
+	 * definitely_needed to not be earlier than maybe_needed.
+	 */
+	GlobalVisSharedRels.definitely_needed =
+		FullTransactionIdNewer(GlobalVisSharedRels.maybe_needed,
+							   GlobalVisSharedRels.definitely_needed);
+	GlobalVisCatalogRels.definitely_needed =
+		FullTransactionIdNewer(GlobalVisCatalogRels.maybe_needed,
+							   GlobalVisCatalogRels.definitely_needed);
+	GlobalVisDataRels.definitely_needed =
+		FullTransactionIdNewer(GlobalVisDataRels.maybe_needed,
+							   GlobalVisDataRels.definitely_needed);
+
+	ComputeXidHorizonsResultLastXmin = RecentXmin;
+}
+
+/*
+ * Update boundaries in GlobalVis{Shared,Catalog, Data}Rels
+ * using ComputeXidHorizons().
+ */
+static void
+GlobalVisUpdate(void)
+{
+	ComputeXidHorizonsResult horizons;
+
+	/* updates the horizons as a side-effect */
+	ComputeXidHorizons(&horizons);
+}
+
+/*
+ * Return true if no snapshot still considers fxid to be running.
+ *
+ * The state passed needs to have been initialized for the relation fxid is
+ * from (NULL is also OK), otherwise the result may not be correct.
+ *
+ * See comment for GlobalVisState for details.
+ */
+bool
+GlobalVisTestIsRemovableFullXid(GlobalVisState *state,
+								FullTransactionId fxid)
+{
+	/*
+	 * If fxid is older than maybe_needed bound, it definitely is visible to
+	 * everyone.
+	 */
+	if (FullTransactionIdPrecedes(fxid, state->maybe_needed))
+		return true;
+
+	/*
+	 * If fxid is >= definitely_needed bound, it is very likely to still be
+	 * considered running.
+	 */
+	if (FullTransactionIdFollowsOrEquals(fxid, state->definitely_needed))
+		return false;
+
+	/*
+	 * fxid is between maybe_needed and definitely_needed, i.e. there might or
+	 * might not exist a snapshot considering fxid running. If it makes sense,
+	 * update boundaries and recheck.
+	 */
+	if (GlobalVisTestShouldUpdate(state))
+	{
+		GlobalVisUpdate();
+
+		Assert(FullTransactionIdPrecedes(fxid, state->definitely_needed));
+
+		return FullTransactionIdPrecedes(fxid, state->maybe_needed);
+	}
+	else
+		return false;
+}
+
+/*
+ * Wrapper around GlobalVisTestIsRemovableFullXid() for 32bit xids.
+ *
+ * It is crucial that this only gets called for xids from a source that
+ * protects against xid wraparounds (e.g. from a table and thus protected by
+ * relfrozenxid).
+ */
+bool
+GlobalVisTestIsRemovableXid(GlobalVisState *state, TransactionId xid)
+{
+	FullTransactionId fxid;
+
+	/*
+	 * Convert 32 bit argument to FullTransactionId. We can do so safely
+	 * because we know the xid has to, at the very least, be between
+	 * [oldestXid, nextFullXid), i.e. within 2 billion of xid. To avoid taking
+	 * a lock to determine either, we can just compare with
+	 * state->definitely_needed, which was based on those value at the time
+	 * the current snapshot was built.
+	 */
+	fxid = FullXidRelativeTo(state->definitely_needed, xid);
+
+	return GlobalVisTestIsRemovableFullXid(state, fxid);
+}
+
+/*
+ * Return FullTransactionId below which all transactions are not considered
+ * running anymore.
+ *
+ * Note: This is less efficient than testing with
+ * GlobalVisTestIsRemovableFullXid as it likely requires building an accurate
+ * cutoff, even in the case all the XIDs compared with the cutoff are outside
+ * [maybe_needed, definitely_needed).
+ */
+FullTransactionId
+GlobalVisTestNonRemovableFullHorizon(GlobalVisState *state)
+{
+	/* acquire accurate horizon if not already done */
+	if (GlobalVisTestShouldUpdate(state))
+		GlobalVisUpdate();
+
+	return state->maybe_needed;
+}
+
+/* Convenience wrapper around GlobalVisTestNonRemovableFullHorizon */
+TransactionId
+GlobalVisTestNonRemovableHorizon(GlobalVisState *state)
+{
+	FullTransactionId cutoff;
+
+	cutoff = GlobalVisTestNonRemovableFullHorizon(state);
+
+	return XidFromFullTransactionId(cutoff);
+}
+
+/*
+ * Convenience wrapper around GlobalVisTestFor() and
+ * GlobalVisTestIsRemovableFullXid(), see their comments.
+ */
+bool
+GlobalVisIsRemovableFullXid(Relation rel, FullTransactionId fxid)
+{
+	GlobalVisState *state;
+
+	state = GlobalVisTestFor(rel);
+
+	return GlobalVisTestIsRemovableFullXid(state, fxid);
+}
+
+/*
+ * Convenience wrapper around GlobalVisTestFor() and
+ * GlobalVisTestIsRemovableXid(), see their comments.
+ */
+bool
+GlobalVisCheckRemovableXid(Relation rel, TransactionId xid)
+{
+	GlobalVisState *state;
+
+	state = GlobalVisTestFor(rel);
+
+	return GlobalVisTestIsRemovableXid(state, xid);
+}
 
 /*
  * Convert a 32 bit transaction id into 64 bit transaction id, by assuming it

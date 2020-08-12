@@ -1181,22 +1181,7 @@ XLogWalRcvSendHSFeedback(bool immed)
 	 */
 	if (hot_standby_feedback)
 	{
-		TransactionId slot_xmin;
-
-		/*
-		 * Usually GetOldestXmin() would include both global replication slot
-		 * xmin and catalog_xmin in its calculations, but we want to derive
-		 * separate values for each of those. So we ask for an xmin that
-		 * excludes the catalog_xmin.
-		 */
-		xmin = GetOldestXmin(NULL,
-							 PROCARRAY_FLAGS_DEFAULT | PROCARRAY_SLOTS_XMIN);
-
-		ProcArrayGetReplicationSlotXmin(&slot_xmin, &catalog_xmin);
-
-		if (TransactionIdIsValid(slot_xmin) &&
-			TransactionIdPrecedes(slot_xmin, xmin))
-			xmin = slot_xmin;
+		GetReplicationHorizons(&xmin, &catalog_xmin);
 	}
 	else
 	{

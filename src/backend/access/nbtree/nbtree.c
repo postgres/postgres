@@ -808,6 +808,12 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 
+	/*
+	 * XXX: If IndexVacuumInfo contained the heap relation, we could be more
+	 * aggressive about vacuuming non catalog relations by passing the table
+	 * to GlobalVisCheckRemovableXid().
+	 */
+
 	if (metad->btm_version < BTREE_NOVAC_VERSION)
 	{
 		/*
@@ -817,13 +823,12 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 		result = true;
 	}
 	else if (TransactionIdIsValid(metad->btm_oldest_btpo_xact) &&
-			 TransactionIdPrecedes(metad->btm_oldest_btpo_xact,
-								   RecentGlobalXmin))
+			 GlobalVisCheckRemovableXid(NULL, metad->btm_oldest_btpo_xact))
 	{
 		/*
 		 * If any oldest btpo.xact from a previously deleted page in the index
-		 * is older than RecentGlobalXmin, then at least one deleted page can
-		 * be recycled -- don't skip cleanup.
+		 * is visible to everyone, then at least one deleted page can be
+		 * recycled -- don't skip cleanup.
 		 */
 		result = true;
 	}
@@ -1276,14 +1281,13 @@ backtrack:
 				 * own conflict now.)
 				 *
 				 * Backends with snapshots acquired after a VACUUM starts but
-				 * before it finishes could have a RecentGlobalXmin with a
-				 * later xid than the VACUUM's OldestXmin cutoff.  These
-				 * backends might happen to opportunistically mark some index
-				 * tuples LP_DEAD before we reach them, even though they may
-				 * be after our cutoff.  We don't try to kill these "extra"
-				 * index tuples in _bt_delitems_vacuum().  This keep things
-				 * simple, and allows us to always avoid generating our own
-				 * conflicts.
+				 * before it finishes could have visibility cutoff with a
+				 * later xid than VACUUM's OldestXmin cutoff.  These backends
+				 * might happen to opportunistically mark some index tuples
+				 * LP_DEAD before we reach them, even though they may be after
+				 * our cutoff.  We don't try to kill these "extra" index
+				 * tuples in _bt_delitems_vacuum().  This keep things simple,
+				 * and allows us to always avoid generating our own conflicts.
 				 */
 				Assert(!BTreeTupleIsPivot(itup));
 				if (!BTreeTupleIsPosting(itup))
