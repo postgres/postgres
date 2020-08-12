@@ -156,28 +156,32 @@
  * authorization phase).  This is used mainly to keep track of how many
  * children we have and send them appropriate signals when necessary.
  *
- * "Special" children such as the startup, bgwriter and autovacuum launcher
- * tasks are not in this list.  Autovacuum worker and walsender are in it.
+ * As shown in the above set of backend types, this list includes not only
+ * "normal" client sessions, but also autovacuum workers, walsenders, and
+ * background workers.  (Note that at the time of launch, walsenders are
+ * labeled BACKEND_TYPE_NORMAL; we relabel them to BACKEND_TYPE_WALSND
+ * upon noticing they've changed their PMChildFlags entry.  Hence that check
+ * must be done before any operation that needs to distinguish walsenders
+ * from normal backends.)
+ *
  * Also, "dead_end" children are in it: these are children launched just for
  * the purpose of sending a friendly rejection message to a would-be client.
  * We must track them because they are attached to shared memory, but we know
  * they will never become live backends.  dead_end children are not assigned a
- * PMChildSlot.
+ * PMChildSlot.  dead_end children have bkend_type NORMAL.
  *
- * Background workers are in this list, too.
+ * "Special" children such as the startup, bgwriter and autovacuum launcher
+ * tasks are not in this list.  They are tracked via StartupPID and other
+ * pid_t variables below.  (Thus, there can't be more than one of any given
+ * "special" child process type.  We use BackendList entries for any child
+ * process there can be more than one of.)
  */
 typedef struct bkend
 {
 	pid_t		pid;			/* process id of backend */
 	int32		cancel_key;		/* cancel key for cancels for this backend */
 	int			child_slot;		/* PMChildSlot for this backend, if any */
-
-	/*
-	 * Flavor of backend or auxiliary process.  Note that BACKEND_TYPE_WALSND
-	 * backends initially announce themselves as BACKEND_TYPE_NORMAL, so if
-	 * bkend_type is normal, you should check for a recent transition.
-	 */
-	int			bkend_type;
+	int			bkend_type;		/* child process flavor, see above */
 	bool		dead_end;		/* is it going to send an error and quit? */
 	bool		bgworker_notify;	/* gets bgworker start/stop notifications */
 	dlist_node	elem;			/* list link in BackendList */
@@ -1059,10 +1063,9 @@ PostmasterMain(int argc, char *argv[])
 	 * only during a few moments during a standby promotion. However there is
 	 * a race condition: if pg_ctl promote is executed and creates the files
 	 * during a promotion, the files can stay around even after the server is
-	 * brought up to be the primary. Then, if a new standby starts by using the
-	 * backup taken from the new primary, the files can exist at the server
-	 * startup and should be removed in order to avoid an unexpected
-	 * promotion.
+	 * brought up to be the primary.  Then, if a new standby starts by using
+	 * the backup taken from the new primary, the files can exist at server
+	 * startup and must be removed in order to avoid an unexpected promotion.
 	 *
 	 * Note that promotion signal files need to be removed before the startup
 	 * process is invoked. Because, after that, they can be used by
@@ -5336,8 +5339,8 @@ sigusr1_handler(SIGNAL_ARGS)
 		/*
 		 * Tell startup process to finish recovery.
 		 *
-		 * Leave the promote signal file in place and let the Startup
-		 * process do the unlink.
+		 * Leave the promote signal file in place and let the Startup process
+		 * do the unlink.
 		 */
 		signal_child(StartupPID, SIGUSR2);
 	}
