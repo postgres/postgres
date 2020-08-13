@@ -1964,7 +1964,7 @@ PhysicalReplicationSlotNewXmin(TransactionId feedbackXmin, TransactionId feedbac
 	ReplicationSlot *slot = MyReplicationSlot;
 
 	SpinLockAcquire(&slot->mutex);
-	MyPgXact->xmin = InvalidTransactionId;
+	MyProc->xmin = InvalidTransactionId;
 
 	/*
 	 * For physical replication we don't need the interlock provided by xmin
@@ -2093,7 +2093,7 @@ ProcessStandbyHSFeedbackMessage(void)
 	if (!TransactionIdIsNormal(feedbackXmin)
 		&& !TransactionIdIsNormal(feedbackCatalogXmin))
 	{
-		MyPgXact->xmin = InvalidTransactionId;
+		MyProc->xmin = InvalidTransactionId;
 		if (MyReplicationSlot != NULL)
 			PhysicalReplicationSlotNewXmin(feedbackXmin, feedbackCatalogXmin);
 		return;
@@ -2135,7 +2135,7 @@ ProcessStandbyHSFeedbackMessage(void)
 	 * risk already since a VACUUM could already have determined the horizon.)
 	 *
 	 * If we're using a replication slot we reserve the xmin via that,
-	 * otherwise via the walsender's PGXACT entry. We can only track the
+	 * otherwise via the walsender's PGPROC entry. We can only track the
 	 * catalog xmin separately when using a slot, so we store the least of the
 	 * two provided when not using a slot.
 	 *
@@ -2148,9 +2148,9 @@ ProcessStandbyHSFeedbackMessage(void)
 	{
 		if (TransactionIdIsNormal(feedbackCatalogXmin)
 			&& TransactionIdPrecedes(feedbackCatalogXmin, feedbackXmin))
-			MyPgXact->xmin = feedbackCatalogXmin;
+			MyProc->xmin = feedbackCatalogXmin;
 		else
-			MyPgXact->xmin = feedbackXmin;
+			MyProc->xmin = feedbackXmin;
 	}
 }
 

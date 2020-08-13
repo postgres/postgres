@@ -296,7 +296,7 @@ ensure that the C compiler does exactly what you tell it to.)
 Another important activity that uses the shared ProcArray is
 ComputeXidHorizons, which must determine a lower bound for the oldest xmin
 of any active MVCC snapshot, system-wide.  Each individual backend
-advertises the smallest xmin of its own snapshots in MyPgXact->xmin, or zero
+advertises the smallest xmin of its own snapshots in MyProc->xmin, or zero
 if it currently has no live snapshots (eg, if it's between transactions or
 hasn't yet set a snapshot for a new transaction).  ComputeXidHorizons takes
 the MIN() of the valid xmin fields.  It does this with only shared lock on
@@ -331,7 +331,7 @@ necessary.
 Note that while it is certain that two concurrent executions of
 GetSnapshotData will compute the same xmin for their own snapshots, there is
 no such guarantee for the horizons computed by ComputeXidHorizons.  This is
-because we allow XID-less transactions to clear their MyPgXact->xmin
+because we allow XID-less transactions to clear their MyProc->xmin
 asynchronously (without taking ProcArrayLock), so one execution might see
 what had been the oldest xmin, and another not.  This is OK since the
 thresholds need only be a valid lower bound.  As noted above, we are already

@@ -389,7 +389,7 @@ gistRedoPageReuse(XLogReaderState *record)
 	 *
 	 * latestRemovedXid was the page's deleteXid.  The
 	 * GlobalVisIsRemovableFullXid(deleteXid) test in gistPageRecyclable()
-	 * conceptually mirrors the pgxact->xmin > limitXmin test in
+	 * conceptually mirrors the PGPROC->xmin > limitXmin test in
 	 * GetConflictingVirtualXIDs().  Consequently, one XID value achieves the
 	 * same exclusion effect on primary and standby.
 	 */

@@ -553,8 +553,8 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 		elog(ERROR, "cannot build an initial slot snapshot, not all transactions are monitored anymore");
 
 	/* so we don't overwrite the existing value */
-	if (TransactionIdIsValid(MyPgXact->xmin))
-		elog(ERROR, "cannot build an initial slot snapshot when MyPgXact->xmin already is valid");
+	if (TransactionIdIsValid(MyProc->xmin))
+		elog(ERROR, "cannot build an initial slot snapshot when MyProc->xmin already is valid");
 
 	snap = SnapBuildBuildSnapshot(builder);
 
@@ -575,7 +575,7 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 	}
 #endif
 
-	MyPgXact->xmin = snap->xmin;
+	MyProc->xmin = snap->xmin;
 
 	/* allocate in transaction context */
 	newxip = (TransactionId *)

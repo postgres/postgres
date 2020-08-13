@@ -464,7 +464,7 @@ MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid, const char *gid,
 	/* We set up the gxact's VXID as InvalidBackendId/XID */
 	proc->lxid = (LocalTransactionId) xid;
 	pgxact->xid = xid;
-	pgxact->xmin = InvalidTransactionId;
+	Assert(proc->xmin == InvalidTransactionId);
 	proc->delayChkpt = false;
 	pgxact->vacuumFlags = 0;
 	proc->pid = 0;

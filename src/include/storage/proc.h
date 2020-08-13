@@ -101,6 +101,11 @@ struct PGPROC
 
 	Latch		procLatch;		/* generic latch for process */
 
+	TransactionId xmin;			/* minimal running XID as it was when we were
+								 * starting our xact, excluding LAZY VACUUM:
+								 * vacuum must not remove tuples deleted by
+								 * xid >= xmin ! */
+
 	LocalTransactionId lxid;	/* local id of top-level transaction currently
 								 * being executed by this proc, if running;
 								 * else InvalidLocalTransactionId */
@@ -222,11 +227,6 @@ typedef struct PGXACT
 	TransactionId xid;			/* id of top-level transaction currently being
 								 * executed by this proc, if running and XID
 								 * is assigned; else InvalidTransactionId */
-
-	TransactionId xmin;			/* minimal running XID as it was when we were
-								 * starting our xact, excluding LAZY VACUUM:
-								 * vacuum must not remove tuples deleted by
-								 * xid >= xmin ! */
 
 	uint8		vacuumFlags;	/* vacuum-related flags, see above */
 	bool		overflowed;

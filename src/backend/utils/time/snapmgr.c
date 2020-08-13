@@ -27,11 +27,11 @@
  * their lifetime is managed separately (as they live longer than one xact.c
  * transaction).
  *
- * These arrangements let us reset MyPgXact->xmin when there are no snapshots
+ * These arrangements let us reset MyProc->xmin when there are no snapshots
  * referenced by this transaction, and advance it when the one with oldest
  * Xmin is no longer referenced.  For simplicity however, only registered
  * snapshots not active snapshots participate in tracking which one is oldest;
- * we don't try to change MyPgXact->xmin except when the active-snapshot
+ * we don't try to change MyProc->xmin except when the active-snapshot
  * stack is empty.
  *
  *
@@ -187,7 +187,7 @@ static ActiveSnapshotElt *OldestActiveSnapshot = NULL;
 
 /*
  * Currently registered Snapshots.  Ordered in a heap by xmin, so that we can
- * quickly find the one with lowest xmin, to advance our MyPgXact->xmin.
+ * quickly find the one with lowest xmin, to advance our MyProc->xmin.
  */
 static int	xmin_cmp(const pairingheap_node *a, const pairingheap_node *b,
 					 void *arg);
@@ -475,7 +475,7 @@ GetNonHistoricCatalogSnapshot(Oid relid)
 
 		/*
 		 * Make sure the catalog snapshot will be accounted for in decisions
-		 * about advancing PGXACT->xmin.  We could apply RegisterSnapshot, but
+		 * about advancing PGPROC->xmin.  We could apply RegisterSnapshot, but
 		 * that would result in making a physical copy, which is overkill; and
 		 * it would also create a dependency on some resource owner, which we
 		 * do not want for reasons explained at the head of this file. Instead
@@ -596,7 +596,7 @@ SetTransactionSnapshot(Snapshot sourcesnap, VirtualTransactionId *sourcevxid,
 	/* NB: curcid should NOT be copied, it's a local matter */
 
 	/*
-	 * Now we have to fix what GetSnapshotData did with MyPgXact->xmin and
+	 * Now we have to fix what GetSnapshotData did with MyProc->xmin and
 	 * TransactionXmin.  There is a race condition: to make sure we are not
 	 * causing the global xmin to go backwards, we have to test that the
 	 * source transaction is still running, and that has to be done
@@ -950,13 +950,13 @@ xmin_cmp(const pairingheap_node *a, const pairingheap_node *b, void *arg)
 /*
  * SnapshotResetXmin
  *
- * If there are no more snapshots, we can reset our PGXACT->xmin to InvalidXid.
+ * If there are no more snapshots, we can reset our PGPROC->xmin to InvalidXid.
  * Note we can do this without locking because we assume that storing an Xid
  * is atomic.
  *
  * Even if there are some remaining snapshots, we may be able to advance our
- * PGXACT->xmin to some degree.  This typically happens when a portal is
- * dropped.  For efficiency, we only consider recomputing PGXACT->xmin when
+ * PGPROC->xmin to some degree.  This typically happens when a portal is
+ * dropped.  For efficiency, we only consider recomputing PGPROC->xmin when
  * the active snapshot stack is empty; this allows us not to need to track
  * which active snapshot is oldest.
  *
@@ -977,15 +977,15 @@ SnapshotResetXmin(void)
 
 	if (pairingheap_is_empty(&RegisteredSnapshots))
 	{
-		MyPgXact->xmin = InvalidTransactionId;
+		MyProc->xmin = InvalidTransactionId;
 		return;
 	}
 
 	minSnapshot = pairingheap_container(SnapshotData, ph_node,
 										pairingheap_first(&RegisteredSnapshots));
 
-	if (TransactionIdPrecedes(MyPgXact->xmin, minSnapshot->xmin))
-		MyPgXact->xmin = minSnapshot->xmin;
+	if (TransactionIdPrecedes(MyProc->xmin, minSnapshot->xmin))
+		MyProc->xmin = minSnapshot->xmin;
 }
 
 /*
@@ -1132,13 +1132,13 @@ AtEOXact_Snapshot(bool isCommit, bool resetXmin)
 
 	/*
 	 * During normal commit processing, we call ProcArrayEndTransaction() to
-	 * reset the MyPgXact->xmin. That call happens prior to the call to
+	 * reset the MyProc->xmin. That call happens prior to the call to
 	 * AtEOXact_Snapshot(), so we need not touch xmin here at all.
 	 */
 	if (resetXmin)
 		SnapshotResetXmin();
 
-	Assert(resetXmin || MyPgXact->xmin == 0);
+	Assert(resetXmin || MyProc->xmin == 0);
 }
 
 
@@ -1830,7 +1830,7 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 	 */
 	if (old_snapshot_threshold == 0)
 	{
-		if (TransactionIdPrecedes(latest_xmin, MyPgXact->xmin)
+		if (TransactionIdPrecedes(latest_xmin, MyProc->xmin)
 			&& TransactionIdFollows(latest_xmin, xlimit))
 			xlimit = latest_xmin;
 
