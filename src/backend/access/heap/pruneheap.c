@@ -732,7 +732,7 @@ heap_page_prune_execute(Buffer buffer,
  * root_offsets[k - 1] = j.
  *
  * The passed-in root_offsets array must have MaxHeapTuplesPerPage entries.
- * We zero out all unused entries.
+ * Unused entries are filled with InvalidOffsetNumber (zero).
  *
  * The function must be called with at least share lock on the buffer, to
  * prevent concurrent prune operations.
@@ -747,7 +747,8 @@ heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 	OffsetNumber offnum,
 				maxoff;
 
-	MemSet(root_offsets, 0, MaxHeapTuplesPerPage * sizeof(OffsetNumber));
+	MemSet(root_offsets, InvalidOffsetNumber,
+		   MaxHeapTuplesPerPage * sizeof(OffsetNumber));
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (offnum = FirstOffsetNumber; offnum <= maxoff; offnum = OffsetNumberNext(offnum))
