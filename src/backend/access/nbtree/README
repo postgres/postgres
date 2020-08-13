@@ -412,7 +412,7 @@ the cost of walking down the tree in such common cases.
 
 The optimization works on the assumption that there can only be one
 non-ignorable leaf rightmost page, and so not even a visible-to-everyone
-style interlock required.  We cannot fail to detect that our hint was
+style interlock is required.  We cannot fail to detect that our hint was
 invalidated, because there can only be one such page in the B-Tree at
 any time. It's possible that the page will be deleted and recycled
 without a backend's cached page also being detected as invalidated, but

@@ -318,7 +318,7 @@ XID less than this could be about to appear in the ProcArray, because of the
 XidGenLock interlock discussed above.)
 
 As GetSnapshotData is performance critical, it does not perform an accurate
-oldest-xmin calculation (it used to, until v13). The contents of a snapshot
+oldest-xmin calculation (it used to, until v14). The contents of a snapshot
 only depend on the xids of other backends, not their xmin. As backend's xmin
 changes much more often than its xid, having GetSnapshotData look at xmins
 can lead to a lot of unnecessary cacheline ping-pong.  Instead
