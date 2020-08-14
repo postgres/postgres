@@ -795,7 +795,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	if ((!am_superuser || am_walsender) &&
 		MyProcPort != NULL &&
-		MyProcPort->canAcceptConnections == CAC_WAITBACKUP)
+		MyProcPort->canAcceptConnections == CAC_SUPERUSER)
 	{
 		if (am_walsender)
 			ereport(FATAL,
