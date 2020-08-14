@@ -235,6 +235,7 @@ static DumpableObject *createBoundaryObjects(void);
 static void addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 									DumpableObject *boundaryObjs);
 
+static void addConstrChildIdxDeps(DumpableObject *dobj, IndxInfo *refidx);
 static void getDomainConstraints(Archive *fout, TypeInfo *tyinfo);
 static void getTableData(DumpOptions *dopt, TableInfo *tblinfo, int numTables, char relkind);
 static void makeTableDataInfo(DumpOptions *dopt, TableInfo *tbinfo);
@@ -7517,25 +7518,20 @@ getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
 			reftable = findTableByOid(constrinfo[j].confrelid);
 			if (reftable && reftable->relkind == RELKIND_PARTITIONED_TABLE)
 			{
-				IndxInfo   *refidx;
 				Oid			indexOid = atooid(PQgetvalue(res, j, i_conindid));
 
 				if (indexOid != InvalidOid)
 				{
 					for (int k = 0; k < reftable->numIndexes; k++)
 					{
-						SimplePtrListCell *cell;
+						IndxInfo   *refidx;
 
 						/* not our index? */
 						if (reftable->indexes[k].dobj.catId.oid != indexOid)
 							continue;
 
 						refidx = &reftable->indexes[k];
-						for (cell = refidx->partattaches.head; cell;
-							 cell = cell->next)
-							addObjectDependency(&constrinfo[j].dobj,
-												((DumpableObject *)
-												 cell->ptr)->dumpId);
+						addConstrChildIdxDeps(&constrinfo[j].dobj, refidx);
 						break;
 					}
 				}
@@ -7546,6 +7542,35 @@ getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
 	}
 
 	destroyPQExpBuffer(query);
+}
+
+/*
+ * addConstrChildIdxDeps
+ *
+ * Recursive subroutine for getConstraints
+ *
+ * Given an object representing a foreign key constraint and an index on the
+ * partitioned table it references, mark the constraint object as dependent
+ * on the DO_INDEX_ATTACH object of each index partition, recursively
+ * drilling down to their partitions if any.  This ensures that the FK is not
+ * restored until the index is fully marked valid.
+ */
+static void
+addConstrChildIdxDeps(DumpableObject *dobj, IndxInfo *refidx)
+{
+	SimplePtrListCell *cell;
+
+	Assert(dobj->objType == DO_FK_CONSTRAINT);
+
+	for (cell = refidx->partattaches.head; cell; cell = cell->next)
+	{
+		IndexAttachInfo *attach = (IndexAttachInfo *) cell->ptr;
+
+		addObjectDependency(dobj, attach->dobj.dumpId);
+
+		if (attach->partitionIdx->partattaches.head != NULL)
+			addConstrChildIdxDeps(dobj, attach->partitionIdx);
+	}
 }
 
 /*
