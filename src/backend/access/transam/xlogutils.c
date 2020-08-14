@@ -260,10 +260,9 @@ XLogCheckInvalidPages(void)
  * determines what needs to be done to redo the changes to it.  If the WAL
  * record includes a full-page image of the page, it is restored.
  *
- * 'lsn' is the LSN of the record being replayed.  It is compared with the
- * page's LSN to determine if the record has already been replayed.
- * 'block_id' is the ID number the block was registered with, when the WAL
- * record was created.
+ * 'record.EndRecPtr' is compared to the page's LSN to determine if the record
+ * has already been replayed.  'block_id' is the ID number the block was
+ * registered with, when the WAL record was created.
  *
  * Returns one of the following:
  *
