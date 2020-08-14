@@ -185,8 +185,8 @@ PostgreSQL documentation
    <option>stop</option> mode shuts down the server that is running in
    the specified data directory.  Three different
    shutdown methods can be selected with the <option>-m</option>
-   option.  <quote>Smart</quote> mode waits for all active
-   clients to disconnect and any online backup to finish.
+   option.  <quote>Smart</quote> mode disallows new connections, then waits
+   for all existing clients to disconnect and any online backup to finish.
    If the server is in hot standby, recovery and streaming replication
    will be terminated once all clients have disconnected.
    <quote>Fast</quote> mode (the default) does not wait for clients to disconnect and
