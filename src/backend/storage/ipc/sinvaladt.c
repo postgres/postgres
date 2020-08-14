@@ -417,9 +417,7 @@ BackendIdGetTransactionIds(int backendID, TransactionId *xid, TransactionId *xmi
 
 		if (proc != NULL)
 		{
-			PGXACT	   *xact = &ProcGlobal->allPgXact[proc->pgprocno];
-
-			*xid = xact->xid;
+			*xid = proc->xid;
 			*xmin = proc->xmin;
 		}
 	}

@@ -251,10 +251,10 @@ enforce, and it assists with some other issues as explained below.)  The
 implementation of this is that GetSnapshotData takes the ProcArrayLock in
 shared mode (so that multiple backends can take snapshots in parallel),
 but ProcArrayEndTransaction must take the ProcArrayLock in exclusive mode
-while clearing MyPgXact->xid at transaction end (either commit or abort).
-(To reduce context switching, when multiple transactions commit nearly
-simultaneously, we have one backend take ProcArrayLock and clear the XIDs
-of multiple processes at once.)
+while clearing the ProcGlobal->xids[] entry at transaction end (either
+commit or abort). (To reduce context switching, when multiple transactions
+commit nearly simultaneously, we have one backend take ProcArrayLock and
+clear the XIDs of multiple processes at once.)
 
 ProcArrayEndTransaction also holds the lock while advancing the shared
 latestCompletedXid variable.  This allows GetSnapshotData to use
@@ -278,12 +278,12 @@ present in the ProcArray, or not running anymore.  (This guarantee doesn't
 apply to subtransaction XIDs, because of the possibility that there's not
 room for them in the subxid array; instead we guarantee that they are
 present or the overflow flag is set.)  If a backend released XidGenLock
-before storing its XID into MyPgXact, then it would be possible for another
-backend to allocate and commit a later XID, causing latestCompletedXid to
-pass the first backend's XID, before that value became visible in the
+before storing its XID into ProcGlobal->xids[], then it would be possible for
+another backend to allocate and commit a later XID, causing latestCompletedXid
+to pass the first backend's XID, before that value became visible in the
 ProcArray.  That would break ComputeXidHorizons, as discussed below.
 
-We allow GetNewTransactionId to store the XID into MyPgXact->xid (or the
+We allow GetNewTransactionId to store the XID into ProcGlobal->xids[] (or the
 subxid array) without taking ProcArrayLock.  This was once necessary to
 avoid deadlock; while that is no longer the case, it's still beneficial for
 performance.  We are thereby relying on fetch/store of an XID to be atomic,
@@ -382,12 +382,13 @@ Top-level transactions do not have a parent, so they leave their pg_subtrans
 entries set to the default value of zero (InvalidTransactionId).
 
 pg_subtrans is used to check whether the transaction in question is still
-running --- the main Xid of a transaction is recorded in the PGXACT struct,
-but since we allow arbitrary nesting of subtransactions, we can't fit all Xids
-in shared memory, so we have to store them on disk.  Note, however, that for
-each transaction we keep a "cache" of Xids that are known to be part of the
-transaction tree, so we can skip looking at pg_subtrans unless we know the
-cache has been overflowed.  See storage/ipc/procarray.c for the gory details.
+running --- the main Xid of a transaction is recorded in ProcGlobal->xids[],
+with a copy in PGPROC->xid, but since we allow arbitrary nesting of
+subtransactions, we can't fit all Xids in shared memory, so we have to store
+them on disk.  Note, however, that for each transaction we keep a "cache" of
+Xids that are known to be part of the transaction tree, so we can skip looking
+at pg_subtrans unless we know the cache has been overflowed.  See
+storage/ipc/procarray.c for the gory details.
 
 slru.c is the supporting mechanism for both pg_xact and pg_subtrans.  It
 implements the LRU policy for in-memory buffer pages.  The high-level routines

@@ -1724,7 +1724,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 		 *
 		 * Note: these flags remain set until CommitTransaction or
 		 * AbortTransaction.  We don't want to clear them until we reset
-		 * MyPgXact->xid/xmin, otherwise GetOldestNonRemovableTransactionId()
+		 * MyProc->xid/xmin, otherwise GetOldestNonRemovableTransactionId()
 		 * might appear to go backwards, which is probably Not Good.
 		 */
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);

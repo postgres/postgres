@@ -11,12 +11,12 @@
  * shared buffer content lock on the buffer containing the tuple.
  *
  * NOTE: When using a non-MVCC snapshot, we must check
- * TransactionIdIsInProgress (which looks in the PGXACT array)
+ * TransactionIdIsInProgress (which looks in the PGPROC array)
  * before TransactionIdDidCommit/TransactionIdDidAbort (which look in
  * pg_xact).  Otherwise we have a race condition: we might decide that a
  * just-committed transaction crashed, because none of the tests succeed.
  * xact.c is careful to record commit/abort in pg_xact before it unsets
- * MyPgXact->xid in the PGXACT array.  That fixes that problem, but it
+ * MyProc->xid in the PGPROC array.  That fixes that problem, but it
  * also means there is a window where TransactionIdIsInProgress and
  * TransactionIdDidCommit will both return true.  If we check only
  * TransactionIdDidCommit, we could consider a tuple committed when a
@@ -956,7 +956,7 @@ HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
  * coding where we tried to set the hint bits as soon as possible, we instead
  * did TransactionIdIsInProgress in each call --- to no avail, as long as the
  * inserting/deleting transaction was still running --- which was more cycles
- * and more contention on the PGXACT array.
+ * and more contention on ProcArrayLock.
  */
 static bool
 HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
@@ -1459,7 +1459,7 @@ HeapTupleSatisfiesNonVacuumable(HeapTuple htup, Snapshot snapshot,
  *	HeapTupleSatisfiesMVCC) and, therefore, any hint bits that can be set
  *	should already be set.  We assume that if no hint bits are set, the xmin
  *	or xmax transaction is still running.  This is therefore faster than
- *	HeapTupleSatisfiesVacuum, because we don't consult PGXACT nor CLOG.
+ *	HeapTupleSatisfiesVacuum, because we consult neither procarray nor CLOG.
  *	It's okay to return false when in doubt, but we must return true only
  *	if the tuple is removable.
  */

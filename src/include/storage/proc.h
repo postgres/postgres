@@ -89,6 +89,17 @@ typedef enum
  * distinguished from a real one at need by the fact that it has pid == 0.
  * The semaphore and lock-activity fields in a prepared-xact PGPROC are unused,
  * but its myProcLocks[] lists are valid.
+ *
+ * Mirrored fields:
+ *
+ * Some fields in PGPROC (see "mirrored in ..." comment) are mirrored into an
+ * element of more densely packed ProcGlobal arrays. These arrays are indexed
+ * by PGPROC->pgxactoff. Both copies need to be maintained coherently.
+ *
+ * NB: The pgxactoff indexed value can *never* be accessed without holding
+ * locks.
+ *
+ * See PROC_HDR for details.
  */
 struct PGPROC
 {
@@ -101,6 +112,12 @@ struct PGPROC
 
 	Latch		procLatch;		/* generic latch for process */
 
+
+	TransactionId xid;			/* id of top-level transaction currently being
+								 * executed by this proc, if running and XID
+								 * is assigned; else InvalidTransactionId.
+								 * mirrored in ProcGlobal->xids[pgxactoff] */
+
 	TransactionId xmin;			/* minimal running XID as it was when we were
 								 * starting our xact, excluding LAZY VACUUM:
 								 * vacuum must not remove tuples deleted by
@@ -110,6 +127,9 @@ struct PGPROC
 								 * being executed by this proc, if running;
 								 * else InvalidLocalTransactionId */
 	int			pid;			/* Backend's process ID; 0 if prepared xact */
+
+	int			pgxactoff;		/* offset into various ProcGlobal->arrays
+								 * with data mirrored from this PGPROC */
 	int			pgprocno;
 
 	/* These fields are zero while a backend is still starting up: */
@@ -224,10 +244,6 @@ extern PGDLLIMPORT struct PGXACT *MyPgXact;
  */
 typedef struct PGXACT
 {
-	TransactionId xid;			/* id of top-level transaction currently being
-								 * executed by this proc, if running and XID
-								 * is assigned; else InvalidTransactionId */
-
 	uint8		vacuumFlags;	/* vacuum-related flags, see above */
 	bool		overflowed;
 
@@ -236,6 +252,57 @@ typedef struct PGXACT
 
 /*
  * There is one ProcGlobal struct for the whole database cluster.
+ *
+ * Adding/Removing an entry into the procarray requires holding *both*
+ * ProcArrayLock and XidGenLock in exclusive mode (in that order). Both are
+ * needed because the dense arrays (see below) are accessed from
+ * GetNewTransactionId() and GetSnapshotData(), and we don't want to add
+ * further contention by both using the same lock. Adding/Removing a procarray
+ * entry is much less frequent.
+ *
+ * Some fields in PGPROC are mirrored into more densely packed arrays (e.g.
+ * xids), with one entry for each backend. These arrays only contain entries
+ * for PGPROCs that have been added to the shared array with ProcArrayAdd()
+ * (in contrast to PGPROC array which has unused PGPROCs interspersed).
+ *
+ * The dense arrays are indexed by PGPROC->pgxactoff. Any concurrent
+ * ProcArrayAdd() / ProcArrayRemove() can lead to pgxactoff of a procarray
+ * member to change.  Therefore it is only safe to use PGPROC->pgxactoff to
+ * access the dense array while holding either ProcArrayLock or XidGenLock.
+ *
+ * As long as a PGPROC is in the procarray, the mirrored values need to be
+ * maintained in both places in a coherent manner.
+ *
+ * The denser separate arrays are beneficial for three main reasons: First, to
+ * allow for as tight loops accessing the data as possible. Second, to prevent
+ * updates of frequently changing data (e.g. xmin) from invalidating
+ * cachelines also containing less frequently changing data (e.g. xid,
+ * vacuumFlags). Third to condense frequently accessed data into as few
+ * cachelines as possible.
+ *
+ * There are two main reasons to have the data mirrored between these dense
+ * arrays and PGPROC. First, as explained above, a PGPROC's array entries can
+ * only be accessed with either ProcArrayLock or XidGenLock held, whereas the
+ * PGPROC entries do not require that (obviously there may still be locking
+ * requirements around the individual field, separate from the concerns
+ * here). That is particularly important for a backend to efficiently checks
+ * it own values, which it often can safely do without locking.  Second, the
+ * PGPROC fields allow to avoid unnecessary accesses and modification to the
+ * dense arrays. A backend's own PGPROC is more likely to be in a local cache,
+ * whereas the cachelines for the dense array will be modified by other
+ * backends (often removing it from the cache for other cores/sockets). At
+ * commit/abort time a check of the PGPROC value can avoid accessing/dirtying
+ * the corresponding array value.
+ *
+ * Basically it makes sense to access the PGPROC variable when checking a
+ * single backend's data, especially when already looking at the PGPROC for
+ * other reasons already.  It makes sense to look at the "dense" arrays if we
+ * need to look at many / most entries, because we then benefit from the
+ * reduced indirection and better cross-process cache-ability.
+ *
+ * When entering a PGPROC for 2PC transactions with ProcArrayAdd(), the data
+ * in the dense arrays is initialized from the PGPROC while it already holds
+ * ProcArrayLock.
  */
 typedef struct PROC_HDR
 {
@@ -243,6 +310,10 @@ typedef struct PROC_HDR
 	PGPROC	   *allProcs;
 	/* Array of PGXACT structures (not including dummies for prepared txns) */
 	PGXACT	   *allPgXact;
+
+	/* Array mirroring PGPROC.xid for each PGPROC currently in the procarray */
+	TransactionId *xids;
+
 	/* Length of allProcs array */
 	uint32		allProcCount;
 	/* Head of list of free PGPROC structures */

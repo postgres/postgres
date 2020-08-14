@@ -38,7 +38,8 @@ VariableCache ShmemVariableCache = NULL;
  * Allocate the next FullTransactionId for a new transaction or
  * subtransaction.
  *
- * The new XID is also stored into MyPgXact before returning.
+ * The new XID is also stored into MyProc->xid/ProcGlobal->xids[] before
+ * returning.
  *
  * Note: when this is called, we are actually already inside a valid
  * transaction, since XIDs are now not allocated until the transaction
@@ -65,7 +66,8 @@ GetNewTransactionId(bool isSubXact)
 	if (IsBootstrapProcessingMode())
 	{
 		Assert(!isSubXact);
-		MyPgXact->xid = BootstrapTransactionId;
+		MyProc->xid = BootstrapTransactionId;
+		ProcGlobal->xids[MyProc->pgxactoff] = BootstrapTransactionId;
 		return FullTransactionIdFromEpochAndXid(0, BootstrapTransactionId);
 	}
 
@@ -190,10 +192,10 @@ GetNewTransactionId(bool isSubXact)
 	 * latestCompletedXid is present in the ProcArray, which is essential for
 	 * correct OldestXmin tracking; see src/backend/access/transam/README.
 	 *
-	 * Note that readers of PGXACT xid fields should be careful to fetch the
-	 * value only once, rather than assume they can read a value multiple
-	 * times and get the same answer each time.  Note we are assuming that
-	 * TransactionId and int fetch/store are atomic.
+	 * Note that readers of ProcGlobal->xids/PGPROC->xid should be careful
+	 * to fetch the value for each proc only once, rather than assume they can
+	 * read a value multiple times and get the same answer each time.  Note we
+	 * are assuming that TransactionId and int fetch/store are atomic.
 	 *
 	 * The same comments apply to the subxact xid count and overflow fields.
 	 *
@@ -219,7 +221,11 @@ GetNewTransactionId(bool isSubXact)
 	 * answer later on when someone does have a reason to inquire.)
 	 */
 	if (!isSubXact)
-		MyPgXact->xid = xid;	/* LWLockRelease acts as barrier */
+	{
+		/* LWLockRelease acts as barrier */
+		MyProc->xid = xid;
+		ProcGlobal->xids[MyProc->pgxactoff] = xid;
+	}
 	else
 	{
 		int			nxids = MyPgXact->nxids;

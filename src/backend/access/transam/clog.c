@@ -285,15 +285,15 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 	 * updates for multiple backends so that the number of times XactSLRULock
 	 * needs to be acquired is reduced.
 	 *
-	 * For this optimization to be safe, the XID in MyPgXact and the subxids
-	 * in MyProc must be the same as the ones for which we're setting the
-	 * status.  Check that this is the case.
+	 * For this optimization to be safe, the XID and subxids in MyProc must be
+	 * the same as the ones for which we're setting the status.  Check that
+	 * this is the case.
 	 *
 	 * For this optimization to be efficient, we shouldn't have too many
 	 * sub-XIDs and all of the XIDs for which we're adjusting clog should be
 	 * on the same page.  Check those conditions, too.
 	 */
-	if (all_xact_same_page && xid == MyPgXact->xid &&
+	if (all_xact_same_page && xid == MyProc->xid &&
 		nsubxids <= THRESHOLD_SUBTRANS_CLOG_OPT &&
 		nsubxids == MyPgXact->nxids &&
 		memcmp(subxids, MyProc->subxids.xids,
