@@ -295,7 +295,7 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 	 */
 	if (all_xact_same_page && xid == MyProc->xid &&
 		nsubxids <= THRESHOLD_SUBTRANS_CLOG_OPT &&
-		nsubxids == MyPgXact->nxids &&
+		nsubxids == MyProc->subxidStatus.count &&
 		memcmp(subxids, MyProc->subxids.xids,
 			   nsubxids * sizeof(TransactionId)) == 0)
 	{
@@ -510,16 +510,15 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 	while (nextidx != INVALID_PGPROCNO)
 	{
 		PGPROC	   *proc = &ProcGlobal->allProcs[nextidx];
-		PGXACT	   *pgxact = &ProcGlobal->allPgXact[nextidx];
 
 		/*
 		 * Transactions with more than THRESHOLD_SUBTRANS_CLOG_OPT sub-XIDs
 		 * should not use group XID status update mechanism.
 		 */
-		Assert(pgxact->nxids <= THRESHOLD_SUBTRANS_CLOG_OPT);
+		Assert(proc->subxidStatus.count <= THRESHOLD_SUBTRANS_CLOG_OPT);
 
 		TransactionIdSetPageStatusInternal(proc->clogGroupMemberXid,
-										   pgxact->nxids,
+										   proc->subxidStatus.count,
 										   proc->subxids.xids,
 										   proc->clogGroupMemberXidStatus,
 										   proc->clogGroupMemberLsn,

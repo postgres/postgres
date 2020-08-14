@@ -35,6 +35,14 @@
  */
 #define PGPROC_MAX_CACHED_SUBXIDS 64	/* XXX guessed-at value */
 
+typedef struct XidCacheStatus
+{
+	/* number of cached subxids, never more than PGPROC_MAX_CACHED_SUBXIDS */
+	uint8	count;
+	/* has PGPROC->subxids overflowed */
+	bool	overflowed;
+} XidCacheStatus;
+
 struct XidCache
 {
 	TransactionId xids[PGPROC_MAX_CACHED_SUBXIDS];
@@ -187,6 +195,8 @@ struct PGPROC
 	 */
 	SHM_QUEUE	myProcLocks[NUM_LOCK_PARTITIONS];
 
+	XidCacheStatus subxidStatus; /* mirrored with
+								  * ProcGlobal->subxidStates[i] */
 	struct XidCache subxids;	/* cache for subtransaction XIDs */
 
 	/* Support for group XID clearing. */
@@ -235,22 +245,6 @@ struct PGPROC
 
 
 extern PGDLLIMPORT PGPROC *MyProc;
-extern PGDLLIMPORT struct PGXACT *MyPgXact;
-
-/*
- * Prior to PostgreSQL 9.2, the fields below were stored as part of the
- * PGPROC.  However, benchmarking revealed that packing these particular
- * members into a separate array as tightly as possible sped up GetSnapshotData
- * considerably on systems with many CPU cores, by reducing the number of
- * cache lines needing to be fetched.  Thus, think very carefully before adding
- * anything else here.
- */
-typedef struct PGXACT
-{
-	bool		overflowed;
-
-	uint8		nxids;
-} PGXACT;
 
 /*
  * There is one ProcGlobal struct for the whole database cluster.
@@ -310,11 +304,15 @@ typedef struct PROC_HDR
 {
 	/* Array of PGPROC structures (not including dummies for prepared txns) */
 	PGPROC	   *allProcs;
-	/* Array of PGXACT structures (not including dummies for prepared txns) */
-	PGXACT	   *allPgXact;
 
 	/* Array mirroring PGPROC.xid for each PGPROC currently in the procarray */
 	TransactionId *xids;
+
+	/*
+	 * Array mirroring PGPROC.subxidStatus for each PGPROC currently in the
+	 * procarray.
+	 */
+	XidCacheStatus *subxidStates;
 
 	/*
 	 * Array mirroring PGPROC.vacuumFlags for each PGPROC currently in the

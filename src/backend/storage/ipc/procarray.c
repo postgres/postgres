@@ -4,9 +4,10 @@
  *	  POSTGRES process array code.
  *
  *
- * This module maintains arrays of the PGPROC and PGXACT structures for all
- * active backends.  Although there are several uses for this, the principal
- * one is as a means of determining the set of currently running transactions.
+ * This module maintains arrays of PGPROC substructures, as well as associated
+ * arrays in ProcGlobal, for all active backends.  Although there are several
+ * uses for this, the principal one is as a means of determining the set of
+ * currently running transactions.
  *
  * Because of various subtle race conditions it is critical that a backend
  * hold the correct locks while setting or clearing its xid (in
@@ -85,7 +86,7 @@ typedef struct ProcArrayStruct
 	/*
 	 * Highest subxid that has been removed from KnownAssignedXids array to
 	 * prevent overflow; or InvalidTransactionId if none.  We track this for
-	 * similar reasons to tracking overflowing cached subxids in PGXACT
+	 * similar reasons to tracking overflowing cached subxids in PGPROC
 	 * entries.  Must hold exclusive ProcArrayLock to change this, and shared
 	 * lock to read it.
 	 */
@@ -96,7 +97,7 @@ typedef struct ProcArrayStruct
 	/* oldest catalog xmin of any replication slot */
 	TransactionId replication_slot_catalog_xmin;
 
-	/* indexes into allPgXact[], has PROCARRAY_MAXPROCS entries */
+	/* indexes into allProcs[], has PROCARRAY_MAXPROCS entries */
 	int			pgprocnos[FLEXIBLE_ARRAY_MEMBER];
 } ProcArrayStruct;
 
@@ -239,7 +240,6 @@ typedef struct ComputeXidHorizonsResult
 static ProcArrayStruct *procArray;
 
 static PGPROC *allProcs;
-static PGXACT *allPgXact;
 
 /*
  * Bookkeeping for tracking emulated transactions in recovery
@@ -325,8 +325,7 @@ static int	KnownAssignedXidsGetAndSetXmin(TransactionId *xarray,
 static TransactionId KnownAssignedXidsGetOldestXmin(void);
 static void KnownAssignedXidsDisplay(int trace_level);
 static void KnownAssignedXidsReset(void);
-static inline void ProcArrayEndTransactionInternal(PGPROC *proc,
-												   PGXACT *pgxact, TransactionId latestXid);
+static inline void ProcArrayEndTransactionInternal(PGPROC *proc, TransactionId latestXid);
 static void ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid);
 static void MaintainLatestCompletedXid(TransactionId latestXid);
 static void MaintainLatestCompletedXidRecovery(TransactionId latestXid);
@@ -411,7 +410,6 @@ CreateSharedProcArray(void)
 	}
 
 	allProcs = ProcGlobal->allProcs;
-	allPgXact = ProcGlobal->allPgXact;
 
 	/* Create or attach to the KnownAssignedXids arrays too, if needed */
 	if (EnableHotStandby)
@@ -476,11 +474,14 @@ ProcArrayAdd(PGPROC *proc)
 			(arrayP->numProcs - index) * sizeof(*arrayP->pgprocnos));
 	memmove(&ProcGlobal->xids[index + 1], &ProcGlobal->xids[index],
 			(arrayP->numProcs - index) * sizeof(*ProcGlobal->xids));
+	memmove(&ProcGlobal->subxidStates[index + 1], &ProcGlobal->subxidStates[index],
+			(arrayP->numProcs - index) * sizeof(*ProcGlobal->subxidStates));
 	memmove(&ProcGlobal->vacuumFlags[index + 1], &ProcGlobal->vacuumFlags[index],
 			(arrayP->numProcs - index) * sizeof(*ProcGlobal->vacuumFlags));
 
 	arrayP->pgprocnos[index] = proc->pgprocno;
 	ProcGlobal->xids[index] = proc->xid;
+	ProcGlobal->subxidStates[index] = proc->subxidStatus;
 	ProcGlobal->vacuumFlags[index] = proc->vacuumFlags;
 
 	arrayP->numProcs++;
@@ -534,6 +535,8 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 		MaintainLatestCompletedXid(latestXid);
 
 		ProcGlobal->xids[proc->pgxactoff] = 0;
+		ProcGlobal->subxidStates[proc->pgxactoff].overflowed = false;
+		ProcGlobal->subxidStates[proc->pgxactoff].count = 0;
 	}
 	else
 	{
@@ -542,6 +545,8 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 	}
 
 	Assert(TransactionIdIsValid(ProcGlobal->xids[proc->pgxactoff] == 0));
+	Assert(TransactionIdIsValid(ProcGlobal->subxidStates[proc->pgxactoff].count == 0));
+	Assert(TransactionIdIsValid(ProcGlobal->subxidStates[proc->pgxactoff].overflowed == false));
 	ProcGlobal->vacuumFlags[proc->pgxactoff] = 0;
 
 	for (index = 0; index < arrayP->numProcs; index++)
@@ -553,6 +558,8 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 					(arrayP->numProcs - index - 1) * sizeof(*arrayP->pgprocnos));
 			memmove(&ProcGlobal->xids[index], &ProcGlobal->xids[index + 1],
 					(arrayP->numProcs - index - 1) * sizeof(*ProcGlobal->xids));
+			memmove(&ProcGlobal->subxidStates[index], &ProcGlobal->subxidStates[index + 1],
+					(arrayP->numProcs - index - 1) * sizeof(*ProcGlobal->subxidStates));
 			memmove(&ProcGlobal->vacuumFlags[index], &ProcGlobal->vacuumFlags[index + 1],
 					(arrayP->numProcs - index - 1) * sizeof(*ProcGlobal->vacuumFlags));
 
@@ -597,8 +604,6 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 void
 ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 {
-	PGXACT	   *pgxact = &allPgXact[proc->pgprocno];
-
 	if (TransactionIdIsValid(latestXid))
 	{
 		/*
@@ -616,7 +621,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		 */
 		if (LWLockConditionalAcquire(ProcArrayLock, LW_EXCLUSIVE))
 		{
-			ProcArrayEndTransactionInternal(proc, pgxact, latestXid);
+			ProcArrayEndTransactionInternal(proc, latestXid);
 			LWLockRelease(ProcArrayLock);
 		}
 		else
@@ -630,14 +635,13 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		 * estimate of global xmin, but that's OK.
 		 */
 		Assert(!TransactionIdIsValid(proc->xid));
+		Assert(proc->subxidStatus.count == 0);
+		Assert(!proc->subxidStatus.overflowed);
 
 		proc->lxid = InvalidLocalTransactionId;
 		proc->xmin = InvalidTransactionId;
 		proc->delayChkpt = false;	/* be sure this is cleared in abort */
 		proc->recoveryConflictPending = false;
-
-		Assert(pgxact->nxids == 0);
-		Assert(pgxact->overflowed == false);
 
 		/* must be cleared with xid/xmin: */
 		/* avoid unnecessarily dirtying shared cachelines */
@@ -659,8 +663,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
  * We don't do any locking here; caller must handle that.
  */
 static inline void
-ProcArrayEndTransactionInternal(PGPROC *proc, PGXACT *pgxact,
-								TransactionId latestXid)
+ProcArrayEndTransactionInternal(PGPROC *proc, TransactionId latestXid)
 {
 	size_t		pgxactoff = proc->pgxactoff;
 
@@ -683,8 +686,15 @@ ProcArrayEndTransactionInternal(PGPROC *proc, PGXACT *pgxact,
 	}
 
 	/* Clear the subtransaction-XID cache too while holding the lock */
-	pgxact->nxids = 0;
-	pgxact->overflowed = false;
+	Assert(ProcGlobal->subxidStates[pgxactoff].count == proc->subxidStatus.count &&
+		   ProcGlobal->subxidStates[pgxactoff].overflowed == proc->subxidStatus.overflowed);
+	if (proc->subxidStatus.count > 0 || proc->subxidStatus.overflowed)
+	{
+		ProcGlobal->subxidStates[pgxactoff].count = 0;
+		ProcGlobal->subxidStates[pgxactoff].overflowed = false;
+		proc->subxidStatus.count = 0;
+		proc->subxidStatus.overflowed = false;
+	}
 
 	/* Also advance global latestCompletedXid while holding the lock */
 	MaintainLatestCompletedXid(latestXid);
@@ -774,9 +784,8 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 	while (nextidx != INVALID_PGPROCNO)
 	{
 		PGPROC	   *proc = &allProcs[nextidx];
-		PGXACT	   *pgxact = &allPgXact[nextidx];
 
-		ProcArrayEndTransactionInternal(proc, pgxact, proc->procArrayGroupMemberXid);
+		ProcArrayEndTransactionInternal(proc, proc->procArrayGroupMemberXid);
 
 		/* Move to next proc in list. */
 		nextidx = pg_atomic_read_u32(&proc->procArrayGroupNext);
@@ -820,7 +829,6 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 void
 ProcArrayClearTransaction(PGPROC *proc)
 {
-	PGXACT	   *pgxact = &allPgXact[proc->pgprocno];
 	size_t		pgxactoff;
 
 	/*
@@ -845,8 +853,15 @@ ProcArrayClearTransaction(PGPROC *proc)
 	Assert(!proc->delayChkpt);
 
 	/* Clear the subtransaction-XID cache too */
-	pgxact->nxids = 0;
-	pgxact->overflowed = false;
+	Assert(ProcGlobal->subxidStates[pgxactoff].count == proc->subxidStatus.count &&
+		   ProcGlobal->subxidStates[pgxactoff].overflowed == proc->subxidStatus.overflowed);
+	if (proc->subxidStatus.count > 0 || proc->subxidStatus.overflowed)
+	{
+		ProcGlobal->subxidStates[pgxactoff].count = 0;
+		ProcGlobal->subxidStates[pgxactoff].overflowed = false;
+		proc->subxidStatus.count = 0;
+		proc->subxidStatus.overflowed = false;
+	}
 
 	LWLockRelease(ProcArrayLock);
 }
@@ -1267,6 +1282,7 @@ TransactionIdIsInProgress(TransactionId xid)
 {
 	static TransactionId *xids = NULL;
 	static TransactionId *other_xids;
+	XidCacheStatus *other_subxidstates;
 	int			nxids = 0;
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId topxid;
@@ -1329,6 +1345,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	}
 
 	other_xids = ProcGlobal->xids;
+	other_subxidstates = ProcGlobal->subxidStates;
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
@@ -1351,7 +1368,6 @@ TransactionIdIsInProgress(TransactionId xid)
 	for (size_t pgxactoff = 0; pgxactoff < numProcs; pgxactoff++)
 	{
 		int			pgprocno;
-		PGXACT	   *pgxact;
 		PGPROC	   *proc;
 		TransactionId pxid;
 		int			pxids;
@@ -1386,9 +1402,7 @@ TransactionIdIsInProgress(TransactionId xid)
 		/*
 		 * Step 2: check the cached child-Xids arrays
 		 */
-		pgprocno = arrayP->pgprocnos[pgxactoff];
-		pgxact = &allPgXact[pgprocno];
-		pxids = pgxact->nxids;
+		pxids = other_subxidstates[pgxactoff].count;
 		pg_read_barrier();		/* pairs with barrier in GetNewTransactionId() */
 		pgprocno = arrayP->pgprocnos[pgxactoff];
 		proc = &allProcs[pgprocno];
@@ -1412,7 +1426,7 @@ TransactionIdIsInProgress(TransactionId xid)
 		 * we hold ProcArrayLock.  So we can't miss an Xid that we need to
 		 * worry about.)
 		 */
-		if (pgxact->overflowed)
+		if (other_subxidstates[pgxactoff].overflowed)
 			xids[nxids++] = pxid;
 	}
 
@@ -2019,6 +2033,7 @@ GetSnapshotData(Snapshot snapshot)
 		size_t		numProcs = arrayP->numProcs;
 		TransactionId *xip = snapshot->xip;
 		int		   *pgprocnos = arrayP->pgprocnos;
+		XidCacheStatus *subxidStates = ProcGlobal->subxidStates;
 		uint8	   *allVacuumFlags = ProcGlobal->vacuumFlags;
 
 		/*
@@ -2095,17 +2110,16 @@ GetSnapshotData(Snapshot snapshot)
 			 */
 			if (!suboverflowed)
 			{
-				int			pgprocno = pgprocnos[pgxactoff];
-				PGXACT	   *pgxact = &allPgXact[pgprocno];
 
-				if (pgxact->overflowed)
+				if (subxidStates[pgxactoff].overflowed)
 					suboverflowed = true;
 				else
 				{
-					int			nsubxids = pgxact->nxids;
+					int			nsubxids = subxidStates[pgxactoff].count;
 
 					if (nsubxids > 0)
 					{
+						int			pgprocno = pgprocnos[pgxactoff];
 						PGPROC	   *proc = &allProcs[pgprocno];
 
 						pg_read_barrier();	/* pairs with GetNewTransactionId */
@@ -2498,8 +2512,6 @@ GetRunningTransactionData(void)
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int			pgprocno = arrayP->pgprocnos[index];
-		PGXACT	   *pgxact = &allPgXact[pgprocno];
 		TransactionId xid;
 
 		/* Fetch xid just once - see GetNewTransactionId */
@@ -2520,7 +2532,7 @@ GetRunningTransactionData(void)
 		if (TransactionIdPrecedes(xid, oldestRunningXid))
 			oldestRunningXid = xid;
 
-		if (pgxact->overflowed)
+		if (ProcGlobal->subxidStates[index].overflowed)
 			suboverflowed = true;
 
 		/*
@@ -2540,27 +2552,28 @@ GetRunningTransactionData(void)
 	 */
 	if (!suboverflowed)
 	{
+		XidCacheStatus *other_subxidstates = ProcGlobal->subxidStates;
+
 		for (index = 0; index < arrayP->numProcs; index++)
 		{
 			int			pgprocno = arrayP->pgprocnos[index];
 			PGPROC	   *proc = &allProcs[pgprocno];
-			PGXACT	   *pgxact = &allPgXact[pgprocno];
-			int			nxids;
+			int			nsubxids;
 
 			/*
 			 * Save subtransaction XIDs. Other backends can't add or remove
 			 * entries while we're holding XidGenLock.
 			 */
-			nxids = pgxact->nxids;
-			if (nxids > 0)
+			nsubxids = other_subxidstates[index].count;
+			if (nsubxids > 0)
 			{
 				/* barrier not really required, as XidGenLock is held, but ... */
 				pg_read_barrier();	/* pairs with GetNewTransactionId */
 
 				memcpy(&xids[count], (void *) proc->subxids.xids,
-					   nxids * sizeof(TransactionId));
-				count += nxids;
-				subcount += nxids;
+					   nsubxids * sizeof(TransactionId));
+				count += nsubxids;
+				subcount += nsubxids;
 
 				/*
 				 * Top-level XID of a transaction is always less than any of
@@ -3627,14 +3640,6 @@ ProcArrayGetReplicationSlotXmin(TransactionId *xmin,
 	LWLockRelease(ProcArrayLock);
 }
 
-
-#define XidCacheRemove(i) \
-	do { \
-		MyProc->subxids.xids[i] = MyProc->subxids.xids[MyPgXact->nxids - 1]; \
-		pg_write_barrier(); \
-		MyPgXact->nxids--; \
-	} while (0)
-
 /*
  * XidCacheRemoveRunningXids
  *
@@ -3650,6 +3655,7 @@ XidCacheRemoveRunningXids(TransactionId xid,
 {
 	int			i,
 				j;
+	XidCacheStatus *mysubxidstat;
 
 	Assert(TransactionIdIsValid(xid));
 
@@ -3667,6 +3673,8 @@ XidCacheRemoveRunningXids(TransactionId xid,
 	 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
+	mysubxidstat = &ProcGlobal->subxidStates[MyProc->pgxactoff];
+
 	/*
 	 * Under normal circumstances xid and xids[] will be in increasing order,
 	 * as will be the entries in subxids.  Scan backwards to avoid O(N^2)
@@ -3676,11 +3684,14 @@ XidCacheRemoveRunningXids(TransactionId xid,
 	{
 		TransactionId anxid = xids[i];
 
-		for (j = MyPgXact->nxids - 1; j >= 0; j--)
+		for (j = MyProc->subxidStatus.count - 1; j >= 0; j--)
 		{
 			if (TransactionIdEquals(MyProc->subxids.xids[j], anxid))
 			{
-				XidCacheRemove(j);
+				MyProc->subxids.xids[j] = MyProc->subxids.xids[MyProc->subxidStatus.count - 1];
+				pg_write_barrier();
+				mysubxidstat->count--;
+				MyProc->subxidStatus.count--;
 				break;
 			}
 		}
@@ -3692,20 +3703,23 @@ XidCacheRemoveRunningXids(TransactionId xid,
 		 * error during AbortSubTransaction.  So instead of Assert, emit a
 		 * debug warning.
 		 */
-		if (j < 0 && !MyPgXact->overflowed)
+		if (j < 0 && !MyProc->subxidStatus.overflowed)
 			elog(WARNING, "did not find subXID %u in MyProc", anxid);
 	}
 
-	for (j = MyPgXact->nxids - 1; j >= 0; j--)
+	for (j = MyProc->subxidStatus.count - 1; j >= 0; j--)
 	{
 		if (TransactionIdEquals(MyProc->subxids.xids[j], xid))
 		{
-			XidCacheRemove(j);
+			MyProc->subxids.xids[j] = MyProc->subxids.xids[MyProc->subxidStatus.count - 1];
+			pg_write_barrier();
+			mysubxidstat->count--;
+			MyProc->subxidStatus.count--;
 			break;
 		}
 	}
 	/* Ordinarily we should have found it, unless the cache has overflowed */
-	if (j < 0 && !MyPgXact->overflowed)
+	if (j < 0 && !MyProc->subxidStatus.overflowed)
 		elog(WARNING, "did not find subXID %u in MyProc", xid);
 
 	/* Also advance global latestCompletedXid while holding the lock */
