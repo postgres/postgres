@@ -139,7 +139,6 @@ typedef enum LockTagType
 {
 	LOCKTAG_RELATION,			/* whole relation */
 	LOCKTAG_RELATION_EXTEND,	/* the right to extend a relation */
-	LOCKTAG_DATABASE_FROZEN_IDS,	/* pg_database.datfrozenxid */
 	LOCKTAG_PAGE,				/* one page of a relation */
 	LOCKTAG_TUPLE,				/* one physical tuple */
 	LOCKTAG_TRANSACTION,		/* transaction (for waiting for xact done) */
@@ -147,10 +146,11 @@ typedef enum LockTagType
 	LOCKTAG_SPECULATIVE_TOKEN,	/* speculative insertion Xid and token */
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	LOCKTAG_USERLOCK,			/* reserved for old contrib/userlock code */
-	LOCKTAG_ADVISORY			/* advisory user locks */
+	LOCKTAG_ADVISORY,			/* advisory user locks */
+	LOCKTAG_DATABASE_FROZEN_IDS	/* pg_database.datfrozenxid */
 } LockTagType;
 
-#define LOCKTAG_LAST_TYPE	LOCKTAG_ADVISORY
+#define LOCKTAG_LAST_TYPE	LOCKTAG_DATABASE_FROZEN_IDS
 
 extern const char *const LockTagTypeNames[];
 
