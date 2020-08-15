@@ -773,11 +773,13 @@ typedef struct SubPlanState
 	MemoryContext hashtablecxt; /* memory context containing hash tables */
 	MemoryContext hashtempcxt;	/* temp memory context for hash tables */
 	ExprContext *innerecontext; /* econtext for computing inner tuples */
+	/* each of the following fields is an array of length numCols: */
 	AttrNumber *keyColIdx;		/* control data for hash tables */
 	FmgrInfo   *tab_hash_funcs; /* hash functions for table datatype(s) */
 	FmgrInfo   *tab_eq_funcs;	/* equality functions for table datatype(s) */
 	FmgrInfo   *lhs_hash_funcs; /* hash functions for lefthand datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for LHS vs. table */
+	int			numCols;		/* number of columns being hashed */
 } SubPlanState;
 
 /* ----------------
