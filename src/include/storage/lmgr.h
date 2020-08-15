@@ -54,6 +54,9 @@ extern void UnlockRelationIdForSession(LockRelId *relid, LOCKMODE lockmode);
 extern void LockRelationForExtension(Relation relation, LOCKMODE lockmode);
 extern void UnlockRelationForExtension(Relation relation, LOCKMODE lockmode);
 
+/* Lock to recompute pg_database.datfrozenxid in the current database */
+extern void LockDatabaseFrozenIds(LOCKMODE lockmode);
+
 /* Lock a page (currently only used within indexes) */
 extern void LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 extern bool ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);

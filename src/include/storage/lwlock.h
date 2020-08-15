@@ -136,7 +136,9 @@ extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 #define CommitTsLock				(&MainLWLockArray[39].lock)
 #define ReplicationOriginLock		(&MainLWLockArray[40].lock)
 #define MultiXactTruncationLock		(&MainLWLockArray[41].lock)
-#define NUM_INDIVIDUAL_LWLOCKS		42
+#define WrapLimitsVacuumLock		(&MainLWLockArray[46].lock)
+#define NotifyQueueTailLock			(&MainLWLockArray[47].lock)
+#define NUM_INDIVIDUAL_LWLOCKS		48
 
 /*
  * It's a bit odd to declare NUM_BUFFER_PARTITIONS and NUM_LOCK_PARTITIONS
