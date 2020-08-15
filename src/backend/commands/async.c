@@ -223,19 +223,22 @@ typedef struct QueueBackendStatus
 /*
  * Shared memory state for LISTEN/NOTIFY (excluding its SLRU stuff)
  *
- * The AsyncQueueControl structure is protected by the AsyncQueueLock.
+ * The AsyncQueueControl structure is protected by the AsyncQueueLock and
+ * NotifyQueueTailLock.
  *
- * When holding the lock in SHARED mode, backends may only inspect their own
- * entries as well as the head and tail pointers. Consequently we can allow a
- * backend to update its own record while holding only SHARED lock (since no
- * other backend will inspect it).
+ * When holding AsyncQueueLock in SHARED mode, backends may only inspect their
+ * own entries as well as the head and tail pointers. Consequently we can
+ * allow a backend to update its own record while holding only SHARED lock
+ * (since no other backend will inspect it).
  *
- * When holding the lock in EXCLUSIVE mode, backends can inspect the entries
- * of other backends and also change the head and tail pointers.
+ * When holding AsyncQueueLock in EXCLUSIVE mode, backends can inspect the
+ * entries of other backends and also change the head pointer. When holding
+ * both AsyncQueueLock and NotifyQueueTailLock in EXCLUSIVE mode, backends can
+ * change the tail pointer.
  *
  * AsyncCtlLock is used as the control lock for the pg_notify SLRU buffers.
- * In order to avoid deadlocks, whenever we need both locks, we always first
- * get AsyncQueueLock and then AsyncCtlLock.
+ * In order to avoid deadlocks, whenever we need multiple locks, we first get
+ * NotifyQueueTailLock, then AsyncQueueLock, and lastly AsyncCtlLock.
  *
  * Each backend uses the backend[] array entry with index equal to its
  * BackendId (which can range from 1 to MaxBackends).  We rely on this to make
@@ -2012,6 +2015,10 @@ asyncQueueAdvanceTail(void)
 	int			newtailpage;
 	int			boundary;
 
+	/* Restrict task to one backend per cluster; see SimpleLruTruncate(). */
+	LWLockAcquire(NotifyQueueTailLock, LW_EXCLUSIVE);
+
+	/* Compute the new tail. */
 	LWLockAcquire(AsyncQueueLock, LW_EXCLUSIVE);
 	min = QUEUE_HEAD;
 	for (i = 1; i <= MaxBackends; i++)
@@ -2020,7 +2027,6 @@ asyncQueueAdvanceTail(void)
 			min = QUEUE_POS_MIN(min, QUEUE_BACKEND_POS(i));
 	}
 	oldtailpage = QUEUE_POS_PAGE(QUEUE_TAIL);
-	QUEUE_TAIL = min;
 	LWLockRelease(AsyncQueueLock);
 
 	/*
@@ -2040,6 +2046,17 @@ asyncQueueAdvanceTail(void)
 		 */
 		SimpleLruTruncate(AsyncCtl, newtailpage);
 	}
+
+	/*
+	 * Advertise the new tail.  This changes asyncQueueIsFull()'s verdict for
+	 * the segment immediately prior to the new tail, allowing fresh data into
+	 * that segment.
+	 */
+	LWLockAcquire(AsyncQueueLock, LW_EXCLUSIVE);
+	QUEUE_TAIL = min;
+	LWLockRelease(AsyncQueueLock);
+
+	LWLockRelease(NotifyQueueTailLock);
 }
 
 /*

@@ -349,8 +349,8 @@ ExtendSUBTRANS(TransactionId newestXact)
 /*
  * Remove all SUBTRANS segments before the one holding the passed transaction ID
  *
- * This is normally called during checkpoint, with oldestXact being the
- * oldest TransactionXmin of any running transaction.
+ * oldestXact is the oldest TransactionXmin of any running transaction.  This
+ * is called only during checkpoint.
  */
 void
 TruncateSUBTRANS(TransactionId oldestXact)

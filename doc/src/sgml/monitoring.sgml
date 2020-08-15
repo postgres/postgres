@@ -885,7 +885,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
       <tbody>
        <row>
-        <entry morerows="64"><literal>LWLock</literal></entry>
+        <entry morerows="66"><literal>LWLock</literal></entry>
         <entry><literal>ShmemIndexLock</literal></entry>
         <entry>Waiting to find or allocate space in shared memory.</entry>
        </row>
@@ -1080,6 +1080,16 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          the oldest transaction id available to it.</entry>
         </row>
         <row>
+         <entry><literal>WrapLimitsVacuumLock</literal></entry>
+         <entry>Waiting to update limits on transaction id and multixact
+         consumption.</entry>
+        </row>
+        <row>
+         <entry><literal>NotifyQueueTailLock</literal></entry>
+         <entry>Waiting to update limit on notification message
+         storage.</entry>
+        </row>
+        <row>
          <entry><literal>clog</literal></entry>
          <entry>Waiting for I/O on a clog (transaction status) buffer.</entry>
         </row>
@@ -1169,13 +1179,19 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          counters during Parallel Hash plan execution.</entry>
         </row>
         <row>
-         <entry morerows="9"><literal>Lock</literal></entry>
+         <entry morerows="10"><literal>Lock</literal></entry>
          <entry><literal>relation</literal></entry>
          <entry>Waiting to acquire a lock on a relation.</entry>
         </row>
         <row>
          <entry><literal>extend</literal></entry>
          <entry>Waiting to extend a relation.</entry>
+        </row>
+        <row>
+         <entry><literal>frozenid</literal></entry>
+         <entry>Waiting to
+         update <structname>pg_database</structname>.<structfield>datfrozenxid</structfield>
+         and <structname>pg_database</structname>.<structfield>datminmxid</structfield>.</entry>
         </row>
         <row>
          <entry><literal>page</literal></entry>
