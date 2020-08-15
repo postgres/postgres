@@ -449,6 +449,7 @@ insert into outer_text values ('b', null);
 
 create temp table inner_text (c1 text, c2 text);
 insert into inner_text values ('a', null);
+insert into inner_text values ('123', '456');
 
 select * from outer_text where (f1, f2) not in (select * from inner_text);
 
@@ -467,6 +468,46 @@ select 'foo'::text in (select 'bar'::name union all select 'bar'::name);
 --
 
 select '1'::text in (select '1'::name union all select '1'::name);
+
+--
+-- Test that we don't try to use a hashed subplan if the simplified
+-- testexpr isn't of the right shape
+--
+
+-- this fails by default, of course
+select * from int8_tbl where q1 in (select c1 from inner_text);
+
+begin;
+
+-- make an operator to allow it to succeed
+create function bogus_int8_text_eq(int8, text) returns boolean
+language sql as 'select $1::text = $2';
+
+create operator = (procedure=bogus_int8_text_eq, leftarg=int8, rightarg=text);
+
+explain (costs off)
+select * from int8_tbl where q1 in (select c1 from inner_text);
+select * from int8_tbl where q1 in (select c1 from inner_text);
+
+-- inlining of this function results in unusual number of hash clauses,
+-- which we can still cope with
+create or replace function bogus_int8_text_eq(int8, text) returns boolean
+language sql as 'select $1::text = $2 and $1::text = $2';
+
+explain (costs off)
+select * from int8_tbl where q1 in (select c1 from inner_text);
+select * from int8_tbl where q1 in (select c1 from inner_text);
+
+-- inlining of this function causes LHS and RHS to be switched,
+-- which we can't cope with, so hashing should be abandoned
+create or replace function bogus_int8_text_eq(int8, text) returns boolean
+language sql as 'select $2 = $1::text';
+
+explain (costs off)
+select * from int8_tbl where q1 in (select c1 from inner_text);
+select * from int8_tbl where q1 in (select c1 from inner_text);
+
+rollback;  -- to get rid of the bogus operator
 
 --
 -- Test case for planner bug with nested EXISTS handling
