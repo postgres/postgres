@@ -26,7 +26,6 @@
 const char *const LockTagTypeNames[] = {
 	"relation",
 	"extend",
-	"frozenid",
 	"page",
 	"tuple",
 	"transactionid",
@@ -34,7 +33,8 @@ const char *const LockTagTypeNames[] = {
 	"speculative token",
 	"object",
 	"userlock",
-	"advisory"
+	"advisory",
+	"frozenid"
 };
 
 /* This must match enum PredicateLockTargetType (predicate_internals.h) */
