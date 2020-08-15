@@ -168,8 +168,6 @@ typedef enum LockTagType
 	/* ID info for a relation is DB OID + REL OID; DB OID = 0 if shared */
 	LOCKTAG_RELATION_EXTEND,	/* the right to extend a relation */
 	/* same ID info as RELATION */
-	LOCKTAG_DATABASE_FROZEN_IDS,	/* pg_database.datfrozenxid */
-	/* ID info for frozen IDs is DB OID */
 	LOCKTAG_PAGE,				/* one page of a relation */
 	/* ID info for a page is RELATION info + BlockNumber */
 	LOCKTAG_TUPLE,				/* one physical tuple */
@@ -189,10 +187,12 @@ typedef enum LockTagType
 	 * Also, we use DB OID = 0 for shared objects such as tablespaces.
 	 */
 	LOCKTAG_USERLOCK,			/* reserved for old contrib/userlock code */
-	LOCKTAG_ADVISORY			/* advisory user locks */
+	LOCKTAG_ADVISORY,			/* advisory user locks */
+	LOCKTAG_DATABASE_FROZEN_IDS	/* pg_database.datfrozenxid */
+	/* ID info for frozen IDs is DB OID */
 } LockTagType;
 
-#define LOCKTAG_LAST_TYPE	LOCKTAG_ADVISORY
+#define LOCKTAG_LAST_TYPE	LOCKTAG_DATABASE_FROZEN_IDS
 
 /*
  * The LOCKTAG struct is defined with malice aforethought to fit into 16
