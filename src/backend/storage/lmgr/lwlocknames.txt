@@ -50,3 +50,6 @@ MultiXactTruncationLock				41
 OldSnapshotTimeMapLock				42
 LogicalRepWorkerLock				43
 XactTruncationLock					44
+# 45 was XactTruncationLock until removal of BackendRandomLock
+WrapLimitsVacuumLock				46
+NotifyQueueTailLock					47

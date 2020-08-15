@@ -1362,6 +1362,14 @@ vac_update_datfrozenxid(void)
 	bool		dirty = false;
 
 	/*
+	 * Restrict this task to one backend per database.  This avoids race
+	 * conditions that would move datfrozenxid or datminmxid backward.  It
+	 * avoids calling vac_truncate_clog() with a datfrozenxid preceding a
+	 * datfrozenxid passed to an earlier vac_truncate_clog() call.
+	 */
+	LockDatabaseFrozenIds(ExclusiveLock);
+
+	/*
 	 * Initialize the "min" calculation with
 	 * GetOldestNonRemovableTransactionId(), which is a reasonable
 	 * approximation to the minimum relfrozenxid for not-yet-committed
@@ -1551,6 +1559,9 @@ vac_truncate_clog(TransactionId frozenXID,
 	bool		bogus = false;
 	bool		frozenAlreadyWrapped = false;
 
+	/* Restrict task to one backend per cluster; see SimpleLruTruncate(). */
+	LWLockAcquire(WrapLimitsVacuumLock, LW_EXCLUSIVE);
+
 	/* init oldest datoids to sync with my frozenXID/minMulti values */
 	oldestxid_datoid = MyDatabaseId;
 	minmulti_datoid = MyDatabaseId;
@@ -1660,6 +1671,8 @@ vac_truncate_clog(TransactionId frozenXID,
 	 */
 	SetTransactionIdLimit(frozenXID, oldestxid_datoid);
 	SetMultiXactIdLimit(minMulti, minmulti_datoid, false);
+
+	LWLockRelease(WrapLimitsVacuumLock);
 }
 
 

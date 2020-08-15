@@ -1743,6 +1743,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to extend a relation.</entry>
      </row>
      <row>
+      <entry><literal>frozenid</literal></entry>
+      <entry>Waiting to
+       update <structname>pg_database</structname>.<structfield>datfrozenxid</structfield>
+       and <structname>pg_database</structname>.<structfield>datminmxid</structfield>.</entry>
+     </row>
+     <row>
       <entry><literal>object</literal></entry>
       <entry>Waiting to acquire a lock on a non-relation database object.</entry>
      </row>
@@ -1909,6 +1915,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>NotifyQueue</literal></entry>
       <entry>Waiting to read or update <command>NOTIFY</command> messages.</entry>
+     </row>
+     <row>
+      <entry><literal>NotifyQueueTail</literal></entry>
+      <entry>Waiting to update limit on <command>NOTIFY</command> message
+       storage.</entry>
      </row>
      <row>
       <entry><literal>NotifySLRU</literal></entry>
@@ -2085,6 +2096,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>WALWrite</literal></entry>
       <entry>Waiting for WAL buffers to be written to disk.</entry>
+     </row>
+     <row>
+      <entry><literal>WrapLimitsVacuum</literal></entry>
+      <entry>Waiting to update limits on transaction id and multixact
+       consumption.</entry>
      </row>
      <row>
       <entry><literal>XactBuffer</literal></entry>

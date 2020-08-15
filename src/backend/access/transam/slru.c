@@ -1191,6 +1191,14 @@ SimpleLruFlush(SlruCtl ctl, bool allow_redirtied)
 
 /*
  * Remove all segments before the one holding the passed page number
+ *
+ * All SLRUs prevent concurrent calls to this function, either with an LWLock
+ * or by calling it only as part of a checkpoint.  Mutual exclusion must begin
+ * before computing cutoffPage.  Mutual exclusion must end after any limit
+ * update that would permit other backends to write fresh data into the
+ * segment immediately preceding the one containing cutoffPage.  Otherwise,
+ * when the SLRU is quite full, SimpleLruTruncate() might delete that segment
+ * after it has accrued freshly-written data.
  */
 void
 SimpleLruTruncate(SlruCtl ctl, int cutoffPage)

@@ -10226,7 +10226,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    and general database objects (identified by class OID and object OID,
    in the same way as in <structname>pg_description</structname> or
    <structname>pg_depend</structname>).  Also, the right to extend a
-   relation is represented as a separate lockable object.
+   relation is represented as a separate lockable object, as is the right to
+   update <structname>pg_database</structname>.<structfield>datfrozenxid</structfield>.
    Also, <quote>advisory</quote> locks can be taken on numbers that have
    user-defined meanings.
   </para>
@@ -10254,6 +10255,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        Type of the lockable object:
        <literal>relation</literal>,
        <literal>extend</literal>,
+       <literal>frozenid</literal>,
        <literal>page</literal>,
        <literal>tuple</literal>,
        <literal>transactionid</literal>,

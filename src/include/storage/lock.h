@@ -138,6 +138,7 @@ typedef enum LockTagType
 {
 	LOCKTAG_RELATION,			/* whole relation */
 	LOCKTAG_RELATION_EXTEND,	/* the right to extend a relation */
+	LOCKTAG_DATABASE_FROZEN_IDS,	/* pg_database.datfrozenxid */
 	LOCKTAG_PAGE,				/* one page of a relation */
 	LOCKTAG_TUPLE,				/* one physical tuple */
 	LOCKTAG_TRANSACTION,		/* transaction (for waiting for xact done) */
@@ -192,6 +193,15 @@ typedef struct LOCKTAG
 	 (locktag).locktag_field3 = 0, \
 	 (locktag).locktag_field4 = 0, \
 	 (locktag).locktag_type = LOCKTAG_RELATION_EXTEND, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
+
+/* ID info for frozen IDs is DB OID */
+#define SET_LOCKTAG_DATABASE_FROZEN_IDS(locktag,dboid) \
+	((locktag).locktag_field1 = (dboid), \
+	 (locktag).locktag_field2 = 0, \
+	 (locktag).locktag_field3 = 0, \
+	 (locktag).locktag_field4 = 0, \
+	 (locktag).locktag_type = LOCKTAG_DATABASE_FROZEN_IDS, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 /* ID info for a page is RELATION info + BlockNumber */
