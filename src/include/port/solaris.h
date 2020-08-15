@@ -24,15 +24,3 @@
 #if defined(__i386__)
 #include <sys/isa_defs.h>
 #endif
-
-/*
- * Many versions of Solaris have broken strtod() --- see bug #4751182.
- * This has been fixed in current versions of Solaris:
- *
- * http://sunsolve.sun.com/search/document.do?assetkey=1-21-108993-62-1&searchclause=108993-62
- * http://sunsolve.sun.com/search/document.do?assetkey=1-21-112874-34-1&searchclause=112874-34
- *
- * However, many people might not have patched versions, so
- * still use our own fix for the buggy version.
- */
-#define HAVE_BUGGY_SOLARIS_STRTOD
