@@ -789,7 +789,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
       <tbody>
        <row>
-        <entry morerows="41"><literal>LWLockNamed</></entry>
+        <entry morerows="43"><literal>LWLockNamed</></entry>
         <entry><literal>ShmemIndexLock</></entry>
         <entry>Waiting to find or allocate space in shared memory.</entry>
        </row>
@@ -975,6 +975,16 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting to read or update old snapshot control information.</entry>
         </row>
         <row>
+         <entry><literal>WrapLimitsVacuumLock</literal></entry>
+         <entry>Waiting to update limits on transaction id and multixact
+         consumption.</entry>
+        </row>
+        <row>
+         <entry><literal>NotifyQueueTailLock</literal></entry>
+         <entry>Waiting to update limit on notification message
+         storage.</entry>
+        </row>
+        <row>
          <entry morerows="15"><literal>LWLockTranche</></entry>
          <entry><literal>clog</></entry>
          <entry>Waiting for I/O on a clog (transaction status) buffer.</entry>
@@ -1042,13 +1052,19 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting to add or examine predicate lock information.</entry>
         </row>
         <row>
-         <entry morerows="9"><literal>Lock</></entry>
+         <entry morerows="10"><literal>Lock</></entry>
          <entry><literal>relation</></entry>
          <entry>Waiting to acquire a lock on a relation.</entry>
         </row>
         <row>
          <entry><literal>extend</></entry>
          <entry>Waiting to extend a relation.</entry>
+        </row>
+        <row>
+         <entry><literal>frozenid</literal></entry>
+         <entry>Waiting to
+         update <structname>pg_database</structname>.<structfield>datfrozenxid</structfield>
+         and <structname>pg_database</structname>.<structfield>datminmxid</structfield>.</entry>
         </row>
         <row>
          <entry><literal>page</></entry>
