@@ -461,6 +461,21 @@ UnlockRelationForExtension(Relation relation, LOCKMODE lockmode)
 }
 
 /*
+ *		LockDatabaseFrozenIds
+ *
+ * This allows one backend per database to execute vac_update_datfrozenxid().
+ */
+void
+LockDatabaseFrozenIds(LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_DATABASE_FROZEN_IDS(tag, MyDatabaseId);
+
+	(void) LockAcquire(&tag, lockmode, false, false);
+}
+
+/*
  *		LockPage
  *
  * Obtain a page-level lock.  This is currently used by some index access
@@ -1096,6 +1111,11 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *tag)
 			appendStringInfo(buf,
 							 _("extension of relation %u of database %u"),
 							 tag->locktag_field2,
+							 tag->locktag_field1);
+			break;
+		case LOCKTAG_DATABASE_FROZEN_IDS:
+			appendStringInfo(buf,
+							 _("pg_database.datfrozenxid of database %u"),
 							 tag->locktag_field1);
 			break;
 		case LOCKTAG_PAGE:
