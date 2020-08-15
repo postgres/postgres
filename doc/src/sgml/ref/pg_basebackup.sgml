@@ -29,51 +29,51 @@ PostgreSQL documentation
  <refsect1>
   <title>Description</title>
   <para>
-   <application>pg_basebackup</application> is used to take base backups of
-   a running <productname>PostgreSQL</productname> database cluster. These
-   are taken without affecting other clients to the database, and can be used
+   <application>pg_basebackup</application> is used to take a base backup of
+   a running <productname>PostgreSQL</productname> database cluster. The backup
+   is taken without affecting other clients of the database, and can be used
    both for point-in-time recovery (see <xref linkend="continuous-archiving"/>)
-   and as the starting point for a log shipping or streaming replication standby
-   servers (see <xref linkend="warm-standby"/>).
+   and as the starting point for a log-shipping or streaming-replication standby
+   server (see <xref linkend="warm-standby"/>).
   </para>
 
   <para>
-   <application>pg_basebackup</application> makes a binary copy of the database
-   cluster files, while making sure the system is put in and
+   <application>pg_basebackup</application> makes an exact copy of the database
+   cluster's files, while making sure the server is put into and
    out of backup mode automatically. Backups are always taken of the entire
    database cluster; it is not possible to back up individual databases or
-   database objects. For individual database backups, a tool such as
+   database objects. For selective backups, another tool such as
    <xref linkend="app-pgdump"/> must be used.
   </para>
 
   <para>
    The backup is made over a regular <productname>PostgreSQL</productname>
-   connection, and uses the replication protocol. The connection must be made
-   with a user having <literal>REPLICATION</literal> permissions
-   (see <xref linkend="role-attributes"/>) or a superuser,
-   and <filename>pg_hba.conf</filename> must explicitly permit the replication
-   connection. The server must also be configured
-   with <xref linkend="guc-max-wal-senders"/> set high enough to leave at least
-   one session available for the backup and one for WAL streaming (if used).
+   connection that uses the replication protocol. The connection must be made
+   with a user ID that has <literal>REPLICATION</literal> permissions
+   (see <xref linkend="role-attributes"/>) or is a superuser,
+   and <link linkend="auth-pg-hba-conf"><filename>pg_hba.conf</filename></link>
+   must permit the replication connection. The server must also be configured
+   with <xref linkend="guc-max-wal-senders"/> set high enough to provide at
+   least one walsender for the backup plus one for WAL streaming (if used).
   </para>
 
   <para>
-   There can be multiple <command>pg_basebackup</command>s running at the same time, but it is
+   There can be multiple <command>pg_basebackup</command>s running at the same time, but it is usually
    better from a performance point of view to take only one backup, and copy
    the result.
   </para>
 
   <para>
    <application>pg_basebackup</application> can make a base backup from
-   not only the primary but also the standby. To take a backup from the standby,
+   not only a primary server but also a standby. To take a backup from a standby,
    set up the standby so that it can accept replication connections (that is, set
    <varname>max_wal_senders</varname> and <xref linkend="guc-hot-standby"/>,
-   and configure <link linkend="auth-pg-hba-conf">host-based authentication</link>).
+   and configure its <filename>pg_hba.conf</filename> appropriately).
    You will also need to enable <xref linkend="guc-full-page-writes"/> on the primary.
   </para>
 
   <para>
-   Note that there are some limitations in an online backup from the standby:
+   Note that there are some limitations in taking a backup from a standby:
 
    <itemizedlist>
     <listitem>
@@ -89,7 +89,7 @@ PostgreSQL documentation
     </listitem>
     <listitem>
      <para>
-      If the standby is promoted to the primary during online backup, the backup fails.
+      If the standby is promoted to be primary during backup, the backup fails.
      </para>
     </listitem>
     <listitem>
@@ -105,7 +105,7 @@ PostgreSQL documentation
 
   <para>
    Whenever <application>pg_basebackup</application> is taking a base
-   backup, the <structname>pg_stat_progress_basebackup</structname>
+   backup, the server's <structname>pg_stat_progress_basebackup</structname>
    view will report the progress of the backup.
    See <xref linkend="basebackup-progress-reporting"/> for details.
   </para>
@@ -116,7 +116,7 @@ PostgreSQL documentation
 
    <para>
     The following command-line options control the location and format of the
-    output.
+    output:
 
     <variablelist>
      <varlistentry>
@@ -124,15 +124,15 @@ PostgreSQL documentation
       <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
-        Directory to write the output to.
-        <application>pg_basebackup</application> will create the directory and
-        any parent directories if necessary.  The directory may already exist,
-        but it is an error if the directory already exists and is not empty.
+        Sets the target directory to write the output to.
+        <application>pg_basebackup</application> will create this directory
+        (and any missing parent directories) if it does not exist.  If it
+        already exists, it must be empty.
        </para>
        <para>
-        When the backup is in tar mode, and the directory is specified as
-        <literal>-</literal> (dash), the tar file will be written to
-        <literal>stdout</literal>.
+        When the backup is in tar format, the target directory may be
+        specified as <literal>-</literal> (dash), causing the tar file to be
+        written to <literal>stdout</literal>.
        </para>
        <para>
         This option is required.
@@ -155,12 +155,12 @@ PostgreSQL documentation
           <listitem>
            <para>
             Write the output as plain files, with the same layout as the
-            current data directory and tablespaces. When the cluster has
+            source server's data directory and tablespaces. When the cluster has
             no additional tablespaces, the whole database will be placed in
             the target directory. If the cluster contains additional
             tablespaces, the main data directory will be placed in the
             target directory, but all other tablespaces will be placed
-            in the same absolute path as they have on the server.
+            in the same absolute path as they have on the source server.
            </para>
            <para>
             This is the default format.
@@ -174,15 +174,15 @@ PostgreSQL documentation
           <listitem>
            <para>
             Write the output as tar files in the target directory. The main
-            data directory will be written to a file named
-            <filename>base.tar</filename>, and all other tablespaces will
-            be named after the tablespace OID.
-            </para>
+            data directory's contents will be written to a file named
+            <filename>base.tar</filename>, and each other tablespace will be
+            written to a separate tar file named after that tablespace's OID.
+           </para>
            <para>
-            If the value <literal>-</literal> (dash) is specified as
-            target directory, the tar contents will be written to
-            standard output, suitable for piping to for example
-            <productname>gzip</productname>. This is only possible if
+            If the target directory is specified as <literal>-</literal>
+            (dash), the tar contents will be written to
+            standard output, suitable for piping to (for example)
+            <productname>gzip</productname>. This is only allowed if
             the cluster has no additional tablespaces and WAL
             streaming is not used.
            </para>
@@ -193,39 +193,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-r <replaceable class="parameter">rate</replaceable></option></term>
-      <term><option>--max-rate=<replaceable class="parameter">rate</replaceable></option></term>
-      <listitem>
-       <para>
-        The maximum transfer rate of data transferred from the server.  Values are
-        in kilobytes per second.  Use a suffix of <literal>M</literal> to indicate megabytes
-        per second.  A suffix of <literal>k</literal> is also accepted, and has no effect.
-        Valid values are between 32 kilobytes per second and 1024 megabytes per second.
-       </para>
-       <para>
-        The purpose is to limit the impact of <application>pg_basebackup</application>
-        on the running server.
-       </para>
-       <para>
-        This option always affects transfer of the data directory. Transfer of
-        WAL files is only affected if the collection method is <literal>fetch</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-R</option></term>
       <term><option>--write-recovery-conf</option></term>
       <listitem>
 
        <para>
-        Create <filename>standby.signal</filename> and append connection settings
-        to <filename>postgresql.auto.conf</filename> in the output
-        directory (or into the base archive file when using tar format) to
-        ease setting up a standby server.
+        Creates a <filename>standby.signal</filename> file and appends
+        connection settings to the <filename>postgresql.auto.conf</filename>
+        file in the target directory (or within the base archive file when
+        using tar format).  This eases setting up a standby server using the
+        results of the backup.
+       </para>
+       <para>
         The <filename>postgresql.auto.conf</filename> file will record the connection
         settings and, if specified, the replication slot
-        that <application>pg_basebackup</application> is using, so that the
+        that <application>pg_basebackup</application> is using, so that
         streaming replication will use the same settings later on.
        </para>
 
@@ -237,17 +219,21 @@ PostgreSQL documentation
       <term><option>--tablespace-mapping=<replaceable class="parameter">olddir</replaceable>=<replaceable class="parameter">newdir</replaceable></option></term>
       <listitem>
        <para>
-        Relocate the tablespace in directory <replaceable>olddir</replaceable>
+        Relocates the tablespace in directory <replaceable>olddir</replaceable>
         to <replaceable>newdir</replaceable> during the backup.  To be
         effective, <replaceable>olddir</replaceable> must exactly match the
-        path specification of the tablespace as it is currently defined.  (But
-        it is not an error if there is no tablespace
-        in <replaceable>olddir</replaceable> contained in the backup.)
+        path specification of the tablespace as it is defined on the source
+        server.  (But it is not an error if there is no tablespace
+        in <replaceable>olddir</replaceable> on the source server.)
+        Meanwhile <replaceable>newdir</replaceable> is a directory in the
+        receiving host's filesystem.  As with the main target directory,
+        <replaceable>newdir</replaceable> need not exist already, but if
+        it does exist it must be empty.
         Both <replaceable>olddir</replaceable>
-        and <replaceable>newdir</replaceable> must be absolute paths.  If a
-        path happens to contain a <literal>=</literal> sign, escape it with a
-        backslash.  This option can be specified multiple times for multiple
-        tablespaces.  See examples below.
+        and <replaceable>newdir</replaceable> must be absolute paths.  If
+        either path needs to contain an equal sign (<literal>=</literal>),
+        precede that with a backslash.  This option can be specified multiple
+        times for multiple tablespaces.
        </para>
 
        <para>
@@ -263,10 +249,16 @@ PostgreSQL documentation
       <term><option>--waldir=<replaceable class="parameter">waldir</replaceable></option></term>
       <listitem>
        <para>
-        Specifies the location for the write-ahead log directory.
+        Sets the directory to write WAL (write-ahead log) files to.
+        By default WAL files will be placed in
+        the <filename>pg_wal</filename> subdirectory of the target
+        directory, but this option can be used to place them elsewhere.
         <replaceable>waldir</replaceable> must be an absolute path.
-        The write-ahead log directory can only be specified when
-        the backup is in plain mode.
+        As with the main target directory,
+        <replaceable>waldir</replaceable> need not exist already, but if
+        it does exist it must be empty.
+        This option can only be specified when
+        the backup is in plain format.
        </para>
       </listitem>
      </varlistentry>
@@ -276,16 +268,16 @@ PostgreSQL documentation
       <term><option>--wal-method=<replaceable class="parameter">method</replaceable></option></term>
       <listitem>
        <para>
-        Includes the required write-ahead log files (WAL files) in the
+        Includes the required WAL (write-ahead log) files in the
         backup. This will include all write-ahead logs generated during
         the backup. Unless the method <literal>none</literal> is specified,
-        it is possible to start a postmaster directly in the extracted
+        it is possible to start a postmaster in the target
         directory without the need to consult the log archive, thus
-        making this a completely standalone backup.
+        making the output a completely standalone backup.
        </para>
        <para>
-        The following methods for collecting the write-ahead logs are
-        supported:
+        The following <replaceable>method</replaceable>s for collecting the
+        write-ahead logs are supported:
 
         <variablelist>
          <varlistentry>
@@ -293,7 +285,7 @@ PostgreSQL documentation
           <term><literal>none</literal></term>
           <listitem>
            <para>
-            Don't include write-ahead log in the backup.
+            Don't include write-ahead logs in the backup.
            </para>
           </listitem>
          </varlistentry>
@@ -304,15 +296,16 @@ PostgreSQL documentation
           <listitem>
            <para>
             The write-ahead log files are collected at the end of the backup.
-            Therefore, it is necessary for the
+            Therefore, it is necessary for the source server's
             <xref linkend="guc-wal-keep-size"/> parameter to be set high
-             enough that the log is not removed before the end of the backup.
-             If the log has been rotated when it's time to transfer it, the
-             backup will fail and be unusable.
+            enough that the required log data is not removed before the end
+            of the backup.  If the required log data has been recycled
+            before it's time to transfer it, the backup will fail and be
+            unusable.
            </para>
            <para>
-            When tar format mode is used, the write-ahead log files will be
-            written to the <filename>base.tar</filename> file.
+            When tar format is used, the write-ahead log files will be
+            included in the <filename>base.tar</filename> file.
            </para>
           </listitem>
          </varlistentry>
@@ -322,16 +315,16 @@ PostgreSQL documentation
           <term><literal>stream</literal></term>
           <listitem>
            <para>
-            Stream the write-ahead log while the backup is created. This will
-            open a second connection to the server and start streaming the
-            write-ahead log in parallel while running the backup. Therefore,
-            it will use up two connections configured by the
-            <xref linkend="guc-max-wal-senders"/> parameter. As long as the
-             client can keep up with write-ahead log received, using this mode
-             requires no extra write-ahead logs to be saved on the primary.
+            Stream write-ahead log data while the backup is being taken.
+            This method will open a second connection to the server and
+            start streaming the write-ahead log in parallel while running
+            the backup.  Therefore, it will require two replication
+            connections not just one.  As long as the client can keep up
+            with the write-ahead log data, using this method requires no
+            extra write-ahead logs to be saved on the source server.
            </para>
            <para>
-            When tar format mode is used, the write-ahead log files will be
+            When tar format is used, the write-ahead log files will be
             written to a separate file named <filename>pg_wal.tar</filename>
             (if the server is a version earlier than 10, the file will be named
             <filename>pg_xlog.tar</filename>).
@@ -375,7 +368,7 @@ PostgreSQL documentation
    </para>
    <para>
     The following command-line options control the generation of the
-    backup and the running of the program.
+    backup and the running of the program:
 
     <variablelist>
      <varlistentry>
@@ -383,7 +376,8 @@ PostgreSQL documentation
       <term><option>--checkpoint=<replaceable class="parameter">fast|spread</replaceable></option></term>
       <listitem>
        <para>
-        Sets checkpoint mode to fast (immediate) or spread (default) (see <xref linkend="backup-lowlevel-base-backup"/>).
+        Sets checkpoint mode to fast (immediate) or spread (the default)
+        (see <xref linkend="backup-lowlevel-base-backup"/>).
        </para>
       </listitem>
      </varlistentry>
@@ -393,9 +387,9 @@ PostgreSQL documentation
       <term><option>--create-slot</option></term>
       <listitem>
        <para>
-        This option causes creation of a replication slot named by the
-        <literal>--slot</literal> option before starting the backup.
-        An error is raised if the slot already exists.
+        Specifies that the replication slot named by the
+        <literal>--slot</literal> option should be created before starting
+        the backup.  An error is raised if the slot already exists.
        </para>
       </listitem>
      </varlistentry>
@@ -418,9 +412,9 @@ PostgreSQL documentation
        <para>
         By default, when <command>pg_basebackup</command> aborts with an
         error, it removes any directories it might have created before
-        discovering that it cannot finish the job (for example, data directory
-        and write-ahead log directory). This option inhibits tidying-up and is
-        thus useful for debugging.
+        discovering that it cannot finish the job (for example, the target
+        directory and write-ahead log directory). This option inhibits
+        tidying-up and is thus useful for debugging.
        </para>
 
        <para>
@@ -461,18 +455,40 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-r <replaceable class="parameter">rate</replaceable></option></term>
+      <term><option>--max-rate=<replaceable class="parameter">rate</replaceable></option></term>
+      <listitem>
+       <para>
+        Sets the maximum transfer rate at which data is collected from the
+        source server.  This can be useful to limit the impact
+        of <application>pg_basebackup</application> on the server.  Values
+        are in kilobytes per second.  Use a suffix of <literal>M</literal>
+        to indicate megabytes per second.  A suffix of <literal>k</literal>
+        is also accepted, and has no effect.  Valid values are between 32
+        kilobytes per second and 1024 megabytes per second.
+       </para>
+       <para>
+        This option always affects transfer of the data directory. Transfer of
+        WAL files is only affected if the collection method
+        is <literal>fetch</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-S <replaceable>slotname</replaceable></option></term>
       <term><option>--slot=<replaceable class="parameter">slotname</replaceable></option></term>
       <listitem>
        <para>
         This option can only be used together with <literal>-X
-        stream</literal>.  It causes the WAL streaming to use the specified
+        stream</literal>.  It causes WAL streaming to use the specified
         replication slot.  If the base backup is intended to be used as a
-        streaming replication standby using replication slots, it should then
-        use the same replication slot name
-        in <xref linkend="guc-primary-slot-name"/>.  That way, it is ensured that
-        the server does not remove any necessary WAL data in the time between
-        the end of the base backup and the start of streaming replication.
+        streaming-replication standby using a replication slot, the standby
+        should then use the same replication slot name as
+        <xref linkend="guc-primary-slot-name"/>.  This ensures that the
+        primary server does not remove any necessary WAL data in the time
+        between the end of the base backup and the start of streaming
+        replication on the new standby.
        </para>
        <para>
         The specified replication slot has to exist unless the
@@ -522,15 +538,15 @@ PostgreSQL documentation
        <para>
         Using a SHA hash function provides a cryptographically secure digest
         of each file for users who wish to verify that the backup has not been
-        tampered with, while the CRC32C algorithm provides a checksum which is
-        much faster to calculate and good at catching errors due to accidental
+        tampered with, while the CRC32C algorithm provides a checksum that is
+        much faster to calculate; it is good at catching errors due to accidental
         changes but is not resistant to targeted modifications.  Note that, to
         be useful against an adversary who has access to the backup, the backup
         manifest would need to be stored securely elsewhere or otherwise
         verified not to have been modified since the backup was taken.
        </para>
        <para>
-        <xref linkend="app-pgverifybackup" /> can be used to check the
+        <xref linkend="app-pgverifybackup"/> can be used to check the
         integrity of a backup against the backup manifest.
        </para>
       </listitem>
@@ -552,11 +568,11 @@ PostgreSQL documentation
       <term><option>--no-estimate-size</option></term>
       <listitem>
        <para>
-        This option prevents the server from estimating the total
+        Prevents the server from estimating the total
         amount of backup data that will be streamed, resulting in the
-        <literal>backup_total</literal> column in the
-        <structname>pg_stat_progress_basebackup</structname>
-        to be <literal>NULL</literal>.
+        <structfield>backup_total</structfield> column in the
+        <structname>pg_stat_progress_basebackup</structname> view
+        always being <literal>NULL</literal>.
        </para>
        <para>
         Without this option, the backup will start by enumerating
@@ -578,7 +594,7 @@ PostgreSQL documentation
        <para>
         Disables generation of a backup manifest. If this option is not
         specified, the server will generate and send a backup manifest
-        which can be verified using <xref linkend="app-pgverifybackup" />.
+        which can be verified using <xref linkend="app-pgverifybackup"/>.
         The manifest is a list of every file present in the backup with the
         exception of any WAL files that may be included. It also stores the
         size, last modification time, and an optional checksum for each file.
@@ -590,16 +606,17 @@ PostgreSQL documentation
       <term><option>--no-slot</option></term>
       <listitem>
        <para>
-        This option prevents the creation of a temporary replication slot
-        during the backup even if it's supported by the server.
+        Prevents the creation of a temporary replication slot
+        for the backup.
        </para>
        <para>
-        Temporary replication slots are created by default if no slot name
-        is given with the option <option>-S</option> when using log streaming.
+        By default, if log streaming is selected but no slot name is given
+        with the <option>-S</option> option, then a temporary replication
+        slot is created (if supported by the source server).
        </para>
        <para>
         The main purpose of this option is to allow taking a base backup when
-        the server is out of free replication slots.  Using replication slots
+        the server has no free replication slots.  Using a replication slot
         is almost always preferred, because it prevents needed WAL from being
         removed by the server during the backup.
        </para>
@@ -617,7 +634,7 @@ PostgreSQL documentation
         By default, checksums are verified and checksum failures will result
         in a non-zero exit status. However, the base backup will not be
         removed in such a case, as if the <option>--no-clean</option> option
-        had been used.  Checksum verifications failures will also be reported
+        had been used.  Checksum verification failures will also be reported
         in the <link linkend="monitoring-pg-stat-database-view">
         <structname>pg_stat_database</structname></link> view.
        </para>
@@ -627,7 +644,8 @@ PostgreSQL documentation
    </para>
 
    <para>
-    The following command-line options control the database connection parameters.
+    The following command-line options control the connection to the source
+    server:
 
     <variablelist>
      <varlistentry>
@@ -641,7 +659,7 @@ PostgreSQL documentation
        <para>
         The option is called <literal>--dbname</literal> for consistency with other
         client applications, but because <application>pg_basebackup</application>
-        doesn't connect to any particular database in the cluster, database
+        doesn't connect to any particular database in the cluster, any database
         name in the connection string will be ignored.
        </para>
       </listitem>
@@ -654,7 +672,7 @@ PostgreSQL documentation
        <para>
         Specifies the host name of the machine on which the server is
         running.  If the value begins with a slash, it is used as the
-        directory for the Unix domain socket. The default is taken
+        directory for a Unix domain socket. The default is taken
         from the <envar>PGHOST</envar> environment variable, if set,
         else a Unix domain socket connection is attempted.
        </para>
@@ -679,11 +697,12 @@ PostgreSQL documentation
       <term><option>--status-interval=<replaceable class="parameter">interval</replaceable></option></term>
       <listitem>
        <para>
-        Specifies the number of seconds between status packets sent back to the
-        server. This allows for easier monitoring of the progress from server.
-        A value of zero disables the periodic status updates completely,
+        Specifies the number of seconds between status packets sent back to
+        the source server. Smaller values allow more accurate monitoring of
+        backup progress from the server.
+        A value of zero disables periodic status updates completely,
         although an update will still be sent when requested by the server, to
-        avoid timeout disconnect. The default value is 10 seconds.
+        avoid timeout-based disconnects. The default value is 10 seconds.
        </para>
       </listitem>
      </varlistentry>
@@ -693,7 +712,7 @@ PostgreSQL documentation
       <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
-        User name to connect as.
+        Specifies the user name to connect as.
        </para>
       </listitem>
      </varlistentry>
@@ -703,7 +722,7 @@ PostgreSQL documentation
       <term><option>--no-password</option></term>
       <listitem>
        <para>
-        Never issue a password prompt.  If the server requires
+        Prevents issuing a password prompt.  If the server requires
         password authentication and a password is not available by
         other means such as a <filename>.pgpass</filename> file, the
         connection attempt will fail.  This option can be useful in
@@ -718,8 +737,8 @@ PostgreSQL documentation
       <term><option>--password</option></term>
       <listitem>
        <para>
-        Force <application>pg_basebackup</application> to prompt for a
-        password before connecting to a database.
+        Forces <application>pg_basebackup</application> to prompt for a
+        password before connecting to the source server.
        </para>
 
        <para>
@@ -745,7 +764,7 @@ PostgreSQL documentation
        <term><option>--version</option></term>
        <listitem>
        <para>
-       Print the <application>pg_basebackup</application> version and exit.
+       Prints the <application>pg_basebackup</application> version and exits.
        </para>
        </listitem>
      </varlistentry>
@@ -755,8 +774,8 @@ PostgreSQL documentation
        <term><option>--help</option></term>
        <listitem>
        <para>
-       Show help about <application>pg_basebackup</application> command line
-       arguments, and exit.
+       Shows help about <application>pg_basebackup</application> command line
+       arguments, and exits.
        </para>
        </listitem>
      </varlistentry>
@@ -787,11 +806,10 @@ PostgreSQL documentation
   <title>Notes</title>
 
   <para>
-   At the beginning of the backup, a checkpoint needs to be written on the
-   server the backup is taken from.  Especially if the option
-   <literal>--checkpoint=fast</literal> is not used, this can take some time
-   during which <application>pg_basebackup</application> will be appear
-   to be idle.
+   At the beginning of the backup, a checkpoint needs to be performed on the
+   source server.  This can take some time (especially if the option
+   <literal>--checkpoint=fast</literal> is not used), during
+   which <application>pg_basebackup</application> will appear to be idle.
   </para>
 
   <para>
@@ -806,8 +824,8 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Tablespaces will in plain format by default be backed up to the same path
-   they have on the server, unless the
+   In plain format, tablespaces will be backed up to the same path
+   they have on the source server, unless the
    option <literal>--tablespace-mapping</literal> is used.  Without
    this option, running a plain format base backup on the same host as the
    server will not work if tablespaces are in use, because the backup would
@@ -816,8 +834,9 @@ PostgreSQL documentation
   </para>
 
   <para>
-   When tar format mode is used, it is the user's responsibility to unpack each
-   tar file before starting the PostgreSQL server. If there are additional tablespaces, the
+   When tar format is used, it is the user's responsibility to unpack each
+   tar file before starting a PostgreSQL server that uses the data. If there
+   are additional tablespaces, the
    tar files for them need to be unpacked in the correct locations. In this
    case the symbolic links for those tablespaces will be created by the server
    according to the contents of the <filename>tablespace_map</filename> file that is
@@ -827,15 +846,14 @@ PostgreSQL documentation
   <para>
    <application>pg_basebackup</application> works with servers of the same
    or an older major version, down to 9.1. However, WAL streaming mode (<literal>-X
-   stream</literal>) only works with server version 9.3 and later, and tar format mode
-   (<literal>--format=tar</literal>) of the current version only works with server version 9.5
-   or later.
+   stream</literal>) only works with server version 9.3 and later, and tar format
+   (<literal>--format=tar</literal>) only works with server version 9.5
+   and later.
   </para>
 
   <para>
-   <application>pg_basebackup</application> will preserve group permissions in
-   both the <literal>plain</literal> and <literal>tar</literal> formats if group
-   permissions are enabled on the source cluster.
+   <application>pg_basebackup</application> will preserve group permissions
+   for data files if group permissions are enabled on the source cluster.
   </para>
 
  </refsect1>
