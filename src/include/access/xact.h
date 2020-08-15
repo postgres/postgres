@@ -82,8 +82,8 @@ typedef enum
 extern int	synchronous_commit;
 
 /* used during logical streaming of a transaction */
-extern TransactionId CheckXidAlive;
-extern bool bsysscan;
+extern PGDLLIMPORT TransactionId CheckXidAlive;
+extern PGDLLIMPORT bool bsysscan;
 
 /*
  * Miscellaneous flag bits to record events which occur on the top level
