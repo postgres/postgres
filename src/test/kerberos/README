@@ -8,10 +8,12 @@ functionality.  This requires a full MIT Kerberos installation,
 including server and client tools, and is therefore kept separate and
 not run by default.
 
-Also, this test suite creates a KDC server that listens for TCP/IP
-connections on localhost without any real access control, so it is not
-safe to run this on a system where there might be untrusted local
-users.
+CAUTION: The test server run by this test is configured to listen for TCP
+connections on localhost. Any user on the same host is able to log in to the
+test server while the tests are running. Do not run this suite on a multi-user
+system where you don't trust all local users! Also, this test suite creates a
+KDC server that listens for TCP/IP connections on localhost without any real
+access control.
 
 Running the tests
 =================

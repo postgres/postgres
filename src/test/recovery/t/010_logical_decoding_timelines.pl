@@ -111,7 +111,7 @@ is($stdout, 'before_basebackup',
 # Examine the physical slot the replica uses to stream changes
 # from the primary to make sure its hot_standby_feedback
 # has locked in a catalog_xmin on the physical slot, and that
-# any xmin is < the catalog_xmin
+# any xmin is >= the catalog_xmin
 $node_primary->poll_query_until(
 	'postgres', q[
 	SELECT catalog_xmin IS NOT NULL

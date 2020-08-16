@@ -9,7 +9,6 @@
 # - a database called trustdb that lets anyone in
 # - another database called certdb that uses certificate authentication, ie.
 #   the client must present a valid certificate signed by the client CA
-# - two users, called ssltestuser and anotheruser.
 #
 # The server is configured to only accept connections from localhost. If you
 # want to run the client from another host, you'll have to configure that
