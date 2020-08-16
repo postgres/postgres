@@ -6048,7 +6048,16 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 				TransactionIdIsInProgress(members[i].xid))
 			{
 				/* running locker cannot possibly be older than the cutoff */
-				Assert(!TransactionIdPrecedes(members[i].xid, cutoff_xid));
+				if (TransactionIdPrecedes(members[i].xid, cutoff_xid))
+				{
+					/* temporary on-bf debugging */
+					elog(PANIC, "too old alive locker: multi: %u, member xid: %u, memb-current: %d, memb-progress: %d, cutoff: %u, cutoff-multi: %u, relfrozenxid: %u, relminmxid: %u",
+						 multi, members[i].xid,
+						 TransactionIdIsCurrentTransactionId(members[i].xid),
+						 TransactionIdIsInProgress(members[i].xid),
+						 cutoff_xid, cutoff_multi,
+						 relfrozenxid, relminmxid);
+				}
 				newmembers[nnewmembers++] = members[i];
 				has_lockers = true;
 			}
