@@ -1663,7 +1663,7 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 		TransactionId xmin;
 
 		/* Fetch xid just once - see GetNewTransactionId */
-		xid = UINT32_ACCESS_ONCE(other_xids[pgprocno]);
+		xid = UINT32_ACCESS_ONCE(other_xids[index]);
 		xmin = UINT32_ACCESS_ONCE(proc->xmin);
 
 		/*
