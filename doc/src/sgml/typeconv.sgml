@@ -1069,7 +1069,7 @@ domain's base type for all subsequent steps.
     functions, this behavior allows a domain type to be preserved through
     a <literal>UNION</literal> or similar construct, so long as the user is
     careful to ensure that all inputs are implicitly or explicitly of that
-    exact type.  Otherwise the domain's base type will be preferred.
+    exact type.  Otherwise the domain's base type will be used.
    </para>
   </footnote>
 </para>
@@ -1092,24 +1092,29 @@ If the non-unknown inputs are not all of the same type category, fail.
 
 <step performance="required">
 <para>
-Choose the first non-unknown input type which is a preferred type in
-that category, if there is one.
+Select the first non-unknown input type as the candidate type,
+then consider each other non-unknown input type, left to right.
+  <footnote>
+   <para>
+    For historical reasons, <literal>CASE</literal> treats
+    its <literal>ELSE</literal> clause (if any) as the <quote>first</quote>
+    input, with the <literal>THEN</literal> clauses(s) considered after
+    that.  In all other cases, <quote>left to right</quote> means the order
+    in which the expressions appear in the query text.
+   </para>
+  </footnote>
+If the candidate type can be implicitly converted to the other type,
+but not vice-versa, select the other type as the new candidate type.
+Then continue considering the remaining inputs.  If, at any stage of this
+process, a preferred type is selected, stop considering additional
+inputs.
 </para>
 </step>
 
 <step performance="required">
 <para>
-Otherwise, choose the last non-unknown input type that allows all the
-preceding non-unknown inputs to be implicitly converted to it.  (There
-always is such a type, since at least the first type in the list must
-satisfy this condition.)
-</para>
-</step>
-
-<step performance="required">
-<para>
-Convert all inputs to the selected type.  Fail if there is not a
-conversion from a given input to the selected type.
+Convert all inputs to the final candidate type.  Fail if there is not an
+implicit conversion from a given input type to the candidate type.
 </para>
 </step>
 </procedure>
