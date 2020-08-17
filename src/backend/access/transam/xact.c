@@ -5565,6 +5565,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 	{
 		xl_xinfo.xinfo |= XACT_XINFO_HAS_RELFILENODES;
 		xl_relfilenodes.nrels = nrels;
+		info |= XLR_SPECIAL_REL_UPDATE;
 	}
 
 	if (nmsgs > 0)
@@ -5697,6 +5698,7 @@ XactLogAbortRecord(TimestampTz abort_time,
 	{
 		xl_xinfo.xinfo |= XACT_XINFO_HAS_RELFILENODES;
 		xl_relfilenodes.nrels = nrels;
+		info |= XLR_SPECIAL_REL_UPDATE;
 	}
 
 	if (TransactionIdIsValid(twophase_xid))

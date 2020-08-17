@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 20;
+use Test::More tests => 23;
 
 use FindBin;
 use lib $FindBin::RealBin;
@@ -28,6 +28,10 @@ sub run_test
 	# table is truncated in the old primary after promotion
 	primary_psql("CREATE TABLE tail_tbl (id integer, d text)");
 	primary_psql("INSERT INTO tail_tbl VALUES (0, 'in primary')");
+
+	# This test table is dropped in the old primary after promotion.
+	primary_psql("CREATE TABLE drop_tbl (d text)");
+	primary_psql("INSERT INTO drop_tbl VALUES ('in primary')");
 
 	primary_psql("CHECKPOINT");
 
@@ -65,6 +69,9 @@ sub run_test
 	# whole new relfilenode)
 	primary_psql("DELETE FROM tail_tbl WHERE id > 10");
 	primary_psql("VACUUM tail_tbl");
+
+	# Drop drop_tbl. pg_rewind should copy it back.
+	primary_psql("DROP TABLE drop_tbl");
 
 	# Before running pg_rewind, do a couple of extra tests with several
 	# option combinations.  As the code paths taken by those tests
@@ -153,6 +160,12 @@ in primary, before promotion
 		qq(10001
 ),
 		'tail-copy');
+
+	check_query(
+		'SELECT * FROM drop_tbl',
+		qq(in primary
+),
+		'drop');
 
 	# Permissions on PGDATA should be default
   SKIP:
