@@ -26,7 +26,7 @@ CREATE TABLE brintest (byteacol bytea,
 	int4rangecol int4range,
 	lsncol pg_lsn,
 	boxcol box
-) WITH (fillfactor=10);
+) WITH (fillfactor=10, autovacuum_enabled=off);
 INSERT INTO brintest SELECT
 	repeat(stringu1, 8)::bytea,
 	substr(stringu1, 1, 1)::"char",
