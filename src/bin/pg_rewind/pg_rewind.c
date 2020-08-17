@@ -422,7 +422,6 @@ main(int argc, char **argv)
 	executeFileMap();
 
 	progress_report(true);
-	printf("\n");
 
 	if (showprogress)
 		pg_log_info("creating backup label and updating control file");
@@ -519,11 +518,14 @@ sanityChecks(void)
 /*
  * Print a progress report based on the fetch_size and fetch_done variables.
  *
- * Progress report is written at maximum once per second, unless the
- * force parameter is set to true.
+ * Progress report is written at maximum once per second, except that the
+ * last progress report is always printed.
+ *
+ * If finished is set to true, this is the last progress report. The cursor
+ * is moved to the next line.
  */
 void
-progress_report(bool force)
+progress_report(bool finished)
 {
 	static pg_time_t last_progress_report = 0;
 	int			percent;
@@ -535,7 +537,7 @@ progress_report(bool force)
 		return;
 
 	now = time(NULL);
-	if (now == last_progress_report && !force)
+	if (now == last_progress_report && !finished)
 		return;					/* Max once per second */
 
 	last_progress_report = now;
@@ -565,10 +567,12 @@ progress_report(bool force)
 	fprintf(stderr, _("%*s/%s kB (%d%%) copied"),
 			(int) strlen(fetch_size_str), fetch_done_str, fetch_size_str,
 			percent);
-	if (isatty(fileno(stderr)))
-		fprintf(stderr, "\r");
-	else
-		fprintf(stderr, "\n");
+
+	/*
+	 * Stay on the same line if reporting to a terminal and we're not done
+	 * yet.
+	 */
+	fprintf(stderr, (!finished && isatty(fileno(stderr))) ? "\r" : "\n");
 }
 
 /*

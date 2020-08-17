@@ -125,7 +125,7 @@ static const struct exclude_list_item skip[] = {
  * src/bin/pg_basebackup/pg_basebackup.c.
  */
 static void
-progress_report(bool force)
+progress_report(bool finished)
 {
 	int			percent;
 	char		total_size_str[32];
@@ -135,7 +135,7 @@ progress_report(bool force)
 	Assert(showprogress);
 
 	now = time(NULL);
-	if (now == last_progress_report && !force)
+	if (now == last_progress_report && !finished)
 		return;					/* Max once per second */
 
 	/* Save current time */
@@ -162,8 +162,11 @@ progress_report(bool force)
 			(int) strlen(current_size_str), current_size_str, total_size_str,
 			percent);
 
-	/* Stay on the same line if reporting to a terminal */
-	fprintf(stderr, isatty(fileno(stderr)) ? "\r" : "\n");
+	/*
+	 * Stay on the same line if reporting to a terminal and we're not done
+	 * yet.
+	 */
+	fprintf(stderr, (!finished && isatty(fileno(stderr))) ? "\r" : "\n");
 }
 
 static bool
@@ -624,10 +627,7 @@ main(int argc, char *argv[])
 		(void) scan_directory(DataDir, "pg_tblspc", false);
 
 		if (showprogress)
-		{
 			progress_report(true);
-			fprintf(stderr, "\n");	/* Need to move to next line */
-		}
 
 		printf(_("Checksum operation completed\n"));
 		printf(_("Files scanned:  %s\n"), psprintf(INT64_FORMAT, files));

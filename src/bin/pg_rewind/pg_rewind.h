@@ -53,7 +53,7 @@ extern XLogRecPtr readOneRecord(const char *datadir, XLogRecPtr ptr,
 								int tliIndex, const char *restoreCommand);
 
 /* in pg_rewind.c */
-extern void progress_report(bool force);
+extern void progress_report(bool finished);
 
 /* in timeline.c */
 extern TimeLineHistoryEntry *rewind_parseTimeLineHistory(char *buffer,
