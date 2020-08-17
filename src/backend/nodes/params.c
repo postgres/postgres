@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "fmgr.h"
 #include "mb/stringinfo_mb.h"
 #include "nodes/params.h"
 #include "parser/parse_node.h"

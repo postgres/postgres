@@ -16,11 +16,11 @@
 
 #include "access/transam.h"
 #include "access/xlogreader.h"
+#include "datatype/timestamp.h"
 #include "lib/stringinfo.h"
 #include "nodes/pg_list.h"
 #include "storage/relfilenode.h"
 #include "storage/sinval.h"
-#include "utils/datetime.h"
 
 /*
  * Maximum size of Global Transaction ID (including '\0').

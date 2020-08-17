@@ -53,6 +53,7 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
+#include "datatype/timestamp.h"
 #include "lib/pairingheap.h"
 #include "miscadmin.h"
 #include "storage/predicate.h"
@@ -67,6 +68,7 @@
 #include "utils/resowner_private.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
+#include "utils/timestamp.h"
 
 
 /*

@@ -46,6 +46,7 @@
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
+#include "utils/datetime.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
