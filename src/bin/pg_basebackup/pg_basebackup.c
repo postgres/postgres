@@ -188,7 +188,8 @@ static PQExpBuffer recoveryconfcontents = NULL;
 /* Function headers */
 static void usage(void);
 static void verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found);
-static void progress_report(int tablespacenum, const char *filename, bool force);
+static void progress_report(int tablespacenum, const char *filename, bool force,
+							bool finished);
 
 static void ReceiveTarFile(PGconn *conn, PGresult *res, int rownum);
 static void ReceiveTarCopyChunk(size_t r, char *copybuf, void *callback_data);
@@ -765,11 +766,15 @@ verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found)
  * Print a progress report based on the global variables. If verbose output
  * is enabled, also print the current file name.
  *
- * Progress report is written at maximum once per second, unless the
- * force parameter is set to true.
+ * Progress report is written at maximum once per second, unless the force
+ * parameter is set to true.
+ *
+ * If finished is set to true, this is the last progress report. The cursor
+ * is moved to the next line.
  */
 static void
-progress_report(int tablespacenum, const char *filename, bool force)
+progress_report(int tablespacenum, const char *filename,
+				bool force, bool finished)
 {
 	int			percent;
 	char		totaldone_str[32];
@@ -780,7 +785,7 @@ progress_report(int tablespacenum, const char *filename, bool force)
 		return;
 
 	now = time(NULL);
-	if (now == last_progress_report && !force)
+	if (now == last_progress_report && !force && !finished)
 		return;					/* Max once per second */
 
 	last_progress_report = now;
@@ -851,10 +856,11 @@ progress_report(int tablespacenum, const char *filename, bool force)
 				totaldone_str, totalsize_str, percent,
 				tablespacenum, tablespacecount);
 
-	if (isatty(fileno(stderr)))
-		fprintf(stderr, "\r");
-	else
-		fprintf(stderr, "\n");
+	/*
+	 * Stay on the same line if reporting to a terminal and we're not done
+	 * yet.
+	 */
+	fprintf(stderr, (!finished && isatty(fileno(stderr))) ? "\r" : "\n");
 }
 
 static int32
@@ -1277,7 +1283,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		}
 	}
 
-	progress_report(rownum, state.filename, true);
+	progress_report(rownum, state.filename, true, false);
 
 	/*
 	 * Do not sync the resulting tar file yet, all files are synced once at
@@ -1470,7 +1476,7 @@ ReceiveTarCopyChunk(size_t r, char *copybuf, void *callback_data)
 		}
 	}
 	totaldone += r;
-	progress_report(state->tablespacenum, state->filename, false);
+	progress_report(state->tablespacenum, state->filename, false, false);
 }
 
 
@@ -1528,7 +1534,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	if (state.file)
 		fclose(state.file);
 
-	progress_report(rownum, state.filename, true);
+	progress_report(rownum, state.filename, true, false);
 
 	if (state.file != NULL)
 	{
@@ -1709,7 +1715,7 @@ ReceiveTarAndUnpackCopyChunk(size_t r, char *copybuf, void *callback_data)
 			exit(1);
 		}
 		totaldone += r;
-		progress_report(state->tablespacenum, state->filename, false);
+		progress_report(state->tablespacenum, state->filename, false, false);
 
 		state->current_len_left -= r;
 		if (state->current_len_left == 0 && state->current_padding == 0)
@@ -2027,11 +2033,7 @@ BaseBackup(void)
 		ReceiveBackupManifest(conn);
 
 	if (showprogress)
-	{
-		progress_report(PQntuples(res), NULL, true);
-		if (isatty(fileno(stderr)))
-			fprintf(stderr, "\n");	/* Need to move to next line */
-	}
+		progress_report(PQntuples(res), NULL, true, true);
 
 	PQclear(res);
 
