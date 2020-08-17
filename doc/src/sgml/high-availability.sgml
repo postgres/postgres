@@ -2380,9 +2380,10 @@ LOG:  database system is ready to accept read only connections
    </para>
 
    <para>
-    The background writer is active during recovery and will perform
-    restartpoints (similar to checkpoints on the primary) and normal block
-    cleaning activities. This can include updates of the hint bit
+    The checkpointer process and the background writer process are active during
+    recovery. The checkpointer process will perform restartpoints (similar to
+    checkpoints on the primary) and the background writer process will perform
+    normal block cleaning activities. This can include updates of the hint bit
     information stored on the standby server.
     The <command>CHECKPOINT</command> command is accepted during recovery,
     though it performs a restartpoint rather than a new checkpoint.
