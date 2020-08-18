@@ -97,6 +97,7 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	char	   *proname;
 	Form_pg_type pg_type_entry;
 	Oid			result_typioparam;
+	Oid			prorettype;
 	FmgrInfo	result_in_func;
 	int			numargs;
 
@@ -117,7 +118,6 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	if (isnull)
 		elog(ERROR, "could not find source text of function \"%s\"",
 			 proname);
-	ReleaseSysCache(pl_tuple);
 	source = DatumGetCString(DirectFunctionCall1(textout, ret));
 	ereport(NOTICE,
 			(errmsg("source text of function \"%s\": %s",
@@ -157,6 +157,10 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 						i, argnames[i], value)));
 	}
 
+	/* Type of the result */
+	prorettype = pl_struct->prorettype;
+	ReleaseSysCache(pl_tuple);
+
 	/*
 	 * Get the required information for input conversion of the return value.
 	 *
@@ -165,13 +169,13 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	 * we can do here.  This returns NULL except if the result type is text,
 	 * where the result is the source text of the function.
 	 */
-	if (pl_struct->prorettype != TEXTOID)
+	if (prorettype != TEXTOID)
 		PG_RETURN_NULL();
 
 	type_tuple = SearchSysCache1(TYPEOID,
-								 ObjectIdGetDatum(pl_struct->prorettype));
+								 ObjectIdGetDatum(prorettype));
 	if (!HeapTupleIsValid(type_tuple))
-		elog(ERROR, "cache lookup failed for type %u", pl_struct->prorettype);
+		elog(ERROR, "cache lookup failed for type %u", prorettype);
 	pg_type_entry = (Form_pg_type) GETSTRUCT(type_tuple);
 	result_typioparam = getTypeIOParam(type_tuple);
 
