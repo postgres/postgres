@@ -524,6 +524,7 @@ SnapBuildBuildSnapshot(SnapBuild *builder)
 	snapshot->curcid = FirstCommandId;
 	snapshot->active_count = 0;
 	snapshot->regd_count = 0;
+	snapshot->snapXactCompletionCount = 0;
 
 	return snapshot;
 }
