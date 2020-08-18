@@ -166,7 +166,7 @@ progress_report(bool finished)
 	 * Stay on the same line if reporting to a terminal and we're not done
 	 * yet.
 	 */
-	fprintf(stderr, (!finished && isatty(fileno(stderr))) ? "\r" : "\n");
+	fputc((!finished && isatty(fileno(stderr))) ? '\r' : '\n', stderr);
 }
 
 static bool
