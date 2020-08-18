@@ -1,0 +1,36 @@
+CREATE EXTENSION plsample;
+-- Create and test some dummy functions
+CREATE FUNCTION plsample_result_text(a1 numeric, a2 text, a3 integer[])
+RETURNS TEXT
+AS $$
+  Example of source with text result.
+$$ LANGUAGE plsample;
+SELECT plsample_result_text(1.23, 'abc', '{4, 5, 6}');
+NOTICE:  source text of function "plsample_result_text": 
+  Example of source with text result.
+
+NOTICE:  argument: 0; name: a1; value: 1.23
+NOTICE:  argument: 1; name: a2; value: abc
+NOTICE:  argument: 2; name: a3; value: {4,5,6}
+         plsample_result_text          
+---------------------------------------
+                                      +
+   Example of source with text result.+
+ 
+(1 row)
+
+CREATE FUNCTION plsample_result_void(a1 text[])
+RETURNS VOID
+AS $$
+  Example of source with void result.
+$$ LANGUAGE plsample;
+SELECT plsample_result_void('{foo, bar, hoge}');
+NOTICE:  source text of function "plsample_result_void": 
+  Example of source with void result.
+
+NOTICE:  argument: 0; name: a1; value: {foo,bar,hoge}
+ plsample_result_void 
+----------------------
+ 
+(1 row)
+

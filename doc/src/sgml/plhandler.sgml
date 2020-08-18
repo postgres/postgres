@@ -96,62 +96,10 @@
    </para>
 
    <para>
-    This is a template for a procedural-language handler written in C:
-<programlisting>
-#include "postgres.h"
-#include "executor/spi.h"
-#include "commands/trigger.h"
-#include "fmgr.h"
-#include "access/heapam.h"
-#include "utils/syscache.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
-
-PG_MODULE_MAGIC;
-
-PG_FUNCTION_INFO_V1(plsample_call_handler);
-
-Datum
-plsample_call_handler(PG_FUNCTION_ARGS)
-{
-    Datum          retval;
-
-    if (CALLED_AS_TRIGGER(fcinfo))
-    {
-        /*
-         * Called as a trigger function
-         */
-        TriggerData    *trigdata = (TriggerData *) fcinfo-&gt;context;
-
-        retval = ...
-    }
-    else
-    {
-        /*
-         * Called as a function
-         */
-
-        retval = ...
-    }
-
-    return retval;
-}
-</programlisting>
-    Only a few thousand lines of code have to be added instead of the
-    dots to complete the call handler.
-   </para>
-
-   <para>
-    After having compiled the handler function into a loadable module
-    (see <xref linkend="dfunc"/>), the following commands then
-    register the sample procedural language:
-<programlisting>
-CREATE FUNCTION plsample_call_handler() RETURNS language_handler
-    AS '<replaceable>filename</replaceable>'
-    LANGUAGE C;
-CREATE LANGUAGE plsample
-    HANDLER plsample_call_handler;
-</programlisting>
+    A template for a procedural-language handler written as a C extension is
+    provided in <literal>src/test/modules/plsample</literal>.  This is a
+    working sample demonstrating one way to create a procedural-language
+    handler, process parameters, and return a value.
    </para>
 
    <para>

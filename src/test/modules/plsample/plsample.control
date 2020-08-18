@@ -1,0 +1,8 @@
+# plsample extension
+comment = 'PL/Sample'
+default_version = '1.0'
+module_pathname = '$libdir/plsample'
+relocatable = false
+schema = pg_catalog
+superuser = false
+trusted = true
