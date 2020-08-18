@@ -860,6 +860,15 @@ ProcArrayClearTransaction(PGPROC *proc)
 	Assert(!(proc->vacuumFlags & PROC_VACUUM_STATE_MASK));
 	Assert(!proc->delayChkpt);
 
+	/*
+	 * Need to increment completion count even though transaction hasn't
+	 * really committed yet. The reason for that is that GetSnapshotData()
+	 * omits the xid of the current transaction, thus without the increment we
+	 * otherwise could end up reusing the snapshot later. Which would be bad,
+	 * because it might not count the prepared transaction as running.
+	 */
+	ShmemVariableCache->xactCompletionCount++;
+
 	/* Clear the subtransaction-XID cache too */
 	Assert(ProcGlobal->subxidStates[pgxactoff].count == proc->subxidStatus.count &&
 		   ProcGlobal->subxidStates[pgxactoff].overflowed == proc->subxidStatus.overflowed);
