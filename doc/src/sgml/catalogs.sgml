@@ -9227,6 +9227,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
+      <entry><link linkend="view-pg-backend-memory-contexts"><structname>pg_backend_memory_contexts</structname></link></entry>
+      <entry>backend memory contexts</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-config"><structname>pg_config</structname></link></entry>
       <entry>compile-time configuration parameters</entry>
      </row>
@@ -9575,6 +9580,123 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    The <structname>pg_available_extension_versions</structname> view is read
    only.
   </para>
+ </sect1>
+
+ <sect1 id="view-pg-backend-memory-contexts">
+  <title><structname>pg_backend_memory_contexts</structname></title>
+
+  <indexterm zone="view-pg-backend-memory-contexts">
+   <primary>pg_backend_memory_contexts</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_backend_memory_contexts</structname> displays all
+   the memory contexts of the server process attached to the current session.
+  </para>
+  <para>
+   <structname>pg_backend_memory_contexts</structname> contains one row
+   for each memory context.
+  </para>
+
+  <table>
+   <title><structname>pg_backend_memory_contexts</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the memory context
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>ident</structfield> <type>text</type>
+      </para>
+      <para>
+       Identification information of the memory context. This field is truncated at 1024 bytes
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>parent</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the parent of this memory context
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>level</structfield> <type>int4</type>
+      </para>
+      <para>
+       Distance from TopMemoryContext in context tree
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>total_bytes</structfield> <type>int8</type>
+      </para>
+      <para>
+       Total bytes allocated for this memory context
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>total_nblocks</structfield> <type>int8</type>
+      </para>
+      <para>
+       Total number of blocks allocated for this memory context
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>free_bytes</structfield> <type>int8</type>
+      </para>
+      <para>
+       Free space in bytes
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>free_chunks</structfield> <type>int8</type>
+      </para>
+      <para>
+       Total number of free chunks
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>used_bytes</structfield> <type>int8</type>
+      </para>
+      <para>
+       Used space in bytes
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
  </sect1>
 
  <sect1 id="view-pg-config">
