@@ -120,9 +120,6 @@ static Node *eval_const_expressions_mutator(Node *node,
 static bool contain_non_const_walker(Node *node, void *context);
 static bool ece_function_is_safe(Oid funcid,
 								 eval_const_expressions_context *context);
-static Node *apply_const_relabel(Node *arg, Oid rtype,
-								 int32 rtypmod, Oid rcollid,
-								 CoercionForm rformat, int rlocation);
 static List *simplify_or_arguments(List *args,
 								   eval_const_expressions_context *context,
 								   bool *haveNull, bool *forceTrue);
@@ -2819,12 +2816,13 @@ eval_const_expressions_mutator(Node *node,
 				arg = eval_const_expressions_mutator((Node *) relabel->arg,
 													 context);
 				/* ... and attach a new RelabelType node, if needed */
-				return apply_const_relabel(arg,
-										   relabel->resulttype,
-										   relabel->resulttypmod,
-										   relabel->resultcollid,
-										   relabel->relabelformat,
-										   relabel->location);
+				return applyRelabelType(arg,
+										relabel->resulttype,
+										relabel->resulttypmod,
+										relabel->resultcollid,
+										relabel->relabelformat,
+										relabel->location,
+										true);
 			}
 		case T_CoerceViaIO:
 			{
@@ -2971,12 +2969,13 @@ eval_const_expressions_mutator(Node *node,
 				arg = eval_const_expressions_mutator((Node *) collate->arg,
 													 context);
 				/* ... and attach a new RelabelType node, if needed */
-				return apply_const_relabel(arg,
-										   exprType(arg),
-										   exprTypmod(arg),
-										   collate->collOid,
-										   COERCE_IMPLICIT_CAST,
-										   collate->location);
+				return applyRelabelType(arg,
+										exprType(arg),
+										exprTypmod(arg),
+										collate->collOid,
+										COERCE_IMPLICIT_CAST,
+										collate->location,
+										true);
 			}
 		case T_CaseExpr:
 			{
@@ -3478,12 +3477,13 @@ eval_const_expressions_mutator(Node *node,
 													cdomain->resulttype);
 
 					/* Generate RelabelType to substitute for CoerceToDomain */
-					return apply_const_relabel(arg,
-											   cdomain->resulttype,
-											   cdomain->resulttypmod,
-											   cdomain->resultcollid,
-											   cdomain->coercionformat,
-											   cdomain->location);
+					return applyRelabelType(arg,
+											cdomain->resulttype,
+											cdomain->resulttypmod,
+											cdomain->resultcollid,
+											cdomain->coercionformat,
+											cdomain->location,
+											true);
 				}
 
 				newcdomain = makeNode(CoerceToDomain);
@@ -3614,58 +3614,6 @@ ece_function_is_safe(Oid funcid, eval_const_expressions_context *context)
 	if (context->estimate && provolatile == PROVOLATILE_STABLE)
 		return true;
 	return false;
-}
-
-/*
- * Subroutine for eval_const_expressions: apply RelabelType if needed
- */
-static Node *
-apply_const_relabel(Node *arg, Oid rtype, int32 rtypmod, Oid rcollid,
-					CoercionForm rformat, int rlocation)
-{
-	/*
-	 * If we find stacked RelabelTypes (eg, from foo::int::oid) we can discard
-	 * all but the top one, and must do so to ensure that semantically
-	 * equivalent expressions are equal().
-	 */
-	while (arg && IsA(arg, RelabelType))
-		arg = (Node *) ((RelabelType *) arg)->arg;
-
-	if (arg && IsA(arg, Const))
-	{
-		/*
-		 * If it's a Const, just modify it in-place; since this is part of
-		 * eval_const_expressions, we want to end up with a simple Const not
-		 * an expression tree.  We assume the Const is newly generated and
-		 * hence safe to modify.
-		 */
-		Const	   *con = (Const *) arg;
-
-		con->consttype = rtype;
-		con->consttypmod = rtypmod;
-		con->constcollid = rcollid;
-		return (Node *) con;
-	}
-	else if (exprType(arg) == rtype &&
-			 exprTypmod(arg) == rtypmod &&
-			 exprCollation(arg) == rcollid)
-	{
-		/* Sometimes we find a nest of relabels that net out to nothing. */
-		return arg;
-	}
-	else
-	{
-		/* Nope, gotta have a RelabelType. */
-		RelabelType *newrelabel = makeNode(RelabelType);
-
-		newrelabel->arg = (Expr *) arg;
-		newrelabel->resulttype = rtype;
-		newrelabel->resulttypmod = rtypmod;
-		newrelabel->resultcollid = rcollid;
-		newrelabel->relabelformat = rformat;
-		newrelabel->location = rlocation;
-		return (Node *) newrelabel;
-	}
 }
 
 /*
