@@ -490,10 +490,6 @@ process_equivalence(PlannerInfo *root,
  * work to not label the collation at all in EC members, but this is risky
  * since some parts of the system expect exprCollation() to deliver the
  * right answer for a sort key.)
- *
- * Note this code assumes that the expression has already been through
- * eval_const_expressions, so there are no CollateExprs and no redundant
- * RelabelTypes.
  */
 Expr *
 canonicalize_ec_expression(Expr *expr, Oid req_type, Oid req_collation)
@@ -514,29 +510,24 @@ canonicalize_ec_expression(Expr *expr, Oid req_type, Oid req_collation)
 		exprCollation((Node *) expr) != req_collation)
 	{
 		/*
-		 * Strip any existing RelabelType, then add a new one if needed. This
-		 * is to preserve the invariant of no redundant RelabelTypes.
-		 *
-		 * If we have to change the exposed type of the stripped expression,
-		 * set typmod to -1 (since the new type may not have the same typmod
-		 * interpretation).  If we only have to change collation, preserve the
-		 * exposed typmod.
+		 * If we have to change the type of the expression, set typmod to -1,
+		 * since the new type may not have the same typmod interpretation.
+		 * When we only have to change collation, preserve the exposed typmod.
 		 */
-		while (expr && IsA(expr, RelabelType))
-			expr = (Expr *) ((RelabelType *) expr)->arg;
+		int32		req_typmod;
 
-		if (exprType((Node *) expr) != req_type)
-			expr = (Expr *) makeRelabelType(expr,
-											req_type,
-											-1,
-											req_collation,
-											COERCE_IMPLICIT_CAST);
-		else if (exprCollation((Node *) expr) != req_collation)
-			expr = (Expr *) makeRelabelType(expr,
-											req_type,
-											exprTypmod((Node *) expr),
-											req_collation,
-											COERCE_IMPLICIT_CAST);
+		if (expr_type != req_type)
+			req_typmod = -1;
+		else
+			req_typmod = exprTypmod((Node *) expr);
+
+		/*
+		 * Use applyRelabelType so that we preserve const-flatness.  This is
+		 * important since eval_const_expressions has already been applied.
+		 */
+		expr = (Expr *) applyRelabelType((Node *) expr,
+										 req_type, req_typmod, req_collation,
+										 COERCE_IMPLICIT_CAST, -1, false);
 	}
 
 	return expr;

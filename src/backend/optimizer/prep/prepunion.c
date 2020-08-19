@@ -1200,13 +1200,9 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 		 * will reach the executor without any further processing.
 		 */
 		if (exprCollation(expr) != colColl)
-		{
-			expr = (Node *) makeRelabelType((Expr *) expr,
-											exprType(expr),
-											exprTypmod(expr),
-											colColl,
-											COERCE_IMPLICIT_CAST);
-		}
+			expr = applyRelabelType(expr,
+									exprType(expr), exprTypmod(expr), colColl,
+									COERCE_IMPLICIT_CAST, -1, false);
 
 		tle = makeTargetEntry((Expr *) expr,
 							  (AttrNumber) resno++,
