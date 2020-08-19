@@ -36,6 +36,9 @@ typedef bool (*check_function_callback) (Oid func_id, void *context);
 extern Oid	exprType(const Node *expr);
 extern int32 exprTypmod(const Node *expr);
 extern bool exprIsLengthCoercion(const Node *expr, int32 *coercedTypmod);
+extern Node *applyRelabelType(Node *arg, Oid rtype, int32 rtypmod, Oid rcollid,
+							  CoercionForm rformat, int rlocation,
+							  bool overwrite_ok);
 extern Node *relabel_to_typmod(Node *expr, int32 typmod);
 extern Node *strip_implicit_coercions(Node *node);
 extern bool expression_returns_set(Node *clause);
