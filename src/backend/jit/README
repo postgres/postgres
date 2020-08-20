@@ -10,11 +10,11 @@ SQL expressions to evaluate an SQL predicate like WHERE a.col = 3, it
 is possible to generate a function than can be natively executed by
 the CPU that just handles that expression, yielding a speedup.
 
-That this is done at query execution time, possibly even only in cases
-where the relevant task is done a number of times, makes it JIT,
-rather than ahead-of-time (AOT). Given the way JIT compilation is used
-in PostgreSQL, the lines between interpretation, AOT and JIT are
-somewhat blurry.
+This is JIT, rather than ahead-of-time (AOT) compilation, because it
+is done at query execution time, and perhaps only in cases where the
+relevant task is repeated a number of times. Given the way JIT
+compilation is used in PostgreSQL, the lines between interpretation,
+AOT and JIT are somewhat blurry.
 
 Note that the interpreted program turned into a native program does
 not necessarily have to be a program in the classical sense. E.g. it
@@ -99,7 +99,7 @@ Lifetimes of JITed functions are managed via JITContext. Exactly one
 such context should be created for work in which all created JITed
 function should have the same lifetime. E.g. there's exactly one
 JITContext for each query executed, in the query's EState.  Only the
-release of an JITContext is exposed to the provider independent
+release of a JITContext is exposed to the provider independent
 facility, as the creation of one is done on-demand by the JIT
 implementations.
 
@@ -231,7 +231,7 @@ needs to be referenced as an offset to one block of memory stored in
 an ExprState, rather than absolute pointers into memory.
 
 Once that is addressed, adding an LRU cache that's keyed by the
-generated LLVM IR will allow to use optimized functions even for
+generated LLVM IR will allow the usage of optimized functions even for
 faster queries.
 
 A longer term project is to move expression compilation to the planner
