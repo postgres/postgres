@@ -1350,14 +1350,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 					if (HeapTupleIsHotUpdated(&tuple) ||
 						HeapTupleIsHeapOnly(&tuple) ||
 						params->index_cleanup == VACOPT_TERNARY_DISABLED)
-					{
-						/* temporary on-bf debugging */
-						elog(LOG, "treating dead HOT tuple (updated %d, heap only: %d, index cleanup: %d) as alive",
-							 HeapTupleIsHotUpdated(&tuple), HeapTupleIsHeapOnly(&tuple),
-							 params->index_cleanup == VACOPT_TERNARY_DISABLED);
-
 						nkeep += 1;
-					}
 					else
 						tupgone = true; /* we can delete the tuple */
 					all_visible = false;
