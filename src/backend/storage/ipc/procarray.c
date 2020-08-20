@@ -840,13 +840,20 @@ ProcArrayClearTransaction(PGPROC *proc)
 	size_t		pgxactoff;
 
 	/*
-	 * We can skip locking ProcArrayLock exclusively here, because this action
-	 * does not actually change anyone's view of the set of running XIDs: our
-	 * entry is duplicate with the gxact that has already been inserted into
-	 * the ProcArray. But need it in shared mode for pgproc->pgxactoff to stay
-	 * the same.
+	 * Currently we need to lock ProcArrayLock exclusively here, as we
+	 * increment xactCompletionCount below. We also need it at least in shared
+	 * mode for pgproc->pgxactoff to stay the same below.
+	 *
+	 * We could however, as this action does not actually change anyone's view
+	 * of the set of running XIDs (our entry is duplicate with the gxact that
+	 * has already been inserted into the ProcArray), lower the lock level to
+	 * shared if we were to make xactCompletionCount an atomic variable. But
+	 * that doesn't seem worth it currently, as a 2PC commit is heavyweight
+	 * enough for this not to be the bottleneck.  If it ever becomes a
+	 * bottleneck it may also be worth considering to combine this with the
+	 * subsequent ProcArrayRemove()
 	 */
-	LWLockAcquire(ProcArrayLock, LW_SHARED);
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
 	pgxactoff = proc->pgxactoff;
 
