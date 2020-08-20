@@ -307,7 +307,7 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
     <orderedlist>
      <listitem>
       <para>
-       A new temporary index definition is added to the catalog
+       A new transient index definition is added to the catalog
        <literal>pg_index</literal>.  This definition will be used to replace
        the old index.  A <literal>SHARE UPDATE EXCLUSIVE</literal> lock at
        session level is taken on the indexes being reindexed as well as their
@@ -383,13 +383,15 @@ Indexes:
     "idx_ccnew" btree (col) INVALID
 </programlisting>
 
-    The recommended recovery method in such cases is to drop the invalid index
-    and try again to perform <command>REINDEX CONCURRENTLY</command>.  The
-    concurrent index created during the processing has a name ending in the
-    suffix <literal>ccnew</literal>, or <literal>ccold</literal> if it is an
-    old index definition which we failed to drop. Invalid indexes can be
-    dropped using <literal>DROP INDEX</literal>, including invalid toast
-    indexes.
+    If the index marked <literal>INVALID</literal> is suffixed
+    <literal>ccnew</literal>, then it corresponds to the transient
+    index created during the concurrent operation, and the recommended
+    recovery method is to drop it using <literal>DROP INDEX</literal>,
+    then attempt <command>REINDEX CONCURRENTLY</command> again.
+    If the invalid index is instead suffixed <literal>ccold</literal>,
+    it corresponds to the original index which could not be dropped;
+    the recommended recovery method is to just drop said index, since the
+    rebuild proper has been successful.
    </para>
 
    <para>
