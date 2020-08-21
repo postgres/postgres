@@ -1824,7 +1824,8 @@ typedef enum AlterTableType
 	AT_DetachPartition,			/* DETACH PARTITION */
 	AT_AddIdentity,				/* ADD IDENTITY */
 	AT_SetIdentity,				/* SET identity column options */
-	AT_DropIdentity				/* DROP IDENTITY */
+	AT_DropIdentity,			/* DROP IDENTITY */
+	AT_CookedColumnDefault		/* add a pre-cooked column default */
 } AlterTableType;
 
 typedef struct ReplicaIdentityStmt
