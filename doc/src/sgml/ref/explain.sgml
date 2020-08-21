@@ -187,8 +187,7 @@ ROLLBACK;
       query processing.
       The number of blocks shown for an
       upper-level node includes those used by all its child nodes.  In text
-      format, only non-zero values are printed.  This parameter may only be
-      used when <literal>ANALYZE</literal> is also enabled.  It defaults to
+      format, only non-zero values are printed.  It defaults to
       <literal>FALSE</literal>.
      </para>
     </listitem>

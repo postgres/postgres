@@ -116,7 +116,8 @@ static void show_instrumentation_count(const char *qlabel, int which,
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
 static void show_eval_params(Bitmapset *bms_params, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
-static void show_buffer_usage(ExplainState *es, const BufferUsage *usage);
+static void show_buffer_usage(ExplainState *es, const BufferUsage *usage,
+							  bool planning);
 static void show_wal_usage(ExplainState *es, const WalUsage *usage);
 static void ExplainIndexScanDetails(Oid indexid, ScanDirection indexorderdir,
 									ExplainState *es);
@@ -220,11 +221,6 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 							opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
-
-	if (es->buffers && !es->analyze)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("EXPLAIN option BUFFERS requires ANALYZE")));
 
 	if (es->wal && !es->analyze)
 		ereport(ERROR,
@@ -586,8 +582,13 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	/* Create textual dump of plan tree */
 	ExplainPrintPlan(es, queryDesc);
 
-	if (es->summary && (planduration || bufusage))
+	/* Show buffer usage in planning */
+	if (bufusage)
+	{
 		ExplainOpenGroup("Planning", "Planning", true, es);
+		show_buffer_usage(es, bufusage, true);
+		ExplainCloseGroup("Planning", "Planning", true, es);
+	}
 
 	if (es->summary && planduration)
 	{
@@ -595,19 +596,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 		ExplainPropertyFloat("Planning Time", "ms", 1000.0 * plantime, 3, es);
 	}
-
-	/* Show buffer usage */
-	if (es->summary && bufusage)
-	{
-		if (es->format == EXPLAIN_FORMAT_TEXT)
-			es->indent++;
-		show_buffer_usage(es, bufusage);
-		if (es->format == EXPLAIN_FORMAT_TEXT)
-			es->indent--;
-	}
-
-	if (es->summary && (planduration || bufusage))
-		ExplainCloseGroup("Planning", "Planning", true, es);
 
 	/* Print info about runtime of triggers */
 	if (es->analyze)
@@ -1996,7 +1984,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 	/* Show buffer/WAL usage */
 	if (es->buffers && planstate->instrument)
-		show_buffer_usage(es, &planstate->instrument->bufusage);
+		show_buffer_usage(es, &planstate->instrument->bufusage, false);
 	if (es->wal && planstate->instrument)
 		show_wal_usage(es, &planstate->instrument->walusage);
 
@@ -2015,7 +2003,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 			ExplainOpenWorker(n, es);
 			if (es->buffers)
-				show_buffer_usage(es, &instrument->bufusage);
+				show_buffer_usage(es, &instrument->bufusage, false);
 			if (es->wal)
 				show_wal_usage(es, &instrument->walusage);
 			ExplainCloseWorker(n, es);
@@ -3301,7 +3289,7 @@ explain_get_index_name(Oid indexId)
  * Show buffer usage details.
  */
 static void
-show_buffer_usage(ExplainState *es, const BufferUsage *usage)
+show_buffer_usage(ExplainState *es, const BufferUsage *usage, bool planning)
 {
 	if (es->format == EXPLAIN_FORMAT_TEXT)
 	{
@@ -3317,6 +3305,15 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage)
 								usage->temp_blks_written > 0);
 		bool		has_timing = (!INSTR_TIME_IS_ZERO(usage->blk_read_time) ||
 								  !INSTR_TIME_IS_ZERO(usage->blk_write_time));
+		bool		show_planning = (planning && (has_shared ||
+												  has_local || has_temp || has_timing));
+
+		if (show_planning)
+		{
+			ExplainIndentText(es);
+			appendStringInfoString(es->str, "Planning:\n");
+			es->indent++;
+		}
 
 		/* Show only positive counter values. */
 		if (has_shared || has_local || has_temp)
@@ -3386,6 +3383,9 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage)
 								 INSTR_TIME_GET_MILLISEC(usage->blk_write_time));
 			appendStringInfoChar(es->str, '\n');
 		}
+
+		if (show_planning)
+			es->indent--;
 	}
 	else
 	{
