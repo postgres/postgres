@@ -306,7 +306,7 @@ COMMENT ON TABLE mytable IS NULL;
    Some more examples:
 
 <programlisting>
-COMMENT ON ACCESS METHOD rtree IS 'R-Tree access method';
+COMMENT ON ACCESS METHOD gin IS 'GIN index access method';
 COMMENT ON AGGREGATE my_aggregate (double precision) IS 'Computes sample variance';
 COMMENT ON CAST (text AS int4) IS 'Allow casts from text to int4';
 COMMENT ON COLLATION "fr_CA" IS 'Canadian French';
@@ -316,6 +316,7 @@ COMMENT ON CONSTRAINT bar_col_cons ON bar IS 'Constrains column col';
 COMMENT ON CONSTRAINT dom_col_constr ON DOMAIN dom IS 'Constrains col of domain';
 COMMENT ON DATABASE my_database IS 'Development Database';
 COMMENT ON DOMAIN my_domain IS 'Email Address Domain';
+COMMENT ON EVENT TRIGGER abort_ddl IS 'Aborts all DDL commands';
 COMMENT ON EXTENSION hstore IS 'implements the hstore data type';
 COMMENT ON FOREIGN DATA WRAPPER mywrapper IS 'my foreign data wrapper';
 COMMENT ON FOREIGN TABLE my_foreign_table IS 'Employee Information in other database';
@@ -330,12 +331,15 @@ COMMENT ON OPERATOR CLASS int4ops USING btree IS '4 byte integer operators for b
 COMMENT ON OPERATOR FAMILY integer_ops USING btree IS 'all integer operators for btrees';
 COMMENT ON POLICY my_policy ON mytable IS 'Filter rows by users';
 COMMENT ON PROCEDURE my_proc (integer, integer) IS 'Runs a report';
+COMMENT ON PUBLICATION alltables IS 'Publishes all operations on all tables';
 COMMENT ON ROLE my_role IS 'Administration group for finance tables';
+COMMENT ON ROUTINE my_routine (integer, integer) IS 'Runs a routine (which is a function or procedure)';
 COMMENT ON RULE my_rule ON my_table IS 'Logs updates of employee records';
 COMMENT ON SCHEMA my_schema IS 'Departmental data';
 COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
 COMMENT ON SERVER myserver IS 'my foreign server';
 COMMENT ON STATISTICS my_statistics IS 'Improves planner row estimations';
+COMMENT ON SUBSCRIPTION alltables IS 'Subscription for all operations on all tables';
 COMMENT ON TABLE my_schema.my_table IS 'Employee Information';
 COMMENT ON TABLESPACE my_tablespace IS 'Tablespace for indexes';
 COMMENT ON TEXT SEARCH CONFIGURATION my_config IS 'Special word filtering';
