@@ -106,7 +106,6 @@ select explain_filter('explain (analyze, buffers, format json) select * from int
        "Temp Written Blocks": N    +
      },                            +
      "Planning": {                 +
-       "Planning Time": N.N,       +
        "Shared Hit Blocks": N,     +
        "Shared Read Blocks": N,    +
        "Shared Dirtied Blocks": N, +
@@ -118,6 +117,7 @@ select explain_filter('explain (analyze, buffers, format json) select * from int
        "Temp Read Blocks": N,      +
        "Temp Written Blocks": N    +
      },                            +
+     "Planning Time": N.N,         +
      "Triggers": [                 +
      ],                            +
      "Execution Time": N.N         +
@@ -155,7 +155,6 @@ select explain_filter('explain (analyze, buffers, format xml) select * from int8
        <Temp-Written-Blocks>N</Temp-Written-Blocks>    +
      </Plan>                                           +
      <Planning>                                        +
-       <Planning-Time>N.N</Planning-Time>              +
        <Shared-Hit-Blocks>N</Shared-Hit-Blocks>        +
        <Shared-Read-Blocks>N</Shared-Read-Blocks>      +
        <Shared-Dirtied-Blocks>N</Shared-Dirtied-Blocks>+
@@ -167,6 +166,7 @@ select explain_filter('explain (analyze, buffers, format xml) select * from int8
        <Temp-Read-Blocks>N</Temp-Read-Blocks>          +
        <Temp-Written-Blocks>N</Temp-Written-Blocks>    +
      </Planning>                                       +
+     <Planning-Time>N.N</Planning-Time>                +
      <Triggers>                                        +
      </Triggers>                                       +
      <Execution-Time>N.N</Execution-Time>              +
@@ -201,7 +201,6 @@ select explain_filter('explain (analyze, buffers, format yaml) select * from int
      Temp Read Blocks: N      +
      Temp Written Blocks: N   +
    Planning:                  +
-     Planning Time: N.N       +
      Shared Hit Blocks: N     +
      Shared Read Blocks: N    +
      Shared Dirtied Blocks: N +
@@ -212,8 +211,56 @@ select explain_filter('explain (analyze, buffers, format yaml) select * from int
      Local Written Blocks: N  +
      Temp Read Blocks: N      +
      Temp Written Blocks: N   +
+   Planning Time: N.N         +
    Triggers:                  +
    Execution Time: N.N
+(1 row)
+
+select explain_filter('explain (buffers, format text) select * from int8_tbl i8');
+                     explain_filter                      
+---------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N)
+(1 row)
+
+select explain_filter('explain (buffers, format json) select * from int8_tbl i8');
+           explain_filter           
+------------------------------------
+ [                                 +
+   {                               +
+     "Plan": {                     +
+       "Node Type": "Seq Scan",    +
+       "Parallel Aware": false,    +
+       "Relation Name": "int8_tbl",+
+       "Alias": "i8",              +
+       "Startup Cost": N.N,        +
+       "Total Cost": N.N,          +
+       "Plan Rows": N,             +
+       "Plan Width": N,            +
+       "Shared Hit Blocks": N,     +
+       "Shared Read Blocks": N,    +
+       "Shared Dirtied Blocks": N, +
+       "Shared Written Blocks": N, +
+       "Local Hit Blocks": N,      +
+       "Local Read Blocks": N,     +
+       "Local Dirtied Blocks": N,  +
+       "Local Written Blocks": N,  +
+       "Temp Read Blocks": N,      +
+       "Temp Written Blocks": N    +
+     },                            +
+     "Planning": {                 +
+       "Shared Hit Blocks": N,     +
+       "Shared Read Blocks": N,    +
+       "Shared Dirtied Blocks": N, +
+       "Shared Written Blocks": N, +
+       "Local Hit Blocks": N,      +
+       "Local Read Blocks": N,     +
+       "Local Dirtied Blocks": N,  +
+       "Local Written Blocks": N,  +
+       "Temp Read Blocks": N,      +
+       "Temp Written Blocks": N    +
+     }                             +
+   }                               +
+ ]
 (1 row)
 
 -- SETTINGS option
@@ -402,7 +449,6 @@ select jsonb_pretty(
              "Shared Written Blocks": 0                     +
          },                                                 +
          "Planning": {                                      +
-             "Planning Time": 0.0,                          +
              "Local Hit Blocks": 0,                         +
              "Temp Read Blocks": 0,                         +
              "Local Read Blocks": 0,                        +
@@ -416,6 +462,7 @@ select jsonb_pretty(
          },                                                 +
          "Triggers": [                                      +
          ],                                                 +
+         "Planning Time": 0.0,                              +
          "Execution Time": 0.0                              +
      }                                                      +
  ]
