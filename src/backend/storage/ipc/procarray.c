@@ -198,7 +198,7 @@ typedef struct ComputeXidHorizonsResult
 	 * be removed.
 	 *
 	 * This likely should only be needed to determine whether pg_subtrans can
-	 * be truncated. It currently includes the effects of replications slots,
+	 * be truncated. It currently includes the effects of replication slots,
 	 * for historical reasons. But that could likely be changed.
 	 */
 	TransactionId oldest_considered_running;
@@ -207,7 +207,7 @@ typedef struct ComputeXidHorizonsResult
 	 * Oldest xid for which deleted tuples need to be retained in shared
 	 * tables.
 	 *
-	 * This includes the effects of replications lots. If that's not desired,
+	 * This includes the effects of replication slots. If that's not desired,
 	 * look at shared_oldest_nonremovable_raw;
 	 */
 	TransactionId shared_oldest_nonremovable;
