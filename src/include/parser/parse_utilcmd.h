@@ -31,6 +31,8 @@ extern void transformRuleStmt(RuleStmt *stmt, const char *queryString,
 extern List *transformCreateSchemaStmt(CreateSchemaStmt *stmt);
 extern PartitionBoundSpec *transformPartitionBound(ParseState *pstate, Relation parent,
 												   PartitionBoundSpec *spec);
+extern List *expandTableLikeClause(RangeVar *heapRel,
+								   TableLikeClause *table_like_clause);
 extern IndexStmt *generateClonedIndexStmt(RangeVar *heapRel,
 										  Relation source_idx,
 										  const struct AttrMap *attmap,

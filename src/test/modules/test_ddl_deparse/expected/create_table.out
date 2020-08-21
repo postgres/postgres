@@ -135,6 +135,8 @@ CREATE TABLE like_fkey_table (
   INCLUDING STORAGE
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
+NOTICE:  DDL test: type alter table, tag ALTER TABLE
+NOTICE:    subcommand: ALTER COLUMN SET DEFAULT (precooked)
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 -- Volatile table types
