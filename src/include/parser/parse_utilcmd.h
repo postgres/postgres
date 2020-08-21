@@ -25,5 +25,7 @@ extern IndexStmt *transformIndexStmt(Oid relid, IndexStmt *stmt,
 extern void transformRuleStmt(RuleStmt *stmt, const char *queryString,
 				  List **actions, Node **whereClause);
 extern List *transformCreateSchemaStmt(CreateSchemaStmt *stmt);
+extern List *expandTableLikeClause(RangeVar *heapRel,
+								   TableLikeClause *table_like_clause);
 
 #endif   /* PARSE_UTILCMD_H */
