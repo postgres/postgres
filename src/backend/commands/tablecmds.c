@@ -405,6 +405,8 @@ static bool ConstraintImpliedByRelConstraint(Relation scanrel,
 											 List *testConstraint, List *provenConstraint);
 static ObjectAddress ATExecColumnDefault(Relation rel, const char *colName,
 										 Node *newDefault, LOCKMODE lockmode);
+static ObjectAddress ATExecCookedColumnDefault(Relation rel, AttrNumber attnum,
+											   Node *newDefault);
 static ObjectAddress ATExecAddIdentity(Relation rel, const char *colName,
 									   Node *def, LOCKMODE lockmode);
 static ObjectAddress ATExecSetIdentity(Relation rel, const char *colName,
@@ -2054,8 +2056,8 @@ storage_name(char c)
  * 'schema' is the column/attribute definition for the table. (It's a list
  *		of ColumnDef's.) It is destructively changed.
  * 'supers' is a list of OIDs of parent relations, already locked by caller.
- * 'relpersistence' is a persistence type of the table.
- * 'is_partition' tells if the table is a partition
+ * 'relpersistence' is the persistence type of the table.
+ * 'is_partition' tells if the table is a partition.
  *
  * Output arguments:
  * 'supconstr' receives a list of constraints belonging to the parents,
@@ -2218,7 +2220,11 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 		TupleDesc	tupleDesc;
 		TupleConstr *constr;
 		AttrMap    *newattmap;
+		List	   *inherited_defaults;
+		List	   *cols_with_defaults;
 		AttrNumber	parent_attno;
+		ListCell   *lc1;
+		ListCell   *lc2;
 
 		/* caller already got lock */
 		relation = table_open(parent, NoLock);
@@ -2304,6 +2310,9 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 		 */
 		newattmap = make_attrmap(tupleDesc->natts);
 
+		/* We can't process inherited defaults until newattmap is complete. */
+		inherited_defaults = cols_with_defaults = NIL;
+
 		for (parent_attno = 1; parent_attno <= tupleDesc->natts;
 			 parent_attno++)
 		{
@@ -2359,7 +2368,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 									   get_collation_name(defCollId),
 									   get_collation_name(attribute->attcollation))));
 
-				/* Copy storage parameter */
+				/* Copy/check storage parameter */
 				if (def->storage == 0)
 					def->storage = attribute->attstorage;
 				else if (def->storage != attribute->attstorage)
@@ -2410,7 +2419,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 			}
 
 			/*
-			 * Copy default if any
+			 * Locate default if any
 			 */
 			if (attribute->atthasdef)
 			{
@@ -2432,23 +2441,59 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				Assert(this_default != NULL);
 
 				/*
-				 * If default expr could contain any vars, we'd need to fix
-				 * 'em, but it can't; so default is ready to apply to child.
-				 *
-				 * If we already had a default from some prior parent, check
-				 * to see if they are the same.  If so, no problem; if not,
-				 * mark the column as having a bogus default. Below, we will
-				 * complain if the bogus default isn't overridden by the child
-				 * schema.
+				 * If it's a GENERATED default, it might contain Vars that
+				 * need to be mapped to the inherited column(s)' new numbers.
+				 * We can't do that till newattmap is ready, so just remember
+				 * all the inherited default expressions for the moment.
 				 */
-				Assert(def->raw_default == NULL);
-				if (def->cooked_default == NULL)
-					def->cooked_default = this_default;
-				else if (!equal(def->cooked_default, this_default))
-				{
-					def->cooked_default = &bogus_marker;
-					have_bogus_defaults = true;
-				}
+				inherited_defaults = lappend(inherited_defaults, this_default);
+				cols_with_defaults = lappend(cols_with_defaults, def);
+			}
+		}
+
+		/*
+		 * Now process any inherited default expressions, adjusting attnos
+		 * using the completed newattmap map.
+		 */
+		forboth(lc1, inherited_defaults, lc2, cols_with_defaults)
+		{
+			Node	   *this_default = (Node *) lfirst(lc1);
+			ColumnDef  *def = (ColumnDef *) lfirst(lc2);
+			bool		found_whole_row;
+
+			/* Adjust Vars to match new table's column numbering */
+			this_default = map_variable_attnos(this_default,
+											   1, 0,
+											   newattmap,
+											   InvalidOid, &found_whole_row);
+
+			/*
+			 * For the moment we have to reject whole-row variables.  We could
+			 * convert them, if we knew the new table's rowtype OID, but that
+			 * hasn't been assigned yet.  (A variable could only appear in a
+			 * generation expression, so the error message is correct.)
+			 */
+			if (found_whole_row)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot convert whole-row table reference"),
+						 errdetail("Generation expression for column \"%s\" contains a whole-row reference to table \"%s\".",
+								   def->colname,
+								   RelationGetRelationName(relation))));
+
+			/*
+			 * If we already had a default from some prior parent, check to
+			 * see if they are the same.  If so, no problem; if not, mark the
+			 * column as having a bogus default.  Below, we will complain if
+			 * the bogus default isn't overridden by the child schema.
+			 */
+			Assert(def->raw_default == NULL);
+			if (def->cooked_default == NULL)
+				def->cooked_default = this_default;
+			else if (!equal(def->cooked_default, this_default))
+			{
+				def->cooked_default = &bogus_marker;
+				have_bogus_defaults = true;
 			}
 		}
 
@@ -2667,7 +2712,6 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					def->raw_default = newdef->raw_default;
 					def->cooked_default = newdef->cooked_default;
 				}
-
 			}
 			else
 			{
@@ -3781,6 +3825,7 @@ AlterTableGetLockLevel(List *cmds)
 				 * Theoretically, these could be ShareRowExclusiveLock.
 				 */
 			case AT_ColumnDefault:
+			case AT_CookedColumnDefault:
 			case AT_AlterConstraint:
 			case AT_AddIndex:	/* from ADD CONSTRAINT */
 			case AT_AddIndexConstraint:
@@ -4039,6 +4084,13 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
 			/* No command-specific prep needed */
 			pass = cmd->def ? AT_PASS_ADD_OTHERCONSTR : AT_PASS_DROP;
+			break;
+		case AT_CookedColumnDefault:	/* add a pre-cooked default */
+			/* This is currently used only in CREATE TABLE */
+			/* (so the permission check really isn't necessary) */
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
+			/* This command never recurses */
+			pass = AT_PASS_ADD_OTHERCONSTR;
 			break;
 		case AT_AddIdentity:
 			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
@@ -4397,6 +4449,9 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
 			address = ATExecColumnDefault(rel, cmd->name, cmd->def, lockmode);
+			break;
+		case AT_CookedColumnDefault:	/* add a pre-cooked default */
+			address = ATExecCookedColumnDefault(rel, cmd->num, cmd->def);
 			break;
 		case AT_AddIdentity:
 			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, false, lockmode,
@@ -6853,6 +6908,35 @@ ATExecColumnDefault(Relation rel, const char *colName,
 		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
 								  false, true, false, NULL);
 	}
+
+	ObjectAddressSubSet(address, RelationRelationId,
+						RelationGetRelid(rel), attnum);
+	return address;
+}
+
+/*
+ * Add a pre-cooked default expression.
+ *
+ * Return the address of the affected column.
+ */
+static ObjectAddress
+ATExecCookedColumnDefault(Relation rel, AttrNumber attnum,
+						  Node *newDefault)
+{
+	ObjectAddress address;
+
+	/* We assume no checking is required */
+
+	/*
+	 * Remove any old default for the column.  We use RESTRICT here for
+	 * safety, but at present we do not expect anything to depend on the
+	 * default.  (In ordinary cases, there could not be a default in place
+	 * anyway, but it's possible when combining LIKE with inheritance.)
+	 */
+	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false,
+					  true);
+
+	(void) StoreAttrDefault(rel, attnum, newDefault, true, false);
 
 	ObjectAddressSubSet(address, RelationRelationId,
 						RelationGetRelid(rel), attnum);

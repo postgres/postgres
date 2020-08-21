@@ -111,6 +111,9 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_ColumnDefault:
 				strtype = "ALTER COLUMN SET DEFAULT";
 				break;
+			case AT_CookedColumnDefault:
+				strtype = "ALTER COLUMN SET DEFAULT (precooked)";
+				break;
 			case AT_DropNotNull:
 				strtype = "DROP NOT NULL";
 				break;
