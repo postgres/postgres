@@ -564,8 +564,8 @@
   </indexterm>
 
   <para>
-   <acronym>PostgreSQL</acronym> can accept time zone specifications that
-   are written according to the <acronym>POSIX</acronym> standard's rules
+   <productname>PostgreSQL</productname> can accept time zone specifications
+   that are written according to the <acronym>POSIX</acronym> standard's rules
    for the <varname>TZ</varname> environment
    variable.  <acronym>POSIX</acronym> time zone specifications are
    inadequate to deal with the complexity of real-world time zone history,
@@ -635,8 +635,8 @@
    or <literal>-</literal>).  The positive sign is used for
    zones <emphasis>west</emphasis> of Greenwich.  (Note that this is the
    opposite of the ISO-8601 sign convention used elsewhere in
-   <acronym>PostgreSQL</acronym>.)  <replaceable>hh</replaceable> can have
-   one or two digits; <replaceable>mm</replaceable>
+   <productname>PostgreSQL</productname>.)  <replaceable>hh</replaceable>
+   can have one or two digits; <replaceable>mm</replaceable>
    and <replaceable>ss</replaceable> (if used) must have two.
   </para>
 

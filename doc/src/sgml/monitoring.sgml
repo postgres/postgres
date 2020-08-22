@@ -4444,7 +4444,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>name</structfield> <type>text</type>
       </para>
       <para>
-       name of the SLRU
+       Name of the SLRU
       </para></entry>
      </row>
 
@@ -4648,7 +4648,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         argument.  The argument can be <literal>bgwriter</literal> to reset
         all the counters shown in
         the <structname>pg_stat_bgwriter</structname>
-        view,or <literal>archiver</literal> to reset all the counters shown in
+        view, or <literal>archiver</literal> to reset all the counters shown in
         the <structname>pg_stat_archiver</structname> view.
        </para>
        <para>
@@ -5188,8 +5188,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <row>
       <entry><literal>finalizing analyze</literal></entry>
       <entry>
-       The command is updating pg_class. When this phase is completed,
-       <command>ANALYZE</command> will end.
+       The command is updating <structname>pg_class</structname>. When this
+       phase is completed, <command>ANALYZE</command> will end.
       </entry>
      </row>
     </tbody>

@@ -14101,7 +14101,7 @@ SELECT xmltable.*
                         size_sq_km float PATH 'SIZE[@unit = "sq_km"]',
                         size_other text PATH
                              'concat(SIZE[@unit!="sq_km"], " ", SIZE[@unit!="sq_km"]/@unit)',
-                        premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified') ;
+                        premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified');
 
  id | ordinality | COUNTRY_NAME | country_id | size_sq_km |  size_other  | premier_name  
 ----+------------+--------------+------------+------------+--------------+---------------
