@@ -4513,9 +4513,12 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 									 lockmode);
 			break;
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
-			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, false, lockmode,
-									  cur_pass, context);
-			/* Might not have gotten AddConstraint back from parse transform */
+			/* Transform the command only during initial examination */
+			if (cur_pass == AT_PASS_ADD_CONSTR)
+				cmd = ATParseTransformCmd(wqueue, tab, rel, cmd,
+										  false, lockmode,
+										  cur_pass, context);
+			/* Depending on constraint type, might be no more work to do now */
 			if (cmd != NULL)
 				address =
 					ATExecAddConstraint(wqueue, tab, rel,
@@ -4523,9 +4526,12 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 										false, false, lockmode);
 			break;
 		case AT_AddConstraintRecurse:	/* ADD CONSTRAINT with recursion */
-			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, true, lockmode,
-									  cur_pass, context);
-			/* Might not have gotten AddConstraint back from parse transform */
+			/* Transform the command only during initial examination */
+			if (cur_pass == AT_PASS_ADD_CONSTR)
+				cmd = ATParseTransformCmd(wqueue, tab, rel, cmd,
+										  true, lockmode,
+										  cur_pass, context);
+			/* Depending on constraint type, might be no more work to do now */
 			if (cmd != NULL)
 				address =
 					ATExecAddConstraint(wqueue, tab, rel,
@@ -4787,75 +4793,88 @@ ATParseTransformCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	foreach(lc, atstmt->cmds)
 	{
 		AlterTableCmd *cmd2 = lfirst_node(AlterTableCmd, lc);
+		int			pass;
 
-		if (newcmd == NULL &&
-			(cmd->subtype == cmd2->subtype ||
-			 (cmd->subtype == AT_AddConstraintRecurse &&
-			  cmd2->subtype == AT_AddConstraint)))
+		/*
+		 * This switch need only cover the subcommand types that can be added
+		 * by parse_utilcmd.c; otherwise, we'll use the default strategy of
+		 * executing the subcommand immediately, as a substitute for the
+		 * original subcommand.  (Note, however, that this does cause
+		 * AT_AddConstraint subcommands to be rescheduled into later passes,
+		 * which is important for index and foreign key constraints.)
+		 *
+		 * We assume we needn't do any phase-1 checks for added subcommands.
+		 */
+		switch (cmd2->subtype)
 		{
-			/* Found the transformed version of our subcommand */
-			cmd2->subtype = cmd->subtype;	/* copy recursion flag */
-			newcmd = cmd2;
+			case AT_SetNotNull:
+				/* Need command-specific recursion decision */
+				ATPrepSetNotNull(wqueue, rel, cmd2,
+								 recurse, false,
+								 lockmode, context);
+				pass = AT_PASS_COL_ATTRS;
+				break;
+			case AT_AddIndex:
+				/* This command never recurses */
+				/* No command-specific prep needed */
+				pass = AT_PASS_ADD_INDEX;
+				break;
+			case AT_AddIndexConstraint:
+				/* This command never recurses */
+				/* No command-specific prep needed */
+				pass = AT_PASS_ADD_INDEXCONSTR;
+				break;
+			case AT_AddConstraint:
+				/* Recursion occurs during execution phase */
+				if (recurse)
+					cmd2->subtype = AT_AddConstraintRecurse;
+				switch (castNode(Constraint, cmd2->def)->contype)
+				{
+					case CONSTR_PRIMARY:
+					case CONSTR_UNIQUE:
+					case CONSTR_EXCLUSION:
+						pass = AT_PASS_ADD_INDEXCONSTR;
+						break;
+					default:
+						pass = AT_PASS_ADD_OTHERCONSTR;
+						break;
+				}
+				break;
+			case AT_AlterColumnGenericOptions:
+				/* This command never recurses */
+				/* No command-specific prep needed */
+				pass = AT_PASS_MISC;
+				break;
+			default:
+				pass = cur_pass;
+				break;
+		}
+
+		if (pass < cur_pass)
+		{
+			/* Cannot schedule into a pass we already finished */
+			elog(ERROR, "ALTER TABLE scheduling failure: too late for pass %d",
+				 pass);
+		}
+		else if (pass > cur_pass)
+		{
+			/* OK, queue it up for later */
+			tab->subcmds[pass] = lappend(tab->subcmds[pass], cmd2);
 		}
 		else
 		{
-			int			pass;
-
 			/*
-			 * Schedule added subcommand appropriately.  We assume we needn't
-			 * do any phase-1 checks for it.  This switch only has to cover
-			 * the subcommand types that can be added by parse_utilcmd.c.
+			 * We should see at most one subcommand for the current pass,
+			 * which is the transformed version of the original subcommand.
 			 */
-			switch (cmd2->subtype)
+			if (newcmd == NULL && cmd->subtype == cmd2->subtype)
 			{
-				case AT_SetNotNull:
-					/* Need command-specific recursion decision */
-					ATPrepSetNotNull(wqueue, rel, cmd2,
-									 recurse, false,
-									 lockmode, context);
-					pass = AT_PASS_COL_ATTRS;
-					break;
-				case AT_AddIndex:
-					/* This command never recurses */
-					/* No command-specific prep needed */
-					pass = AT_PASS_ADD_INDEX;
-					break;
-				case AT_AddIndexConstraint:
-					/* This command never recurses */
-					/* No command-specific prep needed */
-					pass = AT_PASS_ADD_INDEXCONSTR;
-					break;
-				case AT_AddConstraint:
-					/* Recursion occurs during execution phase */
-					if (recurse)
-						cmd2->subtype = AT_AddConstraintRecurse;
-					switch (castNode(Constraint, cmd2->def)->contype)
-					{
-						case CONSTR_PRIMARY:
-						case CONSTR_UNIQUE:
-						case CONSTR_EXCLUSION:
-							pass = AT_PASS_ADD_INDEXCONSTR;
-							break;
-						default:
-							pass = AT_PASS_ADD_OTHERCONSTR;
-							break;
-					}
-					break;
-				case AT_AlterColumnGenericOptions:
-					/* This command never recurses */
-					/* No command-specific prep needed */
-					pass = AT_PASS_MISC;
-					break;
-				default:
-					elog(ERROR, "unexpected AlterTableType: %d",
-						 (int) cmd2->subtype);
-					pass = AT_PASS_UNSET;
-					break;
+				/* Found the transformed version of our subcommand */
+				newcmd = cmd2;
 			}
-			/* Must be for a later pass than we're currently doing */
-			if (pass <= cur_pass)
-				elog(ERROR, "ALTER TABLE scheduling failure");
-			tab->subcmds[pass] = lappend(tab->subcmds[pass], cmd2);
+			else
+				elog(ERROR, "ALTER TABLE scheduling failure: bogus item for pass %d",
+					 pass);
 		}
 	}
 

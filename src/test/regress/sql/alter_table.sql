@@ -2252,6 +2252,20 @@ ALTER TABLE ataddindex
 \d ataddindex
 DROP TABLE ataddindex;
 
+CREATE TABLE ataddindex(id int, ref_id int);
+ALTER TABLE ataddindex
+  ADD PRIMARY KEY (id),
+  ADD FOREIGN KEY (ref_id) REFERENCES ataddindex;
+\d ataddindex
+DROP TABLE ataddindex;
+
+CREATE TABLE ataddindex(id int, ref_id int);
+ALTER TABLE ataddindex
+  ADD UNIQUE (id),
+  ADD FOREIGN KEY (ref_id) REFERENCES ataddindex (id);
+\d ataddindex
+DROP TABLE ataddindex;
+
 -- unsupported constraint types for partitioned tables
 CREATE TABLE partitioned (
 	a int,
