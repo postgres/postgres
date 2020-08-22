@@ -1742,8 +1742,9 @@ simple query protocol can be used.
 
 <para>
  For the purpose of testing replication commands, you can make a replication
- connection via <application>psql</application> or any other <literal>libpq</literal>-using
- tool with a connection string including the <literal>replication</literal> option,
+ connection via <application>psql</application> or any other
+ <application>libpq</application>-using tool with a connection string including
+ the <literal>replication</literal> option,
  e.g.:
 <programlisting>
 psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
