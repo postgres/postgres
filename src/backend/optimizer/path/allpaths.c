@@ -2278,6 +2278,17 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
  * thereby changing the partition contents and thus the window functions'
  * results for rows that remain.
  *
+ * 5. If the subquery has nonempty grouping sets, we cannot push down any
+ * quals.  The concern here is that a qual referencing a "constant" grouping
+ * column could get constant-folded, which would be improper because the value
+ * is potentially nullable by grouping-set expansion.  This restriction could
+ * be removed if we had a parsetree representation that shows that such
+ * grouping columns are not really constant.  (There are other ideas that
+ * could be used to relax this restriction, but that's the approach most
+ * likely to get taken in the future.  Note that there's not much to be gained
+ * so long as subquery_planner can't move HAVING clauses to WHERE within such
+ * a subquery.)
+ *
  * In addition, we make several checks on the subquery's output columns to see
  * if it is safe to reference them in pushed-down quals.  If output column k
  * is found to be unsafe to reference, we set safetyInfo->unsafeColumns[k]
@@ -2320,6 +2331,10 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 
 	/* Check point 1 */
 	if (subquery->limitOffset != NULL || subquery->limitCount != NULL)
+		return false;
+
+	/* Check point 5 */
+	if (subquery->groupClause && subquery->groupingSets)
 		return false;
 
 	/* Check points 3 and 4 */
