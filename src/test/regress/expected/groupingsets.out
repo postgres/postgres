@@ -434,6 +434,38 @@ select x, not x as not_x, q2 from
    |       |  4567890123456789
 (5 rows)
 
+-- check qual push-down rules for a subquery with grouping sets
+explain (verbose, costs off)
+select * from (
+  select 1 as x, q1, sum(q2)
+  from int8_tbl i1
+  group by grouping sets(1, 2)
+) ss
+where x = 1 and q1 = 123;
+                 QUERY PLAN                 
+--------------------------------------------
+ Subquery Scan on ss
+   Output: ss.x, ss.q1, ss.sum
+   Filter: ((ss.x = 1) AND (ss.q1 = 123))
+   ->  GroupAggregate
+         Output: (1), i1.q1, sum(i1.q2)
+         Group Key: 1
+         Sort Key: i1.q1
+           Group Key: i1.q1
+         ->  Seq Scan on public.int8_tbl i1
+               Output: 1, i1.q1, i1.q2
+(10 rows)
+
+select * from (
+  select 1 as x, q1, sum(q2)
+  from int8_tbl i1
+  group by grouping sets(1, 2)
+) ss
+where x = 1 and q1 = 123;
+ x | q1 | sum 
+---+----+-----
+(0 rows)
+
 -- simple rescan tests
 select a, b, sum(v.x)
   from (values (1),(2)) v(x), gstest_data(v.x)
