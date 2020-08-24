@@ -576,7 +576,7 @@ typedef struct BrinOpcInfo
 
       <para>
        The <function>options</function> function is passed a pointer to a
-       <replaceable>local_relopts</replaceable> struct, which needs to be
+       <structname>local_relopts</structname> struct, which needs to be
        filled with a set of operator class specific options.  The options
        can be accessed from other support functions using the
        <literal>PG_HAS_OPCLASS_OPTIONS()</literal> and
