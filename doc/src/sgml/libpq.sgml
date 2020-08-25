@@ -7880,7 +7880,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
      <row>
       <entry><filename>~/.postgresql/postgresql.crt</filename></entry>
       <entry>client certificate</entry>
-      <entry>requested by server</entry>
+      <entry>sent to server</entry>
      </row>
 
      <row>
