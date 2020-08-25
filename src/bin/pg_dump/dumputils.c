@@ -685,7 +685,7 @@ AddAcl(PQExpBuffer aclbuf, const char *keyword, const char *subname)
  * keep this file free of assumptions about how to deal with SQL errors.)
  */
 void
-buildShSecLabelQuery(PGconn *conn, const char *catalog_name, Oid objectId,
+buildShSecLabelQuery(const char *catalog_name, Oid objectId,
 					 PQExpBuffer sql)
 {
 	appendPQExpBuffer(sql,

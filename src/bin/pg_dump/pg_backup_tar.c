@@ -107,7 +107,7 @@ static void tarClose(ArchiveHandle *AH, TAR_MEMBER *TH);
 #ifdef __NOT_USED__
 static char *tarGets(char *buf, size_t len, TAR_MEMBER *th);
 #endif
-static int	tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt,...) pg_attribute_printf(3, 4);
+static int	tarPrintf(TAR_MEMBER *th, const char *fmt,...) pg_attribute_printf(2, 3);
 
 static void _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th);
 static TAR_MEMBER *_tarPositionTo(ArchiveHandle *AH, const char *filename);
@@ -851,7 +851,7 @@ _CloseArchive(ArchiveHandle *AH)
 		 */
 		th = tarOpen(AH, "restore.sql", 'w');
 
-		tarPrintf(AH, th, "--\n"
+		tarPrintf(th, "--\n"
 				  "-- NOTE:\n"
 				  "--\n"
 				  "-- File paths need to be edited. Search for $$PATH$$ and\n"
@@ -964,7 +964,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 
 	sprintf(fname, "blob_%u.dat%s", oid, sfx);
 
-	tarPrintf(AH, ctx->blobToc, "%u %s\n", oid, fname);
+	tarPrintf(ctx->blobToc, "%u %s\n", oid, fname);
 
 	tctx->TH = tarOpen(AH, fname, 'w');
 }
@@ -1008,7 +1008,7 @@ _EndBlobs(ArchiveHandle *AH, TocEntry *te)
  */
 
 static int
-tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt,...)
+tarPrintf(TAR_MEMBER *th, const char *fmt,...)
 {
 	int			save_errno = errno;
 	char	   *p;
