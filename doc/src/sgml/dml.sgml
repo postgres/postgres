@@ -262,7 +262,7 @@ DELETE FROM products;
  </sect1>
 
  <sect1 id="dml-returning">
-  <title>Returning Data From Modified Rows</title>
+  <title>Returning Data from Modified Rows</title>
 
   <indexterm zone="dml-returning">
    <primary>RETURNING</primary>
