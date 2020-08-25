@@ -6876,7 +6876,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 <!-- end re_syntax.n man page -->
 
    <sect3 id="posix-vs-xquery">
-   <title>Differences From XQuery (<literal>LIKE_REGEX</literal>)</title>
+   <title>Differences from XQuery (<literal>LIKE_REGEX</literal>)</title>
 
    <indexterm zone="posix-vs-xquery">
     <primary><literal>LIKE_REGEX</literal></primary>

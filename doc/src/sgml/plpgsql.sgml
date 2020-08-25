@@ -1657,7 +1657,7 @@ END;
    </para>
 
    <sect2 id="plpgsql-statements-returning">
-    <title>Returning From a Function</title>
+    <title>Returning from a Function</title>
 
     <para>
      There are two commands available that allow you to return data
