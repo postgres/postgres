@@ -164,8 +164,7 @@ clauselist_selectivity_simple(PlannerInfo *root,
 	 * directly to clause_selectivity(). None of what we might do below is
 	 * relevant.
 	 */
-	if ((list_length(clauses) == 1) &&
-		bms_num_members(estimatedclauses) == 0)
+	if (list_length(clauses) == 1 && bms_is_empty(estimatedclauses))
 		return clause_selectivity(root, (Node *) linitial(clauses),
 								  varRelid, jointype, sjinfo);
 

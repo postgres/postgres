@@ -1246,7 +1246,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	 * of clauses. We must return 1.0 so the calling function's selectivity is
 	 * unaffected.
 	 */
-	if (bms_num_members(clauses_attnums) < 2)
+	if (bms_membership(clauses_attnums) != BMS_MULTIPLE)
 	{
 		bms_free(clauses_attnums);
 		pfree(list_attnums);
@@ -1273,18 +1273,18 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	{
 		StatisticExtInfo *stat = (StatisticExtInfo *) lfirst(l);
 		Bitmapset  *matched;
-		int			num_matched;
+		BMS_Membership membership;
 
 		/* skip statistics that are not of the correct type */
 		if (stat->kind != STATS_EXT_DEPENDENCIES)
 			continue;
 
 		matched = bms_intersect(clauses_attnums, stat->keys);
-		num_matched = bms_num_members(matched);
+		membership = bms_membership(matched);
 		bms_free(matched);
 
 		/* skip objects matching fewer than two attributes from clauses */
-		if (num_matched < 2)
+		if (membership != BMS_MULTIPLE)
 			continue;
 
 		func_dependencies[nfunc_dependencies]
