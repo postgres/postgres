@@ -57,6 +57,7 @@ OBJS = \
 	lockfuncs.o \
 	mac.o \
 	mac8.o \
+	mcxtfuncs.o \
 	misc.o \
 	name.o \
 	network.o \
