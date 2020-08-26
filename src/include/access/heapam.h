@@ -178,7 +178,8 @@ extern int	heap_page_prune(Relation relation, Buffer buffer,
 							struct GlobalVisState *vistest,
 							TransactionId limited_oldest_xmin,
 							TimestampTz limited_oldest_ts,
-							bool report_stats, TransactionId *latestRemovedXid);
+							bool report_stats, TransactionId *latestRemovedXid,
+							OffsetNumber *off_loc);
 extern void heap_page_prune_execute(Buffer buffer,
 									OffsetNumber *redirected, int nredirected,
 									OffsetNumber *nowdead, int ndead,

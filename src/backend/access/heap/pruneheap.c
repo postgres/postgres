@@ -188,7 +188,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 			/* OK to prune */
 			(void) heap_page_prune(relation, buffer, vistest,
 								   limited_xmin, limited_ts,
-								   true, &ignore);
+								   true, &ignore, NULL);
 		}
 
 		/* And release buffer lock */
@@ -213,6 +213,9 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * send its own new total to pgstats, and we don't want this delta applied
  * on top of that.)
  *
+ * off_loc is the offset location required by the caller to use in error
+ * callback.
+ *
  * Returns the number of tuples deleted from the page and sets
  * latestRemovedXid.
  */
@@ -221,7 +224,8 @@ heap_page_prune(Relation relation, Buffer buffer,
 				GlobalVisState *vistest,
 				TransactionId old_snap_xmin,
 				TimestampTz old_snap_ts,
-				bool report_stats, TransactionId *latestRemovedXid)
+				bool report_stats, TransactionId *latestRemovedXid,
+				OffsetNumber *off_loc)
 {
 	int			ndeleted = 0;
 	Page		page = BufferGetPage(buffer);
@@ -262,6 +266,13 @@ heap_page_prune(Relation relation, Buffer buffer,
 		if (prstate.marked[offnum])
 			continue;
 
+		/*
+		 * Set the offset number so that we can display it along with any
+		 * error that occurred while processing this tuple.
+		 */
+		if (off_loc)
+			*off_loc = offnum;
+
 		/* Nothing to do if slot is empty or already dead */
 		itemid = PageGetItemId(page, offnum);
 		if (!ItemIdIsUsed(itemid) || ItemIdIsDead(itemid))
@@ -270,6 +281,10 @@ heap_page_prune(Relation relation, Buffer buffer,
 		/* Process this item or chain of items */
 		ndeleted += heap_prune_chain(buffer, offnum, &prstate);
 	}
+
+	/* Clear the offset information once we have processed the given page. */
+	if (off_loc)
+		*off_loc = InvalidOffsetNumber;
 
 	/* Any error while applying the changes is critical */
 	START_CRIT_SECTION();
