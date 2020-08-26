@@ -285,7 +285,6 @@ SharedFileSetDeleteOnProcExit(int status, Datum arg)
 void
 SharedFileSetUnregister(SharedFileSet *input_fileset)
 {
-	bool		found = false;
 	ListCell   *l;
 
 	/*
@@ -303,12 +302,12 @@ SharedFileSetUnregister(SharedFileSet *input_fileset)
 		if (input_fileset == fileset)
 		{
 			filesetlist = list_delete_cell(filesetlist, l);
-			found = true;
-			break;
+			return;
 		}
 	}
 
-	Assert(found);
+	/* Should have found a match */
+	Assert(false);
 }
 
 /*
