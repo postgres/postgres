@@ -13,6 +13,10 @@
  * files can be discovered by name, and a shared ownership semantics so that
  * shared files survive until the last user detaches.
  *
+ * SharedFileSets can be used by backends when the temporary files need to be
+ * opened/closed multiple times and the underlying files need to survive across
+ * transactions.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -25,25 +29,36 @@
 #include "common/hashfn.h"
 #include "miscadmin.h"
 #include "storage/dsm.h"
+#include "storage/ipc.h"
 #include "storage/sharedfileset.h"
 #include "utils/builtins.h"
 
+static List *filesetlist = NIL;
+
 static void SharedFileSetOnDetach(dsm_segment *segment, Datum datum);
+static void SharedFileSetDeleteOnProcExit(int status, Datum arg);
 static void SharedFileSetPath(char *path, SharedFileSet *fileset, Oid tablespace);
 static void SharedFilePath(char *path, SharedFileSet *fileset, const char *name);
 static Oid	ChooseTablespace(const SharedFileSet *fileset, const char *name);
 
 /*
- * Initialize a space for temporary files that can be opened for read-only
- * access by other backends.  Other backends must attach to it before
- * accessing it.  Associate this SharedFileSet with 'seg'.  Any contained
- * files will be deleted when the last backend detaches.
+ * Initialize a space for temporary files that can be opened by other backends.
+ * Other backends must attach to it before accessing it.  Associate this
+ * SharedFileSet with 'seg'.  Any contained files will be deleted when the
+ * last backend detaches.
+ *
+ * We can also use this interface if the temporary files are used only by
+ * single backend but the files need to be opened and closed multiple times
+ * and also the underlying files need to survive across transactions.  For
+ * such cases, dsm segment 'seg' should be passed as NULL.  Callers are
+ * expected to explicitly remove such files by using SharedFileSetDelete/
+ * SharedFileSetDeleteAll or we remove such files on proc exit.
  *
  * Files will be distributed over the tablespaces configured in
  * temp_tablespaces.
  *
  * Under the covers the set is one or more directories which will eventually
- * be deleted when there are no backends attached.
+ * be deleted.
  */
 void
 SharedFileSetInit(SharedFileSet *fileset, dsm_segment *seg)
@@ -84,7 +99,25 @@ SharedFileSetInit(SharedFileSet *fileset, dsm_segment *seg)
 	}
 
 	/* Register our cleanup callback. */
-	on_dsm_detach(seg, SharedFileSetOnDetach, PointerGetDatum(fileset));
+	if (seg)
+		on_dsm_detach(seg, SharedFileSetOnDetach, PointerGetDatum(fileset));
+	else
+	{
+		static bool registered_cleanup = false;
+
+		if (!registered_cleanup)
+		{
+			/*
+			 * We must not have registered any fileset before registering the
+			 * fileset clean up.
+			 */
+			Assert(filesetlist == NIL);
+			on_proc_exit(SharedFileSetDeleteOnProcExit, 0);
+			registered_cleanup = true;
+		}
+
+		filesetlist = lcons((void *) fileset, filesetlist);
+	}
 }
 
 /*
@@ -147,13 +180,13 @@ SharedFileSetCreate(SharedFileSet *fileset, const char *name)
  * another backend.
  */
 File
-SharedFileSetOpen(SharedFileSet *fileset, const char *name)
+SharedFileSetOpen(SharedFileSet *fileset, const char *name, int mode)
 {
 	char		path[MAXPGPATH];
 	File		file;
 
 	SharedFilePath(path, fileset, name);
-	file = PathNameOpenTemporaryFile(path);
+	file = PathNameOpenTemporaryFile(path, mode);
 
 	return file;
 }
@@ -192,6 +225,9 @@ SharedFileSetDeleteAll(SharedFileSet *fileset)
 		SharedFileSetPath(dirpath, fileset, fileset->tablespaces[i]);
 		PathNameDeleteTemporaryDir(dirpath);
 	}
+
+	/* Unregister the shared fileset */
+	SharedFileSetUnregister(fileset);
 }
 
 /*
@@ -220,6 +256,59 @@ SharedFileSetOnDetach(dsm_segment *segment, Datum datum)
 	 */
 	if (unlink_all)
 		SharedFileSetDeleteAll(fileset);
+}
+
+/*
+ * Callback function that will be invoked on the process exit.  This will
+ * process the list of all the registered sharedfilesets and delete the
+ * underlying files.
+ */
+static void
+SharedFileSetDeleteOnProcExit(int status, Datum arg)
+{
+	ListCell   *l;
+
+	/* Loop over all the pending shared fileset entry */
+	foreach(l, filesetlist)
+	{
+		SharedFileSet *fileset = (SharedFileSet *) lfirst(l);
+
+		SharedFileSetDeleteAll(fileset);
+	}
+
+	filesetlist = NIL;
+}
+
+/*
+ * Unregister the shared fileset entry registered for cleanup on proc exit.
+ */
+void
+SharedFileSetUnregister(SharedFileSet *input_fileset)
+{
+	bool		found = false;
+	ListCell   *l;
+
+	/*
+	 * If the caller is following the dsm based cleanup then we don't maintain
+	 * the filesetlist so return.
+	 */
+	if (filesetlist == NIL)
+		return;
+
+	foreach(l, filesetlist)
+	{
+		SharedFileSet *fileset = (SharedFileSet *) lfirst(l);
+
+		/* Remove the entry from the list */
+		if (input_fileset == fileset)
+		{
+			filesetlist = list_delete_cell(filesetlist, l);
+			found = true;
+			break;
+		}
+	}
+
+	Assert(found);
 }
 
 /*

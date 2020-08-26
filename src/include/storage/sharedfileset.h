@@ -37,9 +37,11 @@ typedef struct SharedFileSet
 extern void SharedFileSetInit(SharedFileSet *fileset, dsm_segment *seg);
 extern void SharedFileSetAttach(SharedFileSet *fileset, dsm_segment *seg);
 extern File SharedFileSetCreate(SharedFileSet *fileset, const char *name);
-extern File SharedFileSetOpen(SharedFileSet *fileset, const char *name);
+extern File SharedFileSetOpen(SharedFileSet *fileset, const char *name,
+							  int mode);
 extern bool SharedFileSetDelete(SharedFileSet *fileset, const char *name,
 								bool error_on_failure);
 extern void SharedFileSetDeleteAll(SharedFileSet *fileset);
+extern void SharedFileSetUnregister(SharedFileSet *input_fileset);
 
 #endif

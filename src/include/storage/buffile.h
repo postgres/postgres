@@ -48,7 +48,9 @@ extern long BufFileAppend(BufFile *target, BufFile *source);
 
 extern BufFile *BufFileCreateShared(SharedFileSet *fileset, const char *name);
 extern void BufFileExportShared(BufFile *file);
-extern BufFile *BufFileOpenShared(SharedFileSet *fileset, const char *name);
+extern BufFile *BufFileOpenShared(SharedFileSet *fileset, const char *name,
+								  int mode);
 extern void BufFileDeleteShared(SharedFileSet *fileset, const char *name);
+extern void BufFileTruncateShared(BufFile *file, int fileno, off_t offset);
 
 #endif							/* BUFFILE_H */

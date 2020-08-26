@@ -94,7 +94,7 @@ extern mode_t FileGetRawMode(File file);
 
 /* Operations used for sharing named temporary files */
 extern File PathNameCreateTemporaryFile(const char *name, bool error_on_failure);
-extern File PathNameOpenTemporaryFile(const char *name);
+extern File PathNameOpenTemporaryFile(const char *path, int mode);
 extern bool PathNameDeleteTemporaryFile(const char *name, bool error_on_failure);
 extern void PathNameCreateTemporaryDir(const char *base, const char *name);
 extern void PathNameDeleteTemporaryDir(const char *name);

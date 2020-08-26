@@ -78,6 +78,8 @@
 
 #include "postgres.h"
 
+#include <fcntl.h>
+
 #include "storage/buffile.h"
 #include "utils/builtins.h"
 #include "utils/logtape.h"
@@ -551,7 +553,7 @@ ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 		lt = &lts->tapes[i];
 
 		pg_itoa(i, filename);
-		file = BufFileOpenShared(fileset, filename);
+		file = BufFileOpenShared(fileset, filename, O_RDONLY);
 		filesize = BufFileSize(file);
 
 		/*

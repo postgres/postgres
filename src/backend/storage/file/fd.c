@@ -1743,18 +1743,17 @@ PathNameCreateTemporaryFile(const char *path, bool error_on_failure)
 /*
  * Open a file that was created with PathNameCreateTemporaryFile, possibly in
  * another backend.  Files opened this way don't count against the
- * temp_file_limit of the caller, are read-only and are automatically closed
- * at the end of the transaction but are not deleted on close.
+ * temp_file_limit of the caller, are automatically closed at the end of the
+ * transaction but are not deleted on close.
  */
 File
-PathNameOpenTemporaryFile(const char *path)
+PathNameOpenTemporaryFile(const char *path, int mode)
 {
 	File		file;
 
 	ResourceOwnerEnlargeFiles(CurrentResourceOwner);
 
-	/* We open the file read-only. */
-	file = PathNameOpenFile(path, O_RDONLY | PG_BINARY);
+	file = PathNameOpenFile(path, mode | PG_BINARY);
 
 	/* If no such file, then we don't raise an error. */
 	if (file <= 0 && errno != ENOENT)
