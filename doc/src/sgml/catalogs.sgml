@@ -9697,6 +9697,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    </tgroup>
   </table>
 
+  <para>
+   By default, the <structname>pg_backend_memory_contexts</structname> view can be
+   read only by superusers.
+  </para>
  </sect1>
 
  <sect1 id="view-pg-config">
