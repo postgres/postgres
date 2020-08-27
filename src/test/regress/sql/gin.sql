@@ -138,4 +138,28 @@ from
 reset enable_seqscan;
 reset enable_bitmapscan;
 
+-- re-purpose t_gin_test_tbl to test scans involving posting trees
+insert into t_gin_test_tbl select array[1, g, g/10], array[2, g, g/10]
+  from generate_series(1, 20000) g;
+
+select gin_clean_pending_list('t_gin_test_tbl_i_j_idx') is not null;
+
+analyze t_gin_test_tbl;
+
+set enable_seqscan = off;
+set enable_bitmapscan = on;
+
+explain (costs off)
+select count(*) from t_gin_test_tbl where j @> array[50];
+select count(*) from t_gin_test_tbl where j @> array[50];
+explain (costs off)
+select count(*) from t_gin_test_tbl where j @> array[2];
+select count(*) from t_gin_test_tbl where j @> array[2];
+explain (costs off)
+select count(*) from t_gin_test_tbl where j @> '{}'::int[];
+select count(*) from t_gin_test_tbl where j @> '{}'::int[];
+
+reset enable_seqscan;
+reset enable_bitmapscan;
+
 drop table t_gin_test_tbl;
