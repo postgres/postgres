@@ -146,7 +146,7 @@ typedef struct ProcArrayStruct
  *    I.e. the difference to GlobalVisSharedRels is that
  *    snapshot in other databases are ignored.
  *
- * 3) GlobalVisCatalogRels, which only considers an XID's
+ * 3) GlobalVisDataRels, which only considers an XID's
  *    effects visible-to-everyone if neither snapshots in the current
  *    database, nor a replication slot's xmin consider XID as running.
  *
