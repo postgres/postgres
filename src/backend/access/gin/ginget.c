@@ -264,24 +264,28 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			/* Search forward to re-find idatum */
 			for (;;)
 			{
-				Datum		newDatum;
-				GinNullCategory newCategory;
-
 				if (moveRightIfItNeeded(btree, stack, snapshot) == false)
-					elog(ERROR, "lost saved point in index");	/* must not happen !!! */
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("failed to re-find tuple within index \"%s\"",
+									RelationGetRelationName(btree->index))));
 
 				page = BufferGetPage(stack->buffer);
 				itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, stack->off));
 
-				if (gintuple_get_attrnum(btree->ginstate, itup) != attnum)
-					elog(ERROR, "lost saved point in index");	/* must not happen !!! */
-				newDatum = gintuple_get_key(btree->ginstate, itup,
-											&newCategory);
+				if (gintuple_get_attrnum(btree->ginstate, itup) == attnum)
+				{
+					Datum		newDatum;
+					GinNullCategory newCategory;
 
-				if (ginCompareEntries(btree->ginstate, attnum,
-									  newDatum, newCategory,
-									  idatum, icategory) == 0)
-					break;		/* Found! */
+					newDatum = gintuple_get_key(btree->ginstate, itup,
+												&newCategory);
+
+					if (ginCompareEntries(btree->ginstate, attnum,
+										  newDatum, newCategory,
+										  idatum, icategory) == 0)
+						break;	/* Found! */
+				}
 
 				stack->off++;
 			}
