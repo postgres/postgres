@@ -75,53 +75,62 @@
 
   <table id="gin-builtin-opclasses-table">
    <title>Built-in <acronym>GIN</acronym> Operator Classes</title>
-   <tgroup cols="3">
+   <tgroup cols="2">
     <thead>
      <row>
       <entry>Name</entry>
-      <entry>Indexed Data Type</entry>
       <entry>Indexable Operators</entry>
      </row>
     </thead>
     <tbody>
      <row>
-      <entry><literal>array_ops</literal></entry>
-      <entry><type>anyarray</type></entry>
-      <entry>
-       <literal>&amp;&amp;</literal>
-       <literal>&lt;@</literal>
-       <literal>=</literal>
-       <literal>@&gt;</literal>
-      </entry>
+      <entry morerows="3" valign="middle"><literal>array_ops</literal></entry>
+      <entry><literal>&amp;&amp; (anyarray,anyarray)</literal></entry>
      </row>
      <row>
-      <entry><literal>jsonb_ops</literal></entry>
-      <entry><type>jsonb</type></entry>
-      <entry>
-       <literal>?</literal>
-       <literal>?&amp;</literal>
-       <literal>?|</literal>
-       <literal>@&gt;</literal>
-       <literal>@?</literal>
-       <literal>@@</literal>
-      </entry>
+      <entry><literal>@&gt; (anyarray,anyarray)</literal></entry>
      </row>
      <row>
-      <entry><literal>jsonb_path_ops</literal></entry>
-      <entry><type>jsonb</type></entry>
-      <entry>
-       <literal>@&gt;</literal>
-       <literal>@?</literal>
-       <literal>@@</literal>
-      </entry>
+      <entry><literal>&lt;@ (anyarray,anyarray)</literal></entry>
      </row>
      <row>
-      <entry><literal>tsvector_ops</literal></entry>
-      <entry><type>tsvector</type></entry>
-      <entry>
-       <literal>@@</literal>
-       <literal>@@@</literal>
-      </entry>
+      <entry><literal>= (anyarray,anyarray)</literal></entry>
+     </row>
+     <row>
+      <entry morerows="5" valign="middle"><literal>jsonb_ops</literal></entry>
+      <entry><literal>@&gt; (jsonb,jsonb)</literal></entry>
+     </row>
+     <row>
+      <entry><literal>@? (jsonb,jsonpath)</literal></entry>
+     </row>
+     <row>
+      <entry><literal>@@ (jsonb,jsonpath)</literal></entry>
+     </row>
+     <row>
+      <entry><literal>? (jsonb,text)</literal></entry>
+     </row>
+     <row>
+      <entry><literal>?| (jsonb,text[])</literal></entry>
+     </row>
+     <row>
+      <entry><literal>?&amp; (jsonb,text[])</literal></entry>
+     </row>
+     <row>
+      <entry morerows="2" valign="middle"><literal>jsonb_path_ops</literal></entry>
+      <entry><literal>@&gt; (jsonb,jsonb)</literal></entry>
+     </row>
+     <row>
+      <entry><literal>@? (jsonb,jsonpath)</literal></entry>
+     </row>
+     <row>
+      <entry><literal>@@ (jsonb,jsonpath)</literal></entry>
+     </row>
+     <row>
+      <entry morerows="1" valign="middle"><literal>tsvector_ops</literal></entry>
+      <entry><literal>@@ (tsvector,tsquery)</literal></entry>
+     </row>
+     <row>
+      <entry><literal>@@@ (tsvector,tsquery)</literal></entry>
      </row>
     </tbody>
    </tgroup>

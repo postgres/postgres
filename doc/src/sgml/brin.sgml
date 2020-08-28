@@ -120,354 +120,292 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
 
  <table id="brin-builtin-opclasses-table">
   <title>Built-in <acronym>BRIN</acronym> Operator Classes</title>
-  <tgroup cols="3">
-   <colspec colname="col1" colwidth="2*"/>
-   <colspec colname="col2" colwidth="2*"/>
-   <colspec colname="col3" colwidth="1*"/>
+  <tgroup cols="2">
    <thead>
     <row>
      <entry>Name</entry>
-     <entry>Indexed Data Type</entry>
      <entry>Indexable Operators</entry>
     </row>
    </thead>
    <tbody>
     <row>
-     <entry><literal>int8_minmax_ops</literal></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>bit_minmax_ops</literal></entry>
+     <entry><literal>= (bit,bit)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (bit,bit)</literal></entry></row>
+    <row><entry><literal>&gt; (bit,bit)</literal></entry></row>
+    <row><entry><literal>&lt;= (bit,bit)</literal></entry></row>
+    <row><entry><literal>&gt;= (bit,bit)</literal></entry></row>
+
     <row>
-     <entry><literal>bit_minmax_ops</literal></entry>
-     <entry><type>bit</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="12"><literal>box_inclusion_ops</literal></entry>
+     <entry><literal>@&gt; (box,point)</literal></entry>
     </row>
+    <row><entry><literal>&lt;&lt; (box,box)</literal></entry></row>
+    <row><entry><literal>&amp;&lt; (box,box)</literal></entry></row>
+    <row><entry><literal>&amp;&gt; (box,box)</literal></entry></row>
+    <row><entry><literal>&gt;&gt; (box,box)</literal></entry></row>
+    <row><entry><literal>&lt;@ (box,box)</literal></entry></row>
+    <row><entry><literal>@&gt; (box,box)</literal></entry></row>
+    <row><entry><literal>~= (box,box)</literal></entry></row>
+    <row><entry><literal>&amp;&amp; (box,box)</literal></entry></row>
+    <row><entry><literal>&lt;&lt;| (box,box)</literal></entry></row>
+    <row><entry><literal>&amp;&lt;| (box,box)</literal></entry></row>
+    <row><entry><literal>|&amp;&gt; (box,box)</literal></entry></row>
+    <row><entry><literal>|&gt;&gt; (box,box)</literal></entry></row>
+
     <row>
-     <entry><literal>varbit_minmax_ops</literal></entry>
-     <entry><type>bit varying</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>bpchar_minmax_ops</literal></entry>
+     <entry><literal>= (character,character)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (character,character)</literal></entry></row>
+    <row><entry><literal>&lt;= (character,character)</literal></entry></row>
+    <row><entry><literal>&gt; (character,character)</literal></entry></row>
+    <row><entry><literal>&gt;= (character,character)</literal></entry></row>
+
     <row>
-     <entry><literal>box_inclusion_ops</literal></entry>
-     <entry><type>box</type></entry>
-     <entry>
-      <literal>&lt;&lt;</literal>
-      <literal>&amp;&lt;</literal>
-      <literal>&amp;&amp;</literal>
-      <literal>&amp;&gt;</literal>
-      <literal>&gt;&gt;</literal>
-      <literal>~=</literal>
-      <literal>@&gt;</literal>
-      <literal>&lt;@</literal>
-      <literal>&amp;&lt;|</literal>
-      <literal>&lt;&lt;|</literal>
-      <literal>|&gt;&gt;</literal>
-      <literal>|&amp;&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>bytea_minmax_ops</literal></entry>
+     <entry><literal>= (bytea,bytea)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (bytea,bytea)</literal></entry></row>
+    <row><entry><literal>&lt;= (bytea,bytea)</literal></entry></row>
+    <row><entry><literal>&gt; (bytea,bytea)</literal></entry></row>
+    <row><entry><literal>&gt;= (bytea,bytea)</literal></entry></row>
+
     <row>
-     <entry><literal>bytea_minmax_ops</literal></entry>
-     <entry><type>bytea</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>char_minmax_ops</literal></entry>
+     <entry><literal>= ("char","char")</literal></entry>
     </row>
+    <row><entry><literal>&lt; ("char","char")</literal></entry></row>
+    <row><entry><literal>&lt;= ("char","char")</literal></entry></row>
+    <row><entry><literal>&gt; ("char","char")</literal></entry></row>
+    <row><entry><literal>&gt;= ("char","char")</literal></entry></row>
+
     <row>
-     <entry><literal>bpchar_minmax_ops</literal></entry>
-     <entry><type>character</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>date_minmax_ops</literal></entry>
+     <entry><literal>= (date,date)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (date,date)</literal></entry></row>
+    <row><entry><literal>&lt;= (date,date)</literal></entry></row>
+    <row><entry><literal>&gt; (date,date)</literal></entry></row>
+    <row><entry><literal>&gt;= (date,date)</literal></entry></row>
+
     <row>
-     <entry><literal>char_minmax_ops</literal></entry>
-     <entry><type>"char"</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>float4_minmax_ops</literal></entry>
+     <entry><literal>= (float4,float4)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (float4,float4)</literal></entry></row>
+    <row><entry><literal>&gt; (float4,float4)</literal></entry></row>
+    <row><entry><literal>&lt;= (float4,float4)</literal></entry></row>
+    <row><entry><literal>&gt;= (float4,float4)</literal></entry></row>
+
     <row>
-     <entry><literal>date_minmax_ops</literal></entry>
-     <entry><type>date</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>float8_minmax_ops</literal></entry>
+     <entry><literal>= (float8,float8)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (float8,float8)</literal></entry></row>
+    <row><entry><literal>&lt;= (float8,float8)</literal></entry></row>
+    <row><entry><literal>&gt; (float8,float8)</literal></entry></row>
+    <row><entry><literal>&gt;= (float8,float8)</literal></entry></row>
+
     <row>
-     <entry><literal>float8_minmax_ops</literal></entry>
-     <entry><type>double precision</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="5"><literal>inet_inclusion_ops</literal></entry>
+     <entry><literal>&lt;&lt; (inet,inet)</literal></entry>
     </row>
+    <row><entry><literal>&lt;&lt;= (inet,inet)</literal></entry></row>
+    <row><entry><literal>&gt;&gt; (inet,inet)</literal></entry></row>
+    <row><entry><literal>&gt;&gt;= (inet,inet)</literal></entry></row>
+    <row><entry><literal>= (inet,inet)</literal></entry></row>
+    <row><entry><literal>&amp;&amp; (inet,inet)</literal></entry></row>
+
     <row>
-     <entry><literal>inet_minmax_ops</literal></entry>
-     <entry><type>inet</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>inet_minmax_ops</literal></entry>
+     <entry><literal>= (inet,inet)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (inet,inet)</literal></entry></row>
+    <row><entry><literal>&lt;= (inet,inet)</literal></entry></row>
+    <row><entry><literal>&gt; (inet,inet)</literal></entry></row>
+    <row><entry><literal>&gt;= (inet,inet)</literal></entry></row>
+
     <row>
-     <entry><literal>network_inclusion_ops</literal></entry>
-     <entry><type>inet</type></entry>
-     <entry>
-      <literal>&amp;&amp;</literal>
-      <literal>&gt;&gt;=</literal>
-      <literal>&lt;&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;&gt;</literal>
-      <literal>&lt;&lt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>int2_minmax_ops</literal></entry>
+     <entry><literal>= (int2,int2)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (int2,int2)</literal></entry></row>
+    <row><entry><literal>&gt; (int2,int2)</literal></entry></row>
+    <row><entry><literal>&lt;= (int2,int2)</literal></entry></row>
+    <row><entry><literal>&gt;= (int2,int2)</literal></entry></row>
+
     <row>
-     <entry><literal>int4_minmax_ops</literal></entry>
-     <entry><type>integer</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>int4_minmax_ops</literal></entry>
+     <entry><literal>= (int4,int4)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (int4,int4)</literal></entry></row>
+    <row><entry><literal>&gt; (int4,int4)</literal></entry></row>
+    <row><entry><literal>&lt;= (int4,int4)</literal></entry></row>
+    <row><entry><literal>&gt;= (int4,int4)</literal></entry></row>
+
     <row>
-     <entry><literal>interval_minmax_ops</literal></entry>
-     <entry><type>interval</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>int8_minmax_ops</literal></entry>
+     <entry><literal>= (bigint,bigint)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (bigint,bigint)</literal></entry></row>
+    <row><entry><literal>&gt; (bigint,bigint)</literal></entry></row>
+    <row><entry><literal>&lt;= (bigint,bigint)</literal></entry></row>
+    <row><entry><literal>&gt;= (bigint,bigint)</literal></entry></row>
+
     <row>
-     <entry><literal>macaddr_minmax_ops</literal></entry>
-     <entry><type>macaddr</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>interval_minmax_ops</literal></entry>
+     <entry><literal>= (interval,interval)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (interval,interval)</literal></entry></row>
+    <row><entry><literal>&lt;= (interval,interval)</literal></entry></row>
+    <row><entry><literal>&gt; (interval,interval)</literal></entry></row>
+    <row><entry><literal>&gt;= (interval,interval)</literal></entry></row>
+
     <row>
-     <entry><literal>macaddr8_minmax_ops</literal></entry>
-     <entry><type>macaddr8</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>macaddr_minmax_ops</literal></entry>
+     <entry><literal>= (macaddr,macaddr)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (macaddr,macaddr)</literal></entry></row>
+    <row><entry><literal>&lt;= (macaddr,macaddr)</literal></entry></row>
+    <row><entry><literal>&gt; (macaddr,macaddr)</literal></entry></row>
+    <row><entry><literal>&gt;= (macaddr,macaddr)</literal></entry></row>
+
     <row>
-     <entry><literal>name_minmax_ops</literal></entry>
-     <entry><type>name</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>macaddr8_minmax_ops</literal></entry>
+     <entry><literal>= (macaddr8,macaddr8)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (macaddr8,macaddr8)</literal></entry></row>
+    <row><entry><literal>&lt;= (macaddr8,macaddr8)</literal></entry></row>
+    <row><entry><literal>&gt; (macaddr8,macaddr8)</literal></entry></row>
+    <row><entry><literal>&gt;= (macaddr8,macaddr8)</literal></entry></row>
+
     <row>
-     <entry><literal>numeric_minmax_ops</literal></entry>
-     <entry><type>numeric</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>name_minmax_ops</literal></entry>
+     <entry><literal>= (name,name)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (name,name)</literal></entry></row>
+    <row><entry><literal>&lt;= (name,name)</literal></entry></row>
+    <row><entry><literal>&gt; (name,name)</literal></entry></row>
+    <row><entry><literal>&gt;= (name,name)</literal></entry></row>
+
     <row>
-     <entry><literal>pg_lsn_minmax_ops</literal></entry>
-     <entry><type>pg_lsn</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>numeric_minmax_ops</literal></entry>
+     <entry><literal>= (numeric,numeric)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (numeric,numeric)</literal></entry></row>
+    <row><entry><literal>&lt;= (numeric,numeric)</literal></entry></row>
+    <row><entry><literal>&gt; (numeric,numeric)</literal></entry></row>
+    <row><entry><literal>&gt;= (numeric,numeric)</literal></entry></row>
+
     <row>
-     <entry><literal>oid_minmax_ops</literal></entry>
-     <entry><type>oid</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>oid_minmax_ops</literal></entry>
+     <entry><literal>= (oid,oid)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (oid,oid)</literal></entry></row>
+    <row><entry><literal>&gt; (oid,oid)</literal></entry></row>
+    <row><entry><literal>&lt;= (oid,oid)</literal></entry></row>
+    <row><entry><literal>&gt;= (oid,oid)</literal></entry></row>
+
     <row>
-     <entry><literal>range_inclusion_ops</literal></entry>
-     <entry><type>any range type</type></entry>
-     <entry>
-      <literal>&lt;&lt;</literal>
-      <literal>&amp;&lt;</literal>
-      <literal>&amp;&amp;</literal>
-      <literal>&amp;&gt;</literal>
-      <literal>&gt;&gt;</literal>
-      <literal>@&gt;</literal>
-      <literal>&lt;@</literal>
-      <literal>-|-</literal>
-      <literal>=</literal>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;</literal>
-      <literal>&gt;=</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>pg_lsn_minmax_ops</literal></entry>
+     <entry><literal>= (pg_lsn,pg_lsn)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (pg_lsn,pg_lsn)</literal></entry></row>
+    <row><entry><literal>&gt; (pg_lsn,pg_lsn)</literal></entry></row>
+    <row><entry><literal>&lt;= (pg_lsn,pg_lsn)</literal></entry></row>
+    <row><entry><literal>&gt;= (pg_lsn,pg_lsn)</literal></entry></row>
+
     <row>
-     <entry><literal>float4_minmax_ops</literal></entry>
-     <entry><type>real</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="13"><literal>range_inclusion_ops</literal></entry>
+     <entry><literal>= (anyrange,anyrange)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>&lt;= (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>&gt;= (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>&gt; (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>&amp;&amp; (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>@&gt; (anyrange,anyelement)</literal></entry></row>
+    <row><entry><literal>@&gt; (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>&lt;@ (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>&lt;&lt; (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>&gt;&gt; (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>&amp;&lt; (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>&amp;&gt; (anyrange,anyrange)</literal></entry></row>
+    <row><entry><literal>-|- (anyrange,anyrange)</literal></entry></row>
+
     <row>
-     <entry><literal>int2_minmax_ops</literal></entry>
-     <entry><type>smallint</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>text_minmax_ops</literal></entry>
+     <entry><literal>= (text,text)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (text,text)</literal></entry></row>
+    <row><entry><literal>&lt;= (text,text)</literal></entry></row>
+    <row><entry><literal>&gt; (text,text)</literal></entry></row>
+    <row><entry><literal>&gt;= (text,text)</literal></entry></row>
+
     <row>
-     <entry><literal>text_minmax_ops</literal></entry>
-     <entry><type>text</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>tid_minmax_ops</literal></entry>
+     <entry><literal>= (tid,tid)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (tid,tid)</literal></entry></row>
+    <row><entry><literal>&gt; (tid,tid)</literal></entry></row>
+    <row><entry><literal>&lt;= (tid,tid)</literal></entry></row>
+    <row><entry><literal>&gt;= (tid,tid)</literal></entry></row>
+
     <row>
-     <entry><literal>tid_minmax_ops</literal></entry>
-     <entry><type>tid</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>timestamp_minmax_ops</literal></entry>
+     <entry><literal>= (timestamp,timestamp)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (timestamp,timestamp)</literal></entry></row>
+    <row><entry><literal>&lt;= (timestamp,timestamp)</literal></entry></row>
+    <row><entry><literal>&gt; (timestamp,timestamp)</literal></entry></row>
+    <row><entry><literal>&gt;= (timestamp,timestamp)</literal></entry></row>
+
     <row>
-     <entry><literal>timestamp_minmax_ops</literal></entry>
-     <entry><type>timestamp without time zone</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>timestamptz_minmax_ops</literal></entry>
+     <entry><literal>= (timestamptz,timestamptz)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (timestamptz,timestamptz)</literal></entry></row>
+    <row><entry><literal>&lt;= (timestamptz,timestamptz)</literal></entry></row>
+    <row><entry><literal>&gt; (timestamptz,timestamptz)</literal></entry></row>
+    <row><entry><literal>&gt;= (timestamptz,timestamptz)</literal></entry></row>
+
     <row>
-     <entry><literal>timestamptz_minmax_ops</literal></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>time_minmax_ops</literal></entry>
+     <entry><literal>= (time,time)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (time,time)</literal></entry></row>
+    <row><entry><literal>&lt;= (time,time)</literal></entry></row>
+    <row><entry><literal>&gt; (time,time)</literal></entry></row>
+    <row><entry><literal>&gt;= (time,time)</literal></entry></row>
+
     <row>
-     <entry><literal>time_minmax_ops</literal></entry>
-     <entry><type>time without time zone</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>timetz_minmax_ops</literal></entry>
+     <entry><literal>= (timetz,timetz)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (timetz,timetz)</literal></entry></row>
+    <row><entry><literal>&lt;= (timetz,timetz)</literal></entry></row>
+    <row><entry><literal>&gt; (timetz,timetz)</literal></entry></row>
+    <row><entry><literal>&gt;= (timetz,timetz)</literal></entry></row>
+
     <row>
-     <entry><literal>timetz_minmax_ops</literal></entry>
-     <entry><type>time with time zone</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>uuid_minmax_ops</literal></entry>
+     <entry><literal>= (uuid,uuid)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (uuid,uuid)</literal></entry></row>
+    <row><entry><literal>&gt; (uuid,uuid)</literal></entry></row>
+    <row><entry><literal>&lt;= (uuid,uuid)</literal></entry></row>
+    <row><entry><literal>&gt;= (uuid,uuid)</literal></entry></row>
+
     <row>
-     <entry><literal>uuid_minmax_ops</literal></entry>
-     <entry><type>uuid</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
+     <entry valign="middle" morerows="4"><literal>varbit_minmax_ops</literal></entry>
+     <entry><literal>= (varbit,varbit)</literal></entry>
     </row>
+    <row><entry><literal>&lt; (varbit,varbit)</literal></entry></row>
+    <row><entry><literal>&gt; (varbit,varbit)</literal></entry></row>
+    <row><entry><literal>&lt;= (varbit,varbit)</literal></entry></row>
+    <row><entry><literal>&gt;= (varbit,varbit)</literal></entry></row>
    </tbody>
   </tgroup>
  </table>
