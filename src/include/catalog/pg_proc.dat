@@ -328,6 +328,7 @@
   proname => 'unknownout', prorettype => 'cstring', proargtypes => 'unknown',
   prosrc => 'unknownout' },
 { oid => '111',
+  descr => 'implementation of deprecated ! and !! factorial operators',
   proname => 'numeric_fac', prorettype => 'numeric', proargtypes => 'int8',
   prosrc => 'numeric_fac' },
 

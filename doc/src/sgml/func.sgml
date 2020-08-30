@@ -1055,6 +1055,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        </para>
        <para>
         Factorial
+        (deprecated, use <link linkend="function-factorial"><function>factorial()</function></link> instead)
        </para>
        <para>
         <literal>5 !</literal>
@@ -1068,7 +1069,8 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>numeric</returnvalue>
        </para>
        <para>
-        Factorial (as a prefix operator)
+        Factorial as a prefix operator
+        (deprecated, use <link linkend="function-factorial"><function>factorial()</function></link> instead)
        </para>
        <para>
         <literal>!! 5</literal>
@@ -1344,6 +1346,23 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        <para>
         <literal>exp(1.0)</literal>
         <returnvalue>2.7182818284590452</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm id="function-factorial">
+         <primary>factorial</primary>
+        </indexterm>
+        <function>factorial</function> ( <type>bigint</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para>
+        Factorial
+       </para>
+       <para>
+        <literal>factorial(5)</literal>
+        <returnvalue>120</returnvalue>
        </para></entry>
       </row>
 

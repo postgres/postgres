@@ -354,20 +354,19 @@ Some examples follow.
 </para>
 
 <example>
-<title>Factorial Operator Type Resolution</title>
+<title>Square Root Operator Type Resolution</title>
 
 <para>
-There is only one factorial operator (postfix <literal>!</literal>)
+There is only one square root operator (prefix <literal>|/</literal>)
 defined in the standard catalog, and it takes an argument of type
-<type>bigint</type>.
+<type>double precision</type>.
 The scanner assigns an initial type of <type>integer</type> to the argument
 in this query expression:
 <screen>
-SELECT 40 ! AS "40 factorial";
-
-                   40 factorial
---------------------------------------------------
- 815915283247897734345611269596115894272000000000
+SELECT |/ 40 AS "square root of 40";
+ square root of 40
+-------------------
+ 6.324555320336759
 (1 row)
 </screen>
 
@@ -375,7 +374,7 @@ So the parser does a type conversion on the operand and the query
 is equivalent to:
 
 <screen>
-SELECT CAST(40 AS bigint) ! AS "40 factorial";
+SELECT |/ CAST(40 AS double precision) AS "square root of 40";
 </screen>
 </para>
 </example>

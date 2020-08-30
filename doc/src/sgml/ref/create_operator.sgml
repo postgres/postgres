@@ -87,10 +87,17 @@ CREATE OPERATOR <replaceable>name</replaceable> (
 
   <para>
    At least one of <literal>LEFTARG</literal> and <literal>RIGHTARG</literal> must be defined.  For
-   binary operators, both must be defined. For right  unary
+   binary operators, both must be defined. For right unary
    operators, only <literal>LEFTARG</literal> should be defined, while for left
    unary operators only <literal>RIGHTARG</literal> should be defined.
   </para>
+
+  <note>
+   <para>
+    Right unary, also called postfix, operators are deprecated and will be
+    removed in <productname>PostgreSQL</productname> version 14.
+   </para>
+  </note>
 
   <para>
    The <replaceable class="parameter">function_name</replaceable>
