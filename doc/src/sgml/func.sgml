@@ -666,14 +666,16 @@
 
       <row>
        <entry> <literal>!</literal> </entry>
-       <entry>factorial</entry>
+       <entry>factorial
+        (deprecated, use <function>factorial()</function> instead)</entry>
        <entry><literal>5 !</literal></entry>
        <entry><literal>120</literal></entry>
       </row>
 
       <row>
        <entry> <literal>!!</literal> </entry>
-       <entry>factorial (prefix operator)</entry>
+       <entry>factorial as a prefix operator
+        (deprecated, use <function>factorial()</function> instead)</entry>
        <entry><literal>!! 5</literal></entry>
        <entry><literal>120</literal></entry>
       </row>
@@ -854,6 +856,19 @@
        <entry>exponential</entry>
        <entry><literal>exp(1.0)</literal></entry>
        <entry><literal>2.71828182845905</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>factorial</primary>
+        </indexterm>
+        <literal><function>factorial(<type>bigint</type>)</function></literal>
+       </entry>
+       <entry><type>numeric</type></entry>
+       <entry>factorial</entry>
+       <entry><literal>factorial(5)</literal></entry>
+       <entry><literal>120</literal></entry>
       </row>
 
       <row>
