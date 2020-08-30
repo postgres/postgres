@@ -996,7 +996,7 @@ estimate_size(PlannerInfo *root, RelOptInfo *baserel,
 	/*
 	 * Estimate the number of tuples in the file.
 	 */
-	if (baserel->pages > 0)
+	if (baserel->tuples >= 0 && baserel->pages > 0)
 	{
 		/*
 		 * We have # of pages and # of tuples from pg_class (that is, from a

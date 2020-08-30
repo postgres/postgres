@@ -727,7 +727,7 @@ ginvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 * entries.  This is bogus if the index is partial, but it's real hard to
 	 * tell how many distinct heap entries are referenced by a GIN index.
 	 */
-	stats->num_index_tuples = info->num_heap_tuples;
+	stats->num_index_tuples = Max(info->num_heap_tuples, 0);
 	stats->estimated_count = info->estimated_count;
 
 	/*

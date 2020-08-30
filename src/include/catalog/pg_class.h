@@ -62,8 +62,8 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	/* # of blocks (not always up-to-date) */
 	int32		relpages BKI_DEFAULT(0);
 
-	/* # of tuples (not always up-to-date) */
-	float4		reltuples BKI_DEFAULT(0);
+	/* # of tuples (not always up-to-date; -1 means "unknown") */
+	float4		reltuples BKI_DEFAULT(-1);
 
 	/* # of all-visible blocks (not always up-to-date) */
 	int32		relallvisible BKI_DEFAULT(0);

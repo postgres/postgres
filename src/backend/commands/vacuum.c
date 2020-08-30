@@ -1128,8 +1128,8 @@ vacuum_set_xid_limits(Relation rel,
  *		live tuples seen; but if we did not, we should not blindly extrapolate
  *		from that number, since VACUUM may have scanned a quite nonrandom
  *		subset of the table.  When we have only partial information, we take
- *		the old value of pg_class.reltuples as a measurement of the
- *		tuple density in the unscanned pages.
+ *		the old value of pg_class.reltuples/pg_class.relpages as a measurement
+ *		of the tuple density in the unscanned pages.
  *
  *		Note: scanned_tuples should count only *live* tuples, since
  *		pg_class.reltuples is defined that way.
@@ -1152,18 +1152,16 @@ vac_estimate_reltuples(Relation relation,
 
 	/*
 	 * If scanned_pages is zero but total_pages isn't, keep the existing value
-	 * of reltuples.  (Note: callers should avoid updating the pg_class
-	 * statistics in this situation, since no new information has been
-	 * provided.)
+	 * of reltuples.  (Note: we might be returning -1 in this case.)
 	 */
 	if (scanned_pages == 0)
 		return old_rel_tuples;
 
 	/*
-	 * If old value of relpages is zero, old density is indeterminate; we
-	 * can't do much except scale up scanned_tuples to match total_pages.
+	 * If old density is unknown, we can't do much except scale up
+	 * scanned_tuples to match total_pages.
 	 */
-	if (old_rel_pages == 0)
+	if (old_rel_tuples < 0 || old_rel_pages == 0)
 		return floor((scanned_tuples / scanned_pages) * total_pages + 0.5);
 
 	/*

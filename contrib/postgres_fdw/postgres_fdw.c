@@ -692,15 +692,14 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	else
 	{
 		/*
-		 * If the foreign table has never been ANALYZEd, it will have relpages
-		 * and reltuples equal to zero, which most likely has nothing to do
-		 * with reality.  We can't do a whole lot about that if we're not
+		 * If the foreign table has never been ANALYZEd, it will have
+		 * reltuples < 0, meaning "unknown".  We can't do much if we're not
 		 * allowed to consult the remote server, but we can use a hack similar
 		 * to plancat.c's treatment of empty relations: use a minimum size
 		 * estimate of 10 pages, and divide by the column-datatype-based width
 		 * estimate to get the corresponding number of tuples.
 		 */
-		if (baserel->pages == 0 && baserel->tuples == 0)
+		if (baserel->tuples < 0)
 		{
 			baserel->pages = 10;
 			baserel->tuples =

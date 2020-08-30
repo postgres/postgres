@@ -3080,6 +3080,10 @@ relation_needs_vacanalyze(Oid relid,
 		instuples = tabentry->inserts_since_vacuum;
 		anltuples = tabentry->changes_since_analyze;
 
+		/* If the table hasn't yet been vacuumed, take reltuples as zero */
+		if (reltuples < 0)
+			reltuples = 0;
+
 		vacthresh = (float4) vac_base_thresh + vac_scale_factor * reltuples;
 		vacinsthresh = (float4) vac_ins_base_thresh + vac_ins_scale_factor * reltuples;
 		anlthresh = (float4) anl_base_thresh + anl_scale_factor * reltuples;

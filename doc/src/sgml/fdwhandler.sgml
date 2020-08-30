@@ -130,7 +130,8 @@ GetForeignRelSize(PlannerInfo *root,
      (The initial value is
      from <structname>pg_class</structname>.<structfield>reltuples</structfield>
      which represents the total row count seen by the
-     last <command>ANALYZE</command>.)
+     last <command>ANALYZE</command>; it will be <literal>-1</literal> if
+     no <command>ANALYZE</command> has been done on this foreign table.)
     </para>
 
     <para>

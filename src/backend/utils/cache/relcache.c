@@ -1870,7 +1870,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 
 	relation->rd_rel->relreplident = REPLICA_IDENTITY_NOTHING;
 	relation->rd_rel->relpages = 0;
-	relation->rd_rel->reltuples = 0;
+	relation->rd_rel->reltuples = -1;
 	relation->rd_rel->relallvisible = 0;
 	relation->rd_rel->relkind = RELKIND_RELATION;
 	relation->rd_rel->relnatts = (int16) natts;
@@ -3692,7 +3692,7 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 		if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
 		{
 			classform->relpages = 0;	/* it's empty until further notice */
-			classform->reltuples = 0;
+			classform->reltuples = -1;
 			classform->relallvisible = 0;
 		}
 		classform->relfrozenxid = freezeXid;

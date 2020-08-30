@@ -974,11 +974,6 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			/* it has storage, ok to call the smgr */
 			curpages = RelationGetNumberOfBlocks(rel);
 
-			/* coerce values in pg_class to more desirable types */
-			relpages = (BlockNumber) rel->rd_rel->relpages;
-			reltuples = (double) rel->rd_rel->reltuples;
-			relallvisible = (BlockNumber) rel->rd_rel->relallvisible;
-
 			/* report estimated # pages */
 			*pages = curpages;
 			/* quick exit if rel is clearly empty */
@@ -988,6 +983,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				*allvisfrac = 0;
 				break;
 			}
+
 			/* coerce values in pg_class to more desirable types */
 			relpages = (BlockNumber) rel->rd_rel->relpages;
 			reltuples = (double) rel->rd_rel->reltuples;
@@ -1006,12 +1002,12 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			}
 
 			/* estimate number of tuples from previous tuple density */
-			if (relpages > 0)
+			if (reltuples >= 0 && relpages > 0)
 				density = reltuples / (double) relpages;
 			else
 			{
 				/*
-				 * When we have no data because the relation was truncated,
+				 * If we have no data because the relation was never vacuumed,
 				 * estimate tuple width from attribute datatypes.  We assume
 				 * here that the pages are completely full, which is OK for
 				 * tables (since they've presumably not been VACUUMed yet) but
@@ -1059,6 +1055,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			break;
 		case RELKIND_FOREIGN_TABLE:
 			/* Just use whatever's in pg_class */
+			/* Note that FDW must cope if reltuples is -1! */
 			*pages = rel->rd_rel->relpages;
 			*tuples = rel->rd_rel->reltuples;
 			*allvisfrac = 0;

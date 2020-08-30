@@ -208,7 +208,8 @@ typedef struct LVShared
 	 * live tuples in the index vacuum case or the new live tuples in the
 	 * index cleanup case.
 	 *
-	 * estimated_count is true if reltuples is an estimated value.
+	 * estimated_count is true if reltuples is an estimated value.  (Note that
+	 * reltuples could be -1 in this case, indicating we have no idea.)
 	 */
 	double		reltuples;
 	bool		estimated_count;
@@ -567,31 +568,19 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 	/*
 	 * Update statistics in pg_class.
 	 *
-	 * A corner case here is that if we scanned no pages at all because every
-	 * page is all-visible, we should not update relpages/reltuples, because
-	 * we have no new information to contribute.  In particular this keeps us
-	 * from replacing relpages=reltuples=0 (which means "unknown tuple
-	 * density") with nonzero relpages and reltuples=0 (which means "zero
-	 * tuple density") unless there's some actual evidence for the latter.
+	 * In principle new_live_tuples could be -1 indicating that we (still)
+	 * don't know the tuple count.  In practice that probably can't happen,
+	 * since we'd surely have scanned some pages if the table is new and
+	 * nonempty.
 	 *
-	 * It's important that we use tupcount_pages and not scanned_pages for the
-	 * check described above; scanned_pages counts pages where we could not
-	 * get cleanup lock, and which were processed only for frozenxid purposes.
-	 *
-	 * We do update relallvisible even in the corner case, since if the table
-	 * is all-visible we'd definitely like to know that.  But clamp the value
-	 * to be not more than what we're setting relpages to.
+	 * For safety, clamp relallvisible to be not more than what we're setting
+	 * relpages to.
 	 *
 	 * Also, don't change relfrozenxid/relminmxid if we skipped any pages,
 	 * since then we don't know for certain that all tuples have a newer xmin.
 	 */
 	new_rel_pages = vacrelstats->rel_pages;
 	new_live_tuples = vacrelstats->new_live_tuples;
-	if (vacrelstats->tupcount_pages == 0 && new_rel_pages > 0)
-	{
-		new_rel_pages = vacrelstats->old_rel_pages;
-		new_live_tuples = vacrelstats->old_live_tuples;
-	}
 
 	visibilitymap_count(onerel, &new_rel_allvisible, NULL);
 	if (new_rel_allvisible > new_rel_pages)
@@ -612,7 +601,7 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
 						 onerel->rd_rel->relisshared,
-						 new_live_tuples,
+						 Max(new_live_tuples, 0),
 						 vacrelstats->new_dead_tuples);
 	pgstat_progress_end_command();
 
@@ -1695,9 +1684,12 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 														  vacrelstats->tupcount_pages,
 														  live_tuples);
 
-	/* also compute total number of surviving heap entries */
+	/*
+	 * Also compute the total number of surviving heap entries.  In the
+	 * (unlikely) scenario that new_live_tuples is -1, take it as zero.
+	 */
 	vacrelstats->new_rel_tuples =
-		vacrelstats->new_live_tuples + vacrelstats->new_dead_tuples;
+		Max(vacrelstats->new_live_tuples, 0) + vacrelstats->new_dead_tuples;
 
 	/*
 	 * Release any remaining pin on visibility map page.
@@ -2434,7 +2426,7 @@ lazy_cleanup_all_indexes(Relation *Irel, IndexBulkDeleteResult **stats,
  *		dead_tuples, and update running statistics.
  *
  *		reltuples is the number of heap tuples to be passed to the
- *		bulkdelete callback.
+ *		bulkdelete callback.  It's always assumed to be estimated.
  */
 static void
 lazy_vacuum_index(Relation indrel, IndexBulkDeleteResult **stats,

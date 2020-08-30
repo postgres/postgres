@@ -621,7 +621,7 @@ DefineQueryRewrite(const char *rulename,
 		classForm->relam = InvalidOid;
 		classForm->reltablespace = InvalidOid;
 		classForm->relpages = 0;
-		classForm->reltuples = 0;
+		classForm->reltuples = -1;
 		classForm->relallvisible = 0;
 		classForm->reltoastrelid = InvalidOid;
 		classForm->relhasindex = false;

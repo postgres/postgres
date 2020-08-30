@@ -2722,6 +2722,15 @@ index_update_stats(Relation rel,
 	/* Should this be a more comprehensive test? */
 	Assert(rd_rel->relkind != RELKIND_PARTITIONED_INDEX);
 
+	/*
+	 * As a special hack, if we are dealing with an empty table and the
+	 * existing reltuples is -1, we leave that alone.  This ensures that
+	 * creating an index as part of CREATE TABLE doesn't cause the table to
+	 * prematurely look like it's been vacuumed.
+	 */
+	if (reltuples == 0 && rd_rel->reltuples < 0)
+		reltuples = -1;
+
 	/* Apply required updates, if any, to copied tuple */
 
 	dirty = false;

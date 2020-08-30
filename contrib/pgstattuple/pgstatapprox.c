@@ -195,6 +195,9 @@ statapprox_heap(Relation rel, output_type *stat)
 	stat->tuple_count = vac_estimate_reltuples(rel, nblocks, scanned,
 											   stat->tuple_count);
 
+	/* It's not clear if we could get -1 here, but be safe. */
+	stat->tuple_count = Max(stat->tuple_count, 0);
+
 	/*
 	 * Calculate percentages if the relation has one or more pages.
 	 */

@@ -1015,7 +1015,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 		case RELKIND_TOASTVALUE:
 			/* The relation is real, but as yet empty */
 			new_rel_reltup->relpages = 0;
-			new_rel_reltup->reltuples = 0;
+			new_rel_reltup->reltuples = -1;
 			new_rel_reltup->relallvisible = 0;
 			break;
 		case RELKIND_SEQUENCE:
@@ -1027,7 +1027,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 		default:
 			/* Views, etc, have no disk storage */
 			new_rel_reltup->relpages = 0;
-			new_rel_reltup->reltuples = 0;
+			new_rel_reltup->reltuples = -1;
 			new_rel_reltup->relallvisible = 0;
 			break;
 	}

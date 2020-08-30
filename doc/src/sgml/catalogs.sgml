@@ -1977,6 +1977,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        the planner.  It is updated by <command>VACUUM</command>,
        <command>ANALYZE</command>, and a few DDL commands such as
        <command>CREATE INDEX</command>.
+       If the table has never yet been vacuumed or
+       analyzed, <structfield>reltuples</structfield>
+       contains <literal>-1</literal> indicating that the row count is
+       unknown.
       </para></entry>
      </row>
 
