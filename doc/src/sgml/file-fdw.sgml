@@ -216,7 +216,9 @@
   <para>
    One of the obvious uses for <literal>file_fdw</literal> is to make
    the PostgreSQL activity log available as a table for querying.  To
-   do this, first you must be logging to a CSV file, which here we
+   do this, first you must be <link
+   linkend="runtime-config-logging-csvlog">logging to a CSV file,</link>
+   which here we
    will call <literal>pglog.csv</literal>.  First, install <literal>file_fdw</literal>
    as an extension:
   </para>

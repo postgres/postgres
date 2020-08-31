@@ -6689,6 +6689,8 @@ CREATE TABLE postgres_log
 <programlisting>
 COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 </programlisting>
+        It is also possible to access the file as a foreign table, using
+        the supplied <xref linkend="file-fdw"/> module.
        </para>
 
        <para>
