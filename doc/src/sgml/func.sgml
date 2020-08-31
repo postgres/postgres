@@ -7642,9 +7642,9 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
      <listitem>
       <para>
        In <function>to_timestamp</function> and <function>to_date</function>,
-       if the year format specification is less than four digits, e.g.
+       if the year format specification is less than four digits, e.g.,
        <literal>YYY</literal>, and the supplied year is less than four digits,
-       the year will be adjusted to be nearest to the year 2020, e.g.
+       the year will be adjusted to be nearest to the year 2020, e.g.,
        <literal>95</literal> becomes 1995.
       </para>
      </listitem>
@@ -26386,7 +26386,7 @@ FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
        <row>
         <entry><literal>objsubid</literal></entry>
         <entry><type>integer</type></entry>
-        <entry>Sub-object ID (e.g. attribute number for a column)</entry>
+        <entry>Sub-object ID (e.g., attribute number for a column)</entry>
        </row>
        <row>
         <entry><literal>command_tag</literal></entry>
@@ -26476,7 +26476,7 @@ FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
        <row>
         <entry><literal>objsubid</literal></entry>
         <entry><type>integer</type></entry>
-        <entry>Sub-object ID (e.g. attribute number for a column)</entry>
+        <entry>Sub-object ID (e.g., attribute number for a column)</entry>
        </row>
        <row>
         <entry><literal>original</literal></entry>

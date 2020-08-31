@@ -1903,7 +1903,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
      <listitem>
       <para>
        Place the database cluster's data directory in a memory-backed
-       file system (i.e. <acronym>RAM</acronym> disk).  This eliminates all
+       file system (i.e., <acronym>RAM</acronym> disk).  This eliminates all
        database disk I/O, but limits data storage to the amount of
        available memory (and perhaps swap).
       </para>

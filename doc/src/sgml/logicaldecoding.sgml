@@ -882,7 +882,7 @@ OutputPluginWrite(ctx, true);
    <title>Streaming of Large Transactions for Logical Decoding</title>
 
    <para>
-    The basic output plugin callbacks (e.g. <function>begin_cb</function>,
+    The basic output plugin callbacks (e.g., <function>begin_cb</function>,
     <function>change_cb</function>, <function>commit_cb</function> and
     <function>message_cb</function>) are only invoked when the transaction
     actually commits. The changes are still decoded from the transaction
@@ -958,7 +958,7 @@ stream_commit_cb(...);  &lt;-- commit of the streamed transaction
     currently used for decoded changes) is selected and streamed.  However, in
     some cases we still have to spill to the disk even if streaming is enabled
     because if we cross the memory limit but we still have not decoded the
-    complete tuple e.g. only decoded toast table insert but not the main table
+    complete tuple e.g., only decoded toast table insert but not the main table
     insert.
    </para>
 

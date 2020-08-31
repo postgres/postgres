@@ -150,7 +150,7 @@
    </para>
    <para>
     A superuser may override this check on a per-user-mapping basis by setting
-    the user mapping option <literal>password_required 'false'</literal>, e.g.
+    the user mapping option <literal>password_required 'false'</literal>, e.g.,
 <programlisting>
 ALTER USER MAPPING FOR some_non_superuser SERVER loopback_nopw
 OPTIONS (ADD password_required 'false');

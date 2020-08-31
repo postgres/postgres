@@ -131,7 +131,7 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
   <title>Examples</title>
 
   <para>
-   Create table <structname>t1</structname> with two functionally dependent columns, i.e.
+   Create table <structname>t1</structname> with two functionally dependent columns, i.e.,
    knowledge of a value in the first column is sufficient for determining the
    value in the other column. Then functional dependency statistics are built
    on those columns:
