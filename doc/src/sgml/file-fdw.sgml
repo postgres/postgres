@@ -28,7 +28,8 @@
 
    <listitem>
     <para>
-     Specifies the file to be read.  Must be an absolute path name.
+     Specifies the file to be read.  Relative paths are relative to the
+     data directory.
      Either <literal>filename</literal> or <literal>program</literal> must be
      specified, but not both.
     </para>
