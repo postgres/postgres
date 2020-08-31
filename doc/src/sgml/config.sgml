@@ -2610,7 +2610,7 @@ include_dir 'conf.d'
         ensure data preservation even if a standby instance of
         <productname>PostgreSQL</productname> were to crash, but not if the standby
         suffers an operating-system-level crash, since the data has not
-        necessarily reached stable storage on the standby.
+        necessarily reached durable storage on the standby.
         Finally, the setting <literal>local</literal> causes commits to wait for
         local flush to disk, but not for replication.  This is not usually
         desirable when synchronous replication is in use, but is provided for
