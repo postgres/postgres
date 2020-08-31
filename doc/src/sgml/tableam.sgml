@@ -77,7 +77,7 @@
   necessary for each tuple to have a tuple identifier (<acronym>TID</acronym>)
   consisting of a block number and an item number (see also <xref
   linkend="storage-page-layout"/>).  It is not strictly necessary that the
-  sub-parts of <acronym>TIDs</acronym> have the same meaning they e.g. have
+  sub-parts of <acronym>TIDs</acronym> have the same meaning they e.g., have
   for <literal>heap</literal>, but if bitmap scan support is desired (it is
   optional), the block number needs to provide locality.
  </para>

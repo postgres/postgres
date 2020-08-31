@@ -913,7 +913,7 @@ BETTER: unrecognized node type: 42
     <para>
      Both, macros with arguments and <literal>static inline</literal>
      functions, may be used. The latter are preferable if there are
-     multiple-evaluation hazards when written as a macro, as e.g. the
+     multiple-evaluation hazards when written as a macro, as e.g., the
      case with
 <programlisting>
 #define Max(x, y)       ((x) > (y) ? (x) : (y))
@@ -924,7 +924,7 @@ BETTER: unrecognized node type: 42
     </para>
     <para>
      When the definition of an inline function references symbols
-     (i.e. variables, functions) that are only available as part of the
+     (i.e., variables, functions) that are only available as part of the
      backend, the function may not be visible when included from frontend
      code.
 <programlisting>

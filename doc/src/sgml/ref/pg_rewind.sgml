@@ -71,7 +71,7 @@ PostgreSQL documentation
    copied from the WAL archive to the <filename>pg_wal</filename> directory, or
    fetched on startup by configuring <xref linkend="guc-primary-conninfo"/> or
    <xref linkend="guc-restore-command"/>.  The use of
-   <application>pg_rewind</application> is not limited to failover, e.g.  a standby
+   <application>pg_rewind</application> is not limited to failover, e.g.,  a standby
    server can be promoted, run some write transactions, and then rewinded
    to become a standby again.
   </para>

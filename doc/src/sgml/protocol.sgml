@@ -28,7 +28,7 @@
   the server, the connection will be rejected (for example, this would occur
   if the client requested protocol version 4.0, which does not exist as of
   this writing).  If the minor version requested by the client is not
-  supported by the server (e.g. the client requests version 3.1, but the
+  supported by the server (e.g., the client requests version 3.1, but the
   server supports only 3.0), the server may either reject the connection or
   may respond with a NegotiateProtocolVersion message containing the highest
   minor protocol version which it supports.  The client may then choose either
@@ -422,7 +422,7 @@
         by the client, but does support an earlier version of the protocol;
         this message indicates the highest supported minor version.  This
         message will also be sent if the client requested unsupported protocol
-        options (i.e. beginning with <literal>_pq_.</literal>) in the
+        options (i.e., beginning with <literal>_pq_.</literal>) in the
         startup packet.  This message will be followed by an ErrorResponse or
         a message indicating the success or failure of authentication.
        </para>

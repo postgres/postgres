@@ -760,7 +760,7 @@ PostgreSQL documentation
       <term><option>--if-exists</option></term>
       <listitem>
        <para>
-        Use conditional commands (i.e. add an <literal>IF EXISTS</literal>
+        Use conditional commands (i.e., add an <literal>IF EXISTS</literal>
         clause) when cleaning database objects.  This option is not valid
         unless <option>--clean</option> is also specified.
        </para>

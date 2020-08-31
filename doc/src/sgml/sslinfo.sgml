@@ -52,7 +52,7 @@
     </term>
     <listitem>
     <para>
-     Returns the name of the protocol used for the SSL connection (e.g. TLSv1.0
+     Returns the name of the protocol used for the SSL connection (e.g., TLSv1.0
      TLSv1.1, or TLSv1.2).
     </para>
     </listitem>
@@ -68,7 +68,7 @@
     <listitem>
     <para>
      Returns the name of the cipher used for the SSL connection
-     (e.g. DHE-RSA-AES256-SHA).
+     (e.g., DHE-RSA-AES256-SHA).
     </para>
     </listitem>
    </varlistentry>

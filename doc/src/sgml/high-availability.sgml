@@ -219,7 +219,7 @@ protocol to make nodes agree on a serializable transactional order.
      this is unacceptable, either the middleware or the application
      must query such values from a single server and then use those
      values in write queries.  Another option is to use this replication
-     option with a traditional master-standby setup, i.e. data modification
+     option with a traditional master-standby setup, i.e., data modification
      queries are sent only to the master and are propagated to the
      standby servers via master-standby replication, not by the replication
      middleware.  Care must also be taken that all
@@ -657,7 +657,7 @@ protocol to make nodes agree on a serializable transactional order.
     Set up continuous archiving on the primary to an archive directory
     accessible from the standby, as described
     in <xref linkend="continuous-archiving"/>. The archive location should be
-    accessible from the standby even when the master is down, i.e. it should
+    accessible from the standby even when the master is down, i.e., it should
     reside on the standby server itself or another trusted server, not on
     the master server.
    </para>
@@ -2222,7 +2222,7 @@ LOG:  database system is ready to accept read only connections
       <itemizedlist>
        <listitem>
         <para>
-         Data Definition Language (DDL) - e.g. <command>CREATE INDEX</command>
+         Data Definition Language (DDL) - e.g., <command>CREATE INDEX</command>
         </para>
        </listitem>
        <listitem>
@@ -2288,7 +2288,7 @@ LOG:  database system is ready to accept read only connections
 
    <para>
     WAL file control commands will not work during recovery,
-    e.g. <function>pg_start_backup</function>, <function>pg_switch_wal</function> etc.
+    e.g., <function>pg_start_backup</function>, <function>pg_switch_wal</function> etc.
    </para>
 
    <para>

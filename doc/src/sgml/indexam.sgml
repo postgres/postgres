@@ -379,7 +379,7 @@ amcanreturn (Relation indexRelation, int attno);
    linkend="indexes-index-only-scans"><firstterm>index-only scans</firstterm></link> on
    the given column, by returning the indexed column values for an index entry
    in the form of an <structname>IndexTuple</structname>.  The attribute number
-   is 1-based, i.e. the first column's attno is 1. Returns true if supported,
+   is 1-based, i.e., the first column's attno is 1. Returns true if supported,
    else false.  If the access method does not support index-only scans at all,
    the <structfield>amcanreturn</structfield> field in its <structname>IndexAmRoutine</structname>
    struct can be set to NULL.

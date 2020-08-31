@@ -152,9 +152,9 @@
      Besides <command>SELECT</command> queries, the commands can include data
      modification queries (<command>INSERT</command>,
      <command>UPDATE</command>, and <command>DELETE</command>), as well as
-     other SQL commands. (You cannot use transaction control commands, e.g.
+     other SQL commands. (You cannot use transaction control commands, e.g.,
      <command>COMMIT</command>, <command>SAVEPOINT</command>, and some utility
-     commands, e.g.  <literal>VACUUM</literal>, in <acronym>SQL</acronym> functions.)
+     commands, e.g.,  <literal>VACUUM</literal>, in <acronym>SQL</acronym> functions.)
      However, the final command
      must be a <command>SELECT</command> or have a <literal>RETURNING</literal>
      clause that returns whatever is
@@ -3359,7 +3359,7 @@ if (!ptr)
         exceptions.  Any exceptions must be caught and appropriate errors
         passed back to the C interface.  If possible, compile C++ with
         <option>-fno-exceptions</option> to eliminate exceptions entirely; in such
-        cases, you must check for failures in your C++ code, e.g.  check for
+        cases, you must check for failures in your C++ code, e.g.,  check for
         NULL returned by <function>new()</function>.
        </para>
       </listitem>

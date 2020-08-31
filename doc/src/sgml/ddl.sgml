@@ -1338,7 +1338,7 @@ ALTER TABLE products ADD COLUMN description text;
     </para>
 
     <para>
-     However, if the default value is volatile (e.g.
+     However, if the default value is volatile (e.g.,
      <function>clock_timestamp()</function>)
      each row will need to be updated with the value calculated at the time
      <command>ALTER TABLE</command> is executed. To avoid a potentially
@@ -1826,7 +1826,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
        schema (assuming that the objects' own privilege requirements are
        also met).  Essentially this allows the grantee to <quote>look up</quote>
        objects within the schema.  Without this permission, it is still
-       possible to see the object names, e.g. by querying system catalogs.
+       possible to see the object names, e.g., by querying system catalogs.
        Also, after revoking this permission, existing sessions might have
        statements that have previously performed this lookup, so this is not
        a completely secure way to prevent object access.

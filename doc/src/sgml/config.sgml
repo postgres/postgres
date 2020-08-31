@@ -424,7 +424,7 @@ include_dir 'directory'
       start with the <literal>.</literal> character are also ignored, to
       prevent mistakes since such files are hidden on some platforms.  Multiple
       files within an include directory are processed in file name order
-      (according to C locale rules, i.e. numbers before letters, and
+      (according to C locale rules, i.e., numbers before letters, and
       uppercase letters before lowercase ones).
      </para>
 
@@ -1090,7 +1090,7 @@ include_dir 'conf.d'
        <para>
         With this parameter enabled, you can still create ordinary global
         users.  Simply append <literal>@</literal> when specifying the user
-        name in the client, e.g. <literal>joe@</literal>.  The <literal>@</literal>
+        name in the client, e.g., <literal>joe@</literal>.  The <literal>@</literal>
         will be stripped off before the user name is looked up by the
         server.
        </para>
@@ -3168,7 +3168,7 @@ include_dir 'conf.d'
         disabled, but the server continues to accumulate WAL segment files in
         the expectation that a command will soon be provided.  Setting
         <varname>archive_command</varname> to a command that does nothing but
-        return true, e.g. <literal>/bin/true</literal> (<literal>REM</literal> on
+        return true, e.g., <literal>/bin/true</literal> (<literal>REM</literal> on
         Windows), effectively disables
         archiving, but also breaks the chain of WAL files needed for
         archive recovery, so it should only be used in unusual circumstances.
@@ -3413,7 +3413,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       <listitem>
        <para>
         This parameter specifies that recovery should end as soon as a
-        consistent state is reached, i.e. as early as possible. When restoring
+        consistent state is reached, i.e., as early as possible. When restoring
         from an online backup, this means the point where taking the backup
         ended.
        </para>
@@ -3459,7 +3459,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         <xref linkend="guc-timezone-abbreviations"/> variable has been set
         earlier in the configuration file).  Preferred style is to use a
         numeric offset from UTC, or you can write a full time zone name,
-        e.g. <literal>Europe/Helsinki</literal> not <literal>EEST</literal>.
+        e.g., <literal>Europe/Helsinki</literal> not <literal>EEST</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -4766,7 +4766,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         if your data is likely to be completely in cache, such as when
         the database is smaller than the total server memory, decreasing
         random_page_cost can be appropriate.  Storage that has a low random
-        read cost relative to sequential, e.g. solid-state drives, might
+        read cost relative to sequential, e.g., solid-state drives, might
         also be better modeled with a lower value for random_page_cost,
         e.g., <literal>1.1</literal>.
        </para>
@@ -8651,7 +8651,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         rows that can be locked; that value is unlimited.  The default,
         64, has historically proven sufficient, but you might need to
         raise this value if you have queries that touch many different
-        tables in a single transaction, e.g. query of a parent table with
+        tables in a single transaction, e.g., query of a parent table with
         many children.  This parameter can only be set at server start.
        </para>
 
@@ -9147,7 +9147,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         with assertions enabled. That is the case if the
         macro <symbol>USE_ASSERT_CHECKING</symbol> is defined
         when <productname>PostgreSQL</productname> is built (accomplished
-        e.g. by the <command>configure</command> option
+        e.g., by the <command>configure</command> option
         <option>--enable-cassert</option>). By
         default <productname>PostgreSQL</productname> is built without
         assertions.

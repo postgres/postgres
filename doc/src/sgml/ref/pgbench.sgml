@@ -568,7 +568,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
         transaction to finish. The wait time is called the schedule lag time,
         and its average and maximum are also reported separately. The
         transaction latency with respect to the actual transaction start time,
-        i.e. the time spent executing the transaction in the database, can be
+        i.e., the time spent executing the transaction in the database, can be
         computed by subtracting the schedule lag time from the reported
         latency.
        </para>
@@ -718,7 +718,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
         client per thread and there are no external or data dependencies.
         From a statistical viewpoint reproducing runs exactly is a bad idea because
         it can hide the performance variability or improve performance unduly,
-        e.g. by hitting the same pages as a previous run.
+        e.g., by hitting the same pages as a previous run.
         However, it may also be of great help for debugging, for instance
         re-running a tricky case which leads to an error.
         Use wisely.
@@ -738,7 +738,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <para>
         Remember to take the sampling rate into account when processing the
         log file. For example, when computing TPS values, you need to multiply
-        the numbers accordingly (e.g. with 0.01 sample rate, you'll only get
+        the numbers accordingly (e.g., with 0.01 sample rate, you'll only get
         1/100 of the actual TPS).
        </para>
       </listitem>
@@ -1567,7 +1567,7 @@ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
       <literal>2.0 / parameter</literal>, that is a relative
       <literal>1.0 / parameter</literal> around the mean; for instance, if
       <replaceable>parameter</replaceable> is 4.0, 67% of values are drawn from the
-      middle quarter (1.0 / 4.0) of the interval (i.e. from
+      middle quarter (1.0 / 4.0) of the interval (i.e., from
       <literal>3.0 / 8.0</literal> to <literal>5.0 / 8.0</literal>) and 95% from
       the middle half (<literal>2.0 / 4.0</literal>) of the interval (second and third
       quartiles). The minimum allowed <replaceable>parameter</replaceable>
@@ -1762,7 +1762,7 @@ END;
    and <replaceable>max_lag</replaceable>, are only present if the <option>--rate</option>
    option is used.
    They provide statistics about the time each transaction had to wait for the
-   previous one to finish, i.e. the difference between each transaction's
+   previous one to finish, i.e., the difference between each transaction's
    scheduled start time and the time it actually started.
    The very last field, <replaceable>skipped</replaceable>,
    is only present if the <option>--latency-limit</option> option is used, too.

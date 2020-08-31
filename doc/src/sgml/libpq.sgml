@@ -355,7 +355,7 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
        Conversely, if <function>PQconnectPoll(conn)</function> last returned
        <symbol>PGRES_POLLING_WRITING</symbol>, wait until the socket is ready
        to write, then call <function>PQconnectPoll(conn)</function> again.
-       On the first iteration, i.e. if you have yet to call
+       On the first iteration, i.e., if you have yet to call
        <function>PQconnectPoll</function>, behave as if it last returned
        <symbol>PGRES_POLLING_WRITING</symbol>.  Continue this loop until
        <function>PQconnectPoll(conn)</function> returns
@@ -860,7 +860,7 @@ postgresql:///mydb?host=localhost&amp;port=5433
 
    <para>
     Percent-encoding may be used to include symbols with special meaning in any
-    of the <acronym>URI</acronym> parts, e.g. replace <literal>=</literal> with
+    of the <acronym>URI</acronym> parts, e.g., replace <literal>=</literal> with
     <literal>%3D</literal>.
 
    </para>
@@ -919,7 +919,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        <literal>hostaddr</literal>, and <literal>port</literal> options accept a comma-separated
        list of values. The same number of elements must be given in each
        option that is specified, such
-       that e.g. the first <literal>hostaddr</literal> corresponds to the first host name,
+       that e.g., the first <literal>hostaddr</literal> corresponds to the first host name,
        the second <literal>hostaddr</literal> corresponds to the second host name, and so
        forth. As an exception, if only one <literal>port</literal> is specified, it
        applies to all the hosts.
@@ -947,7 +947,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
      <para>
        If a password file is used, you can have different passwords for
        different hosts. All the other connection options are the same for every
-       host in the list; it is not possible to e.g. specify different
+       host in the list; it is not possible to e.g., specify different
        usernames for different hosts.
      </para>
    </sect3>
@@ -1123,7 +1123,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <listitem>
       <para>
        Maximum wait for connection, in seconds (write as a decimal integer,
-       e.g. <literal>10</literal>).  Zero, negative, or not specified means
+       e.g., <literal>10</literal>).  Zero, negative, or not specified means
        wait indefinitely.  The minimum allowed timeout is 2 seconds, therefore
        a value of <literal>1</literal> is interpreted as <literal>2</literal>.
        This timeout applies separately to each host name or IP address.
@@ -2332,7 +2332,7 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
          <term><literal>cipher</literal></term>
           <listitem>
            <para>
-            A short name of the ciphersuite used, e.g.
+            A short name of the ciphersuite used, e.g.,
             <literal>"DHE-RSA-DES-CBC3-SHA"</literal>. The names are specific
             to each SSL implementation.
            </para>
@@ -4981,7 +4981,7 @@ int PQflush(PGconn *conn);
    <function>PQflush</function> again.  Repeat until
    <function>PQflush</function> returns 0.  (It is necessary to check for
    read-ready and drain the input with <function>PQconsumeInput</function>,
-   because the server can block trying to send us data, e.g. NOTICE
+   because the server can block trying to send us data, e.g., NOTICE
    messages, and won't read our data until we read its.)  Once
    <function>PQflush</function> returns 0, wait for the socket to be
    read-ready and then read the response as described above.
@@ -8049,7 +8049,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    For a connection to be known SSL-secured, SSL usage must be configured
    on <emphasis>both the client and the server</emphasis> before the connection
    is made. If it is only configured on the server, the client may end up
-   sending sensitive information (e.g. passwords) before
+   sending sensitive information (e.g., passwords) before
    it knows that the server requires high security. In libpq, secure
    connections can be ensured
    by setting the <literal>sslmode</literal> parameter to <literal>verify-full</literal> or

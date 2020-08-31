@@ -266,7 +266,7 @@
      overhead can reduce performance, especially if journaling
      causes file system <emphasis>data</emphasis> to be flushed
      to disk.  Fortunately, data flushing during journaling can
-     often be disabled with a file system mount option, e.g.
+     often be disabled with a file system mount option, e.g.,
      <literal>data=writeback</literal> on a Linux ext3 file system.
      Journaled file systems do improve boot speed after a crash.
     </para>

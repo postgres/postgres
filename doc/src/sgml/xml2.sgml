@@ -327,7 +327,7 @@ AS t(article_id integer, author text, page_count integer, title text);
    The calling <command>SELECT</command> statement doesn't necessarily have to be
    just <literal>SELECT *</literal> &mdash; it can reference the output
    columns by name or join them to other tables. The function produces a
-   virtual table with which you can perform any operation you wish (e.g.
+   virtual table with which you can perform any operation you wish (e.g.,
    aggregation, joining, sorting etc). So we could also have:
 <programlisting>
 SELECT t.title, p.fullname, p.email

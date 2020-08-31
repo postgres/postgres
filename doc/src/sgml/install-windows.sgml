@@ -118,7 +118,7 @@
   same purpose.
   From the <application>Visual Studio Command Prompt</application>, you can
   change the targeted CPU architecture, build type, and target OS by using the
-  <command>vcvarsall.bat</command> command, e.g.
+  <command>vcvarsall.bat</command> command, e.g.,
   <command>vcvarsall.bat x64 10.0.10240.0</command> to target Windows 10
   with a 64-bit release build. See <command>-help</command> for the other
   options of <command>vcvarsall.bat</command>. All commands should be run from
@@ -251,7 +251,7 @@ $ENV{MSBFLAGS}="/m";
         installations <filename>C:\Program Files\GnuWin32</filename>.
         Consider installing into <filename>C:\GnuWin32</filename> or use the
         NTFS short name path to GnuWin32 in your PATH environment setting
-        (e.g. <filename>C:\PROGRA~1\GnuWin32</filename>).
+        (e.g., <filename>C:\PROGRA~1\GnuWin32</filename>).
        </para>
      </note>
 

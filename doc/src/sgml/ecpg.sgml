@@ -3689,7 +3689,7 @@ EXEC SQL DEALLOCATE DESCRIPTOR <replaceable>identifier</replaceable>;
 EXEC SQL FETCH NEXT FROM mycursor INTO SQL DESCRIPTOR mydesc;
 </programlisting>
     If the result set is empty, the Descriptor Area will still contain
-    the metadata from the query, i.e. the field names.
+    the metadata from the query, i.e., the field names.
    </para>
 
    <para>
@@ -4106,7 +4106,7 @@ typedef struct sqlvar_struct sqlvar_t;
          <term><literal>sqllen</literal></term>
           <listitem>
            <para>
-            Contains the binary length of the field. e.g. 4 bytes for <type>ECPGt_int</type>.
+            Contains the binary length of the field. e.g., 4 bytes for <type>ECPGt_int</type>.
            </para>
           </listitem>
          </varlistentry>
@@ -8044,7 +8044,7 @@ EXEC SQL CLOSE DATABASE;
       <term><literal>FREE cursor_name</literal></term>
       <listitem>
        <para>
-        Due to the differences how ECPG works compared to Informix's ESQL/C (i.e. which steps
+        Due to the differences how ECPG works compared to Informix's ESQL/C (i.e., which steps
         are purely grammar transformations and which steps rely on the underlying run-time library)
         there is no <literal>FREE cursor_name</literal> statement in ECPG. This is because in ECPG,
         <literal>DECLARE CURSOR</literal> doesn't translate to a function call into
