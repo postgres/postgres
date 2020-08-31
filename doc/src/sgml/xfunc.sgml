@@ -84,8 +84,11 @@
     A procedure is a database object similar to a function.  The difference is
     that a procedure does not return a value, so there is no return type
     declaration.  While a function is called as part of a query or DML
-    command, a procedure is called explicitly using
-    the <xref linkend="sql-call"/> statement.
+    command, a procedure is called in isolation using
+    the <xref linkend="sql-call"/> command.  If the CALL command is not
+    part of an explicit transaction, a procedure in many server-side
+    languages can commit, rollback, and begin new transactions during
+    its execution, which is not possible in functions.
    </para>
 
    <para>
