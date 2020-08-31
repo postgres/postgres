@@ -136,8 +136,6 @@ typedef struct xl_heap_truncate
  * or updated tuple in WAL; we can save a few bytes by reconstructing the
  * fields that are available elsewhere in the WAL record, or perhaps just
  * plain needn't be reconstructed.  These are the fields we must store.
- * NOTE: t_hoff could be recomputed, but we may as well store it because
- * it will come for free due to alignment considerations.
  */
 typedef struct xl_heap_header
 {
