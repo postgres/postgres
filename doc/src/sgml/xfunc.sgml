@@ -2194,7 +2194,7 @@ memcpy(destination->data, buffer, 40);
         </row>
         <row>
          <entry><type>timestamp</type></entry>
-         <entry><type>Timestamp*</type></entry>
+         <entry><type>Timestamp</type></entry>
          <entry><filename>datatype/timestamp.h</filename></entry>
         </row>
         <row>
