@@ -6052,7 +6052,7 @@ Branch: REL9_4_STABLE [a683df403] 2019-02-05 10:59:38 -0500
     <listitem>
      <para>
       Fix logical decoding to handle cases where a mapped catalog table is
-      repeatedly rewritten, e.g. by <literal>VACUUM FULL</literal>
+      repeatedly rewritten, e.g., by <literal>VACUUM FULL</literal>
       (Andres Freund)
      </para>
     </listitem>
@@ -15094,7 +15094,7 @@ XXX this is pending backpatch, may need to remove
        </para>
 
        <para>
-        This change allows command tags, e.g. <command>SELECT</>, to
+        This change allows command tags, e.g., <command>SELECT</>, to
         correctly report tuple counts larger than 4 billion.  This also
         applies to PL/pgSQL's <command>GET DIAGNOSTICS ... ROW_COUNT</>
         command.
@@ -15418,7 +15418,7 @@ XXX this is pending backpatch, may need to remove
 -->
        <para>
         Allow omitting one or both boundaries in an array slice specifier,
-        e.g. <literal>array_col[3:]</> (Yury Zhuravlev)
+        e.g., <literal>array_col[3:]</> (Yury Zhuravlev)
        </para>
 
        <para>

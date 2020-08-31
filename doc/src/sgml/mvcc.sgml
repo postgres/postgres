@@ -269,7 +269,7 @@
    <para>
     In <productname>PostgreSQL</productname>, you can request any of
     the four standard transaction isolation levels, but internally only
-    three distinct isolation levels are implemented, i.e. PostgreSQL's
+    three distinct isolation levels are implemented, i.e., PostgreSQL's
     Read Uncommitted mode behaves like Read Committed.  This is because
     it is the only sensible way to map the standard isolation levels to
     PostgreSQL's multiversion concurrency control architecture.
