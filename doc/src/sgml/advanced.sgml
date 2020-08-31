@@ -616,7 +616,7 @@ CREATE TABLE cities (
 );
 
 CREATE TABLE capitals (
-  state      char(2)
+  state      char(2) UNIQUE NOT NULL
 ) INHERITS (cities);
 </programlisting>
    </para>
@@ -630,7 +630,8 @@ CREATE TABLE capitals (
     <type>text</type>, a native <productname>PostgreSQL</productname>
     type for variable length character strings.  The
     <classname>capitals</classname> table has
-    an extra column, <structfield>state</structfield>, which shows their states.  In
+    an additional column, <structfield>state</structfield>, which shows its
+    state abbreviation.  In
     <productname>PostgreSQL</productname>, a table can inherit from
     zero or more other tables.
    </para>
