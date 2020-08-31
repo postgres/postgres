@@ -2666,8 +2666,10 @@ The commands accepted in replication mode are:
       <quote>ustar interchange format</quote> specified in the POSIX 1003.1-2008
       standard) dump of the tablespace contents, except that the two trailing
       blocks of zeroes specified in the standard are omitted.
-      After the tar data is complete, a final ordinary result set will be sent,
-      containing the WAL end position of the backup, in the same format as
+      After the tar data is complete, and if a backup manifest was requested,
+      another CopyResponse result is sent, containing the manifest data for the
+      current base backup. In any case, a final ordinary result set will be
+      sent, containing the WAL end position of the backup, in the same format as
       the start position.
      </para>
 
