@@ -108,7 +108,7 @@
   In the <productname>Microsoft Windows SDK</productname>, start the
   <application>CMD shell</application> listed under the SDK on the Start Menu.
   In recent SDK versions you can change the targeted CPU architecture, build
-  type, and target OS by using the <command>setenv</command> command, e.g.
+  type, and target OS by using the <command>setenv</command> command, e.g.,
   <command>setenv /x86 /release /xp</command> to target Windows XP or later
   with a 32-bit release build. See <command>/?</command> for other options to
   <command>setenv</command>.  All commands should be run from the
@@ -241,7 +241,7 @@ $ENV{MSBFLAGS}="/m";
         installations <filename>C:\Program Files\GnuWin32</filename>.
         Consider installing into <filename>C:\GnuWin32</filename> or use the
         NTFS short name path to GnuWin32 in your PATH environment setting
-        (e.g. <filename>C:\PROGRA~1\GnuWin32</filename>).
+        (e.g., <filename>C:\PROGRA~1\GnuWin32</filename>).
        </para>
      </note>
 

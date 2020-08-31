@@ -7389,7 +7389,7 @@ Branch: REL9_4_STABLE [c7b96ba29] 2018-10-10 13:53:03 -0700
 -->
      <para>
       Fix logical decoding to handle cases where a mapped catalog table is
-      repeatedly rewritten, e.g. by <literal>VACUUM FULL</literal>
+      repeatedly rewritten, e.g., by <literal>VACUUM FULL</literal>
       (Andres Freund)
      </para>
     </listitem>

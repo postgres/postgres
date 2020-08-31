@@ -542,7 +542,7 @@
        <para>
         An extension is <firstterm>relocatable</> if it is possible to move
         its contained objects into a different schema after initial creation
-        of the extension.  The default is <literal>false</>, i.e. the
+        of the extension.  The default is <literal>false</>, i.e., the
         extension is not relocatable.
         See <xref linkend="extend-extensions-relocation"> for more information.
        </para>
@@ -1363,7 +1363,7 @@ include $(PGXS)
       <term><varname>NO_INSTALLCHECK</varname></term>
       <listitem>
        <para>
-        don't define an <literal>installcheck</literal> target, useful e.g. if tests require special configuration, or don't use <application>pg_regress</application>
+        don't define an <literal>installcheck</literal> target, useful e.g., if tests require special configuration, or don't use <application>pg_regress</application>
        </para>
       </listitem>
      </varlistentry>

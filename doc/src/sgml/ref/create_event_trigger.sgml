@@ -86,7 +86,7 @@ CREATE EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable>
       A list of values for the
       associated <replaceable class="parameter">filter_variable</replaceable>
       for which the trigger should fire.  For <literal>TAG</>, this means a
-      list of command tags (e.g. <literal>'DROP FUNCTION'</>).
+      list of command tags (e.g., <literal>'DROP FUNCTION'</>).
      </para>
     </listitem>
    </varlistentry>

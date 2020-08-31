@@ -1946,7 +1946,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
     be migrated in-place from one major <productname>PostgreSQL</>
     version to another.  Upgrades can be performed in minutes,
     particularly with <option>--link</> mode.  It requires steps similar to
-    <application>pg_dumpall</> above, e.g.  starting/stopping the server,
+    <application>pg_dumpall</> above, e.g.,  starting/stopping the server,
     running <application>initdb</>.  The <application>pg_upgrade</> <link
     linkend="pgupgrade">documentation</> outlines the necessary steps.
    </para>
