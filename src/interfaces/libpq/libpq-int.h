@@ -832,8 +832,7 @@ extern ssize_t pg_GSS_read(PGconn *conn, void *ptr, size_t len);
 #define pqIsnonblocking(conn)	((conn)->nonblocking)
 
 /*
- * Connection's outbuffer threshold is set to 64k as it is safe
- * in Windows as per comments in pqSendSome() API.
+ * Connection's outbuffer threshold.
  */
 #define OUTBUFFER_THRESHOLD	65536
 

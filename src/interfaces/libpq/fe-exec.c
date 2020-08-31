@@ -1548,7 +1548,7 @@ PQappendPipelinedCommand(PGconn *conn, PGcommandQueueEntry * entry)
 
 /*
  * PQrecyclePipelinedCommand
- *	Push a command queue entry onto the freelist. It must be a dangling entry
+ *	Push a command queue entry onto the freelist. It must be an entry
  *	with null next pointer and not referenced by any other entry's next pointer.
  */
 static void
@@ -2041,18 +2041,24 @@ exitFailed:
 
 /*
  * PQbatchSendQueue
- * 	End a batch submission by sending a protocol sync. The connection will
- * 	remain in batch mode and unavailable for new synchronous command execution
- * 	functions until all results from the batch are processed by the client.
  *
- * 	It's legal to start submitting another batch immediately, without waiting
- * 	for the results of the current batch. There's no need to end batch mode
- * 	and start it again.
+ * End a batch submission.
  *
- * 	If a command in a batch fails, every subsequent command up to and including
- * 	the PQbatchQueueSync command result gets set to PGRES_BATCH_ABORTED state. If the
- * 	whole batch is processed without error, a PGresult with PGRES_BATCH_END is
- * 	produced.
+ * It's legal to start submitting another batch immediately, without
+ * waiting for the results of the current batch. There's no need to end batch
+ * mode and start it again.
+ *
+ * If a command in a batch fails, every subsequent command up to and
+ * including the PQbatchQueueSync command result gets set to PGRES_BATCH_ABORTED
+ * state. If the whole batch is processed without error, a PGresult with
+ * PGRES_BATCH_END is produced.
+ *
+ * Queries can already have been sent before PQbatchSendQueue is called, but
+ * PQbatchSendQueue need to be called before retrieving command results.
+ *
+ * The connection will remain in batch mode and unavailable for new synchronous
+ * command execution functions until all results from the batch are processed
+ * by the client.
  */
 int
 PQbatchSendQueue(PGconn *conn)
@@ -2070,12 +2076,14 @@ PQbatchSendQueue(PGconn *conn)
 		case PGASYNC_IDLE:
 			printfPQExpBuffer(&conn->errorMessage,
 				   libpq_gettext_noop("internal error, IDLE in batch mode"));
+			return 0;
 			break;
 		case PGASYNC_COPY_IN:
 		case PGASYNC_COPY_OUT:
 		case PGASYNC_COPY_BOTH:
 			printfPQExpBuffer(&conn->errorMessage,
 				   libpq_gettext_noop("internal error, COPY in batch mode"));
+			return 0;
 			break;
 		case PGASYNC_READY:
 		case PGASYNC_READY_MORE:
@@ -4375,7 +4383,8 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 static int
 pqBatchFlush(PGconn *conn)
 {
-	if ((conn->batch_status == PQBATCH_MODE_OFF)||(conn->outCount >= OUTBUFFER_THRESHOLD))
+	if ((conn->batch_status == PQBATCH_MODE_OFF) ||
+	    (conn->outCount >= OUTBUFFER_THRESHOLD))
 		return(pqFlush(conn));
 	return 0; /* Just to keep compiler quiet */
 }
