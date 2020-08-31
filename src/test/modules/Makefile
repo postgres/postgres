@@ -17,6 +17,7 @@ SUBDIRS = \
 		  test_extensions \
 		  test_ginpostinglist \
 		  test_integerset \
+			test_libpq \
 		  test_misc \
 		  test_parser \
 		  test_pg_dump \
