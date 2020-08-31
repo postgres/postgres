@@ -4065,8 +4065,8 @@ ALTER INDEX measurement_city_id_logdate_key
 
      <listitem>
       <para>
-       <literal>BEFORE ROW</literal> triggers, if necessary, must be defined
-       on individual partitions, not the partitioned table.
+       <literal>BEFORE ROW</literal> triggers cannot change which partition
+       is the final destination for a new row.
       </para>
      </listitem>
 
