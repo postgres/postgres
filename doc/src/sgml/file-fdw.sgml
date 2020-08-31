@@ -27,7 +27,8 @@
 
    <listitem>
     <para>
-     Specifies the file to be read.  Required.  Must be an absolute path name.
+     Specifies the file to be read.  Required.  Relative paths are relative to the
+     data directory.
     </para>
    </listitem>
   </varlistentry>
