@@ -530,7 +530,7 @@ UPDATE t1 SET x = 2, y = func1(y) WHERE z = 100;
     commands. <productname>SELinux</productname> provides a feature to allow trusted
     code to run using a security label different from that of the client,
     generally for the purpose of providing highly controlled access to
-    sensitive data (e.g. rows might be omitted, or the precision of stored
+    sensitive data (e.g., rows might be omitted, or the precision of stored
     values might be reduced).  Whether or not a function acts as a trusted
     procedure is controlled by its security label and the operating system
     security policy.  For example:

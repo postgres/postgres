@@ -458,7 +458,7 @@
       Use of symbolic references is enabled in a particular catalog column
       by attaching <literal>BKI_LOOKUP(<replaceable>lookuprule</replaceable>)</literal>
       to the column's definition, where <replaceable>lookuprule</replaceable>
-      is the name of the referenced catalog, e.g. <literal>pg_proc</literal>.
+      is the name of the referenced catalog, e.g., <literal>pg_proc</literal>.
       <literal>BKI_LOOKUP</literal> can be attached to columns of
       type <type>Oid</type>, <type>regproc</type>, <type>oidvector</type>,
       or <type>Oid[]</type>; in the latter two cases it implies performing a

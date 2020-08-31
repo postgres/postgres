@@ -93,7 +93,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       In <xref linkend="ltree"/>, when using adjacent asterisks with braces,
-      e.g. ".*{2}.*{3}", properly interpret that as ".*{5}" (Nikita Glukhov)
+      e.g., ".*{2}.*{3}", properly interpret that as ".*{5}" (Nikita Glukhov)
      </para>
     </listitem>
 
