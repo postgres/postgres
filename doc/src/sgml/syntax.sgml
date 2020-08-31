@@ -1383,7 +1383,7 @@ CREATE FUNCTION dept(text) RETURNS dept
 </synopsis>
     (Here, the brackets <literal>[ ]</literal> are meant to appear literally.)
     Each <replaceable>subscript</replaceable> is itself an expression,
-    which must yield an integer value.
+    which will be rounded to the nearest integer value.
    </para>
 
    <para>
