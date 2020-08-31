@@ -1214,12 +1214,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>ControlFileSync</literal></entry>
       <entry>Waiting for the <filename>pg_control</filename> file to reach
-       stable storage.</entry>
+       durable storage.</entry>
      </row>
      <row>
       <entry><literal>ControlFileSyncUpdate</literal></entry>
       <entry>Waiting for an update to the <filename>pg_control</filename> file
-       to reach stable storage.</entry>
+       to reach durable storage.</entry>
      </row>
      <row>
       <entry><literal>ControlFileWrite</literal></entry>
@@ -1250,12 +1250,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>DataFileFlush</literal></entry>
-      <entry>Waiting for a relation data file to reach stable storage.</entry>
+      <entry>Waiting for a relation data file to reach durable storage.</entry>
      </row>
      <row>
       <entry><literal>DataFileImmediateSync</literal></entry>
       <entry>Waiting for an immediate synchronization of a relation data file to
-       stable storage.</entry>
+       durable storage.</entry>
      </row>
      <row>
       <entry><literal>DataFilePrefetch</literal></entry>
@@ -1268,7 +1268,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>DataFileSync</literal></entry>
-      <entry>Waiting for changes to a relation data file to reach stable storage.</entry>
+      <entry>Waiting for changes to a relation data file to reach durable storage.</entry>
      </row>
      <row>
       <entry><literal>DataFileTruncate</literal></entry>
@@ -1285,7 +1285,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>LockFileAddToDataDirSync</literal></entry>
-      <entry>Waiting for data to reach stable storage while adding a line to the
+      <entry>Waiting for data to reach durable storage while adding a line to the
        data directory lock file.</entry>
      </row>
      <row>
@@ -1300,7 +1300,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>LockFileCreateSync</literal></entry>
-      <entry>Waiting for data to reach stable storage while creating the data
+      <entry>Waiting for data to reach durable storage while creating the data
        directory lock file.</entry>
      </row>
      <row>
@@ -1315,12 +1315,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>LogicalRewriteCheckpointSync</literal></entry>
-      <entry>Waiting for logical rewrite mappings to reach stable storage
+      <entry>Waiting for logical rewrite mappings to reach durable storage
        during a checkpoint.</entry>
      </row>
      <row>
       <entry><literal>LogicalRewriteMappingSync</literal></entry>
-      <entry>Waiting for mapping data to reach stable storage during a logical
+      <entry>Waiting for mapping data to reach durable storage during a logical
        rewrite.</entry>
      </row>
      <row>
@@ -1330,7 +1330,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>LogicalRewriteSync</literal></entry>
-      <entry>Waiting for logical rewrite mappings to reach stable
+      <entry>Waiting for logical rewrite mappings to reach durable
        storage.</entry>
      </row>
      <row>
@@ -1348,7 +1348,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>RelationMapSync</literal></entry>
-      <entry>Waiting for the relation map file to reach stable storage.</entry>
+      <entry>Waiting for the relation map file to reach durable storage.</entry>
      </row>
      <row>
       <entry><literal>RelationMapWrite</literal></entry>
@@ -1373,12 +1373,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>ReplicationSlotRestoreSync</literal></entry>
-      <entry>Waiting for a replication slot control file to reach stable storage
+      <entry>Waiting for a replication slot control file to reach durable storage
        while restoring it to memory.</entry>
      </row>
      <row>
       <entry><literal>ReplicationSlotSync</literal></entry>
-      <entry>Waiting for a replication slot control file to reach stable
+      <entry>Waiting for a replication slot control file to reach durable
        storage.</entry>
      </row>
      <row>
@@ -1387,7 +1387,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>SLRUFlushSync</literal></entry>
-      <entry>Waiting for SLRU data to reach stable storage during a checkpoint
+      <entry>Waiting for SLRU data to reach durable storage during a checkpoint
        or database shutdown.</entry>
      </row>
      <row>
@@ -1396,7 +1396,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>SLRUSync</literal></entry>
-      <entry>Waiting for SLRU data to reach stable storage following a page
+      <entry>Waiting for SLRU data to reach durable storage following a page
        write.</entry>
      </row>
      <row>
@@ -1411,7 +1411,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>SnapbuildSync</literal></entry>
       <entry>Waiting for a serialized historical catalog snapshot to reach
-       stable storage.</entry>
+       durable storage.</entry>
      </row>
      <row>
       <entry><literal>SnapbuildWrite</literal></entry>
@@ -1421,7 +1421,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>TimelineHistoryFileSync</literal></entry>
       <entry>Waiting for a timeline history file received via streaming
-       replication to reach stable storage.</entry>
+       replication to reach durable storage.</entry>
      </row>
      <row>
       <entry><literal>TimelineHistoryFileWrite</literal></entry>
@@ -1434,7 +1434,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>TimelineHistorySync</literal></entry>
-      <entry>Waiting for a newly created timeline history file to reach stable
+      <entry>Waiting for a newly created timeline history file to reach durable
        storage.</entry>
      </row>
      <row>
@@ -1448,7 +1448,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>TwophaseFileSync</literal></entry>
-      <entry>Waiting for a two phase state file to reach stable storage.</entry>
+      <entry>Waiting for a two phase state file to reach durable storage.</entry>
      </row>
      <row>
       <entry><literal>TwophaseFileWrite</literal></entry>
@@ -1456,7 +1456,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>WALBootstrapSync</literal></entry>
-      <entry>Waiting for WAL to reach stable storage during
+      <entry>Waiting for WAL to reach durable storage during
        bootstrapping.</entry>
      </row>
      <row>
@@ -1471,7 +1471,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>WALCopySync</literal></entry>
       <entry>Waiting for a new WAL segment created by copying an existing one to
-       reach stable storage.</entry>
+       reach durable storage.</entry>
      </row>
      <row>
       <entry><literal>WALCopyWrite</literal></entry>
@@ -1480,7 +1480,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>WALInitSync</literal></entry>
-      <entry>Waiting for a newly initialized WAL file to reach stable
+      <entry>Waiting for a newly initialized WAL file to reach durable
        storage.</entry>
      </row>
      <row>
@@ -1498,11 +1498,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>WALSync</literal></entry>
-      <entry>Waiting for a WAL file to reach stable storage.</entry>
+      <entry>Waiting for a WAL file to reach durable storage.</entry>
      </row>
      <row>
       <entry><literal>WALSyncMethodAssign</literal></entry>
-      <entry>Waiting for data to reach stable storage while assigning a new
+      <entry>Waiting for data to reach durable storage while assigning a new
        WAL sync method.</entry>
      </row>
      <row>
