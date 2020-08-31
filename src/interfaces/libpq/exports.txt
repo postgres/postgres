@@ -179,3 +179,8 @@ PQgetgssctx               176
 PQsetSSLKeyPassHook_OpenSSL         177
 PQgetSSLKeyPassHook_OpenSSL         178
 PQdefaultSSLKeyPassHook_OpenSSL     179
+PQenterBatchMode	      180
+PQexitBatchMode           181
+PQbatchSendQueue	      182
+PQbatchProcessQueue	      183
+PQbatchStatus		      184

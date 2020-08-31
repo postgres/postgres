@@ -406,6 +406,12 @@ pqParseInput2(PGconn *conn)
 {
 	char		id;
 
+	if (conn->batch_status != PQBATCH_MODE_OFF)
+	{
+		fprintf(stderr, "internal error, attempt to read v2 protocol in batch mode");
+		abort();
+	}
+
 	/*
 	 * Loop to parse successive complete messages available in the buffer.
 	 */

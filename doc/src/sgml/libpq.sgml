@@ -4829,6 +4829,500 @@ int PQflush(PGconn *conn);
 
  </sect1>
 
+ <sect1 id="libpq-batch-mode">
+  <title>Batch mode and query pipelining</title>
+
+  <indexterm zone="libpq-batch-mode">
+   <primary>libpq</primary>
+   <secondary>batch mode</secondary>
+  </indexterm>
+
+  <indexterm zone="libpq-batch-mode">
+   <primary>libpq</primary>
+   <secondary>pipelining</secondary>
+  </indexterm>
+
+  <para>
+   <application>libpq</application> supports queueing up queries into
+   a pipeline to be executed as a batch on the server. Batching queries allows
+   applications to avoid a client/server round-trip after each query to get
+   the results before issuing the next query.
+  </para>
+
+  <sect2>
+   <title>When to use batching</title>
+
+   <para>
+    Much like asynchronous query mode, there is no performance disadvantage to
+    using batching and pipelining. It increases client application complexity
+    and extra caution is required to prevent client/server deadlocks but
+    can sometimes offer considerable performance improvements.
+   </para>
+
+   <para>
+    Batching is most useful when the server is distant, i.e. network latency
+    (<quote>ping time</quote>) is high, and when many small operations are being performed in
+    rapid sequence. There is usually less benefit in using batches when each
+    query takes many multiples of the client/server round-trip time to execute.
+    A 100-statement operation run on a server 300ms round-trip-time away would take
+    30 seconds in network latency alone without batching; with batching it may spend
+    as little as 0.3s waiting for results from the server.
+   </para>
+
+   <para>
+    Use batches when your application does lots of small
+    <literal>INSERT</literal>, <literal>UPDATE</literal> and
+    <literal>DELETE</literal> operations that can't easily be transformed into
+    operations on sets or into a
+    <link linkend="libpq-copy"><literal>COPY</literal></link> operation.
+   </para>
+
+   <para>
+    Batching is not useful when information from one operation is required by the
+    client before it knows enough to send the next operation. The client must
+    introduce a synchronisation point and wait for a full client/server
+    round-trip to get the results it needs. However, it's often possible to
+    adjust the client design to exchange the required information server-side.
+    Read-modify-write cycles are especially good candidates; for example:
+    <programlisting>
+     BEGIN;
+     SELECT x FROM mytable WHERE id = 42 FOR UPDATE;
+     -- result: x=2
+     -- client adds 1 to x:
+     UPDATE mytable SET x = 3 WHERE id = 42;
+     COMMIT;
+    </programlisting>
+    could be much more efficiently done with:
+    <programlisting>
+     UPDATE mytable SET x = x + 1 WHERE id = 42;
+    </programlisting>
+   </para>
+
+   <note>
+    <para>
+     The batch API was introduced in PostgreSQL 10.0, but clients using PostgresSQL 10.0 version of libpq can
+     use batches on server versions 7.4 and newer. Batching works on any server
+     that supports the v3 extended query protocol.
+    </para>
+   </note>
+
+  </sect2>
+
+  <sect2 id="libpq-batch-using">
+   <title>Using batch mode</title>
+
+   <para>
+    To issue batches the application must switch
+    a connection into batch mode. Enter batch mode with <link
+    linkend="libpq-PQenterBatchMode"><function>PQenterBatchMode(conn)</function></link> or test
+    whether batch mode is active with <link
+    linkend="libpq-PQbatchStatus"><function>PQbatchStatus(conn)</function></link>. In batch mode only <link
+    linkend="libpq-async">asynchronous operations</link> are permitted, and
+    <literal>COPY</literal> is not recommended as it most likely will trigger failure in batch processing. 
+    Using any synchronous command execution functions such as <function>PQfn</function>,
+    <function>PQexec</function> or one of its sibling functions are error conditions.
+    Functions allowed in batch mode are described in <xref linkend="libpq-batch-sending"/>. 
+   </para>
+
+   <para>
+    The client uses libpq's asynchronous query functions to dispatch work,
+    marking the end of each batch with <function>PQbatchSendQueue</function>.
+    And to get results, it uses <function>PQgetResult</function> and
+    <function>PQbatchProcessQueue</function>. It may eventually exit
+    batch mode with <function>PQexitBatchMode</function> once all results are
+    processed.
+   </para>
+
+   <note>
+    <para>
+     It is best to use batch mode with <application>libpq</application> in
+     <link linkend="libpq-pqsetnonblocking">non-blocking mode</link>. If used in
+     blocking mode it is possible for a client/server deadlock to occur. The
+     client will block trying to send queries to the server, but the server will
+     block trying to send results from queries it has already processed to the
+     client. This only occurs when the client sends enough queries to fill its
+     output buffer and the server's receive buffer before switching to
+     processing input from the server, but it's hard to predict exactly when
+     that'll happen so it's best to always use non-blocking mode.
+     Batch mode consumes more memory when send/recv is not done as required even in non-blocking mode.
+    </para>
+   </note>
+
+   <sect3 id="libpq-batch-sending">
+    <title>Issuing queries</title>
+
+    <para>
+     After entering batch mode the application dispatches requests
+     using normal asynchronous <application>libpq</application> functions such as 
+     <function>PQsendQueryParams</function>, <function>PQsendPrepare</function>,
+     <function>PQsendQueryPrepared</function>, <function>PQsendDescribePortal</function>,
+     <function>PQsendDescribePrepared</function>.
+     The asynchronous requests are followed by a <link
+     linkend="libpq-PQbatchSendQueue"><function>PQbatchSendQueue(conn)</function></link> call to mark
+     the end of the batch. The client <emphasis>does not</emphasis> need to call
+     <function>PQgetResult</function> immediately after dispatching each
+     operation. <link linkend="libpq-batch-results">Result processing</link>
+     is handled separately.
+    </para>
+    
+    <para>
+     Batched operations will be executed by the server in the order the client
+     sends them. The server will send the results in the order the statements
+     executed. The server may begin executing the batch before all commands
+     in the batch are queued and the end of batch command is sent. If any
+     statement encounters an error the server aborts the current transaction and
+     skips processing the rest of the batch. Query processing resumes after the
+     end of the failed batch.
+    </para>
+
+    <para>
+     It's fine for one operation to depend on the results of a
+     prior one. One query may define a table that the next query in the same
+     batch uses; similarly, an application may create a named prepared statement
+     then execute it with later statements in the same batch.
+    </para>
+
+   </sect3>
+
+   <sect3 id="libpq-batch-results">
+    <title>Processing results</title>
+
+    <para>
+     The client <link linkend="libpq-batch-interleave">interleaves result
+     processing</link> with sending batch queries, or for small batches may
+     process all results after sending the whole batch.
+    </para>
+
+    <para>
+     To get the result of the first batch entry the client must call <link
+     linkend="libpq-PQbatchProcessQueue"><function>PQbatchProcessQueue</function></link>. It must then call
+     <function>PQgetResult</function> and handle the results until
+     <function>PQgetResult</function> returns null. The result from the next batch entry 
+     may then be retrieved using <function>PQbatchProcessQueue</function> and the cycle repeated.  The
+     application handles individual statement results as normal.
+    </para>
+
+    <para>
+     To enter single-row mode, call <function>PQsetSingleRowMode</function> immediately after a
+     successful call of <function>PQbatchProcessQueue</function>. This mode selection is effective 
+     only for the query currently being processed. For more information on the use of <function>PQsetSingleRowMode
+     </function>, refer to <xref linkend="libpq-single-row-mode"/>.
+     
+    </para>
+
+    <para>
+     <function>PQgetResult</function> behaves the same as for normal asynchronous
+     processing except that it may contain the new <type>PGresult</type> types
+     <literal>PGRES_BATCH_END</literal> and <literal>PGRES_BATCH_ABORTED</literal>.
+     <literal>PGRES_BATCH_END</literal> is reported exactly once for each
+     <function>PQbatchSendQueue</function> call at the corresponding point in
+     the result stream and at no other time. <literal>PGRES_BATCH_ABORTED</literal>
+     is emitted during error handling; see <link linkend="libpq-batch-errors">
+     error handling</link>.
+    </para>
+
+    <para>
+     <function>PQisBusy</function>, <function>PQconsumeInput</function>, etc
+     operate as normal when processing batch results.
+    </para>
+
+    <para>
+     <application>libpq</application> does not provide any information to the
+     application about the query currently being processed. The application
+     must keep track of the order in which it sent queries and the expected
+     results. Applications will typically use a state machine or a FIFO queue
+     for this.
+    </para>
+
+   </sect3>
+
+   <sect3 id="libpq-batch-errors">
+    <title>Error handling</title>
+
+    <para>
+     When a query in a batch causes an <literal>ERROR</literal> the server
+     skips processing all subsequent messages until the end-of-batch message.
+     The open transaction is aborted.
+    </para>
+
+    <para>
+     From the client perspective, after the client gets a
+     <literal>PGRES_FATAL_ERROR</literal> return from
+     <function>PQresultStatus</function> the batch is flagged as aborted.
+     <application>libpq</application> will report
+     <literal>PGRES_BATCH_ABORTED</literal> result for each remaining queued
+     operation in an aborted batch. The result for
+     <function>PQbatchSendQueue</function> is reported as
+     <literal>PGRES_BATCH_END</literal> to signal the end of the aborted batch
+     and resumption of normal result processing.
+    </para>
+
+    <para>
+     The client <emphasis>must</emphasis> process results with
+     <function>PQbatchProcessQueue(...)</function> and
+     <function>PQgetResult</function> during error recovery.
+    </para>
+
+    <para>
+     If the batch used an implicit transaction then operations that have
+     already executed are rolled back and operations that were queued for after
+     the failed operation are skipped entirely. The same behaviour holds if the
+     batch starts and commits a single explicit transaction (i.e. the first
+     statement is <literal>BEGIN</literal> and the last is
+     <literal>COMMIT</literal>) except that the session remains in an aborted
+     transaction state at the end of the batch. If a batch contains <emphasis>
+     multiple explicit transactions</emphasis>, all transactions that committed
+     prior to the error remain committed, the currently in-progress transaction
+     is aborted and all subsequent operations in the current and all later
+     transactions in the same batch are skipped completely.
+    </para>
+
+    <note>
+     <para>
+      The client must not assume that work is committed when it
+      <emphasis>sends</emphasis> a <literal>COMMIT</literal>, only when the
+      corresponding result is received to confirm the commit is complete.
+      Because errors arrive asynchronously the application needs to be able to
+      restart from the last <emphasis>received</emphasis> committed change and
+      resend work done after that point if something goes wrong.
+     </para>
+    </note>
+
+   </sect3>
+
+   <sect3 id="libpq-batch-interleave">
+    <title>Interleaving result processing and query dispatch</title>
+
+    <para>
+     To avoid deadlocks on large batches the client should be structured around
+     a nonblocking I/O loop using a function like <function>select</function>,
+     <function>poll</function>, <function>epoll</function>,
+     <function>WaitForMultipleObjectEx</function>, etc.
+    </para>
+
+    <para>
+     The client application should generally maintain a queue of work still to
+     be dispatched and a queue of work that has been dispatched but not yet had
+     its results processed. When the socket is writable it should dispatch more
+     work. When the socket is readable it should read results and process them,
+     matching them up to the next entry in its expected results queue. 
+     Based on available memory, results from socket should be read frequently and 
+     there's no need to wait till the batch end to read the results.  Batches
+     should be scoped to logical units of work, usually (but not always) one
+     transaction per batch. There's no need to exit batch mode and re-enter it
+     between batches or to wait for one batch to finish before sending the next.
+    </para>
+
+    <para>
+     An example using <function>select()</function> and a simple state machine
+     to track sent and received work is in
+     <filename>src/test/modules/test_libpq/testlibpqbatch.c</filename> in the PostgreSQL
+     source distribution.
+    </para>
+
+   </sect3>
+
+   <sect3 id="libpq-batch-end">
+    <title>Ending batch mode</title>
+
+    <para>
+     Once all dispatched commands have had their results processed and the end batch
+     result has been consumed the application may return to non-batched mode with
+     <link linkend="libpq-PQexitBatchMode"><function>PQexitBatchMode(conn)</function></link>.
+    </para>
+   </sect3>
+
+  </sect2>
+
+  <sect2 id="libpq-funcs-batch">
+   <title>Functions associated with batch mode</title>
+
+   <variablelist>
+
+    <varlistentry id="libpq-PQbatchStatus">
+     <term>
+      <function>PQbatchStatus</function>
+      <indexterm>
+       <primary>PQbatchStatus</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+      Returns current batch mode status of the <application>libpq</application> connection.
+<synopsis>
+int PQbatchStatus(PGconn *conn);
+</synopsis>
+      </para>			
+      <variablelist>
+         <varlistentry id="libpq-PQbatchStatus-1">
+           <term>
+             <literal>PQBATCH_MODE_ON</literal>
+           </term>
+ 
+          <listitem>
+           <para>
+             Returns <literal>PQBATCH_MODE_ON</literal> if <application>libpq</application> connection is in <link
+             linkend="libpq-batch-mode">batch mode</link>.
+           </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-PQbatchStatus-2">
+          <term>
+            <literal>PQBATCH_MODE_OFF</literal>
+          </term>
+  
+          <listitem>
+          <para>
+            Returns <literal>PQBATCH_MODE_OFF</literal> if <application>libpq</application> connection is not in <link
+            linkend="libpq-batch-mode">batch mode</link>.
+          </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-PQbatchStatus-3">
+          <term>
+            <literal>PQBATCH_MODE_ABORTED</literal>
+          </term>
+          <listitem>
+            <para>
+                Returns <literal>PQBATCH_MODE_ABORTED</literal> if <application>libpq</application> connection is in 
+                aborted status. The aborted flag is cleared as soon as the result of the 
+                <function>PQbatchSendQueue</function> at the end of the aborted batch is 
+                processed. Clients don't usually need this function to verify aborted status 
+                as they can tell that the batch is aborted from <literal>PGRES_BATCH_ABORTED</literal> 
+                result codes.
+            </para>
+          </listitem>
+        </varlistentry>
+  
+       </variablelist>
+
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-PQenterBatchMode">
+     <term>
+      <function>PQenterBatchMode</function>
+      <indexterm>
+       <primary>PQenterBatchMode</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+      Causes a connection to enter batch mode if it is currently idle or
+      already in batch mode.
+
+<synopsis>
+int PQenterBatchMode(PGconn *conn);
+</synopsis>
+
+        </para>
+        <para>
+          Returns 1 for success. Returns 0 and has no 
+          effect if the connection is not currently idle, i.e. it has a result 
+          ready, is waiting for more input from the server, etc. This function 
+          does not actually send anything to the server, it just changes the 
+          <application>libpq</application> connection state.
+
+        </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-PQexitBatchMode">
+     <term>
+      <function>PQexitBatchMode</function>
+      <indexterm>
+       <primary>PQexitBatchMode</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+      Causes a connection to exit batch mode if it is currently in batch mode
+      with an empty queue and no pending results.
+<synopsis>
+int PQexitBatchMode(PGconn *conn);
+</synopsis>
+        </para>
+        <para>Returns 1 for success.
+      Returns 1 and takes no action if not in batch mode. If the connection has
+      pending batch items in the queue for reading with
+      <function>PQbatchProcessQueue</function>, the current statement isn't finished
+      processing or there are results pending for collection with
+      <function>PQgetResult</function>, returns 0 and does nothing.
+
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-PQbatchSendQueue">
+     <term>
+      <function>PQbatchSendQueue</function>
+      <indexterm>
+       <primary>PQbatchSendQueue</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+      Delimits the end of a set of a batched commands by sending a <link
+      linkend="protocol-flow-ext-query">sync message</link> and flushing
+      the send buffer. The end of a batch serves as 
+      the delimiter of an implicit transaction and
+      an error recovery point; see <link linkend="libpq-batch-errors">
+      error handling</link>.
+
+<synopsis>
+int PQbatchSendQueue(PGconn *conn);
+</synopsis>
+        </para>
+        <para>Returns 1 for success. Returns 0 if the connection is not in batch mode
+              or sending a <link linkend="protocol-flow-ext-query">sync message</link> is failed.
+
+        </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-PQbatchProcessQueue">
+     <term>
+      <function>PQbatchProcessQueue</function>
+      <indexterm>
+       <primary>PQbatchProcessQueue</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+      Causes the connection to start processing the next queued query's
+      results. 
+     </para>
+
+<synopsis>
+int PQbatchProcessQueue(PGconn *conn);
+</synopsis>
+
+     <para>
+      Returns 1 if a new query was popped from the result queue
+      for processing. Returns 0 and has no effect if there are no query results
+      pending, batch mode is not enabled, or if the query currently processed
+      is incomplete or still has pending results. Reason for these failures can 
+      be verified with <function>PQbatchStatus
+      </function> and <function>PQgetResult</function>.
+      See <link linkend="libpq-batch-results">processing results</link>.
+
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+
+  </sect2>
+
+ </sect1>
+
  <sect1 id="libpq-single-row-mode">
   <title>Retrieving Query Results Row-by-Row</title>
 
@@ -4868,6 +5362,14 @@ int PQflush(PGconn *conn);
    <structname>PGresult</structname> object for the query would have.
    Each object should be freed with <xref linkend="libpq-PQclear"/> as usual.
   </para>
+
+  <note>
+    <para>
+     On using batch mode, call <function>PQsetSingleRowMode</function>
+     immediately after a successful call of <function>PQbatchProcessQueue</function>
+     See <xref linkend="libpq-batch-mode"/> for more information.
+    </para>
+   </note>
 
   <para>
    <variablelist>

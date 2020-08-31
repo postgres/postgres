@@ -1022,6 +1022,9 @@ libpqrcv_exec(WalReceiverConn *conn, const char *query,
 			walres->status = WALRCV_ERROR;
 			walres->err = pchomp(PQerrorMessage(conn->streamConn));
 			break;
+		default:
+		/* This is just to keep compiler quiet */
+			break;
 	}
 
 	PQclear(pgres);
