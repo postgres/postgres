@@ -1510,7 +1510,7 @@ ALTER TABLE products RENAME TO items;
 
   <para>
    An object can be assigned to a new owner with an <command>ALTER</command>
-   command of the appropriate kind for the object, e.g. <xref
+   command of the appropriate kind for the object, e.g., <xref
    linkend="sql-altertable">.  Superusers can always do
    this; ordinary roles can only do it if they are both the current owner
    of the object (or a member of the owning role) and a member of the new

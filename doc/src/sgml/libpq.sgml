@@ -1945,7 +1945,7 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
          <term><literal>cipher</literal></term>
           <listitem>
            <para>
-            A short name of the ciphersuite used, e.g.
+            A short name of the ciphersuite used, e.g.,
             <literal>"DHE-RSA-DES-CBC3-SHA"</literal>. The names are specific
             to each SSL implementation.
            </para>
@@ -4534,7 +4534,7 @@ int PQflush(PGconn *conn);
    <function>PQflush</function> again.  Repeat until
    <function>PQflush</function> returns 0.  (It is necessary to check for
    read-ready and drain the input with <function>PQconsumeInput</function>,
-   because the server can block trying to send us data, e.g. NOTICE
+   because the server can block trying to send us data, e.g., NOTICE
    messages, and won't read our data until we read its.)  Once
    <function>PQflush</function> returns 0, wait for the socket to be
    read-ready and then read the response as described above.
@@ -7418,7 +7418,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    For a connection to be known secure, SSL usage must be configured
    on <emphasis>both the client and the server</> before the connection
    is made. If it is only configured on the server, the client may end up
-   sending sensitive information (e.g. passwords) before
+   sending sensitive information (e.g., passwords) before
    it knows that the server requires high security. In libpq, secure
    connections can be ensured
    by setting the <literal>sslmode</> parameter to <literal>verify-full</> or

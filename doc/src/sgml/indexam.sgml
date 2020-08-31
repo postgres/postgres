@@ -279,7 +279,7 @@ amcanreturn (Relation indexRelation, int attno);
    Check whether the index can support <firstterm>index-only scans</> on the
    given column, by returning the indexed column values for an index entry in
    the form of an <structname>IndexTuple</structname>.  The attribute number
-   is 1-based, i.e. the first columns attno is 1. Returns TRUE if supported,
+   is 1-based, i.e., the first columns attno is 1. Returns TRUE if supported,
    else FALSE.  If the access method does not support index-only scans at all,
    the <structfield>amcanreturn</> field in its <structname>pg_am</> row can
    be set to zero.

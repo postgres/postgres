@@ -5465,7 +5465,7 @@ Branch: REL9_4_STABLE [a683df403] 2019-02-05 10:59:38 -0500
     <listitem>
      <para>
       Fix logical decoding to handle cases where a mapped catalog table is
-      repeatedly rewritten, e.g. by <literal>VACUUM FULL</literal>
+      repeatedly rewritten, e.g., by <literal>VACUUM FULL</literal>
       (Andres Freund)
      </para>
     </listitem>
@@ -14460,7 +14460,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
        </para>
 
        <para>
-        By default, replication commands, e.g. <link
+        By default, replication commands, e.g., <link
         linkend="protocol-replication"><literal>IDENTIFY_SYSTEM</></>,
         are not logged, even when <xref linkend="guc-log-statement"> is set
         to <literal>all</>.
@@ -14489,7 +14489,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
        <para>
         Allow <filename>recovery.conf</>'s <link
         linkend="primary-conninfo"><varname>primary_conninfo</></> setting to
-        use connection <acronym>URI</>s, e.g. <literal>postgres://</>
+        use connection <acronym>URI</>s, e.g., <literal>postgres://</>
         (Alexander Shulgin)
        </para>
       </listitem>
