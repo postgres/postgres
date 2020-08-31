@@ -515,9 +515,10 @@ pg_upgrade.exe
 
       <para>
        Save any configuration files from the old standbys' configuration
-       directories you need to keep, e.g.  <filename>postgresql.conf</filename>,
-       <literal>pg_hba.conf</literal>, because these will be overwritten or
-       removed in the next step.
+       directories you need to keep, e.g.  <filename>postgresql.conf</filename>
+       (and any files included by it), <filename>postgresql.auto.conf</filename>,
+       <literal>pg_hba.conf</literal>, because these will be overwritten
+       or removed in the next step.
       </para>
      </step>
 
@@ -605,7 +606,8 @@ rsync --archive --delete --hard-links --size-only --no-inc-recursive /vol1/pg_tb
     <para>
      If you modified <filename>pg_hba.conf</filename>, restore its original settings.
      It might also be necessary to adjust other configuration files in the new
-     cluster to match the old cluster, e.g. <filename>postgresql.conf</filename>.
+     cluster to match the old cluster, e.g., <filename>postgresql.conf</filename>
+     (and any files included by it), <filename>postgresql.auto.conf</filename>.
     </para>
    </step>
 
