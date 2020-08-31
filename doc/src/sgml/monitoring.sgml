@@ -206,7 +206,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    When the server shuts down cleanly, a permanent copy of the statistics
    data is stored in the <filename>pg_stat</filename> subdirectory, so that
    statistics can be retained across server restarts.  When recovery is
-   performed at server start (e.g. after immediate shutdown, server crash,
+   performed at server start (e.g., after immediate shutdown, server crash,
    and point-in-time recovery), all statistics counters are reset.
   </para>
 

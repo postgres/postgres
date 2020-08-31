@@ -173,7 +173,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       <listitem>
        <para>
         This parameter specifies that recovery should end as soon as a
-        consistent state is reached, i.e. as early as possible. When restoring
+        consistent state is reached, i.e., as early as possible. When restoring
         from an online backup, this means the point where taking the backup
         ended.
        </para>

@@ -1256,7 +1256,7 @@ GROUPING SETS (
     ( )
 )
 </programlisting>
-    This is commonly used for analysis over hierarchical data; e.g. total
+    This is commonly used for analysis over hierarchical data; e.g., total
     salary by department, division, and company-wide total.
    </para>
 
@@ -1265,7 +1265,7 @@ GROUPING SETS (
 <programlisting>
 CUBE ( <replaceable>e1</replaceable>, <replaceable>e2</replaceable>, ... )
 </programlisting>
-    represents the given list and all of its possible subsets (i.e. the power
+    represents the given list and all of its possible subsets (i.e., the power
     set).  Thus
 <programlisting>
 CUBE ( a, b, c )

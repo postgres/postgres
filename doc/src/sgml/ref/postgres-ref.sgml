@@ -822,7 +822,7 @@ PostgreSQL documentation
 
   <para>
    To start <command>postgres</command> with a specific
-   port, e.g. 1234:
+   port, e.g., 1234:
 <screen>
 <prompt>$</prompt> <userinput>postgres -p 1234</userinput>
 </screen>

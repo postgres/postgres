@@ -10402,7 +10402,7 @@ same commits as above
 -->
 
        <para>
-        Allow single-evaluation queries, e.g. <literal>WHERE</literal>
+        Allow single-evaluation queries, e.g., <literal>WHERE</literal>
         clause aggregate queries, and functions in the target list to be
         parallelized (Amit Kapila, Robert Haas)
        </para>
@@ -11039,7 +11039,7 @@ same commits as above
        <para>
         <productname>PostgreSQL</productname> only allows superusers to
         access <filename>postgres_fdw</filename> tables without
-        passwords, e.g. via <literal>peer</literal>.  Previously, the
+        passwords, e.g., via <literal>peer</literal>.  Previously, the
         session owner had to be a superuser to allow such access; now
         the view owner is checked instead.
        </para>
@@ -11636,7 +11636,7 @@ same commits as above
 -->
 
        <para>
-        Allow PL/pgSQL to handle changes to composite types (e.g. record,
+        Allow PL/pgSQL to handle changes to composite types (e.g., record,
         row) that happen between the first and later function executions
         in the same session (Tom Lane)
        </para>
@@ -12375,7 +12375,7 @@ same commits as above
         <acronym>SCRAM</acronym> cannot prevent them unless it can be forced
         to be active.  Unfortunately, there is no way to do that in libpq.
         Support for it is expected in future versions of libpq and in
-        interfaces not built using libpq, e.g. JDBC.
+        interfaces not built using libpq, e.g., JDBC.
        </para>
       </listitem>
 
