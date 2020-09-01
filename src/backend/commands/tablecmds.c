@@ -1347,6 +1347,17 @@ RemoveRelations(DropStmt *drop)
 			flags |= PERFORM_DELETION_CONCURRENTLY;
 		}
 
+		/*
+		 * Concurrent index drop cannot be used with partitioned indexes,
+		 * either.
+		 */
+		if ((flags & PERFORM_DELETION_CONCURRENTLY) != 0 &&
+			get_rel_relkind(relOid) == RELKIND_PARTITIONED_INDEX)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot drop partitioned index \"%s\" concurrently",
+							rel->relname)));
+
 		/* OK, we're ready to delete this one */
 		obj.classId = RelationRelationId;
 		obj.objectId = relOid;

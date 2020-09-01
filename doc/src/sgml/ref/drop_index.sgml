@@ -57,6 +57,8 @@ DROP INDEX [ CONCURRENTLY ] [ IF EXISTS ] <replaceable class="parameter">name</r
       Also, regular <command>DROP INDEX</command> commands can be
       performed within a transaction block, but
       <command>DROP INDEX CONCURRENTLY</command> cannot.
+      Lastly, indexes on partitioned tables cannot be dropped using this
+      option.
      </para>
      <para>
       For temporary tables, <command>DROP INDEX</command> is always
