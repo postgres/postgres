@@ -6933,10 +6933,7 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 {
 	FILE	   *fp;
 	struct stat stat_buf;
-	int			line_number = 0;
-
-#define LINELEN NAMEDATALEN*5
-	char		buf[LINELEN];
+	PQExpBufferData buf;
 
 	if (dbname == NULL || dbname[0] == '\0')
 		return NULL;
@@ -6992,89 +6989,77 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 	if (fp == NULL)
 		return NULL;
 
+	/* Use an expansible buffer to accommodate any reasonable line length */
+	initPQExpBuffer(&buf);
+
 	while (!feof(fp) && !ferror(fp))
 	{
-		char	   *t = buf,
-				   *ret,
-				   *p1,
-				   *p2;
-		int			len;
-		int			buflen;
-
-		if (fgets(buf, sizeof(buf), fp) == NULL)
+		/* Make sure there's a reasonable amount of room in the buffer */
+		if (!enlargePQExpBuffer(&buf, 128))
 			break;
 
-		line_number++;
-		buflen = strlen(buf);
-		if (buflen >= sizeof(buf) - 1 && buf[buflen - 1] != '\n')
+		/* Read some data, appending it to what we already have */
+		if (fgets(buf.data + buf.len, buf.maxlen - buf.len, fp) == NULL)
+			break;
+		buf.len += strlen(buf.data + buf.len);
+
+		/* If we don't yet have a whole line, loop around to read more */
+		if (!(buf.len > 0 && buf.data[buf.len - 1] == '\n') && !feof(fp))
+			continue;
+
+		/* ignore comments */
+		if (buf.data[0] != '#')
 		{
-			char		rest[LINELEN];
-			int			restlen;
+			char	   *t = buf.data;
+			int			len;
 
-			/*
-			 * Warn if this password setting line is too long, because it's
-			 * unexpectedly truncated.
-			 */
-			if (buf[0] != '#')
-				fprintf(stderr,
-						libpq_gettext("WARNING: line %d too long in password file \"%s\"\n"),
-						line_number, pgpassfile);
+			/* strip trailing newline and carriage return */
+			len = pg_strip_crlf(t);
 
-			/* eat rest of the line */
-			while (!feof(fp) && !ferror(fp))
+			if (len > 0 &&
+				(t = pwdfMatchesString(t, hostname)) != NULL &&
+				(t = pwdfMatchesString(t, port)) != NULL &&
+				(t = pwdfMatchesString(t, dbname)) != NULL &&
+				(t = pwdfMatchesString(t, username)) != NULL)
 			{
-				if (fgets(rest, sizeof(rest), fp) == NULL)
-					break;
-				restlen = strlen(rest);
-				if (restlen < sizeof(rest) - 1 || rest[restlen - 1] == '\n')
-					break;
+				/* Found a match. */
+				char	   *ret,
+						   *p1,
+						   *p2;
+
+				ret = strdup(t);
+
+				fclose(fp);
+				explicit_bzero(buf.data, buf.maxlen);
+				termPQExpBuffer(&buf);
+
+				if (!ret)
+				{
+					/* Out of memory. XXX: an error message would be nice. */
+					return NULL;
+				}
+
+				/* De-escape password. */
+				for (p1 = p2 = ret; *p1 != ':' && *p1 != '\0'; ++p1, ++p2)
+				{
+					if (*p1 == '\\' && p1[1] != '\0')
+						++p1;
+					*p2 = *p1;
+				}
+				*p2 = '\0';
+
+				return ret;
 			}
 		}
 
-		/* ignore comments */
-		if (buf[0] == '#')
-			continue;
-
-		/* strip trailing newline and carriage return */
-		len = pg_strip_crlf(buf);
-
-		if (len == 0)
-			continue;
-
-		if ((t = pwdfMatchesString(t, hostname)) == NULL ||
-			(t = pwdfMatchesString(t, port)) == NULL ||
-			(t = pwdfMatchesString(t, dbname)) == NULL ||
-			(t = pwdfMatchesString(t, username)) == NULL)
-			continue;
-
-		/* Found a match. */
-		ret = strdup(t);
-		fclose(fp);
-
-		if (!ret)
-		{
-			/* Out of memory. XXX: an error message would be nice. */
-			explicit_bzero(buf, sizeof(buf));
-			return NULL;
-		}
-
-		/* De-escape password. */
-		for (p1 = p2 = ret; *p1 != ':' && *p1 != '\0'; ++p1, ++p2)
-		{
-			if (*p1 == '\\' && p1[1] != '\0')
-				++p1;
-			*p2 = *p1;
-		}
-		*p2 = '\0';
-
-		return ret;
+		/* No match, reset buffer to prepare for next line. */
+		buf.len = 0;
 	}
 
 	fclose(fp);
-	explicit_bzero(buf, sizeof(buf));
+	explicit_bzero(buf.data, buf.maxlen);
+	termPQExpBuffer(&buf);
 	return NULL;
-
-#undef LINELEN
 }
 
 
