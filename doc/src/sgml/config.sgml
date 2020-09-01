@@ -3068,7 +3068,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Maximum size to let the WAL grow to between automatic WAL
+        Maximum size to let the WAL grow during automatic
         checkpoints. This is a soft limit; WAL size can exceed
         <varname>max_wal_size</varname> under special circumstances, such as
         heavy load, a failing <varname>archive_command</varname>, or a high
