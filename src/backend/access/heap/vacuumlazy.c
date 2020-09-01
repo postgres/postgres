@@ -471,6 +471,7 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 						  params->freeze_table_age,
 						  params->multixact_freeze_min_age,
 						  params->multixact_freeze_table_age,
+						  true, /* we must be a top-level command */
 						  &OldestXmin, &FreezeLimit, &xidFullScanLimit,
 						  &MultiXactCutoff, &mxactFullScanLimit);
 
