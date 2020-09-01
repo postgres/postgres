@@ -174,6 +174,8 @@ create table idxpart1 partition of idxpart for values from (0) to (10);
 drop index idxpart1_a_idx;	-- no way
 ERROR:  cannot drop index idxpart1_a_idx because index idxpart_a_idx requires it
 HINT:  You can drop index idxpart_a_idx instead.
+drop index concurrently idxpart_a_idx;	-- unsupported
+ERROR:  cannot drop partitioned index "idxpart_a_idx" concurrently
 drop index idxpart_a_idx;	-- both indexes go away
 select relname, relkind from pg_class
   where relname like 'idxpart%' order by relname;
@@ -194,6 +196,24 @@ select relname, relkind from pg_class
 (2 rows)
 
 drop table idxpart;
+-- DROP behavior with temporary partitioned indexes
+create temp table idxpart_temp (a int) partition by range (a);
+create index on idxpart_temp(a);
+create temp table idxpart1_temp partition of idxpart_temp
+  for values from (0) to (10);
+drop index idxpart1_temp_a_idx; -- error
+ERROR:  cannot drop index idxpart1_temp_a_idx because index idxpart_temp_a_idx requires it
+HINT:  You can drop index idxpart_temp_a_idx instead.
+-- non-concurrent drop is enforced here, so it is a valid case.
+drop index concurrently idxpart_temp_a_idx;
+select relname, relkind from pg_class
+  where relname like 'idxpart_temp%' order by relname;
+   relname    | relkind 
+--------------+---------
+ idxpart_temp | p
+(1 row)
+
+drop table idxpart_temp;
 -- ALTER INDEX .. ATTACH, error cases
 create table idxpart (a int, b int) partition by range (a, b);
 create table idxpart1 partition of idxpart for values from (0, 0) to (10, 10);
