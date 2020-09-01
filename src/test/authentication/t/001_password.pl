@@ -17,7 +17,7 @@ if ($windows_os)
 }
 else
 {
-	plan tests => 8;
+	plan tests => 11;
 }
 
 
@@ -45,7 +45,9 @@ sub test_role
 
 	$status_string = 'success' if ($expected_res eq 0);
 
-	my $res = $node->psql('postgres', undef, extra_params => [ '-U', $role ]);
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+	my $res = $node->psql('postgres', undef, extra_params => [ '-U', $role, '-w' ]);
 	is($res, $expected_res,
 		"authentication $status_string for method $method, role $role");
 	return;
@@ -86,3 +88,25 @@ test_role($node, 'md5_role',   'scram-sha-256', 2);
 reset_pg_hba($node, 'md5');
 test_role($node, 'scram_role', 'md5', 0);
 test_role($node, 'md5_role',   'md5', 0);
+
+# Test .pgpass processing; but use a temp file, don't overwrite the real one!
+my $pgpassfile = "${TestLib::tmp_check}/pgpass";
+
+delete $ENV{"PGPASSWORD"};
+$ENV{"PGPASSFILE"} = $pgpassfile;
+
+append_to_file($pgpassfile, qq!
+# This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file.
+*:*:postgres:scram_role:pass:this is not part of the password.
+!);
+chmod 0600, $pgpassfile or die;
+
+reset_pg_hba($node, 'password');
+test_role($node, 'scram_role', 'password from pgpass', 0);
+test_role($node, 'md5_role',   'password from pgpass', 2);
+
+append_to_file($pgpassfile, qq!
+*:*:*:md5_role:p\\ass
+!);
+
+test_role($node, 'md5_role',   'password from pgpass', 0);

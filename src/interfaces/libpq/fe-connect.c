@@ -6849,9 +6849,7 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 {
 	FILE	   *fp;
 	struct stat stat_buf;
-
-#define LINELEN NAMEDATALEN*5
-	char		buf[LINELEN];
+	PQExpBufferData buf;
 
 	if (dbname == NULL || dbname[0] == '\0')
 		return NULL;
@@ -6907,63 +6905,81 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 	if (fp == NULL)
 		return NULL;
 
+	/* Use an expansible buffer to accommodate any reasonable line length */
+	initPQExpBuffer(&buf);
+
 	while (!feof(fp) && !ferror(fp))
 	{
-		char	   *t = buf,
-				   *ret,
-				   *p1,
-				   *p2;
-		int			len;
-
-		if (fgets(buf, sizeof(buf), fp) == NULL)
+		/* Make sure there's a reasonable amount of room in the buffer */
+		if (!enlargePQExpBuffer(&buf, 128))
 			break;
 
-		len = strlen(buf);
+		/* Read some data, appending it to what we already have */
+		if (fgets(buf.data + buf.len, buf.maxlen - buf.len, fp) == NULL)
+			break;
+		buf.len += strlen(buf.data + buf.len);
 
-		/* Remove trailing newline */
-		if (len > 0 && buf[len - 1] == '\n')
-		{
-			buf[--len] = '\0';
-			/* Handle DOS-style line endings, too, even when not on Windows */
-			if (len > 0 && buf[len - 1] == '\r')
-				buf[--len] = '\0';
-		}
-
-		if (len == 0)
+		/* If we don't yet have a whole line, loop around to read more */
+		if (!(buf.len > 0 && buf.data[buf.len - 1] == '\n') && !feof(fp))
 			continue;
 
-		if ((t = pwdfMatchesString(t, hostname)) == NULL ||
-			(t = pwdfMatchesString(t, port)) == NULL ||
-			(t = pwdfMatchesString(t, dbname)) == NULL ||
-			(t = pwdfMatchesString(t, username)) == NULL)
-			continue;
-
-		/* Found a match. */
-		ret = strdup(t);
-		fclose(fp);
-
-		if (!ret)
+		/* ignore comments */
+		if (buf.data[0] != '#')
 		{
-			/* Out of memory. XXX: an error message would be nice. */
-			return NULL;
+			char	   *t = buf.data;
+			int			len = buf.len;
+
+			/* Remove trailing newline */
+			if (len > 0 && t[len - 1] == '\n')
+			{
+				t[--len] = '\0';
+				/* Handle DOS-style line endings, too */
+				if (len > 0 && t[len - 1] == '\r')
+					t[--len] = '\0';
+			}
+
+			if (len > 0 &&
+				(t = pwdfMatchesString(t, hostname)) != NULL &&
+				(t = pwdfMatchesString(t, port)) != NULL &&
+				(t = pwdfMatchesString(t, dbname)) != NULL &&
+				(t = pwdfMatchesString(t, username)) != NULL)
+			{
+				/* Found a match. */
+				char	   *ret,
+						   *p1,
+						   *p2;
+
+				ret = strdup(t);
+
+				fclose(fp);
+				termPQExpBuffer(&buf);
+
+				if (!ret)
+				{
+					/* Out of memory. XXX: an error message would be nice. */
+					return NULL;
+				}
+
+				/* De-escape password. */
+				for (p1 = p2 = ret; *p1 != ':' && *p1 != '\0'; ++p1, ++p2)
+				{
+					if (*p1 == '\\' && p1[1] != '\0')
+						++p1;
+					*p2 = *p1;
+				}
+				*p2 = '\0';
+
+				return ret;
+			}
 		}
 
-		/* De-escape password. */
-		for (p1 = p2 = ret; *p1 != ':' && *p1 != '\0'; ++p1, ++p2)
-		{
-			if (*p1 == '\\' && p1[1] != '\0')
-				++p1;
-			*p2 = *p1;
-		}
-		*p2 = '\0';
-
-		return ret;
+		/* No match, reset buffer to prepare for next line. */
+		buf.len = 0;
 	}
 
 	fclose(fp);
+	termPQExpBuffer(&buf);
 	return NULL;
-
-#undef LINELEN
 }
 
 
