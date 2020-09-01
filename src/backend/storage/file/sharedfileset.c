@@ -266,12 +266,16 @@ SharedFileSetOnDetach(dsm_segment *segment, Datum datum)
 static void
 SharedFileSetDeleteOnProcExit(int status, Datum arg)
 {
-	ListCell   *l;
-
-	/* Loop over all the pending shared fileset entry */
-	foreach(l, filesetlist)
+	/*
+	 * Remove all the pending shared fileset entries. We don't use foreach() here
+	 * because SharedFileSetDeleteAll will remove the current element in
+	 * filesetlist. Though we have used foreach_delete_current() to remove the
+	 * element from filesetlist it could only fix up the state of one of the
+	 * loops, see SharedFileSetUnregister.
+	 */
+	while (list_length(filesetlist) > 0)
 	{
-		SharedFileSet *fileset = (SharedFileSet *) lfirst(l);
+		SharedFileSet *fileset = (SharedFileSet *) linitial(filesetlist);
 
 		SharedFileSetDeleteAll(fileset);
 	}
@@ -301,7 +305,7 @@ SharedFileSetUnregister(SharedFileSet *input_fileset)
 		/* Remove the entry from the list */
 		if (input_fileset == fileset)
 		{
-			filesetlist = list_delete_cell(filesetlist, l);
+			filesetlist = foreach_delete_current(filesetlist, l);
 			return;
 		}
 	}
