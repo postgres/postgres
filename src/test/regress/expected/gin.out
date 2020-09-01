@@ -264,6 +264,27 @@ select count(*) from t_gin_test_tbl where j @> '{}'::int[];
  20006
 (1 row)
 
+-- test vacuuming of posting trees
+delete from t_gin_test_tbl where j @> array[2];
+vacuum t_gin_test_tbl;
+select count(*) from t_gin_test_tbl where j @> array[50];
+ count 
+-------
+     0
+(1 row)
+
+select count(*) from t_gin_test_tbl where j @> array[2];
+ count 
+-------
+     0
+(1 row)
+
+select count(*) from t_gin_test_tbl where j @> '{}'::int[];
+ count 
+-------
+     6
+(1 row)
+
 reset enable_seqscan;
 reset enable_bitmapscan;
 drop table t_gin_test_tbl;

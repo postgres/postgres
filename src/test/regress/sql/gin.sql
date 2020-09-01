@@ -159,6 +159,14 @@ explain (costs off)
 select count(*) from t_gin_test_tbl where j @> '{}'::int[];
 select count(*) from t_gin_test_tbl where j @> '{}'::int[];
 
+-- test vacuuming of posting trees
+delete from t_gin_test_tbl where j @> array[2];
+vacuum t_gin_test_tbl;
+
+select count(*) from t_gin_test_tbl where j @> array[50];
+select count(*) from t_gin_test_tbl where j @> array[2];
+select count(*) from t_gin_test_tbl where j @> '{}'::int[];
+
 reset enable_seqscan;
 reset enable_bitmapscan;
 
