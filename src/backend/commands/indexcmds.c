@@ -2766,9 +2766,19 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 		/* functions in indexes may want a snapshot set */
 		PushActiveSnapshot(GetTransactionSnapshot());
 
+		/* check if the relation still exists */
+		if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(relid)))
+		{
+			PopActiveSnapshot();
+			CommitTransactionCommand();
+			continue;
+		}
+
 		if (concurrent && get_rel_persistence(relid) != RELPERSISTENCE_TEMP)
 		{
-			(void) ReindexRelationConcurrently(relid, options);
+			(void) ReindexRelationConcurrently(relid,
+											   options |
+											   REINDEXOPT_MISSING_OK);
 			/* ReindexRelationConcurrently() does the verbose output */
 		}
 		else
@@ -2778,7 +2788,9 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 			result = reindex_relation(relid,
 									  REINDEX_REL_PROCESS_TOAST |
 									  REINDEX_REL_CHECK_CONSTRAINTS,
-									  options | REINDEXOPT_REPORT_PROGRESS);
+									  options |
+									  REINDEXOPT_REPORT_PROGRESS |
+									  REINDEXOPT_MISSING_OK);
 
 			if (result && (options & REINDEXOPT_VERBOSE))
 				ereport(INFO,
@@ -2893,7 +2905,17 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 							 errmsg("cannot reindex system catalogs concurrently")));
 
 				/* Open relation to get its indexes */
-				heapRelation = table_open(relationOid, ShareUpdateExclusiveLock);
+				if ((options & REINDEXOPT_MISSING_OK) != 0)
+				{
+					heapRelation = try_table_open(relationOid,
+												  ShareUpdateExclusiveLock);
+					/* leave if relation does not exist */
+					if (!heapRelation)
+						break;
+				}
+				else
+					heapRelation = table_open(relationOid,
+											  ShareUpdateExclusiveLock);
 
 				/* Add all the valid indexes of relation to list */
 				foreach(lc, RelationGetIndexList(heapRelation))
@@ -2978,7 +3000,13 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 			}
 		case RELKIND_INDEX:
 			{
-				Oid			heapId = IndexGetRelation(relationOid, false);
+				Oid			heapId = IndexGetRelation(relationOid,
+													  (options & REINDEXOPT_MISSING_OK) != 0);
+				Relation	heapRelation;
+
+				/* if relation is missing, leave */
+				if (!OidIsValid(heapId))
+					break;
 
 				if (IsCatalogRelationOid(heapId))
 					ereport(ERROR,
@@ -2994,6 +3022,25 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("cannot reindex invalid index on TOAST table concurrently")));
+
+				/*
+				 * Check if parent relation can be locked and if it exists,
+				 * this needs to be done at this stage as the list of indexes
+				 * to rebuild is not complete yet, and REINDEXOPT_MISSING_OK
+				 * should not be used once all the session locks are taken.
+				 */
+				if ((options & REINDEXOPT_MISSING_OK) != 0)
+				{
+					heapRelation = try_table_open(heapId,
+												  ShareUpdateExclusiveLock);
+					/* leave if relation does not exist */
+					if (!heapRelation)
+						break;
+				}
+				else
+					heapRelation = table_open(heapId,
+											  ShareUpdateExclusiveLock);
+				table_close(heapRelation, NoLock);
 
 				/* Save the list of relation OIDs in private context */
 				oldcontext = MemoryContextSwitchTo(private_context);
@@ -3025,7 +3072,13 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 			break;
 	}
 
-	/* Definitely no indexes, so leave */
+	/*
+	 * Definitely no indexes, so leave.  Any checks based on
+	 * REINDEXOPT_MISSING_OK should be done only while the list of indexes to
+	 * work on is built as the session locks taken before this transaction
+	 * commits will make sure that they cannot be dropped by a concurrent
+	 * session until this operation completes.
+	 */
 	if (indexIds == NIL)
 	{
 		PopActiveSnapshot();

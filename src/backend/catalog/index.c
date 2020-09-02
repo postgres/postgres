@@ -3437,8 +3437,20 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	 * Open and lock the parent heap relation.  ShareLock is sufficient since
 	 * we only need to be sure no schema or data changes are going on.
 	 */
-	heapId = IndexGetRelation(indexId, false);
-	heapRelation = table_open(heapId, ShareLock);
+	heapId = IndexGetRelation(indexId,
+							  (options & REINDEXOPT_MISSING_OK) != 0);
+	/* if relation is missing, leave */
+	if (!OidIsValid(heapId))
+		return;
+
+	if ((options & REINDEXOPT_MISSING_OK) != 0)
+		heapRelation = try_table_open(heapId, ShareLock);
+	else
+		heapRelation = table_open(heapId, ShareLock);
+
+	/* if relation is gone, leave */
+	if (!heapRelation)
+		return;
 
 	if (progress)
 	{
@@ -3672,7 +3684,14 @@ reindex_relation(Oid relid, int flags, int options)
 	 * to prevent schema and data changes in it.  The lock level used here
 	 * should match ReindexTable().
 	 */
-	rel = table_open(relid, ShareLock);
+	if ((options & REINDEXOPT_MISSING_OK) != 0)
+		rel = try_table_open(relid, ShareLock);
+	else
+		rel = table_open(relid, ShareLock);
+
+	/* if relation is gone, leave */
+	if (!rel)
+		return false;
 
 	/*
 	 * This may be useful when implemented someday; but that day is not today.
@@ -3771,7 +3790,14 @@ reindex_relation(Oid relid, int flags, int options)
 	 * still hold the lock on the main table.
 	 */
 	if ((flags & REINDEX_REL_PROCESS_TOAST) && OidIsValid(toast_relid))
-		result |= reindex_relation(toast_relid, flags, options);
+	{
+		/*
+		 * Note that this should fail if the toast relation is missing, so
+		 * reset REINDEXOPT_MISSING_OK.
+		 */
+		result |= reindex_relation(toast_relid, flags,
+								   options & ~(REINDEXOPT_MISSING_OK));
+	}
 
 	return result;
 }

@@ -57,6 +57,40 @@ table_open(Oid relationId, LOCKMODE lockmode)
 	return r;
 }
 
+
+/* ----------------
+ *		try_table_open - open a table relation by relation OID
+ *
+ *		Same as table_open, except return NULL instead of failing
+ *		if the relation does not exist.
+ * ----------------
+ */
+Relation
+try_table_open(Oid relationId, LOCKMODE lockmode)
+{
+	Relation	r;
+
+	r = try_relation_open(relationId, lockmode);
+
+	/* leave if table does not exist */
+	if (!r)
+		return NULL;
+
+	if (r->rd_rel->relkind == RELKIND_INDEX ||
+		r->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is an index",
+						RelationGetRelationName(r))));
+	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a composite type",
+						RelationGetRelationName(r))));
+
+	return r;
+}
+
 /* ----------------
  *		table_openrv - open a table relation specified
  *		by a RangeVar node

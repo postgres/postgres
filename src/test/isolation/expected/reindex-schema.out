@@ -1,0 +1,17 @@
+Parsed test spec with 3 sessions
+
+starting permutation: begin1 lock1 reindex2 drop3 end1
+step begin1: BEGIN;
+step lock1: LOCK reindex_schema.tab_locked IN SHARE UPDATE EXCLUSIVE MODE;
+step reindex2: REINDEX SCHEMA reindex_schema; <waiting ...>
+step drop3: DROP TABLE reindex_schema.tab_dropped;
+step end1: COMMIT;
+step reindex2: <... completed>
+
+starting permutation: begin1 lock1 reindex_conc2 drop3 end1
+step begin1: BEGIN;
+step lock1: LOCK reindex_schema.tab_locked IN SHARE UPDATE EXCLUSIVE MODE;
+step reindex_conc2: REINDEX SCHEMA CONCURRENTLY reindex_schema; <waiting ...>
+step drop3: DROP TABLE reindex_schema.tab_dropped;
+step end1: COMMIT;
+step reindex_conc2: <... completed>
