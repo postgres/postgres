@@ -544,6 +544,21 @@ select string_to_array('1,2,3,4,,6', ',');
 select string_to_array('1,2,3,4,,6', ',', '');
 select string_to_array('1,2,3,4,*,6', ',', '*');
 
+select v, v is null as "is null" from string_to_table('1|2|3', '|') g(v);
+select v, v is null as "is null" from string_to_table('1|2|3|', '|') g(v);
+select v, v is null as "is null" from string_to_table('1||2|3||', '||') g(v);
+select v, v is null as "is null" from string_to_table('1|2|3', '') g(v);
+select v, v is null as "is null" from string_to_table('', '|') g(v);
+select v, v is null as "is null" from string_to_table('1|2|3', NULL) g(v);
+select v, v is null as "is null" from string_to_table(NULL, '|') g(v);
+select v, v is null as "is null" from string_to_table('abc', '') g(v);
+select v, v is null as "is null" from string_to_table('abc', '', 'abc') g(v);
+select v, v is null as "is null" from string_to_table('abc', ',') g(v);
+select v, v is null as "is null" from string_to_table('abc', ',', 'abc') g(v);
+select v, v is null as "is null" from string_to_table('1,2,3,4,,6', ',') g(v);
+select v, v is null as "is null" from string_to_table('1,2,3,4,,6', ',', '') g(v);
+select v, v is null as "is null" from string_to_table('1,2,3,4,*,6', ',', '*') g(v);
+
 select array_to_string(NULL::int4[], ',') IS NULL;
 select array_to_string('{}'::int4[], ',');
 select array_to_string(array[1,2,3,4,NULL,6], ',');

@@ -3220,7 +3220,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        </para>
        <para>
         Splits <parameter>string</parameter> using a POSIX regular
-        expression as the delimiter; see
+        expression as the delimiter, producing an array of results; see
         <xref linkend="functions-posix-regexp"/>.
        </para>
        <para>
@@ -3239,7 +3239,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        </para>
        <para>
         Splits <parameter>string</parameter> using a POSIX regular
-        expression as the delimiter; see
+        expression as the delimiter, producing a set of results; see
         <xref linkend="functions-posix-regexp"/>.
        </para>
        <para>
@@ -3457,6 +3457,65 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        <para>
         <literal>starts_with('alphabet', 'alph')</literal>
         <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>string_to_array</primary>
+        </indexterm>
+        <function>string_to_array</function> ( <parameter>string</parameter> <type>text</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Splits the <parameter>string</parameter> at occurrences
+        of <parameter>delimiter</parameter> and forms the resulting fields
+        into a <type>text</type> array.
+        If <parameter>delimiter</parameter> is <literal>NULL</literal>,
+        each character in the <parameter>string</parameter> will become a
+        separate element in the array.
+        If <parameter>delimiter</parameter> is an empty string, then
+        the <parameter>string</parameter> is treated as a single field.
+        If <parameter>null_string</parameter> is supplied and is
+        not <literal>NULL</literal>, fields matching that string are
+        replaced by <literal>NULL</literal>.
+       </para>
+       <para>
+        <literal>string_to_array('xx~~yy~~zz', '~~', 'yy')</literal>
+        <returnvalue>{xx,NULL,zz}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>string_to_table</primary>
+        </indexterm>
+        <function>string_to_table</function> ( <parameter>string</parameter> <type>text</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Splits the <parameter>string</parameter> at occurrences
+        of <parameter>delimiter</parameter> and returns the resulting fields
+        as a set of <type>text</type> rows.
+        If <parameter>delimiter</parameter> is <literal>NULL</literal>,
+        each character in the <parameter>string</parameter> will become a
+        separate row of the result.
+        If <parameter>delimiter</parameter> is an empty string, then
+        the <parameter>string</parameter> is treated as a single field.
+        If <parameter>null_string</parameter> is supplied and is
+        not <literal>NULL</literal>, fields matching that string are
+        replaced by <literal>NULL</literal>.
+       </para>
+       <para>
+        <literal>string_to_table('xx~^~yy~^~zz', '~^~', 'yy')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ xx
+ NULL
+ zz
+</programlisting>
        </para></entry>
       </row>
 
@@ -17816,33 +17875,6 @@ SELECT NULLIF(value, '(none)') ...
        <para>
         <literal>cardinality(ARRAY[[1,2],[3,4]])</literal>
         <returnvalue>4</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>string_to_array</primary>
-        </indexterm>
-        <function>string_to_array</function> ( <parameter>string</parameter> <type>text</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
-        <returnvalue>text[]</returnvalue>
-       </para>
-       <para>
-        Splits the <parameter>string</parameter> at occurrences
-        of <parameter>delimiter</parameter> and forms the remaining data
-        into a <type>text</type> array.
-        If <parameter>delimiter</parameter> is <literal>NULL</literal>,
-        each character in the <parameter>string</parameter> will become a
-        separate element in the array.
-        If <parameter>delimiter</parameter> is an empty string, then
-        the <parameter>string</parameter> is treated as a single field.
-        If <parameter>null_string</parameter> is supplied and is
-        not <literal>NULL</literal>, fields matching that string are converted
-        to <literal>NULL</literal> entries.
-       </para>
-       <para>
-        <literal>string_to_array('xx~~yy~~zz', '~~', 'yy')</literal>
-        <returnvalue>{xx,NULL,zz}</returnvalue>
        </para></entry>
       </row>
 

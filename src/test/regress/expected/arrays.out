@@ -1755,6 +1755,114 @@ select string_to_array('1,2,3,4,*,6', ',', '*');
  {1,2,3,4,NULL,6}
 (1 row)
 
+select v, v is null as "is null" from string_to_table('1|2|3', '|') g(v);
+ v | is null 
+---+---------
+ 1 | f
+ 2 | f
+ 3 | f
+(3 rows)
+
+select v, v is null as "is null" from string_to_table('1|2|3|', '|') g(v);
+ v | is null 
+---+---------
+ 1 | f
+ 2 | f
+ 3 | f
+   | f
+(4 rows)
+
+select v, v is null as "is null" from string_to_table('1||2|3||', '||') g(v);
+  v  | is null 
+-----+---------
+ 1   | f
+ 2|3 | f
+     | f
+(3 rows)
+
+select v, v is null as "is null" from string_to_table('1|2|3', '') g(v);
+   v   | is null 
+-------+---------
+ 1|2|3 | f
+(1 row)
+
+select v, v is null as "is null" from string_to_table('', '|') g(v);
+ v | is null 
+---+---------
+(0 rows)
+
+select v, v is null as "is null" from string_to_table('1|2|3', NULL) g(v);
+ v | is null 
+---+---------
+ 1 | f
+ | | f
+ 2 | f
+ | | f
+ 3 | f
+(5 rows)
+
+select v, v is null as "is null" from string_to_table(NULL, '|') g(v);
+ v | is null 
+---+---------
+(0 rows)
+
+select v, v is null as "is null" from string_to_table('abc', '') g(v);
+  v  | is null 
+-----+---------
+ abc | f
+(1 row)
+
+select v, v is null as "is null" from string_to_table('abc', '', 'abc') g(v);
+ v | is null 
+---+---------
+   | t
+(1 row)
+
+select v, v is null as "is null" from string_to_table('abc', ',') g(v);
+  v  | is null 
+-----+---------
+ abc | f
+(1 row)
+
+select v, v is null as "is null" from string_to_table('abc', ',', 'abc') g(v);
+ v | is null 
+---+---------
+   | t
+(1 row)
+
+select v, v is null as "is null" from string_to_table('1,2,3,4,,6', ',') g(v);
+ v | is null 
+---+---------
+ 1 | f
+ 2 | f
+ 3 | f
+ 4 | f
+   | f
+ 6 | f
+(6 rows)
+
+select v, v is null as "is null" from string_to_table('1,2,3,4,,6', ',', '') g(v);
+ v | is null 
+---+---------
+ 1 | f
+ 2 | f
+ 3 | f
+ 4 | f
+   | t
+ 6 | f
+(6 rows)
+
+select v, v is null as "is null" from string_to_table('1,2,3,4,*,6', ',', '*') g(v);
+ v | is null 
+---+---------
+ 1 | f
+ 2 | f
+ 3 | f
+ 4 | f
+   | t
+ 6 | f
+(6 rows)
+
 select array_to_string(NULL::int4[], ',') IS NULL;
  ?column? 
 ----------
