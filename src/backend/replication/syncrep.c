@@ -158,17 +158,29 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	 */
 	Assert(InterruptHoldoffCount > 0);
 
+	/*
+	 * Fast exit if user has not requested sync replication, or there are no
+	 * sync replication standby names defined.
+	 *
+	 * Since this routine gets called every commit time, it's important to
+	 * exit quickly if sync replication is not requested. So we check
+	 * WalSndCtl->sync_standbys_defined flag without the lock and exit
+	 * immediately if it's false. If it's true, we need to check it again later
+	 * while holding the lock, to check the flag and operate the sync rep
+	 * queue atomically. This is necessary to avoid the race condition
+	 * described in SyncRepUpdateSyncStandbysDefined(). On the other
+	 * hand, if it's false, the lock is not necessary because we don't touch
+	 * the queue.
+	 */
+	if (!SyncRepRequested() ||
+		!((volatile WalSndCtlData *) WalSndCtl)->sync_standbys_defined)
+		return;
+
 	/* Cap the level for anything other than commit to remote flush only. */
 	if (commit)
 		mode = SyncRepWaitMode;
 	else
 		mode = Min(SyncRepWaitMode, SYNC_REP_WAIT_FLUSH);
-
-	/*
-	 * Fast exit if user has not requested sync replication.
-	 */
-	if (!SyncRepRequested())
-		return;
 
 	Assert(SHMQueueIsDetached(&(MyProc->syncRepLinks)));
 	Assert(WalSndCtl != NULL);
