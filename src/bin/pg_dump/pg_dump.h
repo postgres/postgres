@@ -370,7 +370,7 @@ typedef struct _indxInfo
 								 * contains both key and nonkey attributes */
 	bool		indisclustered;
 	bool		indisreplident;
-	Oid			parentidx;		/* if partitioned, parent index OID */
+	Oid			parentidx;		/* if a partition, parent index OID */
 	/* if there is an associated constraint object, its dumpId: */
 	DumpId		indexconstraint;
 	int			relpages;		/* relpages of the underlying table */
