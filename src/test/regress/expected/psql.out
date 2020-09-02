@@ -2795,20 +2795,28 @@ Argument data types | numeric
 Type                | func
 
 \pset tuples_only false
--- check conditional tableam display
--- Create a heap2 table am handler with heapam handler
+-- check conditional am display
+\pset expanded off
+CREATE SCHEMA tableam_display;
+CREATE ROLE regress_display_role;
+ALTER SCHEMA tableam_display OWNER TO regress_display_role;
+SET search_path TO tableam_display;
 CREATE ACCESS METHOD heap_psql TYPE TABLE HANDLER heap_tableam_handler;
+SET ROLE TO regress_display_role;
+-- Use only relations with a physical size of zero.
 CREATE TABLE tbl_heap_psql(f1 int, f2 char(100)) using heap_psql;
 CREATE TABLE tbl_heap(f1 int, f2 char(100)) using heap;
+CREATE VIEW view_heap_psql AS SELECT f1 from tbl_heap_psql;
+CREATE MATERIALIZED VIEW mat_view_heap_psql USING heap_psql AS SELECT f1 from tbl_heap_psql;
 \d+ tbl_heap_psql
-                                   Table "public.tbl_heap_psql"
+                              Table "tableam_display.tbl_heap_psql"
  Column |      Type      | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+----------------+-----------+----------+---------+----------+--------------+-------------
  f1     | integer        |           |          |         | plain    |              | 
  f2     | character(100) |           |          |         | extended |              | 
 
 \d+ tbl_heap
-                                     Table "public.tbl_heap"
+                                 Table "tableam_display.tbl_heap"
  Column |      Type      | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+----------------+-----------+----------+---------+----------+--------------+-------------
  f1     | integer        |           |          |         | plain    |              | 
@@ -2816,7 +2824,7 @@ CREATE TABLE tbl_heap(f1 int, f2 char(100)) using heap;
 
 \set HIDE_TABLEAM off
 \d+ tbl_heap_psql
-                                   Table "public.tbl_heap_psql"
+                              Table "tableam_display.tbl_heap_psql"
  Column |      Type      | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+----------------+-----------+----------+---------+----------+--------------+-------------
  f1     | integer        |           |          |         | plain    |              | 
@@ -2824,16 +2832,68 @@ CREATE TABLE tbl_heap(f1 int, f2 char(100)) using heap;
 Access method: heap_psql
 
 \d+ tbl_heap
-                                     Table "public.tbl_heap"
+                                 Table "tableam_display.tbl_heap"
  Column |      Type      | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+----------------+-----------+----------+---------+----------+--------------+-------------
  f1     | integer        |           |          |         | plain    |              | 
  f2     | character(100) |           |          |         | extended |              | 
 Access method: heap
 
+-- AM is displayed for tables, indexes and materialized views.
+\d+
+                                                           List of relations
+     Schema      |        Name        |       Type        |        Owner         | Persistence | Access Method |  Size   | Description 
+-----------------+--------------------+-------------------+----------------------+-------------+---------------+---------+-------------
+ tableam_display | mat_view_heap_psql | materialized view | regress_display_role | permanent   | heap_psql     | 0 bytes | 
+ tableam_display | tbl_heap           | table             | regress_display_role | permanent   | heap          | 0 bytes | 
+ tableam_display | tbl_heap_psql      | table             | regress_display_role | permanent   | heap_psql     | 0 bytes | 
+ tableam_display | view_heap_psql     | view              | regress_display_role | permanent   |               | 0 bytes | 
+(4 rows)
+
+\dt+
+                                                  List of relations
+     Schema      |     Name      | Type  |        Owner         | Persistence | Access Method |  Size   | Description 
+-----------------+---------------+-------+----------------------+-------------+---------------+---------+-------------
+ tableam_display | tbl_heap      | table | regress_display_role | permanent   | heap          | 0 bytes | 
+ tableam_display | tbl_heap_psql | table | regress_display_role | permanent   | heap_psql     | 0 bytes | 
+(2 rows)
+
+\dm+
+                                                           List of relations
+     Schema      |        Name        |       Type        |        Owner         | Persistence | Access Method |  Size   | Description 
+-----------------+--------------------+-------------------+----------------------+-------------+---------------+---------+-------------
+ tableam_display | mat_view_heap_psql | materialized view | regress_display_role | permanent   | heap_psql     | 0 bytes | 
+(1 row)
+
+-- But not for views and sequences.
+\dv+
+                                          List of relations
+     Schema      |      Name      | Type |        Owner         | Persistence |  Size   | Description 
+-----------------+----------------+------+----------------------+-------------+---------+-------------
+ tableam_display | view_heap_psql | view | regress_display_role | permanent   | 0 bytes | 
+(1 row)
+
 \set HIDE_TABLEAM on
-DROP TABLE tbl_heap, tbl_heap_psql;
+\d+
+                                                   List of relations
+     Schema      |        Name        |       Type        |        Owner         | Persistence |  Size   | Description 
+-----------------+--------------------+-------------------+----------------------+-------------+---------+-------------
+ tableam_display | mat_view_heap_psql | materialized view | regress_display_role | permanent   | 0 bytes | 
+ tableam_display | tbl_heap           | table             | regress_display_role | permanent   | 0 bytes | 
+ tableam_display | tbl_heap_psql      | table             | regress_display_role | permanent   | 0 bytes | 
+ tableam_display | view_heap_psql     | view              | regress_display_role | permanent   | 0 bytes | 
+(4 rows)
+
+RESET ROLE;
+RESET search_path;
+DROP SCHEMA tableam_display CASCADE;
+NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to table tableam_display.tbl_heap_psql
+drop cascades to table tableam_display.tbl_heap
+drop cascades to view tableam_display.view_heap_psql
+drop cascades to materialized view tableam_display.mat_view_heap_psql
 DROP ACCESS METHOD heap_psql;
+DROP ROLE regress_display_role;
 -- test numericlocale (as best we can without control of psql's locale)
 \pset format aligned
 \pset expanded off

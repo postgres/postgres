@@ -455,20 +455,38 @@ select 1 where false;
 \df exp
 \pset tuples_only false
 
--- check conditional tableam display
+-- check conditional am display
+\pset expanded off
 
--- Create a heap2 table am handler with heapam handler
+CREATE SCHEMA tableam_display;
+CREATE ROLE regress_display_role;
+ALTER SCHEMA tableam_display OWNER TO regress_display_role;
+SET search_path TO tableam_display;
 CREATE ACCESS METHOD heap_psql TYPE TABLE HANDLER heap_tableam_handler;
+SET ROLE TO regress_display_role;
+-- Use only relations with a physical size of zero.
 CREATE TABLE tbl_heap_psql(f1 int, f2 char(100)) using heap_psql;
 CREATE TABLE tbl_heap(f1 int, f2 char(100)) using heap;
+CREATE VIEW view_heap_psql AS SELECT f1 from tbl_heap_psql;
+CREATE MATERIALIZED VIEW mat_view_heap_psql USING heap_psql AS SELECT f1 from tbl_heap_psql;
 \d+ tbl_heap_psql
 \d+ tbl_heap
 \set HIDE_TABLEAM off
 \d+ tbl_heap_psql
 \d+ tbl_heap
+-- AM is displayed for tables, indexes and materialized views.
+\d+
+\dt+
+\dm+
+-- But not for views and sequences.
+\dv+
 \set HIDE_TABLEAM on
-DROP TABLE tbl_heap, tbl_heap_psql;
+\d+
+RESET ROLE;
+RESET search_path;
+DROP SCHEMA tableam_display CASCADE;
 DROP ACCESS METHOD heap_psql;
+DROP ROLE regress_display_role;
 
 -- test numericlocale (as best we can without control of psql's locale)
 

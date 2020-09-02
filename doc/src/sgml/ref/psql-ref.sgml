@@ -1183,7 +1183,9 @@ testdb=&gt;
         columns of the table are shown, as is the presence of OIDs in the
         table, the view definition if the relation is a view, a non-default
         <link linkend="sql-createtable-replica-identity">replica
-        identity</link> setting.
+         identity</link> setting and the
+        <link linkend="sql-create-access-method">access method</link> name
+        if the relation has an access method.
         </para>
 
         <para>
