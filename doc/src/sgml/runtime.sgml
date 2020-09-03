@@ -4,8 +4,20 @@
  <title>Server Setup and Operation</title>
 
  <para>
-  This chapter discusses how to set up and run the database server
+  This chapter discusses how to set up and run the database server,
   and its interactions with the operating system.
+ </para>
+
+ <para>
+  The directions in this chapter assume that you are working with
+  plain <productname>PostgreSQL</productname> without any additional
+  infrastructure, for example a copy that you built from source
+  according to the directions in the preceding chapters.
+  If you are working with a pre-packaged or vendor-supplied
+  version of <productname>PostgreSQL</productname>, it is likely that
+  the packager has made special provisions for installing and starting
+  the database server according to your system's conventions.
+  Consult the package-level documentation for details.
  </para>
 
  <sect1 id="postgres-user">
@@ -21,9 +33,15 @@
    separate user account. This user account should only own the data
    that is managed by the server, and should not be shared with other
    daemons. (For example, using the user <literal>nobody</literal> is a bad
-   idea.) It is not advisable to install executables owned by this
-   user because compromised systems could then modify their own
-   binaries.
+   idea.) In particular, it is advisable that this user account not own
+   the <productname>PostgreSQL</productname> executable files, to ensure
+   that a compromised server process could not modify those executables.
+  </para>
+
+  <para>
+   Pre-packaged versions of <productname>PostgreSQL</productname> will
+   typically create a suitable user account automatically during
+   package installation.
   </para>
 
   <para>
@@ -71,11 +89,26 @@
    completely up to you where you choose to store your data.  There is no
    default, although locations such as
    <filename>/usr/local/pgsql/data</filename> or
-   <filename>/var/lib/pgsql/data</filename> are popular. To initialize a
-   database cluster, use the command <xref
-   linkend="app-initdb"/>,<indexterm><primary>initdb</primary></indexterm> which is
-   installed with <productname>PostgreSQL</productname>. The desired
-   file system location of your database cluster is indicated by the
+   <filename>/var/lib/pgsql/data</filename> are popular.
+   The data directory must be initialized before being used, using the program
+   <xref linkend="app-initdb"/><indexterm><primary>initdb</primary></indexterm>
+   which is installed with <productname>PostgreSQL</productname>.
+  </para>
+
+  <para>
+   If you are using a pre-packaged version
+   of <productname>PostgreSQL</productname>, it may well have a specific
+   convention for where to place the data directory, and it may also
+   provide a script for creating the data directory.  In that case you
+   should use that script in preference to
+   running <command>initdb</command> directly.
+   Consult the package-level documentation for details.
+  </para>
+
+  <para>
+   To initialize a database cluster manually,
+   run <command>initdb</command> and specify the desired
+   file system location of the database cluster with the
    <option>-D</option> option, for example:
 <screen>
 <prompt>$</prompt> <userinput>initdb -D /usr/local/pgsql/data</userinput>
@@ -309,10 +342,22 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    Before anyone can access the database, you must start the database
    server. The database server program is called
    <command>postgres</command>.<indexterm><primary>postgres</primary></indexterm>
-   The <command>postgres</command> program must know where to
-   find the data it is supposed to use. This is done with the
-   <option>-D</option> option. Thus, the simplest way to start the
-   server is:
+  </para>
+
+  <para>
+   If you are using a pre-packaged version
+   of <productname>PostgreSQL</productname>, it almost certainly includes
+   provisions for running the server as a background task according to the
+   conventions of your operating system.  Using the package's
+   infrastructure to start the server will be much less work than figuring
+   out how to do this yourself.  Consult the package-level documentation
+   for details.
+  </para>
+
+  <para>
+   The bare-bones way to start the server manually is just to invoke
+   <command>postgres</command> directly, specifying the location of the
+   data directory with the <option>-D</option> option, for example:
 <screen>
 $ <userinput>postgres -D /usr/local/pgsql/data</userinput>
 </screen>
@@ -364,7 +409,7 @@ pg_ctl start -l logfile
      <secondary>starting the server during</secondary>
    </indexterm>
    Autostart scripts are operating-system-specific.
-   There are a few distributed with
+   There are a few example scripts distributed with
    <productname>PostgreSQL</productname> in the
    <filename>contrib/start-scripts</filename> directory. Installing one will require
    root privileges.
@@ -1481,9 +1526,23 @@ $ <userinput>cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages</userinp
   </indexterm>
 
   <para>
-   There are several ways to shut down the database server. You control
-   the type of shutdown by sending different signals to the supervisor
+   There are several ways to shut down the database server.
+   Under the hood, they all reduce to sending a signal to the supervisor
    <command>postgres</command> process.
+  </para>
+
+  <para>
+   If you are using a pre-packaged version
+   of <productname>PostgreSQL</productname>, and you used its provisions
+   for starting the server, then you should also use its provisions for
+   stopping the server.  Consult the package-level documentation for
+   details.
+  </para>
+
+  <para>
+   When managing the server directly, you can control the type of shutdown
+   by sending different signals to the <command>postgres</command>
+   process:
 
    <variablelist>
     <varlistentry>
@@ -1620,6 +1679,10 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    is to dump and reload the database, though this can be slow.  A
    faster method is <xref linkend="pgupgrade"/>.  Replication methods are
    also available, as discussed below.
+   (If you are using a pre-packaged version
+   of <productname>PostgreSQL</productname>, it may provide scripts to
+   assist with major version upgrades.  Consult the package-level
+   documentation for details.)
   </para>
 
   <para>
