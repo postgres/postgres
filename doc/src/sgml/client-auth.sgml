@@ -77,13 +77,15 @@
    The general format of the <filename>pg_hba.conf</filename> file is
    a set of records, one per line. Blank lines are ignored, as is any
    text after the <literal>#</literal> comment character.
-   Records cannot be continued across lines.
+   A record can be continued onto the next line by ending the line with
+   a backslash. (Backslashes are not special except at the end of a line.)
    A record is made
    up of a number of fields which are separated by spaces and/or tabs.
    Fields can contain white space if the field value is double-quoted.
    Quoting one of the keywords in a database, user, or address field (e.g.,
    <literal>all</literal> or <literal>replication</literal>) makes the word lose its special
    meaning, and just match a database, user, or host with that name.
+   Backslash line continuation applies even within quoted text or comments.
   </para>
 
   <para>
@@ -821,7 +823,7 @@ local   db1,db2,@demodbs  all                                   md5
 <synopsis>
 <replaceable>map-name</replaceable> <replaceable>system-username</replaceable> <replaceable>database-username</replaceable>
 </synopsis>
-   Comments and whitespace are handled in the same way as in
+   Comments, whitespace and line continuations are handled in the same way as in
    <filename>pg_hba.conf</filename>.  The
    <replaceable>map-name</replaceable> is an arbitrary name that will be used to
    refer to this mapping in <filename>pg_hba.conf</filename>. The other

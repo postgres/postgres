@@ -29,6 +29,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "common/ip.h"
+#include "common/string.h"
 #include "funcapi.h"
 #include "libpq/ifaddr.h"
 #include "libpq/libpq.h"
@@ -54,7 +55,6 @@
 
 
 #define MAX_TOKEN	256
-#define MAX_LINE	8192
 
 /* callback data for check_network_callback */
 typedef struct check_network_data
@@ -166,11 +166,19 @@ pg_isblank(const char c)
 /*
  * Grab one token out of the string pointed to by *lineptr.
  *
- * Tokens are strings of non-blank
- * characters bounded by blank characters, commas, beginning of line, and
- * end of line. Blank means space or tab. Tokens can be delimited by
- * double quotes (this allows the inclusion of blanks, but not newlines).
- * Comments (started by an unquoted '#') are skipped.
+ * Tokens are strings of non-blank characters bounded by blank characters,
+ * commas, beginning of line, and end of line.  Blank means space or tab.
+ *
+ * Tokens can be delimited by double quotes (this allows the inclusion of
+ * blanks or '#', but not newlines).  As in SQL, write two double-quotes
+ * to represent a double quote.
+ *
+ * Comments (started by an unquoted '#') are skipped, i.e. the remainder
+ * of the line is ignored.
+ *
+ * (Note that line continuation processing happens before tokenization.
+ * Thus, if a continuation occurs within quoted text or a comment, the
+ * quoted text or comment is considered to continue to the next line.)
  *
  * The token, if any, is returned at *buf (a buffer of size bufsz), and
  * *lineptr is advanced past the token.
@@ -470,6 +478,7 @@ static MemoryContext
 tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 {
 	int			line_number = 1;
+	StringInfoData buf;
 	MemoryContext linecxt;
 	MemoryContext oldcxt;
 
@@ -478,47 +487,72 @@ tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 									ALLOCSET_SMALL_SIZES);
 	oldcxt = MemoryContextSwitchTo(linecxt);
 
+	initStringInfo(&buf);
+
 	*tok_lines = NIL;
 
 	while (!feof(file) && !ferror(file))
 	{
-		char		rawline[MAX_LINE];
 		char	   *lineptr;
 		List	   *current_line = NIL;
 		char	   *err_msg = NULL;
+		int			last_backslash_buflen = 0;
+		int			continuations = 0;
 
-		if (!fgets(rawline, sizeof(rawline), file))
+		/* Collect the next input line, handling backslash continuations */
+		resetStringInfo(&buf);
+
+		while (!feof(file) && !ferror(file))
 		{
-			int			save_errno = errno;
+			/* Make sure there's a reasonable amount of room in the buffer */
+			enlargeStringInfo(&buf, 128);
 
-			if (!ferror(file))
-				break;			/* normal EOF */
-			/* I/O error! */
-			ereport(elevel,
-					(errcode_for_file_access(),
-					 errmsg("could not read file \"%s\": %m", filename)));
-			err_msg = psprintf("could not read file \"%s\": %s",
-							   filename, strerror(save_errno));
-			rawline[0] = '\0';
-		}
-		if (strlen(rawline) == MAX_LINE - 1)
-		{
-			/* Line too long! */
-			ereport(elevel,
-					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("authentication file line too long"),
-					 errcontext("line %d of configuration file \"%s\"",
-								line_number, filename)));
-			err_msg = "authentication file line too long";
-		}
+			/* Read some data, appending it to what we already have */
+			if (fgets(buf.data + buf.len, buf.maxlen - buf.len, file) == NULL)
+			{
+				int			save_errno = errno;
 
-		/* Strip trailing linebreak from rawline */
-		lineptr = rawline + strlen(rawline) - 1;
-		while (lineptr >= rawline && (*lineptr == '\n' || *lineptr == '\r'))
-			*lineptr-- = '\0';
+				if (!ferror(file))
+					break;		/* normal EOF */
+				/* I/O error! */
+				ereport(elevel,
+						(errcode_for_file_access(),
+						 errmsg("could not read file \"%s\": %m", filename)));
+				err_msg = psprintf("could not read file \"%s\": %s",
+								   filename, strerror(save_errno));
+				resetStringInfo(&buf);
+				break;
+			}
+			buf.len += strlen(buf.data + buf.len);
+
+			/* If we haven't got a whole line, loop to read more */
+			if (!(buf.len > 0 && buf.data[buf.len - 1] == '\n'))
+				continue;
+
+			/* Strip trailing newline, including \r in case we're on Windows */
+			buf.len = pg_strip_crlf(buf.data);
+
+			/*
+			 * Check for backslash continuation.  The backslash must be after
+			 * the last place we found a continuation, else two backslashes
+			 * followed by two \n's would behave surprisingly.
+			 */
+			if (buf.len > last_backslash_buflen &&
+				buf.data[buf.len - 1] == '\\')
+			{
+				/* Continuation, so strip it and keep reading */
+				buf.data[--buf.len] = '\0';
+				last_backslash_buflen = buf.len;
+				continuations++;
+				continue;
+			}
+
+			/* Nope, so we have the whole line */
+			break;
+		}
 
 		/* Parse fields */
-		lineptr = rawline;
+		lineptr = buf.data;
 		while (*lineptr && err_msg == NULL)
 		{
 			List	   *current_field;
@@ -538,12 +572,12 @@ tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 			tok_line = (TokenizedLine *) palloc(sizeof(TokenizedLine));
 			tok_line->fields = current_line;
 			tok_line->line_num = line_number;
-			tok_line->raw_line = pstrdup(rawline);
+			tok_line->raw_line = pstrdup(buf.data);
 			tok_line->err_msg = err_msg;
 			*tok_lines = lappend(*tok_lines, tok_line);
 		}
 
-		line_number++;
+		line_number += continuations + 1;
 	}
 
 	MemoryContextSwitchTo(oldcxt);
