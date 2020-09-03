@@ -165,8 +165,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       <xref linkend="sql-createsubscription"/>.  See there for more
       information.  The parameters that can be altered
       are <literal>slot_name</literal>,
-      <literal>synchronous_commit</literal>, and
-      <literal>binary</literal>.
+      <literal>synchronous_commit</literal>,
+      <literal>binary</literal>, and
+      <literal>streaming</literal>.
      </para>
     </listitem>
    </varlistentry>

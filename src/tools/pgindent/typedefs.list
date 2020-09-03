@@ -111,6 +111,7 @@ Append
 AppendPath
 AppendRelInfo
 AppendState
+ApplySubXactData
 Archive
 ArchiveEntryPtrType
 ArchiveFormat
@@ -2370,6 +2371,7 @@ StopList
 StopWorkersData
 StrategyNumber
 StreamCtl
+StreamXidHash
 StringInfo
 StringInfoData
 StripnullState
@@ -2380,6 +2382,7 @@ SubPlanState
 SubTransactionId
 SubXactCallback
 SubXactCallbackItem
+SubXactInfo
 SubXactEvent
 SubplanResultRelHashElem
 SubqueryScan

@@ -425,6 +425,10 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 		appendStringInfo(&cmd, "proto_version '%u'",
 						 options->proto.logical.proto_version);
 
+		if (options->proto.logical.streaming &&
+			PQserverVersion(conn->streamConn) >= 140000)
+			appendStringInfo(&cmd, ", streaming 'on'");
+
 		pubnames = options->proto.logical.publication_names;
 		pubnames_str = stringlist_to_identifierstr(conn->streamConn, pubnames);
 		if (!pubnames_str)
