@@ -115,7 +115,8 @@ DEALLOCATE pstmt;
 do $$begin
   -- Provoke error, possibly in worker.  If this error happens to occur in
   -- the worker, there will be a CONTEXT line which must be hidden.
-  perform stringu1::int2 from tenk1 where unique1 = 1;
+  -- (make the error message long enough to require multiple bufferloads)
+  perform (stringu1 || repeat('abcd', 5000))::int2 from tenk1 where unique1 = 1;
   exception
 	when others then
 		raise 'SQLERRM: %', sqlerrm;
