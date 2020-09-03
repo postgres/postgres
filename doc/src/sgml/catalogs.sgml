@@ -381,9 +381,10 @@
    <function>sum</function>, <function>count</function>, and
    <function>max</function>.  Each entry in
    <structname>pg_aggregate</structname> is an extension of an entry
-   in <structname>pg_proc</structname>.  The <structname>pg_proc</structname>
-   entry carries the aggregate's name, input and output data types, and
-   other information that is similar to ordinary functions.
+   in <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.
+   The <structname>pg_proc</structname> entry carries the aggregate's name,
+   input and output data types, and other information that is similar to
+   ordinary functions.
   </para>
 
   <table>
@@ -902,7 +903,7 @@
    catalog structure for performance reasons).  Also,
    <structfield>amoplefttype</structfield> and <structfield>amoprighttype</structfield> must match
    the <structfield>oprleft</structfield> and <structfield>oprright</structfield> fields of the
-   referenced <structname>pg_operator</structname> entry.
+   referenced <link linkend="catalog-pg-operator"><structname>pg_operator</structname></link> entry.
   </para>
 
  </sect1>
@@ -1099,7 +1100,8 @@
    table columns.  There will be exactly one
    <structname>pg_attribute</structname> row for every column in every
    table in the database.  (There will also be attribute entries for
-   indexes, and indeed all objects that have <structname>pg_class</structname>
+   indexes, and indeed all objects that have
+   <link linkend="catalog-pg-class"><structname>pg_class</structname></link>
    entries.)
   </para>
 
@@ -1270,7 +1272,7 @@
       <para>
        This column has a default expression or generation expression, in which
        case there will be a corresponding entry in the
-       <structname>pg_attrdef</structname> catalog that actually defines the
+       <link linkend="catalog-pg-attrdef"><structname>pg_attrdef</structname></link> catalog that actually defines the
        expression.  (Check <structfield>attgenerated</structfield> to
        determine whether this is a default or a generation expression.)
       </para></entry>
@@ -1402,7 +1404,7 @@
    In a dropped column's <structname>pg_attribute</structname> entry,
    <structfield>atttypid</structfield> is reset to zero, but
    <structfield>attlen</structfield> and the other fields copied from
-   <structname>pg_type</structname> are still valid.  This arrangement is needed
+   <link linkend="catalog-pg-type"><structname>pg_type</structname></link> are still valid.  This arrangement is needed
    to cope with the situation where the dropped column's data type was
    later dropped, and so there is no <structname>pg_type</structname> row anymore.
    <structfield>attlen</structfield> and the other fields can be used
@@ -1836,13 +1838,15 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_class</structname> catalogs tables and most
    everything else that has columns or is otherwise similar to a
-   table.  This includes indexes (but see also
-   <structname>pg_index</structname>), sequences (but see also
-   <structname>pg_sequence</structname>), views, materialized
-   views, composite types, and TOAST tables; see <structfield>relkind</structfield>.
-   Below, when we mean all of these
-   kinds of objects we speak of <quote>relations</quote>.  Not all
-   columns are meaningful for all relation types.
+   table.  This includes indexes (but see also <link
+   linkend="catalog-pg-index"><structname>pg_index</structname></link>),
+   sequences (but see also <link
+   linkend="catalog-pg-sequence"><structname>pg_sequence</structname></link>),
+   views, materialized views, composite types, and TOAST tables;
+   see <structfield>relkind</structfield>.
+   Below, when we mean all of these kinds of objects we speak of
+   <quote>relations</quote>.  Not all columns are meaningful for all relation
+   types.
   </para>
 
   <table>
@@ -2024,7 +2028,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        True if this table is shared across all databases in the cluster.  Only
-       certain system catalogs (such as <structname>pg_database</structname>)
+       certain system catalogs (such as <link linkend="catalog-pg-database"><structname>pg_database</structname></link>)
        are shared.
       </para></entry>
      </row>
@@ -2064,8 +2068,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        Number of user columns in the relation (system columns not
        counted).  There must be this many corresponding entries in
-       <structname>pg_attribute</structname>.  See also
-       <literal>pg_attribute.attnum</literal>.
+       <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.  See also
+       <structname>pg_attribute</structname>.<structfield>attnum</structfield>.
       </para></entry>
      </row>
 
@@ -2409,7 +2413,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    key, unique, foreign key, and exclusion constraints on tables.
    (Column constraints are not treated specially.  Every column constraint is
    equivalent to some table constraint.)
-   Not-null constraints are represented in the <structname>pg_attribute</structname>
+   Not-null constraints are represented in the
+   <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>
    catalog, not here.
   </para>
 
@@ -2712,7 +2717,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    For other cases, a zero appears in <structfield>conkey</structfield>
    and the associated index must be consulted to discover the expression
    that is constrained.  (<structfield>conkey</structfield> thus has the
-   same contents as <structname>pg_index</structname>.<structfield>indkey</structfield> for the
+   same contents as <link linkend="catalog-pg-index"><structname>pg_index</structname></link>.<structfield>indkey</structfield> for the
    index.)
   </para>
 
@@ -2980,7 +2985,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        track whether the database needs to be vacuumed in order to prevent
        transaction ID wraparound or to allow <literal>pg_xact</literal> to be shrunk.
        It is the minimum of the per-table
-       <structname>pg_class</structname>.<structfield>relfrozenxid</structfield> values.
+       <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relfrozenxid</structfield> values.
       </para></entry>
      </row>
 
@@ -2994,7 +2999,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        track whether the database needs to be vacuumed in order to prevent
        multixact ID wraparound or to allow <literal>pg_multixact</literal> to be shrunk.
        It is the minimum of the per-table
-       <structname>pg_class</structname>.<structfield>relminmxid</structfield> values.
+       <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relminmxid</structfield> values.
       </para></entry>
      </row>
 
@@ -3006,7 +3011,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        The default tablespace for the database.
        Within this database, all tables for which
-       <structname>pg_class</structname>.<structfield>reltablespace</structfield> is zero
+       <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>reltablespace</structfield> is zero
        will be stored in this tablespace; in particular, all the non-shared
        system catalogs will be there.
       </para></entry>
@@ -3605,7 +3610,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the <structname>pg_type</structname> entry owning this enum value
+       The OID of the <link linkend="catalog-pg-type"><structname>pg_type</structname></link> entry owning this enum value
       </para></entry>
      </row>
 
@@ -4100,8 +4105,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_foreign_table</structname> contains
    auxiliary information about foreign tables.  A foreign table is
-   primarily represented by a <structname>pg_class</structname> entry,
-   just like a regular table.  Its <structname>pg_foreign_table</structname>
+   primarily represented by a
+   <link linkend="catalog-pg-class"><structname>pg_class</structname></link>
+   entry, just like a regular table.  Its <structname>pg_foreign_table</structname>
    entry contains the information that is pertinent only to foreign tables
    and not any other kind of relation.
   </para>
@@ -4127,7 +4133,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       OID of the <structname>pg_class</structname> entry for this foreign table
+       The OID of the <link linkend="catalog-pg-class"><structname>pg_class</structname></link> entry for this foreign table
       </para></entry>
      </row>
 
@@ -4165,7 +4171,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_index</structname> contains part of the information
    about indexes.  The rest is mostly in
-   <structname>pg_class</structname>.
+   <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.
   </para>
 
   <table>
@@ -4189,7 +4195,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the <structname>pg_class</structname> entry for this index
+       The OID of the <link linkend="catalog-pg-class"><structname>pg_class</structname></link> entry for this index
       </para></entry>
      </row>
 
@@ -4199,7 +4205,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the <structname>pg_class</structname> entry for the table this index is for
+       The OID of the <link linkend="catalog-pg-class"><structname>pg_class</structname></link> entry for the table this index is for
       </para></entry>
      </row>
 
@@ -5400,7 +5406,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the <structname>pg_class</structname> entry for this partitioned table
+       The OID of the <link linkend="catalog-pg-class"><structname>pg_class</structname></link> entry for this partitioned table
       </para></entry>
      </row>
 
@@ -5429,7 +5435,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the <structname>pg_class</structname> entry for the default partition
+       The OID of the <link linkend="catalog-pg-class"><structname>pg_class</structname></link> entry for the default partition
        of this partitioned table, or zero if this partitioned table does not
        have a default partition.
       </para></entry>
@@ -5609,7 +5615,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <note>
    <para>
     Policies stored in <structname>pg_policy</structname> are applied only when
-    <structname>pg_class</structname>.<structfield>relrowsecurity</structfield> is set for
+    <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relrowsecurity</structfield> is set for
     their table.
    </para>
   </note>
@@ -5634,7 +5640,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    If <structfield>prokind</structfield> indicates that the entry is for an
    aggregate function, there should be a matching row in
-   <structfield>pg_aggregate</structfield>.
+   <link linkend="catalog-pg-aggregate"><structfield>pg_aggregate</structfield></link>.
   </para>
 
   <table>
@@ -6564,7 +6570,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_sequence</structname> contains information about
    sequences.  Some of the information about sequences, such as the name and
-   the schema, is in <structname>pg_class</structname>.
+   the schema, is in
+   <link linkend="catalog-pg-class"><structname>pg_class</structname></link>
   </para>
 
   <table>
@@ -6588,7 +6595,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the <structname>pg_class</structname> entry for this sequence
+       The OID of the <link linkend="catalog-pg-class"><structname>pg_class</structname></link> entry for this sequence
       </para></entry>
      </row>
 
@@ -7347,13 +7354,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The catalog <structname>pg_statistic_ext_data</structname>
-   holds data for extended planner statistics defined in <structname>pg_statistic_ext</structname>.
+   holds data for extended planner statistics defined in
+   <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>.
    Each row in this catalog corresponds to a <firstterm>statistics object</firstterm>
    created with <xref linkend="sql-createstatistics"/>.
   </para>
 
   <para>
-   Like <structname>pg_statistic</structname>,
+   Like <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>,
    <structname>pg_statistic_ext_data</structname> should not be
    readable by the public, since the contents might be considered sensitive.
    (Example: most common combinations of values in columns might be quite
@@ -7361,7 +7369,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    <link linkend="view-pg-stats-ext"><structname>pg_stats_ext</structname></link>
    is a publicly readable view
    on <structname>pg_statistic_ext_data</structname> (after joining
-   with <structname>pg_statistic_ext</structname>) that only exposes
+   with <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>) that only exposes
    information about those tables and columns that are readable by the
    current user.
   </para>
@@ -7960,7 +7968,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The <structname>pg_constraint</structname> entry associated with the trigger, if any
+       The <link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link> entry associated with the trigger, if any
       </para></entry>
      </row>
 
@@ -8058,7 +8066,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
     When <structfield>tgconstraint</structfield> is nonzero,
     <structfield>tgconstrrelid</structfield>, <structfield>tgconstrindid</structfield>,
     <structfield>tgdeferrable</structfield>, and <structfield>tginitdeferred</structfield> are
-    largely redundant with the referenced <structname>pg_constraint</structname> entry.
+    largely redundant with the referenced <link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link> entry.
     However, it is possible for a non-deferrable trigger to be associated
     with a deferrable constraint: foreign key constraints can have some
     deferrable and some non-deferrable triggers.
@@ -8205,7 +8213,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-ts-config"><structname>pg_ts_config</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the <structname>pg_ts_config</structname> entry owning this map entry
+       The OID of the <link linkend="catalog-pg-ts-config"><structname>pg_ts_config</structname></link> entry owning this map entry
       </para></entry>
      </row>
 
@@ -8719,11 +8727,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        If this is a composite type (see
        <structfield>typtype</structfield>), then this column points to
-       the <structname>pg_class</structname> entry that defines the
+       the <link linkend="catalog-pg-class"><structname>pg_class</structname></link> entry that defines the
        corresponding table.  (For a free-standing composite type, the
-       <structname>pg_class</structname> entry doesn't really represent
+       <link linkend="catalog-pg-class"><structname>pg_class</structname></link> entry doesn't really represent
        a table, but it is needed anyway for the type's
-       <structname>pg_attribute</structname> entries to link to.)
+       <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link> entries to link to.)
        Zero for non-composite types.
       </para></entry>
      </row>
@@ -10112,8 +10120,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The view <structname>pg_hba_file_rules</structname> provides a summary of
-   the contents of the client authentication configuration
-   file, <filename>pg_hba.conf</filename>.  A row appears in this view for each
+   the contents of the client authentication configuration file,
+   <link linkend="auth-pg-hba-conf"><filename>pg_hba.conf</filename></link>.
+   A row appears in this view for each
    non-empty, non-comment line in the file, with annotations indicating
    whether the rule could be applied successfully.
   </para>
@@ -10354,8 +10363,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    individual tuples of relations,
    transaction IDs (both virtual and permanent IDs),
    and general database objects (identified by class OID and object OID,
-   in the same way as in <structname>pg_description</structname> or
-   <structname>pg_depend</structname>).  Also, the right to extend a
+   in the same way as in <link linkend="catalog-pg-description"><structname>pg_description</structname></link> or
+   <link linkend="catalog-pg-depend"><structname>pg_depend</structname></link>).  Also, the right to extend a
    relation is represented as a separate lockable object, as is the right to
    update <structname>pg_database</structname>.<structfield>datfrozenxid</structfield>.
    Also, <quote>advisory</quote> locks can be taken on numbers that have
@@ -10597,7 +10606,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    <structname>pg_locks</structname> provides a global view of all locks
    in the database cluster, not only those relevant to the current database.
    Although its <structfield>relation</structfield> column can be joined
-   against <structname>pg_class</structname>.<structfield>oid</structfield> to identify locked
+   against <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield> to identify locked
    relations, this will only work correctly for relations in the current
    database (those for which the <structfield>database</structfield> column
    is either the current database's OID or zero).
@@ -11112,8 +11121,9 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   <para>
    The view <structname>pg_publication_tables</structname> provides
    information about the mapping between publications and the tables they
-   contain.  Unlike the underlying
-   catalog <structname>pg_publication_rel</structname>, this view expands
+   contain.  Unlike the underlying catalog
+   <link linkend="catalog-pg-publication-rel"><structname>pg_publication_rel</structname></link>,
+   this view expands
    publications defined as <literal>FOR ALL TABLES</literal>, so for such
    publications there will be a row for each eligible table.
   </para>
@@ -11688,7 +11698,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   <para>
    The <structname>pg_rules</structname> view excludes the <literal>ON SELECT</literal> rules
    of views and materialized views; those can be seen in
-   <structname>pg_views</structname> and <structname>pg_matviews</structname>.
+   <link linkend="view-pg-views"><structname>pg_views</structname></link> and <link linkend="view-pg-matviews"><structname>pg_matviews</structname></link>.
   </para>
 
  </sect1>
@@ -12517,7 +12527,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    the information stored in the <link
    linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
    catalog.  This view allows access only to rows of
-   <structname>pg_statistic</structname> that correspond to tables the
+   <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link> that correspond to tables the
    user has permission to read, and therefore it is safe to allow public
    read access to this view.
   </para>
@@ -12526,7 +12536,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    <structname>pg_stats</structname> is also designed to present the
    information in a more readable format than the underlying catalog
    &mdash; at the cost that its schema must be extended whenever new slot types
-   are defined for <structname>pg_statistic</structname>.
+   are defined for <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>.
   </para>
 
   <table>
@@ -12728,7 +12738,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>
    and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
    catalogs.  This view allows access only to rows of
-   <structname>pg_statistic_ext</structname> and <structname>pg_statistic_ext_data</structname>
+   <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link> and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
    that correspond to tables the user has permission to read, and therefore
    it is safe to allow public read access to this view.
   </para>
@@ -12737,7 +12747,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    <structname>pg_stats_ext</structname> is also designed to present the
    information in a more readable format than the underlying catalogs
    &mdash; at the cost that its schema must be extended whenever new types
-   of extended statistics are added to <structname>pg_statistic_ext</structname>.
+   of extended statistics are added to <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>.
   </para>
 
   <table>
