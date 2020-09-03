@@ -400,9 +400,10 @@ EXPLAIN (analyze, timing off, summary off, costs off) SELECT * FROM tenk1;
 ROLLBACK TO SAVEPOINT settings;
 
 -- provoke error in worker
+-- (make the error message long enough to require multiple bufferloads)
 SAVEPOINT settings;
 SET LOCAL force_parallel_mode = 1;
-select stringu1::int2 from tenk1 where unique1 = 1;
+select (stringu1 || repeat('abcd', 5000))::int2 from tenk1 where unique1 = 1;
 ROLLBACK TO SAVEPOINT settings;
 
 -- test interaction with set-returning functions
