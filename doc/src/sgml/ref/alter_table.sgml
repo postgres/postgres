@@ -811,7 +811,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry id="sql-createtable-replica-identity">
+   <varlistentry id="sql-altertable-replica-identity">
     <term><literal>REPLICA IDENTITY</literal></term>
     <listitem>
      <para>

@@ -24,7 +24,7 @@
    by <command>INSERT</command> and the new row version created
    by <command>UPDATE</command>.  Availability of old row versions for
    <command>UPDATE</command> and <command>DELETE</command> depends on
-   the configured replica identity (see <xref linkend="sql-createtable-replica-identity"/>).
+   the configured replica identity (see <xref linkend="sql-altertable-replica-identity"/>).
   </para>
 
   <para>
