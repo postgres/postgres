@@ -1966,9 +1966,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        Size of the on-disk representation of this table in pages (of size
        <symbol>BLCKSZ</symbol>).  This is only an estimate used by the
-       planner.  It is updated by <command>VACUUM</command>,
-       <command>ANALYZE</command>, and a few DDL commands such as
-       <command>CREATE INDEX</command>.
+       planner.  It is updated by <xref linkend="sql-vacuum"/>,
+       <xref linkend="sql-analyze"/>, and a few DDL commands such as
+       <xref linkend="sql-createindex"/>.
       </para></entry>
      </row>
 
@@ -1978,9 +1978,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        Number of live rows in the table.  This is only an estimate used by
-       the planner.  It is updated by <command>VACUUM</command>,
-       <command>ANALYZE</command>, and a few DDL commands such as
-       <command>CREATE INDEX</command>.
+       the planner.  It is updated by <xref linkend="sql-vacuum"/>,
+       <xref linkend="sql-analyze"/>, and a few DDL commands such as
+       <xref linkend="sql-createindex"/>.
        If the table has never yet been vacuumed or
        analyzed, <structfield>reltuples</structfield>
        contains <literal>-1</literal> indicating that the row count is
@@ -1995,9 +1995,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        Number of pages that are marked all-visible in the table's
        visibility map.  This is only an estimate used by the
-       planner.  It is updated by <command>VACUUM</command>,
-       <command>ANALYZE</command>, and a few DDL commands such as
-       <command>CREATE INDEX</command>.
+       planner.  It is updated by <xref linkend="sql-vacuum"/>,
+       <xref linkend="sql-analyze"/>, and a few DDL commands such as
+       <xref linkend="sql-createindex"/>.
       </para></entry>
      </row>
 
@@ -2241,8 +2241,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    lazily: they are guaranteed to be true if that's the correct state, but
    may not be reset to false immediately when the condition is no longer
    true.  For example, <structfield>relhasindex</structfield> is set by
-   <command>CREATE INDEX</command>, but it is never cleared by
-   <command>DROP INDEX</command>.  Instead, <command>VACUUM</command> clears
+   <xref linkend="sql-createindex"/>, but it is never cleared by
+   <xref linkend="sql-dropindex"/>.  Instead, <xref linkend="sql-vacuum"/> clears
    <structfield>relhasindex</structfield> if it finds the table has no indexes.  This
    arrangement avoids race conditions and improves concurrency.
   </para>
@@ -2419,8 +2419,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </para>
 
   <para>
-   User-defined constraint triggers (created with <command>CREATE CONSTRAINT
-   TRIGGER</command>) also give rise to an entry in this table.
+   User-defined constraint triggers (created with <link linkend="sql-createtrigger">
+   <command>CREATE CONSTRAINT TRIGGER</command></link>) also give rise to an entry in this table.
   </para>
 
   <para>
@@ -3425,7 +3425,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        the referenced object (see
        <link linkend="catalog-pg-extension"><structname>pg_extension</structname></link>).
        The dependent object can be dropped only via
-       <command>DROP EXTENSION</command> on the referenced object.
+       <xref linkend="sql-dropextension"/> on the referenced object.
        Functionally this dependency type acts the same as
        an <literal>INTERNAL</literal> dependency, but it's kept separate for
        clarity and to simplify <application>pg_dump</application>.
@@ -3456,7 +3456,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        There is no dependent object; this type of entry is a signal
        that the system itself depends on the referenced object, and so
        that object must never be deleted.  Entries of this type are
-       created only by <command>initdb</command>.  The columns for the
+       created only by <application>initdb</application>.  The columns for the
        dependent object contain zeroes.
       </para>
      </listitem>
@@ -4285,7 +4285,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        If true, the index is currently valid for queries.  False means the
        index is possibly incomplete: it must still be modified by
-       <command>INSERT</command>/<command>UPDATE</command> operations, but it cannot safely
+       <xref linkend="sql-insert"/>/<xref linkend="sql-update"/> operations, but it cannot safely
        be used for queries. If it is unique, the uniqueness property is not
        guaranteed true either.
       </para></entry>
@@ -4309,7 +4309,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        If true, the index is currently ready for inserts.  False means the
-       index must be ignored by <command>INSERT</command>/<command>UPDATE</command>
+       index must be ignored by <xref linkend="sql-insert"/>/<xref linkend="sql-update"/>
        operations.
       </para></entry>
      </row>
@@ -4330,8 +4330,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        If true this index has been chosen as <quote>replica identity</quote>
-       using <command>ALTER TABLE ... REPLICA IDENTITY USING INDEX
-       ...</command>
+       using <link linkend="sql-altertable-replica-identity"><command>ALTER TABLE ...
+       REPLICA IDENTITY USING INDEX ...</command></link>
       </para></entry>
      </row>
 
@@ -4504,11 +4504,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    Objects can have initial privileges either by having those privileges set
    when the system is initialized (by <application>initdb</application>) or when the
-   object is created during a <command>CREATE EXTENSION</command> and the
-   extension script sets initial privileges using the <command>GRANT</command>
+   object is created during a <xref linkend="sql-createextension"/> and the
+   extension script sets initial privileges using the <xref linkend="sql-grant"/>
    system.  Note that the system will automatically handle recording of the
    privileges during the extension script and that extension authors need
-   only use the <command>GRANT</command> and <command>REVOKE</command>
+   only use the <xref linkend="sql-grant"/> and <xref linkend="sql-revoke"/>
    statements in their script to have the privileges recorded.  The
    <literal>privtype</literal> column indicates if the initial privilege was
    set by <application>initdb</application> or during a
@@ -5564,10 +5564,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        The command type to which the policy is applied:
-       <literal>r</literal> for <command>SELECT</command>,
-       <literal>a</literal> for <command>INSERT</command>,
-       <literal>w</literal> for <command>UPDATE</command>,
-       <literal>d</literal> for <command>DELETE</command>,
+       <literal>r</literal> for <xref linkend="sql-select"/>,
+       <literal>a</literal> for <xref linkend="sql-insert"/>,
+       <literal>w</literal> for <xref linkend="sql-update"/>,
+       <literal>d</literal> for <xref linkend="sql-delete"/>,
        or <literal>*</literal> for all
       </para></entry>
      </row>
@@ -6075,7 +6075,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>pubinsert</structfield> <type>bool</type>
       </para>
       <para>
-       If true, <command>INSERT</command> operations are replicated for
+       If true, <xref linkend="sql-insert"/> operations are replicated for
        tables in the publication.
       </para></entry>
      </row>
@@ -6085,7 +6085,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>pubupdate</structfield> <type>bool</type>
       </para>
       <para>
-       If true, <command>UPDATE</command> operations are replicated for
+       If true, <xref linkend="sql-update"/> operations are replicated for
        tables in the publication.
       </para></entry>
      </row>
@@ -6095,7 +6095,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>pubdelete</structfield> <type>bool</type>
       </para>
       <para>
-       If true, <command>DELETE</command> operations are replicated for
+       If true, <xref linkend="sql-delete"/> operations are replicated for
        tables in the publication.
       </para></entry>
      </row>
@@ -6105,7 +6105,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>pubtruncate</structfield> <type>bool</type>
       </para>
       <para>
-       If true, <command>TRUNCATE</command> operations are replicated for
+       If true, <xref linkend="sql-truncate"/> operations are replicated for
        tables in the publication.
       </para></entry>
      </row>
@@ -6408,9 +6408,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>ev_type</structfield> <type>char</type>
       </para>
       <para>
-       Event type that the rule is for: 1 = <command>SELECT</command>, 2 =
-       <command>UPDATE</command>, 3 = <command>INSERT</command>, 4 =
-       <command>DELETE</command>
+       Event type that the rule is for: 1 = <xref linkend="sql-select"/>, 2 =
+       <xref linkend="sql-update"/>, 3 = <xref linkend="sql-insert"/>, 4 =
+       <xref linkend="sql-delete"/>
       </para></entry>
      </row>
 
@@ -6832,7 +6832,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        There is no dependent object; this type of entry is a signal
        that the system itself depends on the referenced object, and so
        that object must never be deleted.  Entries of this type are
-       created only by <command>initdb</command>.  The columns for the
+       created only by <application>initdb</application>.  The columns for the
        dependent object contain zeroes.
       </para>
      </listitem>
@@ -7336,9 +7336,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The <structname>pg_statistic_ext</structname> entry is filled in
-   completely during <command>CREATE STATISTICS</command>, but the actual
+   completely during <xref linkend="sql-createstatistics"/>, but the actual
    statistical values are not computed then.
-   Subsequent <command>ANALYZE</command> commands compute the desired values
+   Subsequent <xref linkend="sql-analyze"/> commands compute the desired values
    and populate an entry in the
    <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
    catalog.
@@ -7590,8 +7590,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    This catalog only contains tables known to the subscription after running
-   either <command>CREATE SUBSCRIPTION</command> or
-   <command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command>.
+   either <xref linkend="sql-createsubscription"/> or
+   <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... REFRESH
+   PUBLICATION</command></link>.
   </para>
 
   <table>
@@ -8837,7 +8838,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Custom <command>ANALYZE</command> function, or 0 to use the standard function
+       Custom <xref linkend="sql-analyze"/> function, or 0 to use the standard function
       </para></entry>
      </row>
 
@@ -10324,7 +10325,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>indexdef</structfield> <type>text</type>
       </para>
       <para>
-       Index definition (a reconstructed <command>CREATE INDEX</command>
+       Index definition (a reconstructed <xref linkend="sql-createindex"/>
        command)
       </para></entry>
      </row>
@@ -10779,7 +10780,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>definition</structfield> <type>text</type>
       </para>
       <para>
-       Materialized view definition (a reconstructed <command>SELECT</command> query)
+       Materialized view definition (a reconstructed <xref linkend="sql-select"/> query)
       </para></entry>
      </row>
     </tbody>
@@ -10949,7 +10950,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <para>
        The query string submitted by the client to create this
        prepared statement. For prepared statements created via SQL,
-       this is the <command>PREPARE</command> statement submitted by
+       this is the <xref linkend="sql-prepare"/> statement submitted by
        the client. For prepared statements created via the
        frontend/backend protocol, this is the text of the prepared
        statement itself.
@@ -10983,7 +10984,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       </para>
       <para>
        <literal>true</literal> if the prepared statement was created
-       via the <command>PREPARE</command> SQL command;
+       via the <xref linkend="sql-prepare"/> SQL command;
        <literal>false</literal> if the statement was prepared via the
        frontend/backend protocol
       </para></entry>
@@ -12114,7 +12115,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>reset_val</structfield> <type>text</type>
       </para>
       <para>
-       Value that <command>RESET</command> would reset the parameter to
+       Value that <xref linkend="sql-reset"/> would reset the parameter to
        in the current session
       </para></entry>
      </row>
@@ -12172,7 +12173,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       These settings cannot be changed directly; they reflect internally
       determined values.  Some of them may be adjustable by rebuilding the
       server with different configuration options, or by changing options
-      supplied to <command>initdb</command>.
+      supplied to <application>initdb</application>.
      </para>
     </listitem>
    </varlistentry>
@@ -12247,7 +12248,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     <listitem>
      <para>
       These settings can be set from <filename>postgresql.conf</filename>,
-      or within a session via the <command>SET</command> command; but only superusers
+      or within a session via the <xref linkend="sql-set"/> command; but only superusers
       can change them via <command>SET</command>.  Changes in
       <filename>postgresql.conf</filename> will affect existing sessions
       only if no session-local value has been established with <command>SET</command>.
@@ -12260,7 +12261,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     <listitem>
      <para>
       These settings can be set from <filename>postgresql.conf</filename>,
-      or within a session via the <command>SET</command> command.  Any user is
+      or within a session via the <xref linkend="sql-set"/> command.  Any user is
       allowed to change their session-local value.  Changes in
       <filename>postgresql.conf</filename> will affect existing sessions
       only if no session-local value has been established with <command>SET</command>.
@@ -12276,7 +12277,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    The <structname>pg_settings</structname> view cannot be inserted into or
-   deleted from, but it can be updated.  An <command>UPDATE</command> applied
+   deleted from, but it can be updated.  An <xref linkend="sql-update"/> applied
    to a row of <structname>pg_settings</structname> is equivalent to executing
    the <xref linkend="sql-set"/> command on that named
    parameter. The change only affects the value used by the current
@@ -12620,7 +12621,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        If greater than zero, the estimated number of distinct values in the
        column.  If less than zero, the negative of the number of distinct
        values divided by the number of rows.  (The negated form is used when
-       <command>ANALYZE</command> believes that the number of distinct values is
+       <xref linkend="sql-analyze"/> believes that the number of distinct values is
        likely to increase as the table grows; the positive form is used when
        the column seems to have a fixed number of possible values.)  For
        example, -1 indicates a unique column in which the number of distinct
@@ -12718,7 +12719,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    The maximum number of entries in the array fields can be controlled on a
-   column-by-column basis using the <command>ALTER TABLE SET STATISTICS</command>
+   column-by-column basis using the <link linkend="sql-altertable"><command>ALTER
+   TABLE SET STATISTICS</command></link>
    command, or globally by setting the
    <xref linkend="guc-default-statistics-target"/> run-time parameter.
   </para>
@@ -12843,7 +12845,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        than zero, the estimated number of distinct values in the combination.
        If less than zero, the negative of the number of distinct values divided
        by the number of rows.
-       (The negated form is used when <command>ANALYZE</command> believes that
+       (The negated form is used when <xref linkend="sql-analyze"/> believes that
        the number of distinct values is likely to increase as the table grows;
        the positive form is used when the column seems to have a fixed number
        of possible values.)  For example, -1 indicates a unique combination of
@@ -12908,8 +12910,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    The maximum number of entries in the array fields can be controlled on a
-   column-by-column basis using the <command>ALTER TABLE SET STATISTICS</command>
-   command, or globally by setting the
+   column-by-column basis using the <link linkend="sql-altertable"><command>ALTER
+   TABLE SET STATISTICS</command></link> command, or globally by setting the
    <xref linkend="guc-default-statistics-target"/> run-time parameter.
   </para>
 
@@ -13471,7 +13473,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>definition</structfield> <type>text</type>
       </para>
       <para>
-       View definition (a reconstructed <command>SELECT</command> query)
+       View definition (a reconstructed <xref linkend="sql-select"/> query)
       </para></entry>
      </row>
     </tbody>
