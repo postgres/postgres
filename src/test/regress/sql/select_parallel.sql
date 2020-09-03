@@ -255,6 +255,7 @@ EXECUTE pstmt('1', make_some_array(1,2));
 DEALLOCATE pstmt;
 
 -- provoke error in worker
-select stringu1::int2 from tenk1 where unique1 = 1;
+-- (make the error message long enough to require multiple bufferloads)
+select (stringu1 || repeat('abcd', 5000))::int2 from tenk1 where unique1 = 1;
 
 rollback;
