@@ -97,7 +97,7 @@ static bool CompareOpclassOptions(Datum *opts1, Datum *opts2, int natts);
  */
 struct ReindexIndexCallbackState
 {
-	bool		concurrent;		/* flag from statement */
+	int			options;		/* options from statement */
 	Oid			locked_table_oid;	/* tracks previously locked table */
 };
 
@@ -2420,7 +2420,7 @@ ChooseIndexColumnNames(List *indexElems)
  *		Recreate a specific index.
  */
 void
-ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
+ReindexIndex(RangeVar *indexRelation, int options)
 {
 	struct ReindexIndexCallbackState state;
 	Oid			indOid;
@@ -2437,10 +2437,11 @@ ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
 	 * upgrade the lock, but that's OK, because other sessions can't hold
 	 * locks on our temporary table.
 	 */
-	state.concurrent = concurrent;
+	state.options = options;
 	state.locked_table_oid = InvalidOid;
 	indOid = RangeVarGetRelidExtended(indexRelation,
-									  concurrent ? ShareUpdateExclusiveLock : AccessExclusiveLock,
+									  (options & REINDEXOPT_CONCURRENTLY) != 0 ?
+									  ShareUpdateExclusiveLock : AccessExclusiveLock,
 									  0,
 									  RangeVarCallbackForReindexIndex,
 									  &state);
@@ -2460,7 +2461,8 @@ ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
 	persistence = irel->rd_rel->relpersistence;
 	index_close(irel, NoLock);
 
-	if (concurrent && persistence != RELPERSISTENCE_TEMP)
+	if ((options & REINDEXOPT_CONCURRENTLY) != 0 &&
+		persistence != RELPERSISTENCE_TEMP)
 		ReindexRelationConcurrently(indOid, options);
 	else
 		reindex_index(indOid, false, persistence,
@@ -2485,7 +2487,8 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 	 * non-concurrent case and table locks used by index_concurrently_*() for
 	 * concurrent case.
 	 */
-	table_lockmode = state->concurrent ? ShareUpdateExclusiveLock : ShareLock;
+	table_lockmode = ((state->options & REINDEXOPT_CONCURRENTLY) != 0) ?
+		ShareUpdateExclusiveLock : ShareLock;
 
 	/*
 	 * If we previously locked some other index's heap, and the name we're
@@ -2542,7 +2545,7 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
  *		Recreate all indexes of a table (and of its toast table, if any)
  */
 Oid
-ReindexTable(RangeVar *relation, int options, bool concurrent)
+ReindexTable(RangeVar *relation, int options)
 {
 	Oid			heapOid;
 	bool		result;
@@ -2556,11 +2559,13 @@ ReindexTable(RangeVar *relation, int options, bool concurrent)
 	 * locks on our temporary table.
 	 */
 	heapOid = RangeVarGetRelidExtended(relation,
-									   concurrent ? ShareUpdateExclusiveLock : ShareLock,
+									   (options & REINDEXOPT_CONCURRENTLY) != 0 ?
+									   ShareUpdateExclusiveLock : ShareLock,
 									   0,
 									   RangeVarCallbackOwnsTable, NULL);
 
-	if (concurrent && get_rel_persistence(heapOid) != RELPERSISTENCE_TEMP)
+	if ((options & REINDEXOPT_CONCURRENTLY) != 0 &&
+		get_rel_persistence(heapOid) != RELPERSISTENCE_TEMP)
 	{
 		result = ReindexRelationConcurrently(heapOid, options);
 
@@ -2594,7 +2599,7 @@ ReindexTable(RangeVar *relation, int options, bool concurrent)
  */
 void
 ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
-					  int options, bool concurrent)
+					  int options)
 {
 	Oid			objectOid;
 	Relation	relationRelation;
@@ -2613,7 +2618,8 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 		   objectKind == REINDEX_OBJECT_SYSTEM ||
 		   objectKind == REINDEX_OBJECT_DATABASE);
 
-	if (objectKind == REINDEX_OBJECT_SYSTEM && concurrent)
+	if (objectKind == REINDEX_OBJECT_SYSTEM &&
+		(options & REINDEXOPT_CONCURRENTLY) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot reindex system catalogs concurrently")));
@@ -2724,7 +2730,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 		 * Skip system tables, since index_create() would reject indexing them
 		 * concurrently (and it would likely fail if we tried).
 		 */
-		if (concurrent &&
+		if ((options & REINDEXOPT_CONCURRENTLY) != 0 &&
 			IsCatalogRelationOid(relid))
 		{
 			if (!concurrent_warning)
@@ -2774,7 +2780,8 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 			continue;
 		}
 
-		if (concurrent && get_rel_persistence(relid) != RELPERSISTENCE_TEMP)
+		if ((options & REINDEXOPT_CONCURRENTLY) != 0 &&
+			get_rel_persistence(relid) != RELPERSISTENCE_TEMP)
 		{
 			(void) ReindexRelationConcurrently(relid,
 											   options |
