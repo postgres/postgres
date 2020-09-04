@@ -213,10 +213,6 @@ extern char *pg_strerror_r(int errnum, char *buf, size_t buflen);
 /* Wrap strsignal(), or provide our own version if necessary */
 extern const char *pg_strsignal(int signum);
 
-/* Portable prompt handling */
-extern void simple_prompt(const char *prompt, char *destination, size_t destlen,
-						  bool echo);
-
 extern int	pclose_check(FILE *stream);
 
 /* Global variable holding time zone information. */

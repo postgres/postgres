@@ -30,12 +30,6 @@
 #include "mb/pg_wchar.h"
 
 /*
- * Limit on how large password's we will try to process.  A password
- * larger than this will be treated the same as out-of-memory.
- */
-#define MAX_PASSWORD_LENGTH		1024
-
-/*
  * In backend, we will use palloc/pfree.  In frontend, use malloc, and
  * return SASLPREP_OOM on out-of-memory.
  */
@@ -1077,18 +1071,6 @@ pg_saslprep(const char *input, char **output)
 
 	/* Ensure we return *output as NULL on failure */
 	*output = NULL;
-
-	/* Check that the password isn't stupendously long */
-	if (strlen(input) > MAX_PASSWORD_LENGTH)
-	{
-#ifndef FRONTEND
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("password too long")));
-#else
-		return SASLPREP_OOM;
-#endif
-	}
 
 	/*
 	 * Quick check if the input is pure ASCII.  An ASCII string requires no

@@ -13,6 +13,7 @@
 #include "postgres_fe.h"
 #include "common.h"
 #include "common/logging.h"
+#include "common/string.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
 
@@ -63,8 +64,6 @@ main(int argc, char *argv[])
 	int			conn_limit = -2;	/* less than minimum valid value */
 	bool		pwprompt = false;
 	char	   *newpassword = NULL;
-	char		newuser_buf[128];
-	char		newpassword_buf[100];
 
 	/* Tri-valued variables.  */
 	enum trivalue createdb = TRI_DEFAULT,
@@ -191,9 +190,7 @@ main(int argc, char *argv[])
 	{
 		if (interactive)
 		{
-			simple_prompt("Enter name of role to add: ",
-						  newuser_buf, sizeof(newuser_buf), true);
-			newuser = newuser_buf;
+			newuser = simple_prompt("Enter name of role to add: ", true);
 		}
 		else
 		{
@@ -206,17 +203,16 @@ main(int argc, char *argv[])
 
 	if (pwprompt)
 	{
-		char		pw2[100];
+		char	   *pw2;
 
-		simple_prompt("Enter password for new role: ",
-					  newpassword_buf, sizeof(newpassword_buf), false);
-		simple_prompt("Enter it again: ", pw2, sizeof(pw2), false);
-		if (strcmp(newpassword_buf, pw2) != 0)
+		newpassword = simple_prompt("Enter password for new role: ", false);
+		pw2 = simple_prompt("Enter it again: ", false);
+		if (strcmp(newpassword, pw2) != 0)
 		{
 			fprintf(stderr, _("Passwords didn't match.\n"));
 			exit(1);
 		}
-		newpassword = newpassword_buf;
+		free(pw2);
 	}
 
 	if (superuser == 0)

@@ -20,6 +20,7 @@
 #include "common.h"
 #include "common/connect.h"
 #include "common/logging.h"
+#include "common/string.h"
 #include "fe_utils/cancel.h"
 #include "fe_utils/string_utils.h"
 
@@ -68,17 +69,16 @@ connectDatabase(const char *dbname, const char *pghost,
 {
 	PGconn	   *conn;
 	bool		new_pass;
-	static bool have_password = false;
-	static char password[100];
+	static char *password = NULL;
 
-	if (!allow_password_reuse)
-		have_password = false;
-
-	if (!have_password && prompt_password == TRI_YES)
+	if (!allow_password_reuse && password)
 	{
-		simple_prompt("Password: ", password, sizeof(password), false);
-		have_password = true;
+		free(password);
+		password = NULL;
 	}
+
+	if (!password && prompt_password == TRI_YES)
+		password = simple_prompt("Password: ", false);
 
 	/*
 	 * Start the connection.  Loop until we have a password if requested by
@@ -96,7 +96,7 @@ connectDatabase(const char *dbname, const char *pghost,
 		keywords[2] = "user";
 		values[2] = pguser;
 		keywords[3] = "password";
-		values[3] = have_password ? password : NULL;
+		values[3] = password;
 		keywords[4] = "dbname";
 		values[4] = dbname;
 		keywords[5] = "fallback_application_name";
@@ -122,8 +122,9 @@ connectDatabase(const char *dbname, const char *pghost,
 			prompt_password != TRI_NO)
 		{
 			PQfinish(conn);
-			simple_prompt("Password: ", password, sizeof(password), false);
-			have_password = true;
+			if (password)
+				free(password);
+			password = simple_prompt("Password: ", false);
 			new_pass = true;
 		}
 	} while (new_pass);
@@ -444,14 +445,21 @@ yesno_prompt(const char *question)
 
 	for (;;)
 	{
-		char		resp[10];
+		char	   *resp;
 
-		simple_prompt(prompt, resp, sizeof(resp), true);
+		resp = simple_prompt(prompt, true);
 
 		if (strcmp(resp, _(PG_YESLETTER)) == 0)
+		{
+			free(resp);
 			return true;
+		}
 		if (strcmp(resp, _(PG_NOLETTER)) == 0)
+		{
+			free(resp);
 			return false;
+		}
+		free(resp);
 
 		printf(_("Please answer \"%s\" or \"%s\".\n"),
 			   _(PG_YESLETTER), _(PG_NOLETTER));

@@ -63,6 +63,7 @@ OBJS_COMMON = \
 	kwlookup.o \
 	link-canary.o \
 	md5.o \
+	pg_get_line.o \
 	pg_lzcompress.o \
 	pgfnames.o \
 	psprintf.o \
@@ -92,7 +93,8 @@ OBJS_FRONTEND = \
 	fe_memutils.o \
 	file_utils.o \
 	logging.o \
-	restricted_token.o
+	restricted_token.o \
+	sprompt.o
 
 # foo.o, foo_shlib.o, and foo_srv.o are all built from foo.c
 OBJS_SHLIB = $(OBJS_FRONTEND:%.o=%_shlib.o)

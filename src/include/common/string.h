@@ -10,10 +10,17 @@
 #ifndef COMMON_STRING_H
 #define COMMON_STRING_H
 
+/* functions in src/common/string.c */
 extern bool pg_str_endswith(const char *str, const char *end);
 extern int	strtoint(const char *pg_restrict str, char **pg_restrict endptr,
 					 int base);
 extern void pg_clean_ascii(char *str);
 extern int	pg_strip_crlf(char *str);
+
+/* functions in src/common/pg_get_line.c */
+extern char *pg_get_line(FILE *stream);
+
+/* functions in src/common/sprompt.c */
+extern char *simple_prompt(const char *prompt, bool echo);
 
 #endif							/* COMMON_STRING_H */

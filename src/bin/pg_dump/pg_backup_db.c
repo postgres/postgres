@@ -18,6 +18,7 @@
 #endif
 
 #include "common/connect.h"
+#include "common/string.h"
 #include "dumputils.h"
 #include "fe_utils/string_utils.h"
 #include "parallel.h"
@@ -122,7 +123,6 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	const char *newdb;
 	const char *newuser;
 	char	   *password;
-	char		passbuf[100];
 	bool		new_pass;
 
 	if (!reqdb)
@@ -141,10 +141,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	password = AH->savedPassword;
 
 	if (AH->promptPassword == TRI_YES && password == NULL)
-	{
-		simple_prompt("Password: ", passbuf, sizeof(passbuf), false);
-		password = passbuf;
-	}
+		password = simple_prompt("Password: ", false);
 
 	initPQExpBuffer(&connstr);
 	appendPQExpBufferStr(&connstr, "dbname=");
@@ -191,8 +188,9 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 			if (AH->promptPassword != TRI_NO)
 			{
-				simple_prompt("Password: ", passbuf, sizeof(passbuf), false);
-				password = passbuf;
+				if (password && password != AH->savedPassword)
+					free(password);
+				password = simple_prompt("Password: ", false);
 			}
 			else
 				fatal("connection needs password");
@@ -200,6 +198,9 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 			new_pass = true;
 		}
 	} while (new_pass);
+
+	if (password && password != AH->savedPassword)
+		free(password);
 
 	/*
 	 * We want to remember connection's actual password, whether or not we got
@@ -242,7 +243,6 @@ ConnectDatabase(Archive *AHX,
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	char	   *password;
-	char		passbuf[100];
 	bool		new_pass;
 
 	if (AH->connection)
@@ -251,10 +251,8 @@ ConnectDatabase(Archive *AHX,
 	password = AH->savedPassword;
 
 	if (prompt_password == TRI_YES && password == NULL)
-	{
-		simple_prompt("Password: ", passbuf, sizeof(passbuf), false);
-		password = passbuf;
-	}
+		password = simple_prompt("Password: ", false);
+
 	AH->promptPassword = prompt_password;
 
 	/*
@@ -293,8 +291,7 @@ ConnectDatabase(Archive *AHX,
 			prompt_password != TRI_NO)
 		{
 			PQfinish(AH->connection);
-			simple_prompt("Password: ", passbuf, sizeof(passbuf), false);
-			password = passbuf;
+			password = simple_prompt("Password: ", false);
 			new_pass = true;
 		}
 	} while (new_pass);
@@ -308,6 +305,9 @@ ConnectDatabase(Archive *AHX,
 	/* Start strict; later phases may override this. */
 	PQclear(ExecuteSqlQueryForSingleRow((Archive *) AH,
 										ALWAYS_SECURE_SEARCH_PATH_SQL));
+
+	if (password && password != AH->savedPassword)
+		free(password);
 
 	/*
 	 * We want to remember connection's actual password, whether or not we got

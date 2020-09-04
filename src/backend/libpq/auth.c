@@ -698,7 +698,7 @@ recv_password_packet(Port *port)
 	}
 
 	initStringInfo(&buf);
-	if (pq_getmessage(&buf, 1000))	/* receive password */
+	if (pq_getmessage(&buf, 0)) /* receive password */
 	{
 		/* EOF - pq_getmessage already logged a suitable message */
 		pfree(buf.data);

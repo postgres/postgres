@@ -67,6 +67,7 @@
 #include "common/file_utils.h"
 #include "common/logging.h"
 #include "common/restricted_token.h"
+#include "common/string.h"
 #include "common/username.h"
 #include "fe_utils/string_utils.h"
 #include "getaddrinfo.h"
@@ -1481,23 +1482,25 @@ setup_auth(FILE *cmdfd)
 static void
 get_su_pwd(void)
 {
-	char		pwd1[100];
-	char		pwd2[100];
+	char	   *pwd1;
 
 	if (pwprompt)
 	{
 		/*
 		 * Read password from terminal
 		 */
+		char	   *pwd2;
+
 		printf("\n");
 		fflush(stdout);
-		simple_prompt("Enter new superuser password: ", pwd1, sizeof(pwd1), false);
-		simple_prompt("Enter it again: ", pwd2, sizeof(pwd2), false);
+		pwd1 = simple_prompt("Enter new superuser password: ", false);
+		pwd2 = simple_prompt("Enter it again: ", false);
 		if (strcmp(pwd1, pwd2) != 0)
 		{
 			fprintf(stderr, _("Passwords didn't match.\n"));
 			exit(1);
 		}
+		free(pwd2);
 	}
 	else
 	{
@@ -1510,7 +1513,6 @@ get_su_pwd(void)
 		 * for now.
 		 */
 		FILE	   *pwf = fopen(pwfilename, "r");
-		int			i;
 
 		if (!pwf)
 		{
@@ -1518,7 +1520,8 @@ get_su_pwd(void)
 						 pwfilename);
 			exit(1);
 		}
-		if (!fgets(pwd1, sizeof(pwd1), pwf))
+		pwd1 = pg_get_line(pwf);
+		if (!pwd1)
 		{
 			if (ferror(pwf))
 				pg_log_error("could not read password from file \"%s\": %m",
@@ -1530,12 +1533,10 @@ get_su_pwd(void)
 		}
 		fclose(pwf);
 
-		i = strlen(pwd1);
-		while (i > 0 && (pwd1[i - 1] == '\r' || pwd1[i - 1] == '\n'))
-			pwd1[--i] = '\0';
+		(void) pg_strip_crlf(pwd1);
 	}
 
-	superuser_password = pg_strdup(pwd1);
+	superuser_password = pwd1;
 }
 
 /*

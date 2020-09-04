@@ -12,6 +12,7 @@
 #include "catalog/pg_class_d.h"
 #include "common/connect.h"
 #include "common/logging.h"
+#include "common/string.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "pg_getopt.h"
@@ -293,8 +294,7 @@ PGconn *
 sql_conn(struct options *my_opts)
 {
 	PGconn	   *conn;
-	bool		have_password = false;
-	char		password[100];
+	char	   *password = NULL;
 	bool		new_pass;
 	PGresult   *res;
 
@@ -316,7 +316,7 @@ sql_conn(struct options *my_opts)
 		keywords[2] = "user";
 		values[2] = my_opts->username;
 		keywords[3] = "password";
-		values[3] = have_password ? password : NULL;
+		values[3] = password;
 		keywords[4] = "dbname";
 		values[4] = my_opts->dbname;
 		keywords[5] = "fallback_application_name";
@@ -336,11 +336,10 @@ sql_conn(struct options *my_opts)
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
-			!have_password)
+			!password)
 		{
 			PQfinish(conn);
-			simple_prompt("Password: ", password, sizeof(password), false);
-			have_password = true;
+			password = simple_prompt("Password: ", false);
 			new_pass = true;
 		}
 	} while (new_pass);
