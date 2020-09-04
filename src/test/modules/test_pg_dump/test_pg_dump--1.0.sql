@@ -13,6 +13,11 @@ CREATE SEQUENCE regress_pg_dump_seq;
 CREATE SEQUENCE regress_seq_dumpable;
 SELECT pg_catalog.pg_extension_config_dump('regress_seq_dumpable', '');
 
+CREATE TABLE regress_table_dumpable (
+	col1 int
+);
+SELECT pg_catalog.pg_extension_config_dump('regress_table_dumpable', '');
+
 CREATE SCHEMA regress_pg_dump_schema;
 
 GRANT USAGE ON regress_pg_dump_seq TO regress_dump_test_role;
