@@ -6434,13 +6434,12 @@ float4_to_char(PG_FUNCTION_ARGS)
 	int			out_pre_spaces = 0,
 				sign = 0;
 	char	   *numstr,
-			   *orgnum,
 			   *p;
 
 	NUM_TOCHAR_prepare;
 
 	if (IS_ROMAN(&Num))
-		numstr = orgnum = int_to_roman((int) rint(value));
+		numstr = int_to_roman((int) rint(value));
 	else if (IS_EEEE(&Num))
 	{
 		if (isnan(value) || isinf(value))
@@ -6456,20 +6455,19 @@ float4_to_char(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			numstr = orgnum = psprintf("%+.*e", Num.post, value);
+			numstr = psprintf("%+.*e", Num.post, value);
 
 			/*
 			 * Swap a leading positive sign for a space.
 			 */
-			if (*orgnum == '+')
-				*orgnum = ' ';
-
-			numstr = orgnum;
+			if (*numstr == '+')
+				*numstr = ' ';
 		}
 	}
 	else
 	{
 		float4		val = value;
+		char	   *orgnum;
 		int			numstr_pre_len;
 
 		if (IS_MULTI(&Num))
@@ -6480,7 +6478,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 			Num.pre += Num.multi;
 		}
 
-		orgnum = (char *) psprintf("%.0f", fabs(val));
+		orgnum = psprintf("%.0f", fabs(val));
 		numstr_pre_len = strlen(orgnum);
 
 		/* adjust post digits to fit max float digits */
@@ -6538,13 +6536,12 @@ float8_to_char(PG_FUNCTION_ARGS)
 	int			out_pre_spaces = 0,
 				sign = 0;
 	char	   *numstr,
-			   *orgnum,
 			   *p;
 
 	NUM_TOCHAR_prepare;
 
 	if (IS_ROMAN(&Num))
-		numstr = orgnum = int_to_roman((int) rint(value));
+		numstr = int_to_roman((int) rint(value));
 	else if (IS_EEEE(&Num))
 	{
 		if (isnan(value) || isinf(value))
@@ -6560,20 +6557,19 @@ float8_to_char(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			numstr = orgnum = (char *) psprintf("%+.*e", Num.post, value);
+			numstr = psprintf("%+.*e", Num.post, value);
 
 			/*
 			 * Swap a leading positive sign for a space.
 			 */
-			if (*orgnum == '+')
-				*orgnum = ' ';
-
-			numstr = orgnum;
+			if (*numstr == '+')
+				*numstr = ' ';
 		}
 	}
 	else
 	{
 		float8		val = value;
+		char	   *orgnum;
 		int			numstr_pre_len;
 
 		if (IS_MULTI(&Num))
@@ -6583,6 +6579,7 @@ float8_to_char(PG_FUNCTION_ARGS)
 			val = value * multi;
 			Num.pre += Num.multi;
 		}
+
 		orgnum = psprintf("%.0f", fabs(val));
 		numstr_pre_len = strlen(orgnum);
 

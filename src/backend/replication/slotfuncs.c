@@ -518,9 +518,6 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 		 */
 		XLogBeginRead(ctx->reader, MyReplicationSlot->data.restart_lsn);
 
-		/* Initialize our return value in case we don't do anything */
-		retlsn = MyReplicationSlot->data.confirmed_flush;
-
 		/* invalidate non-timetravel entries */
 		InvalidateSystemCaches();
 

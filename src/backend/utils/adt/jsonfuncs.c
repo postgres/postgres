@@ -4687,8 +4687,8 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 				rk1,
 				rk2;
 
-	r1 = rk1 = JsonbIteratorNext(it1, &v1, false);
-	r2 = rk2 = JsonbIteratorNext(it2, &v2, false);
+	rk1 = JsonbIteratorNext(it1, &v1, false);
+	rk2 = JsonbIteratorNext(it2, &v2, false);
 
 	/*
 	 * Both elements are objects.
@@ -4696,15 +4696,15 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 	if (rk1 == WJB_BEGIN_OBJECT && rk2 == WJB_BEGIN_OBJECT)
 	{
 		/*
-		 * Append the all tokens from v1 to res, except last WJB_END_OBJECT
+		 * Append all the tokens from v1 to res, except last WJB_END_OBJECT
 		 * (because res will not be finished yet).
 		 */
-		pushJsonbValue(state, r1, NULL);
+		pushJsonbValue(state, rk1, NULL);
 		while ((r1 = JsonbIteratorNext(it1, &v1, true)) != WJB_END_OBJECT)
 			pushJsonbValue(state, r1, &v1);
 
 		/*
-		 * Append the all tokens from v2 to res, include last WJB_END_OBJECT
+		 * Append all the tokens from v2 to res, include last WJB_END_OBJECT
 		 * (the concatenation will be completed).
 		 */
 		while ((r2 = JsonbIteratorNext(it2, &v2, true)) != WJB_DONE)
@@ -4716,7 +4716,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 	 */
 	else if (rk1 == WJB_BEGIN_ARRAY && rk2 == WJB_BEGIN_ARRAY)
 	{
-		pushJsonbValue(state, r1, NULL);
+		pushJsonbValue(state, rk1, NULL);
 
 		while ((r1 = JsonbIteratorNext(it1, &v1, true)) != WJB_END_ARRAY)
 		{
@@ -4736,10 +4736,8 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 	else if (((rk1 == WJB_BEGIN_ARRAY && !(*it1)->isScalar) && rk2 == WJB_BEGIN_OBJECT) ||
 			 (rk1 == WJB_BEGIN_OBJECT && (rk2 == WJB_BEGIN_ARRAY && !(*it2)->isScalar)))
 	{
-
 		JsonbIterator **it_array = rk1 == WJB_BEGIN_ARRAY ? it1 : it2;
 		JsonbIterator **it_object = rk1 == WJB_BEGIN_OBJECT ? it1 : it2;
-
 		bool		prepend = (rk1 == WJB_BEGIN_OBJECT);
 
 		pushJsonbValue(state, WJB_BEGIN_ARRAY, NULL);
