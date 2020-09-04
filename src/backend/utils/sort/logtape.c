@@ -489,7 +489,7 @@ ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 		 * If the freelist becomes very large, just return and leak this free
 		 * block.
 		 */
-		if (lts->freeBlocksLen * 2 > MaxAllocSize)
+		if (lts->freeBlocksLen * 2 * sizeof(long) > MaxAllocSize)
 			return;
 
 		lts->freeBlocksLen *= 2;
