@@ -126,13 +126,13 @@ SELECT *
     FROM weather LEFT OUTER JOIN cities ON (weather.city = cities.name);
 
 -- Suppose we want to find all the records that are in the temperature range
--- of other records.  W1 and W2 are aliases for weather.
+-- of other records.  w1 and w2 are aliases for weather.
 
-SELECT W1.city, W1.temp_lo, W1.temp_hi,
-       W2.city, W2.temp_lo, W2.temp_hi
-FROM weather W1, weather W2
-WHERE W1.temp_lo < W2.temp_lo
-   and W1.temp_hi > W2.temp_hi;
+SELECT w1.city, w1.temp_lo, w1.temp_hi,
+       w2.city, w2.temp_lo, w2.temp_hi
+FROM weather w1, weather w2
+WHERE w1.temp_lo < w2.temp_lo
+   and w1.temp_hi > w2.temp_hi;
 
 
 -----------------------------

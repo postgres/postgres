@@ -609,11 +609,11 @@ SELECT *
     following query:
 
 <programlisting>
-SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
-    W2.city, W2.temp_lo AS low, W2.temp_hi AS high
-    FROM weather W1, weather W2
-    WHERE W1.temp_lo &lt; W2.temp_lo
-    AND W1.temp_hi &gt; W2.temp_hi;
+SELECT w1.city, w1.temp_lo AS low, w1.temp_hi AS high,
+    w2.city, w2.temp_lo AS low, w2.temp_hi AS high
+    FROM weather w1, weather w2
+    WHERE w1.temp_lo &lt; w2.temp_lo
+    AND w1.temp_hi &gt; w2.temp_hi;
 </programlisting>
 
 <screen>
@@ -624,8 +624,8 @@ SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
 (2 rows)
 </screen>
 
-    Here we have relabeled the weather table as <literal>W1</literal> and
-    <literal>W2</literal> to be able to distinguish the left and right side
+    Here we have relabeled the weather table as <literal>w1</literal> and
+    <literal>w2</literal> to be able to distinguish the left and right side
     of the join.  You can also use these kinds of aliases in other
     queries to save some typing, e.g.:
 <programlisting>
