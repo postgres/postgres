@@ -5097,7 +5097,7 @@ create_ordered_paths(PlannerInfo *root,
 			foreach(lc, input_rel->partial_pathlist)
 			{
 				Path	   *input_path = (Path *) lfirst(lc);
-				Path	   *sorted_path = input_path;
+				Path	   *sorted_path;
 				bool		is_sorted;
 				int			presorted_keys;
 				double		total_groups;

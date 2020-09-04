@@ -478,7 +478,7 @@ changeDependenciesOf(Oid classId, Oid oldObjectId,
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
 	{
-		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+		Form_pg_depend depform;
 
 		/* make a modifiable copy */
 		tup = heap_copytuple(tup);
@@ -561,12 +561,12 @@ changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
 	{
-		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
-
 		if (newIsPinned)
 			CatalogTupleDelete(depRel, &tup->t_self);
 		else
 		{
+			Form_pg_depend depform;
+
 			/* make a modifiable copy */
 			tup = heap_copytuple(tup);
 			depform = (Form_pg_depend) GETSTRUCT(tup);

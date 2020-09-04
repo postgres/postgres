@@ -2124,7 +2124,6 @@ CheckAffix(const char *word, size_t len, AFFIX *Affix, int flagflags, char *neww
 	}
 	else
 	{
-		int			err;
 		pg_wchar   *data;
 		size_t		data_len;
 		int			newword_len;
@@ -2134,7 +2133,8 @@ CheckAffix(const char *word, size_t len, AFFIX *Affix, int flagflags, char *neww
 		data = (pg_wchar *) palloc((newword_len + 1) * sizeof(pg_wchar));
 		data_len = pg_mb2wchar_with_len(newword, data, newword_len);
 
-		if (!(err = pg_regexec(&(Affix->reg.regex), data, data_len, 0, NULL, 0, NULL, 0)))
+		if (pg_regexec(&(Affix->reg.regex), data, data_len,
+					   0, NULL, 0, NULL, 0) == REG_OKAY)
 		{
 			pfree(data);
 			return newword;

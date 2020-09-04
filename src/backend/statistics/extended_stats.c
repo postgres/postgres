@@ -232,7 +232,7 @@ ComputeExtStatisticsRows(Relation onerel,
 	foreach(lc, lstats)
 	{
 		StatExtEntry *stat = (StatExtEntry *) lfirst(lc);
-		int			stattarget = stat->stattarget;
+		int			stattarget;
 		VacAttrStats **stats;
 		int			nattrs = bms_num_members(stat->columns);
 

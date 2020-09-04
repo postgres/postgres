@@ -241,7 +241,6 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack)
 
 	blkno = root->blkno;
 	buffer = root->buffer;
-	offset = InvalidOffsetNumber;
 
 	ptr = (GinBtreeStack *) palloc(sizeof(GinBtreeStack));
 

@@ -243,7 +243,6 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 
 			*bitP |= bitmask;
 		}
-		bitP = ((bits8 *) (rettuple + SizeOfBrinTuple)) - 1;
 	}
 
 	if (tuple->bt_placeholder)

@@ -4259,10 +4259,6 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 		return result;
 	}
 
-	lower_or_start_datum = list_head(spec->lowerdatums);
-	upper_or_start_datum = list_head(spec->upperdatums);
-	num_or_arms = key->partnatts;
-
 	/*
 	 * If it is the recursive call for default, we skip the get_range_nulltest
 	 * to avoid accumulating the NullTest on the same keys for each partition.

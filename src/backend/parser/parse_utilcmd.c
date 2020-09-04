@@ -1765,7 +1765,6 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 			char	   *attname;
 
 			attname = get_attname(indrelid, attnum, false);
-			keycoltype = get_atttype(indrelid, attnum);
 
 			iparam->name = attname;
 			iparam->expr = NULL;
