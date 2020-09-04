@@ -97,5 +97,10 @@ ERROR:  cannot drop access method gist2 because other objects depend on it
 DETAIL:  index grect2ind2 depends on operator class box_ops for access method gist2
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 -- Drop access method cascade
+-- To prevent a (rare) deadlock against autovacuum,
+-- we must lock the table that owns the index that will be dropped
+BEGIN;
+LOCK TABLE fast_emp4000;
 DROP ACCESS METHOD gist2 CASCADE;
 NOTICE:  drop cascades to index grect2ind2
+COMMIT;

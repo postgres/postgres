@@ -65,4 +65,9 @@ ROLLBACK;
 DROP ACCESS METHOD gist2;
 
 -- Drop access method cascade
+-- To prevent a (rare) deadlock against autovacuum,
+-- we must lock the table that owns the index that will be dropped
+BEGIN;
+LOCK TABLE fast_emp4000;
 DROP ACCESS METHOD gist2 CASCADE;
+COMMIT;
