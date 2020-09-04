@@ -548,9 +548,9 @@ SELECT *
     it here to help you understand the following topics.
    </para>
 
-   <para>
-    <indexterm><primary>join</primary><secondary>outer</secondary></indexterm>
+   <indexterm><primary>join</primary><secondary>outer</secondary></indexterm>
 
+   <para>
     Now we will figure out how we can get the Hayward records back in.
     What we want the query to do is to scan the
     <structname>weather</structname> table and for each row to find the
