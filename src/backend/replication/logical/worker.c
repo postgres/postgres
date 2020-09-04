@@ -198,8 +198,8 @@ typedef struct ApplySubXactData
 
 static ApplySubXactData subxact_data = {0, 0, InvalidTransactionId, NULL};
 
-static void subxact_filename(char *path, Oid subid, TransactionId xid);
-static void changes_filename(char *path, Oid subid, TransactionId xid);
+static inline void subxact_filename(char *path, Oid subid, TransactionId xid);
+static inline void changes_filename(char *path, Oid subid, TransactionId xid);
 
 /*
  * Information about subtransactions of a given toplevel transaction.
@@ -2722,7 +2722,7 @@ subxact_info_add(TransactionId xid)
 }
 
 /* format filename for file containing the info about subxacts */
-static void
+static inline void
 subxact_filename(char *path, Oid subid, TransactionId xid)
 {
 	snprintf(path, MAXPGPATH, "%u-%u.subxacts", subid, xid);
