@@ -259,7 +259,7 @@ struct user_args
  * ------------------------------------------------------
  */
 static Datum
-bt_page_print_tuples(FuncCallContext *fctx, struct user_args *uargs)
+bt_page_print_tuples(struct user_args *uargs)
 {
 	Page		page = uargs->page;
 	OffsetNumber offset = uargs->offset;
@@ -498,7 +498,7 @@ bt_page_items(PG_FUNCTION_ARGS)
 
 	if (fctx->call_cntr < fctx->max_calls)
 	{
-		result = bt_page_print_tuples(fctx, uargs);
+		result = bt_page_print_tuples(uargs);
 		uargs->offset++;
 		SRF_RETURN_NEXT(fctx, result);
 	}
@@ -582,7 +582,7 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 
 	if (fctx->call_cntr < fctx->max_calls)
 	{
-		result = bt_page_print_tuples(fctx, uargs);
+		result = bt_page_print_tuples(uargs);
 		uargs->offset++;
 		SRF_RETURN_NEXT(fctx, result);
 	}
