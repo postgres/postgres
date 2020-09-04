@@ -734,9 +734,11 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 BlockNumber
 mdnblocks(SMgrRelation reln, ForkNumber forknum)
 {
-	MdfdVec    *v = mdopenfork(reln, forknum, EXTENSION_FAIL);
+	MdfdVec    *v;
 	BlockNumber nblocks;
-	BlockNumber segno = 0;
+	BlockNumber segno;
+
+	mdopenfork(reln, forknum, EXTENSION_FAIL);
 
 	/* mdopen has opened the first segment */
 	Assert(reln->md_num_open_segs[forknum] > 0);

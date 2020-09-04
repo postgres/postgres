@@ -3436,7 +3436,7 @@ List *
 heap_truncate_find_FKs(List *relationIds)
 {
 	List	   *result = NIL;
-	List	   *oids = list_copy(relationIds);
+	List	   *oids;
 	List	   *parent_cons;
 	ListCell   *cell;
 	ScanKeyData key;

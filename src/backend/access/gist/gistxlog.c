@@ -405,7 +405,6 @@ gistRedoPageReuse(XLogReaderState *record)
 		 * logged value is very old, so that XID wrap-around already happened
 		 * on it, there can't be any snapshots that still see it.
 		 */
-		nextXid = ReadNextFullTransactionId();
 		diff = U64FromFullTransactionId(nextXid) -
 			U64FromFullTransactionId(latestRemovedFullXid);
 		if (diff < MaxTransactionId / 2)

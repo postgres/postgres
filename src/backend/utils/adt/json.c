@@ -990,7 +990,7 @@ catenate_stringinfo_string(StringInfo buffer, const char *addon)
 Datum
 json_build_object(PG_FUNCTION_ARGS)
 {
-	int			nargs = PG_NARGS();
+	int			nargs;
 	int			i;
 	const char *sep = "";
 	StringInfo	result;
