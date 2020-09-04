@@ -135,6 +135,12 @@ my %pgdump_runs = (
 			"$tempdir/defaults_tar_format.tar",
 		],
 	},
+	extension_schema => {
+		dump_cmd => [
+			'pg_dump', '--schema=public', '--inserts',
+			"--file=$tempdir/extension_schema.sql", 'postgres',
+		],
+	},
 	pg_dumpall_globals => {
 		dump_cmd => [
 			'pg_dumpall',                             '--no-sync',
@@ -301,8 +307,9 @@ my %tests = (
 			\n/xm,
 		like => {
 			%full_runs,
-			data_only    => 1,
-			section_data => 1,
+			data_only        => 1,
+			section_data     => 1,
+			extension_schema => 1,
 		},
 	},
 
@@ -536,6 +543,7 @@ my %tests = (
 		like   => {%pgdump_runs},
 		unlike => {
 			data_only          => 1,
+			extension_schema   => 1,
 			pg_dumpall_globals => 1,
 			section_data       => 1,
 			section_pre_data   => 1,
@@ -549,6 +557,7 @@ my %tests = (
 		like   => {%pgdump_runs},
 		unlike => {
 			data_only          => 1,
+			extension_schema   => 1,
 			pg_dumpall_globals => 1,
 			section_data       => 1,
 			section_pre_data   => 1,
@@ -568,6 +577,17 @@ my %tests = (
 			%full_runs,
 			schema_only      => 1,
 			section_pre_data => 1,
+		},
+	},
+
+	# Dumpable object inside specific schema
+	'INSERT INTO public.regress_table_dumpable VALUES (1);' => {
+		create_sql   => 'INSERT INTO public.regress_table_dumpable VALUES (1);',
+		regexp       => qr/^
+			\QINSERT INTO public.regress_table_dumpable VALUES (1);\E
+			\n/xm,
+		like => {
+			extension_schema => 1,
 		},
 	},);
 
