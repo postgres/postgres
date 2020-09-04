@@ -464,8 +464,9 @@ XLogReadRecord(XLogReaderState *state, char **errormsg)
 				total_len != (pageHeader->xlp_rem_len + gotlen))
 			{
 				report_invalid_record(state,
-									  "invalid contrecord length %u at %X/%X",
+									  "invalid contrecord length %u (expected %lld) at %X/%X",
 									  pageHeader->xlp_rem_len,
+									  ((long long) total_len) - gotlen,
 									  (uint32) (RecPtr >> 32), (uint32) RecPtr);
 				goto err;
 			}
