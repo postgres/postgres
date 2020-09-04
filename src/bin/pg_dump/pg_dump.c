@@ -2095,6 +2095,8 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 			if (nfields == 0)
 				continue;
 
+			Assert(tbinfo->attgenerated);
+
 			/* Emit a row heading */
 			if (rows_per_statement == 1)
 				archputs(" (", fout);
@@ -17913,6 +17915,8 @@ processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 							configtbl->dataObj->filtercond = pg_strdup(extconditionarray[j]);
 					}
 				}
+
+				configtbl->interesting = dumpobj;
 			}
 		}
 		if (extconfigarray)
