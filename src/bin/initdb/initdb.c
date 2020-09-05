@@ -468,14 +468,11 @@ filter_lines_with_token(char **lines, const char *token)
 static char **
 readfile(const char *path)
 {
-	FILE	   *infile;
-	int			maxlength = 1,
-				linelen = 0;
-	int			nlines = 0;
-	int			n;
 	char	  **result;
-	char	   *buffer;
-	int			c;
+	FILE	   *infile;
+	int			maxlines;
+	int			n;
+	char	   *ln;
 
 	if ((infile = fopen(path, "r")) == NULL)
 	{
@@ -483,39 +480,24 @@ readfile(const char *path)
 		exit(1);
 	}
 
-	/* pass over the file twice - the first time to size the result */
+	maxlines = 1024;
+	result = (char **) pg_malloc(maxlines * sizeof(char *));
 
-	while ((c = fgetc(infile)) != EOF)
-	{
-		linelen++;
-		if (c == '\n')
-		{
-			nlines++;
-			if (linelen > maxlength)
-				maxlength = linelen;
-			linelen = 0;
-		}
-	}
-
-	/* handle last line without a terminating newline (yuck) */
-	if (linelen)
-		nlines++;
-	if (linelen > maxlength)
-		maxlength = linelen;
-
-	/* set up the result and the line buffer */
-	result = (char **) pg_malloc((nlines + 1) * sizeof(char *));
-	buffer = (char *) pg_malloc(maxlength + 1);
-
-	/* now reprocess the file and store the lines */
-	rewind(infile);
 	n = 0;
-	while (fgets(buffer, maxlength + 1, infile) != NULL && n < nlines)
-		result[n++] = pg_strdup(buffer);
+	while ((ln = pg_get_line(infile)) != NULL)
+	{
+		/* make sure there will be room for a trailing NULL pointer */
+		if (n >= maxlines - 1)
+		{
+			maxlines *= 2;
+			result = (char **) pg_realloc(result, maxlines * sizeof(char *));
+		}
+
+		result[n++] = ln;
+	}
+	result[n] = NULL;
 
 	fclose(infile);
-	free(buffer);
-	result[n] = NULL;
 
 	return result;
 }

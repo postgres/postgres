@@ -53,14 +53,12 @@
 uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
 
 
-#define ALLOC(t, c) \
-	((t *) MemoryContextAllocZero(TopMemoryContext, (unsigned)(c) * sizeof(t)))
-
 static void CheckerModeMain(void);
 static void BootstrapModeMain(void);
 static void bootstrap_signals(void);
 static void ShutdownAuxiliaryProcess(int code, Datum arg);
 static Form_pg_attribute AllocateAttribute(void);
+static void populate_typ_array(void);
 static Oid	gettype(char *type);
 static void cleanup(void);
 
@@ -583,46 +581,24 @@ ShutdownAuxiliaryProcess(int code, Datum arg)
 
 /* ----------------
  *		boot_openrel
+ *
+ * Execute BKI OPEN command.
  * ----------------
  */
 void
 boot_openrel(char *relname)
 {
 	int			i;
-	struct typmap **app;
-	Relation	rel;
-	TableScanDesc scan;
-	HeapTuple	tup;
 
 	if (strlen(relname) >= NAMEDATALEN)
 		relname[NAMEDATALEN - 1] = '\0';
 
+	/*
+	 * pg_type must be filled before any OPEN command is executed, hence we
+	 * can now populate the Typ array if we haven't yet.
+	 */
 	if (Typ == NULL)
-	{
-		/* We can now load the pg_type data */
-		rel = table_open(TypeRelationId, NoLock);
-		scan = table_beginscan_catalog(rel, 0, NULL);
-		i = 0;
-		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
-			++i;
-		table_endscan(scan);
-		app = Typ = ALLOC(struct typmap *, i + 1);
-		while (i-- > 0)
-			*app++ = ALLOC(struct typmap, 1);
-		*app = NULL;
-		scan = table_beginscan_catalog(rel, 0, NULL);
-		app = Typ;
-		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
-		{
-			(*app)->am_oid = ((Form_pg_type) GETSTRUCT(tup))->oid;
-			memcpy((char *) &(*app)->am_typ,
-				   (char *) GETSTRUCT(tup),
-				   sizeof((*app)->am_typ));
-			app++;
-		}
-		table_endscan(scan);
-		table_close(rel, NoLock);
-	}
+		populate_typ_array();
 
 	if (boot_reldesc != NULL)
 		closerel(NULL);
@@ -890,6 +866,52 @@ cleanup(void)
 }
 
 /* ----------------
+ *		populate_typ_array
+ *
+ * Load the Typ array by reading pg_type.
+ * ----------------
+ */
+static void
+populate_typ_array(void)
+{
+	Relation	rel;
+	TableScanDesc scan;
+	HeapTuple	tup;
+	int			nalloc;
+	int			i;
+
+	Assert(Typ == NULL);
+
+	nalloc = 512;
+	Typ = (struct typmap **)
+		MemoryContextAlloc(TopMemoryContext, nalloc * sizeof(struct typmap *));
+
+	rel = table_open(TypeRelationId, NoLock);
+	scan = table_beginscan_catalog(rel, 0, NULL);
+	i = 0;
+	while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Form_pg_type typForm = (Form_pg_type) GETSTRUCT(tup);
+
+		/* make sure there will be room for a trailing NULL pointer */
+		if (i >= nalloc - 1)
+		{
+			nalloc *= 2;
+			Typ = (struct typmap **)
+				repalloc(Typ, nalloc * sizeof(struct typmap *));
+		}
+		Typ[i] = (struct typmap *)
+			MemoryContextAlloc(TopMemoryContext, sizeof(struct typmap));
+		Typ[i]->am_oid = typForm->oid;
+		memcpy(&(Typ[i]->am_typ), typForm, sizeof(Typ[i]->am_typ));
+		i++;
+	}
+	Typ[i] = NULL;				/* Fill trailing NULL pointer */
+	table_endscan(scan);
+	table_close(rel, NoLock);
+}
+
+/* ----------------
  *		gettype
  *
  * NB: this is really ugly; it will return an integer index into TypInfo[],
@@ -903,14 +925,10 @@ cleanup(void)
 static Oid
 gettype(char *type)
 {
-	int			i;
-	Relation	rel;
-	TableScanDesc scan;
-	HeapTuple	tup;
-	struct typmap **app;
-
 	if (Typ != NULL)
 	{
+		struct typmap **app;
+
 		for (app = Typ; *app != NULL; app++)
 		{
 			if (strncmp(NameStr((*app)->am_typ.typname), type, NAMEDATALEN) == 0)
@@ -922,33 +940,16 @@ gettype(char *type)
 	}
 	else
 	{
+		int			i;
+
 		for (i = 0; i < n_types; i++)
 		{
 			if (strncmp(type, TypInfo[i].name, NAMEDATALEN) == 0)
 				return i;
 		}
+		/* Not in TypInfo, so we'd better be able to read pg_type now */
 		elog(DEBUG4, "external type: %s", type);
-		rel = table_open(TypeRelationId, NoLock);
-		scan = table_beginscan_catalog(rel, 0, NULL);
-		i = 0;
-		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
-			++i;
-		table_endscan(scan);
-		app = Typ = ALLOC(struct typmap *, i + 1);
-		while (i-- > 0)
-			*app++ = ALLOC(struct typmap, 1);
-		*app = NULL;
-		scan = table_beginscan_catalog(rel, 0, NULL);
-		app = Typ;
-		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
-		{
-			(*app)->am_oid = ((Form_pg_type) GETSTRUCT(tup))->oid;
-			memmove((char *) &(*app++)->am_typ,
-					(char *) GETSTRUCT(tup),
-					sizeof((*app)->am_typ));
-		}
-		table_endscan(scan);
-		table_close(rel, NoLock);
+		populate_typ_array();
 		return gettype(type);
 	}
 	elog(ERROR, "unrecognized type \"%s\"", type);
