@@ -91,6 +91,8 @@ CreateConstraintEntry(const char *constraintName,
 	NameData	cname;
 	int			i;
 	ObjectAddress conobject;
+	ObjectAddresses *addrs_auto;
+	ObjectAddresses *addrs_normal;
 
 	conDesc = table_open(ConstraintRelationId, RowExclusiveLock);
 
@@ -227,6 +229,9 @@ CreateConstraintEntry(const char *constraintName,
 
 	table_close(conDesc, RowExclusiveLock);
 
+	/* Handle set of auto dependencies */
+	addrs_auto = new_object_addresses();
+
 	if (OidIsValid(relId))
 	{
 		/*
@@ -241,13 +246,13 @@ CreateConstraintEntry(const char *constraintName,
 			{
 				ObjectAddressSubSet(relobject, RelationRelationId, relId,
 									constraintKey[i]);
-				recordDependencyOn(&conobject, &relobject, DEPENDENCY_AUTO);
+				add_exact_object_address(&relobject, addrs_auto);
 			}
 		}
 		else
 		{
 			ObjectAddressSet(relobject, RelationRelationId, relId);
-			recordDependencyOn(&conobject, &relobject, DEPENDENCY_AUTO);
+			add_exact_object_address(&relobject, addrs_auto);
 		}
 	}
 
@@ -259,8 +264,15 @@ CreateConstraintEntry(const char *constraintName,
 		ObjectAddress domobject;
 
 		ObjectAddressSet(domobject, TypeRelationId, domainId);
-		recordDependencyOn(&conobject, &domobject, DEPENDENCY_AUTO);
+		add_exact_object_address(&domobject, addrs_auto);
 	}
+
+	record_object_address_dependencies(&conobject, addrs_auto,
+									   DEPENDENCY_AUTO);
+	free_object_addresses(addrs_auto);
+
+	/* Handle set of normal dependencies */
+	addrs_normal = new_object_addresses();
 
 	if (OidIsValid(foreignRelId))
 	{
@@ -276,13 +288,13 @@ CreateConstraintEntry(const char *constraintName,
 			{
 				ObjectAddressSubSet(relobject, RelationRelationId,
 									foreignRelId, foreignKey[i]);
-				recordDependencyOn(&conobject, &relobject, DEPENDENCY_NORMAL);
+				add_exact_object_address(&relobject, addrs_normal);
 			}
 		}
 		else
 		{
 			ObjectAddressSet(relobject, RelationRelationId, foreignRelId);
-			recordDependencyOn(&conobject, &relobject, DEPENDENCY_NORMAL);
+			add_exact_object_address(&relobject, addrs_normal);
 		}
 	}
 
@@ -297,7 +309,7 @@ CreateConstraintEntry(const char *constraintName,
 		ObjectAddress relobject;
 
 		ObjectAddressSet(relobject, RelationRelationId, indexRelId);
-		recordDependencyOn(&conobject, &relobject, DEPENDENCY_NORMAL);
+		add_exact_object_address(&relobject, addrs_normal);
 	}
 
 	if (foreignNKeys > 0)
@@ -316,19 +328,23 @@ CreateConstraintEntry(const char *constraintName,
 		for (i = 0; i < foreignNKeys; i++)
 		{
 			oprobject.objectId = pfEqOp[i];
-			recordDependencyOn(&conobject, &oprobject, DEPENDENCY_NORMAL);
+			add_exact_object_address(&oprobject, addrs_normal);
 			if (ppEqOp[i] != pfEqOp[i])
 			{
 				oprobject.objectId = ppEqOp[i];
-				recordDependencyOn(&conobject, &oprobject, DEPENDENCY_NORMAL);
+				add_exact_object_address(&oprobject, addrs_normal);
 			}
 			if (ffEqOp[i] != pfEqOp[i])
 			{
 				oprobject.objectId = ffEqOp[i];
-				recordDependencyOn(&conobject, &oprobject, DEPENDENCY_NORMAL);
+				add_exact_object_address(&oprobject, addrs_normal);
 			}
 		}
 	}
+
+	record_object_address_dependencies(&conobject, addrs_normal,
+									   DEPENDENCY_NORMAL);
+	free_object_addresses(addrs_normal);
 
 	/*
 	 * We don't bother to register dependencies on the exclusion operators of

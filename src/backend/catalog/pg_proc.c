@@ -114,6 +114,7 @@ ProcedureCreate(const char *procedureName,
 	char	   *detailmsg;
 	int			i;
 	Oid			trfid;
+	ObjectAddresses *addrs;
 
 	/*
 	 * sanity checks
@@ -585,52 +586,57 @@ ProcedureCreate(const char *procedureName,
 	if (is_update)
 		deleteDependencyRecordsFor(ProcedureRelationId, retval, true);
 
+	addrs = new_object_addresses();
+
 	ObjectAddressSet(myself, ProcedureRelationId, retval);
 
 	/* dependency on namespace */
 	ObjectAddressSet(referenced, NamespaceRelationId, procNamespace);
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	add_exact_object_address(&referenced, addrs);
 
 	/* dependency on implementation language */
 	ObjectAddressSet(referenced, LanguageRelationId, languageObjectId);
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	add_exact_object_address(&referenced, addrs);
 
 	/* dependency on return type */
 	ObjectAddressSet(referenced, TypeRelationId, returnType);
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	add_exact_object_address(&referenced, addrs);
 
 	/* dependency on transform used by return type, if any */
 	if ((trfid = get_transform_oid(returnType, languageObjectId, true)))
 	{
 		ObjectAddressSet(referenced, TransformRelationId, trfid);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	/* dependency on parameter types */
 	for (i = 0; i < allParamCount; i++)
 	{
 		ObjectAddressSet(referenced, TypeRelationId, allParams[i]);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs);
 
 		/* dependency on transform used by parameter type, if any */
 		if ((trfid = get_transform_oid(allParams[i], languageObjectId, true)))
 		{
 			ObjectAddressSet(referenced, TransformRelationId, trfid);
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+			add_exact_object_address(&referenced, addrs);
 		}
 	}
-
-	/* dependency on parameter default expressions */
-	if (parameterDefaults)
-		recordDependencyOnExpr(&myself, (Node *) parameterDefaults,
-							   NIL, DEPENDENCY_NORMAL);
 
 	/* dependency on support function, if any */
 	if (OidIsValid(prosupport))
 	{
 		ObjectAddressSet(referenced, ProcedureRelationId, prosupport);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs);
 	}
+
+	record_object_address_dependencies(&myself, addrs, DEPENDENCY_NORMAL);
+	free_object_addresses(addrs);
+
+	/* dependency on parameter default expressions */
+	if (parameterDefaults)
+		recordDependencyOnExpr(&myself, (Node *) parameterDefaults,
+							   NIL, DEPENDENCY_NORMAL);
 
 	/* dependency on owner */
 	if (!is_update)

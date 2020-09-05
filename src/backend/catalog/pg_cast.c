@@ -50,6 +50,7 @@ CastCreate(Oid sourcetypeid, Oid targettypeid, Oid funcid, char castcontext,
 	bool		nulls[Natts_pg_cast];
 	ObjectAddress myself,
 				referenced;
+	ObjectAddresses *addrs;
 
 	relation = table_open(CastRelationId, RowExclusiveLock);
 
@@ -83,31 +84,28 @@ CastCreate(Oid sourcetypeid, Oid targettypeid, Oid funcid, char castcontext,
 
 	CatalogTupleInsert(relation, tuple);
 
+	addrs = new_object_addresses();
+
 	/* make dependency entries */
-	myself.classId = CastRelationId;
-	myself.objectId = castid;
-	myself.objectSubId = 0;
+	ObjectAddressSet(myself, CastRelationId, castid);
 
 	/* dependency on source type */
-	referenced.classId = TypeRelationId;
-	referenced.objectId = sourcetypeid;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, behavior);
+	ObjectAddressSet(referenced, TypeRelationId, sourcetypeid);
+	add_exact_object_address(&referenced, addrs);
 
 	/* dependency on target type */
-	referenced.classId = TypeRelationId;
-	referenced.objectId = targettypeid;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, behavior);
+	ObjectAddressSet(referenced, TypeRelationId, targettypeid);
+	add_exact_object_address(&referenced, addrs);
 
 	/* dependency on function */
 	if (OidIsValid(funcid))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = funcid;
-		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, behavior);
+		ObjectAddressSet(referenced, ProcedureRelationId, funcid);
+		add_exact_object_address(&referenced, addrs);
 	}
+
+	record_object_address_dependencies(&myself, addrs, behavior);
+	free_object_addresses(addrs);
 
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);

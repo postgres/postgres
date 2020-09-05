@@ -775,6 +775,7 @@ makeOperatorDependencies(HeapTuple tuple, bool isUpdate)
 	Form_pg_operator oper = (Form_pg_operator) GETSTRUCT(tuple);
 	ObjectAddress myself,
 				referenced;
+	ObjectAddresses *addrs;
 
 	ObjectAddressSet(myself, OperatorRelationId, oper->oid);
 
@@ -788,32 +789,34 @@ makeOperatorDependencies(HeapTuple tuple, bool isUpdate)
 		deleteSharedDependencyRecordsFor(myself.classId, myself.objectId, 0);
 	}
 
+	addrs = new_object_addresses();
+
 	/* Dependency on namespace */
 	if (OidIsValid(oper->oprnamespace))
 	{
 		ObjectAddressSet(referenced, NamespaceRelationId, oper->oprnamespace);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	/* Dependency on left type */
 	if (OidIsValid(oper->oprleft))
 	{
 		ObjectAddressSet(referenced, TypeRelationId, oper->oprleft);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	/* Dependency on right type */
 	if (OidIsValid(oper->oprright))
 	{
 		ObjectAddressSet(referenced, TypeRelationId, oper->oprright);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	/* Dependency on result type */
 	if (OidIsValid(oper->oprresult))
 	{
 		ObjectAddressSet(referenced, TypeRelationId, oper->oprresult);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	/*
@@ -829,22 +832,25 @@ makeOperatorDependencies(HeapTuple tuple, bool isUpdate)
 	if (OidIsValid(oper->oprcode))
 	{
 		ObjectAddressSet(referenced, ProcedureRelationId, oper->oprcode);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	/* Dependency on restriction selectivity function */
 	if (OidIsValid(oper->oprrest))
 	{
 		ObjectAddressSet(referenced, ProcedureRelationId, oper->oprrest);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	/* Dependency on join selectivity function */
 	if (OidIsValid(oper->oprjoin))
 	{
 		ObjectAddressSet(referenced, ProcedureRelationId, oper->oprjoin);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs);
 	}
+
+	record_object_address_dependencies(&myself, addrs, DEPENDENCY_NORMAL);
+	free_object_addresses(addrs);
 
 	/* Dependency on owner */
 	recordDependencyOnOwner(OperatorRelationId, oper->oid,

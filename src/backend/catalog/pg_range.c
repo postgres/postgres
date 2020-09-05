@@ -43,6 +43,7 @@ RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 	HeapTuple	tup;
 	ObjectAddress myself;
 	ObjectAddress referenced;
+	ObjectAddresses *addrs;
 
 	pg_range = table_open(RangeRelationId, RowExclusiveLock);
 
@@ -61,44 +62,36 @@ RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 	heap_freetuple(tup);
 
 	/* record type's dependencies on range-related items */
+	addrs = new_object_addresses();
 
-	myself.classId = TypeRelationId;
-	myself.objectId = rangeTypeOid;
-	myself.objectSubId = 0;
+	ObjectAddressSet(myself, TypeRelationId, rangeTypeOid);
 
-	referenced.classId = TypeRelationId;
-	referenced.objectId = rangeSubType;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	ObjectAddressSet(referenced, TypeRelationId, rangeSubType);
+	add_exact_object_address(&referenced, addrs);
 
-	referenced.classId = OperatorClassRelationId;
-	referenced.objectId = rangeSubOpclass;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	ObjectAddressSet(referenced, OperatorClassRelationId, rangeSubOpclass);
+	add_exact_object_address(&referenced, addrs);
 
 	if (OidIsValid(rangeCollation))
 	{
-		referenced.classId = CollationRelationId;
-		referenced.objectId = rangeCollation;
-		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		ObjectAddressSet(referenced, CollationRelationId, rangeCollation);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	if (OidIsValid(rangeCanonical))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = rangeCanonical;
-		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		ObjectAddressSet(referenced, ProcedureRelationId, rangeCanonical);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	if (OidIsValid(rangeSubDiff))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = rangeSubDiff;
-		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		ObjectAddressSet(referenced, ProcedureRelationId, rangeSubDiff);
+		add_exact_object_address(&referenced, addrs);
 	}
+
+	record_object_address_dependencies(&myself, addrs, DEPENDENCY_NORMAL);
+	free_object_addresses(addrs);
 
 	table_close(pg_range, RowExclusiveLock);
 }

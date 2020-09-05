@@ -1018,6 +1018,7 @@ index_create(Relation heapRelation,
 	{
 		ObjectAddress myself,
 					referenced;
+		ObjectAddresses *addrs;
 
 		ObjectAddressSet(myself, RelationRelationId, indexRelationId);
 
@@ -1054,6 +1055,8 @@ index_create(Relation heapRelation,
 		{
 			bool		have_simple_col = false;
 
+			addrs = new_object_addresses();
+
 			/* Create auto dependencies on simply-referenced columns */
 			for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 			{
@@ -1062,7 +1065,7 @@ index_create(Relation heapRelation,
 					ObjectAddressSubSet(referenced, RelationRelationId,
 										heapRelationId,
 										indexInfo->ii_IndexAttrNumbers[i]);
-					recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+					add_exact_object_address(&referenced, addrs);
 					have_simple_col = true;
 				}
 			}
@@ -1077,8 +1080,11 @@ index_create(Relation heapRelation,
 			{
 				ObjectAddressSet(referenced, RelationRelationId,
 								 heapRelationId);
-				recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+				add_exact_object_address(&referenced, addrs);
 			}
+
+			record_object_address_dependencies(&myself, addrs, DEPENDENCY_AUTO);
+			free_object_addresses(addrs);
 		}
 
 		/*
@@ -1096,7 +1102,11 @@ index_create(Relation heapRelation,
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_PARTITION_SEC);
 		}
 
+		/* placeholder for normal dependencies */
+		addrs = new_object_addresses();
+
 		/* Store dependency on collations */
+
 		/* The default collation is pinned, so don't bother recording it */
 		for (i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
 		{
@@ -1105,7 +1115,7 @@ index_create(Relation heapRelation,
 			{
 				ObjectAddressSet(referenced, CollationRelationId,
 								 collationObjectId[i]);
-				recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+				add_exact_object_address(&referenced, addrs);
 			}
 		}
 
@@ -1113,8 +1123,11 @@ index_create(Relation heapRelation,
 		for (i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
 		{
 			ObjectAddressSet(referenced, OperatorClassRelationId, classObjectId[i]);
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+			add_exact_object_address(&referenced, addrs);
 		}
+
+		record_object_address_dependencies(&myself, addrs, DEPENDENCY_NORMAL);
+		free_object_addresses(addrs);
 
 		/* Store dependencies on anything mentioned in index expressions */
 		if (indexInfo->ii_Expressions)

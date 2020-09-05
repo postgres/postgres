@@ -57,6 +57,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	bool		is_update;
 	ObjectAddress myself,
 				referenced;
+	ObjectAddresses *addrs;
 
 	/*
 	 * Check permission
@@ -186,29 +187,28 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, is_update);
 
+	addrs = new_object_addresses();
+
 	/* dependency on the PL handler function */
-	referenced.classId = ProcedureRelationId;
-	referenced.objectId = handlerOid;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	ObjectAddressSet(referenced, ProcedureRelationId, handlerOid);
+	add_exact_object_address(&referenced, addrs);
 
 	/* dependency on the inline handler function, if any */
 	if (OidIsValid(inlineOid))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = inlineOid;
-		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		ObjectAddressSet(referenced, ProcedureRelationId, inlineOid);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	/* dependency on the validator function, if any */
 	if (OidIsValid(valOid))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = valOid;
-		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		ObjectAddressSet(referenced, ProcedureRelationId, valOid);
+		add_exact_object_address(&referenced, addrs);
 	}
+
+	record_object_address_dependencies(&myself, addrs, DEPENDENCY_NORMAL);
+	free_object_addresses(addrs);
 
 	/* Post creation hook for new procedural language */
 	InvokeObjectPostCreateHook(LanguageRelationId, myself.objectId, 0);

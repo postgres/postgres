@@ -1696,6 +1696,7 @@ CreateTransform(CreateTransformStmt *stmt)
 	Relation	relation;
 	ObjectAddress myself,
 				referenced;
+	ObjectAddresses *addrs;
 	bool		is_replace;
 
 	/*
@@ -1836,38 +1837,33 @@ CreateTransform(CreateTransformStmt *stmt)
 	if (is_replace)
 		deleteDependencyRecordsFor(TransformRelationId, transformid, true);
 
+	addrs = new_object_addresses();
+
 	/* make dependency entries */
-	myself.classId = TransformRelationId;
-	myself.objectId = transformid;
-	myself.objectSubId = 0;
+	ObjectAddressSet(myself, TransformRelationId, transformid);
 
 	/* dependency on language */
-	referenced.classId = LanguageRelationId;
-	referenced.objectId = langid;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	ObjectAddressSet(referenced, LanguageRelationId, langid);
+	add_exact_object_address(&referenced, addrs);
 
 	/* dependency on type */
-	referenced.classId = TypeRelationId;
-	referenced.objectId = typeid;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	ObjectAddressSet(referenced, TypeRelationId, typeid);
+	add_exact_object_address(&referenced, addrs);
 
 	/* dependencies on functions */
 	if (OidIsValid(fromsqlfuncid))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = fromsqlfuncid;
-		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		ObjectAddressSet(referenced, ProcedureRelationId, fromsqlfuncid);
+		add_exact_object_address(&referenced, addrs);
 	}
 	if (OidIsValid(tosqlfuncid))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = tosqlfuncid;
-		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		ObjectAddressSet(referenced, ProcedureRelationId, tosqlfuncid);
+		add_exact_object_address(&referenced, addrs);
 	}
+
+	record_object_address_dependencies(&myself, addrs, DEPENDENCY_NORMAL);
+	free_object_addresses(addrs);
 
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, is_replace);
