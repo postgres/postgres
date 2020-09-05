@@ -1400,8 +1400,8 @@ scram_mock_salt(const char *username)
 	/*
 	 * Generate salt using a SHA256 hash of the username and the cluster's
 	 * mock authentication nonce.  (This works as long as the salt length is
-	 * not larger the SHA256 digest length. If the salt is smaller, the caller
-	 * will just ignore the extra data.)
+	 * not larger than the SHA256 digest length.  If the salt is smaller, the
+	 * caller will just ignore the extra data.)
 	 */
 	StaticAssertStmt(PG_SHA256_DIGEST_LENGTH >= SCRAM_DEFAULT_SALT_LEN,
 					 "salt length greater than SHA256 digest length");
