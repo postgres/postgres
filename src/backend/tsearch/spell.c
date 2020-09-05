@@ -1710,7 +1710,7 @@ void
 NISortDictionary(IspellDict *Conf)
 {
 	int			i;
-	int			naffix = 0;
+	int			naffix;
 	int			curaffix;
 
 	/* compress affixes */

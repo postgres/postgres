@@ -619,7 +619,6 @@ _skipData(ArchiveHandle *AH)
 	size_t		blkLen;
 	char	   *buf = NULL;
 	int			buflen = 0;
-	size_t		cnt;
 
 	blkLen = ReadInt(AH);
 	while (blkLen != 0)
@@ -638,7 +637,7 @@ _skipData(ArchiveHandle *AH)
 				buf = (char *) pg_malloc(blkLen);
 				buflen = blkLen;
 			}
-			if ((cnt = fread(buf, 1, blkLen, AH->FH)) != blkLen)
+			if (fread(buf, 1, blkLen, AH->FH) != blkLen)
 			{
 				if (feof(AH->FH))
 					fatal("could not read from input file: end of file");
@@ -664,9 +663,7 @@ _skipData(ArchiveHandle *AH)
 static int
 _WriteByte(ArchiveHandle *AH, const int i)
 {
-	int			res;
-
-	if ((res = fputc(i, AH->FH)) == EOF)
+	if (fputc(i, AH->FH) == EOF)
 		WRITE_ERROR_EXIT;
 
 	return 1;

@@ -3433,7 +3433,6 @@ CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conflictPending)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
-	pid_t		pid = 0;
 
 	/* tell all backends to die */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
@@ -3446,6 +3445,7 @@ CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conflictPending)
 		if (databaseid == InvalidOid || proc->databaseId == databaseid)
 		{
 			VirtualTransactionId procvxid;
+			pid_t		pid;
 
 			GET_VXID_FROM_PGPROC(procvxid, *proc);
 

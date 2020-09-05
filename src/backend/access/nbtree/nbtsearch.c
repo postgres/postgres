@@ -860,7 +860,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	ScanKeyData notnullkeys[INDEX_MAX_KEYS];
 	int			keysCount = 0;
 	int			i;
-	bool		status = true;
+	bool		status;
 	StrategyNumber strat_total;
 	BTScanPosItem *currItem;
 	BlockNumber blkno;
@@ -1858,7 +1858,7 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	BlockNumber blkno = InvalidBlockNumber;
-	bool		status = true;
+	bool		status;
 
 	Assert(BTScanPosIsValid(so->currPos));
 
@@ -1967,7 +1967,7 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 	Relation	rel;
 	Page		page;
 	BTPageOpaque opaque;
-	bool		status = true;
+	bool		status;
 
 	rel = scan->indexRelation;
 

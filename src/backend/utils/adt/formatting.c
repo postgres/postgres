@@ -1510,8 +1510,7 @@ static const char *
 get_th(char *num, int type)
 {
 	int			len = strlen(num),
-				last,
-				seclast;
+				last;
 
 	last = *(num + (len - 1));
 	if (!isdigit((unsigned char) last))
@@ -1523,7 +1522,7 @@ get_th(char *num, int type)
 	 * All "teens" (<x>1[0-9]) get 'TH/th', while <x>[02-9][123] still get
 	 * 'ST/st', 'ND/nd', 'RD/rd', respectively
 	 */
-	if ((len > 1) && ((seclast = num[len - 2]) == '1'))
+	if ((len > 1) && (num[len - 2] == '1'))
 		last = 0;
 
 	switch (last)
@@ -4932,9 +4931,9 @@ NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree)
 static char *
 int_to_roman(int number)
 {
-	int			len = 0,
-				num = 0;
-	char	   *p = NULL,
+	int			len,
+				num;
+	char	   *p,
 			   *result,
 				numstr[12];
 
@@ -4950,7 +4949,7 @@ int_to_roman(int number)
 
 	for (p = numstr; *p != '\0'; p++, --len)
 	{
-		num = *p - 49;			/* 48 ascii + 1 */
+		num = *p - ('0' + 1);
 		if (num < 0)
 			continue;
 
@@ -6118,7 +6117,7 @@ numeric_to_char(PG_FUNCTION_ARGS)
 		x = DatumGetNumeric(DirectFunctionCall2(numeric_round,
 												NumericGetDatum(value),
 												Int32GetDatum(0)));
-		numstr = orgnum =
+		numstr =
 			int_to_roman(DatumGetInt32(DirectFunctionCall1(numeric_int4,
 														   NumericGetDatum(x))));
 	}
@@ -6239,7 +6238,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 	 * On DateType depend part (int32)
 	 */
 	if (IS_ROMAN(&Num))
-		numstr = orgnum = int_to_roman(value);
+		numstr = int_to_roman(value);
 	else if (IS_EEEE(&Num))
 	{
 		/* we can do it easily because float8 won't lose any precision */
@@ -6335,7 +6334,7 @@ int8_to_char(PG_FUNCTION_ARGS)
 	if (IS_ROMAN(&Num))
 	{
 		/* Currently don't support int8 conversion to roman... */
-		numstr = orgnum = int_to_roman(DatumGetInt32(DirectFunctionCall1(int84, Int64GetDatum(value))));
+		numstr = int_to_roman(DatumGetInt32(DirectFunctionCall1(int84, Int64GetDatum(value))));
 	}
 	else if (IS_EEEE(&Num))
 	{
