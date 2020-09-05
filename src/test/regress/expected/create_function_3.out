@@ -17,7 +17,7 @@ SET search_path TO temp_func_test, public;
 CREATE FUNCTION functest_A_1(text, date) RETURNS bool LANGUAGE 'sql'
        AS 'SELECT $1 = ''abcd'' AND $2 > ''2001-01-01''';
 CREATE FUNCTION functest_A_2(text[]) RETURNS int LANGUAGE 'sql'
-       AS 'SELECT $1[0]::int';
+       AS 'SELECT $1[1]::int';
 CREATE FUNCTION functest_A_3() RETURNS bool LANGUAGE 'sql'
        AS 'SELECT false';
 SELECT proname, prorettype::regtype, proargtypes::regtype[] FROM pg_proc
@@ -30,6 +30,24 @@ SELECT proname, prorettype::regtype, proargtypes::regtype[] FROM pg_proc
  functest_a_2 | integer    | [0:0]={text[]}
  functest_a_3 | boolean    | {}
 (3 rows)
+
+SELECT functest_A_1('abcd', '2020-01-01');
+ functest_a_1 
+--------------
+ t
+(1 row)
+
+SELECT functest_A_2(ARRAY['1', '2', '3']);
+ functest_a_2 
+--------------
+            1
+(1 row)
+
+SELECT functest_A_3();
+ functest_a_3 
+--------------
+ f
+(1 row)
 
 --
 -- IMMUTABLE | STABLE | VOLATILE
