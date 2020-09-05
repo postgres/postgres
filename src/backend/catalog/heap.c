@@ -710,12 +710,6 @@ CheckAttributeType(const char *attname,
 }
 
 /*
- * Cap the maximum amount of bytes allocated for InsertPgAttributeTuples()
- * slots.
- */
-#define MAX_PGATTRIBUTE_INSERT_BYTES 65535
-
-/*
  * InsertPgAttributeTuples
  *		Construct and insert a set of tuples in pg_attribute.
  *
@@ -750,7 +744,7 @@ InsertPgAttributeTuples(Relation pg_attribute_rel,
 
 	/* Initialize the number of slots to use */
 	nslots = Min(tupdesc->natts,
-				 (MAX_PGATTRIBUTE_INSERT_BYTES / sizeof(FormData_pg_attribute)));
+				 (MAX_CATALOG_MULTI_INSERT_BYTES / sizeof(FormData_pg_attribute)));
 	slot = palloc(sizeof(TupleTableSlot *) * nslots);
 	for (int i = 0; i < nslots; i++)
 		slot[i] = MakeSingleTupleTableSlot(td, &TTSOpsHeapTuple);

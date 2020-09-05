@@ -30,6 +30,12 @@
 typedef struct ResultRelInfo *CatalogIndexState;
 
 /*
+ * Cap the maximum amount of bytes allocated for multi-inserts with system
+ * catalogs, limiting the number of slots used.
+ */
+#define MAX_CATALOG_MULTI_INSERT_BYTES 65535
+
+/*
  * indexing.c prototypes
  */
 extern CatalogIndexState CatalogOpenIndexes(Relation heapRel);
