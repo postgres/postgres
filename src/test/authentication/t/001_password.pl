@@ -95,6 +95,7 @@ my $pgpassfile = "${TestLib::tmp_check}/pgpass";
 delete $ENV{"PGPASSWORD"};
 $ENV{"PGPASSFILE"} = $pgpassfile;
 
+unlink($pgpassfile);
 append_to_file($pgpassfile, qq!
 # This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file.
 *:*:postgres:scram_role:pass:this is not part of the password.
