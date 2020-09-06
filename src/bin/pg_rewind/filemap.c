@@ -253,22 +253,10 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 					const char *link_target)
 {
 	bool		exists;
-	char		localpath[MAXPGPATH];
-	struct stat statbuf;
 	file_entry_t key;
 	file_entry_t *key_ptr;
 	filemap_t  *map = filemap;
 	file_entry_t *entry;
-
-	snprintf(localpath, sizeof(localpath), "%s/%s", datadir_target, path);
-	if (lstat(localpath, &statbuf) < 0)
-	{
-		if (errno != ENOENT)
-			pg_fatal("could not stat file \"%s\": %s\n",
-					 localpath, strerror(errno));
-
-		exists = false;
-	}
 
 	if (map->array == NULL)
 	{
