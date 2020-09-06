@@ -342,8 +342,6 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 					const char *link_target)
 {
 	bool		exists;
-	char		localpath[MAXPGPATH];
-	struct stat statbuf;
 	file_entry_t key;
 	file_entry_t *key_ptr;
 	filemap_t  *map = filemap;
@@ -354,16 +352,6 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	 * from the target data folder all paths which have been filtered out from
 	 * the source data folder when processing the source files.
 	 */
-
-	snprintf(localpath, sizeof(localpath), "%s/%s", datadir_target, path);
-	if (lstat(localpath, &statbuf) < 0)
-	{
-		if (errno != ENOENT)
-			pg_fatal("could not stat file \"%s\": %m",
-					 localpath);
-
-		exists = false;
-	}
 
 	if (map->array == NULL)
 	{
