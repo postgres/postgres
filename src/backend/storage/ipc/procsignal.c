@@ -430,7 +430,7 @@ WaitForProcSignalBarrier(uint64 generation)
  * cannot safely access the barrier generation inside the signal handler as
  * 64bit atomics might use spinlock based emulation, even for reads. As this
  * routine only gets called when PROCSIG_BARRIER is sent that won't cause a
- * lot fo unnecessary work.
+ * lot of unnecessary work.
  */
 static void
 HandleProcSignalBarrierInterrupt(void)
