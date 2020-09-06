@@ -470,9 +470,9 @@ readfile(const char *path)
 {
 	char	  **result;
 	FILE	   *infile;
+	StringInfoData line;
 	int			maxlines;
 	int			n;
-	char	   *ln;
 
 	if ((infile = fopen(path, "r")) == NULL)
 	{
@@ -480,11 +480,13 @@ readfile(const char *path)
 		exit(1);
 	}
 
+	initStringInfo(&line);
+
 	maxlines = 1024;
 	result = (char **) pg_malloc(maxlines * sizeof(char *));
 
 	n = 0;
-	while ((ln = pg_get_line(infile)) != NULL)
+	while (pg_get_line_append(infile, &line))
 	{
 		/* make sure there will be room for a trailing NULL pointer */
 		if (n >= maxlines - 1)
@@ -493,9 +495,13 @@ readfile(const char *path)
 			result = (char **) pg_realloc(result, maxlines * sizeof(char *));
 		}
 
-		result[n++] = ln;
+		result[n++] = pg_strdup(line.data);
+
+		resetStringInfo(&line);
 	}
 	result[n] = NULL;
+
+	pfree(line.data);
 
 	fclose(infile);
 

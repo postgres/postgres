@@ -502,33 +502,8 @@ tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 		/* Collect the next input line, handling backslash continuations */
 		resetStringInfo(&buf);
 
-		while (!feof(file) && !ferror(file))
+		while (pg_get_line_append(file, &buf))
 		{
-			/* Make sure there's a reasonable amount of room in the buffer */
-			enlargeStringInfo(&buf, 128);
-
-			/* Read some data, appending it to what we already have */
-			if (fgets(buf.data + buf.len, buf.maxlen - buf.len, file) == NULL)
-			{
-				int			save_errno = errno;
-
-				if (!ferror(file))
-					break;		/* normal EOF */
-				/* I/O error! */
-				ereport(elevel,
-						(errcode_for_file_access(),
-						 errmsg("could not read file \"%s\": %m", filename)));
-				err_msg = psprintf("could not read file \"%s\": %s",
-								   filename, strerror(save_errno));
-				resetStringInfo(&buf);
-				break;
-			}
-			buf.len += strlen(buf.data + buf.len);
-
-			/* If we haven't got a whole line, loop to read more */
-			if (!(buf.len > 0 && buf.data[buf.len - 1] == '\n'))
-				continue;
-
 			/* Strip trailing newline, including \r in case we're on Windows */
 			buf.len = pg_strip_crlf(buf.data);
 
@@ -548,6 +523,19 @@ tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 			}
 
 			/* Nope, so we have the whole line */
+			break;
+		}
+
+		if (ferror(file))
+		{
+			/* I/O error! */
+			int			save_errno = errno;
+
+			ereport(elevel,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m", filename)));
+			err_msg = psprintf("could not read file \"%s\": %s",
+							   filename, strerror(save_errno));
 			break;
 		}
 

@@ -41,6 +41,11 @@
  * Note that while I/O errors are reflected back to the caller to be
  * dealt with, an OOM condition for the palloc'd buffer will not be;
  * there'll be an ereport(ERROR) or exit(1) inside stringinfo.c.
+ *
+ * Also note that the palloc'd buffer is usually a lot longer than
+ * strictly necessary, so it may be inadvisable to use this function
+ * to collect lots of long-lived data.  A less memory-hungry option
+ * is to use pg_get_line_append() in a loop, then pstrdup() each line.
  */
 char *
 pg_get_line(FILE *stream)
@@ -49,21 +54,7 @@ pg_get_line(FILE *stream)
 
 	initStringInfo(&buf);
 
-	/* Read some data, appending it to whatever we already have */
-	while (fgets(buf.data + buf.len, buf.maxlen - buf.len, stream) != NULL)
-	{
-		buf.len += strlen(buf.data + buf.len);
-
-		/* Done if we have collected a newline */
-		if (buf.len > 0 && buf.data[buf.len - 1] == '\n')
-			return buf.data;
-
-		/* Make some more room in the buffer, and loop to read more data */
-		enlargeStringInfo(&buf, 128);
-	}
-
-	/* Did fgets() fail because of an I/O error? */
-	if (ferror(stream))
+	if (!pg_get_line_append(stream, &buf))
 	{
 		/* ensure that free() doesn't mess up errno */
 		int			save_errno = errno;
@@ -73,13 +64,50 @@ pg_get_line(FILE *stream)
 		return NULL;
 	}
 
-	/* If we read no data before reaching EOF, we should return NULL */
-	if (buf.len == 0)
+	return buf.data;
+}
+
+/*
+ * pg_get_line_append()
+ *
+ * This has similar behavior to pg_get_line(), and thence to fgets(),
+ * except that the collected data is appended to whatever is in *buf.
+ *
+ * Returns true if a line was successfully collected (including the
+ * case of a non-newline-terminated line at EOF).  Returns false if
+ * there was an I/O error or no data was available before EOF.
+ * (Check ferror(stream) to distinguish these cases.)
+ *
+ * In the false-result case, the contents of *buf are logically unmodified,
+ * though it's possible that the buffer has been resized.
+ */
+bool
+pg_get_line_append(FILE *stream, StringInfo buf)
+{
+	int			orig_len = buf->len;
+
+	/* Read some data, appending it to whatever we already have */
+	while (fgets(buf->data + buf->len, buf->maxlen - buf->len, stream) != NULL)
 	{
-		pfree(buf.data);
-		return NULL;
+		buf->len += strlen(buf->data + buf->len);
+
+		/* Done if we have collected a newline */
+		if (buf->len > orig_len && buf->data[buf->len - 1] == '\n')
+			return true;
+
+		/* Make some more room in the buffer, and loop to read more data */
+		enlargeStringInfo(buf, 128);
 	}
 
-	/* No newline at EOF ... so return what we have */
-	return buf.data;
+	/* Check for I/O errors and EOF */
+	if (ferror(stream) || buf->len == orig_len)
+	{
+		/* Discard any data we collected before detecting error */
+		buf->len = orig_len;
+		buf->data[orig_len] = '\0';
+		return false;
+	}
+
+	/* No newline at EOF, but we did collect some data */
+	return true;
 }
