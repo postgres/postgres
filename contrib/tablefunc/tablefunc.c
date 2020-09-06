@@ -49,7 +49,6 @@ static HTAB *load_categories_hash(char *cats_sql, MemoryContext per_query_ctx);
 static Tuplestorestate *get_crosstab_tuplestore(char *sql,
 												HTAB *crosstab_hash,
 												TupleDesc tupdesc,
-												MemoryContext per_query_ctx,
 												bool randomAccess);
 static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial);
 static bool compatCrosstabTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
@@ -680,7 +679,6 @@ crosstab_hash(PG_FUNCTION_ARGS)
 	rsinfo->setResult = get_crosstab_tuplestore(sql,
 												crosstab_hash,
 												tupdesc,
-												per_query_ctx,
 												rsinfo->allowedModes & SFRM_Materialize_Random);
 
 	/*
@@ -793,7 +791,6 @@ static Tuplestorestate *
 get_crosstab_tuplestore(char *sql,
 						HTAB *crosstab_hash,
 						TupleDesc tupdesc,
-						MemoryContext per_query_ctx,
 						bool randomAccess)
 {
 	Tuplestorestate *tupstore;
