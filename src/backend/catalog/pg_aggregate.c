@@ -564,8 +564,8 @@ AggregateCreate(const char *aggName,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("moving-aggregate implementation returns type %s, but plain implementation returns type %s",
-							format_type_be(aggmTransType),
-							format_type_be(aggTransType))));
+							format_type_be(rettype),
+							format_type_be(finaltype))));
 	}
 
 	/* handle sortop, if supplied */
