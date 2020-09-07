@@ -8191,7 +8191,6 @@ mul_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	int			res_weight;
 	int			maxdigits;
 	int		   *dig;
-	int		   *dig_i1_2;
 	int			carry;
 	int			maxdig;
 	int			newdig;
@@ -8327,7 +8326,7 @@ mul_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 		 * Add the appropriate multiple of var2 into the accumulator.
 		 *
 		 * As above, digits of var2 can be ignored if they don't contribute,
-		 * so we only include digits for which i1+i2+2 <= res_ndigits - 1.
+		 * so we only include digits for which i1+i2+2 < res_ndigits.
 		 *
 		 * This inner loop is the performance bottleneck for multiplication,
 		 * so we want to keep it simple enough so that it can be
@@ -8336,10 +8335,13 @@ mul_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 		 * Since we aren't propagating carries in this loop, the order does
 		 * not matter.
 		 */
-		i = Min(var2ndigits - 1, res_ndigits - i1 - 3);
-		dig_i1_2 = &dig[i1 + 2];
-		for (i2 = 0; i2 <= i; i2++)
-			dig_i1_2[i2] += var1digit * var2digits[i2];
+		{
+			int			i2limit = Min(var2ndigits, res_ndigits - i1 - 2);
+			int		   *dig_i1_2 = &dig[i1 + 2];
+
+			for (i2 = 0; i2 < i2limit; i2++)
+				dig_i1_2[i2] += var1digit * var2digits[i2];
+		}
 	}
 
 	/*
