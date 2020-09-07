@@ -3100,6 +3100,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
    </para>
 
    <simplelist>
+    <member>Abhijit Menon-Sen</member>
     <member>Adam Lee</member>
     <member>Adam Scott</member>
     <member>Adé Heyward</member>
@@ -3256,16 +3257,19 @@ Author: Peter Geoghegan <pg@bowt.ie>
     <member>James Gray</member>
     <member>James Inform</member>
     <member>James Lucas</member>
+    <member>Jan Mussler</member>
     <member>Jaroslav Sivy</member>
     <member>Jeevan Chalke</member>
     <member>Jeevan Ladhe</member>
     <member>Jeff Davis</member>
     <member>Jeff Janes</member>
     <member>Jehan-Guillaume de Rorthais</member>
+    <member>Jeremy Evans</member>
     <member>Jeremy Schneider</member>
     <member>Jeremy Smith</member>
     <member>Jerry Sievers</member>
     <member>Jesper Pedersen</member>
+    <member>Jesse Kinkead</member>
     <member>Jesse Zhang</member>
     <member>Jian Zhang</member>
     <member>Jie Zhang</member>
@@ -3289,6 +3293,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
     <member>Karl O. Pinc</member>
     <member>Keisuke Kuroda</member>
     <member>Keith Fiske</member>
+    <member>Kelly Min</member>
     <member>Ken Tanzer</member>
     <member>Kirill Bychik</member>
     <member>Kirk Jamison</member>
@@ -3346,6 +3351,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
     <member>Noah Misch</member>
     <member>Noriyoshi Shinoda</member>
     <member>Oleg Bartunov</member>
+    <member>Oleg Samoilov</member>
     <member>Oleksii Kliukin</member>
     <member>Ondrej Jirman</member>
     <member>Panagiotis Mavrogiorgos</member>
@@ -3354,6 +3360,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
     <member>Paul Guo</member>
     <member>Paul Jungwirth</member>
     <member>Paul Ramsey</member>
+    <member>Paul Sivash</member>
     <member>Paul Spencer</member>
     <member>Pavan Deolasee</member>
     <member>Pavel Borisov</member>
@@ -3391,6 +3398,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
     <member>Robert Ford</member>
     <member>Robert Haas</member>
     <member>Robert Treat</member>
+    <member>Robin Abbi</member>
     <member>Robins Tharakan</member>
     <member>Roger Harkavy</member>
     <member>Roman Peshkurov</member>
