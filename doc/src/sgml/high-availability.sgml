@@ -305,7 +305,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>File System Repl.</entry>
      <entry>Write-Ahead Log Shipping</entry>
      <entry>Logical Repl.</entry>
-     <entry>Trigger-Based Repl.</entry>
+     <entry>Trigger-&zwsp;Based Repl.</entry>
      <entry>SQL Repl. Middle-ware</entry>
      <entry>Async. MM Repl.</entry>
      <entry>Sync. MM Repl.</entry>
