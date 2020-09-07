@@ -2416,6 +2416,7 @@ cost_agg(Path *path, PlannerInfo *root,
 		double		pages;
 		double		pages_written = 0.0;
 		double		pages_read = 0.0;
+		double		spill_cost;
 		double		hashentrysize;
 		double		nbatches;
 		Size		mem_limit;
@@ -2453,9 +2454,21 @@ cost_agg(Path *path, PlannerInfo *root,
 		pages = relation_byte_size(input_tuples, input_width) / BLCKSZ;
 		pages_written = pages_read = pages * depth;
 
+		/*
+		 * HashAgg has somewhat worse IO behavior than Sort on typical
+		 * hardware/OS combinations. Account for this with a generic penalty.
+		 */
+		pages_read *= 2.0;
+		pages_written *= 2.0;
+
 		startup_cost += pages_written * random_page_cost;
 		total_cost += pages_written * random_page_cost;
 		total_cost += pages_read * seq_page_cost;
+
+		/* account for CPU cost of spilling a tuple and reading it back */
+		spill_cost = depth * input_tuples * 2.0 * cpu_tuple_cost;
+		startup_cost += spill_cost;
+		total_cost += spill_cost;
 	}
 
 	/*
