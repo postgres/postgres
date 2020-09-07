@@ -466,9 +466,12 @@ BITCODE_CFLAGS=""
 user_BITCODE_CXXFLAGS=$BITCODE_CXXFLAGS
 BITCODE_CXXFLAGS=""
 
-# set CFLAGS_VECTOR from the environment, if available
-if test "$ac_env_CFLAGS_VECTOR_set" = set; then
-  CFLAGS_VECTOR=$ac_env_CFLAGS_VECTOR_value
+# set CFLAGS_UNROLL_LOOPS and CFLAGS_VECTORIZE from the environment, if present
+if test "$ac_env_CFLAGS_UNROLL_LOOPS_set" = set; then
+  CFLAGS_UNROLL_LOOPS=$ac_env_CFLAGS_UNROLL_LOOPS_value
+fi
+if test "$ac_env_CFLAGS_VECTORIZE_set" = set; then
+  CFLAGS_VECTORIZE=$ac_env_CFLAGS_VECTORIZE_value
 fi
 
 # Some versions of GCC support some additional useful warning flags.
@@ -512,9 +515,10 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # Disable FP optimizations that cause various errors on gcc 4.5+ or maybe 4.6+
   PGAC_PROG_CC_CFLAGS_OPT([-fexcess-precision=standard])
   PGAC_PROG_CXX_CFLAGS_OPT([-fexcess-precision=standard])
+  # Optimization flags for specific files that benefit from loop unrolling
+  PGAC_PROG_CC_VAR_OPT(CFLAGS_UNROLL_LOOPS, [-funroll-loops])
   # Optimization flags for specific files that benefit from vectorization
-  PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTOR, [-funroll-loops])
-  PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTOR, [-ftree-vectorize])
+  PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTORIZE, [-ftree-vectorize])
   # We want to suppress clang's unhelpful unused-command-line-argument warnings
   # but gcc won't complain about unrecognized -Wno-foo switches, so we have to
   # test for the positive form and if that works, add the negative form
@@ -555,7 +559,8 @@ elif test "$PORTNAME" = "hpux"; then
   PGAC_PROG_CXX_CFLAGS_OPT([+Olibmerrno])
 fi
 
-AC_SUBST(CFLAGS_VECTOR)
+AC_SUBST(CFLAGS_UNROLL_LOOPS)
+AC_SUBST(CFLAGS_VECTORIZE)
 
 # Determine flags used to emit bitcode for JIT inlining. Need to test
 # for behaviour changing compiler flags, to keep compatibility with
