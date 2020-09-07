@@ -56,6 +56,7 @@ OBJS_COMMON = \
 	exec.o \
 	f2s.o \
 	file_perm.o \
+	file_utils.o \
 	hashfn.o \
 	ip.o \
 	jsonapi.o \
@@ -91,7 +92,6 @@ endif
 OBJS_FRONTEND = \
 	$(OBJS_COMMON) \
 	fe_memutils.o \
-	file_utils.o \
 	logging.o \
 	restricted_token.o \
 	sprompt.o
