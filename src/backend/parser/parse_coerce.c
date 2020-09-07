@@ -2155,8 +2155,8 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			else
 			{
 				/*
-				 * Only way to get here is if all the polymorphic args have
-				 * UNKNOWN inputs
+				 * Only way to get here is if all the family-1 polymorphic
+				 * arguments have UNKNOWN inputs.
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -2254,10 +2254,10 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			else
 			{
 				/*
-				 * Only way to get here is if all the ANYCOMPATIBLE args have
-				 * UNKNOWN inputs.  Resolve to TEXT as select_common_type()
-				 * would do.  That doesn't license us to use TEXTRANGE,
-				 * though.
+				 * Only way to get here is if all the family-2 polymorphic
+				 * arguments have UNKNOWN inputs.  Resolve to TEXT as
+				 * select_common_type() would do.  That doesn't license us to
+				 * use TEXTRANGE, though.
 				 */
 				anycompatible_typeid = TEXTOID;
 				anycompatible_array_typeid = TEXTARRAYOID;
@@ -2269,7 +2269,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			}
 		}
 
-		/* replace polymorphic types by selected types */
+		/* replace family-2 polymorphic types by selected types */
 		for (int j = 0; j < nargs; j++)
 		{
 			Oid			decl_type = declared_arg_types[j];
@@ -2285,11 +2285,11 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 	}
 
 	/*
-	 * If we had any UNKNOWN inputs for polymorphic arguments, re-scan to
-	 * assign correct types to them.
+	 * If we had any UNKNOWN inputs for family-1 polymorphic arguments,
+	 * re-scan to assign correct types to them.
 	 *
 	 * Note: we don't have to consider unknown inputs that were matched to
-	 * ANYCOMPATIBLE-family arguments, because we forcibly updated their
+	 * family-2 polymorphic arguments, because we forcibly updated their
 	 * declared_arg_types[] positions just above.
 	 */
 	if (have_poly_unknowns)
