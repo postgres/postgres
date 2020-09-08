@@ -1082,6 +1082,26 @@ SELECT f_test(100);
 DROP FUNCTION f_test(int);
 
 -- ===================================================================
+-- REINDEX
+-- ===================================================================
+-- remote table is not created here
+CREATE FOREIGN TABLE reindex_foreign (c1 int, c2 int)
+  SERVER loopback2 OPTIONS (table_name 'reindex_local');
+REINDEX TABLE reindex_foreign; -- error
+REINDEX TABLE CONCURRENTLY reindex_foreign; -- error
+DROP FOREIGN TABLE reindex_foreign;
+-- partitions and foreign tables
+CREATE TABLE reind_fdw_parent (c1 int) PARTITION BY RANGE (c1);
+CREATE TABLE reind_fdw_0_10 PARTITION OF reind_fdw_parent
+  FOR VALUES FROM (0) TO (10);
+CREATE FOREIGN TABLE reind_fdw_10_20 PARTITION OF reind_fdw_parent
+  FOR VALUES FROM (10) TO (20)
+  SERVER loopback OPTIONS (table_name 'reind_local_10_20');
+REINDEX TABLE reind_fdw_parent; -- ok
+REINDEX TABLE CONCURRENTLY reind_fdw_parent; -- ok
+DROP TABLE reind_fdw_parent;
+
+-- ===================================================================
 -- conversion error
 -- ===================================================================
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE int;

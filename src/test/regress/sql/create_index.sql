@@ -903,12 +903,6 @@ CREATE INDEX concur_reindex_part_index_0_2 ON ONLY concur_reindex_part_0_2 (c1);
 ALTER INDEX concur_reindex_part_index_0 ATTACH PARTITION concur_reindex_part_index_0_2;
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
   ORDER BY relid, level;
--- REINDEX fails for partitioned indexes
-REINDEX INDEX concur_reindex_part_index_10;
-REINDEX INDEX CONCURRENTLY concur_reindex_part_index_10;
--- REINDEX is a no-op for partitioned tables
-REINDEX TABLE concur_reindex_part_10;
-REINDEX TABLE CONCURRENTLY concur_reindex_part_10;
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
   ORDER BY relid, level;
 -- REINDEX should preserve dependencies of partition tree.
@@ -948,6 +942,88 @@ WHERE classid = 'pg_class'::regclass AND
   ORDER BY 1, 2;
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
   ORDER BY relid, level;
+
+-- REINDEX for partitioned indexes
+-- REINDEX TABLE fails for partitioned indexes
+-- Top-most parent index
+REINDEX TABLE concur_reindex_part_index; -- error
+REINDEX TABLE CONCURRENTLY concur_reindex_part_index; -- error
+-- Partitioned index with no leaves
+REINDEX TABLE concur_reindex_part_index_10; -- error
+REINDEX TABLE CONCURRENTLY concur_reindex_part_index_10; -- error
+-- Cannot run in a transaction block
+BEGIN;
+REINDEX INDEX concur_reindex_part_index;
+ROLLBACK;
+-- Helper functions to track changes of relfilenodes in a partition tree.
+-- Create a table tracking the relfilenode state.
+CREATE OR REPLACE FUNCTION create_relfilenode_part(relname text, indname text)
+  RETURNS VOID AS
+  $func$
+  BEGIN
+  EXECUTE format('
+    CREATE TABLE %I AS
+      SELECT oid, relname, relfilenode, relkind, reltoastrelid
+      FROM pg_class
+      WHERE oid IN
+         (SELECT relid FROM pg_partition_tree(''%I''));',
+	 relname, indname);
+  END
+  $func$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION compare_relfilenode_part(tabname text)
+  RETURNS TABLE (relname name, relkind "char", state text) AS
+  $func$
+  BEGIN
+    RETURN QUERY EXECUTE
+      format(
+        'SELECT  b.relname,
+                 b.relkind,
+                 CASE WHEN a.relfilenode = b.relfilenode THEN ''relfilenode is unchanged''
+                 ELSE ''relfilenode has changed'' END
+           -- Do not join with OID here as CONCURRENTLY changes it.
+           FROM %I b JOIN pg_class a ON b.relname = a.relname
+           ORDER BY 1;', tabname);
+  END
+  $func$ LANGUAGE plpgsql;
+--  Check that expected relfilenodes are changed, non-concurrent case.
+SELECT create_relfilenode_part('reindex_index_status', 'concur_reindex_part_index');
+REINDEX INDEX concur_reindex_part_index;
+SELECT * FROM compare_relfilenode_part('reindex_index_status');
+DROP TABLE reindex_index_status;
+-- concurrent case.
+SELECT create_relfilenode_part('reindex_index_status', 'concur_reindex_part_index');
+REINDEX INDEX CONCURRENTLY concur_reindex_part_index;
+SELECT * FROM compare_relfilenode_part('reindex_index_status');
+DROP TABLE reindex_index_status;
+
+-- REINDEX for partitioned tables
+-- REINDEX INDEX fails for partitioned tables
+-- Top-most parent
+REINDEX INDEX concur_reindex_part; -- error
+REINDEX INDEX CONCURRENTLY concur_reindex_part; -- error
+-- Partitioned with no leaves
+REINDEX INDEX concur_reindex_part_10; -- error
+REINDEX INDEX CONCURRENTLY concur_reindex_part_10; -- error
+-- Cannot run in a transaction block
+BEGIN;
+REINDEX TABLE concur_reindex_part;
+ROLLBACK;
+-- Check that expected relfilenodes are changed, non-concurrent case.
+-- Note that the partition tree changes of the *indexes* need to be checked.
+SELECT create_relfilenode_part('reindex_index_status', 'concur_reindex_part_index');
+REINDEX TABLE concur_reindex_part;
+SELECT * FROM compare_relfilenode_part('reindex_index_status');
+DROP TABLE reindex_index_status;
+-- concurrent case.
+SELECT create_relfilenode_part('reindex_index_status', 'concur_reindex_part_index');
+REINDEX TABLE CONCURRENTLY concur_reindex_part;
+SELECT * FROM compare_relfilenode_part('reindex_index_status');
+DROP TABLE reindex_index_status;
+
+DROP FUNCTION create_relfilenode_part;
+DROP FUNCTION compare_relfilenode_part;
+
+-- Cleanup of partition tree used for REINDEX test.
 DROP TABLE concur_reindex_part;
 
 -- Check errors

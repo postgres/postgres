@@ -77,6 +77,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
+#include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
@@ -3486,11 +3487,12 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 									 iRel->rd_rel->relam);
 
 	/*
-	 * The case of reindexing partitioned tables and indexes is handled
-	 * differently by upper layers, so this case shouldn't arise.
+	 * Partitioned indexes should never get processed here, as they have no
+	 * physical storage.
 	 */
 	if (iRel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
-		elog(ERROR, "unsupported relation kind for index \"%s\"",
+		elog(ERROR, "cannot reindex partitioned index \"%s.%s\"",
+			 get_namespace_name(RelationGetNamespace(iRel)),
 			 RelationGetRelationName(iRel));
 
 	/*
@@ -3707,20 +3709,13 @@ reindex_relation(Oid relid, int flags, int options)
 		return false;
 
 	/*
-	 * This may be useful when implemented someday; but that day is not today.
-	 * For now, avoid erroring out when called in a multi-table context
-	 * (REINDEX SCHEMA) and happen to come across a partitioned table.  The
-	 * partitions may be reindexed on their own anyway.
+	 * Partitioned tables should never get processed here, as they have no
+	 * physical storage.
 	 */
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-	{
-		ereport(WARNING,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("REINDEX of partitioned tables is not yet implemented, skipping \"%s\"",
-						RelationGetRelationName(rel))));
-		table_close(rel, ShareLock);
-		return false;
-	}
+		elog(ERROR, "cannot reindex partitioned table \"%s.%s\"",
+			 get_namespace_name(RelationGetNamespace(rel)),
+			 RelationGetRelationName(rel));
 
 	toast_relid = rel->rd_rel->reltoastrelid;
 
