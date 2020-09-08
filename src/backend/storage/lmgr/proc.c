@@ -1318,7 +1318,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			 * Only do it if the worker is not working to protect against Xid
 			 * wraparound.
 			 */
-			vacuumFlags = ProcGlobal->vacuumFlags[proc->pgxactoff];
+			vacuumFlags = ProcGlobal->vacuumFlags[autovac->pgxactoff];
 			if ((vacuumFlags & PROC_IS_AUTOVACUUM) &&
 				!(vacuumFlags & PROC_VACUUM_FOR_WRAPAROUND))
 			{
