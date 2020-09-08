@@ -1,0 +1,49 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1b s1a s2b s2i s1c s2c s2s
+step s1b: begin;
+step s1a: alter table tpart attach partition tpart_2 for values from (100) to (200);
+step s2b: begin;
+step s2i: insert into tpart values (110,'xxx'), (120, 'yyy'), (150, 'zzz'); <waiting ...>
+step s1c: commit;
+step s2i: <... completed>
+error in steps s1c s2i: ERROR:  new row for relation "tpart_default" violates partition constraint
+step s2c: commit;
+step s2s: select tableoid::regclass, * from tpart;
+tableoid       i              j              
+
+tpart_2        110            xxx            
+tpart_2        120            yyy            
+tpart_2        150            zzz            
+
+starting permutation: s1b s1a s2b s2i2 s1c s2c s2s
+step s1b: begin;
+step s1a: alter table tpart attach partition tpart_2 for values from (100) to (200);
+step s2b: begin;
+step s2i2: insert into tpart_default (i, j) values (110, 'xxx'), (120, 'yyy'), (150, 'zzz'); <waiting ...>
+step s1c: commit;
+step s2i2: <... completed>
+error in steps s1c s2i2: ERROR:  new row for relation "tpart_default" violates partition constraint
+step s2c: commit;
+step s2s: select tableoid::regclass, * from tpart;
+tableoid       i              j              
+
+tpart_2        110            xxx            
+tpart_2        120            yyy            
+tpart_2        150            zzz            
+
+starting permutation: s1b s2b s2i s1a s2c s1c s2s
+step s1b: begin;
+step s2b: begin;
+step s2i: insert into tpart values (110,'xxx'), (120, 'yyy'), (150, 'zzz');
+step s1a: alter table tpart attach partition tpart_2 for values from (100) to (200); <waiting ...>
+step s2c: commit;
+step s1a: <... completed>
+error in steps s2c s1a: ERROR:  updated partition constraint for default partition "tpart_default_default" would be violated by some row
+step s1c: commit;
+step s2s: select tableoid::regclass, * from tpart;
+tableoid       i              j              
+
+tpart_default_default110            xxx            
+tpart_default_default120            yyy            
+tpart_default_default150            zzz            
