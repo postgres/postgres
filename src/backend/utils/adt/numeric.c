@@ -492,7 +492,7 @@ static void dump_var(const char *str, NumericVar *var);
 			 pfree(buf); \
 	} while (0)
 
-#define init_var(v)		MemSetAligned(v, 0, sizeof(NumericVar))
+#define init_var(v)		memset(v, 0, sizeof(NumericVar))
 
 #define NUMERIC_DIGITS(num) (NUMERIC_HEADER_IS_SHORT(num) ? \
 	(num)->choice.n_short.n_data : (num)->choice.n_long.n_data)
