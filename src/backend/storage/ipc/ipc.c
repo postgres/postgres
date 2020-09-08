@@ -381,9 +381,9 @@ on_shmem_exit(pg_on_exit_callback function, Datum arg)
  *		cancel_before_shmem_exit
  *
  *		this function removes a previously-registered before_shmem_exit
- *		callback.  For simplicity, only the latest entry can be
- *		removed.  (We could work harder but there is no need for
- *		current uses.)
+ *		callback.  We only look at the latest entry for removal, as we
+ * 		expect callers to add and remove temporary before_shmem_exit
+ * 		callbacks in strict LIFO order.
  * ----------------------------------------------------------------
  */
 void
@@ -394,6 +394,9 @@ cancel_before_shmem_exit(pg_on_exit_callback function, Datum arg)
 		== function &&
 		before_shmem_exit_list[before_shmem_exit_index - 1].arg == arg)
 		--before_shmem_exit_index;
+	else
+		elog(ERROR, "before_shmem_exit callback (%p,0x%llx) is not the latest entry",
+			 function, (long long) arg);
 }
 
 /* ----------------------------------------------------------------
