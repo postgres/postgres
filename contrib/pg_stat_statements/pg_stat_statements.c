@@ -376,7 +376,7 @@ static void JumbleRowMarks(pgssJumbleState *jstate, List *rowMarks);
 static void JumbleExpr(pgssJumbleState *jstate, Node *node);
 static void RecordConstLocation(pgssJumbleState *jstate, int location);
 static char *generate_normalized_query(pgssJumbleState *jstate, const char *query,
-									   int query_loc, int *query_len_p, int encoding);
+									   int query_loc, int *query_len_p);
 static void fill_in_constant_lengths(pgssJumbleState *jstate, const char *query,
 									 int query_loc);
 static int	comp_location(const void *a, const void *b);
@@ -1336,8 +1336,7 @@ pgss_store(const char *query, uint64 queryId,
 			LWLockRelease(pgss->lock);
 			norm_query = generate_normalized_query(jstate, query,
 												   query_location,
-												   &query_len,
-												   encoding);
+												   &query_len);
 			LWLockAcquire(pgss->lock, LW_SHARED);
 		}
 
@@ -3235,7 +3234,7 @@ RecordConstLocation(pgssJumbleState *jstate, int location)
  */
 static char *
 generate_normalized_query(pgssJumbleState *jstate, const char *query,
-						  int query_loc, int *query_len_p, int encoding)
+						  int query_loc, int *query_len_p)
 {
 	char	   *norm_query;
 	int			query_len = *query_len_p;
