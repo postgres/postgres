@@ -752,6 +752,8 @@ SELECT power('-inf'::numeric, '-inf');
 -- ******************************
 -- numeric AVG used to fail on some platforms
 SELECT AVG(val) FROM num_data;
+SELECT MAX(val) FROM num_data;
+SELECT MIN(val) FROM num_data;
 SELECT STDDEV(val) FROM num_data;
 SELECT VARIANCE(val) FROM num_data;
 

@@ -1096,6 +1096,18 @@ SELECT AVG(val) FROM num_data;
  -13430913.592242320700
 (1 row)
 
+SELECT MAX(val) FROM num_data;
+        max         
+--------------------
+ 7799461.4119000000
+(1 row)
+
+SELECT MIN(val) FROM num_data;
+         min          
+----------------------
+ -83028485.0000000000
+(1 row)
+
 SELECT STDDEV(val) FROM num_data;
             stddev             
 -------------------------------
