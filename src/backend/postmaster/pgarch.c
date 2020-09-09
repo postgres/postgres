@@ -96,7 +96,6 @@ static pid_t pgarch_forkexec(void);
 #endif
 
 NON_EXEC_STATIC void PgArchiverMain(int argc, char *argv[]) pg_attribute_noreturn();
-static void pgarch_exit(SIGNAL_ARGS);
 static void pgarch_waken(SIGNAL_ARGS);
 static void pgarch_waken_stop(SIGNAL_ARGS);
 static void pgarch_MainLoop(void);
@@ -229,7 +228,7 @@ PgArchiverMain(int argc, char *argv[])
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
-	pqsignal(SIGQUIT, pgarch_exit);
+	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, pgarch_waken);
@@ -244,14 +243,6 @@ PgArchiverMain(int argc, char *argv[])
 	pgarch_MainLoop();
 
 	exit(0);
-}
-
-/* SIGQUIT signal handler for archiver process */
-static void
-pgarch_exit(SIGNAL_ARGS)
-{
-	/* SIGQUIT means curl up and die ... */
-	exit(1);
 }
 
 /* SIGUSR1 signal handler for archiver process */
