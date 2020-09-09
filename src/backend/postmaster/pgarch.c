@@ -255,8 +255,16 @@ PgArchiverMain(int argc, char *argv[])
 static void
 pgarch_exit(SIGNAL_ARGS)
 {
-	/* SIGQUIT means curl up and die ... */
-	exit(1);
+	/*
+	 * We DO NOT want to run proc_exit() or atexit() callbacks; they wouldn't
+	 * be safe to run from a signal handler.  Just nail the windows shut and
+	 * get out of town.
+	 *
+	 * For consistency with other postmaster children, we do _exit(2) not
+	 * _exit(1).  The postmaster currently will treat these exit codes alike,
+	 * but it seems better to report that we died in an unexpected way.
+	 */
+	_exit(2);
 }
 
 /* SIGHUP signal handler for archiver process */
