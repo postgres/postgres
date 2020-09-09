@@ -401,19 +401,19 @@
   </para>
 
   <para>
-   B-trees require a comparison support function,
-   and allow three additional support functions to be
-   supplied at the operator class author's option, as shown in <xref
-   linkend="xindex-btree-support-table"/>.
-   The requirements for these support functions are explained further in
-   <xref linkend="btree-support-funcs"/>.
-  </para>
-
-  <para>
    Additionally, some opclasses allow users to specify parameters which
    control their behavior.  Each builtin index access method has an optional
    <function>options</function> support function, which defines a set of
    opclass-specific parameters.
+  </para>
+
+  <para>
+   B-trees require a comparison support function,
+   and allow four additional support functions to be
+   supplied at the operator class author's option, as shown in <xref
+   linkend="xindex-btree-support-table"/>.
+   The requirements for these support functions are explained further in
+   <xref linkend="btree-support-funcs"/>.
   </para>
 
    <table tocentry="1" id="xindex-btree-support-table">
@@ -469,8 +469,8 @@
    </table>
 
   <para>
-   Hash indexes require one support function, and allow a second one to be
-   supplied at the operator class author's option, as shown in <xref
+   Hash indexes require one support function, and allow two additional ones to
+   be supplied at the operator class author's option, as shown in <xref
    linkend="xindex-hash-support-table"/>.
   </para>
 
@@ -511,7 +511,7 @@
    </table>
 
   <para>
-   GiST indexes have nine support functions, two of which are optional,
+   GiST indexes have ten support functions, three of which are optional,
    as shown in <xref linkend="xindex-gist-support-table"/>.
    (For more information see <xref linkend="gist"/>.)
   </para>
@@ -594,7 +594,7 @@
    </table>
 
   <para>
-   SP-GiST indexes require five support functions, as
+   SP-GiST indexes have six support functions, one of which is optional, as
    shown in <xref linkend="xindex-spgist-support-table"/>.
    (For more information see <xref linkend="spgist"/>.)
   </para>
@@ -653,7 +653,7 @@
    </table>
 
   <para>
-   GIN indexes have six support functions, three of which are optional,
+   GIN indexes have seven support functions, four of which are optional,
    as shown in <xref linkend="xindex-gin-support-table"/>.
    (For more information see <xref linkend="gin"/>.)
   </para>
@@ -730,9 +730,9 @@
    </table>
 
   <para>
-   BRIN indexes have four basic support functions, as shown in
-   <xref linkend="xindex-brin-support-table"/>; those basic functions
-   may require additional support functions to be provided.
+   BRIN indexes have five basic support functions, one of which is optional,
+   as shown in <xref linkend="xindex-brin-support-table"/>.  Some versions of
+   the basic functions require additional support functions to be provided.
    (For more information see <xref linkend="brin-extensibility"/>.)
   </para>
 
