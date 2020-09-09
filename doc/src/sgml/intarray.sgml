@@ -452,7 +452,7 @@
 -- a message can be in one or more <quote>sections</quote>
 CREATE TABLE message (mid INT PRIMARY KEY, sections INT[], ...);
 
--- create specialized index with sigature length of 32 bytes
+-- create specialized index with signature length of 32 bytes
 CREATE INDEX message_rdtree_idx ON message USING GIST (sections gist__int_ops(siglen=32));
 
 -- select messages in section 1 OR 2 - OVERLAP operator

@@ -272,7 +272,7 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
 	 */
 	if (!found_start_timeline)
 		ereport(ERROR,
-				errmsg("start timeline %u not found history of timeline %u",
+				errmsg("start timeline %u not found in history of timeline %u",
 					   starttli, endtli));
 
 	/* Terminate the list of WAL ranges. */

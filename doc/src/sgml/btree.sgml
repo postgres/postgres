@@ -263,7 +263,7 @@
    </listitem>
   </varlistentry>
   <varlistentry>
-   <term><function>inrange</function></term>
+   <term><function>in_range</function></term>
    <listitem>
     <indexterm>
      <primary>in_range support functions</primary>
