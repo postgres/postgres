@@ -34,14 +34,18 @@
   <productname>PostgreSQL</productname> is started by including the module name in
   <varname>shared_preload_libraries</varname>.  A module wishing to run a background
   worker can register it by calling
-  <function>RegisterBackgroundWorker(<type>BackgroundWorker *worker</type>)</function>
-  from its <function>_PG_init()</function>.  Background workers can also be started
-  after the system is up and running by calling the function
-  <function>RegisterDynamicBackgroundWorker(<type>BackgroundWorker
-  *worker, BackgroundWorkerHandle **handle</type>)</function>.  Unlike
-  <function>RegisterBackgroundWorker</function>, which can only be called from within
-  the postmaster, <function>RegisterDynamicBackgroundWorker</function> must be
-  called from a regular backend or another background worker.
+  <function>RegisterBackgroundWorker(<type>BackgroundWorker</type>
+  *<parameter>worker</parameter>)</function>
+  from its <function>_PG_init()</function> function.
+  Background workers can also be started
+  after the system is up and running by calling
+  <function>RegisterDynamicBackgroundWorker(<type>BackgroundWorker</type>
+  *<parameter>worker</parameter>, <type>BackgroundWorkerHandle</type>
+  **<parameter>handle</parameter>)</function>.  Unlike
+  <function>RegisterBackgroundWorker</function>, which can only be called from
+  within the postmaster process,
+  <function>RegisterDynamicBackgroundWorker</function> must be called
+  from a regular backend or another background worker.
  </para>
 
  <para>
