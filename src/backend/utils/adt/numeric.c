@@ -4073,23 +4073,29 @@ numeric_trim_scale(PG_FUNCTION_ARGS)
  * ----------------------------------------------------------------------
  */
 
-
-Datum
-int4_numeric(PG_FUNCTION_ARGS)
+Numeric
+int64_to_numeric(int64 val)
 {
-	int32		val = PG_GETARG_INT32(0);
 	Numeric		res;
 	NumericVar	result;
 
 	init_var(&result);
 
-	int64_to_numericvar((int64) val, &result);
+	int64_to_numericvar(val, &result);
 
 	res = make_result(&result);
 
 	free_var(&result);
 
-	PG_RETURN_NUMERIC(res);
+	return res;
+}
+
+Datum
+int4_numeric(PG_FUNCTION_ARGS)
+{
+	int32		val = PG_GETARG_INT32(0);
+
+	PG_RETURN_NUMERIC(int64_to_numeric(val));
 }
 
 int32
@@ -4174,18 +4180,8 @@ Datum
 int8_numeric(PG_FUNCTION_ARGS)
 {
 	int64		val = PG_GETARG_INT64(0);
-	Numeric		res;
-	NumericVar	result;
 
-	init_var(&result);
-
-	int64_to_numericvar(val, &result);
-
-	res = make_result(&result);
-
-	free_var(&result);
-
-	PG_RETURN_NUMERIC(res);
+	PG_RETURN_NUMERIC(int64_to_numeric(val));
 }
 
 
@@ -4224,18 +4220,8 @@ Datum
 int2_numeric(PG_FUNCTION_ARGS)
 {
 	int16		val = PG_GETARG_INT16(0);
-	Numeric		res;
-	NumericVar	result;
 
-	init_var(&result);
-
-	int64_to_numericvar((int64) val, &result);
-
-	res = make_result(&result);
-
-	free_var(&result);
-
-	PG_RETURN_NUMERIC(res);
+	PG_RETURN_NUMERIC(int64_to_numeric(val));
 }
 
 
@@ -5290,11 +5276,7 @@ int2_accum(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_accum(state, (int128) PG_GETARG_INT16(1));
 #else
-		Numeric		newval;
-
-		newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
-													 PG_GETARG_DATUM(1)));
-		do_numeric_accum(state, newval);
+		do_numeric_accum(state, int64_to_numeric(PG_GETARG_INT16(1)));
 #endif
 	}
 
@@ -5317,11 +5299,7 @@ int4_accum(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_accum(state, (int128) PG_GETARG_INT32(1));
 #else
-		Numeric		newval;
-
-		newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-													 PG_GETARG_DATUM(1)));
-		do_numeric_accum(state, newval);
+		do_numeric_accum(state, int64_to_numeric(PG_GETARG_INT32(1)));
 #endif
 	}
 
@@ -5340,13 +5318,7 @@ int8_accum(PG_FUNCTION_ARGS)
 		state = makeNumericAggState(fcinfo, true);
 
 	if (!PG_ARGISNULL(1))
-	{
-		Numeric		newval;
-
-		newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-													 PG_GETARG_DATUM(1)));
-		do_numeric_accum(state, newval);
-	}
+		do_numeric_accum(state, int64_to_numeric(PG_GETARG_INT64(1)));
 
 	PG_RETURN_POINTER(state);
 }
@@ -5570,11 +5542,7 @@ int8_avg_accum(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_accum(state, (int128) PG_GETARG_INT64(1));
 #else
-		Numeric		newval;
-
-		newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-													 PG_GETARG_DATUM(1)));
-		do_numeric_accum(state, newval);
+		do_numeric_accum(state, int64_to_numeric(PG_GETARG_INT64(1)));
 #endif
 	}
 
@@ -5767,13 +5735,8 @@ int2_accum_inv(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_discard(state, (int128) PG_GETARG_INT16(1));
 #else
-		Numeric		newval;
-
-		newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
-													 PG_GETARG_DATUM(1)));
-
 		/* Should never fail, all inputs have dscale 0 */
-		if (!do_numeric_discard(state, newval))
+		if (!do_numeric_discard(state, int64_to_numeric(PG_GETARG_INT16(1))))
 			elog(ERROR, "do_numeric_discard failed unexpectedly");
 #endif
 	}
@@ -5797,13 +5760,8 @@ int4_accum_inv(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_discard(state, (int128) PG_GETARG_INT32(1));
 #else
-		Numeric		newval;
-
-		newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-													 PG_GETARG_DATUM(1)));
-
 		/* Should never fail, all inputs have dscale 0 */
-		if (!do_numeric_discard(state, newval))
+		if (!do_numeric_discard(state, int64_to_numeric(PG_GETARG_INT32(1))))
 			elog(ERROR, "do_numeric_discard failed unexpectedly");
 #endif
 	}
@@ -5824,13 +5782,8 @@ int8_accum_inv(PG_FUNCTION_ARGS)
 
 	if (!PG_ARGISNULL(1))
 	{
-		Numeric		newval;
-
-		newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-													 PG_GETARG_DATUM(1)));
-
 		/* Should never fail, all inputs have dscale 0 */
-		if (!do_numeric_discard(state, newval))
+		if (!do_numeric_discard(state, int64_to_numeric(PG_GETARG_INT64(1))))
 			elog(ERROR, "do_numeric_discard failed unexpectedly");
 	}
 
@@ -5853,13 +5806,8 @@ int8_avg_accum_inv(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_discard(state, (int128) PG_GETARG_INT64(1));
 #else
-		Numeric		newval;
-
-		newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-													 PG_GETARG_DATUM(1)));
-
 		/* Should never fail, all inputs have dscale 0 */
-		if (!do_numeric_discard(state, newval))
+		if (!do_numeric_discard(state, int64_to_numeric(PG_GETARG_INT64(1))))
 			elog(ERROR, "do_numeric_discard failed unexpectedly");
 #endif
 	}
@@ -5914,8 +5862,7 @@ numeric_poly_avg(PG_FUNCTION_ARGS)
 
 	int128_to_numericvar(state->sumX, &result);
 
-	countd = DirectFunctionCall1(int8_numeric,
-								 Int64GetDatumFast(state->N));
+	countd = NumericGetDatum(int64_to_numeric(state->N));
 	sumd = NumericGetDatum(make_result(&result));
 
 	free_var(&result);
@@ -5951,7 +5898,7 @@ numeric_avg(PG_FUNCTION_ARGS)
 	if (state->nInfcount > 0)
 		PG_RETURN_NUMERIC(make_result(&const_ninf));
 
-	N_datum = DirectFunctionCall1(int8_numeric, Int64GetDatum(state->N));
+	N_datum = NumericGetDatum(int64_to_numeric(state->N));
 
 	init_var(&sumX_var);
 	accum_sum_final(&state->sumX, &sumX_var);
@@ -6411,7 +6358,6 @@ Datum
 int8_sum(PG_FUNCTION_ARGS)
 {
 	Numeric		oldsum;
-	Datum		newval;
 
 	if (PG_ARGISNULL(0))
 	{
@@ -6419,8 +6365,7 @@ int8_sum(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(1))
 			PG_RETURN_NULL();	/* still no non-null */
 		/* This is the first non-null input. */
-		newval = DirectFunctionCall1(int8_numeric, PG_GETARG_DATUM(1));
-		PG_RETURN_DATUM(newval);
+		PG_RETURN_NUMERIC(int64_to_numeric(PG_GETARG_INT64(1)));
 	}
 
 	/*
@@ -6436,10 +6381,9 @@ int8_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(oldsum);
 
 	/* OK to do the addition. */
-	newval = DirectFunctionCall1(int8_numeric, PG_GETARG_DATUM(1));
-
 	PG_RETURN_DATUM(DirectFunctionCall2(numeric_add,
-										NumericGetDatum(oldsum), newval));
+										NumericGetDatum(oldsum),
+										NumericGetDatum(int64_to_numeric(PG_GETARG_INT64(1)))));
 }
 
 
@@ -6618,10 +6562,8 @@ int8_avg(PG_FUNCTION_ARGS)
 	if (transdata->count == 0)
 		PG_RETURN_NULL();
 
-	countd = DirectFunctionCall1(int8_numeric,
-								 Int64GetDatumFast(transdata->count));
-	sumd = DirectFunctionCall1(int8_numeric,
-							   Int64GetDatumFast(transdata->sum));
+	countd = NumericGetDatum(int64_to_numeric(transdata->count));
+	sumd = NumericGetDatum(int64_to_numeric(transdata->sum));
 
 	PG_RETURN_DATUM(DirectFunctionCall2(numeric_div, sumd, countd));
 }

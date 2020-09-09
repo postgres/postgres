@@ -579,14 +579,6 @@ numeric_to_cstring(Numeric n)
 	return DatumGetCString(DirectFunctionCall1(numeric_out, d));
 }
 
-static Numeric
-int64_to_numeric(int64 v)
-{
-	Datum		d = Int64GetDatum(v);
-
-	return DatumGetNumeric(DirectFunctionCall1(int8_numeric, d));
-}
-
 static bool
 numeric_is_less(Numeric a, Numeric b)
 {
@@ -615,9 +607,9 @@ numeric_half_rounded(Numeric n)
 	Datum		two;
 	Datum		result;
 
-	zero = DirectFunctionCall1(int8_numeric, Int64GetDatum(0));
-	one = DirectFunctionCall1(int8_numeric, Int64GetDatum(1));
-	two = DirectFunctionCall1(int8_numeric, Int64GetDatum(2));
+	zero = NumericGetDatum(int64_to_numeric(0));
+	one = NumericGetDatum(int64_to_numeric(1));
+	two = NumericGetDatum(int64_to_numeric(2));
 
 	if (DatumGetBool(DirectFunctionCall2(numeric_ge, d, zero)))
 		d = DirectFunctionCall2(numeric_add, d, one);
@@ -632,12 +624,10 @@ static Numeric
 numeric_shift_right(Numeric n, unsigned count)
 {
 	Datum		d = NumericGetDatum(n);
-	Datum		divisor_int64;
 	Datum		divisor_numeric;
 	Datum		result;
 
-	divisor_int64 = Int64GetDatum((int64) (1 << count));
-	divisor_numeric = DirectFunctionCall1(int8_numeric, divisor_int64);
+	divisor_numeric = NumericGetDatum(int64_to_numeric(1 << count));
 	result = DirectFunctionCall2(numeric_div_trunc, d, divisor_numeric);
 	return DatumGetNumeric(result);
 }
@@ -832,8 +822,7 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 		{
 			Numeric		mul_num;
 
-			mul_num = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-														  Int64GetDatum(multiplier)));
+			mul_num = int64_to_numeric(multiplier);
 
 			num = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
 													  NumericGetDatum(mul_num),

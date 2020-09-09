@@ -216,9 +216,7 @@ SV_to_JsonbValue(SV *in, JsonbParseState **jsonb_state, bool is_elem)
 				IV			ival = SvIV(in);
 
 				out.type = jbvNumeric;
-				out.val.numeric =
-					DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-														Int64GetDatum((int64) ival)));
+				out.val.numeric = int64_to_numeric(ival);
 			}
 			else if (SvNOK(in))
 			{

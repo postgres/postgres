@@ -842,9 +842,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				lastjbv = hasNext ? &tmpjbv : palloc(sizeof(*lastjbv));
 
 				lastjbv->type = jbvNumeric;
-				lastjbv->val.numeric =
-					DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-														Int32GetDatum(last)));
+				lastjbv->val.numeric = int64_to_numeric(last);
 
 				res = executeNextItem(cxt, jsp, &elem,
 									  lastjbv, found, hasNext);
@@ -1012,9 +1010,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				jb = palloc(sizeof(*jb));
 
 				jb->type = jbvNumeric;
-				jb->val.numeric =
-					DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-														Int32GetDatum(size)));
+				jb->val.numeric = int64_to_numeric(size);
 
 				res = executeNextItem(cxt, jsp, NULL, jb, found, false);
 			}
@@ -1979,8 +1975,7 @@ executeKeyValueMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 	id += (int64) cxt->baseObject.id * INT64CONST(10000000000);
 
 	idval.type = jbvNumeric;
-	idval.val.numeric = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-															Int64GetDatum(id)));
+	idval.val.numeric = int64_to_numeric(id);
 
 	it = JsonbIteratorInit(jbc);
 
