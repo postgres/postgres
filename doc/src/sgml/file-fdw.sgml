@@ -267,7 +267,7 @@ CREATE FOREIGN TABLE pglog (
   application_name text,
   backend_type text
 ) SERVER pglog
-OPTIONS ( filename log/pglog.csv', format 'csv' );
+OPTIONS ( filename 'log/pglog.csv', format 'csv' );
 </programlisting>
   </para>
 
