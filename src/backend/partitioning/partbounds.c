@@ -1020,8 +1020,6 @@ partition_bounds_merge(int partnatts,
 					   JoinType jointype,
 					   List **outer_parts, List **inner_parts)
 {
-	PartitionBoundInfo outer_binfo = outer_rel->boundinfo;
-
 	/*
 	 * Currently, this function is called only from try_partitionwise_join(),
 	 * so the join type should be INNER, LEFT, FULL, SEMI, or ANTI.
@@ -1031,10 +1029,10 @@ partition_bounds_merge(int partnatts,
 		   jointype == JOIN_ANTI);
 
 	/* The partitioning strategies should be the same. */
-	Assert(outer_binfo->strategy == inner_rel->boundinfo->strategy);
+	Assert(outer_rel->boundinfo->strategy == inner_rel->boundinfo->strategy);
 
 	*outer_parts = *inner_parts = NIL;
-	switch (outer_binfo->strategy)
+	switch (outer_rel->boundinfo->strategy)
 	{
 		case PARTITION_STRATEGY_HASH:
 
@@ -1075,7 +1073,7 @@ partition_bounds_merge(int partnatts,
 
 		default:
 			elog(ERROR, "unexpected partition strategy: %d",
-				 (int) outer_binfo->strategy);
+				 (int) outer_rel->boundinfo->strategy);
 			return NULL;		/* keep compiler quiet */
 	}
 }
@@ -1528,7 +1526,7 @@ merge_range_bounds(int partnatts, FmgrInfo *partsupfuncs,
 													 &next_index);
 			Assert(merged_index >= 0);
 
-			/* Get the range of the merged partition. */
+			/* Get the range bounds of the merged partition. */
 			get_merged_range_bounds(partnatts, partsupfuncs,
 									partcollations, jointype,
 									&outer_lb, &outer_ub,
@@ -1833,7 +1831,7 @@ merge_matching_partitions(PartitionMap *outer_map, PartitionMap *inner_map,
 
 	/*
 	 * If neither of them has been merged, merge them.  Otherwise, if one has
-	 * been merged with a dummy relation on the other side (and the other
+	 * been merged with a dummy partition on the other side (and the other
 	 * hasn't yet been merged with anything), re-merge them.  Otherwise, they
 	 * can't be merged, so return -1.
 	 */
