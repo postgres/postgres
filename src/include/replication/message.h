@@ -23,9 +23,8 @@ typedef struct xl_logical_message
 	bool		transactional;	/* is message transactional? */
 	Size		prefix_size;	/* length of prefix */
 	Size		message_size;	/* size of the message */
-	char		message[FLEXIBLE_ARRAY_MEMBER]; /* message including the null
-												 * terminated prefix of length
-												 * prefix_size */
+	/* payload, including null-terminated prefix of length prefix_size */
+	char		message[FLEXIBLE_ARRAY_MEMBER];
 } xl_logical_message;
 
 #define SizeOfLogicalMessage	(offsetof(xl_logical_message, message))

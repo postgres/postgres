@@ -59,6 +59,7 @@ LogLogicalMessage(const char *prefix, const char *message, size_t size,
 
 	xlrec.dbId = MyDatabaseId;
 	xlrec.transactional = transactional;
+	/* trailing zero is critical; see logicalmsg_desc */
 	xlrec.prefix_size = strlen(prefix) + 1;
 	xlrec.message_size = size;
 
