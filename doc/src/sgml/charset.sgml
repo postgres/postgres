@@ -789,11 +789,11 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
      </varlistentry>
 
      <varlistentry>
-      <term><literal>CREATE COLLATION digitslast (provider = icu, locale = 'en-u-kr-latn-digit');</literal></term>
-      <term><literal>CREATE COLLATION digitslast (provider = icu, locale = 'en@colReorder=latn-digit');</literal></term>
+      <term><literal>CREATE COLLATION latinlast (provider = icu, locale = 'en-u-kr-grek-latn');</literal></term>
+      <term><literal>CREATE COLLATION latinlast (provider = icu, locale = 'en@colReorder=grek-latn');</literal></term>
       <listitem>
        <para>
-        Sort digits after Latin letters.  (The default is digits before letters.)
+        Sort Greek letters before Latin ones.  (The default is Latin before Greek.)
        </para>
       </listitem>
      </varlistentry>
@@ -809,9 +809,9 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term><literal>CREATE COLLATION special (provider = icu, locale = 'en-u-kf-upper-kr-latn-digit');</literal></term>
-      <term><literal>CREATE COLLATION special (provider = icu, locale = 'en@colCaseFirst=upper;colReorder=latn-digit');</literal></term>
+    <varlistentry>
+      <term><literal>CREATE COLLATION special (provider = icu, locale = 'en-u-kf-upper-kr-grek-latn');</literal></term>
+      <term><literal>CREATE COLLATION special (provider = icu, locale = 'en@colCaseFirst=upper;colReorder=grek-latn');</literal></term>
       <listitem>
        <para>
         Combines both of the above options.
