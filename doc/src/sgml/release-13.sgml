@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2020-XX-XX, CURRENT AS OF 2020-08-09</para>
+   <para>2020-09-24</para>
   </formalpara>
 
   <sect2>
@@ -88,10 +88,13 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       This new behavior matches the <acronym>SQL</acronym> specification.
-      Previously this caused the escape to be set to the default backslash
-      character.  The previous behavior has been retained in old views
-      by keeping the original function unchanged.  This also applies to
-      <command>substring(text FROM pattern ESCAPE text)</command>.
+      Previously a null <literal>ESCAPE</literal> value was taken to mean
+      using the default escape string (a backslash character).  This also
+      applies to <literal>substring(<replaceable>text</replaceable>
+      FROM <replaceable>pattern</replaceable>
+      ESCAPE <replaceable>text</replaceable>)</literal>.  The previous
+      behavior has been retained in old views by keeping the original
+      function unchanged.
      </para>
     </listitem>
 
@@ -102,21 +105,10 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
      <para>
-      Have <link
-      linkend="textsearch-functions-table"><function>jsonb_to_tsvector()</function></link>
-      properly check "string" parameter (Dominik Czarnota)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-03-28 [9950c8aad] Fix lquery's behavior for consecutive '*' items.
--->
-
-     <para>
-      In <xref linkend="ltree"/>, when using adjacent asterisks with braces,
-      e.g., ".*{2}.*{3}", properly interpret that as ".*{5}" (Nikita Glukhov)
+      Make <link
+      linkend="textsearch-functions-table"><function>json[b]_to_tsvector()</function></link>
+      fully check the spelling of its <literal>string</literal> option
+      (Dominik Czarnota)
      </para>
     </listitem>
 
@@ -133,13 +125,13 @@ Author: Thomas Munro <tmunro@postgresql.org>
      </para>
 
      <para>
-      Previously, this value was adjusted before effecting the number of
-      concurrent requests.  This value is now used directly.  Conversion of
+      Previously, this value was adjusted before setting the number of
+      concurrent requests.  The value is now used directly.  Conversion of
       old values to new ones can be done using:
      </para>
 
 <programlisting>
-SELECT round(sum(OLD / n::float)) FROM generate_series(1, OLD) s(n);
+SELECT round(sum(<replaceable>OLDVALUE</replaceable> / n::float)) FROM generate_series(1, <replaceable>OLDVALUE</replaceable>) s(n);
 </programlisting>
     </listitem>
 
@@ -192,7 +184,7 @@ Author: Fujii Masao <fujii@postgresql.org>
      </para>
 
      <para>
-      Previously it returned <command>ALTER TABLE</command>, but now returns
+      Previously it returned <command>ALTER TABLE</command>; now it returns
       <command>ALTER FOREIGN TABLE</command>.
      </para>
     </listitem>
@@ -210,7 +202,7 @@ Author: Fujii Masao <fujii@postgresql.org>
      </para>
 
      <para>
-      Previously it returned <command>ALTER TABLE</command>, but now returns
+      Previously it returned <command>ALTER TABLE</command>; now it returns
       <command>ALTER MATERIALIZED VIEW</command>.
      </para>
     </listitem>
@@ -227,8 +219,9 @@ Author: Fujii Masao <fujii@postgresql.org>
      </para>
 
      <para>
-      This determines how much WAL to retain for the standby server,
-      specified in megabytes rather than number of files. If you
+      This determines how much WAL to retain for standby servers.
+      It is specified in megabytes, rather than number of files as with
+      the old parameter. If you
       previously used <varname>wal_keep_segments</varname>,
       the following formula will give you an approximately equivalent setting:
 <programlisting>
@@ -306,6 +299,20 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-03-28 [9950c8aad] Fix lquery's behavior for consecutive '*' items.
+-->
+
+     <para>
+      In <xref linkend="ltree"/>, when an <type>lquery</type> pattern
+      contains adjacent asterisks with braces,
+      e.g., <literal>*{2}.*{3}</literal>, properly interpret that
+      as <literal>*{5}</literal> (Nikita Glukhov)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Peter Geoghegan <pg@bowt.ie>
 2020-03-07 [691e8b2e1] pageinspect: Fix types used for bt_metap() columns.
 -->
@@ -347,8 +354,8 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
        <para>
-        Improve cases where <link
-        linkend="ddl-partition-pruning">pruning</link> of partitions can happen
+        Allow <link linkend="ddl-partition-pruning">pruning</link> of
+        partitions to happen in more cases
         (Yuzuko Hosoya, Amit Langote, &Aacute;lvaro Herrera)
        </para>
       </listitem>
@@ -380,13 +387,14 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
        <para>
-        Allow <literal>BEFORE</literal> row-level <link
+        Support row-level <literal>BEFORE</literal> <link
         linkend="triggers">triggers</link> on partitioned tables (&Aacute;lvaro
         Herrera)
        </para>
 
        <para>
-        These triggers cannot change which partition is the destination.
+        However, such a trigger is not allowed to change which partition
+        is the destination.
        </para>
       </listitem>
 
@@ -404,14 +412,15 @@ Author: Peter Eisentraut <peter@eisentraut.org>
        </para>
 
        <para>
-        Previously, partitions had to be replicated individually.  Now
-        partitioned tables can be published explicitly causing all partitions
-        to be automatically published.  Addition/removal of partitions from
-        partitioned tables are automatically added/removed from publications.
+        Previously, partitions had to be replicated individually.  Now a
+        partitioned table can be published explicitly, causing all its
+        partitions to be published automatically.  Addition/removal of a
+        partition causes it to be likewise added to or removed from the
+        publication.
         The <link linkend="sql-createpublication"><command>CREATE
         PUBLICATION</command></link> option
         <literal>publish_via_partition_root</literal> controls whether changes
-        to partitions are published as their own or their ancestor's.
+        to partitions are published as their own changes or their parent's.
        </para>
       </listitem>
 
@@ -439,8 +448,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Allow <link linkend="rowtypes"><literal>ROW</literal> values</link>
-        to be used as partitioning expressions (Amit Langote)
+        Allow whole-row variables (that
+        is, <replaceable>table</replaceable><literal>.*</literal>) to be
+        used in partitioning expressions (Amit Langote)
        </para>
       </listitem>
 
@@ -461,17 +471,17 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
        <para>
         More efficiently store <link
-        linkend="btree-deduplication">duplicates</link> in btree indexes
+        linkend="btree-deduplication">duplicates</link> in B-tree indexes
         (Anastasia Lubennikova, Peter Geoghegan)
        </para>
 
        <para>
-        This allows efficient btree indexing of low cardinality columns
+        This allows efficient B-tree indexing of low-cardinality columns
         by storing duplicate keys only once.  Users upgrading with <link
         linkend="pgupgrade"><application>pg_upgrade</application></link>
         will need to use <link
-        linkend="sql-reindex"><command>REINDEX</command></link> to make use
-        of this feature.
+        linkend="sql-reindex"><command>REINDEX</command></link> to make an
+        existing index use this feature.
        </para>
       </listitem>
 
@@ -485,8 +495,9 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 
        <para>
         Allow <link linkend="gist">GiST</link> and <link
-        linkend="spgist">SP-GiST</link> indexes for <link
-        linkend="datatype-line">box</link>/point distance lookups (Nikita
+        linkend="spgist">SP-GiST</link> indexes on <type>box</type>
+        columns to support <literal>ORDER BY <replaceable>box</replaceable>
+        &lt;-&gt; <replaceable>point</replaceable></literal> queries (Nikita
         Glukhov)
        </para>
       </listitem>
@@ -499,7 +510,8 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 
        <para>
         Allow <link linkend="gin"><acronym>GIN</acronym></link> indexes to
-        more efficiently handle <literal>NOT</literal> restrictions (Nikita
+        more efficiently handle <literal>!</literal> (NOT) clauses
+        in <type>tsquery</type> searches (Nikita
         Glukhov, Alexander Korotkov, Tom Lane, Julien Rouhaud)
        </para>
       </listitem>
@@ -549,8 +561,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
        </para>
 
        <para>
-        The index and column collations must now match so the index's
-        uniqueness matches the column's uniqueness.
+        The index's collation must match that of the underlying column,
+        but <command>ALTER TABLE</command> previously failed to check
+        this.
        </para>
       </listitem>
 
@@ -584,7 +597,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
        <para>
-        Allow setting <link linkend="sql-altertable">statistics target</link>
+        Allow setting the <link linkend="sql-altertable">statistics target</link>
         for <link linkend="sql-createstatistics">extended statistics</link>
         (Tomas Vondra)
        </para>
@@ -636,8 +649,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Allow functions in <literal>FROM</literal> clauses to be moved to their
-        reference sites if they evaluate to constants (Alexander Kuzmenkov,
+        Allow functions in <literal>FROM</literal> clauses to be pulled up
+        (inlined) if they evaluate to constants (Alexander Kuzmenkov,
         Aleksandr Parfenov)
        </para>
       </listitem>
@@ -665,9 +678,15 @@ Author: Peter Eisentraut <peter@eisentraut.org>
        </para>
 
        <para>
-        If a result is already sorted by several leading keys, this
-        allows for batch sorting of additional trailing keys because the
-        previous keys are already equal.  This is controlled by <xref
+        If an intermediate query result is known to be sorted by
+        one or more leading keys of a required sort ordering, the
+        additional sorting can be done considering only the remaining
+        keys, if the rows are sorted in batches that have equal leading
+        keys.
+       </para>
+
+       <para>
+        If necessary, this can be controlled using <xref
         linkend="guc-enable-incremental-sort"/>.
        </para>
       </listitem>
@@ -696,7 +715,6 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
        <para>
         Allow <link linkend="guc-enable-hashagg">hash aggregation</link>
-        and <link linkend="queries-grouping-sets">grouping sets</link>
         to use disk storage for large aggregation result sets (Jeff Davis)
        </para>
 
@@ -709,9 +727,11 @@ Author: Peter Geoghegan <pg@bowt.ie>
        </para>
 
        <para>
-        This behavior is normally preferable to the old behavior.  But if
-        it is inferior for a particular query, behavior similar to
-        previous Postgres releases can be obtained by
+        This behavior is normally preferable to the old behavior, in which
+        once hash aggregation had been chosen, the hash table would be
+        kept in memory no matter how large it got &mdash; which could be
+        very large if the planner had misestimated.  If necessary,
+        behavior similar to that can be obtained by
         increasing <varname>hash_mem_multiplier</varname>.
        </para>
       </listitem>
@@ -723,14 +743,16 @@ Author: David Rowley <drowley@postgresql.org>
 -->
 
        <para>
-        Allow inserts to trigger <link linkend="autovacuum">autovacuum</link>
-        activity (Laurenz Albe, Darafei Praliaskouski)
+        Allow inserts, not only updates and deletes, to
+        trigger <link linkend="autovacuum">autovacuum</link> activity
+        (Laurenz Albe, Darafei Praliaskouski)
        </para>
 
        <para>
-        This new behavior reduces the work necessary when the table needs to
-        be frozen and allows pages to be set as all-visible.  All-visible pages
-        allow index-only scans to access fewer heap rows.
+        This new behavior reduces the work that will be necessary later
+        when the table needs to be frozen, and it allows pages to be
+        marked as all-visible sooner.  All-visible pages allow index-only
+        scans to access fewer heap rows.
        </para>
       </listitem>
 
@@ -770,24 +792,12 @@ Author: Noah Misch <noah@leadboat.com>
 
       <listitem>
 <!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2020-03-28 [8f3ec75de] Enable Unix-domain sockets support on Windows
--->
-
-       <para>
-        Enable <link linkend="client-authentication">Unix-domain sockets</link>
-        support on Windows (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 Author: Fujii Masao <fujii@postgresql.org>
 2019-11-21 [e6d806952] Make DROP DATABASE command generate less WAL records.
 -->
 
        <para>
-        Improve the performance when replaying <link
+        Improve performance when replaying <link
         linkend="sql-dropdatabase"><command>DROP DATABASE</command></link>
         commands when many tablespaces are in use (Fujii Masao)
        </para>
@@ -812,16 +822,16 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
        <para>
-        Improve speed of <link
-        linkend="storage-toast"><acronym>TOAST</acronym></link> decompression
-        and the retrieval of only the leading bytes of <acronym>TOAST</acronym>
-        values (Binguo Bao, Andrey Borodin)
+        Improve retrieval of the leading bytes of <link
+        linkend="storage-toast"><acronym>TOAST</acronym></link>'ed values
+        (Binguo Bao, Andrey Borodin)
        </para>
 
        <para>
-        Previously, <acronym>TOAST</acronym> values were fully fetched and
-        only the requested leading bytes were decompressed and returned.
-        Now, only the requested bytes are fetched.
+        Previously, compressed out-of-line <acronym>TOAST</acronym> values
+        were fully fetched even when it's known that only some leading
+        bytes are needed.  Now, only enough data to produce the result is
+        fetched.
        </para>
       </listitem>
 
@@ -831,24 +841,14 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 2019-09-10 [bca6e6435] Reduce overhead of scanning the backend[] array in LISTE
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2019-09-22 [51004c717] Make some efficiency improvements in LISTEN/NOTIFY.
--->
-
-       <para>
-        Improve performance of <link
-        linkend="sql-listen"><command>LISTEN</command></link>/<command>NOTIFY</command>
-        (Martijn van Oosterhout)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2019-08-15 [bb5ae8f6c] Use a hash table to de-duplicate NOTIFY events faster.
 -->
 
        <para>
-        Improve the efficiency of removing duplicate <link
-        linkend="sql-notify"><command>NOTIFY</command></link> events (Tom Lane)
+        Improve performance of <link
+        linkend="sql-listen"><command>LISTEN</command></link>/<command>NOTIFY</command>
+        (Martijn van Oosterhout, Tom Lane)
        </para>
       </listitem>
 
@@ -859,7 +859,7 @@ Author: Andrew Gierth <rhodiumtoad@postgresql.org>
 -->
 
        <para>
-        Use lookup tables to speed up integer to text conversion (David Fetter)
+        Speed up conversions of integers to text (David Fetter)
        </para>
       </listitem>
 
@@ -870,8 +870,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Reduce memory usage for query strings that contain multiple
-        <acronym>SQL</acronym> statements (Amit Langote)
+        Reduce memory usage for query strings and extension scripts that
+        contain many <acronym>SQL</acronym> statements (Amit Langote)
        </para>
       </listitem>
 
@@ -910,13 +910,15 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
        <para>
-        Allow a sample of statements to be logged (Adrien Nayrat)
+        Allow a sample of SQL statements, rather than all statements, to
+        be logged (Adrien Nayrat)
        </para>
 
        <para>
-        A <xref linkend="guc-log-statement-sample-rate"/> ratio of statements
-        taking over <xref linkend="guc-log-min-duration-sample"/> duration
-        will be logged.
+        A <xref linkend="guc-log-statement-sample-rate"/> fraction of
+        those statements taking more than
+        <xref linkend="guc-log-min-duration-sample"/> duration will be
+        logged.
        </para>
       </listitem>
 
@@ -949,22 +951,10 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
        <para>
         The <acronym>GUC</acronym> setting <xref
         linkend="guc-log-parameter-max-length"/> controls the maximum length
-        of parameter values output during statement non-error logging, and
-        <xref linkend="guc-log-parameter-max-length-on-error"/> does the
-        same for error statement logging.  Previously, prepared statement
-        parameters were not logged during errors.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-2020-02-05 [15d13e829] Make vacuum buffer counters 64 bits wide
--->
-
-       <para>
-        Make <link linkend="sql-vacuum">vacuum</link> buffer counters 64-bits
-        wide to avoid overflow (&Aacute;lvaro Herrera)
+        of parameter values output during logging of non-error statements,
+        while <xref linkend="guc-log-parameter-max-length-on-error"/> does
+        the same for logging of statements with errors.  Previously,
+        prepared statement parameters were never logged during errors.
        </para>
       </listitem>
 
@@ -977,31 +967,25 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
        <para>
-        Allow function call backtraces of errors to be logged (Peter
+        Allow function call backtraces to be logged after errors (Peter
         Eisentraut, &Aacute;lvaro Herrera)
        </para>
 
        <para>
-        Server variable <xref linkend="guc-backtrace-functions"/> specifies
+        The new parameter <xref linkend="guc-backtrace-functions"/> specifies
         which C functions should generate backtraces on error.
        </para>
       </listitem>
 
       <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2019-07-05 [313f87a17] Add min() and max() aggregates for pg_lsn
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2020-02-05 [15d13e829] Make vacuum buffer counters 64 bits wide
 -->
 
        <para>
-        Add <function>min()</function> and
-        <function>max()</function> aggregates for <link
-        linkend="datatype-pg-lsn"><type>pg_lsn</type></link> (Fabr&iacute;zio
-        de Royes Mello)
-       </para>
-
-       <para>
-        This is useful for monitoring queries.
+        Make <link linkend="sql-vacuum">vacuum</link> buffer counters 64-bits
+        wide to avoid overflow (&Aacute;lvaro Herrera)
        </para>
       </listitem>
 
@@ -1049,7 +1033,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
        <para>
         Add system view <link
         linkend="monitoring-stats-dynamic-views-table"><structname>pg_stat_progress_analyze</structname></link>
-        to report <link linkend="sql-analyze">analyze</link> progress
+        to report <link linkend="sql-analyze">ANALYZE</link> progress
         (&Aacute;lvaro Herrera, Tatsuro Yamada, Vinayak Pokale)
        </para>
       </listitem>
@@ -1074,9 +1058,9 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
        <para>
-        Create <link
+        Add system view <link
         linkend="monitoring-stats-views-table"><structname>pg_stat_slru</structname></link>
-        system view to monitor internal <acronym>SLRU</acronym> caches
+        to monitor internal <acronym>SLRU</acronym> caches
         (Tomas Vondra)
        </para>
       </listitem>
@@ -1088,8 +1072,8 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
        <para>
-        Allow <xref linkend="guc-track-activity-query-size"/> to be set up
-        to 1MB (Vyacheslav Makarov)
+        Allow <xref linkend="guc-track-activity-query-size"/> to be set as
+        high as 1MB (Vyacheslav Makarov)
        </para>
 
        <para>
@@ -1113,8 +1097,8 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
        <para>
-        Add wait event for <function>posix_fallocate()</function> (Thomas
-        Munro)
+        Report a wait event while creating a DSM segment
+        with <function>posix_fallocate()</function> (Thomas Munro)
        </para>
       </listitem>
 
@@ -1187,7 +1171,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
        <para>
-        Only allow superusers to view the <xref
+        Allow only superusers to view the <xref
         linkend="guc-ssl-passphrase-command"/> setting (Insung Moon)
        </para>
 
@@ -1208,7 +1192,8 @@ Author: Peter Eisentraut <peter@eisentraut.org>
        </para>
 
        <para>
-        This is controlled by <xref linkend="guc-ssl-min-protocol-version"/>.
+        This choice can be controlled by
+        <xref linkend="guc-ssl-min-protocol-version"/>.
        </para>
       </listitem>
 
@@ -1228,13 +1213,13 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
        <para>
-        Tighten rules on which utility commands are possible in <xref
-        linkend="guc-default-transaction-read-only"/> mode (Robert Haas)
+        Tighten rules on which utility commands are allowed in
+        read-only transaction mode (Robert Haas)
        </para>
 
        <para>
-        This also increases the number of utility commands that can run in
-        parallel queries.
+        This change also increases the number of utility commands that can
+        run in parallel queries.
        </para>
       </listitem>
 
@@ -1266,6 +1251,18 @@ Author: Peter Eisentraut <peter@eisentraut.org>
         was set at server start, non-superusers could issue
         <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>
         commands on system tables.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2020-03-28 [8f3ec75de] Enable Unix-domain sockets support on Windows
+-->
+
+       <para>
+        Enable <link linkend="client-authentication">Unix-domain sockets</link>
+        support on Windows (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -1307,8 +1304,9 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
       <para>
-       Allow <acronym>WAL</acronym> receivers use a temporary replication slot
-       if a permanent one is not specified (Peter Eisentraut, Sergei Kornilov)
+       Allow <acronym>WAL</acronym> receivers to use a temporary
+       replication slot when a permanent one is not specified (Peter
+       Eisentraut, Sergei Kornilov)
       </para>
 
       <para>
@@ -1324,12 +1322,13 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
       <para>
-       Allow replication slot storage to be limited by <xref
-       linkend="guc-max-slot-wal-keep-size"/> (Kyotaro Horiguchi)
+       Allow WAL storage for replication slots to be limited by
+       <xref linkend="guc-max-slot-wal-keep-size"/> (Kyotaro Horiguchi)
       </para>
 
       <para>
-       Replication slots that exceed this value are invalidated.
+       Replication slots that would require exceeding this value are
+       marked invalid.
       </para>
      </listitem>
 
@@ -1363,8 +1362,8 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       </para>
 
       <para>
-       Previously, the end of the <acronym>WAL</acronym> would promote the
-       standby, even if the target was not reached.
+       Previously, a standby would promote itself upon reaching the end
+       of <acronym>WAL</acronym>, even if the target was not reached.
       </para>
      </listitem>
 
@@ -1458,10 +1457,10 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Have <link linkend="sql-createtable"><command>CREATE TABLE
-       LIKE</command></link> propagate <literal>CHECK</literal>'s <literal>NO
-       INHERIT</literal> property to created tables (Ildar Musin, Chris
-       Travers)
+       Make <link linkend="sql-createtable"><command>CREATE TABLE
+       LIKE</command></link> propagate a <literal>CHECK</literal>
+       constraint's <literal>NO INHERIT</literal> property to the created
+       table (Ildar Musin, Chris Travers)
       </para>
      </listitem>
 
@@ -1498,8 +1497,9 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <para>
        Add <link linkend="sql-altertable"><command>ALTER
-       TABLE</command></link> clause <literal>DROP EXPRESSION</literal>
-       to remove generated properties from columns (Peter Eisentraut)
+       TABLE ... DROP EXPRESSION</command></link>
+       to allow removing the <literal>GENERATED</literal>
+       property from a column (Peter Eisentraut)
       </para>
      </listitem>
 
@@ -1510,8 +1510,16 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Fix bugs in <command>ALTER TABLE</command> when later clauses overlap
-       changes made by earlier clauses in the same command (Tom Lane)
+       Fix bugs in multi-step <command>ALTER TABLE</command> commands (Tom
+       Lane)
+      </para>
+
+      <para>
+       <literal>IF NOT EXISTS</literal> clauses now work as expected, in
+       that derived actions (such as index creation) do not execute if the
+       column already exists.  Also, certain cases of combining related
+       actions into one <command>ALTER TABLE</command> now work when they
+       did not before.
       </para>
      </listitem>
 
@@ -1527,8 +1535,9 @@ Author: Fujii Masao <fujii@postgresql.org>
       </para>
 
       <para>
-       This was previously possible only using <command>ALTER TABLE RENAME
-       COLUMN</command>.
+       Renaming view columns was already possible, but one had to
+       write <command>ALTER TABLE RENAME COLUMN</command>, which is
+       confusing.
       </para>
      </listitem>
 
@@ -1540,8 +1549,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
       <para>
        Add <link linkend="sql-altertype"><command>ALTER TYPE</command></link>
-       options useful for extensions, like <acronym>TOAST</acronym> and I/O
-       functions control (Tomas Vondra, Tom Lane)
+       options to modify a base type's <acronym>TOAST</acronym> properties
+       and support functions (Tomas Vondra, Tom Lane)
       </para>
      </listitem>
 
@@ -1558,7 +1567,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       </para>
 
       <para>
-       This combines existing options <literal>LC_COLLATE</literal> and
+       This combines the existing options <literal>LC_COLLATE</literal> and
        <literal>LC_CTYPE</literal> into a single option.
       </para>
      </listitem>
@@ -1571,12 +1580,12 @@ Author: Amit Kapila <akapila@postgresql.org>
 
       <para>
        Allow <link linkend="sql-dropdatabase"><command>DROP
-       DATABASE</command></link> to disconnect users so drop succeeds (Pavel
-       Stehule, Amit Kapila)
+       DATABASE</command></link> to disconnect sessions using the target
+       database, allowing the drop to succeed (Pavel Stehule, Amit Kapila)
       </para>
 
       <para>
-       This is enabled by <literal>WITH FORCE</literal>.
+       This is enabled by the <literal>FORCE</literal> option.
       </para>
      </listitem>
 
@@ -1587,9 +1596,10 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
       <para>
-       Add C structure member <link
+       Add structure member <link
        linkend="trigger-interface"><structfield>tg_updatedcols</structfield></link>
-       to record updated columns to C triggers (Peter Eisentraut)
+       to allow C-language update triggers to know which column(s) were updated
+       (Peter Eisentraut)
       </para>
      </listitem>
 
@@ -1615,8 +1625,9 @@ Tom Lane <tgl@sss.pgh.pa.us>
 
       <para>
        The new data types are <link
-       linkend="datatype-pseudotypes-table">anycompatible</link>,
-       anycompatiblearray, anycompatiblenonarray, and anycompatiblerange.
+       linkend="datatype-pseudotypes-table"><type>anycompatible</type></link>,
+       <type>anycompatiblearray</type>, <type>anycompatiblenonarray</type>,
+       and <type>anycompatiblerange</type>.
       </para>
      </listitem>
 
@@ -1628,13 +1639,13 @@ Author: Thomas Munro <tmunro@postgresql.org>
 
       <para>
        Add <acronym>SQL</acronym> data type <link
-       linkend="datatype-oid">xid8</link> to expose FullTransactionId
-       (Thomas Munro)
+       linkend="datatype-oid"><type>xid8</type></link> to expose
+       FullTransactionId (Thomas Munro)
       </para>
 
       <para>
-       The xid data type is only four bytes so does not show the transaction
-       epoch.
+       The existing <type>xid</type> data type is only four bytes so it
+       does not provide the transaction epoch.
       </para>
      </listitem>
 
@@ -1645,8 +1656,10 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
       <para>
-       Add data type <link linkend="datatype-oid">regcollation</link> and
-       helper functions for system collations (Julien Rouhaud)
+       Add data
+       type <link linkend="datatype-oid"><type>regcollation</type></link>
+       and associated functions, to represent OIDs of collation objects
+       (Julien Rouhaud)
       </para>
      </listitem>
 
@@ -1657,13 +1670,13 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
       <para>
-       Use the glibc version in some cases as the <link
-       linkend="collation">collation</link> version (Thomas Munro)
+       Use the glibc version in some cases as a <link
+       linkend="collation">collation</link> version identifier (Thomas Munro)
       </para>
 
       <para>
-       If the glibc version changes, a warning will be issued when a
-       mismatching collation is used.
+       If the glibc version changes, a warning will be issued about
+       possible corruption of collation-dependent indexes.
       </para>
      </listitem>
 
@@ -1685,12 +1698,13 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Allow <link linkend="rowtypes"><literal>ROW</literal> values</link>
-       values to have their members extracted with suffix notation (Tom Lane)
+       Allow <link linkend="sql-syntax-row-constructors"><literal>ROW</literal>
+       expressions</link> to have their members extracted with suffix
+       notation (Tom Lane)
       </para>
 
       <para>
-       For example, <literal>(ROW(4, 5.0)).f1</literal> returns 4.
+       For example, <literal>(ROW(4, 5.0)).f1</literal> now returns 4.
       </para>
      </listitem>
 
@@ -1711,15 +1725,16 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
       <para>
        Add alternate version of <link
-       linkend="functions-json-processing-table"><function>jsonb_setI()</function></link>
-       with special <literal>NULL</literal> handling (Andrew Dunstan)
+       linkend="functions-json-processing-table"><function>jsonb_set()</function></link>
+       with improved <literal>NULL</literal> handling (Andrew Dunstan)
       </para>
 
       <para>
-       The new function, <function>jsonb_set_lax()</function>, allows null
-       new values to either set the specified key to <acronym>JSON</acronym>
-       null, delete the key, raise exception, or ignore the operation.
-       IS 'return_target' CLEAR?
+       The new function, <function>jsonb_set_lax()</function>, handles a
+       <literal>NULL</literal> new value by either setting the specified
+       key to a <acronym>JSON</acronym> null, deleting the key, raising an
+       exception, or returning the <type>jsonb</type> value unmodified, as
+       requested.
       </para>
      </listitem>
 
@@ -1737,9 +1752,10 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
       </para>
 
       <para>
-       This allows json values to be converted to timestamps, which can
-       then be processed in jsonpath expressions.  This also adds jsonpath
-       functions that support time zone-aware output.
+       This function allows <acronym>JSON</acronym> values to be converted
+       to timestamps, which can then be processed in <type>jsonpath</type>
+       expressions.  This change also adds <type>jsonpath</type> functions
+       that support time-zone-aware output.
       </para>
      </listitem>
 
@@ -1761,19 +1777,35 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
      <listitem>
 <!--
+Author: Michael Paquier <michael@paquier.xyz>
+2019-07-05 [313f87a17] Add min() and max() aggregates for pg_lsn
+-->
+
+      <para>
+       Add <function>min()</function> and
+       <function>max()</function> aggregates for <link
+       linkend="datatype-pg-lsn"><type>pg_lsn</type></link> (Fabr&iacute;zio
+       de Royes Mello)
+      </para>
+
+      <para>
+       These are particularly useful in monitoring queries.
+      </para>
+     </listitem>
+
+     <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2020-03-06 [a6525588b] Allow Unicode escapes in any server encoding, not only U
 -->
 
       <para>
        Allow <link linkend="sql-syntax-strings-uescape">Unicode
-       escapes</link>, e.g., E'\u####', U&amp;'\####', to specify any
-       character available in the database encoding, even when the database
-       encoding is not <acronym>UTF</acronym>-8 (Tom Lane)
-      </para>
-
-      <para>
-       The Unicode characters must be available in the database encoding.
+       escapes</link>,
+       e.g., <literal>E'\u<replaceable>nnnn</replaceable>'</literal>
+       or <literal>U&amp;'\<replaceable>nnnn</replaceable>'</literal>, to
+       specify any character available in the database encoding, even when
+       the database encoding is not <acronym>UTF</acronym>-8 (Tom Lane)
       </para>
      </listitem>
 
@@ -1793,7 +1825,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <para>
        The names recognized are the same as those output by <link
        linkend="functions-formatting"><function>to_char()</function></link>
-       with the same format codes.
+       with the same format patterns.
       </para>
      </listitem>
 
@@ -1804,9 +1836,10 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
       <para>
-       Add format specifications FF1-FF6 to control display of 1-6 subsecond
-       digits (Alexander Korotkov, Nikita Glukhov, Teodor Sigaev, Oleg
-       Bartunov)
+       Add datetime format patterns <literal>FF1</literal>
+       &ndash; <literal>FF6</literal> to specify input or output of
+       1 to 6 fractional-second digits (Alexander
+       Korotkov, Nikita Glukhov, Teodor Sigaev, Oleg Bartunov)
       </para>
 
       <para>
@@ -1823,8 +1856,8 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
       <para>
-       Add <literal>SSSSS</literal> time format specification as an
-       <acronym>SQL</acronym> standard alias for <literal>SSSS</literal>
+       Add <literal>SSSSS</literal> datetime format pattern as an
+       <acronym>SQL</acronym>-standard alias for <literal>SSSS</literal>
        (Nikita Glukhov, Alexander Korotkov)
       </para>
      </listitem>
@@ -1838,12 +1871,12 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       <para>
        Add function <link
        linkend="functions-uuid"><function>gen_random_uuid()</function></link>
-       to generate version 4 UUIDs (Peter Eisentraut)
+       to generate version-4 UUIDs (Peter Eisentraut)
       </para>
 
       <para>
        Previously <acronym>UUID</acronym> generation functions were only
-       available via external modules <xref linkend="uuid-ossp"/> and <xref
+       available in the external modules <xref linkend="uuid-ossp"/> and <xref
        linkend="pgcrypto"/>.
       </para>
      </listitem>
@@ -1855,9 +1888,10 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 -->
 
       <para>
-       Add greatest-common-denominator (<link
-       linkend="functions-math-func-table">gcd</link>) and
-       least-common-multiple (lcm) functions (Vik Fearing)
+       Add greatest-common-denominator
+       (<link linkend="functions-math-func-table"><function>gcd</function></link>)
+       and least-common-multiple (<function>lcm</function>) functions (Vik
+       Fearing)
       </para>
      </listitem>
 
@@ -1870,9 +1904,10 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 -->
 
       <para>
-       Improve the performance and accuracy of <link
-       linkend="functions-math-func-table">square root</link> and natural log
-       (ln) output (Dean Rasheed)
+       Improve the performance and accuracy of the <type>numeric</type>
+       type's <link linkend="functions-math-func-table">square root</link>
+       (<function>sqrt</function>) and natural log
+       (<function>ln</function>) functions (Dean Rasheed)
       </para>
      </listitem>
 
@@ -1885,9 +1920,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <para>
        Add function <link
        linkend="functions-math-func-table"><function>min_scale()</function></link>
-       that returns the number of digits to the right the decimal point
-       that is required to represent the numeric value with full precision
-       (Pavel Stehule)
+       that returns the number of digits to the right of the decimal point
+       that are required to represent a <type>numeric</type> value with
+       full accuracy (Pavel Stehule)
       </para>
      </listitem>
 
@@ -1900,8 +1935,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <para>
        Add function <link
        linkend="functions-math-func-table"><function>trim_scale()</function></link>
-       to reduce the scale of a number by removing trailing zeros (Pavel
-       Stehule)
+       to reduce the scale of a <type>numeric</type> value by removing
+       trailing zeros (Pavel Stehule)
       </para>
      </listitem>
 
@@ -1917,8 +1952,10 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
       </para>
 
       <para>
-       For example, previously only point &lt;-&gt; line was supported,
-       now line &lt;-&gt; point works too.
+       For example, previously only <type>point</type>
+       <literal>&lt;-&gt;</literal> <type>line</type> was supported,
+       now <type>line</type> <literal>&lt;-&gt;</literal> <type>point</type>
+       works too.
       </para>
      </listitem>
 
@@ -1929,14 +1966,14 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
       <para>
-       Create xid8 versions of all <link
-       linkend="functions-pg-snapshot">transaction id functions</link>
+       Create <type>xid8</type> versions of all <link
+       linkend="functions-pg-snapshot">transaction ID functions</link>
        (Thomas Munro)
       </para>
 
       <para>
-       The old function names were kept for backward compatibility.  DO WE
-       HAVE NEW NAMES?
+       The old <type>xid</type>-based functions still exist, for backward
+       compatibility.
       </para>
      </listitem>
 
@@ -1949,8 +1986,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <para>
        Allow <link
        linkend="functions-binarystring-other"><function>get_bit()</function></link>
-       and <function>set_bit()</function> to set bits beyond 256MB of bytea
-       data (Movead Li)
+       and <function>set_bit()</function> to set bits beyond the first
+       256MB of a <type>bytea</type> value (Movead Li)
       </para>
      </listitem>
 
@@ -1983,7 +2020,6 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
       </para>
      </listitem>
 
-
     </itemizedlist>
 
    </sect3>
@@ -2012,7 +2048,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Improve the performance of PL/pgSQL functions that use immutable
+       Improve performance of PL/pgSQL functions that use immutable
        expressions (Konstantin Knizhnik)
       </para>
      </listitem>
@@ -2056,8 +2092,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Add libpq connection parameters to control the min/max
-       <acronym>TLS</acronym> version for encrypted connections
+       Add libpq connection parameters to control the minimum and maximum
+       <acronym>TLS</acronym> version allowed for an encrypted connection
        (Daniel Gustafsson)
       </para>
 
@@ -2072,30 +2108,18 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <listitem>
 <!--
-Author: Fujii Masao <fujii@postgresql.org>
-2020-03-05 [2eb3bc588] Fix issues around .pgpass file.
--->
-
-      <para>
-       Tighten libpq's overlength-line handling and comment detection for <link
-       linkend="libpq-pgpass">.pgpass</link> files (Fujii Masao)
-      </para>
-     </listitem>
-
-     <listitem>
-<!--
 Author: Andrew Dunstan <andrew@dunslane.net>
 2019-11-30 [4dc635521] libq support for sslpassword connection param,  DER form
 -->
 
       <para>
-       Allow specification of passwords to unlock client certificates (Craig
+       Allow use of passwords to unlock client certificates (Craig
        Ringer, Andrew Dunstan)
       </para>
 
       <para>
-       This is specified by the <xref linkend="libpq-connect-sslpassword"/>
-       connection option.
+       This is enabled by libpq's <xref linkend="libpq-connect-sslpassword"/>
+       connection parameter.
       </para>
      </listitem>
 
@@ -2106,8 +2130,8 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 -->
 
       <para>
-       Allow <acronym>DER</acronym>-encoded client certificates (Craig Ringer,
-       Andrew Dunstan)
+       Allow libpq to use <acronym>DER</acronym>-encoded client
+       certificates (Craig Ringer, Andrew Dunstan)
       </para>
      </listitem>
 
@@ -2150,9 +2174,9 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
        <para>
-        Add the transaction status (%x) to the default <link
-        linkend="app-psql-prompting"><application>psql</application>
-        prompts</link> (Vik Fearing)
+        Add transaction status (<literal>%x</literal>)
+        to <application>psql</application>'s default
+        <link linkend="app-psql-prompting">prompts</link> (Vik Fearing)
        </para>
       </listitem>
 
@@ -2163,12 +2187,13 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
        <para>
-        Allow the secondary <application>psql</application> prompt to be same
-        number of spaces as the primary prompt (Thomas Munro)
+        Allow the secondary <application>psql</application> prompt to be
+        blank but the same width as the primary prompt (Thomas Munro)
        </para>
 
        <para>
-        This is accomplished by setting PROMPT2 to %w.
+        This is accomplished by setting <literal>PROMPT2</literal>
+        to <literal>%w</literal>.
        </para>
       </listitem>
 
@@ -2179,13 +2204,16 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Allow <link linkend="app-psql-meta-commands">\g</link> and \gx to
-        change any <link linkend="app-psql-meta-commands">\pset</link> output
-        options for a single command (Tom Lane)
+        Allow <application>psql</application>'s
+        <link linkend="app-psql-meta-commands"><literal>\g</literal></link>
+        and <literal>\gx</literal> commands to
+        change <link linkend="app-psql-meta-commands">\pset</link> output
+        options for the duration of that single command (Tom Lane)
        </para>
 
        <para>
-        This allows syntax like \g (expand=on), which is equivalent to \gx.
+        This feature allows syntax like <literal>\g (expand=on)</literal>,
+        which is equivalent to <literal>\gx</literal>.
        </para>
       </listitem>
 
@@ -2196,14 +2224,16 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
        <para>
-        Add <application>psql</application> commands to report operator
+        Add <application>psql</application> commands to display operator
         classes and operator families (Sergey Cherkashin, Nikita Glukhov,
         Alexander Korotkov)
        </para>
 
        <para>
         The new commands are <link
-        linkend="app-psql-meta-commands">\dAc</link>, \dAf, \dAo, and \dAp.
+        linkend="app-psql-meta-commands"><literal>\dAc</literal></link>,
+        <literal>\dAf</literal>, <literal>\dAo</literal>,
+        and <literal>\dAp</literal>.
        </para>
       </listitem>
 
@@ -2215,8 +2245,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
        <para>
         Show table persistence in <application>psql</application>'s <link
-        linkend="app-psql-meta-commands">\dt+</link> and related commands
-        (David Fetter)
+        linkend="app-psql-meta-commands"><literal>\dt+</literal></link>
+        and related commands (David Fetter)
        </para>
 
        <para>
@@ -2232,9 +2262,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Improve output of <application>psql</application> <link
-        linkend="app-psql-meta-commands">\d</link> for <acronym>TOAST</acronym>
-        tables (Justin Pryzby)
+        Improve output of <application>psql</application>'s <link
+        linkend="app-psql-meta-commands"><literal>\d</literal></link>
+        for <acronym>TOAST</acronym> tables (Justin Pryzby)
        </para>
       </listitem>
 
@@ -2245,13 +2275,15 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Adjust display of <application>psql</application>'s <link
-        linkend="app-psql-meta-commands">\e</link> query (Tom Lane)
+        Fix redisplay after <application>psql</application>'s <link
+        linkend="app-psql-meta-commands"><literal>\e</literal></link>
+        command (Tom Lane)
        </para>
 
        <para>
         When exiting the editor, if the query doesn't end with a semicolon
-        or \g, the query buffer contents will now be displayed.
+        or <literal>\g</literal>, the query buffer contents will now be
+        displayed.
        </para>
       </listitem>
 
@@ -2262,13 +2294,14 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Add <link linkend="app-psql-meta-commands">\warn</link> command to
-        <application>psql</application> (David Fetter)
+        Add <link
+        linkend="app-psql-meta-commands"><literal>\warn</literal></link>
+        command to <application>psql</application> (David Fetter)
        </para>
 
        <para>
-        This is like \echo except that the text is sent to stderr instead
-        of stdout.
+        This is like <literal>\echo</literal> except that the text is sent
+        to stderr instead of stdout.
        </para>
       </listitem>
 
@@ -2300,7 +2333,8 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
        <para>
-        Allow pgbench to partition its 'accounts' table (Fabien Coelho)
+        Allow pgbench to partition its <quote>accounts</quote> table
+        (Fabien Coelho)
        </para>
 
        <para>
@@ -2315,8 +2349,9 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
        <para>
-        Add pgbench command \aset, which behaves like \gset, but for multiple
-        queries (Fabien Coelho)
+        Add pgbench command <literal>\aset</literal>, which behaves
+        like <literal>\gset</literal>, but for multiple queries (Fabien
+        Coelho)
        </para>
       </listitem>
 
@@ -2327,8 +2362,8 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
        <para>
-        Allow pgbench to generate its data server-side, rather than client side
-        (Fabien Coelho)
+        Allow pgbench to generate its initial data server-side, rather
+        than client-side (Fabien Coelho)
        </para>
       </listitem>
 
@@ -2339,7 +2374,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
        <para>
-        Allow pgbench to dump script contents using
+        Allow pgbench to show script contents using option
         <option>--show-script</option> (Fabien Coelho)
        </para>
       </listitem>
@@ -2390,9 +2425,10 @@ Author: Author: Fujii Masao <fujii@postgresql.org>
       <para>
        This computation allows <link
        linkend="monitoring-stats-dynamic-views-table"><structname>pg_stat_progress_basebackup</structname></link>
-       to show progress, and can be disabled by using the
-       <option>--no-estimate-size</option> option.  Previously, this
-       computation happened only if <option>--progress</option> was used.
+       to show progress.  If that is not needed, it can be disabled by
+       using the <option>--no-estimate-size</option> option.  Previously,
+       this computation happened only if the <option>--progress</option>
+       option was used.
       </para>
      </listitem>
 
@@ -2403,9 +2439,9 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
       <para>
-       Add <link
+       Add an option to <link
        linkend="app-pgrewind"><application>pg_rewind</application></link>
-       option to configure standbys (Paul Guo, Jimmy Yih, Ashwin Agrawal)
+       to configure standbys (Paul Guo, Jimmy Yih, Ashwin Agrawal)
       </para>
 
       <para>
@@ -2456,8 +2492,8 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
       <para>
-       Increase <link linkend="sql-prepare-transaction"><command>PREPARE
-       TRANSACTION</command></link> information reported by
+       Increase the <link linkend="sql-prepare-transaction"><command>PREPARE
+       TRANSACTION</command></link>-related information reported by
        <application>pg_waldump</application> (Fujii Masao)
       </para>
      </listitem>
@@ -2530,8 +2566,9 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
       <para>
-       Allow <link linkend="app-dropdb">dropdb</link> to force disconnections
-       so the drop succeeds (Pavel Stehule)
+       Allow <link linkend="app-dropdb">dropdb</link> to disconnect
+       sessions using the target database, allowing the drop to succeed
+       (Pavel Stehule)
       </para>
 
       <para>
@@ -2552,7 +2589,7 @@ Author: Author: Michael Paquier <michael@paquier.xyz>
       </para>
 
       <para>
-       The long-supported options for this are called
+       The long-supported preferred options for this are called
        <option>--superuser</option> and <option>--no-superuser</option>.
       </para>
      </listitem>
@@ -2566,8 +2603,8 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       <para>
        Use the directory of the <link
        linkend="pgupgrade"><application>pg_upgrade</application></link>
-       binary as the default new 'bindir' location when running
-       <application>pg_upgrade</application> (Daniel Gustafsson)
+       program as the default <option>--new-bindir</option> setting when
+       running <application>pg_upgrade</application> (Daniel Gustafsson)
       </para>
      </listitem>
 
@@ -2601,7 +2638,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
       <para>
        Reformat tables containing <link linkend="functions">function
-       information</link> for better clarity (Tom Lane)
+       and operator information</link> for better clarity (Tom Lane)
       </para>
      </listitem>
 
@@ -2728,31 +2765,19 @@ Author: Michael Paquier <michael@paquier.xyz>
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2019-11-27 [4513d8b07] Move configure - -disable-float8-byval to pg_config_manua
--->
-
-      <para>
-       Remove <link linkend="install-short">support</link> option
-       <option>--disable-float8-byval</option> (Peter Eisentraut)
-      </para>
-
-      <para>
-       This was needed for previously supported version-zero functions.
-      </para>
-     </listitem>
-
-     <listitem>
-<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2019-11-21 [2e4db241b] Remove configure - -disable-float4-byval
 -->
 
       <para>
-       Remove configure option <option>--disable-float4-byval</option>
-       (Peter Eisentraut)
+       Remove <link linkend="install-short">configure</link> options
+       <option>--disable-float8-byval</option>
+       and <option>--disable-float4-byval</option> (Peter Eisentraut)
       </para>
 
       <para>
-       This was needed for previously supported version-zero functions.
+       These were needed for compatibility with some version-zero C
+       functions, but those are no longer supported.
       </para>
      </listitem>
 
@@ -2763,7 +2788,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
       <para>
-       Add the query string to planner hook functions (Pascal Legrand,
+       Pass the query string to planner hook functions (Pascal Legrand,
        Julien Rouhaud)
       </para>
      </listitem>
@@ -2822,7 +2847,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
       <para>
-       Use operating system functions to cleanly erase memory that contains
+       Use operating system functions to reliably erase memory that contains
        sensitive information (Peter Eisentraut)
       </para>
 
@@ -2838,8 +2863,8 @@ Author: Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Add "headerscheck" script to test C header-file compatibility
-       (Tom Lane)
+       Add <filename>headerscheck</filename> script to test C header-file
+       compatibility (Tom Lane)
       </para>
      </listitem>
 
@@ -2850,26 +2875,12 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Implement internal lists as arrays, rather than a chain of structures
+       Implement internal lists as arrays, rather than a chain of cells
        (Tom Lane)
       </para>
 
       <para>
-       This improves performance for queries that access many object.
-       The internal List <acronym>API</acronym> has also been improved.
-      </para>
-     </listitem>
-
-     <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2019-07-13 [39aadc984] Fix some inconsistencies in MSVC scripts
--->
-
-      <para>
-       Update <link linkend="install-windows">Windows build scripts</link>
-       to use the modern <option>--with-uuid</option> flag for
-       <acronym>UUID</acronym> libraries (Kyotaro Horiguchi)
+       This improves performance for queries that access many objects.
       </para>
      </listitem>
 
@@ -2913,8 +2924,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       </para>
 
       <para>
-       Such extensions can be installed in a database by users with creation
-       rights, even if they are not superusers.  This change also removes
+       Such extensions can be installed in a database by users with
+       database-level <literal>CREATE</literal> privileges, even if they
+       are not superusers.  This change also removes
        the <structname>pg_pltemplate</structname> system catalog.
       </para>
      </listitem>
@@ -2926,7 +2938,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Remove support for upgrading "unpackaged" extensions (Tom Lane)
+       Remove support for upgrading unpackaged (pre-9.1) extensions (Tom Lane)
       </para>
      </listitem>
 
@@ -2942,11 +2954,11 @@ Author: Andrew Dunstan <andrew@dunslane.net>
       </para>
 
       <para>
-       Specifically, allow <link linkend="sql-alterusermapping"><command>ALTER
-       USER MAPPING</command></link> to set
-       <literal>password_required</literal> to false.  Care must still be
-       taken to avoid non-superusers from using superuser credentials to
-       connect to the foreign server.
+       Specifically, allow a superuser to set
+       <literal>password_required</literal> to false for
+       a <link linkend="sql-alterusermapping">user mapping</link>.  Care
+       must still be taken to prevent non-superusers from using superuser
+       credentials to connect to the foreign server.
       </para>
      </listitem>
 
@@ -3000,8 +3012,8 @@ Author: Andrew Gierth <rhodiumtoad@postgresql.org>
 
       <para>
        Have <xref linkend="pgstatstatements"/> treat <command>SELECT
-       ... FOR UPDATE</command>  as distinct from those without <command>FOR
-       UPDATE</command> (Andrew Gierth, Vik Fearing)
+       ... FOR UPDATE</command> commands as distinct from those
+       without <command>FOR UPDATE</command> (Andrew Gierth, Vik Fearing)
       </para>
      </listitem>
 
@@ -3061,7 +3073,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Add option to <xref linkend="dict-int"/> extension to ignore the sign
+       Add an option to <xref linkend="dict-int"/> to ignore the sign
        of integers (Jeff Janes)
       </para>
      </listitem>
@@ -3102,7 +3114,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
       <para>
-       Add btree index de-duplication processing columns to pageinspect output
+       Add B-tree index de-duplication processing columns to pageinspect output
        (Peter Geoghegan)
       </para>
      </listitem>
