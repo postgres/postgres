@@ -631,8 +631,8 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 	/*
 	 * If the partition's attributes don't match the root relation's, we'll
 	 * need to make a new attrmap which maps partition attribute numbers to
-	 * remoterel's, instead the original which maps root relation's attribute
-	 * numbers to remoterel's.
+	 * remoterel's, instead of the original which maps root relation's
+	 * attribute numbers to remoterel's.
 	 *
 	 * Note that 'map' which comes from the tuple routing data structure
 	 * contains 1-based attribute numbers (of the parent relation).  However,
