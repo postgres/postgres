@@ -159,7 +159,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          <para>
           It is safe to use <literal>off</literal> for logical replication:
           If the subscriber loses transactions because of missing
-          synchronization, the data will be resent from the publisher.
+          synchronization, the data will be sent again from the publisher.
          </para>
 
          <para>
