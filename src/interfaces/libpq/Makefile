@@ -89,6 +89,8 @@ SHLIB_PREREQS = submake-libpgport
 
 SHLIB_EXPORTS = exports.txt
 
+PKG_CONFIG_REQUIRES_PRIVATE = libssl libcrypto
+
 all: all-lib
 
 # Shared library stuff
