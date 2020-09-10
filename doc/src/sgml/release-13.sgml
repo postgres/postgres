@@ -131,7 +131,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
      </para>
 
 <programlisting>
-SELECT round(sum(<replaceable>OLDVALUE</replaceable> / n::float)) FROM generate_series(1, <replaceable>OLDVALUE</replaceable>) s(n);
+SELECT round(sum(<replaceable>OLDVALUE</replaceable> / n::float)) AS newvalue FROM generate_series(1, <replaceable>OLDVALUE</replaceable>) s(n);
 </programlisting>
     </listitem>
 
@@ -775,8 +775,8 @@ Author: Noah Misch <noah@leadboat.com>
 -->
 
        <para>
-        Allow skipping of <acronym>WAL</acronym> for <link
-        linkend="guc-full-page-writes">full table writes</link> if <xref
+        Allow <acronym>WAL</acronym> writes to be skipped during a transaction
+        that creates or rewrites a relation, if <xref
         linkend="guc-wal-level"/> is <literal>minimal</literal> (Kyotaro
         Horiguchi)
        </para>
@@ -1006,8 +1006,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 
        <para>
         Add <structfield>leader_pid</structfield> to <xref
-        linkend="pg-stat-activity-view"/> to report parallel worker ownership
-        (Julien Rouhaud)
+        linkend="pg-stat-activity-view"/> to report a parallel worker's
+        leader process (Julien Rouhaud)
        </para>
       </listitem>
 
@@ -1261,8 +1261,9 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
        <para>
-        Enable <link linkend="client-authentication">Unix-domain sockets</link>
-        support on Windows (Peter Eisentraut)
+        Enable support
+        for <link linkend="runtime-config-connection-settings">Unix-domain
+        sockets</link> on Windows (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -1390,8 +1391,8 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
       <para>
-       Allow <acronym>WAL</acronym> recovery to continue even if invalid
-       pages are referenced (Fujii Masao)
+       Allow recovery to continue even if invalid
+       pages are referenced by <acronym>WAL</acronym> (Fujii Masao)
       </para>
 
       <para>
