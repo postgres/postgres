@@ -786,7 +786,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and
       <literal>FOREIGN KEY</literal> constraints are not considered.
       If any of the <literal>CHECK</literal> constraints of the table being
-      attached is marked <literal>NO INHERIT</literal>, the command will fail;
+      attached are marked <literal>NO INHERIT</literal>, the command will fail;
       such constraints must be recreated without the
       <literal>NO INHERIT</literal> clause.
      </para>
