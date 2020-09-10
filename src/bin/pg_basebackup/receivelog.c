@@ -46,8 +46,7 @@ static bool ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, i
 							   XLogRecPtr *blockpos);
 static PGresult *HandleEndOfCopyStream(PGconn *conn, StreamCtl *stream, char *copybuf,
 									   XLogRecPtr blockpos, XLogRecPtr *stoppos);
-static bool CheckCopyStreamStop(PGconn *conn, StreamCtl *stream, XLogRecPtr blockpos,
-								XLogRecPtr *stoppos);
+static bool CheckCopyStreamStop(PGconn *conn, StreamCtl *stream, XLogRecPtr blockpos);
 static long CalculateCopyStreamSleeptime(TimestampTz now, int standby_message_timeout,
 										 TimestampTz last_status);
 
@@ -747,7 +746,7 @@ HandleCopyStream(PGconn *conn, StreamCtl *stream,
 		/*
 		 * Check if we should continue streaming, or abort at this point.
 		 */
-		if (!CheckCopyStreamStop(conn, stream, blockpos, stoppos))
+		if (!CheckCopyStreamStop(conn, stream, blockpos))
 			goto error;
 
 		now = feGetCurrentTimestamp();
@@ -825,7 +824,7 @@ HandleCopyStream(PGconn *conn, StreamCtl *stream,
 				 * Check if we should continue streaming, or abort at this
 				 * point.
 				 */
-				if (!CheckCopyStreamStop(conn, stream, blockpos, stoppos))
+				if (!CheckCopyStreamStop(conn, stream, blockpos))
 					goto error;
 			}
 			else
@@ -1203,8 +1202,7 @@ HandleEndOfCopyStream(PGconn *conn, StreamCtl *stream, char *copybuf,
  * Check if we should continue streaming, or abort at this point.
  */
 static bool
-CheckCopyStreamStop(PGconn *conn, StreamCtl *stream, XLogRecPtr blockpos,
-					XLogRecPtr *stoppos)
+CheckCopyStreamStop(PGconn *conn, StreamCtl *stream, XLogRecPtr blockpos)
 {
 	if (still_sending && stream->stream_stop(blockpos, stream->timeline, false))
 	{
