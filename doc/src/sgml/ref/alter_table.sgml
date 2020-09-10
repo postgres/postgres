@@ -868,7 +868,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       from the parent table will be created in the partition, if they don't
       already exist.
       If any of the <literal>CHECK</literal> constraints of the table being
-      attached is marked <literal>NO INHERIT</literal>, the command will fail;
+      attached are marked <literal>NO INHERIT</literal>, the command will fail;
       such constraints must be recreated without the
       <literal>NO INHERIT</literal> clause.
      </para>

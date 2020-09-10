@@ -223,7 +223,7 @@ $ pg_recvlogical -d postgres --slot=test --drop-slot
      A logical slot will emit each change just once in normal operation.
      The current position of each slot is persisted only at checkpoint, so in
      the case of a crash the slot may return to an earlier LSN, which will
-     then cause recent changes to be resent when the server restarts.
+     then cause recent changes to be sent again when the server restarts.
      Logical decoding clients are responsible for avoiding ill effects from
      handling the same message more than once.  Clients may wish to record
      the last LSN they saw when decoding and skip over any repeated data or

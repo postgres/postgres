@@ -373,7 +373,7 @@ ereport(ERROR,
      specify suppression of the <literal>CONTEXT:</literal> portion of a message in
      the postmaster log.  This should only be used for verbose debugging
      messages where the repeated inclusion of context would bloat the log
-     volume too much.
+     too much.
     </para>
    </listitem>
   </itemizedlist>

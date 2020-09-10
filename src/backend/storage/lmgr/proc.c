@@ -1370,7 +1370,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			else
 				LWLockRelease(ProcArrayLock);
 
-			/* prevent signal from being resent more than once */
+			/* prevent signal from being sent again more than once */
 			allow_autovacuum_cancel = false;
 		}
 
