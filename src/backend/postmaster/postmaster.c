@@ -401,7 +401,8 @@ static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void sigusr1_handler(SIGNAL_ARGS);
-static void startup_die(SIGNAL_ARGS);
+static void process_startup_packet_die(SIGNAL_ARGS);
+static void process_startup_packet_quickdie(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
 static void StartupPacketTimeoutHandler(void);
 static void CleanupBackend(int pid, int exitstatus);
@@ -4258,22 +4259,30 @@ BackendInitialize(Port *port)
 	whereToSendOutput = DestRemote; /* now safe to ereport to client */
 
 	/*
-	 * We arrange for a simple exit(1) if we receive SIGTERM or SIGQUIT or
-	 * timeout while trying to collect the startup packet.  Otherwise the
-	 * postmaster cannot shutdown the database FAST or IMMED cleanly if a
-	 * buggy client fails to send the packet promptly.  XXX it follows that
-	 * the remainder of this function must tolerate losing control at any
-	 * instant.  Likewise, any pg_on_exit_callback registered before or during
-	 * this function must be prepared to execute at any instant between here
-	 * and the end of this function.  Furthermore, affected callbacks execute
-	 * partially or not at all when a second exit-inducing signal arrives
-	 * after proc_exit_prepare() decrements on_proc_exit_index.  (Thanks to
-	 * that mechanic, callbacks need not anticipate more than one call.)  This
-	 * is fragile; it ought to instead follow the norm of handling interrupts
-	 * at selected, safe opportunities.
+	 * We arrange to do proc_exit(1) if we receive SIGTERM or timeout while
+	 * trying to collect the startup packet; while SIGQUIT results in
+	 * _exit(2).  Otherwise the postmaster cannot shutdown the database FAST
+	 * or IMMED cleanly if a buggy client fails to send the packet promptly.
+	 *
+	 * XXX this is pretty dangerous; signal handlers should not call anything
+	 * as complex as proc_exit() directly.  We minimize the hazard by not
+	 * keeping these handlers active for longer than we must.  However, it
+	 * seems necessary to be able to escape out of DNS lookups as well as the
+	 * startup packet reception proper, so we can't narrow the scope further
+	 * than is done here.
+	 *
+	 * XXX it follows that the remainder of this function must tolerate losing
+	 * control at any instant.  Likewise, any pg_on_exit_callback registered
+	 * before or during this function must be prepared to execute at any
+	 * instant between here and the end of this function.  Furthermore,
+	 * affected callbacks execute partially or not at all when a second
+	 * exit-inducing signal arrives after proc_exit_prepare() decrements
+	 * on_proc_exit_index.  (Thanks to that mechanic, callbacks need not
+	 * anticipate more than one call.)  This is fragile; it ought to instead
+	 * follow the norm of handling interrupts at selected, safe opportunities.
 	 */
-	pqsignal(SIGTERM, startup_die);
-	pqsignal(SIGQUIT, startup_die);
+	pqsignal(SIGTERM, process_startup_packet_die);
+	pqsignal(SIGQUIT, process_startup_packet_quickdie);
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 	PG_SETMASK(&StartupBlockSig);
 
@@ -4333,8 +4342,8 @@ BackendInitialize(Port *port)
 		port->remote_hostname = strdup(remote_host);
 
 	/*
-	 * Ready to begin client interaction.  We will give up and exit(1) after a
-	 * time delay, so that a broken client can't hog a connection
+	 * Ready to begin client interaction.  We will give up and proc_exit(1)
+	 * after a time delay, so that a broken client can't hog a connection
 	 * indefinitely.  PreAuthDelay and any DNS interactions above don't count
 	 * against the time limit.
 	 *
@@ -4355,6 +4364,12 @@ BackendInitialize(Port *port)
 	 * packet).
 	 */
 	status = ProcessStartupPacket(port, false, false);
+
+	/*
+	 * Disable the timeout, and prevent SIGTERM/SIGQUIT again.
+	 */
+	disable_timeout(STARTUP_PACKET_TIMEOUT, false);
+	PG_SETMASK(&BlockSig);
 
 	/*
 	 * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
@@ -4381,12 +4396,6 @@ BackendInitialize(Port *port)
 	else
 		init_ps_display(port->user_name, port->database_name, remote_ps_data,
 						update_process_title ? "authentication" : "");
-
-	/*
-	 * Disable the timeout, and prevent SIGTERM/SIGQUIT again.
-	 */
-	disable_timeout(STARTUP_PACKET_TIMEOUT, false);
-	PG_SETMASK(&BlockSig);
 }
 
 
@@ -5267,18 +5276,47 @@ sigusr1_handler(SIGNAL_ARGS)
 }
 
 /*
- * SIGTERM or SIGQUIT while processing startup packet.
+ * SIGTERM while processing startup packet.
  * Clean up and exit(1).
  *
- * XXX: possible future improvement: try to send a message indicating
- * why we are disconnecting.  Problem is to be sure we don't block while
- * doing so, nor mess up SSL initialization.  In practice, if the client
- * has wedged here, it probably couldn't do anything with the message anyway.
+ * Running proc_exit() from a signal handler is pretty unsafe, since we
+ * can't know what code we've interrupted.  But the alternative of using
+ * _exit(2) is also unpalatable, since it'd mean that a "fast shutdown"
+ * would cause a database crash cycle (forcing WAL replay at restart)
+ * if any sessions are in authentication.  So we live with it for now.
+ *
+ * One might be tempted to try to send a message indicating why we are
+ * disconnecting.  However, that would make this even more unsafe.  Also,
+ * it seems undesirable to provide clues about the database's state to
+ * a client that has not yet completed authentication.
  */
 static void
-startup_die(SIGNAL_ARGS)
+process_startup_packet_die(SIGNAL_ARGS)
 {
 	proc_exit(1);
+}
+
+/*
+ * SIGQUIT while processing startup packet.
+ *
+ * Some backend has bought the farm,
+ * so we need to stop what we're doing and exit.
+ */
+static void
+process_startup_packet_quickdie(SIGNAL_ARGS)
+{
+	/*
+	 * We DO NOT want to run proc_exit() or atexit() callbacks; they wouldn't
+	 * be safe to run from a signal handler.  Just nail the windows shut and
+	 * get out of town.
+	 *
+	 * Note we do _exit(2) not _exit(1).  This is to force the postmaster into
+	 * a system reset cycle if someone sends a manual SIGQUIT to a random
+	 * backend.  (While it might be safe to do _exit(1), since this session
+	 * shouldn't have touched shared memory yet, there seems little point in
+	 * taking any risks.)
+	 */
+	_exit(2);
 }
 
 /*
@@ -5297,7 +5335,11 @@ dummy_handler(SIGNAL_ARGS)
 
 /*
  * Timeout while processing startup packet.
- * As for startup_die(), we clean up and exit(1).
+ * As for process_startup_packet_die(), we clean up and exit(1).
+ *
+ * This is theoretically just as hazardous as in process_startup_packet_die(),
+ * although in practice we're almost certainly waiting for client input,
+ * which greatly reduces the risk.
  */
 static void
 StartupPacketTimeoutHandler(void)
