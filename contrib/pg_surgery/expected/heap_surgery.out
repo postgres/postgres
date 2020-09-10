@@ -1,0 +1,180 @@
+create extension pg_surgery;
+-- create a normal heap table and insert some rows.
+-- note that we don't commit the transaction, so autovacuum can't interfere.
+begin;
+create table htab(a int);
+insert into htab values (100), (200), (300), (400), (500);
+-- test empty TID array
+select heap_force_freeze('htab'::regclass, ARRAY[]::tid[]);
+ heap_force_freeze 
+-------------------
+ 
+(1 row)
+
+-- nothing should be frozen yet
+select * from htab where xmin = 2;
+ a 
+---
+(0 rows)
+
+-- freeze forcibly
+select heap_force_freeze('htab'::regclass, ARRAY['(0, 4)']::tid[]);
+ heap_force_freeze 
+-------------------
+ 
+(1 row)
+
+-- now we should have one frozen tuple
+select ctid, xmax from htab where xmin = 2;
+ ctid  | xmax 
+-------+------
+ (0,4) |    0
+(1 row)
+
+-- kill forcibly
+select heap_force_kill('htab'::regclass, ARRAY['(0, 4)']::tid[]);
+ heap_force_kill 
+-----------------
+ 
+(1 row)
+
+-- should be gone now
+select * from htab where ctid = '(0, 4)';
+ a 
+---
+(0 rows)
+
+-- should now be skipped because it's already dead
+select heap_force_kill('htab'::regclass, ARRAY['(0, 4)']::tid[]);
+NOTICE:  skipping tid (0, 4) for relation "htab" because it is marked dead
+ heap_force_kill 
+-----------------
+ 
+(1 row)
+
+select heap_force_freeze('htab'::regclass, ARRAY['(0, 4)']::tid[]);
+NOTICE:  skipping tid (0, 4) for relation "htab" because it is marked dead
+ heap_force_freeze 
+-------------------
+ 
+(1 row)
+
+-- freeze two TIDs at once while skipping an out-of-range block number
+select heap_force_freeze('htab'::regclass,
+						 ARRAY['(0, 1)', '(0, 3)', '(1, 1)']::tid[]);
+NOTICE:  skipping block 1 for relation "htab" because the block number is out of range
+ heap_force_freeze 
+-------------------
+ 
+(1 row)
+
+-- we should now have two frozen tuples
+select ctid, xmax from htab where xmin = 2;
+ ctid  | xmax 
+-------+------
+ (0,1) |    0
+ (0,3) |    0
+(2 rows)
+
+-- out-of-range TIDs should be skipped
+select heap_force_freeze('htab'::regclass, ARRAY['(0, 0)', '(0, 6)']::tid[]);
+NOTICE:  skipping tid (0, 0) for relation "htab" because the item number is out of range
+NOTICE:  skipping tid (0, 6) for relation "htab" because the item number is out of range
+ heap_force_freeze 
+-------------------
+ 
+(1 row)
+
+rollback;
+-- set up a new table with a redirected line pointer
+create table htab2(a int) with (autovacuum_enabled = off);
+insert into htab2 values (100);
+update htab2 set a = 200;
+vacuum htab2;
+-- redirected TIDs should be skipped
+select heap_force_kill('htab2'::regclass, ARRAY['(0, 1)']::tid[]);
+NOTICE:  skipping tid (0, 1) for relation "htab2" because it redirects to item 2
+ heap_force_kill 
+-----------------
+ 
+(1 row)
+
+-- now create an unused line pointer
+select ctid from htab2;
+ ctid  
+-------
+ (0,2)
+(1 row)
+
+update htab2 set a = 300;
+select ctid from htab2;
+ ctid  
+-------
+ (0,3)
+(1 row)
+
+vacuum freeze htab2;
+-- unused TIDs should be skipped
+select heap_force_kill('htab2'::regclass, ARRAY['(0, 2)']::tid[]);
+NOTICE:  skipping tid (0, 2) for relation "htab2" because it is marked unused
+ heap_force_kill 
+-----------------
+ 
+(1 row)
+
+-- multidimensional TID array should be rejected
+select heap_force_kill('htab2'::regclass, ARRAY[['(0, 2)']]::tid[]);
+ERROR:  argument must be empty or one-dimensional array
+-- TID array with nulls should be rejected
+select heap_force_kill('htab2'::regclass, ARRAY[NULL]::tid[]);
+ERROR:  array must not contain nulls
+-- but we should be able to kill the one tuple we have
+select heap_force_kill('htab2'::regclass, ARRAY['(0, 3)']::tid[]);
+ heap_force_kill 
+-----------------
+ 
+(1 row)
+
+-- materialized view.
+-- note that we don't commit the transaction, so autovacuum can't interfere.
+begin;
+create materialized view mvw as select a from generate_series(1, 3) a;
+select * from mvw where xmin = 2;
+ a 
+---
+(0 rows)
+
+select heap_force_freeze('mvw'::regclass, ARRAY['(0, 3)']::tid[]);
+ heap_force_freeze 
+-------------------
+ 
+(1 row)
+
+select * from mvw where xmin = 2;
+ a 
+---
+ 3
+(1 row)
+
+select heap_force_kill('mvw'::regclass, ARRAY['(0, 3)']::tid[]);
+ heap_force_kill 
+-----------------
+ 
+(1 row)
+
+select * from mvw where ctid = '(0, 3)';
+ a 
+---
+(0 rows)
+
+rollback;
+-- check that it fails on an unsupported relkind
+create view vw as select 1;
+select heap_force_kill('vw'::regclass, ARRAY['(0, 1)']::tid[]);
+ERROR:  "vw" is not a table, materialized view, or TOAST table
+select heap_force_freeze('vw'::regclass, ARRAY['(0, 1)']::tid[]);
+ERROR:  "vw" is not a table, materialized view, or TOAST table
+-- cleanup.
+drop table htab2;
+drop view vw;
+drop extension pg_surgery;

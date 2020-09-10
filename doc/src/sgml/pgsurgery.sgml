@@ -1,0 +1,107 @@
+<!-- doc/src/sgml/pgsurgery.sgml -->
+
+<sect1 id="pgsurgery" xreflabel="pg_surgery">
+ <title>pg_surgery</title>
+
+ <indexterm zone="pgsurgery">
+  <primary>pg_surgery</primary>
+ </indexterm>
+
+ <para>
+  The <filename>pg_surgery</filename> module provides various functions to
+  perform surgery on a damaged relation. These functions are unsafe by design
+  and using them may corrupt (or further corrupt) your database. For example,
+  these functions can easily be used to make a table inconsistent with its
+  own indexes, to cause <literal>UNIQUE</literal> or
+  <literal>FOREIGN KEY</literal> constraint violations, or even to make
+  tuples visible which, when read, will cause a database server crash.
+  They should be used with great caution and only as a last resort.
+ </para>
+
+ <sect2>
+  <title>Functions</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <function>heap_force_kill(regclass, tid[]) returns void</function>
+    </term>
+
+    <listitem>
+     <para>
+      <function>heap_force_kill</function> marks <quote>used</quote> line
+      pointers as <quote>dead</quote> without examining the tuples. The
+      intended use of this function is to forcibly remove tuples that are not
+      otherwise accessible. For example:
+<programlisting>
+test=&gt; select * from t1 where ctid = '(0, 1)';
+ERROR:  could not access status of transaction 4007513275
+DETAIL:  Could not open file "pg_xact/0EED": No such file or directory.
+
+test=# select heap_force_kill('t1'::regclass, ARRAY['(0, 1)']::tid[]);
+ heap_force_kill 
+-----------------
+ 
+(1 row)
+
+test=# select * from t1 where ctid = '(0, 1)';
+(0 rows)
+
+</programlisting>
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>heap_force_freeze(regclass, tid[]) returns void</function>
+    </term>
+
+    <listitem>
+     <para>
+      <function>heap_force_freeze</function> marks tuples as frozen without
+      examining the tuple data. The intended use of this function is to
+      make accessible tuples which are inaccessible due to corrupted
+      visibility information, or which prevent the table from being
+      successfully vacuumed due to corrupted visibility information.
+      For example:
+<programlisting>
+test=&gt; vacuum t1;
+ERROR:  found xmin 507 from before relfrozenxid 515
+CONTEXT:  while scanning block 0 of relation "public.t1"
+
+test=# select ctid from t1 where xmin = 507;
+ ctid  
+-------
+ (0,3)
+(1 row)
+
+test=# select heap_force_freeze('t1'::regclass, ARRAY['(0, 3)']::tid[]);
+ heap_force_freeze 
+-------------------
+ 
+(1 row)
+
+test=# select ctid from t1 where xmin = 2;
+ ctid
+-------
+ (0,3)
+(1 row)
+
+</programlisting>
+    </para>
+   </listitem>
+  </varlistentry>
+
+  </variablelist>
+ </sect2>
+
+ <sect2>
+  <title>Authors</title>
+
+  <para>
+   Ashutosh Sharma <email>ashu.coek88@gmail.com</email>
+  </para>
+ </sect2>
+
+</sect1>

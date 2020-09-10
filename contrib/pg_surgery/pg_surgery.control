@@ -1,0 +1,5 @@
+# pg_surgery extension
+comment = 'extension to perform surgery on a damaged relation'
+default_version = '1.0'
+module_pathname = '$libdir/pg_surgery'
+relocatable = true

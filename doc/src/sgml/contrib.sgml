@@ -125,6 +125,7 @@ CREATE EXTENSION <replaceable>module_name</replaceable>;
  &pgrowlocks;
  &pgstatstatements;
  &pgstattuple;
+ &pgsurgery;
  &pgtrgm;
  &pgvisibility;
  &postgres-fdw;
