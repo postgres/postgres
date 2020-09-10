@@ -12,23 +12,46 @@
   <sect2>
    <title>Overview</title>
 
-    <para>
-     Major enhancements in <productname>PostgreSQL</productname> 13 include:
-    </para>
-
-   <!-- Items in this list summarize one or more items below -->
+   <para>
+    <productname>PostgreSQL</productname> 13 contains many new features and
+    enhancements, including:
+   </para>
 
    <itemizedlist>
-
     <listitem>
-    <para>TBD</para>
+     <para>
+      Space savings and performance gains from de-duplication of B-tree
+      index entries
+     </para>
     </listitem>
-
+    <listitem>
+     <para>
+      Improved performance for queries that use aggregates or partitioned
+      tables
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Better query planning when using extended statistics
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Parallelized vacuuming of B-tree indexes
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Incremental sorting
+     </para>
+    </listitem>
    </itemizedlist>
 
-    <para>
-     The above items are explained in more detail in the sections below.
-    </para>
+   <para>
+    The above items and other new features
+    of <productname>PostgreSQL</productname> 13 are explained in more
+    detail in the sections below.
+   </para>
 
   </sect2>
 
@@ -3079,7 +3102,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
       <para>
-       Add btree index deduplication processing columns to pageinspect output
+       Add btree index de-duplication processing columns to pageinspect output
        (Peter Geoghegan)
       </para>
      </listitem>
