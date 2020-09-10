@@ -82,8 +82,8 @@ PostgreSQL documentation
    for any files for which the computed checksum does not match the
    checksum stored in the manifest. This step is not performed for any files
    which produced errors in the previous step, since they are already known
-   to have problems. Also, files which were ignored in the previous step are
-   also ignored in this step.
+   to have problems. Files which were ignored in the previous step are also
+   ignored in this step.
   </para>
 
   <para>
@@ -121,7 +121,8 @@ PostgreSQL documentation
   <title>Options</title>
 
    <para>
-    The following command-line options control the behavior.
+    <application>pg_verifybackup</application> accepts the following
+    command-line arguments:
 
     <variablelist>
      <varlistentry>
