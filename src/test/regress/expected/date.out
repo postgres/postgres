@@ -21,9 +21,10 @@ INSERT INTO DATE_TBL VALUES ('2000-04-03');
 INSERT INTO DATE_TBL VALUES ('2038-04-08');
 INSERT INTO DATE_TBL VALUES ('2039-04-09');
 INSERT INTO DATE_TBL VALUES ('2040-04-10');
-SELECT f1 AS "Fifteen" FROM DATE_TBL;
-  Fifteen   
-------------
+INSERT INTO DATE_TBL VALUES ('2040-04-10 BC');
+SELECT f1 FROM DATE_TBL;
+      f1       
+---------------
  04-09-1957
  06-13-1957
  02-28-1996
@@ -39,11 +40,12 @@ SELECT f1 AS "Fifteen" FROM DATE_TBL;
  04-08-2038
  04-09-2039
  04-10-2040
-(15 rows)
+ 04-10-2040 BC
+(16 rows)
 
-SELECT f1 AS "Nine" FROM DATE_TBL WHERE f1 < '2000-01-01';
-    Nine    
-------------
+SELECT f1 FROM DATE_TBL WHERE f1 < '2000-01-01';
+      f1       
+---------------
  04-09-1957
  06-13-1957
  02-28-1996
@@ -53,11 +55,12 @@ SELECT f1 AS "Nine" FROM DATE_TBL WHERE f1 < '2000-01-01';
  02-28-1997
  03-01-1997
  03-02-1997
-(9 rows)
+ 04-10-2040 BC
+(10 rows)
 
-SELECT f1 AS "Three" FROM DATE_TBL
+SELECT f1 FROM DATE_TBL
   WHERE f1 BETWEEN '2000-01-01' AND '2001-01-01';
-   Three    
+     f1     
 ------------
  04-01-2000
  04-02-2000
@@ -860,7 +863,8 @@ SELECT f1 - date '2000-01-01' AS "Days From 2K" FROM DATE_TBL;
         13977
         14343
         14710
-(15 rows)
+     -1475115
+(16 rows)
 
 SELECT f1 - date 'epoch' AS "Days From Epoch" FROM DATE_TBL;
  Days From Epoch 
@@ -880,7 +884,8 @@ SELECT f1 - date 'epoch' AS "Days From Epoch" FROM DATE_TBL;
            24934
            25300
            25667
-(15 rows)
+        -1464158
+(16 rows)
 
 SELECT date 'yesterday' - date 'today' AS "One day";
  One day 
@@ -920,6 +925,43 @@ SELECT date 'tomorrow' - date 'yesterday' AS "Two days";
 
 --
 -- test extract!
+--
+SELECT f1 as "date",
+    date_part('year', f1) AS year,
+    date_part('month', f1) AS month,
+    date_part('day', f1) AS day,
+    date_part('quarter', f1) AS quarter,
+    date_part('decade', f1) AS decade,
+    date_part('century', f1) AS century,
+    date_part('millennium', f1) AS millennium,
+    date_part('isoyear', f1) AS isoyear,
+    date_part('week', f1) AS week,
+    date_part('dow', f1) AS dow,
+    date_part('isodow', f1) AS isodow,
+    date_part('doy', f1) AS doy,
+    date_part('julian', f1) AS julian,
+    date_part('epoch', f1) AS epoch
+    FROM date_tbl;
+     date      | year  | month | day | quarter | decade | century | millennium | isoyear | week | dow | isodow | doy | julian  |     epoch     
+---------------+-------+-------+-----+---------+--------+---------+------------+---------+------+-----+--------+-----+---------+---------------
+ 04-09-1957    |  1957 |     4 |   9 |       2 |    195 |      20 |          2 |    1957 |   15 |   2 |      2 |  99 | 2435938 |    -401760000
+ 06-13-1957    |  1957 |     6 |  13 |       2 |    195 |      20 |          2 |    1957 |   24 |   4 |      4 | 164 | 2436003 |    -396144000
+ 02-28-1996    |  1996 |     2 |  28 |       1 |    199 |      20 |          2 |    1996 |    9 |   3 |      3 |  59 | 2450142 |     825465600
+ 02-29-1996    |  1996 |     2 |  29 |       1 |    199 |      20 |          2 |    1996 |    9 |   4 |      4 |  60 | 2450143 |     825552000
+ 03-01-1996    |  1996 |     3 |   1 |       1 |    199 |      20 |          2 |    1996 |    9 |   5 |      5 |  61 | 2450144 |     825638400
+ 03-02-1996    |  1996 |     3 |   2 |       1 |    199 |      20 |          2 |    1996 |    9 |   6 |      6 |  62 | 2450145 |     825724800
+ 02-28-1997    |  1997 |     2 |  28 |       1 |    199 |      20 |          2 |    1997 |    9 |   5 |      5 |  59 | 2450508 |     857088000
+ 03-01-1997    |  1997 |     3 |   1 |       1 |    199 |      20 |          2 |    1997 |    9 |   6 |      6 |  60 | 2450509 |     857174400
+ 03-02-1997    |  1997 |     3 |   2 |       1 |    199 |      20 |          2 |    1997 |    9 |   0 |      7 |  61 | 2450510 |     857260800
+ 04-01-2000    |  2000 |     4 |   1 |       2 |    200 |      20 |          2 |    2000 |   13 |   6 |      6 |  92 | 2451636 |     954547200
+ 04-02-2000    |  2000 |     4 |   2 |       2 |    200 |      20 |          2 |    2000 |   13 |   0 |      7 |  93 | 2451637 |     954633600
+ 04-03-2000    |  2000 |     4 |   3 |       2 |    200 |      20 |          2 |    2000 |   14 |   1 |      1 |  94 | 2451638 |     954720000
+ 04-08-2038    |  2038 |     4 |   8 |       2 |    203 |      21 |          3 |    2038 |   14 |   4 |      4 |  98 | 2465522 |    2154297600
+ 04-09-2039    |  2039 |     4 |   9 |       2 |    203 |      21 |          3 |    2039 |   14 |   6 |      6 |  99 | 2465888 |    2185920000
+ 04-10-2040    |  2040 |     4 |  10 |       2 |    204 |      21 |          3 |    2040 |   15 |   2 |      2 | 101 | 2466255 |    2217628800
+ 04-10-2040 BC | -2040 |     4 |  10 |       2 |   -204 |     -21 |         -3 |   -2040 |   15 |   1 |      1 | 100 |  976430 | -126503251200
+(16 rows)
+
 --
 -- epoch
 --
@@ -1109,6 +1151,132 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '1970-03-20 04:30:00.00000'); -- 20
  date_part 
 -----------
         20
+(1 row)
+
+--
+-- all possible fields
+--
+SELECT EXTRACT(MICROSECONDS  FROM DATE '2020-08-11');
+ date_part 
+-----------
+         0
+(1 row)
+
+SELECT EXTRACT(MILLISECONDS  FROM DATE '2020-08-11');
+ date_part 
+-----------
+         0
+(1 row)
+
+SELECT EXTRACT(SECOND        FROM DATE '2020-08-11');
+ date_part 
+-----------
+         0
+(1 row)
+
+SELECT EXTRACT(MINUTE        FROM DATE '2020-08-11');
+ date_part 
+-----------
+         0
+(1 row)
+
+SELECT EXTRACT(HOUR          FROM DATE '2020-08-11');
+ date_part 
+-----------
+         0
+(1 row)
+
+SELECT EXTRACT(DAY           FROM DATE '2020-08-11');
+ date_part 
+-----------
+        11
+(1 row)
+
+SELECT EXTRACT(MONTH         FROM DATE '2020-08-11');
+ date_part 
+-----------
+         8
+(1 row)
+
+SELECT EXTRACT(YEAR          FROM DATE '2020-08-11');
+ date_part 
+-----------
+      2020
+(1 row)
+
+SELECT EXTRACT(DECADE        FROM DATE '2020-08-11');
+ date_part 
+-----------
+       202
+(1 row)
+
+SELECT EXTRACT(CENTURY       FROM DATE '2020-08-11');
+ date_part 
+-----------
+        21
+(1 row)
+
+SELECT EXTRACT(MILLENNIUM    FROM DATE '2020-08-11');
+ date_part 
+-----------
+         3
+(1 row)
+
+SELECT EXTRACT(ISOYEAR       FROM DATE '2020-08-11');
+ date_part 
+-----------
+      2020
+(1 row)
+
+SELECT EXTRACT(QUARTER       FROM DATE '2020-08-11');
+ date_part 
+-----------
+         3
+(1 row)
+
+SELECT EXTRACT(WEEK          FROM DATE '2020-08-11');
+ date_part 
+-----------
+        33
+(1 row)
+
+SELECT EXTRACT(DOW           FROM DATE '2020-08-11');
+ date_part 
+-----------
+         2
+(1 row)
+
+SELECT EXTRACT(ISODOW        FROM DATE '2020-08-11');
+ date_part 
+-----------
+         2
+(1 row)
+
+SELECT EXTRACT(DOY           FROM DATE '2020-08-11');
+ date_part 
+-----------
+       224
+(1 row)
+
+SELECT EXTRACT(TIMEZONE      FROM DATE '2020-08-11');
+ERROR:  timestamp units "timezone" not supported
+CONTEXT:  SQL function "date_part" statement 1
+SELECT EXTRACT(TIMEZONE_M    FROM DATE '2020-08-11');
+ERROR:  timestamp units "timezone_m" not supported
+CONTEXT:  SQL function "date_part" statement 1
+SELECT EXTRACT(TIMEZONE_H    FROM DATE '2020-08-11');
+ERROR:  timestamp units "timezone_h" not supported
+CONTEXT:  SQL function "date_part" statement 1
+SELECT EXTRACT(EPOCH         FROM DATE '2020-08-11');
+ date_part  
+------------
+ 1597104000
+(1 row)
+
+SELECT EXTRACT(JULIAN        FROM DATE '2020-08-11');
+ date_part 
+-----------
+   2459073
 (1 row)
 
 --

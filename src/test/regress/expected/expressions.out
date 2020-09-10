@@ -121,7 +121,7 @@ select count(*) from date_tbl
   where f1 not between '1997-01-01' and '1998-01-01';
  count 
 -------
-    12
+    13
 (1 row)
 
 explain (costs off)
@@ -155,6 +155,6 @@ select count(*) from date_tbl
   where f1 not between symmetric '1997-01-01' and '1998-01-01';
  count 
 -------
-    12
+    13
 (1 row)
 

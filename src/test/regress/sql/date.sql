@@ -20,12 +20,13 @@ INSERT INTO DATE_TBL VALUES ('2000-04-03');
 INSERT INTO DATE_TBL VALUES ('2038-04-08');
 INSERT INTO DATE_TBL VALUES ('2039-04-09');
 INSERT INTO DATE_TBL VALUES ('2040-04-10');
+INSERT INTO DATE_TBL VALUES ('2040-04-10 BC');
 
-SELECT f1 AS "Fifteen" FROM DATE_TBL;
+SELECT f1 FROM DATE_TBL;
 
-SELECT f1 AS "Nine" FROM DATE_TBL WHERE f1 < '2000-01-01';
+SELECT f1 FROM DATE_TBL WHERE f1 < '2000-01-01';
 
-SELECT f1 AS "Three" FROM DATE_TBL
+SELECT f1 FROM DATE_TBL
   WHERE f1 BETWEEN '2000-01-01' AND '2001-01-01';
 
 --
@@ -218,6 +219,23 @@ SELECT date 'tomorrow' - date 'yesterday' AS "Two days";
 --
 -- test extract!
 --
+SELECT f1 as "date",
+    date_part('year', f1) AS year,
+    date_part('month', f1) AS month,
+    date_part('day', f1) AS day,
+    date_part('quarter', f1) AS quarter,
+    date_part('decade', f1) AS decade,
+    date_part('century', f1) AS century,
+    date_part('millennium', f1) AS millennium,
+    date_part('isoyear', f1) AS isoyear,
+    date_part('week', f1) AS week,
+    date_part('dow', f1) AS dow,
+    date_part('isodow', f1) AS isodow,
+    date_part('doy', f1) AS doy,
+    date_part('julian', f1) AS julian,
+    date_part('epoch', f1) AS epoch
+    FROM date_tbl;
+--
 -- epoch
 --
 SELECT EXTRACT(EPOCH FROM DATE        '1970-01-01');     --  0
@@ -263,6 +281,31 @@ SELECT EXTRACT(DECADE FROM DATE '0012-12-31 BC'); --  -2
 -- on a timestamp.
 SELECT EXTRACT(CENTURY FROM NOW())>=21 AS True;       -- true
 SELECT EXTRACT(CENTURY FROM TIMESTAMP '1970-03-20 04:30:00.00000'); -- 20
+--
+-- all possible fields
+--
+SELECT EXTRACT(MICROSECONDS  FROM DATE '2020-08-11');
+SELECT EXTRACT(MILLISECONDS  FROM DATE '2020-08-11');
+SELECT EXTRACT(SECOND        FROM DATE '2020-08-11');
+SELECT EXTRACT(MINUTE        FROM DATE '2020-08-11');
+SELECT EXTRACT(HOUR          FROM DATE '2020-08-11');
+SELECT EXTRACT(DAY           FROM DATE '2020-08-11');
+SELECT EXTRACT(MONTH         FROM DATE '2020-08-11');
+SELECT EXTRACT(YEAR          FROM DATE '2020-08-11');
+SELECT EXTRACT(DECADE        FROM DATE '2020-08-11');
+SELECT EXTRACT(CENTURY       FROM DATE '2020-08-11');
+SELECT EXTRACT(MILLENNIUM    FROM DATE '2020-08-11');
+SELECT EXTRACT(ISOYEAR       FROM DATE '2020-08-11');
+SELECT EXTRACT(QUARTER       FROM DATE '2020-08-11');
+SELECT EXTRACT(WEEK          FROM DATE '2020-08-11');
+SELECT EXTRACT(DOW           FROM DATE '2020-08-11');
+SELECT EXTRACT(ISODOW        FROM DATE '2020-08-11');
+SELECT EXTRACT(DOY           FROM DATE '2020-08-11');
+SELECT EXTRACT(TIMEZONE      FROM DATE '2020-08-11');
+SELECT EXTRACT(TIMEZONE_M    FROM DATE '2020-08-11');
+SELECT EXTRACT(TIMEZONE_H    FROM DATE '2020-08-11');
+SELECT EXTRACT(EPOCH         FROM DATE '2020-08-11');
+SELECT EXTRACT(JULIAN        FROM DATE '2020-08-11');
 --
 -- test trunc function!
 --
