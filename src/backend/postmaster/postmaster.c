@@ -1850,6 +1850,8 @@ ServerLoop(void)
 			(now - AbortStartTime) >= SIGKILL_CHILDREN_AFTER_SECS)
 		{
 			/* We were gentle with them before. Not anymore */
+			ereport(LOG,
+					(errmsg("issuing SIGKILL to recalcitrant children")));
 			TerminateChildren(SIGKILL);
 			/* reset flag so we don't SIGKILL again */
 			AbortStartTime = 0;
