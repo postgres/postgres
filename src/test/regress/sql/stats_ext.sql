@@ -72,12 +72,14 @@ ANALYZE ab1;
 ALTER TABLE ab1 ALTER a SET STATISTICS -1;
 -- setting statistics target 0 skips the statistics, without printing any message, so check catalog
 ALTER STATISTICS ab1_a_b_stats SET STATISTICS 0;
+\d ab1
 ANALYZE ab1;
 SELECT stxname, stxdndistinct, stxddependencies, stxdmcv
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxname = 'ab1_a_b_stats'
    AND d.stxoid = s.oid;
 ALTER STATISTICS ab1_a_b_stats SET STATISTICS -1;
+\d+ ab1
 -- partial analyze doesn't build stats either
 ANALYZE ab1 (a);
 ANALYZE ab1;
