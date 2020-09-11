@@ -416,3 +416,20 @@ on_exit_reset(void)
 	on_proc_exit_index = 0;
 	reset_on_dsm_detach();
 }
+
+/* ----------------------------------------------------------------
+ *		check_on_shmem_exit_lists_are_empty
+ *
+ *		Debugging check that no shmem cleanup handlers have been registered
+ *		prematurely in the current process.
+ * ----------------------------------------------------------------
+ */
+void
+check_on_shmem_exit_lists_are_empty(void)
+{
+	if (before_shmem_exit_index)
+		elog(FATAL, "before_shmem_exit has been called prematurely");
+	if (on_shmem_exit_index)
+		elog(FATAL, "on_shmem_exit has been called prematurely");
+	/* Checking DSM detach state seems unnecessary given the above */
+}
