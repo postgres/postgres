@@ -2683,8 +2683,13 @@ describeOneTableDetails(const char *schemaname,
 							  "        a.attnum = s.attnum AND NOT attisdropped)) AS columns,\n"
 							  "  'd' = any(stxkind) AS ndist_enabled,\n"
 							  "  'f' = any(stxkind) AS deps_enabled,\n"
-							  "  'm' = any(stxkind) AS mcv_enabled\n"
-							  "FROM pg_catalog.pg_statistic_ext stat "
+							  "  'm' = any(stxkind) AS mcv_enabled,\n");
+
+			if (pset.sversion >= 130000)
+				appendPQExpBufferStr(&buf, "  stxstattarget\n");
+			else
+				appendPQExpBufferStr(&buf, "  -1 AS stxstattarget\n");
+			appendPQExpBuffer(&buf, "FROM pg_catalog.pg_statistic_ext stat\n"
 							  "WHERE stxrelid = '%s'\n"
 							  "ORDER BY 1;",
 							  oid);
@@ -2731,6 +2736,11 @@ describeOneTableDetails(const char *schemaname,
 					appendPQExpBuffer(&buf, ") ON %s FROM %s",
 									  PQgetvalue(result, i, 4),
 									  PQgetvalue(result, i, 1));
+
+					/* Show the stats target if it's not default */
+					if (strcmp(PQgetvalue(result, i, 8), "-1") != 0)
+						appendPQExpBuffer(&buf, "; STATISTICS %s",
+									  PQgetvalue(result, i, 8));
 
 					printTableAddFooter(&cont, buf.data);
 				}

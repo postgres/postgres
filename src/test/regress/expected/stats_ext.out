@@ -102,6 +102,15 @@ WARNING:  statistics object "public.ab1_a_b_stats" could not be computed for rel
 ALTER TABLE ab1 ALTER a SET STATISTICS -1;
 -- setting statistics target 0 skips the statistics, without printing any message, so check catalog
 ALTER STATISTICS ab1_a_b_stats SET STATISTICS 0;
+\d ab1
+                Table "public.ab1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Statistics objects:
+    "public"."ab1_a_b_stats" (ndistinct, dependencies, mcv) ON a, b FROM ab1; STATISTICS 0
+
 ANALYZE ab1;
 SELECT stxname, stxdndistinct, stxddependencies, stxdmcv
   FROM pg_statistic_ext s, pg_statistic_ext_data d
@@ -113,6 +122,15 @@ SELECT stxname, stxdndistinct, stxddependencies, stxdmcv
 (1 row)
 
 ALTER STATISTICS ab1_a_b_stats SET STATISTICS -1;
+\d+ ab1
+                                    Table "public.ab1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+ b      | integer |           |          |         | plain   |              | 
+Statistics objects:
+    "public"."ab1_a_b_stats" (ndistinct, dependencies, mcv) ON a, b FROM ab1
+
 -- partial analyze doesn't build stats either
 ANALYZE ab1 (a);
 WARNING:  statistics object "public.ab1_a_b_stats" could not be computed for relation "public.ab1"
