@@ -209,8 +209,9 @@ CheckpointerMain(void)
 	 */
 	pqsignal(SIGCHLD, SIG_DFL);
 
-	/* We allow SIGQUIT (quickdie) at all times */
+	/* We allow SIGQUIT (SignalHandlerForCrashExit) at all times */
 	sigdelset(&BlockSig, SIGQUIT);
+	PG_SETMASK(&BlockSig);
 
 	/*
 	 * Initialize so that first time-driven event happens at the correct time.
@@ -231,7 +232,20 @@ CheckpointerMain(void)
 	/*
 	 * If an exception is encountered, processing resumes here.
 	 *
-	 * See notes in postgres.c about the design of this coding.
+	 * You might wonder why this isn't coded as an infinite loop around a
+	 * PG_TRY construct.  The reason is that this is the bottom of the
+	 * exception stack, and so with PG_TRY there would be no exception handler
+	 * in force at all during the CATCH part.  By leaving the outermost setjmp
+	 * always active, we have at least some chance of recovering from an error
+	 * during error recovery.  (If we get into an infinite loop thereby, it
+	 * will soon be stopped by overflow of elog.c's internal state stack.)
+	 *
+	 * Note that we use sigsetjmp(..., 1), so that the prevailing signal mask
+	 * (to wit, BlockSig) will be restored when longjmp'ing to here.  Thus,
+	 * signals other than SIGQUIT will be blocked until we complete error
+	 * recovery.  It might seem that this policy makes the HOLD_INTERRUPTS()
+	 * call redundant, but it is not since InterruptPending might be set
+	 * already.
 	 */
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{

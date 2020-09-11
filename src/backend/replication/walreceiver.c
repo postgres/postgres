@@ -279,8 +279,9 @@ WalReceiverMain(void)
 	/* Reset some signals that are accepted by postmaster but not here */
 	pqsignal(SIGCHLD, SIG_DFL);
 
-	/* We allow SIGQUIT (quickdie) at all times */
+	/* We allow SIGQUIT (SignalHandlerForCrashExit) at all times */
 	sigdelset(&BlockSig, SIGQUIT);
+	PG_SETMASK(&BlockSig);
 
 	/* Load the libpq-specific functions */
 	load_file("libpqwalreceiver", false);

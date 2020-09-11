@@ -495,6 +495,12 @@ AutoVacLauncherMain(int argc, char *argv[])
 	 * If an exception is encountered, processing resumes here.
 	 *
 	 * This code is a stripped down version of PostgresMain error recovery.
+	 *
+	 * Note that we use sigsetjmp(..., 1), so that the prevailing signal mask
+	 * (to wit, BlockSig) will be restored when longjmp'ing to here.  Thus,
+	 * signals will be blocked until we complete error recovery.  It might
+	 * seem that this policy makes the HOLD_INTERRUPTS() call redundant, but
+	 * it is not since InterruptPending might be set already.
 	 */
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
@@ -1550,7 +1556,15 @@ AutoVacWorkerMain(int argc, char *argv[])
 	/*
 	 * If an exception is encountered, processing resumes here.
 	 *
-	 * See notes in postgres.c about the design of this coding.
+	 * Unlike most auxiliary processes, we don't attempt to continue
+	 * processing after an error; we just clean up and exit.  The autovac
+	 * launcher is responsible for spawning another worker later.
+	 *
+	 * Note that we use sigsetjmp(..., 1), so that the prevailing signal mask
+	 * (to wit, BlockSig) will be restored when longjmp'ing to here.  Thus,
+	 * signals will be blocked until we exit.  It might seem that this policy
+	 * makes the HOLD_INTERRUPTS() call redundant, but it is not since
+	 * InterruptPending might be set already.
 	 */
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
