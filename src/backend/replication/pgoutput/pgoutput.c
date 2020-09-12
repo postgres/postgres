@@ -77,7 +77,7 @@ static void send_relation_and_attrs(Relation relation, TransactionId xid,
  * and with streamed transactions the commit order may be different from
  * the order the transactions are sent in. Also, the (sub) transactions
  * might get aborted so we need to send the schema for each (sub) transaction
- * so that we don't loose the schema information on abort. For handling this,
+ * so that we don't lose the schema information on abort. For handling this,
  * we maintain the list of xids (streamed_txns) for those we have already sent
  * the schema.
  *

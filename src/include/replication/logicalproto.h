@@ -133,7 +133,6 @@ extern void logicalrep_write_stream_start(StringInfo out, TransactionId xid,
 extern TransactionId logicalrep_read_stream_start(StringInfo in,
 												  bool *first_segment);
 extern void logicalrep_write_stream_stop(StringInfo out);
-extern TransactionId logicalrep_read_stream_stop(StringInfo in);
 extern void logicalrep_write_stream_commit(StringInfo out, ReorderBufferTXN *txn,
 										   XLogRecPtr commit_lsn);
 extern TransactionId logicalrep_read_stream_commit(StringInfo out,
