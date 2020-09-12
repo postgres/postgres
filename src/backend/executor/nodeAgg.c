@@ -2882,7 +2882,7 @@ hashagg_tapeinfo_init(AggState *aggstate)
 	HashTapeInfo *tapeinfo = palloc(sizeof(HashTapeInfo));
 	int			init_tapes = 16;	/* expanded dynamically */
 
-	tapeinfo->tapeset = LogicalTapeSetCreate(init_tapes, NULL, NULL, -1);
+	tapeinfo->tapeset = LogicalTapeSetCreate(init_tapes, true, NULL, NULL, -1);
 	tapeinfo->ntapes = init_tapes;
 	tapeinfo->nfreetapes = init_tapes;
 	tapeinfo->freetapes_alloc = init_tapes;
