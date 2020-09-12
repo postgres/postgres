@@ -5557,7 +5557,8 @@ done:
  * pgstat_read_db_statsfile_timestamp() -
  *
  *	Attempt to determine the timestamp of the last db statfile write.
- *	Returns true if successful; the timestamp is stored in *ts.
+ *	Returns true if successful; the timestamp is stored in *ts. The caller must
+ *	rely on timestamp stored in *ts iff the function returns true.
  *
  *	This needs to be careful about handling databases for which no stats file
  *	exists, such as databases without a stat entry or those not yet written:
@@ -5665,7 +5666,8 @@ pgstat_read_db_statsfile_timestamp(Oid databaseid, bool permanent,
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
 							(errmsg("corrupted statistics file \"%s\"",
 									statfile)));
-					goto done;
+					FreeFile(fpin);
+					return false;
 				}
 
 				/*
@@ -5684,10 +5686,13 @@ pgstat_read_db_statsfile_timestamp(Oid databaseid, bool permanent,
 				goto done;
 
 			default:
-				ereport(pgStatRunningInCollector ? LOG : WARNING,
-						(errmsg("corrupted statistics file \"%s\"",
-								statfile)));
-				goto done;
+				{
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted statistics file \"%s\"",
+									statfile)));
+					FreeFile(fpin);
+					return false;
+				}
 		}
 	}
 
