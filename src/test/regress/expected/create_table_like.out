@@ -421,6 +421,24 @@ CREATE TABLE inh_error2 (LIKE ctlt4 INCLUDING STORAGE) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
 ERROR:  column "a" has a storage parameter conflict
 DETAIL:  MAIN versus EXTENDED
+-- Check that LIKE isn't confused by a system catalog of the same name
+CREATE TABLE pg_attrdef (LIKE ctlt1 INCLUDING ALL);
+\d+ public.pg_attrdef
+                               Table "public.pg_attrdef"
+ Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------+-----------+----------+---------+----------+--------------+-------------
+ a      | text |           | not null |         | main     |              | A
+ b      | text |           |          |         | extended |              | B
+Indexes:
+    "pg_attrdef_pkey" PRIMARY KEY, btree (a)
+    "pg_attrdef_b_idx" btree (b)
+    "pg_attrdef_expr_idx" btree ((a || b))
+Check constraints:
+    "ctlt1_a_check" CHECK (length(a) > 2)
+Statistics objects:
+    "public"."pg_attrdef_a_b_stat" (ndistinct, dependencies, mcv) ON a, b FROM public.pg_attrdef
+
+DROP TABLE public.pg_attrdef;
 DROP TABLE ctlt1, ctlt2, ctlt3, ctlt4, ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctla, ctlb CASCADE;
 NOTICE:  drop cascades to table inhe
 /* LIKE with other relation kinds */
