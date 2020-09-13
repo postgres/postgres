@@ -1137,6 +1137,7 @@ ProcessUtilitySlow(ParseState *pstate,
 				{
 					List	   *stmts;
 					ListCell   *l;
+					RangeVar   *table_rv = NULL;
 
 					/* Run parse analysis ... */
 					stmts = transformCreateStmt((CreateStmt *) parsetree,
@@ -1149,11 +1150,15 @@ ProcessUtilitySlow(ParseState *pstate,
 
 						if (IsA(stmt, CreateStmt))
 						{
+							CreateStmt *cstmt = (CreateStmt *) stmt;
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
+							/* Remember transformed RangeVar for LIKE */
+							table_rv = cstmt->relation;
+
 							/* Create the table itself */
-							address = DefineRelation((CreateStmt *) stmt,
+							address = DefineRelation(cstmt,
 													 RELKIND_RELATION,
 													 InvalidOid, NULL,
 													 queryString);
@@ -1172,7 +1177,7 @@ ProcessUtilitySlow(ParseState *pstate,
 							 * table
 							 */
 							toast_options = transformRelOptions((Datum) 0,
-																((CreateStmt *) stmt)->options,
+																cstmt->options,
 																"toast",
 																validnsps,
 																true,
@@ -1186,12 +1191,17 @@ ProcessUtilitySlow(ParseState *pstate,
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{
+							CreateForeignTableStmt *cstmt = (CreateForeignTableStmt *) stmt;
+
+							/* Remember transformed RangeVar for LIKE */
+							table_rv = cstmt->base.relation;
+
 							/* Create the table itself */
-							address = DefineRelation((CreateStmt *) stmt,
+							address = DefineRelation(&cstmt->base,
 													 RELKIND_FOREIGN_TABLE,
 													 InvalidOid, NULL,
 													 queryString);
-							CreateForeignTable((CreateForeignTableStmt *) stmt,
+							CreateForeignTable(cstmt,
 											   address.objectId);
 							EventTriggerCollectSimpleCommand(address,
 															 secondaryObject,
@@ -1206,10 +1216,11 @@ ProcessUtilitySlow(ParseState *pstate,
 							 * to-do list.
 							 */
 							TableLikeClause *like = (TableLikeClause *) stmt;
-							RangeVar   *rv = ((CreateStmt *) parsetree)->relation;
 							List	   *morestmts;
 
-							morestmts = expandTableLikeClause(rv, like);
+							Assert(table_rv != NULL);
+
+							morestmts = expandTableLikeClause(table_rv, like);
 							stmts = list_concat(stmts, morestmts);
 
 							/*
