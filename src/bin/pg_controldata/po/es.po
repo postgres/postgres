@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:47+0000\n"
-"PO-Revision-Date: 2019-06-06 17:23-0400\n"
+"POT-Creation-Date: 2020-09-13 10:47+0000\n"
+"PO-Revision-Date: 2020-09-12 22:55-0300\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -134,12 +134,12 @@ msgstr ""
 #: pg_controldata.c:44
 #, c-format
 msgid "Report bugs to <%s>.\n"
-msgstr ""
+msgstr "Reporte errores a <%s>.\n"
 
 #: pg_controldata.c:45
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
+msgstr "Sitio web de %s: <%s>\n"
 
 #: pg_controldata.c:55
 msgid "starting up"
@@ -247,10 +247,9 @@ msgid "Catalog version number:               %u\n"
 msgstr "Número de versión del catálogo:             %u\n"
 
 #: pg_controldata.c:232
-#, fuzzy, c-format
-#| msgid "Database system identifier:           %s\n"
+#, c-format
 msgid "Database system identifier:           %llu\n"
-msgstr "Identificador de sistema:                   %s\n"
+msgstr "Identificador de sistema:                   %llu\n"
 
 #: pg_controldata.c:234
 #, c-format
@@ -514,9 +513,3 @@ msgstr "Versión de sumas de verificación de datos:  %u\n"
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Nonce para autentificación simulada:        %s\n"
-
-#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "Float4 argument passing:              %s\n"
-#~ msgstr "Paso de parámetros float4:                  %s\n"

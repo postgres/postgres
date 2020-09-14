@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-06-17 22:44+0000\n"
-"PO-Revision-Date: 2020-06-18 04:20+0200\n"
+"POT-Creation-Date: 2020-09-05 01:14+0000\n"
+"PO-Revision-Date: 2020-09-06 17:03+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -1072,8 +1072,8 @@ msgstr "Der Server (Version %s) unterstützt keine Tablespaces."
 #: describe.c:243 describe.c:251 describe.c:501 describe.c:717 describe.c:873
 #: describe.c:1114 describe.c:3720 describe.c:3918 describe.c:4087
 #: describe.c:4333 describe.c:4604 describe.c:5266 describe.c:5350
-#: describe.c:5746 describe.c:5883 describe.c:5986 describe.c:6100
-#: describe.c:6173 large_obj.c:289
+#: describe.c:5746 describe.c:5883 describe.c:5986 describe.c:6101
+#: describe.c:6180 large_obj.c:289
 msgid "Owner"
 msgstr "Eigentümer"
 
@@ -1192,11 +1192,11 @@ msgstr "Elemente"
 msgid "List of data types"
 msgstr "Liste der Datentypen"
 
-#: describe.c:812 describe.c:6344
+#: describe.c:812
 msgid "Left arg type"
 msgstr "Linker Typ"
 
-#: describe.c:813 describe.c:6345
+#: describe.c:813
 msgid "Right arg type"
 msgstr "Rechter Typ"
 
@@ -1205,7 +1205,7 @@ msgid "Result type"
 msgstr "Ergebnistyp"
 
 #: describe.c:819 describe.c:4339 describe.c:4404 describe.c:4410
-#: describe.c:4820 describe.c:6347
+#: describe.c:4820 describe.c:6352 describe.c:6356
 msgid "Function"
 msgstr "Funktion"
 
@@ -1350,12 +1350,12 @@ msgid "Increment"
 msgstr "Inkrement"
 
 #: describe.c:1716 describe.c:1740 describe.c:1871 describe.c:4255
-#: describe.c:4421 describe.c:4535 describe.c:4540 describe.c:6088
+#: describe.c:4421 describe.c:4535 describe.c:4540 describe.c:6089
 msgid "yes"
 msgstr "ja"
 
 #: describe.c:1717 describe.c:1741 describe.c:1872 describe.c:4255
-#: describe.c:4418 describe.c:4535 describe.c:6089
+#: describe.c:4418 describe.c:4535 describe.c:6090
 msgid "no"
 msgstr "nein"
 
@@ -1903,7 +1903,7 @@ msgstr "Quelle"
 msgid "Destination"
 msgstr "Ziel"
 
-#: describe.c:4256 describe.c:6090
+#: describe.c:4256 describe.c:6091
 msgid "Default?"
 msgstr "Standard?"
 
@@ -2278,71 +2278,79 @@ msgstr "Verbindungsinfo"
 msgid "List of subscriptions"
 msgstr "Liste der Subskriptionen"
 
-#: describe.c:6084 describe.c:6167 describe.c:6252 describe.c:6342
+#: describe.c:6085 describe.c:6174 describe.c:6260 describe.c:6343
 msgid "AM"
 msgstr "AM"
 
-#: describe.c:6085
+#: describe.c:6086
 msgid "Input type"
 msgstr "Eingabetyp"
 
-#: describe.c:6086
+#: describe.c:6087
 msgid "Storage type"
 msgstr "Storage-Typ"
 
-#: describe.c:6087
+#: describe.c:6088
 msgid "Operator class"
 msgstr "Operatorklasse"
 
-#: describe.c:6099 describe.c:6168 describe.c:6253 describe.c:6343
+#: describe.c:6100 describe.c:6175 describe.c:6261 describe.c:6344
 msgid "Operator family"
 msgstr "Operatorfamilie"
 
-#: describe.c:6126
+#: describe.c:6133
 msgid "List of operator classes"
 msgstr "Liste der Operatorklassen"
 
-#: describe.c:6169
+#: describe.c:6176
 msgid "Applicable types"
 msgstr "Passende Typen"
 
-#: describe.c:6204
+#: describe.c:6215
 msgid "List of operator families"
 msgstr "Liste der Operatorfamilien"
 
-#: describe.c:6254
+#: describe.c:6262
 msgid "Operator"
 msgstr "Operator"
 
-#: describe.c:6264
+#: describe.c:6263
 msgid "Strategy"
 msgstr "Strategie"
 
-#: describe.c:6265
+#: describe.c:6264
 msgid "ordering"
 msgstr "Sortieren"
 
-#: describe.c:6266
+#: describe.c:6265
 msgid "search"
 msgstr "Suchen"
 
-#: describe.c:6267
+#: describe.c:6266
 msgid "Purpose"
 msgstr "Zweck"
 
-#: describe.c:6268
+#: describe.c:6271
 msgid "Sort opfamily"
 msgstr "Sortier-Opfamilie"
 
-#: describe.c:6300
+#: describe.c:6302
 msgid "List of operators of operator families"
 msgstr "Liste der Operatoren in Operatorfamilien"
 
+#: describe.c:6345
+msgid "Registered left type"
+msgstr "Registrierter linker Typ"
+
 #: describe.c:6346
+msgid "Registered right type"
+msgstr "Registrierter rechter Typ"
+
+#: describe.c:6347
 msgid "Number"
 msgstr "Nummer"
 
-#: describe.c:6374
+#: describe.c:6383
 msgid "List of support functions of operator families"
 msgstr "Liste der Unterstützungsfunktionen in Operatorfamilien"
 

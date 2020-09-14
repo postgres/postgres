@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:45+0000\n"
-"PO-Revision-Date: 2019-06-06 17:23-0400\n"
+"POT-Creation-Date: 2020-09-13 10:45+0000\n"
+"PO-Revision-Date: 2020-09-12 22:56-0300\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -147,10 +147,9 @@ msgid "%s: could not start server due to setsid() failure: %s\n"
 msgstr "%s: no se pudo iniciar el servidor debido a falla en setsid(): %s\n"
 
 #: pg_ctl.c:548
-#, fuzzy, c-format
-#| msgid "%s: could not open file \"%s\": %s\n"
+#, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
-msgstr "%s: no se pudo abrir el archivo «%s»: %s\n"
+msgstr "%s: no se pudo abrir el archivo de log «%s»: %s\n"
 
 #: pg_ctl.c:565
 #, c-format
@@ -829,11 +828,13 @@ msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
+"\n"
+"Reporte errores a <%s>.\n"
 
 #: pg_ctl.c:2098
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
+msgstr "Sitio web de %s: <%s>\n"
 
 #: pg_ctl.c:2123
 #, c-format
@@ -900,10 +901,3 @@ msgstr "%s: no se especificó operación\n"
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: no se especificó directorio de datos y la variable PGDATA no está definida\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"

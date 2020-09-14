@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-06-21 02:16+0000\n"
-"PO-Revision-Date: 2020-06-21 11:32+0200\n"
+"POT-Creation-Date: 2020-08-27 21:46+0000\n"
+"PO-Revision-Date: 2020-08-30 07:09+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -951,7 +951,7 @@ msgstr ""
 #: scripts_parallel.c:234
 #, c-format
 msgid "too many jobs for this platform -- try %d"
-msgstr ""
+msgstr "för många jobb för denna plattform -- försök med %d"
 
 #: vacuumdb.c:194
 #, c-format

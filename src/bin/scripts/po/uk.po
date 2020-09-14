@@ -1,0 +1,1089 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: postgresql\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2020-06-19 08:46+0000\n"
+"PO-Revision-Date: 2020-07-07 11:20\n"
+"Last-Translator: pasha_golub\n"
+"Language-Team: Ukrainian\n"
+"Language: uk_UA\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
+"X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
+"X-Crowdin-Language: uk\n"
+"X-Crowdin-File: /DEV_13/pgscripts.pot\n"
+"X-Crowdin-File-ID: 514\n"
+
+#: ../../../src/common/logging.c:236
+#, c-format
+msgid "fatal: "
+msgstr "збій: "
+
+#: ../../../src/common/logging.c:243
+#, c-format
+msgid "error: "
+msgstr "помилка: "
+
+#: ../../../src/common/logging.c:250
+#, c-format
+msgid "warning: "
+msgstr "попередження: "
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#, c-format
+msgid "out of memory\n"
+msgstr "недостатньо пам'яті\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "не можу знайти користувача з ефективним ID %ld: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "користувача не існує"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "невдала підстановка імені користувача: код помилки %lu"
+
+#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+msgid "Cancel request sent\n"
+msgstr "Запит на скасування відправлений\n"
+
+#: ../../fe_utils/cancel.c:165
+msgid "Could not send cancel request: "
+msgstr "не вдалося надіслати запит на скасування:  "
+
+#: ../../fe_utils/cancel.c:210
+#, c-format
+msgid "Could not send cancel request: %s"
+msgstr "Не вдалося надіслати скасування запиту: %s"
+
+#: ../../fe_utils/print.c:350
+#, c-format
+msgid "(%lu row)"
+msgid_plural "(%lu rows)"
+msgstr[0] "(%lu рядок)"
+msgstr[1] "(%lu рядки)"
+msgstr[2] "(%lu рядків)"
+msgstr[3] "(%lu рядка)"
+
+#: ../../fe_utils/print.c:3055
+#, c-format
+msgid "Interrupted\n"
+msgstr "Перервано\n"
+
+#: ../../fe_utils/print.c:3119
+#, c-format
+msgid "Cannot add header to table content: column count of %d exceeded.\n"
+msgstr "Неможливо додати заголовок до вмісту таблиці: кількість колонок %d перевищено.\n"
+
+#: ../../fe_utils/print.c:3159
+#, c-format
+msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
+msgstr "Неможливо додати комірку до вмісту таблиці: перевищено загальну кількість комірок %d.\n"
+
+#: ../../fe_utils/print.c:3414
+#, c-format
+msgid "invalid output format (internal error): %d"
+msgstr "невірний формат виводу (внутрішня помилка): %d"
+
+#: clusterdb.c:114 clusterdb.c:133 createdb.c:121 createdb.c:140
+#: createuser.c:171 createuser.c:186 dropdb.c:101 dropdb.c:110 dropdb.c:118
+#: dropuser.c:92 dropuser.c:107 dropuser.c:122 pg_isready.c:95 pg_isready.c:109
+#: reindexdb.c:168 reindexdb.c:187 vacuumdb.c:227 vacuumdb.c:246
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+
+#: clusterdb.c:131 createdb.c:138 createuser.c:184 dropdb.c:116 dropuser.c:105
+#: pg_isready.c:107 reindexdb.c:185 vacuumdb.c:244
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "забагато аргументів у командному рядку (перший \"%s\")"
+
+#: clusterdb.c:143
+#, c-format
+msgid "cannot cluster all databases and a specific one at the same time"
+msgstr "неможливо кластеризувати всі бази даних і одну вказану одночасно"
+
+#: clusterdb.c:149
+#, c-format
+msgid "cannot cluster specific table(s) in all databases"
+msgstr "неможливо кластеризувати вказані таблиці у всіх базах даних"
+
+#: clusterdb.c:217
+#, c-format
+msgid "clustering of table \"%s\" in database \"%s\" failed: %s"
+msgstr "кластеризувати таблицю \"%s\" у базі даних \"%s\" не вдалося: %s"
+
+#: clusterdb.c:220
+#, c-format
+msgid "clustering of database \"%s\" failed: %s"
+msgstr "кластеризувати базу даних \"%s\" не вдалося: %s"
+
+#: clusterdb.c:253
+#, c-format
+msgid "%s: clustering database \"%s\"\n"
+msgstr "%s: кластеризація бази даних \"%s\"\n"
+
+#: clusterdb.c:274
+#, c-format
+msgid "%s clusters all previously clustered tables in a database.\n\n"
+msgstr "%s кластеризація усіх попередньо кластеризованих таблиць в базі даних.\n\n"
+
+#: clusterdb.c:275 createdb.c:259 createuser.c:347 dropdb.c:164 dropuser.c:163
+#: pg_isready.c:224 reindexdb.c:753 vacuumdb.c:921
+#, c-format
+msgid "Usage:\n"
+msgstr "Використання:\n"
+
+#: clusterdb.c:276 reindexdb.c:754 vacuumdb.c:922
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [OPTION]... [DBNAME]\n"
+
+#: clusterdb.c:277 createdb.c:261 createuser.c:349 dropdb.c:166 dropuser.c:165
+#: pg_isready.c:227 reindexdb.c:755 vacuumdb.c:923
+#, c-format
+msgid "\n"
+"Options:\n"
+msgstr "\n"
+"Параметри:\n"
+
+#: clusterdb.c:278
+#, c-format
+msgid "  -a, --all                 cluster all databases\n"
+msgstr "  -a, --all                кластеризація усіх баз даних\n"
+
+#: clusterdb.c:279
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to cluster\n"
+msgstr "  -d, --dbname=ІМ'Я_БД       база даних для кластеризації\n"
+
+#: clusterdb.c:280 createuser.c:353 dropdb.c:167 dropuser.c:166 reindexdb.c:759
+#, c-format
+msgid "  -e, --echo                show the commands being sent to the server\n"
+msgstr "  -e, --echo              показати команди, надіслані серверу\n"
+
+#: clusterdb.c:281 reindexdb.c:762
+#, c-format
+msgid "  -q, --quiet               don't write any messages\n"
+msgstr "  -q, --quiet             не виводити жодних повідомлень\n"
+
+#: clusterdb.c:282
+#, c-format
+msgid "  -t, --table=TABLE         cluster specific table(s) only\n"
+msgstr "  -t, --table=ТАБЛИЦЯ        кластеризувати тільки вказані таблиці\n"
+
+#: clusterdb.c:283 reindexdb.c:766
+#, c-format
+msgid "  -v, --verbose             write a lot of output\n"
+msgstr "  -v, --verbose              виводити багато інформації\n"
+
+#: clusterdb.c:284 createuser.c:365 dropdb.c:170 dropuser.c:169 reindexdb.c:767
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version            вивести інформацію про версію і вийти\n"
+
+#: clusterdb.c:285 createuser.c:370 dropdb.c:172 dropuser.c:171 reindexdb.c:768
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help               показати цю довідку, потім вийти\n"
+
+#: clusterdb.c:286 createdb.c:272 createuser.c:371 dropdb.c:173 dropuser.c:172
+#: pg_isready.c:233 reindexdb.c:769 vacuumdb.c:944
+#, c-format
+msgid "\n"
+"Connection options:\n"
+msgstr "\n"
+"Налаштування з'єднання:\n"
+
+#: clusterdb.c:287 createuser.c:372 dropdb.c:174 dropuser.c:173 reindexdb.c:770
+#: vacuumdb.c:945
+#, c-format
+msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME     хост сервера бази даних або каталог сокетів\n"
+
+#: clusterdb.c:288 createuser.c:373 dropdb.c:175 dropuser.c:174 reindexdb.c:771
+#: vacuumdb.c:946
+#, c-format
+msgid "  -p, --port=PORT           database server port\n"
+msgstr "  -p, --port=PORT         порт сервера бази даних\n"
+
+#: clusterdb.c:289 dropdb.c:176 reindexdb.c:772 vacuumdb.c:947
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as\n"
+msgstr "  -U, --username=ІМ'Я_КОРИСТУВАЧА   ім'я користувача для з'єднання з сервером\n"
+
+#: clusterdb.c:290 createuser.c:375 dropdb.c:177 dropuser.c:176 reindexdb.c:773
+#: vacuumdb.c:948
+#, c-format
+msgid "  -w, --no-password         never prompt for password\n"
+msgstr "  -w, --no-password         ніколи не запитувати пароль\n"
+
+#: clusterdb.c:291 createuser.c:376 dropdb.c:178 dropuser.c:177 reindexdb.c:774
+#: vacuumdb.c:949
+#, c-format
+msgid "  -W, --password            force password prompt\n"
+msgstr "  -W, --password           запросити пароль\n"
+
+#: clusterdb.c:292 dropdb.c:179 reindexdb.c:775 vacuumdb.c:950
+#, c-format
+msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
+msgstr "  --maintenance-db=DBNAME    альтернативна бази даних для обслуговування\n"
+
+#: clusterdb.c:293
+#, c-format
+msgid "\n"
+"Read the description of the SQL command CLUSTER for details.\n"
+msgstr "\n"
+"Для деталей читайте опис команди SQL CLUSTER.\n"
+
+#: clusterdb.c:294 createdb.c:280 createuser.c:377 dropdb.c:180 dropuser.c:178
+#: pg_isready.c:238 reindexdb.c:777 vacuumdb.c:952
+#, c-format
+msgid "\n"
+"Report bugs to <%s>.\n"
+msgstr "\n"
+"Повідомляти про помилки на <%s>.\n"
+
+#: clusterdb.c:295 createdb.c:281 createuser.c:378 dropdb.c:181 dropuser.c:179
+#: pg_isready.c:239 reindexdb.c:778 vacuumdb.c:953
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Домашня сторінка %s: <%s>\n"
+
+#: common.c:79 common.c:125
+msgid "Password: "
+msgstr "Пароль: "
+
+#: common.c:112
+#, c-format
+msgid "could not connect to database %s: out of memory"
+msgstr "не можливо під'єднатися до бази даних %s: не вистачає пам'яті"
+
+#: common.c:139
+#, c-format
+msgid "could not connect to database %s: %s"
+msgstr "не можливо під'єднатися до бази даних %s: %s"
+
+#: common.c:214 common.c:239
+#, c-format
+msgid "query failed: %s"
+msgstr "запит не вдався: %s"
+
+#: common.c:215 common.c:240
+#, c-format
+msgid "query was: %s"
+msgstr "запит був: %s"
+
+#: common.c:312
+#, c-format
+msgid "processing of database \"%s\" failed: %s"
+msgstr "обробка бази даних \"%s\" не вдалась: %s"
+
+#: common.c:406
+#, c-format
+msgid "query returned %d row instead of one: %s"
+msgid_plural "query returned %d rows instead of one: %s"
+msgstr[0] "запит повернув %d рядок замість одного: %s"
+msgstr[1] "запит повернув %d рядки замість одного: %s"
+msgstr[2] "запит повернув %d рядків замість одного: %s"
+msgstr[3] "запит повернув %d рядків замість одного: %s"
+
+#. translator: abbreviation for "yes"
+#: common.c:430
+msgid "y"
+msgstr "y"
+
+#. translator: abbreviation for "no"
+#: common.c:432
+msgid "n"
+msgstr "n"
+
+#. translator: This is a question followed by the translated options for
+#. "yes" and "no".
+#: common.c:442
+#, c-format
+msgid "%s (%s/%s) "
+msgstr "%s (%s/%s) "
+
+#: common.c:456
+#, c-format
+msgid "Please answer \"%s\" or \"%s\".\n"
+msgstr "Відповідь має бути \"%s\" або \"%s\".\n"
+
+#: createdb.c:148
+#, c-format
+msgid "only one of --locale and --lc-ctype can be specified"
+msgstr "тільки --locale або --lc-ctype може бути вказаний"
+
+#: createdb.c:153
+#, c-format
+msgid "only one of --locale and --lc-collate can be specified"
+msgstr "можна вказати лише одне: або --locale, або --lc-collate"
+
+#: createdb.c:164
+#, c-format
+msgid "\"%s\" is not a valid encoding name"
+msgstr "\"%s\" не є невірним ім'ям кодування"
+
+#: createdb.c:221
+#, c-format
+msgid "database creation failed: %s"
+msgstr "створити базу даних не вдалося: %s"
+
+#: createdb.c:240
+#, c-format
+msgid "comment creation failed (database was created): %s"
+msgstr "не вдалося створити коментарі (база даних була створена): %s"
+
+#: createdb.c:258
+#, c-format
+msgid "%s creates a PostgreSQL database.\n\n"
+msgstr "%s створює базу даних PostgreSQL.\n\n"
+
+#: createdb.c:260
+#, c-format
+msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+msgstr "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+
+#: createdb.c:262
+#, c-format
+msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
+msgstr "  -D, --tablespace=ТАБЛИЧНИЙ_ПРОСТІР  табличний простір для бази даних за замовчуванням\n"
+
+#: createdb.c:263
+#, c-format
+msgid "  -e, --echo                   show the commands being sent to the server\n"
+msgstr "  -e, --echo                   показати команди, надіслані серверу\n"
+
+#: createdb.c:264
+#, c-format
+msgid "  -E, --encoding=ENCODING      encoding for the database\n"
+msgstr "  -E, --encoding=КОДУВАННЯ    кодування бази даних\n"
+
+#: createdb.c:265
+#, c-format
+msgid "  -l, --locale=LOCALE          locale settings for the database\n"
+msgstr "  -l, --locale=ЛОКАЛЬ         параметри локалі бази даних\n"
+
+#: createdb.c:266
+#, c-format
+msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
+msgstr "      --lc-collate=ЛОКАЛЬ      параметр LC_COLLATE для бази даних\n"
+
+#: createdb.c:267
+#, c-format
+msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
+msgstr "      --lc-ctype=ЛОКАЛЬ        параметр LC_CTYPE для бази даних\n"
+
+#: createdb.c:268
+#, c-format
+msgid "  -O, --owner=OWNER            database user to own the new database\n"
+msgstr "  -O, --власник=ВЛАСНИК          користувач-власник нової бази даних\n"
+
+#: createdb.c:269
+#, c-format
+msgid "  -T, --template=TEMPLATE      template database to copy\n"
+msgstr "  -T, --шаблон=ШАБЛОН          шаблонна база даних для копіювання\n"
+
+#: createdb.c:270
+#, c-format
+msgid "  -V, --version                output version information, then exit\n"
+msgstr "  -V, --version                вивести інформацію про версію, потім вийти\n"
+
+#: createdb.c:271
+#, c-format
+msgid "  -?, --help                   show this help, then exit\n"
+msgstr "  -?, --help                   показати цю довідку, потім вийти\n"
+
+#: createdb.c:273
+#, c-format
+msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgstr "  -h, --host=ІМ'Я_ХОСТА     хост сервера бази даних або каталог сокетів\n"
+
+#: createdb.c:274
+#, c-format
+msgid "  -p, --port=PORT              database server port\n"
+msgstr "  -p, --port=ПОРТ        порт сервера бази даних\n"
+
+#: createdb.c:275
+#, c-format
+msgid "  -U, --username=USERNAME      user name to connect as\n"
+msgstr "  -U, --username=ІМ'Я_КОРИСТУВАЧА   ім'я користувача для з'єднання з сервером\n"
+
+#: createdb.c:276
+#, c-format
+msgid "  -w, --no-password            never prompt for password\n"
+msgstr "  -w, --no-password         ніколи не запитувати пароль\n"
+
+#: createdb.c:277
+#, c-format
+msgid "  -W, --password               force password prompt\n"
+msgstr "  -W, --password           запросити пароль\n"
+
+#: createdb.c:278
+#, c-format
+msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
+msgstr "  --maintenance-db=DBNAME     альтернативна бази даних для обслуговування\n"
+
+#: createdb.c:279
+#, c-format
+msgid "\n"
+"By default, a database with the same name as the current user is created.\n"
+msgstr "\n"
+"За замовчуванням ім'ям бази даних вважається ім'я поточного користувача.\n"
+
+#: createuser.c:150
+#, c-format
+msgid "invalid value for --connection-limit: %s"
+msgstr "неприпустиме значення для --connection-limit: %s"
+
+#: createuser.c:194
+msgid "Enter name of role to add: "
+msgstr "Введіть ім'я нової ролі: "
+
+#: createuser.c:211
+msgid "Enter password for new role: "
+msgstr "Введіть пароль для нової ролі: "
+
+#: createuser.c:213
+msgid "Enter it again: "
+msgstr "Введіть знову: "
+
+#: createuser.c:216
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "Паролі не співпадають.\n"
+
+#: createuser.c:224
+msgid "Shall the new role be a superuser?"
+msgstr "Чи буде нова роль суперкористувачем?"
+
+#: createuser.c:239
+msgid "Shall the new role be allowed to create databases?"
+msgstr "Чи дозволено новій ролі створювати бази даних?"
+
+#: createuser.c:247
+msgid "Shall the new role be allowed to create more new roles?"
+msgstr "Чи дозволено новій ролі створювати інші нові ролі?"
+
+#: createuser.c:277
+#, c-format
+msgid "password encryption failed: %s"
+msgstr "помилка шифрування пароля: %s"
+
+#: createuser.c:332
+#, c-format
+msgid "creation of new role failed: %s"
+msgstr "не вдалося створити нову роль: %s"
+
+#: createuser.c:346
+#, c-format
+msgid "%s creates a new PostgreSQL role.\n\n"
+msgstr "%s створює нову роль PostgreSQL.\n\n"
+
+#: createuser.c:348 dropuser.c:164
+#, c-format
+msgid "  %s [OPTION]... [ROLENAME]\n"
+msgstr "  %s [OPTION]... [ROLENAME]\n"
+
+#: createuser.c:350
+#, c-format
+msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
+msgstr "  -c, --connection-limit=N   ліміт під'єднань для ролі (за замовчуванням ліміту немає)\n"
+
+#: createuser.c:351
+#, c-format
+msgid "  -d, --createdb            role can create new databases\n"
+msgstr "  -d, --createdb           роль може створювати нові бази даних\n"
+
+#: createuser.c:352
+#, c-format
+msgid "  -D, --no-createdb         role cannot create databases (default)\n"
+msgstr "  -D, --no-createdb        роль не може створювати нові бази даних (за замовчуванням)\n"
+
+#: createuser.c:354
+#, c-format
+msgid "  -g, --role=ROLE           new role will be a member of this role\n"
+msgstr "  -g, --role=РОЛЬ          нова роль буде включена в цю роль\n"
+
+#: createuser.c:355
+#, c-format
+msgid "  -i, --inherit             role inherits privileges of roles it is a\n"
+"                            member of (default)\n"
+msgstr "  -i, --inherit            роль переймає права від ролей до яких вона\n"
+"                           включена (за замовчуванням)\n"
+
+#: createuser.c:357
+#, c-format
+msgid "  -I, --no-inherit          role does not inherit privileges\n"
+msgstr "  -I, --no-inherit         роль не переймає права\n"
+
+#: createuser.c:358
+#, c-format
+msgid "  -l, --login               role can login (default)\n"
+msgstr "  -l, --login             роль може увійти (за замовчуванням)\n"
+
+#: createuser.c:359
+#, c-format
+msgid "  -L, --no-login            role cannot login\n"
+msgstr "  -L, --no-login          роль не може увійти\n"
+
+#: createuser.c:360
+#, c-format
+msgid "  -P, --pwprompt            assign a password to new role\n"
+msgstr "  -P, --pwprompt           призначення паролю для нової ролі\n"
+
+#: createuser.c:361
+#, c-format
+msgid "  -r, --createrole          role can create new roles\n"
+msgstr "  -r, --createrole         роль може створювати нові ролі\n"
+
+#: createuser.c:362
+#, c-format
+msgid "  -R, --no-createrole       role cannot create roles (default)\n"
+msgstr "  -R, --no-createrole       роль не може створювати нові бази даних (за замовчуванням)\n"
+
+#: createuser.c:363
+#, c-format
+msgid "  -s, --superuser           role will be superuser\n"
+msgstr "  -s, --superuser           роль буде суперкористувачем\n"
+
+#: createuser.c:364
+#, c-format
+msgid "  -S, --no-superuser        role will not be superuser (default)\n"
+msgstr "  -S, --no-superuser       роль не буде суперкористувачем (за замовчуванням)\n"
+
+#: createuser.c:366
+#, c-format
+msgid "  --interactive             prompt for missing role name and attributes rather\n"
+"                            than using defaults\n"
+msgstr "  --interactive             запитати пропущені ім’я ролі та атрибути, а не                                                                                        використовувати стандартні\n"
+
+#: createuser.c:368
+#, c-format
+msgid "  --replication             role can initiate replication\n"
+msgstr "  --replication            роль може ініціювати реплікацію\n"
+
+#: createuser.c:369
+#, c-format
+msgid "  --no-replication          role cannot initiate replication\n"
+msgstr "  --no-replication            роль не може ініціювати реплікацію\n"
+
+#: createuser.c:374
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgstr "  -U, --username=USERNAME   ім'я користувача для підключення (не для створення)\n"
+
+#: dropdb.c:109
+#, c-format
+msgid "missing required argument database name"
+msgstr "немає запитаного аргументу: імені бази даних"
+
+#: dropdb.c:124
+#, c-format
+msgid "Database \"%s\" will be permanently removed.\n"
+msgstr "База даних \"%s\" буде назавжди видалена.\n"
+
+#: dropdb.c:125 dropuser.c:130
+msgid "Are you sure?"
+msgstr "Ви впевнені?"
+
+#: dropdb.c:149
+#, c-format
+msgid "database removal failed: %s"
+msgstr "помилка при видаленні бази даних: %s"
+
+#: dropdb.c:163
+#, c-format
+msgid "%s removes a PostgreSQL database.\n\n"
+msgstr "%s видаляє базу даних PostgreSQL.\n\n"
+
+#: dropdb.c:165
+#, c-format
+msgid "  %s [OPTION]... DBNAME\n"
+msgstr "  %s [OPTION]... ІМ'Я_БД\n"
+
+#: dropdb.c:168
+#, c-format
+msgid "  -f, --force               try to terminate other connections before dropping\n"
+msgstr "  -f, --force               спробувати завершити інші підключення перед видаленням\n"
+
+#: dropdb.c:169
+#, c-format
+msgid "  -i, --interactive         prompt before deleting anything\n"
+msgstr "  -i, --interactive       запитувати перед видаленням чого-небудь\n"
+
+#: dropdb.c:171
+#, c-format
+msgid "  --if-exists               don't report error if database doesn't exist\n"
+msgstr "  --if-exists            не повідомляти про помилку, якщо бази даних не існує\n"
+
+#: dropuser.c:115
+msgid "Enter name of role to drop: "
+msgstr "Введіть ім'я ролі для видалення: "
+
+#: dropuser.c:121
+#, c-format
+msgid "missing required argument role name"
+msgstr "немає запитаного аргументу: імені ролі"
+
+#: dropuser.c:129
+#, c-format
+msgid "Role \"%s\" will be permanently removed.\n"
+msgstr "Роль \"%s\" буде назавжди видалена.\n"
+
+#: dropuser.c:147
+#, c-format
+msgid "removal of role \"%s\" failed: %s"
+msgstr "помилка при видаленні ролі \"%s\": %s"
+
+#: dropuser.c:162
+#, c-format
+msgid "%s removes a PostgreSQL role.\n\n"
+msgstr "%s видаляє роль PostgreSQL.\n\n"
+
+#: dropuser.c:167
+#, c-format
+msgid "  -i, --interactive         prompt before deleting anything, and prompt for\n"
+"                            role name if not specified\n"
+msgstr "  -i, --interactive        запитувати перед видаленням чого-небудь і запитувати\n"
+"                            ім'я ролі, якщо не вказано\n"
+
+#: dropuser.c:170
+#, c-format
+msgid "  --if-exists               don't report error if user doesn't exist\n"
+msgstr "  --if-exists            не повідомляти про помилку, якщо користувача не існує\n"
+
+#: dropuser.c:175
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr "  -U, --username=USERNAME   ім'я користувача для підключення (не для розривання)\n"
+
+#: pg_isready.c:144
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_isready.c:152
+#, c-format
+msgid "could not fetch default options"
+msgstr "не вдалося отримати параметри за замовчуванням"
+
+#: pg_isready.c:201
+#, c-format
+msgid "accepting connections\n"
+msgstr "отримання підключень\n"
+
+#: pg_isready.c:204
+#, c-format
+msgid "rejecting connections\n"
+msgstr "відторгнення підключень\n"
+
+#: pg_isready.c:207
+#, c-format
+msgid "no response\n"
+msgstr "відповіді немає\n"
+
+#: pg_isready.c:210
+#, c-format
+msgid "no attempt\n"
+msgstr "немає спроб\n"
+
+#: pg_isready.c:213
+#, c-format
+msgid "unknown\n"
+msgstr "невідомо\n"
+
+#: pg_isready.c:223
+#, c-format
+msgid "%s issues a connection check to a PostgreSQL database.\n\n"
+msgstr "%s: перевірка підключення до бази даних PostgreSQL.\n\n"
+
+#: pg_isready.c:225
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s: [OPTION]...\n"
+
+#: pg_isready.c:228
+#, c-format
+msgid "  -d, --dbname=DBNAME      database name\n"
+msgstr "  -d, --dbname=ІМ'Я_БД    ім'я бази даних\n"
+
+#: pg_isready.c:229
+#, c-format
+msgid "  -q, --quiet              run quietly\n"
+msgstr "  -q, --quiet             тихий запуск\n"
+
+#: pg_isready.c:230
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            вивести інформацію про версію, потім вийти\n"
+
+#: pg_isready.c:231
+#, c-format
+msgid "  -?, --help               show this help, then exit\n"
+msgstr "  -?, --help               показати цю довідку, потім вийти\n"
+
+#: pg_isready.c:234
+#, c-format
+msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME      хост серверу баз даних або каталог сокетів\n"
+
+#: pg_isready.c:235
+#, c-format
+msgid "  -p, --port=PORT          database server port\n"
+msgstr "  -p, --port=ПОРТ        порт сервера бази даних\n"
+
+#: pg_isready.c:236
+#, c-format
+msgid "  -t, --timeout=SECS       seconds to wait when attempting connection, 0 disables (default: %s)\n"
+msgstr "  -t, --timeout=SECS       секунд для очікування при спробі підключення, 0 без обмежень (за замовчуванням: %s)\n"
+
+#: pg_isready.c:237
+#, c-format
+msgid "  -U, --username=USERNAME  user name to connect as\n"
+msgstr "  -U, --username=ІМ'Я_КОРИСТУВАЧА   ім'я користувача для з'єднання з сервером\n"
+
+#: reindexdb.c:154 vacuumdb.c:186
+#, c-format
+msgid "number of parallel jobs must be at least 1"
+msgstr "число паралельних завдань повинно бути не менше 1"
+
+#: reindexdb.c:197
+#, c-format
+msgid "cannot reindex all databases and a specific one at the same time"
+msgstr "неможливо переіндексувати всі бази даних і одну вказану одночасно"
+
+#: reindexdb.c:202
+#, c-format
+msgid "cannot reindex all databases and system catalogs at the same time"
+msgstr "не можливо переіндексувати всі бази даних і системні каталоги одночасно"
+
+#: reindexdb.c:207
+#, c-format
+msgid "cannot reindex specific schema(s) in all databases"
+msgstr "неможливо переіндексувати вказані схеми в усіх базах даних"
+
+#: reindexdb.c:212
+#, c-format
+msgid "cannot reindex specific table(s) in all databases"
+msgstr "неможливо переіндексувати вказані таблиці в усіх базах даних"
+
+#: reindexdb.c:217
+#, c-format
+msgid "cannot reindex specific index(es) in all databases"
+msgstr "неможливо переіндексувати вказані індекси в усіх базах даних"
+
+#: reindexdb.c:229
+#, c-format
+msgid "cannot reindex specific schema(s) and system catalogs at the same time"
+msgstr "не можливо переіндексувати вказані схеми і системні каталоги одночасно"
+
+#: reindexdb.c:234
+#, c-format
+msgid "cannot reindex specific table(s) and system catalogs at the same time"
+msgstr "не можливо переіндексувати вказані таблиці і системні каталоги одночасно"
+
+#: reindexdb.c:239
+#, c-format
+msgid "cannot reindex specific index(es) and system catalogs at the same time"
+msgstr "не можливо переіндексувати вказані індекси і системні каталоги одночасно"
+
+#: reindexdb.c:245
+#, c-format
+msgid "cannot use multiple jobs to reindex system catalogs"
+msgstr "не можна використовувати декілька завдань для переіндексування системних каталогів"
+
+#: reindexdb.c:272
+#, c-format
+msgid "cannot use multiple jobs to reindex indexes"
+msgstr "не можна використовувати декілька завдань для переіндексування індексів"
+
+#: reindexdb.c:337 vacuumdb.c:410 vacuumdb.c:418 vacuumdb.c:425 vacuumdb.c:432
+#: vacuumdb.c:439
+#, c-format
+msgid "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
+msgstr "не можна використовувати параметр \"%s\" на серверній версії старішій за PostgreSQL %s"
+
+#: reindexdb.c:377
+#, c-format
+msgid "cannot reindex system catalogs concurrently, skipping all"
+msgstr "не можна конкурентно переіндексувати системні каталоги, пропускаємо"
+
+#: reindexdb.c:558
+#, c-format
+msgid "reindexing of database \"%s\" failed: %s"
+msgstr "переіндексувати базу даних \"%s\" не вдалося: %s"
+
+#: reindexdb.c:562
+#, c-format
+msgid "reindexing of index \"%s\" in database \"%s\" failed: %s"
+msgstr "переіндексувати індекси \"%s\" в базі даних \"%s\" не вдалося: %s"
+
+#: reindexdb.c:566
+#, c-format
+msgid "reindexing of schema \"%s\" in database \"%s\" failed: %s"
+msgstr "переіндексувати схему \"%s\" в базі даних \"%s\" не вдалося: %s"
+
+#: reindexdb.c:570
+#, c-format
+msgid "reindexing of system catalogs in database \"%s\" failed: %s"
+msgstr "переіндексування системних каталогів в базі даних \"%s\" не вдалося: %s"
+
+#: reindexdb.c:574
+#, c-format
+msgid "reindexing of table \"%s\" in database \"%s\" failed: %s"
+msgstr "переіндексувати таблиці \"%s\" в базі даних \"%s\" не вдалося: %s"
+
+#: reindexdb.c:731
+#, c-format
+msgid "%s: reindexing database \"%s\"\n"
+msgstr "%s: переіндексування бази даних \"%s\"\n"
+
+#: reindexdb.c:752
+#, c-format
+msgid "%s reindexes a PostgreSQL database.\n\n"
+msgstr "%s переіндексовує базу даних PostgreSQL.\n\n"
+
+#: reindexdb.c:756
+#, c-format
+msgid "  -a, --all                 reindex all databases\n"
+msgstr "  -a, --all               переіндексувати усі бази даних\n"
+
+#: reindexdb.c:757
+#, c-format
+msgid "      --concurrently        reindex concurrently\n"
+msgstr "      --concurrently переіндексувати одночасно\n"
+
+#: reindexdb.c:758
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to reindex\n"
+msgstr "  -d, --dbname=ІМ'Я_БД    база даних для переіндексування\n"
+
+#: reindexdb.c:760
+#, c-format
+msgid "  -i, --index=INDEX         recreate specific index(es) only\n"
+msgstr "  -i, --index=ІНДЕКС       відтворити тільки вказані індекси\n"
+
+#: reindexdb.c:761
+#, c-format
+msgid "  -j, --jobs=NUM            use this many concurrent connections to reindex\n"
+msgstr "  -j, --jobs=NUM            використати таку кількість паралельних підключень для переіндексації\n"
+
+#: reindexdb.c:763
+#, c-format
+msgid "  -s, --system              reindex system catalogs\n"
+msgstr "  -s, --system            переіндексувати системні каталоги\n"
+
+#: reindexdb.c:764
+#, c-format
+msgid "  -S, --schema=SCHEMA       reindex specific schema(s) only\n"
+msgstr "  -S, --schema=СХЕМА     переіндексувати тільки вказані схеми\n"
+
+#: reindexdb.c:765
+#, c-format
+msgid "  -t, --table=TABLE         reindex specific table(s) only\n"
+msgstr "  -t, --table=ТАБЛИЦЯ        переіндексувати тільки вказані таблиці\n"
+
+#: reindexdb.c:776
+#, c-format
+msgid "\n"
+"Read the description of the SQL command REINDEX for details.\n"
+msgstr "\n"
+"Для деталей читайте опис команди SQL REINDEX.\n"
+
+#: scripts_parallel.c:234
+#, c-format
+msgid "too many jobs for this platform -- try %d"
+msgstr "надто багато завдань для цієї платформи -- спробуйте %d"
+
+#: vacuumdb.c:194
+#, c-format
+msgid "parallel vacuum degree must be a non-negative integer"
+msgstr "ступінь паралельного очищення повинен бути не від'ємним цілим"
+
+#: vacuumdb.c:214
+#, c-format
+msgid "minimum transaction ID age must be at least 1"
+msgstr "мінімальний ID ери транзакції має бути хоча б 1"
+
+#: vacuumdb.c:222
+#, c-format
+msgid "minimum multixact ID age must be at least 1"
+msgstr "мінімальна ера ID мультитранзакції повинна бути щонайменше 1"
+
+#: vacuumdb.c:254 vacuumdb.c:260 vacuumdb.c:266 vacuumdb.c:278
+#, c-format
+msgid "cannot use the \"%s\" option when performing only analyze"
+msgstr "не можна використовувати параметр \"%s\" під час виконання лише аналіза"
+
+#: vacuumdb.c:284
+#, c-format
+msgid "cannot use the \"%s\" option when performing full"
+msgstr "не можна використовувати параметр \"%s\" під час виконання FULL"
+
+#: vacuumdb.c:300
+#, c-format
+msgid "cannot vacuum all databases and a specific one at the same time"
+msgstr "неможливо очистити всі бази даних і одну вказану одночасно"
+
+#: vacuumdb.c:305
+#, c-format
+msgid "cannot vacuum specific table(s) in all databases"
+msgstr "неможливо очистити вказані таблиці в усіх базах даних"
+
+#: vacuumdb.c:396
+msgid "Generating minimal optimizer statistics (1 target)"
+msgstr "Генерування мінімальної статистики для оптімизатора (1 мета)"
+
+#: vacuumdb.c:397
+msgid "Generating medium optimizer statistics (10 targets)"
+msgstr "Генерування середньої статистики для оптимізатора (10 цілей)"
+
+#: vacuumdb.c:398
+msgid "Generating default (full) optimizer statistics"
+msgstr "Генерування статистики для оптимізатора за замовчуванням (повністю)"
+
+#: vacuumdb.c:447
+#, c-format
+msgid "%s: processing database \"%s\": %s\n"
+msgstr "%s: обробка бази даних \"%s\": %s\n"
+
+#: vacuumdb.c:450
+#, c-format
+msgid "%s: vacuuming database \"%s\"\n"
+msgstr "%s: очищення бази даних \"%s\"\n"
+
+#: vacuumdb.c:909
+#, c-format
+msgid "vacuuming of table \"%s\" in database \"%s\" failed: %s"
+msgstr "очистити таблиці \"%s\" в базі даних \"%s\" не вдалося: %s"
+
+#: vacuumdb.c:912
+#, c-format
+msgid "vacuuming of database \"%s\" failed: %s"
+msgstr "очистити базу даних \"%s\" не вдалося: %s"
+
+#: vacuumdb.c:920
+#, c-format
+msgid "%s cleans and analyzes a PostgreSQL database.\n\n"
+msgstr "%s очищує й аналізує базу даних PostgreSQL.\n\n"
+
+#: vacuumdb.c:924
+#, c-format
+msgid "  -a, --all                       vacuum all databases\n"
+msgstr "  -a, --all                       очистити усі бази даних\n"
+
+#: vacuumdb.c:925
+#, c-format
+msgid "  -d, --dbname=DBNAME             database to vacuum\n"
+msgstr "  -d, --dbname=ІМ'Я_БД             база даних для очищення\n"
+
+#: vacuumdb.c:926
+#, c-format
+msgid "      --disable-page-skipping     disable all page-skipping behavior\n"
+msgstr "      --disable-page-skipping     відключити пропуск сторінок\n"
+
+#: vacuumdb.c:927
+#, c-format
+msgid "  -e, --echo                      show the commands being sent to the server\n"
+msgstr "  -e, --echo              показати команди, надіслані серверу\n"
+
+#: vacuumdb.c:928
+#, c-format
+msgid "  -f, --full                      do full vacuuming\n"
+msgstr "  -f, --full                     зробити повне очищення\n"
+
+#: vacuumdb.c:929
+#, c-format
+msgid "  -F, --freeze                    freeze row transaction information\n"
+msgstr "  -F, --freeze                   заморозити інформацію щодо транзакцій в рядках\n"
+
+#: vacuumdb.c:930
+#, c-format
+msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
+msgstr "  -j, --jobs=ЧИСЛО                   використати ці паралельні підключення для очищення\n"
+
+#: vacuumdb.c:931
+#, c-format
+msgid "      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"
+msgstr "      --min-mxid-age=MXID_AGE     мінімальний ID ери мультитранзакції таблиць для вакууму\n"
+
+#: vacuumdb.c:932
+#, c-format
+msgid "      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"
+msgstr "      --min-mxid-age=MXID_AGE     мінімальний ID ери транзакції таблиць для вакууму\n"
+
+#: vacuumdb.c:933
+#, c-format
+msgid "  -P, --parallel=PARALLEL_DEGREE  use this many background workers for vacuum, if available\n"
+msgstr "  -P, --parallel=PARALLEL_DEGREE  використати таку кількість фонових процесів для очищення, якщо вони доступні\n"
+
+#: vacuumdb.c:934
+#, c-format
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet             не писати жодних повідомлень\n"
+
+#: vacuumdb.c:935
+#, c-format
+msgid "      --skip-locked               skip relations that cannot be immediately locked\n"
+msgstr "      --skip-locked               пропустити відношення, що не можуть бути заблоковані негайно\n"
+
+#: vacuumdb.c:936
+#, c-format
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
+msgstr "  -t, --table='ТАБЛИЦЯ[(СТОВПЦІ)]'  очистити тільки вказані таблиці\n"
+
+#: vacuumdb.c:937
+#, c-format
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose              виводити багато інформації\n"
+
+#: vacuumdb.c:938
+#, c-format
+msgid "  -V, --version                   output version information, then exit\n"
+msgstr "  -V, --version                  вивести інформацію про версію і вийти\n"
+
+#: vacuumdb.c:939
+#, c-format
+msgid "  -z, --analyze                   update optimizer statistics\n"
+msgstr "  -z, --analyze                 оновити статистику для оптимізатора\n"
+
+#: vacuumdb.c:940
+#, c-format
+msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
+msgstr "  -Z, --analyze-only             оновити лише статистику для оптимізатора, не очищати\n"
+
+#: vacuumdb.c:941
+#, c-format
+msgid "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
+"                                  stages for faster results; no vacuum\n"
+msgstr "      --analyze-in-stages         оновити лише статистику для оптимізатора, у декілька стадій для швидших результатів, не очищати\n"
+
+#: vacuumdb.c:943
+#, c-format
+msgid "  -?, --help                      show this help, then exit\n"
+msgstr "  -?, --help                      показати цю справку, потім вийти\n"
+
+#: vacuumdb.c:951
+#, c-format
+msgid "\n"
+"Read the description of the SQL command VACUUM for details.\n"
+msgstr "\n"
+"Для деталей читайте опис команди SQL VACUUM.\n"
+

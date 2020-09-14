@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:46+0000\n"
+"POT-Creation-Date: 2020-09-13 10:46+0000\n"
 "PO-Revision-Date: 2019-09-29 22:24-0300\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -62,6 +62,20 @@ msgstr "el usuario no existe"
 #, c-format
 msgid "user name lookup failure: error code %lu"
 msgstr "fallo en la búsqueda de nombre de usuario: código de error %lu"
+
+#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+msgid "Cancel request sent\n"
+msgstr "Petición de cancelación enviada\n"
+
+#: ../../fe_utils/cancel.c:165
+#, fuzzy
+msgid "Could not send cancel request: "
+msgstr "No se pudo enviar el paquete de cancelación: %s"
+
+#: ../../fe_utils/cancel.c:210
+#, c-format
+msgid "Could not send cancel request: %s"
+msgstr "No se pudo enviar el paquete de cancelación: %s"
 
 #: ../../fe_utils/print.c:350
 #, c-format
@@ -260,12 +274,14 @@ msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
+"\n"
+"Reporte errores a <%s>.\n"
 
 #: clusterdb.c:295 createdb.c:281 createuser.c:378 dropdb.c:181 dropuser.c:179
 #: pg_isready.c:239 reindexdb.c:778 vacuumdb.c:953
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
+msgstr "Sitio web de %s: <%s>\n"
 
 #: common.c:79 common.c:125
 msgid "Password: "
@@ -958,6 +974,11 @@ msgstr ""
 "\n"
 "Lea la descripción de la orden REINDEX de SQL para obtener mayores detalles.\n"
 
+#: scripts_parallel.c:234
+#, c-format
+msgid "too many jobs for this platform -- try %d"
+msgstr ""
+
 #: vacuumdb.c:194
 #, fuzzy, c-format
 #| msgid "remainder for hash partition must be a non-negative integer"
@@ -1148,22 +1169,3 @@ msgid ""
 msgstr ""
 "\n"
 "Lea la descripción de la orden VACUUM de SQL para obtener mayores detalles.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "Cancel request sent\n"
-#~ msgstr "Petición de cancelación enviada\n"
-
-#~ msgid "Could not send cancel request: %s"
-#~ msgstr "No se pudo enviar el paquete de cancelación: %s"
-
-#~ msgid "reindexing of system catalogs failed: %s"
-#~ msgstr "falló la reindexación de los catálogos del sistema: %s"
-
-#~ msgid "too many jobs for this platform -- try %d"
-#~ msgstr "demasiados trabajos para esta plataforma -- pruebe %d"

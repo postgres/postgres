@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-06-05 09:44+0000\n"
-"PO-Revision-Date: 2020-06-05 18:37+0200\n"
+"POT-Creation-Date: 2020-08-27 21:44+0000\n"
+"PO-Revision-Date: 2020-08-30 10:09+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -128,6 +128,19 @@ msgstr "barnprocess terminerades av signal %d: %s"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "barnprocess avslutade med okänd statuskod %d"
+
+#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+msgid "Cancel request sent\n"
+msgstr "Förfrågan om avbrytning skickad\n"
+
+#: ../../fe_utils/cancel.c:165
+msgid "Could not send cancel request: "
+msgstr "Kunde inte skicka förfrågan om avbrytning: "
+
+#: ../../fe_utils/cancel.c:210
+#, c-format
+msgid "Could not send cancel request: %s"
+msgstr "Kunde inte skicka förfrågan om avbrytning: %s"
 
 #: ../../fe_utils/print.c:350
 #, c-format
@@ -1059,8 +1072,8 @@ msgstr "Servern (version %s) stöder inte tabellutrymmen."
 #: describe.c:243 describe.c:251 describe.c:501 describe.c:717 describe.c:873
 #: describe.c:1114 describe.c:3720 describe.c:3918 describe.c:4087
 #: describe.c:4333 describe.c:4604 describe.c:5266 describe.c:5350
-#: describe.c:5746 describe.c:5883 describe.c:5986 describe.c:6100
-#: describe.c:6173 large_obj.c:289
+#: describe.c:5746 describe.c:5883 describe.c:5986 describe.c:6101
+#: describe.c:6180 large_obj.c:289
 msgid "Owner"
 msgstr "Ägare"
 
@@ -1179,11 +1192,11 @@ msgstr "Element"
 msgid "List of data types"
 msgstr "Lista med datatyper"
 
-#: describe.c:812 describe.c:6344
+#: describe.c:812
 msgid "Left arg type"
 msgstr "Vänster argumenttyp"
 
-#: describe.c:813 describe.c:6345
+#: describe.c:813
 msgid "Right arg type"
 msgstr "Höger argumenttyp"
 
@@ -1192,7 +1205,7 @@ msgid "Result type"
 msgstr "Resultattyp"
 
 #: describe.c:819 describe.c:4339 describe.c:4404 describe.c:4410
-#: describe.c:4820 describe.c:6347
+#: describe.c:4820 describe.c:6352 describe.c:6356
 msgid "Function"
 msgstr "Funktion"
 
@@ -1337,12 +1350,12 @@ msgid "Increment"
 msgstr "Ökning"
 
 #: describe.c:1716 describe.c:1740 describe.c:1871 describe.c:4255
-#: describe.c:4421 describe.c:4535 describe.c:4540 describe.c:6088
+#: describe.c:4421 describe.c:4535 describe.c:4540 describe.c:6089
 msgid "yes"
 msgstr "ja"
 
 #: describe.c:1717 describe.c:1741 describe.c:1872 describe.c:4255
-#: describe.c:4418 describe.c:4535 describe.c:6089
+#: describe.c:4418 describe.c:4535 describe.c:6090
 msgid "no"
 msgstr "nej"
 
@@ -1890,7 +1903,7 @@ msgstr "Källa"
 msgid "Destination"
 msgstr "Mål"
 
-#: describe.c:4256 describe.c:6090
+#: describe.c:4256 describe.c:6091
 msgid "Default?"
 msgstr "Standard?"
 
@@ -2265,71 +2278,79 @@ msgstr "Förbindelseinfo"
 msgid "List of subscriptions"
 msgstr "Lista med prenumerationer"
 
-#: describe.c:6084 describe.c:6167 describe.c:6252 describe.c:6342
+#: describe.c:6085 describe.c:6174 describe.c:6260 describe.c:6343
 msgid "AM"
 msgstr "AM"
 
-#: describe.c:6085
+#: describe.c:6086
 msgid "Input type"
 msgstr "Indatatyp"
 
-#: describe.c:6086
+#: describe.c:6087
 msgid "Storage type"
 msgstr "Lagringstyp"
 
-#: describe.c:6087
+#: describe.c:6088
 msgid "Operator class"
 msgstr "Operatorklass"
 
-#: describe.c:6099 describe.c:6168 describe.c:6253 describe.c:6343
+#: describe.c:6100 describe.c:6175 describe.c:6261 describe.c:6344
 msgid "Operator family"
 msgstr "Operatorfamilj"
 
-#: describe.c:6126
+#: describe.c:6133
 msgid "List of operator classes"
 msgstr "Lista med operatorklasser"
 
-#: describe.c:6169
+#: describe.c:6176
 msgid "Applicable types"
 msgstr "Applicerbara typer"
 
-#: describe.c:6204
+#: describe.c:6215
 msgid "List of operator families"
 msgstr "Lista med operatorfamiljer"
 
-#: describe.c:6254
+#: describe.c:6262
 msgid "Operator"
 msgstr "Operator"
 
-#: describe.c:6264
+#: describe.c:6263
 msgid "Strategy"
 msgstr "Strategi"
 
-#: describe.c:6265
+#: describe.c:6264
 msgid "ordering"
 msgstr "ordning"
 
-#: describe.c:6266
+#: describe.c:6265
 msgid "search"
 msgstr "sök"
 
-#: describe.c:6267
+#: describe.c:6266
 msgid "Purpose"
 msgstr "Ändamål"
 
-#: describe.c:6268
+#: describe.c:6271
 msgid "Sort opfamily"
 msgstr "Sortering-opfamilj"
 
-#: describe.c:6300
+#: describe.c:6302
 msgid "List of operators of operator families"
 msgstr "Lista med operatorer i operatorfamiljer"
 
+#: describe.c:6345
+msgid "Registered left type"
+msgstr "Registrerad vänstertyp"
+
 #: describe.c:6346
+msgid "Registered right type"
+msgstr "Registrerad högertyp"
+
+#: describe.c:6347
 msgid "Number"
 msgstr "Nummer"
 
-#: describe.c:6374
+#: describe.c:6383
 msgid "List of support functions of operator families"
 msgstr "Lista med supportfunktioner i operatorfamiljer"
 
@@ -2652,13 +2673,12 @@ msgstr "  \\errverbose            visa senste felmeddelande vid maximal verbosit
 
 #: help.c:178
 #, c-format
-msgid "  \\g [(OPTIONS)] [FILE]  execute query (and send results to file or |pipe);\n"
-msgstr "  \\g [(FLAGGOR)] [FIL]   kör frågan (och skicka resultatet till fil eller |rör);\n"
-
-#: help.c:179
-#, c-format
-msgid "                         \\g with no arguments is equivalent to a semicolon\n"
-msgstr "                         \\g utan argument är ekvivalent med ett semikolon\n"
+msgid ""
+"  \\g [(OPTIONS)] [FILE]  execute query (and send results to file or |pipe);\n"
+"                         \\g with no arguments is equivalent to a semicolon\n"
+msgstr ""
+"  \\g [(FLAGGOR)] [FIL]   kör frågan (och skicka resultatet till fil eller |rör);\n"
+"                         \\g utan argument är samma som ett semikolon\n"
 
 #: help.c:180
 #, c-format
@@ -2852,23 +2872,23 @@ msgstr "  \\dA[+]  [MALL]         lista accessmetoder\n"
 
 #: help.c:231
 #, c-format
-msgid "  \\dAc[+] [AMPTRN [TYPEPTRN]] list operator classes\n"
-msgstr "  \\dAc[+] [AMPTRN [TYPEPTRN]] lista operatorklasser\n"
+msgid "  \\dAc[+] [AMPTRN [TYPEPTRN]]  list operator classes\n"
+msgstr "  \\dAc[+] [AMPTRN [TYPEPTRN]]  lista operatorklasser\n"
 
 #: help.c:232
 #, c-format
-msgid "  \\dAf[+] [AMPTRN [TYPEPTRN]] list operator families\n"
-msgstr "  \\dAf[+] [AMPTRN [TYPEPTRN]] lista operatorfamiljer\n"
+msgid "  \\dAf[+] [AMPTRN [TYPEPTRN]]  list operator families\n"
+msgstr "  \\dAf[+] [AMPTRN [TYPEPTRN]]  lista operatorfamiljer\n"
 
 #: help.c:233
 #, c-format
-msgid "  \\dAo[+] [AMPTRN [OPFPTRN]] list operators of operator families\n"
-msgstr "  \\dAo[+] [AMPTRN [OPFPTRN]] lista operatorer i operatorfamiljer\n"
+msgid "  \\dAo[+] [AMPTRN [OPFPTRN]]   list operators of operator families\n"
+msgstr "  \\dAo[+] [AMPTRN [OPFPTRN]]  lista operatorer i operatorfamiljer\n"
 
 #: help.c:234
 #, c-format
-msgid "  \\dAp    [AMPTRN [OPFPTRN]] list support functions of operator families\n"
-msgstr "  \\dAp    [AMPTRN [OPFPTRN]] lista supportfunktioner i operatorfamiljer\n"
+msgid "  \\dAp    [AMPTRN [OPFPTRN]]   list support functions of operator families\n"
+msgstr "  \\dAp    [AMPTRN [OPFPTRN]]   lista supportfunktioner i operatorfamiljer\n"
 
 #: help.c:235
 #, c-format
@@ -6369,11 +6389,14 @@ msgstr ""
 "okänt värde \"%s\" för \"%s\"\n"
 "Tillgängliga värden är: %s."
 
-#~ msgid "List of procedures of operator families"
-#~ msgstr "Lista med procedurer i operatorfamilj"
+#~ msgid "Opfamily Name"
+#~ msgstr "Opfamiljenamn"
 
 #~ msgid "Proc name"
 #~ msgstr "Proc-namn"
 
-#~ msgid "Opfamily Name"
-#~ msgstr "Opfamiljenamn"
+#~ msgid "List of procedures of operator families"
+#~ msgstr "Lista med procedurer i operatorfamilj"
+
+#~ msgid "                         \\g with no arguments is equivalent to a semicolon\n"
+#~ msgstr "                         \\g utan argument är ekvivalent med ett semikolon\n"

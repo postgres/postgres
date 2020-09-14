@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:45+0000\n"
+"POT-Creation-Date: 2020-09-13 10:45+0000\n"
 "PO-Revision-Date: 2019-09-29 22:26-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -276,12 +276,10 @@ msgstr "fatal\n"
 #: check.c:887
 #, fuzzy, c-format
 #| msgid ""
-#| "Your installation contains \"contrib/isn\" functions which rely on the\n"
-#| "bigint data type.  Your old and new clusters pass bigint values\n"
-#| "differently so this cluster cannot currently be upgraded.  You can\n"
-#| "manually upgrade databases that use \"contrib/isn\" facilities and remove\n"
-#| "\"contrib/isn\" from the old cluster and restart the upgrade.  A list of\n"
-#| "the problem functions is in the file:\n"
+#| "Your installation contains the \"unknown\" data type in user tables.  This\n"
+#| "data type is no longer allowed in tables, so this cluster cannot currently\n"
+#| "be upgraded.  You can remove the problem tables and restart the upgrade.\n"
+#| "A list of the problem columns is in the file:\n"
 #| "    %s\n"
 #| "\n"
 msgid ""
@@ -294,12 +292,10 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene funciones «contrib/isn» que usan el tipo de dato\n"
-"bigint. Los clústers origen y destino pasan valores bigint de distintas\n"
-"maneras, por lo que este clúster no puede ser actualizado en este momento.\n"
-"Puede actualizar manualmente las bases de datos que contengan funcionalidad\n"
-"«contrib/isn» y eliminar el módulo de la base de datos de origen.\n"
-"A continuación se provee una lista de funciones problemáticas:\n"
+"Su instalación contiene el tipo «unknown» en tablas de usuario. Este tipo\n"
+"ya no es permitido en tablas, por lo que este clúster no puede ser actualizado.\n"
+"Puede elimiar las tablas y reiniciar la actualización.\n"
+"Un listado de columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
 
@@ -309,14 +305,7 @@ msgid "Checking for tables WITH OIDS"
 msgstr "Verificando tablas WITH OIDS"
 
 #: check.c:966
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains tables declared WITH OIDS, which is not supported\n"
-#| "anymore. Consider removing the oid column using\n"
-#| "    ALTER TABLE ... SET WITHOUT OIDS;\n"
-#| "A list of tables with the problem is in the file:\n"
-#| "    %s\n"
-#| "\n"
+#, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not\n"
 "supported anymore.  Consider removing the oid column using\n"
@@ -325,11 +314,6 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene tablas declaradas WITH OIDS, que ya no es soportado.\n"
-"Considere eliminar las columns oid usando\n"
-"    ALTER TABLE ... SET WITHOUT OIDS;\n"
-"Una lista de tablas con el problema está en el archivo:\n"
-"    %s\n"
 
 #: check.c:996
 #, c-format
@@ -339,11 +323,10 @@ msgstr "Verificando tipos de datos reg* en datos de usuario"
 #: check.c:1077
 #, fuzzy, c-format
 #| msgid ""
-#| "Your installation contains one of the reg* data types in user tables.\n"
-#| "These data types reference system OIDs that are not preserved by\n"
-#| "pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
-#| "remove the problem tables and restart the upgrade.  A list of the problem\n"
-#| "columns is in the file:\n"
+#| "Your installation contains the \"unknown\" data type in user tables.  This\n"
+#| "data type is no longer allowed in tables, so this cluster cannot currently\n"
+#| "be upgraded.  You can remove the problem tables and restart the upgrade.\n"
+#| "A list of the problem columns is in the file:\n"
 #| "    %s\n"
 #| "\n"
 msgid ""
@@ -355,11 +338,10 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene uno de los tipos de dato reg* en tablas de usuario.\n"
-"Estos tipos de dato hacen referencia a OIDs de sistema que no son preservados\n"
-"por pg_upgrade, por lo que este clúster no puede actualmente actualizarse.\n"
-"Puede eliminar las tablas problemáticas y reiniciar la actualización.\n"
-"Puede encontrar una lista de columnas problemáticas en el archivo:\n"
+"Su instalación contiene el tipo «unknown» en tablas de usuario. Este tipo\n"
+"ya no es permitido en tablas, por lo que este clúster no puede ser actualizado.\n"
+"Puede elimiar las tablas y reiniciar la actualización.\n"
+"Un listado de columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
 
@@ -371,10 +353,10 @@ msgstr "Verificando datos de usuario en tipo «jsonb» incompatible"
 #: check.c:1168
 #, fuzzy, c-format
 #| msgid ""
-#| "Your installation contains the \"jsonb\" data type in user tables.\n"
-#| "The internal format of \"jsonb\" changed during 9.4 beta so this cluster cannot currently\n"
-#| "be upgraded.  You can remove the problem tables and restart the upgrade.  A list\n"
-#| "of the problem columns is in the file:\n"
+#| "Your installation contains the \"unknown\" data type in user tables.  This\n"
+#| "data type is no longer allowed in tables, so this cluster cannot currently\n"
+#| "be upgraded.  You can remove the problem tables and restart the upgrade.\n"
+#| "A list of the problem columns is in the file:\n"
 #| "    %s\n"
 #| "\n"
 msgid ""
@@ -386,11 +368,10 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene alguno de los tipos de dato «jsonb» en tablas de usuario.\n"
-"El formato interno de «jsonb» cambió durante 9.4 beta, de manera que este clúster\n"
-"no puede ser actualizado en este momento.  Puede eliminar las tablas\n"
-"problemáticas y reiniciar la actualización. Una lista de columnas puede\n"
-"encontrarse en el archivo:\n"
+"Su instalación contiene el tipo «unknown» en tablas de usuario. Este tipo\n"
+"ya no es permitido en tablas, por lo que este clúster no puede ser actualizado.\n"
+"Puede elimiar las tablas y reiniciar la actualización.\n"
+"Un listado de columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
 
@@ -1143,12 +1124,11 @@ msgid "  -b, --old-bindir=BINDIR       old cluster executable directory\n"
 msgstr "  -b, --old-bindir=BINDIR       directorio de ejecutables del clúster antiguo\n"
 
 #: option.c:293
-#, fuzzy, c-format
-#| msgid "  -B, --new-bindir=BINDIR       new cluster executable directory\n"
+#, c-format
 msgid ""
 "  -B, --new-bindir=BINDIR       new cluster executable directory (default\n"
 "                                same directory as pg_upgrade)\n"
-msgstr "  -B, --new-bindir=BINDIR       directorio de ejecutables del clúster nuevo\n"
+msgstr ""
 
 #: option.c:295
 #, c-format
@@ -1167,9 +1147,9 @@ msgstr "  -D, --new-datadir=DATADIR     directorio de datos del clúster nuevo\n
 
 #: option.c:298
 #, fuzzy, c-format
-#| msgid "  -j, --jobs                    number of simultaneous processes or threads to use\n"
+#| msgid "  -j, --jobs=NUM               use this many parallel jobs to restore\n"
 msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
-msgstr "  -j, --jobs                    número de procesos o hilos simultáneos a usar\n"
+msgstr "  -j, --jobs=NUM               máximo de procesos paralelos para restaurar\n"
 
 #: option.c:299
 #, c-format
@@ -1312,11 +1292,13 @@ msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
+"\n"
+"Reporte errores a <%s>.\n"
 
 #: option.c:340
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
+msgstr "Sitio web de %s: <%s>\n"
 
 #: option.c:380
 #, c-format
@@ -1575,17 +1557,17 @@ msgstr ""
 
 #: server.c:167
 #, fuzzy, c-format
-#| msgid "could not open version file: %s\n"
+#| msgid "could not open server file \"%s\": %m"
 msgid "could not open version file \"%s\": %m\n"
-msgstr "no se pudo abrir el archivo de versión: %s\n"
+msgstr "no se pudo abrir el archivo de servidor «%s»: %m"
 
 #: server.c:171
 #, fuzzy, c-format
-#| msgid "could not open version file: %s\n"
+#| msgid "could not parse contents of file \"%s\""
 msgid "could not parse version file \"%s\"\n"
-msgstr "no se pudo abrir el archivo de versión: %s\n"
+msgstr "no se pudo interpretar el contenido del archivo «%s»"
 
-#: server.c:294
+#: server.c:297
 #, c-format
 msgid ""
 "\n"
@@ -1594,7 +1576,7 @@ msgstr ""
 "\n"
 "falló la conexión a la base de datos: %s"
 
-#: server.c:299
+#: server.c:302
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -1603,7 +1585,7 @@ msgstr ""
 "no se pudo conectar al postmaster de origen iniciado con la orden:\n"
 "%s\n"
 
-#: server.c:303
+#: server.c:306
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -1612,22 +1594,22 @@ msgstr ""
 "no se pudo conectar al postmaster de destino iniciado con la orden:\n"
 "%s\n"
 
-#: server.c:317
+#: server.c:320
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed\n"
 msgstr "pg_ctl no pudo iniciar el servidor de origen, o la conexión falló\n"
 
-#: server.c:319
+#: server.c:322
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed\n"
 msgstr "pg_ctl no pudo iniciar el servidor de destino, o la conexión falló\n"
 
-#: server.c:364
+#: server.c:367
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: server.c:377
+#: server.c:380
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s\n"
 msgstr "la variable de ambiente libpq %s tiene un valor de servidor no-local: %s\n"
@@ -1837,13 +1819,3 @@ msgstr ""
 "Un listado de columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "could not parse PG_VERSION file from %s\n"
-#~ msgstr "no se pudo interpretar el archivo PG_VERSION de %s\n"

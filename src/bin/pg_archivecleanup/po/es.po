@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:47+0000\n"
-"PO-Revision-Date: 2019-06-06 17:21-0400\n"
+"POT-Creation-Date: 2020-09-13 10:47+0000\n"
+"PO-Revision-Date: 2020-09-12 23:13-0300\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -156,11 +156,13 @@ msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
+"\n"
+"Reporte errores a <%s>.\n"
 
 #: pg_archivecleanup.c:273
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
+msgstr "Sitio web de %s: <%s>\n"
 
 #: pg_archivecleanup.c:335
 #, c-format
@@ -176,10 +178,3 @@ msgstr "debe especificar el fichero WAL más antiguo a mantener"
 #, c-format
 msgid "too many command-line arguments"
 msgstr "demasiados argumentos de línea de órdenes"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"
