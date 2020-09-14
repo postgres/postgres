@@ -281,7 +281,7 @@ main(int argc, char *argv[])
 		}
 		if (vacopts.full)
 		{
-			pg_log_error("cannot use the \"%s\" option when performing full",
+			pg_log_error("cannot use the \"%s\" option when performing full vacuum",
 						 "parallel");
 			exit(1);
 		}

@@ -721,7 +721,10 @@ perform_base_backup(basebackup_options *opt)
 	{
 		if (total_checksum_failures > 1)
 			ereport(WARNING,
-					(errmsg("%lld total checksum verification failures", total_checksum_failures)));
+					(errmsg_plural("%lld total checksum verification failure",
+								   "%lld total checksum verification failures",
+								   total_checksum_failures,
+								   total_checksum_failures)));
 
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),

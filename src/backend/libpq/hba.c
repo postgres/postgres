@@ -1722,10 +1722,10 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("clientcert can not be set to \"no-verify\" when using \"cert\" authentication"),
+						 errmsg("clientcert cannot be set to \"no-verify\" when using \"cert\" authentication"),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
-				*err_msg = "clientcert can not be set to \"no-verify\" when using \"cert\" authentication";
+				*err_msg = "clientcert cannot be set to \"no-verify\" when using \"cert\" authentication";
 				return false;
 			}
 			hbaline->clientcert = clientCertOff;

@@ -3011,7 +3011,7 @@ TerminateOtherDBBackends(Oid databaseId)
 	if (nprepared > 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("database \"%s\" is being used by prepared transaction",
+				 errmsg("database \"%s\" is being used by prepared transactions",
 						get_database_name(databaseId)),
 				 errdetail_plural("There is %d prepared transaction using the database.",
 								  "There are %d prepared transactions using the database.",

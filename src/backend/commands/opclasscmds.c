@@ -1156,14 +1156,14 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 				(OidIsValid(member->righttype) && member->righttype != typeoid))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("associated data types for opclass options parsing functions must match opclass input type")));
+						 errmsg("associated data types for operator class options parsing functions must match opclass input type")));
 		}
 		else
 		{
 			if (member->lefttype != member->righttype)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("left and right associated data types for opclass options parsing functions must match")));
+						 errmsg("left and right associated data types for operator class options parsing functions must match")));
 		}
 
 		if (procform->prorettype != VOIDOID ||
@@ -1171,8 +1171,8 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 			procform->proargtypes.values[0] != INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("invalid opclass options parsing function"),
-					 errhint("Valid signature of opclass options parsing function is '%s'.",
+					 errmsg("invalid operator class options parsing function"),
+					 errhint("Valid signature of operator class options parsing function is %s.",
 							 "(internal) RETURNS void")));
 	}
 

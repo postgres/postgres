@@ -325,7 +325,7 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
 
 			/* It's not a field we recognize. */
 			json_manifest_parse_failure(parse->context,
-										"unknown toplevel field");
+										"unrecognized top-level field");
 			break;
 
 		case JM_EXPECT_THIS_FILE_FIELD:
@@ -358,7 +358,7 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
 				parse->wal_range_field = JMWRF_END_LSN;
 			else
 				json_manifest_parse_failure(parse->context,
-											"unexpected wal range field");
+											"unexpected WAL range field");
 			parse->state = JM_EXPECT_THIS_WAL_RANGE_VALUE;
 			break;
 
@@ -469,10 +469,10 @@ json_manifest_finalize_file(JsonManifestParseState *parse)
 
 	/* Pathname and size are required. */
 	if (parse->pathname == NULL && parse->encoded_pathname == NULL)
-		json_manifest_parse_failure(parse->context, "missing pathname");
+		json_manifest_parse_failure(parse->context, "missing path name");
 	if (parse->pathname != NULL && parse->encoded_pathname != NULL)
 		json_manifest_parse_failure(parse->context,
-									"both pathname and encoded pathname");
+									"both path name and encoded path name");
 	if (parse->size == NULL)
 		json_manifest_parse_failure(parse->context, "missing size");
 	if (parse->algorithm == NULL && parse->checksum != NULL)
@@ -491,7 +491,7 @@ json_manifest_finalize_file(JsonManifestParseState *parse)
 							  parse->encoded_pathname,
 							  raw_length))
 			json_manifest_parse_failure(parse->context,
-										"unable to decode filename");
+										"could not decode file name");
 		parse->pathname[raw_length] = '\0';
 		pfree(parse->encoded_pathname);
 		parse->encoded_pathname = NULL;
@@ -582,10 +582,10 @@ json_manifest_finalize_wal_range(JsonManifestParseState *parse)
 									"timeline is not an integer");
 	if (!parse_xlogrecptr(&start_lsn, parse->start_lsn))
 		json_manifest_parse_failure(parse->context,
-									"unable to parse start LSN");
+									"could not parse start LSN");
 	if (!parse_xlogrecptr(&end_lsn, parse->end_lsn))
 		json_manifest_parse_failure(parse->context,
-									"unable to parse end LSN");
+									"could not parse end LSN");
 
 	/* Invoke the callback with the details we've gathered. */
 	context->perwalrange_cb(context, tli, start_lsn, end_lsn);

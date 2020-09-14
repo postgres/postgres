@@ -12515,7 +12515,7 @@ StartupRequestWalReceiverRestart(void)
 	if (currentSource == XLOG_FROM_STREAM && WalRcvRunning())
 	{
 		ereport(LOG,
-				(errmsg("wal receiver process shutdown requested")));
+				(errmsg("WAL receiver process shutdown requested")));
 
 		pendingWalRcvRestart = true;
 	}

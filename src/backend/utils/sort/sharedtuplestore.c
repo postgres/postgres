@@ -566,7 +566,7 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 			if (BufFileSeekBlock(accessor->read_file, read_page) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not seek block %u in shared tuplestore temporary file",
+						 errmsg("could not seek to block %u in shared tuplestore temporary file",
 								read_page)));
 			nread = BufFileRead(accessor->read_file, &chunk_header,
 								STS_CHUNK_HEADER_SIZE);
