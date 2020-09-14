@@ -64,7 +64,7 @@ is( $primary->safe_psql(
 		FROM pg_stat_archiver
 	}),
 	"0|$segment_name_1",
-	'pg_stat_archiver failed to archive $segment_name_1');
+	"pg_stat_archiver failed to archive $segment_name_1");
 
 # Crash the cluster for the next test in charge of checking that non-archived
 # WAL segments are not removed.
