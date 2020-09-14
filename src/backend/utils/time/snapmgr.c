@@ -1855,7 +1855,7 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 		if (ts == threshold_timestamp)
 		{
 			/*
-			 * Current timestamp is in same bucket as the the last limit that
+			 * Current timestamp is in same bucket as the last limit that
 			 * was applied. Reuse.
 			 */
 			xlimit = threshold_xid;

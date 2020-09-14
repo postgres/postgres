@@ -4106,7 +4106,7 @@ GlobalVisCheckRemovableXid(Relation rel, TransactionId xid)
  *
  * Be very careful about when to use this function. It can only safely be used
  * when there is a guarantee that xid is within MaxTransactionId / 2 xids of
- * rel. That e.g. can be guaranteed if the the caller assures a snapshot is
+ * rel. That e.g. can be guaranteed if the caller assures a snapshot is
  * held by the backend and xid is from a table (where vacuum/freezing ensures
  * the xid has to be within that range), or if xid is from the procarray and
  * prevents xid wraparound that way.
