@@ -141,12 +141,14 @@ $primary->safe_psql(
 	'postgres', q{
 	INSERT INTO mine SELECT generate_series(21,30) AS x;
 	CHECKPOINT;
-	SELECT pg_switch_wal();
 });
 
-# Make sure that the standby has caught here.
-my $primary_lsn = $primary->safe_psql('postgres',
-	q{SELECT pg_current_wal_lsn()});
+# Switch to a new segment and use the returned LSN to make sure that the
+# standby has caught up to this point.
+my $primary_lsn = $primary->safe_psql(
+	'postgres', q{
+	SELECT pg_switch_wal();
+});
 $standby1->poll_query_until('postgres',
 	qq{ SELECT pg_wal_lsn_diff(pg_last_wal_replay_lsn(), '$primary_lsn') >= 0 },
 	't')
