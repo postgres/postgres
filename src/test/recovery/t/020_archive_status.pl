@@ -141,12 +141,14 @@ $primary->safe_psql(
 	'postgres', q{
 	INSERT INTO mine SELECT generate_series(21,30) AS x;
 	CHECKPOINT;
-	SELECT pg_switch_xlog();
 });
 
-# Make sure that the standby has caught here.
-my $primary_lsn = $primary->safe_psql('postgres',
-	q{SELECT pg_current_xlog_location()});
+# Switch to a new segment and use the returned LSN to make sure that the
+# standby has caught up to this point.
+my $primary_lsn = $primary->safe_psql(
+	'postgres', q{
+	SELECT pg_switch_xlog();
+});
 $standby1->poll_query_until('postgres',
 	qq{ SELECT pg_xlog_location_diff(pg_last_xlog_replay_location(), '$primary_lsn') >= 0 })
   or die "Timed out while waiting for xlog replay";
