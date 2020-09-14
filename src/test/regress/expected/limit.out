@@ -623,7 +623,7 @@ SELECT  thousand
 SELECT ''::text AS two, unique1, unique2, stringu1
 		FROM onek WHERE unique1 > 50
 		FETCH FIRST 2 ROW WITH TIES;
-ERROR:  WITH TIES options can not be specified without ORDER BY clause
+ERROR:  WITH TIES cannot be specified without ORDER BY clause
 -- test ruleutils
 CREATE VIEW limit_thousand_v_1 AS SELECT thousand FROM onek WHERE thousand < 995
 		ORDER BY thousand FETCH FIRST 5 ROWS WITH TIES OFFSET 10;
@@ -657,7 +657,7 @@ View definition:
 
 CREATE VIEW limit_thousand_v_3 AS SELECT thousand FROM onek WHERE thousand < 995
 		ORDER BY thousand FETCH FIRST NULL ROWS WITH TIES;		-- fails
-ERROR:  row count cannot be NULL in FETCH FIRST ... WITH TIES clause
+ERROR:  row count cannot be null in FETCH FIRST ... WITH TIES clause
 CREATE VIEW limit_thousand_v_3 AS SELECT thousand FROM onek WHERE thousand < 995
 		ORDER BY thousand FETCH FIRST (NULL+1) ROWS WITH TIES;
 \d+ limit_thousand_v_3

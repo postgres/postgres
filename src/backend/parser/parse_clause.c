@@ -1770,7 +1770,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 		IsA(clause, A_Const) && ((A_Const *) clause)->val.type == T_Null)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ROW_COUNT_IN_LIMIT_CLAUSE),
-				 errmsg("row count cannot be NULL in FETCH FIRST ... WITH TIES clause")));
+				 errmsg("row count cannot be null in FETCH FIRST ... WITH TIES clause")));
 
 	return qual;
 }

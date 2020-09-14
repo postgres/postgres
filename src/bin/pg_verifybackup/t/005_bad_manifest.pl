@@ -38,7 +38,7 @@ test_parse_error('unexpected scalar', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "Files": true}
 EOM
 
-test_parse_error('unknown toplevel field', <<EOM);
+test_parse_error('unrecognized top-level field', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "Oops": 1}
 EOM
 
@@ -46,11 +46,11 @@ test_parse_error('unexpected object start', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "Files": {}}
 EOM
 
-test_parse_error('missing pathname', <<EOM);
+test_parse_error('missing path name', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "Files": [{}]}
 EOM
 
-test_parse_error('both pathname and encoded pathname', <<EOM);
+test_parse_error('both path name and encoded path name', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "Files": [
     {"Path": "x", "Encoded-Path": "1234"}
 ]}
@@ -74,13 +74,13 @@ test_parse_error('file size is not an integer', <<EOM);
 ]}
 EOM
 
-test_parse_error('unable to decode filename', <<EOM);
+test_parse_error('could not decode file name', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "Files": [
     {"Encoded-Path": "123", "Size": 0}
 ]}
 EOM
 
-test_fatal_error('duplicate pathname in backup manifest', <<EOM);
+test_fatal_error('duplicate path name in backup manifest', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "Files": [
     {"Path": "x", "Size": 0},
     {"Path": "x", "Size": 0}
@@ -117,7 +117,7 @@ test_parse_error('missing end LSN', <<EOM);
 ]}
 EOM
 
-test_parse_error('unexpected wal range field', <<EOM);
+test_parse_error('unexpected WAL range field', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "WAL-Ranges": [
     {"Oops": 1}
 ]}
@@ -141,13 +141,13 @@ test_parse_error('timeline is not an integer', <<EOM);
 ]}
 EOM
 
-test_parse_error('unable to parse start LSN', <<EOM);
+test_parse_error('could not parse start LSN', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "WAL-Ranges": [
     {"Timeline": 1, "Start-LSN": "oops", "End-LSN": "0/0"}
 ]}
 EOM
 
-test_parse_error('unable to parse end LSN', <<EOM);
+test_parse_error('could not parse end LSN', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "WAL-Ranges": [
     {"Timeline": 1, "Start-LSN": "0/0", "End-LSN": "oops"}
 ]}

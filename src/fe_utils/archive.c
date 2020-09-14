@@ -50,7 +50,7 @@ RestoreArchivedFile(const char *path, const char *xlogfname,
 										 xlogfname, NULL);
 	if (xlogRestoreCmd == NULL)
 	{
-		pg_log_fatal("could not use restore_command with %%r alias");
+		pg_log_fatal("cannot use restore_command with %%r placeholder");
 		exit(1);
 	}
 
@@ -109,7 +109,7 @@ RestoreArchivedFile(const char *path, const char *xlogfname,
 	 */
 	if (wait_result_is_any_signal(rc, true))
 	{
-		pg_log_fatal("restore_command failed due to the signal: %s",
+		pg_log_fatal("restore_command failed: %s",
 					 wait_result_to_str(rc));
 		exit(1);
 	}

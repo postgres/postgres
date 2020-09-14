@@ -471,7 +471,7 @@ record_manifest_details_for_file(JsonManifestParseContext *context,
 	/* Make a new entry in the hash table for this file. */
 	m = manifest_files_insert(ht, pathname, &found);
 	if (found)
-		report_fatal_error("duplicate pathname in backup manifest: \"%s\"",
+		report_fatal_error("duplicate path name in backup manifest: \"%s\"",
 						   pathname);
 
 	/* Initialize the entry. */

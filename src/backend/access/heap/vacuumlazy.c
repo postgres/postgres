@@ -677,11 +677,10 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 							 read_rate, write_rate);
 			appendStringInfo(&buf, _("system usage: %s\n"), pg_rusage_show(&ru0));
 			appendStringInfo(&buf,
-							 _("WAL usage: %ld records, %ld full page images, "
-							   UINT64_FORMAT " bytes"),
+							 _("WAL usage: %ld records, %ld full page images, %llu bytes"),
 							 walusage.wal_records,
 							 walusage.wal_fpi,
-							 walusage.wal_bytes);
+							 (unsigned long long) walusage.wal_bytes);
 
 			ereport(LOG,
 					(errmsg_internal("%s", buf.data)));
@@ -3523,9 +3522,10 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 										   false);
 	elevel = lvshared->elevel;
 
-	ereport(DEBUG1,
-			(errmsg("starting parallel vacuum worker for %s",
-					lvshared->for_cleanup ? "cleanup" : "bulk delete")));
+	if (lvshared->for_cleanup)
+		elog(DEBUG1, "starting parallel vacuum worker for cleanup");
+	else
+		elog(DEBUG1, "starting parallel vacuum worker for bulk delete");
 
 	/* Set debug_query_string for individual workers */
 	sharedquery = shm_toc_lookup(toc, PARALLEL_VACUUM_KEY_QUERY_TEXT, false);
