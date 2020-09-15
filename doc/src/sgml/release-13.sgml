@@ -270,6 +270,25 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
      </para>
     </listitem>
 
+     <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-02-19 [70a773200] Remove support for upgrading extensions from "unpackaged
+-->
+
+      <para>
+       Remove support for upgrading unpackaged (pre-9.1) extensions (Tom Lane)
+      </para>
+
+      <para>
+       The <literal>FROM</literal> option
+       of <link linkend="sql-createextension"><command>CREATE
+       EXTENSION</command></link> is no longer supported.  Any installations
+       still using unpackaged extensions should upgrade them to a packaged
+       version before updating to <productname>PostgreSQL</productname> 13.
+      </para>
+     </listitem>
+
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
@@ -2929,17 +2948,6 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
        database-level <literal>CREATE</literal> privileges, even if they
        are not superusers.  This change also removes
        the <structname>pg_pltemplate</structname> system catalog.
-      </para>
-     </listitem>
-
-     <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-02-19 [70a773200] Remove support for upgrading extensions from "unpackaged
--->
-
-      <para>
-       Remove support for upgrading unpackaged (pre-9.1) extensions (Tom Lane)
       </para>
      </listitem>
 
