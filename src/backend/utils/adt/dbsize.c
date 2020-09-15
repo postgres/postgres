@@ -627,7 +627,7 @@ numeric_shift_right(Numeric n, unsigned count)
 	Datum		divisor_numeric;
 	Datum		result;
 
-	divisor_numeric = NumericGetDatum(int64_to_numeric(1 << count));
+	divisor_numeric = NumericGetDatum(int64_to_numeric(((int64) 1) << count));
 	result = DirectFunctionCall2(numeric_div_trunc, d, divisor_numeric);
 	return DatumGetNumeric(result);
 }
