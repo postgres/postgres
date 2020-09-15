@@ -76,6 +76,7 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/relmapper.h"
+#include "utils/pg_rusage.h"
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
 
@@ -7169,6 +7170,9 @@ StartupXLOG(void)
 		{
 			ErrorContextCallback errcallback;
 			TimestampTz xtime;
+			PGRUsage	ru0;
+
+			pg_rusage_init(&ru0);
 
 			InRedo = true;
 
@@ -7435,8 +7439,9 @@ StartupXLOG(void)
 			}
 
 			ereport(LOG,
-					(errmsg("redo done at %X/%X",
-							(uint32) (ReadRecPtr >> 32), (uint32) ReadRecPtr)));
+					(errmsg("redo done at %X/%X system usage: %s",
+							(uint32) (ReadRecPtr >> 32), (uint32) ReadRecPtr,
+							pg_rusage_show(&ru0))));
 			xtime = GetLatestXTime();
 			if (xtime)
 				ereport(LOG,
