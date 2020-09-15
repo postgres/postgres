@@ -3200,6 +3200,50 @@ FROM empsalary;
                ->  Seq Scan on empsalary
 (5 rows)
 
+-- Test incremental sorting
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT depname,
+          empno,
+          salary,
+          enroll_date,
+          row_number() OVER (PARTITION BY depname ORDER BY enroll_date) AS first_emp,
+          row_number() OVER (PARTITION BY depname ORDER BY enroll_date DESC) AS last_emp
+   FROM empsalary) emp
+WHERE first_emp = 1 OR last_emp = 1;
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
+ Subquery Scan on emp
+   Filter: ((emp.first_emp = 1) OR (emp.last_emp = 1))
+   ->  WindowAgg
+         ->  Incremental Sort
+               Sort Key: empsalary.depname, empsalary.enroll_date
+               Presorted Key: empsalary.depname
+               ->  WindowAgg
+                     ->  Sort
+                           Sort Key: empsalary.depname, empsalary.enroll_date DESC
+                           ->  Seq Scan on empsalary
+(10 rows)
+
+SELECT * FROM
+  (SELECT depname,
+          empno,
+          salary,
+          enroll_date,
+          row_number() OVER (PARTITION BY depname ORDER BY enroll_date) AS first_emp,
+          row_number() OVER (PARTITION BY depname ORDER BY enroll_date DESC) AS last_emp
+   FROM empsalary) emp
+WHERE first_emp = 1 OR last_emp = 1;
+  depname  | empno | salary | enroll_date | first_emp | last_emp 
+-----------+-------+--------+-------------+-----------+----------
+ develop   |     8 |   6000 | 10-01-2006  |         1 |        5
+ develop   |     7 |   4200 | 01-01-2008  |         5 |        1
+ personnel |     2 |   3900 | 12-23-2006  |         1 |        2
+ personnel |     5 |   3500 | 12-10-2007  |         2 |        1
+ sales     |     1 |   5000 | 10-01-2006  |         1 |        3
+ sales     |     4 |   4800 | 08-08-2007  |         3 |        1
+(6 rows)
+
 -- cleanup
 DROP TABLE empsalary;
 -- test user-defined window function with named args and default args

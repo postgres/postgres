@@ -4582,14 +4582,17 @@ create_window_paths(PlannerInfo *root,
 	/*
 	 * Consider computing window functions starting from the existing
 	 * cheapest-total path (which will likely require a sort) as well as any
-	 * existing paths that satisfy root->window_pathkeys (which won't).
+	 * existing paths that satisfy or partially satisfy root->window_pathkeys.
 	 */
 	foreach(lc, input_rel->pathlist)
 	{
 		Path	   *path = (Path *) lfirst(lc);
+		int			presorted_keys;
 
 		if (path == input_rel->cheapest_total_path ||
-			pathkeys_contained_in(root->window_pathkeys, path->pathkeys))
+			pathkeys_count_contained_in(root->window_pathkeys, path->pathkeys,
+										&presorted_keys) ||
+			presorted_keys > 0)
 			create_one_window_path(root,
 								   window_rel,
 								   path,
@@ -4664,18 +4667,42 @@ create_one_window_path(PlannerInfo *root,
 	{
 		WindowClause *wc = lfirst_node(WindowClause, l);
 		List	   *window_pathkeys;
+		int			presorted_keys;
+		bool		is_sorted;
 
 		window_pathkeys = make_pathkeys_for_window(root,
 												   wc,
 												   root->processed_tlist);
 
+		is_sorted = pathkeys_count_contained_in(window_pathkeys,
+												path->pathkeys,
+												&presorted_keys);
+
 		/* Sort if necessary */
-		if (!pathkeys_contained_in(window_pathkeys, path->pathkeys))
+		if (!is_sorted)
 		{
-			path = (Path *) create_sort_path(root, window_rel,
-											 path,
-											 window_pathkeys,
-											 -1.0);
+			/*
+			 * No presorted keys or incremental sort disabled, just perform a
+			 * complete sort.
+			 */
+			if (presorted_keys == 0 || !enable_incremental_sort)
+				path = (Path *) create_sort_path(root, window_rel,
+												 path,
+												 window_pathkeys,
+												 -1.0);
+			else
+			{
+				/*
+				 * Since we have presorted keys and incremental sort is
+				 * enabled, just use incremental sort.
+				 */
+				path = (Path *) create_incremental_sort_path(root,
+															 window_rel,
+															 path,
+															 window_pathkeys,
+															 presorted_keys,
+															 -1.0);
+			}
 		}
 
 		if (lnext(activeWindows, l))
