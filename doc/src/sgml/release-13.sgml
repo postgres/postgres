@@ -37,7 +37,7 @@
     </listitem>
     <listitem>
      <para>
-      Parallelized vacuuming of B-tree indexes
+      Parallelized vacuuming of indexes
      </para>
     </listitem>
     <listitem>
@@ -1417,7 +1417,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
       <para>
        Allow <link linkend="sql-vacuum"><command>VACUUM</command></link>
-       to process indexes in parallel (Masahiko Sawada, Amit Kapila)
+       to process a table's indexes in parallel (Masahiko Sawada, Amit Kapila)
       </para>
 
       <para>
