@@ -1,0 +1,3 @@
+comment = 'Test extension - event trigger'
+default_version = '1.0'
+relocatable = true
