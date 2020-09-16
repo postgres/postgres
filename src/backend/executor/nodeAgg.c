@@ -2639,8 +2639,6 @@ agg_refill_hash_table(AggState *aggstate)
 	 */
 	hashagg_recompile_expressions(aggstate, true, true);
 
-	LogicalTapeRewindForRead(tapeinfo->tapeset, batch->input_tapenum,
-							 HASHAGG_READ_BUFFER_SIZE);
 	for (;;)
 	{
 		TupleTableSlot *spillslot = aggstate->hash_spill_rslot;
@@ -2923,6 +2921,7 @@ hashagg_tapeinfo_assign(HashTapeInfo *tapeinfo, int *partitions,
 static void
 hashagg_tapeinfo_release(HashTapeInfo *tapeinfo, int tapenum)
 {
+	/* rewinding frees the buffer while not in use */
 	LogicalTapeRewindForWrite(tapeinfo->tapeset, tapenum);
 	if (tapeinfo->freetapes_alloc == tapeinfo->nfreetapes)
 	{
@@ -3152,6 +3151,7 @@ hashagg_spill_finish(AggState *aggstate, HashAggSpill *spill, int setno)
 
 	for (i = 0; i < spill->npartitions; i++)
 	{
+		LogicalTapeSet	*tapeset = aggstate->hash_tapeinfo->tapeset;
 		int				 tapenum = spill->partitions[i];
 		HashAggBatch	*new_batch;
 		double			 cardinality;
@@ -3163,9 +3163,13 @@ hashagg_spill_finish(AggState *aggstate, HashAggSpill *spill, int setno)
 		cardinality = estimateHyperLogLog(&spill->hll_card[i]);
 		freeHyperLogLog(&spill->hll_card[i]);
 
-		new_batch = hashagg_batch_new(aggstate->hash_tapeinfo->tapeset,
-									  tapenum, setno, spill->ntuples[i],
-									  cardinality, used_bits);
+		/* rewinding frees the buffer while not in use */
+		LogicalTapeRewindForRead(tapeset, tapenum,
+								 HASHAGG_READ_BUFFER_SIZE);
+
+		new_batch = hashagg_batch_new(tapeset, tapenum, setno,
+									  spill->ntuples[i], cardinality,
+									  used_bits);
 		aggstate->hash_batches = lcons(new_batch, aggstate->hash_batches);
 		aggstate->hash_batches_used++;
 	}
