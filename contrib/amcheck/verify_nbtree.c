@@ -1624,14 +1624,36 @@ bt_right_page_check_scankey(BtreeCheckState *state)
  * this function is capable to compare pivot keys on different levels.
  */
 static bool
-bt_pivot_tuple_identical(IndexTuple itup1, IndexTuple itup2)
+bt_pivot_tuple_identical(bool heapkeyspace, IndexTuple itup1, IndexTuple itup2)
 {
 	if (IndexTupleSize(itup1) != IndexTupleSize(itup2))
 		return false;
 
-	if (memcmp(&itup1->t_tid.ip_posid, &itup2->t_tid.ip_posid,
-			   IndexTupleSize(itup1) - offsetof(ItemPointerData, ip_posid)) != 0)
-		return false;
+	if (heapkeyspace)
+	{
+		/*
+		 * Offset number will contain important information in heapkeyspace
+		 * indexes: the number of attributes left in the pivot tuple following
+		 * suffix truncation.  Don't skip over it (compare it too).
+		 */
+		if (memcmp(&itup1->t_tid.ip_posid, &itup2->t_tid.ip_posid,
+				   IndexTupleSize(itup1) -
+				   offsetof(ItemPointerData, ip_posid)) != 0)
+			return false;
+	}
+	else
+	{
+		/*
+		 * Cannot rely on offset number field having consistent value across
+		 * levels on pg_upgrade'd !heapkeyspace indexes.  Compare contents of
+		 * tuple starting from just after item pointer (i.e. after block
+		 * number and offset number).
+		 */
+		if (memcmp(&itup1->t_info, &itup2->t_info,
+				   IndexTupleSize(itup1) -
+				   offsetof(IndexTupleData, t_info)) != 0)
+			return false;
+	}
 
 	return true;
 }
@@ -1785,7 +1807,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 		rightsplit = P_INCOMPLETE_SPLIT(opaque);
 
 		/*
-		 * If we visit page with high key, check that it is be equal to the
+		 * If we visit page with high key, check that it is equal to the
 		 * target key next to corresponding downlink.
 		 */
 		if (!rightsplit && !P_RIGHTMOST(opaque))
@@ -1879,7 +1901,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 				itup = state->lowkey;
 			}
 
-			if (!bt_pivot_tuple_identical(highkey, itup))
+			if (!bt_pivot_tuple_identical(state->heapkeyspace, highkey, itup))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INDEX_CORRUPTED),
