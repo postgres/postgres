@@ -945,16 +945,26 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 
 	Assert(RelationSyncCache != NULL);
 
-	/* Find cached function info, creating if not found */
-	oldctx = MemoryContextSwitchTo(CacheMemoryContext);
+	/* Find cached relation info, creating if not found */
 	entry = (RelationSyncEntry *) hash_search(RelationSyncCache,
 											  (void *) &relid,
 											  HASH_ENTER, &found);
-	MemoryContextSwitchTo(oldctx);
 	Assert(entry != NULL);
 
 	/* Not found means schema wasn't sent */
-	if (!found || !entry->replicate_valid)
+	if (!found)
+	{
+		/* immediately make a new entry valid enough to satisfy callbacks */
+		entry->schema_sent = false;
+		entry->streamed_txns = NIL;
+		entry->replicate_valid = false;
+		entry->pubactions.pubinsert = entry->pubactions.pubupdate =
+			entry->pubactions.pubdelete = entry->pubactions.pubtruncate = false;
+		entry->publish_as_relid = InvalidOid;
+	}
+
+	/* Validate the entry */
+	if (!entry->replicate_valid)
 	{
 		List	   *pubids = GetRelationPublications(relid);
 		ListCell   *lc;
@@ -977,9 +987,6 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 		 * relcache considers all publications given relation is in, but here
 		 * we only need to consider ones that the subscriber requested.
 		 */
-		entry->pubactions.pubinsert = entry->pubactions.pubupdate =
-			entry->pubactions.pubdelete = entry->pubactions.pubtruncate = false;
-
 		foreach(lc, data->publications)
 		{
 			Publication *pub = lfirst(lc);
@@ -1052,12 +1059,6 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 
 		entry->publish_as_relid = publish_as_relid;
 		entry->replicate_valid = true;
-	}
-
-	if (!found)
-	{
-		entry->schema_sent = false;
-		entry->streamed_txns = NULL;
 	}
 
 	return entry;
@@ -1145,7 +1146,7 @@ rel_sync_cache_relation_cb(Datum arg, Oid relid)
 	{
 		entry->schema_sent = false;
 		list_free(entry->streamed_txns);
-		entry->streamed_txns = NULL;
+		entry->streamed_txns = NIL;
 	}
 }
 
