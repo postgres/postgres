@@ -3236,7 +3236,7 @@ CopyFrom(CopyState cstate)
 				 * we don't need to if there's no BR trigger defined on the
 				 * partition.
 				 */
-				if (resultRelInfo->ri_PartitionCheck &&
+				if (resultRelInfo->ri_RelationDesc->rd_rel->relispartition &&
 					(proute == NULL || has_before_insert_row_trig))
 					ExecPartitionCheck(resultRelInfo, myslot, estate, true);
 

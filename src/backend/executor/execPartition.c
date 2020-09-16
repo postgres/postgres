@@ -299,7 +299,7 @@ ExecFindPartition(ModifyTableState *mtstate,
 	 * First check the root table's partition constraint, if any.  No point in
 	 * routing the tuple if it doesn't belong in the root table itself.
 	 */
-	if (rootResultRelInfo->ri_PartitionCheck)
+	if (rootResultRelInfo->ri_RelationDesc->rd_rel->relispartition)
 		ExecPartitionCheck(rootResultRelInfo, slot, estate, true);
 
 	/* start with the root partitioned table */

@@ -491,7 +491,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 * one; except that if we got here via tuple-routing, we don't need to
 		 * if there's no BR trigger defined on the partition.
 		 */
-		if (resultRelInfo->ri_PartitionCheck &&
+		if (resultRelationDesc->rd_rel->relispartition &&
 			(resultRelInfo->ri_PartitionRoot == NULL ||
 			 (resultRelInfo->ri_TrigDesc &&
 			  resultRelInfo->ri_TrigDesc->trig_insert_before_row)))
@@ -1181,7 +1181,7 @@ lreplace:;
 		 * row.  So skip the WCO checks if the partition constraint fails.
 		 */
 		partition_constraint_failed =
-			resultRelInfo->ri_PartitionCheck &&
+			resultRelationDesc->rd_rel->relispartition &&
 			!ExecPartitionCheck(resultRelInfo, slot, estate, false);
 
 		if (!partition_constraint_failed &&

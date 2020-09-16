@@ -1676,7 +1676,7 @@ apply_handle_tuple_routing(ResultRelInfo *relinfo,
 				 * Does the updated tuple still satisfy the current
 				 * partition's constraint?
 				 */
-				if (partrelinfo->ri_PartitionCheck == NULL ||
+				if (!partrel->rd_rel->relispartition ||
 					ExecPartitionCheck(partrelinfo, remoteslot_part, estate,
 									   false))
 				{

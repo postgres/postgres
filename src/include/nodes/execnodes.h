@@ -477,19 +477,16 @@ typedef struct ResultRelInfo
 	/* ON CONFLICT evaluation state */
 	OnConflictSetState *ri_onConflict;
 
-	/* partition check expression */
-	List	   *ri_PartitionCheck;
-
-	/* partition check expression state */
+	/* partition check expression state (NULL if not set up yet) */
 	ExprState  *ri_PartitionCheckExpr;
 
-	/* relation descriptor for root partitioned table */
+	/* relation descriptor for partitioned table's root, if any */
 	Relation	ri_PartitionRoot;
 
-	/* Additional information specific to partition tuple routing */
+	/* info for partition tuple routing (NULL if not set up yet) */
 	struct PartitionRoutingInfo *ri_PartitionInfo;
 
-	/* For use by copy.c when performing multi-inserts */
+	/* for use by copy.c when performing multi-inserts */
 	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;
 } ResultRelInfo;
 

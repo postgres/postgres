@@ -1280,8 +1280,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation partition_root,
 				  int instrument_options)
 {
-	List	   *partition_check = NIL;
-
 	MemSet(resultRelInfo, 0, sizeof(ResultRelInfo));
 	resultRelInfo->type = T_ResultRelInfo;
 	resultRelInfo->ri_RangeTableIndex = resultRelationIndex;
@@ -1325,23 +1323,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_ReturningSlot = NULL;
 	resultRelInfo->ri_TrigOldSlot = NULL;
 	resultRelInfo->ri_TrigNewSlot = NULL;
-
-	/*
-	 * Partition constraint, which also includes the partition constraint of
-	 * all the ancestors that are partitions.  Note that it will be checked
-	 * even in the case of tuple-routing where this table is the target leaf
-	 * partition, if there any BR triggers defined on the table.  Although
-	 * tuple-routing implicitly preserves the partition constraint of the
-	 * target partition for a given row, the BR triggers may change the row
-	 * such that the constraint is no longer satisfied, which we must fail for
-	 * by checking it explicitly.
-	 *
-	 * If this is a partitioned table, the partition constraint (if any) of a
-	 * given row will be checked just before performing tuple-routing.
-	 */
-	partition_check = RelationGetPartitionQual(resultRelationDesc);
-
-	resultRelInfo->ri_PartitionCheck = partition_check;
 	resultRelInfo->ri_PartitionRoot = partition_root;
 	resultRelInfo->ri_PartitionInfo = NULL; /* may be set later */
 	resultRelInfo->ri_CopyMultiInsertBuffer = NULL;
@@ -1776,7 +1757,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
  * ExecPartitionCheck --- check that tuple meets the partition constraint.
  *
  * Returns true if it meets the partition constraint.  If the constraint
- * fails and we're asked to emit to error, do so and don't return; otherwise
+ * fails and we're asked to emit an error, do so and don't return; otherwise
  * return false.
  */
 bool
@@ -1788,14 +1769,22 @@ ExecPartitionCheck(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
 
 	/*
 	 * If first time through, build expression state tree for the partition
-	 * check expression.  Keep it in the per-query memory context so they'll
-	 * survive throughout the query.
+	 * check expression.  (In the corner case where the partition check
+	 * expression is empty, ie there's a default partition and nothing else,
+	 * we'll be fooled into executing this code each time through.  But it's
+	 * pretty darn cheap in that case, so we don't worry about it.)
 	 */
 	if (resultRelInfo->ri_PartitionCheckExpr == NULL)
 	{
-		List	   *qual = resultRelInfo->ri_PartitionCheck;
+		/*
+		 * Ensure that the qual tree and prepared expression are in the
+		 * query-lifespan context.
+		 */
+		MemoryContext oldcxt = MemoryContextSwitchTo(estate->es_query_cxt);
+		List	   *qual = RelationGetPartitionQual(resultRelInfo->ri_RelationDesc);
 
 		resultRelInfo->ri_PartitionCheckExpr = ExecPrepareCheck(qual, estate);
+		MemoryContextSwitchTo(oldcxt);
 	}
 
 	/*
@@ -1904,9 +1893,9 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 	Bitmapset  *insertedCols;
 	Bitmapset  *updatedCols;
 
-	Assert(constr || resultRelInfo->ri_PartitionCheck);
+	Assert(constr);				/* we should not be called otherwise */
 
-	if (constr && constr->has_not_null)
+	if (constr->has_not_null)
 	{
 		int			natts = tupdesc->natts;
 		int			attrChk;
@@ -1967,7 +1956,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 		}
 	}
 
-	if (constr && constr->num_check > 0)
+	if (constr->num_check > 0)
 	{
 		const char *failed;
 
