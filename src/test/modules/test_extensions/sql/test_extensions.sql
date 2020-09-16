@@ -93,3 +93,9 @@ DROP TABLE test_ext4_tab;
 DROP FUNCTION create_extension_with_temp_schema();
 RESET client_min_messages;
 \unset SHOW_CONTEXT
+
+-- Test case of an event trigger run in an extension upgrade script.
+-- See: https://postgr.es/m/20200902193715.6e0269d4@firost
+CREATE EXTENSION test_ext_evttrig;
+ALTER EXTENSION test_ext_evttrig UPDATE TO '2.0';
+DROP EXTENSION test_ext_evttrig;
