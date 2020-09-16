@@ -139,6 +139,7 @@ extern void BeginCommand(CommandTag commandTag, CommandDest dest);
 extern DestReceiver *CreateDestReceiver(CommandDest dest);
 extern void EndCommand(const QueryCompletion *qc, CommandDest dest,
 					   bool force_undecorated_output);
+extern void EndReplicationCommand(const char *commandTag);
 
 /* Additional functions that go with destination management, more or less. */
 
