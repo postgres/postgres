@@ -212,6 +212,18 @@ EndCommand(const QueryCompletion *qc, CommandDest dest, bool force_undecorated_o
 }
 
 /* ----------------
+ *		EndReplicationCommand - stripped down version of EndCommand
+ *
+ *		For use by replication commands.
+ * ----------------
+ */
+void
+EndReplicationCommand(const char *commandTag)
+{
+	pq_putmessage('C', commandTag, strlen(commandTag) + 1);
+}
+
+/* ----------------
  *		NullCommand - tell dest that an empty query string was recognized
  *
  *		In FE/BE protocol version 1.0, this hack is necessary to support
