@@ -19,9 +19,16 @@ typedef struct LogicalRepRelMapEntry
 {
 	LogicalRepRelation remoterel;	/* key is remoterel.remoteid */
 
-	/* Mapping to local relation, filled as needed. */
+	/*
+	 * Validity flag -- when false, revalidate all derived info at next
+	 * logicalrep_rel_open.  (While the localrel is open, we assume our lock
+	 * on that rel ensures the info remains good.)
+	 */
+	bool		localrelvalid;
+
+	/* Mapping to local relation. */
 	Oid			localreloid;	/* local relation id */
-	Relation	localrel;		/* relcache entry */
+	Relation	localrel;		/* relcache entry (NULL when closed) */
 	AttrMap    *attrmap;		/* map of local attributes to remote ones */
 	bool		updatable;		/* Can apply updates/deletes? */
 
