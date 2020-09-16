@@ -2704,8 +2704,8 @@ agg_refill_hash_table(AggState *aggstate)
 
 	if (spill_initialized)
 	{
-		hash_agg_update_metrics(aggstate, true, spill.npartitions);
 		hashagg_spill_finish(aggstate, &spill, batch->setno);
+		hash_agg_update_metrics(aggstate, true, spill.npartitions);
 	}
 	else
 		hash_agg_update_metrics(aggstate, true, 0);
