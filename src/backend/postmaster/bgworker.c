@@ -731,9 +731,9 @@ StartBackgroundWorker(void)
 		pqsignal(SIGFPE, SIG_IGN);
 	}
 	pqsignal(SIGTERM, bgworker_die);
+	/* SIGQUIT handler was already set up by InitPostmasterChild */
 	pqsignal(SIGHUP, SIG_IGN);
 
-	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 
 	pqsignal(SIGPIPE, SIG_IGN);

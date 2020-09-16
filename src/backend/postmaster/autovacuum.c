@@ -454,8 +454,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, StatementCancelHandler);
 	pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
+	/* SIGQUIT handler was already set up by InitPostmasterChild */
 
-	pqsignal(SIGQUIT, quickdie);
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 
 	pqsignal(SIGPIPE, SIG_IGN);
@@ -498,9 +498,10 @@ AutoVacLauncherMain(int argc, char *argv[])
 	 *
 	 * Note that we use sigsetjmp(..., 1), so that the prevailing signal mask
 	 * (to wit, BlockSig) will be restored when longjmp'ing to here.  Thus,
-	 * signals will be blocked until we complete error recovery.  It might
-	 * seem that this policy makes the HOLD_INTERRUPTS() call redundant, but
-	 * it is not since InterruptPending might be set already.
+	 * signals other than SIGQUIT will be blocked until we complete error
+	 * recovery.  It might seem that this policy makes the HOLD_INTERRUPTS()
+	 * call redundant, but it is not since InterruptPending might be set
+	 * already.
 	 */
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
@@ -1531,7 +1532,8 @@ AutoVacWorkerMain(int argc, char *argv[])
 	 */
 	pqsignal(SIGINT, StatementCancelHandler);
 	pqsignal(SIGTERM, die);
-	pqsignal(SIGQUIT, quickdie);
+	/* SIGQUIT handler was already set up by InitPostmasterChild */
+
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 
 	pqsignal(SIGPIPE, SIG_IGN);
@@ -1562,9 +1564,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 	 *
 	 * Note that we use sigsetjmp(..., 1), so that the prevailing signal mask
 	 * (to wit, BlockSig) will be restored when longjmp'ing to here.  Thus,
-	 * signals will be blocked until we exit.  It might seem that this policy
-	 * makes the HOLD_INTERRUPTS() call redundant, but it is not since
-	 * InterruptPending might be set already.
+	 * signals other than SIGQUIT will be blocked until we exit.  It might
+	 * seem that this policy makes the HOLD_INTERRUPTS() call redundant, but
+	 * it is not since InterruptPending might be set already.
 	 */
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{

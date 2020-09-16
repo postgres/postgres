@@ -228,7 +228,7 @@ PgArchiverMain(int argc, char *argv[])
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
-	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
+	/* SIGQUIT handler was already set up by InitPostmasterChild */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, pgarch_waken);

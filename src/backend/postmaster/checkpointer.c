@@ -198,7 +198,7 @@ CheckpointerMain(void)
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, ReqCheckpointHandler); /* request checkpoint */
 	pqsignal(SIGTERM, SIG_IGN); /* ignore SIGTERM */
-	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
+	/* SIGQUIT handler was already set up by InitPostmasterChild */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
@@ -208,10 +208,6 @@ CheckpointerMain(void)
 	 * Reset some signals that are accepted by postmaster but not here
 	 */
 	pqsignal(SIGCHLD, SIG_DFL);
-
-	/* We allow SIGQUIT (SignalHandlerForCrashExit) at all times */
-	sigdelset(&BlockSig, SIGQUIT);
-	PG_SETMASK(&BlockSig);
 
 	/*
 	 * Initialize so that first time-driven event happens at the correct time.

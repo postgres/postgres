@@ -101,7 +101,7 @@ WalWriterMain(void)
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, SignalHandlerForShutdownRequest);
 	pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
-	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
+	/* SIGQUIT handler was already set up by InitPostmasterChild */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
@@ -111,10 +111,6 @@ WalWriterMain(void)
 	 * Reset some signals that are accepted by postmaster but not here
 	 */
 	pqsignal(SIGCHLD, SIG_DFL);
-
-	/* We allow SIGQUIT (SignalHandlerForCrashExit) at all times */
-	sigdelset(&BlockSig, SIGQUIT);
-	PG_SETMASK(&BlockSig);
 
 	/*
 	 * Create a memory context that we will do all our work in.  We do this so

@@ -4355,7 +4355,7 @@ BackendInitialize(Port *port)
 	 * cleaned up.
 	 */
 	pqsignal(SIGTERM, process_startup_packet_die);
-	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
+	/* SIGQUIT handler was already set up by InitPostmasterChild */
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 	PG_SETMASK(&StartupBlockSig);
 
@@ -4435,7 +4435,7 @@ BackendInitialize(Port *port)
 	status = ProcessStartupPacket(port, false, false);
 
 	/*
-	 * Disable the timeout, and prevent SIGTERM/SIGQUIT again.
+	 * Disable the timeout, and prevent SIGTERM again.
 	 */
 	disable_timeout(STARTUP_PACKET_TIMEOUT, false);
 	PG_SETMASK(&BlockSig);
@@ -4982,10 +4982,6 @@ SubPostmasterMain(int argc, char *argv[])
 		AutovacuumLauncherIAm();
 	if (strcmp(argv[1], "--forkavworker") == 0)
 		AutovacuumWorkerIAm();
-
-	/* In EXEC_BACKEND case we will not have inherited these settings */
-	pqinitmask();
-	PG_SETMASK(&BlockSig);
 
 	/* Read in remaining GUC variables */
 	read_nondefault_variables();
