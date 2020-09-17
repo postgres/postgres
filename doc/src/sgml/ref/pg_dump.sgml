@@ -594,6 +594,8 @@ PostgreSQL documentation
         <application>pg_dump</application> to output detailed object
         comments and start/stop times to the dump file, and progress
         messages to standard error.
+        Repeating the option causes additional debug-level messages
+        to appear on standard error.
        </para>
       </listitem>
      </varlistentry>

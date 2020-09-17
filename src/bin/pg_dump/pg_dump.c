@@ -512,7 +512,7 @@ main(int argc, char **argv)
 
 			case 'v':			/* verbose */
 				g_verbose = true;
-				pg_logging_set_level(PG_LOG_INFO);
+				pg_logging_increase_verbosity();
 				break;
 
 			case 'w':

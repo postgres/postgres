@@ -66,6 +66,7 @@ extern enum pg_log_level __pg_log_level;
 void		pg_logging_init(const char *argv0);
 void		pg_logging_config(int new_flags);
 void		pg_logging_set_level(enum pg_log_level new_level);
+void		pg_logging_increase_verbosity(void);
 void		pg_logging_set_pre_callback(void (*cb) (void));
 void		pg_logging_set_locus_callback(void (*cb) (const char **filename, uint64 *lineno));
 

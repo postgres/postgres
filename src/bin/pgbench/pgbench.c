@@ -5522,7 +5522,7 @@ main(int argc, char **argv)
 				pgport = pg_strdup(optarg);
 				break;
 			case 'd':
-				pg_logging_set_level(PG_LOG_DEBUG);
+				pg_logging_increase_verbosity();
 				break;
 			case 'c':
 				benchmarking_option_set = true;

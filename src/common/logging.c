@@ -157,10 +157,28 @@ pg_logging_config(int new_flags)
 	log_flags = new_flags;
 }
 
+/*
+ * pg_logging_init sets the default log level to INFO.  Programs that prefer
+ * a different default should use this to set it, immediately afterward.
+ */
 void
 pg_logging_set_level(enum pg_log_level new_level)
 {
 	__pg_log_level = new_level;
+}
+
+/*
+ * Command line switches such as --verbose should invoke this.
+ */
+void
+pg_logging_increase_verbosity(void)
+{
+	/*
+	 * The enum values are chosen such that we have to decrease __pg_log_level
+	 * in order to become more verbose.
+	 */
+	if (__pg_log_level > PG_LOG_NOTSET + 1)
+		__pg_log_level--;
 }
 
 void

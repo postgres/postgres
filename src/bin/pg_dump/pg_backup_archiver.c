@@ -2278,7 +2278,8 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 {
 	ArchiveHandle *AH;
 
-	pg_log_debug("allocating AH for %s, format %d", FileSpec, fmt);
+	pg_log_debug("allocating AH for %s, format %d",
+				 FileSpec ? FileSpec : "(stdio)", fmt);
 
 	AH = (ArchiveHandle *) pg_malloc0(sizeof(ArchiveHandle));
 

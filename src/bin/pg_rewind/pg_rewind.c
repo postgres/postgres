@@ -181,7 +181,7 @@ main(int argc, char **argv)
 
 			case 3:
 				debug = true;
-				pg_logging_set_level(PG_LOG_DEBUG);
+				pg_logging_increase_verbosity();
 				break;
 
 			case 'D':			/* -D or --target-pgdata */
