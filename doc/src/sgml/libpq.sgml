@@ -812,7 +812,8 @@ int callback_fn(char *buf, int size, PGconn *conn);
        its path will be in <literal>conn->sslkey</literal> when the callback
        is invoked. This will be empty if the default key path is being used.
        For keys that are engine specifiers, it is up to engine implementations
-       whether they use the OpenSSL password callback or define their own handling.
+       whether they use the <productname>OpenSSL</productname> password
+       callback or define their own handling.
       </para>
 
       <para>
@@ -1672,13 +1673,15 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        <para>
         Specifying this parameter with any non-empty value suppresses the
         <literal>Enter PEM pass phrase:</literal>
-        prompt that OpenSSL will emit by default when an encrypted client
-        certificate key is provided to <literal>libpq</literal>.
+        prompt that <productname>OpenSSL</productname> will emit by default
+        when an encrypted client certificate key is provided to
+        <literal>libpq</literal>.
        </para>
        <para>
-        If the key is not encrypted this parameter is ignored. The parameter has no
-        effect on keys specified by OpenSSL engines unless the engine uses the
-        OpenSSL password callback mechanism for prompts.
+        If the key is not encrypted this parameter is ignored. The parameter
+        has no effect on keys specified by <productname>OpenSSL</productname>
+        engines unless the engine uses the <productname>OpenSSL</productname>
+        password callback mechanism for prompts.
        </para>
        <para>
         There is no environment variable equivalent to this option, and no
@@ -2471,8 +2474,9 @@ void *PQsslStruct(const PGconn *conn, const char *struct_name);
       </para>
       <para>
        The struct(s) available depend on the SSL implementation in use.
-       For OpenSSL, there is one struct, available under the name "OpenSSL",
-       and it returns a pointer to the OpenSSL <literal>SSL</literal> struct.
+       For <productname>OpenSSL</productname>, there is one struct,
+       available under the name "OpenSSL", and it returns a pointer to the
+       <productname>OpenSSL</productname> <literal>SSL</literal> struct.
        To use this function, code along the following lines could be used:
 <programlisting><![CDATA[
 #include <libpq-fe.h>
@@ -2516,8 +2520,9 @@ void *PQgetssl(const PGconn *conn);
       <para>
        This function is equivalent to <literal>PQsslStruct(conn, "OpenSSL")</literal>. It should
        not be used in new applications, because the returned struct is
-       specific to OpenSSL and will not be available if another SSL
-       implementation is used. To check if a connection uses SSL, call
+       specific to <productname>OpenSSL</productname> and will not be
+       available if another <acronym>SSL</acronym> implementation is used.
+       To check if a connection uses SSL, call
        <xref linkend="libpq-PQsslInUse"/> instead, and for more details about the
        connection, use <xref linkend="libpq-PQsslAttribute"/>.
       </para>
@@ -7665,15 +7670,17 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
 
   <para>
    The key may be
-   stored in cleartext or encrypted with a passphrase using any algorithm supported
-   by OpenSSL, like AES-128. If the key is stored encrypted, then the passphrase
-   may be provided in the <xref linkend="libpq-connect-sslpassword"/> connection
-   option. If an encrypted key is supplied and the <literal>sslpassword</literal>
-   option is absent or blank, a password will be prompted for interactively by
-   OpenSSL with a <literal>Enter PEM pass phrase:</literal>
-   prompt if a TTY is available. Applications can override the client certificate
-   prompt and the handling of the <literal>sslpassword</literal> parameter by supplying
-   their own key password callback; see
+   stored in cleartext or encrypted with a passphrase using any algorithm
+   supported by <productname>OpenSSL</productname>, like AES-128. If the key
+   is stored encrypted, then the passphrase may be provided in the
+   <xref linkend="libpq-connect-sslpassword"/> connection option. If an
+   encrypted key is supplied and the <literal>sslpassword</literal> option
+   is absent or blank, a password will be prompted for interactively by
+   <productname>OpenSSL</productname> with a
+   <literal>Enter PEM pass phrase:</literal> prompt if a TTY is available.
+   Applications can override the client certificate prompt and the handling
+   of the <literal>sslpassword</literal> parameter by supplying their own
+   key password callback; see
    <xref linkend="libpq-pqsetsslkeypasshook-openssl"/>.
   </para>
 
@@ -7936,7 +7943,7 @@ void PQinitOpenSSL(int do_ssl, int do_crypto);
 
       <para>
        When <parameter>do_ssl</parameter> is non-zero, <application>libpq</application>
-       will initialize the <application>OpenSSL</application> library before first
+       will initialize the <productname>OpenSSL</productname> library before first
        opening a database connection.  When <parameter>do_crypto</parameter> is
        non-zero, the <literal>libcrypto</literal> library will be initialized.  By
        default (if <xref linkend="libpq-PQinitOpenSSL"/> is not called), both libraries
@@ -7945,7 +7952,7 @@ void PQinitOpenSSL(int do_ssl, int do_crypto);
       </para>
 
       <para>
-       If your application uses and initializes either <application>OpenSSL</application>
+       If your application uses and initializes either <productname>OpenSSL</productname>
        or its underlying <literal>libcrypto</literal> library, you <emphasis>must</emphasis>
        call this function with zeroes for the appropriate parameter(s)
        before first opening a database connection.  Also be sure that you
@@ -7967,7 +7974,7 @@ void PQinitSSL(int do_ssl);
        This function is equivalent to
        <literal>PQinitOpenSSL(do_ssl, do_ssl)</literal>.
        It is sufficient for applications that initialize both or neither
-       of <application>OpenSSL</application> and <literal>libcrypto</literal>.
+       of <productname>OpenSSL</productname> and <literal>libcrypto</literal>.
       </para>
 
       <para>

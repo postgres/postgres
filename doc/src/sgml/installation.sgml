@@ -2293,7 +2293,7 @@ ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": Bad address
 
      <listitem>
       <para>
-       OpenSSL is not supported.
+       <productname>OpenSSL</productname> is not supported.
       </para>
      </listitem>
 

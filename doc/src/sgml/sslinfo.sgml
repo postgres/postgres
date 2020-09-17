@@ -173,8 +173,8 @@
     <para>
      This function returns the value of the specified field in the
      certificate subject, or NULL if the field is not present.
-     Field names are string constants that are
-     converted into ASN1 object identifiers using the OpenSSL object
+     Field names are string constants that are converted into ASN1 object
+     identifiers using the <productname>OpenSSL</productname> object
      database.  The following values are acceptable:
     </para>
 <literallayout class="monospaced">

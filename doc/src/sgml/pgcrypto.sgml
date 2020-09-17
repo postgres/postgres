@@ -45,8 +45,8 @@ digest(data bytea, type text) returns bytea
     <literal>sha224</literal>, <literal>sha256</literal>,
     <literal>sha384</literal> and <literal>sha512</literal>.
     If <filename>pgcrypto</filename> was built with
-    OpenSSL, more algorithms are available, as detailed in
-    <xref linkend="pgcrypto-with-without-openssl"/>.
+    <productname>OpenSSL</productname>, more algorithms are available, as
+    detailed in <xref linkend="pgcrypto-with-without-openssl"/>.
    </para>
 
    <para>
@@ -1162,9 +1162,10 @@ gen_random_uuid() returns uuid
    </para>
 
    <para>
-    When compiled with OpenSSL, there will be more algorithms available.
-    Also public-key encryption functions will be faster as OpenSSL
-    has more optimized BIGNUM functions.
+    When compiled with <productname>OpenSSL</productname>, there will be
+    more algorithms available. Also public-key encryption functions will
+    be faster as <productname>OpenSSL</productname> has more optimized
+    BIGNUM functions.
    </para>
 
    <table id="pgcrypto-with-without-openssl">
@@ -1239,7 +1240,8 @@ gen_random_uuid() returns uuid
    <orderedlist>
     <listitem>
      <para>
-      Any digest algorithm OpenSSL supports is automatically picked up.
+      Any digest algorithm <productname>OpenSSL</productname> supports
+      is automatically picked up.
       This is not possible with ciphers, which need to be supported
       explicitly.
      </para>

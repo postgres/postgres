@@ -1261,10 +1261,11 @@ include_dir 'conf.d'
           <term><literal>+3DES</literal></term>
           <listitem>
            <para>
-            The OpenSSL default order for <literal>HIGH</literal> is problematic
-            because it orders 3DES higher than AES128.  This is wrong because
-            3DES offers less security than AES128, and it is also much
-            slower.  <literal>+3DES</literal> reorders it after all other
+            The <productname>OpenSSL</productname> default order for
+            <literal>HIGH</literal> is problematic because it orders 3DES
+            higher than AES128.  This is wrong because 3DES offers less
+            security than AES128, and it is also much slower.
+            <literal>+3DES</literal> reorders it after all other
             <literal>HIGH</literal> and <literal>MEDIUM</literal> ciphers.
            </para>
           </listitem>
@@ -1284,8 +1285,8 @@ include_dir 'conf.d'
        </para>
 
        <para>
-        Available cipher suite details will vary across OpenSSL versions.  Use
-        the command
+        Available cipher suite details will vary across
+        <productname>OpenSSL</productname> versions.  Use the command
         <literal>openssl ciphers -v 'HIGH:MEDIUM:+3DES:!aNULL'</literal> to
         see actual details for the currently installed <application>OpenSSL</application>
         version.  Note that this list is filtered at run time based on the
@@ -1337,7 +1338,8 @@ include_dir 'conf.d'
        </para>
 
        <para>
-        OpenSSL names for the most common curves are:
+        <productname>OpenSSL</productname> names for the most common curves
+        are:
         <literal>prime256v1</literal> (NIST P-256),
         <literal>secp384r1</literal> (NIST P-384),
         <literal>secp521r1</literal> (NIST P-521).
