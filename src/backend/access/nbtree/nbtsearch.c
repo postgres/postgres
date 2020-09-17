@@ -778,7 +778,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * never be satisfied (eg, x == 1 AND x > 2).
 	 */
 	if (!so->qual_ok)
+	{
+		/* Notify any other workers that we're done with this scan key. */
+		_bt_parallel_done(scan);
 		return false;
+	}
 
 	/*
 	 * For parallel scans, get the starting page from shared state. If the
