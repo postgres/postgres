@@ -111,7 +111,7 @@ CREATE FUNCTION complex_add(complex, complex)
    LANGUAGE C IMMUTABLE STRICT;
 
 -- we can now define the operator. We show a binary operator here but you
--- can also define unary operators by omitting either of leftarg or rightarg.
+-- can also define a prefix operator by omitting the leftarg.
 CREATE OPERATOR + (
    leftarg = complex,
    rightarg = complex,

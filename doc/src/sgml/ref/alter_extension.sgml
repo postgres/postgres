@@ -251,7 +251,7 @@ ALTER EXTENSION <replaceable class="parameter">name</replaceable> DROP <replacea
       <para>
        The data type(s) of the operator's arguments (optionally
        schema-qualified).  Write <literal>NONE</literal> for the missing argument
-       of a prefix or postfix operator.
+       of a prefix operator.
       </para>
      </listitem>
     </varlistentry>

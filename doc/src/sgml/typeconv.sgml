@@ -97,8 +97,8 @@ Operators
 <listitem>
 <para>
 <productname>PostgreSQL</productname> allows expressions with
-prefix and postfix unary (one-argument) operators,
-as well as binary (two-argument) operators.  Like functions, operators can
+prefix (one-argument) operators,
+as well as infix (two-argument) operators.  Like functions, operators can
 be overloaded, so the same problem of selecting the right operator
 exists.
 </para>
@@ -266,7 +266,7 @@ create objects.  In such situations, cast arguments to force an exact match.
 <para>
 If one argument of a binary operator invocation is of the <type>unknown</type> type,
 then assume it is the same type as the other argument for this check.
-Invocations involving two <type>unknown</type> inputs, or a unary operator
+Invocations involving two <type>unknown</type> inputs, or a prefix operator
 with an <type>unknown</type> input, will never find a match at this step.
 </para>
 </step>

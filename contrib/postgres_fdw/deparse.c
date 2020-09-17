@@ -2706,7 +2706,6 @@ deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 	HeapTuple	tuple;
 	Form_pg_operator form;
 	char		oprkind;
-	ListCell   *arg;
 
 	/* Retrieve information about the operator from system catalog. */
 	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(node->opno));
@@ -2716,18 +2715,16 @@ deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 	oprkind = form->oprkind;
 
 	/* Sanity check. */
-	Assert((oprkind == 'r' && list_length(node->args) == 1) ||
-		   (oprkind == 'l' && list_length(node->args) == 1) ||
+	Assert((oprkind == 'l' && list_length(node->args) == 1) ||
 		   (oprkind == 'b' && list_length(node->args) == 2));
 
 	/* Always parenthesize the expression. */
 	appendStringInfoChar(buf, '(');
 
-	/* Deparse left operand. */
-	if (oprkind == 'r' || oprkind == 'b')
+	/* Deparse left operand, if any. */
+	if (oprkind == 'b')
 	{
-		arg = list_head(node->args);
-		deparseExpr(lfirst(arg), context);
+		deparseExpr(linitial(node->args), context);
 		appendStringInfoChar(buf, ' ');
 	}
 
@@ -2735,12 +2732,8 @@ deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 	deparseOperatorName(buf, form);
 
 	/* Deparse right operand. */
-	if (oprkind == 'l' || oprkind == 'b')
-	{
-		arg = list_tail(node->args);
-		appendStringInfoChar(buf, ' ');
-		deparseExpr(lfirst(arg), context);
-	}
+	appendStringInfoChar(buf, ' ');
+	deparseExpr(llast(node->args), context);
 
 	appendStringInfoChar(buf, ')');
 

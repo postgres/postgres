@@ -12650,6 +12650,11 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	oprcanmerge = PQgetvalue(res, 0, i_oprcanmerge);
 	oprcanhash = PQgetvalue(res, 0, i_oprcanhash);
 
+	/* In PG14 upwards postfix operator support does not exist anymore. */
+	if (strcmp(oprkind, "r") == 0)
+		pg_log_warning("postfix operators are not supported anymore (operator \"%s\")",
+					   oprcode);
+
 	oprregproc = convertRegProcReference(fout, oprcode);
 	if (oprregproc)
 	{
@@ -12662,7 +12667,8 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 
 	/*
 	 * right unary means there's a left arg and left unary means there's a
-	 * right arg
+	 * right arg.  (Although the "r" case is dead code for PG14 and later,
+	 * continue to support it in case we're dumping from an old server.)
 	 */
 	if (strcmp(oprkind, "r") == 0 ||
 		strcmp(oprkind, "b") == 0)

@@ -22,6 +22,7 @@ static void check_is_install_user(ClusterInfo *cluster);
 static void check_proper_datallowconn(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
+static void check_for_user_defined_postfix_ops(ClusterInfo *cluster);
 static void check_for_tables_with_oids(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 static void check_for_jsonb_9_4_usage(ClusterInfo *cluster);
@@ -99,6 +100,13 @@ check_and_dump_old_cluster(bool live_check)
 	check_for_prepared_transactions(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
+
+	/*
+	 * Pre-PG 14 allowed user defined postfix operators, which are not
+	 * supported anymore.  Verify there are none, iff applicable.
+	 */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1300)
+		check_for_user_defined_postfix_ops(&old_cluster);
 
 	/*
 	 * Pre-PG 12 allowed tables to be declared WITH OIDS, which is not
@@ -896,6 +904,104 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 		check_ok();
 }
 
+/*
+ * Verify that no user defined postfix operators exist.
+ */
+static void
+check_for_user_defined_postfix_ops(ClusterInfo *cluster)
+{
+	int			dbnum;
+	FILE	   *script = NULL;
+	bool		found = false;
+	char		output_path[MAXPGPATH];
+
+	prep_status("Checking for user-defined postfix operators");
+
+	snprintf(output_path, sizeof(output_path),
+			 "postfix_ops.txt");
+
+	/* Find any user defined postfix operators */
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+	{
+		PGresult   *res;
+		bool		db_used = false;
+		int			ntups;
+		int			rowno;
+		int			i_oproid,
+					i_oprnsp,
+					i_oprname,
+					i_typnsp,
+					i_typname;
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
+
+		/*
+		 * The query below hardcodes FirstNormalObjectId as 16384 rather than
+		 * interpolating that C #define into the query because, if that
+		 * #define is ever changed, the cutoff we want to use is the value
+		 * used by pre-version 14 servers, not that of some future version.
+		 */
+		res = executeQueryOrDie(conn,
+								"SELECT o.oid AS oproid, "
+								"       n.nspname AS oprnsp, "
+								"       o.oprname, "
+								"       tn.nspname AS typnsp, "
+								"       t.typname "
+								"FROM pg_catalog.pg_operator o, "
+								"     pg_catalog.pg_namespace n, "
+								"     pg_catalog.pg_type t, "
+								"     pg_catalog.pg_namespace tn "
+								"WHERE o.oprnamespace = n.oid AND "
+								"      o.oprleft = t.oid AND "
+								"      t.typnamespace = tn.oid AND "
+								"      o.oprright = 0 AND "
+								"      o.oid >= 16384");
+		ntups = PQntuples(res);
+		i_oproid = PQfnumber(res, "oproid");
+		i_oprnsp = PQfnumber(res, "oprnsp");
+		i_oprname = PQfnumber(res, "oprname");
+		i_typnsp = PQfnumber(res, "typnsp");
+		i_typname = PQfnumber(res, "typname");
+		for (rowno = 0; rowno < ntups; rowno++)
+		{
+			found = true;
+			if (script == NULL &&
+				(script = fopen_priv(output_path, "w")) == NULL)
+				pg_fatal("could not open file \"%s\": %s\n",
+						 output_path, strerror(errno));
+			if (!db_used)
+			{
+				fprintf(script, "In database: %s\n", active_db->db_name);
+				db_used = true;
+			}
+			fprintf(script, "  (oid=%s) %s.%s (%s.%s, NONE)\n",
+					PQgetvalue(res, rowno, i_oproid),
+					PQgetvalue(res, rowno, i_oprnsp),
+					PQgetvalue(res, rowno, i_oprname),
+					PQgetvalue(res, rowno, i_typnsp),
+					PQgetvalue(res, rowno, i_typname));
+		}
+
+		PQclear(res);
+
+		PQfinish(conn);
+	}
+
+	if (script)
+		fclose(script);
+
+	if (found)
+	{
+		pg_log(PG_REPORT, "fatal\n");
+		pg_fatal("Your installation contains user-defined postfix operators, which are not\n"
+				 "supported anymore.  Consider dropping the postfix operators and replacing\n"
+				 "them with prefix operators or function calls.\n"
+				 "A list of user-defined postfix operators is in the file:\n"
+				 "    %s\n\n", output_path);
+	}
+	else
+		check_ok();
+}
 
 /*
  * Verify that no tables are declared WITH OIDS.

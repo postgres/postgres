@@ -41,7 +41,7 @@ CATALOG(pg_operator,2617,OperatorRelationId)
 	/* operator owner */
 	Oid			oprowner BKI_DEFAULT(PGUID);
 
-	/* 'l', 'r', or 'b' */
+	/* 'l' for prefix or 'b' for infix */
 	char		oprkind BKI_DEFAULT(b);
 
 	/* can be used in merge join? */
@@ -50,10 +50,10 @@ CATALOG(pg_operator,2617,OperatorRelationId)
 	/* can be used in hash join? */
 	bool		oprcanhash BKI_DEFAULT(f);
 
-	/* left arg type, or 0 if 'l' oprkind */
+	/* left arg type, or 0 if prefix operator */
 	Oid			oprleft BKI_LOOKUP(pg_type);
 
-	/* right arg type, or 0 if 'r' oprkind */
+	/* right arg type */
 	Oid			oprright BKI_LOOKUP(pg_type);
 
 	/* result datatype */

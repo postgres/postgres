@@ -96,36 +96,22 @@ SELECT n.nspname, r.rolname, format_type(t.oid, null) as typname
 
 
 --
--- lists all left unary operators
+-- lists all prefix operators
 --
-SELECT n.nspname, o.oprname AS left_unary,
+SELECT n.nspname, o.oprname AS prefix_op,
        format_type(right_type.oid, null) AS operand,
        format_type(result.oid, null) AS return_type
   FROM pg_namespace n, pg_operator o,
        pg_type right_type, pg_type result
   WHERE o.oprnamespace = n.oid
-    and o.oprkind = 'l'           -- left unary
+    and o.oprkind = 'l'           -- prefix ("left unary")
     and o.oprright = right_type.oid
     and o.oprresult = result.oid
   ORDER BY nspname, operand;
 
 
 --
--- lists all right unary operators
---
-SELECT n.nspname, o.oprname AS right_unary,
-       format_type(left_type.oid, null) AS operand,
-       format_type(result.oid, null) AS return_type
-  FROM pg_namespace n, pg_operator o,
-       pg_type left_type, pg_type result
-  WHERE o.oprnamespace = n.oid
-    and o.oprkind = 'r'          -- right unary
-    and o.oprleft = left_type.oid
-    and o.oprresult = result.oid
-  ORDER BY nspname, operand;
-
---
--- lists all binary operators
+-- lists all infix operators
 --
 SELECT n.nspname, o.oprname AS binary_op,
        format_type(left_type.oid, null) AS left_opr,
@@ -134,7 +120,7 @@ SELECT n.nspname, o.oprname AS binary_op,
   FROM pg_namespace n, pg_operator o, pg_type left_type,
        pg_type right_type, pg_type result
   WHERE o.oprnamespace = n.oid
-    and o.oprkind = 'b'         -- binary
+    and o.oprkind = 'b'         -- infix ("binary")
     and o.oprleft = left_type.oid
     and o.oprright = right_type.oid
     and o.oprresult = result.oid

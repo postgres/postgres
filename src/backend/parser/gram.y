@@ -741,10 +741,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %nonassoc	'<' '>' '=' LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 %nonassoc	BETWEEN IN_P LIKE ILIKE SIMILAR NOT_LA
 %nonassoc	ESCAPE			/* ESCAPE must be just above LIKE/ILIKE/SIMILAR */
-%left		POSTFIXOP		/* dummy for postfix Op rules */
 /*
  * To support target_el without AS, we must give IDENT an explicit priority
- * between POSTFIXOP and Op.  We can safely assign the same priority to
+ * between ESCAPE and Op.  We can safely assign the same priority to
  * various unreserved keywords as needed to resolve ambiguities (this can't
  * have any bad effects since obviously the keywords will still behave the
  * same as if they weren't keywords).  We need to do this:
@@ -12993,8 +12992,6 @@ a_expr:		c_expr									{ $$ = $1; }
 				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, $3, @2); }
 			| qual_Op a_expr					%prec Op
 				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $1, NULL, $2, @1); }
-			| a_expr qual_Op					%prec POSTFIXOP
-				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, NULL, @2); }
 
 			| a_expr AND a_expr
 				{ $$ = makeAndExpr($1, $3, @2); }
@@ -13408,8 +13405,6 @@ b_expr:		c_expr
 				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, $3, @2); }
 			| qual_Op b_expr					%prec Op
 				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $1, NULL, $2, @1); }
-			| b_expr qual_Op					%prec POSTFIXOP
-				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, NULL, @2); }
 			| b_expr IS DISTINCT FROM b_expr		%prec IS
 				{
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", $1, $5, @2);
@@ -14665,11 +14660,7 @@ target_el:	a_expr AS ColLabel
 				}
 			/*
 			 * We support omitting AS only for column labels that aren't
-			 * any known keyword.  There is an ambiguity against postfix
-			 * operators: is "a ! b" an infix expression, or a postfix
-			 * expression and a column label?  We prefer to resolve this
-			 * as an infix expression, which we accomplish by assigning
-			 * IDENT a precedence higher than POSTFIXOP.
+			 * any known keyword.
 			 */
 			| a_expr IDENT
 				{

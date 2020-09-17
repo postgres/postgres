@@ -31,8 +31,6 @@ extern Oid	LookupOperWithArgs(ObjectWithArgs *oper, bool noError);
 /* NB: the selected operator may require coercion of the input types! */
 extern Operator oper(ParseState *pstate, List *op, Oid arg1, Oid arg2,
 					 bool noError, int location);
-extern Operator right_oper(ParseState *pstate, List *op, Oid arg,
-						   bool noError, int location);
 extern Operator left_oper(ParseState *pstate, List *op, Oid arg,
 						  bool noError, int location);
 

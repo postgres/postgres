@@ -394,7 +394,6 @@ print_expr(const Node *expr, const List *rtable)
 		}
 		else
 		{
-			/* we print prefix and postfix ops the same... */
 			printf("%s ", ((opname != NULL) ? opname : "(invalid operator)"));
 			print_expr(get_leftop((const Expr *) e), rtable);
 		}

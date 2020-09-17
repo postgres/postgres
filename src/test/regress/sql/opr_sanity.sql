@@ -571,7 +571,7 @@ WHERE condefault AND
 
 SELECT p1.oid, p1.oprname
 FROM pg_operator as p1
-WHERE (p1.oprkind != 'b' AND p1.oprkind != 'l' AND p1.oprkind != 'r') OR
+WHERE (p1.oprkind != 'b' AND p1.oprkind != 'l') OR
     p1.oprresult = 0 OR p1.oprcode = 0;
 
 -- Look for missing or unwanted operand types
@@ -580,8 +580,7 @@ SELECT p1.oid, p1.oprname
 FROM pg_operator as p1
 WHERE (p1.oprleft = 0 and p1.oprkind != 'l') OR
     (p1.oprleft != 0 and p1.oprkind = 'l') OR
-    (p1.oprright = 0 and p1.oprkind != 'r') OR
-    (p1.oprright != 0 and p1.oprkind = 'r');
+    p1.oprright = 0;
 
 -- Look for conflicting operator definitions (same names and input datatypes).
 
@@ -714,15 +713,6 @@ WHERE p1.oprcode = p2.oid AND
      OR NOT binary_coercible(p2.prorettype, p1.oprresult)
      OR NOT binary_coercible(p1.oprright, p2.proargtypes[0])
      OR p1.oprleft != 0);
-
-SELECT p1.oid, p1.oprname, p2.oid, p2.proname
-FROM pg_operator AS p1, pg_proc AS p2
-WHERE p1.oprcode = p2.oid AND
-    p1.oprkind = 'r' AND
-    (p2.pronargs != 1
-     OR NOT binary_coercible(p2.prorettype, p1.oprresult)
-     OR NOT binary_coercible(p1.oprleft, p2.proargtypes[0])
-     OR p1.oprright != 0);
 
 -- If the operator is mergejoinable or hashjoinable, its underlying function
 -- should not be volatile.

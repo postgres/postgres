@@ -15,17 +15,15 @@ CREATE OPERATOR <% (
    negator = >=%
 );
 CREATE OPERATOR @#@ (
-   rightarg = int8,		-- left unary
-   procedure = factorial
-);
-CREATE OPERATOR #@# (
-   leftarg = int8,		-- right unary
+   rightarg = int8,		-- prefix
    procedure = factorial
 );
 CREATE OPERATOR #%# (
-   leftarg = int8,		-- right unary
+   leftarg = int8,		-- fail, postfix is no longer supported
    procedure = factorial
 );
+ERROR:  operator right argument type must be specified
+DETAIL:  Postfix operators are not supported.
 -- Test operator created above
 SELECT point '(1,2)' <% widget '(0,0,3)' AS t,
        point '(1,2)' <% widget '(0,0,1)' AS f;
@@ -35,11 +33,22 @@ SELECT point '(1,2)' <% widget '(0,0,3)' AS t,
 (1 row)
 
 -- Test comments
-COMMENT ON OPERATOR ###### (int4, NONE) IS 'bad right unary';
-ERROR:  operator does not exist: integer ######
--- => is disallowed now
+COMMENT ON OPERATOR ###### (NONE, int4) IS 'bad prefix';
+ERROR:  operator does not exist: ###### integer
+COMMENT ON OPERATOR ###### (int4, NONE) IS 'bad postfix';
+ERROR:  postfix operators are not supported
+COMMENT ON OPERATOR ###### (int4, int8) IS 'bad infix';
+ERROR:  operator does not exist: integer ###### bigint
+-- Check that DROP on a nonexistent op behaves sanely, too
+DROP OPERATOR ###### (NONE, int4);
+ERROR:  operator does not exist: ###### integer
+DROP OPERATOR ###### (int4, NONE);
+ERROR:  postfix operators are not supported
+DROP OPERATOR ###### (int4, int8);
+ERROR:  operator does not exist: integer ###### bigint
+-- => is disallowed as an operator name now
 CREATE OPERATOR => (
-   leftarg = int8,		-- right unary
+   rightarg = int8,
    procedure = factorial
 );
 ERROR:  syntax error at or near "=>"
@@ -49,15 +58,20 @@ LINE 1: CREATE OPERATOR => (
 -- (=> is tested elsewhere)
 -- this is legal because ! is not allowed in sql ops
 CREATE OPERATOR !=- (
-   leftarg = int8,		-- right unary
+   rightarg = int8,
    procedure = factorial
 );
-SELECT 2 !=-;
+SELECT !=- 10;
  ?column? 
 ----------
-        2
+  3628800
 (1 row)
 
+-- postfix operators don't work anymore
+SELECT 10 !=-;
+ERROR:  syntax error at or near ";"
+LINE 1: SELECT 10 !=-;
+                     ^
 -- make sure lexer returns != as <> even in edge cases
 SELECT 2 !=/**/ 1, 2 !=/**/ 2;
  ?column? | ?column? 
@@ -127,7 +141,7 @@ GRANT USAGE ON SCHEMA schema_op1 TO PUBLIC;
 REVOKE USAGE ON SCHEMA schema_op1 FROM regress_rol_op1;
 SET ROLE regress_rol_op1;
 CREATE OPERATOR schema_op1.#*# (
-   leftarg = int8,		-- right unary
+   rightarg = int8,
    procedure = factorial
 );
 ERROR:  permission denied for schema schema_op1
@@ -167,19 +181,19 @@ CREATE OPERATOR === (
 ROLLBACK;
 -- Should fail. Invalid attribute
 CREATE OPERATOR #@%# (
-   leftarg = int8,		-- right unary
+   rightarg = int8,
    procedure = factorial,
    invalid_att = int8
 );
 WARNING:  operator attribute "invalid_att" not recognized
--- Should fail. At least leftarg or rightarg should be mandatorily specified
+-- Should fail. At least rightarg should be mandatorily specified
 CREATE OPERATOR #@%# (
    procedure = factorial
 );
-ERROR:  at least one of leftarg or rightarg must be specified
+ERROR:  operator argument types must be specified
 -- Should fail. Procedure should be mandatorily specified
 CREATE OPERATOR #@%# (
-   leftarg = int8
+   rightarg = int8
 );
 ERROR:  operator function must be specified
 -- Should fail. CREATE OPERATOR requires USAGE on TYPE

@@ -21,13 +21,13 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , { <replaceable>right_type</replaceable> | NONE } )
+ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , <replaceable>right_type</replaceable> )
     OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 
-ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , { <replaceable>right_type</replaceable> | NONE } )
+ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , <replaceable>right_type</replaceable> )
     SET SCHEMA <replaceable>new_schema</replaceable>
 
-ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , { <replaceable>right_type</replaceable> | NONE } )
+ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , <replaceable>right_type</replaceable> )
     SET ( {  RESTRICT = { <replaceable class="parameter">res_proc</replaceable> | NONE }
            | JOIN = { <replaceable class="parameter">join_proc</replaceable> | NONE }
          } [, ... ] )
@@ -79,8 +79,7 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
     <term><replaceable class="parameter">right_type</replaceable></term>
     <listitem>
      <para>
-      The data type of the operator's right operand; write
-      <literal>NONE</literal> if the operator has no right operand.
+      The data type of the operator's right operand.
      </para>
     </listitem>
    </varlistentry>

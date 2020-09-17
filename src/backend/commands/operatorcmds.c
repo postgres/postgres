@@ -168,10 +168,22 @@ DefineOperator(List *names, List *parameters)
 	if (typeName2)
 		typeId2 = typenameTypeId(NULL, typeName2);
 
+	/*
+	 * If only the right argument is missing, the user is likely trying to
+	 * create a postfix operator, so give them a hint about why that does not
+	 * work.  But if both arguments are missing, do not mention postfix
+	 * operators, as the user most likely simply neglected to mention the
+	 * arguments.
+	 */
 	if (!OidIsValid(typeId1) && !OidIsValid(typeId2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("at least one of leftarg or rightarg must be specified")));
+				 errmsg("operator argument types must be specified")));
+	if (!OidIsValid(typeId2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("operator right argument type must be specified"),
+				 errdetail("Postfix operators are not supported.")));
 
 	if (typeName1)
 	{

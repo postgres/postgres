@@ -799,6 +799,10 @@ describeOperators(const char *pattern, bool verbose, bool showSystem)
 	 * anyway, for now, because (1) third-party modules may still be following
 	 * the old convention, and (2) we'd need to do it anyway when talking to a
 	 * pre-9.1 server.
+	 *
+	 * The support for postfix operators in this query is dead code as of
+	 * Postgres 14, but we need to keep it for as long as we support talking
+	 * to pre-v14 servers.
 	 */
 
 	printfPQExpBuffer(&buf,

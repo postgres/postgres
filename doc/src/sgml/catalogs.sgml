@@ -5159,8 +5159,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>oprkind</structfield> <type>char</type>
       </para>
       <para>
-       <literal>b</literal> = infix (<quote>both</quote>), <literal>l</literal> = prefix
-       (<quote>left</quote>), <literal>r</literal> = postfix (<quote>right</quote>)
+       <literal>b</literal> = infix operator (<quote>both</quote>),
+       or <literal>l</literal> = prefix operator (<quote>left</quote>)
       </para></entry>
      </row>
 
@@ -5188,7 +5188,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Type of the left operand
+       Type of the left operand (0 if none)
       </para></entry>
      </row>
 
@@ -5266,7 +5266,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </table>
 
   <para>
-   Unused column contain zeroes. For example, <structfield>oprleft</structfield>
+   Unused columns contain zeroes. For example, <structfield>oprleft</structfield>
    is zero for a prefix operator.
   </para>
 

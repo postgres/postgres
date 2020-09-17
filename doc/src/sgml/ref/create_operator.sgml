@@ -86,20 +86,9 @@ CREATE OPERATOR <replaceable>name</replaceable> (
   </para>
 
   <para>
-   At least one of <literal>LEFTARG</literal> and <literal>RIGHTARG</literal> must be defined.  For
-   binary operators, both must be defined. For right unary
-   operators, only <literal>LEFTARG</literal> should be defined, while for left
-   unary operators only <literal>RIGHTARG</literal> should be defined.
-  </para>
-
-  <note>
-   <para>
-    Right unary, also called postfix, operators are deprecated and will be
-    removed in <productname>PostgreSQL</productname> version 14.
-   </para>
-  </note>
-
-  <para>
+   For binary operators, both <literal>LEFTARG</literal> and
+   <literal>RIGHTARG</literal> must be defined.  For prefix operators only
+   <literal>RIGHTARG</literal> should be defined.
    The <replaceable class="parameter">function_name</replaceable>
    function must have been previously defined using <command>CREATE
    FUNCTION</command> and must be defined to accept the correct number
@@ -160,7 +149,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <listitem>
        <para>
         The data type of the operator's left operand, if any.
-        This option would be omitted for a left-unary operator.
+        This option would be omitted for a prefix operator.
        </para>
       </listitem>
      </varlistentry>
@@ -169,8 +158,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">right_type</replaceable></term>
       <listitem>
        <para>
-        The data type of the operator's right operand, if any.
-        This option would be omitted for a right-unary operator.
+        The data type of the operator's right operand.
        </para>
       </listitem>
      </varlistentry>

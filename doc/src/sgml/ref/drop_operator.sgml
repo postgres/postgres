@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP OPERATOR [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( { <replaceable class="parameter">left_type</replaceable> | NONE } , { <replaceable class="parameter">right_type</replaceable> | NONE } ) [, ...] [ CASCADE | RESTRICT ]
+DROP OPERATOR [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( { <replaceable class="parameter">left_type</replaceable> | NONE } , <replaceable class="parameter">right_type</replaceable> ) [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -73,8 +73,7 @@ DROP OPERATOR [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( 
     <term><replaceable class="parameter">right_type</replaceable></term>
     <listitem>
      <para>
-      The data type of the operator's right operand; write
-      <literal>NONE</literal> if the operator has no right operand.
+      The data type of the operator's right operand.
      </para>
     </listitem>
    </varlistentry>
@@ -113,7 +112,7 @@ DROP OPERATOR ^ (integer, integer);
   </para>
 
   <para>
-   Remove the left unary bitwise complement operator
+   Remove the bitwise-complement prefix operator
    <literal>~b</literal> for type <type>bit</type>:
 <programlisting>
 DROP OPERATOR ~ (none, bit);
@@ -121,16 +120,9 @@ DROP OPERATOR ~ (none, bit);
   </para>
 
   <para>
-   Remove the right unary factorial operator <literal>x!</literal>
-   for type <type>bigint</type>:
-<programlisting>
-DROP OPERATOR ! (bigint, none);
-</programlisting></para>
-
-  <para>
    Remove multiple operators in one command:
 <programlisting>
-DROP OPERATOR ~ (none, bit), ! (bigint, none);
+DROP OPERATOR ~ (none, bit), ^ (integer, integer);
 </programlisting></para>
  </refsect1>
 
