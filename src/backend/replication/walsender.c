@@ -1616,12 +1616,14 @@ exec_replication_command(const char *cmd_string)
 	{
 		case T_IdentifySystemCmd:
 			cmdtag = "IDENTIFY_SYSTEM";
+			set_ps_display(cmdtag);
 			IdentifySystem();
 			EndReplicationCommand(cmdtag);
 			break;
 
 		case T_BaseBackupCmd:
 			cmdtag = "BASE_BACKUP";
+			set_ps_display(cmdtag);
 			PreventInTransactionBlock(true, cmdtag);
 			SendBaseBackup((BaseBackupCmd *) cmd_node);
 			EndReplicationCommand(cmdtag);
@@ -1629,12 +1631,14 @@ exec_replication_command(const char *cmd_string)
 
 		case T_CreateReplicationSlotCmd:
 			cmdtag = "CREATE_REPLICATION_SLOT";
+			set_ps_display(cmdtag);
 			CreateReplicationSlot((CreateReplicationSlotCmd *) cmd_node);
 			EndReplicationCommand(cmdtag);
 			break;
 
 		case T_DropReplicationSlotCmd:
 			cmdtag = "DROP_REPLICATION_SLOT";
+			set_ps_display(cmdtag);
 			DropReplicationSlot((DropReplicationSlotCmd *) cmd_node);
 			EndReplicationCommand(cmdtag);
 			break;
@@ -1644,6 +1648,7 @@ exec_replication_command(const char *cmd_string)
 				StartReplicationCmd *cmd = (StartReplicationCmd *) cmd_node;
 
 				cmdtag = "START_REPLICATION";
+				set_ps_display(cmdtag);
 				PreventInTransactionBlock(true, cmdtag);
 
 				if (cmd->kind == REPLICATION_KIND_PHYSICAL)
@@ -1659,6 +1664,7 @@ exec_replication_command(const char *cmd_string)
 
 		case T_TimeLineHistoryCmd:
 			cmdtag = "TIMELINE_HISTORY";
+			set_ps_display(cmdtag);
 			PreventInTransactionBlock(true, cmdtag);
 			SendTimeLineHistory((TimeLineHistoryCmd *) cmd_node);
 			EndReplicationCommand(cmdtag);
@@ -1670,6 +1676,7 @@ exec_replication_command(const char *cmd_string)
 				VariableShowStmt *n = (VariableShowStmt *) cmd_node;
 
 				cmdtag = "SHOW";
+				set_ps_display(cmdtag);
 
 				/* syscache access needs a transaction environment */
 				StartTransactionCommand();
@@ -1688,8 +1695,11 @@ exec_replication_command(const char *cmd_string)
 	MemoryContextSwitchTo(old_context);
 	MemoryContextDelete(cmd_context);
 
-	/* Report to pgstat that this process is now idle */
-	pgstat_report_activity(STATE_IDLE, NULL);
+	/*
+	 * We need not update ps display or pg_stat_activity, because PostgresMain
+	 * will reset those to "idle".  But we must reset debug_query_string to
+	 * ensure it doesn't become a dangling pointer.
+	 */
 	debug_query_string = NULL;
 
 	return true;
