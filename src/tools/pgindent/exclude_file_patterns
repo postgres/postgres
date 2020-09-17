@@ -6,5 +6,6 @@
 /snowball/libstemmer/
 /pl/plperl/ppport\.h$
 /jit/llvmjit\.h$
+/utils/probes\.h$
 /tmp_check/
 /tmp_install/

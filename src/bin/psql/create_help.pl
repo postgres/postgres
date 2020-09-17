@@ -63,11 +63,12 @@ print $hfile_handle "/*
 
 struct _helpStruct
 {
-	const char	   *cmd;		/* the command name */
-	const char	   *help;		/* the help associated with it */
-	const char	   *docbook_id;	/* DocBook XML id (for generating URL) */
-	void (*syntaxfunc)(PQExpBuffer);	/* function that prints the syntax associated with it */
-	int				nl_count;	/* number of newlines in syntax (for pager) */
+	const char *cmd;			/* the command name */
+	const char *help;			/* the help associated with it */
+	const char *docbook_id;		/* DocBook XML id (for generating URL) */
+	void		(*syntaxfunc) (PQExpBuffer);	/* function that prints the
+												 * syntax associated with it */
+	int			nl_count;		/* number of newlines in syntax (for pager) */
 };
 
 extern const struct _helpStruct QL_HELP[];
@@ -190,17 +191,17 @@ foreach (sort keys %entries)
 {
 	my $id = $_;
 	$id =~ s/ /_/g;
-	print $cfile_handle "    { \"$_\",
-      N_(\"$entries{$_}{cmddesc}\"),
-      \"$entries{$_}{cmdid}\",
-      sql_help_$id,
-      $entries{$_}{nl_count} },
+	print $cfile_handle "\t{\"$_\",
+\t\tN_(\"$entries{$_}{cmddesc}\"),
+\t\t\"$entries{$_}{cmdid}\",
+\t\tsql_help_$id,
+\t$entries{$_}{nl_count}},
 
 ";
 }
 
 print $cfile_handle "
-    { NULL, NULL, NULL }    /* End of list marker */
+\t{NULL, NULL, NULL}\t\t\t/* End of list marker */
 };
 ";
 
@@ -210,7 +211,7 @@ print $hfile_handle "
 #define QL_MAX_CMD_LEN	$maxlen		/* largest strlen(cmd) */
 
 
-#endif /* $define */
+#endif							/* $define */
 ";
 
 close $cfile_handle;
