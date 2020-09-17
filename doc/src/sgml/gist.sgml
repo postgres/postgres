@@ -259,6 +259,8 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
    <function>compress</function> method is omitted. The optional tenth method
    <function>options</function> is needed if the operator class provides
    the user-specified parameters.
+   The <function>sortsupport</function> method is also optional and is used to
+   speed up building a <acronym>GiST</acronym> index.
  </para>
 
  <variablelist>
@@ -1062,6 +1064,74 @@ my_compress(PG_FUNCTION_ARGS)
        flexible, it may depend on user-specified parameters.  For instance,
        the length of key signature may be specified.  See
        <literal>gtsvector_options()</literal> for example.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>sortsupport</function></term>
+     <listitem>
+      <para>
+       Returns a comparator function to sort data in a way that preserves
+       locality. It is used by <command>CREATE INDEX</command> and
+       <command>REINDEX</command> commands. The quality of the created index
+       depends on how well the sort order determined by the comparator function
+       preserves locality of the inputs.
+      </para>
+      <para>
+       The <function>sortsupport</function> method is optional. If it is not
+       provided, <command>CREATE INDEX</command> builds the index by inserting
+       each tuple to the tree using the <function>penalty</function> and
+       <function>picksplit</function> functions, which is much slower.
+      </para>
+
+      <para>
+       The <acronym>SQL</acronym> declaration of the function must look like
+       this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_sortsupport(internal)
+RETURNS void
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+</programlisting>
+
+       The argument is a pointer to a <structname>SortSupport</structname>
+       struct. At a minimum, the function must fill in its comparator field.
+       The comparator takes three arguments: two Datums to compare, and
+       a pointer to the <structname>SortSupport</structname> struct. The
+       Datums are the two indexed values in the format that they are stored
+       in the index; that is, in the format returned by the
+       <function>compress</function> method. The full API is defined in
+       <filename>src/include/utils/sortsupport.h</filename>.
+       </para>
+
+       <para>
+        The matching code in the C module could then follow this skeleton:
+
+<programlisting>
+PG_FUNCTION_INFO_V1(my_sortsupport);
+
+static int
+my_fastcmp(Datum x, Datum y, SortSupport ssup)
+{
+  /* establish order between x and y by computing some sorting value z */
+
+  int z1 = ComputeSpatialCode(x);
+  int z2 = ComputeSpatialCode(y);
+
+  return z1 == z2 ? 0 : z1 > z2 ? 1 : -1;
+}
+
+Datum
+my_sortsupport(PG_FUNCTION_ARGS)
+{
+  SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+  ssup->comparator = my_fastcmp;
+  PG_RETURN_VOID();
+}
+</programlisting>
       </para>
      </listitem>
     </varlistentry>

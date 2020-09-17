@@ -143,6 +143,10 @@ gistvalidate(Oid opclassoid)
 			case GIST_OPTIONS_PROC:
 				ok = check_amoptsproc_signature(procform->amproc);
 				break;
+			case GIST_SORTSUPPORT_PROC:
+				ok = check_amproc_signature(procform->amproc, VOIDOID, true,
+											1, 1, INTERNALOID);
+				break;
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -263,7 +267,7 @@ gistvalidate(Oid opclassoid)
 			continue;			/* got it */
 		if (i == GIST_DISTANCE_PROC || i == GIST_FETCH_PROC ||
 			i == GIST_COMPRESS_PROC || i == GIST_DECOMPRESS_PROC ||
-			i == GIST_OPTIONS_PROC)
+			i == GIST_OPTIONS_PROC  || i == GIST_SORTSUPPORT_PROC)
 			continue;			/* optional methods */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),

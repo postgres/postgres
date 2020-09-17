@@ -523,8 +523,8 @@ SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
 SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
         f1         
 -------------------
- (0,0)
  (1e-300,-1e-300)
+ (0,0)
  (-3,4)
  (-10,0)
  (10,10)
@@ -561,8 +561,8 @@ SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
 SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
         f1         
 -------------------
- (0,0)
  (1e-300,-1e-300)
+ (0,0)
  (-3,4)
  (-10,0)
  (10,10)
@@ -584,8 +584,8 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
         f1        
 ------------------
- (0,0)
  (1e-300,-1e-300)
+ (0,0)
  (-3,4)
  (-10,0)
  (10,10)

@@ -24,12 +24,22 @@
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/geo_decls.h"
+#include "utils/sortsupport.h"
 
 
 static bool gist_box_leaf_consistent(BOX *key, BOX *query,
 									 StrategyNumber strategy);
 static bool rtree_internal_consistent(BOX *key, BOX *query,
 									  StrategyNumber strategy);
+
+static uint64 point_zorder_internal(float4 x, float4 y);
+static uint64 part_bits32_by2(uint32 x);
+static uint32 ieee_float32_to_uint32(float f);
+static int gist_bbox_zorder_cmp(Datum a, Datum b, SortSupport ssup);
+static Datum gist_bbox_zorder_abbrev_convert(Datum original, SortSupport ssup);
+static int gist_bbox_zorder_cmp_abbrev(Datum z1, Datum z2, SortSupport ssup);
+static bool gist_bbox_zorder_abbrev_abort(int memtupcount, SortSupport ssup);
+
 
 /* Minimum accepted ratio of split */
 #define LIMIT_RATIO 0.3
@@ -1539,4 +1549,223 @@ gist_poly_distance(PG_FUNCTION_ARGS)
 	*recheck = true;
 
 	PG_RETURN_FLOAT8(distance);
+}
+
+/*
+ * Z-order routines for fast index build
+ */
+
+/*
+ * Compute Z-value of a point
+ *
+ * Z-order (also known as Morton Code) maps a two-dimensional point to a
+ * single integer, in a way that preserves locality. Points that are close in
+ * the two-dimensional space are mapped to integer that are not far from each
+ * other. We do that by interleaving the bits in the X and Y components.
+ *
+ * Morton Code is normally defined only for integers, but the X and Y values
+ * of a point are floating point. We expect floats to be in IEEE format.
+ */
+static uint64
+point_zorder_internal(float4 x, float4 y)
+{
+	uint32		ix = ieee_float32_to_uint32(x);
+	uint32		iy = ieee_float32_to_uint32(y);
+
+	/* Interleave the bits */
+	return part_bits32_by2(ix) | (part_bits32_by2(iy) << 1);
+}
+
+/* Interleave 32 bits with zeroes */
+static uint64
+part_bits32_by2(uint32 x)
+{
+	uint64		n = x;
+
+	n = (n | (n << 16)) & UINT64CONST(0x0000FFFF0000FFFF);
+	n = (n | (n << 8)) & UINT64CONST(0x00FF00FF00FF00FF);
+	n = (n | (n << 4)) & UINT64CONST(0x0F0F0F0F0F0F0F0F);
+	n = (n | (n << 2)) & UINT64CONST(0x3333333333333333);
+	n = (n | (n << 1)) & UINT64CONST(0x5555555555555555);
+
+	return n;
+}
+
+/*
+ * Convert a 32-bit IEEE float to uint32 in a way that preserves the ordering
+ */
+static uint32
+ieee_float32_to_uint32(float f)
+{
+	/*----
+	 *
+	 * IEEE 754 floating point format
+	 * ------------------------------
+	 *
+	 * IEEE 754 floating point numbers have this format:
+	 *
+	 *   exponent (8 bits)
+	 *   |
+	 * s eeeeeeee mmmmmmmmmmmmmmmmmmmmmmm
+	 * |          |
+	 * sign       mantissa (23 bits)
+	 *
+	 * Infinity has all bits in the exponent set and the mantissa is all
+	 * zeros. Negative infinity is the same but with the sign bit set.
+	 *
+	 * NaNs are represented with all bits in the exponent set, and the least
+	 * significant bit in the mantissa also set. The rest of the mantissa bits
+	 * can be used to distinguish different kinds of NaNs.
+	 *
+	 * The IEEE format has the nice property that when you take the bit
+	 * representation and interpret it as an integer, the order is preserved,
+	 * except for the sign. That holds for the +-Infinity values too.
+	 *
+	 * Mapping to uint32
+	 * -----------------
+	 *
+	 * In order to have a smooth transition from negative to positive numbers,
+	 * we map floats to unsigned integers like this:
+	 *
+	 * x < 0 to range 0-7FFFFFFF
+	 * x = 0 to value 8000000 (both positive and negative zero)
+	 * x > 0 to range 8000001-FFFFFFFF
+	 *
+	 * We don't care to distinguish different kind of NaNs, so they are all
+	 * mapped to the same arbitrary value, FFFFFFFF. Because of the IEEE bit
+	 * representation of NaNs, there aren't any non-NaN values that would be
+	 * mapped to FFFFFFFF. In fact, there is a range of unused values on both
+	 * ends of the uint32 space.
+	 */
+	if (isnan(f))
+		return 0xFFFFFFFF;
+	else
+	{
+		union
+		{
+			float		f;
+			uint32		i;
+		}			u;
+
+		u.f = f;
+
+		/* Check the sign bit */
+		if ((u.i & 0x80000000) != 0)
+		{
+			/*
+			 * Map the negative value to range 0-7FFFFFFF. This flips the sign
+			 * bit to 0 in the same instruction.
+			 */
+			Assert(f <= 0);		/* can be -0 */
+			u.i ^= 0xFFFFFFFF;
+		}
+		else
+		{
+			/* Map the positive value (or 0) to range 80000000-FFFFFFFF */
+			u.i |= 0x80000000;
+		}
+
+		return u.i;
+	}
+}
+
+/*
+ * Compare the Z-order of points
+ */
+static int
+gist_bbox_zorder_cmp(Datum a, Datum b, SortSupport ssup)
+{
+	Point	   *p1 = &(DatumGetBoxP(a)->low);
+	Point	   *p2 = &(DatumGetBoxP(b)->low);
+	uint64		z1;
+	uint64		z2;
+
+	/*
+	 * Do a quick check for equality first. It's not clear if this is worth it
+	 * in general, but certainly is when used as tie-breaker with abbreviated
+	 * keys,
+	 */
+	if (p1->x == p2->x && p1->y == p2->y)
+		return 0;
+
+	z1 = point_zorder_internal(p1->x, p1->y);
+	z2 = point_zorder_internal(p2->x, p2->y);
+	if (z1 > z2)
+		return 1;
+	else if (z1 < z2)
+		return -1;
+	else
+		return 0;
+}
+
+/*
+ * Abbreviated version of Z-order comparison
+ *
+ * The abbreviated format is a Z-order value computed from the two 32-bit
+ * floats. If SIZEOF_DATUM == 8, the 64-bit Z-order value fits fully in the
+ * abbreviated Datum, otherwise use its most significant bits.
+ */
+static Datum
+gist_bbox_zorder_abbrev_convert(Datum original, SortSupport ssup)
+{
+	Point	   *p = &(DatumGetBoxP(original)->low);
+	uint64		z;
+
+	z = point_zorder_internal(p->x, p->y);
+
+#if SIZEOF_DATUM == 8
+	return (Datum) z;
+#else
+	return (Datum) (z >> 32);
+#endif
+}
+
+static int
+gist_bbox_zorder_cmp_abbrev(Datum z1, Datum z2, SortSupport ssup)
+{
+	/*
+	 * Compare the pre-computed Z-orders as unsigned integers. Datum is a
+	 * typedef for 'uintptr_t', so no casting is required.
+	 */
+	if (z1 > z2)
+		return 1;
+	else if (z1 < z2)
+		return -1;
+	else
+		return 0;
+}
+
+/*
+ * We never consider aborting the abbreviation.
+ *
+ * On 64-bit systems, the abbreviation is not lossy so it is always
+ * worthwhile. (Perhaps it's not on 32-bit systems, but we don't bother
+ * with logic to decide.)
+ */
+static bool
+gist_bbox_zorder_abbrev_abort(int memtupcount, SortSupport ssup)
+{
+	return false;
+}
+
+/*
+ * Sort support routine for fast GiST index build by sorting.
+ */
+Datum
+gist_point_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	if (ssup->abbreviate)
+	{
+		ssup->comparator = gist_bbox_zorder_cmp_abbrev;
+		ssup->abbrev_converter = gist_bbox_zorder_abbrev_convert;
+		ssup->abbrev_abort = gist_bbox_zorder_abbrev_abort;
+		ssup->abbrev_full_comparator = gist_bbox_zorder_cmp;
+	}
+	else
+	{
+		ssup->comparator = gist_bbox_zorder_cmp;
+	}
+	PG_RETURN_VOID();
 }

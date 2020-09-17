@@ -1168,6 +1168,63 @@ tuplesort_begin_index_hash(Relation heapRel,
 }
 
 Tuplesortstate *
+tuplesort_begin_index_gist(Relation heapRel,
+						   Relation indexRel,
+						   int workMem,
+						   SortCoordinate coordinate,
+						   bool randomAccess)
+{
+	Tuplesortstate *state = tuplesort_begin_common(workMem, coordinate,
+												   randomAccess);
+	MemoryContext oldcontext;
+	int			i;
+
+	oldcontext = MemoryContextSwitchTo(state->sortcontext);
+
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(LOG,
+			 "begin index sort: workMem = %d, randomAccess = %c",
+			 workMem, randomAccess ? 't' : 'f');
+#endif
+
+	state->nKeys = IndexRelationGetNumberOfKeyAttributes(indexRel);
+
+	state->comparetup = comparetup_index_btree;
+	state->copytup = copytup_index;
+	state->writetup = writetup_index;
+	state->readtup = readtup_index;
+
+	state->heapRel = heapRel;
+	state->indexRel = indexRel;
+
+	/* Prepare SortSupport data for each column */
+	state->sortKeys = (SortSupport) palloc0(state->nKeys *
+											sizeof(SortSupportData));
+
+	for (i = 0; i < state->nKeys; i++)
+	{
+		SortSupport sortKey = state->sortKeys + i;
+
+		sortKey->ssup_cxt = CurrentMemoryContext;
+		sortKey->ssup_collation = indexRel->rd_indcollation[i];
+		sortKey->ssup_nulls_first = false;
+		sortKey->ssup_attno = i + 1;
+		/* Convey if abbreviation optimization is applicable in principle */
+		sortKey->abbreviate = (i == 0);
+
+		AssertState(sortKey->ssup_attno != 0);
+
+		/* Look for a sort support function */
+		PrepareSortSupportFromGistIndexRel(indexRel, sortKey);
+	}
+
+	MemoryContextSwitchTo(oldcontext);
+
+	return state;
+}
+
+Tuplesortstate *
 tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 					  bool nullsFirstFlag, int workMem,
 					  SortCoordinate coordinate, bool randomAccess)

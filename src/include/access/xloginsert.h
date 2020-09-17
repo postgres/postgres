@@ -54,6 +54,8 @@ extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
 
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
 							  BlockNumber blk, char *page, bool page_std);
+extern void log_newpages(RelFileNode *rnode, ForkNumber forkNum, int num_pages,
+						 BlockNumber *blknos, char **pages, bool page_std);
 extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
 extern void log_newpage_range(Relation rel, ForkNumber forkNum,
 							  BlockNumber startblk, BlockNumber endblk, bool page_std);

@@ -572,11 +572,30 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 
 IndexTuple
 gistFormTuple(GISTSTATE *giststate, Relation r,
-			  Datum attdata[], bool isnull[], bool isleaf)
+			  Datum *attdata, bool *isnull, bool isleaf)
 {
 	Datum		compatt[INDEX_MAX_KEYS];
-	int			i;
 	IndexTuple	res;
+
+	gistCompressValues(giststate, r, attdata, isnull, isleaf, compatt);
+
+	res = index_form_tuple(isleaf ? giststate->leafTupdesc :
+						   giststate->nonLeafTupdesc,
+						   compatt, isnull);
+
+	/*
+	 * The offset number on tuples on internal pages is unused. For historical
+	 * reasons, it is set to 0xffff.
+	 */
+	ItemPointerSetOffsetNumber(&(res->t_tid), 0xffff);
+	return res;
+}
+
+void
+gistCompressValues(GISTSTATE *giststate, Relation r,
+				   Datum *attdata, bool *isnull, bool isleaf, Datum *compatt)
+{
+	int			i;
 
 	/*
 	 * Call the compress method on each attribute.
@@ -617,17 +636,6 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 				compatt[i] = attdata[i];
 		}
 	}
-
-	res = index_form_tuple(isleaf ? giststate->leafTupdesc :
-						   giststate->nonLeafTupdesc,
-						   compatt, isnull);
-
-	/*
-	 * The offset number on tuples on internal pages is unused. For historical
-	 * reasons, it is set to 0xffff.
-	 */
-	ItemPointerSetOffsetNumber(&(res->t_tid), 0xffff);
-	return res;
 }
 
 /*
@@ -745,14 +753,11 @@ gistpenalty(GISTSTATE *giststate, int attno,
  * Initialize a new index page
  */
 void
-GISTInitBuffer(Buffer b, uint32 f)
+gistinitpage(Page page, uint32 f)
 {
 	GISTPageOpaque opaque;
-	Page		page;
-	Size		pageSize;
+	Size		pageSize = BLCKSZ;
 
-	pageSize = BufferGetPageSize(b);
-	page = BufferGetPage(b);
 	PageInit(page, pageSize, sizeof(GISTPageOpaqueData));
 
 	opaque = GistPageGetOpaque(page);
@@ -761,6 +766,18 @@ GISTInitBuffer(Buffer b, uint32 f)
 	opaque->rightlink = InvalidBlockNumber;
 	opaque->flags = f;
 	opaque->gist_page_id = GIST_PAGE_ID;
+}
+
+/*
+ * Initialize a new index buffer
+ */
+void
+GISTInitBuffer(Buffer b, uint32 f)
+{
+	Page		page;
+
+	page = BufferGetPage(b);
+	gistinitpage(page, f);
 }
 
 /*

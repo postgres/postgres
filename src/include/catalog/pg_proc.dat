@@ -8062,6 +8062,9 @@
   proname => 'gist_poly_distance', prorettype => 'float8',
   proargtypes => 'internal polygon int2 oid internal',
   prosrc => 'gist_poly_distance' },
+{ oid => '3435', descr => 'sort support',
+  proname => 'gist_point_sortsupport', prorettype => 'void',
+  proargtypes => 'internal', prosrc => 'gist_point_sortsupport' },
 
 # GIN array support
 { oid => '2743', descr => 'GIN array support',

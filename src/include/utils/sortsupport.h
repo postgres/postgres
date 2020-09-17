@@ -272,5 +272,6 @@ extern void PrepareSortSupportComparisonShim(Oid cmpFunc, SortSupport ssup);
 extern void PrepareSortSupportFromOrderingOp(Oid orderingOp, SortSupport ssup);
 extern void PrepareSortSupportFromIndexRel(Relation indexRel, int16 strategy,
 										   SortSupport ssup);
+extern void PrepareSortSupportFromGistIndexRel(Relation indexRel, SortSupport ssup);
 
 #endif							/* SORTSUPPORT_H */

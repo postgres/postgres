@@ -53,6 +53,7 @@
  */
 
 /*							yyyymmddN */
+/* FIXME: bump this before pushing! */
 #define CATALOG_VERSION_NO	202009031
 
 #endif

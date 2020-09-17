@@ -480,6 +480,8 @@
   amproc => 'gist_point_distance' },
 { amprocfamily => 'gist/point_ops', amproclefttype => 'point',
   amprocrighttype => 'point', amprocnum => '9', amproc => 'gist_point_fetch' },
+{ amprocfamily => 'gist/point_ops', amproclefttype => 'point',
+  amprocrighttype => 'point', amprocnum => '11', amproc => 'gist_point_sortsupport' },
 { amprocfamily => 'gist/box_ops', amproclefttype => 'box',
   amprocrighttype => 'box', amprocnum => '1', amproc => 'gist_box_consistent' },
 { amprocfamily => 'gist/box_ops', amproclefttype => 'box',
