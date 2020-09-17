@@ -1300,12 +1300,10 @@ SELECT lcm(9999 * (10::numeric)^131068 + (10::numeric^131068 - 1), 2); -- overfl
 --
 -- Tests for factorial
 --
-SELECT 4!;
-SELECT !!3;
+SELECT factorial(4);
 SELECT factorial(15);
-SELECT 100000!;
-SELECT 0!;
-SELECT -4!;
+SELECT factorial(100000);
+SELECT factorial(0);
 SELECT factorial(-4);
 
 --

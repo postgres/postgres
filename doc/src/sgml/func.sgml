@@ -1050,36 +1050,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <type>bigint</type> <literal>!</literal>
-        <returnvalue>numeric</returnvalue>
-       </para>
-       <para>
-        Factorial
-        (deprecated, use <link linkend="function-factorial"><function>factorial()</function></link> instead)
-       </para>
-       <para>
-        <literal>5 !</literal>
-        <returnvalue>120</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <literal>!!</literal> <type>bigint</type>
-        <returnvalue>numeric</returnvalue>
-       </para>
-       <para>
-        Factorial as a prefix operator
-        (deprecated, use <link linkend="function-factorial"><function>factorial()</function></link> instead)
-       </para>
-       <para>
-        <literal>!! 5</literal>
-        <returnvalue>120</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
         <literal>@</literal> <replaceable>numeric_type</replaceable>
         <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
        </para>
