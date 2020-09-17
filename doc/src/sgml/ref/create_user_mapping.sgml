@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE USER MAPPING [ IF NOT EXISTS ] FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | PUBLIC }
+CREATE USER MAPPING [ IF NOT EXISTS ] FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_ROLE | CURRENT_USER | PUBLIC }
     SERVER <replaceable class="parameter">server_name</replaceable>
     [ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [ , ... ] ) ]
 </synopsis>
@@ -67,7 +67,7 @@ CREATE USER MAPPING [ IF NOT EXISTS ] FOR { <replaceable class="parameter">user_
     <listitem>
      <para>
       The name of an existing user that is mapped to foreign server.
-      <literal>CURRENT_USER</literal> and <literal>USER</literal> match the name of
+      <literal>CURRENT_ROLE</literal>, <literal>CURRENT_USER</literal>, and <literal>USER</literal> match the name of
       the current user.  When <literal>PUBLIC</literal> is specified, a
       so-called public mapping is created that is used when no
       user-specific mapping is applicable.

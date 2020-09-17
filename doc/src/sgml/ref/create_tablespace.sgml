@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
-    [ OWNER { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER } ]
+    [ OWNER { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER } ]
     LOCATION '<replaceable class="parameter">directory</replaceable>'
     [ WITH ( <replaceable class="parameter">tablespace_option</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] ) ]
 </synopsis>

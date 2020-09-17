@@ -32,7 +32,7 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
 ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
     DROP MAPPING [ IF EXISTS ] FOR <replaceable class="parameter">token_type</replaceable> [, ... ]
 ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
-ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>

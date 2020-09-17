@@ -318,6 +318,7 @@ typedef struct CollateClause
 typedef enum RoleSpecType
 {
 	ROLESPEC_CSTRING,			/* role name is stored as a C string */
+	ROLESPEC_CURRENT_ROLE,		/* role spec is CURRENT_ROLE */
 	ROLESPEC_CURRENT_USER,		/* role spec is CURRENT_USER */
 	ROLESPEC_SESSION_USER,		/* role spec is SESSION_USER */
 	ROLESPEC_PUBLIC				/* role name is "public" */

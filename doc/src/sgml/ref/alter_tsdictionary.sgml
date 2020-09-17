@@ -25,7 +25,7 @@ ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> (
     <replaceable class="parameter">option</replaceable> [ = <replaceable class="parameter">value</replaceable> ] [, ... ]
 )
 ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
-ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>

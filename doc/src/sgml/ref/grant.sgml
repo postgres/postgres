@@ -87,6 +87,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
 
     [ GROUP ] <replaceable class="parameter">role_name</replaceable>
   | PUBLIC
+  | CURRENT_ROLE
   | CURRENT_USER
   | SESSION_USER
 </synopsis>

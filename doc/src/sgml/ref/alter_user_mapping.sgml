@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | SESSION_USER | PUBLIC }
+ALTER USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_ROLE | CURRENT_USER | SESSION_USER | PUBLIC }
     SERVER <replaceable class="parameter">server_name</replaceable>
     OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ] )
 </synopsis>
@@ -51,7 +51,7 @@ ALTER USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable> 
     <term><replaceable class="parameter">user_name</replaceable></term>
     <listitem>
      <para>
-      User name of the mapping. <literal>CURRENT_USER</literal>
+      User name of the mapping. <literal>CURRENT_ROLE</literal>, <literal>CURRENT_USER</literal>,
       and <literal>USER</literal> match the name of the current
       user. <literal>PUBLIC</literal> is used to match all present and future
       user names in the system.

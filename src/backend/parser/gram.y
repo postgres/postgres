@@ -14919,6 +14919,13 @@ RoleId:		RoleSpec
 											"CURRENT_USER"),
 									 parser_errposition(@1)));
 							break;
+						case ROLESPEC_CURRENT_ROLE:
+							ereport(ERROR,
+									(errcode(ERRCODE_RESERVED_NAME),
+									 errmsg("%s cannot be used as a role name here",
+											"CURRENT_ROLE"),
+									 parser_errposition(@1)));
+							break;
 					}
 				}
 			;
@@ -14949,6 +14956,10 @@ RoleSpec:	NonReservedWord
 							n->rolename = pstrdup($1);
 						}
 						$$ = n;
+					}
+			| CURRENT_ROLE
+					{
+						$$ = makeRoleSpec(ROLESPEC_CURRENT_ROLE, @1);
 					}
 			| CURRENT_USER
 					{

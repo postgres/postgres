@@ -114,6 +114,7 @@ REVOKE [ ADMIN OPTION FOR ]
 
     [ GROUP ] <replaceable class="parameter">role_name</replaceable>
   | PUBLIC
+  | CURRENT_ROLE
   | CURRENT_USER
   | SESSION_USER
 </synopsis>

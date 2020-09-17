@@ -46,6 +46,7 @@ ALTER USER { <replaceable class="parameter">role_specification</replaceable> | A
 <phrase>where <replaceable class="parameter">role_specification</replaceable> can be:</phrase>
 
     <replaceable class="parameter">role_name</replaceable>
+  | CURRENT_ROLE
   | CURRENT_USER
   | SESSION_USER
 </synopsis>

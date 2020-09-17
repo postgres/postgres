@@ -31,7 +31,7 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> [ [ WITH ] <rep
 
 ALTER DATABASE <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 
-ALTER DATABASE <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER DATABASE <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 
 ALTER DATABASE <replaceable class="parameter">name</replaceable> SET TABLESPACE <replaceable class="parameter">new_tablespace</replaceable>
 

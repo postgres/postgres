@@ -82,7 +82,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     NO INHERIT <replaceable class="parameter">parent_table</replaceable>
     OF <replaceable class="parameter">type_name</replaceable>
     NOT OF
-    OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+    OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
     REPLICA IDENTITY { DEFAULT | USING INDEX <replaceable class="parameter">index_name</replaceable> | FULL | NOTHING }
 
 <phrase>and <replaceable class="parameter">partition_bound_spec</replaceable> is:</phrase>

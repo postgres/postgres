@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> DISABLE
 ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> ENABLE [ REPLICA | ALWAYS ]
-ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>

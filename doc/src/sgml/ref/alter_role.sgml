@@ -46,6 +46,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
 <phrase>where <replaceable class="parameter">role_specification</replaceable> can be:</phrase>
 
     <replaceable class="parameter">role_name</replaceable>
+  | CURRENT_ROLE
   | CURRENT_USER
   | SESSION_USER
 </synopsis>
@@ -134,6 +135,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
      </varlistentry>
 
      <varlistentry>
+      <term><literal>CURRENT_ROLE</literal></term>
       <term><literal>CURRENT_USER</literal></term>
       <listitem>
        <para>

@@ -29,6 +29,7 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">role_sp
 <phrase>where <replaceable class="parameter">role_specification</replaceable> can be:</phrase>
 
     <replaceable class="parameter">user_name</replaceable>
+  | CURRENT_ROLE
   | CURRENT_USER
   | SESSION_USER
 </synopsis>
