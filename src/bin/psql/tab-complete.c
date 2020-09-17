@@ -3293,6 +3293,17 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("FOREIGN SCHEMA");
 	else if (Matches("IMPORT", "FOREIGN"))
 		COMPLETE_WITH("SCHEMA");
+	else if (Matches("IMPORT", "FOREIGN", "SCHEMA", MatchAny))
+		COMPLETE_WITH("EXCEPT (", "FROM SERVER", "LIMIT TO (");
+	else if (TailMatches("LIMIT", "TO", "(*)") ||
+			 TailMatches("EXCEPT", "(*)"))
+		COMPLETE_WITH("FROM SERVER");
+	else if (TailMatches("FROM", "SERVER", MatchAny))
+		COMPLETE_WITH("INTO");
+	else if (TailMatches("FROM", "SERVER", MatchAny, "INTO"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
+	else if (TailMatches("FROM", "SERVER", MatchAny, "INTO", MatchAny))
+		COMPLETE_WITH("OPTIONS (");
 
 /* INSERT --- can be inside EXPLAIN, RULE, etc */
 	/* Complete INSERT with "INTO" */
