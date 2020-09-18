@@ -2013,12 +2013,10 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 					CommandId cid, int options)
 {
 	/*
-	 * Parallel operations are required to be strictly read-only in a parallel
-	 * worker.  Parallel inserts are not safe even in the leader in the
-	 * general case, because group locking means that heavyweight locks for
-	 * relation extension or GIN page locks will not conflict between members
-	 * of a lock group, but we don't prohibit that case here because there are
-	 * useful special cases that we can safely allow, such as CREATE TABLE AS.
+	 * To allow parallel inserts, we need to ensure that they are safe to be
+	 * performed in workers. We have the infrastructure to allow parallel
+	 * inserts in general except for the cases where inserts generate a new
+	 * CommandId (eg. inserts into a table having a foreign key column).
 	 */
 	if (IsParallelWorker())
 		ereport(ERROR,
@@ -5694,10 +5692,10 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
 	uint32		newlen;
 
 	/*
-	 * For now, parallel operations are required to be strictly read-only.
-	 * Unlike a regular update, this should never create a combo CID, so it
-	 * might be possible to relax this restriction, but not without more
-	 * thought and testing.  It's not clear that it would be useful, anyway.
+	 * For now, we don't allow parallel updates.  Unlike a regular update,
+	 * this should never create a combo CID, so it might be possible to relax
+	 * this restriction, but not without more thought and testing.  It's not
+	 * clear that it would be useful, anyway.
 	 */
 	if (IsInParallelMode())
 		ereport(ERROR,
