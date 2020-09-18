@@ -68,7 +68,6 @@ typedef struct HASHCTL
 	long		ssize;			/* segment size */
 	long		dsize;			/* (initial) directory size */
 	long		max_dsize;		/* limit to dsize if dir size is limited */
-	long		ffactor;		/* fill factor */
 	Size		keysize;		/* hash key length in bytes */
 	Size		entrysize;		/* total user element size in bytes */
 	HashValueFunc hash;			/* hash function */
@@ -83,7 +82,6 @@ typedef struct HASHCTL
 #define HASH_PARTITION	0x0001	/* Hashtable is used w/partitioned locking */
 #define HASH_SEGMENT	0x0002	/* Set segment size */
 #define HASH_DIRSIZE	0x0004	/* Set directory size (initial and max) */
-#define HASH_FFACTOR	0x0008	/* Set fill factor */
 #define HASH_ELEM		0x0010	/* Set keysize and entrysize */
 #define HASH_BLOBS		0x0020	/* Select support functions for binary keys */
 #define HASH_FUNCTION	0x0040	/* Set user defined hash function */

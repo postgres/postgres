@@ -122,7 +122,6 @@
 #define DEF_SEGSIZE			   256
 #define DEF_SEGSIZE_SHIFT	   8	/* must be log2(DEF_SEGSIZE) */
 #define DEF_DIRSIZE			   256
-#define DEF_FFACTOR			   1	/* default fill factor */
 
 /* Number of freelists to be used for a partitioned hash table. */
 #define NUM_FREELISTS			32
@@ -191,7 +190,6 @@ struct HASHHDR
 	Size		keysize;		/* hash key length in bytes */
 	Size		entrysize;		/* total user element size in bytes */
 	long		num_partitions; /* # partitions (must be power of 2), or 0 */
-	long		ffactor;		/* target fill factor */
 	long		max_dsize;		/* 'dsize' limit if directory is fixed size */
 	long		ssize;			/* segment size --- must be power of 2 */
 	int			sshift;			/* segment shift = log2(ssize) */
@@ -497,8 +495,6 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		/* ssize had better be a power of 2 */
 		Assert(hctl->ssize == (1L << hctl->sshift));
 	}
-	if (flags & HASH_FFACTOR)
-		hctl->ffactor = info->ffactor;
 
 	/*
 	 * SHM hash tables have fixed directory size passed by the caller.
@@ -603,8 +599,6 @@ hdefault(HTAB *hashp)
 
 	hctl->num_partitions = 0;	/* not partitioned */
 
-	hctl->ffactor = DEF_FFACTOR;
-
 	/* table has no fixed maximum size */
 	hctl->max_dsize = NO_MAX_DSIZE;
 
@@ -670,11 +664,10 @@ init_htab(HTAB *hashp, long nelem)
 			SpinLockInit(&(hctl->freeList[i].mutex));
 
 	/*
-	 * Divide number of elements by the fill factor to determine a desired
-	 * number of buckets.  Allocate space for the next greater power of two
-	 * number of buckets
+	 * Allocate space for the next greater power of two number of buckets,
+	 * assuming a desired maximum load factor of 1.
 	 */
-	nbuckets = next_pow2_int((nelem - 1) / hctl->ffactor + 1);
+	nbuckets = next_pow2_int(nelem);
 
 	/*
 	 * In a partitioned table, nbuckets must be at least equal to
@@ -733,7 +726,6 @@ init_htab(HTAB *hashp, long nelem)
 			"DIRECTORY SIZE  ", hctl->dsize,
 			"SEGMENT SIZE    ", hctl->ssize,
 			"SEGMENT SHIFT   ", hctl->sshift,
-			"FILL FACTOR     ", hctl->ffactor,
 			"MAX BUCKET      ", hctl->max_bucket,
 			"HIGH MASK       ", hctl->high_mask,
 			"LOW  MASK       ", hctl->low_mask,
@@ -761,7 +753,7 @@ hash_estimate_size(long num_entries, Size entrysize)
 				elementAllocCnt;
 
 	/* estimate number of buckets wanted */
-	nBuckets = next_pow2_long((num_entries - 1) / DEF_FFACTOR + 1);
+	nBuckets = next_pow2_long(num_entries);
 	/* # of segments needed for nBuckets */
 	nSegments = next_pow2_long((nBuckets - 1) / DEF_SEGSIZE + 1);
 	/* directory entries */
@@ -804,7 +796,7 @@ hash_select_dirsize(long num_entries)
 				nDirEntries;
 
 	/* estimate number of buckets wanted */
-	nBuckets = next_pow2_long((num_entries - 1) / DEF_FFACTOR + 1);
+	nBuckets = next_pow2_long(num_entries);
 	/* # of segments needed for nBuckets */
 	nSegments = next_pow2_long((nBuckets - 1) / DEF_SEGSIZE + 1);
 	/* directory entries */
@@ -975,7 +967,7 @@ hash_search_with_hash_value(HTAB *hashp,
 		 * order of these tests is to try to check cheaper conditions first.
 		 */
 		if (!IS_PARTITIONED(hctl) && !hashp->frozen &&
-			hctl->freeList[0].nentries / (long) (hctl->max_bucket + 1) >= hctl->ffactor &&
+			hctl->freeList[0].nentries > (long) (hctl->max_bucket + 1) &&
 			!has_seq_scans(hashp))
 			(void) expand_table(hashp);
 	}
