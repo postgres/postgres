@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION chkrolattr()
+CREATE FUNCTION chkrolattr()
  RETURNS TABLE ("role" name, rolekeyword text, canlogin bool, replication bool)
  AS $$
 SELECT r.rolname, v.keyword, r.rolcanlogin, r.rolreplication
@@ -13,10 +13,10 @@ SELECT r.rolname, v.keyword, r.rolcanlogin, r.rolreplication
              ('None', '-'))
       AS v(uname, keyword)
       ON (r.rolname = v.uname)
- ORDER BY 1;
+ ORDER BY 1, 2;
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION chksetconfig()
+CREATE FUNCTION chksetconfig()
  RETURNS TABLE (db name, "role" name, rolkeyword text, setconfig text[])
  AS $$
 SELECT COALESCE(d.datname, 'ALL'), COALESCE(r.rolname, 'ALL'),
@@ -33,14 +33,14 @@ SELECT COALESCE(d.datname, 'ALL'), COALESCE(r.rolname, 'ALL'),
 ORDER BY 1, 2;
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION chkumapping()
+CREATE FUNCTION chkumapping()
  RETURNS TABLE (umname name, umserver name, umoptions text[])
  AS $$
 SELECT r.rolname, s.srvname, m.umoptions
  FROM pg_user_mapping m
  LEFT JOIN pg_roles r ON (r.oid = m.umuser)
  JOIN pg_foreign_server s ON (s.oid = m.umserver)
- ORDER BY 2;
+ ORDER BY 2, 1;
 $$ LANGUAGE SQL;
 
 --
