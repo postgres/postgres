@@ -1496,21 +1496,25 @@ SELECT a AS value, b + c AS sum FROM ...
    </para>
 
    <para>
-    The <literal>AS</literal> keyword is optional, but only if the new column
-    name does not match any
-    <productname>PostgreSQL</productname> keyword (see <xref
-    linkend="sql-keywords-appendix"/>).  To avoid an accidental match to
-    a keyword, you can double-quote the column name.  For example,
-    <literal>VALUE</literal> is a keyword, so this does not work:
+    The <literal>AS</literal> key word is usually optional, but in some
+    cases where the desired column name matches a
+    <productname>PostgreSQL</productname> key word, you must write
+    <literal>AS</literal> or double-quote the column name in order to
+    avoid ambiguity.
+    (<xref linkend="sql-keywords-appendix"/> shows which key words
+    require <literal>AS</literal> to be used as a column label.)
+    For example, <literal>FROM</literal> is one such key word, so this
+    does not work:
 <programlisting>
-SELECT a value, b + c AS sum FROM ...
+SELECT a from, b + c AS sum FROM ...
 </programlisting>
-    but this does:
+    but either of these do:
 <programlisting>
-SELECT a "value", b + c AS sum FROM ...
+SELECT a AS from, b + c AS sum FROM ...
+SELECT a "from", b + c AS sum FROM ...
 </programlisting>
-    For protection against possible
-    future keyword additions, it is recommended that you always either
+    For greatest safety against possible
+    future key word additions, it is recommended that you always either
     write <literal>AS</literal> or double-quote the output column name.
    </para>
 

@@ -21,6 +21,28 @@ sub error
 	return;
 }
 
+# Check alphabetical order of a set of keyword symbols
+# (note these are NOT the actual keyword strings)
+sub check_alphabetical_order
+{
+	my ($listname, $list) = @_;
+	my $prevkword = '';
+
+	foreach my $kword (@$list)
+	{
+		# Some symbols have a _P suffix. Remove it for the comparison.
+		my $bare_kword = $kword;
+		$bare_kword =~ s/_P$//;
+		if ($bare_kword le $prevkword)
+		{
+			error
+			  "'$bare_kword' after '$prevkword' in $listname list is misplaced";
+		}
+		$prevkword = $bare_kword;
+	}
+	return;
+}
+
 $, = ' ';     # set output field separator
 $\ = "\n";    # set output record separator
 
@@ -33,9 +55,11 @@ $keyword_categories{'reserved_keyword'}       = 'RESERVED_KEYWORD';
 open(my $gram, '<', $gram_filename) || die("Could not open : $gram_filename");
 
 my $kcat;
+my $in_bare_labels;
 my $comment;
 my @arr;
 my %keywords;
+my @bare_label_keywords;
 
 line: while (my $S = <$gram>)
 {
@@ -51,7 +75,7 @@ line: while (my $S = <$gram>)
 	$s = '[/][*]', $S =~ s#$s# /* #g;
 	$s = '[*][/]', $S =~ s#$s# */ #g;
 
-	if (!($kcat))
+	if (!($kcat) && !($in_bare_labels))
 	{
 
 		# Is this the beginning of a keyword list?
@@ -63,6 +87,10 @@ line: while (my $S = <$gram>)
 				next line;
 			}
 		}
+
+		# Is this the beginning of the bare_label_keyword list?
+		$in_bare_labels = 1 if ($S =~ m/^bare_label_keyword:/);
+
 		next line;
 	}
 
@@ -97,7 +125,8 @@ line: while (my $S = <$gram>)
 		{
 
 			# end of keyword list
-			$kcat = '';
+			undef $kcat;
+			undef $in_bare_labels;
 			next;
 		}
 
@@ -107,31 +136,21 @@ line: while (my $S = <$gram>)
 		}
 
 		# Put this keyword into the right list
-		push @{ $keywords{$kcat} }, $arr[$fieldIndexer];
+		if ($in_bare_labels)
+		{
+			push @bare_label_keywords, $arr[$fieldIndexer];
+		}
+		else
+		{
+			push @{ $keywords{$kcat} }, $arr[$fieldIndexer];
+		}
 	}
 }
 close $gram;
 
 # Check that each keyword list is in alphabetical order (just for neatnik-ism)
-my ($prevkword, $bare_kword);
-foreach my $kcat (keys %keyword_categories)
-{
-	$prevkword = '';
-
-	foreach my $kword (@{ $keywords{$kcat} })
-	{
-
-		# Some keyword have a _P suffix. Remove it for the comparison.
-		$bare_kword = $kword;
-		$bare_kword =~ s/_P$//;
-		if ($bare_kword le $prevkword)
-		{
-			error
-			  "'$bare_kword' after '$prevkword' in $kcat list is misplaced";
-		}
-		$prevkword = $bare_kword;
-	}
-}
+check_alphabetical_order($_, $keywords{$_}) for (keys %keyword_categories);
+check_alphabetical_order('bare_label_keyword', \@bare_label_keywords);
 
 # Transform the keyword lists into hashes.
 # kwhashes is a hash of hashes, keyed by keyword category id,
@@ -147,6 +166,7 @@ while (my ($kcat, $kcat_id) = each(%keyword_categories))
 
 	$kwhashes{$kcat_id} = $hash;
 }
+my %bare_label_keywords = map { $_ => 1 } @bare_label_keywords;
 
 # Now read in kwlist.h
 
@@ -160,11 +180,12 @@ kwlist_line: while (<$kwlist>)
 {
 	my ($line) = $_;
 
-	if ($line =~ /^PG_KEYWORD\(\"(.*)\", (.*), (.*)\)/)
+	if ($line =~ /^PG_KEYWORD\(\"(.*)\", (.*), (.*), (.*)\)/)
 	{
 		my ($kwstring) = $1;
 		my ($kwname)   = $2;
 		my ($kwcat_id) = $3;
+		my ($collabel) = $4;
 
 		# Check that the list is in alphabetical order (critical!)
 		if ($kwstring le $prevkwstring)
@@ -197,7 +218,7 @@ kwlist_line: while (<$kwlist>)
 			  "keyword name '$kwname' doesn't match keyword string '$kwstring'";
 		}
 
-		# Check that the keyword is present in the grammar
+		# Check that the keyword is present in the right category list
 		%kwhash = %{ $kwhashes{$kwcat_id} };
 
 		if (!(%kwhash))
@@ -218,6 +239,29 @@ kwlist_line: while (<$kwlist>)
 				# that were not found in kwlist.h
 				delete $kwhashes{$kwcat_id}->{$kwname};
 			}
+		}
+
+		# Check that the keyword's collabel property matches gram.y
+		if ($collabel eq 'BARE_LABEL')
+		{
+			unless ($bare_label_keywords{$kwname})
+			{
+				error
+				  "'$kwname' is marked as BARE_LABEL in kwlist.h, but it is missing from gram.y's bare_label_keyword rule";
+			}
+		}
+		elsif ($collabel eq 'AS_LABEL')
+		{
+			if ($bare_label_keywords{$kwname})
+			{
+				error
+				  "'$kwname' is marked as AS_LABEL in kwlist.h, but it is listed in gram.y's bare_label_keyword rule";
+			}
+		}
+		else
+		{
+			error
+			  "'$collabel' not recognized in kwlist.h.  Expected either 'BARE_LABEL' or 'AS_LABEL'";
 		}
 	}
 }

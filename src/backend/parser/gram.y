@@ -540,14 +540,16 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <str>		Sconst comment_text notify_payload
 %type <str>		RoleId opt_boolean_or_string
 %type <list>	var_list
-%type <str>		ColId ColLabel var_name type_function_name param_name
+%type <str>		ColId ColLabel BareColLabel
 %type <str>		NonReservedWord NonReservedWord_or_Sconst
+%type <str>		var_name type_function_name param_name
 %type <str>		createdb_opt_name
 %type <node>	var_value zone_value
 %type <rolespec> auth_ident RoleSpec opt_granted_by
 
 %type <keyword> unreserved_keyword type_func_name_keyword
 %type <keyword> col_name_keyword reserved_keyword
+%type <keyword> bare_label_keyword
 
 %type <node>	TableConstraint TableLikeClause
 %type <ival>	TableLikeOptionList TableLikeOption
@@ -14658,11 +14660,7 @@ target_el:	a_expr AS ColLabel
 					$$->val = (Node *)$1;
 					$$->location = @1;
 				}
-			/*
-			 * We support omitting AS only for column labels that aren't
-			 * any known keyword.
-			 */
-			| a_expr IDENT
+			| a_expr BareColLabel
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $2;
@@ -15009,6 +15007,13 @@ ColLabel:	IDENT									{ $$ = $1; }
 			| col_name_keyword						{ $$ = pstrdup($1); }
 			| type_func_name_keyword				{ $$ = pstrdup($1); }
 			| reserved_keyword						{ $$ = pstrdup($1); }
+		;
+
+/* Bare column label --- names that can be column labels without writing "AS".
+ * This classification is orthogonal to the other keyword categories.
+ */
+BareColLabel:	IDENT								{ $$ = $1; }
+			| bare_label_keyword					{ $$ = pstrdup($1); }
 		;
 
 
@@ -15513,6 +15518,429 @@ reserved_keyword:
 			| WHERE
 			| WINDOW
 			| WITH
+		;
+
+/*
+ * While all keywords can be used as column labels when preceded by AS,
+ * not all of them can be used as a "bare" column label without AS.
+ * Those that can be used as a bare label must be listed here,
+ * in addition to appearing in one of the category lists above.
+ *
+ * Always add a new keyword to this list if possible.  Mark it BARE_LABEL
+ * in kwlist.h if it is included here, or AS_LABEL if it is not.
+ */
+bare_label_keyword:
+			  ABORT_P
+			| ABSOLUTE_P
+			| ACCESS
+			| ACTION
+			| ADD_P
+			| ADMIN
+			| AFTER
+			| AGGREGATE
+			| ALL
+			| ALSO
+			| ALTER
+			| ALWAYS
+			| ANALYSE
+			| ANALYZE
+			| AND
+			| ANY
+			| ASC
+			| ASSERTION
+			| ASSIGNMENT
+			| ASYMMETRIC
+			| AT
+			| ATTACH
+			| ATTRIBUTE
+			| AUTHORIZATION
+			| BACKWARD
+			| BEFORE
+			| BEGIN_P
+			| BETWEEN
+			| BIGINT
+			| BINARY
+			| BIT
+			| BOOLEAN_P
+			| BOTH
+			| BY
+			| CACHE
+			| CALL
+			| CALLED
+			| CASCADE
+			| CASCADED
+			| CASE
+			| CAST
+			| CATALOG_P
+			| CHAIN
+			| CHARACTERISTICS
+			| CHECK
+			| CHECKPOINT
+			| CLASS
+			| CLOSE
+			| CLUSTER
+			| COALESCE
+			| COLLATE
+			| COLLATION
+			| COLUMN
+			| COLUMNS
+			| COMMENT
+			| COMMENTS
+			| COMMIT
+			| COMMITTED
+			| CONCURRENTLY
+			| CONFIGURATION
+			| CONFLICT
+			| CONNECTION
+			| CONSTRAINT
+			| CONSTRAINTS
+			| CONTENT_P
+			| CONTINUE_P
+			| CONVERSION_P
+			| COPY
+			| COST
+			| CROSS
+			| CSV
+			| CUBE
+			| CURRENT_P
+			| CURRENT_CATALOG
+			| CURRENT_DATE
+			| CURRENT_ROLE
+			| CURRENT_SCHEMA
+			| CURRENT_TIME
+			| CURRENT_TIMESTAMP
+			| CURRENT_USER
+			| CURSOR
+			| CYCLE
+			| DATA_P
+			| DATABASE
+			| DEALLOCATE
+			| DEC
+			| DECIMAL_P
+			| DECLARE
+			| DEFAULT
+			| DEFAULTS
+			| DEFERRABLE
+			| DEFERRED
+			| DEFINER
+			| DELETE_P
+			| DELIMITER
+			| DELIMITERS
+			| DEPENDS
+			| DESC
+			| DETACH
+			| DICTIONARY
+			| DISABLE_P
+			| DISCARD
+			| DISTINCT
+			| DO
+			| DOCUMENT_P
+			| DOMAIN_P
+			| DOUBLE_P
+			| DROP
+			| EACH
+			| ELSE
+			| ENABLE_P
+			| ENCODING
+			| ENCRYPTED
+			| END_P
+			| ENUM_P
+			| ESCAPE
+			| EVENT
+			| EXCLUDE
+			| EXCLUDING
+			| EXCLUSIVE
+			| EXECUTE
+			| EXISTS
+			| EXPLAIN
+			| EXPRESSION
+			| EXTENSION
+			| EXTERNAL
+			| EXTRACT
+			| FALSE_P
+			| FAMILY
+			| FIRST_P
+			| FLOAT_P
+			| FOLLOWING
+			| FORCE
+			| FOREIGN
+			| FORWARD
+			| FREEZE
+			| FULL
+			| FUNCTION
+			| FUNCTIONS
+			| GENERATED
+			| GLOBAL
+			| GRANTED
+			| GREATEST
+			| GROUPING
+			| GROUPS
+			| HANDLER
+			| HEADER_P
+			| HOLD
+			| IDENTITY_P
+			| IF_P
+			| ILIKE
+			| IMMEDIATE
+			| IMMUTABLE
+			| IMPLICIT_P
+			| IMPORT_P
+			| IN_P
+			| INCLUDE
+			| INCLUDING
+			| INCREMENT
+			| INDEX
+			| INDEXES
+			| INHERIT
+			| INHERITS
+			| INITIALLY
+			| INLINE_P
+			| INNER_P
+			| INOUT
+			| INPUT_P
+			| INSENSITIVE
+			| INSERT
+			| INSTEAD
+			| INT_P
+			| INTEGER
+			| INTERVAL
+			| INVOKER
+			| IS
+			| ISOLATION
+			| JOIN
+			| KEY
+			| LABEL
+			| LANGUAGE
+			| LARGE_P
+			| LAST_P
+			| LATERAL_P
+			| LEADING
+			| LEAKPROOF
+			| LEAST
+			| LEFT
+			| LEVEL
+			| LIKE
+			| LISTEN
+			| LOAD
+			| LOCAL
+			| LOCALTIME
+			| LOCALTIMESTAMP
+			| LOCATION
+			| LOCK_P
+			| LOCKED
+			| LOGGED
+			| MAPPING
+			| MATCH
+			| MATERIALIZED
+			| MAXVALUE
+			| METHOD
+			| MINVALUE
+			| MODE
+			| MOVE
+			| NAME_P
+			| NAMES
+			| NATIONAL
+			| NATURAL
+			| NCHAR
+			| NEW
+			| NEXT
+			| NFC
+			| NFD
+			| NFKC
+			| NFKD
+			| NO
+			| NONE
+			| NORMALIZE
+			| NORMALIZED
+			| NOT
+			| NOTHING
+			| NOTIFY
+			| NOWAIT
+			| NULL_P
+			| NULLIF
+			| NULLS_P
+			| NUMERIC
+			| OBJECT_P
+			| OF
+			| OFF
+			| OIDS
+			| OLD
+			| ONLY
+			| OPERATOR
+			| OPTION
+			| OPTIONS
+			| OR
+			| ORDINALITY
+			| OTHERS
+			| OUT_P
+			| OUTER_P
+			| OVERLAY
+			| OVERRIDING
+			| OWNED
+			| OWNER
+			| PARALLEL
+			| PARSER
+			| PARTIAL
+			| PARTITION
+			| PASSING
+			| PASSWORD
+			| PLACING
+			| PLANS
+			| POLICY
+			| POSITION
+			| PRECEDING
+			| PREPARE
+			| PREPARED
+			| PRESERVE
+			| PRIMARY
+			| PRIOR
+			| PRIVILEGES
+			| PROCEDURAL
+			| PROCEDURE
+			| PROCEDURES
+			| PROGRAM
+			| PUBLICATION
+			| QUOTE
+			| RANGE
+			| READ
+			| REAL
+			| REASSIGN
+			| RECHECK
+			| RECURSIVE
+			| REF
+			| REFERENCES
+			| REFERENCING
+			| REFRESH
+			| REINDEX
+			| RELATIVE_P
+			| RELEASE
+			| RENAME
+			| REPEATABLE
+			| REPLACE
+			| REPLICA
+			| RESET
+			| RESTART
+			| RESTRICT
+			| RETURNS
+			| REVOKE
+			| RIGHT
+			| ROLE
+			| ROLLBACK
+			| ROLLUP
+			| ROUTINE
+			| ROUTINES
+			| ROW
+			| ROWS
+			| RULE
+			| SAVEPOINT
+			| SCHEMA
+			| SCHEMAS
+			| SCROLL
+			| SEARCH
+			| SECURITY
+			| SELECT
+			| SEQUENCE
+			| SEQUENCES
+			| SERIALIZABLE
+			| SERVER
+			| SESSION
+			| SESSION_USER
+			| SET
+			| SETOF
+			| SETS
+			| SHARE
+			| SHOW
+			| SIMILAR
+			| SIMPLE
+			| SKIP
+			| SMALLINT
+			| SNAPSHOT
+			| SOME
+			| SQL_P
+			| STABLE
+			| STANDALONE_P
+			| START
+			| STATEMENT
+			| STATISTICS
+			| STDIN
+			| STDOUT
+			| STORAGE
+			| STORED
+			| STRICT_P
+			| STRIP_P
+			| SUBSCRIPTION
+			| SUBSTRING
+			| SUPPORT
+			| SYMMETRIC
+			| SYSID
+			| SYSTEM_P
+			| TABLE
+			| TABLES
+			| TABLESAMPLE
+			| TABLESPACE
+			| TEMP
+			| TEMPLATE
+			| TEMPORARY
+			| TEXT_P
+			| THEN
+			| TIES
+			| TIME
+			| TIMESTAMP
+			| TRAILING
+			| TRANSACTION
+			| TRANSFORM
+			| TREAT
+			| TRIGGER
+			| TRIM
+			| TRUE_P
+			| TRUNCATE
+			| TRUSTED
+			| TYPE_P
+			| TYPES_P
+			| UESCAPE
+			| UNBOUNDED
+			| UNCOMMITTED
+			| UNENCRYPTED
+			| UNIQUE
+			| UNKNOWN
+			| UNLISTEN
+			| UNLOGGED
+			| UNTIL
+			| UPDATE
+			| USER
+			| USING
+			| VACUUM
+			| VALID
+			| VALIDATE
+			| VALIDATOR
+			| VALUE_P
+			| VALUES
+			| VARCHAR
+			| VARIADIC
+			| VERBOSE
+			| VERSION_P
+			| VIEW
+			| VIEWS
+			| VOLATILE
+			| WHEN
+			| WHITESPACE_P
+			| WORK
+			| WRAPPER
+			| WRITE
+			| XML_P
+			| XMLATTRIBUTES
+			| XMLCONCAT
+			| XMLELEMENT
+			| XMLEXISTS
+			| XMLFOREST
+			| XMLNAMESPACES
+			| XMLPARSE
+			| XMLPI
+			| XMLROOT
+			| XMLSERIALIZE
+			| XMLTABLE
+			| YES_P
+			| ZONE
 		;
 
 %%

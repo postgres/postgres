@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 #
-# Generate the keywords table file
+# Generate the keywords table for the documentation's SQL Key Words appendix
+#
 # Copyright (c) 2019-2020, PostgreSQL Global Development Group
 
 use strict;
@@ -11,8 +12,9 @@ my @sql_versions = reverse sort ('1992', '2011', '2016');
 my $srcdir = $ARGV[0];
 
 my %keywords;
+my %as_keywords;
 
-# read SQL keywords
+# read SQL-spec keywords
 
 foreach my $ver (@sql_versions)
 {
@@ -39,9 +41,10 @@ open my $fh, '<', "$srcdir/../../../src/include/parser/kwlist.h" or die;
 
 while (<$fh>)
 {
-	if (/^PG_KEYWORD\("(\w+)", \w+, (\w+)_KEYWORD\)/)
+	if (/^PG_KEYWORD\("(\w+)", \w+, (\w+)_KEYWORD\, (\w+)\)/)
 	{
 		$keywords{ uc $1 }{'pg'}{ lc $2 } = 1;
+		$as_keywords{ uc $1 } = 1 if $3 eq 'AS_LABEL';
 	}
 }
 
@@ -106,6 +109,10 @@ foreach my $word (sort keys %keywords)
 	elsif ($keywords{$word}{pg}{'reserved'})
 	{
 		print "reserved";
+	}
+	if ($as_keywords{$word})
+	{
+		print ", requires <literal>AS</literal>";
 	}
 	print "</entry>\n";
 

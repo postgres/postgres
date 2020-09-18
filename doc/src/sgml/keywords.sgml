@@ -32,11 +32,11 @@
  </para>
 
  <para>
-  In the <productname>PostgreSQL</productname> parser life is a bit
+  In the <productname>PostgreSQL</productname> parser, life is a bit
   more complicated. There are several different classes of tokens
   ranging from those that can never be used as an identifier to those
-  that have absolutely no special status in the parser as compared to
-  an ordinary identifier.  (The latter is usually the case for
+  that have absolutely no special status in the parser, but are considered
+  ordinary identifiers.  (The latter is usually the case for
   functions specified by SQL.)  Even reserved key words are not
   completely reserved in <productname>PostgreSQL</productname>, but
   can be used as column labels (for example, <literal>SELECT 55 AS
@@ -57,14 +57,24 @@
   <quote>reserved</quote> are those tokens that are not allowed as
   column or table names.  Some reserved key words are
   allowable as names for functions or data types; this is also shown in the
-  table.  If not so marked, a reserved key word is only allowed as an
-  <quote>AS</quote> column label name.
+  table.  If not so marked, a reserved key word is only allowed as a
+  column label.
+  A blank entry in this column means that the word is treated as an
+  ordinary identifier by <productname>PostgreSQL</productname>.
+ </para>
+
+ <para>
+  Furthermore, while most key words can be used as <quote>bare</quote>
+  column labels without writing <literal>AS</literal> before them (as
+  described in <xref linkend="queries-column-labels"/>), there are a few
+  that require a leading <literal>AS</literal> to avoid ambiguity.  These
+  are marked in the table as <quote>requires <literal>AS</literal></quote>.
  </para>
 
  <para>
   As a general rule, if you get spurious parser errors for commands
-  that contain any of the listed key words as an identifier you should
-  try to quote the identifier to see if the problem goes away.
+  that use any of the listed key words as an identifier, you should
+  try quoting the identifier to see if the problem goes away.
  </para>
 
  <para>

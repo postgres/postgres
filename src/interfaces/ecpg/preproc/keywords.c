@@ -29,7 +29,7 @@
 #include "preproc_extern.h"
 #include "preproc.h"
 
-#define PG_KEYWORD(kwname, value, category) value,
+#define PG_KEYWORD(kwname, value, category, collabel) value,
 
 const uint16 SQLScanKeywordTokens[] = {
 #include "parser/kwlist.h"

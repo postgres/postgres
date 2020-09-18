@@ -3683,10 +3683,11 @@
   prosrc => 'pg_get_function_arg_default' },
 
 { oid => '1686', descr => 'list of SQL keywords',
-  proname => 'pg_get_keywords', procost => '10', prorows => '400',
+  proname => 'pg_get_keywords', procost => '10', prorows => '500',
   proretset => 't', provolatile => 's', prorettype => 'record',
-  proargtypes => '', proallargtypes => '{text,char,text}',
-  proargmodes => '{o,o,o}', proargnames => '{word,catcode,catdesc}',
+  proargtypes => '', proallargtypes => '{text,char,bool,text,text}',
+  proargmodes => '{o,o,o,o,o}',
+  proargnames => '{word,catcode,barelabel,catdesc,baredesc}',
   prosrc => 'pg_get_keywords' },
 
 { oid => '2289', descr => 'convert generic options array to name/value table',

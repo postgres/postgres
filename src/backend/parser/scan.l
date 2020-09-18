@@ -73,7 +73,7 @@ bool		standard_conforming_strings = true;
  * callers need to pass it to scanner_init, if they are using the
  * standard keyword list ScanKeywords.
  */
-#define PG_KEYWORD(kwname, value, category) value,
+#define PG_KEYWORD(kwname, value, category, collabel) value,
 
 const uint16 ScanKeywordTokens[] = {
 #include "parser/kwlist.h"

@@ -22173,7 +22173,9 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
         <returnvalue>setof record</returnvalue>
         ( <parameter>word</parameter> <type>text</type>,
         <parameter>catcode</parameter> <type>"char"</type>,
-        <parameter>catdesc</parameter> <type>text</type> )
+        <parameter>barelabel</parameter> <type>boolean</type>,
+        <parameter>catdesc</parameter> <type>text</type>,
+        <parameter>baredesc</parameter> <type>text</type> )
        </para>
        <para>
         Returns a set of records describing the SQL keywords recognized by the
@@ -22183,8 +22185,15 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
         keyword, <literal>C</literal> for a keyword that can be a column
         name, <literal>T</literal> for a keyword that can be a type or
         function name, or <literal>R</literal> for a fully reserved keyword.
+        The <parameter>barelabel</parameter> column
+        contains <literal>true</literal> if the keyword can be used as
+        a <quote>bare</quote> column label in <command>SELECT</command> lists,
+        or <literal>false</literal> if it can only be used
+        after <literal>AS</literal>.
         The <parameter>catdesc</parameter> column contains a
-        possibly-localized string describing the category.
+        possibly-localized string describing the keyword's category.
+        The <parameter>baredesc</parameter> column contains a
+        possibly-localized string describing the keyword's column label status.
        </para></entry>
       </row>
 
