@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  * relation.c
- *	   PostgreSQL logical replication
+ *	   PostgreSQL logical replication relation mapping cache
  *
  * Copyright (c) 2016-2020, PostgreSQL Global Development Group
  *
@@ -8,8 +8,9 @@
  *	  src/backend/replication/logical/relation.c
  *
  * NOTES
- *	  This file contains helper functions for logical replication relation
- *	  mapping cache.
+ *	  Routines in this file mainly have to do with mapping the properties
+ *	  of local replication target relations to the properties of their
+ *	  remote counterpart.
  *
  *-------------------------------------------------------------------------
  */
