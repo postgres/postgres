@@ -963,11 +963,10 @@ hash_search_with_hash_value(HTAB *hashp,
 	{
 		/*
 		 * Can't split if running in partitioned mode, nor if frozen, nor if
-		 * table is the subject of any active hash_seq_search scans.  Strange
-		 * order of these tests is to try to check cheaper conditions first.
+		 * table is the subject of any active hash_seq_search scans.
 		 */
-		if (!IS_PARTITIONED(hctl) && !hashp->frozen &&
-			hctl->freeList[0].nentries > (long) (hctl->max_bucket + 1) &&
+		if (hctl->freeList[0].nentries > (long) hctl->max_bucket &&
+			!IS_PARTITIONED(hctl) && !hashp->frozen &&
 			!has_seq_scans(hashp))
 			(void) expand_table(hashp);
 	}
