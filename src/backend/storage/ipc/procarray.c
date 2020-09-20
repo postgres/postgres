@@ -1699,8 +1699,8 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 		 */
 		xmin = TransactionIdOlder(xmin, xid);
 
-        /* if neither is set, this proc doesn't influence the horizon */
-        if (!TransactionIdIsValid(xmin))
+		/* if neither is set, this proc doesn't influence the horizon */
+		if (!TransactionIdIsValid(xmin))
 			continue;
 
 		/*
