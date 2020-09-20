@@ -408,6 +408,7 @@ gist_indexsortbuild(GISTBuildState *state)
 	 * replaced with the real root page at the end.
 	 */
 	page = palloc0(BLCKSZ);
+	RelationOpenSmgr(state->indexrel);
 	smgrextend(state->indexrel->rd_smgr, MAIN_FORKNUM, GIST_ROOT_BLKNO,
 			   page, true);
 	state->pages_allocated++;
