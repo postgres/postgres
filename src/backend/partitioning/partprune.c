@@ -2427,7 +2427,7 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 		 * have either equality clauses or an IS NULL clause, so if a
 		 * partition key doesn't have an expression, it would be specified
 		 * in step_nullkeys.
- 		 */
+		 */
 		Assert(context->rel->part_scheme->strategy
 			   != PARTITION_STRATEGY_HASH ||
 			   list_length(step_exprs) + 2 + bms_num_members(step_nullkeys) ==
