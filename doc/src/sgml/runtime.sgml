@@ -2560,7 +2560,7 @@ openssl x509 -req -in server.csr -text -days 365 \
    <para>
     The <productname>PostgreSQL</productname> server will listen for both
     normal and <acronym>GSSAPI</acronym>-encrypted connections on the same TCP
-    port, and will negotiate with any connecting client on whether to
+    port, and will negotiate with any connecting client whether to
     use <acronym>GSSAPI</acronym> for encryption (and for authentication).  By
     default, this decision is up to the client (which means it can be
     downgraded by an attacker); see <xref linkend="auth-pg-hba-conf"/> about

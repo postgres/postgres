@@ -1226,7 +1226,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>connect_timeout</literal></term>
       <listitem>
       <para>
-       Maximum wait for connection, in seconds (write as a decimal integer,
+       Maximum time to wait while connecting, in seconds (write as a decimal integer,
        e.g., <literal>10</literal>).  Zero, negative, or not specified means
        wait indefinitely.  The minimum allowed timeout is 2 seconds, therefore
        a value of <literal>1</literal> is interpreted as <literal>2</literal>.

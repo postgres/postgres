@@ -3760,7 +3760,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         servers or streaming base backup clients (i.e., the maximum number of
         simultaneously running WAL sender processes). The default is
         <literal>10</literal>.  The value <literal>0</literal> means
-        replication is disabled.  Abrupt streaming client disconnection might
+        replication is disabled.  Abrupt disconnection of a streaming client might
         leave an orphaned connection slot behind until a timeout is reached,
         so this parameter should be set slightly higher than the maximum
         number of expected clients so disconnected clients can immediately
@@ -3849,9 +3849,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         slots</link> are allowed to retain in the <filename>pg_wal</filename>
         directory at checkpoint time.
         If <varname>max_slot_wal_keep_size</varname> is -1 (the default),
-        replication slots retain unlimited amount of WAL files.  If
-        restart_lsn of a replication slot gets behind more than that megabytes
-        from the current LSN, the standby using the slot may no longer be able
+        replication slots may retain an unlimited amount of WAL files.  Otherwise, if
+        restart_lsn of a replication slot falls behind the current LSN by more
+        than the given size, the standby using the slot may no longer be able
         to continue replication due to removal of required WAL files. You
         can see the WAL availability of replication slots
         in <link linkend="view-pg-replication-slots">pg_replication_slots</link>.
@@ -6788,9 +6788,9 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
       </term>
       <listitem>
        <para>
-        If greater than zero, each bind parameter value reported in
-        non-error statement-logging messages is trimmed to this many bytes.
-        Zero disables logging bind parameters with statements.
+        If greater than zero, each bind parameter value logged with a
+        non-error statement-logging message is trimmed to this many bytes.
+        Zero disables logging of bind parameters for non-error statement logs.
         <literal>-1</literal> (the default) allows bind parameters to be
         logged in full.
         If this value is specified without units, it is taken as bytes.
@@ -8164,10 +8164,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         a regular <command>VACUUM</command> in that it visits every page that might
         contain unfrozen XIDs or MXIDs, not just those that might contain dead
         tuples.  The default is 150 million transactions.  Although users can
-        set this value anywhere from zero to two billions, <command>VACUUM</command>
+        set this value anywhere from zero to two billion, <command>VACUUM</command>
         will silently limit the effective value to 95% of
         <xref linkend="guc-autovacuum-freeze-max-age"/>, so that a
-        periodical manual <command>VACUUM</command> has a chance to run before an
+        periodic manual <command>VACUUM</command> has a chance to run before an
         anti-wraparound autovacuum is launched for the table. For more
         information see
         <xref linkend="vacuum-for-wraparound"/>.
@@ -8211,10 +8211,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         a regular <command>VACUUM</command> in that it visits every page that might
         contain unfrozen XIDs or MXIDs, not just those that might contain dead
         tuples.  The default is 150 million multixacts.
-        Although users can set this value anywhere from zero to two billions,
+        Although users can set this value anywhere from zero to two billion,
         <command>VACUUM</command> will silently limit the effective value to 95% of
         <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>, so that a
-        periodical manual <command>VACUUM</command> has a chance to run before an
+        periodic manual <command>VACUUM</command> has a chance to run before an
         anti-wraparound is launched for the table.
         For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
        </para>

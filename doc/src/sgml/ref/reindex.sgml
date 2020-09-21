@@ -248,7 +248,7 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
   <para>
    Reindexing a single index or table requires being the owner of that
    index or table.  Reindexing a schema or database requires being the
-   owner of that schema or database.  Note that is therefore sometimes
+   owner of that schema or database.  Note specifically that it's thus
    possible for non-superusers to rebuild indexes of tables owned by
    other users.  However, as a special exception, when
    <command>REINDEX DATABASE</command>, <command>REINDEX SCHEMA</command>

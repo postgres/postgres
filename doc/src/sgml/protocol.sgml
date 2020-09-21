@@ -2587,7 +2587,7 @@ The commands accepted in replication mode are:
           and sent along with the backup.  The manifest is a list of every
           file present in the backup with the exception of any WAL files that
           may be included. It also stores the size, last modification time, and
-          an optional checksum for each file.
+          optionally a checksum for each file.
           A value of <literal>force-encode</literal> forces all filenames
           to be hex-encoded; otherwise, this type of encoding is performed only
           for files whose names are non-UTF8 octet sequences.
@@ -2603,7 +2603,7 @@ The commands accepted in replication mode are:
         <term><literal>MANIFEST_CHECKSUMS</literal> <replaceable>checksum_algorithm</replaceable></term>
         <listitem>
          <para>
-          Specifies the algorithm that should be applied to each file included
+          Specifies the checksum algorithm that should be applied to each file included
           in the backup manifest. Currently, the available
           algorithms are <literal>NONE</literal>, <literal>CRC32C</literal>,
           <literal>SHA224</literal>, <literal>SHA256</literal>,

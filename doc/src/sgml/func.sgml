@@ -15587,11 +15587,11 @@ table2-mapping
         <literal>'use_json_null'</literal>.
        </para>
        <para>
-        <literal>jsonb_set_lax('[{"f1":1,"f2":null},2,null,3]', '{0,f1}',null)</literal>
+        <literal>jsonb_set_lax('[{"f1":1,"f2":null},2,null,3]', '{0,f1}', null)</literal>
         <returnvalue>[{"f1":null,"f2":null},2,null,3]</returnvalue>
        </para>
        <para>
-        <literal>jsonb_set_lax('[{"f1":99,"f2":null},2]', '{0,f3}',null, true, 'return_target')</literal>
+        <literal>jsonb_set_lax('[{"f1":99,"f2":null},2]', '{0,f3}', null, true, 'return_target')</literal>
         <returnvalue>[{"f1": 99, "f2": null}, 2]</returnvalue>
        </para></entry>
       </row>

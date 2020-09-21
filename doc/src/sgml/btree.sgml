@@ -642,7 +642,7 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
   </para>
   <para>
    Deduplication works by periodically merging groups of duplicate
-   tuples together, forming a single posting list tuple for each
+   tuples together, forming a single <firstterm>posting list</firstterm> tuple for each
    group.  The column key value(s) only appear once in this
    representation.  This is followed by a sorted array of
    <acronym>TID</acronym>s that point to rows in the table.  This

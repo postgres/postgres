@@ -321,7 +321,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Run the dump in parallel by dumping <replaceable class="parameter">njobs</replaceable>
-        tables simultaneously. This option reduces the time of the dump but it also
+        tables simultaneously. This option may reduce the time needed to perform the dump but it also
         increases the load on the database server. You can only use this option with the
         directory output format because this is the only output format where multiple processes
         can write their data at the same time.

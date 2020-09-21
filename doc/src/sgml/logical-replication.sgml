@@ -403,7 +403,7 @@
    <listitem>
     <para>
      Replication is only supported by tables, including partitioned tables.
-     Attempts to replicate other types of relations such as views, materialized
+     Attempts to replicate other types of relations, such as views, materialized
      views, or foreign tables, will result in an error.
     </para>
    </listitem>
