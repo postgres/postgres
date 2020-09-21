@@ -6,8 +6,8 @@
 # src/backend/parser/check_keywords.pl
 # Copyright (c) 2009-2020, PostgreSQL Global Development Group
 
-use warnings;
 use strict;
+use warnings;
 
 my $gram_filename   = $ARGV[0];
 my $kwlist_filename = $ARGV[1];
