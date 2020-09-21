@@ -762,16 +762,28 @@ Author: David Rowley <drowley@postgresql.org>
 -->
 
        <para>
-        Allow inserts, not only updates and deletes, to
-        trigger <link linkend="autovacuum">autovacuum</link> activity
+        Allow inserts, not only updates and deletes, to trigger vacuuming
+        activity in <link linkend="autovacuum">autovacuum</link>
         (Laurenz Albe, Darafei Praliaskouski)
        </para>
 
        <para>
-        This new behavior reduces the work that will be necessary later
-        when the table needs to be frozen, and it allows pages to be
-        marked as all-visible sooner.  All-visible pages allow index-only
-        scans to access fewer heap rows.
+        Previously, insert-only activity would trigger auto-analyze but
+        not auto-vacuum, on the grounds that there could not be any dead
+        tuples to remove.  However, a vacuum scan has other useful
+        side-effects such as setting page-all-visible bits, which improves
+        the efficiency of index-only scans.  Also, allowing an insert-only
+        table to receive periodic vacuuming helps to spread out the work
+        of <quote>freezing</quote> old tuples, so that there is not
+        suddenly a large amount of freezing work to do when the entire
+        table reaches the anti-wraparound threshold all at once.
+       </para>
+
+       <para>
+        If necessary, this behavior can be adjusted with the new
+        parameters <xref linkend="guc-autovacuum-vacuum-insert-threshold"/>
+        and <xref linkend="guc-autovacuum-vacuum-insert-scale-factor"/>, or
+        the equivalent table storage options.
        </para>
       </listitem>
 
@@ -782,8 +794,8 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
        <para>
-        Add <xref linkend="guc-maintenance-io-concurrency"/> to control I/O
-        concurrency for maintenance operations (Thomas Munro)
+        Add <xref linkend="guc-maintenance-io-concurrency"/> parameter to
+        control I/O concurrency for maintenance operations (Thomas Munro)
        </para>
       </listitem>
 
