@@ -115,7 +115,8 @@ swapfunc(SortTuple *a, SortTuple *b, size_t n)
 {
 	do
 	{
-		SortTuple 	t = *a;
+		SortTuple	t = *a;
+
 		*a++ = *b;
 		*b++ = t;
 	} while (--n > 0);
@@ -143,9 +144,9 @@ med3_$SUFFIX(SortTuple *a, SortTuple *b, SortTuple *c$EXTRAARGS)
 {
 	return cmp_$SUFFIX(a, b$CMPPARAMS) < 0 ?
 		(cmp_$SUFFIX(b, c$CMPPARAMS) < 0 ? b :
-			(cmp_$SUFFIX(a, c$CMPPARAMS) < 0 ? c : a))
+		 (cmp_$SUFFIX(a, c$CMPPARAMS) < 0 ? c : a))
 		: (cmp_$SUFFIX(b, c$CMPPARAMS) > 0 ? b :
-			(cmp_$SUFFIX(a, c$CMPPARAMS) < 0 ? a : c));
+		   (cmp_$SUFFIX(a, c$CMPPARAMS) < 0 ? a : c));
 }
 
 static void

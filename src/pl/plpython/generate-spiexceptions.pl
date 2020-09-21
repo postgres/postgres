@@ -37,8 +37,8 @@ while (<$errcodes>)
 	# Change some_error_condition to SomeErrorCondition
 	$condition_name =~ s/([a-z])([^_]*)(?:_|$)/\u$1$2/g;
 
-	print "{ \"spiexceptions.$condition_name\", "
-	  . "\"$condition_name\", $errcode_macro },\n";
+	print "\n{\n\t\"spiexceptions.$condition_name\", "
+	  . "\"$condition_name\", $errcode_macro\n},\n";
 }
 
 close $errcodes;

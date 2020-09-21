@@ -34,7 +34,7 @@ while (<$errcodes>)
 	# Skip lines without PL/pgSQL condition names
 	next unless defined($condition_name);
 
-	print "{\n\t\"$condition_name\", $errcode_macro\n},\n\n";
+	print "\n{\n\t\"$condition_name\", $errcode_macro\n},\n";
 }
 
 close $errcodes;
