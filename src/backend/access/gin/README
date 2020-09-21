@@ -413,7 +413,7 @@ leftmost leaf of the tree.
 Deletion algorithm keeps exclusive locks on left siblings of pages comprising
 currently investigated path.  Thus, if current page is to be removed, all
 required pages to remove both downlink and rightlink are already locked.  That
-evades potential right to left page locking order, which could deadlock with
+avoids potential right to left page locking order, which could deadlock with
 concurrent stepping right.
 
 A search concurrent to page deletion might already have read a pointer to the

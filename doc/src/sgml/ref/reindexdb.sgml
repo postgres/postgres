@@ -174,8 +174,8 @@ PostgreSQL documentation
        <para>
         Execute the reindex commands in parallel by running
         <replaceable class="parameter">njobs</replaceable>
-        commands simultaneously.  This option reduces the time of the
-        processing but it also increases the load on the database server.
+        commands simultaneously.  This option may reduce the processing time
+        but it also increases the load on the database server.
        </para>
        <para>
         <application>reindexdb</application> will open

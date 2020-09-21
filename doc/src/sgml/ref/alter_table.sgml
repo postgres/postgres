@@ -669,7 +669,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       When applied to a partitioned table, nothing is moved, but any
       partitions created afterwards with
       <command>CREATE TABLE PARTITION OF</command> will use that tablespace,
-      unless the <literal>TABLESPACE</literal> clause is used to override it.
+      unless overridden by a <literal>TABLESPACE</literal> clause.
      </para>
 
      <para>

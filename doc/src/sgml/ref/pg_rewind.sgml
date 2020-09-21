@@ -211,7 +211,7 @@ PostgreSQL documentation
         <command>pg_rewind</command> to return without waiting, which is
         faster, but means that a subsequent operating system crash can leave
         the synchronized data directory corrupt.  Generally, this option is
-        useful for testing but should not be used when creating a production
+        useful for testing but should not be used on a production
         installation.
        </para>
       </listitem>
@@ -322,7 +322,7 @@ GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, b
   <para>
    When executing <application>pg_rewind</application> using an online
    cluster as source which has been recently promoted, it is necessary
-   to execute a <command>CHECKPOINT</command> after promotion so as its
+   to execute a <command>CHECKPOINT</command> after promotion such that its
    control file reflects up-to-date timeline information, which is used by
    <application>pg_rewind</application> to check if the target cluster
    can be rewound using the designated source cluster.

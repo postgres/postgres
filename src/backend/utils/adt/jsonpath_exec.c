@@ -35,7 +35,7 @@
  * executeItemOptUnwrapTarget() function have 'unwrap' argument, which indicates
  * whether unwrapping of array is needed.  When unwrap == true, each of array
  * members is passed to executeItemOptUnwrapTarget() again but with unwrap == false
- * in order to evade subsequent array unwrapping.
+ * in order to avoid subsequent array unwrapping.
  *
  * All boolean expressions (predicates) are evaluated by executeBoolItem()
  * function, which returns tri-state JsonPathBool.  When error is occurred

@@ -3992,7 +3992,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      Before running the <command>ATTACH PARTITION</command> command, it is
      recommended to create a <literal>CHECK</literal> constraint on the table to
      be attached matching the desired partition constraint. That way,
-     the system will be able to skip the scan to validate the implicit
+     the system will be able to skip the scan which is otherwise needed to validate the implicit
      partition constraint. Without the <literal>CHECK</literal> constraint,
      the table will be scanned to validate the partition constraint while
      holding an <literal>ACCESS EXCLUSIVE</literal> lock on that partition

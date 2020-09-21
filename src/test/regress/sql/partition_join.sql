@@ -1090,7 +1090,7 @@ ANALYZE plt3_adv;
 -- This tests that when merging partitions from plt1_adv and plt2_adv in
 -- merge_list_bounds(), process_outer_partition() returns an already-assigned
 -- merged partition when re-called with plt1_adv_p1 for the second list value
--- '0001' of that partitin
+-- '0001' of that partition
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.a, t2.c, t3.a, t3.c FROM (plt1_adv t1 LEFT JOIN plt2_adv t2 ON (t1.c = t2.c)) FULL JOIN plt3_adv t3 ON (t1.c = t3.c) WHERE coalesce(t1.a, 0) % 5 != 3 AND coalesce(t1.a, 0) % 5 != 4 ORDER BY t1.c, t1.a, t2.a, t3.a;
 SELECT t1.a, t1.c, t2.a, t2.c, t3.a, t3.c FROM (plt1_adv t1 LEFT JOIN plt2_adv t2 ON (t1.c = t2.c)) FULL JOIN plt3_adv t3 ON (t1.c = t3.c) WHERE coalesce(t1.a, 0) % 5 != 3 AND coalesce(t1.a, 0) % 5 != 4 ORDER BY t1.c, t1.a, t2.a, t3.a;

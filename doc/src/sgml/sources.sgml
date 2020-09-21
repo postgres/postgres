@@ -518,7 +518,7 @@ Hint:       the addendum
    <title>Use of Quotes</title>
 
    <para>
-    Use quotes always to delimit file names, user-supplied identifiers, and
+    Always use quotes to delimit file names, user-supplied identifiers, and
     other variables that might contain words.  Do not use them to mark up
     variables that will not contain words (for example, operator names).
    </para>
