@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-09-13 10:45+0000\n"
-"PO-Revision-Date: 2019-09-29 22:26-0300\n"
+"PO-Revision-Date: 2020-09-18 18:34-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -274,7 +274,7 @@ msgid "fatal\n"
 msgstr "fatal\n"
 
 #: check.c:887
-#, fuzzy, c-format
+#, c-format
 #| msgid ""
 #| "Your installation contains the \"unknown\" data type in user tables.  This\n"
 #| "data type is no longer allowed in tables, so this cluster cannot currently\n"
@@ -292,10 +292,12 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene el tipo «unknown» en tablas de usuario. Este tipo\n"
-"ya no es permitido en tablas, por lo que este clúster no puede ser actualizado.\n"
-"Puede elimiar las tablas y reiniciar la actualización.\n"
-"Un listado de columnas problemáticas está en el archivo:\n"
+"Su instalación contiene funciones de «contrib/isn» que usan el tip de dato\n"
+"bigint.  Sus clústers nuevo y antiguo pasar el tipo bigint de distinta forma,\n"
+"por lo que este clúster no puede ser actualizado.\n"
+"Puede hacer un volcado (dump) de las bases de datos que usan «contrib/isn»,\n"
+"eliminarlas, hacer el upgrade, y luego restaurarlas.\n"
+"Un listado de funciones problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
 
@@ -314,6 +316,12 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
+"Su instalación contiene tablas declaradas WITH OIDS, que ya no está\n"
+"soportado. Considere eliminar la columna oid usando\n"
+"    ALTER TABLE ... SET WITHOUT OIDS;\n"
+"Una lista de tablas con este problema aparece en el archivo:\n"
+"    %s\n"
+"\n"
 
 #: check.c:996
 #, c-format
@@ -321,7 +329,7 @@ msgid "Checking for reg* data types in user tables"
 msgstr "Verificando tipos de datos reg* en datos de usuario"
 
 #: check.c:1077
-#, fuzzy, c-format
+#, c-format
 #| msgid ""
 #| "Your installation contains the \"unknown\" data type in user tables.  This\n"
 #| "data type is no longer allowed in tables, so this cluster cannot currently\n"
@@ -338,9 +346,10 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene el tipo «unknown» en tablas de usuario. Este tipo\n"
-"ya no es permitido en tablas, por lo que este clúster no puede ser actualizado.\n"
-"Puede elimiar las tablas y reiniciar la actualización.\n"
+"Su instalación contiene uno de los tipos reg* en tablas de usuario. Estos tipos\n"
+"de dato hacen referencia a OIDs de sistema que no son preservados por pg_upgrade,\n"
+"por lo que este clúster no puede ser actualizado.\n"
+"Puede eliminar las tablas y reiniciar la actualización.\n"
 "Un listado de columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
@@ -351,7 +360,7 @@ msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "Verificando datos de usuario en tipo «jsonb» incompatible"
 
 #: check.c:1168
-#, fuzzy, c-format
+#, c-format
 #| msgid ""
 #| "Your installation contains the \"unknown\" data type in user tables.  This\n"
 #| "data type is no longer allowed in tables, so this cluster cannot currently\n"
@@ -368,9 +377,10 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene el tipo «unknown» en tablas de usuario. Este tipo\n"
-"ya no es permitido en tablas, por lo que este clúster no puede ser actualizado.\n"
-"Puede elimiar las tablas y reiniciar la actualización.\n"
+"Su instalación contiene el tipo «jsonb» en tablas de usuario. Este tipo\n"
+"El formato interno de «jsonb» cambió durante 9.4 beta, por lo que este clúster\n"
+"no puede ser actualizado.\n"
+"Puede eliminar las tablas y reiniciar la actualización.\n"
 "Un listado de columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
@@ -887,8 +897,9 @@ msgstr ""
 "La versión del esquema «public» de esta función fue creada por una\n"
 "instalación pre-8.1 de plpython, y debe eliminarse para que pg_upgrade\n"
 "pueda completar puesto que hace referencia a un archivo objeto compartido\n"
-"«plpython» ahora obsoleto.  Puede eliminar la versión del esquema «public»\n"
-"de esta función ejecutando la siguiente orden:\n"
+"«plpython» ahora obsoleto.\n"
+"Puede eliminar la versión del esquema «public» de esta función ejecutando\n"
+"la siguiente orden:\n"
 "\n"
 "    DROP FUNCTION public.plpython_call_handler()\n"
 "\n"
@@ -916,10 +927,10 @@ msgid "could not load library \"%s\": %s"
 msgstr "no se pudo cargar la biblioteca «%s»: %s"
 
 #: function.c:253
-#, fuzzy, c-format
+#, c-format
 #| msgid "Database: %s\n"
 msgid "In database: %s\n"
-msgstr "Base de datos: %s\n"
+msgstr "En la base de datos: %s\n"
 
 #: function.c:263
 #, c-format
@@ -1050,10 +1061,10 @@ msgid "Try \"%s --help\" for more information.\n"
 msgstr "Pruebe «%s --help» para mayor información.\n"
 
 #: option.c:214
-#, fuzzy, c-format
+#, c-format
 #| msgid "too many command-line arguments (first is \"%s\")"
 msgid "too many command-line arguments (first is \"%s\")\n"
-msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)"
+msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)\n"
 
 #: option.c:220
 #, c-format
@@ -1129,6 +1140,8 @@ msgid ""
 "  -B, --new-bindir=BINDIR       new cluster executable directory (default\n"
 "                                same directory as pg_upgrade)\n"
 msgstr ""
+"  -B, --new-bindir=BINDIR    directorio de ejecutables del clúster nuevo\n"
+"                             (por omisión el mismo directorio que pg_upgrade)\n"
 
 #: option.c:295
 #, c-format
@@ -1146,7 +1159,7 @@ msgid "  -D, --new-datadir=DATADIR     new cluster data directory\n"
 msgstr "  -D, --new-datadir=DATADIR     directorio de datos del clúster nuevo\n"
 
 #: option.c:298
-#, fuzzy, c-format
+#, c-format
 #| msgid "  -j, --jobs=NUM               use this many parallel jobs to restore\n"
 msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
 msgstr "  -j, --jobs=NUM               máximo de procesos paralelos para restaurar\n"
@@ -1556,16 +1569,16 @@ msgstr ""
 "%s"
 
 #: server.c:167
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not open server file \"%s\": %m"
 msgid "could not open version file \"%s\": %m\n"
-msgstr "no se pudo abrir el archivo de servidor «%s»: %m"
+msgstr "no se pudo abrir el archivo de versión «%s»: %m\n"
 
 #: server.c:171
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not parse contents of file \"%s\""
 msgid "could not parse version file \"%s\"\n"
-msgstr "no se pudo interpretar el contenido del archivo «%s»"
+msgstr "no se pudo interpretar el archivo de versión «%s»\n"
 
 #: server.c:297
 #, c-format
@@ -1741,7 +1754,7 @@ msgid ""
 msgstr ""
 "Su instalación contiene el tipo «unknown» en tablas de usuario. Este tipo\n"
 "ya no es permitido en tablas, por lo que este clúster no puede ser actualizado.\n"
-"Puede elimiar las tablas y reiniciar la actualización.\n"
+"Puede eliminar las tablas y reiniciar la actualización.\n"
 "Un listado de columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
@@ -1790,13 +1803,13 @@ msgstr ""
 "\n"
 
 #: version.c:418
-#, fuzzy, c-format
+#, c-format
 #| msgid "Checking for invalid \"unknown\" user columns"
 msgid "Checking for invalid \"sql_identifier\" user columns"
-msgstr "Verificando columnas de usuario del tipo no válido «unknown»"
+msgstr "Verificando columnas de usuario del tipo «sql_identifier»"
 
 #: version.c:426
-#, fuzzy, c-format
+#, c-format
 #| msgid ""
 #| "Your installation contains the \"unknown\" data type in user tables.  This\n"
 #| "data type is no longer allowed in tables, so this cluster cannot currently\n"
@@ -1813,9 +1826,11 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene el tipo «unknown» en tablas de usuario. Este tipo\n"
-"ya no es permitido en tablas, por lo que este clúster no puede ser actualizado.\n"
-"Puede elimiar las tablas y reiniciar la actualización.\n"
+"Su instalación contiene el tipo «sql_identifier» en tablas de usuario y/o índices.\n"
+"Este tipo ya no es permitido en tablas, por lo que este clúster no puede ser\n"
+"actualizado.\n"
+"Puede eliminar las tablas o cambiar el tipo a «name» y reiniciar la\n"
+"actualización.\n"
 "Un listado de columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"

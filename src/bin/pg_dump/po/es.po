@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-13 10:46+0000\n"
-"PO-Revision-Date: 2020-09-12 23:12-0300\n"
+"POT-Creation-Date: 2020-09-13 13:46+0000\n"
+"PO-Revision-Date: 2020-09-14 12:57-0300\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: BlackCAT 1.0\n"
+"X-Generator: Poedit 2.3\n"
 
 #: ../../../src/common/logging.c:236
 #, c-format
@@ -900,7 +900,7 @@ msgstr "error durante el posicionamiento (seek) en el archivo: %m"
 #: pg_backup_custom.c:480
 #, c-format
 msgid "data block %d has wrong seek position"
-msgstr ""
+msgstr "el bloque de datos %d tiene una posición de búsqueda incorrecta"
 
 #: pg_backup_custom.c:497
 #, c-format
@@ -2706,9 +2706,3 @@ msgstr ""
 "\n"
 "Si no se especifica un archivo de entrada, se usa la entrada estándar.\n"
 "\n"
-
-#~ msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to lack of data offsets in archive"
-#~ msgstr "no se pudo encontrar el bloque con ID %d en archivo -- posiblemente debido a una petición de restauración fuera de orden, la que no puede ser satisfecha debido a la falta de información de posicionamiento en el archivo"
-
-#~ msgid "ftell mismatch with expected position -- ftell used"
-#~ msgstr "ftell no coincide con la posición esperada -- se usó ftell"

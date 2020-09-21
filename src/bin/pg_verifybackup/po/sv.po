@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-09 08:44+0000\n"
-"PO-Revision-Date: 2020-05-09 13:50+0200\n"
+"POT-Creation-Date: 2020-09-16 05:14+0000\n"
+"PO-Revision-Date: 2020-09-16 07:55+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -147,7 +147,7 @@ msgid "expected version indicator"
 msgstr "förväntade en versionsindikator"
 
 #: parse_manifest.c:328
-msgid "unknown toplevel field"
+msgid "unrecognized top-level field"
 msgstr "okänt toppnivåfält"
 
 #: parse_manifest.c:347
@@ -155,8 +155,8 @@ msgid "unexpected file field"
 msgstr "oväntat filfält"
 
 #: parse_manifest.c:361
-msgid "unexpected wal range field"
-msgstr "oväntat wal-intervall-fält"
+msgid "unexpected WAL range field"
+msgstr "oväntat WAL-intervall-fält"
 
 #: parse_manifest.c:367
 msgid "unexpected object field"
@@ -171,11 +171,11 @@ msgid "unexpected scalar"
 msgstr "oväntad skalar"
 
 #: parse_manifest.c:472
-msgid "missing pathname"
+msgid "missing path name"
 msgstr "saknas sökväg"
 
 #: parse_manifest.c:475
-msgid "both pathname and encoded pathname"
+msgid "both path name and encoded path name"
 msgstr "både sökväg och kodad sökväg"
 
 #: parse_manifest.c:477
@@ -187,8 +187,8 @@ msgid "checksum without algorithm"
 msgstr "checksumma utan algoritm"
 
 #: parse_manifest.c:494
-msgid "unable to decode filename"
-msgstr "kan inte avkoda filnamn"
+msgid "could not decode file name"
+msgstr "kunde inte avkoda filnamn"
 
 #: parse_manifest.c:504
 msgid "file size is not an integer"
@@ -221,12 +221,12 @@ msgid "timeline is not an integer"
 msgstr "tidslinje är inte ett heltal"
 
 #: parse_manifest.c:585
-msgid "unable to parse start LSN"
-msgstr "kan inte parsa start-LSN"
+msgid "could not parse start LSN"
+msgstr "kunde inte parsa start-LSN"
 
 #: parse_manifest.c:588
-msgid "unable to parse end LSN"
-msgstr "kan inte parsa slut-LSN"
+msgid "could not parse end LSN"
+msgstr "kunde inte parsa slut-LSN"
 
 #: parse_manifest.c:649
 msgid "expected at least 2 lines"
@@ -298,7 +298,7 @@ msgstr ""
 msgid "backup successfully verified\n"
 msgstr "korrekt verifierad backup\n"
 
-#: pg_verifybackup.c:387 pg_verifybackup.c:724
+#: pg_verifybackup.c:387 pg_verifybackup.c:723
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
@@ -308,7 +308,7 @@ msgstr "kunde inte öppna fil \"%s\": %m"
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
 
-#: pg_verifybackup.c:411 pg_verifybackup.c:739
+#: pg_verifybackup.c:411 pg_verifybackup.c:738
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
@@ -320,7 +320,7 @@ msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
 
 #: pg_verifybackup.c:474
 #, c-format
-msgid "duplicate pathname in backup manifest: \"%s\""
+msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "duplicerad sökväg i backup-manifest: \"%s\""
 
 #: pg_verifybackup.c:537 pg_verifybackup.c:544
@@ -353,37 +353,37 @@ msgstr "\"%s\" finns på disk men är inte i manifestet"
 msgid "\"%s\" has size %zu on disk but size %zu in the manifest"
 msgstr "\"%s\" har storlek %zu på disk men storlek %zu i manifestet"
 
-#: pg_verifybackup.c:669
+#: pg_verifybackup.c:668
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\" finns i manifestet men inte på disk"
 
-#: pg_verifybackup.c:745
+#: pg_verifybackup.c:744
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "kunde inte stänga fil \"%s\": %m"
 
-#: pg_verifybackup.c:764
+#: pg_verifybackup.c:763
 #, c-format
 msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
 msgstr "filen \"%s\" skall innehålla %zu byte men vi läste %zu byte"
 
-#: pg_verifybackup.c:775
+#: pg_verifybackup.c:774
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "filen \"%s\" har checksumma med längd %d men förväntade %d"
 
-#: pg_verifybackup.c:779
+#: pg_verifybackup.c:778
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "checksumman matchar inte för fil \"%s\""
 
-#: pg_verifybackup.c:805
+#: pg_verifybackup.c:804
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "WAL-parsning misslyckades för tidslinje %u"
 
-#: pg_verifybackup.c:891
+#: pg_verifybackup.c:890
 #, c-format
 msgid ""
 "%s verifies a backup against the backup manifest.\n"
@@ -392,7 +392,7 @@ msgstr ""
 "%s verifierar en backup gentemot backup-manifestet.\n"
 "\n"
 
-#: pg_verifybackup.c:892
+#: pg_verifybackup.c:891
 #, c-format
 msgid ""
 "Usage:\n"
@@ -403,57 +403,57 @@ msgstr ""
 "  %s [FLAGGOR]... BACKUPKAT\n"
 "\n"
 
-#: pg_verifybackup.c:893
+#: pg_verifybackup.c:892
 #, c-format
 msgid "Options:\n"
 msgstr "Flaggor:\n"
 
-#: pg_verifybackup.c:894
+#: pg_verifybackup.c:893
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error         avsluta direkt vid fel\n"
 
-#: pg_verifybackup.c:895
+#: pg_verifybackup.c:894
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIV_SÖKVÄG hoppa över angiven sökväg\n"
 
-#: pg_verifybackup.c:896
+#: pg_verifybackup.c:895
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=SÖKVÄG  använd denna sökväg till manifestet\n"
 
-#: pg_verifybackup.c:897
+#: pg_verifybackup.c:896
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal          försök inte parsa WAL-filer\n"
 
-#: pg_verifybackup.c:898
+#: pg_verifybackup.c:897
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 skriv inte ut några meddelanden förutom fel\n"
 
-#: pg_verifybackup.c:899
+#: pg_verifybackup.c:898
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums        hoppa över verifiering av checksummor\n"
 
-#: pg_verifybackup.c:900
+#: pg_verifybackup.c:899
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
 msgstr "  -w, --wal-directory=SÖKVÄG  använd denna sökväg till WAL-filer\n"
 
-#: pg_verifybackup.c:901
+#: pg_verifybackup.c:900
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version               visa versionsinformation, avsluta sedan\n"
 
-#: pg_verifybackup.c:902
+#: pg_verifybackup.c:901
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                  visa denna hjälp, avsluta sedan\n"
 
-#: pg_verifybackup.c:903
+#: pg_verifybackup.c:902
 #, c-format
 msgid ""
 "\n"
@@ -462,19 +462,10 @@ msgstr ""
 "\n"
 "Rapportera fel till <%s>.\n"
 
-#: pg_verifybackup.c:904
+#: pg_verifybackup.c:903
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "hemsida för %s: <%s>\n"
-
-#~ msgid ""
-#~ "The program \"%s\" was found by \"%s\" but was\n"
-#~ "not the same version as %s.\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "Programmet \"%s\" hittades av \"%s\"\n"
-#~ "men är inte av samma version som %s.\n"
-#~ "Kontrollera din installation."
 
 #~ msgid ""
 #~ "The program \"%s\" is needed by %s but was\n"
@@ -483,4 +474,13 @@ msgstr "hemsida för %s: <%s>\n"
 #~ msgstr ""
 #~ "Programmet \"%s\" behövs av %s men hittades inte i samma\n"
 #~ "katalog som \"%s\".\n"
+#~ "Kontrollera din installation."
+
+#~ msgid ""
+#~ "The program \"%s\" was found by \"%s\" but was\n"
+#~ "not the same version as %s.\n"
+#~ "Check your installation."
+#~ msgstr ""
+#~ "Programmet \"%s\" hittades av \"%s\"\n"
+#~ "men är inte av samma version som %s.\n"
 #~ "Kontrollera din installation."

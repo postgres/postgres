@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-10 12:04+0300\n"
-"PO-Revision-Date: 2020-09-10 12:11+0300\n"
+"POT-Creation-Date: 2020-09-15 18:25+0300\n"
+"PO-Revision-Date: 2020-09-15 19:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -113,7 +113,7 @@ msgstr ""
 #: access/transam/xlog.c:3741 access/transam/xlog.c:3844
 #: access/transam/xlog.c:4718 access/transam/xlogutils.c:807
 #: postmaster/syslogger.c:1488 replication/basebackup.c:621
-#: replication/basebackup.c:1590 replication/logical/origin.c:707
+#: replication/basebackup.c:1593 replication/logical/origin.c:707
 #: replication/logical/reorderbuffer.c:2465
 #: replication/logical/reorderbuffer.c:2825
 #: replication/logical/reorderbuffer.c:3579
@@ -180,7 +180,7 @@ msgid "could not change directory to \"%s\": %m"
 msgstr "не удалось перейти в каталог \"%s\": %m"
 
 #: ../common/exec.c:287 access/transam/xlog.c:10750
-#: replication/basebackup.c:1415 utils/adt/misc.c:337
+#: replication/basebackup.c:1418 utils/adt/misc.c:337
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "не удалось прочитать символическую ссылку \"%s\": %m"
@@ -196,10 +196,10 @@ msgstr "ошибка pclose: %m"
 #: access/transam/xlog.c:6493 lib/dshash.c:246 libpq/auth.c:1090
 #: libpq/auth.c:1491 libpq/auth.c:1559 libpq/auth.c:2089
 #: libpq/be-secure-gssapi.c:484 postmaster/bgworker.c:336
-#: postmaster/bgworker.c:893 postmaster/postmaster.c:2517
-#: postmaster/postmaster.c:2539 postmaster/postmaster.c:4165
-#: postmaster/postmaster.c:4859 postmaster/postmaster.c:4929
-#: postmaster/postmaster.c:5616 postmaster/postmaster.c:5976
+#: postmaster/bgworker.c:893 postmaster/postmaster.c:2518
+#: postmaster/postmaster.c:2540 postmaster/postmaster.c:4166
+#: postmaster/postmaster.c:4868 postmaster/postmaster.c:4938
+#: postmaster/postmaster.c:5635 postmaster/postmaster.c:5995
 #: replication/libpqwalreceiver/libpqwalreceiver.c:276
 #: replication/logical/logical.c:176 replication/walsender.c:590
 #: storage/buffer/localbuf.c:442 storage/file/fd.c:834 storage/file/fd.c:1304
@@ -255,7 +255,7 @@ msgid "could not stat file \"%s\": %m"
 msgstr "не удалось получить информацию о файле \"%s\": %m"
 
 #: ../common/file_utils.c:158 ../common/pgfnames.c:48 commands/tablespace.c:718
-#: commands/tablespace.c:728 postmaster/postmaster.c:1508
+#: commands/tablespace.c:728 postmaster/postmaster.c:1509
 #: storage/file/fd.c:2673 storage/file/reinit.c:122 utils/adt/misc.c:259
 #: utils/misc/tzparser.c:338
 #, c-format
@@ -433,8 +433,8 @@ msgstr "не удалось перезапуститься с ограничен
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "не удалось получить код выхода от подпроцесса (код ошибки: %lu)"
 
-#: ../common/rmtree.c:79 replication/basebackup.c:1168
-#: replication/basebackup.c:1344
+#: ../common/rmtree.c:79 replication/basebackup.c:1171
+#: replication/basebackup.c:1347
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "не удалось получить информацию о файле или каталоге \"%s\": %m"
@@ -1131,7 +1131,7 @@ msgstr "не удалось записать в файл \"%s\" (записан�
 #: access/transam/xlog.c:3300 access/transam/xlog.c:3472
 #: access/transam/xlog.c:4670 access/transam/xlog.c:10869
 #: access/transam/xlog.c:10907 access/transam/xlog.c:11312
-#: access/transam/xlogfuncs.c:735 postmaster/postmaster.c:4620
+#: access/transam/xlogfuncs.c:735 postmaster/postmaster.c:4629
 #: replication/logical/origin.c:575 replication/slot.c:1446
 #: storage/file/copydir.c:167 storage/smgr/md.c:218 utils/time/snapmgr.c:1329
 #, c-format
@@ -1146,8 +1146,8 @@ msgstr "не удалось обрезать файл \"%s\" до нужного
 #: access/heap/rewriteheap.c:1162 access/transam/timeline.c:384
 #: access/transam/timeline.c:424 access/transam/timeline.c:502
 #: access/transam/xlog.c:3356 access/transam/xlog.c:3528
-#: access/transam/xlog.c:4682 postmaster/postmaster.c:4630
-#: postmaster/postmaster.c:4640 replication/logical/origin.c:587
+#: access/transam/xlog.c:4682 postmaster/postmaster.c:4639
+#: postmaster/postmaster.c:4649 replication/logical/origin.c:587
 #: replication/logical/origin.c:629 replication/logical/origin.c:648
 #: replication/logical/snapbuild.c:1622 replication/slot.c:1481
 #: storage/file/buffile.c:502 storage/file/copydir.c:207
@@ -1161,7 +1161,7 @@ msgstr "записать в файл \"%s\" не удалось: %m"
 
 #: access/heap/rewriteheap.c:1252 access/transam/twophase.c:1609
 #: access/transam/xlogarchive.c:118 access/transam/xlogarchive.c:421
-#: postmaster/postmaster.c:1091 postmaster/syslogger.c:1465
+#: postmaster/postmaster.c:1092 postmaster/syslogger.c:1465
 #: replication/logical/origin.c:563 replication/logical/reorderbuffer.c:3079
 #: replication/logical/snapbuild.c:1564 replication/logical/snapbuild.c:2006
 #: replication/slot.c:1578 storage/file/fd.c:754 storage/file/fd.c:3116
@@ -1240,20 +1240,21 @@ msgstr "нагрузка системы: %s\n"
 
 #: access/heap/vacuumlazy.c:684
 #, c-format
-msgid "WAL usage: %ld records, %ld full page images, "
-msgstr "использование WAL: записей: %ld, полных образов страниц: %ld, "
+msgid "WAL usage: %ld records, %ld full page images, %llu bytes"
+msgstr ""
+"использование WAL: записей: %ld, полных образов страниц: %ld, байт: %llu"
 
-#: access/heap/vacuumlazy.c:796
+#: access/heap/vacuumlazy.c:795
 #, c-format
 msgid "aggressively vacuuming \"%s.%s\""
 msgstr "агрессивная очистка \"%s.%s\""
 
-#: access/heap/vacuumlazy.c:801 commands/cluster.c:874
+#: access/heap/vacuumlazy.c:800 commands/cluster.c:874
 #, c-format
 msgid "vacuuming \"%s.%s\""
 msgstr "очистка \"%s.%s\""
 
-#: access/heap/vacuumlazy.c:838
+#: access/heap/vacuumlazy.c:837
 #, c-format
 msgid ""
 "disabling parallel option of vacuum on \"%s\" --- cannot vacuum temporary "
@@ -1262,23 +1263,23 @@ msgstr ""
 "отключение параллельного режима очистки \"%s\" --- создавать временные "
 "таблицы в параллельном режиме нельзя"
 
-#: access/heap/vacuumlazy.c:1726
+#: access/heap/vacuumlazy.c:1725
 #, c-format
 msgid "\"%s\": removed %.0f row versions in %u pages"
 msgstr "\"%s\": удалено версий строк: %.0f, обработано страниц: %u"
 
-#: access/heap/vacuumlazy.c:1736
+#: access/heap/vacuumlazy.c:1735
 #, c-format
 msgid "%.0f dead row versions cannot be removed yet, oldest xmin: %u\n"
 msgstr ""
 "В данный момент нельзя удалить \"мёртвых\" строк: %.0f, старейший xmin: %u\n"
 
-#: access/heap/vacuumlazy.c:1738
+#: access/heap/vacuumlazy.c:1737
 #, c-format
 msgid "There were %.0f unused item identifiers.\n"
 msgstr "Найдено неиспользованных идентификаторов элементов: %.0f.\n"
 
-#: access/heap/vacuumlazy.c:1740
+#: access/heap/vacuumlazy.c:1739
 #, c-format
 msgid "Skipped %u page due to buffer pins, "
 msgid_plural "Skipped %u pages due to buffer pins, "
@@ -1286,7 +1287,7 @@ msgstr[0] "Пропущено страниц, закреплённых в буф
 msgstr[1] "Пропущено страниц, закреплённых в буфере: %u,"
 msgstr[2] "Пропущено страниц, закреплённых в буфере: %u,"
 
-#: access/heap/vacuumlazy.c:1744
+#: access/heap/vacuumlazy.c:1743
 #, c-format
 msgid "%u frozen page.\n"
 msgid_plural "%u frozen pages.\n"
@@ -1294,7 +1295,7 @@ msgstr[0] "замороженных страниц: %u.\n"
 msgstr[1] "замороженных страниц: %u.\n"
 msgstr[2] "замороженных страниц: %u.\n"
 
-#: access/heap/vacuumlazy.c:1748
+#: access/heap/vacuumlazy.c:1747
 #, c-format
 msgid "%u page is entirely empty.\n"
 msgid_plural "%u pages are entirely empty.\n"
@@ -1302,13 +1303,13 @@ msgstr[0] "Полностью пустых страниц: %u.\n"
 msgstr[1] "Полностью пустых страниц: %u.\n"
 msgstr[2] "Полностью пустых страниц: %u.\n"
 
-#: access/heap/vacuumlazy.c:1752 commands/indexcmds.c:3450
+#: access/heap/vacuumlazy.c:1751 commands/indexcmds.c:3450
 #: commands/indexcmds.c:3468
 #, c-format
 msgid "%s."
 msgstr "%s."
 
-#: access/heap/vacuumlazy.c:1755
+#: access/heap/vacuumlazy.c:1754
 #, c-format
 msgid ""
 "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of %u "
@@ -1317,12 +1318,12 @@ msgstr ""
 "\"%s\": найдено удаляемых версий строк: %.0f, неудаляемых - %.0f, обработано "
 "страниц: %u, всего страниц: %u"
 
-#: access/heap/vacuumlazy.c:1889
+#: access/heap/vacuumlazy.c:1888
 #, c-format
 msgid "\"%s\": removed %d row versions in %d pages"
 msgstr "\"%s\": удалено версий строк: %d, обработано страниц: %d"
 
-#: access/heap/vacuumlazy.c:2144
+#: access/heap/vacuumlazy.c:2143
 #, c-format
 msgid "launched %d parallel vacuum worker for index cleanup (planned: %d)"
 msgid_plural ""
@@ -1337,7 +1338,7 @@ msgstr[2] ""
 "запущено %d параллельных процессов очистки для уборки индекса "
 "(планировалось: %d)"
 
-#: access/heap/vacuumlazy.c:2150
+#: access/heap/vacuumlazy.c:2149
 #, c-format
 msgid "launched %d parallel vacuum worker for index vacuuming (planned: %d)"
 msgid_plural ""
@@ -1352,7 +1353,7 @@ msgstr[2] ""
 "запущено %d параллельных процессов очистки для очистки индекса "
 "(планировалось: %d)"
 
-#: access/heap/vacuumlazy.c:2442
+#: access/heap/vacuumlazy.c:2441
 #, c-format
 msgid ""
 "scanned index \"%s\" to remove %d row versions by parallel vacuum worker"
@@ -1360,12 +1361,12 @@ msgstr ""
 "просканирован индекс \"%s\", параллельным процессом очистки удалено версий "
 "строк: %d"
 
-#: access/heap/vacuumlazy.c:2444
+#: access/heap/vacuumlazy.c:2443
 #, c-format
 msgid "scanned index \"%s\" to remove %d row versions"
 msgstr "просканирован индекс \"%s\", удалено версий строк: %d"
 
-#: access/heap/vacuumlazy.c:2502
+#: access/heap/vacuumlazy.c:2501
 #, c-format
 msgid ""
 "index \"%s\" now contains %.0f row versions in %u pages as reported by "
@@ -1374,12 +1375,12 @@ msgstr ""
 "индекс \"%s\" теперь содержит версий строк: %.0f, в страницах: %u (по "
 "информации параллельного процесса очистки)"
 
-#: access/heap/vacuumlazy.c:2504
+#: access/heap/vacuumlazy.c:2503
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages"
 msgstr "индекс \"%s\" теперь содержит версий строк: %.0f, в страницах: %u"
 
-#: access/heap/vacuumlazy.c:2511
+#: access/heap/vacuumlazy.c:2510
 #, c-format
 msgid ""
 "%.0f index row versions were removed.\n"
@@ -1390,25 +1391,20 @@ msgstr ""
 "Удалено индексных страниц: %u, пригодно для повторного использования: %u.\n"
 "%s."
 
-#: access/heap/vacuumlazy.c:2614
+#: access/heap/vacuumlazy.c:2613
 #, c-format
 msgid "\"%s\": stopping truncate due to conflicting lock request"
 msgstr "\"%s\": остановка усечения из-за конфликтующего запроса блокировки"
 
-#: access/heap/vacuumlazy.c:2680
+#: access/heap/vacuumlazy.c:2679
 #, c-format
 msgid "\"%s\": truncated %u to %u pages"
 msgstr "\"%s\": усечение (было страниц: %u, стало: %u)"
 
-#: access/heap/vacuumlazy.c:2745
+#: access/heap/vacuumlazy.c:2744
 #, c-format
 msgid "\"%s\": suspending truncate due to conflicting lock request"
 msgstr "\"%s\": приостановка усечения из-за конфликтующего запроса блокировки"
-
-#: access/heap/vacuumlazy.c:3492
-#, c-format
-msgid "starting parallel vacuum worker for %s"
-msgstr "запуск параллельного процесса очистки \"%s\""
 
 #: access/heap/vacuumlazy.c:3583
 #, c-format
@@ -3241,14 +3237,14 @@ msgstr ""
 "CHECKPOINT на главном сервере, а затем попробуйте резервное копирование \"на "
 "ходу\" ещё раз."
 
-#: access/transam/xlog.c:10757 replication/basebackup.c:1420
+#: access/transam/xlog.c:10757 replication/basebackup.c:1423
 #: utils/adt/misc.c:342
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
 msgstr "целевой путь символической ссылки \"%s\" слишком длинный"
 
 #: access/transam/xlog.c:10810 commands/tablespace.c:402
-#: commands/tablespace.c:566 replication/basebackup.c:1435 utils/adt/misc.c:350
+#: commands/tablespace.c:566 replication/basebackup.c:1438 utils/adt/misc.c:350
 #, c-format
 msgid "tablespaces are not supported on this platform"
 msgstr "табличные пространства не поддерживаются на этой платформе"
@@ -3280,13 +3276,13 @@ msgstr "резервное копирование не выполняется"
 msgid "invalid data in file \"%s\""
 msgstr "неверные данные в файле \"%s\""
 
-#: access/transam/xlog.c:11216 replication/basebackup.c:1268
+#: access/transam/xlog.c:11216 replication/basebackup.c:1271
 #, c-format
 msgid "the standby was promoted during online backup"
 msgstr ""
 "дежурный сервер был повышен в процессе резервного копирования \"на ходу\""
 
-#: access/transam/xlog.c:11217 replication/basebackup.c:1269
+#: access/transam/xlog.c:11217 replication/basebackup.c:1272
 #, c-format
 msgid ""
 "This means that the backup being taken is corrupt and should not be used. "
@@ -3421,7 +3417,7 @@ msgstr ""
 
 #: access/transam/xlog.c:12518
 #, c-format
-msgid "wal receiver process shutdown requested"
+msgid "WAL receiver process shutdown requested"
 msgstr "получен запрос на выключение процесса приёмника WAL"
 
 #: access/transam/xlog.c:12624
@@ -3757,18 +3753,18 @@ msgid "-X requires a power of two value between 1 MB and 1 GB"
 msgstr ""
 "для -X требуется число, равное степени двух, в интервале от 1 МБ до 1 ГБ"
 
-#: bootstrap/bootstrap.c:288 postmaster/postmaster.c:841 tcop/postgres.c:3705
+#: bootstrap/bootstrap.c:288 postmaster/postmaster.c:842 tcop/postgres.c:3705
 #, c-format
 msgid "--%s requires a value"
 msgstr "для --%s требуется значение"
 
-#: bootstrap/bootstrap.c:293 postmaster/postmaster.c:846 tcop/postgres.c:3710
+#: bootstrap/bootstrap.c:293 postmaster/postmaster.c:847 tcop/postgres.c:3710
 #, c-format
 msgid "-c %s requires a value"
 msgstr "для -c %s требуется значение"
 
-#: bootstrap/bootstrap.c:304 postmaster/postmaster.c:858
-#: postmaster/postmaster.c:871
+#: bootstrap/bootstrap.c:304 postmaster/postmaster.c:859
+#: postmaster/postmaster.c:872
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
@@ -7546,7 +7542,7 @@ msgstr "Используйте DROP AGGREGATE для удаления агрег
 
 #: commands/dropcmds.c:158 commands/sequence.c:447 commands/tablecmds.c:3266
 #: commands/tablecmds.c:3424 commands/tablecmds.c:3469
-#: commands/tablecmds.c:15007 tcop/utility.c:1298
+#: commands/tablecmds.c:15007 tcop/utility.c:1309
 #, c-format
 msgid "relation \"%s\" does not exist, skipping"
 msgstr "отношение \"%s\" не существует, пропускается"
@@ -8637,12 +8633,12 @@ msgstr "создание индекса для системных столбцо
 msgid "%s %s will create implicit index \"%s\" for table \"%s\""
 msgstr "%s %s создаст неявный индекс \"%s\" для таблицы \"%s\""
 
-#: commands/indexcmds.c:1198 tcop/utility.c:1484
+#: commands/indexcmds.c:1198 tcop/utility.c:1495
 #, c-format
 msgid "cannot create unique index on partitioned table \"%s\""
 msgstr "создать уникальный индекс в секционированной таблице \"%s\" нельзя"
 
-#: commands/indexcmds.c:1200 tcop/utility.c:1486
+#: commands/indexcmds.c:1200 tcop/utility.c:1497
 #, c-format
 msgid "Table \"%s\" contains partitions that are foreign tables."
 msgstr "Таблица \"%s\" содержит секции, являющиеся сторонними таблицами."
@@ -8991,8 +8987,8 @@ msgstr "операторы поиска по индексу должны воз�
 #: commands/opclasscmds.c:1159
 #, c-format
 msgid ""
-"associated data types for opclass options parsing functions must match "
-"opclass input type"
+"associated data types for operator class options parsing functions must "
+"match opclass input type"
 msgstr ""
 "связанные типы данных для функций, разбирающих параметры класса операторов, "
 "должны совпадать с входным типом класса"
@@ -9000,20 +8996,20 @@ msgstr ""
 #: commands/opclasscmds.c:1166
 #, c-format
 msgid ""
-"left and right associated data types for opclass options parsing functions "
-"must match"
+"left and right associated data types for operator class options parsing "
+"functions must match"
 msgstr ""
 "левый и правый типы данных для функций, разбирающих параметры класса "
 "операторов, должны совпадать"
 
 #: commands/opclasscmds.c:1174
 #, c-format
-msgid "invalid opclass options parsing function"
+msgid "invalid operator class options parsing function"
 msgstr "неправильная функция разбора параметров класса операторов"
 
 #: commands/opclasscmds.c:1175
 #, c-format
-msgid "Valid signature of opclass options parsing function is '%s'."
+msgid "Valid signature of operator class options parsing function is %s."
 msgstr ""
 "Правильная сигнатура функции, осуществляющей разбор параметров класса "
 "операторов: '%s'."
@@ -10196,7 +10192,7 @@ msgstr "столбец \"%s\" отношения \"%s\" содержит зна�
 msgid "check constraint \"%s\" of relation \"%s\" is violated by some row"
 msgstr "ограничение-проверку \"%s\" отношения \"%s\" нарушает некоторая строка"
 
-#: commands/tablecmds.c:5479 partitioning/partbounds.c:3237
+#: commands/tablecmds.c:5479 partitioning/partbounds.c:3235
 #, c-format
 msgid ""
 "updated partition constraint for default partition \"%s\" would be violated "
@@ -10393,10 +10389,10 @@ msgstr "Столбец \"%s\" отношения \"%s\" уже имеет сво
 #: commands/tablecmds.c:6856
 #, c-format
 msgid ""
-"existing constraints on column \"%s\".\"%s\" are sufficient to prove that it "
+"existing constraints on column \"%s.%s\" are sufficient to prove that it "
 "does not contain nulls"
 msgstr ""
-"существующие ограничения для столбца \"%s\".\"%s\" гарантируют, что он не "
+"существующие ограничения для столбца \"%s.%s\" гарантируют, что он не "
 "содержит NULL"
 
 #: commands/tablecmds.c:6899
@@ -11232,8 +11228,8 @@ msgstr ""
 "ограничение секции для таблицы \"%s\" подразумевается существующими "
 "ограничениями"
 
-#: commands/tablecmds.c:16193 partitioning/partbounds.c:3131
-#: partitioning/partbounds.c:3182
+#: commands/tablecmds.c:16193 partitioning/partbounds.c:3129
+#: partitioning/partbounds.c:3180
 #, c-format
 msgid ""
 "updated partition constraint for default partition \"%s\" is implied by "
@@ -15075,7 +15071,7 @@ msgstr "clientcert можно определить только в строка�
 #: libpq/hba.c:1725
 #, c-format
 msgid ""
-"clientcert can not be set to \"no-verify\" when using \"cert\" authentication"
+"clientcert cannot be set to \"no-verify\" when using \"cert\" authentication"
 msgstr ""
 "clientcert не может иметь значение \"no-verify\" при использовании проверки "
 "подлинности \"cert\""
@@ -15710,13 +15706,13 @@ msgstr "тип массива для типа данных %s не найден"
 
 #: nodes/params.c:359
 #, c-format
-msgid "extended query \"%s\" with parameters: %s"
-msgstr "расширенный запрос \"%s\" с параметрами: %s"
+msgid "portal \"%s\" with parameters: %s"
+msgstr "портал \"%s\" с параметрами: %s"
 
 #: nodes/params.c:362
 #, c-format
-msgid "extended query with parameters: %s"
-msgstr "расширенный запрос с параметрами: %s"
+msgid "unnamed portal with parameters: %s"
+msgstr "неименованный портал с параметрами: %s"
 
 #: optimizer/path/joinrels.c:855
 #, c-format
@@ -16533,7 +16529,7 @@ msgstr "слишком много записей в списке псевдон�
 
 #: parser/parse_clause.c:1773
 #, c-format
-msgid "row count cannot be NULL in FETCH FIRST ... WITH TIES clause"
+msgid "row count cannot be null in FETCH FIRST ... WITH TIES clause"
 msgstr ""
 "количество строк в FETCH FIRST ... WITH TIES должно быть отличным от NULL"
 
@@ -18283,12 +18279,12 @@ msgstr "у секционированной по хешу таблицы не м
 msgid "invalid bound specification for a hash partition"
 msgstr "неправильное указание ограничения для хеш-секции"
 
-#: parser/parse_utilcmd.c:3907 partitioning/partbounds.c:4693
+#: parser/parse_utilcmd.c:3907 partitioning/partbounds.c:4691
 #, c-format
 msgid "modulus for hash partition must be a positive integer"
 msgstr "модуль для хеш-секции должен быть положительным целым"
 
-#: parser/parse_utilcmd.c:3914 partitioning/partbounds.c:4701
+#: parser/parse_utilcmd.c:3914 partitioning/partbounds.c:4699
 #, c-format
 msgid "remainder for hash partition must be less than modulus"
 msgstr "остаток для хеш-секции должен быть меньше модуля"
@@ -18383,34 +18379,34 @@ msgstr "неверная суррогатная пара Unicode"
 msgid "identifier \"%s\" will be truncated to \"%s\""
 msgstr "идентификатор \"%s\" будет усечён до \"%s\""
 
-#: partitioning/partbounds.c:2833
+#: partitioning/partbounds.c:2831
 #, c-format
 msgid "partition \"%s\" conflicts with existing default partition \"%s\""
 msgstr "секция \"%s\" конфликтует с существующей секцией по умолчанию \"%s\""
 
-#: partitioning/partbounds.c:2892
+#: partitioning/partbounds.c:2890
 #, c-format
 msgid ""
 "every hash partition modulus must be a factor of the next larger modulus"
 msgstr ""
 "модуль каждой хеш-секции должен быть делителем модулей, превышающих его"
 
-#: partitioning/partbounds.c:2988
+#: partitioning/partbounds.c:2986
 #, c-format
 msgid "empty range bound specified for partition \"%s\""
 msgstr "для секции \"%s\" заданы границы, образующие пустой диапазон"
 
-#: partitioning/partbounds.c:2990
+#: partitioning/partbounds.c:2988
 #, c-format
 msgid "Specified lower bound %s is greater than or equal to upper bound %s."
 msgstr "Указанная нижняя граница %s больше или равна верхней границе %s."
 
-#: partitioning/partbounds.c:3087
+#: partitioning/partbounds.c:3085
 #, c-format
 msgid "partition \"%s\" would overlap partition \"%s\""
 msgstr "секция \"%s\" пересекается с секцией \"%s\""
 
-#: partitioning/partbounds.c:3204
+#: partitioning/partbounds.c:3202
 #, c-format
 msgid ""
 "skipped scanning foreign table \"%s\" which is a partition of default "
@@ -18419,17 +18415,17 @@ msgstr ""
 "пропущено сканирование сторонней таблицы \"%s\", являющейся секцией секции "
 "по умолчанию \"%s\""
 
-#: partitioning/partbounds.c:4697
+#: partitioning/partbounds.c:4695
 #, c-format
 msgid "remainder for hash partition must be a non-negative integer"
 msgstr "остаток для хеш-секции должен быть неотрицательным целым"
 
-#: partitioning/partbounds.c:4724
+#: partitioning/partbounds.c:4722
 #, c-format
 msgid "\"%s\" is not a hash partitioned table"
 msgstr "\"%s\" не является таблицей, секционированной по хешу"
 
-#: partitioning/partbounds.c:4735 partitioning/partbounds.c:4852
+#: partitioning/partbounds.c:4733 partitioning/partbounds.c:4850
 #, c-format
 msgid ""
 "number of partitioning columns (%d) does not match number of partition keys "
@@ -18438,7 +18434,7 @@ msgstr ""
 "число секционирующих столбцов (%d) не равно числу представленных ключей "
 "секционирования (%d)"
 
-#: partitioning/partbounds.c:4757 partitioning/partbounds.c:4789
+#: partitioning/partbounds.c:4755 partitioning/partbounds.c:4787
 #, c-format
 msgid ""
 "column %d of the partition key has type \"%s\", but supplied value is of "
@@ -18938,7 +18934,7 @@ msgstr "Команда архивации с ошибкой: %s"
 msgid "archive command was terminated by exception 0x%X"
 msgstr "команда архивации была прервана исключением 0x%X"
 
-#: postmaster/pgarch.c:605 postmaster/postmaster.c:3741
+#: postmaster/pgarch.c:605 postmaster/postmaster.c:3742
 #, c-format
 msgid ""
 "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
@@ -19096,22 +19092,22 @@ msgstr ""
 msgid "database hash table corrupted during cleanup --- abort"
 msgstr "таблица хеша базы данных испорчена при очистке --- прерывание"
 
-#: postmaster/postmaster.c:732
+#: postmaster/postmaster.c:733
 #, c-format
 msgid "%s: invalid argument for option -f: \"%s\"\n"
 msgstr "%s: неверный аргумент для параметра -f: \"%s\"\n"
 
-#: postmaster/postmaster.c:818
+#: postmaster/postmaster.c:819
 #, c-format
 msgid "%s: invalid argument for option -t: \"%s\"\n"
 msgstr "%s: неверный аргумент для параметра -t: \"%s\"\n"
 
-#: postmaster/postmaster.c:869
+#: postmaster/postmaster.c:870
 #, c-format
 msgid "%s: invalid argument: \"%s\"\n"
 msgstr "%s: неверный аргумент: \"%s\"\n"
 
-#: postmaster/postmaster.c:911
+#: postmaster/postmaster.c:912
 #, c-format
 msgid ""
 "%s: superuser_reserved_connections (%d) must be less than max_connections "
@@ -19120,12 +19116,12 @@ msgstr ""
 "%s: значение superuser_reserved_connections (%d) должно быть меньше "
 "max_connections (%d)\n"
 
-#: postmaster/postmaster.c:918
+#: postmaster/postmaster.c:919
 #, c-format
 msgid "WAL archival cannot be enabled when wal_level is \"minimal\""
 msgstr "Архивацию WAL нельзя включить, если установлен wal_level \"minimal\""
 
-#: postmaster/postmaster.c:921
+#: postmaster/postmaster.c:922
 #, c-format
 msgid ""
 "WAL streaming (max_wal_senders > 0) requires wal_level \"replica\" or "
@@ -19134,93 +19130,93 @@ msgstr ""
 "Для потоковой трансляции WAL (max_wal_senders > 0) wal_level должен быть "
 "\"replica\" или \"logical\""
 
-#: postmaster/postmaster.c:929
+#: postmaster/postmaster.c:930
 #, c-format
 msgid "%s: invalid datetoken tables, please fix\n"
 msgstr "%s: ошибка в таблицах маркеров времени, требуется исправление\n"
 
-#: postmaster/postmaster.c:1046
+#: postmaster/postmaster.c:1047
 #, c-format
 msgid "could not create I/O completion port for child queue"
 msgstr "не удалось создать порт завершения ввода/вывода для очереди потомков"
 
-#: postmaster/postmaster.c:1112
+#: postmaster/postmaster.c:1113
 #, c-format
 msgid "ending log output to stderr"
 msgstr "завершение вывода в stderr"
 
-#: postmaster/postmaster.c:1113
+#: postmaster/postmaster.c:1114
 #, c-format
 msgid "Future log output will go to log destination \"%s\"."
 msgstr "В дальнейшем протокол будет выводиться в \"%s\"."
 
-#: postmaster/postmaster.c:1124
+#: postmaster/postmaster.c:1125
 #, c-format
 msgid "starting %s"
 msgstr "запускается %s"
 
-#: postmaster/postmaster.c:1153 postmaster/postmaster.c:1251
+#: postmaster/postmaster.c:1154 postmaster/postmaster.c:1252
 #: utils/init/miscinit.c:1597
 #, c-format
 msgid "invalid list syntax in parameter \"%s\""
 msgstr "неверный формат списка в параметре \"%s\""
 
-#: postmaster/postmaster.c:1184
+#: postmaster/postmaster.c:1185
 #, c-format
 msgid "could not create listen socket for \"%s\""
 msgstr "не удалось создать принимающий сокет для \"%s\""
 
-#: postmaster/postmaster.c:1190
+#: postmaster/postmaster.c:1191
 #, c-format
 msgid "could not create any TCP/IP sockets"
 msgstr "не удалось создать сокеты TCP/IP"
 
-#: postmaster/postmaster.c:1273
+#: postmaster/postmaster.c:1274
 #, c-format
 msgid "could not create Unix-domain socket in directory \"%s\""
 msgstr "не удалось создать Unix-сокет в каталоге \"%s\""
 
-#: postmaster/postmaster.c:1279
+#: postmaster/postmaster.c:1280
 #, c-format
 msgid "could not create any Unix-domain sockets"
 msgstr "ни один Unix-сокет создать не удалось"
 
-#: postmaster/postmaster.c:1291
+#: postmaster/postmaster.c:1292
 #, c-format
 msgid "no socket created for listening"
 msgstr "отсутствуют принимающие сокеты"
 
-#: postmaster/postmaster.c:1322
+#: postmaster/postmaster.c:1323
 #, c-format
 msgid "%s: could not change permissions of external PID file \"%s\": %s\n"
 msgstr "%s: не удалось поменять права для внешнего файла PID \"%s\": %s\n"
 
-#: postmaster/postmaster.c:1326
+#: postmaster/postmaster.c:1327
 #, c-format
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s: не удалось записать внешний файл PID \"%s\": %s\n"
 
-#: postmaster/postmaster.c:1359 utils/init/postinit.c:215
+#: postmaster/postmaster.c:1360 utils/init/postinit.c:215
 #, c-format
 msgid "could not load pg_hba.conf"
 msgstr "не удалось загрузить pg_hba.conf"
 
-#: postmaster/postmaster.c:1385
+#: postmaster/postmaster.c:1386
 #, c-format
 msgid "postmaster became multithreaded during startup"
 msgstr "процесс postmaster стал многопоточным при запуске"
 
-#: postmaster/postmaster.c:1386
+#: postmaster/postmaster.c:1387
 #, c-format
 msgid "Set the LC_ALL environment variable to a valid locale."
 msgstr "Установите в переменной окружения LC_ALL правильную локаль."
 
-#: postmaster/postmaster.c:1487
+#: postmaster/postmaster.c:1488
 #, c-format
 msgid "%s: could not locate matching postgres executable"
 msgstr "%s: подходящий исполняемый файл postgres не найден"
 
-#: postmaster/postmaster.c:1510 utils/misc/tzparser.c:340
+#: postmaster/postmaster.c:1511 utils/misc/tzparser.c:340
 #, c-format
 msgid ""
 "This may indicate an incomplete PostgreSQL installation, or that the file "
@@ -19229,7 +19225,7 @@ msgstr ""
 "Возможно, PostgreSQL установлен не полностью или файла \"%s\" нет в "
 "положенном месте."
 
-#: postmaster/postmaster.c:1537
+#: postmaster/postmaster.c:1538
 #, c-format
 msgid ""
 "%s: could not find the database system\n"
@@ -19240,408 +19236,408 @@ msgstr ""
 "Ожидалось найти её в каталоге \"%s\",\n"
 "но открыть файл \"%s\" не удалось: %s\n"
 
-#: postmaster/postmaster.c:1714
+#: postmaster/postmaster.c:1715
 #, c-format
 msgid "select() failed in postmaster: %m"
 msgstr "сбой select() в postmaster'е: %m"
 
-#: postmaster/postmaster.c:1869
+#: postmaster/postmaster.c:1870
 #, c-format
 msgid ""
 "performing immediate shutdown because data directory lock file is invalid"
 msgstr ""
 "немедленное отключение из-за ошибочного файла блокировки каталога данных"
 
-#: postmaster/postmaster.c:1972 postmaster/postmaster.c:2003
+#: postmaster/postmaster.c:1973 postmaster/postmaster.c:2004
 #, c-format
 msgid "incomplete startup packet"
 msgstr "неполный стартовый пакет"
 
-#: postmaster/postmaster.c:1984
+#: postmaster/postmaster.c:1985
 #, c-format
 msgid "invalid length of startup packet"
 msgstr "неверная длина стартового пакета"
 
-#: postmaster/postmaster.c:2042
+#: postmaster/postmaster.c:2043
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr "не удалось отправить ответ в процессе SSL-согласования: %m"
 
-#: postmaster/postmaster.c:2073
+#: postmaster/postmaster.c:2074
 #, c-format
 msgid "failed to send GSSAPI negotiation response: %m"
 msgstr "не удалось отправить ответ в процессе согласования GSSAPI: %m"
 
-#: postmaster/postmaster.c:2103
+#: postmaster/postmaster.c:2104
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr ""
 "неподдерживаемый протокол клиентского приложения %u.%u; сервер поддерживает "
 "%u.0 - %u.%u"
 
-#: postmaster/postmaster.c:2167 utils/misc/guc.c:6769 utils/misc/guc.c:6805
+#: postmaster/postmaster.c:2168 utils/misc/guc.c:6769 utils/misc/guc.c:6805
 #: utils/misc/guc.c:6875 utils/misc/guc.c:8198 utils/misc/guc.c:11044
 #: utils/misc/guc.c:11078
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "неверное значение для параметра \"%s\": \"%s\""
 
-#: postmaster/postmaster.c:2170
+#: postmaster/postmaster.c:2171
 #, c-format
 msgid "Valid values are: \"false\", 0, \"true\", 1, \"database\"."
 msgstr "Допустимые значения: \"false\", 0, \"true\", 1, \"database\"."
 
-#: postmaster/postmaster.c:2215
+#: postmaster/postmaster.c:2216
 #, c-format
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr ""
 "неверная структура стартового пакета: последним байтом должен быть терминатор"
 
-#: postmaster/postmaster.c:2253
+#: postmaster/postmaster.c:2254
 #, c-format
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "в стартовом пакете не указано имя пользователя PostgreSQL"
 
-#: postmaster/postmaster.c:2317
+#: postmaster/postmaster.c:2318
 #, c-format
 msgid "the database system is starting up"
 msgstr "система баз данных запускается"
 
-#: postmaster/postmaster.c:2322
+#: postmaster/postmaster.c:2323
 #, c-format
 msgid "the database system is shutting down"
 msgstr "система баз данных останавливается"
 
-#: postmaster/postmaster.c:2327
+#: postmaster/postmaster.c:2328
 #, c-format
 msgid "the database system is in recovery mode"
 msgstr "система баз данных в режиме восстановления"
 
-#: postmaster/postmaster.c:2332 storage/ipc/procarray.c:293
+#: postmaster/postmaster.c:2333 storage/ipc/procarray.c:293
 #: storage/ipc/sinvaladt.c:297 storage/lmgr/proc.c:362
 #, c-format
 msgid "sorry, too many clients already"
 msgstr "извините, уже слишком много клиентов"
 
-#: postmaster/postmaster.c:2422
+#: postmaster/postmaster.c:2423
 #, c-format
 msgid "wrong key in cancel request for process %d"
 msgstr "неправильный ключ в запросе на отмену процесса %d"
 
-#: postmaster/postmaster.c:2434
+#: postmaster/postmaster.c:2435
 #, c-format
 msgid "PID %d in cancel request did not match any process"
 msgstr "процесс с кодом %d, полученным в запросе на отмену, не найден"
 
-#: postmaster/postmaster.c:2705
+#: postmaster/postmaster.c:2706
 #, c-format
 msgid "received SIGHUP, reloading configuration files"
 msgstr "получен SIGHUP, файлы конфигурации перезагружаются"
 
 #. translator: %s is a configuration file
-#: postmaster/postmaster.c:2731 postmaster/postmaster.c:2735
+#: postmaster/postmaster.c:2732 postmaster/postmaster.c:2736
 #, c-format
 msgid "%s was not reloaded"
 msgstr "%s не был перезагружен"
 
-#: postmaster/postmaster.c:2745
+#: postmaster/postmaster.c:2746
 #, c-format
 msgid "SSL configuration was not reloaded"
 msgstr "конфигурация SSL не была перезагружена"
 
-#: postmaster/postmaster.c:2801
+#: postmaster/postmaster.c:2802
 #, c-format
 msgid "received smart shutdown request"
 msgstr "получен запрос на \"вежливое\" выключение"
 
-#: postmaster/postmaster.c:2847
+#: postmaster/postmaster.c:2848
 #, c-format
 msgid "received fast shutdown request"
 msgstr "получен запрос на быстрое выключение"
 
-#: postmaster/postmaster.c:2865
+#: postmaster/postmaster.c:2866
 #, c-format
 msgid "aborting any active transactions"
 msgstr "прерывание всех активных транзакций"
 
-#: postmaster/postmaster.c:2889
+#: postmaster/postmaster.c:2890
 #, c-format
 msgid "received immediate shutdown request"
 msgstr "получен запрос на немедленное выключение"
 
-#: postmaster/postmaster.c:2964
+#: postmaster/postmaster.c:2965
 #, c-format
 msgid "shutdown at recovery target"
 msgstr "выключение при достижении цели восстановления"
 
-#: postmaster/postmaster.c:2982 postmaster/postmaster.c:3018
+#: postmaster/postmaster.c:2983 postmaster/postmaster.c:3019
 msgid "startup process"
 msgstr "стартовый процесс"
 
-#: postmaster/postmaster.c:2985
+#: postmaster/postmaster.c:2986
 #, c-format
 msgid "aborting startup due to startup process failure"
 msgstr "прерывание запуска из-за ошибки в стартовом процессе"
 
-#: postmaster/postmaster.c:3060
+#: postmaster/postmaster.c:3061
 #, c-format
 msgid "database system is ready to accept connections"
 msgstr "система БД готова принимать подключения"
 
-#: postmaster/postmaster.c:3081
+#: postmaster/postmaster.c:3082
 msgid "background writer process"
 msgstr "процесс фоновой записи"
 
-#: postmaster/postmaster.c:3135
+#: postmaster/postmaster.c:3136
 msgid "checkpointer process"
 msgstr "процесс контрольных точек"
 
-#: postmaster/postmaster.c:3151
+#: postmaster/postmaster.c:3152
 msgid "WAL writer process"
 msgstr "процесс записи WAL"
 
-#: postmaster/postmaster.c:3166
+#: postmaster/postmaster.c:3167
 msgid "WAL receiver process"
 msgstr "процесс считывания WAL"
 
-#: postmaster/postmaster.c:3181
+#: postmaster/postmaster.c:3182
 msgid "autovacuum launcher process"
 msgstr "процесс запуска автоочистки"
 
-#: postmaster/postmaster.c:3196
+#: postmaster/postmaster.c:3197
 msgid "archiver process"
 msgstr "процесс архивации"
 
-#: postmaster/postmaster.c:3212
+#: postmaster/postmaster.c:3213
 msgid "statistics collector process"
 msgstr "процесс сбора статистики"
 
-#: postmaster/postmaster.c:3226
+#: postmaster/postmaster.c:3227
 msgid "system logger process"
 msgstr "процесс системного протоколирования"
 
-#: postmaster/postmaster.c:3290
+#: postmaster/postmaster.c:3291
 #, c-format
 msgid "background worker \"%s\""
 msgstr "фоновый процесс \"%s\""
 
-#: postmaster/postmaster.c:3374 postmaster/postmaster.c:3394
-#: postmaster/postmaster.c:3401 postmaster/postmaster.c:3419
+#: postmaster/postmaster.c:3375 postmaster/postmaster.c:3395
+#: postmaster/postmaster.c:3402 postmaster/postmaster.c:3420
 msgid "server process"
 msgstr "процесс сервера"
 
-#: postmaster/postmaster.c:3473
+#: postmaster/postmaster.c:3474
 #, c-format
 msgid "terminating any other active server processes"
 msgstr "завершение всех остальных активных серверных процессов"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3728
+#: postmaster/postmaster.c:3729
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d) завершился с кодом выхода %d"
 
-#: postmaster/postmaster.c:3730 postmaster/postmaster.c:3742
-#: postmaster/postmaster.c:3752 postmaster/postmaster.c:3763
+#: postmaster/postmaster.c:3731 postmaster/postmaster.c:3743
+#: postmaster/postmaster.c:3753 postmaster/postmaster.c:3764
 #, c-format
 msgid "Failed process was running: %s"
 msgstr "Завершившийся процесс выполнял действие: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3739
+#: postmaster/postmaster.c:3740
 #, c-format
 msgid "%s (PID %d) was terminated by exception 0x%X"
 msgstr "%s (PID %d) был прерван исключением 0x%X"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3749
+#: postmaster/postmaster.c:3750
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d: %s"
 msgstr "%s (PID %d) был завершён по сигналу %d: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3761
+#: postmaster/postmaster.c:3762
 #, c-format
 msgid "%s (PID %d) exited with unrecognized status %d"
 msgstr "%s (PID %d) завершился с неизвестным кодом состояния %d"
 
-#: postmaster/postmaster.c:3969
+#: postmaster/postmaster.c:3970
 #, c-format
 msgid "abnormal database system shutdown"
 msgstr "аварийное выключение системы БД"
 
-#: postmaster/postmaster.c:4009
+#: postmaster/postmaster.c:4010
 #, c-format
 msgid "all server processes terminated; reinitializing"
 msgstr "все серверные процессы завершены... переинициализация"
 
-#: postmaster/postmaster.c:4179 postmaster/postmaster.c:5580
-#: postmaster/postmaster.c:5967
+#: postmaster/postmaster.c:4180 postmaster/postmaster.c:5599
+#: postmaster/postmaster.c:5986
 #, c-format
 msgid "could not generate random cancel key"
 msgstr "не удалось сгенерировать случайный ключ отмены"
 
-#: postmaster/postmaster.c:4233
+#: postmaster/postmaster.c:4234
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "породить новый процесс для соединения не удалось: %m"
 
-#: postmaster/postmaster.c:4275
+#: postmaster/postmaster.c:4276
 msgid "could not fork new process for connection: "
 msgstr "породить новый процесс для соединения не удалось: "
 
-#: postmaster/postmaster.c:4384
+#: postmaster/postmaster.c:4393
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "принято подключение: узел=%s порт=%s"
 
-#: postmaster/postmaster.c:4389
+#: postmaster/postmaster.c:4398
 #, c-format
 msgid "connection received: host=%s"
 msgstr "принято подключение: узел=%s"
 
-#: postmaster/postmaster.c:4659
+#: postmaster/postmaster.c:4668
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "запустить серверный процесс \"%s\" не удалось: %m"
 
-#: postmaster/postmaster.c:4818
+#: postmaster/postmaster.c:4827
 #, c-format
 msgid "giving up after too many tries to reserve shared memory"
 msgstr ""
 "число повторных попыток резервирования разделяемой памяти достигло предела"
 
-#: postmaster/postmaster.c:4819
+#: postmaster/postmaster.c:4828
 #, c-format
 msgid "This might be caused by ASLR or antivirus software."
 msgstr "Это может быть вызвано антивирусным ПО или механизмом ASLR."
 
-#: postmaster/postmaster.c:5025
+#: postmaster/postmaster.c:5034
 #, c-format
 msgid "SSL configuration could not be loaded in child process"
 msgstr "не удалось загрузить конфигурацию SSL в дочерний процесс"
 
-#: postmaster/postmaster.c:5157
+#: postmaster/postmaster.c:5166
 #, c-format
 msgid "Please report this to <%s>."
 msgstr "Пожалуйста, напишите об этой ошибке по адресу <%s>."
 
-#: postmaster/postmaster.c:5250
+#: postmaster/postmaster.c:5259
 #, c-format
 msgid "database system is ready to accept read only connections"
 msgstr "система БД готова к подключениям в режиме \"только чтение\""
 
-#: postmaster/postmaster.c:5508
+#: postmaster/postmaster.c:5527
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "породить стартовый процесс не удалось: %m"
 
-#: postmaster/postmaster.c:5512
+#: postmaster/postmaster.c:5531
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "породить процесс фоновой записи не удалось: %m"
 
-#: postmaster/postmaster.c:5516
+#: postmaster/postmaster.c:5535
 #, c-format
 msgid "could not fork checkpointer process: %m"
 msgstr "породить процесс контрольных точек не удалось: %m"
 
-#: postmaster/postmaster.c:5520
+#: postmaster/postmaster.c:5539
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "породить процесс записи WAL не удалось: %m"
 
-#: postmaster/postmaster.c:5524
+#: postmaster/postmaster.c:5543
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "породить процесс считывания WAL не удалось: %m"
 
-#: postmaster/postmaster.c:5528
+#: postmaster/postmaster.c:5547
 #, c-format
 msgid "could not fork process: %m"
 msgstr "породить процесс не удалось: %m"
 
-#: postmaster/postmaster.c:5725 postmaster/postmaster.c:5748
+#: postmaster/postmaster.c:5744 postmaster/postmaster.c:5767
 #, c-format
 msgid "database connection requirement not indicated during registration"
 msgstr ""
 "при регистрации фонового процесса не указывалось, что ему требуется "
 "подключение к БД"
 
-#: postmaster/postmaster.c:5732 postmaster/postmaster.c:5755
+#: postmaster/postmaster.c:5751 postmaster/postmaster.c:5774
 #, c-format
 msgid "invalid processing mode in background worker"
 msgstr "неправильный режим обработки в фоновом процессе"
 
-#: postmaster/postmaster.c:5828
+#: postmaster/postmaster.c:5847
 #, c-format
 msgid "starting background worker process \"%s\""
 msgstr "запуск фонового рабочего процесса \"%s\""
 
-#: postmaster/postmaster.c:5840
+#: postmaster/postmaster.c:5859
 #, c-format
 msgid "could not fork worker process: %m"
 msgstr "породить рабочий процесс не удалось: %m"
 
-#: postmaster/postmaster.c:5953
+#: postmaster/postmaster.c:5972
 #, c-format
 msgid "no slot available for new worker process"
 msgstr "для нового рабочего процесса не нашлось свободного слота"
 
-#: postmaster/postmaster.c:6288
+#: postmaster/postmaster.c:6307
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr ""
 "продублировать сокет %d для серверного процесса не удалось (код ошибки: %d)"
 
-#: postmaster/postmaster.c:6320
+#: postmaster/postmaster.c:6339
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "создать наследуемый сокет не удалось (код ошибки: %d)\n"
 
-#: postmaster/postmaster.c:6349
+#: postmaster/postmaster.c:6368
 #, c-format
 msgid "could not open backend variables file \"%s\": %s\n"
 msgstr "открыть файл серверных переменных \"%s\" не удалось: %s\n"
 
-#: postmaster/postmaster.c:6356
+#: postmaster/postmaster.c:6375
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "прочитать файл серверных переменных \"%s\" не удалось: %s\n"
 
-#: postmaster/postmaster.c:6365
+#: postmaster/postmaster.c:6384
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "не удалось стереть файл \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6382
+#: postmaster/postmaster.c:6401
 #, c-format
 msgid "could not map view of backend variables: error code %lu\n"
 msgstr "отобразить файл серверных переменных не удалось (код ошибки: %lu)\n"
 
-#: postmaster/postmaster.c:6391
+#: postmaster/postmaster.c:6410
 #, c-format
 msgid "could not unmap view of backend variables: error code %lu\n"
 msgstr ""
 "отключить отображение файла серверных переменных не удалось (код ошибки: "
 "%lu)\n"
 
-#: postmaster/postmaster.c:6398
+#: postmaster/postmaster.c:6417
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %lu\n"
 msgstr ""
 "закрыть указатель файла серверных переменных не удалось (код ошибки: %lu)\n"
 
-#: postmaster/postmaster.c:6576
+#: postmaster/postmaster.c:6595
 #, c-format
 msgid "could not read exit code for process\n"
 msgstr "прочитать код завершения процесса не удалось\n"
 
-#: postmaster/postmaster.c:6581
+#: postmaster/postmaster.c:6600
 #, c-format
 msgid "could not post child completion status\n"
 msgstr "отправить состояние завершения потомка не удалось\n"
@@ -19761,7 +19757,7 @@ msgstr "не удалось найти файл WAL \"%s\""
 msgid "unexpected WAL file size \"%s\""
 msgstr "неприемлемый размер файла WAL \"%s\""
 
-#: replication/basebackup.c:648 replication/basebackup.c:1749
+#: replication/basebackup.c:648 replication/basebackup.c:1752
 #, c-format
 msgid "base backup could not send data, aborting backup"
 msgstr ""
@@ -19770,54 +19766,57 @@ msgstr ""
 
 #: replication/basebackup.c:724
 #, c-format
-msgid "%lld total checksum verification failures"
-msgstr "всего ошибок контрольных сумм: %lld"
+msgid "%lld total checksum verification failure"
+msgid_plural "%lld total checksum verification failures"
+msgstr[0] "всего ошибок контрольных сумм: %lld"
+msgstr[1] "всего ошибок контрольных сумм: %lld"
+msgstr[2] "всего ошибок контрольных сумм: %lld"
 
-#: replication/basebackup.c:728
+#: replication/basebackup.c:731
 #, c-format
 msgid "checksum verification failure during base backup"
 msgstr "при базовом резервном копировании выявлены ошибки контрольных сумм"
 
-#: replication/basebackup.c:781 replication/basebackup.c:790
-#: replication/basebackup.c:799 replication/basebackup.c:808
-#: replication/basebackup.c:817 replication/basebackup.c:828
-#: replication/basebackup.c:845 replication/basebackup.c:854
-#: replication/basebackup.c:866 replication/basebackup.c:890
+#: replication/basebackup.c:784 replication/basebackup.c:793
+#: replication/basebackup.c:802 replication/basebackup.c:811
+#: replication/basebackup.c:820 replication/basebackup.c:831
+#: replication/basebackup.c:848 replication/basebackup.c:857
+#: replication/basebackup.c:869 replication/basebackup.c:893
 #, c-format
 msgid "duplicate option \"%s\""
 msgstr "повторяющийся параметр \"%s\""
 
-#: replication/basebackup.c:834
+#: replication/basebackup.c:837
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
 msgstr "%d вне диапазона, допустимого для параметра \"%s\" (%d .. %d)"
 
-#: replication/basebackup.c:879
+#: replication/basebackup.c:882
 #, c-format
 msgid "unrecognized manifest option: \"%s\""
 msgstr "нераспознанный параметр в манифесте: \"%s\""
 
-#: replication/basebackup.c:895
+#: replication/basebackup.c:898
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "нераспознанный алгоритм расчёта контрольных сумм: \"%s\""
 
-#: replication/basebackup.c:910
+#: replication/basebackup.c:913
 #, c-format
 msgid "manifest checksums require a backup manifest"
 msgstr "контрольные суммы не могут рассчитываться без манифеста копии"
 
-#: replication/basebackup.c:1501
+#: replication/basebackup.c:1504
 #, c-format
 msgid "skipping special file \"%s\""
 msgstr "специальный файл \"%s\" пропускается"
 
-#: replication/basebackup.c:1620
+#: replication/basebackup.c:1623
 #, c-format
 msgid "invalid segment number %d in file \"%s\""
 msgstr "неверный номер сегмента %d в файле \"%s\""
 
-#: replication/basebackup.c:1639
+#: replication/basebackup.c:1642
 #, c-format
 msgid ""
 "could not verify checksum in file \"%s\", block %d: read buffer size %d and "
@@ -19826,17 +19825,17 @@ msgstr ""
 "не удалось проверить контрольную сумму в файле \"%s\", блоке %d: размер "
 "прочитанного буфера (%d) отличается от размера страницы (%d)"
 
-#: replication/basebackup.c:1683 replication/basebackup.c:1713
+#: replication/basebackup.c:1686 replication/basebackup.c:1716
 #, c-format
 msgid "could not fseek in file \"%s\": %m"
 msgstr "не удалось переместиться в файле \"%s\": %m"
 
-#: replication/basebackup.c:1705
+#: replication/basebackup.c:1708
 #, c-format
 msgid "could not reread block %d of file \"%s\": %m"
 msgstr "не удалось заново прочитать блок %d файла \"%s\": %m"
 
-#: replication/basebackup.c:1729
+#: replication/basebackup.c:1732
 #, c-format
 msgid ""
 "checksum verification failed in file \"%s\", block %d: calculated %X but "
@@ -19845,14 +19844,14 @@ msgstr ""
 "ошибка контрольной суммы в файле \"%s\", блоке %d: вычислено значение %X, но "
 "ожидалось %X"
 
-#: replication/basebackup.c:1736
+#: replication/basebackup.c:1739
 #, c-format
 msgid ""
 "further checksum verification failures in file \"%s\" will not be reported"
 msgstr ""
 "о дальнейших ошибках контрольных сумм в файле \"%s\" сообщаться не будет"
 
-#: replication/basebackup.c:1804
+#: replication/basebackup.c:1807
 #, c-format
 msgid "file \"%s\" has a total of %d checksum verification failure"
 msgid_plural "file \"%s\" has a total of %d checksum verification failures"
@@ -19860,12 +19859,12 @@ msgstr[0] "всего в файле \"%s\" обнаружено ошибок к�
 msgstr[1] "всего в файле \"%s\" обнаружено ошибок контрольных сумм: %d"
 msgstr[2] "всего в файле \"%s\" обнаружено ошибок контрольных сумм: %d"
 
-#: replication/basebackup.c:1840
+#: replication/basebackup.c:1843
 #, c-format
 msgid "file name too long for tar format: \"%s\""
 msgstr "слишком длинное имя файла для формата tar: \"%s\""
 
-#: replication/basebackup.c:1845
+#: replication/basebackup.c:1848
 #, c-format
 msgid ""
 "symbolic link target too long for tar format: file name \"%s\", target \"%s\""
@@ -21864,8 +21863,8 @@ msgstr "ошибка в %s: %m"
 
 #: storage/ipc/procarray.c:3014
 #, c-format
-msgid "database \"%s\" is being used by prepared transaction"
-msgstr "база \"%s\" используется в подготовленной транзакции"
+msgid "database \"%s\" is being used by prepared transactions"
+msgstr "база \"%s\" используется подготовленными транзакциями"
 
 #: storage/ipc/procarray.c:3046 storage/ipc/signalfuncs.c:142
 #, c-format
@@ -24881,12 +24880,12 @@ msgstr "индекс массива в jsonpath вне целочисленно�
 
 #: utils/adt/jsonpath_exec.c:2590
 #, c-format
-msgid "cannot convert value from %s to %s without timezone usage"
+msgid "cannot convert value from %s to %s without time zone usage"
 msgstr "значение %s нельзя преобразовать в %s без сведений о часовом поясе"
 
 #: utils/adt/jsonpath_exec.c:2592
 #, c-format
-msgid "Use *_tz() function for timezone support."
+msgid "Use *_tz() function for time zone support."
 msgstr "Для передачи часового пояса используйте функцию *_tz()."
 
 # well-spelled: симв
@@ -26654,7 +26653,7 @@ msgstr ""
 
 #: utils/fmgr/fmgr.c:2003
 #, c-format
-msgid "opclass options info is absent in function call context"
+msgid "operator class options info is absent in function call context"
 msgstr ""
 "информация о параметрах класса операторов отсутствует в контексте вызова "
 "функции"
@@ -28516,7 +28515,7 @@ msgstr ""
 "log_statement_sample_rate."
 
 #: utils/misc/guc.c:2833
-msgid "Zero log a sample of all queries. -1 turns this feature off."
+msgid "Zero logs a sample of all queries. -1 turns this feature off."
 msgstr "При 0 выводятся все запросы в выборке; -1 отключает эти сообщения."
 
 #: utils/misc/guc.c:2843
@@ -29016,8 +29015,11 @@ msgid "Sets the shell command that will be called to archive a WAL file."
 msgstr "Задаёт команду оболочки, вызываемую для архивации файла WAL."
 
 #: utils/misc/guc.c:3685
-msgid "Sets the shell command that will retrieve an archived WAL file."
-msgstr "Задаёт команду оболочки, которая будет извлекать из архива файл WAL."
+msgid ""
+"Sets the shell command that will be called to retrieve an archived WAL file."
+msgstr ""
+"Задаёт команду оболочки, которая будет вызываться для извлечения из архива "
+"файла WAL."
 
 #: utils/misc/guc.c:3695
 msgid "Sets the shell command that will be executed at every restart point."
@@ -30005,12 +30007,12 @@ msgstr ""
 "транзакционные команды нельзя выполнять внутри цикла с курсором, "
 "производящим изменения"
 
-#: utils/sort/logtape.c:268 utils/sort/logtape.c:291
+#: utils/sort/logtape.c:266 utils/sort/logtape.c:289
 #, c-format
 msgid "could not seek to block %ld of temporary file"
 msgstr "не удалось переместиться к блоку %ld временного файла"
 
-#: utils/sort/logtape.c:297
+#: utils/sort/logtape.c:295
 #, c-format
 msgid "could not read block %ld of temporary file: read only %zu of %zu bytes"
 msgstr ""
@@ -30030,7 +30032,7 @@ msgstr "неожиданный фрагмент в файле общего вр�
 
 #: utils/sort/sharedtuplestore.c:569
 #, c-format
-msgid "could not seek block %u in shared tuplestore temporary file"
+msgid "could not seek to block %u in shared tuplestore temporary file"
 msgstr ""
 "не удалось переместиться к блоку %u в файле общего временного хранилища "
 "кортежей"
@@ -30451,8 +30453,8 @@ msgstr "параметры LIMIT можно указать только один
 
 #: gram.y:16164
 #, c-format
-msgid "WITH TIES options can not be specified without ORDER BY clause"
-msgstr "параметры WITH TIES нельзя задать без предложения ORDER BY"
+msgid "WITH TIES cannot be specified without ORDER BY clause"
+msgstr "WITH TIES нельзя задать без предложения ORDER BY"
 
 #: gram.y:16172
 #, c-format
@@ -30717,6 +30719,9 @@ msgstr "нестандартное использование спецсимво
 #, c-format
 msgid "Use the escape string syntax for escapes, e.g., E'\\r\\n'."
 msgstr "Используйте для записи спецсимволов синтаксис спецстрок E'\\r\\n'."
+
+#~ msgid "starting parallel vacuum worker for %s"
+#~ msgstr "запуск параллельного процесса очистки \"%s\""
 
 #~ msgid "leftover placeholder tuple detected in BRIN index \"%s\", deleting"
 #~ msgstr ""

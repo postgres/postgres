@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-13 10:44+0000\n"
-"PO-Revision-Date: 2020-09-12 22:39-0300\n"
+"POT-Creation-Date: 2020-09-18 17:44+0000\n"
+"PO-Revision-Date: 2020-09-18 18:21-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -148,16 +148,18 @@ msgid "expected version indicator"
 msgstr "se esperaba indicador de versión"
 
 #: parse_manifest.c:328
-msgid "unknown toplevel field"
-msgstr "campo de nivel superior desconocido"
+#| msgid "unknown toplevel field"
+msgid "unrecognized top-level field"
+msgstr "campo de nivel superior no reconocido"
 
 #: parse_manifest.c:347
 msgid "unexpected file field"
 msgstr "campo de archivo inesperado"
 
 #: parse_manifest.c:361
-msgid "unexpected wal range field"
-msgstr "campo de rango de wal inesperado"
+#| msgid "unexpected wal range field"
+msgid "unexpected WAL range field"
+msgstr "campo de rango de WAL inesperado"
 
 #: parse_manifest.c:367
 msgid "unexpected object field"
@@ -172,11 +174,13 @@ msgid "unexpected scalar"
 msgstr "escalar inesperado"
 
 #: parse_manifest.c:472
-msgid "missing pathname"
-msgstr "ruta de archivo (pathname) faltante"
+#| msgid "missing pathname"
+msgid "missing path name"
+msgstr "ruta de archivo faltante"
 
 #: parse_manifest.c:475
-msgid "both pathname and encoded pathname"
+#| msgid "both pathname and encoded pathname"
+msgid "both path name and encoded path name"
 msgstr "hay tanto ruta de archivo (pathname) como ruta codificada (encoded pathname)"
 
 #: parse_manifest.c:477
@@ -188,7 +192,8 @@ msgid "checksum without algorithm"
 msgstr "suma de comprobación sin algoritmo"
 
 #: parse_manifest.c:494
-msgid "unable to decode filename"
+#| msgid "unable to decode filename"
+msgid "could not decode file name"
 msgstr "no se pudo decodificar el nombre del archivo"
 
 #: parse_manifest.c:504
@@ -222,11 +227,13 @@ msgid "timeline is not an integer"
 msgstr "el timeline no es un número entero"
 
 #: parse_manifest.c:585
-msgid "unable to parse start LSN"
+#| msgid "unable to parse start LSN"
+msgid "could not parse start LSN"
 msgstr "no se pudo interpretar el LSN de inicio"
 
 #: parse_manifest.c:588
-msgid "unable to parse end LSN"
+#| msgid "unable to parse end LSN"
+msgid "could not parse end LSN"
 msgstr "no se pudo interpretar el LSN de término"
 
 #: parse_manifest.c:649
@@ -321,7 +328,8 @@ msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
 
 #: pg_verifybackup.c:474
 #, c-format
-msgid "duplicate pathname in backup manifest: \"%s\""
+#| msgid "duplicate pathname in backup manifest: \"%s\""
+msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "nombre de ruta duplicado en el manifiesto de la copia de seguridad: \"%s\""
 
 #: pg_verifybackup.c:537 pg_verifybackup.c:544

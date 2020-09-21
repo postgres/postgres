@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-10 12:04+0300\n"
-"PO-Revision-Date: 2020-09-09 14:05+0300\n"
+"POT-Creation-Date: 2020-09-15 18:25+0300\n"
+"PO-Revision-Date: 2020-09-15 18:55+0300\n"
 "Last-Translator: Alexander Lakhin <a.lakhin@postgrespro.ru>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -150,16 +150,16 @@ msgid "expected version indicator"
 msgstr "ожидалось указание версии"
 
 #: parse_manifest.c:328
-msgid "unknown toplevel field"
-msgstr "неизвестное поле на верхнем уровне"
+msgid "unrecognized top-level field"
+msgstr "нераспознанное поле на верхнем уровне"
 
 #: parse_manifest.c:347
 msgid "unexpected file field"
 msgstr "неизвестное поле для файла"
 
 #: parse_manifest.c:361
-msgid "unexpected wal range field"
-msgstr "неизвестное поле в указании диапазона wal"
+msgid "unexpected WAL range field"
+msgstr "неизвестное поле в указании диапазона WAL"
 
 #: parse_manifest.c:367
 msgid "unexpected object field"
@@ -174,11 +174,11 @@ msgid "unexpected scalar"
 msgstr "неожиданное скалярное значение"
 
 #: parse_manifest.c:472
-msgid "missing pathname"
+msgid "missing path name"
 msgstr "отсутствует указание пути"
 
 #: parse_manifest.c:475
-msgid "both pathname and encoded pathname"
+msgid "both path name and encoded path name"
 msgstr "указание пути задано в обычном виде и в закодированном"
 
 #: parse_manifest.c:477
@@ -190,7 +190,7 @@ msgid "checksum without algorithm"
 msgstr "не задан алгоритм расчёта контрольной суммы"
 
 #: parse_manifest.c:494
-msgid "unable to decode filename"
+msgid "could not decode file name"
 msgstr "не удалось декодировать имя файла"
 
 #: parse_manifest.c:504
@@ -224,11 +224,11 @@ msgid "timeline is not an integer"
 msgstr "линия времени задаётся не целым числом"
 
 #: parse_manifest.c:585
-msgid "unable to parse start LSN"
+msgid "could not parse start LSN"
 msgstr "не удалось разобрать начальный LSN"
 
 #: parse_manifest.c:588
-msgid "unable to parse end LSN"
+msgid "could not parse end LSN"
 msgstr "не удалось разобрать конечный LSN"
 
 #: parse_manifest.c:649
@@ -323,7 +323,7 @@ msgstr "не удалось прочитать файл \"%s\" (прочитан
 
 #: pg_verifybackup.c:474
 #, c-format
-msgid "duplicate pathname in backup manifest: \"%s\""
+msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "дублирующийся путь в манифесте копии: \"%s\""
 
 #: pg_verifybackup.c:537 pg_verifybackup.c:544

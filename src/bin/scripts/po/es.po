@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-13 10:46+0000\n"
-"PO-Revision-Date: 2019-09-29 22:24-0300\n"
+"POT-Creation-Date: 2020-09-18 17:46+0000\n"
+"PO-Revision-Date: 2020-09-18 18:16-0300\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -68,9 +68,8 @@ msgid "Cancel request sent\n"
 msgstr "Petición de cancelación enviada\n"
 
 #: ../../fe_utils/cancel.c:165
-#, fuzzy
 msgid "Could not send cancel request: "
-msgstr "No se pudo enviar el paquete de cancelación: %s"
+msgstr "No se pudo enviar el paquete de cancelación: "
 
 #: ../../fe_utils/cancel.c:210
 #, c-format
@@ -308,10 +307,10 @@ msgid "query was: %s"
 msgstr "la consulta era: %s"
 
 #: common.c:312
-#, fuzzy, c-format
+#, c-format
 #| msgid "clustering of database \"%s\" failed: %s"
 msgid "processing of database \"%s\" failed: %s"
-msgstr "falló el reordenamiento de la base de datos «%s»: %s"
+msgstr "falló el procesamiento de la base de datos «%s»: %s"
 
 #: common.c:406
 #, c-format
@@ -472,10 +471,10 @@ msgstr ""
 "el usuario actual.\n"
 
 #: createuser.c:150
-#, fuzzy, c-format
+#, c-format
 #| msgid "invalid connection limit: %d"
 msgid "invalid value for --connection-limit: %s"
-msgstr "límite de conexión no válido: %d"
+msgstr "valor para --connection-limit no válido: %s"
 
 #: createuser.c:194
 msgid "Enter name of role to add: "
@@ -661,10 +660,10 @@ msgid "  %s [OPTION]... DBNAME\n"
 msgstr "  %s [OPCIÓN]... BASE-DE-DATOS\n"
 
 #: dropdb.c:168
-#, fuzzy, c-format
+#, c-format
 #| msgid "  -f, --force                    force update to be done\n"
 msgid "  -f, --force               try to terminate other connections before dropping\n"
-msgstr "  -f, --force              fuerza que la actualización sea hecha\n"
+msgstr "  -f, --force              intentar cancelar otras conexiones antes de borrar\n"
 
 #: dropdb.c:169
 #, c-format
@@ -862,16 +861,16 @@ msgid "cannot reindex specific index(es) and system catalogs at the same time"
 msgstr "no es posible reindexar índices específicos y los catálogos del sistema simultáneamente"
 
 #: reindexdb.c:245
-#, fuzzy, c-format
+#, c-format
 #| msgid "cannot reindex system catalogs concurrently"
 msgid "cannot use multiple jobs to reindex system catalogs"
-msgstr "no se pueden reindexar catálogos de sistema concurrentemente"
+msgstr "no se pueden usar múltiples procesos para reindexar índices de sistema"
 
 #: reindexdb.c:272
-#, fuzzy, c-format
+#, c-format
 #| msgid "cannot insert multiple commands into a prepared statement"
 msgid "cannot use multiple jobs to reindex indexes"
-msgstr "no se pueden insertar múltiples órdenes en una sentencia preparada"
+msgstr "no se pueden usar múltiples procesos para reindexar índices"
 
 #: reindexdb.c:337 vacuumdb.c:410 vacuumdb.c:418 vacuumdb.c:425 vacuumdb.c:432
 #: vacuumdb.c:439
@@ -900,10 +899,10 @@ msgid "reindexing of schema \"%s\" in database \"%s\" failed: %s"
 msgstr "falló la reindexación del esquema «%s» en la base de datos «%s»: %s"
 
 #: reindexdb.c:570
-#, fuzzy, c-format
+#, c-format
 #| msgid "reindexing of schema \"%s\" in database \"%s\" failed: %s"
 msgid "reindexing of system catalogs in database \"%s\" failed: %s"
-msgstr "falló la reindexación del esquema «%s» en la base de datos «%s»: %s"
+msgstr "falló la reindexación de los catálogos de sistema en la base de datos «%s»: %s"
 
 #: reindexdb.c:574
 #, c-format
@@ -945,7 +944,7 @@ msgid "  -i, --index=INDEX         recreate specific index(es) only\n"
 msgstr "  -i, --index=INDEX         recrear sólo este o estos índice(s)\n"
 
 #: reindexdb.c:761
-#, fuzzy, c-format
+#, c-format
 #| msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
 msgid "  -j, --jobs=NUM            use this many concurrent connections to reindex\n"
 msgstr "  -j, --jobs=NUM            usar esta cantidad de conexiones concurrentes\n"
@@ -977,13 +976,13 @@ msgstr ""
 #: scripts_parallel.c:234
 #, c-format
 msgid "too many jobs for this platform -- try %d"
-msgstr ""
+msgstr "demasiados procesos para esta plataforma -- intente con %d"
 
 #: vacuumdb.c:194
-#, fuzzy, c-format
+#, c-format
 #| msgid "remainder for hash partition must be a non-negative integer"
 msgid "parallel vacuum degree must be a non-negative integer"
-msgstr "remanente en partición hash debe ser un entero no negativo"
+msgstr "el grado de vacuum paralelo debe ser un entero no negativo"
 
 #: vacuumdb.c:214
 #, c-format
@@ -1001,10 +1000,10 @@ msgid "cannot use the \"%s\" option when performing only analyze"
 msgstr "no se puede usar la opción «%s» cuando se está sólo actualizando estadísticas"
 
 #: vacuumdb.c:284
-#, fuzzy, c-format
+#, c-format
 #| msgid "cannot use the \"%s\" option when performing only analyze"
-msgid "cannot use the \"%s\" option when performing full"
-msgstr "no se puede usar la opción «%s» cuando se está sólo actualizando estadísticas"
+msgid "cannot use the \"%s\" option when performing full vacuum"
+msgstr "no se puede usar la opción «%s» cuando se está ejecutando vacuum full"
 
 #: vacuumdb.c:300
 #, c-format
@@ -1105,7 +1104,7 @@ msgstr "      --min-xid-age=EDAD_XID      edad de ID de transacción mínima de 
 #: vacuumdb.c:933
 #, c-format
 msgid "  -P, --parallel=PARALLEL_DEGREE  use this many background workers for vacuum, if available\n"
-msgstr ""
+msgstr "  -P, --parallel=GRADO_PARALELISMO use esta cantidad de procesos para vacuum, si están disponibles\n"
 
 #: vacuumdb.c:934
 #, c-format

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-03 11:22+0300\n"
-"PO-Revision-Date: 2020-09-03 15:23+0300\n"
+"POT-Creation-Date: 2020-09-15 18:25+0300\n"
+"PO-Revision-Date: 2020-09-15 18:56+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -1049,8 +1049,8 @@ msgstr "при выполнении только анализа нельзя и�
 
 #: vacuumdb.c:284
 #, c-format
-msgid "cannot use the \"%s\" option when performing full"
-msgstr "при выполнении полного анализа нельзя использовать параметр \"%s\""
+msgid "cannot use the \"%s\" option when performing full vacuum"
+msgstr "при выполнении полной очистки нельзя использовать параметр \"%s\""
 
 #: vacuumdb.c:300
 #, c-format

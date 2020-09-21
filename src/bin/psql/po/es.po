@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-13 10:44+0000\n"
-"PO-Revision-Date: 2020-09-12 22:40-0300\n"
+"POT-Creation-Date: 2020-09-13 13:44+0000\n"
+"PO-Revision-Date: 2020-09-14 13:02-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -138,9 +138,8 @@ msgid "Cancel request sent\n"
 msgstr "Petición de cancelación enviada\n"
 
 #: ../../fe_utils/cancel.c:165
-#, fuzzy
 msgid "Could not send cancel request: "
-msgstr "No se pudo enviar el paquete de cancelación: %s"
+msgstr "No se pudo enviar la petición de cancelación: %s"
 
 #: ../../fe_utils/cancel.c:210
 #, c-format
@@ -276,10 +275,10 @@ msgid "There is no previous error."
 msgstr "No hay error anterior."
 
 #: command.c:1371
-#, fuzzy, c-format
+#, c-format
 #| msgid "Missing left parenthesis."
 msgid "\\%s: missing right parenthesis"
-msgstr "Falta paréntesis izquierdo."
+msgstr "\\%s: falta el paréntesis derecho"
 
 #: command.c:1548 command.c:1853 command.c:1867 command.c:1884 command.c:2044
 #: command.c:2281 command.c:2517 command.c:2557
@@ -838,10 +837,10 @@ msgid "Asynchronous notification \"%s\" received from server process with PID %d
 msgstr "Notificación asíncrona «%s» recibida del proceso de servidor con PID %d.\n"
 
 #: common.c:726 common.c:743
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not read input file: %m"
 msgid "could not print result table: %m"
-msgstr "no se pudo leer el archivo de entrada: %m"
+msgstr "no se pudo mostrar la tabla de resultados: %m"
 
 #: common.c:764
 #, c-format
@@ -1519,10 +1518,10 @@ msgid "Partition key: %s"
 msgstr "Llave de partición: %s"
 
 #: describe.c:2195
-#, fuzzy, c-format
+#, c-format
 #| msgid "Foreign table \"%s.%s\""
 msgid "Owning table: \"%s.%s\""
-msgstr "Tabla foránea «%s.%s»"
+msgstr "Tabla dueña: «%s.%s»"
 
 #: describe.c:2266
 msgid "primary key, "
@@ -1834,7 +1833,7 @@ msgstr "temporal"
 
 #: describe.c:3754
 msgid "unlogged"
-msgstr ""
+msgstr "unlogged"
 
 #: describe.c:3755
 msgid "Persistence"
@@ -2309,30 +2308,24 @@ msgid "Operator family"
 msgstr "Familia de operadores"
 
 #: describe.c:6143
-#, fuzzy
-#| msgid "List of operators"
 msgid "List of operator classes"
-msgstr "Listado de operadores"
+msgstr "Listado de clases de operador"
 
 #: describe.c:6186
 msgid "Applicable types"
 msgstr "Tipos aplicables"
 
 #: describe.c:6225
-#, fuzzy
-#| msgid "List of operators"
 msgid "List of operator families"
-msgstr "Listado de operadores"
+msgstr "Listado de familias de operadores"
 
 #: describe.c:6272
 msgid "Operator"
 msgstr "Operador"
 
 #: describe.c:6273
-#, fuzzy
-#| msgid "category"
 msgid "Strategy"
-msgstr "categoría"
+msgstr "Estrategia"
 
 #: describe.c:6274
 msgid "ordering"
@@ -2347,38 +2340,29 @@ msgid "Purpose"
 msgstr "Propósito"
 
 #: describe.c:6281
-#, fuzzy
 #| msgid "operator family"
 msgid "Sort opfamily"
-msgstr "familia de operadores"
+msgstr "familia de ops de ordenamiento"
 
 #: describe.c:6312
-#, fuzzy
-#| msgid "must be owner of operator family %s"
 msgid "List of operators of operator families"
-msgstr "debe ser dueño de la familia de operadores %s"
+msgstr "Lista de operadores de familias de operadores"
 
 #: describe.c:6355
-#, fuzzy
-#| msgid "Result type"
 msgid "Registered left type"
-msgstr "Tipo resultado"
+msgstr "Tipo de dato izquierdo registrado"
 
 #: describe.c:6356
-#, fuzzy
-#| msgid "Right arg type"
 msgid "Registered right type"
-msgstr "Tipo arg der"
+msgstr "Tipo de dato derecho registrado"
 
 #: describe.c:6357
 msgid "Number"
 msgstr "Número"
 
 #: describe.c:6393
-#, fuzzy
-#| msgid "must be owner of operator family %s"
 msgid "List of support functions of operator families"
-msgstr "debe ser dueño de la familia de operadores %s"
+msgstr "Listado de funciones de la familia de operadores %s"
 
 #: help.c:73
 #, c-format
@@ -2711,6 +2695,8 @@ msgid ""
 "  \\g [(OPTIONS)] [FILE]  execute query (and send results to file or |pipe);\n"
 "                         \\g with no arguments is equivalent to a semicolon\n"
 msgstr ""
+"  \\g [(OPTIONS)] [FILE]  ejecuta la consulta (y envía el resultado a un fichero o |pipe);\n"
+"                         \\g sin argumentos es equivalente a un punto y coma\n"
 
 #: help.c:180
 #, c-format
@@ -2732,7 +2718,7 @@ msgstr ""
 #: help.c:183
 #, c-format
 msgid "  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n"
-msgstr ""
+msgstr "  \\ gx [(OPTIONS)] [FILE] como \\g, pero fuerza el modo de salida expandido\n"
 
 #: help.c:184
 #, c-format
@@ -2830,7 +2816,7 @@ msgstr "  \\copy ...       ejecutar orden SQL COPY con flujo de datos al cliente
 #: help.c:210
 #, c-format
 msgid "  \\echo [-n] [STRING]    write string to standard output (-n for no newline)\n"
-msgstr ""
+msgstr "  \\echo [-n] [STRING]    escribe la cadena en la salida estándar (-n no genera el salto de línea final)\n"
 
 #: help.c:211
 #, c-format
@@ -2850,12 +2836,12 @@ msgstr "  \\o [ARCHIVO]    enviar resultados de consultas a archivo u |orden\n"
 #: help.c:214
 #, c-format
 msgid "  \\qecho [-n] [STRING]   write string to \\o output stream (-n for no newline)\n"
-msgstr ""
+msgstr "  \\qecho [-n] [STRING]   escribe la cadena hacia flujo de salida \\o (-n no genera el salto de línea final)\n"
 
 #: help.c:215
 #, c-format
 msgid "  \\warn [-n] [STRING]    write string to standard error (-n for no newline)\n"
-msgstr ""
+msgstr "  \\warn [-n] [STRING]    escribe la cadena a la salida de error estándar (-n no genera el salto de línea final)\n"
 
 #: help.c:218
 #, c-format
@@ -2913,27 +2899,24 @@ msgid "  \\dA[+]  [PATTERN]      list access methods\n"
 msgstr "  \\dA[+]  [PATRÓN]  listar métodos de acceso\n"
 
 #: help.c:231
-#, fuzzy, c-format
-#| msgid "  \\do[S]  [PATTERN]      list operators\n"
+#, c-format
 msgid "  \\dAc[+] [AMPTRN [TYPEPTRN]]  list operator classes\n"
-msgstr "  \\do[S]  [PATRÓN]  listar operadores\n"
+msgstr "  \\do[S]  [PATRÓN]  listar las clases de operadores\n"
 
 #: help.c:232
-#, fuzzy, c-format
-#| msgid "  \\do[S]  [PATTERN]      list operators\n"
+#, c-format
 msgid "  \\dAf[+] [AMPTRN [TYPEPTRN]]  list operator families\n"
-msgstr "  \\do[S]  [PATRÓN]  listar operadores\n"
+msgstr "  \\do[S]  [PATRÓN]  listar las familias de operadores\n"
 
 #: help.c:233
-#, fuzzy, c-format
-#| msgid "  \\do[S]  [PATTERN]      list operators\n"
+#, c-format
 msgid "  \\dAo[+] [AMPTRN [OPFPTRN]]   list operators of operator families\n"
-msgstr "  \\do[S]  [PATRÓN]  listar operadores\n"
+msgstr "  \\do[S]  [PATRÓN]  listar los operadores de la familia de operadores\n"
 
 #: help.c:234
 #, c-format
 msgid "  \\dAp    [AMPTRN [OPFPTRN]]   list support functions of operator families\n"
-msgstr ""
+msgstr "  \\dAp    [AMPTRN [OPFPTRN]]   enumera las funciones de la familia de operadores\n"
 
 #: help.c:235
 #, c-format
@@ -4664,10 +4647,9 @@ msgid "cache"
 msgstr "cache"
 
 #: sql_help.c:1097
-#, fuzzy
 #| msgid "new_table"
 msgid "new_target"
-msgstr "nueva_tabla"
+msgstr "nuevo_valor"
 
 #: sql_help.c:1113 sql_help.c:2675
 msgid "conninfo"
@@ -4834,10 +4816,8 @@ msgid "existing_enum_value"
 msgstr "valor_enum_existente"
 
 #: sql_help.c:1537
-#, fuzzy
-#| msgid "operator"
 msgid "property"
-msgstr "operador"
+msgstr "propiedad"
 
 #: sql_help.c:1612 sql_help.c:2251 sql_help.c:2260 sql_help.c:2643
 #: sql_help.c:3120 sql_help.c:3571 sql_help.c:3750 sql_help.c:3786
@@ -5125,10 +5105,8 @@ msgid "method"
 msgstr "método"
 
 #: sql_help.c:2371
-#, fuzzy
-#| msgid "storage_parameter"
 msgid "opclass_parameter"
-msgstr "parámetro_de_almacenamiento"
+msgstr "parámetro_opclass"
 
 #: sql_help.c:2388
 msgid "call_handler"

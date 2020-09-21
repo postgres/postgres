@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-06-21 02:17+0000\n"
-"PO-Revision-Date: 2020-05-09 13:53+0200\n"
+"POT-Creation-Date: 2020-09-16 05:17+0000\n"
+"PO-Revision-Date: 2020-09-16 07:53+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -85,8 +85,8 @@ msgstr "kunde inte hämta statuskod för underprocess: felkod %lu"
 
 #: ../../fe_utils/archive.c:53
 #, c-format
-msgid "could not use restore_command with %%r alias"
-msgstr "kunde inte använda restore_command med %%r-alias"
+msgid "cannot use restore_command with %%r placeholder"
+msgstr "kan inte använda restore_command med %%r-platshållare"
 
 #: ../../fe_utils/archive.c:74
 #, c-format
@@ -98,15 +98,15 @@ msgstr "oväntad filstorlek på \"%s\": %lu istället för %lu"
 msgid "could not open file \"%s\" restored from archive: %m"
 msgstr "kunde inte öppna fil \"%s\" återställd från arkiv: %m"
 
-#: ../../fe_utils/archive.c:97 copy_fetch.c:88 filemap.c:208 filemap.c:369
+#: ../../fe_utils/archive.c:97 copy_fetch.c:88 filemap.c:208
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
 
 #: ../../fe_utils/archive.c:112
 #, c-format
-msgid "restore_command failed due to the signal: %s"
-msgstr "restore_command misslyckades på grund av signal: %s"
+msgid "restore_command failed: %s"
+msgstr "restore_command misslyckades: %s"
 
 #: ../../fe_utils/archive.c:121
 #, c-format
@@ -281,12 +281,12 @@ msgstr "\"%s\" är inte en symbolisk länk"
 msgid "\"%s\" is not a regular file"
 msgstr "\"%s\" är inte en vanlig fil"
 
-#: filemap.c:381
+#: filemap.c:369
 #, c-format
 msgid "source file list is empty"
 msgstr "källfillistan är tom"
 
-#: filemap.c:496
+#: filemap.c:484
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\""
 msgstr "oväntad sidmodifiering för katalog eller symbolisk länk \"%s\""
@@ -346,72 +346,72 @@ msgstr "kunde inte hämta fillista: %s"
 msgid "unexpected result set while fetching file list"
 msgstr "oväntad resultatmängd vid hämtning av fillista"
 
-#: libpq_fetch.c:260
+#: libpq_fetch.c:265
 #, c-format
 msgid "could not send query: %s"
 msgstr "kunde inte skicka fråga: %s"
 
-#: libpq_fetch.c:265
+#: libpq_fetch.c:270
 #, c-format
 msgid "could not set libpq connection to single row mode"
 msgstr "kunde inte sätta libpq-anslutning till enradsläge"
 
-#: libpq_fetch.c:285
+#: libpq_fetch.c:290
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "oväntat resultat vid hämtning av extern fil: %s"
 
-#: libpq_fetch.c:291
+#: libpq_fetch.c:296
 #, c-format
 msgid "unexpected result set size while fetching remote files"
 msgstr "oväntad resultatmängdstorlek vid hämtning av externa filer"
 
-#: libpq_fetch.c:297
+#: libpq_fetch.c:302
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u"
 msgstr "oväntade datayper i resultatmängd vid hämtning av externa filer: %u %u %u"
 
-#: libpq_fetch.c:305
+#: libpq_fetch.c:310
 #, c-format
 msgid "unexpected result format while fetching remote files"
 msgstr "oväntat resultatformat vid hämtning av externa filer"
 
-#: libpq_fetch.c:311
+#: libpq_fetch.c:316
 #, c-format
 msgid "unexpected null values in result while fetching remote files"
 msgstr "oväntade null-värden i resultat vid hämtning av externa filer"
 
-#: libpq_fetch.c:315
+#: libpq_fetch.c:320
 #, c-format
 msgid "unexpected result length while fetching remote files"
 msgstr "oväntad resultatlängd vid hämtning av externa filer"
 
-#: libpq_fetch.c:376
+#: libpq_fetch.c:381
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "kunde inte hämta extern fil \"%s\": %s"
 
-#: libpq_fetch.c:381
+#: libpq_fetch.c:386
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
 msgstr "oväntat resultatmängd vid hämtning av extern fil \"%s\""
 
-#: libpq_fetch.c:425
+#: libpq_fetch.c:430
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "kunde inte skicka COPY-data: %s"
 
-#: libpq_fetch.c:454
+#: libpq_fetch.c:459
 #, c-format
 msgid "could not send file list: %s"
 msgstr "kunde inte skicka fillista: %s"
 
-#: libpq_fetch.c:496
+#: libpq_fetch.c:501
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "kunde inte skicka slut-på-COPY: %s"
 
-#: libpq_fetch.c:502
+#: libpq_fetch.c:507
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "oväntat resultat vid skickande av fillista: %s"
@@ -644,84 +644,84 @@ msgstr "läser WAL i målet"
 msgid "need to copy %lu MB (total source directory size is %lu MB)"
 msgstr "behöver kopiera %lu MB (total källkatalogstorlek är %lu MB)"
 
-#: pg_rewind.c:428
+#: pg_rewind.c:427
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "skapar backupetikett och uppdaterar kontrollfil"
 
-#: pg_rewind.c:458
+#: pg_rewind.c:457
 #, c-format
 msgid "syncing target data directory"
 msgstr "synkar måldatakatalog"
 
-#: pg_rewind.c:465
+#: pg_rewind.c:464
 #, c-format
 msgid "Done!"
 msgstr "Klar!"
 
-#: pg_rewind.c:477
+#: pg_rewind.c:476
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "källa och målkluster är från olika system"
 
-#: pg_rewind.c:485
+#: pg_rewind.c:484
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "klustren är inte kompatibla med denna version av pg_rewind"
 
-#: pg_rewind.c:495
+#: pg_rewind.c:494
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
 msgstr "målservern behöver använda antingen datachecksums eller \"wal_log_hints = on\""
 
-#: pg_rewind.c:506
+#: pg_rewind.c:505
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "målserver måste stängas ner utan fel"
 
-#: pg_rewind.c:516
+#: pg_rewind.c:515
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "måldatakatalog måste stängas ner utan fel"
 
-#: pg_rewind.c:565
+#: pg_rewind.c:567
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) kopierad"
 
-#: pg_rewind.c:626
+#: pg_rewind.c:630
 #, c-format
 msgid "invalid control file"
 msgstr "ogiltig kontrollfil"
 
-#: pg_rewind.c:710
+#: pg_rewind.c:714
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "kunde inte finna en gemensam anfader av källa och målklusterets tidslinjer"
 
-#: pg_rewind.c:751
+#: pg_rewind.c:755
 #, c-format
 msgid "backup label buffer too small"
 msgstr "backupetikett-buffer för liten"
 
-#: pg_rewind.c:774
+#: pg_rewind.c:778
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "oväntad kontrollfil-CRC"
 
-#: pg_rewind.c:784
+#: pg_rewind.c:788
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "oväntad kontrollfilstorlek %d, förväntade %d"
 
-#: pg_rewind.c:793
+#: pg_rewind.c:797
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
 msgstr[0] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte"
 msgstr[1] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte"
 
-#: pg_rewind.c:850 pg_rewind.c:908
+#: pg_rewind.c:854 pg_rewind.c:912
 #, c-format
 msgid ""
 "The program \"%s\" is needed by %s but was not found in the\n"
@@ -732,7 +732,7 @@ msgstr ""
 "katalog som \"%s\".\n"
 "Kontrollera din installation."
 
-#: pg_rewind.c:855 pg_rewind.c:913
+#: pg_rewind.c:859 pg_rewind.c:917
 #, c-format
 msgid ""
 "The program \"%s\" was found by \"%s\"\n"
@@ -743,22 +743,22 @@ msgstr ""
 "men är inte av samma version som %s.\n"
 "Kontrollera din installation."
 
-#: pg_rewind.c:876
+#: pg_rewind.c:880
 #, c-format
 msgid "restore_command is not set in the target cluster"
 msgstr "restore_command är inte satt i målklustret"
 
-#: pg_rewind.c:919
+#: pg_rewind.c:923
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "kör \"%s\" för målservern för att slutföra krashåterställning"
 
-#: pg_rewind.c:939
+#: pg_rewind.c:943
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "postgres enanvändarläge misslyckades i målklustret"
 
-#: pg_rewind.c:940
+#: pg_rewind.c:944
 #, c-format
 msgid "Command was: %s"
 msgstr "Kommandot var: %s"
@@ -933,22 +933,16 @@ msgstr "post med ogiltig längd vid %X/%X"
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "ogiltig komprimerad image vid %X/%X, block %d"
 
-#~ msgid ""
-#~ "The program \"postgres\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "Programmet \"postgres\" behövs av %s men kunde inte hittas\n"
-#~ "i samma katalog som \"%s\".\n"
-#~ "Kontrollera din installation."
+#~ msgid "could not load advapi32.dll: error code %lu"
+#~ msgstr "kunde inte ladda advapi32.dll: felkod %lu"
 
 #~ msgid ""
-#~ "The program \"postgres\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
+#~ "The program \"%s\" was found by \"%s\" but was\n"
+#~ "not the same version as %s.\n"
 #~ "Check your installation."
 #~ msgstr ""
-#~ "Programmet \"postgres\" hittades av \"%s\",\n"
-#~ "men det är inte byggt i samma version som %s.\n"
+#~ "Programmet \"%s\" hittades av \"%s\"\n"
+#~ "men är inte av samma version som %s.\n"
 #~ "Kontrollera din installation."
 
 #~ msgid ""
@@ -961,13 +955,19 @@ msgstr "ogiltig komprimerad image vid %X/%X, block %d"
 #~ "Kontrollera din installation."
 
 #~ msgid ""
-#~ "The program \"%s\" was found by \"%s\" but was\n"
-#~ "not the same version as %s.\n"
+#~ "The program \"postgres\" was found by \"%s\"\n"
+#~ "but was not the same version as %s.\n"
 #~ "Check your installation."
 #~ msgstr ""
-#~ "Programmet \"%s\" hittades av \"%s\"\n"
-#~ "men är inte av samma version som %s.\n"
+#~ "Programmet \"postgres\" hittades av \"%s\",\n"
+#~ "men det är inte byggt i samma version som %s.\n"
 #~ "Kontrollera din installation."
 
-#~ msgid "could not load advapi32.dll: error code %lu"
-#~ msgstr "kunde inte ladda advapi32.dll: felkod %lu"
+#~ msgid ""
+#~ "The program \"postgres\" is needed by %s but was not found in the\n"
+#~ "same directory as \"%s\".\n"
+#~ "Check your installation."
+#~ msgstr ""
+#~ "Programmet \"postgres\" behövs av %s men kunde inte hittas\n"
+#~ "i samma katalog som \"%s\".\n"
+#~ "Kontrollera din installation."

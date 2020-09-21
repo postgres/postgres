@@ -21,8 +21,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-10 23:13+0000\n"
-"PO-Revision-Date: 2020-09-13 07:37+0200\n"
+"POT-Creation-Date: 2020-09-16 05:13+0000\n"
+"PO-Revision-Date: 2020-09-16 10:54+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -123,7 +123,7 @@ msgstr ""
 #: access/transam/xlog.c:3741 access/transam/xlog.c:3844
 #: access/transam/xlog.c:4718 access/transam/xlogutils.c:807
 #: postmaster/syslogger.c:1488 replication/basebackup.c:621
-#: replication/basebackup.c:1590 replication/logical/origin.c:707
+#: replication/basebackup.c:1593 replication/logical/origin.c:707
 #: replication/logical/reorderbuffer.c:2465
 #: replication/logical/reorderbuffer.c:2825
 #: replication/logical/reorderbuffer.c:3579
@@ -190,7 +190,7 @@ msgid "could not change directory to \"%s\": %m"
 msgstr "kunde inte byta katalog till \"%s\": %m"
 
 #: ../common/exec.c:287 access/transam/xlog.c:10750
-#: replication/basebackup.c:1415 utils/adt/misc.c:337
+#: replication/basebackup.c:1418 utils/adt/misc.c:337
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "kan inte läsa symbolisk länk \"%s\": %m"
@@ -438,8 +438,8 @@ msgstr "kunde inte köra igen med token för begränsad åtkomst: felkod %lu"
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "kunde inte hämta statuskod för underprocess: felkod %lu"
 
-#: ../common/rmtree.c:79 replication/basebackup.c:1168
-#: replication/basebackup.c:1344
+#: ../common/rmtree.c:79 replication/basebackup.c:1171
+#: replication/basebackup.c:1347
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "kunde inte ta status på fil eller katalog \"%s\": %m"
@@ -1139,111 +1139,111 @@ msgstr "systemanvändning: %s\n"
 
 #: access/heap/vacuumlazy.c:684
 #, c-format
-msgid "WAL usage: %ld records, %ld full page images, "
-msgstr "WAL-användning: %ld poster, %ld hela sidor, "
+msgid "WAL usage: %ld records, %ld full page images, %llu bytes"
+msgstr "WAL-användning: %ld poster, %ld hela sidor, %llu bytes"
 
-#: access/heap/vacuumlazy.c:796
+#: access/heap/vacuumlazy.c:795
 #, c-format
 msgid "aggressively vacuuming \"%s.%s\""
 msgstr "aggressiv vaccum av \"%s.%s\""
 
-#: access/heap/vacuumlazy.c:801 commands/cluster.c:874
+#: access/heap/vacuumlazy.c:800 commands/cluster.c:874
 #, c-format
 msgid "vacuuming \"%s.%s\""
 msgstr "kör vaccum på \"%s.%s\""
 
-#: access/heap/vacuumlazy.c:838
+#: access/heap/vacuumlazy.c:837
 #, c-format
 msgid "disabling parallel option of vacuum on \"%s\" --- cannot vacuum temporary tables in parallel"
 msgstr "stänger av parallell-flaggan för vacuumn på \"%s\" --- kan inte köra vacuum på temporära tabeller parallellt"
 
-#: access/heap/vacuumlazy.c:1726
+#: access/heap/vacuumlazy.c:1725
 #, c-format
 msgid "\"%s\": removed %.0f row versions in %u pages"
 msgstr "\"%s\": tog bort %.0f radversioner i %u sidor"
 
-#: access/heap/vacuumlazy.c:1736
+#: access/heap/vacuumlazy.c:1735
 #, c-format
 msgid "%.0f dead row versions cannot be removed yet, oldest xmin: %u\n"
 msgstr "%.0f döda radversioner kan inte tas bort än, äldsta xmin: %u\n"
 
-#: access/heap/vacuumlazy.c:1738
+#: access/heap/vacuumlazy.c:1737
 #, c-format
 msgid "There were %.0f unused item identifiers.\n"
 msgstr "Det fanns %.0f oanvända post-identifierare.\n"
 
-#: access/heap/vacuumlazy.c:1740
+#: access/heap/vacuumlazy.c:1739
 #, c-format
 msgid "Skipped %u page due to buffer pins, "
 msgid_plural "Skipped %u pages due to buffer pins, "
 msgstr[0] "Hoppade över %u sida på grund av fastnålade buffrar, "
 msgstr[1] "Hoppade över %u sidor på grund av fastnålade buffrar, "
 
-#: access/heap/vacuumlazy.c:1744
+#: access/heap/vacuumlazy.c:1743
 #, c-format
 msgid "%u frozen page.\n"
 msgid_plural "%u frozen pages.\n"
 msgstr[0] "%u fryst sida.\n"
 msgstr[1] "%u frysta sidor.\n"
 
-#: access/heap/vacuumlazy.c:1748
+#: access/heap/vacuumlazy.c:1747
 #, c-format
 msgid "%u page is entirely empty.\n"
 msgid_plural "%u pages are entirely empty.\n"
 msgstr[0] "%u sida är helt tom.\n"
 msgstr[1] "%u sidor är helt tomma.\n"
 
-#: access/heap/vacuumlazy.c:1752 commands/indexcmds.c:3450
+#: access/heap/vacuumlazy.c:1751 commands/indexcmds.c:3450
 #: commands/indexcmds.c:3468
 #, c-format
 msgid "%s."
 msgstr "%s."
 
-#: access/heap/vacuumlazy.c:1755
+#: access/heap/vacuumlazy.c:1754
 #, c-format
 msgid "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of %u pages"
 msgstr "\"%s\": hittade %.0f borttagbara, %.0f ej borttagbara radversioner i %u av %u sidor"
 
-#: access/heap/vacuumlazy.c:1889
+#: access/heap/vacuumlazy.c:1888
 #, c-format
 msgid "\"%s\": removed %d row versions in %d pages"
 msgstr "\"%s\": tog bort %d radversioner i %d sidor"
 
-#: access/heap/vacuumlazy.c:2144
+#: access/heap/vacuumlazy.c:2143
 #, c-format
 msgid "launched %d parallel vacuum worker for index cleanup (planned: %d)"
 msgid_plural "launched %d parallel vacuum workers for index cleanup (planned: %d)"
 msgstr[0] "startade %d parallell städarbetare för indexupprensning (planerat: %d)"
 msgstr[1] "startade %d parallella städarbetare för indexupprensning (planerat: %d)"
 
-#: access/heap/vacuumlazy.c:2150
+#: access/heap/vacuumlazy.c:2149
 #, c-format
 msgid "launched %d parallel vacuum worker for index vacuuming (planned: %d)"
 msgid_plural "launched %d parallel vacuum workers for index vacuuming (planned: %d)"
 msgstr[0] "startade %d parallell städarbetare för index-vacuum (planerat: %d)"
 msgstr[1] "startade %d parallella städarbetare för index-vacuum (planerat: %d)"
 
-#: access/heap/vacuumlazy.c:2442
+#: access/heap/vacuumlazy.c:2441
 #, c-format
 msgid "scanned index \"%s\" to remove %d row versions by parallel vacuum worker"
 msgstr "genomsökte index \"%s\" och tog bort %d radversioner med parallell vacuum-arbetsprocess"
 
-#: access/heap/vacuumlazy.c:2444
+#: access/heap/vacuumlazy.c:2443
 #, c-format
 msgid "scanned index \"%s\" to remove %d row versions"
 msgstr "genomsökte index \"%s\" och tog bort %d radversioner"
 
-#: access/heap/vacuumlazy.c:2502
+#: access/heap/vacuumlazy.c:2501
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages as reported by parallel vacuum worker"
 msgstr "index \"%s\" innehåller nu %.0f radversioner i %u sidor enligt raoport från parallell vacuum-arbetsprocess"
 
-#: access/heap/vacuumlazy.c:2504
+#: access/heap/vacuumlazy.c:2503
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages"
 msgstr "index \"%s\" innehåller nu %.0f radversioner i %u sidor"
 
-#: access/heap/vacuumlazy.c:2511
+#: access/heap/vacuumlazy.c:2510
 #, c-format
 msgid ""
 "%.0f index row versions were removed.\n"
@@ -1254,25 +1254,20 @@ msgstr ""
 "%u indexsidor har raderats, %u är nu återanvändningsbara.\n"
 "%s."
 
-#: access/heap/vacuumlazy.c:2614
+#: access/heap/vacuumlazy.c:2613
 #, c-format
 msgid "\"%s\": stopping truncate due to conflicting lock request"
 msgstr "\"%s\": stoppar trunkering pga konfliktande låskrav"
 
-#: access/heap/vacuumlazy.c:2680
+#: access/heap/vacuumlazy.c:2679
 #, c-format
 msgid "\"%s\": truncated %u to %u pages"
 msgstr "\"%s\": trunkerade %u till %u sidor"
 
-#: access/heap/vacuumlazy.c:2745
+#: access/heap/vacuumlazy.c:2744
 #, c-format
 msgid "\"%s\": suspending truncate due to conflicting lock request"
 msgstr "\"%s\": pausar trunkering pga konfliktande låskrav"
-
-#: access/heap/vacuumlazy.c:3492
-#, c-format
-msgid "starting parallel vacuum worker for %s"
-msgstr "startar parallell vacuum-arbetsprocess för %s"
 
 #: access/heap/vacuumlazy.c:3583
 #, c-format
@@ -2785,14 +2780,14 @@ msgstr "WAL skapad med full_page_writes=off har återspelats sedab senaste omsta
 msgid "This means that the backup being taken on the standby is corrupt and should not be used. Enable full_page_writes and run CHECKPOINT on the master, and then try an online backup again."
 msgstr "Det betyder att backup:en som tas på standby:en är trasig och inte skall användas. Slå på full_page_writes och kör CHECKPOINT på master och försök sedan ta en ny online-backup igen."
 
-#: access/transam/xlog.c:10757 replication/basebackup.c:1420
+#: access/transam/xlog.c:10757 replication/basebackup.c:1423
 #: utils/adt/misc.c:342
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
 msgstr "mål för symbolisk länk \"%s\" är för lång"
 
 #: access/transam/xlog.c:10810 commands/tablespace.c:402
-#: commands/tablespace.c:566 replication/basebackup.c:1435 utils/adt/misc.c:350
+#: commands/tablespace.c:566 replication/basebackup.c:1438 utils/adt/misc.c:350
 #, c-format
 msgid "tablespaces are not supported on this platform"
 msgstr "tabellutrymmen stöds inte på denna plattform"
@@ -2820,12 +2815,12 @@ msgstr "ingen backup är på gång"
 msgid "invalid data in file \"%s\""
 msgstr "felaktig data i fil \"%s\""
 
-#: access/transam/xlog.c:11216 replication/basebackup.c:1268
+#: access/transam/xlog.c:11216 replication/basebackup.c:1271
 #, c-format
 msgid "the standby was promoted during online backup"
 msgstr "standby:en befordrades under online-backup"
 
-#: access/transam/xlog.c:11217 replication/basebackup.c:1269
+#: access/transam/xlog.c:11217 replication/basebackup.c:1272
 #, c-format
 msgid "This means that the backup being taken is corrupt and should not be used. Try taking another online backup."
 msgstr "Det betyder att backupen som tas är trasig och inte skall användas. Försök ta en ny online-backup."
@@ -2929,8 +2924,8 @@ msgstr "kunde inte läsa från loggsegment %s, offset %u, läste %d av %zu"
 
 #: access/transam/xlog.c:12518
 #, c-format
-msgid "wal receiver process shutdown requested"
-msgstr "nedstängning av wal-mottagarprocess efterfrågad"
+msgid "WAL receiver process shutdown requested"
+msgstr "nedstängning av WAL-mottagarprocess efterfrågad"
 
 #: access/transam/xlog.c:12624
 #, c-format
@@ -2996,7 +2991,7 @@ msgid "Did you mean to use pg_stop_backup('f')?"
 msgstr "Menade du att använda pg_stop_backup('f')?"
 
 #: access/transam/xlogfuncs.c:185 commands/event_trigger.c:1332
-#: commands/event_trigger.c:1884 commands/extension.c:1944
+#: commands/event_trigger.c:1890 commands/extension.c:1944
 #: commands/extension.c:2052 commands/extension.c:2337 commands/prepare.c:712
 #: executor/execExpr.c:2203 executor/execSRF.c:728 executor/functions.c:1046
 #: foreign/foreign.c:520 libpq/hba.c:2666 replication/logical/launcher.c:1086
@@ -3014,7 +3009,7 @@ msgid "set-valued function called in context that cannot accept a set"
 msgstr "en funktion som returnerar en mängd anropades i kontext som inte godtar en mängd"
 
 #: access/transam/xlogfuncs.c:189 commands/event_trigger.c:1336
-#: commands/event_trigger.c:1888 commands/extension.c:1948
+#: commands/event_trigger.c:1894 commands/extension.c:1948
 #: commands/extension.c:2056 commands/extension.c:2341 commands/prepare.c:716
 #: foreign/foreign.c:525 libpq/hba.c:2670 replication/logical/launcher.c:1090
 #: replication/logical/logicalfuncs.c:161 replication/logical/origin.c:1490
@@ -4979,7 +4974,7 @@ msgstr "slutfunktion med extra argument får inte deklareras STRICT"
 msgid "return type of combine function %s is not %s"
 msgstr "returtyp från sammansätt-funktion %s är inte %s"
 
-#: catalog/pg_aggregate.c:438 executor/nodeAgg.c:4173
+#: catalog/pg_aggregate.c:438 executor/nodeAgg.c:4177
 #, c-format
 msgid "combine function with transition type %s must not be declared STRICT"
 msgstr "kombineringsfunktion med övergångstyp %s får inte deklareras STRICT"
@@ -6775,7 +6770,7 @@ msgstr "Använd DROP AGGREGATE för att ta bort aggregatfunktioner."
 
 #: commands/dropcmds.c:158 commands/sequence.c:447 commands/tablecmds.c:3266
 #: commands/tablecmds.c:3424 commands/tablecmds.c:3469
-#: commands/tablecmds.c:15007 tcop/utility.c:1298
+#: commands/tablecmds.c:15007 tcop/utility.c:1309
 #, c-format
 msgid "relation \"%s\" does not exist, skipping"
 msgstr "relation \"%s\" finns inte, hoppar över"
@@ -6982,7 +6977,7 @@ msgstr "%s kan bara anropas i en sql_drop-händelseutlösarfunktion"
 msgid "%s can only be called in a table_rewrite event trigger function"
 msgstr "%s kan bara anropas i en tabell_rewrite-händelseutlösarfunktion"
 
-#: commands/event_trigger.c:1877
+#: commands/event_trigger.c:1883
 #, c-format
 msgid "%s can only be called in an event trigger function"
 msgstr "%s kan bara anropas i en händelseutlösarfunktion"
@@ -7794,12 +7789,12 @@ msgstr "skapa index för systemkolumner stöds inte"
 msgid "%s %s will create implicit index \"%s\" for table \"%s\""
 msgstr "%s %s kommer skapa ett implicit index \"%s\" för tabell \"%s\""
 
-#: commands/indexcmds.c:1198 tcop/utility.c:1484
+#: commands/indexcmds.c:1198 tcop/utility.c:1495
 #, c-format
 msgid "cannot create unique index on partitioned table \"%s\""
 msgstr "kan inte skapa unikt index för partitionerad tabell \"%s\""
 
-#: commands/indexcmds.c:1200 tcop/utility.c:1486
+#: commands/indexcmds.c:1200 tcop/utility.c:1497
 #, c-format
 msgid "Table \"%s\" contains partitions that are foreign tables."
 msgstr "Tabell \"%s\" innehåller partitioner som är främmande tabeller."
@@ -8111,23 +8106,23 @@ msgstr "index-sök-operatorer måste returnera boolean"
 
 #: commands/opclasscmds.c:1159
 #, c-format
-msgid "associated data types for opclass options parsing functions must match opclass input type"
-msgstr "associerade datatyper för opklassens flaggparsningsfunktioner måste matcha opklassens inputtyp"
+msgid "associated data types for operator class options parsing functions must match opclass input type"
+msgstr "associerade datatyper för operatorklassens flaggparsningsfunktioner måste matcha opklassens inputtyp"
 
 #: commands/opclasscmds.c:1166
 #, c-format
-msgid "left and right associated data types for opclass options parsing functions must match"
-msgstr "vänster och höger associerade datatyper för opklassens flaggparsningsfunktioner måste matcha"
+msgid "left and right associated data types for operator class options parsing functions must match"
+msgstr "vänster och höger associerade datatyper för operatorklassens flaggparsningsfunktioner måste matcha"
 
 #: commands/opclasscmds.c:1174
 #, c-format
-msgid "invalid opclass options parsing function"
-msgstr "ogiltig flaggparsningsfunktion i opklass"
+msgid "invalid operator class options parsing function"
+msgstr "ogiltig flaggparsningsfunktion i operatorklass"
 
 #: commands/opclasscmds.c:1175
 #, c-format
-msgid "Valid signature of opclass options parsing function is '%s'."
-msgstr "Giltig signatud för flaggparsningsfunktion i opklass är '%s'."
+msgid "Valid signature of operator class options parsing function is %s."
+msgstr "Giltig signatud för flaggparsningsfunktion i operatorklass är %s."
 
 #: commands/opclasscmds.c:1194
 #, c-format
@@ -9390,8 +9385,8 @@ msgstr "Kolumn \"%s\" i relation \"%s\" är inte redan NOT NULL."
 
 #: commands/tablecmds.c:6856
 #, c-format
-msgid "existing constraints on column \"%s\".\"%s\" are sufficient to prove that it does not contain nulls"
-msgstr "existerande integritetsvillkor på kolumn \"%s\".\"%s\" är tillräckligt för att bevisa att den inte innehåller null-värden"
+msgid "existing constraints on column \"%s.%s\" are sufficient to prove that it does not contain nulls"
+msgstr "existerande integritetsvillkor på kolumn \"%s.%s\" är tillräckligt för att bevisa att den inte innehåller null-värden"
 
 #: commands/tablecmds.c:6899
 #, c-format
@@ -11996,17 +11991,17 @@ msgstr "Sista satsen returnerar för få kolumner."
 msgid "return type %s is not supported for SQL functions"
 msgstr "returtyp %s stöds inte för SQL-funktioner"
 
-#: executor/nodeAgg.c:3076 executor/nodeAgg.c:3085 executor/nodeAgg.c:3097
+#: executor/nodeAgg.c:3075 executor/nodeAgg.c:3084 executor/nodeAgg.c:3096
 #, c-format
 msgid "unexpected EOF for tape %d: requested %zu bytes, read %zu bytes"
 msgstr "oväntat EOF för band %d: efterfrågade %zu byte, läste %zu byte"
 
-#: executor/nodeAgg.c:4022 parser/parse_agg.c:655 parser/parse_agg.c:685
+#: executor/nodeAgg.c:4026 parser/parse_agg.c:655 parser/parse_agg.c:685
 #, c-format
 msgid "aggregate function calls cannot be nested"
 msgstr "aggregatfunktionsanrop kan inte nästlas"
 
-#: executor/nodeAgg.c:4230 executor/nodeWindowAgg.c:2836
+#: executor/nodeAgg.c:4234 executor/nodeWindowAgg.c:2836
 #, c-format
 msgid "aggregate %u needs to have compatible input type and transition type"
 msgstr "aggregat %u måste ha kompatibel indatatyp och övergångstyp"
@@ -12559,8 +12554,8 @@ msgstr "multipla limit-alternativ tillåts inte"
 
 #: gram.y:16164
 #, c-format
-msgid "WITH TIES options can not be specified without ORDER BY clause"
-msgstr "WITH TIES-flaggan kan inte anges utan en ORDER BY-klausul"
+msgid "WITH TIES cannot be specified without ORDER BY clause"
+msgstr "WITH TIES kan inte anges utan en ORDER BY-klausul"
 
 #: gram.y:16172
 #, c-format
@@ -14059,7 +14054,7 @@ msgstr "clientcert kan bara konfigureras för \"hostssl\"-rader"
 
 #: libpq/hba.c:1725
 #, c-format
-msgid "clientcert can not be set to \"no-verify\" when using \"cert\" authentication"
+msgid "clientcert cannot be set to \"no-verify\" when using \"cert\" authentication"
 msgstr "clientcert kan inte vara satt till \"no-verify\" när man använder \"cert\"-autentisering"
 
 #: libpq/hba.c:1737
@@ -14645,13 +14640,13 @@ msgstr "kunde inte hitta array-typ för datatyp %s"
 
 #: nodes/params.c:359
 #, c-format
-msgid "extended query \"%s\" with parameters: %s"
-msgstr "utökad fråga \"%s\" med parametrar: %s"
+msgid "portal \"%s\" with parameters: %s"
+msgstr "portal \"%s\" med parametrar: %s"
 
 #: nodes/params.c:362
 #, c-format
-msgid "extended query with parameters: %s"
-msgstr "utökad fråga med parametrar: %s"
+msgid "unnamed portal with parameters: %s"
+msgstr "ej namngiven portal med parametrar: %s"
 
 #: optimizer/path/joinrels.c:855
 #, c-format
@@ -15384,8 +15379,8 @@ msgstr "kolumnaliaslista för \"%s\" har för många element"
 
 #: parser/parse_clause.c:1773
 #, c-format
-msgid "row count cannot be NULL in FETCH FIRST ... WITH TIES clause"
-msgstr "radantal kan inte vara NULL i FETCH FIRST ... WITH TIES-klausul"
+msgid "row count cannot be null in FETCH FIRST ... WITH TIES clause"
+msgstr "radantal kan inte vara null i FETCH FIRST ... WITH TIES-klausul"
 
 #. translator: %s is name of a SQL construct, eg LIMIT
 #: parser/parse_clause.c:1798
@@ -18237,98 +18232,100 @@ msgstr "kunde inte hitta WAL-fil \"%s\""
 msgid "unexpected WAL file size \"%s\""
 msgstr "oväntad WAL-filstorlek \"%s\""
 
-#: replication/basebackup.c:648 replication/basebackup.c:1749
+#: replication/basebackup.c:648 replication/basebackup.c:1752
 #, c-format
 msgid "base backup could not send data, aborting backup"
 msgstr "basbackup kunde inte skicka data, avbryter backup"
 
 #: replication/basebackup.c:724
 #, c-format
-msgid "%lld total checksum verification failures"
-msgstr "totalt %lld verifieringsfel av checksumma"
+msgid "%lld total checksum verification failure"
+msgid_plural "%lld total checksum verification failures"
+msgstr[0] "totalt %lld verifieringsfel av checksumma"
+msgstr[1] "totalt %lld verifieringsfel av checksumma"
 
-#: replication/basebackup.c:728
+#: replication/basebackup.c:731
 #, c-format
 msgid "checksum verification failure during base backup"
 msgstr "misslyckad verifiering av checksumma under basbackup"
 
-#: replication/basebackup.c:781 replication/basebackup.c:790
-#: replication/basebackup.c:799 replication/basebackup.c:808
-#: replication/basebackup.c:817 replication/basebackup.c:828
-#: replication/basebackup.c:845 replication/basebackup.c:854
-#: replication/basebackup.c:866 replication/basebackup.c:890
+#: replication/basebackup.c:784 replication/basebackup.c:793
+#: replication/basebackup.c:802 replication/basebackup.c:811
+#: replication/basebackup.c:820 replication/basebackup.c:831
+#: replication/basebackup.c:848 replication/basebackup.c:857
+#: replication/basebackup.c:869 replication/basebackup.c:893
 #, c-format
 msgid "duplicate option \"%s\""
 msgstr "duplicerad flagga \"%s\""
 
-#: replication/basebackup.c:834
+#: replication/basebackup.c:837
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
 msgstr "%d är utanför giltigt intervall för parameter \"%s\" (%d .. %d)"
 
-#: replication/basebackup.c:879
+#: replication/basebackup.c:882
 #, c-format
 msgid "unrecognized manifest option: \"%s\""
 msgstr "okänd manifestflagga: \"%s\""
 
-#: replication/basebackup.c:895
+#: replication/basebackup.c:898
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "okänd checksum-algoritm: \"%s\""
 
-#: replication/basebackup.c:910
+#: replication/basebackup.c:913
 #, c-format
 msgid "manifest checksums require a backup manifest"
 msgstr "manifestchecksummor kräver ett backup-manifest"
 
-#: replication/basebackup.c:1501
+#: replication/basebackup.c:1504
 #, c-format
 msgid "skipping special file \"%s\""
 msgstr "hoppar över specialfil \"%s\""
 
-#: replication/basebackup.c:1620
+#: replication/basebackup.c:1623
 #, c-format
 msgid "invalid segment number %d in file \"%s\""
 msgstr "ogiltigt segmentnummer %d i fil \"%s\""
 
-#: replication/basebackup.c:1639
+#: replication/basebackup.c:1642
 #, c-format
 msgid "could not verify checksum in file \"%s\", block %d: read buffer size %d and page size %d differ"
 msgstr "kunde inte verifiera checksumma i fil \"%s\", block %d: läsbufferstorlek %d och sidstorlek %d skiljer sig åt"
 
-#: replication/basebackup.c:1683 replication/basebackup.c:1713
+#: replication/basebackup.c:1686 replication/basebackup.c:1716
 #, c-format
 msgid "could not fseek in file \"%s\": %m"
 msgstr "kunde inte gör fseek i fil \"%s\": %m"
 
-#: replication/basebackup.c:1705
+#: replication/basebackup.c:1708
 #, c-format
 msgid "could not reread block %d of file \"%s\": %m"
 msgstr "kunde inte läsa tillbaka block %d i fil \"%s\": %m"
 
-#: replication/basebackup.c:1729
+#: replication/basebackup.c:1732
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %d: calculated %X but expected %X"
 msgstr "checksumkontroll misslyckades i fil \"%s\", block %d: beräknade %X men förväntade %X"
 
-#: replication/basebackup.c:1736
+#: replication/basebackup.c:1739
 #, c-format
 msgid "further checksum verification failures in file \"%s\" will not be reported"
 msgstr "ytterligare kontroller av checksummor i fil \"%s\" kommer inte rapporteras"
 
-#: replication/basebackup.c:1804
+#: replication/basebackup.c:1807
 #, c-format
 msgid "file \"%s\" has a total of %d checksum verification failure"
 msgid_plural "file \"%s\" has a total of %d checksum verification failures"
 msgstr[0] "filen \"%s\" har totalt %d kontrollerad felaktiga checksumma"
 msgstr[1] "filen \"%s\" har totalt %d kontrollerade felaktiga checksummor"
 
-#: replication/basebackup.c:1840
+#: replication/basebackup.c:1843
 #, c-format
 msgid "file name too long for tar format: \"%s\""
 msgstr "filnamnet är för långt för tar-format: \"%s\""
 
-#: replication/basebackup.c:1845
+#: replication/basebackup.c:1848
 #, c-format
 msgid "symbolic link target too long for tar format: file name \"%s\", target \"%s\""
 msgstr "mål för symbolisk länk är för långt för tar-format: filnamn \"%s\", mål \"%s\""
@@ -20134,8 +20131,8 @@ msgstr "%s misslyckades: %m"
 
 #: storage/ipc/procarray.c:3014
 #, c-format
-msgid "database \"%s\" is being used by prepared transaction"
-msgstr "databasen \"%s\" används av förberedd transation"
+msgid "database \"%s\" is being used by prepared transactions"
+msgstr "databasen \"%s\" används av förberedda transationer"
 
 #: storage/ipc/procarray.c:3046 storage/ipc/signalfuncs.c:142
 #, c-format
@@ -22925,12 +22922,12 @@ msgstr "jsonpaths array-index är utanför giltigt interval för integer"
 
 #: utils/adt/jsonpath_exec.c:2590
 #, c-format
-msgid "cannot convert value from %s to %s without timezone usage"
+msgid "cannot convert value from %s to %s without time zone usage"
 msgstr "kan inte konvertera värde från %s till %s utan att använda tidszon"
 
 #: utils/adt/jsonpath_exec.c:2592
 #, c-format
-msgid "Use *_tz() function for timezone support."
+msgid "Use *_tz() function for time zone support."
 msgstr "ANvända *_tz()-funktioner som stöder tidszon."
 
 #: utils/adt/levenshtein.c:133
@@ -24590,8 +24587,8 @@ msgstr "okänd API-version %d rapporterad av infofunktion \"%s\""
 
 #: utils/fmgr/fmgr.c:2003
 #, c-format
-msgid "opclass options info is absent in function call context"
-msgstr "opclass-flagginfo saknas i funktionens anropskontext"
+msgid "operator class options info is absent in function call context"
+msgstr "info om operatorklassflaggor saknas i funktionens anropskontext"
 
 #: utils/fmgr/fmgr.c:2070
 #, c-format
@@ -26075,7 +26072,7 @@ msgid "Sets the minimum execution time above which a sample of statements will b
 msgstr "Sätter minimal körtid där ett urval av långsammare satser kommer loggas. Urvalet bestämms av log_statement_sample_rate."
 
 #: utils/misc/guc.c:2833
-msgid "Zero log a sample of all queries. -1 turns this feature off."
+msgid "Zero logs a sample of all queries. -1 turns this feature off."
 msgstr "Noll loggar ett urval som inkluderar alla frågor. -1 stänger av denna funktion."
 
 #: utils/misc/guc.c:2843
@@ -26431,8 +26428,8 @@ msgid "Sets the shell command that will be called to archive a WAL file."
 msgstr "Sätter shell-kommandot som kommer anropas för att arkivera en WAL-fil."
 
 #: utils/misc/guc.c:3685
-msgid "Sets the shell command that will retrieve an archived WAL file."
-msgstr "Sätter shell-kommandot som kommer få en arkiverad WAL-fil."
+msgid "Sets the shell command that will be called to retrieve an archived WAL file."
+msgstr "Sätter shell-kommandot som kommer anropas för att få en arkiverad WAL-fil."
 
 #: utils/misc/guc.c:3695
 msgid "Sets the shell command that will be executed at every restart point."
@@ -27252,12 +27249,12 @@ msgstr "kan inte göra PREPARE på en transaktion som skapat en markör med WITH
 msgid "cannot perform transaction commands inside a cursor loop that is not read-only"
 msgstr "kan inte utföra transaktionskommandon i en markörloop som inte är read-only"
 
-#: utils/sort/logtape.c:268 utils/sort/logtape.c:291
+#: utils/sort/logtape.c:266 utils/sort/logtape.c:289
 #, c-format
 msgid "could not seek to block %ld of temporary file"
 msgstr "kunde inte söka (seek) till block %ld i temporärfil"
 
-#: utils/sort/logtape.c:297
+#: utils/sort/logtape.c:295
 #, c-format
 msgid "could not read block %ld of temporary file: read only %zu of %zu bytes"
 msgstr "kunde inte läsa block %ld i temporärfil: läste bara %zu av %zu byte"
@@ -27276,8 +27273,8 @@ msgstr "oväntad chunk i delad temporär lagringsfil för tupler"
 
 #: utils/sort/sharedtuplestore.c:569
 #, c-format
-msgid "could not seek block %u in shared tuplestore temporary file"
-msgstr "kunde inte söka (seek) block %u i delad temporär lagringsfil för tupler"
+msgid "could not seek to block %u in shared tuplestore temporary file"
+msgstr "kunde inte söka (seek) till block %u i delad temporär lagringsfil för tupler"
 
 #: utils/sort/sharedtuplestore.c:576
 #, c-format
@@ -27369,62 +27366,65 @@ msgstr "en serialiserbar transaktion som inte är read-only kan inte importera e
 msgid "cannot import a snapshot from a different database"
 msgstr "kan inte importera en snapshot från en annan databas"
 
-#~ msgid "leftover placeholder tuple detected in BRIN index \"%s\", deleting"
-#~ msgstr "kvarlämnad platshållartuple hittad i BRIN-index \"%s\", raderar"
-
-#~ msgid "EXPLAIN option BUFFERS requires ANALYZE"
-#~ msgstr "EXPLAIN-flagga BUFFERS kräver ANALYZE"
-
-#~ msgid "could not write to file \"%s\" : %m"
-#~ msgstr "kunde inte skriva till fil \"%s\" : %m"
-
-#~ msgid "Causes the planner to avoid hashed aggregation plans that are expected to use the disk."
-#~ msgstr "Gör så att planeraren unviker planer med hash-aggregering som förväntas använda disk."
-
-#~ msgid "cannot specify both FULL and PARALLEL options"
-#~ msgstr "kan inte ange både flaggan FULL och PARALLEL"
-
-#~ msgid "could not load wldap32.dll"
-#~ msgstr "kunde inte ladda wldap32.dll"
-
-#~ msgid "could not load advapi32.dll: error code %lu"
-#~ msgstr "kunde inte ladda advapi32.dll: felkod %lu"
-
-#~ msgid "cannot advance replication slot that has not previously reserved WAL"
-#~ msgstr "kan inte flytta fram replikeringsslot som inte en tidigare reserverad WAL"
-
-#~ msgid "could not write to tuplestore temporary file: %m"
-#~ msgstr "kunde inte skriva till temporär lagringsfil för tupler: %m"
-
-#~ msgid "When a password is specified in CREATE USER or ALTER USER without writing either ENCRYPTED or UNENCRYPTED, this parameter determines whether the password is to be encrypted."
-#~ msgstr "När ett lösenord anges i CREATE USER eller ALTER USER utan man skrivit varken ENCRYPTED eller UNENCRYPTED så bestämmer denna parameter om lösenordet kommer krypteras."
-
-#~ msgid "Encrypt passwords."
-#~ msgstr "Kryptera lösenord."
-
-#~ msgid "Enables the planner's use of hashed aggregation plans for groupingsets when the total size of the hash tables is expected to exceed work_mem."
-#~ msgstr "Aktiverar planerarens användning av planer med hash-aggregering för grupperingsmängder när totala storleken på hash-tabellerna förväntas överstiga work_mem."
-
-#~ msgid "could not write to temporary file: %m"
-#~ msgstr "kunde inte skriva till temporär fil: %m"
-
-#~ msgid "could not write to hash-join temporary file: %m"
-#~ msgstr "kunde inte skriva till hash-join-temporärfil: %m"
-
-#~ msgid "could not write block %ld of temporary file: %m"
-#~ msgstr "kunde inte skriva block %ld i temporär fil: %m"
-
-#~ msgid "could not restore file \"%s\" from archive"
-#~ msgstr "kunde inte återställa fil \"%s\" från arkiv"
-
-#~ msgid "restore_command failed due to the signal: %s"
-#~ msgstr "restore_command misslyckades på grund av signal: %s"
-
-#~ msgid "could not open file \"%s\" restored from archive: %m"
-#~ msgstr "kunde inte öppna fil \"%s\" återställd från arkiv: %m"
+#~ msgid "could not use restore_command with %%r alias"
+#~ msgstr "kunde inte använda restore_command med %%r-alias"
 
 #~ msgid "unexpected file size for \"%s\": %lu instead of %lu"
 #~ msgstr "oväntad filstorlek på \"%s\": %lu istället för %lu"
 
-#~ msgid "could not use restore_command with %%r alias"
-#~ msgstr "kunde inte använda restore_command med %%r-alias"
+#~ msgid "could not open file \"%s\" restored from archive: %m"
+#~ msgstr "kunde inte öppna fil \"%s\" återställd från arkiv: %m"
+
+#~ msgid "restore_command failed due to the signal: %s"
+#~ msgstr "restore_command misslyckades på grund av signal: %s"
+
+#~ msgid "could not restore file \"%s\" from archive"
+#~ msgstr "kunde inte återställa fil \"%s\" från arkiv"
+
+#~ msgid "could not write block %ld of temporary file: %m"
+#~ msgstr "kunde inte skriva block %ld i temporär fil: %m"
+
+#~ msgid "could not write to hash-join temporary file: %m"
+#~ msgstr "kunde inte skriva till hash-join-temporärfil: %m"
+
+#~ msgid "could not write to temporary file: %m"
+#~ msgstr "kunde inte skriva till temporär fil: %m"
+
+#~ msgid "Enables the planner's use of hashed aggregation plans for groupingsets when the total size of the hash tables is expected to exceed work_mem."
+#~ msgstr "Aktiverar planerarens användning av planer med hash-aggregering för grupperingsmängder när totala storleken på hash-tabellerna förväntas överstiga work_mem."
+
+#~ msgid "Encrypt passwords."
+#~ msgstr "Kryptera lösenord."
+
+#~ msgid "When a password is specified in CREATE USER or ALTER USER without writing either ENCRYPTED or UNENCRYPTED, this parameter determines whether the password is to be encrypted."
+#~ msgstr "När ett lösenord anges i CREATE USER eller ALTER USER utan man skrivit varken ENCRYPTED eller UNENCRYPTED så bestämmer denna parameter om lösenordet kommer krypteras."
+
+#~ msgid "could not write to tuplestore temporary file: %m"
+#~ msgstr "kunde inte skriva till temporär lagringsfil för tupler: %m"
+
+#~ msgid "cannot advance replication slot that has not previously reserved WAL"
+#~ msgstr "kan inte flytta fram replikeringsslot som inte en tidigare reserverad WAL"
+
+#~ msgid "could not load advapi32.dll: error code %lu"
+#~ msgstr "kunde inte ladda advapi32.dll: felkod %lu"
+
+#~ msgid "could not load wldap32.dll"
+#~ msgstr "kunde inte ladda wldap32.dll"
+
+#~ msgid "cannot specify both FULL and PARALLEL options"
+#~ msgstr "kan inte ange både flaggan FULL och PARALLEL"
+
+#~ msgid "Causes the planner to avoid hashed aggregation plans that are expected to use the disk."
+#~ msgstr "Gör så att planeraren unviker planer med hash-aggregering som förväntas använda disk."
+
+#~ msgid "could not write to file \"%s\" : %m"
+#~ msgstr "kunde inte skriva till fil \"%s\" : %m"
+
+#~ msgid "EXPLAIN option BUFFERS requires ANALYZE"
+#~ msgstr "EXPLAIN-flagga BUFFERS kräver ANALYZE"
+
+#~ msgid "leftover placeholder tuple detected in BRIN index \"%s\", deleting"
+#~ msgstr "kvarlämnad platshållartuple hittad i BRIN-index \"%s\", raderar"
+
+#~ msgid "starting parallel vacuum worker for %s"
+#~ msgstr "startar parallell vacuum-arbetsprocess för %s"

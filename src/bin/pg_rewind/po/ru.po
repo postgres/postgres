@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-09 16:45+0300\n"
-"PO-Revision-Date: 2020-09-09 13:58+0300\n"
+"POT-Creation-Date: 2020-09-15 18:25+0300\n"
+"PO-Revision-Date: 2020-09-15 18:54+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -85,8 +85,8 @@ msgstr "не удалось получить код выхода от подпр
 
 #: ../../fe_utils/archive.c:53
 #, c-format
-msgid "could not use restore_command with %%r alias"
-msgstr "в restore_command не должно быть знака подстановки %%r"
+msgid "cannot use restore_command with %%r placeholder"
+msgstr "нельзя использовать restore_command со знаком подстановки %%r"
 
 #: ../../fe_utils/archive.c:74
 #, c-format
@@ -105,8 +105,8 @@ msgstr "не удалось получить информацию о файле 
 
 #: ../../fe_utils/archive.c:112
 #, c-format
-msgid "restore_command failed due to the signal: %s"
-msgstr "выполнение restore_command прервалось сигналом: %s"
+msgid "restore_command failed: %s"
+msgstr "ошибка при выполнении restore_command: %s"
 
 #: ../../fe_utils/archive.c:121
 #, c-format
