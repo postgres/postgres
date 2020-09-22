@@ -28,6 +28,7 @@
 #include "fe-auth.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
+#include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "pg_config_paths.h"
 #include "port/pg_bswap.h"
@@ -5011,8 +5012,6 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 
 #endif							/* USE_LDAP */
 
-#define MAXBUFSIZE 256
-
 /*
  * parseServiceInfo: if a service name has been given, look it up and absorb
  * connection options from it into *options.
@@ -5099,11 +5098,14 @@ parseServiceFile(const char *serviceFile,
 				 PQExpBuffer errorMessage,
 				 bool *group_found)
 {
-	int			linenr = 0,
+	int			result = 0,
+				linenr = 0,
 				i;
 	FILE	   *f;
-	char		buf[MAXBUFSIZE],
-			   *line;
+	char	   *line;
+	StringInfoData linebuf;
+
+	*group_found = false;
 
 	f = fopen(serviceFile, "r");
 	if (f == NULL)
@@ -5113,26 +5115,18 @@ parseServiceFile(const char *serviceFile,
 		return 1;
 	}
 
-	while ((line = fgets(buf, sizeof(buf), f)) != NULL)
-	{
-		int			len;
+	initStringInfo(&linebuf);
 
+	while (pg_get_line_buf(f, &linebuf))
+	{
 		linenr++;
 
-		if (strlen(line) >= sizeof(buf) - 1)
-		{
-			fclose(f);
-			printfPQExpBuffer(errorMessage,
-							  libpq_gettext("line %d too long in service file \"%s\"\n"),
-							  linenr,
-							  serviceFile);
-			return 2;
-		}
-
 		/* ignore whitespace at end of line, especially the newline */
-		len = strlen(line);
-		while (len > 0 && isspace((unsigned char) line[len - 1]))
-			line[--len] = '\0';
+		while (linebuf.len > 0 &&
+			   isspace((unsigned char) linebuf.data[linebuf.len - 1]))
+			linebuf.data[--linebuf.len] = '\0';
+
+		line = linebuf.data;
 
 		/* ignore leading whitespace too */
 		while (*line && isspace((unsigned char) line[0]))
@@ -5147,9 +5141,8 @@ parseServiceFile(const char *serviceFile,
 		{
 			if (*group_found)
 			{
-				/* group info already read */
-				fclose(f);
-				return 0;
+				/* end of desired group reached; return success */
+				goto exit;
 			}
 
 			if (strncmp(line + 1, service, strlen(service)) == 0 &&
@@ -5178,12 +5171,11 @@ parseServiceFile(const char *serviceFile,
 					switch (rc)
 					{
 						case 0:
-							fclose(f);
-							return 0;
+							goto exit;
 						case 1:
 						case 3:
-							fclose(f);
-							return 3;
+							result = 3;
+							goto exit;
 						case 2:
 							continue;
 					}
@@ -5198,8 +5190,8 @@ parseServiceFile(const char *serviceFile,
 									  libpq_gettext("syntax error in service file \"%s\", line %d\n"),
 									  serviceFile,
 									  linenr);
-					fclose(f);
-					return 3;
+					result = 3;
+					goto exit;
 				}
 				*val++ = '\0';
 
@@ -5209,8 +5201,8 @@ parseServiceFile(const char *serviceFile,
 									  libpq_gettext("nested service specifications not supported in service file \"%s\", line %d\n"),
 									  serviceFile,
 									  linenr);
-					fclose(f);
-					return 3;
+					result = 3;
+					goto exit;
 				}
 
 				/*
@@ -5228,8 +5220,8 @@ parseServiceFile(const char *serviceFile,
 						{
 							printfPQExpBuffer(errorMessage,
 											  libpq_gettext("out of memory\n"));
-							fclose(f);
-							return 3;
+							result = 3;
+							goto exit;
 						}
 						found_keyword = true;
 						break;
@@ -5242,16 +5234,18 @@ parseServiceFile(const char *serviceFile,
 									  libpq_gettext("syntax error in service file \"%s\", line %d\n"),
 									  serviceFile,
 									  linenr);
-					fclose(f);
-					return 3;
+					result = 3;
+					goto exit;
 				}
 			}
 		}
 	}
 
+exit:
 	fclose(f);
+	pfree(linebuf.data);
 
-	return 0;
+	return result;
 }
 
 
