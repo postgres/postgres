@@ -101,6 +101,10 @@ the comment block with some dashes:
 
 Odd spacing around typedef names might indicate an incomplete typedefs list.
 
+pgindent will mangle both declaration and definition of a C function whose
+name matches a typedef.  Currently the best workaround is to choose
+non-conflicting names.
+
 pgindent can get confused by #if sequences that look correct to the compiler
 but have mismatched braces/parentheses when considered as a whole.  Usually
 that looks pretty unreadable to humans too, so best practice is to rearrange

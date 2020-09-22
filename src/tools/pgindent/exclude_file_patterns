@@ -10,6 +10,10 @@ src/include/jit/llvmjit\.h$
 # This confuses pgindent, and it's a derived file anyway.
 src/backend/utils/fmgrtab\.c$
 #
+# pgindent might mangle entries in this that match typedef names.
+# Since it's a derived file anyway, just exclude it.
+src/backend/utils/fmgrprotos\.h$
+#
 # kwlist_d files are made by gen_keywordlist.pl.  While we could insist that
 # they match pgindent style, they'd look worse not better, so exclude them.
 kwlist_d\.h$
@@ -35,3 +39,5 @@ src/pl/plperl/Util\.c$
 # Exclude any temporary installations that may be in the tree.
 /tmp_check/
 /tmp_install/
+# ... and for paranoia's sake, don't touch git stuff.
+/\.git/
