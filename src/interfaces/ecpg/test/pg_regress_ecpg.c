@@ -49,7 +49,7 @@ ecpg_filter(const char *sourcefile, const char *outfile)
 
 	initStringInfo(&linebuf);
 
-	while (pg_get_line_append(s, &linebuf))
+	while (pg_get_line_buf(s, &linebuf))
 	{
 		/* check for "#line " in the beginning */
 		if (strstr(linebuf.data, "#line ") == linebuf.data)
@@ -69,7 +69,6 @@ ecpg_filter(const char *sourcefile, const char *outfile)
 			}
 		}
 		fputs(linebuf.data, t);
-		resetStringInfo(&linebuf);
 	}
 
 	pfree(linebuf.data);

@@ -45,7 +45,8 @@
  * Also note that the palloc'd buffer is usually a lot longer than
  * strictly necessary, so it may be inadvisable to use this function
  * to collect lots of long-lived data.  A less memory-hungry option
- * is to use pg_get_line_append() in a loop, then pstrdup() each line.
+ * is to use pg_get_line_buf() or pg_get_line_append() in a loop,
+ * then pstrdup() each line.
  */
 char *
 pg_get_line(FILE *stream)
@@ -68,10 +69,36 @@ pg_get_line(FILE *stream)
 }
 
 /*
+ * pg_get_line_buf()
+ *
+ * This has similar behavior to pg_get_line(), and thence to fgets(),
+ * except that the collected data is returned in a caller-supplied
+ * StringInfo buffer.  This is a convenient API for code that just
+ * wants to read and process one line at a time, without any artificial
+ * limit on line length.
+ *
+ * Returns true if a line was successfully collected (including the
+ * case of a non-newline-terminated line at EOF).  Returns false if
+ * there was an I/O error or no data was available before EOF.
+ * (Check ferror(stream) to distinguish these cases.)
+ *
+ * In the false-result case, buf is reset to empty.
+ */
+bool
+pg_get_line_buf(FILE *stream, StringInfo buf)
+{
+	/* We just need to drop any data from the previous call */
+	resetStringInfo(buf);
+	return pg_get_line_append(stream, buf);
+}
+
+/*
  * pg_get_line_append()
  *
  * This has similar behavior to pg_get_line(), and thence to fgets(),
  * except that the collected data is appended to whatever is in *buf.
+ * This is useful in preference to pg_get_line_buf() if the caller wants
+ * to merge some lines together, e.g. to implement backslash continuation.
  *
  * Returns true if a line was successfully collected (including the
  * case of a non-newline-terminated line at EOF).  Returns false if

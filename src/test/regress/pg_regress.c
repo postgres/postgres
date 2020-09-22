@@ -566,7 +566,7 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 
 		initStringInfo(&line);
 
-		while (pg_get_line_append(infile, &line))
+		while (pg_get_line_buf(infile, &line))
 		{
 			replace_string(&line, "@abs_srcdir@", inputdir);
 			replace_string(&line, "@abs_builddir@", outputdir);
@@ -574,7 +574,6 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 			replace_string(&line, "@libdir@", dlpath);
 			replace_string(&line, "@DLSUFFIX@", DLSUFFIX);
 			fputs(line.data, outfile);
-			resetStringInfo(&line);
 		}
 
 		pfree(line.data);

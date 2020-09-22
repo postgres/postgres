@@ -486,7 +486,7 @@ readfile(const char *path)
 	result = (char **) pg_malloc(maxlines * sizeof(char *));
 
 	n = 0;
-	while (pg_get_line_append(infile, &line))
+	while (pg_get_line_buf(infile, &line))
 	{
 		/* make sure there will be room for a trailing NULL pointer */
 		if (n >= maxlines - 1)
@@ -496,8 +496,6 @@ readfile(const char *path)
 		}
 
 		result[n++] = pg_strdup(line.data);
-
-		resetStringInfo(&line);
 	}
 	result[n] = NULL;
 

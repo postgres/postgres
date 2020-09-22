@@ -21,6 +21,7 @@ extern int	pg_strip_crlf(char *str);
 
 /* functions in src/common/pg_get_line.c */
 extern char *pg_get_line(FILE *stream);
+extern bool pg_get_line_buf(FILE *stream, struct StringInfoData *buf);
 extern bool pg_get_line_append(FILE *stream, struct StringInfoData *buf);
 
 /* functions in src/common/sprompt.c */
