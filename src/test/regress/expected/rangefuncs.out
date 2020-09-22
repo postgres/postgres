@@ -2109,6 +2109,19 @@ select * from testrngfunc();
  7.136178 | 7.14
 (1 row)
 
+-- Check a couple of error cases while we're here
+select * from testrngfunc() as t(f1 int8,f2 int8);  -- fail, composite result
+ERROR:  a column definition list is redundant for a function returning a named composite type
+LINE 1: select * from testrngfunc() as t(f1 int8,f2 int8);
+                                         ^
+select * from pg_get_keywords() as t(f1 int8,f2 int8);  -- fail, OUT params
+ERROR:  a column definition list is redundant for a function with OUT parameters
+LINE 1: select * from pg_get_keywords() as t(f1 int8,f2 int8);
+                                             ^
+select * from sin(3) as t(f1 int8,f2 int8);  -- fail, scalar result type
+ERROR:  a column definition list is only allowed for functions returning "record"
+LINE 1: select * from sin(3) as t(f1 int8,f2 int8);
+                                  ^
 drop type rngfunc_type cascade;
 NOTICE:  drop cascades to function testrngfunc()
 --

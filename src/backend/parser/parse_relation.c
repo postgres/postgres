@@ -1737,16 +1737,46 @@ addRangeTableEntryForFunction(ParseState *pstate,
 
 		/*
 		 * A coldeflist is required if the function returns RECORD and hasn't
-		 * got a predetermined record type, and is prohibited otherwise.
+		 * got a predetermined record type, and is prohibited otherwise.  This
+		 * can be a bit confusing, so we expend some effort on delivering a
+		 * relevant error message.
 		 */
 		if (coldeflist != NIL)
 		{
-			if (functypclass != TYPEFUNC_RECORD)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("a column definition list is only allowed for functions returning \"record\""),
-						 parser_errposition(pstate,
-											exprLocation((Node *) coldeflist))));
+			switch (functypclass)
+			{
+				case TYPEFUNC_RECORD:
+					/* ok */
+					break;
+				case TYPEFUNC_COMPOSITE:
+				case TYPEFUNC_COMPOSITE_DOMAIN:
+
+					/*
+					 * If the function's raw result type is RECORD, we must
+					 * have resolved it using its OUT parameters.  Otherwise,
+					 * it must have a named composite type.
+					 */
+					if (exprType(funcexpr) == RECORDOID)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("a column definition list is redundant for a function with OUT parameters"),
+								 parser_errposition(pstate,
+													exprLocation((Node *) coldeflist))));
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("a column definition list is redundant for a function returning a named composite type"),
+								 parser_errposition(pstate,
+													exprLocation((Node *) coldeflist))));
+					break;
+				default:
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("a column definition list is only allowed for functions returning \"record\""),
+							 parser_errposition(pstate,
+												exprLocation((Node *) coldeflist))));
+					break;
+			}
 		}
 		else
 		{
