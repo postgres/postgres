@@ -147,10 +147,28 @@ tsearch_readline(tsearch_readline_state *stp)
 {
 	char	   *result;
 
+	/* Advance line number to use in error reports */
 	stp->lineno++;
-	stp->curline = NULL;
+
+	/* Clear curline, it's no longer relevant */
+	if (stp->curline)
+	{
+		pfree(stp->curline);
+		stp->curline = NULL;
+	}
+
+	/* Collect next line, if there is one */
 	result = t_readline(stp->fp);
-	stp->curline = result;
+	if (!result)
+		return NULL;
+
+	/*
+	 * Save a copy of the line for possible use in error reports.  (We cannot
+	 * just save "result", since it's likely to get pfree'd at some point by
+	 * the caller; an error after that would try to access freed data.)
+	 */
+	stp->curline = pstrdup(result);
+
 	return result;
 }
 
@@ -160,7 +178,16 @@ tsearch_readline(tsearch_readline_state *stp)
 void
 tsearch_readline_end(tsearch_readline_state *stp)
 {
+	/* Suppress use of curline in any error reported below */
+	if (stp->curline)
+	{
+		pfree(stp->curline);
+		stp->curline = NULL;
+	}
+
+	/* Release other resources */
 	FreeFile(stp->fp);
+
 	/* Pop the error context stack */
 	error_context_stack = stp->cb.previous;
 }
