@@ -837,13 +837,6 @@ CheckPointCLOG(void)
 	/* Flush dirty CLOG pages to disk */
 	TRACE_POSTGRESQL_CLOG_CHECKPOINT_START(true);
 	SimpleLruFlush(ClogCtl, true);
-
-	/*
-	 * fsync pg_xact to ensure that any files flushed previously are durably
-	 * on disk.
-	 */
-	fsync_fname("pg_xact", true);
-
 	TRACE_POSTGRESQL_CLOG_CHECKPOINT_DONE(true);
 }
 
