@@ -4164,7 +4164,7 @@ validateInfiniteBounds(ParseState *pstate, List *blist)
 }
 
 /*
- * Transform one constant in a partition bound spec
+ * Transform one entry in a partition bound spec, producing a constant.
  */
 static Const *
 transformPartitionBoundValue(ParseState *pstate, Node *val,
@@ -4175,6 +4175,13 @@ transformPartitionBoundValue(ParseState *pstate, Node *val,
 
 	/* Transform raw parsetree */
 	value = transformExpr(pstate, val, EXPR_KIND_PARTITION_BOUND);
+
+	/*
+	 * transformExpr() should have already rejected column references,
+	 * subqueries, aggregates, window functions, and SRFs, based on the
+	 * EXPR_KIND_ of a partition bound expression.
+	 */
+	Assert(!contain_var_clause(value));
 
 	/*
 	 * Check that the input expression's collation is compatible with one
@@ -4220,7 +4227,11 @@ transformPartitionBoundValue(ParseState *pstate, Node *val,
 					 parser_errposition(pstate, exprLocation(value))));
 	}
 
-	/* Coerce to correct type */
+	/*
+	 * Coerce to the correct type.  This might cause an explicit coercion step
+	 * to be added on top of the expression, which must be evaluated before
+	 * returning the result to the caller.
+	 */
 	value = coerce_to_target_type(pstate,
 								  value, exprType(value),
 								  colType,
@@ -4236,25 +4247,35 @@ transformPartitionBoundValue(ParseState *pstate, Node *val,
 						format_type_be(colType), colName),
 				 parser_errposition(pstate, exprLocation(val))));
 
-	/* Simplify the expression, in case we had a coercion */
+	/*
+	 * Evaluate the expression, if needed, assigning the partition key's data
+	 * type and collation to the resulting Const node.
+	 */
 	if (!IsA(value, Const))
+	{
 		value = (Node *) expression_planner((Expr *) value);
+		value = (Node *) evaluate_expr((Expr *) value, colType, colTypmod,
+									   partCollation);
+		if (!IsA(value, Const))
+			elog(ERROR, "could not evaluate partition bound expression");
+	}
+	else
+	{
+		/*
+		 * If the expression is already a Const, as is often the case, we can
+		 * skip the rather expensive steps above.  But we still have to insert
+		 * the right collation, since coerce_to_target_type doesn't handle
+		 * that.
+		 */
+		((Const *) value)->constcollid = partCollation;
+	}
 
 	/*
-	 * transformExpr() should have already rejected column references,
-	 * subqueries, aggregates, window functions, and SRFs, based on the
-	 * EXPR_KIND_ for a default expression.
+	 * Attach original expression's parse location to the Const, so that
+	 * that's what will be reported for any later errors related to this
+	 * partition bound.
 	 */
-	Assert(!contain_var_clause(value));
-
-	/*
-	 * Evaluate the expression, assigning the partition key's collation to the
-	 * resulting Const expression.
-	 */
-	value = (Node *) evaluate_expr((Expr *) value, colType, colTypmod,
-								   partCollation);
-	if (!IsA(value, Const))
-		elog(ERROR, "could not evaluate partition bound expression");
+	((Const *) value)->location = exprLocation(val);
 
 	return (Const *) value;
 }

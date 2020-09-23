@@ -3868,6 +3868,8 @@ SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_1'::reg
 CREATE TABLE fail_part (LIKE part_1 INCLUDING CONSTRAINTS);
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 ERROR:  partition "fail_part" would overlap partition "part_1"
+LINE 1: ...LE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+                                                                    ^
 DROP TABLE fail_part;
 -- check that an existing table can be attached as a default partition
 CREATE TABLE def_part (LIKE list_parted INCLUDING CONSTRAINTS);
@@ -3877,6 +3879,8 @@ ALTER TABLE list_parted ATTACH PARTITION def_part DEFAULT;
 CREATE TABLE fail_def_part (LIKE part_1 INCLUDING CONSTRAINTS);
 ALTER TABLE list_parted ATTACH PARTITION fail_def_part DEFAULT;
 ERROR:  partition "fail_def_part" conflicts with existing default partition "def_part"
+LINE 1: ...ER TABLE list_parted ATTACH PARTITION fail_def_part DEFAULT;
+                                                               ^
 -- check validation when attaching list partitions
 CREATE TABLE list_parted2 (
 	a int,
@@ -3946,6 +3950,8 @@ CREATE TABLE partr_def1 PARTITION OF range_parted DEFAULT;
 CREATE TABLE partr_def2 (LIKE part1 INCLUDING CONSTRAINTS);
 ALTER TABLE range_parted ATTACH PARTITION partr_def2 DEFAULT;
 ERROR:  partition "partr_def2" conflicts with existing default partition "partr_def1"
+LINE 1: ...LTER TABLE range_parted ATTACH PARTITION partr_def2 DEFAULT;
+                                                               ^
 -- Overlapping partitions cannot be attached, hence, following should give error
 INSERT INTO partr_def1 VALUES (2, 10);
 CREATE TABLE part3 (LIKE range_parted);
@@ -4066,8 +4072,12 @@ CREATE TABLE hpart_1 PARTITION OF hash_parted FOR VALUES WITH (MODULUS 4, REMAIN
 CREATE TABLE fail_part (LIKE hpart_1);
 ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 8, REMAINDER 4);
 ERROR:  partition "fail_part" would overlap partition "hpart_1"
+LINE 1: ...hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODU...
+                                                             ^
 ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 8, REMAINDER 0);
 ERROR:  partition "fail_part" would overlap partition "hpart_1"
+LINE 1: ...hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODU...
+                                                             ^
 DROP TABLE fail_part;
 -- check validation when attaching hash partitions
 -- check that violating rows are correctly reported

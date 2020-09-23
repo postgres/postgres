@@ -223,7 +223,7 @@ static int32 partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
 static int	partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
 									Oid *partcollation,
 									PartitionBoundInfo boundinfo,
-									PartitionRangeBound *probe, bool *is_equal);
+									PartitionRangeBound *probe, int32 *cmpval);
 static int	get_partition_bound_num_indexes(PartitionBoundInfo b);
 static Expr *make_partition_op_expr(PartitionKey key, int keynum,
 									uint16 strategy, Expr *arg1, Expr *arg2);
@@ -2805,14 +2805,14 @@ partitions_are_ordered(PartitionBoundInfo boundinfo, int nparts)
  */
 void
 check_new_partition_bound(char *relname, Relation parent,
-						  PartitionBoundSpec *spec)
+						  PartitionBoundSpec *spec, ParseState *pstate)
 {
 	PartitionKey key = RelationGetPartitionKey(parent);
 	PartitionDesc partdesc = RelationGetPartitionDesc(parent);
 	PartitionBoundInfo boundinfo = partdesc->boundinfo;
-	ParseState *pstate = make_parsestate(NULL);
 	int			with = -1;
 	bool		overlap = false;
+	int			overlap_location = -1;
 
 	if (spec->is_default)
 	{
@@ -2907,6 +2907,7 @@ check_new_partition_bound(char *relname, Relation parent,
 						if (boundinfo->indexes[remainder] != -1)
 						{
 							overlap = true;
+							overlap_location = spec->location;
 							with = boundinfo->indexes[remainder];
 							break;
 						}
@@ -2935,6 +2936,7 @@ check_new_partition_bound(char *relname, Relation parent,
 					{
 						Const	   *val = castNode(Const, lfirst(cell));
 
+						overlap_location = val->location;
 						if (!val->constisnull)
 						{
 							int			offset;
@@ -2968,6 +2970,7 @@ check_new_partition_bound(char *relname, Relation parent,
 			{
 				PartitionRangeBound *lower,
 						   *upper;
+				int			cmpval;
 
 				Assert(spec->strategy == PARTITION_STRATEGY_RANGE);
 				lower = make_one_partition_rbound(key, -1, spec->lowerdatums, true);
@@ -2977,10 +2980,17 @@ check_new_partition_bound(char *relname, Relation parent,
 				 * First check if the resulting range would be empty with
 				 * specified lower and upper bounds
 				 */
-				if (partition_rbound_cmp(key->partnatts, key->partsupfunc,
-										 key->partcollation, lower->datums,
-										 lower->kind, true, upper) >= 0)
+				cmpval = partition_rbound_cmp(key->partnatts,
+											  key->partsupfunc,
+											  key->partcollation,
+											  lower->datums, lower->kind,
+											  true, upper);
+				if (cmpval >= 0)
 				{
+					/* Fetch the problematic key from the lower datums list. */
+					PartitionRangeDatum *datum = list_nth(spec->lowerdatums,
+														  cmpval - 1);
+
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 							 errmsg("empty range bound specified for partition \"%s\"",
@@ -2988,13 +2998,12 @@ check_new_partition_bound(char *relname, Relation parent,
 							 errdetail("Specified lower bound %s is greater than or equal to upper bound %s.",
 									   get_range_partbound_string(spec->lowerdatums),
 									   get_range_partbound_string(spec->upperdatums)),
-							 parser_errposition(pstate, spec->location)));
+							 parser_errposition(pstate, datum->location)));
 				}
 
 				if (partdesc->nparts > 0)
 				{
 					int			offset;
-					bool		equal;
 
 					Assert(boundinfo &&
 						   boundinfo->strategy == PARTITION_STRATEGY_RANGE &&
@@ -3020,7 +3029,7 @@ check_new_partition_bound(char *relname, Relation parent,
 													 key->partsupfunc,
 													 key->partcollation,
 													 boundinfo, lower,
-													 &equal);
+													 &cmpval);
 
 					if (boundinfo->indexes[offset + 1] < 0)
 					{
@@ -3032,7 +3041,6 @@ check_new_partition_bound(char *relname, Relation parent,
 						 */
 						if (offset + 1 < boundinfo->ndatums)
 						{
-							int32		cmpval;
 							Datum	   *datums;
 							PartitionRangeDatumKind *kind;
 							bool		is_lower;
@@ -3049,11 +3057,19 @@ check_new_partition_bound(char *relname, Relation parent,
 							if (cmpval < 0)
 							{
 								/*
+								 * Fetch the problematic key from the upper
+								 * datums list.
+								 */
+								PartitionRangeDatum *datum =
+								list_nth(spec->upperdatums, -cmpval - 1);
+
+								/*
 								 * The new partition overlaps with the
 								 * existing partition between offset + 1 and
 								 * offset + 2.
 								 */
 								overlap = true;
+								overlap_location = datum->location;
 								with = boundinfo->indexes[offset + 2];
 							}
 						}
@@ -3064,7 +3080,20 @@ check_new_partition_bound(char *relname, Relation parent,
 						 * The new partition overlaps with the existing
 						 * partition between offset and offset + 1.
 						 */
+						PartitionRangeDatum *datum;
+
+						/*
+						 * Fetch the problematic key from the lower datums
+						 * list.  Given the way partition_range_bsearch()
+						 * works, the new lower bound is certainly >= the
+						 * bound at offset.  If the bound matches exactly, we
+						 * flag the 1st key.
+						 */
+						Assert(cmpval >= 0);
+						datum = cmpval == 0 ? linitial(spec->lowerdatums) :
+							list_nth(spec->lowerdatums, cmpval - 1);
 						overlap = true;
+						overlap_location = datum->location;
 						with = boundinfo->indexes[offset + 1];
 					}
 				}
@@ -3084,7 +3113,7 @@ check_new_partition_bound(char *relname, Relation parent,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("partition \"%s\" would overlap partition \"%s\"",
 						relname, get_rel_name(partdesc->oids[with])),
-				 parser_errposition(pstate, spec->location)));
+				 parser_errposition(pstate, overlap_location)));
 	}
 }
 
@@ -3317,8 +3346,12 @@ make_one_partition_rbound(PartitionKey key, int index, List *datums, bool lower)
 /*
  * partition_rbound_cmp
  *
- * Return for two range bounds whether the 1st one (specified in datums1,
- * kind1, and lower1) is <, =, or > the bound specified in *b2.
+ * For two range bounds this decides whether the 1st one (specified by
+ * datums1, kind1, and lower1) is <, =, or > the bound specified in *b2.
+ *
+ * 0 is returned if they are equal, otherwise a non-zero integer whose sign
+ * indicates the ordering, and whose absolute value gives the 1-based
+ * partition key number of the first mismatching column.
  *
  * partnatts, partsupfunc and partcollation give the number of attributes in the
  * bounds to be compared, comparison function to be used and the collations of
@@ -3337,6 +3370,7 @@ partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
 					 Datum *datums1, PartitionRangeDatumKind *kind1,
 					 bool lower1, PartitionRangeBound *b2)
 {
+	int32		colnum = 0;
 	int32		cmpval = 0;		/* placate compiler */
 	int			i;
 	Datum	   *datums2 = b2->datums;
@@ -3345,6 +3379,9 @@ partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
 
 	for (i = 0; i < partnatts; i++)
 	{
+		/* Track column number in case we need it for result */
+		colnum++;
+
 		/*
 		 * First, handle cases where the column is unbounded, which should not
 		 * invoke the comparison procedure, and should not consider any later
@@ -3352,9 +3389,9 @@ partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
 		 * compare the same way as the values they represent.
 		 */
 		if (kind1[i] < kind2[i])
-			return -1;
+			return -colnum;
 		else if (kind1[i] > kind2[i])
-			return 1;
+			return colnum;
 		else if (kind1[i] != PARTITION_RANGE_DATUM_VALUE)
 
 			/*
@@ -3381,7 +3418,7 @@ partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
 	if (cmpval == 0 && lower1 != lower2)
 		cmpval = lower1 ? 1 : -1;
 
-	return cmpval;
+	return cmpval == 0 ? 0 : (cmpval < 0 ? -colnum : colnum);
 }
 
 /*
@@ -3393,7 +3430,6 @@ partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
  * n_tuple_datums, partsupfunc and partcollation give number of attributes in
  * the bounds to be compared, comparison function to be used and the collations
  * of attributes resp.
- *
  */
 int32
 partition_rbound_datum_cmp(FmgrInfo *partsupfunc, Oid *partcollation,
@@ -3486,14 +3522,17 @@ partition_list_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
  *		equal to the given range bound or -1 if all of the range bounds are
  *		greater
  *
- * *is_equal is set to true if the range bound at the returned index is equal
- * to the input range bound
+ * Upon return from this function, *cmpval is set to 0 if the bound at the
+ * returned index matches the input range bound exactly, otherwise a
+ * non-zero integer whose sign indicates the ordering, and whose absolute
+ * value gives the 1-based partition key number of the first mismatching
+ * column.
  */
 static int
 partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
 						Oid *partcollation,
 						PartitionBoundInfo boundinfo,
-						PartitionRangeBound *probe, bool *is_equal)
+						PartitionRangeBound *probe, int32 *cmpval)
 {
 	int			lo,
 				hi,
@@ -3503,21 +3542,17 @@ partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
 	hi = boundinfo->ndatums - 1;
 	while (lo < hi)
 	{
-		int32		cmpval;
-
 		mid = (lo + hi + 1) / 2;
-		cmpval = partition_rbound_cmp(partnatts, partsupfunc,
-									  partcollation,
-									  boundinfo->datums[mid],
-									  boundinfo->kind[mid],
-									  (boundinfo->indexes[mid] == -1),
-									  probe);
-		if (cmpval <= 0)
+		*cmpval = partition_rbound_cmp(partnatts, partsupfunc,
+									   partcollation,
+									   boundinfo->datums[mid],
+									   boundinfo->kind[mid],
+									   (boundinfo->indexes[mid] == -1),
+									   probe);
+		if (*cmpval <= 0)
 		{
 			lo = mid;
-			*is_equal = (cmpval == 0);
-
-			if (*is_equal)
+			if (*cmpval == 0)
 				break;
 		}
 		else
@@ -3528,7 +3563,7 @@ partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
 }
 
 /*
- * partition_range_bsearch
+ * partition_range_datum_bsearch
  *		Returns the index of the greatest range bound that is less than or
  *		equal to the given tuple or -1 if all of the range bounds are greater
  *
