@@ -1176,6 +1176,10 @@ SimpleLruFlush(SlruCtl ctl, bool allow_redirtied)
 	}
 	if (!ok)
 		SlruReportIOError(ctl, pageno, InvalidTransactionId);
+
+	/* Ensure that directory entries for new files are on disk. */
+	if (ctl->do_fsync)
+		fsync_fname(ctl->Dir, true);
 }
 
 /*
