@@ -1949,10 +1949,32 @@ MaintainOldSnapshotTimeMapping(TimestampTz whenTaken, TransactionId xmin)
 	else
 	{
 		/* We need a new bucket, but it might not be the very next one. */
-		int			advance = ((ts - oldSnapshotControl->head_timestamp)
-							   / USECS_PER_MINUTE);
+		int			distance_to_new_tail;
+		int			distance_to_current_tail;
+		int			advance;
 
-		oldSnapshotControl->head_timestamp = ts;
+		/*
+		 * Our goal is for the new "tail" of the mapping, that is, the entry
+		 * which is newest and thus furthest from the "head" entry, to
+		 * correspond to "ts". Since there's one entry per minute, the
+		 * distance between the current head and the new tail is just the
+		 * number of minutes of difference between ts and the current
+		 * head_timestamp.
+		 *
+		 * The distance from the current head to the current tail is one
+		 * less than the number of entries in the mapping, because the
+		 * entry at the head_offset is for 0 minutes after head_timestamp.
+		 *
+		 * The difference between these two values is the number of minutes
+		 * by which we need to advance the mapping, either adding new entries
+		 * or rotating old ones out.
+		 */
+		distance_to_new_tail =
+			(ts - oldSnapshotControl->head_timestamp) / USECS_PER_MINUTE;
+		distance_to_current_tail =
+			oldSnapshotControl->count_used - 1;
+		advance = distance_to_new_tail - distance_to_current_tail;
+		Assert(advance > 0);
 
 		if (advance >= OLD_SNAPSHOT_TIME_MAP_ENTRIES)
 		{
@@ -1960,6 +1982,7 @@ MaintainOldSnapshotTimeMapping(TimestampTz whenTaken, TransactionId xmin)
 			oldSnapshotControl->head_offset = 0;
 			oldSnapshotControl->count_used = 1;
 			oldSnapshotControl->xid_by_minute[0] = xmin;
+			oldSnapshotControl->head_timestamp = ts;
 		}
 		else
 		{
@@ -1978,6 +2001,7 @@ MaintainOldSnapshotTimeMapping(TimestampTz whenTaken, TransactionId xmin)
 					else
 						oldSnapshotControl->head_offset = old_head + 1;
 					oldSnapshotControl->xid_by_minute[old_head] = xmin;
+					oldSnapshotControl->head_timestamp += USECS_PER_MINUTE;
 				}
 				else
 				{
