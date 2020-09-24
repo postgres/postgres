@@ -27,6 +27,7 @@ SUBDIRS = \
 		lo		\
 		ltree		\
 		oid2name	\
+		old_snapshot	\
 		pageinspect	\
 		passwordcheck	\
 		pg_buffercache	\

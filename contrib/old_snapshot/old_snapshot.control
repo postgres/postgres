@@ -1,0 +1,5 @@
+# old_snapshot extension
+comment = 'utilities in support of old_snapshot_threshold'
+default_version = '1.0'
+module_pathname = '$libdir/old_snapshot'
+relocatable = true
