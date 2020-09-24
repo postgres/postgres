@@ -411,8 +411,8 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
 			report_fatal_error("could not read file \"%s\": %m",
 							   manifest_path);
 		else
-			report_fatal_error("could not read file \"%s\": read %d of %zu",
-							   manifest_path, rc, (size_t) statbuf.st_size);
+			report_fatal_error("could not read file \"%s\": read %d of %lld",
+							   manifest_path, rc, (long long int) statbuf.st_size);
 	}
 
 	/* Close the manifest file. */
@@ -638,8 +638,8 @@ verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 	if (m->size != sb.st_size)
 	{
 		report_backup_error(context,
-							"\"%s\" has size %zu on disk but size %zu in the manifest",
-							relpath, (size_t) sb.st_size, m->size);
+							"\"%s\" has size %lld on disk but size %zu in the manifest",
+							relpath, (long long int) sb.st_size, m->size);
 		m->bad = true;
 	}
 

@@ -71,9 +71,9 @@ RestoreArchivedFile(const char *path, const char *xlogfname,
 		{
 			if (expectedSize > 0 && stat_buf.st_size != expectedSize)
 			{
-				pg_log_fatal("unexpected file size for \"%s\": %lu instead of %lu",
-							 xlogfname, (unsigned long) stat_buf.st_size,
-							 (unsigned long) expectedSize);
+				pg_log_fatal("unexpected file size for \"%s\": %lld instead of %lld",
+							 xlogfname, (long long int) stat_buf.st_size,
+							 (long long int) expectedSize);
 				exit(1);
 			}
 			else

@@ -202,10 +202,10 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 				else
 					elevel = FATAL;
 				ereport(elevel,
-						(errmsg("archive file \"%s\" has wrong size: %lu instead of %lu",
+						(errmsg("archive file \"%s\" has wrong size: %lld instead of %lld",
 								xlogfname,
-								(unsigned long) stat_buf.st_size,
-								(unsigned long) expectedSize)));
+								(long long int) stat_buf.st_size,
+								(long long int) expectedSize)));
 				return false;
 			}
 			else
