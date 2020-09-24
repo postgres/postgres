@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <limits.h>
 
+#include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "utils/pg_locale.h"
 
@@ -33,7 +34,9 @@ typedef struct
 	FILE	   *fp;
 	const char *filename;
 	int			lineno;
-	char	   *curline;
+	StringInfoData buf;			/* current input line, in UTF-8 */
+	char	   *curline;		/* current input line, in DB's encoding */
+	/* curline may be NULL, or equal to buf.data, or a palloc'd string */
 	ErrorContextCallback cb;
 } tsearch_readline_state;
 
@@ -56,7 +59,5 @@ extern bool tsearch_readline_begin(tsearch_readline_state *stp,
 								   const char *filename);
 extern char *tsearch_readline(tsearch_readline_state *stp);
 extern void tsearch_readline_end(tsearch_readline_state *stp);
-
-extern char *t_readline(FILE *fp);
 
 #endif							/* __TSLOCALE_H__ */
