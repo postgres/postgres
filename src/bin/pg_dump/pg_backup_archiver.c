@@ -166,6 +166,7 @@ InitDumpOptions(DumpOptions *opts)
 	memset(opts, 0, sizeof(DumpOptions));
 	/* set any fields that shouldn't default to zeroes */
 	opts->include_everything = true;
+	opts->cparams.promptPassword = TRI_DEFAULT;
 	opts->dumpSections = DUMP_UNSECTIONED;
 }
 
@@ -179,6 +180,11 @@ dumpOptionsFromRestoreOptions(RestoreOptions *ropt)
 	DumpOptions *dopt = NewDumpOptions();
 
 	/* this is the inverse of what's at the end of pg_dump.c's main() */
+	dopt->cparams.dbname = ropt->cparams.dbname ? pg_strdup(ropt->cparams.dbname) : NULL;
+	dopt->cparams.pgport = ropt->cparams.pgport ? pg_strdup(ropt->cparams.pgport) : NULL;
+	dopt->cparams.pghost = ropt->cparams.pghost ? pg_strdup(ropt->cparams.pghost) : NULL;
+	dopt->cparams.username = ropt->cparams.username ? pg_strdup(ropt->cparams.username) : NULL;
+	dopt->cparams.promptPassword = ropt->cparams.promptPassword;
 	dopt->outputClean = ropt->dropSchema;
 	dopt->dataOnly = ropt->dataOnly;
 	dopt->schemaOnly = ropt->schemaOnly;
@@ -411,9 +417,7 @@ RestoreArchive(Archive *AHX)
 		AHX->minRemoteVersion = 0;
 		AHX->maxRemoteVersion = 9999999;
 
-		ConnectDatabase(AHX, ropt->dbname,
-						ropt->pghost, ropt->pgport, ropt->username,
-						ropt->promptPassword);
+		ConnectDatabase(AHX, &ropt->cparams, false);
 
 		/*
 		 * If we're talking to the DB directly, don't send comments since they
@@ -833,16 +837,8 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 		if (strcmp(te->desc, "DATABASE") == 0 ||
 			strcmp(te->desc, "DATABASE PROPERTIES") == 0)
 		{
-			PQExpBufferData connstr;
-
-			initPQExpBuffer(&connstr);
-			appendPQExpBufferStr(&connstr, "dbname=");
-			appendConnStrVal(&connstr, te->tag);
-			/* Abandon struct, but keep its buffer until process exit. */
-
 			pg_log_info("connecting to new database \"%s\"", te->tag);
 			_reconnectToDB(AH, te->tag);
-			ropt->dbname = connstr.data;
 		}
 	}
 
@@ -974,7 +970,7 @@ NewRestoreOptions(void)
 
 	/* set any fields that shouldn't default to zeroes */
 	opts->format = archUnknown;
-	opts->promptPassword = TRI_DEFAULT;
+	opts->cparams.promptPassword = TRI_DEFAULT;
 	opts->dumpSections = DUMP_UNSECTIONED;
 
 	return opts;
@@ -2361,8 +2357,6 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	else
 		AH->format = fmt;
 
-	AH->promptPassword = TRI_DEFAULT;
-
 	switch (AH->format)
 	{
 		case archCustom:
@@ -3223,27 +3217,20 @@ _doSetSessionAuth(ArchiveHandle *AH, const char *user)
  * If we're currently restoring right into a database, this will
  * actually establish a connection. Otherwise it puts a \connect into
  * the script output.
- *
- * NULL dbname implies reconnecting to the current DB (pretty useless).
  */
 static void
 _reconnectToDB(ArchiveHandle *AH, const char *dbname)
 {
 	if (RestoringToDB(AH))
-		ReconnectToServer(AH, dbname, NULL);
+		ReconnectToServer(AH, dbname);
 	else
 	{
-		if (dbname)
-		{
-			PQExpBufferData connectbuf;
+		PQExpBufferData connectbuf;
 
-			initPQExpBuffer(&connectbuf);
-			appendPsqlMetaConnect(&connectbuf, dbname);
-			ahprintf(AH, "%s\n", connectbuf.data);
-			termPQExpBuffer(&connectbuf);
-		}
-		else
-			ahprintf(AH, "%s\n", "\\connect -\n");
+		initPQExpBuffer(&connectbuf);
+		appendPsqlMetaConnect(&connectbuf, dbname);
+		ahprintf(AH, "%s\n", connectbuf.data);
+		termPQExpBuffer(&connectbuf);
 	}
 
 	/*
@@ -4184,9 +4171,7 @@ restore_toc_entries_postfork(ArchiveHandle *AH, TocEntry *pending_list)
 	/*
 	 * Now reconnect the single parent connection.
 	 */
-	ConnectDatabase((Archive *) AH, ropt->dbname,
-					ropt->pghost, ropt->pgport, ropt->username,
-					ropt->promptPassword);
+	ConnectDatabase((Archive *) AH, &ropt->cparams, true);
 
 	/* re-establish fixed state */
 	_doSetFixedOutputState(AH);
@@ -4848,54 +4833,15 @@ CloneArchive(ArchiveHandle *AH)
 	clone->public.n_errors = 0;
 
 	/*
-	 * Connect our new clone object to the database: In parallel restore the
-	 * parent is already disconnected, because we can connect the worker
-	 * processes independently to the database (no snapshot sync required). In
-	 * parallel backup we clone the parent's existing connection.
+	 * Connect our new clone object to the database, using the same connection
+	 * parameters used for the original connection.
 	 */
+	ConnectDatabase((Archive *) clone, &clone->public.ropt->cparams, true);
+
+	/* re-establish fixed state */
 	if (AH->mode == archModeRead)
-	{
-		RestoreOptions *ropt = AH->public.ropt;
-
-		Assert(AH->connection == NULL);
-
-		/* this also sets clone->connection */
-		ConnectDatabase((Archive *) clone, ropt->dbname,
-						ropt->pghost, ropt->pgport, ropt->username,
-						ropt->promptPassword);
-
-		/* re-establish fixed state */
 		_doSetFixedOutputState(clone);
-	}
-	else
-	{
-		PQExpBufferData connstr;
-		char	   *pghost;
-		char	   *pgport;
-		char	   *username;
-
-		Assert(AH->connection != NULL);
-
-		/*
-		 * Even though we are technically accessing the parent's database
-		 * object here, these functions are fine to be called like that
-		 * because all just return a pointer and do not actually send/receive
-		 * any data to/from the database.
-		 */
-		initPQExpBuffer(&connstr);
-		appendPQExpBuffer(&connstr, "dbname=");
-		appendConnStrVal(&connstr, PQdb(AH->connection));
-		pghost = PQhost(AH->connection);
-		pgport = PQport(AH->connection);
-		username = PQuser(AH->connection);
-
-		/* this also sets clone->connection */
-		ConnectDatabase((Archive *) clone, connstr.data,
-						pghost, pgport, username, TRI_NO);
-
-		termPQExpBuffer(&connstr);
-		/* setupDumpWorker will fix up connection state */
-	}
+	/* in write case, setupDumpWorker will fix up connection state */
 
 	/* Let the format-specific code have a chance too */
 	clone->ClonePtr(clone);
