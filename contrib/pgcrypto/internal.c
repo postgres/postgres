@@ -123,8 +123,8 @@ int_md5_free(PX_MD *h)
 	MD5_CTX    *ctx = (MD5_CTX *) h->p.ptr;
 
 	px_memset(ctx, 0, sizeof(*ctx));
-	px_free(ctx);
-	px_free(h);
+	pfree(ctx);
+	pfree(h);
 }
 
 /* SHA1 */
@@ -171,8 +171,8 @@ int_sha1_free(PX_MD *h)
 	SHA1_CTX   *ctx = (SHA1_CTX *) h->p.ptr;
 
 	px_memset(ctx, 0, sizeof(*ctx));
-	px_free(ctx);
-	px_free(h);
+	pfree(ctx);
+	pfree(h);
 }
 
 /* init functions */
@@ -182,8 +182,7 @@ init_md5(PX_MD *md)
 {
 	MD5_CTX    *ctx;
 
-	ctx = px_alloc(sizeof(*ctx));
-	memset(ctx, 0, sizeof(*ctx));
+	ctx = palloc0(sizeof(*ctx));
 
 	md->p.ptr = ctx;
 
@@ -202,8 +201,7 @@ init_sha1(PX_MD *md)
 {
 	SHA1_CTX   *ctx;
 
-	ctx = px_alloc(sizeof(*ctx));
-	memset(ctx, 0, sizeof(*ctx));
+	ctx = palloc0(sizeof(*ctx));
 
 	md->p.ptr = ctx;
 
@@ -246,9 +244,9 @@ intctx_free(PX_Cipher *c)
 	if (cx)
 	{
 		px_memset(cx, 0, sizeof *cx);
-		px_free(cx);
+		pfree(cx);
 	}
-	px_free(c);
+	pfree(c);
 }
 
 /*
@@ -373,8 +371,7 @@ rj_load(int mode)
 	PX_Cipher  *c;
 	struct int_ctx *cx;
 
-	c = px_alloc(sizeof *c);
-	memset(c, 0, sizeof *c);
+	c = palloc0(sizeof *c);
 
 	c->block_size = rj_block_size;
 	c->key_size = rj_key_size;
@@ -384,8 +381,7 @@ rj_load(int mode)
 	c->decrypt = rj_decrypt;
 	c->free = intctx_free;
 
-	cx = px_alloc(sizeof *cx);
-	memset(cx, 0, sizeof *cx);
+	cx = palloc0(sizeof *cx);
 	cx->mode = mode;
 
 	c->ptr = cx;
@@ -482,8 +478,7 @@ bf_load(int mode)
 	PX_Cipher  *c;
 	struct int_ctx *cx;
 
-	c = px_alloc(sizeof *c);
-	memset(c, 0, sizeof *c);
+	c = palloc0(sizeof *c);
 
 	c->block_size = bf_block_size;
 	c->key_size = bf_key_size;
@@ -493,8 +488,7 @@ bf_load(int mode)
 	c->decrypt = bf_decrypt;
 	c->free = intctx_free;
 
-	cx = px_alloc(sizeof *cx);
-	memset(cx, 0, sizeof *cx);
+	cx = palloc0(sizeof *cx);
 	cx->mode = mode;
 	c->ptr = cx;
 	return c;
@@ -564,7 +558,7 @@ px_find_digest(const char *name, PX_MD **res)
 	for (p = int_digest_list; p->name; p++)
 		if (pg_strcasecmp(p->name, name) == 0)
 		{
-			h = px_alloc(sizeof(*h));
+			h = palloc(sizeof(*h));
 			p->init(h);
 
 			*res = h;

@@ -44,7 +44,7 @@ pgp_mpi_alloc(int bits, PGP_MPI **mpi)
 		px_debug("pgp_mpi_alloc: unreasonable request: bits=%d", bits);
 		return PXE_PGP_CORRUPT_DATA;
 	}
-	n = px_alloc(sizeof(*n) + len);
+	n = palloc(sizeof(*n) + len);
 	n->bits = bits;
 	n->bytes = len;
 	n->data = (uint8 *) (n) + sizeof(*n);
@@ -72,7 +72,7 @@ pgp_mpi_free(PGP_MPI *mpi)
 	if (mpi == NULL)
 		return 0;
 	px_memset(mpi, 0, sizeof(*mpi) + mpi->bytes);
-	px_free(mpi);
+	pfree(mpi);
 	return 0;
 }
 

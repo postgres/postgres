@@ -70,9 +70,9 @@ mbuf_free(MBuf *mbuf)
 	if (mbuf->own_data)
 	{
 		px_memset(mbuf->data, 0, mbuf->buf_end - mbuf->data);
-		px_free(mbuf->data);
+		pfree(mbuf->data);
 	}
-	px_free(mbuf);
+	pfree(mbuf);
 	return 0;
 }
 
@@ -88,7 +88,7 @@ prepare_room(MBuf *mbuf, int block_len)
 	newlen = (mbuf->buf_end - mbuf->data)
 		+ ((block_len + STEP + STEP - 1) & -STEP);
 
-	newbuf = px_realloc(mbuf->data, newlen);
+	newbuf = repalloc(mbuf->data, newlen);
 
 	mbuf->buf_end = newbuf + newlen;
 	mbuf->data_end = newbuf + (mbuf->data_end - mbuf->data);
@@ -121,8 +121,8 @@ mbuf_create(int len)
 	if (!len)
 		len = 8192;
 
-	mbuf = px_alloc(sizeof *mbuf);
-	mbuf->data = px_alloc(len);
+	mbuf = palloc(sizeof *mbuf);
+	mbuf->data = palloc(len);
 	mbuf->buf_end = mbuf->data + len;
 	mbuf->data_end = mbuf->data;
 	mbuf->read_pos = mbuf->data;
@@ -138,7 +138,7 @@ mbuf_create_from_data(uint8 *data, int len)
 {
 	MBuf	   *mbuf;
 
-	mbuf = px_alloc(sizeof *mbuf);
+	mbuf = palloc(sizeof *mbuf);
 	mbuf->data = (uint8 *) data;
 	mbuf->buf_end = mbuf->data + len;
 	mbuf->data_end = mbuf->data + len;
@@ -219,15 +219,14 @@ pullf_create(PullFilter **pf_p, const PullFilterOps *op, void *init_arg, PullFil
 		res = 0;
 	}
 
-	pf = px_alloc(sizeof(*pf));
-	memset(pf, 0, sizeof(*pf));
+	pf = palloc0(sizeof(*pf));
 	pf->buflen = res;
 	pf->op = op;
 	pf->priv = priv;
 	pf->src = src;
 	if (pf->buflen > 0)
 	{
-		pf->buf = px_alloc(pf->buflen);
+		pf->buf = palloc(pf->buflen);
 		pf->pos = 0;
 	}
 	else
@@ -248,11 +247,11 @@ pullf_free(PullFilter *pf)
 	if (pf->buf)
 	{
 		px_memset(pf->buf, 0, pf->buflen);
-		px_free(pf->buf);
+		pfree(pf->buf);
 	}
 
 	px_memset(pf, 0, sizeof(*pf));
-	px_free(pf);
+	pfree(pf);
 }
 
 /* may return less data than asked, 0 means eof */
@@ -386,15 +385,14 @@ pushf_create(PushFilter **mp_p, const PushFilterOps *op, void *init_arg, PushFil
 		res = 0;
 	}
 
-	mp = px_alloc(sizeof(*mp));
-	memset(mp, 0, sizeof(*mp));
+	mp = palloc0(sizeof(*mp));
 	mp->block_size = res;
 	mp->op = op;
 	mp->priv = priv;
 	mp->next = next;
 	if (mp->block_size > 0)
 	{
-		mp->buf = px_alloc(mp->block_size);
+		mp->buf = palloc(mp->block_size);
 		mp->pos = 0;
 	}
 	else
@@ -415,11 +413,11 @@ pushf_free(PushFilter *mp)
 	if (mp->buf)
 	{
 		px_memset(mp->buf, 0, mp->block_size);
-		px_free(mp->buf);
+		pfree(mp->buf);
 	}
 
 	px_memset(mp, 0, sizeof(*mp));
-	px_free(mp);
+	pfree(mp);
 }
 
 void

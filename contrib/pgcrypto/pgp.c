@@ -200,8 +200,7 @@ pgp_init(PGP_Context **ctx_p)
 {
 	PGP_Context *ctx;
 
-	ctx = px_alloc(sizeof *ctx);
-	memset(ctx, 0, sizeof *ctx);
+	ctx = palloc0(sizeof *ctx);
 
 	ctx->cipher_algo = def_cipher_algo;
 	ctx->s2k_cipher_algo = def_s2k_cipher_algo;
@@ -226,7 +225,7 @@ pgp_free(PGP_Context *ctx)
 	if (ctx->pub_key)
 		pgp_key_free(ctx->pub_key);
 	px_memset(ctx, 0, sizeof *ctx);
-	px_free(ctx);
+	pfree(ctx);
 	return 0;
 }
 

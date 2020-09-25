@@ -37,19 +37,6 @@
 /* keep debug messages? */
 #define PX_DEBUG
 
-/* a way to disable palloc
- * - useful if compiled into standalone
- */
-#ifndef PX_OWN_ALLOC
-#define px_alloc(s) palloc(s)
-#define px_realloc(p, s) repalloc(p, s)
-#define px_free(p)	pfree(p)
-#else
-void	   *px_alloc(size_t s);
-void	   *px_realloc(void *p, size_t s);
-void		px_free(void *p);
-#endif
-
 /* max salt returned */
 #define PX_MAX_SALT_LEN		128
 

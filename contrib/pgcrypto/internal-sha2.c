@@ -85,8 +85,8 @@ int_sha224_free(PX_MD *h)
 	pg_sha224_ctx *ctx = (pg_sha224_ctx *) h->p.ptr;
 
 	px_memset(ctx, 0, sizeof(*ctx));
-	px_free(ctx);
-	px_free(h);
+	pfree(ctx);
+	pfree(h);
 }
 
 /* SHA256 */
@@ -133,8 +133,8 @@ int_sha256_free(PX_MD *h)
 	pg_sha256_ctx *ctx = (pg_sha256_ctx *) h->p.ptr;
 
 	px_memset(ctx, 0, sizeof(*ctx));
-	px_free(ctx);
-	px_free(h);
+	pfree(ctx);
+	pfree(h);
 }
 
 /* SHA384 */
@@ -181,8 +181,8 @@ int_sha384_free(PX_MD *h)
 	pg_sha384_ctx *ctx = (pg_sha384_ctx *) h->p.ptr;
 
 	px_memset(ctx, 0, sizeof(*ctx));
-	px_free(ctx);
-	px_free(h);
+	pfree(ctx);
+	pfree(h);
 }
 
 /* SHA512 */
@@ -229,8 +229,8 @@ int_sha512_free(PX_MD *h)
 	pg_sha512_ctx *ctx = (pg_sha512_ctx *) h->p.ptr;
 
 	px_memset(ctx, 0, sizeof(*ctx));
-	px_free(ctx);
-	px_free(h);
+	pfree(ctx);
+	pfree(h);
 }
 
 /* init functions */
@@ -240,8 +240,7 @@ init_sha224(PX_MD *md)
 {
 	pg_sha224_ctx *ctx;
 
-	ctx = px_alloc(sizeof(*ctx));
-	memset(ctx, 0, sizeof(*ctx));
+	ctx = palloc0(sizeof(*ctx));
 
 	md->p.ptr = ctx;
 
@@ -260,8 +259,7 @@ init_sha256(PX_MD *md)
 {
 	pg_sha256_ctx *ctx;
 
-	ctx = px_alloc(sizeof(*ctx));
-	memset(ctx, 0, sizeof(*ctx));
+	ctx = palloc0(sizeof(*ctx));
 
 	md->p.ptr = ctx;
 
@@ -280,8 +278,7 @@ init_sha384(PX_MD *md)
 {
 	pg_sha384_ctx *ctx;
 
-	ctx = px_alloc(sizeof(*ctx));
-	memset(ctx, 0, sizeof(*ctx));
+	ctx = palloc0(sizeof(*ctx));
 
 	md->p.ptr = ctx;
 
@@ -300,8 +297,7 @@ init_sha512(PX_MD *md)
 {
 	pg_sha512_ctx *ctx;
 
-	ctx = px_alloc(sizeof(*ctx));
-	memset(ctx, 0, sizeof(*ctx));
+	ctx = palloc0(sizeof(*ctx));
 
 	md->p.ptr = ctx;
 

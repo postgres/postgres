@@ -57,8 +57,7 @@ hmac_init(PX_HMAC *h, const uint8 *key, unsigned klen)
 	PX_MD	   *md = h->md;
 
 	bs = px_md_block_size(md);
-	keybuf = px_alloc(bs);
-	memset(keybuf, 0, bs);
+	keybuf = palloc0(bs);
 
 	if (klen > bs)
 	{
@@ -76,7 +75,7 @@ hmac_init(PX_HMAC *h, const uint8 *key, unsigned klen)
 	}
 
 	px_memset(keybuf, 0, bs);
-	px_free(keybuf);
+	pfree(keybuf);
 
 	px_md_update(md, h->p.ipad, bs);
 }
@@ -108,7 +107,7 @@ hmac_finish(PX_HMAC *h, uint8 *dst)
 	bs = px_md_block_size(md);
 	hlen = px_md_result_size(md);
 
-	buf = px_alloc(hlen);
+	buf = palloc(hlen);
 
 	px_md_finish(md, buf);
 
@@ -118,7 +117,7 @@ hmac_finish(PX_HMAC *h, uint8 *dst)
 	px_md_finish(md, dst);
 
 	px_memset(buf, 0, hlen);
-	px_free(buf);
+	pfree(buf);
 }
 
 static void
@@ -131,9 +130,9 @@ hmac_free(PX_HMAC *h)
 
 	px_memset(h->p.ipad, 0, bs);
 	px_memset(h->p.opad, 0, bs);
-	px_free(h->p.ipad);
-	px_free(h->p.opad);
-	px_free(h);
+	pfree(h->p.ipad);
+	pfree(h->p.opad);
+	pfree(h);
 }
 
 
@@ -158,9 +157,9 @@ px_find_hmac(const char *name, PX_HMAC **res)
 		return PXE_HASH_UNUSABLE_FOR_HMAC;
 	}
 
-	h = px_alloc(sizeof(*h));
-	h->p.ipad = px_alloc(bs);
-	h->p.opad = px_alloc(bs);
+	h = palloc(sizeof(*h));
+	h->p.ipad = palloc(bs);
+	h->p.opad = palloc(bs);
 	h->md = md;
 
 	h->result_size = hmac_result_size;
