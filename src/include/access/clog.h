@@ -12,6 +12,7 @@
 #define CLOG_H
 
 #include "access/xlogreader.h"
+#include "storage/sync.h"
 #include "lib/stringinfo.h"
 
 /*
@@ -49,6 +50,8 @@ extern void ShutdownCLOG(void);
 extern void CheckPointCLOG(void);
 extern void ExtendCLOG(TransactionId newestXact);
 extern void TruncateCLOG(TransactionId oldestXact, Oid oldestxid_datoid);
+
+extern int	clogsyncfiletag(const FileTag *ftag, char *path);
 
 /* XLOG stuff */
 #define CLOG_ZEROPAGE		0x00

@@ -42,6 +42,7 @@
 #include "pg_trace.h"
 #include "pgstat.h"
 #include "storage/proc.h"
+#include "storage/sync.h"
 
 /*
  * Defines for CLOG page sizes.  A page is the same BLCKSZ as is used
@@ -691,7 +692,8 @@ CLOGShmemInit(void)
 {
 	XactCtl->PagePrecedes = CLOGPagePrecedes;
 	SimpleLruInit(XactCtl, "Xact", CLOGShmemBuffers(), CLOG_LSNS_PER_PAGE,
-				  XactSLRULock, "pg_xact", LWTRANCHE_XACT_BUFFER);
+				  XactSLRULock, "pg_xact", LWTRANCHE_XACT_BUFFER,
+				  SYNC_HANDLER_CLOG);
 }
 
 /*
@@ -809,33 +811,18 @@ TrimCLOG(void)
 }
 
 /*
- * This must be called ONCE during postmaster or standalone-backend shutdown
- */
-void
-ShutdownCLOG(void)
-{
-	/* Flush dirty CLOG pages to disk */
-	TRACE_POSTGRESQL_CLOG_CHECKPOINT_START(false);
-	SimpleLruFlush(XactCtl, false);
-
-	/*
-	 * fsync pg_xact to ensure that any files flushed previously are durably
-	 * on disk.
-	 */
-	fsync_fname("pg_xact", true);
-
-	TRACE_POSTGRESQL_CLOG_CHECKPOINT_DONE(false);
-}
-
-/*
  * Perform a checkpoint --- either during shutdown, or on-the-fly
  */
 void
 CheckPointCLOG(void)
 {
-	/* Flush dirty CLOG pages to disk */
+	/*
+	 * Write dirty CLOG pages to disk.  This may result in sync requests
+	 * queued for later handling by ProcessSyncRequests(), as part of the
+	 * checkpoint.
+	 */
 	TRACE_POSTGRESQL_CLOG_CHECKPOINT_START(true);
-	SimpleLruFlush(XactCtl, true);
+	SimpleLruWriteAll(XactCtl, true);
 	TRACE_POSTGRESQL_CLOG_CHECKPOINT_DONE(true);
 }
 
@@ -1025,4 +1012,13 @@ clog_redo(XLogReaderState *record)
 	}
 	else
 		elog(PANIC, "clog_redo: unknown op code %u", info);
+}
+
+/*
+ * Entrypoint for sync.c to sync clog files.
+ */
+int
+clogsyncfiletag(const FileTag *ftag, char *path)
+{
+	return SlruSyncFileTag(XactCtl, ftag, path);
 }

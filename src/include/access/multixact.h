@@ -13,6 +13,7 @@
 
 #include "access/xlogreader.h"
 #include "lib/stringinfo.h"
+#include "storage/sync.h"
 
 
 /*
@@ -115,6 +116,9 @@ extern int	GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **xids,
 extern bool MultiXactIdPrecedes(MultiXactId multi1, MultiXactId multi2);
 extern bool MultiXactIdPrecedesOrEquals(MultiXactId multi1,
 										MultiXactId multi2);
+
+extern int	multixactoffsetssyncfiletag(const FileTag *ftag, char *path);
+extern int	multixactmemberssyncfiletag(const FileTag *ftag, char *path);
 
 extern void AtEOXact_MultiXact(void);
 extern void AtPrepare_MultiXact(void);

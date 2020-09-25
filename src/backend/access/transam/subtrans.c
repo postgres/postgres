@@ -193,9 +193,7 @@ SUBTRANSShmemInit(void)
 	SubTransCtl->PagePrecedes = SubTransPagePrecedes;
 	SimpleLruInit(SubTransCtl, "Subtrans", NUM_SUBTRANS_BUFFERS, 0,
 				  SubtransSLRULock, "pg_subtrans",
-				  LWTRANCHE_SUBTRANS_BUFFER);
-	/* Override default assumption that writes should be fsync'd */
-	SubTransCtl->do_fsync = false;
+				  LWTRANCHE_SUBTRANS_BUFFER, SYNC_HANDLER_NONE);
 }
 
 /*
@@ -279,37 +277,20 @@ StartupSUBTRANS(TransactionId oldestActiveXID)
 }
 
 /*
- * This must be called ONCE during postmaster or standalone-backend shutdown
- */
-void
-ShutdownSUBTRANS(void)
-{
-	/*
-	 * Flush dirty SUBTRANS pages to disk
-	 *
-	 * This is not actually necessary from a correctness point of view. We do
-	 * it merely as a debugging aid.
-	 */
-	TRACE_POSTGRESQL_SUBTRANS_CHECKPOINT_START(false);
-	SimpleLruFlush(SubTransCtl, false);
-	TRACE_POSTGRESQL_SUBTRANS_CHECKPOINT_DONE(false);
-}
-
-/*
  * Perform a checkpoint --- either during shutdown, or on-the-fly
  */
 void
 CheckPointSUBTRANS(void)
 {
 	/*
-	 * Flush dirty SUBTRANS pages to disk
+	 * Write dirty SUBTRANS pages to disk
 	 *
 	 * This is not actually necessary from a correctness point of view. We do
 	 * it merely to improve the odds that writing of dirty pages is done by
 	 * the checkpoint process and not by backends.
 	 */
 	TRACE_POSTGRESQL_SUBTRANS_CHECKPOINT_START(true);
-	SimpleLruFlush(SubTransCtl, true);
+	SimpleLruWriteAll(SubTransCtl, true);
 	TRACE_POSTGRESQL_SUBTRANS_CHECKPOINT_DONE(true);
 }
 

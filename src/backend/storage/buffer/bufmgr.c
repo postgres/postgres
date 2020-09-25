@@ -2636,14 +2636,7 @@ PrintBufferLeakWarning(Buffer buffer)
 void
 CheckPointBuffers(int flags)
 {
-	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_START(flags);
-	CheckpointStats.ckpt_write_t = GetCurrentTimestamp();
 	BufferSync(flags);
-	CheckpointStats.ckpt_sync_t = GetCurrentTimestamp();
-	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_SYNC_START();
-	ProcessSyncRequests();
-	CheckpointStats.ckpt_sync_end_t = GetCurrentTimestamp();
-	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_DONE();
 }
 
 

@@ -8528,10 +8528,6 @@ ShutdownXLOG(int code, Datum arg)
 
 		CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
 	}
-	ShutdownCLOG();
-	ShutdownCommitTs();
-	ShutdownSUBTRANS();
-	ShutdownMultiXact();
 }
 
 /*
@@ -9176,17 +9172,29 @@ CreateEndOfRecoveryRecord(void)
 static void
 CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
 {
+	CheckPointRelationMap();
+	CheckPointReplicationSlots();
+	CheckPointSnapBuild();
+	CheckPointLogicalRewriteHeap();
+	CheckPointReplicationOrigin();
+
+	/* Write out all dirty data in SLRUs and the main buffer pool */
+	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_START(flags);
+	CheckpointStats.ckpt_write_t = GetCurrentTimestamp();
 	CheckPointCLOG();
 	CheckPointCommitTs();
 	CheckPointSUBTRANS();
 	CheckPointMultiXact();
 	CheckPointPredicate();
-	CheckPointRelationMap();
-	CheckPointReplicationSlots();
-	CheckPointSnapBuild();
-	CheckPointLogicalRewriteHeap();
-	CheckPointBuffers(flags);	/* performs all required fsyncs */
-	CheckPointReplicationOrigin();
+	CheckPointBuffers(flags);
+
+	/* Perform all queued up fsyncs */
+	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_SYNC_START();
+	CheckpointStats.ckpt_sync_t = GetCurrentTimestamp();
+	ProcessSyncRequests();
+	CheckpointStats.ckpt_sync_end_t = GetCurrentTimestamp();
+	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_DONE();
+
 	/* We deliberately delay 2PC checkpointing as long as possible */
 	CheckPointTwoPhase(checkPointRedo);
 }

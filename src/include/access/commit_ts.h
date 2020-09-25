@@ -14,6 +14,7 @@
 #include "access/xlog.h"
 #include "datatype/timestamp.h"
 #include "replication/origin.h"
+#include "storage/sync.h"
 #include "utils/guc.h"
 
 
@@ -44,6 +45,8 @@ extern void TruncateCommitTs(TransactionId oldestXact);
 extern void SetCommitTsLimit(TransactionId oldestXact,
 							 TransactionId newestXact);
 extern void AdvanceOldestCommitTsXid(TransactionId oldestXact);
+
+extern int	committssyncfiletag(const FileTag *ftag, char *path);
 
 /* XLOG stuff */
 #define COMMIT_TS_ZEROPAGE		0x00

@@ -18,6 +18,9 @@
 #include <fcntl.h>
 #include <sys/file.h>
 
+#include "access/commit_ts.h"
+#include "access/clog.h"
+#include "access/multixact.h"
 #include "access/xlog.h"
 #include "access/xlogutils.h"
 #include "commands/tablespace.h"
@@ -90,12 +93,31 @@ typedef struct SyncOps
 										const FileTag *candidate);
 } SyncOps;
 
+/*
+ * These indexes must correspond to the values of the SyncRequestHandler enum.
+ */
 static const SyncOps syncsw[] = {
 	/* magnetic disk */
-	{
+	[SYNC_HANDLER_MD] = {
 		.sync_syncfiletag = mdsyncfiletag,
 		.sync_unlinkfiletag = mdunlinkfiletag,
 		.sync_filetagmatches = mdfiletagmatches
+	},
+	/* pg_xact */
+	[SYNC_HANDLER_CLOG] = {
+		.sync_syncfiletag = clogsyncfiletag
+	},
+	/* pg_commit_ts */
+	[SYNC_HANDLER_COMMIT_TS] = {
+		.sync_syncfiletag = committssyncfiletag
+	},
+	/* pg_multixact/offsets */
+	[SYNC_HANDLER_MULTIXACT_OFFSET] = {
+		.sync_syncfiletag = multixactoffsetssyncfiletag
+	},
+	/* pg_multixact/members */
+	[SYNC_HANDLER_MULTIXACT_MEMBER] = {
+		.sync_syncfiletag = multixactmemberssyncfiletag
 	}
 };
 
@@ -505,8 +527,8 @@ RememberSyncRequest(const FileTag *ftag, SyncRequestType type)
 												  (void *) ftag,
 												  HASH_ENTER,
 												  &found);
-		/* if new entry, initialize it */
-		if (!found)
+		/* if new entry, or was previously canceled, initialize it */
+		if (!found || entry->canceled)
 		{
 			entry->cycle_ctr = sync_cycle_ctr;
 			entry->canceled = false;

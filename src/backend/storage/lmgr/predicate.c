@@ -821,9 +821,7 @@ SerialInit(void)
 	SerialSlruCtl->PagePrecedes = SerialPagePrecedesLogically;
 	SimpleLruInit(SerialSlruCtl, "Serial",
 				  NUM_SERIAL_BUFFERS, 0, SerialSLRULock, "pg_serial",
-				  LWTRANCHE_SERIAL_BUFFER);
-	/* Override default assumption that writes should be fsync'd */
-	SerialSlruCtl->do_fsync = false;
+				  LWTRANCHE_SERIAL_BUFFER, SYNC_HANDLER_NONE);
 
 	/*
 	 * Create or attach to the SerialControl structure.
@@ -1052,7 +1050,7 @@ CheckPointPredicate(void)
 	SimpleLruTruncate(SerialSlruCtl, tailPage);
 
 	/*
-	 * Flush dirty SLRU pages to disk
+	 * Write dirty SLRU pages to disk
 	 *
 	 * This is not actually necessary from a correctness point of view. We do
 	 * it merely as a debugging aid.
@@ -1061,7 +1059,7 @@ CheckPointPredicate(void)
 	 * before deleting the file in which they sit, which would be completely
 	 * pointless.
 	 */
-	SimpleLruFlush(SerialSlruCtl, true);
+	SimpleLruWriteAll(SerialSlruCtl, true);
 }
 
 /*------------------------------------------------------------------------*/

@@ -2295,12 +2295,12 @@ SlotNumber
 SlruCtl
 SlruCtlData
 SlruErrorCause
-SlruFlush
-SlruFlushData
 SlruPageStatus
 SlruScanCallback
 SlruShared
 SlruSharedData
+SlruWriteAll
+SlruWriteAllData
 SnapBuild
 SnapBuildOnDisk
 SnapBuildState
@@ -2404,6 +2404,7 @@ Syn
 SyncOps
 SyncRepConfigData
 SyncRepStandbyData
+SyncRequestHandler
 SyncRequestType
 SysScanDesc
 SyscacheCallbackFunction
