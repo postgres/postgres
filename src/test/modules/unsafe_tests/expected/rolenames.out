@@ -29,7 +29,7 @@ SELECT COALESCE(d.datname, 'ALL'), COALESCE(r.rolname, 'ALL'),
       AS v(uname, keyword)
       ON (r.rolname = v.uname)
    WHERE (r.rolname) IN ('Public', 'current_user', 'regress_testrol1', 'regress_testrol2')
-ORDER BY 1, 2;
+ORDER BY 1, 2, 3;
 $$ LANGUAGE SQL;
 CREATE FUNCTION chkumapping()
  RETURNS TABLE (umname name, umserver name, umoptions text[])
@@ -437,8 +437,8 @@ SELECT * FROM chksetconfig();
  ALL | Public           | -            | {application_name=BARBAR}
  ALL | current_user     | -            | {application_name=FOOFOO}
  ALL | regress_testrol1 | session_user | {application_name=BAR}
- ALL | regress_testrol2 | current_user | {application_name=FOO}
  ALL | regress_testrol2 | current_role | {application_name=FOO}
+ ALL | regress_testrol2 | current_user | {application_name=FOO}
 (5 rows)
 
 ALTER ROLE regress_testrol1 SET application_name to 'SLAM';
@@ -448,8 +448,8 @@ SELECT * FROM chksetconfig();
  ALL | Public           | -            | {application_name=BARBAR}
  ALL | current_user     | -            | {application_name=FOOFOO}
  ALL | regress_testrol1 | session_user | {application_name=SLAM}
- ALL | regress_testrol2 | current_user | {application_name=FOO}
  ALL | regress_testrol2 | current_role | {application_name=FOO}
+ ALL | regress_testrol2 | current_user | {application_name=FOO}
 (5 rows)
 
 ALTER ROLE CURRENT_ROLE RESET application_name;
@@ -489,8 +489,8 @@ SELECT * FROM chksetconfig();
  ALL | Public           | -            | {application_name=BARBAR}
  ALL | current_user     | -            | {application_name=FOOFOO}
  ALL | regress_testrol1 | session_user | {application_name=BAR}
- ALL | regress_testrol2 | current_user | {application_name=FOO}
  ALL | regress_testrol2 | current_role | {application_name=FOO}
+ ALL | regress_testrol2 | current_user | {application_name=FOO}
 (5 rows)
 
 ALTER USER regress_testrol1 SET application_name to 'SLAM';
@@ -500,8 +500,8 @@ SELECT * FROM chksetconfig();
  ALL | Public           | -            | {application_name=BARBAR}
  ALL | current_user     | -            | {application_name=FOOFOO}
  ALL | regress_testrol1 | session_user | {application_name=SLAM}
- ALL | regress_testrol2 | current_user | {application_name=FOO}
  ALL | regress_testrol2 | current_role | {application_name=FOO}
+ ALL | regress_testrol2 | current_user | {application_name=FOO}
 (5 rows)
 
 ALTER USER CURRENT_ROLE RESET application_name;

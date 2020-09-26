@@ -30,7 +30,7 @@ SELECT COALESCE(d.datname, 'ALL'), COALESCE(r.rolname, 'ALL'),
       AS v(uname, keyword)
       ON (r.rolname = v.uname)
    WHERE (r.rolname) IN ('Public', 'current_user', 'regress_testrol1', 'regress_testrol2')
-ORDER BY 1, 2;
+ORDER BY 1, 2, 3;
 $$ LANGUAGE SQL;
 
 CREATE FUNCTION chkumapping()
