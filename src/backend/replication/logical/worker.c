@@ -3087,7 +3087,9 @@ ApplyWorkerMain(Datum main_arg)
 	options.logical = true;
 	options.startpoint = origin_startpos;
 	options.slotname = myslotname;
-	options.proto.logical.proto_version = LOGICALREP_PROTO_VERSION_NUM;
+	options.proto.logical.proto_version =
+		walrcv_server_version(wrconn) >= 140000 ?
+		LOGICALREP_PROTO_STREAM_VERSION_NUM : LOGICALREP_PROTO_VERSION_NUM;
 	options.proto.logical.publication_names = MySubscription->publications;
 	options.proto.logical.binary = MySubscription->binary;
 	options.proto.logical.streaming = MySubscription->stream;
