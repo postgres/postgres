@@ -877,18 +877,6 @@ typedef struct SubPlanState
 	ExprState  *cur_eq_comp;	/* equality comparator for LHS vs. table */
 } SubPlanState;
 
-/* ----------------
- *		AlternativeSubPlanState node
- * ----------------
- */
-typedef struct AlternativeSubPlanState
-{
-	NodeTag		type;
-	AlternativeSubPlan *subplan;	/* expression plan node */
-	List	   *subplans;		/* SubPlanStates of alternative subplans */
-	int			active;			/* list index of the one we're using */
-} AlternativeSubPlanState;
-
 /*
  * DomainConstraintState - one item to check during CoerceToDomain
  *

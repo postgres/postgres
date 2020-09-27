@@ -8192,7 +8192,12 @@ get_rule_expr(Node *node, deparse_context *context,
 				AlternativeSubPlan *asplan = (AlternativeSubPlan *) node;
 				ListCell   *lc;
 
-				/* As above, this can only happen during EXPLAIN */
+				/*
+				 * This case cannot be reached in normal usage, since no
+				 * AlternativeSubPlan can appear either in parsetrees or
+				 * finished plan trees.  We keep it just in case somebody
+				 * wants to use this code to print planner data structures.
+				 */
 				appendStringInfoString(buf, "(alternatives: ");
 				foreach(lc, asplan->subplans)
 				{

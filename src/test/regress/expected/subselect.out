@@ -875,6 +875,53 @@ select * from int8_tbl where q1 in (select c1 from inner_text);
 
 rollback;  -- to get rid of the bogus operator
 --
+-- Test resolution of hashed vs non-hashed implementation of EXISTS subplan
+--
+explain (costs off)
+select count(*) from tenk1 t
+where (exists(select 1 from tenk1 k where k.unique1 = t.unique2) or ten < 0);
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on tenk1 t
+         Filter: ((hashed SubPlan 2) OR (ten < 0))
+         SubPlan 2
+           ->  Index Only Scan using tenk1_unique1 on tenk1 k
+(5 rows)
+
+select count(*) from tenk1 t
+where (exists(select 1 from tenk1 k where k.unique1 = t.unique2) or ten < 0);
+ count 
+-------
+ 10000
+(1 row)
+
+explain (costs off)
+select count(*) from tenk1 t
+where (exists(select 1 from tenk1 k where k.unique1 = t.unique2) or ten < 0)
+  and thousand = 1;
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tenk1 t
+         Recheck Cond: (thousand = 1)
+         Filter: ((SubPlan 1) OR (ten < 0))
+         ->  Bitmap Index Scan on tenk1_thous_tenthous
+               Index Cond: (thousand = 1)
+         SubPlan 1
+           ->  Index Only Scan using tenk1_unique1 on tenk1 k
+                 Index Cond: (unique1 = t.unique2)
+(9 rows)
+
+select count(*) from tenk1 t
+where (exists(select 1 from tenk1 k where k.unique1 = t.unique2) or ten < 0)
+  and thousand = 1;
+ count 
+-------
+    10
+(1 row)
+
+--
 -- Test case for planner bug with nested EXISTS handling
 --
 select a.thousand from tenk1 a, tenk1 b

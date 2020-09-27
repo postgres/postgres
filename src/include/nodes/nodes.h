@@ -213,7 +213,6 @@ typedef enum NodeTag
 	T_WindowFuncExprState,
 	T_SetExprState,
 	T_SubPlanState,
-	T_AlternativeSubPlanState,
 	T_DomainConstraintState,
 
 	/*

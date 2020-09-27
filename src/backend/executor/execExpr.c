@@ -1104,23 +1104,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				break;
 			}
 
-		case T_AlternativeSubPlan:
-			{
-				AlternativeSubPlan *asplan = (AlternativeSubPlan *) node;
-				AlternativeSubPlanState *asstate;
-
-				if (!state->parent)
-					elog(ERROR, "AlternativeSubPlan found with no parent plan");
-
-				asstate = ExecInitAlternativeSubPlan(asplan, state->parent);
-
-				scratch.opcode = EEOP_ALTERNATIVE_SUBPLAN;
-				scratch.d.alternative_subplan.asstate = asstate;
-
-				ExprEvalPushStep(state, &scratch);
-				break;
-			}
-
 		case T_FieldSelect:
 			{
 				FieldSelect *fselect = (FieldSelect *) node;

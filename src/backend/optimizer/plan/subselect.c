@@ -81,6 +81,7 @@ static Node *convert_testexpr(PlannerInfo *root,
 static Node *convert_testexpr_mutator(Node *node,
 									  convert_testexpr_context *context);
 static bool subplan_is_hashable(Plan *plan);
+static bool subpath_is_hashable(Path *path);
 static bool testexpr_is_hashable(Node *testexpr, List *param_ids);
 static bool test_opexpr_is_hashable(OpExpr *testexpr, List *param_ids);
 static bool hash_ok_operator(OpExpr *expr);
@@ -247,7 +248,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	 * likely to be better (it depends on the expected number of executions of
 	 * the EXISTS qual, and we are much too early in planning the outer query
 	 * to be able to guess that).  So we generate both plans, if possible, and
-	 * leave it to the executor to decide which to use.
+	 * leave it to setrefs.c to decide which to use.
 	 */
 	if (simple_exists && IsA(result, SubPlan))
 	{
@@ -273,20 +274,20 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 			plan_params = root->plan_params;
 			root->plan_params = NIL;
 
-			/* Select best Path and turn it into a Plan */
+			/* Select best Path */
 			final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
 			best_path = final_rel->cheapest_total_path;
 
-			plan = create_plan(subroot, best_path);
-
 			/* Now we can check if it'll fit in hash_mem */
-			/* XXX can we check this at the Path stage? */
-			if (subplan_is_hashable(plan))
+			if (subpath_is_hashable(best_path))
 			{
 				SubPlan    *hashplan;
 				AlternativeSubPlan *asplan;
 
-				/* OK, convert to SubPlan format. */
+				/* OK, finish planning the ANY subquery */
+				plan = create_plan(subroot, best_path);
+
+				/* ... and convert to SubPlan format */
 				hashplan = castNode(SubPlan,
 									build_subplan(root, plan, subroot,
 												  plan_params,
@@ -298,10 +299,11 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 				Assert(hashplan->parParam == NIL);
 				Assert(hashplan->useHashTable);
 
-				/* Leave it to the executor to decide which plan to use */
+				/* Leave it to setrefs.c to decide which plan to use */
 				asplan = makeNode(AlternativeSubPlan);
 				asplan->subplans = list_make2(result, hashplan);
 				result = (Node *) asplan;
+				root->hasAlternativeSubPlans = true;
 			}
 		}
 	}
@@ -714,6 +716,9 @@ convert_testexpr_mutator(Node *node,
 
 /*
  * subplan_is_hashable: can we implement an ANY subplan by hashing?
+ *
+ * This is not responsible for checking whether the combining testexpr
+ * is suitable for hashing.  We only look at the subquery itself.
  */
 static bool
 subplan_is_hashable(Plan *plan)
@@ -729,6 +734,31 @@ subplan_is_hashable(Plan *plan)
 	 */
 	subquery_size = plan->plan_rows *
 		(MAXALIGN(plan->plan_width) + MAXALIGN(SizeofHeapTupleHeader));
+	if (subquery_size > hash_mem * 1024L)
+		return false;
+
+	return true;
+}
+
+/*
+ * subpath_is_hashable: can we implement an ANY subplan by hashing?
+ *
+ * Identical to subplan_is_hashable, but work from a Path for the subplan.
+ */
+static bool
+subpath_is_hashable(Path *path)
+{
+	double		subquery_size;
+	int			hash_mem = get_hash_mem();
+
+	/*
+	 * The estimated size of the subquery result must fit in hash_mem. (Note:
+	 * we use heap tuple overhead here even though the tuples will actually be
+	 * stored as MinimalTuples; this provides some fudge factor for hashtable
+	 * overhead.)
+	 */
+	subquery_size = path->rows *
+		(MAXALIGN(path->pathtarget->width) + MAXALIGN(SizeofHeapTupleHeader));
 	if (subquery_size > hash_mem * 1024L)
 		return false;
 

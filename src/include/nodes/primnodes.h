@@ -736,6 +736,9 @@ typedef struct SubPlan
 /*
  * AlternativeSubPlan - expression node for a choice among SubPlans
  *
+ * This is used only transiently during planning: by the time the plan
+ * reaches the executor, all AlternativeSubPlan nodes have been removed.
+ *
  * The subplans are given as a List so that the node definition need not
  * change if there's ever more than two alternatives.  For the moment,
  * though, there are always exactly two; and the first one is the fast-start

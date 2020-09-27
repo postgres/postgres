@@ -629,6 +629,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->minmax_aggs = NIL;
 	root->qual_security_level = 0;
 	root->inhTargetKind = INHKIND_NONE;
+	root->hasPseudoConstantQuals = false;
+	root->hasAlternativeSubPlans = false;
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
 		root->wt_param_id = assign_special_exec_param(root);
@@ -758,9 +760,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 * an empty qual list ... but "HAVING TRUE" is not a semantic no-op.
 	 */
 	root->hasHavingQual = (parse->havingQual != NULL);
-
-	/* Clear this flag; might get set in distribute_qual_to_rels */
-	root->hasPseudoConstantQuals = false;
 
 	/*
 	 * Do expression preprocessing on targetlist and quals, as well as other

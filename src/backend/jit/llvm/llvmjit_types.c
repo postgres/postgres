@@ -102,7 +102,6 @@ void	   *referenced_functions[] =
 	ExecAggTransReparent,
 	ExecEvalAggOrderedTransDatum,
 	ExecEvalAggOrderedTransTuple,
-	ExecEvalAlternativeSubPlan,
 	ExecEvalArrayCoerce,
 	ExecEvalArrayExpr,
 	ExecEvalConstraintCheck,

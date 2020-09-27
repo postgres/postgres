@@ -431,7 +431,6 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_GROUPING_FUNC,
 		&&CASE_EEOP_WINDOW_FUNC,
 		&&CASE_EEOP_SUBPLAN,
-		&&CASE_EEOP_ALTERNATIVE_SUBPLAN,
 		&&CASE_EEOP_AGG_STRICT_DESERIALIZE,
 		&&CASE_EEOP_AGG_DESERIALIZE,
 		&&CASE_EEOP_AGG_STRICT_INPUT_CHECK_ARGS,
@@ -1532,14 +1531,6 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			/* too complex for an inline implementation */
 			ExecEvalSubPlan(state, op, econtext);
-
-			EEO_NEXT();
-		}
-
-		EEO_CASE(EEOP_ALTERNATIVE_SUBPLAN)
-		{
-			/* too complex for an inline implementation */
-			ExecEvalAlternativeSubPlan(state, op, econtext);
 
 			EEO_NEXT();
 		}
@@ -3866,20 +3857,6 @@ ExecEvalSubPlan(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	check_stack_depth();
 
 	*op->resvalue = ExecSubPlan(sstate, econtext, op->resnull);
-}
-
-/*
- * Hand off evaluation of an alternative subplan to nodeSubplan.c
- */
-void
-ExecEvalAlternativeSubPlan(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
-{
-	AlternativeSubPlanState *asstate = op->d.alternative_subplan.asstate;
-
-	/* could potentially be nested, so make sure there's enough stack */
-	check_stack_depth();
-
-	*op->resvalue = ExecAlternativeSubPlan(asstate, econtext, op->resnull);
 }
 
 /*

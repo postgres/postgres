@@ -1918,12 +1918,6 @@ llvm_compile_expr(ExprState *state)
 				LLVMBuildBr(b, opblocks[opno + 1]);
 				break;
 
-			case EEOP_ALTERNATIVE_SUBPLAN:
-				build_EvalXFunc(b, mod, "ExecEvalAlternativeSubPlan",
-								v_state, op, v_econtext);
-				LLVMBuildBr(b, opblocks[opno + 1]);
-				break;
-
 			case EEOP_AGG_STRICT_DESERIALIZE:
 			case EEOP_AGG_DESERIALIZE:
 				{
