@@ -299,20 +299,31 @@ EncodeSpecialDate(DateADT dt, char *str)
 DateADT
 GetSQLCurrentDate(void)
 {
-	TimestampTz ts;
-	struct pg_tm tt,
-			   *tm = &tt;
-	fsec_t		fsec;
-	int			tz;
+	struct pg_tm tm;
 
-	ts = GetCurrentTransactionStartTimestamp();
+	static int	cache_year = 0;
+	static int	cache_mon = 0;
+	static int	cache_mday = 0;
+	static DateADT cache_date;
 
-	if (timestamp2tm(ts, &tz, tm, &fsec, NULL, NULL) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range")));
+	GetCurrentDateTime(&tm);
 
-	return date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+	/*
+	 * date2j involves several integer divisions; moreover, unless our session
+	 * lives across local midnight, we don't really have to do it more than
+	 * once.  So it seems worth having a separate cache here.
+	 */
+	if (tm.tm_year != cache_year ||
+		tm.tm_mon != cache_mon ||
+		tm.tm_mday != cache_mday)
+	{
+		cache_date = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
+		cache_year = tm.tm_year;
+		cache_mon = tm.tm_mon;
+		cache_mday = tm.tm_mday;
+	}
+
+	return cache_date;
 }
 
 /*
@@ -322,18 +333,12 @@ TimeTzADT *
 GetSQLCurrentTime(int32 typmod)
 {
 	TimeTzADT  *result;
-	TimestampTz ts;
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
 
-	ts = GetCurrentTransactionStartTimestamp();
-
-	if (timestamp2tm(ts, &tz, tm, &fsec, NULL, NULL) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range")));
+	GetCurrentTimeUsec(tm, &fsec, &tz);
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 	tm2timetz(tm, fsec, tz, result);
@@ -348,18 +353,12 @@ TimeADT
 GetSQLLocalTime(int32 typmod)
 {
 	TimeADT		result;
-	TimestampTz ts;
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
 
-	ts = GetCurrentTransactionStartTimestamp();
-
-	if (timestamp2tm(ts, &tz, tm, &fsec, NULL, NULL) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range")));
+	GetCurrentTimeUsec(tm, &fsec, &tz);
 
 	tm2time(tm, fsec, &result);
 	AdjustTimeForTypmod(&result, typmod);
