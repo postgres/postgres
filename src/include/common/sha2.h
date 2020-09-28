@@ -51,7 +51,7 @@
 #define _PG_SHA2_H_
 
 #ifdef USE_OPENSSL
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 #endif
 
 /*** SHA224/256/384/512 Various Length Definitions ***********************/
@@ -70,10 +70,10 @@
 
 /* Context Structures for SHA224/256/384/512 */
 #ifdef USE_OPENSSL
-typedef SHA256_CTX pg_sha256_ctx;
-typedef SHA512_CTX pg_sha512_ctx;
-typedef SHA256_CTX pg_sha224_ctx;
-typedef SHA512_CTX pg_sha384_ctx;
+typedef EVP_MD_CTX *pg_sha256_ctx;
+typedef EVP_MD_CTX *pg_sha512_ctx;
+typedef EVP_MD_CTX *pg_sha224_ctx;
+typedef EVP_MD_CTX *pg_sha384_ctx;
 #else
 typedef struct pg_sha256_ctx
 {
