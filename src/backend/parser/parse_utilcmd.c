@@ -4197,7 +4197,10 @@ transformPartitionBoundValue(ParseState *pstate, Node *val,
 
 	/* Simplify the expression, in case we had a coercion */
 	if (!IsA(value, Const))
+	{
+		assign_expr_collations(pstate, value);
 		value = (Node *) expression_planner((Expr *) value);
+	}
 
 	/*
 	 * transformExpr() should have already rejected column references,
