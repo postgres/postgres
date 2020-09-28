@@ -4209,6 +4209,7 @@ transformPartitionBoundValue(ParseState *pstate, Node *val,
 	 */
 	if (!IsA(value, Const))
 	{
+		assign_expr_collations(pstate, value);
 		value = (Node *) expression_planner((Expr *) value);
 		value = (Node *) evaluate_expr((Expr *) value, colType, colTypmod,
 									   partCollation);
