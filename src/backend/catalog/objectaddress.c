@@ -1506,7 +1506,7 @@ get_object_address_attribute(ObjectType objtype, List *object,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("column name must be qualified")));
-	attname = strVal(lfirst(list_tail(object)));
+	attname = strVal(llast(object));
 	relname = list_truncate(list_copy(object), list_length(object) - 1);
 	/* XXX no missing_ok support here */
 	relation = relation_openrv(makeRangeVarFromNameList(relname), lockmode);
