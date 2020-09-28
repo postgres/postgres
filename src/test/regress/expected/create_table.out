@@ -1042,17 +1042,6 @@ create table test_part_coll2 partition of test_part_coll_posix for values from (
 create table test_part_coll_cast partition of test_part_coll_posix for values from (name 'm' collate "C") to ('s');
 -- ok; partition collation silently overrides the default collation of type 'name'
 create table test_part_coll_cast2 partition of test_part_coll_posix for values from (name 's') to ('z');
-\d+ test_part_coll_posix
-                    Partitioned table "public.test_part_coll_posix"
- Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
---------+------+-----------+----------+---------+----------+--------------+-------------
- a      | text |           |          |         | extended |              | 
-Partition key: RANGE (a COLLATE "POSIX")
-Partitions: test_part_coll FOR VALUES FROM ('a') TO ('g'),
-            test_part_coll2 FOR VALUES FROM ('g') TO ('m'),
-            test_part_coll_cast FOR VALUES FROM ('m') TO ('s'),
-            test_part_coll_cast2 FOR VALUES FROM ('s') TO ('z')
-
 drop table test_part_coll_posix;
 -- Partition bound in describe output
 \d+ part_b

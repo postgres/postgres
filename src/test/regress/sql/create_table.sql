@@ -833,8 +833,6 @@ create table test_part_coll_cast partition of test_part_coll_posix for values fr
 -- ok; partition collation silently overrides the default collation of type 'name'
 create table test_part_coll_cast2 partition of test_part_coll_posix for values from (name 's') to ('z');
 
-\d+ test_part_coll_posix
-
 drop table test_part_coll_posix;
 
 -- Partition bound in describe output
