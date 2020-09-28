@@ -4184,50 +4184,6 @@ transformPartitionBoundValue(ParseState *pstate, Node *val,
 	Assert(!contain_var_clause(value));
 
 	/*
-	 * Check that the input expression's collation is compatible with one
-	 * specified for the parent's partition key (partcollation).  Don't throw
-	 * an error if it's the default collation which we'll replace with the
-	 * parent's collation anyway.
-	 */
-	if (IsA(value, CollateExpr))
-	{
-		Oid			exprCollOid = exprCollation(value);
-
-		/*
-		 * Check we have a collation iff it is a collatable type.  The only
-		 * expected failures here are (1) COLLATE applied to a noncollatable
-		 * type, or (2) partition bound expression had an unresolved
-		 * collation.  But we might as well code this to be a complete
-		 * consistency check.
-		 */
-		if (type_is_collatable(colType))
-		{
-			if (!OidIsValid(exprCollOid))
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for partition bound expression"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-		}
-		else
-		{
-			if (OidIsValid(exprCollOid))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("collations are not supported by type %s",
-								format_type_be(colType))));
-		}
-
-		if (OidIsValid(exprCollOid) &&
-			exprCollOid != DEFAULT_COLLATION_OID &&
-			exprCollOid != partCollation)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("collation of partition bound value for column \"%s\" does not match partition key collation \"%s\"",
-							colName, get_collation_name(partCollation)),
-					 parser_errposition(pstate, exprLocation(value))));
-	}
-
-	/*
 	 * Coerce to the correct type.  This might cause an explicit coercion step
 	 * to be added on top of the expression, which must be evaluated before
 	 * returning the result to the caller.

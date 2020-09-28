@@ -652,8 +652,6 @@ CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (genera
 ERROR:  set-returning functions are not allowed in partition bound
 LINE 1: ...expr_fail PARTITION OF list_parted FOR VALUES IN (generate_s...
                                                              ^
-CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN ('1' collate "POSIX");
-ERROR:  collations are not supported by type integer
 CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN ((1+1) collate "POSIX");
 ERROR:  collations are not supported by type integer
 LINE 1: ...ail PARTITION OF list_parted FOR VALUES IN ((1+1) collate "P...
@@ -1026,28 +1024,28 @@ create table parted_collate_must_match1 partition of parted_collate_must_match
 create table parted_collate_must_match2 partition of parted_collate_must_match
   (b collate "POSIX") for values from ('m') to ('z');
 drop table parted_collate_must_match;
--- check that specifying incompatible collations for partition bound
--- expressions fails promptly
+-- check that non-matching collations for partition bound
+-- expressions are coerced to the right collation
 create table test_part_coll_posix (a text) partition by range (a collate "POSIX");
--- fail
+-- ok, collation is implicitly coerced
 create table test_part_coll partition of test_part_coll_posix for values from ('a' collate "C") to ('g');
-ERROR:  collation of partition bound value for column "a" does not match partition key collation "POSIX"
-LINE 1: ...artition of test_part_coll_posix for values from ('a' collat...
-                                                             ^
--- ok
-create table test_part_coll partition of test_part_coll_posix for values from ('a' collate "POSIX") to ('g');
 -- ok
 create table test_part_coll2 partition of test_part_coll_posix for values from ('g') to ('m');
--- using a cast expression uses the target type's default collation
--- fail
+-- ok, collation is implicitly coerced
 create table test_part_coll_cast partition of test_part_coll_posix for values from (name 'm' collate "C") to ('s');
-ERROR:  collation of partition bound value for column "a" does not match partition key collation "POSIX"
-LINE 1: ...ion of test_part_coll_posix for values from (name 'm' collat...
-                                                             ^
--- ok
-create table test_part_coll_cast partition of test_part_coll_posix for values from (name 'm' collate "POSIX") to ('s');
 -- ok; partition collation silently overrides the default collation of type 'name'
 create table test_part_coll_cast2 partition of test_part_coll_posix for values from (name 's') to ('z');
+\d+ test_part_coll_posix
+                    Partitioned table "public.test_part_coll_posix"
+ Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------+-----------+----------+---------+----------+--------------+-------------
+ a      | text |           |          |         | extended |              | 
+Partition key: RANGE (a COLLATE "POSIX")
+Partitions: test_part_coll FOR VALUES FROM ('a') TO ('g'),
+            test_part_coll2 FOR VALUES FROM ('g') TO ('m'),
+            test_part_coll_cast FOR VALUES FROM ('m') TO ('s'),
+            test_part_coll_cast2 FOR VALUES FROM ('s') TO ('z')
+
 drop table test_part_coll_posix;
 -- Partition bound in describe output
 \d+ part_b
