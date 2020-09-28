@@ -186,35 +186,34 @@ list_length(const List *l)
  * linitial() than lfirst(): given a List, lsecond() returns the data
  * in the second list cell.
  */
-
 #define lfirst(lc)				((lc)->ptr_value)
 #define lfirst_int(lc)			((lc)->int_value)
 #define lfirst_oid(lc)			((lc)->oid_value)
 #define lfirst_node(type,lc)	castNode(type, lfirst(lc))
 
-#define linitial(l)				lfirst(list_head(l))
-#define linitial_int(l)			lfirst_int(list_head(l))
-#define linitial_oid(l)			lfirst_oid(list_head(l))
+#define linitial(l)				lfirst(list_nth_cell(l, 0))
+#define linitial_int(l)			lfirst_int(list_nth_cell(l, 0))
+#define linitial_oid(l)			lfirst_oid(list_nth_cell(l, 0))
 #define linitial_node(type,l)	castNode(type, linitial(l))
 
-#define lsecond(l)				lfirst(list_second_cell(l))
-#define lsecond_int(l)			lfirst_int(list_second_cell(l))
-#define lsecond_oid(l)			lfirst_oid(list_second_cell(l))
+#define lsecond(l)				lfirst(list_nth_cell(l, 1))
+#define lsecond_int(l)			lfirst_int(list_nth_cell(l, 1))
+#define lsecond_oid(l)			lfirst_oid(list_nth_cell(l, 1))
 #define lsecond_node(type,l)	castNode(type, lsecond(l))
 
-#define lthird(l)				lfirst(list_third_cell(l))
-#define lthird_int(l)			lfirst_int(list_third_cell(l))
-#define lthird_oid(l)			lfirst_oid(list_third_cell(l))
+#define lthird(l)				lfirst(list_nth_cell(l, 2))
+#define lthird_int(l)			lfirst_int(list_nth_cell(l, 2))
+#define lthird_oid(l)			lfirst_oid(list_nth_cell(l, 2))
 #define lthird_node(type,l)		castNode(type, lthird(l))
 
-#define lfourth(l)				lfirst(list_fourth_cell(l))
-#define lfourth_int(l)			lfirst_int(list_fourth_cell(l))
-#define lfourth_oid(l)			lfirst_oid(list_fourth_cell(l))
+#define lfourth(l)				lfirst(list_nth_cell(l, 3))
+#define lfourth_int(l)			lfirst_int(list_nth_cell(l, 3))
+#define lfourth_oid(l)			lfirst_oid(list_nth_cell(l, 3))
 #define lfourth_node(type,l)	castNode(type, lfourth(l))
 
-#define llast(l)				lfirst(list_tail(l))
-#define llast_int(l)			lfirst_int(list_tail(l))
-#define llast_oid(l)			lfirst_oid(list_tail(l))
+#define llast(l)				lfirst(list_last_cell(l))
+#define llast_int(l)			lfirst_int(list_last_cell(l))
+#define llast_oid(l)			lfirst_oid(list_last_cell(l))
 #define llast_node(type,l)		castNode(type, llast(l))
 
 /*
@@ -267,6 +266,16 @@ list_nth_cell(const List *list, int n)
 	Assert(list != NIL);
 	Assert(n >= 0 && n < list->length);
 	return &list->elements[n];
+}
+
+/*
+ * Return the last cell in a non-NIL List.
+ */
+static inline ListCell *
+list_last_cell(const List *list)
+{
+	Assert(list != NIL);
+	return &list->elements[list->length - 1];
 }
 
 /*
