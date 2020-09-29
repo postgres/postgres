@@ -2122,15 +2122,30 @@ exec_stmt_perform(PLpgSQL_execstate *estate, PLpgSQL_stmt_perform *stmt)
 
 /*
  * exec_stmt_call
+ *
+ * NOTE: this is used for both CALL and DO statements.
  */
 static int
 exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 {
 	PLpgSQL_expr *expr = stmt->expr;
+	SPIPlanPtr	orig_plan = expr->plan;
+	bool		local_plan;
+	PLpgSQL_variable *volatile cur_target = stmt->target;
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	volatile bool pushed_active_snap = false;
 	volatile int rc;
+
+	/*
+	 * If not in atomic context, we make a local plan that we'll just use for
+	 * this invocation, and will free at the end.  Otherwise, transaction ends
+	 * would cause errors about plancache leaks.
+	 *
+	 * XXX This would be fixable with some plancache/resowner surgery
+	 * elsewhere, but for now we'll just work around this here.
+	 */
+	local_plan = !estate->atomic;
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
@@ -2138,24 +2153,29 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 		SPIPlanPtr	plan = expr->plan;
 		ParamListInfo paramLI;
 
-		if (plan == NULL)
+		/*
+		 * Make a plan if we don't have one, or if we need a local one.  Note
+		 * that we'll overwrite expr->plan either way; the PG_TRY block will
+		 * ensure we undo that on the way out, if the plan is local.
+		 */
+		if (plan == NULL || local_plan)
 		{
+			/* Don't let SPI save the plan if it's going to be local */
+			exec_prepare_plan(estate, expr, 0, !local_plan);
+			plan = expr->plan;
 
 			/*
-			 * Don't save the plan if not in atomic context.  Otherwise,
-			 * transaction ends would cause errors about plancache leaks.
-			 *
-			 * XXX This would be fixable with some plancache/resowner surgery
-			 * elsewhere, but for now we'll just work around this here.
+			 * A CALL or DO can never be a simple expression.  (If it could
+			 * be, we'd have to worry about saving/restoring the previous
+			 * values of the related expr fields, not just expr->plan.)
 			 */
-			exec_prepare_plan(estate, expr, 0, estate->atomic);
+			Assert(!expr->expr_simple_expr);
 
 			/*
 			 * The procedure call could end transactions, which would upset
 			 * the snapshot management in SPI_execute*, so don't let it do it.
 			 * Instead, we set the snapshots ourselves below.
 			 */
-			plan = expr->plan;
 			plan->no_snapshots = true;
 
 			/*
@@ -2163,14 +2183,21 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			 * case the procedure's argument list has changed.
 			 */
 			stmt->target = NULL;
+			cur_target = NULL;
 		}
 
 		/*
 		 * We construct a DTYPE_ROW datum representing the plpgsql variables
 		 * associated with the procedure's output arguments.  Then we can use
 		 * exec_move_row() to do the assignments.
+		 *
+		 * If we're using a local plan, also make a local target; otherwise,
+		 * since the above code will force a new plan each time through, we'd
+		 * repeatedly leak the memory for the target.  (Note: we also leak the
+		 * target when a plan change is forced, but that isn't so likely to
+		 * cause excessive memory leaks.)
 		 */
-		if (stmt->is_call && stmt->target == NULL)
+		if (stmt->is_call && cur_target == NULL)
 		{
 			Node	   *node;
 			FuncExpr   *funcexpr;
@@ -2184,6 +2211,9 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			int			nfields;
 			int			i;
 			ListCell   *lc;
+
+			/* Use eval_mcontext for any cruft accumulated here */
+			oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
 
 			/*
 			 * Get the parsed CallStmt, and look up the called procedure
@@ -2216,9 +2246,11 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			ReleaseSysCache(func_tuple);
 
 			/*
-			 * Begin constructing row Datum
+			 * Begin constructing row Datum; keep it in fn_cxt if it's to be
+			 * long-lived.
 			 */
-			oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
+			if (!local_plan)
+				MemoryContextSwitchTo(estate->func->fn_cxt);
 
 			row = (PLpgSQL_row *) palloc0(sizeof(PLpgSQL_row));
 			row->dtype = PLPGSQL_DTYPE_ROW;
@@ -2226,7 +2258,8 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			row->lineno = -1;
 			row->varnos = (int *) palloc(sizeof(int) * list_length(funcargs));
 
-			MemoryContextSwitchTo(oldcontext);
+			if (!local_plan)
+				MemoryContextSwitchTo(get_eval_mcontext(estate));
 
 			/*
 			 * Examine procedure's argument list.  Each output arg position
@@ -2270,7 +2303,13 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 
 			row->nfields = nfields;
 
-			stmt->target = (PLpgSQL_variable *) row;
+			cur_target = (PLpgSQL_variable *) row;
+
+			/* We can save and re-use the target datum, if it's not local */
+			if (!local_plan)
+				stmt->target = cur_target;
+
+			MemoryContextSwitchTo(oldcontext);
 		}
 
 		paramLI = setup_param_list(estate, expr);
@@ -2293,17 +2332,27 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 	PG_CATCH();
 	{
 		/*
-		 * If we aren't saving the plan, unset the pointer.  Note that it
-		 * could have been unset already, in case of a recursive call.
+		 * If we are using a local plan, restore the old plan link.
 		 */
-		if (expr->plan && !expr->plan->saved)
-			expr->plan = NULL;
+		if (local_plan)
+			expr->plan = orig_plan;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	if (expr->plan && !expr->plan->saved)
-		expr->plan = NULL;
+	/*
+	 * If we are using a local plan, restore the old plan link; then free the
+	 * local plan to avoid memory leaks.  (Note that the error exit path above
+	 * just clears the link without risking calling SPI_freeplan; we expect
+	 * that xact cleanup will take care of the mess in that case.)
+	 */
+	if (local_plan)
+	{
+		SPIPlanPtr	plan = expr->plan;
+
+		expr->plan = orig_plan;
+		SPI_freeplan(plan);
+	}
 
 	if (rc < 0)
 		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
@@ -2339,10 +2388,10 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 	{
 		SPITupleTable *tuptab = SPI_tuptable;
 
-		if (!stmt->target)
+		if (!cur_target)
 			elog(ERROR, "DO statement returned a row");
 
-		exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
+		exec_move_row(estate, cur_target, tuptab->vals[0], tuptab->tupdesc);
 	}
 	else if (SPI_processed > 1)
 		elog(ERROR, "procedure call returned more than one row");
