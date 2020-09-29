@@ -2259,7 +2259,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 	{
 		bool		is_first_sort = ((RollupData *) linitial(rollups))->is_hashed;
 
-		for_each_cell(lc, rollups, list_second_cell(rollups))
+		for_each_from(lc, rollups, 1)
 		{
 			RollupData *rollup = lfirst(lc);
 			AttrNumber *new_grpColIdx;
