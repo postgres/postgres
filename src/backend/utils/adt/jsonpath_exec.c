@@ -1837,11 +1837,11 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		static const char *fmt_str[] =
 		{
 			"yyyy-mm-dd",
-			"HH24:MI:SS TZH:TZM",
-			"HH24:MI:SS TZH",
+			"HH24:MI:SSTZH:TZM",
+			"HH24:MI:SSTZH",
 			"HH24:MI:SS",
-			"yyyy-mm-dd HH24:MI:SS TZH:TZM",
-			"yyyy-mm-dd HH24:MI:SS TZH",
+			"yyyy-mm-dd HH24:MI:SSTZH:TZM",
+			"yyyy-mm-dd HH24:MI:SSTZH",
 			"yyyy-mm-dd HH24:MI:SS"
 		};
 
