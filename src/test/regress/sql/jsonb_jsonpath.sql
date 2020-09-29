@@ -368,6 +368,10 @@ select jsonb_path_query('"10-03-2017 12:34 +05:20"', '$.datetime("dd-mm-yyyy HH2
 select jsonb_path_query('"12:34:56"', '$.datetime("HH24:MI:SS").type()');
 select jsonb_path_query('"12:34:56 +05:20"', '$.datetime("HH24:MI:SS TZH:TZM").type()');
 
+select jsonb_path_query('"10-03-2017T12:34:56"', '$.datetime("dd-mm-yyyy\"T\"HH24:MI:SS")');
+select jsonb_path_query('"10-03-2017t12:34:56"', '$.datetime("dd-mm-yyyy\"T\"HH24:MI:SS")');
+select jsonb_path_query('"10-03-2017 12:34:56"', '$.datetime("dd-mm-yyyy\"T\"HH24:MI:SS")');
+
 set time zone '+00';
 
 select jsonb_path_query('"10-03-2017 12:34"', '$.datetime("dd-mm-yyyy HH24:MI")');
@@ -408,6 +412,8 @@ select jsonb_path_query('"2017-03-10 12:34:56+3"', '$.datetime().type()');
 select jsonb_path_query('"2017-03-10 12:34:56+3"', '$.datetime()');
 select jsonb_path_query('"2017-03-10 12:34:56+3:10"', '$.datetime().type()');
 select jsonb_path_query('"2017-03-10 12:34:56+3:10"', '$.datetime()');
+select jsonb_path_query('"2017-03-10T12:34:56+3:10"', '$.datetime()');
+select jsonb_path_query('"2017-03-10t12:34:56+3:10"', '$.datetime()');
 select jsonb_path_query('"12:34:56"', '$.datetime().type()');
 select jsonb_path_query('"12:34:56"', '$.datetime()');
 select jsonb_path_query('"12:34:56+3"', '$.datetime().type()');

@@ -1833,6 +1833,9 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		/*
 		 * According to SQL/JSON standard enumerate ISO formats for: date,
 		 * timetz, time, timestamptz, timestamp.
+		 *
+		 * We also support ISO 8601 for timestamps, because to_json[b]()
+		 * functions use this format.
 		 */
 		static const char *fmt_str[] =
 		{
@@ -1842,7 +1845,10 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 			"HH24:MI:SS",
 			"yyyy-mm-dd HH24:MI:SSTZH:TZM",
 			"yyyy-mm-dd HH24:MI:SSTZH",
-			"yyyy-mm-dd HH24:MI:SS"
+			"yyyy-mm-dd HH24:MI:SS",
+			"yyyy-mm-dd\"T\"HH24:MI:SSTZH:TZM",
+			"yyyy-mm-dd\"T\"HH24:MI:SSTZH",
+			"yyyy-mm-dd\"T\"HH24:MI:SS"
 		};
 
 		/* cache for format texts */
