@@ -747,6 +747,15 @@ WalRcvFetchTimeLineHistoryFiles(TimeLineID first, TimeLineID last)
 			 */
 			writeTimeLineHistoryFile(tli, content, len);
 
+			/*
+			 * Mark the streamed history file as ready for archiving
+			 * if archive_mode is always.
+			 */
+			if (XLogArchiveMode != ARCHIVE_MODE_ALWAYS)
+				XLogArchiveForceDone(fname);
+			else
+				XLogArchiveNotify(fname);
+
 			pfree(fname);
 			pfree(content);
 		}
