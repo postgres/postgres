@@ -441,7 +441,7 @@ makeItemList(List *list)
 	while (end->next)
 		end = end->next;
 
-	for_each_cell(cell, list, list_second_cell(list))
+	for_each_from(cell, list, 1)
 	{
 		JsonPathParseItem *c = (JsonPathParseItem *) lfirst(cell);
 

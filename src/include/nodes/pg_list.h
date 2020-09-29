@@ -144,26 +144,6 @@ list_second_cell(const List *l)
 		return NULL;
 }
 
-/* Fetch address of list's third cell, if it has one, else NULL */
-static inline ListCell *
-list_third_cell(const List *l)
-{
-	if (l && l->length >= 3)
-		return &l->elements[2];
-	else
-		return NULL;
-}
-
-/* Fetch address of list's fourth cell, if it has one, else NULL */
-static inline ListCell *
-list_fourth_cell(const List *l)
-{
-	if (l && l->length >= 4)
-		return &l->elements[3];
-	else
-		return NULL;
-}
-
 /* Fetch list's length */
 static inline int
 list_length(const List *l)
@@ -390,6 +370,32 @@ lnext(const List *l, const ListCell *c)
 #define foreach_current_index(cell)  (cell##__state.i)
 
 /*
+ * for_each_from -
+ *	  Like foreach(), but start from the N'th (zero-based) list element,
+ *	  not necessarily the first one.
+ *
+ * It's okay for N to exceed the list length, but not for it to be negative.
+ *
+ * The caveats for foreach() apply equally here.
+ */
+#define for_each_from(cell, lst, N)	\
+	for (ForEachState cell##__state = for_each_from_setup(lst, N); \
+		 (cell##__state.l != NIL && \
+		  cell##__state.i < cell##__state.l->length) ? \
+		 (cell = &cell##__state.l->elements[cell##__state.i], true) : \
+		 (cell = NULL, false); \
+		 cell##__state.i++)
+
+static inline ForEachState
+for_each_from_setup(const List *lst, int N)
+{
+	ForEachState r = {lst, N};
+
+	Assert(N >= 0);
+	return r;
+}
+
+/*
  * for_each_cell -
  *	  a convenience macro which loops through a list starting from a
  *	  specified cell
@@ -405,7 +411,7 @@ lnext(const List *l, const ListCell *c)
 		 cell##__state.i++)
 
 static inline ForEachState
-for_each_cell_setup(List *lst, ListCell *initcell)
+for_each_cell_setup(const List *lst, const ListCell *initcell)
 {
 	ForEachState r = {lst,
 	initcell ? list_cell_number(lst, initcell) : list_length(lst)};
@@ -456,8 +462,8 @@ for_each_cell_setup(List *lst, ListCell *initcell)
 		 cell1##__state.i1++, cell1##__state.i2++)
 
 static inline ForBothCellState
-for_both_cell_setup(List *list1, ListCell *initcell1,
-					List *list2, ListCell *initcell2)
+for_both_cell_setup(const List *list1, const ListCell *initcell1,
+					const List *list2, const ListCell *initcell2)
 {
 	ForBothCellState r = {list1, list2,
 		initcell1 ? list_cell_number(list1, initcell1) : list_length(list1),

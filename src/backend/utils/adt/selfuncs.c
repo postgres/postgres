@@ -3519,7 +3519,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		 * for remaining Vars on other rels.
 		 */
 		relvarinfos = lappend(relvarinfos, varinfo1);
-		for_each_cell(l, varinfos, list_second_cell(varinfos))
+		for_each_from(l, varinfos, 1)
 		{
 			GroupVarInfo *varinfo2 = (GroupVarInfo *) lfirst(l);
 

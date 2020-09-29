@@ -1083,7 +1083,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 
 		if (gset_common)
 		{
-			for_each_cell(l, gsets, list_second_cell(gsets))
+			for_each_from(l, gsets, 1)
 			{
 				gset_common = list_intersection_int(gset_common, lfirst(l));
 				if (!gset_common)
@@ -1774,7 +1774,7 @@ expand_grouping_sets(List *groupingSets, int limit)
 		result = lappend(result, list_union_int(NIL, (List *) lfirst(lc)));
 	}
 
-	for_each_cell(lc, expanded_groups, list_second_cell(expanded_groups))
+	for_each_from(lc, expanded_groups, 1)
 	{
 		List	   *p = lfirst(lc);
 		List	   *new_result = NIL;
