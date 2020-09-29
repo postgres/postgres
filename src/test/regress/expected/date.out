@@ -1607,6 +1607,8 @@ select make_time(8, 20, 0.0);
 (1 row)
 
 -- should fail
+select make_date(0, 7, 15);
+ERROR:  date field value out of range: 0-07-15
 select make_date(2013, 2, 30);
 ERROR:  date field value out of range: 2013-02-30
 select make_date(2013, 13, 1);

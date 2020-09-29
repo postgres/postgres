@@ -556,17 +556,21 @@ make_timestamp_internal(int year, int month, int day,
 	TimeOffset	date;
 	TimeOffset	time;
 	int			dterr;
+	bool		bc = false;
 	Timestamp	result;
 
 	tm.tm_year = year;
 	tm.tm_mon = month;
 	tm.tm_mday = day;
 
-	/*
-	 * Note: we'll reject zero or negative year values.  Perhaps negatives
-	 * should be allowed to represent BC years?
-	 */
-	dterr = ValidateDate(DTK_DATE_M, false, false, false, &tm);
+	/* Handle negative years as BC */
+	if (tm.tm_year < 0)
+	{
+		bc = true;
+		tm.tm_year = -tm.tm_year;
+	}
+
+	dterr = ValidateDate(DTK_DATE_M, false, false, bc, &tm);
 
 	if (dterr != 0)
 		ereport(ERROR,

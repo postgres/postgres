@@ -378,6 +378,7 @@ select make_date(2013, 7, 15);
 select make_date(-44, 3, 15);
 select make_time(8, 20, 0.0);
 -- should fail
+select make_date(0, 7, 15);
 select make_date(2013, 2, 30);
 select make_date(2013, 13, 1);
 select make_date(2013, 11, -1);

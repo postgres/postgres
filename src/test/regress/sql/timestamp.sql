@@ -240,4 +240,7 @@ SELECT '' AS to_char_12, to_char(d, 'FF1 FF2 FF3 FF4 FF5 FF6  ff1 ff2 ff3 ff4 ff
    ) d(d);
 
 -- timestamp numeric fields constructor
-SELECT make_timestamp(2014,12,28,6,30,45.887);
+SELECT make_timestamp(2014, 12, 28, 6, 30, 45.887);
+SELECT make_timestamp(-44, 3, 15, 12, 30, 15);
+-- should fail
+select make_timestamp(0, 7, 15, 12, 30, 15);

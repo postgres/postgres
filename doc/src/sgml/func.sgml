@@ -8939,6 +8939,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </para>
         <para>
          Create date from year, month and day fields
+         (negative years signify BC)
         </para>
         <para>
          <literal>make_date(2013, 7, 15)</literal>
@@ -9004,6 +9005,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </para>
         <para>
          Create timestamp from year, month, day, hour, minute and seconds fields
+         (negative years signify BC)
         </para>
         <para>
          <literal>make_timestamp(2013, 7, 15, 8, 15, 23.5)</literal>
@@ -9027,12 +9029,18 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </para>
         <para>
          Create timestamp with time zone from year, month, day, hour, minute
-         and seconds fields; if <parameter>timezone</parameter> is not
-         specified, the current time zone is used
+         and seconds fields (negative years signify BC).
+         If <parameter>timezone</parameter> is not
+         specified, the current time zone is used; the examples assume the
+         session time zone is <literal>Europe/London</literal>
         </para>
         <para>
          <literal>make_timestamptz(2013, 7, 15, 8, 15, 23.5)</literal>
          <returnvalue>2013-07-15 08:15:23.5+01</returnvalue>
+        </para>
+        <para>
+         <literal>make_timestamptz(2013, 7, 15, 8, 15, 23.5, 'America/New_York')</literal>
+         <returnvalue>2013-07-15 13:15:23.5+01</returnvalue>
         </para></entry>
        </row>
 
