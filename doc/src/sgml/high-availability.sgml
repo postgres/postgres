@@ -1385,7 +1385,8 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
      If <varname>archive_mode</varname> is set to <literal>on</literal>, the
      archiver is not enabled during recovery or standby mode. If the standby
      server is promoted, it will start archiving after the promotion, but
-     will not archive any WAL it did not generate itself. To get a complete
+     will not archive any WAL or timeline history files that
+     it did not generate itself. To get a complete
      series of WAL files in the archive, you must ensure that all WAL is
      archived, before it reaches the standby. This is inherently true with
      file-based log shipping, as the standby can only restore files that
