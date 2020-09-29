@@ -20,118 +20,83 @@
 #include "postgres_fe.h"
 #endif
 
+#include <openssl/sha.h>
+
 #include "common/sha2.h"
 
-#ifdef FRONTEND
-#include "common/logging.h"
-#else
-#include "miscadmin.h"
-#endif
-
-#ifdef FRONTEND
-#define sha2_log_and_abort(...) \
-	do { pg_log_fatal(__VA_ARGS__); exit(1); } while(0)
-#else
-#define sha2_log_and_abort(...) elog(ERROR, __VA_ARGS__)
-#endif
-
-static void
-digest_init(EVP_MD_CTX **ctx, const EVP_MD *type)
-{
-	*ctx = EVP_MD_CTX_create();
-	if (*ctx == NULL)
-		sha2_log_and_abort("could not create EVP digest context");
-	if (EVP_DigestInit_ex(*ctx, type, NULL) <= 0)
-		sha2_log_and_abort("could not initialize EVP digest context");
-}
-
-static void
-digest_update(EVP_MD_CTX **ctx, const uint8 *data, size_t len)
-{
-	if (EVP_DigestUpdate(*ctx, data, len) <= 0)
-		sha2_log_and_abort("could not update EVP digest context");
-}
-
-static void
-digest_final(EVP_MD_CTX **ctx, uint8 *dest)
-{
-	if (EVP_DigestFinal_ex(*ctx, dest, 0) <= 0)
-		sha2_log_and_abort("could not finalize EVP digest context");
-	EVP_MD_CTX_destroy(*ctx);
-}
 
 /* Interface routines for SHA-256 */
 void
 pg_sha256_init(pg_sha256_ctx *ctx)
 {
-	digest_init(ctx, EVP_sha256());
+	SHA256_Init((SHA256_CTX *) ctx);
 }
 
 void
 pg_sha256_update(pg_sha256_ctx *ctx, const uint8 *data, size_t len)
 {
-	digest_update(ctx, data, len);
+	SHA256_Update((SHA256_CTX *) ctx, data, len);
 }
 
 void
 pg_sha256_final(pg_sha256_ctx *ctx, uint8 *dest)
 {
-	digest_final(ctx, dest);
+	SHA256_Final(dest, (SHA256_CTX *) ctx);
 }
 
 /* Interface routines for SHA-512 */
 void
 pg_sha512_init(pg_sha512_ctx *ctx)
 {
-	digest_init(ctx, EVP_sha512());
+	SHA512_Init((SHA512_CTX *) ctx);
 }
 
 void
 pg_sha512_update(pg_sha512_ctx *ctx, const uint8 *data, size_t len)
 {
-	digest_update(ctx, data, len);
+	SHA512_Update((SHA512_CTX *) ctx, data, len);
 }
 
 void
 pg_sha512_final(pg_sha512_ctx *ctx, uint8 *dest)
 {
-	digest_final(ctx, dest);
+	SHA512_Final(dest, (SHA512_CTX *) ctx);
 }
 
 /* Interface routines for SHA-384 */
 void
 pg_sha384_init(pg_sha384_ctx *ctx)
 {
-	digest_init(ctx, EVP_sha384());
+	SHA384_Init((SHA512_CTX *) ctx);
 }
 
 void
 pg_sha384_update(pg_sha384_ctx *ctx, const uint8 *data, size_t len)
 {
-	digest_update(ctx, data, len);
+	SHA384_Update((SHA512_CTX *) ctx, data, len);
 }
 
 void
 pg_sha384_final(pg_sha384_ctx *ctx, uint8 *dest)
 {
-	digest_final(ctx, dest);
+	SHA384_Final(dest, (SHA512_CTX *) ctx);
 }
 
 /* Interface routines for SHA-224 */
 void
 pg_sha224_init(pg_sha224_ctx *ctx)
 {
-	digest_init(ctx, EVP_sha224());
+	SHA224_Init((SHA256_CTX *) ctx);
 }
 
 void
 pg_sha224_update(pg_sha224_ctx *ctx, const uint8 *data, size_t len)
 {
-	digest_update(ctx, data, len);
+	SHA224_Update((SHA256_CTX *) ctx, data, len);
 }
 
 void
 pg_sha224_final(pg_sha224_ctx *ctx, uint8 *dest)
 {
-	digest_final(ctx, dest);
+	SHA224_Final(dest, (SHA256_CTX *) ctx);
 }
