@@ -771,7 +771,7 @@ Indexes:
    least a <literal>32MB</literal> share of the total
    <varname>maintenance_work_mem</varname> budget.  There must also be
    a remaining <literal>32MB</literal> share for the leader process.
-   Increasing <xref linkend="guc-max-parallel-workers-maintenance"/>
+   Increasing <xref linkend="guc-max-parallel-maintenance-workers"/>
    may allow more workers to be used, which will reduce the time
    needed for index creation, so long as the index build is not
    already I/O bound.  Of course, there should also be sufficient

@@ -2367,7 +2367,7 @@ include_dir 'conf.d'
         <para>
          When changing this value, consider also adjusting
          <xref linkend="guc-max-parallel-workers"/>,
-         <xref linkend="guc-max-parallel-workers-maintenance"/>, and
+         <xref linkend="guc-max-parallel-maintenance-workers"/>, and
          <xref linkend="guc-max-parallel-workers-per-gather"/>.
         </para>
        </listitem>
@@ -2415,7 +2415,7 @@ include_dir 'conf.d'
        </listitem>
       </varlistentry>
 
-      <varlistentry id="guc-max-parallel-workers-maintenance" xreflabel="max_parallel_maintenance_workers">
+      <varlistentry id="guc-max-parallel-maintenance-workers" xreflabel="max_parallel_maintenance_workers">
        <term><varname>max_parallel_maintenance_workers</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>max_parallel_maintenance_workers</varname> configuration parameter</primary>
@@ -2464,7 +2464,7 @@ include_dir 'conf.d'
          Sets the maximum number of workers that the system can support for
          parallel operations.  The default value is 8.  When increasing or
          decreasing this value, consider also adjusting
-         <xref linkend="guc-max-parallel-workers-maintenance"/> and
+         <xref linkend="guc-max-parallel-maintenance-workers"/> and
          <xref linkend="guc-max-parallel-workers-per-gather"/>.
          Also, note that a setting for this value which is higher than
          <xref linkend="guc-max-worker-processes"/> will have no effect,
