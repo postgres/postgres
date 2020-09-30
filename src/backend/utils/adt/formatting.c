@@ -3881,8 +3881,11 @@ do_to_timestamp(text *date_txt, text *fmt,
 		{
 			/* If a 4-digit year is provided, we use that and ignore CC. */
 			tm->tm_year = tmfc.year;
-			if (tmfc.bc && tm->tm_year > 0)
-				tm->tm_year = -(tm->tm_year - 1);
+			if (tmfc.bc)
+				tm->tm_year = -tm->tm_year;
+			/* correct for our representation of BC years */
+			if (tm->tm_year < 0)
+				tm->tm_year++;
 		}
 		fmask |= DTK_M(YEAR);
 	}

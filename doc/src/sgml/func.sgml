@@ -6695,6 +6695,15 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
      <listitem>
       <para>
        In <function>to_timestamp</function> and <function>to_date</function>,
+       negative years are treated as signifying BC.  If you write both a
+       negative year and an explicit <literal>BC</literal> field, you get AD
+       again.  An input of year zero is treated as 1 BC.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In <function>to_timestamp</function> and <function>to_date</function>,
        the <literal>YYYY</literal> conversion has a restriction when
        processing years with more than 4 digits. You must
        use some non-digit character or template after <literal>YYYY</literal>,

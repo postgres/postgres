@@ -2838,6 +2838,45 @@ SELECT to_date('2458872', 'J');
 (1 row)
 
 --
+-- Check handling of BC dates
+--
+SELECT to_date('44-02-01 BC','YYYY-MM-DD BC');
+    to_date    
+---------------
+ 02-01-0044 BC
+(1 row)
+
+SELECT to_date('-44-02-01','YYYY-MM-DD');
+    to_date    
+---------------
+ 02-01-0044 BC
+(1 row)
+
+SELECT to_date('-44-02-01 BC','YYYY-MM-DD BC');
+  to_date   
+------------
+ 02-01-0044
+(1 row)
+
+SELECT to_timestamp('44-02-01 11:12:13 BC','YYYY-MM-DD HH24:MI:SS BC');
+          to_timestamp           
+---------------------------------
+ Fri Feb 01 11:12:13 0044 PST BC
+(1 row)
+
+SELECT to_timestamp('-44-02-01 11:12:13','YYYY-MM-DD HH24:MI:SS');
+          to_timestamp           
+---------------------------------
+ Fri Feb 01 11:12:13 0044 PST BC
+(1 row)
+
+SELECT to_timestamp('-44-02-01 11:12:13 BC','YYYY-MM-DD HH24:MI:SS BC');
+         to_timestamp         
+------------------------------
+ Mon Feb 01 11:12:13 0044 PST
+(1 row)
+
+--
 -- Check handling of multiple spaces in format and/or input
 --
 SELECT to_timestamp('2011-12-18 23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
@@ -3096,6 +3135,12 @@ SELECT to_date('2016 366', 'YYYY DDD');  -- ok
 
 SELECT to_date('2016 367', 'YYYY DDD');
 ERROR:  date/time field value out of range: "2016 367"
+SELECT to_date('0000-02-01','YYYY-MM-DD');  -- allowed, though it shouldn't be
+    to_date    
+---------------
+ 02-01-0001 BC
+(1 row)
+
 --
 -- Check behavior with SQL-style fixed-GMT-offset time zone (cf bug #8572)
 --
