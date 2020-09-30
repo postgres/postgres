@@ -456,6 +456,17 @@ SELECT to_date('3 4 21 01', 'W MM CC YY');
 SELECT to_date('2458872', 'J');
 
 --
+-- Check handling of BC dates
+--
+
+SELECT to_date('44-02-01 BC','YYYY-MM-DD BC');
+SELECT to_date('-44-02-01','YYYY-MM-DD');
+SELECT to_date('-44-02-01 BC','YYYY-MM-DD BC');
+SELECT to_timestamp('44-02-01 11:12:13 BC','YYYY-MM-DD HH24:MI:SS BC');
+SELECT to_timestamp('-44-02-01 11:12:13','YYYY-MM-DD HH24:MI:SS');
+SELECT to_timestamp('-44-02-01 11:12:13 BC','YYYY-MM-DD HH24:MI:SS BC');
+
+--
 -- Check handling of multiple spaces in format and/or input
 --
 
