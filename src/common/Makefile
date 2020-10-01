@@ -88,16 +88,21 @@ OBJS_COMMON += sha2.o
 endif
 
 # A few files are currently only built for frontend, not server
-# (Mkvcbuild.pm has a copy of this list, too)
-OBJS_FRONTEND = \
+# (Mkvcbuild.pm has a copy of this list, too).  logging.c is excluded
+# from OBJS_FRONTEND_SHLIB (shared library) as a matter of policy,
+# because it is not appropriate for general purpose libraries such
+# as libpq to report errors directly.
+OBJS_FRONTEND_SHLIB = \
 	$(OBJS_COMMON) \
 	fe_memutils.o \
-	logging.o \
 	restricted_token.o \
 	sprompt.o
+OBJS_FRONTEND = \
+	$(OBJS_FRONTEND_SHLIB) \
+	logging.o
 
 # foo.o, foo_shlib.o, and foo_srv.o are all built from foo.c
-OBJS_SHLIB = $(OBJS_FRONTEND:%.o=%_shlib.o)
+OBJS_SHLIB = $(OBJS_FRONTEND_SHLIB:%.o=%_shlib.o)
 OBJS_SRV = $(OBJS_COMMON:%.o=%_srv.o)
 
 # where to find gen_keywordlist.pl and subsidiary files
