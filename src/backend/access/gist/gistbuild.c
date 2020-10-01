@@ -540,6 +540,19 @@ gist_indexsortbuild_pagestate_flush(GISTBuildState *state,
 	/* Re-initialize the page buffer for next page on this level. */
 	pagestate->page = palloc(BLCKSZ);
 	gistinitpage(pagestate->page, isleaf ? F_LEAF : 0);
+
+	/*
+	 * Set the right link to point to the previous page. This is just for
+	 * debugging purposes: GiST only follows the right link if a page is split
+	 * concurrently to a scan, and that cannot happen during index build.
+	 *
+	 * It's a bit counterintuitive that we set the right link on the new page
+	 * to point to the previous page, and not the other way round. But GiST
+	 * pages are not ordered like B-tree pages are, so as long as the
+	 * right-links form a chain through all the pages in the same level, the
+	 * order doesn't matter.
+	 */
+	GistPageGetOpaque(pagestate->page)->rightlink = blkno;
 }
 
 static void
