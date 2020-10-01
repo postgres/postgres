@@ -4280,6 +4280,9 @@ ExpireTreeKnownAssignedTransactionIds(TransactionId xid, int nsubxids,
 	/* As in ProcArrayEndTransaction, advance latestCompletedXid */
 	MaintainLatestCompletedXidRecovery(max_xid);
 
+	/* ... and xactCompletionCount */
+	ShmemVariableCache->xactCompletionCount++;
+
 	LWLockRelease(ProcArrayLock);
 }
 
