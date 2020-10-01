@@ -683,7 +683,7 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 	/* Array dimensions and left bounds */
 	ndim = ARR_NDIM(array);
 	dims = ARR_DIMS(array);
-	Assert(ndim < MAXDIM);
+	Assert(ndim <= MAXDIM);
 
 	/*
 	 * We iterate the SQL array in the physical order it's stored in the
