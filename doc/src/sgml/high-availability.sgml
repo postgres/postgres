@@ -39,9 +39,9 @@
   Some solutions deal with synchronization by allowing only one
   server to modify the data.  Servers that can modify data are
   called read/write, <firstterm>master</firstterm> or <firstterm>primary</firstterm> servers.
-  Servers that track changes in the master are called <firstterm>standby</firstterm>
+  Servers that track changes in the primary are called <firstterm>standby</firstterm>
   or <firstterm>secondary</firstterm> servers. A standby server that cannot be connected
-  to until it is promoted to a master server is called a <firstterm>warm
+  to until it is promoted to a primary server is called a <firstterm>warm
   standby</firstterm> server, and one that can accept connections and serves read-only
   queries is called a <firstterm>hot standby</firstterm> server.
  </para>
@@ -165,10 +165,10 @@ protocol to make nodes agree on a serializable transactional order.
      Logical replication allows a database server to send a stream of data
      modifications to another server.  <productname>PostgreSQL</productname>
      logical replication constructs a stream of logical data modifications
-     from the WAL.  Logical replication allows the data changes from
-     individual tables to be replicated.  Logical replication doesn't require
-     a particular server to be designated as a primary or a replica but allows
-     data to flow in multiple directions.  For more information on logical
+     from the WAL.  Logical replication allows replication of data changes on
+     a per-table basis.  In addition, a server that is publishing its own
+     changes can also subscribe to changes from another server, allowing data
+     to flow in multiple directions.  For more information on logical
      replication, see <xref linkend="logical-replication"/>.  Through the
      logical decoding interface (<xref linkend="logicaldecoding"/>),
      third-party extensions can also provide similar functionality.
@@ -177,22 +177,24 @@ protocol to make nodes agree on a serializable transactional order.
   </varlistentry>
 
   <varlistentry>
-   <term>Trigger-Based Master-Standby Replication</term>
+   <term>Trigger-Based Primary-Standby Replication</term>
    <listitem>
 
     <para>
-     A master-standby replication setup sends all data modification
-     queries to the master server.  The master server asynchronously
-     sends data changes to the standby server.  The standby can answer
-     read-only queries while the master server is running.  The
-     standby server is ideal for data warehouse queries.
+     A trigger-based replication setup typically funnels data modification
+     queries to a designated primary server. Operating on a per-table basis,
+     the primary server sends data changes (typically) asynchronously to the
+     standby servers.  Standby servers can answer queries while the primary is
+     running, and may allow some local data changes or write activity.  This
+     form of replication is often used for offloading large analytical or data
+     warehouse queries.
     </para>
 
     <para>
-     <productname>Slony-I</productname> is an example of this type of replication, with per-table
-     granularity, and support for multiple standby servers.  Because it
-     updates the standby server asynchronously (in batches), there is
-     possible data loss during fail over.
+     <productname>Slony-I</productname> is an example of this type of
+     replication, with per-table granularity, and support for multiple standby
+     servers.  Because it updates the standby server asynchronously (in
+     batches), there is possible data loss during fail over.
     </para>
    </listitem>
   </varlistentry>
@@ -215,14 +217,10 @@ protocol to make nodes agree on a serializable transactional order.
      <function>random()</function>, <function>CURRENT_TIMESTAMP</function>, and
      sequences can have different values on different servers.
      This is because each server operates independently, and because
-     SQL queries are broadcast (and not actual modified rows).  If
+     SQL queries are broadcast rather than actual data changes.  If
      this is unacceptable, either the middleware or the application
-     must query such values from a single server and then use those
-     values in write queries.  Another option is to use this replication
-     option with a traditional primary-standby setup, i.e., data modification
-     queries are sent only to the primary and are propagated to the
-     standby servers via primary-standby replication, not by the replication
-     middleware.  Care must also be taken that all
+     must determine such values from a single source and then use those
+     values in write queries.  Care must also be taken that all
      transactions either commit or abort on all servers, perhaps
      using two-phase commit (<xref linkend="sql-prepare-transaction"/>
      and <xref linkend="sql-commit-prepared"/>).
@@ -351,7 +349,7 @@ protocol to make nodes agree on a serializable transactional order.
     </row>
 
     <row>
-     <entry>Allows multiple master servers</entry>
+     <entry>Allows multiple primary servers</entry>
      <entry align="center"></entry>
      <entry align="center"></entry>
      <entry align="center"></entry>
