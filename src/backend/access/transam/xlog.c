@@ -940,6 +940,7 @@ static bool CheckForStandbyTrigger(void);
 #ifdef WAL_DEBUG
 static void xlog_outrec(StringInfo buf, XLogReaderState *record);
 #endif
+static void xlog_block_info(StringInfo buf, XLogReaderState *record);
 static void xlog_outdesc(StringInfo buf, XLogReaderState *record);
 static void pg_start_backup_callback(int code, Datum arg);
 static void pg_stop_backup_callback(int code, Datum arg);
@@ -10258,6 +10259,19 @@ xlog_outrec(StringInfo buf, XLogReaderState *record)
 	appendStringInfo(buf, "; len %u",
 					 XLogRecGetDataLen(record));
 
+	xlog_block_info(buf, record);
+}
+#endif							/* WAL_DEBUG */
+
+/*
+ * Returns a string giving information about all the blocks in an
+ * XLogRecord.
+ */
+static void
+xlog_block_info(StringInfo buf, XLogReaderState *record)
+{
+	int			block_id;
+
 	/* decode block references */
 	for (block_id = 0; block_id <= record->max_block_id; block_id++)
 	{
@@ -10284,7 +10298,6 @@ xlog_outrec(StringInfo buf, XLogReaderState *record)
 			appendStringInfoString(buf, " FPW");
 	}
 }
-#endif							/* WAL_DEBUG */
 
 /*
  * Returns a string describing an XLogRecord, consisting of its identity
@@ -11765,6 +11778,7 @@ rm_redo_error_callback(void *arg)
 
 	initStringInfo(&buf);
 	xlog_outdesc(&buf, record);
+	xlog_block_info(&buf, record);
 
 	/* translator: %s is a WAL record description */
 	errcontext("WAL redo at %X/%X for %s",
