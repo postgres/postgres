@@ -425,6 +425,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_wal</structname><indexterm><primary>pg_stat_wal</primary></indexterm></entry>
+      <entry>One row only, showing statistics about WAL activity. See
+       <link linkend="monitoring-pg-stat-wal-view">
+       <structname>pg_stat_wal</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_database</structname><indexterm><primary>pg_stat_database</primary></indexterm></entry>
       <entry>One row per database, showing database-wide statistics. See
        <link linkend="monitoring-pg-stat-database-view">
@@ -3280,6 +3288,56 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
  </sect2>
 
+ <sect2 id="monitoring-pg-stat-wal-view">
+   <title><structname>pg_stat_wal</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_wal</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_stat_wal</structname> view will always have a
+   single row, containing data about WAL activity of the cluster.
+  </para>
+
+  <table id="pg-stat-wal-view" xreflabel="pg_stat_wal">
+   <title><structname>pg_stat_wal</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>wal_buffers_full</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times WAL data was written to the disk because WAL buffers got full
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time at which these statistics were last reset
+      </para></entry>
+     </row>
+     </tbody>
+   </tgroup>
+  </table>
+
+</sect2>
+
  <sect2 id="monitoring-pg-stat-database-view">
   <title><structname>pg_stat_database</structname></title>
 
@@ -4668,8 +4726,9 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         argument.  The argument can be <literal>bgwriter</literal> to reset
         all the counters shown in
         the <structname>pg_stat_bgwriter</structname>
-        view, or <literal>archiver</literal> to reset all the counters shown in
-        the <structname>pg_stat_archiver</structname> view.
+        view, <literal>archiver</literal> to reset all the counters shown in
+        the <structname>pg_stat_archiver</structname> view or <literal>wal</literal>
+        to reset all the counters shown in the <structname>pg_stat_wal</structname> view.
        </para>
        <para>
         This function is restricted to superusers by default, but other users

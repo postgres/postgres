@@ -5481,6 +5481,14 @@
   proname => 'pg_stat_get_buf_alloc', provolatile => 's', proparallel => 'r',
   prorettype => 'int8', proargtypes => '', prosrc => 'pg_stat_get_buf_alloc' },
 
+{ oid => '1136', descr => 'statistics: information about WAL activity',
+  proname => 'pg_stat_get_wal', proisstrict => 'f', provolatile => 's',
+  proparallel => 'r', prorettype => 'record', proargtypes => '',
+  proallargtypes => '{int8,timestamptz}',
+  proargmodes => '{o,o}',
+  proargnames => '{wal_buffers_full,stats_reset}',
+  prosrc => 'pg_stat_get_wal' },
+
 { oid => '2306', descr => 'statistics: information about SLRU caches',
   proname => 'pg_stat_get_slru', prorows => '100', proisstrict => 'f',
   proretset => 't', provolatile => 's', proparallel => 'r',

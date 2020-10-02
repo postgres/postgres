@@ -1841,6 +1841,7 @@ PgStat_MsgTabpurge
 PgStat_MsgTabstat
 PgStat_MsgTempFile
 PgStat_MsgVacuum
+PgStat_MsgWal
 PgStat_SLRUStats
 PgStat_Shared_Reset_Target
 PgStat_Single_Reset_Type
@@ -1852,6 +1853,7 @@ PgStat_TableCounts
 PgStat_TableEntry
 PgStat_TableStatus
 PgStat_TableXactStatus
+PgStat_WalStats
 PgXmlErrorContext
 PgXmlStrictness
 Pg_finfo_record

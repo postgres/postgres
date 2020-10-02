@@ -2129,6 +2129,9 @@ pg_stat_user_tables| SELECT pg_stat_all_tables.relid,
     pg_stat_all_tables.autoanalyze_count
    FROM pg_stat_all_tables
   WHERE ((pg_stat_all_tables.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_stat_all_tables.schemaname !~ '^pg_toast'::text));
+pg_stat_wal| SELECT w.wal_buffers_full,
+    w.stats_reset
+   FROM pg_stat_get_wal() w(wal_buffers_full, stats_reset);
 pg_stat_wal_receiver| SELECT s.pid,
     s.status,
     s.receive_start_lsn,
