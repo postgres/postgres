@@ -2679,34 +2679,39 @@ openssl x509 -req -in server.csr -text -days 365 \
    First make sure that an <application>SSH</application> server is
    running properly on the same machine as the
    <productname>PostgreSQL</productname> server and that you can log in using
-   <command>ssh</command> as some user. Then you can establish a secure
-   tunnel with a command like this from the client machine:
+   <command>ssh</command> as some user;  you then can establish a
+   secure tunnel to the remote server.  A secure tunnel listens on a
+   local port and forwards all traffic to a port on the remote machine.
+   Traffic sent to the remote port can arrive on its
+   <literal>localhost</literal> address, or different bind
+   address if desired;  it does not appear as coming from your
+   local machine.  This command creates a secure tunnel from the client
+   machine to the remote machine <literal>foo.com</literal>:
 <programlisting>
 ssh -L 63333:localhost:5432 joe@foo.com
 </programlisting>
    The first number in the <option>-L</option> argument, 63333, is the
-   port number of your end of the tunnel; it can be any unused port.
-   (IANA reserves ports 49152 through 65535 for private use.)  The
-   second number, 5432, is the remote end of the tunnel: the port
-   number your server is using. The name or IP address between the
-   port numbers is the host with the database server you are going to
-   connect to, as seen from the host you are logging in to, which
-   is <literal>foo.com</literal> in this example. In order to connect
-   to the database server using this tunnel, you connect to port 63333
-   on the local machine:
+   local port number of the tunnel; it can be any unused port.  (IANA
+   reserves ports 49152 through 65535 for private use.)  The name or IP
+   address after this is the remote bind address you are connecting to,
+   i.e., <literal>localhost</literal>, which is the default.  The second
+   number, 5432, is the remote end of the tunnel, e.g., the port number
+   your database server is using.  In order to connect to the database
+   server using this tunnel, you connect to port 63333 on the local
+   machine:
 <programlisting>
 psql -h localhost -p 63333 postgres
 </programlisting>
-   To the database server it will then look as though you are really
+   To the database server it will then look as though you are
    user <literal>joe</literal> on host <literal>foo.com</literal>
-   connecting to <literal>localhost</literal> in that context, and it
+   connecting to the <literal>localhost</literal> bind address, and it
    will use whatever authentication procedure was configured for
-   connections from this user and host.  Note that the server will not
+   connections by that user to that bind address.  Note that the server will not
    think the connection is SSL-encrypted, since in fact it is not
    encrypted between the
    <application>SSH</application> server and the
    <productname>PostgreSQL</productname> server.  This should not pose any
-   extra security risk as long as they are on the same machine.
+   extra security risk because they are on the same machine.
   </para>
 
   <para>
@@ -2718,12 +2723,12 @@ psql -h localhost -p 63333 postgres
   </para>
 
   <para>
-   You could also have set up the port forwarding as
+   You could also have set up port forwarding as
 <programlisting>
 ssh -L 63333:foo.com:5432 joe@foo.com
 </programlisting>
    but then the database server will see the connection as coming in
-   on its <literal>foo.com</literal> interface, which is not opened by
+   on its <literal>foo.com</literal> bind address, which is not opened by
    the default setting <literal>listen_addresses =
    'localhost'</literal>.  This is usually not what you want.
   </para>
