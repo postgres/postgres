@@ -95,7 +95,10 @@ PostgreSQL documentation
         <option>--all</option>) is not used, the database name is read
         from the environment variable <envar>PGDATABASE</envar>.  If
         that is not set, the user name specified for the connection is
-        used.
+        used.  The <replaceable>dbname</replaceable> can be a <link
+        linkend="libpq-connstring">connection string</link>.  If so,
+        connection string parameters will override any conflicting command
+        line options.
        </para>
       </listitem>
      </varlistentry>
