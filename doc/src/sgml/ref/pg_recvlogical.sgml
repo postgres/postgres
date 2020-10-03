@@ -273,14 +273,16 @@ PostgreSQL documentation
 
     <variablelist>
       <varlistentry>
-       <term><option>-d <replaceable>database</replaceable></option></term>
-       <term><option>--dbname=<replaceable>database</replaceable></option></term>
+       <term><option>-d <replaceable>dbname</replaceable></option></term>
+       <term><option>--dbname=<replaceable>dbname</replaceable></option></term>
        <listitem>
         <para>
-         The database to connect to.  See the description of the actions for
-         what this means in detail.  This can be a <application>libpq</application> connection string;
-         see <xref linkend="libpq-connstring"/> for more information.  Defaults
-         to user name.
+         The database to connect to.  See the description
+         of the actions for what this means in detail.
+         The <replaceable>dbname</replaceable> can be a <link
+         linkend="libpq-connstring">connection string</link>.  If so,
+         connection string parameters will override any conflicting
+         command line options.  Defaults to the user name.
         </para>
        </listitem>
       </varlistentry>

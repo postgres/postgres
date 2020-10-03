@@ -1101,14 +1101,10 @@ PostgreSQL documentation
        Specifies the name of the database to connect to. This is
        equivalent to specifying <replaceable
        class="parameter">dbname</replaceable> as the first non-option
-       argument on the command line.
-      </para>
-      <para>
-       If this parameter contains an <symbol>=</symbol> sign or starts
-       with a valid <acronym>URI</acronym> prefix
-       (<literal>postgresql://</literal>
-       or <literal>postgres://</literal>), it is treated as a
-       <parameter>conninfo</parameter> string. See <xref linkend="libpq-connect"/> for more information.
+       argument on the command line.  The <replaceable>dbname</replaceable>
+       can be a <link linkend="libpq-connstring">connection string</link>.
+       If so, connection string parameters will override any conflicting
+       command line options.
       </para>
       </listitem>
      </varlistentry>
