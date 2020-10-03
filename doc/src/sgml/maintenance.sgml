@@ -87,7 +87,7 @@
 
    <para>
     <productname>PostgreSQL</productname>'s
-    <xref linkend="sql-vacuum"/> command has to
+    <link linkend="sql-vacuum"><command>VACUUM</command></link> command has to
     process each table on a regular basis for several reasons:
 
     <orderedlist>
@@ -227,9 +227,9 @@
     massive update or delete activity.  If you have such a table and
     you need to reclaim the excess disk space it occupies, you will need
     to use <command>VACUUM FULL</command>, or alternatively
-    <xref linkend="sql-cluster"/>
+    <link linkend="sql-cluster"><command>CLUSTER</command></link>
     or one of the table-rewriting variants of
-    <xref linkend="sql-altertable"/>.
+    <link linkend="sql-altertable"><command>ALTER TABLE</command></link>.
     These commands rewrite an entire new copy of the table and build
     new indexes for it.  All these options require exclusive lock.  Note that
     they also temporarily use extra disk space approximately equal to the size
@@ -242,7 +242,7 @@
    <para>
     If you have a table whose entire contents are deleted on a periodic
     basis, consider doing it with
-    <xref linkend="sql-truncate"/> rather
+    <link linkend="sql-truncate"><command>TRUNCATE</command></link> rather
     than using <command>DELETE</command> followed by
     <command>VACUUM</command>. <command>TRUNCATE</command> removes the
     entire content of the table immediately, without requiring a
@@ -269,7 +269,7 @@
     The <productname>PostgreSQL</productname> query planner relies on
     statistical information about the contents of tables in order to
     generate good plans for queries.  These statistics are gathered by
-    the <xref linkend="sql-analyze"/> command,
+    the <link linkend="sql-analyze"><command>ANALYZE</command></link> command,
     which can be invoked by itself or
     as an optional step in <command>VACUUM</command>.  It is important to have
     reasonably accurate statistics, otherwise poor choices of plans might

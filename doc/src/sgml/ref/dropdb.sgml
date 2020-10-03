@@ -41,7 +41,7 @@ PostgreSQL documentation
 
   <para>
    <application>dropdb</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="sql-dropdatabase"/>.
+   <acronym>SQL</acronym> command <link linkend="sql-dropdatabase"><command>DROP DATABASE</command></link>.
    There is no effective difference between dropping databases via
    this utility and via other methods for accessing the server.
   </para>

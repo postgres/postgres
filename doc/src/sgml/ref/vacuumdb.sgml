@@ -62,7 +62,7 @@ PostgreSQL documentation
 
   <para>
    <application>vacuumdb</application> is a wrapper around the SQL
-   command <xref linkend="sql-vacuum"/>.
+   command <link linkend="sql-vacuum"><command>VACUUM</command></link>.
    There is no effective difference between vacuuming and analyzing
    databases via this utility and via other methods for accessing the
    server.

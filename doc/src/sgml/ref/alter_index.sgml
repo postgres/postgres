@@ -81,7 +81,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
       this command, use <command>ALTER DATABASE</command> or explicit
       <command>ALTER INDEX</command> invocations instead if desired.
       See also
-      <xref linkend="sql-createtablespace"/>.
+      <link linkend="sql-createtablespace"><command>CREATE TABLESPACE</command></link>.
      </para>
     </listitem>
    </varlistentry>
@@ -118,11 +118,11 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
      <para>
       This form changes one or more index-method-specific storage parameters
       for the index.  See
-      <xref linkend="sql-createindex"/>
+      <link linkend="sql-createindex"><command>CREATE INDEX</command></link>
       for details on the available parameters.  Note that the index contents
       will not be modified immediately by this command; depending on the
       parameter you might need to rebuild the index with
-      <xref linkend="sql-reindex"/>
+      <link linkend="sql-reindex"><command>REINDEX</command></link>
       to get the desired effects.
      </para>
     </listitem>
@@ -144,7 +144,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
     <listitem>
      <para>
       This form sets the per-column statistics-gathering target for
-      subsequent <xref linkend="sql-analyze"/> operations, though can
+      subsequent <link linkend="sql-analyze"><command>ANALYZE</command></link> operations, though can
       be used only on index columns that are defined as an expression.
       Since expressions lack a unique name, we refer to them using the
       ordinal number of the index column.
@@ -252,7 +252,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
 
    <para>
     These operations are also possible using
-    <xref linkend="sql-altertable"/>.
+    <link linkend="sql-altertable"><command>ALTER TABLE</command></link>.
     <command>ALTER INDEX</command> is in fact just an alias for the forms
     of <command>ALTER TABLE</command> that apply to indexes.
    </para>

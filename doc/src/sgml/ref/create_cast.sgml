@@ -304,7 +304,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-dropcast"/> to remove user-defined casts.
+   Use <link linkend="sql-dropcast"><command>DROP CAST</command></link> to remove user-defined casts.
   </para>
 
   <para>

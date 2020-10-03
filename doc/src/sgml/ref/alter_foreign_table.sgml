@@ -71,7 +71,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form adds a new column to the foreign table, using the same syntax as
-      <xref linkend="sql-createforeigntable"/>.
+      <link linkend="sql-createforeigntable"><command>CREATE FOREIGN TABLE</command></link>.
       Unlike the case when adding a column to a regular table, nothing happens
       to the underlying storage: this action simply declares that
       some new column is now accessible through the foreign table.
@@ -133,8 +133,8 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
      <para>
       This form
       sets the per-column statistics-gathering target for subsequent
-      <xref linkend="sql-analyze"/> operations.
-      See the similar form of <xref linkend="sql-altertable"/>
+      <link linkend="sql-analyze"><command>ANALYZE</command></link> operations.
+      See the similar form of <link linkend="sql-altertable"><command>ALTER TABLE</command></link>
       for more details.
      </para>
     </listitem>
@@ -146,7 +146,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form sets or resets per-attribute options.
-      See the similar form of <xref linkend="sql-altertable"/>
+      See the similar form of <link linkend="sql-altertable"><command>ALTER TABLE</command></link>
       for more details.
      </para>
     </listitem>
@@ -159,7 +159,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form sets the storage mode for a column.
-      See the similar form of <xref linkend="sql-altertable"/>
+      See the similar form of <link linkend="sql-altertable"><command>ALTER TABLE</command></link>
       for more details.
       Note that the storage mode has no effect unless the table's
       foreign-data wrapper chooses to pay attention to it.
@@ -172,7 +172,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form adds a new constraint to a foreign table, using the same
-      syntax as <xref linkend="sql-createforeigntable"/>.
+      syntax as <link linkend="sql-createforeigntable"><command>CREATE FOREIGN TABLE</command></link>.
       Currently only <literal>CHECK</literal> constraints are supported.
      </para>
 
@@ -181,7 +181,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
       done to verify the constraint is correct; rather, this action simply
       declares that some new condition should be assumed to hold for all rows
       in the foreign table.  (See the discussion
-      in <xref linkend="sql-createforeigntable"/>.)
+      in <link linkend="sql-createforeigntable"><command>CREATE FOREIGN TABLE</command></link>.)
       If the constraint is marked <literal>NOT VALID</literal>, then it isn't
       assumed to hold, but is only recorded for possible future use.
      </para>
@@ -216,7 +216,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       These forms configure the firing of trigger(s) belonging to the foreign
-      table.  See the similar form of <xref linkend="sql-altertable"/> for more
+      table.  See the similar form of <link linkend="sql-altertable"><command>ALTER TABLE</command></link> for more
       details.
      </para>
     </listitem>
@@ -239,7 +239,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
      <para>
       This form adds the target foreign table as a new child of the specified
       parent table.
-      See the similar form of <xref linkend="sql-altertable"/>
+      See the similar form of <link linkend="sql-altertable"><command>ALTER TABLE</command></link>
       for more details.
      </para>
     </listitem>
@@ -503,7 +503,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
    </para>
 
    <para>
-    Refer to <xref linkend="sql-createforeigntable"/> for a further description of valid
+    Refer to <link linkend="sql-createforeigntable"><command>CREATE FOREIGN TABLE</command></link> for a further description of valid
     parameters.
    </para>
  </refsect1>

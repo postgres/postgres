@@ -226,7 +226,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
    </para>
 
    <para>
-    Use <xref linkend="sql-dropdatabase"/> to remove a database.
+    Use <link linkend="sql-dropdatabase"><command>DROP DATABASE</command></link> to remove a database.
    </para>
 
    <para>
@@ -235,9 +235,9 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
    </para>
 
    <para>
-    Database-level configuration parameters (set via <xref
-    linkend="sql-alterdatabase"/>) and database-level permissions (set via
-    <xref linkend="sql-grant"/>) are not copied from the template database.
+    Database-level configuration parameters (set via <link
+    linkend="sql-alterdatabase"><command>ALTER DATABASE</command></link>) and database-level permissions (set via
+    <link linkend="sql-grant"><command>GRANT</command></link>) are not copied from the template database.
    </para>
 
   <para>

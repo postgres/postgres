@@ -137,7 +137,7 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
       <para><replaceable class="parameter">inline_handler</replaceable> is the
        name of a previously registered function that will be called
        to execute an anonymous code block
-       (<xref linkend="sql-do"/> command)
+       (<link linkend="sql-do"><command>DO</command></link> command)
        in this language.
        If no <replaceable class="parameter">inline_handler</replaceable>
        function is specified, the language does not support anonymous code
@@ -183,7 +183,7 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-droplanguage"/> to drop procedural languages.
+   Use <link linkend="sql-droplanguage"><command>DROP LANGUAGE</command></link> to drop procedural languages.
   </para>
 
   <para>

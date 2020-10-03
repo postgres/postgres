@@ -94,7 +94,7 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="parameter">name</
 
   <para>
    While the default index for future
-   <xref linkend="sql-cluster"/>
+   <link linkend="sql-cluster"><command>CLUSTER</command></link>
    operations is retained, <command>REFRESH MATERIALIZED VIEW</command> does not
    order the generated rows based on this property. If you want the data
    to be ordered upon generation, you must use an <literal>ORDER BY</literal>

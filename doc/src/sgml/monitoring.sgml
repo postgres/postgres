@@ -27,7 +27,7 @@
    <command>ps</command>, <command>top</command>, <command>iostat</command>, and <command>vmstat</command>.
    Also, once one has identified a
    poorly-performing query, further investigation might be needed using
-   <productname>PostgreSQL</productname>'s <xref linkend="sql-explain"/> command.
+   <productname>PostgreSQL</productname>'s <link linkend="sql-explain"><command>EXPLAIN</command></link> command.
    <xref linkend="using-explain"/> discusses <command>EXPLAIN</command>
    and other methods for understanding the behavior of an individual
    query.
@@ -5278,8 +5278,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <note>
    <para>
     Note that when <command>ANALYZE</command> is run on a partitioned table,
-    all of its partitions are also recursively analyzed as also mentioned in
-    <xref linkend="sql-analyze"/>.  In that case, <command>ANALYZE</command>
+    all of its partitions are also recursively analyzed.
+    In that case, <command>ANALYZE</command>
     progress is reported first for the parent table, whereby its inheritance
     statistics are collected, followed by that for each partition.
    </para>

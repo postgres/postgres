@@ -185,8 +185,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
         <listitem>
          <para>
           All rows in the temporary table will be deleted at the end
-          of each transaction block.  Essentially, an automatic <xref
-          linkend="sql-truncate"/> is done
+          of each transaction block.  Essentially, an automatic <link
+          linkend="sql-truncate"><command>TRUNCATE</command></link> is done
           at each commit.
          </para>
         </listitem>
@@ -222,9 +222,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <term><replaceable>query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select"/>, <link
-      linkend="sql-table">TABLE</link>, or <xref linkend="sql-values"/>
-      command, or an <xref linkend="sql-execute"/> command that runs a
+      A <link linkend="sql-select"><command>SELECT</command></link>, <link
+      linkend="sql-table"><command>TABLE</command></link>, or <link linkend="sql-values"><command>VALUES</command></link>
+      command, or an <link linkend="sql-execute"><command>EXECUTE</command></link> command that runs a
       prepared <command>SELECT</command>, <command>TABLE</command>, or
       <command>VALUES</command> query.
      </para>

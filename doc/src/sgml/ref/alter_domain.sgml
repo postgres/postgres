@@ -80,7 +80,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form adds a new constraint to a domain using the same syntax as
-      <xref linkend="sql-createdomain"/>.
+      <link linkend="sql-createdomain"><command>CREATE DOMAIN</command></link>.
       When a new constraint is added to a domain, all columns using that
       domain will be checked against the newly added constraint.  These
       checks can be suppressed by adding the new constraint using the

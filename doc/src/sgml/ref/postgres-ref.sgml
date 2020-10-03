@@ -143,8 +143,8 @@ PostgreSQL documentation
        <para>
         This option is meant for other programs that interact with a server
         instance, such as <xref linkend="app-pg-ctl"/>, to query configuration
-        parameter values.  User-facing applications should instead use <xref
-        linkend="sql-show"/> or the <structname>pg_settings</structname> view.
+        parameter values.  User-facing applications should instead use <link
+        linkend="sql-show"><command>SHOW</command></link> or the <structname>pg_settings</structname> view.
        </para>
       </listitem>
      </varlistentry>

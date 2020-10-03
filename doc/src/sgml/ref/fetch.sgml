@@ -335,9 +335,9 @@ FETCH <replaceable class="parameter">count</replaceable>
   </para>
 
   <para>
-   <xref linkend="sql-declare"/>
+   <link linkend="sql-declare"><command>DECLARE</command></link>
    is used to define a cursor.  Use
-   <xref linkend="sql-move"/>
+   <link linkend="sql-move"><command>MOVE</command></link>
    to change cursor position without retrieving data.
   </para>
  </refsect1>

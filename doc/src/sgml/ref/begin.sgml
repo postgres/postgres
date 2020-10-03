@@ -37,9 +37,9 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   <para>
    <command>BEGIN</command> initiates a transaction block, that is,
    all statements after a <command>BEGIN</command> command will be
-   executed in a single transaction until an explicit <xref
-   linkend="sql-commit"/> or <xref
-   linkend="sql-rollback"/> is given.
+   executed in a single transaction until an explicit <link
+   linkend="sql-commit"><command>COMMIT</command></link> or <link
+   linkend="sql-rollback"><command>ROLLBACK</command></link> is given.
    By default (without <command>BEGIN</command>),
    <productname>PostgreSQL</productname> executes
    transactions in <quote>autocommit</quote> mode, that is, each
@@ -60,7 +60,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   <para>
    If the isolation level, read/write mode, or deferrable mode is specified, the new
    transaction has those characteristics, as if
-   <xref linkend="sql-set-transaction"/>
+   <link linkend="sql-set-transaction"><command>SET TRANSACTION</command></link>
    was executed.
   </para>
  </refsect1>
@@ -90,13 +90,13 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   <title>Notes</title>
 
   <para>
-   <xref linkend="sql-start-transaction"/> has the same functionality
+   <link linkend="sql-start-transaction"><command>START TRANSACTION</command></link> has the same functionality
    as <command>BEGIN</command>.
   </para>
 
   <para>
-   Use <xref linkend="sql-commit"/> or
-   <xref linkend="sql-rollback"/>
+   Use <link linkend="sql-commit"><command>COMMIT</command></link> or
+   <link linkend="sql-rollback"><command>ROLLBACK</command></link>
    to terminate a transaction block.
   </para>
 
@@ -131,7 +131,7 @@ BEGIN;
   <para>
    <command>BEGIN</command> is a <productname>PostgreSQL</productname>
    language extension.  It is equivalent to the SQL-standard command
-   <xref linkend="sql-start-transaction"/>, whose reference page
+   <link linkend="sql-start-transaction"><command>START TRANSACTION</command></link>, whose reference page
    contains additional compatibility information.
   </para>
 

@@ -51,7 +51,7 @@
   </para>
 
   <para>
-   The <xref linkend="sql-security-label"/> statement allows assignment of
+   The <link linkend="sql-security-label"><command>SECURITY LABEL</command></link> statement allows assignment of
    a security label to a database object.
   </para>
 
@@ -451,7 +451,7 @@ UPDATE t1 SET x = 2, y = func1(y) WHERE z = 100;
    <itemizedlist>
     <listitem>
      <para>
-      <xref linkend="sql-createdatabase"/> additionally requires
+      <link linkend="sql-createdatabase"><command>CREATE DATABASE</command></link> additionally requires
       <literal>getattr</literal> permission for the source or template database.
      </para>
     </listitem>
@@ -509,7 +509,7 @@ UPDATE t1 SET x = 2, y = func1(y) WHERE z = 100;
     </listitem>
     <listitem>
      <para>
-      Using <xref linkend="sql-security-label"/> on an object additionally
+      Using <link linkend="sql-security-label"><command>SECURITY LABEL</command></link> on an object additionally
       requires <literal>relabelfrom</literal> permission for the object in
       conjunction with its old security label and <literal>relabelto</literal>
       permission for the object in conjunction with its new security label.
@@ -644,7 +644,7 @@ ERROR:  SELinux: security policy violation
   <sect3>
    <title>Miscellaneous</title>
    <para>
-    We reject the <xref linkend="sql-load"/> command across the board, because
+    We reject the <link linkend="sql-load"><command>LOAD</command></link> command across the board, because
     any module loaded could easily circumvent security policy enforcement.
    </para>
 

@@ -70,7 +70,7 @@ ROLLBACK [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-commit"/> to
+   Use <link linkend="sql-commit"><command>COMMIT</command></link> to
    successfully terminate a transaction.
   </para>
 

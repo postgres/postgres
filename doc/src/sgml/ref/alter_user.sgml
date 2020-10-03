@@ -57,7 +57,7 @@ ALTER USER { <replaceable class="parameter">role_specification</replaceable> | A
 
   <para>
    <command>ALTER USER</command> is now an alias for
-   <xref linkend="sql-alterrole"/>.
+   <link linkend="sql-alterrole"><command>ALTER ROLE</command></link>.
   </para>
  </refsect1>
 

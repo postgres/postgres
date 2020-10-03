@@ -41,7 +41,7 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
 
    <tip>
     <para>
-     <xref linkend="sql-truncate"/> provides a
+     <link linkend="sql-truncate"><command>TRUNCATE</command></link> provides a
      faster mechanism to remove all rows from a table.
     </para>
    </tip>

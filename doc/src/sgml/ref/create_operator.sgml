@@ -251,8 +251,8 @@ COMMUTATOR = OPERATOR(myschema.===) ,
   </para>
 
   <para>
-   Use <xref linkend="sql-dropoperator"/> to delete user-defined operators
-   from a database.  Use <xref linkend="sql-alteroperator"/> to modify operators in a
+   Use <link linkend="sql-dropoperator"><command>DROP OPERATOR</command></link> to delete user-defined operators
+   from a database.  Use <link linkend="sql-alteroperator"><command>ALTER OPERATOR</command></link> to modify operators in a
    database.
   </para>
  </refsect1>

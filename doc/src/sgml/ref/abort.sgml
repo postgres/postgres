@@ -33,7 +33,7 @@ ABORT [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
    all the updates made by the transaction to be discarded.
    This command is identical
    in behavior to the standard <acronym>SQL</acronym> command
-   <xref linkend="sql-rollback"/>,
+   <link linkend="sql-rollback"><command>ROLLBACK</command></link>,
    and is present only for historical reasons.
   </para>
  </refsect1>
@@ -57,8 +57,8 @@ ABORT [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
     <listitem>
      <para>
       If <literal>AND CHAIN</literal> is specified, a new transaction is
-      immediately started with the same transaction characteristics (see <xref
-      linkend="sql-set-transaction"/>) as the just finished one.  Otherwise,
+      immediately started with the same transaction characteristics (see <link
+      linkend="sql-set-transaction"><command>SET TRANSACTION</command></link>) as the just finished one.  Otherwise,
       no new transaction is started.
      </para>
     </listitem>
@@ -70,7 +70,7 @@ ABORT [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-commit"/> to
+   Use <link linkend="sql-commit"><command>COMMIT</command></link> to
    successfully terminate a transaction.
   </para>
 

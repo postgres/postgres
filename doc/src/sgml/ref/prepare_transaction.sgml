@@ -39,8 +39,8 @@ PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
 
   <para>
    Once prepared, a transaction can later be committed or rolled back
-   with <xref linkend="sql-commit-prepared"/>
-   or <xref linkend="sql-rollback-prepared"/>,
+   with <link linkend="sql-commit-prepared"><command>COMMIT PREPARED</command></link>
+   or <link linkend="sql-rollback-prepared"><command>ROLLBACK PREPARED</command></link>,
    respectively.  Those commands can be issued from any session, not
    only the one that executed the original transaction.
   </para>
@@ -92,8 +92,8 @@ PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
   </para>
 
   <para>
-   This command must be used inside a transaction block. Use <xref
-   linkend="sql-begin"/> to start one.
+   This command must be used inside a transaction block. Use <link
+   linkend="sql-begin"><command>BEGIN</command></link> to start one.
   </para>
 
   <para>

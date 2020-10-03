@@ -82,7 +82,7 @@ REASSIGN OWNED BY { <replaceable class="parameter">old_role</replaceable> | CURR
   </para>
 
   <para>
-   The <xref linkend="sql-drop-owned"/> command is an alternative that
+   The <link linkend="sql-drop-owned"><command>DROP OWNED</command></link> command is an alternative that
    simply drops all the database objects owned by one or more roles.
   </para>
 

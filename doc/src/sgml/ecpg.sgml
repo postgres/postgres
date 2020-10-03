@@ -479,10 +479,9 @@ EXEC SQL COMMIT;
   </para>
 
   <para>
-   For more details about declaration of the cursor,
-   see <xref linkend="ecpg-sql-declare"/>, and
-   see <xref linkend="sql-fetch"/> for <literal>FETCH</literal> command
-   details.
+   For more details about declaring a cursor, see <xref
+   linkend="ecpg-sql-declare"/>; for more details about fetching rows from a
+   cursor, see <xref linkend="sql-fetch"/>.
   </para>
 
    <note>

@@ -90,7 +90,7 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> SET ( <replaceable 
     <listitem>
      <para>
       This form adds a new attribute to a composite type, using the same syntax as
-      <xref linkend="sql-createtype"/>.
+      <link linkend="sql-createtype"><command>CREATE TYPE</command></link>.
      </para>
     </listitem>
    </varlistentry>

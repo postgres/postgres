@@ -121,8 +121,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     must be less than <symbol>NAMEDATALEN</symbol> bytes long (64 bytes in a
     standard <productname>PostgreSQL</productname> build).  (It is possible to
     create an enumerated type with zero labels, but such a type cannot be used
-    to hold values before at least one label is added using <xref
-    linkend="sql-altertype"/>.)
+    to hold values before at least one label is added using <link
+    linkend="sql-altertype"><command>ALTER TYPE</command></link>.)
    </para>
   </refsect2>
 

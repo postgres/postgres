@@ -49,7 +49,7 @@ PostgreSQL documentation
 
   <para>
    <application>createuser</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="sql-createrole"/>.
+   <acronym>SQL</acronym> command <link linkend="sql-createrole"><command>CREATE ROLE</command></link>.
    There is no effective difference between creating users via
    this utility and via other methods for accessing the server.
   </para>

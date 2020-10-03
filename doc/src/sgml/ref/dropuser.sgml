@@ -42,7 +42,7 @@ PostgreSQL documentation
 
   <para>
    <application>dropuser</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="sql-droprole"/>.
+   <acronym>SQL</acronym> command <link linkend="sql-droprole"><command>DROP ROLE</command></link>.
    There is no effective difference between dropping users via
    this utility and via other methods for accessing the server.
   </para>

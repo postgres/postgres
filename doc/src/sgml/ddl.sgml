@@ -1675,12 +1675,12 @@ REVOKE ALL ON accounts FROM PUBLIC;
      <term><literal>SELECT</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-select"/> from
+       Allows <command>SELECT</command> from
        any column, or specific column(s), of a table, view, materialized
        view, or other table-like object.
-       Also allows use of <xref linkend="sql-copy"/> TO.
+       Also allows use of <command>COPY TO</command>.
        This privilege is also needed to reference existing column values in
-       <xref linkend="sql-update"/> or <xref linkend="sql-delete"/>.
+       <command>UPDATE</command> or <command>DELETE</command>.
        For sequences, this privilege also allows use of the
        <function>currval</function> function.
        For large objects, this privilege allows the object to be read.
@@ -1692,11 +1692,11 @@ REVOKE ALL ON accounts FROM PUBLIC;
      <term><literal>INSERT</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-insert"/> of a new row into a table, view,
+       Allows <command>INSERT</command> of a new row into a table, view,
        etc.  Can be granted on specific column(s), in which case
        only those columns may be assigned to in the <command>INSERT</command>
        command (other columns will therefore receive default values).
-       Also allows use of <xref linkend="sql-copy"/> FROM.
+       Also allows use of <command>COPY FROM</command>.
       </para>
      </listitem>
     </varlistentry>
@@ -1705,7 +1705,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      <term><literal>UPDATE</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-update"/> of any
+       Allows <command>UPDATE</command> of any
        column, or specific column(s), of a table, view, etc.
        (In practice, any nontrivial <command>UPDATE</command> command will
        require <literal>SELECT</literal> privilege as well, since it must
@@ -1727,7 +1727,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      <term><literal>DELETE</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-delete"/> of a row from a table, view, etc.
+       Allows <command>DELETE</command> of a row from a table, view, etc.
        (In practice, any nontrivial <command>DELETE</command> command will
        require <literal>SELECT</literal> privilege as well, since it must
        reference table columns to determine which rows to delete.)
@@ -1739,7 +1739,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      <term><literal>TRUNCATE</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-truncate"/> on a table, view, etc.
+       Allows <command>TRUNCATE</command> on a table, view, etc.
       </para>
      </listitem>
     </varlistentry>
@@ -3370,11 +3370,11 @@ VALUES ('Albany', NULL, NULL, 'NY');
   <para>
    Table inheritance is typically established when the child table is
    created, using the <literal>INHERITS</literal> clause of the
-   <xref linkend="sql-createtable"/>
+   <link linkend="sql-createtable"><command>CREATE TABLE</command></link>
    statement.
    Alternatively, a table which is already defined in a compatible way can
    have a new parent relationship added, using the <literal>INHERIT</literal>
-   variant of <xref linkend="sql-altertable"/>.
+   variant of <link linkend="sql-altertable"><command>ALTER TABLE</command></link>.
    To do this the new child table must already include columns with
    the same names and types as the columns of the parent. It must also include
    check constraints with the same names and check expressions as those of the
@@ -3406,7 +3406,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
   </para>
 
   <para>
-   <xref linkend="sql-altertable"/> will
+   <command>ALTER TABLE</command> will
    propagate any changes in column data definitions and check
    constraints down the inheritance hierarchy.  Again, dropping
    columns that are depended on by other tables is only possible when using

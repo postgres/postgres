@@ -85,7 +85,7 @@
     that a procedure does not return a value, so there is no return type
     declaration.  While a function is called as part of a query or DML
     command, a procedure is called in isolation using
-    the <xref linkend="sql-call"/> command.  If the CALL command is not
+    the <link linkend="sql-call"><command>CALL</command></link> command.  If the <command>CALL</command> command is not
     part of an explicit transaction, a procedure in many server-side
     languages can commit, rollback, and begin new transactions during
     its execution, which is not possible in functions.
@@ -94,15 +94,15 @@
    <para>
     The explanations on how to define user-defined functions in the rest of
     this chapter apply to procedures as well, except that
-    the <xref linkend="sql-createprocedure"/> command is used instead, there is
+    the <link linkend="sql-createprocedure"><command>CREATE PROCEDURE</command></link> command is used instead, there is
     no return type, and some other features such as strictness don't apply.
    </para>
 
    <para>
     Collectively, functions and procedures are also known
     as <firstterm>routines</firstterm><indexterm><primary>routine</primary></indexterm>.
-    There are commands such as <xref linkend="sql-alterroutine"/>
-    and <xref linkend="sql-droproutine"/> that can operate on functions and
+    There are commands such as <link linkend="sql-alterroutine"><command>ALTER ROUTINE</command></link>
+    and <link linkend="sql-droproutine"><command>DROP ROUTINE</command></link> that can operate on functions and
     procedures without having to know which kind it is.  Note, however, that
     there is no <literal>CREATE ROUTINE</literal> command.
    </para>
@@ -1531,7 +1531,7 @@ CREATE FUNCTION test(int, int) RETURNS int
     Every function has a <firstterm>volatility</firstterm> classification, with
     the possibilities being <literal>VOLATILE</literal>, <literal>STABLE</literal>, or
     <literal>IMMUTABLE</literal>.  <literal>VOLATILE</literal> is the default if the
-    <xref linkend="sql-createfunction"/>
+    <link linkend="sql-createfunction"><command>CREATE FUNCTION</command></link>
     command does not specify a category.  The volatility category is a
     promise to the optimizer about the behavior of the function:
 
@@ -3432,7 +3432,7 @@ if (!ptr)
 
    <para>
     Some basic facts can be supplied by declarative annotations provided in
-    the <xref linkend="sql-createfunction"/> command.  Most important of
+    the <link linkend="sql-createfunction"><command>CREATE FUNCTION</command></link> command.  Most important of
     these is the function's <link linkend="xfunc-volatility">volatility
     category</link> (<literal>IMMUTABLE</literal>, <literal>STABLE</literal>,
     or <literal>VOLATILE</literal>); one should always be careful to

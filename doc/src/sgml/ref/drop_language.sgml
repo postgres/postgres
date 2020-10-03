@@ -38,7 +38,7 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="parameter">name</
    <para>
     As of <productname>PostgreSQL</productname> 9.1, most procedural
     languages have been made into <quote>extensions</quote>, and should
-    therefore be removed with <xref linkend="sql-dropextension"/>
+    therefore be removed with <link linkend="sql-dropextension"><command>DROP EXTENSION</command></link>
     not <command>DROP LANGUAGE</command>.
    </para>
   </note>

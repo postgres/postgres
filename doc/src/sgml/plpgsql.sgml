@@ -1299,7 +1299,7 @@ EXECUTE format('SELECT count(*) FROM %I '
     <para>
      The <application>PL/pgSQL</application>
      <command>EXECUTE</command> statement is not related to the
-     <xref linkend="sql-execute"/> SQL
+     <link linkend="sql-execute"><command>EXECUTE</command></link> SQL
      statement supported by the
      <productname>PostgreSQL</productname> server. The server's
      <command>EXECUTE</command> statement cannot be used directly within

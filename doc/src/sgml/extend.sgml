@@ -504,7 +504,7 @@ RETURNS anycompatible AS ...
     of the extension itself.  If the extension includes C code, there
     will typically also be a shared library file into which the C code
     has been built.  Once you have these files, a simple
-    <xref linkend="sql-createextension"/> command loads the objects into
+    <link linkend="sql-createextension"><command>CREATE EXTENSION</command></link> command loads the objects into
     your database.
    </para>
 
@@ -513,7 +513,7 @@ RETURNS anycompatible AS ...
     <acronym>SQL</acronym> script to load a bunch of <quote>loose</quote> objects
     into your database, is that <productname>PostgreSQL</productname> will then
     understand that the objects of the extension go together.  You can
-    drop all the objects with a single <xref linkend="sql-dropextension"/>
+    drop all the objects with a single <link linkend="sql-dropextension"><command>DROP EXTENSION</command></link>
     command (no need to maintain a separate <quote>uninstall</quote> script).
     Even more useful, <application>pg_dump</application> knows that it should not
     dump the individual member objects of the extension &mdash; it will
@@ -572,7 +572,7 @@ RETURNS anycompatible AS ...
 
    <para>
     The kinds of SQL objects that can be members of an extension are shown in
-    the description of <xref linkend="sql-alterextension"/>.  Notably, objects
+    the description of <link linkend="sql-alterextension"><command>ALTER EXTENSION</command></link>.  Notably, objects
     that are database-cluster-wide, such as databases, roles, and tablespaces,
     cannot be extension members since an extension is only known within one
     database.  (Although an extension script is not prohibited from creating
@@ -605,7 +605,7 @@ RETURNS anycompatible AS ...
    </indexterm>
 
     <para>
-     The <xref linkend="sql-createextension"/> command relies on a control
+     The <command>CREATE EXTENSION</command> command relies on a control
      file for each extension, which must be named the same as the extension
      with a suffix of <literal>.control</literal>, and must be placed in the
      installation's <literal>SHAREDIR/extension</literal> directory.  There
@@ -1373,7 +1373,7 @@ include $(PGXS)
 
     <para>
      Once the files are installed, use the
-     <xref linkend="sql-createextension"/> command to load the objects into
+     <command>CREATE EXTENSION</command> command to load the objects into
      any particular database.
     </para>
    </sect2>

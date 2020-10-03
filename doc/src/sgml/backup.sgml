@@ -177,8 +177,8 @@ pg_dump -h <replaceable>host1</replaceable> <replaceable>dbname</replaceable> | 
    </important>
 
    <para>
-    After restoring a backup, it is wise to run <xref
-    linkend="sql-analyze"/> on each
+    After restoring a backup, it is wise to run <link
+    linkend="sql-analyze"><command>ANALYZE</command></link> on each
     database so the query optimizer has useful statistics;
     see <xref linkend="vacuum-for-statistics"/>
     and <xref linkend="autovacuum"/> for more information.
@@ -1594,7 +1594,7 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
   <itemizedlist>
    <listitem>
     <para>
-     If a <xref linkend="sql-createdatabase"/>
+     If a <link linkend="sql-createdatabase"><command>CREATE DATABASE</command></link>
      command is executed while a base backup is being taken, and then
      the template database that the <command>CREATE DATABASE</command> copied
      is modified while the base backup is still in progress, it is
@@ -1607,7 +1607,7 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
 
    <listitem>
     <para>
-     <xref linkend="sql-createtablespace"/>
+     <link linkend="sql-createtablespace"><command>CREATE TABLESPACE</command></link>
      commands are WAL-logged with the literal absolute path, and will
      therefore be replayed as tablespace creations with the same
      absolute path.  This might be undesirable if the log is being

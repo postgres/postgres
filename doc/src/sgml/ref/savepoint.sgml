@@ -64,8 +64,8 @@ SAVEPOINT <replaceable>savepoint_name</replaceable>
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-rollback-to"/> to
-   rollback to a savepoint.  Use <xref linkend="sql-release-savepoint"/>
+   Use <link linkend="sql-rollback-to"><command>ROLLBACK TO</command></link> to
+   rollback to a savepoint.  Use <link linkend="sql-release-savepoint"><command>RELEASE SAVEPOINT</command></link>
    to destroy a savepoint, keeping
    the effects of commands executed after it was established.
   </para>

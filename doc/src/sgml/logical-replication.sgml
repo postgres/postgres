@@ -147,13 +147,13 @@
   </para>
 
   <para>
-   A publication is created using the <xref linkend="sql-createpublication"/>
+   A publication is created using the <link linkend="sql-createpublication"><command>CREATE PUBLICATION</command></link>
    command and may later be altered or dropped using corresponding commands.
   </para>
 
   <para>
    The individual tables can be added and removed dynamically using
-   <xref linkend="sql-alterpublication"/>.  Both the <literal>ADD
+   <link linkend="sql-alterpublication"><command>ALTER PUBLICATION</command></link>.  Both the <literal>ADD
    TABLE</literal> and <literal>DROP TABLE</literal> operations are
    transactional; so the table will start or stop replicating at the correct
    snapshot once the transaction has committed.
@@ -207,10 +207,10 @@
   </para>
 
   <para>
-   The subscription is added using <xref linkend="sql-createsubscription"/> and
+   The subscription is added using <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link> and
    can be stopped/resumed at any time using the
-   <xref linkend="sql-altersubscription"/> command and removed using
-   <xref linkend="sql-dropsubscription"/>.
+   <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION</command></link> command and removed using
+   <link linkend="sql-dropsubscription"><command>DROP SUBSCRIPTION</command></link>.
   </para>
 
   <para>
@@ -418,7 +418,7 @@
      tables.)  Publications can also specify that changes are to be replicated
      using the identity and schema of the partitioned root table instead of
      that of the individual leaf partitions in which the changes actually
-     originate (see <xref linkend="sql-createpublication"/>).
+     originate (see <link linkend="sql-createpublication"><command>CREATE PUBLICATION</command></link>).
     </para>
    </listitem>
   </itemizedlist>

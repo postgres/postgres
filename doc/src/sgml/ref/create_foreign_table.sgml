@@ -159,7 +159,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
       tables from which the new foreign table automatically inherits
       all columns.  Parent tables can be plain tables or foreign tables.
       See the similar form of
-      <xref linkend="sql-createtable"/> for more details.
+      <link linkend="sql-createtable"><command>CREATE TABLE</command></link> for more details.
      </para>
     </listitem>
    </varlistentry>
@@ -171,7 +171,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
       This form can be used to create the foreign table as partition of
       the given parent table with specified partition bound values.
       See the similar form of
-      <xref linkend="sql-createtable"/> for more details.
+      <link linkend="sql-createtable"><command>CREATE TABLE</command></link> for more details.
       Note that it is currently not allowed to create the foreign table as a
       partition of the parent table if there are <literal>UNIQUE</literal>
       indexes on the parent table.  (See also

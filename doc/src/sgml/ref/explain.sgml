@@ -302,7 +302,7 @@ ROLLBACK;
    the <link linkend="autovacuum">autovacuum daemon</link> will take care
    of that automatically.  But if a table has recently had substantial
    changes in its contents, you might need to do a manual
-   <xref linkend="sql-analyze"/> rather than wait for autovacuum to catch up
+   <link linkend="sql-analyze"><command>ANALYZE</command></link> rather than wait for autovacuum to catch up
    with the changes.
   </para>
 

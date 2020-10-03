@@ -131,7 +131,7 @@ REVOKE [ ADMIN OPTION FOR ]
   </para>
 
   <para>
-   See the description of the <xref linkend="sql-grant"/> command for
+   See the description of the <link linkend="sql-grant"><command>GRANT</command></link> command for
    the meaning of the privilege types.
   </para>
 
@@ -292,7 +292,7 @@ REVOKE admins FROM joe;
   <title>Compatibility</title>
 
    <para>
-    The compatibility notes of the <xref linkend="sql-grant"/> command
+    The compatibility notes of the <link linkend="sql-grant"><command>GRANT</command></link> command
     apply analogously to <command>REVOKE</command>.
     The keyword <literal>RESTRICT</literal> or <literal>CASCADE</literal>
     is required according to the standard, but <productname>PostgreSQL</productname>

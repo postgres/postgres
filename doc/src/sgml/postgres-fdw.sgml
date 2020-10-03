@@ -456,14 +456,14 @@ OPTIONS (ADD password_required 'false');
    <para>
     Note that constraints other than <literal>NOT NULL</literal> will never be
     imported from the remote tables.  Although <productname>PostgreSQL</productname>
-    does support <literal>CHECK</literal> constraints on foreign tables, there is no
+    does support check constraints on foreign tables, there is no
     provision for importing them automatically, because of the risk that a
     constraint expression could evaluate differently on the local and remote
-    servers.  Any such inconsistency in the behavior of a <literal>CHECK</literal>
+    servers.  Any such inconsistency in the behavior of a check
     constraint could lead to hard-to-detect errors in query optimization.
-    So if you wish to import <literal>CHECK</literal> constraints, you must do so
+    So if you wish to import check constraints, you must do so
     manually, and you should verify the semantics of each one carefully.
-    For more detail about the treatment of <literal>CHECK</literal> constraints on
+    For more detail about the treatment of check constraints on
     foreign tables, see <xref linkend="sql-createforeigntable"/>.
    </para>
 
@@ -705,7 +705,7 @@ CREATE FOREIGN TABLE foreign_table (
    Column names must match as well, unless you attach <literal>column_name</literal>
    options to the individual columns to show how they are named in the remote
    table.
-   In many cases, use of <xref linkend="sql-importforeignschema"/> is
+   In many cases, use of <link linkend="sql-importforeignschema"><command>IMPORT FOREIGN SCHEMA</command></link> is
    preferable to constructing foreign table definitions manually.
   </para>
  </sect2>

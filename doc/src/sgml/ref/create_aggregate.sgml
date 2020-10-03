@@ -629,7 +629,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       The meanings of <literal>PARALLEL SAFE</literal>, <literal>PARALLEL
       RESTRICTED</literal>, and <literal>PARALLEL UNSAFE</literal> are the same as
-      in <xref linkend="sql-createfunction"/>.  An aggregate will not be
+      in <link linkend="sql-createfunction"><command>CREATE FUNCTION</command></link>.  An aggregate will not be
       considered for parallelization if it is marked <literal>PARALLEL
       UNSAFE</literal> (which is the default!) or <literal>PARALLEL RESTRICTED</literal>.
       Note that the parallel-safety markings of the aggregate's support

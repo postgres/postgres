@@ -30,7 +30,7 @@ DROP USER [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...
 
   <para>
    <command>DROP USER</command> is simply an alternate spelling of
-   <xref linkend="sql-droprole"/>.
+   <link linkend="sql-droprole"><command>DROP ROLE</command></link>.
   </para>
  </refsect1>
 

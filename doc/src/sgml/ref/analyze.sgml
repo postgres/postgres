@@ -174,7 +174,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
    just after making major changes in the contents of a table.  Accurate
    statistics will help the planner to choose the most appropriate query
    plan, and thereby improve the speed of query processing.  A common
-   strategy for read-mostly databases is to run <xref linkend="sql-vacuum"/>
+   strategy for read-mostly databases is to run <link linkend="sql-vacuum"><command>VACUUM</command></link>
    and <command>ANALYZE</command> once a day during a low-usage time of day.
    (This will not be sufficient if there is heavy update activity.)
   </para>
@@ -205,7 +205,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
    will change slightly each time <command>ANALYZE</command> is run,
    even if the actual table contents did not change.  This might result
    in small changes in the planner's estimated costs shown by
-   <xref linkend="sql-explain"/>.
+   <link linkend="sql-explain"><command>EXPLAIN</command></link>.
    In rare situations, this non-determinism will cause the planner's
    choices of query plans to change after <command>ANALYZE</command> is run.
    To avoid this, raise the amount of statistics collected by
@@ -216,8 +216,8 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
    The extent of analysis can be controlled by adjusting the
    <xref linkend="guc-default-statistics-target"/> configuration variable, or
    on a column-by-column basis by setting the per-column statistics
-   target with <command>ALTER TABLE ... ALTER COLUMN ... SET
-   STATISTICS</command> (see <xref linkend="sql-altertable"/>).
+   target with <link linkend="sql-altertable"><command>ALTER TABLE ... ALTER COLUMN ... SET
+   STATISTICS</command></link>.
    The target value sets the
    maximum number of entries in the most-common-value list and the
    maximum number of bins in the histogram.  The default target value
@@ -246,8 +246,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
    with the largest possible statistics target.  If this inaccuracy leads to
    bad query plans, a more accurate value can be determined manually and then
    installed with
-   <command>ALTER TABLE ... ALTER COLUMN ... SET (n_distinct = ...)</command>
-   (see <xref linkend="sql-altertable"/>).
+   <link linkend="sql-altertable"><command>ALTER TABLE ... ALTER COLUMN ... SET (n_distinct = ...)</command></link>.
   </para>
 
   <para>

@@ -186,9 +186,9 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
     <productname>PostgreSQL</productname> reports an error if <command>LOCK</command>
     is used outside a transaction block.
     Use
-    <xref linkend="sql-begin"/> and
-    <xref linkend="sql-commit"/>
-    (or <xref linkend="sql-rollback"/>)
+    <link linkend="sql-begin"><command>BEGIN</command></link> and
+    <link linkend="sql-commit"><command>COMMIT</command></link>
+    (or <link linkend="sql-rollback"><command>ROLLBACK</command></link>)
     to define a transaction block.
    </para>
 

@@ -32,8 +32,8 @@ DROP TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ..
    <command>DROP TABLE</command> removes tables from the database.
    Only the table owner, the schema owner, and superuser can drop a
    table.  To empty a table of rows
-   without destroying the table, use <xref linkend="sql-delete"/>
-   or <xref linkend="sql-truncate"/>.
+   without destroying the table, use <link linkend="sql-delete"><command>DELETE</command></link>
+   or <link linkend="sql-truncate"><command>TRUNCATE</command></link>.
   </para>
 
   <para>

@@ -142,7 +142,7 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signatu
     The recommended syntax for referencing an ordered-set aggregate
     is to write <literal>ORDER BY</literal> between the direct and aggregated
     argument specifications, in the same style as in
-    <xref linkend="sql-createaggregate"/>.  However, it will also work to
+    <link linkend="sql-createaggregate"><command>CREATE AGGREGATE</command></link>.  However, it will also work to
     omit <literal>ORDER BY</literal> and just run the direct and aggregated
     argument specifications into a single list.  In this abbreviated form,
     if <literal>VARIADIC "any"</literal> was used in both the direct and

@@ -39,7 +39,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
    can be used to retrieve
    a small number of rows at a time out of a larger query.
    After the cursor is created, rows are fetched from it using
-   <xref linkend="sql-fetch"/>.
+   <link linkend="sql-fetch"><command>FETCH</command></link>.
   </para>
 
   <note>
@@ -124,8 +124,8 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <term><replaceable class="parameter">query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select"/> or
-      <xref linkend="sql-values"/> command
+      A <link linkend="sql-select"><command>SELECT</command></link> or
+      <link linkend="sql-values"><command>VALUES</command></link> command
       which will provide the rows to be returned by the cursor.
      </para>
     </listitem>
@@ -183,9 +183,9 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <productname>PostgreSQL</productname> reports an error if such a
     command is used outside a transaction block.
     Use
-    <xref linkend="sql-begin"/> and
-    <xref linkend="sql-commit"/>
-    (or <xref linkend="sql-rollback"/>)
+    <link linkend="sql-begin"><command>BEGIN</command></link> and
+    <link linkend="sql-commit"><command>COMMIT</command></link>
+    (or <link linkend="sql-rollback"><command>ROLLBACK</command></link>)
     to define a transaction block.
    </para>
 
@@ -244,7 +244,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     If the cursor's query includes <literal>FOR UPDATE</literal> or <literal>FOR
     SHARE</literal>, then returned rows are locked at the time they are first
     fetched, in the same way as for a regular
-    <xref linkend="sql-select"/> command with
+    <link linkend="sql-select"><command>SELECT</command></link> command with
     these options.
     In addition, the returned rows will be the most up-to-date versions;
     therefore these options provide the equivalent of what the SQL standard

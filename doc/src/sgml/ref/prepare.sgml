@@ -66,7 +66,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
    also means that a single  prepared statement cannot be used by
    multiple simultaneous database clients; however, each client can create
    their own prepared statement to use.  Prepared statements can be
-   manually cleaned up using the <xref linkend="sql-deallocate"/> command.
+   manually cleaned up using the <link linkend="sql-deallocate"><command>DEALLOCATE</command></link> command.
   </para>
 
   <para>
@@ -163,7 +163,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
 
   <para>
    To examine the query plan <productname>PostgreSQL</productname> is using
-   for a prepared statement, use <xref linkend="sql-explain"/>, for example
+   for a prepared statement, use <link linkend="sql-explain"><command>EXPLAIN</command></link>, for example
 <programlisting>
 EXPLAIN EXECUTE <replaceable>name</replaceable>(<replaceable>parameter_values</replaceable>);
 </programlisting>

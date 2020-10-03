@@ -147,7 +147,7 @@ CREATE [ OR REPLACE ] TRANSFORM FOR <replaceable>type_name</replaceable> LANGUAG
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="sql-droptransform"/> to remove transforms.
+   Use <link linkend="sql-droptransform"><command>DROP TRANSFORM</command></link> to remove transforms.
   </para>
  </refsect1>
 

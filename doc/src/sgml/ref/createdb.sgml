@@ -46,7 +46,7 @@ PostgreSQL documentation
 
   <para>
    <application>createdb</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="sql-createdatabase"/>.
+   <acronym>SQL</acronym> command <link linkend="sql-createdatabase"><command>CREATE DATABASE</command></link>.
    There is no effective difference between creating databases via
    this utility and via other methods for accessing the server.
   </para>
@@ -197,7 +197,7 @@ PostgreSQL documentation
     The options <option>-D</option>, <option>-l</option>, <option>-E</option>,
     <option>-O</option>, and
     <option>-T</option> correspond to options of the underlying
-    SQL command <xref linkend="sql-createdatabase"/>; see there for more information
+    SQL command <link linkend="sql-createdatabase"><command>CREATE DATABASE</command></link>; see there for more information
     about them.
    </para>
 

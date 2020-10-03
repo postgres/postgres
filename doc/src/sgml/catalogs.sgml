@@ -639,8 +639,8 @@
   </table>
 
   <para>
-   New aggregate functions are registered with the <xref
-   linkend="sql-createaggregate"/>
+   New aggregate functions are registered with the <link
+   linkend="sql-createaggregate"><command>CREATE AGGREGATE</command></link>
    command.  See <xref linkend="xaggr"/> for more information about
    writing aggregate functions and the meaning of the transition
    functions, etc.
@@ -1161,7 +1161,7 @@
       <para>
        <structfield>attstattarget</structfield> controls the level of detail
        of statistics accumulated for this column by
-       <xref linkend="sql-analyze"/>.
+       <link linkend="sql-analyze"><command>ANALYZE</command></link>.
        A zero value indicates that no statistics should be collected.
        A negative value says to use the system default statistics target.
        The exact meaning of positive values is data type-dependent.
@@ -1966,9 +1966,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        Size of the on-disk representation of this table in pages (of size
        <symbol>BLCKSZ</symbol>).  This is only an estimate used by the
-       planner.  It is updated by <xref linkend="sql-vacuum"/>,
-       <xref linkend="sql-analyze"/>, and a few DDL commands such as
-       <xref linkend="sql-createindex"/>.
+       planner.  It is updated by <link linkend="sql-vacuum"><command>VACUUM</command></link>,
+       <link linkend="sql-analyze"><command>ANALYZE</command></link>, and a few DDL commands such as
+       <link linkend="sql-createindex"><command>CREATE INDEX</command></link>.
       </para></entry>
      </row>
 
@@ -1978,9 +1978,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        Number of live rows in the table.  This is only an estimate used by
-       the planner.  It is updated by <xref linkend="sql-vacuum"/>,
-       <xref linkend="sql-analyze"/>, and a few DDL commands such as
-       <xref linkend="sql-createindex"/>.
+       the planner.  It is updated by <link linkend="sql-vacuum"><command>VACUUM</command></link>,
+       <link linkend="sql-analyze"><command>ANALYZE</command></link>, and a few DDL commands such as
+       <link linkend="sql-createindex"><command>CREATE INDEX</command></link>.
        If the table has never yet been vacuumed or
        analyzed, <structfield>reltuples</structfield>
        contains <literal>-1</literal> indicating that the row count is
@@ -1995,9 +1995,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        Number of pages that are marked all-visible in the table's
        visibility map.  This is only an estimate used by the
-       planner.  It is updated by <xref linkend="sql-vacuum"/>,
-       <xref linkend="sql-analyze"/>, and a few DDL commands such as
-       <xref linkend="sql-createindex"/>.
+       planner.  It is updated by <link linkend="sql-vacuum"><command>VACUUM</command></link>,
+       <link linkend="sql-analyze"><command>ANALYZE</command></link>, and a few DDL commands such as
+       <link linkend="sql-createindex"><command>CREATE INDEX</command></link>.
       </para></entry>
      </row>
 
@@ -2241,8 +2241,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    lazily: they are guaranteed to be true if that's the correct state, but
    may not be reset to false immediately when the condition is no longer
    true.  For example, <structfield>relhasindex</structfield> is set by
-   <xref linkend="sql-createindex"/>, but it is never cleared by
-   <xref linkend="sql-dropindex"/>.  Instead, <xref linkend="sql-vacuum"/> clears
+   <link linkend="sql-createindex"><command>CREATE INDEX</command></link>, but it is never cleared by
+   <link linkend="sql-dropindex"><command>DROP INDEX</command></link>.  Instead, <link linkend="sql-vacuum"><command>VACUUM</command></link> clears
    <structfield>relhasindex</structfield> if it finds the table has no indexes.  This
    arrangement avoids race conditions and improves concurrency.
   </para>
@@ -2848,8 +2848,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The catalog <structname>pg_database</structname> stores information about
-   the available databases.  Databases are created with the <xref
-   linkend="sql-createdatabase"/> command.
+   the available databases.  Databases are created with the <link
+   linkend="sql-createdatabase"><command>CREATE DATABASE</command></link> command.
    Consult <xref linkend="managing-databases"/> for details about the meaning
    of some of the parameters.
   </para>
@@ -3425,7 +3425,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        the referenced object (see
        <link linkend="catalog-pg-extension"><structname>pg_extension</structname></link>).
        The dependent object can be dropped only via
-       <xref linkend="sql-dropextension"/> on the referenced object.
+       <link linkend="sql-dropextension"><command>DROP EXTENSION</command></link> on the referenced object.
        Functionally this dependency type acts the same as
        an <literal>INTERNAL</literal> dependency, but it's kept separate for
        clarity and to simplify <application>pg_dump</application>.
@@ -3492,7 +3492,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_description</structname> stores optional descriptions
    (comments) for each database object.  Descriptions can be manipulated
-   with the <xref linkend="sql-comment"/> command and viewed with
+   with the <link linkend="sql-comment"><command>COMMENT</command></link> command and viewed with
    <application>psql</application>'s <literal>\d</literal> commands.
    Descriptions of many built-in system objects are provided in the initial
    contents of <structname>pg_description</structname>.
@@ -4285,7 +4285,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        If true, the index is currently valid for queries.  False means the
        index is possibly incomplete: it must still be modified by
-       <xref linkend="sql-insert"/>/<xref linkend="sql-update"/> operations, but it cannot safely
+       <link linkend="sql-insert"><command>INSERT</command></link>/<link linkend="sql-update"><command>UPDATE</command></link> operations, but it cannot safely
        be used for queries. If it is unique, the uniqueness property is not
        guaranteed true either.
       </para></entry>
@@ -4309,7 +4309,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        If true, the index is currently ready for inserts.  False means the
-       index must be ignored by <xref linkend="sql-insert"/>/<xref linkend="sql-update"/>
+       index must be ignored by <link linkend="sql-insert"><command>INSERT</command></link>/<link linkend="sql-update"><command>UPDATE</command></link>
        operations.
       </para></entry>
      </row>
@@ -4504,11 +4504,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    Objects can have initial privileges either by having those privileges set
    when the system is initialized (by <application>initdb</application>) or when the
-   object is created during a <xref linkend="sql-createextension"/> and the
-   extension script sets initial privileges using the <xref linkend="sql-grant"/>
+   object is created during a <link linkend="sql-createextension"><command>CREATE EXTENSION</command></link> and the
+   extension script sets initial privileges using the <link linkend="sql-grant"><command>GRANT</command></link>
    system.  Note that the system will automatically handle recording of the
    privileges during the extension script and that extension authors need
-   only use the <xref linkend="sql-grant"/> and <xref linkend="sql-revoke"/>
+   only use the <command>GRANT</command> and <command>REVOKE</command>
    statements in their script to have the privileges recorded.  The
    <literal>privtype</literal> column indicates if the initial privilege was
    set by <application>initdb</application> or during a
@@ -6481,7 +6481,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_seclabel</structname> stores security
    labels on database objects.  Security labels can be manipulated
-   with the <xref linkend="sql-security-label"/> command.  For an easier
+   with the <link linkend="sql-security-label"><command>SECURITY LABEL</command></link> command.  For an easier
    way to view security labels, see <xref linkend="view-pg-seclabels"/>.
   </para>
 
@@ -6855,7 +6855,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_shdescription</structname> stores optional
    descriptions (comments) for shared database objects.  Descriptions can be
-   manipulated with the <xref linkend="sql-comment"/> command and viewed with
+   manipulated with the <link linkend="sql-comment"><command>COMMENT</command></link> command and viewed with
    <application>psql</application>'s <literal>\d</literal> commands.
   </para>
 
@@ -6931,7 +6931,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_shseclabel</structname> stores security
    labels on shared database objects.  Security labels can be manipulated
-   with the <xref linkend="sql-security-label"/> command.  For an easier
+   with the <link linkend="sql-security-label"><command>SECURITY LABEL</command></link> command.  For an easier
    way to view security labels, see <xref linkend="view-pg-seclabels"/>.
   </para>
 
@@ -7015,7 +7015,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_statistic</structname> stores
    statistical data about the contents of the database.  Entries are
-   created by <xref linkend="sql-analyze"/>
+   created by <link linkend="sql-analyze"><command>ANALYZE</command></link>
    and subsequently used by the query planner.  Note that all the
    statistical data is inherently approximate, even assuming that it
    is up-to-date.
@@ -7223,7 +7223,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    The catalog <structname>pg_statistic_ext</structname>
    holds definitions of extended planner statistics.
    Each row in this catalog corresponds to a <firstterm>statistics object</firstterm>
-   created with <xref linkend="sql-createstatistics"/>.
+   created with <link linkend="sql-createstatistics"><command>CREATE STATISTICS</command></link>.
   </para>
 
   <table>
@@ -7296,7 +7296,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        <structfield>stxstattarget</structfield> controls the level of detail
        of statistics accumulated for this statistics object by
-       <xref linkend="sql-analyze"/>.
+       <link linkend="sql-analyze"><command>ANALYZE</command></link>.
        A zero value indicates that no statistics should be collected.
        A negative value says to use the maximum of the statistics targets of
        the referenced columns, if set, or the system default statistics target.
@@ -7337,9 +7337,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The <structname>pg_statistic_ext</structname> entry is filled in
-   completely during <xref linkend="sql-createstatistics"/>, but the actual
+   completely during <link linkend="sql-createstatistics"><command>CREATE STATISTICS</command></link>, but the actual
    statistical values are not computed then.
-   Subsequent <xref linkend="sql-analyze"/> commands compute the desired values
+   Subsequent <link linkend="sql-analyze"><command>ANALYZE</command></link> commands compute the desired values
    and populate an entry in the
    <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
    catalog.
@@ -7358,7 +7358,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    holds data for extended planner statistics defined in
    <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>.
    Each row in this catalog corresponds to a <firstterm>statistics object</firstterm>
-   created with <xref linkend="sql-createstatistics"/>.
+   created with <link linkend="sql-createstatistics"><command>CREATE STATISTICS</command></link>.
   </para>
 
   <para>
@@ -7591,7 +7591,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    This catalog only contains tables known to the subscription after running
-   either <xref linkend="sql-createsubscription"/> or
+   either <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link> or
    <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... REFRESH
    PUBLICATION</command></link>.
   </para>
@@ -8569,9 +8569,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    The catalog <structname>pg_type</structname> stores information about data
    types.  Base types and enum types (scalar types) are created with
-   <xref linkend="sql-createtype"/>, and
+   <link linkend="sql-createtype"><command>CREATE TYPE</command></link>, and
    domains with
-   <xref linkend="sql-createdomain"/>.
+   <link linkend="sql-createdomain"><command>CREATE DOMAIN</command></link>.
    A composite type is automatically created for each table in the database, to
    represent the row structure of the table.  It is also possible to create
    composite types with <command>CREATE TYPE AS</command>.
@@ -9791,7 +9791,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    <itemizedlist>
     <listitem>
      <para>
-      via the <xref linkend="sql-declare"/>
+      via the <link linkend="sql-declare"><command>DECLARE</command></link>
       statement in SQL
      </para>
     </listitem>
@@ -10917,7 +10917,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    <structname>pg_prepared_statements</structname> contains one row
    for each prepared statement. Rows are added to the view when a new
    prepared statement is created and removed when a prepared statement
-   is released (for example, via the <xref linkend="sql-deallocate"/> command).
+   is released (for example, via the <link linkend="sql-deallocate"><command>DEALLOCATE</command></link> command).
   </para>
 
   <table>
@@ -10951,7 +10951,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <para>
        The query string submitted by the client to create this
        prepared statement. For prepared statements created via SQL,
-       this is the <xref linkend="sql-prepare"/> statement submitted by
+       this is the <command>PREPARE</command> statement submitted by
        the client. For prepared statements created via the
        frontend/backend protocol, this is the text of the prepared
        statement itself.
@@ -10985,7 +10985,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       </para>
       <para>
        <literal>true</literal> if the prepared statement was created
-       via the <xref linkend="sql-prepare"/> SQL command;
+       via the <command>PREPARE</command> SQL command;
        <literal>false</literal> if the statement was prepared via the
        frontend/backend protocol
       </para></entry>
@@ -11967,10 +11967,10 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   <para>
    The view <structname>pg_settings</structname> provides access to
    run-time parameters of the server.  It is essentially an alternative
-   interface to the <xref linkend="sql-show"/>
-   and <xref linkend="sql-set"/> commands.
+   interface to the <link linkend="sql-show"><command>SHOW</command></link>
+   and <link linkend="sql-set"><command>SET</command></link> commands.
    It also provides access to some facts about each parameter that are
-   not directly available from <command>SHOW</command>, such as minimum and
+   not directly available from <link linkend="sql-show"><command>SHOW</command></link>, such as minimum and
    maximum values.
   </para>
 
@@ -12116,7 +12116,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>reset_val</structfield> <type>text</type>
       </para>
       <para>
-       Value that <xref linkend="sql-reset"/> would reset the parameter to
+       Value that <link linkend="sql-reset"><command>RESET</command></link> would reset the parameter to
        in the current session
       </para></entry>
      </row>
@@ -12249,7 +12249,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     <listitem>
      <para>
       These settings can be set from <filename>postgresql.conf</filename>,
-      or within a session via the <xref linkend="sql-set"/> command; but only superusers
+      or within a session via the <command>SET</command> command; but only superusers
       can change them via <command>SET</command>.  Changes in
       <filename>postgresql.conf</filename> will affect existing sessions
       only if no session-local value has been established with <command>SET</command>.
@@ -12262,7 +12262,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     <listitem>
      <para>
       These settings can be set from <filename>postgresql.conf</filename>,
-      or within a session via the <xref linkend="sql-set"/> command.  Any user is
+      or within a session via the <command>SET</command> command.  Any user is
       allowed to change their session-local value.  Changes in
       <filename>postgresql.conf</filename> will affect existing sessions
       only if no session-local value has been established with <command>SET</command>.
@@ -12278,9 +12278,9 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    The <structname>pg_settings</structname> view cannot be inserted into or
-   deleted from, but it can be updated.  An <xref linkend="sql-update"/> applied
+   deleted from, but it can be updated.  An <command>UPDATE</command> applied
    to a row of <structname>pg_settings</structname> is equivalent to executing
-   the <xref linkend="sql-set"/> command on that named
+   the <command>SET</command> command on that named
    parameter. The change only affects the value used by the current
    session. If an <command>UPDATE</command> is issued within a transaction
    that is later aborted, the effects of the <command>UPDATE</command> command
@@ -12622,7 +12622,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        If greater than zero, the estimated number of distinct values in the
        column.  If less than zero, the negative of the number of distinct
        values divided by the number of rows.  (The negated form is used when
-       <xref linkend="sql-analyze"/> believes that the number of distinct values is
+       <command>ANALYZE</command> believes that the number of distinct values is
        likely to increase as the table grows; the positive form is used when
        the column seems to have a fixed number of possible values.)  For
        example, -1 indicates a unique column in which the number of distinct
@@ -12846,7 +12846,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        than zero, the estimated number of distinct values in the combination.
        If less than zero, the negative of the number of distinct values divided
        by the number of rows.
-       (The negated form is used when <xref linkend="sql-analyze"/> believes that
+       (The negated form is used when <command>ANALYZE</command> believes that
        the number of distinct values is likely to increase as the table grows;
        the positive form is used when the column seems to have a fixed number
        of possible values.)  For example, -1 indicates a unique combination of

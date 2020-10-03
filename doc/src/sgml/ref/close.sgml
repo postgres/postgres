@@ -84,7 +84,7 @@ CLOSE { <replaceable class="parameter">name</replaceable> | ALL }
    <productname>PostgreSQL</productname> does not have an explicit
    <command>OPEN</command> cursor statement; a cursor is considered
    open when it is declared.  Use the
-   <xref linkend="sql-declare"/>
+   <link linkend="sql-declare"><command>DECLARE</command></link>
    statement to declare a cursor.
   </para>
 

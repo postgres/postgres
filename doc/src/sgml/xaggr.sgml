@@ -490,7 +490,7 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
    Also, because the final function performs the sort, it is not possible
    to continue adding input rows by executing the transition function again
    later.  This means the final function is not <literal>READ_ONLY</literal>;
-   it must be declared in <xref linkend="sql-createaggregate"/>
+   it must be declared in <link linkend="sql-createaggregate"><command>CREATE AGGREGATE</command></link>
    as <literal>READ_WRITE</literal>, or as <literal>SHAREABLE</literal> if
    it's possible for additional final-function calls to make use of the
    already-sorted state.

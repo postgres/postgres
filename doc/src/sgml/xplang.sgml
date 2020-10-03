@@ -103,7 +103,7 @@ CREATE FUNCTION <replaceable>handler_function_name</replaceable>()
      <para>
       Optionally, the language handler can provide an <quote>inline</quote>
       handler function that executes anonymous code blocks
-      (<xref linkend="sql-do"/> commands)
+      (<link linkend="sql-do"><command>DO</command></link> commands)
       written in this language.  If an inline handler function
       is provided by the language, declare it with a command like
 <synopsis>

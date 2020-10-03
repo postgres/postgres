@@ -779,8 +779,8 @@ Indexes:
   </para>
 
   <para>
-   Setting a value for <literal>parallel_workers</literal> via <xref
-   linkend="sql-altertable"/> directly controls how many parallel
+   Setting a value for <literal>parallel_workers</literal> via <link
+   linkend="sql-altertable"><command>ALTER TABLE</command></link> directly controls how many parallel
    worker processes will be requested by a <command>CREATE
    INDEX</command> against the table.  This bypasses the cost model
    completely, and prevents <varname>maintenance_work_mem</varname>
@@ -808,7 +808,7 @@ Indexes:
   </para>
 
   <para>
-   Use <xref linkend="sql-dropindex"/>
+   Use <link linkend="sql-dropindex"><command>DROP INDEX</command></link>
    to remove an index.
   </para>
 

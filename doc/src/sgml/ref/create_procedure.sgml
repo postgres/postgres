@@ -285,7 +285,7 @@ CREATE [ OR REPLACE ] PROCEDURE
        the SQL procedure. The string <replaceable
        class="parameter">obj_file</replaceable> is the name of the shared
        library file containing the compiled C procedure, and is interpreted
-       as for the <xref linkend="sql-load"/> command.  The string
+       as for the <link linkend="sql-load"><command>LOAD</command></link> command.  The string
        <replaceable class="parameter">link_symbol</replaceable> is the
        procedure's link symbol, that is, the name of the procedure in the C
        language source code.  If the link symbol is omitted, it is assumed

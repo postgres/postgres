@@ -37,8 +37,8 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
   <para>
    This command begins a new transaction block. If the isolation level,
    read/write mode, or deferrable mode is specified, the new transaction has those
-   characteristics, as if <xref linkend="sql-set-transaction"/> was executed. This is the same
-   as the <xref linkend="sql-begin"/> command.
+   characteristics, as if <link linkend="sql-set-transaction"><command>SET TRANSACTION</command></link> was executed. This is the same
+   as the <link linkend="sql-begin"><command>BEGIN</command></link> command.
   </para>
  </refsect1>
 
