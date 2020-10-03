@@ -156,7 +156,10 @@ PostgreSQL documentation
        <para>
         Connect to database <replaceable
         class="parameter">dbname</replaceable> and restore directly
-        into the database.
+        into the database.  The <replaceable>dbname</replaceable> can
+        be a <link linkend="libpq-connstring">connection string</link>.
+        If so, connection string parameters will override any conflicting
+        command line options.
        </para>
       </listitem>
      </varlistentry>
