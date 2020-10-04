@@ -155,6 +155,7 @@ extern bool ParseConfigDirectory(const char *includedir,
 								 ConfigVariable **head_p,
 								 ConfigVariable **tail_p);
 extern void FreeConfigVariables(ConfigVariable *list);
+extern char *DeescapeQuotedString(const char *s);
 
 /*
  * The possible values of an enum variable are specified by an array of

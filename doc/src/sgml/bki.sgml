@@ -752,8 +752,8 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
    next token that syntactically cannot belong to the preceding
    command starts a new one.  (Usually you would put a new command on
    a new line, for clarity.)  Tokens can be certain key words, special
-   characters (parentheses, commas, etc.), numbers, or double-quoted
-   strings.  Everything is case sensitive.
+   characters (parentheses, commas, etc.), identifiers, numbers, or
+   single-quoted strings.  Everything is case sensitive.
   </para>
 
   <para>
@@ -876,7 +876,9 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
      <para>
       NULL values can be specified using the special key word
       <literal>_null_</literal>.  Values that do not look like
-      identifiers or digit strings must be double quoted.
+      identifiers or digit strings must be single-quoted.
+      (To include a single quote in a value, write it twice.
+      Escape-string-style backslash escapes are allowed in the string, too.)
      </para>
     </listitem>
    </varlistentry>
@@ -1046,7 +1048,7 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
 <programlisting>
 create test_table 420 (oid = oid, cola = int4, colb = text)
 open test_table
-insert ( 421 1 "value1" )
+insert ( 421 1 'value 1' )
 insert ( 422 2 _null_ )
 close test_table
 </programlisting>

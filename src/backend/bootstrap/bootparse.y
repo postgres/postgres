@@ -18,16 +18,10 @@
 
 #include <unistd.h>
 
-#include "access/attnum.h"
-#include "access/htup.h"
-#include "access/itup.h"
-#include "access/tupdesc.h"
 #include "bootstrap/bootstrap.h"
-#include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am.h"
-#include "catalog/pg_attribute.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_namespace.h"
@@ -36,20 +30,7 @@
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
-#include "rewrite/prs2lock.h"
-#include "storage/block.h"
-#include "storage/fd.h"
-#include "storage/ipc.h"
-#include "storage/itemptr.h"
-#include "storage/off.h"
-#include "storage/smgr.h"
-#include "tcop/dest.h"
 #include "utils/memutils.h"
-#include "utils/rel.h"
 
 
 /*
