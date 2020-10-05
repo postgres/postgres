@@ -303,7 +303,7 @@ SELECT * FROM itest6;
  102 | 
 (3 rows)
 
-SELECT table_name, column_name, is_identity, identity_generation FROM information_schema.columns WHERE table_name = 'itest6';
+SELECT table_name, column_name, is_identity, identity_generation FROM information_schema.columns WHERE table_name = 'itest6' ORDER BY 1, 2;
  table_name | column_name | is_identity | identity_generation 
 ------------+-------------+-------------+---------------------
  itest6     | a           | YES         | BY DEFAULT

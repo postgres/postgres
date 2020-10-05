@@ -183,7 +183,7 @@ INSERT INTO itest6 DEFAULT VALUES;
 INSERT INTO itest6 DEFAULT VALUES;
 SELECT * FROM itest6;
 
-SELECT table_name, column_name, is_identity, identity_generation FROM information_schema.columns WHERE table_name = 'itest6';
+SELECT table_name, column_name, is_identity, identity_generation FROM information_schema.columns WHERE table_name = 'itest6' ORDER BY 1, 2;
 
 ALTER TABLE itest6 ALTER COLUMN b SET INCREMENT BY 2;  -- fail, not identity
 
