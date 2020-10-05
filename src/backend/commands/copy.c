@@ -1159,6 +1159,8 @@ ProcessCopyOptions(ParseState *pstate,
 				   List *options)
 {
 	bool		format_specified = false;
+	bool		freeze_specified = false;
+	bool		header_specified = false;
 	ListCell   *option;
 
 	/* Support external use for option sanity checking */
@@ -1198,11 +1200,12 @@ ProcessCopyOptions(ParseState *pstate,
 		}
 		else if (strcmp(defel->defname, "freeze") == 0)
 		{
-			if (cstate->freeze)
+			if (freeze_specified)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
+			freeze_specified = true;
 			cstate->freeze = defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "delimiter") == 0)
@@ -1225,11 +1228,12 @@ ProcessCopyOptions(ParseState *pstate,
 		}
 		else if (strcmp(defel->defname, "header") == 0)
 		{
-			if (cstate->header_line)
+			if (header_specified)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
+			header_specified = true;
 			cstate->header_line = defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "quote") == 0)
