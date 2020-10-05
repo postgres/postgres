@@ -1730,29 +1730,25 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 			*err_msg = "clientcert can only be configured for \"hostssl\" rows";
 			return false;
 		}
-		if (strcmp(val, "1") == 0
-			|| strcmp(val, "verify-ca") == 0)
-		{
-			hbaline->clientcert = clientCertCA;
-		}
-		else if (strcmp(val, "verify-full") == 0)
+
+		if (strcmp(val, "verify-full") == 0)
 		{
 			hbaline->clientcert = clientCertFull;
 		}
-		else if (strcmp(val, "0") == 0
-				 || strcmp(val, "no-verify") == 0)
+		else if (strcmp(val, "verify-ca") == 0)
 		{
 			if (hbaline->auth_method == uaCert)
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("clientcert cannot be set to \"no-verify\" when using \"cert\" authentication"),
+						 errmsg("clientcert only accepts \"verify-full\" when using \"cert\" authentication"),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
-				*err_msg = "clientcert cannot be set to \"no-verify\" when using \"cert\" authentication";
+				*err_msg = "clientcert can only be set to \"verify-full\" when using \"cert\" authentication";
 				return false;
 			}
-			hbaline->clientcert = clientCertOff;
+
+			hbaline->clientcert = clientCertCA;
 		}
 		else
 		{
