@@ -179,6 +179,24 @@ SELECT clean_emp();
 </screen>
     </para>
 
+    <para>
+     You can also write this as a procedure, thus avoiding the issue of the
+     return type.  For example:
+<screen>
+CREATE PROCEDURE clean_emp() AS '
+    DELETE FROM emp
+        WHERE salary &lt; 0;
+' LANGUAGE SQL;
+
+CALL clean_emp();
+</screen>
+     In simple cases like this, the difference between a function returning
+     <type>void</type> and a procedure is mostly stylistic.  However,
+     procedures offer additional functionality such as transaction control
+     that is not available in functions.  Also, procedures are SQL standard
+     whereas returning <type>void</type> is a PostgreSQL extension.
+    </para>
+
     <note>
      <para>
       The entire body of a SQL function is parsed before any of it is
@@ -713,6 +731,47 @@ DROP FUNCTION sum_n_product (int, int);
      argument list) and an output parameter (part of the result record type).
      <literal>VARIADIC</literal> parameters are input parameters, but are treated
      specially as described next.
+    </para>
+   </sect2>
+
+   <sect2 id="xfunc-output-parameters-proc">
+    <title><acronym>SQL</acronym> Procedures with Output Parameters</title>
+
+    <indexterm>
+     <primary>procedures</primary>
+     <secondary>output parameter</secondary>
+    </indexterm>
+
+    <para>
+     Output parameters are also supported in procedures, but they work a bit
+     differently from functions.  Notably, output parameters
+     <emphasis>are</emphasis> included in the signature of a procedure and
+     must be specified in the procedure call.
+    </para>
+
+    <para>
+     For example, the bank account debiting routine from earlier could be
+     written like this:
+<programlisting>
+CREATE PROCEDURE tp1 (accountno integer, debit numeric, OUT new_balance numeric) AS $$
+    UPDATE bank
+        SET balance = balance - debit
+        WHERE accountno = tp1.accountno
+    RETURNING balance;
+$$ LANGUAGE SQL;
+</programlisting>
+     To call this procedure, it is irrelevant what is passed as the argument
+     of the <literal>OUT</literal> parameter, so you could pass
+     <literal>NULL</literal>:
+<programlisting>
+CALL tp1(17, 100.0, NULL);
+</programlisting>
+    </para>
+
+    <para>
+     Procedures with output parameters are more useful in PL/pgSQL, where the
+     output parameters can be assigned to variables.  See <xref
+     linkend="plpgsql-statements-calling-procedure"/> for details.
     </para>
    </sect2>
 

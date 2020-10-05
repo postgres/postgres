@@ -146,6 +146,19 @@ AS $$
 SELECT a = b;
 $$;
 CALL ptest7(least('a', 'b'), 'a');
+-- OUT parameters
+CREATE PROCEDURE ptest9(OUT a int)
+LANGUAGE SQL
+AS $$
+INSERT INTO cp_test VALUES (1, 'a');
+SELECT 1;
+$$;
+CALL ptest9(NULL);
+ a 
+---
+ 1
+(1 row)
+
 -- various error cases
 CALL version();  -- error: not a procedure
 ERROR:  version() is not a procedure
@@ -165,9 +178,6 @@ CREATE PROCEDURE ptestx() LANGUAGE SQL STRICT AS $$ INSERT INTO cp_test VALUES (
 ERROR:  invalid attribute in procedure definition
 LINE 1: CREATE PROCEDURE ptestx() LANGUAGE SQL STRICT AS $$ INSERT I...
                                                ^
-CREATE PROCEDURE ptestx(OUT a int) LANGUAGE SQL AS $$ INSERT INTO cp_test VALUES (1, 'a') $$;
-ERROR:  procedures cannot have OUT arguments
-HINT:  INOUT arguments are permitted.
 ALTER PROCEDURE ptest1(text) STRICT;
 ERROR:  invalid attribute in procedure definition
 LINE 1: ALTER PROCEDURE ptest1(text) STRICT;

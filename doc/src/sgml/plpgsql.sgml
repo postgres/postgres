@@ -479,6 +479,14 @@ $$ LANGUAGE plpgsql;
      </para>
 
      <para>
+      To call a function with <literal>OUT</literal> parameters, omit the
+      output parameter in the function call:
+<programlisting>
+SELECT sales_tax(100.00);
+</programlisting>
+     </para>
+
+     <para>
       Output parameters are most useful when returning multiple values.
       A trivial example is:
 
@@ -489,12 +497,42 @@ BEGIN
     prod := x * y;
 END;
 $$ LANGUAGE plpgsql;
+
+SELECT * FROM sum_n_product(2, 4);
+ sum | prod
+-----+------
+   6 |    8
 </programlisting>
 
       As discussed in <xref linkend="xfunc-output-parameters"/>, this
       effectively creates an anonymous record type for the function's
       results.  If a <literal>RETURNS</literal> clause is given, it must say
       <literal>RETURNS record</literal>.
+     </para>
+
+     <para>
+      This also works with procedures, for example:
+
+<programlisting>
+CREATE PROCEDURE sum_n_product(x int, y int, OUT sum int, OUT prod int) AS $$
+BEGIN
+    sum := x + y;
+    prod := x * y;
+END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+
+      In a call to a procedure, all the parameters must be specified.  For
+      output parameters, <literal>NULL</literal> may be specified.
+<programlisting>
+CALL sum_n_product(2, 4, NULL, NULL);
+ sum | prod
+-----+------
+   6 |    8
+</programlisting>
+      Output parameters in procedures become more interesting in nested calls,
+      where they can be assigned to variables.  See <xref
+      linkend="plpgsql-statements-calling-procedure"/> for details.
      </para>
 
      <para>

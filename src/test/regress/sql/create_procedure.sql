@@ -112,6 +112,18 @@ $$;
 CALL ptest7(least('a', 'b'), 'a');
 
 
+-- OUT parameters
+
+CREATE PROCEDURE ptest9(OUT a int)
+LANGUAGE SQL
+AS $$
+INSERT INTO cp_test VALUES (1, 'a');
+SELECT 1;
+$$;
+
+CALL ptest9(NULL);
+
+
 -- various error cases
 
 CALL version();  -- error: not a procedure
@@ -119,7 +131,6 @@ CALL sum(1);  -- error: not a procedure
 
 CREATE PROCEDURE ptestx() LANGUAGE SQL WINDOW AS $$ INSERT INTO cp_test VALUES (1, 'a') $$;
 CREATE PROCEDURE ptestx() LANGUAGE SQL STRICT AS $$ INSERT INTO cp_test VALUES (1, 'a') $$;
-CREATE PROCEDURE ptestx(OUT a int) LANGUAGE SQL AS $$ INSERT INTO cp_test VALUES (1, 'a') $$;
 
 ALTER PROCEDURE ptest1(text) STRICT;
 ALTER FUNCTION ptest1(text) VOLATILE;  -- error: not a function

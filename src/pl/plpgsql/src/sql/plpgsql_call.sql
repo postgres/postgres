@@ -237,6 +237,27 @@ END
 $$;
 
 
+-- OUT parameters
+
+CREATE PROCEDURE test_proc9(IN a int, OUT b int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE NOTICE 'a: %, b: %', a, b;
+  b := a * 2;
+END;
+$$;
+
+DO $$
+DECLARE _a int; _b int;
+BEGIN
+  _a := 10; _b := 30;
+  CALL test_proc9(_a, _b);
+  RAISE NOTICE '_a: %, _b: %', _a, _b;
+END
+$$;
+
+
 -- transition variable assignment
 
 TRUNCATE test1;

@@ -54,6 +54,25 @@ $$;
 CALL test_proc6(2, 3, 4);
 
 
+-- OUT parameters
+
+CREATE PROCEDURE test_proc9(IN a int, OUT b int)
+LANGUAGE plpythonu
+AS $$
+plpy.notice("a: %s, b: %s" % (a, b))
+return (a * 2,)
+$$;
+
+DO $$
+DECLARE _a int; _b int;
+BEGIN
+  _a := 10; _b := 30;
+  CALL test_proc9(_a, _b);
+  RAISE NOTICE '_a: %, _b: %', _a, _b;
+END
+$$;
+
+
 DROP PROCEDURE test_proc1;
 DROP PROCEDURE test_proc2;
 DROP PROCEDURE test_proc3;

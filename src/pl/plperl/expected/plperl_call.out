@@ -48,6 +48,24 @@ CALL test_proc6(2, 3, 4);
  6 | 8
 (1 row)
 
+-- OUT parameters
+CREATE PROCEDURE test_proc9(IN a int, OUT b int)
+LANGUAGE plperl
+AS $$
+my ($a, $b) = @_;
+elog(NOTICE, "a: $a, b: $b");
+return { b => $a * 2 };
+$$;
+DO $$
+DECLARE _a int; _b int;
+BEGIN
+  _a := 10; _b := 30;
+  CALL test_proc9(_a, _b);
+  RAISE NOTICE '_a: %, _b: %', _a, _b;
+END
+$$;
+NOTICE:  a: 10, b: 
+NOTICE:  _a: 10, _b: 20
 DROP PROCEDURE test_proc1;
 DROP PROCEDURE test_proc2;
 DROP PROCEDURE test_proc3;

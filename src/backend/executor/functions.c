@@ -259,7 +259,8 @@ prepare_sql_fn_parse_info(HeapTuple procedureTuple,
 		if (isNull)
 			proargmodes = PointerGetDatum(NULL);	/* just to be sure */
 
-		n_arg_names = get_func_input_arg_names(proargnames, proargmodes,
+		n_arg_names = get_func_input_arg_names(procedureStruct->prokind,
+											   proargnames, proargmodes,
 											   &pinfo->argnames);
 
 		/* Paranoia: ignore the result if too few array entries */

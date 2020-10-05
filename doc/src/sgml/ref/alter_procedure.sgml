@@ -81,8 +81,9 @@ ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="para
 
     <listitem>
      <para>
-      The mode of an argument: <literal>IN</literal>  or <literal>VARIADIC</literal>.
-      If omitted, the default is <literal>IN</literal>.
+      The mode of an argument: <literal>IN</literal>, <literal>OUT</literal>,
+      <literal>INOUT</literal>, or <literal>VARIADIC</literal>.  If omitted,
+      the default is <literal>IN</literal>.
      </para>
     </listitem>
    </varlistentry>

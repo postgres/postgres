@@ -249,6 +249,9 @@ ProcedureCreate(const char *procedureName,
 						elog(ERROR, "variadic parameter must be last");
 					break;
 				case PROARGMODE_OUT:
+					if (OidIsValid(variadicType) && prokind == PROKIND_PROCEDURE)
+						elog(ERROR, "variadic parameter must be last");
+					break;
 				case PROARGMODE_TABLE:
 					/* okay */
 					break;
@@ -462,10 +465,12 @@ ProcedureCreate(const char *procedureName,
 			if (isnull)
 				proargmodes = PointerGetDatum(NULL);	/* just to be sure */
 
-			n_old_arg_names = get_func_input_arg_names(proargnames,
+			n_old_arg_names = get_func_input_arg_names(prokind,
+													   proargnames,
 													   proargmodes,
 													   &old_arg_names);
-			n_new_arg_names = get_func_input_arg_names(parameterNames,
+			n_new_arg_names = get_func_input_arg_names(prokind,
+													   parameterNames,
 													   parameterModes,
 													   &new_arg_names);
 			for (j = 0; j < n_old_arg_names; j++)
