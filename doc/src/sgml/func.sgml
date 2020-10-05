@@ -8960,13 +8960,13 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <entry role="func_table_entry"><para role="func_signature"><indexterm>
           <primary>make_interval</primary>
          </indexterm>
-         <function>make_interval</function> ( <optional> <parameter>year</parameter> <type>int</type>
-         <optional>, <parameter>month</parameter> <type>int</type>
-         <optional>, <parameter>week</parameter> <type>int</type>
-         <optional>, <parameter>day</parameter> <type>int</type>
-         <optional>, <parameter>hour</parameter> <type>int</type>
-         <optional>, <parameter>min</parameter> <type>int</type>
-         <optional>, <parameter>sec</parameter> <type>double precision</type>
+         <function>make_interval</function> ( <optional> <parameter>years</parameter> <type>int</type>
+         <optional>, <parameter>months</parameter> <type>int</type>
+         <optional>, <parameter>weeks</parameter> <type>int</type>
+         <optional>, <parameter>days</parameter> <type>int</type>
+         <optional>, <parameter>hours</parameter> <type>int</type>
+         <optional>, <parameter>mins</parameter> <type>int</type>
+         <optional>, <parameter>secs</parameter> <type>double precision</type>
          </optional></optional></optional></optional></optional></optional></optional> )
          <returnvalue>interval</returnvalue>
         </para>
@@ -22416,7 +22416,7 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
         <indexterm>
          <primary>pg_options_to_table</primary>
         </indexterm>
-        <function>pg_options_to_table</function> ( <parameter>reloptions</parameter> <type>text[]</type> )
+        <function>pg_options_to_table</function> ( <parameter>options_array</parameter> <type>text[]</type> )
         <returnvalue>setof record</returnvalue>
         ( <parameter>option_name</parameter> <type>text</type>,
         <parameter>option_value</parameter> <type>text</type> )
