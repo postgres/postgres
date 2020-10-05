@@ -630,12 +630,6 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	expr = canonicalize_ec_expression(expr, opcintype, collation);
 
 	/*
-	 * Get the precise set of nullable relids appearing in the expression.
-	 */
-	expr_relids = pull_varnos((Node *) expr);
-	nullable_relids = bms_intersect(nullable_relids, expr_relids);
-
-	/*
 	 * Scan through the existing EquivalenceClasses for a match
 	 */
 	foreach(lc1, root->eq_classes)
@@ -710,6 +704,12 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 
 	if (newec->ec_has_volatile && sortref == 0) /* should not happen */
 		elog(ERROR, "volatile EquivalenceClass has no sortref");
+
+	/*
+	 * Get the precise set of nullable relids appearing in the expression.
+	 */
+	expr_relids = pull_varnos((Node *) expr);
+	nullable_relids = bms_intersect(nullable_relids, expr_relids);
 
 	newem = add_eq_member(newec, copyObject(expr), expr_relids,
 						  nullable_relids, false, opcintype);
