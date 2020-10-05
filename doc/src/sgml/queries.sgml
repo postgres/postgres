@@ -762,7 +762,8 @@ SELECT * FROM vw_getfoo;
      In some cases it is useful to define table functions that can
      return different column sets depending on how they are invoked.
      To support this, the table function can be declared as returning
-     the pseudo-type <type>record</type>.  When such a function is used in
+     the pseudo-type <type>record</type> with no <literal>OUT</literal>
+     parameters.  When such a function is used in
      a query, the expected row structure must be specified in the
      query itself, so that the system can know how to parse and plan
      the query.  This syntax looks like:
@@ -802,6 +803,33 @@ SELECT *
      The actual column set must be specified in the calling query so
      that the parser knows, for example, what <literal>*</literal> should
      expand to.
+    </para>
+
+    <para>
+     This example uses <literal>ROWS FROM</literal>:
+<programlisting>
+SELECT *
+FROM ROWS FROM
+    (
+        json_to_recordset('[{"a":40,"b":"foo"},{"a":"100","b":"bar"}]')
+            AS (a INTEGER, b TEXT),
+        generate_series(1, 3)
+    ) AS x (p, q, s)
+ORDER BY p;
+
+  p  |  q  | s
+-----+-----+---
+  40 | foo | 1
+ 100 | bar | 2
+     |     | 3
+</programlisting>
+     It joins two functions into a single <literal>FROM</literal>
+     target.  <function>json_to_recordset()</function> is instructed
+     to return two columns, the first <type>integer</type>
+     and the second <type>text</type>.  The result of
+     <function>generate_series()</function> is used directly.
+     The <literal>ORDER BY</literal> clause sorts the column values
+     as integers.
     </para>
    </sect3>
 
