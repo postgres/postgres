@@ -2042,13 +2042,10 @@ host ... radius radiusservers="server1,server2" radiussecrets="""secret one"",""
    </para>
 
    <para>
-    In a <filename>pg_hba.conf</filename> record specifying certificate
-    authentication, the authentication option <literal>clientcert</literal> is
-    assumed to be <literal>verify-ca</literal> or <literal>verify-full</literal>,
-    and it cannot be turned off since a client certificate is necessary for this
-    method. What the <literal>cert</literal> method adds to the basic
-    <literal>clientcert</literal> certificate validity test is a check that the
-    <literal>cn</literal> attribute matches the database user name.
+    It is redundant to use the <literal>clientcert</literal> option with
+    <literal>cert</literal> authentication because <literal>cert</literal>
+    authentication is effectively <literal>trust</literal> authentication
+    with <literal>clientcert=verify-full</literal>.
    </para>
   </sect1>
 
