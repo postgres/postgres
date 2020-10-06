@@ -268,7 +268,7 @@ check_cluster_versions(void)
 	 * upgrades
 	 */
 
-	if (GET_MAJOR_VERSION(old_cluster.major_version) < 804)
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
 		pg_fatal("This utility can only upgrade from PostgreSQL version 8.4 and later.\n");
 
 	/* Only current PG version is supported as a target */
@@ -305,7 +305,7 @@ check_cluster_compatibility(bool live_check)
 	check_control_data(&old_cluster.controldata, &new_cluster.controldata);
 
 	/* We read the real port number for PG >= 9.1 */
-	if (live_check && GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
+	if (live_check && GET_MAJOR_VERSION(old_cluster.major_version) <= 900 &&
 		old_cluster.port == DEF_PGUPORT)
 		pg_fatal("When checking a pre-PG 9.1 live old server, "
 				 "you must specify the old server's port number.\n");
@@ -513,7 +513,7 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 	fprintf(script, "\"%s/vacuumdb\" %s--all --analyze-in-stages\n",
 			new_cluster.bindir, user_specification.data);
 	/* Did we copy the free space files? */
-	if (GET_MAJOR_VERSION(old_cluster.major_version) < 804)
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
 		fprintf(script, "\"%s/vacuumdb\" %s--all\n", new_cluster.bindir,
 				user_specification.data);
 
