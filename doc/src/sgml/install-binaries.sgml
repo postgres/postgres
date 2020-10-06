@@ -1,0 +1,24 @@
+<!-- doc/src/sgml/install-binaries.sgml -->
+<chapter id="install-binaries">
+ <title>Installation from Binaries</title>
+
+ <indexterm>
+  <primary>installation</primary>
+  <secondary>binaries</secondary>
+ </indexterm>
+
+ <para>
+  <productname>PostgreSQL</productname> is available in the form of binary
+  packages for most common operating systems today. When available, this is
+  the recommended way to install PostgreSQL for users of the system. Building
+  from source (see <xref linkend="installation" />) is only recommended for
+  people developing <productname>PostgreSQL</productname> or extensions.
+ </para>
+
+ <para>
+  For an updated list of platforms providing binary packages, please visit
+  the download section on the <productname>PostgreSQL</productname> website at
+  <ulink url="https://www.postgresql.org/download/"></ulink> and follow the
+  instructions for the specific platform.
+ </para>
+</chapter>

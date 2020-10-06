@@ -21,7 +21,7 @@ documentation.  See standalone-profile.xsl for details.
   <productname>PostgreSQL</productname> using the source code
   distribution.  If you are installing a pre-packaged distribution,
   such as an RPM or Debian package, ignore this chapter
-  and read the packager's instructions instead.
+  and see <xref linkend="install-binaries" /> instead.
  </para>
 
  <para>
