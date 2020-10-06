@@ -530,10 +530,10 @@ PostgreSQL documentation
        </para>
 
        <para>
-        As well as tables, this option can be used to dump views, materialized views,
-        foreign tables, and sequence definitions.  However it will not dump the contents
-        of views or materialized views, and the contents of foreign tables will only be
-        dumped if the corresponding foreign server is specified with
+        As well as tables, this option can be used to dump the definition of matching
+        views, materialized views, foreign tables, and sequences.  It will not dump the
+        contents of views or materialized views, and the contents of foreign tables will
+        only be dumped if the corresponding foreign server is specified with
         <option>--include-foreign-data</option>.
        </para>
 
