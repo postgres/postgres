@@ -188,16 +188,12 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 			/* transfer primary file */
 			transfer_relfile(pageConverter, &maps[mapnum], "");
 
-			/* fsm/vm files added in PG 8.4 */
-			if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
-			{
-				/*
-				 * Copy/link any fsm and vm files, if they exist
-				 */
-				transfer_relfile(pageConverter, &maps[mapnum], "_fsm");
-				if (vm_crashsafe_match)
-					transfer_relfile(pageConverter, &maps[mapnum], "_vm");
-			}
+			/*
+			 * Copy/link any fsm and vm files, if they exist
+			 */
+			transfer_relfile(pageConverter, &maps[mapnum], "_fsm");
+			if (vm_crashsafe_match)
+				transfer_relfile(pageConverter, &maps[mapnum], "_vm");
 		}
 	}
 }
