@@ -517,9 +517,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Dump only tables with names matching
-        <replaceable class="parameter">pattern</replaceable>.
-        For this purpose, <quote>table</quote> includes views, materialized views,
-        sequences, and foreign tables.  Multiple tables
+        <replaceable class="parameter">pattern</replaceable>. Multiple tables
         can be selected by writing multiple <option>-t</option> switches.  The
         <replaceable class="parameter">pattern</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
@@ -529,6 +527,14 @@ PostgreSQL documentation
         in the pattern.  When using wildcards, be careful to quote the pattern
         if needed to prevent the shell from expanding the wildcards;  see
         <xref linkend="pg-dump-examples"/> below.
+       </para>
+
+       <para>
+        As well as tables, this option can be used to dump views, materialized views,
+        foreign tables, and sequence definitions.  However it will not dump the contents
+        of views or materialized views, and the contents of foreign tables will only be
+        dumped if the corresponding foreign server is specified with
+        <option>--include-foreign-data</option>.
        </para>
 
        <para>
