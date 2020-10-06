@@ -10250,8 +10250,6 @@ xlog_redo(XLogReaderState *record)
 static void
 xlog_outrec(StringInfo buf, XLogReaderState *record)
 {
-	int			block_id;
-
 	appendStringInfo(buf, "prev %X/%X; xid %u",
 					 (uint32) (XLogRecGetPrev(record) >> 32),
 					 (uint32) XLogRecGetPrev(record),
