@@ -2380,12 +2380,23 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 	Relids		top_parent_relids = child_joinrel->top_parent_relids;
 	Relids		child_relids = child_joinrel->relids;
 	Bitmapset  *matching_ecs;
+	MemoryContext oldcontext;
 	int			i;
 
 	Assert(IS_JOIN_REL(child_joinrel) && IS_JOIN_REL(parent_joinrel));
 
 	/* We need consider only ECs that mention the parent joinrel */
 	matching_ecs = get_eclass_indexes_for_relids(root, top_parent_relids);
+
+	/*
+	 * If we're being called during GEQO join planning, we still have to
+	 * create any new EC members in the main planner context, to avoid having
+	 * a corrupt EC data structure after the GEQO context is reset.  This is
+	 * problematic since we'll leak memory across repeated GEQO cycles.  For
+	 * now, though, bloat is better than crash.  If it becomes a real issue
+	 * we'll have to do something to avoid generating duplicate EC members.
+	 */
+	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
 	i = -1;
 	while ((i = bms_next_member(matching_ecs, i)) >= 0)
@@ -2486,6 +2497,8 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 			}
 		}
 	}
+
+	MemoryContextSwitchTo(oldcontext);
 }
 
 
