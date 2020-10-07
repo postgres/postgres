@@ -229,6 +229,43 @@ logicalrep_rel_att_by_name(LogicalRepRelation *remoterel, const char *attname)
 }
 
 /*
+ * Report error with names of the missing local relation column(s), if any.
+ */
+static void
+logicalrep_report_missing_attrs(LogicalRepRelation *remoterel,
+								Bitmapset *missingatts)
+{
+	if (!bms_is_empty(missingatts))
+	{
+		StringInfoData missingattsbuf;
+		int			missingattcnt = 0;
+		int			i;
+
+		initStringInfo(&missingattsbuf);
+
+		while ((i = bms_first_member(missingatts)) >= 0)
+		{
+			missingattcnt++;
+			if (missingattcnt == 1)
+				appendStringInfo(&missingattsbuf, _("\"%s\""),
+								 remoterel->attnames[i]);
+			else
+				appendStringInfo(&missingattsbuf, _(", \"%s\""),
+								 remoterel->attnames[i]);
+		}
+
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg_plural("logical replication target relation \"%s.%s\" is missing replicated column: %s",
+							   "logical replication target relation \"%s.%s\" is missing replicated columns: %s",
+							   missingattcnt,
+							   remoterel->nspname,
+							   remoterel->relname,
+							   missingattsbuf.data)));
+	}
+}
+
+/*
  * Open the local relation associated with the remote one.
  *
  * Rebuilds the Relcache mapping if it was invalidated by local DDL.
@@ -286,11 +323,11 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 	if (!entry->localrelvalid)
 	{
 		Oid			relid;
-		int			found;
 		Bitmapset  *idkey;
 		TupleDesc	desc;
 		MemoryContext oldctx;
 		int			i;
+		Bitmapset  *missingatts;
 
 		/* Try to find and lock the relation by name. */
 		relid = RangeVarGetRelid(makeRangeVar(remoterel->nspname,
@@ -318,7 +355,8 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		entry->attrmap = make_attrmap(desc->natts);
 		MemoryContextSwitchTo(oldctx);
 
-		found = 0;
+		/* check and report missing attrs, if any */
+		missingatts = bms_add_range(NULL, 0, remoterel->natts - 1);
 		for (i = 0; i < desc->natts; i++)
 		{
 			int			attnum;
@@ -335,16 +373,13 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 
 			entry->attrmap->attnums[i] = attnum;
 			if (attnum >= 0)
-				found++;
+				missingatts = bms_del_member(missingatts, attnum);
 		}
 
-		/* TODO, detail message with names of missing columns */
-		if (found < remoterel->natts)
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("logical replication target relation \"%s.%s\" is missing "
-							"some replicated columns",
-							remoterel->nspname, remoterel->relname)));
+		logicalrep_report_missing_attrs(remoterel, missingatts);
+
+		/* be tidy */
+		bms_free(missingatts);
 
 		/*
 		 * Check that replica identity matches. We allow for stricter replica
