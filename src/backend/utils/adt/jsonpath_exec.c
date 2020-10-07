@@ -2602,93 +2602,36 @@ castTimeToTimeTz(Datum time, bool useTz)
 	return DirectFunctionCall1(time_timetz, time);
 }
 
-/*---
- * Compares 'ts1' and 'ts2' timestamp, assuming that ts1 might be overflowed
- * during cast from another datatype.
- *
- * 'overflow1' specifies overflow of 'ts1' value:
- *  0 - no overflow,
- * -1 - exceed lower boundary,
- *  1 - exceed upper boundary.
- */
-static int
-cmpTimestampWithOverflow(Timestamp ts1, int overflow1, Timestamp ts2)
-{
-	/*
-	 * All the timestamps we deal with in jsonpath are produced by
-	 * to_datetime() method.  So, they should be valid.
-	 */
-	Assert(IS_VALID_TIMESTAMP(ts2));
-
-	/*
-	 * Timestamp, which exceed lower (upper) bound, is always lower (higher)
-	 * than any valid timestamp except minus (plus) infinity.
-	 */
-	if (overflow1)
-	{
-		if (overflow1 < 0)
-		{
-			if (TIMESTAMP_IS_NOBEGIN(ts2))
-				return 1;
-			else
-				return -1;
-		}
-		if (overflow1 > 0)
-		{
-			if (TIMESTAMP_IS_NOEND(ts2))
-				return -1;
-			else
-				return 1;
-		}
-	}
-
-	return timestamp_cmp_internal(ts1, ts2);
-}
-
 /*
- * Compare date to timestamptz without throwing overflow error during cast.
+ * Compare date to timestamp.
+ * Note that this doesn't involve any timezone considerations.
  */
 static int
 cmpDateToTimestamp(DateADT date1, Timestamp ts2, bool useTz)
 {
-	TimestampTz ts1;
-	int			overflow = 0;
-
-	ts1 = date2timestamp_opt_overflow(date1, &overflow);
-
-	return cmpTimestampWithOverflow(ts1, overflow, ts2);
+	return date_cmp_timestamp_internal(date1, ts2);
 }
 
 /*
- * Compare date to timestamptz without throwing overflow error during cast.
+ * Compare date to timestamptz.
  */
 static int
 cmpDateToTimestampTz(DateADT date1, TimestampTz tstz2, bool useTz)
 {
-	TimestampTz tstz1;
-	int			overflow = 0;
-
 	checkTimezoneIsUsedForCast(useTz, "date", "timestamptz");
 
-	tstz1 = date2timestamptz_opt_overflow(date1, &overflow);
-
-	return cmpTimestampWithOverflow(tstz1, overflow, tstz2);
+	return date_cmp_timestamptz_internal(date1, tstz2);
 }
 
 /*
- * Compare timestamp to timestamptz without throwing overflow error during cast.
+ * Compare timestamp to timestamptz.
  */
 static int
 cmpTimestampToTimestampTz(Timestamp ts1, TimestampTz tstz2, bool useTz)
 {
-	TimestampTz tstz1;
-	int			overflow = 0;
-
 	checkTimezoneIsUsedForCast(useTz, "timestamp", "timestamptz");
 
-	tstz1 = timestamp2timestamptz_opt_overflow(ts1, &overflow);
-
-	return cmpTimestampWithOverflow(tstz1, overflow, tstz2);
+	return timestamp_cmp_timestamptz_internal(ts1, tstz2);
 }
 
 /*
