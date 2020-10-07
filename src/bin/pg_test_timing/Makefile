@@ -33,3 +33,4 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f pg_test_timing$(X) $(OBJS)
+	rm -rf tmp_check
