@@ -3,6 +3,8 @@
 --
 SET DateStyle = 'Postgres, MDY';
 
+SHOW TimeZone;  -- Many of these tests depend on the prevailing setting
+
 --
 -- Test various input formats
 --
@@ -278,6 +280,31 @@ SELECT '' AS "16", f1 AS "timestamp", date(f1) AS date
   ORDER BY date, "timestamp";
 
 DROP TABLE TEMP_TIMESTAMP;
+
+--
+-- Comparisons between datetime types, especially overflow cases
+---
+
+SELECT '2202020-10-05'::date::timestamp;  -- fail
+SELECT '2202020-10-05'::date > '2020-10-05'::timestamp as t;
+SELECT '2020-10-05'::timestamp > '2202020-10-05'::date as f;
+
+SELECT '2202020-10-05'::date::timestamptz;  -- fail
+SELECT '2202020-10-05'::date > '2020-10-05'::timestamptz as t;
+SELECT '2020-10-05'::timestamptz > '2202020-10-05'::date as f;
+
+-- This conversion may work depending on timezone
+SELECT '4714-11-24 BC'::date::timestamptz;
+SET TimeZone = 'UTC-2';
+SELECT '4714-11-24 BC'::date::timestamptz;  -- fail
+
+SELECT '4714-11-24 BC'::date < '2020-10-05'::timestamptz as t;
+SELECT '2020-10-05'::timestamptz >= '4714-11-24 BC'::date as t;
+
+SELECT '4714-11-24 BC'::timestamp < '2020-10-05'::timestamptz as t;
+SELECT '2020-10-05'::timestamptz >= '4714-11-24 BC'::timestamp as t;
+
+RESET TimeZone;
 
 --
 -- Formats
