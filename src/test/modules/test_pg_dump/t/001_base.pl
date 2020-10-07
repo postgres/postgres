@@ -135,6 +135,20 @@ my %pgdump_runs = (
 			"$tempdir/defaults_tar_format.tar",
 		],
 	},
+	exclude_table => {
+		dump_cmd => [
+			'pg_dump',
+			'--exclude-table=regress_table_dumpable',
+			"--file=$tempdir/exclude_table.sql",
+			'postgres',
+		],
+	},
+	extension_schema => {
+		dump_cmd => [
+			'pg_dump',                              '--schema=public',
+			"--file=$tempdir/extension_schema.sql", 'postgres',
+		],
+	},
 	pg_dumpall_globals => {
 		dump_cmd => [
 			'pg_dumpall',                             '--no-sync',
@@ -219,6 +233,7 @@ my %full_runs = (
 	clean_if_exists => 1,
 	createdb        => 1,
 	defaults        => 1,
+	exclude_table   => 1,
 	no_privs        => 1,
 	no_owner        => 1,);
 
@@ -301,8 +316,9 @@ my %tests = (
 			\n/xm,
 		like => {
 			%full_runs,
-			data_only    => 1,
-			section_data => 1,
+			data_only        => 1,
+			section_data     => 1,
+			extension_schema => 1,
 		},
 	},
 
@@ -310,9 +326,26 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE TABLE public.regress_pg_dump_table (\E
 			\n\s+\Qcol1 integer NOT NULL,\E
-			\n\s+\Qcol2 integer\E
+			\n\s+\Qcol2 integer,\E
+			\n\s+\QCONSTRAINT regress_pg_dump_table_col2_check CHECK ((col2 > 0))\E
 			\n\);\n/xm,
 		like => { binary_upgrade => 1, },
+	},
+
+	'COPY public.regress_table_dumpable (col1)' => {
+		regexp => qr/^
+			\QCOPY public.regress_table_dumpable (col1) FROM stdin;\E
+			\n/xm,
+		like => {
+			%full_runs,
+			data_only        => 1,
+			section_data     => 1,
+			extension_schema => 1,
+		},
+		unlike => {
+			binary_upgrade => 1,
+			exclude_table  => 1,
+		},
 	},
 
 	'CREATE ACCESS METHOD regress_test_am' => {
@@ -436,7 +469,8 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE TABLE regress_pg_dump_schema.test_table (\E
 			\n\s+\Qcol1 integer,\E
-			\n\s+\Qcol2 integer\E
+			\n\s+\Qcol2 integer,\E
+			\n\s+\QCONSTRAINT test_table_col2_check CHECK ((col2 > 0))\E
 			\n\);\n/xm,
 		like => { binary_upgrade => 1, },
 	},
@@ -536,6 +570,7 @@ my %tests = (
 		like   => {%pgdump_runs},
 		unlike => {
 			data_only          => 1,
+			extension_schema   => 1,
 			pg_dumpall_globals => 1,
 			section_data       => 1,
 			section_pre_data   => 1,
@@ -549,6 +584,7 @@ my %tests = (
 		like   => {%pgdump_runs},
 		unlike => {
 			data_only          => 1,
+			extension_schema   => 1,
 			pg_dumpall_globals => 1,
 			section_data       => 1,
 			section_pre_data   => 1,
