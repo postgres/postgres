@@ -2046,6 +2046,9 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 	DataDumperPtr dumpFn;
 	char	   *copyStmt;
 
+	/* We had better have loaded per-column details about this table */
+	Assert(tbinfo->interesting);
+
 	if (!dopt->dump_inserts)
 	{
 		/* Dump/restore using COPY */
@@ -2207,6 +2210,9 @@ makeTableDataInfo(DumpOptions *dopt, TableInfo *tbinfo, bool oids)
 	addObjectDependency(&tdinfo->dobj, tbinfo->dobj.dumpId);
 
 	tbinfo->dataObj = tdinfo;
+
+	/* Make sure that we'll collect per-column info for this table. */
+	tbinfo->interesting = true;
 }
 
 /*
@@ -14956,6 +14962,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	char	   *ftoptions;
 	int			j,
 				k;
+
+	/* We had better have loaded per-column details about this table */
+	Assert(tbinfo->interesting);
 
 	qrelname = pg_strdup(fmtId(tbinfo->dobj.name));
 	qualrelname = pg_strdup(fmtQualifiedDumpable(tbinfo));
