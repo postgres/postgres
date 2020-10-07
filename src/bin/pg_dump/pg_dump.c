@@ -2040,8 +2040,6 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 			if (nfields == 0)
 				continue;
 
-			Assert(tbinfo->attgenerated);
-
 			/* Emit a row heading */
 			if (rows_per_statement == 1)
 				archputs(" (", fout);
@@ -2201,6 +2199,9 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 	DataDumperPtr dumpFn;
 	char	   *copyStmt;
 	const char *copyFrom;
+
+	/* We had better have loaded per-column details about this table */
+	Assert(tbinfo->interesting);
 
 	if (!dopt->dump_inserts)
 	{
@@ -2390,6 +2391,9 @@ makeTableDataInfo(DumpOptions *dopt, TableInfo *tbinfo)
 	addObjectDependency(&tdinfo->dobj, tbinfo->dobj.dumpId);
 
 	tbinfo->dataObj = tdinfo;
+
+	/* Make sure that we'll collect per-column info for this table. */
+	tbinfo->interesting = true;
 }
 
 /*
@@ -15651,9 +15655,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	int			j,
 				k;
 
+	/* We had better have loaded per-column details about this table */
+	Assert(tbinfo->interesting);
+
 	qrelname = pg_strdup(fmtId(tbinfo->dobj.name));
 	qualrelname = pg_strdup(fmtQualifiedDumpable(tbinfo));
-
 
 	if (tbinfo->hasoids)
 		pg_log_warning("WITH OIDS is not supported anymore (table \"%s\")",
@@ -18016,8 +18022,6 @@ processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 							configtbl->dataObj->filtercond = pg_strdup(extconditionarray[j]);
 					}
 				}
-
-				configtbl->interesting = dumpobj;
 			}
 		}
 		if (extconfigarray)
