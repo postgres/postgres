@@ -1742,7 +1742,7 @@ PostPrepare_MultiXact(TransactionId xid)
 	OldestVisibleMXactId[MyBackendId] = InvalidMultiXactId;
 
 	/*
-	 * Discard the local MultiXactId cache like in AtEOX_MultiXact
+	 * Discard the local MultiXactId cache like in AtEOXact_MultiXact.
 	 */
 	MXactContext = NULL;
 	dlist_init(&MXactCache);
@@ -1772,7 +1772,7 @@ multixact_twophase_recover(TransactionId xid, uint16 info,
 
 /*
  * multixact_twophase_postcommit
- *		Similar to AtEOX_MultiXact but for COMMIT PREPARED
+ *		Similar to AtEOXact_MultiXact but for COMMIT PREPARED
  */
 void
 multixact_twophase_postcommit(TransactionId xid, uint16 info,
