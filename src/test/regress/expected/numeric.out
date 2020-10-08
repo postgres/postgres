@@ -1316,10 +1316,8 @@ SELECT width_bucket('NaN', 3.0, 4.0, 888);
 ERROR:  operand, lower bound, and upper bound cannot be NaN
 SELECT width_bucket(0::float8, 'NaN', 4.0::float8, 888);
 ERROR:  operand, lower bound, and upper bound cannot be NaN
-SELECT width_bucket('inf', 3.0, 4.0, 888);
-ERROR:  operand, lower bound, and upper bound cannot be infinity
 SELECT width_bucket(2.0, 3.0, '-inf', 888);
-ERROR:  operand, lower bound, and upper bound cannot be infinity
+ERROR:  lower and upper bounds must be finite
 SELECT width_bucket(0::float8, '-inf', 4.0::float8, 888);
 ERROR:  lower and upper bounds must be finite
 -- normal operation
@@ -1362,8 +1360,19 @@ SELECT
  10.0000000000001 |    6 |     6 |    0 |     0 |    5 |     5 |   21 |    21 |    8 |     8
 (19 rows)
 
--- for float8 only, check positive and negative infinity: we require
+-- Check positive and negative infinity: we require
 -- finite bucket bounds, but allow an infinite operand
+SELECT width_bucket(0.0::numeric, 'Infinity'::numeric, 5, 10); -- error
+ERROR:  lower and upper bounds must be finite
+SELECT width_bucket(0.0::numeric, 5, '-Infinity'::numeric, 20); -- error
+ERROR:  lower and upper bounds must be finite
+SELECT width_bucket('Infinity'::numeric, 1, 10, 10),
+       width_bucket('-Infinity'::numeric, 1, 10, 10);
+ width_bucket | width_bucket 
+--------------+--------------
+           11 |            0
+(1 row)
+
 SELECT width_bucket(0.0::float8, 'Infinity'::float8, 5, 10); -- error
 ERROR:  lower and upper bounds must be finite
 SELECT width_bucket(0.0::float8, 5, '-Infinity'::float8, 20); -- error

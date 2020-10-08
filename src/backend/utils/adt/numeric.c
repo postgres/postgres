@@ -1724,10 +1724,11 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
 					 errmsg("operand, lower bound, and upper bound cannot be NaN")));
-		else
+		/* We allow "operand" to be infinite; cmp_numerics will cope */
+		if (NUMERIC_IS_INF(bound1) || NUMERIC_IS_INF(bound2))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-					 errmsg("operand, lower bound, and upper bound cannot be infinity")));
+					 errmsg("lower and upper bounds must be finite")));
 	}
 
 	init_var(&result_var);
