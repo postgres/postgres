@@ -888,6 +888,15 @@ SELECT width_bucket('Infinity'::float8, 1, 10, 10),
 
 DROP TABLE width_bucket_test;
 
+-- Simple test for roundoff error when results should be exact
+SELECT x, width_bucket(x::float8, 10, 100, 9) as flt,
+       width_bucket(x::numeric, 10, 100, 9) as num
+FROM generate_series(0, 110, 10) x;
+SELECT x, width_bucket(x::float8, 100, 10, 9) as flt,
+       width_bucket(x::numeric, 100, 10, 9) as num
+FROM generate_series(0, 110, 10) x;
+
+--
 -- TO_CHAR()
 --
 SELECT '' AS to_char_1, to_char(val, '9G999G999G999G999G999')

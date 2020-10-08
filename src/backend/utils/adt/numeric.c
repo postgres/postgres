@@ -592,7 +592,8 @@ static void round_var(NumericVar *var, int rscale);
 static void trunc_var(NumericVar *var, int rscale);
 static void strip_var(NumericVar *var);
 static void compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
-						   const NumericVar *count_var, NumericVar *result_var);
+						   const NumericVar *count_var, bool reversed_bounds,
+						   NumericVar *result_var);
 
 static void accum_sum_add(NumericSumAccum *accum, const NumericVar *var1);
 static void accum_sum_rescale(NumericSumAccum *accum, const NumericVar *val);
@@ -1752,8 +1753,8 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 			else if (cmp_numerics(operand, bound2) >= 0)
 				add_var(&count_var, &const_one, &result_var);
 			else
-				compute_bucket(operand, bound1, bound2,
-							   &count_var, &result_var);
+				compute_bucket(operand, bound1, bound2, &count_var, false,
+							   &result_var);
 			break;
 
 			/* bound1 > bound2 */
@@ -1763,8 +1764,8 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 			else if (cmp_numerics(operand, bound2) <= 0)
 				add_var(&count_var, &const_one, &result_var);
 			else
-				compute_bucket(operand, bound1, bound2,
-							   &count_var, &result_var);
+				compute_bucket(operand, bound1, bound2, &count_var, true,
+							   &result_var);
 			break;
 	}
 
@@ -1783,11 +1784,13 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 /*
  * If 'operand' is not outside the bucket range, determine the correct
  * bucket for it to go. The calculations performed by this function
- * are derived directly from the SQL2003 spec.
+ * are derived directly from the SQL2003 spec. Note however that we
+ * multiply by count before dividing, to avoid unnecessary roundoff error.
  */
 static void
 compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
-			   const NumericVar *count_var, NumericVar *result_var)
+			   const NumericVar *count_var, bool reversed_bounds,
+			   NumericVar *result_var)
 {
 	NumericVar	bound1_var;
 	NumericVar	bound2_var;
@@ -1797,23 +1800,21 @@ compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 	init_var_from_num(bound2, &bound2_var);
 	init_var_from_num(operand, &operand_var);
 
-	if (cmp_var(&bound1_var, &bound2_var) < 0)
+	if (!reversed_bounds)
 	{
 		sub_var(&operand_var, &bound1_var, &operand_var);
 		sub_var(&bound2_var, &bound1_var, &bound2_var);
-		div_var(&operand_var, &bound2_var, result_var,
-				select_div_scale(&operand_var, &bound2_var), true);
 	}
 	else
 	{
 		sub_var(&bound1_var, &operand_var, &operand_var);
-		sub_var(&bound1_var, &bound2_var, &bound1_var);
-		div_var(&operand_var, &bound1_var, result_var,
-				select_div_scale(&operand_var, &bound1_var), true);
+		sub_var(&bound1_var, &bound2_var, &bound2_var);
 	}
 
-	mul_var(result_var, count_var, result_var,
-			result_var->dscale + count_var->dscale);
+	mul_var(&operand_var, count_var, &operand_var,
+			operand_var.dscale + count_var->dscale);
+	div_var(&operand_var, &bound2_var, result_var,
+			select_div_scale(&operand_var, &bound2_var), true);
 	add_var(result_var, &const_one, result_var);
 	floor_var(result_var, result_var);
 
