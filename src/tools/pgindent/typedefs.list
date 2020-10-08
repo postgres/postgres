@@ -1832,7 +1832,9 @@ PgStat_MsgFuncstat
 PgStat_MsgHdr
 PgStat_MsgInquiry
 PgStat_MsgRecoveryConflict
+PgStat_MsgReplSlot
 PgStat_MsgResetcounter
+PgStat_MsgResetreplslotcounter
 PgStat_MsgResetsharedcounter
 PgStat_MsgResetsinglecounter
 PgStat_MsgResetslrucounter
@@ -1842,6 +1844,7 @@ PgStat_MsgTabstat
 PgStat_MsgTempFile
 PgStat_MsgVacuum
 PgStat_MsgWal
+PgStat_ReplSlotStats
 PgStat_SLRUStats
 PgStat_Shared_Reset_Target
 PgStat_Single_Reset_Type

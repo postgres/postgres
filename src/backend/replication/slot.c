@@ -99,7 +99,6 @@ ReplicationSlot *MyReplicationSlot = NULL;
 int			max_replication_slots = 0;	/* the maximum number of replication
 										 * slots */
 
-static ReplicationSlot *SearchNamedReplicationSlot(const char *name);
 static int ReplicationSlotAcquireInternal(ReplicationSlot *slot,
 										  const char *name, SlotAcquireBehavior behavior);
 static void ReplicationSlotDropAcquired(void);
@@ -315,6 +314,15 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	LWLockRelease(ReplicationSlotControlLock);
 
 	/*
+	 * Create statistics entry for the new logical slot. We don't collect any
+	 * stats for physical slots, so no need to create an entry for the same.
+	 * See ReplicationSlotDropPtr for why we need to do this before releasing
+	 * ReplicationSlotAllocationLock.
+	 */
+	if (SlotIsLogical(slot))
+		pgstat_report_replslot(NameStr(slot->data.name), 0, 0, 0);
+
+	/*
 	 * Now that the slot has been marked as in_use and active, it's safe to
 	 * let somebody else try to allocate a slot.
 	 */
@@ -331,7 +339,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
  *
  * The caller must hold ReplicationSlotControlLock in shared mode.
  */
-static ReplicationSlot *
+ReplicationSlot *
 SearchNamedReplicationSlot(const char *name)
 {
 	int			i;
@@ -682,6 +690,19 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	if (!rmtree(tmppath, true))
 		ereport(WARNING,
 				(errmsg("could not remove directory \"%s\"", tmppath)));
+
+	/*
+	 * Send a message to drop the replication slot to the stats collector.
+	 * Since there is no guarantee of the order of message transfer on a UDP
+	 * connection, it's possible that a message for creating a new slot
+	 * reaches before a message for removing the old slot. We send the drop
+	 * and create messages while holding ReplicationSlotAllocationLock to
+	 * reduce that possibility. If the messages reached in reverse, we would
+	 * lose one statistics update message. But the next update message will
+	 * create the statistics for the replication slot.
+	 */
+	if (SlotIsLogical(slot))
+		pgstat_report_replslot_drop(NameStr(slot->data.name));
 
 	/*
 	 * We release this at the very end, so that nobody starts trying to create

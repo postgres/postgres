@@ -162,9 +162,10 @@ typedef struct ReorderBufferChange
 #define RBTXN_HAS_CATALOG_CHANGES 0x0001
 #define RBTXN_IS_SUBXACT          0x0002
 #define RBTXN_IS_SERIALIZED       0x0004
-#define RBTXN_IS_STREAMED         0x0008
-#define RBTXN_HAS_TOAST_INSERT    0x0010
-#define RBTXN_HAS_SPEC_INSERT     0x0020
+#define RBTXN_IS_SERIALIZED_CLEAR 0x0008
+#define RBTXN_IS_STREAMED         0x0010
+#define RBTXN_HAS_TOAST_INSERT    0x0020
+#define RBTXN_HAS_SPEC_INSERT     0x0040
 
 /* Does the transaction have catalog changes? */
 #define rbtxn_has_catalog_changes(txn) \
@@ -182,6 +183,12 @@ typedef struct ReorderBufferChange
 #define rbtxn_is_serialized(txn) \
 ( \
 	((txn)->txn_flags & RBTXN_IS_SERIALIZED) != 0 \
+)
+
+/* Has this transaction ever been spilled to disk? */
+#define rbtxn_is_serialized_clear(txn) \
+( \
+	((txn)->txn_flags & RBTXN_IS_SERIALIZED_CLEAR) != 0 \
 )
 
 /* This transaction's changes has toast insert, without main table insert. */
@@ -525,6 +532,17 @@ struct ReorderBuffer
 
 	/* memory accounting */
 	Size		size;
+
+	/*
+	 * Statistics about transactions spilled to disk.
+	 *
+	 * A single transaction may be spilled repeatedly, which is why we keep
+	 * two different counters. For spilling, the transaction counter includes
+	 * both toplevel transactions and subtransactions.
+	 */
+	int64		spillTxns;		/* number of transactions spilled to disk */
+	int64		spillCount;		/* spill-to-disk invocation counter */
+	int64		spillBytes;		/* amount of data spilled to disk */
 };
 
 

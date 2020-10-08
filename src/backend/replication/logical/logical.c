@@ -32,6 +32,7 @@
 #include "access/xlog_internal.h"
 #include "fmgr.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/origin.h"
@@ -1459,4 +1460,32 @@ ResetLogicalStreamingState(void)
 {
 	CheckXidAlive = InvalidTransactionId;
 	bsysscan = false;
+}
+
+/*
+ * Report stats for a slot.
+ */
+void
+UpdateDecodingStats(LogicalDecodingContext *ctx)
+{
+	ReorderBuffer *rb = ctx->reorder;
+
+	/*
+	 * Nothing to do if we haven't spilled anything since the last time the
+	 * stats has been sent.
+	 */
+	if (rb->spillBytes <= 0)
+		return;
+
+	elog(DEBUG2, "UpdateSpillStats: updating stats %p %lld %lld %lld",
+		 rb,
+		 (long long) rb->spillTxns,
+		 (long long) rb->spillCount,
+		 (long long) rb->spillBytes);
+
+	pgstat_report_replslot(NameStr(ctx->slot->data.name),
+						   rb->spillTxns, rb->spillCount, rb->spillBytes);
+	rb->spillTxns = 0;
+	rb->spillCount = 0;
+	rb->spillBytes = 0;
 }
