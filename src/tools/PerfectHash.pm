@@ -81,13 +81,13 @@ sub generate_hash_function
 	# to calculate via shift-and-add, so don't change them without care.
 	# (Commonly, random seeds are tried, but we want reproducible results
 	# from this program so we don't do that.)
-	my $hash_mult1 = 31;
+	my $hash_mult1 = 257;
 	my $hash_mult2;
 	my $hash_seed1;
 	my $hash_seed2;
 	my @subresult;
   FIND_PARAMS:
-	foreach (127, 257, 521, 1033, 2053)
+	foreach (17, 31, 127, 8191)
 	{
 		$hash_mult2 = $_;    # "foreach $hash_mult2" doesn't work
 		for ($hash_seed1 = 0; $hash_seed1 < 10; $hash_seed1++)
