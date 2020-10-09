@@ -1432,7 +1432,7 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		ReorderBufferCleanupTXN(rb, subtxn);
 	}
 
-	/* cleanup changes in the toplevel txn */
+	/* cleanup changes in the txn */
 	dlist_foreach_modify(iter, &txn->changes)
 	{
 		ReorderBufferChange *change;
@@ -1533,7 +1533,7 @@ ReorderBufferTruncateTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		ReorderBufferTruncateTXN(rb, subtxn);
 	}
 
-	/* cleanup changes in the toplevel txn */
+	/* cleanup changes in the txn */
 	dlist_foreach_modify(iter, &txn->changes)
 	{
 		ReorderBufferChange *change;

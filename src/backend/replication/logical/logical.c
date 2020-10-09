@@ -1477,7 +1477,7 @@ UpdateDecodingStats(LogicalDecodingContext *ctx)
 	if (rb->spillBytes <= 0)
 		return;
 
-	elog(DEBUG2, "UpdateSpillStats: updating stats %p %lld %lld %lld",
+	elog(DEBUG2, "UpdateDecodingStats: updating stats %p %lld %lld %lld",
 		 rb,
 		 (long long) rb->spillTxns,
 		 (long long) rb->spillCount,
