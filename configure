@@ -16515,6 +16515,12 @@ esac
  ;;
 esac
 
+  case " $LIBOBJS " in
+  *" win32stat.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS win32stat.$ac_objext"
+ ;;
+esac
+
 
 $as_echo "#define HAVE_SYMLINK 1" >>confdefs.h
 
