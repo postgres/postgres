@@ -51,7 +51,13 @@
 #include <signal.h>
 #include <direct.h>
 #undef near
-#include <sys/stat.h>			/* needed before sys/stat hacking below */
+
+/* needed before sys/stat hacking below: */
+#define fstat microsoft_native_fstat
+#define stat microsoft_native_stat
+#include <sys/stat.h>
+#undef fstat
+#undef stat
 
 /* Must be here to avoid conflicting with prototype in windows.h */
 #define mkdir(a,b)	mkdir(a)
@@ -240,20 +246,34 @@ typedef int pid_t;
  * Supplement to <sys/stat.h>.
  *
  * We must pull in sys/stat.h before this part, else our overrides lose.
- */
-#define lstat(path, sb) stat(path, sb)
-
-/*
- * stat() is not guaranteed to set the st_size field on win32, so we
- * redefine it to our own implementation that is.
  *
- * Some frontends don't need the size from stat, so if UNSAFE_STAT_OK
- * is defined we don't bother with this.
+ * stat() is not guaranteed to set the st_size field on win32, so we
+ * redefine it to our own implementation.  See src/port/win32stat.c.
+ *
+ * The struct stat is 32 bit in MSVC, so we redefine it as a copy of
+ * struct __stat64.  This also fixes the struct size for MINGW builds.
  */
-#ifndef UNSAFE_STAT_OK
-extern int	pgwin32_safestat(const char *path, struct stat *buf);
-#define stat(a,b) pgwin32_safestat(a,b)
-#endif
+struct stat						/* This should match struct __stat64 */
+{
+	_dev_t		st_dev;
+	_ino_t		st_ino;
+	unsigned short st_mode;
+	short		st_nlink;
+	short		st_uid;
+	short		st_gid;
+	_dev_t		st_rdev;
+	__int64		st_size;
+	__time64_t	st_atime;
+	__time64_t	st_mtime;
+	__time64_t	st_ctime;
+};
+
+extern int	_pgfstat64(int fileno, struct stat *buf);
+extern int	_pgstat64(const char *name, struct stat *buf);
+
+#define fstat(fileno, sb)	_pgfstat64(fileno, sb)
+#define stat(path, sb)		_pgstat64(path, sb)
+#define lstat(path, sb)		_pgstat64(path, sb)
 
 /* These macros are not provided by older MinGW, nor by MSVC */
 #ifndef S_IRUSR
