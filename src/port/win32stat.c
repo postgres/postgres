@@ -40,14 +40,12 @@ typedef struct _FILE_STANDARD_INFORMATION
 #endif							/* !defined(__MINGW32__) &&
 								 * !defined(__MINGW64__) */
 
-typedef NTSTATUS(NTAPI * PFN_NTQUERYINFORMATIONFILE)
-(
- IN HANDLE FileHandle,
- OUT PIO_STATUS_BLOCK IoStatusBlock,
- OUT PVOID FileInformation,
- IN ULONG Length,
- IN FILE_INFORMATION_CLASS FileInformationClass
-);
+typedef NTSTATUS (NTAPI * PFN_NTQUERYINFORMATIONFILE)
+			(IN HANDLE FileHandle,
+			 OUT PIO_STATUS_BLOCK IoStatusBlock,
+			 OUT PVOID FileInformation,
+			 IN ULONG Length,
+			 IN FILE_INFORMATION_CLASS FileInformationClass);
 
 static PFN_NTQUERYINFORMATIONFILE _NtQueryInformationFile = NULL;
 
@@ -101,8 +99,8 @@ fileattr_to_unixmode(int attr)
 	uxmode |= (unsigned short) ((attr & FILE_ATTRIBUTE_DIRECTORY) ?
 								(_S_IFDIR) : (_S_IFREG));
 
-	uxmode |= (unsigned short) (attr & FILE_ATTRIBUTE_READONLY) ?
-		(_S_IREAD) : (_S_IREAD | _S_IWRITE);
+	uxmode |= (unsigned short) ((attr & FILE_ATTRIBUTE_READONLY) ?
+								(_S_IREAD) : (_S_IREAD | _S_IWRITE));
 
 	/* there is no need to simulate _S_IEXEC using CMD's PATHEXT extensions */
 	uxmode |= _S_IEXEC;
@@ -149,8 +147,8 @@ fileinfo_to_stat(HANDLE hFile, struct stat *buf)
 	buf->st_mode = fileattr_to_unixmode(fiData.dwFileAttributes);
 	buf->st_nlink = fiData.nNumberOfLinks;
 
-	buf->st_size = (((uint64) fiData.nFileSizeHigh) << 32) |
-		(uint64) fiData.nFileSizeLow;
+	buf->st_size = ((((uint64) fiData.nFileSizeHigh) << 32) |
+					fiData.nFileSizeLowi);
 
 	return 0;
 }
@@ -220,8 +218,10 @@ _pgstat64(const char *name, struct stat *buf)
 		LoadNtdll();
 		if (ntdll == NULL)
 		{
-			_dosmaperr(GetLastError());
+			DWORD		err = GetLastError();
+
 			CloseHandle(hFile);
+			_dosmaperr(err);
 			return -1;
 		}
 
@@ -229,8 +229,10 @@ _pgstat64(const char *name, struct stat *buf)
 			GetProcAddress(ntdll, "NtQueryInformationFile");
 		if (_NtQueryInformationFile == NULL)
 		{
-			_dosmaperr(GetLastError());
+			DWORD		err = GetLastError();
+
 			CloseHandle(hFile);
+			_dosmaperr(err);
 			return -1;
 		}
 	}
@@ -239,16 +241,20 @@ _pgstat64(const char *name, struct stat *buf)
 											sizeof(standardInfo),
 											FileStandardInformation)))
 	{
-		_dosmaperr(GetLastError());
+		DWORD		err = GetLastError();
+
 		CloseHandle(hFile);
+		_dosmaperr(err);
 		return -1;
 	}
 #else
 	if (!GetFileInformationByHandleEx(hFile, FileStandardInfo, &standardInfo,
 									  sizeof(standardInfo)))
 	{
-		_dosmaperr(GetLastError());
+		DWORD		err = GetLastError();
+
 		CloseHandle(hFile);
+		_dosmaperr(err);
 		return -1;
 	}
 #endif							/* _WIN32_WINNT < 0x0600 */
