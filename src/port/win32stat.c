@@ -148,7 +148,7 @@ fileinfo_to_stat(HANDLE hFile, struct stat *buf)
 	buf->st_nlink = fiData.nNumberOfLinks;
 
 	buf->st_size = ((((uint64) fiData.nFileSizeHigh) << 32) |
-					fiData.nFileSizeLowi);
+					fiData.nFileSizeLow);
 
 	return 0;
 }
