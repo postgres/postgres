@@ -14,17 +14,6 @@
 #define write(a,b,c) _write(a,b,c)
 
 #undef EAGAIN					/* doesn't apply on sockets */
-#undef EINTR
-#define EINTR WSAEINTR
-#ifndef EWOULDBLOCK
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#endif
-#ifndef ECONNRESET
-#define ECONNRESET WSAECONNRESET
-#endif
-#ifndef EINPROGRESS
-#define EINPROGRESS WSAEINPROGRESS
-#endif
 
 /*
  * support for handling Windows Socket errors

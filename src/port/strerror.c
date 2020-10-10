@@ -146,16 +146,12 @@ get_errno_symbol(int errnum)
 			return "EBUSY";
 		case ECHILD:
 			return "ECHILD";
-#ifdef ECONNABORTED
 		case ECONNABORTED:
 			return "ECONNABORTED";
-#endif
 		case ECONNREFUSED:
 			return "ECONNREFUSED";
-#ifdef ECONNRESET
 		case ECONNRESET:
 			return "ECONNRESET";
-#endif
 		case EDEADLK:
 			return "EDEADLK";
 		case EDOM:
@@ -166,10 +162,10 @@ get_errno_symbol(int errnum)
 			return "EFAULT";
 		case EFBIG:
 			return "EFBIG";
-#ifdef EHOSTUNREACH
+		case EHOSTDOWN:
+			return "EHOSTDOWN";
 		case EHOSTUNREACH:
 			return "EHOSTUNREACH";
-#endif
 		case EIDRM:
 			return "EIDRM";
 		case EINPROGRESS:
@@ -198,6 +194,12 @@ get_errno_symbol(int errnum)
 			return "EMSGSIZE";
 		case ENAMETOOLONG:
 			return "ENAMETOOLONG";
+		case ENETDOWN:
+			return "ENETDOWN";
+		case ENETRESET:
+			return "ENETRESET";
+		case ENETUNREACH:
+			return "ENETUNREACH";
 		case ENFILE:
 			return "ENFILE";
 		case ENOBUFS:

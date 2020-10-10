@@ -668,24 +668,29 @@ retry3:
 						  conn->inBufSize - conn->inEnd);
 	if (nread < 0)
 	{
-		if (SOCK_ERRNO == EINTR)
-			goto retry3;
-		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
+		switch (SOCK_ERRNO)
+		{
+			case EINTR:
+				goto retry3;
+
+				/* Some systems return EAGAIN/EWOULDBLOCK for no data */
 #ifdef EAGAIN
-		if (SOCK_ERRNO == EAGAIN)
-			return someread;
+			case EAGAIN:
+				return someread;
 #endif
 #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
-		if (SOCK_ERRNO == EWOULDBLOCK)
-			return someread;
+			case EWOULDBLOCK:
+				return someread;
 #endif
-		/* We might get ECONNRESET here if using TCP and backend died */
-#ifdef ECONNRESET
-		if (SOCK_ERRNO == ECONNRESET)
-			goto definitelyFailed;
-#endif
-		/* pqsecure_read set the error message for us */
-		return -1;
+
+				/* We might get ECONNRESET etc here if connection failed */
+			case ALL_CONNECTION_FAILURE_ERRNOS:
+				goto definitelyFailed;
+
+			default:
+				/* pqsecure_read set the error message for us */
+				return -1;
+		}
 	}
 	if (nread > 0)
 	{
@@ -758,24 +763,29 @@ retry4:
 						  conn->inBufSize - conn->inEnd);
 	if (nread < 0)
 	{
-		if (SOCK_ERRNO == EINTR)
-			goto retry4;
-		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
+		switch (SOCK_ERRNO)
+		{
+			case EINTR:
+				goto retry4;
+
+				/* Some systems return EAGAIN/EWOULDBLOCK for no data */
 #ifdef EAGAIN
-		if (SOCK_ERRNO == EAGAIN)
-			return 0;
+			case EAGAIN:
+				return 0;
 #endif
 #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
-		if (SOCK_ERRNO == EWOULDBLOCK)
-			return 0;
+			case EWOULDBLOCK:
+				return 0;
 #endif
-		/* We might get ECONNRESET here if using TCP and backend died */
-#ifdef ECONNRESET
-		if (SOCK_ERRNO == ECONNRESET)
-			goto definitelyFailed;
-#endif
-		/* pqsecure_read set the error message for us */
-		return -1;
+
+				/* We might get ECONNRESET etc here if connection failed */
+			case ALL_CONNECTION_FAILURE_ERRNOS:
+				goto definitelyFailed;
+
+			default:
+				/* pqsecure_read set the error message for us */
+				return -1;
+		}
 	}
 	if (nread > 0)
 	{

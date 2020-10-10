@@ -1825,10 +1825,15 @@ piperead(int s, char *buf, int len)
 {
 	int			ret = recv(s, buf, len, 0);
 
-	if (ret < 0 && WSAGetLastError() == WSAECONNRESET)
+	if (ret < 0)
 	{
-		/* EOF on the pipe! */
-		ret = 0;
+		switch (TranslateSocketError())
+		{
+			case ALL_CONNECTION_FAILURE_ERRNOS:
+				/* Treat connection loss as EOF on the pipe */
+				ret = 0;
+				break;
+		}
 	}
 	return ret;
 }
