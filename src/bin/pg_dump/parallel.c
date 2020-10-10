@@ -130,7 +130,7 @@ typedef struct
 
 /* Windows implementation of pipe access */
 static int	pgpipe(int handles[2]);
-static int	piperead(int s, char *buf, int len);
+#define piperead(a,b,c)		recv(a,b,c,0)
 #define pipewrite(a,b,c)	send(a,b,c,0)
 
 #else							/* !WIN32 */
@@ -1815,27 +1815,6 @@ pgpipe(int handles[2])
 
 	closesocket(s);
 	return 0;
-}
-
-/*
- * Windows implementation of reading from a pipe.
- */
-static int
-piperead(int s, char *buf, int len)
-{
-	int			ret = recv(s, buf, len, 0);
-
-	if (ret < 0)
-	{
-		switch (TranslateSocketError())
-		{
-			case ALL_CONNECTION_FAILURE_ERRNOS:
-				/* Treat connection loss as EOF on the pipe */
-				ret = 0;
-				break;
-		}
-	}
-	return ret;
 }
 
 #endif							/* WIN32 */
