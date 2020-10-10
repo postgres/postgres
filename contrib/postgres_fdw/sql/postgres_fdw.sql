@@ -2687,9 +2687,12 @@ SELECT 1 FROM ft1 LIMIT 1;
 
 -- If the query detects the broken connection when starting new remote
 -- subtransaction, it doesn't reestablish new connection and should fail.
+-- The text of the error might vary across platforms, so don't show it.
 CALL terminate_backend_and_wait('fdw_retry_check');
 SAVEPOINT s;
+\set VERBOSITY sqlstate
 SELECT 1 FROM ft1 LIMIT 1;    -- should fail
+\set VERBOSITY default
 COMMIT;
 
 -- Clean up
