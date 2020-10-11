@@ -9,6 +9,10 @@
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::RealBin/../../tools/";
+use PerfectHash;
+
 my %data;
 
 print
@@ -18,13 +22,25 @@ print <<EOS;
 #include "common/unicode_norm.h"
 
 /*
- * We use a bit field here to save space.
+ * Normalization quick check entry for codepoint.  We use a bit field
+ * here to save space.
  */
 typedef struct
 {
 	unsigned int codepoint:21;
 	signed int	quickcheck:4;	/* really UnicodeNormalizationQC */
-}			pg_unicode_normprops;
+} pg_unicode_normprops;
+
+/* Typedef for hash function on quick check table */
+typedef int (*qc_hash_func) (const void *key);
+
+/* Information for quick check lookup with perfect hash function */
+typedef struct
+{
+	const pg_unicode_normprops *normprops;
+	qc_hash_func	hash;
+	int		num_normprops;
+} pg_unicode_norminfo;
 EOS
 
 foreach my $line (<ARGV>)
@@ -66,6 +82,7 @@ foreach my $prop (sort keys %data)
 	  "static const pg_unicode_normprops UnicodeNormProps_${prop}[] = {\n";
 
 	my %subdata = %{ $data{$prop} };
+	my @cp_packed;
 	foreach my $cp (sort { $a <=> $b } keys %subdata)
 	{
 		my $qc;
@@ -82,7 +99,27 @@ foreach my $prop (sort keys %data)
 			die;
 		}
 		printf "\t{0x%04X, %s},\n", $cp, $qc;
+
+		# Save the bytes as a string in network order.
+		push @cp_packed, pack('N', $cp);
 	}
 
 	print "};\n";
+
+	# Emit the definition of the perfect hash function.
+	my $funcname = $prop . '_hash_func';
+	my $f        = PerfectHash::generate_hash_function(\@cp_packed, $funcname,
+		fixed_key_length => 4);
+	printf "\n/* Perfect hash function for %s */", $prop;
+	print "\nstatic $f\n";
+
+	# Emit the structure that wraps the hash lookup information into
+	# one variable.
+	printf "/* Hash lookup information for %s */", $prop;
+	printf "\nstatic const pg_unicode_norminfo ";
+	printf "UnicodeNormInfo_%s = {\n", $prop;
+	printf "\tUnicodeNormProps_%s,\n", $prop;
+	printf "\t%s,\n",                  $funcname;
+	printf "\t%d\n",                   scalar @cp_packed;
+	printf "};\n";
 }

@@ -465,15 +465,32 @@ get_canonical_class(pg_wchar ch)
 		return entry->comb_class;
 }
 
-static int
-qc_compare(const void *p1, const void *p2)
+static const pg_unicode_normprops *
+qc_hash_lookup(pg_wchar ch, const pg_unicode_norminfo *norminfo)
 {
-	uint32		v1,
-				v2;
+	int			h;
+	uint32		hashkey;
 
-	v1 = ((const pg_unicode_normprops *) p1)->codepoint;
-	v2 = ((const pg_unicode_normprops *) p2)->codepoint;
-	return (v1 - v2);
+	/*
+	 * Compute the hash function. The hash key is the codepoint with the bytes
+	 * in network order.
+	 */
+	hashkey = htonl(ch);
+	h = norminfo->hash(&hashkey);
+
+	/* An out-of-range result implies no match */
+	if (h < 0 || h >= norminfo->num_normprops)
+		return NULL;
+
+	/*
+	 * Since it's a perfect hash, we need only match to the specific codepoint
+	 * it identifies.
+	 */
+	if (ch != norminfo->normprops[h].codepoint)
+		return NULL;
+
+	/* Success! */
+	return &norminfo->normprops[h];
 }
 
 /*
@@ -482,26 +499,15 @@ qc_compare(const void *p1, const void *p2)
 static UnicodeNormalizationQC
 qc_is_allowed(UnicodeNormalizationForm form, pg_wchar ch)
 {
-	pg_unicode_normprops key;
-	pg_unicode_normprops *found = NULL;
-
-	key.codepoint = ch;
+	const pg_unicode_normprops *found = NULL;
 
 	switch (form)
 	{
 		case UNICODE_NFC:
-			found = bsearch(&key,
-							UnicodeNormProps_NFC_QC,
-							lengthof(UnicodeNormProps_NFC_QC),
-							sizeof(pg_unicode_normprops),
-							qc_compare);
+			found = qc_hash_lookup(ch, &UnicodeNormInfo_NFC_QC);
 			break;
 		case UNICODE_NFKC:
-			found = bsearch(&key,
-							UnicodeNormProps_NFKC_QC,
-							lengthof(UnicodeNormProps_NFKC_QC),
-							sizeof(pg_unicode_normprops),
-							qc_compare);
+			found = qc_hash_lookup(ch, &UnicodeNormInfo_NFKC_QC);
 			break;
 		default:
 			Assert(false);

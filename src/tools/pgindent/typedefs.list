@@ -3191,6 +3191,7 @@ pg_tz
 pg_tz_cache
 pg_tzenum
 pg_unicode_decomposition
+pg_unicode_norminfo
 pg_unicode_normprops
 pg_utf_to_local_combined
 pg_uuid_t
