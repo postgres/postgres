@@ -2144,20 +2144,20 @@ SELECT * FROM search_graph;
    <literal>UNION ALL</literal> to <literal>UNION</literal> would not eliminate the looping.
    Instead we need to recognize whether we have reached the same row again
    while following a particular path of links.  We add two columns
-   <structfield>path</structfield> and <structfield>cycle</structfield> to the loop-prone query:
+   <structfield>is_cycle</structfield> and <structfield>path</structfield> to the loop-prone query:
 
 <programlisting>
-WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (
+WITH RECURSIVE search_graph(id, link, data, depth, is_cycle, path) AS (
     SELECT g.id, g.link, g.data, 1,
-      ARRAY[g.id],
-      false
+      false,
+      ARRAY[g.id]
     FROM graph g
   UNION ALL
     SELECT g.id, g.link, g.data, sg.depth + 1,
-      path || g.id,
-      g.id = ANY(path)
+      g.id = ANY(path),
+      path || g.id
     FROM graph g, search_graph sg
-    WHERE g.id = sg.link AND NOT cycle
+    WHERE g.id = sg.link AND NOT is_cycle
 )
 SELECT * FROM search_graph;
 </programlisting>
@@ -2172,17 +2172,17 @@ SELECT * FROM search_graph;
    compare fields <structfield>f1</structfield> and <structfield>f2</structfield>:
 
 <programlisting>
-WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (
+WITH RECURSIVE search_graph(id, link, data, depth, is_cycle, path) AS (
     SELECT g.id, g.link, g.data, 1,
-      ARRAY[ROW(g.f1, g.f2)],
-      false
+      false,
+      ARRAY[ROW(g.f1, g.f2)]
     FROM graph g
   UNION ALL
     SELECT g.id, g.link, g.data, sg.depth + 1,
-      path || ROW(g.f1, g.f2),
-      ROW(g.f1, g.f2) = ANY(path)
+      ROW(g.f1, g.f2) = ANY(path),
+      path || ROW(g.f1, g.f2)
     FROM graph g, search_graph sg
-    WHERE g.id = sg.link AND NOT cycle
+    WHERE g.id = sg.link AND NOT is_cycle
 )
 SELECT * FROM search_graph;
 </programlisting>
