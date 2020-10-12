@@ -3583,15 +3583,18 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 		if (lc == list_head(subpaths))	/* first node? */
 			pathnode->path.startup_cost = subpath->startup_cost;
 		pathnode->path.total_cost += subpath->total_cost;
-		pathnode->path.rows += subpath->rows;
-		total_size += subpath->pathtarget->width * subpath->rows;
+		if (returningLists != NIL)
+		{
+			pathnode->path.rows += subpath->rows;
+			total_size += subpath->pathtarget->width * subpath->rows;
+		}
 	}
 
 	/*
 	 * Set width to the average width of the subpath outputs.  XXX this is
-	 * totally wrong: we should report zero if no RETURNING, else an average
-	 * of the RETURNING tlist widths.  But it's what happened historically,
-	 * and improving it is a task for another day.
+	 * totally wrong: we should return an average of the RETURNING tlist
+	 * widths.  But it's what happened historically, and improving it is a task
+	 * for another day.
 	 */
 	if (pathnode->path.rows > 0)
 		total_size /= pathnode->path.rows;
