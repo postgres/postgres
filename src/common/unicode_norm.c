@@ -23,6 +23,7 @@
 #ifndef FRONTEND
 #include "common/unicode_normprops_table.h"
 #endif
+#include "port/pg_bswap.h"
 
 #ifndef FRONTEND
 #define ALLOC(size) palloc(size)
@@ -475,7 +476,7 @@ qc_hash_lookup(pg_wchar ch, const pg_unicode_norminfo *norminfo)
 	 * Compute the hash function. The hash key is the codepoint with the bytes
 	 * in network order.
 	 */
-	hashkey = htonl(ch);
+	hashkey = pg_hton32(ch);
 	h = norminfo->hash(&hashkey);
 
 	/* An out-of-range result implies no match */
