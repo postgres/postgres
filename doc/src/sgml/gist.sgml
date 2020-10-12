@@ -975,7 +975,7 @@ static char *str_param_default = "default";
 /*
  * Sample validator: checks that string is not longer than 8 bytes.
  */
-static void 
+static void
 validate_my_string_relopt(const char *value)
 {
     if (strlen(value) > 8)
@@ -987,7 +987,7 @@ validate_my_string_relopt(const char *value)
 /*
  * Sample filler: switches characters to lower case.
  */
-static Size 
+static Size
 fill_my_string_relopt(const char *value, void *ptr)
 {
     char   *tmp = str_tolower(value, strlen(value), DEFAULT_COLLATION_OID);
@@ -1157,23 +1157,38 @@ my_sortsupport(PG_FUNCTION_ARGS)
  <title>Implementation</title>
 
  <sect2 id="gist-buffering-build">
-  <title>GiST Buffering Build</title>
+  <title>GiST Index Build Methods</title>
+
   <para>
-   Building large GiST indexes by simply inserting all the tuples tends to be
-   slow, because if the index tuples are scattered across the index and the
-   index is large enough to not fit in cache, the insertions need to perform
-   a lot of random I/O.  Beginning in version 9.2, PostgreSQL supports a more
-   efficient method to build GiST indexes based on buffering, which can
-   dramatically reduce the number of random I/Os needed for non-ordered data
-   sets. For well-ordered data sets the benefit is smaller or non-existent,
-   because only a small number of pages receive new tuples at a time, and
-   those pages fit in cache even if the index as whole does not.
+   The simplest way to build a GiST index is just to insert all the entries,
+   one by one.  This tends to be slow for large indexes, because if the
+   index tuples are scattered across the index and the index is large enough
+   to not fit in cache, a lot of random I/O will be
+   needed.  <productname>PostgreSQL</productname> supports two alternative
+   methods for initial build of a GiST index: <firstterm>sorted</firstterm>
+   and <firstterm>buffered</firstterm> modes.
   </para>
 
   <para>
-   However, buffering index build needs to call the <function>penalty</function>
-   function more often, which consumes some extra CPU resources. Also, the
-   buffers used in the buffering build need temporary disk space, up to
+   The sorted method is only available if each of the opclasses used by the
+   index provides a <function>sortsupport</function> function, as described
+   in <xref linkend="gist-extensibility"/>.  If they do, this method is
+   usually the best, so it is used by default.
+  </para>
+
+  <para>
+   The buffered method works by not inserting tuples directly into the index
+   right away.  It can dramatically reduce the amount of random I/O needed
+   for non-ordered data sets.  For well-ordered data sets the benefit is
+   smaller or non-existent, because only a small number of pages receive new
+   tuples at a time, and those pages fit in cache even if the index as a
+   whole does not.
+  </para>
+
+  <para>
+   The buffered method needs to call the <function>penalty</function>
+   function more often than the simple method does, which consumes some
+   extra CPU resources. Also, the buffers need temporary disk space, up to
    the size of the resulting index. Buffering can also influence the quality
    of the resulting index, in both positive and negative directions. That
    influence depends on various factors, like the distribution of the input
@@ -1181,12 +1196,13 @@ my_sortsupport(PG_FUNCTION_ARGS)
   </para>
 
   <para>
-   By default, a GiST index build switches to the buffering method when the
-   index size reaches <xref linkend="guc-effective-cache-size"/>. It can
-   be manually turned on or off by the <literal>buffering</literal> parameter
-   to the CREATE INDEX command. The default behavior is good for most cases,
-   but turning buffering off might speed up the build somewhat if the input
-   data is ordered.
+   If sorting is not possible, then by default a GiST index build switches
+   to the buffering method when the index size reaches
+   <xref linkend="guc-effective-cache-size"/>.  Buffering can be manually
+   forced or prevented by the <literal>buffering</literal> parameter to the
+   CREATE INDEX command.  The default behavior is good for most cases, but
+   turning buffering off might speed up the build somewhat if the input data
+   is ordered.
   </para>
 
  </sect2>

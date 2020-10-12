@@ -463,11 +463,15 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     </term>
     <listitem>
     <para>
-     Determines whether the buffering build technique described in
+     Determines whether the buffered build technique described in
      <xref linkend="gist-buffering-build"/> is used to build the index. With
-     <literal>OFF</literal> it is disabled, with <literal>ON</literal> it is enabled, and
-     with <literal>AUTO</literal> it is initially disabled, but turned on
-     on-the-fly once the index size reaches <xref linkend="guc-effective-cache-size"/>. The default is <literal>AUTO</literal>.
+     <literal>OFF</literal> buffering is disabled, with <literal>ON</literal>
+     it is enabled, and with <literal>AUTO</literal> it is initially disabled,
+     but is turned on on-the-fly once the index size reaches
+     <xref linkend="guc-effective-cache-size"/>.  The default
+     is <literal>AUTO</literal>.
+     Note that if sorted build is possible, it will be used instead of
+     buffered build unless <literal>buffering=ON</literal> is specified.
     </para>
     </listitem>
    </varlistentry>
