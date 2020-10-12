@@ -720,6 +720,14 @@ test_atomic_uint32(void)
 	EXPECT_EQ_U32(pg_atomic_read_u32(&var), (uint32) INT_MAX + 1);
 	EXPECT_EQ_U32(pg_atomic_sub_fetch_u32(&var, INT_MAX), 1);
 	pg_atomic_sub_fetch_u32(&var, 1);
+	expected = PG_INT16_MAX;
+	EXPECT_TRUE(!pg_atomic_compare_exchange_u32(&var, &expected, 1));
+	expected = PG_INT16_MAX + 1;
+	EXPECT_TRUE(!pg_atomic_compare_exchange_u32(&var, &expected, 1));
+	expected = PG_INT16_MIN;
+	EXPECT_TRUE(!pg_atomic_compare_exchange_u32(&var, &expected, 1));
+	expected = PG_INT16_MIN - 1;
+	EXPECT_TRUE(!pg_atomic_compare_exchange_u32(&var, &expected, 1));
 
 	/* fail exchange because of old expected */
 	expected = 10;

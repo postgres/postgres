@@ -72,14 +72,6 @@ typedef struct pg_atomic_uint64
  * the __asm__.  (That would remove the freedom to eliminate dead stores when
  * the caller ignores "expected", but few callers do.)
  *
- * The cmpwi variant may be dead code.  In gcc 7.2.0,
- * __builtin_constant_p(*expected) always reports false.
- * __atomic_compare_exchange_n() does use cmpwi when its second argument
- * points to a constant.  Hence, using this instead of
- * __atomic_compare_exchange_n() nominally penalizes the generic.h
- * pg_atomic_test_set_flag_impl().  Modern GCC will use the generic-gcc.h
- * version, making the penalty theoretical only.
- *
  * Recognizing constant "newval" would be superfluous, because there's no
  * immediate-operand version of stwcx.
  */
@@ -94,7 +86,8 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 
 #ifdef HAVE_I_CONSTRAINT__BUILTIN_CONSTANT_P
 	if (__builtin_constant_p(*expected) &&
-		*expected <= PG_INT16_MAX && *expected >= PG_INT16_MIN)
+		(int32) *expected <= PG_INT16_MAX &&
+		(int32) *expected >= PG_INT16_MIN)
 		__asm__ __volatile__(
 			"	sync				\n"
 			"	lwarx   %0,0,%5		\n"
@@ -183,7 +176,8 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 	/* Like u32, but s/lwarx/ldarx/; s/stwcx/stdcx/; s/cmpw/cmpd/ */
 #ifdef HAVE_I_CONSTRAINT__BUILTIN_CONSTANT_P
 	if (__builtin_constant_p(*expected) &&
-		*expected <= PG_INT16_MAX && *expected >= PG_INT16_MIN)
+		(int64) *expected <= PG_INT16_MAX &&
+		(int64) *expected >= PG_INT16_MIN)
 		__asm__ __volatile__(
 			"	sync				\n"
 			"	ldarx   %0,0,%5		\n"
