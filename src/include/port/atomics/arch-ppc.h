@@ -32,14 +32,14 @@ typedef struct pg_atomic_uint32
 } pg_atomic_uint32;
 
 /* 64bit atomics are only supported in 64bit mode */
-#ifdef __64BIT__
+#if SIZEOF_VOID_P >= 8
 #define PG_HAVE_ATOMIC_U64_SUPPORT
 typedef struct pg_atomic_uint64
 {
 	volatile uint64 value pg_attribute_aligned(8);
 } pg_atomic_uint64;
 
-#endif /* __64BIT__ */
+#endif
 
 /*
  * This mimics gcc __atomic_compare_exchange_n(..., __ATOMIC_SEQ_CST), but
