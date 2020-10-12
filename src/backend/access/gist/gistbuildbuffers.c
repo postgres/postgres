@@ -666,7 +666,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 			zero_penalty = true;
 
 			/* Loop over index attributes. */
-			for (j = 0; j < r->rd_att->natts; j++)
+			for (j = 0; j < IndexRelationGetNumberOfKeyAttributes(r); j++)
 			{
 				float		usize;
 
@@ -692,7 +692,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 					which = i;
 					best_penalty[j] = usize;
 
-					if (j < r->rd_att->natts - 1)
+					if (j < IndexRelationGetNumberOfKeyAttributes(r) - 1)
 						best_penalty[j + 1] = -1;
 				}
 				else if (best_penalty[j] == usize)
