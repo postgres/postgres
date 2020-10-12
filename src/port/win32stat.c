@@ -204,8 +204,10 @@ _pgstat64(const char *name, struct stat *buf)
 					   NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
+		DWORD		err = GetLastError();
+
 		CloseHandle(hFile);
-		errno = ENOENT;
+		_dosmaperr(err);
 		return -1;
 	}
 
