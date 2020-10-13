@@ -41,11 +41,13 @@ $$ LANGUAGE plpgsql;
 BEGIN;
 INSERT INTO stats_test SELECT 'serialize-topbig--1:'||g.i FROM generate_series(1, 5000) g(i);
 COMMIT;
-SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL,NULL);
+SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'skip-empty-xacts', '1');
 
--- check stats, wait for stats collector to update.
+-- Check stats, wait for the stats collector to update. We can't test the
+-- exact stats count as that can vary if any background transaction (say by
+-- autovacuum) happens in parallel to the main transaction.
 SELECT wait_for_decode_stats(false);
-SELECT name, spill_txns, spill_count FROM pg_stat_replication_slots;
+SELECT name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
 
 -- reset the slot stats, and wait for stats collector to reset
 SELECT pg_stat_reset_replication_slot('regression_slot');
@@ -53,9 +55,9 @@ SELECT wait_for_decode_stats(true);
 SELECT name, spill_txns, spill_count FROM pg_stat_replication_slots;
 
 -- decode and check stats again.
-SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL,NULL);
+SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'skip-empty-xacts', '1');
 SELECT wait_for_decode_stats(false);
-SELECT name, spill_txns, spill_count FROM pg_stat_replication_slots;
+SELECT name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
 
 DROP FUNCTION wait_for_decode_stats(bool);
 DROP TABLE stats_test;
