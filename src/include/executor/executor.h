@@ -191,7 +191,6 @@ extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 							  Relation partition_root,
 							  int instrument_options);
 extern ResultRelInfo *ExecGetTriggerResultRel(EState *estate, Oid relid);
-extern void ExecCleanUpTriggerState(EState *estate);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 							TupleTableSlot *slot, EState *estate);
 extern bool ExecPartitionCheck(ResultRelInfo *resultRelInfo,
@@ -538,6 +537,8 @@ extern bool ExecRelationIsTargetRelation(EState *estate, Index scanrelid);
 extern Relation ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags);
 
 extern void ExecInitRangeTable(EState *estate, List *rangeTable);
+extern void ExecCloseRangeTableRelations(EState *estate);
+extern void ExecCloseResultRelations(EState *estate);
 
 static inline RangeTblEntry *
 exec_rt_fetch(Index rti, EState *estate)
@@ -546,6 +547,8 @@ exec_rt_fetch(Index rti, EState *estate)
 }
 
 extern Relation ExecGetRangeTableRelation(EState *estate, Index rti);
+extern void ExecInitResultRelation(EState *estate, ResultRelInfo *resultRelInfo,
+								   Index rti);
 
 extern int	executor_errposition(EState *estate, int location);
 

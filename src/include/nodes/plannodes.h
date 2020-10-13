@@ -68,12 +68,6 @@ typedef struct PlannedStmt
 	/* rtable indexes of target relations for INSERT/UPDATE/DELETE */
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
-	/*
-	 * rtable indexes of partitioned table roots that are UPDATE/DELETE
-	 * targets; needed for trigger firing.
-	 */
-	List	   *rootResultRelations;
-
 	List	   *appendRelations;	/* list of AppendRelInfo nodes */
 
 	List	   *subplans;		/* Plan trees for SubPlan expressions; note
@@ -224,8 +218,6 @@ typedef struct ModifyTable
 	Index		rootRelation;	/* Root RT index, if target is partitioned */
 	bool		partColsUpdated;	/* some part key in hierarchy updated */
 	List	   *resultRelations;	/* integer list of RT indexes */
-	int			resultRelIndex; /* index of first resultRel in plan's list */
-	int			rootResultRelIndex; /* index of the partitioned table root */
 	List	   *plans;			/* plan(s) producing source data */
 	List	   *withCheckOptionLists;	/* per-target-table WCO lists */
 	List	   *returningLists; /* per-target-table RETURNING tlists */

@@ -2727,6 +2727,7 @@ CopyFrom(CopyState cstate)
 	bool		leafpart_use_multi_insert = false;
 
 	Assert(cstate->rel);
+	Assert(list_length(cstate->range_table) == 1);
 
 	/*
 	 * The target must be a plain, foreign, or partitioned relation, or have
@@ -2829,24 +2830,16 @@ CopyFrom(CopyState cstate)
 	 * index-entry-making machinery.  (There used to be a huge amount of code
 	 * here that basically duplicated execUtils.c ...)
 	 */
-	resultRelInfo = makeNode(ResultRelInfo);
-	InitResultRelInfo(resultRelInfo,
-					  cstate->rel,
-					  1,		/* must match rel's position in range_table */
-					  NULL,
-					  0);
-	target_resultRelInfo = resultRelInfo;
+	ExecInitRangeTable(estate, cstate->range_table);
+	resultRelInfo = target_resultRelInfo = makeNode(ResultRelInfo);
+	ExecInitResultRelation(estate, resultRelInfo, 1);
 
 	/* Verify the named relation is a valid target for INSERT */
 	CheckValidResultRel(resultRelInfo, CMD_INSERT);
 
 	ExecOpenIndices(resultRelInfo, false);
 
-	estate->es_result_relations = resultRelInfo;
-	estate->es_num_result_relations = 1;
 	estate->es_result_relation_info = resultRelInfo;
-
-	ExecInitRangeTable(estate, cstate->range_table);
 
 	/*
 	 * Set up a ModifyTableState so we can let FDW(s) init themselves for
@@ -2856,7 +2849,7 @@ CopyFrom(CopyState cstate)
 	mtstate->ps.plan = NULL;
 	mtstate->ps.state = estate;
 	mtstate->operation = CMD_INSERT;
-	mtstate->resultRelInfo = estate->es_result_relations;
+	mtstate->resultRelInfo = resultRelInfo;
 
 	if (resultRelInfo->ri_FdwRoutine != NULL &&
 		resultRelInfo->ri_FdwRoutine->BeginForeignInsert != NULL)
@@ -3359,14 +3352,13 @@ CopyFrom(CopyState cstate)
 	if (insertMethod != CIM_SINGLE)
 		CopyMultiInsertInfoCleanup(&multiInsertInfo);
 
-	ExecCloseIndices(target_resultRelInfo);
-
 	/* Close all the partitioned tables, leaf partitions, and their indices */
 	if (proute)
 		ExecCleanupTupleRouting(mtstate, proute);
 
-	/* Close any trigger target relations */
-	ExecCleanUpTriggerState(estate);
+	/* Close the result relations, including any trigger target relations */
+	ExecCloseResultRelations(estate);
+	ExecCloseRangeTableRelations(estate);
 
 	FreeExecutorState(estate);
 

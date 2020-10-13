@@ -2301,7 +2301,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	ResultRelInfo *saved_resultRelInfo;
 	ResultRelInfo *resultRelInfo;
 	Plan	   *subplan;
-	ListCell   *l;
+	ListCell   *l,
+			   *l1;
 	int			i;
 	Relation	rel;
 	bool		update_tuple_routing_needed = node->partColsUpdated;
@@ -2322,13 +2323,17 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	mtstate->mt_done = false;
 
 	mtstate->mt_plans = (PlanState **) palloc0(sizeof(PlanState *) * nplans);
-	mtstate->resultRelInfo = estate->es_result_relations + node->resultRelIndex;
+	mtstate->resultRelInfo = (ResultRelInfo *)
+		palloc(nplans * sizeof(ResultRelInfo));
 	mtstate->mt_scans = (TupleTableSlot **) palloc0(sizeof(TupleTableSlot *) * nplans);
 
 	/* If modifying a partitioned table, initialize the root table info */
-	if (node->rootResultRelIndex >= 0)
-		mtstate->rootResultRelInfo = estate->es_root_result_relations +
-			node->rootResultRelIndex;
+	if (node->rootRelation > 0)
+	{
+		mtstate->rootResultRelInfo = makeNode(ResultRelInfo);
+		ExecInitResultRelation(estate, mtstate->rootResultRelInfo,
+							   node->rootRelation);
+	}
 
 	mtstate->mt_arowmarks = (List **) palloc0(sizeof(List *) * nplans);
 	mtstate->mt_nplans = nplans;
@@ -2351,9 +2356,14 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 	resultRelInfo = mtstate->resultRelInfo;
 	i = 0;
-	foreach(l, node->plans)
+	forboth(l, node->resultRelations, l1, node->plans)
 	{
-		subplan = (Plan *) lfirst(l);
+		Index		resultRelation = lfirst_int(l);
+
+		subplan = (Plan *) lfirst(l1);
+
+		/* This opens the relation and fills ResultRelInfo. */
+		ExecInitResultRelation(estate, resultRelInfo, resultRelation);
 
 		/* Initialize the usesFdwDirectModify flag */
 		resultRelInfo->ri_usesFdwDirectModify = bms_is_member(i,

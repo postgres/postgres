@@ -975,26 +975,15 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 
 				/*
 				 * Append this ModifyTable node's final result relation RT
-				 * index(es) to the global list for the plan, and set its
-				 * resultRelIndex to reflect their starting position in the
-				 * global list.
+				 * index(es) to the global list for the plan.
 				 */
-				splan->resultRelIndex = list_length(root->glob->resultRelations);
 				root->glob->resultRelations =
 					list_concat(root->glob->resultRelations,
 								splan->resultRelations);
-
-				/*
-				 * If the main target relation is a partitioned table, also
-				 * add the partition root's RT index to rootResultRelations,
-				 * and remember its index in that list in rootResultRelIndex.
-				 */
 				if (splan->rootRelation)
 				{
-					splan->rootResultRelIndex =
-						list_length(root->glob->rootResultRelations);
-					root->glob->rootResultRelations =
-						lappend_int(root->glob->rootResultRelations,
+					root->glob->resultRelations =
+						lappend_int(root->glob->resultRelations,
 									splan->rootRelation);
 				}
 			}

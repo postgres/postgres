@@ -305,7 +305,6 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	glob->finalrtable = NIL;
 	glob->finalrowmarks = NIL;
 	glob->resultRelations = NIL;
-	glob->rootResultRelations = NIL;
 	glob->appendRelations = NIL;
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
@@ -493,7 +492,6 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	Assert(glob->finalrtable == NIL);
 	Assert(glob->finalrowmarks == NIL);
 	Assert(glob->resultRelations == NIL);
-	Assert(glob->rootResultRelations == NIL);
 	Assert(glob->appendRelations == NIL);
 	top_plan = set_plan_references(root, top_plan);
 	/* ... and the subplans (both regular subplans and initplans) */
@@ -520,7 +518,6 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	result->planTree = top_plan;
 	result->rtable = glob->finalrtable;
 	result->resultRelations = glob->resultRelations;
-	result->rootResultRelations = glob->rootResultRelations;
 	result->appendRelations = glob->appendRelations;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;

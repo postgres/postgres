@@ -1787,6 +1787,11 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 	/*
 	 * To fire triggers, we'll need an EState as well as a ResultRelInfo for
 	 * each relation.  We don't need to call ExecOpenIndices, though.
+	 *
+	 * We put the ResultRelInfos in the es_opened_result_relations list, even
+	 * though we don't have a range table and don't populate the
+	 * es_result_relations array.  That's a big bogus, but it's enough to make
+	 * ExecGetTriggerResultRel() find them.
 	 */
 	estate = CreateExecutorState();
 	resultRelInfos = (ResultRelInfo *)
@@ -1801,10 +1806,10 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 						  0,	/* dummy rangetable index */
 						  NULL,
 						  0);
+		estate->es_opened_result_relations =
+			lappend(estate->es_opened_result_relations, resultRelInfo);
 		resultRelInfo++;
 	}
-	estate->es_result_relations = resultRelInfos;
-	estate->es_num_result_relations = list_length(rels);
 
 	/*
 	 * Process all BEFORE STATEMENT TRUNCATE triggers before we begin
