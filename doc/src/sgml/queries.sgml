@@ -2011,6 +2011,10 @@ GROUP BY region, product;
    but we'd have needed two levels of nested sub-<command>SELECT</command>s.  It's a bit
    easier to follow this way.
   </para>
+ </sect2>
+
+ <sect2 id="queries-with-recursive">
+  <title>Recursive Queries</title>
 
   <para>
    <indexterm>
@@ -2114,6 +2118,120 @@ GROUP BY sub_part
 </programlisting>
   </para>
 
+  <sect3 id="queries-with-search">
+   <title>Search Order</title>
+
+   <para>
+    When computing a tree traversal using a recursive query, you might want to
+    order the results in either depth-first or breadth-first order.  This can
+    be done by computing an ordering column alongside the other data columns
+    and using that to sort the results at the end.  Note that this does not
+    actually control in which order the query evaluation visits the rows; that
+    is as always in SQL implementation-dependent.  This approach merely
+    provides a convenient way to order the results afterwards.
+   </para>
+
+   <para>
+    To create a depth-first order, we compute for each result row an array of
+    rows that we have visited so far.  For example, consider the following
+    query that searches a table <structname>tree</structname> using a
+    <structfield>link</structfield> field:
+
+<programlisting>
+WITH RECURSIVE search_tree(id, link, data) AS (
+    SELECT t.id, t.link, t.data
+    FROM tree t
+  UNION ALL
+    SELECT t.id, t.link, t.data
+    FROM tree t, search_tree st
+    WHERE t.id = st.link
+)
+SELECT * FROM search_tree;
+</programlisting>
+
+    To add depth-first ordering information, you can write this:
+
+<programlisting>
+WITH RECURSIVE search_tree(id, link, data, <emphasis>path</emphasis>) AS (
+    SELECT t.id, t.link, t.data, <emphasis>ARRAY[t.id]</emphasis>
+    FROM tree t
+  UNION ALL
+    SELECT t.id, t.link, t.data, <emphasis>path || t.id</emphasis>
+    FROM tree t, search_tree st
+    WHERE t.id = st.link
+)
+SELECT * FROM search_tree <emphasis>ORDER BY path</emphasis>;
+</programlisting>
+   </para>
+
+   <para>
+    In the general case where more than one field needs to be used to identify
+    a row, use an array of rows.  For example, if we needed to track fields
+    <structfield>f1</structfield> and <structfield>f2</structfield>:
+
+<programlisting>
+WITH RECURSIVE search_tree(id, link, data, <emphasis>path</emphasis>) AS (
+    SELECT t.id, t.link, t.data, <emphasis>ARRAY[ROW(t.f1, t.f2)]</emphasis>
+    FROM tree t
+  UNION ALL
+    SELECT t.id, t.link, t.data, <emphasis>path || ROW(t.f1, t.f2)</emphasis>
+    FROM tree t, search_tree st
+    WHERE t.id = st.link
+)
+SELECT * FROM search_tree <emphasis>ORDER BY path</emphasis>;
+</programlisting>
+   </para>
+
+   <note>
+    <para>
+     The queries shown in this and the following section involving
+     <literal>ROW</literal> constructors in the target list only support
+     <literal>UNION ALL</literal> (not plain <literal>UNION</literal>) in the
+     current implementation.
+    </para>
+   </note>
+
+   <tip>
+    <para>
+     Omit the <literal>ROW()</literal> syntax in the common case where only one
+     field needs to be tracked.  This allows a simple array rather than a
+     composite-type array to be used, gaining efficiency.
+    </para>
+   </tip>
+
+   <para>
+    To create a breadth-first order, you can add a column that tracks the depth
+    of the search, for example:
+
+<programlisting>
+WITH RECURSIVE search_tree(id, link, data, <emphasis>depth</emphasis>) AS (
+    SELECT t.id, t.link, t.data, <emphasis>0</emphasis>
+    FROM tree t
+  UNION ALL
+    SELECT t.id, t.link, t.data, <emphasis>depth + 1</emphasis>
+    FROM tree t, search_tree st
+    WHERE t.id = st.link
+)
+SELECT * FROM search_tree <emphasis>ORDER BY depth</emphasis>;
+</programlisting>
+
+    To get a stable sort, add data columns as secondary sorting columns.
+   </para>
+
+   <tip>
+    <para>
+     The recursive query evaluation algorithm produces its output in
+     breadth-first search order.  However, this is an implementation detail and
+     it is perhaps unsound to rely on it.  The order of the rows within each
+     level is certainly undefined, so some explicit ordering might be desired
+     in any case.
+    </para>
+   </tip>
+  </sect3>
+
+  <sect3 id="queries-with-cycle">
+   <title>Cycle Detection</title>
+
   <para>
    When working with recursive queries it is important to be sure that
    the recursive part of the query will eventually return no tuples,
@@ -2123,13 +2241,13 @@ GROUP BY sub_part
    cycle does not involve output rows that are completely duplicate: it may be
    necessary to check just one or a few fields to see if the same point has
    been reached before.  The standard method for handling such situations is
-   to compute an array of the already-visited values.  For example, consider
+   to compute an array of the already-visited values.  For example, consider again
    the following query that searches a table <structname>graph</structname> using a
    <structfield>link</structfield> field:
 
 <programlisting>
 WITH RECURSIVE search_graph(id, link, data, depth) AS (
-    SELECT g.id, g.link, g.data, 1
+    SELECT g.id, g.link, g.data, 0
     FROM graph g
   UNION ALL
     SELECT g.id, g.link, g.data, sg.depth + 1
@@ -2147,17 +2265,17 @@ SELECT * FROM search_graph;
    <structfield>is_cycle</structfield> and <structfield>path</structfield> to the loop-prone query:
 
 <programlisting>
-WITH RECURSIVE search_graph(id, link, data, depth, is_cycle, path) AS (
-    SELECT g.id, g.link, g.data, 1,
-      false,
-      ARRAY[g.id]
+WITH RECURSIVE search_graph(id, link, data, depth, <emphasis>is_cycle, path</emphasis>) AS (
+    SELECT g.id, g.link, g.data, 0,
+      <emphasis>false,
+      ARRAY[g.id]</emphasis>
     FROM graph g
   UNION ALL
     SELECT g.id, g.link, g.data, sg.depth + 1,
-      g.id = ANY(path),
-      path || g.id
+      <emphasis>g.id = ANY(path),
+      path || g.id</emphasis>
     FROM graph g, search_graph sg
-    WHERE g.id = sg.link AND NOT is_cycle
+    WHERE g.id = sg.link <emphasis>AND NOT is_cycle</emphasis>
 )
 SELECT * FROM search_graph;
 </programlisting>
@@ -2172,17 +2290,17 @@ SELECT * FROM search_graph;
    compare fields <structfield>f1</structfield> and <structfield>f2</structfield>:
 
 <programlisting>
-WITH RECURSIVE search_graph(id, link, data, depth, is_cycle, path) AS (
-    SELECT g.id, g.link, g.data, 1,
-      false,
-      ARRAY[ROW(g.f1, g.f2)]
+WITH RECURSIVE search_graph(id, link, data, depth, <emphasis>is_cycle, path</emphasis>) AS (
+    SELECT g.id, g.link, g.data, 0,
+      <emphasis>false,
+      ARRAY[ROW(g.f1, g.f2)]</emphasis>
     FROM graph g
   UNION ALL
     SELECT g.id, g.link, g.data, sg.depth + 1,
-      ROW(g.f1, g.f2) = ANY(path),
-      path || ROW(g.f1, g.f2)
+      <emphasis>ROW(g.f1, g.f2) = ANY(path),
+      path || ROW(g.f1, g.f2)</emphasis>
     FROM graph g, search_graph sg
-    WHERE g.id = sg.link AND NOT is_cycle
+    WHERE g.id = sg.link <emphasis>AND NOT is_cycle</emphasis>
 )
 SELECT * FROM search_graph;
 </programlisting>
@@ -2198,10 +2316,8 @@ SELECT * FROM search_graph;
 
   <tip>
    <para>
-    The recursive query evaluation algorithm produces its output in
-    breadth-first search order.  You can display the results in depth-first
-    search order by making the outer query <literal>ORDER BY</literal> a
-    <quote>path</quote> column constructed in this way.
+    The cycle path column is computed in the same way as the depth-first
+    ordering column show in the previous section.
    </para>
   </tip>
 
@@ -2217,7 +2333,7 @@ WITH RECURSIVE t(n) AS (
   UNION ALL
     SELECT n+1 FROM t
 )
-SELECT n FROM t LIMIT 100;
+SELECT n FROM t <emphasis>LIMIT 100</emphasis>;
 </programlisting>
 
    This works because <productname>PostgreSQL</productname>'s implementation
@@ -2229,6 +2345,11 @@ SELECT n FROM t LIMIT 100;
    outer query will usually try to fetch all of the <literal>WITH</literal> query's
    output anyway.
   </para>
+  </sect3>
+ </sect2>
+
+ <sect2>
+  <title>Common Table Expression Materialization</title>
 
   <para>
    A useful property of <literal>WITH</literal> queries is that they are
