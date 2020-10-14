@@ -599,12 +599,20 @@ typedef struct WorkTableScan
  * When the plan node represents a foreign join, scan.scanrelid is zero and
  * fs_relids must be consulted to identify the join relation.  (fs_relids
  * is valid for simple scans as well, but will always match scan.scanrelid.)
+ *
+ * If the FDW's PlanDirectModify() callback decides to repurpose a ForeignScan
+ * node to perform the UPDATE or DELETE operation directly in the remote
+ * server, it sets 'operation' and 'resultRelation' to identify the operation
+ * type and target relation.  Note that these fields are only set if the
+ * modification is performed *fully* remotely; otherwise, the modification is
+ * driven by a local ModifyTable node and 'operation' is left to CMD_SELECT.
  * ----------------
  */
 typedef struct ForeignScan
 {
 	Scan		scan;
 	CmdType		operation;		/* SELECT/INSERT/UPDATE/DELETE */
+	Index		resultRelation; /* direct modification target's RT index */
 	Oid			fs_server;		/* OID of foreign server */
 	List	   *fdw_exprs;		/* expressions that FDW may evaluate */
 	List	   *fdw_private;	/* private data for FDW */

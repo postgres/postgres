@@ -215,6 +215,13 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	scanstate->fdwroutine = fdwroutine;
 	scanstate->fdw_state = NULL;
 
+	/*
+	 * For the FDW's convenience, look up the modification target relation's.
+	 * ResultRelInfo.
+	 */
+	if (node->resultRelation > 0)
+		scanstate->resultRelInfo = estate->es_result_relations[node->resultRelation - 1];
+
 	/* Initialize any outer plan. */
 	if (outerPlan(node))
 		outerPlanState(scanstate) =

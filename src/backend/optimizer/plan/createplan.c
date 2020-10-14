@@ -5530,7 +5530,11 @@ make_foreignscan(List *qptlist,
 	plan->lefttree = outer_plan;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
+
+	/* these may be overridden by the FDW's PlanDirectModify callback. */
 	node->operation = CMD_SELECT;
+	node->resultRelation = 0;
+
 	/* fs_server will be filled in by create_foreignscan_plan */
 	node->fs_server = InvalidOid;
 	node->fdw_exprs = fdw_exprs;

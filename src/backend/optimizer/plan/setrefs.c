@@ -1310,6 +1310,10 @@ set_foreignscan_references(PlannerInfo *root,
 	}
 
 	fscan->fs_relids = offset_relid_set(fscan->fs_relids, rtoffset);
+
+	/* Adjust resultRelation if it's valid */
+	if (fscan->resultRelation > 0)
+		fscan->resultRelation += rtoffset;
 }
 
 /*

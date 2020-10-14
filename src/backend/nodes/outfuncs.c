@@ -695,6 +695,7 @@ _outForeignScan(StringInfo str, const ForeignScan *node)
 	WRITE_NODE_FIELD(fdw_recheck_quals);
 	WRITE_BITMAPSET_FIELD(fs_relids);
 	WRITE_BOOL_FIELD(fsSystemCol);
+	WRITE_INT_FIELD(resultRelation);
 }
 
 static void

@@ -451,6 +451,7 @@ static void init_returning_filter(PgFdwDirectModifyState *dmstate,
 								  List *fdw_scan_tlist,
 								  Index rtindex);
 static TupleTableSlot *apply_returning_filter(PgFdwDirectModifyState *dmstate,
+											  ResultRelInfo *resultRelInfo,
 											  TupleTableSlot *slot,
 											  EState *estate);
 static void prepare_query_params(PlanState *node,
@@ -2287,9 +2288,10 @@ postgresPlanDirectModify(PlannerInfo *root,
 	}
 
 	/*
-	 * Update the operation info.
+	 * Update the operation and target relation info.
 	 */
 	fscan->operation = operation;
+	fscan->resultRelation = resultRelation;
 
 	/*
 	 * Update the fdw_exprs list that will be available to the executor.
@@ -2355,7 +2357,7 @@ postgresBeginDirectModify(ForeignScanState *node, int eflags)
 	 * Identify which user to do the remote access as.  This should match what
 	 * ExecCheckRTEPerms() does.
 	 */
-	rtindex = estate->es_result_relation_info->ri_RangeTableIndex;
+	rtindex = node->resultRelInfo->ri_RangeTableIndex;
 	rte = exec_rt_fetch(rtindex, estate);
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
@@ -2450,7 +2452,7 @@ postgresIterateDirectModify(ForeignScanState *node)
 {
 	PgFdwDirectModifyState *dmstate = (PgFdwDirectModifyState *) node->fdw_state;
 	EState	   *estate = node->ss.ps.state;
-	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
+	ResultRelInfo *resultRelInfo = node->resultRelInfo;
 
 	/*
 	 * If this is the first call after Begin, execute the statement.
@@ -4086,7 +4088,7 @@ get_returning_data(ForeignScanState *node)
 {
 	PgFdwDirectModifyState *dmstate = (PgFdwDirectModifyState *) node->fdw_state;
 	EState	   *estate = node->ss.ps.state;
-	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
+	ResultRelInfo *resultRelInfo = node->resultRelInfo;
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
 	TupleTableSlot *resultSlot;
 
@@ -4141,7 +4143,7 @@ get_returning_data(ForeignScanState *node)
 		if (dmstate->rel)
 			resultSlot = slot;
 		else
-			resultSlot = apply_returning_filter(dmstate, slot, estate);
+			resultSlot = apply_returning_filter(dmstate, resultRelInfo, slot, estate);
 	}
 	dmstate->next_tuple++;
 
@@ -4230,10 +4232,10 @@ init_returning_filter(PgFdwDirectModifyState *dmstate,
  */
 static TupleTableSlot *
 apply_returning_filter(PgFdwDirectModifyState *dmstate,
+					   ResultRelInfo *resultRelInfo,
 					   TupleTableSlot *slot,
 					   EState *estate)
 {
-	ResultRelInfo *relInfo = estate->es_result_relation_info;
 	TupleDesc	resultTupType = RelationGetDescr(dmstate->resultRel);
 	TupleTableSlot *resultSlot;
 	Datum	   *values;
@@ -4245,7 +4247,7 @@ apply_returning_filter(PgFdwDirectModifyState *dmstate,
 	/*
 	 * Use the return tuple slot as a place to store the result tuple.
 	 */
-	resultSlot = ExecGetReturningSlot(estate, relInfo);
+	resultSlot = ExecGetReturningSlot(estate, resultRelInfo);
 
 	/*
 	 * Extract all the values of the scan tuple.
