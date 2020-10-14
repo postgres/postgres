@@ -125,7 +125,6 @@ CreateExecutorState(void)
 
 	estate->es_result_relations = NULL;
 	estate->es_opened_result_relations = NIL;
-	estate->es_result_relation_info = NULL;
 	estate->es_tuple_routing_result_relations = NIL;
 	estate->es_trig_target_relations = NIL;
 

@@ -404,10 +404,10 @@ retry:
  * Caller is responsible for opening the indexes.
  */
 void
-ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
+ExecSimpleRelationInsert(ResultRelInfo *resultRelInfo,
+						 EState *estate, TupleTableSlot *slot)
 {
 	bool		skip_tuple = false;
-	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
 	Relation	rel = resultRelInfo->ri_RelationDesc;
 
 	/* For now we support only tables. */
@@ -430,7 +430,8 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 		/* Compute stored generated columns */
 		if (rel->rd_att->constr &&
 			rel->rd_att->constr->has_generated_stored)
-			ExecComputeStoredGenerated(estate, slot, CMD_INSERT);
+			ExecComputeStoredGenerated(resultRelInfo, estate, slot,
+									   CMD_INSERT);
 
 		/* Check the constraints of the tuple */
 		if (rel->rd_att->constr)
@@ -442,7 +443,8 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 		simple_table_tuple_insert(resultRelInfo->ri_RelationDesc, slot);
 
 		if (resultRelInfo->ri_NumIndices > 0)
-			recheckIndexes = ExecInsertIndexTuples(slot, estate, false, NULL,
+			recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
+												   slot, estate, false, NULL,
 												   NIL);
 
 		/* AFTER ROW INSERT Triggers */
@@ -466,11 +468,11 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
  * Caller is responsible for opening the indexes.
  */
 void
-ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
+ExecSimpleRelationUpdate(ResultRelInfo *resultRelInfo,
+						 EState *estate, EPQState *epqstate,
 						 TupleTableSlot *searchslot, TupleTableSlot *slot)
 {
 	bool		skip_tuple = false;
-	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
 	Relation	rel = resultRelInfo->ri_RelationDesc;
 	ItemPointer tid = &(searchslot->tts_tid);
 
@@ -496,7 +498,8 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 		/* Compute stored generated columns */
 		if (rel->rd_att->constr &&
 			rel->rd_att->constr->has_generated_stored)
-			ExecComputeStoredGenerated(estate, slot, CMD_UPDATE);
+			ExecComputeStoredGenerated(resultRelInfo, estate, slot,
+									   CMD_UPDATE);
 
 		/* Check the constraints of the tuple */
 		if (rel->rd_att->constr)
@@ -508,7 +511,8 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 								  &update_indexes);
 
 		if (resultRelInfo->ri_NumIndices > 0 && update_indexes)
-			recheckIndexes = ExecInsertIndexTuples(slot, estate, false, NULL,
+			recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
+												   slot, estate, false, NULL,
 												   NIL);
 
 		/* AFTER ROW UPDATE Triggers */
@@ -527,11 +531,11 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
  * Caller is responsible for opening the indexes.
  */
 void
-ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
+ExecSimpleRelationDelete(ResultRelInfo *resultRelInfo,
+						 EState *estate, EPQState *epqstate,
 						 TupleTableSlot *searchslot)
 {
 	bool		skip_tuple = false;
-	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
 	Relation	rel = resultRelInfo->ri_RelationDesc;
 	ItemPointer tid = &searchslot->tts_tid;
 

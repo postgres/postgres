@@ -525,7 +525,6 @@ typedef struct EState
 	List	   *es_opened_result_relations; /* List of non-NULL entries in
 											 * es_result_relations in no
 											 * specific order */
-	ResultRelInfo *es_result_relation_info; /* currently active array elt */
 
 	PartitionDirectory es_partition_directory;	/* for PartitionDesc lookup */
 

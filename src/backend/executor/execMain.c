@@ -827,9 +827,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 	estate->es_plannedstmt = plannedstmt;
 
-	/* es_result_relation_info is NULL except when within ModifyTable */
-	estate->es_result_relation_info = NULL;
-
 	/*
 	 * Next, build the ExecRowMark array from the PlanRowMark(s), if any.
 	 */
@@ -2694,7 +2691,6 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 	 * subplans themselves are initialized.
 	 */
 	parentestate->es_result_relations = NULL;
-	/* es_result_relation_info must NOT be copied */
 	/* es_trig_target_relations must NOT be copied */
 	rcestate->es_top_eflags = parentestate->es_top_eflags;
 	rcestate->es_instrument = parentestate->es_instrument;

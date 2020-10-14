@@ -576,10 +576,14 @@ extern TupleTableSlot *ExecGetReturningSlot(EState *estate, ResultRelInfo *relIn
  */
 extern void ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
-extern List *ExecInsertIndexTuples(TupleTableSlot *slot, EState *estate, bool noDupErr,
+extern List *ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
+								   TupleTableSlot *slot, EState *estate,
+								   bool noDupErr,
 								   bool *specConflict, List *arbiterIndexes);
-extern bool ExecCheckIndexConstraints(TupleTableSlot *slot, EState *estate,
-									  ItemPointer conflictTid, List *arbiterIndexes);
+extern bool ExecCheckIndexConstraints(ResultRelInfo *resultRelInfo,
+									  TupleTableSlot *slot,
+									  EState *estate, ItemPointer conflictTid,
+									  List *arbiterIndexes);
 extern void check_exclusion_constraint(Relation heap, Relation index,
 									   IndexInfo *indexInfo,
 									   ItemPointer tupleid,
@@ -596,10 +600,13 @@ extern bool RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
 extern bool RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
 									 TupleTableSlot *searchslot, TupleTableSlot *outslot);
 
-extern void ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot);
-extern void ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
+extern void ExecSimpleRelationInsert(ResultRelInfo *resultRelInfo,
+									 EState *estate, TupleTableSlot *slot);
+extern void ExecSimpleRelationUpdate(ResultRelInfo *resultRelInfo,
+									 EState *estate, EPQState *epqstate,
 									 TupleTableSlot *searchslot, TupleTableSlot *slot);
-extern void ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
+extern void ExecSimpleRelationDelete(ResultRelInfo *resultRelInfo,
+									 EState *estate, EPQState *epqstate,
 									 TupleTableSlot *searchslot);
 extern void CheckCmdReplicaIdentity(Relation rel, CmdType cmd);
 

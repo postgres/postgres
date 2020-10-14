@@ -2489,9 +2489,6 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 	ResultRelInfo *resultRelInfo = buffer->resultRelInfo;
 	TupleTableSlot **slots = buffer->slots;
 
-	/* Set es_result_relation_info to the ResultRelInfo we're flushing. */
-	estate->es_result_relation_info = resultRelInfo;
-
 	/*
 	 * Print error context information correctly, if one of the operations
 	 * below fail.
@@ -2524,7 +2521,8 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 
 			cstate->cur_lineno = buffer->linenos[i];
 			recheckIndexes =
-				ExecInsertIndexTuples(buffer->slots[i], estate, false, NULL,
+				ExecInsertIndexTuples(resultRelInfo,
+									  buffer->slots[i], estate, false, NULL,
 									  NIL);
 			ExecARInsertTriggers(estate, resultRelInfo,
 								 slots[i], recheckIndexes,
@@ -2839,8 +2837,6 @@ CopyFrom(CopyState cstate)
 
 	ExecOpenIndices(resultRelInfo, false);
 
-	estate->es_result_relation_info = resultRelInfo;
-
 	/*
 	 * Set up a ModifyTableState so we can let FDW(s) init themselves for
 	 * foreign-table result relation(s).
@@ -3109,11 +3105,6 @@ CopyFrom(CopyState cstate)
 			}
 
 			/*
-			 * For ExecInsertIndexTuples() to work on the partition's indexes
-			 */
-			estate->es_result_relation_info = resultRelInfo;
-
-			/*
 			 * If we're capturing transition tuples, we might need to convert
 			 * from the partition rowtype to root rowtype.
 			 */
@@ -3217,7 +3208,8 @@ CopyFrom(CopyState cstate)
 				/* Compute stored generated columns */
 				if (resultRelInfo->ri_RelationDesc->rd_att->constr &&
 					resultRelInfo->ri_RelationDesc->rd_att->constr->has_generated_stored)
-					ExecComputeStoredGenerated(estate, myslot, CMD_INSERT);
+					ExecComputeStoredGenerated(resultRelInfo, estate, myslot,
+											   CMD_INSERT);
 
 				/*
 				 * If the target is a plain table, check the constraints of
@@ -3288,7 +3280,8 @@ CopyFrom(CopyState cstate)
 										   myslot, mycid, ti_options, bistate);
 
 						if (resultRelInfo->ri_NumIndices > 0)
-							recheckIndexes = ExecInsertIndexTuples(myslot,
+							recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
+																   myslot,
 																   estate,
 																   false,
 																   NULL,

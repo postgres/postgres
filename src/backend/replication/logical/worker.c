@@ -1174,7 +1174,6 @@ apply_handle_insert(StringInfo s)
 										&TTSOpsVirtual);
 	resultRelInfo = makeNode(ResultRelInfo);
 	InitResultRelInfo(resultRelInfo, rel->localrel, 1, NULL, 0);
-	estate->es_result_relation_info = resultRelInfo;
 
 	/* Input functions may need an active snapshot, so get one */
 	PushActiveSnapshot(GetTransactionSnapshot());
@@ -1214,7 +1213,7 @@ apply_handle_insert_internal(ResultRelInfo *relinfo,
 	ExecOpenIndices(relinfo, false);
 
 	/* Do the insert. */
-	ExecSimpleRelationInsert(estate, remoteslot);
+	ExecSimpleRelationInsert(relinfo, estate, remoteslot);
 
 	/* Cleanup. */
 	ExecCloseIndices(relinfo);
@@ -1300,7 +1299,6 @@ apply_handle_update(StringInfo s)
 										&TTSOpsVirtual);
 	resultRelInfo = makeNode(ResultRelInfo);
 	InitResultRelInfo(resultRelInfo, rel->localrel, 1, NULL, 0);
-	estate->es_result_relation_info = resultRelInfo;
 
 	/*
 	 * Populate updatedCols so that per-column triggers can fire.  This could
@@ -1392,7 +1390,8 @@ apply_handle_update_internal(ResultRelInfo *relinfo,
 		EvalPlanQualSetSlot(&epqstate, remoteslot);
 
 		/* Do the actual update. */
-		ExecSimpleRelationUpdate(estate, &epqstate, localslot, remoteslot);
+		ExecSimpleRelationUpdate(relinfo, estate, &epqstate, localslot,
+								 remoteslot);
 	}
 	else
 	{
@@ -1455,7 +1454,6 @@ apply_handle_delete(StringInfo s)
 										&TTSOpsVirtual);
 	resultRelInfo = makeNode(ResultRelInfo);
 	InitResultRelInfo(resultRelInfo, rel->localrel, 1, NULL, 0);
-	estate->es_result_relation_info = resultRelInfo;
 
 	PushActiveSnapshot(GetTransactionSnapshot());
 
@@ -1508,7 +1506,7 @@ apply_handle_delete_internal(ResultRelInfo *relinfo, EState *estate,
 		EvalPlanQualSetSlot(&epqstate, localslot);
 
 		/* Do the actual delete. */
-		ExecSimpleRelationDelete(estate, &epqstate, localslot);
+		ExecSimpleRelationDelete(relinfo, estate, &epqstate, localslot);
 	}
 	else
 	{
@@ -1616,7 +1614,6 @@ apply_handle_tuple_routing(ResultRelInfo *relinfo,
 	}
 	MemoryContextSwitchTo(oldctx);
 
-	estate->es_result_relation_info = partrelinfo;
 	switch (operation)
 	{
 		case CMD_INSERT:
@@ -1697,8 +1694,8 @@ apply_handle_tuple_routing(ResultRelInfo *relinfo,
 					ExecOpenIndices(partrelinfo, false);
 
 					EvalPlanQualSetSlot(&epqstate, remoteslot_part);
-					ExecSimpleRelationUpdate(estate, &epqstate, localslot,
-											 remoteslot_part);
+					ExecSimpleRelationUpdate(partrelinfo, estate, &epqstate,
+											 localslot, remoteslot_part);
 					ExecCloseIndices(partrelinfo);
 					EvalPlanQualEnd(&epqstate);
 				}
@@ -1739,7 +1736,6 @@ apply_handle_tuple_routing(ResultRelInfo *relinfo,
 					Assert(partrelinfo_new != partrelinfo);
 
 					/* DELETE old tuple found in the old partition. */
-					estate->es_result_relation_info = partrelinfo;
 					apply_handle_delete_internal(partrelinfo, estate,
 												 localslot,
 												 &relmapentry->remoterel);
@@ -1771,7 +1767,6 @@ apply_handle_tuple_routing(ResultRelInfo *relinfo,
 						slot_getallattrs(remoteslot);
 					}
 					MemoryContextSwitchTo(oldctx);
-					estate->es_result_relation_info = partrelinfo_new;
 					apply_handle_insert_internal(partrelinfo_new, estate,
 												 remoteslot_part);
 				}

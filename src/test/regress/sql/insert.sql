@@ -542,9 +542,7 @@ drop table inserttest3;
 drop table brtrigpartcon;
 drop function brtrigpartcon1trigf();
 
--- check that "do nothing" BR triggers work with tuple-routing (this checks
--- that estate->es_result_relation_info is appropriately set/reset for each
--- routed tuple)
+-- check that "do nothing" BR triggers work with tuple-routing
 create table donothingbrtrig_test (a int, b text) partition by list (a);
 create table donothingbrtrig_test1 (b text, a int);
 create table donothingbrtrig_test2 (c text, b text, a int);
