@@ -412,7 +412,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 
 				ste = get_tle_by_resno(GetCTETargetList(cte), attnum);
 				if (ste == NULL || ste->resjunk)
-					elog(ERROR, "subquery %s does not have attribute %d",
+					elog(ERROR, "CTE %s does not have attribute %d",
 						 rte->eref->aliasname, attnum);
 				tle->resorigtbl = ste->resorigtbl;
 				tle->resorigcol = ste->resorigcol;
@@ -1606,7 +1606,7 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 
 				ste = get_tle_by_resno(GetCTETargetList(cte), attnum);
 				if (ste == NULL || ste->resjunk)
-					elog(ERROR, "subquery %s does not have attribute %d",
+					elog(ERROR, "CTE %s does not have attribute %d",
 						 rte->eref->aliasname, attnum);
 				expr = (Node *) ste->expr;
 				if (IsA(expr, Var))
