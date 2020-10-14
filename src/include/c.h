@@ -1132,7 +1132,8 @@ typedef union PGAlignedXLogBlock
  *	access to the original string and translated string, and for cases where
  *	immediate translation is not possible, like when initializing global
  *	variables.
- *		http://www.gnu.org/software/autoconf/manual/gettext/Special-cases.html
+ *
+ *	https://www.gnu.org/software/gettext/manual/html_node/Special-cases.html
  */
 #define gettext_noop(x) (x)
 
