@@ -1656,7 +1656,8 @@ exec_replication_command(const char *cmd_string)
 				else
 					StartLogicalReplication(cmd);
 
-				/* callees already sent their own completion message */
+				/* dupe, but necessary per libpqrcv_endstreaming */
+				EndReplicationCommand(cmdtag);
 
 				Assert(xlogreader != NULL);
 				break;
