@@ -1429,7 +1429,10 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 		timeout_p = &timeout;
 	}
 
-	/* Report events discovered by WaitEventAdjustKqueue(). */
+	/*
+	 * Report postmaster events discovered by WaitEventAdjustKqueue() or an
+	 * earlier call to WaitEventSetWait().
+	 */
 	if (unlikely(set->report_postmaster_not_running))
 	{
 		if (set->exit_on_postmaster_death)
@@ -1500,6 +1503,13 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 				 cur_kqueue_event->filter == EVFILT_PROC &&
 				 (cur_kqueue_event->fflags & NOTE_EXIT) != 0)
 		{
+			/*
+			 * The kernel will tell this kqueue object only once about the exit
+			 * of the postmaster, so let's remember that for next time so that
+			 * we provide level-triggered semantics.
+			 */
+			set->report_postmaster_not_running = true;
+
 			if (set->exit_on_postmaster_death)
 				proc_exit(1);
 			occurred_events->fd = PGINVALID_SOCKET;
