@@ -2059,8 +2059,9 @@ The commands accepted in replication mode are:
       the switch position is the end of the WAL that was streamed, but there
       are corner cases where the server can send some WAL from the old
       timeline that it has not itself replayed before promoting. Finally, the
-      server sends CommandComplete message, and is ready to accept a new
-      command.
+      server sends two CommandComplete messages (one that ends the CopyData
+      and the other ends the <literal>START_REPLICATION</literal> itself), and
+      is ready to accept a new command.
      </para>
 
      <para>
@@ -2382,7 +2383,8 @@ The commands accepted in replication mode are:
 
      <para>
       The messages inside the CopyBothResponse messages are of the same format
-      documented for <literal>START_REPLICATION ... PHYSICAL</literal>.
+      documented for <literal>START_REPLICATION ... PHYSICAL</literal>, including
+      two CommandComplete messages.
      </para>
 
      <para>
