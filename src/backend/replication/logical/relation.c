@@ -437,8 +437,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 	if (entry->state != SUBREL_STATE_READY)
 		entry->state = GetSubscriptionRelState(MySubscription->oid,
 											   entry->localreloid,
-											   &entry->statelsn,
-											   true);
+											   &entry->statelsn);
 
 	return entry;
 }
