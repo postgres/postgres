@@ -2618,7 +2618,8 @@ l1:
 			HEAP_XMAX_IS_LOCKED_ONLY(tp.t_data->t_infomask) ||
 			HeapTupleHeaderIsOnlyLocked(tp.t_data))
 			result = TM_Ok;
-		else if (!ItemPointerEquals(&tp.t_self, &tp.t_data->t_ctid))
+		else if (!ItemPointerEquals(&tp.t_self, &tp.t_data->t_ctid) ||
+				 HeapTupleHeaderIndicatesMovedPartitions(tp.t_data))
 			result = TM_Updated;
 		else
 			result = TM_Deleted;
@@ -3247,7 +3248,8 @@ l2:
 
 		if (can_continue)
 			result = TM_Ok;
-		else if (!ItemPointerEquals(&oldtup.t_self, &oldtup.t_data->t_ctid))
+		else if (!ItemPointerEquals(&oldtup.t_self, &oldtup.t_data->t_ctid) ||
+				 HeapTupleHeaderIndicatesMovedPartitions(oldtup.t_data))
 			result = TM_Updated;
 		else
 			result = TM_Deleted;
@@ -4483,7 +4485,8 @@ l3:
 			HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_data->t_infomask) ||
 			HeapTupleHeaderIsOnlyLocked(tuple->t_data))
 			result = TM_Ok;
-		else if (!ItemPointerEquals(&tuple->t_self, &tuple->t_data->t_ctid))
+		else if (!ItemPointerEquals(&tuple->t_self, &tuple->t_data->t_ctid) ||
+				 HeapTupleHeaderIndicatesMovedPartitions(tuple->t_data))
 			result = TM_Updated;
 		else
 			result = TM_Deleted;
@@ -5056,7 +5059,8 @@ test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
 								LOCKMODE_from_mxstatus(wantedstatus)))
 		{
 			/* bummer */
-			if (!ItemPointerEquals(&tup->t_self, &tup->t_data->t_ctid))
+			if (!ItemPointerEquals(&tup->t_self, &tup->t_data->t_ctid) ||
+				HeapTupleHeaderIndicatesMovedPartitions(tup->t_data))
 				return TM_Updated;
 			else
 				return TM_Deleted;
