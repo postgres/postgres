@@ -1663,7 +1663,7 @@ RI_PartitionRemove_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 		appendStringInfo(&querybuf, ") WHERE %s AND (",
 						 constraintDef);
 	else
-		appendStringInfo(&querybuf, ") WHERE (");
+		appendStringInfoString(&querybuf, ") WHERE (");
 
 	sep = "";
 	for (i = 0; i < riinfo->nkeys; i++)

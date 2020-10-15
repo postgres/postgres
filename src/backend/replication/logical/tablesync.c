@@ -774,7 +774,7 @@ copy_table(Relation rel)
 		 * For non-tables, we need to do COPY (SELECT ...), but we can't just
 		 * do SELECT * because we need to not copy generated columns.
 		 */
-		appendStringInfo(&cmd, "COPY (SELECT ");
+		appendStringInfoString(&cmd, "COPY (SELECT ");
 		for (int i = 0; i < lrel.natts; i++)
 		{
 			appendStringInfoString(&cmd, quote_identifier(lrel.attnames[i]));

@@ -1375,8 +1375,8 @@ expand_foreign_server_name_patterns(Archive *fout,
 
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
-		appendPQExpBuffer(query,
-						  "SELECT oid FROM pg_catalog.pg_foreign_server s\n");
+		appendPQExpBufferStr(query,
+							 "SELECT oid FROM pg_catalog.pg_foreign_server s\n");
 		processSQLNamePattern(GetConnection(fout), query, cell->val, false,
 							  false, NULL, "s.srvname", NULL, NULL);
 
@@ -4250,23 +4250,19 @@ getSubscriptions(Archive *fout)
 					  username_subquery);
 
 	if (fout->remoteVersion >= 140000)
-		appendPQExpBuffer(query,
-						  " s.subbinary,\n");
+		appendPQExpBufferStr(query, " s.subbinary,\n");
 	else
-		appendPQExpBuffer(query,
-						  " false AS subbinary,\n");
+		appendPQExpBufferStr(query, " false AS subbinary,\n");
 
 	if (fout->remoteVersion >= 140000)
-		appendPQExpBuffer(query,
-						  " s.substream\n");
+		appendPQExpBufferStr(query, " s.substream\n");
 	else
-		appendPQExpBuffer(query,
-						  " false AS substream\n");
+		appendPQExpBufferStr(query, " false AS substream\n");
 
-	appendPQExpBuffer(query,
-					  "FROM pg_subscription s\n"
-					  "WHERE s.subdbid = (SELECT oid FROM pg_database\n"
-					  "                   WHERE datname = current_database())");
+	appendPQExpBufferStr(query,
+						 "FROM pg_subscription s\n"
+						 "WHERE s.subdbid = (SELECT oid FROM pg_database\n"
+						 "                   WHERE datname = current_database())");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -4376,10 +4372,10 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 		appendPQExpBufferStr(query, "NONE");
 
 	if (strcmp(subinfo->subbinary, "t") == 0)
-		appendPQExpBuffer(query, ", binary = true");
+		appendPQExpBufferStr(query, ", binary = true");
 
 	if (strcmp(subinfo->substream, "f") != 0)
-		appendPQExpBuffer(query, ", streaming = on");
+		appendPQExpBufferStr(query, ", streaming = on");
 
 	if (strcmp(subinfo->subsynccommit, "off") != 0)
 		appendPQExpBuffer(query, ", synchronous_commit = %s", fmtId(subinfo->subsynccommit));
@@ -11845,26 +11841,26 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	asPart = createPQExpBuffer();
 
 	/* Fetch function-specific details */
-	appendPQExpBuffer(query,
-					  "SELECT\n"
-					  "proretset,\n"
-					  "prosrc,\n"
-					  "probin,\n"
-					  "provolatile,\n"
-					  "proisstrict,\n"
-					  "prosecdef,\n"
-					  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname,\n");
+	appendPQExpBufferStr(query,
+						 "SELECT\n"
+						 "proretset,\n"
+						 "prosrc,\n"
+						 "probin,\n"
+						 "provolatile,\n"
+						 "proisstrict,\n"
+						 "prosecdef,\n"
+						 "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname,\n");
 
 	if (fout->remoteVersion >= 80300)
-		appendPQExpBuffer(query,
-						  "proconfig,\n"
-						  "procost,\n"
-						  "prorows,\n");
+		appendPQExpBufferStr(query,
+							 "proconfig,\n"
+							 "procost,\n"
+							 "prorows,\n");
 	else
-		appendPQExpBuffer(query,
-						  "null AS proconfig,\n"
-						  "0 AS procost,\n"
-						  "0 AS prorows,\n");
+		appendPQExpBufferStr(query,
+							 "null AS proconfig,\n"
+							 "0 AS procost,\n"
+							 "0 AS prorows,\n");
 
 	if (fout->remoteVersion >= 80400)
 	{
@@ -11872,56 +11868,56 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		 * In 8.4 and up we rely on pg_get_function_arguments and
 		 * pg_get_function_result instead of examining proallargtypes etc.
 		 */
-		appendPQExpBuffer(query,
-						  "pg_catalog.pg_get_function_arguments(oid) AS funcargs,\n"
-						  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs,\n"
-						  "pg_catalog.pg_get_function_result(oid) AS funcresult,\n");
+		appendPQExpBufferStr(query,
+							 "pg_catalog.pg_get_function_arguments(oid) AS funcargs,\n"
+							 "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs,\n"
+							 "pg_catalog.pg_get_function_result(oid) AS funcresult,\n");
 	}
 	else if (fout->remoteVersion >= 80100)
-		appendPQExpBuffer(query,
-						  "proallargtypes,\n"
-						  "proargmodes,\n"
-						  "proargnames,\n");
+		appendPQExpBufferStr(query,
+							 "proallargtypes,\n"
+							 "proargmodes,\n"
+							 "proargnames,\n");
 	else
-		appendPQExpBuffer(query,
-						  "null AS proallargtypes,\n"
-						  "null AS proargmodes,\n"
-						  "proargnames,\n");
+		appendPQExpBufferStr(query,
+							 "null AS proallargtypes,\n"
+							 "null AS proargmodes,\n"
+							 "proargnames,\n");
 
 	if (fout->remoteVersion >= 90200)
-		appendPQExpBuffer(query,
-						  "proleakproof,\n");
+		appendPQExpBufferStr(query,
+							 "proleakproof,\n");
 	else
-		appendPQExpBuffer(query,
-						  "false AS proleakproof,\n");
+		appendPQExpBufferStr(query,
+							 "false AS proleakproof,\n");
 
 	if (fout->remoteVersion >= 90500)
-		appendPQExpBuffer(query,
-						  "array_to_string(protrftypes, ' ') AS protrftypes,\n");
+		appendPQExpBufferStr(query,
+							 "array_to_string(protrftypes, ' ') AS protrftypes,\n");
 
 	if (fout->remoteVersion >= 90600)
-		appendPQExpBuffer(query,
-						  "proparallel,\n");
+		appendPQExpBufferStr(query,
+							 "proparallel,\n");
 	else
-		appendPQExpBuffer(query,
-						  "'u' AS proparallel,\n");
+		appendPQExpBufferStr(query,
+							 "'u' AS proparallel,\n");
 
 	if (fout->remoteVersion >= 110000)
-		appendPQExpBuffer(query,
-						  "prokind,\n");
+		appendPQExpBufferStr(query,
+							 "prokind,\n");
 	else if (fout->remoteVersion >= 80400)
-		appendPQExpBuffer(query,
-						  "CASE WHEN proiswindow THEN 'w' ELSE 'f' END AS prokind,\n");
+		appendPQExpBufferStr(query,
+							 "CASE WHEN proiswindow THEN 'w' ELSE 'f' END AS prokind,\n");
 	else
-		appendPQExpBuffer(query,
-						  "'f' AS prokind,\n");
+		appendPQExpBufferStr(query,
+							 "'f' AS prokind,\n");
 
 	if (fout->remoteVersion >= 120000)
-		appendPQExpBuffer(query,
-						  "prosupport\n");
+		appendPQExpBufferStr(query,
+							 "prosupport\n");
 	else
-		appendPQExpBuffer(query,
-						  "'-' AS prosupport\n");
+		appendPQExpBufferStr(query,
+							 "'-' AS prosupport\n");
 
 	appendPQExpBuffer(query,
 					  "FROM pg_catalog.pg_proc "
@@ -13891,71 +13887,71 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	details = createPQExpBuffer();
 
 	/* Get aggregate-specific details */
-	appendPQExpBuffer(query,
-					  "SELECT\n"
-					  "aggtransfn,\n"
-					  "aggfinalfn,\n"
-					  "aggtranstype::pg_catalog.regtype,\n"
-					  "agginitval,\n");
+	appendPQExpBufferStr(query,
+						 "SELECT\n"
+						 "aggtransfn,\n"
+						 "aggfinalfn,\n"
+						 "aggtranstype::pg_catalog.regtype,\n"
+						 "agginitval,\n");
 
 	if (fout->remoteVersion >= 80100)
-		appendPQExpBuffer(query,
-						  "aggsortop,\n");
+		appendPQExpBufferStr(query,
+							 "aggsortop,\n");
 	else
-		appendPQExpBuffer(query,
-						  "0 AS aggsortop,\n");
+		appendPQExpBufferStr(query,
+							 "0 AS aggsortop,\n");
 
 	if (fout->remoteVersion >= 80400)
-		appendPQExpBuffer(query,
-						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs,\n"
-						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs,\n");
+		appendPQExpBufferStr(query,
+							 "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs,\n"
+							 "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs,\n");
 
 	if (fout->remoteVersion >= 90400)
-		appendPQExpBuffer(query,
-						  "aggkind,\n"
-						  "aggmtransfn,\n"
-						  "aggminvtransfn,\n"
-						  "aggmfinalfn,\n"
-						  "aggmtranstype::pg_catalog.regtype,\n"
-						  "aggfinalextra,\n"
-						  "aggmfinalextra,\n"
-						  "aggtransspace,\n"
-						  "aggmtransspace,\n"
-						  "aggminitval,\n");
+		appendPQExpBufferStr(query,
+							 "aggkind,\n"
+							 "aggmtransfn,\n"
+							 "aggminvtransfn,\n"
+							 "aggmfinalfn,\n"
+							 "aggmtranstype::pg_catalog.regtype,\n"
+							 "aggfinalextra,\n"
+							 "aggmfinalextra,\n"
+							 "aggtransspace,\n"
+							 "aggmtransspace,\n"
+							 "aggminitval,\n");
 	else
-		appendPQExpBuffer(query,
-						  "'n' AS aggkind,\n"
-						  "'-' AS aggmtransfn,\n"
-						  "'-' AS aggminvtransfn,\n"
-						  "'-' AS aggmfinalfn,\n"
-						  "0 AS aggmtranstype,\n"
-						  "false AS aggfinalextra,\n"
-						  "false AS aggmfinalextra,\n"
-						  "0 AS aggtransspace,\n"
-						  "0 AS aggmtransspace,\n"
-						  "NULL AS aggminitval,\n");
+		appendPQExpBufferStr(query,
+							 "'n' AS aggkind,\n"
+							 "'-' AS aggmtransfn,\n"
+							 "'-' AS aggminvtransfn,\n"
+							 "'-' AS aggmfinalfn,\n"
+							 "0 AS aggmtranstype,\n"
+							 "false AS aggfinalextra,\n"
+							 "false AS aggmfinalextra,\n"
+							 "0 AS aggtransspace,\n"
+							 "0 AS aggmtransspace,\n"
+							 "NULL AS aggminitval,\n");
 
 	if (fout->remoteVersion >= 90600)
-		appendPQExpBuffer(query,
-						  "aggcombinefn,\n"
-						  "aggserialfn,\n"
-						  "aggdeserialfn,\n"
-						  "proparallel,\n");
+		appendPQExpBufferStr(query,
+							 "aggcombinefn,\n"
+							 "aggserialfn,\n"
+							 "aggdeserialfn,\n"
+							 "proparallel,\n");
 	else
-		appendPQExpBuffer(query,
-						  "'-' AS aggcombinefn,\n"
-						  "'-' AS aggserialfn,\n"
-						  "'-' AS aggdeserialfn,\n"
-						  "'u' AS proparallel,\n");
+		appendPQExpBufferStr(query,
+							 "'-' AS aggcombinefn,\n"
+							 "'-' AS aggserialfn,\n"
+							 "'-' AS aggdeserialfn,\n"
+							 "'u' AS proparallel,\n");
 
 	if (fout->remoteVersion >= 110000)
-		appendPQExpBuffer(query,
-						  "aggfinalmodify,\n"
-						  "aggmfinalmodify\n");
+		appendPQExpBufferStr(query,
+							 "aggfinalmodify,\n"
+							 "aggmfinalmodify\n");
 	else
-		appendPQExpBuffer(query,
-						  "'0' AS aggfinalmodify,\n"
-						  "'0' AS aggmfinalmodify\n");
+		appendPQExpBufferStr(query,
+							 "'0' AS aggfinalmodify,\n"
+							 "'0' AS aggmfinalmodify\n");
 
 	appendPQExpBuffer(query,
 					  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "

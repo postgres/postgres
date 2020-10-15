@@ -606,7 +606,7 @@ pg_output_stream_start(LogicalDecodingContext *ctx, TestDecodingData *data, Reor
 	if (data->include_xids)
 		appendStringInfo(ctx->out, "opening a streamed block for transaction TXN %u", txn->xid);
 	else
-		appendStringInfo(ctx->out, "opening a streamed block for transaction");
+		appendStringInfoString(ctx->out, "opening a streamed block for transaction");
 	OutputPluginWrite(ctx, last_write);
 }
 
@@ -623,7 +623,7 @@ pg_decode_stream_stop(LogicalDecodingContext *ctx,
 	if (data->include_xids)
 		appendStringInfo(ctx->out, "closing a streamed block for transaction TXN %u", txn->xid);
 	else
-		appendStringInfo(ctx->out, "closing a streamed block for transaction");
+		appendStringInfoString(ctx->out, "closing a streamed block for transaction");
 	OutputPluginWrite(ctx, true);
 }
 
@@ -641,7 +641,7 @@ pg_decode_stream_abort(LogicalDecodingContext *ctx,
 	if (data->include_xids)
 		appendStringInfo(ctx->out, "aborting streamed (sub)transaction TXN %u", txn->xid);
 	else
-		appendStringInfo(ctx->out, "aborting streamed (sub)transaction");
+		appendStringInfoString(ctx->out, "aborting streamed (sub)transaction");
 	OutputPluginWrite(ctx, true);
 }
 
@@ -660,7 +660,7 @@ pg_decode_stream_commit(LogicalDecodingContext *ctx,
 	if (data->include_xids)
 		appendStringInfo(ctx->out, "committing streamed transaction TXN %u", txn->xid);
 	else
-		appendStringInfo(ctx->out, "committing streamed transaction");
+		appendStringInfoString(ctx->out, "committing streamed transaction");
 
 	if (data->include_timestamp)
 		appendStringInfo(ctx->out, " (at %s)",
@@ -693,7 +693,7 @@ pg_decode_stream_change(LogicalDecodingContext *ctx,
 	if (data->include_xids)
 		appendStringInfo(ctx->out, "streaming change for TXN %u", txn->xid);
 	else
-		appendStringInfo(ctx->out, "streaming change for transaction");
+		appendStringInfoString(ctx->out, "streaming change for transaction");
 	OutputPluginWrite(ctx, true);
 }
 
@@ -745,6 +745,6 @@ pg_decode_stream_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	if (data->include_xids)
 		appendStringInfo(ctx->out, "streaming truncate for TXN %u", txn->xid);
 	else
-		appendStringInfo(ctx->out, "streaming truncate for transaction");
+		appendStringInfoString(ctx->out, "streaming truncate for transaction");
 	OutputPluginWrite(ctx, true);
 }

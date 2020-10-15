@@ -614,16 +614,16 @@ get_parallel_object_list(PGconn *conn, ReindexType type,
 	{
 		case REINDEX_DATABASE:
 			Assert(user_list == NULL);
-			appendPQExpBuffer(&catalog_query,
-							  "SELECT c.relname, ns.nspname\n"
-							  " FROM pg_catalog.pg_class c\n"
-							  " JOIN pg_catalog.pg_namespace ns"
-							  " ON c.relnamespace = ns.oid\n"
-							  " WHERE ns.nspname != 'pg_catalog'\n"
-							  "   AND c.relkind IN ("
-							  CppAsString2(RELKIND_RELATION) ", "
-							  CppAsString2(RELKIND_MATVIEW) ")\n"
-							  " ORDER BY c.relpages DESC;");
+			appendPQExpBufferStr(&catalog_query,
+								 "SELECT c.relname, ns.nspname\n"
+								 " FROM pg_catalog.pg_class c\n"
+								 " JOIN pg_catalog.pg_namespace ns"
+								 " ON c.relnamespace = ns.oid\n"
+								 " WHERE ns.nspname != 'pg_catalog'\n"
+								 "   AND c.relkind IN ("
+								 CppAsString2(RELKIND_RELATION) ", "
+								 CppAsString2(RELKIND_MATVIEW) ")\n"
+								 " ORDER BY c.relpages DESC;");
 			break;
 
 		case REINDEX_SCHEMA:
@@ -637,30 +637,30 @@ get_parallel_object_list(PGconn *conn, ReindexType type,
 				 * All the tables from all the listed schemas are grabbed at
 				 * once.
 				 */
-				appendPQExpBuffer(&catalog_query,
-								  "SELECT c.relname, ns.nspname\n"
-								  " FROM pg_catalog.pg_class c\n"
-								  " JOIN pg_catalog.pg_namespace ns"
-								  " ON c.relnamespace = ns.oid\n"
-								  " WHERE c.relkind IN ("
-								  CppAsString2(RELKIND_RELATION) ", "
-								  CppAsString2(RELKIND_MATVIEW) ")\n"
-								  " AND ns.nspname IN (");
+				appendPQExpBufferStr(&catalog_query,
+									 "SELECT c.relname, ns.nspname\n"
+									 " FROM pg_catalog.pg_class c\n"
+									 " JOIN pg_catalog.pg_namespace ns"
+									 " ON c.relnamespace = ns.oid\n"
+									 " WHERE c.relkind IN ("
+									 CppAsString2(RELKIND_RELATION) ", "
+									 CppAsString2(RELKIND_MATVIEW) ")\n"
+									 " AND ns.nspname IN (");
 
 				for (cell = user_list->head; cell; cell = cell->next)
 				{
 					const char *nspname = cell->val;
 
 					if (nsp_listed)
-						appendPQExpBuffer(&catalog_query, ", ");
+						appendPQExpBufferStr(&catalog_query, ", ");
 					else
 						nsp_listed = true;
 
 					appendStringLiteralConn(&catalog_query, nspname, conn);
 				}
 
-				appendPQExpBuffer(&catalog_query, ")\n"
-								  " ORDER BY c.relpages DESC;");
+				appendPQExpBufferStr(&catalog_query, ")\n"
+									 " ORDER BY c.relpages DESC;");
 			}
 			break;
 

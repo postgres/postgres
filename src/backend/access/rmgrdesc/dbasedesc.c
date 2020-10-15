@@ -37,7 +37,7 @@ dbase_desc(StringInfo buf, XLogReaderState *record)
 		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) rec;
 		int			i;
 
-		appendStringInfo(buf, "dir");
+		appendStringInfoString(buf, "dir");
 		for (i = 0; i < xlrec->ntablespaces; i++)
 			appendStringInfo(buf, " %u/%u",
 							 xlrec->tablespace_ids[i], xlrec->db_id);

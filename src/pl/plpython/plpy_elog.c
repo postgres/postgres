@@ -216,7 +216,7 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 	else if (strcmp(e_module_s, "builtins") == 0
 			 || strcmp(e_module_s, "__main__") == 0
 			 || strcmp(e_module_s, "exceptions") == 0)
-		appendStringInfo(&xstr, "%s", e_type_s);
+		appendStringInfoString(&xstr, e_type_s);
 	else
 		appendStringInfo(&xstr, "%s.%s", e_module_s, e_type_s);
 	appendStringInfo(&xstr, ": %s", vstr);

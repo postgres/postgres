@@ -5250,7 +5250,7 @@ get_select_query_def(Query *query, deparse_context *context,
 			appendContextKeyword(context, " FETCH FIRST ",
 								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
 			get_rule_expr(query->limitCount, context, false);
-			appendStringInfo(buf, " ROWS WITH TIES");
+			appendStringInfoString(buf, " ROWS WITH TIES");
 		}
 		else
 		{
@@ -11362,7 +11362,7 @@ get_range_partbound_string(List *bound_datums)
 	memset(&context, 0, sizeof(deparse_context));
 	context.buf = buf;
 
-	appendStringInfoString(buf, "(");
+	appendStringInfoChar(buf, '(');
 	sep = "";
 	foreach(cell, bound_datums)
 	{

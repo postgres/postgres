@@ -2768,14 +2768,14 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 						 groupInfo->groupCount);
 		/* plural/singular based on methodNames size */
 		if (list_length(methodNames) > 1)
-			appendStringInfo(es->str, "s: ");
+			appendStringInfoString(es->str, "s: ");
 		else
-			appendStringInfo(es->str, ": ");
+			appendStringInfoString(es->str, ": ");
 		foreach(methodCell, methodNames)
 		{
-			appendStringInfo(es->str, "%s", (char *) methodCell->ptr_value);
+			appendStringInfoString(es->str, (char *) methodCell->ptr_value);
 			if (foreach_current_index(methodCell) < list_length(methodNames) - 1)
-				appendStringInfo(es->str, ", ");
+				appendStringInfoString(es->str, ", ");
 		}
 
 		if (groupInfo->maxMemorySpaceUsed > 0)
@@ -2882,11 +2882,11 @@ show_incremental_sort_info(IncrementalSortState *incrsortstate,
 		if (prefixsortGroupInfo->groupCount > 0)
 		{
 			if (es->format == EXPLAIN_FORMAT_TEXT)
-				appendStringInfo(es->str, "\n");
+				appendStringInfoChar(es->str, '\n');
 			show_incremental_sort_group_info(prefixsortGroupInfo, "Pre-sorted", true, es);
 		}
 		if (es->format == EXPLAIN_FORMAT_TEXT)
-			appendStringInfo(es->str, "\n");
+			appendStringInfoChar(es->str, '\n');
 	}
 
 	if (incrsortstate->shared_info != NULL)
@@ -2925,11 +2925,11 @@ show_incremental_sort_info(IncrementalSortState *incrsortstate,
 			if (prefixsortGroupInfo->groupCount > 0)
 			{
 				if (es->format == EXPLAIN_FORMAT_TEXT)
-					appendStringInfo(es->str, "\n");
+					appendStringInfoChar(es->str, '\n');
 				show_incremental_sort_group_info(prefixsortGroupInfo, "Pre-sorted", true, es);
 			}
 			if (es->format == EXPLAIN_FORMAT_TEXT)
-				appendStringInfo(es->str, "\n");
+				appendStringInfoChar(es->str, '\n');
 
 			if (es->workers_state)
 				ExplainCloseWorker(n, es);

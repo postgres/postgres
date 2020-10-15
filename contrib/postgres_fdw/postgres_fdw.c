@@ -2591,8 +2591,8 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 									 quote_identifier(relname));
 				}
 				else
-					appendStringInfo(relations, "%s",
-									 quote_identifier(relname));
+					appendStringInfoString(relations,
+										   quote_identifier(relname));
 				refname = (char *) list_nth(es->rtable_names, rti - 1);
 				if (refname == NULL)
 					refname = rte->eref->aliasname;

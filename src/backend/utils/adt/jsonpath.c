@@ -660,7 +660,7 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 			else if (v->content.anybounds.first == v->content.anybounds.last)
 			{
 				if (v->content.anybounds.first == PG_UINT32_MAX)
-					appendStringInfo(buf, "**{last}");
+					appendStringInfoString(buf, "**{last}");
 				else
 					appendStringInfo(buf, "**{%u}",
 									 v->content.anybounds.first);
