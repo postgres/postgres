@@ -1148,7 +1148,8 @@ WaitEventAdjustKqueue(WaitEventSet *set, WaitEvent *event, int old_events)
 
 	if (rc < 0)
 	{
-		if (event->events == WL_POSTMASTER_DEATH && errno == ESRCH)
+		if (event->events == WL_POSTMASTER_DEATH &&
+			(errno == ESRCH || errno == EACCES))
 			set->report_postmaster_not_running = true;
 		else
 			ereport(ERROR,
