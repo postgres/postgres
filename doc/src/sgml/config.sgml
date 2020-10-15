@@ -2571,14 +2571,26 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Specifies whether transaction commit will wait for WAL records
-        to be written to disk before the command returns a <quote>success</quote>
-        indication to the client.  Valid values are <literal>on</literal>,
-        <literal>remote_apply</literal>, <literal>remote_write</literal>, <literal>local</literal>,
-        and <literal>off</literal>.  The default, and safe, setting
-        is <literal>on</literal>.  When <literal>off</literal>, there can be a delay between
-        when success is reported to the client and when the transaction is
-        really guaranteed to be safe against a server crash.  (The maximum
+        Specifies how much WAL processing must complete before
+        the database server returns a <quote>success</quote>
+        indication to the client.  Valid values are
+        <literal>remote_apply</literal>, <literal>on</literal>
+        (the default), <literal>remote_write</literal>,
+        <literal>local</literal>, and <literal>off</literal>.
+       </para>
+
+       <para>
+        If <varname>synchronous_standby_names</varname> is empty,
+        the only meaningful settings are <literal>on</literal> and
+        <literal>off</literal>;  <literal>remote_apply</literal>,
+        <literal>remote_write</literal> and <literal>local</literal>
+        all provide the same local synchronization level
+        as <literal>on</literal>.  The local behavior of all
+        non-<literal>off</literal> modes is to wait for local flush of WAL
+        to disk.  In <literal>off</literal> mode, there is no waiting,
+        so there can be a delay between when success is reported to the
+        client and when the transaction is later guaranteed to be safe
+        against a server crash.  (The maximum
         delay is three times <xref linkend="guc-wal-writer-delay"/>.)  Unlike
         <xref linkend="guc-fsync"/>, setting this parameter to <literal>off</literal>
         does not create any risk of database inconsistency: an operating
@@ -2590,38 +2602,40 @@ include_dir 'conf.d'
         exact certainty about the durability of a transaction.  For more
         discussion see <xref linkend="wal-async-commit"/>.
        </para>
+
        <para>
-        If <xref linkend="guc-synchronous-standby-names"/> is non-empty, this
-        parameter also controls whether or not transaction commits will wait
-        for their WAL records to be replicated to the standby server(s).
-        When set to <literal>on</literal>, commits will wait until replies
+        If <xref linkend="guc-synchronous-standby-names"/> is non-empty,
+        <varname>synchronous_commit</varname> also controls whether
+        transaction commits will wait for their WAL records to be
+        processed on the standby server(s).
+       </para>
+
+       <para>
+        When set to <literal>remote_apply</literal>, commits will wait
+        until replies from the current synchronous standby(s) indicate they
+        have received the commit record of the transaction and applied
+        it, so that it has become visible to queries on the standby(s),
+        and also written to durable storage on the standbys.  This will
+        cause much larger commit delays than previous settings since
+        it waits for WAL replay.  When set to <literal>on</literal>,
+        commits wait until replies
         from the current synchronous standby(s) indicate they have received
-        the commit record of the transaction and flushed it to disk.  This
+        the commit record of the transaction and flushed it to durable storage.  This
         ensures the transaction will not be lost unless both the primary and
         all synchronous standbys suffer corruption of their database storage.
-        When set to <literal>remote_apply</literal>, commits will wait until replies
-        from the current synchronous standby(s) indicate they have received the
-        commit record of the transaction and applied it, so that it has become
-        visible to queries on the standby(s).
         When set to <literal>remote_write</literal>, commits will wait until replies
         from the current synchronous standby(s) indicate they have
-        received the commit record of the transaction and written it out to
-        their operating system. This setting is sufficient to
-        ensure data preservation even if a standby instance of
-        <productname>PostgreSQL</productname> were to crash, but not if the standby
-        suffers an operating-system-level crash, since the data has not
+        received the commit record of the transaction and written it to
+        their file systems. This setting ensures data preservation if a standby instance of
+        <productname>PostgreSQL</productname> crashes, but not if the standby
+        suffers an operating-system-level crash because the data has not
         necessarily reached durable storage on the standby.
-        Finally, the setting <literal>local</literal> causes commits to wait for
-        local flush to disk, but not for replication.  This is not usually
+        The setting <literal>local</literal> causes commits to wait for
+        local flush to disk, but not for replication.  This is usually not
         desirable when synchronous replication is in use, but is provided for
         completeness.
        </para>
-       <para>
-        If <varname>synchronous_standby_names</varname> is empty, the settings
-        <literal>on</literal>, <literal>remote_apply</literal>, <literal>remote_write</literal>
-        and <literal>local</literal> all provide the same synchronization level:
-        transaction commits only wait for local flush to disk.
-       </para>
+
        <para>
         This parameter can be changed at any time; the behavior for any
         one transaction is determined by the setting in effect when it
@@ -2631,6 +2645,76 @@ include_dir 'conf.d'
         asynchronously when the default is the opposite, issue <command>SET
         LOCAL synchronous_commit TO OFF</command> within the transaction.
        </para>
+
+       <para>
+        <xref linkend="synchronous-commit-matrix"/> summarizes the
+        capabilities of the <varname>synchronous_commit</varname> settings.
+       </para>
+
+       <table id="synchronous-commit-matrix">
+        <title>synchronous_commit Modes</title>
+        <tgroup cols="5">
+         <colspec colname="col1" colwidth="1.1*"/>
+         <colspec colname="col2" colwidth="1*"/>
+         <colspec colname="col3" colwidth="1*"/>
+         <colspec colname="col4" colwidth="1*"/>
+         <colspec colname="col5" colwidth="1*"/>
+         <thead>
+          <row>
+           <entry>synchronous_commit setting</entry>
+           <entry>local durable commit</entry>
+           <entry>standby durable commit after PG crash</entry>
+           <entry>standby durable commit after OS crash</entry>
+           <entry>standby query consistency</entry>
+          </row>
+         </thead>
+
+         <tbody>
+
+          <row>
+           <entry>remote_apply</entry>
+           <entry align="center">&bull;</entry>
+           <entry align="center">&bull;</entry>
+           <entry align="center">&bull;</entry>
+           <entry align="center">&bull;</entry>
+          </row>
+
+          <row>
+           <entry>on</entry>
+           <entry align="center">&bull;</entry>
+           <entry align="center">&bull;</entry>
+           <entry align="center">&bull;</entry>
+           <entry align="center"></entry>
+          </row>
+
+          <row>
+           <entry>remote_write</entry>
+           <entry align="center">&bull;</entry>
+           <entry align="center">&bull;</entry>
+           <entry align="center"></entry>
+           <entry align="center"></entry>
+          </row>
+
+          <row>
+           <entry>local</entry>
+           <entry align="center">&bull;</entry>
+           <entry align="center"></entry>
+           <entry align="center"></entry>
+           <entry align="center"></entry>
+          </row>
+
+          <row>
+           <entry>off</entry>
+           <entry align="center"></entry>
+           <entry align="center"></entry>
+           <entry align="center"></entry>
+           <entry align="center"></entry>
+          </row>
+
+         </tbody>
+        </tgroup>
+       </table>
+
       </listitem>
      </varlistentry>
 
