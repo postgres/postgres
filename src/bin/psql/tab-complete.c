@@ -3077,19 +3077,27 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("SELECT", "INSERT", "DELETE", "UPDATE", "DECLARE");
 
 /* FETCH && MOVE */
-	/* Complete FETCH with one of FORWARD, BACKWARD, RELATIVE */
-	else if (Matches("FETCH|MOVE"))
-		COMPLETE_WITH("ABSOLUTE", "BACKWARD", "FORWARD", "RELATIVE");
-	/* Complete FETCH <sth> with one of ALL, NEXT, PRIOR */
-	else if (Matches("FETCH|MOVE", MatchAny))
-		COMPLETE_WITH("ALL", "NEXT", "PRIOR");
 
 	/*
-	 * Complete FETCH <sth1> <sth2> with "FROM" or "IN". These are equivalent,
+	 * Complete FETCH with one of ABSOLUTE, BACKWARD, FORWARD, RELATIVE, ALL,
+	 * NEXT, PRIOR, FIRST, LAST
+	 */
+	else if (Matches("FETCH|MOVE"))
+		COMPLETE_WITH("ABSOLUTE", "BACKWARD", "FORWARD", "RELATIVE",
+					  "ALL", "NEXT", "PRIOR", "FIRST", "LAST");
+
+	/* Complete FETCH BACKWARD or FORWARD with one of ALL, FROM, IN */
+	else if (Matches("FETCH|MOVE", "BACKWARD|FORWARD"))
+		COMPLETE_WITH("ALL", "FROM", "IN");
+
+	/*
+	 * Complete FETCH <direction> with "FROM" or "IN". These are equivalent,
 	 * but we may as well tab-complete both: perhaps some users prefer one
 	 * variant or the other.
 	 */
-	else if (Matches("FETCH|MOVE", MatchAny, MatchAny))
+	else if (Matches("FETCH|MOVE", "ABSOLUTE|BACKWARD|FORWARD|RELATIVE",
+					 MatchAnyExcept("FROM|IN")) ||
+			 Matches("FETCH|MOVE", "ALL|NEXT|PRIOR|FIRST|LAST"))
 		COMPLETE_WITH("FROM", "IN");
 
 /* FOREIGN DATA WRAPPER */
