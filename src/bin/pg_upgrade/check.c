@@ -27,6 +27,7 @@ static void check_for_tables_with_oids(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 static void check_for_jsonb_9_4_usage(ClusterInfo *cluster);
 static void check_for_pg_role_prefix(ClusterInfo *cluster);
+static void check_for_new_tablespace_dir(ClusterInfo *new_cluster);
 static char *get_canonical_locale_name(int category, const char *locale);
 
 
@@ -180,6 +181,8 @@ check_new_cluster(void)
 	check_is_install_user(&new_cluster);
 
 	check_for_prepared_transactions(&new_cluster);
+
+	check_for_new_tablespace_dir(&new_cluster);
 }
 
 
@@ -519,6 +522,43 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 	check_ok();
 }
 
+
+/*
+ * A previous run of pg_upgrade might have failed and the new cluster
+ * directory recreated, but they might have forgotten to remove
+ * the new cluster's tablespace directories.  Therefore, check that
+ * new cluster tablespace directories do not already exist.  If
+ * they do, it would cause an error while restoring global objects.
+ * This allows the failure to be detected at check time, rather than
+ * during schema restore.
+ *
+ * Note, v8.4 has no tablespace_suffix, which is fine so long as the
+ * version being upgraded *to* has a suffix, since it's not allowed
+ * to pg_upgrade from a version to the same version if tablespaces are
+ * in use.
+ */
+static void
+check_for_new_tablespace_dir(ClusterInfo *new_cluster)
+{
+	char	new_tablespace_dir[MAXPGPATH];
+
+	prep_status("Checking for new cluster tablespace directories");
+
+	for (int tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+	{
+		struct stat statbuf;
+
+		snprintf(new_tablespace_dir, MAXPGPATH, "%s%s",
+				os_info.old_tablespaces[tblnum],
+				new_cluster->tablespace_suffix);
+
+		if (stat(new_tablespace_dir, &statbuf) == 0 || errno != ENOENT)
+			pg_fatal("new cluster tablespace directory already exists: \"%s\"\n",
+					 new_tablespace_dir);
+	}
+
+	check_ok();
+}
 
 /*
  * create_script_for_old_cluster_deletion()
