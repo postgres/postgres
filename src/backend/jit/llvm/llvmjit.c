@@ -330,26 +330,46 @@ llvm_get_decl(LLVMModuleRef mod, LLVMValueRef v_src)
 }
 
 /*
- * Copy attributes from one function to another.
+ * Copy attributes from one function to another, for a specific index (an
+ * index can reference return value, function and parameter attributes).
+ */
+static void
+llvm_copy_attributes_at_index(LLVMValueRef v_from, LLVMValueRef v_to, uint32 index)
+{
+	int			num_attributes;
+	LLVMAttributeRef *attrs;
+
+	num_attributes = LLVMGetAttributeCountAtIndex(v_from, index);
+
+	attrs = palloc(sizeof(LLVMAttributeRef) * num_attributes);
+	LLVMGetAttributesAtIndex(v_from, index, attrs);
+
+	for (int attno = 0; attno < num_attributes; attno++)
+		LLVMAddAttributeAtIndex(v_to, index, attrs[attno]);
+
+	pfree(attrs);
+}
+
+/*
+ * Copy all attributes from one function to another. I.e. function, return and
+ * parameters will be copied.
  */
 void
 llvm_copy_attributes(LLVMValueRef v_from, LLVMValueRef v_to)
 {
-	int			num_attributes;
-	int			attno;
-	LLVMAttributeRef *attrs;
+	uint32		param_count;
 
-	num_attributes =
-		LLVMGetAttributeCountAtIndex(v_from, LLVMAttributeFunctionIndex);
+	/* copy function attributes */
+	llvm_copy_attributes_at_index(v_from, v_to, LLVMAttributeFunctionIndex);
 
-	attrs = palloc(sizeof(LLVMAttributeRef) * num_attributes);
-	LLVMGetAttributesAtIndex(v_from, LLVMAttributeFunctionIndex, attrs);
+	/* and the return value attributes */
+	llvm_copy_attributes_at_index(v_from, v_to, LLVMAttributeReturnIndex);
 
-	for (attno = 0; attno < num_attributes; attno++)
-	{
-		LLVMAddAttributeAtIndex(v_to, LLVMAttributeFunctionIndex,
-								attrs[attno]);
-	}
+	/* and each function parameter's attribute */
+	param_count = LLVMCountParams(v_from);
+
+	for (int paramidx = 1; paramidx <= param_count; paramidx++)
+		llvm_copy_attributes_at_index(v_from, v_to, paramidx);
 }
 
 /*
