@@ -540,11 +540,12 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 static void
 check_for_new_tablespace_dir(ClusterInfo *new_cluster)
 {
+	int		tblnum;
 	char	new_tablespace_dir[MAXPGPATH];
 
 	prep_status("Checking for new cluster tablespace directories");
 
-	for (int tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
 	{
 		struct stat statbuf;
 
