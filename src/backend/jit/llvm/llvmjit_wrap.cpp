@@ -16,6 +16,13 @@ extern "C"
 #include "postgres.h"
 }
 
+#include <llvm-c/Core.h>
+
+/* Avoid macro clash with LLVM's C++ headers */
+#undef Min
+
+#include <llvm/IR/Attributes.h>
+#include <llvm/IR/Function.h>
 #include <llvm/MC/SubtargetFeature.h>
 #include <llvm/Support/Host.h>
 
@@ -44,3 +51,28 @@ char *LLVMGetHostCPUFeatures(void) {
 	return strdup(Features.getString().c_str());
 }
 #endif
+
+/*
+ * Like LLVM's LLVMGetAttributeCountAtIndex(), works around a bug in LLVM 3.9.
+ *
+ * In LLVM <= 3.9, LLVMGetAttributeCountAtIndex() segfaults if there are no
+ * attributes at an index (fixed in LLVM commit ce9bb1097dc2).
+ */
+unsigned
+LLVMGetAttributeCountAtIndexPG(LLVMValueRef F, uint32 Idx)
+{
+	/*
+	 * This is more expensive, so only do when using a problematic LLVM
+	 * version.
+	 */
+#if LLVM_VERSION_MAJOR < 4
+	if (!llvm::unwrap<llvm::Function>(F)->getAttributes().hasAttributes(Idx))
+		return 0;
+#endif
+
+	/*
+	 * There is no nice public API to determine the count nicely, so just
+	 * always fall back to LLVM's C API.
+	 */
+	return LLVMGetAttributeCountAtIndex(F, Idx);
+}

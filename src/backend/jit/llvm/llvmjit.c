@@ -339,7 +339,14 @@ llvm_copy_attributes_at_index(LLVMValueRef v_from, LLVMValueRef v_to, uint32 ind
 	int			num_attributes;
 	LLVMAttributeRef *attrs;
 
-	num_attributes = LLVMGetAttributeCountAtIndex(v_from, index);
+	num_attributes = LLVMGetAttributeCountAtIndexPG(v_from, index);
+
+	/*
+	 * Not just for efficiency: LLVM <= 3.9 crashes when
+	 * LLVMGetAttributesAtIndex() is called for an index with 0 attributes.
+	 */
+	if (num_attributes == 0)
+		return;
 
 	attrs = palloc(sizeof(LLVMAttributeRef) * num_attributes);
 	LLVMGetAttributesAtIndex(v_from, index, attrs);
