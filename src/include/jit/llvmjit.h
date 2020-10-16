@@ -133,6 +133,8 @@ extern char *LLVMGetHostCPUName(void);
 extern char *LLVMGetHostCPUFeatures(void);
 #endif
 
+extern unsigned LLVMGetAttributeCountAtIndexPG(LLVMValueRef F, uint32 Idx);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
