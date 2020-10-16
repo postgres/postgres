@@ -65,11 +65,17 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 	/* get the length of the true salt */
 	sl = ep - sp;
 
-	/* */
+	/* we need two PX_MD objects */
 	err = px_find_digest("md5", &ctx);
 	if (err)
 		return NULL;
 	err = px_find_digest("md5", &ctx1);
+	if (err)
+	{
+		/* this path is possible under low-memory circumstances */
+		px_md_free(ctx);
+		return NULL;
+	}
 
 	/* The password first, since that is what is most unknown */
 	px_md_update(ctx, (const uint8 *) pw, strlen(pw));
