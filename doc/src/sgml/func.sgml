@@ -8727,20 +8727,22 @@ now()
 <programlisting>
 SELECT CURRENT_TIMESTAMP;
 SELECT now();
-SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
+SELECT TIMESTAMP 'now';  -- but see tip below
 </programlisting>
    </para>
 
     <tip>
      <para>
-      You do not want to use the third form when specifying a <literal>DEFAULT</literal>
-      clause while creating a table.  The system will convert <literal>now</literal>
+      Do not use the third form when specifying a value to be evaluated later,
+      for example in a <literal>DEFAULT</literal> clause for a table column.
+      The system will convert <literal>now</literal>
       to a <type>timestamp</type> as soon as the constant is parsed, so that when
       the default value is needed,
       the time of the table creation would be used!  The first two
       forms will not be evaluated until the default value is used,
       because they are function calls.  Thus they will give the desired
       behavior of defaulting to the time of row insertion.
+      (See also <xref linkend="datatype-datetime-special-values"/>.)
      </para>
     </tip>
   </sect2>

@@ -2114,7 +2114,7 @@ January 8 04:05:06 1999 PST
      </para>
     </sect3>
 
-    <sect3>
+    <sect3 id="datatype-datetime-special-values">
      <title>Special Values</title>
 
      <indexterm>
@@ -2202,11 +2202,25 @@ January 8 04:05:06 1999 PST
       type:
       <literal>CURRENT_DATE</literal>, <literal>CURRENT_TIME</literal>,
       <literal>CURRENT_TIMESTAMP</literal>, <literal>LOCALTIME</literal>,
-      <literal>LOCALTIMESTAMP</literal>.  The latter four accept an
-      optional subsecond precision specification.  (See <xref
+      <literal>LOCALTIMESTAMP</literal>.  (See <xref
       linkend="functions-datetime-current"/>.)  Note that these are
       SQL functions and are <emphasis>not</emphasis> recognized in data input strings.
      </para>
+
+     <caution>
+      <para>
+       While the input strings <literal>now</literal>,
+       <literal>today</literal>, <literal>tomorrow</literal>,
+       and <literal>yesterday</literal> are fine to use in interactive SQL
+       commands, they can have surprising behavior when the command is
+       saved to be executed later, for example in prepared statements,
+       views, and function definitions.  The string can be converted to a
+       specific time value that continues to be used long after it becomes
+       stale.  Use one of the SQL functions instead in such contexts.
+       For example, <literal>CURRENT_DATE + 1</literal> is safer than
+       <literal>'tomorrow'::date</literal>.
+      </para>
+     </caution>
 
     </sect3>
    </sect2>
