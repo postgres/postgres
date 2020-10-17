@@ -1,4 +1,4 @@
-# version 2020a
+# version 2020c
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -22,7 +22,7 @@ R d 1978 o - Mar 24 1 1 S
 R d 1978 o - S 22 3 0 -
 R d 1980 o - Ap 25 0 1 S
 R d 1980 o - O 31 2 0 -
-Z Africa/Algiers 0:12:12 - LMT 1891 Mar 15 0:1
+Z Africa/Algiers 0:12:12 - LMT 1891 Mar 16
 0:9:21 - PMT 1911 Mar 11
 0 d WE%sT 1940 F 25 2
 1 d CE%sT 1946 O 7
@@ -193,7 +193,7 @@ R M 2021 o - May 16 2 0 -
 R M 2022 o - Mar 27 3 -1 -
 R M 2022 o - May 8 2 0 -
 R M 2023 o - Mar 19 3 -1 -
-R M 2023 o - Ap 23 2 0 -
+R M 2023 o - Ap 30 2 0 -
 R M 2024 o - Mar 10 3 -1 -
 R M 2024 o - Ap 14 2 0 -
 R M 2025 o - F 23 3 -1 -
@@ -209,7 +209,7 @@ R M 2029 o - F 18 2 0 -
 R M 2029 o - D 30 3 -1 -
 R M 2030 o - F 10 2 0 -
 R M 2030 o - D 22 3 -1 -
-R M 2031 o - Ja 26 2 0 -
+R M 2031 o - F 2 2 0 -
 R M 2031 o - D 14 3 -1 -
 R M 2032 o - Ja 18 2 0 -
 R M 2032 o - N 28 3 -1 -
@@ -225,7 +225,7 @@ R M 2036 o - N 23 2 0 -
 R M 2037 o - O 4 3 -1 -
 R M 2037 o - N 15 2 0 -
 R M 2038 o - S 26 3 -1 -
-R M 2038 o - O 31 2 0 -
+R M 2038 o - N 7 2 0 -
 R M 2039 o - S 18 3 -1 -
 R M 2039 o - O 23 2 0 -
 R M 2040 o - S 2 3 -1 -
@@ -241,7 +241,7 @@ R M 2044 o - Au 28 2 0 -
 R M 2045 o - Jul 9 3 -1 -
 R M 2045 o - Au 20 2 0 -
 R M 2046 o - Jul 1 3 -1 -
-R M 2046 o - Au 5 2 0 -
+R M 2046 o - Au 12 2 0 -
 R M 2047 o - Jun 23 3 -1 -
 R M 2047 o - Jul 28 2 0 -
 R M 2048 o - Jun 7 3 -1 -
@@ -257,7 +257,7 @@ R M 2052 o - Jun 2 2 0 -
 R M 2053 o - Ap 13 3 -1 -
 R M 2053 o - May 25 2 0 -
 R M 2054 o - Ap 5 3 -1 -
-R M 2054 o - May 10 2 0 -
+R M 2054 o - May 17 2 0 -
 R M 2055 o - Mar 28 3 -1 -
 R M 2055 o - May 2 2 0 -
 R M 2056 o - Mar 12 3 -1 -
@@ -273,7 +273,7 @@ R M 2060 o - Mar 7 2 0 -
 R M 2061 o - Ja 16 3 -1 -
 R M 2061 o - F 27 2 0 -
 R M 2062 o - Ja 8 3 -1 -
-R M 2062 o - F 12 2 0 -
+R M 2062 o - F 19 2 0 -
 R M 2062 o - D 31 3 -1 -
 R M 2063 o - F 4 2 0 -
 R M 2063 o - D 16 3 -1 -
@@ -289,7 +289,7 @@ R M 2067 o - D 11 2 0 -
 R M 2068 o - O 21 3 -1 -
 R M 2068 o - D 2 2 0 -
 R M 2069 o - O 13 3 -1 -
-R M 2069 o - N 17 2 0 -
+R M 2069 o - N 24 2 0 -
 R M 2070 o - O 5 3 -1 -
 R M 2070 o - N 9 2 0 -
 R M 2071 o - S 20 3 -1 -
@@ -305,7 +305,7 @@ R M 2075 o - S 15 2 0 -
 R M 2076 o - Jul 26 3 -1 -
 R M 2076 o - S 6 2 0 -
 R M 2077 o - Jul 18 3 -1 -
-R M 2077 o - Au 22 2 0 -
+R M 2077 o - Au 29 2 0 -
 R M 2078 o - Jul 10 3 -1 -
 R M 2078 o - Au 14 2 0 -
 R M 2079 o - Jun 25 3 -1 -
@@ -315,13 +315,13 @@ R M 2080 o - Jul 21 2 0 -
 R M 2081 o - Jun 1 3 -1 -
 R M 2081 o - Jul 13 2 0 -
 R M 2082 o - May 24 3 -1 -
-R M 2082 o - Jun 28 2 0 -
+R M 2082 o - Jul 5 2 0 -
 R M 2083 o - May 16 3 -1 -
 R M 2083 o - Jun 20 2 0 -
 R M 2084 o - Ap 30 3 -1 -
 R M 2084 o - Jun 11 2 0 -
 R M 2085 o - Ap 22 3 -1 -
-R M 2085 o - May 27 2 0 -
+R M 2085 o - Jun 3 2 0 -
 R M 2086 o - Ap 14 3 -1 -
 R M 2086 o - May 19 2 0 -
 R M 2087 o - Mar 30 3 -1 -
@@ -426,7 +426,12 @@ Z Antarctica/Casey 0 - -00 1969
 11 - +11 2012 F 21 17u
 8 - +08 2016 O 22
 11 - +11 2018 Mar 11 4
-8 - +08
+8 - +08 2018 O 7 4
+11 - +11 2019 Mar 17 3
+8 - +08 2019 O 4 3
+11 - +11 2020 Mar 8 3
+8 - +08 2020 O 4 0:1
+11 - +11
 Z Antarctica/Davis 0 - -00 1957 Ja 13
 7 - +07 1964 N
 0 - -00 1969 F
@@ -1399,8 +1404,9 @@ Z Antarctica/Macquarie 0 - -00 1899 N
 10 AU AE%sT 1919 Ap 1 0s
 0 - -00 1948 Mar 25
 10 AU AE%sT 1967
-10 AT AE%sT 2010 Ap 4 3
-11 - +11
+10 AT AE%sT 2010
+10 1 AEDT 2011
+10 AT AE%sT
 Z Indian/Christmas 7:2:52 - LMT 1895 F
 7 - +07
 Z Indian/Cocos 6:27:40 - LMT 1900
@@ -1415,7 +1421,9 @@ R FJ 2012 2013 - Ja Su>=18 3 0 -
 R FJ 2014 o - Ja Su>=18 2 0 -
 R FJ 2014 2018 - N Su>=1 2 1 -
 R FJ 2015 ma - Ja Su>=12 3 0 -
-R FJ 2019 ma - N Su>=8 2 1 -
+R FJ 2019 o - N Su>=8 2 1 -
+R FJ 2020 o - D 20 2 1 -
+R FJ 2021 ma - N Su>=8 2 1 -
 Z Pacific/Fiji 11:55:44 - LMT 1915 O 26
 12 FJ +12/+13
 Z Pacific/Gambier -8:59:48 - LMT 1912 O
@@ -1992,8 +2000,8 @@ R F 1945 o - Ap 2 2 2 M
 R F 1945 o - S 16 3 0 -
 R F 1976 o - Mar 28 1 1 S
 R F 1976 o - S 26 1 0 -
-Z Europe/Paris 0:9:21 - LMT 1891 Mar 15 0:1
-0:9:21 - PMT 1911 Mar 11 0:1
+Z Europe/Paris 0:9:21 - LMT 1891 Mar 16
+0:9:21 - PMT 1911 Mar 11
 0 F WE%sT 1940 Jun 14 23
 1 c CE%sT 1944 Au 25
 0 F WE%sT 1945 S 16 3
@@ -2045,29 +2053,30 @@ Z Europe/Athens 1:34:52 - LMT 1895 S 14
 1 g CE%sT 1944 Ap 4
 2 g EE%sT 1981
 2 E EE%sT
-R h 1918 o - Ap 1 3 1 S
-R h 1918 o - S 16 3 0 -
-R h 1919 o - Ap 15 3 1 S
-R h 1919 o - N 24 3 0 -
+R h 1918 1919 - Ap 15 2 1 S
+R h 1918 1920 - S M>=15 3 0 -
+R h 1920 o - Ap 5 2 1 S
 R h 1945 o - May 1 23 1 S
-R h 1945 o - N 1 0 0 -
+R h 1945 o - N 1 1 0 -
 R h 1946 o - Mar 31 2s 1 S
-R h 1946 1949 - O Su>=1 2s 0 -
+R h 1946 o - O 7 2 0 -
 R h 1947 1949 - Ap Su>=4 2s 1 S
-R h 1950 o - Ap 17 2s 1 S
-R h 1950 o - O 23 2s 0 -
-R h 1954 1955 - May 23 0 1 S
-R h 1954 1955 - O 3 0 0 -
-R h 1956 o - Jun Su>=1 0 1 S
-R h 1956 o - S lastSu 0 0 -
-R h 1957 o - Jun Su>=1 1 1 S
-R h 1957 o - S lastSu 3 0 -
-R h 1980 o - Ap 6 1 1 S
-Z Europe/Budapest 1:16:20 - LMT 1890 O
+R h 1947 1949 - O Su>=1 2s 0 -
+R h 1954 o - May 23 0 1 S
+R h 1954 o - O 3 0 0 -
+R h 1955 o - May 22 2 1 S
+R h 1955 o - O 2 3 0 -
+R h 1956 1957 - Jun Su>=1 2 1 S
+R h 1956 1957 - S lastSu 3 0 -
+R h 1980 o - Ap 6 0 1 S
+R h 1980 o - S 28 1 0 -
+R h 1981 1983 - Mar lastSu 0 1 S
+R h 1981 1983 - S lastSu 1 0 -
+Z Europe/Budapest 1:16:20 - LMT 1890 N
 1 c CE%sT 1918
-1 h CE%sT 1941 Ap 8
+1 h CE%sT 1941 Ap 7 23
 1 c CE%sT 1945
-1 h CE%sT 1980 S 28 2s
+1 h CE%sT 1984
 1 E CE%sT
 R w 1917 1919 - F 19 23 1 -
 R w 1917 o - O 21 1 0 -
@@ -2223,8 +2232,8 @@ Z Europe/Chisinau 1:55:20 - LMT 1880
 2 R EE%sT 1992
 2 e EE%sT 1997
 2 MD EE%sT
-Z Europe/Monaco 0:29:32 - LMT 1891 Mar 15
-0:9:21 - PMT 1911 Mar 11
+Z Europe/Monaco 0:29:32 - LMT 1892 Jun
+0:9:21 - PMT 1911 Mar 29
 0 F WE%sT 1945 S 16 3
 1 F CE%sT 1977
 1 E CE%sT
@@ -3413,12 +3422,12 @@ Z America/Inuvik 0 - -00 1953
 Z America/Whitehorse -9:0:12 - LMT 1900 Au 20
 -9 Y Y%sT 1967 May 28
 -8 Y P%sT 1980
--8 C P%sT 2020 Mar 8 2
+-8 C P%sT 2020 N
 -7 - MST
 Z America/Dawson -9:17:40 - LMT 1900 Au 20
 -9 Y Y%sT 1973 O 28
 -8 Y P%sT 1980
--8 C P%sT 2020 Mar 8 2
+-8 C P%sT 2020 N
 -7 - MST
 R m 1939 o - F 5 0 1 D
 R m 1939 o - Jun 25 0 0 S
