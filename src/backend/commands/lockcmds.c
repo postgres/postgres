@@ -266,7 +266,7 @@ LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait,
 
 	LockViewRecurse_walker((Node *) viewquery, &context);
 
-	(void) list_delete_last(context.ancestor_views);
+	context.ancestor_views = list_delete_last(context.ancestor_views);
 
 	table_close(view, NoLock);
 }

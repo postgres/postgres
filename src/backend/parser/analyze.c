@@ -1475,8 +1475,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 			Node	   *col = (Node *) lfirst(lc);
 			List	   *sublist = lfirst(lc2);
 
-			/* sublist pointer in exprsLists won't need adjustment */
-			(void) lappend(sublist, col);
+			sublist = lappend(sublist, col);
 		}
 		list_free(colexprs[i]);
 	}
