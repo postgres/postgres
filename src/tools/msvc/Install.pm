@@ -374,7 +374,8 @@ sub GenerateTimezoneFiles
 	print "Generating timezone files...";
 
 	my @args =
-	  ("$conf/zic/zic", '-d', "$target/share/timezone", '-p', "$posixrules");
+	  ("$conf/zic/zic", '-d', "$target/share/timezone",
+	   '-p', "$posixrules", '-b', 'fat');
 	foreach (@tzfiles)
 	{
 		my $tzfile = $_;

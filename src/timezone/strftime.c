@@ -128,12 +128,22 @@ size_t
 pg_strftime(char *s, size_t maxsize, const char *format, const struct pg_tm *t)
 {
 	char	   *p;
+	int			saved_errno = errno;
 	enum warn	warn = IN_NONE;
 
 	p = _fmt(format, t, s, s + maxsize, &warn);
-	if (p == s + maxsize)
+	if (!p)
+	{
+		errno = EOVERFLOW;
 		return 0;
+	}
+	if (p == s + maxsize)
+	{
+		errno = ERANGE;
+		return 0;
+	}
 	*p = '\0';
+	errno = saved_errno;
 	return p - s;
 }
 
