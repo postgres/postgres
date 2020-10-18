@@ -1637,16 +1637,17 @@ dump_lo_buf(ArchiveHandle *AH)
 {
 	if (AH->connection)
 	{
-		size_t		res;
+		int			res;
 
 		res = lo_write(AH->connection, AH->loFd, AH->lo_buf, AH->lo_buf_used);
-		pg_log_debug(ngettext("wrote %lu byte of large object data (result = %lu)",
-							  "wrote %lu bytes of large object data (result = %lu)",
+		pg_log_debug(ngettext("wrote %zu byte of large object data (result = %d)",
+							  "wrote %zu bytes of large object data (result = %d)",
 							  AH->lo_buf_used),
-					 (unsigned long) AH->lo_buf_used, (unsigned long) res);
+					 AH->lo_buf_used, res);
+		/* We assume there are no short writes, only errors */
 		if (res != AH->lo_buf_used)
-			fatal("could not write to large object (result: %lu, expected: %lu)",
-				  (unsigned long) res, (unsigned long) AH->lo_buf_used);
+			warn_or_exit_horribly(AH, "could not write to large object: %s",
+								  PQerrorMessage(AH->connection));
 	}
 	else
 	{
