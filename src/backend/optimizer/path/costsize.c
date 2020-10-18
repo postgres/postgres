@@ -107,6 +107,13 @@
  */
 #define APPEND_CPU_COST_MULTIPLIER 0.5
 
+/*
+ * Maximum value for row estimates.  We cap row estimates to this to help
+ * ensure that costs based on these estimates remain within the range of what
+ * double can represent.  add_path() wouldn't act sanely given infinite or NaN
+ * cost values.
+ */
+#define MAXIMUM_ROWCOUNT 1e100
 
 double		seq_page_cost = DEFAULT_SEQ_PAGE_COST;
 double		random_page_cost = DEFAULT_RANDOM_PAGE_COST;
@@ -189,11 +196,14 @@ double
 clamp_row_est(double nrows)
 {
 	/*
-	 * Force estimate to be at least one row, to make explain output look
-	 * better and to avoid possible divide-by-zero when interpolating costs.
-	 * Make it an integer, too.
+	 * Avoid infinite and NaN row estimates.  Costs derived from such values
+	 * are going to be useless.  Also force the estimate to be at least one
+	 * row, to make explain output look better and to avoid possible
+	 * divide-by-zero when interpolating costs.  Make it an integer, too.
 	 */
-	if (nrows <= 1.0)
+	if (nrows > MAXIMUM_ROWCOUNT || isnan(nrows))
+		nrows = MAXIMUM_ROWCOUNT;
+	else if (nrows <= 1.0)
 		nrows = 1.0;
 	else
 		nrows = rint(nrows);
@@ -2737,12 +2747,11 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	QualCost	restrict_qual_cost;
 	double		ntuples;
 
-	/* Protect some assumptions below that rowcounts aren't zero or NaN */
-	if (outer_path_rows <= 0 || isnan(outer_path_rows))
+	/* Protect some assumptions below that rowcounts aren't zero */
+	if (outer_path_rows <= 0)
 		outer_path_rows = 1;
-	if (inner_path_rows <= 0 || isnan(inner_path_rows))
+	if (inner_path_rows <= 0)
 		inner_path_rows = 1;
-
 	/* Mark the path with the correct row estimate */
 	if (path->path.param_info)
 		path->path.rows = path->path.param_info->ppi_rows;
@@ -2952,10 +2961,10 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 				innerendsel;
 	Path		sort_path;		/* dummy for result of cost_sort */
 
-	/* Protect some assumptions below that rowcounts aren't zero or NaN */
-	if (outer_path_rows <= 0 || isnan(outer_path_rows))
+	/* Protect some assumptions below that rowcounts aren't zero */
+	if (outer_path_rows <= 0)
 		outer_path_rows = 1;
-	if (inner_path_rows <= 0 || isnan(inner_path_rows))
+	if (inner_path_rows <= 0)
 		inner_path_rows = 1;
 
 	/*
@@ -3185,8 +3194,8 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 				rescannedtuples;
 	double		rescanratio;
 
-	/* Protect some assumptions below that rowcounts aren't zero or NaN */
-	if (inner_path_rows <= 0 || isnan(inner_path_rows))
+	/* Protect some assumptions below that rowcounts aren't zero */
+	if (inner_path_rows <= 0)
 		inner_path_rows = 1;
 
 	/* Mark the path with the correct row estimate */
