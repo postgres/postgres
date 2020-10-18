@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 #endif
 
 #ifdef WIN32
-	err = WSAStartup(MAKEWORD(1, 1), &wsaData);
+	err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (err != 0)
 	{
 		fprintf(stderr, "Cannot start the network subsystem - %d**\nexiting\n", err);
