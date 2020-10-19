@@ -44,6 +44,7 @@ main(int argc, char *argv[])
 	char	   *port = NULL;
 	char	   *username = NULL;
 	enum trivalue prompt_password = TRI_DEFAULT;
+	ConnParams	cparams;
 	bool		echo = false;
 	char	   *langname = NULL;
 	char	   *p;
@@ -129,6 +130,13 @@ main(int argc, char *argv[])
 			dbname = get_user_name_or_exit(progname);
 	}
 
+	cparams.dbname = dbname;
+	cparams.pghost = host;
+	cparams.pgport = port;
+	cparams.pguser = username;
+	cparams.prompt_password = prompt_password;
+	cparams.override_dbname = NULL;
+
 	initPQExpBuffer(&sql);
 
 	/*
@@ -139,7 +147,7 @@ main(int argc, char *argv[])
 		printQueryOpt popt;
 		static const bool translate_columns[] = {false, true};
 
-		conn = connectDatabase(dbname, host, port, username, prompt_password,
+		conn = connectDatabase(&cparams,
 							   progname, echo, false, false);
 
 		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", "
@@ -181,7 +189,7 @@ main(int argc, char *argv[])
 		if (*p >= 'A' && *p <= 'Z')
 			*p += ('a' - 'A');
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
+	conn = connectDatabase(&cparams,
 						   progname, echo, false, false);
 
 	/*
