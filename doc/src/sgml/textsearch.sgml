@@ -1637,7 +1637,7 @@ SELECT to_tsquery('fat') &lt;-&gt; to_tsquery('cat | rat');
      <listitem>
       <para>
        Returns a query that searches for a match to the first given query
-       followed by a match to the second given query at a distance of at
+       followed by a match to the second given query at a distance of exactly
        <replaceable>distance</replaceable> lexemes, using
        the <literal>&lt;<replaceable>N</replaceable>&gt;</literal>
        <type>tsquery</type> operator.  For example:
