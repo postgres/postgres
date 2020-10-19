@@ -157,8 +157,7 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ 
    When <literal>RESTART IDENTITY</literal> is specified, the implied
    <command>ALTER SEQUENCE RESTART</command> operations are also done
    transactionally; that is, they will be rolled back if the surrounding
-   transaction does not commit.  This is unlike the normal behavior of
-   <command>ALTER SEQUENCE RESTART</command>.  Be aware that if any additional
+   transaction does not commit.  Be aware that if any additional
    sequence operations are done on the restarted sequences before the
    transaction rolls back, the effects of these operations on the sequences
    will be rolled back, but not their effects on <function>currval()</function>;
