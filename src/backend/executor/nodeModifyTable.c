@@ -72,9 +72,6 @@ static TupleTableSlot *ExecPrepareTupleRouting(ModifyTableState *mtstate,
 											   ResultRelInfo *targetRelInfo,
 											   TupleTableSlot *slot,
 											   ResultRelInfo **partRelInfo);
-static void ExecSetupChildParentMapForSubplan(ModifyTableState *mtstate);
-static TupleConversionMap *tupconv_map_for_subplan(ModifyTableState *node,
-												   int whichplan);
 
 /*
  * Verify that the tuples to be produced by INSERT or UPDATE match the
@@ -1086,9 +1083,7 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
 {
 	EState	   *estate = mtstate->ps.state;
 	PartitionTupleRouting *proute = mtstate->mt_partition_tuple_routing;
-	int			map_index;
 	TupleConversionMap *tupconv_map;
-	TupleConversionMap *saved_tcs_map = NULL;
 	bool		tuple_deleted;
 	TupleTableSlot *epqslot = NULL;
 
@@ -1163,37 +1158,25 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
 
 	/*
 	 * resultRelInfo is one of the per-subplan resultRelInfos.  So we should
-	 * convert the tuple into root's tuple descriptor, since ExecInsert()
-	 * starts the search from root.  The tuple conversion map list is in the
-	 * order of mtstate->resultRelInfo[], so to retrieve the one for this
-	 * resultRel, we need to know the position of the resultRel in
-	 * mtstate->resultRelInfo[].
+	 * convert the tuple into root's tuple descriptor if needed, since
+	 * ExecInsert() starts the search from root.
 	 */
-	map_index = resultRelInfo - mtstate->resultRelInfo;
-	Assert(map_index >= 0 && map_index < mtstate->mt_nplans);
-	tupconv_map = tupconv_map_for_subplan(mtstate, map_index);
+	tupconv_map = resultRelInfo->ri_ChildToRootMap;
 	if (tupconv_map != NULL)
 		slot = execute_attr_map_slot(tupconv_map->attrMap,
 									 slot,
 									 mtstate->mt_root_tuple_slot);
 
-	/*
-	 * ExecInsert() may scribble on mtstate->mt_transition_capture, so save
-	 * the currently active map.
-	 */
-	if (mtstate->mt_transition_capture)
-		saved_tcs_map = mtstate->mt_transition_capture->tcs_map;
-
 	/* Tuple routing starts from the root table. */
 	*inserted_tuple = ExecInsert(mtstate, mtstate->rootResultRelInfo, slot,
 								 planSlot, estate, canSetTag);
 
-	/* Clear the INSERT's tuple and restore the saved map. */
+	/*
+	 * Reset the transition state that may possibly have been written
+	 * by INSERT.
+	 */
 	if (mtstate->mt_transition_capture)
-	{
 		mtstate->mt_transition_capture->tcs_original_insert_tuple = NULL;
-		mtstate->mt_transition_capture->tcs_map = saved_tcs_map;
-	}
 
 	/* We're done moving. */
 	return true;
@@ -1870,28 +1853,6 @@ ExecSetupTransitionCaptureState(ModifyTableState *mtstate, EState *estate)
 			MakeTransitionCaptureState(targetRelInfo->ri_TrigDesc,
 									   RelationGetRelid(targetRelInfo->ri_RelationDesc),
 									   CMD_UPDATE);
-
-	/*
-	 * If we found that we need to collect transition tuples then we may also
-	 * need tuple conversion maps for any children that have TupleDescs that
-	 * aren't compatible with the tuplestores.  (We can share these maps
-	 * between the regular and ON CONFLICT cases.)
-	 */
-	if (mtstate->mt_transition_capture != NULL ||
-		mtstate->mt_oc_transition_capture != NULL)
-	{
-		ExecSetupChildParentMapForSubplan(mtstate);
-
-		/*
-		 * Install the conversion map for the first plan for UPDATE and DELETE
-		 * operations.  It will be advanced each time we switch to the next
-		 * plan.  (INSERT operations set it every time, so we need not update
-		 * mtstate->mt_oc_transition_capture here.)
-		 */
-		if (mtstate->mt_transition_capture && mtstate->operation != CMD_INSERT)
-			mtstate->mt_transition_capture->tcs_map =
-				tupconv_map_for_subplan(mtstate, 0);
-	}
 }
 
 /*
@@ -1929,35 +1890,20 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 
 	/*
 	 * If we're capturing transition tuples, we might need to convert from the
-	 * partition rowtype to root partitioned table's rowtype.
+	 * partition rowtype to root partitioned table's rowtype.  But if there
+	 * are no BEFORE triggers on the partition that could change the tuple, we
+	 * can just remember the original unconverted tuple to avoid a needless
+	 * round trip conversion.
 	 */
 	if (mtstate->mt_transition_capture != NULL)
 	{
-		if (partrel->ri_TrigDesc &&
-			partrel->ri_TrigDesc->trig_insert_before_row)
-		{
-			/*
-			 * If there are any BEFORE triggers on the partition, we'll have
-			 * to be ready to convert their result back to tuplestore format.
-			 */
-			mtstate->mt_transition_capture->tcs_original_insert_tuple = NULL;
-			mtstate->mt_transition_capture->tcs_map =
-				partrouteinfo->pi_PartitionToRootMap;
-		}
-		else
-		{
-			/*
-			 * Otherwise, just remember the original unconverted tuple, to
-			 * avoid a needless round trip conversion.
-			 */
-			mtstate->mt_transition_capture->tcs_original_insert_tuple = slot;
-			mtstate->mt_transition_capture->tcs_map = NULL;
-		}
-	}
-	if (mtstate->mt_oc_transition_capture != NULL)
-	{
-		mtstate->mt_oc_transition_capture->tcs_map =
-			partrouteinfo->pi_PartitionToRootMap;
+		bool		has_before_insert_row_trig;
+
+		has_before_insert_row_trig = (partrel->ri_TrigDesc &&
+									  partrel->ri_TrigDesc->trig_insert_before_row);
+
+		mtstate->mt_transition_capture->tcs_original_insert_tuple =
+			!has_before_insert_row_trig ? slot : NULL;
 	}
 
 	/*
@@ -1973,58 +1919,6 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 
 	*partRelInfo = partrel;
 	return slot;
-}
-
-/*
- * Initialize the child-to-root tuple conversion map array for UPDATE subplans.
- *
- * This map array is required to convert the tuple from the subplan result rel
- * to the target table descriptor. This requirement arises for two independent
- * scenarios:
- * 1. For update-tuple-routing.
- * 2. For capturing tuples in transition tables.
- */
-static void
-ExecSetupChildParentMapForSubplan(ModifyTableState *mtstate)
-{
-	ResultRelInfo *targetRelInfo = mtstate->rootResultRelInfo;
-	ResultRelInfo *resultRelInfos = mtstate->resultRelInfo;
-	TupleDesc	outdesc;
-	int			numResultRelInfos = mtstate->mt_nplans;
-	int			i;
-
-	/*
-	 * Build array of conversion maps from each child's TupleDesc to the one
-	 * used in the target relation.  The map pointers may be NULL when no
-	 * conversion is necessary, which is hopefully a common case.
-	 */
-
-	/* Get tuple descriptor of the target rel. */
-	outdesc = RelationGetDescr(targetRelInfo->ri_RelationDesc);
-
-	mtstate->mt_per_subplan_tupconv_maps = (TupleConversionMap **)
-		palloc(sizeof(TupleConversionMap *) * numResultRelInfos);
-
-	for (i = 0; i < numResultRelInfos; ++i)
-	{
-		mtstate->mt_per_subplan_tupconv_maps[i] =
-			convert_tuples_by_name(RelationGetDescr(resultRelInfos[i].ri_RelationDesc),
-								   outdesc);
-	}
-}
-
-/*
- * For a given subplan index, get the tuple conversion map.
- */
-static TupleConversionMap *
-tupconv_map_for_subplan(ModifyTableState *mtstate, int whichplan)
-{
-	/* If nobody else set the per-subplan array of maps, do so ourselves. */
-	if (mtstate->mt_per_subplan_tupconv_maps == NULL)
-		ExecSetupChildParentMapForSubplan(mtstate);
-
-	Assert(whichplan >= 0 && whichplan < mtstate->mt_nplans);
-	return mtstate->mt_per_subplan_tupconv_maps[whichplan];
 }
 
 /* ----------------------------------------------------------------
@@ -2122,17 +2016,6 @@ ExecModifyTable(PlanState *pstate)
 				junkfilter = resultRelInfo->ri_junkFilter;
 				EvalPlanQualSetPlan(&node->mt_epqstate, subplanstate->plan,
 									node->mt_arowmarks[node->mt_whichplan]);
-				/* Prepare to convert transition tuples from this child. */
-				if (node->mt_transition_capture != NULL)
-				{
-					node->mt_transition_capture->tcs_map =
-						tupconv_map_for_subplan(node, node->mt_whichplan);
-				}
-				if (node->mt_oc_transition_capture != NULL)
-				{
-					node->mt_oc_transition_capture->tcs_map =
-						tupconv_map_for_subplan(node, node->mt_whichplan);
-				}
 				continue;
 			}
 			else
@@ -2334,8 +2217,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * If it's a partitioned table, the root partition doesn't appear
 	 * elsewhere in the plan and its RT index is given explicitly in
 	 * node->rootRelation.  Otherwise (i.e. table inheritance) the target
-	 * relation is the first relation in the node->resultRelations list, and
-	 * we will initialize it in the loop below.
+	 * relation is the first relation in the node->resultRelations list.
 	 *----------
 	 */
 	if (node->rootRelation > 0)
@@ -2347,6 +2229,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	else
 	{
 		mtstate->rootResultRelInfo = mtstate->resultRelInfo;
+		ExecInitResultRelation(estate, mtstate->resultRelInfo,
+							   linitial_int(node->resultRelations));
 	}
 
 	mtstate->mt_arowmarks = (List **) palloc0(sizeof(List *) * nplans);
@@ -2355,6 +2239,13 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/* set up epqstate with dummy subplan data for the moment */
 	EvalPlanQualInit(&mtstate->mt_epqstate, estate, NULL, NIL, node->epqParam);
 	mtstate->fireBSTriggers = true;
+
+	/*
+	 * Build state for collecting transition tuples.  This requires having a
+	 * valid trigger query context, so skip it in explain-only mode.
+	 */
+	if (!(eflags & EXEC_FLAG_EXPLAIN_ONLY))
+		ExecSetupTransitionCaptureState(mtstate, estate);
 
 	/*
 	 * call ExecInitNode on each of the plans to be executed and save the
@@ -2370,8 +2261,12 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 		subplan = (Plan *) lfirst(l1);
 
-		/* This opens the relation and fills ResultRelInfo. */
-		ExecInitResultRelation(estate, resultRelInfo, resultRelation);
+		/*
+		 * This opens result relation and fills ResultRelInfo. (root relation
+		 * was initialized already.)
+		 */
+		if (resultRelInfo != mtstate->rootResultRelInfo)
+			ExecInitResultRelation(estate, resultRelInfo, resultRelation);
 
 		/* Initialize the usesFdwDirectModify flag */
 		resultRelInfo->ri_usesFdwDirectModify = bms_is_member(i,
@@ -2427,6 +2322,23 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 															 eflags);
 		}
 
+		/*
+		 * If needed, initialize a map to convert tuples in the child format
+		 * to the format of the table mentioned in the query (root relation).
+		 * It's needed for update tuple routing, because the routing starts
+		 * from the root relation.  It's also needed for capturing transition
+		 * tuples, because the transition tuple store can only store tuples
+		 * in the root table format.
+		 *
+		 * For INSERT, the map is only initialized for a given partition when
+		 * the partition itself is first initialized by ExecFindPartition().
+		 */
+		if (update_tuple_routing_needed ||
+			(mtstate->mt_transition_capture &&
+			 mtstate->operation != CMD_INSERT))
+			resultRelInfo->ri_ChildToRootMap =
+				convert_tuples_by_name(RelationGetDescr(resultRelInfo->ri_RelationDesc),
+									   RelationGetDescr(mtstate->rootResultRelInfo->ri_RelationDesc));
 		resultRelInfo++;
 		i++;
 	}
@@ -2451,26 +2363,12 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			ExecSetupPartitionTupleRouting(estate, mtstate, rel);
 
 	/*
-	 * Build state for collecting transition tuples.  This requires having a
-	 * valid trigger query context, so skip it in explain-only mode.
-	 */
-	if (!(eflags & EXEC_FLAG_EXPLAIN_ONLY))
-		ExecSetupTransitionCaptureState(mtstate, estate);
-
-	/*
-	 * Construct mapping from each of the per-subplan partition attnos to the
-	 * root attno.  This is required when during update row movement the tuple
-	 * descriptor of a source partition does not match the root partitioned
-	 * table descriptor.  In such a case we need to convert tuples to the root
-	 * tuple descriptor, because the search for destination partition starts
-	 * from the root.  We'll also need a slot to store these converted tuples.
-	 * We can skip this setup if it's not a partition key update.
+	 * For update row movement we'll need a dedicated slot to store the
+	 * tuples that have been converted from partition format to the root
+	 * table format.
 	 */
 	if (update_tuple_routing_needed)
-	{
-		ExecSetupChildParentMapForSubplan(mtstate);
 		mtstate->mt_root_tuple_slot = table_slot_create(rel, NULL);
-	}
 
 	/*
 	 * Initialize any WITH CHECK OPTION constraints if needed.

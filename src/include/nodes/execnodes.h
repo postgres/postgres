@@ -486,6 +486,13 @@ typedef struct ResultRelInfo
 	/* info for partition tuple routing (NULL if not set up yet) */
 	struct PartitionRoutingInfo *ri_PartitionInfo;
 
+	/*
+	 * Map to convert child result relation tuples to the format of the table
+	 * actually mentioned in the query (called "root").  Set only if
+	 * transition tuple capture or update partition row movement is active.
+	 */
+	TupleConversionMap *ri_ChildToRootMap;
+
 	/* for use by copy.c when performing multi-inserts */
 	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;
 } ResultRelInfo;
@@ -1179,9 +1186,6 @@ typedef struct ModifyTableState
 
 	/* controls transition table population for INSERT...ON CONFLICT UPDATE */
 	struct TransitionCaptureState *mt_oc_transition_capture;
-
-	/* Per plan map for tuple conversion from child to root */
-	TupleConversionMap **mt_per_subplan_tupconv_maps;
 } ModifyTableState;
 
 /* ----------------

@@ -908,6 +908,15 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	}
 
 	/*
+	 * Also, if transition capture is required, store a map to convert tuples
+	 * from partition's rowtype to the root partition table's.
+	 */
+	if (mtstate->mt_transition_capture || mtstate->mt_oc_transition_capture)
+		leaf_part_rri->ri_ChildToRootMap =
+			convert_tuples_by_name(RelationGetDescr(leaf_part_rri->ri_RelationDesc),
+								   RelationGetDescr(leaf_part_rri->ri_PartitionRoot));
+
+	/*
 	 * Since we've just initialized this ResultRelInfo, it's not in any list
 	 * attached to the estate as yet.  Add it, so that it can be found later.
 	 *
@@ -975,20 +984,6 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 	}
 	else
 		partrouteinfo->pi_PartitionTupleSlot = NULL;
-
-	/*
-	 * Also, if transition capture is required, store a map to convert tuples
-	 * from partition's rowtype to the root partition table's.
-	 */
-	if (mtstate &&
-		(mtstate->mt_transition_capture || mtstate->mt_oc_transition_capture))
-	{
-		partrouteinfo->pi_PartitionToRootMap =
-			convert_tuples_by_name(RelationGetDescr(partRelInfo->ri_RelationDesc),
-								   RelationGetDescr(partRelInfo->ri_PartitionRoot));
-	}
-	else
-		partrouteinfo->pi_PartitionToRootMap = NULL;
 
 	/*
 	 * If the partition is a foreign table, let the FDW init itself for

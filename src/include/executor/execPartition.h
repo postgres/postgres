@@ -37,12 +37,6 @@ typedef struct PartitionRoutingInfo
 	TupleConversionMap *pi_RootToPartitionMap;
 
 	/*
-	 * Map for converting tuples in partition format into the root partitioned
-	 * table format, or NULL if no conversion is required.
-	 */
-	TupleConversionMap *pi_PartitionToRootMap;
-
-	/*
 	 * Slot to store tuples in partition format, or NULL when no translation
 	 * is required between root and partition.
 	 */
