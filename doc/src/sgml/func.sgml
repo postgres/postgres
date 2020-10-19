@@ -15034,7 +15034,7 @@ table2-mapping
         per <function>to_json</function> or <function>to_jsonb</function>.
        </para>
        <para>
-        <literal>json_build_array(1,2,'foo',4,5)</literal>
+        <literal>json_build_array(1, 2, 'foo', 4, 5)</literal>
         <returnvalue>[1, 2, "foo", 4, 5]</returnvalue>
        </para></entry>
       </row>
@@ -15061,7 +15061,7 @@ table2-mapping
         per <function>to_json</function> or <function>to_jsonb</function>.
        </para>
        <para>
-        <literal>json_build_object('foo',1,2,row(3,'bar'))</literal>
+        <literal>json_build_object('foo', 1, 2, row(3,'bar'))</literal>
         <returnvalue>{"foo" : 1, "2" : {"f1":3,"f2":"bar"}}</returnvalue>
        </para></entry>
       </row>
@@ -15093,7 +15093,7 @@ table2-mapping
         <literal>json_object('{a, 1, b, "def", c, 3.5}')</literal>
         <returnvalue>{"a" : "1", "b" : "def", "c" : "3.5"}</returnvalue>
        </para>
-        <para><literal>json_object('{{a, 1},{b, "def"},{c, 3.5}}')</literal>
+        <para><literal>json_object('{{a, 1}, {b, "def"}, {c, 3.5}}')</literal>
         <returnvalue>{"a" : "1", "b" : "def", "c" : "3.5"}</returnvalue>
        </para></entry>
       </row>
@@ -15113,7 +15113,7 @@ table2-mapping
         the one-argument form.
        </para>
        <para>
-        <literal>json_object('{a, b}', '{1,2}')</literal>
+        <literal>json_object('{a,b}', '{1,2}')</literal>
         <returnvalue>{"a": "1", "b": "2"}</returnvalue>
        </para></entry>
       </row>
@@ -15504,7 +15504,7 @@ table2-mapping
         <literal>create type twoints as (a int, b int);</literal>
        </para>
        <para>
-        <literal>select * from json_populate_recordset(null::twoints, '[{"a":1,"b":2},{"a":3,"b":4}]')</literal>
+        <literal>select * from json_populate_recordset(null::twoints, '[{"a":1,"b":2}, {"a":3,"b":4}]')</literal>
         <returnvalue></returnvalue>
 <programlisting>
  a | b
@@ -15579,7 +15579,7 @@ table2-mapping
         for <function>json[b]_populate_record</function>.
        </para>
        <para>
-        <literal>select * from json_to_recordset('[{"a":1,"b":"foo"},{"a":"2","c":"bar"}]') as x(a int, b text)</literal>
+        <literal>select * from json_to_recordset('[{"a":1,"b":"foo"}, {"a":"2","c":"bar"}]') as x(a int, b text)</literal>
         <returnvalue></returnvalue>
 <programlisting>
  a |  b
@@ -15617,11 +15617,11 @@ table2-mapping
         or at the end of the array if it is positive.
        </para>
        <para>
-        <literal>jsonb_set('[{"f1":1,"f2":null},2,null,3]', '{0,f1}','[2,3,4]', false)</literal>
+        <literal>jsonb_set('[{"f1":1,"f2":null},2,null,3]', '{0,f1}', '[2,3,4]', false)</literal>
         <returnvalue>[{"f1": [2, 3, 4], "f2": null}, 2, null, 3]</returnvalue>
        </para>
        <para>
-        <literal>jsonb_set('[{"f1":1,"f2":null},2]', '{0,f3}','[2,3,4]')</literal>
+        <literal>jsonb_set('[{"f1":1,"f2":null},2]', '{0,f3}', '[2,3,4]')</literal>
         <returnvalue>[{"f1": 1, "f2": null, "f3": [2, 3, 4]}, 2]</returnvalue>
        </para></entry>
       </row>
@@ -15713,7 +15713,7 @@ table2-mapping
         untouched.
        </para>
        <para>
-        <literal>json_strip_nulls('[{"f1":1,"f2":null},2,null,3]')</literal>
+        <literal>json_strip_nulls('[{"f1":1, "f2":null}, 2, null, 3]')</literal>
         <returnvalue>[{"f1":1},2,null,3]</returnvalue>
        </para></entry>
       </row>
@@ -15737,7 +15737,7 @@ table2-mapping
         as the <literal>@?</literal> and <literal>@@</literal> operators do.
        </para>
        <para>
-        <literal>jsonb_path_exists('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2,"max":4}')</literal>
+        <literal>jsonb_path_exists('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
         <returnvalue>t</returnvalue>
        </para></entry>
       </row>
@@ -15759,7 +15759,7 @@ table2-mapping
         for <function>jsonb_path_exists</function>.
        </para>
        <para>
-        <literal>jsonb_path_match('{"a":[1,2,3,4,5]}', 'exists($.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max))', '{"min":2,"max":4}')</literal>
+        <literal>jsonb_path_match('{"a":[1,2,3,4,5]}', 'exists($.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max))', '{"min":2, "max":4}')</literal>
         <returnvalue>t</returnvalue>
        </para></entry>
       </row>
@@ -15780,7 +15780,7 @@ table2-mapping
         for <function>jsonb_path_exists</function>.
        </para>
        <para>
-        <literal>select * from jsonb_path_query('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2,"max":4}')</literal>
+        <literal>select * from jsonb_path_query('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
         <returnvalue></returnvalue>
 <programlisting>
  jsonb_path_query
@@ -15808,7 +15808,7 @@ table2-mapping
         for <function>jsonb_path_exists</function>.
        </para>
        <para>
-        <literal>jsonb_path_query_array('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2,"max":4}')</literal>
+        <literal>jsonb_path_query_array('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
         <returnvalue>[2, 3, 4]</returnvalue>
        </para></entry>
       </row>
@@ -15830,7 +15830,7 @@ table2-mapping
         for <function>jsonb_path_exists</function>.
        </para>
        <para>
-        <literal>jsonb_path_query_first('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2,"max":4}')</literal>
+        <literal>jsonb_path_query_first('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
         <returnvalue>2</returnvalue>
        </para></entry>
       </row>
@@ -15902,7 +15902,7 @@ table2-mapping
         Converts the given JSON value to pretty-printed, indented text.
        </para>
        <para>
-        <literal>jsonb_pretty('[{"f1":1,"f2":null},2]')</literal>
+        <literal>jsonb_pretty('[{"f1":1,"f2":null}, 2]')</literal>
         <returnvalue></returnvalue>
 <programlisting>
 [
@@ -26599,7 +26599,7 @@ BEGIN
                      obj.object_name,
                      obj.object_identity;
     END LOOP;
-END
+END;
 $$;
 CREATE EVENT TRIGGER test_event_trigger_for_drops
    ON sql_drop

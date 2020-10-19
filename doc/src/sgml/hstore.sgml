@@ -631,7 +631,7 @@ b
         Does <type>hstore</type> contain key?
        </para>
        <para>
-        <literal>exist('a=&gt;1','a')</literal>
+        <literal>exist('a=&gt;1', 'a')</literal>
         <returnvalue>t</returnvalue>
        </para></entry>
       </row>
@@ -647,7 +647,7 @@ b
         for key?
        </para>
        <para>
-        <literal>defined('a=&gt;NULL','a')</literal>
+        <literal>defined('a=&gt;NULL', 'a')</literal>
         <returnvalue>f</returnvalue>
        </para></entry>
       </row>
@@ -662,7 +662,7 @@ b
         Deletes pair with matching key.
        </para>
        <para>
-        <literal>delete('a=&gt;1,b=&gt;2','b')</literal>
+        <literal>delete('a=&gt;1,b=&gt;2', 'b')</literal>
         <returnvalue>"a"=&gt;"1"</returnvalue>
        </para></entry>
       </row>
@@ -676,7 +676,7 @@ b
         Deletes pairs with matching keys.
        </para>
        <para>
-        <literal>delete('a=&gt;1,b=&gt;2,c=&gt;3',ARRAY['a','b'])</literal>
+        <literal>delete('a=&gt;1,b=&gt;2,c=&gt;3', ARRAY['a','b'])</literal>
         <returnvalue>"c"=&gt;"3"</returnvalue>
        </para></entry>
       </row>
@@ -690,7 +690,7 @@ b
         Deletes pairs matching those in the second argument.
        </para>
        <para>
-        <literal>delete('a=&gt;1,b=&gt;2','a=&gt;4,b=&gt;2'::hstore)</literal>
+        <literal>delete('a=&gt;1,b=&gt;2', 'a=&gt;4,b=&gt;2'::hstore)</literal>
         <returnvalue>"a"=&gt;"1"</returnvalue>
        </para></entry>
       </row>

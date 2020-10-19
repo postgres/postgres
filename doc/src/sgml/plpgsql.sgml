@@ -1181,7 +1181,7 @@ BEGIN
     SELECT users.userid INTO STRICT userid
         FROM users WHERE users.username = get_userid.username;
     RETURN userid;
-END
+END;
 $$ LANGUAGE plpgsql;
 </programlisting>
      On failure, this function might produce an error message such as
@@ -1854,7 +1854,7 @@ BEGIN
         RETURN NEXT r; -- return current row of SELECT
     END LOOP;
     RETURN;
-END
+END;
 $BODY$
 LANGUAGE plpgsql;
 
@@ -1882,7 +1882,7 @@ BEGIN
     END IF;
 
     RETURN;
- END
+ END;
 $BODY$
 LANGUAGE plpgsql;
 
@@ -1956,7 +1956,7 @@ DECLARE myvar int := 5;
 BEGIN
   CALL triple(myvar);
   RAISE NOTICE 'myvar = %', myvar;  -- prints 15
-END
+END;
 $$;
 </programlisting>
     </para>
@@ -3559,7 +3559,7 @@ BEGIN
             ROLLBACK;
         END IF;
     END LOOP;
-END
+END;
 $$;
 
 CALL transaction_test1();
@@ -5213,7 +5213,7 @@ DECLARE
 f1 int;
 BEGIN
 RETURN f1;
-END
+END;
 $$ LANGUAGE plpgsql;
 WARNING:  variable "f1" shadows a previously defined variable
 LINE 3: f1 int;
