@@ -1154,8 +1154,13 @@ typedef struct ModifyTableState
 	TupleTableSlot **mt_scans;	/* input tuple corresponding to underlying
 								 * plans */
 	ResultRelInfo *resultRelInfo;	/* per-subplan target relations */
-	ResultRelInfo *rootResultRelInfo;	/* root target relation (partitioned
-										 * table root) */
+
+	/*
+	 * Target relation mentioned in the original statement, used to fire
+	 * statement-level triggers and as the root for tuple routing.
+	 */
+	ResultRelInfo *rootResultRelInfo;
+
 	List	  **mt_arowmarks;	/* per-subplan ExecAuxRowMark lists */
 	EPQState	mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool		fireBSTriggers; /* do we need to fire stmt triggers? */
