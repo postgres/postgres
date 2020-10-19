@@ -1523,7 +1523,7 @@
       </para>
       <para>
        Role can log in. That is, this role can be given as the initial
-       session authorization identifier
+       session authorization identifier.
       </para></entry>
      </row>
 

@@ -471,7 +471,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
   </para>
 
   <para>
-    The following operations are always parallel restricted.
+    The following operations are always parallel restricted:
   </para>
 
   <itemizedlist>
