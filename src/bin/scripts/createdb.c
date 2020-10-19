@@ -51,6 +51,7 @@ main(int argc, char *argv[])
 	char	   *port = NULL;
 	char	   *username = NULL;
 	enum trivalue prompt_password = TRI_DEFAULT;
+	ConnParams	cparams;
 	bool		echo = false;
 	char	   *owner = NULL;
 	char	   *tablespace = NULL;
@@ -180,8 +181,14 @@ main(int argc, char *argv[])
 	if (maintenance_db == NULL && strcmp(dbname, "postgres") == 0)
 		maintenance_db = "template1";
 
-	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
-									  prompt_password, progname, echo);
+	cparams.dbname = maintenance_db;
+	cparams.pghost = host;
+	cparams.pgport = port;
+	cparams.pguser = username;
+	cparams.prompt_password = prompt_password;
+	cparams.override_dbname = NULL;
+
+	conn = connectMaintenanceDatabase(&cparams, progname, echo);
 
 	initPQExpBuffer(&sql);
 

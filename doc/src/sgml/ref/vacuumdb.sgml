@@ -92,9 +92,9 @@ PostgreSQL documentation
       <term><option><optional>--dbname=</optional><replaceable class="parameter">dbname</replaceable></option></term>
       <listitem>
        <para>
-        Specifies the name of the database to be cleaned or analyzed.
-        If this is not specified and <option>-a</option> (or
-        <option>--all</option>) is not used, the database name is read
+        Specifies the name of the database to be cleaned or analyzed,
+        when <option>-a</option>/<option>--all</option> is not used.
+        If this is not specified, the database name is read
         from the environment variable <envar>PGDATABASE</envar>.  If
         that is not set, the user name specified for the connection is
         used.  The <replaceable>dbname</replaceable> can be a <link
@@ -426,10 +426,16 @@ PostgreSQL documentation
       <term><option>--maintenance-db=<replaceable class="parameter">dbname</replaceable></option></term>
       <listitem>
        <para>
-         Specifies the name of the database to connect to discover what other
-         databases should be vacuumed. If not specified, the
-         <literal>postgres</literal> database will be used,
-         and if that does not exist, <literal>template1</literal> will be used.
+        Specifies the name of the database to connect to to discover which
+        databases should be vacuumed,
+        when <option>-a</option>/<option>--all</option> is used.
+        If not specified, the <literal>postgres</literal> database will be used,
+        or if that does not exist, <literal>template1</literal> will be used.
+        This can be a <link linkend="libpq-connstring">connection
+        string</link>.  If so, connection string parameters will override any
+        conflicting command line options.  Also, connection string parameters
+        other than the database name itself will be re-used when connecting
+        to other databases.
        </para>
       </listitem>
      </varlistentry>

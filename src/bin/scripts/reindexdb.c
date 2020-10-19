@@ -16,19 +16,14 @@
 #include "fe_utils/string_utils.h"
 
 
-static void reindex_one_database(const char *name, const char *dbname,
-								 const char *type, const char *host,
-								 const char *port, const char *username,
-								 enum trivalue prompt_password, const char *progname,
+static void reindex_one_database(const ConnParams *cparams,
+								 const char *type, const char *name,
+								 const char *progname,
 								 bool echo, bool verbose, bool concurrently);
-static void reindex_all_databases(const char *maintenance_db,
-								  const char *host, const char *port,
-								  const char *username, enum trivalue prompt_password,
+static void reindex_all_databases(ConnParams *cparams,
 								  const char *progname, bool echo,
 								  bool quiet, bool verbose, bool concurrently);
-static void reindex_system_catalogs(const char *dbname,
-									const char *host, const char *port,
-									const char *username, enum trivalue prompt_password,
+static void reindex_system_catalogs(const ConnParams *cparams,
 									const char *progname, bool echo, bool verbose,
 									bool concurrently);
 static void help(const char *progname);
@@ -66,6 +61,7 @@ main(int argc, char *argv[])
 	const char *port = NULL;
 	const char *username = NULL;
 	enum trivalue prompt_password = TRI_DEFAULT;
+	ConnParams	cparams;
 	bool		syscatalog = false;
 	bool		alldb = false;
 	bool		echo = false;
@@ -159,6 +155,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/* fill cparams except for dbname, which is set below */
+	cparams.pghost = host;
+	cparams.pgport = port;
+	cparams.pguser = username;
+	cparams.prompt_password = prompt_password;
+	cparams.override_dbname = NULL;
+
 	setup_cancel_handler();
 
 	if (alldb)
@@ -189,8 +192,10 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		reindex_all_databases(maintenance_db, host, port, username,
-							  prompt_password, progname, echo, quiet, verbose, concurrently);
+		cparams.dbname = maintenance_db;
+
+		reindex_all_databases(&cparams,
+							  progname, echo, quiet, verbose, concurrently);
 	}
 	else if (syscatalog)
 	{
@@ -220,7 +225,9 @@ main(int argc, char *argv[])
 				dbname = get_user_name_or_exit(progname);
 		}
 
-		reindex_system_catalogs(dbname, host, port, username, prompt_password,
+		cparams.dbname = dbname;
+
+		reindex_system_catalogs(&cparams,
 								progname, echo, verbose, concurrently);
 	}
 	else
@@ -235,14 +242,16 @@ main(int argc, char *argv[])
 				dbname = get_user_name_or_exit(progname);
 		}
 
+		cparams.dbname = dbname;
+
 		if (schemas.head != NULL)
 		{
 			SimpleStringListCell *cell;
 
 			for (cell = schemas.head; cell; cell = cell->next)
 			{
-				reindex_one_database(cell->val, dbname, "SCHEMA", host, port,
-									 username, prompt_password, progname, echo, verbose, concurrently);
+				reindex_one_database(&cparams, "SCHEMA", cell->val,
+									 progname, echo, verbose, concurrently);
 			}
 		}
 
@@ -252,8 +261,8 @@ main(int argc, char *argv[])
 
 			for (cell = indexes.head; cell; cell = cell->next)
 			{
-				reindex_one_database(cell->val, dbname, "INDEX", host, port,
-									 username, prompt_password, progname, echo, verbose, concurrently);
+				reindex_one_database(&cparams, "INDEX", cell->val,
+									 progname, echo, verbose, concurrently);
 			}
 		}
 		if (tables.head != NULL)
@@ -262,8 +271,8 @@ main(int argc, char *argv[])
 
 			for (cell = tables.head; cell; cell = cell->next)
 			{
-				reindex_one_database(cell->val, dbname, "TABLE", host, port,
-									 username, prompt_password, progname, echo, verbose, concurrently);
+				reindex_one_database(&cparams, "TABLE", cell->val,
+									 progname, echo, verbose, concurrently);
 			}
 		}
 
@@ -272,25 +281,24 @@ main(int argc, char *argv[])
 		 * specified
 		 */
 		if (indexes.head == NULL && tables.head == NULL && schemas.head == NULL)
-			reindex_one_database(NULL, dbname, "DATABASE", host, port,
-								 username, prompt_password, progname, echo, verbose, concurrently);
+			reindex_one_database(&cparams, "DATABASE", NULL,
+								 progname, echo, verbose, concurrently);
 	}
 
 	exit(0);
 }
 
 static void
-reindex_one_database(const char *name, const char *dbname, const char *type,
-					 const char *host, const char *port, const char *username,
-					 enum trivalue prompt_password, const char *progname, bool echo,
-					 bool verbose, bool concurrently)
+reindex_one_database(const ConnParams *cparams,
+					 const char *type, const char *name,
+					 const char *progname,
+					 bool echo, bool verbose, bool concurrently)
 {
 	PQExpBufferData sql;
 
 	PGconn	   *conn;
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, echo, false, false);
+	conn = connectDatabase(cparams, progname, echo, false, false);
 
 	if (concurrently && PQserverVersion(conn) < 120000)
 	{
@@ -343,23 +351,18 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 }
 
 static void
-reindex_all_databases(const char *maintenance_db,
-					  const char *host, const char *port,
-					  const char *username, enum trivalue prompt_password,
+reindex_all_databases(ConnParams *cparams,
 					  const char *progname, bool echo, bool quiet, bool verbose,
 					  bool concurrently)
 {
 	PGconn	   *conn;
 	PGresult   *result;
-	PQExpBufferData connstr;
 	int			i;
 
-	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
-									  prompt_password, progname, echo);
+	conn = connectMaintenanceDatabase(cparams, progname, echo);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
-	initPQExpBuffer(&connstr);
 	for (i = 0; i < PQntuples(result); i++)
 	{
 		char	   *dbname = PQgetvalue(result, i, 0);
@@ -370,29 +373,23 @@ reindex_all_databases(const char *maintenance_db,
 			fflush(stdout);
 		}
 
-		resetPQExpBuffer(&connstr);
-		appendPQExpBuffer(&connstr, "dbname=");
-		appendConnStrVal(&connstr, dbname);
+		cparams->override_dbname = dbname;
 
-		reindex_one_database(NULL, connstr.data, "DATABASE", host,
-							 port, username, prompt_password,
+		reindex_one_database(cparams, "DATABASE", NULL,
 							 progname, echo, verbose, concurrently);
 	}
-	termPQExpBuffer(&connstr);
 
 	PQclear(result);
 }
 
 static void
-reindex_system_catalogs(const char *dbname, const char *host, const char *port,
-						const char *username, enum trivalue prompt_password,
+reindex_system_catalogs(const ConnParams *cparams,
 						const char *progname, bool echo, bool verbose, bool concurrently)
 {
 	PGconn	   *conn;
 	PQExpBufferData sql;
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, echo, false, false);
+	conn = connectDatabase(cparams, progname, echo, false, false);
 
 	initPQExpBuffer(&sql);
 
