@@ -1172,8 +1172,8 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
 								 planSlot, estate, canSetTag);
 
 	/*
-	 * Reset the transition state that may possibly have been written
-	 * by INSERT.
+	 * Reset the transition state that may possibly have been written by
+	 * INSERT.
 	 */
 	if (mtstate->mt_transition_capture)
 		mtstate->mt_transition_capture->tcs_original_insert_tuple = NULL;
@@ -1874,7 +1874,6 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 						ResultRelInfo **partRelInfo)
 {
 	ResultRelInfo *partrel;
-	PartitionRoutingInfo *partrouteinfo;
 	TupleConversionMap *map;
 
 	/*
@@ -1885,8 +1884,6 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 	 * UPDATE to another partition becomes a DELETE+INSERT.
 	 */
 	partrel = ExecFindPartition(mtstate, targetRelInfo, proute, slot, estate);
-	partrouteinfo = partrel->ri_PartitionInfo;
-	Assert(partrouteinfo != NULL);
 
 	/*
 	 * If we're capturing transition tuples, we might need to convert from the
@@ -1909,10 +1906,10 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 	/*
 	 * Convert the tuple, if necessary.
 	 */
-	map = partrouteinfo->pi_RootToPartitionMap;
+	map = partrel->ri_RootToPartitionMap;
 	if (map != NULL)
 	{
-		TupleTableSlot *new_slot = partrouteinfo->pi_PartitionTupleSlot;
+		TupleTableSlot *new_slot = partrel->ri_PartitionTupleSlot;
 
 		slot = execute_attr_map_slot(map->attrMap, slot, new_slot);
 	}
@@ -2327,8 +2324,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * to the format of the table mentioned in the query (root relation).
 		 * It's needed for update tuple routing, because the routing starts
 		 * from the root relation.  It's also needed for capturing transition
-		 * tuples, because the transition tuple store can only store tuples
-		 * in the root table format.
+		 * tuples, because the transition tuple store can only store tuples in
+		 * the root table format.
 		 *
 		 * For INSERT, the map is only initialized for a given partition when
 		 * the partition itself is first initialized by ExecFindPartition().
@@ -2363,9 +2360,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			ExecSetupPartitionTupleRouting(estate, mtstate, rel);
 
 	/*
-	 * For update row movement we'll need a dedicated slot to store the
-	 * tuples that have been converted from partition format to the root
-	 * table format.
+	 * For update row movement we'll need a dedicated slot to store the tuples
+	 * that have been converted from partition format to the root table
+	 * format.
 	 */
 	if (update_tuple_routing_needed)
 		mtstate->mt_root_tuple_slot = table_slot_create(rel, NULL);

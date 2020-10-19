@@ -1243,7 +1243,9 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_TrigOldSlot = NULL;
 	resultRelInfo->ri_TrigNewSlot = NULL;
 	resultRelInfo->ri_PartitionRoot = partition_root;
-	resultRelInfo->ri_PartitionInfo = NULL; /* may be set later */
+	resultRelInfo->ri_RootToPartitionMap = NULL;	/* set by
+													 * ExecInitRoutingInfo */
+	resultRelInfo->ri_PartitionTupleSlot = NULL;	/* ditto */
 	resultRelInfo->ri_ChildToRootMap = NULL;
 	resultRelInfo->ri_CopyMultiInsertBuffer = NULL;
 }

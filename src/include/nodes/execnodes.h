@@ -33,7 +33,6 @@
 #include "utils/tuplestore.h"
 
 struct PlanState;				/* forward references in this file */
-struct PartitionRoutingInfo;
 struct ParallelHashJoinState;
 struct ExecRowMark;
 struct ExprState;
@@ -480,11 +479,17 @@ typedef struct ResultRelInfo
 	/* partition check expression state (NULL if not set up yet) */
 	ExprState  *ri_PartitionCheckExpr;
 
-	/* relation descriptor for partitioned table's root, if any */
+	/*
+	 * Information needed by tuple routing target relations
+	 *
+	 * PartitionRoot gives the target relation mentioned in the query.
+	 * RootToPartitionMap and PartitionTupleSlot, initialized by
+	 * ExecInitRoutingInfo, are non-NULL if partition has a different tuple
+	 * format than the root table.
+	 */
 	Relation	ri_PartitionRoot;
-
-	/* info for partition tuple routing (NULL if not set up yet) */
-	struct PartitionRoutingInfo *ri_PartitionInfo;
+	TupleConversionMap *ri_RootToPartitionMap;
+	TupleTableSlot *ri_PartitionTupleSlot;
 
 	/*
 	 * Map to convert child result relation tuples to the format of the table

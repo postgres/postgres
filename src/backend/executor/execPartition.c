@@ -261,7 +261,7 @@ ExecSetupPartitionTupleRouting(EState *estate, ModifyTableState *mtstate,
  * If the partition's ResultRelInfo does not yet exist in 'proute' then we set
  * one up or reuse one from mtstate's resultRelInfo array.  When reusing a
  * ResultRelInfo from the mtstate we verify that the relation is a valid
- * target for INSERTs and then set up a PartitionRoutingInfo for it.
+ * target for INSERTs and initialize tuple routing information.
  *
  * rootResultRelInfo is the relation named in the query.
  *
@@ -307,6 +307,7 @@ ExecFindPartition(ModifyTableState *mtstate,
 	while (dispatch != NULL)
 	{
 		int			partidx = -1;
+		bool		is_leaf;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -346,8 +347,10 @@ ExecFindPartition(ModifyTableState *mtstate,
 					 errtable(rel)));
 		}
 
-		if (partdesc->is_leaf[partidx])
+		is_leaf = partdesc->is_leaf[partidx];
+		if (is_leaf)
 		{
+
 			/*
 			 * We've reached the leaf -- hurray, we're done.  Look to see if
 			 * we've already got a ResultRelInfo for this partition.
@@ -382,7 +385,10 @@ ExecFindPartition(ModifyTableState *mtstate,
 						/* Verify this ResultRelInfo allows INSERTs */
 						CheckValidResultRel(rri, CMD_INSERT);
 
-						/* Set up the PartitionRoutingInfo for it */
+						/*
+						 * Initialize information needed to insert this and
+						 * subsequent tuples routed to this partition.
+						 */
 						ExecInitRoutingInfo(mtstate, estate, proute, dispatch,
 											rri, partidx);
 					}
@@ -464,8 +470,6 @@ ExecFindPartition(ModifyTableState *mtstate,
 		 */
 		if (partidx == partdesc->boundinfo->default_index)
 		{
-			PartitionRoutingInfo *partrouteinfo = rri->ri_PartitionInfo;
-
 			/*
 			 * The tuple must match the partition's layout for the constraint
 			 * expression to be evaluated successfully.  If the partition is
@@ -478,13 +482,13 @@ ExecFindPartition(ModifyTableState *mtstate,
 			 * So if we have to convert, do it from the root slot; if not, use
 			 * the root slot as-is.
 			 */
-			if (partrouteinfo)
+			if (is_leaf)
 			{
-				TupleConversionMap *map = partrouteinfo->pi_RootToPartitionMap;
+				TupleConversionMap *map = rri->ri_RootToPartitionMap;
 
 				if (map)
 					slot = execute_attr_map_slot(map->attrMap, rootslot,
-												 partrouteinfo->pi_PartitionTupleSlot);
+												 rri->ri_PartitionTupleSlot);
 				else
 					slot = rootslot;
 			}
@@ -788,7 +792,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		{
 			TupleConversionMap *map;
 
-			map = leaf_part_rri->ri_PartitionInfo->pi_RootToPartitionMap;
+			map = leaf_part_rri->ri_RootToPartitionMap;
 
 			Assert(node->onConflictSet != NIL);
 			Assert(rootResultRelInfo->ri_onConflict != NULL);
@@ -949,18 +953,15 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 					int partidx)
 {
 	MemoryContext oldcxt;
-	PartitionRoutingInfo *partrouteinfo;
 	int			rri_index;
 
 	oldcxt = MemoryContextSwitchTo(proute->memcxt);
-
-	partrouteinfo = palloc(sizeof(PartitionRoutingInfo));
 
 	/*
 	 * Set up a tuple conversion map to convert a tuple routed to the
 	 * partition from the parent's type to the partition's.
 	 */
-	partrouteinfo->pi_RootToPartitionMap =
+	partRelInfo->ri_RootToPartitionMap =
 		convert_tuples_by_name(RelationGetDescr(partRelInfo->ri_PartitionRoot),
 							   RelationGetDescr(partRelInfo->ri_RelationDesc));
 
@@ -970,7 +971,7 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 	 * for various operations that are applied to tuples after routing, such
 	 * as checking constraints.
 	 */
-	if (partrouteinfo->pi_RootToPartitionMap != NULL)
+	if (partRelInfo->ri_RootToPartitionMap != NULL)
 	{
 		Relation	partrel = partRelInfo->ri_RelationDesc;
 
@@ -979,11 +980,11 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 		 * partition's TupleDesc; TupleDesc reference will be released at the
 		 * end of the command.
 		 */
-		partrouteinfo->pi_PartitionTupleSlot =
+		partRelInfo->ri_PartitionTupleSlot =
 			table_slot_create(partrel, &estate->es_tupleTable);
 	}
 	else
-		partrouteinfo->pi_PartitionTupleSlot = NULL;
+		partRelInfo->ri_PartitionTupleSlot = NULL;
 
 	/*
 	 * If the partition is a foreign table, let the FDW init itself for
@@ -993,7 +994,6 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 		partRelInfo->ri_FdwRoutine->BeginForeignInsert != NULL)
 		partRelInfo->ri_FdwRoutine->BeginForeignInsert(mtstate, partRelInfo);
 
-	partRelInfo->ri_PartitionInfo = partrouteinfo;
 	partRelInfo->ri_CopyMultiInsertBuffer = NULL;
 
 	/*

@@ -23,27 +23,6 @@ typedef struct PartitionDispatchData *PartitionDispatch;
 typedef struct PartitionTupleRouting PartitionTupleRouting;
 
 /*
- * PartitionRoutingInfo
- *
- * Additional result relation information specific to routing tuples to a
- * table partition.
- */
-typedef struct PartitionRoutingInfo
-{
-	/*
-	 * Map for converting tuples in root partitioned table format into
-	 * partition format, or NULL if no conversion is required.
-	 */
-	TupleConversionMap *pi_RootToPartitionMap;
-
-	/*
-	 * Slot to store tuples in partition format, or NULL when no translation
-	 * is required between root and partition.
-	 */
-	TupleTableSlot *pi_PartitionTupleSlot;
-} PartitionRoutingInfo;
-
-/*
  * PartitionedRelPruningData - Per-partitioned-table data for run-time pruning
  * of partitions.  For a multilevel partitioned table, we have one of these
  * for the topmost partition plus one for each non-leaf child partition.

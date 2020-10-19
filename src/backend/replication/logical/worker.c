@@ -1572,7 +1572,6 @@ apply_handle_tuple_routing(ResultRelInfo *relinfo,
 	ResultRelInfo *partrelinfo;
 	Relation	partrel;
 	TupleTableSlot *remoteslot_part;
-	PartitionRoutingInfo *partinfo;
 	TupleConversionMap *map;
 	MemoryContext oldctx;
 
@@ -1599,11 +1598,10 @@ apply_handle_tuple_routing(ResultRelInfo *relinfo,
 	 * partition's rowtype. Convert if needed or just copy, using a dedicated
 	 * slot to store the tuple in any case.
 	 */
-	partinfo = partrelinfo->ri_PartitionInfo;
-	remoteslot_part = partinfo->pi_PartitionTupleSlot;
+	remoteslot_part = partrelinfo->ri_PartitionTupleSlot;
 	if (remoteslot_part == NULL)
 		remoteslot_part = table_slot_create(partrel, &estate->es_tupleTable);
-	map = partinfo->pi_RootToPartitionMap;
+	map = partrelinfo->ri_RootToPartitionMap;
 	if (map != NULL)
 		remoteslot_part = execute_attr_map_slot(map->attrMap, remoteslot,
 												remoteslot_part);
@@ -1748,12 +1746,11 @@ apply_handle_tuple_routing(ResultRelInfo *relinfo,
 					 */
 					oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 					partrel = partrelinfo_new->ri_RelationDesc;
-					partinfo = partrelinfo_new->ri_PartitionInfo;
-					remoteslot_part = partinfo->pi_PartitionTupleSlot;
+					remoteslot_part = partrelinfo_new->ri_PartitionTupleSlot;
 					if (remoteslot_part == NULL)
 						remoteslot_part = table_slot_create(partrel,
 															&estate->es_tupleTable);
-					map = partinfo->pi_RootToPartitionMap;
+					map = partrelinfo_new->ri_RootToPartitionMap;
 					if (map != NULL)
 					{
 						remoteslot_part = execute_attr_map_slot(map->attrMap,
