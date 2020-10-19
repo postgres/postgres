@@ -40,19 +40,16 @@ typedef struct vacuumingOptions
 } vacuumingOptions;
 
 
-static void vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
+static void vacuum_one_database(const ConnParams *cparams,
+								vacuumingOptions *vacopts,
 								int stage,
 								SimpleStringList *tables,
-								const char *host, const char *port,
-								const char *username, enum trivalue prompt_password,
 								int concurrentCons,
 								const char *progname, bool echo, bool quiet);
 
-static void vacuum_all_databases(vacuumingOptions *vacopts,
+static void vacuum_all_databases(ConnParams *cparams,
+								 vacuumingOptions *vacopts,
 								 bool analyze_in_stages,
-								 const char *maintenance_db,
-								 const char *host, const char *port,
-								 const char *username, enum trivalue prompt_password,
 								 int concurrentCons,
 								 const char *progname, bool echo, bool quiet);
 
@@ -108,6 +105,7 @@ main(int argc, char *argv[])
 	char	   *port = NULL;
 	char	   *username = NULL;
 	enum trivalue prompt_password = TRI_DEFAULT;
+	ConnParams	cparams;
 	bool		echo = false;
 	bool		quiet = false;
 	vacuumingOptions vacopts;
@@ -287,6 +285,13 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/* fill cparams except for dbname, which is set below */
+	cparams.pghost = host;
+	cparams.pgport = port;
+	cparams.pguser = username;
+	cparams.prompt_password = prompt_password;
+	cparams.override_dbname = NULL;
+
 	setup_cancel_handler(NULL);
 
 	/* Avoid opening extra connections. */
@@ -306,10 +311,10 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		vacuum_all_databases(&vacopts,
+		cparams.dbname = maintenance_db;
+
+		vacuum_all_databases(&cparams, &vacopts,
 							 analyze_in_stages,
-							 maintenance_db,
-							 host, port, username, prompt_password,
 							 concurrentCons,
 							 progname, echo, quiet);
 	}
@@ -325,25 +330,25 @@ main(int argc, char *argv[])
 				dbname = get_user_name_or_exit(progname);
 		}
 
+		cparams.dbname = dbname;
+
 		if (analyze_in_stages)
 		{
 			int			stage;
 
 			for (stage = 0; stage < ANALYZE_NUM_STAGES; stage++)
 			{
-				vacuum_one_database(dbname, &vacopts,
+				vacuum_one_database(&cparams, &vacopts,
 									stage,
 									&tables,
-									host, port, username, prompt_password,
 									concurrentCons,
 									progname, echo, quiet);
 			}
 		}
 		else
-			vacuum_one_database(dbname, &vacopts,
+			vacuum_one_database(&cparams, &vacopts,
 								ANALYZE_NO_STAGE,
 								&tables,
-								host, port, username, prompt_password,
 								concurrentCons,
 								progname, echo, quiet);
 	}
@@ -365,11 +370,10 @@ main(int argc, char *argv[])
  * a list of tables from the database.
  */
 static void
-vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
+vacuum_one_database(const ConnParams *cparams,
+					vacuumingOptions *vacopts,
 					int stage,
 					SimpleStringList *tables,
-					const char *host, const char *port,
-					const char *username, enum trivalue prompt_password,
 					int concurrentCons,
 					const char *progname, bool echo, bool quiet)
 {
@@ -401,8 +405,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	Assert(stage == ANALYZE_NO_STAGE ||
 		   (stage >= 0 && stage < ANALYZE_NUM_STAGES));
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, echo, false, true);
+	conn = connectDatabase(cparams, progname, echo, false, true);
 
 	if (vacopts->disable_page_skipping && PQserverVersion(conn) < 90600)
 	{
@@ -630,8 +633,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	if (concurrentCons <= 0)
 		concurrentCons = 1;
 
-	slots = ParallelSlotsSetup(dbname, host, port, username, prompt_password,
-							   progname, echo, conn, concurrentCons);
+	slots = ParallelSlotsSetup(cparams, progname, echo, conn, concurrentCons);
 
 	/*
 	 * Prepare all the connections to run the appropriate analyze stage, if
@@ -703,28 +705,23 @@ finish:
  * quickly everywhere before generating more detailed ones.
  */
 static void
-vacuum_all_databases(vacuumingOptions *vacopts,
+vacuum_all_databases(ConnParams *cparams,
+					 vacuumingOptions *vacopts,
 					 bool analyze_in_stages,
-					 const char *maintenance_db, const char *host,
-					 const char *port, const char *username,
-					 enum trivalue prompt_password,
 					 int concurrentCons,
 					 const char *progname, bool echo, bool quiet)
 {
 	PGconn	   *conn;
 	PGresult   *result;
-	PQExpBufferData connstr;
 	int			stage;
 	int			i;
 
-	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
-									  prompt_password, progname, echo);
+	conn = connectMaintenanceDatabase(cparams, progname, echo);
 	result = executeQuery(conn,
 						  "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
 						  echo);
 	PQfinish(conn);
 
-	initPQExpBuffer(&connstr);
 	if (analyze_in_stages)
 	{
 		/*
@@ -739,14 +736,11 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 		{
 			for (i = 0; i < PQntuples(result); i++)
 			{
-				resetPQExpBuffer(&connstr);
-				appendPQExpBufferStr(&connstr, "dbname=");
-				appendConnStrVal(&connstr, PQgetvalue(result, i, 0));
+				cparams->override_dbname = PQgetvalue(result, i, 0);
 
-				vacuum_one_database(connstr.data, vacopts,
+				vacuum_one_database(cparams, vacopts,
 									stage,
 									NULL,
-									host, port, username, prompt_password,
 									concurrentCons,
 									progname, echo, quiet);
 			}
@@ -756,19 +750,15 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 	{
 		for (i = 0; i < PQntuples(result); i++)
 		{
-			resetPQExpBuffer(&connstr);
-			appendPQExpBufferStr(&connstr, "dbname=");
-			appendConnStrVal(&connstr, PQgetvalue(result, i, 0));
+			cparams->override_dbname = PQgetvalue(result, i, 0);
 
-			vacuum_one_database(connstr.data, vacopts,
+			vacuum_one_database(cparams, vacopts,
 								ANALYZE_NO_STAGE,
 								NULL,
-								host, port, username, prompt_password,
 								concurrentCons,
 								progname, echo, quiet);
 		}
 	}
-	termPQExpBuffer(&connstr);
 
 	PQclear(result);
 }

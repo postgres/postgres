@@ -205,8 +205,7 @@ ParallelSlotsGetIdle(ParallelSlot *slots, int numslots)
  * set.
  */
 ParallelSlot *
-ParallelSlotsSetup(const char *dbname, const char *host, const char *port,
-				   const char *username, bool prompt_password,
+ParallelSlotsSetup(const ConnParams *cparams,
 				   const char *progname, bool echo,
 				   PGconn *conn, int numslots)
 {
@@ -221,8 +220,7 @@ ParallelSlotsSetup(const char *dbname, const char *host, const char *port,
 	{
 		for (i = 1; i < numslots; i++)
 		{
-			conn = connectDatabase(dbname, host, port, username, prompt_password,
-								   progname, echo, false, true);
+			conn = connectDatabase(cparams, progname, echo, false, true);
 
 			/*
 			 * Fail and exit immediately if trying to use a socket in an
