@@ -3802,23 +3802,30 @@ makeEmptyPGconn(void)
 #ifdef WIN32
 
 	/*
-	 * Make sure socket support is up and running.
+	 * Make sure socket support is up and running in this process.
+	 *
+	 * Note: the Windows documentation says that we should eventually do a
+	 * matching WSACleanup() call, but experience suggests that that is at
+	 * least as likely to cause problems as fix them.  So we don't.
 	 */
-	WSADATA		wsaData;
+	static bool wsastartup_done = false;
 
-	if (WSAStartup(MAKEWORD(1, 1), &wsaData))
-		return NULL;
+	if (!wsastartup_done)
+	{
+		WSADATA		wsaData;
+
+		if (WSAStartup(MAKEWORD(1, 1), &wsaData) != 0)
+			return NULL;
+		wsastartup_done = true;
+	}
+
+	/* Forget any earlier error */
 	WSASetLastError(0);
-#endif
+#endif							/* WIN32 */
 
 	conn = (PGconn *) malloc(sizeof(PGconn));
 	if (conn == NULL)
-	{
-#ifdef WIN32
-		WSACleanup();
-#endif
 		return conn;
-	}
 
 	/* Zero all pointers and booleans */
 	MemSet(conn, 0, sizeof(PGconn));
@@ -3994,10 +4001,6 @@ freePGconn(PGconn *conn)
 	termPQExpBuffer(&conn->workBuffer);
 
 	free(conn);
-
-#ifdef WIN32
-	WSACleanup();
-#endif
 }
 
 /*

@@ -91,21 +91,6 @@
     </para>
    </warning>
 
-   <note>
-    <para>
-     On Windows, there is a way to improve performance if a single
-     database connection is repeatedly started and shutdown.  Internally,
-     libpq calls <function>WSAStartup()</function> and <function>WSACleanup()</function> for connection startup
-     and shutdown, respectively.  <function>WSAStartup()</function> increments an internal
-     Windows library reference count which is decremented by <function>WSACleanup()</function>.
-     When the reference count is just one, calling <function>WSACleanup()</function> frees
-     all resources and all DLLs are unloaded.  This is an expensive
-     operation.  To avoid this, an application can manually call
-     <function>WSAStartup()</function> so resources will not be freed when the last database
-     connection is closed.
-    </para>
-   </note>
-
    <variablelist>
     <varlistentry id="libpq-pqconnectdbparams">
      <term><function>PQconnectdbParams</function><indexterm><primary>PQconnectdbParams</primary></indexterm></term>
