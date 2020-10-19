@@ -565,7 +565,7 @@
     </para>
     <para>
      <varname>gin_pending_list_limit</varname> can be overridden for individual
-     GIN indexes by changing storage parameters, and which allows each
+     GIN indexes by changing storage parameters, which allows each
      GIN index to have its own cleanup threshold.
      For example, it's possible to increase the threshold only for the GIN
      index which can be updated heavily, and decrease it otherwise.

@@ -167,7 +167,7 @@ SELECT dblink_connect('myconn', 'fdtest');
  OK
 (1 row)
 
-SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[]);
+SELECT * FROM dblink('myconn', 'SELECT * FROM foo') AS t(a int, b text, c text[]);
  a  | b |       c       
 ----+---+---------------
   0 | a | {a0,b0,c0}
@@ -616,7 +616,7 @@ dblink_exec(text sql [, bool fail_on_error]) returns text
       <para>
        The SQL command that you wish to execute in the remote database,
        for example
-       <literal>insert into foo values(0,'a','{"a0","b0","c0"}')</literal>.
+       <literal>insert into foo values(0, 'a', '{"a0","b0","c0"}')</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -653,7 +653,7 @@ SELECT dblink_connect('dbname=dblink_test_standby');
  OK
 (1 row)
 
-SELECT dblink_exec('insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
+SELECT dblink_exec('insert into foo values(21, ''z'', ''{"a0","b0","c0"}'');');
    dblink_exec
 -----------------
  INSERT 943366 1
@@ -665,7 +665,7 @@ SELECT dblink_connect('myconn', 'dbname=regression');
  OK
 (1 row)
 
-SELECT dblink_exec('myconn', 'insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
+SELECT dblink_exec('myconn', 'insert into foo values(21, ''z'', ''{"a0","b0","c0"}'');');
    dblink_exec
 ------------------
  INSERT 6432584 1

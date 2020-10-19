@@ -197,8 +197,8 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   </table>
 
   <para>
-   Because <literal>...</literal> is widely used in data sources, it is allowed
-   as an alternative spelling of <literal>..</literal>.  Unfortunately, this
+   Because the <literal>...</literal> operator is widely used in data sources, it is allowed
+   as an alternative spelling of the <literal>..</literal> operator.  Unfortunately, this
    creates a parsing ambiguity: it is not clear whether the upper bound
    in <literal>0...23</literal> is meant to be <literal>23</literal> or <literal>0.23</literal>.
    This is resolved by requiring at least one digit before the decimal

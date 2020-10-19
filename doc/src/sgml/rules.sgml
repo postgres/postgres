@@ -769,7 +769,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 </para>
 
 <para>
-    The benefit of implementing views with the rule system is,
+    The benefit of implementing views with the rule system is
     that the planner has all
     the information about which tables have to be scanned plus the
     relationships between these tables plus the restrictive
@@ -781,7 +781,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     the best path to execute the query, and the more information
     the planner has, the better this decision can be. And
     the rule system as implemented in <productname>PostgreSQL</productname>
-    ensures, that this is all information available about the query
+    ensures that this is all information available about the query
     up to that point.
 </para>
 </sect2>
@@ -2086,7 +2086,7 @@ CREATE FUNCTION tricky(text, text) RETURNS bool AS $$
 BEGIN
     RAISE NOTICE '% =&gt; %', $1, $2;
     RETURN true;
-END
+END;
 $$ LANGUAGE plpgsql COST 0.0000000000000000000001;
 
 SELECT * FROM phone_number WHERE tricky(person, phone);
