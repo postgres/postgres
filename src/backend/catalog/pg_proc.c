@@ -913,8 +913,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 																  (ParserSetupHook) sql_fn_parser_setup,
 																  pinfo,
 																  NULL);
-				querytree_list = list_concat(querytree_list,
-											 querytree_sublist);
+				querytree_list = lappend(querytree_list,
+										 querytree_sublist);
 			}
 
 			check_sql_fn_statements(querytree_list);

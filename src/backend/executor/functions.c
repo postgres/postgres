@@ -609,7 +609,6 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	SQLFunctionCachePtr fcache;
 	List	   *raw_parsetree_list;
 	List	   *queryTree_list;
-	List	   *flat_query_list;
 	List	   *resulttlist;
 	ListCell   *lc;
 	Datum		tmp;
@@ -689,13 +688,7 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 
 	/*
 	 * Parse and rewrite the queries in the function text.  Use sublists to
-	 * keep track of the original query boundaries.  But we also build a
-	 * "flat" list of the rewritten queries to pass to check_sql_fn_retval.
-	 * This is because the last canSetTag query determines the result type
-	 * independently of query boundaries --- and it might not be in the last
-	 * sublist, for example if the last query rewrites to DO INSTEAD NOTHING.
-	 * (It might not be unreasonable to throw an error in such a case, but
-	 * this is the historical behavior and it doesn't seem worth changing.)
+	 * keep track of the original query boundaries.
 	 *
 	 * Note: since parsing and planning is done in fcontext, we will generate
 	 * a lot of cruft that lives as long as the fcache does.  This is annoying
@@ -705,7 +698,6 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	raw_parsetree_list = pg_parse_query(fcache->src);
 
 	queryTree_list = NIL;
-	flat_query_list = NIL;
 	foreach(lc, raw_parsetree_list)
 	{
 		RawStmt    *parsetree = lfirst_node(RawStmt, lc);
@@ -717,10 +709,12 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 														  fcache->pinfo,
 														  NULL);
 		queryTree_list = lappend(queryTree_list, queryTree_sublist);
-		flat_query_list = list_concat(flat_query_list, queryTree_sublist);
 	}
 
-	check_sql_fn_statements(flat_query_list);
+	/*
+	 * Check that there are no statements we don't want to allow.
+	 */
+	check_sql_fn_statements(queryTree_list);
 
 	/*
 	 * Check that the function returns the type it claims to.  Although in
@@ -740,7 +734,7 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	 * the rowtype column into multiple columns, since we have no way to
 	 * notify the caller that it should do that.)
 	 */
-	fcache->returnsTuple = check_sql_fn_retval(flat_query_list,
+	fcache->returnsTuple = check_sql_fn_retval(queryTree_list,
 											   rettype,
 											   rettupdesc,
 											   false,
@@ -1510,51 +1504,63 @@ ShutdownSQLFunction(Datum arg)
  * is not acceptable.
  */
 void
-check_sql_fn_statements(List *queryTreeList)
+check_sql_fn_statements(List *queryTreeLists)
 {
 	ListCell   *lc;
 
-	foreach(lc, queryTreeList)
+	/* We are given a list of sublists of Queries */
+	foreach(lc, queryTreeLists)
 	{
-		Query	   *query = lfirst_node(Query, lc);
+		List	   *sublist = lfirst_node(List, lc);
+		ListCell   *lc2;
 
-		/*
-		 * Disallow procedures with output arguments.  The current
-		 * implementation would just throw the output values away, unless the
-		 * statement is the last one.  Per SQL standard, we should assign the
-		 * output values by name.  By disallowing this here, we preserve an
-		 * opportunity for future improvement.
-		 */
-		if (query->commandType == CMD_UTILITY &&
-			IsA(query->utilityStmt, CallStmt))
+		foreach(lc2, sublist)
 		{
-			CallStmt   *stmt = castNode(CallStmt, query->utilityStmt);
-			HeapTuple	tuple;
-			int			numargs;
-			Oid		   *argtypes;
-			char	  **argnames;
-			char	   *argmodes;
-			int			i;
+			Query	   *query = lfirst_node(Query, lc2);
 
-			tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(stmt->funcexpr->funcid));
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "cache lookup failed for function %u", stmt->funcexpr->funcid);
-			numargs = get_func_arg_info(tuple, &argtypes, &argnames, &argmodes);
-			ReleaseSysCache(tuple);
-
-			for (i = 0; i < numargs; i++)
+			/*
+			 * Disallow procedures with output arguments.  The current
+			 * implementation would just throw the output values away, unless
+			 * the statement is the last one.  Per SQL standard, we should
+			 * assign the output values by name.  By disallowing this here, we
+			 * preserve an opportunity for future improvement.
+			 */
+			if (query->commandType == CMD_UTILITY &&
+				IsA(query->utilityStmt, CallStmt))
 			{
-				if (argmodes && (argmodes[i] == PROARGMODE_INOUT || argmodes[i] == PROARGMODE_OUT))
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("calling procedures with output arguments is not supported in SQL functions")));
+				CallStmt   *stmt = castNode(CallStmt, query->utilityStmt);
+				HeapTuple	tuple;
+				int			numargs;
+				Oid		   *argtypes;
+				char	  **argnames;
+				char	   *argmodes;
+				int			i;
+
+				tuple = SearchSysCache1(PROCOID,
+										ObjectIdGetDatum(stmt->funcexpr->funcid));
+				if (!HeapTupleIsValid(tuple))
+					elog(ERROR, "cache lookup failed for function %u",
+						 stmt->funcexpr->funcid);
+				numargs = get_func_arg_info(tuple,
+											&argtypes, &argnames, &argmodes);
+				ReleaseSysCache(tuple);
+
+				for (i = 0; i < numargs; i++)
+				{
+					if (argmodes && (argmodes[i] == PROARGMODE_INOUT ||
+									 argmodes[i] == PROARGMODE_OUT))
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("calling procedures with output arguments is not supported in SQL functions")));
+				}
 			}
 		}
 	}
 }
 
 /*
- * check_sql_fn_retval() -- check return value of a list of sql parse trees.
+ * check_sql_fn_retval()
+ *		Check return value of a list of lists of sql parse trees.
  *
  * The return value of a sql function is the value returned by the last
  * canSetTag query in the function.  We do some ad-hoc type checking and
@@ -1592,7 +1598,7 @@ check_sql_fn_statements(List *queryTreeList)
  * function is defined to return VOID then *resultTargetList is set to NIL.
  */
 bool
-check_sql_fn_retval(List *queryTreeList,
+check_sql_fn_retval(List *queryTreeLists,
 					Oid rettype, TupleDesc rettupdesc,
 					bool insertDroppedCols,
 					List **resultTargetList)
@@ -1619,20 +1625,30 @@ check_sql_fn_retval(List *queryTreeList,
 		return false;
 
 	/*
-	 * Find the last canSetTag query in the list.  This isn't necessarily the
-	 * last parsetree, because rule rewriting can insert queries after what
-	 * the user wrote.
+	 * Find the last canSetTag query in the function body (which is presented
+	 * to us as a list of sublists of Query nodes).  This isn't necessarily
+	 * the last parsetree, because rule rewriting can insert queries after
+	 * what the user wrote.  Note that it might not even be in the last
+	 * sublist, for example if the last query rewrites to DO INSTEAD NOTHING.
+	 * (It might not be unreasonable to throw an error in such a case, but
+	 * this is the historical behavior and it doesn't seem worth changing.)
 	 */
 	parse = NULL;
 	parse_cell = NULL;
-	foreach(lc, queryTreeList)
+	foreach(lc, queryTreeLists)
 	{
-		Query	   *q = lfirst_node(Query, lc);
+		List	   *sublist = lfirst_node(List, lc);
+		ListCell   *lc2;
 
-		if (q->canSetTag)
+		foreach(lc2, sublist)
 		{
-			parse = q;
-			parse_cell = lc;
+			Query	   *q = lfirst_node(Query, lc2);
+
+			if (q->canSetTag)
+			{
+				parse = q;
+				parse_cell = lc2;
+			}
 		}
 	}
 
