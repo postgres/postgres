@@ -230,19 +230,6 @@ static char *readMessageFromPipe(int fd);
 
 
 /*
- * Shutdown callback to clean up socket access
- */
-#ifdef WIN32
-static void
-shutdown_parallel_dump_utils(int code, void *unused)
-{
-	/* Call the cleanup function only from the main thread */
-	if (mainThreadId == GetCurrentThreadId())
-		WSACleanup();
-}
-#endif
-
-/*
  * Initialize parallel dump support --- should be called early in process
  * startup.  (Currently, this is called whether or not we intend parallel
  * activity.)
@@ -267,8 +254,7 @@ init_parallel_dump_utils(void)
 			pg_log_error("WSAStartup failed: %d", err);
 			exit_nicely(1);
 		}
-		/* ... and arrange to shut it down at exit */
-		on_exit_nicely(shutdown_parallel_dump_utils, NULL);
+
 		parallel_init_done = true;
 	}
 #endif
