@@ -15,15 +15,10 @@
 #include "fe_utils/string_utils.h"
 
 
-static void cluster_one_database(const char *dbname, bool verbose, const char *table,
-					 const char *host, const char *port,
-					 const char *username, enum trivalue prompt_password,
-					 const char *progname, bool echo);
-static void cluster_all_databases(bool verbose, const char *maintenance_db,
-					  const char *host, const char *port,
-					  const char *username, enum trivalue prompt_password,
-					  const char *progname, bool echo, bool quiet);
-
+static void cluster_one_database(const ConnParams *cparams, const char *table,
+								 const char *progname, bool verbose, bool echo);
+static void cluster_all_databases(ConnParams *cparams, const char *progname,
+								  bool verbose, bool echo, bool quiet);
 static void help(const char *progname);
 
 
@@ -56,6 +51,7 @@ main(int argc, char *argv[])
 	char	   *port = NULL;
 	char	   *username = NULL;
 	enum trivalue prompt_password = TRI_DEFAULT;
+	ConnParams	cparams;
 	bool		echo = false;
 	bool		quiet = false;
 	bool		alldb = false;
@@ -131,6 +127,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/* fill cparams except for dbname, which is set below */
+	cparams.pghost = host;
+	cparams.pgport = port;
+	cparams.pguser = username;
+	cparams.prompt_password = prompt_password;
+	cparams.override_dbname = NULL;
+
 	setup_cancel_handler();
 
 	if (alldb)
@@ -149,8 +152,9 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		cluster_all_databases(verbose, maintenance_db, host, port, username, prompt_password,
-							  progname, echo, quiet);
+		cparams.dbname = maintenance_db;
+
+		cluster_all_databases(&cparams, progname, verbose, echo, quiet);
 	}
 	else
 	{
@@ -164,21 +168,21 @@ main(int argc, char *argv[])
 				dbname = get_user_name_or_exit(progname);
 		}
 
+		cparams.dbname = dbname;
+
 		if (tables.head != NULL)
 		{
 			SimpleStringListCell *cell;
 
 			for (cell = tables.head; cell; cell = cell->next)
 			{
-				cluster_one_database(dbname, verbose, cell->val,
-									 host, port, username, prompt_password,
-									 progname, echo);
+				cluster_one_database(&cparams, cell->val,
+									 progname, verbose, echo);
 			}
 		}
 		else
-			cluster_one_database(dbname, verbose, NULL,
-								 host, port, username, prompt_password,
-								 progname, echo);
+			cluster_one_database(&cparams, NULL,
+								 progname, verbose, echo);
 	}
 
 	exit(0);
@@ -186,17 +190,14 @@ main(int argc, char *argv[])
 
 
 static void
-cluster_one_database(const char *dbname, bool verbose, const char *table,
-					 const char *host, const char *port,
-					 const char *username, enum trivalue prompt_password,
-					 const char *progname, bool echo)
+cluster_one_database(const ConnParams *cparams, const char *table,
+					 const char *progname, bool verbose, bool echo)
 {
 	PQExpBufferData sql;
 
 	PGconn	   *conn;
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, echo, false, false);
+	conn = connectDatabase(cparams, progname, echo, false, false);
 
 	initPQExpBuffer(&sql);
 
@@ -227,22 +228,17 @@ cluster_one_database(const char *dbname, bool verbose, const char *table,
 
 
 static void
-cluster_all_databases(bool verbose, const char *maintenance_db,
-					  const char *host, const char *port,
-					  const char *username, enum trivalue prompt_password,
-					  const char *progname, bool echo, bool quiet)
+cluster_all_databases(ConnParams *cparams, const char *progname,
+					  bool verbose, bool echo, bool quiet)
 {
 	PGconn	   *conn;
 	PGresult   *result;
-	PQExpBufferData connstr;
 	int			i;
 
-	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
-									  prompt_password, progname, echo);
+	conn = connectMaintenanceDatabase(cparams, progname, echo);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
-	initPQExpBuffer(&connstr);
 	for (i = 0; i < PQntuples(result); i++)
 	{
 		char	   *dbname = PQgetvalue(result, i, 0);
@@ -253,15 +249,10 @@ cluster_all_databases(bool verbose, const char *maintenance_db,
 			fflush(stdout);
 		}
 
-		resetPQExpBuffer(&connstr);
-		appendPQExpBuffer(&connstr, "dbname=");
-		appendConnStrVal(&connstr, dbname);
+		cparams->override_dbname = dbname;
 
-		cluster_one_database(connstr.data, verbose, NULL,
-							 host, port, username, prompt_password,
-							 progname, echo);
+		cluster_one_database(cparams, NULL, progname, verbose, echo);
 	}
-	termPQExpBuffer(&connstr);
 
 	PQclear(result);
 }

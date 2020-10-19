@@ -23,20 +23,32 @@ enum trivalue
 
 extern bool CancelRequested;
 
+/* Parameters needed by connectDatabase/connectMaintenanceDatabase */
+typedef struct _connParams
+{
+	/* These fields record the actual command line parameters */
+	const char *dbname;			/* this may be a connstring! */
+	const char *pghost;
+	const char *pgport;
+	const char *pguser;
+	enum trivalue prompt_password;
+	/* If not NULL, this overrides the dbname obtained from command line */
+	/* (but *only* the DB name, not anything else in the connstring) */
+	const char *override_dbname;
+} ConnParams;
+
 typedef void (*help_handler) (const char *progname);
 
 extern void handle_help_version_opts(int argc, char *argv[],
 						 const char *fixed_progname,
 						 help_handler hlp);
 
-extern PGconn *connectDatabase(const char *dbname, const char *pghost,
-				const char *pgport, const char *pguser,
-				enum trivalue prompt_password, const char *progname,
-				bool echo, bool fail_ok, bool allow_password_reuse);
+extern PGconn *connectDatabase(const ConnParams *cparams,
+							   const char *progname,
+							   bool echo, bool fail_ok,
+							   bool allow_password_reuse);
 
-extern PGconn *connectMaintenanceDatabase(const char *maintenance_db,
-						   const char *pghost, const char *pgport,
-						   const char *pguser, enum trivalue prompt_password,
+extern PGconn *connectMaintenanceDatabase(ConnParams *cparams,
 						   const char *progname, bool echo);
 
 extern PGresult *executeQuery(PGconn *conn, const char *query,
