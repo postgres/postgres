@@ -1615,9 +1615,9 @@ occurrences to display in the result.',
 
 <screen>
 SELECT to_tsquery('fat') &lt;-&gt; to_tsquery('cat | rat');
-             ?column?
------------------------------------
- 'fat' &lt;-&gt; 'cat' | 'fat' &lt;-&gt; 'rat'
+          ?column?
+----------------------------
+ 'fat' &lt;-&gt; ( 'cat' | 'rat' )
 </screen>
       </para>
      </listitem>
