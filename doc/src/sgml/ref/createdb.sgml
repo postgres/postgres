@@ -286,6 +286,9 @@ PostgreSQL documentation
          database will be used; if that does not exist (or if it is the name
          of the new database being created), <literal>template1</literal> will
          be used.
+         This can be a <link linkend="libpq-connstring">connection
+         string</link>.  If so, connection string parameters will override any
+         conflicting command line options.
        </para>
       </listitem>
      </varlistentry>
