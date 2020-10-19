@@ -2109,6 +2109,50 @@ select * from testrngfunc();
  7.136178 | 7.14
 (1 row)
 
+create or replace function testrngfunc() returns setof rngfunc_type as $$
+  select 1, 2 union select 3, 4 order by 1;
+$$ language sql immutable;
+explain (verbose, costs off)
+select testrngfunc();
+       QUERY PLAN        
+-------------------------
+ ProjectSet
+   Output: testrngfunc()
+   ->  Result
+(3 rows)
+
+select testrngfunc();
+   testrngfunc   
+-----------------
+ (1.000000,2.00)
+ (3.000000,4.00)
+(2 rows)
+
+explain (verbose, costs off)
+select * from testrngfunc();
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Subquery Scan on "*SELECT*"
+   Output: "*SELECT*"."?column?", "*SELECT*"."?column?_1"
+   ->  Unique
+         Output: (1), (2)
+         ->  Sort
+               Output: (1), (2)
+               Sort Key: (1), (2)
+               ->  Append
+                     ->  Result
+                           Output: 1, 2
+                     ->  Result
+                           Output: 3, 4
+(12 rows)
+
+select * from testrngfunc();
+    f1    |  f2  
+----------+------
+ 1.000000 | 2.00
+ 3.000000 | 4.00
+(2 rows)
+
 drop type rngfunc_type cascade;
 NOTICE:  drop cascades to function testrngfunc()
 --
