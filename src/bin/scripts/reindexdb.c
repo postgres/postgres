@@ -34,15 +34,12 @@ static SimpleStringList *get_parallel_object_list(PGconn *conn,
 												  ReindexType type,
 												  SimpleStringList *user_list,
 												  bool echo);
-static void reindex_one_database(const char *dbname, ReindexType type,
-								 SimpleStringList *user_list, const char *host,
-								 const char *port, const char *username,
-								 enum trivalue prompt_password, const char *progname,
+static void reindex_one_database(const ConnParams *cparams, ReindexType type,
+								 SimpleStringList *user_list,
+								 const char *progname,
 								 bool echo, bool verbose, bool concurrently,
 								 int concurrentCons);
-static void reindex_all_databases(const char *maintenance_db,
-								  const char *host, const char *port,
-								  const char *username, enum trivalue prompt_password,
+static void reindex_all_databases(ConnParams *cparams,
 								  const char *progname, bool echo,
 								  bool quiet, bool verbose, bool concurrently,
 								  int concurrentCons);
@@ -86,6 +83,7 @@ main(int argc, char *argv[])
 	const char *port = NULL;
 	const char *username = NULL;
 	enum trivalue prompt_password = TRI_DEFAULT;
+	ConnParams	cparams;
 	bool		syscatalog = false;
 	bool		alldb = false;
 	bool		echo = false;
@@ -188,6 +186,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/* fill cparams except for dbname, which is set below */
+	cparams.pghost = host;
+	cparams.pgport = port;
+	cparams.pguser = username;
+	cparams.prompt_password = prompt_password;
+	cparams.override_dbname = NULL;
+
 	setup_cancel_handler(NULL);
 
 	if (alldb)
@@ -218,8 +223,9 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		reindex_all_databases(maintenance_db, host, port, username,
-							  prompt_password, progname, echo, quiet, verbose,
+		cparams.dbname = maintenance_db;
+
+		reindex_all_databases(&cparams, progname, echo, quiet, verbose,
 							  concurrently, concurrentCons);
 	}
 	else if (syscatalog)
@@ -256,9 +262,11 @@ main(int argc, char *argv[])
 				dbname = get_user_name_or_exit(progname);
 		}
 
-		reindex_one_database(dbname, REINDEX_SYSTEM, NULL, host,
-							 port, username, prompt_password, progname,
-							 echo, verbose, concurrently, 1);
+		cparams.dbname = dbname;
+
+		reindex_one_database(&cparams, REINDEX_SYSTEM, NULL,
+							 progname, echo, verbose,
+							 concurrently, 1);
 	}
 	else
 	{
@@ -283,40 +291,40 @@ main(int argc, char *argv[])
 				dbname = get_user_name_or_exit(progname);
 		}
 
+		cparams.dbname = dbname;
+
 		if (schemas.head != NULL)
-			reindex_one_database(dbname, REINDEX_SCHEMA, &schemas, host,
-								 port, username, prompt_password, progname,
-								 echo, verbose, concurrently, concurrentCons);
+			reindex_one_database(&cparams, REINDEX_SCHEMA, &schemas,
+								 progname, echo, verbose,
+								 concurrently, concurrentCons);
 
 		if (indexes.head != NULL)
-			reindex_one_database(dbname, REINDEX_INDEX, &indexes, host,
-								 port, username, prompt_password, progname,
-								 echo, verbose, concurrently, 1);
+			reindex_one_database(&cparams, REINDEX_INDEX, &indexes,
+								 progname, echo, verbose,
+								 concurrently, 1);
 
 		if (tables.head != NULL)
-			reindex_one_database(dbname, REINDEX_TABLE, &tables, host,
-								 port, username, prompt_password, progname,
-								 echo, verbose, concurrently,
-								 concurrentCons);
+			reindex_one_database(&cparams, REINDEX_TABLE, &tables,
+								 progname, echo, verbose,
+								 concurrently, concurrentCons);
 
 		/*
 		 * reindex database only if neither index nor table nor schema is
 		 * specified
 		 */
 		if (indexes.head == NULL && tables.head == NULL && schemas.head == NULL)
-			reindex_one_database(dbname, REINDEX_DATABASE, NULL, host,
-								 port, username, prompt_password, progname,
-								 echo, verbose, concurrently, concurrentCons);
+			reindex_one_database(&cparams, REINDEX_DATABASE, NULL,
+								 progname, echo, verbose,
+								 concurrently, concurrentCons);
 	}
 
 	exit(0);
 }
 
 static void
-reindex_one_database(const char *dbname, ReindexType type,
-					 SimpleStringList *user_list, const char *host,
-					 const char *port, const char *username,
-					 enum trivalue prompt_password, const char *progname, bool echo,
+reindex_one_database(const ConnParams *cparams, ReindexType type,
+					 SimpleStringList *user_list,
+					 const char *progname, bool echo,
 					 bool verbose, bool concurrently, int concurrentCons)
 {
 	PGconn	   *conn;
@@ -328,8 +336,7 @@ reindex_one_database(const char *dbname, ReindexType type,
 	bool		failed = false;
 	int			items_count = 0;
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, echo, false, false);
+	conn = connectDatabase(cparams, progname, echo, false, false);
 
 	if (concurrently && PQserverVersion(conn) < 120000)
 	{
@@ -436,8 +443,7 @@ reindex_one_database(const char *dbname, ReindexType type,
 
 	Assert(process_list != NULL);
 
-	slots = ParallelSlotsSetup(dbname, host, port, username, prompt_password,
-							   progname, echo, conn, concurrentCons);
+	slots = ParallelSlotsSetup(cparams, progname, echo, conn, concurrentCons);
 
 	cell = process_list->head;
 	do
@@ -705,23 +711,18 @@ get_parallel_object_list(PGconn *conn, ReindexType type,
 }
 
 static void
-reindex_all_databases(const char *maintenance_db,
-					  const char *host, const char *port,
-					  const char *username, enum trivalue prompt_password,
+reindex_all_databases(ConnParams *cparams,
 					  const char *progname, bool echo, bool quiet, bool verbose,
 					  bool concurrently, int concurrentCons)
 {
 	PGconn	   *conn;
 	PGresult   *result;
-	PQExpBufferData connstr;
 	int			i;
 
-	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
-									  prompt_password, progname, echo);
+	conn = connectMaintenanceDatabase(cparams, progname, echo);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", echo);
 	PQfinish(conn);
 
-	initPQExpBuffer(&connstr);
 	for (i = 0; i < PQntuples(result); i++)
 	{
 		char	   *dbname = PQgetvalue(result, i, 0);
@@ -732,16 +733,12 @@ reindex_all_databases(const char *maintenance_db,
 			fflush(stdout);
 		}
 
-		resetPQExpBuffer(&connstr);
-		appendPQExpBufferStr(&connstr, "dbname=");
-		appendConnStrVal(&connstr, dbname);
+		cparams->override_dbname = dbname;
 
-		reindex_one_database(connstr.data, REINDEX_DATABASE, NULL, host,
-							 port, username, prompt_password,
+		reindex_one_database(cparams, REINDEX_DATABASE, NULL,
 							 progname, echo, verbose, concurrently,
 							 concurrentCons);
 	}
-	termPQExpBuffer(&connstr);
 
 	PQclear(result);
 }

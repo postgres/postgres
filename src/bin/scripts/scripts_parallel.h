@@ -12,6 +12,7 @@
 #ifndef SCRIPTS_PARALLEL_H
 #define SCRIPTS_PARALLEL_H
 
+#include "common.h"
 #include "libpq-fe.h"
 
 
@@ -23,10 +24,7 @@ typedef struct ParallelSlot
 
 extern ParallelSlot *ParallelSlotsGetIdle(ParallelSlot *slots, int numslots);
 
-extern ParallelSlot *ParallelSlotsSetup(const char *dbname, const char *host,
-										const char *port,
-										const char *username,
-										bool prompt_password,
+extern ParallelSlot *ParallelSlotsSetup(const ConnParams *cparams,
 										const char *progname, bool echo,
 										PGconn *conn, int numslots);
 
