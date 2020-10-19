@@ -564,7 +564,7 @@ amgettuple (IndexScanDesc scan,
    will pass the caller's snapshot test.  On success, <function>amgettuple</function>
    must also set <literal>scan-&gt;xs_recheck</literal> to true or false.
    False means it is certain that the index entry matches the scan keys.
-   true means this is not certain, and the conditions represented by the
+   True means this is not certain, and the conditions represented by the
    scan keys must be rechecked against the heap tuple after fetching it.
    This provision supports <quote>lossy</quote> index operators.
    Note that rechecking will extend only to the scan conditions; a partial

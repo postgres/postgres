@@ -22565,7 +22565,7 @@ BEGIN
                      obj.object_name,
                      obj.object_identity;
     END LOOP;
-END
+END;
 $$;
 CREATE EVENT TRIGGER test_event_trigger_for_drops
    ON sql_drop

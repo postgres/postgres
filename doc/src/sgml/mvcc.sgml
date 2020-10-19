@@ -1239,7 +1239,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          The <literal>FOR UPDATE</literal> lock mode
          is also acquired by any <command>DELETE</command> on a row, and also by an
-         <command>UPDATE</command> that modifies the values on certain columns.  Currently,
+         <command>UPDATE</command> that modifies the values of certain columns.  Currently,
          the set of columns considered for the <command>UPDATE</command> case are those that
          have a unique index on them that can be used in a foreign key (so partial
          indexes and expressional indexes are not considered), but this may change

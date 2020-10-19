@@ -2799,7 +2799,7 @@ The commands accepted in replication mode are:
   <para>
    Every sent transaction contains zero or more DML messages (Insert,
    Update, Delete). In case of a cascaded setup it can also contain Origin
-   messages. The origin message indicated that the transaction originated on
+   messages. The origin message indicates that the transaction originated on
    different replication node. Since a replication node in the scope of logical
    replication protocol can be pretty much anything, the only identifier
    is the origin name. It's downstream's responsibility to handle this as

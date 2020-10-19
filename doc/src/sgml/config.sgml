@@ -9705,8 +9705,8 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </term>
       <listitem>
        <para>
-        If set, do not trace locks for tables below this OID. (use to avoid
-        output on system tables)
+        If set, do not trace locks for tables below this OID (used to avoid
+        output on system tables).
        </para>
        <para>
         This parameter is only available if the <symbol>LOCK_DEBUG</symbol>

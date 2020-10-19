@@ -1494,7 +1494,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
     Note that in this mode, the server will apply WAL one file at a
     time, so if you use the standby server for queries (see Hot Standby),
     there is a delay between an action in the master and when the
-    action becomes visible in the standby, corresponding the time it takes
+    action becomes visible in the standby, corresponding to the time it takes
     to fill up the WAL file. <varname>archive_timeout</varname> can be used to make that delay
     shorter. Also note that you can't combine streaming replication with
     this method.
