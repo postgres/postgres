@@ -2805,8 +2805,9 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 	outer_rows = clamp_row_est(outer_path_rows * outerendsel);
 	inner_rows = clamp_row_est(inner_path_rows * innerendsel);
 
-	Assert(outer_skip_rows <= outer_rows);
-	Assert(inner_skip_rows <= inner_rows);
+	/* skip rows can become NaN when path rows has become infinite */
+	Assert(outer_skip_rows <= outer_rows || isnan(outer_skip_rows));
+	Assert(inner_skip_rows <= inner_rows || isnan(inner_skip_rows));
 
 	/*
 	 * Readjust scan selectivities to account for above rounding.  This is
@@ -2818,8 +2819,9 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 	outerendsel = outer_rows / outer_path_rows;
 	innerendsel = inner_rows / inner_path_rows;
 
-	Assert(outerstartsel <= outerendsel);
-	Assert(innerstartsel <= innerendsel);
+	/* start sel can become NaN when path rows has become infinite */
+	Assert(outerstartsel <= outerendsel || isnan(outerstartsel));
+	Assert(innerstartsel <= innerendsel || isnan(innerstartsel));
 
 	/* cost of source data */
 
