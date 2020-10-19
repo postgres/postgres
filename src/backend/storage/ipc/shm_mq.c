@@ -24,6 +24,7 @@
 #include "storage/procsignal.h"
 #include "storage/shm_mq.h"
 #include "storage/spin.h"
+#include "utils/memutils.h"
 
 /*
  * This structure represents the actual queue, stored in shared memory.
@@ -360,6 +361,13 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 	for (i = 0; i < iovcnt; ++i)
 		nbytes += iov[i].len;
 
+	/* Prevent writing messages overwhelming the receiver. */
+	if (nbytes > MaxAllocSize)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("cannot send a message of size %zu via shared memory queue",
+						nbytes)));
+
 	/* Try to write, or finish writing, the length word into the buffer. */
 	while (!mqh->mqh_length_word_complete)
 	{
@@ -675,6 +683,17 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 	}
 	nbytes = mqh->mqh_expected_bytes;
 
+	/*
+	 * Should be disallowed on the sending side already, but better check and
+	 * error out on the receiver side as well rather than trying to read a
+	 * prohibitively large message.
+	 */
+	if (nbytes > MaxAllocSize)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("invalid message size %zu in shared memory queue",
+						nbytes)));
+
 	if (mqh->mqh_partial_bytes == 0)
 	{
 		/*
@@ -703,8 +722,13 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 		{
 			Size		newbuflen = Max(mqh->mqh_buflen, MQH_INITIAL_BUFSIZE);
 
+			/*
+			 * Double the buffer size until the payload fits, but limit to
+			 * MaxAllocSize.
+			 */
 			while (newbuflen < nbytes)
 				newbuflen *= 2;
+			newbuflen = Min(newbuflen, MaxAllocSize);
 
 			if (mqh->mqh_buffer != NULL)
 			{
