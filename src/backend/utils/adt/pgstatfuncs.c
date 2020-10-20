@@ -2153,7 +2153,7 @@ pg_stat_get_archiver(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_replication_slots(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_GET_REPLICATION_SLOT_CLOS 5
+#define PG_STAT_GET_REPLICATION_SLOT_COLS 5
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
@@ -2190,8 +2190,8 @@ pg_stat_get_replication_slots(PG_FUNCTION_ARGS)
 	slotstats = pgstat_fetch_replslot(&nstats);
 	for (i = 0; i < nstats; i++)
 	{
-		Datum		values[PG_STAT_GET_REPLICATION_SLOT_CLOS];
-		bool		nulls[PG_STAT_GET_REPLICATION_SLOT_CLOS];
+		Datum		values[PG_STAT_GET_REPLICATION_SLOT_COLS];
+		bool		nulls[PG_STAT_GET_REPLICATION_SLOT_COLS];
 		PgStat_ReplSlotStats *s = &(slotstats[i]);
 
 		MemSet(values, 0, sizeof(values));

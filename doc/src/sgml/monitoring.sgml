@@ -2590,7 +2590,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <tbody>
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-        <structfield>name</structfield> <type>text</type>
+        <structfield>slot_name</structfield> <type>text</type>
        </para>
        <para>
         A unique, cluster-wide identifier for the replication slot

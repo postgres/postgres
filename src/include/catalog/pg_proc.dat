@@ -5263,7 +5263,7 @@
   prorettype => 'record', proargtypes => '',
   proallargtypes => '{text,int8,int8,int8,timestamptz}',
   proargmodes => '{o,o,o,o,o}',
-  proargnames => '{name,spill_txns,spill_count,spill_bytes,stats_reset}',
+  proargnames => '{slot_name,spill_txns,spill_count,spill_bytes,stats_reset}',
   prosrc => 'pg_stat_get_replication_slots' },
 { oid => '6118', descr => 'statistics: information about subscription',
   proname => 'pg_stat_get_subscription', proisstrict => 'f', provolatile => 's',

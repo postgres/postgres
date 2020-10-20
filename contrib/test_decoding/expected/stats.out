@@ -21,7 +21,7 @@ BEGIN
                 ELSE (spill_txns > 0)
            END
     INTO updated
-    FROM pg_stat_replication_slots WHERE name='regression_slot';
+    FROM pg_stat_replication_slots WHERE slot_name='regression_slot';
 
     exit WHEN updated;
 
@@ -57,8 +57,8 @@ SELECT wait_for_decode_stats(false);
  
 (1 row)
 
-SELECT name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
-      name       | spill_txns | spill_count 
+SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
+    slot_name    | spill_txns | spill_count 
 -----------------+------------+-------------
  regression_slot | t          | t
 (1 row)
@@ -76,8 +76,8 @@ SELECT wait_for_decode_stats(true);
  
 (1 row)
 
-SELECT name, spill_txns, spill_count FROM pg_stat_replication_slots;
-      name       | spill_txns | spill_count 
+SELECT slot_name, spill_txns, spill_count FROM pg_stat_replication_slots;
+    slot_name    | spill_txns | spill_count 
 -----------------+------------+-------------
  regression_slot |          0 |           0
 (1 row)
@@ -95,8 +95,8 @@ SELECT wait_for_decode_stats(false);
  
 (1 row)
 
-SELECT name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
-      name       | spill_txns | spill_count 
+SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
+    slot_name    | spill_txns | spill_count 
 -----------------+------------+-------------
  regression_slot | t          | t
 (1 row)

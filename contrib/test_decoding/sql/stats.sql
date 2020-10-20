@@ -19,7 +19,7 @@ BEGIN
                 ELSE (spill_txns > 0)
            END
     INTO updated
-    FROM pg_stat_replication_slots WHERE name='regression_slot';
+    FROM pg_stat_replication_slots WHERE slot_name='regression_slot';
 
     exit WHEN updated;
 
@@ -47,17 +47,17 @@ SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL,
 -- exact stats count as that can vary if any background transaction (say by
 -- autovacuum) happens in parallel to the main transaction.
 SELECT wait_for_decode_stats(false);
-SELECT name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
+SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
 
 -- reset the slot stats, and wait for stats collector to reset
 SELECT pg_stat_reset_replication_slot('regression_slot');
 SELECT wait_for_decode_stats(true);
-SELECT name, spill_txns, spill_count FROM pg_stat_replication_slots;
+SELECT slot_name, spill_txns, spill_count FROM pg_stat_replication_slots;
 
 -- decode and check stats again.
 SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'skip-empty-xacts', '1');
 SELECT wait_for_decode_stats(false);
-SELECT name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
+SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
 
 DROP FUNCTION wait_for_decode_stats(bool);
 DROP TABLE stats_test;
