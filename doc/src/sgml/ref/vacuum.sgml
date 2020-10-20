@@ -239,7 +239,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       to perform the operation is equal to the number of indexes on the
       relation that support parallel vacuum which is limited by the number of
       workers specified with <literal>PARALLEL</literal> option if any which is
-      further limited by <xref linkend="guc-max-parallel-maintenance-workers"/>.
+      further limited by <xref linkend="guc-max-parallel-workers-maintenance"/>.
       An index can participate in parallel vacuum if and only if the size of the
       index is more than <xref linkend="guc-min-parallel-index-scan-size"/>.
       Please note that it is not guaranteed that the number of parallel workers
