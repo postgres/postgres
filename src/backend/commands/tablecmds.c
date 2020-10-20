@@ -4237,6 +4237,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DisableTrigAll:
 		case AT_DisableTrigUser:
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
+			if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+				ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			pass = AT_PASS_MISC;
 			break;
 		case AT_EnableRule:		/* ENABLE/DISABLE RULE variants */

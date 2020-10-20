@@ -2442,6 +2442,62 @@ select tgrelid::regclass, count(*) from pg_trigger
 (5 rows)
 
 drop table trg_clone;
+-- Test the interaction between ALTER TABLE .. DISABLE TRIGGER and
+-- both kinds of inheritance.  Historically, legacy inheritance has
+-- not recursed to children, so that behavior is preserved.
+create table parent (a int);
+create table child1 () inherits (parent);
+create function trig_nothing() returns trigger language plpgsql
+  as $$ begin return null; end $$;
+create trigger tg after insert on parent
+  for each row execute function trig_nothing();
+create trigger tg after insert on child1
+  for each row execute function trig_nothing();
+alter table parent disable trigger tg;
+select tgrelid::regclass, tgname, tgenabled from pg_trigger
+  where tgrelid in ('parent'::regclass, 'child1'::regclass)
+  order by tgrelid::regclass::text;
+ tgrelid | tgname | tgenabled 
+---------+--------+-----------
+ child1  | tg     | O
+ parent  | tg     | D
+(2 rows)
+
+alter table only parent enable always trigger tg;
+select tgrelid::regclass, tgname, tgenabled from pg_trigger
+  where tgrelid in ('parent'::regclass, 'child1'::regclass)
+  order by tgrelid::regclass::text;
+ tgrelid | tgname | tgenabled 
+---------+--------+-----------
+ child1  | tg     | O
+ parent  | tg     | A
+(2 rows)
+
+drop table parent, child1;
+create table parent (a int) partition by list (a);
+create table child1 partition of parent for values in (1);
+create trigger tg after insert on parent
+  for each row execute procedure trig_nothing();
+select tgrelid::regclass, tgname, tgenabled from pg_trigger
+  where tgrelid in ('parent'::regclass, 'child1'::regclass)
+  order by tgrelid::regclass::text;
+ tgrelid | tgname | tgenabled 
+---------+--------+-----------
+ child1  | tg     | O
+ parent  | tg     | O
+(2 rows)
+
+alter table only parent enable always trigger tg;
+select tgrelid::regclass, tgname, tgenabled from pg_trigger
+  where tgrelid in ('parent'::regclass, 'child1'::regclass)
+  order by tgrelid::regclass::text;
+ tgrelid | tgname | tgenabled 
+---------+--------+-----------
+ child1  | tg     | O
+ parent  | tg     | A
+(2 rows)
+
+drop table parent, child1;
 --
 -- Test the interaction between transition tables and both kinds of
 -- inheritance.  We'll dump the contents of the transition tables in a

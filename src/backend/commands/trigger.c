@@ -1868,27 +1868,6 @@ EnableDisableTrigger(Relation rel, const char *tgname,
 
 			heap_freetuple(newtup);
 
-			/*
-			 * When altering FOR EACH ROW triggers on a partitioned table, do
-			 * the same on the partitions as well.
-			 */
-			if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
-				(TRIGGER_FOR_ROW(oldtrig->tgtype)))
-			{
-				PartitionDesc partdesc = RelationGetPartitionDesc(rel);
-				int			i;
-
-				for (i = 0; i < partdesc->nparts; i++)
-				{
-					Relation	part;
-
-					part = relation_open(partdesc->oids[i], lockmode);
-					EnableDisableTrigger(part, NameStr(oldtrig->tgname),
-										 fires_when, skip_system, lockmode);
-					table_close(part, NoLock);	/* keep lock till commit */
-				}
-			}
-
 			changed = true;
 		}
 
