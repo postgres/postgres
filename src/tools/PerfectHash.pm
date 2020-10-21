@@ -121,13 +121,16 @@ sub generate_hash_function
 	{
 		$f .= sprintf "%s(const void *key, size_t keylen)\n{\n", $funcname;
 	}
-	$f .= sprintf "\tstatic const %s h[%d] = {\n", $elemtype, $nhash;
+	$f .= sprintf "\tstatic const %s h[%d] = {\n\t\t", $elemtype, $nhash;
 	for (my $i = 0; $i < $nhash; $i++)
 	{
-		$f .= sprintf "%s%6d,%s",
-		  ($i % 8 == 0 ? "\t\t" : " "),
-		  $hashtab[$i],
-		  ($i % 8 == 7 ? "\n" : "");
+		# Hash element.
+		$f .= sprintf "%d", $hashtab[$i];
+		next if ($i == $nhash - 1);
+
+		# Optional indentation and newline, with eight items per line.
+		$f .= sprintf ",%s",
+		  ($i % 8 == 7 ? "\n\t\t" : ' ' x (6 - length($hashtab[$i])));
 	}
 	$f .= sprintf "\n" if ($nhash % 8 != 0);
 	$f .= sprintf "\t};\n\n";
