@@ -9,7 +9,7 @@ Not all these tests get run by "make check". Check src/test/Makefile to see
 which tests get run automatically.
 
 authentication/
-  Tests for authentication
+  Tests for authentication (but see also below)
 
 examples/
   Demonstration programs for libpq that double as regression tests via
@@ -17,6 +17,12 @@ examples/
 
 isolation/
   Tests for concurrent behavior at the SQL level
+
+kerberos/
+  Tests for Kerberos/GSSAPI authentication and encryption
+
+ldap/
+  Tests for LDAP-based authentication
 
 locale/
   Sanity checks for locale data, encodings, etc
@@ -42,6 +48,3 @@ ssl/
 
 subscription/
   Tests for logical replication
-
-thread/
-  A thread-safety-testing utility used by configure

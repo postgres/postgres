@@ -66,13 +66,11 @@ clean:
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/isolation $@
-	$(MAKE) -C test/thread $@
 
 distclean maintainer-clean:
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/isolation $@
-	$(MAKE) -C test/thread $@
 	rm -f Makefile.port Makefile.global
 
 

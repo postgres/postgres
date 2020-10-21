@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * thread_test.c
- *		libc thread test program
+ *		libc threading test program
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	src/test/thread/thread_test.c
+ *	config/thread_test.c
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -20,12 +20,7 @@
  *-------------------------------------------------------------------------
  */
 
-#if !defined(IN_CONFIGURE) && !defined(WIN32)
-#include "postgres.h"
-
-/* we want to know what the native strerror does, not pg_strerror */
-#undef strerror
-#endif
+/* We cannot use c.h, as port.h will not exist yet */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +31,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <pthread.h>
 
 /* CYGWIN requires this for MAXHOSTNAMELEN */
 #ifdef __CYGWIN__
@@ -47,24 +43,10 @@
 #include <winsock2.h>
 #endif
 
-
 /* Test for POSIX.1c 2-arg sigwait() and fail on single-arg version */
 #include <signal.h>
 int			sigwait(const sigset_t *set, int *sig);
 
-
-#if !defined(ENABLE_THREAD_SAFETY) && !defined(IN_CONFIGURE) && !defined(WIN32)
-int
-main(int argc, char *argv[])
-{
-	fprintf(stderr, "This PostgreSQL build does not support threads.\n");
-	fprintf(stderr, "Perhaps rerun 'configure' using '--enable-thread-safety'.\n");
-	return 1;
-}
-#else
-
-/* This must be down here because this is the code that uses threads. */
-#include <pthread.h>
 
 #define		TEMP_FILENAME_1 "thread_test.1"
 #define		TEMP_FILENAME_2 "thread_test.2"
@@ -119,11 +101,9 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
-#ifdef IN_CONFIGURE
 	/* Send stdout to 'config.log' */
 	close(1);
 	dup(5);
-#endif
 
 #ifdef WIN32
 	err = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -455,5 +435,3 @@ func_call_2(void)
 	pthread_mutex_lock(&init_mutex);	/* wait for parent to test */
 	pthread_mutex_unlock(&init_mutex);
 }
-
-#endif							/* !ENABLE_THREAD_SAFETY && !IN_CONFIGURE */

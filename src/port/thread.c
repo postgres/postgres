@@ -47,9 +47,6 @@
  *		use non-*_r functions if they are thread-safe
  *
  *	One thread-safe solution for gethostbyname() might be to use getaddrinfo().
- *
- *	Run src/test/thread to test if your operating system has thread-safe
- *	non-*_r functions.
  */
 
 
