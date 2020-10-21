@@ -66,7 +66,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 		return 0;
 	}
 
-	_CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
+	_CreateRestrictedToken = (__CreateRestrictedToken) (pg_funcptr_t) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
 
 	if (_CreateRestrictedToken == NULL)
 	{

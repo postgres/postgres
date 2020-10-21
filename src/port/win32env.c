@@ -95,7 +95,7 @@ pgwin32_putenv(const char *envval)
 		{
 			PUTENVPROC	putenvFunc;
 
-			putenvFunc = (PUTENVPROC) GetProcAddress(hmodule, "_putenv");
+			putenvFunc = (PUTENVPROC) (pg_funcptr_t) GetProcAddress(hmodule, "_putenv");
 			if (putenvFunc)
 				putenvFunc(envval);
 			FreeLibrary(hmodule);

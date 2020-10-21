@@ -227,7 +227,7 @@ _pgstat64(const char *name, struct stat *buf)
 			return -1;
 		}
 
-		_NtQueryInformationFile = (PFN_NTQUERYINFORMATIONFILE)
+		_NtQueryInformationFile = (PFN_NTQUERYINFORMATIONFILE) (pg_funcptr_t)
 			GetProcAddress(ntdll, "NtQueryInformationFile");
 		if (_NtQueryInformationFile == NULL)
 		{

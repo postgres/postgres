@@ -122,7 +122,7 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
-		pDump = (MINIDUMPWRITEDUMP) GetProcAddress(hDll, "MiniDumpWriteDump");
+		pDump = (MINIDUMPWRITEDUMP) (pg_funcptr_t) GetProcAddress(hDll, "MiniDumpWriteDump");
 
 		if (pDump == NULL)
 		{
