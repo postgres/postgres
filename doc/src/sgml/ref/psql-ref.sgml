@@ -890,35 +890,47 @@ testdb=&gt;
         <para>
         Establishes a new connection to a <productname>PostgreSQL</productname>
         server.  The connection parameters to use can be specified either
-        using a positional syntax, or using <replaceable>conninfo</replaceable> connection
-        strings as detailed in <xref linkend="libpq-connstring"/>.
+        using a positional syntax (one or more of database name, user,
+        host, and port), or using a <replaceable>conninfo</replaceable>
+        connection string as detailed in
+        <xref linkend="libpq-connstring"/>.  If no arguments are given, a
+        new connection is made using the same parameters as before.
         </para>
 
         <para>
-        Where the command omits database name, user, host, or port, the new
-        connection can reuse values from the previous connection.  By default,
-        values from the previous connection are reused except when processing
-        a <replaceable>conninfo</replaceable> string.  Passing a first argument
-        of <literal>-reuse-previous=on</literal>
-        or <literal>-reuse-previous=off</literal> overrides that default.
-        When the command neither specifies nor reuses a particular parameter,
-        the <application>libpq</application> default is used.  Specifying any
+        Specifying any
         of <replaceable class="parameter">dbname</replaceable>,
         <replaceable class="parameter">username</replaceable>,
         <replaceable class="parameter">host</replaceable> or
         <replaceable class="parameter">port</replaceable>
         as <literal>-</literal> is equivalent to omitting that parameter.
-        If <literal>hostaddr</literal> was specified in the original
-        connection's <structname>conninfo</structname>, that address is reused
-        for the new connection (disregarding any other host specification).
+        </para>
+
+        <para>
+        The new connection can re-use connection parameters from the previous
+        connection; not only database name, user, host, and port, but other
+        settings such as <replaceable>sslmode</replaceable>.  By default,
+        parameters are re-used in the positional syntax, but not when
+        a <replaceable>conninfo</replaceable> string is given.  Passing a
+        first argument of <literal>-reuse-previous=on</literal>
+        or <literal>-reuse-previous=off</literal> overrides that default.  If
+        parameters are re-used, then any parameter not explicitly specified as
+        a positional parameter or in the <replaceable>conninfo</replaceable>
+        string is taken from the existing connection's parameters.  An
+        exception is that if the <replaceable>host</replaceable> setting
+        is changed from its previous value using the positional syntax,
+        any <replaceable>hostaddr</replaceable> setting present in the
+        existing connection's parameters is dropped.
+        When the command neither specifies nor reuses a particular parameter,
+        the <application>libpq</application> default is used.
         </para>
 
         <para>
         If the new connection is successfully made, the previous
         connection is closed.
-        If the connection attempt failed (wrong user name, access
-        denied, etc.), the previous connection will only be kept if
-        <application>psql</application> is in interactive mode. When
+        If the connection attempt fails (wrong user name, access
+        denied, etc.), the previous connection will be kept if
+        <application>psql</application> is in interactive mode. But when
         executing a non-interactive script, processing will
         immediately stop with an error. This distinction was chosen as
         a user convenience against typos on the one hand, and a safety
@@ -933,6 +945,7 @@ testdb=&gt;
 =&gt; \c mydb myuser host.dom 6432
 =&gt; \c service=foo
 =&gt; \c "host=localhost port=5432 dbname=mydb connect_timeout=10 sslmode=disable"
+=&gt; \c -reuse-previous=on sslmode=require    -- changes only sslmode
 =&gt; \c postgresql://tom@localhost/mydb?application_name=myapp
 </programlisting>
         </listitem>

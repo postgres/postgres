@@ -2870,26 +2870,6 @@ param_is_newly_set(const char *old_val, const char *new_val)
 	return false;
 }
 
-/* return whether the connection has 'hostaddr' in its conninfo */
-static bool
-has_hostaddr(PGconn *conn)
-{
-	bool		used = false;
-	PQconninfoOption *ciopt = PQconninfo(conn);
-
-	for (PQconninfoOption *p = ciopt; p->keyword != NULL; p++)
-	{
-		if (strcmp(p->keyword, "hostaddr") == 0 && p->val != NULL)
-		{
-			used = true;
-			break;
-		}
-	}
-
-	PQconninfoFree(ciopt);
-	return used;
-}
-
 /*
  * do_connect -- handler for \connect
  *
@@ -2907,13 +2887,15 @@ do_connect(enum trivalue reuse_previous_specification,
 		   char *dbname, char *user, char *host, char *port)
 {
 	PGconn	   *o_conn = pset.db,
-			   *n_conn;
+			   *n_conn = NULL;
+	PQconninfoOption *cinfo;
+	int			nconnopts = 0;
+	bool		same_host = false;
 	char	   *password = NULL;
-	char	   *hostaddr = NULL;
-	bool		keep_password;
+	bool		success = true;
+	bool		keep_password = true;
 	bool		has_connection_string;
 	bool		reuse_previous;
-	PQExpBufferData connstr;
 
 	if (!o_conn && (!dbname || !user || !host || !port))
 	{
@@ -2955,55 +2937,125 @@ do_connect(enum trivalue reuse_previous_specification,
 	}
 
 	/*
-	 * Grab missing values from the old connection.  If we grab host (or host
-	 * is the same as before) and hostaddr was set, grab that too.
+	 * If we intend to re-use connection parameters, collect them out of the
+	 * old connection, then replace individual values as necessary. Otherwise,
+	 * obtain a PQconninfoOption array containing libpq's defaults, and modify
+	 * that.  Note this function assumes that PQconninfo, PQconndefaults, and
+	 * PQconninfoParse will all produce arrays containing the same options in
+	 * the same order.
 	 */
 	if (reuse_previous)
-	{
-		if (!user)
-			user = PQuser(o_conn);
-		if (host && strcmp(host, PQhost(o_conn)) == 0 &&
-			has_hostaddr(o_conn))
-		{
-			hostaddr = PQhostaddr(o_conn);
-		}
-		if (!host)
-		{
-			host = PQhost(o_conn);
-			if (has_hostaddr(o_conn))
-				hostaddr = PQhostaddr(o_conn);
-		}
-		if (!port)
-			port = PQport(o_conn);
-	}
-
-	/*
-	 * Any change in the parameters read above makes us discard the password.
-	 * We also discard it if we're to use a conninfo rather than the
-	 * positional syntax.
-	 */
-	if (has_connection_string)
-		keep_password = false;
+		cinfo = PQconninfo(o_conn);
 	else
-		keep_password =
-			(user && PQuser(o_conn) && strcmp(user, PQuser(o_conn)) == 0) &&
-			(host && PQhost(o_conn) && strcmp(host, PQhost(o_conn)) == 0) &&
-			(port && PQport(o_conn) && strcmp(port, PQport(o_conn)) == 0);
+		cinfo = PQconndefaults();
 
-	/*
-	 * Grab missing dbname from old connection.  No password discard if this
-	 * changes: passwords aren't (usually) database-specific.
-	 */
-	if (!dbname && reuse_previous)
+	if (cinfo)
 	{
-		initPQExpBuffer(&connstr);
-		appendPQExpBuffer(&connstr, "dbname=");
-		appendConnStrVal(&connstr, PQdb(o_conn));
-		dbname = connstr.data;
-		/* has_connection_string=true would be a dead store */
+		if (has_connection_string)
+		{
+			/* Parse the connstring and insert values into cinfo */
+			PQconninfoOption *replcinfo;
+			char	   *errmsg;
+
+			replcinfo = PQconninfoParse(dbname, &errmsg);
+			if (replcinfo)
+			{
+				PQconninfoOption *ci;
+				PQconninfoOption *replci;
+
+				for (ci = cinfo, replci = replcinfo;
+					 ci->keyword && replci->keyword;
+					 ci++, replci++)
+				{
+					Assert(strcmp(ci->keyword, replci->keyword) == 0);
+					/* Insert value from connstring if one was provided */
+					if (replci->val)
+					{
+						/*
+						 * We know that both val strings were allocated by
+						 * libpq, so the least messy way to avoid memory leaks
+						 * is to swap them.
+						 */
+						char	   *swap = replci->val;
+
+						replci->val = ci->val;
+						ci->val = swap;
+					}
+				}
+				Assert(ci->keyword == NULL && replci->keyword == NULL);
+
+				/* While here, determine how many option slots there are */
+				nconnopts = ci - cinfo;
+
+				PQconninfoFree(replcinfo);
+
+				/* We never re-use a password with a conninfo string. */
+				keep_password = false;
+
+				/* Don't let code below try to inject dbname into params. */
+				dbname = NULL;
+			}
+			else
+			{
+				/* PQconninfoParse failed */
+				if (errmsg)
+				{
+					pg_log_error("%s", errmsg);
+					PQfreemem(errmsg);
+				}
+				else
+					pg_log_error("out of memory");
+				success = false;
+			}
+		}
+		else
+		{
+			/*
+			 * If dbname isn't a connection string, then we'll inject it and
+			 * the other parameters into the keyword array below.  (We can't
+			 * easily insert them into the cinfo array because of memory
+			 * management issues: PQconninfoFree would misbehave on Windows.)
+			 * However, to avoid dependencies on the order in which parameters
+			 * appear in the array, make a preliminary scan to set
+			 * keep_password and same_host correctly.
+			 *
+			 * While any change in user, host, or port causes us to ignore the
+			 * old connection's password, we don't force that for dbname,
+			 * since passwords aren't database-specific.
+			 */
+			PQconninfoOption *ci;
+
+			for (ci = cinfo; ci->keyword; ci++)
+			{
+				if (user && strcmp(ci->keyword, "user") == 0)
+				{
+					if (!(ci->val && strcmp(user, ci->val) == 0))
+						keep_password = false;
+				}
+				else if (host && strcmp(ci->keyword, "host") == 0)
+				{
+					if (ci->val && strcmp(host, ci->val) == 0)
+						same_host = true;
+					else
+						keep_password = false;
+				}
+				else if (port && strcmp(ci->keyword, "port") == 0)
+				{
+					if (!(ci->val && strcmp(port, ci->val) == 0))
+						keep_password = false;
+				}
+			}
+
+			/* While here, determine how many option slots there are */
+			nconnopts = ci - cinfo;
+		}
 	}
 	else
-		connstr.data = NULL;
+	{
+		/* We failed to create the cinfo structure */
+		pg_log_error("out of memory");
+		success = false;
+	}
 
 	/*
 	 * If the user asked to be prompted for a password, ask for one now. If
@@ -3015,13 +3067,13 @@ do_connect(enum trivalue reuse_previous_specification,
 	 * the postmaster's log.  But libpq offers no API that would let us obtain
 	 * a password and then continue with the first connection attempt.
 	 */
-	if (pset.getPassword == TRI_YES)
+	if (pset.getPassword == TRI_YES && success)
 	{
 		/*
-		 * If a connstring or URI is provided, we can't be sure we know which
-		 * username will be used, since we haven't parsed that argument yet.
+		 * If a connstring or URI is provided, we don't know which username
+		 * will be used, since we haven't dug that out of the connstring.
 		 * Don't risk issuing a misleading prompt.  As in startup.c, it does
-		 * not seem worth working harder, since this getPassword option is
+		 * not seem worth working harder, since this getPassword setting is
 		 * normally only used in noninteractive cases.
 		 */
 		password = prompt_for_password(has_connection_string ? NULL : user);
@@ -3035,56 +3087,59 @@ do_connect(enum trivalue reuse_previous_specification,
 			password = NULL;
 	}
 
-	while (true)
+	/* Loop till we have a connection or fail, which we might've already */
+	while (success)
 	{
-#define PARAMS_ARRAY_SIZE	9
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-		int			paramnum = -1;
-
-		keywords[++paramnum] = "host";
-		values[paramnum] = host;
-		if (hostaddr && *hostaddr)
-		{
-			keywords[++paramnum] = "hostaddr";
-			values[paramnum] = hostaddr;
-		}
-		keywords[++paramnum] = "port";
-		values[paramnum] = port;
-		keywords[++paramnum] = "user";
-		values[paramnum] = user;
+		const char **keywords = pg_malloc((nconnopts + 1) * sizeof(*keywords));
+		const char **values = pg_malloc((nconnopts + 1) * sizeof(*values));
+		int			paramnum = 0;
+		PQconninfoOption *ci;
 
 		/*
-		 * Position in the array matters when the dbname is a connection
-		 * string, because settings in a connection string override earlier
-		 * array entries only.  Thus, user= in the connection string always
-		 * takes effect, but client_encoding= often will not.
+		 * Copy non-default settings into the PQconnectdbParams parameter
+		 * arrays; but override any values specified old-style, as well as the
+		 * password and a couple of fields we want to set forcibly.
 		 *
-		 * If you change this code, also change the initial-connection code in
+		 * If you change this code, see also the initial-connection code in
 		 * main().  For no good reason, a connection string password= takes
 		 * precedence in main() but not here.
 		 */
-		keywords[++paramnum] = "dbname";
-		values[paramnum] = dbname;
-		keywords[++paramnum] = "password";
-		values[paramnum] = password;
-		keywords[++paramnum] = "fallback_application_name";
-		values[paramnum] = pset.progname;
-		keywords[++paramnum] = "client_encoding";
-		values[paramnum] = (pset.notty || getenv("PGCLIENTENCODING")) ? NULL : "auto";
+		for (ci = cinfo; ci->keyword; ci++)
+		{
+			keywords[paramnum] = ci->keyword;
 
+			if (dbname && strcmp(ci->keyword, "dbname") == 0)
+				values[paramnum++] = dbname;
+			else if (user && strcmp(ci->keyword, "user") == 0)
+				values[paramnum++] = user;
+			else if (host && strcmp(ci->keyword, "host") == 0)
+				values[paramnum++] = host;
+			else if (host && !same_host && strcmp(ci->keyword, "hostaddr") == 0)
+			{
+				/* If we're changing the host value, drop any old hostaddr */
+				values[paramnum++] = NULL;
+			}
+			else if (port && strcmp(ci->keyword, "port") == 0)
+				values[paramnum++] = port;
+			else if (strcmp(ci->keyword, "password") == 0)
+				values[paramnum++] = password;
+			else if (strcmp(ci->keyword, "fallback_application_name") == 0)
+				values[paramnum++] = pset.progname;
+			else if (strcmp(ci->keyword, "client_encoding") == 0)
+				values[paramnum++] = (pset.notty || getenv("PGCLIENTENCODING")) ? NULL : "auto";
+			else if (ci->val)
+				values[paramnum++] = ci->val;
+			/* else, don't bother making libpq parse this keyword */
+		}
 		/* add array terminator */
-		keywords[++paramnum] = NULL;
+		keywords[paramnum] = NULL;
 		values[paramnum] = NULL;
 
-		n_conn = PQconnectdbParams(keywords, values, true);
+		/* Note we do not want libpq to re-expand the dbname parameter */
+		n_conn = PQconnectdbParams(keywords, values, false);
 
 		pg_free(keywords);
 		pg_free(values);
-
-		/* We can immediately discard the password -- no longer needed */
-		if (password)
-			pg_free(password);
 
 		if (PQstatus(n_conn) == CONNECTION_OK)
 			break;
@@ -3101,9 +3156,28 @@ do_connect(enum trivalue reuse_previous_specification,
 			 */
 			password = prompt_for_password(PQuser(n_conn));
 			PQfinish(n_conn);
+			n_conn = NULL;
 			continue;
 		}
 
+		/*
+		 * We'll report the error below ... unless n_conn is NULL, indicating
+		 * that libpq didn't have enough memory to make a PGconn.
+		 */
+		if (n_conn == NULL)
+			pg_log_error("out of memory");
+
+		success = false;
+	}							/* end retry loop */
+
+	/* Release locally allocated data, whether we succeeded or not */
+	if (password)
+		pg_free(password);
+	if (cinfo)
+		PQconninfoFree(cinfo);
+
+	if (!success)
+	{
 		/*
 		 * Failed to connect to the database. In interactive mode, keep the
 		 * previous connection to the DB; in scripting mode, close our
@@ -3111,7 +3185,11 @@ do_connect(enum trivalue reuse_previous_specification,
 		 */
 		if (pset.cur_cmd_interactive)
 		{
-			pg_log_info("%s", PQerrorMessage(n_conn));
+			if (n_conn)
+			{
+				pg_log_info("%s", PQerrorMessage(n_conn));
+				PQfinish(n_conn);
+			}
 
 			/* pset.db is left unmodified */
 			if (o_conn)
@@ -3119,7 +3197,12 @@ do_connect(enum trivalue reuse_previous_specification,
 		}
 		else
 		{
-			pg_log_error("\\connect: %s", PQerrorMessage(n_conn));
+			if (n_conn)
+			{
+				pg_log_error("\\connect: %s", PQerrorMessage(n_conn));
+				PQfinish(n_conn);
+			}
+
 			if (o_conn)
 			{
 				/*
@@ -3133,13 +3216,8 @@ do_connect(enum trivalue reuse_previous_specification,
 			}
 		}
 
-		PQfinish(n_conn);
-		if (connstr.data)
-			termPQExpBuffer(&connstr);
 		return false;
 	}
-	if (connstr.data)
-		termPQExpBuffer(&connstr);
 
 	/*
 	 * Replace the old connection with the new one, and update
