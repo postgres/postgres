@@ -118,14 +118,10 @@ get_errno_symbol(int errnum)
 			return "E2BIG";
 		case EACCES:
 			return "EACCES";
-#ifdef EADDRINUSE
 		case EADDRINUSE:
 			return "EADDRINUSE";
-#endif
-#ifdef EADDRNOTAVAIL
 		case EADDRNOTAVAIL:
 			return "EADDRNOTAVAIL";
-#endif
 		case EAFNOSUPPORT:
 			return "EAFNOSUPPORT";
 #ifdef EAGAIN
@@ -176,10 +172,8 @@ get_errno_symbol(int errnum)
 			return "EINVAL";
 		case EIO:
 			return "EIO";
-#ifdef EISCONN
 		case EISCONN:
 			return "EISCONN";
-#endif
 		case EISDIR:
 			return "EISDIR";
 #ifdef ELOOP
@@ -216,20 +210,16 @@ get_errno_symbol(int errnum)
 			return "ENOSPC";
 		case ENOSYS:
 			return "ENOSYS";
-#ifdef ENOTCONN
 		case ENOTCONN:
 			return "ENOTCONN";
-#endif
 		case ENOTDIR:
 			return "ENOTDIR";
 #if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST) /* same code on AIX */
 		case ENOTEMPTY:
 			return "ENOTEMPTY";
 #endif
-#ifdef ENOTSOCK
 		case ENOTSOCK:
 			return "ENOTSOCK";
-#endif
 #ifdef ENOTSUP
 		case ENOTSUP:
 			return "ENOTSUP";
