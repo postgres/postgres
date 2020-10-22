@@ -736,6 +736,25 @@ ReadNextMultiXactId(void)
 }
 
 /*
+ * ReadMultiXactIdRange
+ *		Get the range of IDs that may still be referenced by a relation.
+ */
+void
+ReadMultiXactIdRange(MultiXactId *oldest, MultiXactId *next)
+{
+	LWLockAcquire(MultiXactGenLock, LW_SHARED);
+	*oldest = MultiXactState->oldestMultiXactId;
+	*next = MultiXactState->nextMXact;
+	LWLockRelease(MultiXactGenLock);
+
+	if (*oldest < FirstMultiXactId)
+		*oldest = FirstMultiXactId;
+	if (*next < FirstMultiXactId)
+		*next = FirstMultiXactId;
+}
+
+
+/*
  * MultiXactIdCreateFromMembers
  *		Make a new MultiXactId from the specified set of members
  *

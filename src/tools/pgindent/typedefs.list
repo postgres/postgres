@@ -1020,6 +1020,7 @@ HbaToken
 HeadlineJsonState
 HeadlineParsedText
 HeadlineWordEntry
+HeapCheckContext
 HeapScanDesc
 HeapTuple
 HeapTupleData
@@ -2290,6 +2291,7 @@ SimpleStringList
 SimpleStringListCell
 SingleBoundSortItem
 Size
+SkipPages
 SlabBlock
 SlabChunk
 SlabContext
@@ -2791,6 +2793,8 @@ XactCallback
 XactCallbackItem
 XactEvent
 XactLockTableWaitInfo
+XidBoundsViolation
+XidCommitStatus
 XidHorizonPrefetchState
 XidStatus
 XmlExpr
