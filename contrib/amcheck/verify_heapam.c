@@ -555,7 +555,7 @@ check_tuple_header_and_visibilty(HeapTupleHeader tuphdr, HeapCheckContext *ctx)
 {
 	uint16		infomask = tuphdr->t_infomask;
 	bool		header_garbled = false;
-	unsigned	expected_hoff;;
+	unsigned	expected_hoff;
 
 	if (ctx->tuphdr->t_hoff > ctx->lp_len)
 	{
@@ -1368,60 +1368,55 @@ check_mxid_valid_in_rel(MultiXactId mxid, HeapCheckContext *ctx)
  * truly been valid at that time.
  *
  * If the status argument is not NULL, and if and only if the transaction ID
- * appears to be valid in this relation, clog will be consulted and the commit
- * status argument will be set with the status of the transaction ID.
+ * appears to be valid in this relation, the status argument will be set with
+ * the commit status of the transaction ID.
  */
 static XidBoundsViolation
 get_xid_status(TransactionId xid, HeapCheckContext *ctx,
 			   XidCommitStatus *status)
 {
-	XidBoundsViolation result;
 	FullTransactionId fxid;
 	FullTransactionId clog_horizon;
 
 	/* Quick check for special xids */
 	if (!TransactionIdIsValid(xid))
-		result = XID_INVALID;
+		return XID_INVALID;
 	else if (xid == BootstrapTransactionId || xid == FrozenTransactionId)
-		result = XID_BOUNDS_OK;
-	else
 	{
-		/* Check if the xid is within bounds */
-		fxid = FullTransactionIdFromXidAndCtx(xid, ctx);
-		if (!fxid_in_cached_range(fxid, ctx))
-		{
-			/*
-			 * We may have been checking against stale values.  Update the
-			 * cached range to be sure, and since we relied on the cached
-			 * range when we performed the full xid conversion, reconvert.
-			 */
-			update_cached_xid_range(ctx);
-			fxid = FullTransactionIdFromXidAndCtx(xid, ctx);
-		}
-
-		if (FullTransactionIdPrecedesOrEquals(ctx->next_fxid, fxid))
-			result = XID_IN_FUTURE;
-		else if (FullTransactionIdPrecedes(fxid, ctx->oldest_fxid))
-			result = XID_PRECEDES_CLUSTERMIN;
-		else if (FullTransactionIdPrecedes(fxid, ctx->relfrozenfxid))
-			result = XID_PRECEDES_RELMIN;
-		else
-			result = XID_BOUNDS_OK;
+		if (status != NULL)
+			*status = XID_COMMITTED;
+		return XID_BOUNDS_OK;
 	}
 
-	/*
-	 * Early return if the caller does not request clog checking, or if the
-	 * xid is already known to be out of bounds.  We dare not check clog for
-	 * out of bounds transaction IDs.
-	 */
-	if (status == NULL || result != XID_BOUNDS_OK)
-		return result;
+	/* Check if the xid is within bounds */
+	fxid = FullTransactionIdFromXidAndCtx(xid, ctx);
+	if (!fxid_in_cached_range(fxid, ctx))
+	{
+		/*
+		 * We may have been checking against stale values.  Update the
+		 * cached range to be sure, and since we relied on the cached
+		 * range when we performed the full xid conversion, reconvert.
+		 */
+		update_cached_xid_range(ctx);
+		fxid = FullTransactionIdFromXidAndCtx(xid, ctx);
+	}
+
+	if (FullTransactionIdPrecedesOrEquals(ctx->next_fxid, fxid))
+		return XID_IN_FUTURE;
+	if (FullTransactionIdPrecedes(fxid, ctx->oldest_fxid))
+		return XID_PRECEDES_CLUSTERMIN;
+	if (FullTransactionIdPrecedes(fxid, ctx->relfrozenfxid))
+		return XID_PRECEDES_RELMIN;
+
+	/* Early return if the caller does not request clog checking */
+	if (status == NULL)
+		return XID_BOUNDS_OK;
 
 	/* Early return if we just checked this xid in a prior call */
 	if (xid == ctx->cached_xid)
 	{
 		*status = ctx->cached_status;
-		return result;
+		return XID_BOUNDS_OK;
 	}
 
 	*status = XID_COMMITTED;
@@ -1443,5 +1438,5 @@ get_xid_status(TransactionId xid, HeapCheckContext *ctx,
 	LWLockRelease(XactTruncationLock);
 	ctx->cached_xid = xid;
 	ctx->cached_status = *status;
-	return result;
+	return XID_BOUNDS_OK;
 }
