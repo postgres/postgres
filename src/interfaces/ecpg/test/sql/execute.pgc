@@ -25,8 +25,8 @@ exec sql end declare section;
 	exec sql create table test (name char(8), amount int, letter char(1));
 	exec sql commit;
 
-	sprintf(command, "insert into test (name, amount, letter) values ('db: ''r1''', 1, 'f')");
-	exec sql execute immediate :command;
+	/* test handling of embedded quotes in EXECUTE IMMEDIATE "literal" */
+	exec sql execute immediate "insert into test (name, \042amount\042, letter) values ('db: ''r1''', 1, 'f')";
 
 	sprintf(command, "insert into test (name, amount, letter) values ('db: ''r1''', 2, 't')");
 	exec sql execute immediate :command;

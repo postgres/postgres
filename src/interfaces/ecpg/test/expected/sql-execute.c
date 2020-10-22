@@ -77,8 +77,8 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 26 "execute.pgc"
 
 
-	sprintf(command, "insert into test (name, amount, letter) values ('db: ''r1''', 1, 'f')");
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_exec_immediate, command, ECPGt_EOIT, ECPGt_EORT);
+	/* test handling of embedded quotes in EXECUTE IMMEDIATE "literal" */
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_exec_immediate, "insert into test (name, \042amount\042, letter) values ('db: ''r1''', 1, 'f')", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

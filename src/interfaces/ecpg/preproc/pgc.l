@@ -715,7 +715,14 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					BEGIN(state_before_str_start);
 					if (literallen == 0)
 						mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
-					/* The backend will truncate the identifier here. We do not as it does not change the result. */
+					/*
+					 * The server will truncate the identifier here.  We do
+					 * not, as (1) it does not change the result; (2) we don't
+					 * know what NAMEDATALEN the server might use; (3) this
+					 * code path is also taken for literal query strings in
+					 * PREPARE and EXECUTE IMMEDIATE, which can certainly be
+					 * longer than NAMEDATALEN.
+					 */
 					base_yylval.str = mm_strdup(literalbuf);
 					return CSTRING;
 				}

@@ -7066,12 +7066,36 @@ EXECUTE IMMEDIATE <replaceable class="parameter">string</replaceable>
       <term><replaceable class="parameter">string</replaceable></term>
       <listitem>
        <para>
-        A literal C string or a host variable containing the SQL
+        A literal string or a host variable containing the SQL
         statement to be executed.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
+   </refsect1>
+
+   <refsect1>
+    <title>Notes</title>
+
+    <para>
+     In typical usage, the <replaceable>string</replaceable> is a host
+     variable reference to a string containing a dynamically-constructed
+     SQL statement.  The case of a literal string is not very useful;
+     you might as well just write the SQL statement directly, without
+     the extra typing of <command>EXECUTE IMMEDIATE</command>.
+    </para>
+
+    <para>
+     If you do use a literal string, keep in mind that any double quotes
+     you might wish to include in the SQL statement must be written as
+     octal escapes (<literal>\042</literal>) not the usual C
+     idiom <literal>\"</literal>.  This is because the string is inside
+     an <literal>EXEC SQL</literal> section, so the ECPG lexer parses it
+     according to SQL rules not C rules.  Any embedded backslashes will
+     later be handled according to C rules; but <literal>\"</literal>
+     causes an immediate syntax error because it is seen as ending the
+     literal.
+    </para>
    </refsect1>
 
    <refsect1>
@@ -7388,7 +7412,7 @@ EXEC SQL OPEN :curname1;
 
    <refsynopsisdiv>
 <synopsis>
-PREPARE <replaceable class="parameter">name</replaceable> FROM <replaceable class="parameter">string</replaceable>
+PREPARE <replaceable class="parameter">prepared_name</replaceable> FROM <replaceable class="parameter">string</replaceable>
 </synopsis>
    </refsynopsisdiv>
 
@@ -7421,13 +7445,38 @@ PREPARE <replaceable class="parameter">name</replaceable> FROM <replaceable clas
       <term><replaceable class="parameter">string</replaceable></term>
       <listitem>
        <para>
-        A literal C string or a host variable containing a preparable
-        statement, one of the SELECT, INSERT, UPDATE, or
-        DELETE.
+        A literal string or a host variable containing a preparable
+        SQL statement, one of SELECT, INSERT, UPDATE, or DELETE.
+        Use question marks (<literal>?</literal>) for parameter values
+        to be supplied at execution.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
+   </refsect1>
+
+   <refsect1>
+    <title>Notes</title>
+
+    <para>
+     In typical usage, the <replaceable>string</replaceable> is a host
+     variable reference to a string containing a dynamically-constructed
+     SQL statement.  The case of a literal string is not very useful;
+     you might as well just write a direct SQL <command>PREPARE</command>
+     statement.
+    </para>
+
+    <para>
+     If you do use a literal string, keep in mind that any double quotes
+     you might wish to include in the SQL statement must be written as
+     octal escapes (<literal>\042</literal>) not the usual C
+     idiom <literal>\"</literal>.  This is because the string is inside
+     an <literal>EXEC SQL</literal> section, so the ECPG lexer parses it
+     according to SQL rules not C rules.  Any embedded backslashes will
+     later be handled according to C rules; but <literal>\"</literal>
+     causes an immediate syntax error because it is seen as ending the
+     literal.
+    </para>
    </refsect1>
 
    <refsect1>
