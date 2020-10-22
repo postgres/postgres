@@ -43,6 +43,7 @@ package TestLib;
 use strict;
 use warnings;
 
+use Carp;
 use Config;
 use Cwd;
 use Exporter 'import';
@@ -421,7 +422,7 @@ sub slurp_dir
 {
 	my ($dir) = @_;
 	opendir(my $dh, $dir)
-	  or die "could not opendir \"$dir\": $!";
+	  or croak "could not opendir \"$dir\": $!";
 	my @direntries = readdir $dh;
 	closedir $dh;
 	return @direntries;
@@ -443,19 +444,19 @@ sub slurp_file
 	if ($Config{osname} ne 'MSWin32')
 	{
 		open(my $in, '<', $filename)
-		  or die "could not read \"$filename\": $!";
+		  or croak "could not read \"$filename\": $!";
 		$contents = <$in>;
 		close $in;
 	}
 	else
 	{
 		my $fHandle = createFile($filename, "r", "rwd")
-		  or die "could not open \"$filename\": $^E";
+		  or croak "could not open \"$filename\": $^E";
 		OsFHandleOpen(my $fh = IO::Handle->new(), $fHandle, 'r')
-		  or die "could not read \"$filename\": $^E\n";
+		  or croak "could not read \"$filename\": $^E\n";
 		$contents = <$fh>;
 		CloseHandle($fHandle)
-		  or die "could not close \"$filename\": $^E\n";
+		  or croak "could not close \"$filename\": $^E\n";
 	}
 	$contents =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 	return $contents;
@@ -474,7 +475,7 @@ sub append_to_file
 {
 	my ($filename, $str) = @_;
 	open my $fh, ">>", $filename
-	  or die "could not write \"$filename\": $!";
+	  or croak "could not write \"$filename\": $!";
 	print $fh $str;
 	close $fh;
 	return;
