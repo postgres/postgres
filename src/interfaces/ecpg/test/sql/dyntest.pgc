@@ -51,7 +51,7 @@ main ()
   exec sql create table dyntest (name char (14), d float8, i int,
 				 bignumber int8, b boolean, comment text,
 				 day date);
-  exec sql insert into dyntest values ('first entry', 14.7, 14, 123045607890, true, 'The world''''s most advanced open source database.', '1987-07-14');
+  exec sql insert into dyntest values ('first entry', 14.7, 14, 123045607890, true, 'The world''s most advanced open source database.', '1987-07-14');
   exec sql insert into dyntest values ('second entry', 1407.87, 1407, 987065403210, false, 'The elephant never forgets.', '1999-11-5');
 
   exec sql prepare MYQUERY from :QUERY;

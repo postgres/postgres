@@ -623,11 +623,8 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					}
 				}
 
-<xq,xe,xn,xus>{xqdouble}	{ addlitchar('\''); }
-<xqc>{xqcquote}	{
-					addlitchar('\\');
-					addlitchar('\'');
-				}
+<xq,xe,xn,xus>{xqdouble}	{ addlit(yytext, yyleng); }
+<xqc>{xqcquote}				{ addlit(yytext, yyleng); }
 <xq,xqc,xn,xus>{xqinside}	{ addlit(yytext, yyleng); }
 <xe>{xeinside}  {
 					addlit(yytext, yyleng);
@@ -736,7 +733,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					return UIDENT;
 				}
 <xd,xui>{xddouble}	{
-					addlitchar('"');
+					addlit(yytext, yyleng);
 				}
 <xd,xui>{xdinside}	{
 					addlit(yytext, yyleng);

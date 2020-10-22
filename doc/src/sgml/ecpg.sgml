@@ -31,7 +31,7 @@
    specially marked sections.  To build the program, the source code (<filename>*.pgc</filename>)
    is first passed through the embedded SQL preprocessor, which converts it
    to an ordinary C program (<filename>*.c</filename>), and afterwards it can be processed by a C
-   compiler.  (For details about the compiling and linking see <xref linkend="ecpg-process"/>).
+   compiler.  (For details about the compiling and linking see <xref linkend="ecpg-process"/>.)
    Converted ECPG applications call functions in the libpq library
    through the embedded SQL library (ecpglib), and communicate with
    the PostgreSQL server using the normal frontend-backend protocol.
@@ -63,11 +63,22 @@ EXEC SQL ...;
 </programlisting>
    These statements syntactically take the place of a C statement.
    Depending on the particular statement, they can appear at the
-   global level or within a function.  Embedded
+   global level or within a function.
+  </para>
+
+  <para>
+   Embedded
    <acronym>SQL</acronym> statements follow the case-sensitivity rules of
    normal <acronym>SQL</acronym> code, and not those of C. Also they allow nested
-   C-style comments that are part of the SQL standard. The C part of the
+   C-style comments as per the SQL standard. The C part of the
    program, however, follows the C standard of not accepting nested comments.
+   Embedded <acronym>SQL</acronym> statements likewise use SQL rules, not
+   C rules, for parsing quoted strings and identifiers.
+   (See <xref linkend="sql-syntax-strings"/> and
+   <xref linkend="sql-syntax-identifiers"/> respectively.  Note that
+   ECPG assumes that <varname>standard_conforming_strings</varname>
+   is <literal>on</literal>.)
+   Of course, the C part of the program follows C quoting rules.
   </para>
 
   <para>

@@ -12,10 +12,10 @@ int main(void)
 
   exec sql set standard_conforming_strings to on;
 
-  exec sql select 'abcdef',
-                  N'abcdef' AS foo,
-                  E'abc\bdef' AS "foo",
-                  U&'d\0061t\0061' AS U&"foo",
+  exec sql select 'abc''d\ef',
+                  N'abc''d\ef' AS foo,
+                  E'abc''d\\ef' AS "foo""bar",
+                  U&'d\0061t\0061' AS U&"foo""bar",
                   U&'d!+000061t!+000061' uescape '!',
                   $foo$abc$def$foo$
                   into :s1, :s2, :s3, :s4, :s5, :s6;
