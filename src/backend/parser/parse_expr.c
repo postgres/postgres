@@ -1698,11 +1698,12 @@ transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref)
 		/*
 		 * If we're at the last column, delete the RowExpr from
 		 * p_multiassign_exprs; we don't need it anymore, and don't want it in
-		 * the finished UPDATE tlist.
+		 * the finished UPDATE tlist.  We assume this is still the last entry
+		 * in p_multiassign_exprs.
 		 */
 		if (maref->colno == maref->ncolumns)
 			pstate->p_multiassign_exprs =
-				list_delete_ptr(pstate->p_multiassign_exprs, tle);
+				list_delete_last(pstate->p_multiassign_exprs);
 
 		return result;
 	}

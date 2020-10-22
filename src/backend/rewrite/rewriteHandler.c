@@ -650,11 +650,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 			if (IsA(rtr, RangeTblRef) &&
 				rtr->rtindex == rt_index)
 			{
-				newjointree = list_delete_ptr(newjointree, rtr);
-
-				/*
-				 * foreach is safe because we exit loop after list_delete...
-				 */
+				newjointree = foreach_delete_current(newjointree, l);
 				break;
 			}
 		}

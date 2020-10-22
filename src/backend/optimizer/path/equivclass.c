@@ -137,6 +137,7 @@ process_equivalence(PlannerInfo *root,
 	EquivalenceMember *em1,
 			   *em2;
 	ListCell   *lc1;
+	int			ec2_idx;
 
 	/* Should not already be marked as having generated an eclass */
 	Assert(restrictinfo->left_ec == NULL);
@@ -258,6 +259,7 @@ process_equivalence(PlannerInfo *root,
 	 */
 	ec1 = ec2 = NULL;
 	em1 = em2 = NULL;
+	ec2_idx = -1;
 	foreach(lc1, root->eq_classes)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
@@ -311,6 +313,7 @@ process_equivalence(PlannerInfo *root,
 				equal(item2, cur_em->em_expr))
 			{
 				ec2 = cur_ec;
+				ec2_idx = foreach_current_index(lc1);
 				em2 = cur_em;
 				if (ec1)
 					break;
@@ -371,7 +374,7 @@ process_equivalence(PlannerInfo *root,
 		ec1->ec_max_security = Max(ec1->ec_max_security,
 								   ec2->ec_max_security);
 		ec2->ec_merged = ec1;
-		root->eq_classes = list_delete_ptr(root->eq_classes, ec2);
+		root->eq_classes = list_delete_nth_cell(root->eq_classes, ec2_idx);
 		/* just to avoid debugging confusion w/ dangling pointers: */
 		ec2->ec_members = NIL;
 		ec2->ec_sources = NIL;
@@ -1964,6 +1967,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 		bool		matchleft;
 		bool		matchright;
 		ListCell   *lc2;
+		int			coal_idx = -1;
 
 		/* Ignore EC unless it contains pseudoconstants */
 		if (!cur_ec->ec_has_const)
@@ -2008,6 +2012,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 
 				if (equal(leftvar, cfirst) && equal(rightvar, csecond))
 				{
+					coal_idx = foreach_current_index(lc2);
 					match = true;
 					break;
 				}
@@ -2072,7 +2077,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 		 */
 		if (matchleft && matchright)
 		{
-			cur_ec->ec_members = list_delete_ptr(cur_ec->ec_members, coal_em);
+			cur_ec->ec_members = list_delete_nth_cell(cur_ec->ec_members, coal_idx);
 			return true;
 		}
 

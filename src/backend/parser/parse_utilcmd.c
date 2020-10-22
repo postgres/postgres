@@ -360,6 +360,7 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	CreateSeqStmt *seqstmt;
 	AlterSeqStmt *altseqstmt;
 	List	   *attnamelist;
+	int			nameEl_idx = -1;
 
 	/*
 	 * Determine namespace and name to use for the sequence.
@@ -386,6 +387,7 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			nameEl = defel;
+			nameEl_idx = foreach_current_index(option);
 		}
 	}
 
@@ -405,7 +407,7 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 		}
 		sname = rv->relname;
 		/* Remove the SEQUENCE NAME item from seqoptions */
-		seqoptions = list_delete_ptr(seqoptions, nameEl);
+		seqoptions = list_delete_nth_cell(seqoptions, nameEl_idx);
 	}
 	else
 	{
