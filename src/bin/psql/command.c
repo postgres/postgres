@@ -3014,11 +3014,10 @@ param_is_newly_set(const char *old_val, const char *new_val)
 /*
  * do_connect -- handler for \connect
  *
- * Connects to a database with given parameters. Absent an established
- * connection, all parameters are required. Given -reuse-previous=off or a
- * connection string without -reuse-previous=on, NULL values will pass through
- * to PQconnectdbParams(), so the libpq defaults will be used. Otherwise, NULL
- * values will be replaced with the ones in the current connection.
+ * Connects to a database with given parameters.  If we are told to re-use
+ * parameters, parameters from the previous connection are used where the
+ * command's own options do not supply a value.  Otherwise, libpq defaults
+ * are used.
  *
  * In interactive mode, if connection fails with the given parameters,
  * the old connection will be kept.
@@ -3038,20 +3037,16 @@ do_connect(enum trivalue reuse_previous_specification,
 	bool		has_connection_string;
 	bool		reuse_previous;
 
-	if (!o_conn && (!dbname || !user || !host || !port))
+	has_connection_string = dbname ?
+		recognized_connection_string(dbname) : false;
+
+	/* Complain if we have additional arguments after a connection string. */
+	if (has_connection_string && (user || host || port))
 	{
-		/*
-		 * We don't know the supplied connection parameters and don't want to
-		 * connect to the wrong database by using defaults, so require all
-		 * parameters to be specified.
-		 */
-		pg_log_error("All connection parameters must be supplied because no "
-					 "database connection exists");
+		pg_log_error("Do not give user, host, or port separately when using a connection string");
 		return false;
 	}
 
-	has_connection_string = dbname ?
-		recognized_connection_string(dbname) : false;
 	switch (reuse_previous_specification)
 	{
 		case TRI_YES:
@@ -3065,16 +3060,14 @@ do_connect(enum trivalue reuse_previous_specification,
 			break;
 	}
 
-	/* If the old connection does not exist, there is nothing to reuse. */
-	if (!o_conn)
-		reuse_previous = false;
-
-	/* Silently ignore arguments subsequent to a connection string. */
-	if (has_connection_string)
+	/*
+	 * If we are to re-use parameters, there'd better be an old connection to
+	 * get them from.
+	 */
+	if (reuse_previous && !o_conn)
 	{
-		user = NULL;
-		host = NULL;
-		port = NULL;
+		pg_log_error("No database connection exists to re-use parameters from");
+		return false;
 	}
 
 	/*
@@ -3103,6 +3096,7 @@ do_connect(enum trivalue reuse_previous_specification,
 			{
 				PQconninfoOption *ci;
 				PQconninfoOption *replci;
+				bool		have_password = false;
 
 				for (ci = cinfo, replci = replcinfo;
 					 ci->keyword && replci->keyword;
@@ -3121,6 +3115,26 @@ do_connect(enum trivalue reuse_previous_specification,
 
 						replci->val = ci->val;
 						ci->val = swap;
+
+						/*
+						 * Check whether connstring provides options affecting
+						 * password re-use.  While any change in user, host,
+						 * hostaddr, or port causes us to ignore the old
+						 * connection's password, we don't force that for
+						 * dbname, since passwords aren't database-specific.
+						 */
+						if (replci->val == NULL ||
+							strcmp(ci->val, replci->val) != 0)
+						{
+							if (strcmp(replci->keyword, "user") == 0 ||
+								strcmp(replci->keyword, "host") == 0 ||
+								strcmp(replci->keyword, "hostaddr") == 0 ||
+								strcmp(replci->keyword, "port") == 0)
+								keep_password = false;
+						}
+						/* Also note whether connstring contains a password. */
+						if (strcmp(replci->keyword, "password") == 0)
+							have_password = true;
 					}
 				}
 				Assert(ci->keyword == NULL && replci->keyword == NULL);
@@ -3130,8 +3144,13 @@ do_connect(enum trivalue reuse_previous_specification,
 
 				PQconninfoFree(replcinfo);
 
-				/* We never re-use a password with a conninfo string. */
-				keep_password = false;
+				/*
+				 * If the connstring contains a password, tell the loop below
+				 * that we may use it, regardless of other settings (i.e.,
+				 * cinfo's password is no longer an "old" password).
+				 */
+				if (have_password)
+					keep_password = true;
 
 				/* Don't let code below try to inject dbname into params. */
 				dbname = NULL;
@@ -3219,14 +3238,6 @@ do_connect(enum trivalue reuse_previous_specification,
 		 */
 		password = prompt_for_password(has_connection_string ? NULL : user);
 	}
-	else if (o_conn && keep_password)
-	{
-		password = PQpass(o_conn);
-		if (password && *password)
-			password = pg_strdup(password);
-		else
-			password = NULL;
-	}
 
 	/* Loop till we have a connection or fail, which we might've already */
 	while (success)
@@ -3238,12 +3249,12 @@ do_connect(enum trivalue reuse_previous_specification,
 
 		/*
 		 * Copy non-default settings into the PQconnectdbParams parameter
-		 * arrays; but override any values specified old-style, as well as the
-		 * password and a couple of fields we want to set forcibly.
+		 * arrays; but inject any values specified old-style, as well as any
+		 * interactively-obtained password, and a couple of fields we want to
+		 * set forcibly.
 		 *
 		 * If you change this code, see also the initial-connection code in
-		 * main().  For no good reason, a connection string password= takes
-		 * precedence in main() but not here.
+		 * main().
 		 */
 		for (ci = cinfo; ci->keyword; ci++)
 		{
@@ -3262,7 +3273,9 @@ do_connect(enum trivalue reuse_previous_specification,
 			}
 			else if (port && strcmp(ci->keyword, "port") == 0)
 				values[paramnum++] = port;
-			else if (strcmp(ci->keyword, "password") == 0)
+			/* If !keep_password, we unconditionally drop old password */
+			else if ((password || !keep_password) &&
+					 strcmp(ci->keyword, "password") == 0)
 				values[paramnum++] = password;
 			else if (strcmp(ci->keyword, "fallback_application_name") == 0)
 				values[paramnum++] = pset.progname;
