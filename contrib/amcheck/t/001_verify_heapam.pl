@@ -4,7 +4,7 @@ use warnings;
 use PostgresNode;
 use TestLib;
 
-use Test::More tests => 65;
+use Test::More tests => 55;
 
 my ($node, $result);
 
@@ -28,19 +28,17 @@ check_all_options_uncorrupted('test', 'plain');
 #
 fresh_test_table('test');
 corrupt_first_page('test');
-detects_corruption(
-	"verify_heapam('test')",
-	"plain corrupted table");
-detects_corruption(
+detects_heap_corruption("verify_heapam('test')", "plain corrupted table");
+detects_heap_corruption(
 	"verify_heapam('test', skip := 'all-visible')",
 	"plain corrupted table skipping all-visible");
-detects_corruption(
+detects_heap_corruption(
 	"verify_heapam('test', skip := 'all-frozen')",
 	"plain corrupted table skipping all-frozen");
-detects_corruption(
+detects_heap_corruption(
 	"verify_heapam('test', check_toast := false)",
 	"plain corrupted table skipping toast");
-detects_corruption(
+detects_heap_corruption(
 	"verify_heapam('test', startblock := 0, endblock := 0)",
 	"plain corrupted table checking only block zero");
 
@@ -50,70 +48,11 @@ detects_corruption(
 fresh_test_table('test');
 $node->safe_psql('postgres', q(VACUUM FREEZE test));
 corrupt_first_page('test');
-detects_corruption(
-	"verify_heapam('test')",
+detects_heap_corruption("verify_heapam('test')",
 	"all-frozen corrupted table");
 detects_no_corruption(
 	"verify_heapam('test', skip := 'all-frozen')",
 	"all-frozen corrupted table skipping all-frozen");
-
-#
-# Check a corrupt table with corrupt page header
-#
-fresh_test_table('test');
-corrupt_first_page_and_header('test');
-detects_corruption(
-	"verify_heapam('test')",
-	"corrupted test table with bad page header");
-
-#
-# Check an uncorrupted table with corrupt toast page header
-#
-fresh_test_table('test');
-my $toast = get_toast_for('test');
-corrupt_first_page_and_header($toast);
-detects_corruption(
-	"verify_heapam('test', check_toast := true)",
-	"table with corrupted toast page header checking toast");
-detects_no_corruption(
-	"verify_heapam('test', check_toast := false)",
-	"table with corrupted toast page header skipping toast");
-detects_corruption(
-	"verify_heapam('$toast')",
-	"corrupted toast page header");
-
-#
-# Check an uncorrupted table with corrupt toast
-#
-fresh_test_table('test');
-$toast = get_toast_for('test');
-corrupt_first_page($toast);
-detects_corruption(
-	"verify_heapam('test', check_toast := true)",
-	"table with corrupted toast checking toast");
-detects_no_corruption(
-	"verify_heapam('test', check_toast := false)",
-	"table with corrupted toast skipping toast");
-detects_corruption(
-	"verify_heapam('$toast')",
-	"corrupted toast table");
-
-#
-# Check an uncorrupted all-frozen table with corrupt toast
-#
-fresh_test_table('test');
-$node->safe_psql('postgres', q(VACUUM FREEZE test));
-$toast = get_toast_for('test');
-corrupt_first_page($toast);
-detects_corruption(
-	"verify_heapam('test', check_toast := true)",
-	"all-frozen table with corrupted toast checking toast");
-detects_no_corruption(
-	"verify_heapam('test', check_toast := false)",
-	"all-frozen table with corrupted toast skipping toast");
-detects_corruption(
-	"verify_heapam('$toast')",
-	"corrupted toast table of all-frozen table");
 
 # Returns the filesystem path for the named relation.
 sub relation_filepath
@@ -121,8 +60,8 @@ sub relation_filepath
 	my ($relname) = @_;
 
 	my $pgdata = $node->data_dir;
-	my $rel = $node->safe_psql('postgres',
-							   qq(SELECT pg_relation_filepath('$relname')));
+	my $rel    = $node->safe_psql('postgres',
+		qq(SELECT pg_relation_filepath('$relname')));
 	die "path not found for relation $relname" unless defined $rel;
 	return "$pgdata/$rel";
 }
@@ -131,7 +70,9 @@ sub relation_filepath
 sub get_toast_for
 {
 	my ($relname) = @_;
-	$node->safe_psql('postgres', qq(
+
+	return $node->safe_psql(
+		'postgres', qq(
 		SELECT 'pg_toast.' || t.relname
 			FROM pg_catalog.pg_class c, pg_catalog.pg_class t
 			WHERE c.relname = '$relname'
@@ -142,7 +83,9 @@ sub get_toast_for
 sub fresh_test_table
 {
 	my ($relname) = @_;
-	$node->safe_psql('postgres', qq(
+
+	return $node->safe_psql(
+		'postgres', qq(
 		DROP TABLE IF EXISTS $relname CASCADE;
 		CREATE TABLE $relname (a integer, b text);
 		ALTER TABLE $relname SET (autovacuum_enabled=false);
@@ -154,55 +97,54 @@ sub fresh_test_table
 
 # Stops the test node, corrupts the first page of the named relation, and
 # restarts the node.
-sub corrupt_first_page_internal
+sub corrupt_first_page
 {
-	my ($relname, $corrupt_header) = @_;
+	my ($relname) = @_;
 	my $relpath = relation_filepath($relname);
 
 	$node->stop;
+
 	my $fh;
-	open($fh, '+<', $relpath);
+	open($fh, '+<', $relpath)
+	  or BAIL_OUT("open failed: $!");
 	binmode $fh;
 
-	# If we corrupt the header, postgres won't allow the page into the buffer.
-	syswrite($fh, '\xFF\xFF\xFF\xFF', 8) if ($corrupt_header);
+	# Corrupt two line pointers.  To be stable across platforms, we use
+	# 0x55555555 and 0xAAAAAAAA for the two, which are bitwise reverses of each
+	# other.
+	seek($fh, 32, 0)
+	  or BAIL_OUT("seek failed: $!");
+	syswrite($fh, pack("L*", 0x55555555, 0xAAAAAAAA))
+	  or BAIL_OUT("syswrite failed: $!");
+	close($fh)
+	  or BAIL_OUT("close failed: $!");
 
-	# Corrupt at least the line pointers.  Exactly what this corrupts will
-	# depend on the page, as it may run past the line pointers into the user
-	# data.  We stop short of writing 2048 bytes (2k), the smallest supported
-	# page size, as we don't want to corrupt the next page.
-	seek($fh, 32, 0);
-	syswrite($fh, '\x77\x77\x77\x77', 500);
-	close($fh);
 	$node->start;
 }
 
-sub corrupt_first_page
+sub detects_heap_corruption
 {
-	corrupt_first_page_internal($_[0], undef);
-}
+	my ($function, $testname) = @_;
 
-sub corrupt_first_page_and_header
-{
-	corrupt_first_page_internal($_[0], 1);
+	detects_corruption($function, $testname,
+		qr/line pointer redirection to item at offset \d+ exceeds maximum offset \d+/
+	);
 }
 
 sub detects_corruption
 {
-	my ($function, $testname) = @_;
+	my ($function, $testname, $re) = @_;
 
-	my $result = $node->safe_psql('postgres',
-		qq(SELECT COUNT(*) > 0 FROM $function));
-	is($result, 't', $testname);
+	my $result = $node->safe_psql('postgres', qq(SELECT * FROM $function));
+	like($result, $re, $testname);
 }
 
 sub detects_no_corruption
 {
 	my ($function, $testname) = @_;
 
-	my $result = $node->safe_psql('postgres',
-		qq(SELECT COUNT(*) = 0 FROM $function));
-	is($result, 't', $testname);
+	my $result = $node->safe_psql('postgres', qq(SELECT * FROM $function));
+	is($result, '', $testname);
 }
 
 # Check various options are stable (don't abort) and do not report corruption
@@ -215,6 +157,7 @@ sub detects_no_corruption
 sub check_all_options_uncorrupted
 {
 	my ($relname, $prefix) = @_;
+
 	for my $stop (qw(true false))
 	{
 		for my $check_toast (qw(true false))
@@ -225,11 +168,12 @@ sub check_all_options_uncorrupted
 				{
 					for my $endblock (qw(NULL 0))
 					{
-						my $opts = "on_error_stop := $stop, " .
-								   "check_toast := $check_toast, " .
-								   "skip := $skip, " .
-								   "startblock := $startblock, " .
-								   "endblock := $endblock";
+						my $opts =
+						    "on_error_stop := $stop, "
+						  . "check_toast := $check_toast, "
+						  . "skip := $skip, "
+						  . "startblock := $startblock, "
+						  . "endblock := $endblock";
 
 						detects_no_corruption(
 							"verify_heapam('$relname', $opts)",
