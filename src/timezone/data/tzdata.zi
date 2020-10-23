@@ -1,4 +1,4 @@
-# version 2020c
+# version 2020d
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -1096,10 +1096,10 @@ R P 2004 o - O 1 1 0 -
 R P 2005 o - O 4 2 0 -
 R P 2006 2007 - Ap 1 0 1 S
 R P 2006 o - S 22 0 0 -
-R P 2007 o - S Th>=8 2 0 -
+R P 2007 o - S 13 2 0 -
 R P 2008 2009 - Mar lastF 0 1 S
 R P 2008 o - S 1 0 0 -
-R P 2009 o - S F>=1 1 0 -
+R P 2009 o - S 4 1 0 -
 R P 2010 o - Mar 26 0 1 S
 R P 2010 o - Au 11 0 0 -
 R P 2011 o - Ap 1 0:1 1 S
@@ -1108,12 +1108,16 @@ R P 2011 o - Au 30 0 1 S
 R P 2011 o - S 30 0 0 -
 R P 2012 2014 - Mar lastTh 24 1 S
 R P 2012 o - S 21 1 0 -
-R P 2013 o - S F>=21 0 0 -
-R P 2014 2015 - O F>=21 0 0 -
-R P 2015 o - Mar lastF 24 1 S
+R P 2013 o - S 27 0 0 -
+R P 2014 o - O 24 0 0 -
+R P 2015 o - Mar 28 0 1 S
+R P 2015 o - O 23 1 0 -
 R P 2016 2018 - Mar Sa>=24 1 1 S
-R P 2016 ma - O lastSa 1 0 -
-R P 2019 ma - Mar lastF 0 1 S
+R P 2016 2018 - O Sa>=24 1 0 -
+R P 2019 o - Mar 29 0 1 S
+R P 2019 o - O Sa>=24 0 0 -
+R P 2020 ma - Mar Sa>=24 0 1 S
+R P 2020 ma - O Sa>=24 1 0 -
 Z Asia/Gaza 2:17:52 - LMT 1900 O
 2 Z EET/EEST 1948 May 15
 2 K EE%sT 1967 Jun 5
