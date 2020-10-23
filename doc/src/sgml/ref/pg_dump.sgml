@@ -554,18 +554,6 @@ PostgreSQL documentation
         </para>
        </note>
 
-       <note>
-        <para>
-         The behavior of the <option>-t</option> switch is not entirely upward
-         compatible with pre-8.2 <productname>PostgreSQL</productname>
-         versions.  Formerly, writing <literal>-t tab</literal> would dump all
-         tables named <literal>tab</literal>, but now it just dumps whichever one
-         is visible in your default search path.  To get the old behavior
-         you can write <literal>-t '*.tab'</literal>.  Also, you must write something
-         like <literal>-t sch.tab</literal> to select a table in a particular schema,
-         rather than the old locution of <literal>-n sch -t tab</literal>.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
