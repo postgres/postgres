@@ -2830,7 +2830,7 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 			ExplainPropertyInteger("Peak Sort Space Used", "kB",
 								   groupInfo->maxMemorySpaceUsed, es);
 
-			ExplainCloseGroup("Sort Spaces", memoryName.data, true, es);
+			ExplainCloseGroup("Sort Space", memoryName.data, true, es);
 		}
 		if (groupInfo->maxDiskSpaceUsed > 0)
 		{
@@ -2847,7 +2847,7 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 			ExplainPropertyInteger("Peak Sort Space Used", "kB",
 								   groupInfo->maxDiskSpaceUsed, es);
 
-			ExplainCloseGroup("Sort Spaces", diskName.data, true, es);
+			ExplainCloseGroup("Sort Space", diskName.data, true, es);
 		}
 
 		ExplainCloseGroup("Incremental Sort Groups", groupName.data, true, es);
