@@ -634,7 +634,8 @@ static const char *leapsec;
 static const char *tzdefault;
 
 /* -1 if the TZif output file should be slim, 0 if default, 1 if the
-   output should be fat for backward compatibility.  The default is slim.  */
+   output should be fat for backward compatibility.  ZIC_BLOAT_DEFAULT
+   determines the default.  */
 static int	bloat;
 
 static bool
@@ -787,7 +788,16 @@ main(int argc, char **argv)
 	if (optind == argc - 1 && strcmp(argv[optind], "=") == 0)
 		usage(stderr, EXIT_FAILURE);	/* usage message by request */
 	if (bloat == 0)
-		bloat = strcmp(ZIC_BLOAT_DEFAULT, "slim") == 0 ? -1 : 1;
+	{
+		static char const bloat_default[] = ZIC_BLOAT_DEFAULT;
+
+		if (strcmp(bloat_default, "slim") == 0)
+			bloat = -1;
+		else if (strcmp(bloat_default, "fat") == 0)
+			bloat = 1;
+		else
+			abort();			/* Configuration error.  */
+	}
 	if (directory == NULL)
 		directory = "data";
 	if (tzdefault == NULL)
