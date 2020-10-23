@@ -313,10 +313,14 @@ CheckConnection(void)
 			fprintf(stderr, _("Failed.\n"));
 
 			/*
-			 * Transition to having no connection.  Keep this bit in sync with
-			 * do_connect().
+			 * Transition to having no connection; but stash away the failed
+			 * connection so that we can still refer to its parameters in a
+			 * later \connect attempt.  Keep the state cleanup here in sync
+			 * with do_connect().
 			 */
-			PQfinish(pset.db);
+			if (pset.dead_conn)
+				PQfinish(pset.dead_conn);
+			pset.dead_conn = pset.db;
 			pset.db = NULL;
 			ResetCancelConn();
 			UnsyncVariables();

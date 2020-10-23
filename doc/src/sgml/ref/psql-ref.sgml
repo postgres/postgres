@@ -931,12 +931,23 @@ testdb=&gt;
         connection is closed.
         If the connection attempt fails (wrong user name, access
         denied, etc.), the previous connection will be kept if
-        <application>psql</application> is in interactive mode. But when
-        executing a non-interactive script, processing will
-        immediately stop with an error. This distinction was chosen as
+        <application>psql</application> is in interactive mode.  But when
+        executing a non-interactive script, the old connection is closed
+        and an error is reported.  That may or may not terminate the
+        script; if it does not, all database-accessing commands will fail
+        until another <literal>\connect</literal> command is successfully
+        executed.  This distinction was chosen as
         a user convenience against typos on the one hand, and a safety
         mechanism that scripts are not accidentally acting on the
         wrong database on the other hand.
+        Note that whenever a <literal>\connect</literal> command attempts
+        to re-use parameters, the values re-used are those of the last
+        successful connection, not of any failed attempts made subsequently.
+        However, in the case of a
+        non-interactive <literal>\connect</literal> failure, no parameters
+        are allowed to be re-used later, since the script would likely be
+        expecting the values from the failed <literal>\connect</literal>
+        to be re-used.
         </para>
 
         <para>

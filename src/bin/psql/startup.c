@@ -145,6 +145,7 @@ main(int argc, char *argv[])
 	pset.progname = get_progname(argv[0]);
 
 	pset.db = NULL;
+	pset.dead_conn = NULL;
 	setDecimalLocale();
 	pset.encoding = PQenv2encoding();
 	pset.queryFout = stdout;
@@ -442,7 +443,10 @@ error:
 	/* clean up */
 	if (pset.logfile)
 		fclose(pset.logfile);
-	PQfinish(pset.db);
+	if (pset.db)
+		PQfinish(pset.db);
+	if (pset.dead_conn)
+		PQfinish(pset.dead_conn);
 	setQFout(NULL);
 
 	return successResult;

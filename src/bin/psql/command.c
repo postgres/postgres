@@ -3061,25 +3061,27 @@ do_connect(enum trivalue reuse_previous_specification,
 	}
 
 	/*
-	 * If we are to re-use parameters, there'd better be an old connection to
-	 * get them from.
-	 */
-	if (reuse_previous && !o_conn)
-	{
-		pg_log_error("No database connection exists to re-use parameters from");
-		return false;
-	}
-
-	/*
 	 * If we intend to re-use connection parameters, collect them out of the
-	 * old connection, then replace individual values as necessary. Otherwise,
-	 * obtain a PQconninfoOption array containing libpq's defaults, and modify
-	 * that.  Note this function assumes that PQconninfo, PQconndefaults, and
-	 * PQconninfoParse will all produce arrays containing the same options in
-	 * the same order.
+	 * old connection, then replace individual values as necessary.  (We may
+	 * need to resort to looking at pset.dead_conn, if the connection died
+	 * previously.)  Otherwise, obtain a PQconninfoOption array containing
+	 * libpq's defaults, and modify that.  Note this function assumes that
+	 * PQconninfo, PQconndefaults, and PQconninfoParse will all produce arrays
+	 * containing the same options in the same order.
 	 */
 	if (reuse_previous)
-		cinfo = PQconninfo(o_conn);
+	{
+		if (o_conn)
+			cinfo = PQconninfo(o_conn);
+		else if (pset.dead_conn)
+			cinfo = PQconninfo(pset.dead_conn);
+		else
+		{
+			/* This is reachable after a non-interactive \connect failure */
+			pg_log_error("No database connection exists to re-use parameters from");
+			return false;
+		}
+	}
 	else
 		cinfo = PQconndefaults();
 
@@ -3360,13 +3362,25 @@ do_connect(enum trivalue reuse_previous_specification,
 			if (o_conn)
 			{
 				/*
-				 * Transition to having no connection.  Keep this bit in sync
-				 * with CheckConnection().
+				 * Transition to having no connection.
+				 *
+				 * Unlike CheckConnection(), we close the old connection
+				 * immediately to prevent its parameters from being re-used.
+				 * This is so that a script cannot accidentally reuse
+				 * parameters it did not expect to.  Otherwise, the state
+				 * cleanup should be the same as in CheckConnection().
 				 */
 				PQfinish(o_conn);
 				pset.db = NULL;
 				ResetCancelConn();
 				UnsyncVariables();
+			}
+
+			/* On the same reasoning, release any dead_conn to prevent reuse */
+			if (pset.dead_conn)
+			{
+				PQfinish(pset.dead_conn);
+				pset.dead_conn = NULL;
 			}
 		}
 
@@ -3421,8 +3435,15 @@ do_connect(enum trivalue reuse_previous_specification,
 				   PQdb(pset.db), PQuser(pset.db));
 	}
 
+	/* Drop no-longer-needed connection(s) */
 	if (o_conn)
 		PQfinish(o_conn);
+	if (pset.dead_conn)
+	{
+		PQfinish(pset.dead_conn);
+		pset.dead_conn = NULL;
+	}
+
 	return true;
 }
 
