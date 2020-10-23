@@ -105,6 +105,7 @@ typedef struct HeapCheckContext
 	OffsetNumber offnum;
 	ItemId		itemid;
 	uint16		lp_len;
+	uint16		lp_off;
 	HeapTupleHeader tuphdr;
 	int			natts;
 
@@ -247,6 +248,13 @@ verify_heapam(PG_FUNCTION_ARGS)
 	memset(&ctx, 0, sizeof(HeapCheckContext));
 	ctx.cached_xid = InvalidTransactionId;
 
+	/*
+	 * If we report corruption when not examining some individual attribute,
+	 * we need attnum to be reported as NULL.  Set that up before any
+	 * corruption reporting might happen.
+	 */
+	ctx.attnum = -1;
+
 	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
 	old_context = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 	random_access = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
@@ -378,14 +386,22 @@ verify_heapam(PG_FUNCTION_ARGS)
 
 			/*
 			 * If this line pointer has been redirected, check that it
-			 * redirects to a valid offset within the line pointer array.
+			 * redirects to a valid offset within the line pointer array
 			 */
 			if (ItemIdIsRedirected(ctx.itemid))
 			{
 				OffsetNumber rdoffnum = ItemIdGetRedirect(ctx.itemid);
 				ItemId		rditem;
 
-				if (rdoffnum < FirstOffsetNumber || rdoffnum > maxoff)
+				if (rdoffnum < FirstOffsetNumber)
+				{
+					report_corruption(&ctx,
+									  psprintf("line pointer redirection to item at offset %u precedes minimum offset %u",
+											   (unsigned) rdoffnum,
+											   (unsigned) FirstOffsetNumber));
+					continue;
+				}
+				if (rdoffnum > maxoff)
 				{
 					report_corruption(&ctx,
 									  psprintf("line pointer redirection to item at offset %u exceeds maximum offset %u",
@@ -401,8 +417,36 @@ verify_heapam(PG_FUNCTION_ARGS)
 				continue;
 			}
 
-			/* Set up context information about this next tuple */
+			/* Sanity-check the line pointer's offset and length values */
 			ctx.lp_len = ItemIdGetLength(ctx.itemid);
+			ctx.lp_off = ItemIdGetOffset(ctx.itemid);
+
+			if (ctx.lp_off != MAXALIGN(ctx.lp_off))
+			{
+				report_corruption(&ctx,
+								  psprintf("line pointer to page offset %u is not maximally aligned",
+										   ctx.lp_off));
+				continue;
+			}
+			if (ctx.lp_len < MAXALIGN(SizeofHeapTupleHeader))
+			{
+				report_corruption(&ctx,
+								  psprintf("line pointer length %u is less than the minimum tuple header size %u",
+										   ctx.lp_len,
+										   (unsigned) MAXALIGN(SizeofHeapTupleHeader)));
+				continue;
+			}
+			if (ctx.lp_off + ctx.lp_len > BLCKSZ)
+			{
+				report_corruption(&ctx,
+								  psprintf("line pointer to page offset %u with length %u ends beyond maximum page offset %u",
+										   ctx.lp_off,
+										   ctx.lp_len,
+										   (unsigned) BLCKSZ));
+				continue;
+			}
+
+			/* It should be safe to examine the tuple's header, at least */
 			ctx.tuphdr = (HeapTupleHeader) PageGetItem(ctx.page, ctx.itemid);
 			ctx.natts = HeapTupleHeaderGetNatts(ctx.tuphdr);
 
@@ -1088,25 +1132,6 @@ check_tuple(HeapCheckContext *ctx)
 	bool		fatal = false;
 	uint16		infomask = ctx->tuphdr->t_infomask;
 
-	/*
-	 * If we report corruption before iterating over individual attributes, we
-	 * need attnum to be reported as NULL.  Set that up before any corruption
-	 * reporting might happen.
-	 */
-	ctx->attnum = -1;
-
-	/*
-	 * If the line pointer for this tuple does not reserve enough space for a
-	 * complete tuple header, we dare not read the tuple header.
-	 */
-	if (ctx->lp_len < MAXALIGN(SizeofHeapTupleHeader))
-	{
-		report_corruption(ctx,
-						  psprintf("line pointer length %u is less than the minimum tuple header size %u",
-								   ctx->lp_len, (uint32) MAXALIGN(SizeofHeapTupleHeader)));
-		return;
-	}
-
 	/* If xmin is normal, it should be within valid range */
 	xmin = HeapTupleHeaderGetXmin(ctx->tuphdr);
 	switch (get_xid_status(xmin, ctx, NULL))
@@ -1256,6 +1281,9 @@ check_tuple(HeapCheckContext *ctx)
 	for (ctx->attnum = 0; ctx->attnum < ctx->natts; ctx->attnum++)
 		if (!check_tuple_attribute(ctx))
 			break;				/* cannot continue */
+
+	/* revert attnum to -1 until we again examine individual attributes */
+	ctx->attnum = -1;
 }
 
 /*
@@ -1393,9 +1421,9 @@ get_xid_status(TransactionId xid, HeapCheckContext *ctx,
 	if (!fxid_in_cached_range(fxid, ctx))
 	{
 		/*
-		 * We may have been checking against stale values.  Update the
-		 * cached range to be sure, and since we relied on the cached
-		 * range when we performed the full xid conversion, reconvert.
+		 * We may have been checking against stale values.  Update the cached
+		 * range to be sure, and since we relied on the cached range when we
+		 * performed the full xid conversion, reconvert.
 		 */
 		update_cached_xid_range(ctx);
 		fxid = FullTransactionIdFromXidAndCtx(xid, ctx);

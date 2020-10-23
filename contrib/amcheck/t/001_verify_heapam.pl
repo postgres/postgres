@@ -4,7 +4,7 @@ use warnings;
 use PostgresNode;
 use TestLib;
 
-use Test::More tests => 55;
+use Test::More tests => 79;
 
 my ($node, $result);
 
@@ -109,13 +109,17 @@ sub corrupt_first_page
 	  or BAIL_OUT("open failed: $!");
 	binmode $fh;
 
-	# Corrupt two line pointers.  To be stable across platforms, we use
-	# 0x55555555 and 0xAAAAAAAA for the two, which are bitwise reverses of each
-	# other.
+	# Corrupt some line pointers.  The values are chosen to hit the
+	# various line-pointer-corruption checks in verify_heapam.c
+	# on both little-endian and big-endian architectures.
 	seek($fh, 32, 0)
 	  or BAIL_OUT("seek failed: $!");
-	syswrite($fh, pack("L*", 0x55555555, 0xAAAAAAAA))
-	  or BAIL_OUT("syswrite failed: $!");
+	syswrite(
+		$fh,
+		pack("L*",
+			0xAAA15550, 0xAAA0D550, 0x00010000,
+			0x00008000, 0x0000800F, 0x001e8000)
+	) or BAIL_OUT("syswrite failed: $!");
 	close($fh)
 	  or BAIL_OUT("close failed: $!");
 
@@ -126,17 +130,23 @@ sub detects_heap_corruption
 {
 	my ($function, $testname) = @_;
 
-	detects_corruption($function, $testname,
-		qr/line pointer redirection to item at offset \d+ exceeds maximum offset \d+/
+	detects_corruption(
+		$function,
+		$testname,
+		qr/line pointer redirection to item at offset \d+ precedes minimum offset \d+/,
+		qr/line pointer redirection to item at offset \d+ exceeds maximum offset \d+/,
+		qr/line pointer to page offset \d+ is not maximally aligned/,
+		qr/line pointer length \d+ is less than the minimum tuple header size \d+/,
+		qr/line pointer to page offset \d+ with length \d+ ends beyond maximum page offset \d+/,
 	);
 }
 
 sub detects_corruption
 {
-	my ($function, $testname, $re) = @_;
+	my ($function, $testname, @re) = @_;
 
 	my $result = $node->safe_psql('postgres', qq(SELECT * FROM $function));
-	like($result, $re, $testname);
+	like($result, $_, $testname) for (@re);
 }
 
 sub detects_no_corruption
