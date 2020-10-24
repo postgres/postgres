@@ -475,8 +475,8 @@ win32_pthread_once(volatile pthread_once_t *once, void (*fn) (void))
 		pthread_mutex_lock(&win32_pthread_once_lock);
 		if (!*once)
 		{
-			*once = true;
 			fn();
+			*once = true;
 		}
 		pthread_mutex_unlock(&win32_pthread_once_lock);
 	}
