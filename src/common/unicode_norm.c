@@ -46,6 +46,21 @@
 #define NCOUNT		VCOUNT * TCOUNT
 #define SCOUNT		LCOUNT * NCOUNT
 
+#ifdef FRONTEND
+/* comparison routine for bsearch() of decomposition lookup table. */
+static int
+conv_compare(const void *p1, const void *p2)
+{
+	uint32		v1,
+				v2;
+
+	v1 = *(const uint32 *) p1;
+	v2 = ((const pg_unicode_decomposition *) p2)->codepoint;
+	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
+}
+
+#endif
+
 /*
  * get_code_entry
  *
@@ -53,11 +68,10 @@
  * The backend version of this code uses a perfect hash function for the
  * lookup, while the frontend version uses a binary search.
  */
-#ifndef FRONTEND
-
 static const pg_unicode_decomposition *
 get_code_entry(pg_wchar code)
 {
+#ifndef FRONTEND
 	int			h;
 	uint32		hashkey;
 	pg_unicode_decompinfo decompinfo = UnicodeDecompInfo;
@@ -82,33 +96,15 @@ get_code_entry(pg_wchar code)
 
 	/* Success! */
 	return &decompinfo.decomps[h];
-}
-
 #else
-
-/* comparison routine for bsearch() of decomposition lookup table. */
-static int
-conv_compare(const void *p1, const void *p2)
-{
-	uint32		v1,
-				v2;
-
-	v1 = *(const uint32 *) p1;
-	v2 = ((const pg_unicode_decomposition *) p2)->codepoint;
-	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
-}
-
-static const pg_unicode_decomposition *
-get_code_entry(pg_wchar code)
-{
 	return bsearch(&(code),
 				   UnicodeDecompMain,
 				   lengthof(UnicodeDecompMain),
 				   sizeof(pg_unicode_decomposition),
 				   conv_compare);
+#endif
 }
 
-#endif							/* !FRONTEND */
 
 /*
  * Given a decomposition entry looked up earlier, get the decomposed
