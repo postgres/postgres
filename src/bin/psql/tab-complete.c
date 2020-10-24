@@ -1974,10 +1974,10 @@ psql_completion(const char *text, int start, int end)
 	 */
 	else if (Matches("ALTER", "TABLE", MatchAny))
 		COMPLETE_WITH("ADD", "ALTER", "CLUSTER ON", "DISABLE", "DROP",
-					  "ENABLE", "INHERIT", "NO INHERIT", "RENAME", "RESET",
+					  "ENABLE", "INHERIT", "NO", "RENAME", "RESET",
 					  "OWNER TO", "SET", "VALIDATE CONSTRAINT",
 					  "REPLICA IDENTITY", "ATTACH PARTITION",
-					  "DETACH PARTITION");
+					  "DETACH PARTITION", "FORCE ROW LEVEL SECURITY");
 	/* ALTER TABLE xxx ENABLE */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ENABLE"))
 		COMPLETE_WITH("ALWAYS", "REPLICA", "ROW LEVEL SECURITY", "RULE",
@@ -2007,6 +2007,9 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER TABLE xxx INHERIT */
 	else if (Matches("ALTER", "TABLE", MatchAny, "INHERIT"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, "");
+	/* ALTER TABLE xxx NO */
+	else if (Matches("ALTER", "TABLE", MatchAny, "NO"))
+		COMPLETE_WITH("FORCE ROW LEVEL SECURITY", "INHERIT");
 	/* ALTER TABLE xxx NO INHERIT */
 	else if (Matches("ALTER", "TABLE", MatchAny, "NO", "INHERIT"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, "");
