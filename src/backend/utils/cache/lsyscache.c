@@ -824,7 +824,7 @@ get_attnum(Oid relid, const char *attname)
 /*
  * get_attgenerated
  *
- *		Given the relation id and the attribute name,
+ *		Given the relation id and the attribute number,
  *		return the "attgenerated" field from the attribute relation.
  *
  *		Errors if not found.
