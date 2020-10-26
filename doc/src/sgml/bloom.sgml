@@ -110,75 +110,70 @@ CREATE INDEX bloomidx ON tbloom USING bloom (i1,i2,i3)
    FROM
   generate_series(1,10000000);
 SELECT 10000000
-=# CREATE INDEX bloomidx ON tbloom USING bloom (i1, i2, i3, i4, i5, i6);
-CREATE INDEX
-=# SELECT pg_size_pretty(pg_relation_size('bloomidx'));
- pg_size_pretty
-----------------
- 153 MB
-(1 row)
-=# CREATE index btreeidx ON tbloom (i1, i2, i3, i4, i5, i6);
-CREATE INDEX
-=# SELECT pg_size_pretty(pg_relation_size('btreeidx'));
- pg_size_pretty
-----------------
- 387 MB
-(1 row)
 </programlisting>
 
   <para>
    A sequential scan over this large table takes a long time:
 <programlisting>
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
-                                                 QUERY PLAN
--------------------------------------------------------------------&zwsp;-----------------------------------------
- Seq Scan on tbloom  (cost=0.00..213694.08 rows=1 width=24) (actual time=1445.438..1445.438 rows=0 loops=1)
+                                              QUERY PLAN                                              
+-------------------------------------------------------------------&zwsp;-----------------------------------
+ Seq Scan on tbloom  (cost=0.00..2137.14 rows=3 width=24) (actual time=15.480..15.480 rows=0 loops=1)
    Filter: ((i2 = 898732) AND (i5 = 123451))
-   Rows Removed by Filter: 10000000
- Planning time: 0.177 ms
- Execution time: 1445.473 ms
+   Rows Removed by Filter: 100000
+ Planning Time: 0.340 ms
+ Execution Time: 15.501 ms
 (5 rows)
 </programlisting>
   </para>
 
   <para>
-   So the planner will usually select an index scan if possible.
-   With a btree index, we get results like this:
+   Even with the btree index defined the result will still be a
+   sequential scan:
 <programlisting>
+=# CREATE INDEX btreeidx ON tbloom (i1, i2, i3, i4, i5, i6);
+CREATE INDEX
+=# SELECT pg_size_pretty(pg_relation_size('btreeidx'));
+ pg_size_pretty
+----------------
+ 3976 kB
+(1 row)
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
-                                                           QUERY PLAN
--------------------------------------------------------------------&zwsp;-------------------------------------------------------------
- Index Only Scan using btreeidx on tbloom  (cost=0.56..298311.96 rows=1 width=24) (actual time=445.709..445.709 rows=0 loops=1)
-   Index Cond: ((i2 = 898732) AND (i5 = 123451))
-   Heap Fetches: 0
- Planning time: 0.193 ms
- Execution time: 445.770 ms
+                                              QUERY PLAN                                              
+-------------------------------------------------------------------&zwsp;-----------------------------------
+ Seq Scan on tbloom  (cost=0.00..2137.00 rows=2 width=24) (actual time=12.604..12.604 rows=0 loops=1)
+   Filter: ((i2 = 898732) AND (i5 = 123451))
+   Rows Removed by Filter: 100000
+ Planning Time: 0.155 ms
+ Execution Time: 12.617 ms
 (5 rows)
 </programlisting>
   </para>
 
   <para>
-   Bloom is better than btree in handling this type of search:
+   Having the bloom index defined on the table is better than btree in
+   handling this type of search:
 <programlisting>
+=# CREATE INDEX bloomidx ON tbloom USING bloom (i1, i2, i3, i4, i5, i6);
+CREATE INDEX
+=# SELECT pg_size_pretty(pg_relation_size('bloomidx'));
+ pg_size_pretty
+----------------
+ 1584 kB
+(1 row)
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
-                                                        QUERY PLAN
--------------------------------------------------------------------&zwsp;--------------------------------------------------------
- Bitmap Heap Scan on tbloom  (cost=178435.39..178439.41 rows=1 width=24) (actual time=76.698..76.698 rows=0 loops=1)
+                                                     QUERY PLAN                                                      
+-------------------------------------------------------------------&zwsp;--------------------------------------------------
+ Bitmap Heap Scan on tbloom  (cost=1792.00..1799.69 rows=2 width=24) (actual time=0.384..0.384 rows=0 loops=1)
    Recheck Cond: ((i2 = 898732) AND (i5 = 123451))
-   Rows Removed by Index Recheck: 2439
-   Heap Blocks: exact=2408
-   -&gt;  Bitmap Index Scan on bloomidx  (cost=0.00..178435.39 rows=1 width=0) (actual time=72.455..72.455 rows=2439 loops=1)
+   Rows Removed by Index Recheck: 26
+   Heap Blocks: exact=26
+   -&gt;  Bitmap Index Scan on bloomidx  (cost=0.00..1792.00 rows=2 width=0) (actual time=0.350..0.350 rows=26 loops=1)
          Index Cond: ((i2 = 898732) AND (i5 = 123451))
- Planning time: 0.475 ms
- Execution time: 76.778 ms
+ Planning Time: 0.122 ms
+ Execution Time: 0.407 ms
 (8 rows)
 </programlisting>
-   Note the relatively large number of false positives: 2439 rows were
-   selected to be visited in the heap, but none actually matched the
-   query.  We could reduce that by specifying a larger signature length.
-   In this example, creating the index with <literal>length=200</literal>
-   reduced the number of false positives to 55; but it doubled the index size
-   (to 306 MB) and ended up being slower for this query (125 ms overall).
   </para>
 
   <para>
@@ -187,24 +182,36 @@ CREATE INDEX
    A better strategy for btree is to create a separate index on each column.
    Then the planner will choose something like this:
 <programlisting>
+=# CREATE INDEX btreeidx1 ON tbloom (i1);
+CREATE INDEX
+=# CREATE INDEX btreeidx2 ON tbloom (i2);
+CREATE INDEX
+=# CREATE INDEX btreeidx3 ON tbloom (i3);
+CREATE INDEX
+=# CREATE INDEX btreeidx4 ON tbloom (i4);
+CREATE INDEX
+=# CREATE INDEX btreeidx5 ON tbloom (i5);
+CREATE INDEX
+=# CREATE INDEX btreeidx6 ON tbloom (i6);
+CREATE INDEX
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
-                                                          QUERY PLAN
--------------------------------------------------------------------&zwsp;-----------------------------------------------------------
- Bitmap Heap Scan on tbloom  (cost=9.29..13.30 rows=1 width=24) (actual time=0.148..0.148 rows=0 loops=1)
+                                                        QUERY PLAN                                                         
+-------------------------------------------------------------------&zwsp;--------------------------------------------------------
+ Bitmap Heap Scan on tbloom  (cost=24.34..32.03 rows=2 width=24) (actual time=0.032..0.033 rows=0 loops=1)
    Recheck Cond: ((i5 = 123451) AND (i2 = 898732))
-   -&gt;  BitmapAnd  (cost=9.29..9.29 rows=1 width=0) (actual time=0.145..0.145 rows=0 loops=1)
-         -&gt;  Bitmap Index Scan on tbloom_i5_idx  (cost=0.00..4.52 rows=11 width=0) (actual time=0.089..0.089 rows=10 loops=1)
+   -&gt;  BitmapAnd  (cost=24.34..24.34 rows=2 width=0) (actual time=0.029..0.030 rows=0 loops=1)
+         -&gt;  Bitmap Index Scan on btreeidx5  (cost=0.00..12.04 rows=500 width=0) (actual time=0.029..0.029 rows=0 loops=1)
                Index Cond: (i5 = 123451)
-         -&gt;  Bitmap Index Scan on tbloom_i2_idx  (cost=0.00..4.52 rows=11 width=0) (actual time=0.048..0.048 rows=8 loops=1)
+         -&gt;  Bitmap Index Scan on btreeidx2  (cost=0.00..12.04 rows=500 width=0) (never executed)
                Index Cond: (i2 = 898732)
- Planning time: 2.049 ms
- Execution time: 0.280 ms
+ Planning Time: 0.537 ms
+ Execution Time: 0.064 ms
 (9 rows)
 </programlisting>
    Although this query runs much faster than with either of the single
-   indexes, we pay a large penalty in index size.  Each of the single-column
-   btree indexes occupies 214 MB, so the total space needed is over 1.2GB,
-   more than 8 times the space used by the bloom index.
+   indexes, we pay a penalty in index size.  Each of the single-column
+   btree indexes occupies 2 MB, so the total space needed is 12 MB,
+   eight times the space used by the bloom index.
   </para>
  </sect2>
 
