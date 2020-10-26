@@ -6848,30 +6848,6 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     constraints, and the longest/shortest-match (rather than first-match)
     matching semantics.
    </para>
-
-   <para>
-    Two significant incompatibilities exist between AREs and the ERE syntax
-    recognized by pre-7.4 releases of <productname>PostgreSQL</productname>:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       In AREs, <literal>\</literal> followed by an alphanumeric character is either
-       an escape or an error, while in previous releases, it was just another
-       way of writing the alphanumeric.
-       This should not be much of a problem because there was no reason to
-       write such a sequence in earlier releases.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       In AREs, <literal>\</literal> remains a special character within
-       <literal>[]</literal>, so a literal <literal>\</literal> within a bracket
-       expression must be written <literal>\\</literal>.
-      </para>
-     </listitem>
-    </itemizedlist>
-   </para>
    </sect3>
 
    <sect3 id="posix-basic-regexes">
@@ -17107,16 +17083,6 @@ nextval('foo')              <lineannotation>searches search path for <literal>fo
 
   <note>
    <para>
-    Before <productname>PostgreSQL</productname> 8.1, the arguments of the
-    sequence functions were of type <type>text</type>, not <type>regclass</type>, and
-    the above-described conversion from a text string to an OID value would
-    happen at run time during each call.  For backward compatibility, this
-    facility still exists, but internally it is now handled as an implicit
-    coercion from <type>text</type> to <type>regclass</type> before the function is
-    invoked.
-   </para>
-
-   <para>
     When you write the argument of a sequence function as an unadorned
     literal string, it becomes a constant of type <type>regclass</type>.
     Since this is really just an OID, it will track the originally
@@ -17129,9 +17095,6 @@ nextval('foo')              <lineannotation>searches search path for <literal>fo
 <programlisting>
 nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at runtime</lineannotation>
 </programlisting>
-    Note that late binding was the only behavior supported in
-    <productname>PostgreSQL</productname> releases before 8.1, so you
-    might need to do this to preserve the semantics of old applications.
    </para>
 
    <para>

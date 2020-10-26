@@ -1632,42 +1632,6 @@ if (!triggered)
     improvement in server robustness, nor would it be described as HA.
    </para>
   </sect2>
-
-  <sect2 id="warm-standby-record">
-   <title>Record-Based Log Shipping</title>
-
-   <para>
-    It is also possible to implement record-based log shipping using this
-    alternative method, though this requires custom development, and changes
-    will still only become visible to hot standby queries after a full WAL
-    file has been shipped.
-   </para>
-
-   <para>
-    An external program can call the <function>pg_walfile_name_offset()</function>
-    function (see <xref linkend="functions-admin"/>)
-    to find out the file name and the exact byte offset within it of
-    the current end of WAL.  It can then access the WAL file directly
-    and copy the data from the last known end of WAL through the current end
-    over to the standby servers.  With this approach, the window for data
-    loss is the polling cycle time of the copying program, which can be very
-    small, and there is no wasted bandwidth from forcing partially-used
-    segment files to be archived.  Note that the standby servers'
-    <varname>restore_command</varname> scripts can only deal with whole WAL files,
-    so the incrementally copied data is not ordinarily made available to
-    the standby servers.  It is of use only when the primary dies &mdash;
-    then the last partial WAL file is fed to the standby before allowing
-    it to come up.  The correct implementation of this process requires
-    cooperation of the <varname>restore_command</varname> script with the data
-    copying program.
-   </para>
-
-   <para>
-    Starting with <productname>PostgreSQL</productname> version 9.0, you can use
-    streaming replication (see <xref linkend="streaming-replication"/>) to
-    achieve the same benefits with less effort.
-   </para>
-  </sect2>
  </sect1>
 
  <sect1 id="hot-standby">

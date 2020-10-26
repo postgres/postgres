@@ -68,13 +68,6 @@
    space within pages.  Therefore, the values are not meaningful, just
    whether a page is full or empty.
   </para>
-
-  <note>
-   <para>
-    The interface was changed in version 8.4, to reflect the new FSM
-    implementation introduced in the same version.
-   </para>
-  </note>
  </sect2>
 
  <sect2>

@@ -560,9 +560,6 @@ build-postgresql:
     The standard installation provides all the header files needed for client
     application development as well as for server-side program
     development, such as custom functions or data types written in C.
-    (Prior to <productname>PostgreSQL</productname> 8.0, a separate <literal>make
-    install-all-headers</literal> command was needed for the latter, but this
-    step has been folded into the standard install.)
    </para>
 
    <formalpara>

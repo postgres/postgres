@@ -375,10 +375,7 @@ PostgreSQL documentation
         the dump. Instead, fail if unable to lock a table within the specified
         <replaceable class="parameter">timeout</replaceable>. The timeout may be
         specified in any of the formats accepted by <command>SET
-        statement_timeout</command>.  Allowed values vary depending on the server
-        version you are dumping from, but an integer number of milliseconds
-        is accepted by all versions since 7.3.  This option is ignored when
-        dumping from a pre-7.3 server.
+        statement_timeout</command>.
        </para>
       </listitem>
      </varlistentry>
