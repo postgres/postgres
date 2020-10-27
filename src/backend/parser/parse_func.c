@@ -1750,6 +1750,7 @@ unify_hypothetical_args(ParseState *pstate,
 		ListCell   *harg = list_nth_cell(fargs, hargpos);
 		ListCell   *aarg = list_nth_cell(fargs, aargpos);
 		Oid			commontype;
+		int32		commontypmod;
 
 		/* A mismatch means AggregateCreate didn't check properly ... */
 		if (declared_arg_types[hargpos] != declared_arg_types[aargpos])
@@ -1768,6 +1769,9 @@ unify_hypothetical_args(ParseState *pstate,
 										list_make2(lfirst(aarg), lfirst(harg)),
 										"WITHIN GROUP",
 										NULL);
+		commontypmod = select_common_typmod(pstate,
+											list_make2(lfirst(aarg), lfirst(harg)),
+											commontype);
 
 		/*
 		 * Perform the coercions.  We don't need to worry about NamedArgExprs
@@ -1776,7 +1780,7 @@ unify_hypothetical_args(ParseState *pstate,
 		lfirst(harg) = coerce_type(pstate,
 								   (Node *) lfirst(harg),
 								   actual_arg_types[hargpos],
-								   commontype, -1,
+								   commontype, commontypmod,
 								   COERCION_IMPLICIT,
 								   COERCE_IMPLICIT_CAST,
 								   -1);
@@ -1784,7 +1788,7 @@ unify_hypothetical_args(ParseState *pstate,
 		lfirst(aarg) = coerce_type(pstate,
 								   (Node *) lfirst(aarg),
 								   actual_arg_types[aargpos],
-								   commontype, -1,
+								   commontype, commontypmod,
 								   COERCION_IMPLICIT,
 								   COERCE_IMPLICIT_CAST,
 								   -1);

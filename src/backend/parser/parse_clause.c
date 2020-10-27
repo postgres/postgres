@@ -1568,24 +1568,13 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 			   *r_node,
 			   *res_node;
 
-	/*
-	 * Choose output type if input types are dissimilar.
-	 */
-	outcoltype = l_colvar->vartype;
-	outcoltypmod = l_colvar->vartypmod;
-	if (outcoltype != r_colvar->vartype)
-	{
-		outcoltype = select_common_type(pstate,
+	outcoltype = select_common_type(pstate,
+									list_make2(l_colvar, r_colvar),
+									"JOIN/USING",
+									NULL);
+	outcoltypmod = select_common_typmod(pstate,
 										list_make2(l_colvar, r_colvar),
-										"JOIN/USING",
-										NULL);
-		outcoltypmod = -1;		/* ie, unknown */
-	}
-	else if (outcoltypmod != r_colvar->vartypmod)
-	{
-		/* same type, but not same typmod */
-		outcoltypmod = -1;		/* ie, unknown */
-	}
+										outcoltype);
 
 	/*
 	 * Insert coercion functions if needed.  Note that a difference in typmod

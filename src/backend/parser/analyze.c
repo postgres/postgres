@@ -1434,9 +1434,8 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	for (i = 0; i < sublist_length; i++)
 	{
 		Oid			coltype;
-		int32		coltypmod = -1;
+		int32		coltypmod;
 		Oid			colcoll;
-		bool		first = true;
 
 		coltype = select_common_type(pstate, colexprs[i], "VALUES", NULL);
 
@@ -1446,19 +1445,9 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 
 			col = coerce_to_common_type(pstate, col, coltype, "VALUES");
 			lfirst(lc) = (void *) col;
-			if (first)
-			{
-				coltypmod = exprTypmod(col);
-				first = false;
-			}
-			else
-			{
-				/* As soon as we see a non-matching typmod, fall back to -1 */
-				if (coltypmod >= 0 && coltypmod != exprTypmod(col))
-					coltypmod = -1;
-			}
 		}
 
+		coltypmod = select_common_typmod(pstate, colexprs[i], coltype);
 		colcoll = select_common_collation(pstate, colexprs[i], true);
 
 		coltypes = lappend_oid(coltypes, coltype);
@@ -2020,8 +2009,6 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			Node	   *rcolnode = (Node *) rtle->expr;
 			Oid			lcoltype = exprType(lcolnode);
 			Oid			rcoltype = exprType(rcolnode);
-			int32		lcoltypmod = exprTypmod(lcolnode);
-			int32		rcoltypmod = exprTypmod(rcolnode);
 			Node	   *bestexpr;
 			int			bestlocation;
 			Oid			rescoltype;
@@ -2034,11 +2021,6 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 											context,
 											&bestexpr);
 			bestlocation = exprLocation(bestexpr);
-			/* if same type and same typmod, use typmod; else default */
-			if (lcoltype == rcoltype && lcoltypmod == rcoltypmod)
-				rescoltypmod = lcoltypmod;
-			else
-				rescoltypmod = -1;
 
 			/*
 			 * Verify the coercions are actually possible.  If not, we'd fail
@@ -2088,6 +2070,10 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 												 rescoltype, context);
 				rtle->expr = (Expr *) rcolnode;
 			}
+
+			rescoltypmod = select_common_typmod(pstate,
+												list_make2(lcolnode, rcolnode),
+												rescoltype);
 
 			/*
 			 * Select common collation.  A common collation is required for

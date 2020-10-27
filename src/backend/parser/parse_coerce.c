@@ -1523,6 +1523,43 @@ coerce_to_common_type(ParseState *pstate, Node *node,
 }
 
 /*
+ * select_common_typmod()
+ *		Determine the common typmod of a list of input expressions.
+ *
+ * common_type is the selected common type of the expressions, typically
+ * computed using select_common_type().
+ */
+int32
+select_common_typmod(ParseState *pstate, List *exprs, Oid common_type)
+{
+	ListCell   *lc;
+	bool		first = true;
+	int32		result = -1;
+
+	foreach(lc, exprs)
+	{
+		Node   *expr = (Node *) lfirst(lc);
+
+		/* Types must match */
+		if (exprType(expr) != common_type)
+			return -1;
+		else if (first)
+		{
+			result = exprTypmod(expr);
+			first = false;
+		}
+		else
+		{
+			/* As soon as we see a non-matching typmod, fall back to -1 */
+			if (result != exprTypmod(expr))
+				return -1;
+		}
+	}
+
+	return result;
+}
+
+/*
  * check_generic_type_consistency()
  *		Are the actual arguments potentially compatible with a
  *		polymorphic function?
