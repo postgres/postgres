@@ -2607,8 +2607,8 @@ NOTICE:  row = {10,11,12}
 
     <para>
      By default, any error occurring in a <application>PL/pgSQL</application>
-     function aborts execution of the function, and indeed of the
-     surrounding transaction as well.  You can trap errors and recover
+     function aborts execution of the function and the
+     surrounding transaction.  You can trap errors and recover
      from them by using a <command>BEGIN</command> block with an
      <literal>EXCEPTION</literal> clause.  The syntax is an extension of the
      normal syntax for a <command>BEGIN</command> block:
