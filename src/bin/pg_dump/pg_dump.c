@@ -1062,6 +1062,9 @@ setup_connection(Archive *AH, const char *dumpencoding,
 			ExecuteSqlStatement(AH, "SET row_security = off");
 	}
 
+	/* Detect whether LOCK TABLE can handle non-table relations */
+	AH->hasGenericLockTable = IsLockTableGeneric(AH);
+
 	/*
 	 * Start transaction-snapshot mode transaction to dump consistent data.
 	 */
@@ -5398,10 +5401,12 @@ getTables(Archive *fout, int *numTables)
 		 * assume our lock on the child is enough to prevent schema
 		 * alterations to parent tables.
 		 *
-		 * NOTE: it'd be kinda nice to lock other relations too, not only
-		 * plain tables, but the backend doesn't presently allow that.
+		 * On server versions that support it, we lock all relations not just
+		 * plain tables.
 		 */
-		if (tblinfo[i].dobj.dump && tblinfo[i].relkind == RELKIND_RELATION)
+		if (tblinfo[i].dobj.dump &&
+			(fout->hasGenericLockTable ||
+			 tblinfo[i].relkind == RELKIND_RELATION))
 		{
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query,
