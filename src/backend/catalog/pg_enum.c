@@ -125,7 +125,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
 					 errmsg("invalid enum label \"%s\"", lab),
-					 errdetail("Labels must be %d characters or less.",
+					 errdetail("Labels must be %d bytes or less.",
 							   NAMEDATALEN - 1)));
 
 		values[Anum_pg_enum_oid - 1] = ObjectIdGetDatum(oids[elemno]);
@@ -228,7 +228,7 @@ AddEnumLabel(Oid enumTypeOid,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid enum label \"%s\"", newVal),
-				 errdetail("Labels must be %d characters or less.",
+				 errdetail("Labels must be %d bytes or less.",
 						   NAMEDATALEN - 1)));
 
 	/*
@@ -523,7 +523,7 @@ RenameEnumLabel(Oid enumTypeOid,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid enum label \"%s\"", newVal),
-				 errdetail("Labels must be %d characters or less.",
+				 errdetail("Labels must be %d bytes or less.",
 						   NAMEDATALEN - 1)));
 
 	/*
