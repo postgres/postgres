@@ -163,6 +163,15 @@ variable_paramref_hook(ParseState *pstate, ParamRef *pref)
 	if (*pptype == InvalidOid)
 		*pptype = UNKNOWNOID;
 
+	/*
+	 * If the argument is of type void and it's procedure call, interpret it
+	 * as unknown.  This allows the JDBC driver to not have to distinguish
+	 * function and procedure calls.  See also another component of this hack
+	 * in ParseFuncOrColumn().
+	 */
+	if (*pptype == VOIDOID && pstate->p_expr_kind == EXPR_KIND_CALL_ARGUMENT)
+		*pptype = UNKNOWNOID;
+
 	param = makeNode(Param);
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = paramno;
