@@ -8370,14 +8370,6 @@ int PQisthreadsafe();
    <application>libpq</application> source code for a way to do cooperative
    locking between <application>libpq</application> and your application.
   </para>
-
-  <para>
-   If you experience problems with threaded applications, run the program
-   in <filename>src/tools/thread</filename> to see if your platform has
-   thread-unsafe functions.  This program is run by
-   <filename>configure</filename>, but for binary distributions your
-   library might not match the library used to build the binaries.
-  </para>
  </sect1>
 
 
