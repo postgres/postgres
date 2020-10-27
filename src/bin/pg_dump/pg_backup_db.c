@@ -534,6 +534,70 @@ EndDBCopyMode(Archive *AHX, const char *tocEntryTag)
 	}
 }
 
+/*
+ * Does LOCK TABLE work on non-table relations on this server?
+ *
+ * Note: assumes it is called out of any transaction
+ */
+bool
+IsLockTableGeneric(Archive *AHX)
+{
+	ArchiveHandle *AH = (ArchiveHandle *) AHX;
+	PGresult *res;
+	char	 *sqlstate;
+	bool	retval;
+
+	if (AHX->remoteVersion >= 140000)
+		return true;
+	else if (AHX->remoteVersion < 90500)
+		return false;
+
+	StartTransaction(AHX);
+
+	/*
+	 * Try a LOCK TABLE on a well-known non-table catalog; WRONG_OBJECT_TYPE
+	 * tells us that this server doesn't support locking non-table rels, while
+	 * LOCK_NOT_AVAILABLE and INSUFFICIENT_PRIVILEGE tell us that it does.
+	 * Report anything else as a fatal problem.
+	 */
+#define ERRCODE_INSUFFICIENT_PRIVILEGE	"42501"
+#define ERRCODE_WRONG_OBJECT_TYPE	"42809"
+#define ERRCODE_LOCK_NOT_AVAILABLE	"55P03"
+	res = PQexec(AH->connection,
+				 "LOCK TABLE pg_catalog.pg_class_tblspc_relfilenode_index IN ACCESS SHARE MODE NOWAIT");
+	switch (PQresultStatus(res))
+	{
+		case PGRES_COMMAND_OK:
+			retval = true;
+			break;
+		case PGRES_FATAL_ERROR:
+			sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+			if (strcmp(sqlstate, ERRCODE_WRONG_OBJECT_TYPE) == 0)
+			{
+				retval = false;
+				break;
+			}
+			else if (strcmp(sqlstate, ERRCODE_LOCK_NOT_AVAILABLE) == 0 ||
+					 strcmp(sqlstate, ERRCODE_INSUFFICIENT_PRIVILEGE) == 0)
+			{
+				retval = true;
+				break;
+			}
+			/* else, falls through */
+		default:
+			warn_or_exit_horribly(AH, "LOCK TABLE failed for \"%s\": %s",
+								  "pg_catalog.pg_class_tblspc_relfilenode_index",
+								  PQerrorMessage(AH->connection));
+			retval = false;		/* not reached */
+			break;
+	}
+	PQclear(res);
+
+	CommitTransaction(AHX);
+
+	return retval;
+}
+
 void
 StartTransaction(Archive *AHX)
 {
