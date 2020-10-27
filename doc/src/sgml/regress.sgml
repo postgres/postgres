@@ -806,12 +806,12 @@ make check PROVE_TESTS='t/001_test1.pl t/003_test3.pl'
     instrumentation, so that it becomes possible to examine which
     parts of the code are covered by the regression tests or any other
     test suite that is run with the code.  This is currently supported
-    when compiling with GCC and requires the <command>gcov</command>
+    when compiling with GCC, and it requires the <command>gcov</command>
     and <command>lcov</command> programs.
    </para>
 
    <para>
-    A typical workflow would look like this:
+    A typical workflow looks like this:
 <screen>
 ./configure --enable-coverage ... OTHER OPTIONS ...
 make
@@ -820,12 +820,11 @@ make coverage-html
 </screen>
     Then point your HTML browser
     to <filename>coverage/index.html</filename>.
-    The <command>make</command> commands also work in subdirectories.
    </para>
 
    <para>
     If you don't have <command>lcov</command> or prefer text output over an
-    HTML report, you can also run
+    HTML report, you can run
 <screen>
 make coverage
 </screen>
@@ -837,10 +836,22 @@ make coverage
    </para>
 
    <para>
-    To reset the execution counts between test runs, run:
+    You can run several different tests before making the coverage report;
+    the execution counts will accumulate.  If you want
+    to reset the execution counts between test runs, run:
 <screen>
 make coverage-clean
 </screen>
+   </para>
+
+   <para>
+    You can run the <literal>make coverage-html</literal> or <literal>make
+    coverage</literal> command in a subdirectory if you want a coverage
+    report for only a portion of the code tree.
+   </para>
+
+   <para>
+    Use <literal>make distclean</literal> to clean up when done.
    </para>
   </sect1>
 
