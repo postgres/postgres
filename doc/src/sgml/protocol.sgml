@@ -4860,6 +4860,44 @@ FunctionCallResponse (B)
 
 <varlistentry>
 <term>
+GSSENCRequest (F)
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Int32(8)
+</term>
+<listitem>
+<para>
+                Length of message contents in bytes, including self.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32(80877104)
+</term>
+<listitem>
+<para>
+                The <acronym>GSSAPI</acronym> Encryption request code.  The value is chosen to contain
+                <literal>1234</literal> in the most significant 16 bits, and <literal>5680</literal> in the
+                least significant 16 bits.  (To avoid confusion, this code
+                must not be the same as any protocol version number.)
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</para>
+</listitem>
+</varlistentry>
+
+
+<varlistentry>
+<term>
 GSSResponse (F)
 </term>
 <listitem>
@@ -5812,43 +5850,6 @@ SSLRequest (F)
 <para>
                 The <acronym>SSL</acronym> request code.  The value is chosen to contain
                 <literal>1234</literal> in the most significant 16 bits, and <literal>5679</literal> in the
-                least significant 16 bits.  (To avoid confusion, this code
-                must not be the same as any protocol version number.)
-</para>
-</listitem>
-</varlistentry>
-</variablelist>
-
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-GSSENCRequest (F)
-</term>
-<listitem>
-<para>
-
-<variablelist>
-<varlistentry>
-<term>
-        Int32(8)
-</term>
-<listitem>
-<para>
-                Length of message contents in bytes, including self.
-</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>
-        Int32(80877104)
-</term>
-<listitem>
-<para>
-                The <acronym>GSSAPI</acronym> Encryption request code.  The value is chosen to contain
-                <literal>1234</literal> in the most significant 16 bits, and <literal>5680</literal> in the
                 least significant 16 bits.  (To avoid confusion, this code
                 must not be the same as any protocol version number.)
 </para>
