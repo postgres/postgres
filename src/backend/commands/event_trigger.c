@@ -1807,9 +1807,15 @@ EventTriggerAlterTableEnd(void)
 	/* If no subcommands, don't collect */
 	if (list_length(currentEventTriggerState->currentCommand->d.alterTable.subcmds) != 0)
 	{
+		MemoryContext oldcxt;
+
+		oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
+
 		currentEventTriggerState->commandList =
 			lappend(currentEventTriggerState->commandList,
 					currentEventTriggerState->currentCommand);
+
+		MemoryContextSwitchTo(oldcxt);
 	}
 	else
 		pfree(currentEventTriggerState->currentCommand);
