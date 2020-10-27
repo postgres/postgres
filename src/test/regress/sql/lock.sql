@@ -13,6 +13,9 @@ CREATE VIEW lock_view3 AS SELECT * from lock_view2;
 CREATE VIEW lock_view4 AS SELECT (select a from lock_tbl1a limit 1) from lock_tbl1;
 CREATE VIEW lock_view5 AS SELECT * from lock_tbl1 where a in (select * from lock_tbl1a);
 CREATE VIEW lock_view6 AS SELECT * from (select * from lock_tbl1) sub;
+CREATE MATERIALIZED VIEW lock_mv1 AS SELECT * FROM lock_view6;
+CREATE INDEX lock_mvi1 ON lock_mv1 (a);
+CREATE SEQUENCE lock_seq;
 CREATE ROLE regress_rol_lock1;
 ALTER ROLE regress_rol_lock1 SET search_path = lock_schema1;
 GRANT USAGE ON SCHEMA lock_schema1 TO regress_rol_lock1;
@@ -113,9 +116,18 @@ LOCK TABLE ONLY lock_tbl1;
 ROLLBACK;
 RESET ROLE;
 
+-- Lock other relations
+BEGIN TRANSACTION;
+LOCK TABLE lock_mv1;
+LOCK TABLE lock_mvi1;
+LOCK TABLE lock_seq;
+ROLLBACK;
+
+
 --
 -- Clean up
 --
+DROP MATERIALIZED VIEW lock_mv1;
 DROP VIEW lock_view7;
 DROP VIEW lock_view6;
 DROP VIEW lock_view5;
@@ -126,6 +138,7 @@ DROP TABLE lock_tbl3;
 DROP TABLE lock_tbl2;
 DROP TABLE lock_tbl1;
 DROP TABLE lock_tbl1a;
+DROP SEQUENCE lock_seq;
 DROP SCHEMA lock_schema1 CASCADE;
 DROP ROLE regress_rol_lock1;
 
