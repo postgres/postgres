@@ -88,13 +88,6 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 		return;					/* woops, concurrently dropped; no permissions
 								 * check */
 
-	/* Currently, we only allow plain tables to be locked */
-	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
-						rv->relname)));
-
 	/*
 	 * Make note if a temporary relation has been accessed in this
 	 * transaction.
