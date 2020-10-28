@@ -438,9 +438,9 @@ flatten_rtes_walker(Node *node, PlannerGlobal *glob)
  * In the flat rangetable, we zero out substructure pointers that are not
  * needed by the executor; this reduces the storage space and copying cost
  * for cached plans.  We keep only the ctename, alias and eref Alias fields,
- * which are needed by EXPLAIN, and the selectedCols, insertedCols and
- * updatedCols bitmaps, which are needed for executor-startup permissions
- * checking and for trigger event checking.
+ * which are needed by EXPLAIN, and the selectedCols, insertedCols,
+ * updatedCols, and extraUpdatedCols bitmaps, which are needed for
+ * executor-startup permissions checking and for trigger event checking.
  */
 static void
 add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)

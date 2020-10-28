@@ -697,6 +697,27 @@ SELECT events & 4 != 0 AS upd,
 
 DROP TABLE base_tbl CASCADE;
 
+-- view on table with GENERATED columns
+
+CREATE TABLE base_tbl (id int, idplus1 int GENERATED ALWAYS AS (id + 1) STORED);
+CREATE VIEW rw_view1 AS SELECT * FROM base_tbl;
+
+INSERT INTO base_tbl (id) VALUES (1);
+INSERT INTO rw_view1 (id) VALUES (2);
+INSERT INTO base_tbl (id, idplus1) VALUES (3, DEFAULT);
+INSERT INTO rw_view1 (id, idplus1) VALUES (4, DEFAULT);
+INSERT INTO base_tbl (id, idplus1) VALUES (5, 6);  -- error
+INSERT INTO rw_view1 (id, idplus1) VALUES (6, 7);  -- error
+
+SELECT * FROM base_tbl;
+
+UPDATE base_tbl SET id = 2000 WHERE id = 2;
+UPDATE rw_view1 SET id = 3000 WHERE id = 3;
+
+SELECT * FROM base_tbl;
+
+DROP TABLE base_tbl CASCADE;
+
 -- inheritance tests
 
 CREATE TABLE base_tbl_parent (a int);
