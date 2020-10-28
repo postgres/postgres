@@ -901,8 +901,7 @@
   prosrc => 'ftoi4' },
 
 # Table access method handlers
-{ oid => '3', oid_symbol => 'HEAP_TABLE_AM_HANDLER_OID',
-  descr => 'row-oriented heap table access method handler',
+{ oid => '3', descr => 'row-oriented heap table access method handler',
   proname => 'heap_tableam_handler', provolatile => 'v',
   prorettype => 'table_am_handler', proargtypes => 'internal',
   prosrc => 'heap_tableam_handler' },

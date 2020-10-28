@@ -602,6 +602,13 @@ EOM
 		# Emit OID symbol
 		if (defined $bki_values{oid_symbol})
 		{
+			# OID symbols for builtin functions are handled automatically
+			# by utils/Gen_fmgrtab.pl
+			die sprintf
+			  "custom OID symbols are not allowed for pg_proc entries: '%s'",
+			  $bki_values{oid_symbol}
+			  if $catname eq 'pg_proc';
+
 			printf $def "#define %s %s\n",
 			  $bki_values{oid_symbol}, $bki_values{oid};
 		}

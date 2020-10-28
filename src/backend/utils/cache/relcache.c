@@ -1761,7 +1761,7 @@ RelationInitTableAccessMethod(Relation relation)
 		 * seem prudent to show that in the catalog. So just overwrite it
 		 * here.
 		 */
-		relation->rd_amhandler = HEAP_TABLE_AM_HANDLER_OID;
+		relation->rd_amhandler = F_HEAP_TABLEAM_HANDLER;
 	}
 	else if (IsCatalogRelation(relation))
 	{
@@ -1769,7 +1769,7 @@ RelationInitTableAccessMethod(Relation relation)
 		 * Avoid doing a syscache lookup for catalog tables.
 		 */
 		Assert(relation->rd_rel->relam == HEAP_TABLE_AM_OID);
-		relation->rd_amhandler = HEAP_TABLE_AM_HANDLER_OID;
+		relation->rd_amhandler = F_HEAP_TABLEAM_HANDLER;
 	}
 	else
 	{
