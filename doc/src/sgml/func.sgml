@@ -26192,43 +26192,49 @@ SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
 
    <table id="functions-data-sanity-table">
     <title>Data Sanity Functions</title>
-    <tgroup cols="3">
+    <tgroup cols="1">
      <thead>
-      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry>
-        <literal><function>pg_relation_check_pages(<parameter>relation</parameter> <type>regclass</type> [, <parameter>fork</parameter> <type>text</type> <literal>DEFAULT</literal> <literal>NULL</literal> ])</function></literal>
-       </entry>
-       <entry><type>setof record</type></entry>
-       <entry>Check the pages of a relation.
-       </entry>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_relation_check_pages</primary>
+        </indexterm>
+        <function>pg_relation_check_pages</function> ( <parameter>relation</parameter> <type>regclass</type> [, <parameter>fork</parameter> <type>text</type> ] )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>path</parameter> <type>text</type>,
+        <parameter>failed_block_num</parameter> <type>bigint</type> )
+       </para>
+       <para>
+        Checks the pages of the specified relation to see if they are valid
+        enough to safely be loaded into the server's shared buffers.  If
+        given, <parameter>fork</parameter> specifies that only the pages of
+        the given fork are to be verified.  <parameter>fork</parameter> can
+        be <literal>main</literal> for the main data
+        fork, <literal>fsm</literal> for the free space
+        map, <literal>vm</literal> for the visibility map,
+        or <literal>init</literal> for the initialization fork.  The
+        default of <literal>NULL</literal> means that all forks of the
+        relation should be checked.  The function returns a list of block
+        numbers that appear corrupted along with the path names of their
+        files.  Use of this function is restricted to superusers by
+        default, but access may be granted to others
+        using <command>GRANT</command>.
+       </para></entry>
       </row>
      </tbody>
     </tgroup>
    </table>
-
-   <indexterm>
-    <primary>pg_relation_check_pages</primary>
-   </indexterm>
-   <para id="functions-check-relation-note" xreflabel="pg_relation_check_pages">
-    <function>pg_relation_check_pages</function> iterates over all blocks of a
-    given relation and verifies if they are in a state where they can safely
-    be loaded into the shared buffers. If defined,
-    <replaceable>fork</replaceable> specifies that only the pages of the given
-    fork are to be verified. Fork can be <literal>'main'</literal> for the
-    main data fork, <literal>'fsm'</literal> for the free space map,
-    <literal>'vm'</literal> for the visibility map, or
-    <literal>'init'</literal> for the initialization fork.  The default of
-    <literal>NULL</literal> means that all the forks of the relation are
-    checked. The function returns a list of blocks that are considered as
-    corrupted with the path of the related file. Use of this function is
-    restricted to superusers by default but access may be granted to others
-    using <command>GRANT</command>.
-   </para>
 
   </sect2>
 
