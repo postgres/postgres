@@ -2287,7 +2287,6 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 	RangeTblEntry *target_rte;
 	ListCell   *orig_tl;
 	ListCell   *tl;
-	TupleDesc	tupdesc = pstate->p_target_relation->rd_att;
 
 	tlist = transformTargetList(pstate, origTlist,
 								EXPR_KIND_UPDATE_SOURCE);
@@ -2346,39 +2345,7 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 	if (orig_tl != NULL)
 		elog(ERROR, "UPDATE target count mismatch --- internal error");
 
-	fill_extraUpdatedCols(target_rte, tupdesc);
-
 	return tlist;
-}
-
-/*
- * Record in extraUpdatedCols generated columns referencing updated base
- * columns.
- */
-void
-fill_extraUpdatedCols(RangeTblEntry *target_rte, TupleDesc tupdesc)
-{
-	if (tupdesc->constr &&
-		tupdesc->constr->has_generated_stored)
-	{
-		for (int i = 0; i < tupdesc->constr->num_defval; i++)
-		{
-			AttrDefault defval = tupdesc->constr->defval[i];
-			Node	   *expr;
-			Bitmapset  *attrs_used = NULL;
-
-			/* skip if not generated column */
-			if (!TupleDescAttr(tupdesc, defval.adnum - 1)->attgenerated)
-				continue;
-
-			expr = stringToNode(defval.adbin);
-			pull_varattnos(expr, 1, &attrs_used);
-
-			if (bms_overlap(target_rte->updatedCols, attrs_used))
-				target_rte->extraUpdatedCols = bms_add_member(target_rte->extraUpdatedCols,
-															  defval.adnum - FirstLowInvalidHeapAttributeNumber);
-		}
-	}
 }
 
 /*

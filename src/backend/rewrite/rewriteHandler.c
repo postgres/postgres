@@ -30,6 +30,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/optimizer.h"
 #include "parser/analyze.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
@@ -1510,6 +1511,42 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 	}
 }
 
+/*
+ * Record in target_rte->extraUpdatedCols the indexes of any generated columns
+ * that depend on any columns mentioned in target_rte->updatedCols.
+ */
+void
+fill_extraUpdatedCols(RangeTblEntry *target_rte, Relation target_relation)
+{
+	TupleDesc	tupdesc = RelationGetDescr(target_relation);
+	TupleConstr *constr = tupdesc->constr;
+
+	target_rte->extraUpdatedCols = NULL;
+
+	if (constr && constr->has_generated_stored)
+	{
+		for (int i = 0; i < constr->num_defval; i++)
+		{
+			AttrDefault *defval = &constr->defval[i];
+			Node	   *expr;
+			Bitmapset  *attrs_used = NULL;
+
+			/* skip if not generated column */
+			if (!TupleDescAttr(tupdesc, defval->adnum - 1)->attgenerated)
+				continue;
+
+			/* identify columns this generated column depends on */
+			expr = stringToNode(defval->adbin);
+			pull_varattnos(expr, 1, &attrs_used);
+
+			if (bms_overlap(target_rte->updatedCols, attrs_used))
+				target_rte->extraUpdatedCols =
+					bms_add_member(target_rte->extraUpdatedCols,
+								   defval->adnum - FirstLowInvalidHeapAttributeNumber);
+		}
+	}
+}
+
 
 /*
  * matchLocks -
@@ -1641,6 +1678,7 @@ ApplyRetrieveRule(Query *parsetree,
 			rte->selectedCols = NULL;
 			rte->insertedCols = NULL;
 			rte->updatedCols = NULL;
+			rte->extraUpdatedCols = NULL;
 
 			/*
 			 * For the most part, Vars referencing the view should remain as
@@ -3617,6 +3655,9 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 									parsetree->override,
 									rt_entry_relation,
 									parsetree->resultRelation);
+
+			/* Also populate extraUpdatedCols (for generated columns) */
+			fill_extraUpdatedCols(rt_entry, rt_entry_relation);
 		}
 		else if (event == CMD_DELETE)
 		{

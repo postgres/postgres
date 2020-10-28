@@ -46,6 +46,4 @@ extern void applyLockingClause(Query *qry, Index rtindex,
 extern List *BuildOnConflictExcludedTargetlist(Relation targetrel,
 											   Index exclRelIndex);
 
-extern void fill_extraUpdatedCols(RangeTblEntry *target_rte, TupleDesc tupdesc);
-
 #endif							/* ANALYZE_H */
