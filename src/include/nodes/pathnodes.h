@@ -889,10 +889,13 @@ typedef struct ForeignKeyOptInfo
 
 	/* Derived info about whether FK's equality conditions match the query: */
 	int			nmatched_ec;	/* # of FK cols matched by ECs */
+	int			nconst_ec;		/* # of these ECs that are ec_has_const */
 	int			nmatched_rcols; /* # of FK cols matched by non-EC rinfos */
 	int			nmatched_ri;	/* total # of non-EC rinfos matched to FK */
 	/* Pointer to eclass matching each column's condition, if there is one */
 	struct EquivalenceClass *eclass[INDEX_MAX_KEYS];
+	/* Pointer to eclass member for the referencing Var, if there is one */
+	struct EquivalenceMember *fk_eclass_member[INDEX_MAX_KEYS];
 	/* List of non-EC RestrictInfos matching each column's condition */
 	List	   *rinfos[INDEX_MAX_KEYS];
 } ForeignKeyOptInfo;

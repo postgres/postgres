@@ -62,14 +62,12 @@ static SpecialJoinInfo *make_outerjoininfo(PlannerInfo *root,
 										   JoinType jointype, List *clause);
 static void compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause);
 static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
-									bool is_deduced,
 									bool below_outer_join,
 									JoinType jointype,
 									Index security_level,
 									Relids qualscope,
 									Relids ojscope,
 									Relids outerjoin_nonnullable,
-									Relids deduced_nullable_relids,
 									List **postponed_qual_list);
 static bool check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
 								  Relids *nullable_relids_p, bool is_pushed_down);
@@ -815,9 +813,9 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 
 			if (bms_is_subset(pq->relids, *qualscope))
 				distribute_qual_to_rels(root, pq->qual,
-										false, below_outer_join, JOIN_INNER,
+										below_outer_join, JOIN_INNER,
 										root->qual_security_level,
-										*qualscope, NULL, NULL, NULL,
+										*qualscope, NULL, NULL,
 										NULL);
 			else
 				*postponed_qual_list = lappend(*postponed_qual_list, pq);
@@ -831,9 +829,9 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			Node	   *qual = (Node *) lfirst(l);
 
 			distribute_qual_to_rels(root, qual,
-									false, below_outer_join, JOIN_INNER,
+									below_outer_join, JOIN_INNER,
 									root->qual_security_level,
-									*qualscope, NULL, NULL, NULL,
+									*qualscope, NULL, NULL,
 									postponed_qual_list);
 		}
 	}
@@ -1008,10 +1006,10 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			Node	   *qual = (Node *) lfirst(l);
 
 			distribute_qual_to_rels(root, qual,
-									false, below_outer_join, j->jointype,
+									below_outer_join, j->jointype,
 									root->qual_security_level,
 									*qualscope,
-									ojscope, nonnullable_rels, NULL,
+									ojscope, nonnullable_rels,
 									postponed_qual_list);
 		}
 
@@ -1110,13 +1108,11 @@ process_security_barrier_quals(PlannerInfo *root,
 			 * than being pushed up to top of tree, which we don't want.
 			 */
 			distribute_qual_to_rels(root, qual,
-									false,
 									below_outer_join,
 									JOIN_INNER,
 									security_level,
 									qualscope,
 									qualscope,
-									NULL,
 									NULL,
 									NULL);
 		}
@@ -1581,7 +1577,6 @@ compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
  *	  as belonging to a higher join level, just add it to postponed_qual_list.
  *
  * 'clause': the qual clause to be distributed
- * 'is_deduced': true if the qual came from implied-equality deduction
  * 'below_outer_join': true if the qual is from a JOIN/ON that is below the
  *		nullable side of a higher-level outer join
  * 'jointype': type of join the qual is from (JOIN_INNER for a WHERE clause)
@@ -1593,8 +1588,6 @@ compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
  *		baserels appearing on the outer (nonnullable) side of the join
  *		(for FULL JOIN this includes both sides of the join, and must in fact
  *		equal qualscope)
- * 'deduced_nullable_relids': if is_deduced is true, the nullable relids to
- *		impute to the clause; otherwise NULL
  * 'postponed_qual_list': list of PostponedQual structs, which we can add
  *		this qual to if it turns out to belong to a higher join level.
  *		Can be NULL if caller knows postponement is impossible.
@@ -1603,23 +1596,17 @@ compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
  * 'ojscope' is needed if we decide to force the qual up to the outer-join
  * level, which will be ojscope not necessarily qualscope.
  *
- * In normal use (when is_deduced is false), at the time this is called,
- * root->join_info_list must contain entries for all and only those special
- * joins that are syntactically below this qual.  But when is_deduced is true,
- * we are adding new deduced clauses after completion of deconstruct_jointree,
- * so it cannot be assumed that root->join_info_list has anything to do with
- * qual placement.
+ * At the time this is called, root->join_info_list must contain entries for
+ * all and only those special joins that are syntactically below this qual.
  */
 static void
 distribute_qual_to_rels(PlannerInfo *root, Node *clause,
-						bool is_deduced,
 						bool below_outer_join,
 						JoinType jointype,
 						Index security_level,
 						Relids qualscope,
 						Relids ojscope,
 						Relids outerjoin_nonnullable,
-						Relids deduced_nullable_relids,
 						List **postponed_qual_list)
 {
 	Relids		relids;
@@ -1653,7 +1640,6 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 
 		Assert(root->hasLateralRTEs);	/* shouldn't happen otherwise */
 		Assert(jointype == JOIN_INNER); /* mustn't postpone past outer join */
-		Assert(!is_deduced);	/* shouldn't be deduced, either */
 		pq->qual = clause;
 		pq->relids = relids;
 		*postponed_qual_list = lappend(*postponed_qual_list, pq);
@@ -1754,24 +1740,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * This seems like another reason why it should perhaps be rethought.
 	 *----------
 	 */
-	if (is_deduced)
-	{
-		/*
-		 * If the qual came from implied-equality deduction, it should not be
-		 * outerjoin-delayed, else deducer blew it.  But we can't check this
-		 * because the join_info_list may now contain OJs above where the qual
-		 * belongs.  For the same reason, we must rely on caller to supply the
-		 * correct nullable_relids set.
-		 */
-		Assert(!ojscope);
-		is_pushed_down = true;
-		outerjoin_delayed = false;
-		nullable_relids = deduced_nullable_relids;
-		/* Don't feed it back for more deductions */
-		maybe_equivalence = false;
-		maybe_outer_join = false;
-	}
-	else if (bms_overlap(relids, outerjoin_nonnullable))
+	if (bms_overlap(relids, outerjoin_nonnullable))
 	{
 		/*
 		 * The qual is attached to an outer join and mentions (some of the)
@@ -2277,14 +2246,18 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
  * can produce constant TRUE or constant FALSE.  (Otherwise it's not,
  * because the expressions went through eval_const_expressions already.)
  *
+ * Returns the generated RestrictInfo, if any.  The result will be NULL
+ * if both_const is true and we successfully reduced the clause to
+ * constant TRUE.
+ *
  * Note: this function will copy item1 and item2, but it is caller's
  * responsibility to make sure that the Relids parameters are fresh copies
  * not shared with other uses.
  *
- * This is currently used only when an EquivalenceClass is found to
- * contain pseudoconstants.  See path/pathkeys.c for more details.
+ * Note: we do not do initialize_mergeclause_eclasses() here.  It is
+ * caller's responsibility that left_ec/right_ec be set as necessary.
  */
-void
+RestrictInfo *
 process_implied_equality(PlannerInfo *root,
 						 Oid opno,
 						 Oid collation,
@@ -2296,24 +2269,27 @@ process_implied_equality(PlannerInfo *root,
 						 bool below_outer_join,
 						 bool both_const)
 {
-	Expr	   *clause;
+	RestrictInfo *restrictinfo;
+	Node	   *clause;
+	Relids		relids;
+	bool		pseudoconstant = false;
 
 	/*
 	 * Build the new clause.  Copy to ensure it shares no substructure with
 	 * original (this is necessary in case there are subselects in there...)
 	 */
-	clause = make_opclause(opno,
-						   BOOLOID, /* opresulttype */
-						   false,	/* opretset */
-						   copyObject(item1),
-						   copyObject(item2),
-						   InvalidOid,
-						   collation);
+	clause = (Node *) make_opclause(opno,
+									BOOLOID,	/* opresulttype */
+									false,	/* opretset */
+									copyObject(item1),
+									copyObject(item2),
+									InvalidOid,
+									collation);
 
 	/* If both constant, try to reduce to a boolean constant. */
 	if (both_const)
 	{
-		clause = (Expr *) eval_const_expressions(root, (Node *) clause);
+		clause = eval_const_expressions(root, clause);
 
 		/* If we produced const TRUE, just drop the clause */
 		if (clause && IsA(clause, Const))
@@ -2322,25 +2298,106 @@ process_implied_equality(PlannerInfo *root,
 
 			Assert(cclause->consttype == BOOLOID);
 			if (!cclause->constisnull && DatumGetBool(cclause->constvalue))
-				return;
+				return NULL;
 		}
 	}
 
 	/*
+	 * The rest of this is a very cut-down version of distribute_qual_to_rels.
+	 * We can skip most of the work therein, but there are a couple of special
+	 * cases we still have to handle.
+	 *
+	 * Retrieve all relids mentioned within the possibly-simplified clause.
+	 */
+	relids = pull_varnos(clause);
+	Assert(bms_is_subset(relids, qualscope));
+
+	/*
+	 * If the clause is variable-free, our normal heuristic for pushing it
+	 * down to just the mentioned rels doesn't work, because there are none.
+	 * Apply at the given qualscope, or at the top of tree if it's nonvolatile
+	 * (which it very likely is, but we'll check, just to be sure).
+	 */
+	if (bms_is_empty(relids))
+	{
+		/* eval at original syntactic level */
+		relids = bms_copy(qualscope);
+		if (!contain_volatile_functions(clause))
+		{
+			/* mark as gating qual */
+			pseudoconstant = true;
+			/* tell createplan.c to check for gating quals */
+			root->hasPseudoConstantQuals = true;
+			/* if not below outer join, push it to top of tree */
+			if (!below_outer_join)
+			{
+				relids =
+					get_relids_in_jointree((Node *) root->parse->jointree,
+										   false);
+			}
+		}
+	}
+
+	/*
+	 * Build the RestrictInfo node itself.
+	 */
+	restrictinfo = make_restrictinfo((Expr *) clause,
+									 true,	/* is_pushed_down */
+									 false, /* outerjoin_delayed */
+									 pseudoconstant,
+									 security_level,
+									 relids,
+									 NULL,	/* outer_relids */
+									 nullable_relids);
+
+	/*
+	 * If it's a join clause, add vars used in the clause to targetlists of
+	 * their relations, so that they will be emitted by the plan nodes that
+	 * scan those relations (else they won't be available at the join node!).
+	 *
+	 * Typically, we'd have already done this when the component expressions
+	 * were first seen by distribute_qual_to_rels; but it is possible that
+	 * some of the Vars could have missed having that done because they only
+	 * appeared in single-relation clauses originally.  So do it here for
+	 * safety.
+	 */
+	if (bms_membership(relids) == BMS_MULTIPLE)
+	{
+		List	   *vars = pull_var_clause(clause,
+										   PVC_RECURSE_AGGREGATES |
+										   PVC_RECURSE_WINDOWFUNCS |
+										   PVC_INCLUDE_PLACEHOLDERS);
+
+		add_vars_to_targetlist(root, vars, relids, false);
+		list_free(vars);
+	}
+
+	/*
+	 * Check mergejoinability.  This will usually succeed, since the op came
+	 * from an EquivalenceClass; but we could have reduced the original clause
+	 * to a constant.
+	 */
+	check_mergejoinable(restrictinfo);
+
+	/*
+	 * Note we don't do initialize_mergeclause_eclasses(); the caller can
+	 * handle that much more cheaply than we can.  It's okay to call
+	 * distribute_restrictinfo_to_rels() before that happens.
+	 */
+
+	/*
 	 * Push the new clause into all the appropriate restrictinfo lists.
 	 */
-	distribute_qual_to_rels(root, (Node *) clause,
-							true, below_outer_join, JOIN_INNER,
-							security_level,
-							qualscope, NULL, NULL, nullable_relids,
-							NULL);
+	distribute_restrictinfo_to_rels(root, restrictinfo);
+
+	return restrictinfo;
 }
 
 /*
  * build_implied_join_equality --- build a RestrictInfo for a derived equality
  *
  * This overlaps the functionality of process_implied_equality(), but we
- * must return the RestrictInfo, not push it into the joininfo tree.
+ * must not push the RestrictInfo into the joininfo tree.
  *
  * Note: this function will copy item1 and item2, but it is caller's
  * responsibility to make sure that the Relids parameters are fresh copies
@@ -2455,18 +2512,19 @@ match_foreign_keys_to_quals(PlannerInfo *root)
 		 */
 		for (colno = 0; colno < fkinfo->nkeys; colno++)
 		{
+			EquivalenceClass *ec;
 			AttrNumber	con_attno,
 						ref_attno;
 			Oid			fpeqop;
 			ListCell   *lc2;
 
-			fkinfo->eclass[colno] = match_eclasses_to_foreign_key_col(root,
-																	  fkinfo,
-																	  colno);
+			ec = match_eclasses_to_foreign_key_col(root, fkinfo, colno);
 			/* Don't bother looking for loose quals if we got an EC match */
-			if (fkinfo->eclass[colno] != NULL)
+			if (ec != NULL)
 			{
 				fkinfo->nmatched_ec++;
+				if (ec->ec_has_const)
+					fkinfo->nconst_ec++;
 				continue;
 			}
 

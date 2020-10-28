@@ -5066,9 +5066,16 @@ get_foreign_key_join_selectivity(PlannerInfo *root,
 		 * remove back into the worklist.
 		 *
 		 * Since the matching clauses are known not outerjoin-delayed, they
-		 * should certainly have appeared in the initial joinclause list.  If
-		 * we didn't find them, they must have been matched to, and removed
-		 * by, some other FK in a previous iteration of this loop.  (A likely
+		 * would normally have appeared in the initial joinclause list.  If we
+		 * didn't find them, there are two possibilities:
+		 *
+		 * 1. If the FK match is based on an EC that is ec_has_const, it won't
+		 * have generated any join clauses at all.  We discount such ECs while
+		 * checking to see if we have "all" the clauses.  (Below, we'll adjust
+		 * the selectivity estimate for this case.)
+		 *
+		 * 2. The clauses were matched to some other FK in a previous
+		 * iteration of this loop, and thus removed from worklist.  (A likely
 		 * case is that two FKs are matched to the same EC; there will be only
 		 * one EC-derived clause in the initial list, so the first FK will
 		 * consume it.)  Applying both FKs' selectivity independently risks
@@ -5078,8 +5085,9 @@ get_foreign_key_join_selectivity(PlannerInfo *root,
 		 * Later we might think of a reasonable way to combine the estimates,
 		 * but for now, just punt, since this is a fairly uncommon situation.
 		 */
-		if (list_length(removedlist) !=
-			(fkinfo->nmatched_ec + fkinfo->nmatched_ri))
+		if (removedlist == NIL ||
+			list_length(removedlist) !=
+			(fkinfo->nmatched_ec - fkinfo->nconst_ec + fkinfo->nmatched_ri))
 		{
 			worklist = list_concat(worklist, removedlist);
 			continue;
@@ -5138,9 +5146,48 @@ get_foreign_key_join_selectivity(PlannerInfo *root,
 
 			fkselec *= 1.0 / ref_tuples;
 		}
+
+		/*
+		 * If any of the FK columns participated in ec_has_const ECs, then
+		 * equivclass.c will have generated "var = const" restrictions for
+		 * each side of the join, thus reducing the sizes of both input
+		 * relations.  Taking the fkselec at face value would amount to
+		 * double-counting the selectivity of the constant restriction for the
+		 * referencing Var.  Hence, look for the restriction clause(s) that
+		 * were applied to the referencing Var(s), and divide out their
+		 * selectivity to correct for this.
+		 */
+		if (fkinfo->nconst_ec > 0)
+		{
+			for (int i = 0; i < fkinfo->nkeys; i++)
+			{
+				EquivalenceClass *ec = fkinfo->eclass[i];
+
+				if (ec && ec->ec_has_const)
+				{
+					EquivalenceMember *em = fkinfo->fk_eclass_member[i];
+					RestrictInfo *rinfo = find_derived_clause_for_ec_member(ec,
+																			em);
+
+					if (rinfo)
+					{
+						Selectivity s0;
+
+						s0 = clause_selectivity(root,
+												(Node *) rinfo,
+												0,
+												jointype,
+												sjinfo);
+						if (s0 > 0)
+							fkselec /= s0;
+					}
+				}
+			}
+		}
 	}
 
 	*restrictlist = worklist;
+	CLAMP_PROBABILITY(fkselec);
 	return fkselec;
 }
 
