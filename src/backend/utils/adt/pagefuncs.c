@@ -214,7 +214,7 @@ check_relation_fork(TupleDesc tupdesc, Tuplestorestate *tupstore,
 		memset(nulls, 0, sizeof(nulls));
 
 		values[i++] = CStringGetTextDatum(path);
-		values[i++] = UInt32GetDatum(blkno);
+		values[i++] = Int64GetDatum((int64) blkno);
 
 		Assert(i == PG_CHECK_RELATION_COLS);
 
