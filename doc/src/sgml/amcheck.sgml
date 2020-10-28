@@ -83,7 +83,7 @@ AND c.relpersistence != 't'
 -- Function may throw an error when this is omitted:
 AND c.relkind = 'i' AND i.indisready AND i.indisvalid
 ORDER BY c.relpages DESC LIMIT 10;
- bt_index_check |             relname             | relpages 
+ bt_index_check |             relname             | relpages
 ----------------+---------------------------------+----------
                 | pg_depend_reference_index       |       43
                 | pg_depend_depender_index        |       40
@@ -208,14 +208,14 @@ SET client_min_messages = DEBUG1;
       verify_heapam(relation regclass,
                     on_error_stop boolean,
                     check_toast boolean,
-                    skip cstring,
+                    skip text,
                     startblock bigint,
                     endblock bigint,
                     blkno OUT bigint,
                     offnum OUT integer,
                     attnum OUT integer,
                     msg OUT text)
-      returns record
+      returns setof record
      </function>
     </term>
     <listitem>
@@ -223,89 +223,17 @@ SET client_min_messages = DEBUG1;
       Checks a table for structural corruption, where pages in the relation
       contain data that is invalidly formatted, and for logical corruption,
       where pages are structurally valid but inconsistent with the rest of the
-      database cluster.  Example usage:
-<screen>
-test=# select * from verify_heapam('mytable', check_toast := true);
- blkno | offnum | attnum |                                                msg
--------+--------+--------+--------------------------------------------------------------------------------------------------
-    17 |     12 |        | xmin 4294967295 precedes relation freeze threshold 17:1134217582
-   960 |      4 |        | data begins at offset 152 beyond the tuple length 58
-   960 |      4 |        | tuple data should begin at byte 24, but actually begins at byte 152 (3 attributes, no nulls)
-   960 |      5 |        | tuple data should begin at byte 24, but actually begins at byte 27 (3 attributes, no nulls)
-   960 |      6 |        | tuple data should begin at byte 24, but actually begins at byte 16 (3 attributes, no nulls)
-   960 |      7 |        | tuple data should begin at byte 24, but actually begins at byte 21 (3 attributes, no nulls)
-  1147 |      2 |        | number of attributes 2047 exceeds maximum expected for table 3
-  1147 |     10 |        | tuple data should begin at byte 280, but actually begins at byte 24 (2047 attributes, has nulls)
-  1147 |     15 |        | number of attributes 67 exceeds maximum expected for table 3
-  1147 |     16 |      1 | attribute 1 with length 4294967295 ends at offset 416848000 beyond total tuple length 58
-  1147 |     18 |      2 | final toast chunk number 0 differs from expected value 6
-  1147 |     19 |      2 | toasted value for attribute 2 missing from toast table
-  1147 |     21 |        | tuple is marked as only locked, but also claims key columns were updated
-  1147 |     22 |        | multitransaction ID 1775655 is from before relation cutoff 2355572
-(14 rows)
-</screen>
-      As this example shows, the Tuple ID (TID) of the corrupt tuple is given
-      in the (<literal>blkno</literal>, <literal>offnum</literal>) columns, and
-      for corruptions specific to a particular attribute in the tuple, the
-      <literal>attnum</literal> field shows which one.
-     </para>
-     <para>
-      Structural corruption can happen due to faulty storage hardware, or
-      relation files being overwritten or modified by unrelated software.
-      This kind of corruption can also be detected with
-      <link linkend="app-initdb-data-checksums"><application>data page
-      checksums</application></link>.
-     </para>
-     <para>
-      Relation pages which are correctly formatted, internally consistent, and
-      correct relative to their own internal checksums may still contain
-      logical corruption.  As such, this kind of corruption cannot be detected
-      with <application>checksums</application>.  Examples include toasted
-      values in the main table which lack a corresponding entry in the toast
-      table, and tuples in the main table with a Transaction ID that is older
-      than the oldest valid Transaction ID in the database or cluster.
-     </para>
-     <para>
-      Multiple causes of logical corruption have been observed in production
-      systems, including bugs in the <productname>PostgreSQL</productname>
-      server software, faulty and ill-conceived backup and restore tools, and
-      user error.
-     </para>
-     <para>
-      Corrupt relations are most concerning in live production environments,
-      precisely the same environments where high risk activities are least
-      welcome.  For this reason, <function>verify_heapam</function> has been
-      designed to diagnose corruption without undue risk.  It cannot guard
-      against all causes of backend crashes, as even executing the calling
-      query could be unsafe on a badly corrupted system.   Access to <link
-      linkend="catalogs-overview">catalog tables</link> are performed and could
-      be problematic if the catalogs themselves are corrupted.
-     </para>
-     <para>
-      The design principle adhered to in <function>verify_heapam</function> is
-      that, if the rest of the system and server hardware are correct, under
-      default options, <function>verify_heapam</function> will not crash the
-      server due merely to structural or logical corruption in the target
-      table.
-     </para>
-     <para>
-      The <literal>check_toast</literal> attempts to reconcile the target
-      table against entries in its corresponding toast table.  This option is
-      disabled by default and is known to be slow.
-      If the target relation's corresponding toast table or toast index is
-      corrupt, reconciling the target table against toast values could
-      conceivably crash the server, although in many cases this would
-      just produce an error.
+      database cluster.
      </para>
      <para>
       The following optional arguments are recognized:
      </para>
      <variablelist>
       <varlistentry>
-       <term>on_error_stop</term>
+       <term><literal>on_error_stop</literal></term>
        <listitem>
         <para>
-         If true, corruption checking stops at the end of the first block on
+         If true, corruption checking stops at the end of the first block in
          which any corruptions are found.
         </para>
         <para>
@@ -314,11 +242,17 @@ test=# select * from verify_heapam('mytable', check_toast := true);
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term>check_toast</term>
+       <term><literal>check_toast</literal></term>
        <listitem>
         <para>
-         If true, toasted values are checked gainst the corresponding
+         If true, toasted values are checked against the target relation's
          TOAST table.
+        </para>
+        <para>
+         This option is known to be slow.  Also, if the toast table or its
+         index is corrupt, checking it against toast values could conceivably
+         crash the server, although in many cases this would just produce an
+         error.
         </para>
         <para>
          Defaults to false.
@@ -326,11 +260,11 @@ test=# select * from verify_heapam('mytable', check_toast := true);
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term>skip</term>
+       <term><literal>skip</literal></term>
        <listitem>
         <para>
          If not <literal>none</literal>, corruption checking skips blocks that
-         are marked as all-visible or all-frozen, as given.
+         are marked as all-visible or all-frozen, as specified.
          Valid options are <literal>all-visible</literal>,
          <literal>all-frozen</literal> and <literal>none</literal>.
         </para>
@@ -340,7 +274,7 @@ test=# select * from verify_heapam('mytable', check_toast := true);
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term>startblock</term>
+       <term><literal>startblock</literal></term>
        <listitem>
         <para>
          If specified, corruption checking begins at the specified block,
@@ -349,12 +283,12 @@ test=# select * from verify_heapam('mytable', check_toast := true);
          target table.
         </para>
         <para>
-         By default, does not skip any blocks.
+         By default, checking begins at the first block.
         </para>
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term>endblock</term>
+       <term><literal>endblock</literal></term>
        <listitem>
         <para>
          If specified, corruption checking ends at the specified block,
@@ -363,7 +297,7 @@ test=# select * from verify_heapam('mytable', check_toast := true);
          table.
         </para>
         <para>
-         By default, does not skip any blocks.
+         By default, all blocks are checked.
         </para>
        </listitem>
       </varlistentry>
@@ -374,7 +308,7 @@ test=# select * from verify_heapam('mytable', check_toast := true);
      </para>
      <variablelist>
       <varlistentry>
-       <term>blkno</term>
+       <term><literal>blkno</literal></term>
        <listitem>
         <para>
          The number of the block containing the corrupt page.
@@ -382,7 +316,7 @@ test=# select * from verify_heapam('mytable', check_toast := true);
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term>offnum</term>
+       <term><literal>offnum</literal></term>
        <listitem>
         <para>
          The OffsetNumber of the corrupt tuple.
@@ -390,7 +324,7 @@ test=# select * from verify_heapam('mytable', check_toast := true);
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term>attnum</term>
+       <term><literal>attnum</literal></term>
        <listitem>
         <para>
          The attribute number of the corrupt column in the tuple, if the
@@ -399,10 +333,10 @@ test=# select * from verify_heapam('mytable', check_toast := true);
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term>msg</term>
+       <term><literal>msg</literal></term>
        <listitem>
         <para>
-         A human readable message describing the corruption in the page.
+         A message describing the problem detected.
         </para>
        </listitem>
       </varlistentry>
@@ -460,7 +394,7 @@ test=# select * from verify_heapam('mytable', check_toast := true);
   <filename>amcheck</filename> can be effective at detecting various types of
   failure modes that <link
   linkend="app-initdb-data-checksums"><application>data page
-  checksums</application></link> will always fail to catch.  These include:
+  checksums</application></link> will fail to catch.  These include:
 
   <itemizedlist>
    <listitem>
@@ -557,6 +491,45 @@ test=# select * from verify_heapam('mytable', check_toast := true);
     </para>
    </listitem>
   </itemizedlist>
+ </para>
+
+ <para>
+  Structural corruption can happen due to faulty storage hardware, or
+  relation files being overwritten or modified by unrelated software.
+  This kind of corruption can also be detected with
+  <link linkend="app-initdb-data-checksums"><application>data page
+  checksums</application></link>.
+ </para>
+
+ <para>
+  Relation pages which are correctly formatted, internally consistent, and
+  correct relative to their own internal checksums may still contain
+  logical corruption.  As such, this kind of corruption cannot be detected
+  with <application>checksums</application>.  Examples include toasted
+  values in the main table which lack a corresponding entry in the toast
+  table, and tuples in the main table with a Transaction ID that is older
+  than the oldest valid Transaction ID in the database or cluster.
+ </para>
+
+ <para>
+  Multiple causes of logical corruption have been observed in production
+  systems, including bugs in the <productname>PostgreSQL</productname>
+  server software, faulty and ill-conceived backup and restore tools, and
+  user error.
+ </para>
+
+ <para>
+  Corrupt relations are most concerning in live production environments,
+  precisely the same environments where high risk activities are least
+  welcome.  For this reason, <function>verify_heapam</function> has been
+  designed to diagnose corruption without undue risk.  It cannot guard
+  against all causes of backend crashes, as even executing the calling
+  query could be unsafe on a badly corrupted system.   Access to <link
+  linkend="catalogs-overview">catalog tables</link> are performed and could
+  be problematic if the catalogs themselves are corrupted.
+ </para>
+
+ <para>
   In general, <filename>amcheck</filename> can only prove the presence of
   corruption; it cannot prove its absence.
  </para>
