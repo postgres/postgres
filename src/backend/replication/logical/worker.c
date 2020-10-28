@@ -45,8 +45,6 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/optimizer.h"
-#include "parser/analyze.h"
-#include "parser/parse_relation.h"
 #include "pgstat.h"
 #include "postmaster/bgworker.h"
 #include "postmaster/interrupt.h"
@@ -777,7 +775,8 @@ apply_handle_update(StringInfo s)
 		}
 	}
 
-	fill_extraUpdatedCols(target_rte, RelationGetDescr(rel->localrel));
+	/* Also populate extraUpdatedCols, in case we have generated columns */
+	fill_extraUpdatedCols(target_rte, rel->localrel);
 
 	PushActiveSnapshot(GetTransactionSnapshot());
 
