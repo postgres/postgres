@@ -10958,6 +10958,13 @@
   proallargtypes => '{oid,text,int8,timestamptz}', proargmodes => '{i,o,o,o}',
   proargnames => '{tablespace,name,size,modification}',
   prosrc => 'pg_ls_tmpdir_1arg' },
+{ oid => '9147', descr => 'check pages of a relation',
+  proname => 'pg_relation_check_pages', procost => '10000', prorows => '20',
+  proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'r',
+  prorettype => 'record', proargtypes => 'regclass text',
+  proallargtypes => '{regclass,text,text,int8}', proargmodes => '{i,i,o,o}',
+  proargnames => '{relation,fork,path,failed_block_num}',
+  prosrc => 'pg_relation_check_pages' },
 
 # hash partitioning constraint function
 { oid => '5028', descr => 'hash partition CHECK constraint',

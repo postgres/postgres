@@ -332,6 +332,7 @@ CatCacheHeader
 CatalogId
 CatalogIndexState
 ChangeVarNodes_context
+CheckPagesErrorInfo
 CheckPoint
 CheckPointStmt
 CheckpointStatsData

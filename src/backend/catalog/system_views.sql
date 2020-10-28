@@ -1300,6 +1300,14 @@ LANGUAGE INTERNAL
 STRICT VOLATILE
 AS 'pg_create_logical_replication_slot';
 
+CREATE OR REPLACE FUNCTION pg_relation_check_pages(
+    IN relation regclass, IN fork text DEFAULT NULL,
+    OUT path text, OUT failed_block_num bigint)
+RETURNS SETOF record
+LANGUAGE internal
+VOLATILE PARALLEL RESTRICTED
+AS 'pg_relation_check_pages';
+
 CREATE OR REPLACE FUNCTION
   make_interval(years int4 DEFAULT 0, months int4 DEFAULT 0, weeks int4 DEFAULT 0,
                 days int4 DEFAULT 0, hours int4 DEFAULT 0, mins int4 DEFAULT 0,
@@ -1444,6 +1452,7 @@ AS 'unicode_is_normalized';
 -- can later change who can access these functions, or leave them as only
 -- available to superuser / cluster owner, if they choose.
 --
+REVOKE EXECUTE ON FUNCTION pg_relation_check_pages(regclass, text) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_start_backup(text, boolean, boolean) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stop_backup() FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stop_backup(boolean, boolean) FROM public;

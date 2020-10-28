@@ -26182,6 +26182,56 @@ SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
 
   </sect2>
 
+  <sect2 id="functions-data-sanity">
+   <title>Data Sanity Functions</title>
+
+   <para>
+    The functions shown in <xref linkend="functions-data-sanity-table"/>
+    provide ways to check the sanity of data files in the cluster.
+   </para>
+
+   <table id="functions-data-sanity-table">
+    <title>Data Sanity Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>pg_relation_check_pages(<parameter>relation</parameter> <type>regclass</type> [, <parameter>fork</parameter> <type>text</type> <literal>DEFAULT</literal> <literal>NULL</literal> ])</function></literal>
+       </entry>
+       <entry><type>setof record</type></entry>
+       <entry>Check the pages of a relation.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <indexterm>
+    <primary>pg_relation_check_pages</primary>
+   </indexterm>
+   <para id="functions-check-relation-note" xreflabel="pg_relation_check_pages">
+    <function>pg_relation_check_pages</function> iterates over all blocks of a
+    given relation and verifies if they are in a state where they can safely
+    be loaded into the shared buffers. If defined,
+    <replaceable>fork</replaceable> specifies that only the pages of the given
+    fork are to be verified. Fork can be <literal>'main'</literal> for the
+    main data fork, <literal>'fsm'</literal> for the free space map,
+    <literal>'vm'</literal> for the visibility map, or
+    <literal>'init'</literal> for the initialization fork.  The default of
+    <literal>NULL</literal> means that all the forks of the relation are
+    checked. The function returns a list of blocks that are considered as
+    corrupted with the path of the related file. Use of this function is
+    restricted to superusers by default but access may be granted to others
+    using <command>GRANT</command>.
+   </para>
+
+  </sect2>
+
   </sect1>
 
   <sect1 id="functions-trigger">
