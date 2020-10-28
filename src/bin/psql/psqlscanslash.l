@@ -777,7 +777,7 @@ evaluate_backtick(PsqlScanState state)
 
 	initPQExpBuffer(&cmd_output);
 
-	fd = popen(cmd, PG_BINARY_R);
+	fd = popen(cmd, "r");
 	if (!fd)
 	{
 		pg_log_error("%s: %m", cmd);
@@ -818,7 +818,7 @@ evaluate_backtick(PsqlScanState state)
 	/* If no error, transfer result to output_buf */
 	if (!error)
 	{
-		/* strip any trailing newline */
+		/* strip any trailing newline (but only one) */
 		if (cmd_output.len > 0 &&
 			cmd_output.data[cmd_output.len - 1] == '\n')
 			cmd_output.len--;
