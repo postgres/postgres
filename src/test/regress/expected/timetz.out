@@ -91,45 +91,45 @@ SELECT f1 AS "Ten" FROM TIMETZ_TBL WHERE f1 >= '00:00-07';
 (12 rows)
 
 -- Check edge cases
-SELECT '23:59:59.999999'::timetz;
+SELECT '23:59:59.999999 PDT'::timetz;
        timetz       
 --------------------
  23:59:59.999999-07
 (1 row)
 
-SELECT '23:59:59.9999999'::timetz;  -- rounds up
+SELECT '23:59:59.9999999 PDT'::timetz;  -- rounds up
    timetz    
 -------------
  24:00:00-07
 (1 row)
 
-SELECT '23:59:60'::timetz;  -- rounds up
+SELECT '23:59:60 PDT'::timetz;  -- rounds up
    timetz    
 -------------
  24:00:00-07
 (1 row)
 
-SELECT '24:00:00'::timetz;  -- allowed
+SELECT '24:00:00 PDT'::timetz;  -- allowed
    timetz    
 -------------
  24:00:00-07
 (1 row)
 
-SELECT '24:00:00.01'::timetz;  -- not allowed
-ERROR:  date/time field value out of range: "24:00:00.01"
-LINE 1: SELECT '24:00:00.01'::timetz;
+SELECT '24:00:00.01 PDT'::timetz;  -- not allowed
+ERROR:  date/time field value out of range: "24:00:00.01 PDT"
+LINE 1: SELECT '24:00:00.01 PDT'::timetz;
                ^
-SELECT '23:59:60.01'::timetz;  -- not allowed
-ERROR:  date/time field value out of range: "23:59:60.01"
-LINE 1: SELECT '23:59:60.01'::timetz;
+SELECT '23:59:60.01 PDT'::timetz;  -- not allowed
+ERROR:  date/time field value out of range: "23:59:60.01 PDT"
+LINE 1: SELECT '23:59:60.01 PDT'::timetz;
                ^
-SELECT '24:01:00'::timetz;  -- not allowed
-ERROR:  date/time field value out of range: "24:01:00"
-LINE 1: SELECT '24:01:00'::timetz;
+SELECT '24:01:00 PDT'::timetz;  -- not allowed
+ERROR:  date/time field value out of range: "24:01:00 PDT"
+LINE 1: SELECT '24:01:00 PDT'::timetz;
                ^
-SELECT '25:00:00'::timetz;  -- not allowed
-ERROR:  date/time field value out of range: "25:00:00"
-LINE 1: SELECT '25:00:00'::timetz;
+SELECT '25:00:00 PDT'::timetz;  -- not allowed
+ERROR:  date/time field value out of range: "25:00:00 PDT"
+LINE 1: SELECT '25:00:00 PDT'::timetz;
                ^
 --
 -- TIME simple math
