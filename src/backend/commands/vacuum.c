@@ -907,8 +907,7 @@ get_all_vacuum_rels(int options)
 /*
  * vacuum_set_xid_limits() -- compute oldestXmin and freeze cutoff points
  *
- * Input parameters are the target relation, applicable freeze age settings,
- * and isTopLevel which should be passed down from ProcessUtility.
+ * Input parameters are the target relation, applicable freeze age settings.
  *
  * The output parameters are:
  * - oldestXmin is the cutoff value used to distinguish whether tuples are
@@ -934,7 +933,6 @@ vacuum_set_xid_limits(Relation rel,
 					  int freeze_table_age,
 					  int multixact_freeze_min_age,
 					  int multixact_freeze_table_age,
-					  bool isTopLevel,
 					  TransactionId *oldestXmin,
 					  TransactionId *freezeLimit,
 					  TransactionId *xidFullScanLimit,
@@ -950,53 +948,33 @@ vacuum_set_xid_limits(Relation rel,
 	MultiXactId mxactLimit;
 	MultiXactId safeMxactLimit;
 
-	if (RELATION_IS_LOCAL(rel) && !IsInTransactionBlock(isTopLevel))
-	{
-		/*
-		 * If we are processing a temp relation (which by prior checks must be
-		 * one belonging to our session), and we are not inside any
-		 * transaction block, then there can be no tuples in the rel that are
-		 * still in-doubt, nor can there be any that are dead but possibly
-		 * still interesting to some snapshot our session holds.  We don't
-		 * need to care whether other sessions could see such tuples, either.
-		 * So we can aggressively set the cutoff xmin to be the nextXid.
-		 */
-		*oldestXmin = ReadNewTransactionId();
-	}
-	else
-	{
-		/*
-		 * Otherwise, calculate the cutoff xmin normally.
-		 *
-		 * We can always ignore processes running lazy vacuum.  This is
-		 * because we use these values only for deciding which tuples we must
-		 * keep in the tables.  Since lazy vacuum doesn't write its XID
-		 * anywhere (usually no XID assigned), it's safe to ignore it.  In
-		 * theory it could be problematic to ignore lazy vacuums in a full
-		 * vacuum, but keep in mind that only one vacuum process can be
-		 * working on a particular table at any time, and that each vacuum is
-		 * always an independent transaction.
-		 */
-		*oldestXmin = GetOldestNonRemovableTransactionId(rel);
+	/*
+	 * We can always ignore processes running lazy vacuum.  This is because we
+	 * use these values only for deciding which tuples we must keep in the
+	 * tables.  Since lazy vacuum doesn't write its XID anywhere (usually no
+	 * XID assigned), it's safe to ignore it.  In theory it could be
+	 * problematic to ignore lazy vacuums in a full vacuum, but keep in mind
+	 * that only one vacuum process can be working on a particular table at
+	 * any time, and that each vacuum is always an independent transaction.
+	 */
+	*oldestXmin = GetOldestNonRemovableTransactionId(rel);
 
-		if (OldSnapshotThresholdActive())
+	if (OldSnapshotThresholdActive())
+	{
+		TransactionId limit_xmin;
+		TimestampTz limit_ts;
+
+		if (TransactionIdLimitedForOldSnapshots(*oldestXmin, rel,
+												&limit_xmin, &limit_ts))
 		{
-			TransactionId limit_xmin;
-			TimestampTz limit_ts;
-
-			if (TransactionIdLimitedForOldSnapshots(*oldestXmin, rel,
-													&limit_xmin, &limit_ts))
-			{
-				/*
-				 * TODO: We should only set the threshold if we are pruning on
-				 * the basis of the increased limits.  Not as crucial here as
-				 * it is for opportunistic pruning (which often happens at a
-				 * much higher frequency), but would still be a significant
-				 * improvement.
-				 */
-				SetOldSnapshotThresholdTimestamp(limit_ts, limit_xmin);
-				*oldestXmin = limit_xmin;
-			}
+			/*
+			 * TODO: We should only set the threshold if we are pruning on the
+			 * basis of the increased limits.  Not as crucial here as it is
+			 * for opportunistic pruning (which often happens at a much higher
+			 * frequency), but would still be a significant improvement.
+			 */
+			SetOldSnapshotThresholdTimestamp(limit_ts, limit_xmin);
+			*oldestXmin = limit_xmin;
 		}
 	}
 
@@ -1930,7 +1908,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 			cluster_options |= CLUOPT_VERBOSE;
 
 		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
-		cluster_rel(relid, InvalidOid, cluster_options, true);
+		cluster_rel(relid, InvalidOid, cluster_options);
 	}
 	else
 		table_relation_vacuum(onerel, params, vac_strategy);

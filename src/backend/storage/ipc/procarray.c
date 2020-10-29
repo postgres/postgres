@@ -131,7 +131,7 @@ typedef struct ProcArrayStruct
  * different types of relations. As e.g. a normal user defined table in one
  * database is inaccessible to backends connected to another database, a test
  * specific to a relation can be more aggressive than a test for a shared
- * relation.  Currently we track three different states:
+ * relation.  Currently we track four different states:
  *
  * 1) GlobalVisSharedRels, which only considers an XID's
  *    effects visible-to-everyone if neither snapshots in any database, nor a
@@ -152,6 +152,9 @@ typedef struct ProcArrayStruct
  *
  *    I.e. the difference to GlobalVisCatalogRels is that
  *    replication slot's catalog_xmin is not taken into account.
+ *
+ * 4) GlobalVisTempRels, which only considers the current session, as temp
+ *    tables are not visible to other sessions.
  *
  * GlobalVisTestFor(relation) returns the appropriate state
  * for the relation.
@@ -234,6 +237,13 @@ typedef struct ComputeXidHorizonsResult
 	 * defined tables.
 	 */
 	TransactionId data_oldest_nonremovable;
+
+	/*
+	 * Oldest xid for which deleted tuples need to be retained in this
+	 * session's temporary tables.
+	 */
+	TransactionId temp_oldest_nonremovable;
+
 } ComputeXidHorizonsResult;
 
 
@@ -257,12 +267,13 @@ static TransactionId standbySnapshotPendingXmin;
 
 /*
  * State for visibility checks on different types of relations. See struct
- * GlobalVisState for details. As shared, catalog, and user defined
+ * GlobalVisState for details. As shared, catalog, normal and temporary
  * relations can have different horizons, one such state exists for each.
  */
 static GlobalVisState GlobalVisSharedRels;
 static GlobalVisState GlobalVisCatalogRels;
 static GlobalVisState GlobalVisDataRels;
+static GlobalVisState GlobalVisTempRels;
 
 /*
  * This backend's RecentXmin at the last time the accurate xmin horizon was
@@ -1668,6 +1679,23 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 		h->oldest_considered_running = initial;
 		h->shared_oldest_nonremovable = initial;
 		h->data_oldest_nonremovable = initial;
+
+		/*
+		 * Only modifications made by this backend affect the horizon for
+		 * temporary relations. Instead of a check in each iteration of the
+		 * loop over all PGPROCs it is cheaper to just initialize to the
+		 * current top-level xid any.
+		 *
+		 * Without an assigned xid we could use a horizon as agressive as
+		 * ReadNewTransactionid(), but we can get away with the much cheaper
+		 * latestCompletedXid + 1: If this backend has no xid there, by
+		 * definition, can't be any newer changes in the temp table than
+		 * latestCompletedXid.
+		 */
+		if (TransactionIdIsValid(MyProc->xid))
+			h->temp_oldest_nonremovable = MyProc->xid;
+		else
+			h->temp_oldest_nonremovable = initial;
 	}
 
 	/*
@@ -1760,6 +1788,7 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 			TransactionIdOlder(h->shared_oldest_nonremovable, kaxmin);
 		h->data_oldest_nonremovable =
 			TransactionIdOlder(h->data_oldest_nonremovable, kaxmin);
+		/* temp relations cannot be accessed in recovery */
 	}
 	else
 	{
@@ -1785,6 +1814,7 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 		h->data_oldest_nonremovable =
 			TransactionIdRetreatedBy(h->data_oldest_nonremovable,
 									 vacuum_defer_cleanup_age);
+		/* defer doesn't apply to temp relations */
 	}
 
 	/*
@@ -1844,6 +1874,8 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 										 h->catalog_oldest_nonremovable));
 	Assert(TransactionIdPrecedesOrEquals(h->oldest_considered_running,
 										 h->data_oldest_nonremovable));
+	Assert(TransactionIdPrecedesOrEquals(h->oldest_considered_running,
+										 h->temp_oldest_nonremovable));
 	Assert(!TransactionIdIsValid(h->slot_xmin) ||
 		   TransactionIdPrecedesOrEquals(h->oldest_considered_running,
 										 h->slot_xmin));
@@ -1878,6 +1910,8 @@ GetOldestNonRemovableTransactionId(Relation rel)
 		return horizons.shared_oldest_nonremovable;
 	else if (RelationIsAccessibleInLogicalDecoding(rel))
 		return horizons.catalog_oldest_nonremovable;
+	else if (RELATION_IS_LOCAL(rel))
+		return horizons.temp_oldest_nonremovable;
 	else
 		return horizons.data_oldest_nonremovable;
 }
@@ -2054,8 +2088,8 @@ GetSnapshotDataReuse(Snapshot snapshot)
  *		RecentXmin: the xmin computed for the most recent snapshot.  XIDs
  *			older than this are known not running any more.
  *
- * And try to advance the bounds of GlobalVisSharedRels, GlobalVisCatalogRels,
- * GlobalVisDataRels for the benefit of theGlobalVisTest* family of functions.
+ * And try to advance the bounds of GlobalVis{Shared,Catalog,Data,Temp}Rels
+ * for the benefit of theGlobalVisTest* family of functions.
  *
  * Note: this function should probably not be called with an argument that's
  * not statically allocated (see xip allocation below).
@@ -2357,6 +2391,15 @@ GetSnapshotData(Snapshot snapshot)
 		GlobalVisDataRels.definitely_needed =
 			FullTransactionIdNewer(def_vis_fxid_data,
 								   GlobalVisDataRels.definitely_needed);
+		/* See temp_oldest_nonremovable computation in ComputeXidHorizons() */
+		if (TransactionIdIsNormal(myxid))
+			GlobalVisTempRels.definitely_needed =
+				FullXidRelativeTo(latest_completed, myxid);
+		else
+		{
+			GlobalVisTempRels.definitely_needed = latest_completed;
+			FullTransactionIdAdvance(&GlobalVisTempRels.definitely_needed);
+		}
 
 		/*
 		 * Check if we know that we can initialize or increase the lower
@@ -2375,6 +2418,8 @@ GetSnapshotData(Snapshot snapshot)
 		GlobalVisDataRels.maybe_needed =
 			FullTransactionIdNewer(GlobalVisDataRels.maybe_needed,
 								   oldestfxid);
+		/* accurate value known */
+		GlobalVisTempRels.maybe_needed = GlobalVisTempRels.definitely_needed;
 	}
 
 	RecentXmin = xmin;
@@ -3892,6 +3937,8 @@ GlobalVisTestFor(Relation rel)
 		state = &GlobalVisSharedRels;
 	else if (need_catalog)
 		state = &GlobalVisCatalogRels;
+	else if (RELATION_IS_LOCAL(rel))
+		state = &GlobalVisTempRels;
 	else
 		state = &GlobalVisDataRels;
 
@@ -3942,6 +3989,9 @@ GlobalVisUpdateApply(ComputeXidHorizonsResult *horizons)
 	GlobalVisDataRels.maybe_needed =
 		FullXidRelativeTo(horizons->latest_completed,
 						  horizons->data_oldest_nonremovable);
+	GlobalVisTempRels.maybe_needed =
+		FullXidRelativeTo(horizons->latest_completed,
+						  horizons->temp_oldest_nonremovable);
 
 	/*
 	 * In longer running transactions it's possible that transactions we
@@ -3957,6 +4007,7 @@ GlobalVisUpdateApply(ComputeXidHorizonsResult *horizons)
 	GlobalVisDataRels.definitely_needed =
 		FullTransactionIdNewer(GlobalVisDataRels.maybe_needed,
 							   GlobalVisDataRels.definitely_needed);
+	GlobalVisTempRels.definitely_needed = GlobalVisTempRels.maybe_needed;
 
 	ComputeXidHorizonsResultLastXmin = RecentXmin;
 }

@@ -78,6 +78,7 @@ test: timeouts
 test: vacuum-concurrent-drop
 test: vacuum-conflict
 test: vacuum-skip-locked
+test: horizons
 test: predicate-hash
 test: predicate-gist
 test: predicate-gin
