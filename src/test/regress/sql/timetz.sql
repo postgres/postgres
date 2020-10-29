@@ -36,14 +36,14 @@ SELECT f1 AS "None" FROM TIMETZ_TBL WHERE f1 < '00:00-07';
 SELECT f1 AS "Ten" FROM TIMETZ_TBL WHERE f1 >= '00:00-07';
 
 -- Check edge cases
-SELECT '23:59:59.999999'::timetz;
-SELECT '23:59:59.9999999'::timetz;  -- rounds up
-SELECT '23:59:60'::timetz;  -- rounds up
-SELECT '24:00:00'::timetz;  -- allowed
-SELECT '24:00:00.01'::timetz;  -- not allowed
-SELECT '23:59:60.01'::timetz;  -- not allowed
-SELECT '24:01:00'::timetz;  -- not allowed
-SELECT '25:00:00'::timetz;  -- not allowed
+SELECT '23:59:59.999999 PDT'::timetz;
+SELECT '23:59:59.9999999 PDT'::timetz;  -- rounds up
+SELECT '23:59:60 PDT'::timetz;  -- rounds up
+SELECT '24:00:00 PDT'::timetz;  -- allowed
+SELECT '24:00:00.01 PDT'::timetz;  -- not allowed
+SELECT '23:59:60.01 PDT'::timetz;  -- not allowed
+SELECT '24:01:00 PDT'::timetz;  -- not allowed
+SELECT '25:00:00 PDT'::timetz;  -- not allowed
 
 --
 -- TIME simple math
