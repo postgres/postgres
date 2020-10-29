@@ -1471,21 +1471,28 @@ UpdateDecodingStats(LogicalDecodingContext *ctx)
 	ReorderBuffer *rb = ctx->reorder;
 
 	/*
-	 * Nothing to do if we haven't spilled anything since the last time the
-	 * stats has been sent.
+	 * Nothing to do if we haven't spilled or streamed anything since the last
+	 * time the stats has been sent.
 	 */
-	if (rb->spillBytes <= 0)
+	if (rb->spillBytes <= 0 && rb->streamBytes <= 0)
 		return;
 
-	elog(DEBUG2, "UpdateDecodingStats: updating stats %p %lld %lld %lld",
+	elog(DEBUG2, "UpdateDecodingStats: updating stats %p %lld %lld %lld %lld %lld %lld",
 		 rb,
 		 (long long) rb->spillTxns,
 		 (long long) rb->spillCount,
-		 (long long) rb->spillBytes);
+		 (long long) rb->spillBytes,
+		 (long long) rb->streamTxns,
+		 (long long) rb->streamCount,
+		 (long long) rb->streamBytes);
 
 	pgstat_report_replslot(NameStr(ctx->slot->data.name),
-						   rb->spillTxns, rb->spillCount, rb->spillBytes);
+						   rb->spillTxns, rb->spillCount, rb->spillBytes,
+						   rb->streamTxns, rb->streamCount, rb->streamBytes);
 	rb->spillTxns = 0;
 	rb->spillCount = 0;
 	rb->spillBytes = 0;
+	rb->streamTxns = 0;
+	rb->streamCount = 0;
+	rb->streamBytes = 0;
 }

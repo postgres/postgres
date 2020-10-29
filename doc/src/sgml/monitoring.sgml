@@ -2634,6 +2634,44 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>stream_txns</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of in-progress transactions streamed to the decoding output plugin
+        after the memory used by logical decoding of changes from WAL for this
+        slot exceeds <literal>logical_decoding_work_mem</literal>. Streaming only
+        works with toplevel transactions (subtransactions can't be streamed
+        independently), so the counter does not get incremented for subtransactions.
+       </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>stream_count</structfield><type>bigint</type>
+       </para>
+       <para>
+        Number of times in-progress transactions were streamed to the decoding
+        output plugin while decoding changes from WAL for this slot. Transactions
+        may get streamed repeatedly, and this counter gets incremented on every
+        such invocation.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>stream_bytes</structfield><type>bigint</type>
+       </para>
+       <para>
+        Amount of decoded in-progress transaction data streamed to the decoding
+        output plugin while decoding changes from WAL for this slot. This and other
+        streaming counters for this slot can be used to gauge the network I/O which
+        occurred during logical decoding and allow tuning <literal>logical_decoding_work_mem</literal>.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
         <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
        </para>
        <para>

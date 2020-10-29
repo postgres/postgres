@@ -551,6 +551,11 @@ struct ReorderBuffer
 	int64		spillTxns;		/* number of transactions spilled to disk */
 	int64		spillCount;		/* spill-to-disk invocation counter */
 	int64		spillBytes;		/* amount of data spilled to disk */
+
+	/* Statistics about transactions streamed to the decoding output plugin */
+	int64		streamTxns;		/* number of transactions streamed */
+	int64		streamCount;	/* streaming invocation counter */
+	int64		streamBytes;	/* amount of data streamed */
 };
 
 

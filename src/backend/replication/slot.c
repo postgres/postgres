@@ -320,7 +320,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	 * ReplicationSlotAllocationLock.
 	 */
 	if (SlotIsLogical(slot))
-		pgstat_report_replslot(NameStr(slot->data.name), 0, 0, 0);
+		pgstat_report_replslot(NameStr(slot->data.name), 0, 0, 0, 0, 0, 0);
 
 	/*
 	 * Now that the slot has been marked as in_use and active, it's safe to
