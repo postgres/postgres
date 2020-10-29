@@ -1757,9 +1757,16 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 		 * the shared horizon. But in recovery we cannot compute an accurate
 		 * per-database horizon as all xids are managed via the
 		 * KnownAssignedXids machinery.
+		 *
+		 * Be careful to compute a pessimistic value when MyDatabaseId is not
+		 * set. If this is a backend in the process of starting up, we may not
+		 * use a "too aggressive" horizon (otherwise we could end up using it
+		 * to prune still needed data away). If the current backend never
+		 * connects to a database that is harmless, because
+		 * data_oldest_nonremovable will never be utilized.
 		 */
 		if (in_recovery ||
-			proc->databaseId == MyDatabaseId ||
+			MyDatabaseId == InvalidOid || proc->databaseId == MyDatabaseId ||
 			proc->databaseId == 0)	/* always include WalSender */
 		{
 			h->data_oldest_nonremovable =
