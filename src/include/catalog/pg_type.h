@@ -312,6 +312,13 @@ typedef FormData_pg_type *Form_pg_type;
 	 (typid) == ANYCOMPATIBLENONARRAYOID || \
 	 (typid) == ANYCOMPATIBLERANGEOID)
 
+/*
+ * Backwards compatibility for ancient random spellings of pg_type OID macros.
+ * Don't use these names in new code.
+ */
+#define CASHOID	MONEYOID
+#define LSNOID	PG_LSNOID
+
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
 

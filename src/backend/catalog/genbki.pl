@@ -588,9 +588,13 @@ EOM
 		}
 
 		# Special hack to generate OID symbols for pg_type entries
-		# that lack one.
-		if ($catname eq 'pg_type' and !exists $bki_values{oid_symbol})
+		if ($catname eq 'pg_type')
 		{
+			die sprintf
+			  "custom OID symbols are not allowed for pg_type entries: '%s'",
+			  $bki_values{oid_symbol}
+			  if defined $bki_values{oid_symbol};
+
 			my $symbol = form_pg_type_symbol($bki_values{typname});
 			$bki_values{oid_symbol} = $symbol
 			  if defined $symbol;

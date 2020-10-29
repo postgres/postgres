@@ -2002,7 +2002,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 	{
 		if (proc->prorettype == TRIGGEROID)
 			is_trigger = true;
-		else if (proc->prorettype == EVTTRIGGEROID)
+		else if (proc->prorettype == EVENT_TRIGGEROID)
 			is_event_trigger = true;
 		else if (proc->prorettype != RECORDOID &&
 				 proc->prorettype != VOIDOID)
@@ -2838,7 +2838,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 					rettype == RECORDOID)
 					 /* okay */ ;
 				else if (rettype == TRIGGEROID ||
-						 rettype == EVTTRIGGEROID)
+						 rettype == EVENT_TRIGGEROID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("trigger functions can only be called "

@@ -220,7 +220,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				if (rettype == VOIDOID ||
 					rettype == RECORDOID)
 					 /* okay */ ;
-				else if (rettype == TRIGGEROID || rettype == EVTTRIGGEROID)
+				else if (rettype == TRIGGEROID || rettype == EVENT_TRIGGEROID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("trigger functions can only be called as triggers")));

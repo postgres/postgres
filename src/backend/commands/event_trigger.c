@@ -177,7 +177,7 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 	/* Find and validate the trigger function. */
 	funcoid = LookupFuncName(stmt->funcname, 0, NULL, false);
 	funcrettype = get_func_rettype(funcoid);
-	if (funcrettype != EVTTRIGGEROID)
+	if (funcrettype != EVENT_TRIGGEROID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("function %s must return type %s",

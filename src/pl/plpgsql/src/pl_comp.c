@@ -551,7 +551,7 @@ do_compile(FunctionCallInfo fcinfo,
 				if (rettypeid == VOIDOID ||
 					rettypeid == RECORDOID)
 					 /* okay */ ;
-				else if (rettypeid == TRIGGEROID || rettypeid == EVTTRIGGEROID)
+				else if (rettypeid == TRIGGEROID || rettypeid == EVENT_TRIGGEROID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("trigger functions can only be called as triggers")));

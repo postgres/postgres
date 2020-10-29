@@ -1532,7 +1532,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 					rettype == RECORDOID)
 					 /* okay */ ;
 				else if (rettype == TRIGGEROID ||
-						 rettype == EVTTRIGGEROID)
+						 rettype == EVENT_TRIGGEROID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("trigger functions can only be called as triggers")));
