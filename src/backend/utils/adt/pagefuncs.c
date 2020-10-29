@@ -220,9 +220,9 @@ check_relation_fork(TupleDesc tupdesc, Tuplestorestate *tupstore,
 
 		/* Save the corrupted blocks in the tuplestore. */
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
-
-		pfree(path);
 	}
+
+	pfree(path);
 
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;
