@@ -2703,10 +2703,10 @@ add_merged_range_bounds(int partnatts, FmgrInfo *partsupfuncs,
 		prev_ub.lower = false;
 
 		/*
-		 * We pass to partition_rbound_cmp() lower1 as false to prevent it
-		 * from considering the last upper bound to be smaller than the lower
-		 * bound of the merged partition when the values of the two range
-		 * bounds compare equal.
+		 * We pass lower1 = false to partition_rbound_cmp() to prevent it from
+		 * considering the last upper bound to be smaller than the lower bound
+		 * of the merged partition when the values of the two range bounds
+		 * compare equal.
 		 */
 		cmpval = partition_rbound_cmp(partnatts, partsupfuncs, partcollations,
 									  merged_lb->datums, merged_lb->kind,
@@ -2978,16 +2978,19 @@ check_new_partition_bound(char *relname, Relation parent,
 
 				/*
 				 * First check if the resulting range would be empty with
-				 * specified lower and upper bounds
+				 * specified lower and upper bounds.  partition_rbound_cmp
+				 * cannot return zero here, since the lower-bound flags are
+				 * different.
 				 */
 				cmpval = partition_rbound_cmp(key->partnatts,
 											  key->partsupfunc,
 											  key->partcollation,
 											  lower->datums, lower->kind,
 											  true, upper);
-				if (cmpval >= 0)
+				Assert(cmpval != 0);
+				if (cmpval > 0)
 				{
-					/* Fetch the problematic key from the lower datums list. */
+					/* Point to problematic key in the lower datums list. */
 					PartitionRangeDatum *datum = list_nth(spec->lowerdatums,
 														  cmpval - 1);
 
@@ -3057,11 +3060,11 @@ check_new_partition_bound(char *relname, Relation parent,
 							if (cmpval < 0)
 							{
 								/*
-								 * Fetch the problematic key from the upper
+								 * Point to problematic key in the upper
 								 * datums list.
 								 */
 								PartitionRangeDatum *datum =
-								list_nth(spec->upperdatums, -cmpval - 1);
+								list_nth(spec->upperdatums, Abs(cmpval) - 1);
 
 								/*
 								 * The new partition overlaps with the
@@ -3083,15 +3086,11 @@ check_new_partition_bound(char *relname, Relation parent,
 						PartitionRangeDatum *datum;
 
 						/*
-						 * Fetch the problematic key from the lower datums
-						 * list.  Given the way partition_range_bsearch()
-						 * works, the new lower bound is certainly >= the
-						 * bound at offset.  If the bound matches exactly, we
-						 * flag the 1st key.
+						 * Point to problematic key in the lower datums list;
+						 * if we have equality, point to the first one.
 						 */
-						Assert(cmpval >= 0);
 						datum = cmpval == 0 ? linitial(spec->lowerdatums) :
-							list_nth(spec->lowerdatums, cmpval - 1);
+							list_nth(spec->lowerdatums, Abs(cmpval) - 1);
 						overlap = true;
 						overlap_location = datum->location;
 						with = boundinfo->indexes[offset + 1];
@@ -3393,13 +3392,14 @@ partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
 		else if (kind1[i] > kind2[i])
 			return colnum;
 		else if (kind1[i] != PARTITION_RANGE_DATUM_VALUE)
-
+		{
 			/*
 			 * The column bounds are both MINVALUE or both MAXVALUE. No later
 			 * columns should be considered, but we still need to compare
 			 * whether they are upper or lower bounds.
 			 */
 			break;
+		}
 
 		cmpval = DatumGetInt32(FunctionCall2Coll(&partsupfunc[i],
 												 partcollation[i],
@@ -3692,9 +3692,9 @@ qsort_partition_rbound_cmp(const void *a, const void *b, void *arg)
 	PartitionRangeBound *b2 = (*(PartitionRangeBound *const *) b);
 	PartitionKey key = (PartitionKey) arg;
 
-	return partition_rbound_cmp(key->partnatts, key->partsupfunc,
-								key->partcollation, b1->datums, b1->kind,
-								b1->lower, b2);
+	return compare_range_bounds(key->partnatts, key->partsupfunc,
+								key->partcollation,
+								b1, b2);
 }
 
 /*
