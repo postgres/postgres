@@ -1245,7 +1245,6 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	BTLeader   *btleader = (BTLeader *) palloc0(sizeof(BTLeader));
 	BufferUsage *bufferusage;
 	bool		leaderparticipates = true;
-	char	   *sharedquery;
 	int			querylen;
 
 #ifdef DISABLE_LEADER_PARTICIPATION
@@ -1308,9 +1307,14 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/* Finally, estimate PARALLEL_KEY_QUERY_TEXT space */
-	querylen = strlen(debug_query_string);
-	shm_toc_estimate_chunk(&pcxt->estimator, querylen + 1);
-	shm_toc_estimate_keys(&pcxt->estimator, 1);
+	if (debug_query_string)
+	{
+		querylen = strlen(debug_query_string);
+		shm_toc_estimate_chunk(&pcxt->estimator, querylen + 1);
+		shm_toc_estimate_keys(&pcxt->estimator, 1);
+	}
+	else
+		querylen = 0;			/* keep compiler quiet */
 
 	/* Everyone's had a chance to ask for space, so now create the DSM */
 	InitializeParallelDSM(pcxt);
@@ -1372,9 +1376,14 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	}
 
 	/* Store query string for workers */
-	sharedquery = (char *) shm_toc_allocate(pcxt->toc, querylen + 1);
-	memcpy(sharedquery, debug_query_string, querylen + 1);
-	shm_toc_insert(pcxt->toc, PARALLEL_KEY_QUERY_TEXT, sharedquery);
+	if (debug_query_string)
+	{
+		char	   *sharedquery;
+
+		sharedquery = (char *) shm_toc_allocate(pcxt->toc, querylen + 1);
+		memcpy(sharedquery, debug_query_string, querylen + 1);
+		shm_toc_insert(pcxt->toc, PARALLEL_KEY_QUERY_TEXT, sharedquery);
+	}
 
 	/* Allocate space for each worker's BufferUsage; no need to initialize */
 	bufferusage = shm_toc_allocate(pcxt->toc,
@@ -1577,7 +1586,7 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 #endif							/* BTREE_BUILD_STATS */
 
 	/* Set debug_query_string for individual workers first */
-	sharedquery = shm_toc_lookup(toc, PARALLEL_KEY_QUERY_TEXT, false);
+	sharedquery = shm_toc_lookup(toc, PARALLEL_KEY_QUERY_TEXT, true);
 	debug_query_string = sharedquery;
 
 	/* Report the query string from leader */
