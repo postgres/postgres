@@ -119,6 +119,7 @@ initialize_worker_spi(worktable *table)
 	appendStringInfo(&buf, "select count(*) from pg_namespace where nspname = '%s'",
 					 table->schema);
 
+	debug_query_string = buf.data;
 	ret = SPI_execute(buf.data, true, 0);
 	if (ret != SPI_OK_SELECT)
 		elog(FATAL, "SPI_execute failed: error code %d", ret);
@@ -134,6 +135,7 @@ initialize_worker_spi(worktable *table)
 
 	if (ntup == 0)
 	{
+		debug_query_string = NULL;
 		resetStringInfo(&buf);
 		appendStringInfo(&buf,
 						 "CREATE SCHEMA \"%s\" "
@@ -147,15 +149,19 @@ initialize_worker_spi(worktable *table)
 		/* set statement start time */
 		SetCurrentStatementStartTimestamp();
 
+		debug_query_string = buf.data;
 		ret = SPI_execute(buf.data, false, 0);
 
 		if (ret != SPI_OK_UTILITY)
 			elog(FATAL, "failed to create my schema");
+
+		debug_query_string = NULL;	/* rest is not statement-specific */
 	}
 
 	SPI_finish();
 	PopActiveSnapshot();
 	CommitTransactionCommand();
+	debug_query_string = NULL;
 	pgstat_report_activity(STATE_IDLE, NULL);
 }
 
@@ -262,6 +268,7 @@ worker_spi_main(Datum main_arg)
 		StartTransactionCommand();
 		SPI_connect();
 		PushActiveSnapshot(GetTransactionSnapshot());
+		debug_query_string = buf.data;
 		pgstat_report_activity(STATE_RUNNING, buf.data);
 
 		/* We can now execute queries via SPI */
@@ -291,6 +298,7 @@ worker_spi_main(Datum main_arg)
 		SPI_finish();
 		PopActiveSnapshot();
 		CommitTransactionCommand();
+		debug_query_string = NULL;
 		pgstat_report_stat(false);
 		pgstat_report_activity(STATE_IDLE, NULL);
 	}
