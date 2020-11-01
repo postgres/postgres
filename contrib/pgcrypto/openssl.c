@@ -400,7 +400,7 @@ gen_ossl_encrypt(PX_Cipher *c, const uint8 *data, unsigned dlen,
 	}
 
 	if (!EVP_EncryptUpdate(od->evp_ctx, res, &outlen, data, dlen))
-		return PXE_ERR_GENERIC;
+		return PXE_ENCRYPT_FAILED;
 
 	return 0;
 }
