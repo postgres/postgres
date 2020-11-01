@@ -3113,6 +3113,47 @@ cookConstraint(ParseState *pstate,
 	return expr;
 }
 
+/*
+ * CopyStatistics --- copy entries in pg_statistic from one rel to another
+ */
+void
+CopyStatistics(Oid fromrelid, Oid torelid)
+{
+	HeapTuple	tup;
+	SysScanDesc scan;
+	ScanKeyData key[1];
+	Relation	statrel;
+
+	statrel = table_open(StatisticRelationId, RowExclusiveLock);
+
+	/* Now search for stat records */
+	ScanKeyInit(&key[0],
+				Anum_pg_statistic_starelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(fromrelid));
+
+	scan = systable_beginscan(statrel, StatisticRelidAttnumInhIndexId,
+							  true, NULL, 1, key);
+
+	while (HeapTupleIsValid((tup = systable_getnext(scan))))
+	{
+		Form_pg_statistic statform;
+
+		/* make a modifiable copy */
+		tup = heap_copytuple(tup);
+		statform = (Form_pg_statistic) GETSTRUCT(tup);
+
+		/* update the copy of the tuple and insert it */
+		statform->starelid = torelid;
+		CatalogTupleInsert(statrel, tup);
+
+		heap_freetuple(tup);
+	}
+
+	systable_endscan(scan);
+
+	table_close(statrel, RowExclusiveLock);
+}
 
 /*
  * RemoveStatistics --- remove entries in pg_statistic for a rel or column

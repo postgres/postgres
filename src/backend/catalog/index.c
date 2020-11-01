@@ -1714,6 +1714,9 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 		}
 	}
 
+	/* Copy data of pg_statistic from the old index to the new one */
+	CopyStatistics(oldIndexId, newIndexId);
+
 	/* Close relations */
 	table_close(pg_class, RowExclusiveLock);
 	table_close(pg_index, RowExclusiveLock);

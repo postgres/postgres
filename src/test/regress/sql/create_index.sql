@@ -997,6 +997,12 @@ CREATE UNIQUE INDEX concur_exprs_index_pred ON concur_exprs_tab (c1)
 CREATE UNIQUE INDEX concur_exprs_index_pred_2
   ON concur_exprs_tab ((1 / c1))
   WHERE ('-H') >= (c2::TEXT) COLLATE "C";
+ANALYZE concur_exprs_tab;
+SELECT starelid::regclass, count(*) FROM pg_statistic WHERE starelid IN (
+  'concur_exprs_index_expr'::regclass,
+  'concur_exprs_index_pred'::regclass,
+  'concur_exprs_index_pred_2'::regclass)
+  GROUP BY starelid ORDER BY starelid::regclass::text;
 SELECT pg_get_indexdef('concur_exprs_index_expr'::regclass);
 SELECT pg_get_indexdef('concur_exprs_index_pred'::regclass);
 SELECT pg_get_indexdef('concur_exprs_index_pred_2'::regclass);
@@ -1009,6 +1015,12 @@ ALTER TABLE concur_exprs_tab ALTER c2 TYPE TEXT;
 SELECT pg_get_indexdef('concur_exprs_index_expr'::regclass);
 SELECT pg_get_indexdef('concur_exprs_index_pred'::regclass);
 SELECT pg_get_indexdef('concur_exprs_index_pred_2'::regclass);
+-- Statistics should remain intact.
+SELECT starelid::regclass, count(*) FROM pg_statistic WHERE starelid IN (
+  'concur_exprs_index_expr'::regclass,
+  'concur_exprs_index_pred'::regclass,
+  'concur_exprs_index_pred_2'::regclass)
+  GROUP BY starelid ORDER BY starelid::regclass::text;
 DROP TABLE concur_exprs_tab;
 
 -- Temporary tables and on-commit actions, where CONCURRENTLY is ignored.
