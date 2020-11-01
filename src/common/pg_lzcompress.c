@@ -710,7 +710,6 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 
 		for (ctrlc = 0; ctrlc < 8 && sp < srcend && dp < destend; ctrlc++)
 		{
-
 			if (ctrl & 1)
 			{
 				/*
@@ -732,41 +731,62 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 					len += *sp++;
 
 				/*
-				 * Now we copy the bytes specified by the tag from OUTPUT to
-				 * OUTPUT (copy len bytes from dp - off to dp). The copied
-				 * areas could overlap, to preven possible uncertainty, we
-				 * copy only non-overlapping regions.
+				 * Check for corrupt data: if we fell off the end of the
+				 * source, or if we obtained off = 0, we have problems.  (We
+				 * must check this, else we risk an infinite loop below in the
+				 * face of corrupt data.)
+				 */
+				if (sp > srcend || off == 0)
+					break;
+
+				/*
+				 * Don't emit more data than requested.
 				 */
 				len = Min(len, destend - dp);
+
+				/*
+				 * Now we copy the bytes specified by the tag from OUTPUT to
+				 * OUTPUT (copy len bytes from dp - off to dp).  The copied
+				 * areas could overlap, so to avoid undefined behavior in
+				 * memcpy(), be careful to copy only non-overlapping regions.
+				 *
+				 * Note that we cannot use memmove() instead, since while its
+				 * behavior is well-defined, it's also not what we want.
+				 */
 				while (off < len)
 				{
-					/*---------
-					 * When offset is smaller than length - source and
-					 * destination regions overlap. memmove() is resolving
-					 * this overlap in an incompatible way with pglz. Thus we
-					 * resort to memcpy()-ing non-overlapping regions.
-					 *
-					 * Consider input: 112341234123412341234
-					 * At byte 5       here ^ we have match with length 16 and
-					 * offset 4.       11234M(len=16, off=4)
-					 * We are decoding first period of match and rewrite match
-					 *                 112341234M(len=12, off=8)
-					 *
-					 * The same match is now at position 9, it points to the
-					 * same start byte of output, but from another position:
-					 * the offset is doubled.
-					 *
-					 * We iterate through this offset growth until we can
-					 * proceed to usual memcpy(). If we would try to decode
-					 * the match at byte 5 (len=16, off=4) by memmove() we
-					 * would issue memmove(5, 1, 16) which would produce
-					 * 112341234XXXXXXXXXXXX, where series of X is 12
-					 * undefined bytes, that were at bytes [5:17].
-					 *---------
+					/*
+					 * We can safely copy "off" bytes since that clearly
+					 * results in non-overlapping source and destination.
 					 */
 					memcpy(dp, dp - off, off);
 					len -= off;
 					dp += off;
+
+					/*----------
+					 * This bit is less obvious: we can double "off" after
+					 * each such step.  Consider this raw input:
+					 *		112341234123412341234
+					 * This will be encoded as 5 literal bytes "11234" and
+					 * then a match tag with length 16 and offset 4.  After
+					 * memcpy'ing the first 4 bytes, we will have emitted
+					 *		112341234
+					 * so we can double "off" to 8, then after the next step
+					 * we have emitted
+					 *		11234123412341234
+					 * Then we can double "off" again, after which it is more
+					 * than the remaining "len" so we fall out of this loop
+					 * and finish with a non-overlapping copy of the
+					 * remainder.  In general, a match tag with off < len
+					 * implies that the decoded data has a repeat length of
+					 * "off".  We can handle 1, 2, 4, etc repetitions of the
+					 * repeated string per memcpy until we get to a situation
+					 * where the final copy step is non-overlapping.
+					 *
+					 * (Another way to understand this is that we are keeping
+					 * the copy source point dp - off the same throughout.)
+					 *----------
+					 */
 					off += off;
 				}
 				memcpy(dp, dp - off, len);
@@ -820,21 +840,32 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 int32
 pglz_maximum_compressed_size(int32 rawsize, int32 total_compressed_size)
 {
-	int32		compressed_size;
+	int64		compressed_size;
 
 	/*
-	 * pglz uses one control bit per byte, so we need (rawsize * 9) bits. We
-	 * care about bytes though, so we add 7 to make sure we include the last
-	 * incomplete byte (integer division rounds down).
+	 * pglz uses one control bit per byte, so if the entire desired prefix is
+	 * represented as literal bytes, we'll need (rawsize * 9) bits.  We care
+	 * about bytes though, so be sure to round up not down.
 	 *
-	 * XXX Use int64 to prevent overflow during calculation.
+	 * Use int64 here to prevent overflow during calculation.
 	 */
-	compressed_size = (int32) ((int64) rawsize * 9 + 7) / 8;
+	compressed_size = ((int64) rawsize * 9 + 7) / 8;
+
+	/*
+	 * The above fails to account for a corner case: we could have compressed
+	 * data that starts with N-1 or N-2 literal bytes and then has a match tag
+	 * of 2 or 3 bytes.  It's therefore possible that we need to fetch 1 or 2
+	 * more bytes in order to have the whole match tag.  (Match tags earlier
+	 * in the compressed data don't cause a problem, since they should
+	 * represent more decompressed bytes than they occupy themselves.)
+	 */
+	compressed_size += 2;
 
 	/*
 	 * Maximum compressed size can't be larger than total compressed size.
+	 * (This also ensures that our result fits in int32.)
 	 */
 	compressed_size = Min(compressed_size, total_compressed_size);
 
-	return compressed_size;
+	return (int32) compressed_size;
 }
