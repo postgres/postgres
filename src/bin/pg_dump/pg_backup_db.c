@@ -543,9 +543,9 @@ bool
 IsLockTableGeneric(Archive *AHX)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	PGresult *res;
-	char	 *sqlstate;
-	bool	retval;
+	PGresult   *res;
+	char	   *sqlstate;
+	bool		retval;
 
 	if (AHX->remoteVersion >= 140000)
 		return true;
@@ -572,13 +572,15 @@ IsLockTableGeneric(Archive *AHX)
 			break;
 		case PGRES_FATAL_ERROR:
 			sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
-			if (strcmp(sqlstate, ERRCODE_WRONG_OBJECT_TYPE) == 0)
+			if (sqlstate &&
+				strcmp(sqlstate, ERRCODE_WRONG_OBJECT_TYPE) == 0)
 			{
 				retval = false;
 				break;
 			}
-			else if (strcmp(sqlstate, ERRCODE_LOCK_NOT_AVAILABLE) == 0 ||
-					 strcmp(sqlstate, ERRCODE_INSUFFICIENT_PRIVILEGE) == 0)
+			else if (sqlstate &&
+					 (strcmp(sqlstate, ERRCODE_LOCK_NOT_AVAILABLE) == 0 ||
+					  strcmp(sqlstate, ERRCODE_INSUFFICIENT_PRIVILEGE) == 0))
 			{
 				retval = true;
 				break;
