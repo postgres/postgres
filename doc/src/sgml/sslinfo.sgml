@@ -52,7 +52,7 @@
     </term>
     <listitem>
     <para>
-     Returns the name of the protocol used for the SSL connection (e.g., TLSv1.0
+     Returns the name of the protocol used for the SSL connection (e.g., TLSv1.0,
      TLSv1.1, or TLSv1.2).
     </para>
     </listitem>
