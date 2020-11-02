@@ -612,7 +612,8 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  *
  * In RBM_NORMAL mode, the page is read from disk, and the page header is
  * validated.  An error is thrown if the page header is not valid.  (But
- * note that an all-zero page is considered "valid"; see PageIsVerified().)
+ * note that an all-zero page is considered "valid"; see
+ * PageIsVerifiedExtended().)
  *
  * RBM_ZERO_ON_ERROR is like the normal mode, but if the page header is not
  * valid, the page is zeroed instead of throwing an error. This is intended
@@ -898,7 +899,8 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			}
 
 			/* check for garbage data */
-			if (!PageIsVerified((Page) bufBlock, blockNum))
+			if (!PageIsVerifiedExtended((Page) bufBlock, blockNum,
+										PIV_LOG_WARNING))
 			{
 				if (mode == RBM_ZERO_ON_ERROR || zero_damaged_pages)
 				{
