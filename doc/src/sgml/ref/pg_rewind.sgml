@@ -74,7 +74,7 @@ PostgreSQL documentation
    <application>pg_rewind</application> with the <literal>-c</literal> option to
    automatically retrieve them from the WAL archive. The use of
    <application>pg_rewind</application> is not limited to failover, e.g.,  a standby
-   server can be promoted, run some write transactions, and then rewinded
+   server can be promoted, run some write transactions, and then rewound
    to become a standby again.
   </para>
 

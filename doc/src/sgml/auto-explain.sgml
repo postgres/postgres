@@ -200,7 +200,7 @@ LOAD 'auto_explain';
     <listitem>
      <para>
       <varname>auto_explain.log_settings</varname> controls whether information
-      about modified configuration options is printed when execution plan is logged.
+      about modified configuration options is printed when an execution plan is logged.
       Only options affecting query planning with value different from the built-in
       default value are included in the output.  This parameter is off by default.
       Only superusers can change this setting.
