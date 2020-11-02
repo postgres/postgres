@@ -1067,16 +1067,15 @@ alter table listp_12_1 set (parallel_workers = 0);
 
 -- Ensure that listp_12_2 is not scanned.  (The nested Append is not seen in
 -- the plan as it's pulled in setref.c due to having just a single subnode).
-explain (analyze on, costs off, timing off, summary off)
-select * from listp where a = (select 1);
+select explain_parallel_append('select * from listp where a = (select 1);');
 
 -- Like the above but throw some more complexity at the planner by adding
 -- a UNION ALL.  We expect both sides of the union not to scan the
 -- non-required partitions.
-explain (analyze on, costs off, timing off, summary off)
-select * from listp where a = (select 1)
+select explain_parallel_append(
+'select * from listp where a = (select 1)
   union all
-select * from listp where a = (select 2);
+select * from listp where a = (select 2);');
 
 drop table listp;
 reset parallel_tuple_cost;
