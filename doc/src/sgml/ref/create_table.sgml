@@ -171,8 +171,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       If specified, the table is created as a temporary table.
       Temporary tables are automatically dropped at the end of a
       session, or optionally at the end of the current transaction
-      (see <literal>ON COMMIT</literal> below).  Existing permanent
-      tables with the same name are not visible to the current session
+      (see <literal>ON COMMIT</literal> below).  The default
+      search_path includes the temporary schema first and so identically
+      named existing permanent tables are not chosen for new plans
       while the temporary table exists, unless they are referenced
       with schema-qualified names. Any indexes created on a temporary
       table are automatically temporary as well.
