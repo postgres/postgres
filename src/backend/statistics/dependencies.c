@@ -1305,7 +1305,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 
 	/*
 	 * Work out which dependencies we can apply, starting with the
-	 * widest/stongest ones, and proceeding to smaller/weaker ones.
+	 * widest/strongest ones, and proceeding to smaller/weaker ones.
 	 */
 	dependencies = (MVDependency **) palloc(sizeof(MVDependency *) *
 											total_ndeps);

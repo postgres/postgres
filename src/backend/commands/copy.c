@@ -2610,9 +2610,9 @@ CopyMultiInsertInfoFlush(CopyMultiInsertInfo *miinfo, ResultRelInfo *curr_rri)
 
 	/*
 	 * Trim the list of tracked buffers down if it exceeds the limit.  Here we
-	 * remove buffers starting with the ones we created first.  It seems more
-	 * likely that these older ones are less likely to be needed than ones
-	 * that were just created.
+	 * remove buffers starting with the ones we created first.  It seems less
+	 * likely that these older ones will be needed than the ones that were
+	 * just created.
 	 */
 	while (list_length(miinfo->multiInsertBuffers) > MAX_PARTITION_BUFFERS)
 	{

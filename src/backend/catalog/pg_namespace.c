@@ -106,7 +106,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	/* dependency on owner */
 	recordDependencyOnOwner(NamespaceRelationId, nspoid, ownerId);
 
-	/* dependences on roles mentioned in default ACL */
+	/* dependencies on roles mentioned in default ACL */
 	recordDependencyOnNewAcl(NamespaceRelationId, nspoid, 0, ownerId, nspacl);
 
 	/* dependency on extension ... but not for magic temp schemas */

@@ -291,7 +291,7 @@ restart:
 		 * A stream must be terminated by a normal packet.  If the last stream
 		 * packet in the source stream is a full packet, a normal empty packet
 		 * must follow.  Since the underlying packet reader doesn't know that
-		 * the compressed stream has been ended, we need to to consume the
+		 * the compressed stream has been ended, we need to consume the
 		 * terminating packet here.  This read does not harm even if the
 		 * stream has already ended.
 		 */

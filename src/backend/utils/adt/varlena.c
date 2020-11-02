@@ -6180,7 +6180,7 @@ unicode_normalize_func(PG_FUNCTION_ARGS)
 /*
  * Check whether the string is in the specified Unicode normalization form.
  *
- * This is done by convering the string to the specified normal form and then
+ * This is done by converting the string to the specified normal form and then
  * comparing that to the original string.  To speed that up, we also apply the
  * "quick check" algorithm specified in UAX #15, which can give a yes or no
  * answer for many strings by just scanning the string once.

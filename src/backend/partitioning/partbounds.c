@@ -1783,7 +1783,7 @@ merge_matching_partitions(PartitionMap *outer_map, PartitionMap *inner_map,
 	if (outer_merged_index >= 0 && inner_merged_index >= 0)
 	{
 		/*
-		 * If the mereged partitions are the same, no need to do anything;
+		 * If the merged partitions are the same, no need to do anything;
 		 * return the index of the merged partitions.  Otherwise, if each of
 		 * the given partitions has been merged with a dummy partition on the
 		 * other side, re-map them to either of the two merged partitions.

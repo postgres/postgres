@@ -1790,7 +1790,7 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 	 *
 	 * We put the ResultRelInfos in the es_opened_result_relations list, even
 	 * though we don't have a range table and don't populate the
-	 * es_result_relations array.  That's a big bogus, but it's enough to make
+	 * es_result_relations array.  That's a bit bogus, but it's enough to make
 	 * ExecGetTriggerResultRel() find them.
 	 */
 	estate = CreateExecutorState();

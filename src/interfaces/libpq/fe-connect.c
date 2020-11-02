@@ -7088,7 +7088,7 @@ pgpassfileWarning(PGconn *conn)
 }
 
 /*
- * Check if the SSL procotol value given in input is valid or not.
+ * Check if the SSL protocol value given in input is valid or not.
  * This is used as a sanity check routine for the connection parameters
  * ssl_min_protocol_version and ssl_max_protocol_version.
  */

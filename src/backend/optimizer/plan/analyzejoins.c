@@ -371,7 +371,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 	 * Likewise remove references from PlaceHolderVar data structures,
 	 * removing any no-longer-needed placeholders entirely.
 	 *
-	 * Removal is a bit tricker than it might seem: we can remove PHVs that
+	 * Removal is a bit trickier than it might seem: we can remove PHVs that
 	 * are used at the target rel and/or in the join qual, but not those that
 	 * are used at join partner rels or above the join.  It's not that easy to
 	 * distinguish PHVs used at partner rels from those used in the join qual,

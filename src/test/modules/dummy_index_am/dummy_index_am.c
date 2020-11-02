@@ -153,7 +153,7 @@ dibuild(Relation heap, Relation index, IndexInfo *indexInfo)
 }
 
 /*
- * Build an empty index for the initialiation fork.
+ * Build an empty index for the initialization fork.
  */
 static void
 dibuildempty(Relation index)

@@ -105,7 +105,7 @@ ExecLimit(PlanState *pstate)
 				}
 
 				/*
-				 * Tuple at limit is needed for comparation in subsequent
+				 * Tuple at limit is needed for comparison in subsequent
 				 * execution to detect ties.
 				 */
 				if (node->limitOption == LIMIT_OPTION_WITH_TIES &&

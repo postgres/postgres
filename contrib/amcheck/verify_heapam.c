@@ -560,7 +560,7 @@ verify_heapam_tupdesc(void)
  * Since we do not hold a snapshot, tuple visibility is not a question of
  * whether we should be able to see the tuple relative to any particular
  * snapshot, but rather a question of whether it is safe and reasonable to
- * to check the tuple attributes.
+ * check the tuple attributes.
  *
  * Some kinds of corruption make it unsafe to check the tuple attributes, for
  * example when the line pointer refers to a range of bytes outside the page.
@@ -1342,7 +1342,7 @@ fxid_in_cached_range(FullTransactionId fxid, const HeapCheckContext *ctx)
 }
 
 /*
- * Checks wheter a multitransaction ID is in the cached valid range, returning
+ * Checks whether a multitransaction ID is in the cached valid range, returning
  * the nature of the range violation, if any.
  */
 static XidBoundsViolation

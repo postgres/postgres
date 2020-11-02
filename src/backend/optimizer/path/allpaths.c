@@ -2915,7 +2915,7 @@ generate_useful_gather_paths(PlannerInfo *root, RelOptInfo *rel, bool override_r
 
 			/*
 			 * If the path has no ordering at all, then we can't use either
-			 * incremental sort or rely on implict sorting with a gather
+			 * incremental sort or rely on implicit sorting with a gather
 			 * merge.
 			 */
 			if (subpath->pathkeys == NIL)

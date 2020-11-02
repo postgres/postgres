@@ -1097,7 +1097,7 @@ ExecEndIncrementalSort(IncrementalSortState *node)
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 	/* must drop pointer to sort result tuple */
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	/* must drop stanalone tuple slots from outer node */
+	/* must drop standalone tuple slots from outer node */
 	ExecDropSingleTupleTableSlot(node->group_pivot);
 	ExecDropSingleTupleTableSlot(node->transfer_tuple);
 

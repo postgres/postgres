@@ -385,7 +385,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 
 
 /*
- * Perform visiblity checks for heap pruning.
+ * Perform visibility checks for heap pruning.
  *
  * This is more complicated than just using GlobalVisTestIsRemovableXid()
  * because of old_snapshot_threshold. We only want to increase the threshold

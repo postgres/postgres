@@ -4185,7 +4185,7 @@ runInitSteps(const char *initialize_steps)
 }
 
 /*
- * Extract pgbench table informations into global variables scale,
+ * Extract pgbench table information into global variables scale,
  * partition_method and partitions.
  */
 static void

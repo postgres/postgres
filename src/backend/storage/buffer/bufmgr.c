@@ -560,7 +560,7 @@ PrefetchSharedBuffer(SMgrRelation smgr_reln,
  * could be used by the caller to avoid the need for a later buffer lookup, but
  * it's not pinned, so the caller must recheck it.
  *
- * 2.  If the kernel has been asked to initiate I/O, the initated_io member is
+ * 2.  If the kernel has been asked to initiate I/O, the initiated_io member is
  * true.  Currently there is no way to know if the data was already cached by
  * the kernel and therefore didn't really initiate I/O, and no way to know when
  * the I/O completes other than using synchronous ReadBuffer().

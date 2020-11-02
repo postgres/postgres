@@ -3266,7 +3266,7 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 	 *
 	 * For ordered aggregates:
 	 *
-	 * Only need to choose between the faster path for a single orderred
+	 * Only need to choose between the faster path for a single ordered
 	 * column, and the one between multiple columns. Checking strictness etc
 	 * is done when finalizing the aggregate. See
 	 * process_ordered_aggregate_{single, multi} and

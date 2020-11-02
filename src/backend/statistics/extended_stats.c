@@ -1403,7 +1403,7 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 		stat_sel = mcv_sel + other_sel;
 		CLAMP_PROBABILITY(stat_sel);
 
-		/* Factor the estimate from this MCV to the oveall estimate. */
+		/* Factor the estimate from this MCV to the overall estimate. */
 		sel *= stat_sel;
 	}
 
