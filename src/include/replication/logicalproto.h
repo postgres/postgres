@@ -34,6 +34,33 @@
 #define LOGICALREP_PROTO_MAX_VERSION_NUM LOGICALREP_PROTO_STREAM_VERSION_NUM
 
 /*
+ * Logical message types
+ *
+ * Used by logical replication wire protocol.
+ *
+ * Note: though this is an enum, the values are used to identify message types
+ * in logical replication protocol, which uses a single byte to identify a
+ * message type. Hence the values should be single byte wide and preferrably
+ * human readable characters.
+ */
+typedef enum LogicalRepMsgType
+{
+	LOGICAL_REP_MSG_BEGIN = 'B',
+	LOGICAL_REP_MSG_COMMIT = 'C',
+	LOGICAL_REP_MSG_ORIGIN = 'O',
+	LOGICAL_REP_MSG_INSERT = 'I',
+	LOGICAL_REP_MSG_UPDATE = 'U',
+	LOGICAL_REP_MSG_DELETE = 'D',
+	LOGICAL_REP_MSG_TRUNCATE = 'T',
+	LOGICAL_REP_MSG_RELATION = 'R',
+	LOGICAL_REP_MSG_TYPE = 'Y',
+	LOGICAL_REP_MSG_STREAM_START = 'S',
+	LOGICAL_REP_MSG_STREAM_END = 'E',
+	LOGICAL_REP_MSG_STREAM_COMMIT = 'c',
+	LOGICAL_REP_MSG_STREAM_ABORT = 'A'
+} LogicalRepMsgType;
+
+/*
  * This struct stores a tuple received via logical replication.
  * Keep in mind that the columns correspond to the *remote* table.
  */

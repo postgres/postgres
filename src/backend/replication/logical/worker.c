@@ -1896,67 +1896,66 @@ apply_handle_truncate(StringInfo s)
 static void
 apply_dispatch(StringInfo s)
 {
-	char		action = pq_getmsgbyte(s);
+	LogicalRepMsgType action = pq_getmsgbyte(s);
 
 	switch (action)
 	{
-			/* BEGIN */
-		case 'B':
+		case LOGICAL_REP_MSG_BEGIN:
 			apply_handle_begin(s);
-			break;
-			/* COMMIT */
-		case 'C':
+			return;
+
+		case LOGICAL_REP_MSG_COMMIT:
 			apply_handle_commit(s);
-			break;
-			/* INSERT */
-		case 'I':
+			return;
+
+		case LOGICAL_REP_MSG_INSERT:
 			apply_handle_insert(s);
-			break;
-			/* UPDATE */
-		case 'U':
+			return;
+
+		case LOGICAL_REP_MSG_UPDATE:
 			apply_handle_update(s);
-			break;
-			/* DELETE */
-		case 'D':
+			return;
+
+		case LOGICAL_REP_MSG_DELETE:
 			apply_handle_delete(s);
-			break;
-			/* TRUNCATE */
-		case 'T':
+			return;
+
+		case LOGICAL_REP_MSG_TRUNCATE:
 			apply_handle_truncate(s);
-			break;
-			/* RELATION */
-		case 'R':
+			return;
+
+		case LOGICAL_REP_MSG_RELATION:
 			apply_handle_relation(s);
-			break;
-			/* TYPE */
-		case 'Y':
+			return;
+
+		case LOGICAL_REP_MSG_TYPE:
 			apply_handle_type(s);
-			break;
-			/* ORIGIN */
-		case 'O':
+			return;
+
+		case LOGICAL_REP_MSG_ORIGIN:
 			apply_handle_origin(s);
-			break;
-			/* STREAM START */
-		case 'S':
+			return;
+
+		case LOGICAL_REP_MSG_STREAM_START:
 			apply_handle_stream_start(s);
-			break;
-			/* STREAM END */
-		case 'E':
+			return;
+
+		case LOGICAL_REP_MSG_STREAM_END:
 			apply_handle_stream_stop(s);
-			break;
-			/* STREAM ABORT */
-		case 'A':
+			return;
+
+		case LOGICAL_REP_MSG_STREAM_ABORT:
 			apply_handle_stream_abort(s);
-			break;
-			/* STREAM COMMIT */
-		case 'c':
+			return;
+
+		case LOGICAL_REP_MSG_STREAM_COMMIT:
 			apply_handle_stream_commit(s);
-			break;
-		default:
-			ereport(ERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("invalid logical replication message type \"%c\"", action)));
+			return;
 	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_PROTOCOL_VIOLATION),
+			 errmsg("invalid logical replication message type \"%c\"", action)));
 }
 
 /*
