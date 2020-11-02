@@ -3339,7 +3339,7 @@ pg_get_multixact_members(PG_FUNCTION_ARGS)
 		int			nmembers;
 		int			iter;
 	} mxact;
-	MultiXactId mxid = PG_GETARG_UINT32(0);
+	MultiXactId mxid = PG_GETARG_TRANSACTIONID(0);
 	mxact	   *multi;
 	FuncCallContext *funccxt;
 

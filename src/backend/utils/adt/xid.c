@@ -23,9 +23,6 @@
 #include "utils/builtins.h"
 #include "utils/xid8.h"
 
-#define PG_GETARG_TRANSACTIONID(n)	DatumGetTransactionId(PG_GETARG_DATUM(n))
-#define PG_RETURN_TRANSACTIONID(x)	return TransactionIdGetDatum(x)
-
 #define PG_GETARG_COMMANDID(n)		DatumGetCommandId(PG_GETARG_DATUM(n))
 #define PG_RETURN_COMMANDID(x)		return CommandIdGetDatum(x)
 

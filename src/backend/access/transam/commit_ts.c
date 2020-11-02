@@ -404,7 +404,7 @@ error_commit_ts_disabled(void)
 Datum
 pg_xact_commit_timestamp(PG_FUNCTION_ARGS)
 {
-	TransactionId xid = PG_GETARG_UINT32(0);
+	TransactionId xid = PG_GETARG_TRANSACTIONID(0);
 	TimestampTz ts;
 	bool		found;
 
@@ -481,7 +481,7 @@ pg_last_committed_xact(PG_FUNCTION_ARGS)
 Datum
 pg_xact_commit_timestamp_origin(PG_FUNCTION_ARGS)
 {
-	TransactionId xid = PG_GETARG_UINT32(0);
+	TransactionId xid = PG_GETARG_TRANSACTIONID(0);
 	RepOriginId nodeid;
 	TimestampTz ts;
 	Datum		values[2];
