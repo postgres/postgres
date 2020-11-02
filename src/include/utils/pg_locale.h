@@ -103,7 +103,7 @@ typedef struct pg_locale_struct *pg_locale_t;
 
 extern pg_locale_t pg_newlocale_from_collation(Oid collid);
 
-extern char *get_collation_actual_version(char collprovider, const char *collcollate);
+extern char *get_collation_version_for_oid(Oid collid);
 
 #ifdef USE_ICU
 extern int32_t icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes);

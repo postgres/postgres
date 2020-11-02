@@ -40,6 +40,15 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
    <itemizedlist>
     <listitem>
      <para>
+      The index depends on the sort order of a collation, and the definition
+      of the collation has changed.  This can cause index scans to fail to
+      find keys that are present.  See <xref linkend="collation-versions"/> for
+      more information.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       An index has become corrupted, and no longer contains valid
       data. Although in theory this should never happen, in
       practice indexes can become corrupted due to software bugs or

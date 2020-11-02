@@ -62,8 +62,7 @@ CATALOG(pg_depend,2608,DependRelationId)
 	 */
 	char		deptype;		/* see codes in dependency.h */
 #ifdef CATALOG_VARLEN
-	text		refobjversion;	/* version tracking, NULL if not used or
-								 * unknown */
+	text		refobjversion;	/* version of referenced object */
 #endif
 } FormData_pg_depend;
 

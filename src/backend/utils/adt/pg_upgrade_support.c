@@ -13,6 +13,7 @@
 
 #include "catalog/binary_upgrade.h"
 #include "catalog/heap.h"
+#include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/extension.h"

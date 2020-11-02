@@ -25444,7 +25444,9 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        </para>
        <para>
         Returns the actual version of the collation object as it is currently
-        installed in the operating system.
+        installed in the operating system.  <literal>null</literal> is returned
+        on operating systems where <productname>PostgreSQL</productname>
+        doesn't have support for versions.
        </para></entry>
       </row>
 

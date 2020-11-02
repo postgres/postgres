@@ -216,6 +216,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--index-collation-versions-unknown</option></term>
+      <listitem>
+       <para>
+        When upgrading indexes from releases before 14 that didn't track
+        collation versions, <application>pg_upgrade</application>
+        assumes by default that the upgraded indexes are compatible with the
+        currently installed versions of relevant collations (see
+        <xref linkend="collation-versions"/>).  Specify
+        <option>--index-collation-versions-unknown</option> to mark
+        them as needing to be rebuilt instead.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-?</option></term>
       <term><option>--help</option></term>
       <listitem><para>show help, then exit</para></listitem>

@@ -121,6 +121,9 @@ extern void FormIndexDatum(IndexInfo *indexInfo,
 						   Datum *values,
 						   bool *isnull);
 
+extern void index_check_collation_versions(Oid relid);
+extern void index_update_collation_versions(Oid relid, Oid coll);
+
 extern void index_build(Relation heapRelation,
 						Relation indexRelation,
 						IndexInfo *indexInfo,

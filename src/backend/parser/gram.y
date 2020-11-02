@@ -2591,6 +2591,14 @@ alter_table_cmd:
 					n->subtype = AT_NoForceRowSecurity;
 					$$ = (Node *)n;
 				}
+			/* ALTER INDEX <name> ALTER COLLATION ... REFRESH VERSION */
+			| ALTER COLLATION any_name REFRESH VERSION_P
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_AlterCollationRefreshVersion;
+					n->object = $3;
+					$$ = (Node *)n;
+				}
 			| alter_generic_options
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);

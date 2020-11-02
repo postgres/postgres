@@ -2336,7 +2336,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 		 */
 		recordDependencyOnSingleRelExpr(&colobject, expr, RelationGetRelid(rel),
 										DEPENDENCY_AUTO,
-										DEPENDENCY_AUTO, false);
+										DEPENDENCY_AUTO, false, false);
 	}
 	else
 	{
@@ -2346,7 +2346,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 		 */
 		recordDependencyOnSingleRelExpr(&defobject, expr, RelationGetRelid(rel),
 										DEPENDENCY_NORMAL,
-										DEPENDENCY_NORMAL, false);
+										DEPENDENCY_NORMAL, false, false);
 	}
 
 	/*
@@ -3706,7 +3706,8 @@ StorePartitionKey(Relation rel,
 										RelationGetRelid(rel),
 										DEPENDENCY_NORMAL,
 										DEPENDENCY_INTERNAL,
-										true /* reverse the self-deps */ );
+										true /* reverse the self-deps */ ,
+										false /* don't track versions */ );
 
 	/*
 	 * We must invalidate the relcache so that the next

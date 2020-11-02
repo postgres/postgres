@@ -57,7 +57,9 @@
 #include "access/htup_details.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_control.h"
+#include "catalog/pg_database.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
 #include "utils/hsearch.h"
@@ -138,6 +140,9 @@ static char *IsoLocaleName(const char *);	/* MSVC specific */
 #ifdef USE_ICU
 static void icu_set_collation_attributes(UCollator *collator, const char *loc);
 #endif
+
+static char *get_collation_actual_version(char collprovider,
+										  const char *collcollate);
 
 /*
  * pg_perm_setlocale
@@ -1630,7 +1635,7 @@ pg_newlocale_from_collation(Oid collid)
  * Get provider-specific collation version string for the given collation from
  * the operating system/library.
  */
-char *
+static char *
 get_collation_actual_version(char collprovider, const char *collcollate)
 {
 	char	   *collversion = NULL;
@@ -1712,6 +1717,45 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 	return collversion;
 }
 
+/*
+ * Get provider-specific collation version string for a given collation OID.
+ * Return NULL if the provider doesn't support versions.
+ */
+char *
+get_collation_version_for_oid(Oid oid)
+{
+	HeapTuple	tp;
+	char	   *version = NULL;
+
+	Assert(oid != C_COLLATION_OID && oid != POSIX_COLLATION_OID);
+
+	if (oid == DEFAULT_COLLATION_OID)
+	{
+		Form_pg_database dbform;
+
+		tp = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+		if (!HeapTupleIsValid(tp))
+			elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
+		dbform = (Form_pg_database) GETSTRUCT(tp);
+		version = get_collation_actual_version(COLLPROVIDER_LIBC,
+											   NameStr(dbform->datcollate));
+	}
+	else
+	{
+		Form_pg_collation collform;
+
+		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(oid));
+		if (!HeapTupleIsValid(tp))
+			elog(ERROR, "cache lookup failed for collation %u", oid);
+		collform = (Form_pg_collation) GETSTRUCT(tp);
+		version = get_collation_actual_version(collform->collprovider,
+											   NameStr(collform->collcollate));
+	}
+
+	ReleaseSysCache(tp);
+
+	return version;
+}
 
 #ifdef USE_ICU
 /*

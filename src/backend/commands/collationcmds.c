@@ -270,23 +270,9 @@ Datum
 pg_collation_actual_version(PG_FUNCTION_ARGS)
 {
 	Oid			collid = PG_GETARG_OID(0);
-	HeapTuple	tp;
-	char	   *collcollate;
-	char		collprovider;
 	char	   *version;
 
-	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
-	if (!HeapTupleIsValid(tp))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("collation with OID %u does not exist", collid)));
-
-	collcollate = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
-	collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
-
-	ReleaseSysCache(tp);
-
-	version = get_collation_actual_version(collprovider, collcollate);
+	version = get_collation_version_for_oid(collid);
 
 	if (version)
 		PG_RETURN_TEXT_P(cstring_to_text(version));

@@ -25,6 +25,7 @@ ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RENA
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
 ALTER INDEX <replaceable class="parameter">name</replaceable> ATTACH PARTITION <replaceable class="parameter">index_name</replaceable>
 ALTER INDEX <replaceable class="parameter">name</replaceable> DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable>
+ALTER INDEX <replaceable class="parameter">name</replaceable> ALTER COLLATION <replaceable class="parameter">collation_name</replaceable> REFRESH VERSION
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RESET ( <replaceable class="parameter">storage_parameter</replaceable> [, ... ] )
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ALTER [ COLUMN ] <replaceable class="parameter">column_number</replaceable>
@@ -108,6 +109,20 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
       dependent on that extension if <literal>NO</literal> is specified.
       An index that's marked as dependent on an extension is automatically
       dropped when the extension is dropped.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ALTER COLLATION <replaceable class="parameter">collation_name</replaceable> REFRESH VERSION</literal></term>
+    <listitem>
+     <para>
+      Silences warnings about mismatched collation versions, by declaring
+      that the index is compatible with the current collation definition.
+      Be aware that incorrect use of this command can hide index corruption.
+      If you don't know whether a collation's definition has changed
+      incompatibly, <xref linkend="sql-reindex"/> is a safe alternative.
+      See <xref linkend="collation-versions"/> for more information.
      </para>
     </listitem>
    </varlistentry>

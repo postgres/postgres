@@ -292,6 +292,7 @@ typedef struct
 	transferMode transfer_mode; /* copy files or link them? */
 	int			jobs;			/* number of processes/threads to use */
 	char	   *socketdir;		/* directory to use for Unix sockets */
+	bool		ind_coll_unknown;	/* mark unknown index collation versions */
 } UserOpts;
 
 typedef struct
