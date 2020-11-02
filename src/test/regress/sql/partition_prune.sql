@@ -1051,6 +1051,55 @@ reset enable_partition_pruning;
 
 drop table listp;
 
+-- Ensure run-time pruning works correctly for nested Append nodes
+set parallel_setup_cost to 0;
+set parallel_tuple_cost to 0;
+
+create table listp (a int) partition by list(a);
+create table listp_12 partition of listp for values in(1,2) partition by list(a);
+create table listp_12_1 partition of listp_12 for values in(1);
+create table listp_12_2 partition of listp_12 for values in(2);
+
+-- Force the 2nd subnode of the Append to be non-parallel.  This results in
+-- a nested Append node because the mixed parallel / non-parallel paths cannot
+-- be pulled into the top-level Append.
+alter table listp_12_1 set (parallel_workers = 0);
+
+-- Ensure that listp_12_2 is not scanned.  (The nested Append is not seen in
+-- the plan as it's pulled in setref.c due to having just a single subnode).
+explain (analyze on, costs off, timing off, summary off)
+select * from listp where a = (select 1);
+
+-- Like the above but throw some more complexity at the planner by adding
+-- a UNION ALL.  We expect both sides of the union not to scan the
+-- non-required partitions.
+explain (analyze on, costs off, timing off, summary off)
+select * from listp where a = (select 1)
+  union all
+select * from listp where a = (select 2);
+
+drop table listp;
+reset parallel_tuple_cost;
+reset parallel_setup_cost;
+
+-- Test case for run-time pruning with a nested Merge Append
+set enable_sort to 0;
+create table rangep (a int, b int) partition by range (a);
+create table rangep_0_to_100 partition of rangep for values from (0) to (100) partition by list (b);
+-- We need 3 sub-partitions. 1 to validate pruning worked and another two
+-- because a single remaining partition would be pulled up to the main Append.
+create table rangep_0_to_100_1 partition of rangep_0_to_100 for values in(1);
+create table rangep_0_to_100_2 partition of rangep_0_to_100 for values in(2);
+create table rangep_0_to_100_3 partition of rangep_0_to_100 for values in(3);
+create table rangep_100_to_200 partition of rangep for values from (100) to (200);
+create index on rangep (a);
+
+-- Ensure run-time pruning works on the nested Merge Append
+explain (analyze on, costs off, timing off, summary off)
+select * from rangep where b IN((select 1),(select 2)) order by a;
+reset enable_sort;
+drop table rangep;
+
 --
 -- Check that gen_prune_steps_from_opexps() works well for various cases of
 -- clauses for different partition keys

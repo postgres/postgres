@@ -141,7 +141,7 @@ typedef struct PruneStepResult
 static List *make_partitionedrel_pruneinfo(PlannerInfo *root,
 										   RelOptInfo *parentrel,
 										   int *relid_subplan_map,
-										   List *partitioned_rels, List *prunequal,
+										   Relids partrelids, List *prunequal,
 										   Bitmapset **matchedsubplans);
 static void gen_partprune_steps(RelOptInfo *rel, List *clauses,
 								PartClauseTarget target,
@@ -267,13 +267,13 @@ make_partition_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 	prunerelinfos = NIL;
 	foreach(lc, partitioned_rels)
 	{
-		List	   *rels = (List *) lfirst(lc);
+		Relids		partrelids = (Relids) lfirst(lc);
 		List	   *pinfolist;
 		Bitmapset  *matchedsubplans = NULL;
 
 		pinfolist = make_partitionedrel_pruneinfo(root, parentrel,
 												  relid_subplan_map,
-												  rels, prunequal,
+												  partrelids, prunequal,
 												  &matchedsubplans);
 
 		/* When pruning is possible, record the matched subplans */
@@ -342,7 +342,7 @@ make_partition_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 static List *
 make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 							  int *relid_subplan_map,
-							  List *partitioned_rels, List *prunequal,
+							  Relids partrelids, List *prunequal,
 							  Bitmapset **matchedsubplans)
 {
 	RelOptInfo *targetpart = NULL;
@@ -351,6 +351,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 	int		   *relid_subpart_map;
 	Bitmapset  *subplansfound = NULL;
 	ListCell   *lc;
+	int			rti;
 	int			i;
 
 	/*
@@ -364,9 +365,9 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 	relid_subpart_map = palloc0(sizeof(int) * root->simple_rel_array_size);
 
 	i = 1;
-	foreach(lc, partitioned_rels)
+	rti = -1;
+	while ((rti = bms_next_member(partrelids, rti)) > 0)
 	{
-		Index		rti = lfirst_int(lc);
 		RelOptInfo *subpart = find_base_rel(root, rti);
 		PartitionedRelPruneInfo *pinfo;
 		List	   *partprunequal;
@@ -379,14 +380,11 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		 * Fill the mapping array.
 		 *
 		 * relid_subpart_map maps relid of a non-leaf partition to the index
-		 * in 'partitioned_rels' of that rel (which will also be the index in
-		 * the returned PartitionedRelPruneInfo list of the info for that
-		 * partition).  We use 1-based indexes here, so that zero can
-		 * represent an un-filled array entry.
+		 * in the returned PartitionedRelPruneInfo list of the info for that
+		 * partition.  We use 1-based indexes here, so that zero can represent
+		 * an un-filled array entry.
 		 */
 		Assert(rti < root->simple_rel_array_size);
-		/* No duplicates please */
-		Assert(relid_subpart_map[rti] == 0);
 		relid_subpart_map[rti] = i++;
 
 		/*
@@ -581,6 +579,13 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 			else if (subpartidx >= 0)
 				present_parts = bms_add_member(present_parts, i);
 		}
+
+		/*
+		 * Ensure there were no stray PartitionedRelPruneInfo generated for
+		 * partitioned tables that we have no sub-paths or
+		 * sub-PartitionedRelPruneInfo for.
+		 */
+		Assert(!bms_is_empty(present_parts));
 
 		/* Record the maps and other information. */
 		pinfo->present_parts = present_parts;

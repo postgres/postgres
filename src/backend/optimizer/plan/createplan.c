@@ -1228,7 +1228,6 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 	 * do partition pruning.
 	 */
 	if (enable_partition_pruning &&
-		rel->reloptkind == RELOPT_BASEREL &&
 		best_path->partitioned_rels != NIL)
 	{
 		List	   *prunequal;
@@ -1395,7 +1394,6 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 	 * do partition pruning.
 	 */
 	if (enable_partition_pruning &&
-		rel->reloptkind == RELOPT_BASEREL &&
 		best_path->partitioned_rels != NIL)
 	{
 		List	   *prunequal;
