@@ -779,7 +779,7 @@ contain_volatile_functions_not_nextval(Node *clause)
 static bool
 contain_volatile_functions_not_nextval_checker(Oid func_id, void *context)
 {
-	return (func_id != F_NEXTVAL_OID &&
+	return (func_id != F_NEXTVAL &&
 			func_volatile(func_id) == PROVOLATILE_VOLATILE);
 }
 
