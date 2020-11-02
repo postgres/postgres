@@ -680,9 +680,12 @@ pglz_compress(const char *source, int32 slen, char *dest,
  * pglz_decompress -
  *
  *		Decompresses source into dest. Returns the number of bytes
- *		decompressed in the destination buffer, and *optionally*
- *		checks that both the source and dest buffers have been
- *		fully read and written to, respectively.
+ *		decompressed into the destination buffer, or -1 if the
+ *		compressed data is corrupted.
+ *
+ *		If check_complete is true, the data is considered corrupted
+ *		if we don't exactly fill the destination buffer.  Callers that
+ *		are extracting a slice typically can't apply this check.
  * ----------
  */
 int32
@@ -736,8 +739,8 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 				 * must check this, else we risk an infinite loop below in the
 				 * face of corrupt data.)
 				 */
-				if (sp > srcend || off == 0)
-					break;
+				if (unlikely(sp > srcend || off == 0))
+					return -1;
 
 				/*
 				 * Don't emit more data than requested.
@@ -809,9 +812,7 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 	}
 
 	/*
-	 * Check we decompressed the right amount. If we are slicing, then we
-	 * won't necessarily be at the end of the source or dest buffers when we
-	 * hit a stop, so we don't test them.
+	 * If requested, check we decompressed the right amount.
 	 */
 	if (check_complete && (dp != destend || sp != srcend))
 		return -1;
