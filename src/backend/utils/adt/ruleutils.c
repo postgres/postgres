@@ -4733,7 +4733,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	bool		is_instead;
 	char	   *ev_qual;
 	char	   *ev_action;
-	List	   *actions = NIL;
+	List	   *actions;
 	Relation	ev_relation;
 	TupleDesc	viewResultDesc = NULL;
 	int			fno;
@@ -4763,14 +4763,16 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	Assert(!isnull);
 	is_instead = DatumGetBool(dat);
 
-	/* these could be nulls */
 	fno = SPI_fnumber(rulettc, "ev_qual");
 	ev_qual = SPI_getvalue(ruletup, rulettc, fno);
+	Assert(ev_qual != NULL);
 
 	fno = SPI_fnumber(rulettc, "ev_action");
 	ev_action = SPI_getvalue(ruletup, rulettc, fno);
-	if (ev_action != NULL)
-		actions = (List *) stringToNode(ev_action);
+	Assert(ev_action != NULL);
+	actions = (List *) stringToNode(ev_action);
+	if (actions == NIL)
+		elog(ERROR, "invalid empty ev_action list");
 
 	ev_relation = table_open(ev_class, AccessShareLock);
 
@@ -4820,9 +4822,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 					 generate_qualified_relation_name(ev_class));
 
 	/* If the rule has an event qualification, add it */
-	if (ev_qual == NULL)
-		ev_qual = "";
-	if (strlen(ev_qual) > 0 && strcmp(ev_qual, "<>") != 0)
+	if (strcmp(ev_qual, "<>") != 0)
 	{
 		Node	   *qual;
 		Query	   *query;
@@ -4893,10 +4893,6 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		}
 		appendStringInfoString(buf, ");");
 	}
-	else if (list_length(actions) == 0)
-	{
-		appendStringInfoString(buf, "NOTHING;");
-	}
 	else
 	{
 		Query	   *query;
@@ -4926,7 +4922,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	bool		is_instead;
 	char	   *ev_qual;
 	char	   *ev_action;
-	List	   *actions = NIL;
+	List	   *actions;
 	Relation	ev_relation;
 	int			fno;
 	Datum		dat;
@@ -4950,14 +4946,14 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	Assert(!isnull);
 	is_instead = DatumGetBool(dat);
 
-	/* these could be nulls */
 	fno = SPI_fnumber(rulettc, "ev_qual");
 	ev_qual = SPI_getvalue(ruletup, rulettc, fno);
+	Assert(ev_qual != NULL);
 
 	fno = SPI_fnumber(rulettc, "ev_action");
 	ev_action = SPI_getvalue(ruletup, rulettc, fno);
-	if (ev_action != NULL)
-		actions = (List *) stringToNode(ev_action);
+	Assert(ev_action != NULL);
+	actions = (List *) stringToNode(ev_action);
 
 	if (list_length(actions) != 1)
 	{
