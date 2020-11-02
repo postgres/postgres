@@ -18,8 +18,8 @@ WHERE refclassid = 0 OR refobjid = 0 OR
       deptype NOT IN ('a', 'e', 'i', 'n', 'p') OR
       (deptype != 'p' AND (classid = 0 OR objid = 0)) OR
       (deptype = 'p' AND (classid != 0 OR objid != 0 OR objsubid != 0));
- classid | objid | objsubid | refclassid | refobjid | refobjsubid | deptype 
----------+-------+----------+------------+----------+-------------+---------
+ classid | objid | objsubid | refclassid | refobjid | refobjsubid | deptype | refobjversion 
+---------+-------+----------+------------+----------+-------------+---------+---------------
 (0 rows)
 
 -- **************** pg_shdepend ****************

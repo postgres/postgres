@@ -189,6 +189,7 @@ extern void recordDependencyOn(const ObjectAddress *depender,
 extern void recordMultipleDependencies(const ObjectAddress *depender,
 									   const ObjectAddress *referenced,
 									   int nreferenced,
+									   const char *version,
 									   DependencyType behavior);
 
 extern void recordDependencyOnCurrentExtension(const ObjectAddress *object,

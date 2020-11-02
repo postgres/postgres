@@ -53,6 +53,7 @@ DECLARE_TOAST(pg_aggregate, 4159, 4160);
 DECLARE_TOAST(pg_attrdef, 2830, 2831);
 DECLARE_TOAST(pg_constraint, 2832, 2833);
 DECLARE_TOAST(pg_default_acl, 4143, 4144);
+DECLARE_TOAST(pg_depend, 8888, 8889);
 DECLARE_TOAST(pg_description, 2834, 2835);
 DECLARE_TOAST(pg_event_trigger, 4145, 4146);
 DECLARE_TOAST(pg_extension, 4147, 4148);

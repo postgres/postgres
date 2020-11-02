@@ -24,6 +24,7 @@
 #include "catalog/pg_extension.h"
 #include "commands/extension.h"
 #include "miscadmin.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -44,7 +45,7 @@ recordDependencyOn(const ObjectAddress *depender,
 				   const ObjectAddress *referenced,
 				   DependencyType behavior)
 {
-	recordMultipleDependencies(depender, referenced, 1, behavior);
+	recordMultipleDependencies(depender, referenced, 1, NULL, behavior);
 }
 
 /*
@@ -55,6 +56,7 @@ void
 recordMultipleDependencies(const ObjectAddress *depender,
 						   const ObjectAddress *referenced,
 						   int nreferenced,
+						   const char *version,
 						   DependencyType behavior)
 {
 	Relation	dependDesc;
@@ -115,6 +117,9 @@ recordMultipleDependencies(const ObjectAddress *depender,
 		 * Record the dependency.  Note we don't bother to check for duplicate
 		 * dependencies; there's no harm in them.
 		 */
+		memset(slot[slot_stored_count]->tts_isnull, false,
+			   slot[slot_stored_count]->tts_tupleDescriptor->natts * sizeof(bool));
+
 		slot[slot_stored_count]->tts_values[Anum_pg_depend_refclassid - 1] = ObjectIdGetDatum(referenced->classId);
 		slot[slot_stored_count]->tts_values[Anum_pg_depend_refobjid - 1] = ObjectIdGetDatum(referenced->objectId);
 		slot[slot_stored_count]->tts_values[Anum_pg_depend_refobjsubid - 1] = Int32GetDatum(referenced->objectSubId);
@@ -122,9 +127,10 @@ recordMultipleDependencies(const ObjectAddress *depender,
 		slot[slot_stored_count]->tts_values[Anum_pg_depend_classid - 1] = ObjectIdGetDatum(depender->classId);
 		slot[slot_stored_count]->tts_values[Anum_pg_depend_objid - 1] = ObjectIdGetDatum(depender->objectId);
 		slot[slot_stored_count]->tts_values[Anum_pg_depend_objsubid - 1] = Int32GetDatum(depender->objectSubId);
-
-		memset(slot[slot_stored_count]->tts_isnull, false,
-			   slot[slot_stored_count]->tts_tupleDescriptor->natts * sizeof(bool));
+		if (version)
+			slot[slot_stored_count]->tts_values[Anum_pg_depend_refobjversion - 1] = CStringGetTextDatum(version);
+		else
+			slot[slot_stored_count]->tts_isnull[Anum_pg_depend_refobjversion - 1] = true;
 
 		ExecStoreVirtualTuple(slot[slot_stored_count]);
 		slot_stored_count++;
