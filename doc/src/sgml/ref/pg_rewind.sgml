@@ -72,7 +72,7 @@ PostgreSQL documentation
    fetched on startup by configuring <xref linkend="guc-primary-conninfo"/> or
    <xref linkend="guc-restore-command"/>.  The use of
    <application>pg_rewind</application> is not limited to failover, e.g.,  a standby
-   server can be promoted, run some write transactions, and then rewinded
+   server can be promoted, run some write transactions, and then rewound
    to become a standby again.
   </para>
 
