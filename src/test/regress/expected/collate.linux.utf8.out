@@ -1093,9 +1093,6 @@ SELECT collname FROM pg_collation WHERE collname LIKE 'test%';
 
 DROP SCHEMA test_schema;
 DROP ROLE regress_test_role;
--- ALTER
-ALTER COLLATION "en_US" REFRESH VERSION;
-NOTICE:  version has not changed
 -- dependencies
 CREATE COLLATION test0 FROM "C";
 CREATE TABLE collate_dep_test1 (a int, b text COLLATE test0);

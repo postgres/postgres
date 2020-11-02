@@ -37,10 +37,6 @@ CATALOG(pg_collation,3456,CollationRelationId)
 	int32		collencoding;	/* encoding for this collation; -1 = "all" */
 	NameData	collcollate;	/* LC_COLLATE setting */
 	NameData	collctype;		/* LC_CTYPE setting */
-#ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text		collversion;	/* provider-dependent version of collation
-								 * data */
-#endif
 } FormData_pg_collation;
 
 /* ----------------
@@ -65,7 +61,6 @@ extern Oid	CollationCreate(const char *collname, Oid collnamespace,
 							bool collisdeterministic,
 							int32 collencoding,
 							const char *collcollate, const char *collctype,
-							const char *collversion,
 							bool if_not_exists,
 							bool quiet);
 

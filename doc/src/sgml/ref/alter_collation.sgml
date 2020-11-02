@@ -21,8 +21,6 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER COLLATION <replaceable>name</replaceable> REFRESH VERSION
-
 ALTER COLLATION <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 ALTER COLLATION <replaceable>name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_schema</replaceable>
@@ -88,68 +86,7 @@ ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_sche
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>REFRESH VERSION</literal></term>
-    <listitem>
-     <para>
-      Update the collation's version.
-      See <xref linkend="sql-altercollation-notes"/> below.
-     </para>
-    </listitem>
-   </varlistentry>
   </variablelist>
- </refsect1>
-
- <refsect1 id="sql-altercollation-notes" xreflabel="Notes">
-  <title>Notes</title>
-
-  <para>
-   When using collations provided by the ICU library, the ICU-specific version
-   of the collator is recorded in the system catalog when the collation object
-   is created.  When the collation is used, the current version is
-   checked against the recorded version, and a warning is issued when there is
-   a mismatch, for example:
-<screen>
-WARNING:  collation "xx-x-icu" has version mismatch
-DETAIL:  The collation in the database was created using version 1.2.3.4, but the operating system provides version 2.3.4.5.
-HINT:  Rebuild all objects affected by this collation and run ALTER COLLATION pg_catalog."xx-x-icu" REFRESH VERSION, or build PostgreSQL with the right library version.
-</screen>
-   A change in collation definitions can lead to corrupt indexes and other
-   problems because the database system relies on stored objects having a
-   certain sort order.  Generally, this should be avoided, but it can happen
-   in legitimate circumstances, such as when
-   using <command>pg_upgrade</command> to upgrade to server binaries linked
-   with a newer version of ICU.  When this happens, all objects depending on
-   the collation should be rebuilt, for example,
-   using <command>REINDEX</command>.  When that is done, the collation version
-   can be refreshed using the command <literal>ALTER COLLATION ... REFRESH
-   VERSION</literal>.  This will update the system catalog to record the
-   current collator version and will make the warning go away.  Note that this
-   does not actually check whether all affected objects have been rebuilt
-   correctly.
-  </para>
-  <para>
-   When using collations provided by <literal>libc</literal> and
-   <productname>PostgreSQL</productname> was built with the GNU C library, the
-   C library's version is used as a collation version.  Since collation
-   definitions typically change only with GNU C library releases, this provides
-   some defense against corruption, but it is not completely reliable.
-  </para>
-  <para>
-   Currently, there is no version tracking for the database default collation.
-  </para>
-
-  <para>
-   The following query can be used to identify all collations in the current
-   database that need to be refreshed and the objects that depend on them:
-<programlisting><![CDATA[
-SELECT pg_describe_object(refclassid, refobjid, refobjsubid) AS "Collation",
-       pg_describe_object(classid, objid, objsubid) AS "Object"
-  FROM pg_depend d JOIN pg_collation c
-       ON refclassid = 'pg_collation'::regclass AND refobjid = c.oid
-  WHERE c.collversion <> pg_collation_actual_version(c.oid)
-  ORDER BY 1, 2;
-]]></programlisting></para>
  </refsect1>
 
  <refsect1>

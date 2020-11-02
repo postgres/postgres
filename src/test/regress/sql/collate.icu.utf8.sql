@@ -405,11 +405,6 @@ DROP SCHEMA test_schema;
 DROP ROLE regress_test_role;
 
 
--- ALTER
-
-ALTER COLLATION "en-x-icu" REFRESH VERSION;
-
-
 -- dependencies
 
 CREATE COLLATION test0 FROM "C";

@@ -27,7 +27,6 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> (
     [ LC_CTYPE = <replaceable>lc_ctype</replaceable>, ]
     [ PROVIDER = <replaceable>provider</replaceable>, ]
     [ DETERMINISTIC = <replaceable>boolean</replaceable>, ]
-    [ VERSION = <replaceable>version</replaceable> ]
 )
 CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replaceable>existing_collation</replaceable>
 </synopsis>
@@ -145,26 +144,6 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
 
       <para>
        Nondeterministic collations are only supported with the ICU provider.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><replaceable>version</replaceable></term>
-
-     <listitem>
-      <para>
-       Specifies the version string to store with the collation.  Normally,
-       this should be omitted, which will cause the version to be computed
-       from the actual version of the collation as provided by the operating
-       system.  This option is intended to be used
-       by <command>pg_upgrade</command> for copying the version from an
-       existing installation.
-      </para>
-
-      <para>
-       See also <xref linkend="sql-altercollation"/> for how to handle
-       collation version mismatches.
       </para>
      </listitem>
     </varlistentry>

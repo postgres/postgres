@@ -25444,11 +25444,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        </para>
        <para>
         Returns the actual version of the collation object as it is currently
-        installed in the operating system.  If this is different from the
-        value in
-        <structname>pg_collation</structname>.<structfield>collversion</structfield>,
-        then objects depending on the collation might need to be rebuilt.  See
-        also <xref linkend="sql-altercollation"/>.
+        installed in the operating system.
        </para></entry>
       </row>
 
