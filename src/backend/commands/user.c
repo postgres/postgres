@@ -694,8 +694,10 @@ AlterRole(AlterRoleStmt *stmt)
 	roleid = HeapTupleGetOid(tuple);
 
 	/*
-	 * To mess with a superuser you gotta be superuser; else you need
-	 * createrole, or just want to change your own password
+	 * To mess with a superuser or replication role in any way you gotta be
+	 * superuser.  We also insist on superuser to change the BYPASSRLS
+	 * property.  Otherwise, if you don't have createrole, you're only allowed
+	 * to change your own password.
 	 */
 	if (authform->rolsuper || issuper >= 0)
 	{
@@ -711,7 +713,7 @@ AlterRole(AlterRoleStmt *stmt)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to alter replication users")));
 	}
-	else if (authform->rolbypassrls || bypassrls >= 0)
+	else if (bypassrls >= 0)
 	{
 		if (!superuser())
 			ereport(ERROR,
@@ -720,11 +722,11 @@ AlterRole(AlterRoleStmt *stmt)
 	}
 	else if (!have_createrole_privilege())
 	{
+		/* We already checked issuper, isreplication, and bypassrls */
 		if (!(inherit < 0 &&
 			  createrole < 0 &&
 			  createdb < 0 &&
 			  canlogin < 0 &&
-			  isreplication < 0 &&
 			  !dconnlimit &&
 			  !rolemembers &&
 			  !validUntil &&

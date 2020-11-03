@@ -176,6 +176,8 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
         highly privileged role, and should only be used on roles actually
         used for replication. If not specified,
         <literal>NOREPLICATION</literal> is the default.
+        You must be a superuser to create a new role having the
+        <literal>REPLICATION</literal> attribute.
        </para>
       </listitem>
      </varlistentry>
@@ -187,11 +189,16 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
        <para>
         These clauses determine whether a role bypasses every row-level
         security (RLS) policy.  <literal>NOBYPASSRLS</literal> is the default.
+        You must be a superuser to create a new role having
+        the <literal>BYPASSRLS</literal> attribute.
+       </para>
+
+       <para>
         Note that pg_dump will set <literal>row_security</literal> to
         <literal>OFF</literal> by default, to ensure all contents of a table are
         dumped out.  If the user running pg_dump does not have appropriate
-        permissions, an error will be returned.  The superuser and owner of the
-        table being dumped always bypass RLS.
+        permissions, an error will be returned.  However, superusers and the
+        owner of the table being dumped always bypass RLS.
        </para>
       </listitem>
      </varlistentry>
