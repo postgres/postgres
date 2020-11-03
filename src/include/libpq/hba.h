@@ -42,6 +42,10 @@ typedef enum UserAuth
 #define USER_AUTH_LAST uaPeer	/* Must be last value of this enum */
 } UserAuth;
 
+/*
+ * Data structures representing pg_hba.conf entries
+ */
+
 typedef enum IPCompareMethod
 {
 	ipCmpMask,
@@ -108,6 +112,8 @@ typedef struct HbaLine
 	char	   *radiusidentifiers_s;
 	List	   *radiusports;
 	char	   *radiusports_s;
+	int			addrlen;		/* zero if we don't have a valid addr */
+	int			masklen;		/* zero if we don't have a valid mask */
 } HbaLine;
 
 typedef struct IdentLine
