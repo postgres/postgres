@@ -17,7 +17,7 @@
  *		XLogBeginRead() or XLogFindNextRecord(), and call XLogReadRecord()
  *		until it returns NULL.
  *
- *		Callers supply a page_read callback if they want to to call
+ *		Callers supply a page_read callback if they want to call
  *		XLogReadRecord or XLogFindNextRecord; it can be passed in as NULL
  *		otherwise.  The WALRead function can be used as a helper to write
  *		page_read callbacks, but it is not mandatory; callers that use it,

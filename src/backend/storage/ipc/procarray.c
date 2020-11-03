@@ -1600,7 +1600,7 @@ TransactionIdIsActive(TransactionId xid)
  * See the definition of ComputedXidHorizonsResult for the various computed
  * horizons.
  *
- * For VACUUM separate horizons (used to to decide which deleted tuples must
+ * For VACUUM separate horizons (used to decide which deleted tuples must
  * be preserved), for shared and non-shared tables are computed.  For shared
  * relations backends in all databases must be considered, but for non-shared
  * relations that's not required, since only backends in my own database could
