@@ -413,7 +413,7 @@ static ObjectAddress ATExecAddIdentity(Relation rel, const char *colName,
 static ObjectAddress ATExecSetIdentity(Relation rel, const char *colName,
 									   Node *def, LOCKMODE lockmode);
 static ObjectAddress ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode);
-static void ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recursing);
+static void ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recurse, bool recursing, LOCKMODE lockmode);
 static ObjectAddress ATExecDropExpression(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode);
 static ObjectAddress ATExecSetStatistics(Relation rel, const char *colName, int16 colNum,
 										 Node *newValue, LOCKMODE lockmode);
@@ -4151,7 +4151,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DropExpression: /* ALTER COLUMN DROP EXPRESSION */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
-			ATPrepDropExpression(rel, cmd, recursing);
+			ATPrepDropExpression(rel, cmd, recurse, recursing, lockmode);
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetStatistics:	/* ALTER COLUMN SET STATISTICS */
@@ -7262,8 +7262,24 @@ ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE 
  * ALTER TABLE ALTER COLUMN DROP EXPRESSION
  */
 static void
-ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recursing)
+ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recurse, bool recursing, LOCKMODE lockmode)
 {
+	/*
+	 * Reject ONLY if there are child tables.  We could implement this, but it
+	 * is a bit complicated.  GENERATED clauses must be attached to the column
+	 * definition and cannot be added later like DEFAULT, so if a child table
+	 * has a generation expression that the parent does not have, the child
+	 * column will necessarily be an attlocal column.  So to implement ONLY
+	 * here, we'd need extra code to update attislocal of the direct child
+	 * tables, somewhat similar to how DROP COLUMN does it, so that the
+	 * resulting state can be properly dumped and restored.
+	 */
+	if (!recurse &&
+		find_inheritance_children(RelationGetRelid(rel), lockmode))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("ALTER TABLE / DROP EXPRESSION must be applied to child tables too")));
+
 	/*
 	 * Cannot drop generation expression from inherited columns.
 	 */

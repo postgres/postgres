@@ -805,13 +805,14 @@ CREATE TABLE gtest30 (
     b int GENERATED ALWAYS AS (a * 2) STORED
 );
 CREATE TABLE gtest30_1 () INHERITS (gtest30);
-ALTER TABLE ONLY gtest30 ALTER COLUMN b DROP EXPRESSION;
+ALTER TABLE ONLY gtest30 ALTER COLUMN b DROP EXPRESSION;  -- error
+ERROR:  ALTER TABLE / DROP EXPRESSION must be applied to child tables too
 \d gtest30
-              Table "public.gtest30"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
+                            Table "public.gtest30"
+ Column |  Type   | Collation | Nullable |              Default               
+--------+---------+-----------+----------+------------------------------------
  a      | integer |           |          | 
- b      | integer |           |          | 
+ b      | integer |           |          | generated always as (a * 2) stored
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d gtest30_1
