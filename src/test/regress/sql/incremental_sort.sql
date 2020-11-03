@@ -221,3 +221,34 @@ set enable_hashagg to off;
 explain (costs off) select * from t union select * from t order by 1,3;
 
 drop table t;
+
+-- Sort pushdown can't go below where expressions are part of the rel target.
+-- In particular this is interesting for volatile expressions which have to
+-- go above joins since otherwise we'll incorrectly use expression evaluations
+-- across multiple rows.
+set enable_hashagg=off;
+set enable_seqscan=off;
+set enable_incremental_sort = off;
+set parallel_tuple_cost=0;
+set parallel_setup_cost=0;
+set min_parallel_table_scan_size = 0;
+set min_parallel_index_scan_size = 0;
+
+-- Parallel sort below join.
+explain (costs off) select distinct sub.unique1, stringu1
+from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub;
+explain (costs off) select sub.unique1, stringu1
+from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub
+order by 1, 2;
+-- Parallel sort but with expression that can be safely generated at the base rel.
+explain (costs off) select distinct sub.unique1, md5(stringu1)
+from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub;
+explain (costs off) select sub.unique1, md5(stringu1)
+from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub
+order by 1, 2;
+-- Parallel sort but with expression not available until the upper rel.
+explain (costs off) select distinct sub.unique1, stringu1 || random()::text
+from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub;
+explain (costs off) select sub.unique1, stringu1 || random()::text
+from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub
+order by 1, 2;

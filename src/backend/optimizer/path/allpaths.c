@@ -2816,7 +2816,8 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	/*
 	 * Considering query_pathkeys is always worth it, because it might allow
 	 * us to avoid a total sort when we have a partially presorted path
-	 * available.
+	 * available or to push the total sort into the parallel portion of the
+	 * query.
 	 */
 	if (root->query_pathkeys)
 	{
@@ -2829,17 +2830,17 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 			EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
 
 			/*
-			 * We can only build an Incremental Sort for pathkeys which
-			 * contain an EC member in the current relation, so ignore any
-			 * suffix of the list as soon as we find a pathkey without an EC
-			 * member the relation.
+			 * We can only build a sort for pathkeys which contain an EC
+			 * member in the current relation's target, so ignore any suffix
+			 * of the list as soon as we find a pathkey without an EC member
+			 * in the relation.
 			 *
 			 * By still returning the prefix of the pathkeys list that does
 			 * meet criteria of EC membership in the current relation, we
 			 * enable not just an incremental sort on the entirety of
 			 * query_pathkeys but also incremental sort below a JOIN.
 			 */
-			if (!find_em_expr_for_rel(pathkey_ec, rel))
+			if (!find_em_expr_usable_for_sorting_rel(pathkey_ec, rel))
 				break;
 
 			npathkeys++;

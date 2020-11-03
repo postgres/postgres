@@ -798,6 +798,76 @@ find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
 }
 
 /*
+ * Find an equivalence class member expression that can be safely used by a
+ * sort node on top of the provided relation. The rules here must match those
+ * applied in prepare_sort_from_pathkeys.
+ */
+Expr *
+find_em_expr_usable_for_sorting_rel(EquivalenceClass *ec, RelOptInfo *rel)
+{
+	ListCell   *lc_em;
+
+	/*
+	 * If there is more than one equivalence member matching these
+	 * requirements we'll be content to choose any one of them.
+	 */
+	foreach(lc_em, ec->ec_members)
+	{
+		EquivalenceMember *em = lfirst(lc_em);
+		Expr	   *em_expr = em->em_expr;
+		PathTarget *target = rel->reltarget;
+		ListCell   *lc_target_expr;
+
+		/*
+		 * We shouldn't be trying to sort by an equivalence class that
+		 * contains a constant, so no need to consider such cases any further.
+		 */
+		if (em->em_is_const)
+			continue;
+
+		/*
+		 * Any Vars in the equivalence class member need to come from this
+		 * relation. This is a superset of prepare_sort_from_pathkeys ignoring
+		 * child members unless they belong to the rel being sorted.
+		 */
+		if (!bms_is_subset(em->em_relids, rel->relids))
+			continue;
+
+		/*
+		 * As long as the expression isn't volatile then
+		 * prepare_sort_from_pathkeys is able to generate a new target entry,
+		 * so there's no need to verify that one already exists.
+		 */
+		if (!ec->ec_has_volatile)
+			return em->em_expr;
+
+		/*
+		 * If, however, it's volatile, we have to verify that the
+		 * equivalence member's expr is already generated in the
+		 * relation's target (we do strip relabels first from both
+		 * expressions, which is cheap and might allow us to match
+		 * more expressions).
+		 */
+		while (em_expr && IsA(em_expr, RelabelType))
+			em_expr = ((RelabelType *) em_expr)->arg;
+
+		foreach(lc_target_expr, target->exprs)
+		{
+			Expr	   *target_expr = lfirst(lc_target_expr);
+
+			while (target_expr && IsA(target_expr, RelabelType))
+				target_expr = ((RelabelType *) target_expr)->arg;
+
+			if (equal(target_expr, em_expr))
+				return em->em_expr;
+		}
+	}
+
+	/* We didn't find any suitable equivalence class expression */
+	return NULL;
+}
+
+/*
  * generate_base_implied_equalities
  *	  Generate any restriction clauses that we can deduce from equivalence
  *	  classes.
