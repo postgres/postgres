@@ -71,7 +71,9 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    Attributes not mentioned in the command retain their previous settings.
    Database superusers can change any of these settings for any role.
    Roles having <literal>CREATEROLE</literal> privilege can change any of these
-   settings, but only for non-superuser and non-replication roles.
+   settings except <literal>SUPERUSER</literal>, <literal>REPLICATION</literal>,
+   and <literal>BYPASSRLS</literal>; but only for non-superuser and
+   non-replication roles.
    Ordinary roles can only change their own password.
   </para>
 
