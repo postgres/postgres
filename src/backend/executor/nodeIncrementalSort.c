@@ -333,7 +333,7 @@ switchToPresortedPrefixMode(PlanState *pstate)
 	 */
 	if (node->bounded)
 	{
-		SO1_printf("Setting bound on presorted prefix tuplesort to: %ld\n",
+		SO1_printf("Setting bound on presorted prefix tuplesort to: " INT64_FORMAT "\n",
 				   node->bound - node->bound_Done);
 		tuplesort_set_bound(node->prefixsort_state,
 							node->bound - node->bound_Done);
@@ -417,9 +417,9 @@ switchToPresortedPrefixMode(PlanState *pstate)
 	 * remaining in the large single prefix key group we think we've
 	 * encountered.
 	 */
-	SO1_printf("Moving %ld tuples to presorted prefix tuplesort\n", nTuples);
+	SO1_printf("Moving " INT64_FORMAT " tuples to presorted prefix tuplesort\n", nTuples);
 	node->n_fullsort_remaining -= nTuples;
-	SO1_printf("Setting n_fullsort_remaining to %ld\n", node->n_fullsort_remaining);
+	SO1_printf("Setting n_fullsort_remaining to " INT64_FORMAT "\n", node->n_fullsort_remaining);
 
 	if (lastTuple)
 	{
@@ -449,7 +449,7 @@ switchToPresortedPrefixMode(PlanState *pstate)
 		 * out all of those tuples, and then come back around to find another
 		 * batch.
 		 */
-		SO1_printf("Sorting presorted prefix tuplesort with %ld tuples\n", nTuples);
+		SO1_printf("Sorting presorted prefix tuplesort with " INT64_FORMAT " tuples\n", nTuples);
 		tuplesort_performsort(node->prefixsort_state);
 
 		INSTRUMENT_SORT_GROUP(node, prefixsort);
@@ -462,7 +462,7 @@ switchToPresortedPrefixMode(PlanState *pstate)
 			 * - n), so store the current number of processed tuples for use
 			 * in configuring sorting bound.
 			 */
-			SO2_printf("Changing bound_Done from %ld to %ld\n",
+			SO2_printf("Changing bound_Done from " INT64_FORMAT " to " INT64_FORMAT "\n",
 					   Min(node->bound, node->bound_Done + nTuples), node->bound_Done);
 			node->bound_Done = Min(node->bound, node->bound_Done + nTuples);
 		}
@@ -574,7 +574,7 @@ ExecIncrementalSort(PlanState *pstate)
 			 * need to re-execute the prefix mode transition function to pull
 			 * out the next prefix key group.
 			 */
-			SO1_printf("Re-calling switchToPresortedPrefixMode() because n_fullsort_remaining is > 0 (%ld)\n",
+			SO1_printf("Re-calling switchToPresortedPrefixMode() because n_fullsort_remaining is > 0 (" INT64_FORMAT ")\n",
 					   node->n_fullsort_remaining);
 			switchToPresortedPrefixMode(pstate);
 		}
@@ -707,7 +707,7 @@ ExecIncrementalSort(PlanState *pstate)
 				 */
 				node->outerNodeDone = true;
 
-				SO1_printf("Sorting fullsort with %ld tuples\n", nTuples);
+				SO1_printf("Sorting fullsort with " INT64_FORMAT " tuples\n", nTuples);
 				tuplesort_performsort(fullsort_state);
 
 				INSTRUMENT_SORT_GROUP(node, fullsort);
@@ -776,7 +776,7 @@ ExecIncrementalSort(PlanState *pstate)
 						 * current number of processed tuples for later use
 						 * configuring the sort state's bound.
 						 */
-						SO2_printf("Changing bound_Done from %ld to %ld\n",
+						SO2_printf("Changing bound_Done from " INT64_FORMAT " to " INT64_FORMAT "\n",
 								   node->bound_Done,
 								   Min(node->bound, node->bound_Done + nTuples));
 						node->bound_Done = Min(node->bound, node->bound_Done + nTuples);
@@ -787,7 +787,7 @@ ExecIncrementalSort(PlanState *pstate)
 					 * sort and transition modes to reading out the sorted
 					 * tuples.
 					 */
-					SO1_printf("Sorting fullsort tuplesort with %ld tuples\n",
+					SO1_printf("Sorting fullsort tuplesort with " INT64_FORMAT " tuples\n",
 							   nTuples);
 					tuplesort_performsort(fullsort_state);
 
@@ -828,7 +828,7 @@ ExecIncrementalSort(PlanState *pstate)
 				 * on FIFO retrieval semantics when transferring them to the
 				 * presorted prefix tuplesort.
 				 */
-				SO1_printf("Sorting fullsort tuplesort with %ld tuples\n", nTuples);
+				SO1_printf("Sorting fullsort tuplesort with " INT64_FORMAT " tuples\n", nTuples);
 				tuplesort_performsort(fullsort_state);
 
 				INSTRUMENT_SORT_GROUP(node, fullsort);
@@ -847,12 +847,12 @@ ExecIncrementalSort(PlanState *pstate)
 				{
 					int64		currentBound = node->bound - node->bound_Done;
 
-					SO2_printf("Read %ld tuples, but setting to %ld because we used bounded sort\n",
+					SO2_printf("Read " INT64_FORMAT " tuples, but setting to " INT64_FORMAT " because we used bounded sort\n",
 							   nTuples, Min(currentBound, nTuples));
 					nTuples = Min(currentBound, nTuples);
 				}
 
-				SO1_printf("Setting n_fullsort_remaining to %ld and calling switchToPresortedPrefixMode()\n",
+				SO1_printf("Setting n_fullsort_remaining to " INT64_FORMAT " and calling switchToPresortedPrefixMode()\n",
 						   nTuples);
 
 				/*
@@ -942,7 +942,7 @@ ExecIncrementalSort(PlanState *pstate)
 		 * Perform the sort and begin returning the tuples to the parent plan
 		 * node.
 		 */
-		SO1_printf("Sorting presorted prefix tuplesort with >= %ld tuples\n", nTuples);
+		SO1_printf("Sorting presorted prefix tuplesort with " INT64_FORMAT " tuples\n", nTuples);
 		tuplesort_performsort(node->prefixsort_state);
 
 		INSTRUMENT_SORT_GROUP(node, prefixsort);
@@ -958,7 +958,7 @@ ExecIncrementalSort(PlanState *pstate)
 			 * - n), so store the current number of processed tuples for use
 			 * in configuring sorting bound.
 			 */
-			SO2_printf("Changing bound_Done from %ld to %ld\n",
+			SO2_printf("Changing bound_Done from " INT64_FORMAT " to " INT64_FORMAT "\n",
 					   node->bound_Done,
 					   Min(node->bound, node->bound_Done + nTuples));
 			node->bound_Done = Min(node->bound, node->bound_Done + nTuples);
