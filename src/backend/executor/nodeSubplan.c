@@ -797,7 +797,15 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 	sstate->planstate = (PlanState *) list_nth(estate->es_subplanstates,
 											   subplan->plan_id - 1);
 
-	/* ... and to its parent's state */
+	/*
+	 * This check can fail if the planner mistakenly puts a parallel-unsafe
+	 * subplan into a parallelized subquery; see ExecSerializePlan.
+	 */
+	if (sstate->planstate == NULL)
+		elog(ERROR, "subplan \"%s\" was not initialized",
+			 subplan->plan_name);
+
+	/* Link to parent's state, too */
 	sstate->parent = parent;
 
 	/* Initialize subexpressions */
