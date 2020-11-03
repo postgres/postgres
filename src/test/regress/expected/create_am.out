@@ -46,18 +46,18 @@ SET enable_indexscan = ON;
 SET enable_bitmapscan = OFF;
 EXPLAIN (COSTS OFF)
 SELECT * FROM fast_emp4000
-    WHERE home_base @ '(200,200),(2000,1000)'::box
+    WHERE home_base <@ '(200,200),(2000,1000)'::box
     ORDER BY (home_base[0])[0];
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Sort
    Sort Key: ((home_base[0])[0])
    ->  Index Only Scan using grect2ind2 on fast_emp4000
-         Index Cond: (home_base @ '(2000,1000),(200,200)'::box)
+         Index Cond: (home_base <@ '(2000,1000),(200,200)'::box)
 (4 rows)
 
 SELECT * FROM fast_emp4000
-    WHERE home_base @ '(200,200),(2000,1000)'::box
+    WHERE home_base <@ '(200,200),(2000,1000)'::box
     ORDER BY (home_base[0])[0];
        home_base       
 -----------------------
