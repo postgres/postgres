@@ -112,7 +112,7 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion tr
 # ----------
 # Another group of parallel tests
 # ----------
-test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain pagefuncs
+test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain
 
 # event triggers cannot run concurrently with any test that runs DDL
 test: event_trigger

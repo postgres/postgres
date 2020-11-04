@@ -197,7 +197,6 @@ test: hash_part
 test: indexing
 test: partition_aggregate
 test: partition_info
-test: pagefuncs
 test: tuplesort
 test: explain
 test: event_trigger

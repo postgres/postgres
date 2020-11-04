@@ -240,9 +240,6 @@ extern void AtProcExit_LocalBuffers(void);
 
 extern void TestForOldSnapshot_impl(Snapshot snapshot, Relation relation);
 
-extern bool CheckBuffer(struct SMgrRelationData *smgr, ForkNumber forknum,
-						BlockNumber blkno);
-
 /* in freelist.c */
 extern BufferAccessStrategy GetAccessStrategy(BufferAccessStrategyType btype);
 extern void FreeAccessStrategy(BufferAccessStrategy strategy);

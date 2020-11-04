@@ -69,7 +69,6 @@ OBJS = \
 	oid.o \
 	oracle_compat.o \
 	orderedsetaggs.o \
-	pagefuncs.o \
 	partitionfuncs.o \
 	pg_locale.o \
 	pg_lsn.o \
