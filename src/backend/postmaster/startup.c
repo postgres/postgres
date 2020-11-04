@@ -37,7 +37,6 @@
 /*
  * Flags set by interrupt handlers for later service in the redo loop.
  */
-static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
 static volatile sig_atomic_t promote_signaled = false;
 
@@ -49,7 +48,6 @@ static volatile sig_atomic_t in_restore_command = false;
 
 /* Signal handlers */
 static void StartupProcTriggerHandler(SIGNAL_ARGS);
-static void StartupProcSigHupHandler(SIGNAL_ARGS);
 
 
 /* --------------------------------
@@ -64,19 +62,7 @@ StartupProcTriggerHandler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	promote_signaled = true;
-	WakeupRecovery();
-
-	errno = save_errno;
-}
-
-/* SIGHUP: set flag to re-read config file at next convenient time */
-static void
-StartupProcSigHupHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-	WakeupRecovery();
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -91,7 +77,7 @@ StartupProcShutdownHandler(SIGNAL_ARGS)
 		proc_exit(1);
 	else
 		shutdown_requested = true;
-	WakeupRecovery();
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -137,9 +123,9 @@ HandleStartupProcInterrupts(void)
 	/*
 	 * Process any requests or signals received recently.
 	 */
-	if (got_SIGHUP)
+	if (ConfigReloadPending)
 	{
-		got_SIGHUP = false;
+		ConfigReloadPending = false;
 		StartupRereadConfig();
 	}
 
@@ -172,7 +158,7 @@ StartupProcessMain(void)
 	/*
 	 * Properly accept or ignore signals the postmaster might send us.
 	 */
-	pqsignal(SIGHUP, StartupProcSigHupHandler); /* reload config file */
+	pqsignal(SIGHUP, SignalHandlerForConfigReload); /* reload config file */
 	pqsignal(SIGINT, SIG_IGN);	/* ignore query cancel */
 	pqsignal(SIGTERM, StartupProcShutdownHandler);	/* request shutdown */
 	/* SIGQUIT handler was already set up by InitPostmasterChild */

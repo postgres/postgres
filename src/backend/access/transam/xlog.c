@@ -682,7 +682,7 @@ typedef struct XLogCtlData
 	 * WAL replay, if it is waiting for WAL to arrive or failover trigger file
 	 * to appear.
 	 */
-	Latch		recoveryWakeupLatch;
+	Latch		*recoveryWakeupLatch;
 
 	/*
 	 * During recovery, we keep a copy of the latest checkpoint record here.
@@ -5185,7 +5185,6 @@ XLOGShmemInit(void)
 	SpinLockInit(&XLogCtl->Insert.insertpos_lck);
 	SpinLockInit(&XLogCtl->info_lck);
 	SpinLockInit(&XLogCtl->ulsn_lck);
-	InitSharedLatch(&XLogCtl->recoveryWakeupLatch);
 }
 
 /*
@@ -6122,7 +6121,7 @@ recoveryApplyDelay(XLogReaderState *record)
 
 	while (true)
 	{
-		ResetLatch(&XLogCtl->recoveryWakeupLatch);
+		ResetLatch(MyLatch);
 
 		/* might change the trigger file's location */
 		HandleStartupProcInterrupts();
@@ -6146,7 +6145,7 @@ recoveryApplyDelay(XLogReaderState *record)
 		elog(DEBUG2, "recovery apply delay %ld seconds, %d milliseconds",
 			 secs, microsecs / 1000);
 
-		(void) WaitLatch(&XLogCtl->recoveryWakeupLatch,
+		(void) WaitLatch(MyLatch,
 						 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 						 secs * 1000L + microsecs / 1000,
 						 WAIT_EVENT_RECOVERY_APPLY_DELAY);
@@ -6474,11 +6473,11 @@ StartupXLOG(void)
 	}
 
 	/*
-	 * Take ownership of the wakeup latch if we're going to sleep during
-	 * recovery.
+	 * Advertise our latch that other processes can use to wake us up
+	 * if we're going to sleep during recovery.
 	 */
 	if (ArchiveRecoveryRequested)
-		OwnLatch(&XLogCtl->recoveryWakeupLatch);
+		XLogCtl->recoveryWakeupLatch = &MyProc->procLatch;
 
 	/* Set up XLOG reader facility */
 	MemSet(&private, 0, sizeof(XLogPageReadPrivate));
@@ -7489,11 +7488,11 @@ StartupXLOG(void)
 		ResetUnloggedRelations(UNLOGGED_RELATION_INIT);
 
 	/*
-	 * We don't need the latch anymore. It's not strictly necessary to disown
-	 * it, but let's do it for the sake of tidiness.
+	 * We don't need the latch anymore. It's not strictly necessary to reset
+	 * it to NULL, but let's do it for the sake of tidiness.
 	 */
 	if (ArchiveRecoveryRequested)
-		DisownLatch(&XLogCtl->recoveryWakeupLatch);
+		XLogCtl->recoveryWakeupLatch = NULL;
 
 	/*
 	 * We are now done reading the xlog from stream. Turn off streaming
@@ -12242,12 +12241,12 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						wait_time = wal_retrieve_retry_interval -
 							(secs * 1000 + usecs / 1000);
 
-						(void) WaitLatch(&XLogCtl->recoveryWakeupLatch,
+						(void) WaitLatch(MyLatch,
 										 WL_LATCH_SET | WL_TIMEOUT |
 										 WL_EXIT_ON_PM_DEATH,
 										 wait_time,
 										 WAIT_EVENT_RECOVERY_RETRIEVE_RETRY_INTERVAL);
-						ResetLatch(&XLogCtl->recoveryWakeupLatch);
+						ResetLatch(MyLatch);
 						now = GetCurrentTimestamp();
 					}
 					last_fail_time = now;
@@ -12498,11 +12497,11 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 * to react to a trigger file promptly and to check if the
 					 * WAL receiver is still active.
 					 */
-					(void) WaitLatch(&XLogCtl->recoveryWakeupLatch,
+					(void) WaitLatch(MyLatch,
 									 WL_LATCH_SET | WL_TIMEOUT |
 									 WL_EXIT_ON_PM_DEATH,
 									 5000L, WAIT_EVENT_RECOVERY_WAL_STREAM);
-					ResetLatch(&XLogCtl->recoveryWakeupLatch);
+					ResetLatch(MyLatch);
 					break;
 				}
 
@@ -12674,7 +12673,7 @@ CheckPromoteSignal(void)
 void
 WakeupRecovery(void)
 {
-	SetLatch(&XLogCtl->recoveryWakeupLatch);
+	SetLatch(XLogCtl->recoveryWakeupLatch);
 }
 
 /*
