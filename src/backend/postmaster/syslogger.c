@@ -39,6 +39,7 @@
 #include "pgstat.h"
 #include "pgtime.h"
 #include "postmaster/fork_process.h"
+#include "postmaster/interrupt.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "storage/dsm.h"
@@ -123,7 +124,6 @@ static CRITICAL_SECTION sysloggerSection;
 /*
  * Flags set by interrupt handlers for later service in the main loop.
  */
-static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t rotation_requested = false;
 
 
@@ -144,7 +144,6 @@ static unsigned int __stdcall pipeThread(void *arg);
 static void logfile_rotate(bool time_based_rotation, int size_rotation_for);
 static char *logfile_getname(pg_time_t timestamp, const char *suffix);
 static void set_next_rotation_time(void);
-static void sigHupHandler(SIGNAL_ARGS);
 static void sigUsr1Handler(SIGNAL_ARGS);
 static void update_metainfo_datafile(void);
 
@@ -240,7 +239,7 @@ SysLoggerMain(int argc, char *argv[])
 	 * broken backends...
 	 */
 
-	pqsignal(SIGHUP, sigHupHandler);	/* set flag to read config file */
+	pqsignal(SIGHUP, SignalHandlerForConfigReload);	/* set flag to read config file */
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN);
 	pqsignal(SIGQUIT, SIG_IGN);
@@ -324,9 +323,9 @@ SysLoggerMain(int argc, char *argv[])
 		/*
 		 * Process any requests or signals received recently.
 		 */
-		if (got_SIGHUP)
+		if (ConfigReloadPending)
 		{
-			got_SIGHUP = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 
 			/*
@@ -1551,18 +1550,6 @@ void
 RemoveLogrotateSignalFiles(void)
 {
 	unlink(LOGROTATE_SIGNAL_FILE);
-}
-
-/* SIGHUP: set flag to reload config file */
-static void
-sigHupHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /* SIGUSR1: set flag to rotate logfile */
