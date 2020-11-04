@@ -19,6 +19,7 @@ extern void remove_target_file(const char *path, bool missing_ok);
 extern void truncate_target_file(const char *path, off_t newsize);
 extern void create_target(file_entry_t *t);
 extern void remove_target(file_entry_t *t);
+extern void sync_target_dir(void);
 
 extern char *slurpFile(const char *datadir, const char *path, size_t *filesize);
 

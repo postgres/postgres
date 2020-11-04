@@ -20,7 +20,6 @@
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
 #include "common/file_perm.h"
-#include "common/file_utils.h"
 #include "common/restricted_token.h"
 #include "common/string.h"
 #include "fe_utils/recovery_gen.h"
@@ -38,7 +37,6 @@ static void createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli,
 
 static void digestControlFile(ControlFileData *ControlFile, char *source,
 							  size_t size);
-static void syncTargetDirectory(void);
 static void getRestoreCommand(const char *argv0);
 static void sanityChecks(void);
 static void findCommonAncestorTimeline(XLogRecPtr *recptr, int *tliIndex);
@@ -455,7 +453,7 @@ main(int argc, char **argv)
 
 	if (showprogress)
 		pg_log_info("syncing target data directory");
-	syncTargetDirectory();
+	sync_target_dir();
 
 	if (writerecoveryconf && !dry_run)
 		WriteRecoveryConfig(conn, datadir_target,
@@ -801,24 +799,6 @@ digestControlFile(ControlFileData *ControlFile, char *src, size_t size)
 
 	/* Additional checks on control file */
 	checkControlFile(ControlFile);
-}
-
-/*
- * Sync target data directory to ensure that modifications are safely on disk.
- *
- * We do this once, for the whole data directory, for performance reasons.  At
- * the end of pg_rewind's run, the kernel is likely to already have flushed
- * most dirty buffers to disk.  Additionally fsync_pgdata uses a two-pass
- * approach (only initiating writeback in the first pass), which often reduces
- * the overall amount of IO noticeably.
- */
-static void
-syncTargetDirectory(void)
-{
-	if (!do_sync || dry_run)
-		return;
-
-	fsync_pgdata(datadir_target, PG_VERSION_NUM);
 }
 
 /*
