@@ -4071,7 +4071,7 @@ hash_array_extended(PG_FUNCTION_ARGS)
 	typalign = typentry->typalign;
 
 	InitFunctionCallInfoData(*locfcinfo, &typentry->hash_extended_proc_finfo, 2,
-							 InvalidOid, NULL, NULL);
+							 PG_GET_COLLATION(), NULL, NULL);
 
 	/* Loop over source data */
 	nitems = ArrayGetNItems(ndims, dims);
