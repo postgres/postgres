@@ -1743,10 +1743,22 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 		MultiByteToWideChar(CP_ACP, 0, collcollate, -1, wide_collcollate,
 							LOCALE_NAME_MAX_LENGTH);
 		if (!GetNLSVersionEx(COMPARE_STRING, wide_collcollate, &version))
+		{
+			/*
+			 * GetNLSVersionEx() wants a language tag such as "en-US", not a
+			 * locale name like "English_United States.1252".  Until those
+			 * values can be prevented from entering the system, or 100%
+			 * reliably converted to the more useful tag format, tolerate the
+			 * resulting error and report that we have no version data.
+			 */
+			if (GetLastError() == ERROR_INVALID_PARAMETER)
+				return NULL;
+
 			ereport(ERROR,
 					(errmsg("could not get collation version for locale \"%s\": error code %lu",
 							collcollate,
 							GetLastError())));
+		}
 		collversion = psprintf("%d.%d,%d.%d",
 							   (version.dwNLSVersion >> 8) & 0xFFFF,
 							   version.dwNLSVersion & 0xFF,
