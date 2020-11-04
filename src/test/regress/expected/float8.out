@@ -120,6 +120,12 @@ SELECT 'Infinity'::float8 / 'Infinity'::float8;
       NaN
 (1 row)
 
+SELECT '42'::float8 / 'Infinity'::float8;
+ ?column? 
+----------
+        0
+(1 row)
+
 SELECT 'nan'::float8 / 'nan'::float8;
  ?column? 
 ----------

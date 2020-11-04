@@ -42,6 +42,7 @@ SELECT ' INFINITY    x'::float8;
 
 SELECT 'Infinity'::float8 + 100.0;
 SELECT 'Infinity'::float8 / 'Infinity'::float8;
+SELECT '42'::float8 / 'Infinity'::float8;
 SELECT 'nan'::float8 / 'nan'::float8;
 SELECT 'nan'::float8 / '0'::float8;
 SELECT 'nan'::numeric::float8;
