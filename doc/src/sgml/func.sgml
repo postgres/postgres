@@ -1756,7 +1756,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>width_bucket</function> ( <parameter>operand</parameter> <type>anyelement</type>, <parameter>thresholds</parameter> <type>anyarray</type> )
+        <function>width_bucket</function> ( <parameter>operand</parameter> <type>anycompatible</type>, <parameter>thresholds</parameter> <type>anycompatiblearray</type> )
        <returnvalue>integer</returnvalue>
        </para>
        <para>
@@ -17448,29 +17448,31 @@ SELECT NULLIF(value, '(none)') ...
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <type>anyarray</type> <literal>||</literal> <type>anyarray</type>
-        <returnvalue>anyarray</returnvalue>
+        <type>anycompatiblearray</type> <literal>||</literal> <type>anycompatiblearray</type>
+        <returnvalue>anycompatiblearray</returnvalue>
        </para>
        <para>
         Concatenates the two arrays.  Concatenating a null or empty array is a
         no-op; otherwise the arrays must have the same number of dimensions
         (as illustrated by the first example) or differ in number of
         dimensions by one (as illustrated by the second).
+        If the arrays are not of identical element types, they will be coerced
+        to a common type (see <xref linkend="typeconv-union-case"/>).
        </para>
        <para>
         <literal>ARRAY[1,2,3] || ARRAY[4,5,6,7]</literal>
         <returnvalue>{1,2,3,4,5,6,7}</returnvalue>
        </para>
        <para>
-        <literal>ARRAY[1,2,3] || ARRAY[[4,5,6],[7,8,9]]</literal>
-        <returnvalue>{{1,2,3},{4,5,6},{7,8,9}}</returnvalue>
+        <literal>ARRAY[1,2,3] || ARRAY[[4,5,6],[7,8,9.9]]</literal>
+        <returnvalue>{{1,2,3},{4,5,6},{7,8,9.9}}</returnvalue>
        </para></entry>
       </row>
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <type>anyelement</type> <literal>||</literal> <type>anyarray</type>
-        <returnvalue>anyarray</returnvalue>
+        <type>anycompatible</type> <literal>||</literal> <type>anycompatiblearray</type>
+        <returnvalue>anycompatiblearray</returnvalue>
        </para>
        <para>
         Concatenates an element onto the front of an array (which must be
@@ -17484,8 +17486,8 @@ SELECT NULLIF(value, '(none)') ...
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <type>anyarray</type> <literal>||</literal> <type>anyelement</type>
-        <returnvalue>anyarray</returnvalue>
+        <type>anycompatiblearray</type> <literal>||</literal> <type>anycompatible</type>
+        <returnvalue>anycompatiblearray</returnvalue>
        </para>
        <para>
         Concatenates an element onto the end of an array (which must be
@@ -17535,12 +17537,12 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>array_append</primary>
         </indexterm>
-        <function>array_append</function> ( <type>anyarray</type>, <type>anyelement</type> )
-        <returnvalue>anyarray</returnvalue>
+        <function>array_append</function> ( <type>anycompatiblearray</type>, <type>anycompatible</type> )
+        <returnvalue>anycompatiblearray</returnvalue>
        </para>
        <para>
         Appends an element to the end of an array (same as
-        the <type>anyarray</type> <literal>||</literal> <type>anyelement</type>
+        the <type>anycompatiblearray</type> <literal>||</literal> <type>anycompatible</type>
         operator).
        </para>
        <para>
@@ -17554,12 +17556,12 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>array_cat</primary>
         </indexterm>
-        <function>array_cat</function> ( <type>anyarray</type>, <type>anyarray</type> )
-        <returnvalue>anyarray</returnvalue>
+        <function>array_cat</function> ( <type>anycompatiblearray</type>, <type>anycompatiblearray</type> )
+        <returnvalue>anycompatiblearray</returnvalue>
        </para>
        <para>
         Concatenates two arrays (same as
-        the <type>anyarray</type> <literal>||</literal> <type>anyarray</type>
+        the <type>anycompatiblearray</type> <literal>||</literal> <type>anycompatiblearray</type>
         operator).
        </para>
        <para>
@@ -17666,7 +17668,7 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>array_position</primary>
         </indexterm>
-        <function>array_position</function> ( <type>anyarray</type>, <type>anyelement</type> <optional>, <type>integer</type> </optional> )
+        <function>array_position</function> ( <type>anycompatiblearray</type>, <type>anycompatible</type> <optional>, <type>integer</type> </optional> )
         <returnvalue>integer</returnvalue>
        </para>
        <para>
@@ -17688,7 +17690,7 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>array_positions</primary>
         </indexterm>
-        <function>array_positions</function> ( <type>anyarray</type>, <type>anyelement</type> )
+        <function>array_positions</function> ( <type>anycompatiblearray</type>, <type>anycompatible</type> )
         <returnvalue>integer[]</returnvalue>
        </para>
        <para>
@@ -17712,12 +17714,12 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>array_prepend</primary>
         </indexterm>
-        <function>array_prepend</function> ( <type>anyelement</type>, <type>anyarray</type> )
-        <returnvalue>anyarray</returnvalue>
+        <function>array_prepend</function> ( <type>anycompatible</type>, <type>anycompatiblearray</type> )
+        <returnvalue>anycompatiblearray</returnvalue>
        </para>
        <para>
         Prepends an element to the beginning of an array (same as
-        the <type>anyelement</type> <literal>||</literal> <type>anyarray</type>
+        the <type>anycompatible</type> <literal>||</literal> <type>anycompatiblearray</type>
         operator).
        </para>
        <para>
@@ -17731,8 +17733,8 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>array_remove</primary>
         </indexterm>
-        <function>array_remove</function> ( <type>anyarray</type>, <type>anyelement</type> )
-        <returnvalue>anyarray</returnvalue>
+        <function>array_remove</function> ( <type>anycompatiblearray</type>, <type>anycompatible</type> )
+        <returnvalue>anycompatiblearray</returnvalue>
        </para>
        <para>
         Removes all elements equal to the given value from the array.
@@ -17751,8 +17753,8 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>array_replace</primary>
         </indexterm>
-        <function>array_replace</function> ( <type>anyarray</type>, <type>anyelement</type>, <type>anyelement</type> )
-        <returnvalue>anyarray</returnvalue>
+        <function>array_replace</function> ( <type>anycompatiblearray</type>, <type>anycompatible</type>, <type>anycompatible</type> )
+        <returnvalue>anycompatiblearray</returnvalue>
        </para>
        <para>
         Replaces each array element equal to the second argument with the

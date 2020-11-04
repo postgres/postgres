@@ -298,10 +298,10 @@ FROM (VALUES (1, 1.0e20::float8),
    Here is an example of a polymorphic aggregate:
 
 <programlisting>
-CREATE AGGREGATE array_accum (anyelement)
+CREATE AGGREGATE array_accum (anycompatible)
 (
     sfunc = array_append,
-    stype = anyarray,
+    stype = anycompatiblearray,
     initcond = '{}'
 );
 </programlisting>

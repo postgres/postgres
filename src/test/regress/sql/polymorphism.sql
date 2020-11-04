@@ -498,10 +498,10 @@ select q2, sql_if(q2 > 0, q2, q2 + 1) from int8_tbl;
 
 -- another sort of polymorphic aggregate
 
-CREATE AGGREGATE array_cat_accum (anyarray)
+CREATE AGGREGATE array_cat_accum (anycompatiblearray)
 (
     sfunc = array_cat,
-    stype = anyarray,
+    stype = anycompatiblearray,
     initcond = '{}'
 );
 
@@ -549,7 +549,7 @@ create aggregate build_group(int8, integer) (
 
 -- check proper resolution of data types for polymorphic transfn/finalfn
 
-create function first_el(anyarray) returns anyelement as
+create function first_el(anycompatiblearray) returns anycompatible as
 'select $1[1]' language sql strict immutable;
 
 create aggregate first_el_agg_f8(float8) (
@@ -558,9 +558,9 @@ create aggregate first_el_agg_f8(float8) (
   FINALFUNC = first_el
 );
 
-create aggregate first_el_agg_any(anyelement) (
+create aggregate first_el_agg_any(anycompatible) (
   SFUNC = array_append,
-  STYPE = anyarray,
+  STYPE = anycompatiblearray,
   FINALFUNC = first_el
 );
 
