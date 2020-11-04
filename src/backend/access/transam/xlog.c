@@ -12673,7 +12673,8 @@ CheckPromoteSignal(void)
 void
 WakeupRecovery(void)
 {
-	SetLatch(XLogCtl->recoveryWakeupLatch);
+	if (XLogCtl->recoveryWakeupLatch)
+		SetLatch(XLogCtl->recoveryWakeupLatch);
 }
 
 /*
