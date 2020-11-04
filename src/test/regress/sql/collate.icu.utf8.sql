@@ -483,6 +483,14 @@ SELECT * FROM test6;
 SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_det;
 SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_nondet;
 
+-- same with arrays
+CREATE TABLE test6a (a int, b text[]);
+INSERT INTO test6a VALUES (1, ARRAY[U&'\00E4bc']);
+INSERT INTO test6a VALUES (2, ARRAY[U&'\0061\0308bc']);
+SELECT * FROM test6a;
+SELECT * FROM test6a WHERE b = ARRAY['äbc'] COLLATE ctest_det;
+SELECT * FROM test6a WHERE b = ARRAY['äbc'] COLLATE ctest_nondet;
+
 CREATE COLLATION case_sensitive (provider = icu, locale = '');
 CREATE COLLATION case_insensitive (provider = icu, locale = '@colStrength=secondary', deterministic = false);
 
@@ -685,6 +693,15 @@ INSERT INTO test22 VALUES (2, 'DEF');
 -- they end up in different partitions
 SELECT (SELECT count(*) FROM test22_0) = (SELECT count(*) FROM test22_1);
 
+-- same with arrays
+CREATE TABLE test22a (a int, b text[] COLLATE case_sensitive) PARTITION BY HASH (b);
+CREATE TABLE test22a_0 PARTITION OF test22a FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE test22a_1 PARTITION OF test22a FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO test22a VALUES (1, ARRAY['def']);
+INSERT INTO test22a VALUES (2, ARRAY['DEF']);
+-- they end up in different partitions
+SELECT (SELECT count(*) FROM test22a_0) = (SELECT count(*) FROM test22a_1);
+
 CREATE TABLE test23 (a int, b text COLLATE case_insensitive) PARTITION BY HASH (b);
 CREATE TABLE test23_0 PARTITION OF test23 FOR VALUES WITH (MODULUS 2, REMAINDER 0);
 CREATE TABLE test23_1 PARTITION OF test23 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
@@ -692,6 +709,15 @@ INSERT INTO test23 VALUES (1, 'def');
 INSERT INTO test23 VALUES (2, 'DEF');
 -- they end up in the same partition (but it's platform-dependent which one)
 SELECT (SELECT count(*) FROM test23_0) <> (SELECT count(*) FROM test23_1);
+
+-- same with arrays
+CREATE TABLE test23a (a int, b text[] COLLATE case_insensitive) PARTITION BY HASH (b);
+CREATE TABLE test23a_0 PARTITION OF test23a FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE test23a_1 PARTITION OF test23a FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO test23a VALUES (1, ARRAY['def']);
+INSERT INTO test23a VALUES (2, ARRAY['DEF']);
+-- they end up in the same partition (but it's platform-dependent which one)
+SELECT (SELECT count(*) FROM test23a_0) <> (SELECT count(*) FROM test23a_1);
 
 CREATE TABLE test30 (a int, b char(3) COLLATE case_insensitive) PARTITION BY LIST (b);
 CREATE TABLE test30_1 PARTITION OF test30 FOR VALUES IN ('abc');
