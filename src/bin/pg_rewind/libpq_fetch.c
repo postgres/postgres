@@ -465,7 +465,7 @@ libpq_executeFileMap(filemap_t *map)
 		entry = map->array[i];
 
 		/* If this is a relation file, copy the modified blocks */
-		execute_pagemap(&entry->pagemap, entry->path);
+		execute_pagemap(&entry->target_pages_to_overwrite, entry->path);
 
 		switch (entry->action)
 		{
@@ -476,15 +476,15 @@ libpq_executeFileMap(filemap_t *map)
 			case FILE_ACTION_COPY:
 				/* Truncate the old file out of the way, if any */
 				open_target_file(entry->path, true);
-				fetch_file_range(entry->path, 0, entry->newsize);
+				fetch_file_range(entry->path, 0, entry->source_size);
 				break;
 
 			case FILE_ACTION_TRUNCATE:
-				truncate_target_file(entry->path, entry->newsize);
+				truncate_target_file(entry->path, entry->source_size);
 				break;
 
 			case FILE_ACTION_COPY_TAIL:
-				fetch_file_range(entry->path, entry->oldsize, entry->newsize);
+				fetch_file_range(entry->path, entry->target_size, entry->source_size);
 				break;
 
 			case FILE_ACTION_REMOVE:
@@ -493,6 +493,10 @@ libpq_executeFileMap(filemap_t *map)
 
 			case FILE_ACTION_CREATE:
 				create_target(entry);
+				break;
+
+			case FILE_ACTION_UNDECIDED:
+				pg_fatal("no action decided for \"%s\"", entry->path);
 				break;
 		}
 	}

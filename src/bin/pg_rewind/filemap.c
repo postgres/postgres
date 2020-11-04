@@ -26,6 +26,8 @@ static bool isRelDataFile(const char *path);
 static char *datasegpath(RelFileNode rnode, ForkNumber forknum,
 						 BlockNumber segno);
 static int	path_cmp(const void *a, const void *b);
+
+static file_entry_t *get_filemap_entry(const char *path, bool create);
 static int	final_filemap_cmp(const void *a, const void *b);
 static void filemap_list_to_array(filemap_t *map);
 static bool check_file_excluded(const char *path, bool is_source);
@@ -146,33 +148,79 @@ filemap_create(void)
 	filemap = map;
 }
 
+/* Look up or create entry for 'path' */
+static file_entry_t *
+get_filemap_entry(const char *path, bool create)
+{
+	filemap_t  *map = filemap;
+	file_entry_t *entry;
+	file_entry_t **e;
+	file_entry_t key;
+	file_entry_t *key_ptr;
+
+	if (map->array)
+	{
+		key.path = (char *) path;
+		key_ptr = &key;
+		e = bsearch(&key_ptr, map->array, map->narray, sizeof(file_entry_t *),
+					path_cmp);
+	}
+	else
+		e = NULL;
+
+	if (e)
+		entry = *e;
+	else if (!create)
+		entry = NULL;
+	else
+	{
+		/* Create a new entry for this file */
+		entry = pg_malloc(sizeof(file_entry_t));
+		entry->path = pg_strdup(path);
+		entry->isrelfile = isRelDataFile(path);
+		entry->action = FILE_ACTION_UNDECIDED;
+
+		entry->target_exists = false;
+		entry->target_type = FILE_TYPE_UNDEFINED;
+		entry->target_size = 0;
+		entry->target_link_target = NULL;
+		entry->target_pages_to_overwrite.bitmap = NULL;
+		entry->target_pages_to_overwrite.bitmapsize = 0;
+
+		entry->source_exists = false;
+		entry->source_type = FILE_TYPE_UNDEFINED;
+		entry->source_size = 0;
+		entry->source_link_target = NULL;
+
+		entry->next = NULL;
+
+		if (map->last)
+		{
+			map->last->next = entry;
+			map->last = entry;
+		}
+		else
+			map->first = map->last = entry;
+		map->nlist++;
+	}
+
+	return entry;
+}
+
 /*
  * Callback for processing source file list.
  *
- * This is called once for every file in the source server. We decide what
- * action needs to be taken for the file, depending on whether the file
- * exists in the target and whether the size matches.
+ * This is called once for every file in the source server.  We record the
+ * type and size of the file, so that decide_file_action() can later decide what
+ * to do with it.
  */
 void
-process_source_file(const char *path, file_type_t type, size_t newsize,
+process_source_file(const char *path, file_type_t type, size_t size,
 					const char *link_target)
 {
-	bool		exists;
-	char		localpath[MAXPGPATH];
-	struct stat statbuf;
-	filemap_t  *map = filemap;
-	file_action_t action = FILE_ACTION_NONE;
-	size_t		oldsize = 0;
 	file_entry_t *entry;
 
-	Assert(map->array == NULL);
-
-	/*
-	 * Skip any files matching the exclusion filters. This has the effect to
-	 * remove all those files on the target.
-	 */
-	if (check_file_excluded(path, true))
-		return;
+	Assert(filemap->array == NULL);
 
 	/*
 	 * Pretend that pg_wal is a directory, even if it's really a symlink. We
@@ -183,174 +231,31 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 		type = FILE_TYPE_DIRECTORY;
 
 	/*
-	 * Skip temporary files, .../pgsql_tmp/... and .../pgsql_tmp.* in source.
-	 * This has the effect that all temporary files in the destination will be
-	 * removed.
-	 */
-	if (strstr(path, "/" PG_TEMP_FILE_PREFIX) != NULL)
-		return;
-	if (strstr(path, "/" PG_TEMP_FILES_DIR "/") != NULL)
-		return;
-
-	/*
 	 * sanity check: a filename that looks like a data file better be a
 	 * regular file
 	 */
 	if (type != FILE_TYPE_REGULAR && isRelDataFile(path))
 		pg_fatal("data file \"%s\" in source is not a regular file", path);
 
-	snprintf(localpath, sizeof(localpath), "%s/%s", datadir_target, path);
-
-	/* Does the corresponding file exist in the target data dir? */
-	if (lstat(localpath, &statbuf) < 0)
-	{
-		if (errno != ENOENT)
-			pg_fatal("could not stat file \"%s\": %m",
-					 localpath);
-
-		exists = false;
-	}
-	else
-		exists = true;
-
-	switch (type)
-	{
-		case FILE_TYPE_DIRECTORY:
-			if (exists && !S_ISDIR(statbuf.st_mode) && strcmp(path, "pg_wal") != 0)
-			{
-				/* it's a directory in source, but not in target. Strange.. */
-				pg_fatal("\"%s\" is not a directory", localpath);
-			}
-
-			if (!exists)
-				action = FILE_ACTION_CREATE;
-			else
-				action = FILE_ACTION_NONE;
-			oldsize = 0;
-			break;
-
-		case FILE_TYPE_SYMLINK:
-			if (exists &&
-#ifndef WIN32
-				!S_ISLNK(statbuf.st_mode)
-#else
-				!pgwin32_is_junction(localpath)
-#endif
-				)
-			{
-				/*
-				 * It's a symbolic link in source, but not in target.
-				 * Strange..
-				 */
-				pg_fatal("\"%s\" is not a symbolic link", localpath);
-			}
-
-			if (!exists)
-				action = FILE_ACTION_CREATE;
-			else
-				action = FILE_ACTION_NONE;
-			oldsize = 0;
-			break;
-
-		case FILE_TYPE_REGULAR:
-			if (exists && !S_ISREG(statbuf.st_mode))
-				pg_fatal("\"%s\" is not a regular file", localpath);
-
-			if (!exists || !isRelDataFile(path))
-			{
-				/*
-				 * File exists in source, but not in target. Or it's a
-				 * non-data file that we have no special processing for. Copy
-				 * it in toto.
-				 *
-				 * An exception: PG_VERSIONs should be identical, but avoid
-				 * overwriting it for paranoia.
-				 */
-				if (pg_str_endswith(path, "PG_VERSION"))
-				{
-					action = FILE_ACTION_NONE;
-					oldsize = statbuf.st_size;
-				}
-				else
-				{
-					action = FILE_ACTION_COPY;
-					oldsize = 0;
-				}
-			}
-			else
-			{
-				/*
-				 * It's a data file that exists in both.
-				 *
-				 * If it's larger in target, we can truncate it. There will
-				 * also be a WAL record of the truncation in the source
-				 * system, so WAL replay would eventually truncate the target
-				 * too, but we might as well do it now.
-				 *
-				 * If it's smaller in the target, it means that it has been
-				 * truncated in the target, or enlarged in the source, or
-				 * both. If it was truncated in the target, we need to copy
-				 * the missing tail from the source system. If it was enlarged
-				 * in the source system, there will be WAL records in the
-				 * source system for the new blocks, so we wouldn't need to
-				 * copy them here. But we don't know which scenario we're
-				 * dealing with, and there's no harm in copying the missing
-				 * blocks now, so do it now.
-				 *
-				 * If it's the same size, do nothing here. Any blocks modified
-				 * in the target will be copied based on parsing the target
-				 * system's WAL, and any blocks modified in the source will be
-				 * updated after rewinding, when the source system's WAL is
-				 * replayed.
-				 */
-				oldsize = statbuf.st_size;
-				if (oldsize < newsize)
-					action = FILE_ACTION_COPY_TAIL;
-				else if (oldsize > newsize)
-					action = FILE_ACTION_TRUNCATE;
-				else
-					action = FILE_ACTION_NONE;
-			}
-			break;
-	}
-
-	/* Create a new entry for this file */
-	entry = pg_malloc(sizeof(file_entry_t));
-	entry->path = pg_strdup(path);
-	entry->type = type;
-	entry->action = action;
-	entry->oldsize = oldsize;
-	entry->newsize = newsize;
-	entry->link_target = link_target ? pg_strdup(link_target) : NULL;
-	entry->next = NULL;
-	entry->pagemap.bitmap = NULL;
-	entry->pagemap.bitmapsize = 0;
-	entry->isrelfile = isRelDataFile(path);
-
-	if (map->last)
-	{
-		map->last->next = entry;
-		map->last = entry;
-	}
-	else
-		map->first = map->last = entry;
-	map->nlist++;
+	/* Remember this source file */
+	entry = get_filemap_entry(path, true);
+	entry->source_exists = true;
+	entry->source_type = type;
+	entry->source_size = size;
+	entry->source_link_target = link_target ? pg_strdup(link_target) : NULL;
 }
 
 /*
  * Callback for processing target file list.
  *
- * All source files must be already processed before calling this. This only
- * marks target data directory's files that didn't exist in the source for
- * deletion.
+ * All source files must be already processed before calling this.  We record
+ * the type and size of file, so that decide_file_action() can later decide
+ * what to do with it.
  */
 void
-process_target_file(const char *path, file_type_t type, size_t oldsize,
+process_target_file(const char *path, file_type_t type, size_t size,
 					const char *link_target)
 {
-	bool		exists;
-	file_entry_t key;
-	file_entry_t *key_ptr;
 	filemap_t  *map = filemap;
 	file_entry_t *entry;
 
@@ -359,7 +264,6 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	 * from the target data folder all paths which have been filtered out from
 	 * the source data folder when processing the source files.
 	 */
-
 	if (map->array == NULL)
 	{
 		/* on first call, initialize lookup array */
@@ -377,120 +281,77 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	}
 
 	/*
-	 * Like in process_source_file, pretend that xlog is always a  directory.
+	 * Like in process_source_file, pretend that pg_wal is always a directory.
 	 */
 	if (strcmp(path, "pg_wal") == 0 && type == FILE_TYPE_SYMLINK)
 		type = FILE_TYPE_DIRECTORY;
 
-	key.path = (char *) path;
-	key_ptr = &key;
-	exists = (bsearch(&key_ptr, map->array, map->narray, sizeof(file_entry_t *),
-					  path_cmp) != NULL);
-
-	/* Remove any file or folder that doesn't exist in the source system. */
-	if (!exists)
-	{
-		entry = pg_malloc(sizeof(file_entry_t));
-		entry->path = pg_strdup(path);
-		entry->type = type;
-		entry->action = FILE_ACTION_REMOVE;
-		entry->oldsize = oldsize;
-		entry->newsize = 0;
-		entry->link_target = link_target ? pg_strdup(link_target) : NULL;
-		entry->next = NULL;
-		entry->pagemap.bitmap = NULL;
-		entry->pagemap.bitmapsize = 0;
-		entry->isrelfile = isRelDataFile(path);
-
-		if (map->last == NULL)
-			map->first = entry;
-		else
-			map->last->next = entry;
-		map->last = entry;
-		map->nlist++;
-	}
-	else
-	{
-		/*
-		 * We already handled all files that exist in the source system in
-		 * process_source_file().
-		 */
-	}
+	/* Remember this target file */
+	entry = get_filemap_entry(path, true);
+	entry->target_exists = true;
+	entry->target_type = type;
+	entry->target_size = size;
+	entry->target_link_target = link_target ? pg_strdup(link_target) : NULL;
 }
 
 /*
  * This callback gets called while we read the WAL in the target, for every
- * block that have changed in the target system. It makes note of all the
- * changed blocks in the pagemap of the file.
+ * block that has changed in the target system.  It decides if the given
+ * 'blkno' in the target relfile needs to be overwritten from the source, and
+ * if so, records it in 'target_pages_to_overwrite' bitmap.
+ *
+ * NOTE: All the files on both systems must have already been added to the
+ * file map!
  */
 void
-process_block_change(ForkNumber forknum, RelFileNode rnode, BlockNumber blkno)
+process_target_wal_block_change(ForkNumber forknum, RelFileNode rnode,
+								BlockNumber blkno)
 {
 	char	   *path;
-	file_entry_t key;
-	file_entry_t *key_ptr;
 	file_entry_t *entry;
 	BlockNumber blkno_inseg;
 	int			segno;
-	filemap_t  *map = filemap;
-	file_entry_t **e;
 
-	Assert(map->array);
+	Assert(filemap->array);
 
 	segno = blkno / RELSEG_SIZE;
 	blkno_inseg = blkno % RELSEG_SIZE;
 
 	path = datasegpath(rnode, forknum, segno);
-
-	key.path = (char *) path;
-	key_ptr = &key;
-
-	e = bsearch(&key_ptr, map->array, map->narray, sizeof(file_entry_t *),
-				path_cmp);
-	if (e)
-		entry = *e;
-	else
-		entry = NULL;
+	entry = get_filemap_entry(path, false);
 	pfree(path);
 
 	if (entry)
 	{
+		int64		end_offset;
+
 		Assert(entry->isrelfile);
 
-		switch (entry->action)
-		{
-			case FILE_ACTION_NONE:
-			case FILE_ACTION_TRUNCATE:
-				/* skip if we're truncating away the modified block anyway */
-				if ((blkno_inseg + 1) * BLCKSZ <= entry->newsize)
-					datapagemap_add(&entry->pagemap, blkno_inseg);
-				break;
+		if (entry->target_type != FILE_TYPE_REGULAR)
+			pg_fatal("unexpected page modification for non-regular file \"%s\"",
+					 entry->path);
 
-			case FILE_ACTION_COPY_TAIL:
-
-				/*
-				 * skip the modified block if it is part of the "tail" that
-				 * we're copying anyway.
-				 */
-				if ((blkno_inseg + 1) * BLCKSZ <= entry->oldsize)
-					datapagemap_add(&entry->pagemap, blkno_inseg);
-				break;
-
-			case FILE_ACTION_COPY:
-			case FILE_ACTION_REMOVE:
-				break;
-
-			case FILE_ACTION_CREATE:
-				pg_fatal("unexpected page modification for directory or symbolic link \"%s\"", entry->path);
-		}
+		/*
+		 * If the block beyond the EOF in the source system, no need to
+		 * remember it now, because we're going to truncate it away from the
+		 * target anyway. Also no need to remember the block if it's beyond
+		 * the current EOF in the target system; we will copy it over with the
+		 * "tail" from the source system, anyway.
+		 */
+		end_offset = (blkno_inseg + 1) * BLCKSZ;
+		if (end_offset <= entry->source_size &&
+			end_offset <= entry->target_size)
+			datapagemap_add(&entry->target_pages_to_overwrite, blkno_inseg);
 	}
 	else
 	{
 		/*
 		 * If we don't have any record of this file in the file map, it means
-		 * that it's a relation that doesn't exist in the source system, and
-		 * it was subsequently removed in the target system, too. We can
-		 * safely ignore it.
+		 * that it's a relation that doesn't exist in the source system.  It
+		 * could exist in the target system; we haven't moved the target-only
+		 * entries from the linked list to the array yet!  But in any case, if
+		 * it doesn't exist in the source it will be removed from the target
+		 * too, and we can safely ignore it.
 		 */
 	}
 }
@@ -504,6 +365,15 @@ check_file_excluded(const char *path, bool is_source)
 	char		localpath[MAXPGPATH];
 	int			excludeIdx;
 	const char *filename;
+
+	/*
+	 * Skip all temporary files, .../pgsql_tmp/... and .../pgsql_tmp.*
+	 */
+	if (strstr(path, "/" PG_TEMP_FILE_PREFIX) != NULL ||
+		strstr(path, "/" PG_TEMP_FILES_DIR "/") != NULL)
+	{
+		return true;
+	}
 
 	/* check individual files... */
 	for (excludeIdx = 0; excludeFiles[excludeIdx].name != NULL; excludeIdx++)
@@ -581,16 +451,6 @@ filemap_list_to_array(filemap_t *map)
 	map->first = map->last = NULL;
 }
 
-void
-filemap_finalize(void)
-{
-	filemap_t  *map = filemap;
-
-	filemap_list_to_array(map);
-	qsort(map->array, map->narray, sizeof(file_entry_t *),
-		  final_filemap_cmp);
-}
-
 static const char *
 action_to_str(file_action_t action)
 {
@@ -631,26 +491,26 @@ calculate_totals(void)
 	{
 		entry = map->array[i];
 
-		if (entry->type != FILE_TYPE_REGULAR)
+		if (entry->source_type != FILE_TYPE_REGULAR)
 			continue;
 
-		map->total_size += entry->newsize;
+		map->total_size += entry->source_size;
 
 		if (entry->action == FILE_ACTION_COPY)
 		{
-			map->fetch_size += entry->newsize;
+			map->fetch_size += entry->source_size;
 			continue;
 		}
 
 		if (entry->action == FILE_ACTION_COPY_TAIL)
-			map->fetch_size += (entry->newsize - entry->oldsize);
+			map->fetch_size += (entry->source_size - entry->target_size);
 
-		if (entry->pagemap.bitmapsize > 0)
+		if (entry->target_pages_to_overwrite.bitmapsize > 0)
 		{
 			datapagemap_iterator_t *iter;
 			BlockNumber blk;
 
-			iter = datapagemap_iterate(&entry->pagemap);
+			iter = datapagemap_iterate(&entry->target_pages_to_overwrite);
 			while (datapagemap_next(iter, &blk))
 				map->fetch_size += BLCKSZ;
 
@@ -670,13 +530,13 @@ print_filemap(void)
 	{
 		entry = map->array[i];
 		if (entry->action != FILE_ACTION_NONE ||
-			entry->pagemap.bitmapsize > 0)
+			entry->target_pages_to_overwrite.bitmapsize > 0)
 		{
 			pg_log_debug("%s (%s)", entry->path,
 						 action_to_str(entry->action));
 
-			if (entry->pagemap.bitmapsize > 0)
-				datapagemap_print(&entry->pagemap);
+			if (entry->target_pages_to_overwrite.bitmapsize > 0)
+				datapagemap_print(&entry->target_pages_to_overwrite);
 		}
 	}
 	fflush(stdout);
@@ -824,4 +684,172 @@ final_filemap_cmp(const void *a, const void *b)
 		return strcmp(fb->path, fa->path);
 	else
 		return strcmp(fa->path, fb->path);
+}
+
+/*
+ * Decide what action to perform to a file.
+ */
+static file_action_t
+decide_file_action(file_entry_t *entry)
+{
+	const char *path = entry->path;
+
+	/*
+	 * Don't touch the control file. It is handled specially, after copying
+	 * all the other files.
+	 */
+	if (strcmp(path, "global/pg_control") == 0)
+		return FILE_ACTION_NONE;
+
+	/*
+	 * Remove all files matching the exclusion filters in the target.
+	 */
+	if (check_file_excluded(path, true))
+	{
+		if (entry->target_exists)
+			return FILE_ACTION_REMOVE;
+		else
+			return FILE_ACTION_NONE;
+	}
+
+	/*
+	 * Handle cases where the file is missing from one of the systems.
+	 */
+	if (!entry->target_exists && entry->source_exists)
+	{
+		/*
+		 * File exists in source, but not in target. Copy it in toto. (If it's
+		 * a relation data file, WAL replay after rewinding should re-create
+		 * it anyway. But there's no harm in copying it now.)
+		 */
+		switch (entry->source_type)
+		{
+			case FILE_TYPE_DIRECTORY:
+			case FILE_TYPE_SYMLINK:
+				return FILE_ACTION_CREATE;
+			case FILE_TYPE_REGULAR:
+				return FILE_ACTION_COPY;
+			case FILE_TYPE_UNDEFINED:
+				pg_fatal("unknown file type for \"%s\"", entry->path);
+				break;
+		}
+	}
+	else if (entry->target_exists && !entry->source_exists)
+	{
+		/* File exists in target, but not source. Remove it. */
+		return FILE_ACTION_REMOVE;
+	}
+	else if (!entry->target_exists && !entry->source_exists)
+	{
+		/*
+		 * Doesn't exist in either server. Why does it have an entry in the
+		 * first place??
+		 */
+		Assert(false);
+		return FILE_ACTION_NONE;
+	}
+
+	/*
+	 * Otherwise, the file exists on both systems
+	 */
+	Assert(entry->target_exists && entry->source_exists);
+
+	if (entry->source_type != entry->target_type)
+	{
+		/* But it's a different kind of object. Strange.. */
+		pg_fatal("file \"%s\" is of different type in source and target", entry->path);
+	}
+
+	/*
+	 * PG_VERSION files should be identical on both systems, but avoid
+	 * overwriting them for paranoia.
+	 */
+	if (pg_str_endswith(entry->path, "PG_VERSION"))
+		return FILE_ACTION_NONE;
+
+	switch (entry->source_type)
+	{
+		case FILE_TYPE_DIRECTORY:
+			return FILE_ACTION_NONE;
+
+		case FILE_TYPE_SYMLINK:
+
+			/*
+			 * XXX: Should we check if it points to the same target?
+			 */
+			return FILE_ACTION_NONE;
+
+		case FILE_TYPE_REGULAR:
+			if (!entry->isrelfile)
+			{
+				/*
+				 * It's a non-data file that we have no special processing
+				 * for. Copy it in toto.
+				 */
+				return FILE_ACTION_COPY;
+			}
+			else
+			{
+				/*
+				 * It's a data file that exists in both systems.
+				 *
+				 * If it's larger in target, we can truncate it. There will
+				 * also be a WAL record of the truncation in the source
+				 * system, so WAL replay would eventually truncate the target
+				 * too, but we might as well do it now.
+				 *
+				 * If it's smaller in the target, it means that it has been
+				 * truncated in the target, or enlarged in the source, or
+				 * both. If it was truncated in the target, we need to copy
+				 * the missing tail from the source system. If it was enlarged
+				 * in the source system, there will be WAL records in the
+				 * source system for the new blocks, so we wouldn't need to
+				 * copy them here. But we don't know which scenario we're
+				 * dealing with, and there's no harm in copying the missing
+				 * blocks now, so do it now.
+				 *
+				 * If it's the same size, do nothing here. Any blocks modified
+				 * in the target will be copied based on parsing the target
+				 * system's WAL, and any blocks modified in the source will be
+				 * updated after rewinding, when the source system's WAL is
+				 * replayed.
+				 */
+				if (entry->target_size < entry->source_size)
+					return FILE_ACTION_COPY_TAIL;
+				else if (entry->target_size > entry->source_size)
+					return FILE_ACTION_TRUNCATE;
+				else
+					return FILE_ACTION_NONE;
+			}
+			break;
+
+		case FILE_TYPE_UNDEFINED:
+			pg_fatal("unknown file type for \"%s\"", path);
+			break;
+	}
+
+	/* unreachable */
+	pg_fatal("could not decide what to do with file \"%s\"", path);
+}
+
+/*
+ * Decide what to do with each file.
+ */
+void
+decide_file_actions(void)
+{
+	int			i;
+
+	filemap_list_to_array(filemap);
+
+	for (i = 0; i < filemap->narray; i++)
+	{
+		file_entry_t *entry = filemap->array[i];
+
+		entry->action = decide_file_action(entry);
+	}
+
+	/* Sort the actions to the order that they should be performed */
+	qsort(filemap->array, filemap->narray, sizeof(file_entry_t *),
+		  final_filemap_cmp);
 }

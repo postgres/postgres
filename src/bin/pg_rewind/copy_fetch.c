@@ -210,7 +210,7 @@ copy_executeFileMap(filemap_t *map)
 	for (i = 0; i < map->narray; i++)
 	{
 		entry = map->array[i];
-		execute_pagemap(&entry->pagemap, entry->path);
+		execute_pagemap(&entry->target_pages_to_overwrite, entry->path);
 
 		switch (entry->action)
 		{
@@ -219,16 +219,16 @@ copy_executeFileMap(filemap_t *map)
 				break;
 
 			case FILE_ACTION_COPY:
-				rewind_copy_file_range(entry->path, 0, entry->newsize, true);
+				rewind_copy_file_range(entry->path, 0, entry->source_size, true);
 				break;
 
 			case FILE_ACTION_TRUNCATE:
-				truncate_target_file(entry->path, entry->newsize);
+				truncate_target_file(entry->path, entry->source_size);
 				break;
 
 			case FILE_ACTION_COPY_TAIL:
-				rewind_copy_file_range(entry->path, entry->oldsize,
-									   entry->newsize, false);
+				rewind_copy_file_range(entry->path, entry->target_size,
+									   entry->source_size, false);
 				break;
 
 			case FILE_ACTION_CREATE:
@@ -237,6 +237,10 @@ copy_executeFileMap(filemap_t *map)
 
 			case FILE_ACTION_REMOVE:
 				remove_target(entry);
+				break;
+
+			case FILE_ACTION_UNDECIDED:
+				pg_fatal("no action decided for \"%s\"", entry->path);
 				break;
 		}
 	}

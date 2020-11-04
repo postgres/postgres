@@ -126,8 +126,9 @@ void
 remove_target(file_entry_t *entry)
 {
 	Assert(entry->action == FILE_ACTION_REMOVE);
+	Assert(entry->target_exists);
 
-	switch (entry->type)
+	switch (entry->target_type)
 	{
 		case FILE_TYPE_DIRECTORY:
 			remove_target_dir(entry->path);
@@ -140,6 +141,10 @@ remove_target(file_entry_t *entry)
 		case FILE_TYPE_SYMLINK:
 			remove_target_symlink(entry->path);
 			break;
+
+		case FILE_TYPE_UNDEFINED:
+			pg_fatal("undefined file type for \"%s\"", entry->path);
+			break;
 	}
 }
 
@@ -147,20 +152,25 @@ void
 create_target(file_entry_t *entry)
 {
 	Assert(entry->action == FILE_ACTION_CREATE);
+	Assert(!entry->target_exists);
 
-	switch (entry->type)
+	switch (entry->source_type)
 	{
 		case FILE_TYPE_DIRECTORY:
 			create_target_dir(entry->path);
 			break;
 
 		case FILE_TYPE_SYMLINK:
-			create_target_symlink(entry->path, entry->link_target);
+			create_target_symlink(entry->path, entry->source_link_target);
 			break;
 
 		case FILE_TYPE_REGULAR:
 			/* can't happen. Regular files are created with open_target_file. */
 			pg_fatal("invalid action (CREATE) for regular file");
+			break;
+
+		case FILE_TYPE_UNDEFINED:
+			pg_fatal("undefined file type for \"%s\"", entry->path);
 			break;
 	}
 }

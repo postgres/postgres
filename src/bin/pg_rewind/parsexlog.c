@@ -436,6 +436,6 @@ extractPageInfo(XLogReaderState *record)
 		if (forknum != MAIN_FORKNUM)
 			continue;
 
-		process_block_change(forknum, rnode, blkno);
+		process_target_wal_block_change(forknum, rnode, blkno);
 	}
 }

@@ -14,17 +14,22 @@
 
 /*
  * For every file found in the local or remote system, we have a file entry
- * which says what we are going to do with the file. For relation files,
- * there is also a page map, marking pages in the file that were changed
- * locally.
- *
- * The enum values are sorted in the order we want actions to be processed.
+ * that contains information about the file on both systems.  For relation
+ * files, there is also a page map that marks pages in the file that were
+ * changed in the target after the last common checkpoint.  Each entry also
+ * contains an 'action' field, which says what we are going to do with the
+ * file.
  */
+
+/* these enum values are sorted in the order we want actions to be processed */
 typedef enum
 {
+	FILE_ACTION_UNDECIDED = 0,	/* not decided yet */
+
 	FILE_ACTION_CREATE,			/* create local directory or symbolic link */
 	FILE_ACTION_COPY,			/* copy whole file, overwriting if exists */
-	FILE_ACTION_COPY_TAIL,		/* copy tail from 'oldsize' to 'newsize' */
+	FILE_ACTION_COPY_TAIL,		/* copy tail from 'source_size' to
+								 * 'target_size' */
 	FILE_ACTION_NONE,			/* no action (we might still copy modified
 								 * blocks based on the parsed WAL) */
 	FILE_ACTION_TRUNCATE,		/* truncate local file to 'newsize' bytes */
@@ -33,6 +38,8 @@ typedef enum
 
 typedef enum
 {
+	FILE_TYPE_UNDEFINED = 0,
+
 	FILE_TYPE_REGULAR,
 	FILE_TYPE_DIRECTORY,
 	FILE_TYPE_SYMLINK
@@ -41,19 +48,34 @@ typedef enum
 typedef struct file_entry_t
 {
 	char	   *path;
-	file_type_t type;
-
-	file_action_t action;
-
-	/* for a regular file */
-	size_t		oldsize;
-	size_t		newsize;
 	bool		isrelfile;		/* is it a relation data file? */
 
-	datapagemap_t pagemap;
+	/*
+	 * Status of the file in the target.
+	 */
+	bool		target_exists;
+	file_type_t target_type;
+	size_t		target_size;	/* for a regular file */
+	char	   *target_link_target; /* for a symlink */
 
-	/* for a symlink */
-	char	   *link_target;
+	/*
+	 * Pages that were modified in the target and need to be replaced from the
+	 * source.
+	 */
+	datapagemap_t target_pages_to_overwrite;
+
+	/*
+	 * Status of the file in the source.
+	 */
+	bool		source_exists;
+	file_type_t source_type;
+	size_t		source_size;
+	char	   *source_link_target; /* for a symlink */
+
+	/*
+	 * What will we do to the file?
+	 */
+	file_action_t action;
 
 	struct file_entry_t *next;
 } file_entry_t;
@@ -71,19 +93,18 @@ typedef struct filemap_t
 	/*
 	 * After processing all the remote files, the entries in the linked list
 	 * are moved to this array. After processing local files, too, all the
-	 * local entries are added to the array by filemap_finalize, and sorted in
-	 * the final order. After filemap_finalize, all the entries are in the
-	 * array, and the linked list is empty.
+	 * local entries are added to the array by decide_file_actions(), and
+	 * sorted in the final order. After decide_file_actions(), all the entries
+	 * are in the array, and the linked list is empty.
 	 */
 	file_entry_t **array;
 	int			narray;			/* current length of array */
 
 	/*
-	 * Summary information. total_size is the total size of the source
-	 * cluster, and fetch_size is the number of bytes that needs to be copied.
+	 * Summary information.
 	 */
-	uint64		total_size;
-	uint64		fetch_size;
+	uint64		total_size;		/* total size of the source cluster */
+	uint64		fetch_size;		/* number of bytes that needs to be copied */
 } filemap_t;
 
 extern filemap_t *filemap;
@@ -94,11 +115,12 @@ extern void print_filemap(void);
 
 /* Functions for populating the filemap */
 extern void process_source_file(const char *path, file_type_t type,
-								size_t newsize, const char *link_target);
+								size_t size, const char *link_target);
 extern void process_target_file(const char *path, file_type_t type,
-								size_t newsize, const char *link_target);
-extern void process_block_change(ForkNumber forknum, RelFileNode rnode,
-								 BlockNumber blkno);
-extern void filemap_finalize(void);
+								size_t size, const char *link_target);
+extern void process_target_wal_block_change(ForkNumber forknum,
+											RelFileNode rnode,
+											BlockNumber blkno);
+extern void decide_file_actions(void);
 
 #endif							/* FILEMAP_H */
