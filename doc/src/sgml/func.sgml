@@ -19594,17 +19594,17 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>lag</primary>
         </indexterm>
-        <function>lag</function> ( <parameter>value</parameter> <type>anyelement</type>
+        <function>lag</function> ( <parameter>value</parameter> <type>anycompatible</type>
           <optional>, <parameter>offset</parameter> <type>integer</type>
-          <optional>, <parameter>default</parameter> <type>anyelement</type> </optional></optional> )
-        <returnvalue>anyelement</returnvalue>
+          <optional>, <parameter>default</parameter> <type>anycompatible</type> </optional></optional> )
+        <returnvalue>anycompatible</returnvalue>
        </para>
        <para>
         Returns <parameter>value</parameter> evaluated at
         the row that is <parameter>offset</parameter>
         rows before the current row within the partition; if there is no such
         row, instead returns <parameter>default</parameter>
-        (which must be of the same type as
+        (which must be of a type compatible with
         <parameter>value</parameter>).
         Both <parameter>offset</parameter> and
         <parameter>default</parameter> are evaluated
@@ -19619,17 +19619,17 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>lead</primary>
         </indexterm>
-        <function>lead</function> ( <parameter>value</parameter> <type>anyelement</type>
+        <function>lead</function> ( <parameter>value</parameter> <type>anycompatible</type>
           <optional>, <parameter>offset</parameter> <type>integer</type>
-          <optional>, <parameter>default</parameter> <type>anyelement</type> </optional></optional> )
-        <returnvalue>anyelement</returnvalue>
+          <optional>, <parameter>default</parameter> <type>anycompatible</type> </optional></optional> )
+        <returnvalue>anycompatible</returnvalue>
        </para>
        <para>
         Returns <parameter>value</parameter> evaluated at
         the row that is <parameter>offset</parameter>
         rows after the current row within the partition; if there is no such
         row, instead returns <parameter>default</parameter>
-        (which must be of the same type as
+        (which must be of a type compatible with
         <parameter>value</parameter>).
         Both <parameter>offset</parameter> and
         <parameter>default</parameter> are evaluated
