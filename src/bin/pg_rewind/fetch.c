@@ -37,7 +37,7 @@ fetchSourceFileList(void)
  * Fetch all relation data files that are marked in the given data page map.
  */
 void
-executeFileMap(void)
+execute_file_actions(filemap_t *filemap)
 {
 	if (datadir_source)
 		copy_executeFileMap(filemap);

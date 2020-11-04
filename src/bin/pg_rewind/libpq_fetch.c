@@ -460,9 +460,9 @@ libpq_executeFileMap(filemap_t *map)
 				 PQresultErrorMessage(res));
 	PQclear(res);
 
-	for (i = 0; i < map->narray; i++)
+	for (i = 0; i < map->nentries; i++)
 	{
-		entry = map->array[i];
+		entry = map->entries[i];
 
 		/* If this is a relation file, copy the modified blocks */
 		execute_pagemap(&entry->target_pages_to_overwrite, entry->path);

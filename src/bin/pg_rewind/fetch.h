@@ -25,7 +25,7 @@
  */
 extern void fetchSourceFileList(void);
 extern char *fetchFile(const char *filename, size_t *filesize);
-extern void executeFileMap(void);
+extern void execute_file_actions(filemap_t *filemap);
 
 /* in libpq_fetch.c */
 extern void libpqProcessFileList(void);
