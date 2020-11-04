@@ -541,10 +541,11 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 				list_length(fc->args) > 1 &&
 				fc->agg_order == NIL &&
 				fc->agg_filter == NULL &&
+				fc->over == NULL &&
 				!fc->agg_star &&
 				!fc->agg_distinct &&
 				!fc->func_variadic &&
-				fc->over == NULL &&
+				fc->funcformat == COERCE_EXPLICIT_CALL &&
 				coldeflist == NIL)
 			{
 				ListCell   *lc;
@@ -558,6 +559,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 
 					newfc = makeFuncCall(SystemFuncName("unnest"),
 										 list_make1(arg),
+										 COERCE_EXPLICIT_CALL,
 										 fc->location);
 
 					newfexpr = transformExpr(pstate, (Node *) newfc,

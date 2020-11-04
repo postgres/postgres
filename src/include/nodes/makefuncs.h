@@ -79,7 +79,8 @@ extern ColumnDef *makeColumnDef(const char *colname,
 extern FuncExpr *makeFuncExpr(Oid funcid, Oid rettype, List *args,
 							  Oid funccollid, Oid inputcollid, CoercionForm fformat);
 
-extern FuncCall *makeFuncCall(List *name, List *args, int location);
+extern FuncCall *makeFuncCall(List *name, List *args,
+							  CoercionForm funcformat, int location);
 
 extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
 						   Expr *leftop, Expr *rightop,

@@ -1710,11 +1710,50 @@ select pg_get_viewdef('tt20v', true);
      i4.i4,                                 +
      i8.i8                                  +
     FROM COALESCE(1, 2) c(c),               +
-     pg_collation_for('x'::text) col(col),  +
+     COLLATION FOR ('x'::text) col(col),    +
      CURRENT_DATE d(d),                     +
      LOCALTIMESTAMP(3) t(t),                +
      CAST(1 + 2 AS integer) i4(i4),         +
      CAST((1 + 2)::bigint AS bigint) i8(i8);
+(1 row)
+
+-- reverse-listing of various special function syntaxes required by SQL
+create view tt201v as
+select
+  extract(day from now()) as extr,
+  (now(), '1 day'::interval) overlaps
+    (current_timestamp(2), '1 day'::interval) as o,
+  'foo' is normalized isn,
+  'foo' is nfkc normalized isnn,
+  normalize('foo') as n,
+  normalize('foo', nfkd) as nfkd,
+  overlay('foo' placing 'bar' from 2) as ovl,
+  overlay('foo' placing 'bar' from 2 for 3) as ovl2,
+  position('foo' in 'foobar') as p,
+  substring('foo' from 2 for 3) as s,
+  substring('foo' similar 'f' escape '#') as ss,
+  substring('foo' from 'oo') as ssf,  -- historically-permitted abuse
+  trim(' ' from ' foo ') as bt,
+  trim(leading ' ' from ' foo ') as lt,
+  trim(trailing ' foo ') as rt;
+select pg_get_viewdef('tt201v', true);
+                                        pg_get_viewdef                                         
+-----------------------------------------------------------------------------------------------
+  SELECT date_part('day'::text, now()) AS extr,                                               +
+     ((now(), '@ 1 day'::interval) OVERLAPS (CURRENT_TIMESTAMP(2), '@ 1 day'::interval)) AS o,+
+     (('foo'::text) IS NORMALIZED) AS isn,                                                    +
+     (('foo'::text) IS NFKC NORMALIZED) AS isnn,                                              +
+     NORMALIZE('foo'::text) AS n,                                                             +
+     NORMALIZE('foo'::text, NFKD) AS nfkd,                                                    +
+     OVERLAY('foo'::text PLACING 'bar'::text FROM 2) AS ovl,                                  +
+     OVERLAY('foo'::text PLACING 'bar'::text FROM 2 FOR 3) AS ovl2,                           +
+     POSITION(('foo'::text) IN ('foobar'::text)) AS p,                                        +
+     SUBSTRING('foo'::text FROM 2 FOR 3) AS s,                                                +
+     SUBSTRING('foo'::text SIMILAR 'f'::text ESCAPE '#'::text) AS ss,                         +
+     "substring"('foo'::text, 'oo'::text) AS ssf,                                             +
+     TRIM(BOTH ' '::text FROM ' foo '::text) AS bt,                                           +
+     TRIM(LEADING ' '::text FROM ' foo '::text) AS lt,                                        +
+     TRIM(TRAILING FROM ' foo '::text) AS rt;
 (1 row)
 
 -- corner cases with empty join conditions
@@ -1904,7 +1943,7 @@ drop cascades to view aliased_view_2
 drop cascades to view aliased_view_3
 drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 67 other objects
+NOTICE:  drop cascades to 68 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -1966,6 +2005,7 @@ drop cascades to view tt17v
 drop cascades to view tt18v
 drop cascades to view tt19v
 drop cascades to view tt20v
+drop cascades to view tt201v
 drop cascades to view tt21v
 drop cascades to view tt22v
 drop cascades to view tt23v

@@ -2726,10 +2726,10 @@ create temp table tmptz (f1 timestamptz primary key);
 insert into tmptz values ('2017-01-18 00:00+00');
 explain (costs off)
 select * from tmptz where f1 at time zone 'utc' = '2017-01-18 00:00';
-                                           QUERY PLAN                                            
--------------------------------------------------------------------------------------------------
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
  Seq Scan on tmptz
-   Filter: (timezone('utc'::text, f1) = 'Wed Jan 18 00:00:00 2017'::timestamp without time zone)
+   Filter: ((f1 AT TIME ZONE 'utc'::text) = 'Wed Jan 18 00:00:00 2017'::timestamp without time zone)
 (2 rows)
 
 select * from tmptz where f1 at time zone 'utc' = '2017-01-18 00:00';

@@ -445,7 +445,10 @@ typedef enum CoercionContext
 } CoercionContext;
 
 /*
- * CoercionForm - how to display a node that could have come from a cast
+ * CoercionForm - how to display a FuncExpr or related node
+ *
+ * "Coercion" is a bit of a misnomer, since this value records other
+ * special syntaxes besides casts, but for now we'll keep this naming.
  *
  * NB: equal() ignores CoercionForm fields, therefore this *must* not carry
  * any semantically significant information.  We need that behavior so that
@@ -457,7 +460,8 @@ typedef enum CoercionForm
 {
 	COERCE_EXPLICIT_CALL,		/* display as a function call */
 	COERCE_EXPLICIT_CAST,		/* display as an explicit cast */
-	COERCE_IMPLICIT_CAST		/* implicit cast, so hide it */
+	COERCE_IMPLICIT_CAST,		/* implicit cast, so hide it */
+	COERCE_SQL_SYNTAX			/* display with SQL-mandated special syntax */
 } CoercionForm;
 
 /*

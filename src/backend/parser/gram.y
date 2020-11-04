@@ -490,7 +490,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	rowsfrom_item rowsfrom_list opt_col_def_list
 %type <boolean> opt_ordinality
 %type <list>	ExclusionConstraintList ExclusionConstraintElem
-%type <list>	func_arg_list
+%type <list>	func_arg_list func_arg_list_opt
 %type <node>	func_arg_expr
 %type <list>	row explicit_row implicit_row type_list array_expr_list
 %type <node>	case_expr case_arg when_clause case_default
@@ -12969,6 +12969,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					$$ = (Node *) makeFuncCall(SystemFuncName("timezone"),
 											   list_make2($5, $1),
+											   COERCE_SQL_SYNTAX,
 											   @2);
 				}
 		/*
@@ -13032,6 +13033,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2($3, $5),
+											   COERCE_EXPLICIT_CALL,
 											   @2);
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_LIKE, "~~",
 												   $1, (Node *) n, @2);
@@ -13045,6 +13047,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2($4, $6),
+											   COERCE_EXPLICIT_CALL,
 											   @2);
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_LIKE, "!~~",
 												   $1, (Node *) n, @2);
@@ -13058,6 +13061,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2($3, $5),
+											   COERCE_EXPLICIT_CALL,
 											   @2);
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_ILIKE, "~~*",
 												   $1, (Node *) n, @2);
@@ -13071,6 +13075,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2($4, $6),
+											   COERCE_EXPLICIT_CALL,
 											   @2);
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_ILIKE, "!~~*",
 												   $1, (Node *) n, @2);
@@ -13080,6 +13085,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_to_escape"),
 											   list_make1($4),
+											   COERCE_EXPLICIT_CALL,
 											   @2);
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "~",
 												   $1, (Node *) n, @2);
@@ -13088,6 +13094,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_to_escape"),
 											   list_make2($4, $6),
+											   COERCE_EXPLICIT_CALL,
 											   @2);
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "~",
 												   $1, (Node *) n, @2);
@@ -13096,6 +13103,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_to_escape"),
 											   list_make1($5),
+											   COERCE_EXPLICIT_CALL,
 											   @2);
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "!~",
 												   $1, (Node *) n, @2);
@@ -13104,6 +13112,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_to_escape"),
 											   list_make2($5, $7),
+											   COERCE_EXPLICIT_CALL,
 											   @2);
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "!~",
 												   $1, (Node *) n, @2);
@@ -13164,6 +13173,7 @@ a_expr:		c_expr									{ $$ = $1; }
 								 parser_errposition(@3)));
 					$$ = (Node *) makeFuncCall(SystemFuncName("overlaps"),
 											   list_concat($1, $3),
+											   COERCE_SQL_SYNTAX,
 											   @2);
 				}
 			| a_expr IS TRUE_P							%prec IS
@@ -13351,19 +13361,33 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| a_expr IS NORMALIZED								%prec IS
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("is_normalized"), list_make1($1), @2);
+					$$ = (Node *) makeFuncCall(SystemFuncName("is_normalized"),
+											   list_make1($1),
+											   COERCE_SQL_SYNTAX,
+											   @2);
 				}
 			| a_expr IS unicode_normal_form NORMALIZED			%prec IS
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("is_normalized"), list_make2($1, makeStringConst($3, @3)), @2);
+					$$ = (Node *) makeFuncCall(SystemFuncName("is_normalized"),
+											   list_make2($1, makeStringConst($3, @3)),
+											   COERCE_SQL_SYNTAX,
+											   @2);
 				}
 			| a_expr IS NOT NORMALIZED							%prec IS
 				{
-					$$ = makeNotExpr((Node *) makeFuncCall(SystemFuncName("is_normalized"), list_make1($1), @2), @2);
+					$$ = makeNotExpr((Node *) makeFuncCall(SystemFuncName("is_normalized"),
+														   list_make1($1),
+														   COERCE_SQL_SYNTAX,
+														   @2),
+									 @2);
 				}
 			| a_expr IS NOT unicode_normal_form NORMALIZED		%prec IS
 				{
-					$$ = makeNotExpr((Node *) makeFuncCall(SystemFuncName("is_normalized"), list_make2($1, makeStringConst($4, @4)), @2), @2);
+					$$ = makeNotExpr((Node *) makeFuncCall(SystemFuncName("is_normalized"),
+														   list_make2($1, makeStringConst($4, @4)),
+														   COERCE_SQL_SYNTAX,
+														   @2),
+									 @2);
 				}
 			| DEFAULT
 				{
@@ -13613,31 +13637,41 @@ c_expr:		columnref								{ $$ = $1; }
 
 func_application: func_name '(' ')'
 				{
-					$$ = (Node *) makeFuncCall($1, NIL, @1);
+					$$ = (Node *) makeFuncCall($1, NIL,
+											   COERCE_EXPLICIT_CALL,
+											   @1);
 				}
 			| func_name '(' func_arg_list opt_sort_clause ')'
 				{
-					FuncCall *n = makeFuncCall($1, $3, @1);
+					FuncCall *n = makeFuncCall($1, $3,
+											   COERCE_EXPLICIT_CALL,
+											   @1);
 					n->agg_order = $4;
 					$$ = (Node *)n;
 				}
 			| func_name '(' VARIADIC func_arg_expr opt_sort_clause ')'
 				{
-					FuncCall *n = makeFuncCall($1, list_make1($4), @1);
+					FuncCall *n = makeFuncCall($1, list_make1($4),
+											   COERCE_EXPLICIT_CALL,
+											   @1);
 					n->func_variadic = true;
 					n->agg_order = $5;
 					$$ = (Node *)n;
 				}
 			| func_name '(' func_arg_list ',' VARIADIC func_arg_expr opt_sort_clause ')'
 				{
-					FuncCall *n = makeFuncCall($1, lappend($3, $6), @1);
+					FuncCall *n = makeFuncCall($1, lappend($3, $6),
+											   COERCE_EXPLICIT_CALL,
+											   @1);
 					n->func_variadic = true;
 					n->agg_order = $7;
 					$$ = (Node *)n;
 				}
 			| func_name '(' ALL func_arg_list opt_sort_clause ')'
 				{
-					FuncCall *n = makeFuncCall($1, $4, @1);
+					FuncCall *n = makeFuncCall($1, $4,
+											   COERCE_EXPLICIT_CALL,
+											   @1);
 					n->agg_order = $5;
 					/* Ideally we'd mark the FuncCall node to indicate
 					 * "must be an aggregate", but there's no provision
@@ -13647,7 +13681,9 @@ func_application: func_name '(' ')'
 				}
 			| func_name '(' DISTINCT func_arg_list opt_sort_clause ')'
 				{
-					FuncCall *n = makeFuncCall($1, $4, @1);
+					FuncCall *n = makeFuncCall($1, $4,
+											   COERCE_EXPLICIT_CALL,
+											   @1);
 					n->agg_order = $5;
 					n->agg_distinct = true;
 					$$ = (Node *)n;
@@ -13664,7 +13700,9 @@ func_application: func_name '(' ')'
 					 * so that later processing can detect what the argument
 					 * really was.
 					 */
-					FuncCall *n = makeFuncCall($1, NIL, @1);
+					FuncCall *n = makeFuncCall($1, NIL,
+											   COERCE_EXPLICIT_CALL,
+											   @1);
 					n->agg_star = true;
 					$$ = (Node *)n;
 				}
@@ -13738,6 +13776,7 @@ func_expr_common_subexpr:
 				{
 					$$ = (Node *) makeFuncCall(SystemFuncName("pg_collation_for"),
 											   list_make1($4),
+											   COERCE_SQL_SYNTAX,
 											   @1);
 				}
 			| CURRENT_DATE
@@ -13804,31 +13843,77 @@ func_expr_common_subexpr:
 				{ $$ = makeTypeCast($3, $5, @1); }
 			| EXTRACT '(' extract_list ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("date_part"), $3, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("date_part"),
+											   $3,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| NORMALIZE '(' a_expr ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("normalize"), list_make1($3), @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("normalize"),
+											   list_make1($3),
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| NORMALIZE '(' a_expr ',' unicode_normal_form ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("normalize"), list_make2($3, makeStringConst($5, @5)), @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("normalize"),
+											   list_make2($3, makeStringConst($5, @5)),
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| OVERLAY '(' overlay_list ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("overlay"), $3, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("overlay"),
+											   $3,
+											   COERCE_SQL_SYNTAX,
+											   @1);
+				}
+			| OVERLAY '(' func_arg_list_opt ')'
+				{
+					/*
+					 * allow functions named overlay() to be called without
+					 * special syntax
+					 */
+					$$ = (Node *) makeFuncCall(list_make1(makeString("overlay")),
+											   $3,
+											   COERCE_EXPLICIT_CALL,
+											   @1);
 				}
 			| POSITION '(' position_list ')'
 				{
-					/* position(A in B) is converted to position(B, A) */
-					$$ = (Node *) makeFuncCall(SystemFuncName("position"), $3, @1);
+					/*
+					 * position(A in B) is converted to position(B, A)
+					 *
+					 * We deliberately don't offer a "plain syntax" option
+					 * for position(), because the reversal of the arguments
+					 * creates too much risk of confusion.
+					 */
+					$$ = (Node *) makeFuncCall(SystemFuncName("position"),
+											   $3,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| SUBSTRING '(' substr_list ')'
 				{
 					/* substring(A from B for C) is converted to
 					 * substring(A, B, C) - thomas 2000-11-28
 					 */
-					$$ = (Node *) makeFuncCall(SystemFuncName("substring"), $3, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("substring"),
+											   $3,
+											   COERCE_SQL_SYNTAX,
+											   @1);
+				}
+			| SUBSTRING '(' func_arg_list_opt ')'
+				{
+					/*
+					 * allow functions named substring() to be called without
+					 * special syntax
+					 */
+					$$ = (Node *) makeFuncCall(list_make1(makeString("substring")),
+											   $3,
+											   COERCE_EXPLICIT_CALL,
+											   @1);
 				}
 			| TREAT '(' a_expr AS Typename ')'
 				{
@@ -13841,28 +13926,41 @@ func_expr_common_subexpr:
 					 * Convert SystemTypeName() to SystemFuncName() even though
 					 * at the moment they result in the same thing.
 					 */
-					$$ = (Node *) makeFuncCall(SystemFuncName(((Value *)llast($5->names))->val.str),
-												list_make1($3),
-												@1);
+					$$ = (Node *) makeFuncCall(SystemFuncName(((Value *) llast($5->names))->val.str),
+											   list_make1($3),
+											   COERCE_EXPLICIT_CALL,
+											   @1);
 				}
 			| TRIM '(' BOTH trim_list ')'
 				{
 					/* various trim expressions are defined in SQL
 					 * - thomas 1997-07-19
 					 */
-					$$ = (Node *) makeFuncCall(SystemFuncName("btrim"), $4, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("btrim"),
+											   $4,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| TRIM '(' LEADING trim_list ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("ltrim"), $4, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("ltrim"),
+											   $4,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| TRIM '(' TRAILING trim_list ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("rtrim"), $4, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("rtrim"),
+											   $4,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| TRIM '(' trim_list ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("btrim"), $3, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("btrim"),
+											   $3,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| NULLIF '(' a_expr ',' a_expr ')'
 				{
@@ -13915,7 +14013,10 @@ func_expr_common_subexpr:
 				{
 					/* xmlexists(A PASSING [BY REF] B [BY REF]) is
 					 * converted to xmlexists(A, B)*/
-					$$ = (Node *) makeFuncCall(SystemFuncName("xmlexists"), list_make2($3, $4), @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("xmlexists"),
+											   list_make2($3, $4),
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| XMLFOREST '(' xml_attribute_list ')'
 				{
@@ -14399,6 +14500,10 @@ func_arg_expr:  a_expr
 				}
 		;
 
+func_arg_list_opt:	func_arg_list					{ $$ = $1; }
+			| /*EMPTY*/								{ $$ = NIL; }
+		;
+
 type_list:	Typename								{ $$ = list_make1($1); }
 			| type_list ',' Typename				{ $$ = lappend($1, $3); }
 		;
@@ -14427,7 +14532,6 @@ extract_list:
 				{
 					$$ = list_make2(makeStringConst($1, @1), $3);
 				}
-			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 /* Allow delimited string Sconst in extract_arg as an SQL extension.
@@ -14445,10 +14549,10 @@ extract_arg:
 		;
 
 unicode_normal_form:
-			NFC										{ $$ = "nfc"; }
-			| NFD									{ $$ = "nfd"; }
-			| NFKC									{ $$ = "nfkc"; }
-			| NFKD									{ $$ = "nfkd"; }
+			NFC										{ $$ = "NFC"; }
+			| NFD									{ $$ = "NFD"; }
+			| NFKC									{ $$ = "NFKC"; }
+			| NFKD									{ $$ = "NFKD"; }
 		;
 
 /* OVERLAY() arguments */
@@ -14468,29 +14572,24 @@ overlay_list:
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
 position_list:
 			b_expr IN_P b_expr						{ $$ = list_make2($3, $1); }
-			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 /*
  * SUBSTRING() arguments
  *
  * Note that SQL:1999 has both
- *
  *     text FROM int FOR int
- *
  * and
- *
  *     text FROM pattern FOR escape
  *
  * In the parser we map them both to a call to the substring() function and
  * rely on type resolution to pick the right one.
  *
  * In SQL:2003, the second variant was changed to
- *
  *     text SIMILAR pattern ESCAPE escape
- *
  * We could in theory map that to a different function internally, but
- * since we still support the SQL:1999 version, we don't.
+ * since we still support the SQL:1999 version, we don't.  However,
+ * ruleutils.c will reverse-list the call in the newer style.
  */
 substr_list:
 			a_expr FROM a_expr FOR a_expr
@@ -14504,6 +14603,13 @@ substr_list:
 				}
 			| a_expr FROM a_expr
 				{
+					/*
+					 * Because we aren't restricting data types here, this
+					 * syntax can end up resolving to textregexsubstr().
+					 * We've historically allowed that to happen, so continue
+					 * to accept it.  However, ruleutils.c will reverse-list
+					 * such a call in regular function call syntax.
+					 */
 					$$ = list_make2($1, $3);
 				}
 			| a_expr FOR a_expr
@@ -14527,16 +14633,6 @@ substr_list:
 				{
 					$$ = list_make3($1, $3, $5);
 				}
-			/*
-			 * We also want to support generic substring functions that
-			 * accept the usual generic list of arguments.
-			 */
-			| expr_list
-				{
-					$$ = $1;
-				}
-			| /*EMPTY*/
-				{ $$ = NIL; }
 		;
 
 trim_list:	a_expr FROM expr_list					{ $$ = lappend($3, $1); }

@@ -604,6 +604,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		castnode->location = -1;
 		funccallnode = makeFuncCall(SystemFuncName("nextval"),
 									list_make1(castnode),
+									COERCE_EXPLICIT_CALL,
 									-1);
 		constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_DEFAULT;
