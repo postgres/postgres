@@ -20,12 +20,11 @@ LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
 OBJS = \
 	$(WIN32RES) \
-	copy_fetch.o \
 	datapagemap.o \
-	fetch.o \
 	file_ops.o \
 	filemap.o \
-	libpq_fetch.o \
+	libpq_source.o \
+	local_source.o \
 	parsexlog.o \
 	pg_rewind.o \
 	timeline.o \

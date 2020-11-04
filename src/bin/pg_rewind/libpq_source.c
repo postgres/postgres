@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
- * libpq_fetch.c
- *	  Functions for fetching files from a remote server.
+ * libpq_source.c
+ *	  Functions for fetching files from a remote server via libpq.
  *
  * Copyright (c) 2013-2020, PostgreSQL Global Development Group
  *
@@ -9,21 +9,14 @@
  */
 #include "postgres_fe.h"
 
-#include <sys/stat.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "catalog/pg_type_d.h"
 #include "common/connect.h"
 #include "datapagemap.h"
-#include "fetch.h"
 #include "file_ops.h"
 #include "filemap.h"
 #include "pg_rewind.h"
 #include "port/pg_bswap.h"
-
-PGconn	   *conn = NULL;
+#include "rewind_source.h"
 
 /*
  * Files are fetched max CHUNKSIZE bytes at a time.
@@ -34,30 +27,71 @@ PGconn	   *conn = NULL;
  */
 #define CHUNKSIZE 1000000
 
-static void receiveFileChunks(const char *sql);
-static void execute_pagemap(datapagemap_t *pagemap, const char *path);
-static char *run_simple_query(const char *sql);
-static void run_simple_command(const char *sql);
-
-void
-libpqConnect(const char *connstr)
+typedef struct
 {
-	char	   *str;
+	rewind_source common;		/* common interface functions */
+
+	PGconn	   *conn;
+	bool		copy_started;
+} libpq_source;
+
+static void init_libpq_conn(PGconn *conn);
+static char *run_simple_query(PGconn *conn, const char *sql);
+static void run_simple_command(PGconn *conn, const char *sql);
+
+/* public interface functions */
+static void libpq_traverse_files(rewind_source *source,
+								 process_file_callback_t callback);
+static void libpq_queue_fetch_range(rewind_source *source, const char *path,
+									off_t off, size_t len);
+static void libpq_finish_fetch(rewind_source *source);
+static char *libpq_fetch_file(rewind_source *source, const char *path,
+							  size_t *filesize);
+static XLogRecPtr libpq_get_current_wal_insert_lsn(rewind_source *source);
+static void libpq_destroy(rewind_source *source);
+
+/*
+ * Create a new libpq source.
+ *
+ * The caller has already established the connection, but should not try
+ * to use it while the source is active.
+ */
+rewind_source *
+init_libpq_source(PGconn *conn)
+{
+	libpq_source *src;
+
+	init_libpq_conn(conn);
+
+	src = pg_malloc0(sizeof(libpq_source));
+
+	src->common.traverse_files = libpq_traverse_files;
+	src->common.fetch_file = libpq_fetch_file;
+	src->common.queue_fetch_range = libpq_queue_fetch_range;
+	src->common.finish_fetch = libpq_finish_fetch;
+	src->common.get_current_wal_insert_lsn = libpq_get_current_wal_insert_lsn;
+	src->common.destroy = libpq_destroy;
+
+	src->conn = conn;
+
+	return &src->common;
+}
+
+/*
+ * Initialize a libpq connection for use.
+ */
+static void
+init_libpq_conn(PGconn *conn)
+{
 	PGresult   *res;
-
-	conn = PQconnectdb(connstr);
-	if (PQstatus(conn) == CONNECTION_BAD)
-		pg_fatal("could not connect to server: %s",
-				 PQerrorMessage(conn));
-
-	if (showprogress)
-		pg_log_info("connected to server");
+	char	   *str;
 
 	/* disable all types of timeouts */
-	run_simple_command("SET statement_timeout = 0");
-	run_simple_command("SET lock_timeout = 0");
-	run_simple_command("SET idle_in_transaction_session_timeout = 0");
+	run_simple_command(conn, "SET statement_timeout = 0");
+	run_simple_command(conn, "SET lock_timeout = 0");
+	run_simple_command(conn, "SET idle_in_transaction_session_timeout = 0");
 
+	/* secure search_path */
 	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("could not clear search_path: %s",
@@ -70,7 +104,7 @@ libpqConnect(const char *connstr)
 	 * currently because we use a temporary table. Better to check for it
 	 * explicitly than error out, for a better error message.
 	 */
-	str = run_simple_query("SELECT pg_is_in_recovery()");
+	str = run_simple_query(conn, "SELECT pg_is_in_recovery()");
 	if (strcmp(str, "f") != 0)
 		pg_fatal("source server must not be in recovery mode");
 	pg_free(str);
@@ -80,27 +114,19 @@ libpqConnect(const char *connstr)
 	 * a page is modified while we read it with pg_read_binary_file(), and we
 	 * rely on full page images to fix them.
 	 */
-	str = run_simple_query("SHOW full_page_writes");
+	str = run_simple_query(conn, "SHOW full_page_writes");
 	if (strcmp(str, "on") != 0)
 		pg_fatal("full_page_writes must be enabled in the source server");
 	pg_free(str);
-
-	/*
-	 * Although we don't do any "real" updates, we do work with a temporary
-	 * table. We don't care about synchronous commit for that. It doesn't
-	 * otherwise matter much, but if the server is using synchronous
-	 * replication, and replication isn't working for some reason, we don't
-	 * want to get stuck, waiting for it to start working again.
-	 */
-	run_simple_command("SET synchronous_commit = off");
 }
 
 /*
- * Runs a query that returns a single value.
+ * Run a query that returns a single value.
+ *
  * The result should be pg_free'd after use.
  */
 static char *
-run_simple_query(const char *sql)
+run_simple_query(PGconn *conn, const char *sql)
 {
 	PGresult   *res;
 	char	   *result;
@@ -123,11 +149,12 @@ run_simple_query(const char *sql)
 }
 
 /*
- * Runs a command.
+ * Run a command.
+ *
  * In the event of a failure, exit immediately.
  */
 static void
-run_simple_command(const char *sql)
+run_simple_command(PGconn *conn, const char *sql)
 {
 	PGresult   *res;
 
@@ -141,17 +168,18 @@ run_simple_command(const char *sql)
 }
 
 /*
- * Calls pg_current_wal_insert_lsn() function
+ * Call the pg_current_wal_insert_lsn() function in the remote system.
  */
-XLogRecPtr
-libpqGetCurrentXlogInsertLocation(void)
+static XLogRecPtr
+libpq_get_current_wal_insert_lsn(rewind_source *source)
 {
+	PGconn	   *conn = ((libpq_source *) source)->conn;
 	XLogRecPtr	result;
 	uint32		hi;
 	uint32		lo;
 	char	   *val;
 
-	val = run_simple_query("SELECT pg_current_wal_insert_lsn()");
+	val = run_simple_query(conn, "SELECT pg_current_wal_insert_lsn()");
 
 	if (sscanf(val, "%X/%X", &hi, &lo) != 2)
 		pg_fatal("unrecognized result \"%s\" for current WAL insert location", val);
@@ -166,9 +194,10 @@ libpqGetCurrentXlogInsertLocation(void)
 /*
  * Get a list of all files in the data directory.
  */
-void
-libpqProcessFileList(void)
+static void
+libpq_traverse_files(rewind_source *source, process_file_callback_t callback)
 {
+	PGconn	   *conn = ((libpq_source *) source)->conn;
 	PGresult   *res;
 	const char *sql;
 	int			i;
@@ -246,30 +275,114 @@ libpqProcessFileList(void)
 	PQclear(res);
 }
 
-/*----
- * Runs a query, which returns pieces of files from the remote source data
- * directory, and overwrites the corresponding parts of target files with
- * the received parts. The result set is expected to be of format:
- *
- * path		text	-- path in the data directory, e.g "base/1/123"
- * begin	int8	-- offset within the file
- * chunk	bytea	-- file content
- *----
+/*
+ * Queue up a request to fetch a piece of a file from remote system.
  */
 static void
-receiveFileChunks(const char *sql)
+libpq_queue_fetch_range(rewind_source *source, const char *path, off_t off,
+						size_t len)
 {
-	PGresult   *res;
+	libpq_source *src = (libpq_source *) source;
+	uint64		begin = off;
+	uint64		end = off + len;
 
-	if (PQsendQueryParams(conn, sql, 0, NULL, NULL, NULL, NULL, 1) != 1)
-		pg_fatal("could not send query: %s", PQerrorMessage(conn));
+	/*
+	 * On first call, create a temporary table, and start COPYing to it.
+	 * We will load it with the list of blocks that we need to fetch.
+	 */
+	if (!src->copy_started)
+	{
+		PGresult   *res;
+
+		run_simple_command(src->conn, "CREATE TEMPORARY TABLE fetchchunks(path text, begin int8, len int4)");
+
+		res = PQexec(src->conn, "COPY fetchchunks FROM STDIN");
+		if (PQresultStatus(res) != PGRES_COPY_IN)
+			pg_fatal("could not send file list: %s",
+					 PQresultErrorMessage(res));
+		PQclear(res);
+
+		src->copy_started = true;
+	}
+
+	/*
+	 * Write the file range to a temporary table in the server.
+	 *
+	 * The range is sent to the server as a COPY formatted line, to be inserted
+	 * into the 'fetchchunks' temporary table. The libpq_finish_fetch() uses
+	 * the temporary table to actually fetch the data.
+	 */
+
+	/* Split the range into CHUNKSIZE chunks */
+	while (end - begin > 0)
+	{
+		char		linebuf[MAXPGPATH + 23];
+		unsigned int len;
+
+		/* Fine as long as CHUNKSIZE is not bigger than UINT32_MAX */
+		if (end - begin > CHUNKSIZE)
+			len = CHUNKSIZE;
+		else
+			len = (unsigned int) (end - begin);
+
+		snprintf(linebuf, sizeof(linebuf), "%s\t" UINT64_FORMAT "\t%u\n", path, begin, len);
+
+		if (PQputCopyData(src->conn, linebuf, strlen(linebuf)) != 1)
+			pg_fatal("could not send COPY data: %s",
+					 PQerrorMessage(src->conn));
+
+		begin += len;
+	}
+}
+
+/*
+ * Receive all the queued chunks and write them to the target data directory.
+ */
+static void
+libpq_finish_fetch(rewind_source *source)
+{
+	libpq_source *src = (libpq_source *) source;
+	PGresult   *res;
+	const char *sql;
+
+	if (PQputCopyEnd(src->conn, NULL) != 1)
+		pg_fatal("could not send end-of-COPY: %s",
+				 PQerrorMessage(src->conn));
+
+	while ((res = PQgetResult(src->conn)) != NULL)
+	{
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+			pg_fatal("unexpected result while sending file list: %s",
+					 PQresultErrorMessage(res));
+		PQclear(res);
+	}
+
+	/*
+	 * We've now copied the list of file ranges that we need to fetch to the
+	 * temporary table. Now, actually fetch all of those ranges.
+	 */
+	sql =
+		"SELECT path, begin,\n"
+		"  pg_read_binary_file(path, begin, len, true) AS chunk\n"
+		"FROM fetchchunks\n";
+
+	if (PQsendQueryParams(src->conn, sql, 0, NULL, NULL, NULL, NULL, 1) != 1)
+		pg_fatal("could not send query: %s", PQerrorMessage(src->conn));
 
 	pg_log_debug("getting file chunks");
 
-	if (PQsetSingleRowMode(conn) != 1)
+	if (PQsetSingleRowMode(src->conn) != 1)
 		pg_fatal("could not set libpq connection to single row mode");
 
-	while ((res = PQgetResult(conn)) != NULL)
+	/*----
+	 * The result set is of format:
+	 *
+	 * path		text	-- path in the data directory, e.g "base/1/123"
+	 * begin	int8	-- offset within the file
+	 * chunk	bytea	-- file content
+	 *----
+	 */
+	while ((res = PQgetResult(src->conn)) != NULL)
 	{
 		char	   *filename;
 		int			filenamelen;
@@ -349,8 +462,8 @@ receiveFileChunks(const char *sql)
 			continue;
 		}
 
-		pg_log_debug("received chunk for file \"%s\", offset %lld, size %d",
-					 filename, (long long int) chunkoff, chunksize);
+		pg_log_debug("received chunk for file \"%s\", offset " INT64_FORMAT ", size %d",
+					 filename, chunkoff, chunksize);
 
 		open_target_file(filename, false);
 
@@ -363,28 +476,29 @@ receiveFileChunks(const char *sql)
 }
 
 /*
- * Receive a single file as a malloc'd buffer.
+ * Fetch a single file as a malloc'd buffer.
  */
-char *
-libpqGetFile(const char *filename, size_t *filesize)
+static char *
+libpq_fetch_file(rewind_source *source, const char *path, size_t *filesize)
 {
+	PGconn	   *conn = ((libpq_source *) source)->conn;
 	PGresult   *res;
 	char	   *result;
 	int			len;
 	const char *paramValues[1];
 
-	paramValues[0] = filename;
+	paramValues[0] = path;
 	res = PQexecParams(conn, "SELECT pg_read_binary_file($1)",
 					   1, NULL, paramValues, NULL, NULL, 1);
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("could not fetch remote file \"%s\": %s",
-				 filename, PQresultErrorMessage(res));
+				 path, PQresultErrorMessage(res));
 
 	/* sanity check the result set */
 	if (PQntuples(res) != 1 || PQgetisnull(res, 0, 0))
 		pg_fatal("unexpected result set while fetching remote file \"%s\"",
-				 filename);
+				 path);
 
 	/* Read result to local variables */
 	len = PQgetlength(res, 0, 0);
@@ -394,7 +508,7 @@ libpqGetFile(const char *filename, size_t *filesize)
 
 	PQclear(res);
 
-	pg_log_debug("fetched file \"%s\", length %d", filename, len);
+	pg_log_debug("fetched file \"%s\", length %d", path, len);
 
 	if (filesize)
 		*filesize = len;
@@ -402,142 +516,11 @@ libpqGetFile(const char *filename, size_t *filesize)
 }
 
 /*
- * Write a file range to a temporary table in the server.
- *
- * The range is sent to the server as a COPY formatted line, to be inserted
- * into the 'fetchchunks' temporary table. It is used in receiveFileChunks()
- * function to actually fetch the data.
+ * Close a libpq source.
  */
 static void
-fetch_file_range(const char *path, uint64 begin, uint64 end)
+libpq_destroy(rewind_source *source)
 {
-	char		linebuf[MAXPGPATH + 23];
-
-	/* Split the range into CHUNKSIZE chunks */
-	while (end - begin > 0)
-	{
-		unsigned int len;
-
-		/* Fine as long as CHUNKSIZE is not bigger than UINT32_MAX */
-		if (end - begin > CHUNKSIZE)
-			len = CHUNKSIZE;
-		else
-			len = (unsigned int) (end - begin);
-
-		snprintf(linebuf, sizeof(linebuf), "%s\t" UINT64_FORMAT "\t%u\n", path, begin, len);
-
-		if (PQputCopyData(conn, linebuf, strlen(linebuf)) != 1)
-			pg_fatal("could not send COPY data: %s",
-					 PQerrorMessage(conn));
-
-		begin += len;
-	}
-}
-
-/*
- * Fetch all changed blocks from remote source data directory.
- */
-void
-libpq_executeFileMap(filemap_t *map)
-{
-	file_entry_t *entry;
-	const char *sql;
-	PGresult   *res;
-	int			i;
-
-	/*
-	 * First create a temporary table, and load it with the blocks that we
-	 * need to fetch.
-	 */
-	sql = "CREATE TEMPORARY TABLE fetchchunks(path text, begin int8, len int4);";
-	run_simple_command(sql);
-
-	sql = "COPY fetchchunks FROM STDIN";
-	res = PQexec(conn, sql);
-
-	if (PQresultStatus(res) != PGRES_COPY_IN)
-		pg_fatal("could not send file list: %s",
-				 PQresultErrorMessage(res));
-	PQclear(res);
-
-	for (i = 0; i < map->nentries; i++)
-	{
-		entry = map->entries[i];
-
-		/* If this is a relation file, copy the modified blocks */
-		execute_pagemap(&entry->target_pages_to_overwrite, entry->path);
-
-		switch (entry->action)
-		{
-			case FILE_ACTION_NONE:
-				/* nothing else to do */
-				break;
-
-			case FILE_ACTION_COPY:
-				/* Truncate the old file out of the way, if any */
-				open_target_file(entry->path, true);
-				fetch_file_range(entry->path, 0, entry->source_size);
-				break;
-
-			case FILE_ACTION_TRUNCATE:
-				truncate_target_file(entry->path, entry->source_size);
-				break;
-
-			case FILE_ACTION_COPY_TAIL:
-				fetch_file_range(entry->path, entry->target_size, entry->source_size);
-				break;
-
-			case FILE_ACTION_REMOVE:
-				remove_target(entry);
-				break;
-
-			case FILE_ACTION_CREATE:
-				create_target(entry);
-				break;
-
-			case FILE_ACTION_UNDECIDED:
-				pg_fatal("no action decided for \"%s\"", entry->path);
-				break;
-		}
-	}
-
-	if (PQputCopyEnd(conn, NULL) != 1)
-		pg_fatal("could not send end-of-COPY: %s",
-				 PQerrorMessage(conn));
-
-	while ((res = PQgetResult(conn)) != NULL)
-	{
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			pg_fatal("unexpected result while sending file list: %s",
-					 PQresultErrorMessage(res));
-		PQclear(res);
-	}
-
-	/*
-	 * We've now copied the list of file ranges that we need to fetch to the
-	 * temporary table. Now, actually fetch all of those ranges.
-	 */
-	sql =
-		"SELECT path, begin,\n"
-		"  pg_read_binary_file(path, begin, len, true) AS chunk\n"
-		"FROM fetchchunks\n";
-
-	receiveFileChunks(sql);
-}
-
-static void
-execute_pagemap(datapagemap_t *pagemap, const char *path)
-{
-	datapagemap_iterator_t *iter;
-	BlockNumber blkno;
-	off_t		offset;
-
-	iter = datapagemap_iterate(pagemap);
-	while (datapagemap_next(iter, &blkno))
-	{
-		offset = blkno * BLCKSZ;
-
-		fetch_file_range(path, offset, offset + BLCKSZ);
-	}
-	pg_free(iter);
+	pfree(source);
+	/* NOTE: we don't close the connection here, as it was not opened by us. */
 }

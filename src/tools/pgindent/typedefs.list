@@ -2956,9 +2956,11 @@ f_smgr
 fd_set
 fe_scram_state
 fe_scram_state_enum
+fetch_range_request
 file_action_t
 file_entry_t
 file_type_t
+filehash_hash
 filemap_t
 fill_string_relopt
 finalize_primnode_context
@@ -3084,11 +3086,13 @@ lclContext
 lclTocEntry
 leafSegmentInfo
 leaf_item
+libpq_source
 line_t
 lineno_t
 list_sort_comparator
 local_relopt
 local_relopts
+local_source
 locale_t
 locate_agg_of_level_context
 locate_var_of_level_context
@@ -3312,6 +3316,7 @@ rendezvousHashEntry
 replace_rte_variables_callback
 replace_rte_variables_context
 ret_type
+rewind_source
 rewrite_event
 rijndael_ctx
 rm_detail_t
