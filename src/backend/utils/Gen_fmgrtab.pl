@@ -75,6 +75,7 @@ foreach my $row (@{ $catalog_data{pg_proc} })
 		oid    => $bki_values{oid},
 		name   => $bki_values{proname},
 		lang   => $bki_values{prolang},
+		kind   => $bki_values{prokind},
 		strict => $bki_values{proisstrict},
 		retset => $bki_values{proretset},
 		nargs  => $bki_values{pronargs},
@@ -195,8 +196,10 @@ foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 	$sqlname .= "_" . $s->{args} if ($proname_counts{ $s->{name} } > 1);
 	$sqlname =~ s/\s+/_/g;
 	print $ofh "#define F_" . uc $sqlname . " $s->{oid}\n";
-	# We want only one extern per internal-language function
-	if ($s->{lang} eq 'internal' && !$seenit{ $s->{prosrc} })
+	# We want only one extern per internal-language, non-aggregate function
+	if (   $s->{lang} eq 'internal'
+		&& $s->{kind} ne 'a'
+		&& !$seenit{ $s->{prosrc} })
 	{
 		$seenit{ $s->{prosrc} } = 1;
 		print $pfh "extern Datum $s->{prosrc}(PG_FUNCTION_ARGS);\n";
@@ -214,6 +217,8 @@ my $fmgr_count       = 0;
 foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 {
 	next if $s->{lang} ne 'internal';
+	# We do not need entries for aggregate functions
+	next if $s->{kind} eq 'a';
 
 	print $tfh ",\n" if ($fmgr_count > 0);
 	print $tfh

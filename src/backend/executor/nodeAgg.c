@@ -4935,24 +4935,6 @@ AggRegisterCallback(FunctionCallInfo fcinfo,
 }
 
 
-/*
- * aggregate_dummy - dummy execution routine for aggregate functions
- *
- * This function is listed as the implementation (prosrc field) of pg_proc
- * entries for aggregate functions.  Its only purpose is to throw an error
- * if someone mistakenly executes such a function in the normal way.
- *
- * Perhaps someday we could assign real meaning to the prosrc field of
- * an aggregate?
- */
-Datum
-aggregate_dummy(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "aggregate function %u called as normal function",
-		 fcinfo->flinfo->fn_oid);
-	return (Datum) 0;			/* keep compiler quiet */
-}
-
 /* ----------------------------------------------------------------
  *						Parallel Query Support
  * ----------------------------------------------------------------
