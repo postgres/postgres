@@ -124,16 +124,14 @@ select relname from pg_locks l, pg_class c
 (2 rows)
 
 ROLLBACK;
--- detecting infinite recursions in view definitions
+-- Verify that we cope with infinite recursion in view definitions.
 CREATE OR REPLACE VIEW lock_view2 AS SELECT * from lock_view3;
 BEGIN TRANSACTION;
 LOCK TABLE lock_view2 IN EXCLUSIVE MODE;
-ERROR:  infinite recursion detected in rules for relation "lock_view2"
 ROLLBACK;
 CREATE VIEW lock_view7 AS SELECT * from lock_view2;
 BEGIN TRANSACTION;
 LOCK TABLE lock_view7 IN EXCLUSIVE MODE;
-ERROR:  infinite recursion detected in rules for relation "lock_view2"
 ROLLBACK;
 -- Verify that we can lock a table with inheritance children.
 CREATE TABLE lock_tbl2 (b BIGINT) INHERITS (lock_tbl1);
