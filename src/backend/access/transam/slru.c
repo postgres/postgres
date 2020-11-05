@@ -145,7 +145,7 @@ static int	SlruSelectLRUPage(SlruCtl ctl, int pageno);
 
 static bool SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename,
 									  int segpage, void *data);
-static void SlruInternalDeleteSegment(SlruCtl ctl, char *filename);
+static void SlruInternalDeleteSegment(SlruCtl ctl, int segno);
 
 /*
  * Initialization of shared memory
@@ -1298,19 +1298,28 @@ restart:;
 }
 
 /*
- * Delete an individual SLRU segment, identified by the filename.
+ * Delete an individual SLRU segment.
  *
  * NB: This does not touch the SLRU buffers themselves, callers have to ensure
  * they either can't yet contain anything, or have already been cleaned out.
  */
 static void
-SlruInternalDeleteSegment(SlruCtl ctl, char *filename)
+SlruInternalDeleteSegment(SlruCtl ctl, int segno)
 {
 	char		path[MAXPGPATH];
 
-	snprintf(path, MAXPGPATH, "%s/%s", ctl->Dir, filename);
-	ereport(DEBUG2,
-			(errmsg("removing file \"%s\"", path)));
+	/* Forget any fsync requests queued for this segment. */
+	if (ctl->sync_handler != SYNC_HANDLER_NONE)
+	{
+		FileTag		tag;
+
+		INIT_SLRUFILETAG(tag, ctl->sync_handler, segno);
+		RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true);
+	}
+
+	/* Unlink the file. */
+	SlruFileName(ctl, path, segno);
+	ereport(DEBUG2, (errmsg("removing file \"%s\"", path)));
 	unlink(path);
 }
 
@@ -1322,7 +1331,6 @@ SlruDeleteSegment(SlruCtl ctl, int segno)
 {
 	SlruShared	shared = ctl->shared;
 	int			slotno;
-	char		path[MAXPGPATH];
 	bool		did_write;
 
 	/* Clean out any possibly existing references to the segment. */
@@ -1364,23 +1372,7 @@ restart:
 	if (did_write)
 		goto restart;
 
-	snprintf(path, MAXPGPATH, "%s/%04X", ctl->Dir, segno);
-	ereport(DEBUG2,
-			(errmsg("removing file \"%s\"", path)));
-
-	/*
-	 * Tell the checkpointer to forget any sync requests, before we unlink the
-	 * file.
-	 */
-	if (ctl->sync_handler != SYNC_HANDLER_NONE)
-	{
-		FileTag		tag;
-
-		INIT_SLRUFILETAG(tag, ctl->sync_handler, segno);
-		RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true);
-	}
-
-	unlink(path);
+	SlruInternalDeleteSegment(ctl, segno);
 
 	LWLockRelease(shared->ControlLock);
 }
@@ -1413,7 +1405,7 @@ SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
 	int			cutoffPage = *(int *) data;
 
 	if (ctl->PagePrecedes(segpage, cutoffPage))
-		SlruInternalDeleteSegment(ctl, filename);
+		SlruInternalDeleteSegment(ctl, segpage / SLRU_PAGES_PER_SEGMENT);
 
 	return false;				/* keep going */
 }
@@ -1425,7 +1417,7 @@ SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
 bool
 SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int segpage, void *data)
 {
-	SlruInternalDeleteSegment(ctl, filename);
+	SlruInternalDeleteSegment(ctl, segpage / SLRU_PAGES_PER_SEGMENT);
 
 	return false;				/* keep going */
 }
