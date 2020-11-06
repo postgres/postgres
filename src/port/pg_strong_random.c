@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#ifdef USE_OPENSSL
+#ifdef USE_OPENSSL_RANDOM
 #include <openssl/rand.h>
 #endif
 #ifdef USE_WIN32_RANDOM
@@ -74,6 +74,50 @@ random_from_file(const char *filename, void *buf, size_t len)
 	return true;
 }
 #endif
+
+/*
+ * pg_strong_random_init
+ *
+ * Initialize the randomness state of "strong" random numbers.  This is invoked
+ * *after* forking a process, and should include initialization steps specific
+ * to the chosen random source to prove fork-safety.
+ */
+void
+pg_strong_random_init(void)
+{
+#if defined(USE_OPENSSL)
+	/*
+	 * Make sure processes do not share OpenSSL randomness state. We need to
+	 * call this even if pg_strong_random is implemented using another source
+	 * for random numbers to ensure fork-safety in our TLS backend.  This is no
+	 * longer required in OpenSSL 1.1.1 and later versions, but until we drop
+	 * support for version < 1.1.1 we need to do this.
+	*/
+	RAND_poll();
+#endif
+
+#if defined(USE_OPENSSL_RANDOM)
+	/*
+	 * In case the backend is using the PRNG from OpenSSL without being built
+	 * with support for OpenSSL, make sure to perform post-fork initialization.
+	 * If the backend is using OpenSSL then we have already performed this
+	 * step. The same version caveat as discussed in the comment above applies
+	 * here as well.
+	 */
+#ifndef USE_OPENSSL
+	RAND_poll();
+#endif
+
+#elif defined(USE_WIN32_RANDOM)
+	/* no initialization needed for WIN32 */
+
+#elif defined(USE_DEV_URANDOM)
+	/* no initialization needed for /dev/urandom */
+
+#else
+#error no source of random numbers configured
+#endif
+}
 
 /*
  * pg_strong_random

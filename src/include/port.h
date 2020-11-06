@@ -513,6 +513,7 @@ extern char *pg_inet_net_ntop(int af, const void *src, int bits,
 							  char *dst, size_t size);
 
 /* port/pg_strong_random.c */
+extern void pg_strong_random_init(void);
 extern bool pg_strong_random(void *buf, size_t len);
 
 /*

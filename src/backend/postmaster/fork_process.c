@@ -16,9 +16,6 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
-#ifdef USE_OPENSSL
-#include <openssl/rand.h>
-#endif
 
 #include "postmaster/fork_process.h"
 
@@ -108,14 +105,8 @@ fork_process(void)
 			}
 		}
 
-		/*
-		 * Make sure processes do not share OpenSSL randomness state. This is
-		 * no longer required in OpenSSL 1.1.1 and later versions, but until
-		 * we drop support for version < 1.1.1 we need to do this.
-		 */
-#ifdef USE_OPENSSL
-		RAND_poll();
-#endif
+		/* do post-fork initialization for random number generation */
+		pg_strong_random_init();
 	}
 
 	return result;
