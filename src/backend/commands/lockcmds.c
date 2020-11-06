@@ -95,6 +95,14 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 		return;					/* woops, concurrently dropped; no permissions
 								 * check */
 
+	/* Currently, we only allow plain tables or views to be locked */
+	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE &&
+		relkind != RELKIND_VIEW)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table or view",
+						rv->relname)));
+
 	/*
 	 * Make note if a temporary relation has been accessed in this
 	 * transaction.
@@ -201,13 +209,11 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 		foreach(rtable, query->rtable)
 		{
 			RangeTblEntry *rte = lfirst(rtable);
-			Oid			relid;
 			AclResult	aclresult;
 
-			/* ignore all non-relation RTEs */
-			if (rte->rtekind != RTE_RELATION)
-				continue;
-			relid = rte->relid;
+			Oid			relid = rte->relid;
+			char		relkind = rte->relkind;
+			char	   *relname = get_rel_name(relid);
 
 			/*
 			 * The OLD and NEW placeholder entries in the view's rtable are
@@ -216,6 +222,11 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 			if (relid == context->viewoid &&
 				(strcmp(rte->eref->aliasname, "old") == 0 ||
 				 strcmp(rte->eref->aliasname, "new") == 0))
+				continue;
+
+			/* Currently, we only allow plain tables or views to be locked. */
+			if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE &&
+				relkind != RELKIND_VIEW)
 				continue;
 
 			/*
@@ -228,8 +239,7 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 			/* Check permissions with the view owner's privilege. */
 			aclresult = LockTableAclCheck(relid, context->lockmode, context->viewowner);
 			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, get_relkind_objtype(rte->relkind),
-							   get_rel_name(relid));
+				aclcheck_error(aclresult, get_relkind_objtype(relkind), relname);
 
 			/* We have enough rights to lock the relation; do so. */
 			if (!context->nowait)
@@ -238,9 +248,9 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 				ereport(ERROR,
 						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 						 errmsg("could not obtain lock on relation \"%s\"",
-								get_rel_name(relid))));
+								relname)));
 
-			if (rte->relkind == RELKIND_VIEW)
+			if (relkind == RELKIND_VIEW)
 				LockViewRecurse(relid, context->lockmode, context->nowait,
 								context->ancestor_views);
 			else if (rte->inh)
