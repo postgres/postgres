@@ -35,6 +35,7 @@
 #include "access/brin_tuple.h"
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
+#include "access/tuptoaster.h"
 #include "utils/datum.h"
 #include "utils/memutils.h"
 
@@ -100,6 +101,12 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 	Size		len,
 				hoff,
 				data_len;
+	int			i;
+
+#ifdef TOAST_INDEX_HACK
+	Datum	   *untoasted_values;
+	int			nuntoasted = 0;
+#endif
 
 	Assert(brdesc->bd_totalstored > 0);
 
@@ -107,6 +114,10 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 	nulls = (bool *) palloc0(sizeof(bool) * brdesc->bd_totalstored);
 	phony_nullbitmap = (bits8 *)
 		palloc(sizeof(bits8) * BITMAPLEN(brdesc->bd_totalstored));
+
+#ifdef TOAST_INDEX_HACK
+	untoasted_values = (Datum *) palloc(sizeof(Datum) * brdesc->bd_totalstored);
+#endif
 
 	/*
 	 * Set up the values/nulls arrays for heap_fill_tuple
@@ -139,10 +150,83 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 		if (tuple->bt_columns[keyno].bv_hasnulls)
 			anynulls = true;
 
+		/*
+		 * Now obtain the values of each stored datum.  Note that some values
+		 * might be toasted, and we cannot rely on the original heap values
+		 * sticking around forever, so we must detoast them.  Also try to
+		 * compress them.
+		 */
 		for (datumno = 0;
 			 datumno < brdesc->bd_info[keyno]->oi_nstored;
 			 datumno++)
-			values[idxattno++] = tuple->bt_columns[keyno].bv_values[datumno];
+		{
+			Datum value = tuple->bt_columns[keyno].bv_values[datumno];
+
+#ifdef TOAST_INDEX_HACK
+
+			/* We must look at the stored type, not at the index descriptor. */
+			TypeCacheEntry	*atttype = brdesc->bd_info[keyno]->oi_typcache[datumno];
+
+			/* Do we need to free the value at the end? */
+			bool free_value = false;
+
+			/* For non-varlena types we don't need to do anything special */
+			if (atttype->typlen != -1)
+			{
+				values[idxattno++] = value;
+				continue;
+			}
+
+			/*
+			 * Do nothing if value is not of varlena type. We don't need to
+			 * care about NULL values here, thanks to bv_allnulls above.
+			 *
+			 * If value is stored EXTERNAL, must fetch it so we are not
+			 * depending on outside storage.
+			 *
+			 * XXX Is this actually true? Could it be that the summary is
+			 * NULL even for range with non-NULL data? E.g. degenerate bloom
+			 * filter may be thrown away, etc.
+			 */
+			if (VARATT_IS_EXTERNAL(DatumGetPointer(value)))
+			{
+				value = PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
+															  DatumGetPointer(value)));
+				free_value = true;
+			}
+
+			/*
+			 * If value is above size target, and is of a compressible datatype,
+			 * try to compress it in-line.
+			 */
+			if (!VARATT_IS_EXTENDED(DatumGetPointer(value)) &&
+				VARSIZE(DatumGetPointer(value)) > TOAST_INDEX_TARGET &&
+				(atttype->typstorage == 'x' || atttype->typstorage == 'm'))
+			{
+				Datum		cvalue = toast_compress_datum(value);
+
+				if (DatumGetPointer(cvalue) != NULL)
+				{
+					/* successful compression */
+					if (free_value)
+						pfree(DatumGetPointer(value));
+
+					value = cvalue;
+					free_value = true;
+				}
+			}
+
+			/*
+			 * If we untoasted / compressed the value, we need to free it
+			 * after forming the index tuple.
+			 */
+			if (free_value)
+				untoasted_values[nuntoasted++] = value;
+
+#endif
+
+			values[idxattno++] = value;
+		}
 	}
 
 	/* Assert we did not overrun temp arrays */
@@ -193,6 +277,11 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 	pfree(values);
 	pfree(nulls);
 	pfree(phony_nullbitmap);
+
+#ifdef TOAST_INDEX_HACK
+	for (i = 0; i < nuntoasted; i++)
+		pfree(DatumGetPointer(untoasted_values[i]));
+#endif
 
 	/*
 	 * Now fill in the real null bitmasks.  allnulls first.
