@@ -199,8 +199,6 @@ typedef struct Archive
 	int			minRemoteVersion;	/* allowable range */
 	int			maxRemoteVersion;
 
-	bool		hasGenericLockTable;	/* can LOCK TABLE do non-table rels */
-
 	int			numWorkers;		/* number of parallel processes */
 	char	   *sync_snapshot_id;	/* sync snapshot id for parallel operation */
 
