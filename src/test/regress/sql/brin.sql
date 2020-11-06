@@ -470,3 +470,42 @@ VACUUM ANALYZE brin_test;
 EXPLAIN (COSTS OFF) SELECT * FROM brin_test WHERE a = 1;
 -- Ensure brin index is not used when values are not correlated
 EXPLAIN (COSTS OFF) SELECT * FROM brin_test WHERE b = 1;
+
+-- make sure data are properly de-toasted in BRIN index
+CREATE TABLE brintest_3 (a text, b text, c text, d text);
+
+-- long random strings (~2000 chars each, so ~6kB for min/max on two
+-- columns) to trigger toasting
+WITH rand_value AS (SELECT string_agg(md5(i::text),'') AS val FROM generate_series(1,60) s(i))
+INSERT INTO brintest_3
+SELECT val, val, val, val FROM rand_value;
+
+CREATE INDEX brin_test_toast_idx ON brintest_3 USING brin (b, c);
+DELETE FROM brintest_3;
+
+-- We need to wait a bit for all transactions to complete, so that the
+-- vacuum actually removes the TOAST rows. Creating an index concurrently
+-- is a one way to achieve that, because it does exactly such wait.
+CREATE INDEX CONCURRENTLY brin_test_temp_idx ON brintest_3(a);
+DROP INDEX brin_test_temp_idx;
+
+-- vacuum the table, to discard TOAST data
+VACUUM brintest_3;
+
+-- retry insert with a different random-looking (but deterministic) value
+-- the value is different, and so should replace either min or max in the
+-- brin summary
+WITH rand_value AS (SELECT string_agg(md5((-i)::text),'') AS val FROM generate_series(1,60) s(i))
+INSERT INTO brintest_3
+SELECT val, val, val, val FROM rand_value;
+
+-- now try some queries, accessing the brin index
+SET enable_seqscan = off;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM brintest_3 WHERE b < '0';
+
+SELECT * FROM brintest_3 WHERE b < '0';
+
+DROP TABLE brintest_3;
+RESET enable_seqscan;
