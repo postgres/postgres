@@ -5,10 +5,7 @@
 CREATE SCHEMA lock_schema1;
 SET search_path = lock_schema1;
 CREATE TABLE lock_tbl1 (a BIGINT);
-CREATE VIEW lock_view1 AS SELECT 1 AS a;
-CREATE MATERIALIZED VIEW lock_mv1 AS SELECT * FROM lock_view1;
-CREATE INDEX lock_mvi1 ON lock_mv1 (a);
-CREATE SEQUENCE lock_seq;
+CREATE VIEW lock_view1 AS SELECT 1;
 CREATE ROLE regress_rol_lock1;
 ALTER ROLE regress_rol_lock1 SET search_path = lock_schema1;
 GRANT USAGE ON SCHEMA lock_schema1 TO regress_rol_lock1;
@@ -33,7 +30,8 @@ LOCK TABLE lock_tbl1 IN SHARE MODE NOWAIT;
 LOCK TABLE lock_tbl1 IN SHARE ROW EXCLUSIVE MODE NOWAIT;
 LOCK TABLE lock_tbl1 IN EXCLUSIVE MODE NOWAIT;
 LOCK TABLE lock_tbl1 IN ACCESS EXCLUSIVE MODE NOWAIT;
-LOCK TABLE lock_view1 IN EXCLUSIVE MODE;
+LOCK TABLE lock_view1 IN EXCLUSIVE MODE;   -- Will fail; can't lock a non-table
+ERROR:  "lock_view1" is not a table
 ROLLBACK;
 -- Verify that we can lock a table with inheritance children.
 CREATE TABLE lock_tbl2 (b BIGINT) INHERITS (lock_tbl1);
@@ -53,21 +51,13 @@ BEGIN;
 LOCK TABLE ONLY lock_tbl1;
 ROLLBACK;
 RESET ROLE;
--- Lock other relations
-BEGIN TRANSACTION;
-LOCK TABLE lock_mv1;
-LOCK TABLE lock_mvi1;
-LOCK TABLE lock_seq;
-ROLLBACK;
 --
 -- Clean up
 --
-DROP MATERIALIZED VIEW lock_mv1;
 DROP VIEW lock_view1;
 DROP TABLE lock_tbl3;
 DROP TABLE lock_tbl2;
 DROP TABLE lock_tbl1;
-DROP SEQUENCE lock_seq;
 DROP SCHEMA lock_schema1 CASCADE;
 DROP ROLE regress_rol_lock1;
 -- atomic ops tests
