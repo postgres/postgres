@@ -20,8 +20,6 @@ extern PGresult *ExecuteSqlQueryForSingleRow(Archive *fout, const char *query);
 
 extern void EndDBCopyMode(Archive *AHX, const char *tocEntryTag);
 
-extern bool IsLockTableGeneric(Archive *AHX);
-
 extern void StartTransaction(Archive *AHX);
 extern void CommitTransaction(Archive *AHX);
 
