@@ -87,6 +87,13 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 		return;					/* woops, concurrently dropped; no permissions
 								 * check */
 
+	/* Currently, we only allow plain tables to be locked */
+	if (relkind != RELKIND_RELATION)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						rv->relname)));
+
 	/* Check permissions. */
 	aclresult = LockTableAclCheck(relid, lockmode);
 	if (aclresult != ACLCHECK_OK)
