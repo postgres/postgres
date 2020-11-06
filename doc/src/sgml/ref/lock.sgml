@@ -117,8 +117,13 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ] 
       table is locked. If <literal>ONLY</literal> is not specified, the table and all
       its descendant tables (if any) are locked.  Optionally, <literal>*</literal>
       can be specified after the table name to explicitly indicate that
-      descendant tables are included.  When locking a view, all relations appearing
-      in the view definition are locked, regardless of <literal>ONLY</literal>.
+      descendant tables are included.
+     </para>
+
+     <para>
+      Locking a view locks only the view object itself, not any referenced
+      relations.  (Note that this behavior is different
+      in <productname>PostgreSQL</productname> v11 and later.)
      </para>
 
      <para>
