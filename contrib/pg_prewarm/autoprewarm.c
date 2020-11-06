@@ -35,6 +35,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgworker.h"
+#include "postmaster/interrupt.h"
 #include "storage/buf_internals.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
@@ -94,12 +95,6 @@ static void apw_start_database_worker(void);
 static bool apw_init_shmem(void);
 static void apw_detach_shmem(int code, Datum arg);
 static int	apw_compare_blockinfo(const void *p, const void *q);
-static void apw_sigterm_handler(SIGNAL_ARGS);
-static void apw_sighup_handler(SIGNAL_ARGS);
-
-/* Flags set by signal handlers */
-static volatile sig_atomic_t got_sigterm = false;
-static volatile sig_atomic_t got_sighup = false;
 
 /* Pointer to shared-memory state. */
 static AutoPrewarmSharedState *apw_state = NULL;
@@ -161,8 +156,8 @@ autoprewarm_main(Datum main_arg)
 	TimestampTz last_dump_time = 0;
 
 	/* Establish signal handlers; once that's done, unblock signals. */
-	pqsignal(SIGTERM, apw_sigterm_handler);
-	pqsignal(SIGHUP, apw_sighup_handler);
+	pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
+	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 	BackgroundWorkerUnblockSignals();
 
@@ -206,19 +201,19 @@ autoprewarm_main(Datum main_arg)
 	}
 
 	/* Periodically dump buffers until terminated. */
-	while (!got_sigterm)
+	while (!ShutdownRequestPending)
 	{
 		/* In case of a SIGHUP, just reload the configuration. */
-		if (got_sighup)
+		if (ConfigReloadPending)
 		{
-			got_sighup = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 		}
 
 		if (autoprewarm_interval <= 0)
 		{
 			/* We're only dumping at shutdown, so just wait forever. */
-			(void) WaitLatch(&MyProc->procLatch,
+			(void) WaitLatch(MyLatch,
 							 WL_LATCH_SET | WL_EXIT_ON_PM_DEATH,
 							 -1L,
 							 PG_WAIT_EXTENSION);
@@ -247,14 +242,14 @@ autoprewarm_main(Datum main_arg)
 			}
 
 			/* Sleep until the next dump time. */
-			(void) WaitLatch(&MyProc->procLatch,
+			(void) WaitLatch(MyLatch,
 							 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 							 delay_in_ms,
 							 PG_WAIT_EXTENSION);
 		}
 
 		/* Reset the latch, loop. */
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 	}
 
 	/*
@@ -894,36 +889,4 @@ apw_compare_blockinfo(const void *p, const void *q)
 	cmp_member_elem(blocknum);
 
 	return 0;
-}
-
-/*
- * Signal handler for SIGTERM
- */
-static void
-apw_sigterm_handler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_sigterm = true;
-
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
-
-	errno = save_errno;
-}
-
-/*
- * Signal handler for SIGHUP
- */
-static void
-apw_sighup_handler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_sighup = true;
-
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
-
-	errno = save_errno;
 }
