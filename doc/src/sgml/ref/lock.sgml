@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>LOCK</refname>
-  <refpurpose>lock a named relation (table, etc)</refpurpose>
+  <refpurpose>lock a table</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -34,9 +34,7 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
   <title>Description</title>
 
   <para>
-   <command>LOCK TABLE</command> obtains a table-level lock on a
-   relation (table, partitioned table, foreign table, view,
-   materialized view, index, composite type, sequence), waiting
+   <command>LOCK TABLE</command> obtains a table-level lock, waiting
    if necessary for any conflicting locks to be released.  If
    <literal>NOWAIT</literal> is specified, <command>LOCK
    TABLE</command> does not wait to acquire the desired lock: if it
@@ -117,18 +115,17 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of an existing relation to
-      lock. If <literal>ONLY</literal> is specified before a table name, only that
+      The name (optionally schema-qualified) of an existing table to
+      lock. If <literal>ONLY</literal> is specified before the table name, only that
       table is locked. If <literal>ONLY</literal> is not specified, the table and all
       its descendant tables (if any) are locked.  Optionally, <literal>*</literal>
       can be specified after the table name to explicitly indicate that
-      descendant tables are included.  When locking a view, all relations appearing
-      in the view definition are locked, regardless of <literal>ONLY</literal>.
+      descendant tables are included.
      </para>
 
      <para>
       The command <literal>LOCK TABLE a, b;</literal> is equivalent to
-      <literal>LOCK TABLE a; LOCK TABLE b;</literal>. The relations are locked
+      <literal>LOCK TABLE a; LOCK TABLE b;</literal>. The tables are locked
       one-by-one in the order specified in the <command>LOCK
       TABLE</command> command.
      </para>
