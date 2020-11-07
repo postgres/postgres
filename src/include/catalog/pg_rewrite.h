@@ -51,4 +51,6 @@ CATALOG(pg_rewrite,2618,RewriteRelationId)
  */
 typedef FormData_pg_rewrite *Form_pg_rewrite;
 
+DECLARE_TOAST(pg_rewrite, 2838, 2839);
+
 #endif							/* PG_REWRITE_H */

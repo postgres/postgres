@@ -24,8 +24,7 @@
   the catalog has, as well as some other basic properties such as its OID.
   Other critical files defining the catalog structure
   include <filename>indexing.h</filename>, which defines the indexes present
-  on all the system catalogs, and <filename>toasting.h</filename>, which
-  defines TOAST tables for catalogs that need one.
+  on all the system catalogs.
  </para>
 
  <para>

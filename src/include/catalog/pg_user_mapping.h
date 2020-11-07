@@ -45,4 +45,6 @@ CATALOG(pg_user_mapping,1418,UserMappingRelationId)
  */
 typedef FormData_pg_user_mapping *Form_pg_user_mapping;
 
+DECLARE_TOAST(pg_user_mapping, 4173, 4174);
+
 #endif							/* PG_USER_MAPPING_H */

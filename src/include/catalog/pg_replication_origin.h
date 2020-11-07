@@ -54,4 +54,8 @@ CATALOG(pg_replication_origin,6000,ReplicationOriginRelationId) BKI_SHARED_RELAT
 
 typedef FormData_pg_replication_origin *Form_pg_replication_origin;
 
+DECLARE_TOAST(pg_replication_origin, 4181, 4182);
+#define PgReplicationOriginToastTable 4181
+#define PgReplicationOriginToastIndex 4182
+
 #endif							/* PG_REPLICATION_ORIGIN_H */

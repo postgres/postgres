@@ -55,4 +55,8 @@ CATALOG(pg_authid,1260,AuthIdRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(284
  */
 typedef FormData_pg_authid *Form_pg_authid;
 
+DECLARE_TOAST(pg_authid, 4175, 4176);
+#define PgAuthidToastTable 4175
+#define PgAuthidToastIndex 4176
+
 #endif							/* PG_AUTHID_H */

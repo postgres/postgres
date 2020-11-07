@@ -49,4 +49,6 @@ CATALOG(pg_extension,3079,ExtensionRelationId)
  */
 typedef FormData_pg_extension *Form_pg_extension;
 
+DECLARE_TOAST(pg_extension, 4147, 4148);
+
 #endif							/* PG_EXTENSION_H */

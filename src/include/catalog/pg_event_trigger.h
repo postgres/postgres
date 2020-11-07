@@ -48,4 +48,6 @@ CATALOG(pg_event_trigger,3466,EventTriggerRelationId)
  */
 typedef FormData_pg_event_trigger *Form_pg_event_trigger;
 
+DECLARE_TOAST(pg_event_trigger, 4145, 4146);
+
 #endif							/* PG_EVENT_TRIGGER_H */

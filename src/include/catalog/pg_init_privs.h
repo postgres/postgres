@@ -62,6 +62,8 @@ CATALOG(pg_init_privs,3394,InitPrivsRelationId)
  */
 typedef FormData_pg_init_privs * Form_pg_init_privs;
 
+DECLARE_TOAST(pg_init_privs, 4155, 4156);
+
 /*
  * It is important to know if the initial privileges are from initdb or from an
  * extension.  This enum is used to provide that differentiation and the two

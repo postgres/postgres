@@ -73,4 +73,6 @@ CATALOG(pg_depend,2608,DependRelationId)
  */
 typedef FormData_pg_depend *Form_pg_depend;
 
+DECLARE_TOAST(pg_depend, 8888, 8889);
+
 #endif							/* PG_DEPEND_H */

@@ -45,4 +45,8 @@ CATALOG(pg_tablespace,1213,TableSpaceRelationId) BKI_SHARED_RELATION
  */
 typedef FormData_pg_tablespace *Form_pg_tablespace;
 
+DECLARE_TOAST(pg_tablespace, 4185, 4186);
+#define PgTablespaceToastTable 4185
+#define PgTablespaceToastIndex 4186
+
 #endif							/* PG_TABLESPACE_H */

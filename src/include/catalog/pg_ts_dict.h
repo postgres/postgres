@@ -51,4 +51,6 @@ CATALOG(pg_ts_dict,3600,TSDictionaryRelationId)
 
 typedef FormData_pg_ts_dict *Form_pg_ts_dict;
 
+DECLARE_TOAST(pg_ts_dict, 4169, 4170);
+
 #endif							/* PG_TS_DICT_H */

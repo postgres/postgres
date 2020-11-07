@@ -37,4 +37,6 @@ CATALOG(pg_seclabel,3596,SecLabelRelationId)
 #endif
 } FormData_pg_seclabel;
 
+DECLARE_TOAST(pg_seclabel, 3598, 3599);
+
 #endif							/* PG_SECLABEL_H */

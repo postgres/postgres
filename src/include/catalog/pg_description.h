@@ -63,4 +63,6 @@ CATALOG(pg_description,2609,DescriptionRelationId)
  */
 typedef FormData_pg_description * Form_pg_description;
 
+DECLARE_TOAST(pg_description, 2834, 2835);
+
 #endif							/* PG_DESCRIPTION_H */

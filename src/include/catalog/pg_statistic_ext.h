@@ -63,6 +63,8 @@ CATALOG(pg_statistic_ext,3381,StatisticExtRelationId)
  */
 typedef FormData_pg_statistic_ext *Form_pg_statistic_ext;
 
+DECLARE_TOAST(pg_statistic_ext, 3439, 3440);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 #define STATS_EXT_NDISTINCT			'd'

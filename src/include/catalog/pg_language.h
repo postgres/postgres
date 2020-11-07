@@ -64,4 +64,6 @@ CATALOG(pg_language,2612,LanguageRelationId)
  */
 typedef FormData_pg_language *Form_pg_language;
 
+DECLARE_TOAST(pg_language, 4157, 4158);
+
 #endif							/* PG_LANGUAGE_H */

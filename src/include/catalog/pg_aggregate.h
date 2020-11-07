@@ -108,6 +108,8 @@ CATALOG(pg_aggregate,2600,AggregateRelationId)
  */
 typedef FormData_pg_aggregate *Form_pg_aggregate;
 
+DECLARE_TOAST(pg_aggregate, 4159, 4160);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /*

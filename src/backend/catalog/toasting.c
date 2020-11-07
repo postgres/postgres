@@ -391,7 +391,7 @@ needs_toast_table(Relation rel)
 	/*
 	 * Ignore attempts to create toast tables on catalog tables after initdb.
 	 * Which catalogs get toast tables is explicitly chosen in
-	 * catalog/toasting.h.  (We could get here via some ALTER TABLE command if
+	 * catalog/pg_*.h.  (We could get here via some ALTER TABLE command if
 	 * the catalog doesn't have a toast table.)
 	 */
 	if (IsCatalogRelation(rel) && !IsBootstrapProcessingMode())

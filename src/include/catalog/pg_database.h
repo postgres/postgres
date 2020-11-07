@@ -80,4 +80,8 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
  */
 typedef FormData_pg_database *Form_pg_database;
 
+DECLARE_TOAST(pg_database, 4177, 4178);
+#define PgDatabaseToastTable 4177
+#define PgDatabaseToastIndex 4178
+
 #endif							/* PG_DATABASE_H */

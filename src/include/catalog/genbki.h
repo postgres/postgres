@@ -41,6 +41,19 @@
  */
 #define BKI_LOOKUP(catalog)
 
+/*
+ * These lines are processed by genbki.pl to create the statements
+ * the bootstrap parser will turn into BootstrapToastTable commands.
+ * Each line specifies the system catalog that needs a toast table,
+ * the OID to assign to the toast table, and the OID to assign to the
+ * toast table's index.  The reason we hard-wire these OIDs is that we
+ * need stable OIDs for shared relations, and that includes toast tables
+ * of shared relations.
+ *
+ * The macro definition is just to keep the C compiler from spitting up.
+ */
+#define DECLARE_TOAST(name,toastoid,indexoid) extern int no_such_variable
+
 /* The following are never defined; they are here only for documentation. */
 
 /*

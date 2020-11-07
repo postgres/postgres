@@ -254,6 +254,8 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
  */
 typedef FormData_pg_type *Form_pg_type;
 
+DECLARE_TOAST(pg_type, 4171, 4172);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /*

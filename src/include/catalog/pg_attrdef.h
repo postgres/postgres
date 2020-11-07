@@ -46,4 +46,6 @@ CATALOG(pg_attrdef,2604,AttrDefaultRelationId)
  */
 typedef FormData_pg_attrdef *Form_pg_attrdef;
 
+DECLARE_TOAST(pg_attrdef, 2830, 2831);
+
 #endif							/* PG_ATTRDEF_H */

@@ -72,11 +72,8 @@ CATALOG_HEADERS := \
 
 GENERATED_HEADERS := $(CATALOG_HEADERS:%.h=%_d.h) schemapg.h
 
-# In the list of headers used to assemble postgres.bki, indexing.h needs
-# be last, and toasting.h just before it.  This ensures we don't try to
-# create indexes or toast tables before their catalogs exist.
 POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
-	$(CATALOG_HEADERS) toasting.h indexing.h \
+	$(CATALOG_HEADERS) indexing.h \
 	)
 
 # The .dat files we need can just be listed alphabetically.

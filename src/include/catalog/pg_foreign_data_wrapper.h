@@ -47,4 +47,6 @@ CATALOG(pg_foreign_data_wrapper,2328,ForeignDataWrapperRelationId)
  */
 typedef FormData_pg_foreign_data_wrapper *Form_pg_foreign_data_wrapper;
 
+DECLARE_TOAST(pg_foreign_data_wrapper, 4149, 4150);
+
 #endif							/* PG_FOREIGN_DATA_WRAPPER_H */

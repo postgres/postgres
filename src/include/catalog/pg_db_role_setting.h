@@ -43,6 +43,10 @@ CATALOG(pg_db_role_setting,2964,DbRoleSettingRelationId) BKI_SHARED_RELATION
 
 typedef FormData_pg_db_role_setting * Form_pg_db_role_setting;
 
+DECLARE_TOAST(pg_db_role_setting, 2966, 2967);
+#define PgDbRoleSettingToastTable 2966
+#define PgDbRoleSettingToastIndex 2967
+
 /*
  * prototypes for functions in pg_db_role_setting.h
  */

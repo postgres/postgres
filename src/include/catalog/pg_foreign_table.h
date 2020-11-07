@@ -42,4 +42,6 @@ CATALOG(pg_foreign_table,3118,ForeignTableRelationId)
  */
 typedef FormData_pg_foreign_table *Form_pg_foreign_table;
 
+DECLARE_TOAST(pg_foreign_table, 4153, 4154);
+
 #endif							/* PG_FOREIGN_TABLE_H */

@@ -133,6 +133,8 @@ CATALOG(pg_statistic,2619,StatisticRelationId)
  */
 typedef FormData_pg_statistic *Form_pg_statistic;
 
+DECLARE_TOAST(pg_statistic, 2840, 2841);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /*

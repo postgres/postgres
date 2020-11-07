@@ -38,4 +38,8 @@ CATALOG(pg_shseclabel,3592,SharedSecLabelRelationId) BKI_SHARED_RELATION BKI_ROW
 
 typedef FormData_pg_shseclabel * Form_pg_shseclabel;
 
+DECLARE_TOAST(pg_shseclabel, 4060, 4061);
+#define PgShseclabelToastTable 4060
+#define PgShseclabelToastIndex 4061
+
 #endif							/* PG_SHSECLABEL_H */

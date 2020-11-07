@@ -132,6 +132,8 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
  */
 typedef FormData_pg_proc *Form_pg_proc;
 
+DECLARE_TOAST(pg_proc, 2836, 2837);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /*

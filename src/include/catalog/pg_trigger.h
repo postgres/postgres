@@ -72,6 +72,8 @@ CATALOG(pg_trigger,2620,TriggerRelationId)
  */
 typedef FormData_pg_trigger *Form_pg_trigger;
 
+DECLARE_TOAST(pg_trigger, 2336, 2337);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /* Bits within tgtype */

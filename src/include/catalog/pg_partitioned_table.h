@@ -64,4 +64,6 @@ CATALOG(pg_partitioned_table,3350,PartitionedRelationId)
  */
 typedef FormData_pg_partitioned_table *Form_pg_partitioned_table;
 
+DECLARE_TOAST(pg_partitioned_table, 4165, 4166);
+
 #endif							/* PG_PARTITIONED_TABLE_H */

@@ -153,6 +153,8 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
  */
 typedef FormData_pg_constraint *Form_pg_constraint;
 
+DECLARE_TOAST(pg_constraint, 2832, 2833);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /* Valid values for contype */

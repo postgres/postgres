@@ -61,7 +61,7 @@ if ($output_path ne '' && substr($output_path, -1) ne '/')
 }
 
 # Collect all the existing assigned OIDs (including those to be remapped).
-my @header_files = (glob("pg_*.h"), qw(indexing.h toasting.h));
+my @header_files = (glob("pg_*.h"), qw(indexing.h));
 my $oids = Catalog::FindAllOidsFromHeaders(@header_files);
 
 # Hash-ify the existing OIDs for convenient lookup.
@@ -173,7 +173,7 @@ foreach my $input_file (@header_files)
 			}
 		}
 
-		# In indexing.h and toasting.h only, check for #define SYM nnnn,
+		# In indexing.h only, check for #define SYM nnnn,
 		# and replace if within mapped range.
 		elsif ($line =~ m/^(\s*#\s*define\s+\w+\s+)(\d+)\b/)
 		{

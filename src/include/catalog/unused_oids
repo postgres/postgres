@@ -28,7 +28,7 @@ chdir $FindBin::RealBin or die "could not cd to $FindBin::RealBin: $!\n";
 use lib "$FindBin::RealBin/../../backend/catalog/";
 use Catalog;
 
-my @input_files = (glob("pg_*.h"), qw(indexing.h toasting.h));
+my @input_files = (glob("pg_*.h"), qw(indexing.h));
 
 my $oids = Catalog::FindAllOidsFromHeaders(@input_files);
 

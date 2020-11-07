@@ -49,4 +49,6 @@ CATALOG(pg_policy,3256,PolicyRelationId)
  */
 typedef FormData_pg_policy *Form_pg_policy;
 
+DECLARE_TOAST(pg_policy, 4167, 4168);
+
 #endif							/* PG_POLICY_H */

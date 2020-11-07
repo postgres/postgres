@@ -47,6 +47,8 @@ CATALOG(pg_default_acl,826,DefaultAclRelationId)
  */
 typedef FormData_pg_default_acl *Form_pg_default_acl;
 
+DECLARE_TOAST(pg_default_acl, 4143, 4144);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /*

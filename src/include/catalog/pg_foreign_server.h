@@ -47,4 +47,6 @@ CATALOG(pg_foreign_server,1417,ForeignServerRelationId)
  */
 typedef FormData_pg_foreign_server *Form_pg_foreign_server;
 
+DECLARE_TOAST(pg_foreign_server, 4151, 4152);
+
 #endif							/* PG_FOREIGN_SERVER_H */

@@ -70,6 +70,10 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 
 typedef FormData_pg_subscription *Form_pg_subscription;
 
+DECLARE_TOAST(pg_subscription, 4183, 4184);
+#define PgSubscriptionToastTable 4183
+#define PgSubscriptionToastIndex 4184
+
 typedef struct Subscription
 {
 	Oid			oid;			/* Oid of the subscription */
