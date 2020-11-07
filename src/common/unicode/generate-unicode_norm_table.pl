@@ -400,7 +400,7 @@ sub recomp_sort
 	my $bcode = hex($b->{code});
 
 	return -1 if $acode < $bcode;
-	return -1 if $acode > $bcode;
+	return 1  if $acode > $bcode;
 
 	die "found duplicate entries of recomposeable code pairs";
 }

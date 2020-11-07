@@ -22,10 +22,10 @@
 #ifndef FRONTEND
 #include "common/unicode_norm_hashfunc.h"
 #include "common/unicode_normprops_table.h"
+#include "port/pg_bswap.h"
 #else
 #include "common/unicode_norm_table.h"
 #endif
-#include "port/pg_bswap.h"
 
 #ifndef FRONTEND
 #define ALLOC(size) palloc(size)
