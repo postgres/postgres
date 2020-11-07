@@ -38,6 +38,7 @@ my %replace_token = (
 	'BCONST' => 'ecpg_bconst',
 	'FCONST' => 'ecpg_fconst',
 	'Sconst' => 'ecpg_sconst',
+	'XCONST' => 'ecpg_xconst',
 	'IDENT'  => 'ecpg_ident',
 	'PARAM'  => 'ecpg_param',);
 

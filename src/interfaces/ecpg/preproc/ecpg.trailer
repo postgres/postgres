@@ -1715,13 +1715,13 @@ cvariable:	CVARIABLE
 
 ecpg_param:	PARAM		{ $$ = make_name(); } ;
 
-ecpg_bconst:	BCONST		{ $$ = make_name(); } ;
+ecpg_bconst:	BCONST		{ $$ = $1; } ;
 
 ecpg_fconst:	FCONST		{ $$ = make_name(); } ;
 
 ecpg_sconst:	SCONST		{ $$ = $1; } ;
 
-ecpg_xconst:	XCONST		{ $$ = make_name(); } ;
+ecpg_xconst:	XCONST		{ $$ = $1; } ;
 
 ecpg_ident:	IDENT		{ $$ = $1; }
 		| CSTRING	{ $$ = make3_str(mm_strdup("\""), $1, mm_strdup("\"")); }
