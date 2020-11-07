@@ -505,9 +505,9 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 <SQL>{
 {xbstart}		{
 					token_start = yytext;
+					state_before_str_start = YYSTATE;
 					BEGIN(xb);
 					startlit();
-					addlitchar('b');
 				}
 } /* <SQL> */
 
@@ -519,9 +519,9 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 
 <SQL>{xhstart}	{
 					token_start = yytext;
+					state_before_str_start = YYSTATE;
 					BEGIN(xh);
 					startlit();
-					addlitchar('x');
 				}
 <xh><<EOF>>		{ mmfatal(PARSE_ERROR, "unterminated hexadecimal string literal"); }
 
@@ -597,12 +597,14 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					switch (state_before_str_stop)
 					{
 						case xb:
-							if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
+							if (literalbuf[strspn(literalbuf, "01")] != '\0')
 								mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string literal");
-							base_yylval.str = mm_strdup(literalbuf);
+							base_yylval.str = psprintf("b'%s'", literalbuf);
 							return BCONST;
 						case xh:
-							base_yylval.str = mm_strdup(literalbuf);
+							if (literalbuf[strspn(literalbuf, "0123456789abcdefABCDEF")] != '\0')
+								mmerror(PARSE_ERROR, ET_ERROR, "invalid hex string literal");
+							base_yylval.str = psprintf("x'%s'", literalbuf);
 							return XCONST;
 						case xq:
 							/* fallthrough */
