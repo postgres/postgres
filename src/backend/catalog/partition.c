@@ -170,13 +170,14 @@ index_get_partition(Relation partition, Oid indexId)
 		ReleaseSysCache(tup);
 		if (!ispartition)
 			continue;
-		if (get_partition_parent(lfirst_oid(l)) == indexId)
+		if (get_partition_parent(partIdx) == indexId)
 		{
 			list_free(idxlist);
 			return partIdx;
 		}
 	}
 
+	list_free(idxlist);
 	return InvalidOid;
 }
 
