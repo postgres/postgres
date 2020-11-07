@@ -200,8 +200,7 @@ GetConnection(void)
 
 	if (PQstatus(tmpconn) != CONNECTION_OK)
 	{
-		pg_log_error("could not connect to server: %s",
-					 PQerrorMessage(tmpconn));
+		pg_log_error("%s", PQerrorMessage(tmpconn));
 		PQfinish(tmpconn);
 		free(values);
 		free(keywords);

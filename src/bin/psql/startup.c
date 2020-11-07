@@ -295,7 +295,7 @@ main(int argc, char *argv[])
 
 	if (PQstatus(pset.db) == CONNECTION_BAD)
 	{
-		pg_log_error("could not connect to server: %s", PQerrorMessage(pset.db));
+		pg_log_error("%s", PQerrorMessage(pset.db));
 		PQfinish(pset.db);
 		exit(EXIT_BADCONN);
 	}
