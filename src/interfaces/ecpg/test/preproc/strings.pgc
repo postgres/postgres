@@ -23,9 +23,9 @@ int main(void)
   printf("%s %s %s %s %s %s\n", s1, s2, s3, s4, s5, s6);
 
   exec sql select b'0010', X'019ABcd'
-                  into :s1, :s2;
+                  into :s7, :s8;
 
-  printf("%s %s\n", s1, s2);
+  printf("%s %s\n", s7, s8);
 
   exec sql disconnect;
   return 0;

@@ -24,11 +24,13 @@
 		   
 		   
 		   
+		   
+		   
 
 #line 5 "strings.pgc"
 
 #line 1 "strings.h"
- char * s1 , * s2 , * s3 , * s4 , * s5 , * s6 ;
+ char * s1 , * s2 , * s3 , * s4 , * s5 , * s6 , * s7 , * s8 ;
 /* exec sql end declare section */
 #line 5 "strings.pgc"
 
@@ -64,14 +66,14 @@ int main(void)
   printf("%s %s %s %s %s %s\n", s1, s2, s3, s4, s5, s6);
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select b'0010' , x'019ABcd'", ECPGt_EOIT, 
-	ECPGt_char,&(s1),(long)0,(long)1,(1)*sizeof(char), 
+	ECPGt_char,&(s7),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_char,&(s2),(long)0,(long)1,(1)*sizeof(char), 
+	ECPGt_char,&(s8),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 26 "strings.pgc"
 
 
-  printf("%s %s\n", s1, s2);
+  printf("%s %s\n", s7, s8);
 
   { ECPGdisconnect(__LINE__, "CURRENT");}
 #line 30 "strings.pgc"
