@@ -361,7 +361,7 @@ Branch: REL_13_STABLE [5ed20a689] 2020-10-07 17:10:26 -0400
 -->
      <para>
       Prevent internal overflows in cross-type datetime
-      comparisons (Alexander Korotkov, Tom Lane)
+      comparisons (Nikita Glukhov, Alexander Korotkov, Tom Lane)
      </para>
 
      <para>
@@ -700,6 +700,31 @@ Branch: REL_10_STABLE [fcc3665a0] 2020-09-17 15:59:42 +0530
 
     <listitem>
 <!--
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+Branch: master [7577dd848] 2020-11-07 00:39:19 +0100
+Branch: REL_13_STABLE [6a7b55f37] 2020-11-07 00:40:06 +0100
+Branch: REL_12_STABLE [8149e9f9a] 2020-11-07 00:40:40 +0100
+Branch: REL_11_STABLE [895d0f0e8] 2020-11-07 00:41:02 +0100
+Branch: REL_10_STABLE [0b96fc977] 2020-11-07 00:41:19 +0100
+Branch: REL9_6_STABLE [bae31e75f] 2020-11-07 00:41:36 +0100
+Branch: REL9_5_STABLE [d2d3a4bd3] 2020-11-07 00:41:52 +0100
+-->
+     <para>
+      Ensure that data is detoasted before being inserted into a BRIN
+      index (Tomas Vondra)
+     </para>
+
+     <para>
+      Index entries are not supposed to contain out-of-line TOAST
+      pointers, but BRIN didn't get that memo.  This could lead to errors
+      like <quote>missing chunk number 0 for toast value NNN</quote>.
+      (If you are faced with such an error from an existing
+      index, <command>REINDEX</command> should be enough to fix it.)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [1f42d35a1] 2020-08-12 15:33:36 -0400
 Branch: REL_13_STABLE Release: REL_13_0 [8782ea2f3] 2020-08-12 15:33:36 -0400
@@ -964,6 +989,19 @@ Branch: REL9_5_STABLE [bf34ae930] 2020-09-26 16:04:06 -0400
 
     <listitem>
 <!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [623644f02] 2020-11-06 22:52:16 -0300
+Branch: REL_13_STABLE [d94d37f8c] 2020-11-06 22:52:15 -0300
+Branch: REL_12_STABLE [8ad6a0c1b] 2020-11-06 22:52:15 -0300
+-->
+     <para>
+      Fix edge-case memory leak
+      in <function>index_get_partition()</function> (Justin Pryzby)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [397ea901e] 2020-10-12 13:31:24 -0400
 Branch: REL_13_STABLE [9343bfefa] 2020-10-12 13:31:24 -0400
@@ -1071,6 +1109,19 @@ Branch: REL9_5_STABLE [758b45e83] 2020-10-24 13:12:53 -0400
      <para>
       Multi-threaded <application>ecpg</application> applications could
       suffer rare misbehavior due to incorrect locking.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [1e3868ab3] 2020-11-07 15:03:44 -0500
+Branch: REL_13_STABLE [1bccb159a] 2020-11-07 15:03:44 -0500
+-->
+     <para>
+      Fix <application>ecpg</application>'s mis-processing
+      of <literal>B'...'</literal> and <literal>X'...'</literal> literals
+      (Shenhao Wang)
      </para>
     </listitem>
 
