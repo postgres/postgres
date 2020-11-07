@@ -61,7 +61,7 @@ if ($output_path ne '' && substr($output_path, -1) ne '/')
 }
 
 # Collect all the existing assigned OIDs (including those to be remapped).
-my @header_files = (glob("pg_*.h"), qw(indexing.h));
+my @header_files = glob("pg_*.h");
 my $oids = Catalog::FindAllOidsFromHeaders(@header_files);
 
 # Hash-ify the existing OIDs for convenient lookup.
@@ -170,19 +170,6 @@ foreach my $input_file (@header_files)
 					$line =~ s/BKI_ROWTYPE_OID\(\d+,\w+\)/$repl/;
 					$changed = 1;
 				}
-			}
-		}
-
-		# In indexing.h only, check for #define SYM nnnn,
-		# and replace if within mapped range.
-		elsif ($line =~ m/^(\s*#\s*define\s+\w+\s+)(\d+)\b/)
-		{
-			if (($catname eq 'indexing' || $catname eq 'toasting')
-				&& exists $maphash{$2})
-			{
-				my $repl = $1 . $maphash{$2};
-				$line =~ s/^\s*#\s*define\s+\w+\s+\d+\b/$repl/;
-				$changed = 1;
 			}
 		}
 

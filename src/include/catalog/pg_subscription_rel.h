@@ -49,6 +49,9 @@ CATALOG(pg_subscription_rel,6102,SubscriptionRelRelationId)
 
 typedef FormData_pg_subscription_rel *Form_pg_subscription_rel;
 
+DECLARE_UNIQUE_INDEX(pg_subscription_rel_srrelid_srsubid_index, 6117, on pg_subscription_rel using btree(srrelid oid_ops, srsubid oid_ops));
+#define SubscriptionRelSrrelidSrsubidIndexId 6117
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /* ----------------

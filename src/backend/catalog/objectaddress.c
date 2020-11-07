@@ -21,7 +21,6 @@
 #include "access/sysattr.h"
 #include "access/table.h"
 #include "catalog/catalog.h"
-#include "catalog/indexing.h"
 #include "catalog/objectaddress.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"

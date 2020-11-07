@@ -74,6 +74,13 @@ typedef FormData_pg_trigger *Form_pg_trigger;
 
 DECLARE_TOAST(pg_trigger, 2336, 2337);
 
+DECLARE_INDEX(pg_trigger_tgconstraint_index, 2699, on pg_trigger using btree(tgconstraint oid_ops));
+#define TriggerConstraintIndexId  2699
+DECLARE_UNIQUE_INDEX(pg_trigger_tgrelid_tgname_index, 2701, on pg_trigger using btree(tgrelid oid_ops, tgname name_ops));
+#define TriggerRelidNameIndexId  2701
+DECLARE_UNIQUE_INDEX(pg_trigger_oid_index, 2702, on pg_trigger using btree(oid oid_ops));
+#define TriggerOidIndexId  2702
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /* Bits within tgtype */

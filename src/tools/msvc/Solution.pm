@@ -762,7 +762,6 @@ EOF
 	$mf =~ /^CATALOG_HEADERS\s*:?=(.*)$/gm
 	  || croak "Could not find CATALOG_HEADERS in Makefile\n";
 	my @bki_srcs = split /\s+/, $1;
-	push @bki_srcs, 'indexing.h';
 	$mf =~ /^POSTGRES_BKI_DATA\s*:?=[^,]+,(.*)\)$/gm
 	  || croak "Could not find POSTGRES_BKI_DATA in Makefile\n";
 	my @bki_data = split /\s+/, $1;

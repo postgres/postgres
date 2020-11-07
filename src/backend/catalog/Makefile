@@ -72,9 +72,7 @@ CATALOG_HEADERS := \
 
 GENERATED_HEADERS := $(CATALOG_HEADERS:%.h=%_d.h) schemapg.h
 
-POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
-	$(CATALOG_HEADERS) indexing.h \
-	)
+POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, $(CATALOG_HEADERS))
 
 # The .dat files we need can just be listed alphabetically.
 POSTGRES_BKI_DATA = $(addprefix $(top_srcdir)/src/include/catalog/,\

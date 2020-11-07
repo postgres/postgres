@@ -24,7 +24,6 @@
 
 #include "access/htup_details.h"
 #include "catalog/dependency.h"
-#include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"

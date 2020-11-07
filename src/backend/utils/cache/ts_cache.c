@@ -30,7 +30,6 @@
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "access/xact.h"
-#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_config_map.h"

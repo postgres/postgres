@@ -43,6 +43,13 @@ CATALOG(pg_enum,3501,EnumRelationId)
  */
 typedef FormData_pg_enum *Form_pg_enum;
 
+DECLARE_UNIQUE_INDEX(pg_enum_oid_index, 3502, on pg_enum using btree(oid oid_ops));
+#define EnumOidIndexId	3502
+DECLARE_UNIQUE_INDEX(pg_enum_typid_label_index, 3503, on pg_enum using btree(enumtypid oid_ops, enumlabel name_ops));
+#define EnumTypIdLabelIndexId 3503
+DECLARE_UNIQUE_INDEX(pg_enum_typid_sortorder_index, 3534, on pg_enum using btree(enumtypid oid_ops, enumsortorder float4_ops));
+#define EnumTypIdSortOrderIndexId 3534
+
 /*
  * prototypes for functions in pg_enum.c
  */

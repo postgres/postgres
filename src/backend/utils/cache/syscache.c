@@ -22,7 +22,6 @@
 
 #include "access/htup_details.h"
 #include "access/sysattr.h"
-#include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
@@ -97,7 +96,7 @@
 
 	There must be a unique index underlying each syscache (ie, an index
 	whose key is the same as that of the cache).  If there is not one
-	already, add definitions for it to include/catalog/indexing.h: you need
+	already, add definitions for it to include/catalog/pg_*.h: you need
 	to add a DECLARE_UNIQUE_INDEX macro and a #define for the index OID.
 	(Adding an index requires a catversion.h update, while simply
 	adding/deleting caches only requires a recompile.)

@@ -15,7 +15,6 @@
 #include "access/sysattr.h"
 #include "access/table.h"
 #include "catalog/dependency.h"
-#include "catalog/indexing.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "commands/seclabel.h"

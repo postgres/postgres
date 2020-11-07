@@ -49,4 +49,9 @@ typedef FormData_pg_foreign_data_wrapper *Form_pg_foreign_data_wrapper;
 
 DECLARE_TOAST(pg_foreign_data_wrapper, 4149, 4150);
 
+DECLARE_UNIQUE_INDEX(pg_foreign_data_wrapper_oid_index, 112, on pg_foreign_data_wrapper using btree(oid oid_ops));
+#define ForeignDataWrapperOidIndexId	112
+DECLARE_UNIQUE_INDEX(pg_foreign_data_wrapper_name_index, 548, on pg_foreign_data_wrapper using btree(fdwname name_ops));
+#define ForeignDataWrapperNameIndexId	548
+
 #endif							/* PG_FOREIGN_DATA_WRAPPER_H */

@@ -18,13 +18,10 @@
  <para>
   The structures of the catalogs are declared in specially formatted C
   header files in the <filename>src/include/catalog/</filename> directory of
-  the source tree.  In particular, for each catalog there is a header file
+  the source tree.  For each catalog there is a header file
   named after the catalog (e.g., <filename>pg_class.h</filename>
   for <structname>pg_class</structname>), which defines the set of columns
   the catalog has, as well as some other basic properties such as its OID.
-  Other critical files defining the catalog structure
-  include <filename>indexing.h</filename>, which defines the indexes present
-  on all the system catalogs.
  </para>
 
  <para>

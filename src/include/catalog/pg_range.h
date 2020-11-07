@@ -54,6 +54,9 @@ CATALOG(pg_range,3541,RangeRelationId)
  */
 typedef FormData_pg_range *Form_pg_range;
 
+DECLARE_UNIQUE_INDEX(pg_range_rngtypid_index, 3542, on pg_range using btree(rngtypid oid_ops));
+#define RangeTypidIndexId					3542
+
 /*
  * prototypes for functions in pg_range.c
  */

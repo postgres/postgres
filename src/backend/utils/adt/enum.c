@@ -16,7 +16,6 @@
 #include "access/genam.h"
 #include "access/htup_details.h"
 #include "access/table.h"
-#include "catalog/indexing.h"
 #include "catalog/pg_enum.h"
 #include "libpq/pqformat.h"
 #include "storage/procarray.h"

@@ -26,7 +26,6 @@
 #include "access/table.h"
 #include "access/transam.h"
 #include "catalog/catalog.h"
-#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
@@ -248,7 +247,7 @@ IsSharedRelation(Oid relationId)
 		relationId == ReplicationOriginRelationId ||
 		relationId == SubscriptionRelationId)
 		return true;
-	/* These are their indexes (see indexing.h) */
+	/* These are their indexes */
 	if (relationId == AuthIdRolnameIndexId ||
 		relationId == AuthIdOidIndexId ||
 		relationId == AuthMemRoleMemIndexId ||

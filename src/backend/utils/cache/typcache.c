@@ -50,7 +50,6 @@
 #include "access/relation.h"
 #include "access/session.h"
 #include "access/table.h"
-#include "catalog/indexing.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_enum.h"

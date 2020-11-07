@@ -43,6 +43,9 @@ CATALOG(pg_largeobject,2613,LargeObjectRelationId)
  */
 typedef FormData_pg_largeobject *Form_pg_largeobject;
 
+DECLARE_UNIQUE_INDEX(pg_largeobject_loid_pn_index, 2683, on pg_largeobject using btree(loid oid_ops, pageno int4_ops));
+#define LargeObjectLOidPNIndexId  2683
+
 extern Oid	LargeObjectCreate(Oid loid);
 extern void LargeObjectDrop(Oid loid);
 extern bool LargeObjectExists(Oid loid);

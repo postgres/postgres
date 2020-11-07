@@ -87,6 +87,13 @@ CATALOG(pg_amop,2602,AccessMethodOperatorRelationId)
  */
 typedef FormData_pg_amop *Form_pg_amop;
 
+DECLARE_UNIQUE_INDEX(pg_amop_fam_strat_index, 2653, on pg_amop using btree(amopfamily oid_ops, amoplefttype oid_ops, amoprighttype oid_ops, amopstrategy int2_ops));
+#define AccessMethodStrategyIndexId  2653
+DECLARE_UNIQUE_INDEX(pg_amop_opr_fam_index, 2654, on pg_amop using btree(amopopr oid_ops, amoppurpose char_ops, amopfamily oid_ops));
+#define AccessMethodOperatorIndexId  2654
+DECLARE_UNIQUE_INDEX(pg_amop_oid_index, 2756, on pg_amop using btree(oid oid_ops));
+#define AccessMethodOperatorOidIndexId	2756
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /* allowed values of amoppurpose: */

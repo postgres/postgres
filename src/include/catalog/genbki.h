@@ -54,6 +54,23 @@
  */
 #define DECLARE_TOAST(name,toastoid,indexoid) extern int no_such_variable
 
+/*
+ * These lines processed by genbki.pl to create the statements
+ * the bootstrap parser will turn into DefineIndex calls.
+ *
+ * The keyword is DECLARE_INDEX or DECLARE_UNIQUE_INDEX.  The first two
+ * arguments are the index name and OID, the rest is much like a standard
+ * 'create index' SQL command.
+ *
+ * For each index, we also provide a #define for its OID.  References to
+ * the index in the C code should always use these #defines, not the actual
+ * index name (much less the numeric OID).
+ *
+ * The macro definitions are just to keep the C compiler from spitting up.
+ */
+#define DECLARE_INDEX(name,oid,decl) extern int no_such_variable
+#define DECLARE_UNIQUE_INDEX(name,oid,decl) extern int no_such_variable
+
 /* The following are never defined; they are here only for documentation. */
 
 /*

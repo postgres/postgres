@@ -40,4 +40,9 @@ CATALOG(pg_publication_rel,6106,PublicationRelRelationId)
  */
 typedef FormData_pg_publication_rel *Form_pg_publication_rel;
 
+DECLARE_UNIQUE_INDEX(pg_publication_rel_oid_index, 6112, on pg_publication_rel using btree(oid oid_ops));
+#define PublicationRelObjectIndexId 6112
+DECLARE_UNIQUE_INDEX(pg_publication_rel_prrelid_prpubid_index, 6113, on pg_publication_rel using btree(prrelid oid_ops, prpubid oid_ops));
+#define PublicationRelPrrelidPrpubidIndexId 6113
+
 #endif							/* PG_PUBLICATION_REL_H */

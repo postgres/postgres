@@ -45,4 +45,7 @@ CATALOG(pg_largeobject_metadata,2995,LargeObjectMetadataRelationId)
  */
 typedef FormData_pg_largeobject_metadata *Form_pg_largeobject_metadata;
 
+DECLARE_UNIQUE_INDEX(pg_largeobject_metadata_oid_index, 2996, on pg_largeobject_metadata using btree(oid oid_ops));
+#define LargeObjectMetadataOidIndexId	2996
+
 #endif							/* PG_LARGEOBJECT_METADATA_H */
