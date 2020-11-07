@@ -190,8 +190,7 @@ GetConnection(void)
 
 	if (PQstatus(tmpconn) != CONNECTION_OK)
 	{
-		fprintf(stderr, _("%s: could not connect to server: %s"),
-				progname, PQerrorMessage(tmpconn));
+		fprintf(stderr, _("%s: %s"), progname, PQerrorMessage(tmpconn));
 		PQfinish(tmpconn);
 		free(values);
 		free(keywords);
