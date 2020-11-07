@@ -2432,7 +2432,6 @@ lazy_vacuum_index(Relation indrel, IndexBulkDeleteResult **stats,
 				  LVDeadTuples *dead_tuples, double reltuples, LVRelStats *vacrelstats)
 {
 	IndexVacuumInfo ivinfo;
-	const char *msg;
 	PGRUsage	ru0;
 	LVSavedErrInfo saved_err_info;
 
@@ -2462,13 +2461,8 @@ lazy_vacuum_index(Relation indrel, IndexBulkDeleteResult **stats,
 	*stats = index_bulk_delete(&ivinfo, *stats,
 							   lazy_tid_reaped, (void *) dead_tuples);
 
-	if (IsParallelWorker())
-		msg = gettext_noop("scanned index \"%s\" to remove %d row versions by parallel vacuum worker");
-	else
-		msg = gettext_noop("scanned index \"%s\" to remove %d row versions");
-
 	ereport(elevel,
-			(errmsg(msg,
+			(errmsg("scanned index \"%s\" to remove %d row versions",
 					vacrelstats->indname,
 					dead_tuples->num_tuples),
 			 errdetail_internal("%s", pg_rusage_show(&ru0))));
@@ -2491,7 +2485,6 @@ lazy_cleanup_index(Relation indrel,
 				   double reltuples, bool estimated_count, LVRelStats *vacrelstats)
 {
 	IndexVacuumInfo ivinfo;
-	const char *msg;
 	PGRUsage	ru0;
 	LVSavedErrInfo saved_err_info;
 
@@ -2522,13 +2515,8 @@ lazy_cleanup_index(Relation indrel,
 
 	if (*stats)
 	{
-		if (IsParallelWorker())
-			msg = gettext_noop("index \"%s\" now contains %.0f row versions in %u pages as reported by parallel vacuum worker");
-		else
-			msg = gettext_noop("index \"%s\" now contains %.0f row versions in %u pages");
-
 		ereport(elevel,
-				(errmsg(msg,
+				(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
 						RelationGetRelationName(indrel),
 						(*stats)->num_index_tuples,
 						(*stats)->num_pages),
