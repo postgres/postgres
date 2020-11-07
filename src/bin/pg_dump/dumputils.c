@@ -865,11 +865,12 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 bool
 variable_is_guc_list_quote(const char *name)
 {
-	if (pg_strcasecmp(name, "temp_tablespaces") == 0 ||
+	if (pg_strcasecmp(name, "local_preload_libraries") == 0 ||
+		pg_strcasecmp(name, "search_path") == 0 ||
 		pg_strcasecmp(name, "session_preload_libraries") == 0 ||
 		pg_strcasecmp(name, "shared_preload_libraries") == 0 ||
-		pg_strcasecmp(name, "local_preload_libraries") == 0 ||
-		pg_strcasecmp(name, "search_path") == 0)
+		pg_strcasecmp(name, "temp_tablespaces") == 0 ||
+		pg_strcasecmp(name, "unix_socket_directories") == 0)
 		return true;
 	else
 		return false;
