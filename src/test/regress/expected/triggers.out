@@ -216,34 +216,56 @@ select * from trigtest;
 
 drop table trigtest;
 -- Check behavior with an implicit column default, too (bug #16644)
-create table trigtest (a integer);
+create table trigtest (
+  a integer,
+  b bool default true not null,
+  c text default 'xyzzy' not null);
 create trigger trigger_return_old
 	before insert or delete or update on trigtest
 	for each row execute procedure trigger_return_old();
 insert into trigtest values(1);
 select * from trigtest;
- a 
----
- 1
+ a | b |   c   
+---+---+-------
+ 1 | t | xyzzy
 (1 row)
 
-alter table trigtest add column b integer default 42 not null;
+alter table trigtest add column d integer default 42 not null;
 select * from trigtest;
- a | b  
----+----
- 1 | 42
+ a | b |   c   | d  
+---+---+-------+----
+ 1 | t | xyzzy | 42
 (1 row)
 
 update trigtest set a = 2 where a = 1 returning *;
- a | b  
----+----
- 1 | 42
+ a | b |   c   | d  
+---+---+-------+----
+ 1 | t | xyzzy | 42
 (1 row)
 
 select * from trigtest;
- a | b  
----+----
- 1 | 42
+ a | b |   c   | d  
+---+---+-------+----
+ 1 | t | xyzzy | 42
+(1 row)
+
+alter table trigtest drop column b;
+select * from trigtest;
+ a |   c   | d  
+---+-------+----
+ 1 | xyzzy | 42
+(1 row)
+
+update trigtest set a = 2 where a = 1 returning *;
+ a |   c   | d  
+---+-------+----
+ 1 | xyzzy | 42
+(1 row)
+
+select * from trigtest;
+ a |   c   | d  
+---+-------+----
+ 1 | xyzzy | 42
 (1 row)
 
 drop table trigtest;

@@ -155,7 +155,10 @@ select * from trigtest;
 drop table trigtest;
 
 -- Check behavior with an implicit column default, too (bug #16644)
-create table trigtest (a integer);
+create table trigtest (
+  a integer,
+  b bool default true not null,
+  c text default 'xyzzy' not null);
 
 create trigger trigger_return_old
 	before insert or delete or update on trigtest
@@ -164,7 +167,13 @@ create trigger trigger_return_old
 insert into trigtest values(1);
 select * from trigtest;
 
-alter table trigtest add column b integer default 42 not null;
+alter table trigtest add column d integer default 42 not null;
+
+select * from trigtest;
+update trigtest set a = 2 where a = 1 returning *;
+select * from trigtest;
+
+alter table trigtest drop column b;
 
 select * from trigtest;
 update trigtest set a = 2 where a = 1 returning *;
