@@ -78,7 +78,7 @@ else
 	test_connect_fails(
 		$common_connstr,
 		"user=ssltestuser channel_binding=require",
-		qr/could not connect to server: channel binding is required, but server did not offer an authentication method that supports channel binding/,
+		qr/channel binding is required, but server did not offer an authentication method that supports channel binding/,
 		"SCRAM with SSL and channel_binding=require");
 }
 
