@@ -89,8 +89,6 @@ static bool GetTupleForTrigger(EState *estate,
 							   LockTupleMode lockmode,
 							   TupleTableSlot *oldslot,
 							   TupleTableSlot **newSlot);
-static HeapTuple MaterializeTupleForTrigger(TupleTableSlot *slot,
-											bool *shouldFree);
 static bool TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 						   Trigger *trigger, TriggerEvent event,
 						   Bitmapset *modifiedCols,
@@ -3036,7 +3034,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 				ExecCopySlot(newslot, epqslot_clean);
 		}
 
-		trigtuple = MaterializeTupleForTrigger(oldslot, &should_free_trig);
+		trigtuple = ExecFetchSlotHeapTuple(oldslot, true, &should_free_trig);
 	}
 	else
 	{
@@ -3402,40 +3400,6 @@ GetTupleForTrigger(EState *estate,
 	}
 
 	return true;
-}
-
-/*
- * Extract a HeapTuple that we can pass off to trigger functions.
- *
- * We must materialize the tuple and make sure it is not dependent on any
- * attrmissing data.  This is needed for the old row in BEFORE UPDATE
- * triggers, since they can choose to pass back this exact tuple as the update
- * result, causing the tuple to be inserted into an executor slot that lacks
- * the attrmissing data.
- *
- * Currently we don't seem to need to remove the attrmissing dependency in any
- * other cases, but keep this as a separate function to simplify fixing things
- * if that changes.
- */
-static HeapTuple
-MaterializeTupleForTrigger(TupleTableSlot *slot, bool *shouldFree)
-{
-	HeapTuple	tup;
-	TupleDesc	tupdesc = slot->tts_tupleDescriptor;
-
-	tup = ExecFetchSlotHeapTuple(slot, true, shouldFree);
-	if (HeapTupleHeaderGetNatts(tup->t_data) < tupdesc->natts &&
-		tupdesc->constr && tupdesc->constr->missing)
-	{
-		HeapTuple	newtup;
-
-		newtup = heap_expand_tuple(tup, tupdesc);
-		if (*shouldFree)
-			heap_freetuple(tup);
-		*shouldFree = true;
-		tup = newtup;
-	}
-	return tup;
 }
 
 /*
