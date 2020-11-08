@@ -156,6 +156,9 @@ extern void ResetTupleHashTable(TupleHashTable hashtable);
  */
 extern JunkFilter *ExecInitJunkFilter(List *targetList,
 									  TupleTableSlot *slot);
+extern JunkFilter *ExecInitJunkFilterInsertion(List *targetList,
+											   TupleDesc cleanTupType,
+											   TupleTableSlot *slot);
 extern JunkFilter *ExecInitJunkFilterConversion(List *targetList,
 												TupleDesc cleanTupType,
 												TupleTableSlot *slot);

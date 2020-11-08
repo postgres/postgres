@@ -54,22 +54,47 @@
  *
  * The source targetlist is passed in.  The output tuple descriptor is
  * built from the non-junk tlist entries.
- * An optional resultSlot can be passed as well.
+ * An optional resultSlot can be passed as well; otherwise, we create one.
  */
 JunkFilter *
 ExecInitJunkFilter(List *targetList, TupleTableSlot *slot)
 {
-	JunkFilter *junkfilter;
 	TupleDesc	cleanTupType;
-	int			cleanLength;
-	AttrNumber *cleanMap;
-	ListCell   *t;
-	AttrNumber	cleanResno;
 
 	/*
 	 * Compute the tuple descriptor for the cleaned tuple.
 	 */
 	cleanTupType = ExecCleanTypeFromTL(targetList);
+
+	/*
+	 * The rest is the same as ExecInitJunkFilterInsertion, ie, we want to map
+	 * every non-junk targetlist column into the output tuple.
+	 */
+	return ExecInitJunkFilterInsertion(targetList, cleanTupType, slot);
+}
+
+/*
+ * ExecInitJunkFilterInsertion
+ *
+ * Initialize a JunkFilter for insertions into a table.
+ *
+ * Here, we are given the target "clean" tuple descriptor rather than
+ * inferring it from the targetlist.  Although the target descriptor can
+ * contain deleted columns, that is not of concern here, since the targetlist
+ * should contain corresponding NULL constants (cf. ExecCheckPlanOutput).
+ * It is assumed that the caller has checked that the table's columns match up
+ * with the non-junk columns of the targetlist.
+ */
+JunkFilter *
+ExecInitJunkFilterInsertion(List *targetList,
+							TupleDesc cleanTupType,
+							TupleTableSlot *slot)
+{
+	JunkFilter *junkfilter;
+	int			cleanLength;
+	AttrNumber *cleanMap;
+	ListCell   *t;
+	AttrNumber	cleanResno;
 
 	/*
 	 * Use the given slot, or make a new slot if we weren't given one.
@@ -93,17 +118,18 @@ ExecInitJunkFilter(List *targetList, TupleTableSlot *slot)
 	if (cleanLength > 0)
 	{
 		cleanMap = (AttrNumber *) palloc(cleanLength * sizeof(AttrNumber));
-		cleanResno = 1;
+		cleanResno = 0;
 		foreach(t, targetList)
 		{
 			TargetEntry *tle = lfirst(t);
 
 			if (!tle->resjunk)
 			{
-				cleanMap[cleanResno - 1] = tle->resno;
+				cleanMap[cleanResno] = tle->resno;
 				cleanResno++;
 			}
 		}
+		Assert(cleanResno == cleanLength);
 	}
 	else
 		cleanMap = NULL;
