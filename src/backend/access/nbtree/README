@@ -429,7 +429,10 @@ allowing subsequent index scans to skip visiting the heap tuple.  The
 "known dead" marking works by setting the index item's lp_flags state
 to LP_DEAD.  This is currently only done in plain indexscans, not bitmap
 scans, because only plain scans visit the heap and index "in sync" and so
-there's not a convenient way to do it for bitmap scans.
+there's not a convenient way to do it for bitmap scans.  Note also that
+LP_DEAD bits are often set when checking a unique index for conflicts on
+insert (this is simpler because it takes place when we hold an exclusive
+lock on the leaf page).
 
 Once an index tuple has been marked LP_DEAD it can actually be removed
 from the index immediately; since index scans only stop "between" pages,
@@ -456,12 +459,15 @@ that this breaks the interlock between VACUUM and indexscans, but that is
 not so: as long as an indexscanning process has a pin on the page where
 the index item used to be, VACUUM cannot complete its btbulkdelete scan
 and so cannot remove the heap tuple.  This is another reason why
-btbulkdelete has to get a super-exclusive lock on every leaf page, not
-only the ones where it actually sees items to delete.  So that we can
-handle the cases where we attempt LP_DEAD flagging for a page after we
-have released its pin, we remember the LSN of the index page when we read
-the index tuples from it; we do not attempt to flag index tuples as dead
-if the we didn't hold the pin the entire time and the LSN has changed.
+btbulkdelete has to get a super-exclusive lock on every leaf page, not only
+the ones where it actually sees items to delete.
+
+LP_DEAD setting by index scans cannot be sure that a TID whose index tuple
+it had planned on LP_DEAD-setting has not been recycled by VACUUM if it
+drops its pin in the meantime.  It must conservatively also remember the
+LSN of the page, and only act to set LP_DEAD bits when the LSN has not
+changed at all. (Avoiding dropping the pin entirely also makes it safe, of
+course.)
 
 WAL Considerations
 ------------------
