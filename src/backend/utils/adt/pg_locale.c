@@ -1731,15 +1731,14 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 
 /*
  * Get provider-specific collation version string for a given collation OID.
- * Return NULL if the provider doesn't support versions.
+ * Return NULL if the provider doesn't support versions, or the collation is
+ * unversioned (for example "C").
  */
 char *
 get_collation_version_for_oid(Oid oid)
 {
 	HeapTuple	tp;
-	char	   *version = NULL;
-
-	Assert(oid != C_COLLATION_OID && oid != POSIX_COLLATION_OID);
+	char	   *version;
 
 	if (oid == DEFAULT_COLLATION_OID)
 	{
