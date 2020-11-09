@@ -1,5 +1,5 @@
 # Swedish message translation file for initdb
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
 # Magnus Hagander <magnus@hagander.net>, 2007.
 # Peter Eisentraut <peter_e@gmx.net>, 2009.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
@@ -10,14 +10,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-06-15 18:37+0000\n"
-"PO-Revision-Date: 2019-06-16 19:17+0200\n"
+"POT-Creation-Date: 2020-08-27 22:23+0000\n"
+"PO-Revision-Date: 2020-08-30 13:36+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -154,22 +155,17 @@ msgstr "kommandot kan ej hittas"
 msgid "child process exited with exit code %d"
 msgstr "barnprocess avslutade med kod %d"
 
-#: ../../common/wait_error.c:63
+#: ../../common/wait_error.c:64
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "barnprocess terminerades med avbrott 0x%X"
 
-#: ../../common/wait_error.c:73
+#: ../../common/wait_error.c:68
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "barnprocess terminerades av signal %s"
+msgid "child process was terminated by signal %d: %s"
+msgstr "barnprocess terminerades av signal %d: %s"
 
-#: ../../common/wait_error.c:77
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "barnprocess terminerades av signal %d"
-
-#: ../../common/wait_error.c:82
+#: ../../common/wait_error.c:74
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "barnprocess avslutade med okänd statuskod %d"
@@ -467,11 +463,11 @@ msgid ""
 "Rerun %s and either do not specify an encoding explicitly,\n"
 "or choose a matching combination.\n"
 msgstr ""
-"Teckenkodningen du har valt (%s) och kodningen svarande\n"
-"mot lokalnamnet (%s), de passar inte ihop. Detta kan leda\n"
-"till problem för funktioner som arbetar med strängar. Detta\n"
-"undgås genom att utföra %s igen och då låta bli bli att\n"
-"sätta kodning, eller i annat fall att välja bättre teckensats.\n"
+"Teckenkodningen du har valt (%s) och teckenkodningen som\n"
+"valda lokalen använder (%s) passar inte ihop. Detta kommer leda\n"
+"till problem för funktioner som arbetar med strängar.\n"
+"Kör %s igen och låt bli ange teckenkodning eller välj\n"
+"en kombination som passar ihop.\n"
 
 #: initdb.c:2676
 #, c-format
@@ -977,6 +973,3 @@ msgstr ""
 "\n"
 "    %s%s%spg_ctl%s -D %s%s%s -l loggfil start\n"
 "\n"
-
-#~ msgid "%s: symlinks are not supported on this platform"
-#~ msgstr "%s: symboliska länkar stöds inte på denna plattform"

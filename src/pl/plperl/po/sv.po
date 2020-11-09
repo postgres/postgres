@@ -6,7 +6,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plperl (PostgreSQL) 9.6\n"
+"Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-06-18 20:27+0000\n"
 "PO-Revision-Date: 2017-08-05 08:26+0200\n"

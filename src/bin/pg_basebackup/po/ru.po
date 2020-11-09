@@ -1,13 +1,13 @@
 # Russian message translation file for pg_basebackup
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2020-08-10 10:44+0300\n"
-"PO-Revision-Date: 2019-09-02 12:28+0300\n"
+"POT-Creation-Date: 2020-11-09 07:37+0300\n"
+"PO-Revision-Date: 2020-11-09 08:27+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -282,7 +282,7 @@ msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: не удалось прочитать из готового канала: %s\n"
 
 #: pg_basebackup.c:326 pg_basebackup.c:429 pg_basebackup.c:1926
-#: streamutil.c:316
+#: streamutil.c:315
 #, c-format
 msgid "%s: could not parse transaction log location \"%s\"\n"
 msgstr "%s: не удалось разобрать положение в журнале транзакций \"%s\"\n"
@@ -467,7 +467,7 @@ msgstr ""
 "контрольной точки\n"
 
 #: pg_basebackup.c:1710 pg_recvlogical.c:264 receivelog.c:548 receivelog.c:599
-#: receivelog.c:639 streamutil.c:286 streamutil.c:390 streamutil.c:436
+#: receivelog.c:639 streamutil.c:285 streamutil.c:389 streamutil.c:435
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: не удалось передать команду репликации \"%s\": %s"
@@ -1143,7 +1143,7 @@ msgstr ""
 "%s: несовместимая версия сервера %s; клиент не поддерживает репликацию с "
 "серверов версии выше %s\n"
 
-#: receivelog.c:556 streamutil.c:295 streamutil.c:334
+#: receivelog.c:556 streamutil.c:294 streamutil.c:333
 #, c-format
 msgid ""
 "%s: could not identify system: got %d rows and %d fields, expected %d rows "
@@ -1243,26 +1243,26 @@ msgstr "%s: не удалось подключиться к серверу\n"
 
 #: streamutil.c:196
 #, c-format
-msgid "%s: could not connect to server: %s"
-msgstr "%s: не удалось подключиться к серверу: %s"
+msgid "%s: %s"
+msgstr "%s: %s"
 
-#: streamutil.c:225
+#: streamutil.c:224
 #, c-format
 msgid "%s: could not clear search_path: %s"
 msgstr "%s: не удалось очистить search_path: %s"
 
-#: streamutil.c:242
+#: streamutil.c:241
 #, c-format
 msgid "%s: could not determine server setting for integer_datetimes\n"
 msgstr "%s: не удалось получить настройку сервера integer_datetimes\n"
 
-#: streamutil.c:255
+#: streamutil.c:254
 #, c-format
 msgid "%s: integer_datetimes compile flag does not match server\n"
 msgstr ""
 "%s: флаг компиляции integer_datetimes не соответствует настройке сервера\n"
 
-#: streamutil.c:402
+#: streamutil.c:401
 #, c-format
 msgid ""
 "%s: could not create replication slot \"%s\": got %d rows and %d fields, "
@@ -1271,7 +1271,7 @@ msgstr ""
 "%s: создать слот репликации \"%s\" не удалось; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d)\n"
 
-#: streamutil.c:447
+#: streamutil.c:446
 #, c-format
 msgid ""
 "%s: could not drop replication slot \"%s\": got %d rows and %d fields, "
@@ -1279,6 +1279,9 @@ msgid ""
 msgstr ""
 "%s: удалить слот репликации \"%s\" не получилось; получено строк: %d, полей: "
 "%d (ожидалось: %d и %d)\n"
+
+#~ msgid "%s: could not connect to server: %s"
+#~ msgstr "%s: не удалось подключиться к серверу: %s"
 
 #~ msgid "%s: child process did not exit normally\n"
 #~ msgstr "%s: дочерний процесс завершён ненормально\n"

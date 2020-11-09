@@ -1,5 +1,5 @@
 # Swedish message translation file for pg_ctl
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
 # Magnus Hagander <magnus@hagander.net>, 2010.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2013, 2014.
 #
@@ -9,14 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-06-18 02:32+0000\n"
-"PO-Revision-Date: 2018-06-18 22:01+0200\n"
+"POT-Creation-Date: 2020-08-27 22:22+0000\n"
+"PO-Revision-Date: 2020-04-11 07:51+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -80,22 +81,17 @@ msgstr "kommandot kan ej hittas"
 msgid "child process exited with exit code %d"
 msgstr "barnprocess avslutade med kod %d"
 
-#: ../../common/wait_error.c:63
+#: ../../common/wait_error.c:64
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "barnprocess terminerades med avbrott 0x%X"
 
-#: ../../common/wait_error.c:73
+#: ../../common/wait_error.c:68
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "barnprocess terminerades av signal %s"
+msgid "child process was terminated by signal %d: %s"
+msgstr "barnprocess terminerades av signal %d: %s"
 
-#: ../../common/wait_error.c:77
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "barnprocess terminerades av signal %d"
-
-#: ../../common/wait_error.c:82
+#: ../../common/wait_error.c:74
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "barnprocess avslutade med okänd statuskod %d"
@@ -336,7 +332,7 @@ msgstr "%s: kunde inte skicka signalen \"reload\" (PID: %ld): %s\n"
 
 #: pg_ctl.c:1158
 msgid "server signaled\n"
-msgstr "servern är singalerad\n"
+msgstr "servern är signalerad\n"
 
 #: pg_ctl.c:1184
 #, c-format
@@ -457,7 +453,7 @@ msgstr "%s: VARNING: \"Restricted Token\" stöds inte av plattformen.\n"
 #: pg_ctl.c:1753
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s: kunde inte skapa processmärke (token): felkod %lu\n"
+msgstr "%s: kunde inte öppna process-token: felkod %lu\n"
 
 #: pg_ctl.c:1767
 #, c-format
@@ -820,95 +816,3 @@ msgstr "%s: ingen operation angiven\n"
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: ingen databaskatalog angiven och omgivningsvariabeln PGDATA är inte satt\n"
-
-#~ msgid "%s: could not start server: exit code was %d\n"
-#~ msgstr "%s: kunde inte starta servern: avslutningskoden var %d\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s: denna databaskatalog tycks nyttjas av en redan driftsatt postmaster\n"
-
-#~ msgid "%s: server did not start in time\n"
-#~ msgstr "%s: servern startade inte i tid\n"
-
-#~ msgid "trying to start server anyway\n"
-#~ msgstr "försöker starta servern ändå\n"
-
-#~ msgid "waiting for server to promote..."
-#~ msgstr "väntar på att servern skall befordras..."
-
-#~ msgid "server promoted\n"
-#~ msgstr "servern befordrad\n"
-
-#~ msgid "%s: server did not promote in time\n"
-#~ msgstr "%s: servern befordrades inte i tid\n"
-
-#~ msgid "%s: could not get LUIDs for privileges: error code %lu\n"
-#~ msgstr "%s: kunde inte hämta LUID:er för rättigheter: felkod %lu\n"
-
-#~ msgid "%s: could not get token information: error code %lu\n"
-#~ msgstr "%s: kunde inte hämta token-information: felkod %lu\n"
-
-#~ msgid "%s: out of memory\n"
-#~ msgstr "%s: slut på minne\n"
-
-#~ msgid "  %s init[db] [-D DATADIR] [-s] [-o OPTIONS]\n"
-#~ msgstr "  %s init[db] [-D DATAKAT] [-s] [-o FLAGGOR]\n"
-
-#~ msgid ""
-#~ "  %s start    [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
-#~ "                  [-o OPTIONS] [-p PATH] [-c]\n"
-#~ msgstr ""
-#~ "  %s start    [-D DATAKAT] [-l FILNAMN] [-W] [-t SEK] [-s]\n"
-#~ "                  [-o FLAGGOR] [-p SOKVÄG] [-c]\n"
-
-#~ msgid "  %s stop     [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
-#~ msgstr "  %s stop     [-D DATAKAT] [-m STÄNGNINGSMETOD] [-W] [-t SEK] [-s]\n"
-
-#~ msgid ""
-#~ "  %s restart  [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
-#~ "                  [-o OPTIONS] [-c]\n"
-#~ msgstr ""
-#~ "  %s restart  [-D DATAKAT] [-m STÄNGNINGSMETOD] [-W] [-t SEK] [-s]\n"
-#~ "                  [-o FLAGGOR] [-c]\n"
-
-#~ msgid "  %s reload   [-D DATADIR] [-s]\n"
-#~ msgstr "  %s reload   [-D DATAKAT] [-s]\n"
-
-#~ msgid "  %s status   [-D DATADIR]\n"
-#~ msgstr "  %s status   [-D DATAKAT]\n"
-
-#~ msgid "  %s promote  [-D DATADIR] [-W] [-t SECS] [-s]\n"
-#~ msgstr "  %s promote  [-D DATAKAT] [-W] [-t SEK] [-s]\n"
-
-#~ msgid "  %s kill     SIGNALNAME PID\n"
-#~ msgstr "  %s kill     SIGNALNAMN PID\n"
-
-#~ msgid ""
-#~ "  %s register [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
-#~ "                  [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
-#~ msgstr ""
-#~ "  %s register [-D DATAKAT] [-N TJÄNSTENAMN] [-U ANVÄNDARNAMN] [-P LÖSENORD]\n"
-#~ "                  [-S STARTTYPE] [-e KÄLLA] [-W] [-t SEK] [-s] [-o FLAGGOR]\n"
-
-#~ msgid "  -w, --wait             wait until operation completes (default)\n"
-#~ msgstr "  -w, --wait             vänta på att operationen slutförs (standard)\n"
-
-#~ msgid "  -W, --no-wait          do not wait until operation completes\n"
-#~ msgstr "  -W, --no-wait          vänta inte på att operationen slutförs\n"
-
-#~ msgid ""
-#~ "  -o, --options=OPTIONS  command line options to pass to postgres\n"
-#~ "                         (PostgreSQL server executable) or initdb\n"
-#~ msgstr ""
-#~ "  -o, --options=OPTIONS  kommandoradsflaggor som skickas vidare till postgres\n"
-#~ "                         (PostgreSQL-serverns körbara fil) eller till initdb\n"
-
-#~ msgid "  fast        quit directly, with proper shutdown (default)\n"
-#~ msgstr "  fast        stäng omedelbart, med en kontrollerad nedstängning (standard)\n"
-
-#~ msgid "%s: control file appears to be corrupt\n"
-#~ msgstr "%s: kontrollfilen verkar vara trasig\n"
