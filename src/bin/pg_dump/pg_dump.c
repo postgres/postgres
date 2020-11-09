@@ -18573,13 +18573,25 @@ appendIndexCollationVersion(PQExpBuffer buffer, IndxInfo *indxinfo, int enc,
 	}
 
 	/* Restore the versions that were recorded by the old cluster (if any). */
-	parsePGArray(inddependcollnames,
-				 &inddependcollnamesarray,
-				 &ninddependcollnames);
-	parsePGArray(inddependcollversions,
-				 &inddependcollversionsarray,
-				 &ninddependcollversions);
-	Assert(ninddependcollnames == ninddependcollversions);
+	if (strlen(inddependcollnames) == 0 && strlen(inddependcollversions) == 0)
+	{
+		ninddependcollnames = ninddependcollversions = 0;
+		inddependcollnamesarray = inddependcollversionsarray = NULL;
+	}
+	else
+	{
+		if (!parsePGArray(inddependcollnames,
+						  &inddependcollnamesarray,
+						  &ninddependcollnames))
+			fatal("could not parse index collation name array");
+		if (!parsePGArray(inddependcollversions,
+						  &inddependcollversionsarray,
+						  &ninddependcollversions))
+			fatal("could not parse index collation version array");
+	}
+
+	if (ninddependcollnames != ninddependcollversions)
+		fatal("mismatched number of collation names and versions for index");
 
 	if (ninddependcollnames > 0)
 		appendPQExpBufferStr(buffer,
@@ -18594,7 +18606,7 @@ appendIndexCollationVersion(PQExpBuffer buffer, IndxInfo *indxinfo, int enc,
 						  "UPDATE pg_catalog.pg_depend SET refobjversion = %s WHERE objid = '%u'::pg_catalog.oid AND refclassid = 'pg_catalog.pg_collation'::regclass AND refobjversion IS NOT NULL AND refobjid = ",
 						  inddependcollversionsarray[i],
 						  indxinfo->dobj.catId.oid);
-		appendStringLiteralAH(buffer,inddependcollnamesarray[i], fout);
+		appendStringLiteralAH(buffer, inddependcollnamesarray[i], fout);
 		appendPQExpBuffer(buffer, "::regcollation;\n");
 	}
 
