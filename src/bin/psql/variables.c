@@ -361,6 +361,32 @@ SetVariableHooks(VariableSpace space, const char *name,
 }
 
 /*
+ * Return true iff the named variable has substitute and/or assign hook
+ * functions.
+ */
+bool
+VariableHasHook(VariableSpace space, const char *name)
+{
+	struct _variable *current;
+
+	Assert(space);
+	Assert(name);
+
+	for (current = space->next; current; current = current->next)
+	{
+		int			cmp = strcmp(current->name, name);
+
+		if (cmp == 0)
+			return (current->substitute_hook != NULL ||
+					current->assign_hook != NULL);
+		if (cmp > 0)
+			break;				/* it's not there */
+	}
+
+	return false;
+}
+
+/*
  * Convenience function to set a variable's value to "on".
  */
 bool

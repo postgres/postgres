@@ -90,6 +90,7 @@ bool		DeleteVariable(VariableSpace space, const char *name);
 void SetVariableHooks(VariableSpace space, const char *name,
 				 VariableSubstituteHook shook,
 				 VariableAssignHook ahook);
+bool		VariableHasHook(VariableSpace space, const char *name);
 
 void		PsqlVarEnumError(const char *name, const char *value, const char *suggestions);
 
