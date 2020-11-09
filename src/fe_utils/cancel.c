@@ -207,7 +207,7 @@ consoleHandler(DWORD dwCtrlType)
 			}
 			else
 			{
-				write_stderr(_("Could not send cancel request: %s"));
+				write_stderr(_("Could not send cancel request: "));
 				write_stderr(errbuf);
 			}
 		}
