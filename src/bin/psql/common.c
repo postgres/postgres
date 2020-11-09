@@ -786,6 +786,13 @@ StoreQueryTuple(const PGresult *result)
 			/* concatenate prefix and column name */
 			varname = psprintf("%s%s", pset.gset_prefix, colname);
 
+			if (VariableHasHook(pset.vars, varname))
+			{
+				pg_log_warning("attempt to \\gset into specially treated variable \"%s\" ignored",
+							   varname);
+				continue;
+			}
+
 			if (!PQgetisnull(result, 0, i))
 				value = PQgetvalue(result, 0, i);
 			else

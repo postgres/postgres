@@ -55,6 +55,9 @@ select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 select 10 as "bad name"
 \gset
 
+select 97 as "EOF", 'ok' as _foo \gset IGNORE
+\echo :IGNORE_foo :IGNOREEOF
+
 -- multiple backslash commands in one line
 select 1 as x, 2 as y \gset pref01_ \\ \echo :pref01_x
 select 3 as x, 4 as y \gset pref01_ \echo :pref01_x \echo :pref01_y

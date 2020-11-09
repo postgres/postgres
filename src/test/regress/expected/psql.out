@@ -106,6 +106,10 @@ select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 select 10 as "bad name"
 \gset
 invalid variable name: "bad name"
+select 97 as "EOF", 'ok' as _foo \gset IGNORE
+attempt to \gset into specially treated variable "IGNOREEOF" ignored
+\echo :IGNORE_foo :IGNOREEOF
+ok 0
 -- multiple backslash commands in one line
 select 1 as x, 2 as y \gset pref01_ \\ \echo :pref01_x
 1
