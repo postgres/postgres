@@ -1,13 +1,13 @@
 # Russian message translation file for pg_rewind
 # Copyright (C) 2015-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019.
+# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-02 06:52+0300\n"
-"PO-Revision-Date: 2019-09-02 12:32+0300\n"
+"POT-Creation-Date: 2020-11-09 07:34+0300\n"
+"PO-Revision-Date: 2020-11-09 08:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -83,7 +83,7 @@ msgstr "не удалось получить код выхода от подпр
 msgid "could not open directory \"%s\": %m"
 msgstr "не удалось открыть каталог \"%s\": %m"
 
-#: copy_fetch.c:88 filemap.c:201 filemap.c:362
+#: copy_fetch.c:88 filemap.c:201
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не удалось получить информацию о файле \"%s\": %m"
@@ -232,12 +232,12 @@ msgstr "\"%s\" не является символической ссылкой"
 msgid "\"%s\" is not a regular file"
 msgstr "\"%s\" не является обычным файлом"
 
-#: filemap.c:374
+#: filemap.c:362
 #, c-format
 msgid "source file list is empty"
 msgstr "список файлов в источнике пуст"
 
-#: filemap.c:489
+#: filemap.c:477
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\""
 msgstr ""
@@ -245,76 +245,76 @@ msgstr ""
 
 #: libpq_fetch.c:52
 #, c-format
-msgid "could not connect to server: %s"
-msgstr "не удалось подключиться к серверу: %s"
+msgid "%s"
+msgstr "%s"
 
-#: libpq_fetch.c:56
+#: libpq_fetch.c:55
 #, c-format
 msgid "connected to server"
 msgstr "подключение к серверу установлено"
 
-#: libpq_fetch.c:65
+#: libpq_fetch.c:64
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "не удалось очистить search_path: %s"
 
-#: libpq_fetch.c:77
+#: libpq_fetch.c:76
 #, c-format
 msgid "source server must not be in recovery mode"
 msgstr "исходный сервер должен выйти из режима восстановления"
 
-#: libpq_fetch.c:87
+#: libpq_fetch.c:86
 #, c-format
 msgid "full_page_writes must be enabled in the source server"
 msgstr "на исходном сервере должен быть включён режим full_page_writes"
 
-#: libpq_fetch.c:113 libpq_fetch.c:139
+#: libpq_fetch.c:112 libpq_fetch.c:138
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "ошибка выполнения запроса (%s) на исходном сервере: %s"
 
-#: libpq_fetch.c:118
+#: libpq_fetch.c:117
 #, c-format
 msgid "unexpected result set from query"
 msgstr "неожиданный результат запроса"
 
-#: libpq_fetch.c:159
+#: libpq_fetch.c:158
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location"
 msgstr ""
 "нераспознанный результат \"%s\" вместо текущей позиции добавления в WAL"
 
-#: libpq_fetch.c:209
+#: libpq_fetch.c:208
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "не удалось получить список файлов: %s"
 
-#: libpq_fetch.c:214
+#: libpq_fetch.c:213
 #, c-format
 msgid "unexpected result set while fetching file list"
 msgstr "неожиданный результат при получении списка файлов"
 
-#: libpq_fetch.c:262
+#: libpq_fetch.c:266
 #, c-format
 msgid "could not send query: %s"
 msgstr "не удалось отправить запрос: %s"
 
-#: libpq_fetch.c:267
+#: libpq_fetch.c:271
 #, c-format
 msgid "could not set libpq connection to single row mode"
 msgstr "не удалось перевести подключение libpq в однострочный режим"
 
-#: libpq_fetch.c:288
+#: libpq_fetch.c:292
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "неожиданный результат при получении файлов с сервера: %s"
 
-#: libpq_fetch.c:294
+#: libpq_fetch.c:298
 #, c-format
 msgid "unexpected result set size while fetching remote files"
 msgstr "неожиданный размер набора результатов при получении файлов с сервера"
 
-#: libpq_fetch.c:300
+#: libpq_fetch.c:304
 #, c-format
 msgid ""
 "unexpected data types in result set while fetching remote files: %u %u %u"
@@ -322,47 +322,47 @@ msgstr ""
 "неожиданные типы данных в наборе результатов при получении файлов с сервера: "
 "%u %u %u"
 
-#: libpq_fetch.c:308
+#: libpq_fetch.c:312
 #, c-format
 msgid "unexpected result format while fetching remote files"
 msgstr "неожиданный формат результата при получении файлов с сервера"
 
-#: libpq_fetch.c:314
+#: libpq_fetch.c:318
 #, c-format
 msgid "unexpected null values in result while fetching remote files"
 msgstr "неожиданные значения NULL в результате при получении файлов с сервера"
 
-#: libpq_fetch.c:318
+#: libpq_fetch.c:322
 #, c-format
 msgid "unexpected result length while fetching remote files"
 msgstr "неожиданная длина результата при получении файлов с сервера"
 
-#: libpq_fetch.c:384
+#: libpq_fetch.c:388
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "не удалось получить с сервера файл \"%s\": %s"
 
-#: libpq_fetch.c:389
+#: libpq_fetch.c:393
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
 msgstr "неожиданный набор результатов при получении файла \"%s\" с сервера"
 
-#: libpq_fetch.c:433
+#: libpq_fetch.c:437
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "не удалось отправить данные COPY: %s"
 
-#: libpq_fetch.c:462
+#: libpq_fetch.c:466
 #, c-format
 msgid "could not send file list: %s"
 msgstr "не удалось отправить список файлов: %s"
 
-#: libpq_fetch.c:504
+#: libpq_fetch.c:508
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "не удалось отправить сообщение о завершении копирования: %s"
 
-#: libpq_fetch.c:510
+#: libpq_fetch.c:514
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "неожиданный результат при передаче списка: %s"
@@ -427,7 +427,7 @@ msgid ""
 "  %s [OPTION]...\n"
 "\n"
 msgstr ""
-"Пример запуска:\n"
+"Использование:\n"
 "  %s [ПАРАМЕТР]...\n"
 "\n"
 
@@ -589,32 +589,32 @@ msgstr "чтение WAL в целевом кластере"
 msgid "need to copy %lu MB (total source directory size is %lu MB)"
 msgstr "требуется скопировать %lu МБ (общий размер исходного каталога: %lu МБ)"
 
-#: pg_rewind.c:365
+#: pg_rewind.c:364
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "создание метки копии и модификация управляющего файла"
 
-#: pg_rewind.c:395
+#: pg_rewind.c:394
 #, c-format
 msgid "syncing target data directory"
 msgstr "синхронизация целевого каталога данных"
 
-#: pg_rewind.c:398
+#: pg_rewind.c:397
 #, c-format
 msgid "Done!"
 msgstr "Готово!"
 
-#: pg_rewind.c:410
+#: pg_rewind.c:409
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "исходный и целевой кластеры относятся к разным системам"
 
-#: pg_rewind.c:418
+#: pg_rewind.c:417
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "кластеры несовместимы с этой версией pg_rewind"
 
-#: pg_rewind.c:428
+#: pg_rewind.c:427
 #, c-format
 msgid ""
 "target server needs to use either data checksums or \"wal_log_hints = on\""
@@ -622,49 +622,49 @@ msgstr ""
 "на целевом сервере должны быть контрольные суммы данных или \"wal_log_hints "
 "= on\""
 
-#: pg_rewind.c:439
+#: pg_rewind.c:438
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "целевой сервер должен быть выключен штатно"
 
-#: pg_rewind.c:449
+#: pg_rewind.c:448
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "работа с исходным каталогом данных должна быть завершена штатно"
 
-#: pg_rewind.c:498
+#: pg_rewind.c:500
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s КБ (%d%%) скопировано"
 
-#: pg_rewind.c:559
+#: pg_rewind.c:563
 #, c-format
 msgid "invalid control file"
 msgstr "неверный управляющий файл"
 
-#: pg_rewind.c:643
+#: pg_rewind.c:647
 #, c-format
 msgid ""
 "could not find common ancestor of the source and target cluster's timelines"
 msgstr ""
 "не удалось найти общего предка линий времени исходного и целевого кластеров"
 
-#: pg_rewind.c:684
+#: pg_rewind.c:688
 #, c-format
 msgid "backup label buffer too small"
 msgstr "буфер для метки копии слишком мал"
 
-#: pg_rewind.c:707
+#: pg_rewind.c:711
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "неверная контрольная сумма управляющего файла"
 
-#: pg_rewind.c:717
+#: pg_rewind.c:721
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "неверный размер управляющего файла (%d), ожидалось: %d"
 
-#: pg_rewind.c:726
+#: pg_rewind.c:730
 #, c-format
 msgid ""
 "WAL segment size must be a power of two between 1 MB and 1 GB, but the "
@@ -883,6 +883,9 @@ msgstr "запись с неверной длиной в позиции %X/%X"
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "неверный сжатый образ в позиции %X/%X, блок %d"
+
+#~ msgid "could not connect to server: %s"
+#~ msgstr "не удалось подключиться к серверу: %s"
 
 #~ msgid "  block %u\n"
 #~ msgstr "  блок %u\n"

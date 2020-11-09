@@ -10054,7 +10054,7 @@ msgstr "必要ならば手作業でこのディレクトリを削除すること
 #: commands/trigger.c:210 commands/trigger.c:221
 #, c-format
 msgid "\"%s\" is a table"
-msgstr "\"%s\"はテーブルではありません"
+msgstr "\"%s\"はテーブルです"
 
 #: commands/trigger.c:212 commands/trigger.c:223
 #, c-format
@@ -24273,7 +24273,7 @@ msgstr "ライブラリ\"%s\"をロードしました"
 #: utils/init/postinit.c:255
 #, c-format
 msgid "replication connection authorized: user=%s application_name=%s SSL enabled (protocol=%s, cipher=%s, bits=%d, compression=%s)"
-msgstr "レプリケーション接続の認証完了: ユーザ=%s application_name=%s SLL有効 (プロトコル=%s、暗号方式=%s、ビット長=%d、圧縮=%s)"
+msgstr "レプリケーション接続の認証完了: ユーザ=%s application_name=%s SSL有効 (プロトコル=%s、暗号方式=%s、ビット長=%d、圧縮=%s)"
 
 #: utils/init/postinit.c:261 utils/init/postinit.c:267
 #: utils/init/postinit.c:289 utils/init/postinit.c:295
@@ -24288,7 +24288,7 @@ msgstr "有効"
 #: utils/init/postinit.c:262
 #, c-format
 msgid "replication connection authorized: user=%s SSL enabled (protocol=%s, cipher=%s, bits=%d, compression=%s)"
-msgstr "レプリケーション接続の認証完了: ユーザ=%s SLL有効 (プロトコル=%s、暗号方式=%s、ビット長=%d、圧縮=%s)"
+msgstr "レプリケーション接続の認証完了: ユーザ=%s SSL有効 (プロトコル=%s、暗号方式=%s、ビット長=%d、圧縮=%s)"
 
 #: utils/init/postinit.c:272
 #, c-format

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-02 06:52+0300\n"
-"PO-Revision-Date: 2020-05-06 11:08+0300\n"
+"POT-Creation-Date: 2020-11-09 07:34+0300\n"
+"PO-Revision-Date: 2020-11-09 08:34+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: check.c:67
+#: check.c:68
 #, c-format
 msgid ""
 "Performing Consistency Checks on Old Live Server\n"
@@ -26,7 +26,7 @@ msgstr ""
 "Проверка целостности на старом работающем сервере\n"
 "-------------------------------------------------\n"
 
-#: check.c:73
+#: check.c:74
 #, c-format
 msgid ""
 "Performing Consistency Checks\n"
@@ -35,7 +35,7 @@ msgstr ""
 "Проведение проверок целостности\n"
 "-------------------------------\n"
 
-#: check.c:191
+#: check.c:194
 #, c-format
 msgid ""
 "\n"
@@ -44,7 +44,7 @@ msgstr ""
 "\n"
 "*Кластеры совместимы*\n"
 
-#: check.c:197
+#: check.c:200
 #, c-format
 msgid ""
 "\n"
@@ -56,7 +56,7 @@ msgstr ""
 "initdb\n"
 "для нового кластера, чтобы продолжить.\n"
 
-#: check.c:233
+#: check.c:234
 #, c-format
 msgid ""
 "Optimizer statistics are not transferred by pg_upgrade so,\n"
@@ -69,20 +69,7 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:238
-#, c-format
-msgid ""
-"Optimizer statistics and free space information are not transferred\n"
-"by pg_upgrade so, once you start the new server, consider running:\n"
-"    %s\n"
-"\n"
-msgstr ""
-"Статистика оптимизатора и сведения о свободном месте утилитой pg_upgrade\n"
-"не переносятся, поэтому, запустив новый сервер, имеет смысл выполнить:\n"
-"    %s\n"
-"\n"
-
-#: check.c:245
+#: check.c:240
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
@@ -91,7 +78,7 @@ msgstr ""
 "При запуске этого скрипта будут удалены файлы данных старого кластера:\n"
 "    %s\n"
 
-#: check.c:250
+#: check.c:245
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
@@ -104,24 +91,24 @@ msgstr ""
 "пространства или каталог данных нового кластера.\n"
 "Содержимое старого кластера нужно будет удалить вручную.\n"
 
-#: check.c:260
+#: check.c:255
 #, c-format
 msgid "Checking cluster versions"
 msgstr "Проверка версий кластеров"
 
-#: check.c:272
+#: check.c:267
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version 8.4 and later.\n"
 msgstr ""
 "Эта утилита может производить обновление только с версии PostgreSQL 8.4 и "
 "новее.\n"
 
-#: check.c:276
+#: check.c:271
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s.\n"
 msgstr "Эта утилита может только повышать версию PostgreSQL до %s.\n"
 
-#: check.c:285
+#: check.c:280
 #, c-format
 msgid ""
 "This utility cannot be used to downgrade to older major PostgreSQL "
@@ -130,7 +117,7 @@ msgstr ""
 "Эта утилита не может понижать версию до более старой основной версии "
 "PostgreSQL.\n"
 
-#: check.c:290
+#: check.c:285
 #, c-format
 msgid ""
 "Old cluster data and binary directories are from different major versions.\n"
@@ -138,7 +125,7 @@ msgstr ""
 "Каталоги данных и исполняемых файлов старого кластера относятся к разным "
 "основным версиям.\n"
 
-#: check.c:293
+#: check.c:288
 #, c-format
 msgid ""
 "New cluster data and binary directories are from different major versions.\n"
@@ -146,7 +133,7 @@ msgstr ""
 "Каталоги данных и исполняемых файлов нового кластера относятся к разным "
 "основным версиям.\n"
 
-#: check.c:310
+#: check.c:305
 #, c-format
 msgid ""
 "When checking a pre-PG 9.1 live old server, you must specify the old "
@@ -155,7 +142,7 @@ msgstr ""
 "Для проверки старого работающего сервера версии до 9.1 необходимо указать "
 "номер порта этого сервера.\n"
 
-#: check.c:314
+#: check.c:309
 #, c-format
 msgid ""
 "When checking a live server, the old and new port numbers must be "
@@ -164,14 +151,14 @@ msgstr ""
 "Для проверки работающего сервера новый номер порта должен отличаться от "
 "старого.\n"
 
-#: check.c:329
+#: check.c:324
 #, c-format
 msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr ""
 "кодировки в базе данных \"%s\" различаются:  старая - \"%s\", новая - \"%s"
 "\"\n"
 
-#: check.c:334
+#: check.c:329
 #, c-format
 msgid ""
 "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
@@ -179,7 +166,7 @@ msgstr ""
 "значения lc_collate в базе данных \"%s\" различаются:  старое - \"%s\", "
 "новое - \"%s\"\n"
 
-#: check.c:337
+#: check.c:332
 #, c-format
 msgid ""
 "lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
@@ -187,30 +174,41 @@ msgstr ""
 "значения lc_ctype в базе данных \"%s\" различаются:  старое - \"%s\", новое "
 "- \"%s\"\n"
 
-#: check.c:410
+#: check.c:405
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\"\n"
 msgstr ""
 "Новая база данных кластера \"%s\" не пустая: найдено отношение \"%s.%s\"\n"
 
-#: check.c:459
+#: check.c:454
 #, c-format
 msgid "Creating script to analyze new cluster"
 msgstr "Создание скрипта для анализа нового кластера"
 
-#: check.c:473 check.c:601 check.c:865 check.c:944 check.c:1053 check.c:1144
+#: check.c:468 check.c:627 check.c:891 check.c:970 check.c:1079 check.c:1170
 #: file.c:341 function.c:246 option.c:495 version.c:57 version.c:202
 #: version.c:344
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "не удалось открыть файл \"%s\": %s\n"
 
-#: check.c:528 check.c:657
+#: check.c:516 check.c:683
 #, c-format
 msgid "could not add execute permission to file \"%s\": %s\n"
 msgstr "не удалось добавить право выполнения для файла \"%s\": %s\n"
 
-#: check.c:564
+#: check.c:546
+#, c-format
+msgid "Checking for new cluster tablespace directories"
+msgstr "Проверка каталогов табличных пространств в новом кластере"
+
+#: check.c:557
+#, c-format
+msgid "new cluster tablespace directory already exists: \"%s\"\n"
+msgstr ""
+"каталог табличного пространства в новом кластере уже существует: \"%s\"\n"
+
+#: check.c:590
 #, c-format
 msgid ""
 "\n"
@@ -221,7 +219,7 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ:  новый каталог данных не должен располагаться внутри старого "
 "каталога данных, то есть, в %s\n"
 
-#: check.c:588
+#: check.c:614
 #, c-format
 msgid ""
 "\n"
@@ -232,37 +230,37 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ:  пользовательские табличные пространства не должны "
 "располагаться внутри каталога данных, то есть, в %s\n"
 
-#: check.c:598
+#: check.c:624
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "Создание скрипта для удаления старого кластера"
 
-#: check.c:677
+#: check.c:703
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "Проверка, является ли пользователь БД стартовым пользователем"
 
-#: check.c:693
+#: check.c:719
 #, c-format
 msgid "database user \"%s\" is not the install user\n"
 msgstr "пользователь БД \"%s\" не является стартовым пользователем\n"
 
-#: check.c:704
+#: check.c:730
 #, c-format
 msgid "could not determine the number of users\n"
 msgstr "не удалось определить количество пользователей\n"
 
-#: check.c:712
+#: check.c:738
 #, c-format
 msgid "Only the install user can be defined in the new cluster.\n"
 msgstr "В новом кластере может быть определён только стартовый пользователь.\n"
 
-#: check.c:732
+#: check.c:758
 #, c-format
 msgid "Checking database connection settings"
 msgstr "Проверка параметров подключения к базе данных"
 
-#: check.c:754
+#: check.c:780
 #, c-format
 msgid ""
 "template0 must not allow connections, i.e. its pg_database.datallowconn must "
@@ -271,7 +269,7 @@ msgstr ""
 "База template0 не должна допускать подключения, то есть её свойство "
 "pg_database.datallowconn должно быть false\n"
 
-#: check.c:764
+#: check.c:790
 #, c-format
 msgid ""
 "All non-template0 databases must allow connections, i.e. their pg_database."
@@ -280,33 +278,33 @@ msgstr ""
 "Все базы, кроме template0, должны допускать подключения, то есть их свойство "
 "pg_database.datallowconn должно быть true\n"
 
-#: check.c:789
+#: check.c:815
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "Проверка наличия подготовленных транзакций"
 
-#: check.c:798
+#: check.c:824
 #, c-format
 msgid "The source cluster contains prepared transactions\n"
 msgstr "Исходный кластер содержит подготовленные транзакции\n"
 
-#: check.c:800
+#: check.c:826
 #, c-format
 msgid "The target cluster contains prepared transactions\n"
 msgstr "Целевой кластер содержит подготовленные транзакции\n"
 
-#: check.c:826
+#: check.c:852
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Проверка несоответствия при передаче bigint в contrib/isn"
 
-#: check.c:887 check.c:966 check.c:1076 check.c:1167 function.c:268
+#: check.c:913 check.c:992 check.c:1102 check.c:1193 function.c:268
 #: version.c:248 version.c:285 version.c:428
 #, c-format
 msgid "fatal\n"
 msgstr "сбой\n"
 
-#: check.c:888
+#: check.c:914
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -330,12 +328,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:912
+#: check.c:938
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "Проверка таблиц со свойством WITH OIDS"
 
-#: check.c:967
+#: check.c:993
 #, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not "
@@ -354,12 +352,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:997
+#: check.c:1023
 #, c-format
 msgid "Checking for reg* data types in user tables"
 msgstr "Проверка типов данных reg* в пользовательских таблицах"
 
-#: check.c:1077
+#: check.c:1103
 #, c-format
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
@@ -379,12 +377,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1102
+#: check.c:1128
 #, c-format
 msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "Проверка несовместимого типа данных \"jsonb\""
 
-#: check.c:1168
+#: check.c:1194
 #, c-format
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
@@ -404,32 +402,32 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1189
+#: check.c:1215
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Проверка ролей с именами, начинающимися с \"pg_\""
 
-#: check.c:1199
+#: check.c:1225
 #, c-format
 msgid "The source cluster contains roles starting with \"pg_\"\n"
 msgstr "В исходном кластере есть роли, имена которых начинаются с \"pg_\"\n"
 
-#: check.c:1201
+#: check.c:1227
 #, c-format
 msgid "The target cluster contains roles starting with \"pg_\"\n"
 msgstr "В целевом кластере есть роли, имена которых начинаются с \"pg_\"\n"
 
-#: check.c:1227
+#: check.c:1253
 #, c-format
 msgid "failed to get the current locale\n"
 msgstr "не удалось получить текущую локаль\n"
 
-#: check.c:1236
+#: check.c:1262
 #, c-format
 msgid "failed to get system locale name for \"%s\"\n"
 msgstr "не удалось получить системное имя локали для \"%s\"\n"
 
-#: check.c:1242
+#: check.c:1268
 #, c-format
 msgid "failed to restore old locale \"%s\"\n"
 msgstr "не удалось восстановить старую локаль \"%s\"\n"
@@ -485,7 +483,7 @@ msgid "The target cluster lacks cluster state information:\n"
 msgstr "В целевом кластере не хватает информации о состоянии кластера:\n"
 
 #: controldata.c:208 dump.c:51 pg_upgrade.c:336 pg_upgrade.c:373
-#: relfilenode.c:252 util.c:80
+#: relfilenode.c:248 util.c:80
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1652,7 +1650,7 @@ msgstr "Подключение файлов пользовательских о�
 msgid "old database \"%s\" not found in the new cluster\n"
 msgstr "старая база данных \"%s\" не найдена в новом кластере\n"
 
-#: relfilenode.c:239
+#: relfilenode.c:235
 #, c-format
 msgid ""
 "error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
@@ -1660,22 +1658,22 @@ msgstr ""
 "ошибка при проверке существования файла отношения \"%s.%s\" (перенос \"%s\" "
 "в \"%s\"): %s\n"
 
-#: relfilenode.c:257
+#: relfilenode.c:253
 #, c-format
 msgid "rewriting \"%s\" to \"%s\"\n"
 msgstr "переписывание \"%s\" в \"%s\"\n"
 
-#: relfilenode.c:265
+#: relfilenode.c:261
 #, c-format
 msgid "cloning \"%s\" to \"%s\"\n"
 msgstr "клонирование \"%s\" в \"%s\"\n"
 
-#: relfilenode.c:270
+#: relfilenode.c:266
 #, c-format
 msgid "copying \"%s\" to \"%s\"\n"
 msgstr "копирование \"%s\" в \"%s\"\n"
 
-#: relfilenode.c:275
+#: relfilenode.c:271
 #, c-format
 msgid "linking \"%s\" to \"%s\"\n"
 msgstr "создание ссылки на \"%s\" в \"%s\"\n"
@@ -1716,7 +1714,7 @@ msgstr "не удалось открыть файл с версией \"%s\": %m
 msgid "could not parse version file \"%s\"\n"
 msgstr "не удалось разобрать файл с версией \"%s\"\n"
 
-#: server.c:295
+#: server.c:298
 #, c-format
 msgid ""
 "\n"
@@ -1725,7 +1723,7 @@ msgstr ""
 "\n"
 "не удалось подключиться к базе: %s"
 
-#: server.c:300
+#: server.c:303
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -1735,7 +1733,7 @@ msgstr ""
 "командой:\n"
 "%s\n"
 
-#: server.c:304
+#: server.c:307
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -1745,26 +1743,26 @@ msgstr ""
 "командой:\n"
 "%s\n"
 
-#: server.c:318
+#: server.c:321
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed\n"
 msgstr ""
 "программа pg_ctl не смогла запустить исходный сервер, либо к нему не удалось "
 "подключиться\n"
 
-#: server.c:320
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed\n"
 msgstr ""
 "программа pg_ctl не смогла запустить целевой сервер, либо к нему не удалось "
 "подключиться\n"
 
-#: server.c:365
+#: server.c:368
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: server.c:378
+#: server.c:381
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s\n"
 msgstr "в переменной окружения для libpq %s задано не локальное значение: %s\n"
@@ -1977,6 +1975,17 @@ msgstr ""
 "Список проблемных столбцов приведён в файле:\n"
 "    %s\n"
 "\n"
+
+#~ msgid ""
+#~ "Optimizer statistics and free space information are not transferred\n"
+#~ "by pg_upgrade so, once you start the new server, consider running:\n"
+#~ "    %s\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Статистика оптимизатора и сведения о свободном месте утилитой pg_upgrade\n"
+#~ "не переносятся, поэтому, запустив новый сервер, имеет смысл выполнить:\n"
+#~ "    %s\n"
+#~ "\n"
 
 #~ msgid "could not parse PG_VERSION file from %s\n"
 #~ msgstr "не удалось разобрать файл PG_VERSION из %s\n"

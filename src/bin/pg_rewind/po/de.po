@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-08-23 00:45+0000\n"
+"POT-Creation-Date: 2020-11-07 22:27+0000\n"
 "PO-Revision-Date: 2019-08-23 08:44+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -17,17 +17,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "Fatal: "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "Fehler: "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "Warnung: "
@@ -83,7 +83,7 @@ msgstr "konnte Statuscode des Subprozesses nicht ermitteln: Fehlercode %lu"
 msgid "could not open directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
 
-#: copy_fetch.c:88 filemap.c:187 filemap.c:348
+#: copy_fetch.c:88 filemap.c:201
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
@@ -208,162 +208,152 @@ msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
 
-#: filemap.c:179
+#: filemap.c:193
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
 msgstr "Datendatei »%s« in der Quelle ist keine normale Datei"
 
-#: filemap.c:201
+#: filemap.c:215
 #, c-format
 msgid "\"%s\" is not a directory"
 msgstr "»%s« ist kein Verzeichnis"
 
-#: filemap.c:224
+#: filemap.c:238
 #, c-format
 msgid "\"%s\" is not a symbolic link"
 msgstr "»%s« ist keine symbolische Verknüpfung"
 
-#: filemap.c:236
+#: filemap.c:250
 #, c-format
 msgid "\"%s\" is not a regular file"
 msgstr "»%s« ist keine normale Datei"
 
-#: filemap.c:360
+#: filemap.c:362
 #, c-format
 msgid "source file list is empty"
 msgstr "Quelldateiliste ist leer"
 
-#: filemap.c:475
+#: filemap.c:477
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\""
 msgstr "unerwartete Seitenänderung für Verzeichnis oder symbolische Verknüpfung »%s«"
 
-#: libpq_fetch.c:51
+#: libpq_fetch.c:52
 #, c-format
-msgid "could not connect to server: %s"
-msgstr "konnte nicht mit Server verbinden: %s"
+msgid "%s"
+msgstr "%s"
 
 #: libpq_fetch.c:55
 #, c-format
 msgid "connected to server"
 msgstr "mit Server verbunden"
 
-#: libpq_fetch.c:59
+#: libpq_fetch.c:64
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "konnte search_path nicht auf leer setzen: %s"
 
-#: libpq_fetch.c:71
+#: libpq_fetch.c:76
 #, c-format
 msgid "source server must not be in recovery mode"
 msgstr "Quell-Server darf nicht im Wiederherstellungsmodus sein"
 
-#: libpq_fetch.c:81
+#: libpq_fetch.c:86
 #, c-format
 msgid "full_page_writes must be enabled in the source server"
 msgstr "full_page_writes muss im Quell-Server eingeschaltet sein"
 
-#: libpq_fetch.c:93
-#, c-format
-msgid "could not set up connection context: %s"
-msgstr "konnte Verbindungskontext nicht einrichten: %s"
-
-#: libpq_fetch.c:111
+#: libpq_fetch.c:112 libpq_fetch.c:138
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "Fehler beim Ausführen einer Anfrage (%s) im Quellserver: %s"
 
-#: libpq_fetch.c:116
+#: libpq_fetch.c:117
 #, c-format
 msgid "unexpected result set from query"
 msgstr "Anfrage ergab unerwartete Ergebnismenge"
 
-#: libpq_fetch.c:139
+#: libpq_fetch.c:158
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location"
 msgstr "unbekanntes Ergebnis »%s« für aktuelle WAL-Einfügeposition"
 
-#: libpq_fetch.c:189
+#: libpq_fetch.c:208
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "konnte Dateiliste nicht holen: %s"
 
-#: libpq_fetch.c:194
+#: libpq_fetch.c:213
 #, c-format
 msgid "unexpected result set while fetching file list"
 msgstr "unerwartete Ergebnismenge beim Holen der Dateiliste"
 
-#: libpq_fetch.c:242
+#: libpq_fetch.c:266
 #, c-format
 msgid "could not send query: %s"
 msgstr "konnte Anfrage nicht senden: %s"
 
-#: libpq_fetch.c:247
+#: libpq_fetch.c:271
 #, c-format
 msgid "could not set libpq connection to single row mode"
 msgstr "konnte libpq-Verbindung nicht in den Einzelzeilenmodus setzen"
 
-#: libpq_fetch.c:268
+#: libpq_fetch.c:292
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "unerwartetes Ergebnis beim Holen von fernen Dateien: %s"
 
-#: libpq_fetch.c:274
+#: libpq_fetch.c:298
 #, c-format
 msgid "unexpected result set size while fetching remote files"
 msgstr "unerwartete Ergebnismengengröße beim Holen von fernen Dateien"
 
-#: libpq_fetch.c:280
+#: libpq_fetch.c:304
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u"
 msgstr "unerwartete Datentypen in Ergebnismenge beim Holen von fernen Dateien: %u %u %u"
 
-#: libpq_fetch.c:288
+#: libpq_fetch.c:312
 #, c-format
 msgid "unexpected result format while fetching remote files"
 msgstr "unerwartetes Ergebnisformat beim Holen von fernen Dateien"
 
-#: libpq_fetch.c:294
+#: libpq_fetch.c:318
 #, c-format
 msgid "unexpected null values in result while fetching remote files"
 msgstr "unerwartete NULL-Werte im Ergebnis beim Holen von fernen Dateien"
 
-#: libpq_fetch.c:298
+#: libpq_fetch.c:322
 #, c-format
 msgid "unexpected result length while fetching remote files"
 msgstr "unerwartete Ergebnislänge beim Holen von fernen Dateien"
 
-#: libpq_fetch.c:364
+#: libpq_fetch.c:388
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "konnte ferne Datei »%s« nicht holen: %s"
 
-#: libpq_fetch.c:369
+#: libpq_fetch.c:393
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
 msgstr "unerwartete Ergebnismenge beim Holen der fernen Datei »%s«"
 
-#: libpq_fetch.c:413
+#: libpq_fetch.c:437
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "konnte COPY-Daten nicht senden: %s"
 
-#: libpq_fetch.c:439
-#, c-format
-msgid "could not create temporary table: %s"
-msgstr "konnte temporäre Tabelle nicht erzeugen: %s"
-
-#: libpq_fetch.c:447
+#: libpq_fetch.c:466
 #, c-format
 msgid "could not send file list: %s"
 msgstr "konnte Dateiliste nicht senden: %s"
 
-#: libpq_fetch.c:489
+#: libpq_fetch.c:508
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "konnte COPY-Ende nicht senden: %s"
 
-#: libpq_fetch.c:495
+#: libpq_fetch.c:514
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "unerwartetes Ergebnis beim Senden der Dateiliste: %s"
@@ -574,7 +564,7 @@ msgstr "lese WAL im Ziel-Cluster"
 msgid "need to copy %lu MB (total source directory size is %lu MB)"
 msgstr "%lu MB müssen kopiert werden (Gesamtgröße des Quellverzeichnisses ist %lu MB)"
 
-#: pg_rewind.c:365
+#: pg_rewind.c:364
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "erzeuge Backup-Label und aktualisiere Kontrolldatei"
@@ -614,37 +604,37 @@ msgstr "Zielserver muss sauber heruntergefahren worden sein"
 msgid "source data directory must be shut down cleanly"
 msgstr "Quelldatenverzeichnis muss sauber heruntergefahren worden sein"
 
-#: pg_rewind.c:497
+#: pg_rewind.c:500
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) kopiert"
 
-#: pg_rewind.c:558
+#: pg_rewind.c:563
 #, c-format
 msgid "invalid control file"
 msgstr "ungültige Kontrolldatei"
 
-#: pg_rewind.c:642
+#: pg_rewind.c:647
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "konnte keinen gemeinsamen Anfangspunkt in den Zeitleisten von Quell- und Ziel-Cluster finden"
 
-#: pg_rewind.c:683
+#: pg_rewind.c:688
 #, c-format
 msgid "backup label buffer too small"
 msgstr "Puffer für Backup-Label ist zu klein"
 
-#: pg_rewind.c:706
+#: pg_rewind.c:711
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "unerwartete CRC in Kontrolldatei"
 
-#: pg_rewind.c:716
+#: pg_rewind.c:721
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "unerwartete Kontrolldateigröße %d, erwartet wurde %d"
 
-#: pg_rewind.c:725
+#: pg_rewind.c:730
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
