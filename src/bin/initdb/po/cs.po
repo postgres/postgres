@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-09-27 15:43+0000\n"
-"PO-Revision-Date: 2019-09-27 22:53+0200\n"
+"POT-Creation-Date: 2020-10-28 19:28+0000\n"
+"PO-Revision-Date: 2020-11-01 00:37+0100\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.4.1\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -153,22 +153,18 @@ msgstr "příkaz nenalezen"
 msgid "child process exited with exit code %d"
 msgstr "potomek skončil s návratovým kódem %d"
 
-#: ../../common/wait_error.c:63
+#: ../../common/wait_error.c:64
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "potomek byl ukončen vyjímkou 0x%X"
 
-#: ../../common/wait_error.c:73
+#: ../../common/wait_error.c:68
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "potomek byl ukončen signálem %s"
+#| msgid "child process was terminated by signal %d"
+msgid "child process was terminated by signal %d: %s"
+msgstr "potomek byl ukončen signálem %d: %s"
 
-#: ../../common/wait_error.c:77
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "potomek byl ukončen signálem %d"
-
-#: ../../common/wait_error.c:82
+#: ../../common/wait_error.c:74
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "potomek skončil s nerozponaným stavem %d"
@@ -1025,62 +1021,65 @@ msgstr ""
 "    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
 "\n"
 
-#~ msgid "%s: The password file was not generated. Please report this problem.\n"
-#~ msgstr "%s: Soubor s hesly nebyl vytvořen. Prosíme oznamte tento problém tvůrcům.\n"
-
-#~ msgid "%s: could not determine valid short version string\n"
-#~ msgstr "%s: nemohu zjistit platné krátké označení verze\n"
-
-#~ msgid "Using the top-level directory of a mount point is not recommended.\n"
-#~ msgstr "Použití top-level adresáře mount pointu se nedoporučuje.\n"
-
-#~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s: nelze získat jméno aktuálního uživatele: %s\n"
-
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s: nelze získat informace o aktualním uživateli: %s\n"
-
-#~ msgid "%s: argument of --wal-segsize must be a power of 2 between 1 and 1024\n"
-#~ msgstr "%s: argument pro --wal-segsize musí být mocnina 2 mezi 1 a 1024\n"
-
-#~ msgid "%s: argument of --wal-segsize must be a number\n"
-#~ msgstr "%s: argument pro --wal-segsize musí být číslo\n"
-
-#~ msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
-#~ msgstr "      --wal-segsize=SIZE    velikost WAL segmentů, v megabytech\n"
-
-#~ msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
-#~ msgstr "  -g, --allow-group-access  povolit čtení/spouštění pro skupinu na datovém adresáři\n"
-
-#~ msgid "logfile"
-#~ msgstr "logfile"
-
-#~ msgid "%s: WAL directory \"%s\" not removed at user's request\n"
-#~ msgstr "%s: WAL adresář \"%s\" nebyl na žádost uživatele odstraněn\n"
-
-#~ msgid "%s: failed to remove contents of WAL directory\n"
-#~ msgstr "%s: selhalo odstranění obsahu WAL adresáře\n"
-
-#~ msgid "%s: removing contents of WAL directory \"%s\"\n"
-#~ msgstr "%s: odstraňuji obsah WAL adresáře \"%s\"\n"
-
-#~ msgid "%s: failed to remove WAL directory\n"
-#~ msgstr "%s: selhalo odstranění WAL adresáře\n"
-
-#~ msgid "%s: removing WAL directory \"%s\"\n"
-#~ msgstr "%s: odstraňuji WAL adresář \"%s\"\n"
-
-#~ msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
-#~ msgstr "%s: soubor \"%s\" nelze přejmenovat na \"%s\": %s\n"
-
-#~ msgid "%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"\n"
-#~ msgstr "%s: superuživatelské jméno \"%s\" není povoleno; názvy rolí nemohou začínat \"pg_\"\n"
-
-#~ msgid "performing post-bootstrap initialization ... "
-#~ msgstr "provádím post-bootstrap inicializaci ... "
+#~ msgid "%s: symlinks are not supported on this platform"
+#~ msgstr "%s: na této platformě nejsou podporovány symbolické linky"
 
 #~ msgid "running bootstrap script ... "
 #~ msgstr "spouštím bootstrap script ... "
 
-#~ msgid "%s: symlinks are not supported on this platform"
-#~ msgstr "%s: na této platformě nejsou podporovány symbolické linky"
+#~ msgid "performing post-bootstrap initialization ... "
+#~ msgstr "provádím post-bootstrap inicializaci ... "
+
+#~ msgid "%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"\n"
+#~ msgstr "%s: superuživatelské jméno \"%s\" není povoleno; názvy rolí nemohou začínat \"pg_\"\n"
+
+#~ msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
+#~ msgstr "%s: soubor \"%s\" nelze přejmenovat na \"%s\": %s\n"
+
+#~ msgid "%s: removing WAL directory \"%s\"\n"
+#~ msgstr "%s: odstraňuji WAL adresář \"%s\"\n"
+
+#~ msgid "%s: failed to remove WAL directory\n"
+#~ msgstr "%s: selhalo odstranění WAL adresáře\n"
+
+#~ msgid "%s: removing contents of WAL directory \"%s\"\n"
+#~ msgstr "%s: odstraňuji obsah WAL adresáře \"%s\"\n"
+
+#~ msgid "%s: failed to remove contents of WAL directory\n"
+#~ msgstr "%s: selhalo odstranění obsahu WAL adresáře\n"
+
+#~ msgid "%s: WAL directory \"%s\" not removed at user's request\n"
+#~ msgstr "%s: WAL adresář \"%s\" nebyl na žádost uživatele odstraněn\n"
+
+#~ msgid "logfile"
+#~ msgstr "logfile"
+
+#~ msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
+#~ msgstr "  -g, --allow-group-access  povolit čtení/spouštění pro skupinu na datovém adresáři\n"
+
+#~ msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
+#~ msgstr "      --wal-segsize=SIZE    velikost WAL segmentů, v megabytech\n"
+
+#~ msgid "%s: argument of --wal-segsize must be a number\n"
+#~ msgstr "%s: argument pro --wal-segsize musí být číslo\n"
+
+#~ msgid "%s: argument of --wal-segsize must be a power of 2 between 1 and 1024\n"
+#~ msgstr "%s: argument pro --wal-segsize musí být mocnina 2 mezi 1 a 1024\n"
+
+#~ msgid "%s: could not obtain information about current user: %s\n"
+#~ msgstr "%s: nelze získat informace o aktualním uživateli: %s\n"
+
+#~ msgid "%s: could not get current user name: %s\n"
+#~ msgstr "%s: nelze získat jméno aktuálního uživatele: %s\n"
+
+#~ msgid "Using the top-level directory of a mount point is not recommended.\n"
+#~ msgstr "Použití top-level adresáře mount pointu se nedoporučuje.\n"
+
+#~ msgid "%s: could not determine valid short version string\n"
+#~ msgstr "%s: nemohu zjistit platné krátké označení verze\n"
+
+#~ msgid "%s: The password file was not generated. Please report this problem.\n"
+#~ msgstr "%s: Soubor s hesly nebyl vytvořen. Prosíme oznamte tento problém tvůrcům.\n"
+
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "potomek byl ukončen signálem %s"

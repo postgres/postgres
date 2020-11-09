@@ -4,12 +4,12 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2005.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004-2005.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2020-08-10 10:45+0300\n"
+"POT-Creation-Date: 2020-11-09 07:38+0300\n"
 "PO-Revision-Date: 2019-09-09 13:43+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -56,8 +56,8 @@ msgid "pclose failed: %s"
 msgstr "ошибка pclose: %s"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 command.c:330 input.c:216 mainloop.c:73
-#: mainloop.c:253
+#: ../../common/fe_memutils.c:98 command.c:330 command.c:1751 command.c:1800
+#: command.c:1905 input.c:216 mainloop.c:73 mainloop.c:253
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -164,7 +164,7 @@ msgstr ""
 msgid "no query buffer\n"
 msgstr "нет буфера запросов\n"
 
-#: command.c:580 command.c:3242
+#: command.c:580 command.c:3368
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "неверный номер строки: %s\n"
@@ -251,9 +251,9 @@ msgstr "Секундомер включён."
 msgid "Timing is off."
 msgstr "Секундомер выключен."
 
-#: command.c:1452 command.c:1472 command.c:2161 command.c:2164 command.c:2167
-#: command.c:2173 command.c:2175 command.c:2183 command.c:2193 command.c:2202
-#: command.c:2216 command.c:2233 command.c:2292 common.c:67 copy.c:331
+#: command.c:1452 command.c:1472 command.c:2287 command.c:2290 command.c:2293
+#: command.c:2299 command.c:2301 command.c:2309 command.c:2319 command.c:2328
+#: command.c:2342 command.c:2359 command.c:2418 common.c:67 copy.c:331
 #: copy.c:391 copy.c:404 psqlscan.l:1723 psqlscan.l:1734 psqlscan.l:1744
 #, c-format
 msgid "%s: %s\n"
@@ -273,7 +273,7 @@ msgstr "Пароль: "
 msgid "Password for user %s: "
 msgstr "Пароль пользователя %s: "
 
-#: command.c:1648
+#: command.c:1651
 #, c-format
 msgid ""
 "All connection parameters must be supplied because no database connection "
@@ -282,24 +282,24 @@ msgstr ""
 "Без подключения к базе данных необходимо указывать все параметры "
 "подключения\n"
 
-#: command.c:1803 command.c:3276 common.c:140 common.c:451 common.c:1084
-#: common.c:1112 common.c:1212 copy.c:491 copy.c:711 large_obj.c:156
-#: large_obj.c:191 large_obj.c:253 psqlscan.l:1995
+#: command.c:1747 command.c:1927 command.c:3402 common.c:140 common.c:451
+#: common.c:1084 common.c:1112 common.c:1212 copy.c:491 copy.c:711
+#: large_obj.c:156 large_obj.c:191 large_obj.c:253 psqlscan.l:1995
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1807
+#: command.c:1933
 #, c-format
 msgid "Previous connection kept\n"
 msgstr "Сохранено предыдущее подключение\n"
 
-#: command.c:1811
+#: command.c:1939
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1856
+#: command.c:1982
 #, c-format
 msgid ""
 "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
@@ -308,7 +308,7 @@ msgstr ""
 "Вы подключены к базе данных \"%s\" как пользователь \"%s\" через сокет в \"%s"
 "\", порт \"%s\".\n"
 
-#: command.c:1859
+#: command.c:1985
 #, c-format
 msgid ""
 "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at "
@@ -317,17 +317,17 @@ msgstr ""
 "Вы подключены к базе данных \"%s\" как пользователь \"%s\" (сервер \"%s\", "
 "порт \"%s\").\n"
 
-#: command.c:1863
+#: command.c:1989
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Вы подключены к базе данных \"%s\" как пользователь \"%s\".\n"
 
-#: command.c:1896
+#: command.c:2022
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, сервер %s)\n"
 
-#: command.c:1904
+#: command.c:2030
 #, c-format
 msgid ""
 "WARNING: %s major version %s, server major version %s.\n"
@@ -336,24 +336,24 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: %s имеет базовую версию %s, а сервер - %s.\n"
 "                Часть функций psql может не работать.\n"
 
-#: command.c:1942
+#: command.c:2068
 #, c-format
 msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
 msgstr "SSL-соединение (протокол: %s, шифр: %s, бит: %s, сжатие: %s)\n"
 
-#: command.c:1943 command.c:1944 command.c:1945
+#: command.c:2069 command.c:2070 command.c:2071
 msgid "unknown"
 msgstr "неизвестно"
 
-#: command.c:1946 help.c:46
+#: command.c:2072 help.c:46
 msgid "off"
 msgstr "выкл."
 
-#: command.c:1946 help.c:46
+#: command.c:2072 help.c:46
 msgid "on"
 msgstr "вкл."
 
-#: command.c:1966
+#: command.c:2092
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -366,7 +366,7 @@ msgstr ""
 "                Подробнее об этом смотрите документацию psql, раздел\n"
 "                \"Notes for Windows users\".\n"
 
-#: command.c:2050
+#: command.c:2176
 #, c-format
 msgid ""
 "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a "
@@ -375,27 +375,27 @@ msgstr ""
 "в переменной окружения PSQL_EDITOR_LINENUMBER_ARG должен быть указан номер "
 "строки\n"
 
-#: command.c:2079
+#: command.c:2205
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "не удалось запустить редактор \"%s\"\n"
 
-#: command.c:2081
+#: command.c:2207
 #, c-format
 msgid "could not start /bin/sh\n"
 msgstr "не удалось запустить /bin/sh\n"
 
-#: command.c:2119
+#: command.c:2245
 #, c-format
 msgid "could not locate temporary directory: %s\n"
 msgstr "не удалось найти временный каталог: %s\n"
 
-#: command.c:2146
+#: command.c:2272
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "не удалось открыть временный файл \"%s\": %s\n"
 
-#: command.c:2450
+#: command.c:2576
 #, c-format
 msgid ""
 "\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, "
@@ -404,122 +404,122 @@ msgstr ""
 "\\pset: допустимые форматы: unaligned, aligned, wrapped, html, asciidoc, "
 "latex, latex-longtable, troff-ms\n"
 
-#: command.c:2469
+#: command.c:2595
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr "\\pset: допустимые стили линий: ascii, old-ascii, unicode\n"
 
-#: command.c:2485
+#: command.c:2611
 #, c-format
 msgid "\\pset: allowed Unicode border line styles are single, double\n"
 msgstr "\\pset: допустимые стили Unicode-линий границ: single, double\n"
 
-#: command.c:2500
+#: command.c:2626
 #, c-format
 msgid "\\pset: allowed Unicode column line styles are single, double\n"
 msgstr "\\pset: допустимые стили Unicode-линий столбцов: single, double\n"
 
-#: command.c:2515
+#: command.c:2641
 #, c-format
 msgid "\\pset: allowed Unicode header line styles are single, double\n"
 msgstr "\\pset: допустимые стили Unicode-линий заголовков: single, double\n"
 
-#: command.c:2667 command.c:2846
+#: command.c:2793 command.c:2972
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "неизвестный параметр \\pset: %s\n"
 
-#: command.c:2685
+#: command.c:2811
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Стиль границ: %d.\n"
 
-#: command.c:2691
+#: command.c:2817
 #, c-format
 msgid "Target width is unset.\n"
 msgstr "Ширина вывода сброшена.\n"
 
-#: command.c:2693
+#: command.c:2819
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "Ширина вывода: %d.\n"
 
-#: command.c:2700
+#: command.c:2826
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Расширенный вывод включён.\n"
 
-#: command.c:2702
+#: command.c:2828
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "Расширенный вывод применяется автоматически.\n"
 
-#: command.c:2704
+#: command.c:2830
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Расширенный вывод выключен.\n"
 
-#: command.c:2711 command.c:2719
+#: command.c:2837 command.c:2845
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "Разделитель полей - нулевой байт.\n"
 
-#: command.c:2713
+#: command.c:2839
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Разделитель полей: \"%s\".\n"
 
-#: command.c:2726
+#: command.c:2852
 #, c-format
 msgid "Default footer is on.\n"
 msgstr "Строка итогов включена.\n"
 
-#: command.c:2728
+#: command.c:2854
 #, c-format
 msgid "Default footer is off.\n"
 msgstr "Строка итогов выключена.\n"
 
-#: command.c:2734
+#: command.c:2860
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Формат вывода: %s.\n"
 
-#: command.c:2740
+#: command.c:2866
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "Установлен стиль линий: %s.\n"
 
-#: command.c:2747
+#: command.c:2873
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null выводится как: \"%s\".\n"
 
-#: command.c:2755
+#: command.c:2881
 #, c-format
 msgid "Locale-adjusted numeric output is on.\n"
 msgstr "Локализованный вывод чисел включён.\n"
 
-#: command.c:2757
+#: command.c:2883
 #, c-format
 msgid "Locale-adjusted numeric output is off.\n"
 msgstr "Локализованный вывод чисел выключен.\n"
 
-#: command.c:2764
+#: command.c:2890
 #, c-format
 msgid "Pager is used for long output.\n"
 msgstr "Постраничник используется для вывода длинного текста.\n"
 
-#: command.c:2766
+#: command.c:2892
 #, c-format
 msgid "Pager is always used.\n"
 msgstr "Постраничник используется всегда.\n"
 
-#: command.c:2768
+#: command.c:2894
 #, c-format
 msgid "Pager usage is off.\n"
 msgstr "Постраничник выключен.\n"
 
-#: command.c:2774
+#: command.c:2900
 #, c-format
 msgid "Pager won't be used for less than %d line.\n"
 msgid_plural "Pager won't be used for less than %d lines.\n"
@@ -527,82 +527,82 @@ msgstr[0] "Постраничник не будет использоваться
 msgstr[1] "Постраничник не будет использоваться, если строк меньше %d\n"
 msgstr[2] "Постраничник не будет использоваться, если строк меньше %d\n"
 
-#: command.c:2784 command.c:2794
+#: command.c:2910 command.c:2920
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "Разделитель записей - нулевой байт.\n"
 
-#: command.c:2786
+#: command.c:2912
 #, c-format
 msgid "Record separator is <newline>.\n"
 msgstr "Разделитель записей: <новая строка>.\n"
 
-#: command.c:2788
+#: command.c:2914
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Разделитель записей: \"%s\".\n"
 
-#: command.c:2801
+#: command.c:2927
 #, c-format
 msgid "Table attributes are \"%s\".\n"
 msgstr "Атрибуты HTML-таблицы: \"%s\".\n"
 
-#: command.c:2804
+#: command.c:2930
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Атрибуты HTML-таблицы не заданы.\n"
 
-#: command.c:2811
+#: command.c:2937
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Заголовок: \"%s\".\n"
 
-#: command.c:2813
+#: command.c:2939
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Заголовок не задан.\n"
 
-#: command.c:2820
+#: command.c:2946
 #, c-format
 msgid "Tuples only is on.\n"
 msgstr "Режим вывода только кортежей включён.\n"
 
-#: command.c:2822
+#: command.c:2948
 #, c-format
 msgid "Tuples only is off.\n"
 msgstr "Режим вывода только кортежей выключен.\n"
 
-#: command.c:2828
+#: command.c:2954
 #, c-format
 msgid "Unicode border line style is \"%s\".\n"
 msgstr "Стиль Unicode-линий границ: \"%s\".\n"
 
-#: command.c:2834
+#: command.c:2960
 #, c-format
 msgid "Unicode column line style is \"%s\".\n"
 msgstr "Стиль Unicode-линий столбцов: \"%s\".\n"
 
-#: command.c:2840
+#: command.c:2966
 #, c-format
 msgid "Unicode header line style is \"%s\".\n"
 msgstr "Стиль Unicode-линий границ: \"%s\".\n"
 
-#: command.c:3000
+#: command.c:3126
 #, c-format
 msgid "\\!: failed\n"
 msgstr "\\!: ошибка\n"
 
-#: command.c:3020 common.c:586
+#: command.c:3146 common.c:586
 #, c-format
 msgid "\\watch cannot be used with an empty query\n"
 msgstr "\\watch нельзя использовать с пустым запросом\n"
 
-#: command.c:3041
+#: command.c:3167
 #, c-format
 msgid "Watch every %lds\t%s"
 msgstr "Повтор запрос через %ld сек.\t%s"
 
-#: command.c:3092 command.c:3099 common.c:486 common.c:493 common.c:1067
+#: command.c:3218 command.c:3225 common.c:486 common.c:493 common.c:1067
 #, c-format
 msgid ""
 "********* QUERY **********\n"

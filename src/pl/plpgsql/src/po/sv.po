@@ -1,0 +1,809 @@
+# Swedish message translation file for plpgsql
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Dennis Björklund <db@zigo.dhs.org>, 2017,2018,2019,2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.5\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2020-08-30 20:54+0000\n"
+"PO-Revision-Date: 2020-08-31 07:17+0200\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: pl_comp.c:436 pl_handler.c:450
+#, c-format
+msgid "PL/pgSQL functions cannot accept type %s"
+msgstr "PL/pgSQL-funktioner kan inte acceptera typ %s"
+
+#: pl_comp.c:517
+#, c-format
+msgid "could not determine actual return type for polymorphic function \"%s\""
+msgstr "kunde inte bestämma aktuell returtyp för polymorfisk funktion \"%s\""
+
+#: pl_comp.c:547
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "utlösarfunktioner kan bara anropas som utlösare"
+
+#: pl_comp.c:551 pl_handler.c:435
+#, c-format
+msgid "PL/pgSQL functions cannot return type %s"
+msgstr "PL/pgSQL-funktioner kan inte returnera typ %s"
+
+#: pl_comp.c:592
+#, c-format
+msgid "trigger functions cannot have declared arguments"
+msgstr "utlösarfunktioner kan inte ha deklarerade argument"
+
+#: pl_comp.c:593
+#, c-format
+msgid "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead."
+msgstr "Argumenten till utlösaren kan accessas via TG_NARGS och TG_ARGV istället."
+
+#: pl_comp.c:695
+#, c-format
+msgid "event trigger functions cannot have declared arguments"
+msgstr "händelseutlösarfunktioner kan inte ha deklarerade argument"
+
+#: pl_comp.c:957
+#, c-format
+msgid "compilation of PL/pgSQL function \"%s\" near line %d"
+msgstr "kompilering av PL/pgSQL-funktion \"%s\" nära rad %d"
+
+#: pl_comp.c:980
+#, c-format
+msgid "parameter name \"%s\" used more than once"
+msgstr "parameternamn \"%s\" angivet mer än en gång"
+
+#: pl_comp.c:1090
+#, c-format
+msgid "column reference \"%s\" is ambiguous"
+msgstr "kolumnreferens \"%s\" är tvetydig"
+
+#: pl_comp.c:1092
+#, c-format
+msgid "It could refer to either a PL/pgSQL variable or a table column."
+msgstr "Det kan referera till antingen en PL/pgSQL-variabel eller en tabellkolumn."
+
+#: pl_comp.c:1272 pl_comp.c:1300 pl_exec.c:4447 pl_exec.c:4795 pl_exec.c:4880
+#: pl_exec.c:4971
+#, c-format
+msgid "record \"%s\" has no field \"%s\""
+msgstr "post \"%s\" saknar fält \"%s\""
+
+#: pl_comp.c:1831
+#, c-format
+msgid "relation \"%s\" does not exist"
+msgstr "relationen \"%s\" existerar inte"
+
+#: pl_comp.c:1940
+#, c-format
+msgid "variable \"%s\" has pseudo-type %s"
+msgstr "variabel \"%s\" har pseudotyp %s"
+
+#: pl_comp.c:2006
+#, c-format
+msgid "relation \"%s\" is not a table"
+msgstr "relation \"%s\" är inte en tabell"
+
+#: pl_comp.c:2166
+#, c-format
+msgid "type \"%s\" is only a shell"
+msgstr "typ \"%s\" är bara ett skal"
+
+#: pl_comp.c:2260 pl_comp.c:2313
+#, c-format
+msgid "unrecognized exception condition \"%s\""
+msgstr "okänt avbrottsvillkor \"%s\""
+
+#: pl_comp.c:2476
+#, c-format
+msgid "could not determine actual argument type for polymorphic function \"%s\""
+msgstr "kunde inte bestämma argumenttyp för polymorfisk funktion function \"%s\""
+
+#: pl_exec.c:321 pl_exec.c:614 pl_exec.c:893
+msgid "during initialization of execution state"
+msgstr "unde initiering av körtillstånd"
+
+#: pl_exec.c:328
+msgid "while storing call arguments into local variables"
+msgstr "under sparande av anropsargument till lokala variabler"
+
+#: pl_exec.c:408 pl_exec.c:771
+msgid "during function entry"
+msgstr "under funktionsingången"
+
+#: pl_exec.c:439 pl_exec.c:802 pl_exec.c:934
+#, c-format
+msgid "CONTINUE cannot be used outside a loop"
+msgstr "CONTINUE kan inte användas utanför en loop"
+
+#: pl_exec.c:443
+#, c-format
+msgid "control reached end of function without RETURN"
+msgstr "kontrollen nådde slutet av funktionen utan RETURN"
+
+#: pl_exec.c:450
+msgid "while casting return value to function's return type"
+msgstr "under typomvandling av returvärde till funktionens returtyp"
+
+#: pl_exec.c:463 pl_exec.c:2987
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "en funktion som returnerar en mängd anropades i kontext som inte godtar en mängd"
+
+#: pl_exec.c:501 pl_exec.c:2829
+msgid "returned record type does not match expected record type"
+msgstr "returnerad posttyp matchar inte förväntad posttyp"
+
+#: pl_exec.c:556 pl_exec.c:810 pl_exec.c:942
+msgid "during function exit"
+msgstr "under funktionsavslutning"
+
+#: pl_exec.c:806 pl_exec.c:938
+#, c-format
+msgid "control reached end of trigger procedure without RETURN"
+msgstr "kontroll nådde slutet på utlösarprocedur utan RETURN"
+
+#: pl_exec.c:815
+#, c-format
+msgid "trigger procedure cannot return a set"
+msgstr "utlösarprocedur kan inte returnera en mängd"
+
+#: pl_exec.c:837
+msgid "returned row structure does not match the structure of the triggering table"
+msgstr "returnerad radstruktur matchar inte strukturen på utlösande tabell"
+
+#. translator: last %s is a phrase such as "during statement block
+#. local variable initialization"
+#.
+#: pl_exec.c:993
+#, c-format
+msgid "PL/pgSQL function %s line %d %s"
+msgstr "PL/pgSQL-funktion %s rad %d %s"
+
+#. translator: last %s is a phrase such as "while storing call
+#. arguments into local variables"
+#.
+#: pl_exec.c:1004
+#, c-format
+msgid "PL/pgSQL function %s %s"
+msgstr "PL/pgSQL-funktion %s %s"
+
+#. translator: last %s is a plpgsql statement type name
+#: pl_exec.c:1012
+#, c-format
+msgid "PL/pgSQL function %s line %d at %s"
+msgstr "PL/pgSQL-funktion %s rad %d vid %s"
+
+#: pl_exec.c:1018
+#, c-format
+msgid "PL/pgSQL function %s"
+msgstr "PL/pgSQL-funktion %s"
+
+#: pl_exec.c:1129
+msgid "during statement block local variable initialization"
+msgstr "under initiering av lokala variabler i satsblock"
+
+#: pl_exec.c:1169
+#, c-format
+msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
+msgstr "variabel \"%s\" deklarerad NOT NULL kan inte default:a till NULL"
+
+#: pl_exec.c:1219
+msgid "during statement block entry"
+msgstr "under ingång till satsblock"
+
+#: pl_exec.c:1240
+msgid "during statement block exit"
+msgstr "under satsblockavslutning"
+
+#: pl_exec.c:1283
+msgid "during exception cleanup"
+msgstr "under avbrottsuppstädning"
+
+#: pl_exec.c:1634
+#, c-format
+msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
+msgstr "GET STACKED DIAGNOSTICS kan inte användas utanför en avbrottshanterare"
+
+#: pl_exec.c:1838
+#, c-format
+msgid "case not found"
+msgstr "hittade inte alternativ"
+
+#: pl_exec.c:1839
+#, c-format
+msgid "CASE statement is missing ELSE part."
+msgstr "CASE-sats saknar ELSE-del."
+
+#: pl_exec.c:1993
+#, c-format
+msgid "lower bound of FOR loop cannot be null"
+msgstr "lägre gräns i FOR-loop kan inte vara null"
+
+#: pl_exec.c:2009
+#, c-format
+msgid "upper bound of FOR loop cannot be null"
+msgstr "övre gräns i FOR-loop kan inte vara null"
+
+#: pl_exec.c:2027
+#, c-format
+msgid "BY value of FOR loop cannot be null"
+msgstr "BY-värde i FOR-loop kan inte vara null"
+
+#: pl_exec.c:2033
+#, c-format
+msgid "BY value of FOR loop must be greater than zero"
+msgstr "BY-värde i FOR-loop måste vara större än noll"
+
+#: pl_exec.c:2203 pl_exec.c:3963
+#, c-format
+msgid "cursor \"%s\" already in use"
+msgstr "markören \"%s\" används redan"
+
+#: pl_exec.c:2226 pl_exec.c:4025
+#, c-format
+msgid "arguments given for cursor without arguments"
+msgstr "argument angivna till markör utan argumnet"
+
+#: pl_exec.c:2245 pl_exec.c:4044
+#, c-format
+msgid "arguments required for cursor"
+msgstr "argument krävs för markör"
+
+#: pl_exec.c:2330
+#, c-format
+msgid "FOREACH expression must not be null"
+msgstr "FOREACH-uttryck får inte vara null"
+
+#: pl_exec.c:2336
+#, c-format
+msgid "FOREACH expression must yield an array, not type %s"
+msgstr "FOREACH-uttryck måste ge en array, inte typ %s"
+
+#: pl_exec.c:2353
+#, c-format
+msgid "slice dimension (%d) is out of the valid range 0..%d"
+msgstr "slice-storlek (%d) är utanför giltigt intervall 0..%d"
+
+#: pl_exec.c:2380
+#, c-format
+msgid "FOREACH ... SLICE loop variable must be of an array type"
+msgstr "FOREACH ... SLICE-loop-variabel måste ha typen array"
+
+#: pl_exec.c:2384
+#, c-format
+msgid "FOREACH loop variable must not be of an array type"
+msgstr "FOREACH-loop-variable får inte ha typen array"
+
+#: pl_exec.c:2572 pl_exec.c:2654 pl_exec.c:2821
+#, c-format
+msgid "cannot return non-composite value from function returning composite type"
+msgstr "kan inte returnera icke-composit-värde från funktion med returtyp composit"
+
+#: pl_exec.c:2698 pl_gram.y:3141
+#, c-format
+msgid "cannot use RETURN NEXT in a non-SETOF function"
+msgstr "kan inte använda RETURN NEXT i en icke-SETOF-funktion"
+
+#: pl_exec.c:2732 pl_exec.c:2863
+#, c-format
+msgid "wrong result type supplied in RETURN NEXT"
+msgstr "fel resultattyp given i RETURN NEXT"
+
+#: pl_exec.c:2761 pl_exec.c:4434 pl_exec.c:4762 pl_exec.c:4788 pl_exec.c:4854
+#: pl_exec.c:4873 pl_exec.c:4941 pl_exec.c:4964
+#, c-format
+msgid "record \"%s\" is not assigned yet"
+msgstr "posten \"%s\" är inte tilldelad än"
+
+#: pl_exec.c:2763 pl_exec.c:4436 pl_exec.c:4764 pl_exec.c:4790 pl_exec.c:4856
+#: pl_exec.c:4875 pl_exec.c:4943 pl_exec.c:4966
+#, c-format
+msgid "The tuple structure of a not-yet-assigned record is indeterminate."
+msgstr "Tuple-strukturen av en ej-ännu-tilldelad post är obestämd."
+
+#: pl_exec.c:2767 pl_exec.c:2787
+#, c-format
+msgid "wrong record type supplied in RETURN NEXT"
+msgstr "fel posttyp given i RETURN NEXT"
+
+#: pl_exec.c:2882
+#, c-format
+msgid "RETURN NEXT must have a parameter"
+msgstr "RETURN NEXT måste ha en parameter"
+
+#: pl_exec.c:2915 pl_gram.y:3203
+#, c-format
+msgid "cannot use RETURN QUERY in a non-SETOF function"
+msgstr "kan inte använda RETURN QUERY i en icke-SETOF-funktion"
+
+#: pl_exec.c:2935
+msgid "structure of query does not match function result type"
+msgstr "strukturen på frågan matchar inte funktionens resultattyp"
+
+#: pl_exec.c:3015 pl_exec.c:3145
+#, c-format
+msgid "RAISE option already specified: %s"
+msgstr "RAISE-flagga redan angiven: %s"
+
+#: pl_exec.c:3048
+#, c-format
+msgid "RAISE without parameters cannot be used outside an exception handler"
+msgstr "RAISE utan parametrar kan inte användas utanför en avbrottshanterare"
+
+#: pl_exec.c:3135
+#, c-format
+msgid "RAISE statement option cannot be null"
+msgstr "RAISE-satsens flagga får inte vare null"
+
+#: pl_exec.c:3206
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pl_exec.c:3279
+#, c-format
+msgid "assertion failed"
+msgstr "assert misslyckades"
+
+#: pl_exec.c:3469 pl_exec.c:3613 pl_exec.c:3802
+#, c-format
+msgid "cannot COPY to/from client in PL/pgSQL"
+msgstr "kan inte COPY till/från klient i PL/pgSQL"
+
+#: pl_exec.c:3473 pl_exec.c:3617 pl_exec.c:3806
+#, c-format
+msgid "cannot begin/end transactions in PL/pgSQL"
+msgstr "kan inte starta/avsluta transaktioner i PL/pgSQL"
+
+#: pl_exec.c:3474 pl_exec.c:3618 pl_exec.c:3807
+#, c-format
+msgid "Use a BEGIN block with an EXCEPTION clause instead."
+msgstr "Använd ett BEGIN-block men en EXCEPTION-klausul istället."
+
+#: pl_exec.c:3641 pl_exec.c:3831
+#, c-format
+msgid "INTO used with a command that cannot return data"
+msgstr "INTO använd med ett kommando som inte returnerar data"
+
+#: pl_exec.c:3669 pl_exec.c:3859
+#, c-format
+msgid "query returned no rows"
+msgstr "frågan returnerade inga rader"
+
+#: pl_exec.c:3688 pl_exec.c:3878
+#, c-format
+msgid "query returned more than one row"
+msgstr "frågan returnerade mer än en rad"
+
+#: pl_exec.c:3705
+#, c-format
+msgid "query has no destination for result data"
+msgstr "frågan har ingen destination för resultatdatan"
+
+#: pl_exec.c:3706
+#, c-format
+msgid "If you want to discard the results of a SELECT, use PERFORM instead."
+msgstr "Om du vill slänga resultatet av en SELECT, använd PERFORM istället."
+
+#: pl_exec.c:3738 pl_exec.c:7033
+#, c-format
+msgid "query string argument of EXECUTE is null"
+msgstr "frågesträngargumentet till EXECUTE är null"
+
+#: pl_exec.c:3794
+#, c-format
+msgid "EXECUTE of SELECT ... INTO is not implemented"
+msgstr "EXECUTE för SELECT ... INTO är inte implementerad"
+
+#: pl_exec.c:3795
+#, c-format
+msgid "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead."
+msgstr "Du vill nog använda EXECUTE ... INTO eller EXECUTE CREATE TABLE ... AS istället."
+
+#: pl_exec.c:4105 pl_exec.c:4197
+#, c-format
+msgid "cursor variable \"%s\" is null"
+msgstr "markörvariabel \"%s\" är null"
+
+#: pl_exec.c:4112 pl_exec.c:4204
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "markör \"%s\" existerar inte"
+
+#: pl_exec.c:4126
+#, c-format
+msgid "relative or absolute cursor position is null"
+msgstr "relativ eller absolut markörposition är null"
+
+#: pl_exec.c:4306
+#, c-format
+msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
+msgstr "null-value kan inte tilldelas till variabel \"%s\" som deklarerats NOT NULL"
+
+#: pl_exec.c:4378
+#, c-format
+msgid "cannot assign non-composite value to a row variable"
+msgstr "kan inte tilldela icke-composite-värde till radvariabel"
+
+#: pl_exec.c:4402
+#, c-format
+msgid "cannot assign non-composite value to a record variable"
+msgstr "kan inte tilldela  icke-composite-värde till en post-variabel"
+
+#: pl_exec.c:4545
+#, c-format
+msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
+msgstr "antalet array-dimensioner (%d) överskrider det maximalt tillåtna (%d)"
+
+#: pl_exec.c:4577
+#, c-format
+msgid "subscripted object is not an array"
+msgstr "arrayindexobjekt är inte en array"
+
+#: pl_exec.c:4614
+#, c-format
+msgid "array subscript in assignment must not be null"
+msgstr "arrayindex i tilldelning kan inte vara null"
+
+#: pl_exec.c:5080
+#, c-format
+msgid "query \"%s\" did not return data"
+msgstr "frågan \"%s\" returnerade ingen data"
+
+#: pl_exec.c:5088
+#, c-format
+msgid "query \"%s\" returned %d column"
+msgid_plural "query \"%s\" returned %d columns"
+msgstr[0] "frågan \"%s\" returnerade %d kolumn"
+msgstr[1] "frågan \"%s\" returnerade %d kolumner"
+
+#: pl_exec.c:5115
+#, c-format
+msgid "query \"%s\" returned more than one row"
+msgstr "frågan \"%s\" returnerade mer än en rad"
+
+#: pl_exec.c:5170
+#, c-format
+msgid "query \"%s\" is not a SELECT"
+msgstr "frågan \"%s\" är inte en SELECT"
+
+#: pl_funcs.c:218
+msgid "statement block"
+msgstr "satsblock"
+
+#: pl_funcs.c:220
+msgid "assignment"
+msgstr "tilldelning"
+
+#: pl_funcs.c:230
+msgid "FOR with integer loop variable"
+msgstr "FOR med helatalsloopvariabel"
+
+#: pl_funcs.c:232
+msgid "FOR over SELECT rows"
+msgstr "FOR över SELECT-rader"
+
+#: pl_funcs.c:234
+msgid "FOR over cursor"
+msgstr "FOR över markör"
+
+#: pl_funcs.c:236
+msgid "FOREACH over array"
+msgstr "FOREACH över array"
+
+#: pl_funcs.c:250
+msgid "SQL statement"
+msgstr "SQL-sats"
+
+#: pl_funcs.c:254
+msgid "FOR over EXECUTE statement"
+msgstr "FOR över EXECUTE-sats"
+
+#: pl_gram.y:473
+#, c-format
+msgid "block label must be placed before DECLARE, not after"
+msgstr "blocketikett måste anges före DECLARE, inte efter"
+
+#: pl_gram.y:493
+#, c-format
+msgid "collations are not supported by type %s"
+msgstr "jämförelser stöds inte för typ %s"
+
+#: pl_gram.y:508
+#, c-format
+msgid "row or record variable cannot be CONSTANT"
+msgstr "rad- eller post-variabel får inte vara CONSTANT"
+
+#: pl_gram.y:518
+#, c-format
+msgid "row or record variable cannot be NOT NULL"
+msgstr "rad- eller post-variabel får inte vara NOT NULL"
+
+#: pl_gram.y:529
+#, c-format
+msgid "default value for row or record variable is not supported"
+msgstr "standardvärde för rad- eller post-variabel stöds inte"
+
+#: pl_gram.y:674 pl_gram.y:689 pl_gram.y:715
+#, c-format
+msgid "variable \"%s\" does not exist"
+msgstr "variabel \"%s\" finns inte"
+
+#: pl_gram.y:733 pl_gram.y:761
+msgid "duplicate declaration"
+msgstr "duplicerad deklaration"
+
+#: pl_gram.y:744 pl_gram.y:772
+#, c-format
+msgid "variable \"%s\" shadows a previously defined variable"
+msgstr "variabeln \"%s\" döljer en tidigare definierad variabel"
+
+#: pl_gram.y:951
+#, c-format
+msgid "diagnostics item %s is not allowed in GET STACKED DIAGNOSTICS"
+msgstr "diagnostikdel %s tillåts inte i GET STACKED DIAGNOSTICS"
+
+#: pl_gram.y:969
+#, c-format
+msgid "diagnostics item %s is not allowed in GET CURRENT DIAGNOSTICS"
+msgstr "diagnostikdel %s tillåts inte i GET CURRENT DIAGNOSTICS"
+
+#: pl_gram.y:1067
+msgid "unrecognized GET DIAGNOSTICS item"
+msgstr "okänd GET DIAGNOSTICS-del"
+
+#: pl_gram.y:1078 pl_gram.y:3390
+#, c-format
+msgid "\"%s\" is not a scalar variable"
+msgstr "\"%s\" är inte ett skalärt värde"
+
+#: pl_gram.y:1330 pl_gram.y:1524
+#, c-format
+msgid "loop variable of loop over rows must be a record or row variable or list of scalar variables"
+msgstr "loop-variabel för loop över rader måste vara en record, radvariabel eller en lista av skalärvariabler"
+
+#: pl_gram.y:1364
+#, c-format
+msgid "cursor FOR loop must have only one target variable"
+msgstr "markör-FOR-loop måste ha exakt en målvariabel"
+
+#: pl_gram.y:1371
+#, c-format
+msgid "cursor FOR loop must use a bound cursor variable"
+msgstr "markör-FOR-loop måste använda en bunden markörvariabel"
+
+#: pl_gram.y:1455
+#, c-format
+msgid "integer FOR loop must have only one target variable"
+msgstr "heltals-FOR-loop måste ha exakt en målvariabel"
+
+#: pl_gram.y:1491
+#, c-format
+msgid "cannot specify REVERSE in query FOR loop"
+msgstr "kan inte ange REVERSE i fråge-FOR-loop"
+
+#: pl_gram.y:1638
+#, c-format
+msgid "loop variable of FOREACH must be a known variable or list of variables"
+msgstr "loop-variabel för FOREACH måste vara en känd variabel eller lista av variabler"
+
+#: pl_gram.y:1690 pl_gram.y:1727 pl_gram.y:1775 pl_gram.y:2840 pl_gram.y:2925
+#: pl_gram.y:3036 pl_gram.y:3792
+msgid "unexpected end of function definition"
+msgstr "oväntat slut på funktionsdefinitionen"
+
+#: pl_gram.y:1795 pl_gram.y:1819 pl_gram.y:1835 pl_gram.y:1841 pl_gram.y:1959
+#: pl_gram.y:1967 pl_gram.y:1981 pl_gram.y:2076 pl_gram.y:2257 pl_gram.y:2340
+#: pl_gram.y:2492 pl_gram.y:3633 pl_gram.y:3694 pl_gram.y:3773
+msgid "syntax error"
+msgstr "syntaxfel"
+
+#: pl_gram.y:1823 pl_gram.y:1825 pl_gram.y:2261 pl_gram.y:2263
+msgid "invalid SQLSTATE code"
+msgstr "ogiltig SQLSTATE-kod"
+
+#: pl_gram.y:2023
+msgid "syntax error, expected \"FOR\""
+msgstr "syntaxfel, förväntade \"FOR\""
+
+#: pl_gram.y:2085
+#, c-format
+msgid "FETCH statement cannot return multiple rows"
+msgstr "FETCH-sats kan inte returnera multipla rader"
+
+#: pl_gram.y:2141
+#, c-format
+msgid "cursor variable must be a simple variable"
+msgstr "markörvariabel måste vara en enkel variabel"
+
+#: pl_gram.y:2147
+#, c-format
+msgid "variable \"%s\" must be of type cursor or refcursor"
+msgstr "variabel \"%s\" måste ha typen cursor eller refcursor"
+
+#: pl_gram.y:2315
+msgid "label does not exist"
+msgstr "etikett finns inte"
+
+#: pl_gram.y:2463 pl_gram.y:2474
+#, c-format
+msgid "\"%s\" is not a known variable"
+msgstr "\"%s\" är inte en känd variabel"
+
+#: pl_gram.y:2578 pl_gram.y:2588 pl_gram.y:2744
+msgid "mismatched parentheses"
+msgstr "missmatchade parenteser"
+
+#: pl_gram.y:2592
+#, c-format
+msgid "missing \"%s\" at end of SQL expression"
+msgstr "saknar \"%s\" vid slutet av SQL-uttryck"
+
+#: pl_gram.y:2598
+#, c-format
+msgid "missing \"%s\" at end of SQL statement"
+msgstr "saknar \"%s\" vid slutet av SQL-sats"
+
+#: pl_gram.y:2615
+msgid "missing expression"
+msgstr "saknar uttryck"
+
+#: pl_gram.y:2617
+msgid "missing SQL statement"
+msgstr "saknars SQL-sats"
+
+#: pl_gram.y:2746
+msgid "incomplete data type declaration"
+msgstr "inkomplett datatypdeklaration"
+
+#: pl_gram.y:2769
+msgid "missing data type declaration"
+msgstr "saknar datatypdeklaration"
+
+#: pl_gram.y:2848
+msgid "INTO specified more than once"
+msgstr "INTO angiven mer än en gång"
+
+#: pl_gram.y:3017
+msgid "expected FROM or IN"
+msgstr "förväntade FROM eller IN"
+
+#: pl_gram.y:3077
+#, c-format
+msgid "RETURN cannot have a parameter in function returning set"
+msgstr "RETURN kan inte ha en parameter i funktion som returnerar en mängd"
+
+#: pl_gram.y:3078
+#, c-format
+msgid "Use RETURN NEXT or RETURN QUERY."
+msgstr "Använd RETURN NEXT eller RETURN QUERY."
+
+#: pl_gram.y:3086
+#, c-format
+msgid "RETURN cannot have a parameter in function with OUT parameters"
+msgstr "RETURN kan inte ha en parameter i en funktion med OUT-parameterar"
+
+#: pl_gram.y:3095
+#, c-format
+msgid "RETURN cannot have a parameter in function returning void"
+msgstr "RETURN kan inte ha en parameter i funktion som returnerar void"
+
+#: pl_gram.y:3155
+#, c-format
+msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
+msgstr "RETURN NEXT kan inte ha en parameter i funktion med OUT-parametrar"
+
+#: pl_gram.y:3259
+#, c-format
+msgid "\"%s\" is declared CONSTANT"
+msgstr "\"%s\" är deklarerad CONSTANT"
+
+#: pl_gram.y:3321 pl_gram.y:3333
+#, c-format
+msgid "record or row variable cannot be part of multiple-item INTO list"
+msgstr "post eller radvariabel kan inte vara del av en multi-element-INTO-lista"
+
+#: pl_gram.y:3378
+#, c-format
+msgid "too many INTO variables specified"
+msgstr "för många INTO-variabler angivna"
+
+#: pl_gram.y:3586
+#, c-format
+msgid "end label \"%s\" specified for unlabelled block"
+msgstr "slutetikett \"%s\" angiven för block utan etikett"
+
+#: pl_gram.y:3593
+#, c-format
+msgid "end label \"%s\" differs from block's label \"%s\""
+msgstr "slutetikett \"%s\" stämmer inte med blockets etikett \"%s\""
+
+#: pl_gram.y:3628
+#, c-format
+msgid "cursor \"%s\" has no arguments"
+msgstr "markör \"%s\" har inga argument"
+
+#: pl_gram.y:3642
+#, c-format
+msgid "cursor \"%s\" has arguments"
+msgstr "markör \"%s\" har argument"
+
+#: pl_gram.y:3684
+#, c-format
+msgid "cursor \"%s\" has no argument named \"%s\""
+msgstr "markör \"%s\" har inga argument med namn \"%s\""
+
+#: pl_gram.y:3704
+#, c-format
+msgid "value for parameter \"%s\" of cursor \"%s\" specified more than once"
+msgstr "värdet för parameter \"%s\" i markör \"%s\" är angivet mer än en gång"
+
+#: pl_gram.y:3729
+#, c-format
+msgid "not enough arguments for cursor \"%s\""
+msgstr "ej tillräckligt med argument för markör \"%s\""
+
+#: pl_gram.y:3736
+#, c-format
+msgid "too many arguments for cursor \"%s\""
+msgstr "fär många argument för markör \"%s\""
+
+#: pl_gram.y:3824
+msgid "unrecognized RAISE statement option"
+msgstr "okänd RAISE-sats-flagga"
+
+#: pl_gram.y:3828
+msgid "syntax error, expected \"=\""
+msgstr "syntaxfel, förväntade \"=\""
+
+#: pl_gram.y:3869
+#, c-format
+msgid "too many parameters specified for RAISE"
+msgstr "för många parametrar angivna för RAISE"
+
+#: pl_gram.y:3873
+#, c-format
+msgid "too few parameters specified for RAISE"
+msgstr "för få parametrar angivna för RAISE"
+
+#: pl_handler.c:151
+msgid "Sets handling of conflicts between PL/pgSQL variable names and table column names."
+msgstr "Sätter hantering av konflikter mellan PL/pgSQL-variabelnamn och tabellkolumnnamn."
+
+#: pl_handler.c:160
+msgid "Print information about parameters in the DETAIL part of the error messages generated on INTO ... STRICT failures."
+msgstr "Skriv information om parametrar i DETAIL-delen av felmeddelanden vid INTO ... STRICT-fel."
+
+#: pl_handler.c:168
+msgid "Perform checks given in ASSERT statements."
+msgstr "Utför kontroller angivna i ASSERT-satser."
+
+#: pl_handler.c:176
+msgid "List of programming constructs that should produce a warning."
+msgstr "Lista av programmeringskonstruktioner som skall ge en varning."
+
+#: pl_handler.c:186
+msgid "List of programming constructs that should produce an error."
+msgstr "Lista av programmeringskonstruktioner som skall ge ett fel"
+
+#. translator: %s is typically the translation of "syntax error"
+#: pl_scanner.c:622
+#, c-format
+msgid "%s at end of input"
+msgstr "%s vid slutet av indatan"
+
+#. translator: first %s is typically the translation of "syntax error"
+#: pl_scanner.c:638
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s vid eller nära \"%s\""
