@@ -1,13 +1,13 @@
 # Russian message translation file for pg_rewind
 # Copyright (C) 2015-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019.
+# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-08-28 07:05+0300\n"
-"PO-Revision-Date: 2019-09-02 12:32+0300\n"
+"POT-Creation-Date: 2020-11-09 07:36+0300\n"
+"PO-Revision-Date: 2020-11-09 08:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -70,7 +70,7 @@ msgstr "%s: не удалось получить код выхода от под
 msgid "could not open directory \"%s\": %s\n"
 msgstr "не удалось открыть каталог \"%s\": %s\n"
 
-#: copy_fetch.c:91 filemap.c:112 filemap.c:267
+#: copy_fetch.c:91 filemap.c:112
 #, c-format
 msgid "could not stat file \"%s\": %s\n"
 msgstr "не удалось получить информацию о файле \"%s\": %s\n"
@@ -219,12 +219,12 @@ msgstr "\"%s\" не является символической ссылкой\n
 msgid "\"%s\" is not a regular file\n"
 msgstr "\"%s\" не является обычным файлом\n"
 
-#: filemap.c:279
+#: filemap.c:267
 #, c-format
 msgid "source file list is empty\n"
 msgstr "список файлов в источнике пуст\n"
 
-#: filemap.c:401
+#: filemap.c:389
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
 msgstr ""
@@ -232,88 +232,88 @@ msgstr ""
 "\"\n"
 
 #. translator: first %s is a file path, second is a keyword such as COPY
-#: filemap.c:537
+#: filemap.c:525
 #, c-format
 msgid "%s (%s)\n"
 msgstr "%s (%s)\n"
 
 #: libpq_fetch.c:57
 #, c-format
-msgid "could not connect to server: %s"
-msgstr "не удалось подключиться к серверу: %s"
+msgid "%s"
+msgstr "%s"
 
-#: libpq_fetch.c:60
+#: libpq_fetch.c:59
 #, c-format
 msgid "connected to server\n"
 msgstr "подключение к серверу установлено\n"
 
-#: libpq_fetch.c:69
+#: libpq_fetch.c:68
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "не удалось очистить search_path: %s"
 
-#: libpq_fetch.c:81
+#: libpq_fetch.c:80
 #, c-format
 msgid "source server must not be in recovery mode\n"
 msgstr "исходный сервер должен выйти из режима восстановления\n"
 
-#: libpq_fetch.c:91
+#: libpq_fetch.c:90
 #, c-format
 msgid "full_page_writes must be enabled in the source server\n"
 msgstr "на исходном сервере должен быть включён режим full_page_writes\n"
 
-#: libpq_fetch.c:117 libpq_fetch.c:143
+#: libpq_fetch.c:116 libpq_fetch.c:142
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "ошибка выполнения запроса (%s) на исходном сервере: %s"
 
-#: libpq_fetch.c:122
+#: libpq_fetch.c:121
 #, c-format
 msgid "unexpected result set from query\n"
 msgstr "неожиданный результат запроса\n"
 
-#: libpq_fetch.c:163
+#: libpq_fetch.c:162
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location\n"
 msgstr ""
 "нераспознанный результат \"%s\" вместо текущей позиции добавления в WAL\n"
 
-#: libpq_fetch.c:213
+#: libpq_fetch.c:212
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "не удалось получить список файлов: %s"
 
-#: libpq_fetch.c:218
+#: libpq_fetch.c:217
 #, c-format
 msgid "unexpected result set while fetching file list\n"
 msgstr "неожиданный результат при получении списка файлов\n"
 
-#: libpq_fetch.c:288
+#: libpq_fetch.c:292
 #, c-format
 msgid "could not send query: %s"
 msgstr "не удалось отправить запрос: %s"
 
-#: libpq_fetch.c:290
+#: libpq_fetch.c:294
 #, c-format
 msgid "getting file chunks\n"
 msgstr "получение сегментов файлов\n"
 
-#: libpq_fetch.c:293
+#: libpq_fetch.c:297
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
 msgstr "не удалось перевести подключение libpq в однострочный режим\n"
 
-#: libpq_fetch.c:314
+#: libpq_fetch.c:318
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "неожиданный результат при получении файлов с сервера: %s"
 
-#: libpq_fetch.c:320
+#: libpq_fetch.c:324
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "неожиданный размер набора результатов при получении файлов с сервера\n"
 
-#: libpq_fetch.c:326
+#: libpq_fetch.c:330
 #, c-format
 msgid ""
 "unexpected data types in result set while fetching remote files: %u %u %u\n"
@@ -321,63 +321,63 @@ msgstr ""
 "неожиданные типы данных в наборе результатов при получении файлов с сервера: "
 "%u %u %u\n"
 
-#: libpq_fetch.c:334
+#: libpq_fetch.c:338
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "неожиданный формат результата при получении файлов с сервера\n"
 
-#: libpq_fetch.c:340
+#: libpq_fetch.c:344
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr ""
 "неожиданные значения NULL в результате при получении файлов с сервера\n"
 
-#: libpq_fetch.c:344
+#: libpq_fetch.c:348
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "неожиданная длина результата при получении файлов с сервера\n"
 
-#: libpq_fetch.c:369
+#: libpq_fetch.c:373
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "для файла \"%s\" вместо сегмента получено NULL-значение, файл удалён\n"
 
-#: libpq_fetch.c:382
+#: libpq_fetch.c:386
 #, c-format
 msgid "received chunk for file \"%s\", offset %s, size %d\n"
 msgstr "получен сегмент файла \"%s\": смещение %s, размер %d\n"
 
-#: libpq_fetch.c:411
+#: libpq_fetch.c:415
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "не удалось получить с сервера файл \"%s\": %s"
 
-#: libpq_fetch.c:416
+#: libpq_fetch.c:420
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "неожиданный набор результатов при получении файла \"%s\" с сервера\n"
 
-#: libpq_fetch.c:427
+#: libpq_fetch.c:431
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "получен файл \"%s\", длина %d\n"
 
-#: libpq_fetch.c:460
+#: libpq_fetch.c:464
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "не удалось отправить данные COPY: %s"
 
-#: libpq_fetch.c:489
+#: libpq_fetch.c:493
 #, c-format
 msgid "could not send file list: %s"
 msgstr "не удалось отправить список файлов: %s"
 
-#: libpq_fetch.c:531
+#: libpq_fetch.c:535
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "не удалось отправить сообщение о завершении копирования: %s"
 
-#: libpq_fetch.c:537
+#: libpq_fetch.c:541
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "неожиданный результат при передаче списка: %s"
@@ -451,7 +451,7 @@ msgid ""
 "  %s [OPTION]...\n"
 "\n"
 msgstr ""
-"Пример запуска:\n"
+"Использование:\n"
 "  %s [ПАРАМЕТР]...\n"
 "\n"
 
@@ -709,7 +709,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Программа \"initdb\" найдена в \"%s\",\n"
+"Программа \"initdb\" найдена программой \"%s\",\n"
 "но её версия отличается от версии %s.\n"
 "Проверьте правильность установки СУБД.\n"
 
@@ -920,6 +920,9 @@ msgstr "запись с неверной длиной в позиции %X/%X"
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "неверный сжатый образ в позиции %X/%X, блок %d"
+
+#~ msgid "could not connect to server: %s"
+#~ msgstr "не удалось подключиться к серверу: %s"
 
 #~ msgid "could not set up connection context: %s"
 #~ msgstr "не удалось настроить контекст подключения: %s"

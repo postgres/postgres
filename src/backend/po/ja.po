@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2019-11-09 09:00+0000\n"
-"PO-Revision-Date: 2018-03-05 19:17+0900\n"
+"PO-Revision-Date: 2020-09-04 10:55-0400\n"
 "Last-Translator: Kyotaro Horiguchi <horiguchi.kyotaro@lab.ntt.co.jp>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -9471,7 +9471,7 @@ msgstr "必要ならば手作業でこのディレクトリを削除すること
 #: commands/trigger.c:190
 #, c-format
 msgid "\"%s\" is a table"
-msgstr "\"%s\" はテーブルではありません"
+msgstr "\"%s\"はテーブルです"
 
 #: commands/trigger.c:192
 #, c-format
@@ -22934,7 +22934,7 @@ msgstr "ライブラリ\"%s\"をロードしました"
 #: utils/init/postinit.c:251
 #, c-format
 msgid "replication connection authorized: user=%s SSL enabled (protocol=%s, cipher=%s, compression=%s)"
-msgstr "レプリケーション接続の認証完了: ユーザ=%s SLL有効 (プロトコル=%s、暗号方式=%s、圧縮=%s)"
+msgstr "レプリケーション接続の認証完了: ユーザ=%s SSL有効 (プロトコル=%s、暗号方式=%s、圧縮=%s)"
 
 #: utils/init/postinit.c:253 utils/init/postinit.c:267
 msgid "off"

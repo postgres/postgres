@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-02-09 11:25+0000\n"
+"POT-Creation-Date: 2020-11-08 11:45+0000\n"
 "PO-Revision-Date: 2019-02-09 16:00+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
+#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:126 parsexlog.c:178
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
@@ -67,7 +67,7 @@ msgstr "%s: konnte Statuscode des Subprozesses nicht ermitteln: Fehlercode %lu\n
 msgid "could not open directory \"%s\": %s\n"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %s\n"
 
-#: copy_fetch.c:91 filemap.c:112 filemap.c:267
+#: copy_fetch.c:91 filemap.c:112
 #, c-format
 msgid "could not stat file \"%s\": %s\n"
 msgstr "konnte »stat« für Datei »%s« nicht ausführen: %s\n"
@@ -212,168 +212,158 @@ msgstr "»%s« ist keine symbolische Verknüpfung\n"
 msgid "\"%s\" is not a regular file\n"
 msgstr "»%s« ist keine normale Datei\n"
 
-#: filemap.c:279
+#: filemap.c:267
 #, c-format
 msgid "source file list is empty\n"
 msgstr "Quelldateiliste ist leer\n"
 
-#: filemap.c:401
+#: filemap.c:389
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
 msgstr "unerwartete Seitenänderung für Verzeichnis oder symbolische Verknüpfung »%s«\n"
 
 #. translator: first %s is a file path, second is a keyword such as COPY
-#: filemap.c:537
+#: filemap.c:525
 #, c-format
 msgid "%s (%s)\n"
 msgstr "%s (%s)\n"
 
-#: libpq_fetch.c:56
+#: libpq_fetch.c:57
 #, c-format
-msgid "could not connect to server: %s"
-msgstr "konnte nicht mit Server verbinden: %s"
+msgid "%s"
+msgstr "%s"
 
 #: libpq_fetch.c:59
 #, c-format
 msgid "connected to server\n"
 msgstr "mit Server verbunden\n"
 
-#: libpq_fetch.c:63
+#: libpq_fetch.c:68
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "konnte search_path nicht auf leer setzen: %s"
 
-#: libpq_fetch.c:75
+#: libpq_fetch.c:80
 #, c-format
 msgid "source server must not be in recovery mode\n"
 msgstr "Quell-Server darf nicht im Wiederherstellungsmodus sein\n"
 
-#: libpq_fetch.c:85
+#: libpq_fetch.c:90
 #, c-format
 msgid "full_page_writes must be enabled in the source server\n"
 msgstr "full_page_writes muss im Quell-Server eingeschaltet sein\n"
 
-#: libpq_fetch.c:97
-#, c-format
-msgid "could not set up connection context: %s"
-msgstr "konnte Verbindungskontext nicht einrichten: %s"
-
-#: libpq_fetch.c:115
+#: libpq_fetch.c:116 libpq_fetch.c:142
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "Fehler beim Ausführen einer Anfrage (%s) im Quellserver: %s"
 
-#: libpq_fetch.c:120
+#: libpq_fetch.c:121
 #, c-format
 msgid "unexpected result set from query\n"
 msgstr "Anfrage ergab unerwartete Ergebnismenge\n"
 
-#: libpq_fetch.c:143
+#: libpq_fetch.c:162
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location\n"
 msgstr "unbekanntes Ergebnis »%s« für aktuelle WAL-Einfügeposition\n"
 
-#: libpq_fetch.c:193
+#: libpq_fetch.c:212
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "konnte Dateiliste nicht holen: %s"
 
-#: libpq_fetch.c:198
+#: libpq_fetch.c:217
 #, c-format
 msgid "unexpected result set while fetching file list\n"
 msgstr "unerwartete Ergebnismenge beim Holen der Dateiliste\n"
 
-#: libpq_fetch.c:268
+#: libpq_fetch.c:292
 #, c-format
 msgid "could not send query: %s"
 msgstr "konnte Anfrage nicht senden: %s"
 
-#: libpq_fetch.c:270
+#: libpq_fetch.c:294
 #, c-format
 msgid "getting file chunks\n"
 msgstr "hole Dateistücke\n"
 
-#: libpq_fetch.c:273
+#: libpq_fetch.c:297
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
 msgstr "konnte libpq-Verbindung nicht in den Einzelzeilenmodus setzen\n"
 
-#: libpq_fetch.c:294
+#: libpq_fetch.c:318
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "unerwartetes Ergebnis beim Holen von fernen Dateien: %s"
 
-#: libpq_fetch.c:300
+#: libpq_fetch.c:324
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "unerwartete Ergebnismengengröße beim Holen von fernen Dateien\n"
 
-#: libpq_fetch.c:306
+#: libpq_fetch.c:330
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u\n"
 msgstr "unerwartete Datentypen in Ergebnismenge beim Holen von fernen Dateien: %u %u %u\n"
 
-#: libpq_fetch.c:314
+#: libpq_fetch.c:338
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "unerwartetes Ergebnisformat beim Holen von fernen Dateien\n"
 
-#: libpq_fetch.c:320
+#: libpq_fetch.c:344
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr "unerwartete NULL-Werte im Ergebnis beim Holen von fernen Dateien\n"
 
-#: libpq_fetch.c:324
+#: libpq_fetch.c:348
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "unerwartete Ergebnislänge beim Holen von fernen Dateien\n"
 
-#: libpq_fetch.c:349
+#: libpq_fetch.c:373
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "NULL-Wert für Stück von Datei »%s« empfangen, Datei wurde gelöscht\n"
 
-#: libpq_fetch.c:362
+#: libpq_fetch.c:386
 #, c-format
 msgid "received chunk for file \"%s\", offset %s, size %d\n"
 msgstr "Stück von Datei »%s« empfangen, Offset %s, Größe %d\n"
 
-#: libpq_fetch.c:391
+#: libpq_fetch.c:415
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "konnte ferne Datei »%s« nicht holen: %s"
 
-#: libpq_fetch.c:396
+#: libpq_fetch.c:420
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "unerwartete Ergebnismenge beim Holen der fernen Datei »%s«\n"
 
-#: libpq_fetch.c:407
+#: libpq_fetch.c:431
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "Datei »%s« geholt, Länge %d\n"
 
-#: libpq_fetch.c:440
+#: libpq_fetch.c:464
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "konnte COPY-Daten nicht senden: %s"
 
-#: libpq_fetch.c:466
-#, c-format
-msgid "could not create temporary table: %s"
-msgstr "konnte temporäre Tabelle nicht erzeugen: %s"
-
-#: libpq_fetch.c:474
+#: libpq_fetch.c:493
 #, c-format
 msgid "could not send file list: %s"
 msgstr "konnte Dateiliste nicht senden: %s"
 
-#: libpq_fetch.c:516
+#: libpq_fetch.c:535
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "konnte COPY-Ende nicht senden: %s"
 
-#: libpq_fetch.c:522
+#: libpq_fetch.c:541
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "unerwartetes Ergebnis beim Senden der Dateiliste: %s"
@@ -387,42 +377,42 @@ msgstr "Fehlgeschlagen, Programm wird beendet\n"
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) kopiert"
 
-#: parsexlog.c:87 parsexlog.c:133
+#: parsexlog.c:87 parsexlog.c:132
 #, c-format
 msgid "could not read WAL record at %X/%X: %s\n"
 msgstr "konnte WAL-Eintrag bei %X/%X nicht lesen: %s\n"
 
-#: parsexlog.c:91 parsexlog.c:136
+#: parsexlog.c:91 parsexlog.c:135
 #, c-format
 msgid "could not read WAL record at %X/%X\n"
 msgstr "konnte WAL-Eintrag bei %X/%X nicht lesen\n"
 
-#: parsexlog.c:191
+#: parsexlog.c:190
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s\n"
 msgstr "konnte vorangegangenen WAL-Eintrag bei %X/%X nicht finden: %s\n"
 
-#: parsexlog.c:195
+#: parsexlog.c:194
 #, c-format
 msgid "could not find previous WAL record at %X/%X\n"
 msgstr "konnte vorangegangenen WAL-Eintrag bei %X/%X nicht finden\n"
 
-#: parsexlog.c:283
+#: parsexlog.c:282
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "konnte Datei »%s« nicht öffnen: %s\n"
 
-#: parsexlog.c:297
+#: parsexlog.c:296
 #, c-format
 msgid "could not seek in file \"%s\": %s\n"
 msgstr "konnte Positionszeiger in Datei »%s« nicht setzen: %s\n"
 
-#: parsexlog.c:304
+#: parsexlog.c:303
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
 msgstr "konnte nicht aus Datei »%s« lesen: %s\n"
 
-#: parsexlog.c:372
+#: parsexlog.c:371
 #, c-format
 msgid ""
 "WAL record modifies a relation, but record type is not recognized\n"
