@@ -13910,6 +13910,12 @@ SELECT COALESCE(description, short_description, '(none)') ...
   </para>
 
    <para>
+    The arguments must all be convertible to a common data type, which
+    will be the type of the result (see
+    <xref linkend="typeconv-union-case"/> for details).
+   </para>
+
+   <para>
     Like a <token>CASE</token> expression, <function>COALESCE</function> only
     evaluates the arguments that are needed to determine the result;
     that is, arguments to the right of the first non-null argument are
@@ -13939,11 +13945,28 @@ SELECT COALESCE(description, short_description, '(none)') ...
 <programlisting>
 SELECT NULLIF(value, '(none)') ...
 </programlisting>
-  </para>
-  <para>
    In this example, if <literal>value</literal> is <literal>(none)</literal>,
    null is returned, otherwise the value of <literal>value</literal>
    is returned.
+  </para>
+
+  <para>
+   The two arguments must be of comparable types.
+   To be specific, they are compared exactly as if you had
+   written <literal><replaceable>value1</replaceable>
+   = <replaceable>value2</replaceable></literal>, so there must be a
+   suitable <literal>=</literal> operator available.
+  </para>
+
+  <para>
+   The result has the same type as the first argument &mdash; but there is
+   a subtlety.  What is actually returned is the first argument of the
+   implied <literal>=</literal> operator, and in some cases that will have
+   been promoted to match the second argument's type.  For
+   example, <literal>NULLIF(1, 2.2)</literal> yields <type>numeric</type>,
+   because there is no <type>integer</type> <literal>=</literal>
+   <type>numeric</type> operator,
+   only <type>numeric</type> <literal>=</literal> <type>numeric</type>.
   </para>
 
   </sect2>
