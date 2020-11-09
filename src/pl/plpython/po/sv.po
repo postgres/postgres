@@ -1,14 +1,14 @@
 # Swedish message translation file for plpython
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plpython (PostgreSQL) 10\n"
+"Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-04-29 20:08+0000\n"
-"PO-Revision-Date: 2018-04-29 23:49+0200\n"
+"PO-Revision-Date: 2020-08-30 11:10+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-02-05 00:46+0000\n"
+"POT-Creation-Date: 2020-11-07 22:36+0000\n"
 "PO-Revision-Date: 2019-02-05 08:27+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: \n"
@@ -19,7 +19,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:75 parsexlog.c:129 parsexlog.c:187
+#: ../../common/fe_memutils.c:98 parsexlog.c:75 parsexlog.c:128 parsexlog.c:186
 #, c-format
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
@@ -69,7 +69,7 @@ msgstr "%s : n'a pas pu récupérer le code de statut du sous-processus : code d
 msgid "could not open directory \"%s\": %s\n"
 msgstr "n'a pas pu ouvrir le répertoire « %s » : %s\n"
 
-#: copy_fetch.c:89 filemap.c:185 filemap.c:348
+#: copy_fetch.c:89 filemap.c:202
 #, c-format
 msgid "could not stat file \"%s\": %s\n"
 msgstr "n'a pas pu tester le fichier « %s » : %s\n"
@@ -194,198 +194,188 @@ msgstr "n'a pas pu supprimer le lien symbolique « %s » : %s\n"
 msgid "could not open file \"%s\" for reading: %s\n"
 msgstr "n'a pas pu ouvrir le fichier « %s » pour une lecture : %s\n"
 
-#: filemap.c:177
+#: filemap.c:194
 #, c-format
 msgid "data file \"%s\" in source is not a regular file\n"
 msgstr "le fichier de données « %s » en source n'est pas un fichier standard\n"
 
-#: filemap.c:199
+#: filemap.c:216
 #, c-format
 msgid "\"%s\" is not a directory\n"
 msgstr "« %s » n'est pas un répertoire\n"
 
-#: filemap.c:222
+#: filemap.c:239
 #, c-format
 msgid "\"%s\" is not a symbolic link\n"
 msgstr "« %s » n'est pas un lien symbolique\n"
 
-#: filemap.c:234
+#: filemap.c:251
 #, c-format
 msgid "\"%s\" is not a regular file\n"
 msgstr "« %s » n'est pas un fichier standard\n"
 
-#: filemap.c:360
+#: filemap.c:363
 #, c-format
 msgid "source file list is empty\n"
 msgstr "la liste de fichiers sources est vide\n"
 
-#: filemap.c:475
+#: filemap.c:478
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
 msgstr "modification inattendue de page pour le répertoire ou le lien symbolique « %s »\n"
 
-#: filemap.c:510 filemap.c:530
+#: filemap.c:518 filemap.c:538
 #, c-format
 msgid "entry \"%s\" excluded from source file list\n"
 msgstr "enregistrement « %s » exclus de la liste des fichiers sources\n"
 
-#: filemap.c:513 filemap.c:533
+#: filemap.c:521 filemap.c:541
 #, c-format
 msgid "entry \"%s\" excluded from target file list\n"
 msgstr "enregistrement « %s » exclus de la liste des fichiers cibles\n"
 
 #. translator: first %s is a file path, second is a keyword such as COPY
-#: filemap.c:664
+#: filemap.c:672
 #, c-format
 msgid "%s (%s)\n"
 msgstr "%s (%s)\n"
 
-#: libpq_fetch.c:52
+#: libpq_fetch.c:53
 #, c-format
-msgid "could not connect to server: %s"
-msgstr "n'a pas pu se connecter au serveur : %s"
+msgid "%s"
+msgstr "%s"
 
 #: libpq_fetch.c:55
 #, c-format
 msgid "connected to server\n"
 msgstr "connecté au serveur\n"
 
-#: libpq_fetch.c:59
+#: libpq_fetch.c:64
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "n'a pas pu effacer search_path : %s"
 
-#: libpq_fetch.c:71
+#: libpq_fetch.c:76
 #, c-format
 msgid "source server must not be in recovery mode\n"
 msgstr "le serveur source ne doit pas être en mode restauration\n"
 
-#: libpq_fetch.c:81
+#: libpq_fetch.c:86
 #, c-format
 msgid "full_page_writes must be enabled in the source server\n"
 msgstr "full_page_writes doit être activé sur le serveur source\n"
 
-#: libpq_fetch.c:93
-#, c-format
-msgid "could not set up connection context: %s"
-msgstr "n'a pas pu initialiser le contexte de connexion : « %s »"
-
-#: libpq_fetch.c:111
+#: libpq_fetch.c:112 libpq_fetch.c:138
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "erreur lors de l'exécution de la requête (%s) dans le serveur source : %s"
 
-#: libpq_fetch.c:116
+#: libpq_fetch.c:117
 #, c-format
 msgid "unexpected result set from query\n"
 msgstr "ensemble de résultats inattendu de la requête\n"
 
-#: libpq_fetch.c:139
+#: libpq_fetch.c:158
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location\n"
 msgstr "résultat non reconnu « %s » pour l'emplacement d'insertion actuel dans les WAL\n"
 
-#: libpq_fetch.c:189
+#: libpq_fetch.c:208
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "n'a pas pu récupérer la liste des fichiers : %s"
 
-#: libpq_fetch.c:194
+#: libpq_fetch.c:213
 #, c-format
 msgid "unexpected result set while fetching file list\n"
 msgstr "ensemble de résultats inattendu lors de la récupération de la liste des fichiers\n"
 
-#: libpq_fetch.c:242
+#: libpq_fetch.c:266
 #, c-format
 msgid "could not send query: %s"
 msgstr "n'a pas pu envoyer la requête : %s"
 
-#: libpq_fetch.c:244
+#: libpq_fetch.c:268
 #, c-format
 msgid "getting file chunks\n"
 msgstr "récupération des parties de fichier\n"
 
-#: libpq_fetch.c:247
+#: libpq_fetch.c:271
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
 msgstr "n'a pas pu configurer la connexion libpq en mode ligne seule\n"
 
-#: libpq_fetch.c:268
+#: libpq_fetch.c:292
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "résultat inattendu lors de la récupération des fichiers cibles : %s"
 
-#: libpq_fetch.c:274
+#: libpq_fetch.c:298
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "taille inattendue de l'ensemble de résultats lors de la récupération des fichiers distants\n"
 
-#: libpq_fetch.c:280
+#: libpq_fetch.c:304
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u\n"
 msgstr "types de données inattendus dans l'ensemble de résultats lors de la récupération des fichiers distants : %u %u %u\n"
 
-#: libpq_fetch.c:288
+#: libpq_fetch.c:312
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "format de résultat inattendu lors de la récupération des fichiers distants\n"
 
-#: libpq_fetch.c:294
+#: libpq_fetch.c:318
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr "valeurs NULL inattendues dans le résultat lors de la récupération des fichiers distants\n"
 
-#: libpq_fetch.c:298
+#: libpq_fetch.c:322
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "longueur de résultats inattendu lors de la récupération des fichiers distants\n"
 
-#: libpq_fetch.c:323
+#: libpq_fetch.c:347
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "a reçu une valeur NULL pour une partie du fichier « %s », le fichier a été supprimé\n"
 
-#: libpq_fetch.c:336
+#: libpq_fetch.c:360
 #, c-format
 msgid "received chunk for file \"%s\", offset %s, size %d\n"
 msgstr "a reçu une partie du fichier « %s », décalage %s, taille %d\n"
 
-#: libpq_fetch.c:365
+#: libpq_fetch.c:389
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "n'a pas pu récupérer le fichier distant « %s » : %s"
 
-#: libpq_fetch.c:370
+#: libpq_fetch.c:394
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "ensemble de résultats inattendu lors de la récupération du fichier distant « %s »\n"
 
-#: libpq_fetch.c:381
+#: libpq_fetch.c:405
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "fichier récupéré « %s », longueur %d\n"
 
-#: libpq_fetch.c:414
+#: libpq_fetch.c:438
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "n'a pas pu envoyer les données COPY : %s"
 
-#: libpq_fetch.c:440
-#, c-format
-msgid "could not create temporary table: %s"
-msgstr "n'a pas pu créer la table temporaire : %s"
-
-#: libpq_fetch.c:448
+#: libpq_fetch.c:467
 #, c-format
 msgid "could not send file list: %s"
 msgstr "n'a pas pu envoyer la liste de fichiers : %s"
 
-#: libpq_fetch.c:490
+#: libpq_fetch.c:509
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "n'a pas pu envoyer end-of-COPY : %s"
 
-#: libpq_fetch.c:496
+#: libpq_fetch.c:515
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "résultat inattendu lors de l'envoi de la liste de fichiers : %s"
@@ -399,42 +389,42 @@ msgstr "Échec, sortie\n"
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s Ko (%d%%) copiés"
 
-#: parsexlog.c:88 parsexlog.c:135
+#: parsexlog.c:88 parsexlog.c:134
 #, c-format
 msgid "could not read WAL record at %X/%X: %s\n"
 msgstr "n'a pas pu lire l'enregistrement WAL précédent à %X/%X : %s\n"
 
-#: parsexlog.c:92 parsexlog.c:138
+#: parsexlog.c:92 parsexlog.c:137
 #, c-format
 msgid "could not read WAL record at %X/%X\n"
 msgstr "n'a pas pu lire l'enregistrement WAL précédent à %X/%X\n"
 
-#: parsexlog.c:199
+#: parsexlog.c:198
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s\n"
 msgstr "n'a pas pu trouver l'enregistrement WAL précédent à %X/%X : %s\n"
 
-#: parsexlog.c:203
+#: parsexlog.c:202
 #, c-format
 msgid "could not find previous WAL record at %X/%X\n"
 msgstr "n'a pas pu trouver l'enregistrement WAL précédent à %X/%X\n"
 
-#: parsexlog.c:293
+#: parsexlog.c:292
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "n'a pas pu ouvrir le fichier « %s » : %s\n"
 
-#: parsexlog.c:307
+#: parsexlog.c:306
 #, c-format
 msgid "could not seek in file \"%s\": %s\n"
 msgstr "n'a pas pu chercher dans le fichier « %s » : %s\n"
 
-#: parsexlog.c:314
+#: parsexlog.c:313
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
 msgstr "n'a pas pu lire le fichier « %s » : %s\n"
 
-#: parsexlog.c:382
+#: parsexlog.c:381
 #, c-format
 msgid ""
 "WAL record modifies a relation, but record type is not recognized\n"
@@ -891,3 +881,12 @@ msgstr "image compressée invalide à %X/%X, bloc %d"
 
 #~ msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
 #~ msgstr "le fichier WAL provient d'un système différent : XLOG_SEG_SIZE invalide dans l'en-tête de page"
+
+#~ msgid "could not create temporary table: %s"
+#~ msgstr "n'a pas pu créer la table temporaire : %s"
+
+#~ msgid "could not set up connection context: %s"
+#~ msgstr "n'a pas pu initialiser le contexte de connexion : « %s »"
+
+#~ msgid "could not connect to server: %s"
+#~ msgstr "n'a pas pu se connecter au serveur : %s"

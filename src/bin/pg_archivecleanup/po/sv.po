@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_archivecleanup
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
+"Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-08-05 02:15+0000\n"
-"PO-Revision-Date: 2017-08-05 07:55+0200\n"
+"PO-Revision-Date: 2020-08-30 11:06+0200\n"
 "Last-Translator: FDennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"

@@ -2,14 +2,14 @@
 # Copyright (C) 2014 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
-# Dennis Björklund <db@zigo.dhs.org> 2017.
+# Dennis Björklund <db@zigo.dhs.org> 2017, 2018, 2019, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plperl (PostgreSQL) 10\n"
+"Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-07-20 20:37+0000\n"
-"PO-Revision-Date: 2017-08-05 08:26+0200\n"
+"PO-Revision-Date: 2020-08-30 11:10+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"

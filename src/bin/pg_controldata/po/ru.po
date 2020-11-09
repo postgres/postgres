@@ -4,13 +4,13 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2002-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Andrey Sudnik <sudnikand@gmail.com>, 2011.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-10-05 21:51+0300\n"
-"PO-Revision-Date: 2018-10-02 16:23+0300\n"
+"PO-Revision-Date: 2020-05-08 15:51+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -494,7 +494,7 @@ msgstr "64-битные целые"
 #: pg_controldata.c:335
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "Передача аргумента Float4:            %s\n"
+msgstr "Передача аргумента float4:            %s\n"
 
 #: pg_controldata.c:336 pg_controldata.c:338
 msgid "by reference"
@@ -507,7 +507,7 @@ msgstr "по значению"
 #: pg_controldata.c:337
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "Передача аргумента Float8:            %s\n"
+msgstr "Передача аргумента float8:            %s\n"
 
 #: pg_controldata.c:339
 #, c-format

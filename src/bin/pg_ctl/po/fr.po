@@ -9,15 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-09-22 00:15+0000\n"
-"PO-Revision-Date: 2018-09-23 14:55+0200\n"
+"POT-Creation-Date: 2020-08-25 14:35+0000\n"
+"PO-Revision-Date: 2020-08-27 19:38+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.1.1\n"
+"X-Generator: Poedit 2.4.1\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -81,22 +81,17 @@ msgstr "commande introuvable"
 msgid "child process exited with exit code %d"
 msgstr "le processus fils a quitté avec le code de sortie %d"
 
-#: ../../common/wait_error.c:61
+#: ../../common/wait_error.c:62
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "le processus fils a été terminé par l'exception 0x%X"
 
-#: ../../common/wait_error.c:71
+#: ../../common/wait_error.c:66
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "le processus fils a été terminé par le signal %s"
+msgid "child process was terminated by signal %d: %s"
+msgstr "le processus fils a été terminé par le signal %d : %s"
 
-#: ../../common/wait_error.c:75
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "le processus fils a été terminé par le signal %d"
-
-#: ../../common/wait_error.c:80
+#: ../../common/wait_error.c:72
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec un statut %d non reconnu"
@@ -866,27 +861,46 @@ msgstr ""
 "%s : aucun répertoire de bases de données indiqué et variable\n"
 "d'environnement PGDATA non initialisée\n"
 
-#~ msgid "server is still starting up\n"
-#~ msgstr "le serveur est toujours en cours de démarrage\n"
+#~ msgid ""
+#~ "\n"
+#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
+#~ msgstr ""
+#~ "\n"
+#~ "%s : l'option -w n'est pas supportée lors du démarrage d'un serveur pré-9.1\n"
 
 #~ msgid ""
 #~ "\n"
-#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
+#~ "%s: -w option cannot use a relative socket directory specification\n"
 #~ msgstr ""
 #~ "\n"
-#~ "%s : ce répertoire des données semble être utilisé par un postmaster déjà existant\n"
+#~ "%s : l'option -w ne peut pas utiliser un chemin relatif vers le répertoire de\n"
+#~ "la socket\n"
 
-#~ msgid "%s: could not start server: exit code was %d\n"
-#~ msgstr "%s : n'a pas pu démarrer le serveur : le code de sortie est %d\n"
+#~ msgid "%s: could not wait for server because of misconfiguration\n"
+#~ msgstr "%s : n'a pas pu attendre le serveur à cause d'une mauvaise configuration\n"
 
-#~ msgid "%s: could not open process token: %lu\n"
-#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : %lu\n"
+#~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
+#~ msgstr ""
+#~ "  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l NOM_FICHIER]\n"
+#~ "                [-o \"OPTIONS\"]\n"
 
-#~ msgid "  --help                 show this help, then exit\n"
-#~ msgstr "  --help                   affiche cette aide et quitte\n"
+#~ msgid ""
+#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
+#~ "\n"
+#~ msgstr ""
+#~ "(Le comportement par défaut attend l'arrêt, pas le démarrage ou le\n"
+#~ "redémarrage.)\n"
+#~ "\n"
 
-#~ msgid "  --version              output version information, then exit\n"
-#~ msgstr "  --version                affiche la version et quitte\n"
+#~ msgid ""
+#~ "\n"
+#~ "Options for stop, restart, or promote:\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Options pour l'arrêt, le redémarrage ou la promotion :\n"
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "n'a pas pu accéder au répertoire « %s »"
 
 #~ msgid ""
 #~ "%s is a utility to start, stop, restart, reload configuration files,\n"
@@ -898,43 +912,27 @@ msgstr ""
 #~ "ou d'envoyer un signal à un processus PostgreSQL\n"
 #~ "\n"
 
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "n'a pas pu accéder au répertoire « %s »"
+#~ msgid "  --version              output version information, then exit\n"
+#~ msgstr "  --version                affiche la version et quitte\n"
+
+#~ msgid "  --help                 show this help, then exit\n"
+#~ msgstr "  --help                   affiche cette aide et quitte\n"
+
+#~ msgid "%s: could not open process token: %lu\n"
+#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : %lu\n"
+
+#~ msgid "%s: could not start server: exit code was %d\n"
+#~ msgstr "%s : n'a pas pu démarrer le serveur : le code de sortie est %d\n"
 
 #~ msgid ""
 #~ "\n"
-#~ "Options for stop, restart, or promote:\n"
+#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
 #~ msgstr ""
 #~ "\n"
-#~ "Options pour l'arrêt, le redémarrage ou la promotion :\n"
+#~ "%s : ce répertoire des données semble être utilisé par un postmaster déjà existant\n"
 
-#~ msgid ""
-#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
-#~ "\n"
-#~ msgstr ""
-#~ "(Le comportement par défaut attend l'arrêt, pas le démarrage ou le\n"
-#~ "redémarrage.)\n"
-#~ "\n"
+#~ msgid "server is still starting up\n"
+#~ msgstr "le serveur est toujours en cours de démarrage\n"
 
-#~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-#~ msgstr ""
-#~ "  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l NOM_FICHIER]\n"
-#~ "                [-o \"OPTIONS\"]\n"
-
-#~ msgid "%s: could not wait for server because of misconfiguration\n"
-#~ msgstr "%s : n'a pas pu attendre le serveur à cause d'une mauvaise configuration\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: -w option cannot use a relative socket directory specification\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s : l'option -w ne peut pas utiliser un chemin relatif vers le répertoire de\n"
-#~ "la socket\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s : l'option -w n'est pas supportée lors du démarrage d'un serveur pré-9.1\n"
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "le processus fils a été terminé par le signal %s"

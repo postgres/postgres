@@ -7,17 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-09-27 15:22+0000\n"
-"PO-Revision-Date: 2019-09-27 22:35+0200\n"
+"POT-Creation-Date: 2020-10-31 16:35+0000\n"
+"PO-Revision-Date: 2020-11-01 00:06+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.4.1\n"
 
-#: check.c:66
+#: check.c:67
 #, c-format
 msgid ""
 "Performing Consistency Checks on Old Live Server\n"
@@ -26,7 +26,7 @@ msgstr ""
 "Provádím Kontrolu Konzistence na Starém Live Serveru\n"
 "----------------------------------------------------\n"
 
-#: check.c:72
+#: check.c:73
 #, c-format
 msgid ""
 "Performing Consistency Checks\n"
@@ -35,7 +35,7 @@ msgstr ""
 "Provádím Kontrolu Konzistence\n"
 "-----------------------------\n"
 
-#: check.c:166
+#: check.c:169
 #, c-format
 msgid ""
 "\n"
@@ -44,7 +44,7 @@ msgstr ""
 "\n"
 "*Clustery jsou kompatibilní*\n"
 
-#: check.c:172
+#: check.c:175
 #, c-format
 msgid ""
 "\n"
@@ -55,7 +55,7 @@ msgstr ""
 "Pokud pg_upgrade selže po tomto místě, musíte reinicializovat\n"
 "(initdb) nový cluster než budete pokračovat.\n"
 
-#: check.c:208
+#: check.c:209
 #, c-format
 msgid ""
 "Optimizer statistics are not transferred by pg_upgrade so,\n"
@@ -68,20 +68,7 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:213
-#, c-format
-msgid ""
-"Optimizer statistics and free space information are not transferred\n"
-"by pg_upgrade so, once you start the new server, consider running:\n"
-"    %s\n"
-"\n"
-msgstr ""
-"Statistiky optimalizéru a informace o volném místě nejsou zachovány\n"
-"při pg_upgrade, takže po nastartování nového serveru zvažte spuštění:\n"
-"    %s\n"
-"\n"
-
-#: check.c:220
+#: check.c:215
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
@@ -90,7 +77,7 @@ msgstr ""
 "Spuštění tohoto skriptu smaže datové soubory starého clusteru:\n"
 "    %s\n"
 
-#: check.c:225
+#: check.c:220
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
@@ -103,83 +90,93 @@ msgstr ""
 "clusteru jsou v adresáři starého clusteru.  Obsah starého clusteru musí\n"
 "být smazán manuálně.\n"
 
-#: check.c:235
+#: check.c:230
 #, c-format
 msgid "Checking cluster versions"
 msgstr "Kontroluji verze clusterů"
 
-#: check.c:247
+#: check.c:242
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version 8.4 and later.\n"
 msgstr "Tato utilita může upgradovat pouze z PostgreSQL verze 8.4 a novějších.\n"
 
-#: check.c:251
+#: check.c:246
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s.\n"
 msgstr "Tato utilita může upgradovat pouze na PostgreSQL verze %s.\n"
 
-#: check.c:260
+#: check.c:255
 #, c-format
 msgid "This utility cannot be used to downgrade to older major PostgreSQL versions.\n"
 msgstr "Tato utilita nemůže být použita pro downgrade na starší major PostgreSQL verze.\n"
 
-#: check.c:265
+#: check.c:260
 #, c-format
 msgid "Old cluster data and binary directories are from different major versions.\n"
 msgstr "Data a binární adresáře starého clusteru jsou z jiných major verzí.\n"
 
-#: check.c:268
+#: check.c:263
 #, c-format
 msgid "New cluster data and binary directories are from different major versions.\n"
 msgstr "Data a binární adresáře nového clusteru jsou z různých minárních verzí.\n"
 
-#: check.c:285
+#: check.c:280
 #, c-format
 msgid "When checking a pre-PG 9.1 live old server, you must specify the old server's port number.\n"
 msgstr "Při kontrole pre-PG 9.1 živého starého serveru, musíte zadat číslo portu starého serveru.\n"
 
-#: check.c:289
+#: check.c:284
 #, c-format
 msgid "When checking a live server, the old and new port numbers must be different.\n"
 msgstr "Při kontrole živého serveru, staré a nové číslo portu musí být různá.\n"
 
-#: check.c:304
+#: check.c:299
 #, c-format
 msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "kódování databáze \"%s\" neodpovídají:  stará \"%s\", nová \"%s\"\n"
 
-#: check.c:309
+#: check.c:304
 #, c-format
 msgid "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "lc_collate hodnoty pro databázi \"%s\" neodpovídají:  stará \"%s\", nová \"%s\"\n"
 
-#: check.c:312
+#: check.c:307
 #, c-format
 msgid "lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "lc_ctype hodnoty pro databázi \"%s\" neodpovídají:  stará \"%s\", nová \"%s\"\n"
 
-#: check.c:385
+#: check.c:380
 #, c-format
 msgid "New cluster database \"%s\" is not empty\n"
 msgstr "Databáze \"%s\" na novém clusteru není prázdná\n"
 
-#: check.c:432
+#: check.c:427
 #, c-format
 msgid "Creating script to analyze new cluster"
 msgstr "Vytvářím skript pro analyze nového clusteru"
 
-#: check.c:446 check.c:574 check.c:838 check.c:949 check.c:1040 function.c:253
-#: option.c:480 version.c:57 version.c:156 version.c:257 version.c:339
+#: check.c:441 check.c:600 check.c:864 check.c:975 check.c:1066 function.c:253
+#: option.c:480 version.c:57 version.c:202 version.c:344
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "nelze otevřít soubor \"%s\": %s\n"
 
-#: check.c:501 check.c:630
+#: check.c:489 check.c:656
 #, c-format
 msgid "could not add execute permission to file \"%s\": %s\n"
 msgstr "nelze přidat právo na spuštění pro soubor \"%s\": %s\n"
 
-#: check.c:537
+#: check.c:519
+#, c-format
+msgid "Checking for new cluster tablespace directories"
+msgstr "Kontroluji tablespace adresáře na novém clusteru"
+
+#: check.c:530
+#, c-format
+msgid "new cluster tablespace directory already exists: \"%s\"\n"
+msgstr "tablespace adresář na novém clusteru již existuje: %s\n"
+
+#: check.c:563
 #, c-format
 msgid ""
 "\n"
@@ -188,7 +185,7 @@ msgstr ""
 "\n"
 "VAROVÁNÍ:  nový datový adresář by neměl být ve starém datovém adresáři, e.g. %s\n"
 
-#: check.c:561
+#: check.c:587
 #, c-format
 msgid ""
 "\n"
@@ -197,73 +194,73 @@ msgstr ""
 "\n"
 "VAROVÁNÍ:  umístění uživatelem definovaných tablespaces by neměly být v datovém adresáři, e.g. %s\n"
 
-#: check.c:571
+#: check.c:597
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "Vytvářím skript pro smazání starého clusteru"
 
-#: check.c:650
+#: check.c:676
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "Kontroluji že databázový uživatel je použit pro instalaci"
 
-#: check.c:666
+#: check.c:692
 #, c-format
 msgid "database user \"%s\" is not the install user\n"
 msgstr "databázový uživatel \"%s\" nebyl použit pro instalaci\n"
 
-#: check.c:677
+#: check.c:703
 #, c-format
 msgid "could not determine the number of users\n"
 msgstr "nelže určit počet uživatelů\n"
 
-#: check.c:685
+#: check.c:711
 #, c-format
 msgid "Only the install user can be defined in the new cluster.\n"
 msgstr "Pouze instalační uživatel může být definován pro nový cluster.\n"
 
-#: check.c:705
+#: check.c:731
 #, c-format
 msgid "Checking database connection settings"
 msgstr "Kontroluji nastavení databázového spojení"
 
-#: check.c:727
+#: check.c:753
 #, c-format
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false\n"
 msgstr "template0 nesmí povolovat spojení, i.e. příslušná hodnota pg_database.datallowconn musí být false\n"
 
-#: check.c:737
+#: check.c:763
 #, c-format
 msgid "All non-template0 databases must allow connections, i.e. their pg_database.datallowconn must be true\n"
 msgstr "Všechny non-template0 databáze musí povolovat spojení, i.e. jejich pg_database.datallowconn musí být true\n"
 
-#: check.c:762
+#: check.c:788
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "Kontroluji prepared transakce"
 
-#: check.c:771
+#: check.c:797
 #, c-format
 msgid "The source cluster contains prepared transactions\n"
 msgstr "Zdrojový cluster obsahuje prepared transakce\n"
 
-#: check.c:773
+#: check.c:799
 #, c-format
 msgid "The target cluster contains prepared transactions\n"
 msgstr "Cílový cluster obsahuje prepared transakce\n"
 
-#: check.c:799
+#: check.c:825
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Kontroluji contrib/isn s bigint-passing rozdílem"
 
-#: check.c:860 check.c:972 check.c:1063 function.c:268 version.c:179
-#: version.c:280
+#: check.c:886 check.c:998 check.c:1089 function.c:268 version.c:248
+#: version.c:285
 #, c-format
 msgid "fatal\n"
 msgstr "fatal\n"
 
-#: check.c:861
+#: check.c:887
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -284,12 +281,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:893
+#: check.c:919
 #, c-format
 msgid "Checking for reg* data types in user tables"
 msgstr "Kontroluji reg* datové typy v uživatelských tabulkách"
 
-#: check.c:973
+#: check.c:999
 #, c-format
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
@@ -308,12 +305,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:998
+#: check.c:1024
 #, c-format
 msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "Kontroluji nekompatibilní \"jsonb\" datový typ"
 
-#: check.c:1064
+#: check.c:1090
 #, c-format
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
@@ -330,32 +327,32 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1085
+#: check.c:1111
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Kontroluji existenci rolí začínajících na \"pg_\""
 
-#: check.c:1095
+#: check.c:1121
 #, c-format
 msgid "The source cluster contains roles starting with \"pg_\"\n"
 msgstr "Zdrojový cluster obsahuje role začínající na \"pg_\"\n"
 
-#: check.c:1097
+#: check.c:1123
 #, c-format
 msgid "The target cluster contains roles starting with \"pg_\"\n"
 msgstr "Cílový cluster obsahuje role začínající na \"pg_\"\n"
 
-#: check.c:1123
+#: check.c:1149
 #, c-format
 msgid "failed to get the current locale\n"
 msgstr "selhalo získání aktuální hodnoty locale\n"
 
-#: check.c:1132
+#: check.c:1158
 #, c-format
 msgid "failed to get system locale name for \"%s\"\n"
 msgstr "selhalo získání jména systémové locale pro \"%s\"\n"
 
-#: check.c:1138
+#: check.c:1164
 #, c-format
 msgid "failed to restore old locale \"%s\"\n"
 msgstr "selhala obnova staré locale \"%s\"\n"
@@ -401,7 +398,7 @@ msgid "The target cluster lacks cluster state information:\n"
 msgstr "Cílový cluster postrádá některé nutné informace o stavu:\n"
 
 #: controldata.c:208 dump.c:51 pg_upgrade.c:333 pg_upgrade.c:370
-#: relfilenode.c:244 util.c:80
+#: relfilenode.c:240 util.c:80
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1042,8 +1039,9 @@ msgstr "  -D, --new-datadir=DATADIR     datový adresář nového clusteru\n"
 
 #: option.c:286
 #, c-format
-msgid "  -j, --jobs                    number of simultaneous processes or threads to use\n"
-msgstr "  -j, --jobs                    počet paralelních procesů nebo threadů\n"
+#| msgid "  -j, --jobs                    number of simultaneous processes or threads to use\n"
+msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
+msgstr "  -j, --jobs=NUM                počet paralelních procesů nebo threadů\n"
 
 #: option.c:287
 #, c-format
@@ -1230,7 +1228,6 @@ msgstr "volání waitpid() selhalo: %s\n"
 
 #: parallel.c:309
 #, c-format
-#| msgid "child worker exited abnormally: %s\n"
 msgid "child process exited abnormally: status %d\n"
 msgstr "podřízený proces abnormálně skončil: status %d\n"
 
@@ -1379,22 +1376,22 @@ msgstr "Kopíruji soubory pro uživatelské relace\n"
 msgid "old database \"%s\" not found in the new cluster\n"
 msgstr "stará databáze \"%s\" nenalezena v novém clusteru\n"
 
-#: relfilenode.c:231
+#: relfilenode.c:227
 #, c-format
 msgid "error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
 msgstr "chyba při kontrole existence souboru \"%s.%s\" (\"%s\" na \"%s\"): %s\n"
 
-#: relfilenode.c:249
+#: relfilenode.c:245
 #, c-format
 msgid "rewriting \"%s\" to \"%s\"\n"
 msgstr "přepisuji \"%s\" na \"%s\"\n"
 
-#: relfilenode.c:255
+#: relfilenode.c:251
 #, c-format
 msgid "copying \"%s\" to \"%s\"\n"
 msgstr "copíruji \"%s\" do \"%s\"\n"
 
-#: relfilenode.c:261
+#: relfilenode.c:257
 #, c-format
 msgid "linking \"%s\" to \"%s\"\n"
 msgstr "linkuji \"%s\" na \"%s\"\n"
@@ -1427,15 +1424,15 @@ msgstr ""
 
 #: server.c:168
 #, c-format
-msgid "could not open version file: %s\n"
-msgstr "nelze otevřít soubor s verzí: %s\n"
+msgid "could not open version file \"%s\"\n"
+msgstr "nelze otevřít soubor s verzí: \"%s\"\n"
 
 #: server.c:172
 #, c-format
-msgid "could not parse PG_VERSION file from %s\n"
-msgstr "nelze naparsovat PG_VERSION soubor z %s\n"
+msgid "could not parse version file \"%s\"\n"
+msgstr "neplatný formát řetězce s verzí \"%s\"\n"
 
-#: server.c:295
+#: server.c:298
 #, c-format
 msgid ""
 "\n"
@@ -1444,7 +1441,7 @@ msgstr ""
 "\n"
 "spojení na databázi selhalo: %s"
 
-#: server.c:300
+#: server.c:303
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -1453,7 +1450,7 @@ msgstr ""
 "nelze se připojit ke zdrojovému postmaster procesu příkazem:\n"
 "%s\n"
 
-#: server.c:304
+#: server.c:307
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -1462,22 +1459,22 @@ msgstr ""
 "nelze se připojit k cílovému postmaster procesu příkazem:\n"
 "%s\n"
 
-#: server.c:318
+#: server.c:321
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed\n"
 msgstr "pg_ctl selhal při pokusu nastartovat zdrojový server, nebo selhal pokus o spojení\n"
 
-#: server.c:320
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed\n"
 msgstr "pg_ctl selhal při pokusu nastartovat cílový server, nebo selhal pokus o spojení\n"
 
-#: server.c:365
+#: server.c:368
 #, c-format
 msgid "out of memory\n"
 msgstr "nedostatek paměti\n"
 
-#: server.c:378
+#: server.c:381
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s\n"
 msgstr "libpq proměnná prostředí %s má hodnotu odkazující na nelokální server: %s\n"
@@ -1526,7 +1523,7 @@ msgstr "ok"
 msgid "Checking for large objects"
 msgstr "Kontrola velkých objektů"
 
-#: version.c:80 version.c:382
+#: version.c:80 version.c:387
 #, c-format
 msgid "warning"
 msgstr "varování"
@@ -1567,12 +1564,12 @@ msgstr ""
 "po spuštění z psql pod superuživatelským účtem tato výchozí práva nastaví.\n"
 "\n"
 
-#: version.c:118
+#: version.c:242
 #, c-format
 msgid "Checking for incompatible \"line\" data type"
 msgstr "Kontrola nekompatibilního \"line\" datového typu"
 
-#: version.c:180
+#: version.c:249
 #, c-format
 msgid ""
 "Your installation contains the \"line\" data type in user tables.  This\n"
@@ -1591,12 +1588,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:215
+#: version.c:279
 #, c-format
 msgid "Checking for invalid \"unknown\" user columns"
 msgstr "Kontrola pro neplatné \"unknown\" uživatelské sloupce"
 
-#: version.c:281
+#: version.c:286
 #, c-format
 msgid ""
 "Your installation contains the \"unknown\" data type in user tables.  This\n"
@@ -1613,12 +1610,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:304
+#: version.c:309
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "Kontrola hash indexů"
 
-#: version.c:384
+#: version.c:389
 #, c-format
 msgid ""
 "\n"
@@ -1635,7 +1632,7 @@ msgstr ""
 "jak REINDEX provést.\n"
 "\n"
 
-#: version.c:390
+#: version.c:395
 #, c-format
 msgid ""
 "\n"
@@ -1655,3 +1652,17 @@ msgstr ""
 "po spuštění z psql pod superuživatelským účtem znovu vytvoří všechny\n"
 "neplatné indexy; dokud k tomu nedojde tyto indexy nebudou používány.\n"
 "\n"
+
+#~ msgid "could not parse PG_VERSION file from %s\n"
+#~ msgstr "nelze naparsovat PG_VERSION soubor z %s\n"
+
+#~ msgid ""
+#~ "Optimizer statistics and free space information are not transferred\n"
+#~ "by pg_upgrade so, once you start the new server, consider running:\n"
+#~ "    %s\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Statistiky optimalizéru a informace o volném místě nejsou zachovány\n"
+#~ "při pg_upgrade, takže po nastartování nového serveru zvažte spuštění:\n"
+#~ "    %s\n"
+#~ "\n"

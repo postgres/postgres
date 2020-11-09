@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-07-13 19:45+0000\n"
-"PO-Revision-Date: 2018-07-13 23:48+0200\n"
+"POT-Creation-Date: 2020-10-31 16:34+0000\n"
+"PO-Revision-Date: 2020-11-01 00:08+0100\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.0.7\n"
+"X-Generator: Poedit 2.4.1\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -80,22 +80,17 @@ msgstr "příkaz nenalezen"
 msgid "child process exited with exit code %d"
 msgstr "potomek skončil s návratovým kódem %d"
 
-#: ../../common/wait_error.c:61
+#: ../../common/wait_error.c:62
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "potomek byl ukončen vyjímkou 0x%X"
 
-#: ../../common/wait_error.c:71
+#: ../../common/wait_error.c:66
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "potomek byl ukončen signálem %s"
+msgid "child process was terminated by signal %d: %s"
+msgstr "potomek byl ukončen signálem %d: %s"
 
-#: ../../common/wait_error.c:75
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "potomek byl ukončen signálem %d"
-
-#: ../../common/wait_error.c:80
+#: ../../common/wait_error.c:72
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "potomek skončil s nerozponaným stavem %d"
@@ -238,8 +233,7 @@ msgstr "Běží server?\n"
 #: pg_ctl.c:879
 #, c-format
 msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
-msgstr ""
-"%s: nemohu zastavit server; postgres běží v single-user módu (PID: %ld)\n"
+msgstr "%s: nemohu zastavit server; postgres běží v single-user módu (PID: %ld)\n"
 
 #: pg_ctl.c:887 pg_ctl.c:983
 #, c-format
@@ -292,8 +286,7 @@ msgstr "přesto zkouším server spustit\n"
 #: pg_ctl.c:971
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
-msgstr ""
-"%s: nemohu restartovat server; postgres běží v single-user módu (PID: %ld)\n"
+msgstr "%s: nemohu restartovat server; postgres běží v single-user módu (PID: %ld)\n"
 
 #: pg_ctl.c:974 pg_ctl.c:1060
 msgid "Please terminate the single-user server and try again.\n"
@@ -311,8 +304,7 @@ msgstr "přesto server spouštím\n"
 #: pg_ctl.c:1057
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
-msgstr ""
-"%s: nemohu znovunačíst server; server běží v single-user módu (PID: %ld)\n"
+msgstr "%s: nemohu znovunačíst server; server běží v single-user módu (PID: %ld)\n"
 
 #: pg_ctl.c:1066
 #, c-format
@@ -326,9 +318,7 @@ msgstr "server obdržel signál\n"
 #: pg_ctl.c:1096
 #, c-format
 msgid "%s: cannot promote server; single-user server is running (PID: %ld)\n"
-msgstr ""
-"%s: nelze povýšit (promote) server; server běží v single-user módu (PID: "
-"%ld)\n"
+msgstr "%s: nelze povýšit (promote) server; server běží v single-user módu (PID: %ld)\n"
 
 #: pg_ctl.c:1104
 #, c-format
@@ -338,14 +328,12 @@ msgstr "%s: nelze povýšit (promote) server; server není ve standby módu\n"
 #: pg_ctl.c:1119
 #, c-format
 msgid "%s: could not create promote signal file \"%s\": %s\n"
-msgstr ""
-"%s: nelze vytvořit signální soubor pro povýšení (promote) \"%s\": %s\n"
+msgstr "%s: nelze vytvořit signální soubor pro povýšení (promote) \"%s\": %s\n"
 
 #: pg_ctl.c:1125
 #, c-format
 msgid "%s: could not write promote signal file \"%s\": %s\n"
-msgstr ""
-"%s: nelze zapsat do signálního souboru pro povýšení (promote) \"%s\": %s\n"
+msgstr "%s: nelze zapsat do signálního souboru pro povýšení (promote) \"%s\": %s\n"
 
 #: pg_ctl.c:1133
 #, c-format
@@ -355,8 +343,7 @@ msgstr "%s: nelze poslat signál pro povýšení (promote, PID: %ld): %s\n"
 #: pg_ctl.c:1136
 #, c-format
 msgid "%s: could not remove promote signal file \"%s\": %s\n"
-msgstr ""
-"%s: nelze odstranit signální soubor pro povýšení (promote) \"%s\": %s\n"
+msgstr "%s: nelze odstranit signální soubor pro povýšení (promote) \"%s\": %s\n"
 
 #: pg_ctl.c:1146
 msgid "waiting for server to promote..."
@@ -475,8 +462,7 @@ msgstr "%s: nelze vytvořit vyhrazený token: chybový kód %lu\n"
 #: pg_ctl.c:1762
 #, c-format
 msgid "%s: WARNING: could not locate all job object functions in system API\n"
-msgstr ""
-"%s: VAROVÁNÍ: v systémovém API nelze najít všechny \"job object\" funkce\n"
+msgstr "%s: VAROVÁNÍ: v systémovém API nelze najít všechny \"job object\" funkce\n"
 
 #: pg_ctl.c:1859
 #, c-format
@@ -501,12 +487,10 @@ msgstr "Zkuste \"%s --help\" pro více informací.\n"
 #: pg_ctl.c:1913
 #, c-format
 msgid ""
-"%s is a utility to initialize, start, stop, or control a PostgreSQL "
-"server.\n"
+"%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s je nástroj pro inicializaci, spuštění, zastavení, nebo ovládání "
-"PostgreSQL serveru.\n"
+"%s je nástroj pro inicializaci, spuštění, zastavení, nebo ovládání PostgreSQL serveru.\n"
 "\n"
 
 #: pg_ctl.c:1914
@@ -566,12 +550,10 @@ msgstr "  %s kill     SIGNÁL  IDPROCESU\n"
 #, c-format
 msgid ""
 "  %s register [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
-"                  [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o "
-"OPTIONS]\n"
+"                  [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
 msgstr ""
 "  %s register [-D ADRESÁŘ] [-N NÁZEVSLUŽBY] [-U UŽIVATEL] [-P HESLO]\n"
-"                  [-S MÓD-STARTU] [-e ZDROJ] [-W] [-t SECS] [-s] [-o "
-"VOLBY]\n"
+"                  [-S MÓD-STARTU] [-e ZDROJ] [-W] [-t SECS] [-s] [-o VOLBY]\n"
 
 #: pg_ctl.c:1928
 #, c-format
@@ -594,24 +576,18 @@ msgstr "  -D, --pgdata=ADRESÁŘ   umístění úložiště databáze\n"
 
 #: pg_ctl.c:1934
 #, c-format
-msgid ""
-"  -e SOURCE              event source for logging when running as a "
-"service\n"
-msgstr ""
-"  -e SOURCE              název zdroje pro logování při běhu jako služba\n"
+msgid "  -e SOURCE              event source for logging when running as a service\n"
+msgstr "  -e SOURCE              název zdroje pro logování při běhu jako služba\n"
 
 #: pg_ctl.c:1936
 #, c-format
-msgid ""
-"  -s, --silent           only print errors, no informational messages\n"
-msgstr ""
-"  -s, --silent           vypisuj jen chyby, žádné informativní zprávy\n"
+msgid "  -s, --silent           only print errors, no informational messages\n"
+msgstr "  -s, --silent           vypisuj jen chyby, žádné informativní zprávy\n"
 
 #: pg_ctl.c:1937
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
-msgstr ""
-"  -t, --timeout=SECS     počet vteřin pro čekání při využití volby -w\n"
+msgstr "  -t, --timeout=SECS     počet vteřin pro čekání při využití volby -w\n"
 
 #: pg_ctl.c:1938
 #, c-format
@@ -635,10 +611,8 @@ msgstr "  -?, --help             vypsat tuto nápovědu, potom skončit\n"
 
 #: pg_ctl.c:1942
 #, c-format
-msgid ""
-"If the -D option is omitted, the environment variable PGDATA is used.\n"
-msgstr ""
-"Pokud je vynechán parametr -D, použije se proměnná prostředí PGDATA.\n"
+msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
+msgstr "Pokud je vynechán parametr -D, použije se proměnná prostředí PGDATA.\n"
 
 #: pg_ctl.c:1944
 #, c-format
@@ -662,9 +636,7 @@ msgstr "  -c, --core-files       nepoužitelné pro tuto platformu\n"
 #: pg_ctl.c:1950
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
-msgstr ""
-"  -l, --log=SOUBOR       zapisuj (nebo připoj na konec) log serveru do "
-"SOUBORU.\n"
+msgstr "  -l, --log=SOUBOR       zapisuj (nebo připoj na konec) log serveru do SOUBORU.\n"
 
 #: pg_ctl.c:1951
 #, c-format
@@ -691,10 +663,8 @@ msgstr ""
 
 #: pg_ctl.c:1955
 #, c-format
-msgid ""
-"  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr ""
-"  -m, --mode=MODE        může být \"smart\", \"fast\", or \"immediate\"\n"
+msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
+msgstr "  -m, --mode=MODE        může být \"smart\", \"fast\", or \"immediate\"\n"
 
 #: pg_ctl.c:1957
 #, c-format
@@ -713,14 +683,11 @@ msgstr "  smart       skonči potom, co se odpojí všichni klienti\n"
 #: pg_ctl.c:1959
 #, c-format
 msgid "  fast        quit directly, with proper shutdown (default)\n"
-msgstr ""
-"  fast        skonči okamžitě, s korektním zastavením serveru (výchozí)\n"
+msgstr "  fast        skonči okamžitě, s korektním zastavením serveru (výchozí)\n"
 
 #: pg_ctl.c:1960
 #, c-format
-msgid ""
-"  immediate   quit without complete shutdown; will lead to recovery on "
-"restart\n"
+msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
 msgstr ""
 "  immediate   skonči bez kompletního zastavení; po restartu se provede\n"
 "              obnova po pádu (crash recovery)\n"
@@ -745,10 +712,8 @@ msgstr ""
 
 #: pg_ctl.c:1967
 #, c-format
-msgid ""
-"  -N SERVICENAME  service name with which to register PostgreSQL server\n"
-msgstr ""
-"  -N SERVICENAME  jméno služby, pod kterým registrovat PostgreSQL server\n"
+msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
+msgstr "  -N SERVICENAME  jméno služby, pod kterým registrovat PostgreSQL server\n"
 
 #: pg_ctl.c:1968
 #, c-format
@@ -758,14 +723,12 @@ msgstr "  -P PASSWORD     heslo k účtu pro registraci PostgreSQL serveru\n"
 #: pg_ctl.c:1969
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
-msgstr ""
-"  -U USERNAME     uživatelské jméno pro registraci PostgreSQL server\n"
+msgstr "  -U USERNAME     uživatelské jméno pro registraci PostgreSQL server\n"
 
 #: pg_ctl.c:1970
 #, c-format
 msgid "  -S START-TYPE   service start type to register PostgreSQL server\n"
-msgstr ""
-"  -S TYP-STARTU   typ spuštění služby pro registraci PostgreSQL serveru\n"
+msgstr "  -S TYP-STARTU   typ spuštění služby pro registraci PostgreSQL serveru\n"
 
 #: pg_ctl.c:1972
 #, c-format
@@ -778,10 +741,8 @@ msgstr ""
 
 #: pg_ctl.c:1973
 #, c-format
-msgid ""
-"  auto       start service automatically during system startup (default)\n"
-msgstr ""
-"  auto       spusť službu automaticky během startu systému (implicitní)\n"
+msgid "  auto       start service automatically during system startup (default)\n"
+msgstr "  auto       spusť službu automaticky během startu systému (implicitní)\n"
 
 #: pg_ctl.c:1974
 #, c-format
@@ -860,18 +821,44 @@ msgstr "%s: není specifikována operace\n"
 
 #: pg_ctl.c:2393
 #, c-format
-msgid ""
-"%s: no database directory specified and environment variable PGDATA unset\n"
-msgstr ""
-"%s: není zadán datový adresář a ani není nastavena proměnná prostředí "
-"PGDATA\n"
+msgid "%s: no database directory specified and environment variable PGDATA unset\n"
+msgstr "%s: není zadán datový adresář a ani není nastavena proměnná prostředí PGDATA\n"
+
+#~ msgid "  fast        promote quickly without waiting for checkpoint completion\n"
+#~ msgstr "  fast        promote rychlé bez čekání na dokončení checkpointu\n"
+
+#~ msgid "  smart       promote after performing a checkpoint\n"
+#~ msgstr "  smart       promote po provedení checkpointu\n"
 
 #~ msgid ""
 #~ "\n"
-#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
+#~ "Options for stop, restart, or promote:\n"
 #~ msgstr ""
 #~ "\n"
-#~ "%s: -w volba není podporována při startu pre-9.1 serveru\n"
+#~ "Přepínače pro zastavení, restart a promote:\n"
+
+#~ msgid ""
+#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
+#~ "\n"
+#~ msgstr ""
+#~ "(Implicitní chování je čekat na ukončení, ale ne při startu nebo restartu.)\n"
+#~ "\n"
+
+#~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
+#~ msgstr "  %s start   [-w] [-t SECS] [-D ADRESÁŘ] [-s] [-l SOUBOR] [-o \"PŘEPÍNAČE\"]\n"
+
+#~ msgid "%s: could not wait for server because of misconfiguration\n"
+#~ msgstr "%s: nelze čekat na server kvůli chybné konfiguraci\n"
+
+#~ msgid "server is still starting up\n"
+#~ msgstr "server stále startuje\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
+#~ msgstr ""
+#~ "\n"
+#~ "%s: zdá se že v tomto datovém adresáři již běží existující postmaster\n"
 
 #~ msgid ""
 #~ "\n"
@@ -882,42 +869,10 @@ msgstr ""
 
 #~ msgid ""
 #~ "\n"
-#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
+#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
 #~ msgstr ""
 #~ "\n"
-#~ "%s: zdá se že v tomto datovém adresáři již běží existující postmaster\n"
+#~ "%s: -w volba není podporována při startu pre-9.1 serveru\n"
 
-#~ msgid "server is still starting up\n"
-#~ msgstr "server stále startuje\n"
-
-#~ msgid "%s: could not wait for server because of misconfiguration\n"
-#~ msgstr "%s: nelze čekat na server kvůli chybné konfiguraci\n"
-
-#~ msgid ""
-#~ "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS"
-#~ "\"]\n"
-#~ msgstr ""
-#~ "  %s start   [-w] [-t SECS] [-D ADRESÁŘ] [-s] [-l SOUBOR] [-o \"PŘEPÍNAČE"
-#~ "\"]\n"
-
-#~ msgid ""
-#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
-#~ "\n"
-#~ msgstr ""
-#~ "(Implicitní chování je čekat na ukončení, ale ne při startu nebo "
-#~ "restartu.)\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Options for stop, restart, or promote:\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Přepínače pro zastavení, restart a promote:\n"
-
-#~ msgid "  smart       promote after performing a checkpoint\n"
-#~ msgstr "  smart       promote po provedení checkpointu\n"
-
-#~ msgid ""
-#~ "  fast        promote quickly without waiting for checkpoint completion\n"
-#~ msgstr "  fast        promote rychlé bez čekání na dokončení checkpointu\n"
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "potomek byl ukončen signálem %s"

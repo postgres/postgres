@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-09-27 15:23+0000\n"
-"PO-Revision-Date: 2019-09-27 22:27+0200\n"
+"POT-Creation-Date: 2020-10-31 16:35+0000\n"
+"PO-Revision-Date: 2020-11-01 00:09+0100\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.4.1\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -184,22 +184,18 @@ msgstr "příkaz nenalezen"
 msgid "child process exited with exit code %d"
 msgstr "potomek skončil s návratovým kódem %d"
 
-#: ../../common/wait_error.c:61
+#: ../../common/wait_error.c:62
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "potomek byl ukončen vyjímkou 0x%X"
 
-#: ../../common/wait_error.c:71
+#: ../../common/wait_error.c:66
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "potomek byl ukončen signálem %s"
+#| msgid "child process was terminated by signal %d"
+msgid "child process was terminated by signal %d: %s"
+msgstr "potomek byl ukončen signálem %d: %s"
 
-#: ../../common/wait_error.c:75
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "potomek byl ukončen signálem %d"
-
-#: ../../common/wait_error.c:80
+#: ../../common/wait_error.c:72
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "potomek skončil s nerozponaným stavem %d"
@@ -983,95 +979,98 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#~ msgid "%s: The password file was not generated. Please report this problem.\n"
-#~ msgstr "%s: Soubor s hesly nebyl vytvořen. Prosíme oznamte tento problém tvůrcům.\n"
-
-#~ msgid "%s: could not determine valid short version string\n"
-#~ msgstr "%s: nemohu zjistit platné krátké označení verze\n"
-
-#~ msgid "Using the top-level directory of a mount point is not recommended.\n"
-#~ msgstr "Použití top-level adresáře mount pointu se nedoporučuje.\n"
-
-#~ msgid "copying template1 to postgres ... "
-#~ msgstr "kopíruji template1 do postgres ... "
-
-#~ msgid "copying template1 to template0 ... "
-#~ msgstr "kopíruji template1 do template0 ... "
-
-#~ msgid "vacuuming database template1 ... "
-#~ msgstr "pouštím VACUUM na databázi template1 ... "
-
-#~ msgid "loading PL/pgSQL server-side language ... "
-#~ msgstr "načítám PL/pgSQL jazyk ... "
-
-#~ msgid "creating information schema ... "
-#~ msgstr "vytvářím informační schéma ... "
-
-#~ msgid "setting privileges on built-in objects ... "
-#~ msgstr "nastavuji oprávnění pro vestavěné objekty ... "
-
-#~ msgid "creating dictionaries ... "
-#~ msgstr "vytvářím adresáře ... "
-
-#~ msgid "creating conversions ... "
-#~ msgstr "vytvářím konverze ... "
-
-#~ msgid "not supported on this platform\n"
-#~ msgstr "na této platformě není podporováno\n"
-
-#~ msgid "Use the option \"--debug\" to see details.\n"
-#~ msgstr "Pro více detailů použijte volbu \"--debug\".\n"
-
-#~ msgid "No usable system locales were found.\n"
-#~ msgstr "Nebylo nalezené žádné použitelné systémové nárovní nastavení (locales).\n"
-
-#~ msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
-#~ msgstr "%s: jméno locale obsahuje ne-ASCII znaky, přeskakuji: %s\n"
-
-#~ msgid "%s: locale name too long, skipped: \"%s\"\n"
-#~ msgstr "%s: jméno locale je příliš dlouhé, přeskakuji: %s\n"
-
-#~ msgid "creating collations ... "
-#~ msgstr "vytvářím collations ... "
-
-#~ msgid "loading system objects' descriptions ... "
-#~ msgstr "nahrávám popisy systémových objektů ... "
-
-#~ msgid "creating system views ... "
-#~ msgstr "vytvářím systémové pohledy ... "
-
-#~ msgid "initializing dependencies ... "
-#~ msgstr "inicializuji závislosti ... "
-
-#~ msgid "setting password ... "
-#~ msgstr "nastavuji heslo ... "
-
-#~ msgid "initializing pg_authid ... "
-#~ msgstr "inicializuji pg_authid ... "
-
-#~ msgid "creating template1 database in %s/base/1 ... "
-#~ msgstr "vytvářím databázi template1 v %s/base/1 ... "
-
-#~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s: nelze získat jméno aktuálního uživatele: %s\n"
-
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s: nelze získat informace o aktualním uživateli: %s\n"
-
-#~ msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
-#~ msgstr "%s: adresář s transakčním logem \"%s\" nebyl na žádost uživatele odstraněn\n"
-
-#~ msgid "%s: failed to remove contents of transaction log directory\n"
-#~ msgstr "%s: selhalo odstranění obsahu adresáře s transakčním logem\n"
-
-#~ msgid "%s: removing contents of transaction log directory \"%s\"\n"
-#~ msgstr "%s: odstraňuji obsah adresáře s transakčním logem \"%s\"\n"
-
-#~ msgid "%s: failed to remove transaction log directory\n"
-#~ msgstr "%s: selhalo odstraňení adresáře s transakčním logem\n"
+#~ msgid "%s: symlinks are not supported on this platform"
+#~ msgstr "%s: na této platformě nejsou podporovány symbolické linky"
 
 #~ msgid "%s: removing transaction log directory \"%s\"\n"
 #~ msgstr "%s: odstraňuji adresář s transakčním logem \"%s\"\n"
 
-#~ msgid "%s: symlinks are not supported on this platform"
-#~ msgstr "%s: na této platformě nejsou podporovány symbolické linky"
+#~ msgid "%s: failed to remove transaction log directory\n"
+#~ msgstr "%s: selhalo odstraňení adresáře s transakčním logem\n"
+
+#~ msgid "%s: removing contents of transaction log directory \"%s\"\n"
+#~ msgstr "%s: odstraňuji obsah adresáře s transakčním logem \"%s\"\n"
+
+#~ msgid "%s: failed to remove contents of transaction log directory\n"
+#~ msgstr "%s: selhalo odstranění obsahu adresáře s transakčním logem\n"
+
+#~ msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
+#~ msgstr "%s: adresář s transakčním logem \"%s\" nebyl na žádost uživatele odstraněn\n"
+
+#~ msgid "%s: could not obtain information about current user: %s\n"
+#~ msgstr "%s: nelze získat informace o aktualním uživateli: %s\n"
+
+#~ msgid "%s: could not get current user name: %s\n"
+#~ msgstr "%s: nelze získat jméno aktuálního uživatele: %s\n"
+
+#~ msgid "creating template1 database in %s/base/1 ... "
+#~ msgstr "vytvářím databázi template1 v %s/base/1 ... "
+
+#~ msgid "initializing pg_authid ... "
+#~ msgstr "inicializuji pg_authid ... "
+
+#~ msgid "setting password ... "
+#~ msgstr "nastavuji heslo ... "
+
+#~ msgid "initializing dependencies ... "
+#~ msgstr "inicializuji závislosti ... "
+
+#~ msgid "creating system views ... "
+#~ msgstr "vytvářím systémové pohledy ... "
+
+#~ msgid "loading system objects' descriptions ... "
+#~ msgstr "nahrávám popisy systémových objektů ... "
+
+#~ msgid "creating collations ... "
+#~ msgstr "vytvářím collations ... "
+
+#~ msgid "%s: locale name too long, skipped: \"%s\"\n"
+#~ msgstr "%s: jméno locale je příliš dlouhé, přeskakuji: %s\n"
+
+#~ msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
+#~ msgstr "%s: jméno locale obsahuje ne-ASCII znaky, přeskakuji: %s\n"
+
+#~ msgid "No usable system locales were found.\n"
+#~ msgstr "Nebylo nalezené žádné použitelné systémové nárovní nastavení (locales).\n"
+
+#~ msgid "Use the option \"--debug\" to see details.\n"
+#~ msgstr "Pro více detailů použijte volbu \"--debug\".\n"
+
+#~ msgid "not supported on this platform\n"
+#~ msgstr "na této platformě není podporováno\n"
+
+#~ msgid "creating conversions ... "
+#~ msgstr "vytvářím konverze ... "
+
+#~ msgid "creating dictionaries ... "
+#~ msgstr "vytvářím adresáře ... "
+
+#~ msgid "setting privileges on built-in objects ... "
+#~ msgstr "nastavuji oprávnění pro vestavěné objekty ... "
+
+#~ msgid "creating information schema ... "
+#~ msgstr "vytvářím informační schéma ... "
+
+#~ msgid "loading PL/pgSQL server-side language ... "
+#~ msgstr "načítám PL/pgSQL jazyk ... "
+
+#~ msgid "vacuuming database template1 ... "
+#~ msgstr "pouštím VACUUM na databázi template1 ... "
+
+#~ msgid "copying template1 to template0 ... "
+#~ msgstr "kopíruji template1 do template0 ... "
+
+#~ msgid "copying template1 to postgres ... "
+#~ msgstr "kopíruji template1 do postgres ... "
+
+#~ msgid "Using the top-level directory of a mount point is not recommended.\n"
+#~ msgstr "Použití top-level adresáře mount pointu se nedoporučuje.\n"
+
+#~ msgid "%s: could not determine valid short version string\n"
+#~ msgstr "%s: nemohu zjistit platné krátké označení verze\n"
+
+#~ msgid "%s: The password file was not generated. Please report this problem.\n"
+#~ msgstr "%s: Soubor s hesly nebyl vytvořen. Prosíme oznamte tento problém tvůrcům.\n"
+
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "potomek byl ukončen signálem %s"

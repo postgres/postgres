@@ -1,16 +1,16 @@
 # Swedish message translation file for pg_controldata
 # This file is put in the public domain.
-# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 # Use these quotes: "%s"
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 10\n"
+"Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-06-13 20:47+0000\n"
-"PO-Revision-Date: 2018-06-14 06:56+0200\n"
+"PO-Revision-Date: 2020-08-30 11:07+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"

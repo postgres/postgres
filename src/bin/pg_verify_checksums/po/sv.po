@@ -1,14 +1,14 @@
 # SWEDISH message translation file for pg_verify_checksums
 # Copyright (C) 2018 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_verify_checksums (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2018, 2019, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
+"Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2019-03-30 17:17+0000\n"
-"PO-Revision-Date: 2019-03-31 10:23+0200\n"
+"PO-Revision-Date: 2020-08-30 11:09+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"

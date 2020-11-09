@@ -1,5 +1,5 @@
 # Swedish message translation file for pg_ctl
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
 # Magnus Hagander <magnus@hagander.net>, 2010.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2013, 2014.
 #
@@ -7,16 +7,17 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 10\n"
+"Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-04-29 11:16+0000\n"
-"PO-Revision-Date: 2018-08-26 07:42+0200\n"
+"POT-Creation-Date: 2020-08-27 22:06+0000\n"
+"PO-Revision-Date: 2020-08-30 10:57+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -80,22 +81,17 @@ msgstr "kommandot kan ej hittas"
 msgid "child process exited with exit code %d"
 msgstr "barnprocess avslutade med kod %d"
 
-#: ../../common/wait_error.c:61
+#: ../../common/wait_error.c:62
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "barnprocess terminerades med avbrott 0x%X"
 
-#: ../../common/wait_error.c:71
+#: ../../common/wait_error.c:66
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "barnprocess terminerades av signal %s"
+msgid "child process was terminated by signal %d: %s"
+msgstr "barnprocess terminerades av signal %d: %s"
 
-#: ../../common/wait_error.c:75
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "barnprocess terminerades av signal %d"
-
-#: ../../common/wait_error.c:80
+#: ../../common/wait_error.c:72
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "barnprocess avslutade med okänd statuskod %d"
@@ -318,7 +314,7 @@ msgstr "%s: kunde inte skicka signalen \"reload\" (PID: %ld): %s\n"
 
 #: pg_ctl.c:1071
 msgid "server signaled\n"
-msgstr "servern är singalerad\n"
+msgstr "servern är signalerad\n"
 
 #: pg_ctl.c:1096
 #, c-format
@@ -829,44 +825,3 @@ msgstr "%s: ingen operation angiven\n"
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: ingen databaskatalog angiven och omgivningsvariabeln PGDATA är inte satt\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s: växeln -w stöds inte av server i version före 9.1\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: -w option cannot use a relative socket directory specification\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s: växeln -w kan inte nyttja uttag (socket) med relativ sökväg\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s: denna databaskatalog tycks nyttjas av en redan driftsatt postmaster\n"
-
-#~ msgid "%s: could not start server: exit code was %d\n"
-#~ msgstr "%s: kunde inte starta servern: avslutningskoden var %d\n"
-
-#~ msgid "server is still starting up\n"
-#~ msgstr "Servern är fortfarande i startläge.\n"
-
-#~ msgid "%s: could not wait for server because of misconfiguration\n"
-#~ msgstr "%s: kunde inte invänta server på grund av felinställning\n"
-
-#~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-#~ msgstr "  %s start   [-w] [-t SEK] [-D DATAKAT] [-s] [-l FILNAMN] [-o \"FLAGGOR\"]\n"
-
-#~ msgid ""
-#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Standard är att vänta på nedstängning, men inte att vänta på start\n"
-#~ "eller omstart.\n"
-#~ "\n"

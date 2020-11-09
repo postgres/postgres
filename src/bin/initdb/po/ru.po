@@ -6,13 +6,13 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-06-17 21:28+0300\n"
-"PO-Revision-Date: 2019-09-02 12:06+0300\n"
+"POT-Creation-Date: 2020-08-10 10:41+0300\n"
+"PO-Revision-Date: 2020-10-29 15:03+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -190,22 +190,17 @@ msgstr "команда не найдена"
 msgid "child process exited with exit code %d"
 msgstr "дочерний процесс завершился с кодом возврата %d"
 
-#: ../../common/wait_error.c:61
+#: ../../common/wait_error.c:62
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "дочерний процесс прерван исключением 0x%X"
 
-#: ../../common/wait_error.c:71
+#: ../../common/wait_error.c:66
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "дочерний процесс завершён по сигналу %s"
+msgid "child process was terminated by signal %d: %s"
+msgstr "дочерний процесс завершён по сигналу %d: %s"
 
-#: ../../common/wait_error.c:75
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "дочерний процесс завершён по сигналу %d"
-
-#: ../../common/wait_error.c:80
+#: ../../common/wait_error.c:72
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
@@ -739,7 +734,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Программа \"postgres\" найдена в \"%s\",\n"
+"Программа \"postgres\" найдена программой \"%s\",\n"
 "но её версия отличается от версии %s.\n"
 "Проверьте правильность установки СУБД.\n"
 
@@ -1041,6 +1036,9 @@ msgstr ""
 "\n"
 "    %s\n"
 "\n"
+
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "дочерний процесс завершён по сигналу %s"
 
 #~ msgid "%s: removing transaction log directory \"%s\"\n"
 #~ msgstr "%s: удаление каталога журнала транзакций \"%s\"\n"
