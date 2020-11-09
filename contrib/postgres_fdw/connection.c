@@ -646,6 +646,10 @@ pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
 
 /*
  * pgfdw_xact_callback --- cleanup at main-transaction end.
+ *
+ * This runs just late enough that it must not enter user-defined code
+ * locally.  (Entering such code on the remote side is fine.  Its remote
+ * COMMIT TRANSACTION may run deferred triggers.)
  */
 static void
 pgfdw_xact_callback(XactEvent event, void *arg)
