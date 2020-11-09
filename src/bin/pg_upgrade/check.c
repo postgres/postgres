@@ -234,13 +234,22 @@ issue_warnings_and_set_wal_level(void)
 
 
 void
-output_completion_banner(char *analyze_script_file_name,
-						 char *deletion_script_file_name)
+output_completion_banner(char *deletion_script_file_name)
 {
+	PQExpBufferData user_specification;
+
+	initPQExpBuffer(&user_specification);
+	if (os_info.user_specified)
+	{
+		appendPQExpBufferStr(&user_specification, "-U ");
+		appendShellString(&user_specification, os_info.user);
+		appendPQExpBufferChar(&user_specification, ' ');
+	}
+
 	pg_log(PG_REPORT,
 		   "Optimizer statistics are not transferred by pg_upgrade so,\n"
 		   "once you start the new server, consider running:\n"
-		   "    %s\n\n", analyze_script_file_name);
+		   "    %s/vacuumdb %s--all --analyze-in-stages\n\n", new_cluster.bindir, user_specification.data);
 
 	if (deletion_script_file_name)
 		pg_log(PG_REPORT,
@@ -253,6 +262,8 @@ output_completion_banner(char *analyze_script_file_name,
 			   "because user-defined tablespaces or the new cluster's data directory\n"
 			   "exist in the old cluster directory.  The old cluster's contents must\n"
 			   "be deleted manually.\n");
+
+	termPQExpBuffer(&user_specification);
 }
 
 
@@ -445,90 +456,6 @@ check_databases_are_compatible(void)
 		}
 	}
 }
-
-
-/*
- * create_script_for_cluster_analyze()
- *
- *	This incrementally generates better optimizer statistics
- */
-void
-create_script_for_cluster_analyze(char **analyze_script_file_name)
-{
-	FILE	   *script = NULL;
-	PQExpBufferData user_specification;
-
-	prep_status("Creating script to analyze new cluster");
-
-	initPQExpBuffer(&user_specification);
-	if (os_info.user_specified)
-	{
-		appendPQExpBufferStr(&user_specification, "-U ");
-		appendShellString(&user_specification, os_info.user);
-		appendPQExpBufferChar(&user_specification, ' ');
-	}
-
-	*analyze_script_file_name = psprintf("%sanalyze_new_cluster.%s",
-										 SCRIPT_PREFIX, SCRIPT_EXT);
-
-	if ((script = fopen_priv(*analyze_script_file_name, "w")) == NULL)
-		pg_fatal("could not open file \"%s\": %s\n",
-				 *analyze_script_file_name, strerror(errno));
-
-#ifndef WIN32
-	/* add shebang header */
-	fprintf(script, "#!/bin/sh\n\n");
-#else
-	/* suppress command echoing */
-	fprintf(script, "@echo off\n");
-#endif
-
-	fprintf(script, "echo %sThis script will generate minimal optimizer statistics rapidly%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %sso your system is usable, and then gather statistics twice more%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %swith increasing accuracy.  When it is done, your system will%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %shave the default level of optimizer statistics.%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo%s\n\n", ECHO_BLANK);
-
-	fprintf(script, "echo %sIf you have used ALTER TABLE to modify the statistics target for%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %sany tables, you might want to remove them and restore them after%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %srunning this script because they will delay fast statistics generation.%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo%s\n\n", ECHO_BLANK);
-
-	fprintf(script, "echo %sIf you would like default statistics as quickly as possible, cancel%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %sthis script and run:%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %s    \"%s/vacuumdb\" %s--all --analyze-only%s\n", ECHO_QUOTE,
-			new_cluster.bindir, user_specification.data, ECHO_QUOTE);
-	fprintf(script, "echo%s\n\n", ECHO_BLANK);
-
-	fprintf(script, "\"%s/vacuumdb\" %s--all --analyze-in-stages\n",
-			new_cluster.bindir, user_specification.data);
-
-	fprintf(script, "echo%s\n\n", ECHO_BLANK);
-	fprintf(script, "echo %sDone%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-
-	fclose(script);
-
-#ifndef WIN32
-	if (chmod(*analyze_script_file_name, S_IRWXU) != 0)
-		pg_fatal("could not add execute permission to file \"%s\": %s\n",
-				 *analyze_script_file_name, strerror(errno));
-#endif
-
-	termPQExpBuffer(&user_specification);
-
-	check_ok();
-}
-
 
 /*
  * A previous run of pg_upgrade might have failed and the new cluster

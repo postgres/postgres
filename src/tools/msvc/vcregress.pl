@@ -607,7 +607,8 @@ sub upgradecheck
 	@args = ('pg_ctl', '-l', "$logdir/postmaster2.log", 'start');
 	system(@args) == 0 or exit 1;
 	print "\nSetting up stats on new cluster\n\n";
-	system(".\\analyze_new_cluster.bat") == 0 or exit 1;
+	@args = ('vacuumdb', '--all', '--analyze-in-stages');
+	system(@args) == 0 or exit 1;
 	print "\nDumping new cluster\n\n";
 	@args = ('pg_dumpall', '-f', "$tmp_root/dump2.sql");
 	system(@args) == 0 or exit 1;

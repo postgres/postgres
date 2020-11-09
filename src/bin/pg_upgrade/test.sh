@@ -243,13 +243,7 @@ esac
 
 pg_ctl start -l "$logdir/postmaster2.log" -o "$POSTMASTER_OPTS" -w
 
-# In the commands below we inhibit msys2 from converting the "/c" switch
-# in "cmd /c" to a file system path.
-
-case $testhost in
-	MINGW*)	MSYS2_ARG_CONV_EXCL=/c cmd /c analyze_new_cluster.bat ;;
-	*)		sh ./analyze_new_cluster.sh ;;
-esac
+vacuumdb --all --analyze-in-stages
 
 pg_dumpall --no-sync -f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
 pg_ctl -m fast stop
