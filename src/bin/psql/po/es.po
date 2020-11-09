@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-13 13:44+0000\n"
+"POT-Creation-Date: 2020-09-13 10:44+0000\n"
 "PO-Revision-Date: 2020-09-14 13:02-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -276,7 +276,6 @@ msgstr "No hay error anterior."
 
 #: command.c:1371
 #, c-format
-#| msgid "Missing left parenthesis."
 msgid "\\%s: missing right parenthesis"
 msgstr "\\%s: falta el paréntesis derecho"
 
@@ -838,7 +837,6 @@ msgstr "Notificación asíncrona «%s» recibida del proceso de servidor con PID
 
 #: common.c:726 common.c:743
 #, c-format
-#| msgid "could not read input file: %m"
 msgid "could not print result table: %m"
 msgstr "no se pudo mostrar la tabla de resultados: %m"
 
@@ -1519,7 +1517,6 @@ msgstr "Llave de partición: %s"
 
 #: describe.c:2195
 #, c-format
-#| msgid "Foreign table \"%s.%s\""
 msgid "Owning table: \"%s.%s\""
 msgstr "Tabla dueña: «%s.%s»"
 
@@ -2340,7 +2337,6 @@ msgid "Purpose"
 msgstr "Propósito"
 
 #: describe.c:6281
-#| msgid "operator family"
 msgid "Sort opfamily"
 msgstr "familia de ops de ordenamiento"
 
@@ -4647,7 +4643,6 @@ msgid "cache"
 msgstr "cache"
 
 #: sql_help.c:1097
-#| msgid "new_table"
 msgid "new_target"
 msgstr "nuevo_valor"
 

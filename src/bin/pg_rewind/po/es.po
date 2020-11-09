@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-18 15:16+0000\n"
-"PO-Revision-Date: 2020-09-18 14:06-0300\n"
+"POT-Creation-Date: 2020-09-13 10:47+0000\n"
+"PO-Revision-Date: 2020-10-16 15:59-0300\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -89,19 +89,17 @@ msgstr "no se pudo obtener el código de salida del subproceso»: código de err
 
 #: ../../fe_utils/archive.c:53
 #, c-format
-#| msgid "could not send replication command \"%s\": %s"
-msgid "cannot use restore_command with %%r placeholder"
-msgstr "no se puede usar restore_command con el especificador %%r"
+#| msgid "cannot use restore_command with %%r placeholder"
+msgid "could not use restore_command with %%r alias"
+msgstr "no se puede usar restore_command con el alias %%r"
 
 #: ../../fe_utils/archive.c:74
 #, c-format
-#| msgid "archive file \"%s\" has wrong size: %lu instead of %lu"
 msgid "unexpected file size for \"%s\": %lu instead of %lu"
 msgstr "el archivo «%s» tiene tamaño inesperado: %lu en lugar de %lu"
 
 #: ../../fe_utils/archive.c:85
 #, c-format
-#| msgid "could not restore file \"%s\" from archive: %s"
 msgid "could not open file \"%s\" restored from archive: %m"
 msgstr "no se pudo abrir el archivo «%s» restaurado del archivo: %m"
 
@@ -112,13 +110,12 @@ msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
 #: ../../fe_utils/archive.c:112
 #, c-format
-#| msgid "Restoring global objects in the new cluster"
-msgid "restore_command failed: %s"
-msgstr "restore_command falló: %s"
+#| msgid "restore_command failed: %s"
+msgid "restore_command failed due to the signal: %s"
+msgstr "restore_command falló debido a la señal: %s"
 
 #: ../../fe_utils/archive.c:121
 #, c-format
-#| msgid "could not restore file \"%s\" from archive: %s"
 msgid "could not restore file \"%s\" from archive"
 msgstr "no se pudo recuperar el archivo «%s» del archivo"
 
@@ -327,7 +324,6 @@ msgstr "full_page_writes debe estar activado en el servidor de origen"
 
 #: libpq_fetch.c:111
 #, c-format
-#| msgid "error running query (%s) in source server: %s"
 msgid "error running query (%s) on source server: %s"
 msgstr "error ejecutando consulta (%s) en el servidor de origen: %s"
 
@@ -520,14 +516,10 @@ msgstr "  -N, --no-sync                  no esperar que los cambios se sincronic
 #: pg_rewind.c:89
 #, c-format
 msgid "  -P, --progress                 write progress messages\n"
-msgstr ""
-"  -P, --progress                 escribir mensajes de progreso\n"
+msgstr "  -P, --progress                 escribir mensajes de progreso\n"
 
 #: pg_rewind.c:90
 #, c-format
-#| msgid ""
-#| "  -R, --write-recovery-conf\n"
-#| "                         write configuration for replication\n"
 msgid ""
 "  -R, --write-recovery-conf      write configuration for replication\n"
 "                                 (requires --source-server)\n"
@@ -758,7 +750,6 @@ msgstr ""
 
 #: pg_rewind.c:880
 #, c-format
-#| msgid "Restoring global objects in the new cluster"
 msgid "restore_command is not set in the target cluster"
 msgstr "restore_command no está definido en el clúster de destino"
 
@@ -774,7 +765,6 @@ msgstr "el modo «single-user» en el servidor de destino falló"
 
 #: pg_rewind.c:944
 #, c-format
-#| msgid "%s: %sCommand was: %s"
 msgid "Command was: %s"
 msgstr "La orden era: % s"
 
@@ -870,7 +860,6 @@ msgstr "info bits %04X no válidos en archivo %s, posición %u"
 
 #: xlogreader.c:837
 #, c-format
-#| msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s"
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "archivo WAL es de un sistema de bases de datos distinto: identificador de sistema en archivo WAL es %llu, identificador en pg_control es %llu"
 

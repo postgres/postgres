@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-14 06:47+0000\n"
-"PO-Revision-Date: 2020-09-14 11:32+0200\n"
+"POT-Creation-Date: 2020-11-08 07:16+0000\n"
+"PO-Revision-Date: 2020-11-08 09:04+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -293,125 +293,125 @@ msgstr "unerwartete Seitenänderung für Verzeichnis oder symbolische Verknüpfu
 
 #: libpq_fetch.c:50
 #, c-format
-msgid "could not connect to server: %s"
-msgstr "konnte nicht mit Server verbinden: %s"
+msgid "%s"
+msgstr "%s"
 
-#: libpq_fetch.c:54
+#: libpq_fetch.c:53
 #, c-format
 msgid "connected to server"
 msgstr "mit Server verbunden"
 
-#: libpq_fetch.c:63
+#: libpq_fetch.c:62
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "konnte search_path nicht auf leer setzen: %s"
 
-#: libpq_fetch.c:75
+#: libpq_fetch.c:74
 #, c-format
 msgid "source server must not be in recovery mode"
 msgstr "Quell-Server darf nicht im Wiederherstellungsmodus sein"
 
-#: libpq_fetch.c:85
+#: libpq_fetch.c:84
 #, c-format
 msgid "full_page_writes must be enabled in the source server"
 msgstr "full_page_writes muss im Quell-Server eingeschaltet sein"
 
-#: libpq_fetch.c:111
+#: libpq_fetch.c:110
 #, c-format
 msgid "error running query (%s) on source server: %s"
 msgstr "Fehler beim Ausführen einer Anfrage (%s) auf dem Quellserver: %s"
 
-#: libpq_fetch.c:116
+#: libpq_fetch.c:115
 #, c-format
 msgid "unexpected result set from query"
 msgstr "Anfrage ergab unerwartete Ergebnismenge"
 
-#: libpq_fetch.c:137
+#: libpq_fetch.c:136
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "Fehler beim Ausführen einer Anfrage (%s) im Quellserver: %s"
 
-#: libpq_fetch.c:157
+#: libpq_fetch.c:156
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location"
 msgstr "unbekanntes Ergebnis »%s« für aktuelle WAL-Einfügeposition"
 
-#: libpq_fetch.c:207
+#: libpq_fetch.c:206
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "konnte Dateiliste nicht holen: %s"
 
-#: libpq_fetch.c:212
+#: libpq_fetch.c:211
 #, c-format
 msgid "unexpected result set while fetching file list"
 msgstr "unerwartete Ergebnismenge beim Holen der Dateiliste"
 
-#: libpq_fetch.c:265
+#: libpq_fetch.c:264
 #, c-format
 msgid "could not send query: %s"
 msgstr "konnte Anfrage nicht senden: %s"
 
-#: libpq_fetch.c:270
+#: libpq_fetch.c:269
 #, c-format
 msgid "could not set libpq connection to single row mode"
 msgstr "konnte libpq-Verbindung nicht in den Einzelzeilenmodus setzen"
 
-#: libpq_fetch.c:290
+#: libpq_fetch.c:289
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "unerwartetes Ergebnis beim Holen von fernen Dateien: %s"
 
-#: libpq_fetch.c:296
+#: libpq_fetch.c:295
 #, c-format
 msgid "unexpected result set size while fetching remote files"
 msgstr "unerwartete Ergebnismengengröße beim Holen von fernen Dateien"
 
-#: libpq_fetch.c:302
+#: libpq_fetch.c:301
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u"
 msgstr "unerwartete Datentypen in Ergebnismenge beim Holen von fernen Dateien: %u %u %u"
 
-#: libpq_fetch.c:310
+#: libpq_fetch.c:309
 #, c-format
 msgid "unexpected result format while fetching remote files"
 msgstr "unerwartetes Ergebnisformat beim Holen von fernen Dateien"
 
-#: libpq_fetch.c:316
+#: libpq_fetch.c:315
 #, c-format
 msgid "unexpected null values in result while fetching remote files"
 msgstr "unerwartete NULL-Werte im Ergebnis beim Holen von fernen Dateien"
 
-#: libpq_fetch.c:320
+#: libpq_fetch.c:319
 #, c-format
 msgid "unexpected result length while fetching remote files"
 msgstr "unerwartete Ergebnislänge beim Holen von fernen Dateien"
 
-#: libpq_fetch.c:381
+#: libpq_fetch.c:380
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "konnte ferne Datei »%s« nicht holen: %s"
 
-#: libpq_fetch.c:386
+#: libpq_fetch.c:385
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
 msgstr "unerwartete Ergebnismenge beim Holen der fernen Datei »%s«"
 
-#: libpq_fetch.c:430
+#: libpq_fetch.c:429
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "konnte COPY-Daten nicht senden: %s"
 
-#: libpq_fetch.c:459
+#: libpq_fetch.c:458
 #, c-format
 msgid "could not send file list: %s"
 msgstr "konnte Dateiliste nicht senden: %s"
 
-#: libpq_fetch.c:501
+#: libpq_fetch.c:500
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "konnte COPY-Ende nicht senden: %s"
 
-#: libpq_fetch.c:507
+#: libpq_fetch.c:506
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "unerwartetes Ergebnis beim Senden der Dateiliste: %s"

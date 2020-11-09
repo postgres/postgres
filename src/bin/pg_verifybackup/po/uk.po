@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-07-06 05:44+0000\n"
-"PO-Revision-Date: 2020-07-07 12:12\n"
+"POT-Creation-Date: 2020-09-21 21:14+0000\n"
+"PO-Revision-Date: 2020-09-22 13:43\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -147,16 +147,16 @@ msgid "expected version indicator"
 msgstr "індикатор очікуваної версії"
 
 #: parse_manifest.c:328
-msgid "unknown toplevel field"
-msgstr "невідоме поле верхнього рівня"
+msgid "unrecognized top-level field"
+msgstr "нерозпізнане поле верхнього рівня"
 
 #: parse_manifest.c:347
 msgid "unexpected file field"
 msgstr "неочікуване поле файлу"
 
 #: parse_manifest.c:361
-msgid "unexpected wal range field"
-msgstr "неочікуване поле діапазону wal"
+msgid "unexpected WAL range field"
+msgstr "неочікуване поле діапазону WAL"
 
 #: parse_manifest.c:367
 msgid "unexpected object field"
@@ -171,11 +171,11 @@ msgid "unexpected scalar"
 msgstr "неочікуваний скаляр"
 
 #: parse_manifest.c:472
-msgid "missing pathname"
+msgid "missing path name"
 msgstr "пропущено шлях"
 
 #: parse_manifest.c:475
-msgid "both pathname and encoded pathname"
+msgid "both path name and encoded path name"
 msgstr "і ім'я шляху, і закодований шлях"
 
 #: parse_manifest.c:477
@@ -187,7 +187,7 @@ msgid "checksum without algorithm"
 msgstr "контрольна сума без алгоритму"
 
 #: parse_manifest.c:494
-msgid "unable to decode filename"
+msgid "could not decode file name"
 msgstr "не вдалося декодувати ім'я файлу"
 
 #: parse_manifest.c:504
@@ -221,11 +221,11 @@ msgid "timeline is not an integer"
 msgstr "часова лінія не є цілим числом"
 
 #: parse_manifest.c:585
-msgid "unable to parse start LSN"
+msgid "could not parse start LSN"
 msgstr "не вдалося проаналізувати початковий LSN"
 
 #: parse_manifest.c:588
-msgid "unable to parse end LSN"
+msgid "could not parse end LSN"
 msgstr "не вдалося проаналізувати кінцевий LSN"
 
 #: parse_manifest.c:649
@@ -314,8 +314,8 @@ msgstr "не вдалося прочитати файл \"%s\": прочитан
 
 #: pg_verifybackup.c:474
 #, c-format
-msgid "duplicate pathname in backup manifest: \"%s\""
-msgstr "дубліеований шлях у маніфесті резервного копіювання: \"%s\""
+msgid "duplicate path name in backup manifest: \"%s\""
+msgstr "дубльований шлях у маніфесті резервного копіювання: \"%s\""
 
 #: pg_verifybackup.c:537 pg_verifybackup.c:544
 #, c-format
@@ -375,7 +375,7 @@ msgstr "невідповідність контрольної суми для ф
 #: pg_verifybackup.c:804
 #, c-format
 msgid "WAL parsing failed for timeline %u"
-msgstr "Не вдалося проаналізувати WAL для часової шкали %u"
+msgstr "не вдалося проаналізувати WAL для часової шкали %u"
 
 #: pg_verifybackup.c:890
 #, c-format

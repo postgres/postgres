@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-03 11:22+0300\n"
+"POT-Creation-Date: 2020-11-09 07:34+0300\n"
 "PO-Revision-Date: 2020-09-03 17:44+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -467,7 +467,7 @@ msgid "could not read from ready pipe: %m"
 msgstr "не удалось прочитать из готового канала: %m"
 
 #: pg_basebackup.c:477 pg_basebackup.c:608 pg_basebackup.c:2133
-#: streamutil.c:450
+#: streamutil.c:449
 #, c-format
 msgid "could not parse write-ahead log location \"%s\""
 msgstr "не удалось разобрать положение в журнале предзаписи \"%s\""
@@ -666,8 +666,8 @@ msgstr ""
 "точки"
 
 #: pg_basebackup.c:1908 pg_recvlogical.c:262 receivelog.c:481 receivelog.c:530
-#: receivelog.c:569 streamutil.c:297 streamutil.c:370 streamutil.c:422
-#: streamutil.c:533 streamutil.c:578
+#: receivelog.c:569 streamutil.c:296 streamutil.c:369 streamutil.c:421
+#: streamutil.c:532 streamutil.c:577
 #, c-format
 msgid "could not send replication command \"%s\": %s"
 msgstr "не удалось передать команду репликации \"%s\": %s"
@@ -763,7 +763,7 @@ msgstr "сбой при ожидании дочернего процесса: %m
 msgid "child %d died, expected %d"
 msgstr "завершился дочерний процесс %d вместо ожидаемого %d"
 
-#: pg_basebackup.c:2120 streamutil.c:92
+#: pg_basebackup.c:2120 streamutil.c:92 streamutil.c:202
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1428,7 +1428,7 @@ msgstr ""
 "несовместимая версия сервера %s; клиент не поддерживает репликацию с "
 "серверов версии выше %s"
 
-#: receivelog.c:488 streamutil.c:430 streamutil.c:467
+#: receivelog.c:488 streamutil.c:429 streamutil.c:466
 #, c-format
 msgid ""
 "could not identify system: got %d rows and %d fields, expected %d rows and "
@@ -1526,27 +1526,22 @@ msgstr "Пароль: "
 msgid "could not connect to server"
 msgstr "не удалось подключиться к серверу"
 
-#: streamutil.c:202
-#, c-format
-msgid "could not connect to server: %s"
-msgstr "не удалось подключиться к серверу: %s"
-
-#: streamutil.c:231
+#: streamutil.c:230
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "не удалось очистить search_path: %s"
 
-#: streamutil.c:247
+#: streamutil.c:246
 #, c-format
 msgid "could not determine server setting for integer_datetimes"
 msgstr "не удалось получить настройку сервера integer_datetimes"
 
-#: streamutil.c:254
+#: streamutil.c:253
 #, c-format
 msgid "integer_datetimes compile flag does not match server"
 msgstr "флаг компиляции integer_datetimes не соответствует настройке сервера"
 
-#: streamutil.c:305
+#: streamutil.c:304
 #, c-format
 msgid ""
 "could not fetch WAL segment size: got %d rows and %d fields, expected %d "
@@ -1555,12 +1550,12 @@ msgstr ""
 "не удалось извлечь размер сегмента WAL; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d (или более))"
 
-#: streamutil.c:315
+#: streamutil.c:314
 #, c-format
 msgid "WAL segment size could not be parsed"
 msgstr "разобрать размер сегмента WAL не удалось"
 
-#: streamutil.c:333
+#: streamutil.c:332
 #, c-format
 msgid ""
 "WAL segment size must be a power of two between 1 MB and 1 GB, but the "
@@ -1578,7 +1573,7 @@ msgstr[2] ""
 "размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до 1 "
 "ГБ, но удалённый сервер сообщил значение: %d"
 
-#: streamutil.c:378
+#: streamutil.c:377
 #, c-format
 msgid ""
 "could not fetch group access flag: got %d rows and %d fields, expected %d "
@@ -1587,12 +1582,12 @@ msgstr ""
 "не удалось извлечь флаг доступа группы; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d (или более))"
 
-#: streamutil.c:387
+#: streamutil.c:386
 #, c-format
 msgid "group access flag could not be parsed: %s"
 msgstr "не удалось разобрать флаг доступа группы: %s"
 
-#: streamutil.c:544
+#: streamutil.c:543
 #, c-format
 msgid ""
 "could not create replication slot \"%s\": got %d rows and %d fields, "
@@ -1601,7 +1596,7 @@ msgstr ""
 "создать слот репликации \"%s\" не удалось; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d)"
 
-#: streamutil.c:588
+#: streamutil.c:587
 #, c-format
 msgid ""
 "could not drop replication slot \"%s\": got %d rows and %d fields, expected "
@@ -1642,6 +1637,9 @@ msgstr "со сжатием закрытие файла с удалением н
 #: walmethods.c:952
 msgid "could not close compression stream"
 msgstr "не удалось закрыть поток сжатых данных"
+
+#~ msgid "could not connect to server: %s"
+#~ msgstr "не удалось подключиться к серверу: %s"
 
 #~ msgid ""
 #~ "\n"

@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-06-19 08:47+0000\n"
-"PO-Revision-Date: 2020-07-07 11:19\n"
-"Last-Translator: pasha_golub\n"
+"POT-Creation-Date: 2020-09-21 21:17+0000\n"
+"PO-Revision-Date: 2020-09-22 13:43\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -85,8 +85,8 @@ msgstr "не вдалося отримати код завершення під�
 
 #: ../../fe_utils/archive.c:53
 #, c-format
-msgid "could not use restore_command with %%r alias"
-msgstr "не вдалося використати restore_command з псевдонімом %%r"
+msgid "cannot use restore_command with %%r placeholder"
+msgstr "не вдалося використати restore_command із заповнювачем  %%r"
 
 #: ../../fe_utils/archive.c:74
 #, c-format
@@ -98,15 +98,15 @@ msgstr "неочікуваний розмір файлу для  \"%s\": %lu з�
 msgid "could not open file \"%s\" restored from archive: %m"
 msgstr "не вдалося відкрити файл \"%s\" відновлений з архіву: %m"
 
-#: ../../fe_utils/archive.c:97 copy_fetch.c:88 filemap.c:208 filemap.c:369
+#: ../../fe_utils/archive.c:97 copy_fetch.c:88 filemap.c:208
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
 
 #: ../../fe_utils/archive.c:112
 #, c-format
-msgid "restore_command failed due to the signal: %s"
-msgstr "не вдалося виконати restore_command через сигнал: %s"
+msgid "restore_command failed: %s"
+msgstr "помилка restore_command: %s"
 
 #: ../../fe_utils/archive.c:121
 #, c-format
@@ -281,12 +281,12 @@ msgstr "\"%s\" не є символічним посиланням"
 msgid "\"%s\" is not a regular file"
 msgstr "\"%s\" не є регулярним файлом"
 
-#: filemap.c:381
+#: filemap.c:369
 #, c-format
 msgid "source file list is empty"
 msgstr "список файлів в джерелі порожній"
 
-#: filemap.c:496
+#: filemap.c:484
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\""
 msgstr "неочікувана модифікація сторінки для каталогу або символічного посилання \"%s\""
@@ -346,72 +346,72 @@ msgstr "не вдалося отримати список файлів: %s"
 msgid "unexpected result set while fetching file list"
 msgstr "неочікуваний результат при отриманні списку файлів"
 
-#: libpq_fetch.c:260
+#: libpq_fetch.c:265
 #, c-format
 msgid "could not send query: %s"
 msgstr "не вдалося надіслати запит: %s"
 
-#: libpq_fetch.c:265
+#: libpq_fetch.c:270
 #, c-format
 msgid "could not set libpq connection to single row mode"
 msgstr "не вдалося встановити libpq з'єднання для однорядкового режиму"
 
-#: libpq_fetch.c:285
+#: libpq_fetch.c:290
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "неочікуваний результат при отриманні віддалених файлів: %s"
 
-#: libpq_fetch.c:291
+#: libpq_fetch.c:296
 #, c-format
 msgid "unexpected result set size while fetching remote files"
 msgstr "неочікуваний розмір набору результатів при отриманні віддалених файлів"
 
-#: libpq_fetch.c:297
+#: libpq_fetch.c:302
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u"
 msgstr "неочікувані типи даних в результаті при отриманні віддалених файлів: %u %u %u"
 
-#: libpq_fetch.c:305
+#: libpq_fetch.c:310
 #, c-format
 msgid "unexpected result format while fetching remote files"
 msgstr "неочікуваний формат результату при отриманні віддалених файлів"
 
-#: libpq_fetch.c:311
+#: libpq_fetch.c:316
 #, c-format
 msgid "unexpected null values in result while fetching remote files"
 msgstr "неочікувані нульові значення в результаті при отриманні віддалених файлів"
 
-#: libpq_fetch.c:315
+#: libpq_fetch.c:320
 #, c-format
 msgid "unexpected result length while fetching remote files"
 msgstr "неочікувана довжина результату при отриманні віддалених файлів"
 
-#: libpq_fetch.c:376
+#: libpq_fetch.c:381
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "не вдалося отримати віддалений файл \"%s\": %s"
 
-#: libpq_fetch.c:381
+#: libpq_fetch.c:386
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
 msgstr "неочікуваний набір результатів при отриманні віддаленого файлу \"%s\""
 
-#: libpq_fetch.c:425
+#: libpq_fetch.c:430
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "не вдалося надіслати дані COPY: %s"
 
-#: libpq_fetch.c:454
+#: libpq_fetch.c:459
 #, c-format
 msgid "could not send file list: %s"
 msgstr "не вдалося надіслати список файлів: %s"
 
-#: libpq_fetch.c:496
+#: libpq_fetch.c:501
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "не вдалося надіслати сповіщення про закінчення копіювання: %s"
 
-#: libpq_fetch.c:502
+#: libpq_fetch.c:507
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "неочікуваний результат при надсиланні списку файлів: %s"
@@ -626,77 +626,77 @@ msgstr "читання WAL у цілі"
 msgid "need to copy %lu MB (total source directory size is %lu MB)"
 msgstr "треба скопіювати %lu МБ (загальний розмір каталогу джерела становить %lu МБ)"
 
-#: pg_rewind.c:428
+#: pg_rewind.c:427
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "створення мітки резервного копіювання і оновлення контрольного файлу"
 
-#: pg_rewind.c:458
+#: pg_rewind.c:457
 #, c-format
 msgid "syncing target data directory"
 msgstr "синхронізація цільового каталогу даних"
 
-#: pg_rewind.c:465
+#: pg_rewind.c:464
 #, c-format
 msgid "Done!"
 msgstr "Готово!"
 
-#: pg_rewind.c:477
+#: pg_rewind.c:476
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "початковий і цільовий кластер належать до різних систем"
 
-#: pg_rewind.c:485
+#: pg_rewind.c:484
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "кластери не сумісні з даною версією pg_rewind"
 
-#: pg_rewind.c:495
+#: pg_rewind.c:494
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
 msgstr "цільовий сервер потребує використання контрольної суми даних або \"wal_log_hints = on\""
 
-#: pg_rewind.c:506
+#: pg_rewind.c:505
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "цільовий сервер повинен бути вимкненим штатно"
 
-#: pg_rewind.c:516
+#: pg_rewind.c:515
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "робота з початковим каталогом даних повинна бути завершена штатно"
 
-#: pg_rewind.c:565
+#: pg_rewind.c:567
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "скопійовано %*s/%s кБ (%d%%)"
 
-#: pg_rewind.c:626
+#: pg_rewind.c:630
 #, c-format
 msgid "invalid control file"
 msgstr "неприпустимий контрольний файл"
 
-#: pg_rewind.c:710
+#: pg_rewind.c:714
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "не вдалося знайти спільного предка ліній часу початкового та цільового кластерів"
 
-#: pg_rewind.c:751
+#: pg_rewind.c:755
 #, c-format
 msgid "backup label buffer too small"
 msgstr "буфер для мітки резервного копіювання замалий"
 
-#: pg_rewind.c:774
+#: pg_rewind.c:778
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "неочікуваний контрольний файл CRC"
 
-#: pg_rewind.c:784
+#: pg_rewind.c:788
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "неочікуваний розмір контрольного файлу %d, очікувалося %d"
 
-#: pg_rewind.c:793
+#: pg_rewind.c:797
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
@@ -705,7 +705,7 @@ msgstr[1] "Розмір сегменту WAL повинен задаватись
 msgstr[2] "Розмір сегменту WAL повинен задаватись ступенем 2 в інтервалі від 1 МБ до 1 ГБ, але в керуючому файлі вказано значення %d"
 msgstr[3] "Розмір сегменту WAL повинен задаватись ступенем 2 в інтервалі від 1 МБ до 1 ГБ, але в керуючому файлі вказано значення %d"
 
-#: pg_rewind.c:850 pg_rewind.c:908
+#: pg_rewind.c:854 pg_rewind.c:912
 #, c-format
 msgid "The program \"%s\" is needed by %s but was not found in the\n"
 "same directory as \"%s\".\n"
@@ -713,7 +713,7 @@ msgid "The program \"%s\" is needed by %s but was not found in the\n"
 msgstr "Програма \"%s\" потрібна для %s, але не знайдена в тому ж каталозі, що й \"%s\".\n"
 "Перевірте вашу установку."
 
-#: pg_rewind.c:855 pg_rewind.c:913
+#: pg_rewind.c:859 pg_rewind.c:917
 #, c-format
 msgid "The program \"%s\" was found by \"%s\"\n"
 "but was not the same version as %s.\n"
@@ -721,22 +721,22 @@ msgid "The program \"%s\" was found by \"%s\"\n"
 msgstr "Програма \"%s\" була знайдена \"%s\", але не була тієї ж версії, що %s.\n"
 "Перевірте вашу установку."
 
-#: pg_rewind.c:876
+#: pg_rewind.c:880
 #, c-format
 msgid "restore_command is not set in the target cluster"
 msgstr "команда restore_command не встановлена в цільовому кластері"
 
-#: pg_rewind.c:919
+#: pg_rewind.c:923
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "виконання \"%s\" для цільового серверу, щоб завершити відновлення після аварійного завершення роботи"
 
-#: pg_rewind.c:939
+#: pg_rewind.c:943
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "не вдалося ввімкнути однокористувацький режим postgres в цільовому кластері"
 
-#: pg_rewind.c:940
+#: pg_rewind.c:944
 #, c-format
 msgid "Command was: %s"
 msgstr "Команда була: %s"

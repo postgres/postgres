@@ -275,13 +275,6 @@ msgstr "fatal\n"
 
 #: check.c:887
 #, c-format
-#| msgid ""
-#| "Your installation contains the \"unknown\" data type in user tables.  This\n"
-#| "data type is no longer allowed in tables, so this cluster cannot currently\n"
-#| "be upgraded.  You can remove the problem tables and restart the upgrade.\n"
-#| "A list of the problem columns is in the file:\n"
-#| "    %s\n"
-#| "\n"
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
 "bigint data type.  Your old and new clusters pass bigint values\n"
@@ -330,13 +323,6 @@ msgstr "Verificando tipos de datos reg* en datos de usuario"
 
 #: check.c:1077
 #, c-format
-#| msgid ""
-#| "Your installation contains the \"unknown\" data type in user tables.  This\n"
-#| "data type is no longer allowed in tables, so this cluster cannot currently\n"
-#| "be upgraded.  You can remove the problem tables and restart the upgrade.\n"
-#| "A list of the problem columns is in the file:\n"
-#| "    %s\n"
-#| "\n"
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
 "These data types reference system OIDs that are not preserved by\n"
@@ -361,13 +347,6 @@ msgstr "Verificando datos de usuario en tipo «jsonb» incompatible"
 
 #: check.c:1168
 #, c-format
-#| msgid ""
-#| "Your installation contains the \"unknown\" data type in user tables.  This\n"
-#| "data type is no longer allowed in tables, so this cluster cannot currently\n"
-#| "be upgraded.  You can remove the problem tables and restart the upgrade.\n"
-#| "A list of the problem columns is in the file:\n"
-#| "    %s\n"
-#| "\n"
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
 "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
@@ -928,7 +907,6 @@ msgstr "no se pudo cargar la biblioteca «%s»: %s"
 
 #: function.c:253
 #, c-format
-#| msgid "Database: %s\n"
 msgid "In database: %s\n"
 msgstr "En la base de datos: %s\n"
 
@@ -1062,7 +1040,6 @@ msgstr "Pruebe «%s --help» para mayor información.\n"
 
 #: option.c:214
 #, c-format
-#| msgid "too many command-line arguments (first is \"%s\")"
 msgid "too many command-line arguments (first is \"%s\")\n"
 msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)\n"
 
@@ -1160,7 +1137,6 @@ msgstr "  -D, --new-datadir=DATADIR     directorio de datos del clúster nuevo\n
 
 #: option.c:298
 #, c-format
-#| msgid "  -j, --jobs=NUM               use this many parallel jobs to restore\n"
 msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
 msgstr "  -j, --jobs=NUM               máximo de procesos paralelos para restaurar\n"
 
@@ -1570,13 +1546,11 @@ msgstr ""
 
 #: server.c:167
 #, c-format
-#| msgid "could not open server file \"%s\": %m"
 msgid "could not open version file \"%s\": %m\n"
 msgstr "no se pudo abrir el archivo de versión «%s»: %m\n"
 
 #: server.c:171
 #, c-format
-#| msgid "could not parse contents of file \"%s\""
 msgid "could not parse version file \"%s\"\n"
 msgstr "no se pudo interpretar el archivo de versión «%s»\n"
 
@@ -1804,19 +1778,11 @@ msgstr ""
 
 #: version.c:418
 #, c-format
-#| msgid "Checking for invalid \"unknown\" user columns"
 msgid "Checking for invalid \"sql_identifier\" user columns"
 msgstr "Verificando columnas de usuario del tipo «sql_identifier»"
 
 #: version.c:426
 #, c-format
-#| msgid ""
-#| "Your installation contains the \"unknown\" data type in user tables.  This\n"
-#| "data type is no longer allowed in tables, so this cluster cannot currently\n"
-#| "be upgraded.  You can remove the problem tables and restart the upgrade.\n"
-#| "A list of the problem columns is in the file:\n"
-#| "    %s\n"
-#| "\n"
 msgid ""
 "Your installation contains the \"sql_identifier\" data type in user tables\n"
 "and/or indexes.  The on-disk format for this data type has changed, so this\n"

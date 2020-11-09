@@ -69,20 +69,17 @@ msgstr "no se pudo encontrar ningún archivo WAL"
 
 #: pg_waldump.c:318
 #, c-format
-#| msgid "could not fsync file \"%s\": %m"
 msgid "could not find file \"%s\": %m"
 msgstr "no se pudo encontrar el archivo «%s»: %m"
 
 #: pg_waldump.c:367
 #, c-format
-#| msgid "Could not read from file \"%s\" at offset %u: %m."
 msgid "could not read from file %s, offset %u: %m"
 msgstr "no se pudo leer desde el archivo «%s» en la posición %u: %m"
 
 # XXX why talk about "log segment" instead of "file"?
 #: pg_waldump.c:371
 #, c-format
-#| msgid "could not read from log segment %s, offset %u: read %d of %zu"
 msgid "could not read from file %s, offset %u: read %d of %zu"
 msgstr "no se pudo leer del archivo %s, posición %u: leídos %d de %zu"
 
@@ -147,7 +144,6 @@ msgstr ""
 
 #: pg_waldump.c:732
 #, c-format
-#| msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgid "  -q, --quiet            do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 no escribir ningún mensaje, excepto errores\n"
 

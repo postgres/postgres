@@ -766,7 +766,6 @@ msgstr "se especificaron demasiadas variables INTO"
 
 #: pl_gram.y:3752
 #, c-format
-#| msgid "end label \"%s\" specified for unlabelled block"
 msgid "end label \"%s\" specified for unlabeled block"
 msgstr "etiqueta de término «%s» especificada para un bloque sin etiqueta"
 

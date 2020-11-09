@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-06-19 08:46+0000\n"
-"PO-Revision-Date: 2020-07-07 11:20\n"
-"Last-Translator: pasha_golub\n"
+"POT-Creation-Date: 2020-09-21 21:16+0000\n"
+"PO-Revision-Date: 2020-09-22 13:43\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -934,8 +934,8 @@ msgstr "не можна використовувати параметр \"%s\" �
 
 #: vacuumdb.c:284
 #, c-format
-msgid "cannot use the \"%s\" option when performing full"
-msgstr "не можна використовувати параметр \"%s\" під час виконання FULL"
+msgid "cannot use the \"%s\" option when performing full vacuum"
+msgstr "не можна використовувати параметр \"%s\" під час виконання VACUUM FULL"
 
 #: vacuumdb.c:300
 #, c-format

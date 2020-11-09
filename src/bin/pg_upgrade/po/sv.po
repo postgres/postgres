@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-11 01:15+0000\n"
-"PO-Revision-Date: 2020-04-11 08:26+0200\n"
+"POT-Creation-Date: 2020-10-20 16:45+0000\n"
+"PO-Revision-Date: 2020-10-20 20:29+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: check.c:66
+#: check.c:67
 #, c-format
 msgid ""
 "Performing Consistency Checks on Old Live Server\n"
@@ -26,7 +26,7 @@ msgstr ""
 "Utför konsistenskontroller på gamla live-servern\n"
 "------------------------------------------------\n"
 
-#: check.c:72
+#: check.c:73
 #, c-format
 msgid ""
 "Performing Consistency Checks\n"
@@ -35,7 +35,7 @@ msgstr ""
 "Utför konsistenskontroller\n"
 "--------------------------\n"
 
-#: check.c:190
+#: check.c:193
 #, c-format
 msgid ""
 "\n"
@@ -44,7 +44,7 @@ msgstr ""
 "\n"
 "*Klustren är kompatibla*\n"
 
-#: check.c:196
+#: check.c:199
 #, c-format
 msgid ""
 "\n"
@@ -55,7 +55,7 @@ msgstr ""
 "Om pg_upgrade misslyckas efter denna punkt så måste du\n"
 "köra om initdb på nya klustret innan du fortsätter.\n"
 
-#: check.c:232
+#: check.c:233
 #, c-format
 msgid ""
 "Optimizer statistics are not transferred by pg_upgrade so,\n"
@@ -68,19 +68,7 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:237
-#, c-format
-msgid ""
-"Optimizer statistics and free space information are not transferred\n"
-"by pg_upgrade so, once you start the new server, consider running:\n"
-"    %s\n"
-"\n"
-msgstr ""
-"Optimeringsstatistik och information om ledigt utrymme överförs\n"
-"inte av pg_upgrade så när du startar nya servern så vill du nog köra:\n"
-"    %s\n"
-
-#: check.c:244
+#: check.c:239
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
@@ -89,7 +77,7 @@ msgstr ""
 "När detta skript körs så raderas gamla klustrets datafiler:\n"
 "    %s\n"
 
-#: check.c:249
+#: check.c:244
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
@@ -102,84 +90,94 @@ msgstr ""
 "ligger i gamla klusterkatalogen. Det gamla klustrets innehåll\n"
 "måste raderas för hand.\n"
 
-#: check.c:259
+#: check.c:254
 #, c-format
 msgid "Checking cluster versions"
 msgstr "Kontrollerar klustrets versioner"
 
-#: check.c:271
+#: check.c:266
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version 8.4 and later.\n"
 msgstr "Detta verktyg kan bara uppgradera från PostgreSQL version 8.4 eller nyare.\n"
 
-#: check.c:275
+#: check.c:270
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s.\n"
 msgstr "Detta verktyg kan bara uppgradera till PostgreSQL version %s.\n"
 
-#: check.c:284
+#: check.c:279
 #, c-format
 msgid "This utility cannot be used to downgrade to older major PostgreSQL versions.\n"
 msgstr "Detta verktyg kan inte användas för att nergradera till äldre major-versioner av PostgreSQL.\n"
 
-#: check.c:289
+#: check.c:284
 #, c-format
 msgid "Old cluster data and binary directories are from different major versions.\n"
 msgstr "Gammal klusterdata och binära kataloger är från olika major-versioner.\n"
 
-#: check.c:292
+#: check.c:287
 #, c-format
 msgid "New cluster data and binary directories are from different major versions.\n"
 msgstr "Nya klusterdata och binära kataloger är från olika major-versioner.\n"
 
-#: check.c:309
+#: check.c:304
 #, c-format
 msgid "When checking a pre-PG 9.1 live old server, you must specify the old server's port number.\n"
 msgstr "Vid kontroll av en gammal live-server före PG 9.1 så måste den gamla serverns portnummer anges.\n"
 
-#: check.c:313
+#: check.c:308
 #, c-format
 msgid "When checking a live server, the old and new port numbers must be different.\n"
 msgstr "Vid kontroll av en live-server så måste gamla och nya portnumren vara olika.\n"
 
-#: check.c:328
+#: check.c:323
 #, c-format
 msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "kodning för databasen \"%s\" matchar inte:  gammal \"%s\", ny \"%s\"\n"
 
-#: check.c:333
+#: check.c:328
 #, c-format
 msgid "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "lc_collate-värden för databasen \"%s\" matchar inte:  gammal \"%s\", ny \"%s\"\n"
 
-#: check.c:336
+#: check.c:331
 #, c-format
 msgid "lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "lc_ctype-värden för databasen \"%s\" matchar inte:  gammal \"%s\", ny \"%s\"\n"
 
-#: check.c:409
+#: check.c:404
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\"\n"
 msgstr "Nya databasklustret \"%s\" är inte tomt: hittade relation \"%s.%s\"\n"
 
-#: check.c:458
+#: check.c:453
 #, c-format
 msgid "Creating script to analyze new cluster"
 msgstr "Skapar skript för att analysera nya klustret"
 
-#: check.c:472 check.c:600 check.c:864 check.c:943 check.c:1053 check.c:1144
+#: check.c:467 check.c:626 check.c:890 check.c:969 check.c:1079 check.c:1170
 #: file.c:336 function.c:240 option.c:497 version.c:54 version.c:199
 #: version.c:341
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "kan inte öppna fil \"%s\": %s\n"
 
-#: check.c:527 check.c:656
+#: check.c:515 check.c:682
 #, c-format
 msgid "could not add execute permission to file \"%s\": %s\n"
 msgstr "kan inte sätta rättigheten \"körbar\" på filen \"%s\": %s\n"
 
-#: check.c:563
+#: check.c:545
+#, c-format
+msgid "Checking for new cluster tablespace directories"
+msgstr "Letar efter nya tablespace-kataloger i klustret"
+
+#: check.c:556
+#, c-format
+msgid "new cluster tablespace directory already exists: \"%s\"\n"
+msgstr "i klustret finns redan ny tablespace-katalog: \"%s\"\n"
+
+#: check.c:589
 #, c-format
 msgid ""
 "\n"
@@ -188,7 +186,7 @@ msgstr ""
 "\n"
 "VARNING:  nya datakatalogen skall inte ligga inuti den gamla datakatalogen, dvs. %s\n"
 
-#: check.c:587
+#: check.c:613
 #, c-format
 msgid ""
 "\n"
@@ -197,73 +195,73 @@ msgstr ""
 "\n"
 "VARNING:  användardefinierade tabellutrymmens position skall inte vara i datakatalogen, dvs. %s\n"
 
-#: check.c:597
+#: check.c:623
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "Skapar skript för att radera gamla klustret"
 
-#: check.c:676
+#: check.c:702
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "Kontrollerar att databasanvändaren är installationsanvändaren"
 
-#: check.c:692
+#: check.c:718
 #, c-format
 msgid "database user \"%s\" is not the install user\n"
 msgstr "databasanvändare \"%s\" är inte installationsanvändaren\n"
 
-#: check.c:703
+#: check.c:729
 #, c-format
 msgid "could not determine the number of users\n"
 msgstr "kunde inte bestämma antalet användare\n"
 
-#: check.c:711
+#: check.c:737
 #, c-format
 msgid "Only the install user can be defined in the new cluster.\n"
 msgstr "Bara installationsanvändaren får finnas i nya klustret.\n"
 
-#: check.c:731
+#: check.c:757
 #, c-format
 msgid "Checking database connection settings"
 msgstr "Kontrollerar databasens anslutningsinställningar"
 
-#: check.c:753
+#: check.c:779
 #, c-format
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false\n"
 msgstr "template0 får inte tillåta anslutningar, dvs dess pg_database.datallowconn måste vara false\n"
 
-#: check.c:763
+#: check.c:789
 #, c-format
 msgid "All non-template0 databases must allow connections, i.e. their pg_database.datallowconn must be true\n"
 msgstr "Alla icke-template0-databaser måste tillåta anslutningar, dvs. deras pg_database.datallowconn måste vara true\n"
 
-#: check.c:788
+#: check.c:814
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "Letar efter förberedda transaktioner"
 
-#: check.c:797
+#: check.c:823
 #, c-format
 msgid "The source cluster contains prepared transactions\n"
 msgstr "Källklustret innehåller förberedda transaktioner\n"
 
-#: check.c:799
+#: check.c:825
 #, c-format
 msgid "The target cluster contains prepared transactions\n"
 msgstr "Målklustret innehåller förberedda transaktioner\n"
 
-#: check.c:825
+#: check.c:851
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Letar efter contrib/isn med bigint-anropsfel"
 
-#: check.c:886 check.c:965 check.c:1076 check.c:1167 function.c:262
+#: check.c:912 check.c:991 check.c:1102 check.c:1193 function.c:262
 #: version.c:245 version.c:282 version.c:425
 #, c-format
 msgid "fatal\n"
 msgstr "fatalt\n"
 
-#: check.c:887
+#: check.c:913
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -284,12 +282,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:911
+#: check.c:937
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "Letar efter tabeller med WITH OIDS"
 
-#: check.c:966
+#: check.c:992
 #, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not\n"
@@ -307,12 +305,12 @@ msgstr ""
 "\n"
 
 # FIXME: is this msgid correct?
-#: check.c:996
+#: check.c:1022
 #, c-format
 msgid "Checking for reg* data types in user tables"
 msgstr "Letar efter reg*-datatyper i användartabeller"
 
-#: check.c:1077
+#: check.c:1103
 #, c-format
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
@@ -332,12 +330,12 @@ msgstr ""
 "\n"
 
 # FIXME: is this msgid correct?
-#: check.c:1102
+#: check.c:1128
 #, c-format
 msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "Letar efter inkompatibel \"jsonb\"-datatyp"
 
-#: check.c:1168
+#: check.c:1194
 #, c-format
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
@@ -355,32 +353,32 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1190
+#: check.c:1216
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Letar efter roller som startar med \"pg_\""
 
-#: check.c:1200
+#: check.c:1226
 #, c-format
 msgid "The source cluster contains roles starting with \"pg_\"\n"
 msgstr "Källklustret innehåller roller som startar med \"pg_\"\n"
 
-#: check.c:1202
+#: check.c:1228
 #, c-format
 msgid "The target cluster contains roles starting with \"pg_\"\n"
 msgstr "Målklustret innehåller roller som startar med \"pg_\"\n"
 
-#: check.c:1228
+#: check.c:1254
 #, c-format
 msgid "failed to get the current locale\n"
 msgstr "misslyckades med att hämta aktuell lokal\n"
 
-#: check.c:1237
+#: check.c:1263
 #, c-format
 msgid "failed to get system locale name for \"%s\"\n"
 msgstr "misslyckades med att hämta systemlokalnamn för \"%s\"\n"
 
-#: check.c:1243
+#: check.c:1269
 #, c-format
 msgid "failed to restore old locale \"%s\"\n"
 msgstr "misslyckades med att återställa gamla lokalen \"%s\"\n"
@@ -413,7 +411,7 @@ msgstr "Källklustret har inte stängts ner på ett korrekt sätt.\n"
 #: controldata.c:165
 #, c-format
 msgid "The target cluster was not shut down cleanly.\n"
-msgstr "Målklustret har inte stängts ner på ett korrekt sätt\n"
+msgstr "Målklustret har inte stängts ner på ett korrekt sätt.\n"
 
 #: controldata.c:176
 #, c-format
@@ -426,7 +424,7 @@ msgid "The target cluster lacks cluster state information:\n"
 msgstr "Målklustret saknar information om kluster-state:\n"
 
 #: controldata.c:208 dump.c:49 pg_upgrade.c:339 pg_upgrade.c:375
-#: relfilenode.c:247 util.c:79
+#: relfilenode.c:243 util.c:79
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1480,27 +1478,27 @@ msgstr "Länkar användares relationsfiler\n"
 msgid "old database \"%s\" not found in the new cluster\n"
 msgstr "gamla databasen \"%s\" kan inte hittas i nya klustret\n"
 
-#: relfilenode.c:234
+#: relfilenode.c:230
 #, c-format
 msgid "error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
 msgstr "fel vid kontroll av filexistens \"%s.%s\" (\"%s\" till \"%s\"): %s\n"
 
-#: relfilenode.c:252
+#: relfilenode.c:248
 #, c-format
 msgid "rewriting \"%s\" to \"%s\"\n"
 msgstr "skriver om \"%s\" till \"%s\"\n"
 
-#: relfilenode.c:260
+#: relfilenode.c:256
 #, c-format
 msgid "cloning \"%s\" to \"%s\"\n"
 msgstr "klonar \"%s\" till \"%s\"\n"
 
-#: relfilenode.c:265
+#: relfilenode.c:261
 #, c-format
 msgid "copying \"%s\" to \"%s\"\n"
 msgstr "kopierar \"%s\" till \"%s\"\n"
 
-#: relfilenode.c:270
+#: relfilenode.c:266
 #, c-format
 msgid "linking \"%s\" to \"%s\"\n"
 msgstr "länkar \"%s\" till \"%s\"\n"
@@ -1541,7 +1539,7 @@ msgstr "kunde inte öppna versionsfil \"%s\": %m\n"
 msgid "could not parse version file \"%s\"\n"
 msgstr "kunde inte tolka versionsfil \"%s\"\n"
 
-#: server.c:294
+#: server.c:297
 #, c-format
 msgid ""
 "\n"
@@ -1550,7 +1548,7 @@ msgstr ""
 "\n"
 "anslutning till databas misslyckades: %s"
 
-#: server.c:299
+#: server.c:302
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -1559,7 +1557,7 @@ msgstr ""
 "kunde inte ansluta till käll-postmaster som startats med kommandot:\n"
 "%s\n"
 
-#: server.c:303
+#: server.c:306
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -1568,22 +1566,22 @@ msgstr ""
 "kunde inte ansluta till mål-postmaster som startats med kommandot:\n"
 "%s\n"
 
-#: server.c:317
+#: server.c:320
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed\n"
 msgstr "pg_ctl misslyckades att start källservern eller så misslyckades anslutningen\n"
 
-#: server.c:319
+#: server.c:322
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed\n"
 msgstr "pg_ctl misslyckades att start målservern eller så misslyckades anslutningen\n"
 
-#: server.c:364
+#: server.c:367
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: server.c:377
+#: server.c:380
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s\n"
 msgstr "libpq:s omgivningsvariabel %s har ett icke-lokalt servervärde: %s\n"
@@ -1789,3 +1787,13 @@ msgstr ""
 "i filen:\n"
 "    %s\n"
 "\n"
+
+#~ msgid ""
+#~ "Optimizer statistics and free space information are not transferred\n"
+#~ "by pg_upgrade so, once you start the new server, consider running:\n"
+#~ "    %s\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Optimeringsstatistik och information om ledigt utrymme överförs\n"
+#~ "inte av pg_upgrade så när du startar nya servern så vill du nog köra:\n"
+#~ "    %s\n"

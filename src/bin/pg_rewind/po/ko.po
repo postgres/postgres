@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
+"Project-Id-Version: pg_rewind (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-02-09 20:16+0000\n"
-"PO-Revision-Date: 2019-10-31 17:52+0900\n"
+"PO-Revision-Date: 2020-10-27 14:47+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-27 08:13+0000\n"
-"PO-Revision-Date: 2019-09-28 11:28+0200\n"
+"POT-Creation-Date: 2020-10-31 16:14+0000\n"
+"PO-Revision-Date: 2020-10-31 21:30+0100\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -16,52 +16,51 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.4.1\n"
 
-#: ../../common/config_info.c:130 ../../common/config_info.c:138
-#: ../../common/config_info.c:146 ../../common/config_info.c:154
-#: ../../common/config_info.c:162 ../../common/config_info.c:170
-#: ../../common/config_info.c:178 ../../common/config_info.c:186
-#: ../../common/config_info.c:194
+#: ../../common/config_info.c:134 ../../common/config_info.c:142
+#: ../../common/config_info.c:150 ../../common/config_info.c:158
+#: ../../common/config_info.c:166 ../../common/config_info.c:174
+#: ../../common/config_info.c:182 ../../common/config_info.c:190
 msgid "not recorded"
 msgstr "nezaznamenáno"
 
-#: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
+#: ../../common/exec.c:137 ../../common/exec.c:254 ../../common/exec.c:300
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "nelze získat aktuální adresář: %m"
 
-#: ../../common/exec.c:157
+#: ../../common/exec.c:156
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "neplatný binární soubor\"%s\""
 
-#: ../../common/exec.c:207
+#: ../../common/exec.c:206
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "nelze číst binární soubor \"%s\""
 
-#: ../../common/exec.c:215
+#: ../../common/exec.c:214
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "nelze najít soubor \"%s\" ke spuštění"
 
-#: ../../common/exec.c:271 ../../common/exec.c:310
+#: ../../common/exec.c:270 ../../common/exec.c:309
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "nelze změnit adresář na \"%s\" : %m"
 
-#: ../../common/exec.c:288
+#: ../../common/exec.c:287
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "nelze přečíst symbolický odkaz \"%s\": %m"
 
-#: ../../common/exec.c:541
+#: ../../common/exec.c:410
 #, c-format
 msgid "pclose failed: %m"
 msgstr "volání pclose selhalo: %m"
 
-#: ../../common/exec.c:670 ../../common/exec.c:715 ../../common/exec.c:807
+#: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
 msgid "out of memory"
 msgstr "nedostatek paměti"
 
@@ -236,38 +235,46 @@ msgstr ""
 
 #: pg_config.c:105
 #, c-format
-msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-msgstr "Oznámení o chybách zasílejte na <pgsql-bugs@postgresql.org>.\n"
+msgid "Report bugs to <%s>.\n"
+msgstr "Chyby hlašte na <%s>.\n"
 
-#: pg_config.c:111
+#: pg_config.c:106
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s domácí stránka: <%s>\n"
+
+#: pg_config.c:112
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Zkuste \"%s --help\" pro více informací.\n"
 
-#: pg_config.c:153
+#: pg_config.c:154
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: nelze najít vlastní spustitelný soubor\n"
 
-#: pg_config.c:180
+#: pg_config.c:181
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: neplatný parametr: %s\n"
 
-#~ msgid "child process exited with unrecognized status %d"
-#~ msgstr "potomek skončil s nerozponaným stavem %d"
-
-#~ msgid "child process was terminated by signal %d"
-#~ msgstr "potomek byl ukončen signálem %d"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "potomek byl ukončen signálem %s"
-
-#~ msgid "child process was terminated by exception 0x%X"
-#~ msgstr "potomek byl ukončen vyjímkou 0x%X"
+#~ msgid "could not read symbolic link \"%s\""
+#~ msgstr "nelze číst symbolický link \"%s\""
 
 #~ msgid "child process exited with exit code %d"
 #~ msgstr "potomek skončil s návratovým kódem %d"
 
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "nelze číst symbolický link \"%s\""
+#~ msgid "child process was terminated by exception 0x%X"
+#~ msgstr "potomek byl ukončen vyjímkou 0x%X"
+
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "potomek byl ukončen signálem %s"
+
+#~ msgid "child process was terminated by signal %d"
+#~ msgstr "potomek byl ukončen signálem %d"
+
+#~ msgid "child process exited with unrecognized status %d"
+#~ msgstr "potomek skončil s nerozponaným stavem %d"
+
+#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgstr "Oznámení o chybách zasílejte na <pgsql-bugs@postgresql.org>.\n"

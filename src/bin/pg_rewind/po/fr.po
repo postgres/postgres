@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-17 00:47+0000\n"
+"POT-Creation-Date: 2020-11-08 08:46+0000\n"
 "PO-Revision-Date: 2020-09-17 08:30+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: \n"
@@ -294,125 +294,125 @@ msgstr "modification inattendue de page pour le répertoire ou le lien symboliqu
 
 #: libpq_fetch.c:50
 #, c-format
-msgid "could not connect to server: %s"
-msgstr "n'a pas pu se connecter au serveur : %s"
+msgid "%s"
+msgstr "%s"
 
-#: libpq_fetch.c:54
+#: libpq_fetch.c:53
 #, c-format
 msgid "connected to server"
 msgstr "connecté au serveur"
 
-#: libpq_fetch.c:63
+#: libpq_fetch.c:62
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "n'a pas pu effacer search_path : %s"
 
-#: libpq_fetch.c:75
+#: libpq_fetch.c:74
 #, c-format
 msgid "source server must not be in recovery mode"
 msgstr "le serveur source ne doit pas être en mode restauration"
 
-#: libpq_fetch.c:85
+#: libpq_fetch.c:84
 #, c-format
 msgid "full_page_writes must be enabled in the source server"
 msgstr "full_page_writes doit être activé sur le serveur source"
 
-#: libpq_fetch.c:111
+#: libpq_fetch.c:110
 #, c-format
 msgid "error running query (%s) on source server: %s"
 msgstr "erreur lors de l'exécution de la requête (%s) sur le serveur source : %s"
 
-#: libpq_fetch.c:116
+#: libpq_fetch.c:115
 #, c-format
 msgid "unexpected result set from query"
 msgstr "ensemble de résultats inattendu provenant de la requête"
 
-#: libpq_fetch.c:137
+#: libpq_fetch.c:136
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "erreur lors de l'exécution de la requête (%s) dans le serveur source : %s"
 
-#: libpq_fetch.c:157
+#: libpq_fetch.c:156
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location"
 msgstr "résultat non reconnu « %s » pour l'emplacement d'insertion actuel dans les WAL"
 
-#: libpq_fetch.c:207
+#: libpq_fetch.c:206
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "n'a pas pu récupérer la liste des fichiers : %s"
 
-#: libpq_fetch.c:212
+#: libpq_fetch.c:211
 #, c-format
 msgid "unexpected result set while fetching file list"
 msgstr "ensemble de résultats inattendu lors de la récupération de la liste des fichiers"
 
-#: libpq_fetch.c:265
+#: libpq_fetch.c:264
 #, c-format
 msgid "could not send query: %s"
 msgstr "n'a pas pu envoyer la requête : %s"
 
-#: libpq_fetch.c:270
+#: libpq_fetch.c:269
 #, c-format
 msgid "could not set libpq connection to single row mode"
 msgstr "n'a pas pu configurer la connexion libpq en mode ligne seule"
 
-#: libpq_fetch.c:290
+#: libpq_fetch.c:289
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "résultat inattendu lors de la récupération des fichiers cibles : %s"
 
-#: libpq_fetch.c:296
+#: libpq_fetch.c:295
 #, c-format
 msgid "unexpected result set size while fetching remote files"
 msgstr "taille inattendue de l'ensemble de résultats lors de la récupération des fichiers distants"
 
-#: libpq_fetch.c:302
+#: libpq_fetch.c:301
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u"
 msgstr "types de données inattendus dans l'ensemble de résultats lors de la récupération des fichiers distants : %u %u %u"
 
-#: libpq_fetch.c:310
+#: libpq_fetch.c:309
 #, c-format
 msgid "unexpected result format while fetching remote files"
 msgstr "format de résultat inattendu lors de la récupération des fichiers distants"
 
-#: libpq_fetch.c:316
+#: libpq_fetch.c:315
 #, c-format
 msgid "unexpected null values in result while fetching remote files"
 msgstr "valeurs NULL inattendues dans le résultat lors de la récupération des fichiers distants"
 
-#: libpq_fetch.c:320
+#: libpq_fetch.c:319
 #, c-format
 msgid "unexpected result length while fetching remote files"
 msgstr "longueur de résultats inattendu lors de la récupération des fichiers distants"
 
-#: libpq_fetch.c:381
+#: libpq_fetch.c:380
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "n'a pas pu récupérer le fichier distant « %s » : %s"
 
-#: libpq_fetch.c:386
+#: libpq_fetch.c:385
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
 msgstr "ensemble de résultats inattendu lors de la récupération du fichier distant « %s »"
 
-#: libpq_fetch.c:430
+#: libpq_fetch.c:429
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "n'a pas pu envoyer les données COPY : %s"
 
-#: libpq_fetch.c:459
+#: libpq_fetch.c:458
 #, c-format
 msgid "could not send file list: %s"
 msgstr "n'a pas pu envoyer la liste de fichiers : %s"
 
-#: libpq_fetch.c:501
+#: libpq_fetch.c:500
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "n'a pas pu envoyer end-of-COPY : %s"
 
-#: libpq_fetch.c:507
+#: libpq_fetch.c:506
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "résultat inattendu lors de l'envoi de la liste de fichiers : %s"
@@ -936,22 +936,190 @@ msgstr "enregistrement de longueur invalide à %X/%X"
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "image compressée invalide à %X/%X, bloc %d"
 
-#~ msgid ""
-#~ "The program \"postgres\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "Le programme « postgres » est nécessaire à %s mais n'a pas été trouvé dans\n"
-#~ "le même répertoire que « %s ».\n"
-#~ "Vérifiez votre installation."
+#~ msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+#~ msgstr "%s : ATTENTION : ne peut pas créer les jetons restreints sur cette plateforme\n"
+
+#~ msgid "%s: could not open process token: error code %lu\n"
+#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : code d'erreur %lu\n"
+
+#~ msgid "%s: could not allocate SIDs: error code %lu\n"
+#~ msgstr "%s : n'a pas pu allouer les SID : code d'erreur %lu\n"
+
+#~ msgid "%s: could not create restricted token: error code %lu\n"
+#~ msgstr "%s : n'a pas pu créer le jeton restreint : code d'erreur %lu\n"
+
+#~ msgid "%s: could not start process for command \"%s\": error code %lu\n"
+#~ msgstr "%s : n'a pas pu démarrer le processus pour la commande « %s » : code d'erreur %lu\n"
+
+#~ msgid "%s: could not re-execute with restricted token: error code %lu\n"
+#~ msgstr "%s : n'a pas pu ré-exécuter le jeton restreint : code d'erreur %lu\n"
+
+#~ msgid "%s: could not get exit code from subprocess: error code %lu\n"
+#~ msgstr "%s : n'a pas pu récupérer le code de statut du sous-processus : code d'erreur %lu\n"
+
+#~ msgid "could not open directory \"%s\": %s\n"
+#~ msgstr "n'a pas pu ouvrir le répertoire « %s » : %s\n"
+
+#~ msgid "could not stat file \"%s\": %s\n"
+#~ msgstr "n'a pas pu tester le fichier « %s » : %s\n"
+
+#~ msgid "could not read symbolic link \"%s\": %s\n"
+#~ msgstr "n'a pas pu lire le lien symbolique « %s » : %s\n"
+
+#~ msgid "symbolic link \"%s\" target is too long\n"
+#~ msgstr "la cible du lien symbolique « %s » est trop long\n"
+
+#~ msgid "could not read directory \"%s\": %s\n"
+#~ msgstr "n'a pas pu lire le répertoire « %s » : %s\n"
+
+#~ msgid "could not close directory \"%s\": %s\n"
+#~ msgstr "n'a pas pu fermer le répertoire « %s » : %s\n"
+
+#~ msgid "could not read file \"%s\": %s\n"
+#~ msgstr "n'a pas pu lire le fichier « %s » : %s\n"
+
+#~ msgid "could not close file \"%s\": %s\n"
+#~ msgstr "n'a pas pu fermer le fichier « %s » : %s\n"
+
+#~ msgid "  block %u\n"
+#~ msgstr " bloc %u\n"
+
+#~ msgid "could not write file \"%s\": %s\n"
+#~ msgstr "n'a pas pu écrire le fichier « %s » : %s\n"
+
+#~ msgid "could not remove file \"%s\": %s\n"
+#~ msgstr "n'a pas pu supprimer le fichier « %s » : %s\n"
+
+#~ msgid "could not truncate file \"%s\" to %u: %s\n"
+#~ msgstr "n'a pas pu tronquer le fichier « %s » à %u : %s\n"
+
+#~ msgid "could not create directory \"%s\": %s\n"
+#~ msgstr "n'a pas pu créer le répertoire « %s » : %s\n"
+
+#~ msgid "could not remove directory \"%s\": %s\n"
+#~ msgstr "n'a pas pu supprimer le répertoire « %s » : %s\n"
+
+#~ msgid "could not remove symbolic link \"%s\": %s\n"
+#~ msgstr "n'a pas pu supprimer le lien symbolique « %s » : %s\n"
+
+#~ msgid "could not open file \"%s\" for reading: %s\n"
+#~ msgstr "n'a pas pu ouvrir le fichier « %s » pour une lecture : %s\n"
+
+#~ msgid "entry \"%s\" excluded from source file list\n"
+#~ msgstr "enregistrement « %s » exclus de la liste des fichiers sources\n"
+
+#~ msgid "entry \"%s\" excluded from target file list\n"
+#~ msgstr "enregistrement « %s » exclus de la liste des fichiers cibles\n"
+
+#~ msgid "%s (%s)\n"
+#~ msgstr "%s (%s)\n"
+
+#~ msgid "could not set up connection context: %s"
+#~ msgstr "n'a pas pu initialiser le contexte de connexion : « %s »"
+
+#~ msgid "getting file chunks\n"
+#~ msgstr "récupération des parties de fichier\n"
+
+#~ msgid "received null value for chunk for file \"%s\", file has been deleted\n"
+#~ msgstr "a reçu une valeur NULL pour une partie du fichier « %s », le fichier a été supprimé\n"
+
+#~ msgid "received chunk for file \"%s\", offset %s, size %d\n"
+#~ msgstr "a reçu une partie du fichier « %s », décalage %s, taille %d\n"
+
+#~ msgid "fetched file \"%s\", length %d\n"
+#~ msgstr "fichier récupéré « %s », longueur %d\n"
+
+#~ msgid "could not create temporary table: %s"
+#~ msgstr "n'a pas pu créer la table temporaire : %s"
+
+#~ msgid "Failure, exiting\n"
+#~ msgstr "Échec, sortie\n"
+
+#~ msgid "could not open file \"%s\": %s\n"
+#~ msgstr "n'a pas pu ouvrir le fichier « %s » : %s\n"
+
+#~ msgid "could not seek in file \"%s\": %s\n"
+#~ msgstr "n'a pas pu chercher dans le fichier « %s » : %s\n"
+
+#~ msgid "could not read from file \"%s\": %s\n"
+#~ msgstr "n'a pas pu lire le fichier « %s » : %s\n"
+
+#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
+#~ msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
+
+#~ msgid "%s: could not read permissions of directory \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu lire les droits sur le répertoire « %s » : %s\n"
+
+#~ msgid "Source timeline history:\n"
+#~ msgstr "Historique de la ligne de temps source :\n"
+
+#~ msgid "Target timeline history:\n"
+#~ msgstr "Historique de la ligne de temps cible :\n"
+
+#~ msgid "%d: %X/%X - %X/%X\n"
+#~ msgstr "%d : %X/%X - %X/%X\n"
+
+#~ msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte\n"
+#~ msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes\n"
+#~ msgstr[0] "La taille du segment WAL doit être une puissance de deux comprise entre 1 Mo et 1 Go, mais le fichier de contrôle indique %d octet\n"
+#~ msgstr[1] "La taille du segment WAL doit être une puissance de deux comprise entre 1 Mo et 1 Go, mais le fichier de contrôle indique %d octets\n"
 
 #~ msgid ""
-#~ "The program \"postgres\" was found by \"%s\"\n"
+#~ "The program \"initdb\" is needed by %s but was\n"
+#~ "not found in the same directory as \"%s\".\n"
+#~ "Check your installation.\n"
+#~ msgstr ""
+#~ "Le programme « initdb » est nécessaire pour %s, mais n'a pas été trouvé\n"
+#~ "dans le même répertoire que « %s ».\n"
+#~ "Vérifiez votre installation.\n"
+
+#~ msgid ""
+#~ "The program \"initdb\" was found by \"%s\"\n"
 #~ "but was not the same version as %s.\n"
+#~ "Check your installation.\n"
+#~ msgstr ""
+#~ "Le programme « initdb » a été trouvé par « %s », mais n'est pas de la même version\n"
+#~ "que %s.\n"
+#~ "Vérifiez votre installation.\n"
+
+#~ msgid "sync of target directory failed\n"
+#~ msgstr "échec de la synchronisation du répertoire cible\n"
+
+#~ msgid "syntax error in history file: %s\n"
+#~ msgstr "erreur de syntaxe dans le fichier historique : %s\n"
+
+#~ msgid "Expected a numeric timeline ID.\n"
+#~ msgstr "Attendait un identifiant numérique de ligne de temps.\n"
+
+#~ msgid "Expected a write-ahead log switchpoint location.\n"
+#~ msgstr "Attendait un emplacement de bascule de journal de transactions.\n"
+
+#~ msgid "invalid data in history file: %s\n"
+#~ msgstr "données invalides dans le fichier historique : %s\n"
+
+#~ msgid "Timeline IDs must be in increasing sequence.\n"
+#~ msgstr "Les identifiants de ligne de temps doivent être dans une séquence croissante.\n"
+
+#~ msgid "Timeline IDs must be less than child timeline's ID.\n"
+#~ msgstr "Les identifiants de ligne de temps doivent être inférieurs à l'identifiant de la ligne de temps enfant.\n"
+
+#~ msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
+#~ msgstr "le fichier WAL provient d'un système différent : XLOG_SEG_SIZE invalide dans l'en-tête de page"
+
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
+
+#~ msgid ""
+#~ "The program \"%s\" was found by \"%s\" but was\n"
+#~ "not the same version as %s.\n"
 #~ "Check your installation."
 #~ msgstr ""
-#~ "Le programme « postgres » a été trouvé par « %s » mais n'est pas de la même\n"
-#~ "version que « %s ».\n"
+#~ "Le programme « %s » a été trouvé par « %s » mais n'était pas de la même version\n"
+#~ "que %s.\n"
 #~ "Vérifiez votre installation."
 
 #~ msgid ""
@@ -964,187 +1132,22 @@ msgstr "image compressée invalide à %X/%X, bloc %d"
 #~ "Vérifiez votre installation."
 
 #~ msgid ""
-#~ "The program \"%s\" was found by \"%s\" but was\n"
-#~ "not the same version as %s.\n"
+#~ "The program \"postgres\" was found by \"%s\"\n"
+#~ "but was not the same version as %s.\n"
 #~ "Check your installation."
 #~ msgstr ""
-#~ "Le programme « %s » a été trouvé par « %s » mais n'était pas de la même version\n"
-#~ "que %s.\n"
+#~ "Le programme « postgres » a été trouvé par « %s » mais n'est pas de la même\n"
+#~ "version que « %s ».\n"
 #~ "Vérifiez votre installation."
 
 #~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ "The program \"postgres\" is needed by %s but was not found in the\n"
+#~ "same directory as \"%s\".\n"
+#~ "Check your installation."
 #~ msgstr ""
-#~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
+#~ "Le programme « postgres » est nécessaire à %s mais n'a pas été trouvé dans\n"
+#~ "le même répertoire que « %s ».\n"
+#~ "Vérifiez votre installation."
 
-#~ msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
-#~ msgstr "le fichier WAL provient d'un système différent : XLOG_SEG_SIZE invalide dans l'en-tête de page"
-
-#~ msgid "Timeline IDs must be less than child timeline's ID.\n"
-#~ msgstr "Les identifiants de ligne de temps doivent être inférieurs à l'identifiant de la ligne de temps enfant.\n"
-
-#~ msgid "Timeline IDs must be in increasing sequence.\n"
-#~ msgstr "Les identifiants de ligne de temps doivent être dans une séquence croissante.\n"
-
-#~ msgid "invalid data in history file: %s\n"
-#~ msgstr "données invalides dans le fichier historique : %s\n"
-
-#~ msgid "Expected a write-ahead log switchpoint location.\n"
-#~ msgstr "Attendait un emplacement de bascule de journal de transactions.\n"
-
-#~ msgid "Expected a numeric timeline ID.\n"
-#~ msgstr "Attendait un identifiant numérique de ligne de temps.\n"
-
-#~ msgid "syntax error in history file: %s\n"
-#~ msgstr "erreur de syntaxe dans le fichier historique : %s\n"
-
-#~ msgid "sync of target directory failed\n"
-#~ msgstr "échec de la synchronisation du répertoire cible\n"
-
-#~ msgid ""
-#~ "The program \"initdb\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "Le programme « initdb » a été trouvé par « %s », mais n'est pas de la même version\n"
-#~ "que %s.\n"
-#~ "Vérifiez votre installation.\n"
-
-#~ msgid ""
-#~ "The program \"initdb\" is needed by %s but was\n"
-#~ "not found in the same directory as \"%s\".\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "Le programme « initdb » est nécessaire pour %s, mais n'a pas été trouvé\n"
-#~ "dans le même répertoire que « %s ».\n"
-#~ "Vérifiez votre installation.\n"
-
-#~ msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte\n"
-#~ msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes\n"
-#~ msgstr[0] "La taille du segment WAL doit être une puissance de deux comprise entre 1 Mo et 1 Go, mais le fichier de contrôle indique %d octet\n"
-#~ msgstr[1] "La taille du segment WAL doit être une puissance de deux comprise entre 1 Mo et 1 Go, mais le fichier de contrôle indique %d octets\n"
-
-#~ msgid "%d: %X/%X - %X/%X\n"
-#~ msgstr "%d : %X/%X - %X/%X\n"
-
-#~ msgid "Target timeline history:\n"
-#~ msgstr "Historique de la ligne de temps cible :\n"
-
-#~ msgid "Source timeline history:\n"
-#~ msgstr "Historique de la ligne de temps source :\n"
-
-#~ msgid "%s: could not read permissions of directory \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu lire les droits sur le répertoire « %s » : %s\n"
-
-#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
-#~ msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
-
-#~ msgid "could not read from file \"%s\": %s\n"
-#~ msgstr "n'a pas pu lire le fichier « %s » : %s\n"
-
-#~ msgid "could not seek in file \"%s\": %s\n"
-#~ msgstr "n'a pas pu chercher dans le fichier « %s » : %s\n"
-
-#~ msgid "could not open file \"%s\": %s\n"
-#~ msgstr "n'a pas pu ouvrir le fichier « %s » : %s\n"
-
-#~ msgid "Failure, exiting\n"
-#~ msgstr "Échec, sortie\n"
-
-#~ msgid "could not create temporary table: %s"
-#~ msgstr "n'a pas pu créer la table temporaire : %s"
-
-#~ msgid "fetched file \"%s\", length %d\n"
-#~ msgstr "fichier récupéré « %s », longueur %d\n"
-
-#~ msgid "received chunk for file \"%s\", offset %s, size %d\n"
-#~ msgstr "a reçu une partie du fichier « %s », décalage %s, taille %d\n"
-
-#~ msgid "received null value for chunk for file \"%s\", file has been deleted\n"
-#~ msgstr "a reçu une valeur NULL pour une partie du fichier « %s », le fichier a été supprimé\n"
-
-#~ msgid "getting file chunks\n"
-#~ msgstr "récupération des parties de fichier\n"
-
-#~ msgid "could not set up connection context: %s"
-#~ msgstr "n'a pas pu initialiser le contexte de connexion : « %s »"
-
-#~ msgid "%s (%s)\n"
-#~ msgstr "%s (%s)\n"
-
-#~ msgid "entry \"%s\" excluded from target file list\n"
-#~ msgstr "enregistrement « %s » exclus de la liste des fichiers cibles\n"
-
-#~ msgid "entry \"%s\" excluded from source file list\n"
-#~ msgstr "enregistrement « %s » exclus de la liste des fichiers sources\n"
-
-#~ msgid "could not open file \"%s\" for reading: %s\n"
-#~ msgstr "n'a pas pu ouvrir le fichier « %s » pour une lecture : %s\n"
-
-#~ msgid "could not remove symbolic link \"%s\": %s\n"
-#~ msgstr "n'a pas pu supprimer le lien symbolique « %s » : %s\n"
-
-#~ msgid "could not remove directory \"%s\": %s\n"
-#~ msgstr "n'a pas pu supprimer le répertoire « %s » : %s\n"
-
-#~ msgid "could not create directory \"%s\": %s\n"
-#~ msgstr "n'a pas pu créer le répertoire « %s » : %s\n"
-
-#~ msgid "could not truncate file \"%s\" to %u: %s\n"
-#~ msgstr "n'a pas pu tronquer le fichier « %s » à %u : %s\n"
-
-#~ msgid "could not remove file \"%s\": %s\n"
-#~ msgstr "n'a pas pu supprimer le fichier « %s » : %s\n"
-
-#~ msgid "could not write file \"%s\": %s\n"
-#~ msgstr "n'a pas pu écrire le fichier « %s » : %s\n"
-
-#~ msgid "  block %u\n"
-#~ msgstr " bloc %u\n"
-
-#~ msgid "could not close file \"%s\": %s\n"
-#~ msgstr "n'a pas pu fermer le fichier « %s » : %s\n"
-
-#~ msgid "could not read file \"%s\": %s\n"
-#~ msgstr "n'a pas pu lire le fichier « %s » : %s\n"
-
-#~ msgid "could not close directory \"%s\": %s\n"
-#~ msgstr "n'a pas pu fermer le répertoire « %s » : %s\n"
-
-#~ msgid "could not read directory \"%s\": %s\n"
-#~ msgstr "n'a pas pu lire le répertoire « %s » : %s\n"
-
-#~ msgid "symbolic link \"%s\" target is too long\n"
-#~ msgstr "la cible du lien symbolique « %s » est trop long\n"
-
-#~ msgid "could not read symbolic link \"%s\": %s\n"
-#~ msgstr "n'a pas pu lire le lien symbolique « %s » : %s\n"
-
-#~ msgid "could not stat file \"%s\": %s\n"
-#~ msgstr "n'a pas pu tester le fichier « %s » : %s\n"
-
-#~ msgid "could not open directory \"%s\": %s\n"
-#~ msgstr "n'a pas pu ouvrir le répertoire « %s » : %s\n"
-
-#~ msgid "%s: could not get exit code from subprocess: error code %lu\n"
-#~ msgstr "%s : n'a pas pu récupérer le code de statut du sous-processus : code d'erreur %lu\n"
-
-#~ msgid "%s: could not re-execute with restricted token: error code %lu\n"
-#~ msgstr "%s : n'a pas pu ré-exécuter le jeton restreint : code d'erreur %lu\n"
-
-#~ msgid "%s: could not start process for command \"%s\": error code %lu\n"
-#~ msgstr "%s : n'a pas pu démarrer le processus pour la commande « %s » : code d'erreur %lu\n"
-
-#~ msgid "%s: could not create restricted token: error code %lu\n"
-#~ msgstr "%s : n'a pas pu créer le jeton restreint : code d'erreur %lu\n"
-
-#~ msgid "%s: could not allocate SIDs: error code %lu\n"
-#~ msgstr "%s : n'a pas pu allouer les SID : code d'erreur %lu\n"
-
-#~ msgid "%s: could not open process token: error code %lu\n"
-#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : code d'erreur %lu\n"
-
-#~ msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-#~ msgstr "%s : ATTENTION : ne peut pas créer les jetons restreints sur cette plateforme\n"
+#~ msgid "could not connect to server: %s"
+#~ msgstr "n'a pas pu se connecter au serveur : %s"

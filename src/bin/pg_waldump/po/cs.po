@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-27 08:13+0000\n"
-"PO-Revision-Date: 2019-09-27 20:46+0200\n"
+"POT-Creation-Date: 2020-10-31 16:14+0000\n"
+"PO-Revision-Date: 2020-10-31 21:06+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: cs\n"
@@ -16,31 +16,29 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.4.1\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
-#| msgid "fatal\n"
 msgid "fatal: "
 msgstr "fatal: "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
-#| msgid "warning"
 msgid "warning: "
 msgstr "warning: "
 
-#: pg_waldump.c:148
+#: pg_waldump.c:146
 #, c-format
-msgid "could not open file \"%s\": %s"
-msgstr "nelze otevřít soubor \"%s\": %s"
+msgid "could not open file \"%s\": %m"
+msgstr "nelze otevřít soubor \"%s\": %m"
 
-#: pg_waldump.c:205
+#: pg_waldump.c:202
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
@@ -48,47 +46,42 @@ msgstr[0] "velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale h
 msgstr[1] "velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale hlavička WAL souboru \"%s\" udává %d byty"
 msgstr[2] "velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale hlavička WAL souboru \"%s\" udává %d bytů"
 
-#: pg_waldump.c:213
+#: pg_waldump.c:210
 #, c-format
-msgid "could not read file \"%s\": %s"
-msgstr "nelze číst soubor \"%s\": %s"
+msgid "could not read file \"%s\": %m"
+msgstr "nelze číst soubor \"%s\": %m"
 
-#: pg_waldump.c:216
+#: pg_waldump.c:213
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "nelze číst soubor \"%s\": načteno %d z %zu"
 
-#: pg_waldump.c:294
+#: pg_waldump.c:275
 #, c-format
 msgid "could not locate WAL file \"%s\""
 msgstr "nelze najít WAL soubor \"%s\""
 
-#: pg_waldump.c:296
+#: pg_waldump.c:277
 #, c-format
 msgid "could not find any WAL file"
 msgstr "nelze najít žádný WAL soubor"
 
+#: pg_waldump.c:318
+#, c-format
+msgid "could not find file \"%s\": %m"
+msgstr "nelze najít soubor \"%s\": %m"
+
 #: pg_waldump.c:367
 #, c-format
-msgid "could not find file \"%s\": %s"
-msgstr "nelze najít soubor \"%s\": %s"
+msgid "could not read from file %s, offset %u: %m"
+msgstr "nelze číst ze souboru %s, offset %u : %m"
 
-#: pg_waldump.c:382
+#: pg_waldump.c:371
 #, c-format
-msgid "could not seek in log file %s to offset %u: %s"
-msgstr "nelze nastavit pozici (seek) v log souboru %s na offset %u: %s"
+msgid "could not read from file %s, offset %u: read %d of %zu"
+msgstr "nelze číst ze souboru %s, offset %u, načteno %d z %zu"
 
-#: pg_waldump.c:405
-#, c-format
-msgid "could not read from log file %s, offset %u, length %d: %s"
-msgstr "nelze číst z log souboru %s, offset %u, délka %d: %s"
-
-#: pg_waldump.c:408
-#, c-format
-msgid "could not read from log file %s, offset %u: read %d of %zu"
-msgstr "nelze číst z log souboru %s, offset %u, načteno %d z %zu"
-
-#: pg_waldump.c:787
+#: pg_waldump.c:720
 #, c-format
 msgid ""
 "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
@@ -97,17 +90,17 @@ msgstr ""
 "%s dekóduje a zobrazuje PostgreSQL write-ahead logy pro účely debugování.\n"
 "\n"
 
-#: pg_waldump.c:789
+#: pg_waldump.c:722
 #, c-format
 msgid "Usage:\n"
 msgstr "Použití:\n"
 
-#: pg_waldump.c:790
+#: pg_waldump.c:723
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 msgstr "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 
-#: pg_waldump.c:791
+#: pg_waldump.c:724
 #, c-format
 msgid ""
 "\n"
@@ -116,27 +109,27 @@ msgstr ""
 "\n"
 "Přepínače:\n"
 
-#: pg_waldump.c:792
+#: pg_waldump.c:725
 #, c-format
 msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
 msgstr "  -b, --bkp-details      output detailed information about backup blocks\n"
 
-#: pg_waldump.c:793
+#: pg_waldump.c:726
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
 msgstr "  -e, --end=RECPTR       přestane číst WAL na pozici RECPTR\n"
 
-#: pg_waldump.c:794
+#: pg_waldump.c:727
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
 msgstr "  -f, --follow           dále to zkoušet po dosažení konce WAL\n"
 
-#: pg_waldump.c:795
+#: pg_waldump.c:728
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
 msgstr "  -n, --limit=N          počet záznamů pro zobrazení\n"
 
-#: pg_waldump.c:796
+#: pg_waldump.c:729
 #, c-format
 msgid ""
 "  -p, --path=PATH        directory in which to find log segment files or a\n"
@@ -147,7 +140,12 @@ msgstr ""
 "                         adresář s ./pg_wal který tyto soubory obsahuje\n"
 "                         (implicitní: aktuální adresář, ./pg_wal, $PGDATA/pg_wal)\n"
 
-#: pg_waldump.c:799
+#: pg_waldump.c:732
+#, c-format
+msgid "  -q, --quiet            do not print any output, except for errors\n"
+msgstr "  -q, --quiet               nevypisovat žádné zprávy, s výjimkou chyb\n"
+
+#: pg_waldump.c:733
 #, c-format
 msgid ""
 "  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
@@ -156,12 +154,12 @@ msgstr ""
 "  -r, --rmgr=RMGR        zobrazí pouze záznamy generované resource managerem RMGR;\n"
 "                         použijte --rmgr=list pro seznam platných jmen resource managerů\n"
 
-#: pg_waldump.c:801
+#: pg_waldump.c:735
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
 msgstr "  -s, --start=RECPTR     začne číst WAL na pozici RECPTR\n"
 
-#: pg_waldump.c:802
+#: pg_waldump.c:736
 #, c-format
 msgid ""
 "  -t, --timeline=TLI     timeline from which to read log records\n"
@@ -170,17 +168,17 @@ msgstr ""
 "  -t, --timeline=TLI     timeline ze které číst log záznamy\n"
 "                         (implicitní: 1 nebo hodnota v STARTSEG)\n"
 
-#: pg_waldump.c:804
+#: pg_waldump.c:738
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          vypiš informace o verzi, potom skonči\n"
 
-#: pg_waldump.c:805
+#: pg_waldump.c:739
 #, c-format
 msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
 msgstr "  -x, --xid=XID          zobrazí pouze záznamy pro transakci s ID XID\n"
 
-#: pg_waldump.c:806
+#: pg_waldump.c:740
 #, c-format
 msgid ""
 "  -z, --stats[=record]   show statistics instead of records\n"
@@ -189,111 +187,111 @@ msgstr ""
 "  -z, --stats[=record]   zobrazí statistiky namísto záznamů\n"
 "                         (volitelně, zobrazí per-record statistiky)\n"
 
-#: pg_waldump.c:808
+#: pg_waldump.c:742
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             ukaž tuto nápovědu, potom skonči\n"
 
-#: pg_waldump.c:809
+#: pg_waldump.c:743
 #, c-format
 msgid ""
 "\n"
-"Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+"Report bugs to <%s>.\n"
 msgstr ""
 "\n"
-"Chyby hlaste na adresu <pgsql-bugs@postgresql.org>.\n"
+"Chyby hlašte na <%s>.\n"
 
-#: pg_waldump.c:883
+#: pg_waldump.c:744
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s domácí stránka: <%s>\n"
+
+#: pg_waldump.c:821
 #, c-format
 msgid "no arguments specified"
 msgstr "nezadán žádný argument"
 
-#: pg_waldump.c:898
+#: pg_waldump.c:836
 #, c-format
 msgid "could not parse end WAL location \"%s\""
 msgstr "nelze naparsovat koncovou WAL pozici \"%s\""
 
-#: pg_waldump.c:910
+#: pg_waldump.c:848
 #, c-format
 msgid "could not parse limit \"%s\""
 msgstr "nelze naparsovat limit \"%s\""
 
-#: pg_waldump.c:938
+#: pg_waldump.c:879
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "resource manager \"%s\" neexistuje"
 
-#: pg_waldump.c:947
+#: pg_waldump.c:888
 #, c-format
 msgid "could not parse start WAL location \"%s\""
 msgstr "nelze naparsovat počáteční WAL pozici \"%s\""
 
-#: pg_waldump.c:957
+#: pg_waldump.c:898
 #, c-format
 msgid "could not parse timeline \"%s\""
 msgstr "nelze naparsovat timeline \"%s\""
 
-#: pg_waldump.c:964
+#: pg_waldump.c:905
 #, c-format
 msgid "could not parse \"%s\" as a transaction ID"
 msgstr "nelze naparsovat \"%s\" jako ID transakce"
 
-#: pg_waldump.c:979
+#: pg_waldump.c:920
 #, c-format
 msgid "unrecognized argument to --stats: %s"
 msgstr "nerozpoznaný argument pro --stats: %s"
 
-#: pg_waldump.c:992
+#: pg_waldump.c:933
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "příliš mnoho argumentů v příkazové řádce (první je \"%s\")"
 
-#: pg_waldump.c:1002
+#: pg_waldump.c:943 pg_waldump.c:963
 #, c-format
-msgid "path \"%s\" could not be opened: %s"
-msgstr "cestu \"%s\" nelze otevřít: %s"
+msgid "could not open directory \"%s\": %m"
+msgstr "nelze otevřít adresář \"%s\": %m"
 
-#: pg_waldump.c:1023
-#, c-format
-msgid "could not open directory \"%s\": %s"
-msgstr "nelze otevřít adresář \"%s\": %s"
-
-#: pg_waldump.c:1030 pg_waldump.c:1061
+#: pg_waldump.c:969 pg_waldump.c:1000
 #, c-format
 msgid "could not open file \"%s\""
 msgstr "nelze otevřít soubor \"%s\""
 
-#: pg_waldump.c:1040
+#: pg_waldump.c:979
 #, c-format
 msgid "start WAL location %X/%X is not inside file \"%s\""
 msgstr "počátační WAL pozice %X/%X není v souboru \"%s\""
 
-#: pg_waldump.c:1068
+#: pg_waldump.c:1007
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "ENDSEG %s je před STARTSEG %s"
 
-#: pg_waldump.c:1083
+#: pg_waldump.c:1022
 #, c-format
 msgid "end WAL location %X/%X is not inside file \"%s\""
 msgstr "koncová WAL pozice %X/%X není v souboru \"%s\""
 
-#: pg_waldump.c:1096
+#: pg_waldump.c:1035
 #, c-format
 msgid "no start WAL location given"
 msgstr "není zadána žádná WAL pozice"
 
-#: pg_waldump.c:1106
+#: pg_waldump.c:1049
 #, c-format
 msgid "out of memory"
 msgstr "nedostatek paměti"
 
-#: pg_waldump.c:1112
+#: pg_waldump.c:1055
 #, c-format
 msgid "could not find a valid record after %X/%X"
 msgstr "nelze najít platný záznam po %X/%X"
 
-#: pg_waldump.c:1123
+#: pg_waldump.c:1066
 #, c-format
 msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
 msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
@@ -301,18 +299,40 @@ msgstr[0] "první záznam po %X/%X, na %X/%X, přeskakuji %u bytů\n"
 msgstr[1] "první záznam po %X/%X, na %X/%X, přeskakuji %u byty\n"
 msgstr[2] "první záznam po %X/%X, na %X/%X, přeskakuji %u bytů\n"
 
-#: pg_waldump.c:1174
+#: pg_waldump.c:1117
 #, c-format
 msgid "error in WAL record at %X/%X: %s"
 msgstr "chyba ve WAL záznamu na %X/%X: %s"
 
-#: pg_waldump.c:1184
+#: pg_waldump.c:1127
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Zkuste \"%s --help\" pro více informací.\n"
 
+#~ msgid "%s: FATAL:  "
+#~ msgstr "%s: FATAL:  "
+
 #~ msgid "not enough data in file \"%s\""
 #~ msgstr "nedostatek dat v souboru \"%s\""
 
-#~ msgid "%s: FATAL:  "
-#~ msgstr "%s: FATAL:  "
+#~ msgid "could not open directory \"%s\": %s"
+#~ msgstr "nelze otevřít adresář \"%s\": %s"
+
+#~ msgid "path \"%s\" could not be opened: %s"
+#~ msgstr "cestu \"%s\" nelze otevřít: %s"
+
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Chyby hlaste na adresu <pgsql-bugs@postgresql.org>.\n"
+
+#~ msgid "could not seek in log file %s to offset %u: %s"
+#~ msgstr "nelze nastavit pozici (seek) v log souboru %s na offset %u: %s"
+
+#~ msgid "could not read file \"%s\": %s"
+#~ msgstr "nelze číst soubor \"%s\": %s"
+
+#~ msgid "could not open file \"%s\": %s"
+#~ msgstr "nelze otevřít soubor \"%s\": %s"
