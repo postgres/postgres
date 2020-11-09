@@ -7086,7 +7086,6 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 		{
 			hoffnum = ItemIdGetRedirect(hitemid);
 			hitemid = PageGetItemId(hpage, hoffnum);
-			CHECK_FOR_INTERRUPTS();
 		}
 
 		/*
