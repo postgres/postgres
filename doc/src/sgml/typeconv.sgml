@@ -127,8 +127,10 @@ must appear in a single set of columns, the types of the results of each
 <command>SELECT</command> clause must be matched up and converted to a uniform set.
 Similarly, the result expressions of a <literal>CASE</literal> construct must be
 converted to a common type so that the <literal>CASE</literal> expression as a whole
-has a known output type.  The same holds for <literal>ARRAY</literal> constructs,
-and for the <function>GREATEST</function> and <function>LEAST</function> functions.
+has a known output type.  Some other constructs, such
+as <literal>ARRAY[]</literal> and the <function>GREATEST</function>
+and <function>LEAST</function> functions, likewise require determination of a
+common type for several subexpressions.
 </para>
 </listitem>
 </varlistentry>
@@ -1040,9 +1042,11 @@ SQL <literal>UNION</literal> constructs must match up possibly dissimilar
 types to become a single result set.  The resolution algorithm is
 applied separately to each output column of a union query.  The
 <literal>INTERSECT</literal> and <literal>EXCEPT</literal> constructs resolve
-dissimilar types in the same way as <literal>UNION</literal>.  The
+dissimilar types in the same way as <literal>UNION</literal>.
+Some other constructs, including
 <literal>CASE</literal>, <literal>ARRAY</literal>, <literal>VALUES</literal>,
-<function>GREATEST</function> and <function>LEAST</function> constructs use the identical
+and the <function>GREATEST</function> and <function>LEAST</function>
+functions, use the identical
 algorithm to match up their component expressions and select a result
 data type.
 </para>
