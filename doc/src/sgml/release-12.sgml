@@ -36,6 +36,149 @@
     <listitem>
 <!--
 Author: Noah Misch <noah@leadboat.com>
+Branch: master [0c3185e96] 2020-11-09 07:32:09 -0800
+Branch: REL_13_STABLE [c90c84b3f] 2020-11-09 07:32:12 -0800
+Branch: REL_12_STABLE [ac8f6243c] 2020-11-09 07:32:12 -0800
+Branch: REL_11_STABLE [43ebfea5a] 2020-11-09 07:32:13 -0800
+Branch: REL_10_STABLE [f97ecea1e] 2020-11-09 07:32:13 -0800
+Branch: REL9_6_STABLE [ff3de4c21] 2020-11-09 07:32:13 -0800
+Branch: REL9_5_STABLE [aefc625de] 2020-11-09 07:32:14 -0800
+-->
+     <para>
+      Block <command>DECLARE CURSOR ... WITH HOLD</command> and firing of
+      deferred triggers within index expressions and materialized view
+      queries (Noah Misch)
+     </para>
+
+     <para>
+      This is essentially a leak in the <quote>security restricted
+      operation</quote> sandbox mechanism.  An attacker having permission
+      to create non-temporary SQL objects could parlay this leak to
+      execute arbitrary SQL code as a superuser.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Etienne Stalmans for reporting this problem.
+      (CVE-2020-25695)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a45bc8a4f] 2020-09-24 18:19:38 -0400
+Branch: REL_13_STABLE [cb8885ac4] 2020-09-24 18:19:38 -0400
+Branch: REL_12_STABLE [fb93f784f] 2020-09-24 18:19:38 -0400
+Branch: REL_11_STABLE [1738a61c8] 2020-09-24 18:19:39 -0400
+Branch: REL_10_STABLE [1888ff8d0] 2020-09-24 18:19:39 -0400
+Branch: REL9_6_STABLE [7c154f2fd] 2020-09-24 18:19:39 -0400
+Branch: REL9_5_STABLE [56b46d3a1] 2020-09-24 18:19:39 -0400
+Branch: master [8e5793ab6] 2020-10-19 19:03:46 -0400
+Branch: REL_13_STABLE [1814f915b] 2020-10-19 19:03:46 -0400
+Branch: REL_12_STABLE [c6d0b9b16] 2020-10-19 19:03:46 -0400
+Branch: REL_11_STABLE [5a9f99bed] 2020-10-19 19:03:47 -0400
+Branch: REL_10_STABLE [68f236993] 2020-10-19 19:03:47 -0400
+Branch: REL9_6_STABLE [5c78f7977] 2020-10-19 19:03:47 -0400
+Branch: REL9_5_STABLE [da129a04a] 2020-10-19 19:03:47 -0400
+-->
+     <para>
+      Fix usage of complex connection-string parameters
+      in <application>pg_dump</application>,
+      <application>pg_restore</application>,
+      <application>clusterdb</application>,
+      <application>reindexdb</application>,
+      and <application>vacuumdb</application> (Tom Lane)
+     </para>
+
+     <para>
+      The <option>-d</option> parameter
+      of <application>pg_dump</application>
+      and <application>pg_restore</application>, or
+      the <option>--maintenance-db</option> parameter of the other
+      programs mentioned, can be a <quote>connection string</quote>
+      containing multiple connection parameters rather than just a
+      database name.  In cases where these programs need to initiate
+      additional connections, such as parallel processing or processing of
+      multiple databases, the connection string was forgotten and just the
+      basic connection parameters (database name, host, port, and
+      username) were used for the additional connections.  This could lead
+      to connection failures if the connection string included any other
+      essential information, such as non-default SSL or GSS parameters.
+      Worse, the connection might succeed but not be encrypted as
+      intended, or be vulnerable to man-in-the-middle attacks that the
+      intended connection parameters would have prevented.
+      (CVE-2020-25694)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [85c54287a] 2020-10-21 16:19:00 -0400
+Branch: REL_13_STABLE [2e4af4110] 2020-10-21 16:19:00 -0400
+Branch: REL_12_STABLE [f656517ec] 2020-10-21 16:19:01 -0400
+Branch: REL_11_STABLE [20be76d5c] 2020-10-21 16:19:01 -0400
+Branch: REL_10_STABLE [8175da6e7] 2020-10-21 16:19:02 -0400
+Branch: REL9_6_STABLE [870a23230] 2020-10-21 16:18:41 -0400
+Branch: REL9_5_STABLE [6997da09a] 2020-10-21 16:18:41 -0400
+-->
+     <para>
+      When <application>psql</application>'s <command>\connect</command>
+      command re-uses connection parameters, ensure that all
+      non-overridden parameters from a previous connection string are
+      re-used (Tom Lane)
+     </para>
+
+     <para>
+      This avoids cases where reconnection might fail due to omission of
+      relevant parameters, such as non-default SSL or GSS options.
+      Worse, the reconnection might succeed but not be encrypted as
+      intended, or be vulnerable to man-in-the-middle attacks that the
+      intended connection parameters would have prevented.
+      This is largely the same problem as just cited
+      for <application>pg_dump</application> et al,
+      although <application>psql</application>'s behavior is more complex
+      since the user may intentionally override some connection
+      parameters.
+      (CVE-2020-25694)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [098fb0079] 2020-11-09 07:32:09 -0800
+Branch: REL_13_STABLE [67029845b] 2020-11-09 07:32:12 -0800
+Branch: REL_12_STABLE [3855e5b47] 2020-11-09 07:32:13 -0800
+Branch: REL_11_STABLE [7b356c78f] 2020-11-09 07:32:13 -0800
+Branch: REL_10_STABLE [a498db87b] 2020-11-09 07:32:13 -0800
+Branch: REL9_6_STABLE [12fd81cb7] 2020-11-09 07:32:14 -0800
+Branch: REL9_5_STABLE [a54dfbee1] 2020-11-09 07:32:14 -0800
+-->
+     <para>
+      Prevent <application>psql</application>'s <command>\gset</command>
+      command from modifying specially-treated variables (Noah Misch)
+     </para>
+
+     <para>
+      <command>\gset</command> without a prefix would overwrite whatever
+      variables the server told it to.  Thus, a compromised server could
+      set specially-treated variables such as <varname>PROMPT1</varname>,
+      giving the ability to execute arbitrary shell code in the user's
+      session.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Nick Cleaton for reporting this problem.
+      (CVE-2020-25696)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
 Branch: master [566372b3d] 2020-08-15 10:15:53 -0700
 Branch: REL_13_STABLE Release: REL_13_0 [592a589a0] 2020-08-15 10:15:56 -0700
 Branch: REL_12_STABLE [30e68a2ab] 2020-08-15 10:15:56 -0700
@@ -964,79 +1107,6 @@ Branch: REL9_5_STABLE [aff06436c] 2020-10-28 14:35:53 -0400
 
      <para>
       This ensures proper handling of newlines.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [a45bc8a4f] 2020-09-24 18:19:38 -0400
-Branch: REL_13_STABLE [cb8885ac4] 2020-09-24 18:19:38 -0400
-Branch: REL_12_STABLE [fb93f784f] 2020-09-24 18:19:38 -0400
-Branch: REL_11_STABLE [1738a61c8] 2020-09-24 18:19:39 -0400
-Branch: REL_10_STABLE [1888ff8d0] 2020-09-24 18:19:39 -0400
-Branch: REL9_6_STABLE [7c154f2fd] 2020-09-24 18:19:39 -0400
-Branch: REL9_5_STABLE [56b46d3a1] 2020-09-24 18:19:39 -0400
-Branch: master [8e5793ab6] 2020-10-19 19:03:46 -0400
-Branch: REL_13_STABLE [1814f915b] 2020-10-19 19:03:46 -0400
-Branch: REL_12_STABLE [c6d0b9b16] 2020-10-19 19:03:46 -0400
-Branch: REL_11_STABLE [5a9f99bed] 2020-10-19 19:03:47 -0400
-Branch: REL_10_STABLE [68f236993] 2020-10-19 19:03:47 -0400
-Branch: REL9_6_STABLE [5c78f7977] 2020-10-19 19:03:47 -0400
-Branch: REL9_5_STABLE [da129a04a] 2020-10-19 19:03:47 -0400
--->
-     <para>
-      Fix usage of complex connection-string parameters
-      in <application>pg_dump</application>,
-      <application>pg_restore</application>,
-      <application>clusterdb</application>,
-      <application>reindexdb</application>,
-      and <application>vacuumdb</application> (Tom Lane)
-     </para>
-
-     <para>
-      The <option>-d</option> parameter
-      of <application>pg_dump</application>
-      and <application>pg_restore</application>, or
-      the <option>--maintenance-db</option> parameter of the other
-      programs mentioned, can be a <quote>connection string</quote>
-      containing multiple connection parameters rather than just a
-      database name.  In cases where these programs need to initiate
-      additional connections, such as parallel processing or processing of
-      multiple databases, the connection string was forgotten and just the
-      basic connection parameters (database name, host, port, and
-      username) were used for the additional connections.  This could lead
-      to connection failures if the connection string included any other
-      essential information, such as non-default SSL or GSS parameters.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [85c54287a] 2020-10-21 16:19:00 -0400
-Branch: REL_13_STABLE [2e4af4110] 2020-10-21 16:19:00 -0400
-Branch: REL_12_STABLE [f656517ec] 2020-10-21 16:19:01 -0400
-Branch: REL_11_STABLE [20be76d5c] 2020-10-21 16:19:01 -0400
-Branch: REL_10_STABLE [8175da6e7] 2020-10-21 16:19:02 -0400
-Branch: REL9_6_STABLE [870a23230] 2020-10-21 16:18:41 -0400
-Branch: REL9_5_STABLE [6997da09a] 2020-10-21 16:18:41 -0400
--->
-     <para>
-      When <application>psql</application>'s <command>\connect</command>
-      command re-uses connection parameters, ensure that all
-      non-overridden parameters from a previous connection string are
-      re-used (Tom Lane)
-     </para>
-
-     <para>
-      This avoids cases where reconnection might fail due to omission of
-      relevant parameters, such as non-default SSL or GSS options.  This
-      is largely the same problem as just cited
-      for <application>pg_dump</application> et al,
-      although <application>psql</application>'s behavior is more complex
-      since the user may intentionally override some connection
-      parameters.
      </para>
     </listitem>
 
