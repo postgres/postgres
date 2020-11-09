@@ -10,6 +10,10 @@ select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 select 10 as "bad name"
 \gset
 could not set variable "bad name"
+select 'terse' as "OSITY", 'ok' as _foo \gset VERB
+attempt to \gset into specially treated variable "VERBOSITY" ignored
+\echo :VERB_foo :VERBOSITY
+ok default
 -- multiple backslash commands in one line
 select 1 as x, 2 as y \gset pref01_ \\ \echo :pref01_x
 1
