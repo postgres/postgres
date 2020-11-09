@@ -12279,10 +12279,14 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <para>
-   The <structname>pg_settings</structname> view cannot be inserted into or
-   deleted from, but it can be updated.  An <command>UPDATE</command> applied
-   to a row of <structname>pg_settings</structname> is equivalent to executing
-   the <command>SET</command> command on that named
+   This view does not display <link linkend="runtime-config-custom">customized options</link>
+   until the extension module that defines them has been loaded.
+  </para>
+
+  <para>
+   This view cannot be inserted into or deleted from, but it can be updated.  An
+   <command>UPDATE</command> applied to a row of <structname>pg_settings</structname>
+   is equivalent to executing the <command>SET</command> command on that named
    parameter. The change only affects the value used by the current
    session. If an <command>UPDATE</command> is issued within a transaction
    that is later aborted, the effects of the <command>UPDATE</command> command
