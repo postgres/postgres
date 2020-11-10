@@ -105,7 +105,6 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
-#include "miscadmin.h"
 #include "pg_getopt.h"
 #include "pgstat.h"
 #include "port/pg_bswap.h"
@@ -219,12 +218,6 @@ int			ReservedBackends;
 /* The socket(s) we're listening to. */
 #define MAXLISTEN	64
 static pgsocket ListenSocket[MAXLISTEN];
-
-/*
- * Set by the -o option
- */
-static char ExtraOptions[MAXPGPATH];
-
 /*
  * These globals control the behavior of the postmaster in case some
  * backend dumps core.  Normally, it kills all peers of the dead backend
@@ -537,7 +530,6 @@ typedef struct
 #endif
 	char		my_exec_path[MAXPGPATH];
 	char		pkglib_path[MAXPGPATH];
-	char		ExtraOptions[MAXPGPATH];
 } BackendParameters;
 
 static void read_backend_variables(char *id, Port *port);
@@ -694,7 +686,7 @@ PostmasterMain(int argc, char *argv[])
 	 * tcop/postgres.c (the option sets should not conflict) and with the
 	 * common help() function in main/main.c.
 	 */
-	while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
+	while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOPp:r:S:sTt:W:-:")) != -1)
 	{
 		switch (opt)
 		{
@@ -771,13 +763,6 @@ PostmasterMain(int argc, char *argv[])
 
 			case 'O':
 				SetConfigOption("allow_system_table_mods", "true", PGC_POSTMASTER, PGC_S_ARGV);
-				break;
-
-			case 'o':
-				/* Other options to pass to the backend on the command line */
-				snprintf(ExtraOptions + strlen(ExtraOptions),
-						 sizeof(ExtraOptions) - strlen(ExtraOptions),
-						 " %s", optarg);
 				break;
 
 			case 'P':
@@ -4489,48 +4474,11 @@ BackendInitialize(Port *port)
 static void
 BackendRun(Port *port)
 {
-	char	  **av;
-	int			maxac;
-	int			ac;
-	int			i;
+	char	   *av[2];
+	const int	ac = 1;
 
-	/*
-	 * Now, build the argv vector that will be given to PostgresMain.
-	 *
-	 * The maximum possible number of commandline arguments that could come
-	 * from ExtraOptions is (strlen(ExtraOptions) + 1) / 2; see
-	 * pg_split_opts().
-	 */
-	maxac = 2;					/* for fixed args supplied below */
-	maxac += (strlen(ExtraOptions) + 1) / 2;
-
-	av = (char **) MemoryContextAlloc(TopMemoryContext,
-									  maxac * sizeof(char *));
-	ac = 0;
-
-	av[ac++] = "postgres";
-
-	/*
-	 * Pass any backend switches specified with -o on the postmaster's own
-	 * command line.  We assume these are secure.
-	 */
-	pg_split_opts(av, &ac, ExtraOptions);
-
-	av[ac] = NULL;
-
-	Assert(ac < maxac);
-
-	/*
-	 * Debug: print arguments being passed to backend
-	 */
-	ereport(DEBUG3,
-			(errmsg_internal("%s child[%d]: starting with (",
-							 progname, (int) getpid())));
-	for (i = 0; i < ac; ++i)
-		ereport(DEBUG3,
-				(errmsg_internal("\t%s", av[i])));
-	ereport(DEBUG3,
-			(errmsg_internal(")")));
+	av[0] = "postgres";
+	av[1] = NULL;
 
 	/*
 	 * Make sure we aren't in PostmasterContext anymore.  (We can't delete it
@@ -6253,8 +6201,6 @@ save_backend_variables(BackendParameters *param, Port *port,
 
 	strlcpy(param->pkglib_path, pkglib_path, MAXPGPATH);
 
-	strlcpy(param->ExtraOptions, ExtraOptions, MAXPGPATH);
-
 	return true;
 }
 
@@ -6484,8 +6430,6 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	strlcpy(my_exec_path, param->my_exec_path, MAXPGPATH);
 
 	strlcpy(pkglib_path, param->pkglib_path, MAXPGPATH);
-
-	strlcpy(ExtraOptions, param->ExtraOptions, MAXPGPATH);
 
 	/*
 	 * We need to restore fd.c's counts of externally-opened FDs; to avoid

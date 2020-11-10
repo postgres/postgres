@@ -281,32 +281,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-o <replaceable class="parameter">extra-options</replaceable></option></term>
-      <listitem>
-       <para>
-        The command-line-style arguments specified in <replaceable
-        class="parameter">extra-options</replaceable> are passed to
-        all server processes started by this
-        <command>postgres</command> process.
-       </para>
-
-       <para>
-        Spaces within <replaceable class="parameter">extra-options</replaceable> are
-        considered to separate arguments, unless escaped with a backslash
-        (<literal>\</literal>); write <literal>\\</literal> to represent a literal
-        backslash.  Multiple arguments can also be specified via multiple
-        uses of <option>-o</option>.
-       </para>
-
-       <para>
-        The use of this option is obsolete; all command-line options
-        for server processes can be specified directly on the
-        <command>postgres</command> command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
       <listitem>
        <para>
