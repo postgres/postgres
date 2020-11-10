@@ -4468,8 +4468,7 @@ BackendInitialize(Port *port)
  * BackendRun -- set up the backend's argument list and invoke PostgresMain()
  *
  * returns:
- *		Shouldn't return at all.
- *		If PostgresMain() fails, return status.
+ *		Doesn't return at all.
  */
 static void
 BackendRun(Port *port)
