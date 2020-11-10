@@ -71,6 +71,7 @@ sub run_test
 	primary_psql("VACUUM tail_tbl");
 
 	# Drop drop_tbl. pg_rewind should copy it back.
+	primary_psql("insert into drop_tbl values ('in primary, after promotion')");
 	primary_psql("DROP TABLE drop_tbl");
 
 	# Before running pg_rewind, do a couple of extra tests with several
