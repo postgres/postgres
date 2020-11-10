@@ -18,7 +18,13 @@
 #include <llvm-c/BitWriter.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>
+#if LLVM_VERSION_MAJOR > 11
+#include <llvm-c/Orc.h>
+#include <llvm-c/OrcEE.h>
+#include <llvm-c/LLJIT.h>
+#else
 #include <llvm-c/OrcBindings.h>
+#endif
 #include <llvm-c/Support.h>
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/IPO.h>
@@ -39,8 +45,13 @@
 /* Handle of a module emitted via ORC JIT */
 typedef struct LLVMJitHandle
 {
+#if LLVM_VERSION_MAJOR > 11
+	LLVMOrcLLJITRef lljit;
+	LLVMOrcResourceTrackerRef resource_tracker;
+#else
 	LLVMOrcJITStackRef stack;
 	LLVMOrcModuleHandle orc_handle;
+#endif
 } LLVMJitHandle;
 
 
@@ -85,12 +96,15 @@ static const char *llvm_triple = NULL;
 static const char *llvm_layout = NULL;
 
 
-static LLVMTargetMachineRef llvm_opt0_targetmachine;
-static LLVMTargetMachineRef llvm_opt3_targetmachine;
-
 static LLVMTargetRef llvm_targetref;
+#if LLVM_VERSION_MAJOR > 11
+static LLVMOrcThreadSafeContextRef llvm_ts_context;
+static LLVMOrcLLJITRef llvm_opt0_orc;
+static LLVMOrcLLJITRef llvm_opt3_orc;
+#else							/* LLVM_VERSION_MAJOR > 11 */
 static LLVMOrcJITStackRef llvm_opt0_orc;
 static LLVMOrcJITStackRef llvm_opt3_orc;
+#endif							/* LLVM_VERSION_MAJOR > 11 */
 
 
 static void llvm_release_context(JitContext *context);
@@ -102,6 +116,10 @@ static void llvm_optimize_module(LLVMJitContext *context, LLVMModuleRef module);
 static void llvm_create_types(void);
 static uint64_t llvm_resolve_symbol(const char *name, void *ctx);
 
+#if LLVM_VERSION_MAJOR > 11
+static LLVMOrcLLJITRef llvm_create_jit_instance(LLVMTargetMachineRef tm);
+static char *llvm_error_message(LLVMErrorRef error);
+#endif							/* LLVM_VERSION_MAJOR > 11 */
 
 PG_MODULE_MAGIC;
 
@@ -161,24 +179,47 @@ llvm_release_context(JitContext *context)
 	 * have occurred from within LLVM, we do not want to risk reentering. All
 	 * resource cleanup is going to happen through process exit.
 	 */
-	if (!proc_exit_inprogress)
+	if (proc_exit_inprogress)
+		return;
+
+	if (llvm_context->module)
 	{
-		if (llvm_context->module)
+		LLVMDisposeModule(llvm_context->module);
+		llvm_context->module = NULL;
+	}
+
+	while (llvm_context->handles != NIL)
+	{
+		LLVMJitHandle *jit_handle;
+
+		jit_handle = (LLVMJitHandle *) linitial(llvm_context->handles);
+		llvm_context->handles = list_delete_first(llvm_context->handles);
+
+#if LLVM_VERSION_MAJOR > 11
 		{
-			LLVMDisposeModule(llvm_context->module);
-			llvm_context->module = NULL;
+			LLVMOrcExecutionSessionRef ee;
+			LLVMOrcSymbolStringPoolRef sp;
+
+			LLVMOrcResourceTrackerRemove(jit_handle->resource_tracker);
+			LLVMOrcReleaseResourceTracker(jit_handle->resource_tracker);
+
+			/*
+			 * Without triggering cleanup of the string pool, we'd leak
+			 * memory. It'd be sufficient to do this far less often, but in
+			 * experiments the required time was small enough to just always
+			 * do it.
+			 */
+			ee = LLVMOrcLLJITGetExecutionSession(jit_handle->lljit);
+			sp = LLVMOrcExecutionSessionGetSymbolStringPool(ee);
+			LLVMOrcSymbolStringPoolClearDeadEntries(sp);
 		}
-
-		while (llvm_context->handles != NIL)
+#else							/* LLVM_VERSION_MAJOR > 11 */
 		{
-			LLVMJitHandle *jit_handle;
-
-			jit_handle = (LLVMJitHandle *) linitial(llvm_context->handles);
-			llvm_context->handles = list_delete_first(llvm_context->handles);
-
 			LLVMOrcRemoveModule(jit_handle->stack, jit_handle->orc_handle);
-			pfree(jit_handle);
 		}
+#endif							/* LLVM_VERSION_MAJOR > 11 */
+
+		pfree(jit_handle);
 	}
 }
 
@@ -234,8 +275,8 @@ llvm_expand_funcname(struct LLVMJitContext *context, const char *basename)
 void *
 llvm_get_function(LLVMJitContext *context, const char *funcname)
 {
-	LLVMOrcTargetAddress addr = 0;
-#if defined(HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN) && HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN
+#if LLVM_VERSION_MAJOR > 11 || \
+	defined(HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN) && HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN
 	ListCell   *lc;
 #endif
 
@@ -255,9 +296,40 @@ llvm_get_function(LLVMJitContext *context, const char *funcname)
 	 * to mangle here.
 	 */
 
-#if defined(HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN) && HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN
+#if LLVM_VERSION_MAJOR > 11
 	foreach(lc, context->handles)
 	{
+		LLVMJitHandle *handle = (LLVMJitHandle *) lfirst(lc);
+		instr_time	starttime;
+		instr_time	endtime;
+		LLVMErrorRef error;
+		LLVMOrcJITTargetAddress addr;
+
+		INSTR_TIME_SET_CURRENT(starttime);
+
+		addr = 0;
+		error = LLVMOrcLLJITLookup(handle->lljit, &addr, funcname);
+		if (error)
+			elog(ERROR, "failed to look up symbol \"%s\": %s",
+				 funcname, llvm_error_message(error));
+
+		/*
+		 * LLJIT only actually emits code the first time a symbol is
+		 * referenced. Thus add lookup time to emission time. That's counting
+		 * a bit more than with older LLVM versions, but unlikely to ever
+		 * matter.
+		 */
+		INSTR_TIME_SET_CURRENT(endtime);
+		INSTR_TIME_ACCUM_DIFF(context->base.instr.emission_counter,
+							  endtime, starttime);
+
+		if (addr)
+			return (void *) (uintptr_t) addr;
+	}
+#elif defined(HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN) && HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN
+	foreach(lc, context->handles)
+	{
+		LLVMOrcTargetAddress addr;
 		LLVMJitHandle *handle = (LLVMJitHandle *) lfirst(lc);
 
 		addr = 0;
@@ -266,26 +338,29 @@ llvm_get_function(LLVMJitContext *context, const char *funcname)
 		if (addr)
 			return (void *) (uintptr_t) addr;
 	}
+#elif LLVM_VERSION_MAJOR < 5
+	{
+		LLVMOrcTargetAddress addr;
 
+		if ((addr = LLVMOrcGetSymbolAddress(llvm_opt0_orc, funcname)))
+			return (void *) (uintptr_t) addr;
+		if ((addr = LLVMOrcGetSymbolAddress(llvm_opt3_orc, funcname)))
+			return (void *) (uintptr_t) addr;
+	}
 #else
+	{
+		LLVMOrcTargetAddress addr;
 
-#if LLVM_VERSION_MAJOR < 5
-	if ((addr = LLVMOrcGetSymbolAddress(llvm_opt0_orc, funcname)))
-		return (void *) (uintptr_t) addr;
-	if ((addr = LLVMOrcGetSymbolAddress(llvm_opt3_orc, funcname)))
-		return (void *) (uintptr_t) addr;
-#else
-	if (LLVMOrcGetSymbolAddress(llvm_opt0_orc, &addr, funcname))
-		elog(ERROR, "failed to look up symbol \"%s\"", funcname);
-	if (addr)
-		return (void *) (uintptr_t) addr;
-	if (LLVMOrcGetSymbolAddress(llvm_opt3_orc, &addr, funcname))
-		elog(ERROR, "failed to look up symbol \"%s\"", funcname);
-	if (addr)
-		return (void *) (uintptr_t) addr;
-#endif							/* LLVM_VERSION_MAJOR */
-
-#endif							/* HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN */
+		if (LLVMOrcGetSymbolAddress(llvm_opt0_orc, &addr, funcname))
+			elog(ERROR, "failed to look up symbol \"%s\"", funcname);
+		if (addr)
+			return (void *) (uintptr_t) addr;
+		if (LLVMOrcGetSymbolAddress(llvm_opt3_orc, &addr, funcname))
+			elog(ERROR, "failed to look up symbol \"%s\"", funcname);
+		if (addr)
+			return (void *) (uintptr_t) addr;
+	}
+#endif
 
 	elog(ERROR, "failed to JIT: %s", funcname);
 
@@ -420,6 +495,8 @@ llvm_function_reference(LLVMJitContext *context,
 		v_fn = LLVMAddGlobal(mod, TypePGFunction, funcname);
 		LLVMSetInitializer(v_fn, v_fn_addr);
 		LLVMSetGlobalConstant(v_fn, true);
+		LLVMSetLinkage(v_fn, LLVMPrivateLinkage);
+		LLVMSetUnnamedAddr(v_fn, true);
 
 		return LLVMBuildLoad(builder, v_fn, "");
 	}
@@ -511,11 +588,15 @@ llvm_optimize_module(LLVMJitContext *context, LLVMModuleRef module)
 static void
 llvm_compile_module(LLVMJitContext *context)
 {
-	LLVMOrcModuleHandle orc_handle;
+	LLVMJitHandle *handle;
 	MemoryContext oldcontext;
-	static LLVMOrcJITStackRef compile_orc;
 	instr_time	starttime;
 	instr_time	endtime;
+#if LLVM_VERSION_MAJOR > 11
+	LLVMOrcLLJITRef compile_orc;
+#else
+	LLVMOrcJITStackRef compile_orc;
+#endif
 
 	if (context->base.flags & PGJIT_OPT3)
 		compile_orc = llvm_opt3_orc;
@@ -562,6 +643,9 @@ llvm_compile_module(LLVMJitContext *context)
 		pfree(filename);
 	}
 
+	handle = (LLVMJitHandle *)
+		MemoryContextAlloc(TopMemoryContext, sizeof(LLVMJitHandle));
+
 	/*
 	 * Emit the code. Note that this can, depending on the optimization
 	 * settings, take noticeable resources as code emission executes low-level
@@ -569,13 +653,42 @@ llvm_compile_module(LLVMJitContext *context)
 	 * faster instruction selection mechanism is used.
 	 */
 	INSTR_TIME_SET_CURRENT(starttime);
-#if LLVM_VERSION_MAJOR > 6
+#if LLVM_VERSION_MAJOR > 11
 	{
-		if (LLVMOrcAddEagerlyCompiledIR(compile_orc, &orc_handle, context->module,
+		LLVMOrcThreadSafeModuleRef ts_module;
+		LLVMErrorRef error;
+		LLVMOrcJITDylibRef jd = LLVMOrcLLJITGetMainJITDylib(compile_orc);
+
+		ts_module = LLVMOrcCreateNewThreadSafeModule(context->module, llvm_ts_context);
+
+		handle->lljit = compile_orc;
+		handle->resource_tracker = LLVMOrcJITDylibCreateResourceTracker(jd);
+
+		/*
+		 * NB: This doesn't actually emit code. That happens lazily the first
+		 * time a symbol defined in the module is requested. Due to that
+		 * llvm_get_function() also accounts for emission time.
+		 */
+
+		context->module = NULL; /* will be owned by LLJIT */
+		error = LLVMOrcLLJITAddLLVMIRModuleWithRT(compile_orc,
+												  handle->resource_tracker,
+												  ts_module);
+
+		if (error)
+			elog(ERROR, "failed to JIT module: %s",
+				 llvm_error_message(error));
+
+		handle->lljit = compile_orc;
+
+		/* LLVMOrcLLJITAddLLVMIRModuleWithRT takes ownership of the module */
+	}
+#elif LLVM_VERSION_MAJOR > 6
+	{
+		handle->stack = compile_orc;
+		if (LLVMOrcAddEagerlyCompiledIR(compile_orc, &handle->orc_handle, context->module,
 										llvm_resolve_symbol, NULL))
-		{
 			elog(ERROR, "failed to JIT module");
-		}
 
 		/* LLVMOrcAddEagerlyCompiledIR takes ownership of the module */
 	}
@@ -584,20 +697,23 @@ llvm_compile_module(LLVMJitContext *context)
 		LLVMSharedModuleRef smod;
 
 		smod = LLVMOrcMakeSharedModule(context->module);
-		if (LLVMOrcAddEagerlyCompiledIR(compile_orc, &orc_handle, smod,
+		handle->stack = compile_orc;
+		if (LLVMOrcAddEagerlyCompiledIR(compile_orc, &handle->orc_handle, smod,
 										llvm_resolve_symbol, NULL))
-		{
 			elog(ERROR, "failed to JIT module");
-		}
+
 		LLVMOrcDisposeSharedModuleRef(smod);
 	}
 #else							/* LLVM 4.0 and 3.9 */
 	{
-		orc_handle = LLVMOrcAddEagerlyCompiledIR(compile_orc, context->module,
-												 llvm_resolve_symbol, NULL);
+		handle->stack = compile_orc;
+		handle->orc_handle = LLVMOrcAddEagerlyCompiledIR(compile_orc, context->module,
+														 llvm_resolve_symbol, NULL);
+
 		LLVMDisposeModule(context->module);
 	}
 #endif
+
 	INSTR_TIME_SET_CURRENT(endtime);
 	INSTR_TIME_ACCUM_DIFF(context->base.instr.emission_counter,
 						  endtime, starttime);
@@ -607,15 +723,7 @@ llvm_compile_module(LLVMJitContext *context)
 
 	/* remember emitted code for cleanup and lookups */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-	{
-		LLVMJitHandle *handle;
-
-		handle = (LLVMJitHandle *) palloc(sizeof(LLVMJitHandle));
-		handle->stack = compile_orc;
-		handle->orc_handle = orc_handle;
-
-		context->handles = lappend(context->handles, handle);
-	}
+	context->handles = lappend(context->handles, handle);
 	MemoryContextSwitchTo(oldcontext);
 
 	ereport(DEBUG1,
@@ -637,6 +745,8 @@ llvm_session_initialize(void)
 	char	   *error = NULL;
 	char	   *cpu = NULL;
 	char	   *features = NULL;
+	LLVMTargetMachineRef opt0_tm;
+	LLVMTargetMachineRef opt3_tm;
 
 	if (llvm_session_initialized)
 		return;
@@ -669,12 +779,12 @@ llvm_session_initialize(void)
 	elog(DEBUG2, "LLVMJIT detected CPU \"%s\", with features \"%s\"",
 		 cpu, features);
 
-	llvm_opt0_targetmachine =
+	opt0_tm =
 		LLVMCreateTargetMachine(llvm_targetref, llvm_triple, cpu, features,
 								LLVMCodeGenLevelNone,
 								LLVMRelocDefault,
 								LLVMCodeModelJITDefault);
-	llvm_opt3_targetmachine =
+	opt3_tm =
 		LLVMCreateTargetMachine(llvm_targetref, llvm_triple, cpu, features,
 								LLVMCodeGenLevelAggressive,
 								LLVMRelocDefault,
@@ -688,27 +798,41 @@ llvm_session_initialize(void)
 	/* force symbols in main binary to be loaded */
 	LLVMLoadLibraryPermanently(NULL);
 
-	llvm_opt0_orc = LLVMOrcCreateInstance(llvm_opt0_targetmachine);
-	llvm_opt3_orc = LLVMOrcCreateInstance(llvm_opt3_targetmachine);
+#if LLVM_VERSION_MAJOR > 11
+	{
+		llvm_ts_context = LLVMOrcCreateNewThreadSafeContext();
+
+		llvm_opt0_orc = llvm_create_jit_instance(opt0_tm);
+		opt0_tm = 0;
+
+		llvm_opt3_orc = llvm_create_jit_instance(opt3_tm);
+		opt3_tm = 0;
+	}
+#else							/* LLVM_VERSION_MAJOR > 11 */
+	{
+		llvm_opt0_orc = LLVMOrcCreateInstance(opt0_tm);
+		llvm_opt3_orc = LLVMOrcCreateInstance(opt3_tm);
 
 #if defined(HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER) && HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER
-	if (jit_debugging_support)
-	{
-		LLVMJITEventListenerRef l = LLVMCreateGDBRegistrationListener();
+		if (jit_debugging_support)
+		{
+			LLVMJITEventListenerRef l = LLVMCreateGDBRegistrationListener();
 
-		LLVMOrcRegisterJITEventListener(llvm_opt0_orc, l);
-		LLVMOrcRegisterJITEventListener(llvm_opt3_orc, l);
-	}
+			LLVMOrcRegisterJITEventListener(llvm_opt0_orc, l);
+			LLVMOrcRegisterJITEventListener(llvm_opt3_orc, l);
+		}
 #endif
 #if defined(HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER) && HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER
-	if (jit_profiling_support)
-	{
-		LLVMJITEventListenerRef l = LLVMCreatePerfJITEventListener();
+		if (jit_profiling_support)
+		{
+			LLVMJITEventListenerRef l = LLVMCreatePerfJITEventListener();
 
-		LLVMOrcRegisterJITEventListener(llvm_opt0_orc, l);
-		LLVMOrcRegisterJITEventListener(llvm_opt3_orc, l);
-	}
+			LLVMOrcRegisterJITEventListener(llvm_opt0_orc, l);
+			LLVMOrcRegisterJITEventListener(llvm_opt3_orc, l);
+		}
 #endif
+	}
+#endif							/* LLVM_VERSION_MAJOR > 11 */
 
 	on_proc_exit(llvm_shutdown, 0);
 
@@ -720,27 +844,49 @@ llvm_session_initialize(void)
 static void
 llvm_shutdown(int code, Datum arg)
 {
-	/* unregister profiling support, needs to be flushed to be useful */
-
-	if (llvm_opt3_orc)
+#if LLVM_VERSION_MAJOR > 11
 	{
-#if defined(HAVE_DECL_LLVMORCREGISTERPERF) && HAVE_DECL_LLVMORCREGISTERPERF
-		if (jit_profiling_support)
-			LLVMOrcUnregisterPerf(llvm_opt3_orc);
-#endif
-		LLVMOrcDisposeInstance(llvm_opt3_orc);
-		llvm_opt3_orc = NULL;
+		if (llvm_opt3_orc)
+		{
+			LLVMOrcDisposeLLJIT(llvm_opt3_orc);
+			llvm_opt3_orc = NULL;
+		}
+		if (llvm_opt0_orc)
+		{
+			LLVMOrcDisposeLLJIT(llvm_opt0_orc);
+			llvm_opt0_orc = NULL;
+		}
+		if (llvm_ts_context)
+		{
+			LLVMOrcDisposeThreadSafeContext(llvm_ts_context);
+			llvm_ts_context = NULL;
+		}
 	}
-
-	if (llvm_opt0_orc)
+#else							/* LLVM_VERSION_MAJOR > 11 */
 	{
+		/* unregister profiling support, needs to be flushed to be useful */
+
+		if (llvm_opt3_orc)
+		{
 #if defined(HAVE_DECL_LLVMORCREGISTERPERF) && HAVE_DECL_LLVMORCREGISTERPERF
-		if (jit_profiling_support)
-			LLVMOrcUnregisterPerf(llvm_opt0_orc);
+			if (jit_profiling_support)
+				LLVMOrcUnregisterPerf(llvm_opt3_orc);
 #endif
-		LLVMOrcDisposeInstance(llvm_opt0_orc);
-		llvm_opt0_orc = NULL;
+			LLVMOrcDisposeInstance(llvm_opt3_orc);
+			llvm_opt3_orc = NULL;
+		}
+
+		if (llvm_opt0_orc)
+		{
+#if defined(HAVE_DECL_LLVMORCREGISTERPERF) && HAVE_DECL_LLVMORCREGISTERPERF
+			if (jit_profiling_support)
+				LLVMOrcUnregisterPerf(llvm_opt0_orc);
+#endif
+			LLVMOrcDisposeInstance(llvm_opt0_orc);
+			llvm_opt0_orc = NULL;
+		}
 	}
+#endif							/* LLVM_VERSION_MAJOR > 11 */
 }
 
 /* helper for llvm_create_types, returning a global var's type */
@@ -922,3 +1068,145 @@ llvm_resolve_symbol(const char *symname, void *ctx)
 
 	return (uint64_t) addr;
 }
+
+#if LLVM_VERSION_MAJOR > 11
+
+static LLVMErrorRef
+llvm_resolve_symbols(LLVMOrcDefinitionGeneratorRef GeneratorObj, void *Ctx,
+					 LLVMOrcLookupStateRef *LookupState, LLVMOrcLookupKind Kind,
+					 LLVMOrcJITDylibRef JD, LLVMOrcJITDylibLookupFlags JDLookupFlags,
+					 LLVMOrcCLookupSet LookupSet, size_t LookupSetSize)
+{
+	LLVMOrcCSymbolMapPairs symbols = palloc0(sizeof(LLVMJITCSymbolMapPair) * LookupSetSize);
+	LLVMErrorRef error;
+	LLVMOrcMaterializationUnitRef mu;
+
+	for (int i = 0; i < LookupSetSize; i++)
+	{
+		const char *name = LLVMOrcSymbolStringPoolEntryStr(LookupSet[i].Name);
+
+		symbols[i].Name = LookupSet[i].Name;
+		symbols[i].Sym.Address = llvm_resolve_symbol(name, NULL);
+		symbols[i].Sym.Flags.GenericFlags = LLVMJITSymbolGenericFlagsExported;
+	}
+
+	mu = LLVMOrcAbsoluteSymbols(symbols, LookupSetSize);
+	error = LLVMOrcJITDylibDefine(JD, mu);
+	if (error != LLVMErrorSuccess)
+		LLVMOrcDisposeMaterializationUnit(mu);
+
+	pfree(symbols);
+
+	return error;
+}
+
+/*
+ * We cannot throw errors through LLVM (without causing a FATAL at least), so
+ * just use WARNING here. That's OK anyway, as the error is also reported at
+ * the top level action (with less detail) and there might be multiple
+ * invocations of errors with details.
+ *
+ * This doesn't really happen during normal operation, but in cases like
+ * symbol resolution breakage. So just using elog(WARNING) is fine.
+ */
+static void
+llvm_log_jit_error(void *ctx, LLVMErrorRef error)
+{
+	elog(WARNING, "error during JITing: %s",
+		 llvm_error_message(error));
+}
+
+/*
+ * Create our own object layer, so we can add event listeners.
+ */
+static LLVMOrcObjectLayerRef
+llvm_create_object_layer(void *Ctx, LLVMOrcExecutionSessionRef ES, const char *Triple)
+{
+	LLVMOrcObjectLayerRef objlayer =
+	LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(ES);
+
+#if defined(HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER) && HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER
+	if (jit_debugging_support)
+	{
+		LLVMJITEventListenerRef l = LLVMCreateGDBRegistrationListener();
+
+		LLVMOrcRTDyldObjectLinkingLayerRegisterJITEventListener(objlayer, l);
+	}
+#endif
+
+#if defined(HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER) && HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER
+	if (jit_profiling_support)
+	{
+		LLVMJITEventListenerRef l = LLVMCreatePerfJITEventListener();
+
+		LLVMOrcRTDyldObjectLinkingLayerRegisterJITEventListener(objlayer, l);
+	}
+#endif
+
+	return objlayer;
+}
+
+/*
+ * Create LLJIT instance, using the passed in target machine. Note that the
+ * target machine afterwards is owned by the LLJIT instance.
+ */
+static LLVMOrcLLJITRef
+llvm_create_jit_instance(LLVMTargetMachineRef tm)
+{
+	LLVMOrcLLJITRef lljit;
+	LLVMOrcJITTargetMachineBuilderRef tm_builder;
+	LLVMOrcLLJITBuilderRef lljit_builder;
+	LLVMErrorRef error;
+	LLVMOrcDefinitionGeneratorRef main_gen;
+	LLVMOrcDefinitionGeneratorRef ref_gen;
+
+	lljit_builder = LLVMOrcCreateLLJITBuilder();
+	tm_builder = LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine(tm);
+	LLVMOrcLLJITBuilderSetJITTargetMachineBuilder(lljit_builder, tm_builder);
+
+	LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(lljit_builder,
+													llvm_create_object_layer,
+													NULL);
+
+	error = LLVMOrcCreateLLJIT(&lljit, lljit_builder);
+	if (error)
+		elog(ERROR, "failed to create lljit instance: %s",
+			 llvm_error_message(error));
+
+	LLVMOrcExecutionSessionSetErrorReporter(LLVMOrcLLJITGetExecutionSession(lljit),
+											llvm_log_jit_error, NULL);
+
+	/*
+	 * Symbol resolution support for symbols in the postgres binary /
+	 * libraries already loaded.
+	 */
+	error = LLVMOrcCreateDynamicLibrarySearchGeneratorForProcess(&main_gen,
+																 LLVMOrcLLJITGetGlobalPrefix(lljit),
+																 0, NULL);
+	if (error)
+		elog(ERROR, "failed to create generator: %s",
+			 llvm_error_message(error));
+	LLVMOrcJITDylibAddGenerator(LLVMOrcLLJITGetMainJITDylib(lljit), main_gen);
+
+	/*
+	 * Symbol resolution support for "special" functions, e.g. a call into an
+	 * SQL callable function.
+	 */
+	ref_gen = LLVMOrcCreateCustomCAPIDefinitionGenerator(llvm_resolve_symbols, NULL);
+	LLVMOrcJITDylibAddGenerator(LLVMOrcLLJITGetMainJITDylib(lljit), ref_gen);
+
+	return lljit;
+}
+
+static char *
+llvm_error_message(LLVMErrorRef error)
+{
+	char	   *orig = LLVMGetErrorMessage(error);
+	char	   *msg = pstrdup(orig);
+
+	LLVMDisposeErrorMessage(orig);
+
+	return msg;
+}
+
+#endif							/* LLVM_VERSION_MAJOR > 11 */
