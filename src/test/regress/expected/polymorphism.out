@@ -729,24 +729,24 @@ select q2, sql_if(q2 > 0, q2, q2 + 1) from int8_tbl;
 (5 rows)
 
 -- another sort of polymorphic aggregate
-CREATE AGGREGATE array_cat_accum (anyarray)
+CREATE AGGREGATE array_larger_accum (anyarray)
 (
-    sfunc = array_cat,
+    sfunc = array_larger,
     stype = anyarray,
     initcond = '{}'
 );
-SELECT array_cat_accum(i)
+SELECT array_larger_accum(i)
 FROM (VALUES (ARRAY[1,2]), (ARRAY[3,4])) as t(i);
- array_cat_accum 
------------------
- {1,2,3,4}
+ array_larger_accum 
+--------------------
+ {3,4}
 (1 row)
 
-SELECT array_cat_accum(i)
+SELECT array_larger_accum(i)
 FROM (VALUES (ARRAY[row(1,2),row(3,4)]), (ARRAY[row(5,6),row(7,8)])) as t(i);
-          array_cat_accum          
------------------------------------
- {"(1,2)","(3,4)","(5,6)","(7,8)"}
+ array_larger_accum 
+--------------------
+ {"(5,6)","(7,8)"}
 (1 row)
 
 -- another kind of polymorphic aggregate
@@ -786,6 +786,8 @@ create aggregate build_group(int8, integer) (
   STYPE = int8[]
 );
 -- check proper resolution of data types for polymorphic transfn/finalfn
+create function first_el_transfn(anyarray, anyelement) returns anyarray as
+'select $1 || $2' language sql immutable;
 create function first_el(anyarray) returns anyelement as
 'select $1[1]' language sql strict immutable;
 create aggregate first_el_agg_f8(float8) (
@@ -794,7 +796,7 @@ create aggregate first_el_agg_f8(float8) (
   FINALFUNC = first_el
 );
 create aggregate first_el_agg_any(anyelement) (
-  SFUNC = array_append,
+  SFUNC = first_el_transfn,
   STYPE = anyarray,
   FINALFUNC = first_el
 );
