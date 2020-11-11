@@ -320,10 +320,6 @@ GetReplicationApplyDelay(void)
 	WalRcvData *walrcv = WalRcv;
 	XLogRecPtr	receivePtr;
 	XLogRecPtr	replayPtr;
-
-	long		secs;
-	int			usecs;
-
 	TimestampTz chunkReplayStartTime;
 
 	SpinLockAcquire(&walrcv->mutex);
@@ -340,11 +336,8 @@ GetReplicationApplyDelay(void)
 	if (chunkReplayStartTime == 0)
 		return -1;
 
-	TimestampDifference(chunkReplayStartTime,
-						GetCurrentTimestamp(),
-						&secs, &usecs);
-
-	return (((int) secs * 1000) + (usecs / 1000));
+	return TimestampDifferenceMilliseconds(chunkReplayStartTime,
+										   GetCurrentTimestamp());
 }
 
 /*
@@ -355,24 +348,14 @@ int
 GetReplicationTransferLatency(void)
 {
 	WalRcvData *walrcv = WalRcv;
-
 	TimestampTz lastMsgSendTime;
 	TimestampTz lastMsgReceiptTime;
-
-	long		secs = 0;
-	int			usecs = 0;
-	int			ms;
 
 	SpinLockAcquire(&walrcv->mutex);
 	lastMsgSendTime = walrcv->lastMsgSendTime;
 	lastMsgReceiptTime = walrcv->lastMsgReceiptTime;
 	SpinLockRelease(&walrcv->mutex);
 
-	TimestampDifference(lastMsgSendTime,
-						lastMsgReceiptTime,
-						&secs, &usecs);
-
-	ms = ((int) secs * 1000) + (usecs / 1000);
-
-	return ms;
+	return TimestampDifferenceMilliseconds(lastMsgSendTime,
+										   lastMsgReceiptTime);
 }
