@@ -1641,12 +1641,14 @@ timeofday(PG_FUNCTION_ARGS)
  * TimestampDifference -- convert the difference between two timestamps
  *		into integer seconds and microseconds
  *
+ * This is typically used to calculate a wait timeout for select(2),
+ * which explains the otherwise-odd choice of output format.
+ *
  * Both inputs must be ordinary finite timestamps (in current usage,
  * they'll be results from GetCurrentTimestamp()).
  *
- * We expect start_time <= stop_time.  If not, we return zeros; for current
- * callers there is no need to be tense about which way division rounds on
- * negative inputs.
+ * We expect start_time <= stop_time.  If not, we return zeros,
+ * since then we're already past the previously determined stop_time.
  */
 void
 TimestampDifference(TimestampTz start_time, TimestampTz stop_time,
@@ -1664,6 +1666,36 @@ TimestampDifference(TimestampTz start_time, TimestampTz stop_time,
 		*secs = (long) (diff / USECS_PER_SEC);
 		*microsecs = (int) (diff % USECS_PER_SEC);
 	}
+}
+
+/*
+ * TimestampDifferenceMilliseconds -- convert the difference between two
+ * 		timestamps into integer milliseconds
+ *
+ * This is typically used to calculate a wait timeout for WaitLatch()
+ * or a related function.  The choice of "long" as the result type
+ * is to harmonize with that.  It is caller's responsibility that the
+ * input timestamps not be so far apart as to risk overflow of "long"
+ * (which'd happen at about 25 days on machines with 32-bit "long").
+ *
+ * Both inputs must be ordinary finite timestamps (in current usage,
+ * they'll be results from GetCurrentTimestamp()).
+ *
+ * We expect start_time <= stop_time.  If not, we return zero,
+ * since then we're already past the previously determined stop_time.
+ *
+ * Note we round up any fractional millisecond, since waiting for just
+ * less than the intended timeout is undesirable.
+ */
+long
+TimestampDifferenceMilliseconds(TimestampTz start_time, TimestampTz stop_time)
+{
+	TimestampTz diff = stop_time - start_time;
+
+	if (diff <= 0)
+		return 0;
+	else
+		return (long) ((diff + 999) / 1000);
 }
 
 /*
