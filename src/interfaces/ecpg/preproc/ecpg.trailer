@@ -36,7 +36,7 @@ CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectSt
 
 			$$ = cat_str(7, mm_strdup("create"), $2, mm_strdup("table"), $4, mm_strdup("as"), $7, $8);
 		}
-                |  CREATE OptTemp TABLE IF_P NOT EXISTS create_as_target AS {FoundInto = 0;} SelectStmt opt_with_data
+		|  CREATE OptTemp TABLE IF_P NOT EXISTS create_as_target AS {FoundInto = 0;} SelectStmt opt_with_data
 		{
 			if (FoundInto == 1)
 				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE AS cannot specify INTO");
@@ -1821,27 +1821,27 @@ c_anything:  ecpg_ident				{ $$ = $1; }
 		| ':'				{ $$ = mm_strdup(":"); }
 		;
 
-DeallocateStmt: DEALLOCATE prepared_name                { $$ = $2; }
-                | DEALLOCATE PREPARE prepared_name      { $$ = $3; }
-                | DEALLOCATE ALL                        { $$ = mm_strdup("all"); }
-                | DEALLOCATE PREPARE ALL                { $$ = mm_strdup("all"); }
-                ;
+DeallocateStmt: DEALLOCATE prepared_name	{ $$ = $2; }
+		| DEALLOCATE PREPARE prepared_name	{ $$ = $3; }
+		| DEALLOCATE ALL					{ $$ = mm_strdup("all"); }
+		| DEALLOCATE PREPARE ALL			{ $$ = mm_strdup("all"); }
+		;
 
-Iresult:        Iconst				{ $$ = $1; }
-                | '(' Iresult ')'		{ $$ = cat_str(3, mm_strdup("("), $2, mm_strdup(")")); }
-                | Iresult '+' Iresult		{ $$ = cat_str(3, $1, mm_strdup("+"), $3); }
-                | Iresult '-' Iresult		{ $$ = cat_str(3, $1, mm_strdup("-"), $3); }
-                | Iresult '*' Iresult		{ $$ = cat_str(3, $1, mm_strdup("*"), $3); }
-                | Iresult '/' Iresult		{ $$ = cat_str(3, $1, mm_strdup("/"), $3); }
-                | Iresult '%' Iresult		{ $$ = cat_str(3, $1, mm_strdup("%"), $3); }
-                | ecpg_sconst			{ $$ = $1; }
-                | ColId				{ $$ = $1; }
-		| ColId '(' var_type ')'        { if (pg_strcasecmp($1, "sizeof") != 0)
+Iresult: Iconst						{ $$ = $1; }
+		| '(' Iresult ')'			{ $$ = cat_str(3, mm_strdup("("), $2, mm_strdup(")")); }
+		| Iresult '+' Iresult		{ $$ = cat_str(3, $1, mm_strdup("+"), $3); }
+		| Iresult '-' Iresult		{ $$ = cat_str(3, $1, mm_strdup("-"), $3); }
+		| Iresult '*' Iresult		{ $$ = cat_str(3, $1, mm_strdup("*"), $3); }
+		| Iresult '/' Iresult		{ $$ = cat_str(3, $1, mm_strdup("/"), $3); }
+		| Iresult '%' Iresult		{ $$ = cat_str(3, $1, mm_strdup("%"), $3); }
+		| ecpg_sconst				{ $$ = $1; }
+		| ColId						{ $$ = $1; }
+		| ColId '(' var_type ')'	{ if (pg_strcasecmp($1, "sizeof") != 0)
 							mmerror(PARSE_ERROR, ET_ERROR, "operator not allowed in variable definition");
 						  else
 							$$ = cat_str(4, $1, mm_strdup("("), $3.type_str, mm_strdup(")"));
 						}
-                ;
+		;
 
 execute_rest: /* EMPTY */	{ $$ = EMPTY; }
 	| ecpg_using opt_ecpg_into  { $$ = EMPTY; }

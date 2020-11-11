@@ -1483,7 +1483,7 @@ generic_set:
 		;
 
 set_rest_more:	/* Generic SET syntaxes: */
-			generic_set 						{$$ = $1;}
+			generic_set							{$$ = $1;}
 			| var_name FROM CURRENT_P
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -4996,8 +4996,8 @@ ImportForeignSchemaStmt:
 		;
 
 import_qualification_type:
-		LIMIT TO 				{ $$ = FDW_IMPORT_SCHEMA_LIMIT_TO; }
-		| EXCEPT 				{ $$ = FDW_IMPORT_SCHEMA_EXCEPT; }
+		LIMIT TO				{ $$ = FDW_IMPORT_SCHEMA_LIMIT_TO; }
+		| EXCEPT				{ $$ = FDW_IMPORT_SCHEMA_EXCEPT; }
 		;
 
 import_qualification:
@@ -10538,8 +10538,8 @@ vac_analyze_option_name:
 
 vac_analyze_option_arg:
 			opt_boolean_or_string					{ $$ = (Node *) makeString($1); }
-			| NumericOnly			{ $$ = (Node *) $1; }
-			| /* EMPTY */		 					{ $$ = NULL; }
+			| NumericOnly							{ $$ = (Node *) $1; }
+			| /* EMPTY */							{ $$ = NULL; }
 		;
 
 opt_analyze:
@@ -11773,10 +11773,10 @@ for_locking_item:
 		;
 
 for_locking_strength:
-			FOR UPDATE 							{ $$ = LCS_FORUPDATE; }
-			| FOR NO KEY UPDATE 				{ $$ = LCS_FORNOKEYUPDATE; }
-			| FOR SHARE 						{ $$ = LCS_FORSHARE; }
-			| FOR KEY SHARE 					{ $$ = LCS_FORKEYSHARE; }
+			FOR UPDATE							{ $$ = LCS_FORUPDATE; }
+			| FOR NO KEY UPDATE					{ $$ = LCS_FORNOKEYUPDATE; }
+			| FOR SHARE							{ $$ = LCS_FORSHARE; }
+			| FOR KEY SHARE						{ $$ = LCS_FORKEYSHARE; }
 		;
 
 locked_rels_list:

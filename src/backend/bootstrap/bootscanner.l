@@ -88,7 +88,7 @@ _null_			{ return NULLVAL; }
 [\n]			{ yyline++; }
 [\r\t ]			;
 
-^\#[^\n]* 		;		/* drop everything after "#" for comments */
+^\#[^\n]*		;		/* drop everything after "#" for comments */
 
 declare			{ yylval.kw = "declare"; return XDECLARE; }
 build			{ yylval.kw = "build"; return XBUILD; }
