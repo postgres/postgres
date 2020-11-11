@@ -550,7 +550,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies parameters used to connect to the server, as a <link
-        linkend="libpq-connstring">connction string</link>;  these
+        linkend="libpq-connstring">connection string</link>;  these
         will override any conflicting command line options.
        </para>
        <para>
