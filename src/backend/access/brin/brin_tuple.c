@@ -492,9 +492,6 @@ brin_memtuple_initialize(BrinMemTuple *dtuple, BrinDesc *brdesc)
 				 sizeof(BrinValues) * brdesc->bd_tupdesc->natts);
 	for (i = 0; i < brdesc->bd_tupdesc->natts; i++)
 	{
-		dtuple->bt_columns[i].bv_allnulls = true;
-		dtuple->bt_columns[i].bv_hasnulls = false;
-
 		dtuple->bt_columns[i].bv_attno = i + 1;
 		dtuple->bt_columns[i].bv_allnulls = true;
 		dtuple->bt_columns[i].bv_hasnulls = false;
