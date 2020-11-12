@@ -16,7 +16,7 @@ typedef struct
 	int			siglen;			/* signature length in bytes */
 } TrgmGistOptions;
 
-#define LTREE_GET_ASIGLEN()		(PG_HAS_OPCLASS_OPTIONS() ? \
+#define GET_SIGLEN()			(PG_HAS_OPCLASS_OPTIONS() ? \
 								 ((TrgmGistOptions *) PG_GET_OPCLASS_OPTIONS())->siglen : \
 								 SIGLEN_DEFAULT)
 
@@ -108,7 +108,7 @@ Datum
 gtrgm_compress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = GET_SIGLEN();
 	GISTENTRY  *retval = entry;
 
 	if (entry->leafkey)
@@ -195,7 +195,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = GET_SIGLEN();
 	TRGM	   *key = (TRGM *) DatumGetPointer(entry->key);
 	TRGM	   *qtrg;
 	bool		res;
@@ -448,7 +448,7 @@ gtrgm_distance(PG_FUNCTION_ARGS)
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = GET_SIGLEN();
 	TRGM	   *key = (TRGM *) DatumGetPointer(entry->key);
 	TRGM	   *qtrg;
 	float8		res;
@@ -557,7 +557,7 @@ gtrgm_union(PG_FUNCTION_ARGS)
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int32		len = entryvec->n;
 	int		   *size = (int *) PG_GETARG_POINTER(1);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = GET_SIGLEN();
 	int32		i;
 	TRGM	   *result = gtrgm_alloc(false, siglen, NULL);
 	BITVECP		base = GETSIGN(result);
@@ -583,7 +583,7 @@ gtrgm_same(PG_FUNCTION_ARGS)
 	TRGM	   *a = (TRGM *) PG_GETARG_POINTER(0);
 	TRGM	   *b = (TRGM *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = GET_SIGLEN();
 
 	if (ISSIGNKEY(a))
 	{							/* then b also ISSIGNKEY */
@@ -680,7 +680,7 @@ gtrgm_penalty(PG_FUNCTION_ARGS)
 	GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0); /* always ISSIGNKEY */
 	GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
 	float	   *penalty = (float *) PG_GETARG_POINTER(2);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = GET_SIGLEN();
 	TRGM	   *origval = (TRGM *) DatumGetPointer(origentry->key);
 	TRGM	   *newval = (TRGM *) DatumGetPointer(newentry->key);
 	BITVECP		orig = GETSIGN(origval);
@@ -788,7 +788,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	OffsetNumber maxoff = entryvec->n - 2;
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = GET_SIGLEN();
 	OffsetNumber k,
 				j;
 	TRGM	   *datum_l,
