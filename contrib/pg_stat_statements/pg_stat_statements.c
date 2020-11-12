@@ -1171,13 +1171,14 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		INSTR_TIME_SUBTRACT(duration, start);
 
 		/*
-		 * Track the total number of rows retrieved or affected by
-		 * the utility statements of COPY, FETCH, CREATE TABLE AS,
-		 * CREATE MATERIALIZED VIEW and SELECT INTO.
+		 * Track the total number of rows retrieved or affected by the utility
+		 * statements of COPY, FETCH, CREATE TABLE AS, CREATE MATERIALIZED
+		 * VIEW, REFRESH MATERIALIZED VIEW and SELECT INTO.
 		 */
 		rows = (qc && (qc->commandTag == CMDTAG_COPY ||
 					   qc->commandTag == CMDTAG_FETCH ||
-					   qc->commandTag == CMDTAG_SELECT)) ?
+					   qc->commandTag == CMDTAG_SELECT ||
+					   qc->commandTag == CMDTAG_REFRESH_MATERIALIZED_VIEW)) ?
 			qc->nprocessed : 0;
 
 		/* calc differences of buffer counters. */

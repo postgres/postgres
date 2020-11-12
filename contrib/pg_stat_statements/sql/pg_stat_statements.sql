@@ -252,8 +252,8 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 
 --
 -- Track the total number of rows retrieved or affected by the utility
--- commands of COPY, FETCH, CREATE TABLE AS, CREATE MATERIALIZED VIEW
--- and SELECT INTO
+-- commands of COPY, FETCH, CREATE TABLE AS, CREATE MATERIALIZED VIEW,
+-- REFRESH MATERIALIZED VIEW and SELECT INTO
 --
 SELECT pg_stat_statements_reset();
 
@@ -265,6 +265,7 @@ COPY pgss_ctas (a, b) FROM STDIN;
 13	copy
 \.
 CREATE MATERIALIZED VIEW pgss_matv AS SELECT * FROM pgss_ctas;
+REFRESH MATERIALIZED VIEW pgss_matv;
 BEGIN;
 DECLARE pgss_cursor CURSOR FOR SELECT * FROM pgss_matv;
 FETCH NEXT pgss_cursor;
