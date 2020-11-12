@@ -389,7 +389,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				OptTableElementList TableElementList OptInherit definition
 				OptTypedTableElementList TypedTableElementList
 				reloptions opt_reloptions
-				OptWith distinct_clause opt_all_clause opt_definition func_args func_args_list
+				OptWith distinct_clause opt_definition func_args func_args_list
 				func_args_with_defaults func_args_with_defaults_list
 				aggr_args aggr_args_list
 				func_as createfunc_opt_list alterfunc_opt_list
@@ -446,7 +446,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	locked_rels_list
 %type <boolean>	all_or_distinct
 
-%type <node>	join_outer join_qual
+%type <node>	join_qual
 %type <jtype>	join_type
 
 %type <list>	extract_list overlay_list position_list
@@ -461,7 +461,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <boolean> copy_from opt_program
 
-%type <ival>	opt_column event cursor_options opt_hold opt_set_data
+%type <ival>	event cursor_options opt_hold opt_set_data
 %type <objtype>	object_type_any_name object_type_name object_type_name_on_any_name
 				drop_type_name
 
@@ -992,9 +992,9 @@ CreateRoleStmt:
 		;
 
 
-opt_with:	WITH									{}
-			| WITH_LA								{}
-			| /*EMPTY*/								{}
+opt_with:	WITH
+			| WITH_LA
+			| /*EMPTY*/
 		;
 
 /*
@@ -3127,8 +3127,8 @@ copy_delimiter:
 		;
 
 opt_using:
-			USING									{}
-			| /*EMPTY*/								{}
+			USING
+			| /*EMPTY*/
 		;
 
 /* new COPY option syntax */
@@ -4319,8 +4319,8 @@ SeqOptElem: AS SimpleTypename
 				}
 		;
 
-opt_by:		BY				{}
-			| /* empty */	{}
+opt_by:		BY
+			| /* empty */
 	  ;
 
 NumericOnly:
@@ -4406,8 +4406,8 @@ opt_validator:
 		;
 
 opt_procedural:
-			PROCEDURAL								{}
-			| /*EMPTY*/								{}
+			PROCEDURAL
+			| /*EMPTY*/
 		;
 
 /*****************************************************************************
@@ -5366,8 +5366,8 @@ TriggerForSpec:
 		;
 
 TriggerForOptEach:
-			EACH									{}
-			| /*EMPTY*/								{}
+			EACH
+			| /*EMPTY*/
 		;
 
 TriggerForType:
@@ -6707,12 +6707,12 @@ fetch_args:	cursor_name
 				}
 		;
 
-from_in:	FROM									{}
-			| IN_P									{}
+from_in:	FROM
+			| IN_P
 		;
 
-opt_from_in:	from_in								{}
-			| /* EMPTY */							{}
+opt_from_in:	from_in
+			| /* EMPTY */
 		;
 
 
@@ -8836,8 +8836,8 @@ RenameStmt: ALTER AGGREGATE aggregate_with_argtypes RENAME TO name
 				}
 		;
 
-opt_column: COLUMN									{ $$ = COLUMN; }
-			| /*EMPTY*/								{ $$ = 0; }
+opt_column: COLUMN
+			| /*EMPTY*/
 		;
 
 opt_set_data: SET DATA_P							{ $$ = 1; }
@@ -9859,9 +9859,9 @@ TransactionStmt:
 				}
 		;
 
-opt_transaction:	WORK							{}
-			| TRANSACTION							{}
-			| /*EMPTY*/								{}
+opt_transaction:	WORK
+			| TRANSACTION
+			| /*EMPTY*/
 		;
 
 transaction_mode_item:
@@ -10066,8 +10066,8 @@ createdb_opt_name:
  *	Though the equals sign doesn't match other WITH options, pg_dump uses
  *	equals for backward compatibility, and it doesn't seem worth removing it.
  */
-opt_equal:	'='										{}
-			| /*EMPTY*/								{}
+opt_equal:	'='
+			| /*EMPTY*/
 		;
 
 
@@ -10285,8 +10285,8 @@ AlterDomainStmt:
 				}
 			;
 
-opt_as:		AS										{}
-			| /* EMPTY */							{}
+opt_as:		AS
+			| /* EMPTY */
 		;
 
 
@@ -10372,8 +10372,8 @@ AlterTSConfigurationStmt:
 		;
 
 /* Use this if TIME or ORDINALITY after WITH should be taken as an identifier */
-any_with:	WITH									{}
-			| WITH_LA								{}
+any_with:	WITH
+			| WITH_LA
 		;
 
 
@@ -10520,8 +10520,8 @@ vac_analyze_option_list:
 		;
 
 analyze_keyword:
-			ANALYZE									{}
-			| ANALYSE /* British */					{}
+			ANALYZE
+			| ANALYSE /* British */
 		;
 
 vac_analyze_option_elem:
@@ -11462,8 +11462,8 @@ OptTempTableName:
 				}
 		;
 
-opt_table:	TABLE									{}
-			| /*EMPTY*/								{}
+opt_table:	TABLE
+			| /*EMPTY*/
 		;
 
 all_or_distinct:
@@ -11481,8 +11481,8 @@ distinct_clause:
 		;
 
 opt_all_clause:
-			ALL										{ $$ = NIL;}
-			| /*EMPTY*/								{ $$ = NIL; }
+			ALL
+			| /*EMPTY*/
 		;
 
 opt_sort_clause:
@@ -12086,15 +12086,15 @@ func_alias_clause:
 				}
 		;
 
-join_type:	FULL join_outer							{ $$ = JOIN_FULL; }
-			| LEFT join_outer						{ $$ = JOIN_LEFT; }
-			| RIGHT join_outer						{ $$ = JOIN_RIGHT; }
+join_type:	FULL opt_outer							{ $$ = JOIN_FULL; }
+			| LEFT opt_outer						{ $$ = JOIN_LEFT; }
+			| RIGHT opt_outer						{ $$ = JOIN_RIGHT; }
 			| INNER_P								{ $$ = JOIN_INNER; }
 		;
 
 /* OUTER is just noise... */
-join_outer: OUTER_P									{ $$ = NULL; }
-			| /*EMPTY*/								{ $$ = NULL; }
+opt_outer: OUTER_P
+			| /*EMPTY*/
 		;
 
 /* JOIN qualification clauses
