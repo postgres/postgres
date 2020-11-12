@@ -57,12 +57,17 @@ InitializeBackupManifest(backup_manifest_info *manifest,
 						 backup_manifest_option want_manifest,
 						 pg_checksum_type manifest_checksum_type)
 {
+	memset(manifest, 0, sizeof(backup_manifest_info));
+	manifest->checksum_type = manifest_checksum_type;
+
 	if (want_manifest == MANIFEST_OPTION_NO)
 		manifest->buffile = NULL;
 	else
+	{
 		manifest->buffile = BufFileCreateTemp(false);
-	manifest->checksum_type = manifest_checksum_type;
-	pg_sha256_init(&manifest->manifest_ctx);
+		pg_sha256_init(&manifest->manifest_ctx);
+	}
+
 	manifest->manifest_size = UINT64CONST(0);
 	manifest->force_encode = (want_manifest == MANIFEST_OPTION_FORCE_ENCODE);
 	manifest->first_file = true;
