@@ -705,6 +705,16 @@ Indexes:
   </para>
 
   <para>
+   The regularly system collects statistics on all of a table's
+   columns.  Newly-created non-expression indexes can immediately
+   use these statistics to determine an index's usefulness.
+   For new expression indexes, it is necessary to run <link
+   linkend="sql-analyze"><command>ANALYZE</command></link> or wait for
+   the <link linkend="autovacuum">autovacuum daemon</link> to analyze
+   the table to generate statistics about new expression indexes.
+  </para>
+
+  <para>
    For most index methods, the speed of creating an index is
    dependent on the setting of <xref linkend="guc-maintenance-work-mem"/>.
    Larger values will reduce the time needed for index creation, so long
