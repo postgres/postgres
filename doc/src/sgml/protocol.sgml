@@ -1858,7 +1858,10 @@ The commands accepted in replication mode are:
      <para>
       Requests the server to send over the timeline history file for timeline
       <replaceable class="parameter">tli</replaceable>.  Server replies with a
-      result set of a single row, containing two fields:
+      result set of a single row, containing two fields.  While the
+      fields are labeled as <type>text</type> and <type>bytea</type>,
+      they effectively return raw bytes, with no escaping or encoding
+      conversion:
      </para>
 
      <para>
