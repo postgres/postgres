@@ -786,7 +786,7 @@ Datum
 gtrgm_picksplit(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	OffsetNumber maxoff = entryvec->n - 2;
+	OffsetNumber maxoff = entryvec->n - 1;
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	int			siglen = GET_SIGLEN();
 	OffsetNumber k,
@@ -811,8 +811,8 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 	SPLITCOST  *costvector;
 
 	/* cache the sign data for each existing item */
-	cache = (CACHESIGN *) palloc(sizeof(CACHESIGN) * (maxoff + 2));
-	cache_sign = palloc(siglen * (maxoff + 2));
+	cache = (CACHESIGN *) palloc(sizeof(CACHESIGN) * (maxoff + 1));
+	cache_sign = palloc(siglen * (maxoff + 1));
 
 	for (k = FirstOffsetNumber; k <= maxoff; k = OffsetNumberNext(k))
 		fillcache(&cache[k], GETENTRY(entryvec, k), &cache_sign[siglen * k],
@@ -841,7 +841,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	/* initialize the result vectors */
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	nbytes = maxoff * sizeof(OffsetNumber);
 	v->spl_left = left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = right = (OffsetNumber *) palloc(nbytes);
 	v->spl_nleft = 0;
@@ -853,9 +853,6 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 
 	union_l = GETSIGN(datum_l);
 	union_r = GETSIGN(datum_r);
-	maxoff = OffsetNumberNext(maxoff);
-	fillcache(&cache[maxoff], GETENTRY(entryvec, maxoff),
-			  &cache_sign[siglen * maxoff], siglen);
 
 	/* sort before ... */
 	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
@@ -944,7 +941,6 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 		}
 	}
 
-	*right = *left = FirstOffsetNumber;
 	v->spl_ldatum = PointerGetDatum(datum_l);
 	v->spl_rdatum = PointerGetDatum(datum_r);
 
