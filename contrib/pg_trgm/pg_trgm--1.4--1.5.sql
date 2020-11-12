@@ -1,4 +1,4 @@
-/* contrib/pg_trgm/pg_trgm--1.5--1.5.sql */
+/* contrib/pg_trgm/pg_trgm--1.4--1.5.sql */
 
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
 \echo Use "ALTER EXTENSION pg_trgm UPDATE TO '1.5'" to load this file. \quit
