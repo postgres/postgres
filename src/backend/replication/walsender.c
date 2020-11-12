@@ -460,6 +460,10 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	pq_sendstring(&buf, "content");		/* col name */
 	pq_sendint(&buf, 0, 4);		/* table oid */
 	pq_sendint(&buf, 0, 2);		/* attnum */
+	/*
+	 * While this is labeled as BYTEAOID, it is the same output format
+	 * as TEXTOID above.
+	 */
 	pq_sendint(&buf, BYTEAOID, 4);		/* type oid */
 	pq_sendint(&buf, -1, 2);	/* typlen */
 	pq_sendint(&buf, 0, 4);		/* typmod */
