@@ -496,7 +496,7 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	pq_sendstring(&buf, "content"); /* col name */
 	pq_sendint32(&buf, 0);		/* table oid */
 	pq_sendint16(&buf, 0);		/* attnum */
-	pq_sendint32(&buf, BYTEAOID);	/* type oid */
+	pq_sendint32(&buf, TEXTOID);	/* type oid */
 	pq_sendint16(&buf, -1);		/* typlen */
 	pq_sendint32(&buf, 0);		/* typmod */
 	pq_sendint16(&buf, 0);		/* format code */
