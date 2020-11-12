@@ -173,7 +173,7 @@ PostgreSQL documentation
         with a role having sufficient permissions to execute the functions
         used by <application>pg_rewind</application> on the source server
         (see Notes section for details) or a superuser role.  This option
-        requires the source server to be running and not in recovery mode.
+        requires the source server to be running and accepting connections.
        </para>
       </listitem>
      </varlistentry>
