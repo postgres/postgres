@@ -3356,11 +3356,17 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        <para>
         Splits <parameter>string</parameter> at occurrences
         of <parameter>delimiter</parameter> and returns
-        the <parameter>n</parameter>'th field (counting from one).
+        the <parameter>n</parameter>'th field (counting from one),
+        or when <parameter>n</parameter> is negative, returns
+        the |<parameter>n</parameter>|'th-from-last field.
        </para>
        <para>
         <literal>split_part('abc~@~def~@~ghi', '~@~', 2)</literal>
         <returnvalue>def</returnvalue>
+       </para>
+       <para>
+        <literal>split_part('abc,def,ghi,jkl', ',', -2)</literal>
+        <returnvalue>ghi</returnvalue>
        </para></entry>
       </row>
 

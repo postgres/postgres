@@ -1552,8 +1552,56 @@ SELECT replace('yabadoo', 'bad', '') AS "yaoo";
 --
 -- test split_part
 --
+select split_part('','@',1) AS "empty string";
+ empty string 
+--------------
+ 
+(1 row)
+
+select split_part('','@',-1) AS "empty string";
+ empty string 
+--------------
+ 
+(1 row)
+
+select split_part('joeuser@mydatabase','',1) AS "joeuser@mydatabase";
+ joeuser@mydatabase 
+--------------------
+ joeuser@mydatabase
+(1 row)
+
+select split_part('joeuser@mydatabase','',2) AS "empty string";
+ empty string 
+--------------
+ 
+(1 row)
+
+select split_part('joeuser@mydatabase','',-1) AS "joeuser@mydatabase";
+ joeuser@mydatabase 
+--------------------
+ joeuser@mydatabase
+(1 row)
+
+select split_part('joeuser@mydatabase','',-2) AS "empty string";
+ empty string 
+--------------
+ 
+(1 row)
+
 select split_part('joeuser@mydatabase','@',0) AS "an error";
-ERROR:  field position must be greater than zero
+ERROR:  field position must not be zero
+select split_part('joeuser@mydatabase','@@',1) AS "joeuser@mydatabase";
+ joeuser@mydatabase 
+--------------------
+ joeuser@mydatabase
+(1 row)
+
+select split_part('joeuser@mydatabase','@@',2) AS "empty string";
+ empty string 
+--------------
+ 
+(1 row)
+
 select split_part('joeuser@mydatabase','@',1) AS "joeuser";
  joeuser 
 ---------
@@ -1576,6 +1624,30 @@ select split_part('@joeuser@mydatabase@','@',2) AS "joeuser";
  joeuser 
 ---------
  joeuser
+(1 row)
+
+select split_part('joeuser@mydatabase','@',-1) AS "mydatabase";
+ mydatabase 
+------------
+ mydatabase
+(1 row)
+
+select split_part('joeuser@mydatabase','@',-2) AS "joeuser";
+ joeuser 
+---------
+ joeuser
+(1 row)
+
+select split_part('joeuser@mydatabase','@',-3) AS "empty string";
+ empty string 
+--------------
+ 
+(1 row)
+
+select split_part('@joeuser@mydatabase@','@',-2) AS "mydatabase";
+ mydatabase 
+------------
+ mydatabase
 (1 row)
 
 --
