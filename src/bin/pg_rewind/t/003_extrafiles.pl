@@ -43,13 +43,10 @@ sub run_test
 	append_to_file
 	  "$test_standby_datadir/tst_standby_dir/standby_file3 with 'quotes'",
 	  "in standby3";
-	append_to_file
-	  "$test_standby_datadir/tst_standby_dir/standby_file4 with double\"quote",
-	  "in standby4";
 	mkdir "$test_standby_datadir/tst_standby_dir/standby_subdir/";
 	append_to_file
-	  "$test_standby_datadir/tst_standby_dir/standby_subdir/standby_file5",
-	  "in standby5";
+	  "$test_standby_datadir/tst_standby_dir/standby_subdir/standby_file4",
+	  "in standby4";
 
 	mkdir "$test_primary_datadir/tst_primary_dir";
 	append_to_file "$test_primary_datadir/tst_primary_dir/primary_file1",
@@ -87,9 +84,8 @@ sub run_test
 			"$test_primary_datadir/tst_standby_dir/standby_file1",
 			"$test_primary_datadir/tst_standby_dir/standby_file2",
 			"$test_primary_datadir/tst_standby_dir/standby_file3 with 'quotes'",
-			"$test_primary_datadir/tst_standby_dir/standby_file4 with double\"quote",
 			"$test_primary_datadir/tst_standby_dir/standby_subdir",
-			"$test_primary_datadir/tst_standby_dir/standby_subdir/standby_file5"
+			"$test_primary_datadir/tst_standby_dir/standby_subdir/standby_file4"
 		],
 		"file lists match");
 
