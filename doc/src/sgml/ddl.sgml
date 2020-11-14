@@ -3537,8 +3537,8 @@ VALUES ('Albany', NULL, NULL, 'NY');
       <para>
        Query performance can be improved dramatically in certain situations,
        particularly when most of the heavily accessed rows of the table are in a
-       single partition or a small number of partitions.  The partitioning
-       substitutes for leading columns of indexes, reducing index size and
+       single partition or a small number of partitions.  Partitioning
+       effectively substitutes for the upper tree levels of indexes,
        making it more likely that the heavily-used parts of the indexes
        fit in memory.
       </para>
@@ -3547,18 +3547,20 @@ VALUES ('Albany', NULL, NULL, 'NY');
      <listitem>
       <para>
        When queries or updates access a large percentage of a single
-       partition, performance can be improved by taking advantage
-       of sequential scan of that partition instead of using an
-       index and random access reads scattered across the whole table.
+       partition, performance can be improved by using a
+       sequential scan of that partition instead of using an
+       index, which would require random-access reads scattered across the
+       whole table.
       </para>
      </listitem>
 
      <listitem>
       <para>
        Bulk loads and deletes can be accomplished by adding or removing
-       partitions, if that requirement is planned into the partitioning design.
-       Doing <command>ALTER TABLE DETACH PARTITION</command> or dropping an individual
-       partition using <command>DROP TABLE</command> is far faster than a bulk
+       partitions, if the usage pattern is accounted for in the
+       partitioning design.  Dropping an individual partition
+       using <command>DROP TABLE</command>, or doing <command>ALTER TABLE
+       DETACH PARTITION</command>, is far faster than a bulk
        operation.  These commands also entirely avoid the
        <command>VACUUM</command> overhead caused by a bulk <command>DELETE</command>.
       </para>
@@ -3571,7 +3573,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
      </listitem>
     </itemizedlist>
 
-     The benefits will normally be worthwhile only when a table would
+     These benefits will normally be worthwhile only when a table would
      otherwise be very large. The exact point at which a table will
      benefit from partitioning depends on the application, although a
      rule of thumb is that the size of the table should exceed the physical
@@ -3593,6 +3595,13 @@ VALUES ('Albany', NULL, NULL, 'NY');
          the ranges of values assigned to different partitions.  For
          example, one might partition by date ranges, or by ranges of
          identifiers for particular business objects.
+         Each range's bounds are understood as being inclusive at the
+         lower end and exclusive at the upper end.  For example, if one
+         partition's range is from <literal>1</literal>
+         to <literal>10</literal>, and the next one's range is
+         from <literal>10</literal> to <literal>20</literal>, then
+         value <literal>10</literal> belongs to the second partition not
+         the first.
         </para>
        </listitem>
       </varlistentry>
@@ -3602,7 +3611,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
        <listitem>
         <para>
-         The table is partitioned by explicitly listing which key values
+         The table is partitioned by explicitly listing which key value(s)
          appear in each partition.
         </para>
        </listitem>
@@ -3634,25 +3643,34 @@ VALUES ('Albany', NULL, NULL, 'NY');
    <title>Declarative Partitioning</title>
 
    <para>
-    <productname>PostgreSQL</productname> offers a way to specify how to
-    divide a table into pieces called partitions.  The table that is divided
+    <productname>PostgreSQL</productname> allows you to declare
+    that a table is divided into partitions.  The table that is divided
     is referred to as a <firstterm>partitioned table</firstterm>.  The
-    specification consists of the <firstterm>partitioning method</firstterm>
-    and a list of columns or expressions to be used as the
-    <firstterm>partition key</firstterm>.
+    declaration includes the <firstterm>partitioning method</firstterm>
+    as described above, plus a list of columns or expressions to be used
+    as the <firstterm>partition key</firstterm>.
    </para>
 
    <para>
-    All rows inserted into a partitioned table will be routed to one of the
-    <firstterm>partitions</firstterm> based on the value of the partition
-    key.  Each partition has a subset of the data defined by its
-    <firstterm>partition bounds</firstterm>.  The currently supported
-    partitioning methods are range, list, and hash.
+    The partitioned table itself is a <quote>virtual</quote> table having
+    no storage of its own.  Instead, the storage belongs
+    to <firstterm>partitions</firstterm>, which are otherwise-ordinary
+    tables associated with the partitioned table.
+    Each partition stores a subset of the data as defined by its
+    <firstterm>partition bounds</firstterm>.
+    All rows inserted into a partitioned table will be routed to the
+    appropriate one of the partitions based on the values of the partition
+    key column(s).
+    Updating the partition key of a row will cause it to be moved into a
+    different partition if it no longer satisfies the partition bounds
+    of its original partition.
    </para>
 
    <para>
-    Partitions may themselves be defined as partitioned tables, using what is
-    called <firstterm>sub-partitioning</firstterm>.  Partitions may have their
+    Partitions may themselves be defined as partitioned tables, resulting
+    in <firstterm>sub-partitioning</firstterm>.  Although all partitions
+    must have the same columns as their partitioned parent, partitions may
+    have their
     own indexes, constraints and default values, distinct from those of other
     partitions.  See <xref linkend="sql-createtable"/> for more details on
     creating partitioned tables and partitions.
@@ -3660,88 +3678,19 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
    <para>
     It is not possible to turn a regular table into a partitioned table or
-    vice versa.  However, it is possible to add a regular or partitioned table
-    containing data as a partition of a partitioned table, or remove a
+    vice versa.  However, it is possible to add an existing regular or
+    partitioned table as a partition of a partitioned table, or remove a
     partition from a partitioned table turning it into a standalone table;
-    see <xref linkend="sql-altertable"/> to learn more about the
+    this can simplify and speed up many maintenance processes.
+    See <xref linkend="sql-altertable"/> to learn more about the
     <command>ATTACH PARTITION</command> and <command>DETACH PARTITION</command>
     sub-commands.
-   </para>
-
-   <para>
-    Individual partitions are linked to the partitioned table with inheritance
-    behind-the-scenes; however, it is not possible to use some of the
-    generic features of inheritance (discussed below) with declaratively
-    partitioned tables or their partitions.  For example, a partition
-    cannot have any parents other than the partitioned table it is a
-    partition of, nor can a regular table inherit from a partitioned table
-    making the latter its parent.  That means partitioned tables and their
-    partitions do not participate in inheritance with regular tables.
-    Since a partition hierarchy consisting of the partitioned table and its
-    partitions is still an inheritance hierarchy, all the normal rules of
-    inheritance apply as described in <xref linkend="ddl-inherit"/> with
-    some exceptions, most notably:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       Both <literal>CHECK</literal> and <literal>NOT NULL</literal>
-       constraints of a partitioned table are always inherited by all its
-       partitions.  <literal>CHECK</literal> constraints that are marked
-       <literal>NO INHERIT</literal> are not allowed to be created on
-       partitioned tables.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Using <literal>ONLY</literal> to add or drop a constraint on only the
-       partitioned table is supported as long as there are no partitions.  Once
-       partitions exist, using <literal>ONLY</literal> will result in an error
-       as adding or dropping constraints on only the partitioned table, when
-       partitions exist, is not supported.  Instead, constraints on the
-       partitions themselves can be added and (if they are not present in the
-       parent table) dropped.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       As a partitioned table does not have any data directly, attempts to use
-       <command>TRUNCATE</command> <literal>ONLY</literal> on a partitioned
-       table will always return an error.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Partitions cannot have columns that are not present in the parent.  It
-       is not possible to specify columns when creating partitions with
-       <command>CREATE TABLE</command>, nor is it possible to add columns to
-       partitions after-the-fact using <command>ALTER TABLE</command>.  Tables may be
-       added as a partition with <command>ALTER TABLE ... ATTACH PARTITION</command>
-       only if their columns exactly match the parent.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       You cannot drop the <literal>NOT NULL</literal> constraint on a
-       partition's column if the constraint is present in the parent table.
-      </para>
-     </listitem>
-    </itemizedlist>
    </para>
 
    <para>
     Partitions can also be foreign tables, although they have some limitations
     that normal tables do not; see <xref linkend="sql-createforeigntable"/> for
     more information.
-   </para>
-
-   <para>
-    Updating the partition key of a row might cause it to be moved into a
-    different partition where this row satisfies the partition bounds.
    </para>
 
    <sect3 id="ddl-partitioning-declarative-example">
@@ -3764,7 +3713,7 @@ CREATE TABLE measurement (
     We know that most queries will access just the last week's, month's or
     quarter's data, since the main use of this table will be to prepare
     online reports for management.  To reduce the amount of old data that
-    needs to be stored, we decide to only keep the most recent 3 years
+    needs to be stored, we decide to keep only the most recent 3 years
     worth of data. At the beginning of each month we will remove the oldest
     month's data.  In this situation we can use partitioning to help us meet
     all of our different requirements for the measurements table.
@@ -3776,7 +3725,7 @@ CREATE TABLE measurement (
     <orderedlist spacing="compact">
      <listitem>
       <para>
-       Create <structname>measurement</structname> table as a partitioned
+       Create the <structname>measurement</structname> table as a partitioned
        table by specifying the <literal>PARTITION BY</literal> clause, which
        includes the partitioning method (<literal>RANGE</literal> in this
        case) and the list of column(s) to use as the partition key.
@@ -3790,30 +3739,15 @@ CREATE TABLE measurement (
 ) PARTITION BY RANGE (logdate);
 </programlisting>
       </para>
-
-      <para>
-       You may decide to use multiple columns in the partition key for range
-       partitioning, if desired.  Of course, this will often result in a larger
-       number of partitions, each of which is individually smaller.  On the
-       other hand, using fewer columns may lead to a coarser-grained
-       partitioning criteria with smaller number of partitions.  A query
-       accessing the partitioned table will have to scan fewer partitions if
-       the conditions involve some or all of these columns.
-       For example, consider a table range partitioned using columns
-       <structfield>lastname</structfield> and <structfield>firstname</structfield> (in that order)
-       as the partition key.
-      </para>
      </listitem>
 
      <listitem>
       <para>
-       Create partitions.  Each partition's definition must specify the bounds
+       Create partitions.  Each partition's definition must specify bounds
        that correspond to the partitioning method and partition key of the
        parent.  Note that specifying bounds such that the new partition's
-       values will overlap with those in one or more existing partitions will
-       cause an error.  Inserting data into the parent table that does not map
-       to one of the existing partitions will cause an error; an appropriate
-       partition must be added manually.
+       values would overlap with those in one or more existing partitions will
+       cause an error.
       </para>
 
       <para>
@@ -3824,10 +3758,9 @@ CREATE TABLE measurement (
       </para>
 
       <para>
-       It is not necessary to create table constraints describing partition
-       boundary condition for partitions.  Instead, partition constraints are
-       generated implicitly from the partition bound specification whenever
-       there is need to refer to them.
+       For our example, each partition should hold one month's worth of
+       data, to match the requirement of deleting one month's data at a
+       time.  So the commands might look like:
 
 <programlisting>
 CREATE TABLE measurement_y2006m02 PARTITION OF measurement
@@ -3849,10 +3782,13 @@ CREATE TABLE measurement_y2008m01 PARTITION OF measurement
     WITH (parallel_workers = 4)
     TABLESPACE fasttablespace;
 </programlisting>
+
+       (Recall that adjacent partitions can share a bound value, since
+       range upper bounds are treated as exclusive bounds.)
       </para>
 
       <para>
-       To implement sub-partitioning, specify the
+       If you wish to implement sub-partitioning, again specify the
        <literal>PARTITION BY</literal> clause in the commands used to create
        individual partitions, for example:
 
@@ -3864,15 +3800,28 @@ CREATE TABLE measurement_y2006m02 PARTITION OF measurement
 
        After creating partitions of <structname>measurement_y2006m02</structname>,
        any data inserted into <structname>measurement</structname> that is mapped to
-       <structname>measurement_y2006m02</structname> (or data that is directly inserted
-       into <structname>measurement_y2006m02</structname>, provided it satisfies its
-       partition constraint) will be further redirected to one of its
+       <structname>measurement_y2006m02</structname> (or data that is
+       directly inserted into <structname>measurement_y2006m02</structname>,
+       which is allowed provided its partition constraint is satisfied)
+       will be further redirected to one of its
        partitions based on the <structfield>peaktemp</structfield> column.  The partition
        key specified may overlap with the parent's partition key, although
        care should be taken when specifying the bounds of a sub-partition
        such that the set of data it accepts constitutes a subset of what
-       the partition's own bounds allows; the system does not try to check
+       the partition's own bounds allow; the system does not try to check
        whether that's really the case.
+      </para>
+
+      <para>
+       Inserting data into the parent table that does not map
+       to one of the existing partitions will cause an error; an appropriate
+       partition must be added manually.
+      </para>
+
+      <para>
+       It is not necessary to manually create table constraints describing
+       the partition boundary conditions for partitions.  Such constraints
+       will be created automatically.
       </para>
      </listitem>
 
@@ -3881,9 +3830,13 @@ CREATE TABLE measurement_y2006m02 PARTITION OF measurement
        Create an index on the key column(s), as well as any other indexes you
        might want, on the partitioned table. (The key index is not strictly
        necessary, but in most scenarios it is helpful.)
-       This automatically creates
-       one index on each partition, and any partitions you create or attach
-       later will also contain the index.
+       This automatically creates a matching index on each partition, and
+       any partitions you create or attach later will also have such an
+       index.
+       An index or unique constraint declared on a partitioned table
+       is <quote>virtual</quote> in the same way that the partitioned table
+       is: the actual data is in child indexes on the individual partition
+       tables.
 
 <programlisting>
 CREATE INDEX ON measurement (logdate);
@@ -3914,7 +3867,7 @@ CREATE INDEX ON measurement (logdate);
     <para>
       Normally the set of partitions established when initially defining the
       table is not intended to remain static.  It is common to want to
-      remove old partitions of data and periodically add new partitions for
+      remove partitions holding old data and periodically add new partitions for
       new data. One of the most important advantages of partitioning is
       precisely that it allows this otherwise painful task to be executed
       nearly instantaneously by manipulating the partition structure, rather
@@ -3963,8 +3916,10 @@ CREATE TABLE measurement_y2008m02 PARTITION OF measurement
 
      As an alternative, it is sometimes more convenient to create the
      new table outside the partition structure, and make it a proper
-     partition later. This allows the data to be loaded, checked, and
-     transformed prior to it appearing in the partitioned table:
+     partition later. This allows new data to be loaded, checked, and
+     transformed prior to it appearing in the partitioned table.
+     The <literal>CREATE TABLE ... LIKE</literal> option is helpful
+     to avoid tediously repeating the parent table's definition:
 
 <programlisting>
 CREATE TABLE measurement_y2008m02
@@ -3985,27 +3940,29 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
     <para>
      Before running the <command>ATTACH PARTITION</command> command, it is
      recommended to create a <literal>CHECK</literal> constraint on the table to
-     be attached matching the desired partition constraint. That way,
-     the system will be able to skip the scan to validate the implicit
+     be attached that matches the expected partition constraint, as
+     illustrated above. That way, the system will be able to skip the scan
+     which is otherwise needed to validate the implicit
      partition constraint. Without the <literal>CHECK</literal> constraint,
      the table will be scanned to validate the partition constraint while
-     holding an <literal>ACCESS EXCLUSIVE</literal> lock on that partition
+     holding both an <literal>ACCESS EXCLUSIVE</literal> lock on that partition
      and a <literal>SHARE UPDATE EXCLUSIVE</literal> lock on the parent table.
-     It may be desired to drop the redundant <literal>CHECK</literal> constraint
-     after <command>ATTACH PARTITION</command> is finished.
+     It is recommended to drop the now-redundant <literal>CHECK</literal>
+     constraint after <command>ATTACH PARTITION</command> is finished.
     </para>
 
     <para>
      As explained above, it is possible to create indexes on partitioned tables
-     and they are applied automatically to the entire hierarchy.  This is very
-     convenient, as not only the existing partitions will become indexed, but
+     so that they are applied automatically to the entire hierarchy.
+     This is very
+     convenient, as not only will the existing partitions become indexed, but
      also any partitions that are created in the future will.  One limitation is
      that it's not possible to use the <literal>CONCURRENTLY</literal>
-     qualifier when creating such a partitioned index.  To overcome long lock
+     qualifier when creating such a partitioned index.  To avoid long lock
      times, it is possible to use <command>CREATE INDEX ON ONLY</command>
      the partitioned table; such an index is marked invalid, and the partitions
      do not get the index applied automatically.  The indexes on partitions can
-     be created separately using <literal>CONCURRENTLY</literal>, and later
+     be created individually using <literal>CONCURRENTLY</literal>, and then
      <firstterm>attached</firstterm> to the index on the parent using
      <command>ALTER INDEX .. ATTACH PARTITION</command>.  Once indexes for all
      partitions are attached to the parent index, the parent index is marked
@@ -4042,18 +3999,22 @@ ALTER INDEX measurement_city_id_logdate_key
     <itemizedlist>
      <listitem>
       <para>
-       There is no way to create an
-       exclusion constraint spanning all partitions; it is only possible
-       to constrain each leaf partition individually.
+       Unique constraints (and hence primary keys) on partitioned tables must
+       include all the partition key columns.  This limitation exists because
+       the individual indexes making up the constraint can only directly
+       enforce uniqueness within their own partitions; therefore, the
+       partition structure itself must guarantee that there are not
+       duplicates in different partitions.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Unique constraints (and hence primary keys) on partitioned tables must
-       include all the partition key columns.  This limitation exists because
-       <productname>PostgreSQL</productname> can only enforce
-       uniqueness in each partition individually.
+       There is no way to create an exclusion constraint spanning the
+       whole partitioned table.  It is only possible to put such a
+       constraint on each leaf partition individually.  Again, this
+       limitation stems from not being able to enforce cross-partition
+       restrictions.
       </para>
      </listitem>
 
@@ -4075,11 +4036,76 @@ ALTER INDEX measurement_city_id_logdate_key
      </listitem>
     </itemizedlist>
     </para>
+
+    <para>
+     Individual partitions are linked to their partitioned table using
+     inheritance behind-the-scenes.  However, it is not possible to use
+     all of the generic features of inheritance with declaratively
+     partitioned tables or their partitions, as discussed below.  Notably,
+     a partition cannot have any parents other than the partitioned table
+     it is a partition of, nor can a table inherit from both a partitioned
+     table and a regular table.  That means partitioned tables and their
+     partitions never share an inheritance hierarchy with regular tables.
+    </para>
+
+    <para>
+     Since a partition hierarchy consisting of the partitioned table and its
+     partitions is still an inheritance hierarchy, all the normal rules of
+     inheritance apply as described in <xref linkend="ddl-inherit"/>, with
+     a few exceptions:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+        Partitions cannot have columns that are not present in the parent.  It
+        is not possible to specify columns when creating partitions with
+        <command>CREATE TABLE</command>, nor is it possible to add columns to
+        partitions after-the-fact using <command>ALTER TABLE</command>.
+        Tables may be added as a partition with <command>ALTER TABLE
+        ... ATTACH PARTITION</command> only if their columns exactly match
+        the parent.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Both <literal>CHECK</literal> and <literal>NOT NULL</literal>
+        constraints of a partitioned table are always inherited by all its
+        partitions.  <literal>CHECK</literal> constraints that are marked
+        <literal>NO INHERIT</literal> are not allowed to be created on
+        partitioned tables.
+        You cannot drop a <literal>NOT NULL</literal> constraint on a
+        partition's column if the same constraint is present in the parent
+        table.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Using <literal>ONLY</literal> to add or drop a constraint on only
+        the partitioned table is supported as long as there are no
+        partitions.  Once partitions exist, using <literal>ONLY</literal>
+        will result in an error.  Instead, constraints on the partitions
+        themselves can be added and (if they are not present in the parent
+        table) dropped.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        As a partitioned table does not have any data itself, attempts to use
+        <command>TRUNCATE</command> <literal>ONLY</literal> on a partitioned
+        table will always return an error.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
     </sect3>
    </sect2>
 
-   <sect2 id="ddl-partitioning-implementation-inheritance">
-    <title>Implementation Using Inheritance</title>
+   <sect2 id="ddl-partitioning-using-inheritance">
+    <title>Partitioning Using Inheritance</title>
+
     <para>
      While the built-in declarative partitioning is suitable for most
      common use cases, there are some circumstances where a more flexible
@@ -4129,8 +4155,8 @@ ALTER INDEX measurement_city_id_logdate_key
      <title>Example</title>
 
      <para>
-      We use the non-partitioned <structname>measurement</structname>
-      table above.  To implement partitioning using inheritance, use
+      This example builds a partitioning structure equivalent to the
+      declarative partitioning example above.  Use
       the following steps:
 
       <orderedlist spacing="compact">
@@ -4142,7 +4168,16 @@ ALTER INDEX measurement_city_id_logdate_key
          to be applied equally to all child tables.  There is no point in
          defining any indexes or unique constraints on it, either.  For our
          example, the master table is the <structname>measurement</structname>
-         table as originally defined.
+         table as originally defined:
+
+<programlisting>
+CREATE TABLE measurement (
+    city_id         int not null,
+    logdate         date not null,
+    peaktemp        int,
+    unitsales       int
+);
+</programlisting>
         </para>
        </listitem>
 
@@ -4189,10 +4224,7 @@ CHECK ( outletID BETWEEN 200 AND 300 )
 </programlisting>
          This is wrong since it is not clear which child table the key
          value 200 belongs in.
-        </para>
-
-        <para>
-         It would be better to instead create child tables as follows:
+         Instead, ranges should be defined in this style:
 
 <programlisting>
 CREATE TABLE measurement_y2006m02 (
@@ -4265,7 +4297,7 @@ CREATE TRIGGER insert_measurement_trigger
 </programlisting>
 
          We must redefine the trigger function each month so that it always
-         points to the current child table.  The trigger definition does
+         inserts into the current child table.  The trigger definition does
          not need to be updated, however.
         </para>
 
@@ -4728,12 +4760,12 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    </itemizedlist>
    </para>
   </sect2>
-  
+
   <sect2 id="ddl-partitioning-declarative-best-practices">
-   <title>Declarative Partitioning Best Practices</title>
+   <title>Best Practices for Declarative Partitioning</title>
 
    <para>
-    The choice of how to partition a table should be made carefully as the
+    The choice of how to partition a table should be made carefully, as the
     performance of query planning and execution can be negatively affected by
     poor design.
    </para>
@@ -4743,8 +4775,8 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     by which you partition your data.  Often the best choice will be to
     partition by the column or set of columns which most commonly appear in
     <literal>WHERE</literal> clauses of queries being executed on the
-    partitioned table.  <literal>WHERE</literal> clause items that match and
-    are compatible with the partition key can be used to prune unneeded
+    partitioned table.  <literal>WHERE</literal> clauses that are compatible
+    with the partition bound constraints can be used to prune unneeded
     partitions.  However, you may be forced into making other decisions by
     requirements for the <literal>PRIMARY KEY</literal> or a
     <literal>UNIQUE</literal> constraint.  Removal of unwanted data is also a
@@ -4761,7 +4793,8 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     which could result in low cache hit ratios.  However, dividing the table
     into too many partitions can also cause issues.  Too many partitions can
     mean longer query planning times and higher memory consumption during both
-    query planning and execution.  When choosing how to partition your table,
+    query planning and execution, as further described below.
+    When choosing how to partition your table,
     it's also important to consider what changes may occur in the future.  For
     example, if you choose to have one partition per customer and you
     currently have a small number of large customers, consider the
@@ -4775,13 +4808,15 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
 
    <para>
     Sub-partitioning can be useful to further divide partitions that are
-    expected to become larger than other partitions, although excessive
-    sub-partitioning can easily lead to large numbers of partitions and can
-    cause the same problems mentioned in the preceding paragraph.
+    expected to become larger than other partitions.
+    Another option is to use range partitioning with multiple columns in
+    the partition key.
+    Either of these can easily lead to excessive numbers of partitions,
+    so restraint is advisable.
    </para>
 
    <para>
-    It is also important to consider the overhead of partitioning during
+    It is important to consider the overhead of partitioning during
     query planning and execution.  The query planner is generally able to
     handle partition hierarchies with up to a few thousand partitions fairly
     well, provided that typical queries allow the query planner to prune all
@@ -4790,7 +4825,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     performs partition pruning.  This is particularly true for the
     <command>UPDATE</command> and <command>DELETE</command> commands.  Another
     reason to be concerned about having a large number of partitions is that
-    the server's memory consumption may grow significantly over a period of
+    the server's memory consumption may grow significantly over
     time, especially if many sessions touch large numbers of partitions.
     That's because each partition requires its metadata to be loaded into the
     local memory of each session that touches it.
@@ -4804,8 +4839,8 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     either of these two types of workload, it is important to make the right
     decisions early, as re-partitioning large quantities of data can be
     painfully slow.  Simulations of the intended workload are often beneficial
-    for optimizing the partitioning strategy.  Never assume that more
-    partitions are better than fewer partitions and vice-versa.
+    for optimizing the partitioning strategy.  Never just assume that more
+    partitions are better than fewer partitions, nor vice-versa.
    </para>
   </sect2>
 
