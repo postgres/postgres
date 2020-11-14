@@ -588,7 +588,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		true
 	},
 	{
-		"extented statistics",
+		"extended statistics",
 		StatisticExtRelationId,
 		StatisticExtOidIndexId,
 		STATEXTOID,

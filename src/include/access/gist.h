@@ -80,7 +80,7 @@ typedef GISTPageOpaqueData *GISTPageOpaque;
  * Maximum possible sizes for GiST index tuple and index key.  Calculation is
  * based on assumption that GiST page should fit at least 4 tuples.  In theory,
  * GiST index can be functional when page can fit 3 tuples.  But that seems
- * rather inefficent, so we use a bit conservative estimate.
+ * rather inefficient, so we use a bit conservative estimate.
  *
  * The maximum size of index key is true for unicolumn index.  Therefore, this
  * estimation should be used to figure out which maximum size of GiST index key

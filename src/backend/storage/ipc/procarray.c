@@ -1686,7 +1686,7 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 		 * loop over all PGPROCs it is cheaper to just initialize to the
 		 * current top-level xid any.
 		 *
-		 * Without an assigned xid we could use a horizon as agressive as
+		 * Without an assigned xid we could use a horizon as aggressive as
 		 * ReadNewTransactionid(), but we can get away with the much cheaper
 		 * latestCompletedXid + 1: If this backend has no xid there, by
 		 * definition, can't be any newer changes in the temp table than

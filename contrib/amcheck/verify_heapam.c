@@ -500,7 +500,7 @@ sanity_check_relation(Relation rel)
 /*
  * Record a single corruption found in the table.  The values in ctx should
  * reflect the location of the corruption, and the msg argument should contain
- * a human readable description of the corruption.
+ * a human-readable description of the corruption.
  *
  * The msg argument is pfree'd by this function.
  */

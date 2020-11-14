@@ -212,7 +212,7 @@ TypeCreate(Oid newTypeOid,
 		   bool isImplicitArray,
 		   Oid arrayType,
 		   Oid baseType,
-		   const char *defaultTypeValue,	/* human readable rep */
+		   const char *defaultTypeValue,	/* human-readable rep */
 		   char *defaultTypeBin,	/* cooked rep */
 		   bool passedByValue,
 		   char alignment,

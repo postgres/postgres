@@ -40,8 +40,8 @@
  *
  * Note: though this is an enum, the values are used to identify message types
  * in logical replication protocol, which uses a single byte to identify a
- * message type. Hence the values should be single byte wide and preferrably
- * human readable characters.
+ * message type. Hence the values should be single-byte wide and preferably
+ * human-readable characters.
  */
 typedef enum LogicalRepMsgType
 {
