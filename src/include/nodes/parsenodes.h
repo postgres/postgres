@@ -2425,6 +2425,8 @@ typedef struct CreateAmStmt
 typedef struct CreateTrigStmt
 {
 	NodeTag		type;
+	bool		replace;		/* replace trigger if already exists */
+	bool		isconstraint;	/* This is a constraint trigger */
 	char	   *trigname;		/* TRIGGER's name */
 	RangeVar   *relation;		/* relation trigger is on */
 	List	   *funcname;		/* qual. name of function to call */
@@ -2436,7 +2438,6 @@ typedef struct CreateTrigStmt
 	int16		events;			/* "OR" of INSERT/UPDATE/DELETE/TRUNCATE */
 	List	   *columns;		/* column names, or NIL for all columns */
 	Node	   *whenClause;		/* qual expression, or NULL if none */
-	bool		isconstraint;	/* This is a constraint trigger */
 	/* explicitly named transition data */
 	List	   *transitionRels; /* TriggerTransition nodes, or NIL if none */
 	/* The remaining fields are only used for constraint triggers */

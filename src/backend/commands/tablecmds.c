@@ -10550,10 +10550,10 @@ CreateFKCheckTrigger(Oid myRelOid, Oid refRelOid, Constraint *fkconstraint,
 	 * and "RI_ConstraintTrigger_c_NNNN" for the check triggers.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
+	fk_trigger->replace = false;
+	fk_trigger->isconstraint = true;
 	fk_trigger->trigname = "RI_ConstraintTrigger_c";
 	fk_trigger->relation = NULL;
-	fk_trigger->row = true;
-	fk_trigger->timing = TRIGGER_TYPE_AFTER;
 
 	/* Either ON INSERT or ON UPDATE */
 	if (on_insert)
@@ -10567,14 +10567,15 @@ CreateFKCheckTrigger(Oid myRelOid, Oid refRelOid, Constraint *fkconstraint,
 		fk_trigger->events = TRIGGER_TYPE_UPDATE;
 	}
 
+	fk_trigger->args = NIL;
+	fk_trigger->row = true;
+	fk_trigger->timing = TRIGGER_TYPE_AFTER;
 	fk_trigger->columns = NIL;
-	fk_trigger->transitionRels = NIL;
 	fk_trigger->whenClause = NULL;
-	fk_trigger->isconstraint = true;
+	fk_trigger->transitionRels = NIL;
 	fk_trigger->deferrable = fkconstraint->deferrable;
 	fk_trigger->initdeferred = fkconstraint->initdeferred;
 	fk_trigger->constrrel = NULL;
-	fk_trigger->args = NIL;
 
 	(void) CreateTrigger(fk_trigger, NULL, myRelOid, refRelOid, constraintOid,
 						 indexOid, InvalidOid, InvalidOid, NULL, true, false);
@@ -10599,15 +10600,17 @@ createForeignKeyActionTriggers(Relation rel, Oid refRelOid, Constraint *fkconstr
 	 * DELETE action on the referenced table.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
+	fk_trigger->replace = false;
+	fk_trigger->isconstraint = true;
 	fk_trigger->trigname = "RI_ConstraintTrigger_a";
 	fk_trigger->relation = NULL;
+	fk_trigger->args = NIL;
 	fk_trigger->row = true;
 	fk_trigger->timing = TRIGGER_TYPE_AFTER;
 	fk_trigger->events = TRIGGER_TYPE_DELETE;
 	fk_trigger->columns = NIL;
-	fk_trigger->transitionRels = NIL;
 	fk_trigger->whenClause = NULL;
-	fk_trigger->isconstraint = true;
+	fk_trigger->transitionRels = NIL;
 	fk_trigger->constrrel = NULL;
 	switch (fkconstraint->fk_del_action)
 	{
@@ -10641,7 +10644,6 @@ createForeignKeyActionTriggers(Relation rel, Oid refRelOid, Constraint *fkconstr
 				 (int) fkconstraint->fk_del_action);
 			break;
 	}
-	fk_trigger->args = NIL;
 
 	(void) CreateTrigger(fk_trigger, NULL, refRelOid, RelationGetRelid(rel),
 						 constraintOid,
@@ -10655,15 +10657,17 @@ createForeignKeyActionTriggers(Relation rel, Oid refRelOid, Constraint *fkconstr
 	 * UPDATE action on the referenced table.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
+	fk_trigger->replace = false;
+	fk_trigger->isconstraint = true;
 	fk_trigger->trigname = "RI_ConstraintTrigger_a";
 	fk_trigger->relation = NULL;
+	fk_trigger->args = NIL;
 	fk_trigger->row = true;
 	fk_trigger->timing = TRIGGER_TYPE_AFTER;
 	fk_trigger->events = TRIGGER_TYPE_UPDATE;
 	fk_trigger->columns = NIL;
-	fk_trigger->transitionRels = NIL;
 	fk_trigger->whenClause = NULL;
-	fk_trigger->isconstraint = true;
+	fk_trigger->transitionRels = NIL;
 	fk_trigger->constrrel = NULL;
 	switch (fkconstraint->fk_upd_action)
 	{
@@ -10697,7 +10701,6 @@ createForeignKeyActionTriggers(Relation rel, Oid refRelOid, Constraint *fkconstr
 				 (int) fkconstraint->fk_upd_action);
 			break;
 	}
-	fk_trigger->args = NIL;
 
 	(void) CreateTrigger(fk_trigger, NULL, refRelOid, RelationGetRelid(rel),
 						 constraintOid,
@@ -16898,6 +16901,8 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 		}
 
 		trigStmt = makeNode(CreateTrigStmt);
+		trigStmt->replace = false;
+		trigStmt->isconstraint = OidIsValid(trigForm->tgconstraint);
 		trigStmt->trigname = NameStr(trigForm->tgname);
 		trigStmt->relation = NULL;
 		trigStmt->funcname = NULL;	/* passed separately */
@@ -16907,7 +16912,6 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 		trigStmt->events = trigForm->tgtype & TRIGGER_TYPE_EVENT_MASK;
 		trigStmt->columns = cols;
 		trigStmt->whenClause = NULL;	/* passed separately */
-		trigStmt->isconstraint = OidIsValid(trigForm->tgconstraint);
 		trigStmt->transitionRels = NIL; /* not supported at present */
 		trigStmt->deferrable = trigForm->tgdeferrable;
 		trigStmt->initdeferred = trigForm->tginitdeferred;

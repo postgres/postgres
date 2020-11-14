@@ -4304,6 +4304,8 @@ _copyCreateTrigStmt(const CreateTrigStmt *from)
 {
 	CreateTrigStmt *newnode = makeNode(CreateTrigStmt);
 
+	COPY_SCALAR_FIELD(replace);
+	COPY_SCALAR_FIELD(isconstraint);
 	COPY_STRING_FIELD(trigname);
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(funcname);
@@ -4313,7 +4315,6 @@ _copyCreateTrigStmt(const CreateTrigStmt *from)
 	COPY_SCALAR_FIELD(events);
 	COPY_NODE_FIELD(columns);
 	COPY_NODE_FIELD(whenClause);
-	COPY_SCALAR_FIELD(isconstraint);
 	COPY_NODE_FIELD(transitionRels);
 	COPY_SCALAR_FIELD(deferrable);
 	COPY_SCALAR_FIELD(initdeferred);

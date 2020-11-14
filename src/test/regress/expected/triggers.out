@@ -3153,6 +3153,95 @@ drop table self_ref;
 drop function dump_insert();
 drop function dump_update();
 drop function dump_delete();
+--
+-- Tests for CREATE OR REPLACE TRIGGER
+--
+create table my_table (id integer);
+create function funcA() returns trigger as $$
+begin
+  raise notice 'hello from funcA';
+  return null;
+end; $$ language plpgsql;
+create function funcB() returns trigger as $$
+begin
+  raise notice 'hello from funcB';
+  return null;
+end; $$ language plpgsql;
+create trigger my_trig
+  after insert on my_table
+  for each row execute procedure funcA();
+create trigger my_trig
+  before insert on my_table
+  for each row execute procedure funcB();  -- should fail
+ERROR:  trigger "my_trig" for relation "my_table" already exists
+insert into my_table values (1);
+NOTICE:  hello from funcA
+create or replace trigger my_trig
+  before insert on my_table
+  for each row execute procedure funcB();  -- OK
+insert into my_table values (2);  -- this insert should become a no-op
+NOTICE:  hello from funcB
+table my_table;
+ id 
+----
+  1
+(1 row)
+
+drop table my_table;
+-- test CREATE OR REPLACE TRIGGER on partition table
+create table parted_trig (a int) partition by range (a);
+create table parted_trig_1 partition of parted_trig
+       for values from (0) to (1000) partition by range (a);
+create table parted_trig_1_1 partition of parted_trig_1 for values from (0) to (100);
+create table parted_trig_2 partition of parted_trig for values from (1000) to (2000);
+create table default_parted_trig partition of parted_trig default;
+-- test that trigger can be replaced by another one
+-- at the same level of partition table
+create or replace trigger my_trig
+  after insert on parted_trig
+  for each row execute procedure funcA();
+insert into parted_trig (a) values (50);
+NOTICE:  hello from funcA
+create or replace trigger my_trig
+  after insert on parted_trig
+  for each row execute procedure funcB();
+insert into parted_trig (a) values (50);
+NOTICE:  hello from funcB
+-- test that child trigger cannot be replaced directly
+create or replace trigger my_trig
+  after insert on parted_trig
+  for each row execute procedure funcA();
+insert into parted_trig (a) values (50);
+NOTICE:  hello from funcA
+create or replace trigger my_trig
+  after insert on parted_trig_1
+  for each row execute procedure funcB();  -- should fail
+ERROR:  trigger "my_trig" for relation "parted_trig_1" is an internal trigger
+insert into parted_trig (a) values (50);
+NOTICE:  hello from funcA
+drop trigger my_trig on parted_trig;
+insert into parted_trig (a) values (50);
+-- test that user trigger can be overwritten by one defined at upper level
+create trigger my_trig
+  after insert on parted_trig_1
+  for each row execute procedure funcA();
+insert into parted_trig (a) values (50);
+NOTICE:  hello from funcA
+create trigger my_trig
+  after insert on parted_trig
+  for each row execute procedure funcB();  -- should fail
+ERROR:  trigger "my_trig" for relation "parted_trig_1" already exists
+insert into parted_trig (a) values (50);
+NOTICE:  hello from funcA
+create or replace trigger my_trig
+  after insert on parted_trig
+  for each row execute procedure funcB();
+insert into parted_trig (a) values (50);
+NOTICE:  hello from funcB
+-- cleanup
+drop table parted_trig;
+drop function funcA();
+drop function funcB();
 -- Leave around some objects for other tests
 create table trigger_parted (a int primary key) partition by list (a);
 create function trigger_parted_trigfunc() returns trigger language plpgsql as
