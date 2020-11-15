@@ -101,6 +101,12 @@ insert into test2 values ('abcdef');
 insert into test2 values ('quark');
 insert into test2 values ('  z foo bar');
 insert into test2 values ('/123/-45/');
+insert into test2 values ('line 1');
+insert into test2 values ('%line 2');
+insert into test2 values ('line 3%');
+insert into test2 values ('%line 4%');
+insert into test2 values ('%li%ne 5%');
+insert into test2 values ('li_e 6');
 create index test2_idx_gin on test2 using gin (t gin_trgm_ops);
 set enable_seqscan=off;
 explain (costs off)
@@ -137,6 +143,23 @@ select * from test2 where t ~ '  z foo bar';
 select * from test2 where t ~ '  z foo';
 select * from test2 where t ~ 'qua(?!foo)';
 select * from test2 where t ~ '/\d+/-\d';
+-- test = operator
+explain (costs off)
+  select * from test2 where t = 'abcdef';
+select * from test2 where t = 'abcdef';
+explain (costs off)
+  select * from test2 where t = '%line%';
+select * from test2 where t = '%line%';
+select * from test2 where t = 'li_e 1';
+select * from test2 where t = '%line 2';
+select * from test2 where t = 'line 3%';
+select * from test2 where t = '%line 3%';
+select * from test2 where t = '%line 4%';
+select * from test2 where t = '%line 5%';
+select * from test2 where t = '%li_ne 5%';
+select * from test2 where t = '%li%ne 5%';
+select * from test2 where t = 'line 6';
+select * from test2 where t = 'li_e 6';
 drop index test2_idx_gin;
 
 create index test2_idx_gist on test2 using gist (t gist_trgm_ops);
@@ -175,6 +198,23 @@ select * from test2 where t ~ '  z foo bar';
 select * from test2 where t ~ '  z foo';
 select * from test2 where t ~ 'qua(?!foo)';
 select * from test2 where t ~ '/\d+/-\d';
+-- test = operator
+explain (costs off)
+  select * from test2 where t = 'abcdef';
+select * from test2 where t = 'abcdef';
+explain (costs off)
+  select * from test2 where t = '%line%';
+select * from test2 where t = '%line%';
+select * from test2 where t = 'li_e 1';
+select * from test2 where t = '%line 2';
+select * from test2 where t = 'line 3%';
+select * from test2 where t = '%line 3%';
+select * from test2 where t = '%line 4%';
+select * from test2 where t = '%line 5%';
+select * from test2 where t = '%li_ne 5%';
+select * from test2 where t = '%li%ne 5%';
+select * from test2 where t = 'line 6';
+select * from test2 where t = 'li_e 6';
 
 -- Check similarity threshold (bug #14202)
 

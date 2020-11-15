@@ -232,6 +232,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 			case SimilarityStrategyNumber:
 			case WordSimilarityStrategyNumber:
 			case StrictWordSimilarityStrategyNumber:
+			case EqualStrategyNumber:
 				qtrg = generate_trgm(VARDATA(query),
 									 querysize - VARHDRSZ);
 				break;
@@ -338,7 +339,8 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 #endif
 			/* FALL THRU */
 		case LikeStrategyNumber:
-			/* Wildcard search is inexact */
+		case EqualStrategyNumber:
+			/* Wildcard and equal search are inexact */
 			*recheck = true;
 
 			/*

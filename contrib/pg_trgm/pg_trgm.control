@@ -1,6 +1,6 @@
 # pg_trgm extension
 comment = 'text similarity measurement and index searching based on trigrams'
-default_version = '1.5'
+default_version = '1.6'
 module_pathname = '$libdir/pg_trgm'
 relocatable = true
 trusted = true

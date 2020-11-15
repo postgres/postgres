@@ -4761,6 +4761,12 @@ insert into test2 values ('abcdef');
 insert into test2 values ('quark');
 insert into test2 values ('  z foo bar');
 insert into test2 values ('/123/-45/');
+insert into test2 values ('line 1');
+insert into test2 values ('%line 2');
+insert into test2 values ('line 3%');
+insert into test2 values ('%line 4%');
+insert into test2 values ('%li%ne 5%');
+insert into test2 values ('li_e 6');
 create index test2_idx_gin on test2 using gin (t gin_trgm_ops);
 set enable_seqscan=off;
 explain (costs off)
@@ -4863,7 +4869,13 @@ select * from test2 where t ~ '(abc)*$';
  quark
    z foo bar
  /123/-45/
-(4 rows)
+ line 1
+ %line 2
+ line 3%
+ %line 4%
+ %li%ne 5%
+ li_e 6
+(10 rows)
 
 select * from test2 where t ~* 'DEF';
    t    
@@ -4918,7 +4930,11 @@ select * from test2 where t ~ '[a-z]{3}';
  abcdef
  quark
    z foo bar
-(3 rows)
+ line 1
+ %line 2
+ line 3%
+ %line 4%
+(7 rows)
 
 select * from test2 where t ~* '(a{10}|b{10}|c{10}){10}';
  t 
@@ -4959,6 +4975,93 @@ select * from test2 where t ~ '/\d+/-\d';
      t     
 -----------
  /123/-45/
+(1 row)
+
+-- test = operator
+explain (costs off)
+  select * from test2 where t = 'abcdef';
+                QUERY PLAN                
+------------------------------------------
+ Bitmap Heap Scan on test2
+   Recheck Cond: (t = 'abcdef'::text)
+   ->  Bitmap Index Scan on test2_idx_gin
+         Index Cond: (t = 'abcdef'::text)
+(4 rows)
+
+select * from test2 where t = 'abcdef';
+   t    
+--------
+ abcdef
+(1 row)
+
+explain (costs off)
+  select * from test2 where t = '%line%';
+                QUERY PLAN                
+------------------------------------------
+ Bitmap Heap Scan on test2
+   Recheck Cond: (t = '%line%'::text)
+   ->  Bitmap Index Scan on test2_idx_gin
+         Index Cond: (t = '%line%'::text)
+(4 rows)
+
+select * from test2 where t = '%line%';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = 'li_e 1';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = '%line 2';
+    t    
+---------
+ %line 2
+(1 row)
+
+select * from test2 where t = 'line 3%';
+    t    
+---------
+ line 3%
+(1 row)
+
+select * from test2 where t = '%line 3%';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = '%line 4%';
+    t     
+----------
+ %line 4%
+(1 row)
+
+select * from test2 where t = '%line 5%';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = '%li_ne 5%';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = '%li%ne 5%';
+     t     
+-----------
+ %li%ne 5%
+(1 row)
+
+select * from test2 where t = 'line 6';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = 'li_e 6';
+   t    
+--------
+ li_e 6
 (1 row)
 
 drop index test2_idx_gin;
@@ -5056,7 +5159,13 @@ select * from test2 where t ~ '(abc)*$';
  quark
    z foo bar
  /123/-45/
-(4 rows)
+ line 1
+ %line 2
+ line 3%
+ %line 4%
+ %li%ne 5%
+ li_e 6
+(10 rows)
 
 select * from test2 where t ~* 'DEF';
    t    
@@ -5111,7 +5220,11 @@ select * from test2 where t ~ '[a-z]{3}';
  abcdef
  quark
    z foo bar
-(3 rows)
+ line 1
+ %line 2
+ line 3%
+ %line 4%
+(7 rows)
 
 select * from test2 where t ~* '(a{10}|b{10}|c{10}){10}';
  t 
@@ -5152,6 +5265,89 @@ select * from test2 where t ~ '/\d+/-\d';
      t     
 -----------
  /123/-45/
+(1 row)
+
+-- test = operator
+explain (costs off)
+  select * from test2 where t = 'abcdef';
+                QUERY PLAN                
+------------------------------------------
+ Index Scan using test2_idx_gist on test2
+   Index Cond: (t = 'abcdef'::text)
+(2 rows)
+
+select * from test2 where t = 'abcdef';
+   t    
+--------
+ abcdef
+(1 row)
+
+explain (costs off)
+  select * from test2 where t = '%line%';
+                QUERY PLAN                
+------------------------------------------
+ Index Scan using test2_idx_gist on test2
+   Index Cond: (t = '%line%'::text)
+(2 rows)
+
+select * from test2 where t = '%line%';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = 'li_e 1';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = '%line 2';
+    t    
+---------
+ %line 2
+(1 row)
+
+select * from test2 where t = 'line 3%';
+    t    
+---------
+ line 3%
+(1 row)
+
+select * from test2 where t = '%line 3%';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = '%line 4%';
+    t     
+----------
+ %line 4%
+(1 row)
+
+select * from test2 where t = '%line 5%';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = '%li_ne 5%';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = '%li%ne 5%';
+     t     
+-----------
+ %li%ne 5%
+(1 row)
+
+select * from test2 where t = 'line 6';
+ t 
+---
+(0 rows)
+
+select * from test2 where t = 'li_e 6';
+   t    
+--------
+ li_e 6
 (1 row)
 
 -- Check similarity threshold (bug #14202)
