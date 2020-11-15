@@ -155,7 +155,7 @@ $node_a->safe_psql('postgres',
 	"INSERT INTO tbl1 values ('in A, after rewind')");
 
 $lsn = $node_a->lsn('insert');
-$node_b->wait_for_catchup('node_c', 'write', $lsn);
+$node_b->wait_for_catchup('node_c', 'replay', $lsn);
 
 check_query(
 	'SELECT * FROM tbl1',
