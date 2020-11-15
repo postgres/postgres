@@ -1025,6 +1025,7 @@ HeapScanDesc
 HeapTuple
 HeapTupleData
 HeapTupleFields
+HeapTupleForceOption
 HeapTupleHeader
 HeapTupleHeaderData
 HeapTupleTableSlot
@@ -2392,8 +2393,8 @@ SubPlanState
 SubTransactionId
 SubXactCallback
 SubXactCallbackItem
-SubXactInfo
 SubXactEvent
+SubXactInfo
 SubplanResultRelHashElem
 SubqueryScan
 SubqueryScanPath
@@ -3597,4 +3598,3 @@ yyscan_t
 z_stream
 z_streamp
 zic_t
-HeapTupleForceOption
