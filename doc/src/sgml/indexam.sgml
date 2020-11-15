@@ -197,7 +197,7 @@ typedef struct IndexAmRoutine
    implications.  The requirements of <structfield>amcanunique</structfield>
    are discussed in <xref linkend="index-unique-checks"/>.
    The <structfield>amcanmulticol</structfield> flag asserts that the
-   access method supports multicolumn indexes, while
+   access method supports multi-key-column indexes, while
    <structfield>amoptionalkey</structfield> asserts that it allows scans
    where no indexable restriction clause is given for the first index column.
    When <structfield>amcanmulticol</structfield> is false,
@@ -231,6 +231,19 @@ typedef struct IndexAmRoutine
    <structfield>amsearchnulls</structfield>, indicating that it supports
    <literal>IS NULL</literal> and <literal>IS NOT NULL</literal> clauses as search
    conditions.
+  </para>
+
+  <para>
+   The <structfield>amcaninclude</structfield> flag indicates whether the
+   access method supports <quote>included</quote> columns, that is it can
+   store (without processing) additional columns beyond the key column(s).
+   The requirements of the preceding paragraph apply only to the key
+   columns.  In particular, the combination
+   of <structfield>amcanmulticol</structfield>=<literal>false</literal>
+   and <structfield>amcaninclude</structfield>=<literal>true</literal> is
+   sensible: it means that there can only be one key column, but there can
+   also be included column(s).  Also, included columns must be allowed to be
+   null, independently of <structfield>amoptionalkey</structfield>.
   </para>
 
  </sect1>
@@ -383,10 +396,13 @@ amcanreturn (Relation indexRelation, int attno);
 </programlisting>
    Check whether the index can support <link
    linkend="indexes-index-only-scans"><firstterm>index-only scans</firstterm></link> on
-   the given column, by returning the indexed column values for an index entry
-   in the form of an <structname>IndexTuple</structname>.  The attribute number
-   is 1-based, i.e., the first column's attno is 1. Returns true if supported,
-   else false.  If the access method does not support index-only scans at all,
+   the given column, by returning the column's original indexed value.
+   The attribute number is 1-based, i.e., the first column's attno is 1.
+   Returns true if supported, else false.
+   This function should always return true for included columns
+   (if those are supported), since there's little point in an included
+   column that can't be retrieved.
+   If the access method does not support index-only scans at all,
    the <structfield>amcanreturn</structfield> field in its <structname>IndexAmRoutine</structname>
    struct can be set to NULL.
   </para>
@@ -476,7 +492,7 @@ amproperty (Oid index_oid, int attno,
    core code does not know how to do that and will return NULL.  It may
    also be advantageous to implement <literal>AMPROP_RETURNABLE</literal> testing,
    if that can be done more cheaply than by opening the index and calling
-   <structfield>amcanreturn</structfield>, which is the core code's default behavior.
+   <function>amcanreturn</function>, which is the core code's default behavior.
    The default behavior should be satisfactory for all other standard
    properties.
   </para>
@@ -621,10 +637,13 @@ amgettuple (IndexScanDesc scan,
 
   <para>
    If the index supports <link linkend="indexes-index-only-scans">index-only
-   scans</link> (i.e., <function>amcanreturn</function> returns true for it),
+   scans</link> (i.e., <function>amcanreturn</function> returns true for any
+   of its columns),
    then on success the AM must also check <literal>scan-&gt;xs_want_itup</literal>,
    and if that is true it must return the originally indexed data for the
-   index entry.  The data can be returned in the form of an
+   index entry.  Columns for which <function>amcanreturn</function> returns
+   false can be returned as nulls.
+   The data can be returned in the form of an
    <structname>IndexTuple</structname> pointer stored at <literal>scan-&gt;xs_itup</literal>,
    with tuple descriptor <literal>scan-&gt;xs_itupdesc</literal>; or in the form of
    a <structname>HeapTuple</structname> pointer stored at <literal>scan-&gt;xs_hitup</literal>,
