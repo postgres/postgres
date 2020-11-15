@@ -421,7 +421,7 @@
    trigram-based index searches for <literal>LIKE</literal>, <literal>ILIKE</literal>,
    <literal>~</literal> and <literal>~*</literal> queries.  Beginning in
    <productname>PostgreSQL</productname> 14, these indexes also support
-   equality operator (simple comparison operators are not supported).
+   the equality operator (simple comparison operators are not supported).
    Note that those indexes may not be as efficient as regular B-tree indexes
    for equality operator.
   </para>
