@@ -535,7 +535,7 @@ DefineIndex(Oid relationId,
 								 list_copy(stmt->indexIncludingParams));
 	numberOfAttributes = list_length(allIndexParams);
 
-	if (numberOfAttributes <= 0)
+	if (numberOfKeyAttributes <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("must specify at least one column")));
@@ -758,7 +758,7 @@ DefineIndex(Oid relationId,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("access method \"%s\" does not support included columns",
 						accessMethodName)));
-	if (numberOfAttributes > 1 && !amRoutine->amcanmulticol)
+	if (numberOfKeyAttributes > 1 && !amRoutine->amcanmulticol)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("access method \"%s\" does not support multicolumn indexes",
