@@ -1129,6 +1129,8 @@ _bt_insertonpg(Relation rel,
 		   IndexRelationGetNumberOfKeyAttributes(rel));
 	Assert(!BTreeTupleIsPosting(itup));
 	Assert(MAXALIGN(IndexTupleSize(itup)) == itemsz);
+	/* Caller must always finish incomplete split for us */
+	Assert(!P_INCOMPLETE_SPLIT(lpageop));
 
 	/*
 	 * Every internal page should have exactly one negative infinity item at
@@ -1137,11 +1139,6 @@ _bt_insertonpg(Relation rel,
 	 * only routines that allocate new internal pages.
 	 */
 	Assert(P_ISLEAF(lpageop) || newitemoff > P_FIRSTDATAKEY(lpageop));
-
-	/* The caller should've finished any incomplete splits already. */
-	if (P_INCOMPLETE_SPLIT(lpageop))
-		elog(ERROR, "cannot insert to incompletely split page %u",
-			 BufferGetBlockNumber(buf));
 
 	/*
 	 * Do we need to split an existing posting list item?
