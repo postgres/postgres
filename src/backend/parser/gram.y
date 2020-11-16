@@ -4320,7 +4320,7 @@ SeqOptElem: AS SimpleTypename
 		;
 
 opt_by:		BY
-			| /* empty */
+			| /* EMPTY */
 	  ;
 
 NumericOnly:
@@ -5808,7 +5808,7 @@ AlterEnumStmt:
 		 ;
 
 opt_if_not_exists: IF_P NOT EXISTS              { $$ = true; }
-		| /* empty */                          { $$ = false; }
+		| /* EMPTY */                          { $$ = false; }
 		;
 
 
@@ -6555,7 +6555,7 @@ SecLabelStmt:
 		;
 
 opt_provider:	FOR NonReservedWord_or_Sconst	{ $$ = $2; }
-				| /* empty */					{ $$ = NULL; }
+				| /* EMPTY */					{ $$ = NULL; }
 		;
 
 security_label:	Sconst				{ $$ = $1; }
