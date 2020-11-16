@@ -378,7 +378,6 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 
 		case RTOverlapStrategyNumber:
 		case RTContainsStrategyNumber:
-		case RTOldContainsStrategyNumber:
 		case RTContainsElemStrategyNumber:
 		case RTSubStrategyNumber:
 		case RTSubEqualStrategyNumber:
@@ -399,7 +398,6 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 */
 
 		case RTContainedByStrategyNumber:
-		case RTOldContainedByStrategyNumber:
 		case RTSuperStrategyNumber:
 		case RTSuperEqualStrategyNumber:
 			finfo = inclusion_get_strategy_procinfo(bdesc, attno, subtype,
