@@ -21,16 +21,56 @@ ALTER DEFAULT PRIVILEGES FOR ROLE regress_selinto_user
 GRANT ALL ON SCHEMA selinto_schema TO public;
 SET SESSION AUTHORIZATION regress_selinto_user;
 SELECT * INTO TABLE selinto_schema.tmp1
-	  FROM pg_class WHERE relname like '%a%';	-- Error
+  FROM pg_class WHERE relname like '%a%';
 ERROR:  permission denied for table tmp1
 SELECT oid AS clsoid, relname, relnatts + 10 AS x
-	  INTO selinto_schema.tmp2
-	  FROM pg_class WHERE relname like '%b%';	-- Error
+  INTO selinto_schema.tmp2
+  FROM pg_class WHERE relname like '%b%';
 ERROR:  permission denied for table tmp2
-CREATE TABLE selinto_schema.tmp3 (a,b,c)
-	   AS SELECT oid,relname,relacl FROM pg_class
-	   WHERE relname like '%c%';	-- Error
-ERROR:  permission denied for table tmp3
+-- WITH DATA, fails
+CREATE TABLE selinto_schema.tbl_withdata (a,b,c)
+  AS SELECT oid,relname,relacl FROM pg_class
+  WHERE relname like '%c%' WITH DATA;
+ERROR:  permission denied for table tbl_withdata
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE selinto_schema.tbl_withdata (a,b,c)
+  AS SELECT oid,relname,relacl FROM pg_class
+  WHERE relname like '%c%' WITH DATA;
+ERROR:  permission denied for table tbl_withdata
+-- WITH NO DATA, passes.
+CREATE TABLE selinto_schema.tbl_nodata1 (a) AS
+  SELECT oid FROM pg_class WHERE relname like '%c%' WITH NO DATA;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE selinto_schema.tbl_nodata2 (a) AS
+  SELECT oid FROM pg_class WHERE relname like '%c%' WITH NO DATA;
+              QUERY PLAN               
+---------------------------------------
+ Seq Scan on pg_class (never executed)
+   Filter: (relname ~~ '%c%'::text)
+(2 rows)
+
+-- EXECUTE and WITH DATA, fails.
+PREPARE data_sel AS
+  SELECT oid FROM pg_class WHERE relname like '%c%';
+CREATE TABLE selinto_schema.tbl_withdata (a) AS
+  EXECUTE data_sel WITH DATA;
+ERROR:  permission denied for table tbl_withdata
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE selinto_schema.tbl_withdata (a) AS
+  EXECUTE data_sel WITH DATA;
+ERROR:  permission denied for table tbl_withdata
+-- EXECUTE and WITH NO DATA, passes.
+CREATE TABLE selinto_schema.tbl_nodata3 (a) AS
+  EXECUTE data_sel WITH NO DATA;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE selinto_schema.tbl_nodata4 (a) AS
+  EXECUTE data_sel WITH NO DATA;
+              QUERY PLAN               
+---------------------------------------
+ Seq Scan on pg_class (never executed)
+   Filter: (relname ~~ '%c%'::text)
+(2 rows)
+
 RESET SESSION AUTHORIZATION;
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_selinto_user
 	  GRANT INSERT ON TABLES TO regress_selinto_user;
@@ -45,8 +85,12 @@ CREATE TABLE selinto_schema.tmp3 (a,b,c)
 	   WHERE relname like '%c%';	-- OK
 RESET SESSION AUTHORIZATION;
 DROP SCHEMA selinto_schema CASCADE;
-NOTICE:  drop cascades to 3 other objects
-DETAIL:  drop cascades to table selinto_schema.tmp1
+NOTICE:  drop cascades to 7 other objects
+DETAIL:  drop cascades to table selinto_schema.tbl_nodata1
+drop cascades to table selinto_schema.tbl_nodata2
+drop cascades to table selinto_schema.tbl_nodata3
+drop cascades to table selinto_schema.tbl_nodata4
+drop cascades to table selinto_schema.tmp1
 drop cascades to table selinto_schema.tmp2
 drop cascades to table selinto_schema.tmp3
 DROP USER regress_selinto_user;

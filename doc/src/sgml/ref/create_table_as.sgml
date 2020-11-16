@@ -53,6 +53,13 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    defining <command>SELECT</command> statement whenever it is
    queried.
   </para>
+
+  <para>
+   <command>CREATE TABLE AS</command> requires <literal>CREATE</literal>
+   privilege on the schema used for the table.  If using
+   <command>WITH DATA</command>, the default, <literal>INSERT</literal>
+   privilege is also required.
+  </para>
  </refsect1>
 
  <refsect1>

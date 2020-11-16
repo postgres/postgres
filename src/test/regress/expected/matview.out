@@ -589,3 +589,38 @@ SELECT * FROM mvtest2;
 ERROR:  materialized view "mvtest2" has not been populated
 HINT:  Use the REFRESH MATERIALIZED VIEW command.
 ROLLBACK;
+-- INSERT privileges if relation owner is not allowed to insert.
+CREATE SCHEMA matview_schema;
+CREATE USER regress_matview_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE regress_matview_user
+  REVOKE INSERT ON TABLES FROM regress_matview_user;
+GRANT ALL ON SCHEMA matview_schema TO public;
+SET SESSION AUTHORIZATION regress_matview_user;
+-- WITH DATA fails.
+CREATE MATERIALIZED VIEW matview_schema.mv_withdata1 (a) AS
+  SELECT generate_series(1, 10) WITH DATA; -- error
+ERROR:  permission denied for materialized view mv_withdata1
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE MATERIALIZED VIEW matview_schema.mv_withdata1 (a) AS
+  SELECT generate_series(1, 10) WITH DATA; -- error
+ERROR:  permission denied for materialized view mv_withdata1
+-- WITH NO DATA passes.
+CREATE MATERIALIZED VIEW matview_schema.mv_nodata1 (a) AS
+  SELECT generate_series(1, 10) WITH NO DATA;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE MATERIALIZED VIEW matview_schema.mv_nodata2 (a) AS
+  SELECT generate_series(1, 10) WITH NO DATA;
+          QUERY PLAN           
+-------------------------------
+ ProjectSet (never executed)
+   ->  Result (never executed)
+(2 rows)
+
+RESET SESSION AUTHORIZATION;
+ALTER DEFAULT PRIVILEGES FOR ROLE regress_matview_user
+  GRANT INSERT ON TABLES TO regress_matview_user;
+DROP SCHEMA matview_schema CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to materialized view matview_schema.mv_nodata1
+drop cascades to materialized view matview_schema.mv_nodata2
+DROP USER regress_matview_user;

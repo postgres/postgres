@@ -27,13 +27,38 @@ GRANT ALL ON SCHEMA selinto_schema TO public;
 
 SET SESSION AUTHORIZATION regress_selinto_user;
 SELECT * INTO TABLE selinto_schema.tmp1
-	  FROM pg_class WHERE relname like '%a%';	-- Error
+  FROM pg_class WHERE relname like '%a%';
 SELECT oid AS clsoid, relname, relnatts + 10 AS x
-	  INTO selinto_schema.tmp2
-	  FROM pg_class WHERE relname like '%b%';	-- Error
-CREATE TABLE selinto_schema.tmp3 (a,b,c)
-	   AS SELECT oid,relname,relacl FROM pg_class
-	   WHERE relname like '%c%';	-- Error
+  INTO selinto_schema.tmp2
+  FROM pg_class WHERE relname like '%b%';
+-- WITH DATA, fails
+CREATE TABLE selinto_schema.tbl_withdata (a,b,c)
+  AS SELECT oid,relname,relacl FROM pg_class
+  WHERE relname like '%c%' WITH DATA;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE selinto_schema.tbl_withdata (a,b,c)
+  AS SELECT oid,relname,relacl FROM pg_class
+  WHERE relname like '%c%' WITH DATA;
+-- WITH NO DATA, passes.
+CREATE TABLE selinto_schema.tbl_nodata1 (a) AS
+  SELECT oid FROM pg_class WHERE relname like '%c%' WITH NO DATA;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE selinto_schema.tbl_nodata2 (a) AS
+  SELECT oid FROM pg_class WHERE relname like '%c%' WITH NO DATA;
+-- EXECUTE and WITH DATA, fails.
+PREPARE data_sel AS
+  SELECT oid FROM pg_class WHERE relname like '%c%';
+CREATE TABLE selinto_schema.tbl_withdata (a) AS
+  EXECUTE data_sel WITH DATA;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE selinto_schema.tbl_withdata (a) AS
+  EXECUTE data_sel WITH DATA;
+-- EXECUTE and WITH NO DATA, passes.
+CREATE TABLE selinto_schema.tbl_nodata3 (a) AS
+  EXECUTE data_sel WITH NO DATA;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE selinto_schema.tbl_nodata4 (a) AS
+  EXECUTE data_sel WITH NO DATA;
 RESET SESSION AUTHORIZATION;
 
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_selinto_user
