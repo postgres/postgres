@@ -711,7 +711,7 @@ Indexes:
    For new expression indexes, it is necessary to run <link
    linkend="sql-analyze"><command>ANALYZE</command></link> or wait for
    the <link linkend="autovacuum">autovacuum daemon</link> to analyze
-   the table to generate statistics about new expression indexes.
+   the table to generate statistics for these indexes.
   </para>
 
   <para>
