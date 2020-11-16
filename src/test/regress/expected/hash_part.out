@@ -10,11 +10,7 @@ CREATE TABLE mchash1
   PARTITION OF mchash FOR VALUES WITH (MODULUS 4, REMAINDER 0);
 -- invalid OID, no such table
 SELECT satisfies_hash_partition(0, 4, 0, NULL);
- satisfies_hash_partition 
---------------------------
- 
-(1 row)
-
+ERROR:  could not open relation with OID 0
 -- not partitioned
 SELECT satisfies_hash_partition('tenk1'::regclass, 4, 0, NULL);
 ERROR:  "tenk1" is not a hash partitioned table
@@ -34,14 +30,14 @@ ERROR:  remainder for hash partition must be less than modulus
 SELECT satisfies_hash_partition('mchash'::regclass, NULL, 0, NULL);
  satisfies_hash_partition 
 --------------------------
- 
+ f
 (1 row)
 
 -- remainder is null
 SELECT satisfies_hash_partition('mchash'::regclass, 4, NULL, NULL);
  satisfies_hash_partition 
 --------------------------
- 
+ f
 (1 row)
 
 -- too many arguments
