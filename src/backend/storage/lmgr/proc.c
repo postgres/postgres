@@ -111,7 +111,7 @@ ProcGlobalShmemSize(void)
 
 	size = add_size(size, mul_size(TotalProcs, sizeof(*ProcGlobal->xids)));
 	size = add_size(size, mul_size(TotalProcs, sizeof(*ProcGlobal->subxidStates)));
-	size = add_size(size, mul_size(TotalProcs, sizeof(*ProcGlobal->vacuumFlags)));
+	size = add_size(size, mul_size(TotalProcs, sizeof(*ProcGlobal->statusFlags)));
 
 	return size;
 }
@@ -210,8 +210,8 @@ InitProcGlobal(void)
 	MemSet(ProcGlobal->xids, 0, TotalProcs * sizeof(*ProcGlobal->xids));
 	ProcGlobal->subxidStates = (XidCacheStatus *) ShmemAlloc(TotalProcs * sizeof(*ProcGlobal->subxidStates));
 	MemSet(ProcGlobal->subxidStates, 0, TotalProcs * sizeof(*ProcGlobal->subxidStates));
-	ProcGlobal->vacuumFlags = (uint8 *) ShmemAlloc(TotalProcs * sizeof(*ProcGlobal->vacuumFlags));
-	MemSet(ProcGlobal->vacuumFlags, 0, TotalProcs * sizeof(*ProcGlobal->vacuumFlags));
+	ProcGlobal->statusFlags = (uint8 *) ShmemAlloc(TotalProcs * sizeof(*ProcGlobal->statusFlags));
+	MemSet(ProcGlobal->statusFlags, 0, TotalProcs * sizeof(*ProcGlobal->statusFlags));
 
 	for (i = 0; i < TotalProcs; i++)
 	{
@@ -393,10 +393,10 @@ InitProcess(void)
 	MyProc->tempNamespaceId = InvalidOid;
 	MyProc->isBackgroundWorker = IsBackgroundWorker;
 	MyProc->delayChkpt = false;
-	MyProc->vacuumFlags = 0;
+	MyProc->statusFlags = 0;
 	/* NB -- autovac launcher intentionally does not set IS_AUTOVACUUM */
 	if (IsAutoVacuumWorkerProcess())
-		MyProc->vacuumFlags |= PROC_IS_AUTOVACUUM;
+		MyProc->statusFlags |= PROC_IS_AUTOVACUUM;
 	MyProc->lwWaiting = false;
 	MyProc->lwWaitMode = 0;
 	MyProc->waitLock = NULL;
@@ -574,7 +574,7 @@ InitAuxiliaryProcess(void)
 	MyProc->tempNamespaceId = InvalidOid;
 	MyProc->isBackgroundWorker = IsBackgroundWorker;
 	MyProc->delayChkpt = false;
-	MyProc->vacuumFlags = 0;
+	MyProc->statusFlags = 0;
 	MyProc->lwWaiting = false;
 	MyProc->lwWaitMode = 0;
 	MyProc->waitLock = NULL;
@@ -1310,7 +1310,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		if (deadlock_state == DS_BLOCKED_BY_AUTOVACUUM && allow_autovacuum_cancel)
 		{
 			PGPROC	   *autovac = GetBlockingAutoVacuumPgproc();
-			uint8		vacuumFlags;
+			uint8		statusFlags;
 
 			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
@@ -1318,9 +1318,9 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			 * Only do it if the worker is not working to protect against Xid
 			 * wraparound.
 			 */
-			vacuumFlags = ProcGlobal->vacuumFlags[autovac->pgxactoff];
-			if ((vacuumFlags & PROC_IS_AUTOVACUUM) &&
-				!(vacuumFlags & PROC_VACUUM_FOR_WRAPAROUND))
+			statusFlags = ProcGlobal->statusFlags[autovac->pgxactoff];
+			if ((statusFlags & PROC_IS_AUTOVACUUM) &&
+				!(statusFlags & PROC_VACUUM_FOR_WRAPAROUND))
 			{
 				int			pid = autovac->pid;
 				StringInfoData locktagbuf;

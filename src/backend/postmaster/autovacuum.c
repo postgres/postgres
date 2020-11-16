@@ -2509,7 +2509,7 @@ do_autovacuum(void)
 						   tab->at_datname, tab->at_nspname, tab->at_relname);
 			EmitErrorReport();
 
-			/* this resets ProcGlobal->vacuumFlags[i] too */
+			/* this resets ProcGlobal->statusFlags[i] too */
 			AbortOutOfAnyTransaction();
 			FlushErrorState();
 			MemoryContextResetAndDeleteChildren(PortalContext);
@@ -2525,7 +2525,7 @@ do_autovacuum(void)
 
 		did_vacuum = true;
 
-		/* ProcGlobal->vacuumFlags[i] are reset at the next end of xact */
+		/* ProcGlobal->statusFlags[i] are reset at the next end of xact */
 
 		/* be tidy */
 deleted:
@@ -2702,7 +2702,7 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 				   cur_datname, cur_nspname, cur_relname);
 		EmitErrorReport();
 
-		/* this resets ProcGlobal->vacuumFlags[i] too */
+		/* this resets ProcGlobal->statusFlags[i] too */
 		AbortOutOfAnyTransaction();
 		FlushErrorState();
 		MemoryContextResetAndDeleteChildren(PortalContext);

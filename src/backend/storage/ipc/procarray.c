@@ -488,13 +488,13 @@ ProcArrayAdd(PGPROC *proc)
 			(arrayP->numProcs - index) * sizeof(*ProcGlobal->xids));
 	memmove(&ProcGlobal->subxidStates[index + 1], &ProcGlobal->subxidStates[index],
 			(arrayP->numProcs - index) * sizeof(*ProcGlobal->subxidStates));
-	memmove(&ProcGlobal->vacuumFlags[index + 1], &ProcGlobal->vacuumFlags[index],
-			(arrayP->numProcs - index) * sizeof(*ProcGlobal->vacuumFlags));
+	memmove(&ProcGlobal->statusFlags[index + 1], &ProcGlobal->statusFlags[index],
+			(arrayP->numProcs - index) * sizeof(*ProcGlobal->statusFlags));
 
 	arrayP->pgprocnos[index] = proc->pgprocno;
 	ProcGlobal->xids[index] = proc->xid;
 	ProcGlobal->subxidStates[index] = proc->subxidStatus;
-	ProcGlobal->vacuumFlags[index] = proc->vacuumFlags;
+	ProcGlobal->statusFlags[index] = proc->statusFlags;
 
 	arrayP->numProcs++;
 
@@ -562,7 +562,7 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 	Assert(TransactionIdIsValid(ProcGlobal->xids[proc->pgxactoff] == 0));
 	Assert(TransactionIdIsValid(ProcGlobal->subxidStates[proc->pgxactoff].count == 0));
 	Assert(TransactionIdIsValid(ProcGlobal->subxidStates[proc->pgxactoff].overflowed == false));
-	ProcGlobal->vacuumFlags[proc->pgxactoff] = 0;
+	ProcGlobal->statusFlags[proc->pgxactoff] = 0;
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
@@ -575,8 +575,8 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 					(arrayP->numProcs - index - 1) * sizeof(*ProcGlobal->xids));
 			memmove(&ProcGlobal->subxidStates[index], &ProcGlobal->subxidStates[index + 1],
 					(arrayP->numProcs - index - 1) * sizeof(*ProcGlobal->subxidStates));
-			memmove(&ProcGlobal->vacuumFlags[index], &ProcGlobal->vacuumFlags[index + 1],
-					(arrayP->numProcs - index - 1) * sizeof(*ProcGlobal->vacuumFlags));
+			memmove(&ProcGlobal->statusFlags[index], &ProcGlobal->statusFlags[index + 1],
+					(arrayP->numProcs - index - 1) * sizeof(*ProcGlobal->statusFlags));
 
 			arrayP->pgprocnos[arrayP->numProcs - 1] = -1;	/* for debugging */
 			arrayP->numProcs--;
@@ -660,13 +660,13 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 
 		/* must be cleared with xid/xmin: */
 		/* avoid unnecessarily dirtying shared cachelines */
-		if (proc->vacuumFlags & PROC_VACUUM_STATE_MASK)
+		if (proc->statusFlags & PROC_VACUUM_STATE_MASK)
 		{
 			Assert(!LWLockHeldByMe(ProcArrayLock));
 			LWLockAcquire(ProcArrayLock, LW_SHARED);
-			Assert(proc->vacuumFlags == ProcGlobal->vacuumFlags[proc->pgxactoff]);
-			proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-			ProcGlobal->vacuumFlags[proc->pgxactoff] = proc->vacuumFlags;
+			Assert(proc->statusFlags == ProcGlobal->statusFlags[proc->pgxactoff]);
+			proc->statusFlags &= ~PROC_VACUUM_STATE_MASK;
+			ProcGlobal->statusFlags[proc->pgxactoff] = proc->statusFlags;
 			LWLockRelease(ProcArrayLock);
 		}
 	}
@@ -695,10 +695,10 @@ ProcArrayEndTransactionInternal(PGPROC *proc, TransactionId latestXid)
 
 	/* must be cleared with xid/xmin: */
 	/* avoid unnecessarily dirtying shared cachelines */
-	if (proc->vacuumFlags & PROC_VACUUM_STATE_MASK)
+	if (proc->statusFlags & PROC_VACUUM_STATE_MASK)
 	{
-		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		ProcGlobal->vacuumFlags[proc->pgxactoff] = proc->vacuumFlags;
+		proc->statusFlags &= ~PROC_VACUUM_STATE_MASK;
+		ProcGlobal->statusFlags[proc->pgxactoff] = proc->statusFlags;
 	}
 
 	/* Clear the subtransaction-XID cache too while holding the lock */
@@ -875,7 +875,7 @@ ProcArrayClearTransaction(PGPROC *proc)
 	proc->xmin = InvalidTransactionId;
 	proc->recoveryConflictPending = false;
 
-	Assert(!(proc->vacuumFlags & PROC_VACUUM_STATE_MASK));
+	Assert(!(proc->statusFlags & PROC_VACUUM_STATE_MASK));
 	Assert(!proc->delayChkpt);
 
 	/*
@@ -1710,7 +1710,7 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 	{
 		int			pgprocno = arrayP->pgprocnos[index];
 		PGPROC	   *proc = &allProcs[pgprocno];
-		int8		vacuumFlags = ProcGlobal->vacuumFlags[index];
+		int8		statusFlags = ProcGlobal->statusFlags[index];
 		TransactionId xid;
 		TransactionId xmin;
 
@@ -1745,7 +1745,7 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 		 * removed, as long as pg_subtrans is not truncated) or doing logical
 		 * decoding (which manages xmin separately, check below).
 		 */
-		if (vacuumFlags & (PROC_IN_VACUUM | PROC_IN_LOGICAL_DECODING))
+		if (statusFlags & (PROC_IN_VACUUM | PROC_IN_LOGICAL_DECODING))
 			continue;
 
 		/* shared tables need to take backends in all database into account */
@@ -2194,7 +2194,7 @@ GetSnapshotData(Snapshot snapshot)
 		TransactionId *xip = snapshot->xip;
 		int		   *pgprocnos = arrayP->pgprocnos;
 		XidCacheStatus *subxidStates = ProcGlobal->subxidStates;
-		uint8	   *allVacuumFlags = ProcGlobal->vacuumFlags;
+		uint8	   *allStatusFlags = ProcGlobal->statusFlags;
 
 		/*
 		 * First collect set of pgxactoff/xids that need to be included in the
@@ -2204,7 +2204,7 @@ GetSnapshotData(Snapshot snapshot)
 		{
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId xid = UINT32_ACCESS_ONCE(other_xids[pgxactoff]);
-			uint8		vacuumFlags;
+			uint8		statusFlags;
 
 			Assert(allProcs[arrayP->pgprocnos[pgxactoff]].pgxactoff == pgxactoff);
 
@@ -2243,8 +2243,8 @@ GetSnapshotData(Snapshot snapshot)
 			 * Skip over backends doing logical decoding which manages xmin
 			 * separately (check below) and ones running LAZY VACUUM.
 			 */
-			vacuumFlags = allVacuumFlags[pgxactoff];
-			if (vacuumFlags & (PROC_IN_LOGICAL_DECODING | PROC_IN_VACUUM))
+			statusFlags = allStatusFlags[pgxactoff];
+			if (statusFlags & (PROC_IN_LOGICAL_DECODING | PROC_IN_VACUUM))
 				continue;
 
 			if (NormalTransactionIdPrecedes(xid, xmin))
@@ -2483,11 +2483,11 @@ ProcArrayInstallImportedXmin(TransactionId xmin,
 	{
 		int			pgprocno = arrayP->pgprocnos[index];
 		PGPROC	   *proc = &allProcs[pgprocno];
-		int			vacuumFlags = ProcGlobal->vacuumFlags[index];
+		int			statusFlags = ProcGlobal->statusFlags[index];
 		TransactionId xid;
 
 		/* Ignore procs running LAZY VACUUM */
-		if (vacuumFlags & PROC_IN_VACUUM)
+		if (statusFlags & PROC_IN_VACUUM)
 			continue;
 
 		/* We are only interested in the specific virtual transaction. */
@@ -3142,7 +3142,7 @@ IsBackendPid(int pid)
  *	If excludeXmin0 is true, skip processes with xmin = 0.
  *	If allDbs is false, skip processes attached to other databases.
  *	If excludeVacuum isn't zero, skip processes for which
- *		(vacuumFlags & excludeVacuum) is not zero.
+ *		(statusFlags & excludeVacuum) is not zero.
  *
  * Note: the purpose of the limitXmin and excludeXmin0 parameters is to
  * allow skipping backends whose oldest live snapshot is no older than
@@ -3176,12 +3176,12 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool excludeXmin0,
 	{
 		int			pgprocno = arrayP->pgprocnos[index];
 		PGPROC	   *proc = &allProcs[pgprocno];
-		uint8		vacuumFlags = ProcGlobal->vacuumFlags[index];
+		uint8		statusFlags = ProcGlobal->statusFlags[index];
 
 		if (proc == MyProc)
 			continue;
 
-		if (excludeVacuum & vacuumFlags)
+		if (excludeVacuum & statusFlags)
 			continue;
 
 		if (allDbs || proc->databaseId == MyDatabaseId)
@@ -3596,7 +3596,7 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
 		{
 			int			pgprocno = arrayP->pgprocnos[index];
 			PGPROC	   *proc = &allProcs[pgprocno];
-			uint8		vacuumFlags = ProcGlobal->vacuumFlags[index];
+			uint8		statusFlags = ProcGlobal->statusFlags[index];
 
 			if (proc->databaseId != databaseId)
 				continue;
@@ -3610,7 +3610,7 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
 			else
 			{
 				(*nbackends)++;
-				if ((vacuumFlags & PROC_IS_AUTOVACUUM) &&
+				if ((statusFlags & PROC_IS_AUTOVACUUM) &&
 					nautovacs < MAXAUTOVACPIDS)
 					autovac_pids[nautovacs++] = proc->pid;
 			}

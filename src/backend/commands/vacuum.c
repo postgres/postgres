@@ -1742,10 +1742,10 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 		 * might appear to go backwards, which is probably Not Good.
 		 */
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-		MyProc->vacuumFlags |= PROC_IN_VACUUM;
+		MyProc->statusFlags |= PROC_IN_VACUUM;
 		if (params->is_wraparound)
-			MyProc->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
-		ProcGlobal->vacuumFlags[MyProc->pgxactoff] = MyProc->vacuumFlags;
+			MyProc->statusFlags |= PROC_VACUUM_FOR_WRAPAROUND;
+		ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
 		LWLockRelease(ProcArrayLock);
 	}
 
