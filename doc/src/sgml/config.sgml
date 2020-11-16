@@ -2037,8 +2037,11 @@ include_dir 'conf.d'
       There is a separate server
       process called the <firstterm>background writer</firstterm>, whose function
       is to issue writes of <quote>dirty</quote> (new or modified) shared
-      buffers.  It writes shared buffers so server processes handling
-      user queries seldom or never need to wait for a write to occur.
+      buffers.  When the number of clean shared buffers appears to be
+      insufficient, the background writer writes some dirty buffers to the
+      file system and marks them as clean.  This reduces the likelihood
+      that server processes handling user queries will be unable to find
+      clean buffers and have to write dirty buffers themselves.
       However, the background writer does cause a net overall
       increase in I/O load, because while a repeatedly-dirtied page might
       otherwise be written only once per checkpoint interval, the
