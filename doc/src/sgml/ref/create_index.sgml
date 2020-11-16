@@ -705,7 +705,7 @@ Indexes:
   </para>
 
   <para>
-   The regularly system collects statistics on all of a table's
+   The system regularly collects statistics on all of a table's
    columns.  Newly-created non-expression indexes can immediately
    use these statistics to determine an index's usefulness.
    For new expression indexes, it is necessary to run <link
