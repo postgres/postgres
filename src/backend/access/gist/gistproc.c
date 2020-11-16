@@ -907,13 +907,11 @@ gist_box_leaf_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 													  PointerGetDatum(query)));
 			break;
 		case RTContainsStrategyNumber:
-		case RTOldContainsStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contain,
 													  PointerGetDatum(key),
 													  PointerGetDatum(query)));
 			break;
 		case RTContainedByStrategyNumber:
-		case RTOldContainedByStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contained,
 													  PointerGetDatum(key),
 													  PointerGetDatum(query)));
@@ -990,13 +988,11 @@ rtree_internal_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
-		case RTOldContainsStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contain,
 													  PointerGetDatum(key),
 													  PointerGetDatum(query)));
 			break;
 		case RTContainedByStrategyNumber:
-		case RTOldContainedByStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overlap,
 													  PointerGetDatum(key),
 													  PointerGetDatum(query)));
