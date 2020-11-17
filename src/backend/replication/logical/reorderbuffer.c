@@ -402,6 +402,7 @@ ReorderBufferGetTXN(ReorderBuffer *rb)
 
 	/* InvalidCommandId is not zero, so set it explicitly */
 	txn->command_id = InvalidCommandId;
+	txn->output_plugin_private = NULL;
 
 	return txn;
 }

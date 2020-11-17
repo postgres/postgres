@@ -378,6 +378,11 @@ typedef struct ReorderBufferTXN
 
 	/* If we have detected concurrent abort then ignore future changes. */
 	bool		concurrent_abort;
+
+	/*
+	 * Private data pointer of the output plugin.
+	 */
+	void	   *output_plugin_private;
 } ReorderBufferTXN;
 
 /* so we can define the callbacks used inside struct ReorderBuffer itself */

@@ -2505,6 +2505,7 @@ Tcl_Obj
 Tcl_Time
 TempNamespaceStatus
 TestDecodingData
+TestDecodingTxnData
 TestSpec
 TextFreq
 TextPositionState
