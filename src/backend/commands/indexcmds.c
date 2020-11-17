@@ -68,6 +68,7 @@
 
 
 /* non-export function prototypes */
+static bool CompareOpclassOptions(Datum *opts1, Datum *opts2, int natts);
 static void CheckPredicate(Expr *predicate);
 static void ComputeIndexAttrs(IndexInfo *indexInfo,
 							  Oid *typeOidP,
@@ -87,13 +88,11 @@ static char *ChooseIndexNameAddition(List *colnames);
 static List *ChooseIndexColumnNames(List *indexElems);
 static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
 											Oid relId, Oid oldRelId, void *arg);
-static bool ReindexRelationConcurrently(Oid relationOid, int options);
-
+static void reindex_error_callback(void *args);
 static void ReindexPartitions(Oid relid, int options, bool isTopLevel);
 static void ReindexMultipleInternal(List *relids, int options);
-static void reindex_error_callback(void *args);
+static bool ReindexRelationConcurrently(Oid relationOid, int options);
 static void update_relispartition(Oid relationId, bool newval);
-static bool CompareOpclassOptions(Datum *opts1, Datum *opts2, int natts);
 
 /*
  * callback argument type for RangeVarCallbackForReindexIndex()
