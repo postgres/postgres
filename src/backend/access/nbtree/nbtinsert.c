@@ -58,7 +58,10 @@ static void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
 static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static inline bool _bt_pgaddtup(Page page, Size itemsize, IndexTuple itup,
 								OffsetNumber itup_off, bool newfirstdataitem);
-static void _bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel);
+static void _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
+										 BTInsertState insertstate,
+										 bool lpdeadonly, bool checkingunique,
+										 bool uniquedup);
 
 /*
  *	_bt_doinsert() -- Handle insertion of a single index tuple in the tree.
@@ -871,38 +874,14 @@ _bt_findinsertloc(Relation rel,
 		}
 
 		/*
-		 * If the target page is full, see if we can obtain enough space by
-		 * erasing LP_DEAD items.  If that fails to free enough space, see if
-		 * we can avoid a page split by performing a deduplication pass over
-		 * the page.
-		 *
-		 * We only perform a deduplication pass for a checkingunique caller
-		 * when the incoming item is a duplicate of an existing item on the
-		 * leaf page.  This heuristic avoids wasting cycles -- we only expect
-		 * to benefit from deduplicating a unique index page when most or all
-		 * recently added items are duplicates.  See nbtree/README.
+		 * If the target page is full, see if we can obtain enough space using
+		 * one or more strategies (e.g. erasing LP_DEAD items, deduplication).
+		 * Page splits are expensive, and should only go ahead when truly
+		 * necessary.
 		 */
 		if (PageGetFreeSpace(page) < insertstate->itemsz)
-		{
-			if (P_HAS_GARBAGE(opaque))
-			{
-				_bt_vacuum_one_page(rel, insertstate->buf, heapRel);
-				insertstate->bounds_valid = false;
-
-				/* Might as well assume duplicates (if checkingunique) */
-				uniquedup = true;
-			}
-
-			if (itup_key->allequalimage && BTGetDeduplicateItems(rel) &&
-				(!checkingunique || uniquedup) &&
-				PageGetFreeSpace(page) < insertstate->itemsz)
-			{
-				_bt_dedup_one_page(rel, insertstate->buf, heapRel,
-								   insertstate->itup, insertstate->itemsz,
-								   checkingunique);
-				insertstate->bounds_valid = false;
-			}
-		}
+			_bt_delete_or_dedup_one_page(rel, heapRel, insertstate, false,
+										 checkingunique, uniquedup);
 	}
 	else
 	{
@@ -942,8 +921,9 @@ _bt_findinsertloc(Relation rel,
 			 */
 			if (P_HAS_GARBAGE(opaque))
 			{
-				_bt_vacuum_one_page(rel, insertstate->buf, heapRel);
-				insertstate->bounds_valid = false;
+				/* Erase LP_DEAD items (won't deduplicate) */
+				_bt_delete_or_dedup_one_page(rel, heapRel, insertstate, true,
+											 checkingunique, false);
 
 				if (PageGetFreeSpace(page) >= insertstate->itemsz)
 					break;		/* OK, now we have enough space */
@@ -993,14 +973,17 @@ _bt_findinsertloc(Relation rel,
 		 * performing a posting list split, so delete all LP_DEAD items early.
 		 * This is the only case where LP_DEAD deletes happen even though
 		 * there is space for newitem on the page.
+		 *
+		 * This can only erase LP_DEAD items (it won't deduplicate).
 		 */
-		_bt_vacuum_one_page(rel, insertstate->buf, heapRel);
+		_bt_delete_or_dedup_one_page(rel, heapRel, insertstate, true,
+									 checkingunique, false);
 
 		/*
 		 * Do new binary search.  New insert location cannot overlap with any
 		 * posting list now.
 		 */
-		insertstate->bounds_valid = false;
+		Assert(!insertstate->bounds_valid);
 		insertstate->postingoff = 0;
 		newitemoff = _bt_binsrch_insert(rel, insertstate);
 		Assert(insertstate->postingoff == 0);
@@ -2623,32 +2606,59 @@ _bt_pgaddtup(Page page,
 }
 
 /*
- * _bt_vacuum_one_page - vacuum just one index page.
+ * _bt_delete_or_dedup_one_page - Try to avoid a leaf page split by attempting
+ * a variety of operations.
  *
- * Try to remove LP_DEAD items from the given page.  The passed buffer
- * must be exclusive-locked, but unlike a real VACUUM, we don't need a
- * super-exclusive "cleanup" lock (see nbtree/README).
+ * There are two operations performed here: deleting items already marked
+ * LP_DEAD, and deduplication.  If both operations fail to free enough space
+ * for the incoming item then caller will go on to split the page.  We always
+ * attempt our preferred strategy (which is to delete items whose LP_DEAD bit
+ * are set) first.  If that doesn't work out we move on to deduplication.
+ *
+ * Caller's checkingunique and uniquedup arguments help us decide if we should
+ * perform deduplication, which is primarily useful with low cardinality data,
+ * but can sometimes absorb version churn.
+ *
+ * Callers that only want us to look for/delete LP_DEAD items can ask for that
+ * directly by passing true 'lpdeadonly' argument.
+ *
+ * Note: We used to only delete LP_DEAD items when the BTP_HAS_GARBAGE page
+ * level flag was found set.  The flag was useful back when there wasn't
+ * necessarily one single page for a duplicate tuple to go on (before heap TID
+ * became a part of the key space in version 4 indexes).  But we don't
+ * actually look at the flag anymore (it's not a gating condition for our
+ * caller).  That would cause us to miss tuples that are safe to delete,
+ * without getting any benefit in return.  We know that the alternative is to
+ * split the page; scanning the line pointer array in passing won't have
+ * noticeable overhead.  (We still maintain the BTP_HAS_GARBAGE flag despite
+ * all this because !heapkeyspace indexes must still do a "getting tired"
+ * linear search, and so are likely to get some benefit from using it as a
+ * gating condition.)
  */
 static void
-_bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel)
+_bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
+							 BTInsertState insertstate,
+							 bool lpdeadonly, bool checkingunique,
+							 bool uniquedup)
 {
 	OffsetNumber deletable[MaxIndexTuplesPerPage];
 	int			ndeletable = 0;
 	OffsetNumber offnum,
-				minoff,
 				maxoff;
+	Buffer		buffer = insertstate->buf;
+	BTScanInsert itup_key = insertstate->itup_key;
 	Page		page = BufferGetPage(buffer);
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	Assert(P_ISLEAF(opaque));
+	Assert(lpdeadonly || itup_key->heapkeyspace);
 
 	/*
 	 * Scan over all items to see which ones need to be deleted according to
 	 * LP_DEAD flags.
 	 */
-	minoff = P_FIRSTDATAKEY(opaque);
 	maxoff = PageGetMaxOffsetNumber(page);
-	for (offnum = minoff;
+	for (offnum = P_FIRSTDATAKEY(opaque);
 		 offnum <= maxoff;
 		 offnum = OffsetNumberNext(offnum))
 	{
@@ -2659,12 +2669,50 @@ _bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel)
 	}
 
 	if (ndeletable > 0)
+	{
 		_bt_delitems_delete(rel, buffer, deletable, ndeletable, heapRel);
+		insertstate->bounds_valid = false;
+
+		/* Return when a page split has already been avoided */
+		if (PageGetFreeSpace(page) >= insertstate->itemsz)
+			return;
+
+		/* Might as well assume duplicates (if checkingunique) */
+		uniquedup = true;
+	}
 
 	/*
-	 * Note: if we didn't find any LP_DEAD items, then the page's
-	 * BTP_HAS_GARBAGE hint bit is falsely set.  We do not bother expending a
-	 * separate write to clear it, however.  We will clear it when we split
-	 * the page, or when deduplication runs.
+	 * Some callers only want to delete LP_DEAD items.  Return early for these
+	 * callers.
+	 *
+	 * Note: The page's BTP_HAS_GARBAGE hint flag may still be set when we
+	 * return at this point (or when we go on the try either or both of our
+	 * other strategies and they also fail).  We do not bother expending a
+	 * separate write to clear it, however.  Caller will definitely clear it
+	 * when it goes on to split the page (plus deduplication knows to clear
+	 * the flag when it actually modifies the page).
 	 */
+	if (lpdeadonly)
+		return;
+
+	/*
+	 * We can get called in the checkingunique case when there is no reason to
+	 * believe that there are any duplicates on the page; we should at least
+	 * still check for LP_DEAD items.  If that didn't work out, give up and
+	 * let caller split the page.  Deduplication cannot be justified given
+	 * there is no reason to think that there are duplicates.
+	 */
+	if (checkingunique && !uniquedup)
+		return;
+
+	/* Assume bounds about to be invalidated (this is almost certain now) */
+	insertstate->bounds_valid = false;
+
+	/*
+	 * Perform deduplication pass, though only when it is enabled for the
+	 * index and known to be safe (it must be an allequalimage index).
+	 */
+	if (BTGetDeduplicateItems(rel) && itup_key->allequalimage)
+		_bt_dedup_pass(rel, buffer, heapRel, insertstate->itup,
+					   insertstate->itemsz, checkingunique);
 }

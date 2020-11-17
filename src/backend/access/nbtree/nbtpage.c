@@ -1187,8 +1187,8 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	 * array of offset numbers.
 	 *
 	 * PageIndexTupleOverwrite() won't unset each item's LP_DEAD bit when it
-	 * happens to already be set.  Although we unset the BTP_HAS_GARBAGE page
-	 * level flag, unsetting individual LP_DEAD bits should still be avoided.
+	 * happens to already be set.  It's important that we not interfere with
+	 * _bt_delitems_delete().
 	 */
 	for (int i = 0; i < nupdatable; i++)
 	{
@@ -1215,20 +1215,12 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	opaque->btpo_cycleid = 0;
 
 	/*
-	 * Mark the page as not containing any LP_DEAD items.  This is not
-	 * certainly true (there might be some that have recently been marked, but
-	 * weren't targeted by VACUUM's heap scan), but it will be true often
-	 * enough.  VACUUM does not delete items purely because they have their
-	 * LP_DEAD bit set, since doing so would necessitate explicitly logging a
-	 * latestRemovedXid cutoff (this is how _bt_delitems_delete works).
+	 * Clear the BTP_HAS_GARBAGE page flag.
 	 *
-	 * The consequences of falsely unsetting BTP_HAS_GARBAGE should be fairly
-	 * limited, since we never falsely unset an LP_DEAD bit.  Workloads that
-	 * are particularly dependent on LP_DEAD bits being set quickly will
-	 * usually manage to set the BTP_HAS_GARBAGE flag before the page fills up
-	 * again anyway.  Furthermore, attempting a deduplication pass will remove
-	 * all LP_DEAD items, regardless of whether the BTP_HAS_GARBAGE hint bit
-	 * is set or not.
+	 * This flag indicates the presence of LP_DEAD items on the page (though
+	 * not reliably).  Note that we only trust it with pg_upgrade'd
+	 * !heapkeyspace indexes.  That's why clearing it here won't usually
+	 * interfere with _bt_delitems_delete().
 	 */
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
@@ -1310,10 +1302,17 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 
 	/*
 	 * Unlike _bt_delitems_vacuum, we *must not* clear the vacuum cycle ID,
-	 * because this is not called by VACUUM.  Just clear the BTP_HAS_GARBAGE
-	 * page flag, since we deleted all items with their LP_DEAD bit set.
+	 * because this is not called by VACUUM
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	/*
+	 * Clear the BTP_HAS_GARBAGE page flag.
+	 *
+	 * This flag indicates the presence of LP_DEAD items on the page (though
+	 * not reliably).  Note that we only trust it with pg_upgrade'd
+	 * !heapkeyspace indexes.
+	 */
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
 	MarkBufferDirty(buf);

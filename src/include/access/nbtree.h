@@ -75,7 +75,7 @@ typedef BTPageOpaqueData *BTPageOpaque;
 #define BTP_META		(1 << 3)	/* meta-page */
 #define BTP_HALF_DEAD	(1 << 4)	/* empty, but still in tree */
 #define BTP_SPLIT_END	(1 << 5)	/* rightmost page of split group */
-#define BTP_HAS_GARBAGE (1 << 6)	/* page has LP_DEAD tuples */
+#define BTP_HAS_GARBAGE (1 << 6)	/* page has LP_DEAD tuples (deprecated) */
 #define BTP_INCOMPLETE_SPLIT (1 << 7)	/* right sibling's downlink is missing */
 
 /*
@@ -1027,9 +1027,9 @@ extern void _bt_parallel_advance_array_keys(IndexScanDesc scan);
 /*
  * prototypes for functions in nbtdedup.c
  */
-extern void _bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
-							   IndexTuple newitem, Size newitemsz,
-							   bool checkingunique);
+extern void _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel,
+						   IndexTuple newitem, Size newitemsz,
+						   bool checkingunique);
 extern void _bt_dedup_start_pending(BTDedupState state, IndexTuple base,
 									OffsetNumber baseoff);
 extern bool _bt_dedup_save_htid(BTDedupState state, IndexTuple itup);

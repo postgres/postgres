@@ -28,9 +28,7 @@ static bool _bt_posting_valid(IndexTuple posting);
 #endif
 
 /*
- * Deduplicate items on a leaf page.  The page will have to be split by caller
- * if we cannot successfully free at least newitemsz (we also need space for
- * newitem's line pointer, which isn't included in caller's newitemsz).
+ * Perform a deduplication pass.
  *
  * The general approach taken here is to perform as much deduplication as
  * possible to free as much space as possible.  Note, however, that "single
@@ -43,76 +41,32 @@ static bool _bt_posting_valid(IndexTuple posting);
  * handle those if and when the anticipated right half page gets its own
  * deduplication pass, following further inserts of duplicates.)
  *
- * This function should be called during insertion, when the page doesn't have
- * enough space to fit an incoming newitem.  If the BTP_HAS_GARBAGE page flag
- * was set, caller should have removed any LP_DEAD items by calling
- * _bt_vacuum_one_page() before calling here.  We may still have to kill
- * LP_DEAD items here when the page's BTP_HAS_GARBAGE hint is falsely unset,
- * but that should be rare.  Also, _bt_vacuum_one_page() won't unset the
- * BTP_HAS_GARBAGE flag when it finds no LP_DEAD items, so a successful
- * deduplication pass will always clear it, just to keep things tidy.
+ * The page will have to be split if we cannot successfully free at least
+ * newitemsz (we also need space for newitem's line pointer, which isn't
+ * included in caller's newitemsz).
+ *
+ * Note: Caller should have already deleted all existing items with their
+ * LP_DEAD bits set.
  */
 void
-_bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
-				   IndexTuple newitem, Size newitemsz, bool checkingunique)
+_bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
+			   Size newitemsz, bool checkingunique)
 {
 	OffsetNumber offnum,
 				minoff,
 				maxoff;
 	Page		page = BufferGetPage(buf);
-	BTPageOpaque opaque;
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	Page		newpage;
-	OffsetNumber deletable[MaxIndexTuplesPerPage];
 	BTDedupState state;
-	int			ndeletable = 0;
 	Size		pagesaving = 0;
 	bool		singlevalstrat = false;
 	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
-
-	/*
-	 * We can't assume that there are no LP_DEAD items.  For one thing, VACUUM
-	 * will clear the BTP_HAS_GARBAGE hint without reliably removing items
-	 * that are marked LP_DEAD.  We don't want to unnecessarily unset LP_DEAD
-	 * bits when deduplicating items.  Allowing it would be correct, though
-	 * wasteful.
-	 */
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	minoff = P_FIRSTDATAKEY(opaque);
-	maxoff = PageGetMaxOffsetNumber(page);
-	for (offnum = minoff;
-		 offnum <= maxoff;
-		 offnum = OffsetNumberNext(offnum))
-	{
-		ItemId		itemid = PageGetItemId(page, offnum);
-
-		if (ItemIdIsDead(itemid))
-			deletable[ndeletable++] = offnum;
-	}
-
-	if (ndeletable > 0)
-	{
-		_bt_delitems_delete(rel, buf, deletable, ndeletable, heapRel);
-
-		/*
-		 * Return when a split will be avoided.  This is equivalent to
-		 * avoiding a split using the usual _bt_vacuum_one_page() path.
-		 */
-		if (PageGetFreeSpace(page) >= newitemsz)
-			return;
-
-		/*
-		 * Reconsider number of items on page, in case _bt_delitems_delete()
-		 * managed to delete an item or two
-		 */
-		minoff = P_FIRSTDATAKEY(opaque);
-		maxoff = PageGetMaxOffsetNumber(page);
-	}
 
 	/* Passed-in newitemsz is MAXALIGNED but does not include line pointer */
 	newitemsz += sizeof(ItemIdData);
 
 	/*
-	 * By here, it's clear that deduplication will definitely be attempted.
 	 * Initialize deduplication state.
 	 *
 	 * It would be possible for maxpostingsize (limit on posting list tuple
@@ -137,6 +91,9 @@ _bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
 	state->phystupsize = 0;
 	/* nintervals should be initialized to zero */
 	state->nintervals = 0;
+
+	minoff = P_FIRSTDATAKEY(opaque);
+	maxoff = PageGetMaxOffsetNumber(page);
 
 	/* Determine if "single value" strategy should be used */
 	if (!checkingunique)
@@ -259,10 +216,9 @@ _bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
 	/*
 	 * By here, it's clear that deduplication will definitely go ahead.
 	 *
-	 * Clear the BTP_HAS_GARBAGE page flag in the unlikely event that it is
-	 * still falsely set, just to keep things tidy.  (We can't rely on
-	 * _bt_vacuum_one_page() having done this already, and we can't rely on a
-	 * page split or VACUUM getting to it in the near future.)
+	 * Clear the BTP_HAS_GARBAGE page flag.  The index must be a heapkeyspace
+	 * index, and as such we'll never pay attention to BTP_HAS_GARBAGE anyway.
+	 * But keep things tidy.
 	 */
 	if (P_HAS_GARBAGE(opaque))
 	{

@@ -1065,7 +1065,8 @@ btree_mask(char *pagedata, BlockNumber blkno)
 
 	/*
 	 * BTP_HAS_GARBAGE is just an un-logged hint bit. So, mask it. See
-	 * _bt_killitems(), _bt_check_unique() for details.
+	 * _bt_delete_or_dedup_one_page(), _bt_killitems(), and _bt_check_unique()
+	 * for details.
 	 */
 	maskopaq->btpo_flags &= ~BTP_HAS_GARBAGE;
 
