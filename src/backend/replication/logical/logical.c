@@ -181,7 +181,7 @@ StartupDecodingContext(List *output_plugin_options,
 	 */
 	if (!IsTransactionOrTransactionBlock())
 	{
-		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+		LWLockAcquire(ProcArrayLock, LW_SHARED);
 		MyProc->statusFlags |= PROC_IN_LOGICAL_DECODING;
 		ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
 		LWLockRelease(ProcArrayLock);

@@ -623,7 +623,7 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 					 * because that flag is set at process start and never
 					 * reset.  There is logic elsewhere to avoid canceling an
 					 * autovacuum that is working to prevent XID wraparound
-					 * problems (which needs to read a different vacuumFlag
+					 * problems (which needs to read a different statusFlags
 					 * bit), but we don't do that here to avoid grabbing
 					 * ProcArrayLock.
 					 */

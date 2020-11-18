@@ -1741,7 +1741,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 		 * MyProc->xid/xmin, otherwise GetOldestNonRemovableTransactionId()
 		 * might appear to go backwards, which is probably Not Good.
 		 */
-		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+		LWLockAcquire(ProcArrayLock, LW_SHARED);
 		MyProc->statusFlags |= PROC_IN_VACUUM;
 		if (params->is_wraparound)
 			MyProc->statusFlags |= PROC_VACUUM_FOR_WRAPAROUND;

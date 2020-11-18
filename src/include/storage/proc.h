@@ -98,6 +98,11 @@ typedef enum
  * The semaphore and lock-activity fields in a prepared-xact PGPROC are unused,
  * but its myProcLocks[] lists are valid.
  *
+ * We allow many fields of this struct to be accessed without locks, such as
+ * statusFlags or delayChkpt. However, keep in mind that writing mirrored ones
+ * (see below) requires holding ProcArrayLock or XidGenLock in at least shared
+ * mode, so that pgxactoff does not change concurrently.
+ *
  * Mirrored fields:
  *
  * Some fields in PGPROC (see "mirrored in ..." comment) are mirrored into an
