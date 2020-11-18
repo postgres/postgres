@@ -49,6 +49,15 @@ SELECT * FROM t;
  5
 (5 rows)
 
+-- UNION DISTINCT requires hashable type
+WITH RECURSIVE t(n) AS (
+    VALUES (1::money)
+UNION
+    SELECT n+1::money FROM t WHERE n < 100::money
+)
+SELECT sum(n) FROM t;
+ERROR:  could not implement recursive UNION
+DETAIL:  All column datatypes must be hashable.
 -- recursive view
 CREATE RECURSIVE VIEW nums (n) AS
     VALUES (1)
@@ -616,6 +625,17 @@ select * from search_graph;
  2 | 3 | arc 2 -> 3 | f        | {"(1,4)","(4,5)","(5,1)","(1,2)","(2,3)"}
 (25 rows)
 
+-- UNION DISTINCT currently not supported here because row types not hashable
+with recursive search_graph(f, t, label, is_cycle, path) as (
+	select *, false, array[row(g.f, g.t)] from graph g
+	union distinct
+	select g.*, row(g.f, g.t) = any(path), path || row(g.f, g.t)
+	from graph g, search_graph sg
+	where g.f = sg.t and not is_cycle
+)
+select * from search_graph;
+ERROR:  could not implement recursive UNION
+DETAIL:  All column datatypes must be hashable.
 -- ordering by the path column has same effect as SEARCH DEPTH FIRST
 with recursive search_graph(f, t, label, is_cycle, path) as (
 	select *, false, array[row(g.f, g.t)] from graph g

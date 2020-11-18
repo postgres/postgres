@@ -118,9 +118,15 @@ SELECT q1 FROM int8_tbl EXCEPT ALL SELECT q1 FROM int8_tbl FOR NO KEY UPDATE;
 (SELECT 1,2,3 UNION SELECT 4,5,6) EXCEPT SELECT 4,5,6;
 (SELECT 1,2,3 UNION SELECT 4,5,6 ORDER BY 1,2) EXCEPT SELECT 4,5,6;
 
--- exercise both hashed and sorted implementations of INTERSECT/EXCEPT
+-- exercise both hashed and sorted implementations of UNION/INTERSECT/EXCEPT
 
 set enable_hashagg to on;
+
+explain (costs off)
+select count(*) from
+  ( select unique1 from tenk1 union select fivethous from tenk1 ) ss;
+select count(*) from
+  ( select unique1 from tenk1 union select fivethous from tenk1 ) ss;
 
 explain (costs off)
 select count(*) from
@@ -136,6 +142,12 @@ set enable_hashagg to off;
 
 explain (costs off)
 select count(*) from
+  ( select unique1 from tenk1 union select fivethous from tenk1 ) ss;
+select count(*) from
+  ( select unique1 from tenk1 union select fivethous from tenk1 ) ss;
+
+explain (costs off)
+select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
 select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
@@ -143,6 +155,84 @@ select count(*) from
 explain (costs off)
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+
+reset enable_hashagg;
+
+-- non-hashable type
+set enable_hashagg to on;
+
+explain (costs off)
+select x from (values (100::money), (200::money)) _(x) union select x from (values (100::money), (300::money)) _(x);
+
+set enable_hashagg to off;
+
+explain (costs off)
+select x from (values (100::money), (200::money)) _(x) union select x from (values (100::money), (300::money)) _(x);
+
+reset enable_hashagg;
+
+-- arrays
+set enable_hashagg to on;
+
+explain (costs off)
+select x from (values (array[1, 2]), (array[1, 3])) _(x) union select x from (values (array[1, 2]), (array[1, 4])) _(x);
+select x from (values (array[1, 2]), (array[1, 3])) _(x) union select x from (values (array[1, 2]), (array[1, 4])) _(x);
+explain (costs off)
+select x from (values (array[1, 2]), (array[1, 3])) _(x) intersect select x from (values (array[1, 2]), (array[1, 4])) _(x);
+select x from (values (array[1, 2]), (array[1, 3])) _(x) intersect select x from (values (array[1, 2]), (array[1, 4])) _(x);
+explain (costs off)
+select x from (values (array[1, 2]), (array[1, 3])) _(x) except select x from (values (array[1, 2]), (array[1, 4])) _(x);
+select x from (values (array[1, 2]), (array[1, 3])) _(x) except select x from (values (array[1, 2]), (array[1, 4])) _(x);
+
+-- non-hashable type
+explain (costs off)
+select x from (values (array[100::money]), (array[200::money])) _(x) union select x from (values (array[100::money]), (array[300::money])) _(x);
+select x from (values (array[100::money]), (array[200::money])) _(x) union select x from (values (array[100::money]), (array[300::money])) _(x);
+
+set enable_hashagg to off;
+
+explain (costs off)
+select x from (values (array[1, 2]), (array[1, 3])) _(x) union select x from (values (array[1, 2]), (array[1, 4])) _(x);
+select x from (values (array[1, 2]), (array[1, 3])) _(x) union select x from (values (array[1, 2]), (array[1, 4])) _(x);
+explain (costs off)
+select x from (values (array[1, 2]), (array[1, 3])) _(x) intersect select x from (values (array[1, 2]), (array[1, 4])) _(x);
+select x from (values (array[1, 2]), (array[1, 3])) _(x) intersect select x from (values (array[1, 2]), (array[1, 4])) _(x);
+explain (costs off)
+select x from (values (array[1, 2]), (array[1, 3])) _(x) except select x from (values (array[1, 2]), (array[1, 4])) _(x);
+select x from (values (array[1, 2]), (array[1, 3])) _(x) except select x from (values (array[1, 2]), (array[1, 4])) _(x);
+
+reset enable_hashagg;
+
+-- records
+set enable_hashagg to on;
+
+-- currently no hashing support for record, so these will still run with sort plans:
+explain (costs off)
+select x from (values (row(1, 2)), (row(1, 3))) _(x) union select x from (values (row(1, 2)), (row(1, 4))) _(x);
+select x from (values (row(1, 2)), (row(1, 3))) _(x) union select x from (values (row(1, 2)), (row(1, 4))) _(x);
+explain (costs off)
+select x from (values (row(1, 2)), (row(1, 3))) _(x) intersect select x from (values (row(1, 2)), (row(1, 4))) _(x);
+select x from (values (row(1, 2)), (row(1, 3))) _(x) intersect select x from (values (row(1, 2)), (row(1, 4))) _(x);
+explain (costs off)
+select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (values (row(1, 2)), (row(1, 4))) _(x);
+select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (values (row(1, 2)), (row(1, 4))) _(x);
+
+-- non-hashable type
+explain (costs off)
+select x from (values (row(100::money)), (row(200::money))) _(x) union select x from (values (row(100::money)), (row(300::money))) _(x);
+select x from (values (row(100::money)), (row(200::money))) _(x) union select x from (values (row(100::money)), (row(300::money))) _(x);
+
+set enable_hashagg to off;
+
+explain (costs off)
+select x from (values (row(1, 2)), (row(1, 3))) _(x) union select x from (values (row(1, 2)), (row(1, 4))) _(x);
+select x from (values (row(1, 2)), (row(1, 3))) _(x) union select x from (values (row(1, 2)), (row(1, 4))) _(x);
+explain (costs off)
+select x from (values (row(1, 2)), (row(1, 3))) _(x) intersect select x from (values (row(1, 2)), (row(1, 4))) _(x);
+select x from (values (row(1, 2)), (row(1, 3))) _(x) intersect select x from (values (row(1, 2)), (row(1, 4))) _(x);
+explain (costs off)
+select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (values (row(1, 2)), (row(1, 4))) _(x);
+select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (values (row(1, 2)), (row(1, 4))) _(x);
 
 reset enable_hashagg;
 

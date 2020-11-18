@@ -177,6 +177,13 @@ WHERE  hash_array(v)::bit(32) != hash_array_extended(v, 0)::bit(32)
 -------+----------+-----------+-----------
 (0 rows)
 
+-- array hashing with non-hashable element type
+SELECT v as value, hash_array(v)::bit(32) as standard
+FROM   (VALUES ('{0}'::money[])) x(v);
+ERROR:  could not identify a hash function for type money
+SELECT v as value, hash_array_extended(v, 0)::bit(32) as extended0
+FROM   (VALUES ('{0}'::money[])) x(v);
+ERROR:  could not identify an extended hash function for type money
 SELECT v as value, hashbpchar(v)::bit(32) as standard,
        hashbpcharextended(v, 0)::bit(32) as extended0,
        hashbpcharextended(v, 1)::bit(32) as extended1

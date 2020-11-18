@@ -130,6 +130,12 @@ FROM   (VALUES ('{0}'::int4[]), ('{0,1,2,3,4}'), ('{17,18,19,20}'),
 WHERE  hash_array(v)::bit(32) != hash_array_extended(v, 0)::bit(32)
        OR hash_array(v)::bit(32) = hash_array_extended(v, 1)::bit(32);
 
+-- array hashing with non-hashable element type
+SELECT v as value, hash_array(v)::bit(32) as standard
+FROM   (VALUES ('{0}'::money[])) x(v);
+SELECT v as value, hash_array_extended(v, 0)::bit(32) as extended0
+FROM   (VALUES ('{0}'::money[])) x(v);
+
 SELECT v as value, hashbpchar(v)::bit(32) as standard,
        hashbpcharextended(v, 0)::bit(32) as extended0,
        hashbpcharextended(v, 1)::bit(32) as extended1

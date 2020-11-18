@@ -31,6 +31,14 @@ UNION ALL
 )
 SELECT * FROM t;
 
+-- UNION DISTINCT requires hashable type
+WITH RECURSIVE t(n) AS (
+    VALUES (1::money)
+UNION
+    SELECT n+1::money FROM t WHERE n < 100::money
+)
+SELECT sum(n) FROM t;
+
 -- recursive view
 CREATE RECURSIVE VIEW nums (n) AS
     VALUES (1)
@@ -311,6 +319,16 @@ insert into graph values
 with recursive search_graph(f, t, label, is_cycle, path) as (
 	select *, false, array[row(g.f, g.t)] from graph g
 	union all
+	select g.*, row(g.f, g.t) = any(path), path || row(g.f, g.t)
+	from graph g, search_graph sg
+	where g.f = sg.t and not is_cycle
+)
+select * from search_graph;
+
+-- UNION DISTINCT currently not supported here because row types not hashable
+with recursive search_graph(f, t, label, is_cycle, path) as (
+	select *, false, array[row(g.f, g.t)] from graph g
+	union distinct
 	select g.*, row(g.f, g.t) = any(path), path || row(g.f, g.t)
 	from graph g, search_graph sg
 	where g.f = sg.t and not is_cycle
