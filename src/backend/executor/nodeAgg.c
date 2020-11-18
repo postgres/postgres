@@ -3665,7 +3665,11 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 							&aggstate->hash_ngroups_limit,
 							&aggstate->hash_planned_partitions);
 		find_hash_columns(aggstate);
-		build_hash_tables(aggstate);
+
+		/* Skip massive memory allocation if we are just doing EXPLAIN */
+		if (!(eflags & EXEC_FLAG_EXPLAIN_ONLY))
+			build_hash_tables(aggstate);
+
 		aggstate->table_filled = false;
 
 		/* Initialize this to 1, meaning nothing spilled, yet */
