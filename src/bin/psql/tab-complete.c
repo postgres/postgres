@@ -1580,7 +1580,7 @@ psql_completion(const char *text, int start, int end)
 	/* complete with something you can create or replace */
 	else if (TailMatches("CREATE", "OR", "REPLACE"))
 		COMPLETE_WITH("FUNCTION", "PROCEDURE", "LANGUAGE", "RULE", "VIEW",
-					  "AGGREGATE", "TRANSFORM");
+					  "AGGREGATE", "TRANSFORM", "TRIGGER");
 
 /* DROP, but not DROP embedded in other commands */
 	/* complete with something you can drop */
@@ -2712,31 +2712,56 @@ psql_completion(const char *text, int start, int end)
 					  "slot_name", "synchronous_commit");
 
 /* CREATE TRIGGER --- is allowed inside CREATE SCHEMA, so use TailMatches */
-	/* complete CREATE TRIGGER <name> with BEFORE,AFTER,INSTEAD OF */
-	else if (TailMatches("CREATE", "TRIGGER", MatchAny))
+
+	/*
+	 * Complete CREATE [ OR REPLACE ] TRIGGER <name> with BEFORE|AFTER|INSTEAD
+	 * OF.
+	 */
+	else if (TailMatches("CREATE", "TRIGGER", MatchAny) ||
+			 TailMatches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAny))
 		COMPLETE_WITH("BEFORE", "AFTER", "INSTEAD OF");
-	/* complete CREATE TRIGGER <name> BEFORE,AFTER with an event */
-	else if (TailMatches("CREATE", "TRIGGER", MatchAny, "BEFORE|AFTER"))
+
+	/*
+	 * Complete CREATE [ OR REPLACE ] TRIGGER <name> BEFORE,AFTER with an
+	 * event.
+	 */
+	else if (TailMatches("CREATE", "TRIGGER", MatchAny, "BEFORE|AFTER") ||
+			 TailMatches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAny, "BEFORE|AFTER"))
 		COMPLETE_WITH("INSERT", "DELETE", "UPDATE", "TRUNCATE");
-	/* complete CREATE TRIGGER <name> INSTEAD OF with an event */
-	else if (TailMatches("CREATE", "TRIGGER", MatchAny, "INSTEAD", "OF"))
+	/* Complete CREATE [ OR REPLACE ] TRIGGER <name> INSTEAD OF with an event */
+	else if (TailMatches("CREATE", "TRIGGER", MatchAny, "INSTEAD", "OF") ||
+			 TailMatches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAny, "INSTEAD", "OF"))
 		COMPLETE_WITH("INSERT", "DELETE", "UPDATE");
-	/* complete CREATE TRIGGER <name> BEFORE,AFTER sth with OR,ON */
+
+	/*
+	 * Complete CREATE [ OR REPLACE ] TRIGGER <name> BEFORE,AFTER sth with
+	 * OR|ON.
+	 */
 	else if (TailMatches("CREATE", "TRIGGER", MatchAny, "BEFORE|AFTER", MatchAny) ||
-			 TailMatches("CREATE", "TRIGGER", MatchAny, "INSTEAD", "OF", MatchAny))
+			 TailMatches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAny, "BEFORE|AFTER", MatchAny) ||
+			 TailMatches("CREATE", "TRIGGER", MatchAny, "INSTEAD", "OF", MatchAny) ||
+			 TailMatches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAny, "INSTEAD", "OF", MatchAny))
 		COMPLETE_WITH("ON", "OR");
 
 	/*
-	 * complete CREATE TRIGGER <name> BEFORE,AFTER event ON with a list of
-	 * tables.  EXECUTE FUNCTION is the recommended grammar instead of EXECUTE
-	 * PROCEDURE in version 11 and upwards.
+	 * Complete CREATE [ OR REPLACE ] TRIGGER <name> BEFORE,AFTER event ON
+	 * with a list of tables.  EXECUTE FUNCTION is the recommended grammar
+	 * instead of EXECUTE PROCEDURE in version 11 and upwards.
 	 */
-	else if (TailMatches("CREATE", "TRIGGER", MatchAny, "BEFORE|AFTER", MatchAny, "ON"))
+	else if (TailMatches("CREATE", "TRIGGER", MatchAny, "BEFORE|AFTER", MatchAny, "ON") ||
+			 TailMatches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAny, "BEFORE|AFTER", MatchAny, "ON"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
-	/* complete CREATE TRIGGER ... INSTEAD OF event ON with a list of views */
-	else if (TailMatches("CREATE", "TRIGGER", MatchAny, "INSTEAD", "OF", MatchAny, "ON"))
+
+	/*
+	 * Complete CREATE [ OR REPLACE ] TRIGGER ... INSTEAD OF event ON with a
+	 * list of views.
+	 */
+	else if (TailMatches("CREATE", "TRIGGER", MatchAny, "INSTEAD", "OF", MatchAny, "ON") ||
+			 TailMatches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAny, "INSTEAD", "OF", MatchAny, "ON"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
-	else if (HeadMatches("CREATE", "TRIGGER") && TailMatches("ON", MatchAny))
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
+			 TailMatches("ON", MatchAny))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("NOT DEFERRABLE", "DEFERRABLE", "INITIALLY",
@@ -2745,7 +2770,8 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH("NOT DEFERRABLE", "DEFERRABLE", "INITIALLY",
 						  "REFERENCING", "FOR", "WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if (HeadMatches("CREATE", "TRIGGER") &&
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
 			 (TailMatches("DEFERRABLE") || TailMatches("INITIALLY", "IMMEDIATE|DEFERRED")))
 	{
 		if (pset.sversion >= 110000)
@@ -2753,11 +2779,16 @@ psql_completion(const char *text, int start, int end)
 		else
 			COMPLETE_WITH("REFERENCING", "FOR", "WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if (HeadMatches("CREATE", "TRIGGER") && TailMatches("REFERENCING"))
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
+			 TailMatches("REFERENCING"))
 		COMPLETE_WITH("OLD TABLE", "NEW TABLE");
-	else if (HeadMatches("CREATE", "TRIGGER") && TailMatches("OLD|NEW", "TABLE"))
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
+			 TailMatches("OLD|NEW", "TABLE"))
 		COMPLETE_WITH("AS");
-	else if (HeadMatches("CREATE", "TRIGGER") &&
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
 			 (TailMatches("REFERENCING", "OLD", "TABLE", "AS", MatchAny) ||
 			  TailMatches("REFERENCING", "OLD", "TABLE", MatchAny)))
 	{
@@ -2766,7 +2797,8 @@ psql_completion(const char *text, int start, int end)
 		else
 			COMPLETE_WITH("NEW TABLE", "FOR", "WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if (HeadMatches("CREATE", "TRIGGER") &&
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
 			 (TailMatches("REFERENCING", "NEW", "TABLE", "AS", MatchAny) ||
 			  TailMatches("REFERENCING", "NEW", "TABLE", MatchAny)))
 	{
@@ -2775,7 +2807,8 @@ psql_completion(const char *text, int start, int end)
 		else
 			COMPLETE_WITH("OLD TABLE", "FOR", "WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if (HeadMatches("CREATE", "TRIGGER") &&
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
 			 (TailMatches("REFERENCING", "OLD|NEW", "TABLE", "AS", MatchAny, "OLD|NEW", "TABLE", "AS", MatchAny) ||
 			  TailMatches("REFERENCING", "OLD|NEW", "TABLE", MatchAny, "OLD|NEW", "TABLE", "AS", MatchAny) ||
 			  TailMatches("REFERENCING", "OLD|NEW", "TABLE", "AS", MatchAny, "OLD|NEW", "TABLE", MatchAny) ||
@@ -2786,11 +2819,16 @@ psql_completion(const char *text, int start, int end)
 		else
 			COMPLETE_WITH("FOR", "WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if (HeadMatches("CREATE", "TRIGGER") && TailMatches("FOR"))
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
+			 TailMatches("FOR"))
 		COMPLETE_WITH("EACH", "ROW", "STATEMENT");
-	else if (HeadMatches("CREATE", "TRIGGER") && TailMatches("FOR", "EACH"))
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
+			 TailMatches("FOR", "EACH"))
 		COMPLETE_WITH("ROW", "STATEMENT");
-	else if (HeadMatches("CREATE", "TRIGGER") &&
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
 			 (TailMatches("FOR", "EACH", "ROW|STATEMENT") ||
 			  TailMatches("FOR", "ROW|STATEMENT")))
 	{
@@ -2799,22 +2837,31 @@ psql_completion(const char *text, int start, int end)
 		else
 			COMPLETE_WITH("WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if (HeadMatches("CREATE", "TRIGGER") && TailMatches("WHEN", "(*)"))
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
+			 TailMatches("WHEN", "(*)"))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("EXECUTE FUNCTION");
 		else
 			COMPLETE_WITH("EXECUTE PROCEDURE");
 	}
-	/* complete CREATE TRIGGER ... EXECUTE with PROCEDURE|FUNCTION */
-	else if (HeadMatches("CREATE", "TRIGGER") && TailMatches("EXECUTE"))
+
+	/*
+	 * Complete CREATE [ OR REPLACE ] TRIGGER ... EXECUTE with
+	 * PROCEDURE|FUNCTION.
+	 */
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
+			 TailMatches("EXECUTE"))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("FUNCTION");
 		else
 			COMPLETE_WITH("PROCEDURE");
 	}
-	else if (HeadMatches("CREATE", "TRIGGER") &&
+	else if ((HeadMatches("CREATE", "TRIGGER") ||
+			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
 			 TailMatches("EXECUTE", "FUNCTION|PROCEDURE"))
 		COMPLETE_WITH_VERSIONED_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
 
