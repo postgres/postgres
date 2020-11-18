@@ -23922,7 +23922,8 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
    <para>
     Each of these functions returns <literal>true</literal> if
-    successful and <literal>false</literal> otherwise.
+    the signal was successfully sent and <literal>false</literal>
+    if sending the signal failed.
    </para>
 
    <table id="functions-admin-signal-table">
@@ -23970,7 +23971,10 @@ SELECT collation for ('foo' COLLATE "de_DE");
         server to reload their configuration files.  (This is initiated by
         sending a <systemitem>SIGHUP</systemitem> signal to the postmaster
         process, which in turn sends <systemitem>SIGHUP</systemitem> to each
-        of its children.)
+        of its children.) You can use the
+        <link linkend="view-pg-file-settings">pg_file_settings</link> and
+        <link linkend="view-pg-hba-file-rules">pg_hba_file_rules</link> views
+        to check the configuration files for possible errors, before reloading.
        </para></entry>
       </row>
 
