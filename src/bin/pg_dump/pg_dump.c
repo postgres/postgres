@@ -4357,13 +4357,7 @@ dumpSubscription(Archive *fout, SubscriptionInfo *subinfo)
 
 	/* Build list of quoted publications and append them to query. */
 	if (!parsePGArray(subinfo->subpublications, &pubnames, &npubnames))
-	{
-		pg_log_warning("could not parse subpublications array");
-		if (pubnames)
-			free(pubnames);
-		pubnames = NULL;
-		npubnames = 0;
-	}
+		fatal("could not parse subpublications array");
 
 	publications = createPQExpBuffer();
 	for (i = 0; i < npubnames; i++)
@@ -12128,13 +12122,12 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	if (proconfig && *proconfig)
 	{
 		if (!parsePGArray(proconfig, &configitems, &nconfigitems))
-		{
-			pg_log_warning("could not parse proconfig array");
-			if (configitems)
-				free(configitems);
-			configitems = NULL;
-			nconfigitems = 0;
-		}
+			fatal("could not parse proconfig array");
+	}
+	else
+	{
+		configitems = NULL;
+		nconfigitems = 0;
 	}
 
 	if (funcargs)
@@ -16453,8 +16446,8 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 		char	   *indstatvals = indxinfo->indstatvals;
 		char	  **indstatcolsarray = NULL;
 		char	  **indstatvalsarray = NULL;
-		int			nstatcols;
-		int			nstatvals;
+		int			nstatcols = 0;
+		int			nstatvals = 0;
 
 		if (dopt->binary_upgrade)
 			binary_upgrade_set_pg_class_oids(fout, q,
@@ -16483,11 +16476,16 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 		 * If the index has any statistics on some of its columns, generate
 		 * the associated ALTER INDEX queries.
 		 */
-		if (parsePGArray(indstatcols, &indstatcolsarray, &nstatcols) &&
-			parsePGArray(indstatvals, &indstatvalsarray, &nstatvals) &&
-			nstatcols == nstatvals)
+		if (strlen(indstatcols) != 0 || strlen(indstatvals) != 0)
 		{
 			int			j;
+
+			if (!parsePGArray(indstatcols, &indstatcolsarray, &nstatcols))
+				fatal("could not parse index statistic columns");
+			if (!parsePGArray(indstatvals, &indstatvalsarray, &nstatvals))
+				fatal("could not parse index statistic values");
+			if (nstatcols != nstatvals)
+				fatal("mismatched number of columns and values for index stats");
 
 			for (j = 0; j < nstatcols; j++)
 			{
@@ -17938,14 +17936,19 @@ processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 		char	   *extcondition = curext->extcondition;
 		char	  **extconfigarray = NULL;
 		char	  **extconditionarray = NULL;
-		int			nconfigitems;
-		int			nconditionitems;
+		int			nconfigitems = 0;
+		int			nconditionitems = 0;
 
-		if (parsePGArray(extconfig, &extconfigarray, &nconfigitems) &&
-			parsePGArray(extcondition, &extconditionarray, &nconditionitems) &&
-			nconfigitems == nconditionitems)
+		if (strlen(extconfig) != 0 || strlen(extcondition) != 0)
 		{
 			int			j;
+
+			if (!parsePGArray(extconfig, &extconfigarray, &nconfigitems))
+				fatal("could not parse extension configuration array");
+			if (!parsePGArray(extcondition, &extconditionarray, &nconditionitems))
+				fatal("could not parse extension condition array");
+			if (nconfigitems != nconditionitems)
+				fatal("mismatched number of configurations and conditions for extension");
 
 			for (j = 0; j < nconfigitems; j++)
 			{
