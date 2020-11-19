@@ -227,19 +227,19 @@ FROM   (VALUES (int4range(10, 20)), (int4range(23, 43)),
 WHERE  hash_range(v)::bit(32) != hash_range_extended(v, 0)::bit(32)
        OR hash_range(v)::bit(32) = hash_range_extended(v, 1)::bit(32);
 
-CREATE TYPE t1 AS (a int, b text);
+CREATE TYPE hash_test_t1 AS (a int, b text);
 SELECT v as value, hash_record(v)::bit(32) as standard,
        hash_record_extended(v, 0)::bit(32) as extended0,
        hash_record_extended(v, 1)::bit(32) as extended1
-FROM   (VALUES (row(1, 'aaa')::t1, row(2, 'bbb'), row(-1, 'ccc'))) x(v)
+FROM   (VALUES (row(1, 'aaa')::hash_test_t1, row(2, 'bbb'), row(-1, 'ccc'))) x(v)
 WHERE  hash_record(v)::bit(32) != hash_record_extended(v, 0)::bit(32)
        OR hash_record(v)::bit(32) = hash_record_extended(v, 1)::bit(32);
-DROP TYPE t1;
+DROP TYPE hash_test_t1;
 
 -- record hashing with non-hashable field type
-CREATE TYPE t2 AS (a money, b text);
+CREATE TYPE hash_test_t2 AS (a money, b text);
 SELECT v as value, hash_record(v)::bit(32) as standard
-FROM   (VALUES (row(1, 'aaa')::t2)) x(v);
+FROM   (VALUES (row(1, 'aaa')::hash_test_t2)) x(v);
 SELECT v as value, hash_record_extended(v, 0)::bit(32) as extended0
-FROM   (VALUES (row(1, 'aaa')::t2)) x(v);
-DROP TYPE t2;
+FROM   (VALUES (row(1, 'aaa')::hash_test_t2)) x(v);
+DROP TYPE hash_test_t2;
