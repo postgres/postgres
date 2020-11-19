@@ -325,7 +325,7 @@ with recursive search_graph(f, t, label, is_cycle, path) as (
 )
 select * from search_graph;
 
--- UNION DISTINCT currently not supported here because row types not hashable
+-- UNION DISTINCT exercises row type hashing support
 with recursive search_graph(f, t, label, is_cycle, path) as (
 	select *, false, array[row(g.f, g.t)] from graph g
 	union distinct

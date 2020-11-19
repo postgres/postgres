@@ -1358,11 +1358,16 @@ op_hashjoinable(Oid opno, Oid inputtype)
 	TypeCacheEntry *typentry;
 
 	/* As in op_mergejoinable, let the typcache handle the hard cases */
-	/* Eventually we'll need a similar case for record_eq ... */
 	if (opno == ARRAY_EQ_OP)
 	{
 		typentry = lookup_type_cache(inputtype, TYPECACHE_HASH_PROC);
 		if (typentry->hash_proc == F_HASH_ARRAY)
+			result = true;
+	}
+	else if (opno == RECORD_EQ_OP)
+	{
+		typentry = lookup_type_cache(inputtype, TYPECACHE_HASH_PROC);
+		if (typentry->hash_proc == F_HASH_RECORD)
 			result = true;
 	}
 	else

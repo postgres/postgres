@@ -2182,15 +2182,6 @@ SELECT * FROM search_tree <emphasis>ORDER BY path</emphasis>;
 </programlisting>
    </para>
 
-   <note>
-    <para>
-     The queries shown in this and the following section involving
-     <literal>ROW</literal> constructors in the target list only support
-     <literal>UNION ALL</literal> (not plain <literal>UNION</literal>) in the
-     current implementation.
-    </para>
-   </note>
-
    <tip>
     <para>
      Omit the <literal>ROW()</literal> syntax in the common case where only one

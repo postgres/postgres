@@ -3000,7 +3000,7 @@
 
 # generic record comparison operators
 { oid => '2988', oid_symbol => 'RECORD_EQ_OP', descr => 'equal',
-  oprname => '=', oprcanmerge => 't', oprleft => 'record', oprright => 'record',
+  oprname => '=', oprcanmerge => 't', oprcanhash => 't', oprleft => 'record', oprright => 'record',
   oprresult => 'bool', oprcom => '=(record,record)',
   oprnegate => '<>(record,record)', oprcode => 'record_eq', oprrest => 'eqsel',
   oprjoin => 'eqjoinsel' },

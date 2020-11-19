@@ -97,8 +97,10 @@ static TypeCacheEntry *firstDomainTypeEntry = NULL;
 #define TCFLAGS_CHECKED_FIELD_PROPERTIES	0x004000
 #define TCFLAGS_HAVE_FIELD_EQUALITY			0x008000
 #define TCFLAGS_HAVE_FIELD_COMPARE			0x010000
-#define TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS	0x020000
-#define TCFLAGS_DOMAIN_BASE_IS_COMPOSITE	0x040000
+#define TCFLAGS_HAVE_FIELD_HASHING			0x020000
+#define TCFLAGS_HAVE_FIELD_EXTENDED_HASHING	0x040000
+#define TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS	0x080000
+#define TCFLAGS_DOMAIN_BASE_IS_COMPOSITE	0x100000
 
 /* The flags associated with equality/comparison/hashing are all but these: */
 #define TCFLAGS_OPERATOR_FLAGS \
@@ -297,6 +299,8 @@ static bool array_element_has_extended_hashing(TypeCacheEntry *typentry);
 static void cache_array_element_properties(TypeCacheEntry *typentry);
 static bool record_fields_have_equality(TypeCacheEntry *typentry);
 static bool record_fields_have_compare(TypeCacheEntry *typentry);
+static bool record_fields_have_hashing(TypeCacheEntry *typentry);
+static bool record_fields_have_extended_hashing(TypeCacheEntry *typentry);
 static void cache_record_field_properties(TypeCacheEntry *typentry);
 static bool range_element_has_hashing(TypeCacheEntry *typentry);
 static bool range_element_has_extended_hashing(TypeCacheEntry *typentry);
@@ -677,18 +681,16 @@ lookup_type_cache(Oid type_id, int flags)
 										  HASHSTANDARD_PROC);
 
 		/*
-		 * As above, make sure hash_array will succeed.  We don't currently
-		 * support hashing for composite types, but when we do, we'll need
-		 * more logic here to check that case too.
+		 * As above, make sure hash_array, hash_record, or hash_range will
+		 * succeed.
 		 */
 		if (hash_proc == F_HASH_ARRAY &&
 			!array_element_has_hashing(typentry))
 			hash_proc = InvalidOid;
-
-		/*
-		 * Likewise for hash_range.
-		 */
-		if (hash_proc == F_HASH_RANGE &&
+		else if (hash_proc == F_HASH_RECORD &&
+				 !record_fields_have_hashing(typentry))
+			hash_proc = InvalidOid;
+		else if (hash_proc == F_HASH_RANGE &&
 			!range_element_has_hashing(typentry))
 			hash_proc = InvalidOid;
 
@@ -721,18 +723,16 @@ lookup_type_cache(Oid type_id, int flags)
 												   HASHEXTENDED_PROC);
 
 		/*
-		 * As above, make sure hash_array_extended will succeed.  We don't
-		 * currently support hashing for composite types, but when we do,
-		 * we'll need more logic here to check that case too.
+		 * As above, make sure hash_array_extended, hash_record_extended, or
+		 * hash_range_extended will succeed.
 		 */
 		if (hash_extended_proc == F_HASH_ARRAY_EXTENDED &&
 			!array_element_has_extended_hashing(typentry))
 			hash_extended_proc = InvalidOid;
-
-		/*
-		 * Likewise for hash_range_extended.
-		 */
-		if (hash_extended_proc == F_HASH_RANGE_EXTENDED &&
+		else if (hash_extended_proc == F_HASH_RECORD_EXTENDED &&
+			!record_fields_have_extended_hashing(typentry))
+			hash_extended_proc = InvalidOid;
+		else if (hash_extended_proc == F_HASH_RANGE_EXTENDED &&
 			!range_element_has_extended_hashing(typentry))
 			hash_extended_proc = InvalidOid;
 
@@ -1447,6 +1447,22 @@ record_fields_have_compare(TypeCacheEntry *typentry)
 	return (typentry->flags & TCFLAGS_HAVE_FIELD_COMPARE) != 0;
 }
 
+static bool
+record_fields_have_hashing(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_FIELD_PROPERTIES))
+		cache_record_field_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_FIELD_HASHING) != 0;
+}
+
+static bool
+record_fields_have_extended_hashing(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_FIELD_PROPERTIES))
+		cache_record_field_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_FIELD_EXTENDED_HASHING) != 0;
+}
+
 static void
 cache_record_field_properties(TypeCacheEntry *typentry)
 {
@@ -1456,8 +1472,12 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 	 * everything will (we may get a failure at runtime ...)
 	 */
 	if (typentry->type_id == RECORDOID)
+	{
 		typentry->flags |= (TCFLAGS_HAVE_FIELD_EQUALITY |
-							TCFLAGS_HAVE_FIELD_COMPARE);
+							TCFLAGS_HAVE_FIELD_COMPARE |
+							TCFLAGS_HAVE_FIELD_HASHING |
+							TCFLAGS_HAVE_FIELD_EXTENDED_HASHING);
+	}
 	else if (typentry->typtype == TYPTYPE_COMPOSITE)
 	{
 		TupleDesc	tupdesc;
@@ -1474,7 +1494,9 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 
 		/* Have each property if all non-dropped fields have the property */
 		newflags = (TCFLAGS_HAVE_FIELD_EQUALITY |
-					TCFLAGS_HAVE_FIELD_COMPARE);
+					TCFLAGS_HAVE_FIELD_COMPARE |
+					TCFLAGS_HAVE_FIELD_HASHING |
+					TCFLAGS_HAVE_FIELD_EXTENDED_HASHING);
 		for (i = 0; i < tupdesc->natts; i++)
 		{
 			TypeCacheEntry *fieldentry;
@@ -1485,11 +1507,17 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 
 			fieldentry = lookup_type_cache(attr->atttypid,
 										   TYPECACHE_EQ_OPR |
-										   TYPECACHE_CMP_PROC);
+										   TYPECACHE_CMP_PROC |
+										   TYPECACHE_HASH_PROC |
+										   TYPECACHE_HASH_EXTENDED_PROC);
 			if (!OidIsValid(fieldentry->eq_opr))
 				newflags &= ~TCFLAGS_HAVE_FIELD_EQUALITY;
 			if (!OidIsValid(fieldentry->cmp_proc))
 				newflags &= ~TCFLAGS_HAVE_FIELD_COMPARE;
+			if (!OidIsValid(fieldentry->hash_proc))
+				newflags &= ~TCFLAGS_HAVE_FIELD_HASHING;
+			if (!OidIsValid(fieldentry->hash_extended_proc))
+				newflags &= ~TCFLAGS_HAVE_FIELD_EXTENDED_HASHING;
 
 			/* We can drop out of the loop once we disprove all bits */
 			if (newflags == 0)
@@ -1514,12 +1542,16 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 		}
 		baseentry = lookup_type_cache(typentry->domainBaseType,
 									  TYPECACHE_EQ_OPR |
-									  TYPECACHE_CMP_PROC);
+									  TYPECACHE_CMP_PROC |
+									  TYPECACHE_HASH_PROC |
+									  TYPECACHE_HASH_EXTENDED_PROC);
 		if (baseentry->typtype == TYPTYPE_COMPOSITE)
 		{
 			typentry->flags |= TCFLAGS_DOMAIN_BASE_IS_COMPOSITE;
 			typentry->flags |= baseentry->flags & (TCFLAGS_HAVE_FIELD_EQUALITY |
-												   TCFLAGS_HAVE_FIELD_COMPARE);
+												   TCFLAGS_HAVE_FIELD_COMPARE |
+												   TCFLAGS_HAVE_FIELD_HASHING |
+												   TCFLAGS_HAVE_FIELD_EXTENDED_HASHING);
 		}
 	}
 	typentry->flags |= TCFLAGS_CHECKED_FIELD_PROPERTIES;

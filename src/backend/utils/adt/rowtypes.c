@@ -19,6 +19,7 @@
 #include "access/detoast.h"
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
+#include "common/hashfn.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -1765,4 +1766,252 @@ Datum
 btrecordimagecmp(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT32(record_image_cmp(fcinfo));
+}
+
+
+/*
+ * Row type hash functions
+ */
+
+Datum
+hash_record(PG_FUNCTION_ARGS)
+{
+	HeapTupleHeader record = PG_GETARG_HEAPTUPLEHEADER(0);
+	uint32		result = 0;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupdesc;
+	HeapTupleData tuple;
+	int			ncolumns;
+	RecordCompareData *my_extra;
+	Datum	   *values;
+	bool	   *nulls;
+
+	check_stack_depth();		/* recurses for record-type columns */
+
+	/* Extract type info from tuple */
+	tupType = HeapTupleHeaderGetTypeId(record);
+	tupTypmod = HeapTupleHeaderGetTypMod(record);
+	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	ncolumns = tupdesc->natts;
+
+	/* Build temporary HeapTuple control structure */
+	tuple.t_len = HeapTupleHeaderGetDatumLength(record);
+	ItemPointerSetInvalid(&(tuple.t_self));
+	tuple.t_tableOid = InvalidOid;
+	tuple.t_data = record;
+
+	/*
+	 * We arrange to look up the needed hashing info just once per series
+	 * of calls, assuming the record type doesn't change underneath us.
+	 */
+	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL ||
+		my_extra->ncolumns < ncolumns)
+	{
+		fcinfo->flinfo->fn_extra =
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   offsetof(RecordCompareData, columns) +
+							   ncolumns * sizeof(ColumnCompareData));
+		my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+		my_extra->ncolumns = ncolumns;
+		my_extra->record1_type = InvalidOid;
+		my_extra->record1_typmod = 0;
+	}
+
+	if (my_extra->record1_type != tupType ||
+		my_extra->record1_typmod != tupTypmod)
+	{
+		MemSet(my_extra->columns, 0, ncolumns * sizeof(ColumnCompareData));
+		my_extra->record1_type = tupType;
+		my_extra->record1_typmod = tupTypmod;
+	}
+
+	/* Break down the tuple into fields */
+	values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	heap_deform_tuple(&tuple, tupdesc, values, nulls);
+
+	for (int i = 0; i < ncolumns; i++)
+	{
+		Form_pg_attribute att;
+		TypeCacheEntry *typentry;
+		uint32		element_hash;
+
+		att = TupleDescAttr(tupdesc, i);
+
+		if (att->attisdropped)
+			continue;
+
+		/*
+		 * Lookup the hash function if not done already
+		 */
+		typentry = my_extra->columns[i].typentry;
+		if (typentry == NULL ||
+			typentry->type_id != att->atttypid)
+		{
+			typentry = lookup_type_cache(att->atttypid,
+										 TYPECACHE_HASH_PROC_FINFO);
+			if (!OidIsValid(typentry->hash_proc_finfo.fn_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not identify a hash function for type %s",
+								format_type_be(typentry->type_id))));
+			my_extra->columns[i].typentry = typentry;
+		}
+
+		/* Compute hash of element */
+		if (nulls[i])
+		{
+			element_hash = 0;
+		}
+		else
+		{
+			LOCAL_FCINFO(locfcinfo, 1);
+
+			InitFunctionCallInfoData(*locfcinfo, &typentry->hash_proc_finfo, 1,
+									 att->attcollation, NULL, NULL);
+			locfcinfo->args[0].value = values[i];
+			locfcinfo->args[0].isnull = false;
+			element_hash = DatumGetUInt32(FunctionCallInvoke(locfcinfo));
+
+			/* We don't expect hash support functions to return null */
+			Assert(!locfcinfo->isnull);
+		}
+
+		/* see hash_array() */
+		result = (result << 5) - result + element_hash;
+	}
+
+	pfree(values);
+	pfree(nulls);
+	ReleaseTupleDesc(tupdesc);
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(record, 0);
+
+	PG_RETURN_UINT32(result);
+}
+
+Datum
+hash_record_extended(PG_FUNCTION_ARGS)
+{
+	HeapTupleHeader record = PG_GETARG_HEAPTUPLEHEADER(0);
+	uint64		seed = PG_GETARG_INT64(1);
+	uint64		result = 0;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupdesc;
+	HeapTupleData tuple;
+	int			ncolumns;
+	RecordCompareData *my_extra;
+	Datum	   *values;
+	bool	   *nulls;
+
+	check_stack_depth();		/* recurses for record-type columns */
+
+	/* Extract type info from tuple */
+	tupType = HeapTupleHeaderGetTypeId(record);
+	tupTypmod = HeapTupleHeaderGetTypMod(record);
+	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	ncolumns = tupdesc->natts;
+
+	/* Build temporary HeapTuple control structure */
+	tuple.t_len = HeapTupleHeaderGetDatumLength(record);
+	ItemPointerSetInvalid(&(tuple.t_self));
+	tuple.t_tableOid = InvalidOid;
+	tuple.t_data = record;
+
+	/*
+	 * We arrange to look up the needed hashing info just once per series
+	 * of calls, assuming the record type doesn't change underneath us.
+	 */
+	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL ||
+		my_extra->ncolumns < ncolumns)
+	{
+		fcinfo->flinfo->fn_extra =
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   offsetof(RecordCompareData, columns) +
+							   ncolumns * sizeof(ColumnCompareData));
+		my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+		my_extra->ncolumns = ncolumns;
+		my_extra->record1_type = InvalidOid;
+		my_extra->record1_typmod = 0;
+	}
+
+	if (my_extra->record1_type != tupType ||
+		my_extra->record1_typmod != tupTypmod)
+	{
+		MemSet(my_extra->columns, 0, ncolumns * sizeof(ColumnCompareData));
+		my_extra->record1_type = tupType;
+		my_extra->record1_typmod = tupTypmod;
+	}
+
+	/* Break down the tuple into fields */
+	values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	heap_deform_tuple(&tuple, tupdesc, values, nulls);
+
+	for (int i = 0; i < ncolumns; i++)
+	{
+		Form_pg_attribute att;
+		TypeCacheEntry *typentry;
+		uint64		element_hash;
+
+		att = TupleDescAttr(tupdesc, i);
+
+		if (att->attisdropped)
+			continue;
+
+		/*
+		 * Lookup the hash function if not done already
+		 */
+		typentry = my_extra->columns[i].typentry;
+		if (typentry == NULL ||
+			typentry->type_id != att->atttypid)
+		{
+			typentry = lookup_type_cache(att->atttypid,
+										 TYPECACHE_HASH_EXTENDED_PROC_FINFO);
+			if (!OidIsValid(typentry->hash_extended_proc_finfo.fn_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not identify an extended hash function for type %s",
+								format_type_be(typentry->type_id))));
+			my_extra->columns[i].typentry = typentry;
+		}
+
+		/* Compute hash of element */
+		if (nulls[i])
+		{
+			element_hash = 0;
+		}
+		else
+		{
+			LOCAL_FCINFO(locfcinfo, 2);
+
+			InitFunctionCallInfoData(*locfcinfo, &typentry->hash_extended_proc_finfo, 2,
+									 att->attcollation, NULL, NULL);
+			locfcinfo->args[0].value = values[i];
+			locfcinfo->args[0].isnull = false;
+			locfcinfo->args[1].value = Int64GetDatum(seed);
+			locfcinfo->args[0].isnull = false;
+			element_hash = DatumGetUInt64(FunctionCallInvoke(locfcinfo));
+
+			/* We don't expect hash support functions to return null */
+			Assert(!locfcinfo->isnull);
+		}
+
+		/* see hash_array_extended() */
+		result = (result << 5) - result + element_hash;
+	}
+
+	pfree(values);
+	pfree(nulls);
+	ReleaseTupleDesc(tupdesc);
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(record, 0);
+
+	PG_RETURN_UINT64(result);
 }

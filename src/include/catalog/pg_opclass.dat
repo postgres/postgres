@@ -114,6 +114,8 @@
   opcfamily => 'hash/oidvector_ops', opcintype => 'oidvector' },
 { opcmethod => 'btree', opcname => 'record_ops',
   opcfamily => 'btree/record_ops', opcintype => 'record' },
+{ opcmethod => 'hash', opcname => 'record_ops',
+  opcfamily => 'hash/record_ops', opcintype => 'record' },
 { opcmethod => 'btree', opcname => 'record_image_ops',
   opcfamily => 'btree/record_image_ops', opcintype => 'record',
   opcdefault => 'f' },

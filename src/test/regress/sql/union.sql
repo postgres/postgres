@@ -206,7 +206,6 @@ reset enable_hashagg;
 -- records
 set enable_hashagg to on;
 
--- currently no hashing support for record, so these will still run with sort plans:
 explain (costs off)
 select x from (values (row(1, 2)), (row(1, 3))) _(x) union select x from (values (row(1, 2)), (row(1, 4))) _(x);
 select x from (values (row(1, 2)), (row(1, 3))) _(x) union select x from (values (row(1, 2)), (row(1, 4))) _(x);
@@ -218,9 +217,20 @@ select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (value
 select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (values (row(1, 2)), (row(1, 4))) _(x);
 
 -- non-hashable type
+
+-- With an anonymous row type, the typcache reports that the type is
+-- hashable, but then it will fail at run time.
 explain (costs off)
 select x from (values (row(100::money)), (row(200::money))) _(x) union select x from (values (row(100::money)), (row(300::money))) _(x);
 select x from (values (row(100::money)), (row(200::money))) _(x) union select x from (values (row(100::money)), (row(300::money))) _(x);
+
+-- With a defined row type, the typcache can inspect the type's fields
+-- for hashability.
+create type ct1 as (f1 money);
+explain (costs off)
+select x from (values (row(100::money)::ct1), (row(200::money)::ct1)) _(x) union select x from (values (row(100::money)::ct1), (row(300::money)::ct1)) _(x);
+select x from (values (row(100::money)::ct1), (row(200::money)::ct1)) _(x) union select x from (values (row(100::money)::ct1), (row(300::money)::ct1)) _(x);
+drop type ct1;
 
 set enable_hashagg to off;
 

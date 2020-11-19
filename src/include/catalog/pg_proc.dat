@@ -9683,6 +9683,13 @@
   proname => 'btrecordcmp', prorettype => 'int4',
   proargtypes => 'record record', prosrc => 'btrecordcmp' },
 
+{ oid => '9609', descr => 'hash',
+  proname => 'hash_record', prorettype => 'int4', proargtypes => 'record',
+  prosrc => 'hash_record' },
+{ oid => '9610', descr => 'hash',
+  proname => 'hash_record_extended', prorettype => 'int8', proargtypes => 'record int8',
+  prosrc => 'hash_record_extended' },
+
 # record comparison using raw byte images
 { oid => '3181',
   proname => 'record_image_eq', prorettype => 'bool',
