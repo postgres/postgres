@@ -1136,17 +1136,22 @@ ProcessUtilitySlow(ParseState *pstate,
 			case T_CreateForeignTableStmt:
 				{
 					List	   *stmts;
-					ListCell   *l;
 					RangeVar   *table_rv = NULL;
 
 					/* Run parse analysis ... */
 					stmts = transformCreateStmt((CreateStmt *) parsetree,
 												queryString);
 
-					/* ... and do it */
-					foreach(l, stmts)
+					/*
+					 * ... and do it.  We can't use foreach() because we may
+					 * modify the list midway through, so pick off the
+					 * elements one at a time, the hard way.
+					 */
+					while (stmts != NIL)
 					{
-						Node	   *stmt = (Node *) lfirst(l);
+						Node	   *stmt = (Node *) linitial(stmts);
+
+						stmts = list_delete_first(stmts);
 
 						if (IsA(stmt, CreateStmt))
 						{
@@ -1212,8 +1217,8 @@ ProcessUtilitySlow(ParseState *pstate,
 							/*
 							 * Do delayed processing of LIKE options.  This
 							 * will result in additional sub-statements for us
-							 * to process.  We can just tack those onto the
-							 * to-do list.
+							 * to process.  Those should get done before any
+							 * remaining actions, so prepend them to "stmts".
 							 */
 							TableLikeClause *like = (TableLikeClause *) stmt;
 							List	   *morestmts;
@@ -1221,14 +1226,7 @@ ProcessUtilitySlow(ParseState *pstate,
 							Assert(table_rv != NULL);
 
 							morestmts = expandTableLikeClause(table_rv, like);
-							stmts = list_concat(stmts, morestmts);
-
-							/*
-							 * We don't need a CCI now, besides which the "l"
-							 * list pointer is now possibly invalid, so just
-							 * skip the CCI test below.
-							 */
-							continue;
+							stmts = list_concat(morestmts, stmts);
 						}
 						else
 						{
@@ -1256,7 +1254,7 @@ ProcessUtilitySlow(ParseState *pstate,
 						}
 
 						/* Need CCI between commands */
-						if (lnext(stmts, l) != NULL)
+						if (stmts != NIL)
 							CommandCounterIncrement();
 					}
 
