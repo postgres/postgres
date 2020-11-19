@@ -45,13 +45,8 @@
 
 #define PG_DYNSHMEM_CONTROL_MAGIC		0x9a503d32
 
-/*
- * There's no point in getting too cheap here, because the minimum allocation
- * is one OS page, which is probably at least 4KB and could easily be as high
- * as 64KB.  Each currently sizeof(dsm_control_item), currently 8 bytes.
- */
 #define PG_DYNSHMEM_FIXED_SLOTS			64
-#define PG_DYNSHMEM_SLOTS_PER_BACKEND	2
+#define PG_DYNSHMEM_SLOTS_PER_BACKEND	5
 
 #define INVALID_CONTROL_SLOT		((uint32) -1)
 
