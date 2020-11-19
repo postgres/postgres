@@ -114,6 +114,11 @@ INSERT INTO inhg (xx, yy, x) VALUES ('foo', 10, 15); -- should fail
 DROP TABLE inhg;
 DROP TABLE inhz;
 
+/* Use primary key imported by LIKE for self-referential FK constraint */
+CREATE TABLE inhz (x text REFERENCES inhz, LIKE inhx INCLUDING INDEXES);
+\d inhz
+DROP TABLE inhz;
+
 -- including storage and comments
 CREATE TABLE ctlt1 (a text CHECK (length(a) > 2) PRIMARY KEY, b text);
 CREATE INDEX ctlt1_b_key ON ctlt1 (b);

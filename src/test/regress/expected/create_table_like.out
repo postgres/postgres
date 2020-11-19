@@ -283,6 +283,22 @@ ERROR:  duplicate key value violates unique constraint "inhg_x_key"
 DETAIL:  Key (x)=(15) already exists.
 DROP TABLE inhg;
 DROP TABLE inhz;
+/* Use primary key imported by LIKE for self-referential FK constraint */
+CREATE TABLE inhz (x text REFERENCES inhz, LIKE inhx INCLUDING INDEXES);
+\d inhz
+              Table "public.inhz"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ x      | text |           |          | 
+ xx     | text |           | not null | 
+Indexes:
+    "inhz_pkey" PRIMARY KEY, btree (xx)
+Foreign-key constraints:
+    "inhz_x_fkey" FOREIGN KEY (x) REFERENCES inhz(xx)
+Referenced by:
+    TABLE "inhz" CONSTRAINT "inhz_x_fkey" FOREIGN KEY (x) REFERENCES inhz(xx)
+
+DROP TABLE inhz;
 -- including storage and comments
 CREATE TABLE ctlt1 (a text CHECK (length(a) > 2) PRIMARY KEY, b text);
 CREATE INDEX ctlt1_b_key ON ctlt1 (b);
