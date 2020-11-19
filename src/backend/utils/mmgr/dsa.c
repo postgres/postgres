@@ -74,7 +74,7 @@
  * dsm.c's limits on total number of segments), or limiting the total size
  * an area can manage when using small pointers.
  */
-#define DSA_NUM_SEGMENTS_AT_EACH_SIZE 4
+#define DSA_NUM_SEGMENTS_AT_EACH_SIZE 2
 
 /*
  * The number of bits used to represent the offset part of a dsa_pointer.
