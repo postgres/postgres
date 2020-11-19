@@ -13238,14 +13238,6 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_NOT_DISTINCT, "=", $1, $6, @2);
 				}
-			| a_expr IS OF '(' type_list ')'			%prec IS
-				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", $1, (Node *) $5, @2);
-				}
-			| a_expr IS NOT OF '(' type_list ')'		%prec IS
-				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", $1, (Node *) $6, @2);
-				}
 			| a_expr BETWEEN opt_asymmetric b_expr AND a_expr		%prec BETWEEN
 				{
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_BETWEEN,
@@ -13463,14 +13455,6 @@ b_expr:		c_expr
 			| b_expr IS NOT DISTINCT FROM b_expr	%prec IS
 				{
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_NOT_DISTINCT, "=", $1, $6, @2);
-				}
-			| b_expr IS OF '(' type_list ')'		%prec IS
-				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", $1, (Node *) $5, @2);
-				}
-			| b_expr IS NOT OF '(' type_list ')'	%prec IS
-				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", $1, (Node *) $6, @2);
 				}
 			| b_expr IS DOCUMENT_P					%prec IS
 				{

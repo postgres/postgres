@@ -70,22 +70,16 @@ from basictest;
 (3 rows)
 
 -- check that union/case/coalesce type resolution handles domains properly
-select coalesce(4::domainint4, 7) is of (int4) as t;
- t 
----
- t
+select pg_typeof(coalesce(4::domainint4, 7));
+ pg_typeof 
+-----------
+ integer
 (1 row)
 
-select coalesce(4::domainint4, 7) is of (domainint4) as f;
- f 
----
- f
-(1 row)
-
-select coalesce(4::domainint4, 7::domainint4) is of (domainint4) as t;
- t 
----
- t
+select pg_typeof(coalesce(4::domainint4, 7::domainint4));
+ pg_typeof  
+------------
+ domainint4
 (1 row)
 
 drop table basictest;

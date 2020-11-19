@@ -94,7 +94,6 @@ static Node *transformAExprOpAny(ParseState *pstate, A_Expr *a);
 static Node *transformAExprOpAll(ParseState *pstate, A_Expr *a);
 static Node *transformAExprDistinct(ParseState *pstate, A_Expr *a);
 static Node *transformAExprNullIf(ParseState *pstate, A_Expr *a);
-static Node *transformAExprOf(ParseState *pstate, A_Expr *a);
 static Node *transformAExprIn(ParseState *pstate, A_Expr *a);
 static Node *transformAExprBetween(ParseState *pstate, A_Expr *a);
 static Node *transformBoolExpr(ParseState *pstate, BoolExpr *a);
@@ -227,9 +226,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 						break;
 					case AEXPR_NULLIF:
 						result = transformAExprNullIf(pstate, a);
-						break;
-					case AEXPR_OF:
-						result = transformAExprOf(pstate, a);
 						break;
 					case AEXPR_IN:
 						result = transformAExprIn(pstate, a);
@@ -1164,51 +1160,6 @@ transformAExprNullIf(ParseState *pstate, A_Expr *a)
 	 * We rely on NullIfExpr and OpExpr being the same struct
 	 */
 	NodeSetTag(result, T_NullIfExpr);
-
-	return (Node *) result;
-}
-
-/*
- * Checking an expression for match to a list of type names. Will result
- * in a boolean constant node.
- */
-static Node *
-transformAExprOf(ParseState *pstate, A_Expr *a)
-{
-	Node	   *lexpr = a->lexpr;
-	Const	   *result;
-	ListCell   *telem;
-	Oid			ltype,
-				rtype;
-	bool		matched = false;
-
-	if (operator_precedence_warning)
-		emit_precedence_warnings(pstate, PREC_GROUP_POSTFIX_IS, "IS",
-								 lexpr, NULL,
-								 a->location);
-
-	lexpr = transformExprRecurse(pstate, lexpr);
-
-	ltype = exprType(lexpr);
-	foreach(telem, (List *) a->rexpr)
-	{
-		rtype = typenameTypeId(pstate, lfirst(telem));
-		matched = (rtype == ltype);
-		if (matched)
-			break;
-	}
-
-	/*
-	 * We have two forms: equals or not equals. Flip the sense of the result
-	 * for not equals.
-	 */
-	if (strcmp(strVal(linitial(a->name)), "<>") == 0)
-		matched = (!matched);
-
-	result = (Const *) makeBoolConst(matched, false);
-
-	/* Make the result have the original input's parse location */
-	result->location = exprLocation((Node *) a);
 
 	return (Node *) result;
 }
@@ -3256,11 +3207,6 @@ operator_precedence_group(Node *node, const char **nodename)
 		{
 			*nodename = "IS";
 			group = PREC_GROUP_INFIX_IS;
-		}
-		else if (aexpr->kind == AEXPR_OF)
-		{
-			*nodename = "IS";
-			group = PREC_GROUP_POSTFIX_IS;
 		}
 		else if (aexpr->kind == AEXPR_IN)
 		{

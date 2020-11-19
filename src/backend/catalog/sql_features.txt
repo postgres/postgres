@@ -373,7 +373,7 @@ S096	Optional array bounds			YES
 S097	Array element assignment			NO	
 S098	ARRAY_AGG			YES	
 S111	ONLY in query expressions			YES	
-S151	Type predicate			NO	
+S151	Type predicate			NO	see pg_typeof()
 S161	Subtype treatment			NO	
 S162	Subtype treatment for references			NO	
 S201	SQL-invoked routines on arrays			YES	

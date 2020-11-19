@@ -762,25 +762,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
     expression must be of Boolean type.
    </para>
 
-<!-- IS OF does not conform to the ISO SQL behavior, so it is undocumented here
-   <para>
-    <indexterm>
-     <primary>IS OF</primary>
-    </indexterm>
-    <indexterm>
-     <primary>IS NOT OF</primary>
-    </indexterm>
-    It is possible to check the data type of an expression using the
-    predicates
-<synopsis>
-<replaceable>expression</replaceable> IS OF (typename, ...)
-<replaceable>expression</replaceable> IS NOT OF (typename, ...)
-</synopsis>
-    They return a boolean value based on whether the expression's data
-    type is one of the listed data types.
-   </para>
--->
-
    <para>
     Some comparison-related functions are also available, as shown in <xref
     linkend="functions-comparison-func-table"/>.

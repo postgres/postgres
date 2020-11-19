@@ -59,9 +59,8 @@ select testtext || testvarchar as concat, testnumeric + 42 as sum
 from basictest;
 
 -- check that union/case/coalesce type resolution handles domains properly
-select coalesce(4::domainint4, 7) is of (int4) as t;
-select coalesce(4::domainint4, 7) is of (domainint4) as f;
-select coalesce(4::domainint4, 7::domainint4) is of (domainint4) as t;
+select pg_typeof(coalesce(4::domainint4, 7));
+select pg_typeof(coalesce(4::domainint4, 7::domainint4));
 
 drop table basictest;
 drop domain domainvarchar restrict;

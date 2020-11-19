@@ -258,7 +258,6 @@ typedef enum A_Expr_Kind
 	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
 	AEXPR_NOT_DISTINCT,			/* IS NOT DISTINCT FROM - name must be "=" */
 	AEXPR_NULLIF,				/* NULLIF - name must be "=" */
-	AEXPR_OF,					/* IS [NOT] OF - name must be "=" or "<>" */
 	AEXPR_IN,					/* [NOT] IN - name must be "=" or "<>" */
 	AEXPR_LIKE,					/* [NOT] LIKE - name must be "~~" or "!~~" */
 	AEXPR_ILIKE,				/* [NOT] ILIKE - name must be "~~*" or "!~~*" */

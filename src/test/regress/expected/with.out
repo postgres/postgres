@@ -142,10 +142,10 @@ SELECT * FROM t LIMIT 10;
 
 -- Test behavior with an unknown-type literal in the WITH
 WITH q AS (SELECT 'foo' AS x)
-SELECT x, x IS OF (text) AS is_text FROM q;
-  x  | is_text 
------+---------
- foo | t
+SELECT x, pg_typeof(x) FROM q;
+  x  | pg_typeof 
+-----+-----------
+ foo | text
 (1 row)
 
 WITH RECURSIVE t(n) AS (
@@ -153,15 +153,15 @@ WITH RECURSIVE t(n) AS (
 UNION ALL
     SELECT n || ' bar' FROM t WHERE length(n) < 20
 )
-SELECT n, n IS OF (text) AS is_text FROM t;
-            n            | is_text 
--------------------------+---------
- foo                     | t
- foo bar                 | t
- foo bar bar             | t
- foo bar bar bar         | t
- foo bar bar bar bar     | t
- foo bar bar bar bar bar | t
+SELECT n, pg_typeof(n) FROM t;
+            n            | pg_typeof 
+-------------------------+-----------
+ foo                     | text
+ foo bar                 | text
+ foo bar bar             | text
+ foo bar bar bar         | text
+ foo bar bar bar bar     | text
+ foo bar bar bar bar bar | text
 (6 rows)
 
 -- In a perfect world, this would work and resolve the literal as int ...
@@ -171,7 +171,7 @@ WITH RECURSIVE t(n) AS (
 UNION ALL
     SELECT n+1 FROM t WHERE n < 10
 )
-SELECT n, n IS OF (int) AS is_int FROM t;
+SELECT n, pg_typeof(n) FROM t;
 ERROR:  operator does not exist: text + integer
 LINE 4:     SELECT n+1 FROM t WHERE n < 10
                     ^
