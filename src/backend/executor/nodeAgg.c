@@ -3073,7 +3073,11 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		aggstate->hash_pergroup = palloc0(sizeof(AggStatePerGroup) * numHashes);
 
 		find_hash_columns(aggstate);
-		build_hash_table(aggstate);
+
+		/* Skip massive memory allocation if we are just doing EXPLAIN */
+		if (!(eflags & EXEC_FLAG_EXPLAIN_ONLY))
+			build_hash_table(aggstate);
+
 		aggstate->table_filled = false;
 	}
 
