@@ -89,6 +89,10 @@ $node_c->safe_psql('postgres', "checkpoint");
 $node_a->safe_psql('postgres',
 	"INSERT INTO tbl1 VALUES ('in A, after C was promoted')");
 
+# make sure it's replicated to B before we continue
+$lsn = $node_a->lsn('insert');
+$node_a->wait_for_catchup('node_b', 'replay', $lsn);
+
 # Also insert a new row in the standby, which won't be present in the
 # old primary.
 $node_c->safe_psql('postgres',
