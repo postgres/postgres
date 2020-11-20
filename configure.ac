@@ -2152,40 +2152,23 @@ else
   SHMEM_IMPLEMENTATION="src/backend/port/win32_shmem.c"
 fi
 
-# Select random number source
-#
-# You can override this logic by setting the appropriate USE_*RANDOM flag to 1
-# in the template or configure command line.
-
-# If not selected manually, try to select a source automatically.
-if test x"$USE_OPENSSL_RANDOM" = x"" && test x"$USE_WIN32_RANDOM" = x"" && test x"$USE_DEV_URANDOM" = x"" ; then
-  if test x"$with_openssl" = x"yes" ; then
-    USE_OPENSSL_RANDOM=1
-  elif test "$PORTNAME" = "win32" ; then
-    USE_WIN32_RANDOM=1
-  else
-    AC_CHECK_FILE([/dev/urandom], [], [])
-
-    if test x"$ac_cv_file__dev_urandom" = x"yes" ; then
-      USE_DEV_URANDOM=1
-    fi
-  fi
-fi
-
+# Select random number source. If a TLS library is used then it will be the
+# first choice, else the native platform sources (Windows API or /dev/urandom)
+# will be used.
 AC_MSG_CHECKING([which random number source to use])
-if test x"$USE_OPENSSL_RANDOM" = x"1" ; then
-  AC_DEFINE(USE_OPENSSL_RANDOM, 1, [Define to use OpenSSL for random number generation])
+if test x"$with_openssl" = x"yes" ; then
   AC_MSG_RESULT([OpenSSL])
-elif test x"$USE_WIN32_RANDOM" = x"1" ; then
-  AC_DEFINE(USE_WIN32_RANDOM, 1, [Define to use native Windows API for random number generation])
+elif test x"$PORTNAME" = x"win32" ; then
   AC_MSG_RESULT([Windows native])
-elif test x"$USE_DEV_URANDOM" = x"1" ; then
-  AC_DEFINE(USE_DEV_URANDOM, 1, [Define to use /dev/urandom for random number generation])
-  AC_MSG_RESULT([/dev/urandom])
 else
-  AC_MSG_ERROR([
+  AC_MSG_RESULT([/dev/urandom])
+  AC_CHECK_FILE([/dev/urandom], [], [])
+
+  if test x"$ac_cv_file__dev_urandom" = x"no" ; then
+    AC_MSG_ERROR([
 no source of strong random numbers was found
-PostgreSQL can use OpenSSL or /dev/urandom as a source of random numbers.])
+PostgreSQL can use OpenSSL, native Windows API or /dev/urandom as a source of random numbers.])
+  fi
 fi
 
 # If not set in template file, set bytes to use libc memset()

@@ -862,9 +862,6 @@
 /* Define to 1 to build with BSD Authentication support. (--with-bsd-auth) */
 #undef USE_BSD_AUTH
 
-/* Define to use /dev/urandom for random number generation */
-#undef USE_DEV_URANDOM
-
 /* Define to build with ICU support. (--with-icu) */
 #undef USE_ICU
 
@@ -886,9 +883,6 @@
 
 /* Define to build with OpenSSL support. (--with-openssl) */
 #undef USE_OPENSSL
-
-/* Define to use OpenSSL for random number generation */
-#undef USE_OPENSSL_RANDOM
 
 /* Define to 1 to build with PAM support. (--with-pam) */
 #undef USE_PAM
@@ -913,9 +907,6 @@
 
 /* Define to select unnamed POSIX semaphores. */
 #undef USE_UNNAMED_POSIX_SEMAPHORES
-
-/* Define to use native Windows API for random number generation */
-#undef USE_WIN32_RANDOM
 
 /* Define to select Win32-style semaphores. */
 #undef USE_WIN32_SEMAPHORES
