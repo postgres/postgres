@@ -973,7 +973,8 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
     Version information is available from the
     <literal>icu</literal> provider on all operating systems.  For the
     <literal>libc</literal> provider, versions are currently only available
-    on systems using the GNU C library (most Linux systems) and Windows.
+    on systems using the GNU C library (most Linux systems), FreeBSD and
+    Windows.
    </para>
 
    <note>

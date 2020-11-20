@@ -1684,6 +1684,26 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 
 		/* Use the glibc version because we don't have anything better. */
 		collversion = pstrdup(gnu_get_libc_version());
+#elif defined(LC_VERSION_MASK)
+		locale_t    loc;
+
+		/* C[.encoding] and POSIX never change. */
+		if (strcmp("C", collcollate) == 0 ||
+			strncmp("C.", collcollate, 2) == 0 ||
+			strcmp("POSIX", collcollate) == 0)
+			return NULL;
+
+		/* Look up FreeBSD collation version. */
+		loc = newlocale(LC_COLLATE, collcollate, NULL);
+		if (loc)
+		{
+			collversion =
+				pstrdup(querylocale(LC_COLLATE_MASK | LC_VERSION_MASK, loc));
+			freelocale(loc);
+		}
+		else
+			ereport(ERROR,
+					(errmsg("could not load locale \"%s\"", collcollate)));
 #elif defined(WIN32) && _WIN32_WINNT >= 0x0600
 		/*
 		 * If we are targeting Windows Vista and above, we can ask for a name
