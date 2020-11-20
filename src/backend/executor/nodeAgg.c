@@ -2664,7 +2664,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 	if (node->aggstrategy == AGG_HASHED)
 	{
-		build_hash_table(aggstate);
+		/* Skip massive memory allocation if we are just doing EXPLAIN */
+		if (!(eflags & EXEC_FLAG_EXPLAIN_ONLY))
+			build_hash_table(aggstate);
+
 		aggstate->table_filled = false;
 		/* Compute the columns we actually need to hash on */
 		aggstate->hash_needed = find_hash_columns(aggstate);
