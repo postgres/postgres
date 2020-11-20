@@ -220,11 +220,12 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 		else
 		{
 			/* stat failed */
-			if (errno != ENOENT)
-				ereport(FATAL,
-						(errcode_for_file_access(),
-						 errmsg("could not stat file \"%s\": %m",
-								xlogpath)));
+			int			elevel = (errno == ENOENT) ? LOG : FATAL;
+
+			ereport(elevel,
+					(errcode_for_file_access(),
+					 errmsg("could not stat file \"%s\": %m", xlogpath),
+					 errdetail("restore_command returned a zero exit status, but stat() failed.")));
 		}
 	}
 
