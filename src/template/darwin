@@ -11,6 +11,7 @@ fi
 if test x"$PG_SYSROOT" != x"" ; then
   if test -d "$PG_SYSROOT" ; then
     CPPFLAGS="-isysroot $PG_SYSROOT $CPPFLAGS"
+    LDFLAGS="-isysroot $PG_SYSROOT $LDFLAGS"
   else
     PG_SYSROOT=""
   fi
