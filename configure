@@ -19424,8 +19424,10 @@ _ACEOF
 # literally, so that it's possible to override it at build time using
 # a command like "make ... PG_SYSROOT=path".  This has to be done after
 # we've finished all configure checks that depend on CPPFLAGS.
+# The same for LDFLAGS, too.
 if test x"$PG_SYSROOT" != x; then
   CPPFLAGS=`echo "$CPPFLAGS" | sed -e "s| $PG_SYSROOT | \\\$(PG_SYSROOT) |"`
+  LDFLAGS=`echo "$LDFLAGS" | sed -e "s| $PG_SYSROOT | \\\$(PG_SYSROOT) |"`
 fi
 
 
