@@ -1144,7 +1144,8 @@ CREATE TABLE circles (
 
      <para>
       The OID of the table containing this row.  This column is
-      particularly handy for queries that select from inheritance
+      particularly handy for queries that select from partitioned
+      tables (see <xref linkend="ddl-partitioning"/>) or inheritance
       hierarchies (see <xref linkend="ddl-inherit"/>), since without it,
       it's difficult to tell which individual table a row came from.  The
       <structfield>tableoid</structfield> can be joined against the
