@@ -52,8 +52,7 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
   <para>
    <command>CREATE MATERIALIZED VIEW</command> requires
    <literal>CREATE</literal> privilege on the schema used for the materialized
-   view.  If using <command>WITH DATA</command>, the default,
-   <literal>INSERT</literal> privilege is also required.
+   view.
   </para>
  </refsect1>
 

@@ -432,7 +432,6 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	DR_intorel *myState = (DR_intorel *) self;
 	IntoClause *into = myState->into;
 	bool		is_matview;
-	char		relkind;
 	List	   *attrList;
 	ObjectAddress intoRelationAddr;
 	Relation	intoRelationDesc;
@@ -443,7 +442,6 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
 	is_matview = (into->viewQuery != NULL);
-	relkind = is_matview ? RELKIND_MATVIEW : RELKIND_RELATION;
 
 	/*
 	 * Build column definitions using "pre-cooked" type and collation info. If
@@ -504,30 +502,6 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 * Finally we can open the target table
 	 */
 	intoRelationDesc = table_open(intoRelationAddr.objectId, AccessExclusiveLock);
-
-	/*
-	 * Check INSERT permission on the constructed table.  Skip this check if
-	 * WITH NO DATA is specified as only a table gets created with no tuples
-	 * inserted, that is a case possible when using EXPLAIN ANALYZE or
-	 * EXECUTE.
-	 */
-	if (!into->skipData)
-	{
-		RangeTblEntry *rte;
-
-		rte = makeNode(RangeTblEntry);
-		rte->rtekind = RTE_RELATION;
-		rte->relid = intoRelationAddr.objectId;
-		rte->relkind = relkind;
-		rte->rellockmode = RowExclusiveLock;
-		rte->requiredPerms = ACL_INSERT;
-
-		for (attnum = 1; attnum <= intoRelationDesc->rd_att->natts; attnum++)
-			rte->insertedCols = bms_add_member(rte->insertedCols,
-											   attnum - FirstLowInvalidHeapAttributeNumber);
-
-		ExecCheckRTPerms(list_make1(rte), true);
-	}
 
 	/*
 	 * Make sure the constructed table does not have RLS enabled.

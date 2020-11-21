@@ -245,18 +245,18 @@ ALTER DEFAULT PRIVILEGES FOR ROLE regress_matview_user
 GRANT ALL ON SCHEMA matview_schema TO public;
 
 SET SESSION AUTHORIZATION regress_matview_user;
--- WITH DATA fails.
 CREATE MATERIALIZED VIEW matview_schema.mv_withdata1 (a) AS
-  SELECT generate_series(1, 10) WITH DATA; -- error
+  SELECT generate_series(1, 10) WITH DATA;
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
-  CREATE MATERIALIZED VIEW matview_schema.mv_withdata1 (a) AS
-  SELECT generate_series(1, 10) WITH DATA; -- error
--- WITH NO DATA passes.
+  CREATE MATERIALIZED VIEW matview_schema.mv_withdata2 (a) AS
+  SELECT generate_series(1, 10) WITH DATA;
+REFRESH MATERIALIZED VIEW matview_schema.mv_withdata2;
 CREATE MATERIALIZED VIEW matview_schema.mv_nodata1 (a) AS
   SELECT generate_series(1, 10) WITH NO DATA;
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
   CREATE MATERIALIZED VIEW matview_schema.mv_nodata2 (a) AS
   SELECT generate_series(1, 10) WITH NO DATA;
+REFRESH MATERIALIZED VIEW matview_schema.mv_nodata2;
 RESET SESSION AUTHORIZATION;
 
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_matview_user
