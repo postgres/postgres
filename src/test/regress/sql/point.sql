@@ -21,6 +21,8 @@ INSERT INTO POINT_TBL(f1) VALUES ('(1e-300,-1e-300)');	-- To underflow
 
 INSERT INTO POINT_TBL(f1) VALUES ('(1e+300,Inf)');		-- To overflow
 
+INSERT INTO POINT_TBL(f1) VALUES ('(Inf,1e+300)');		-- Transposed
+
 INSERT INTO POINT_TBL(f1) VALUES (' ( Nan , NaN ) ');
 
 -- bad format points

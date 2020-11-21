@@ -11,6 +11,7 @@ INSERT INTO POINT_TBL(f1) VALUES ('(5.1, 34.5)');
 INSERT INTO POINT_TBL(f1) VALUES ('(-5.0,-12.0)');
 INSERT INTO POINT_TBL(f1) VALUES ('(1e-300,-1e-300)');	-- To underflow
 INSERT INTO POINT_TBL(f1) VALUES ('(1e+300,Inf)');		-- To overflow
+INSERT INTO POINT_TBL(f1) VALUES ('(Inf,1e+300)');		-- Transposed
 INSERT INTO POINT_TBL(f1) VALUES (' ( Nan , NaN ) ');
 -- bad format points
 INSERT INTO POINT_TBL(f1) VALUES ('asdfasdf');
@@ -44,9 +45,10 @@ SELECT '' AS six, * FROM POINT_TBL;
      | (-5,-12)
      | (1e-300,-1e-300)
      | (1e+300,Infinity)
+     | (Infinity,1e+300)
      | (NaN,NaN)
      | (10,10)
-(9 rows)
+(10 rows)
 
 -- left of
 SELECT '' AS three, p.* FROM POINT_TBL p WHERE p.f1 << '(0.0, 0.0)';
@@ -115,8 +117,9 @@ SELECT '' AS three, p.* FROM POINT_TBL p
        | (-5,-12)
        | (1e-300,-1e-300)
        | (1e+300,Infinity)
+       | (Infinity,1e+300)
        | (NaN,NaN)
-(6 rows)
+(7 rows)
 
 SELECT '' AS two, p.* FROM POINT_TBL p
    WHERE p.f1 <@ path '[(0,0),(-10,0),(-10,10)]';
@@ -136,8 +139,9 @@ SELECT '' AS three, p.* FROM POINT_TBL p
        | (-5,-12)
        | (1e-300,-1e-300)
        | (1e+300,Infinity)
+       | (Infinity,1e+300)
        | (NaN,NaN)
-(6 rows)
+(7 rows)
 
 SELECT '' AS six, p.f1, p.f1 <-> point '(0,0)' AS dist
    FROM POINT_TBL p
@@ -152,8 +156,9 @@ SELECT '' AS six, p.f1, p.f1 <-> point '(0,0)' AS dist
      | (10,10)           |      14.142135623731
      | (5.1,34.5)        |     34.8749193547455
      | (1e+300,Infinity) |             Infinity
+     | (Infinity,1e+300) |             Infinity
      | (NaN,NaN)         |                  NaN
-(9 rows)
+(10 rows)
 
 SELECT '' AS thirtysix, p1.f1 AS point1, p2.f1 AS point2, p1.f1 <-> p2.f1 AS dist
    FROM POINT_TBL p1, POINT_TBL p2
@@ -210,12 +215,19 @@ SELECT '' AS thirtysix, p1.f1 AS point1, p2.f1 AS point2, p1.f1 <-> p2.f1 AS dis
            | (-5,-12)          | (5.1,34.5)        |     47.5842410888311
            | (5.1,34.5)        | (-5,-12)          |     47.5842410888311
            | (-10,0)           | (1e+300,Infinity) |             Infinity
+           | (-10,0)           | (Infinity,1e+300) |             Infinity
            | (-5,-12)          | (1e+300,Infinity) |             Infinity
+           | (-5,-12)          | (Infinity,1e+300) |             Infinity
            | (-3,4)            | (1e+300,Infinity) |             Infinity
+           | (-3,4)            | (Infinity,1e+300) |             Infinity
            | (0,0)             | (1e+300,Infinity) |             Infinity
+           | (0,0)             | (Infinity,1e+300) |             Infinity
            | (1e-300,-1e-300)  | (1e+300,Infinity) |             Infinity
+           | (1e-300,-1e-300)  | (Infinity,1e+300) |             Infinity
            | (5.1,34.5)        | (1e+300,Infinity) |             Infinity
+           | (5.1,34.5)        | (Infinity,1e+300) |             Infinity
            | (10,10)           | (1e+300,Infinity) |             Infinity
+           | (10,10)           | (Infinity,1e+300) |             Infinity
            | (1e+300,Infinity) | (-10,0)           |             Infinity
            | (1e+300,Infinity) | (-5,-12)          |             Infinity
            | (1e+300,Infinity) | (-3,4)            |             Infinity
@@ -223,6 +235,15 @@ SELECT '' AS thirtysix, p1.f1 AS point1, p2.f1 AS point2, p1.f1 <-> p2.f1 AS dis
            | (1e+300,Infinity) | (1e-300,-1e-300)  |             Infinity
            | (1e+300,Infinity) | (5.1,34.5)        |             Infinity
            | (1e+300,Infinity) | (10,10)           |             Infinity
+           | (1e+300,Infinity) | (Infinity,1e+300) |             Infinity
+           | (Infinity,1e+300) | (-10,0)           |             Infinity
+           | (Infinity,1e+300) | (-5,-12)          |             Infinity
+           | (Infinity,1e+300) | (-3,4)            |             Infinity
+           | (Infinity,1e+300) | (0,0)             |             Infinity
+           | (Infinity,1e+300) | (1e-300,-1e-300)  |             Infinity
+           | (Infinity,1e+300) | (5.1,34.5)        |             Infinity
+           | (Infinity,1e+300) | (10,10)           |             Infinity
+           | (Infinity,1e+300) | (1e+300,Infinity) |             Infinity
            | (-10,0)           | (NaN,NaN)         |                  NaN
            | (-5,-12)          | (NaN,NaN)         |                  NaN
            | (-3,4)            | (NaN,NaN)         |                  NaN
@@ -232,6 +253,8 @@ SELECT '' AS thirtysix, p1.f1 AS point1, p2.f1 AS point2, p1.f1 <-> p2.f1 AS dis
            | (10,10)           | (NaN,NaN)         |                  NaN
            | (1e+300,Infinity) | (1e+300,Infinity) |                  NaN
            | (1e+300,Infinity) | (NaN,NaN)         |                  NaN
+           | (Infinity,1e+300) | (Infinity,1e+300) |                  NaN
+           | (Infinity,1e+300) | (NaN,NaN)         |                  NaN
            | (NaN,NaN)         | (-10,0)           |                  NaN
            | (NaN,NaN)         | (-5,-12)          |                  NaN
            | (NaN,NaN)         | (-3,4)            |                  NaN
@@ -240,8 +263,9 @@ SELECT '' AS thirtysix, p1.f1 AS point1, p2.f1 AS point2, p1.f1 <-> p2.f1 AS dis
            | (NaN,NaN)         | (5.1,34.5)        |                  NaN
            | (NaN,NaN)         | (10,10)           |                  NaN
            | (NaN,NaN)         | (1e+300,Infinity) |                  NaN
+           | (NaN,NaN)         | (Infinity,1e+300) |                  NaN
            | (NaN,NaN)         | (NaN,NaN)         |                  NaN
-(81 rows)
+(100 rows)
 
 SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
    FROM POINT_TBL p1, POINT_TBL p2
@@ -253,6 +277,7 @@ SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
         | (0,0)             | (5.1,34.5)
         | (0,0)             | (-5,-12)
         | (0,0)             | (1e+300,Infinity)
+        | (0,0)             | (Infinity,1e+300)
         | (0,0)             | (NaN,NaN)
         | (0,0)             | (10,10)
         | (-10,0)           | (0,0)
@@ -261,6 +286,7 @@ SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
         | (-10,0)           | (-5,-12)
         | (-10,0)           | (1e-300,-1e-300)
         | (-10,0)           | (1e+300,Infinity)
+        | (-10,0)           | (Infinity,1e+300)
         | (-10,0)           | (NaN,NaN)
         | (-10,0)           | (10,10)
         | (-3,4)            | (0,0)
@@ -269,6 +295,7 @@ SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
         | (-3,4)            | (-5,-12)
         | (-3,4)            | (1e-300,-1e-300)
         | (-3,4)            | (1e+300,Infinity)
+        | (-3,4)            | (Infinity,1e+300)
         | (-3,4)            | (NaN,NaN)
         | (-3,4)            | (10,10)
         | (5.1,34.5)        | (0,0)
@@ -277,6 +304,7 @@ SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
         | (5.1,34.5)        | (-5,-12)
         | (5.1,34.5)        | (1e-300,-1e-300)
         | (5.1,34.5)        | (1e+300,Infinity)
+        | (5.1,34.5)        | (Infinity,1e+300)
         | (5.1,34.5)        | (NaN,NaN)
         | (5.1,34.5)        | (10,10)
         | (-5,-12)          | (0,0)
@@ -285,6 +313,7 @@ SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
         | (-5,-12)          | (5.1,34.5)
         | (-5,-12)          | (1e-300,-1e-300)
         | (-5,-12)          | (1e+300,Infinity)
+        | (-5,-12)          | (Infinity,1e+300)
         | (-5,-12)          | (NaN,NaN)
         | (-5,-12)          | (10,10)
         | (1e-300,-1e-300)  | (-10,0)
@@ -292,6 +321,7 @@ SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
         | (1e-300,-1e-300)  | (5.1,34.5)
         | (1e-300,-1e-300)  | (-5,-12)
         | (1e-300,-1e-300)  | (1e+300,Infinity)
+        | (1e-300,-1e-300)  | (Infinity,1e+300)
         | (1e-300,-1e-300)  | (NaN,NaN)
         | (1e-300,-1e-300)  | (10,10)
         | (1e+300,Infinity) | (0,0)
@@ -301,8 +331,19 @@ SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
         | (1e+300,Infinity) | (-5,-12)
         | (1e+300,Infinity) | (1e-300,-1e-300)
         | (1e+300,Infinity) | (1e+300,Infinity)
+        | (1e+300,Infinity) | (Infinity,1e+300)
         | (1e+300,Infinity) | (NaN,NaN)
         | (1e+300,Infinity) | (10,10)
+        | (Infinity,1e+300) | (0,0)
+        | (Infinity,1e+300) | (-10,0)
+        | (Infinity,1e+300) | (-3,4)
+        | (Infinity,1e+300) | (5.1,34.5)
+        | (Infinity,1e+300) | (-5,-12)
+        | (Infinity,1e+300) | (1e-300,-1e-300)
+        | (Infinity,1e+300) | (1e+300,Infinity)
+        | (Infinity,1e+300) | (Infinity,1e+300)
+        | (Infinity,1e+300) | (NaN,NaN)
+        | (Infinity,1e+300) | (10,10)
         | (NaN,NaN)         | (0,0)
         | (NaN,NaN)         | (-10,0)
         | (NaN,NaN)         | (-3,4)
@@ -310,6 +351,7 @@ SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
         | (NaN,NaN)         | (-5,-12)
         | (NaN,NaN)         | (1e-300,-1e-300)
         | (NaN,NaN)         | (1e+300,Infinity)
+        | (NaN,NaN)         | (Infinity,1e+300)
         | (NaN,NaN)         | (NaN,NaN)
         | (NaN,NaN)         | (10,10)
         | (10,10)           | (0,0)
@@ -319,57 +361,67 @@ SELECT '' AS thirty, p1.f1 AS point1, p2.f1 AS point2
         | (10,10)           | (-5,-12)
         | (10,10)           | (1e-300,-1e-300)
         | (10,10)           | (1e+300,Infinity)
+        | (10,10)           | (Infinity,1e+300)
         | (10,10)           | (NaN,NaN)
-(72 rows)
+(91 rows)
 
 -- put distance result into output to allow sorting with GEQ optimizer - tgl 97/05/10
 SELECT '' AS fifteen, p1.f1 AS point1, p2.f1 AS point2, (p1.f1 <-> p2.f1) AS distance
    FROM POINT_TBL p1, POINT_TBL p2
    WHERE (p1.f1 <-> p2.f1) > 3 and p1.f1 << p2.f1
    ORDER BY distance, p1.f1[0], p2.f1[0];
- fifteen |      point1      |      point2       |     distance     
----------+------------------+-------------------+------------------
-         | (-3,4)           | (0,0)             |                5
-         | (-3,4)           | (1e-300,-1e-300)  |                5
-         | (-10,0)          | (-3,4)            | 8.06225774829855
-         | (-10,0)          | (0,0)             |               10
-         | (-10,0)          | (1e-300,-1e-300)  |               10
-         | (-10,0)          | (-5,-12)          |               13
-         | (-5,-12)         | (0,0)             |               13
-         | (-5,-12)         | (1e-300,-1e-300)  |               13
-         | (0,0)            | (10,10)           |  14.142135623731
-         | (1e-300,-1e-300) | (10,10)           |  14.142135623731
-         | (-3,4)           | (10,10)           | 14.3178210632764
-         | (-5,-12)         | (-3,4)            | 16.1245154965971
-         | (-10,0)          | (10,10)           | 22.3606797749979
-         | (5.1,34.5)       | (10,10)           | 24.9851956166046
-         | (-5,-12)         | (10,10)           | 26.6270539113887
-         | (-3,4)           | (5.1,34.5)        | 31.5572495632937
-         | (0,0)            | (5.1,34.5)        | 34.8749193547455
-         | (1e-300,-1e-300) | (5.1,34.5)        | 34.8749193547455
-         | (-10,0)          | (5.1,34.5)        | 37.6597928831267
-         | (-5,-12)         | (5.1,34.5)        | 47.5842410888311
-         | (-10,0)          | (1e+300,Infinity) |         Infinity
-         | (-5,-12)         | (1e+300,Infinity) |         Infinity
-         | (-3,4)           | (1e+300,Infinity) |         Infinity
-         | (0,0)            | (1e+300,Infinity) |         Infinity
-         | (1e-300,-1e-300) | (1e+300,Infinity) |         Infinity
-         | (5.1,34.5)       | (1e+300,Infinity) |         Infinity
-         | (10,10)          | (1e+300,Infinity) |         Infinity
-(27 rows)
+ fifteen |      point1       |      point2       |     distance     
+---------+-------------------+-------------------+------------------
+         | (-3,4)            | (0,0)             |                5
+         | (-3,4)            | (1e-300,-1e-300)  |                5
+         | (-10,0)           | (-3,4)            | 8.06225774829855
+         | (-10,0)           | (0,0)             |               10
+         | (-10,0)           | (1e-300,-1e-300)  |               10
+         | (-10,0)           | (-5,-12)          |               13
+         | (-5,-12)          | (0,0)             |               13
+         | (-5,-12)          | (1e-300,-1e-300)  |               13
+         | (0,0)             | (10,10)           |  14.142135623731
+         | (1e-300,-1e-300)  | (10,10)           |  14.142135623731
+         | (-3,4)            | (10,10)           | 14.3178210632764
+         | (-5,-12)          | (-3,4)            | 16.1245154965971
+         | (-10,0)           | (10,10)           | 22.3606797749979
+         | (5.1,34.5)        | (10,10)           | 24.9851956166046
+         | (-5,-12)          | (10,10)           | 26.6270539113887
+         | (-3,4)            | (5.1,34.5)        | 31.5572495632937
+         | (0,0)             | (5.1,34.5)        | 34.8749193547455
+         | (1e-300,-1e-300)  | (5.1,34.5)        | 34.8749193547455
+         | (-10,0)           | (5.1,34.5)        | 37.6597928831267
+         | (-5,-12)          | (5.1,34.5)        | 47.5842410888311
+         | (-10,0)           | (1e+300,Infinity) |         Infinity
+         | (-10,0)           | (Infinity,1e+300) |         Infinity
+         | (-5,-12)          | (1e+300,Infinity) |         Infinity
+         | (-5,-12)          | (Infinity,1e+300) |         Infinity
+         | (-3,4)            | (1e+300,Infinity) |         Infinity
+         | (-3,4)            | (Infinity,1e+300) |         Infinity
+         | (0,0)             | (1e+300,Infinity) |         Infinity
+         | (0,0)             | (Infinity,1e+300) |         Infinity
+         | (1e-300,-1e-300)  | (1e+300,Infinity) |         Infinity
+         | (1e-300,-1e-300)  | (Infinity,1e+300) |         Infinity
+         | (5.1,34.5)        | (1e+300,Infinity) |         Infinity
+         | (5.1,34.5)        | (Infinity,1e+300) |         Infinity
+         | (10,10)           | (1e+300,Infinity) |         Infinity
+         | (10,10)           | (Infinity,1e+300) |         Infinity
+         | (1e+300,Infinity) | (Infinity,1e+300) |         Infinity
+(35 rows)
 
 -- put distance result into output to allow sorting with GEQ optimizer - tgl 97/05/10
 SELECT '' AS three, p1.f1 AS point1, p2.f1 AS point2, (p1.f1 <-> p2.f1) AS distance
    FROM POINT_TBL p1, POINT_TBL p2
    WHERE (p1.f1 <-> p2.f1) > 3 and p1.f1 << p2.f1 and p1.f1 >^ p2.f1
    ORDER BY distance;
- three |   point1   |      point2      |     distance     
--------+------------+------------------+------------------
-       | (-3,4)     | (0,0)            |                5
-       | (-3,4)     | (1e-300,-1e-300) |                5
-       | (-10,0)    | (-5,-12)         |               13
-       | (5.1,34.5) | (10,10)          | 24.9851956166046
-(4 rows)
+ three |      point1       |      point2       |     distance     
+-------+-------------------+-------------------+------------------
+       | (-3,4)            | (0,0)             |                5
+       | (-3,4)            | (1e-300,-1e-300)  |                5
+       | (-10,0)           | (-5,-12)          |               13
+       | (5.1,34.5)        | (10,10)           | 24.9851956166046
+       | (1e+300,Infinity) | (Infinity,1e+300) |         Infinity
+(5 rows)
 
 -- Test that GiST indexes provide same behavior as sequential scan
 CREATE TEMP TABLE point_gist_tbl(f1 point);

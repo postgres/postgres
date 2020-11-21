@@ -85,6 +85,10 @@ SELECT p.f1, p1.f1, p.f1 <-> p1.f1 AS dist_ppath, p1.f1 <-> p.f1 AS dist_pathp F
 -- Distance to polygon
 SELECT p.f1, p1.f1, p.f1 <-> p1.f1 AS dist_ppoly, p1.f1 <-> p.f1 AS dist_polyp FROM POINT_TBL p, POLYGON_TBL p1;
 
+-- Construct line through two points
+SELECT p1.f1, p2.f1, line(p1.f1, p2.f1)
+  FROM POINT_TBL p1, POINT_TBL p2 WHERE p1.f1 <> p2.f1;
+
 -- Closest point to line
 SELECT p.f1, l.s, p.f1 ## l.s FROM POINT_TBL p, LINE_TBL l;
 
