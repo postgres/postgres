@@ -1055,12 +1055,19 @@ line_send(PG_FUNCTION_ARGS)
 static inline void
 line_construct(LINE *result, Point *pt, float8 m)
 {
-	if (m == DBL_MAX)
+	if (isinf(m))
 	{
 		/* vertical - use "x = C" */
 		result->A = -1.0;
 		result->B = 0.0;
 		result->C = pt->x;
+	}
+	else if (m == 0)
+	{
+		/* horizontal - use "y = C" */
+		result->A = 0.0;
+		result->B = -1.0;
+		result->C = pt->y;
 	}
 	else
 	{
@@ -1201,7 +1208,7 @@ line_sl(LINE *line)
 	if (FPzero(line->A))
 		return 0.0;
 	if (FPzero(line->B))
-		return DBL_MAX;
+		return get_float8_infinity();
 	return float8_div(line->A, -line->B);
 }
 
@@ -1213,7 +1220,7 @@ static inline float8
 line_invsl(LINE *line)
 {
 	if (FPzero(line->A))
-		return DBL_MAX;
+		return get_float8_infinity();
 	if (FPzero(line->B))
 		return 0.0;
 	return float8_div(line->B, line->A);
@@ -1979,13 +1986,13 @@ point_slope(PG_FUNCTION_ARGS)
 /*
  * Return slope of two points
  *
- * Note that this function returns DBL_MAX when the points are the same.
+ * Note that this function returns Inf when the points are the same.
  */
 static inline float8
 point_sl(Point *pt1, Point *pt2)
 {
 	if (FPeq(pt1->x, pt2->x))
-		return DBL_MAX;
+		return get_float8_infinity();
 	if (FPeq(pt1->y, pt2->y))
 		return 0.0;
 	return float8_div(float8_mi(pt1->y, pt2->y), float8_mi(pt1->x, pt2->x));
@@ -2003,7 +2010,7 @@ point_invsl(Point *pt1, Point *pt2)
 	if (FPeq(pt1->x, pt2->x))
 		return 0.0;
 	if (FPeq(pt1->y, pt2->y))
-		return DBL_MAX;
+		return get_float8_infinity();
 	return float8_div(float8_mi(pt1->x, pt2->x), float8_mi(pt2->y, pt1->y));
 }
 
