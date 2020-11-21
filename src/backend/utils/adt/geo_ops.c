@@ -1155,9 +1155,6 @@ line_horizontal(PG_FUNCTION_ARGS)
 
 /*
  * Check whether the two lines are the same
- *
- * We consider NaNs values to be equal to each other to let those lines
- * to be found.
  */
 Datum
 line_eq(PG_FUNCTION_ARGS)
@@ -1166,21 +1163,28 @@ line_eq(PG_FUNCTION_ARGS)
 	LINE	   *l2 = PG_GETARG_LINE_P(1);
 	float8		ratio;
 
-	if (!FPzero(l2->A) && !isnan(l2->A))
+	/* If any NaNs are involved, insist on exact equality */
+	if (unlikely(isnan(l1->A) || isnan(l1->B) || isnan(l1->C) ||
+				 isnan(l2->A) || isnan(l2->B) || isnan(l2->C)))
+	{
+		PG_RETURN_BOOL(float8_eq(l1->A, l2->A) &&
+					   float8_eq(l1->B, l2->B) &&
+					   float8_eq(l1->C, l2->C));
+	}
+
+	/* Otherwise, lines whose parameters are proportional are the same */
+	if (!FPzero(l2->A))
 		ratio = float8_div(l1->A, l2->A);
-	else if (!FPzero(l2->B) && !isnan(l2->B))
+	else if (!FPzero(l2->B))
 		ratio = float8_div(l1->B, l2->B);
-	else if (!FPzero(l2->C) && !isnan(l2->C))
+	else if (!FPzero(l2->C))
 		ratio = float8_div(l1->C, l2->C);
 	else
 		ratio = 1.0;
 
-	PG_RETURN_BOOL((FPeq(l1->A, float8_mul(ratio, l2->A)) &&
-					FPeq(l1->B, float8_mul(ratio, l2->B)) &&
-					FPeq(l1->C, float8_mul(ratio, l2->C))) ||
-				   (float8_eq(l1->A, l2->A) &&
-					float8_eq(l1->B, l2->B) &&
-					float8_eq(l1->C, l2->C)));
+	PG_RETURN_BOOL(FPeq(l1->A, float8_mul(ratio, l2->A)) &&
+				   FPeq(l1->B, float8_mul(ratio, l2->B)) &&
+				   FPeq(l1->C, float8_mul(ratio, l2->C)));
 }
 
 
@@ -1930,15 +1934,16 @@ point_ne(PG_FUNCTION_ARGS)
 
 /*
  * Check whether the two points are the same
- *
- * We consider NaNs coordinates to be equal to each other to let those points
- * to be found.
  */
 static inline bool
 point_eq_point(Point *pt1, Point *pt2)
 {
-	return ((FPeq(pt1->x, pt2->x) && FPeq(pt1->y, pt2->y)) ||
-			(float8_eq(pt1->x, pt2->x) && float8_eq(pt1->y, pt2->y)));
+	/* If any NaNs are involved, insist on exact equality */
+	if (unlikely(isnan(pt1->x) || isnan(pt1->y) ||
+				 isnan(pt2->x) || isnan(pt2->y)))
+		return (float8_eq(pt1->x, pt2->x) && float8_eq(pt1->y, pt2->y));
+
+	return (FPeq(pt1->x, pt2->x) && FPeq(pt1->y, pt2->y));
 }
 
 

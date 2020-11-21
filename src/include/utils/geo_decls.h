@@ -18,25 +18,66 @@
 #ifndef GEO_DECLS_H
 #define GEO_DECLS_H
 
+#include <math.h>
+
 #include "fmgr.h"
 
 /*--------------------------------------------------------------------
  * Useful floating point utilities and constants.
- *-------------------------------------------------------------------
+ *--------------------------------------------------------------------
  *
- * XXX: They are not NaN-aware.
+ * "Fuzzy" floating-point comparisons: values within EPSILON of each other
+ * are considered equal.  Beware of normal reasoning about the behavior of
+ * these comparisons, since for example FPeq does not behave transitively.
+ *
+ * Note that these functions are not NaN-aware and will give FALSE for
+ * any case involving NaN inputs.
+ *
+ * Also note that these will give sane answers for infinite inputs,
+ * where it's important to avoid computing Inf minus Inf; we do so
+ * by eliminating equality cases before subtracting.
  */
 
 #define EPSILON					1.0E-06
 
 #ifdef EPSILON
 #define FPzero(A)				(fabs(A) <= EPSILON)
-#define FPeq(A,B)				(fabs((A) - (B)) <= EPSILON)
-#define FPne(A,B)				(fabs((A) - (B)) > EPSILON)
-#define FPlt(A,B)				((B) - (A) > EPSILON)
-#define FPle(A,B)				((A) - (B) <= EPSILON)
-#define FPgt(A,B)				((A) - (B) > EPSILON)
-#define FPge(A,B)				((B) - (A) <= EPSILON)
+
+static inline bool
+FPeq(double A, double B)
+{
+	return A == B || fabs(A - B) <= EPSILON;
+}
+
+static inline bool
+FPne(double A, double B)
+{
+	return A != B && fabs(A - B) > EPSILON;
+}
+
+static inline bool
+FPlt(double A, double B)
+{
+	return A + EPSILON < B;
+}
+
+static inline bool
+FPle(double A, double B)
+{
+	return A <= B + EPSILON;
+}
+
+static inline bool
+FPgt(double A, double B)
+{
+	return A > B + EPSILON;
+}
+
+static inline bool
+FPge(double A, double B)
+{
+	return A + EPSILON >= B;
+}
 #else
 #define FPzero(A)				((A) == 0)
 #define FPeq(A,B)				((A) == (B))

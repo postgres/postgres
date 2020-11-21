@@ -190,7 +190,7 @@ SELECT p1.f1, p2.f1, slope(p1.f1, p2.f1) FROM POINT_TBL p1, POINT_TBL p2;
  (Infinity,1e+300) | (-5,-12)          |                  0
  (Infinity,1e+300) | (1e-300,-1e-300)  |                  0
  (Infinity,1e+300) | (1e+300,Infinity) |                NaN
- (Infinity,1e+300) | (Infinity,1e+300) |                  0
+ (Infinity,1e+300) | (Infinity,1e+300) | 1.79769313486e+308
  (Infinity,1e+300) | (NaN,NaN)         |                NaN
  (Infinity,1e+300) | (10,10)           |                  0
  (NaN,NaN)         | (0,0)             |                NaN
