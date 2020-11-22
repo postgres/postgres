@@ -56,6 +56,29 @@ SELECT * FROM itest4;
 
 -- VALUES RTEs
 
+CREATE TABLE itest5 (a int generated always as identity, b text);
+INSERT INTO itest5 VALUES (1, 'a');  -- error
+INSERT INTO itest5 VALUES (DEFAULT, 'a');  -- ok
+INSERT INTO itest5 VALUES (2, 'b'), (3, 'c');  -- error
+INSERT INTO itest5 VALUES (DEFAULT, 'b'), (3, 'c');  -- error
+INSERT INTO itest5 VALUES (2, 'b'), (DEFAULT, 'c');  -- error
+INSERT INTO itest5 VALUES (DEFAULT, 'b'), (DEFAULT, 'c');  -- ok
+
+INSERT INTO itest5 OVERRIDING SYSTEM VALUE VALUES (-1, 'aa');
+INSERT INTO itest5 OVERRIDING SYSTEM VALUE VALUES (-2, 'bb'), (-3, 'cc');
+INSERT INTO itest5 OVERRIDING SYSTEM VALUE VALUES (DEFAULT, 'dd'), (-4, 'ee');
+INSERT INTO itest5 OVERRIDING SYSTEM VALUE VALUES (-5, 'ff'), (DEFAULT, 'gg');
+INSERT INTO itest5 OVERRIDING SYSTEM VALUE VALUES (DEFAULT, 'hh'), (DEFAULT, 'ii');
+
+INSERT INTO itest5 OVERRIDING USER VALUE VALUES (-1, 'aaa');
+INSERT INTO itest5 OVERRIDING USER VALUE VALUES (-2, 'bbb'), (-3, 'ccc');
+INSERT INTO itest5 OVERRIDING USER VALUE VALUES (DEFAULT, 'ddd'), (-4, 'eee');
+INSERT INTO itest5 OVERRIDING USER VALUE VALUES (-5, 'fff'), (DEFAULT, 'ggg');
+INSERT INTO itest5 OVERRIDING USER VALUE VALUES (DEFAULT, 'hhh'), (DEFAULT, 'iii');
+
+SELECT * FROM itest5;
+DROP TABLE itest5;
+
 INSERT INTO itest3 VALUES (DEFAULT, 'a');
 INSERT INTO itest3 VALUES (DEFAULT, 'b'), (DEFAULT, 'c');
 

@@ -105,6 +105,62 @@ SELECT * FROM itest4;
 (2 rows)
 
 -- VALUES RTEs
+CREATE TABLE itest5 (a int generated always as identity, b text);
+INSERT INTO itest5 VALUES (1, 'a');  -- error
+ERROR:  cannot insert into column "a"
+DETAIL:  Column "a" is an identity column defined as GENERATED ALWAYS.
+HINT:  Use OVERRIDING SYSTEM VALUE to override.
+INSERT INTO itest5 VALUES (DEFAULT, 'a');  -- ok
+INSERT INTO itest5 VALUES (2, 'b'), (3, 'c');  -- error
+ERROR:  cannot insert into column "a"
+DETAIL:  Column "a" is an identity column defined as GENERATED ALWAYS.
+HINT:  Use OVERRIDING SYSTEM VALUE to override.
+INSERT INTO itest5 VALUES (DEFAULT, 'b'), (3, 'c');  -- error
+ERROR:  cannot insert into column "a"
+DETAIL:  Column "a" is an identity column defined as GENERATED ALWAYS.
+HINT:  Use OVERRIDING SYSTEM VALUE to override.
+INSERT INTO itest5 VALUES (2, 'b'), (DEFAULT, 'c');  -- error
+ERROR:  cannot insert into column "a"
+DETAIL:  Column "a" is an identity column defined as GENERATED ALWAYS.
+HINT:  Use OVERRIDING SYSTEM VALUE to override.
+INSERT INTO itest5 VALUES (DEFAULT, 'b'), (DEFAULT, 'c');  -- ok
+INSERT INTO itest5 OVERRIDING SYSTEM VALUE VALUES (-1, 'aa');
+INSERT INTO itest5 OVERRIDING SYSTEM VALUE VALUES (-2, 'bb'), (-3, 'cc');
+INSERT INTO itest5 OVERRIDING SYSTEM VALUE VALUES (DEFAULT, 'dd'), (-4, 'ee');
+INSERT INTO itest5 OVERRIDING SYSTEM VALUE VALUES (-5, 'ff'), (DEFAULT, 'gg');
+INSERT INTO itest5 OVERRIDING SYSTEM VALUE VALUES (DEFAULT, 'hh'), (DEFAULT, 'ii');
+INSERT INTO itest5 OVERRIDING USER VALUE VALUES (-1, 'aaa');
+INSERT INTO itest5 OVERRIDING USER VALUE VALUES (-2, 'bbb'), (-3, 'ccc');
+INSERT INTO itest5 OVERRIDING USER VALUE VALUES (DEFAULT, 'ddd'), (-4, 'eee');
+INSERT INTO itest5 OVERRIDING USER VALUE VALUES (-5, 'fff'), (DEFAULT, 'ggg');
+INSERT INTO itest5 OVERRIDING USER VALUE VALUES (DEFAULT, 'hhh'), (DEFAULT, 'iii');
+SELECT * FROM itest5;
+ a  |  b  
+----+-----
+  1 | a
+  2 | b
+  3 | c
+ -1 | aa
+ -2 | bb
+ -3 | cc
+  4 | dd
+ -4 | ee
+ -5 | ff
+  5 | gg
+  6 | hh
+  7 | ii
+  8 | aaa
+  9 | bbb
+ 10 | ccc
+ 11 | ddd
+ 12 | eee
+ 13 | fff
+ 14 | ggg
+ 15 | hhh
+ 16 | iii
+(21 rows)
+
+DROP TABLE itest5;
 INSERT INTO itest3 VALUES (DEFAULT, 'a');
 INSERT INTO itest3 VALUES (DEFAULT, 'b'), (DEFAULT, 'c');
 SELECT * FROM itest3;
