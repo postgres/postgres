@@ -1123,7 +1123,7 @@ get_func_arg_info(HeapTuple procTup,
 			numargs < 0 ||
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != OIDOID)
-			elog(ERROR, "proallargtypes is not a 1-D Oid array");
+			elog(ERROR, "proallargtypes is not a 1-D Oid array or it contains nulls");
 		Assert(numargs >= procStruct->pronargs);
 		*p_argtypes = (Oid *) palloc(numargs * sizeof(Oid));
 		memcpy(*p_argtypes, ARR_DATA_PTR(arr),
@@ -1170,7 +1170,8 @@ get_func_arg_info(HeapTuple procTup,
 			ARR_DIMS(arr)[0] != numargs ||
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != CHAROID)
-			elog(ERROR, "proargmodes is not a 1-D char array");
+			elog(ERROR, "proargmodes is not a 1-D char array of length %d or it contains nulls",
+				 numargs);
 		*p_argmodes = (char *) palloc(numargs * sizeof(char));
 		memcpy(*p_argmodes, ARR_DATA_PTR(arr),
 			   numargs * sizeof(char));
@@ -1210,7 +1211,7 @@ get_func_trftypes(HeapTuple procTup,
 			nelems < 0 ||
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != OIDOID)
-			elog(ERROR, "protrftypes is not a 1-D Oid array");
+			elog(ERROR, "protrftypes is not a 1-D Oid array or it contains nulls");
 		Assert(nelems >= ((Form_pg_proc) GETSTRUCT(procTup))->pronargs);
 		*p_trftypes = (Oid *) palloc(nelems * sizeof(Oid));
 		memcpy(*p_trftypes, ARR_DATA_PTR(arr),
@@ -1261,7 +1262,7 @@ get_func_input_arg_names(char prokind,
 	if (ARR_NDIM(arr) != 1 ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != TEXTOID)
-		elog(ERROR, "proargnames is not a 1-D text array");
+		elog(ERROR, "proargnames is not a 1-D text array or it contains nulls");
 	deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
 					  &argnames, NULL, &numargs);
 	if (proargmodes != PointerGetDatum(NULL))
@@ -1271,7 +1272,8 @@ get_func_input_arg_names(char prokind,
 			ARR_DIMS(arr)[0] != numargs ||
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != CHAROID)
-			elog(ERROR, "proargmodes is not a 1-D char array");
+			elog(ERROR, "proargmodes is not a 1-D char array of length %d or it contains nulls",
+				 numargs);
 		argmodes = (char *) ARR_DATA_PTR(arr);
 	}
 	else
@@ -1368,14 +1370,15 @@ get_func_result_name(Oid functionId)
 			numargs < 0 ||
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != CHAROID)
-			elog(ERROR, "proargmodes is not a 1-D char array");
+			elog(ERROR, "proargmodes is not a 1-D char array or it contains nulls");
 		argmodes = (char *) ARR_DATA_PTR(arr);
 		arr = DatumGetArrayTypeP(proargnames);	/* ensure not toasted */
 		if (ARR_NDIM(arr) != 1 ||
 			ARR_DIMS(arr)[0] != numargs ||
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != TEXTOID)
-			elog(ERROR, "proargnames is not a 1-D text array");
+			elog(ERROR, "proargnames is not a 1-D text array of length %d or it contains nulls",
+				 numargs);
 		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
 						  &argnames, NULL, &nargnames);
 		Assert(nargnames == numargs);
@@ -1506,14 +1509,15 @@ build_function_result_tupdesc_d(char prokind,
 		numargs < 0 ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != OIDOID)
-		elog(ERROR, "proallargtypes is not a 1-D Oid array");
+		elog(ERROR, "proallargtypes is not a 1-D Oid array or it contains nulls");
 	argtypes = (Oid *) ARR_DATA_PTR(arr);
 	arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
 	if (ARR_NDIM(arr) != 1 ||
 		ARR_DIMS(arr)[0] != numargs ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != CHAROID)
-		elog(ERROR, "proargmodes is not a 1-D char array");
+		elog(ERROR, "proargmodes is not a 1-D char array of length %d or it contains nulls",
+			 numargs);
 	argmodes = (char *) ARR_DATA_PTR(arr);
 	if (proargnames != PointerGetDatum(NULL))
 	{
@@ -1522,7 +1526,8 @@ build_function_result_tupdesc_d(char prokind,
 			ARR_DIMS(arr)[0] != numargs ||
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != TEXTOID)
-			elog(ERROR, "proargnames is not a 1-D text array");
+			elog(ERROR, "proargnames is not a 1-D text array of length %d or it contains nulls",
+				 numargs);
 		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
 						  &argnames, NULL, &nargnames);
 		Assert(nargnames == numargs);
