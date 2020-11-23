@@ -749,7 +749,7 @@ copy_table(Relation rel)
 	LogicalRepRelation lrel;
 	WalRcvExecResult *res;
 	StringInfoData cmd;
-	CopyState	cstate;
+	CopyFromState cstate;
 	List	   *attnamelist;
 	ParseState *pstate;
 
@@ -800,7 +800,7 @@ copy_table(Relation rel)
 										 NULL, false, false);
 
 	attnamelist = make_copy_attnamelist(relmapentry);
-	cstate = BeginCopyFrom(pstate, rel, NULL, false, copy_read_data, attnamelist, NIL);
+	cstate = BeginCopyFrom(pstate, rel, NULL, NULL, false, copy_read_data, attnamelist, NIL);
 
 	/* Do the copy */
 	(void) CopyFrom(cstate);
