@@ -1311,14 +1311,28 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		{
 			PGPROC	   *autovac = GetBlockingAutoVacuumPgproc();
 			uint8		statusFlags;
+			uint8		lockmethod_copy;
+			LOCKTAG		locktag_copy;
 
+			/*
+			 * Grab info we need, then release lock immediately.  Note this
+			 * coding means that there is a tiny chance that the process
+			 * terminates its current transaction and starts a different one
+			 * before we have a change to send the signal; the worst possible
+			 * consequence is that a for-wraparound vacuum is cancelled.  But
+			 * that could happen in any case unless we were to do kill() with
+			 * the lock held, which is much more undesirable.
+			 */
 			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+			statusFlags = ProcGlobal->statusFlags[autovac->pgxactoff];
+			lockmethod_copy = lock->tag.locktag_lockmethodid;
+			locktag_copy = lock->tag;
+			LWLockRelease(ProcArrayLock);
 
 			/*
 			 * Only do it if the worker is not working to protect against Xid
 			 * wraparound.
 			 */
-			statusFlags = ProcGlobal->statusFlags[autovac->pgxactoff];
 			if ((statusFlags & PROC_IS_AUTOVACUUM) &&
 				!(statusFlags & PROC_VACUUM_FOR_WRAPAROUND))
 			{
@@ -1326,25 +1340,25 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				StringInfoData locktagbuf;
 				StringInfoData logbuf;	/* errdetail for server log */
 
+				/* report the case, if configured to do so */
 				initStringInfo(&locktagbuf);
 				initStringInfo(&logbuf);
-				DescribeLockTag(&locktagbuf, &lock->tag);
+				DescribeLockTag(&locktagbuf, &locktag_copy);
 				appendStringInfo(&logbuf,
 								 _("Process %d waits for %s on %s."),
 								 MyProcPid,
-								 GetLockmodeName(lock->tag.locktag_lockmethodid,
-												 lockmode),
+								 GetLockmodeName(lockmethod_copy, lockmode),
 								 locktagbuf.data);
 
-				/* release lock as quickly as possible */
-				LWLockRelease(ProcArrayLock);
-
-				/* send the autovacuum worker Back to Old Kent Road */
 				ereport(DEBUG1,
 						(errmsg("sending cancel to blocking autovacuum PID %d",
 								pid),
 						 errdetail_log("%s", logbuf.data)));
 
+				pfree(logbuf.data);
+				pfree(locktagbuf.data);
+
+				/* send the autovacuum worker Back to Old Kent Road */
 				if (kill(pid, SIGINT) < 0)
 				{
 					/*
@@ -1362,12 +1376,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 								(errmsg("could not send signal to process %d: %m",
 										pid)));
 				}
-
-				pfree(logbuf.data);
-				pfree(locktagbuf.data);
 			}
-			else
-				LWLockRelease(ProcArrayLock);
 
 			/* prevent signal from being sent again more than once */
 			allow_autovacuum_cancel = false;
