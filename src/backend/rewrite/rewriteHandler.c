@@ -861,7 +861,7 @@ rewriteTargetListIU(List *targetList,
 					if (!apply_default)
 						ereport(ERROR,
 								(errcode(ERRCODE_GENERATED_ALWAYS),
-								 errmsg("cannot insert into column \"%s\"",
+								 errmsg("cannot insert a non-DEFAULT value into column \"%s\"",
 										NameStr(att_tup->attname)),
 								 errdetail("Column \"%s\" is an identity column defined as GENERATED ALWAYS.",
 										   NameStr(att_tup->attname)),
@@ -899,8 +899,8 @@ rewriteTargetListIU(List *targetList,
 
 				if (!apply_default)
 					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("cannot insert into column \"%s\"",
+							(errcode(ERRCODE_GENERATED_ALWAYS),
+							 errmsg("cannot insert a non-DEFAULT value into column \"%s\"",
 									NameStr(att_tup->attname)),
 							 errdetail("Column \"%s\" is a generated column.",
 									   NameStr(att_tup->attname))));
@@ -923,17 +923,20 @@ rewriteTargetListIU(List *targetList,
 		 */
 		if (commandType == CMD_UPDATE)
 		{
-			if (att_tup->attidentity == ATTRIBUTE_IDENTITY_ALWAYS && new_tle && !apply_default)
+			if (att_tup->attidentity == ATTRIBUTE_IDENTITY_ALWAYS &&
+				new_tle && !apply_default)
 				ereport(ERROR,
 						(errcode(ERRCODE_GENERATED_ALWAYS),
-						 errmsg("column \"%s\" can only be updated to DEFAULT", NameStr(att_tup->attname)),
+						 errmsg("column \"%s\" can only be updated to DEFAULT",
+								NameStr(att_tup->attname)),
 						 errdetail("Column \"%s\" is an identity column defined as GENERATED ALWAYS.",
 								   NameStr(att_tup->attname))));
 
 			if (att_tup->attgenerated && new_tle && !apply_default)
 				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("column \"%s\" can only be updated to DEFAULT", NameStr(att_tup->attname)),
+						(errcode(ERRCODE_GENERATED_ALWAYS),
+						 errmsg("column \"%s\" can only be updated to DEFAULT",
+								NameStr(att_tup->attname)),
 						 errdetail("Column \"%s\" is a generated column.",
 								   NameStr(att_tup->attname))));
 		}

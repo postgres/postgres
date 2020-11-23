@@ -107,20 +107,20 @@ SELECT * FROM itest4;
 -- VALUES RTEs
 CREATE TABLE itest5 (a int generated always as identity, b text);
 INSERT INTO itest5 VALUES (1, 'a');  -- error
-ERROR:  cannot insert into column "a"
+ERROR:  cannot insert a non-DEFAULT value into column "a"
 DETAIL:  Column "a" is an identity column defined as GENERATED ALWAYS.
 HINT:  Use OVERRIDING SYSTEM VALUE to override.
 INSERT INTO itest5 VALUES (DEFAULT, 'a');  -- ok
 INSERT INTO itest5 VALUES (2, 'b'), (3, 'c');  -- error
-ERROR:  cannot insert into column "a"
+ERROR:  cannot insert a non-DEFAULT value into column "a"
 DETAIL:  Column "a" is an identity column defined as GENERATED ALWAYS.
 HINT:  Use OVERRIDING SYSTEM VALUE to override.
 INSERT INTO itest5 VALUES (DEFAULT, 'b'), (3, 'c');  -- error
-ERROR:  cannot insert into column "a"
+ERROR:  cannot insert a non-DEFAULT value into column "a"
 DETAIL:  Column "a" is an identity column defined as GENERATED ALWAYS.
 HINT:  Use OVERRIDING SYSTEM VALUE to override.
 INSERT INTO itest5 VALUES (2, 'b'), (DEFAULT, 'c');  -- error
-ERROR:  cannot insert into column "a"
+ERROR:  cannot insert a non-DEFAULT value into column "a"
 DETAIL:  Column "a" is an identity column defined as GENERATED ALWAYS.
 HINT:  Use OVERRIDING SYSTEM VALUE to override.
 INSERT INTO itest5 VALUES (DEFAULT, 'b'), (DEFAULT, 'c');  -- ok
@@ -197,7 +197,7 @@ SELECT * FROM itest1;
 -- GENERATED ALWAYS
 -- This is an error:
 INSERT INTO itest2 VALUES (10, 'xyz');
-ERROR:  cannot insert into column "a"
+ERROR:  cannot insert a non-DEFAULT value into column "a"
 DETAIL:  Column "a" is an identity column defined as GENERATED ALWAYS.
 HINT:  Use OVERRIDING SYSTEM VALUE to override.
 -- This inserts the row as presented:
@@ -313,7 +313,7 @@ SELECT * FROM itestv10;
 (4 rows)
 
 INSERT INTO itestv11 VALUES (10, 'xyz');
-ERROR:  cannot insert into column "a"
+ERROR:  cannot insert a non-DEFAULT value into column "a"
 DETAIL:  Column "a" is an identity column defined as GENERATED ALWAYS.
 HINT:  Use OVERRIDING SYSTEM VALUE to override.
 INSERT INTO itestv11 OVERRIDING SYSTEM VALUE VALUES (11, 'xyz');
