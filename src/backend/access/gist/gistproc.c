@@ -1341,8 +1341,18 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		result;
-	StrategyNumber strategyGroup = strategy / GeoStrategyNumberOffset;
+	StrategyNumber strategyGroup;
 
+	/*
+	 * We have to remap these strategy numbers to get this klugy
+	 * classification logic to work.
+	 */
+	if (strategy == RTOldBelowStrategyNumber)
+		strategy = RTBelowStrategyNumber;
+	else if (strategy == RTOldAboveStrategyNumber)
+		strategy = RTAboveStrategyNumber;
+
+	strategyGroup = strategy / GeoStrategyNumberOffset;
 	switch (strategyGroup)
 	{
 		case PointStrategyNumberGroup:

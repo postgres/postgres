@@ -10609,7 +10609,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </para>
        <para>
         Is first object strictly below second?
-        Available for <type>box</type>, <type>polygon</type>,
+        Available for <type>point</type>, <type>box</type>, <type>polygon</type>,
         <type>circle</type>.
        </para>
        <para>
@@ -10625,7 +10625,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </para>
        <para>
         Is first object strictly above second?
-        Available for <type>box</type>, <type>polygon</type>,
+        Available for <type>point</type>, <type>box</type>, <type>polygon</type>,
         <type>circle</type>.
        </para>
        <para>
@@ -10682,21 +10682,6 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <type>point</type> <literal>&lt;^</literal> <type>point</type>
-        <returnvalue>boolean</returnvalue>
-       </para>
-       <para>
-        Is first object strictly below second?
-        (This operator is misnamed; it should be <literal>&lt;&lt;|</literal>.)
-       </para>
-       <para>
-        <literal>point '(1,0)' &lt;^ point '(1,1)'</literal>
-        <returnvalue>t</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
         <type>box</type> <literal>&gt;^</literal> <type>box</type>
         <returnvalue>boolean</returnvalue>
        </para>
@@ -10705,21 +10690,6 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </para>
        <para>
         <literal>box '((2,2),(1,1))' &gt;^ box '((1,1),(0,0))'</literal>
-        <returnvalue>t</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <type>point</type> <literal>&gt;^</literal> <type>point</type>
-        <returnvalue>boolean</returnvalue>
-       </para>
-       <para>
-        Is first object strictly above second?
-        (This operator is misnamed; it should be <literal>|&gt;&gt;</literal>.)
-       </para>
-       <para>
-        <literal>point '(1,1)' &gt;^ point '(1,0)'</literal>
         <returnvalue>t</returnvalue>
        </para></entry>
       </row>
@@ -10876,6 +10846,18 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
      on), where available for these types, likewise compare areas.
     </para>
    </caution>
+
+   <note>
+    <para>
+     Before <productname>PostgreSQL</productname> 14, the point
+     is strictly below/above comparison operators <type>point</type>
+     <literal>&lt;&lt;|</literal> <type>point</type> and <type>point</type>
+     <literal>|&gt;&gt;</literal> <type>point</type> were respectively
+     called <literal>&lt;^</literal> and <literal>&gt;^</literal>.  These
+     names are still available, but are deprecated and will eventually be
+     removed.
+    </para>
+   </note>
 
    <table id="functions-geometry-func-table">
     <title>Geometric Functions</title>

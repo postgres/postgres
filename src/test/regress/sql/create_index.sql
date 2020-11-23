@@ -136,9 +136,9 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 << '(0.0, 0.0)';
 
 SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
 
-SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 <<| '(0.0, 0.0)';
 
-SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 |>> '(0.0, 0.0)';
 
 SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
 
@@ -220,12 +220,12 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
 SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
-SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 <<| '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 <<| '(0.0, 0.0)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
-SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 |>> '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 |>> '(0.0, 0.0)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';

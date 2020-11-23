@@ -395,7 +395,7 @@
   oprname => '<=', oprleft => 'box', oprright => 'box', oprresult => 'bool',
   oprcom => '>=(box,box)', oprnegate => '>(box,box)', oprcode => 'box_le',
   oprrest => 'areasel', oprjoin => 'areajoinsel' },
-{ oid => '506', descr => 'is above',
+{ oid => '506', descr => 'deprecated, use |>> instead',
   oprname => '>^', oprleft => 'point', oprright => 'point', oprresult => 'bool',
   oprcode => 'point_above', oprrest => 'positionsel',
   oprjoin => 'positionjoinsel' },
@@ -407,7 +407,7 @@
   oprname => '>>', oprleft => 'point', oprright => 'point', oprresult => 'bool',
   oprcode => 'point_right', oprrest => 'positionsel',
   oprjoin => 'positionjoinsel' },
-{ oid => '509', descr => 'is below',
+{ oid => '509', descr => 'deprecated, use <<| instead',
   oprname => '<^', oprleft => 'point', oprright => 'point', oprresult => 'bool',
   oprcode => 'point_below', oprrest => 'positionsel',
   oprjoin => 'positionjoinsel' },
@@ -1877,6 +1877,15 @@
 { oid => '1617', descr => 'intersection point',
   oprname => '#', oprleft => 'line', oprright => 'line', oprresult => 'point',
   oprcom => '#(line,line)', oprcode => 'line_interpt' },
+
+{ oid => '4161', descr => 'is above',
+  oprname => '|>>', oprleft => 'point', oprright => 'point',
+  oprresult => 'bool', oprcode => 'point_above', oprrest => 'positionsel',
+  oprjoin => 'positionjoinsel' },
+{ oid => '4162', descr => 'is below',
+  oprname => '<<|', oprleft => 'point', oprright => 'point',
+  oprresult => 'bool', oprcode => 'point_below', oprrest => 'positionsel',
+  oprjoin => 'positionjoinsel' },
 
 # MACADDR type
 { oid => '1220', descr => 'equal',

@@ -48,10 +48,10 @@ SELECT '' AS three, p.* FROM POINT_TBL p WHERE p.f1 << '(0.0, 0.0)';
 SELECT '' AS three, p.* FROM POINT_TBL p WHERE '(0.0,0.0)' >> p.f1;
 
 -- above
-SELECT '' AS one, p.* FROM POINT_TBL p WHERE '(0.0,0.0)' >^ p.f1;
+SELECT '' AS one, p.* FROM POINT_TBL p WHERE '(0.0,0.0)' |>> p.f1;
 
 -- below
-SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 <^ '(0.0, 0.0)';
+SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 <<| '(0.0, 0.0)';
 
 -- equal
 SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 ~= '(5.1, 34.5)';
@@ -93,7 +93,7 @@ SELECT '' AS fifteen, p1.f1 AS point1, p2.f1 AS point2, (p1.f1 <-> p2.f1) AS dis
 -- put distance result into output to allow sorting with GEQ optimizer - tgl 97/05/10
 SELECT '' AS three, p1.f1 AS point1, p2.f1 AS point2, (p1.f1 <-> p2.f1) AS distance
    FROM POINT_TBL p1, POINT_TBL p2
-   WHERE (p1.f1 <-> p2.f1) > 3 and p1.f1 << p2.f1 and p1.f1 >^ p2.f1
+   WHERE (p1.f1 <-> p2.f1) > 3 and p1.f1 << p2.f1 and p1.f1 |>> p2.f1
    ORDER BY distance;
 
 -- Test that GiST indexes provide same behavior as sequential scan

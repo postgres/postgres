@@ -118,12 +118,12 @@
 
      <row>
       <entry valign="middle" morerows="7"><literal>point_ops</literal></entry>
-      <entry><literal>&gt;^ (point,point)</literal></entry>
+      <entry><literal>|&gt;&gt; (point,point)</literal></entry>
       <entry valign="middle" morerows="7"><literal>&lt;-&gt; (point,point)</literal></entry>
      </row>
      <row><entry><literal>&lt;&lt; (point,point)</literal></entry></row>
      <row><entry><literal>&gt;&gt; (point,point)</literal></entry></row>
-     <row><entry><literal>&lt;^ (point,point)</literal></entry></row>
+     <row><entry><literal>&lt;&lt;| (point,point)</literal></entry></row>
      <row><entry><literal>~= (point,point)</literal></entry></row>
      <row><entry><literal>&lt;@ (point,box)</literal></entry></row>
      <row><entry><literal>&lt;@ (point,polygon)</literal></entry></row>

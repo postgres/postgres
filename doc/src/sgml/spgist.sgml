@@ -76,7 +76,7 @@
      <row>
       <entry valign="middle" morerows="11"><literal>box_ops</literal></entry>
       <entry><literal>&lt;&lt; (box,box)</literal></entry>
-      <entry valign="middle" morerows="11"><literal>&lt;-&gt; (box,point)</literal></entry>      
+      <entry valign="middle" morerows="11"><literal>&lt;-&gt; (box,point)</literal></entry>
      </row>
      <row><entry><literal>&amp;&lt; (box,box)</literal></entry></row>
      <row><entry><literal>&amp;&gt; (box,box)</literal></entry></row>
@@ -92,12 +92,12 @@
 
      <row>
       <entry valign="middle" morerows="5"><literal>kd_point_ops</literal></entry>
-      <entry><literal>&gt;^ (point,point)</literal></entry>
+      <entry><literal>|&gt;&gt; (point,point)</literal></entry>
       <entry valign="middle" morerows="5"><literal>&lt;-&gt; (point,point)</literal></entry>
      </row>
      <row><entry><literal>&lt;&lt; (point,point)</literal></entry></row>
      <row><entry><literal>&gt;&gt; (point,point)</literal></entry></row>
-     <row><entry><literal>&lt;^ (point,point)</literal></entry></row>
+     <row><entry><literal>&lt;&lt;| (point,point)</literal></entry></row>
      <row><entry><literal>~= (point,point)</literal></entry></row>
      <row><entry><literal>&lt;@ (point,box)</literal></entry></row>
 
@@ -132,16 +132,16 @@
      <row><entry><literal>&lt;&lt;| (polygon,polygon)</literal></entry></row>
      <row><entry><literal>&amp;&lt;| (polygon,polygon)</literal></entry></row>
      <row><entry><literal>|&gt;&gt; (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>|&amp;&gt; (polygon,polygon)</literal></entry></row>      
+     <row><entry><literal>|&amp;&gt; (polygon,polygon)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="5"><literal>quad_point_ops</literal></entry>
-      <entry><literal>&gt;^ (point,point)</literal></entry>
+      <entry><literal>|&gt;&gt; (point,point)</literal></entry>
       <entry valign="middle" morerows="5"><literal>&lt;-&gt; (point,point)</literal></entry>
      </row>
      <row><entry><literal>&lt;&lt; (point,point)</literal></entry></row>
      <row><entry><literal>&gt;&gt; (point,point)</literal></entry></row>
-     <row><entry><literal>&lt;^ (point,point)</literal></entry></row>
+     <row><entry><literal>&lt;&lt;| (point,point)</literal></entry></row>
      <row><entry><literal>~= (point,point)</literal></entry></row>
      <row><entry><literal>&lt;@ (point,box)</literal></entry></row>
 
@@ -159,7 +159,7 @@
      <row><entry><literal>&amp;&lt; (anyrange,anyrange)</literal></entry></row>
      <row><entry><literal>&amp;&gt; (anyrange,anyrange)</literal></entry></row>
      <row><entry><literal>-|- (anyrange,anyrange)</literal></entry></row>
- 
+
      <row>
       <entry valign="middle" morerows="9"><literal>text_ops</literal></entry>
       <entry><literal>= (text,text)</literal></entry>

@@ -316,10 +316,12 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 				which &= (1 << getQuadrant(centroid, query));
 				break;
 			case RTBelowStrategyNumber:
+			case RTOldBelowStrategyNumber:
 				if (SPTEST(point_above, centroid, query))
 					which &= (1 << 2) | (1 << 3);
 				break;
 			case RTAboveStrategyNumber:
+			case RTOldAboveStrategyNumber:
 				if (SPTEST(point_below, centroid, query))
 					which &= (1 << 1) | (1 << 4);
 				break;
@@ -434,9 +436,11 @@ spg_quad_leaf_consistent(PG_FUNCTION_ARGS)
 				res = SPTEST(point_eq, datum, query);
 				break;
 			case RTBelowStrategyNumber:
+			case RTOldBelowStrategyNumber:
 				res = SPTEST(point_below, datum, query);
 				break;
 			case RTAboveStrategyNumber:
+			case RTOldAboveStrategyNumber:
 				res = SPTEST(point_above, datum, query);
 				break;
 			case RTContainedByStrategyNumber:

@@ -160,13 +160,13 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
      4
 (1 row)
 
-SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 <<| '(0.0, 0.0)';
  count 
 -------
      1
 (1 row)
 
-SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 |>> '(0.0, 0.0)';
  count 
 -------
      5
@@ -470,30 +470,30 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 <<| '(0.0, 0.0)';
                       QUERY PLAN                      
 ------------------------------------------------------
  Aggregate
    ->  Index Only Scan using gpointind on point_tbl p
-         Index Cond: (f1 <^ '(0,0)'::point)
+         Index Cond: (f1 <<| '(0,0)'::point)
 (3 rows)
 
-SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 <<| '(0.0, 0.0)';
  count 
 -------
      1
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 |>> '(0.0, 0.0)';
                       QUERY PLAN                      
 ------------------------------------------------------
  Aggregate
    ->  Index Only Scan using gpointind on point_tbl p
-         Index Cond: (f1 >^ '(0,0)'::point)
+         Index Cond: (f1 |>> '(0,0)'::point)
 (3 rows)
 
-SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 |>> '(0.0, 0.0)';
  count 
 -------
      5
