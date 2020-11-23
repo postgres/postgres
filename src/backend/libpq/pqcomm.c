@@ -1626,7 +1626,7 @@ socket_endcopyout(bool errorAbort)
 		return;
 	if (errorAbort)
 		pq_putbytes("\n\n\\.\n", 5);
-	/* in non-error case, copy.c will have emitted the terminator line */
+	/* in non-error case, copyto.c will have emitted the terminator line */
 	DoingCopyOut = false;
 }
 

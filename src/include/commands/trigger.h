@@ -44,7 +44,7 @@ typedef struct TriggerData
 
 /*
  * The state for capturing old and new tuples into transition tables for a
- * single ModifyTable node (or other operation source, e.g. copy.c).
+ * single ModifyTable node (or other operation source, e.g. copyfrom.c).
  *
  * This is per-caller to avoid conflicts in setting
  * tcs_original_insert_tuple.  Note, however, that the pointed-to
@@ -69,8 +69,8 @@ typedef struct TransitionCaptureState
 	 * For INSERT and COPY, it would be wasteful to convert tuples from child
 	 * format to parent format after they have already been converted in the
 	 * opposite direction during routing.  In that case we bypass conversion
-	 * and allow the inserting code (copy.c and nodeModifyTable.c) to provide
-	 * a slot containing the original tuple directly.
+	 * and allow the inserting code (copyfrom.c and nodeModifyTable.c) to
+	 * provide a slot containing the original tuple directly.
 	 */
 	TupleTableSlot *tcs_original_insert_tuple;
 

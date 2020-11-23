@@ -2112,7 +2112,7 @@ CCC	42
 \.
 
 -- same behavior for copy if there is an index (interesting because rows are
--- captured by a different code path in copy.c if there are indexes)
+-- captured by a different code path in copyfrom.c if there are indexes)
 create index on parent(b);
 copy parent (a, b) from stdin;
 DDD	42
