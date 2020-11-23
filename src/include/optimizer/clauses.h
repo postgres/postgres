@@ -14,7 +14,6 @@
 #ifndef CLAUSES_H
 #define CLAUSES_H
 
-#include "access/htup.h"
 #include "nodes/pathnodes.h"
 
 typedef struct
