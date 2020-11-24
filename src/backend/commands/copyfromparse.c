@@ -114,8 +114,8 @@ static Datum CopyReadBinaryAttribute(CopyFromState cstate, FmgrInfo *flinfo,
 /* Low-level communications functions */
 static int	CopyGetData(CopyFromState cstate, void *databuf,
 						int minread, int maxread);
-static bool CopyGetInt32(CopyFromState cstate, int32 *val);
-static bool CopyGetInt16(CopyFromState cstate, int16 *val);
+static inline bool CopyGetInt32(CopyFromState cstate, int32 *val);
+static inline bool CopyGetInt16(CopyFromState cstate, int16 *val);
 static bool CopyLoadRawBuf(CopyFromState cstate);
 static int	CopyReadBinaryData(CopyFromState cstate, char *dest, int nbytes);
 
