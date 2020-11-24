@@ -84,8 +84,8 @@ LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.min(integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4smaller(integer,integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.avg(integer)"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4_avg_accum(bigint[],integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int8_avg(bigint[])"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4_avg_accum(bigint[],integer)"
  min |         avg         
 -----+---------------------
    1 | 50.5000000000000000
@@ -101,8 +101,8 @@ LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.min(integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4smaller(integer,integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.avg(integer)"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4_avg_accum(bigint[],integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int8_avg(bigint[])"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4_avg_accum(bigint[],integer)"
  min |         avg         
 -----+---------------------
    0 | 49.5000000000000000
@@ -114,8 +114,8 @@ LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.min(integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4smaller(integer,integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.avg(integer)"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4_avg_accum(bigint[],integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int8_avg(bigint[])"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4_avg_accum(bigint[],integer)"
  min |        avg         
 -----+--------------------
    0 | 4.5000000000000000
@@ -127,8 +127,8 @@ LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.min(integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4smaller(integer,integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.avg(integer)"
-LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4_avg_accum(bigint[],integer)"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int8_avg(bigint[])"
+LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.int4_avg_accum(bigint[],integer)"
  min |         avg         
 -----+---------------------
   10 | 54.5000000000000000
