@@ -5650,10 +5650,7 @@ SELECT * FROM parent WHERE key = 2400;
       <term>
        <varname>parallel_leader_participation</varname> (<type>boolean</type>)
        <indexterm>
-        <primary>
-         <varname>parallel_leader_participation</varname> configuration
-         parameter
-        </primary>
+        <primary><varname>parallel_leader_participation</varname> configuration parameter</primary>
        </indexterm>
       </term>
       <listitem>
