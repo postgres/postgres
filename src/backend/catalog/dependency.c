@@ -1146,15 +1146,9 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 	 * If no error is to be thrown, and the msglevel is too low to be shown to
 	 * either client or server log, there's no need to do any of the rest of
 	 * the work.
-	 *
-	 * Note: this code doesn't know all there is to be known about elog
-	 * levels, but it works for NOTICE and DEBUG2, which are the only values
-	 * msglevel can currently have.  We also assume we are running in a normal
-	 * operating environment.
 	 */
 	if (behavior == DROP_CASCADE &&
-		msglevel < client_min_messages &&
-		(msglevel < log_min_messages || log_min_messages == LOG))
+		!message_level_is_interesting(msglevel))
 		return;
 
 	/*

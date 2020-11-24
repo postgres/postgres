@@ -184,7 +184,94 @@ static void write_pipe_chunks(char *data, int len, int dest);
 static void send_message_to_frontend(ErrorData *edata);
 static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
-static bool is_log_level_output(int elevel, int log_min_level);
+
+
+/*
+ * is_log_level_output -- is elevel logically >= log_min_level?
+ *
+ * We use this for tests that should consider LOG to sort out-of-order,
+ * between ERROR and FATAL.  Generally this is the right thing for testing
+ * whether a message should go to the postmaster log, whereas a simple >=
+ * test is correct for testing whether the message should go to the client.
+ */
+static inline bool
+is_log_level_output(int elevel, int log_min_level)
+{
+	if (elevel == LOG || elevel == LOG_SERVER_ONLY)
+	{
+		if (log_min_level == LOG || log_min_level <= ERROR)
+			return true;
+	}
+	else if (log_min_level == LOG)
+	{
+		/* elevel != LOG */
+		if (elevel >= FATAL)
+			return true;
+	}
+	/* Neither is LOG */
+	else if (elevel >= log_min_level)
+		return true;
+
+	return false;
+}
+
+/*
+ * Policy-setting subroutines.  These are fairly simple, but it seems wise
+ * to have the code in just one place.
+ */
+
+/*
+ * should_output_to_server --- should message of given elevel go to the log?
+ */
+static inline bool
+should_output_to_server(int elevel)
+{
+	return is_log_level_output(elevel, log_min_messages);
+}
+
+/*
+ * should_output_to_client --- should message of given elevel go to the client?
+ */
+static inline bool
+should_output_to_client(int elevel)
+{
+	if (whereToSendOutput == DestRemote && elevel != LOG_SERVER_ONLY)
+	{
+		/*
+		 * client_min_messages is honored only after we complete the
+		 * authentication handshake.  This is required both for security
+		 * reasons and because many clients can't handle NOTICE messages
+		 * during authentication.
+		 */
+		if (ClientAuthInProgress)
+			return (elevel >= ERROR);
+		else
+			return (elevel >= client_min_messages || elevel == INFO);
+	}
+	return false;
+}
+
+
+/*
+ * message_level_is_interesting --- would ereport/elog do anything?
+ *
+ * Returns true if ereport/elog with this elevel will not be a no-op.
+ * This is useful to short-circuit any expensive preparatory work that
+ * might be needed for a logging message.  There is no point in
+ * prepending this to a bare ereport/elog call, however.
+ */
+bool
+message_level_is_interesting(int elevel)
+{
+	/*
+	 * Keep this in sync with the decision-making in errstart().
+	 */
+	if (elevel >= ERROR ||
+		should_output_to_server(elevel) ||
+		should_output_to_client(elevel))
+		return true;
+	return false;
+}
 
 
 /*
@@ -301,27 +388,8 @@ errstart(int elevel, const char *domain)
 	 * warning or less and not enabled for logging, just return false without
 	 * starting up any error logging machinery.
 	 */
-
-	/* Determine whether message is enabled for server log output */
-	output_to_server = is_log_level_output(elevel, log_min_messages);
-
-	/* Determine whether message is enabled for client output */
-	if (whereToSendOutput == DestRemote && elevel != LOG_SERVER_ONLY)
-	{
-		/*
-		 * client_min_messages is honored only after we complete the
-		 * authentication handshake.  This is required both for security
-		 * reasons and because many clients can't handle NOTICE messages
-		 * during authentication.
-		 */
-		if (ClientAuthInProgress)
-			output_to_client = (elevel >= ERROR);
-		else
-			output_to_client = (elevel >= client_min_messages ||
-								elevel == INFO);
-	}
-
-	/* Skip processing effort if non-error message will not be output */
+	output_to_server = should_output_to_server(elevel);
+	output_to_client = should_output_to_client(elevel);
 	if (elevel < ERROR && !output_to_server && !output_to_client)
 		return false;
 
@@ -1743,16 +1811,10 @@ pg_re_throw(void)
 
 		/*
 		 * At least in principle, the increase in severity could have changed
-		 * where-to-output decisions, so recalculate.  This should stay in
-		 * sync with errstart(), which see for comments.
+		 * where-to-output decisions, so recalculate.
 		 */
-		if (IsPostmasterEnvironment)
-			edata->output_to_server = is_log_level_output(FATAL,
-														  log_min_messages);
-		else
-			edata->output_to_server = (FATAL >= log_min_messages);
-		if (whereToSendOutput == DestRemote)
-			edata->output_to_client = true;
+		edata->output_to_server = should_output_to_server(FATAL);
+		edata->output_to_client = should_output_to_client(FATAL);
 
 		/*
 		 * We can use errfinish() for the rest, but we don't want it to call
@@ -3504,35 +3566,6 @@ write_stderr(const char *fmt,...)
 	va_end(ap);
 }
 
-
-/*
- * is_log_level_output -- is elevel logically >= log_min_level?
- *
- * We use this for tests that should consider LOG to sort out-of-order,
- * between ERROR and FATAL.  Generally this is the right thing for testing
- * whether a message should go to the postmaster log, whereas a simple >=
- * test is correct for testing whether the message should go to the client.
- */
-static bool
-is_log_level_output(int elevel, int log_min_level)
-{
-	if (elevel == LOG || elevel == LOG_SERVER_ONLY)
-	{
-		if (log_min_level == LOG || log_min_level <= ERROR)
-			return true;
-	}
-	else if (log_min_level == LOG)
-	{
-		/* elevel != LOG */
-		if (elevel >= FATAL)
-			return true;
-	}
-	/* Neither is LOG */
-	else if (elevel >= log_min_level)
-		return true;
-
-	return false;
-}
 
 /*
  * Adjust the level of a recovery-related message per trace_recovery_messages.

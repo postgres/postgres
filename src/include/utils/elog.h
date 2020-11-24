@@ -157,8 +157,10 @@
 
 #define TEXTDOMAIN NULL
 
-extern bool pg_attribute_cold errstart_cold(int elevel, const char *domain);
+extern bool message_level_is_interesting(int elevel);
+
 extern bool errstart(int elevel, const char *domain);
+extern bool pg_attribute_cold errstart_cold(int elevel, const char *domain);
 extern void errfinish(const char *filename, int lineno, const char *funcname);
 
 extern int	errcode(int sqlerrcode);

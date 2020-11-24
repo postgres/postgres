@@ -1337,26 +1337,30 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				!(statusFlags & PROC_VACUUM_FOR_WRAPAROUND))
 			{
 				int			pid = autovac->pid;
-				StringInfoData locktagbuf;
-				StringInfoData logbuf;	/* errdetail for server log */
 
 				/* report the case, if configured to do so */
-				initStringInfo(&locktagbuf);
-				initStringInfo(&logbuf);
-				DescribeLockTag(&locktagbuf, &locktag_copy);
-				appendStringInfo(&logbuf,
-								 _("Process %d waits for %s on %s."),
-								 MyProcPid,
-								 GetLockmodeName(lockmethod_copy, lockmode),
-								 locktagbuf.data);
+				if (message_level_is_interesting(DEBUG1))
+				{
+					StringInfoData locktagbuf;
+					StringInfoData logbuf;	/* errdetail for server log */
 
-				ereport(DEBUG1,
-						(errmsg("sending cancel to blocking autovacuum PID %d",
-								pid),
-						 errdetail_log("%s", logbuf.data)));
+					initStringInfo(&locktagbuf);
+					initStringInfo(&logbuf);
+					DescribeLockTag(&locktagbuf, &locktag_copy);
+					appendStringInfo(&logbuf,
+									 _("Process %d waits for %s on %s."),
+									 MyProcPid,
+									 GetLockmodeName(lockmethod_copy, lockmode),
+									 locktagbuf.data);
 
-				pfree(logbuf.data);
-				pfree(locktagbuf.data);
+					ereport(DEBUG1,
+							(errmsg("sending cancel to blocking autovacuum PID %d",
+									pid),
+							 errdetail_log("%s", logbuf.data)));
+
+					pfree(locktagbuf.data);
+					pfree(logbuf.data);
+				}
 
 				/* send the autovacuum worker Back to Old Kent Road */
 				if (kill(pid, SIGINT) < 0)

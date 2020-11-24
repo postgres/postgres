@@ -1215,7 +1215,7 @@ ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 	walrcv->lastMsgReceiptTime = lastMsgReceiptTime;
 	SpinLockRelease(&walrcv->mutex);
 
-	if (log_min_messages <= DEBUG2)
+	if (message_level_is_interesting(DEBUG2))
 	{
 		char	   *sendtime;
 		char	   *receipttime;

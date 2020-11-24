@@ -1900,7 +1900,7 @@ ProcessStandbyReplyMessage(void)
 	replyTime = pq_getmsgint64(&reply_message);
 	replyRequested = pq_getmsgbyte(&reply_message);
 
-	if (log_min_messages <= DEBUG2)
+	if (message_level_is_interesting(DEBUG2))
 	{
 		char	   *replyTimeStr;
 
@@ -2082,7 +2082,7 @@ ProcessStandbyHSFeedbackMessage(void)
 	feedbackCatalogXmin = pq_getmsgint(&reply_message, 4);
 	feedbackCatalogEpoch = pq_getmsgint(&reply_message, 4);
 
-	if (log_min_messages <= DEBUG2)
+	if (message_level_is_interesting(DEBUG2))
 	{
 		char	   *replyTimeStr;
 
