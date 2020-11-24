@@ -195,16 +195,23 @@
  * Marking certain functions as "hot" or "cold" can be useful to assist the
  * compiler in arranging the assembly code in a more efficient way.
  */
-#if defined(__has_attribute) && __has_attribute (cold)
+#if defined(__has_attribute)
+
+#if __has_attribute (cold)
 #define pg_attribute_cold __attribute__((cold))
 #else
 #define pg_attribute_cold
 #endif
 
-#if defined(__has_attribute) && __has_attribute (hot)
+#if __has_attribute (hot)
 #define pg_attribute_hot __attribute__((hot))
 #else
 #define pg_attribute_hot
+#endif
+
+#else
+#define pg_attribute_hot
+#define pg_attribute_cold
 #endif
 
 /*
