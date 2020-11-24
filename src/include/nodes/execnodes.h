@@ -747,17 +747,6 @@ typedef tuplehash_iterator TupleHashIterator;
  */
 
 /* ----------------
- *		AggrefExprState node
- * ----------------
- */
-typedef struct AggrefExprState
-{
-	NodeTag		type;
-	Aggref	   *aggref;			/* expression plan node */
-	int			aggno;			/* ID number for agg within its plan node */
-} AggrefExprState;
-
-/* ----------------
  *		WindowFuncExprState node
  * ----------------
  */

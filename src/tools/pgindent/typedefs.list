@@ -50,7 +50,6 @@ AggStatePerPhase
 AggStatePerTrans
 AggStrategy
 Aggref
-AggrefExprState
 AlenState
 Alias
 AllocBlock

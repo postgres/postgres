@@ -24,8 +24,6 @@ typedef struct
 } WindowFuncLists;
 
 extern bool contain_agg_clause(Node *clause);
-extern void get_agg_clause_costs(PlannerInfo *root, Node *clause,
-								 AggSplit aggsplit, AggClauseCosts *costs);
 
 extern bool contain_window_function(Node *clause);
 extern WindowFuncLists *find_window_functions(Node *clause, Index maxWinRef);

@@ -305,6 +305,12 @@ typedef struct Param
  * a crosscheck that the Aggrefs match the plan; but note that when aggsplit
  * indicates a non-final mode, aggtype reflects the transition data type
  * not the SQL-level output type of the aggregate.
+ *
+ * aggno and aggtransno are -1 in the parse stage, and are set in planning.
+ * Aggregates with the same 'aggno' represent the same aggregate expression,
+ * and can share the result.  Aggregates with same 'transno' but different
+ * 'aggno' can share the same transition state, only the final function needs
+ * to be called separately.
  */
 typedef struct Aggref
 {
@@ -326,6 +332,8 @@ typedef struct Aggref
 	char		aggkind;		/* aggregate kind (see pg_aggregate.h) */
 	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
 	AggSplit	aggsplit;		/* expected agg-splitting mode of parent Agg */
+	int			aggno;			/* unique ID within the Agg node */
+	int			aggtransno;		/* unique ID of transition state in the Agg */
 	int			location;		/* token location, or -1 if unknown */
 } Aggref;
 

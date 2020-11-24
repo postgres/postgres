@@ -1492,6 +1492,8 @@ _copyAggref(const Aggref *from)
 	COPY_SCALAR_FIELD(aggkind);
 	COPY_SCALAR_FIELD(agglevelsup);
 	COPY_SCALAR_FIELD(aggsplit);
+	COPY_SCALAR_FIELD(aggno);
+	COPY_SCALAR_FIELD(aggtransno);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;

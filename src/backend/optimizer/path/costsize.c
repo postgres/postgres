@@ -2439,7 +2439,8 @@ cost_agg(Path *path, PlannerInfo *root,
 		 * than or equal to one, all groups are expected to fit in memory;
 		 * otherwise we expect to spill.
 		 */
-		hashentrysize = hash_agg_entry_size(aggcosts->numAggs, input_width,
+		hashentrysize = hash_agg_entry_size(list_length(root->aggtransinfos),
+											input_width,
 											aggcosts->transitionSpace);
 		hash_agg_set_limits(hashentrysize, numGroups, 0, &mem_limit,
 							&ngroups_limit, &num_partitions);

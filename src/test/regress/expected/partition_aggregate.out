@@ -1412,11 +1412,12 @@ SELECT y, sum(x), avg(x), count(*) FROM pagg_tab_para GROUP BY y HAVING avg(x) <
 (4 rows)
 
 -- Test when parent can produce parallel paths but not any (or some) of its children
+-- (Use one more aggregate to tilt the cost estimates for the plan we want)
 ALTER TABLE pagg_tab_para_p1 SET (parallel_workers = 0);
 ALTER TABLE pagg_tab_para_p3 SET (parallel_workers = 0);
 ANALYZE pagg_tab_para;
 EXPLAIN (COSTS OFF)
-SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
+SELECT x, sum(y), avg(y), sum(x+y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
                                         QUERY PLAN                                         
 -------------------------------------------------------------------------------------------
  Sort
@@ -1436,21 +1437,21 @@ SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) <
                                  ->  Parallel Seq Scan on pagg_tab_para_p2 pagg_tab_para_2
 (15 rows)
 
-SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
- x  | sum  |        avg         | count 
-----+------+--------------------+-------
-  0 | 5000 | 5.0000000000000000 |  1000
-  1 | 6000 | 6.0000000000000000 |  1000
- 10 | 5000 | 5.0000000000000000 |  1000
- 11 | 6000 | 6.0000000000000000 |  1000
- 20 | 5000 | 5.0000000000000000 |  1000
- 21 | 6000 | 6.0000000000000000 |  1000
+SELECT x, sum(y), avg(y), sum(x+y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
+ x  | sum  |        avg         |  sum  | count 
+----+------+--------------------+-------+-------
+  0 | 5000 | 5.0000000000000000 |  5000 |  1000
+  1 | 6000 | 6.0000000000000000 |  7000 |  1000
+ 10 | 5000 | 5.0000000000000000 | 15000 |  1000
+ 11 | 6000 | 6.0000000000000000 | 17000 |  1000
+ 20 | 5000 | 5.0000000000000000 | 25000 |  1000
+ 21 | 6000 | 6.0000000000000000 | 27000 |  1000
 (6 rows)
 
 ALTER TABLE pagg_tab_para_p2 SET (parallel_workers = 0);
 ANALYZE pagg_tab_para;
 EXPLAIN (COSTS OFF)
-SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
+SELECT x, sum(y), avg(y), sum(x+y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
  Sort
@@ -1470,15 +1471,15 @@ SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) <
                                  ->  Seq Scan on pagg_tab_para_p3 pagg_tab_para_3
 (15 rows)
 
-SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
- x  | sum  |        avg         | count 
-----+------+--------------------+-------
-  0 | 5000 | 5.0000000000000000 |  1000
-  1 | 6000 | 6.0000000000000000 |  1000
- 10 | 5000 | 5.0000000000000000 |  1000
- 11 | 6000 | 6.0000000000000000 |  1000
- 20 | 5000 | 5.0000000000000000 |  1000
- 21 | 6000 | 6.0000000000000000 |  1000
+SELECT x, sum(y), avg(y), sum(x+y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) < 7 ORDER BY 1, 2, 3;
+ x  | sum  |        avg         |  sum  | count 
+----+------+--------------------+-------+-------
+  0 | 5000 | 5.0000000000000000 |  5000 |  1000
+  1 | 6000 | 6.0000000000000000 |  7000 |  1000
+ 10 | 5000 | 5.0000000000000000 | 15000 |  1000
+ 11 | 6000 | 6.0000000000000000 | 17000 |  1000
+ 20 | 5000 | 5.0000000000000000 | 25000 |  1000
+ 21 | 6000 | 6.0000000000000000 | 27000 |  1000
 (6 rows)
 
 -- Reset parallelism parameters to get partitionwise aggregation plan.

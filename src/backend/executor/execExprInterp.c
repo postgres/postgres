@@ -1494,12 +1494,12 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			 * Returns a Datum whose value is the precomputed aggregate value
 			 * found in the given expression context.
 			 */
-			AggrefExprState *aggref = op->d.aggref.astate;
+			int			aggno = op->d.aggref.aggno;
 
 			Assert(econtext->ecxt_aggvalues != NULL);
 
-			*op->resvalue = econtext->ecxt_aggvalues[aggref->aggno];
-			*op->resnull = econtext->ecxt_aggnulls[aggref->aggno];
+			*op->resvalue = econtext->ecxt_aggvalues[aggno];
+			*op->resnull = econtext->ecxt_aggnulls[aggno];
 
 			EEO_NEXT();
 		}

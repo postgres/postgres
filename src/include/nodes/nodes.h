@@ -206,10 +206,9 @@ typedef enum NodeTag
 	 * Most Expr-based plan nodes do not have a corresponding expression state
 	 * node, they're fully handled within execExpr* - but sometimes the state
 	 * needs to be shared with other parts of the executor, as for example
-	 * with AggrefExprState, which nodeAgg.c has to modify.
+	 * with SubPlanState, which nodeSubplan.c has to modify.
 	 */
 	T_ExprState,
-	T_AggrefExprState,
 	T_WindowFuncExprState,
 	T_SetExprState,
 	T_SubPlanState,

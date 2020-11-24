@@ -1849,20 +1849,11 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_AGGREF:
 				{
-					AggrefExprState *aggref = op->d.aggref.astate;
-					LLVMValueRef v_aggnop;
 					LLVMValueRef v_aggno;
 					LLVMValueRef value,
 								isnull;
 
-					/*
-					 * At this point aggref->aggno is not yet set (it's set up
-					 * in ExecInitAgg() after initializing the expression). So
-					 * load it from memory each time round.
-					 */
-					v_aggnop = l_ptr_const(&aggref->aggno,
-										   l_ptr(LLVMInt32Type()));
-					v_aggno = LLVMBuildLoad(b, v_aggnop, "v_aggno");
+					v_aggno = l_int32_const(op->d.aggref.aggno);
 
 					/* load agg value / null */
 					value = l_load_gep1(b, v_aggvalues, v_aggno, "aggvalue");

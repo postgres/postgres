@@ -564,8 +564,7 @@ typedef struct ExprEvalStep
 		/* for EEOP_AGGREF */
 		struct
 		{
-			/* out-of-line state, modified by nodeAgg.c */
-			AggrefExprState *astate;
+			int			aggno;
 		}			aggref;
 
 		/* for EEOP_GROUPING_FUNC */
