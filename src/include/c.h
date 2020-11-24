@@ -104,6 +104,15 @@
  * XLC: https://www.ibm.com/support/knowledgecenter/SSGH2K_13.1.2/com.ibm.xlc131.aix.doc/language_ref/type_attrib.html
  */
 
+/*
+ * For compilers which don't support __has_attribute, we just define
+ * __has_attribute(x) to 0 so that we can define macros for various
+ * __attribute__s more easily below.
+ */
+#ifndef __has_attribute
+#define __has_attribute(attribute) 0
+#endif
+
 /* only GCC supports the unused attribute */
 #ifdef __GNUC__
 #define pg_attribute_unused() __attribute__((unused))
@@ -195,8 +204,6 @@
  * Marking certain functions as "hot" or "cold" can be useful to assist the
  * compiler in arranging the assembly code in a more efficient way.
  */
-#if defined(__has_attribute)
-
 #if __has_attribute (cold)
 #define pg_attribute_cold __attribute__((cold))
 #else
@@ -207,11 +214,6 @@
 #define pg_attribute_hot __attribute__((hot))
 #else
 #define pg_attribute_hot
-#endif
-
-#else
-#define pg_attribute_hot
-#define pg_attribute_cold
 #endif
 
 /*
