@@ -645,10 +645,7 @@ ExecInsert(ModifyTableState *mtstate,
 	}
 
 	if (canSetTag)
-	{
 		(estate->es_processed)++;
-		setLastTid(&slot->tts_tid);
-	}
 
 	/*
 	 * If this insert is the result of a partition key update that moved the
