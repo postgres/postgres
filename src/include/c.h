@@ -201,6 +201,21 @@
 #endif
 
 /*
+ * For now, just define pg_attribute_cold and pg_attribute_hot to be empty
+ * macros on minGW 8.1.  There appears to be a compiler bug that results in
+ * compilation failure.  At this time, we still have at least one buildfarm
+ * animal running that compiler, so this should make that green again. It's
+ * likely this compiler is not popular enough to warrant keeping this code
+ * around forever, so let's just remove it once the last buildfarm animal
+ * upgrades.
+ */
+#if defined(__MINGW64__) && __GNUC__ == 8 && __GNUC_MINOR__ == 1
+
+#define pg_attribute_cold
+#define pg_attribute_hot
+
+#else
+/*
  * Marking certain functions as "hot" or "cold" can be useful to assist the
  * compiler in arranging the assembly code in a more efficient way.
  */
@@ -216,6 +231,8 @@
 #define pg_attribute_hot
 #endif
 
+#endif							/* defined(__MINGW64__) && __GNUC__ == 8 &&
+								 * __GNUC_MINOR__ == 1 */
 /*
  * Mark a point as unreachable in a portable fashion.  This should preferably
  * be something that the compiler understands, to aid code generation.
