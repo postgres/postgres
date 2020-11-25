@@ -1093,7 +1093,7 @@ connectOptions2(PGconn *conn)
 		{
 			ch->type = CHT_HOST_NAME;
 #ifdef HAVE_UNIX_SOCKETS
-			if (is_absolute_path(ch->host))
+			if (is_unixsock_path(ch->host))
 				ch->type = CHT_UNIX_SOCKET;
 #endif
 		}
@@ -6945,7 +6945,7 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 	/* 'localhost' matches pghost of '' or the default socket directory */
 	if (hostname == NULL || hostname[0] == '\0')
 		hostname = DefaultHost;
-	else if (is_absolute_path(hostname))
+	else if (is_unixsock_path(hostname))
 
 		/*
 		 * We should probably use canonicalize_path(), but then we have to

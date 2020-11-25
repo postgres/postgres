@@ -1031,7 +1031,10 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         communication; the value is the name of the directory in which the
         socket file is stored.  (On Unix, an absolute path name begins with a
         slash.  On Windows, paths starting with drive letters are also
-        recognized.)  The default behavior when <literal>host</literal> is not
+        recognized.)  If the host name starts with <literal>@</literal>, it is
+        taken as a Unix-domain socket in the abstract namespace (currently
+        supported on Linux and Windows).
+        The default behavior when <literal>host</literal> is not
         specified, or is empty, is to connect to a Unix-domain
         socket<indexterm><primary>Unix domain socket</primary></indexterm> in
         <filename>/tmp</filename> (or whatever socket directory was specified

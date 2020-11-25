@@ -37,6 +37,7 @@
 #include "input.h"
 #include "large_obj.h"
 #include "libpq-fe.h"
+#include "libpq/pqcomm.h"
 #include "mainloop.h"
 #include "portability/instr_time.h"
 #include "pqexpbuffer.h"
@@ -604,12 +605,9 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 			char	   *host = PQhost(pset.db);
 			char	   *hostaddr = PQhostaddr(pset.db);
 
-			/*
-			 * If the host is an absolute path, the connection is via socket
-			 * unless overridden by hostaddr
-			 */
-			if (is_absolute_path(host))
+			if (is_unixsock_path(host))
 			{
+				/* hostaddr overrides host */
 				if (hostaddr && *hostaddr)
 					printf(_("You are connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"),
 						   db, PQuser(pset.db), hostaddr, PQport(pset.db));
@@ -3407,12 +3405,9 @@ do_connect(enum trivalue reuse_previous_specification,
 			char	   *host = PQhost(pset.db);
 			char	   *hostaddr = PQhostaddr(pset.db);
 
-			/*
-			 * If the host is an absolute path, the connection is via socket
-			 * unless overridden by hostaddr
-			 */
-			if (is_absolute_path(host))
+			if (is_unixsock_path(host))
 			{
+				/* hostaddr overrides host */
 				if (hostaddr && *hostaddr)
 					printf(_("You are now connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"),
 						   PQdb(pset.db), PQuser(pset.db), hostaddr, PQport(pset.db));

@@ -85,6 +85,15 @@ typedef struct
  */
 #define UNIXSOCK_PATH_BUFLEN sizeof(((struct sockaddr_un *) NULL)->sun_path)
 
+/*
+ * A host that looks either like an absolute path or starts with @ is
+ * interpreted as a Unix-domain socket address.
+ */
+static inline bool
+is_unixsock_path(const char *path)
+{
+	return is_absolute_path(path) || path[0] == '@';
+}
 
 /*
  * These manipulate the frontend/backend protocol version number.

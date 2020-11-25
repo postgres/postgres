@@ -611,6 +611,10 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 static int
 Lock_AF_UNIX(const char *unixSocketDir, const char *unixSocketPath)
 {
+	/* no lock file for abstract sockets */
+	if (unixSocketPath[0] == '@')
+		return STATUS_OK;
+
 	/*
 	 * Grab an interlock file associated with the socket file.
 	 *
@@ -642,6 +646,10 @@ Lock_AF_UNIX(const char *unixSocketDir, const char *unixSocketPath)
 static int
 Setup_AF_UNIX(const char *sock_path)
 {
+	/* no file system permissions for abstract sockets */
+	if (sock_path[0] == '@')
+		return STATUS_OK;
+
 	/*
 	 * Fix socket ownership/permission if requested.  Note we must do this
 	 * before we listen() to avoid a window where unwanted connections could

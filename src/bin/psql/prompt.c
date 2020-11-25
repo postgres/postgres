@@ -15,6 +15,7 @@
 #include "common.h"
 #include "common/string.h"
 #include "input.h"
+#include "libpq/pqcomm.h"
 #include "prompt.h"
 #include "settings.h"
 
@@ -136,7 +137,7 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 						const char *host = PQhost(pset.db);
 
 						/* INET socket */
-						if (host && host[0] && !is_absolute_path(host))
+						if (host && host[0] && !is_unixsock_path(host))
 						{
 							strlcpy(buf, host, sizeof(buf));
 							if (*p == 'm')
