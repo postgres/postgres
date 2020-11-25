@@ -530,18 +530,20 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 		err = bind(fd, addr->ai_addr, addr->ai_addrlen);
 		if (err < 0)
 		{
+			int			saved_errno = errno;
+
 			ereport(LOG,
 					(errcode_for_socket_access(),
 			/* translator: first %s is IPv4, IPv6, or Unix */
 					 errmsg("could not bind %s address \"%s\": %m",
 							familyDesc, addrDesc),
-					 (IS_AF_UNIX(addr->ai_family)) ?
-					 errhint("Is another postmaster already running on port %d?"
-							 " If not, remove socket file \"%s\" and retry.",
-							 (int) portNumber, service) :
-					 errhint("Is another postmaster already running on port %d?"
-							 " If not, wait a few seconds and retry.",
-							 (int) portNumber)));
+					 saved_errno == EADDRINUSE ?
+					 (IS_AF_UNIX(addr->ai_family) ?
+					  errhint("Is another postmaster already running on port %d?",
+							  (int) portNumber) :
+					  errhint("Is another postmaster already running on port %d?"
+							  " If not, wait a few seconds and retry.",
+							  (int) portNumber)) : 0));
 			closesocket(fd);
 			continue;
 		}
