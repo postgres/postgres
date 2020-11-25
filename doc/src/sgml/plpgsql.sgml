@@ -19,7 +19,7 @@
     <itemizedlist>
      <listitem>
       <para>
-       can be used to create functions and triggers,
+       can be used to create functions, procedures, and triggers,
       </para>
      </listitem>
      <listitem>
@@ -34,7 +34,7 @@
      </listitem>
      <listitem>
       <para>
-       inherits all user-defined types, functions, and operators,
+       inherits all user-defined types, functions, procedures, and operators,
       </para>
      </listitem>
      <listitem>
