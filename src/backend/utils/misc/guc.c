@@ -4822,6 +4822,8 @@ static bool guc_dirty;			/* true if need to do commit/abort work */
 
 static bool reporting_enabled;	/* true to enable GUC_REPORT */
 
+static bool report_needed;		/* true if any GUC_REPORT reports are needed */
+
 static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
 
@@ -5452,6 +5454,7 @@ InitializeOneGUCOption(struct config_generic *gconf)
 	gconf->reset_scontext = PGC_INTERNAL;
 	gconf->stack = NULL;
 	gconf->extra = NULL;
+	gconf->last_reported = NULL;
 	gconf->sourcefile = NULL;
 	gconf->sourceline = 0;
 
@@ -5828,7 +5831,10 @@ ResetAllOptions(void)
 		gconf->scontext = gconf->reset_scontext;
 
 		if (gconf->flags & GUC_REPORT)
-			ReportGUCOption(gconf);
+		{
+			gconf->status |= GUC_NEEDS_REPORT;
+			report_needed = true;
+		}
 	}
 }
 
@@ -6215,7 +6221,10 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 
 			/* Report new value if we changed it */
 			if (changed && (gconf->flags & GUC_REPORT))
-				ReportGUCOption(gconf);
+			{
+				gconf->status |= GUC_NEEDS_REPORT;
+				report_needed = true;
+			}
 		}						/* end of stack-popping loop */
 
 		if (stack != NULL)
@@ -6257,17 +6266,60 @@ BeginReportingGUCOptions(void)
 		if (conf->flags & GUC_REPORT)
 			ReportGUCOption(conf);
 	}
+
+	report_needed = false;
+}
+
+/*
+ * ReportChangedGUCOptions: report recently-changed GUC_REPORT variables
+ *
+ * This is called just before we wait for a new client query.
+ *
+ * By handling things this way, we ensure that a ParameterStatus message
+ * is sent at most once per variable per query, even if the variable
+ * changed multiple times within the query.  That's quite possible when
+ * using features such as function SET clauses.  Function SET clauses
+ * also tend to cause values to change intraquery but eventually revert
+ * to their prevailing values; ReportGUCOption is responsible for avoiding
+ * redundant reports in such cases.
+ */
+void
+ReportChangedGUCOptions(void)
+{
+	/* Quick exit if not (yet) enabled */
+	if (!reporting_enabled)
+		return;
+
+	/* Quick exit if no values have been changed */
+	if (!report_needed)
+		return;
+
+	/* Transmit new values of interesting variables */
+	for (int i = 0; i < num_guc_variables; i++)
+	{
+		struct config_generic *conf = guc_variables[i];
+
+		if ((conf->flags & GUC_REPORT) && (conf->status & GUC_NEEDS_REPORT))
+			ReportGUCOption(conf);
+	}
+
+	report_needed = false;
 }
 
 /*
  * ReportGUCOption: if appropriate, transmit option value to frontend
+ *
+ * We need not transmit the value if it's the same as what we last
+ * transmitted.  However, clear the NEEDS_REPORT flag in any case.
  */
 static void
 ReportGUCOption(struct config_generic *record)
 {
-	if (reporting_enabled && (record->flags & GUC_REPORT))
+	char	   *val = _ShowOption(record, false);
+
+	if (record->last_reported == NULL ||
+		strcmp(val, record->last_reported) != 0)
 	{
-		char	   *val = _ShowOption(record, false);
 		StringInfoData msgbuf;
 
 		pq_beginmessage(&msgbuf, 'S');
@@ -6275,8 +6327,19 @@ ReportGUCOption(struct config_generic *record)
 		pq_sendstring(&msgbuf, val);
 		pq_endmessage(&msgbuf);
 
-		pfree(val);
+		/*
+		 * We need a long-lifespan copy.  If strdup() fails due to OOM, we'll
+		 * set last_reported to NULL and thereby possibly make a duplicate
+		 * report later.
+		 */
+		if (record->last_reported)
+			free(record->last_reported);
+		record->last_reported = strdup(val);
 	}
+
+	pfree(val);
+
+	record->status &= ~GUC_NEEDS_REPORT;
 }
 
 /*
@@ -7695,7 +7758,10 @@ set_config_option(const char *name, const char *value,
 	}
 
 	if (changeVal && (record->flags & GUC_REPORT))
-		ReportGUCOption(record);
+	{
+		record->status |= GUC_NEEDS_REPORT;
+		report_needed = true;
+	}
 
 	return changeVal ? 1 : -1;
 }

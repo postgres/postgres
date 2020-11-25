@@ -4229,6 +4229,9 @@ PostgresMain(int argc, char *argv[],
 				pgstat_report_activity(STATE_IDLE, NULL);
 			}
 
+			/* Report any recently-changed GUC options */
+			ReportChangedGUCOptions();
+
 			ReadyForQuery(whereToSendOutput);
 			send_ready_for_query = false;
 		}
