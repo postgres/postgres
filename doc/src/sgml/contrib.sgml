@@ -178,7 +178,7 @@ pages.
    applications in <literal>contrib</literal>.  They can be run from anywhere,
    independent of where the database server resides.  See
    also <xref linkend="reference-client"/> for information about client
-   applications that part of the core <productname>PostgreSQL</productname>
+   applications that are part of the core <productname>PostgreSQL</productname>
    distribution.
   </para>
 
@@ -194,7 +194,7 @@ pages.
    applications in <literal>contrib</literal>.  They are typically run on the
    host where the database server resides.  See also <xref
    linkend="reference-server"/> for information about server applications that
-   part of the core <productname>PostgreSQL</productname> distribution.
+   are part of the core <productname>PostgreSQL</productname> distribution.
   </para>
 
  &pgstandby;
