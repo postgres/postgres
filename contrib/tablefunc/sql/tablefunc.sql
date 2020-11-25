@@ -4,7 +4,9 @@ CREATE EXTENSION tablefunc;
 -- normal_rand()
 -- no easy way to do this for regression testing
 --
-SELECT avg(normal_rand)::int FROM normal_rand(100, 250, 0.2);
+SELECT avg(normal_rand)::int, count(*) FROM normal_rand(100, 250, 0.2);
+-- negative number of tuples
+SELECT avg(normal_rand)::int, count(*) FROM normal_rand(-1, 250, 0.2);
 
 --
 -- crosstab()
