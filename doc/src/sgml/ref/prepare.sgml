@@ -184,7 +184,8 @@ EXPLAIN EXECUTE <replaceable>name</replaceable>(<replaceable>parameter_values</r
    analysis and planning of the statement, <productname>PostgreSQL</productname> will
    force re-analysis and re-planning of the statement before using it
    whenever database objects used in the statement have undergone
-   definitional (DDL) changes since the previous use of the prepared
+   definitional (DDL) changes or the planner statistics of them have
+   been updated since the previous use of the prepared
    statement.  Also, if the value of <xref linkend="guc-search-path"/> changes
    from one use to the next, the statement will be re-parsed using the new
    <varname>search_path</varname>.  (This latter behavior is new as of
