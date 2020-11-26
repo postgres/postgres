@@ -102,9 +102,9 @@ typedef enum
  * but its myProcLocks[] lists are valid.
  *
  * We allow many fields of this struct to be accessed without locks, such as
- * statusFlags or delayChkpt. However, keep in mind that writing mirrored ones
- * (see below) requires holding ProcArrayLock or XidGenLock in at least shared
- * mode, so that pgxactoff does not change concurrently.
+ * delayChkpt and isBackgroundWorker. However, keep in mind that writing
+ * mirrored ones (see below) requires holding ProcArrayLock or XidGenLock in
+ * at least shared mode, so that pgxactoff does not change concurrently.
  *
  * Mirrored fields:
  *

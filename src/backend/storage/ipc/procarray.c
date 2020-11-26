@@ -662,10 +662,8 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		/* avoid unnecessarily dirtying shared cachelines */
 		if (proc->statusFlags & PROC_VACUUM_STATE_MASK)
 		{
-			/* Only safe to change my own flags with just share lock */
-			Assert(proc == MyProc);
 			Assert(!LWLockHeldByMe(ProcArrayLock));
-			LWLockAcquire(ProcArrayLock, LW_SHARED);
+			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 			Assert(proc->statusFlags == ProcGlobal->statusFlags[proc->pgxactoff]);
 			proc->statusFlags &= ~PROC_VACUUM_STATE_MASK;
 			ProcGlobal->statusFlags[proc->pgxactoff] = proc->statusFlags;
@@ -685,8 +683,8 @@ ProcArrayEndTransactionInternal(PGPROC *proc, TransactionId latestXid)
 	size_t		pgxactoff = proc->pgxactoff;
 
 	/*
-	 * Note: we need exclusive lock here because we're going to
-	 * change other processes' PGPROC entries.
+	 * Note: we need exclusive lock here because we're going to change other
+	 * processes' PGPROC entries.
 	 */
 	Assert(LWLockHeldByMeInMode(ProcArrayLock, LW_EXCLUSIVE));
 	Assert(TransactionIdIsValid(ProcGlobal->xids[pgxactoff]));

@@ -1712,13 +1712,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
 
-	/*
-	 * Need to acquire a snapshot to prevent pg_subtrans from being truncated,
-	 * cutoff xids in local memory wrapping around, and to have updated xmin
-	 * horizons.
-	 */
-	PushActiveSnapshot(GetTransactionSnapshot());
-
 	if (!(params->options & VACOPT_FULL))
 	{
 		/*
@@ -1739,15 +1732,24 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 		 * Note: these flags remain set until CommitTransaction or
 		 * AbortTransaction.  We don't want to clear them until we reset
 		 * MyProc->xid/xmin, otherwise GetOldestNonRemovableTransactionId()
-		 * might appear to go backwards, which is probably Not Good.
+		 * might appear to go backwards, which is probably Not Good.  (We also
+		 * set PROC_IN_VACUUM *before* taking our own snapshot, so that our
+		 * xmin doesn't become visible ahead of setting the flag.)
 		 */
-		LWLockAcquire(ProcArrayLock, LW_SHARED);
+		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyProc->statusFlags |= PROC_IN_VACUUM;
 		if (params->is_wraparound)
 			MyProc->statusFlags |= PROC_VACUUM_FOR_WRAPAROUND;
 		ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
 		LWLockRelease(ProcArrayLock);
 	}
+
+	/*
+	 * Need to acquire a snapshot to prevent pg_subtrans from being truncated,
+	 * cutoff xids in local memory wrapping around, and to have updated xmin
+	 * horizons.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
 
 	/*
 	 * Check for user-requested abort.  Note we want this to be inside a
