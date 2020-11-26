@@ -304,7 +304,7 @@ ensure_transaction(void)
  * Returns true for streamed transactions, false otherwise (regular mode).
  */
 static bool
-handle_streamed_transaction(const char action, StringInfo s)
+handle_streamed_transaction(LogicalRepMsgType action, StringInfo s)
 {
 	TransactionId xid;
 
@@ -1090,7 +1090,7 @@ apply_handle_relation(StringInfo s)
 {
 	LogicalRepRelation *rel;
 
-	if (handle_streamed_transaction('R', s))
+	if (handle_streamed_transaction(LOGICAL_REP_MSG_RELATION, s))
 		return;
 
 	rel = logicalrep_read_rel(s);
@@ -1108,7 +1108,7 @@ apply_handle_type(StringInfo s)
 {
 	LogicalRepTyp typ;
 
-	if (handle_streamed_transaction('Y', s))
+	if (handle_streamed_transaction(LOGICAL_REP_MSG_TYPE, s))
 		return;
 
 	logicalrep_read_typ(s, &typ);
@@ -1148,7 +1148,7 @@ apply_handle_insert(StringInfo s)
 	TupleTableSlot *remoteslot;
 	MemoryContext oldctx;
 
-	if (handle_streamed_transaction('I', s))
+	if (handle_streamed_transaction(LOGICAL_REP_MSG_INSERT, s))
 		return;
 
 	ensure_transaction();
@@ -1269,7 +1269,7 @@ apply_handle_update(StringInfo s)
 	RangeTblEntry *target_rte;
 	MemoryContext oldctx;
 
-	if (handle_streamed_transaction('U', s))
+	if (handle_streamed_transaction(LOGICAL_REP_MSG_UPDATE, s))
 		return;
 
 	ensure_transaction();
@@ -1426,7 +1426,7 @@ apply_handle_delete(StringInfo s)
 	TupleTableSlot *remoteslot;
 	MemoryContext oldctx;
 
-	if (handle_streamed_transaction('D', s))
+	if (handle_streamed_transaction(LOGICAL_REP_MSG_DELETE, s))
 		return;
 
 	ensure_transaction();
@@ -1795,7 +1795,7 @@ apply_handle_truncate(StringInfo s)
 	List	   *relids_logged = NIL;
 	ListCell   *lc;
 
-	if (handle_streamed_transaction('T', s))
+	if (handle_streamed_transaction(LOGICAL_REP_MSG_TRUNCATE, s))
 		return;
 
 	ensure_transaction();
