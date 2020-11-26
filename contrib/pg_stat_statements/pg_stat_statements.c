@@ -98,7 +98,7 @@ PG_MODULE_MAGIC;
 #define PGSS_TEXT_FILE	PG_STAT_TMP_DIR "/pgss_query_texts.stat"
 
 /* Magic number identifying the stats file format */
-static const uint32 PGSS_FILE_HEADER = 0x20171004;
+static const uint32 PGSS_FILE_HEADER = 0x20201126;
 
 /* PostgreSQL major version number, changes in which invalidate all entries */
 static const uint32 PGSS_PG_MAJOR_VERSION = PG_VERSION_NUM / 100;
@@ -194,6 +194,14 @@ typedef struct Counters
 } Counters;
 
 /*
+ * Global statistics for pg_stat_statements
+ */
+typedef struct pgssGlobalStats
+{
+	int64		dealloc;		/* # of times entries were deallocated */
+} pgssGlobalStats;
+
+/*
  * Statistics per statement
  *
  * Note: in event of a failure in garbage collection of the query text file,
@@ -222,6 +230,7 @@ typedef struct pgssSharedState
 	Size		extent;			/* current extent of query file */
 	int			n_writers;		/* number of active writers to query file */
 	int			gc_count;		/* query file garbage collection cycle count */
+	pgssGlobalStats stats;		/* global statistics for pgss */
 } pgssSharedState;
 
 /*
@@ -327,6 +336,7 @@ PG_FUNCTION_INFO_V1(pg_stat_statements_1_2);
 PG_FUNCTION_INFO_V1(pg_stat_statements_1_3);
 PG_FUNCTION_INFO_V1(pg_stat_statements_1_8);
 PG_FUNCTION_INFO_V1(pg_stat_statements);
+PG_FUNCTION_INFO_V1(pg_stat_statements_info);
 
 static void pgss_shmem_startup(void);
 static void pgss_shmem_shutdown(int code, Datum arg);
@@ -554,6 +564,7 @@ pgss_shmem_startup(void)
 		pgss->extent = 0;
 		pgss->n_writers = 0;
 		pgss->gc_count = 0;
+		pgss->stats.dealloc = 0;
 	}
 
 	memset(&info, 0, sizeof(info));
@@ -672,6 +683,10 @@ pgss_shmem_startup(void)
 		/* copy in the actual stats */
 		entry->counters = temp.counters;
 	}
+
+	/* Read global statistics for pg_stat_statements */
+	if (fread(&pgss->stats, sizeof(pgssGlobalStats), 1, file) != 1)
+		goto read_error;
 
 	pfree(buffer);
 	FreeFile(file);
@@ -793,6 +808,10 @@ pgss_shmem_shutdown(int code, Datum arg)
 			goto error;
 		}
 	}
+
+	/* Dump global statistics for pg_stat_statements */
+	if (fwrite(&pgss->stats, sizeof(pgssGlobalStats), 1, file) != 1)
+		goto error;
 
 	free(qbuffer);
 	qbuffer = NULL;
@@ -1864,6 +1883,26 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 }
 
 /*
+ * Return statistics of pg_stat_statements.
+ */
+Datum
+pg_stat_statements_info(PG_FUNCTION_ARGS)
+{
+	pgssGlobalStats stats;
+
+	/* Read global statistics for pg_stat_statements */
+	{
+		volatile pgssSharedState *s = (volatile pgssSharedState *) pgss;
+
+		SpinLockAcquire(&s->mutex);
+		stats = s->stats;
+		SpinLockRelease(&s->mutex);
+	}
+
+	PG_RETURN_INT64(stats.dealloc);
+}
+
+/*
  * Estimate shared memory space needed.
  */
 static Size
@@ -2018,6 +2057,15 @@ entry_dealloc(void)
 	}
 
 	pfree(entries);
+
+	/* Increment the number of times entries are deallocated */
+	{
+		volatile pgssSharedState *s = (volatile pgssSharedState *) pgss;
+
+		SpinLockAcquire(&s->mutex);
+		s->stats.dealloc += 1;
+		SpinLockRelease(&s->mutex);
+	}
 }
 
 /*
@@ -2503,6 +2551,15 @@ entry_reset(Oid userid, Oid dbid, uint64 queryid)
 		{
 			hash_search(pgss_hash, &entry->key, HASH_REMOVE, NULL);
 			num_remove++;
+		}
+
+		/* Reset global statistics for pg_stat_statements */
+		{
+			volatile pgssSharedState *s = (volatile pgssSharedState *) pgss;
+
+			SpinLockAcquire(&s->mutex);
+			s->stats.dealloc = 0;
+			SpinLockRelease(&s->mutex);
 		}
 	}
 

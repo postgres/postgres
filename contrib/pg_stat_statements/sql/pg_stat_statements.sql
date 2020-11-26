@@ -358,4 +358,10 @@ SELECT 42;
 SELECT 42;
 SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 
+--
+-- access to pg_stat_statements_info view
+--
+SELECT pg_stat_statements_reset();
+SELECT dealloc FROM pg_stat_statements_info;
+
 DROP EXTENSION pg_stat_statements;

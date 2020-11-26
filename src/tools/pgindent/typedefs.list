@@ -3215,6 +3215,7 @@ pgpid_t
 pgsocket
 pgsql_thing_t
 pgssEntry
+pgssGlobalStats
 pgssHashKey
 pgssJumbleState
 pgssLocationLen

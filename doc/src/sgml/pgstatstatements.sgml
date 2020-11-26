@@ -23,7 +23,9 @@
  <para>
    When <filename>pg_stat_statements</filename> is loaded, it tracks
    statistics across all databases of the server.  To access and manipulate
-   these statistics, the module provides a view, <structname>pg_stat_statements</structname>,
+   these statistics, the module provides views
+   <structname>pg_stat_statements</structname> and
+   <structname>pg_stat_statements_info</structname>,
    and the utility functions <function>pg_stat_statements_reset</function> and
    <function>pg_stat_statements</function>.  These are not available globally but
    can be enabled for a specific database with
@@ -481,6 +483,52 @@
  </sect2>
 
  <sect2>
+  <title>The <structname>pg_stat_statements_info</structname> View</title>
+
+  <indexterm>
+   <primary>pg_stat_statements_info</primary>
+  </indexterm>
+
+  <para>
+   The statistics of the <filename>pg_stat_statements</filename> module
+   itself are tracked and made available via a view named
+   <structname>pg_stat_statements_info</structname>.  This view contains
+   only a single row.  The columns of the view are shown in
+   <xref linkend="pgstatstatementsinfo-columns"/>.
+  </para>
+
+  <table id="pgstatstatementsinfo-columns">
+   <title><structname>pg_stat_statements_info</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>dealloc</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of times <structname>pg_stat_statements</structname>
+       entries about the least-executed statements were deallocated
+       because more distinct statements than
+       <varname>pg_stat_statements.max</varname> were observed
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect2>
+
+ <sect2>
   <title>Functions</title>
 
   <variablelist>
@@ -501,9 +549,10 @@
       specified, the default value <literal>0</literal>(invalid) is used for
       each of them and the statistics that match with other parameters will be
       reset.  If no parameter is specified or all the specified parameters are
-      <literal>0</literal>(invalid), it will discard all statistics.  By
-      default, this function can only be executed by superusers.  Access may be
-      granted to others using <command>GRANT</command>.
+      <literal>0</literal>(invalid), it will discard all statistics including
+      the statistics that <structname>pg_stat_statements_info</structname>
+      displays.  By default, this function can only be executed by superusers.
+      Access may be granted to others using <command>GRANT</command>.
      </para>
     </listitem>
    </varlistentry>
@@ -555,7 +604,9 @@
       statements tracked by the module (i.e., the maximum number of rows
       in the <structname>pg_stat_statements</structname> view).  If more distinct
       statements than that are observed, information about the least-executed
-      statements is discarded.
+      statements is discarded.  The number of times such information was
+      discarded can be seen in the
+      <structname>pg_stat_statements_info</structname> view.
       The default value is 5000.
       This parameter can only be set at server start.
      </para>

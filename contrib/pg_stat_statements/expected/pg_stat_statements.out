@@ -861,4 +861,19 @@ SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE 
  SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     1 |     0 |    0
 (6 rows)
 
+--
+-- access to pg_stat_statements_info view
+--
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+SELECT dealloc FROM pg_stat_statements_info;
+ dealloc 
+---------
+       0
+(1 row)
+
 DROP EXTENSION pg_stat_statements;
