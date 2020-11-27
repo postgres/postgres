@@ -24,10 +24,10 @@
 #include "storage/procarray.h"
 #include "storage/shm_mq.h"
 #include "storage/shm_toc.h"
+#include "tcop/tcopprot.h"
 
 #include "test_shm_mq.h"
 
-static void handle_sigterm(SIGNAL_ARGS);
 static void attach_to_queues(dsm_segment *seg, shm_toc *toc,
 							 int myworkernumber, shm_mq_handle **inqhp,
 							 shm_mq_handle **outqhp);
@@ -58,10 +58,9 @@ test_shm_mq_main(Datum main_arg)
 	 * Establish signal handlers.
 	 *
 	 * We want CHECK_FOR_INTERRUPTS() to kill off this worker process just as
-	 * it would a normal user backend.  To make that happen, we establish a
-	 * signal handler that is a stripped-down version of die().
+	 * it would a normal user backend.  To make that happen, we use die().
 	 */
-	pqsignal(SIGTERM, handle_sigterm);
+	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
 
 	/*
@@ -195,25 +194,4 @@ copy_messages(shm_mq_handle *inqh, shm_mq_handle *outqh)
 		if (res != SHM_MQ_SUCCESS)
 			break;
 	}
-}
-
-/*
- * When we receive a SIGTERM, we set InterruptPending and ProcDiePending just
- * like a normal backend.  The next CHECK_FOR_INTERRUPTS() will do the right
- * thing.
- */
-static void
-handle_sigterm(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	SetLatch(MyLatch);
-
-	if (!proc_exit_inprogress)
-	{
-		InterruptPending = true;
-		ProcDiePending = true;
-	}
-
-	errno = save_errno;
 }
