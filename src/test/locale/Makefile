@@ -13,6 +13,7 @@ all: $(PROGS)
 
 clean distclean maintainer-clean:
 	rm -f $(PROGS) *.o
+	rm -rf tmp_check
 	for d in $(DIRS); do \
 		$(MAKE) -C $$d clean || exit; \
 	done
