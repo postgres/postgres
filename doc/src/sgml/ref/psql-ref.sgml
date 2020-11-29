@@ -920,6 +920,8 @@ testdb=&gt;
         is changed from its previous value using the positional syntax,
         any <replaceable>hostaddr</replaceable> setting present in the
         existing connection's parameters is dropped.
+        Also, any password used for the existing connection will be re-used
+        only if the user, host, and port settings are not changed.
         When the command neither specifies nor reuses a particular parameter,
         the <application>libpq</application> default is used.
         </para>
