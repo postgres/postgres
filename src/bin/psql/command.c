@@ -3030,6 +3030,7 @@ do_connect(enum trivalue reuse_previous_specification,
 	int			nconnopts = 0;
 	bool		same_host = false;
 	char	   *password = NULL;
+	char	   *client_encoding;
 	bool		success = true;
 	bool		keep_password = true;
 	bool		has_connection_string;
@@ -3239,6 +3240,16 @@ do_connect(enum trivalue reuse_previous_specification,
 		password = prompt_for_password(has_connection_string ? NULL : user);
 	}
 
+	/*
+	 * Consider whether to force client_encoding to "auto" (overriding
+	 * anything in the connection string).  We do so if we have a terminal
+	 * connection and there is no PGCLIENTENCODING environment setting.
+	 */
+	if (pset.notty || getenv("PGCLIENTENCODING"))
+		client_encoding = NULL;
+	else
+		client_encoding = "auto";
+
 	/* Loop till we have a connection or fail, which we might've already */
 	while (success)
 	{
@@ -3279,8 +3290,9 @@ do_connect(enum trivalue reuse_previous_specification,
 				values[paramnum++] = password;
 			else if (strcmp(ci->keyword, "fallback_application_name") == 0)
 				values[paramnum++] = pset.progname;
-			else if (strcmp(ci->keyword, "client_encoding") == 0)
-				values[paramnum++] = (pset.notty || getenv("PGCLIENTENCODING")) ? NULL : "auto";
+			else if (client_encoding &&
+					 strcmp(ci->keyword, "client_encoding") == 0)
+				values[paramnum++] = client_encoding;
 			else if (ci->val)
 				values[paramnum++] = ci->val;
 			/* else, don't bother making libpq parse this keyword */
