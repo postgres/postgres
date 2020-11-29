@@ -123,35 +123,53 @@ PGconn *PQconnectdbParams(const char * const *keywords,
       </para>
 
       <para>
-       When <literal>expand_dbname</literal> is non-zero, the
-       <parameter>dbname</parameter> key word value is allowed to be recognized
-       as a connection string. Only the first occurrence of
-       <parameter>dbname</parameter> is expanded this way, any subsequent
-       <parameter>dbname</parameter> value is processed as plain database name. More
-       details on the possible connection string formats appear in
-       <xref linkend="libpq-connstring"/>.
-      </para>
-
-      <para>
        The passed arrays can be empty to use all default parameters, or can
-       contain one or more parameter settings. They should be matched in length.
-       Processing will stop at the first <symbol>NULL</symbol> element
+       contain one or more parameter settings. They must be matched in length.
+       Processing will stop at the first <symbol>NULL</symbol> entry
        in the <literal>keywords</literal> array.
+       Also, if the <literal>values</literal> entry associated with a
+       non-<symbol>NULL</symbol> <literal>keywords</literal> entry is
+       <symbol>NULL</symbol> or an empty string, that entry is ignored and
+       processing continues with the next pair of array entries.
       </para>
 
       <para>
-       If  any  parameter is <symbol>NULL</symbol> or an empty string, the corresponding
-       environment variable (see <xref linkend="libpq-envars"/>) is checked.
-       If the  environment  variable is not set either, then the indicated
-       built-in defaults are used.
+       When <literal>expand_dbname</literal> is non-zero, the value for
+       the first <parameter>dbname</parameter> key word is checked to see
+       if it is a <firstterm>connection string</firstterm>.  If so, it
+       is <quote>expanded</quote> into the individual connection
+       parameters extracted from the string.  The value is considered to
+       be a connection string, rather than just a database name, if it
+       contains an equal sign (<literal>=</literal>) or it begins with a
+       URI scheme designator.  (More details on connection string formats
+       appear in <xref linkend="libpq-connstring"/>.)  Only the first
+       occurrence of <parameter>dbname</parameter> is treated in this way;
+       any subsequent <parameter>dbname</parameter> parameter is processed
+       as a plain database name.
       </para>
 
       <para>
-       In general key words are processed from the beginning of these arrays in index
-       order. The effect of this is that when key words are repeated, the last processed
-       value is retained. Therefore, through careful placement of the
-       <parameter>dbname</parameter> key word, it is possible to determine what may
-       be overridden by a <parameter>conninfo</parameter> string, and what may not.
+       In general the parameter arrays are processed from start to end.
+       If any key word is repeated, the last value (that is
+       not <symbol>NULL</symbol> or empty) is used.  This rule applies in
+       particular when a key word found in a connection string conflicts
+       with one appearing in the <literal>keywords</literal> array.  Thus,
+       the programmer may determine whether array entries can override or
+       be overridden by values taken from a connection string.  Array
+       entries appearing before an expanded <parameter>dbname</parameter>
+       entry can be overridden by fields of the connection string, and in
+       turn those fields are overridden by array entries appearing
+       after <parameter>dbname</parameter> (but, again, only if those
+       entries supply non-empty values).
+      </para>
+
+      <para>
+       After processing all the array entries and any expanded connection
+       string, any connection parameters that remain unset are filled with
+       default values.  If an unset parameter's corresponding environment
+       variable (see <xref linkend="libpq-envars"/>) is set, its value is
+       used.  If the environment variable is not set either, then the
+       parameter's built-in default value is used.
       </para>
 
      </listitem>
@@ -817,15 +835,15 @@ host=localhost port=5432 dbname=mydb connect_timeout=10
    <para>
    The general form for a connection <acronym>URI</acronym> is:
 <synopsis>
-postgresql://[user[:password]@][netloc][:port][,...][/dbname][?param1=value1&amp;...]
+postgresql://[user[:password]@][host][:port][,...][/dbname][?param1=value1&amp;...]
 </synopsis>
    </para>
 
    <para>
     The <acronym>URI</acronym> scheme designator can be either
     <literal>postgresql://</literal> or <literal>postgres://</literal>.  Each
-    of the <acronym>URI</acronym> parts is optional.  The following examples
-    illustrate valid <acronym>URI</acronym> syntax uses:
+    of the remaining <acronym>URI</acronym> parts is optional.  The
+    following examples illustrate valid <acronym>URI</acronym> syntax:
 <programlisting>
 postgresql://
 postgresql://localhost
@@ -836,11 +854,17 @@ postgresql://user:secret@localhost
 postgresql://other@localhost/otherdb?connect_timeout=10&amp;application_name=myapp
 postgresql://host1:123,host2:456/somedb?target_session_attrs=any&amp;application_name=myapp
 </programlisting>
-    Components of the hierarchical part of the <acronym>URI</acronym> can also
-    be given as parameters.  For example:
+    Values that would normally appear in the hierarchical part of
+    the <acronym>URI</acronym> can alternatively be given as named
+    parameters.  For example:
 <programlisting>
 postgresql:///mydb?host=localhost&amp;port=5433
 </programlisting>
+    All named parameters must match key words listed in
+    <xref linkend="libpq-paramkeywords"/>, except that for compatibility
+    with JDBC connection <acronym>URI</acronym>s, instances
+    of <literal>ssl=true</literal> are translated into
+    <literal>sslmode=require</literal>.
    </para>
 
    <para>
@@ -851,34 +875,23 @@ postgresql:///mydb?host=localhost&amp;port=5433
    </para>
 
    <para>
-    Any connection parameters not corresponding to key words listed in <xref
-    linkend="libpq-paramkeywords"/> are ignored and a warning message about them
-    is sent to <filename>stderr</filename>.
-   </para>
-
-   <para>
-    For improved compatibility with JDBC connection <acronym>URI</acronym>s,
-    instances of parameter <literal>ssl=true</literal> are translated into
-    <literal>sslmode=require</literal>.
-   </para>
-
-   <para>
-    The host part may be either host name or an IP address.  To specify an
-    IPv6 host address, enclose it in square brackets:
+    The host part may be either a host name or an IP address.  To specify an
+    IPv6 address, enclose it in square brackets:
 <synopsis>
 postgresql://[2001:db8::1234]/database
 </synopsis>
    </para>
 
    <para>
-    The host component is interpreted as described for the parameter <xref
+    The host part is interpreted as described for the parameter <xref
     linkend="libpq-connect-host"/>.  In particular, a Unix-domain socket
-    connection is chosen if the host part is either empty or starts with a
-    slash, otherwise a TCP/IP connection is initiated.  Note, however, that the
+    connection is chosen if the host part is either empty or looks like an
+    absolute path name,
+    otherwise a TCP/IP connection is initiated.  Note, however, that the
     slash is a reserved character in the hierarchical part of the URI.  So, to
     specify a non-standard Unix-domain socket directory, either omit the host
-    specification in the URI and specify the host as a parameter, or
-    percent-encode the path in the host component of the URI:
+    part of the URI and specify the host as a named parameter, or
+    percent-encode the path in the host part of the URI:
 <programlisting>
 postgresql:///dbname?host=/var/lib/postgresql
 postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
