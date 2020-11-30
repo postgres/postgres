@@ -3072,6 +3072,11 @@ ProcessInterrupts(void)
 					 errmsg("terminating connection due to conflict with recovery"),
 					 errdetail_recovery_conflict()));
 		}
+		else if (IsBackgroundWorker)
+			ereport(FATAL,
+					(errcode(ERRCODE_ADMIN_SHUTDOWN),
+					 errmsg("terminating background worker \"%s\" due to administrator command",
+							MyBgworkerEntry->bgw_type)));
 		else
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
