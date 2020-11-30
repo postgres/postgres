@@ -155,10 +155,12 @@
    You can get away with not installing DocBook XML and the DocBook XSLT
    stylesheets locally, because the required files will be downloaded from the
    Internet and cached locally.  This may in fact be the preferred solution if
-   your operating system packages provide only an old version of especially
-   the stylesheets or if no packages are available at all.  See
-   the <option>--nonet</option> option for <command>xmllint</command>
-   and <command>xsltproc</command> for more information.
+   your operating system packages provide only an old version of these files,
+   or if no packages are available at all.
+   If you want to prevent any attempt to access the Internet while building
+   the documentation, you need to pass the <option>--nonet</option> option
+   to <command>xmllint</command> and <command>xsltproc</command>; see below
+   for an example.
   </para>
 
   <sect2>
@@ -228,21 +230,37 @@ brew install docbook docbook-xsl fop
 
   <para>
    Before you can build the documentation you need to run the
-   <filename>configure</filename> script as you would when building
+   <filename>configure</filename> script, as you would when building
    the <productname>PostgreSQL</productname> programs themselves.
-   Check the output near the end of the run, it should look something
+   Check the output near the end of the run; it should look something
    like this:
 <screen>
 checking for xmllint... xmllint
-checking for DocBook XML V4.5... yes
-checking for dbtoepub... dbtoepub
 checking for xsltproc... xsltproc
 checking for fop... fop
+checking for dbtoepub... dbtoepub
 </screen>
-   If <filename>xmllint</filename> was not found then some of the following
-   tests will be skipped.
+   If <filename>xmllint</filename> or <filename>xsltproc</filename> is not
+   found, you will not be able to build any of the documentation.
+   <filename>fop</filename> is only needed to build the documentation in
+   PDF format.
+   <filename>dbtoepub</filename> is only needed to build the documentation
+   in EPUB format.
   </para>
 
+  <para>
+   If necessary, you can tell <filename>configure</filename> where to find
+   these programs, for example
+<screen>
+./configure ... XMLLINT=/opt/local/bin/xmllint ...
+</screen>
+   Also, if you want to ensure that <filename>xmllint</filename>
+   and <filename>xsltproc</filename> will not perform any network access,
+   you can do something like
+<screen>
+./configure ... XMLLINT="xmllint --nonet" XSLTPROC="xsltproc --nonet" ...
+</screen>
+  </para>
   </sect2>
  </sect1>
 
