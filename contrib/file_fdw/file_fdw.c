@@ -723,9 +723,6 @@ fileIterateForeignScan(ForeignScanState *node)
 	 *
 	 * We can pass ExprContext = NULL because we read all columns from the
 	 * file, so no need to evaluate default expressions.
-	 *
-	 * We can also pass tupleOid = NULL because we don't allow oids for
-	 * foreign tables.
 	 */
 	ExecClearTuple(slot);
 	found = NextCopyFrom(festate->cstate, NULL,

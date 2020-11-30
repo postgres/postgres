@@ -3629,7 +3629,6 @@ NextCopyFromRawFields(CopyState cstate, char ***fields, int *nfields)
  *
  * 'values' and 'nulls' arrays must be the same length as columns of the
  * relation passed to BeginCopyFrom. This function fills the arrays.
- * Oid of the tuple is returned with 'tupleOid' separately.
  */
 bool
 NextCopyFrom(CopyState cstate, ExprContext *econtext,
