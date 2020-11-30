@@ -184,17 +184,17 @@ extern ProjectSetPath *create_set_projection_path(PlannerInfo *root,
 												  RelOptInfo *rel,
 												  Path *subpath,
 												  PathTarget *target);
-extern SortPath *create_incremental_sort_path(PlannerInfo *root,
-											  RelOptInfo *rel,
-											  Path *subpath,
-											  List *pathkeys,
-											  int presorted_keys,
-											  double limit_tuples);
 extern SortPath *create_sort_path(PlannerInfo *root,
 								  RelOptInfo *rel,
 								  Path *subpath,
 								  List *pathkeys,
 								  double limit_tuples);
+extern IncrementalSortPath *create_incremental_sort_path(PlannerInfo *root,
+														 RelOptInfo *rel,
+														 Path *subpath,
+														 List *pathkeys,
+														 int presorted_keys,
+														 double limit_tuples);
 extern GroupPath *create_group_path(PlannerInfo *root,
 									RelOptInfo *rel,
 									Path *subpath,

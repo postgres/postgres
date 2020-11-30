@@ -2798,7 +2798,7 @@ create_set_projection_path(PlannerInfo *root,
  * 'limit_tuples' is the estimated bound on the number of output tuples,
  *		or -1 if no LIMIT or couldn't estimate
  */
-SortPath *
+IncrementalSortPath *
 create_incremental_sort_path(PlannerInfo *root,
 							 RelOptInfo *rel,
 							 Path *subpath,
@@ -2834,7 +2834,7 @@ create_incremental_sort_path(PlannerInfo *root,
 
 	sort->nPresortedCols = presorted_keys;
 
-	return pathnode;
+	return sort;
 }
 
 /*

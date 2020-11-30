@@ -1655,7 +1655,10 @@ typedef struct SortPath
 } SortPath;
 
 /*
- * IncrementalSortPath
+ * IncrementalSortPath represents an incremental sort step
+ *
+ * This is like a regular sort, except some leading key columns are assumed
+ * to be ordered already.
  */
 typedef struct IncrementalSortPath
 {
