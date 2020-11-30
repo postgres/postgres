@@ -2318,13 +2318,12 @@ if test "$with_python" = yes; then
 fi
 
 #
-# Check for DocBook and tools
+# Check for documentation-building tools
 #
-PGAC_PATH_XMLLINT
-PGAC_CHECK_DOCBOOK(4.2)
-PGAC_PATH_PROGS(DBTOEPUB, dbtoepub)
+PGAC_PATH_PROGS(XMLLINT, xmllint)
 PGAC_PATH_PROGS(XSLTPROC, xsltproc)
 PGAC_PATH_PROGS(FOP, fop)
+PGAC_PATH_PROGS(DBTOEPUB, dbtoepub)
 
 #
 # Check for test tools
