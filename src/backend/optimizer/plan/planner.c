@@ -6090,8 +6090,12 @@ plan_create_index_workers(Oid tableOid, Oid indexOid)
 	double		reltuples;
 	double		allvisfrac;
 
-	/* Return immediately when parallelism disabled */
-	if (dynamic_shared_memory_type == DSM_IMPL_NONE ||
+	/*
+	 * We don't allow performing parallel operation in standalone backend or
+	 * when parallelism is disabled.
+	 */
+	if (!IsUnderPostmaster ||
+		dynamic_shared_memory_type == DSM_IMPL_NONE ||
 		max_parallel_maintenance_workers == 0)
 		return 0;
 
