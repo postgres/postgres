@@ -564,7 +564,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     wait for existing transactions that have modified the table to terminate.
     After the second scan, the index build must wait for any transactions
     that have a snapshot (see <xref linkend="mvcc"/>) predating the second
-    scan to terminate.  Then finally the index can be marked ready for use,
+    scan to terminate, including transactions used by any phase of concurrent
+    index builds on other tables.  Then finally the index can be marked ready for use,
     and the <command>CREATE INDEX</command> command terminates.
     Even then, however, the index may not be immediately usable for queries:
     in the worst case, it cannot be used as long as transactions exist that
