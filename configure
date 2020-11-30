@@ -630,10 +630,9 @@ vpath_build
 PG_SYSROOT
 PG_VERSION_NUM
 PROVE
+DBTOEPUB
 FOP
 XSLTPROC
-DBTOEPUB
-have_docbook
 XMLLINT
 TCL_SHLIB_LD_LIBS
 TCL_SHARED_BUILD
@@ -18799,7 +18798,7 @@ fi
 fi
 
 #
-# Check for DocBook and tools
+# Check for documentation-building tools
 #
 if test -z "$XMLLINT"; then
   for ac_prog in xmllint
@@ -18853,96 +18852,6 @@ else
 $as_echo_n "checking for XMLLINT... " >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XMLLINT" >&5
 $as_echo "$XMLLINT" >&6; }
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for DocBook XML V4.2" >&5
-$as_echo_n "checking for DocBook XML V4.2... " >&6; }
-if ${pgac_cv_check_docbook+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat >conftest.xml <<EOF
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-<book>
- <title>test</title>
- <chapter>
-  <title>random</title>
-   <sect1>
-    <title>testsect</title>
-    <para>text</para>
-  </sect1>
- </chapter>
-</book>
-EOF
-
-pgac_cv_check_docbook=no
-
-if test -n "$XMLLINT"; then
-  $XMLLINT --noout --valid conftest.xml 1>&5 2>&1
-  if test $? -eq 0; then
-    pgac_cv_check_docbook=yes
-  fi
-fi
-rm -f conftest.xml
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_check_docbook" >&5
-$as_echo "$pgac_cv_check_docbook" >&6; }
-
-have_docbook=$pgac_cv_check_docbook
-
-
-if test -z "$DBTOEPUB"; then
-  for ac_prog in dbtoepub
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_DBTOEPUB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $DBTOEPUB in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_DBTOEPUB="$DBTOEPUB" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_DBTOEPUB="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-DBTOEPUB=$ac_cv_path_DBTOEPUB
-if test -n "$DBTOEPUB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DBTOEPUB" >&5
-$as_echo "$DBTOEPUB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$DBTOEPUB" && break
-done
-
-else
-  # Report the value of DBTOEPUB in configure's output in all cases.
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for DBTOEPUB" >&5
-$as_echo_n "checking for DBTOEPUB... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DBTOEPUB" >&5
-$as_echo "$DBTOEPUB" >&6; }
 fi
 
 if test -z "$XSLTPROC"; then
@@ -19051,6 +18960,60 @@ else
 $as_echo_n "checking for FOP... " >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $FOP" >&5
 $as_echo "$FOP" >&6; }
+fi
+
+if test -z "$DBTOEPUB"; then
+  for ac_prog in dbtoepub
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_DBTOEPUB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $DBTOEPUB in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_DBTOEPUB="$DBTOEPUB" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_DBTOEPUB="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+DBTOEPUB=$ac_cv_path_DBTOEPUB
+if test -n "$DBTOEPUB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DBTOEPUB" >&5
+$as_echo "$DBTOEPUB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$DBTOEPUB" && break
+done
+
+else
+  # Report the value of DBTOEPUB in configure's output in all cases.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for DBTOEPUB" >&5
+$as_echo_n "checking for DBTOEPUB... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DBTOEPUB" >&5
+$as_echo "$DBTOEPUB" >&6; }
 fi
 
 
