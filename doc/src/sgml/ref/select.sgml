@@ -1934,18 +1934,6 @@ SELECT 2+2;
     by introducing a dummy one-row table from which to do the
     <command>SELECT</command>.
    </para>
-
-   <para>
-    Note that if a <literal>FROM</literal> clause is not specified,
-    the query cannot reference any database tables. For example, the
-    following query is invalid:
-<programlisting>
-SELECT distributors.* WHERE distributors.name = 'Westward';
-</programlisting><productname>PostgreSQL</productname> releases prior to
-    8.1 would accept queries of this form, and add an implicit entry
-    to the query's <literal>FROM</literal> clause for each table
-    referenced by the query. This is no longer allowed.
-   </para>
   </refsect2>
 
   <refsect2>

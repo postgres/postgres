@@ -507,7 +507,7 @@
    Updating a <acronym>GIN</acronym> index tends to be slow because of the
    intrinsic nature of inverted indexes: inserting or updating one heap row
    can cause many inserts into the index (one for each key extracted
-   from the indexed item). As of <productname>PostgreSQL</productname> 8.4,
+   from the indexed item).
    <acronym>GIN</acronym> is capable of postponing much of this work by inserting
    new tuples into a temporary, unsorted list of pending entries.
    When the table is vacuumed or autoanalyzed, or when
@@ -576,10 +576,10 @@
     </para>
 
     <para>
-     As of <productname>PostgreSQL</productname> 8.4, this advice is less
-     necessary since delayed indexing is used (see <xref
-     linkend="gin-fast-update"/> for details).  But for very large updates
-     it may still be best to drop and recreate the index.
+     When <literal>fastupdate</literal> is enabled for <acronym>GIN</acronym>
+     (see <xref linkend="gin-fast-update"/> for details), the penalty is
+     less than when it is not.  But for very large updates it may still be
+     best to drop and recreate the index.
     </para>
    </listitem>
   </varlistentry>

@@ -2309,15 +2309,11 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
 
    <note>
     <para>
-     Before <productname>PostgreSQL</productname> 8.3, these functions would
-     silently accept values of several non-string data types as well, due to
-     the presence of implicit coercions from those data types to
-     <type>text</type>.  Those coercions have been removed because they frequently
-     caused surprising behaviors.  However, the string concatenation operator
-     (<literal>||</literal>) still accepts non-string input, so long as at least one
-     input is of a string type, as shown in <xref
-     linkend="functions-string-sql"/>.  For other cases, insert an explicit
-     coercion to <type>text</type> if you need to duplicate the previous behavior.
+     The string concatenation operator (<literal>||</literal>) will accept
+     non-string input, so long as at least one input is of string type, as shown
+     in <xref linkend="functions-string-sql"/>.  For other cases, inserting an
+     explicit coercion to <type>text</type> can be used to have non-string input
+     accepted.
     </para>
    </note>
 
@@ -17368,10 +17364,7 @@ SELECT NULLIF(value, '(none)') ...
    (last subscript varies most rapidly).
    If the contents of two arrays are equal but the dimensionality is
    different, the first difference in the dimensionality information
-   determines the sort order.  (This is a change from versions of
-   <productname>PostgreSQL</productname> prior to 8.2: older versions would claim
-   that two arrays with the same contents were equal, even if the
-   number of dimensions or subscript ranges were different.)
+   determines the sort order.
   </para>
 
    <table id="array-operators-table">
