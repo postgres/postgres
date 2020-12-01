@@ -173,6 +173,14 @@ CREATE TABLE pg_attrdef (LIKE ctlt1 INCLUDING ALL);
 \d+ public.pg_attrdef
 DROP TABLE public.pg_attrdef;
 
+-- Check that LIKE isn't confused when new table masks the old, either
+BEGIN;
+CREATE SCHEMA ctl_schema;
+SET LOCAL search_path = ctl_schema, public;
+CREATE TABLE ctlt1 (LIKE ctlt1 INCLUDING ALL);
+\d+ ctlt1
+ROLLBACK;
+
 DROP TABLE ctlt1, ctlt2, ctlt3, ctlt4, ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctla, ctlb CASCADE;
 
 -- LIKE must respect NO INHERIT property of constraints

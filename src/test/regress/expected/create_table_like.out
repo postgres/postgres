@@ -455,6 +455,27 @@ Statistics objects:
     "public"."pg_attrdef_a_b_stat" (ndistinct, dependencies, mcv) ON a, b FROM public.pg_attrdef
 
 DROP TABLE public.pg_attrdef;
+-- Check that LIKE isn't confused when new table masks the old, either
+BEGIN;
+CREATE SCHEMA ctl_schema;
+SET LOCAL search_path = ctl_schema, public;
+CREATE TABLE ctlt1 (LIKE ctlt1 INCLUDING ALL);
+\d+ ctlt1
+                                Table "ctl_schema.ctlt1"
+ Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------+-----------+----------+---------+----------+--------------+-------------
+ a      | text |           | not null |         | main     |              | A
+ b      | text |           |          |         | extended |              | B
+Indexes:
+    "ctlt1_pkey" PRIMARY KEY, btree (a)
+    "ctlt1_b_idx" btree (b)
+    "ctlt1_expr_idx" btree ((a || b))
+Check constraints:
+    "ctlt1_a_check" CHECK (length(a) > 2)
+Statistics objects:
+    "ctl_schema"."ctlt1_a_b_stat" (ndistinct, dependencies, mcv) ON a, b FROM ctlt1
+
+ROLLBACK;
 DROP TABLE ctlt1, ctlt2, ctlt3, ctlt4, ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctla, ctlb CASCADE;
 NOTICE:  drop cascades to table inhe
 -- LIKE must respect NO INHERIT property of constraints
