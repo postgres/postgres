@@ -622,6 +622,33 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 #endif
 }
 
+/*
+ * Truncate a file to a given length by name.
+ */
+int
+pg_truncate(const char *path, off_t length)
+{
+#ifdef WIN32
+	int			save_errno;
+	int			ret;
+	int			fd;
+
+	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
+	if (fd >= 0)
+	{
+		ret = ftruncate(fd, 0);
+		save_errno = errno;
+		CloseTransientFile(fd);
+		errno = save_errno;
+	}
+	else
+		ret = -1;
+
+	return ret;
+#else
+	return truncate(path, length);
+#endif
+}
 
 /*
  * fsync_fname -- fsync a file or directory, handling errors properly
