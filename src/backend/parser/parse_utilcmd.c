@@ -1091,14 +1091,18 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	 * we don't yet know what column numbers the copied columns will have in
 	 * the finished table.  If any of those options are specified, add the
 	 * LIKE clause to cxt->likeclauses so that expandTableLikeClause will be
-	 * called after we do know that.
+	 * called after we do know that.  Also, remember the relation OID so that
+	 * expandTableLikeClause is certain to open the same table.
 	 */
 	if (table_like_clause->options &
 		(CREATE_TABLE_LIKE_DEFAULTS |
 		 CREATE_TABLE_LIKE_GENERATED |
 		 CREATE_TABLE_LIKE_CONSTRAINTS |
 		 CREATE_TABLE_LIKE_INDEXES))
+	{
+		table_like_clause->relationOid = RelationGetRelid(relation);
 		cxt->likeclauses = lappend(cxt->likeclauses, table_like_clause);
+	}
 
 	/*
 	 * We may copy extended statistics if requested, since the representation
@@ -1171,9 +1175,13 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 	 * Open the relation referenced by the LIKE clause.  We should still have
 	 * the table lock obtained by transformTableLikeClause (and this'll throw
 	 * an assertion failure if not).  Hence, no need to recheck privileges
-	 * etc.
+	 * etc.  We must open the rel by OID not name, to be sure we get the same
+	 * table.
 	 */
-	relation = relation_openrv(table_like_clause->relation, NoLock);
+	if (!OidIsValid(table_like_clause->relationOid))
+		elog(ERROR, "expandTableLikeClause called on untransformed LIKE clause");
+
+	relation = relation_open(table_like_clause->relationOid, NoLock);
 
 	tupleDesc = RelationGetDescr(relation);
 	constr = tupleDesc->constr;
