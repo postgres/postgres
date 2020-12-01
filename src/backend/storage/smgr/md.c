@@ -286,6 +286,41 @@ mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 		mdunlinkfork(rnode, forkNum, isRedo);
 }
 
+/*
+ * Truncate a file to release disk space.
+ */
+static int
+do_truncate(const char *path)
+{
+	int			save_errno;
+	int			ret;
+	int			fd;
+
+	/* truncate(2) would be easier here, but Windows hasn't got it */
+	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
+	if (fd >= 0)
+	{
+		ret = ftruncate(fd, 0);
+		save_errno = errno;
+		CloseTransientFile(fd);
+		errno = save_errno;
+	}
+	else
+		ret = -1;
+
+	/* Log a warning here to avoid repetition in callers. */
+	if (ret < 0 && errno != ENOENT)
+	{
+		save_errno = errno;
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not truncate file \"%s\": %m", path)));
+		errno = save_errno;
+	}
+
+	return ret;
+}
+
 static void
 mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 {
@@ -299,38 +334,31 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 	 */
 	if (isRedo || forkNum != MAIN_FORKNUM || RelFileNodeBackendIsTemp(rnode))
 	{
-		/* First, forget any pending sync requests for the first segment */
 		if (!RelFileNodeBackendIsTemp(rnode))
-			register_forget_request(rnode, forkNum, 0 /* first seg */ );
+		{
+			/* Prevent other backends' fds from holding on to the disk space */
+			ret = do_truncate(path);
 
-		/* Next unlink the file */
-		ret = unlink(path);
-		if (ret < 0 && errno != ENOENT)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not remove file \"%s\": %m", path)));
+			/* Forget any pending sync requests for the first segment */
+			register_forget_request(rnode, forkNum, 0 /* first seg */ );
+		}
+		else
+			ret = 0;
+
+		/* Next unlink the file, unless it was already found to be missing */
+		if (ret == 0 || errno != ENOENT)
+		{
+			ret = unlink(path);
+			if (ret < 0 && errno != ENOENT)
+				ereport(WARNING,
+						(errcode_for_file_access(),
+						 errmsg("could not remove file \"%s\": %m", path)));
+		}
 	}
 	else
 	{
-		/* truncate(2) would be easier here, but Windows hasn't got it */
-		int			fd;
-
-		fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
-		if (fd >= 0)
-		{
-			int			save_errno;
-
-			ret = ftruncate(fd, 0);
-			save_errno = errno;
-			CloseTransientFile(fd);
-			errno = save_errno;
-		}
-		else
-			ret = -1;
-		if (ret < 0 && errno != ENOENT)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not truncate file \"%s\": %m", path)));
+		/* Prevent other backends' fds from holding on to the disk space */
+		ret = do_truncate(path);
 
 		/* Register request to unlink first segment later */
 		register_unlink_segment(rnode, forkNum, 0 /* first seg */ );
@@ -350,14 +378,24 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 		 */
 		for (segno = 1;; segno++)
 		{
-			/*
-			 * Forget any pending sync requests for this segment before we try
-			 * to unlink.
-			 */
-			if (!RelFileNodeBackendIsTemp(rnode))
-				register_forget_request(rnode, forkNum, segno);
-
 			sprintf(segpath, "%s.%u", path, segno);
+
+			if (!RelFileNodeBackendIsTemp(rnode))
+			{
+				/*
+				 * Prevent other backends' fds from holding on to the disk
+				 * space.
+				 */
+				if (do_truncate(segpath) < 0 && errno == ENOENT)
+					break;
+
+				/*
+				 * Forget any pending sync requests for this segment before we
+				 * try to unlink.
+				 */
+				register_forget_request(rnode, forkNum, segno);
+			}
+
 			if (unlink(segpath) < 0)
 			{
 				/* ENOENT is expected after the last segment... */
