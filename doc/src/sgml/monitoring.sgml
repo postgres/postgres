@@ -5229,6 +5229,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
  <sect2 id="analyze-progress-reporting">
   <title>ANALYZE Progress Reporting</title>
 
+  <indexterm>
+   <primary>pg_stat_progress_analyze</primary>
+  </indexterm>
+
   <para>
    Whenever <command>ANALYZE</command> is running, the
    <structname>pg_stat_progress_analyze</structname> view will contain a
@@ -5441,6 +5445,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
  <sect2 id="create-index-progress-reporting">
   <title>CREATE INDEX Progress Reporting</title>
+
+  <indexterm>
+   <primary>pg_stat_progress_create_index</primary>
+  </indexterm>
 
   <para>
    Whenever <command>CREATE INDEX</command> or <command>REINDEX</command> is running, the
@@ -5738,6 +5746,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
  <sect2 id="vacuum-progress-reporting">
   <title>VACUUM Progress Reporting</title>
 
+  <indexterm>
+   <primary>pg_stat_progress_vacuum</primary>
+  </indexterm>
+
   <para>
    Whenever <command>VACUUM</command> is running, the
    <structname>pg_stat_progress_vacuum</structname> view will contain
@@ -5964,6 +5976,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
  <sect2 id="cluster-progress-reporting">
   <title>CLUSTER Progress Reporting</title>
 
+  <indexterm>
+   <primary>pg_stat_progress_cluster</primary>
+  </indexterm>
+
   <para>
    Whenever <command>CLUSTER</command> or <command>VACUUM FULL</command> is
    running, the <structname>pg_stat_progress_cluster</structname> view will
@@ -6181,6 +6197,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
  <sect2 id="basebackup-progress-reporting">
   <title>Base Backup Progress Reporting</title>
+
+  <indexterm>
+   <primary>pg_stat_progress_basebackup</primary>
+  </indexterm>
 
   <para>
    Whenever an application like <application>pg_basebackup</application>
