@@ -61,7 +61,7 @@
  </para>
 
  <para>
-  RFC 7159 specifies that JSON strings should be encoded in UTF8.
+  <acronym>RFC</acronym> 7159 specifies that JSON strings should be encoded in UTF8.
   It is therefore not possible for the JSON
   types to conform rigidly to the JSON specification unless the database
   encoding is UTF8. Attempts to directly include characters that
@@ -71,7 +71,7 @@
  </para>
 
  <para>
-  RFC 7159 permits JSON strings to contain Unicode escape sequences
+  <acronym>RFC</acronym> 7159 permits JSON strings to contain Unicode escape sequences
   denoted by <literal>\u<replaceable>XXXX</replaceable></literal>.  In the input
   function for the <type>json</type> type, Unicode escapes are allowed
   regardless of the database encoding, and are checked only for syntactic

@@ -2663,7 +2663,7 @@ RESET client_encoding;
       </varlistentry>
 
       <varlistentry>
-       <term>RFC 3629</term>
+       <term><ulink url="https://tools.ietf.org/html/rfc3629">RFC 3629</ulink></term>
 
        <listitem>
         <para>

@@ -948,7 +948,8 @@ omicron         bryanh                  guest1
     <listitem>
      <para>
       <link linkend="auth-ident">Ident authentication</link>, which
-      relies on an <quote>Identification Protocol</quote> (RFC 1413)
+      relies on an <quote>Identification Protocol</quote>
+      (<ulink url="https://tools.ietf.org/html/rfc1413">RFC 1413</ulink>)
       service on the client's machine.  (On local Unix-socket connections,
       this is treated as peer authentication.)
      </para>
@@ -1198,7 +1199,8 @@ omicron         bryanh                  guest1
 
    <para>
     <productname>GSSAPI</productname> is an industry-standard protocol
-    for secure authentication defined in RFC 2743.
+    for secure authentication defined in
+    <ulink url="https://tools.ietf.org/html/rfc2743">RFC 2743</ulink>.
 
     <productname>PostgreSQL</productname>
     supports <productname>GSSAPI</productname> for use as either an encrypted,
@@ -1503,7 +1505,8 @@ omicron         bryanh                  guest1
 
    <para>
     The <quote>Identification Protocol</quote> is described in
-    RFC 1413. Virtually every Unix-like
+    <ulink url="https://tools.ietf.org/html/rfc1413">RFC 1413</ulink>.
+    Virtually every Unix-like
     operating system ships with an ident server that listens on TCP
     port 113 by default. The basic functionality of an ident server
     is to answer questions like <quote>What user initiated the
@@ -1671,8 +1674,8 @@ omicron         bryanh                  guest1
        <para>
         Set to 1 to make the connection between PostgreSQL and the LDAP server
         use TLS encryption.  This uses the <literal>StartTLS</literal>
-        operation per RFC 4513.  See also the <literal>ldapscheme</literal>
-        option for an alternative.
+        operation per <ulink url="https://tools.ietf.org/html/rfc4513">RFC 4513</ulink>.
+        See also the <literal>ldapscheme</literal> option for an alternative.
        </para>
       </listitem>
      </varlistentry>
@@ -1766,7 +1769,8 @@ omicron         bryanh                  guest1
        <term><literal>ldapurl</literal></term>
        <listitem>
         <para>
-         An RFC 4516 LDAP URL.  This is an alternative way to write some of the
+         An <ulink url="https://tools.ietf.org/html/rfc4516">RFC 4516</ulink>
+         LDAP URL.  This is an alternative way to write some of the
          other LDAP options in a more compact and standard form.  The format is
 <synopsis>
 ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replaceable>basedn</replaceable>[?[<replaceable>attribute</replaceable>][?[<replaceable>scope</replaceable>][?[<replaceable>filter</replaceable>]]]]
@@ -1827,7 +1831,8 @@ ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<rep
      If <productname>PostgreSQL</productname> was compiled with
      <productname>OpenLDAP</productname> as the LDAP client library, the
      <literal>ldapserver</literal> setting may be omitted.  In that case, a
-     list of host names and ports is looked up via RFC 2782 DNS SRV records.
+     list of host names and ports is looked up via
+     <ulink url="https://tools.ietf.org/html/rfc2782">RFC 2782</ulink> DNS SRV records.
      The name <literal>_ldap._tcp.DOMAIN</literal> is looked up, where
      <literal>DOMAIN</literal> is extracted from <literal>ldapbasedn</literal>.
    </para>

@@ -4449,7 +4449,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       <para>
        The <literal>base64</literal> format is that
        of <ulink url="https://tools.ietf.org/html/rfc2045#section-6.8">RFC
-       2045 Section 6.8</ulink>.  As per the RFC, encoded lines are
+       2045 Section 6.8</ulink>.  As per the <acronym>RFC</acronym>, encoded lines are
        broken at 76 characters.  However instead of the MIME CRLF
        end-of-line marker, only a newline is used for end-of-line.
        The <function>decode</function> function ignores carriage-return,

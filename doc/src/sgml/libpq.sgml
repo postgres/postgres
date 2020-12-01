@@ -7462,8 +7462,9 @@ user=admin
    <literal>ldap://</literal> will be recognized as an LDAP URL and an
    LDAP query will be performed. The result must be a list of
    <literal>keyword = value</literal> pairs which will be used to set
-   connection options.  The URL must conform to RFC 1959 and be of the
-   form
+   connection options.  The URL must conform to
+   <ulink url="https://tools.ietf.org/html/rfc1959">RFC 1959</ulink>
+   and be of the form
 <synopsis>
 ldap://[<replaceable>hostname</replaceable>[:<replaceable>port</replaceable>]]/<replaceable>search_base</replaceable>?<replaceable>attribute</replaceable>?<replaceable>search_scope</replaceable>?<replaceable>filter</replaceable>
 </synopsis>
