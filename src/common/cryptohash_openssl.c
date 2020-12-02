@@ -119,7 +119,7 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 int
 pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
 {
-	int			status;
+	int			status = 0;
 
 	if (ctx == NULL)
 		return 0;
@@ -154,7 +154,7 @@ pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
 int
 pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest)
 {
-	int			status;
+	int			status = 0;
 
 	if (ctx == NULL)
 		return 0;
