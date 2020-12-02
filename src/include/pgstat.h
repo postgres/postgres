@@ -459,6 +459,9 @@ typedef struct PgStat_MsgBgWriter
 typedef struct PgStat_MsgWal
 {
 	PgStat_MsgHdr m_hdr;
+	PgStat_Counter m_wal_records;
+	PgStat_Counter m_wal_fpi;
+	uint64		m_wal_bytes;
 	PgStat_Counter m_wal_buffers_full;
 } PgStat_MsgWal;
 
@@ -798,6 +801,9 @@ typedef struct PgStat_GlobalStats
  */
 typedef struct PgStat_WalStats
 {
+	PgStat_Counter wal_records;
+	PgStat_Counter wal_fpi;
+	uint64		wal_bytes;
 	PgStat_Counter wal_buffers_full;
 	TimestampTz stat_reset_timestamp;
 } PgStat_WalStats;

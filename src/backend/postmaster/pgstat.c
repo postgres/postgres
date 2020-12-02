@@ -41,6 +41,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_proc.h"
 #include "common/ip.h"
+#include "executor/instrument.h"
 #include "libpq/libpq.h"
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
@@ -142,6 +143,14 @@ char	   *pgstat_stat_tmpname = NULL;
  */
 PgStat_MsgBgWriter BgWriterStats;
 PgStat_MsgWal WalStats;
+
+/*
+ * WAL usage counters saved from pgWALUsage at the previous call to
+ * pgstat_send_wal(). This is used to calculate how much WAL usage
+ * happens between pgstat_send_wal() calls, by substracting
+ * the previous counters from the current ones.
+ */
+static WalUsage prevWalUsage;
 
 /*
  * List of SLRU names that we keep stats for.  There is no central registry of
@@ -3048,6 +3057,13 @@ pgstat_initialize(void)
 		MyBEEntry = &BackendStatusArray[MaxBackends + MyAuxProcType];
 	}
 
+	/*
+	 * Initialize prevWalUsage with pgWalUsage so that pgstat_send_wal() can
+	 * calculate how much pgWalUsage counters are increased by substracting
+	 * prevWalUsage from pgWalUsage.
+	 */
+	prevWalUsage = pgWalUsage;
+
 	/* Set up a process-exit hook to clean up */
 	on_shmem_exit(pgstat_beshutdown_hook, 0);
 }
@@ -4577,6 +4593,20 @@ pgstat_send_wal(void)
 	/* We assume this initializes to zeroes */
 	static const PgStat_MsgWal all_zeroes;
 
+	WalUsage	walusage;
+
+	/*
+	 * Calculate how much WAL usage counters are increased by substracting the
+	 * previous counters from the current ones. Fill the results in WAL stats
+	 * message.
+	 */
+	MemSet(&walusage, 0, sizeof(WalUsage));
+	WalUsageAccumDiff(&walusage, &pgWalUsage, &prevWalUsage);
+
+	WalStats.m_wal_records = walusage.wal_records;
+	WalStats.m_wal_fpi = walusage.wal_fpi;
+	WalStats.m_wal_bytes = walusage.wal_bytes;
+
 	/*
 	 * This function can be called even if nothing at all has happened. In
 	 * this case, avoid sending a completely empty message to the stats
@@ -4590,6 +4620,11 @@ pgstat_send_wal(void)
 	 */
 	pgstat_setheader(&WalStats.m_hdr, PGSTAT_MTYPE_WAL);
 	pgstat_send(&WalStats, sizeof(WalStats));
+
+	/*
+	 * Save the current counters for the subsequent calculation of WAL usage.
+	 */
+	prevWalUsage = pgWalUsage;
 
 	/*
 	 * Clear out the statistics buffer, so it can be re-used.
@@ -6759,6 +6794,9 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 static void
 pgstat_recv_wal(PgStat_MsgWal *msg, int len)
 {
+	walStats.wal_records += msg->m_wal_records;
+	walStats.wal_fpi += msg->m_wal_fpi;
+	walStats.wal_bytes += msg->m_wal_bytes;
 	walStats.wal_buffers_full += msg->m_wal_buffers_full;
 }
 
