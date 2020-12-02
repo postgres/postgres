@@ -16,10 +16,11 @@ use warnings;
 use TestLib;
 use PostgresNode;
 use Test::More;
+use Time::HiRes qw(usleep);
 
 if ($ENV{with_gssapi} eq 'yes')
 {
-	plan tests => 18;
+	plan tests => 34;
 }
 else
 {
@@ -73,6 +74,10 @@ my $kdc_port    = get_free_port();
 my $kdc_datadir = "${TestLib::tmp_check}/krb5kdc";
 my $kdc_pidfile = "${TestLib::tmp_check}/krb5kdc.pid";
 my $keytab      = "${TestLib::tmp_check}/krb5.keytab";
+
+my $dbname = 'postgres';
+my $username = 'test1';
+my $application = '001_auth.pl';
 
 note "setting up Kerberos";
 
@@ -160,6 +165,8 @@ my $node = get_new_node('node');
 $node->init;
 $node->append_conf('postgresql.conf', "listen_addresses = '$hostaddr'");
 $node->append_conf('postgresql.conf', "krb_server_keyfile = '$keytab'");
+$node->append_conf('postgresql.conf', "logging_collector = on");
+$node->append_conf('postgresql.conf', "log_connections = on");
 $node->start;
 
 $node->safe_psql('postgres', 'CREATE USER test1;');
@@ -169,7 +176,7 @@ note "running tests";
 # Test connection success or failure, and if success, that query returns true.
 sub test_access
 {
-	my ($node, $role, $query, $expected_res, $gssencmode, $test_name) = @_;
+	my ($node, $role, $query, $expected_res, $gssencmode, $test_name, $expect_log_msg) = @_;
 
 	# need to connect over TCP/IP for Kerberos
 	my ($res, $stdoutres, $stderrres) = $node->psql(
@@ -192,6 +199,33 @@ sub test_access
 	{
 		is($res, $expected_res, $test_name);
 	}
+
+	# Verify specified log message is logged in the log file.
+	if ($expect_log_msg ne '')
+	{
+		my $current_logfiles = slurp_file($node->data_dir . '/current_logfiles');
+		note "current_logfiles = $current_logfiles";
+		like($current_logfiles, qr|^stderr log/postgresql-.*log$|,
+			 'current_logfiles is sane');
+
+		my $lfname = $current_logfiles;
+		$lfname =~ s/^stderr //;
+		chomp $lfname;
+
+		# might need to retry if logging collector process is slow...
+		my $max_attempts = 180 * 10;
+		my $first_logfile;
+		for (my $attempts = 0; $attempts < $max_attempts; $attempts++)
+		{
+			$first_logfile = slurp_file($node->data_dir . '/' . $lfname);
+			last if $first_logfile =~ m/\Q$expect_log_msg\E/;
+			usleep(100_000);
+		}
+
+		like($first_logfile, qr/\Q$expect_log_msg\E/,
+			 'found expected log file content');
+	}
+
 	return;
 }
 
@@ -223,11 +257,11 @@ $node->append_conf('pg_hba.conf',
 	qq{host all all $hostaddr/32 gss map=mymap});
 $node->restart;
 
-test_access($node, 'test1', 'SELECT true', 2, '', 'fails without ticket');
+test_access($node, 'test1', 'SELECT true', 2, '', 'fails without ticket', '');
 
 run_log [ $kinit, 'test1' ], \$test1_password or BAIL_OUT($?);
 
-test_access($node, 'test1', 'SELECT true', 2, '', 'fails without mapping');
+test_access($node, 'test1', 'SELECT true', 2, '', 'fails without mapping', '');
 
 $node->append_conf('pg_ident.conf', qq{mymap  /^(.*)\@$realm\$  \\1});
 $node->restart;
@@ -238,42 +272,49 @@ test_access(
 	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
 	'',
-	'succeeds with mapping with default gssencmode and host hba');
+	'succeeds with mapping with default gssencmode and host hba',
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+);
+
 test_access(
 	$node,
-	"test1",
+	'test1',
 	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
-	"gssencmode=prefer",
-	"succeeds with GSS-encrypted access preferred with host hba");
+	'gssencmode=prefer',
+	'succeeds with GSS-encrypted access preferred with host hba',
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+);
 test_access(
 	$node,
-	"test1",
+	'test1',
 	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
-	"gssencmode=require",
-	"succeeds with GSS-encrypted access required with host hba");
+	'gssencmode=require',
+	'succeeds with GSS-encrypted access required with host hba',
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+);
 
 # Test that we can transport a reasonable amount of data.
 test_query(
 	$node,
-	"test1",
+	'test1',
 	'SELECT * FROM generate_series(1, 100000);',
 	qr/^1\n.*\n1024\n.*\n9999\n.*\n100000$/s,
-	"gssencmode=require",
-	"receiving 100K lines works");
+	'gssencmode=require',
+	'receiving 100K lines works');
 
 test_query(
 	$node,
-	"test1",
+	'test1',
 	"CREATE TABLE mytab (f1 int primary key);\n"
 	  . "COPY mytab FROM STDIN;\n"
 	  . join("\n", (1 .. 100000))
 	  . "\n\\.\n"
 	  . "SELECT COUNT(*) FROM mytab;",
 	qr/^100000$/s,
-	"gssencmode=require",
-	"sending 100K lines works");
+	'gssencmode=require',
+	'sending 100K lines works');
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',
@@ -282,20 +323,24 @@ $node->restart;
 
 test_access(
 	$node,
-	"test1",
+	'test1',
 	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
-	"gssencmode=prefer",
-	"succeeds with GSS-encrypted access preferred and hostgssenc hba");
+	'gssencmode=prefer',
+	'succeeds with GSS-encrypted access preferred and hostgssenc hba',
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+);
 test_access(
 	$node,
-	"test1",
+	'test1',
 	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
-	"gssencmode=require",
-	"succeeds with GSS-encrypted access required and hostgssenc hba");
-test_access($node, "test1", 'SELECT true', 2, "gssencmode=disable",
-	"fails with GSS encryption disabled and hostgssenc hba");
+	'gssencmode=require',
+	'succeeds with GSS-encrypted access required and hostgssenc hba',
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+);
+test_access($node, 'test1', 'SELECT true', 2, 'gssencmode=disable',
+	'fails with GSS encryption disabled and hostgssenc hba', '');
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',
@@ -304,21 +349,24 @@ $node->restart;
 
 test_access(
 	$node,
-	"test1",
+	'test1',
 	'SELECT gss_authenticated and not encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
-	"gssencmode=prefer",
-	"succeeds with GSS-encrypted access preferred and hostnogssenc hba, but no encryption"
+	'gssencmode=prefer',
+	'succeeds with GSS-encrypted access preferred and hostnogssenc hba, but no encryption',
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=no, principal=test1\@$realm)"
 );
-test_access($node, "test1", 'SELECT true', 2, "gssencmode=require",
-	"fails with GSS-encrypted access required and hostnogssenc hba");
+test_access($node, 'test1', 'SELECT true', 2, 'gssencmode=require',
+	'fails with GSS-encrypted access required and hostnogssenc hba', '');
 test_access(
 	$node,
-	"test1",
+	'test1',
 	'SELECT gss_authenticated and not encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
-	"gssencmode=disable",
-	"succeeds with GSS encryption disabled and hostnogssenc hba");
+	'gssencmode=disable',
+	'succeeds with GSS encryption disabled and hostnogssenc hba',
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=no, principal=test1\@$realm)"
+);
 
 truncate($node->data_dir . '/pg_ident.conf', 0);
 unlink($node->data_dir . '/pg_hba.conf');
@@ -332,4 +380,6 @@ test_access(
 	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
 	0,
 	'',
-	'succeeds with include_realm=0 and defaults');
+	'succeeds with include_realm=0 and defaults',
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+);
