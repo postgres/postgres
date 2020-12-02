@@ -634,7 +634,7 @@ main(int argc, char *argv[])
 		if (mode == PG_MODE_CHECK)
 		{
 			printf(_("Bad checksums:  %s\n"), psprintf(INT64_FORMAT, badblocks));
-			printf(_("Data checksum version: %d\n"), ControlFile->data_checksum_version);
+			printf(_("Data checksum version: %u\n"), ControlFile->data_checksum_version);
 
 			if (badblocks > 0)
 				exit(1);
@@ -661,7 +661,7 @@ main(int argc, char *argv[])
 		update_controlfile(DataDir, ControlFile, do_sync);
 
 		if (verbose)
-			printf(_("Data checksum version: %d\n"), ControlFile->data_checksum_version);
+			printf(_("Data checksum version: %u\n"), ControlFile->data_checksum_version);
 		if (mode == PG_MODE_ENABLE)
 			printf(_("Checksums enabled in cluster\n"));
 		else
