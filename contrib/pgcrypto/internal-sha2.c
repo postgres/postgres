@@ -33,6 +33,7 @@
 
 #include <time.h>
 
+#include "common/cryptohash.h"
 #include "common/sha2.h"
 #include "px.h"
 
@@ -42,7 +43,6 @@ void		init_sha384(PX_MD *h);
 void		init_sha512(PX_MD *h);
 
 /* SHA224 */
-
 static unsigned
 int_sha224_len(PX_MD *h)
 {
@@ -55,42 +55,7 @@ int_sha224_block_len(PX_MD *h)
 	return PG_SHA224_BLOCK_LENGTH;
 }
 
-static void
-int_sha224_update(PX_MD *h, const uint8 *data, unsigned dlen)
-{
-	pg_sha224_ctx *ctx = (pg_sha224_ctx *) h->p.ptr;
-
-	pg_sha224_update(ctx, data, dlen);
-}
-
-static void
-int_sha224_reset(PX_MD *h)
-{
-	pg_sha224_ctx *ctx = (pg_sha224_ctx *) h->p.ptr;
-
-	pg_sha224_init(ctx);
-}
-
-static void
-int_sha224_finish(PX_MD *h, uint8 *dst)
-{
-	pg_sha224_ctx *ctx = (pg_sha224_ctx *) h->p.ptr;
-
-	pg_sha224_final(ctx, dst);
-}
-
-static void
-int_sha224_free(PX_MD *h)
-{
-	pg_sha224_ctx *ctx = (pg_sha224_ctx *) h->p.ptr;
-
-	px_memset(ctx, 0, sizeof(*ctx));
-	pfree(ctx);
-	pfree(h);
-}
-
 /* SHA256 */
-
 static unsigned
 int_sha256_len(PX_MD *h)
 {
@@ -103,42 +68,7 @@ int_sha256_block_len(PX_MD *h)
 	return PG_SHA256_BLOCK_LENGTH;
 }
 
-static void
-int_sha256_update(PX_MD *h, const uint8 *data, unsigned dlen)
-{
-	pg_sha256_ctx *ctx = (pg_sha256_ctx *) h->p.ptr;
-
-	pg_sha256_update(ctx, data, dlen);
-}
-
-static void
-int_sha256_reset(PX_MD *h)
-{
-	pg_sha256_ctx *ctx = (pg_sha256_ctx *) h->p.ptr;
-
-	pg_sha256_init(ctx);
-}
-
-static void
-int_sha256_finish(PX_MD *h, uint8 *dst)
-{
-	pg_sha256_ctx *ctx = (pg_sha256_ctx *) h->p.ptr;
-
-	pg_sha256_final(ctx, dst);
-}
-
-static void
-int_sha256_free(PX_MD *h)
-{
-	pg_sha256_ctx *ctx = (pg_sha256_ctx *) h->p.ptr;
-
-	px_memset(ctx, 0, sizeof(*ctx));
-	pfree(ctx);
-	pfree(h);
-}
-
 /* SHA384 */
-
 static unsigned
 int_sha384_len(PX_MD *h)
 {
@@ -151,42 +81,7 @@ int_sha384_block_len(PX_MD *h)
 	return PG_SHA384_BLOCK_LENGTH;
 }
 
-static void
-int_sha384_update(PX_MD *h, const uint8 *data, unsigned dlen)
-{
-	pg_sha384_ctx *ctx = (pg_sha384_ctx *) h->p.ptr;
-
-	pg_sha384_update(ctx, data, dlen);
-}
-
-static void
-int_sha384_reset(PX_MD *h)
-{
-	pg_sha384_ctx *ctx = (pg_sha384_ctx *) h->p.ptr;
-
-	pg_sha384_init(ctx);
-}
-
-static void
-int_sha384_finish(PX_MD *h, uint8 *dst)
-{
-	pg_sha384_ctx *ctx = (pg_sha384_ctx *) h->p.ptr;
-
-	pg_sha384_final(ctx, dst);
-}
-
-static void
-int_sha384_free(PX_MD *h)
-{
-	pg_sha384_ctx *ctx = (pg_sha384_ctx *) h->p.ptr;
-
-	px_memset(ctx, 0, sizeof(*ctx));
-	pfree(ctx);
-	pfree(h);
-}
-
 /* SHA512 */
-
 static unsigned
 int_sha512_len(PX_MD *h)
 {
@@ -199,37 +94,40 @@ int_sha512_block_len(PX_MD *h)
 	return PG_SHA512_BLOCK_LENGTH;
 }
 
+/* Generic interface for all SHA2 methods */
 static void
-int_sha512_update(PX_MD *h, const uint8 *data, unsigned dlen)
+int_sha2_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
-	pg_sha512_ctx *ctx = (pg_sha512_ctx *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	pg_sha512_update(ctx, data, dlen);
+	if (pg_cryptohash_update(ctx, data, dlen) < 0)
+		elog(ERROR, "could not update %s context", "SHA2");
 }
 
 static void
-int_sha512_reset(PX_MD *h)
+int_sha2_reset(PX_MD *h)
 {
-	pg_sha512_ctx *ctx = (pg_sha512_ctx *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	pg_sha512_init(ctx);
+	if (pg_cryptohash_init(ctx) < 0)
+		elog(ERROR, "could not initialize %s context", "SHA2");
 }
 
 static void
-int_sha512_finish(PX_MD *h, uint8 *dst)
+int_sha2_finish(PX_MD *h, uint8 *dst)
 {
-	pg_sha512_ctx *ctx = (pg_sha512_ctx *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	pg_sha512_final(ctx, dst);
+	if (pg_cryptohash_final(ctx, dst) < 0)
+		elog(ERROR, "could not finalize %s context", "SHA2");
 }
 
 static void
-int_sha512_free(PX_MD *h)
+int_sha2_free(PX_MD *h)
 {
-	pg_sha512_ctx *ctx = (pg_sha512_ctx *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	px_memset(ctx, 0, sizeof(*ctx));
-	pfree(ctx);
+	pg_cryptohash_free(ctx);
 	pfree(h);
 }
 
@@ -238,18 +136,17 @@ int_sha512_free(PX_MD *h)
 void
 init_sha224(PX_MD *md)
 {
-	pg_sha224_ctx *ctx;
+	pg_cryptohash_ctx *ctx;
 
-	ctx = palloc0(sizeof(*ctx));
-
+	ctx = pg_cryptohash_create(PG_SHA224);
 	md->p.ptr = ctx;
 
 	md->result_size = int_sha224_len;
 	md->block_size = int_sha224_block_len;
-	md->reset = int_sha224_reset;
-	md->update = int_sha224_update;
-	md->finish = int_sha224_finish;
-	md->free = int_sha224_free;
+	md->reset = int_sha2_reset;
+	md->update = int_sha2_update;
+	md->finish = int_sha2_finish;
+	md->free = int_sha2_free;
 
 	md->reset(md);
 }
@@ -257,18 +154,17 @@ init_sha224(PX_MD *md)
 void
 init_sha256(PX_MD *md)
 {
-	pg_sha256_ctx *ctx;
+	pg_cryptohash_ctx *ctx;
 
-	ctx = palloc0(sizeof(*ctx));
-
+	ctx = pg_cryptohash_create(PG_SHA256);
 	md->p.ptr = ctx;
 
 	md->result_size = int_sha256_len;
 	md->block_size = int_sha256_block_len;
-	md->reset = int_sha256_reset;
-	md->update = int_sha256_update;
-	md->finish = int_sha256_finish;
-	md->free = int_sha256_free;
+	md->reset = int_sha2_reset;
+	md->update = int_sha2_update;
+	md->finish = int_sha2_finish;
+	md->free = int_sha2_free;
 
 	md->reset(md);
 }
@@ -276,18 +172,17 @@ init_sha256(PX_MD *md)
 void
 init_sha384(PX_MD *md)
 {
-	pg_sha384_ctx *ctx;
+	pg_cryptohash_ctx *ctx;
 
-	ctx = palloc0(sizeof(*ctx));
-
+	ctx = pg_cryptohash_create(PG_SHA384);
 	md->p.ptr = ctx;
 
 	md->result_size = int_sha384_len;
 	md->block_size = int_sha384_block_len;
-	md->reset = int_sha384_reset;
-	md->update = int_sha384_update;
-	md->finish = int_sha384_finish;
-	md->free = int_sha384_free;
+	md->reset = int_sha2_reset;
+	md->update = int_sha2_update;
+	md->finish = int_sha2_finish;
+	md->free = int_sha2_free;
 
 	md->reset(md);
 }
@@ -295,18 +190,17 @@ init_sha384(PX_MD *md)
 void
 init_sha512(PX_MD *md)
 {
-	pg_sha512_ctx *ctx;
+	pg_cryptohash_ctx *ctx;
 
-	ctx = palloc0(sizeof(*ctx));
-
+	ctx = pg_cryptohash_create(PG_SHA512);
 	md->p.ptr = ctx;
 
 	md->result_size = int_sha512_len;
 	md->block_size = int_sha512_block_len;
-	md->reset = int_sha512_reset;
-	md->update = int_sha512_update;
-	md->finish = int_sha512_finish;
-	md->free = int_sha512_free;
+	md->reset = int_sha2_reset;
+	md->update = int_sha2_update;
+	md->finish = int_sha2_finish;
+	md->free = int_sha2_free;
 
 	md->reset(md);
 }

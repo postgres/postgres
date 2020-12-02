@@ -63,8 +63,8 @@ static bool read_server_first_message(fe_scram_state *state, char *input);
 static bool read_server_final_message(fe_scram_state *state, char *input);
 static char *build_client_first_message(fe_scram_state *state);
 static char *build_client_final_message(fe_scram_state *state);
-static bool verify_server_signature(fe_scram_state *state);
-static void calculate_client_proof(fe_scram_state *state,
+static bool verify_server_signature(fe_scram_state *state, bool *match);
+static bool calculate_client_proof(fe_scram_state *state,
 								   const char *client_final_message_without_proof,
 								   uint8 *result);
 
@@ -256,11 +256,15 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 			 * Verify server signature, to make sure we're talking to the
 			 * genuine server.
 			 */
-			if (verify_server_signature(state))
-				*success = true;
-			else
+			if (!verify_server_signature(state, success))
 			{
-				*success = false;
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not verify server signature\n"));
+				goto error;
+			}
+
+			if (!*success)
+			{
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("incorrect server signature\n"));
 			}
@@ -544,9 +548,15 @@ build_client_final_message(fe_scram_state *state)
 		goto oom_error;
 
 	/* Append proof to it, to form client-final-message. */
-	calculate_client_proof(state,
-						   state->client_final_message_without_proof,
-						   client_proof);
+	if (!calculate_client_proof(state,
+								state->client_final_message_without_proof,
+								client_proof))
+	{
+		termPQExpBuffer(&buf);
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("could not calculate client proof\n"));
+		return NULL;
+	}
 
 	appendPQExpBufferStr(&buf, ",p=");
 	encoded_len = pg_b64_enc_len(SCRAM_KEY_LEN);
@@ -745,9 +755,9 @@ read_server_final_message(fe_scram_state *state, char *input)
 
 /*
  * Calculate the client proof, part of the final exchange message sent
- * by the client.
+ * by the client.  Returns true on success, false on failure.
  */
-static void
+static bool
 calculate_client_proof(fe_scram_state *state,
 					   const char *client_final_message_without_proof,
 					   uint8 *result)
@@ -762,60 +772,70 @@ calculate_client_proof(fe_scram_state *state,
 	 * Calculate SaltedPassword, and store it in 'state' so that we can reuse
 	 * it later in verify_server_signature.
 	 */
-	scram_SaltedPassword(state->password, state->salt, state->saltlen,
-						 state->iterations, state->SaltedPassword);
-
-	scram_ClientKey(state->SaltedPassword, ClientKey);
-	scram_H(ClientKey, SCRAM_KEY_LEN, StoredKey);
-
-	scram_HMAC_init(&ctx, StoredKey, SCRAM_KEY_LEN);
-	scram_HMAC_update(&ctx,
-					  state->client_first_message_bare,
-					  strlen(state->client_first_message_bare));
-	scram_HMAC_update(&ctx, ",", 1);
-	scram_HMAC_update(&ctx,
-					  state->server_first_message,
-					  strlen(state->server_first_message));
-	scram_HMAC_update(&ctx, ",", 1);
-	scram_HMAC_update(&ctx,
-					  client_final_message_without_proof,
-					  strlen(client_final_message_without_proof));
-	scram_HMAC_final(ClientSignature, &ctx);
+	if (scram_SaltedPassword(state->password, state->salt, state->saltlen,
+							 state->iterations, state->SaltedPassword) < 0 ||
+		scram_ClientKey(state->SaltedPassword, ClientKey) < 0 ||
+		scram_H(ClientKey, SCRAM_KEY_LEN, StoredKey) < 0 ||
+		scram_HMAC_init(&ctx, StoredKey, SCRAM_KEY_LEN) < 0 ||
+		scram_HMAC_update(&ctx,
+						  state->client_first_message_bare,
+						  strlen(state->client_first_message_bare)) < 0 ||
+		scram_HMAC_update(&ctx, ",", 1) < 0 ||
+		scram_HMAC_update(&ctx,
+						  state->server_first_message,
+						  strlen(state->server_first_message)) < 0 ||
+		scram_HMAC_update(&ctx, ",", 1) < 0 ||
+		scram_HMAC_update(&ctx,
+						  client_final_message_without_proof,
+						  strlen(client_final_message_without_proof)) < 0 ||
+		scram_HMAC_final(ClientSignature, &ctx) < 0)
+	{
+		return false;
+	}
 
 	for (i = 0; i < SCRAM_KEY_LEN; i++)
 		result[i] = ClientKey[i] ^ ClientSignature[i];
+
+	return true;
 }
 
 /*
  * Validate the server signature, received as part of the final exchange
- * message received from the server.
+ * message received from the server.  *match tracks if the server signature
+ * matched or not. Returns true if the server signature got verified, and
+ * false for a processing error.
  */
 static bool
-verify_server_signature(fe_scram_state *state)
+verify_server_signature(fe_scram_state *state, bool *match)
 {
 	uint8		expected_ServerSignature[SCRAM_KEY_LEN];
 	uint8		ServerKey[SCRAM_KEY_LEN];
 	scram_HMAC_ctx ctx;
 
-	scram_ServerKey(state->SaltedPassword, ServerKey);
-
+	if (scram_ServerKey(state->SaltedPassword, ServerKey) < 0 ||
 	/* calculate ServerSignature */
-	scram_HMAC_init(&ctx, ServerKey, SCRAM_KEY_LEN);
-	scram_HMAC_update(&ctx,
-					  state->client_first_message_bare,
-					  strlen(state->client_first_message_bare));
-	scram_HMAC_update(&ctx, ",", 1);
-	scram_HMAC_update(&ctx,
-					  state->server_first_message,
-					  strlen(state->server_first_message));
-	scram_HMAC_update(&ctx, ",", 1);
-	scram_HMAC_update(&ctx,
-					  state->client_final_message_without_proof,
-					  strlen(state->client_final_message_without_proof));
-	scram_HMAC_final(expected_ServerSignature, &ctx);
-
-	if (memcmp(expected_ServerSignature, state->ServerSignature, SCRAM_KEY_LEN) != 0)
+		scram_HMAC_init(&ctx, ServerKey, SCRAM_KEY_LEN) < 0 ||
+		scram_HMAC_update(&ctx,
+						  state->client_first_message_bare,
+						  strlen(state->client_first_message_bare)) < 0 ||
+		scram_HMAC_update(&ctx, ",", 1) < 0 ||
+		scram_HMAC_update(&ctx,
+						  state->server_first_message,
+						  strlen(state->server_first_message)) < 0 ||
+		scram_HMAC_update(&ctx, ",", 1) < 0 ||
+		scram_HMAC_update(&ctx,
+						  state->client_final_message_without_proof,
+						  strlen(state->client_final_message_without_proof)) < 0 ||
+		scram_HMAC_final(expected_ServerSignature, &ctx) < 0)
+	{
 		return false;
+	}
+
+	/* signature processed, so now check after it */
+	if (memcmp(expected_ServerSignature, state->ServerSignature, SCRAM_KEY_LEN) != 0)
+		*match = false;
+	else
+		*match = true;
 
 	return true;
 }

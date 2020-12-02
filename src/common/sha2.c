@@ -1,12 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * sha2.c
- *	  Set of SHA functions for SHA-224, SHA-256, SHA-384 and SHA-512.
+ *	   SHA functions for SHA-224, SHA-256, SHA-384 and SHA-512.
  *
- * This is the set of in-core functions used when there are no other
- * alternative options like OpenSSL.
+ * This includes the fallback implementation for SHA2 cryptographic
+ * hashes.
  *
- * Portions Copyright (c) 2016-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  src/common/sha2.c
@@ -56,9 +57,19 @@
 #include "postgres_fe.h"
 #endif
 
-#include <sys/param.h>
+#include "sha2_int.h"
 
-#include "common/sha2.h"
+/*
+ * In backend, use palloc/pfree to ease the error handling.  In frontend,
+ * use malloc to be able to return a failure status back to the caller.
+ */
+#ifndef FRONTEND
+#define ALLOC(size) palloc(size)
+#define FREE(ptr) pfree(ptr)
+#else
+#define ALLOC(size) malloc(size)
+#define FREE(ptr) free(ptr)
+#endif
 
 /*
  * UNROLLED TRANSFORM LOOP NOTE:

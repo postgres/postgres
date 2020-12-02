@@ -29,9 +29,9 @@
 /*
  * Calculate HMAC per RFC2104.
  *
- * The hash function used is SHA-256.
+ * The hash function used is SHA-256.  Returns 0 on success, -1 on failure.
  */
-void
+int
 scram_HMAC_init(scram_HMAC_ctx *ctx, const uint8 *key, int keylen)
 {
 	uint8		k_ipad[SHA256_HMAC_B];
@@ -44,13 +44,21 @@ scram_HMAC_init(scram_HMAC_ctx *ctx, const uint8 *key, int keylen)
 	 */
 	if (keylen > SHA256_HMAC_B)
 	{
-		pg_sha256_ctx sha256_ctx;
+		pg_cryptohash_ctx *sha256_ctx;
 
-		pg_sha256_init(&sha256_ctx);
-		pg_sha256_update(&sha256_ctx, key, keylen);
-		pg_sha256_final(&sha256_ctx, keybuf);
+		sha256_ctx = pg_cryptohash_create(PG_SHA256);
+		if (sha256_ctx == NULL)
+			return -1;
+		if (pg_cryptohash_init(sha256_ctx) < 0 ||
+			pg_cryptohash_update(sha256_ctx, key, keylen) < 0 ||
+			pg_cryptohash_final(sha256_ctx, keybuf) < 0)
+		{
+			pg_cryptohash_free(sha256_ctx);
+			return -1;
+		}
 		key = keybuf;
 		keylen = SCRAM_KEY_LEN;
+		pg_cryptohash_free(sha256_ctx);
 	}
 
 	memset(k_ipad, HMAC_IPAD, SHA256_HMAC_B);
@@ -62,45 +70,75 @@ scram_HMAC_init(scram_HMAC_ctx *ctx, const uint8 *key, int keylen)
 		ctx->k_opad[i] ^= key[i];
 	}
 
+	ctx->sha256ctx = pg_cryptohash_create(PG_SHA256);
+	if (ctx->sha256ctx == NULL)
+		return -1;
+
 	/* tmp = H(K XOR ipad, text) */
-	pg_sha256_init(&ctx->sha256ctx);
-	pg_sha256_update(&ctx->sha256ctx, k_ipad, SHA256_HMAC_B);
+	if (pg_cryptohash_init(ctx->sha256ctx) < 0 ||
+		pg_cryptohash_update(ctx->sha256ctx, k_ipad, SHA256_HMAC_B) < 0)
+	{
+		pg_cryptohash_free(ctx->sha256ctx);
+		return -1;
+	}
+
+	return 0;
 }
 
 /*
  * Update HMAC calculation
- * The hash function used is SHA-256.
+ * The hash function used is SHA-256.  Returns 0 on success, -1 on failure.
  */
-void
+int
 scram_HMAC_update(scram_HMAC_ctx *ctx, const char *str, int slen)
 {
-	pg_sha256_update(&ctx->sha256ctx, (const uint8 *) str, slen);
+	Assert(ctx->sha256ctx != NULL);
+	if (pg_cryptohash_update(ctx->sha256ctx, (const uint8 *) str, slen) < 0)
+	{
+		pg_cryptohash_free(ctx->sha256ctx);
+		return -1;
+	}
+	return 0;
 }
 
 /*
  * Finalize HMAC calculation.
- * The hash function used is SHA-256.
+ * The hash function used is SHA-256.  Returns 0 on success, -1 on failure.
  */
-void
+int
 scram_HMAC_final(uint8 *result, scram_HMAC_ctx *ctx)
 {
 	uint8		h[SCRAM_KEY_LEN];
 
-	pg_sha256_final(&ctx->sha256ctx, h);
+	Assert(ctx->sha256ctx != NULL);
+
+	if (pg_cryptohash_final(ctx->sha256ctx, h) < 0)
+	{
+		pg_cryptohash_free(ctx->sha256ctx);
+		return -1;
+	}
 
 	/* H(K XOR opad, tmp) */
-	pg_sha256_init(&ctx->sha256ctx);
-	pg_sha256_update(&ctx->sha256ctx, ctx->k_opad, SHA256_HMAC_B);
-	pg_sha256_update(&ctx->sha256ctx, h, SCRAM_KEY_LEN);
-	pg_sha256_final(&ctx->sha256ctx, result);
+	if (pg_cryptohash_init(ctx->sha256ctx) < 0 ||
+		pg_cryptohash_update(ctx->sha256ctx, ctx->k_opad, SHA256_HMAC_B) < 0 ||
+		pg_cryptohash_update(ctx->sha256ctx, h, SCRAM_KEY_LEN) < 0 ||
+		pg_cryptohash_final(ctx->sha256ctx, result) < 0)
+	{
+		pg_cryptohash_free(ctx->sha256ctx);
+		return -1;
+	}
+
+	pg_cryptohash_free(ctx->sha256ctx);
+	return 0;
 }
 
 /*
  * Calculate SaltedPassword.
  *
- * The password should already be normalized by SASLprep.
+ * The password should already be normalized by SASLprep.  Returns 0 on
+ * success, -1 on failure.
  */
-void
+int
 scram_SaltedPassword(const char *password,
 					 const char *salt, int saltlen, int iterations,
 					 uint8 *result)
@@ -120,63 +158,94 @@ scram_SaltedPassword(const char *password,
 	 */
 
 	/* First iteration */
-	scram_HMAC_init(&hmac_ctx, (uint8 *) password, password_len);
-	scram_HMAC_update(&hmac_ctx, salt, saltlen);
-	scram_HMAC_update(&hmac_ctx, (char *) &one, sizeof(uint32));
-	scram_HMAC_final(Ui_prev, &hmac_ctx);
+	if (scram_HMAC_init(&hmac_ctx, (uint8 *) password, password_len) < 0 ||
+		scram_HMAC_update(&hmac_ctx, salt, saltlen) < 0 ||
+		scram_HMAC_update(&hmac_ctx, (char *) &one, sizeof(uint32)) < 0 ||
+		scram_HMAC_final(Ui_prev, &hmac_ctx) < 0)
+	{
+		return -1;
+	}
+
 	memcpy(result, Ui_prev, SCRAM_KEY_LEN);
 
 	/* Subsequent iterations */
 	for (i = 2; i <= iterations; i++)
 	{
-		scram_HMAC_init(&hmac_ctx, (uint8 *) password, password_len);
-		scram_HMAC_update(&hmac_ctx, (const char *) Ui_prev, SCRAM_KEY_LEN);
-		scram_HMAC_final(Ui, &hmac_ctx);
+		if (scram_HMAC_init(&hmac_ctx, (uint8 *) password, password_len) < 0 ||
+			scram_HMAC_update(&hmac_ctx, (const char *) Ui_prev, SCRAM_KEY_LEN) < 0 ||
+			scram_HMAC_final(Ui, &hmac_ctx) < 0)
+		{
+			return -1;
+		}
+
 		for (j = 0; j < SCRAM_KEY_LEN; j++)
 			result[j] ^= Ui[j];
 		memcpy(Ui_prev, Ui, SCRAM_KEY_LEN);
 	}
+
+	return 0;
 }
 
 
 /*
  * Calculate SHA-256 hash for a NULL-terminated string. (The NULL terminator is
- * not included in the hash).
+ * not included in the hash).  Returns 0 on success, -1 on failure.
  */
-void
+int
 scram_H(const uint8 *input, int len, uint8 *result)
 {
-	pg_sha256_ctx ctx;
+	pg_cryptohash_ctx *ctx;
 
-	pg_sha256_init(&ctx);
-	pg_sha256_update(&ctx, input, len);
-	pg_sha256_final(&ctx, result);
+	ctx = pg_cryptohash_create(PG_SHA256);
+	if (ctx == NULL)
+		return -1;
+
+	if (pg_cryptohash_init(ctx) < 0 ||
+		pg_cryptohash_update(ctx, input, len) < 0 ||
+		pg_cryptohash_final(ctx, result) < 0)
+	{
+		pg_cryptohash_free(ctx);
+		return -1;
+	}
+
+	pg_cryptohash_free(ctx);
+	return 0;
 }
 
 /*
- * Calculate ClientKey.
+ * Calculate ClientKey.  Returns 0 on success, -1 on failure.
  */
-void
+int
 scram_ClientKey(const uint8 *salted_password, uint8 *result)
 {
 	scram_HMAC_ctx ctx;
 
-	scram_HMAC_init(&ctx, salted_password, SCRAM_KEY_LEN);
-	scram_HMAC_update(&ctx, "Client Key", strlen("Client Key"));
-	scram_HMAC_final(result, &ctx);
+	if (scram_HMAC_init(&ctx, salted_password, SCRAM_KEY_LEN) < 0 ||
+		scram_HMAC_update(&ctx, "Client Key", strlen("Client Key")) < 0 ||
+		scram_HMAC_final(result, &ctx) < 0)
+	{
+		return -1;
+	}
+
+	return 0;
 }
 
 /*
- * Calculate ServerKey.
+ * Calculate ServerKey.  Returns 0 on success, -1 on failure.
  */
-void
+int
 scram_ServerKey(const uint8 *salted_password, uint8 *result)
 {
 	scram_HMAC_ctx ctx;
 
-	scram_HMAC_init(&ctx, salted_password, SCRAM_KEY_LEN);
-	scram_HMAC_update(&ctx, "Server Key", strlen("Server Key"));
-	scram_HMAC_final(result, &ctx);
+	if (scram_HMAC_init(&ctx, salted_password, SCRAM_KEY_LEN) < 0 ||
+		scram_HMAC_update(&ctx, "Server Key", strlen("Server Key")) < 0 ||
+		scram_HMAC_final(result, &ctx) < 0)
+	{
+		return -1;
+	}
+
+	return 0;
 }
 
 
@@ -207,12 +276,18 @@ scram_build_secret(const char *salt, int saltlen, int iterations,
 		iterations = SCRAM_DEFAULT_ITERATIONS;
 
 	/* Calculate StoredKey and ServerKey */
-	scram_SaltedPassword(password, salt, saltlen, iterations,
-						 salted_password);
-	scram_ClientKey(salted_password, stored_key);
-	scram_H(stored_key, SCRAM_KEY_LEN, stored_key);
-
-	scram_ServerKey(salted_password, server_key);
+	if (scram_SaltedPassword(password, salt, saltlen, iterations,
+							 salted_password) < 0 ||
+		scram_ClientKey(salted_password, stored_key) < 0 ||
+		scram_H(stored_key, SCRAM_KEY_LEN, stored_key) < 0 ||
+		scram_ServerKey(salted_password, server_key) < 0)
+	{
+#ifdef FRONTEND
+		return NULL;
+#else
+		elog(ERROR, "could not calculate stored key and server key");
+#endif
+	}
 
 	/*----------
 	 * The format is:

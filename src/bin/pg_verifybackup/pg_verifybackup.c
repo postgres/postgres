@@ -726,13 +726,26 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 	}
 
 	/* Initialize checksum context. */
-	pg_checksum_init(&checksum_ctx, m->checksum_type);
+	if (pg_checksum_init(&checksum_ctx, m->checksum_type) < 0)
+	{
+		report_backup_error(context, "could not initialize checksum of file \"%s\"",
+							relpath);
+		return;
+	}
 
 	/* Read the file chunk by chunk, updating the checksum as we go. */
 	while ((rc = read(fd, buffer, READ_CHUNK_SIZE)) > 0)
 	{
 		bytes_read += rc;
-		pg_checksum_update(&checksum_ctx, buffer, rc);
+		if (pg_checksum_update(&checksum_ctx, buffer, rc) < 0)
+		{
+			report_backup_error(context, "could not update checksum of file \"%s\"",
+								relpath);
+			close(fd);
+			return;
+		}
+
+
 	}
 	if (rc < 0)
 		report_backup_error(context, "could not read file \"%s\": %m",
@@ -767,6 +780,13 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 
 	/* Get the final checksum. */
 	checksumlen = pg_checksum_final(&checksum_ctx, checksumbuf);
+	if (checksumlen < 0)
+	{
+		report_backup_error(context,
+							"could not finalize checksum of file \"%s\"",
+							relpath);
+		return;
+	}
 
 	/* And check it against the manifest. */
 	if (checksumlen != m->checksum_length)
