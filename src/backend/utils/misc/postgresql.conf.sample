@@ -253,7 +253,6 @@
 				# placeholders: %p = path of file to restore
 				#               %f = file name only
 				# e.g. 'cp /mnt/server/archivedir/%f %p'
-				# (change requires restart)
 #archive_cleanup_command = ''	# command to execute at every restartpoint
 #recovery_end_command = ''	# command to execute at completion of recovery
 

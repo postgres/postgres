@@ -3699,7 +3699,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"restore_command", PGC_POSTMASTER, WAL_ARCHIVE_RECOVERY,
+		{"restore_command", PGC_SIGHUP, WAL_ARCHIVE_RECOVERY,
 			gettext_noop("Sets the shell command that will be called to retrieve an archived WAL file."),
 			NULL
 		},
