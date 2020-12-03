@@ -34,6 +34,7 @@ extern ObjectAddress DefineIndex(Oid relationId,
 								 bool check_not_in_use,
 								 bool skip_build,
 								 bool quiet);
+extern int	ReindexParseOptions(ParseState *pstate, ReindexStmt *stmt);
 extern void ReindexIndex(RangeVar *indexRelation, int options, bool isTopLevel);
 extern Oid	ReindexTable(RangeVar *relation, int options, bool isTopLevel);
 extern void ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,

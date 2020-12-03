@@ -796,7 +796,7 @@ DROP TABLE reindex_verbose;
 CREATE TABLE concur_reindex_tab (c1 int);
 -- REINDEX
 REINDEX TABLE concur_reindex_tab; -- notice
-REINDEX TABLE CONCURRENTLY concur_reindex_tab; -- notice
+REINDEX (CONCURRENTLY) TABLE concur_reindex_tab; -- notice
 ALTER TABLE concur_reindex_tab ADD COLUMN c2 text; -- add toast index
 -- Normal index with integer column
 CREATE UNIQUE INDEX concur_reindex_ind1 ON concur_reindex_tab(c1);

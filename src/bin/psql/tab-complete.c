@@ -2287,20 +2287,32 @@ psql_completion(const char *text, int start, int end)
 /* CLUSTER */
 	else if (Matches("CLUSTER"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_clusterables, "UNION SELECT 'VERBOSE'");
-	else if (Matches("CLUSTER", "VERBOSE"))
+	else if (Matches("CLUSTER", "VERBOSE") ||
+			 Matches("CLUSTER", "(*)"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_clusterables, NULL);
 	/* If we have CLUSTER <sth>, then add "USING" */
-	else if (Matches("CLUSTER", MatchAnyExcept("VERBOSE|ON")))
+	else if (Matches("CLUSTER", MatchAnyExcept("VERBOSE|ON|(|(*)")))
 		COMPLETE_WITH("USING");
 	/* If we have CLUSTER VERBOSE <sth>, then add "USING" */
-	else if (Matches("CLUSTER", "VERBOSE", MatchAny))
+	else if (Matches("CLUSTER", "VERBOSE|(*)", MatchAny))
 		COMPLETE_WITH("USING");
 	/* If we have CLUSTER <sth> USING, then add the index as well */
 	else if (Matches("CLUSTER", MatchAny, "USING") ||
-			 Matches("CLUSTER", "VERBOSE", MatchAny, "USING"))
+			 Matches("CLUSTER", "VERBOSE|(*)", MatchAny, "USING"))
 	{
 		completion_info_charp = prev2_wd;
 		COMPLETE_WITH_QUERY(Query_for_index_of_table);
+	}
+	else if (HeadMatches("CLUSTER", "(*") &&
+			 !HeadMatches("CLUSTER", "(*)"))
+	{
+		/*
+		 * This fires if we're in an unfinished parenthesized option list.
+		 * get_previous_words treats a completed parenthesized option list as
+		 * one word, so the above test is correct.
+		 */
+		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
+			COMPLETE_WITH("VERBOSE");
 	}
 
 /* COMMENT */
@@ -3565,7 +3577,7 @@ psql_completion(const char *text, int start, int end)
 		 * one word, so the above test is correct.
 		 */
 		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
-			COMPLETE_WITH("VERBOSE");
+			COMPLETE_WITH("CONCURRENTLY", "VERBOSE");
 	}
 
 /* SECURITY LABEL */

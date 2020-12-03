@@ -3197,18 +3197,12 @@ typedef struct AlterSystemStmt
  *		Cluster Statement (support pbrown's cluster index implementation)
  * ----------------------
  */
-typedef enum ClusterOption
-{
-	CLUOPT_RECHECK = 1 << 0,	/* recheck relation state */
-	CLUOPT_VERBOSE = 1 << 1		/* print progress info */
-} ClusterOption;
-
 typedef struct ClusterStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* relation being indexed, or NULL if all */
 	char	   *indexname;		/* original index defined */
-	int			options;		/* OR of ClusterOption flags */
+	List	   *params;			/* list of DefElem nodes */
 } ClusterStmt;
 
 /* ----------------------
@@ -3346,13 +3340,6 @@ typedef struct ConstraintsSetStmt
  *		REINDEX Statement
  * ----------------------
  */
-
-/* Reindex options */
-#define REINDEXOPT_VERBOSE (1 << 0) /* print progress info */
-#define REINDEXOPT_REPORT_PROGRESS (1 << 1) /* report pgstat progress */
-#define REINDEXOPT_MISSING_OK (1 << 2)	/* skip missing relations */
-#define REINDEXOPT_CONCURRENTLY (1 << 3)	/* concurrent mode */
-
 typedef enum ReindexObjectType
 {
 	REINDEX_OBJECT_INDEX,		/* index */
@@ -3369,7 +3356,7 @@ typedef struct ReindexStmt
 								 * etc. */
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
-	int			options;		/* Reindex options flags */
+	List	   *params;			/* list of DefElem nodes */
 } ReindexStmt;
 
 /* ----------------------

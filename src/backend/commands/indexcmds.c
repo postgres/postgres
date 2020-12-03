@@ -2452,6 +2452,42 @@ ChooseIndexColumnNames(List *indexElems)
 }
 
 /*
+ * ReindexParseOptions
+ *		Parse list of REINDEX options, returning a bitmask of ReindexOption.
+ */
+int
+ReindexParseOptions(ParseState *pstate, ReindexStmt *stmt)
+{
+	ListCell   *lc;
+	int			options = 0;
+	bool		concurrently = false;
+	bool		verbose = false;
+
+	/* Parse option list */
+	foreach(lc, stmt->params)
+	{
+		DefElem    *opt = (DefElem *) lfirst(lc);
+
+		if (strcmp(opt->defname, "verbose") == 0)
+			verbose = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "concurrently") == 0)
+			concurrently = defGetBoolean(opt);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unrecognized REINDEX option \"%s\"",
+							opt->defname),
+					 parser_errposition(pstate, opt->location)));
+	}
+
+	options =
+		(verbose ? REINDEXOPT_VERBOSE : 0) |
+		(concurrently ? REINDEXOPT_CONCURRENTLY : 0);
+
+	return options;
+}
+
+/*
  * ReindexIndex
  *		Recreate a specific index.
  */

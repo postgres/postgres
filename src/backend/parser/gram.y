@@ -515,7 +515,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	generic_option_list alter_generic_option_list
 
 %type <ival>	reindex_target_type reindex_target_multitable
-%type <ival>	reindex_option_list reindex_option_elem
 
 %type <node>	copy_generic_opt_arg copy_generic_opt_arg_list_item
 %type <defelt>	copy_generic_opt_elem
@@ -8217,9 +8216,10 @@ ReindexStmt:
 					n->kind = $2;
 					n->relation = $4;
 					n->name = NULL;
-					n->options = 0;
+					n->params = NIL;
 					if ($3)
-						n->options |= REINDEXOPT_CONCURRENTLY;
+						n->params = lappend(n->params,
+								makeDefElem("concurrently", NULL, @3));
 					$$ = (Node *)n;
 				}
 			| REINDEX reindex_target_multitable opt_concurrently name
@@ -8228,31 +8228,34 @@ ReindexStmt:
 					n->kind = $2;
 					n->name = $4;
 					n->relation = NULL;
-					n->options = 0;
+					n->params = NIL;
 					if ($3)
-						n->options |= REINDEXOPT_CONCURRENTLY;
+						n->params = lappend(n->params,
+								makeDefElem("concurrently", NULL, @3));
 					$$ = (Node *)n;
 				}
-			| REINDEX '(' reindex_option_list ')' reindex_target_type opt_concurrently qualified_name
+			| REINDEX '(' utility_option_list ')' reindex_target_type opt_concurrently qualified_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = $5;
 					n->relation = $7;
 					n->name = NULL;
-					n->options = $3;
+					n->params = $3;
 					if ($6)
-						n->options |= REINDEXOPT_CONCURRENTLY;
+						n->params = lappend(n->params,
+								makeDefElem("concurrently", NULL, @6));
 					$$ = (Node *)n;
 				}
-			| REINDEX '(' reindex_option_list ')' reindex_target_multitable opt_concurrently name
+			| REINDEX '(' utility_option_list ')' reindex_target_multitable opt_concurrently name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = $5;
 					n->name = $7;
 					n->relation = NULL;
-					n->options = $3;
+					n->params = $3;
 					if ($6)
-						n->options |= REINDEXOPT_CONCURRENTLY;
+						n->params = lappend(n->params,
+								makeDefElem("concurrently", NULL, @6));
 					$$ = (Node *)n;
 				}
 		;
@@ -8264,13 +8267,6 @@ reindex_target_multitable:
 			SCHEMA					{ $$ = REINDEX_OBJECT_SCHEMA; }
 			| SYSTEM_P				{ $$ = REINDEX_OBJECT_SYSTEM; }
 			| DATABASE				{ $$ = REINDEX_OBJECT_DATABASE; }
-		;
-reindex_option_list:
-			reindex_option_elem								{ $$ = $1; }
-			| reindex_option_list ',' reindex_option_elem	{ $$ = $1 | $3; }
-		;
-reindex_option_elem:
-			VERBOSE	{ $$ = REINDEXOPT_VERBOSE; }
 		;
 
 /*****************************************************************************
@@ -10407,6 +10403,7 @@ CreateConversionStmt:
  *
  *		QUERY:
  *				CLUSTER [VERBOSE] <qualified_name> [ USING <index_name> ]
+ *				CLUSTER [ (options) ] <qualified_name> [ USING <index_name> ]
  *				CLUSTER [VERBOSE]
  *				CLUSTER [VERBOSE] <index_name> ON <qualified_name> (for pre-8.3)
  *
@@ -10418,9 +10415,18 @@ ClusterStmt:
 					ClusterStmt *n = makeNode(ClusterStmt);
 					n->relation = $3;
 					n->indexname = $4;
-					n->options = 0;
+					n->params = NIL;
 					if ($2)
-						n->options |= CLUOPT_VERBOSE;
+						n->params = lappend(n->params, makeDefElem("verbose", NULL, @2));
+					$$ = (Node*)n;
+				}
+
+			| CLUSTER '(' utility_option_list ')' qualified_name cluster_index_specification
+				{
+					ClusterStmt *n = makeNode(ClusterStmt);
+					n->relation = $5;
+					n->indexname = $6;
+					n->params = $3;
 					$$ = (Node*)n;
 				}
 			| CLUSTER opt_verbose
@@ -10428,9 +10434,9 @@ ClusterStmt:
 					ClusterStmt *n = makeNode(ClusterStmt);
 					n->relation = NULL;
 					n->indexname = NULL;
-					n->options = 0;
+					n->params = NIL;
 					if ($2)
-						n->options |= CLUOPT_VERBOSE;
+						n->params = lappend(n->params, makeDefElem("verbose", NULL, @2));
 					$$ = (Node*)n;
 				}
 			/* kept for pre-8.3 compatibility */
@@ -10439,9 +10445,9 @@ ClusterStmt:
 					ClusterStmt *n = makeNode(ClusterStmt);
 					n->relation = $5;
 					n->indexname = $3;
-					n->options = 0;
+					n->params = NIL;
 					if ($2)
-						n->options |= CLUOPT_VERBOSE;
+						n->params = lappend(n->params, makeDefElem("verbose", NULL, @2));
 					$$ = (Node*)n;
 				}
 		;
