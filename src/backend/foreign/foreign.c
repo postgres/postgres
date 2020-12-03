@@ -544,7 +544,7 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 		nulls[0] = false;
 		if (def->arg)
 		{
-			values[1] = CStringGetTextDatum(((Value *) (def->arg))->val.str);
+			values[1] = CStringGetTextDatum(strVal(def->arg));
 			nulls[1] = false;
 		}
 		else

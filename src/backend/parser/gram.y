@@ -13890,7 +13890,7 @@ func_expr_common_subexpr:
 					 * Convert SystemTypeName() to SystemFuncName() even though
 					 * at the moment they result in the same thing.
 					 */
-					$$ = (Node *) makeFuncCall(SystemFuncName(((Value *) llast($5->names))->val.str),
+					$$ = (Node *) makeFuncCall(SystemFuncName(strVal(llast($5->names))),
 											   list_make1($3),
 											   COERCE_EXPLICIT_CALL,
 											   @1);
