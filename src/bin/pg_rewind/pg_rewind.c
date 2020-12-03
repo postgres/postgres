@@ -99,6 +99,7 @@ main(int argc, char **argv)
 	XLogRecPtr	chkptrec;
 	TimeLineID	chkpttli;
 	XLogRecPtr	chkptredo;
+	XLogRecPtr	target_wal_endrec;
 	size_t		size;
 	char	   *buffer;
 	bool		rewind_needed;
@@ -240,42 +241,55 @@ main(int argc, char **argv)
 	{
 		printf(_("source and target cluster are on the same timeline\n"));
 		rewind_needed = false;
+		target_wal_endrec = 0;
 	}
 	else
 	{
+		XLogRecPtr	chkptendrec;
+
 		findCommonAncestorTimeline(&divergerec, &lastcommontliIndex);
 		printf(_("servers diverged at WAL location %X/%X on timeline %u\n"),
 			   (uint32) (divergerec >> 32), (uint32) divergerec,
 			   targetHistory[lastcommontliIndex].tli);
 
 		/*
+		 * Determine the end-of-WAL on the target.
+		 *
+		 * The WAL ends at the last shutdown checkpoint, or at
+		 * minRecoveryPoint if it was a standby. (If we supported rewinding a
+		 * server that was not shut down cleanly, we would need to replay
+		 * until we reach the first invalid record, like crash recovery does.)
+		 */
+
+		/* read the checkpoint record on the target to see where it ends. */
+		chkptendrec = readOneRecord(datadir_target,
+									ControlFile_target.checkPoint,
+									targetNentries - 1);
+
+		if (ControlFile_target.minRecoveryPoint > chkptendrec)
+		{
+			target_wal_endrec = ControlFile_target.minRecoveryPoint;
+		}
+		else
+		{
+			target_wal_endrec = chkptendrec;
+		}
+
+		/*
 		 * Check for the possibility that the target is in fact a direct
 		 * ancestor of the source. In that case, there is no divergent history
 		 * in the target that needs rewinding.
 		 */
-		if (ControlFile_target.checkPoint >= divergerec)
+		if (target_wal_endrec > divergerec)
 		{
 			rewind_needed = true;
 		}
 		else
 		{
-			XLogRecPtr	chkptendrec;
+			/* the last common checkpoint record must be part of target WAL */
+			Assert(target_wal_endrec == divergerec);
 
-			/* Read the checkpoint record on the target to see where it ends. */
-			chkptendrec = readOneRecord(datadir_target,
-										ControlFile_target.checkPoint,
-										targetNentries - 1);
-
-			/*
-			 * If the histories diverged exactly at the end of the shutdown
-			 * checkpoint record on the target, there are no WAL records in
-			 * the target that don't belong in the source's history, and no
-			 * rewind is needed.
-			 */
-			if (chkptendrec == divergerec)
-				rewind_needed = false;
-			else
-				rewind_needed = true;
+			rewind_needed = false;
 		}
 	}
 
@@ -304,13 +318,11 @@ main(int argc, char **argv)
 	/*
 	 * Read the target WAL from last checkpoint before the point of fork, to
 	 * extract all the pages that were modified on the target cluster after
-	 * the fork. We can stop reading after reaching the final shutdown record.
-	 * XXX: If we supported rewinding a server that was not shut down cleanly,
-	 * we would need to replay until the end of WAL here.
+	 * the fork.
 	 */
 	pg_log(PG_PROGRESS, "reading WAL in target\n");
 	extractPageMap(datadir_target, chkptrec, lastcommontliIndex,
-				   ControlFile_target.checkPoint);
+				   target_wal_endrec);
 	filemap_finalize();
 
 	if (showprogress)
