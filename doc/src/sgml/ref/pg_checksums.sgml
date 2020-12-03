@@ -28,7 +28,7 @@ PostgreSQL documentation
      <arg choice="plain"><option>-D</option></arg>
      <arg choice="plain"><option>--pgdata</option></arg>
     </group>
-    <replaceable class="parameter"> datadir</replaceable>
+    <replaceable class="parameter">datadir</replaceable>
    </group>
   </cmdsynopsis>
  </refsynopsisdiv>
