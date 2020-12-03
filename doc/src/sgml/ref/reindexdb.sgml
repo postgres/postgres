@@ -28,8 +28,8 @@ PostgreSQL documentation
    <arg choice="plain" rep="repeat">
     <arg choice="opt">
      <group choice="plain">
-      <arg choice="plain"><option>--schema</option></arg>
       <arg choice="plain"><option>-S</option></arg>
+      <arg choice="plain"><option>--schema</option></arg>
      </group>
      <replaceable>schema</replaceable>
     </arg>
@@ -38,8 +38,8 @@ PostgreSQL documentation
    <arg choice="plain" rep="repeat">
     <arg choice="opt">
      <group choice="plain">
-      <arg choice="plain"><option>--table</option></arg>
       <arg choice="plain"><option>-t</option></arg>
+      <arg choice="plain"><option>--table</option></arg>
      </group>
      <replaceable>table</replaceable>
     </arg>
@@ -48,8 +48,8 @@ PostgreSQL documentation
    <arg choice="plain" rep="repeat">
     <arg choice="opt">
      <group choice="plain">
-      <arg choice="plain"><option>--index</option></arg>
       <arg choice="plain"><option>-i</option></arg>
+      <arg choice="plain"><option>--index</option></arg>
      </group>
      <replaceable>index</replaceable>
     </arg>
@@ -64,8 +64,8 @@ PostgreSQL documentation
    <arg rep="repeat"><replaceable>option</replaceable></arg>
 
    <group choice="plain">
-    <arg choice="plain"><option>--all</option></arg>
     <arg choice="plain"><option>-a</option></arg>
+    <arg choice="plain"><option>--all</option></arg>
    </group>
   </cmdsynopsis>
 
@@ -75,8 +75,8 @@ PostgreSQL documentation
    <arg rep="repeat"><replaceable>option</replaceable></arg>
 
    <group choice="plain">
-    <arg choice="plain"><option>--system</option></arg>
     <arg choice="plain"><option>-s</option></arg>
+    <arg choice="plain"><option>--system</option></arg>
    </group>
    <arg choice="opt"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
