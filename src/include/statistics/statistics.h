@@ -116,7 +116,8 @@ extern Selectivity statext_clauselist_selectivity(PlannerInfo *root,
 												  JoinType jointype,
 												  SpecialJoinInfo *sjinfo,
 												  RelOptInfo *rel,
-												  Bitmapset **estimatedclauses);
+												  Bitmapset **estimatedclauses,
+												  bool is_or);
 extern bool has_stats_of_kind(List *stats, char requiredkind);
 extern StatisticExtInfo *choose_best_statistics(List *stats, char requiredkind,
 												Bitmapset **clause_attnums,

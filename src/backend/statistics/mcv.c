@@ -32,6 +32,7 @@
 #include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
+#include "utils/selfuncs.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -1889,15 +1890,79 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 
 
 /*
+ * mcv_combine_selectivities
+ * 		Combine per-column and multi-column MCV selectivity estimates.
+ *
+ * simple_sel is a "simple" selectivity estimate (produced without using any
+ * extended statistics, essentially assuming independence of columns/clauses).
+ *
+ * mcv_sel and mcv_basesel are sums of the frequencies and base frequencies of
+ * all matching MCV items.  The difference (mcv_sel - mcv_basesel) is then
+ * essentially interpreted as a correction to be added to simple_sel, as
+ * described below.
+ *
+ * mcv_totalsel is the sum of the frequencies of all MCV items (not just the
+ * matching ones).  This is used as an upper bound on the portion of the
+ * selectivity estimates not covered by the MCV statistics.
+ *
+ * Note: While simple and base selectivities are defined in a quite similar
+ * way, the values are computed differently and are not therefore equal. The
+ * simple selectivity is computed as a product of per-clause estimates, while
+ * the base selectivity is computed by adding up base frequencies of matching
+ * items of the multi-column MCV list. So the values may differ for two main
+ * reasons - (a) the MCV list may not cover 100% of the data and (b) some of
+ * the MCV items did not match the estimated clauses.
+ *
+ * As both (a) and (b) reduce the base selectivity value, it generally holds
+ * that (simple_sel >= mcv_basesel). If the MCV list covers all the data, the
+ * values may be equal.
+ *
+ * So, other_sel = (simple_sel - mcv_basesel) is an estimate for the part not
+ * covered by the MCV list, and (mcv_sel - mcv_basesel) may be seen as a
+ * correction for the part covered by the MCV list. Those two statements are
+ * actually equivalent.
+ */
+Selectivity
+mcv_combine_selectivities(Selectivity simple_sel,
+						  Selectivity mcv_sel,
+						  Selectivity mcv_basesel,
+						  Selectivity mcv_totalsel)
+{
+	Selectivity other_sel;
+	Selectivity sel;
+
+	/* estimated selectivity of values not covered by MCV matches */
+	other_sel = simple_sel - mcv_basesel;
+	CLAMP_PROBABILITY(other_sel);
+
+	/* this non-MCV selectivity cannot exceed 1 - mcv_totalsel */
+	if (other_sel > 1.0 - mcv_totalsel)
+		other_sel = 1.0 - mcv_totalsel;
+
+	/* overall selectivity is the sum of the MCV and non-MCV parts */
+	sel = mcv_sel + other_sel;
+	CLAMP_PROBABILITY(sel);
+
+	return sel;
+}
+
+
+/*
  * mcv_clauselist_selectivity
- *		Return the selectivity estimate computed using an MCV list.
+ *		Use MCV statistics to estimate the selectivity of an implicitly-ANDed
+ *		list of clauses.
  *
- * First builds a bitmap of MCV items matching the clauses, and then sums
- * the frequencies of matching items.
+ * This determines which MCV items match every clause in the list and returns
+ * the sum of the frequencies of those items.
  *
- * It also produces two additional interesting selectivities - total
- * selectivity of all the MCV items (not just the matching ones), and the
- * base frequency computed on the assumption of independence.
+ * In addition, it returns the sum of the base frequencies of each of those
+ * items (that is the sum of the selectivities that each item would have if
+ * the columns were independent of one another), and the total selectivity of
+ * all the MCV items (not just the matching ones).  These are expected to be
+ * used together with a "simple" selectivity estimate (one based only on
+ * per-column statistics) to produce an overall selectivity estimate that
+ * makes use of both per-column and multi-column statistics --- see
+ * mcv_combine_selectivities().
  */
 Selectivity
 mcv_clauselist_selectivity(PlannerInfo *root, StatisticExtInfo *stat,
@@ -1928,11 +1993,101 @@ mcv_clauselist_selectivity(PlannerInfo *root, StatisticExtInfo *stat,
 
 		if (matches[i] != false)
 		{
-			/* XXX Shouldn't the basesel be outside the if condition? */
 			*basesel += mcv->items[i].base_frequency;
 			s += mcv->items[i].frequency;
 		}
 	}
+
+	return s;
+}
+
+
+/*
+ * mcv_clause_selectivity_or
+ *		Use MCV statistics to estimate the selectivity of a clause that
+ *		appears in an ORed list of clauses.
+ *
+ * As with mcv_clauselist_selectivity() this determines which MCV items match
+ * the clause and returns both the sum of the frequencies and the sum of the
+ * base frequencies of those items, as well as the sum of the frequencies of
+ * all MCV items (not just the matching ones) so that this information can be
+ * used by mcv_combine_selectivities() to produce a selectivity estimate that
+ * makes use of both per-column and multi-column statistics.
+ *
+ * Additionally, we return information to help compute the overall selectivity
+ * of the ORed list of clauses assumed to contain this clause.  This function
+ * is intended to be called for each clause in the ORed list of clauses,
+ * allowing the overall selectivity to be computed using the following
+ * algorithm:
+ *
+ * Suppose P[n] = P(C[1] OR C[2] OR ... OR C[n]) is the combined selectivity
+ * of the first n clauses in the list.  Then the combined selectivity taking
+ * into account the next clause C[n+1] can be written as
+ *
+ *		P[n+1] = P[n] + P(C[n+1]) - P((C[1] OR ... OR C[n]) AND C[n+1])
+ *
+ * The final term above represents the overlap between the clauses examined so
+ * far and the (n+1)'th clause.  To estimate its selectivity, we track the
+ * match bitmap for the ORed list of clauses examined so far and examine its
+ * intersection with the match bitmap for the (n+1)'th clause.
+ *
+ * We then also return the sums of the MCV item frequencies and base
+ * frequencies for the match bitmap intersection corresponding to the overlap
+ * term above, so that they can be combined with a simple selectivity estimate
+ * for that term.
+ *
+ * The parameter "or_matches" is an in/out parameter tracking the match bitmap
+ * for the clauses examined so far.  The caller is expected to set it to NULL
+ * the first time it calls this function.
+ */
+Selectivity
+mcv_clause_selectivity_or(PlannerInfo *root, StatisticExtInfo *stat,
+						  MCVList *mcv, Node *clause, bool **or_matches,
+						  Selectivity *basesel, Selectivity *overlap_mcvsel,
+						  Selectivity *overlap_basesel, Selectivity *totalsel)
+{
+	Selectivity s = 0.0;
+	bool	   *new_matches;
+	int			i;
+
+	/* build the OR-matches bitmap, if not built already */
+	if (*or_matches == NULL)
+		*or_matches = palloc0(sizeof(bool) * mcv->nitems);
+
+	/* build the match bitmap for the new clause */
+	new_matches = mcv_get_match_bitmap(root, list_make1(clause), stat->keys,
+									   mcv, false);
+
+	/*
+	 * Sum the frequencies for all the MCV items matching this clause and also
+	 * those matching the overlap between this clause and any of the preceding
+	 * clauses as described above.
+	 */
+	*basesel = 0.0;
+	*overlap_mcvsel = 0.0;
+	*overlap_basesel = 0.0;
+	*totalsel = 0.0;
+	for (i = 0; i < mcv->nitems; i++)
+	{
+		*totalsel += mcv->items[i].frequency;
+
+		if (new_matches[i])
+		{
+			s += mcv->items[i].frequency;
+			*basesel += mcv->items[i].base_frequency;
+
+			if ((*or_matches)[i])
+			{
+				*overlap_mcvsel += mcv->items[i].frequency;
+				*overlap_basesel += mcv->items[i].base_frequency;
+			}
+		}
+
+		/* update the OR-matches bitmap for the next clause */
+		(*or_matches)[i] = (*or_matches)[i] || new_matches[i];
+	}
+
+	pfree(new_matches);
 
 	return s;
 }

@@ -1239,10 +1239,10 @@ statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
  * One of the main challenges with using MCV lists is how to extrapolate the
  * estimate to the data not covered by the MCV list. To do that, we compute
  * not only the "MCV selectivity" (selectivities for MCV items matching the
- * supplied clauses), but also a couple of derived selectivities:
+ * supplied clauses), but also the following related selectivities:
  *
- * - simple selectivity:  Computed without extended statistic, i.e. as if the
- * columns/clauses were independent
+ * - simple selectivity:  Computed without extended statistics, i.e. as if the
+ * columns/clauses were independent.
  *
  * - base selectivity:  Similar to simple selectivity, but is computed using
  * the extended statistic by adding up the base frequencies (that we compute
@@ -1250,30 +1250,9 @@ statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
  *
  * - total selectivity: Selectivity covered by the whole MCV list.
  *
- * - other selectivity: A selectivity estimate for data not covered by the MCV
- * list (i.e. satisfying the clauses, but not common enough to make it into
- * the MCV list)
- *
- * Note: While simple and base selectivities are defined in a quite similar
- * way, the values are computed differently and are not therefore equal. The
- * simple selectivity is computed as a product of per-clause estimates, while
- * the base selectivity is computed by adding up base frequencies of matching
- * items of the multi-column MCV list. So the values may differ for two main
- * reasons - (a) the MCV list may not cover 100% of the data and (b) some of
- * the MCV items did not match the estimated clauses.
- *
- * As both (a) and (b) reduce the base selectivity value, it generally holds
- * that (simple_selectivity >= base_selectivity). If the MCV list covers all
- * the data, the values may be equal.
- *
- * So, (simple_selectivity - base_selectivity) is an estimate for the part
- * not covered by the MCV list, and (mcv_selectivity - base_selectivity) may
- * be seen as a correction for the part covered by the MCV list. Those two
- * statements are actually equivalent.
- *
- * Note: Due to rounding errors and minor differences in how the estimates
- * are computed, the inequality may not always hold. Which is why we clamp
- * the selectivities to prevent strange estimate (negative etc.).
+ * These are passed to mcv_combine_selectivities() which combines them to
+ * produce a selectivity estimate that makes use of both per-column statistics
+ * and the multi-column MCV statistics.
  *
  * 'estimatedclauses' is an input/output parameter.  We set bits for the
  * 0-based 'clauses' indexes we estimate for and also skip clause items that
@@ -1282,16 +1261,17 @@ statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
 static Selectivity
 statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varRelid,
 								   JoinType jointype, SpecialJoinInfo *sjinfo,
-								   RelOptInfo *rel, Bitmapset **estimatedclauses)
+								   RelOptInfo *rel, Bitmapset **estimatedclauses,
+								   bool is_or)
 {
 	ListCell   *l;
 	Bitmapset **list_attnums;
 	int			listidx;
-	Selectivity sel = 1.0;
+	Selectivity sel = (is_or) ? 0.0 : 1.0;
 
 	/* check if there's any stats that might be useful for us. */
 	if (!has_stats_of_kind(rel->statlist, STATS_EXT_MCV))
-		return 1.0;
+		return sel;
 
 	list_attnums = (Bitmapset **) palloc(sizeof(Bitmapset *) *
 										 list_length(clauses));
@@ -1327,12 +1307,7 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 	{
 		StatisticExtInfo *stat;
 		List	   *stat_clauses;
-		Selectivity simple_sel,
-					mcv_sel,
-					mcv_basesel,
-					mcv_totalsel,
-					other_sel,
-					stat_sel;
+		Bitmapset  *simple_clauses;
 
 		/* find the best suited statistics object for these attnums */
 		stat = choose_best_statistics(rel->statlist, STATS_EXT_MCV,
@@ -1351,6 +1326,9 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 		/* now filter the clauses to be estimated using the selected MCV */
 		stat_clauses = NIL;
 
+		/* record which clauses are simple (single column) */
+		simple_clauses = NULL;
+
 		listidx = 0;
 		foreach(l, clauses)
 		{
@@ -1361,6 +1339,10 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 			if (list_attnums[listidx] != NULL &&
 				bms_is_subset(list_attnums[listidx], stat->keys))
 			{
+				if (bms_membership(list_attnums[listidx]) == BMS_SINGLETON)
+					simple_clauses = bms_add_member(simple_clauses,
+													list_length(stat_clauses));
+
 				stat_clauses = lappend(stat_clauses, (Node *) lfirst(l));
 				*estimatedclauses = bms_add_member(*estimatedclauses, listidx);
 
@@ -1371,40 +1353,131 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 			listidx++;
 		}
 
-		/*
-		 * First compute "simple" selectivity, i.e. without the extended
-		 * statistics, and essentially assuming independence of the
-		 * columns/clauses. We'll then use the various selectivities computed
-		 * from MCV list to improve it.
-		 */
-		simple_sel = clauselist_selectivity_simple(root, stat_clauses, varRelid,
-												   jointype, sjinfo, NULL);
+		if (is_or)
+		{
+			bool	   *or_matches = NULL;
+			Selectivity simple_or_sel = 0.0;
+			MCVList    *mcv_list;
 
-		/*
-		 * Now compute the multi-column estimate from the MCV list, along with
-		 * the other selectivities (base & total selectivity).
-		 */
-		mcv_sel = mcv_clauselist_selectivity(root, stat, stat_clauses, varRelid,
-											 jointype, sjinfo, rel,
-											 &mcv_basesel, &mcv_totalsel);
+			/* Load the MCV list stored in the statistics object */
+			mcv_list = statext_mcv_load(stat->statOid);
 
-		/* Estimated selectivity of values not covered by MCV matches */
-		other_sel = simple_sel - mcv_basesel;
-		CLAMP_PROBABILITY(other_sel);
+			/*
+			 * Compute the selectivity of the ORed list of clauses by
+			 * estimating each in turn and combining them using the formula
+			 * P(A OR B) = P(A) + P(B) - P(A AND B).  This allows us to use
+			 * the multivariate MCV stats to better estimate each term.
+			 *
+			 * Each time we iterate this formula, the clause "A" above is
+			 * equal to all the clauses processed so far, combined with "OR".
+			 */
+			listidx = 0;
+			foreach(l, stat_clauses)
+			{
+				Node	   *clause = (Node *) lfirst(l);
+				Selectivity simple_sel,
+							overlap_simple_sel,
+							mcv_sel,
+							mcv_basesel,
+							overlap_mcvsel,
+							overlap_basesel,
+							mcv_totalsel,
+							clause_sel,
+							overlap_sel;
 
-		/* The non-MCV selectivity can't exceed the 1 - mcv_totalsel. */
-		if (other_sel > 1.0 - mcv_totalsel)
-			other_sel = 1.0 - mcv_totalsel;
+				/*
+				 * "Simple" selectivity of the next clause and its overlap
+				 * with any of the previous clauses.  These are our initial
+				 * estimates of P(B) and P(A AND B), assuming independence of
+				 * columns/clauses.
+				 */
+				simple_sel = clause_selectivity_ext(root, clause, varRelid,
+													jointype, sjinfo, false);
 
-		/*
-		 * Overall selectivity is the combination of MCV and non-MCV
-		 * estimates.
-		 */
-		stat_sel = mcv_sel + other_sel;
-		CLAMP_PROBABILITY(stat_sel);
+				overlap_simple_sel = simple_or_sel * simple_sel;
 
-		/* Factor the estimate from this MCV to the overall estimate. */
-		sel *= stat_sel;
+				/*
+				 * New "simple" selectivity of all clauses seen so far,
+				 * assuming independence.
+				 */
+				simple_or_sel += simple_sel - overlap_simple_sel;
+				CLAMP_PROBABILITY(simple_or_sel);
+
+				/*
+				 * Multi-column estimate of this clause using MCV statistics,
+				 * along with base and total selectivities, and corresponding
+				 * selectivities for the overlap term P(A AND B).
+				 */
+				mcv_sel = mcv_clause_selectivity_or(root, stat, mcv_list,
+													clause, &or_matches,
+													&mcv_basesel,
+													&overlap_mcvsel,
+													&overlap_basesel,
+													&mcv_totalsel);
+
+				/*
+				 * Combine the simple and multi-column estimates.
+				 *
+				 * If this clause is a simple single-column clause, then we
+				 * just use the simple selectivity estimate for it, since the
+				 * multi-column statistics are unlikely to improve on that
+				 * (and in fact could make it worse).  For the overlap, we
+				 * always make use of the multi-column statistics.
+				 */
+				if (bms_is_member(listidx, simple_clauses))
+					clause_sel = simple_sel;
+				else
+					clause_sel = mcv_combine_selectivities(simple_sel,
+														   mcv_sel,
+														   mcv_basesel,
+														   mcv_totalsel);
+
+				overlap_sel = mcv_combine_selectivities(overlap_simple_sel,
+														overlap_mcvsel,
+														overlap_basesel,
+														mcv_totalsel);
+
+				/* Factor these into the overall result */
+				sel += clause_sel - overlap_sel;
+				CLAMP_PROBABILITY(sel);
+
+				listidx++;
+			}
+		}
+		else					/* Implicitly-ANDed list of clauses */
+		{
+			Selectivity simple_sel,
+						mcv_sel,
+						mcv_basesel,
+						mcv_totalsel,
+						stat_sel;
+
+			/*
+			 * "Simple" selectivity, i.e. without any extended statistics,
+			 * essentially assuming independence of the columns/clauses.
+			 */
+			simple_sel = clauselist_selectivity_ext(root, stat_clauses,
+													varRelid, jointype,
+													sjinfo, false);
+
+			/*
+			 * Multi-column estimate using MCV statistics, along with base and
+			 * total selectivities.
+			 */
+			mcv_sel = mcv_clauselist_selectivity(root, stat, stat_clauses,
+												 varRelid, jointype, sjinfo,
+												 rel, &mcv_basesel,
+												 &mcv_totalsel);
+
+			/* Combine the simple and multi-column estimates. */
+			stat_sel = mcv_combine_selectivities(simple_sel,
+												 mcv_sel,
+												 mcv_basesel,
+												 mcv_totalsel);
+
+			/* Factor this into the overall result */
+			sel *= stat_sel;
+		}
 	}
 
 	return sel;
@@ -1417,13 +1490,21 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 Selectivity
 statext_clauselist_selectivity(PlannerInfo *root, List *clauses, int varRelid,
 							   JoinType jointype, SpecialJoinInfo *sjinfo,
-							   RelOptInfo *rel, Bitmapset **estimatedclauses)
+							   RelOptInfo *rel, Bitmapset **estimatedclauses,
+							   bool is_or)
 {
 	Selectivity sel;
 
 	/* First, try estimating clauses using a multivariate MCV list. */
 	sel = statext_mcv_clauselist_selectivity(root, clauses, varRelid, jointype,
-											 sjinfo, rel, estimatedclauses);
+											 sjinfo, rel, estimatedclauses, is_or);
+
+	/*
+	 * Functional dependencies only work for clauses connected by AND, so for
+	 * OR clauses we're done.
+	 */
+	if (is_or)
+		return sel;
 
 	/*
 	 * Then, apply functional dependencies on the remaining clauses by calling
