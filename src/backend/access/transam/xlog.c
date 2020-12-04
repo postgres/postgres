@@ -1811,9 +1811,10 @@ WaitXLogInsertionsToFinish(XLogRecPtr upto)
 	 */
 	if (upto > reservedUpto)
 	{
-		elog(LOG, "request to flush past end of generated WAL; request %X/%X, currpos %X/%X",
-			 (uint32) (upto >> 32), (uint32) upto,
-			 (uint32) (reservedUpto >> 32), (uint32) reservedUpto);
+		ereport(LOG,
+				(errmsg("request to flush past end of generated WAL; request %X/%X, current position %X/%X",
+						(uint32) (upto >> 32), (uint32) upto,
+						(uint32) (reservedUpto >> 32), (uint32) reservedUpto)));
 		upto = reservedUpto;
 	}
 
@@ -8532,16 +8533,30 @@ ShutdownXLOG(int code, Datum arg)
 static void
 LogCheckpointStart(int flags, bool restartpoint)
 {
-	elog(LOG, "%s starting:%s%s%s%s%s%s%s%s",
-		 restartpoint ? "restartpoint" : "checkpoint",
-		 (flags & CHECKPOINT_IS_SHUTDOWN) ? " shutdown" : "",
-		 (flags & CHECKPOINT_END_OF_RECOVERY) ? " end-of-recovery" : "",
-		 (flags & CHECKPOINT_IMMEDIATE) ? " immediate" : "",
-		 (flags & CHECKPOINT_FORCE) ? " force" : "",
-		 (flags & CHECKPOINT_WAIT) ? " wait" : "",
-		 (flags & CHECKPOINT_CAUSE_XLOG) ? " wal" : "",
-		 (flags & CHECKPOINT_CAUSE_TIME) ? " time" : "",
-		 (flags & CHECKPOINT_FLUSH_ALL) ? " flush-all" : "");
+	if (restartpoint)
+		ereport(LOG,
+				/* translator: the placeholders show checkpoint options */
+				(errmsg("restartpoint starting:%s%s%s%s%s%s%s%s",
+						(flags & CHECKPOINT_IS_SHUTDOWN) ? " shutdown" : "",
+						(flags & CHECKPOINT_END_OF_RECOVERY) ? " end-of-recovery" : "",
+						(flags & CHECKPOINT_IMMEDIATE) ? " immediate" : "",
+						(flags & CHECKPOINT_FORCE) ? " force" : "",
+						(flags & CHECKPOINT_WAIT) ? " wait" : "",
+						(flags & CHECKPOINT_CAUSE_XLOG) ? " wal" : "",
+						(flags & CHECKPOINT_CAUSE_TIME) ? " time" : "",
+						(flags & CHECKPOINT_FLUSH_ALL) ? " flush-all" : "")));
+	else
+		ereport(LOG,
+				/* translator: the placeholders show checkpoint options */
+				(errmsg("checkpoint starting:%s%s%s%s%s%s%s%s",
+						(flags & CHECKPOINT_IS_SHUTDOWN) ? " shutdown" : "",
+						(flags & CHECKPOINT_END_OF_RECOVERY) ? " end-of-recovery" : "",
+						(flags & CHECKPOINT_IMMEDIATE) ? " immediate" : "",
+						(flags & CHECKPOINT_FORCE) ? " force" : "",
+						(flags & CHECKPOINT_WAIT) ? " wait" : "",
+						(flags & CHECKPOINT_CAUSE_XLOG) ? " wal" : "",
+						(flags & CHECKPOINT_CAUSE_TIME) ? " time" : "",
+						(flags & CHECKPOINT_FLUSH_ALL) ? " flush-all" : "")));
 }
 
 /*
@@ -8591,25 +8606,46 @@ LogCheckpointEnd(bool restartpoint)
 			CheckpointStats.ckpt_sync_rels;
 	average_msecs = (long) ((average_sync_time + 999) / 1000);
 
-	elog(LOG, "%s complete: wrote %d buffers (%.1f%%); "
-		 "%d WAL file(s) added, %d removed, %d recycled; "
-		 "write=%ld.%03d s, sync=%ld.%03d s, total=%ld.%03d s; "
-		 "sync files=%d, longest=%ld.%03d s, average=%ld.%03d s; "
-		 "distance=%d kB, estimate=%d kB",
-		 restartpoint ? "restartpoint" : "checkpoint",
-		 CheckpointStats.ckpt_bufs_written,
-		 (double) CheckpointStats.ckpt_bufs_written * 100 / NBuffers,
-		 CheckpointStats.ckpt_segs_added,
-		 CheckpointStats.ckpt_segs_removed,
-		 CheckpointStats.ckpt_segs_recycled,
-		 write_msecs / 1000, (int) (write_msecs % 1000),
-		 sync_msecs / 1000, (int) (sync_msecs % 1000),
-		 total_msecs / 1000, (int) (total_msecs % 1000),
-		 CheckpointStats.ckpt_sync_rels,
-		 longest_msecs / 1000, (int) (longest_msecs % 1000),
-		 average_msecs / 1000, (int) (average_msecs % 1000),
-		 (int) (PrevCheckPointDistance / 1024.0),
-		 (int) (CheckPointDistanceEstimate / 1024.0));
+	if (restartpoint)
+		ereport(LOG,
+				(errmsg("restartpoint complete: wrote %d buffers (%.1f%%); "
+						"%d WAL file(s) added, %d removed, %d recycled; "
+						"write=%ld.%03d s, sync=%ld.%03d s, total=%ld.%03d s; "
+						"sync files=%d, longest=%ld.%03d s, average=%ld.%03d s; "
+						"distance=%d kB, estimate=%d kB",
+						CheckpointStats.ckpt_bufs_written,
+						(double) CheckpointStats.ckpt_bufs_written * 100 / NBuffers,
+						CheckpointStats.ckpt_segs_added,
+						CheckpointStats.ckpt_segs_removed,
+						CheckpointStats.ckpt_segs_recycled,
+						write_msecs / 1000, (int) (write_msecs % 1000),
+						sync_msecs / 1000, (int) (sync_msecs % 1000),
+						total_msecs / 1000, (int) (total_msecs % 1000),
+						CheckpointStats.ckpt_sync_rels,
+						longest_msecs / 1000, (int) (longest_msecs % 1000),
+						average_msecs / 1000, (int) (average_msecs % 1000),
+						(int) (PrevCheckPointDistance / 1024.0),
+						(int) (CheckPointDistanceEstimate / 1024.0))));
+	else
+		ereport(LOG,
+				(errmsg("checkpoint complete: wrote %d buffers (%.1f%%); "
+						"%d WAL file(s) added, %d removed, %d recycled; "
+						"write=%ld.%03d s, sync=%ld.%03d s, total=%ld.%03d s; "
+						"sync files=%d, longest=%ld.%03d s, average=%ld.%03d s; "
+						"distance=%d kB, estimate=%d kB",
+						CheckpointStats.ckpt_bufs_written,
+						(double) CheckpointStats.ckpt_bufs_written * 100 / NBuffers,
+						CheckpointStats.ckpt_segs_added,
+						CheckpointStats.ckpt_segs_removed,
+						CheckpointStats.ckpt_segs_recycled,
+						write_msecs / 1000, (int) (write_msecs % 1000),
+						sync_msecs / 1000, (int) (sync_msecs % 1000),
+						total_msecs / 1000, (int) (total_msecs % 1000),
+						CheckpointStats.ckpt_sync_rels,
+						longest_msecs / 1000, (int) (longest_msecs % 1000),
+						average_msecs / 1000, (int) (average_msecs % 1000),
+						(int) (PrevCheckPointDistance / 1024.0),
+						(int) (CheckPointDistanceEstimate / 1024.0))));
 }
 
 /*

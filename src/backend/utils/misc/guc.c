@@ -11533,7 +11533,7 @@ assign_tcp_keepalives_idle(int newval, void *extra)
 	 * once we set it we might fail to unset it.  So there seems little point
 	 * in fully implementing the check-then-assign GUC API for these
 	 * variables.  Instead we just do the assignment on demand.  pqcomm.c
-	 * reports any problems via elog(LOG).
+	 * reports any problems via ereport(LOG).
 	 *
 	 * This approach means that the GUC value might have little to do with the
 	 * actual kernel value, so we use a show_hook that retrieves the kernel

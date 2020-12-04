@@ -857,7 +857,8 @@ check_same_host_or_net(SockAddr *raddr, IPCompareMethod method)
 	errno = 0;
 	if (pg_foreach_ifaddr(check_network_callback, &cn) < 0)
 	{
-		elog(LOG, "error enumerating network interfaces: %m");
+		ereport(LOG,
+				(errmsg("error enumerating network interfaces: %m")));
 		return false;
 	}
 

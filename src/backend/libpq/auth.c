@@ -2131,9 +2131,10 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
 				reply[i].resp_retcode = PAM_SUCCESS;
 				break;
 			default:
-				elog(LOG, "unsupported PAM conversation %d/\"%s\"",
-					 msg[i]->msg_style,
-					 msg[i]->msg ? msg[i]->msg : "(none)");
+				ereport(LOG,
+						(errmsg("unsupported PAM conversation %d/\"%s\"",
+								msg[i]->msg_style,
+								msg[i]->msg ? msg[i]->msg : "(none)")));
 				goto fail;
 		}
 	}

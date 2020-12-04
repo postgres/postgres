@@ -636,7 +636,8 @@ retry2:
 		if (getsockopt(pgStatSock, SOL_SOCKET, SO_RCVBUF,
 					   (char *) &old_rcvbuf, &rcvbufsize) < 0)
 		{
-			elog(LOG, "getsockopt(SO_RCVBUF) failed: %m");
+			ereport(LOG,
+					(errmsg("getsockopt(%s) failed: %m", "SO_RCVBUF")));
 			/* if we can't get existing size, always try to set it */
 			old_rcvbuf = 0;
 		}
@@ -646,7 +647,8 @@ retry2:
 		{
 			if (setsockopt(pgStatSock, SOL_SOCKET, SO_RCVBUF,
 						   (char *) &new_rcvbuf, sizeof(new_rcvbuf)) < 0)
-				elog(LOG, "setsockopt(SO_RCVBUF) failed: %m");
+				ereport(LOG,
+						(errmsg("setsockopt(%s) failed: %m", "SO_RCVBUF")));
 		}
 	}
 
@@ -6108,8 +6110,9 @@ backend_read_statsfile(void)
 				/* Copy because timestamptz_to_str returns a static buffer */
 				filetime = pstrdup(timestamptz_to_str(file_ts));
 				mytime = pstrdup(timestamptz_to_str(cur_ts));
-				elog(LOG, "stats collector's time %s is later than backend local time %s",
-					 filetime, mytime);
+				ereport(LOG,
+						(errmsg("statistics collector's time %s is later than backend local time %s",
+								filetime, mytime)));
 				pfree(filetime);
 				pfree(mytime);
 			}
@@ -6251,9 +6254,9 @@ pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 			/* Copy because timestamptz_to_str returns a static buffer */
 			writetime = pstrdup(timestamptz_to_str(dbentry->stats_timestamp));
 			mytime = pstrdup(timestamptz_to_str(cur_ts));
-			elog(LOG,
-				 "stats_timestamp %s is later than collector's time %s for database %u",
-				 writetime, mytime, dbentry->databaseid);
+			ereport(LOG,
+					(errmsg("stats_timestamp %s is later than collector's time %s for database %u",
+							writetime, mytime, dbentry->databaseid)));
 			pfree(writetime);
 			pfree(mytime);
 		}

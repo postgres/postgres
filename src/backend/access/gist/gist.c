@@ -1167,8 +1167,9 @@ gistfixsplit(GISTInsertState *state, GISTSTATE *giststate)
 	Page		page;
 	List	   *splitinfo = NIL;
 
-	elog(LOG, "fixing incomplete split in index \"%s\", block %u",
-		 RelationGetRelationName(state->r), stack->blkno);
+	ereport(LOG,
+			(errmsg("fixing incomplete split in index \"%s\", block %u",
+					RelationGetRelationName(state->r), stack->blkno)));
 
 	Assert(GistFollowRight(stack->page));
 	Assert(OffsetNumberIsValid(stack->downlinkoffnum));

@@ -250,10 +250,10 @@ BackgroundWorkerStateChange(void)
 	 */
 	if (max_worker_processes != BackgroundWorkerData->total_slots)
 	{
-		elog(LOG,
-			 "inconsistent background worker state (max_worker_processes=%d, total_slots=%d",
-			 max_worker_processes,
-			 BackgroundWorkerData->total_slots);
+		ereport(LOG,
+				(errmsg("inconsistent background worker state (max_worker_processes=%d, total_slots=%d)",
+						max_worker_processes,
+						BackgroundWorkerData->total_slots)));
 		return;
 	}
 

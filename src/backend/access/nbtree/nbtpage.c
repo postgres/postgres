@@ -2151,9 +2151,10 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 
 			if (leftsib == P_NONE)
 			{
-				elog(LOG, "no left sibling (concurrent deletion?) of block %u in \"%s\"",
-					 target,
-					 RelationGetRelationName(rel));
+				ereport(LOG,
+						(errmsg("no left sibling (concurrent deletion?) of block %u in \"%s\"",
+								target,
+								RelationGetRelationName(rel))));
 				if (target != leafblkno)
 				{
 					/* we have only a pin on target, but pin+lock on leafbuf */

@@ -1207,8 +1207,9 @@ PostmasterMain(int argc, char *argv[])
 								 NULL,
 								 NULL);
 		if (err != kDNSServiceErr_NoError)
-			elog(LOG, "DNSServiceRegister() failed: error code %ld",
-				 (long) err);
+			ereport(LOG,
+					(errmsg("DNSServiceRegister() failed: error code %ld",
+							(long) err)));
 
 		/*
 		 * We don't bother to read the mDNS daemon's reply, and we expect that
@@ -1466,7 +1467,8 @@ getInstallationPaths(const char *argv0)
 
 	/* Locate the postgres executable itself */
 	if (find_my_exec(argv0, my_exec_path) < 0)
-		elog(FATAL, "%s: could not locate my own executable path", argv0);
+		ereport(FATAL,
+				(errmsg("%s: could not locate my own executable path", argv0)));
 
 #ifdef EXEC_BACKEND
 	/* Locate executable backend before we change working directory */
@@ -4674,16 +4676,18 @@ retry:
 									NULL);
 	if (paramHandle == INVALID_HANDLE_VALUE)
 	{
-		elog(LOG, "could not create backend parameter file mapping: error code %lu",
-			 GetLastError());
+		ereport(LOG,
+				(errmsg("could not create backend parameter file mapping: error code %lu",
+						GetLastError())));
 		return -1;
 	}
 
 	param = MapViewOfFile(paramHandle, FILE_MAP_WRITE, 0, 0, sizeof(BackendParameters));
 	if (!param)
 	{
-		elog(LOG, "could not map backend parameter memory: error code %lu",
-			 GetLastError());
+		ereport(LOG,
+				(errmsg("could not map backend parameter memory: error code %lu",
+						GetLastError())));
 		CloseHandle(paramHandle);
 		return -1;
 	}
@@ -4708,7 +4712,8 @@ retry:
 	}
 	if (cmdLine[sizeof(cmdLine) - 2] != '\0')
 	{
-		elog(LOG, "subprocess command line too long");
+		ereport(LOG,
+				(errmsg("subprocess command line too long")));
 		UnmapViewOfFile(param);
 		CloseHandle(paramHandle);
 		return -1;
@@ -4725,8 +4730,9 @@ retry:
 	if (!CreateProcess(NULL, cmdLine, NULL, NULL, TRUE, CREATE_SUSPENDED,
 					   NULL, NULL, &si, &pi))
 	{
-		elog(LOG, "CreateProcess call failed: %m (error code %lu)",
-			 GetLastError());
+		ereport(LOG,
+				(errmsg("CreateProcess() call failed: %m (error code %lu)",
+						GetLastError())));
 		UnmapViewOfFile(param);
 		CloseHandle(paramHandle);
 		return -1;
@@ -4751,11 +4757,13 @@ retry:
 
 	/* Drop the parameter shared memory that is now inherited to the backend */
 	if (!UnmapViewOfFile(param))
-		elog(LOG, "could not unmap view of backend parameter file: error code %lu",
-			 GetLastError());
+		ereport(LOG,
+				(errmsg("could not unmap view of backend parameter file: error code %lu",
+						GetLastError())));
 	if (!CloseHandle(paramHandle))
-		elog(LOG, "could not close handle to backend parameter file: error code %lu",
-			 GetLastError());
+		ereport(LOG,
+				(errmsg("could not close handle to backend parameter file: error code %lu",
+						GetLastError())));
 
 	/*
 	 * Reserve the memory region used by our main shared memory segment before
@@ -5639,7 +5647,9 @@ CreateOptsFile(int argc, char *argv[], char *fullprogname)
 
 	if ((fp = fopen(OPTS_FILE, "w")) == NULL)
 	{
-		elog(LOG, "could not create file \"%s\": %m", OPTS_FILE);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not create file \"%s\": %m", OPTS_FILE)));
 		return false;
 	}
 
@@ -5650,7 +5660,9 @@ CreateOptsFile(int argc, char *argv[], char *fullprogname)
 
 	if (fclose(fp))
 	{
-		elog(LOG, "could not write file \"%s\": %m", OPTS_FILE);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not write file \"%s\": %m", OPTS_FILE)));
 		return false;
 	}
 
