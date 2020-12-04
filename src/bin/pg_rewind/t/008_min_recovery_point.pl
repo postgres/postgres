@@ -34,6 +34,7 @@ use TestLib;
 use Test::More tests => 3;
 
 use File::Copy;
+use File::Path qw(rmtree);
 
 my $tmp_folder = TestLib::tempdir;
 
@@ -50,53 +51,69 @@ $node_1->safe_psql('postgres', 'CREATE TABLE public.foo (t TEXT)');
 $node_1->safe_psql('postgres', 'CREATE TABLE public.bar (t TEXT)');
 $node_1->safe_psql('postgres', "INSERT INTO public.bar VALUES ('in both')");
 
-
-# Take backup
+#
+# Create node_2 and node_3 as standbys following node_1
+#
 my $backup_name = 'my_backup';
 $node_1->backup($backup_name);
 
-# Create streaming standby from backup
 my $node_2 = get_new_node('node_2');
 $node_2->init_from_backup($node_1, $backup_name,
 	has_streaming => 1);
 $node_2->start;
 
-# Create streaming standby from backup
 my $node_3 = get_new_node('node_3');
 $node_3->init_from_backup($node_1, $backup_name,
 	has_streaming => 1);
 $node_3->start;
 
-# Stop node_1
+# Wait until node 3 has connected and caught up
+my $until_lsn =
+  $node_1->safe_psql('postgres', "SELECT pg_current_xlog_location();");
+my $caughtup_query =
+  "SELECT '$until_lsn'::pg_lsn <= pg_last_xlog_replay_location()";
+$node_3->poll_query_until('postgres', $caughtup_query)
+  or die "Timed out while waiting for standby to catch up";
 
+#
+# Swap the roles of node_1 and node_3, so that node_1 follows node_3.
+#
 $node_1->stop('fast');
-
-# Promote node_3
 $node_3->promote;
 
-# node_1 rejoins node_3
+# reconfigure node_1 as a standby following node_3
+rmtree $node_1->data_dir;
+$node_1->init_from_backup($node_1, $backup_name);
 
 my $node_3_connstr = $node_3->connstr;
-
-unlink($node_2->data_dir . '/recovery.conf');
+unlink($node_1->data_dir . '/recovery.conf');
 $node_1->append_conf('recovery.conf', qq(
 standby_mode=on
-primary_conninfo='$node_3_connstr'
+primary_conninfo='$node_3_connstr application_name=node_1'
 recovery_target_timeline='latest'
 ));
 $node_1->start();
 
-# node_2 follows node_3
-
+# also reconfigure node_2 to follow node_3
 unlink($node_2->data_dir . '/recovery.conf');
 $node_2->append_conf('recovery.conf', qq(
 standby_mode=on
-primary_conninfo='$node_3_connstr'
+primary_conninfo='$node_3_connstr application_name=node_2'
 recovery_target_timeline='latest'
 ));
 $node_2->restart();
 
-# Promote node_1
+#
+# Promote node_1, to create a split-brain scenario.
+#
+
+# make sure node_1 is full caught up with node_3 first
+$until_lsn =
+  $node_3->safe_psql('postgres', "SELECT pg_current_xlog_location();");
+$caughtup_query =
+  "SELECT '$until_lsn'::pg_lsn <= pg_last_xlog_replay_location()";
+$node_1->poll_query_until('postgres', $caughtup_query)
+  or die "Timed out while waiting for standby to catch up";
 
 $node_1->promote;
 
@@ -104,9 +121,11 @@ $node_1->promote;
 $node_1->poll_query_until('postgres', "SELECT pg_is_in_recovery() <> true");
 $node_3->poll_query_until('postgres', "SELECT pg_is_in_recovery() <> true");
 
+#
 # We now have a split-brain with two primaries. Insert a row on both to
 # demonstratively create a split brain. After the rewind, we should only
 # see the insert on 1, as the insert on node 3 is rewound away.
+#
 $node_1->safe_psql('postgres', "INSERT INTO public.foo (t) VALUES ('keep this')");
 
 # Insert more rows in node 1, to bump up the XID counter. Otherwise, if
