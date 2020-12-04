@@ -22,7 +22,7 @@ OBJS = \
 	bool.o \
 	cash.o \
 	char.o \
-	cryptohashes.o \
+	cryptohashfuncs.o \
 	date.o \
 	datetime.o \
 	datum.o \

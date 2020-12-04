@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * cryptohashes.c
+ * cryptohashfuncs.c
  *	  Cryptographic hash functions
  *
  * Portions Copyright (c) 2018-2020, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  src/backend/utils/adt/cryptohashes.c
+ *	  src/backend/utils/adt/cryptohashfuncs.c
  *
  *-------------------------------------------------------------------------
  */
