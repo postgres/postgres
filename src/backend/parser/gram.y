@@ -414,7 +414,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				relation_expr_list dostmt_opt_list
 				transform_element_list transform_type_list
 				TriggerTransitions TriggerReferencing
-				publication_name_list
 				vacuum_relation_list opt_vacuum_relation_list
 				drop_option_list
 
@@ -422,7 +421,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <node>	group_by_item empty_grouping_set rollup_clause cube_clause
 %type <node>	grouping_sets_clause
 %type <node>	opt_publication_for_tables publication_for_tables
-%type <value>	publication_name_item
 
 %type <list>	opt_fdw_options fdw_options
 %type <defelt>	fdw_option
@@ -9512,7 +9510,7 @@ AlterPublicationStmt:
  *****************************************************************************/
 
 CreateSubscriptionStmt:
-			CREATE SUBSCRIPTION name CONNECTION Sconst PUBLICATION publication_name_list opt_definition
+			CREATE SUBSCRIPTION name CONNECTION Sconst PUBLICATION name_list opt_definition
 				{
 					CreateSubscriptionStmt *n =
 						makeNode(CreateSubscriptionStmt);
@@ -9523,20 +9521,6 @@ CreateSubscriptionStmt:
 					$$ = (Node *)n;
 				}
 		;
-
-publication_name_list:
-			publication_name_item
-				{
-					$$ = list_make1($1);
-				}
-			| publication_name_list ',' publication_name_item
-				{
-					$$ = lappend($1, $3);
-				}
-		;
-
-publication_name_item:
-			ColLabel			{ $$ = makeString($1); };
 
 /*****************************************************************************
  *
@@ -9572,7 +9556,7 @@ AlterSubscriptionStmt:
 					n->options = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list opt_definition
+			| ALTER SUBSCRIPTION name SET PUBLICATION name_list opt_definition
 				{
 					AlterSubscriptionStmt *n =
 						makeNode(AlterSubscriptionStmt);
