@@ -50,54 +50,61 @@ $node_1->safe_psql('postgres', 'CREATE TABLE public.foo (t TEXT)');
 $node_1->safe_psql('postgres', 'CREATE TABLE public.bar (t TEXT)');
 $node_1->safe_psql('postgres', "INSERT INTO public.bar VALUES ('in both')");
 
-
-# Take backup
+#
+# Create node_2 and node_3 as standbys following node_1
+#
 my $backup_name = 'my_backup';
 $node_1->backup($backup_name);
 
-# Create streaming standby from backup
 my $node_2 = get_new_node('node_2');
 $node_2->init_from_backup($node_1, $backup_name,
 	has_streaming => 1);
 $node_2->start;
 
-# Create streaming standby from backup
 my $node_3 = get_new_node('node_3');
 $node_3->init_from_backup($node_1, $backup_name,
 	has_streaming => 1);
 $node_3->start;
 
-# Stop node_1
+# Wait until node 3 has connected and caught up
+my $lsn = $node_1->lsn('insert');
+$node_1->wait_for_catchup('node_3', 'replay', $lsn);
 
+#
+# Swap the roles of node_1 and node_3, so that node_1 follows node_3.
+#
 $node_1->stop('fast');
-
-# Promote node_3
 $node_3->promote;
 
-# node_1 rejoins node_3
-
+# reconfigure node_1 as a standby following node_3
 my $node_3_connstr = $node_3->connstr;
-
 $node_1->append_conf('postgresql.conf', qq(
 primary_conninfo='$node_3_connstr'
 ));
 $node_1->set_standby_mode();
 $node_1->start();
 
-# node_2 follows node_3
-
+# also reconfigure node_2 to follow node_3
 $node_2->append_conf('postgresql.conf', qq(
 primary_conninfo='$node_3_connstr'
 ));
 $node_2->restart();
 
-# Promote node_1
+#
+# Promote node_1, to create a split-brain scenario.
+#
+
+# make sure node_1 is full caught up with node_3 first
+$lsn = $node_3->lsn('insert');
+$node_3->wait_for_catchup('node_1', 'replay', $lsn);
 
 $node_1->promote;
 
+#
 # We now have a split-brain with two primaries. Insert a row on both to
 # demonstratively create a split brain. After the rewind, we should only
 # see the insert on 1, as the insert on node 3 is rewound away.
+#
 $node_1->safe_psql('postgres', "INSERT INTO public.foo (t) VALUES ('keep this')");
 
 # Insert more rows in node 1, to bump up the XID counter. Otherwise, if
