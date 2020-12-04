@@ -729,11 +729,17 @@ perform_base_backup(basebackup_options *opt)
 				 errmsg("checksum verification failure during base backup")));
 	}
 
+	/*
+	 * Make sure to free the manifest before the resource owners as manifests
+	 * use cryptohash contexts that may depend on resource owners (like
+	 * OpenSSL).
+	 */
+	FreeBackupManifest(&manifest);
+
 	/* clean up the resource owner we created */
 	WalSndResourceCleanup(true);
 
 	pgstat_progress_end_command();
-	FreeBackupManifest(&manifest);
 }
 
 /*

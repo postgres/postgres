@@ -95,4 +95,11 @@ extern void ResourceOwnerRememberJIT(ResourceOwner owner,
 extern void ResourceOwnerForgetJIT(ResourceOwner owner,
 								   Datum handle);
 
+/* support for cryptohash context management */
+extern void ResourceOwnerEnlargeCryptoHash(ResourceOwner owner);
+extern void ResourceOwnerRememberCryptoHash(ResourceOwner owner,
+											Datum handle);
+extern void ResourceOwnerForgetCryptoHash(ResourceOwner owner,
+										  Datum handle);
+
 #endif							/* RESOWNER_PRIVATE_H */
