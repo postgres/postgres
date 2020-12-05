@@ -3090,6 +3090,7 @@ remove_result_refs(PlannerInfo *root, int varno, Node *newjtloc)
 		subrelids = get_relids_in_jointree(newjtloc, false);
 		Assert(!bms_is_empty(subrelids));
 		substitute_phv_relids((Node *) root->parse, varno, subrelids);
+		fix_append_rel_relids(root->append_rel_list, varno, subrelids);
 	}
 
 	/*
