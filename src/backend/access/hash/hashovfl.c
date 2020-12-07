@@ -875,8 +875,8 @@ _hash_squeezebucket(Relation rel,
 		int			i;
 		bool		retain_pin = false;
 
-readpage:
 		/* Scan each tuple in "read" page */
+readpage:
 		maxroffnum = PageGetMaxOffsetNumber(rpage);
 		for (roffnum = FirstOffsetNumber;
 			 roffnum <= maxroffnum;
