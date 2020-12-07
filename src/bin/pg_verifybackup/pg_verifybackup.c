@@ -730,6 +730,7 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 	{
 		report_backup_error(context, "could not initialize checksum of file \"%s\"",
 							relpath);
+		close(fd);
 		return;
 	}
 
