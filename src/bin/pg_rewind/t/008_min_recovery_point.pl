@@ -75,6 +75,13 @@ $node_1->wait_for_catchup('node_3', 'replay', $lsn);
 #
 $node_1->stop('fast');
 $node_3->promote;
+# Force a checkpoint after the promotion. pg_rewind looks at the control
+# file to determine what timeline the server is on, and that isn't updated
+# immediately at promotion, but only at the next checkpoint. When running
+# pg_rewind in remote mode, it's possible that we complete the test steps
+# after promotion so quickly that when pg_rewind runs, the standby has not
+# performed a checkpoint after promotion yet.
+$node_3->safe_psql('postgres', "checkpoint");
 
 # reconfigure node_1 as a standby following node_3
 my $node_3_connstr = $node_3->connstr;
@@ -99,6 +106,8 @@ $lsn = $node_3->lsn('insert');
 $node_3->wait_for_catchup('node_1', 'replay', $lsn);
 
 $node_1->promote;
+# Force a checkpoint after promotion, like earlier.
+$node_1->safe_psql('postgres', "checkpoint");
 
 #
 # We now have a split-brain with two primaries. Insert a row on both to
@@ -106,6 +115,9 @@ $node_1->promote;
 # see the insert on 1, as the insert on node 3 is rewound away.
 #
 $node_1->safe_psql('postgres', "INSERT INTO public.foo (t) VALUES ('keep this')");
+# 'bar' is unmodified in node 1, so it won't be overwritten by replaying the
+# WAL from node 1.
+$node_3->safe_psql('postgres', "INSERT INTO public.bar (t) VALUES ('rewind this')");
 
 # Insert more rows in node 1, to bump up the XID counter. Otherwise, if
 # rewind doesn't correctly rewind the changes made on the other node,
@@ -113,10 +125,6 @@ $node_1->safe_psql('postgres', "INSERT INTO public.foo (t) VALUES ('keep this')"
 # are not marked as committed.
 $node_1->safe_psql('postgres', "INSERT INTO public.foo (t) VALUES ('and this')");
 $node_1->safe_psql('postgres', "INSERT INTO public.foo (t) VALUES ('and this too')");
-
-# Also insert a row in 'bar' on node 3. It is unmodified in node 1, so it won't get
-# overwritten by replaying the WAL from node 1.
-$node_3->safe_psql('postgres', "INSERT INTO public.bar (t) VALUES ('rewind this')");
 
 # Wait for node 2 to catch up
 $node_2->poll_query_until('postgres',
@@ -139,9 +147,10 @@ command_ok(
     [
         'pg_rewind',
         "--source-server=$node_1_connstr",
-        "--target-pgdata=$node_2_pgdata"
+	    "--target-pgdata=$node_2_pgdata",
+	    "--debug"
     ],
-	'pg_rewind detects rewind needed');
+	'run pg_rewind');
 
 # Now move back postgresql.conf with old settings
 move(
@@ -153,7 +162,6 @@ $node_2->start;
 # Check contents of the test tables after rewind. The rows inserted in node 3
 # before rewind should've been overwritten with the data from node 1.
 my $result;
-$result = $node_2->safe_psql('postgres', 'checkpoint');
 $result = $node_2->safe_psql('postgres', 'SELECT * FROM public.foo');
 is($result, qq(keep this
 and this
