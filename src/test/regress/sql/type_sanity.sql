@@ -50,18 +50,18 @@ FROM pg_type as p1
 WHERE (p1.typtype = 'c' AND p1.typrelid = 0) OR
     (p1.typtype != 'c' AND p1.typrelid != 0);
 
--- Look for types that should have an array type according to their typtype,
--- but don't.  We exclude composites here because we have not bothered to
--- make array types corresponding to the system catalogs' rowtypes.
--- NOTE: as of v10, this check finds pg_node_tree, pg_ndistinct, smgr.
+-- Look for types that should have an array type but don't.
+-- Generally anything that's not a pseudotype should have an array type.
+-- However, we do have a small number of exceptions.
 
 SELECT p1.oid, p1.typname
 FROM pg_type as p1
-WHERE p1.typtype not in ('c','d','p') AND p1.typname NOT LIKE E'\\_%'
+WHERE p1.typtype not in ('p') AND p1.typname NOT LIKE E'\\_%'
     AND NOT EXISTS
     (SELECT 1 FROM pg_type as p2
      WHERE p2.typname = ('_' || p1.typname)::name AND
-           p2.typelem = p1.oid and p1.typarray = p2.oid);
+           p2.typelem = p1.oid and p1.typarray = p2.oid)
+ORDER BY p1.oid;
 
 -- Make sure typarray points to a varlena array type of our own base
 SELECT p1.oid, p1.typname as basetype, p2.typname as arraytype,

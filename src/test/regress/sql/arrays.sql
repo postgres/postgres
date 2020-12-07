@@ -34,6 +34,9 @@ INSERT INTO arrtest (a, b[1:2][1:2], c, d, e, f, g)
 INSERT INTO arrtest (a, b[1:2], c, d[1:2])
    VALUES ('{}', '{3,4}', '{foo,bar}', '{bar,foo}');
 
+INSERT INTO arrtest (b[2]) VALUES(now());  -- error, type mismatch
+
+INSERT INTO arrtest (b[1:2]) VALUES(now());  -- error, type mismatch
 
 SELECT * FROM arrtest;
 
@@ -122,6 +125,8 @@ UPDATE arrtest
 UPDATE arrtest
   SET c[1:NULL] = '{"can''t assign"}'
   WHERE array_dims(c) is not null;
+-- Un-subscriptable type
+SELECT (now())[1];
 
 -- test slices with empty lower and/or upper index
 CREATE TEMP TABLE arrtest_s (

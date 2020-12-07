@@ -26,6 +26,16 @@ INSERT INTO arrtest (a, b[1:2][1:2], c, d, e, f, g)
            '{"abc","abcde"}', '{"abc","abcde"}');
 INSERT INTO arrtest (a, b[1:2], c, d[1:2])
    VALUES ('{}', '{3,4}', '{foo,bar}', '{bar,foo}');
+INSERT INTO arrtest (b[2]) VALUES(now());  -- error, type mismatch
+ERROR:  array assignment to "b" requires type integer but expression is of type timestamp with time zone
+LINE 1: INSERT INTO arrtest (b[2]) VALUES(now());
+                             ^
+HINT:  You will need to rewrite or cast the expression.
+INSERT INTO arrtest (b[1:2]) VALUES(now());  -- error, type mismatch
+ERROR:  array assignment to "b" requires type integer[] but expression is of type timestamp with time zone
+LINE 1: INSERT INTO arrtest (b[1:2]) VALUES(now());
+                             ^
+HINT:  You will need to rewrite or cast the expression.
 SELECT * FROM arrtest;
       a      |        b        |     c     |       d       |        e        |        f        |      g      
 -------------+-----------------+-----------+---------------+-----------------+-----------------+-------------
@@ -225,6 +235,9 @@ UPDATE arrtest
   SET c[1:NULL] = '{"can''t assign"}'
   WHERE array_dims(c) is not null;
 ERROR:  array subscript in assignment must not be null
+-- Un-subscriptable type
+SELECT (now())[1];
+ERROR:  cannot subscript type timestamp with time zone because it is not an array
 -- test slices with empty lower and/or upper index
 CREATE TEMP TABLE arrtest_s (
   a       int2[],

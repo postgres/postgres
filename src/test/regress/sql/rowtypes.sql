@@ -63,6 +63,10 @@ select * from people;
 
 insert into quadtable (f1, q.c1.r, q.c2.i) values(44,55,66);
 
+update quadtable set q.c1.r = 12 where f1 = 2;
+
+update quadtable set q.c1 = 12;  -- error, type mismatch
+
 select * from quadtable;
 
 -- The object here is to ensure that toasted references inside
