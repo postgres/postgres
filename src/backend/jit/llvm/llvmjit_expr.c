@@ -84,7 +84,6 @@ llvm_compile_expr(ExprState *state)
 
 	LLVMBuilderRef b;
 	LLVMModuleRef mod;
-	LLVMTypeRef eval_sig;
 	LLVMValueRef eval_fn;
 	LLVMBasicBlockRef entry;
 	LLVMBasicBlockRef *opblocks;
@@ -149,19 +148,9 @@ llvm_compile_expr(ExprState *state)
 
 	funcname = llvm_expand_funcname(context, "evalexpr");
 
-	/* Create the signature and function */
-	{
-		LLVMTypeRef param_types[3];
-
-		param_types[0] = l_ptr(StructExprState);	/* state */
-		param_types[1] = l_ptr(StructExprContext);	/* econtext */
-		param_types[2] = l_ptr(TypeStorageBool);	/* isnull */
-
-		eval_sig = LLVMFunctionType(TypeSizeT,
-									param_types, lengthof(param_types),
-									false);
-	}
-	eval_fn = LLVMAddFunction(mod, funcname, eval_sig);
+	/* create function */
+	eval_fn = LLVMAddFunction(mod, funcname,
+							  llvm_pg_var_func_type("TypeExprStateEvalFunc"));
 	LLVMSetLinkage(eval_fn, LLVMExternalLinkage);
 	LLVMSetVisibility(eval_fn, LLVMDefaultVisibility);
 	llvm_copy_attributes(AttributeTemplate, eval_fn);
@@ -1086,24 +1075,16 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_PARAM_CALLBACK:
 				{
-					LLVMTypeRef param_types[3];
-					LLVMValueRef v_params[3];
 					LLVMTypeRef v_functype;
 					LLVMValueRef v_func;
+					LLVMValueRef v_params[3];
 
-					param_types[0] = l_ptr(StructExprState);
-					param_types[1] = l_ptr(TypeSizeT);
-					param_types[2] = l_ptr(StructExprContext);
-
-					v_functype = LLVMFunctionType(LLVMVoidType(),
-												  param_types,
-												  lengthof(param_types),
-												  false);
+					v_functype = llvm_pg_var_func_type("TypeExecEvalSubroutine");
 					v_func = l_ptr_const(op->d.cparam.paramfunc,
-										 l_ptr(v_functype));
+										 LLVMPointerType(v_functype, 0));
 
 					v_params[0] = v_state;
-					v_params[1] = l_ptr_const(op, l_ptr(TypeSizeT));
+					v_params[1] = l_ptr_const(op, l_ptr(StructExprEvalStep));
 					v_params[2] = v_econtext;
 					LLVMBuildCall(b,
 								  v_func,

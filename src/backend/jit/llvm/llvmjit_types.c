@@ -48,6 +48,8 @@
 PGFunction	TypePGFunction;
 size_t		TypeSizeT;
 bool		TypeStorageBool;
+ExprStateEvalFunc TypeExprStateEvalFunc;
+ExecEvalSubroutine TypeExecEvalSubroutine;
 
 NullableDatum StructNullableDatum;
 AggState	StructAggState;
