@@ -10810,79 +10810,47 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	bool		typdefault_is_literal = false;
 
 	/* Fetch type-specific details */
-	if (fout->remoteVersion >= 90100)
-	{
-		appendPQExpBuffer(query, "SELECT typlen, "
-						  "typinput, typoutput, typreceive, typsend, "
-						  "typmodin, typmodout, typanalyze, "
-						  "typreceive::pg_catalog.oid AS typreceiveoid, "
-						  "typsend::pg_catalog.oid AS typsendoid, "
-						  "typmodin::pg_catalog.oid AS typmodinoid, "
-						  "typmodout::pg_catalog.oid AS typmodoutoid, "
-						  "typanalyze::pg_catalog.oid AS typanalyzeoid, "
-						  "typcategory, typispreferred, "
-						  "typdelim, typbyval, typalign, typstorage, "
-						  "(typcollation <> 0) AS typcollatable, "
-						  "pg_catalog.pg_get_expr(typdefaultbin, 0) AS typdefaultbin, typdefault "
-						  "FROM pg_catalog.pg_type "
-						  "WHERE oid = '%u'::pg_catalog.oid",
-						  tyinfo->dobj.catId.oid);
-	}
-	else if (fout->remoteVersion >= 80400)
-	{
-		appendPQExpBuffer(query, "SELECT typlen, "
-						  "typinput, typoutput, typreceive, typsend, "
-						  "typmodin, typmodout, typanalyze, "
-						  "typreceive::pg_catalog.oid AS typreceiveoid, "
-						  "typsend::pg_catalog.oid AS typsendoid, "
-						  "typmodin::pg_catalog.oid AS typmodinoid, "
-						  "typmodout::pg_catalog.oid AS typmodoutoid, "
-						  "typanalyze::pg_catalog.oid AS typanalyzeoid, "
-						  "typcategory, typispreferred, "
-						  "typdelim, typbyval, typalign, typstorage, "
-						  "false AS typcollatable, "
-						  "pg_catalog.pg_get_expr(typdefaultbin, 0) AS typdefaultbin, typdefault "
-						  "FROM pg_catalog.pg_type "
-						  "WHERE oid = '%u'::pg_catalog.oid",
-						  tyinfo->dobj.catId.oid);
-	}
-	else if (fout->remoteVersion >= 80300)
-	{
-		/* Before 8.4, pg_get_expr does not allow 0 for its second arg */
-		appendPQExpBuffer(query, "SELECT typlen, "
-						  "typinput, typoutput, typreceive, typsend, "
-						  "typmodin, typmodout, typanalyze, "
-						  "typreceive::pg_catalog.oid AS typreceiveoid, "
-						  "typsend::pg_catalog.oid AS typsendoid, "
-						  "typmodin::pg_catalog.oid AS typmodinoid, "
-						  "typmodout::pg_catalog.oid AS typmodoutoid, "
-						  "typanalyze::pg_catalog.oid AS typanalyzeoid, "
-						  "'U' AS typcategory, false AS typispreferred, "
-						  "typdelim, typbyval, typalign, typstorage, "
-						  "false AS typcollatable, "
-						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin, typdefault "
-						  "FROM pg_catalog.pg_type "
-						  "WHERE oid = '%u'::pg_catalog.oid",
-						  tyinfo->dobj.catId.oid);
-	}
+	appendPQExpBufferStr(query, "SELECT typlen, "
+						 "typinput, typoutput, typreceive, typsend, "
+						 "typreceive::pg_catalog.oid AS typreceiveoid, "
+						 "typsend::pg_catalog.oid AS typsendoid, "
+						 "typanalyze, "
+						 "typanalyze::pg_catalog.oid AS typanalyzeoid, "
+						 "typdelim, typbyval, typalign, typstorage, ");
+
+	if (fout->remoteVersion >= 80300)
+		appendPQExpBufferStr(query,
+							 "typmodin, typmodout, "
+							 "typmodin::pg_catalog.oid AS typmodinoid, "
+							 "typmodout::pg_catalog.oid AS typmodoutoid, ");
 	else
-	{
-		appendPQExpBuffer(query, "SELECT typlen, "
-						  "typinput, typoutput, typreceive, typsend, "
-						  "'-' AS typmodin, '-' AS typmodout, "
-						  "typanalyze, "
-						  "typreceive::pg_catalog.oid AS typreceiveoid, "
-						  "typsend::pg_catalog.oid AS typsendoid, "
-						  "0 AS typmodinoid, 0 AS typmodoutoid, "
-						  "typanalyze::pg_catalog.oid AS typanalyzeoid, "
-						  "'U' AS typcategory, false AS typispreferred, "
-						  "typdelim, typbyval, typalign, typstorage, "
-						  "false AS typcollatable, "
-						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin, typdefault "
-						  "FROM pg_catalog.pg_type "
-						  "WHERE oid = '%u'::pg_catalog.oid",
-						  tyinfo->dobj.catId.oid);
-	}
+		appendPQExpBufferStr(query,
+							 "'-' AS typmodin, '-' AS typmodout, "
+							 "0 AS typmodinoid, 0 AS typmodoutoid, ");
+
+	if (fout->remoteVersion >= 80400)
+		appendPQExpBufferStr(query,
+							 "typcategory, typispreferred, ");
+	else
+		appendPQExpBufferStr(query,
+							 "'U' AS typcategory, false AS typispreferred, ");
+
+	if (fout->remoteVersion >= 90100)
+		appendPQExpBufferStr(query, "(typcollation <> 0) AS typcollatable, ");
+	else
+		appendPQExpBufferStr(query, "false AS typcollatable, ");
+
+	/* Before 8.4, pg_get_expr does not allow 0 for its second arg */
+	if (fout->remoteVersion >= 80400)
+		appendPQExpBufferStr(query,
+							 "pg_catalog.pg_get_expr(typdefaultbin, 0) AS typdefaultbin, typdefault ");
+	else
+		appendPQExpBufferStr(query,
+							 "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin, typdefault ");
+
+	appendPQExpBuffer(query, "FROM pg_catalog.pg_type "
+					  "WHERE oid = '%u'::pg_catalog.oid",
+					  tyinfo->dobj.catId.oid);
 
 	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
