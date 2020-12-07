@@ -484,14 +484,6 @@ if test "$GCC" = yes -a "$ICC" = no; then
   CXXFLAGS="-Wall -Wpointer-arith"
   # These work in some but not all gcc versions
   save_CFLAGS=$CFLAGS
-  PGAC_PROG_CC_CFLAGS_OPT([-Wdeclaration-after-statement])
-  # -Wdeclaration-after-statement isn't applicable for C++.  Specific C files
-  # disable it, so AC_SUBST the negative form.
-  PERMIT_DECLARATION_AFTER_STATEMENT=
-  if test x"$save_CFLAGS" != x"$CFLAGS"; then
-    PERMIT_DECLARATION_AFTER_STATEMENT=-Wno-declaration-after-statement
-  fi
-  AC_SUBST(PERMIT_DECLARATION_AFTER_STATEMENT)
   # Really don't want VLAs to be used in our dialect of C
   PGAC_PROG_CC_CFLAGS_OPT([-Werror=vla])
   # On macOS, complain about usage of symbols newer than the deployment target
