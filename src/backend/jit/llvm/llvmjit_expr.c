@@ -151,7 +151,7 @@ llvm_compile_expr(ExprState *state)
 
 		param_types[0] = l_ptr(StructExprState);	/* state */
 		param_types[1] = l_ptr(StructExprContext);	/* econtext */
-		param_types[2] = l_ptr(TypeParamBool);	/* isnull */
+		param_types[2] = l_ptr(TypeStorageBool);	/* isnull */
 
 		eval_sig = LLVMFunctionType(TypeSizeT,
 									param_types, lengthof(param_types),
@@ -258,8 +258,6 @@ llvm_compile_expr(ExprState *state)
 
 					v_tmpvalue = LLVMBuildLoad(b, v_tmpvaluep, "");
 					v_tmpisnull = LLVMBuildLoad(b, v_tmpisnullp, "");
-					v_tmpisnull =
-						LLVMBuildTrunc(b, v_tmpisnull, TypeParamBool, "");
 
 					LLVMBuildStore(b, v_tmpisnull, v_isnullp);
 
