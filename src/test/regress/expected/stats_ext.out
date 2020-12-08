@@ -1594,13 +1594,13 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_partial WHERE a = 0 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_partial WHERE (a = 0 AND b = 0 AND c = 0) OR (a = 1 AND b = 1 AND c = 1) OR (a = 2 AND b = 2 AND c = 2)');
  estimated | actual 
 -----------+--------
-       300 |    306
+       306 |    306
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_partial WHERE (a = 0 AND b = 0) OR (a = 0 AND c = 0) OR (b = 0 AND c = 0)');
  estimated | actual 
 -----------+--------
-       306 |    102
+       108 |    102
 (1 row)
 
 DROP TABLE mcv_lists_partial;

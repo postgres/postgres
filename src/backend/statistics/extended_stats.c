@@ -1174,6 +1174,31 @@ statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
 	RestrictInfo *rinfo = (RestrictInfo *) clause;
 	Oid			userid;
 
+	/*
+	 * Special-case handling for bare BoolExpr AND clauses, because the
+	 * restrictinfo machinery doesn't build RestrictInfos on top of AND
+	 * clauses.
+	 */
+	if (is_andclause(clause))
+	{
+		BoolExpr   *expr = (BoolExpr *) clause;
+		ListCell   *lc;
+
+		/*
+		 * Check that each sub-clause is compatible.  We expect these to be
+		 * RestrictInfos.
+		 */
+		foreach(lc, expr->args)
+		{
+			if (!statext_is_compatible_clause(root, (Node *) lfirst(lc),
+											  relid, attnums))
+				return false;
+		}
+
+		return true;
+	}
+
+	/* Otherwise it must be a RestrictInfo. */
 	if (!IsA(rinfo, RestrictInfo))
 		return false;
 

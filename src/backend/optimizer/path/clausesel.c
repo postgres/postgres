@@ -538,7 +538,28 @@ find_single_rel_for_clauses(PlannerInfo *root, List *clauses)
 		 * However, currently the extended-stats machinery won't do anything
 		 * with non-RestrictInfo clauses anyway, so there's no point in
 		 * spending extra cycles; just fail if that's what we have.
+		 *
+		 * An exception to that rule is if we have a bare BoolExpr AND clause.
+		 * We treat this as a special case because the restrictinfo machinery
+		 * doesn't build RestrictInfos on top of AND clauses.
 		 */
+		if (is_andclause(rinfo))
+		{
+			RelOptInfo *rel;
+
+			rel = find_single_rel_for_clauses(root,
+											  ((BoolExpr *) rinfo)->args);
+
+			if (rel == NULL)
+				return NULL;
+			if (lastrelid == 0)
+				lastrelid = rel->relid;
+			else if (rel->relid != lastrelid)
+				return NULL;
+
+			continue;
+		}
+
 		if (!IsA(rinfo, RestrictInfo))
 			return NULL;
 
