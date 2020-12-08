@@ -1167,6 +1167,14 @@ SELECT '52093.89'::money::numeric::float8;
    </para>
 
    <para>
+    The characters that can be stored in any of these data types are
+    determined by the database character set, which is selected when
+    the database is created.  Regardless of the specific character set,
+    the character with code zero (sometimes called NUL) cannot be stored.
+    For more information refer to <xref linkend="multibyte"/>.
+   </para>
+
+   <para>
     The storage requirement for a short string (up to 126 bytes) is 1 byte
     plus the actual string, which includes the space padding in the case of
     <type>character</type>.  Longer strings have 4 bytes of overhead instead
@@ -1203,10 +1211,7 @@ SELECT '52093.89'::money::numeric::float8;
    <para>
     Refer to <xref linkend="sql-syntax-strings"/> for information about
     the syntax of string literals, and to <xref linkend="functions"/>
-    for information about available operators and functions. The
-    database character set determines the character set used to store
-    textual values; for more information on character set support,
-    refer to <xref linkend="multibyte"/>.
+    for information about available operators and functions.
    </para>
 
    <example>
