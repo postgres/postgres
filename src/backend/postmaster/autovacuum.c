@@ -328,6 +328,10 @@ static void FreeWorkerInfo(int code, Datum arg);
 static autovac_table *table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 											TupleDesc pg_class_desc,
 											int effective_multixact_freeze_max_age);
+static void recheck_relation_needs_vacanalyze(Oid relid, AutoVacOpts *avopts,
+											  Form_pg_class classForm,
+											  int effective_multixact_freeze_max_age,
+											  bool *dovacuum, bool *doanalyze, bool *wraparound);
 static void relation_needs_vacanalyze(Oid relid, AutoVacOpts *relopts,
 									  Form_pg_class classForm,
 									  PgStat_StatTabEntry *tabentry,
@@ -2797,17 +2801,9 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 	bool		dovacuum;
 	bool		doanalyze;
 	autovac_table *tab = NULL;
-	PgStat_StatTabEntry *tabentry;
-	PgStat_StatDBEntry *shared;
-	PgStat_StatDBEntry *dbentry;
 	bool		wraparound;
 	AutoVacOpts *avopts;
-
-	/* use fresh stats */
-	autovac_refresh_stats();
-
-	shared = pgstat_fetch_stat_dbentry(InvalidOid);
-	dbentry = pgstat_fetch_stat_dbentry(MyDatabaseId);
+	static bool reuse_stats = false;
 
 	/* fetch the relation's relcache entry */
 	classTup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relid));
@@ -2831,17 +2827,38 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 			avopts = &hentry->ar_reloptions;
 	}
 
-	/* fetch the pgstat table entry */
-	tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
-										 shared, dbentry);
+	/*
+	 * Reuse the stats to recheck whether a relation needs to be vacuumed or
+	 * analyzed if it was reloaded before and has not been cleared yet. This
+	 * is necessary to avoid frequent refresh of stats, especially when there
+	 * are very large number of relations and the refresh can cause lots of
+	 * overhead.
+	 *
+	 * If we determined that a relation needs to be vacuumed or analyzed,
+	 * based on the old stats, we refresh stats and recheck the necessity
+	 * again. Because a relation may have already been vacuumed or analyzed by
+	 * someone since the last reload of stats.
+	 */
+	if (reuse_stats)
+	{
+		recheck_relation_needs_vacanalyze(relid, avopts, classForm,
+										  effective_multixact_freeze_max_age,
+										  &dovacuum, &doanalyze, &wraparound);
 
-	relation_needs_vacanalyze(relid, avopts, classForm, tabentry,
-							  effective_multixact_freeze_max_age,
-							  &dovacuum, &doanalyze, &wraparound);
+		/* Quick exit if a relation doesn't need to be vacuumed or analyzed */
+		if (!doanalyze && !dovacuum)
+		{
+			heap_freetuple(classTup);
+			return NULL;
+		}
+	}
 
-	/* ignore ANALYZE for toast tables */
-	if (classForm->relkind == RELKIND_TOASTVALUE)
-		doanalyze = false;
+	/* Use fresh stats and recheck again */
+	autovac_refresh_stats();
+
+	recheck_relation_needs_vacanalyze(relid, avopts, classForm,
+									  effective_multixact_freeze_max_age,
+									  &dovacuum, &doanalyze, &wraparound);
 
 	/* OK, it needs something done */
 	if (doanalyze || dovacuum)
@@ -2929,11 +2946,64 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		tab->at_dobalance =
 			!(avopts && (avopts->vacuum_cost_limit > 0 ||
 						 avopts->vacuum_cost_delay > 0));
+
+		/*
+		 * When we decide to do vacuum or analyze, the existing stats cannot
+		 * be reused in the next cycle because it's cleared at the end of
+		 * vacuum or analyze (by AtEOXact_PgStat()).
+		 */
+		reuse_stats = false;
+	}
+	else
+	{
+		/*
+		 * If neither vacuum nor analyze is necessary, the existing stats is
+		 * not cleared and can be reused in the next cycle.
+		 */
+		reuse_stats = true;
 	}
 
 	heap_freetuple(classTup);
-
 	return tab;
+}
+
+/*
+ * recheck_relation_needs_vacanalyze
+ *
+ * Subroutine for table_recheck_autovac.
+ *
+ * Fetch the pgstat of a relation and recheck whether a relation
+ * needs to be vacuumed or analyzed.
+ */
+static void
+recheck_relation_needs_vacanalyze(Oid relid,
+								  AutoVacOpts *avopts,
+								  Form_pg_class classForm,
+								  int effective_multixact_freeze_max_age,
+								  bool *dovacuum,
+								  bool *doanalyze,
+								  bool *wraparound)
+{
+	PgStat_StatTabEntry *tabentry;
+	PgStat_StatDBEntry *shared = NULL;
+	PgStat_StatDBEntry *dbentry = NULL;
+
+	if (classForm->relisshared)
+		shared = pgstat_fetch_stat_dbentry(InvalidOid);
+	else
+		dbentry = pgstat_fetch_stat_dbentry(MyDatabaseId);
+
+	/* fetch the pgstat table entry */
+	tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
+										 shared, dbentry);
+
+	relation_needs_vacanalyze(relid, avopts, classForm, tabentry,
+							  effective_multixact_freeze_max_age,
+							  dovacuum, doanalyze, wraparound);
+
+	/* ignore ANALYZE for toast tables */
+	if (classForm->relkind == RELKIND_TOASTVALUE)
+		*doanalyze = false;
 }
 
 /*
