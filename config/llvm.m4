@@ -76,6 +76,7 @@ AC_DEFUN([PGAC_LLVM_SUPPORT],
       debuginfodwarf) pgac_components="$pgac_components $pgac_component";;
       orcjit) pgac_components="$pgac_components $pgac_component";;
       passes) pgac_components="$pgac_components $pgac_component";;
+      native) pgac_components="$pgac_components $pgac_component";;
       perfjitevents) pgac_components="$pgac_components $pgac_component";;
     esac
   done;
