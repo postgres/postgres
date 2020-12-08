@@ -59,7 +59,6 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/gramparse.h"
 #include "parser/parser.h"
-#include "parser/parse_expr.h"
 #include "storage/lmgr.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
@@ -13461,28 +13460,6 @@ c_expr:		columnref								{ $$ = $1; }
 						n->indirection = check_indirection($4, yyscanner);
 						$$ = (Node *)n;
 					}
-					else if (operator_precedence_warning)
-					{
-						/*
-						 * If precedence warnings are enabled, insert
-						 * AEXPR_PAREN nodes wrapping all explicitly
-						 * parenthesized subexpressions; this prevents bogus
-						 * warnings from being issued when the ordering has
-						 * been forced by parentheses.  Take care that an
-						 * AEXPR_PAREN node has the same exprLocation as its
-						 * child, so as not to cause surprising changes in
-						 * error cursor positioning.
-						 *
-						 * In principle we should not be relying on a GUC to
-						 * decide whether to insert AEXPR_PAREN nodes.
-						 * However, since they have no effect except to
-						 * suppress warnings, it's probably safe enough; and
-						 * we'd just as soon not waste cycles on dummy parse
-						 * nodes if we don't have to.
-						 */
-						$$ = (Node *) makeA_Expr(AEXPR_PAREN, NIL, $2, NULL,
-												 exprLocation($2));
-					}
 					else
 						$$ = $2;
 				}
@@ -16516,16 +16493,10 @@ doNegateFloat(Value *v)
 static Node *
 makeAndExpr(Node *lexpr, Node *rexpr, int location)
 {
-	Node	   *lexp = lexpr;
-
-	/* Look through AEXPR_PAREN nodes so they don't affect flattening */
-	while (IsA(lexp, A_Expr) &&
-		   ((A_Expr *) lexp)->kind == AEXPR_PAREN)
-		lexp = ((A_Expr *) lexp)->lexpr;
 	/* Flatten "a AND b AND c ..." to a single BoolExpr on sight */
-	if (IsA(lexp, BoolExpr))
+	if (IsA(lexpr, BoolExpr))
 	{
-		BoolExpr *blexpr = (BoolExpr *) lexp;
+		BoolExpr *blexpr = (BoolExpr *) lexpr;
 
 		if (blexpr->boolop == AND_EXPR)
 		{
@@ -16539,16 +16510,10 @@ makeAndExpr(Node *lexpr, Node *rexpr, int location)
 static Node *
 makeOrExpr(Node *lexpr, Node *rexpr, int location)
 {
-	Node	   *lexp = lexpr;
-
-	/* Look through AEXPR_PAREN nodes so they don't affect flattening */
-	while (IsA(lexp, A_Expr) &&
-		   ((A_Expr *) lexp)->kind == AEXPR_PAREN)
-		lexp = ((A_Expr *) lexp)->lexpr;
 	/* Flatten "a OR b OR c ..." to a single BoolExpr on sight */
-	if (IsA(lexp, BoolExpr))
+	if (IsA(lexpr, BoolExpr))
 	{
-		BoolExpr *blexpr = (BoolExpr *) lexp;
+		BoolExpr *blexpr = (BoolExpr *) lexpr;
 
 		if (blexpr->boolop == OR_EXPR)
 		{

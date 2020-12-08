@@ -1121,11 +1121,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
      cases, these changes will result in no behavioral change, or perhaps
      in <quote>no such operator</quote> failures which can be resolved by adding
      parentheses.  However there are corner cases in which a query might
-     change behavior without any parsing error being reported.  If you are
-     concerned about whether these changes have silently broken something,
-     you can test your application with the configuration
-     parameter <xref linkend="guc-operator-precedence-warning"/> turned on
-     to see if any warnings are logged.
+     change behavior without any parsing error being reported.
     </para>
    </note>
   </sect2>

@@ -3264,9 +3264,6 @@ _outAExpr(StringInfo str, const A_Expr *node)
 			appendStringInfoString(str, " NOT_BETWEEN_SYM ");
 			WRITE_NODE_FIELD(name);
 			break;
-		case AEXPR_PAREN:
-			appendStringInfoString(str, " PAREN");
-			break;
 		default:
 			appendStringInfoString(str, " ??");
 			break;

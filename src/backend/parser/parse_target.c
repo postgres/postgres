@@ -1755,11 +1755,6 @@ FigureColnameInternal(Node *node, char **name)
 				*name = "nullif";
 				return 2;
 			}
-			if (((A_Expr *) node)->kind == AEXPR_PAREN)
-			{
-				/* look through dummy parenthesis node */
-				return FigureColnameInternal(((A_Expr *) node)->lexpr, name);
-			}
 			break;
 		case T_TypeCast:
 			strength = FigureColnameInternal(((TypeCast *) node)->arg,
