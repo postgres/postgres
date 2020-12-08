@@ -720,9 +720,11 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
      <para>
       The <literal>UNIQUE</literal> constraint specifies that a
       group of one or more columns of a table can contain
-      only unique values. The behavior of the unique table constraint
-      is the same as that for column constraints, with the additional
-      capability to span multiple columns.
+      only unique values. The behavior of a unique table constraint
+      is the same as that of a unique column constraint, with the
+      additional capability to span multiple columns.  The constraint
+      therefore enforces that any two rows must differ in at least one
+      of these columns.
      </para>
 
      <para>
@@ -731,10 +733,10 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
      </para>
 
      <para>
-      Each unique table constraint must name a set of columns that is
+      Each unique constraint should name a set of columns that is
       different from the set of columns named by any other unique or
-      primary key constraint defined for the table.  (Otherwise it
-      would just be the same constraint listed twice.)
+      primary key constraint defined for the table.  (Otherwise, redundant
+      unique constraints will be discarded.)
      </para>
     </listitem>
    </varlistentry>
@@ -759,10 +761,16 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
 
      <para>
       <literal>PRIMARY KEY</literal> enforces the same data constraints as
-      a combination of <literal>UNIQUE</> and <literal>NOT NULL</>, but
+      a combination of <literal>UNIQUE</> and <literal>NOT NULL</>.  However,
       identifying a set of columns as the primary key also provides metadata
       about the design of the schema, since a primary key implies that other
       tables can rely on this set of columns as a unique identifier for rows.
+     </para>
+
+     <para>
+      Adding a <literal>PRIMARY KEY</literal> constraint will automatically
+      create a unique btree index on the column or group of columns used in the
+      constraint.
      </para>
     </listitem>
    </varlistentry>
