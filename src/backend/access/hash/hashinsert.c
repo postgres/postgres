@@ -50,14 +50,15 @@ _hash_doinsert(Relation rel, IndexTuple itup, Relation heapRel)
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
-restart_insert:
-
 	/*
 	 * Read the metapage.  We don't lock it yet; HashMaxItemSize() will
 	 * examine pd_pagesize_version, but that can't change so we can examine it
 	 * without a lock.
 	 */
-	Buffer		metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_NOLOCK, LH_META_PAGE);
+	Buffer		metabuf;
+restart_insert:
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_NOLOCK, LH_META_PAGE);
+
 	Page		metapage = BufferGetPage(metabuf);
 
 	/*

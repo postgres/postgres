@@ -1030,9 +1030,9 @@ btvacuumpage(BTVacState *vstate, BlockNumber scanblkno)
 
 	blkno = scanblkno;
 
+	bool		attempt_pagedel;
 backtrack:
-
-	bool		attempt_pagedel = false;
+	attempt_pagedel = false;
 	backtrack_to = P_NONE;
 
 	/* call vacuum_delay_point while not holding any buffer lock */

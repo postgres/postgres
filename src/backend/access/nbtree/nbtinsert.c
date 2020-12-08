@@ -151,15 +151,14 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 	insertstate.bounds_valid = false;
 	insertstate.buf = InvalidBuffer;
 	insertstate.postingoff = 0;
-
-search:
-
 	/*
 	 * Find and lock the leaf page that the tuple should be added to by
 	 * searching from the root page.  insertstate.buf will hold a buffer that
 	 * is locked in exclusive mode afterwards.
 	 */
-	BTStack		stack = _bt_search_insert(rel, &insertstate);
+	BTStack		stack;
+search:
+	stack = _bt_search_insert(rel, &insertstate);
 
 	/*
 	 * checkingunique inserts are not allowed to go ahead when two tuples with
