@@ -1602,7 +1602,6 @@ contain_leaked_vars_walker(Node *node, void *context)
 		case T_Var:
 		case T_Const:
 		case T_Param:
-		case T_ArrayRef:
 		case T_ArrayExpr:
 		case T_FieldSelect:
 		case T_FieldStore:
@@ -1641,6 +1640,23 @@ contain_leaked_vars_walker(Node *node, void *context)
 										context) &&
 				contain_var_clause(node))
 				return true;
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef *aref = (ArrayRef *) node;
+
+				/*
+				 * array assignment is leaky, but subscripted fetches
+				 * are not
+				 */
+				if (aref->refassgnexpr != NULL)
+				{
+					/* Node is leaky, so reject if it contains Vars */
+					if (contain_var_clause(node))
+						return true;
+				}
+			}
 			break;
 
 		case T_RowCompareExpr:
