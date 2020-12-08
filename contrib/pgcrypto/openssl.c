@@ -114,16 +114,24 @@ static unsigned
 digest_result_size(PX_MD *h)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
+	int			result = EVP_MD_CTX_size(digest->ctx);
 
-	return EVP_MD_CTX_size(digest->ctx);
+	if (result < 0)
+		elog(ERROR, "EVP_MD_CTX_size() failed");
+
+	return result;
 }
 
 static unsigned
 digest_block_size(PX_MD *h)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
+	int			result = EVP_MD_CTX_block_size(digest->ctx);
 
-	return EVP_MD_CTX_block_size(digest->ctx);
+	if (result < 0)
+		elog(ERROR, "EVP_MD_CTX_block_size() failed");
+
+	return result;
 }
 
 static void
@@ -131,7 +139,8 @@ digest_reset(PX_MD *h)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
-	EVP_DigestInit_ex(digest->ctx, digest->algo, NULL);
+	if (!EVP_DigestInit_ex(digest->ctx, digest->algo, NULL))
+		elog(ERROR, "EVP_DigestInit_ex() failed");
 }
 
 static void
@@ -139,7 +148,8 @@ digest_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
-	EVP_DigestUpdate(digest->ctx, data, dlen);
+	if (!EVP_DigestUpdate(digest->ctx, data, dlen))
+		elog(ERROR, "EVP_DigestUpdate() failed");
 }
 
 static void
@@ -147,7 +157,8 @@ digest_finish(PX_MD *h, uint8 *dst)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
-	EVP_DigestFinal_ex(digest->ctx, dst, NULL);
+	if (!EVP_DigestFinal_ex(digest->ctx, dst, NULL))
+		elog(ERROR, "EVP_DigestFinal_ex() failed");
 }
 
 static void
