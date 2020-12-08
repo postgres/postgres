@@ -1706,7 +1706,7 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_multi WHERE (a = 0 A
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_multi WHERE a = 0 OR b = 0 OR c = 0 OR d = 0');
  estimated | actual 
 -----------+--------
-      1714 |   1572
+      1571 |   1572
 (1 row)
 
 DROP TABLE mcv_lists_multi;

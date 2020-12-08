@@ -1356,17 +1356,19 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 		if (is_or)
 		{
 			bool	   *or_matches = NULL;
-			Selectivity simple_or_sel = 0.0;
+			Selectivity simple_or_sel = 0.0,
+						stat_sel = 0.0;
 			MCVList    *mcv_list;
 
 			/* Load the MCV list stored in the statistics object */
 			mcv_list = statext_mcv_load(stat->statOid);
 
 			/*
-			 * Compute the selectivity of the ORed list of clauses by
-			 * estimating each in turn and combining them using the formula
-			 * P(A OR B) = P(A) + P(B) - P(A AND B).  This allows us to use
-			 * the multivariate MCV stats to better estimate each term.
+			 * Compute the selectivity of the ORed list of clauses covered by
+			 * this statistics object by estimating each in turn and combining
+			 * them using the formula P(A OR B) = P(A) + P(B) - P(A AND B).
+			 * This allows us to use the multivariate MCV stats to better
+			 * estimate the individual terms and their overlap.
 			 *
 			 * Each time we iterate this formula, the clause "A" above is
 			 * equal to all the clauses processed so far, combined with "OR".
@@ -1437,12 +1439,19 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 														overlap_basesel,
 														mcv_totalsel);
 
-				/* Factor these into the overall result */
-				sel += clause_sel - overlap_sel;
-				CLAMP_PROBABILITY(sel);
+				/* Factor these into the result for this statistics object */
+				stat_sel += clause_sel - overlap_sel;
+				CLAMP_PROBABILITY(stat_sel);
 
 				listidx++;
 			}
+
+			/*
+			 * Factor the result for this statistics object into the overall
+			 * result.  We treat the results from each separate statistics
+			 * object as independent of one another.
+			 */
+			sel = sel + stat_sel - sel * stat_sel;
 		}
 		else					/* Implicitly-ANDed list of clauses */
 		{
