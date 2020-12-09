@@ -105,6 +105,23 @@ get_code_entry(pg_wchar code)
 #endif
 }
 
+/*
+ * Get the combining class of the given codepoint.
+ */
+static uint8
+get_canonical_class(pg_wchar code)
+{
+	const pg_unicode_decomposition *entry = get_code_entry(code);
+
+	/*
+	 * If no entries are found, the character used is either an Hangul
+	 * character or a character with a class of 0 and no decompositions.
+	 */
+	if (!entry)
+		return 0;
+	else
+		return entry->comb_class;
+}
 
 /*
  * Given a decomposition entry looked up earlier, get the decomposed
@@ -430,16 +447,8 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 		pg_wchar	prev = decomp_chars[count - 1];
 		pg_wchar	next = decomp_chars[count];
 		pg_wchar	tmp;
-		const pg_unicode_decomposition *prevEntry = get_code_entry(prev);
-		const pg_unicode_decomposition *nextEntry = get_code_entry(next);
-
-		/*
-		 * If no entries are found, the character used is either an Hangul
-		 * character or a character with a class of 0 and no decompositions,
-		 * so move to next result.
-		 */
-		if (prevEntry == NULL || nextEntry == NULL)
-			continue;
+		const uint8 prevClass = get_canonical_class(prev);
+		const uint8 nextClass = get_canonical_class(next);
 
 		/*
 		 * Per Unicode (https://www.unicode.org/reports/tr15/tr15-18.html)
@@ -449,10 +458,10 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 		 * combining class for the second, and the second is not a starter.  A
 		 * character is a starter if its combining class is 0.
 		 */
-		if (nextEntry->comb_class == 0x0 || prevEntry->comb_class == 0x0)
+		if (prevClass == 0 || nextClass == 0)
 			continue;
 
-		if (prevEntry->comb_class <= nextEntry->comb_class)
+		if (prevClass <= nextClass)
 			continue;
 
 		/* exchange can happen */
@@ -489,8 +498,7 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 	for (count = 1; count < decomp_size; count++)
 	{
 		pg_wchar	ch = decomp_chars[count];
-		const pg_unicode_decomposition *ch_entry = get_code_entry(ch);
-		int			ch_class = (ch_entry == NULL) ? 0 : ch_entry->comb_class;
+		int			ch_class = get_canonical_class(ch);
 		pg_wchar	composite;
 
 		if (last_class < ch_class &&
@@ -526,17 +534,6 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 
 /* We only need this in the backend. */
 #ifndef FRONTEND
-
-static uint8
-get_canonical_class(pg_wchar ch)
-{
-	const pg_unicode_decomposition *entry = get_code_entry(ch);
-
-	if (!entry)
-		return 0;
-	else
-		return entry->comb_class;
-}
 
 static const pg_unicode_normprops *
 qc_hash_lookup(pg_wchar ch, const pg_unicode_norminfo *norminfo)
