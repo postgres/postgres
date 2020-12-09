@@ -1094,23 +1094,56 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
+			case EEOP_SBSREF_SUBSCRIPTS:
+				{
+					int			jumpdone = op->d.sbsref_subscript.jumpdone;
+					LLVMTypeRef v_functype;
+					LLVMValueRef v_func;
+					LLVMValueRef v_params[3];
+					LLVMValueRef v_ret;
+
+					v_functype = llvm_pg_var_func_type("TypeExecEvalBoolSubroutine");
+					v_func = l_ptr_const(op->d.sbsref_subscript.subscriptfunc,
+										 LLVMPointerType(v_functype, 0));
+
+					v_params[0] = v_state;
+					v_params[1] = l_ptr_const(op, l_ptr(StructExprEvalStep));
+					v_params[2] = v_econtext;
+					v_ret = LLVMBuildCall(b,
+										  v_func,
+										  v_params, lengthof(v_params), "");
+					v_ret = LLVMBuildZExt(b, v_ret, TypeStorageBool, "");
+
+					LLVMBuildCondBr(b,
+									LLVMBuildICmp(b, LLVMIntEQ, v_ret,
+												  l_sbool_const(1), ""),
+									opblocks[opno + 1],
+									opblocks[jumpdone]);
+					break;
+				}
+
 			case EEOP_SBSREF_OLD:
-				build_EvalXFunc(b, mod, "ExecEvalSubscriptingRefOld",
-								v_state, op);
-				LLVMBuildBr(b, opblocks[opno + 1]);
-				break;
-
 			case EEOP_SBSREF_ASSIGN:
-				build_EvalXFunc(b, mod, "ExecEvalSubscriptingRefAssign",
-								v_state, op);
-				LLVMBuildBr(b, opblocks[opno + 1]);
-				break;
-
 			case EEOP_SBSREF_FETCH:
-				build_EvalXFunc(b, mod, "ExecEvalSubscriptingRefFetch",
-								v_state, op);
-				LLVMBuildBr(b, opblocks[opno + 1]);
-				break;
+				{
+					LLVMTypeRef v_functype;
+					LLVMValueRef v_func;
+					LLVMValueRef v_params[3];
+
+					v_functype = llvm_pg_var_func_type("TypeExecEvalSubroutine");
+					v_func = l_ptr_const(op->d.sbsref.subscriptfunc,
+										 LLVMPointerType(v_functype, 0));
+
+					v_params[0] = v_state;
+					v_params[1] = l_ptr_const(op, l_ptr(StructExprEvalStep));
+					v_params[2] = v_econtext;
+					LLVMBuildCall(b,
+								  v_func,
+								  v_params, lengthof(v_params), "");
+
+					LLVMBuildBr(b, opblocks[opno + 1]);
+					break;
+				}
 
 			case EEOP_CASE_TESTVAL:
 				{
@@ -1724,23 +1757,6 @@ llvm_compile_expr(ExprState *state)
 								v_state, op, v_econtext);
 				LLVMBuildBr(b, opblocks[opno + 1]);
 				break;
-
-			case EEOP_SBSREF_SUBSCRIPT:
-				{
-					int			jumpdone = op->d.sbsref_subscript.jumpdone;
-					LLVMValueRef v_ret;
-
-					v_ret = build_EvalXFunc(b, mod, "ExecEvalSubscriptingRef",
-											v_state, op);
-					v_ret = LLVMBuildZExt(b, v_ret, TypeStorageBool, "");
-
-					LLVMBuildCondBr(b,
-									LLVMBuildICmp(b, LLVMIntEQ, v_ret,
-												  l_sbool_const(1), ""),
-									opblocks[opno + 1],
-									opblocks[jumpdone]);
-					break;
-				}
 
 			case EEOP_DOMAIN_TESTVAL:
 				{

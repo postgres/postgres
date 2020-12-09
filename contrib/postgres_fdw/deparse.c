@@ -426,23 +426,28 @@ foreign_expr_walker(Node *node,
 					return false;
 
 				/*
-				 * Recurse to remaining subexpressions.  Since the container
-				 * subscripts must yield (noncollatable) integers, they won't
-				 * affect the inner_cxt state.
+				 * Recurse into the remaining subexpressions.  The container
+				 * subscripts will not affect collation of the SubscriptingRef
+				 * result, so do those first and reset inner_cxt afterwards.
 				 */
 				if (!foreign_expr_walker((Node *) sr->refupperindexpr,
 										 glob_cxt, &inner_cxt))
 					return false;
+				inner_cxt.collation = InvalidOid;
+				inner_cxt.state = FDW_COLLATE_NONE;
 				if (!foreign_expr_walker((Node *) sr->reflowerindexpr,
 										 glob_cxt, &inner_cxt))
 					return false;
+				inner_cxt.collation = InvalidOid;
+				inner_cxt.state = FDW_COLLATE_NONE;
 				if (!foreign_expr_walker((Node *) sr->refexpr,
 										 glob_cxt, &inner_cxt))
 					return false;
 
 				/*
-				 * Container subscripting should yield same collation as
-				 * input, but for safety use same logic as for function nodes.
+				 * Container subscripting typically yields same collation as
+				 * refexpr's, but in case it doesn't, use same logic as for
+				 * function nodes.
 				 */
 				collation = sr->refcollid;
 				if (collation == InvalidOid)

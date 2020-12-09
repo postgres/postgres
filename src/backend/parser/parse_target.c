@@ -861,7 +861,7 @@ transformAssignmentIndirection(ParseState *pstate,
 		if (targetIsSubscripting)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("array assignment to \"%s\" requires type %s"
+					 errmsg("subscripted assignment to \"%s\" requires type %s"
 							" but expression is of type %s",
 							targetName,
 							format_type_be(targetTypeId),
@@ -901,26 +901,37 @@ transformAssignmentSubscripts(ParseState *pstate,
 							  int location)
 {
 	Node	   *result;
+	SubscriptingRef *sbsref;
 	Oid			containerType;
 	int32		containerTypMod;
-	Oid			elementTypeId;
 	Oid			typeNeeded;
+	int32		typmodNeeded;
 	Oid			collationNeeded;
 
 	Assert(subscripts != NIL);
 
-	/* Identify the actual array type and element type involved */
+	/* Identify the actual container type involved */
 	containerType = targetTypeId;
 	containerTypMod = targetTypMod;
-	elementTypeId = transformContainerType(&containerType, &containerTypMod);
+	transformContainerType(&containerType, &containerTypMod);
 
-	/* Identify type that RHS must provide */
-	typeNeeded = isSlice ? containerType : elementTypeId;
+	/* Process subscripts and identify required type for RHS */
+	sbsref = transformContainerSubscripts(pstate,
+										  basenode,
+										  containerType,
+										  containerTypMod,
+										  subscripts,
+										  true);
+
+	typeNeeded = sbsref->refrestype;
+	typmodNeeded = sbsref->reftypmod;
 
 	/*
-	 * container normally has same collation as elements, but there's an
-	 * exception: we might be subscripting a domain over a container type. In
-	 * that case use collation of the base type.
+	 * Container normally has same collation as its elements, but there's an
+	 * exception: we might be subscripting a domain over a container type.  In
+	 * that case use collation of the base type.  (This is shaky for arbitrary
+	 * subscripting semantics, but it doesn't matter all that much since we
+	 * only use this to label the collation of a possible CaseTestExpr.)
 	 */
 	if (containerType == targetTypeId)
 		collationNeeded = targetCollation;
@@ -933,21 +944,22 @@ transformAssignmentSubscripts(ParseState *pstate,
 										 targetName,
 										 true,
 										 typeNeeded,
-										 containerTypMod,
+										 typmodNeeded,
 										 collationNeeded,
 										 indirection,
 										 next_indirection,
 										 rhs,
 										 location);
 
-	/* process subscripts */
-	result = (Node *) transformContainerSubscripts(pstate,
-												   basenode,
-												   containerType,
-												   elementTypeId,
-												   containerTypMod,
-												   subscripts,
-												   rhs);
+	/*
+	 * Insert the already-properly-coerced RHS into the SubscriptingRef.  Then
+	 * set refrestype and reftypmod back to the container type's values.
+	 */
+	sbsref->refassgnexpr = (Expr *) rhs;
+	sbsref->refrestype = containerType;
+	sbsref->reftypmod = containerTypMod;
+
+	result = (Node *) sbsref;
 
 	/* If target was a domain over container, need to coerce up to the domain */
 	if (containerType != targetTypeId)

@@ -2853,9 +2853,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 			prodesc->result_oid = rettype;
 			prodesc->fn_retisset = procStruct->proretset;
 			prodesc->fn_retistuple = type_is_rowtype(rettype);
-
-			prodesc->fn_retisarray =
-				(typeStruct->typlen == -1 && typeStruct->typelem);
+			prodesc->fn_retisarray = IsTrueArrayType(typeStruct);
 
 			fmgr_info_cxt(typeStruct->typinput,
 						  &(prodesc->result_in_func),
@@ -2901,7 +2899,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 				}
 
 				/* Identify array-type arguments */
-				if (typeStruct->typelem != 0 && typeStruct->typlen == -1)
+				if (IsTrueArrayType(typeStruct))
 					prodesc->arg_arraytype[i] = argtype;
 				else
 					prodesc->arg_arraytype[i] = InvalidOid;

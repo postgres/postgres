@@ -70,6 +70,11 @@ struct ExprContext;
 
 
 /*
+ * Maximum number of array subscripts (arbitrary limit)
+ */
+#define MAXDIM 6
+
+/*
  * Arrays are varlena objects, so must meet the varlena convention that
  * the first int32 of the object contains the total object size in bytes.
  * Be sure to use VARSIZE() and SET_VARSIZE() to access it, though!

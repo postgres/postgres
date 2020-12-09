@@ -66,15 +66,7 @@ exprType(const Node *expr)
 			type = ((const WindowFunc *) expr)->wintype;
 			break;
 		case T_SubscriptingRef:
-			{
-				const SubscriptingRef *sbsref = (const SubscriptingRef *) expr;
-
-				/* slice and/or store operations yield the container type */
-				if (sbsref->reflowerindexpr || sbsref->refassgnexpr)
-					type = sbsref->refcontainertype;
-				else
-					type = sbsref->refelemtype;
-			}
+			type = ((const SubscriptingRef *) expr)->refrestype;
 			break;
 		case T_FuncExpr:
 			type = ((const FuncExpr *) expr)->funcresulttype;
@@ -286,7 +278,6 @@ exprTypmod(const Node *expr)
 		case T_Param:
 			return ((const Param *) expr)->paramtypmod;
 		case T_SubscriptingRef:
-			/* typmod is the same for container or element */
 			return ((const SubscriptingRef *) expr)->reftypmod;
 		case T_FuncExpr:
 			{

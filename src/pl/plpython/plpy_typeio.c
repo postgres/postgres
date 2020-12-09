@@ -352,9 +352,9 @@ PLy_output_setup_func(PLyObToDatum *arg, MemoryContext arg_mcxt,
 							  proc);
 	}
 	else if (typentry &&
-			 OidIsValid(typentry->typelem) && typentry->typlen == -1)
+			 IsTrueArrayType(typentry))
 	{
-		/* Standard varlena array (cf. get_element_type) */
+		/* Standard array */
 		arg->func = PLySequence_ToArray;
 		/* Get base type OID to insert into constructed array */
 		/* (note this might not be the same as the immediate child type) */
@@ -470,9 +470,9 @@ PLy_input_setup_func(PLyDatumToOb *arg, MemoryContext arg_mcxt,
 							 proc);
 	}
 	else if (typentry &&
-			 OidIsValid(typentry->typelem) && typentry->typlen == -1)
+			 IsTrueArrayType(typentry))
 	{
-		/* Standard varlena array (cf. get_element_type) */
+		/* Standard array */
 		arg->func = PLyList_FromArray;
 		/* Recursively set up conversion info for the element type */
 		arg->u.array.elm = (PLyDatumToOb *)

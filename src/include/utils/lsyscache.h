@@ -17,6 +17,9 @@
 #include "access/htup.h"
 #include "nodes/pg_list.h"
 
+/* avoid including subscripting.h here */
+struct SubscriptRoutines;
+
 /* Result list element for get_op_btree_interpretation */
 typedef struct OpBtreeInterpretation
 {
@@ -173,6 +176,9 @@ extern void getTypeBinaryOutputInfo(Oid type, Oid *typSend, bool *typIsVarlena);
 extern Oid	get_typmodin(Oid typid);
 extern Oid	get_typcollation(Oid typid);
 extern bool type_is_collatable(Oid typid);
+extern RegProcedure get_typsubscript(Oid typid, Oid *typelemp);
+extern const struct SubscriptRoutines *getSubscriptingRoutines(Oid typid,
+															   Oid *typelemp);
 extern Oid	getBaseType(Oid typid);
 extern Oid	getBaseTypeAndTypmod(Oid typid, int32 *typmod);
 extern int32 get_typavgwidth(Oid typid, int32 typmod);

@@ -390,14 +390,14 @@ typedef struct WindowFunc
 	int			location;		/* token location, or -1 if unknown */
 } WindowFunc;
 
-/* ----------------
- *	SubscriptingRef: describes a subscripting operation over a container
- *			(array, etc).
+/*
+ * SubscriptingRef: describes a subscripting operation over a container
+ * (array, etc).
  *
  * A SubscriptingRef can describe fetching a single element from a container,
- * fetching a part of container (e.g. array slice), storing a single element into
- * a container, or storing a slice.  The "store" cases work with an
- * initial container value and a source value that is inserted into the
+ * fetching a part of a container (e.g. an array slice), storing a single
+ * element into a container, or storing a slice.  The "store" cases work with
+ * an initial container value and a source value that is inserted into the
  * appropriate part of the container; the result of the operation is an
  * entire new modified container value.
  *
@@ -410,23 +410,32 @@ typedef struct WindowFunc
  *
  * In the slice case, individual expressions in the subscript lists can be
  * NULL, meaning "substitute the array's current lower or upper bound".
+ * (Non-array containers may or may not support this.)
  *
- * Note: the result datatype is the element type when fetching a single
- * element; but it is the array type when doing subarray fetch or either
- * type of store.
+ * refcontainertype is the actual container type that determines the
+ * subscripting semantics.  (This will generally be either the exposed type of
+ * refexpr, or the base type if that is a domain.)  refelemtype is the type of
+ * the container's elements; this is saved for the use of the subscripting
+ * functions, but is not used by the core code.  refrestype, reftypmod, and
+ * refcollid describe the type of the SubscriptingRef's result.  In a store
+ * expression, refrestype will always match refcontainertype; in a fetch,
+ * it could be refelemtype for an element fetch, or refcontainertype for a
+ * slice fetch, or possibly something else as determined by type-specific
+ * subscripting logic.  Likewise, reftypmod and refcollid will match the
+ * container's properties in a store, but could be different in a fetch.
  *
  * Note: for the cases where a container is returned, if refexpr yields a R/W
- * expanded container, then the implementation is allowed to modify that object
- * in-place and return the same object.)
- * ----------------
+ * expanded container, then the implementation is allowed to modify that
+ * object in-place and return the same object.
  */
 typedef struct SubscriptingRef
 {
 	Expr		xpr;
 	Oid			refcontainertype;	/* type of the container proper */
-	Oid			refelemtype;	/* type of the container elements */
-	int32		reftypmod;		/* typmod of the container (and elements too) */
-	Oid			refcollid;		/* OID of collation, or InvalidOid if none */
+	Oid			refelemtype;	/* the container type's pg_type.typelem */
+	Oid			refrestype;		/* type of the SubscriptingRef's result */
+	int32		reftypmod;		/* typmod of the result */
+	Oid			refcollid;		/* collation of result, or InvalidOid if none */
 	List	   *refupperindexpr;	/* expressions that evaluate to upper
 									 * container indexes */
 	List	   *reflowerindexpr;	/* expressions that evaluate to lower
@@ -434,7 +443,6 @@ typedef struct SubscriptingRef
 									 * container element */
 	Expr	   *refexpr;		/* the expression that evaluates to a
 								 * container value */
-
 	Expr	   *refassgnexpr;	/* expression for the source value, or NULL if
 								 * fetch */
 } SubscriptingRef;

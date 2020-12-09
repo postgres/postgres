@@ -1548,6 +1548,7 @@ _copySubscriptingRef(const SubscriptingRef *from)
 
 	COPY_SCALAR_FIELD(refcontainertype);
 	COPY_SCALAR_FIELD(refelemtype);
+	COPY_SCALAR_FIELD(refrestype);
 	COPY_SCALAR_FIELD(reftypmod);
 	COPY_SCALAR_FIELD(refcollid);
 	COPY_NODE_FIELD(refupperindexpr);

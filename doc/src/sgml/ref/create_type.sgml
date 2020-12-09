@@ -43,6 +43,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
     [ , TYPMOD_IN = <replaceable class="parameter">type_modifier_input_function</replaceable> ]
     [ , TYPMOD_OUT = <replaceable class="parameter">type_modifier_output_function</replaceable> ]
     [ , ANALYZE = <replaceable class="parameter">analyze_function</replaceable> ]
+    [ , SUBSCRIPT = <replaceable class="parameter">subscript_function</replaceable> ]
     [ , INTERNALLENGTH = { <replaceable class="parameter">internallength</replaceable> | VARIABLE } ]
     [ , PASSEDBYVALUE ]
     [ , ALIGNMENT = <replaceable class="parameter">alignment</replaceable> ]
@@ -196,8 +197,9 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <replaceable class="parameter">receive_function</replaceable>,
    <replaceable class="parameter">send_function</replaceable>,
    <replaceable class="parameter">type_modifier_input_function</replaceable>,
-   <replaceable class="parameter">type_modifier_output_function</replaceable> and
-   <replaceable class="parameter">analyze_function</replaceable>
+   <replaceable class="parameter">type_modifier_output_function</replaceable>,
+   <replaceable class="parameter">analyze_function</replaceable>, and
+   <replaceable class="parameter">subscript_function</replaceable>
    are optional.  Generally these functions have to be coded in C
    or another low-level language.
   </para>
@@ -319,6 +321,26 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
+   The optional <replaceable class="parameter">subscript_function</replaceable>
+   allows the data type to be subscripted in SQL commands.  Specifying this
+   function does not cause the type to be considered a <quote>true</quote>
+   array type; for example, it will not be a candidate for the result type
+   of <literal>ARRAY[]</literal> constructs.  But if subscripting a value
+   of the type is a natural notation for extracting data from it, then
+   a <replaceable class="parameter">subscript_function</replaceable> can
+   be written to define what that means.  The subscript function must be
+   declared to take a single argument of type <type>internal</type>, and
+   return an <type>internal</type> result, which is a pointer to a struct
+   of methods (functions) that implement subscripting.
+   The detailed API for subscript functions appears
+   in <filename>src/include/nodes/subscripting.h</filename>;
+   it may also be useful to read the array implementation
+   in <filename>src/backend/utils/adt/arraysubs.c</filename>.
+   Additional information appears in
+   <xref linkend="sql-createtype-array"/> below.
+  </para>
+
+  <para>
    While the details of the new type's internal representation are only
    known to the I/O functions and other functions you create to work with
    the type, there are several properties of the internal representation
@@ -428,11 +450,12 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   To indicate that a type is an array, specify the type of the array
+   To indicate that a type is a fixed-length array type,
+   specify the type of the array
    elements using the <literal>ELEMENT</literal> key word.  For example, to
    define an array of 4-byte integers (<type>int4</type>), specify
-   <literal>ELEMENT = int4</literal>. More details about array types
-   appear below.
+   <literal>ELEMENT = int4</literal>.  For more details,
+   see <xref linkend="sql-createtype-array"/> below.
   </para>
 
   <para>
@@ -456,7 +479,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </para>
   </refsect2>
 
-  <refsect2>
+  <refsect2 id="sql-createtype-array" xreflabel="Array Types">
    <title>Array Types</title>
 
    <para>
@@ -469,14 +492,16 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     repeated until a non-colliding name is found.)
     This implicitly-created array type is variable length and uses the
     built-in input and output functions <literal>array_in</literal> and
-    <literal>array_out</literal>.  The array type tracks any changes in its
+    <literal>array_out</literal>.  Furthermore, this type is what the system
+    uses for constructs such as <literal>ARRAY[]</literal> over the
+    user-defined type.  The array type tracks any changes in its
     element type's owner or schema, and is dropped if the element type is.
    </para>
 
    <para>
     You might reasonably ask why there is an <option>ELEMENT</option>
     option, if the system makes the correct array type automatically.
-    The only case where it's useful to use <option>ELEMENT</option> is when you are
+    The main case where it's useful to use <option>ELEMENT</option> is when you are
     making a fixed-length type that happens to be internally an array of a number of
     identical things, and you want to allow these things to be accessed
     directly by subscripting, in addition to whatever operations you plan
@@ -485,12 +510,31 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     using <literal>point[0]</literal> and <literal>point[1]</literal>.
     Note that
     this facility only works for fixed-length types whose internal form
-    is exactly a sequence of identical fixed-length fields.  A subscriptable
-    variable-length type must have the generalized internal representation
-    used by <literal>array_in</literal> and <literal>array_out</literal>.
+    is exactly a sequence of identical fixed-length fields.
     For historical reasons (i.e., this is clearly wrong but it's far too
     late to change it), subscripting of fixed-length array types starts from
     zero, rather than from one as for variable-length arrays.
+   </para>
+
+   <para>
+    Specifying the <option>SUBSCRIPT</option> option allows a data type to
+    be subscripted, even though the system does not otherwise regard it as
+    an array type.  The behavior just described for fixed-length arrays is
+    actually implemented by the <option>SUBSCRIPT</option> handler
+    function <function>raw_array_subscript_handler</function>, which is
+    used automatically if you specify <option>ELEMENT</option> for a
+    fixed-length type without also writing <option>SUBSCRIPT</option>.
+   </para>
+
+   <para>
+    When specifying a custom <option>SUBSCRIPT</option> function, it is
+    not necessary to specify <option>ELEMENT</option> unless
+    the <option>SUBSCRIPT</option> handler function needs to
+    consult <structfield>typelem</structfield> to find out what to return.
+    Be aware that specifying <option>ELEMENT</option> causes the system to
+    assume that the new type contains, or is somehow physically dependent on,
+    the element type; thus for example changing properties of the element
+    type won't be allowed if there are any columns of the dependent type.
    </para>
   </refsect2>
  </refsect1>
@@ -650,6 +694,16 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
      <para>
       The name of a function that performs statistical analysis for the
       data type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">subscript_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of a function that defines what subscripting a value of the
+      data type does.
      </para>
     </listitem>
    </varlistentry>

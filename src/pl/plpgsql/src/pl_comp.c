@@ -26,6 +26,7 @@
 #include "parser/parse_type.h"
 #include "plpgsql.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -2144,8 +2145,7 @@ build_datatype(HeapTuple typeTup, int32 typmod,
 		 * This test should include what get_element_type() checks.  We also
 		 * disallow non-toastable array types (i.e. oidvector and int2vector).
 		 */
-		typ->typisarray = (typeStruct->typlen == -1 &&
-						   OidIsValid(typeStruct->typelem) &&
+		typ->typisarray = (IsTrueArrayType(typeStruct) &&
 						   typeStruct->typstorage != TYPSTORAGE_PLAIN);
 	}
 	else if (typeStruct->typtype == TYPTYPE_DOMAIN)

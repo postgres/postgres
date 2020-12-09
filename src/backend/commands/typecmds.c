@@ -115,6 +115,7 @@ static Oid	findTypeSendFunction(List *procname, Oid typeOid);
 static Oid	findTypeTypmodinFunction(List *procname);
 static Oid	findTypeTypmodoutFunction(List *procname);
 static Oid	findTypeAnalyzeFunction(List *procname, Oid typeOid);
+static Oid	findTypeSubscriptingFunction(List *procname, Oid typeOid);
 static Oid	findRangeSubOpclass(List *opcname, Oid subtype);
 static Oid	findRangeCanonicalFunction(List *procname, Oid typeOid);
 static Oid	findRangeSubtypeDiffFunction(List *procname, Oid subtype);
@@ -149,6 +150,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	List	   *typmodinName = NIL;
 	List	   *typmodoutName = NIL;
 	List	   *analyzeName = NIL;
+	List	   *subscriptName = NIL;
 	char		category = TYPCATEGORY_USER;
 	bool		preferred = false;
 	char		delimiter = DEFAULT_TYPDELIM;
@@ -167,6 +169,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	DefElem    *typmodinNameEl = NULL;
 	DefElem    *typmodoutNameEl = NULL;
 	DefElem    *analyzeNameEl = NULL;
+	DefElem    *subscriptNameEl = NULL;
 	DefElem    *categoryEl = NULL;
 	DefElem    *preferredEl = NULL;
 	DefElem    *delimiterEl = NULL;
@@ -183,6 +186,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	Oid			typmodinOid = InvalidOid;
 	Oid			typmodoutOid = InvalidOid;
 	Oid			analyzeOid = InvalidOid;
+	Oid			subscriptOid = InvalidOid;
 	char	   *array_type;
 	Oid			array_oid;
 	Oid			typoid;
@@ -288,6 +292,8 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		else if (strcmp(defel->defname, "analyze") == 0 ||
 				 strcmp(defel->defname, "analyse") == 0)
 			defelp = &analyzeNameEl;
+		else if (strcmp(defel->defname, "subscript") == 0)
+			defelp = &subscriptNameEl;
 		else if (strcmp(defel->defname, "category") == 0)
 			defelp = &categoryEl;
 		else if (strcmp(defel->defname, "preferred") == 0)
@@ -358,6 +364,8 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		typmodoutName = defGetQualifiedName(typmodoutNameEl);
 	if (analyzeNameEl)
 		analyzeName = defGetQualifiedName(analyzeNameEl);
+	if (subscriptNameEl)
+		subscriptName = defGetQualifiedName(subscriptNameEl);
 	if (categoryEl)
 	{
 		char	   *p = defGetString(categoryEl);
@@ -483,6 +491,24 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		analyzeOid = findTypeAnalyzeFunction(analyzeName, typoid);
 
 	/*
+	 * Likewise look up the subscripting procedure if any.  If it is not
+	 * specified, but a typelem is specified, allow that if
+	 * raw_array_subscript_handler can be used.  (This is for backwards
+	 * compatibility; maybe someday we should throw an error instead.)
+	 */
+	if (subscriptName)
+		subscriptOid = findTypeSubscriptingFunction(subscriptName, typoid);
+	else if (OidIsValid(elemType))
+	{
+		if (internalLength > 0 && !byValue && get_typlen(elemType) > 0)
+			subscriptOid = F_RAW_ARRAY_SUBSCRIPT_HANDLER;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("element type cannot be specified without a valid subscripting procedure")));
+	}
+
+	/*
 	 * Check permissions on functions.  We choose to require the creator/owner
 	 * of a type to also own the underlying functions.  Since creating a type
 	 * is tantamount to granting public execute access on the functions, the
@@ -516,6 +542,9 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	if (analyzeOid && !pg_proc_ownercheck(analyzeOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
 					   NameListToString(analyzeName));
+	if (subscriptOid && !pg_proc_ownercheck(subscriptOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
+					   NameListToString(subscriptName));
 #endif
 
 	/*
@@ -551,8 +580,9 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 				   typmodinOid, /* typmodin procedure */
 				   typmodoutOid,	/* typmodout procedure */
 				   analyzeOid,	/* analyze procedure */
+				   subscriptOid,	/* subscript procedure */
 				   elemType,	/* element type ID */
-				   false,		/* this is not an array type */
+				   false,		/* this is not an implicit array type */
 				   array_oid,	/* array type we are about to create */
 				   InvalidOid,	/* base type ID (only for domains) */
 				   defaultValue,	/* default type value */
@@ -592,6 +622,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 			   typmodinOid,		/* typmodin procedure */
 			   typmodoutOid,	/* typmodout procedure */
 			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
+			   F_ARRAY_SUBSCRIPT_HANDLER,	/* array subscript procedure */
 			   typoid,			/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -800,6 +831,12 @@ DefineDomain(CreateDomainStmt *stmt)
 	/* Analysis function */
 	analyzeProcedure = baseType->typanalyze;
 
+	/*
+	 * Domains don't need a subscript procedure, since they are not
+	 * subscriptable on their own.  If the base type is subscriptable, the
+	 * parser will reduce the type to the base type before subscripting.
+	 */
+
 	/* Inherited default value */
 	datum = SysCacheGetAttr(TYPEOID, typeTup,
 							Anum_pg_type_typdefault, &isnull);
@@ -993,6 +1030,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   InvalidOid,	/* typmodin procedure - none */
 				   InvalidOid,	/* typmodout procedure - none */
 				   analyzeProcedure,	/* analyze procedure */
+				   InvalidOid,	/* subscript procedure - none */
 				   InvalidOid,	/* no array element type */
 				   false,		/* this isn't an array */
 				   domainArrayOid,	/* array type we are about to create */
@@ -1033,6 +1071,7 @@ DefineDomain(CreateDomainStmt *stmt)
 			   InvalidOid,		/* typmodin procedure - none */
 			   InvalidOid,		/* typmodout procedure - none */
 			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
+			   F_ARRAY_SUBSCRIPT_HANDLER,	/* array subscript procedure */
 			   address.objectId,	/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1148,6 +1187,7 @@ DefineEnum(CreateEnumStmt *stmt)
 				   InvalidOid,	/* typmodin procedure - none */
 				   InvalidOid,	/* typmodout procedure - none */
 				   InvalidOid,	/* analyze procedure - default */
+				   InvalidOid,	/* subscript procedure - none */
 				   InvalidOid,	/* element type ID */
 				   false,		/* this is not an array type */
 				   enumArrayOid,	/* array type we are about to create */
@@ -1188,6 +1228,7 @@ DefineEnum(CreateEnumStmt *stmt)
 			   InvalidOid,		/* typmodin procedure - none */
 			   InvalidOid,		/* typmodout procedure - none */
 			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
+			   F_ARRAY_SUBSCRIPT_HANDLER,	/* array subscript procedure */
 			   enumTypeAddr.objectId,	/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1476,6 +1517,7 @@ DefineRange(CreateRangeStmt *stmt)
 				   InvalidOid,	/* typmodin procedure - none */
 				   InvalidOid,	/* typmodout procedure - none */
 				   F_RANGE_TYPANALYZE,	/* analyze procedure */
+				   InvalidOid,	/* subscript procedure - none */
 				   InvalidOid,	/* element type ID - none */
 				   false,		/* this is not an array type */
 				   rangeArrayOid,	/* array type we are about to create */
@@ -1519,6 +1561,7 @@ DefineRange(CreateRangeStmt *stmt)
 			   InvalidOid,		/* typmodin procedure - none */
 			   InvalidOid,		/* typmodout procedure - none */
 			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
+			   F_ARRAY_SUBSCRIPT_HANDLER,	/* array subscript procedure */
 			   typoid,			/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1616,7 +1659,7 @@ makeRangeConstructors(const char *name, Oid namespace,
 
 
 /*
- * Find suitable I/O functions for a type.
+ * Find suitable I/O and other support functions for a type.
  *
  * typeOid is the type's OID (which will already exist, if only as a shell
  * type).
@@ -1900,6 +1943,45 @@ findTypeAnalyzeFunction(List *procname, Oid typeOid)
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("type analyze function %s must return type %s",
 						NameListToString(procname), "boolean")));
+
+	return procOid;
+}
+
+static Oid
+findTypeSubscriptingFunction(List *procname, Oid typeOid)
+{
+	Oid			argList[1];
+	Oid			procOid;
+
+	/*
+	 * Subscripting support functions always take one INTERNAL argument and
+	 * return INTERNAL.  (The argument is not used, but we must have it to
+	 * maintain type safety.)
+	 */
+	argList[0] = INTERNALOID;
+
+	procOid = LookupFuncName(procname, 1, argList, true);
+	if (!OidIsValid(procOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function %s does not exist",
+						func_signature_string(procname, 1, NIL, argList))));
+
+	if (get_func_rettype(procOid) != INTERNALOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type subscripting function %s must return type %s",
+						NameListToString(procname), "internal")));
+
+	/*
+	 * We disallow array_subscript_handler() from being selected explicitly,
+	 * since that must only be applied to autogenerated array types.
+	 */
+	if (procOid == F_ARRAY_SUBSCRIPT_HANDLER)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("user-defined types cannot use subscripting function %s",
+						NameListToString(procname))));
 
 	return procOid;
 }
@@ -3221,8 +3303,7 @@ RenameType(RenameStmt *stmt)
 				 errhint("Use ALTER TABLE instead.")));
 
 	/* don't allow direct alteration of array types, either */
-	if (OidIsValid(typTup->typelem) &&
-		get_array_type(typTup->typelem) == typeOid)
+	if (IsTrueArrayType(typTup))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot alter array type %s",
@@ -3303,8 +3384,7 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 				 errhint("Use ALTER TABLE instead.")));
 
 	/* don't allow direct alteration of array types, either */
-	if (OidIsValid(typTup->typelem) &&
-		get_array_type(typTup->typelem) == typeOid)
+	if (IsTrueArrayType(typTup))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot alter array type %s",
@@ -3869,8 +3949,7 @@ AlterType(AlterTypeStmt *stmt)
 	/*
 	 * For the same reasons, don't allow direct alteration of array types.
 	 */
-	if (OidIsValid(typForm->typelem) &&
-		get_array_type(typForm->typelem) == typeOid)
+	if (IsTrueArrayType(typForm))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("%s is not a base type",

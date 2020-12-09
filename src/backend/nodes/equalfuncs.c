@@ -276,6 +276,7 @@ _equalSubscriptingRef(const SubscriptingRef *a, const SubscriptingRef *b)
 {
 	COMPARE_SCALAR_FIELD(refcontainertype);
 	COMPARE_SCALAR_FIELD(refelemtype);
+	COMPARE_SCALAR_FIELD(refrestype);
 	COMPARE_SCALAR_FIELD(reftypmod);
 	COMPARE_SCALAR_FIELD(refcollid);
 	COMPARE_NODE_FIELD(refupperindexpr);

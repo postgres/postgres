@@ -591,14 +591,6 @@ typedef uint32 CommandId;
 #define FirstCommandId	((CommandId) 0)
 #define InvalidCommandId	(~(CommandId)0)
 
-/*
- * Array indexing support
- */
-#define MAXDIM 6
-typedef struct
-{
-	int			indx[MAXDIM];
-}			IntArray;
 
 /* ----------------
  *		Variable-length datatypes all share the 'struct varlena' header.

@@ -20,6 +20,7 @@
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/subscripting.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
@@ -182,23 +183,16 @@ pcb_error_callback(void *arg)
 
 /*
  * transformContainerType()
- *		Identify the types involved in a subscripting operation for container
+ *		Identify the actual container type for a subscripting operation.
  *
- *
- * On entry, containerType/containerTypmod identify the type of the input value
- * to be subscripted (which could be a domain type).  These are modified if
- * necessary to identify the actual container type and typmod, and the
- * container's element type is returned.  An error is thrown if the input isn't
- * an array type.
+ * containerType/containerTypmod are modified if necessary to identify
+ * the actual container type and typmod.  This mainly involves smashing
+ * any domain to its base type, but there are some special considerations.
+ * Note that caller still needs to check if the result type is a container.
  */
-Oid
+void
 transformContainerType(Oid *containerType, int32 *containerTypmod)
 {
-	Oid			origContainerType = *containerType;
-	Oid			elementType;
-	HeapTuple	type_tuple_container;
-	Form_pg_type type_struct_container;
-
 	/*
 	 * If the input is a domain, smash to base type, and extract the actual
 	 * typmod to be applied to the base type. Subscripting a domain is an
@@ -209,35 +203,16 @@ transformContainerType(Oid *containerType, int32 *containerTypmod)
 	*containerType = getBaseTypeAndTypmod(*containerType, containerTypmod);
 
 	/*
-	 * Here is an array specific code. We treat int2vector and oidvector as
-	 * though they were domains over int2[] and oid[].  This is needed because
-	 * array slicing could create an array that doesn't satisfy the
-	 * dimensionality constraints of the xxxvector type; so we want the result
-	 * of a slice operation to be considered to be of the more general type.
+	 * We treat int2vector and oidvector as though they were domains over
+	 * int2[] and oid[].  This is needed because array slicing could create an
+	 * array that doesn't satisfy the dimensionality constraints of the
+	 * xxxvector type; so we want the result of a slice operation to be
+	 * considered to be of the more general type.
 	 */
 	if (*containerType == INT2VECTOROID)
 		*containerType = INT2ARRAYOID;
 	else if (*containerType == OIDVECTOROID)
 		*containerType = OIDARRAYOID;
-
-	/* Get the type tuple for the container */
-	type_tuple_container = SearchSysCache1(TYPEOID, ObjectIdGetDatum(*containerType));
-	if (!HeapTupleIsValid(type_tuple_container))
-		elog(ERROR, "cache lookup failed for type %u", *containerType);
-	type_struct_container = (Form_pg_type) GETSTRUCT(type_tuple_container);
-
-	/* needn't check typisdefined since this will fail anyway */
-
-	elementType = type_struct_container->typelem;
-	if (elementType == InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("cannot subscript type %s because it is not an array",
-						format_type_be(origContainerType))));
-
-	ReleaseSysCache(type_tuple_container);
-
-	return elementType;
 }
 
 /*
@@ -249,13 +224,14 @@ transformContainerType(Oid *containerType, int32 *containerTypmod)
  * an expression that represents the result of extracting a single container
  * element or a container slice.
  *
- * In a container assignment, we are given a destination container value plus a
- * source value that is to be assigned to a single element or a slice of that
- * container. We produce an expression that represents the new container value
- * with the source data inserted into the right part of the container.
+ * Container assignments are treated basically the same as container fetches
+ * here.  The caller will modify the result node to insert the source value
+ * that is to be assigned to the element or slice that a fetch would have
+ * retrieved.  The execution result will be a new container value with
+ * the source value inserted into the right part of the container.
  *
- * For both cases, if the source container is of a domain-over-array type,
- * the result is of the base array type or its element type; essentially,
+ * For both cases, if the source is of a domain-over-container type, the
+ * result is the same as if it had been of the container type; essentially,
  * we must fold a domain to its base type before applying subscripting.
  * (Note that int2vector and oidvector are treated as domains here.)
  *
@@ -264,48 +240,48 @@ transformContainerType(Oid *containerType, int32 *containerTypmod)
  * containerType	OID of container's datatype (should match type of
  *					containerBase, or be the base type of containerBase's
  *					domain type)
- * elementType		OID of container's element type (fetch with
- *					transformContainerType, or pass InvalidOid to do it here)
- * containerTypMod	typmod for the container (which is also typmod for the
- *					elements)
+ * containerTypMod	typmod for the container
  * indirection		Untransformed list of subscripts (must not be NIL)
- * assignFrom		NULL for container fetch, else transformed expression for
- *					source.
+ * isAssignment		True if this will become a container assignment.
  */
 SubscriptingRef *
 transformContainerSubscripts(ParseState *pstate,
 							 Node *containerBase,
 							 Oid containerType,
-							 Oid elementType,
 							 int32 containerTypMod,
 							 List *indirection,
-							 Node *assignFrom)
+							 bool isAssignment)
 {
-	bool		isSlice = false;
-	List	   *upperIndexpr = NIL;
-	List	   *lowerIndexpr = NIL;
-	ListCell   *idx;
 	SubscriptingRef *sbsref;
+	const SubscriptRoutines *sbsroutines;
+	Oid			elementType;
+	bool		isSlice = false;
+	ListCell   *idx;
 
 	/*
-	 * Caller may or may not have bothered to determine elementType.  Note
-	 * that if the caller did do so, containerType/containerTypMod must be as
-	 * modified by transformContainerType, ie, smash domain to base type.
+	 * Determine the actual container type, smashing any domain.  In the
+	 * assignment case the caller already did this, since it also needs to
+	 * know the actual container type.
 	 */
-	if (!OidIsValid(elementType))
-		elementType = transformContainerType(&containerType, &containerTypMod);
+	if (!isAssignment)
+		transformContainerType(&containerType, &containerTypMod);
 
 	/*
+	 * Verify that the container type is subscriptable, and get its support
+	 * functions and typelem.
+	 */
+	sbsroutines = getSubscriptingRoutines(containerType, &elementType);
+
+	/*
+	 * Detect whether any of the indirection items are slice specifiers.
+	 *
 	 * A list containing only simple subscripts refers to a single container
 	 * element.  If any of the items are slice specifiers (lower:upper), then
-	 * the subscript expression means a container slice operation.  In this
-	 * case, we convert any non-slice items to slices by treating the single
-	 * subscript as the upper bound and supplying an assumed lower bound of 1.
-	 * We have to prescan the list to see if there are any slice items.
+	 * the subscript expression means a container slice operation.
 	 */
 	foreach(idx, indirection)
 	{
-		A_Indices  *ai = (A_Indices *) lfirst(idx);
+		A_Indices  *ai = lfirst_node(A_Indices, idx);
 
 		if (ai->is_slice)
 		{
@@ -315,120 +291,35 @@ transformContainerSubscripts(ParseState *pstate,
 	}
 
 	/*
-	 * Transform the subscript expressions.
-	 */
-	foreach(idx, indirection)
-	{
-		A_Indices  *ai = lfirst_node(A_Indices, idx);
-		Node	   *subexpr;
-
-		if (isSlice)
-		{
-			if (ai->lidx)
-			{
-				subexpr = transformExpr(pstate, ai->lidx, pstate->p_expr_kind);
-				/* If it's not int4 already, try to coerce */
-				subexpr = coerce_to_target_type(pstate,
-												subexpr, exprType(subexpr),
-												INT4OID, -1,
-												COERCION_ASSIGNMENT,
-												COERCE_IMPLICIT_CAST,
-												-1);
-				if (subexpr == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("array subscript must have type integer"),
-							 parser_errposition(pstate, exprLocation(ai->lidx))));
-			}
-			else if (!ai->is_slice)
-			{
-				/* Make a constant 1 */
-				subexpr = (Node *) makeConst(INT4OID,
-											 -1,
-											 InvalidOid,
-											 sizeof(int32),
-											 Int32GetDatum(1),
-											 false,
-											 true); /* pass by value */
-			}
-			else
-			{
-				/* Slice with omitted lower bound, put NULL into the list */
-				subexpr = NULL;
-			}
-			lowerIndexpr = lappend(lowerIndexpr, subexpr);
-		}
-		else
-			Assert(ai->lidx == NULL && !ai->is_slice);
-
-		if (ai->uidx)
-		{
-			subexpr = transformExpr(pstate, ai->uidx, pstate->p_expr_kind);
-			/* If it's not int4 already, try to coerce */
-			subexpr = coerce_to_target_type(pstate,
-											subexpr, exprType(subexpr),
-											INT4OID, -1,
-											COERCION_ASSIGNMENT,
-											COERCE_IMPLICIT_CAST,
-											-1);
-			if (subexpr == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("array subscript must have type integer"),
-						 parser_errposition(pstate, exprLocation(ai->uidx))));
-		}
-		else
-		{
-			/* Slice with omitted upper bound, put NULL into the list */
-			Assert(isSlice && ai->is_slice);
-			subexpr = NULL;
-		}
-		upperIndexpr = lappend(upperIndexpr, subexpr);
-	}
-
-	/*
-	 * If doing an array store, coerce the source value to the right type.
-	 * (This should agree with the coercion done by transformAssignedExpr.)
-	 */
-	if (assignFrom != NULL)
-	{
-		Oid			typesource = exprType(assignFrom);
-		Oid			typeneeded = isSlice ? containerType : elementType;
-		Node	   *newFrom;
-
-		newFrom = coerce_to_target_type(pstate,
-										assignFrom, typesource,
-										typeneeded, containerTypMod,
-										COERCION_ASSIGNMENT,
-										COERCE_IMPLICIT_CAST,
-										-1);
-		if (newFrom == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("array assignment requires type %s"
-							" but expression is of type %s",
-							format_type_be(typeneeded),
-							format_type_be(typesource)),
-					 errhint("You will need to rewrite or cast the expression."),
-					 parser_errposition(pstate, exprLocation(assignFrom))));
-		assignFrom = newFrom;
-	}
-
-	/*
 	 * Ready to build the SubscriptingRef node.
 	 */
-	sbsref = (SubscriptingRef *) makeNode(SubscriptingRef);
-	if (assignFrom != NULL)
-		sbsref->refassgnexpr = (Expr *) assignFrom;
+	sbsref = makeNode(SubscriptingRef);
 
 	sbsref->refcontainertype = containerType;
 	sbsref->refelemtype = elementType;
+	/* refrestype is to be set by container-specific logic */
 	sbsref->reftypmod = containerTypMod;
 	/* refcollid will be set by parse_collate.c */
-	sbsref->refupperindexpr = upperIndexpr;
-	sbsref->reflowerindexpr = lowerIndexpr;
+	/* refupperindexpr, reflowerindexpr are to be set by container logic */
 	sbsref->refexpr = (Expr *) containerBase;
-	sbsref->refassgnexpr = (Expr *) assignFrom;
+	sbsref->refassgnexpr = NULL;	/* caller will fill if it's an assignment */
+
+	/*
+	 * Call the container-type-specific logic to transform the subscripts and
+	 * determine the subscripting result type.
+	 */
+	sbsroutines->transform(sbsref, indirection, pstate,
+						   isSlice, isAssignment);
+
+	/*
+	 * Verify we got a valid type (this defends, for example, against someone
+	 * using array_subscript_handler as typsubscript without setting typelem).
+	 */
+	if (!OidIsValid(sbsref->refrestype))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("cannot subscript type %s because it does not support subscripting",
+						format_type_be(containerType))));
 
 	return sbsref;
 }

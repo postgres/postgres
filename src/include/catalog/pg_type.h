@@ -101,15 +101,21 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	Oid			typrelid BKI_DEFAULT(0) BKI_ARRAY_DEFAULT(0) BKI_LOOKUP(pg_class);
 
 	/*
-	 * If typelem is not 0 then it identifies another row in pg_type. The
-	 * current type can then be subscripted like an array yielding values of
-	 * type typelem. A non-zero typelem does not guarantee this type to be a
-	 * "real" array type; some ordinary fixed-length types can also be
-	 * subscripted (e.g., name, point). Variable-length types can *not* be
-	 * turned into pseudo-arrays like that. Hence, the way to determine
-	 * whether a type is a "true" array type is if:
-	 *
-	 * typelem != 0 and typlen == -1.
+	 * Type-specific subscripting handler.  If typsubscript is 0, it means
+	 * that this type doesn't support subscripting.  Note that various parts
+	 * of the system deem types to be "true" array types only if their
+	 * typsubscript is array_subscript_handler.
+	 */
+	regproc		typsubscript BKI_DEFAULT(-) BKI_ARRAY_DEFAULT(array_subscript_handler) BKI_LOOKUP(pg_proc);
+
+	/*
+	 * If typelem is not 0 then it identifies another row in pg_type, defining
+	 * the type yielded by subscripting.  This should be 0 if typsubscript is
+	 * 0.  However, it can be 0 when typsubscript isn't 0, if the handler
+	 * doesn't need typelem to determine the subscripting result type.  Note
+	 * that a typelem dependency is considered to imply physical containment
+	 * of the element type in this type; so DDL changes on the element type
+	 * might be restricted by the presence of this type.
 	 */
 	Oid			typelem BKI_DEFAULT(0) BKI_LOOKUP(pg_type);
 
@@ -319,6 +325,11 @@ DECLARE_UNIQUE_INDEX(pg_type_typname_nsp_index, 2704, on pg_type using btree(typ
 	 (typid) == ANYCOMPATIBLENONARRAYOID || \
 	 (typid) == ANYCOMPATIBLERANGEOID)
 
+/* Is this a "true" array type?  (Requires fmgroids.h) */
+#define IsTrueArrayType(typeForm)  \
+	(OidIsValid((typeForm)->typelem) && \
+	 (typeForm)->typsubscript == F_ARRAY_SUBSCRIPT_HANDLER)
+
 /*
  * Backwards compatibility for ancient random spellings of pg_type OID macros.
  * Don't use these names in new code.
@@ -351,6 +362,7 @@ extern ObjectAddress TypeCreate(Oid newTypeOid,
 								Oid typmodinProcedure,
 								Oid typmodoutProcedure,
 								Oid analyzeProcedure,
+								Oid subscriptProcedure,
 								Oid elementType,
 								bool isImplicitArray,
 								Oid arrayType,

@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/hsearch.h"
 #include "utils/json.h"
 #include "utils/jsonb.h"
@@ -3011,7 +3012,7 @@ prepare_column_cache(ColumnIOData *column,
 		column->io.composite.base_typmod = typmod;
 		column->io.composite.domain_info = NULL;
 	}
-	else if (type->typlen == -1 && OidIsValid(type->typelem))
+	else if (IsTrueArrayType(type))
 	{
 		column->typcat = TYPECAT_ARRAY;
 		column->io.array.element_info = MemoryContextAllocZero(mcxt,

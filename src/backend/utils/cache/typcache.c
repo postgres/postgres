@@ -406,6 +406,7 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->typstorage = typtup->typstorage;
 		typentry->typtype = typtup->typtype;
 		typentry->typrelid = typtup->typrelid;
+		typentry->typsubscript = typtup->typsubscript;
 		typentry->typelem = typtup->typelem;
 		typentry->typcollation = typtup->typcollation;
 		typentry->flags |= TCFLAGS_HAVE_PG_TYPE_DATA;
@@ -450,6 +451,7 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->typstorage = typtup->typstorage;
 		typentry->typtype = typtup->typtype;
 		typentry->typrelid = typtup->typrelid;
+		typentry->typsubscript = typtup->typsubscript;
 		typentry->typelem = typtup->typelem;
 		typentry->typcollation = typtup->typcollation;
 		typentry->flags |= TCFLAGS_HAVE_PG_TYPE_DATA;

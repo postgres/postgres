@@ -8742,24 +8742,36 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>typsubscript</structfield> <type>regproc</type>
+       (references <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Subscripting handler function's OID, or zero if this type doesn't
+       support subscripting.  Types that are <quote>true</quote> array
+       types have <structfield>typsubscript</structfield>
+       = <function>array_subscript_handler</function>, but other types may
+       have other handler functions to implement specialized subscripting
+       behavior.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>typelem</structfield> <type>oid</type>
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
        If <structfield>typelem</structfield> is not 0 then it
-       identifies another row in <structname>pg_type</structname>.
-       The current type can then be subscripted like an array yielding
-       values of type <structfield>typelem</structfield>.  A
-       <quote>true</quote> array type is variable length
-       (<structfield>typlen</structfield> = -1),
-       but some fixed-length (<structfield>typlen</structfield> &gt; 0) types
-       also have nonzero <structfield>typelem</structfield>, for example
-       <type>name</type> and <type>point</type>.
-       If a fixed-length type has a <structfield>typelem</structfield> then
-       its internal representation must be some number of values of the
-       <structfield>typelem</structfield> data type with no other data.
-       Variable-length array types have a header defined by the array
-       subroutines.
+       identifies another row in <structname>pg_type</structname>,
+       defining the type yielded by subscripting.  This should be 0
+       if <structfield>typsubscript</structfield> is 0.  However, it can
+       be 0 when <structfield>typsubscript</structfield> isn't 0, if the
+       handler doesn't need <structfield>typelem</structfield> to
+       determine the subscripting result type.
+       Note that a <structfield>typelem</structfield> dependency is
+       considered to imply physical containment of the element type in
+       this type; so DDL changes on the element type might be restricted
+       by the presence of this type.
       </para></entry>
      </row>
 

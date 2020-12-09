@@ -2074,6 +2074,22 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
+	else if (IsA(node, SubscriptingRef))
+	{
+		SubscriptingRef *sbsref = (SubscriptingRef *) node;
+
+		/*
+		 * The refexpr should provide adequate dependency on refcontainertype,
+		 * and that type in turn depends on refelemtype.  However, a custom
+		 * subscripting handler might set refrestype to something different
+		 * from either of those, in which case we'd better record it.
+		 */
+		if (sbsref->refrestype != sbsref->refcontainertype &&
+			sbsref->refrestype != sbsref->refelemtype)
+			add_object_address(OCLASS_TYPE, sbsref->refrestype, 0,
+							   context->addrs);
+		/* fall through to examine arguments */
+	}
 	else if (IsA(node, SubPlan))
 	{
 		/* Extra work needed here if we ever need this case */

@@ -63,12 +63,13 @@ WHERE p1.typtype not in ('p') AND p1.typname NOT LIKE E'\\_%'
            p2.typelem = p1.oid and p1.typarray = p2.oid)
 ORDER BY p1.oid;
 
--- Make sure typarray points to a varlena array type of our own base
+-- Make sure typarray points to a "true" array type of our own base
 SELECT p1.oid, p1.typname as basetype, p2.typname as arraytype,
-       p2.typelem, p2.typlen
+       p2.typsubscript
 FROM   pg_type p1 LEFT JOIN pg_type p2 ON (p1.typarray = p2.oid)
 WHERE  p1.typarray <> 0 AND
-       (p2.oid IS NULL OR p2.typelem <> p1.oid OR p2.typlen <> -1);
+       (p2.oid IS NULL OR
+        p2.typsubscript <> 'array_subscript_handler'::regproc);
 
 -- Look for range types that do not have a pg_range entry
 SELECT p1.oid, p1.typname
@@ -323,6 +324,26 @@ WHERE p1.typarray = p2.oid AND
     p2.typalign != (CASE WHEN p1.typalign = 'd' THEN 'd'::"char"
                          ELSE 'i'::"char" END);
 
+-- Check for typelem set without a handler
+
+SELECT p1.oid, p1.typname, p1.typelem
+FROM pg_type AS p1
+WHERE p1.typelem != 0 AND p1.typsubscript = 0;
+
+-- Check for misuse of standard subscript handlers
+
+SELECT p1.oid, p1.typname,
+       p1.typelem, p1.typlen, p1.typbyval
+FROM pg_type AS p1
+WHERE p1.typsubscript = 'array_subscript_handler'::regproc AND NOT
+    (p1.typelem != 0 AND p1.typlen = -1 AND NOT p1.typbyval);
+
+SELECT p1.oid, p1.typname,
+       p1.typelem, p1.typlen, p1.typbyval
+FROM pg_type AS p1
+WHERE p1.typsubscript = 'raw_array_subscript_handler'::regproc AND NOT
+    (p1.typelem != 0 AND p1.typlen > 0 AND NOT p1.typbyval);
+
 -- Check for bogus typanalyze routines
 
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
@@ -356,7 +377,7 @@ SELECT t.oid, t.typname, t.typanalyze
 FROM pg_type t
 WHERE t.typbasetype = 0 AND
     (t.typanalyze = 'array_typanalyze'::regproc) !=
-    (typelem != 0 AND typlen < 0)
+    (t.typsubscript = 'array_subscript_handler'::regproc)
 ORDER BY 1;
 
 -- **************** pg_class ****************
@@ -452,7 +473,8 @@ WHERE o.opcmethod != 403 OR
     ((o.opcintype != p1.rngsubtype) AND NOT
      (o.opcintype = 'pg_catalog.anyarray'::regtype AND
       EXISTS(select 1 from pg_catalog.pg_type where
-             oid = p1.rngsubtype and typelem != 0 and typlen = -1)));
+             oid = p1.rngsubtype and typelem != 0 and
+             typsubscript = 'array_subscript_handler'::regproc)));
 
 -- canonical function, if any, had better match the range type
 

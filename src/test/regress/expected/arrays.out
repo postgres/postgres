@@ -27,12 +27,12 @@ INSERT INTO arrtest (a, b[1:2][1:2], c, d, e, f, g)
 INSERT INTO arrtest (a, b[1:2], c, d[1:2])
    VALUES ('{}', '{3,4}', '{foo,bar}', '{bar,foo}');
 INSERT INTO arrtest (b[2]) VALUES(now());  -- error, type mismatch
-ERROR:  array assignment to "b" requires type integer but expression is of type timestamp with time zone
+ERROR:  subscripted assignment to "b" requires type integer but expression is of type timestamp with time zone
 LINE 1: INSERT INTO arrtest (b[2]) VALUES(now());
                              ^
 HINT:  You will need to rewrite or cast the expression.
 INSERT INTO arrtest (b[1:2]) VALUES(now());  -- error, type mismatch
-ERROR:  array assignment to "b" requires type integer[] but expression is of type timestamp with time zone
+ERROR:  subscripted assignment to "b" requires type integer[] but expression is of type timestamp with time zone
 LINE 1: INSERT INTO arrtest (b[1:2]) VALUES(now());
                              ^
 HINT:  You will need to rewrite or cast the expression.
@@ -200,7 +200,7 @@ select ('[0:2][0:2]={{1,2,3},{4,5,6},{7,8,9}}'::int[])[1:2][2];
 --
 -- check subscription corner cases
 --
--- More subscripts than MAXDIMS(6)
+-- More subscripts than MAXDIM (6)
 SELECT ('{}'::int[])[1][2][3][4][5][6][7];
 ERROR:  number of array dimensions (7) exceeds the maximum allowed (6)
 -- NULL index yields NULL when selecting
@@ -237,7 +237,7 @@ UPDATE arrtest
 ERROR:  array subscript in assignment must not be null
 -- Un-subscriptable type
 SELECT (now())[1];
-ERROR:  cannot subscript type timestamp with time zone because it is not an array
+ERROR:  cannot subscript type timestamp with time zone because it does not support subscripting
 -- test slices with empty lower and/or upper index
 CREATE TEMP TABLE arrtest_s (
   a       int2[],

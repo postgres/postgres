@@ -32,6 +32,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/subscripting.h"
 #include "nodes/supportnodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
@@ -839,13 +840,16 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, SubscriptingRef))
 	{
-		/*
-		 * subscripting assignment is nonstrict, but subscripting itself is
-		 * strict
-		 */
-		if (((SubscriptingRef *) node)->refassgnexpr != NULL)
-			return true;
+		SubscriptingRef *sbsref = (SubscriptingRef *) node;
+		const SubscriptRoutines *sbsroutines;
 
+		/* Subscripting assignment is always presumed nonstrict */
+		if (sbsref->refassgnexpr != NULL)
+			return true;
+		/* Otherwise we must look up the subscripting support methods */
+		sbsroutines = getSubscriptingRoutines(sbsref->refcontainertype, NULL);
+		if (!sbsroutines->fetch_strict)
+			return true;
 		/* else fall through to check args */
 	}
 	if (IsA(node, DistinctExpr))
@@ -1135,12 +1139,14 @@ contain_leaked_vars_walker(Node *node, void *context)
 		case T_SubscriptingRef:
 			{
 				SubscriptingRef *sbsref = (SubscriptingRef *) node;
+				const SubscriptRoutines *sbsroutines;
 
-				/*
-				 * subscripting assignment is leaky, but subscripted fetches
-				 * are not
-				 */
-				if (sbsref->refassgnexpr != NULL)
+				/* Consult the subscripting support method info */
+				sbsroutines = getSubscriptingRoutines(sbsref->refcontainertype,
+													  NULL);
+				if (!(sbsref->refassgnexpr != NULL ?
+					  sbsroutines->store_leakproof :
+					  sbsroutines->fetch_leakproof))
 				{
 					/* Node is leaky, so reject if it contains Vars */
 					if (contain_var_clause(node))
@@ -2859,6 +2865,11 @@ eval_const_expressions_mutator(Node *node,
 				 * known to be immutable, and for which we need no smarts
 				 * beyond "simplify if all inputs are constants".
 				 *
+				 * Treating SubscriptingRef this way assumes that subscripting
+				 * fetch and assignment are both immutable.  This constrains
+				 * type-specific subscripting implementations; maybe we should
+				 * relax it someday.
+				 *
 				 * Treating MinMaxExpr this way amounts to assuming that the
 				 * btree comparison function it calls is immutable; see the
 				 * reasoning in contain_mutable_functions_walker.
@@ -3122,10 +3133,10 @@ eval_const_expressions_mutator(Node *node,
 			{
 				/*
 				 * This case could be folded into the generic handling used
-				 * for SubscriptingRef etc.  But because the simplification
-				 * logic is so trivial, applying evaluate_expr() to perform it
-				 * would be a heavy overhead.  BooleanTest is probably common
-				 * enough to justify keeping this bespoke implementation.
+				 * for ArrayExpr etc.  But because the simplification logic is
+				 * so trivial, applying evaluate_expr() to perform it would be
+				 * a heavy overhead.  BooleanTest is probably common enough to
+				 * justify keeping this bespoke implementation.
 				 */
 				BooleanTest *btest = (BooleanTest *) node;
 				BooleanTest *newbtest;

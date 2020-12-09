@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/numeric.h"
 #include "utils/syscache.h"
@@ -138,15 +139,14 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	typeform = (Form_pg_type) GETSTRUCT(tuple);
 
 	/*
-	 * Check if it's a regular (variable length) array type.  Fixed-length
-	 * array types such as "name" shouldn't get deconstructed.  As of Postgres
-	 * 8.1, rather than checking typlen we check the toast property, and don't
+	 * Check if it's a "true" array type.  Pseudo-array types such as "name"
+	 * shouldn't get deconstructed.  Also check the toast property, and don't
 	 * deconstruct "plain storage" array types --- this is because we don't
 	 * want to show oidvector as oid[].
 	 */
 	array_base_type = typeform->typelem;
 
-	if (array_base_type != InvalidOid &&
+	if (IsTrueArrayType(typeform) &&
 		typeform->typstorage != TYPSTORAGE_PLAIN)
 	{
 		/* Switch our attention to the array element type */

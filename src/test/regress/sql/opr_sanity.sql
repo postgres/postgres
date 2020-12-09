@@ -34,7 +34,8 @@ begin
   if $2 = 'pg_catalog.any'::pg_catalog.regtype then return true; end if;
   if $2 = 'pg_catalog.anyarray'::pg_catalog.regtype then
     if EXISTS(select 1 from pg_catalog.pg_type where
-              oid = $1 and typelem != 0 and typlen = -1)
+              oid = $1 and typelem != 0 and
+              typsubscript = 'pg_catalog.array_subscript_handler'::pg_catalog.regproc)
     then return true; end if;
   end if;
   if $2 = 'pg_catalog.anyrange'::pg_catalog.regtype then
@@ -59,7 +60,8 @@ begin
   if $2 = 'pg_catalog.any'::pg_catalog.regtype then return true; end if;
   if $2 = 'pg_catalog.anyarray'::pg_catalog.regtype then
     if EXISTS(select 1 from pg_catalog.pg_type where
-              oid = $1 and typelem != 0 and typlen = -1)
+              oid = $1 and typelem != 0 and
+              typsubscript = 'pg_catalog.array_subscript_handler'::pg_catalog.regproc)
     then return true; end if;
   end if;
   if $2 = 'pg_catalog.anyrange'::pg_catalog.regtype then

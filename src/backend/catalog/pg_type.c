@@ -103,6 +103,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	values[Anum_pg_type_typisdefined - 1] = BoolGetDatum(false);
 	values[Anum_pg_type_typdelim - 1] = CharGetDatum(DEFAULT_TYPDELIM);
 	values[Anum_pg_type_typrelid - 1] = ObjectIdGetDatum(InvalidOid);
+	values[Anum_pg_type_typsubscript - 1] = ObjectIdGetDatum(InvalidOid);
 	values[Anum_pg_type_typelem - 1] = ObjectIdGetDatum(InvalidOid);
 	values[Anum_pg_type_typarray - 1] = ObjectIdGetDatum(InvalidOid);
 	values[Anum_pg_type_typinput - 1] = ObjectIdGetDatum(F_SHELL_IN);
@@ -208,6 +209,7 @@ TypeCreate(Oid newTypeOid,
 		   Oid typmodinProcedure,
 		   Oid typmodoutProcedure,
 		   Oid analyzeProcedure,
+		   Oid subscriptProcedure,
 		   Oid elementType,
 		   bool isImplicitArray,
 		   Oid arrayType,
@@ -357,6 +359,7 @@ TypeCreate(Oid newTypeOid,
 	values[Anum_pg_type_typisdefined - 1] = BoolGetDatum(true);
 	values[Anum_pg_type_typdelim - 1] = CharGetDatum(typDelim);
 	values[Anum_pg_type_typrelid - 1] = ObjectIdGetDatum(relationOid);
+	values[Anum_pg_type_typsubscript - 1] = ObjectIdGetDatum(subscriptProcedure);
 	values[Anum_pg_type_typelem - 1] = ObjectIdGetDatum(elementType);
 	values[Anum_pg_type_typarray - 1] = ObjectIdGetDatum(arrayType);
 	values[Anum_pg_type_typinput - 1] = ObjectIdGetDatum(inputProcedure);
@@ -667,7 +670,7 @@ GenerateTypeDependencies(HeapTuple typeTuple,
 		recordDependencyOnCurrentExtension(&myself, rebuild);
 	}
 
-	/* Normal dependencies on the I/O functions */
+	/* Normal dependencies on the I/O and support functions */
 	if (OidIsValid(typeForm->typinput))
 	{
 		ObjectAddressSet(referenced, ProcedureRelationId, typeForm->typinput);
@@ -707,6 +710,12 @@ GenerateTypeDependencies(HeapTuple typeTuple,
 	if (OidIsValid(typeForm->typanalyze))
 	{
 		ObjectAddressSet(referenced, ProcedureRelationId, typeForm->typanalyze);
+		add_exact_object_address(&referenced, addrs_normal);
+	}
+
+	if (OidIsValid(typeForm->typsubscript))
+	{
+		ObjectAddressSet(referenced, ProcedureRelationId, typeForm->typsubscript);
 		add_exact_object_address(&referenced, addrs_normal);
 	}
 

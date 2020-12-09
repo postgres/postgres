@@ -10794,11 +10794,13 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	char	   *typmodin;
 	char	   *typmodout;
 	char	   *typanalyze;
+	char	   *typsubscript;
 	Oid			typreceiveoid;
 	Oid			typsendoid;
 	Oid			typmodinoid;
 	Oid			typmodoutoid;
 	Oid			typanalyzeoid;
+	Oid			typsubscriptoid;
 	char	   *typcategory;
 	char	   *typispreferred;
 	char	   *typdelim;
@@ -10840,6 +10842,14 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	else
 		appendPQExpBufferStr(query, "false AS typcollatable, ");
 
+	if (fout->remoteVersion >= 140000)
+		appendPQExpBufferStr(query,
+							 "typsubscript, "
+							 "typsubscript::pg_catalog.oid AS typsubscriptoid, ");
+	else
+		appendPQExpBufferStr(query,
+							 "'-' AS typsubscript, 0 AS typsubscriptoid, ");
+
 	/* Before 8.4, pg_get_expr does not allow 0 for its second arg */
 	if (fout->remoteVersion >= 80400)
 		appendPQExpBufferStr(query,
@@ -10862,11 +10872,13 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	typmodin = PQgetvalue(res, 0, PQfnumber(res, "typmodin"));
 	typmodout = PQgetvalue(res, 0, PQfnumber(res, "typmodout"));
 	typanalyze = PQgetvalue(res, 0, PQfnumber(res, "typanalyze"));
+	typsubscript = PQgetvalue(res, 0, PQfnumber(res, "typsubscript"));
 	typreceiveoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typreceiveoid")));
 	typsendoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typsendoid")));
 	typmodinoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typmodinoid")));
 	typmodoutoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typmodoutoid")));
 	typanalyzeoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typanalyzeoid")));
+	typsubscriptoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typsubscriptoid")));
 	typcategory = PQgetvalue(res, 0, PQfnumber(res, "typcategory"));
 	typispreferred = PQgetvalue(res, 0, PQfnumber(res, "typispreferred"));
 	typdelim = PQgetvalue(res, 0, PQfnumber(res, "typdelim"));
@@ -10934,6 +10946,9 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 		else
 			appendPQExpBufferStr(q, typdefault);
 	}
+
+	if (OidIsValid(typsubscriptoid))
+		appendPQExpBuffer(q, ",\n    SUBSCRIPT = %s", typsubscript);
 
 	if (OidIsValid(tyinfo->typelem))
 	{

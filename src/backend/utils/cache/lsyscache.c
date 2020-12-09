@@ -2661,8 +2661,9 @@ get_typ_typrelid(Oid typid)
  *
  *		Given the type OID, get the typelem (InvalidOid if not an array type).
  *
- * NB: this only considers varlena arrays to be true arrays; InvalidOid is
- * returned if the input is a fixed-length array type.
+ * NB: this only succeeds for "true" arrays having array_subscript_handler
+ * as typsubscript.  For other types, InvalidOid is returned independently
+ * of whether they have typelem or typsubscript set.
  */
 Oid
 get_element_type(Oid typid)
@@ -2675,7 +2676,7 @@ get_element_type(Oid typid)
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
 		Oid			result;
 
-		if (typtup->typlen == -1)
+		if (IsTrueArrayType(typtup))
 			result = typtup->typelem;
 		else
 			result = InvalidOid;
@@ -2758,7 +2759,7 @@ get_base_element_type(Oid typid)
 			Oid			result;
 
 			/* This test must match get_element_type */
-			if (typTup->typlen == -1)
+			if (IsTrueArrayType(typTup))
 				result = typTup->typelem;
 			else
 				result = InvalidOid;
@@ -2990,6 +2991,64 @@ bool
 type_is_collatable(Oid typid)
 {
 	return OidIsValid(get_typcollation(typid));
+}
+
+
+/*
+ * get_typsubscript
+ *
+ *		Given the type OID, return the type's subscripting handler's OID,
+ *		if it has one.
+ *
+ * If typelemp isn't NULL, we also store the type's typelem value there.
+ * This saves some callers an extra catalog lookup.
+ */
+RegProcedure
+get_typsubscript(Oid typid, Oid *typelemp)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typform = (Form_pg_type) GETSTRUCT(tp);
+		RegProcedure handler = typform->typsubscript;
+
+		if (typelemp)
+			*typelemp = typform->typelem;
+		ReleaseSysCache(tp);
+		return handler;
+	}
+	else
+	{
+		if (typelemp)
+			*typelemp = InvalidOid;
+		return InvalidOid;
+	}
+}
+
+/*
+ * getSubscriptingRoutines
+ *
+ *		Given the type OID, fetch the type's subscripting methods struct.
+ *		Fail if type is not subscriptable.
+ *
+ * If typelemp isn't NULL, we also store the type's typelem value there.
+ * This saves some callers an extra catalog lookup.
+ */
+const struct SubscriptRoutines *
+getSubscriptingRoutines(Oid typid, Oid *typelemp)
+{
+	RegProcedure typsubscript = get_typsubscript(typid, typelemp);
+
+	if (!OidIsValid(typsubscript))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("cannot subscript type %s because it does not support subscripting",
+						format_type_be(typid))));
+
+	return (const struct SubscriptRoutines *)
+		DatumGetPointer(OidFunctionCall0(typsubscript));
 }
 
 

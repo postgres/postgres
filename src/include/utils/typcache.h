@@ -42,6 +42,7 @@ typedef struct TypeCacheEntry
 	char		typstorage;
 	char		typtype;
 	Oid			typrelid;
+	Oid			typsubscript;
 	Oid			typelem;
 	Oid			typcollation;
 

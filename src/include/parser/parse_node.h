@@ -313,15 +313,15 @@ extern void setup_parser_errposition_callback(ParseCallbackState *pcbstate,
 											  ParseState *pstate, int location);
 extern void cancel_parser_errposition_callback(ParseCallbackState *pcbstate);
 
-extern Oid	transformContainerType(Oid *containerType, int32 *containerTypmod);
+extern void transformContainerType(Oid *containerType, int32 *containerTypmod);
 
 extern SubscriptingRef *transformContainerSubscripts(ParseState *pstate,
 													 Node *containerBase,
 													 Oid containerType,
-													 Oid elementType,
 													 int32 containerTypMod,
 													 List *indirection,
-													 Node *assignFrom);
+													 bool isAssignment);
+
 extern Const *make_const(ParseState *pstate, Value *value, int location);
 
 #endif							/* PARSE_NODE_H */

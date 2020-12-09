@@ -667,6 +667,29 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 															&loccontext);
 						}
 						break;
+					case T_SubscriptingRef:
+						{
+							/*
+							 * The subscripts are treated as independent
+							 * expressions not contributing to the node's
+							 * collation.  Only the container, and the source
+							 * expression if any, contribute.  (This models
+							 * the old behavior, in which the subscripts could
+							 * be counted on to be integers and thus not
+							 * contribute anything.)
+							 */
+							SubscriptingRef *sbsref = (SubscriptingRef *) node;
+
+							assign_expr_collations(context->pstate,
+												   (Node *) sbsref->refupperindexpr);
+							assign_expr_collations(context->pstate,
+												   (Node *) sbsref->reflowerindexpr);
+							(void) assign_collations_walker((Node *) sbsref->refexpr,
+															&loccontext);
+							(void) assign_collations_walker((Node *) sbsref->refassgnexpr,
+															&loccontext);
+						}
+						break;
 					default:
 
 						/*

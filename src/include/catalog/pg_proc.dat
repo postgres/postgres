@@ -10936,6 +10936,14 @@
   proargnames => '{max_data_alignment,database_block_size,blocks_per_segment,wal_block_size,bytes_per_wal_segment,max_identifier_length,max_index_columns,max_toast_chunk_size,large_object_chunk_size,float8_pass_by_value,data_page_checksum_version}',
   prosrc => 'pg_control_init' },
 
+# subscripting support for built-in types
+{ oid => '9255', descr => 'standard array subscripting support',
+  proname => 'array_subscript_handler', prorettype => 'internal',
+  proargtypes => 'internal', prosrc => 'array_subscript_handler' },
+{ oid => '9256', descr => 'raw array subscripting support',
+  proname => 'raw_array_subscript_handler', prorettype => 'internal',
+  proargtypes => 'internal', prosrc => 'raw_array_subscript_handler' },
+
 # collation management functions
 { oid => '3445', descr => 'import collations from operating system',
   proname => 'pg_import_system_collations', procost => '100',

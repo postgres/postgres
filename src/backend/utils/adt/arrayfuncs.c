@@ -2044,7 +2044,8 @@ array_get_element_expanded(Datum arraydatum,
  * array bound.
  *
  * NOTE: we assume it is OK to scribble on the provided subscript arrays
- * lowerIndx[] and upperIndx[].  These are generally just temporaries.
+ * lowerIndx[] and upperIndx[]; also, these arrays must be of size MAXDIM
+ * even when nSubscripts is less.  These are generally just temporaries.
  */
 Datum
 array_get_slice(Datum arraydatum,
@@ -2772,7 +2773,8 @@ array_set_element_expanded(Datum arraydatum,
  * (XXX TODO: allow a corresponding behavior for multidimensional arrays)
  *
  * NOTE: we assume it is OK to scribble on the provided index arrays
- * lowerIndx[] and upperIndx[].  These are generally just temporaries.
+ * lowerIndx[] and upperIndx[]; also, these arrays must be of size MAXDIM
+ * even when nSubscripts is less.  These are generally just temporaries.
  *
  * NOTE: For assignments, we throw an error for silly subscripts etc,
  * rather than returning a NULL or empty array as the fetch operations do.

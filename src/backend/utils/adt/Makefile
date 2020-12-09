@@ -17,6 +17,7 @@ OBJS = \
 	array_typanalyze.o \
 	array_userfuncs.o \
 	arrayfuncs.o \
+	arraysubs.o \
 	arrayutils.o \
 	ascii.o \
 	bool.o \
