@@ -1094,6 +1094,33 @@ get_constraint_name(Oid conoid)
 		return NULL;
 }
 
+/*
+ * get_constraint_index
+ *		Given the OID of a unique, primary-key, or exclusion constraint,
+ *		return the OID of the underlying index.
+ *
+ * Return InvalidOid if the index couldn't be found; this suggests the
+ * given OID is bogus, but we leave it to caller to decide what to do.
+ */
+Oid
+get_constraint_index(Oid conoid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache1(CONSTROID, ObjectIdGetDatum(conoid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_constraint contup = (Form_pg_constraint) GETSTRUCT(tp);
+		Oid			result;
+
+		result = contup->conindid;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+
 /*				---------- LANGUAGE CACHE ----------					 */
 
 char *

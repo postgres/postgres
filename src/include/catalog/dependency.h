@@ -235,8 +235,6 @@ extern bool sequenceIsOwned(Oid seqId, char deptype, Oid *tableId, int32 *colId)
 extern List *getOwnedSequences(Oid relid);
 extern Oid	getIdentitySequence(Oid relid, AttrNumber attnum, bool missing_ok);
 
-extern Oid	get_constraint_index(Oid constraintId);
-
 extern Oid	get_index_constraint(Oid indexId);
 
 extern List *get_index_ref_constraints(Oid indexId);

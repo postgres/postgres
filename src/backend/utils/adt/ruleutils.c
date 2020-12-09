@@ -24,7 +24,6 @@
 #include "access/relation.h"
 #include "access/sysattr.h"
 #include "access/table.h"
-#include "catalog/dependency.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_authid.h"
@@ -2140,7 +2139,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				appendStringInfoChar(&buf, ')');
 
-				indexId = get_constraint_index(constraintId);
+				indexId = conForm->conindid;
 
 				/* Build including column list (from pg_index.indkeys) */
 				indtup = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexId));
