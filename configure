@@ -8307,12 +8307,12 @@ if test "$with_uuid" = bsd ; then
 
 $as_echo "#define HAVE_UUID_BSD 1" >>confdefs.h
 
-  UUID_EXTRA_OBJS="md5.o sha1.o"
+  UUID_EXTRA_OBJS="sha1.o"
 elif test "$with_uuid" = e2fs ; then
 
 $as_echo "#define HAVE_UUID_E2FS 1" >>confdefs.h
 
-  UUID_EXTRA_OBJS="md5.o sha1.o"
+  UUID_EXTRA_OBJS="sha1.o"
 elif test "$with_uuid" = ossp ; then
 
 $as_echo "#define HAVE_UUID_OSSP 1" >>confdefs.h

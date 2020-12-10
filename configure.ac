@@ -921,10 +921,10 @@ fi
 
 if test "$with_uuid" = bsd ; then
   AC_DEFINE([HAVE_UUID_BSD], 1, [Define to 1 if you have BSD UUID support.])
-  UUID_EXTRA_OBJS="md5.o sha1.o"
+  UUID_EXTRA_OBJS="sha1.o"
 elif test "$with_uuid" = e2fs ; then
   AC_DEFINE([HAVE_UUID_E2FS], 1, [Define to 1 if you have E2FS UUID support.])
-  UUID_EXTRA_OBJS="md5.o sha1.o"
+  UUID_EXTRA_OBJS="sha1.o"
 elif test "$with_uuid" = ossp ; then
   AC_DEFINE([HAVE_UUID_OSSP], 1, [Define to 1 if you have OSSP UUID support.])
   UUID_EXTRA_OBJS=""
