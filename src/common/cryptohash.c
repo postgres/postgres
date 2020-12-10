@@ -24,6 +24,7 @@
 #include <sys/param.h>
 
 #include "common/cryptohash.h"
+#include "md5_int.h"
 #include "sha2_int.h"
 
 /*
@@ -57,6 +58,9 @@ pg_cryptohash_create(pg_cryptohash_type type)
 
 	switch (type)
 	{
+		case PG_MD5:
+			ctx->data = ALLOC(sizeof(pg_md5_ctx));
+			break;
 		case PG_SHA224:
 			ctx->data = ALLOC(sizeof(pg_sha224_ctx));
 			break;
@@ -95,6 +99,9 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 
 	switch (ctx->type)
 	{
+		case PG_MD5:
+			pg_md5_init((pg_md5_ctx *) ctx->data);
+			break;
 		case PG_SHA224:
 			pg_sha224_init((pg_sha224_ctx *) ctx->data);
 			break;
@@ -126,6 +133,9 @@ pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
 
 	switch (ctx->type)
 	{
+		case PG_MD5:
+			pg_md5_update((pg_md5_ctx *) ctx->data, data, len);
+			break;
 		case PG_SHA224:
 			pg_sha224_update((pg_sha224_ctx *) ctx->data, data, len);
 			break;
@@ -157,6 +167,9 @@ pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest)
 
 	switch (ctx->type)
 	{
+		case PG_MD5:
+			pg_md5_final((pg_md5_ctx *) ctx->data, dest);
+			break;
 		case PG_SHA224:
 			pg_sha224_final((pg_sha224_ctx *) ctx->data, dest);
 			break;

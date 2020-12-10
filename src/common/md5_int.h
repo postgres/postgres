@@ -1,4 +1,17 @@
-/*	contrib/pgcrypto/md5.h */
+/*-------------------------------------------------------------------------
+ *
+ * md5_int.h
+ *	  Internal headers for fallback implementation of MD5
+ *
+ * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *		  src/common/md5_int.h
+ *
+ *-------------------------------------------------------------------------
+ */
+
 /*	   $KAME: md5.h,v 1.3 2000/02/22 14:01:18 itojun Exp $	   */
 
 /*
@@ -30,11 +43,14 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _NETINET6_MD5_H_
-#define _NETINET6_MD5_H_
+#ifndef PG_MD5_INT_H
+#define PG_MD5_INT_H
 
-#define MD5_BUFLEN	64
+#include "common/md5.h"
 
+#define MD5_BUFLEN 64
+
+/* Context data for MD5 */
 typedef struct
 {
 	union
@@ -43,37 +59,27 @@ typedef struct
 		uint8		md5_state8[16];
 	}			md5_st;
 
-#define md5_sta		md5_st.md5_state32[0]
-#define md5_stb		md5_st.md5_state32[1]
-#define md5_stc		md5_st.md5_state32[2]
-#define md5_std		md5_st.md5_state32[3]
-#define md5_st8		md5_st.md5_state8
+#define md5_sta     md5_st.md5_state32[0]
+#define md5_stb     md5_st.md5_state32[1]
+#define md5_stc     md5_st.md5_state32[2]
+#define md5_std     md5_st.md5_state32[3]
+#define md5_st8     md5_st.md5_state8
 
 	union
 	{
 		uint64		md5_count64;
 		uint8		md5_count8[8];
 	}			md5_count;
-#define md5_n	md5_count.md5_count64
-#define md5_n8	md5_count.md5_count8
+#define md5_n   md5_count.md5_count64
+#define md5_n8  md5_count.md5_count8
 
 	unsigned int md5_i;
 	uint8		md5_buf[MD5_BUFLEN];
-} md5_ctxt;
+} pg_md5_ctx;
 
-extern void md5_init(md5_ctxt *);
-extern void md5_loop(md5_ctxt *, const uint8 *, unsigned int);
-extern void md5_pad(md5_ctxt *);
-extern void md5_result(uint8 *, md5_ctxt *);
+/* Interface routines for MD5 */
+extern void pg_md5_init(pg_md5_ctx *ctx);
+extern void pg_md5_update(pg_md5_ctx *ctx, const uint8 *data, size_t len);
+extern void pg_md5_final(pg_md5_ctx *ctx, uint8 *dest);
 
-/* compatibility */
-#define MD5_CTX		md5_ctxt
-#define MD5Init(x)	md5_init((x))
-#define MD5Update(x, y, z)	md5_loop((x), (y), (z))
-#define MD5Final(x, y) \
-do {				\
-	md5_pad((y));		\
-	md5_result((x), (y));	\
-} while (0)
-
-#endif							/* ! _NETINET6_MD5_H_ */
+#endif							/* PG_MD5_INT_H */

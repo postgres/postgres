@@ -3192,6 +3192,7 @@ pg_int64
 pg_local_to_utf_combined
 pg_locale_t
 pg_mb_radix_tree
+pg_md5_ctx
 pg_on_exit_callback
 pg_re_flags
 pg_saslprep_rc

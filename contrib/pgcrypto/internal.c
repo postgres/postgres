@@ -34,10 +34,12 @@
 #include <time.h>
 
 #include "blf.h"
-#include "md5.h"
 #include "px.h"
 #include "rijndael.h"
 #include "sha1.h"
+
+#include "common/cryptohash.h"
+#include "common/md5.h"
 
 #ifndef MD5_DIGEST_LENGTH
 #define MD5_DIGEST_LENGTH 16
@@ -96,34 +98,33 @@ int_md5_block_len(PX_MD *h)
 static void
 int_md5_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
-	MD5_CTX    *ctx = (MD5_CTX *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	MD5Update(ctx, data, dlen);
+	pg_cryptohash_update(ctx, data, dlen);
 }
 
 static void
 int_md5_reset(PX_MD *h)
 {
-	MD5_CTX    *ctx = (MD5_CTX *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	MD5Init(ctx);
+	pg_cryptohash_init(ctx);
 }
 
 static void
 int_md5_finish(PX_MD *h, uint8 *dst)
 {
-	MD5_CTX    *ctx = (MD5_CTX *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	MD5Final(dst, ctx);
+	pg_cryptohash_final(ctx, dst);
 }
 
 static void
 int_md5_free(PX_MD *h)
 {
-	MD5_CTX    *ctx = (MD5_CTX *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	px_memset(ctx, 0, sizeof(*ctx));
-	pfree(ctx);
+	pg_cryptohash_free(ctx);
 	pfree(h);
 }
 
@@ -180,9 +181,9 @@ int_sha1_free(PX_MD *h)
 static void
 init_md5(PX_MD *md)
 {
-	MD5_CTX    *ctx;
+	pg_cryptohash_ctx *ctx;
 
-	ctx = palloc0(sizeof(*ctx));
+	ctx = pg_cryptohash_create(PG_MD5);
 
 	md->p.ptr = ctx;
 

@@ -135,6 +135,9 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 
 	switch (ctx->type)
 	{
+		case PG_MD5:
+			status = EVP_DigestInit_ex(state->evpctx, EVP_md5(), NULL);
+			break;
 		case PG_SHA224:
 			status = EVP_DigestInit_ex(state->evpctx, EVP_sha224(), NULL);
 			break;
