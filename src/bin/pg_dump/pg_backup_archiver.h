@@ -229,12 +229,9 @@ typedef enum
 #define RESTORE_PASS_LAST RESTORE_PASS_POST_ACL
 } RestorePass;
 
-typedef enum
-{
-	REQ_SCHEMA = 0x01,			/* want schema */
-	REQ_DATA = 0x02,			/* want data */
-	REQ_SPECIAL = 0x04			/* for special TOC entries */
-} teReqs;
+#define REQ_SCHEMA	0x01		/* want schema */
+#define REQ_DATA	0x02		/* want data */
+#define REQ_SPECIAL	0x04		/* for special TOC entries */
 
 struct _archiveHandle
 {
@@ -386,7 +383,7 @@ struct _tocEntry
 
 	/* working state while dumping/restoring */
 	pgoff_t		dataLength;		/* item's data size; 0 if none or unknown */
-	teReqs		reqs;			/* do we need schema and/or data of object */
+	int			reqs;			/* do we need schema and/or data of object (REQ_* bit mask) */
 	bool		created;		/* set for DATA member if TABLE was created */
 
 	/* working state (needed only for parallel restore) */
@@ -436,7 +433,7 @@ extern void WriteDataChunksForTocEntry(ArchiveHandle *AH, TocEntry *te);
 extern ArchiveHandle *CloneArchive(ArchiveHandle *AH);
 extern void DeCloneArchive(ArchiveHandle *AH);
 
-extern teReqs TocIDRequired(ArchiveHandle *AH, DumpId id);
+extern int TocIDRequired(ArchiveHandle *AH, DumpId id);
 TocEntry   *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
 extern bool checkSeek(FILE *fp);
 

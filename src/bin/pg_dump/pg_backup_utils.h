@@ -17,13 +17,11 @@
 
 #include "common/logging.h"
 
-typedef enum					/* bits returned by set_dump_section */
-{
-	DUMP_PRE_DATA = 0x01,
-	DUMP_DATA = 0x02,
-	DUMP_POST_DATA = 0x04,
-	DUMP_UNSECTIONED = 0xff
-} DumpSections;
+/* bits returned by set_dump_section */
+#define DUMP_PRE_DATA		0x01
+#define DUMP_DATA			0x02
+#define DUMP_POST_DATA		0x04
+#define DUMP_UNSECTIONED	0xff
 
 typedef void (*on_exit_nicely_callback) (int code, void *arg);
 

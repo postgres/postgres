@@ -86,7 +86,7 @@ static void _selectTableAccessMethod(ArchiveHandle *AH, const char *tableam);
 static void processEncodingEntry(ArchiveHandle *AH, TocEntry *te);
 static void processStdStringsEntry(ArchiveHandle *AH, TocEntry *te);
 static void processSearchPathEntry(ArchiveHandle *AH, TocEntry *te);
-static teReqs _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH);
+static int	_tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH);
 static RestorePass _tocEntryRestorePass(TocEntry *te);
 static bool _tocEntryIsACL(TocEntry *te);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te);
@@ -757,7 +757,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 {
 	RestoreOptions *ropt = AH->public.ropt;
 	int			status = WORKER_OK;
-	teReqs		reqs;
+	int			reqs;
 	bool		defnDumped;
 
 	AH->currentTE = te;
@@ -1868,7 +1868,7 @@ getTocEntryByDumpId(ArchiveHandle *AH, DumpId id)
 	return NULL;
 }
 
-teReqs
+int
 TocIDRequired(ArchiveHandle *AH, DumpId id)
 {
 	TocEntry   *te = getTocEntryByDumpId(AH, id);
@@ -2803,10 +2803,10 @@ StrictNamesCheck(RestoreOptions *ropt)
  * REQ_SCHEMA and REQ_DATA bits if we want to restore schema and/or data
  * portions of this TOC entry, or REQ_SPECIAL if it's a special entry.
  */
-static teReqs
+static int
 _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 {
-	teReqs		res = REQ_SCHEMA | REQ_DATA;
+	int			res = REQ_SCHEMA | REQ_DATA;
 	RestoreOptions *ropt = AH->public.ropt;
 
 	/* These items are treated specially */
