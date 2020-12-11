@@ -238,6 +238,8 @@ ERROR:  array subscript in assignment must not be null
 -- Un-subscriptable type
 SELECT (now())[1];
 ERROR:  cannot subscript type timestamp with time zone because it does not support subscripting
+LINE 1: SELECT (now())[1];
+                ^
 -- test slices with empty lower and/or upper index
 CREATE TEMP TABLE arrtest_s (
   a       int2[],

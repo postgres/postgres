@@ -848,7 +848,7 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 			return true;
 		/* Otherwise we must look up the subscripting support methods */
 		sbsroutines = getSubscriptingRoutines(sbsref->refcontainertype, NULL);
-		if (!sbsroutines->fetch_strict)
+		if (!(sbsroutines && sbsroutines->fetch_strict))
 			return true;
 		/* else fall through to check args */
 	}
@@ -1144,7 +1144,8 @@ contain_leaked_vars_walker(Node *node, void *context)
 				/* Consult the subscripting support method info */
 				sbsroutines = getSubscriptingRoutines(sbsref->refcontainertype,
 													  NULL);
-				if (!(sbsref->refassgnexpr != NULL ?
+				if (!sbsroutines ||
+					!(sbsref->refassgnexpr != NULL ?
 					  sbsroutines->store_leakproof :
 					  sbsroutines->fetch_leakproof))
 				{

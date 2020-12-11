@@ -3031,7 +3031,7 @@ get_typsubscript(Oid typid, Oid *typelemp)
  * getSubscriptingRoutines
  *
  *		Given the type OID, fetch the type's subscripting methods struct.
- *		Fail if type is not subscriptable.
+ *		Return NULL if type is not subscriptable.
  *
  * If typelemp isn't NULL, we also store the type's typelem value there.
  * This saves some callers an extra catalog lookup.
@@ -3042,10 +3042,7 @@ getSubscriptingRoutines(Oid typid, Oid *typelemp)
 	RegProcedure typsubscript = get_typsubscript(typid, typelemp);
 
 	if (!OidIsValid(typsubscript))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("cannot subscript type %s because it does not support subscripting",
-						format_type_be(typid))));
+		return NULL;
 
 	return (const struct SubscriptRoutines *)
 		DatumGetPointer(OidFunctionCall0(typsubscript));

@@ -271,6 +271,12 @@ transformContainerSubscripts(ParseState *pstate,
 	 * functions and typelem.
 	 */
 	sbsroutines = getSubscriptingRoutines(containerType, &elementType);
+	if (!sbsroutines)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("cannot subscript type %s because it does not support subscripting",
+						format_type_be(containerType)),
+				 parser_errposition(pstate, exprLocation(containerBase))));
 
 	/*
 	 * Detect whether any of the indirection items are slice specifiers.
