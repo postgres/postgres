@@ -713,6 +713,39 @@ b
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   In addition to these operators and functions, values of
+   the <type>hstore</type> type can be subscripted, allowing them to act
+   like associative arrays.  Only a single subscript of type <type>text</type>
+   can be specified; it is interpreted as a key and the corresponding
+   value is fetched or stored.  For example,
+
+<programlisting>
+CREATE TABLE mytable (h hstore);
+INSERT INTO mytable VALUES ('a=>b, c=>d');
+SELECT h['a'] FROM mytable;
+ h
+---
+ b
+(1 row)
+
+UPDATE mytable SET h['c'] = 'new';
+SELECT h FROM mytable;
+          h
+----------------------
+ "a"=>"b", "c"=>"new"
+(1 row)
+</programlisting>
+
+   A subscripted fetch returns <literal>NULL</literal> if the subscript
+   is <literal>NULL</literal> or that key does not exist in
+   the <type>hstore</type>.  (Thus, a subscripted fetch is not greatly
+   different from the <literal>-&gt;</literal> operator.)
+   A subscripted update fails if the subscript is <literal>NULL</literal>;
+   otherwise, it replaces the value for that key, adding an entry to
+   the <type>hstore</type> if the key does not already exist.
+  </para>
  </sect2>
 
  <sect2>
@@ -767,7 +800,16 @@ CREATE INDEX hidx ON testhstore USING HASH (h);
   <para>
    Add a key, or update an existing key with a new value:
 <programlisting>
+UPDATE tab SET h['c'] = '3';
+</programlisting>
+   Another way to do the same thing is:
+<programlisting>
 UPDATE tab SET h = h || hstore('c', '3');
+</programlisting>
+   If multiple keys are to be added or changed in one operation,
+   the concatenation approach is more efficient than subscripting:
+<programlisting>
+UPDATE tab SET h = h || hstore(array['q', 'w'], array['11', '12']);
 </programlisting>
   </para>
 

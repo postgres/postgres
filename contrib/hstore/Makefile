@@ -7,10 +7,12 @@ OBJS = \
 	hstore_gin.o \
 	hstore_gist.o \
 	hstore_io.o \
-	hstore_op.o
+	hstore_op.o \
+	hstore_subs.o
 
 EXTENSION = hstore
 DATA = hstore--1.4.sql \
+	hstore--1.7--1.8.sql \
 	hstore--1.6--1.7.sql \
 	hstore--1.5--1.6.sql \
 	hstore--1.4--1.5.sql \

@@ -1560,6 +1560,29 @@ select json_agg(q) from (select f1, hstore_to_json_loose(f2) as f2 from test_jso
   {"f1":"rec2","f2":{"b": false, "c": "null", "d": -12345, "e": "012345.6", "f": -1.234, "g": 0.345e-4, "a key": 2}}]
 (1 row)
 
+-- Test subscripting
+insert into test_json_agg default values;
+select f2['d'], f2['x'] is null as x_isnull from test_json_agg;
+   f2   | x_isnull 
+--------+----------
+ 12345  | t
+ -12345 | t
+        | t
+(3 rows)
+
+select f2['d']['e'] from test_json_agg;  -- error
+ERROR:  hstore allows only one subscript
+select f2['d':'e'] from test_json_agg;  -- error
+ERROR:  hstore allows only one subscript
+update test_json_agg set f2['d'] = f2['e'], f2['x'] = 'xyzzy';
+select f2 from test_json_agg;
+                                                         f2                                                          
+---------------------------------------------------------------------------------------------------------------------
+ "b"=>"t", "c"=>NULL, "d"=>"012345", "e"=>"012345", "f"=>"1.234", "g"=>"2.345e+4", "x"=>"xyzzy", "a key"=>"1"
+ "b"=>"f", "c"=>"null", "d"=>"012345.6", "e"=>"012345.6", "f"=>"-1.234", "g"=>"0.345e-4", "x"=>"xyzzy", "a key"=>"2"
+ "d"=>NULL, "x"=>"xyzzy"
+(3 rows)
+
 -- Check the hstore_hash() and hstore_hash_extended() function explicitly.
 SELECT v as value, hstore_hash(v)::bit(32) as standard,
        hstore_hash_extended(v, 0)::bit(32) as extended0,

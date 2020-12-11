@@ -364,6 +364,14 @@ insert into test_json_agg values ('rec1','"a key" =>1, b => t, c => null, d=> 12
 select json_agg(q) from test_json_agg q;
 select json_agg(q) from (select f1, hstore_to_json_loose(f2) as f2 from test_json_agg) q;
 
+-- Test subscripting
+insert into test_json_agg default values;
+select f2['d'], f2['x'] is null as x_isnull from test_json_agg;
+select f2['d']['e'] from test_json_agg;  -- error
+select f2['d':'e'] from test_json_agg;  -- error
+update test_json_agg set f2['d'] = f2['e'], f2['x'] = 'xyzzy';
+select f2 from test_json_agg;
+
 -- Check the hstore_hash() and hstore_hash_extended() function explicitly.
 SELECT v as value, hstore_hash(v)::bit(32) as standard,
        hstore_hash_extended(v, 0)::bit(32) as extended0,

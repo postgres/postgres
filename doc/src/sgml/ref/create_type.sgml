@@ -333,9 +333,11 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    return an <type>internal</type> result, which is a pointer to a struct
    of methods (functions) that implement subscripting.
    The detailed API for subscript functions appears
-   in <filename>src/include/nodes/subscripting.h</filename>;
-   it may also be useful to read the array implementation
-   in <filename>src/backend/utils/adt/arraysubs.c</filename>.
+   in <filename>src/include/nodes/subscripting.h</filename>.
+   It may also be useful to read the array implementation
+   in <filename>src/backend/utils/adt/arraysubs.c</filename>,
+   or the simpler code
+   in <filename>contrib/hstore/hstore_subs.c</filename>.
    Additional information appears in
    <xref linkend="sql-createtype-array"/> below.
   </para>
