@@ -207,23 +207,25 @@ ALTER TYPE myvarchar SET (
     receive = myvarcharrecv,
     typmod_in = varchartypmodin,
     typmod_out = varchartypmodout,
-    analyze = array_typanalyze  -- bogus, but it doesn't matter
+    -- these are bogus, but it's safe as long as we don't use the type:
+    analyze = ts_typanalyze,
+    subscript = raw_array_subscript_handler
 );
 
 SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
-       typanalyze, typstorage
+       typanalyze, typsubscript, typstorage
 FROM pg_type WHERE typname = 'myvarchar';
 
 SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
-       typanalyze, typstorage
+       typanalyze, typsubscript, typstorage
 FROM pg_type WHERE typname = '_myvarchar';
 
 SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
-       typanalyze, typstorage
+       typanalyze, typsubscript, typstorage
 FROM pg_type WHERE typname = 'myvarchardom';
 
 SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
-       typanalyze, typstorage
+       typanalyze, typsubscript, typstorage
 FROM pg_type WHERE typname = '_myvarchardom';
 
 -- ensure dependencies are straight

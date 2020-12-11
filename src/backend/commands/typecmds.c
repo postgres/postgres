@@ -94,6 +94,7 @@ typedef struct
 	bool		updateTypmodin;
 	bool		updateTypmodout;
 	bool		updateAnalyze;
+	bool		updateSubscript;
 	/* New values for relevant attributes */
 	char		storage;
 	Oid			receiveOid;
@@ -101,6 +102,7 @@ typedef struct
 	Oid			typmodinOid;
 	Oid			typmodoutOid;
 	Oid			analyzeOid;
+	Oid			subscriptOid;
 } AlterTypeRecurseParams;
 
 /* Potentially set by pg_upgrade_support functions */
@@ -3885,6 +3887,18 @@ AlterType(AlterTypeStmt *stmt)
 			/* Replacing an analyze function requires superuser. */
 			requireSuper = true;
 		}
+		else if (strcmp(defel->defname, "subscript") == 0)
+		{
+			if (defel->arg != NULL)
+				atparams.subscriptOid =
+					findTypeSubscriptingFunction(defGetQualifiedName(defel),
+												 typeOid);
+			else
+				atparams.subscriptOid = InvalidOid; /* NONE, remove function */
+			atparams.updateSubscript = true;
+			/* Replacing a subscript function requires superuser. */
+			requireSuper = true;
+		}
 
 		/*
 		 * The rest of the options that CREATE accepts cannot be changed.
@@ -4042,6 +4056,11 @@ AlterTypeRecurse(Oid typeOid, bool isImplicitArray,
 		replaces[Anum_pg_type_typanalyze - 1] = true;
 		values[Anum_pg_type_typanalyze - 1] = ObjectIdGetDatum(atparams->analyzeOid);
 	}
+	if (atparams->updateSubscript)
+	{
+		replaces[Anum_pg_type_typsubscript - 1] = true;
+		values[Anum_pg_type_typsubscript - 1] = ObjectIdGetDatum(atparams->subscriptOid);
+	}
 
 	newtup = heap_modify_tuple(tup, RelationGetDescr(catalog),
 							   values, nulls, replaces);
@@ -4098,6 +4117,7 @@ AlterTypeRecurse(Oid typeOid, bool isImplicitArray,
 	atparams->updateReceive = false;	/* domains use F_DOMAIN_RECV */
 	atparams->updateTypmodin = false;	/* domains don't have typmods */
 	atparams->updateTypmodout = false;
+	atparams->updateSubscript = false;	/* domains don't have subscriptors */
 
 	/* Skip the scan if nothing remains to be done */
 	if (!(atparams->updateStorage ||

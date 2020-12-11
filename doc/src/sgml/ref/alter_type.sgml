@@ -196,6 +196,14 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> SET ( <replaceable 
        </listitem>
        <listitem>
         <para>
+         <literal>SUBSCRIPT</literal> can be set to the name of a type-specific
+         subscripting handler function, or <literal>NONE</literal> to remove
+         the type's subscripting handler function.  Using this option
+         requires superuser privilege.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
          <literal>STORAGE</literal><indexterm>
           <primary>TOAST</primary>
           <secondary>per-type storage settings</secondary>

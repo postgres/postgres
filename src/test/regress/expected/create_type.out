@@ -260,38 +260,40 @@ ALTER TYPE myvarchar SET (
     receive = myvarcharrecv,
     typmod_in = varchartypmodin,
     typmod_out = varchartypmodout,
-    analyze = array_typanalyze  -- bogus, but it doesn't matter
+    -- these are bogus, but it's safe as long as we don't use the type:
+    analyze = ts_typanalyze,
+    subscript = raw_array_subscript_handler
 );
 SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
-       typanalyze, typstorage
+       typanalyze, typsubscript, typstorage
 FROM pg_type WHERE typname = 'myvarchar';
-  typinput   |  typoutput   |  typreceive   |    typsend    |    typmodin     |    typmodout     |    typanalyze    | typstorage 
--------------+--------------+---------------+---------------+-----------------+------------------+------------------+------------
- myvarcharin | myvarcharout | myvarcharrecv | myvarcharsend | varchartypmodin | varchartypmodout | array_typanalyze | x
+  typinput   |  typoutput   |  typreceive   |    typsend    |    typmodin     |    typmodout     |  typanalyze   |        typsubscript         | typstorage 
+-------------+--------------+---------------+---------------+-----------------+------------------+---------------+-----------------------------+------------
+ myvarcharin | myvarcharout | myvarcharrecv | myvarcharsend | varchartypmodin | varchartypmodout | ts_typanalyze | raw_array_subscript_handler | x
 (1 row)
 
 SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
-       typanalyze, typstorage
+       typanalyze, typsubscript, typstorage
 FROM pg_type WHERE typname = '_myvarchar';
- typinput | typoutput | typreceive |  typsend   |    typmodin     |    typmodout     |    typanalyze    | typstorage 
-----------+-----------+------------+------------+-----------------+------------------+------------------+------------
- array_in | array_out | array_recv | array_send | varchartypmodin | varchartypmodout | array_typanalyze | x
+ typinput | typoutput | typreceive |  typsend   |    typmodin     |    typmodout     |    typanalyze    |      typsubscript       | typstorage 
+----------+-----------+------------+------------+-----------------+------------------+------------------+-------------------------+------------
+ array_in | array_out | array_recv | array_send | varchartypmodin | varchartypmodout | array_typanalyze | array_subscript_handler | x
 (1 row)
 
 SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
-       typanalyze, typstorage
+       typanalyze, typsubscript, typstorage
 FROM pg_type WHERE typname = 'myvarchardom';
- typinput  |  typoutput   | typreceive  |    typsend    | typmodin | typmodout |    typanalyze    | typstorage 
------------+--------------+-------------+---------------+----------+-----------+------------------+------------
- domain_in | myvarcharout | domain_recv | myvarcharsend | -        | -         | array_typanalyze | x
+ typinput  |  typoutput   | typreceive  |    typsend    | typmodin | typmodout |  typanalyze   | typsubscript | typstorage 
+-----------+--------------+-------------+---------------+----------+-----------+---------------+--------------+------------
+ domain_in | myvarcharout | domain_recv | myvarcharsend | -        | -         | ts_typanalyze | -            | x
 (1 row)
 
 SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
-       typanalyze, typstorage
+       typanalyze, typsubscript, typstorage
 FROM pg_type WHERE typname = '_myvarchardom';
- typinput | typoutput | typreceive |  typsend   | typmodin | typmodout |    typanalyze    | typstorage 
-----------+-----------+------------+------------+----------+-----------+------------------+------------
- array_in | array_out | array_recv | array_send | -        | -         | array_typanalyze | x
+ typinput | typoutput | typreceive |  typsend   | typmodin | typmodout |    typanalyze    |      typsubscript       | typstorage 
+----------+-----------+------------+------------+----------+-----------+------------------+-------------------------+------------
+ array_in | array_out | array_recv | array_send | -        | -         | array_typanalyze | array_subscript_handler | x
 (1 row)
 
 -- ensure dependencies are straight
