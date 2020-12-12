@@ -3094,7 +3094,7 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-	while ((c = getopt_long(argc, argv, "A:dD:E:gkL:nNWsST:U:X:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "A:dD:E:gkL:nNsST:U:WX:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
