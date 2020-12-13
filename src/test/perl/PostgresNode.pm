@@ -1368,7 +1368,7 @@ both B<stdout> and B<stderr> the results may be interleaved unpredictably.
 =item on_error_stop => 1
 
 By default, the B<psql> method invokes the B<psql> program with ON_ERROR_STOP=1
-set, so SQL execution is stopped at the first error and exit code 2 is
+set, so SQL execution is stopped at the first error and exit code 3 is
 returned.  Set B<on_error_stop> to 0 to ignore errors instead.
 
 =item on_error_die => 0

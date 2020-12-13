@@ -2252,7 +2252,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 			bool		requestReply = false;
 
 			/*
-			 * Check if time since last receive from standby has reached the
+			 * Check if time since last receive from primary has reached the
 			 * configured limit.
 			 */
 			if (wal_receiver_timeout > 0)

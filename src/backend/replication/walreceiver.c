@@ -537,7 +537,7 @@ WalReceiverMain(void)
 					bool		requestReply = false;
 
 					/*
-					 * Check if time since last receive from standby has
+					 * Check if time since last receive from primary has
 					 * reached the configured limit.
 					 */
 					if (wal_receiver_timeout > 0)
