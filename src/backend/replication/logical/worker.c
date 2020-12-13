@@ -776,7 +776,7 @@ apply_handle_stream_start(StringInfo s)
 		hash_ctl.entrysize = sizeof(StreamXidHash);
 		hash_ctl.hcxt = ApplyContext;
 		xidhash = hash_create("StreamXidHash", 1024, &hash_ctl,
-							  HASH_ELEM | HASH_CONTEXT);
+							  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	}
 
 	/* open the spool file for this transaction */

@@ -46,14 +46,36 @@ my $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*), count(c), count(d = 999) FROM test_tab");
 is($result, qq(2|2|2), 'check initial data was copied to subscriber');
 
-# Insert, update and delete enough rows to exceed the 64kB limit.
-$node_publisher->safe_psql('postgres', q{
+# Interleave a pair of transactions, each exceeding the 64kB limit.
+my $in  = '';
+my $out = '';
+
+my $timer = IPC::Run::timeout(180);
+
+my $h = $node_publisher->background_psql('postgres', \$in, \$out, $timer,
+	on_error_stop => 0);
+
+$in .= q{
 BEGIN;
 INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
 UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
 DELETE FROM test_tab WHERE mod(a,3) = 0;
+};
+$h->pump_nb;
+
+$node_publisher->safe_psql(
+	'postgres', q{
+BEGIN;
+INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(5001, 9999) s(i);
+DELETE FROM test_tab WHERE a > 5000;
 COMMIT;
 });
+
+$in .= q{
+COMMIT;
+\q
+};
+$h->finish;    # errors make the next test fail, so ignore them here
 
 $node_publisher->wait_for_catchup($appname);
 
