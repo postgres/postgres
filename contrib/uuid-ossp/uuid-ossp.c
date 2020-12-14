@@ -41,8 +41,8 @@
 #undef uuid_hash
 
 /*
- * Some BSD variants offer md5 and sha1 implementations but Linux does not,
- * so we use a copy of the ones from pgcrypto.  Not needed with OSSP, though.
+ * Some BSD variants offer sha1 implementation but Linux does not, so we use
+ * a copy from pgcrypto.  Not needed with OSSP, though.
  */
 #ifndef HAVE_UUID_OSSP
 #include "sha1.h"

@@ -69,7 +69,7 @@ bytesToHex(uint8 b[16], char *s)
 bool
 pg_md5_hash(const void *buff, size_t len, char *hexsum)
 {
-	uint8		sum[16];
+	uint8		sum[MD5_DIGEST_LENGTH];
 	pg_cryptohash_ctx *ctx;
 
 	ctx = pg_cryptohash_create(PG_MD5);

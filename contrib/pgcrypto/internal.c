@@ -41,10 +41,6 @@
 #include "common/cryptohash.h"
 #include "common/md5.h"
 
-#ifndef MD5_DIGEST_LENGTH
-#define MD5_DIGEST_LENGTH 16
-#endif
-
 #ifndef SHA1_DIGEST_LENGTH
 #ifdef SHA1_RESULTLEN
 #define SHA1_DIGEST_LENGTH SHA1_RESULTLEN

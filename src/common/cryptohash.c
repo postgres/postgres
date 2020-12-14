@@ -197,6 +197,26 @@ pg_cryptohash_free(pg_cryptohash_ctx *ctx)
 {
 	if (ctx == NULL)
 		return;
+
+	switch (ctx->type)
+	{
+		case PG_MD5:
+			explicit_bzero(ctx->data, sizeof(pg_md5_ctx));
+			break;
+		case PG_SHA224:
+			explicit_bzero(ctx->data, sizeof(pg_sha224_ctx));
+			break;
+		case PG_SHA256:
+			explicit_bzero(ctx->data, sizeof(pg_sha256_ctx));
+			break;
+		case PG_SHA384:
+			explicit_bzero(ctx->data, sizeof(pg_sha384_ctx));
+			break;
+		case PG_SHA512:
+			explicit_bzero(ctx->data, sizeof(pg_sha512_ctx));
+			break;
+	}
+
 	FREE(ctx->data);
 	explicit_bzero(ctx, sizeof(pg_cryptohash_ctx));
 	FREE(ctx);
