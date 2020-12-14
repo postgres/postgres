@@ -8688,6 +8688,39 @@ UpdateCheckPointDistanceEstimate(uint64 nbytes)
 }
 
 /*
+ * Update the ps display for a process running a checkpoint.  Note that
+ * this routine should not do any allocations so as it can be called
+ * from a critical section.
+ */
+static void
+update_checkpoint_display(int flags, bool restartpoint, bool reset)
+{
+	/*
+	 * The status is reported only for end-of-recovery and shutdown
+	 * checkpoints or shutdown restartpoints.  Updating the ps display is
+	 * useful in those situations as it may not be possible to rely on
+	 * pg_stat_activity to see the status of the checkpointer or the startup
+	 * process.
+	 */
+	if ((flags & (CHECKPOINT_END_OF_RECOVERY | CHECKPOINT_IS_SHUTDOWN)) == 0)
+		return;
+
+	if (reset)
+		set_ps_display("");
+	else
+	{
+		char		activitymsg[128];
+
+		snprintf(activitymsg, sizeof(activitymsg), "performing %s%s%s",
+				 (flags & CHECKPOINT_END_OF_RECOVERY) ? "end-of-recovery " : "",
+				 (flags & CHECKPOINT_IS_SHUTDOWN) ? "shutdown " : "",
+				 restartpoint ? "restartpoint" : "checkpoint");
+		set_ps_display(activitymsg);
+	}
+}
+
+
+/*
  * Perform a checkpoint --- either during shutdown, or on-the-fly
  *
  * flags is a bitwise OR of the following:
@@ -8905,6 +8938,9 @@ CreateCheckPoint(int flags)
 	if (log_checkpoints)
 		LogCheckpointStart(flags, false);
 
+	/* Update the process title */
+	update_checkpoint_display(flags, false, false);
+
 	TRACE_POSTGRESQL_CHECKPOINT_START(flags);
 
 	/*
@@ -9119,6 +9155,9 @@ CreateCheckPoint(int flags)
 
 	/* Real work is done, but log and update stats before releasing lock. */
 	LogCheckpointEnd(false);
+
+	/* Reset the process title */
+	update_checkpoint_display(flags, false, true);
 
 	TRACE_POSTGRESQL_CHECKPOINT_DONE(CheckpointStats.ckpt_bufs_written,
 									 NBuffers,
@@ -9374,6 +9413,9 @@ CreateRestartPoint(int flags)
 	if (log_checkpoints)
 		LogCheckpointStart(flags, true);
 
+	/* Update the process title */
+	update_checkpoint_display(flags, true, false);
+
 	CheckPointGuts(lastCheckPoint.redo, flags);
 
 	/*
@@ -9491,6 +9533,9 @@ CreateRestartPoint(int flags)
 
 	/* Real work is done, but log and update before releasing lock. */
 	LogCheckpointEnd(true);
+
+	/* Reset the process title */
+	update_checkpoint_display(flags, true, true);
 
 	xtime = GetLatestXTime();
 	ereport((log_checkpoints ? LOG : DEBUG2),
