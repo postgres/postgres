@@ -680,13 +680,12 @@ find_rendezvous_variable(const char *varName)
 	{
 		HASHCTL		ctl;
 
-		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = NAMEDATALEN;
 		ctl.entrysize = sizeof(rendezvousHashEntry);
 		rendezvousHash = hash_create("Rendezvous variable hash",
 									 16,
 									 &ctl,
-									 HASH_ELEM);
+									 HASH_ELEM | HASH_STRINGS);
 	}
 
 	/* Find or create the hashtable entry for this varName */

@@ -1265,7 +1265,6 @@ pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid)
 	HeapTuple	tup;
 	Snapshot	snapshot;
 
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(Oid);
 	hash_ctl.hcxt = CurrentMemoryContext;
@@ -1815,7 +1814,6 @@ pgstat_init_function_usage(FunctionCallInfo fcinfo,
 		/* First time through - initialize function stat table */
 		HASHCTL		hash_ctl;
 
-		memset(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(Oid);
 		hash_ctl.entrysize = sizeof(PgStat_BackendFunctionEntry);
 		pgStatFunctions = hash_create("Function stat entries",
@@ -1975,7 +1973,6 @@ get_tabstat_entry(Oid rel_id, bool isshared)
 	{
 		HASHCTL		ctl;
 
-		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(TabStatHashEntry);
 
@@ -4994,7 +4991,6 @@ reset_dbentry_counters(PgStat_StatDBEntry *dbentry)
 	dbentry->stat_reset_timestamp = GetCurrentTimestamp();
 	dbentry->stats_timestamp = 0;
 
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
 	dbentry->tables = hash_create("Per-database table",
@@ -5423,7 +5419,6 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 	/*
 	 * Create the DB hashtable
 	 */
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(PgStat_StatDBEntry);
 	hash_ctl.hcxt = pgStatLocalContext;
@@ -5608,7 +5603,6 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 						break;
 				}
 
-				memset(&hash_ctl, 0, sizeof(hash_ctl));
 				hash_ctl.keysize = sizeof(Oid);
 				hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
 				hash_ctl.hcxt = pgStatLocalContext;

@@ -2043,7 +2043,6 @@ do_autovacuum(void)
 	pg_class_desc = CreateTupleDescCopy(RelationGetDescr(classRel));
 
 	/* create hash table for toast <-> main relid mapping */
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(av_relation);
 

@@ -372,7 +372,6 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 	{
 		HASHCTL		ctl;
 
-		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(struct tablesync_start_time_mapping);
 		last_start_times = hash_create("Logical replication table sync worker start times",

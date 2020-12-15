@@ -117,7 +117,6 @@ lookup_ts_parser_cache(Oid prsId)
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
 
-		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(TSParserCacheEntry);
 		TSParserCacheHash = hash_create("Tsearch parser cache", 4,
@@ -215,7 +214,6 @@ lookup_ts_dictionary_cache(Oid dictId)
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
 
-		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(TSDictionaryCacheEntry);
 		TSDictionaryCacheHash = hash_create("Tsearch dictionary cache", 8,
@@ -365,7 +363,6 @@ init_ts_config_cache(void)
 {
 	HASHCTL		ctl;
 
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(TSConfigCacheEntry);
 	TSConfigCacheHash = hash_create("Tsearch configuration cache", 16,

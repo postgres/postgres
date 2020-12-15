@@ -111,7 +111,6 @@ logicalrep_relmap_init(void)
 								  ALLOCSET_DEFAULT_SIZES);
 
 	/* Initialize the relation hash table. */
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(LogicalRepRelId);
 	ctl.entrysize = sizeof(LogicalRepRelMapEntry);
 	ctl.hcxt = LogicalRepRelMapContext;
@@ -120,7 +119,6 @@ logicalrep_relmap_init(void)
 								   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* Initialize the type hash table. */
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(LogicalRepTyp);
 	ctl.hcxt = LogicalRepRelMapContext;
@@ -606,7 +604,6 @@ logicalrep_partmap_init(void)
 								  ALLOCSET_DEFAULT_SIZES);
 
 	/* Initialize the relation hash table. */
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);	/* partition OID */
 	ctl.entrysize = sizeof(LogicalRepPartMapEntry);
 	ctl.hcxt = LogicalRepPartMapContext;

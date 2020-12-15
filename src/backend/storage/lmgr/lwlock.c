@@ -342,7 +342,6 @@ init_lwlock_stats(void)
 											 ALLOCSET_DEFAULT_SIZES);
 	MemoryContextAllowInCriticalSection(lwlock_stats_cxt, true);
 
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(lwlock_stats_key);
 	ctl.entrysize = sizeof(lwlock_stats);
 	ctl.hcxt = lwlock_stats_cxt;

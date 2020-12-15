@@ -81,7 +81,6 @@ InitRecoveryTransactionEnvironment(void)
 	 * Initialize the hash table for tracking the list of locks held by each
 	 * transaction.
 	 */
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(TransactionId);
 	hash_ctl.entrysize = sizeof(RecoveryLockListsEntry);
 	RecoveryLockLists = hash_create("RecoveryLockLists",

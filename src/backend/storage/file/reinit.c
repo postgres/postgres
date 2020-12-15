@@ -30,7 +30,7 @@ static void ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname,
 
 typedef struct
 {
-	char		oid[OIDCHARS + 1];
+	Oid			reloid;			/* hash key */
 } unlogged_relation_entry;
 
 /*
@@ -172,10 +172,11 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		 * need to be reset.  Otherwise, this cleanup operation would be
 		 * O(n^2).
 		 */
-		memset(&ctl, 0, sizeof(ctl));
-		ctl.keysize = sizeof(unlogged_relation_entry);
+		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(unlogged_relation_entry);
-		hash = hash_create("unlogged hash", 32, &ctl, HASH_ELEM);
+		ctl.hcxt = CurrentMemoryContext;
+		hash = hash_create("unlogged relation OIDs", 32, &ctl,
+						   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 		/* Scan the directory. */
 		dbspace_dir = AllocateDir(dbspacedirname);
@@ -198,9 +199,8 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 			 * Put the OID portion of the name into the hash table, if it
 			 * isn't already.
 			 */
-			memset(ent.oid, 0, sizeof(ent.oid));
-			memcpy(ent.oid, de->d_name, oidchars);
-			hash_search(hash, &ent, HASH_ENTER, NULL);
+			ent.reloid = atooid(de->d_name);
+			(void) hash_search(hash, &ent, HASH_ENTER, NULL);
 		}
 
 		/* Done with the first pass. */
@@ -224,7 +224,6 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		{
 			ForkNumber	forkNum;
 			int			oidchars;
-			bool		found;
 			unlogged_relation_entry ent;
 
 			/* Skip anything that doesn't look like a relation data file. */
@@ -238,14 +237,10 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 
 			/*
 			 * See whether the OID portion of the name shows up in the hash
-			 * table.
+			 * table.  If so, nuke it!
 			 */
-			memset(ent.oid, 0, sizeof(ent.oid));
-			memcpy(ent.oid, de->d_name, oidchars);
-			hash_search(hash, &ent, HASH_FIND, &found);
-
-			/* If so, nuke it! */
-			if (found)
+			ent.reloid = atooid(de->d_name);
+			if (hash_search(hash, &ent, HASH_FIND, NULL))
 			{
 				snprintf(rm_path, sizeof(rm_path), "%s/%s",
 						 dbspacedirname, de->d_name);

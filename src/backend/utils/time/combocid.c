@@ -223,7 +223,6 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 		sizeComboCids = CCID_ARRAY_SIZE;
 		usedComboCids = 0;
 
-		memset(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(ComboCidKeyData);
 		hash_ctl.entrysize = sizeof(ComboCidEntryData);
 		hash_ctl.hcxt = TopTransactionContext;

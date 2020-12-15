@@ -1096,7 +1096,6 @@ InitPredicateLocks(void)
 	 * Allocate hash table for PREDICATELOCKTARGET structs.  This stores
 	 * per-predicate-lock-target information.
 	 */
-	MemSet(&info, 0, sizeof(info));
 	info.keysize = sizeof(PREDICATELOCKTARGETTAG);
 	info.entrysize = sizeof(PREDICATELOCKTARGET);
 	info.num_partitions = NUM_PREDICATELOCK_PARTITIONS;
@@ -1129,7 +1128,6 @@ InitPredicateLocks(void)
 	 * Allocate hash table for PREDICATELOCK structs.  This stores per
 	 * xact-lock-of-a-target information.
 	 */
-	MemSet(&info, 0, sizeof(info));
 	info.keysize = sizeof(PREDICATELOCKTAG);
 	info.entrysize = sizeof(PREDICATELOCK);
 	info.hash = predicatelock_hash;
@@ -1212,7 +1210,6 @@ InitPredicateLocks(void)
 	 * Allocate hash table for SERIALIZABLEXID structs.  This stores per-xid
 	 * information for serializable transactions which have accessed data.
 	 */
-	MemSet(&info, 0, sizeof(info));
 	info.keysize = sizeof(SERIALIZABLEXIDTAG);
 	info.entrysize = sizeof(SERIALIZABLEXID);
 
@@ -1853,7 +1850,6 @@ CreateLocalPredicateLockHash(void)
 
 	/* Initialize the backend-local hash table of parent locks */
 	Assert(LocalPredicateLockHash == NULL);
-	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(PREDICATELOCKTARGETTAG);
 	hash_ctl.entrysize = sizeof(LOCALPREDICATELOCK);
 	LocalPredicateLockHash = hash_create("Local predicate lock",

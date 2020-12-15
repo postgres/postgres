@@ -30,11 +30,12 @@
  * dynahash.c provides support for these types of lookup keys:
  *
  * 1. Null-terminated C strings (truncated if necessary to fit in keysize),
- * compared as though by strcmp().  This is the default behavior.
+ * compared as though by strcmp().  This is selected by specifying the
+ * HASH_STRINGS flag to hash_create.
  *
  * 2. Arbitrary binary data of size keysize, compared as though by memcmp().
  * (Caller must ensure there are no undefined padding bits in the keys!)
- * This is selected by specifying HASH_BLOBS flag to hash_create.
+ * This is selected by specifying the HASH_BLOBS flag to hash_create.
  *
  * 3. More complex key behavior can be selected by specifying user-supplied
  * hashing, comparison, and/or key-copying functions.  At least a hashing
@@ -47,8 +48,8 @@
  *   locks.
  * - Shared memory hashes are allocated in a fixed size area at startup and
  *   are discoverable by name from other processes.
- * - Because entries don't need to be moved in the case of hash conflicts, has
- *   better performance for large entries
+ * - Because entries don't need to be moved in the case of hash conflicts,
+ *   dynahash has better performance for large entries.
  * - Guarantees stable pointers to entries.
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
@@ -316,6 +317,28 @@ string_compare(const char *key1, const char *key2, Size keysize)
  *	*info: additional table parameters, as indicated by flags
  *	flags: bitmask indicating which parameters to take from *info
  *
+ * The flags value *must* include HASH_ELEM.  (Formerly, this was nominally
+ * optional, but the default keysize and entrysize values were useless.)
+ * The flags value must also include exactly one of HASH_STRINGS, HASH_BLOBS,
+ * or HASH_FUNCTION, to define the key hashing semantics (C strings,
+ * binary blobs, or custom, respectively).  Callers specifying a custom
+ * hash function will likely also want to use HASH_COMPARE, and perhaps
+ * also HASH_KEYCOPY, to control key comparison and copying.
+ * Another often-used flag is HASH_CONTEXT, to allocate the hash table
+ * under info->hcxt rather than under TopMemoryContext; the default
+ * behavior is only suitable for session-lifespan hash tables.
+ * Other flags bits are special-purpose and seldom used, except for those
+ * associated with shared-memory hash tables, for which see ShmemInitHash().
+ *
+ * Fields in *info are read only when the associated flags bit is set.
+ * It is not necessary to initialize other fields of *info.
+ * Neither tabname nor *info need persist after the hash_create() call.
+ *
+ * Note: It is deprecated for callers of hash_create() to explicitly specify
+ * string_hash, tag_hash, uint32_hash, or oid_hash.  Just set HASH_STRINGS or
+ * HASH_BLOBS.  Use HASH_FUNCTION only when you want something other than
+ * one of these.
+ *
  * Note: for a shared-memory hashtable, nelem needs to be a pretty good
  * estimate, since we can't expand the table on the fly.  But an unshared
  * hashtable can be expanded on-the-fly, so it's better for nelem to be
@@ -323,10 +346,18 @@ string_compare(const char *key1, const char *key2, Size keysize)
  * large nelem will penalize hash_seq_search speed without buying much.
  */
 HTAB *
-hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
+hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 {
 	HTAB	   *hashp;
 	HASHHDR    *hctl;
+
+	/*
+	 * Hash tables now allocate space for key and data, but you have to say
+	 * how much space to allocate.
+	 */
+	Assert(flags & HASH_ELEM);
+	Assert(info->keysize > 0);
+	Assert(info->entrysize >= info->keysize);
 
 	/*
 	 * For shared hash tables, we have a local hash header (HTAB struct) that
@@ -370,28 +401,43 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	 * Select the appropriate hash function (see comments at head of file).
 	 */
 	if (flags & HASH_FUNCTION)
+	{
+		Assert(!(flags & (HASH_BLOBS | HASH_STRINGS)));
 		hashp->hash = info->hash;
+	}
 	else if (flags & HASH_BLOBS)
 	{
+		Assert(!(flags & HASH_STRINGS));
 		/* We can optimize hashing for common key sizes */
-		Assert(flags & HASH_ELEM);
 		if (info->keysize == sizeof(uint32))
 			hashp->hash = uint32_hash;
 		else
 			hashp->hash = tag_hash;
 	}
 	else
-		hashp->hash = string_hash;	/* default hash function */
+	{
+		/*
+		 * string_hash used to be considered the default hash method, and in a
+		 * non-assert build it effectively still is.  But we now consider it
+		 * an assertion error to not say HASH_STRINGS explicitly.  To help
+		 * catch mistaken usage of HASH_STRINGS, we also insist on a
+		 * reasonably long string length: if the keysize is only 4 or 8 bytes,
+		 * it's almost certainly an integer or pointer not a string.
+		 */
+		Assert(flags & HASH_STRINGS);
+		Assert(info->keysize > 8);
+
+		hashp->hash = string_hash;
+	}
 
 	/*
 	 * If you don't specify a match function, it defaults to string_compare if
-	 * you used string_hash (either explicitly or by default) and to memcmp
-	 * otherwise.
+	 * you used string_hash, and to memcmp otherwise.
 	 *
 	 * Note: explicitly specifying string_hash is deprecated, because this
 	 * might not work for callers in loadable modules on some platforms due to
 	 * referencing a trampoline instead of the string_hash function proper.
-	 * Just let it default, eh?
+	 * Specify HASH_STRINGS instead.
 	 */
 	if (flags & HASH_COMPARE)
 		hashp->match = info->match;
@@ -505,16 +551,9 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		hctl->dsize = info->dsize;
 	}
 
-	/*
-	 * hash table now allocates space for key and data but you have to say how
-	 * much space to allocate
-	 */
-	if (flags & HASH_ELEM)
-	{
-		Assert(info->entrysize >= info->keysize);
-		hctl->keysize = info->keysize;
-		hctl->entrysize = info->entrysize;
-	}
+	/* remember the entry sizes, too */
+	hctl->keysize = info->keysize;
+	hctl->entrysize = info->entrysize;
 
 	/* make local copies of heavily-used constant fields */
 	hashp->keysize = hctl->keysize;
@@ -592,10 +631,6 @@ hdefault(HTAB *hashp)
 
 	hctl->dsize = DEF_DIRSIZE;
 	hctl->nsegs = 0;
-
-	/* rather pointless defaults for key & entry size */
-	hctl->keysize = sizeof(char *);
-	hctl->entrysize = 2 * sizeof(char *);
 
 	hctl->num_partitions = 0;	/* not partitioned */
 

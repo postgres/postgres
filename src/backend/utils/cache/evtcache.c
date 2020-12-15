@@ -118,7 +118,6 @@ BuildEventTriggerCache(void)
 	EventTriggerCacheState = ETCS_REBUILD_STARTED;
 
 	/* Create new hash table. */
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(EventTriggerEvent);
 	ctl.entrysize = sizeof(EventTriggerCacheEntry);
 	ctl.hcxt = EventTriggerCacheContext;

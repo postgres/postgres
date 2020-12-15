@@ -1982,7 +1982,6 @@ lookup_proof_cache(Oid pred_op, Oid clause_op, bool refute_it)
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
 
-		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(OprProofCacheKey);
 		ctl.entrysize = sizeof(OprProofCacheEntry);
 		OprProofCacheHash = hash_create("Btree proof lookup cache", 256,

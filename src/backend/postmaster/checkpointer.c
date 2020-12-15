@@ -1161,7 +1161,6 @@ CompactCheckpointerRequestQueue(void)
 	skip_slot = palloc0(sizeof(bool) * CheckpointerShmem->num_requests);
 
 	/* Initialize temporary hash table */
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(CheckpointerRequest);
 	ctl.entrysize = sizeof(struct CheckpointerSlotMapping);
 	ctl.hcxt = CurrentMemoryContext;

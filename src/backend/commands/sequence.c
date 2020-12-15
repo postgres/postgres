@@ -1087,7 +1087,6 @@ create_seq_hashtable(void)
 {
 	HASHCTL		ctl;
 
-	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(SeqTableData);
 

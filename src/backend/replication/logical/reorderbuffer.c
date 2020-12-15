@@ -1619,8 +1619,6 @@ ReorderBufferBuildTupleCidHash(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	if (!rbtxn_has_catalog_changes(txn) || dlist_is_empty(&txn->tuplecids))
 		return;
 
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
-
 	hash_ctl.keysize = sizeof(ReorderBufferTupleCidKey);
 	hash_ctl.entrysize = sizeof(ReorderBufferTupleCidEnt);
 	hash_ctl.hcxt = rb->context;
@@ -4116,7 +4114,6 @@ ReorderBufferToastInitHash(ReorderBuffer *rb, ReorderBufferTXN *txn)
 
 	Assert(txn->toast_hash == NULL);
 
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(ReorderBufferToastEnt);
 	hash_ctl.hcxt = rb->context;

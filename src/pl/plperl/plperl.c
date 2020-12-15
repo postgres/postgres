@@ -458,7 +458,6 @@ _PG_init(void)
 	/*
 	 * Create hash tables.
 	 */
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(plperl_interp_desc);
 	plperl_interp_hash = hash_create("PL/Perl interpreters",
@@ -466,7 +465,6 @@ _PG_init(void)
 									 &hash_ctl,
 									 HASH_ELEM | HASH_BLOBS);
 
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(plperl_proc_key);
 	hash_ctl.entrysize = sizeof(plperl_proc_ptr);
 	plperl_proc_hash = hash_create("PL/Perl procedures",
@@ -580,13 +578,12 @@ select_perl_context(bool trusted)
 	{
 		HASHCTL		hash_ctl;
 
-		memset(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = NAMEDATALEN;
 		hash_ctl.entrysize = sizeof(plperl_query_entry);
 		interp_desc->query_hash = hash_create("PL/Perl queries",
 											  32,
 											  &hash_ctl,
-											  HASH_ELEM);
+											  HASH_ELEM | HASH_STRINGS);
 	}
 
 	/*

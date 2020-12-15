@@ -400,7 +400,6 @@ build_join_rel_hash(PlannerInfo *root)
 	ListCell   *l;
 
 	/* Create the hash table */
-	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Relids);
 	hash_ctl.entrysize = sizeof(JoinHashEntry);
 	hash_ctl.hash = bitmap_hash;

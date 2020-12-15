@@ -567,7 +567,6 @@ pgss_shmem_startup(void)
 		pgss->stats.dealloc = 0;
 	}
 
-	memset(&info, 0, sizeof(info));
 	info.keysize = sizeof(pgssHashKey);
 	info.entrysize = sizeof(pgssEntry);
 	pgss_hash = ShmemInitHash("pg_stat_statements hash",

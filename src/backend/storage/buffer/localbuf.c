@@ -465,7 +465,6 @@ InitLocalBuffers(void)
 	}
 
 	/* Create the lookup hash table */
-	MemSet(&info, 0, sizeof(info));
 	info.keysize = sizeof(BufferTag);
 	info.entrysize = sizeof(LocalBufferLookupEnt);
 

@@ -110,17 +110,15 @@ InitializeRelfilenodeMap(void)
 	relfilenode_skey[0].sk_attno = Anum_pg_class_reltablespace;
 	relfilenode_skey[1].sk_attno = Anum_pg_class_relfilenode;
 
-	/* Initialize the hash table. */
-	MemSet(&ctl, 0, sizeof(ctl));
-	ctl.keysize = sizeof(RelfilenodeMapKey);
-	ctl.entrysize = sizeof(RelfilenodeMapEntry);
-	ctl.hcxt = CacheMemoryContext;
-
 	/*
 	 * Only create the RelfilenodeMapHash now, so we don't end up partially
 	 * initialized when fmgr_info_cxt() above ERRORs out with an out of memory
 	 * error.
 	 */
+	ctl.keysize = sizeof(RelfilenodeMapKey);
+	ctl.entrysize = sizeof(RelfilenodeMapEntry);
+	ctl.hcxt = CacheMemoryContext;
+
 	RelfilenodeMapHash =
 		hash_create("RelfilenodeMap cache", 64, &ctl,
 					HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);

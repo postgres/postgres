@@ -419,7 +419,6 @@ InitLocks(void)
 	 * Allocate hash table for LOCK structs.  This stores per-locked-object
 	 * information.
 	 */
-	MemSet(&info, 0, sizeof(info));
 	info.keysize = sizeof(LOCKTAG);
 	info.entrysize = sizeof(LOCK);
 	info.num_partitions = NUM_LOCK_PARTITIONS;

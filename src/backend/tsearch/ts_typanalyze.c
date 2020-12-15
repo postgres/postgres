@@ -180,7 +180,6 @@ compute_tsvector_stats(VacAttrStats *stats,
 	 * worry about overflowing the initial size. Also we don't need to pay any
 	 * attention to locking and memory management.
 	 */
-	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(LexemeHashKey);
 	hash_ctl.entrysize = sizeof(TrackItem);
 	hash_ctl.hash = lexeme_hash;

@@ -3464,14 +3464,14 @@ set_rtable_names(deparse_namespace *dpns, List *parent_namespaces,
 	 * We use a hash table to hold known names, so that this process is O(N)
 	 * not O(N^2) for N names.
 	 */
-	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = NAMEDATALEN;
 	hash_ctl.entrysize = sizeof(NameHashEntry);
 	hash_ctl.hcxt = CurrentMemoryContext;
 	names_hash = hash_create("set_rtable_names names",
 							 list_length(dpns->rtable),
 							 &hash_ctl,
-							 HASH_ELEM | HASH_CONTEXT);
+							 HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
+
 	/* Preload the hash table with names appearing in parent_namespaces */
 	foreach(lc, parent_namespaces)
 	{

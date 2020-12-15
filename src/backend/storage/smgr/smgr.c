@@ -154,7 +154,6 @@ smgropen(RelFileNode rnode, BackendId backend)
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
 
-		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(RelFileNodeBackend);
 		ctl.entrysize = sizeof(SMgrRelationData);
 		SMgrRelationHash = hash_create("smgr relation table", 400,

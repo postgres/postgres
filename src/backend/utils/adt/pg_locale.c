@@ -1297,7 +1297,6 @@ lookup_collation_cache(Oid collation, bool set_flags)
 		/* First time through, initialize the hash table */
 		HASHCTL		ctl;
 
-		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(collation_cache_entry);
 		collation_cache = hash_create("Collation cache", 100, &ctl,

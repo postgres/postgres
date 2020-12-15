@@ -277,7 +277,6 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	 * worry about overflowing the initial size. Also we don't need to pay any
 	 * attention to locking and memory management.
 	 */
-	MemSet(&elem_hash_ctl, 0, sizeof(elem_hash_ctl));
 	elem_hash_ctl.keysize = sizeof(Datum);
 	elem_hash_ctl.entrysize = sizeof(TrackItem);
 	elem_hash_ctl.hash = element_hash;
@@ -289,7 +288,6 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 							   HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* hashtable for array distinct elements counts */
-	MemSet(&count_hash_ctl, 0, sizeof(count_hash_ctl));
 	count_hash_ctl.keysize = sizeof(int);
 	count_hash_ctl.entrysize = sizeof(DECountItem);
 	count_hash_ctl.hcxt = CurrentMemoryContext;

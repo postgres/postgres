@@ -406,15 +406,13 @@ InitQueryHashTable(void)
 {
 	HASHCTL		hash_ctl;
 
-	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
-
 	hash_ctl.keysize = NAMEDATALEN;
 	hash_ctl.entrysize = sizeof(PreparedStatement);
 
 	prepared_queries = hash_create("Prepared Queries",
 								   32,
 								   &hash_ctl,
-								   HASH_ELEM);
+								   HASH_ELEM | HASH_STRINGS);
 }
 
 /*

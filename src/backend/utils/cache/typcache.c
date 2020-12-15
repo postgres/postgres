@@ -341,7 +341,6 @@ lookup_type_cache(Oid type_id, int flags)
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
 
-		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(TypeCacheEntry);
 		TypeCacheHash = hash_create("Type information cache", 64,
@@ -1874,7 +1873,6 @@ assign_record_type_typmod(TupleDesc tupDesc)
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
 
-		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(TupleDesc);	/* just the pointer */
 		ctl.entrysize = sizeof(RecordCacheEntry);
 		ctl.hash = record_type_typmod_hash;

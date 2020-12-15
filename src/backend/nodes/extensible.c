@@ -47,11 +47,11 @@ RegisterExtensibleNodeEntry(HTAB **p_htable, const char *htable_label,
 	{
 		HASHCTL		ctl;
 
-		memset(&ctl, 0, sizeof(HASHCTL));
 		ctl.keysize = EXTNODENAME_MAX_LEN;
 		ctl.entrysize = sizeof(ExtensibleNodeEntry);
 
-		*p_htable = hash_create(htable_label, 100, &ctl, HASH_ELEM);
+		*p_htable = hash_create(htable_label, 100, &ctl,
+								HASH_ELEM | HASH_STRINGS);
 	}
 
 	if (strlen(extnodename) >= EXTNODENAME_MAX_LEN)

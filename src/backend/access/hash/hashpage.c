@@ -1363,7 +1363,6 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 	bool		found;
 
 	/* Initialize hash tables used to track TIDs */
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(ItemPointerData);
 	hash_ctl.entrysize = sizeof(ItemPointerData);
 	hash_ctl.hcxt = CurrentMemoryContext;

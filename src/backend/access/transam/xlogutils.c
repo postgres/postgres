@@ -113,7 +113,6 @@ log_invalid_page(RelFileNode node, ForkNumber forkno, BlockNumber blkno,
 		/* create hash table when first needed */
 		HASHCTL		ctl;
 
-		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(xl_invalid_page_key);
 		ctl.entrysize = sizeof(xl_invalid_page);
 

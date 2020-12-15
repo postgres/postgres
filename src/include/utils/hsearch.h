@@ -64,25 +64,36 @@ typedef struct HTAB HTAB;
 /* Only those fields indicated by hash_flags need be set */
 typedef struct HASHCTL
 {
+	/* Used if HASH_PARTITION flag is set: */
 	long		num_partitions; /* # partitions (must be power of 2) */
+	/* Used if HASH_SEGMENT flag is set: */
 	long		ssize;			/* segment size */
+	/* Used if HASH_DIRSIZE flag is set: */
 	long		dsize;			/* (initial) directory size */
 	long		max_dsize;		/* limit to dsize if dir size is limited */
+	/* Used if HASH_ELEM flag is set (which is now required): */
 	Size		keysize;		/* hash key length in bytes */
 	Size		entrysize;		/* total user element size in bytes */
+	/* Used if HASH_FUNCTION flag is set: */
 	HashValueFunc hash;			/* hash function */
+	/* Used if HASH_COMPARE flag is set: */
 	HashCompareFunc match;		/* key comparison function */
+	/* Used if HASH_KEYCOPY flag is set: */
 	HashCopyFunc keycopy;		/* key copying function */
+	/* Used if HASH_ALLOC flag is set: */
 	HashAllocFunc alloc;		/* memory allocator */
+	/* Used if HASH_CONTEXT flag is set: */
 	MemoryContext hcxt;			/* memory context to use for allocations */
+	/* Used if HASH_SHARED_MEM flag is set: */
 	HASHHDR    *hctl;			/* location of header in shared mem */
 } HASHCTL;
 
-/* Flags to indicate which parameters are supplied */
+/* Flag bits for hash_create; most indicate which parameters are supplied */
 #define HASH_PARTITION	0x0001	/* Hashtable is used w/partitioned locking */
 #define HASH_SEGMENT	0x0002	/* Set segment size */
 #define HASH_DIRSIZE	0x0004	/* Set directory size (initial and max) */
-#define HASH_ELEM		0x0010	/* Set keysize and entrysize */
+#define HASH_ELEM		0x0008	/* Set keysize and entrysize (now required!) */
+#define HASH_STRINGS	0x0010	/* Select support functions for string keys */
 #define HASH_BLOBS		0x0020	/* Select support functions for binary keys */
 #define HASH_FUNCTION	0x0040	/* Set user defined hash function */
 #define HASH_COMPARE	0x0080	/* Set user defined comparison function */
@@ -92,7 +103,6 @@ typedef struct HASHCTL
 #define HASH_SHARED_MEM 0x0800	/* Hashtable is in shared memory */
 #define HASH_ATTACH		0x1000	/* Do not initialize hctl */
 #define HASH_FIXED_SIZE 0x2000	/* Initial size is a hard limit */
-
 
 /* max_dsize value to indicate expansible directory */
 #define NO_MAX_DSIZE			(-1)
@@ -116,13 +126,9 @@ typedef struct
 
 /*
  * prototypes for functions in dynahash.c
- *
- * Note: It is deprecated for callers of hash_create to explicitly specify
- * string_hash, tag_hash, uint32_hash, or oid_hash.  Just set HASH_BLOBS or
- * not.  Use HASH_FUNCTION only when you want something other than those.
  */
 extern HTAB *hash_create(const char *tabname, long nelem,
-						 HASHCTL *info, int flags);
+						 const HASHCTL *info, int flags);
 extern void hash_destroy(HTAB *hashp);
 extern void hash_stats(const char *where, HTAB *hashp);
 extern void *hash_search(HTAB *hashp, const void *keyPtr, HASHACTION action,

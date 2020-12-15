@@ -2375,7 +2375,6 @@ AddEventToPendingNotifies(Notification *n)
 		ListCell   *l;
 
 		/* Create the hash table */
-		MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(Notification *);
 		hash_ctl.entrysize = sizeof(NotificationHash);
 		hash_ctl.hash = notification_hash;

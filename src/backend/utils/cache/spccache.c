@@ -79,7 +79,6 @@ InitializeTableSpaceCache(void)
 	HASHCTL		ctl;
 
 	/* Initialize the hash table. */
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(TableSpaceCacheEntry);
 	TableSpaceCacheHash =

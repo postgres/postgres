@@ -2567,7 +2567,6 @@ plpgsql_HashTableInit(void)
 	/* don't allow double-initialization */
 	Assert(plpgsql_HashTable == NULL);
 
-	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(PLpgSQL_func_hashkey);
 	ctl.entrysize = sizeof(plpgsql_HashEnt);
 	plpgsql_HashTable = hash_create("PLpgSQL function hash",

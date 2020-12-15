@@ -150,7 +150,6 @@ InitSync(void)
 											  ALLOCSET_DEFAULT_SIZES);
 		MemoryContextAllowInCriticalSection(pendingOpsCxt, true);
 
-		MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(FileTag);
 		hash_ctl.entrysize = sizeof(PendingFsyncEntry);
 		hash_ctl.hcxt = pendingOpsCxt;

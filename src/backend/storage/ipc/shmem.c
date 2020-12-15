@@ -292,7 +292,6 @@ void
 InitShmemIndex(void)
 {
 	HASHCTL		info;
-	int			hash_flags;
 
 	/*
 	 * Create the shared memory shmem index.
@@ -304,11 +303,11 @@ InitShmemIndex(void)
 	 */
 	info.keysize = SHMEM_INDEX_KEYSIZE;
 	info.entrysize = sizeof(ShmemIndexEnt);
-	hash_flags = HASH_ELEM;
 
 	ShmemIndex = ShmemInitHash("ShmemIndex",
 							   SHMEM_INDEX_SIZE, SHMEM_INDEX_SIZE,
-							   &info, hash_flags);
+							   &info,
+							   HASH_ELEM | HASH_STRINGS);
 }
 
 /*
@@ -328,6 +327,11 @@ InitShmemIndex(void)
  * init_size is the number of hashtable entries to preallocate.  For a table
  * whose maximum size is certain, this should be equal to max_size; that
  * ensures that no run-time out-of-shared-memory failures can occur.
+ *
+ * *infoP and hash_flags must specify at least the entry sizes and key
+ * comparison semantics (see hash_create()).  Flag bits and values specific
+ * to shared-memory hash tables are added here, except that callers may
+ * choose to specify HASH_PARTITION and/or HASH_FIXED_SIZE.
  *
  * Note: before Postgres 9.0, this function returned NULL for some failure
  * cases.  Now, it always throws error instead, so callers need not check

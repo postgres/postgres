@@ -214,7 +214,6 @@ PLy_add_exceptions(PyObject *plpy)
 	PLy_exc_spi_error = PLy_create_exception("plpy.SPIError", NULL, NULL,
 											 "SPIError", plpy);
 
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(int);
 	hash_ctl.entrysize = sizeof(PLyExceptionEntry);
 	PLy_spi_exceptions = hash_create("PL/Python SPI exceptions", 256,

@@ -93,7 +93,6 @@ InitializeShippableCache(void)
 	HASHCTL		ctl;
 
 	/* Create the hash table. */
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(ShippableCacheKey);
 	ctl.entrysize = sizeof(ShippableCacheEntry);
 	ShippableCacheHash =

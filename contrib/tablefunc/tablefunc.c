@@ -714,7 +714,6 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 	MemoryContext SPIcontext;
 
 	/* initialize the category hash table */
-	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = MAX_CATNAME_LEN;
 	ctl.entrysize = sizeof(crosstab_HashEnt);
 	ctl.hcxt = per_query_ctx;
@@ -726,7 +725,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 	crosstab_hash = hash_create("crosstab hash",
 								INIT_CATS,
 								&ctl,
-								HASH_ELEM | HASH_CONTEXT);
+								HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)

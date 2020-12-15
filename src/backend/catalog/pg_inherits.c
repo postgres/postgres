@@ -171,7 +171,6 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 			   *rel_numparents;
 	ListCell   *l;
 
-	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(SeenRelsEntry);
 	ctl.hcxt = CurrentMemoryContext;

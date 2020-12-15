@@ -4058,7 +4058,6 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	{
 		estate->simple_eval_estate = simple_eval_estate;
 		/* Private cast hash just lives in function's main context */
-		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(plpgsql_CastHashKey);
 		ctl.entrysize = sizeof(plpgsql_CastHashEntry);
 		ctl.hcxt = CurrentMemoryContext;
@@ -4077,7 +4076,6 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 			shared_cast_context = AllocSetContextCreate(TopMemoryContext,
 														"PLpgSQL cast info",
 														ALLOCSET_DEFAULT_SIZES);
-			memset(&ctl, 0, sizeof(ctl));
 			ctl.keysize = sizeof(plpgsql_CastHashKey);
 			ctl.entrysize = sizeof(plpgsql_CastHashEntry);
 			ctl.hcxt = shared_cast_context;

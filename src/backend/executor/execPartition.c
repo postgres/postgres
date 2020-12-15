@@ -521,7 +521,6 @@ ExecHashSubPlanResultRelsByOid(ModifyTableState *mtstate,
 	HTAB	   *htab;
 	int			i;
 
-	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(SubplanResultRelHashElem);
 	ctl.hcxt = CurrentMemoryContext;
