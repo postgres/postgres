@@ -2368,7 +2368,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * Initialize any WITH CHECK OPTION constraints if needed.
 	 */
 	resultRelInfo = mtstate->resultRelInfo;
-	i = 0;
 	foreach(l, node->withCheckOptionLists)
 	{
 		List	   *wcoList = (List *) lfirst(l);
@@ -2387,7 +2386,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		resultRelInfo->ri_WithCheckOptions = wcoList;
 		resultRelInfo->ri_WithCheckOptionExprs = wcoExprs;
 		resultRelInfo++;
-		i++;
 	}
 
 	/*
