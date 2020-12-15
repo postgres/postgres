@@ -440,8 +440,7 @@ btrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 	}
 
 	/*
-	 * Reset the scan keys. Note that keys ordering stuff moved to _bt_first.
-	 * - vadim 05/05/97
+	 * Reset the scan keys
 	 */
 	if (scankey && scan->numberOfKeys > 0)
 		memmove(scan->keyData,
