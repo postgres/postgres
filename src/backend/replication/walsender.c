@@ -1719,7 +1719,12 @@ ProcessRepliesIfAny(void)
 
 	last_processing = GetCurrentTimestamp();
 
-	for (;;)
+	/*
+	 * If we already received a CopyDone from the frontend, any subsequent
+	 * message is the beginning of a new command, and should be processed in
+	 * the main processing loop.
+	 */
+	while (!streamingDoneReceiving)
 	{
 		pq_startmsgread();
 		r = pq_getbyte_if_available(&firstchar);
@@ -1747,19 +1752,6 @@ ProcessRepliesIfAny(void)
 					 errmsg("unexpected EOF on standby connection")));
 			proc_exit(0);
 		}
-
-		/*
-		 * If we already received a CopyDone from the frontend, the frontend
-		 * should not send us anything until we've closed our end of the COPY.
-		 * XXX: In theory, the frontend could already send the next command
-		 * before receiving the CopyDone, but libpq doesn't currently allow
-		 * that.
-		 */
-		if (streamingDoneReceiving && firstchar != 'X')
-			ereport(FATAL,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("unexpected standby message type \"%c\", after receiving CopyDone",
-							firstchar)));
 
 		/* Handle the very limited subset of commands expected in this phase */
 		switch (firstchar)
@@ -2362,8 +2354,10 @@ WalSndLoop(WalSndSendDataCallback send_data)
 			long		sleeptime;
 			int			wakeEvents;
 
-			wakeEvents = WL_LATCH_SET | WL_EXIT_ON_PM_DEATH | WL_TIMEOUT |
-				WL_SOCKET_READABLE;
+			wakeEvents = WL_LATCH_SET | WL_EXIT_ON_PM_DEATH | WL_TIMEOUT;
+
+			if (!streamingDoneReceiving)
+				wakeEvents |= WL_SOCKET_READABLE;
 
 			/*
 			 * Use fresh timestamp, not last_processing, to reduce the chance
