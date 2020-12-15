@@ -25,79 +25,79 @@ INSERT INTO CHAR_TBL (f1) VALUES ('');
 INSERT INTO CHAR_TBL (f1) VALUES ('cd');
 ERROR:  value too long for type character(1)
 INSERT INTO CHAR_TBL (f1) VALUES ('c     ');
-SELECT '' AS seven, * FROM CHAR_TBL;
- seven | f1 
--------+----
-       | a
-       | A
-       | 1
-       | 2
-       | 3
-       |  
-       | c
+SELECT * FROM CHAR_TBL;
+ f1 
+----
+ a
+ A
+ 1
+ 2
+ 3
+  
+ c
 (7 rows)
 
-SELECT '' AS six, c.*
+SELECT c.*
    FROM CHAR_TBL c
    WHERE c.f1 <> 'a';
- six | f1 
------+----
-     | A
-     | 1
-     | 2
-     | 3
-     |  
-     | c
+ f1 
+----
+ A
+ 1
+ 2
+ 3
+  
+ c
 (6 rows)
 
-SELECT '' AS one, c.*
+SELECT c.*
    FROM CHAR_TBL c
    WHERE c.f1 = 'a';
- one | f1 
------+----
-     | a
+ f1 
+----
+ a
 (1 row)
 
-SELECT '' AS five, c.*
+SELECT c.*
    FROM CHAR_TBL c
    WHERE c.f1 < 'a';
- five | f1 
-------+----
-      | A
-      | 1
-      | 2
-      | 3
-      |  
+ f1 
+----
+ A
+ 1
+ 2
+ 3
+  
 (5 rows)
 
-SELECT '' AS six, c.*
+SELECT c.*
    FROM CHAR_TBL c
    WHERE c.f1 <= 'a';
- six | f1 
------+----
-     | a
-     | A
-     | 1
-     | 2
-     | 3
-     |  
+ f1 
+----
+ a
+ A
+ 1
+ 2
+ 3
+  
 (6 rows)
 
-SELECT '' AS one, c.*
+SELECT c.*
    FROM CHAR_TBL c
    WHERE c.f1 > 'a';
- one | f1 
------+----
-     | c
+ f1 
+----
+ c
 (1 row)
 
-SELECT '' AS two, c.*
+SELECT c.*
    FROM CHAR_TBL c
    WHERE c.f1 >= 'a';
- two | f1 
------+----
-     | a
-     | c
+ f1 
+----
+ a
+ c
 (2 rows)
 
 DROP TABLE CHAR_TBL;
@@ -111,12 +111,12 @@ INSERT INTO CHAR_TBL (f1) VALUES ('abcd');
 INSERT INTO CHAR_TBL (f1) VALUES ('abcde');
 ERROR:  value too long for type character(4)
 INSERT INTO CHAR_TBL (f1) VALUES ('abcd    ');
-SELECT '' AS four, * FROM CHAR_TBL;
- four |  f1  
-------+------
-      | a   
-      | ab  
-      | abcd
-      | abcd
+SELECT * FROM CHAR_TBL;
+  f1  
+------
+ a   
+ ab  
+ abcd
+ abcd
 (4 rows)
 

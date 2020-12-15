@@ -17,14 +17,14 @@ INSERT INTO DEFAULT_TBL VALUES (1, 'bruce');
 INSERT INTO DEFAULT_TBL (i, f) VALUES (2, 987.654);
 INSERT INTO DEFAULT_TBL (x) VALUES ('marc');
 INSERT INTO DEFAULT_TBL VALUES (3, null, 1.0);
-SELECT '' AS five, * FROM DEFAULT_TBL;
- five |  i  |   x    |    f    
-------+-----+--------+---------
-      |   1 | thomas | 57.0613
-      |   1 | bruce  | 123.456
-      |   2 | vadim  | 987.654
-      | 100 | marc   | 123.456
-      |   3 |        |       1
+SELECT * FROM DEFAULT_TBL;
+  i  |   x    |    f    
+-----+--------+---------
+   1 | thomas | 57.0613
+   1 | bruce  | 123.456
+   2 | vadim  | 987.654
+ 100 | marc   | 123.456
+   3 |        |       1
 (5 rows)
 
 CREATE SEQUENCE DEFAULT_SEQ;
@@ -34,13 +34,13 @@ INSERT INTO DEFAULTEXPR_TBL VALUES (-1, -2);
 INSERT INTO DEFAULTEXPR_TBL (i1) VALUES (-3);
 INSERT INTO DEFAULTEXPR_TBL (i2) VALUES (-4);
 INSERT INTO DEFAULTEXPR_TBL (i2) VALUES (NULL);
-SELECT '' AS four, * FROM DEFAULTEXPR_TBL;
- four | i1  | i2 
-------+-----+----
-      |  -1 | -2
-      |  -3 |  1
-      | 102 | -4
-      | 102 |   
+SELECT * FROM DEFAULTEXPR_TBL;
+ i1  | i2 
+-----+----
+  -1 | -2
+  -3 |  1
+ 102 | -4
+ 102 |   
 (4 rows)
 
 -- syntax errors
@@ -76,12 +76,12 @@ INSERT INTO CHECK_TBL VALUES (6);
 INSERT INTO CHECK_TBL VALUES (1);
 ERROR:  new row for relation "check_tbl" violates check constraint "check_con"
 DETAIL:  Failing row contains (1).
-SELECT '' AS three, * FROM CHECK_TBL;
- three | x 
--------+---
-       | 5
-       | 4
-       | 6
+SELECT * FROM CHECK_TBL;
+ x 
+---
+ 5
+ 4
+ 6
 (3 rows)
 
 CREATE SEQUENCE CHECK_SEQ;
@@ -102,11 +102,11 @@ INSERT INTO CHECK2_TBL VALUES (6, 'check failed', 11);
 ERROR:  new row for relation "check2_tbl" violates check constraint "sequence_con"
 DETAIL:  Failing row contains (6, check failed, 11).
 INSERT INTO CHECK2_TBL VALUES (7, 'check ok', 7);
-SELECT '' AS two, * from CHECK2_TBL;
- two | x |    y     | z  
------+---+----------+----
-     | 4 | check ok | -2
-     | 7 | check ok |  7
+SELECT * from CHECK2_TBL;
+ x |    y     | z  
+---+----------+----
+ 4 | check ok | -2
+ 7 | check ok |  7
 (2 rows)
 
 --
@@ -121,9 +121,9 @@ CREATE TABLE INSERT_TBL (x INT DEFAULT nextval('insert_seq'),
 INSERT INTO INSERT_TBL(x,z) VALUES (2, -2);
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (2, -NULL-, -2).
-SELECT '' AS zero, * FROM INSERT_TBL;
- zero | x | y | z 
-------+---+---+---
+SELECT * FROM INSERT_TBL;
+ x | y | z 
+---+---+---
 (0 rows)
 
 SELECT 'one' AS one, nextval('insert_seq');
@@ -145,13 +145,13 @@ ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_
 DETAIL:  Failing row contains (5, check failed, -5).
 INSERT INTO INSERT_TBL VALUES (7, '!check failed', -7);
 INSERT INTO INSERT_TBL(y) VALUES ('-!NULL-');
-SELECT '' AS four, * FROM INSERT_TBL;
- four | x |       y       | z  
-------+---+---------------+----
-      | 3 | Y             | -3
-      | 7 | -NULL-        | -7
-      | 7 | !check failed | -7
-      | 4 | -!NULL-       | -4
+SELECT * FROM INSERT_TBL;
+ x |       y       | z  
+---+---------------+----
+ 3 | Y             | -3
+ 7 | -NULL-        | -7
+ 7 | !check failed | -7
+ 4 | -!NULL-       | -4
 (4 rows)
 
 INSERT INTO INSERT_TBL(y,z) VALUES ('check failed', 4);
@@ -162,15 +162,15 @@ ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_
 DETAIL:  Failing row contains (5, check failed, -5).
 INSERT INTO INSERT_TBL(x,y) VALUES (5, '!check failed');
 INSERT INTO INSERT_TBL(y) VALUES ('-!NULL-');
-SELECT '' AS six, * FROM INSERT_TBL;
- six | x |       y       | z  
------+---+---------------+----
-     | 3 | Y             | -3
-     | 7 | -NULL-        | -7
-     | 7 | !check failed | -7
-     | 4 | -!NULL-       | -4
-     | 5 | !check failed | -5
-     | 6 | -!NULL-       | -6
+SELECT * FROM INSERT_TBL;
+ x |       y       | z  
+---+---------------+----
+ 3 | Y             | -3
+ 7 | -NULL-        | -7
+ 7 | !check failed | -7
+ 4 | -!NULL-       | -4
+ 5 | !check failed | -5
+ 6 | -!NULL-       | -6
 (6 rows)
 
 SELECT 'seven' AS one, nextval('insert_seq');
@@ -192,16 +192,16 @@ SELECT 'eight' AS one, currval('insert_seq');
 -- constraint-condition results.  Postgres used to reject this, but it
 -- was wrong:
 INSERT INTO INSERT_TBL VALUES (null, null, null);
-SELECT '' AS nine, * FROM INSERT_TBL;
- nine | x |       y       | z  
-------+---+---------------+----
-      | 3 | Y             | -3
-      | 7 | -NULL-        | -7
-      | 7 | !check failed | -7
-      | 4 | -!NULL-       | -4
-      | 5 | !check failed | -5
-      | 6 | -!NULL-       | -6
-      |   |               |   
+SELECT * FROM INSERT_TBL;
+ x |       y       | z  
+---+---------------+----
+ 3 | Y             | -3
+ 7 | -NULL-        | -7
+ 7 | !check failed | -7
+ 4 | -!NULL-       | -4
+ 5 | !check failed | -5
+ 6 | -!NULL-       | -6
+   |               |   
 (7 rows)
 
 --
@@ -296,12 +296,12 @@ INSERT INTO tmp VALUES (null, 'Y', null);
 INSERT INTO tmp VALUES (5, '!check failed', null);
 INSERT INTO tmp VALUES (null, 'try again', null);
 INSERT INTO INSERT_TBL(y) select yd from tmp;
-SELECT '' AS three, * FROM INSERT_TBL;
- three | x |       y       | z  
--------+---+---------------+----
-       | 4 | Y             | -4
-       | 5 | !check failed | -5
-       | 6 | try again     | -6
+SELECT * FROM INSERT_TBL;
+ x |       y       | z  
+---+---------------+----
+ 4 | Y             | -4
+ 5 | !check failed | -5
+ 6 | try again     | -6
 (3 rows)
 
 INSERT INTO INSERT_TBL SELECT * FROM tmp WHERE yd = 'try again';
@@ -309,14 +309,14 @@ INSERT INTO INSERT_TBL(y,z) SELECT yd, -7 FROM tmp WHERE yd = 'try again';
 INSERT INTO INSERT_TBL(y,z) SELECT yd, -8 FROM tmp WHERE yd = 'try again';
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (8, try again, -8).
-SELECT '' AS four, * FROM INSERT_TBL;
- four | x |       y       | z  
-------+---+---------------+----
-      | 4 | Y             | -4
-      | 5 | !check failed | -5
-      | 6 | try again     | -6
-      |   | try again     |   
-      | 7 | try again     | -7
+SELECT * FROM INSERT_TBL;
+ x |       y       | z  
+---+---------------+----
+ 4 | Y             | -4
+ 5 | !check failed | -5
+ 6 | try again     | -6
+   | try again     |   
+ 7 | try again     | -7
 (5 rows)
 
 DROP TABLE tmp;
@@ -347,11 +347,11 @@ CREATE TABLE COPY_TBL (x INT, y TEXT, z INT,
 	CONSTRAINT COPY_CON
 	CHECK (x > 3 AND y <> 'check failed' AND x < 7 ));
 COPY COPY_TBL FROM '@abs_srcdir@/data/constro.data';
-SELECT '' AS two, * FROM COPY_TBL;
- two | x |       y       | z 
------+---+---------------+---
-     | 4 | !check failed | 5
-     | 6 | OK            | 4
+SELECT * FROM COPY_TBL;
+ x |       y       | z 
+---+---------------+---
+ 4 | !check failed | 5
+ 6 | OK            | 4
 (2 rows)
 
 COPY COPY_TBL FROM '@abs_srcdir@/data/constrf.data';
@@ -379,13 +379,13 @@ INSERT INTO PRIMARY_TBL VALUES (5, 'one');
 INSERT INTO PRIMARY_TBL (t) VALUES ('six');
 ERROR:  null value in column "i" of relation "primary_tbl" violates not-null constraint
 DETAIL:  Failing row contains (null, six).
-SELECT '' AS four, * FROM PRIMARY_TBL;
- four | i |   t   
-------+---+-------
-      | 1 | one
-      | 2 | two
-      | 4 | three
-      | 5 | one
+SELECT * FROM PRIMARY_TBL;
+ i |   t   
+---+-------
+ 1 | one
+ 2 | two
+ 4 | three
+ 5 | one
 (4 rows)
 
 DROP TABLE PRIMARY_TBL;
@@ -399,14 +399,14 @@ INSERT INTO PRIMARY_TBL VALUES (5, 'one');
 INSERT INTO PRIMARY_TBL (t) VALUES ('six');
 ERROR:  null value in column "i" of relation "primary_tbl" violates not-null constraint
 DETAIL:  Failing row contains (null, six).
-SELECT '' AS three, * FROM PRIMARY_TBL;
- three | i |   t   
--------+---+-------
-       | 1 | one
-       | 2 | two
-       | 1 | three
-       | 4 | three
-       | 5 | one
+SELECT * FROM PRIMARY_TBL;
+ i |   t   
+---+-------
+ 1 | one
+ 2 | two
+ 1 | three
+ 4 | three
+ 5 | one
 (5 rows)
 
 DROP TABLE PRIMARY_TBL;
@@ -429,16 +429,16 @@ INSERT INTO UNIQUE_TBL VALUES (6, 'six-upsert-insert') ON CONFLICT (i) DO UPDATE
 INSERT INTO UNIQUE_TBL VALUES (1, 'a'), (2, 'b'), (2, 'b') ON CONFLICT (i) DO UPDATE SET t = 'fails';
 ERROR:  ON CONFLICT DO UPDATE command cannot affect row a second time
 HINT:  Ensure that no rows proposed for insertion within the same command have duplicate constrained values.
-SELECT '' AS five, * FROM UNIQUE_TBL;
- five | i |         t          
-------+---+--------------------
-      | 1 | one
-      | 2 | two
-      | 4 | four
-      |   | six
-      |   | seven
-      | 5 | five-upsert-update
-      | 6 | six-upsert-insert
+SELECT * FROM UNIQUE_TBL;
+ i |         t          
+---+--------------------
+ 1 | one
+ 2 | two
+ 4 | four
+   | six
+   | seven
+ 5 | five-upsert-update
+ 6 | six-upsert-insert
 (7 rows)
 
 DROP TABLE UNIQUE_TBL;
@@ -452,14 +452,14 @@ ERROR:  duplicate key value violates unique constraint "unique_tbl_i_t_key"
 DETAIL:  Key (i, t)=(1, one) already exists.
 INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 INSERT INTO UNIQUE_TBL (t) VALUES ('six');
-SELECT '' AS five, * FROM UNIQUE_TBL;
- five | i |   t   
-------+---+-------
-      | 1 | one
-      | 2 | two
-      | 1 | three
-      | 5 | one
-      |   | six
+SELECT * FROM UNIQUE_TBL;
+ i |   t   
+---+-------
+ 1 | one
+ 2 | two
+ 1 | three
+ 5 | one
+   | six
 (5 rows)
 
 DROP TABLE UNIQUE_TBL;

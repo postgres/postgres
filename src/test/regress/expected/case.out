@@ -107,33 +107,33 @@ SELECT CASE 'a' WHEN 'a' THEN 1 ELSE 2 END;
 --
 -- Examples of targets involving tables
 --
-SELECT '' AS "Five",
+SELECT
   CASE
     WHEN i >= 3 THEN i
   END AS ">= 3 or Null"
   FROM CASE_TBL;
- Five | >= 3 or Null 
-------+--------------
-      |             
-      |             
-      |            3
-      |            4
+ >= 3 or Null 
+--------------
+             
+             
+            3
+            4
 (4 rows)
 
-SELECT '' AS "Five",
+SELECT
   CASE WHEN i >= 3 THEN (i + i)
        ELSE i
   END AS "Simplest Math"
   FROM CASE_TBL;
- Five | Simplest Math 
-------+---------------
-      |             1
-      |             2
-      |             6
-      |             8
+ Simplest Math 
+---------------
+             1
+             2
+             6
+             8
 (4 rows)
 
-SELECT '' AS "Five", i AS "Value",
+SELECT i AS "Value",
   CASE WHEN (i < 0) THEN 'small'
        WHEN (i = 0) THEN 'zero'
        WHEN (i = 1) THEN 'one'
@@ -141,15 +141,15 @@ SELECT '' AS "Five", i AS "Value",
        ELSE 'big'
   END AS "Category"
   FROM CASE_TBL;
- Five | Value | Category 
-------+-------+----------
-      |     1 | one
-      |     2 | two
-      |     3 | big
-      |     4 | big
+ Value | Category 
+-------+----------
+     1 | one
+     2 | two
+     3 | big
+     4 | big
 (4 rows)
 
-SELECT '' AS "Five",
+SELECT
   CASE WHEN ((i < 0) or (i < 0)) THEN 'small'
        WHEN ((i = 0) or (i = 0)) THEN 'zero'
        WHEN ((i = 1) or (i = 1)) THEN 'one'
@@ -157,12 +157,12 @@ SELECT '' AS "Five",
        ELSE 'big'
   END AS "Category"
   FROM CASE_TBL;
- Five | Category 
-------+----------
-      | one
-      | two
-      | big
-      | big
+ Category 
+----------
+ one
+ two
+ big
+ big
 (4 rows)
 
 --
@@ -223,44 +223,44 @@ SELECT *
  4 |   | 2 | -4
 (2 rows)
 
-SELECT '' AS Five, NULLIF(a.i,b.i) AS "NULLIF(a.i,b.i)",
+SELECT NULLIF(a.i,b.i) AS "NULLIF(a.i,b.i)",
   NULLIF(b.i, 4) AS "NULLIF(b.i,4)"
   FROM CASE_TBL a, CASE2_TBL b;
- five | NULLIF(a.i,b.i) | NULLIF(b.i,4) 
-------+-----------------+---------------
-      |                 |             1
-      |               2 |             1
-      |               3 |             1
-      |               4 |             1
-      |               1 |             2
-      |                 |             2
-      |               3 |             2
-      |               4 |             2
-      |               1 |             3
-      |               2 |             3
-      |                 |             3
-      |               4 |             3
-      |               1 |             2
-      |                 |             2
-      |               3 |             2
-      |               4 |             2
-      |                 |             1
-      |               2 |             1
-      |               3 |             1
-      |               4 |             1
-      |               1 |              
-      |               2 |              
-      |               3 |              
-      |               4 |              
+ NULLIF(a.i,b.i) | NULLIF(b.i,4) 
+-----------------+---------------
+                 |             1
+               2 |             1
+               3 |             1
+               4 |             1
+               1 |             2
+                 |             2
+               3 |             2
+               4 |             2
+               1 |             3
+               2 |             3
+                 |             3
+               4 |             3
+               1 |             2
+                 |             2
+               3 |             2
+               4 |             2
+                 |             1
+               2 |             1
+               3 |             1
+               4 |             1
+               1 |              
+               2 |              
+               3 |              
+               4 |              
 (24 rows)
 
-SELECT '' AS "Two", *
+SELECT *
   FROM CASE_TBL a, CASE2_TBL b
   WHERE COALESCE(f,b.i) = 2;
- Two | i | f | i | j  
------+---+---+---+----
-     | 4 |   | 2 | -2
-     | 4 |   | 2 | -4
+ i | f | i | j  
+---+---+---+----
+ 4 |   | 2 | -2
+ 4 |   | 2 | -4
 (2 rows)
 
 --

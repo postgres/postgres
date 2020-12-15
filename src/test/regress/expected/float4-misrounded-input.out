@@ -161,136 +161,136 @@ SELECT 'nan'::numeric::float4;
     NaN
 (1 row)
 
-SELECT '' AS five, * FROM FLOAT4_TBL;
- five |      f1       
-------+---------------
-      |             0
-      |        1004.3
-      |        -34.84
-      | 1.2345679e+20
-      | 1.2345679e-20
+SELECT * FROM FLOAT4_TBL;
+      f1       
+---------------
+             0
+        1004.3
+        -34.84
+ 1.2345679e+20
+ 1.2345679e-20
 (5 rows)
 
-SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE f.f1 <> '1004.3';
- four |      f1       
-------+---------------
-      |             0
-      |        -34.84
-      | 1.2345679e+20
-      | 1.2345679e-20
+SELECT f.* FROM FLOAT4_TBL f WHERE f.f1 <> '1004.3';
+      f1       
+---------------
+             0
+        -34.84
+ 1.2345679e+20
+ 1.2345679e-20
 (4 rows)
 
-SELECT '' AS one, f.* FROM FLOAT4_TBL f WHERE f.f1 = '1004.3';
- one |   f1   
------+--------
-     | 1004.3
+SELECT f.* FROM FLOAT4_TBL f WHERE f.f1 = '1004.3';
+   f1   
+--------
+ 1004.3
 (1 row)
 
-SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE '1004.3' > f.f1;
- three |      f1       
--------+---------------
-       |             0
-       |        -34.84
-       | 1.2345679e-20
+SELECT f.* FROM FLOAT4_TBL f WHERE '1004.3' > f.f1;
+      f1       
+---------------
+             0
+        -34.84
+ 1.2345679e-20
 (3 rows)
 
-SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE  f.f1 < '1004.3';
- three |      f1       
--------+---------------
-       |             0
-       |        -34.84
-       | 1.2345679e-20
+SELECT f.* FROM FLOAT4_TBL f WHERE  f.f1 < '1004.3';
+      f1       
+---------------
+             0
+        -34.84
+ 1.2345679e-20
 (3 rows)
 
-SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE '1004.3' >= f.f1;
- four |      f1       
-------+---------------
-      |             0
-      |        1004.3
-      |        -34.84
-      | 1.2345679e-20
+SELECT f.* FROM FLOAT4_TBL f WHERE '1004.3' >= f.f1;
+      f1       
+---------------
+             0
+        1004.3
+        -34.84
+ 1.2345679e-20
 (4 rows)
 
-SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE  f.f1 <= '1004.3';
- four |      f1       
-------+---------------
-      |             0
-      |        1004.3
-      |        -34.84
-      | 1.2345679e-20
+SELECT f.* FROM FLOAT4_TBL f WHERE  f.f1 <= '1004.3';
+      f1       
+---------------
+             0
+        1004.3
+        -34.84
+ 1.2345679e-20
 (4 rows)
 
-SELECT '' AS three, f.f1, f.f1 * '-10' AS x FROM FLOAT4_TBL f
+SELECT f.f1, f.f1 * '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
- three |      f1       |       x        
--------+---------------+----------------
-       |        1004.3 |         -10043
-       | 1.2345679e+20 | -1.2345678e+21
-       | 1.2345679e-20 | -1.2345678e-19
+      f1       |       x        
+---------------+----------------
+        1004.3 |         -10043
+ 1.2345679e+20 | -1.2345678e+21
+ 1.2345679e-20 | -1.2345678e-19
 (3 rows)
 
-SELECT '' AS three, f.f1, f.f1 + '-10' AS x FROM FLOAT4_TBL f
+SELECT f.f1, f.f1 + '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
- three |      f1       |       x       
--------+---------------+---------------
-       |        1004.3 |         994.3
-       | 1.2345679e+20 | 1.2345679e+20
-       | 1.2345679e-20 |           -10
+      f1       |       x       
+---------------+---------------
+        1004.3 |         994.3
+ 1.2345679e+20 | 1.2345679e+20
+ 1.2345679e-20 |           -10
 (3 rows)
 
-SELECT '' AS three, f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
+SELECT f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
- three |      f1       |       x        
--------+---------------+----------------
-       |        1004.3 |        -100.43
-       | 1.2345679e+20 | -1.2345679e+19
-       | 1.2345679e-20 | -1.2345679e-21
+      f1       |       x        
+---------------+----------------
+        1004.3 |        -100.43
+ 1.2345679e+20 | -1.2345679e+19
+ 1.2345679e-20 | -1.2345679e-21
 (3 rows)
 
-SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
+SELECT f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
- three |      f1       |       x       
--------+---------------+---------------
-       |        1004.3 |        1014.3
-       | 1.2345679e+20 | 1.2345679e+20
-       | 1.2345679e-20 |            10
+      f1       |       x       
+---------------+---------------
+        1004.3 |        1014.3
+ 1.2345679e+20 | 1.2345679e+20
+ 1.2345679e-20 |            10
 (3 rows)
 
 -- test divide by zero
-SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
+SELECT f.f1 / '0.0' from FLOAT4_TBL f;
 ERROR:  division by zero
-SELECT '' AS five, * FROM FLOAT4_TBL;
- five |      f1       
-------+---------------
-      |             0
-      |        1004.3
-      |        -34.84
-      | 1.2345679e+20
-      | 1.2345679e-20
+SELECT * FROM FLOAT4_TBL;
+      f1       
+---------------
+             0
+        1004.3
+        -34.84
+ 1.2345679e+20
+ 1.2345679e-20
 (5 rows)
 
 -- test the unary float4abs operator
-SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
- five |      f1       |    abs_f1     
-------+---------------+---------------
-      |             0 |             0
-      |        1004.3 |        1004.3
-      |        -34.84 |         34.84
-      | 1.2345679e+20 | 1.2345679e+20
-      | 1.2345679e-20 | 1.2345679e-20
+SELECT f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
+      f1       |    abs_f1     
+---------------+---------------
+             0 |             0
+        1004.3 |        1004.3
+        -34.84 |         34.84
+ 1.2345679e+20 | 1.2345679e+20
+ 1.2345679e-20 | 1.2345679e-20
 (5 rows)
 
 UPDATE FLOAT4_TBL
    SET f1 = FLOAT4_TBL.f1 * '-1'
    WHERE FLOAT4_TBL.f1 > '0.0';
-SELECT '' AS five, * FROM FLOAT4_TBL;
- five |       f1       
-------+----------------
-      |              0
-      |         -34.84
-      |        -1004.3
-      | -1.2345679e+20
-      | -1.2345679e-20
+SELECT * FROM FLOAT4_TBL;
+       f1       
+----------------
+              0
+         -34.84
+        -1004.3
+ -1.2345679e+20
+ -1.2345679e-20
 (5 rows)
 
 -- test edge-case coercions to integer

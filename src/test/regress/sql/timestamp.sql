@@ -135,7 +135,7 @@ INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 2001');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 -0097');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 5097 BC');
 
-SELECT '' AS "64", d1 FROM TIMESTAMP_TBL;
+SELECT d1 FROM TIMESTAMP_TBL;
 
 -- Check behavior at the lower boundary of the timestamp range
 SELECT '4714-11-24 00:00:00 BC'::timestamp;
@@ -143,31 +143,31 @@ SELECT '4714-11-23 23:59:59 BC'::timestamp;  -- out of range
 -- The upper boundary differs between integer and float timestamps, so no check
 
 -- Demonstrate functions and operators
-SELECT '' AS "48", d1 FROM TIMESTAMP_TBL
+SELECT d1 FROM TIMESTAMP_TBL
    WHERE d1 > timestamp without time zone '1997-01-02';
 
-SELECT '' AS "15", d1 FROM TIMESTAMP_TBL
+SELECT d1 FROM TIMESTAMP_TBL
    WHERE d1 < timestamp without time zone '1997-01-02';
 
-SELECT '' AS one, d1 FROM TIMESTAMP_TBL
+SELECT d1 FROM TIMESTAMP_TBL
    WHERE d1 = timestamp without time zone '1997-01-02';
 
-SELECT '' AS "63", d1 FROM TIMESTAMP_TBL
+SELECT d1 FROM TIMESTAMP_TBL
    WHERE d1 != timestamp without time zone '1997-01-02';
 
-SELECT '' AS "16", d1 FROM TIMESTAMP_TBL
+SELECT d1 FROM TIMESTAMP_TBL
    WHERE d1 <= timestamp without time zone '1997-01-02';
 
-SELECT '' AS "49", d1 FROM TIMESTAMP_TBL
+SELECT d1 FROM TIMESTAMP_TBL
    WHERE d1 >= timestamp without time zone '1997-01-02';
 
-SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
+SELECT d1 - timestamp without time zone '1997-01-02' AS diff
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
-SELECT '' AS date_trunc_week, date_trunc( 'week', timestamp '2004-02-29 15:44:17.71393' ) AS week_trunc;
+SELECT date_trunc( 'week', timestamp '2004-02-29 15:44:17.71393' ) AS week_trunc;
 
 -- Test casting within a BETWEEN qualifier
-SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
+SELECT d1 - timestamp without time zone '1997-01-02' AS diff
   FROM TIMESTAMP_TBL
   WHERE d1 BETWEEN timestamp without time zone '1902-01-01'
    AND timestamp without time zone '2038-01-01';
@@ -198,40 +198,40 @@ SELECT d1 as "timestamp",
    FROM TIMESTAMP_TBL;
 
 -- TO_CHAR()
-SELECT '' AS to_char_1, to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon')
+SELECT to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_2, to_char(d1, 'FMDAY FMDay FMday FMMONTH FMMonth FMmonth FMRM')
+SELECT to_char(d1, 'FMDAY FMDay FMday FMMONTH FMMonth FMmonth FMRM')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_3, to_char(d1, 'Y,YYY YYYY YYY YY Y CC Q MM WW DDD DD D J')
+SELECT to_char(d1, 'Y,YYY YYYY YYY YY Y CC Q MM WW DDD DD D J')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_4, to_char(d1, 'FMY,YYY FMYYYY FMYYY FMYY FMY FMCC FMQ FMMM FMWW FMDDD FMDD FMD FMJ')
+SELECT to_char(d1, 'FMY,YYY FMYYYY FMYYY FMYY FMY FMCC FMQ FMMM FMWW FMDDD FMDD FMD FMJ')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS')
+SELECT to_char(d1, 'HH HH12 HH24 MI SS SSSS')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_6, to_char(d1, E'"HH:MI:SS is" HH:MI:SS "\\"text between quote marks\\""')
+SELECT to_char(d1, E'"HH:MI:SS is" HH:MI:SS "\\"text between quote marks\\""')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
+SELECT to_char(d1, 'HH24--text--MI--text--SS')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth')
+SELECT to_char(d1, 'YYYYTH YYYYth Jth')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. HH:MI:SS p.m. HH:MI:SS pm')
+SELECT to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. HH:MI:SS p.m. HH:MI:SS pm')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
+SELECT to_char(d1, 'IYYY IYY IY I IW IDDD ID')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
+SELECT to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
    FROM TIMESTAMP_TBL;
 
-SELECT '' AS to_char_12, to_char(d, 'FF1 FF2 FF3 FF4 FF5 FF6  ff1 ff2 ff3 ff4 ff5 ff6  MS US')
+SELECT to_char(d, 'FF1 FF2 FF3 FF4 FF5 FF6  ff1 ff2 ff3 ff4 ff5 ff6  MS US')
    FROM (VALUES
        ('2018-11-02 12:34:56'::timestamp),
        ('2018-11-02 12:34:56.78'),

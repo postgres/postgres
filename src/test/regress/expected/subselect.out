@@ -86,131 +86,131 @@ INSERT INTO SUBSELECT_TBL VALUES (2, 2, 2);
 INSERT INTO SUBSELECT_TBL VALUES (3, 3, 3);
 INSERT INTO SUBSELECT_TBL VALUES (6, 7, 8);
 INSERT INTO SUBSELECT_TBL VALUES (8, 9, NULL);
-SELECT '' AS eight, * FROM SUBSELECT_TBL;
- eight | f1 | f2 | f3 
--------+----+----+----
-       |  1 |  2 |  3
-       |  2 |  3 |  4
-       |  3 |  4 |  5
-       |  1 |  1 |  1
-       |  2 |  2 |  2
-       |  3 |  3 |  3
-       |  6 |  7 |  8
-       |  8 |  9 |   
+SELECT * FROM SUBSELECT_TBL;
+ f1 | f2 | f3 
+----+----+----
+  1 |  2 |  3
+  2 |  3 |  4
+  3 |  4 |  5
+  1 |  1 |  1
+  2 |  2 |  2
+  3 |  3 |  3
+  6 |  7 |  8
+  8 |  9 |   
 (8 rows)
 
 -- Uncorrelated subselects
-SELECT '' AS two, f1 AS "Constant Select" FROM SUBSELECT_TBL
+SELECT f1 AS "Constant Select" FROM SUBSELECT_TBL
   WHERE f1 IN (SELECT 1);
- two | Constant Select 
------+-----------------
-     |               1
-     |               1
+ Constant Select 
+-----------------
+               1
+               1
 (2 rows)
 
-SELECT '' AS six, f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
+SELECT f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
   WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL);
- six | Uncorrelated Field 
------+--------------------
-     |                  1
-     |                  2
-     |                  3
-     |                  1
-     |                  2
-     |                  3
+ Uncorrelated Field 
+--------------------
+                  1
+                  2
+                  3
+                  1
+                  2
+                  3
 (6 rows)
 
-SELECT '' AS six, f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
+SELECT f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
   WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE
     f2 IN (SELECT f1 FROM SUBSELECT_TBL));
- six | Uncorrelated Field 
------+--------------------
-     |                  1
-     |                  2
-     |                  3
-     |                  1
-     |                  2
-     |                  3
+ Uncorrelated Field 
+--------------------
+                  1
+                  2
+                  3
+                  1
+                  2
+                  3
 (6 rows)
 
-SELECT '' AS three, f1, f2
+SELECT f1, f2
   FROM SUBSELECT_TBL
   WHERE (f1, f2) NOT IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
                          WHERE f3 IS NOT NULL);
- three | f1 | f2 
--------+----+----
-       |  1 |  2
-       |  6 |  7
-       |  8 |  9
+ f1 | f2 
+----+----
+  1 |  2
+  6 |  7
+  8 |  9
 (3 rows)
 
 -- Correlated subselects
-SELECT '' AS six, f1 AS "Correlated Field", f2 AS "Second Field"
+SELECT f1 AS "Correlated Field", f2 AS "Second Field"
   FROM SUBSELECT_TBL upper
   WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE f1 = upper.f1);
- six | Correlated Field | Second Field 
------+------------------+--------------
-     |                1 |            2
-     |                2 |            3
-     |                3 |            4
-     |                1 |            1
-     |                2 |            2
-     |                3 |            3
+ Correlated Field | Second Field 
+------------------+--------------
+                1 |            2
+                2 |            3
+                3 |            4
+                1 |            1
+                2 |            2
+                3 |            3
 (6 rows)
 
-SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
+SELECT f1 AS "Correlated Field", f3 AS "Second Field"
   FROM SUBSELECT_TBL upper
   WHERE f1 IN
     (SELECT f2 FROM SUBSELECT_TBL WHERE CAST(upper.f2 AS float) = f3);
- six | Correlated Field | Second Field 
------+------------------+--------------
-     |                2 |            4
-     |                3 |            5
-     |                1 |            1
-     |                2 |            2
-     |                3 |            3
+ Correlated Field | Second Field 
+------------------+--------------
+                2 |            4
+                3 |            5
+                1 |            1
+                2 |            2
+                3 |            3
 (5 rows)
 
-SELECT '' AS six, f1 AS "Correlated Field", f3 AS "Second Field"
+SELECT f1 AS "Correlated Field", f3 AS "Second Field"
   FROM SUBSELECT_TBL upper
   WHERE f3 IN (SELECT upper.f1 + f2 FROM SUBSELECT_TBL
                WHERE f2 = CAST(f3 AS integer));
- six | Correlated Field | Second Field 
------+------------------+--------------
-     |                1 |            3
-     |                2 |            4
-     |                3 |            5
-     |                6 |            8
+ Correlated Field | Second Field 
+------------------+--------------
+                1 |            3
+                2 |            4
+                3 |            5
+                6 |            8
 (4 rows)
 
-SELECT '' AS five, f1 AS "Correlated Field"
+SELECT f1 AS "Correlated Field"
   FROM SUBSELECT_TBL
   WHERE (f1, f2) IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
                      WHERE f3 IS NOT NULL);
- five | Correlated Field 
-------+------------------
-      |                2
-      |                3
-      |                1
-      |                2
-      |                3
+ Correlated Field 
+------------------
+                2
+                3
+                1
+                2
+                3
 (5 rows)
 
 --
 -- Use some existing tables in the regression test
 --
-SELECT '' AS eight, ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
+SELECT ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
   FROM SUBSELECT_TBL ss
   WHERE f1 NOT IN (SELECT f1+1 FROM INT4_TBL
                    WHERE f1 != ss.f1 AND f1 < 2147483647);
- eight | Correlated Field | Second Field 
--------+------------------+--------------
-       |                2 |            4
-       |                3 |            5
-       |                2 |            2
-       |                3 |            3
-       |                6 |            8
-       |                8 |             
+ Correlated Field | Second Field 
+------------------+--------------
+                2 |            4
+                3 |            5
+                2 |            2
+                3 |            3
+                6 |            8
+                8 |             
 (6 rows)
 
 select q1, float8(count(*)) / (select count(*) from int8_tbl)

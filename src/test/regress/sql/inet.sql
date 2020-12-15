@@ -29,26 +29,26 @@ INSERT INTO INET_TBL (c, i) VALUES ('1234::1234::1234', '::1.2.3.4');
 -- check that CIDR rejects invalid input when converting from text:
 INSERT INTO INET_TBL (c, i) VALUES (cidr('192.168.1.2/30'), '192.168.1.226');
 INSERT INTO INET_TBL (c, i) VALUES (cidr('ffff:ffff:ffff:ffff::/24'), '::192.168.1.226');
-SELECT '' AS ten, c AS cidr, i AS inet FROM INET_TBL;
+SELECT c AS cidr, i AS inet FROM INET_TBL;
 
 -- now test some support functions
 
-SELECT '' AS ten, i AS inet, host(i), text(i), family(i) FROM INET_TBL;
-SELECT '' AS ten, c AS cidr, broadcast(c),
+SELECT i AS inet, host(i), text(i), family(i) FROM INET_TBL;
+SELECT c AS cidr, broadcast(c),
   i AS inet, broadcast(i) FROM INET_TBL;
-SELECT '' AS ten, c AS cidr, network(c) AS "network(cidr)",
+SELECT c AS cidr, network(c) AS "network(cidr)",
   i AS inet, network(i) AS "network(inet)" FROM INET_TBL;
-SELECT '' AS ten, c AS cidr, masklen(c) AS "masklen(cidr)",
+SELECT c AS cidr, masklen(c) AS "masklen(cidr)",
   i AS inet, masklen(i) AS "masklen(inet)" FROM INET_TBL;
 
-SELECT '' AS four, c AS cidr, masklen(c) AS "masklen(cidr)",
+SELECT c AS cidr, masklen(c) AS "masklen(cidr)",
   i AS inet, masklen(i) AS "masklen(inet)" FROM INET_TBL
   WHERE masklen(c) <= 8;
 
-SELECT '' AS six, c AS cidr, i AS inet FROM INET_TBL
+SELECT c AS cidr, i AS inet FROM INET_TBL
   WHERE c = i;
 
-SELECT '' AS ten, i, c,
+SELECT i, c,
   i < c AS lt, i <= c AS le, i = c AS eq,
   i >= c AS ge, i > c AS gt, i <> c AS ne,
   i << c AS sb, i <<= c AS sbe,
@@ -60,7 +60,7 @@ SELECT max(i) AS max, min(i) AS min FROM INET_TBL;
 SELECT max(c) AS max, min(c) AS min FROM INET_TBL;
 
 -- check the conversion to/from text and set_netmask
-SELECT '' AS ten, set_masklen(inet(text(i)), 24) FROM INET_TBL;
+SELECT set_masklen(inet(text(i)), 24) FROM INET_TBL;
 
 -- check that btree index works correctly
 CREATE INDEX inet_idx1 ON inet_tbl(i);

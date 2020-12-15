@@ -12,20 +12,20 @@ INSERT INTO TEMP_FLOAT (f1)
   SELECT float8(f1) FROM INT4_TBL;
 INSERT INTO TEMP_FLOAT (f1)
   SELECT float8(f1) FROM INT2_TBL;
-SELECT '' AS ten, f1 FROM TEMP_FLOAT
+SELECT f1 FROM TEMP_FLOAT
   ORDER BY f1;
- ten |     f1      
------+-------------
-     | -2147483647
-     |     -123456
-     |      -32767
-     |       -1234
-     |           0
-     |           0
-     |        1234
-     |       32767
-     |      123456
-     |  2147483647
+     f1      
+-------------
+ -2147483647
+     -123456
+      -32767
+       -1234
+           0
+           0
+        1234
+       32767
+      123456
+  2147483647
 (10 rows)
 
 -- int4
@@ -35,19 +35,19 @@ INSERT INTO TEMP_INT4 (f1)
   WHERE (f1 > -2147483647) AND (f1 < 2147483647);
 INSERT INTO TEMP_INT4 (f1)
   SELECT int4(f1) FROM INT2_TBL;
-SELECT '' AS nine, f1 FROM TEMP_INT4
+SELECT f1 FROM TEMP_INT4
   ORDER BY f1;
- nine |   f1   
-------+--------
-      | -32767
-      |  -1234
-      |  -1004
-      |    -35
-      |      0
-      |      0
-      |      0
-      |   1234
-      |  32767
+   f1   
+--------
+ -32767
+  -1234
+  -1004
+    -35
+      0
+      0
+      0
+   1234
+  32767
 (9 rows)
 
 -- int2
@@ -58,15 +58,15 @@ INSERT INTO TEMP_INT2 (f1)
 INSERT INTO TEMP_INT2 (f1)
   SELECT int2(f1) FROM INT4_TBL
   WHERE (f1 >= -32767) AND (f1 <= 32767);
-SELECT '' AS five, f1 FROM TEMP_INT2
+SELECT f1 FROM TEMP_INT2
   ORDER BY f1;
- five |  f1   
-------+-------
-      | -1004
-      |   -35
-      |     0
-      |     0
-      |     0
+  f1   
+-------
+ -1004
+   -35
+     0
+     0
+     0
 (5 rows)
 
 --

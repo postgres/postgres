@@ -54,45 +54,45 @@ SELECT 'nan'::float4 / 'nan'::float4;
 SELECT 'nan'::float4 / '0'::float4;
 SELECT 'nan'::numeric::float4;
 
-SELECT '' AS five, * FROM FLOAT4_TBL;
+SELECT * FROM FLOAT4_TBL;
 
-SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE f.f1 <> '1004.3';
+SELECT f.* FROM FLOAT4_TBL f WHERE f.f1 <> '1004.3';
 
-SELECT '' AS one, f.* FROM FLOAT4_TBL f WHERE f.f1 = '1004.3';
+SELECT f.* FROM FLOAT4_TBL f WHERE f.f1 = '1004.3';
 
-SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE '1004.3' > f.f1;
+SELECT f.* FROM FLOAT4_TBL f WHERE '1004.3' > f.f1;
 
-SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE  f.f1 < '1004.3';
+SELECT f.* FROM FLOAT4_TBL f WHERE  f.f1 < '1004.3';
 
-SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE '1004.3' >= f.f1;
+SELECT f.* FROM FLOAT4_TBL f WHERE '1004.3' >= f.f1;
 
-SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE  f.f1 <= '1004.3';
+SELECT f.* FROM FLOAT4_TBL f WHERE  f.f1 <= '1004.3';
 
-SELECT '' AS three, f.f1, f.f1 * '-10' AS x FROM FLOAT4_TBL f
+SELECT f.f1, f.f1 * '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
 
-SELECT '' AS three, f.f1, f.f1 + '-10' AS x FROM FLOAT4_TBL f
+SELECT f.f1, f.f1 + '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
 
-SELECT '' AS three, f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
+SELECT f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
 
-SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
+SELECT f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
 
 -- test divide by zero
-SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
+SELECT f.f1 / '0.0' from FLOAT4_TBL f;
 
-SELECT '' AS five, * FROM FLOAT4_TBL;
+SELECT * FROM FLOAT4_TBL;
 
 -- test the unary float4abs operator
-SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
+SELECT f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
 
 UPDATE FLOAT4_TBL
    SET f1 = FLOAT4_TBL.f1 * '-1'
    WHERE FLOAT4_TBL.f1 > '0.0';
 
-SELECT '' AS five, * FROM FLOAT4_TBL;
+SELECT * FROM FLOAT4_TBL;
 
 -- test edge-case coercions to integer
 SELECT '32767.4'::float4::int2;

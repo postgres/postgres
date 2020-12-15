@@ -52,71 +52,71 @@ INSERT INTO OID_TBL(f1) VALUES ('-23582358720398502385');
 ERROR:  value "-23582358720398502385" is out of range for type oid
 LINE 1: INSERT INTO OID_TBL(f1) VALUES ('-23582358720398502385');
                                         ^
-SELECT '' AS six, * FROM OID_TBL;
- six |     f1     
------+------------
-     |       1234
-     |       1235
-     |        987
-     | 4294966256
-     |   99999999
-     |          5
-     |         10
-     |         15
+SELECT * FROM OID_TBL;
+     f1     
+------------
+       1234
+       1235
+        987
+ 4294966256
+   99999999
+          5
+         10
+         15
 (8 rows)
 
-SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 = 1234;
- one |  f1  
------+------
-     | 1234
+SELECT o.* FROM OID_TBL o WHERE o.f1 = 1234;
+  f1  
+------
+ 1234
 (1 row)
 
-SELECT '' AS five, o.* FROM OID_TBL o WHERE o.f1 <> '1234';
- five |     f1     
-------+------------
-      |       1235
-      |        987
-      | 4294966256
-      |   99999999
-      |          5
-      |         10
-      |         15
+SELECT o.* FROM OID_TBL o WHERE o.f1 <> '1234';
+     f1     
+------------
+       1235
+        987
+ 4294966256
+   99999999
+          5
+         10
+         15
 (7 rows)
 
-SELECT '' AS three, o.* FROM OID_TBL o WHERE o.f1 <= '1234';
- three |  f1  
--------+------
-       | 1234
-       |  987
-       |    5
-       |   10
-       |   15
+SELECT o.* FROM OID_TBL o WHERE o.f1 <= '1234';
+  f1  
+------
+ 1234
+  987
+    5
+   10
+   15
 (5 rows)
 
-SELECT '' AS two, o.* FROM OID_TBL o WHERE o.f1 < '1234';
- two | f1  
------+-----
-     | 987
-     |   5
-     |  10
-     |  15
+SELECT o.* FROM OID_TBL o WHERE o.f1 < '1234';
+ f1  
+-----
+ 987
+   5
+  10
+  15
 (4 rows)
 
-SELECT '' AS four, o.* FROM OID_TBL o WHERE o.f1 >= '1234';
- four |     f1     
-------+------------
-      |       1234
-      |       1235
-      | 4294966256
-      |   99999999
+SELECT o.* FROM OID_TBL o WHERE o.f1 >= '1234';
+     f1     
+------------
+       1234
+       1235
+ 4294966256
+   99999999
 (4 rows)
 
-SELECT '' AS three, o.* FROM OID_TBL o WHERE o.f1 > '1234';
- three |     f1     
--------+------------
-       |       1235
-       | 4294966256
-       |   99999999
+SELECT o.* FROM OID_TBL o WHERE o.f1 > '1234';
+     f1     
+------------
+       1235
+ 4294966256
+   99999999
 (3 rows)
 
 DROP TABLE OID_TBL;

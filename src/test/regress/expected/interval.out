@@ -73,138 +73,138 @@ ERROR:  invalid input syntax for type interval: "@ 30 eons ago"
 LINE 1: INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
                                               ^
 -- test interval operators
-SELECT '' AS ten, * FROM INTERVAL_TBL;
- ten |       f1        
------+-----------------
-     | 00:01:00
-     | 05:00:00
-     | 10 days
-     | 34 years
-     | 3 mons
-     | -00:00:14
-     | 1 day 02:03:04
-     | 6 years
-     | 5 mons
-     | 5 mons 12:00:00
+SELECT * FROM INTERVAL_TBL;
+       f1        
+-----------------
+ 00:01:00
+ 05:00:00
+ 10 days
+ 34 years
+ 3 mons
+ -00:00:14
+ 1 day 02:03:04
+ 6 years
+ 5 mons
+ 5 mons 12:00:00
 (10 rows)
 
-SELECT '' AS nine, * FROM INTERVAL_TBL
+SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 <> interval '@ 10 days';
- nine |       f1        
-------+-----------------
-      | 00:01:00
-      | 05:00:00
-      | 34 years
-      | 3 mons
-      | -00:00:14
-      | 1 day 02:03:04
-      | 6 years
-      | 5 mons
-      | 5 mons 12:00:00
+       f1        
+-----------------
+ 00:01:00
+ 05:00:00
+ 34 years
+ 3 mons
+ -00:00:14
+ 1 day 02:03:04
+ 6 years
+ 5 mons
+ 5 mons 12:00:00
 (9 rows)
 
-SELECT '' AS three, * FROM INTERVAL_TBL
+SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 <= interval '@ 5 hours';
- three |    f1     
--------+-----------
-       | 00:01:00
-       | 05:00:00
-       | -00:00:14
+    f1     
+-----------
+ 00:01:00
+ 05:00:00
+ -00:00:14
 (3 rows)
 
-SELECT '' AS three, * FROM INTERVAL_TBL
+SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 < interval '@ 1 day';
- three |    f1     
--------+-----------
-       | 00:01:00
-       | 05:00:00
-       | -00:00:14
+    f1     
+-----------
+ 00:01:00
+ 05:00:00
+ -00:00:14
 (3 rows)
 
-SELECT '' AS one, * FROM INTERVAL_TBL
+SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 = interval '@ 34 years';
- one |    f1    
------+----------
-     | 34 years
+    f1    
+----------
+ 34 years
 (1 row)
 
-SELECT '' AS five, * FROM INTERVAL_TBL
+SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 >= interval '@ 1 month';
- five |       f1        
-------+-----------------
-      | 34 years
-      | 3 mons
-      | 6 years
-      | 5 mons
-      | 5 mons 12:00:00
+       f1        
+-----------------
+ 34 years
+ 3 mons
+ 6 years
+ 5 mons
+ 5 mons 12:00:00
 (5 rows)
 
-SELECT '' AS nine, * FROM INTERVAL_TBL
+SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 > interval '@ 3 seconds ago';
- nine |       f1        
-------+-----------------
-      | 00:01:00
-      | 05:00:00
-      | 10 days
-      | 34 years
-      | 3 mons
-      | 1 day 02:03:04
-      | 6 years
-      | 5 mons
-      | 5 mons 12:00:00
+       f1        
+-----------------
+ 00:01:00
+ 05:00:00
+ 10 days
+ 34 years
+ 3 mons
+ 1 day 02:03:04
+ 6 years
+ 5 mons
+ 5 mons 12:00:00
 (9 rows)
 
-SELECT '' AS fortyfive, r1.*, r2.*
+SELECT r1.*, r2.*
    FROM INTERVAL_TBL r1, INTERVAL_TBL r2
    WHERE r1.f1 > r2.f1
    ORDER BY r1.f1, r2.f1;
- fortyfive |       f1        |       f1        
------------+-----------------+-----------------
-           | 00:01:00        | -00:00:14
-           | 05:00:00        | -00:00:14
-           | 05:00:00        | 00:01:00
-           | 1 day 02:03:04  | -00:00:14
-           | 1 day 02:03:04  | 00:01:00
-           | 1 day 02:03:04  | 05:00:00
-           | 10 days         | -00:00:14
-           | 10 days         | 00:01:00
-           | 10 days         | 05:00:00
-           | 10 days         | 1 day 02:03:04
-           | 3 mons          | -00:00:14
-           | 3 mons          | 00:01:00
-           | 3 mons          | 05:00:00
-           | 3 mons          | 1 day 02:03:04
-           | 3 mons          | 10 days
-           | 5 mons          | -00:00:14
-           | 5 mons          | 00:01:00
-           | 5 mons          | 05:00:00
-           | 5 mons          | 1 day 02:03:04
-           | 5 mons          | 10 days
-           | 5 mons          | 3 mons
-           | 5 mons 12:00:00 | -00:00:14
-           | 5 mons 12:00:00 | 00:01:00
-           | 5 mons 12:00:00 | 05:00:00
-           | 5 mons 12:00:00 | 1 day 02:03:04
-           | 5 mons 12:00:00 | 10 days
-           | 5 mons 12:00:00 | 3 mons
-           | 5 mons 12:00:00 | 5 mons
-           | 6 years         | -00:00:14
-           | 6 years         | 00:01:00
-           | 6 years         | 05:00:00
-           | 6 years         | 1 day 02:03:04
-           | 6 years         | 10 days
-           | 6 years         | 3 mons
-           | 6 years         | 5 mons
-           | 6 years         | 5 mons 12:00:00
-           | 34 years        | -00:00:14
-           | 34 years        | 00:01:00
-           | 34 years        | 05:00:00
-           | 34 years        | 1 day 02:03:04
-           | 34 years        | 10 days
-           | 34 years        | 3 mons
-           | 34 years        | 5 mons
-           | 34 years        | 5 mons 12:00:00
-           | 34 years        | 6 years
+       f1        |       f1        
+-----------------+-----------------
+ 00:01:00        | -00:00:14
+ 05:00:00        | -00:00:14
+ 05:00:00        | 00:01:00
+ 1 day 02:03:04  | -00:00:14
+ 1 day 02:03:04  | 00:01:00
+ 1 day 02:03:04  | 05:00:00
+ 10 days         | -00:00:14
+ 10 days         | 00:01:00
+ 10 days         | 05:00:00
+ 10 days         | 1 day 02:03:04
+ 3 mons          | -00:00:14
+ 3 mons          | 00:01:00
+ 3 mons          | 05:00:00
+ 3 mons          | 1 day 02:03:04
+ 3 mons          | 10 days
+ 5 mons          | -00:00:14
+ 5 mons          | 00:01:00
+ 5 mons          | 05:00:00
+ 5 mons          | 1 day 02:03:04
+ 5 mons          | 10 days
+ 5 mons          | 3 mons
+ 5 mons 12:00:00 | -00:00:14
+ 5 mons 12:00:00 | 00:01:00
+ 5 mons 12:00:00 | 05:00:00
+ 5 mons 12:00:00 | 1 day 02:03:04
+ 5 mons 12:00:00 | 10 days
+ 5 mons 12:00:00 | 3 mons
+ 5 mons 12:00:00 | 5 mons
+ 6 years         | -00:00:14
+ 6 years         | 00:01:00
+ 6 years         | 05:00:00
+ 6 years         | 1 day 02:03:04
+ 6 years         | 10 days
+ 6 years         | 3 mons
+ 6 years         | 5 mons
+ 6 years         | 5 mons 12:00:00
+ 34 years        | -00:00:14
+ 34 years        | 00:01:00
+ 34 years        | 05:00:00
+ 34 years        | 1 day 02:03:04
+ 34 years        | 10 days
+ 34 years        | 3 mons
+ 34 years        | 5 mons
+ 34 years        | 5 mons 12:00:00
+ 34 years        | 6 years
 (45 rows)
 
 -- Test intervals that are large enough to overflow 64 bits in comparisons
@@ -342,19 +342,19 @@ FROM INTERVAL_MULDIV_TBL;
 DROP TABLE INTERVAL_MULDIV_TBL;
 SET DATESTYLE = 'postgres';
 SET IntervalStyle to postgres_verbose;
-SELECT '' AS ten, * FROM INTERVAL_TBL;
- ten |              f1               
------+-------------------------------
-     | @ 1 min
-     | @ 5 hours
-     | @ 10 days
-     | @ 34 years
-     | @ 3 mons
-     | @ 14 secs ago
-     | @ 1 day 2 hours 3 mins 4 secs
-     | @ 6 years
-     | @ 5 mons
-     | @ 5 mons 12 hours
+SELECT * FROM INTERVAL_TBL;
+              f1               
+-------------------------------
+ @ 1 min
+ @ 5 hours
+ @ 10 days
+ @ 34 years
+ @ 3 mons
+ @ 14 secs ago
+ @ 1 day 2 hours 3 mins 4 secs
+ @ 6 years
+ @ 5 mons
+ @ 5 mons 12 hours
 (10 rows)
 
 -- test avg(interval), which is somewhat fragile since people have been

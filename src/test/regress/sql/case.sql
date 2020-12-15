@@ -78,19 +78,19 @@ SELECT CASE 'a' WHEN 'a' THEN 1 ELSE 2 END;
 -- Examples of targets involving tables
 --
 
-SELECT '' AS "Five",
+SELECT
   CASE
     WHEN i >= 3 THEN i
   END AS ">= 3 or Null"
   FROM CASE_TBL;
 
-SELECT '' AS "Five",
+SELECT
   CASE WHEN i >= 3 THEN (i + i)
        ELSE i
   END AS "Simplest Math"
   FROM CASE_TBL;
 
-SELECT '' AS "Five", i AS "Value",
+SELECT i AS "Value",
   CASE WHEN (i < 0) THEN 'small'
        WHEN (i = 0) THEN 'zero'
        WHEN (i = 1) THEN 'one'
@@ -99,7 +99,7 @@ SELECT '' AS "Five", i AS "Value",
   END AS "Category"
   FROM CASE_TBL;
 
-SELECT '' AS "Five",
+SELECT
   CASE WHEN ((i < 0) or (i < 0)) THEN 'small'
        WHEN ((i = 0) or (i = 0)) THEN 'zero'
        WHEN ((i = 1) or (i = 1)) THEN 'one'
@@ -129,11 +129,11 @@ SELECT *
   FROM CASE_TBL a, CASE2_TBL b
   WHERE COALESCE(a.f, b.i, b.j) = 2;
 
-SELECT '' AS Five, NULLIF(a.i,b.i) AS "NULLIF(a.i,b.i)",
+SELECT NULLIF(a.i,b.i) AS "NULLIF(a.i,b.i)",
   NULLIF(b.i, 4) AS "NULLIF(b.i,4)"
   FROM CASE_TBL a, CASE2_TBL b;
 
-SELECT '' AS "Two", *
+SELECT *
   FROM CASE_TBL a, CASE2_TBL b
   WHERE COALESCE(f,b.i) = 2;
 

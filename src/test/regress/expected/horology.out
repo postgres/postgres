@@ -469,144 +469,144 @@ SELECT timestamptz(date '1994-01-01', time with time zone '11:00-5') AS "Jan_01_
  Sat Jan 01 08:00:00 1994 PST
 (1 row)
 
-SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
- 64 |          one_year           
-----+-----------------------------
-    | -infinity
-    | infinity
-    | Fri Jan 01 00:00:00 1971
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:02 1998
-    | Tue Feb 10 17:32:01.4 1998
-    | Tue Feb 10 17:32:01.5 1998
-    | Tue Feb 10 17:32:01.6 1998
-    | Fri Jan 02 00:00:00 1998
-    | Fri Jan 02 03:04:05 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Wed Jun 10 17:32:01 1998
-    | Sun Sep 22 18:19:20 2002
-    | Thu Mar 15 08:14:01 2001
-    | Thu Mar 15 13:14:02 2001
-    | Thu Mar 15 12:14:03 2001
-    | Thu Mar 15 03:14:04 2001
-    | Thu Mar 15 02:14:05 2001
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:00 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Wed Jun 10 18:32:01 1998
-    | Tue Feb 10 17:32:01 1998
-    | Wed Feb 11 17:32:01 1998
-    | Thu Feb 12 17:32:01 1998
-    | Fri Feb 13 17:32:01 1998
-    | Sat Feb 14 17:32:01 1998
-    | Sun Feb 15 17:32:01 1998
-    | Mon Feb 16 17:32:01 1998
-    | Thu Feb 16 17:32:01 0096 BC
-    | Sun Feb 16 17:32:01 0098
-    | Fri Feb 16 17:32:01 0598
-    | Wed Feb 16 17:32:01 1098
-    | Sun Feb 16 17:32:01 1698
-    | Fri Feb 16 17:32:01 1798
-    | Wed Feb 16 17:32:01 1898
-    | Mon Feb 16 17:32:01 1998
-    | Sun Feb 16 17:32:01 2098
-    | Fri Feb 28 17:32:01 1997
-    | Fri Feb 28 17:32:01 1997
-    | Sat Mar 01 17:32:01 1997
-    | Tue Dec 30 17:32:01 1997
-    | Wed Dec 31 17:32:01 1997
-    | Thu Jan 01 17:32:01 1998
-    | Sat Feb 28 17:32:01 1998
-    | Sun Mar 01 17:32:01 1998
-    | Wed Dec 30 17:32:01 1998
-    | Thu Dec 31 17:32:01 1998
-    | Sun Dec 31 17:32:01 2000
-    | Mon Jan 01 17:32:01 2001
-    | Mon Dec 31 17:32:01 2001
-    | Tue Jan 01 17:32:01 2002
+SELECT d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
+          one_year           
+-----------------------------
+ -infinity
+ infinity
+ Fri Jan 01 00:00:00 1971
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:02 1998
+ Tue Feb 10 17:32:01.4 1998
+ Tue Feb 10 17:32:01.5 1998
+ Tue Feb 10 17:32:01.6 1998
+ Fri Jan 02 00:00:00 1998
+ Fri Jan 02 03:04:05 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Wed Jun 10 17:32:01 1998
+ Sun Sep 22 18:19:20 2002
+ Thu Mar 15 08:14:01 2001
+ Thu Mar 15 13:14:02 2001
+ Thu Mar 15 12:14:03 2001
+ Thu Mar 15 03:14:04 2001
+ Thu Mar 15 02:14:05 2001
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:00 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Wed Jun 10 18:32:01 1998
+ Tue Feb 10 17:32:01 1998
+ Wed Feb 11 17:32:01 1998
+ Thu Feb 12 17:32:01 1998
+ Fri Feb 13 17:32:01 1998
+ Sat Feb 14 17:32:01 1998
+ Sun Feb 15 17:32:01 1998
+ Mon Feb 16 17:32:01 1998
+ Thu Feb 16 17:32:01 0096 BC
+ Sun Feb 16 17:32:01 0098
+ Fri Feb 16 17:32:01 0598
+ Wed Feb 16 17:32:01 1098
+ Sun Feb 16 17:32:01 1698
+ Fri Feb 16 17:32:01 1798
+ Wed Feb 16 17:32:01 1898
+ Mon Feb 16 17:32:01 1998
+ Sun Feb 16 17:32:01 2098
+ Fri Feb 28 17:32:01 1997
+ Fri Feb 28 17:32:01 1997
+ Sat Mar 01 17:32:01 1997
+ Tue Dec 30 17:32:01 1997
+ Wed Dec 31 17:32:01 1997
+ Thu Jan 01 17:32:01 1998
+ Sat Feb 28 17:32:01 1998
+ Sun Mar 01 17:32:01 1998
+ Wed Dec 30 17:32:01 1998
+ Thu Dec 31 17:32:01 1998
+ Sun Dec 31 17:32:01 2000
+ Mon Jan 01 17:32:01 2001
+ Mon Dec 31 17:32:01 2001
+ Tue Jan 01 17:32:01 2002
 (65 rows)
 
-SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
- 64 |          one_year           
-----+-----------------------------
-    | -infinity
-    | infinity
-    | Wed Jan 01 00:00:00 1969
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:02 1996
-    | Sat Feb 10 17:32:01.4 1996
-    | Sat Feb 10 17:32:01.5 1996
-    | Sat Feb 10 17:32:01.6 1996
-    | Tue Jan 02 00:00:00 1996
-    | Tue Jan 02 03:04:05 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Mon Jun 10 17:32:01 1996
-    | Fri Sep 22 18:19:20 2000
-    | Mon Mar 15 08:14:01 1999
-    | Mon Mar 15 13:14:02 1999
-    | Mon Mar 15 12:14:03 1999
-    | Mon Mar 15 03:14:04 1999
-    | Mon Mar 15 02:14:05 1999
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:00 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Mon Jun 10 18:32:01 1996
-    | Sat Feb 10 17:32:01 1996
-    | Sun Feb 11 17:32:01 1996
-    | Mon Feb 12 17:32:01 1996
-    | Tue Feb 13 17:32:01 1996
-    | Wed Feb 14 17:32:01 1996
-    | Thu Feb 15 17:32:01 1996
-    | Fri Feb 16 17:32:01 1996
-    | Mon Feb 16 17:32:01 0098 BC
-    | Thu Feb 16 17:32:01 0096
-    | Tue Feb 16 17:32:01 0596
-    | Sun Feb 16 17:32:01 1096
-    | Thu Feb 16 17:32:01 1696
-    | Tue Feb 16 17:32:01 1796
-    | Sun Feb 16 17:32:01 1896
-    | Fri Feb 16 17:32:01 1996
-    | Thu Feb 16 17:32:01 2096
-    | Tue Feb 28 17:32:01 1995
-    | Tue Feb 28 17:32:01 1995
-    | Wed Mar 01 17:32:01 1995
-    | Sat Dec 30 17:32:01 1995
-    | Sun Dec 31 17:32:01 1995
-    | Mon Jan 01 17:32:01 1996
-    | Wed Feb 28 17:32:01 1996
-    | Fri Mar 01 17:32:01 1996
-    | Mon Dec 30 17:32:01 1996
-    | Tue Dec 31 17:32:01 1996
-    | Thu Dec 31 17:32:01 1998
-    | Fri Jan 01 17:32:01 1999
-    | Fri Dec 31 17:32:01 1999
-    | Sat Jan 01 17:32:01 2000
+SELECT d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
+          one_year           
+-----------------------------
+ -infinity
+ infinity
+ Wed Jan 01 00:00:00 1969
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:02 1996
+ Sat Feb 10 17:32:01.4 1996
+ Sat Feb 10 17:32:01.5 1996
+ Sat Feb 10 17:32:01.6 1996
+ Tue Jan 02 00:00:00 1996
+ Tue Jan 02 03:04:05 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Mon Jun 10 17:32:01 1996
+ Fri Sep 22 18:19:20 2000
+ Mon Mar 15 08:14:01 1999
+ Mon Mar 15 13:14:02 1999
+ Mon Mar 15 12:14:03 1999
+ Mon Mar 15 03:14:04 1999
+ Mon Mar 15 02:14:05 1999
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:00 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Mon Jun 10 18:32:01 1996
+ Sat Feb 10 17:32:01 1996
+ Sun Feb 11 17:32:01 1996
+ Mon Feb 12 17:32:01 1996
+ Tue Feb 13 17:32:01 1996
+ Wed Feb 14 17:32:01 1996
+ Thu Feb 15 17:32:01 1996
+ Fri Feb 16 17:32:01 1996
+ Mon Feb 16 17:32:01 0098 BC
+ Thu Feb 16 17:32:01 0096
+ Tue Feb 16 17:32:01 0596
+ Sun Feb 16 17:32:01 1096
+ Thu Feb 16 17:32:01 1696
+ Tue Feb 16 17:32:01 1796
+ Sun Feb 16 17:32:01 1896
+ Fri Feb 16 17:32:01 1996
+ Thu Feb 16 17:32:01 2096
+ Tue Feb 28 17:32:01 1995
+ Tue Feb 28 17:32:01 1995
+ Wed Mar 01 17:32:01 1995
+ Sat Dec 30 17:32:01 1995
+ Sun Dec 31 17:32:01 1995
+ Mon Jan 01 17:32:01 1996
+ Wed Feb 28 17:32:01 1996
+ Fri Mar 01 17:32:01 1996
+ Mon Dec 30 17:32:01 1996
+ Tue Dec 31 17:32:01 1996
+ Thu Dec 31 17:32:01 1998
+ Fri Jan 01 17:32:01 1999
+ Fri Dec 31 17:32:01 1999
+ Sat Jan 01 17:32:01 2000
 (65 rows)
 
 SELECT timestamp with time zone '1996-03-01' - interval '1 second' AS "Feb 29";
@@ -715,146 +715,146 @@ SELECT timestamptz(date '1994-01-01', time with time zone '11:00-5') AS "Jan_01_
  Sat Jan 01 08:00:00 1994 PST
 (1 row)
 
-SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
- 64 |            one_year             
-----+---------------------------------
-    | -infinity
-    | infinity
-    | Thu Dec 31 16:00:00 1970 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:02 1998 PST
-    | Tue Feb 10 17:32:01.4 1998 PST
-    | Tue Feb 10 17:32:01.5 1998 PST
-    | Tue Feb 10 17:32:01.6 1998 PST
-    | Fri Jan 02 00:00:00 1998 PST
-    | Fri Jan 02 03:04:05 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Wed Jun 10 17:32:01 1998 PDT
-    | Sun Sep 22 18:19:20 2002 PDT
-    | Thu Mar 15 08:14:01 2001 PST
-    | Thu Mar 15 04:14:02 2001 PST
-    | Thu Mar 15 02:14:03 2001 PST
-    | Thu Mar 15 03:14:04 2001 PST
-    | Thu Mar 15 01:14:05 2001 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:00 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 17:32:01 1998 PST
-    | Tue Feb 10 09:32:01 1998 PST
-    | Tue Feb 10 09:32:01 1998 PST
-    | Tue Feb 10 09:32:01 1998 PST
-    | Tue Feb 10 14:32:01 1998 PST
-    | Fri Jul 10 14:32:01 1998 PDT
-    | Wed Jun 10 18:32:01 1998 PDT
-    | Tue Feb 10 17:32:01 1998 PST
-    | Wed Feb 11 17:32:01 1998 PST
-    | Thu Feb 12 17:32:01 1998 PST
-    | Fri Feb 13 17:32:01 1998 PST
-    | Sat Feb 14 17:32:01 1998 PST
-    | Sun Feb 15 17:32:01 1998 PST
-    | Mon Feb 16 17:32:01 1998 PST
-    | Thu Feb 16 17:32:01 0096 PST BC
-    | Sun Feb 16 17:32:01 0098 PST
-    | Fri Feb 16 17:32:01 0598 PST
-    | Wed Feb 16 17:32:01 1098 PST
-    | Sun Feb 16 17:32:01 1698 PST
-    | Fri Feb 16 17:32:01 1798 PST
-    | Wed Feb 16 17:32:01 1898 PST
-    | Mon Feb 16 17:32:01 1998 PST
-    | Sun Feb 16 17:32:01 2098 PST
-    | Fri Feb 28 17:32:01 1997 PST
-    | Fri Feb 28 17:32:01 1997 PST
-    | Sat Mar 01 17:32:01 1997 PST
-    | Tue Dec 30 17:32:01 1997 PST
-    | Wed Dec 31 17:32:01 1997 PST
-    | Thu Jan 01 17:32:01 1998 PST
-    | Sat Feb 28 17:32:01 1998 PST
-    | Sun Mar 01 17:32:01 1998 PST
-    | Wed Dec 30 17:32:01 1998 PST
-    | Thu Dec 31 17:32:01 1998 PST
-    | Sun Dec 31 17:32:01 2000 PST
-    | Mon Jan 01 17:32:01 2001 PST
-    | Mon Dec 31 17:32:01 2001 PST
-    | Tue Jan 01 17:32:01 2002 PST
+SELECT d1 + interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
+            one_year             
+---------------------------------
+ -infinity
+ infinity
+ Thu Dec 31 16:00:00 1970 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:02 1998 PST
+ Tue Feb 10 17:32:01.4 1998 PST
+ Tue Feb 10 17:32:01.5 1998 PST
+ Tue Feb 10 17:32:01.6 1998 PST
+ Fri Jan 02 00:00:00 1998 PST
+ Fri Jan 02 03:04:05 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Wed Jun 10 17:32:01 1998 PDT
+ Sun Sep 22 18:19:20 2002 PDT
+ Thu Mar 15 08:14:01 2001 PST
+ Thu Mar 15 04:14:02 2001 PST
+ Thu Mar 15 02:14:03 2001 PST
+ Thu Mar 15 03:14:04 2001 PST
+ Thu Mar 15 01:14:05 2001 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:00 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 17:32:01 1998 PST
+ Tue Feb 10 09:32:01 1998 PST
+ Tue Feb 10 09:32:01 1998 PST
+ Tue Feb 10 09:32:01 1998 PST
+ Tue Feb 10 14:32:01 1998 PST
+ Fri Jul 10 14:32:01 1998 PDT
+ Wed Jun 10 18:32:01 1998 PDT
+ Tue Feb 10 17:32:01 1998 PST
+ Wed Feb 11 17:32:01 1998 PST
+ Thu Feb 12 17:32:01 1998 PST
+ Fri Feb 13 17:32:01 1998 PST
+ Sat Feb 14 17:32:01 1998 PST
+ Sun Feb 15 17:32:01 1998 PST
+ Mon Feb 16 17:32:01 1998 PST
+ Thu Feb 16 17:32:01 0096 PST BC
+ Sun Feb 16 17:32:01 0098 PST
+ Fri Feb 16 17:32:01 0598 PST
+ Wed Feb 16 17:32:01 1098 PST
+ Sun Feb 16 17:32:01 1698 PST
+ Fri Feb 16 17:32:01 1798 PST
+ Wed Feb 16 17:32:01 1898 PST
+ Mon Feb 16 17:32:01 1998 PST
+ Sun Feb 16 17:32:01 2098 PST
+ Fri Feb 28 17:32:01 1997 PST
+ Fri Feb 28 17:32:01 1997 PST
+ Sat Mar 01 17:32:01 1997 PST
+ Tue Dec 30 17:32:01 1997 PST
+ Wed Dec 31 17:32:01 1997 PST
+ Thu Jan 01 17:32:01 1998 PST
+ Sat Feb 28 17:32:01 1998 PST
+ Sun Mar 01 17:32:01 1998 PST
+ Wed Dec 30 17:32:01 1998 PST
+ Thu Dec 31 17:32:01 1998 PST
+ Sun Dec 31 17:32:01 2000 PST
+ Mon Jan 01 17:32:01 2001 PST
+ Mon Dec 31 17:32:01 2001 PST
+ Tue Jan 01 17:32:01 2002 PST
 (66 rows)
 
-SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
- 64 |            one_year             
-----+---------------------------------
-    | -infinity
-    | infinity
-    | Tue Dec 31 16:00:00 1968 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:02 1996 PST
-    | Sat Feb 10 17:32:01.4 1996 PST
-    | Sat Feb 10 17:32:01.5 1996 PST
-    | Sat Feb 10 17:32:01.6 1996 PST
-    | Tue Jan 02 00:00:00 1996 PST
-    | Tue Jan 02 03:04:05 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Mon Jun 10 17:32:01 1996 PDT
-    | Fri Sep 22 18:19:20 2000 PDT
-    | Mon Mar 15 08:14:01 1999 PST
-    | Mon Mar 15 04:14:02 1999 PST
-    | Mon Mar 15 02:14:03 1999 PST
-    | Mon Mar 15 03:14:04 1999 PST
-    | Mon Mar 15 01:14:05 1999 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:00 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sat Feb 10 09:32:01 1996 PST
-    | Sat Feb 10 09:32:01 1996 PST
-    | Sat Feb 10 09:32:01 1996 PST
-    | Sat Feb 10 14:32:01 1996 PST
-    | Wed Jul 10 14:32:01 1996 PDT
-    | Mon Jun 10 18:32:01 1996 PDT
-    | Sat Feb 10 17:32:01 1996 PST
-    | Sun Feb 11 17:32:01 1996 PST
-    | Mon Feb 12 17:32:01 1996 PST
-    | Tue Feb 13 17:32:01 1996 PST
-    | Wed Feb 14 17:32:01 1996 PST
-    | Thu Feb 15 17:32:01 1996 PST
-    | Fri Feb 16 17:32:01 1996 PST
-    | Mon Feb 16 17:32:01 0098 PST BC
-    | Thu Feb 16 17:32:01 0096 PST
-    | Tue Feb 16 17:32:01 0596 PST
-    | Sun Feb 16 17:32:01 1096 PST
-    | Thu Feb 16 17:32:01 1696 PST
-    | Tue Feb 16 17:32:01 1796 PST
-    | Sun Feb 16 17:32:01 1896 PST
-    | Fri Feb 16 17:32:01 1996 PST
-    | Thu Feb 16 17:32:01 2096 PST
-    | Tue Feb 28 17:32:01 1995 PST
-    | Tue Feb 28 17:32:01 1995 PST
-    | Wed Mar 01 17:32:01 1995 PST
-    | Sat Dec 30 17:32:01 1995 PST
-    | Sun Dec 31 17:32:01 1995 PST
-    | Mon Jan 01 17:32:01 1996 PST
-    | Wed Feb 28 17:32:01 1996 PST
-    | Fri Mar 01 17:32:01 1996 PST
-    | Mon Dec 30 17:32:01 1996 PST
-    | Tue Dec 31 17:32:01 1996 PST
-    | Thu Dec 31 17:32:01 1998 PST
-    | Fri Jan 01 17:32:01 1999 PST
-    | Fri Dec 31 17:32:01 1999 PST
-    | Sat Jan 01 17:32:01 2000 PST
+SELECT d1 - interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
+            one_year             
+---------------------------------
+ -infinity
+ infinity
+ Tue Dec 31 16:00:00 1968 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:02 1996 PST
+ Sat Feb 10 17:32:01.4 1996 PST
+ Sat Feb 10 17:32:01.5 1996 PST
+ Sat Feb 10 17:32:01.6 1996 PST
+ Tue Jan 02 00:00:00 1996 PST
+ Tue Jan 02 03:04:05 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Mon Jun 10 17:32:01 1996 PDT
+ Fri Sep 22 18:19:20 2000 PDT
+ Mon Mar 15 08:14:01 1999 PST
+ Mon Mar 15 04:14:02 1999 PST
+ Mon Mar 15 02:14:03 1999 PST
+ Mon Mar 15 03:14:04 1999 PST
+ Mon Mar 15 01:14:05 1999 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:00 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 17:32:01 1996 PST
+ Sat Feb 10 09:32:01 1996 PST
+ Sat Feb 10 09:32:01 1996 PST
+ Sat Feb 10 09:32:01 1996 PST
+ Sat Feb 10 14:32:01 1996 PST
+ Wed Jul 10 14:32:01 1996 PDT
+ Mon Jun 10 18:32:01 1996 PDT
+ Sat Feb 10 17:32:01 1996 PST
+ Sun Feb 11 17:32:01 1996 PST
+ Mon Feb 12 17:32:01 1996 PST
+ Tue Feb 13 17:32:01 1996 PST
+ Wed Feb 14 17:32:01 1996 PST
+ Thu Feb 15 17:32:01 1996 PST
+ Fri Feb 16 17:32:01 1996 PST
+ Mon Feb 16 17:32:01 0098 PST BC
+ Thu Feb 16 17:32:01 0096 PST
+ Tue Feb 16 17:32:01 0596 PST
+ Sun Feb 16 17:32:01 1096 PST
+ Thu Feb 16 17:32:01 1696 PST
+ Tue Feb 16 17:32:01 1796 PST
+ Sun Feb 16 17:32:01 1896 PST
+ Fri Feb 16 17:32:01 1996 PST
+ Thu Feb 16 17:32:01 2096 PST
+ Tue Feb 28 17:32:01 1995 PST
+ Tue Feb 28 17:32:01 1995 PST
+ Wed Mar 01 17:32:01 1995 PST
+ Sat Dec 30 17:32:01 1995 PST
+ Sun Dec 31 17:32:01 1995 PST
+ Mon Jan 01 17:32:01 1996 PST
+ Wed Feb 28 17:32:01 1996 PST
+ Fri Mar 01 17:32:01 1996 PST
+ Mon Dec 30 17:32:01 1996 PST
+ Tue Dec 31 17:32:01 1996 PST
+ Thu Dec 31 17:32:01 1998 PST
+ Fri Jan 01 17:32:01 1999 PST
+ Fri Dec 31 17:32:01 1999 PST
+ Sat Jan 01 17:32:01 2000 PST
 (66 rows)
 
 --
@@ -1407,677 +1407,677 @@ INSERT INTO TEMP_TIMESTAMP (f1)
   SELECT d1 FROM TIMESTAMP_TBL
   WHERE d1 BETWEEN '13-jun-1957' AND '1-jan-1997'
    OR d1 BETWEEN '1-jan-1999' AND '1-jan-2010';
-SELECT '' AS "16", f1 AS "timestamp"
+SELECT f1 AS "timestamp"
   FROM TEMP_TIMESTAMP
   ORDER BY "timestamp";
- 16 |          timestamp           
-----+------------------------------
-    | Thu Jan 01 00:00:00 1970 PST
-    | Wed Feb 28 17:32:01 1996 PST
-    | Thu Feb 29 17:32:01 1996 PST
-    | Fri Mar 01 17:32:01 1996 PST
-    | Mon Dec 30 17:32:01 1996 PST
-    | Tue Dec 31 17:32:01 1996 PST
-    | Fri Dec 31 17:32:01 1999 PST
-    | Sat Jan 01 17:32:01 2000 PST
-    | Wed Mar 15 02:14:05 2000 PST
-    | Wed Mar 15 03:14:04 2000 PST
-    | Wed Mar 15 08:14:01 2000 PST
-    | Wed Mar 15 12:14:03 2000 PST
-    | Wed Mar 15 13:14:02 2000 PST
-    | Sun Dec 31 17:32:01 2000 PST
-    | Mon Jan 01 17:32:01 2001 PST
-    | Sat Sep 22 18:19:20 2001 PDT
+          timestamp           
+------------------------------
+ Thu Jan 01 00:00:00 1970 PST
+ Wed Feb 28 17:32:01 1996 PST
+ Thu Feb 29 17:32:01 1996 PST
+ Fri Mar 01 17:32:01 1996 PST
+ Mon Dec 30 17:32:01 1996 PST
+ Tue Dec 31 17:32:01 1996 PST
+ Fri Dec 31 17:32:01 1999 PST
+ Sat Jan 01 17:32:01 2000 PST
+ Wed Mar 15 02:14:05 2000 PST
+ Wed Mar 15 03:14:04 2000 PST
+ Wed Mar 15 08:14:01 2000 PST
+ Wed Mar 15 12:14:03 2000 PST
+ Wed Mar 15 13:14:02 2000 PST
+ Sun Dec 31 17:32:01 2000 PST
+ Mon Jan 01 17:32:01 2001 PST
+ Sat Sep 22 18:19:20 2001 PDT
 (16 rows)
 
-SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS "interval", d.f1 + t.f1 AS plus
+SELECT d.f1 AS "timestamp", t.f1 AS "interval", d.f1 + t.f1 AS plus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
   ORDER BY plus, "timestamp", "interval";
- 160 |          timestamp           |           interval            |             plus             
------+------------------------------+-------------------------------+------------------------------
-     | Thu Jan 01 00:00:00 1970 PST | @ 14 secs ago                 | Wed Dec 31 23:59:46 1969 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 1 min                       | Thu Jan 01 00:01:00 1970 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 5 hours                     | Thu Jan 01 05:00:00 1970 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 1 day 2 hours 3 mins 4 secs | Fri Jan 02 02:03:04 1970 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 10 days                     | Sun Jan 11 00:00:00 1970 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 3 mons                      | Wed Apr 01 00:00:00 1970 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 5 mons                      | Mon Jun 01 00:00:00 1970 PDT
-     | Thu Jan 01 00:00:00 1970 PST | @ 5 mons 12 hours             | Mon Jun 01 12:00:00 1970 PDT
-     | Thu Jan 01 00:00:00 1970 PST | @ 6 years                     | Thu Jan 01 00:00:00 1976 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 14 secs ago                 | Wed Feb 28 17:31:47 1996 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 1 min                       | Wed Feb 28 17:33:01 1996 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 5 hours                     | Wed Feb 28 22:32:01 1996 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 14 secs ago                 | Thu Feb 29 17:31:47 1996 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 1 min                       | Thu Feb 29 17:33:01 1996 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Feb 29 19:35:05 1996 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 5 hours                     | Thu Feb 29 22:32:01 1996 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 14 secs ago                 | Fri Mar 01 17:31:47 1996 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 1 min                       | Fri Mar 01 17:33:01 1996 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Fri Mar 01 19:35:05 1996 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 5 hours                     | Fri Mar 01 22:32:01 1996 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Sat Mar 02 19:35:05 1996 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 10 days                     | Sat Mar 09 17:32:01 1996 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 10 days                     | Sun Mar 10 17:32:01 1996 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 10 days                     | Mon Mar 11 17:32:01 1996 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 3 mons                      | Tue May 28 17:32:01 1996 PDT
-     | Thu Feb 29 17:32:01 1996 PST | @ 3 mons                      | Wed May 29 17:32:01 1996 PDT
-     | Fri Mar 01 17:32:01 1996 PST | @ 3 mons                      | Sat Jun 01 17:32:01 1996 PDT
-     | Wed Feb 28 17:32:01 1996 PST | @ 5 mons                      | Sun Jul 28 17:32:01 1996 PDT
-     | Wed Feb 28 17:32:01 1996 PST | @ 5 mons 12 hours             | Mon Jul 29 05:32:01 1996 PDT
-     | Thu Feb 29 17:32:01 1996 PST | @ 5 mons                      | Mon Jul 29 17:32:01 1996 PDT
-     | Thu Feb 29 17:32:01 1996 PST | @ 5 mons 12 hours             | Tue Jul 30 05:32:01 1996 PDT
-     | Fri Mar 01 17:32:01 1996 PST | @ 5 mons                      | Thu Aug 01 17:32:01 1996 PDT
-     | Fri Mar 01 17:32:01 1996 PST | @ 5 mons 12 hours             | Fri Aug 02 05:32:01 1996 PDT
-     | Mon Dec 30 17:32:01 1996 PST | @ 14 secs ago                 | Mon Dec 30 17:31:47 1996 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 1 min                       | Mon Dec 30 17:33:01 1996 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 5 hours                     | Mon Dec 30 22:32:01 1996 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 14 secs ago                 | Tue Dec 31 17:31:47 1996 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 1 min                       | Tue Dec 31 17:33:01 1996 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Dec 31 19:35:05 1996 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 5 hours                     | Tue Dec 31 22:32:01 1996 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Wed Jan 01 19:35:05 1997 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 10 days                     | Thu Jan 09 17:32:01 1997 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 10 days                     | Fri Jan 10 17:32:01 1997 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 3 mons                      | Sun Mar 30 17:32:01 1997 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 3 mons                      | Mon Mar 31 17:32:01 1997 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 5 mons                      | Fri May 30 17:32:01 1997 PDT
-     | Mon Dec 30 17:32:01 1996 PST | @ 5 mons 12 hours             | Sat May 31 05:32:01 1997 PDT
-     | Tue Dec 31 17:32:01 1996 PST | @ 5 mons                      | Sat May 31 17:32:01 1997 PDT
-     | Tue Dec 31 17:32:01 1996 PST | @ 5 mons 12 hours             | Sun Jun 01 05:32:01 1997 PDT
-     | Fri Dec 31 17:32:01 1999 PST | @ 14 secs ago                 | Fri Dec 31 17:31:47 1999 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 1 min                       | Fri Dec 31 17:33:01 1999 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 5 hours                     | Fri Dec 31 22:32:01 1999 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 14 secs ago                 | Sat Jan 01 17:31:47 2000 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 1 min                       | Sat Jan 01 17:33:01 2000 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 1 day 2 hours 3 mins 4 secs | Sat Jan 01 19:35:05 2000 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 5 hours                     | Sat Jan 01 22:32:01 2000 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Sun Jan 02 19:35:05 2000 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 10 days                     | Mon Jan 10 17:32:01 2000 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 10 days                     | Tue Jan 11 17:32:01 2000 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 14 secs ago                 | Wed Mar 15 02:13:51 2000 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 1 min                       | Wed Mar 15 02:15:05 2000 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 14 secs ago                 | Wed Mar 15 03:13:50 2000 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 1 min                       | Wed Mar 15 03:15:04 2000 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 5 hours                     | Wed Mar 15 07:14:05 2000 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 14 secs ago                 | Wed Mar 15 08:13:47 2000 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 5 hours                     | Wed Mar 15 08:14:04 2000 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 1 min                       | Wed Mar 15 08:15:01 2000 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 14 secs ago                 | Wed Mar 15 12:13:49 2000 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 1 min                       | Wed Mar 15 12:15:03 2000 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 14 secs ago                 | Wed Mar 15 13:13:48 2000 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 5 hours                     | Wed Mar 15 13:14:01 2000 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 1 min                       | Wed Mar 15 13:15:02 2000 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 5 hours                     | Wed Mar 15 17:14:03 2000 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 5 hours                     | Wed Mar 15 18:14:02 2000 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Mar 16 04:17:09 2000 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Mar 16 05:17:08 2000 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Mar 16 10:17:05 2000 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Mar 16 14:17:07 2000 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Mar 16 15:17:06 2000 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 10 days                     | Sat Mar 25 02:14:05 2000 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 10 days                     | Sat Mar 25 03:14:04 2000 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 10 days                     | Sat Mar 25 08:14:01 2000 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 10 days                     | Sat Mar 25 12:14:03 2000 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 10 days                     | Sat Mar 25 13:14:02 2000 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 3 mons                      | Fri Mar 31 17:32:01 2000 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 3 mons                      | Sat Apr 01 17:32:01 2000 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 5 mons                      | Wed May 31 17:32:01 2000 PDT
-     | Fri Dec 31 17:32:01 1999 PST | @ 5 mons 12 hours             | Thu Jun 01 05:32:01 2000 PDT
-     | Sat Jan 01 17:32:01 2000 PST | @ 5 mons                      | Thu Jun 01 17:32:01 2000 PDT
-     | Sat Jan 01 17:32:01 2000 PST | @ 5 mons 12 hours             | Fri Jun 02 05:32:01 2000 PDT
-     | Wed Mar 15 02:14:05 2000 PST | @ 3 mons                      | Thu Jun 15 02:14:05 2000 PDT
-     | Wed Mar 15 03:14:04 2000 PST | @ 3 mons                      | Thu Jun 15 03:14:04 2000 PDT
-     | Wed Mar 15 08:14:01 2000 PST | @ 3 mons                      | Thu Jun 15 08:14:01 2000 PDT
-     | Wed Mar 15 12:14:03 2000 PST | @ 3 mons                      | Thu Jun 15 12:14:03 2000 PDT
-     | Wed Mar 15 13:14:02 2000 PST | @ 3 mons                      | Thu Jun 15 13:14:02 2000 PDT
-     | Wed Mar 15 02:14:05 2000 PST | @ 5 mons                      | Tue Aug 15 02:14:05 2000 PDT
-     | Wed Mar 15 03:14:04 2000 PST | @ 5 mons                      | Tue Aug 15 03:14:04 2000 PDT
-     | Wed Mar 15 08:14:01 2000 PST | @ 5 mons                      | Tue Aug 15 08:14:01 2000 PDT
-     | Wed Mar 15 12:14:03 2000 PST | @ 5 mons                      | Tue Aug 15 12:14:03 2000 PDT
-     | Wed Mar 15 13:14:02 2000 PST | @ 5 mons                      | Tue Aug 15 13:14:02 2000 PDT
-     | Wed Mar 15 02:14:05 2000 PST | @ 5 mons 12 hours             | Tue Aug 15 14:14:05 2000 PDT
-     | Wed Mar 15 03:14:04 2000 PST | @ 5 mons 12 hours             | Tue Aug 15 15:14:04 2000 PDT
-     | Wed Mar 15 08:14:01 2000 PST | @ 5 mons 12 hours             | Tue Aug 15 20:14:01 2000 PDT
-     | Wed Mar 15 12:14:03 2000 PST | @ 5 mons 12 hours             | Wed Aug 16 00:14:03 2000 PDT
-     | Wed Mar 15 13:14:02 2000 PST | @ 5 mons 12 hours             | Wed Aug 16 01:14:02 2000 PDT
-     | Sun Dec 31 17:32:01 2000 PST | @ 14 secs ago                 | Sun Dec 31 17:31:47 2000 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 1 min                       | Sun Dec 31 17:33:01 2000 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 5 hours                     | Sun Dec 31 22:32:01 2000 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 14 secs ago                 | Mon Jan 01 17:31:47 2001 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 1 min                       | Mon Jan 01 17:33:01 2001 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Mon Jan 01 19:35:05 2001 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 5 hours                     | Mon Jan 01 22:32:01 2001 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Jan 02 19:35:05 2001 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 10 days                     | Wed Jan 10 17:32:01 2001 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 10 days                     | Thu Jan 11 17:32:01 2001 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 3 mons                      | Sat Mar 31 17:32:01 2001 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 3 mons                      | Sun Apr 01 17:32:01 2001 PDT
-     | Sun Dec 31 17:32:01 2000 PST | @ 5 mons                      | Thu May 31 17:32:01 2001 PDT
-     | Sun Dec 31 17:32:01 2000 PST | @ 5 mons 12 hours             | Fri Jun 01 05:32:01 2001 PDT
-     | Mon Jan 01 17:32:01 2001 PST | @ 5 mons                      | Fri Jun 01 17:32:01 2001 PDT
-     | Mon Jan 01 17:32:01 2001 PST | @ 5 mons 12 hours             | Sat Jun 02 05:32:01 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 14 secs ago                 | Sat Sep 22 18:19:06 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 1 min                       | Sat Sep 22 18:20:20 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 5 hours                     | Sat Sep 22 23:19:20 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 1 day 2 hours 3 mins 4 secs | Sun Sep 23 20:22:24 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 10 days                     | Tue Oct 02 18:19:20 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 3 mons                      | Sat Dec 22 18:19:20 2001 PST
-     | Sat Sep 22 18:19:20 2001 PDT | @ 5 mons                      | Fri Feb 22 18:19:20 2002 PST
-     | Sat Sep 22 18:19:20 2001 PDT | @ 5 mons 12 hours             | Sat Feb 23 06:19:20 2002 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 6 years                     | Thu Feb 28 17:32:01 2002 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 6 years                     | Thu Feb 28 17:32:01 2002 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 6 years                     | Fri Mar 01 17:32:01 2002 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 6 years                     | Mon Dec 30 17:32:01 2002 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 6 years                     | Tue Dec 31 17:32:01 2002 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 34 years                    | Thu Jan 01 00:00:00 2004 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 6 years                     | Sat Dec 31 17:32:01 2005 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 6 years                     | Sun Jan 01 17:32:01 2006 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 6 years                     | Wed Mar 15 02:14:05 2006 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 6 years                     | Wed Mar 15 03:14:04 2006 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 6 years                     | Wed Mar 15 08:14:01 2006 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 6 years                     | Wed Mar 15 12:14:03 2006 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 6 years                     | Wed Mar 15 13:14:02 2006 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 6 years                     | Sun Dec 31 17:32:01 2006 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 6 years                     | Mon Jan 01 17:32:01 2007 PST
-     | Sat Sep 22 18:19:20 2001 PDT | @ 6 years                     | Sat Sep 22 18:19:20 2007 PDT
-     | Wed Feb 28 17:32:01 1996 PST | @ 34 years                    | Thu Feb 28 17:32:01 2030 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 34 years                    | Thu Feb 28 17:32:01 2030 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 34 years                    | Fri Mar 01 17:32:01 2030 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 34 years                    | Mon Dec 30 17:32:01 2030 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 34 years                    | Tue Dec 31 17:32:01 2030 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 34 years                    | Sat Dec 31 17:32:01 2033 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 34 years                    | Sun Jan 01 17:32:01 2034 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 34 years                    | Wed Mar 15 02:14:05 2034 PDT
-     | Wed Mar 15 03:14:04 2000 PST | @ 34 years                    | Wed Mar 15 03:14:04 2034 PDT
-     | Wed Mar 15 08:14:01 2000 PST | @ 34 years                    | Wed Mar 15 08:14:01 2034 PDT
-     | Wed Mar 15 12:14:03 2000 PST | @ 34 years                    | Wed Mar 15 12:14:03 2034 PDT
-     | Wed Mar 15 13:14:02 2000 PST | @ 34 years                    | Wed Mar 15 13:14:02 2034 PDT
-     | Sun Dec 31 17:32:01 2000 PST | @ 34 years                    | Sun Dec 31 17:32:01 2034 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 34 years                    | Mon Jan 01 17:32:01 2035 PST
-     | Sat Sep 22 18:19:20 2001 PDT | @ 34 years                    | Sat Sep 22 18:19:20 2035 PDT
+          timestamp           |           interval            |             plus             
+------------------------------+-------------------------------+------------------------------
+ Thu Jan 01 00:00:00 1970 PST | @ 14 secs ago                 | Wed Dec 31 23:59:46 1969 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 1 min                       | Thu Jan 01 00:01:00 1970 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 5 hours                     | Thu Jan 01 05:00:00 1970 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 1 day 2 hours 3 mins 4 secs | Fri Jan 02 02:03:04 1970 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 10 days                     | Sun Jan 11 00:00:00 1970 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 3 mons                      | Wed Apr 01 00:00:00 1970 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 5 mons                      | Mon Jun 01 00:00:00 1970 PDT
+ Thu Jan 01 00:00:00 1970 PST | @ 5 mons 12 hours             | Mon Jun 01 12:00:00 1970 PDT
+ Thu Jan 01 00:00:00 1970 PST | @ 6 years                     | Thu Jan 01 00:00:00 1976 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 14 secs ago                 | Wed Feb 28 17:31:47 1996 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 1 min                       | Wed Feb 28 17:33:01 1996 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 5 hours                     | Wed Feb 28 22:32:01 1996 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 14 secs ago                 | Thu Feb 29 17:31:47 1996 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 1 min                       | Thu Feb 29 17:33:01 1996 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Feb 29 19:35:05 1996 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 5 hours                     | Thu Feb 29 22:32:01 1996 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 14 secs ago                 | Fri Mar 01 17:31:47 1996 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 1 min                       | Fri Mar 01 17:33:01 1996 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Fri Mar 01 19:35:05 1996 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 5 hours                     | Fri Mar 01 22:32:01 1996 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Sat Mar 02 19:35:05 1996 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 10 days                     | Sat Mar 09 17:32:01 1996 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 10 days                     | Sun Mar 10 17:32:01 1996 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 10 days                     | Mon Mar 11 17:32:01 1996 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 3 mons                      | Tue May 28 17:32:01 1996 PDT
+ Thu Feb 29 17:32:01 1996 PST | @ 3 mons                      | Wed May 29 17:32:01 1996 PDT
+ Fri Mar 01 17:32:01 1996 PST | @ 3 mons                      | Sat Jun 01 17:32:01 1996 PDT
+ Wed Feb 28 17:32:01 1996 PST | @ 5 mons                      | Sun Jul 28 17:32:01 1996 PDT
+ Wed Feb 28 17:32:01 1996 PST | @ 5 mons 12 hours             | Mon Jul 29 05:32:01 1996 PDT
+ Thu Feb 29 17:32:01 1996 PST | @ 5 mons                      | Mon Jul 29 17:32:01 1996 PDT
+ Thu Feb 29 17:32:01 1996 PST | @ 5 mons 12 hours             | Tue Jul 30 05:32:01 1996 PDT
+ Fri Mar 01 17:32:01 1996 PST | @ 5 mons                      | Thu Aug 01 17:32:01 1996 PDT
+ Fri Mar 01 17:32:01 1996 PST | @ 5 mons 12 hours             | Fri Aug 02 05:32:01 1996 PDT
+ Mon Dec 30 17:32:01 1996 PST | @ 14 secs ago                 | Mon Dec 30 17:31:47 1996 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 1 min                       | Mon Dec 30 17:33:01 1996 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 5 hours                     | Mon Dec 30 22:32:01 1996 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 14 secs ago                 | Tue Dec 31 17:31:47 1996 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 1 min                       | Tue Dec 31 17:33:01 1996 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Dec 31 19:35:05 1996 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 5 hours                     | Tue Dec 31 22:32:01 1996 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Wed Jan 01 19:35:05 1997 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 10 days                     | Thu Jan 09 17:32:01 1997 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 10 days                     | Fri Jan 10 17:32:01 1997 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 3 mons                      | Sun Mar 30 17:32:01 1997 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 3 mons                      | Mon Mar 31 17:32:01 1997 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 5 mons                      | Fri May 30 17:32:01 1997 PDT
+ Mon Dec 30 17:32:01 1996 PST | @ 5 mons 12 hours             | Sat May 31 05:32:01 1997 PDT
+ Tue Dec 31 17:32:01 1996 PST | @ 5 mons                      | Sat May 31 17:32:01 1997 PDT
+ Tue Dec 31 17:32:01 1996 PST | @ 5 mons 12 hours             | Sun Jun 01 05:32:01 1997 PDT
+ Fri Dec 31 17:32:01 1999 PST | @ 14 secs ago                 | Fri Dec 31 17:31:47 1999 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 1 min                       | Fri Dec 31 17:33:01 1999 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 5 hours                     | Fri Dec 31 22:32:01 1999 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 14 secs ago                 | Sat Jan 01 17:31:47 2000 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 1 min                       | Sat Jan 01 17:33:01 2000 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 1 day 2 hours 3 mins 4 secs | Sat Jan 01 19:35:05 2000 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 5 hours                     | Sat Jan 01 22:32:01 2000 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Sun Jan 02 19:35:05 2000 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 10 days                     | Mon Jan 10 17:32:01 2000 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 10 days                     | Tue Jan 11 17:32:01 2000 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 14 secs ago                 | Wed Mar 15 02:13:51 2000 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 1 min                       | Wed Mar 15 02:15:05 2000 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 14 secs ago                 | Wed Mar 15 03:13:50 2000 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 1 min                       | Wed Mar 15 03:15:04 2000 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 5 hours                     | Wed Mar 15 07:14:05 2000 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 14 secs ago                 | Wed Mar 15 08:13:47 2000 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 5 hours                     | Wed Mar 15 08:14:04 2000 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 1 min                       | Wed Mar 15 08:15:01 2000 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 14 secs ago                 | Wed Mar 15 12:13:49 2000 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 1 min                       | Wed Mar 15 12:15:03 2000 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 14 secs ago                 | Wed Mar 15 13:13:48 2000 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 5 hours                     | Wed Mar 15 13:14:01 2000 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 1 min                       | Wed Mar 15 13:15:02 2000 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 5 hours                     | Wed Mar 15 17:14:03 2000 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 5 hours                     | Wed Mar 15 18:14:02 2000 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Mar 16 04:17:09 2000 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Mar 16 05:17:08 2000 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Mar 16 10:17:05 2000 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Mar 16 14:17:07 2000 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Mar 16 15:17:06 2000 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 10 days                     | Sat Mar 25 02:14:05 2000 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 10 days                     | Sat Mar 25 03:14:04 2000 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 10 days                     | Sat Mar 25 08:14:01 2000 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 10 days                     | Sat Mar 25 12:14:03 2000 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 10 days                     | Sat Mar 25 13:14:02 2000 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 3 mons                      | Fri Mar 31 17:32:01 2000 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 3 mons                      | Sat Apr 01 17:32:01 2000 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 5 mons                      | Wed May 31 17:32:01 2000 PDT
+ Fri Dec 31 17:32:01 1999 PST | @ 5 mons 12 hours             | Thu Jun 01 05:32:01 2000 PDT
+ Sat Jan 01 17:32:01 2000 PST | @ 5 mons                      | Thu Jun 01 17:32:01 2000 PDT
+ Sat Jan 01 17:32:01 2000 PST | @ 5 mons 12 hours             | Fri Jun 02 05:32:01 2000 PDT
+ Wed Mar 15 02:14:05 2000 PST | @ 3 mons                      | Thu Jun 15 02:14:05 2000 PDT
+ Wed Mar 15 03:14:04 2000 PST | @ 3 mons                      | Thu Jun 15 03:14:04 2000 PDT
+ Wed Mar 15 08:14:01 2000 PST | @ 3 mons                      | Thu Jun 15 08:14:01 2000 PDT
+ Wed Mar 15 12:14:03 2000 PST | @ 3 mons                      | Thu Jun 15 12:14:03 2000 PDT
+ Wed Mar 15 13:14:02 2000 PST | @ 3 mons                      | Thu Jun 15 13:14:02 2000 PDT
+ Wed Mar 15 02:14:05 2000 PST | @ 5 mons                      | Tue Aug 15 02:14:05 2000 PDT
+ Wed Mar 15 03:14:04 2000 PST | @ 5 mons                      | Tue Aug 15 03:14:04 2000 PDT
+ Wed Mar 15 08:14:01 2000 PST | @ 5 mons                      | Tue Aug 15 08:14:01 2000 PDT
+ Wed Mar 15 12:14:03 2000 PST | @ 5 mons                      | Tue Aug 15 12:14:03 2000 PDT
+ Wed Mar 15 13:14:02 2000 PST | @ 5 mons                      | Tue Aug 15 13:14:02 2000 PDT
+ Wed Mar 15 02:14:05 2000 PST | @ 5 mons 12 hours             | Tue Aug 15 14:14:05 2000 PDT
+ Wed Mar 15 03:14:04 2000 PST | @ 5 mons 12 hours             | Tue Aug 15 15:14:04 2000 PDT
+ Wed Mar 15 08:14:01 2000 PST | @ 5 mons 12 hours             | Tue Aug 15 20:14:01 2000 PDT
+ Wed Mar 15 12:14:03 2000 PST | @ 5 mons 12 hours             | Wed Aug 16 00:14:03 2000 PDT
+ Wed Mar 15 13:14:02 2000 PST | @ 5 mons 12 hours             | Wed Aug 16 01:14:02 2000 PDT
+ Sun Dec 31 17:32:01 2000 PST | @ 14 secs ago                 | Sun Dec 31 17:31:47 2000 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 1 min                       | Sun Dec 31 17:33:01 2000 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 5 hours                     | Sun Dec 31 22:32:01 2000 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 14 secs ago                 | Mon Jan 01 17:31:47 2001 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 1 min                       | Mon Jan 01 17:33:01 2001 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Mon Jan 01 19:35:05 2001 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 5 hours                     | Mon Jan 01 22:32:01 2001 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Jan 02 19:35:05 2001 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 10 days                     | Wed Jan 10 17:32:01 2001 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 10 days                     | Thu Jan 11 17:32:01 2001 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 3 mons                      | Sat Mar 31 17:32:01 2001 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 3 mons                      | Sun Apr 01 17:32:01 2001 PDT
+ Sun Dec 31 17:32:01 2000 PST | @ 5 mons                      | Thu May 31 17:32:01 2001 PDT
+ Sun Dec 31 17:32:01 2000 PST | @ 5 mons 12 hours             | Fri Jun 01 05:32:01 2001 PDT
+ Mon Jan 01 17:32:01 2001 PST | @ 5 mons                      | Fri Jun 01 17:32:01 2001 PDT
+ Mon Jan 01 17:32:01 2001 PST | @ 5 mons 12 hours             | Sat Jun 02 05:32:01 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 14 secs ago                 | Sat Sep 22 18:19:06 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 1 min                       | Sat Sep 22 18:20:20 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 5 hours                     | Sat Sep 22 23:19:20 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 1 day 2 hours 3 mins 4 secs | Sun Sep 23 20:22:24 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 10 days                     | Tue Oct 02 18:19:20 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 3 mons                      | Sat Dec 22 18:19:20 2001 PST
+ Sat Sep 22 18:19:20 2001 PDT | @ 5 mons                      | Fri Feb 22 18:19:20 2002 PST
+ Sat Sep 22 18:19:20 2001 PDT | @ 5 mons 12 hours             | Sat Feb 23 06:19:20 2002 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 6 years                     | Thu Feb 28 17:32:01 2002 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 6 years                     | Thu Feb 28 17:32:01 2002 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 6 years                     | Fri Mar 01 17:32:01 2002 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 6 years                     | Mon Dec 30 17:32:01 2002 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 6 years                     | Tue Dec 31 17:32:01 2002 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 34 years                    | Thu Jan 01 00:00:00 2004 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 6 years                     | Sat Dec 31 17:32:01 2005 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 6 years                     | Sun Jan 01 17:32:01 2006 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 6 years                     | Wed Mar 15 02:14:05 2006 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 6 years                     | Wed Mar 15 03:14:04 2006 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 6 years                     | Wed Mar 15 08:14:01 2006 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 6 years                     | Wed Mar 15 12:14:03 2006 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 6 years                     | Wed Mar 15 13:14:02 2006 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 6 years                     | Sun Dec 31 17:32:01 2006 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 6 years                     | Mon Jan 01 17:32:01 2007 PST
+ Sat Sep 22 18:19:20 2001 PDT | @ 6 years                     | Sat Sep 22 18:19:20 2007 PDT
+ Wed Feb 28 17:32:01 1996 PST | @ 34 years                    | Thu Feb 28 17:32:01 2030 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 34 years                    | Thu Feb 28 17:32:01 2030 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 34 years                    | Fri Mar 01 17:32:01 2030 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 34 years                    | Mon Dec 30 17:32:01 2030 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 34 years                    | Tue Dec 31 17:32:01 2030 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 34 years                    | Sat Dec 31 17:32:01 2033 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 34 years                    | Sun Jan 01 17:32:01 2034 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 34 years                    | Wed Mar 15 02:14:05 2034 PDT
+ Wed Mar 15 03:14:04 2000 PST | @ 34 years                    | Wed Mar 15 03:14:04 2034 PDT
+ Wed Mar 15 08:14:01 2000 PST | @ 34 years                    | Wed Mar 15 08:14:01 2034 PDT
+ Wed Mar 15 12:14:03 2000 PST | @ 34 years                    | Wed Mar 15 12:14:03 2034 PDT
+ Wed Mar 15 13:14:02 2000 PST | @ 34 years                    | Wed Mar 15 13:14:02 2034 PDT
+ Sun Dec 31 17:32:01 2000 PST | @ 34 years                    | Sun Dec 31 17:32:01 2034 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 34 years                    | Mon Jan 01 17:32:01 2035 PST
+ Sat Sep 22 18:19:20 2001 PDT | @ 34 years                    | Sat Sep 22 18:19:20 2035 PDT
 (160 rows)
 
-SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS "interval", d.f1 - t.f1 AS minus
+SELECT d.f1 AS "timestamp", t.f1 AS "interval", d.f1 - t.f1 AS minus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
   WHERE isfinite(d.f1)
   ORDER BY minus, "timestamp", "interval";
- 160 |          timestamp           |           interval            |            minus             
------+------------------------------+-------------------------------+------------------------------
-     | Thu Jan 01 00:00:00 1970 PST | @ 34 years                    | Wed Jan 01 00:00:00 1936 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 34 years                    | Wed Feb 28 17:32:01 1962 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 34 years                    | Wed Feb 28 17:32:01 1962 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 34 years                    | Thu Mar 01 17:32:01 1962 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 34 years                    | Sun Dec 30 17:32:01 1962 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 34 years                    | Mon Dec 31 17:32:01 1962 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 6 years                     | Wed Jan 01 00:00:00 1964 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 34 years                    | Fri Dec 31 17:32:01 1965 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 34 years                    | Sat Jan 01 17:32:01 1966 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 34 years                    | Tue Mar 15 02:14:05 1966 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 34 years                    | Tue Mar 15 03:14:04 1966 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 34 years                    | Tue Mar 15 08:14:01 1966 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 34 years                    | Tue Mar 15 12:14:03 1966 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 34 years                    | Tue Mar 15 13:14:02 1966 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 34 years                    | Sat Dec 31 17:32:01 1966 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 34 years                    | Sun Jan 01 17:32:01 1967 PST
-     | Sat Sep 22 18:19:20 2001 PDT | @ 34 years                    | Fri Sep 22 18:19:20 1967 PDT
-     | Thu Jan 01 00:00:00 1970 PST | @ 5 mons 12 hours             | Thu Jul 31 12:00:00 1969 PDT
-     | Thu Jan 01 00:00:00 1970 PST | @ 5 mons                      | Fri Aug 01 00:00:00 1969 PDT
-     | Thu Jan 01 00:00:00 1970 PST | @ 3 mons                      | Wed Oct 01 00:00:00 1969 PDT
-     | Thu Jan 01 00:00:00 1970 PST | @ 10 days                     | Mon Dec 22 00:00:00 1969 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Dec 30 21:56:56 1969 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 5 hours                     | Wed Dec 31 19:00:00 1969 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 1 min                       | Wed Dec 31 23:59:00 1969 PST
-     | Thu Jan 01 00:00:00 1970 PST | @ 14 secs ago                 | Thu Jan 01 00:00:14 1970 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 6 years                     | Wed Feb 28 17:32:01 1990 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 6 years                     | Wed Feb 28 17:32:01 1990 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 6 years                     | Thu Mar 01 17:32:01 1990 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 6 years                     | Sun Dec 30 17:32:01 1990 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 6 years                     | Mon Dec 31 17:32:01 1990 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 6 years                     | Fri Dec 31 17:32:01 1993 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 6 years                     | Sat Jan 01 17:32:01 1994 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 6 years                     | Tue Mar 15 02:14:05 1994 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 6 years                     | Tue Mar 15 03:14:04 1994 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 6 years                     | Tue Mar 15 08:14:01 1994 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 6 years                     | Tue Mar 15 12:14:03 1994 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 6 years                     | Tue Mar 15 13:14:02 1994 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 6 years                     | Sat Dec 31 17:32:01 1994 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 6 years                     | Sun Jan 01 17:32:01 1995 PST
-     | Sat Sep 22 18:19:20 2001 PDT | @ 6 years                     | Fri Sep 22 18:19:20 1995 PDT
-     | Wed Feb 28 17:32:01 1996 PST | @ 5 mons 12 hours             | Thu Sep 28 05:32:01 1995 PDT
-     | Wed Feb 28 17:32:01 1996 PST | @ 5 mons                      | Thu Sep 28 17:32:01 1995 PDT
-     | Thu Feb 29 17:32:01 1996 PST | @ 5 mons 12 hours             | Fri Sep 29 05:32:01 1995 PDT
-     | Thu Feb 29 17:32:01 1996 PST | @ 5 mons                      | Fri Sep 29 17:32:01 1995 PDT
-     | Fri Mar 01 17:32:01 1996 PST | @ 5 mons 12 hours             | Sun Oct 01 05:32:01 1995 PDT
-     | Fri Mar 01 17:32:01 1996 PST | @ 5 mons                      | Sun Oct 01 17:32:01 1995 PDT
-     | Wed Feb 28 17:32:01 1996 PST | @ 3 mons                      | Tue Nov 28 17:32:01 1995 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 3 mons                      | Wed Nov 29 17:32:01 1995 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 3 mons                      | Fri Dec 01 17:32:01 1995 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 10 days                     | Sun Feb 18 17:32:01 1996 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 10 days                     | Mon Feb 19 17:32:01 1996 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 10 days                     | Tue Feb 20 17:32:01 1996 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Feb 27 15:28:57 1996 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 5 hours                     | Wed Feb 28 12:32:01 1996 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Wed Feb 28 15:28:57 1996 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 1 min                       | Wed Feb 28 17:31:01 1996 PST
-     | Wed Feb 28 17:32:01 1996 PST | @ 14 secs ago                 | Wed Feb 28 17:32:15 1996 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 5 hours                     | Thu Feb 29 12:32:01 1996 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Feb 29 15:28:57 1996 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 1 min                       | Thu Feb 29 17:31:01 1996 PST
-     | Thu Feb 29 17:32:01 1996 PST | @ 14 secs ago                 | Thu Feb 29 17:32:15 1996 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 5 hours                     | Fri Mar 01 12:32:01 1996 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 1 min                       | Fri Mar 01 17:31:01 1996 PST
-     | Fri Mar 01 17:32:01 1996 PST | @ 14 secs ago                 | Fri Mar 01 17:32:15 1996 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 5 mons 12 hours             | Tue Jul 30 05:32:01 1996 PDT
-     | Mon Dec 30 17:32:01 1996 PST | @ 5 mons                      | Tue Jul 30 17:32:01 1996 PDT
-     | Tue Dec 31 17:32:01 1996 PST | @ 5 mons 12 hours             | Wed Jul 31 05:32:01 1996 PDT
-     | Tue Dec 31 17:32:01 1996 PST | @ 5 mons                      | Wed Jul 31 17:32:01 1996 PDT
-     | Mon Dec 30 17:32:01 1996 PST | @ 3 mons                      | Mon Sep 30 17:32:01 1996 PDT
-     | Tue Dec 31 17:32:01 1996 PST | @ 3 mons                      | Mon Sep 30 17:32:01 1996 PDT
-     | Mon Dec 30 17:32:01 1996 PST | @ 10 days                     | Fri Dec 20 17:32:01 1996 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 10 days                     | Sat Dec 21 17:32:01 1996 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Sun Dec 29 15:28:57 1996 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 5 hours                     | Mon Dec 30 12:32:01 1996 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Mon Dec 30 15:28:57 1996 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 1 min                       | Mon Dec 30 17:31:01 1996 PST
-     | Mon Dec 30 17:32:01 1996 PST | @ 14 secs ago                 | Mon Dec 30 17:32:15 1996 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 5 hours                     | Tue Dec 31 12:32:01 1996 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 1 min                       | Tue Dec 31 17:31:01 1996 PST
-     | Tue Dec 31 17:32:01 1996 PST | @ 14 secs ago                 | Tue Dec 31 17:32:15 1996 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 5 mons 12 hours             | Sat Jul 31 05:32:01 1999 PDT
-     | Fri Dec 31 17:32:01 1999 PST | @ 5 mons                      | Sat Jul 31 17:32:01 1999 PDT
-     | Sat Jan 01 17:32:01 2000 PST | @ 5 mons 12 hours             | Sun Aug 01 05:32:01 1999 PDT
-     | Sat Jan 01 17:32:01 2000 PST | @ 5 mons                      | Sun Aug 01 17:32:01 1999 PDT
-     | Fri Dec 31 17:32:01 1999 PST | @ 3 mons                      | Thu Sep 30 17:32:01 1999 PDT
-     | Sat Jan 01 17:32:01 2000 PST | @ 3 mons                      | Fri Oct 01 17:32:01 1999 PDT
-     | Wed Mar 15 02:14:05 2000 PST | @ 5 mons 12 hours             | Thu Oct 14 14:14:05 1999 PDT
-     | Wed Mar 15 03:14:04 2000 PST | @ 5 mons 12 hours             | Thu Oct 14 15:14:04 1999 PDT
-     | Wed Mar 15 08:14:01 2000 PST | @ 5 mons 12 hours             | Thu Oct 14 20:14:01 1999 PDT
-     | Wed Mar 15 12:14:03 2000 PST | @ 5 mons 12 hours             | Fri Oct 15 00:14:03 1999 PDT
-     | Wed Mar 15 13:14:02 2000 PST | @ 5 mons 12 hours             | Fri Oct 15 01:14:02 1999 PDT
-     | Wed Mar 15 02:14:05 2000 PST | @ 5 mons                      | Fri Oct 15 02:14:05 1999 PDT
-     | Wed Mar 15 03:14:04 2000 PST | @ 5 mons                      | Fri Oct 15 03:14:04 1999 PDT
-     | Wed Mar 15 08:14:01 2000 PST | @ 5 mons                      | Fri Oct 15 08:14:01 1999 PDT
-     | Wed Mar 15 12:14:03 2000 PST | @ 5 mons                      | Fri Oct 15 12:14:03 1999 PDT
-     | Wed Mar 15 13:14:02 2000 PST | @ 5 mons                      | Fri Oct 15 13:14:02 1999 PDT
-     | Wed Mar 15 02:14:05 2000 PST | @ 3 mons                      | Wed Dec 15 02:14:05 1999 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 3 mons                      | Wed Dec 15 03:14:04 1999 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 3 mons                      | Wed Dec 15 08:14:01 1999 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 3 mons                      | Wed Dec 15 12:14:03 1999 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 3 mons                      | Wed Dec 15 13:14:02 1999 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 10 days                     | Tue Dec 21 17:32:01 1999 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 10 days                     | Wed Dec 22 17:32:01 1999 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Dec 30 15:28:57 1999 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 5 hours                     | Fri Dec 31 12:32:01 1999 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Fri Dec 31 15:28:57 1999 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 1 min                       | Fri Dec 31 17:31:01 1999 PST
-     | Fri Dec 31 17:32:01 1999 PST | @ 14 secs ago                 | Fri Dec 31 17:32:15 1999 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 5 hours                     | Sat Jan 01 12:32:01 2000 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 1 min                       | Sat Jan 01 17:31:01 2000 PST
-     | Sat Jan 01 17:32:01 2000 PST | @ 14 secs ago                 | Sat Jan 01 17:32:15 2000 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 10 days                     | Sun Mar 05 02:14:05 2000 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 10 days                     | Sun Mar 05 03:14:04 2000 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 10 days                     | Sun Mar 05 08:14:01 2000 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 10 days                     | Sun Mar 05 12:14:03 2000 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 10 days                     | Sun Mar 05 13:14:02 2000 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Mar 14 00:11:01 2000 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Mar 14 01:11:00 2000 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Mar 14 06:10:57 2000 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Mar 14 10:10:59 2000 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Mar 14 11:10:58 2000 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 5 hours                     | Tue Mar 14 21:14:05 2000 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 5 hours                     | Tue Mar 14 22:14:04 2000 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 1 min                       | Wed Mar 15 02:13:05 2000 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 14 secs ago                 | Wed Mar 15 02:14:19 2000 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 1 min                       | Wed Mar 15 03:13:04 2000 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 5 hours                     | Wed Mar 15 03:14:01 2000 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 14 secs ago                 | Wed Mar 15 03:14:18 2000 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 5 hours                     | Wed Mar 15 07:14:03 2000 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 1 min                       | Wed Mar 15 08:13:01 2000 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 5 hours                     | Wed Mar 15 08:14:02 2000 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 14 secs ago                 | Wed Mar 15 08:14:15 2000 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 1 min                       | Wed Mar 15 12:13:03 2000 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 14 secs ago                 | Wed Mar 15 12:14:17 2000 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 1 min                       | Wed Mar 15 13:13:02 2000 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 14 secs ago                 | Wed Mar 15 13:14:16 2000 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 5 mons 12 hours             | Mon Jul 31 05:32:01 2000 PDT
-     | Sun Dec 31 17:32:01 2000 PST | @ 5 mons                      | Mon Jul 31 17:32:01 2000 PDT
-     | Mon Jan 01 17:32:01 2001 PST | @ 5 mons 12 hours             | Tue Aug 01 05:32:01 2000 PDT
-     | Mon Jan 01 17:32:01 2001 PST | @ 5 mons                      | Tue Aug 01 17:32:01 2000 PDT
-     | Sun Dec 31 17:32:01 2000 PST | @ 3 mons                      | Sat Sep 30 17:32:01 2000 PDT
-     | Mon Jan 01 17:32:01 2001 PST | @ 3 mons                      | Sun Oct 01 17:32:01 2000 PDT
-     | Sun Dec 31 17:32:01 2000 PST | @ 10 days                     | Thu Dec 21 17:32:01 2000 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 10 days                     | Fri Dec 22 17:32:01 2000 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Sat Dec 30 15:28:57 2000 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 5 hours                     | Sun Dec 31 12:32:01 2000 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 1 day 2 hours 3 mins 4 secs | Sun Dec 31 15:28:57 2000 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 1 min                       | Sun Dec 31 17:31:01 2000 PST
-     | Sun Dec 31 17:32:01 2000 PST | @ 14 secs ago                 | Sun Dec 31 17:32:15 2000 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 5 hours                     | Mon Jan 01 12:32:01 2001 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 1 min                       | Mon Jan 01 17:31:01 2001 PST
-     | Mon Jan 01 17:32:01 2001 PST | @ 14 secs ago                 | Mon Jan 01 17:32:15 2001 PST
-     | Sat Sep 22 18:19:20 2001 PDT | @ 5 mons 12 hours             | Sun Apr 22 06:19:20 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 5 mons                      | Sun Apr 22 18:19:20 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 3 mons                      | Fri Jun 22 18:19:20 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 10 days                     | Wed Sep 12 18:19:20 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 1 day 2 hours 3 mins 4 secs | Fri Sep 21 16:16:16 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 5 hours                     | Sat Sep 22 13:19:20 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 1 min                       | Sat Sep 22 18:18:20 2001 PDT
-     | Sat Sep 22 18:19:20 2001 PDT | @ 14 secs ago                 | Sat Sep 22 18:19:34 2001 PDT
+          timestamp           |           interval            |            minus             
+------------------------------+-------------------------------+------------------------------
+ Thu Jan 01 00:00:00 1970 PST | @ 34 years                    | Wed Jan 01 00:00:00 1936 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 34 years                    | Wed Feb 28 17:32:01 1962 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 34 years                    | Wed Feb 28 17:32:01 1962 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 34 years                    | Thu Mar 01 17:32:01 1962 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 34 years                    | Sun Dec 30 17:32:01 1962 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 34 years                    | Mon Dec 31 17:32:01 1962 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 6 years                     | Wed Jan 01 00:00:00 1964 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 34 years                    | Fri Dec 31 17:32:01 1965 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 34 years                    | Sat Jan 01 17:32:01 1966 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 34 years                    | Tue Mar 15 02:14:05 1966 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 34 years                    | Tue Mar 15 03:14:04 1966 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 34 years                    | Tue Mar 15 08:14:01 1966 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 34 years                    | Tue Mar 15 12:14:03 1966 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 34 years                    | Tue Mar 15 13:14:02 1966 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 34 years                    | Sat Dec 31 17:32:01 1966 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 34 years                    | Sun Jan 01 17:32:01 1967 PST
+ Sat Sep 22 18:19:20 2001 PDT | @ 34 years                    | Fri Sep 22 18:19:20 1967 PDT
+ Thu Jan 01 00:00:00 1970 PST | @ 5 mons 12 hours             | Thu Jul 31 12:00:00 1969 PDT
+ Thu Jan 01 00:00:00 1970 PST | @ 5 mons                      | Fri Aug 01 00:00:00 1969 PDT
+ Thu Jan 01 00:00:00 1970 PST | @ 3 mons                      | Wed Oct 01 00:00:00 1969 PDT
+ Thu Jan 01 00:00:00 1970 PST | @ 10 days                     | Mon Dec 22 00:00:00 1969 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Dec 30 21:56:56 1969 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 5 hours                     | Wed Dec 31 19:00:00 1969 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 1 min                       | Wed Dec 31 23:59:00 1969 PST
+ Thu Jan 01 00:00:00 1970 PST | @ 14 secs ago                 | Thu Jan 01 00:00:14 1970 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 6 years                     | Wed Feb 28 17:32:01 1990 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 6 years                     | Wed Feb 28 17:32:01 1990 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 6 years                     | Thu Mar 01 17:32:01 1990 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 6 years                     | Sun Dec 30 17:32:01 1990 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 6 years                     | Mon Dec 31 17:32:01 1990 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 6 years                     | Fri Dec 31 17:32:01 1993 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 6 years                     | Sat Jan 01 17:32:01 1994 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 6 years                     | Tue Mar 15 02:14:05 1994 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 6 years                     | Tue Mar 15 03:14:04 1994 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 6 years                     | Tue Mar 15 08:14:01 1994 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 6 years                     | Tue Mar 15 12:14:03 1994 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 6 years                     | Tue Mar 15 13:14:02 1994 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 6 years                     | Sat Dec 31 17:32:01 1994 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 6 years                     | Sun Jan 01 17:32:01 1995 PST
+ Sat Sep 22 18:19:20 2001 PDT | @ 6 years                     | Fri Sep 22 18:19:20 1995 PDT
+ Wed Feb 28 17:32:01 1996 PST | @ 5 mons 12 hours             | Thu Sep 28 05:32:01 1995 PDT
+ Wed Feb 28 17:32:01 1996 PST | @ 5 mons                      | Thu Sep 28 17:32:01 1995 PDT
+ Thu Feb 29 17:32:01 1996 PST | @ 5 mons 12 hours             | Fri Sep 29 05:32:01 1995 PDT
+ Thu Feb 29 17:32:01 1996 PST | @ 5 mons                      | Fri Sep 29 17:32:01 1995 PDT
+ Fri Mar 01 17:32:01 1996 PST | @ 5 mons 12 hours             | Sun Oct 01 05:32:01 1995 PDT
+ Fri Mar 01 17:32:01 1996 PST | @ 5 mons                      | Sun Oct 01 17:32:01 1995 PDT
+ Wed Feb 28 17:32:01 1996 PST | @ 3 mons                      | Tue Nov 28 17:32:01 1995 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 3 mons                      | Wed Nov 29 17:32:01 1995 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 3 mons                      | Fri Dec 01 17:32:01 1995 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 10 days                     | Sun Feb 18 17:32:01 1996 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 10 days                     | Mon Feb 19 17:32:01 1996 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 10 days                     | Tue Feb 20 17:32:01 1996 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Feb 27 15:28:57 1996 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 5 hours                     | Wed Feb 28 12:32:01 1996 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Wed Feb 28 15:28:57 1996 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 1 min                       | Wed Feb 28 17:31:01 1996 PST
+ Wed Feb 28 17:32:01 1996 PST | @ 14 secs ago                 | Wed Feb 28 17:32:15 1996 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 5 hours                     | Thu Feb 29 12:32:01 1996 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Feb 29 15:28:57 1996 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 1 min                       | Thu Feb 29 17:31:01 1996 PST
+ Thu Feb 29 17:32:01 1996 PST | @ 14 secs ago                 | Thu Feb 29 17:32:15 1996 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 5 hours                     | Fri Mar 01 12:32:01 1996 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 1 min                       | Fri Mar 01 17:31:01 1996 PST
+ Fri Mar 01 17:32:01 1996 PST | @ 14 secs ago                 | Fri Mar 01 17:32:15 1996 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 5 mons 12 hours             | Tue Jul 30 05:32:01 1996 PDT
+ Mon Dec 30 17:32:01 1996 PST | @ 5 mons                      | Tue Jul 30 17:32:01 1996 PDT
+ Tue Dec 31 17:32:01 1996 PST | @ 5 mons 12 hours             | Wed Jul 31 05:32:01 1996 PDT
+ Tue Dec 31 17:32:01 1996 PST | @ 5 mons                      | Wed Jul 31 17:32:01 1996 PDT
+ Mon Dec 30 17:32:01 1996 PST | @ 3 mons                      | Mon Sep 30 17:32:01 1996 PDT
+ Tue Dec 31 17:32:01 1996 PST | @ 3 mons                      | Mon Sep 30 17:32:01 1996 PDT
+ Mon Dec 30 17:32:01 1996 PST | @ 10 days                     | Fri Dec 20 17:32:01 1996 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 10 days                     | Sat Dec 21 17:32:01 1996 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Sun Dec 29 15:28:57 1996 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 5 hours                     | Mon Dec 30 12:32:01 1996 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 1 day 2 hours 3 mins 4 secs | Mon Dec 30 15:28:57 1996 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 1 min                       | Mon Dec 30 17:31:01 1996 PST
+ Mon Dec 30 17:32:01 1996 PST | @ 14 secs ago                 | Mon Dec 30 17:32:15 1996 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 5 hours                     | Tue Dec 31 12:32:01 1996 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 1 min                       | Tue Dec 31 17:31:01 1996 PST
+ Tue Dec 31 17:32:01 1996 PST | @ 14 secs ago                 | Tue Dec 31 17:32:15 1996 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 5 mons 12 hours             | Sat Jul 31 05:32:01 1999 PDT
+ Fri Dec 31 17:32:01 1999 PST | @ 5 mons                      | Sat Jul 31 17:32:01 1999 PDT
+ Sat Jan 01 17:32:01 2000 PST | @ 5 mons 12 hours             | Sun Aug 01 05:32:01 1999 PDT
+ Sat Jan 01 17:32:01 2000 PST | @ 5 mons                      | Sun Aug 01 17:32:01 1999 PDT
+ Fri Dec 31 17:32:01 1999 PST | @ 3 mons                      | Thu Sep 30 17:32:01 1999 PDT
+ Sat Jan 01 17:32:01 2000 PST | @ 3 mons                      | Fri Oct 01 17:32:01 1999 PDT
+ Wed Mar 15 02:14:05 2000 PST | @ 5 mons 12 hours             | Thu Oct 14 14:14:05 1999 PDT
+ Wed Mar 15 03:14:04 2000 PST | @ 5 mons 12 hours             | Thu Oct 14 15:14:04 1999 PDT
+ Wed Mar 15 08:14:01 2000 PST | @ 5 mons 12 hours             | Thu Oct 14 20:14:01 1999 PDT
+ Wed Mar 15 12:14:03 2000 PST | @ 5 mons 12 hours             | Fri Oct 15 00:14:03 1999 PDT
+ Wed Mar 15 13:14:02 2000 PST | @ 5 mons 12 hours             | Fri Oct 15 01:14:02 1999 PDT
+ Wed Mar 15 02:14:05 2000 PST | @ 5 mons                      | Fri Oct 15 02:14:05 1999 PDT
+ Wed Mar 15 03:14:04 2000 PST | @ 5 mons                      | Fri Oct 15 03:14:04 1999 PDT
+ Wed Mar 15 08:14:01 2000 PST | @ 5 mons                      | Fri Oct 15 08:14:01 1999 PDT
+ Wed Mar 15 12:14:03 2000 PST | @ 5 mons                      | Fri Oct 15 12:14:03 1999 PDT
+ Wed Mar 15 13:14:02 2000 PST | @ 5 mons                      | Fri Oct 15 13:14:02 1999 PDT
+ Wed Mar 15 02:14:05 2000 PST | @ 3 mons                      | Wed Dec 15 02:14:05 1999 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 3 mons                      | Wed Dec 15 03:14:04 1999 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 3 mons                      | Wed Dec 15 08:14:01 1999 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 3 mons                      | Wed Dec 15 12:14:03 1999 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 3 mons                      | Wed Dec 15 13:14:02 1999 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 10 days                     | Tue Dec 21 17:32:01 1999 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 10 days                     | Wed Dec 22 17:32:01 1999 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 1 day 2 hours 3 mins 4 secs | Thu Dec 30 15:28:57 1999 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 5 hours                     | Fri Dec 31 12:32:01 1999 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Fri Dec 31 15:28:57 1999 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 1 min                       | Fri Dec 31 17:31:01 1999 PST
+ Fri Dec 31 17:32:01 1999 PST | @ 14 secs ago                 | Fri Dec 31 17:32:15 1999 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 5 hours                     | Sat Jan 01 12:32:01 2000 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 1 min                       | Sat Jan 01 17:31:01 2000 PST
+ Sat Jan 01 17:32:01 2000 PST | @ 14 secs ago                 | Sat Jan 01 17:32:15 2000 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 10 days                     | Sun Mar 05 02:14:05 2000 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 10 days                     | Sun Mar 05 03:14:04 2000 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 10 days                     | Sun Mar 05 08:14:01 2000 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 10 days                     | Sun Mar 05 12:14:03 2000 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 10 days                     | Sun Mar 05 13:14:02 2000 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Mar 14 00:11:01 2000 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Mar 14 01:11:00 2000 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Mar 14 06:10:57 2000 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Mar 14 10:10:59 2000 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Tue Mar 14 11:10:58 2000 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 5 hours                     | Tue Mar 14 21:14:05 2000 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 5 hours                     | Tue Mar 14 22:14:04 2000 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 1 min                       | Wed Mar 15 02:13:05 2000 PST
+ Wed Mar 15 02:14:05 2000 PST | @ 14 secs ago                 | Wed Mar 15 02:14:19 2000 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 1 min                       | Wed Mar 15 03:13:04 2000 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 5 hours                     | Wed Mar 15 03:14:01 2000 PST
+ Wed Mar 15 03:14:04 2000 PST | @ 14 secs ago                 | Wed Mar 15 03:14:18 2000 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 5 hours                     | Wed Mar 15 07:14:03 2000 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 1 min                       | Wed Mar 15 08:13:01 2000 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 5 hours                     | Wed Mar 15 08:14:02 2000 PST
+ Wed Mar 15 08:14:01 2000 PST | @ 14 secs ago                 | Wed Mar 15 08:14:15 2000 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 1 min                       | Wed Mar 15 12:13:03 2000 PST
+ Wed Mar 15 12:14:03 2000 PST | @ 14 secs ago                 | Wed Mar 15 12:14:17 2000 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 1 min                       | Wed Mar 15 13:13:02 2000 PST
+ Wed Mar 15 13:14:02 2000 PST | @ 14 secs ago                 | Wed Mar 15 13:14:16 2000 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 5 mons 12 hours             | Mon Jul 31 05:32:01 2000 PDT
+ Sun Dec 31 17:32:01 2000 PST | @ 5 mons                      | Mon Jul 31 17:32:01 2000 PDT
+ Mon Jan 01 17:32:01 2001 PST | @ 5 mons 12 hours             | Tue Aug 01 05:32:01 2000 PDT
+ Mon Jan 01 17:32:01 2001 PST | @ 5 mons                      | Tue Aug 01 17:32:01 2000 PDT
+ Sun Dec 31 17:32:01 2000 PST | @ 3 mons                      | Sat Sep 30 17:32:01 2000 PDT
+ Mon Jan 01 17:32:01 2001 PST | @ 3 mons                      | Sun Oct 01 17:32:01 2000 PDT
+ Sun Dec 31 17:32:01 2000 PST | @ 10 days                     | Thu Dec 21 17:32:01 2000 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 10 days                     | Fri Dec 22 17:32:01 2000 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 1 day 2 hours 3 mins 4 secs | Sat Dec 30 15:28:57 2000 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 5 hours                     | Sun Dec 31 12:32:01 2000 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 1 day 2 hours 3 mins 4 secs | Sun Dec 31 15:28:57 2000 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 1 min                       | Sun Dec 31 17:31:01 2000 PST
+ Sun Dec 31 17:32:01 2000 PST | @ 14 secs ago                 | Sun Dec 31 17:32:15 2000 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 5 hours                     | Mon Jan 01 12:32:01 2001 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 1 min                       | Mon Jan 01 17:31:01 2001 PST
+ Mon Jan 01 17:32:01 2001 PST | @ 14 secs ago                 | Mon Jan 01 17:32:15 2001 PST
+ Sat Sep 22 18:19:20 2001 PDT | @ 5 mons 12 hours             | Sun Apr 22 06:19:20 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 5 mons                      | Sun Apr 22 18:19:20 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 3 mons                      | Fri Jun 22 18:19:20 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 10 days                     | Wed Sep 12 18:19:20 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 1 day 2 hours 3 mins 4 secs | Fri Sep 21 16:16:16 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 5 hours                     | Sat Sep 22 13:19:20 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 1 min                       | Sat Sep 22 18:18:20 2001 PDT
+ Sat Sep 22 18:19:20 2001 PDT | @ 14 secs ago                 | Sat Sep 22 18:19:34 2001 PDT
 (160 rows)
 
-SELECT '' AS "16", d.f1 AS "timestamp",
+SELECT d.f1 AS "timestamp",
    timestamp with time zone '1980-01-06 00:00 GMT' AS gpstime_zero,
    d.f1 - timestamp with time zone '1980-01-06 00:00 GMT' AS difference
   FROM TEMP_TIMESTAMP d
   ORDER BY difference;
- 16 |          timestamp           |         gpstime_zero         |             difference              
-----+------------------------------+------------------------------+-------------------------------------
-    | Thu Jan 01 00:00:00 1970 PST | Sat Jan 05 16:00:00 1980 PST | @ 3656 days 16 hours ago
-    | Wed Feb 28 17:32:01 1996 PST | Sat Jan 05 16:00:00 1980 PST | @ 5898 days 1 hour 32 mins 1 sec
-    | Thu Feb 29 17:32:01 1996 PST | Sat Jan 05 16:00:00 1980 PST | @ 5899 days 1 hour 32 mins 1 sec
-    | Fri Mar 01 17:32:01 1996 PST | Sat Jan 05 16:00:00 1980 PST | @ 5900 days 1 hour 32 mins 1 sec
-    | Mon Dec 30 17:32:01 1996 PST | Sat Jan 05 16:00:00 1980 PST | @ 6204 days 1 hour 32 mins 1 sec
-    | Tue Dec 31 17:32:01 1996 PST | Sat Jan 05 16:00:00 1980 PST | @ 6205 days 1 hour 32 mins 1 sec
-    | Fri Dec 31 17:32:01 1999 PST | Sat Jan 05 16:00:00 1980 PST | @ 7300 days 1 hour 32 mins 1 sec
-    | Sat Jan 01 17:32:01 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7301 days 1 hour 32 mins 1 sec
-    | Wed Mar 15 02:14:05 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7374 days 10 hours 14 mins 5 secs
-    | Wed Mar 15 03:14:04 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7374 days 11 hours 14 mins 4 secs
-    | Wed Mar 15 08:14:01 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7374 days 16 hours 14 mins 1 sec
-    | Wed Mar 15 12:14:03 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7374 days 20 hours 14 mins 3 secs
-    | Wed Mar 15 13:14:02 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7374 days 21 hours 14 mins 2 secs
-    | Sun Dec 31 17:32:01 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7666 days 1 hour 32 mins 1 sec
-    | Mon Jan 01 17:32:01 2001 PST | Sat Jan 05 16:00:00 1980 PST | @ 7667 days 1 hour 32 mins 1 sec
-    | Sat Sep 22 18:19:20 2001 PDT | Sat Jan 05 16:00:00 1980 PST | @ 7931 days 1 hour 19 mins 20 secs
+          timestamp           |         gpstime_zero         |             difference              
+------------------------------+------------------------------+-------------------------------------
+ Thu Jan 01 00:00:00 1970 PST | Sat Jan 05 16:00:00 1980 PST | @ 3656 days 16 hours ago
+ Wed Feb 28 17:32:01 1996 PST | Sat Jan 05 16:00:00 1980 PST | @ 5898 days 1 hour 32 mins 1 sec
+ Thu Feb 29 17:32:01 1996 PST | Sat Jan 05 16:00:00 1980 PST | @ 5899 days 1 hour 32 mins 1 sec
+ Fri Mar 01 17:32:01 1996 PST | Sat Jan 05 16:00:00 1980 PST | @ 5900 days 1 hour 32 mins 1 sec
+ Mon Dec 30 17:32:01 1996 PST | Sat Jan 05 16:00:00 1980 PST | @ 6204 days 1 hour 32 mins 1 sec
+ Tue Dec 31 17:32:01 1996 PST | Sat Jan 05 16:00:00 1980 PST | @ 6205 days 1 hour 32 mins 1 sec
+ Fri Dec 31 17:32:01 1999 PST | Sat Jan 05 16:00:00 1980 PST | @ 7300 days 1 hour 32 mins 1 sec
+ Sat Jan 01 17:32:01 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7301 days 1 hour 32 mins 1 sec
+ Wed Mar 15 02:14:05 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7374 days 10 hours 14 mins 5 secs
+ Wed Mar 15 03:14:04 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7374 days 11 hours 14 mins 4 secs
+ Wed Mar 15 08:14:01 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7374 days 16 hours 14 mins 1 sec
+ Wed Mar 15 12:14:03 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7374 days 20 hours 14 mins 3 secs
+ Wed Mar 15 13:14:02 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7374 days 21 hours 14 mins 2 secs
+ Sun Dec 31 17:32:01 2000 PST | Sat Jan 05 16:00:00 1980 PST | @ 7666 days 1 hour 32 mins 1 sec
+ Mon Jan 01 17:32:01 2001 PST | Sat Jan 05 16:00:00 1980 PST | @ 7667 days 1 hour 32 mins 1 sec
+ Sat Sep 22 18:19:20 2001 PDT | Sat Jan 05 16:00:00 1980 PST | @ 7931 days 1 hour 19 mins 20 secs
 (16 rows)
 
-SELECT '' AS "226", d1.f1 AS timestamp1, d2.f1 AS timestamp2, d1.f1 - d2.f1 AS difference
+SELECT d1.f1 AS timestamp1, d2.f1 AS timestamp2, d1.f1 - d2.f1 AS difference
   FROM TEMP_TIMESTAMP d1, TEMP_TIMESTAMP d2
   ORDER BY timestamp1, timestamp2, difference;
- 226 |          timestamp1          |          timestamp2          |                difference                 
------+------------------------------+------------------------------+-------------------------------------------
-     | Thu Jan 01 00:00:00 1970 PST | Thu Jan 01 00:00:00 1970 PST | @ 0
-     | Thu Jan 01 00:00:00 1970 PST | Wed Feb 28 17:32:01 1996 PST | @ 9554 days 17 hours 32 mins 1 sec ago
-     | Thu Jan 01 00:00:00 1970 PST | Thu Feb 29 17:32:01 1996 PST | @ 9555 days 17 hours 32 mins 1 sec ago
-     | Thu Jan 01 00:00:00 1970 PST | Fri Mar 01 17:32:01 1996 PST | @ 9556 days 17 hours 32 mins 1 sec ago
-     | Thu Jan 01 00:00:00 1970 PST | Mon Dec 30 17:32:01 1996 PST | @ 9860 days 17 hours 32 mins 1 sec ago
-     | Thu Jan 01 00:00:00 1970 PST | Tue Dec 31 17:32:01 1996 PST | @ 9861 days 17 hours 32 mins 1 sec ago
-     | Thu Jan 01 00:00:00 1970 PST | Fri Dec 31 17:32:01 1999 PST | @ 10956 days 17 hours 32 mins 1 sec ago
-     | Thu Jan 01 00:00:00 1970 PST | Sat Jan 01 17:32:01 2000 PST | @ 10957 days 17 hours 32 mins 1 sec ago
-     | Thu Jan 01 00:00:00 1970 PST | Wed Mar 15 02:14:05 2000 PST | @ 11031 days 2 hours 14 mins 5 secs ago
-     | Thu Jan 01 00:00:00 1970 PST | Wed Mar 15 03:14:04 2000 PST | @ 11031 days 3 hours 14 mins 4 secs ago
-     | Thu Jan 01 00:00:00 1970 PST | Wed Mar 15 08:14:01 2000 PST | @ 11031 days 8 hours 14 mins 1 sec ago
-     | Thu Jan 01 00:00:00 1970 PST | Wed Mar 15 12:14:03 2000 PST | @ 11031 days 12 hours 14 mins 3 secs ago
-     | Thu Jan 01 00:00:00 1970 PST | Wed Mar 15 13:14:02 2000 PST | @ 11031 days 13 hours 14 mins 2 secs ago
-     | Thu Jan 01 00:00:00 1970 PST | Sun Dec 31 17:32:01 2000 PST | @ 11322 days 17 hours 32 mins 1 sec ago
-     | Thu Jan 01 00:00:00 1970 PST | Mon Jan 01 17:32:01 2001 PST | @ 11323 days 17 hours 32 mins 1 sec ago
-     | Thu Jan 01 00:00:00 1970 PST | Sat Sep 22 18:19:20 2001 PDT | @ 11587 days 17 hours 19 mins 20 secs ago
-     | Wed Feb 28 17:32:01 1996 PST | Thu Jan 01 00:00:00 1970 PST | @ 9554 days 17 hours 32 mins 1 sec
-     | Wed Feb 28 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST | @ 0
-     | Wed Feb 28 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST | @ 1 day ago
-     | Wed Feb 28 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST | @ 2 days ago
-     | Wed Feb 28 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST | @ 306 days ago
-     | Wed Feb 28 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST | @ 307 days ago
-     | Wed Feb 28 17:32:01 1996 PST | Fri Dec 31 17:32:01 1999 PST | @ 1402 days ago
-     | Wed Feb 28 17:32:01 1996 PST | Sat Jan 01 17:32:01 2000 PST | @ 1403 days ago
-     | Wed Feb 28 17:32:01 1996 PST | Wed Mar 15 02:14:05 2000 PST | @ 1476 days 8 hours 42 mins 4 secs ago
-     | Wed Feb 28 17:32:01 1996 PST | Wed Mar 15 03:14:04 2000 PST | @ 1476 days 9 hours 42 mins 3 secs ago
-     | Wed Feb 28 17:32:01 1996 PST | Wed Mar 15 08:14:01 2000 PST | @ 1476 days 14 hours 42 mins ago
-     | Wed Feb 28 17:32:01 1996 PST | Wed Mar 15 12:14:03 2000 PST | @ 1476 days 18 hours 42 mins 2 secs ago
-     | Wed Feb 28 17:32:01 1996 PST | Wed Mar 15 13:14:02 2000 PST | @ 1476 days 19 hours 42 mins 1 sec ago
-     | Wed Feb 28 17:32:01 1996 PST | Sun Dec 31 17:32:01 2000 PST | @ 1768 days ago
-     | Wed Feb 28 17:32:01 1996 PST | Mon Jan 01 17:32:01 2001 PST | @ 1769 days ago
-     | Wed Feb 28 17:32:01 1996 PST | Sat Sep 22 18:19:20 2001 PDT | @ 2032 days 23 hours 47 mins 19 secs ago
-     | Thu Feb 29 17:32:01 1996 PST | Thu Jan 01 00:00:00 1970 PST | @ 9555 days 17 hours 32 mins 1 sec
-     | Thu Feb 29 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST | @ 1 day
-     | Thu Feb 29 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST | @ 0
-     | Thu Feb 29 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST | @ 1 day ago
-     | Thu Feb 29 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST | @ 305 days ago
-     | Thu Feb 29 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST | @ 306 days ago
-     | Thu Feb 29 17:32:01 1996 PST | Fri Dec 31 17:32:01 1999 PST | @ 1401 days ago
-     | Thu Feb 29 17:32:01 1996 PST | Sat Jan 01 17:32:01 2000 PST | @ 1402 days ago
-     | Thu Feb 29 17:32:01 1996 PST | Wed Mar 15 02:14:05 2000 PST | @ 1475 days 8 hours 42 mins 4 secs ago
-     | Thu Feb 29 17:32:01 1996 PST | Wed Mar 15 03:14:04 2000 PST | @ 1475 days 9 hours 42 mins 3 secs ago
-     | Thu Feb 29 17:32:01 1996 PST | Wed Mar 15 08:14:01 2000 PST | @ 1475 days 14 hours 42 mins ago
-     | Thu Feb 29 17:32:01 1996 PST | Wed Mar 15 12:14:03 2000 PST | @ 1475 days 18 hours 42 mins 2 secs ago
-     | Thu Feb 29 17:32:01 1996 PST | Wed Mar 15 13:14:02 2000 PST | @ 1475 days 19 hours 42 mins 1 sec ago
-     | Thu Feb 29 17:32:01 1996 PST | Sun Dec 31 17:32:01 2000 PST | @ 1767 days ago
-     | Thu Feb 29 17:32:01 1996 PST | Mon Jan 01 17:32:01 2001 PST | @ 1768 days ago
-     | Thu Feb 29 17:32:01 1996 PST | Sat Sep 22 18:19:20 2001 PDT | @ 2031 days 23 hours 47 mins 19 secs ago
-     | Fri Mar 01 17:32:01 1996 PST | Thu Jan 01 00:00:00 1970 PST | @ 9556 days 17 hours 32 mins 1 sec
-     | Fri Mar 01 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST | @ 2 days
-     | Fri Mar 01 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST | @ 1 day
-     | Fri Mar 01 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST | @ 0
-     | Fri Mar 01 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST | @ 304 days ago
-     | Fri Mar 01 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST | @ 305 days ago
-     | Fri Mar 01 17:32:01 1996 PST | Fri Dec 31 17:32:01 1999 PST | @ 1400 days ago
-     | Fri Mar 01 17:32:01 1996 PST | Sat Jan 01 17:32:01 2000 PST | @ 1401 days ago
-     | Fri Mar 01 17:32:01 1996 PST | Wed Mar 15 02:14:05 2000 PST | @ 1474 days 8 hours 42 mins 4 secs ago
-     | Fri Mar 01 17:32:01 1996 PST | Wed Mar 15 03:14:04 2000 PST | @ 1474 days 9 hours 42 mins 3 secs ago
-     | Fri Mar 01 17:32:01 1996 PST | Wed Mar 15 08:14:01 2000 PST | @ 1474 days 14 hours 42 mins ago
-     | Fri Mar 01 17:32:01 1996 PST | Wed Mar 15 12:14:03 2000 PST | @ 1474 days 18 hours 42 mins 2 secs ago
-     | Fri Mar 01 17:32:01 1996 PST | Wed Mar 15 13:14:02 2000 PST | @ 1474 days 19 hours 42 mins 1 sec ago
-     | Fri Mar 01 17:32:01 1996 PST | Sun Dec 31 17:32:01 2000 PST | @ 1766 days ago
-     | Fri Mar 01 17:32:01 1996 PST | Mon Jan 01 17:32:01 2001 PST | @ 1767 days ago
-     | Fri Mar 01 17:32:01 1996 PST | Sat Sep 22 18:19:20 2001 PDT | @ 2030 days 23 hours 47 mins 19 secs ago
-     | Mon Dec 30 17:32:01 1996 PST | Thu Jan 01 00:00:00 1970 PST | @ 9860 days 17 hours 32 mins 1 sec
-     | Mon Dec 30 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST | @ 306 days
-     | Mon Dec 30 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST | @ 305 days
-     | Mon Dec 30 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST | @ 304 days
-     | Mon Dec 30 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST | @ 0
-     | Mon Dec 30 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST | @ 1 day ago
-     | Mon Dec 30 17:32:01 1996 PST | Fri Dec 31 17:32:01 1999 PST | @ 1096 days ago
-     | Mon Dec 30 17:32:01 1996 PST | Sat Jan 01 17:32:01 2000 PST | @ 1097 days ago
-     | Mon Dec 30 17:32:01 1996 PST | Wed Mar 15 02:14:05 2000 PST | @ 1170 days 8 hours 42 mins 4 secs ago
-     | Mon Dec 30 17:32:01 1996 PST | Wed Mar 15 03:14:04 2000 PST | @ 1170 days 9 hours 42 mins 3 secs ago
-     | Mon Dec 30 17:32:01 1996 PST | Wed Mar 15 08:14:01 2000 PST | @ 1170 days 14 hours 42 mins ago
-     | Mon Dec 30 17:32:01 1996 PST | Wed Mar 15 12:14:03 2000 PST | @ 1170 days 18 hours 42 mins 2 secs ago
-     | Mon Dec 30 17:32:01 1996 PST | Wed Mar 15 13:14:02 2000 PST | @ 1170 days 19 hours 42 mins 1 sec ago
-     | Mon Dec 30 17:32:01 1996 PST | Sun Dec 31 17:32:01 2000 PST | @ 1462 days ago
-     | Mon Dec 30 17:32:01 1996 PST | Mon Jan 01 17:32:01 2001 PST | @ 1463 days ago
-     | Mon Dec 30 17:32:01 1996 PST | Sat Sep 22 18:19:20 2001 PDT | @ 1726 days 23 hours 47 mins 19 secs ago
-     | Tue Dec 31 17:32:01 1996 PST | Thu Jan 01 00:00:00 1970 PST | @ 9861 days 17 hours 32 mins 1 sec
-     | Tue Dec 31 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST | @ 307 days
-     | Tue Dec 31 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST | @ 306 days
-     | Tue Dec 31 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST | @ 305 days
-     | Tue Dec 31 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST | @ 1 day
-     | Tue Dec 31 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST | @ 0
-     | Tue Dec 31 17:32:01 1996 PST | Fri Dec 31 17:32:01 1999 PST | @ 1095 days ago
-     | Tue Dec 31 17:32:01 1996 PST | Sat Jan 01 17:32:01 2000 PST | @ 1096 days ago
-     | Tue Dec 31 17:32:01 1996 PST | Wed Mar 15 02:14:05 2000 PST | @ 1169 days 8 hours 42 mins 4 secs ago
-     | Tue Dec 31 17:32:01 1996 PST | Wed Mar 15 03:14:04 2000 PST | @ 1169 days 9 hours 42 mins 3 secs ago
-     | Tue Dec 31 17:32:01 1996 PST | Wed Mar 15 08:14:01 2000 PST | @ 1169 days 14 hours 42 mins ago
-     | Tue Dec 31 17:32:01 1996 PST | Wed Mar 15 12:14:03 2000 PST | @ 1169 days 18 hours 42 mins 2 secs ago
-     | Tue Dec 31 17:32:01 1996 PST | Wed Mar 15 13:14:02 2000 PST | @ 1169 days 19 hours 42 mins 1 sec ago
-     | Tue Dec 31 17:32:01 1996 PST | Sun Dec 31 17:32:01 2000 PST | @ 1461 days ago
-     | Tue Dec 31 17:32:01 1996 PST | Mon Jan 01 17:32:01 2001 PST | @ 1462 days ago
-     | Tue Dec 31 17:32:01 1996 PST | Sat Sep 22 18:19:20 2001 PDT | @ 1725 days 23 hours 47 mins 19 secs ago
-     | Fri Dec 31 17:32:01 1999 PST | Thu Jan 01 00:00:00 1970 PST | @ 10956 days 17 hours 32 mins 1 sec
-     | Fri Dec 31 17:32:01 1999 PST | Wed Feb 28 17:32:01 1996 PST | @ 1402 days
-     | Fri Dec 31 17:32:01 1999 PST | Thu Feb 29 17:32:01 1996 PST | @ 1401 days
-     | Fri Dec 31 17:32:01 1999 PST | Fri Mar 01 17:32:01 1996 PST | @ 1400 days
-     | Fri Dec 31 17:32:01 1999 PST | Mon Dec 30 17:32:01 1996 PST | @ 1096 days
-     | Fri Dec 31 17:32:01 1999 PST | Tue Dec 31 17:32:01 1996 PST | @ 1095 days
-     | Fri Dec 31 17:32:01 1999 PST | Fri Dec 31 17:32:01 1999 PST | @ 0
-     | Fri Dec 31 17:32:01 1999 PST | Sat Jan 01 17:32:01 2000 PST | @ 1 day ago
-     | Fri Dec 31 17:32:01 1999 PST | Wed Mar 15 02:14:05 2000 PST | @ 74 days 8 hours 42 mins 4 secs ago
-     | Fri Dec 31 17:32:01 1999 PST | Wed Mar 15 03:14:04 2000 PST | @ 74 days 9 hours 42 mins 3 secs ago
-     | Fri Dec 31 17:32:01 1999 PST | Wed Mar 15 08:14:01 2000 PST | @ 74 days 14 hours 42 mins ago
-     | Fri Dec 31 17:32:01 1999 PST | Wed Mar 15 12:14:03 2000 PST | @ 74 days 18 hours 42 mins 2 secs ago
-     | Fri Dec 31 17:32:01 1999 PST | Wed Mar 15 13:14:02 2000 PST | @ 74 days 19 hours 42 mins 1 sec ago
-     | Fri Dec 31 17:32:01 1999 PST | Sun Dec 31 17:32:01 2000 PST | @ 366 days ago
-     | Fri Dec 31 17:32:01 1999 PST | Mon Jan 01 17:32:01 2001 PST | @ 367 days ago
-     | Fri Dec 31 17:32:01 1999 PST | Sat Sep 22 18:19:20 2001 PDT | @ 630 days 23 hours 47 mins 19 secs ago
-     | Sat Jan 01 17:32:01 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 10957 days 17 hours 32 mins 1 sec
-     | Sat Jan 01 17:32:01 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1403 days
-     | Sat Jan 01 17:32:01 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1402 days
-     | Sat Jan 01 17:32:01 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1401 days
-     | Sat Jan 01 17:32:01 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1097 days
-     | Sat Jan 01 17:32:01 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1096 days
-     | Sat Jan 01 17:32:01 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 1 day
-     | Sat Jan 01 17:32:01 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 0
-     | Sat Jan 01 17:32:01 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 73 days 8 hours 42 mins 4 secs ago
-     | Sat Jan 01 17:32:01 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 73 days 9 hours 42 mins 3 secs ago
-     | Sat Jan 01 17:32:01 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 73 days 14 hours 42 mins ago
-     | Sat Jan 01 17:32:01 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 73 days 18 hours 42 mins 2 secs ago
-     | Sat Jan 01 17:32:01 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 73 days 19 hours 42 mins 1 sec ago
-     | Sat Jan 01 17:32:01 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 365 days ago
-     | Sat Jan 01 17:32:01 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 366 days ago
-     | Sat Jan 01 17:32:01 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 629 days 23 hours 47 mins 19 secs ago
-     | Wed Mar 15 02:14:05 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11031 days 2 hours 14 mins 5 secs
-     | Wed Mar 15 02:14:05 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1476 days 8 hours 42 mins 4 secs
-     | Wed Mar 15 02:14:05 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1475 days 8 hours 42 mins 4 secs
-     | Wed Mar 15 02:14:05 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1474 days 8 hours 42 mins 4 secs
-     | Wed Mar 15 02:14:05 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1170 days 8 hours 42 mins 4 secs
-     | Wed Mar 15 02:14:05 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1169 days 8 hours 42 mins 4 secs
-     | Wed Mar 15 02:14:05 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 74 days 8 hours 42 mins 4 secs
-     | Wed Mar 15 02:14:05 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 73 days 8 hours 42 mins 4 secs
-     | Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 0
-     | Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 59 mins 59 secs ago
-     | Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 5 hours 59 mins 56 secs ago
-     | Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 9 hours 59 mins 58 secs ago
-     | Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 10 hours 59 mins 57 secs ago
-     | Wed Mar 15 02:14:05 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 291 days 15 hours 17 mins 56 secs ago
-     | Wed Mar 15 02:14:05 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 292 days 15 hours 17 mins 56 secs ago
-     | Wed Mar 15 02:14:05 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 556 days 15 hours 5 mins 15 secs ago
-     | Wed Mar 15 03:14:04 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11031 days 3 hours 14 mins 4 secs
-     | Wed Mar 15 03:14:04 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1476 days 9 hours 42 mins 3 secs
-     | Wed Mar 15 03:14:04 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1475 days 9 hours 42 mins 3 secs
-     | Wed Mar 15 03:14:04 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1474 days 9 hours 42 mins 3 secs
-     | Wed Mar 15 03:14:04 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1170 days 9 hours 42 mins 3 secs
-     | Wed Mar 15 03:14:04 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1169 days 9 hours 42 mins 3 secs
-     | Wed Mar 15 03:14:04 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 74 days 9 hours 42 mins 3 secs
-     | Wed Mar 15 03:14:04 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 73 days 9 hours 42 mins 3 secs
-     | Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 59 mins 59 secs
-     | Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 0
-     | Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 4 hours 59 mins 57 secs ago
-     | Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 8 hours 59 mins 59 secs ago
-     | Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 9 hours 59 mins 58 secs ago
-     | Wed Mar 15 03:14:04 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 291 days 14 hours 17 mins 57 secs ago
-     | Wed Mar 15 03:14:04 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 292 days 14 hours 17 mins 57 secs ago
-     | Wed Mar 15 03:14:04 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 556 days 14 hours 5 mins 16 secs ago
-     | Wed Mar 15 08:14:01 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11031 days 8 hours 14 mins 1 sec
-     | Wed Mar 15 08:14:01 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1476 days 14 hours 42 mins
-     | Wed Mar 15 08:14:01 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1475 days 14 hours 42 mins
-     | Wed Mar 15 08:14:01 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1474 days 14 hours 42 mins
-     | Wed Mar 15 08:14:01 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1170 days 14 hours 42 mins
-     | Wed Mar 15 08:14:01 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1169 days 14 hours 42 mins
-     | Wed Mar 15 08:14:01 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 74 days 14 hours 42 mins
-     | Wed Mar 15 08:14:01 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 73 days 14 hours 42 mins
-     | Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 5 hours 59 mins 56 secs
-     | Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 4 hours 59 mins 57 secs
-     | Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 0
-     | Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 4 hours 2 secs ago
-     | Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 5 hours 1 sec ago
-     | Wed Mar 15 08:14:01 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 291 days 9 hours 18 mins ago
-     | Wed Mar 15 08:14:01 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 292 days 9 hours 18 mins ago
-     | Wed Mar 15 08:14:01 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 556 days 9 hours 5 mins 19 secs ago
-     | Wed Mar 15 12:14:03 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11031 days 12 hours 14 mins 3 secs
-     | Wed Mar 15 12:14:03 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1476 days 18 hours 42 mins 2 secs
-     | Wed Mar 15 12:14:03 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1475 days 18 hours 42 mins 2 secs
-     | Wed Mar 15 12:14:03 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1474 days 18 hours 42 mins 2 secs
-     | Wed Mar 15 12:14:03 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1170 days 18 hours 42 mins 2 secs
-     | Wed Mar 15 12:14:03 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1169 days 18 hours 42 mins 2 secs
-     | Wed Mar 15 12:14:03 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 74 days 18 hours 42 mins 2 secs
-     | Wed Mar 15 12:14:03 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 73 days 18 hours 42 mins 2 secs
-     | Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 9 hours 59 mins 58 secs
-     | Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 8 hours 59 mins 59 secs
-     | Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 4 hours 2 secs
-     | Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 0
-     | Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 59 mins 59 secs ago
-     | Wed Mar 15 12:14:03 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 291 days 5 hours 17 mins 58 secs ago
-     | Wed Mar 15 12:14:03 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 292 days 5 hours 17 mins 58 secs ago
-     | Wed Mar 15 12:14:03 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 556 days 5 hours 5 mins 17 secs ago
-     | Wed Mar 15 13:14:02 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11031 days 13 hours 14 mins 2 secs
-     | Wed Mar 15 13:14:02 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1476 days 19 hours 42 mins 1 sec
-     | Wed Mar 15 13:14:02 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1475 days 19 hours 42 mins 1 sec
-     | Wed Mar 15 13:14:02 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1474 days 19 hours 42 mins 1 sec
-     | Wed Mar 15 13:14:02 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1170 days 19 hours 42 mins 1 sec
-     | Wed Mar 15 13:14:02 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1169 days 19 hours 42 mins 1 sec
-     | Wed Mar 15 13:14:02 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 74 days 19 hours 42 mins 1 sec
-     | Wed Mar 15 13:14:02 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 73 days 19 hours 42 mins 1 sec
-     | Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 10 hours 59 mins 57 secs
-     | Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 9 hours 59 mins 58 secs
-     | Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 5 hours 1 sec
-     | Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 59 mins 59 secs
-     | Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 0
-     | Wed Mar 15 13:14:02 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 291 days 4 hours 17 mins 59 secs ago
-     | Wed Mar 15 13:14:02 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 292 days 4 hours 17 mins 59 secs ago
-     | Wed Mar 15 13:14:02 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 556 days 4 hours 5 mins 18 secs ago
-     | Sun Dec 31 17:32:01 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11322 days 17 hours 32 mins 1 sec
-     | Sun Dec 31 17:32:01 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1768 days
-     | Sun Dec 31 17:32:01 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1767 days
-     | Sun Dec 31 17:32:01 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1766 days
-     | Sun Dec 31 17:32:01 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1462 days
-     | Sun Dec 31 17:32:01 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1461 days
-     | Sun Dec 31 17:32:01 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 366 days
-     | Sun Dec 31 17:32:01 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 365 days
-     | Sun Dec 31 17:32:01 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 291 days 15 hours 17 mins 56 secs
-     | Sun Dec 31 17:32:01 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 291 days 14 hours 17 mins 57 secs
-     | Sun Dec 31 17:32:01 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 291 days 9 hours 18 mins
-     | Sun Dec 31 17:32:01 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 291 days 5 hours 17 mins 58 secs
-     | Sun Dec 31 17:32:01 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 291 days 4 hours 17 mins 59 secs
-     | Sun Dec 31 17:32:01 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 0
-     | Sun Dec 31 17:32:01 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 1 day ago
-     | Sun Dec 31 17:32:01 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 264 days 23 hours 47 mins 19 secs ago
-     | Mon Jan 01 17:32:01 2001 PST | Thu Jan 01 00:00:00 1970 PST | @ 11323 days 17 hours 32 mins 1 sec
-     | Mon Jan 01 17:32:01 2001 PST | Wed Feb 28 17:32:01 1996 PST | @ 1769 days
-     | Mon Jan 01 17:32:01 2001 PST | Thu Feb 29 17:32:01 1996 PST | @ 1768 days
-     | Mon Jan 01 17:32:01 2001 PST | Fri Mar 01 17:32:01 1996 PST | @ 1767 days
-     | Mon Jan 01 17:32:01 2001 PST | Mon Dec 30 17:32:01 1996 PST | @ 1463 days
-     | Mon Jan 01 17:32:01 2001 PST | Tue Dec 31 17:32:01 1996 PST | @ 1462 days
-     | Mon Jan 01 17:32:01 2001 PST | Fri Dec 31 17:32:01 1999 PST | @ 367 days
-     | Mon Jan 01 17:32:01 2001 PST | Sat Jan 01 17:32:01 2000 PST | @ 366 days
-     | Mon Jan 01 17:32:01 2001 PST | Wed Mar 15 02:14:05 2000 PST | @ 292 days 15 hours 17 mins 56 secs
-     | Mon Jan 01 17:32:01 2001 PST | Wed Mar 15 03:14:04 2000 PST | @ 292 days 14 hours 17 mins 57 secs
-     | Mon Jan 01 17:32:01 2001 PST | Wed Mar 15 08:14:01 2000 PST | @ 292 days 9 hours 18 mins
-     | Mon Jan 01 17:32:01 2001 PST | Wed Mar 15 12:14:03 2000 PST | @ 292 days 5 hours 17 mins 58 secs
-     | Mon Jan 01 17:32:01 2001 PST | Wed Mar 15 13:14:02 2000 PST | @ 292 days 4 hours 17 mins 59 secs
-     | Mon Jan 01 17:32:01 2001 PST | Sun Dec 31 17:32:01 2000 PST | @ 1 day
-     | Mon Jan 01 17:32:01 2001 PST | Mon Jan 01 17:32:01 2001 PST | @ 0
-     | Mon Jan 01 17:32:01 2001 PST | Sat Sep 22 18:19:20 2001 PDT | @ 263 days 23 hours 47 mins 19 secs ago
-     | Sat Sep 22 18:19:20 2001 PDT | Thu Jan 01 00:00:00 1970 PST | @ 11587 days 17 hours 19 mins 20 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Wed Feb 28 17:32:01 1996 PST | @ 2032 days 23 hours 47 mins 19 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Thu Feb 29 17:32:01 1996 PST | @ 2031 days 23 hours 47 mins 19 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Fri Mar 01 17:32:01 1996 PST | @ 2030 days 23 hours 47 mins 19 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Mon Dec 30 17:32:01 1996 PST | @ 1726 days 23 hours 47 mins 19 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Tue Dec 31 17:32:01 1996 PST | @ 1725 days 23 hours 47 mins 19 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Fri Dec 31 17:32:01 1999 PST | @ 630 days 23 hours 47 mins 19 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Sat Jan 01 17:32:01 2000 PST | @ 629 days 23 hours 47 mins 19 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Wed Mar 15 02:14:05 2000 PST | @ 556 days 15 hours 5 mins 15 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Wed Mar 15 03:14:04 2000 PST | @ 556 days 14 hours 5 mins 16 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Wed Mar 15 08:14:01 2000 PST | @ 556 days 9 hours 5 mins 19 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Wed Mar 15 12:14:03 2000 PST | @ 556 days 5 hours 5 mins 17 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Wed Mar 15 13:14:02 2000 PST | @ 556 days 4 hours 5 mins 18 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Sun Dec 31 17:32:01 2000 PST | @ 264 days 23 hours 47 mins 19 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Mon Jan 01 17:32:01 2001 PST | @ 263 days 23 hours 47 mins 19 secs
-     | Sat Sep 22 18:19:20 2001 PDT | Sat Sep 22 18:19:20 2001 PDT | @ 0
+          timestamp1          |          timestamp2          |                difference                 
+------------------------------+------------------------------+-------------------------------------------
+ Thu Jan 01 00:00:00 1970 PST | Thu Jan 01 00:00:00 1970 PST | @ 0
+ Thu Jan 01 00:00:00 1970 PST | Wed Feb 28 17:32:01 1996 PST | @ 9554 days 17 hours 32 mins 1 sec ago
+ Thu Jan 01 00:00:00 1970 PST | Thu Feb 29 17:32:01 1996 PST | @ 9555 days 17 hours 32 mins 1 sec ago
+ Thu Jan 01 00:00:00 1970 PST | Fri Mar 01 17:32:01 1996 PST | @ 9556 days 17 hours 32 mins 1 sec ago
+ Thu Jan 01 00:00:00 1970 PST | Mon Dec 30 17:32:01 1996 PST | @ 9860 days 17 hours 32 mins 1 sec ago
+ Thu Jan 01 00:00:00 1970 PST | Tue Dec 31 17:32:01 1996 PST | @ 9861 days 17 hours 32 mins 1 sec ago
+ Thu Jan 01 00:00:00 1970 PST | Fri Dec 31 17:32:01 1999 PST | @ 10956 days 17 hours 32 mins 1 sec ago
+ Thu Jan 01 00:00:00 1970 PST | Sat Jan 01 17:32:01 2000 PST | @ 10957 days 17 hours 32 mins 1 sec ago
+ Thu Jan 01 00:00:00 1970 PST | Wed Mar 15 02:14:05 2000 PST | @ 11031 days 2 hours 14 mins 5 secs ago
+ Thu Jan 01 00:00:00 1970 PST | Wed Mar 15 03:14:04 2000 PST | @ 11031 days 3 hours 14 mins 4 secs ago
+ Thu Jan 01 00:00:00 1970 PST | Wed Mar 15 08:14:01 2000 PST | @ 11031 days 8 hours 14 mins 1 sec ago
+ Thu Jan 01 00:00:00 1970 PST | Wed Mar 15 12:14:03 2000 PST | @ 11031 days 12 hours 14 mins 3 secs ago
+ Thu Jan 01 00:00:00 1970 PST | Wed Mar 15 13:14:02 2000 PST | @ 11031 days 13 hours 14 mins 2 secs ago
+ Thu Jan 01 00:00:00 1970 PST | Sun Dec 31 17:32:01 2000 PST | @ 11322 days 17 hours 32 mins 1 sec ago
+ Thu Jan 01 00:00:00 1970 PST | Mon Jan 01 17:32:01 2001 PST | @ 11323 days 17 hours 32 mins 1 sec ago
+ Thu Jan 01 00:00:00 1970 PST | Sat Sep 22 18:19:20 2001 PDT | @ 11587 days 17 hours 19 mins 20 secs ago
+ Wed Feb 28 17:32:01 1996 PST | Thu Jan 01 00:00:00 1970 PST | @ 9554 days 17 hours 32 mins 1 sec
+ Wed Feb 28 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST | @ 0
+ Wed Feb 28 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST | @ 1 day ago
+ Wed Feb 28 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST | @ 2 days ago
+ Wed Feb 28 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST | @ 306 days ago
+ Wed Feb 28 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST | @ 307 days ago
+ Wed Feb 28 17:32:01 1996 PST | Fri Dec 31 17:32:01 1999 PST | @ 1402 days ago
+ Wed Feb 28 17:32:01 1996 PST | Sat Jan 01 17:32:01 2000 PST | @ 1403 days ago
+ Wed Feb 28 17:32:01 1996 PST | Wed Mar 15 02:14:05 2000 PST | @ 1476 days 8 hours 42 mins 4 secs ago
+ Wed Feb 28 17:32:01 1996 PST | Wed Mar 15 03:14:04 2000 PST | @ 1476 days 9 hours 42 mins 3 secs ago
+ Wed Feb 28 17:32:01 1996 PST | Wed Mar 15 08:14:01 2000 PST | @ 1476 days 14 hours 42 mins ago
+ Wed Feb 28 17:32:01 1996 PST | Wed Mar 15 12:14:03 2000 PST | @ 1476 days 18 hours 42 mins 2 secs ago
+ Wed Feb 28 17:32:01 1996 PST | Wed Mar 15 13:14:02 2000 PST | @ 1476 days 19 hours 42 mins 1 sec ago
+ Wed Feb 28 17:32:01 1996 PST | Sun Dec 31 17:32:01 2000 PST | @ 1768 days ago
+ Wed Feb 28 17:32:01 1996 PST | Mon Jan 01 17:32:01 2001 PST | @ 1769 days ago
+ Wed Feb 28 17:32:01 1996 PST | Sat Sep 22 18:19:20 2001 PDT | @ 2032 days 23 hours 47 mins 19 secs ago
+ Thu Feb 29 17:32:01 1996 PST | Thu Jan 01 00:00:00 1970 PST | @ 9555 days 17 hours 32 mins 1 sec
+ Thu Feb 29 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST | @ 1 day
+ Thu Feb 29 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST | @ 0
+ Thu Feb 29 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST | @ 1 day ago
+ Thu Feb 29 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST | @ 305 days ago
+ Thu Feb 29 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST | @ 306 days ago
+ Thu Feb 29 17:32:01 1996 PST | Fri Dec 31 17:32:01 1999 PST | @ 1401 days ago
+ Thu Feb 29 17:32:01 1996 PST | Sat Jan 01 17:32:01 2000 PST | @ 1402 days ago
+ Thu Feb 29 17:32:01 1996 PST | Wed Mar 15 02:14:05 2000 PST | @ 1475 days 8 hours 42 mins 4 secs ago
+ Thu Feb 29 17:32:01 1996 PST | Wed Mar 15 03:14:04 2000 PST | @ 1475 days 9 hours 42 mins 3 secs ago
+ Thu Feb 29 17:32:01 1996 PST | Wed Mar 15 08:14:01 2000 PST | @ 1475 days 14 hours 42 mins ago
+ Thu Feb 29 17:32:01 1996 PST | Wed Mar 15 12:14:03 2000 PST | @ 1475 days 18 hours 42 mins 2 secs ago
+ Thu Feb 29 17:32:01 1996 PST | Wed Mar 15 13:14:02 2000 PST | @ 1475 days 19 hours 42 mins 1 sec ago
+ Thu Feb 29 17:32:01 1996 PST | Sun Dec 31 17:32:01 2000 PST | @ 1767 days ago
+ Thu Feb 29 17:32:01 1996 PST | Mon Jan 01 17:32:01 2001 PST | @ 1768 days ago
+ Thu Feb 29 17:32:01 1996 PST | Sat Sep 22 18:19:20 2001 PDT | @ 2031 days 23 hours 47 mins 19 secs ago
+ Fri Mar 01 17:32:01 1996 PST | Thu Jan 01 00:00:00 1970 PST | @ 9556 days 17 hours 32 mins 1 sec
+ Fri Mar 01 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST | @ 2 days
+ Fri Mar 01 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST | @ 1 day
+ Fri Mar 01 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST | @ 0
+ Fri Mar 01 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST | @ 304 days ago
+ Fri Mar 01 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST | @ 305 days ago
+ Fri Mar 01 17:32:01 1996 PST | Fri Dec 31 17:32:01 1999 PST | @ 1400 days ago
+ Fri Mar 01 17:32:01 1996 PST | Sat Jan 01 17:32:01 2000 PST | @ 1401 days ago
+ Fri Mar 01 17:32:01 1996 PST | Wed Mar 15 02:14:05 2000 PST | @ 1474 days 8 hours 42 mins 4 secs ago
+ Fri Mar 01 17:32:01 1996 PST | Wed Mar 15 03:14:04 2000 PST | @ 1474 days 9 hours 42 mins 3 secs ago
+ Fri Mar 01 17:32:01 1996 PST | Wed Mar 15 08:14:01 2000 PST | @ 1474 days 14 hours 42 mins ago
+ Fri Mar 01 17:32:01 1996 PST | Wed Mar 15 12:14:03 2000 PST | @ 1474 days 18 hours 42 mins 2 secs ago
+ Fri Mar 01 17:32:01 1996 PST | Wed Mar 15 13:14:02 2000 PST | @ 1474 days 19 hours 42 mins 1 sec ago
+ Fri Mar 01 17:32:01 1996 PST | Sun Dec 31 17:32:01 2000 PST | @ 1766 days ago
+ Fri Mar 01 17:32:01 1996 PST | Mon Jan 01 17:32:01 2001 PST | @ 1767 days ago
+ Fri Mar 01 17:32:01 1996 PST | Sat Sep 22 18:19:20 2001 PDT | @ 2030 days 23 hours 47 mins 19 secs ago
+ Mon Dec 30 17:32:01 1996 PST | Thu Jan 01 00:00:00 1970 PST | @ 9860 days 17 hours 32 mins 1 sec
+ Mon Dec 30 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST | @ 306 days
+ Mon Dec 30 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST | @ 305 days
+ Mon Dec 30 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST | @ 304 days
+ Mon Dec 30 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST | @ 0
+ Mon Dec 30 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST | @ 1 day ago
+ Mon Dec 30 17:32:01 1996 PST | Fri Dec 31 17:32:01 1999 PST | @ 1096 days ago
+ Mon Dec 30 17:32:01 1996 PST | Sat Jan 01 17:32:01 2000 PST | @ 1097 days ago
+ Mon Dec 30 17:32:01 1996 PST | Wed Mar 15 02:14:05 2000 PST | @ 1170 days 8 hours 42 mins 4 secs ago
+ Mon Dec 30 17:32:01 1996 PST | Wed Mar 15 03:14:04 2000 PST | @ 1170 days 9 hours 42 mins 3 secs ago
+ Mon Dec 30 17:32:01 1996 PST | Wed Mar 15 08:14:01 2000 PST | @ 1170 days 14 hours 42 mins ago
+ Mon Dec 30 17:32:01 1996 PST | Wed Mar 15 12:14:03 2000 PST | @ 1170 days 18 hours 42 mins 2 secs ago
+ Mon Dec 30 17:32:01 1996 PST | Wed Mar 15 13:14:02 2000 PST | @ 1170 days 19 hours 42 mins 1 sec ago
+ Mon Dec 30 17:32:01 1996 PST | Sun Dec 31 17:32:01 2000 PST | @ 1462 days ago
+ Mon Dec 30 17:32:01 1996 PST | Mon Jan 01 17:32:01 2001 PST | @ 1463 days ago
+ Mon Dec 30 17:32:01 1996 PST | Sat Sep 22 18:19:20 2001 PDT | @ 1726 days 23 hours 47 mins 19 secs ago
+ Tue Dec 31 17:32:01 1996 PST | Thu Jan 01 00:00:00 1970 PST | @ 9861 days 17 hours 32 mins 1 sec
+ Tue Dec 31 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST | @ 307 days
+ Tue Dec 31 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST | @ 306 days
+ Tue Dec 31 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST | @ 305 days
+ Tue Dec 31 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST | @ 1 day
+ Tue Dec 31 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST | @ 0
+ Tue Dec 31 17:32:01 1996 PST | Fri Dec 31 17:32:01 1999 PST | @ 1095 days ago
+ Tue Dec 31 17:32:01 1996 PST | Sat Jan 01 17:32:01 2000 PST | @ 1096 days ago
+ Tue Dec 31 17:32:01 1996 PST | Wed Mar 15 02:14:05 2000 PST | @ 1169 days 8 hours 42 mins 4 secs ago
+ Tue Dec 31 17:32:01 1996 PST | Wed Mar 15 03:14:04 2000 PST | @ 1169 days 9 hours 42 mins 3 secs ago
+ Tue Dec 31 17:32:01 1996 PST | Wed Mar 15 08:14:01 2000 PST | @ 1169 days 14 hours 42 mins ago
+ Tue Dec 31 17:32:01 1996 PST | Wed Mar 15 12:14:03 2000 PST | @ 1169 days 18 hours 42 mins 2 secs ago
+ Tue Dec 31 17:32:01 1996 PST | Wed Mar 15 13:14:02 2000 PST | @ 1169 days 19 hours 42 mins 1 sec ago
+ Tue Dec 31 17:32:01 1996 PST | Sun Dec 31 17:32:01 2000 PST | @ 1461 days ago
+ Tue Dec 31 17:32:01 1996 PST | Mon Jan 01 17:32:01 2001 PST | @ 1462 days ago
+ Tue Dec 31 17:32:01 1996 PST | Sat Sep 22 18:19:20 2001 PDT | @ 1725 days 23 hours 47 mins 19 secs ago
+ Fri Dec 31 17:32:01 1999 PST | Thu Jan 01 00:00:00 1970 PST | @ 10956 days 17 hours 32 mins 1 sec
+ Fri Dec 31 17:32:01 1999 PST | Wed Feb 28 17:32:01 1996 PST | @ 1402 days
+ Fri Dec 31 17:32:01 1999 PST | Thu Feb 29 17:32:01 1996 PST | @ 1401 days
+ Fri Dec 31 17:32:01 1999 PST | Fri Mar 01 17:32:01 1996 PST | @ 1400 days
+ Fri Dec 31 17:32:01 1999 PST | Mon Dec 30 17:32:01 1996 PST | @ 1096 days
+ Fri Dec 31 17:32:01 1999 PST | Tue Dec 31 17:32:01 1996 PST | @ 1095 days
+ Fri Dec 31 17:32:01 1999 PST | Fri Dec 31 17:32:01 1999 PST | @ 0
+ Fri Dec 31 17:32:01 1999 PST | Sat Jan 01 17:32:01 2000 PST | @ 1 day ago
+ Fri Dec 31 17:32:01 1999 PST | Wed Mar 15 02:14:05 2000 PST | @ 74 days 8 hours 42 mins 4 secs ago
+ Fri Dec 31 17:32:01 1999 PST | Wed Mar 15 03:14:04 2000 PST | @ 74 days 9 hours 42 mins 3 secs ago
+ Fri Dec 31 17:32:01 1999 PST | Wed Mar 15 08:14:01 2000 PST | @ 74 days 14 hours 42 mins ago
+ Fri Dec 31 17:32:01 1999 PST | Wed Mar 15 12:14:03 2000 PST | @ 74 days 18 hours 42 mins 2 secs ago
+ Fri Dec 31 17:32:01 1999 PST | Wed Mar 15 13:14:02 2000 PST | @ 74 days 19 hours 42 mins 1 sec ago
+ Fri Dec 31 17:32:01 1999 PST | Sun Dec 31 17:32:01 2000 PST | @ 366 days ago
+ Fri Dec 31 17:32:01 1999 PST | Mon Jan 01 17:32:01 2001 PST | @ 367 days ago
+ Fri Dec 31 17:32:01 1999 PST | Sat Sep 22 18:19:20 2001 PDT | @ 630 days 23 hours 47 mins 19 secs ago
+ Sat Jan 01 17:32:01 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 10957 days 17 hours 32 mins 1 sec
+ Sat Jan 01 17:32:01 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1403 days
+ Sat Jan 01 17:32:01 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1402 days
+ Sat Jan 01 17:32:01 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1401 days
+ Sat Jan 01 17:32:01 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1097 days
+ Sat Jan 01 17:32:01 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1096 days
+ Sat Jan 01 17:32:01 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 1 day
+ Sat Jan 01 17:32:01 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 0
+ Sat Jan 01 17:32:01 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 73 days 8 hours 42 mins 4 secs ago
+ Sat Jan 01 17:32:01 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 73 days 9 hours 42 mins 3 secs ago
+ Sat Jan 01 17:32:01 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 73 days 14 hours 42 mins ago
+ Sat Jan 01 17:32:01 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 73 days 18 hours 42 mins 2 secs ago
+ Sat Jan 01 17:32:01 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 73 days 19 hours 42 mins 1 sec ago
+ Sat Jan 01 17:32:01 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 365 days ago
+ Sat Jan 01 17:32:01 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 366 days ago
+ Sat Jan 01 17:32:01 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 629 days 23 hours 47 mins 19 secs ago
+ Wed Mar 15 02:14:05 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11031 days 2 hours 14 mins 5 secs
+ Wed Mar 15 02:14:05 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1476 days 8 hours 42 mins 4 secs
+ Wed Mar 15 02:14:05 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1475 days 8 hours 42 mins 4 secs
+ Wed Mar 15 02:14:05 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1474 days 8 hours 42 mins 4 secs
+ Wed Mar 15 02:14:05 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1170 days 8 hours 42 mins 4 secs
+ Wed Mar 15 02:14:05 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1169 days 8 hours 42 mins 4 secs
+ Wed Mar 15 02:14:05 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 74 days 8 hours 42 mins 4 secs
+ Wed Mar 15 02:14:05 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 73 days 8 hours 42 mins 4 secs
+ Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 0
+ Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 59 mins 59 secs ago
+ Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 5 hours 59 mins 56 secs ago
+ Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 9 hours 59 mins 58 secs ago
+ Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 10 hours 59 mins 57 secs ago
+ Wed Mar 15 02:14:05 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 291 days 15 hours 17 mins 56 secs ago
+ Wed Mar 15 02:14:05 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 292 days 15 hours 17 mins 56 secs ago
+ Wed Mar 15 02:14:05 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 556 days 15 hours 5 mins 15 secs ago
+ Wed Mar 15 03:14:04 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11031 days 3 hours 14 mins 4 secs
+ Wed Mar 15 03:14:04 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1476 days 9 hours 42 mins 3 secs
+ Wed Mar 15 03:14:04 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1475 days 9 hours 42 mins 3 secs
+ Wed Mar 15 03:14:04 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1474 days 9 hours 42 mins 3 secs
+ Wed Mar 15 03:14:04 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1170 days 9 hours 42 mins 3 secs
+ Wed Mar 15 03:14:04 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1169 days 9 hours 42 mins 3 secs
+ Wed Mar 15 03:14:04 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 74 days 9 hours 42 mins 3 secs
+ Wed Mar 15 03:14:04 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 73 days 9 hours 42 mins 3 secs
+ Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 59 mins 59 secs
+ Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 0
+ Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 4 hours 59 mins 57 secs ago
+ Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 8 hours 59 mins 59 secs ago
+ Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 9 hours 59 mins 58 secs ago
+ Wed Mar 15 03:14:04 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 291 days 14 hours 17 mins 57 secs ago
+ Wed Mar 15 03:14:04 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 292 days 14 hours 17 mins 57 secs ago
+ Wed Mar 15 03:14:04 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 556 days 14 hours 5 mins 16 secs ago
+ Wed Mar 15 08:14:01 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11031 days 8 hours 14 mins 1 sec
+ Wed Mar 15 08:14:01 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1476 days 14 hours 42 mins
+ Wed Mar 15 08:14:01 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1475 days 14 hours 42 mins
+ Wed Mar 15 08:14:01 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1474 days 14 hours 42 mins
+ Wed Mar 15 08:14:01 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1170 days 14 hours 42 mins
+ Wed Mar 15 08:14:01 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1169 days 14 hours 42 mins
+ Wed Mar 15 08:14:01 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 74 days 14 hours 42 mins
+ Wed Mar 15 08:14:01 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 73 days 14 hours 42 mins
+ Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 5 hours 59 mins 56 secs
+ Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 4 hours 59 mins 57 secs
+ Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 0
+ Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 4 hours 2 secs ago
+ Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 5 hours 1 sec ago
+ Wed Mar 15 08:14:01 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 291 days 9 hours 18 mins ago
+ Wed Mar 15 08:14:01 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 292 days 9 hours 18 mins ago
+ Wed Mar 15 08:14:01 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 556 days 9 hours 5 mins 19 secs ago
+ Wed Mar 15 12:14:03 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11031 days 12 hours 14 mins 3 secs
+ Wed Mar 15 12:14:03 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1476 days 18 hours 42 mins 2 secs
+ Wed Mar 15 12:14:03 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1475 days 18 hours 42 mins 2 secs
+ Wed Mar 15 12:14:03 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1474 days 18 hours 42 mins 2 secs
+ Wed Mar 15 12:14:03 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1170 days 18 hours 42 mins 2 secs
+ Wed Mar 15 12:14:03 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1169 days 18 hours 42 mins 2 secs
+ Wed Mar 15 12:14:03 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 74 days 18 hours 42 mins 2 secs
+ Wed Mar 15 12:14:03 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 73 days 18 hours 42 mins 2 secs
+ Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 9 hours 59 mins 58 secs
+ Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 8 hours 59 mins 59 secs
+ Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 4 hours 2 secs
+ Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 0
+ Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 59 mins 59 secs ago
+ Wed Mar 15 12:14:03 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 291 days 5 hours 17 mins 58 secs ago
+ Wed Mar 15 12:14:03 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 292 days 5 hours 17 mins 58 secs ago
+ Wed Mar 15 12:14:03 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 556 days 5 hours 5 mins 17 secs ago
+ Wed Mar 15 13:14:02 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11031 days 13 hours 14 mins 2 secs
+ Wed Mar 15 13:14:02 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1476 days 19 hours 42 mins 1 sec
+ Wed Mar 15 13:14:02 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1475 days 19 hours 42 mins 1 sec
+ Wed Mar 15 13:14:02 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1474 days 19 hours 42 mins 1 sec
+ Wed Mar 15 13:14:02 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1170 days 19 hours 42 mins 1 sec
+ Wed Mar 15 13:14:02 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1169 days 19 hours 42 mins 1 sec
+ Wed Mar 15 13:14:02 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 74 days 19 hours 42 mins 1 sec
+ Wed Mar 15 13:14:02 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 73 days 19 hours 42 mins 1 sec
+ Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 10 hours 59 mins 57 secs
+ Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 9 hours 59 mins 58 secs
+ Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 5 hours 1 sec
+ Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 59 mins 59 secs
+ Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 0
+ Wed Mar 15 13:14:02 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 291 days 4 hours 17 mins 59 secs ago
+ Wed Mar 15 13:14:02 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 292 days 4 hours 17 mins 59 secs ago
+ Wed Mar 15 13:14:02 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 556 days 4 hours 5 mins 18 secs ago
+ Sun Dec 31 17:32:01 2000 PST | Thu Jan 01 00:00:00 1970 PST | @ 11322 days 17 hours 32 mins 1 sec
+ Sun Dec 31 17:32:01 2000 PST | Wed Feb 28 17:32:01 1996 PST | @ 1768 days
+ Sun Dec 31 17:32:01 2000 PST | Thu Feb 29 17:32:01 1996 PST | @ 1767 days
+ Sun Dec 31 17:32:01 2000 PST | Fri Mar 01 17:32:01 1996 PST | @ 1766 days
+ Sun Dec 31 17:32:01 2000 PST | Mon Dec 30 17:32:01 1996 PST | @ 1462 days
+ Sun Dec 31 17:32:01 2000 PST | Tue Dec 31 17:32:01 1996 PST | @ 1461 days
+ Sun Dec 31 17:32:01 2000 PST | Fri Dec 31 17:32:01 1999 PST | @ 366 days
+ Sun Dec 31 17:32:01 2000 PST | Sat Jan 01 17:32:01 2000 PST | @ 365 days
+ Sun Dec 31 17:32:01 2000 PST | Wed Mar 15 02:14:05 2000 PST | @ 291 days 15 hours 17 mins 56 secs
+ Sun Dec 31 17:32:01 2000 PST | Wed Mar 15 03:14:04 2000 PST | @ 291 days 14 hours 17 mins 57 secs
+ Sun Dec 31 17:32:01 2000 PST | Wed Mar 15 08:14:01 2000 PST | @ 291 days 9 hours 18 mins
+ Sun Dec 31 17:32:01 2000 PST | Wed Mar 15 12:14:03 2000 PST | @ 291 days 5 hours 17 mins 58 secs
+ Sun Dec 31 17:32:01 2000 PST | Wed Mar 15 13:14:02 2000 PST | @ 291 days 4 hours 17 mins 59 secs
+ Sun Dec 31 17:32:01 2000 PST | Sun Dec 31 17:32:01 2000 PST | @ 0
+ Sun Dec 31 17:32:01 2000 PST | Mon Jan 01 17:32:01 2001 PST | @ 1 day ago
+ Sun Dec 31 17:32:01 2000 PST | Sat Sep 22 18:19:20 2001 PDT | @ 264 days 23 hours 47 mins 19 secs ago
+ Mon Jan 01 17:32:01 2001 PST | Thu Jan 01 00:00:00 1970 PST | @ 11323 days 17 hours 32 mins 1 sec
+ Mon Jan 01 17:32:01 2001 PST | Wed Feb 28 17:32:01 1996 PST | @ 1769 days
+ Mon Jan 01 17:32:01 2001 PST | Thu Feb 29 17:32:01 1996 PST | @ 1768 days
+ Mon Jan 01 17:32:01 2001 PST | Fri Mar 01 17:32:01 1996 PST | @ 1767 days
+ Mon Jan 01 17:32:01 2001 PST | Mon Dec 30 17:32:01 1996 PST | @ 1463 days
+ Mon Jan 01 17:32:01 2001 PST | Tue Dec 31 17:32:01 1996 PST | @ 1462 days
+ Mon Jan 01 17:32:01 2001 PST | Fri Dec 31 17:32:01 1999 PST | @ 367 days
+ Mon Jan 01 17:32:01 2001 PST | Sat Jan 01 17:32:01 2000 PST | @ 366 days
+ Mon Jan 01 17:32:01 2001 PST | Wed Mar 15 02:14:05 2000 PST | @ 292 days 15 hours 17 mins 56 secs
+ Mon Jan 01 17:32:01 2001 PST | Wed Mar 15 03:14:04 2000 PST | @ 292 days 14 hours 17 mins 57 secs
+ Mon Jan 01 17:32:01 2001 PST | Wed Mar 15 08:14:01 2000 PST | @ 292 days 9 hours 18 mins
+ Mon Jan 01 17:32:01 2001 PST | Wed Mar 15 12:14:03 2000 PST | @ 292 days 5 hours 17 mins 58 secs
+ Mon Jan 01 17:32:01 2001 PST | Wed Mar 15 13:14:02 2000 PST | @ 292 days 4 hours 17 mins 59 secs
+ Mon Jan 01 17:32:01 2001 PST | Sun Dec 31 17:32:01 2000 PST | @ 1 day
+ Mon Jan 01 17:32:01 2001 PST | Mon Jan 01 17:32:01 2001 PST | @ 0
+ Mon Jan 01 17:32:01 2001 PST | Sat Sep 22 18:19:20 2001 PDT | @ 263 days 23 hours 47 mins 19 secs ago
+ Sat Sep 22 18:19:20 2001 PDT | Thu Jan 01 00:00:00 1970 PST | @ 11587 days 17 hours 19 mins 20 secs
+ Sat Sep 22 18:19:20 2001 PDT | Wed Feb 28 17:32:01 1996 PST | @ 2032 days 23 hours 47 mins 19 secs
+ Sat Sep 22 18:19:20 2001 PDT | Thu Feb 29 17:32:01 1996 PST | @ 2031 days 23 hours 47 mins 19 secs
+ Sat Sep 22 18:19:20 2001 PDT | Fri Mar 01 17:32:01 1996 PST | @ 2030 days 23 hours 47 mins 19 secs
+ Sat Sep 22 18:19:20 2001 PDT | Mon Dec 30 17:32:01 1996 PST | @ 1726 days 23 hours 47 mins 19 secs
+ Sat Sep 22 18:19:20 2001 PDT | Tue Dec 31 17:32:01 1996 PST | @ 1725 days 23 hours 47 mins 19 secs
+ Sat Sep 22 18:19:20 2001 PDT | Fri Dec 31 17:32:01 1999 PST | @ 630 days 23 hours 47 mins 19 secs
+ Sat Sep 22 18:19:20 2001 PDT | Sat Jan 01 17:32:01 2000 PST | @ 629 days 23 hours 47 mins 19 secs
+ Sat Sep 22 18:19:20 2001 PDT | Wed Mar 15 02:14:05 2000 PST | @ 556 days 15 hours 5 mins 15 secs
+ Sat Sep 22 18:19:20 2001 PDT | Wed Mar 15 03:14:04 2000 PST | @ 556 days 14 hours 5 mins 16 secs
+ Sat Sep 22 18:19:20 2001 PDT | Wed Mar 15 08:14:01 2000 PST | @ 556 days 9 hours 5 mins 19 secs
+ Sat Sep 22 18:19:20 2001 PDT | Wed Mar 15 12:14:03 2000 PST | @ 556 days 5 hours 5 mins 17 secs
+ Sat Sep 22 18:19:20 2001 PDT | Wed Mar 15 13:14:02 2000 PST | @ 556 days 4 hours 5 mins 18 secs
+ Sat Sep 22 18:19:20 2001 PDT | Sun Dec 31 17:32:01 2000 PST | @ 264 days 23 hours 47 mins 19 secs
+ Sat Sep 22 18:19:20 2001 PDT | Mon Jan 01 17:32:01 2001 PST | @ 263 days 23 hours 47 mins 19 secs
+ Sat Sep 22 18:19:20 2001 PDT | Sat Sep 22 18:19:20 2001 PDT | @ 0
 (256 rows)
 
 --
 -- Conversions
 --
-SELECT '' AS "16", f1 AS "timestamp", date(f1) AS date
+SELECT f1 AS "timestamp", date(f1) AS date
   FROM TEMP_TIMESTAMP
   WHERE f1 <> timestamp 'now'
   ORDER BY date, "timestamp";
- 16 |          timestamp           |    date    
-----+------------------------------+------------
-    | Thu Jan 01 00:00:00 1970 PST | 01-01-1970
-    | Wed Feb 28 17:32:01 1996 PST | 02-28-1996
-    | Thu Feb 29 17:32:01 1996 PST | 02-29-1996
-    | Fri Mar 01 17:32:01 1996 PST | 03-01-1996
-    | Mon Dec 30 17:32:01 1996 PST | 12-30-1996
-    | Tue Dec 31 17:32:01 1996 PST | 12-31-1996
-    | Fri Dec 31 17:32:01 1999 PST | 12-31-1999
-    | Sat Jan 01 17:32:01 2000 PST | 01-01-2000
-    | Wed Mar 15 02:14:05 2000 PST | 03-15-2000
-    | Wed Mar 15 03:14:04 2000 PST | 03-15-2000
-    | Wed Mar 15 08:14:01 2000 PST | 03-15-2000
-    | Wed Mar 15 12:14:03 2000 PST | 03-15-2000
-    | Wed Mar 15 13:14:02 2000 PST | 03-15-2000
-    | Sun Dec 31 17:32:01 2000 PST | 12-31-2000
-    | Mon Jan 01 17:32:01 2001 PST | 01-01-2001
-    | Sat Sep 22 18:19:20 2001 PDT | 09-22-2001
+          timestamp           |    date    
+------------------------------+------------
+ Thu Jan 01 00:00:00 1970 PST | 01-01-1970
+ Wed Feb 28 17:32:01 1996 PST | 02-28-1996
+ Thu Feb 29 17:32:01 1996 PST | 02-29-1996
+ Fri Mar 01 17:32:01 1996 PST | 03-01-1996
+ Mon Dec 30 17:32:01 1996 PST | 12-30-1996
+ Tue Dec 31 17:32:01 1996 PST | 12-31-1996
+ Fri Dec 31 17:32:01 1999 PST | 12-31-1999
+ Sat Jan 01 17:32:01 2000 PST | 01-01-2000
+ Wed Mar 15 02:14:05 2000 PST | 03-15-2000
+ Wed Mar 15 03:14:04 2000 PST | 03-15-2000
+ Wed Mar 15 08:14:01 2000 PST | 03-15-2000
+ Wed Mar 15 12:14:03 2000 PST | 03-15-2000
+ Wed Mar 15 13:14:02 2000 PST | 03-15-2000
+ Sun Dec 31 17:32:01 2000 PST | 12-31-2000
+ Mon Jan 01 17:32:01 2001 PST | 01-01-2001
+ Sat Sep 22 18:19:20 2001 PDT | 09-22-2001
 (16 rows)
 
 DROP TABLE TEMP_TIMESTAMP;
@@ -2157,145 +2157,145 @@ SHOW DateStyle;
  Postgres, MDY
 (1 row)
 
-SELECT '' AS "64", d1 AS us_postgres FROM TIMESTAMP_TBL;
- 64 |         us_postgres         
-----+-----------------------------
-    | -infinity
-    | infinity
-    | Thu Jan 01 00:00:00 1970
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:02 1997
-    | Mon Feb 10 17:32:01.4 1997
-    | Mon Feb 10 17:32:01.5 1997
-    | Mon Feb 10 17:32:01.6 1997
-    | Thu Jan 02 00:00:00 1997
-    | Thu Jan 02 03:04:05 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Tue Jun 10 17:32:01 1997
-    | Sat Sep 22 18:19:20 2001
-    | Wed Mar 15 08:14:01 2000
-    | Wed Mar 15 13:14:02 2000
-    | Wed Mar 15 12:14:03 2000
-    | Wed Mar 15 03:14:04 2000
-    | Wed Mar 15 02:14:05 2000
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:00 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Tue Jun 10 18:32:01 1997
-    | Mon Feb 10 17:32:01 1997
-    | Tue Feb 11 17:32:01 1997
-    | Wed Feb 12 17:32:01 1997
-    | Thu Feb 13 17:32:01 1997
-    | Fri Feb 14 17:32:01 1997
-    | Sat Feb 15 17:32:01 1997
-    | Sun Feb 16 17:32:01 1997
-    | Tue Feb 16 17:32:01 0097 BC
-    | Sat Feb 16 17:32:01 0097
-    | Thu Feb 16 17:32:01 0597
-    | Tue Feb 16 17:32:01 1097
-    | Sat Feb 16 17:32:01 1697
-    | Thu Feb 16 17:32:01 1797
-    | Tue Feb 16 17:32:01 1897
-    | Sun Feb 16 17:32:01 1997
-    | Sat Feb 16 17:32:01 2097
-    | Wed Feb 28 17:32:01 1996
-    | Thu Feb 29 17:32:01 1996
-    | Fri Mar 01 17:32:01 1996
-    | Mon Dec 30 17:32:01 1996
-    | Tue Dec 31 17:32:01 1996
-    | Wed Jan 01 17:32:01 1997
-    | Fri Feb 28 17:32:01 1997
-    | Sat Mar 01 17:32:01 1997
-    | Tue Dec 30 17:32:01 1997
-    | Wed Dec 31 17:32:01 1997
-    | Fri Dec 31 17:32:01 1999
-    | Sat Jan 01 17:32:01 2000
-    | Sun Dec 31 17:32:01 2000
-    | Mon Jan 01 17:32:01 2001
+SELECT d1 AS us_postgres FROM TIMESTAMP_TBL;
+         us_postgres         
+-----------------------------
+ -infinity
+ infinity
+ Thu Jan 01 00:00:00 1970
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:02 1997
+ Mon Feb 10 17:32:01.4 1997
+ Mon Feb 10 17:32:01.5 1997
+ Mon Feb 10 17:32:01.6 1997
+ Thu Jan 02 00:00:00 1997
+ Thu Jan 02 03:04:05 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Tue Jun 10 17:32:01 1997
+ Sat Sep 22 18:19:20 2001
+ Wed Mar 15 08:14:01 2000
+ Wed Mar 15 13:14:02 2000
+ Wed Mar 15 12:14:03 2000
+ Wed Mar 15 03:14:04 2000
+ Wed Mar 15 02:14:05 2000
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:00 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Tue Jun 10 18:32:01 1997
+ Mon Feb 10 17:32:01 1997
+ Tue Feb 11 17:32:01 1997
+ Wed Feb 12 17:32:01 1997
+ Thu Feb 13 17:32:01 1997
+ Fri Feb 14 17:32:01 1997
+ Sat Feb 15 17:32:01 1997
+ Sun Feb 16 17:32:01 1997
+ Tue Feb 16 17:32:01 0097 BC
+ Sat Feb 16 17:32:01 0097
+ Thu Feb 16 17:32:01 0597
+ Tue Feb 16 17:32:01 1097
+ Sat Feb 16 17:32:01 1697
+ Thu Feb 16 17:32:01 1797
+ Tue Feb 16 17:32:01 1897
+ Sun Feb 16 17:32:01 1997
+ Sat Feb 16 17:32:01 2097
+ Wed Feb 28 17:32:01 1996
+ Thu Feb 29 17:32:01 1996
+ Fri Mar 01 17:32:01 1996
+ Mon Dec 30 17:32:01 1996
+ Tue Dec 31 17:32:01 1996
+ Wed Jan 01 17:32:01 1997
+ Fri Feb 28 17:32:01 1997
+ Sat Mar 01 17:32:01 1997
+ Tue Dec 30 17:32:01 1997
+ Wed Dec 31 17:32:01 1997
+ Fri Dec 31 17:32:01 1999
+ Sat Jan 01 17:32:01 2000
+ Sun Dec 31 17:32:01 2000
+ Mon Jan 01 17:32:01 2001
 (65 rows)
 
 SET DateStyle TO 'US,ISO';
-SELECT '' AS "64", d1 AS us_iso FROM TIMESTAMP_TBL;
- 64 |         us_iso         
-----+------------------------
-    | -infinity
-    | infinity
-    | 1970-01-01 00:00:00
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:02
-    | 1997-02-10 17:32:01.4
-    | 1997-02-10 17:32:01.5
-    | 1997-02-10 17:32:01.6
-    | 1997-01-02 00:00:00
-    | 1997-01-02 03:04:05
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-06-10 17:32:01
-    | 2001-09-22 18:19:20
-    | 2000-03-15 08:14:01
-    | 2000-03-15 13:14:02
-    | 2000-03-15 12:14:03
-    | 2000-03-15 03:14:04
-    | 2000-03-15 02:14:05
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:00
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-06-10 18:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-11 17:32:01
-    | 1997-02-12 17:32:01
-    | 1997-02-13 17:32:01
-    | 1997-02-14 17:32:01
-    | 1997-02-15 17:32:01
-    | 1997-02-16 17:32:01
-    | 0097-02-16 17:32:01 BC
-    | 0097-02-16 17:32:01
-    | 0597-02-16 17:32:01
-    | 1097-02-16 17:32:01
-    | 1697-02-16 17:32:01
-    | 1797-02-16 17:32:01
-    | 1897-02-16 17:32:01
-    | 1997-02-16 17:32:01
-    | 2097-02-16 17:32:01
-    | 1996-02-28 17:32:01
-    | 1996-02-29 17:32:01
-    | 1996-03-01 17:32:01
-    | 1996-12-30 17:32:01
-    | 1996-12-31 17:32:01
-    | 1997-01-01 17:32:01
-    | 1997-02-28 17:32:01
-    | 1997-03-01 17:32:01
-    | 1997-12-30 17:32:01
-    | 1997-12-31 17:32:01
-    | 1999-12-31 17:32:01
-    | 2000-01-01 17:32:01
-    | 2000-12-31 17:32:01
-    | 2001-01-01 17:32:01
+SELECT d1 AS us_iso FROM TIMESTAMP_TBL;
+         us_iso         
+------------------------
+ -infinity
+ infinity
+ 1970-01-01 00:00:00
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:02
+ 1997-02-10 17:32:01.4
+ 1997-02-10 17:32:01.5
+ 1997-02-10 17:32:01.6
+ 1997-01-02 00:00:00
+ 1997-01-02 03:04:05
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-06-10 17:32:01
+ 2001-09-22 18:19:20
+ 2000-03-15 08:14:01
+ 2000-03-15 13:14:02
+ 2000-03-15 12:14:03
+ 2000-03-15 03:14:04
+ 2000-03-15 02:14:05
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:00
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-06-10 18:32:01
+ 1997-02-10 17:32:01
+ 1997-02-11 17:32:01
+ 1997-02-12 17:32:01
+ 1997-02-13 17:32:01
+ 1997-02-14 17:32:01
+ 1997-02-15 17:32:01
+ 1997-02-16 17:32:01
+ 0097-02-16 17:32:01 BC
+ 0097-02-16 17:32:01
+ 0597-02-16 17:32:01
+ 1097-02-16 17:32:01
+ 1697-02-16 17:32:01
+ 1797-02-16 17:32:01
+ 1897-02-16 17:32:01
+ 1997-02-16 17:32:01
+ 2097-02-16 17:32:01
+ 1996-02-28 17:32:01
+ 1996-02-29 17:32:01
+ 1996-03-01 17:32:01
+ 1996-12-30 17:32:01
+ 1996-12-31 17:32:01
+ 1997-01-01 17:32:01
+ 1997-02-28 17:32:01
+ 1997-03-01 17:32:01
+ 1997-12-30 17:32:01
+ 1997-12-31 17:32:01
+ 1999-12-31 17:32:01
+ 2000-01-01 17:32:01
+ 2000-12-31 17:32:01
+ 2001-01-01 17:32:01
 (65 rows)
 
 SET DateStyle TO 'US,SQL';
@@ -2305,74 +2305,74 @@ SHOW DateStyle;
  SQL, MDY
 (1 row)
 
-SELECT '' AS "64", d1 AS us_sql FROM TIMESTAMP_TBL;
- 64 |         us_sql         
-----+------------------------
-    | -infinity
-    | infinity
-    | 01/01/1970 00:00:00
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:02
-    | 02/10/1997 17:32:01.4
-    | 02/10/1997 17:32:01.5
-    | 02/10/1997 17:32:01.6
-    | 01/02/1997 00:00:00
-    | 01/02/1997 03:04:05
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 06/10/1997 17:32:01
-    | 09/22/2001 18:19:20
-    | 03/15/2000 08:14:01
-    | 03/15/2000 13:14:02
-    | 03/15/2000 12:14:03
-    | 03/15/2000 03:14:04
-    | 03/15/2000 02:14:05
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:00
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 02/10/1997 17:32:01
-    | 06/10/1997 18:32:01
-    | 02/10/1997 17:32:01
-    | 02/11/1997 17:32:01
-    | 02/12/1997 17:32:01
-    | 02/13/1997 17:32:01
-    | 02/14/1997 17:32:01
-    | 02/15/1997 17:32:01
-    | 02/16/1997 17:32:01
-    | 02/16/0097 17:32:01 BC
-    | 02/16/0097 17:32:01
-    | 02/16/0597 17:32:01
-    | 02/16/1097 17:32:01
-    | 02/16/1697 17:32:01
-    | 02/16/1797 17:32:01
-    | 02/16/1897 17:32:01
-    | 02/16/1997 17:32:01
-    | 02/16/2097 17:32:01
-    | 02/28/1996 17:32:01
-    | 02/29/1996 17:32:01
-    | 03/01/1996 17:32:01
-    | 12/30/1996 17:32:01
-    | 12/31/1996 17:32:01
-    | 01/01/1997 17:32:01
-    | 02/28/1997 17:32:01
-    | 03/01/1997 17:32:01
-    | 12/30/1997 17:32:01
-    | 12/31/1997 17:32:01
-    | 12/31/1999 17:32:01
-    | 01/01/2000 17:32:01
-    | 12/31/2000 17:32:01
-    | 01/01/2001 17:32:01
+SELECT d1 AS us_sql FROM TIMESTAMP_TBL;
+         us_sql         
+------------------------
+ -infinity
+ infinity
+ 01/01/1970 00:00:00
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:02
+ 02/10/1997 17:32:01.4
+ 02/10/1997 17:32:01.5
+ 02/10/1997 17:32:01.6
+ 01/02/1997 00:00:00
+ 01/02/1997 03:04:05
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 06/10/1997 17:32:01
+ 09/22/2001 18:19:20
+ 03/15/2000 08:14:01
+ 03/15/2000 13:14:02
+ 03/15/2000 12:14:03
+ 03/15/2000 03:14:04
+ 03/15/2000 02:14:05
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:00
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 02/10/1997 17:32:01
+ 06/10/1997 18:32:01
+ 02/10/1997 17:32:01
+ 02/11/1997 17:32:01
+ 02/12/1997 17:32:01
+ 02/13/1997 17:32:01
+ 02/14/1997 17:32:01
+ 02/15/1997 17:32:01
+ 02/16/1997 17:32:01
+ 02/16/0097 17:32:01 BC
+ 02/16/0097 17:32:01
+ 02/16/0597 17:32:01
+ 02/16/1097 17:32:01
+ 02/16/1697 17:32:01
+ 02/16/1797 17:32:01
+ 02/16/1897 17:32:01
+ 02/16/1997 17:32:01
+ 02/16/2097 17:32:01
+ 02/28/1996 17:32:01
+ 02/29/1996 17:32:01
+ 03/01/1996 17:32:01
+ 12/30/1996 17:32:01
+ 12/31/1996 17:32:01
+ 01/01/1997 17:32:01
+ 02/28/1997 17:32:01
+ 03/01/1997 17:32:01
+ 12/30/1997 17:32:01
+ 12/31/1997 17:32:01
+ 12/31/1999 17:32:01
+ 01/01/2000 17:32:01
+ 12/31/2000 17:32:01
+ 01/01/2001 17:32:01
 (65 rows)
 
 SET DateStyle TO 'European,Postgres';
@@ -2389,75 +2389,75 @@ SELECT count(*) as one FROM TIMESTAMP_TBL WHERE d1 = 'Jun 13 1957';
    1
 (1 row)
 
-SELECT '' AS "65", d1 AS european_postgres FROM TIMESTAMP_TBL;
- 65 |      european_postgres      
-----+-----------------------------
-    | -infinity
-    | infinity
-    | Thu 01 Jan 00:00:00 1970
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:02 1997
-    | Mon 10 Feb 17:32:01.4 1997
-    | Mon 10 Feb 17:32:01.5 1997
-    | Mon 10 Feb 17:32:01.6 1997
-    | Thu 02 Jan 00:00:00 1997
-    | Thu 02 Jan 03:04:05 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Tue 10 Jun 17:32:01 1997
-    | Sat 22 Sep 18:19:20 2001
-    | Wed 15 Mar 08:14:01 2000
-    | Wed 15 Mar 13:14:02 2000
-    | Wed 15 Mar 12:14:03 2000
-    | Wed 15 Mar 03:14:04 2000
-    | Wed 15 Mar 02:14:05 2000
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:00 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Tue 10 Jun 18:32:01 1997
-    | Mon 10 Feb 17:32:01 1997
-    | Tue 11 Feb 17:32:01 1997
-    | Wed 12 Feb 17:32:01 1997
-    | Thu 13 Feb 17:32:01 1997
-    | Fri 14 Feb 17:32:01 1997
-    | Sat 15 Feb 17:32:01 1997
-    | Sun 16 Feb 17:32:01 1997
-    | Tue 16 Feb 17:32:01 0097 BC
-    | Sat 16 Feb 17:32:01 0097
-    | Thu 16 Feb 17:32:01 0597
-    | Tue 16 Feb 17:32:01 1097
-    | Sat 16 Feb 17:32:01 1697
-    | Thu 16 Feb 17:32:01 1797
-    | Tue 16 Feb 17:32:01 1897
-    | Sun 16 Feb 17:32:01 1997
-    | Sat 16 Feb 17:32:01 2097
-    | Wed 28 Feb 17:32:01 1996
-    | Thu 29 Feb 17:32:01 1996
-    | Fri 01 Mar 17:32:01 1996
-    | Mon 30 Dec 17:32:01 1996
-    | Tue 31 Dec 17:32:01 1996
-    | Wed 01 Jan 17:32:01 1997
-    | Fri 28 Feb 17:32:01 1997
-    | Sat 01 Mar 17:32:01 1997
-    | Tue 30 Dec 17:32:01 1997
-    | Wed 31 Dec 17:32:01 1997
-    | Fri 31 Dec 17:32:01 1999
-    | Sat 01 Jan 17:32:01 2000
-    | Sun 31 Dec 17:32:01 2000
-    | Mon 01 Jan 17:32:01 2001
-    | Thu 13 Jun 00:00:00 1957
+SELECT d1 AS european_postgres FROM TIMESTAMP_TBL;
+      european_postgres      
+-----------------------------
+ -infinity
+ infinity
+ Thu 01 Jan 00:00:00 1970
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:02 1997
+ Mon 10 Feb 17:32:01.4 1997
+ Mon 10 Feb 17:32:01.5 1997
+ Mon 10 Feb 17:32:01.6 1997
+ Thu 02 Jan 00:00:00 1997
+ Thu 02 Jan 03:04:05 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Tue 10 Jun 17:32:01 1997
+ Sat 22 Sep 18:19:20 2001
+ Wed 15 Mar 08:14:01 2000
+ Wed 15 Mar 13:14:02 2000
+ Wed 15 Mar 12:14:03 2000
+ Wed 15 Mar 03:14:04 2000
+ Wed 15 Mar 02:14:05 2000
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:00 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Tue 10 Jun 18:32:01 1997
+ Mon 10 Feb 17:32:01 1997
+ Tue 11 Feb 17:32:01 1997
+ Wed 12 Feb 17:32:01 1997
+ Thu 13 Feb 17:32:01 1997
+ Fri 14 Feb 17:32:01 1997
+ Sat 15 Feb 17:32:01 1997
+ Sun 16 Feb 17:32:01 1997
+ Tue 16 Feb 17:32:01 0097 BC
+ Sat 16 Feb 17:32:01 0097
+ Thu 16 Feb 17:32:01 0597
+ Tue 16 Feb 17:32:01 1097
+ Sat 16 Feb 17:32:01 1697
+ Thu 16 Feb 17:32:01 1797
+ Tue 16 Feb 17:32:01 1897
+ Sun 16 Feb 17:32:01 1997
+ Sat 16 Feb 17:32:01 2097
+ Wed 28 Feb 17:32:01 1996
+ Thu 29 Feb 17:32:01 1996
+ Fri 01 Mar 17:32:01 1996
+ Mon 30 Dec 17:32:01 1996
+ Tue 31 Dec 17:32:01 1996
+ Wed 01 Jan 17:32:01 1997
+ Fri 28 Feb 17:32:01 1997
+ Sat 01 Mar 17:32:01 1997
+ Tue 30 Dec 17:32:01 1997
+ Wed 31 Dec 17:32:01 1997
+ Fri 31 Dec 17:32:01 1999
+ Sat 01 Jan 17:32:01 2000
+ Sun 31 Dec 17:32:01 2000
+ Mon 01 Jan 17:32:01 2001
+ Thu 13 Jun 00:00:00 1957
 (66 rows)
 
 SET DateStyle TO 'European,ISO';
@@ -2467,75 +2467,75 @@ SHOW DateStyle;
  ISO, DMY
 (1 row)
 
-SELECT '' AS "65", d1 AS european_iso FROM TIMESTAMP_TBL;
- 65 |      european_iso      
-----+------------------------
-    | -infinity
-    | infinity
-    | 1970-01-01 00:00:00
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:02
-    | 1997-02-10 17:32:01.4
-    | 1997-02-10 17:32:01.5
-    | 1997-02-10 17:32:01.6
-    | 1997-01-02 00:00:00
-    | 1997-01-02 03:04:05
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-06-10 17:32:01
-    | 2001-09-22 18:19:20
-    | 2000-03-15 08:14:01
-    | 2000-03-15 13:14:02
-    | 2000-03-15 12:14:03
-    | 2000-03-15 03:14:04
-    | 2000-03-15 02:14:05
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:00
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-10 17:32:01
-    | 1997-06-10 18:32:01
-    | 1997-02-10 17:32:01
-    | 1997-02-11 17:32:01
-    | 1997-02-12 17:32:01
-    | 1997-02-13 17:32:01
-    | 1997-02-14 17:32:01
-    | 1997-02-15 17:32:01
-    | 1997-02-16 17:32:01
-    | 0097-02-16 17:32:01 BC
-    | 0097-02-16 17:32:01
-    | 0597-02-16 17:32:01
-    | 1097-02-16 17:32:01
-    | 1697-02-16 17:32:01
-    | 1797-02-16 17:32:01
-    | 1897-02-16 17:32:01
-    | 1997-02-16 17:32:01
-    | 2097-02-16 17:32:01
-    | 1996-02-28 17:32:01
-    | 1996-02-29 17:32:01
-    | 1996-03-01 17:32:01
-    | 1996-12-30 17:32:01
-    | 1996-12-31 17:32:01
-    | 1997-01-01 17:32:01
-    | 1997-02-28 17:32:01
-    | 1997-03-01 17:32:01
-    | 1997-12-30 17:32:01
-    | 1997-12-31 17:32:01
-    | 1999-12-31 17:32:01
-    | 2000-01-01 17:32:01
-    | 2000-12-31 17:32:01
-    | 2001-01-01 17:32:01
-    | 1957-06-13 00:00:00
+SELECT d1 AS european_iso FROM TIMESTAMP_TBL;
+      european_iso      
+------------------------
+ -infinity
+ infinity
+ 1970-01-01 00:00:00
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:02
+ 1997-02-10 17:32:01.4
+ 1997-02-10 17:32:01.5
+ 1997-02-10 17:32:01.6
+ 1997-01-02 00:00:00
+ 1997-01-02 03:04:05
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-06-10 17:32:01
+ 2001-09-22 18:19:20
+ 2000-03-15 08:14:01
+ 2000-03-15 13:14:02
+ 2000-03-15 12:14:03
+ 2000-03-15 03:14:04
+ 2000-03-15 02:14:05
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:00
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-02-10 17:32:01
+ 1997-06-10 18:32:01
+ 1997-02-10 17:32:01
+ 1997-02-11 17:32:01
+ 1997-02-12 17:32:01
+ 1997-02-13 17:32:01
+ 1997-02-14 17:32:01
+ 1997-02-15 17:32:01
+ 1997-02-16 17:32:01
+ 0097-02-16 17:32:01 BC
+ 0097-02-16 17:32:01
+ 0597-02-16 17:32:01
+ 1097-02-16 17:32:01
+ 1697-02-16 17:32:01
+ 1797-02-16 17:32:01
+ 1897-02-16 17:32:01
+ 1997-02-16 17:32:01
+ 2097-02-16 17:32:01
+ 1996-02-28 17:32:01
+ 1996-02-29 17:32:01
+ 1996-03-01 17:32:01
+ 1996-12-30 17:32:01
+ 1996-12-31 17:32:01
+ 1997-01-01 17:32:01
+ 1997-02-28 17:32:01
+ 1997-03-01 17:32:01
+ 1997-12-30 17:32:01
+ 1997-12-31 17:32:01
+ 1999-12-31 17:32:01
+ 2000-01-01 17:32:01
+ 2000-12-31 17:32:01
+ 2001-01-01 17:32:01
+ 1957-06-13 00:00:00
 (66 rows)
 
 SET DateStyle TO 'European,SQL';
@@ -2545,75 +2545,75 @@ SHOW DateStyle;
  SQL, DMY
 (1 row)
 
-SELECT '' AS "65", d1 AS european_sql FROM TIMESTAMP_TBL;
- 65 |      european_sql      
-----+------------------------
-    | -infinity
-    | infinity
-    | 01/01/1970 00:00:00
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:02
-    | 10/02/1997 17:32:01.4
-    | 10/02/1997 17:32:01.5
-    | 10/02/1997 17:32:01.6
-    | 02/01/1997 00:00:00
-    | 02/01/1997 03:04:05
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/06/1997 17:32:01
-    | 22/09/2001 18:19:20
-    | 15/03/2000 08:14:01
-    | 15/03/2000 13:14:02
-    | 15/03/2000 12:14:03
-    | 15/03/2000 03:14:04
-    | 15/03/2000 02:14:05
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:00
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/02/1997 17:32:01
-    | 10/06/1997 18:32:01
-    | 10/02/1997 17:32:01
-    | 11/02/1997 17:32:01
-    | 12/02/1997 17:32:01
-    | 13/02/1997 17:32:01
-    | 14/02/1997 17:32:01
-    | 15/02/1997 17:32:01
-    | 16/02/1997 17:32:01
-    | 16/02/0097 17:32:01 BC
-    | 16/02/0097 17:32:01
-    | 16/02/0597 17:32:01
-    | 16/02/1097 17:32:01
-    | 16/02/1697 17:32:01
-    | 16/02/1797 17:32:01
-    | 16/02/1897 17:32:01
-    | 16/02/1997 17:32:01
-    | 16/02/2097 17:32:01
-    | 28/02/1996 17:32:01
-    | 29/02/1996 17:32:01
-    | 01/03/1996 17:32:01
-    | 30/12/1996 17:32:01
-    | 31/12/1996 17:32:01
-    | 01/01/1997 17:32:01
-    | 28/02/1997 17:32:01
-    | 01/03/1997 17:32:01
-    | 30/12/1997 17:32:01
-    | 31/12/1997 17:32:01
-    | 31/12/1999 17:32:01
-    | 01/01/2000 17:32:01
-    | 31/12/2000 17:32:01
-    | 01/01/2001 17:32:01
-    | 13/06/1957 00:00:00
+SELECT d1 AS european_sql FROM TIMESTAMP_TBL;
+      european_sql      
+------------------------
+ -infinity
+ infinity
+ 01/01/1970 00:00:00
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:02
+ 10/02/1997 17:32:01.4
+ 10/02/1997 17:32:01.5
+ 10/02/1997 17:32:01.6
+ 02/01/1997 00:00:00
+ 02/01/1997 03:04:05
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/06/1997 17:32:01
+ 22/09/2001 18:19:20
+ 15/03/2000 08:14:01
+ 15/03/2000 13:14:02
+ 15/03/2000 12:14:03
+ 15/03/2000 03:14:04
+ 15/03/2000 02:14:05
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:00
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/02/1997 17:32:01
+ 10/06/1997 18:32:01
+ 10/02/1997 17:32:01
+ 11/02/1997 17:32:01
+ 12/02/1997 17:32:01
+ 13/02/1997 17:32:01
+ 14/02/1997 17:32:01
+ 15/02/1997 17:32:01
+ 16/02/1997 17:32:01
+ 16/02/0097 17:32:01 BC
+ 16/02/0097 17:32:01
+ 16/02/0597 17:32:01
+ 16/02/1097 17:32:01
+ 16/02/1697 17:32:01
+ 16/02/1797 17:32:01
+ 16/02/1897 17:32:01
+ 16/02/1997 17:32:01
+ 16/02/2097 17:32:01
+ 28/02/1996 17:32:01
+ 29/02/1996 17:32:01
+ 01/03/1996 17:32:01
+ 30/12/1996 17:32:01
+ 31/12/1996 17:32:01
+ 01/01/1997 17:32:01
+ 28/02/1997 17:32:01
+ 01/03/1997 17:32:01
+ 30/12/1997 17:32:01
+ 31/12/1997 17:32:01
+ 31/12/1999 17:32:01
+ 01/01/2000 17:32:01
+ 31/12/2000 17:32:01
+ 01/01/2001 17:32:01
+ 13/06/1957 00:00:00
 (66 rows)
 
 RESET DateStyle;
