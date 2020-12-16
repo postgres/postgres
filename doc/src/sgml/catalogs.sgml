@@ -12493,7 +12493,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       </para>
       <para>
        The offset at which the allocation starts. NULL for anonymous
-       allocations and unused memory.
+       allocations, since details related to them are not known.
       </para></entry>
      </row>
 
