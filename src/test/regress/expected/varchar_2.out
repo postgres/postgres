@@ -53,7 +53,7 @@ SELECT c.*
  f1 
 ----
  
-(1 rows)
+(1 row)
 
 SELECT c.*
    FROM VARCHAR_TBL c
