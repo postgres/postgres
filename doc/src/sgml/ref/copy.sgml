@@ -411,26 +411,22 @@ COPY <replaceable class="parameter">count</replaceable>
   <title>Notes</title>
 
    <para>
-    <command>COPY TO</command> can only be used with plain tables, not
-    with views.  However, you can write <literal>COPY (SELECT * FROM
-    <replaceable class="parameter">viewname</replaceable>) TO ...</literal>
-    to copy the current contents of a view.
+    <command>COPY TO</command> can be used only with plain
+    tables, not views, and does not copy rows from child tables
+    or child partitions.  For example, <literal>COPY <replaceable
+    class="parameter">table</replaceable> TO</literal> copies
+    the same rows as <literal>SELECT * FROM ONLY <replaceable
+    class="parameter">table</replaceable></literal>.
+    The syntax <literal>COPY (SELECT * FROM <replaceable
+    class="parameter">table</replaceable>) TO ...</literal> can be used to
+    dump all of the rows in an inheritance hierarchy, partitioned table,
+    or view.
    </para>
 
    <para>
     <command>COPY FROM</command> can be used with plain, foreign, or
     partitioned tables or with views that have
     <literal>INSTEAD OF INSERT</literal> triggers.
-   </para>
-
-   <para>
-    <command>COPY</command> only deals with the specific table named;
-    it does not copy data to or from child tables.  Thus for example
-    <literal>COPY <replaceable class="parameter">table</replaceable> TO</literal>
-    shows the same data as <literal>SELECT * FROM ONLY <replaceable
-    class="parameter">table</replaceable></literal>.  But <literal>COPY
-    (SELECT * FROM <replaceable class="parameter">table</replaceable>) TO ...</literal>
-    can be used to dump all of the data in an inheritance hierarchy.
    </para>
 
    <para>
