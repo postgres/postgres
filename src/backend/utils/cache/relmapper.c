@@ -928,8 +928,15 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 		}
 	}
 
-	/* Success, update permanent copy */
-	memcpy(realmap, newmap, sizeof(RelMapFile));
+	/*
+	 * Success, update permanent copy.  During bootstrap, we might be working
+	 * on the permanent copy itself, in which case skip the memcpy() to avoid
+	 * invoking nominally-undefined behavior.
+	 */
+	if (realmap != newmap)
+		memcpy(realmap, newmap, sizeof(RelMapFile));
+	else
+		Assert(!send_sinval);	/* must be bootstrapping */
 
 	/* Critical section done */
 	if (write_wal)
