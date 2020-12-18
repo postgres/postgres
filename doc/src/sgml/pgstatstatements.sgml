@@ -523,6 +523,16 @@
        <varname>pg_stat_statements.max</varname> were observed
       </para></entry>
      </row>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time at which all statistics in the
+       <structname>pg_stat_statements</structname> view were last reset.
+      </para></entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -549,9 +559,11 @@
       specified, the default value <literal>0</literal>(invalid) is used for
       each of them and the statistics that match with other parameters will be
       reset.  If no parameter is specified or all the specified parameters are
-      <literal>0</literal>(invalid), it will discard all statistics including
-      the statistics that <structname>pg_stat_statements_info</structname>
-      displays.  By default, this function can only be executed by superusers.
+      <literal>0</literal>(invalid), it will discard all statistics.
+      If all statistics in the <filename>pg_stat_statements</filename>
+      view are discarded, it will also reset the statistics in the
+      <structname>pg_stat_statements_info</structname> view.
+      By default, this function can only be executed by superusers.
       Access may be granted to others using <command>GRANT</command>.
      </para>
     </listitem>

@@ -81,6 +81,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/timestamp.h"
 
 PG_MODULE_MAGIC;
 
@@ -98,7 +99,7 @@ PG_MODULE_MAGIC;
 #define PGSS_TEXT_FILE	PG_STAT_TMP_DIR "/pgss_query_texts.stat"
 
 /* Magic number identifying the stats file format */
-static const uint32 PGSS_FILE_HEADER = 0x20201126;
+static const uint32 PGSS_FILE_HEADER = 0x20201218;
 
 /* PostgreSQL major version number, changes in which invalidate all entries */
 static const uint32 PGSS_PG_MAJOR_VERSION = PG_VERSION_NUM / 100;
@@ -199,6 +200,7 @@ typedef struct Counters
 typedef struct pgssGlobalStats
 {
 	int64		dealloc;		/* # of times entries were deallocated */
+	TimestampTz stats_reset;	/* timestamp with all stats reset */
 } pgssGlobalStats;
 
 /*
@@ -565,6 +567,7 @@ pgss_shmem_startup(void)
 		pgss->n_writers = 0;
 		pgss->gc_count = 0;
 		pgss->stats.dealloc = 0;
+		pgss->stats.stats_reset = GetCurrentTimestamp();
 	}
 
 	info.keysize = sizeof(pgssHashKey);
@@ -1881,6 +1884,9 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 	tuplestore_donestoring(tupstore);
 }
 
+/* Number of output arguments (columns) for pg_stat_statements_info */
+#define PG_STAT_STATEMENTS_INFO_COLS	2
+
 /*
  * Return statistics of pg_stat_statements.
  */
@@ -1888,6 +1894,16 @@ Datum
 pg_stat_statements_info(PG_FUNCTION_ARGS)
 {
 	pgssGlobalStats stats;
+	TupleDesc	tupdesc;
+	Datum		values[PG_STAT_STATEMENTS_INFO_COLS];
+	bool		nulls[PG_STAT_STATEMENTS_INFO_COLS];
+
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Read global statistics for pg_stat_statements */
 	{
@@ -1898,7 +1914,10 @@ pg_stat_statements_info(PG_FUNCTION_ARGS)
 		SpinLockRelease(&s->mutex);
 	}
 
-	PG_RETURN_INT64(stats.dealloc);
+	values[0] = Int64GetDatum(stats.dealloc);
+	values[1] = TimestampTzGetDatum(stats.stats_reset);
+
+	PG_RETURN_DATUM(HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls)));
 }
 
 /*
@@ -2551,20 +2570,25 @@ entry_reset(Oid userid, Oid dbid, uint64 queryid)
 			hash_search(pgss_hash, &entry->key, HASH_REMOVE, NULL);
 			num_remove++;
 		}
-
-		/* Reset global statistics for pg_stat_statements */
-		{
-			volatile pgssSharedState *s = (volatile pgssSharedState *) pgss;
-
-			SpinLockAcquire(&s->mutex);
-			s->stats.dealloc = 0;
-			SpinLockRelease(&s->mutex);
-		}
 	}
 
 	/* All entries are removed? */
 	if (num_entries != num_remove)
 		goto release_lock;
+
+	/*
+	 * Reset global statistics for pg_stat_statements since all entries are
+	 * removed.
+	 */
+	{
+		volatile pgssSharedState *s = (volatile pgssSharedState *) pgss;
+		TimestampTz stats_reset = GetCurrentTimestamp();
+
+		SpinLockAcquire(&s->mutex);
+		s->stats.dealloc = 0;
+		s->stats.stats_reset = stats_reset;
+		SpinLockRelease(&s->mutex);
+	}
 
 	/*
 	 * Write new empty query file, perhaps even creating a new one to recover

@@ -5,9 +5,10 @@
 
 --- Define pg_stat_statements_info
 CREATE FUNCTION pg_stat_statements_info(
-    OUT dealloc bigint
+    OUT dealloc bigint,
+    OUT stats_reset timestamp with time zone
 )
-RETURNS bigint
+RETURNS record
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT VOLATILE PARALLEL SAFE;
 
