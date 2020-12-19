@@ -783,7 +783,8 @@ ReorderBufferQueueChange(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn,
 }
 
 /*
- * Queue message into a transaction so it can be processed upon commit.
+ * A transactional message is queued to be processed upon commit and a
+ * non-transactional message gets processed immediately.
  */
 void
 ReorderBufferQueueMessage(ReorderBuffer *rb, TransactionId xid,
