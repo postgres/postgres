@@ -28,11 +28,11 @@
     <productname>PostgreSQL</productname> source distribution
     in the directory <filename>src/tutorial/</filename>.  (Binary
     distributions of <productname>PostgreSQL</productname> might not
-    compile these files.)  To use those
+    provide those files.)  To use those
     files, first change to that directory and run <application>make</application>:
 
 <screen>
-<prompt>$</prompt> <userinput>cd <replaceable>....</replaceable>/src/tutorial</userinput>
+<prompt>$</prompt> <userinput>cd <replaceable>...</replaceable>/src/tutorial</userinput>
 <prompt>$</prompt> <userinput>make</userinput>
 </screen>
 
@@ -40,12 +40,10 @@
     functions and types.  Then, to start the tutorial, do the following:
 
 <screen>
-<prompt>$</prompt> <userinput>cd <replaceable>....</replaceable>/tutorial</userinput>
 <prompt>$</prompt> <userinput>psql -s mydb</userinput>
 <computeroutput>
 ...
 </computeroutput>
-
 <prompt>mydb=&gt;</prompt> <userinput>\i basics.sql</userinput>
 </screen>
 
