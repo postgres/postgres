@@ -4541,7 +4541,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 	 */
 	if (include_multirange_type)
 	{
-		if (fout->remoteVersion >= 130000)
+		if (fout->remoteVersion >= 140000)
 		{
 			appendPQExpBuffer(upgrade_query,
 							  "SELECT t.oid, t.typarray "
@@ -8402,7 +8402,7 @@ getCasts(Archive *fout, int *numCasts)
 	int			i_castcontext;
 	int			i_castmethod;
 
-	if (fout->remoteVersion >= 130000)
+	if (fout->remoteVersion >= 140000)
 	{
 		appendPQExpBufferStr(query, "SELECT tableoid, oid, "
 							 "castsource, casttarget, castfunc, castcontext, "
@@ -10709,7 +10709,7 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(q, "\n    subtype = %s",
 					  PQgetvalue(res, 0, PQfnumber(res, "rngsubtype")));
 
-	if (PQgetvalue(res, 0, PQfnumber(res, "rngmultitype")))
+	if (!PQgetisnull(res, 0, PQfnumber(res, "rngmultitype")))
 		appendPQExpBuffer(q, ",\n    multirange_type_name = %s",
 						  PQgetvalue(res, 0, PQfnumber(res, "rngmultitype")));
 
