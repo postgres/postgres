@@ -161,6 +161,7 @@ extern char get_typtype(Oid typid);
 extern bool type_is_rowtype(Oid typid);
 extern bool type_is_enum(Oid typid);
 extern bool type_is_range(Oid typid);
+extern bool type_is_multirange(Oid typid);
 extern void get_type_category_preferred(Oid typid,
 										char *typcategory,
 										bool *typispreferred);
@@ -190,6 +191,8 @@ extern char *get_namespace_name(Oid nspid);
 extern char *get_namespace_name_or_temp(Oid nspid);
 extern Oid	get_range_subtype(Oid rangeOid);
 extern Oid	get_range_collation(Oid rangeOid);
+extern Oid	get_range_multirange(Oid rangeOid);
+extern Oid	get_multirange_range(Oid multirangeOid);
 extern Oid	get_index_column_opclass(Oid index_oid, int attno);
 extern bool get_index_isreplident(Oid index_oid);
 extern bool get_index_isvalid(Oid index_oid);

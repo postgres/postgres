@@ -61,7 +61,7 @@ create function polyf(x anyelement) returns anyrange as $$
   select array[x + 1, x + 2]
 $$ language sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anyrange requires at least one input of type anyrange.
+DETAIL:  A result of type anyrange requires at least one input of type anyrange or anymultirange.
 create function polyf(x anyrange) returns anyarray as $$
   select array[lower(x), upper(x)]
 $$ language sql;
@@ -97,12 +97,27 @@ LINE 1: select polyf(int4range(42, 49), 11, 4.5) as fail;
                ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 drop function polyf(x anycompatiblerange, y anycompatible, z anycompatible);
+create function polyf(x anycompatiblemultirange, y anycompatible, z anycompatible) returns anycompatiblearray as $$
+  select array[lower(x), upper(x), y, z]
+$$ language sql;
+select polyf(multirange(int4range(42, 49)), 11, 2::smallint) as int, polyf(multirange(float8range(4.5, 7.8)), 7.8, 11::real) as num;
+     int      |       num        
+--------------+------------------
+ {42,49,11,2} | {4.5,7.8,7.8,11}
+(1 row)
+
+select polyf(multirange(int4range(42, 49)), 11, 4.5) as fail;  -- range type doesn't fit
+ERROR:  function polyf(int4multirange, integer, numeric) does not exist
+LINE 1: select polyf(multirange(int4range(42, 49)), 11, 4.5) as fail...
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+drop function polyf(x anycompatiblemultirange, y anycompatible, z anycompatible);
 -- fail, can't infer type:
 create function polyf(x anycompatible) returns anycompatiblerange as $$
   select array[x + 1, x + 2]
 $$ language sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anycompatiblerange requires at least one input of type anycompatiblerange.
+DETAIL:  A result of type anycompatiblerange requires at least one input of type anycompatiblerange or anycompatiblemultirange.
 create function polyf(x anycompatiblerange, y anycompatiblearray) returns anycompatiblerange as $$
   select x
 $$ language sql;
@@ -113,6 +128,22 @@ select polyf(int4range(42, 49), array[11]) as int, polyf(float8range(4.5, 7.8), 
 (1 row)
 
 drop function polyf(x anycompatiblerange, y anycompatiblearray);
+-- fail, can't infer type:
+create function polyf(x anycompatible) returns anycompatiblemultirange as $$
+  select array[x + 1, x + 2]
+$$ language sql;
+ERROR:  cannot determine result data type
+DETAIL:  A result of type anycompatiblemultirange requires at least one input of type anycompatiblerange or anycompatiblemultirange.
+create function polyf(x anycompatiblemultirange, y anycompatiblearray) returns anycompatiblemultirange as $$
+  select x
+$$ language sql;
+select polyf(multirange(int4range(42, 49)), array[11]) as int, polyf(multirange(float8range(4.5, 7.8)), array[7]) as num;
+    int    |     num     
+-----------+-------------
+ {[42,49)} | {[4.5,7.8)}
+(1 row)
+
+drop function polyf(x anycompatiblemultirange, y anycompatiblearray);
 create function polyf(a anyelement, b anyarray,
                       c anycompatible, d anycompatible,
                       OUT x anyarray, OUT y anycompatiblearray)
@@ -231,7 +262,7 @@ CREATE AGGREGATE myaggp01a(*) (SFUNC = stfnp, STYPE = int4[],
 CREATE AGGREGATE myaggp02a(*) (SFUNC = stfnp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --     N    P
 -- should CREATE
 CREATE AGGREGATE myaggp03a(*) (SFUNC = stfp, STYPE = int4[],
@@ -243,11 +274,11 @@ CREATE AGGREGATE myaggp03b(*) (SFUNC = stfp, STYPE = int4[],
 CREATE AGGREGATE myaggp04a(*) (SFUNC = stfp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 CREATE AGGREGATE myaggp04b(*) (SFUNC = stfp, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --    Case2 (R = P) && ((B = P) || (B = N))
 --    -------------------------------------
 --    S    tf1      B    tf2
@@ -302,13 +333,13 @@ ERROR:  function tfp(integer[], anyelement) does not exist
 CREATE AGGREGATE myaggp13a(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --    P    N        N    P
 -- should ERROR: tf2p(anyarray, int) not matched by tf2p(int[],anyelement)
 CREATE AGGREGATE myaggp14a(BASETYPE = int, SFUNC = tf2p, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --    P    N        P    N
 -- should ERROR: tfnp(anyarray, anyelement) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggp15a(BASETYPE = anyelement, SFUNC = tfnp,
@@ -324,21 +355,21 @@ ERROR:  function tf2p(anyarray, anyelement) does not exist
 CREATE AGGREGATE myaggp17a(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 CREATE AGGREGATE myaggp17b(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --    P    P        N    P
 -- should ERROR: tfp(anyarray, int) not matched by tfp(anyarray, anyelement)
 CREATE AGGREGATE myaggp18a(BASETYPE = int, SFUNC = tfp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 CREATE AGGREGATE myaggp18b(BASETYPE = int, SFUNC = tfp, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --    P    P        P    N
 -- should ERROR: tf1p(anyarray, anyelement) not matched by tf1p(anyarray, int)
 CREATE AGGREGATE myaggp19a(BASETYPE = anyelement, SFUNC = tf1p,
@@ -368,11 +399,11 @@ CREATE AGGREGATE myaggn01b(*) (SFUNC = stfnp, STYPE = int4[],
 CREATE AGGREGATE myaggn02a(*) (SFUNC = stfnp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 CREATE AGGREGATE myaggn02b(*) (SFUNC = stfnp, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --     N    P
 -- should CREATE
 CREATE AGGREGATE myaggn03a(*) (SFUNC = stfp, STYPE = int4[],
@@ -382,7 +413,7 @@ CREATE AGGREGATE myaggn03a(*) (SFUNC = stfp, STYPE = int4[],
 CREATE AGGREGATE myaggn04a(*) (SFUNC = stfp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --    Case4 (R = N) && ((B = P) || (B = N))
 --    -------------------------------------
 --    S    tf1      B    tf2
@@ -436,21 +467,21 @@ ERROR:  function tfp(integer[], anyelement) does not exist
 CREATE AGGREGATE myaggn13a(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 CREATE AGGREGATE myaggn13b(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --    P    N        N    P
 -- should ERROR: tf2p(anyarray, int) not matched by tf2p(int[],anyelement)
 CREATE AGGREGATE myaggn14a(BASETYPE = int, SFUNC = tf2p, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 CREATE AGGREGATE myaggn14b(BASETYPE = int, SFUNC = tf2p, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --    P    N        P    N
 -- should ERROR: tfnp(anyarray, anyelement) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggn15a(BASETYPE = anyelement, SFUNC = tfnp,
@@ -472,13 +503,13 @@ ERROR:  function tf2p(anyarray, anyelement) does not exist
 CREATE AGGREGATE myaggn17a(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --    P    P        N    P
 -- should ERROR: tfp(anyarray, int) not matched by tfp(anyarray, anyelement)
 CREATE AGGREGATE myaggn18a(BASETYPE = int, SFUNC = tfp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 --    P    P        P    N
 -- should ERROR: tf1p(anyarray, anyelement) not matched by tf1p(anyarray, int)
 CREATE AGGREGATE myaggn19a(BASETYPE = anyelement, SFUNC = tf1p,
@@ -1855,7 +1886,59 @@ returns anycompatiblerange as $$
   select $1
 $$ language sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anycompatiblerange requires at least one input of type anycompatiblerange.
+DETAIL:  A result of type anycompatiblerange requires at least one input of type anycompatiblerange or anycompatiblemultirange.
+create function anyctest(anycompatible, anycompatiblemultirange)
+returns anycompatiblemultirange as $$
+  select $2
+$$ language sql;
+select x, pg_typeof(x) from anyctest(11, multirange(int4range(4,7))) x;
+    x    |   pg_typeof    
+---------+----------------
+ {[4,7)} | int4multirange
+(1 row)
+
+select x, pg_typeof(x) from anyctest(11, multirange(numrange(4,7))) x;
+    x    |   pg_typeof   
+---------+---------------
+ {[4,7)} | nummultirange
+(1 row)
+
+select x, pg_typeof(x) from anyctest(11, 12) x;  -- fail
+ERROR:  function anyctest(integer, integer) does not exist
+LINE 1: select x, pg_typeof(x) from anyctest(11, 12) x;
+                                    ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select x, pg_typeof(x) from anyctest(11.2, multirange(int4range(4,7))) x;  -- fail
+ERROR:  function anyctest(numeric, int4multirange) does not exist
+LINE 1: select x, pg_typeof(x) from anyctest(11.2, multirange(int4ra...
+                                    ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select x, pg_typeof(x) from anyctest(11.2, '{[4,7)}') x;  -- fail
+ERROR:  could not identify anycompatiblemultirange type
+drop function anyctest(anycompatible, anycompatiblemultirange);
+create function anyctest(anycompatiblemultirange, anycompatiblemultirange)
+returns anycompatible as $$
+  select lower($1) + upper($2)
+$$ language sql;
+select x, pg_typeof(x) from anyctest(multirange(int4range(11,12)), multirange(int4range(4,7))) x;
+ x  | pg_typeof 
+----+-----------
+ 18 | integer
+(1 row)
+
+select x, pg_typeof(x) from anyctest(multirange(int4range(11,12)), multirange(numrange(4,7))) x; -- fail
+ERROR:  function anyctest(int4multirange, nummultirange) does not exist
+LINE 1: select x, pg_typeof(x) from anyctest(multirange(int4range(11...
+                                    ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+drop function anyctest(anycompatiblemultirange, anycompatiblemultirange);
+-- fail, can't infer result type:
+create function anyctest(anycompatible)
+returns anycompatiblemultirange as $$
+  select $1
+$$ language sql;
+ERROR:  cannot determine result data type
+DETAIL:  A result of type anycompatiblemultirange requires at least one input of type anycompatiblerange or anycompatiblemultirange.
 create function anyctest(anycompatiblenonarray, anycompatiblenonarray)
 returns anycompatiblearray as $$
   select array[$1, $2]

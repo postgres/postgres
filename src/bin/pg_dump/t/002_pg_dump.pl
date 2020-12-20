@@ -1601,6 +1601,7 @@ my %tests = (
 			\QOPERATOR 3 dump_test.~~(integer,integer);\E\n.+
 			\QCREATE TYPE dump_test.range_type_custom AS RANGE (\E\n\s+
 			\Qsubtype = integer,\E\n\s+
+			\Qmultirange_type_name = dump_test.multirange_type_custom,\E\n\s+
 			\Qsubtype_opclass = dump_test.op_class_custom\E\n
 			\Q);\E
 			/xms,
@@ -1698,6 +1699,7 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE TYPE dump_test.textrange AS RANGE (\E
 			\n\s+\Qsubtype = text,\E
+			\n\s+\Qmultirange_type_name = dump_test.textmultirange,\E
 			\n\s+\Qcollation = pg_catalog."C"\E
 			\n\);/xm,
 		like =>

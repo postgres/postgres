@@ -118,6 +118,12 @@ select numrange(1.0, 2.0) * numrange(2.0, 3.0);
 select numrange(1.0, 2.0) * numrange(1.5, 3.0);
 select numrange(1.0, 2.0) * numrange(2.5, 3.0);
 
+select range_intersect_agg(nr) from numrange_test;
+select range_intersect_agg(nr) from numrange_test where false;
+select range_intersect_agg(nr) from numrange_test where nr @> 4.0;
+
+analyze numrange_test;
+
 create table numrange_test2(nr numrange);
 create index numrange_test2_hash_idx on numrange_test2 using hash (nr);
 
@@ -528,6 +534,7 @@ reset enable_sort;
 -- OUT/INOUT/TABLE functions
 --
 
+-- infer anyrange from anyrange
 create function outparam_succeed(i anyrange, out r anyrange, out t text)
   as $$ select $1, 'foo'::text $$ language sql;
 
@@ -539,6 +546,13 @@ create function outparam2_succeed(r anyrange, out lu anyarray, out ul anyarray)
 
 select * from outparam2_succeed(int4range(1,11));
 
+-- infer anyarray from anyrange
+create function outparam_succeed2(i anyrange, out r anyarray, out t text)
+  as $$ select ARRAY[upper($1)], 'foo'::text $$ language sql;
+
+select * from outparam_succeed2(int4range(int4range(1,2)));
+
+-- infer anyelement from anyrange
 create function inoutparam_succeed(out i anyelement, inout r anyrange)
   as $$ select upper($1), $1 $$ language sql;
 

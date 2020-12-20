@@ -13,19 +13,22 @@
 [
 
 { rngtypid => 'int4range', rngsubtype => 'int4', rngsubopc => 'btree/int4_ops',
-  rngcanonical => 'int4range_canonical', rngsubdiff => 'int4range_subdiff' },
+  rngcanonical => 'int4range_canonical', rngsubdiff => 'int4range_subdiff',
+  rngmultitypid => 'int4multirange' },
 { rngtypid => 'numrange', rngsubtype => 'numeric',
   rngsubopc => 'btree/numeric_ops', rngcanonical => '-',
-  rngsubdiff => 'numrange_subdiff' },
+  rngsubdiff => 'numrange_subdiff', rngmultitypid => 'nummultirange' },
 { rngtypid => 'tsrange', rngsubtype => 'timestamp',
   rngsubopc => 'btree/timestamp_ops', rngcanonical => '-',
-  rngsubdiff => 'tsrange_subdiff' },
+  rngsubdiff => 'tsrange_subdiff', rngmultitypid => 'tsmultirange' },
 { rngtypid => 'tstzrange', rngsubtype => 'timestamptz',
   rngsubopc => 'btree/timestamptz_ops', rngcanonical => '-',
-  rngsubdiff => 'tstzrange_subdiff' },
+  rngsubdiff => 'tstzrange_subdiff', rngmultitypid => 'tstzmultirange' },
 { rngtypid => 'daterange', rngsubtype => 'date', rngsubopc => 'btree/date_ops',
-  rngcanonical => 'daterange_canonical', rngsubdiff => 'daterange_subdiff' },
+  rngcanonical => 'daterange_canonical', rngsubdiff => 'daterange_subdiff',
+  rngmultitypid => 'datemultirange' },
 { rngtypid => 'int8range', rngsubtype => 'int8', rngsubopc => 'btree/int8_ops',
-  rngcanonical => 'int8range_canonical', rngsubdiff => 'int8range_subdiff' },
+  rngcanonical => 'int8range_canonical', rngsubdiff => 'int8range_subdiff',
+  rngmultitypid => 'int8multirange' },
 
 ]

@@ -33,6 +33,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> AS RANGE (
     [ , COLLATION = <replaceable class="parameter">collation</replaceable> ]
     [ , CANONICAL = <replaceable class="parameter">canonical_function</replaceable> ]
     [ , SUBTYPE_DIFF = <replaceable class="parameter">subtype_diff_function</replaceable> ]
+    [ , MULTIRANGE_TYPE_NAME = <replaceable class="parameter">multirange_type_name</replaceable> ]
 )
 
 CREATE TYPE <replaceable class="parameter">name</replaceable> (
@@ -173,6 +174,17 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     providing it allows much greater efficiency of GiST indexes on columns of
     the range type.  See <xref linkend="rangetypes-defining"/> for more
     information.
+   </para>
+
+   <para>
+    The optional <replaceable class="parameter">multirange_type_name</replaceable>
+    parameter specifies the name of the corresponding multirange type.  If not
+    specified, this name is chosen automatically as follows.
+    If range type name contains <literal>range</literal> substring, then
+    multirange type name is formed by replacement of the <literal>range</literal>
+    substring with <literal>multirange</literal> substring in the range
+    type name.  Otherwise, multirange type name is formed by appending
+    <literal>_multirange</literal> suffix to the range type name.
    </para>
   </refsect2>
 
@@ -626,6 +638,15 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       The name of a difference function for the subtype.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">multirange_type_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the corresponding multirange type.
      </para>
     </listitem>
    </varlistentry>

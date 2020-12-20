@@ -1395,6 +1395,9 @@ MultiXactMember
 MultiXactOffset
 MultiXactStateData
 MultiXactStatus
+MultirangeIOData
+MultirangeParseState
+MultirangeType
 NDBOX
 NODE
 NUMCacheEntry
@@ -3139,6 +3142,7 @@ mp_small
 mp_usmall
 mp_word
 mpz_t
+multirange_bsearch_comparison
 mxact
 mxtruncinfo
 needs_fmgr_hook_type

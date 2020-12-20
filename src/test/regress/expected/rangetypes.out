@@ -518,6 +518,25 @@ select numrange(1.0, 2.0) * numrange(2.5, 3.0);
  empty
 (1 row)
 
+select range_intersect_agg(nr) from numrange_test;
+ range_intersect_agg 
+---------------------
+ empty
+(1 row)
+
+select range_intersect_agg(nr) from numrange_test where false;
+ range_intersect_agg 
+---------------------
+ 
+(1 row)
+
+select range_intersect_agg(nr) from numrange_test where nr @> 4.0;
+ range_intersect_agg 
+---------------------
+ [3,5)
+(1 row)
+
+analyze numrange_test;
 create table numrange_test2(nr numrange);
 create index numrange_test2_hash_idx on numrange_test2 using hash (nr);
 INSERT INTO numrange_test2 VALUES('[, 5)');
@@ -1371,12 +1390,12 @@ drop function anyarray_anyrange_func(anyarray, anyrange);
 create function bogus_func(anyelement)
   returns anyrange as 'select int4range(1,10)' language sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anyrange requires at least one input of type anyrange.
+DETAIL:  A result of type anyrange requires at least one input of type anyrange or anymultirange.
 -- should fail
 create function bogus_func(int)
   returns anyrange as 'select int4range(1,10)' language sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anyrange requires at least one input of type anyrange.
+DETAIL:  A result of type anyrange requires at least one input of type anyrange or anymultirange.
 create function range_add_bounds(anyrange)
   returns anyelement as 'select lower($1) + upper($1)' language sql;
 select range_add_bounds(int4range(1, 17));
@@ -1430,7 +1449,7 @@ drop function anycompatiblearray_anycompatiblerange_func(anycompatiblearray, any
 create function bogus_func(anycompatible)
   returns anycompatiblerange as 'select int4range(1,10)' language sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anycompatiblerange requires at least one input of type anycompatiblerange.
+DETAIL:  A result of type anycompatiblerange requires at least one input of type anycompatiblerange or anycompatiblemultirange.
 --
 -- Arrays of ranges
 --
@@ -1508,6 +1527,7 @@ reset enable_sort;
 --
 -- OUT/INOUT/TABLE functions
 --
+-- infer anyrange from anyrange
 create function outparam_succeed(i anyrange, out r anyrange, out t text)
   as $$ select $1, 'foo'::text $$ language sql;
 select * from outparam_succeed(int4range(1,2));
@@ -1525,6 +1545,16 @@ select * from outparam2_succeed(int4range(1,11));
  {1,11} | {11,1}
 (1 row)
 
+-- infer anyarray from anyrange
+create function outparam_succeed2(i anyrange, out r anyarray, out t text)
+  as $$ select ARRAY[upper($1)], 'foo'::text $$ language sql;
+select * from outparam_succeed2(int4range(int4range(1,2)));
+  r  |  t  
+-----+-----
+ {2} | foo
+(1 row)
+
+-- infer anyelement from anyrange
 create function inoutparam_succeed(out i anyelement, inout r anyrange)
   as $$ select upper($1), $1 $$ language sql;
 select * from inoutparam_succeed(int4range(1,2));
@@ -1547,14 +1577,14 @@ select * from table_succeed(int4range(1,11));
 create function outparam_fail(i anyelement, out r anyrange, out t text)
   as $$ select '[1,10]', 'foo' $$ language sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anyrange requires at least one input of type anyrange.
+DETAIL:  A result of type anyrange requires at least one input of type anyrange or anymultirange.
 --should fail
 create function inoutparam_fail(inout i anyelement, out r anyrange)
   as $$ select $1, '[1,10]' $$ language sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anyrange requires at least one input of type anyrange.
+DETAIL:  A result of type anyrange requires at least one input of type anyrange or anymultirange.
 --should fail
 create function table_fail(i anyelement) returns table(i anyelement, r anyrange)
   as $$ select $1, '[1,10]' $$ language sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anyrange requires at least one input of type anyrange.
+DETAIL:  A result of type anyrange requires at least one input of type anyrange or anymultirange.

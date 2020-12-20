@@ -1374,6 +1374,28 @@
   amoprighttype => 'anyrange', amopstrategy => '18',
   amopopr => '=(anyrange,anyrange)', amopmethod => 'gist' },
 
+# btree multirange_ops
+{ amopfamily => 'btree/multirange_ops', amoplefttype => 'anymultirange',
+  amoprighttype => 'anymultirange', amopstrategy => '1',
+  amopopr => '<(anymultirange,anymultirange)', amopmethod => 'btree' },
+{ amopfamily => 'btree/multirange_ops', amoplefttype => 'anymultirange',
+  amoprighttype => 'anymultirange', amopstrategy => '2',
+  amopopr => '<=(anymultirange,anymultirange)', amopmethod => 'btree' },
+{ amopfamily => 'btree/multirange_ops', amoplefttype => 'anymultirange',
+  amoprighttype => 'anymultirange', amopstrategy => '3',
+  amopopr => '=(anymultirange,anymultirange)', amopmethod => 'btree' },
+{ amopfamily => 'btree/multirange_ops', amoplefttype => 'anymultirange',
+  amoprighttype => 'anymultirange', amopstrategy => '4',
+  amopopr => '>=(anymultirange,anymultirange)', amopmethod => 'btree' },
+{ amopfamily => 'btree/multirange_ops', amoplefttype => 'anymultirange',
+  amoprighttype => 'anymultirange', amopstrategy => '5',
+  amopopr => '>(anymultirange,anymultirange)', amopmethod => 'btree' },
+
+# hash multirange_ops
+{ amopfamily => 'hash/multirange_ops', amoplefttype => 'anymultirange',
+  amoprighttype => 'anymultirange', amopstrategy => '1',
+  amopopr => '=(anymultirange,anymultirange)', amopmethod => 'hash' },
+
 # SP-GiST quad_point_ops
 { amopfamily => 'spgist/quad_point_ops', amoplefttype => 'point',
   amoprighttype => 'point', amopstrategy => '11', amopopr => '|>>(point,point)',

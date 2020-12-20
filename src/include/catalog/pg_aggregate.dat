@@ -538,6 +538,17 @@
   aggtransfn => 'bytea_string_agg_transfn',
   aggfinalfn => 'bytea_string_agg_finalfn', aggtranstype => 'internal' },
 
+# range
+{ aggfnoid => 'range_intersect_agg(anyrange)',
+  aggtransfn => 'range_intersect_agg_transfn',
+  aggcombinefn => 'range_intersect_agg_transfn', aggtranstype => 'anyrange' },
+{ aggfnoid => 'range_intersect_agg(anymultirange)',
+  aggtransfn => 'multirange_intersect_agg_transfn',
+  aggcombinefn => 'multirange_intersect_agg_transfn', aggtranstype => 'anymultirange' },
+{ aggfnoid => 'range_agg(anyrange)', aggtransfn => 'range_agg_transfn',
+  aggfinalfn => 'range_agg_finalfn', aggfinalextra => 't',
+  aggtranstype => 'internal' },
+
 # json
 { aggfnoid => 'json_agg', aggtransfn => 'json_agg_transfn',
   aggfinalfn => 'json_agg_finalfn', aggtranstype => 'internal' },

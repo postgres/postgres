@@ -26,6 +26,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/rangetypes.h"
+#include "utils/multirangetypes.h"
 
 
 /*
@@ -225,6 +226,43 @@ Datum
 anycompatiblerange_out(PG_FUNCTION_ARGS)
 {
 	return range_out(fcinfo);
+}
+
+/*
+ * anycompatiblemultirange
+ *
+ * We may as well allow output, since multirange_out will in fact work.
+ */
+PSEUDOTYPE_DUMMY_INPUT_FUNC(anycompatiblemultirange);
+
+Datum
+anycompatiblemultirange_out(PG_FUNCTION_ARGS)
+{
+	return multirange_out(fcinfo);
+}
+
+/*
+ * anymultirange_in		- input routine for pseudo-type ANYMULTIRANGE.
+ */
+Datum
+anymultirange_in(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type %s", "anymultirange")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * anymultirange_out		- output routine for pseudo-type ANYMULTIRANGE.
+ *
+ * We may as well allow this, since multirange_out will in fact work.
+ */
+Datum
+anymultirange_out(PG_FUNCTION_ARGS)
+{
+	return multirange_out(fcinfo);
 }
 
 /*

@@ -176,6 +176,7 @@ typedef struct _typeInfo
 	char		typrelkind;		/* 'r', 'v', 'c', etc */
 	char		typtype;		/* 'b', 'c', etc */
 	bool		isArray;		/* true if auto-generated array type */
+	bool		isMultirange;	/* true if auto-generated multirange type */
 	bool		isDefined;		/* true if typisdefined */
 	/* If needed, we'll create a "shell type" entry for it; link that here: */
 	struct _shellTypeInfo *shellType;	/* shell-type entry, or NULL */

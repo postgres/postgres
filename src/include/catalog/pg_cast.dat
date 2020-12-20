@@ -530,4 +530,17 @@
 { castsource => 'jsonb', casttarget => 'float8', castfunc => 'float8(jsonb)',
   castcontext => 'e', castmethod => 'f' },
 
+# range to multirange
+{ castsource => 'int4range', casttarget => 'int4multirange', castfunc => 'int4multirange(int4range)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'int8range', casttarget => 'int8multirange', castfunc => 'int8multirange(int8range)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'numrange', casttarget => 'nummultirange', castfunc => 'nummultirange(numrange)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'daterange', casttarget => 'datemultirange', castfunc => 'datemultirange(daterange)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'tsrange', casttarget => 'tsmultirange', castfunc => 'tsmultirange(tsrange)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'tstzrange', casttarget => 'tstzmultirange', castfunc => 'tstzmultirange(tstzrange)',
+  castcontext => 'e', castmethod => 'f' },
 ]

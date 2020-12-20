@@ -139,8 +139,8 @@
  *	* we need to estimate alignment padding cost abstractly, ie without
  *	  reference to a real tuple.  We must assume the worst case that
  *	  all varlenas are aligned.
- *	* within arrays, we unconditionally align varlenas (XXX this should be
- *	  revisited, probably).
+ *	* within arrays and multiranges, we unconditionally align varlenas (XXX this
+ *	  should be revisited, probably).
  *
  * The attalign cases are tested in what is hopefully something like their
  * frequency of occurrence.

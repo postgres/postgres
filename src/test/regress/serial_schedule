@@ -20,6 +20,7 @@ test: uuid
 test: enum
 test: money
 test: rangetypes
+test: multirangetypes
 test: pg_lsn
 test: regproc
 test: strings

@@ -232,5 +232,9 @@
   opfmethod => 'spgist', opfname => 'box_ops' },
 { oid => '5008',
   opfmethod => 'spgist', opfname => 'poly_ops' },
+{ oid => '4199',
+  opfmethod => 'btree', opfname => 'multirange_ops' },
+{ oid => '4225',
+  opfmethod => 'hash', opfname => 'multirange_ops' },
 
 ]

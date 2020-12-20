@@ -42,6 +42,10 @@ begin
     if (select typtype from pg_catalog.pg_type where oid = $1) = 'r'
     then return true; end if;
   end if;
+  if $2 = 'pg_catalog.anymultirange'::pg_catalog.regtype then
+    if (select typtype from pg_catalog.pg_type where oid = $1) = 'm'
+    then return true; end if;
+  end if;
   return false;
 end
 $$ language plpgsql strict stable;
@@ -166,7 +170,8 @@ WHERE p1.oid < p2.oid AND
 -- need to be modified whenever new pairs of types are made binary-equivalent,
 -- or when new polymorphic built-in functions are added!
 -- Note: ignore aggregate functions here, since they all point to the same
--- dummy built-in function.  Likewise, ignore range constructor functions.
+-- dummy built-in function.  Likewise, ignore range and multirange constructor
+-- functions.
 
 SELECT DISTINCT p1.prorettype::regtype, p2.prorettype::regtype
 FROM pg_proc AS p1, pg_proc AS p2
@@ -176,6 +181,8 @@ WHERE p1.oid != p2.oid AND
     p1.prokind != 'a' AND p2.prokind != 'a' AND
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
+    p1.prosrc NOT LIKE E'multirange\\_constructor_' AND
+    p2.prosrc NOT LIKE E'multirange\\_constructor_' AND
     (p1.prorettype < p2.prorettype)
 ORDER BY 1, 2;
 
@@ -187,6 +194,8 @@ WHERE p1.oid != p2.oid AND
     p1.prokind != 'a' AND p2.prokind != 'a' AND
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
+    p1.prosrc NOT LIKE E'multirange\\_constructor_' AND
+    p2.prosrc NOT LIKE E'multirange\\_constructor_' AND
     (p1.proargtypes[0] < p2.proargtypes[0])
 ORDER BY 1, 2;
 
@@ -198,6 +207,8 @@ WHERE p1.oid != p2.oid AND
     p1.prokind != 'a' AND p2.prokind != 'a' AND
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
+    p1.prosrc NOT LIKE E'multirange\\_constructor_' AND
+    p2.prosrc NOT LIKE E'multirange\\_constructor_' AND
     (p1.proargtypes[1] < p2.proargtypes[1])
 ORDER BY 1, 2;
 
@@ -281,16 +292,19 @@ WHERE p1.prorettype IN
      'anyarray'::regtype = ANY (p1.proargtypes) OR
      'anynonarray'::regtype = ANY (p1.proargtypes) OR
      'anyenum'::regtype = ANY (p1.proargtypes) OR
-     'anyrange'::regtype = ANY (p1.proargtypes))
+     'anyrange'::regtype = ANY (p1.proargtypes) OR
+     'anymultirange'::regtype = ANY (p1.proargtypes))
 ORDER BY 2;
 
--- anyrange is tighter than the rest, can only resolve from anyrange input
+-- anyrange and anymultirange are tighter than the rest, can only resolve
+-- from each other
 
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
-WHERE p1.prorettype = 'anyrange'::regtype
+WHERE p1.prorettype IN ('anyrange'::regtype, 'anymultirange'::regtype)
   AND NOT
-     'anyrange'::regtype = ANY (p1.proargtypes)
+    ('anyrange'::regtype = ANY (p1.proargtypes) OR
+      'anymultirange'::regtype = ANY (p1.proargtypes))
 ORDER BY 2;
 
 -- similarly for the anycompatible family

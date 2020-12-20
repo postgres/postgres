@@ -1711,7 +1711,8 @@ check_sql_fn_retval(List *queryTreeLists,
 	if (fn_typtype == TYPTYPE_BASE ||
 		fn_typtype == TYPTYPE_DOMAIN ||
 		fn_typtype == TYPTYPE_ENUM ||
-		fn_typtype == TYPTYPE_RANGE)
+		fn_typtype == TYPTYPE_RANGE ||
+		fn_typtype == TYPTYPE_MULTIRANGE)
 	{
 		/*
 		 * For scalar-type returns, the target list must have exactly one

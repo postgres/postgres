@@ -289,6 +289,14 @@
        </row>
 
        <row>
+        <entry><type>anymultirange</type></entry>
+        <entry>Simple</entry>
+        <entry>Indicates that a function accepts any multirange data type
+        (see <xref linkend="rangetypes"/>)
+        </entry>
+       </row>
+
+       <row>
         <entry><type>anycompatible</type></entry>
         <entry>Common</entry>
         <entry>Indicates that a function accepts any data type,
@@ -319,6 +327,14 @@
         with automatic promotion of multiple arguments to a common data type
         </entry>
        </row>
+
+       <row>
+        <entry><type>anycompatiblemultirange</type></entry>
+        <entry>Common</entry>
+        <entry>Indicates that a function accepts any multirange data type,
+        with automatic promotion of multiple arguments to a common data type
+        </entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
@@ -346,23 +362,34 @@
      position declared as <type>anyarray</type> can have any array data type,
      but similarly they must all be the same type.  And similarly,
      positions declared as <type>anyrange</type> must all be the same range
-     type.  Furthermore, if there are
+     type.  Likewise for <type>anymultirange</type>.
+    </para>
+
+    <para>
+     Furthermore, if there are
      positions declared <type>anyarray</type> and others declared
      <type>anyelement</type>, the actual array type in the
      <type>anyarray</type> positions must be an array whose elements are
      the same type appearing in the <type>anyelement</type> positions.
-     Similarly, if there are positions declared <type>anyrange</type>
-     and others declared <type>anyelement</type> or <type>anyarray</type>,
-     the actual range type in the <type>anyrange</type> positions must be a
-     range whose subtype is the same type appearing in
-     the <type>anyelement</type> positions and the same as the element type
-     of the <type>anyarray</type> positions.
      <type>anynonarray</type> is treated exactly the same as <type>anyelement</type>,
      but adds the additional constraint that the actual type must not be
      an array type.
      <type>anyenum</type> is treated exactly the same as <type>anyelement</type>,
      but adds the additional constraint that the actual type must
      be an enum type.
+    </para>
+
+    <para>
+     Similarly, if there are positions declared <type>anyrange</type>
+     and others declared <type>anyelement</type> or <type>anyarray</type>,
+     the actual range type in the <type>anyrange</type> positions must be a
+     range whose subtype is the same type appearing in
+     the <type>anyelement</type> positions and the same as the element type
+     of the <type>anyarray</type> positions.
+     If there are positions declared <type>anymultirange</type>,
+     their actual multirange type must contain ranges matching parameters declared
+     <type>anyrange</type> and base elements matching parameters declared
+     <type>anyelement</type> and <type>anyarray</type>.
     </para>
 
     <para>
@@ -420,7 +447,8 @@
      Selection of the common type considers the actual types
      of <type>anycompatible</type> and <type>anycompatiblenonarray</type>
      inputs, the array element types of <type>anycompatiblearray</type>
-     inputs, and the range subtypes of <type>anycompatiblerange</type>
+     inputs, the range subtypes of <type>anycompatiblerange</type> inputs,
+     and the multirange subtypes of <type>anycompatiablemultirange</type>
      inputs.  If <type>anycompatiblenonarray</type> is present then the
      common type is required to be a non-array type.  Once a common type is
      identified, arguments in <type>anycompatible</type>
@@ -431,12 +459,15 @@
 
     <para>
      Since there is no way to select a range type knowing only its subtype,
-     use of <type>anycompatiblerange</type> requires that all arguments
-     declared with that type have the same actual range type, and that that
-     type's subtype agree with the selected common type, so that no casting
-     of the range values is required.  As with <type>anyrange</type>, use
-     of <type>anycompatiblerange</type> as a function result type requires
-     that there be an <type>anycompatiblerange</type> argument.
+     use of <type>anycompatiblerange</type> and/or
+     <type>anycompatiblemultirange</type> requires that all arguments declared
+     with that type have the same actual range and/or multirange type, and that
+     that type's subtype agree with the selected common type, so that no casting
+     of the range values is required.  As with <type>anyrange</type> and
+     <type>anymultirange</type>, use of <type>anycompatiblerange</type> and
+     <type>anymultirange</type> as a function result type requires that there be
+     an <type>anycompatiblerange</type> or <type>anycompatiblemultirange</type>
+     argument.
     </para>
 
     <para>

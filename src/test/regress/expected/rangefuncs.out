@@ -1556,7 +1556,7 @@ DROP FUNCTION dup(anyelement);
 CREATE FUNCTION bad (f1 int, out f2 anyelement, out f3 anyarray)
 AS 'select $1, array[$1,$1]' LANGUAGE sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anyelement requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
+DETAIL:  A result of type anyelement requires at least one input of type anyelement, anyarray, anynonarray, anyenum, anyrange, or anymultirange.
 CREATE FUNCTION dup (f1 anycompatible, f2 anycompatiblearray, f3 out anycompatible, f4 out anycompatiblearray)
 AS 'select $1, $2' LANGUAGE sql;
 SELECT dup(22, array[44]);

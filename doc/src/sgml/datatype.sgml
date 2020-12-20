@@ -4908,6 +4908,10 @@ SELECT * FROM pg_attribute
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
+    <primary>anymultirange</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
     <primary>anycompatible</primary>
    </indexterm>
 
@@ -4921,6 +4925,10 @@ SELECT * FROM pg_attribute
 
    <indexterm zone="datatype-pseudo">
     <primary>anycompatiblerange</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>anycompatiblemultirange</primary>
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
@@ -5035,6 +5043,13 @@ SELECT * FROM pg_attribute
        </row>
 
        <row>
+        <entry><type>anymultirange</type></entry>
+        <entry>Indicates that a function accepts any multirange data type
+        (see <xref linkend="extend-types-polymorphic"/> and
+        <xref linkend="rangetypes"/>).</entry>
+       </row>
+
+       <row>
         <entry><type>anycompatible</type></entry>
         <entry>Indicates that a function accepts any data type,
         with automatic promotion of multiple arguments to a common data type
@@ -5058,6 +5073,14 @@ SELECT * FROM pg_attribute
        <row>
         <entry><type>anycompatiblerange</type></entry>
         <entry>Indicates that a function accepts any range data type,
+        with automatic promotion of multiple arguments to a common data type
+        (see <xref linkend="extend-types-polymorphic"/> and
+        <xref linkend="rangetypes"/>).</entry>
+       </row>
+
+       <row>
+        <entry><type>anycompatiblemultirange</type></entry>
+        <entry>Indicates that a function accepts any multirange data type,
         with automatic promotion of multiple arguments to a common data type
         (see <xref linkend="extend-types-polymorphic"/> and
         <xref linkend="rangetypes"/>).</entry>

@@ -20,7 +20,7 @@ SELECT p1.oid, p1.typname
 FROM pg_type as p1
 WHERE p1.typnamespace = 0 OR
     (p1.typlen <= 0 AND p1.typlen != -1 AND p1.typlen != -2) OR
-    (p1.typtype not in ('b', 'c', 'd', 'e', 'p', 'r')) OR
+    (p1.typtype not in ('b', 'c', 'd', 'e', 'p', 'r', 'm')) OR
     NOT p1.typisdefined OR
     (p1.typalign not in ('c', 's', 'i', 'd')) OR
     (p1.typstorage not in ('p', 'x', 'e', 'm'));
@@ -154,7 +154,7 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typinput = p2.oid AND p2.provolatile NOT IN ('i', 's');
 
--- Composites, domains, enums, ranges should all use the same input routines
+-- Composites, domains, enums, multiranges, ranges should all use the same input routines
 SELECT DISTINCT typtype, typinput
 FROM pg_type AS p1
 WHERE p1.typtype not in ('b', 'p')
@@ -183,7 +183,7 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typoutput = p2.oid AND p2.provolatile NOT IN ('i', 's');
 
--- Composites, enums, ranges should all use the same output routines
+-- Composites, enums, multiranges, ranges should all use the same output routines
 SELECT DISTINCT typtype, typoutput
 FROM pg_type AS p1
 WHERE p1.typtype not in ('b', 'd', 'p')
@@ -235,7 +235,7 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typreceive = p2.oid AND p2.provolatile NOT IN ('i', 's');
 
--- Composites, domains, enums, ranges should all use the same receive routines
+-- Composites, domains, enums, multiranges, ranges should all use the same receive routines
 SELECT DISTINCT typtype, typreceive
 FROM pg_type AS p1
 WHERE p1.typtype not in ('b', 'p')
@@ -264,7 +264,7 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typsend = p2.oid AND p2.provolatile NOT IN ('i', 's');
 
--- Composites, enums, ranges should all use the same send routines
+-- Composites, enums, multiranges, ranges should all use the same send routines
 SELECT DISTINCT typtype, typsend
 FROM pg_type AS p1
 WHERE p1.typtype not in ('b', 'd', 'p')
@@ -489,3 +489,9 @@ FROM pg_range p1 JOIN pg_proc p ON p.oid = p1.rngsubdiff
 WHERE pronargs != 2
     OR proargtypes[0] != rngsubtype OR proargtypes[1] != rngsubtype
     OR prorettype != 'pg_catalog.float8'::regtype;
+
+-- every range should have a valid multirange
+
+SELECT p1.rngtypid, p1.rngsubtype, p1.rngmultitypid
+FROM pg_range p1
+WHERE p1.rngmultitypid IS NULL OR p1.rngmultitypid = 0;

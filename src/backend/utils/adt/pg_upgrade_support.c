@@ -53,6 +53,28 @@ binary_upgrade_set_next_array_pg_type_oid(PG_FUNCTION_ARGS)
 }
 
 Datum
+binary_upgrade_set_next_multirange_pg_type_oid(PG_FUNCTION_ARGS)
+{
+	Oid			typoid = PG_GETARG_OID(0);
+
+	CHECK_IS_BINARY_UPGRADE;
+	binary_upgrade_next_mrng_pg_type_oid = typoid;
+
+	PG_RETURN_VOID();
+}
+
+Datum
+binary_upgrade_set_next_multirange_array_pg_type_oid(PG_FUNCTION_ARGS)
+{
+	Oid			typoid = PG_GETARG_OID(0);
+
+	CHECK_IS_BINARY_UPGRADE;
+	binary_upgrade_next_mrng_array_pg_type_oid = typoid;
+
+	PG_RETURN_VOID();
+}
+
+Datum
 binary_upgrade_set_next_heap_pg_class_oid(PG_FUNCTION_ARGS)
 {
 	Oid			reloid = PG_GETARG_OID(0);

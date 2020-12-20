@@ -140,6 +140,7 @@ owner of sequence deptest_a_seq
 owner of table deptest
 owner of function deptest_func()
 owner of type deptest_enum
+owner of type deptest_multirange
 owner of type deptest_range
 owner of table deptest2
 owner of sequence ss1

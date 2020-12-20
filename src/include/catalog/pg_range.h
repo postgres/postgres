@@ -34,6 +34,9 @@ CATALOG(pg_range,3541,RangeRelationId)
 	/* OID of range's element type (subtype) */
 	Oid			rngsubtype BKI_LOOKUP(pg_type);
 
+	/* OID of the range's multirange type */
+	Oid			rngmultitypid BKI_LOOKUP(pg_type);
+
 	/* collation for this range type, or 0 */
 	Oid			rngcollation BKI_DEFAULT(0);
 
@@ -57,13 +60,17 @@ typedef FormData_pg_range *Form_pg_range;
 DECLARE_UNIQUE_INDEX(pg_range_rngtypid_index, 3542, on pg_range using btree(rngtypid oid_ops));
 #define RangeTypidIndexId					3542
 
+DECLARE_UNIQUE_INDEX(pg_range_rngmultitypid_index, 2228, on pg_range using btree(rngmultitypid oid_ops));
+#define RangeMultirangeTypidIndexId			2228
+
+
 /*
  * prototypes for functions in pg_range.c
  */
 
 extern void RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 						Oid rangeSubOpclass, RegProcedure rangeCanonical,
-						RegProcedure rangeSubDiff);
+						RegProcedure rangeSubDiff, Oid multirangeTypeOid);
 extern void RangeDelete(Oid rangeTypeOid);
 
 #endif							/* PG_RANGE_H */

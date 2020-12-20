@@ -102,6 +102,11 @@ typedef struct TypeCacheEntry
 	FmgrInfo	rng_subdiff_finfo;	/* difference function, if any */
 
 	/*
+	 * Fields computed when TYPCACHE_MULTIRANGE_INFO is required.
+	 */
+	struct TypeCacheEntry *rngtype; /* multirange's range underlying type */
+
+	/*
 	 * Domain's base type and typmod if it's a domain type.  Zeroes if not
 	 * domain, or if information hasn't been requested.
 	 */
@@ -128,22 +133,23 @@ typedef struct TypeCacheEntry
 } TypeCacheEntry;
 
 /* Bit flags to indicate which fields a given caller needs to have set */
-#define TYPECACHE_EQ_OPR			0x0001
-#define TYPECACHE_LT_OPR			0x0002
-#define TYPECACHE_GT_OPR			0x0004
-#define TYPECACHE_CMP_PROC			0x0008
-#define TYPECACHE_HASH_PROC			0x0010
-#define TYPECACHE_EQ_OPR_FINFO		0x0020
-#define TYPECACHE_CMP_PROC_FINFO	0x0040
-#define TYPECACHE_HASH_PROC_FINFO	0x0080
-#define TYPECACHE_TUPDESC			0x0100
-#define TYPECACHE_BTREE_OPFAMILY	0x0200
-#define TYPECACHE_HASH_OPFAMILY		0x0400
-#define TYPECACHE_RANGE_INFO		0x0800
-#define TYPECACHE_DOMAIN_BASE_INFO			0x1000
-#define TYPECACHE_DOMAIN_CONSTR_INFO		0x2000
-#define TYPECACHE_HASH_EXTENDED_PROC		0x4000
-#define TYPECACHE_HASH_EXTENDED_PROC_FINFO	0x8000
+#define TYPECACHE_EQ_OPR			0x00001
+#define TYPECACHE_LT_OPR			0x00002
+#define TYPECACHE_GT_OPR			0x00004
+#define TYPECACHE_CMP_PROC			0x00008
+#define TYPECACHE_HASH_PROC			0x00010
+#define TYPECACHE_EQ_OPR_FINFO		0x00020
+#define TYPECACHE_CMP_PROC_FINFO	0x00040
+#define TYPECACHE_HASH_PROC_FINFO	0x00080
+#define TYPECACHE_TUPDESC			0x00100
+#define TYPECACHE_BTREE_OPFAMILY	0x00200
+#define TYPECACHE_HASH_OPFAMILY		0x00400
+#define TYPECACHE_RANGE_INFO		0x00800
+#define TYPECACHE_DOMAIN_BASE_INFO			0x01000
+#define TYPECACHE_DOMAIN_CONSTR_INFO		0x02000
+#define TYPECACHE_HASH_EXTENDED_PROC		0x04000
+#define TYPECACHE_HASH_EXTENDED_PROC_FINFO	0x08000
+#define TYPECACHE_MULTIRANGE_INFO			0x10000
 
 /* This value will not equal any valid tupledesc identifier, nor 0 */
 #define INVALID_TUPLEDESC_IDENTIFIER ((uint64) 1)

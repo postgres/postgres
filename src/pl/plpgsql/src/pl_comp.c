@@ -515,6 +515,8 @@ do_compile(FunctionCallInfo fcinfo,
 					else if (rettypeid == ANYRANGEOID ||
 							 rettypeid == ANYCOMPATIBLERANGEOID)
 						rettypeid = INT4RANGEOID;
+					else if (rettypeid == ANYMULTIRANGEOID)
+						rettypeid = INT4MULTIRANGEOID;
 					else		/* ANYELEMENT or ANYNONARRAY or ANYCOMPATIBLE */
 						rettypeid = INT4OID;
 					/* XXX what could we use for ANYENUM? */
@@ -2109,6 +2111,7 @@ build_datatype(HeapTuple typeTup, int32 typmod,
 		case TYPTYPE_BASE:
 		case TYPTYPE_ENUM:
 		case TYPTYPE_RANGE:
+		case TYPTYPE_MULTIRANGE:
 			typ->ttype = PLPGSQL_TTYPE_SCALAR;
 			break;
 		case TYPTYPE_COMPOSITE:
@@ -2525,6 +2528,9 @@ plpgsql_resolve_polymorphic_argtypes(int numargs,
 				case ANYRANGEOID:
 				case ANYCOMPATIBLERANGEOID:
 					argtypes[i] = INT4RANGEOID;
+					break;
+				case ANYMULTIRANGEOID:
+					argtypes[i] = INT4MULTIRANGEOID;
 					break;
 				default:
 					break;

@@ -29,6 +29,8 @@ extern ObjectAddress DefineRange(CreateRangeStmt *stmt);
 extern ObjectAddress AlterEnum(AlterEnumStmt *stmt);
 extern ObjectAddress DefineCompositeType(RangeVar *typevar, List *coldeflist);
 extern Oid	AssignTypeArrayOid(void);
+extern Oid	AssignTypeMultirangeOid(void);
+extern Oid	AssignTypeMultirangeArrayOid(void);
 
 extern ObjectAddress AlterDomainDefault(List *names, Node *defaultRaw);
 extern ObjectAddress AlterDomainNotNull(List *names, bool notNull);

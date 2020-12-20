@@ -92,6 +92,7 @@ num_exp_sqrt|t
 num_exp_sub|t
 num_input_test|f
 num_result|f
+nummultirange_test|t
 numrange_test|t
 onek|t
 onek2|t
@@ -172,6 +173,7 @@ quad_poly_tbl|t
 radix_text_tbl|t
 ramp|f
 real_city|f
+reservations|f
 road|t
 shighway|t
 slow_emp4000|f

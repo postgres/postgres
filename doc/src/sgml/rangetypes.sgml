@@ -27,40 +27,53 @@
   ranges from an instrument, and so forth can also be useful.
  </para>
 
+ <para>
+  Every range type has a corresponding multirange type. A multirange is
+  an ordered list of non-continguous, non-empty, non-null ranges. Most
+  range operators also work on multiranges, and they have a few functions
+  of their own.
+ </para>
+
  <sect2 id="rangetypes-builtin">
-  <title>Built-in Range Types</title>
+  <title>Built-in Range and Multirange Types</title>
 
  <para>
   PostgreSQL comes with the following built-in range types:
   <itemizedlist>
     <listitem>
       <para>
-       <type>int4range</type> &mdash; Range of <type>integer</type>
+       <type>int4range</type> &mdash; Range of <type>integer</type>,
+       <type>int4multirange</type> &mdash; corresponding Multirange
       </para>
     </listitem>
     <listitem>
       <para>
-       <type>int8range</type> &mdash; Range of <type>bigint</type>
+       <type>int8range</type> &mdash; Range of <type>bigint</type>,
+       <type>int8multirange</type> &mdash; corresponding Multirange
       </para>
     </listitem>
     <listitem>
       <para>
-       <type>numrange</type> &mdash; Range of <type>numeric</type>
+       <type>numrange</type> &mdash; Range of <type>numeric</type>,
+       <type>nummultirange</type> &mdash; corresponding Multirange
       </para>
     </listitem>
     <listitem>
       <para>
-       <type>tsrange</type> &mdash; Range of <type>timestamp without time zone</type>
+       <type>tsrange</type> &mdash; Range of <type>timestamp without time zone</type>,
+       <type>tsmultirange</type> &mdash; corresponding Multirange
       </para>
     </listitem>
     <listitem>
       <para>
-       <type>tstzrange</type> &mdash; Range of <type>timestamp with time zone</type>
+       <type>tstzrange</type> &mdash; Range of <type>timestamp with time zone</type>,
+       <type>tstzmultirange</type> &mdash; corresponding Multirange
       </para>
     </listitem>
     <listitem>
       <para>
-       <type>daterange</type> &mdash; Range of <type>date</type>
+       <type>daterange</type> &mdash; Range of <type>date</type>,
+       <type>datemultirange</type> &mdash; corresponding Multirange
       </para>
     </listitem>
   </itemizedlist>
@@ -232,10 +245,30 @@ SELECT '[4,4]'::int4range;
 SELECT '[4,4)'::int4range;
 </programlisting>
   </para>
+
+  <para>
+   The input for a multirange is curly brackets (<literal>{</literal> and
+   <literal>}</literal>) containing zero or more valid ranges,
+   separated by commas. Whitespace is permitted around the brackets and
+   commas. This is intended to be reminiscent of array syntax, although
+   multiranges are much simpler: they have just one dimension and there is
+   no need to quote their contents. (The bounds of their ranges may be
+   quoted as above however.)
+  </para>
+
+  <para>
+  Examples:
+<programlisting>
+SELECT '{}'::int4multirange;
+SELECT '{[3,7)}'::int4multirange;
+SELECT '{[3,7), [8,9)}'::int4multirange;
+</programlisting>
+  </para>
+
  </sect2>
 
  <sect2 id="rangetypes-construct">
-  <title>Constructing Ranges</title>
+  <title>Constructing Ranges and Multiranges</title>
 
   <para>
    Each range type has a constructor function with the same name as the range
@@ -267,6 +300,19 @@ SELECT int8range(1, 14, '(]');
 
 -- Using NULL for either bound causes the range to be unbounded on that side.
 SELECT numrange(NULL, 2.2);
+</programlisting>
+  </para>
+
+  <para>
+   Each range type also has a multirange constructor with the same name as the
+   multirange type.  The constructor function takes zero or more arguments
+   which are all ranges of the appropriate type.
+   For example:
+
+<programlisting>
+SELECT nummultirange();
+SELECT nummultirange(numrange(1.0, 14.0));
+SELECT nummultirange(numrange(1.0, 14.0), numrange(20.0, 25.0));
 </programlisting>
   </para>
  </sect2>
@@ -339,6 +385,11 @@ SELECT '[1.234, 5.678]'::floatrange;
    Because <type>float8</type> has no meaningful
    <quote>step</quote>, we do not define a canonicalization
    function in this example.
+  </para>
+
+  <para>
+   When you define your own range you automatically get a corresponding
+   multirange type.
   </para>
 
   <para>
