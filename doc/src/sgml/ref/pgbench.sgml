@@ -346,14 +346,18 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       <term><option>--builtin</option>=<replaceable>scriptname[@weight]</replaceable></term>
       <listitem>
        <para>
-        Add the specified built-in script to the list of executed scripts.
-        An optional integer weight after <literal>@</literal> allows to adjust the
-        probability of drawing the script.  If not specified, it is set to 1.
+        Add the specified built-in script to the list of scripts to be executed.
         Available built-in scripts are: <literal>tpcb-like</literal>,
         <literal>simple-update</literal> and <literal>select-only</literal>.
         Unambiguous prefixes of built-in names are accepted.
-        With special name <literal>list</literal>, show the list of built-in scripts
+        With the special name <literal>list</literal>, show the list of built-in scripts
         and exit immediately.
+       </para>
+       <para>
+        Optionally, write an integer weight after <literal>@</literal> to
+        adjust the probability of selecting this script versus other ones.
+        The default weight is 1.
+        See below for details.
        </para>
       </listitem>
      </varlistentry>
@@ -408,10 +412,16 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       <term><option>--file=</option><replaceable>filename[@weight]</replaceable></term>
       <listitem>
        <para>
-        Add a transaction script read from <replaceable>filename</replaceable> to
-        the list of executed scripts.
-        An optional integer weight after <literal>@</literal> allows to adjust the
-        probability of drawing the test.
+        Add a transaction script read from <replaceable>filename</replaceable>
+        to the list of scripts to be executed.
+       </para>
+       <para>
+        Optionally, write an integer weight after <literal>@</literal> to
+        adjust the probability of selecting this script versus other ones.
+        The default weight is 1.
+        (To use a script file name that includes an <literal>@</literal>
+        character, append a weight so that there is no ambiguity, for
+        example <literal>filen@me@1</literal>.)
         See below for details.
        </para>
       </listitem>
@@ -859,10 +869,10 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
   <para>
    <application>pgbench</application> executes test scripts chosen randomly
    from a specified list.
-   They include built-in scripts with <option>-b</option> and
-   user-provided custom scripts with <option>-f</option>.
-   Each script may be given a relative weight specified after a
-   <literal>@</literal> so as to change its drawing probability.
+   The scripts may include built-in scripts specified with <option>-b</option>
+   and user-provided scripts specified with <option>-f</option>.
+   Each script may be given a relative weight specified after an
+   <literal>@</literal> so as to change its selection probability.
    The default weight is <literal>1</literal>.
    Scripts with a weight of <literal>0</literal> are ignored.
  </para>
