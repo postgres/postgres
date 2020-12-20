@@ -6916,15 +6916,15 @@ pgstat_recv_replslot(PgStat_MsgReplSlot *msg, int len)
 		return;
 
 	/* it must be a valid replication slot index */
-	Assert(idx >= 0 && idx < max_replication_slots);
+	Assert(idx < nReplSlotStats);
 
 	if (msg->m_drop)
 	{
 		/* Remove the replication slot statistics with the given name */
-		memcpy(&replSlotStats[idx], &replSlotStats[nReplSlotStats - 1],
-			   sizeof(PgStat_ReplSlotStats));
+		if (idx < nReplSlotStats - 1)
+			memcpy(&replSlotStats[idx], &replSlotStats[nReplSlotStats - 1],
+				   sizeof(PgStat_ReplSlotStats));
 		nReplSlotStats--;
-		Assert(nReplSlotStats >= 0);
 	}
 	else
 	{
