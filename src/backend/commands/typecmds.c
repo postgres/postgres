@@ -1364,7 +1364,7 @@ DefineRange(CreateRangeStmt *stmt)
 	AclResult	aclresult;
 	ListCell   *lc;
 	ObjectAddress address;
-	ObjectAddress mltrngaddress;
+	ObjectAddress mltrngaddress PG_USED_FOR_ASSERTS_ONLY;
 	Oid			castFuncOid;
 
 	/* Convert list of names to a name and namespace */
