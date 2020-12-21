@@ -11925,10 +11925,13 @@ table2-mapping
 
   <note>
    <para>
-    The <literal>||</literal> operator concatenates the elements at the top level of
-    each of its operands. It does not operate recursively. For example, if
-    both operands are objects with a common key field name, the value of the
-    field in the result will just be the value from the right hand operand.
+    The <literal>||</literal> operator concatenates two JSON objects by
+    generating an object containing the union of their keys, taking the
+    second object's value when there are duplicate keys.  All other cases
+    produce a JSON array: first, any non-array input is converted into a
+    single-element array, and then the two arrays are concatenated.
+    It does not operate recursively; only the top-level array or object
+    structure is merged.
    </para>
   </note>
 
