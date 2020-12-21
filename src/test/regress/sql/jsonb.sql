@@ -1056,6 +1056,11 @@ select '{"a":"b"}'::jsonb || '[]'::jsonb;
 select '"a"'::jsonb || '{"a":1}';
 select '{"a":1}' || '"a"'::jsonb;
 
+select '[3]'::jsonb || '{}'::jsonb;
+select '3'::jsonb || '[]'::jsonb;
+select '3'::jsonb || '4'::jsonb;
+select '3'::jsonb || '{}'::jsonb;
+
 select '["a", "b"]'::jsonb || '{"c":1}';
 select '{"c": 1}'::jsonb || '["a", "b"]';
 
