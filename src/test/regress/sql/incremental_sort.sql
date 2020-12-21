@@ -220,6 +220,10 @@ explain (costs off) select a,b,sum(c) from t group by 1,2 order by 1,2,3 limit 1
 set enable_hashagg to off;
 explain (costs off) select * from t union select * from t order by 1,3;
 
+-- Full sort, not just incremental sort can be pushed below a gather merge path
+-- by generate_useful_gather_paths.
+explain (costs off) select distinct a,b from t;
+
 drop table t;
 
 -- Sort pushdown can't go below where expressions are part of the rel target.
