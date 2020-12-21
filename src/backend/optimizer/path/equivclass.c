@@ -800,7 +800,8 @@ find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
  * applied in prepare_sort_from_pathkeys.
  */
 Expr *
-find_em_expr_usable_for_sorting_rel(EquivalenceClass *ec, RelOptInfo *rel)
+find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
+									RelOptInfo *rel, bool require_parallel_safe)
 {
 	ListCell   *lc_em;
 
@@ -828,6 +829,12 @@ find_em_expr_usable_for_sorting_rel(EquivalenceClass *ec, RelOptInfo *rel)
 		 * child members unless they belong to the rel being sorted.
 		 */
 		if (!bms_is_subset(em->em_relids, rel->relids))
+			continue;
+
+		/*
+		 * If requested, reject expressions that are not parallel-safe.
+		 */
+		if (require_parallel_safe && !is_parallel_safe(root, (Node *) em_expr))
 			continue;
 
 		/*

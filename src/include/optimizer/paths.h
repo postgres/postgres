@@ -135,7 +135,10 @@ extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 												  Relids rel,
 												  bool create_it);
 extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
-extern Expr *find_em_expr_usable_for_sorting_rel(EquivalenceClass *ec, RelOptInfo *rel);
+extern Expr *find_em_expr_usable_for_sorting_rel(PlannerInfo *root,
+												 EquivalenceClass *ec,
+												 RelOptInfo *rel,
+												 bool require_parallel_safe);
 extern void generate_base_implied_equalities(PlannerInfo *root);
 extern List *generate_join_implied_equalities(PlannerInfo *root,
 											  Relids join_relids,
