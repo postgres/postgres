@@ -816,8 +816,6 @@ find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
 	{
 		EquivalenceMember *em = lfirst(lc_em);
 		Expr	   *em_expr = em->em_expr;
-		PathTarget *target = rel->reltarget;
-		ListCell   *lc_target_expr;
 
 		/*
 		 * We shouldn't be trying to sort by an equivalence class that
@@ -851,30 +849,14 @@ find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
 		 * As long as the expression isn't volatile then
 		 * prepare_sort_from_pathkeys is able to generate a new target entry,
 		 * so there's no need to verify that one already exists.
+		 *
+		 * While prepare_sort_from_pathkeys has to be concerned about matching
+		 * up a volatile expression to the proper tlist entry, it doesn't seem
+		 * valuable here to expend the work trying to find a match in the
+		 * target's exprs since such a sort will have to be postponed anyway.
 		 */
 		if (!ec->ec_has_volatile)
 			return em->em_expr;
-
-		/*
-		 * If, however, it's volatile, we have to verify that the
-		 * equivalence member's expr is already generated in the
-		 * relation's target (we do strip relabels first from both
-		 * expressions, which is cheap and might allow us to match
-		 * more expressions).
-		 */
-		while (em_expr && IsA(em_expr, RelabelType))
-			em_expr = ((RelabelType *) em_expr)->arg;
-
-		foreach(lc_target_expr, target->exprs)
-		{
-			Expr	   *target_expr = lfirst(lc_target_expr);
-
-			while (target_expr && IsA(target_expr, RelabelType))
-				target_expr = ((RelabelType *) target_expr)->arg;
-
-			if (equal(target_expr, em_expr))
-				return em->em_expr;
-		}
 	}
 
 	/* We didn't find any suitable equivalence class expression */
