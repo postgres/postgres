@@ -1551,6 +1551,46 @@ order by 1, 2;
    ->  Function Scan on generate_series
 (7 rows)
 
+-- Parallel sort but with expression (correlated subquery) that
+-- is prohibited in parallel plans.
+explain (costs off) select distinct
+  unique1,
+  (select t.unique1 from tenk1 where tenk1.unique1 = t.unique1)
+from tenk1 t, generate_series(1, 1000);
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Unique
+   ->  Sort
+         Sort Key: t.unique1, ((SubPlan 1))
+         ->  Gather
+               Workers Planned: 2
+               ->  Nested Loop
+                     ->  Parallel Index Only Scan using tenk1_unique1 on tenk1 t
+                     ->  Function Scan on generate_series
+               SubPlan 1
+                 ->  Index Only Scan using tenk1_unique1 on tenk1
+                       Index Cond: (unique1 = t.unique1)
+(11 rows)
+
+explain (costs off) select
+  unique1,
+  (select t.unique1 from tenk1 where tenk1.unique1 = t.unique1)
+from tenk1 t, generate_series(1, 1000)
+order by 1, 2;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Sort
+   Sort Key: t.unique1, ((SubPlan 1))
+   ->  Gather
+         Workers Planned: 2
+         ->  Nested Loop
+               ->  Parallel Index Only Scan using tenk1_unique1 on tenk1 t
+               ->  Function Scan on generate_series
+         SubPlan 1
+           ->  Index Only Scan using tenk1_unique1 on tenk1
+                 Index Cond: (unique1 = t.unique1)
+(10 rows)
+
 -- Parallel sort but with expression not available until the upper rel.
 explain (costs off) select distinct sub.unique1, stringu1 || random()::text
 from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub;
