@@ -1016,20 +1016,20 @@ multirange_constructor1(PG_FUNCTION_ARGS)
 Datum
 multirange_constructor0(PG_FUNCTION_ARGS)
 {
-	Oid			mltrngtypid = get_fn_expr_rettype(fcinfo->flinfo);
+	Oid			mltrngtypid;
 	TypeCacheEntry *typcache;
 	TypeCacheEntry *rangetyp;
 
+	/* This should always be called without arguments */
+	if (PG_NARGS() != 0)
+		elog(ERROR,
+			 "niladic multirange constructor must not receive arguments");
+
+	mltrngtypid = get_fn_expr_rettype(fcinfo->flinfo);
 	typcache = multirange_get_typcache(fcinfo, mltrngtypid);
 	rangetyp = typcache->rngtype;
 
-	/* We should always be called with no arguments */
-
-	if (PG_NARGS() == 0)
-		PG_RETURN_MULTIRANGE_P(make_multirange(mltrngtypid, rangetyp, 0, NULL));
-	else
-		elog(ERROR,				/* can't happen */
-			 "niladic multirange constructor must not receive arguments");
+	PG_RETURN_MULTIRANGE_P(make_multirange(mltrngtypid, rangetyp, 0, NULL));
 }
 
 
