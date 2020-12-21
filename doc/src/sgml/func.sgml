@@ -14715,8 +14715,12 @@ table2-mapping
        </para>
        <para>
         Concatenates two <type>jsonb</type> values.
-        Concatenating two objects generates an object with the union of their
+        Concatenating two arrays generates an array containing all the
+        elements of each input.  Concatenating two objects generates an
+        object containing the union of their
         keys, taking the second object's value when there are duplicate keys.
+        All other cases are treated by converting a non-array input into a
+        single-element array, and then proceeding as for two arrays.
         Does not operate recursively: only the top-level array or object
         structure is merged.
        </para>
@@ -14727,6 +14731,22 @@ table2-mapping
        <para>
         <literal>'{"a": "b"}'::jsonb || '{"c": "d"}'::jsonb</literal>
         <returnvalue>{"a": "b", "c": "d"}</returnvalue>
+       </para>
+       <para>
+        <literal>'[1, 2]'::jsonb || '3'::jsonb</literal>
+        <returnvalue>[1, 2, 3]</returnvalue>
+       </para>
+       <para>
+        <literal>'{"a": "b"}'::jsonb || '42'::jsonb</literal>
+        <returnvalue>[{"a": "b"}, 42]</returnvalue>
+       </para>
+       <para>
+        To append an array to another array as a single entry, wrap it
+        in an additional layer of array, for example:
+       </para>
+       <para>
+        <literal>'[1, 2]'::jsonb || jsonb_build_array('[3, 4]'::jsonb)</literal>
+        <returnvalue>[1, 2, [3, 4]]</returnvalue>
        </para></entry>
       </row>
 
