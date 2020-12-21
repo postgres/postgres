@@ -21,11 +21,6 @@
 #include "optimizer/tlist.h"
 
 
-/* Test if an expression node represents a SRF call.  Beware multiple eval! */
-#define IS_SRF_CALL(node) \
-	((IsA(node, FuncExpr) && ((FuncExpr *) (node))->funcretset) || \
-	 (IsA(node, OpExpr) && ((OpExpr *) (node))->opretset))
-
 /*
  * Data structures for split_pathtarget_at_srfs().  To preserve the identity
  * of sortgroupref items even if they are textually equal(), what we track is
