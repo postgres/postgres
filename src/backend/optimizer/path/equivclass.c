@@ -841,6 +841,13 @@ find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
 			continue;
 
 		/*
+		 * Disallow SRFs so that all of them can be evaluated at the correct
+		 * time as determined by make_sort_input_target.
+		 */
+		if (IS_SRF_CALL((Node *) em_expr))
+			continue;
+
+		/*
 		 * As long as the expression isn't volatile then
 		 * prepare_sort_from_pathkeys is able to generate a new target entry,
 		 * so there's no need to verify that one already exists.
