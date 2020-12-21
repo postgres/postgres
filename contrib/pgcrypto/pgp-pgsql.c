@@ -32,6 +32,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
+#include "common/string.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
@@ -90,19 +91,6 @@ static text *
 convert_to_utf8(text *src)
 {
 	return convert_charset(src, GetDatabaseEncoding(), PG_UTF8);
-}
-
-static bool
-string_is_ascii(const char *str)
-{
-	const char *p;
-
-	for (p = str; *p; p++)
-	{
-		if (IS_HIGHBIT_SET(*p))
-			return false;
-	}
-	return true;
 }
 
 static void
@@ -814,7 +802,7 @@ parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
 
 		v = TextDatumGetCString(key_datums[i]);
 
-		if (!string_is_ascii(v))
+		if (!pg_is_ascii(v))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("header key must not contain non-ASCII characters")));
@@ -836,7 +824,7 @@ parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
 
 		v = TextDatumGetCString(val_datums[i]);
 
-		if (!string_is_ascii(v))
+		if (!pg_is_ascii(v))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("header value must not contain non-ASCII characters")));

@@ -26,6 +26,7 @@
 #endif
 
 #include "common/saslprep.h"
+#include "common/string.h"
 #include "common/unicode_norm.h"
 #include "mb/pg_wchar.h"
 
@@ -47,7 +48,6 @@
 static int	codepoint_range_cmp(const void *a, const void *b);
 static bool is_code_in_table(pg_wchar code, const pg_wchar *map, int mapsize);
 static int	pg_utf8_string_len(const char *source);
-static bool pg_is_ascii_string(const char *p);
 
 /*
  * Stringprep Mapping Tables.
@@ -1019,21 +1019,6 @@ pg_utf8_string_len(const char *source)
 	return num_chars;
 }
 
-/*
- * Returns true if the input string is pure ASCII.
- */
-static bool
-pg_is_ascii_string(const char *p)
-{
-	while (*p)
-	{
-		if (IS_HIGHBIT_SET(*p))
-			return false;
-		p++;
-	}
-	return true;
-}
-
 
 /*
  * pg_saslprep - Normalize a password with SASLprep.
@@ -1076,7 +1061,7 @@ pg_saslprep(const char *input, char **output)
 	 * Quick check if the input is pure ASCII.  An ASCII string requires no
 	 * further processing.
 	 */
-	if (pg_is_ascii_string(input))
+	if (pg_is_ascii(input))
 	{
 		*output = STRDUP(input);
 		if (!(*output))

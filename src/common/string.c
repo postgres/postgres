@@ -93,6 +93,22 @@ pg_clean_ascii(char *str)
 
 
 /*
+ * pg_is_ascii -- Check if string is made only of ASCII characters
+ */
+bool
+pg_is_ascii(const char *str)
+{
+	while (*str)
+	{
+		if (IS_HIGHBIT_SET(*str))
+			return false;
+		str++;
+	}
+	return true;
+}
+
+
+/*
  * pg_strip_crlf -- Remove any trailing newline and carriage return
  *
  * Removes any trailing newline and carriage return characters (\r on
