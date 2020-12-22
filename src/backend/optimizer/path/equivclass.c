@@ -798,9 +798,11 @@ find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
 }
 
 /*
- * Find an equivalence class member expression that can be safely used by a
- * sort node on top of the provided relation. The rules here must match those
- * applied in prepare_sort_from_pathkeys.
+ * Find an equivalence class member expression that can be safely used to build
+ * a sort node using the provided relation. The rules are a subset of those
+ * applied in prepare_sort_from_pathkeys since that function deals with sorts
+ * that must be delayed until the last stages of query execution, while here
+ * we only care about proactive sorts.
  */
 Expr *
 find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
