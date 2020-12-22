@@ -33,7 +33,7 @@ $node_standby->start;
 # instance being driven by us, add a timeout high enough that it
 # should never trigger even on very slow machines, unless something
 # is really wrong.
-my $psql_timeout = IPC::Run::timer(30);
+my $psql_timeout = IPC::Run::timer(300);
 
 # One psql to primary and standby each, for all queries. That allows
 # to check uncommitted changes being replicated and such.
