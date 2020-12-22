@@ -5844,6 +5844,9 @@ make_incrementalsort(Plan *lefttree, int numCols, int nPresortedCols,
  *
  * Returns the node which is to be the input to the Sort (either lefttree,
  * or a Result stacked atop lefttree).
+ *
+ * Note: Restrictions on what expressions are safely sortable may also need to
+ * be added to find_em_expr_usable_for_sorting_rel.
  */
 static Plan *
 prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
