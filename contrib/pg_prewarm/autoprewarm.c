@@ -157,6 +157,7 @@ void
 autoprewarm_main(Datum main_arg)
 {
 	bool		first_time = true;
+	bool		final_dump_allowed = true;
 	TimestampTz last_dump_time = 0;
 
 	/* Establish signal handlers; once that's done, unblock signals. */
@@ -197,10 +198,15 @@ autoprewarm_main(Datum main_arg)
 	 * There's not much point in performing a dump immediately after we finish
 	 * preloading; so, if we do end up preloading, consider the last dump time
 	 * to be equal to the current time.
+	 *
+	 * If apw_load_buffers() is terminated early by a shutdown request,
+	 * prevent dumping out our state below the loop, because we'd effectively
+	 * just truncate the saved state to however much we'd managed to preload.
 	 */
 	if (first_time)
 	{
 		apw_load_buffers();
+		final_dump_allowed = !got_sigterm;
 		last_dump_time = GetCurrentTimestamp();
 	}
 
@@ -258,7 +264,8 @@ autoprewarm_main(Datum main_arg)
 	 * Dump one last time.  We assume this is probably the result of a system
 	 * shutdown, although it's possible that we've merely been terminated.
 	 */
-	apw_dump_now(true, true);
+	if (final_dump_allowed)
+		apw_dump_now(true, true);
 }
 
 /*
@@ -392,6 +399,18 @@ apw_load_buffers(void)
 			break;
 
 		/*
+		 * Likewise, don't launch if we've already been told to shut down.
+		 *
+		 * There is a race condition here: if the postmaster has received a
+		 * fast-shutdown signal, but we've not heard about it yet, then the
+		 * postmaster will ignore our worker start request and we'll wait
+		 * forever.  However, that's a bug in the general background-worker
+		 * logic, not the fault of this module.
+		 */
+		if (got_sigterm)
+			break;
+
+		/*
 		 * Start a per-database worker to load blocks for this database; this
 		 * function will return once the per-database worker exits.
 		 */
@@ -408,10 +427,11 @@ apw_load_buffers(void)
 	apw_state->pid_using_dumpfile = InvalidPid;
 	LWLockRelease(&apw_state->lock);
 
-	/* Report our success. */
-	ereport(LOG,
-			(errmsg("autoprewarm successfully prewarmed %d of %d previously-loaded blocks",
-					apw_state->prewarmed_blocks, num_elements)));
+	/* Report our success, if we were able to finish. */
+	if (!got_sigterm)
+		ereport(LOG,
+				(errmsg("autoprewarm successfully prewarmed %d of %d previously-loaded blocks",
+						apw_state->prewarmed_blocks, num_elements)));
 }
 
 /*
