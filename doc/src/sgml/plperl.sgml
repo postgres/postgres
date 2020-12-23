@@ -13,13 +13,13 @@
 
   <para>
    PL/Perl is a loadable procedural language that enables you to write
-   <productname>PostgreSQL</productname> functions in the
+   <productname>PostgreSQL</productname> functions and procedures in the
    <ulink url="https://www.perl.org">Perl programming language</ulink>.
   </para>
 
   <para>
    The main advantage to using PL/Perl is that this allows use,
-   within stored functions, of the manyfold <quote>string
+   within stored functions and procedures, of the manyfold <quote>string
    munging</quote> operators and functions available for Perl.  Parsing
    complex strings might be easier using Perl than it is with the
    string functions and control structures provided in PL/pgSQL.
