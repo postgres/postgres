@@ -5341,7 +5341,7 @@ readRecoveryCommandFile(void)
 		else if (strcmp(item->name, "recovery_target_xid") == 0)
 		{
 			errno = 0;
-			recoveryTargetXid = (TransactionId) strtoul(item->value, NULL, 0);
+			recoveryTargetXid = (TransactionId) pg_strtouint64(item->value, NULL, 0);
 			if (errno == EINVAL || errno == ERANGE)
 				ereport(FATAL,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
