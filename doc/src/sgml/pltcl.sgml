@@ -16,7 +16,7 @@
    <productname>PostgreSQL</productname> database system
    that enables the <ulink url="https://www.tcl.tk/">
    Tcl language</ulink> to be used to write
-   <productname>PostgreSQL</productname> functions.
+   <productname>PostgreSQL</productname> functions and procedures.
   </para>
 
   <!-- **** PL/Tcl overview **** -->
