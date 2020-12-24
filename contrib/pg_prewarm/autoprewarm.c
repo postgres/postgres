@@ -400,12 +400,7 @@ apw_load_buffers(void)
 
 		/*
 		 * Likewise, don't launch if we've already been told to shut down.
-		 *
-		 * There is a race condition here: if the postmaster has received a
-		 * fast-shutdown signal, but we've not heard about it yet, then the
-		 * postmaster will ignore our worker start request and we'll wait
-		 * forever.  However, that's a bug in the general background-worker
-		 * logic, not the fault of this module.
+		 * (The launch would fail anyway, but we might as well skip it.)
 		 */
 		if (got_sigterm)
 			break;

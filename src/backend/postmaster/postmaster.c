@@ -3761,6 +3761,13 @@ PostmasterStateMachine(void)
 	 */
 	if (pmState == PM_STOP_BACKENDS)
 	{
+		/*
+		 * Forget any pending requests for background workers, since we're no
+		 * longer willing to launch any new workers.  (If additional requests
+		 * arrive, BackgroundWorkerStateChange will reject them.)
+		 */
+		ForgetUnstartedBackgroundWorkers();
+
 		/* Signal all backend children except walsenders */
 		SignalSomeChildren(SIGTERM,
 						   BACKEND_TYPE_ALL - BACKEND_TYPE_WALSND);
@@ -5151,13 +5158,6 @@ sigusr1_handler(SIGNAL_ARGS)
 	PG_SETMASK(&BlockSig);
 #endif
 
-	/* Process background worker state change. */
-	if (CheckPostmasterSignal(PMSIGNAL_BACKGROUND_WORKER_CHANGE))
-	{
-		BackgroundWorkerStateChange();
-		StartWorkerNeeded = true;
-	}
-
 	/*
 	 * RECOVERY_STARTED and BEGIN_HOT_STANDBY signals are ignored in
 	 * unexpected states. If the startup process quickly starts up, completes
@@ -5203,6 +5203,7 @@ sigusr1_handler(SIGNAL_ARGS)
 
 		pmState = PM_RECOVERY;
 	}
+
 	if (CheckPostmasterSignal(PMSIGNAL_BEGIN_HOT_STANDBY) &&
 		pmState == PM_RECOVERY && Shutdown == NoShutdown)
 	{
@@ -5225,6 +5226,14 @@ sigusr1_handler(SIGNAL_ARGS)
 		connsAllowed = ALLOW_ALL_CONNS;
 
 		/* Some workers may be scheduled to start now */
+		StartWorkerNeeded = true;
+	}
+
+	/* Process background worker state changes. */
+	if (CheckPostmasterSignal(PMSIGNAL_BACKGROUND_WORKER_CHANGE))
+	{
+		/* Accept new worker requests only if not stopping. */
+		BackgroundWorkerStateChange(pmState < PM_STOP_BACKENDS);
 		StartWorkerNeeded = true;
 	}
 
