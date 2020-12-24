@@ -15,6 +15,7 @@
 
 #include <ctype.h>
 
+#include "common/hex_decode.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
@@ -146,17 +147,6 @@ binary_decode(PG_FUNCTION_ARGS)
 
 static const char hextbl[] = "0123456789abcdef";
 
-static const int8 hexlookup[128] = {
-	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
-	-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-	-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-};
-
 uint64
 hex_encode(const char *src, size_t len, char *dst)
 {
@@ -169,58 +159,6 @@ hex_encode(const char *src, size_t len, char *dst)
 		src++;
 	}
 	return (uint64) len * 2;
-}
-
-static inline char
-get_hex(const char *cp)
-{
-	unsigned char c = (unsigned char) *cp;
-	int			res = -1;
-
-	if (c < 127)
-		res = hexlookup[c];
-
-	if (res < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid hexadecimal digit: \"%.*s\"",
-						pg_mblen(cp), cp)));
-
-	return (char) res;
-}
-
-uint64
-hex_decode(const char *src, size_t len, char *dst)
-{
-	const char *s,
-			   *srcend;
-	char		v1,
-				v2,
-			   *p;
-
-	srcend = src + len;
-	s = src;
-	p = dst;
-	while (s < srcend)
-	{
-		if (*s == ' ' || *s == '\n' || *s == '\t' || *s == '\r')
-		{
-			s++;
-			continue;
-		}
-		v1 = get_hex(s) << 4;
-		s++;
-		if (s >= srcend)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid hexadecimal data: odd number of digits")));
-
-		v2 = get_hex(s);
-		s++;
-		*p++ = v1 | v2;
-	}
-
-	return p - dst;
 }
 
 static uint64

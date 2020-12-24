@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
 #include "common/int.h"
+#include "common/hex_decode.h"
 #include "common/unicode_norm.h"
 #include "lib/hyperloglog.h"
 #include "libpq/pqformat.h"
