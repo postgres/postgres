@@ -29,7 +29,7 @@
 
  <para>
   Every range type has a corresponding multirange type. A multirange is
-  an ordered list of non-continguous, non-empty, non-null ranges. Most
+  an ordered list of non-contiguous, non-empty, non-null ranges. Most
   range operators also work on multiranges, and they have a few functions
   of their own.
  </para>

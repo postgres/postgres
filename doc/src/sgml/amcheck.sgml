@@ -525,7 +525,7 @@ SET client_min_messages = DEBUG1;
   designed to diagnose corruption without undue risk.  It cannot guard
   against all causes of backend crashes, as even executing the calling
   query could be unsafe on a badly corrupted system.   Access to <link
-  linkend="catalogs-overview">catalog tables</link> are performed and could
+  linkend="catalogs-overview">catalog tables</link> is performed and could
   be problematic if the catalogs themselves are corrupted.
  </para>
 

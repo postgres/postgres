@@ -180,10 +180,10 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     The optional <replaceable class="parameter">multirange_type_name</replaceable>
     parameter specifies the name of the corresponding multirange type.  If not
     specified, this name is chosen automatically as follows.
-    If range type name contains <literal>range</literal> substring, then
-    multirange type name is formed by replacement of the <literal>range</literal>
-    substring with <literal>multirange</literal> substring in the range
-    type name.  Otherwise, multirange type name is formed by appending
+    If the range type name contains the substring <literal>range</literal>, then
+    the multirange type name is formed by replacement of the <literal>range</literal>
+    substring with <literal>multirange</literal> in the range
+    type name.  Otherwise, the multirange type name is formed by appending a
     <literal>_multirange</literal> suffix to the range type name.
    </para>
   </refsect2>

@@ -3470,7 +3470,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>wal_bytes</structfield> <type>numeric</type>
       </para>
       <para>
-       Total amount of WAL bytes generated
+       Total amount of WAL generated in bytes
       </para></entry>
      </row>
 
@@ -3479,7 +3479,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>wal_buffers_full</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of times WAL data was written to the disk because WAL buffers got full
+       Number of times WAL data was written to disk because WAL buffers became full
       </para></entry>
      </row>
 

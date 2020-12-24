@@ -953,11 +953,11 @@ stream_commit_cb(...);  &lt;-- commit of the streamed transaction
    <para>
     Similar to spill-to-disk behavior, streaming is triggered when the total
     amount of changes decoded from the WAL (for all in-progress transactions)
-    exceeds limit defined by <varname>logical_decoding_work_mem</varname> setting.
-    At that point the largest toplevel transaction (measured by amount of memory
+    exceeds the limit defined by <varname>logical_decoding_work_mem</varname> setting.
+    At that point, the largest toplevel transaction (measured by the amount of memory
     currently used for decoded changes) is selected and streamed.  However, in
-    some cases we still have to spill to the disk even if streaming is enabled
-    because if we cross the memory limit but we still have not decoded the
+    some cases we still have to spill to disk even if streaming is enabled
+    because we exceed the memory threshold but still have not decoded the
     complete tuple e.g., only decoded toast table insert but not the main table
     insert.
    </para>

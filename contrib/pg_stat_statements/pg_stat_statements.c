@@ -191,7 +191,7 @@ typedef struct Counters
 	double		usage;			/* usage factor */
 	int64		wal_records;	/* # of WAL records generated */
 	int64		wal_fpi;		/* # of WAL full page images generated */
-	uint64		wal_bytes;		/* total amount of WAL bytes generated */
+	uint64		wal_bytes;		/* total amount of WAL generated in bytes */
 } Counters;
 
 /*

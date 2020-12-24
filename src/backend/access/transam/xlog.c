@@ -10418,7 +10418,7 @@ get_sync_bit(int method)
 	 *
 	 * Never use O_DIRECT in walreceiver process for similar reasons; the WAL
 	 * written by walreceiver is normally read by the startup process soon
-	 * after its written. Also, walreceiver performs unaligned writes, which
+	 * after it's written. Also, walreceiver performs unaligned writes, which
 	 * don't work with O_DIRECT, so it is required for correctness too.
 	 */
 	if (!XLogIsNeeded() && !AmWalReceiverProcess())

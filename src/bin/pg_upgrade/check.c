@@ -247,8 +247,8 @@ output_completion_banner(char *deletion_script_file_name)
 	}
 
 	pg_log(PG_REPORT,
-		   "Optimizer statistics are not transferred by pg_upgrade so,\n"
-		   "once you start the new server, consider running:\n"
+		   "Optimizer statistics are not transferred by pg_upgrade.\n"
+		   "Once you start the new server, consider running:\n"
 		   "    %s/vacuumdb %s--all --analyze-in-stages\n\n", new_cluster.bindir, user_specification.data);
 
 	if (deletion_script_file_name)

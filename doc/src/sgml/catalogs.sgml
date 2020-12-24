@@ -4478,7 +4478,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        inherited columns are to be arranged.  The count starts at 1.
       </para>
       <para>
-       Indexes can not have multiple inheritance, since they can only inherit
+       Indexes cannot have multiple inheritance, since they can only inherit
        when using declarative partitioning.
       </para></entry>
      </row>

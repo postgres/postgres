@@ -198,9 +198,9 @@ ROLLBACK;
     <listitem>
      <para>
       Include information on WAL record generation. Specifically, include the
-      number of records, number of full page images (fpi) and amount of WAL
-      bytes generated.  In text format, only non-zero values are printed.  This
-      parameter may only be used when <literal>ANALYZE</literal> is also
+      number of records, number of full page images (fpi) and the amount of WAL
+      generated in bytes. In text format, only non-zero values are printed.
+      This parameter may only be used when <literal>ANALYZE</literal> is also
       enabled.  It defaults to <literal>FALSE</literal>.
      </para>
     </listitem>

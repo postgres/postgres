@@ -1274,7 +1274,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         (truncates towards zero)
        </para>
        <para>
-        <literal>div(9,4)</literal>
+        <literal>div(9, 4)</literal>
         <returnvalue>2</returnvalue>
        </para></entry>
       </row>
@@ -1493,7 +1493,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <type>bigint</type>, and <type>numeric</type>
        </para>
        <para>
-        <literal>mod(9,4)</literal>
+        <literal>mod(9, 4)</literal>
         <returnvalue>1</returnvalue>
        </para></entry>
       </row>
@@ -1975,7 +1975,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         result in radians
        </para>
        <para>
-        <literal>atan2(1,0)</literal>
+        <literal>atan2(1, 0)</literal>
         <returnvalue>1.5707963267948966</returnvalue>
        </para></entry>
       </row>
@@ -1995,7 +1995,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         result in degrees
        </para>
        <para>
-        <literal>atan2d(1,0)</literal>
+        <literal>atan2d(1, 0)</literal>
         <returnvalue>90</returnvalue>
        </para></entry>
       </row>

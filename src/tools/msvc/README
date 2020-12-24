@@ -81,7 +81,7 @@ VSObjectFactory.pm     factory module providing the code to create the
 Description of the internals of the Visual Studio build process
 ---------------------------------------------------------------
 By typing 'build' the user starts the build.bat wrapper which simply passes
-it's arguments to build.pl.
+its arguments to build.pl.
 In build.pl the user's buildenv.pl is used to set up the build environment
 (i. e. path to bison and flex). In addition his config.pl file is merged into
 config_default.pl to create the configuration arguments.

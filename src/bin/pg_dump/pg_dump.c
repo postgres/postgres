@@ -7018,10 +7018,7 @@ getInherits(Archive *fout, int *numInherits)
 	int			i_inhrelid;
 	int			i_inhparent;
 
-	/*
-	 * Find all the inheritance information, excluding implicit inheritance
-	 * via partitioning.
-	 */
+	/* find all the inheritance information */
 	appendPQExpBufferStr(query, "SELECT inhrelid, inhparent FROM pg_inherits");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);

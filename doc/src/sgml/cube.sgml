@@ -321,7 +321,7 @@ SELECT c FROM test ORDER BY c ~&gt; 3 DESC LIMIT 5;
         Makes a one dimensional cube.
        </para>
        <para>
-        <literal>cube(1,2)</literal>
+        <literal>cube(1, 2)</literal>
         <returnvalue>(1),(2)</returnvalue>
        </para></entry>
       </row>

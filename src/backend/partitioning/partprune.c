@@ -3119,7 +3119,7 @@ get_matching_range_bounds(PartitionPruneContext *context,
 	/*
 	 * If the smallest partition to return has MINVALUE (negative infinity) as
 	 * its lower bound, increment it to point to the next finite bound
-	 * (supposedly its upper bound), so that we don't advertently end up
+	 * (supposedly its upper bound), so that we don't inadvertently end up
 	 * scanning the default partition.
 	 */
 	if (minoff < boundinfo->ndatums && partindices[minoff] < 0)
@@ -3138,7 +3138,7 @@ get_matching_range_bounds(PartitionPruneContext *context,
 	 * If the previous greatest partition has MAXVALUE (positive infinity) as
 	 * its upper bound (something only possible to do with multi-column range
 	 * partitioning), we scan switch to it as the greatest partition to
-	 * return.  Again, so that we don't advertently end up scanning the
+	 * return.  Again, so that we don't inadvertently end up scanning the
 	 * default partition.
 	 */
 	if (maxoff >= 1 && partindices[maxoff] < 0)
