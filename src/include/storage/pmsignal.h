@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pmsignal.h
- *	  routines for signaling the postmaster from its child processes
+ *	  routines for signaling between the postmaster and its child processes
  *
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
@@ -45,6 +45,16 @@ typedef enum
 	NUM_PMSIGNALS				/* Must be last value of enum! */
 } PMSignalReason;
 
+/*
+ * Reasons why the postmaster would send SIGQUIT to its children.
+ */
+typedef enum
+{
+	PMQUIT_NOT_SENT = 0,		/* postmaster hasn't sent SIGQUIT */
+	PMQUIT_FOR_CRASH,			/* some other backend bought the farm */
+	PMQUIT_FOR_STOP				/* immediate stop was commanded */
+} QuitSignalReason;
+
 /* PMSignalData is an opaque struct, details known only within pmsignal.c */
 typedef struct PMSignalData PMSignalData;
 
@@ -55,6 +65,8 @@ extern Size PMSignalShmemSize(void);
 extern void PMSignalShmemInit(void);
 extern void SendPostmasterSignal(PMSignalReason reason);
 extern bool CheckPostmasterSignal(PMSignalReason reason);
+extern void SetQuitSignalReason(QuitSignalReason reason);
+extern QuitSignalReason GetQuitSignalReason(void);
 extern int	AssignPostmasterChildSlot(void);
 extern bool ReleasePostmasterChildSlot(int slot);
 extern bool IsPostmasterChildWalSender(int slot);

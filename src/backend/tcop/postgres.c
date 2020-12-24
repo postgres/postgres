@@ -67,6 +67,7 @@
 #include "rewrite/rewriteHandler.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
+#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
@@ -2752,8 +2753,8 @@ drop_unnamed_stmt(void)
 /*
  * quickdie() occurs when signaled SIGQUIT by the postmaster.
  *
- * Some backend has bought the farm,
- * so we need to stop what we're doing and exit.
+ * Either some backend has bought the farm, or we've been told to shut down
+ * "immediately"; so we need to stop what we're doing and exit.
  */
 void
 quickdie(SIGNAL_ARGS)
@@ -2788,18 +2789,36 @@ quickdie(SIGNAL_ARGS)
 	 * wrong, so there's not much to lose.  Assuming the postmaster is still
 	 * running, it will SIGKILL us soon if we get stuck for some reason.
 	 *
-	 * Ideally this should be ereport(FATAL), but then we'd not get control
-	 * back...
+	 * Ideally these should be ereport(FATAL), but then we'd not get control
+	 * back to force the correct type of process exit.
 	 */
-	ereport(WARNING,
-			(errcode(ERRCODE_CRASH_SHUTDOWN),
-			 errmsg("terminating connection because of crash of another server process"),
-			 errdetail("The postmaster has commanded this server process to roll back"
-					   " the current transaction and exit, because another"
-					   " server process exited abnormally and possibly corrupted"
-					   " shared memory."),
-			 errhint("In a moment you should be able to reconnect to the"
-					 " database and repeat your command.")));
+	switch (GetQuitSignalReason())
+	{
+		case PMQUIT_NOT_SENT:
+			/* Hmm, SIGQUIT arrived out of the blue */
+			ereport(WARNING,
+					(errcode(ERRCODE_ADMIN_SHUTDOWN),
+					 errmsg("terminating connection because of unexpected SIGQUIT signal")));
+			break;
+		case PMQUIT_FOR_CRASH:
+			/* A crash-and-restart cycle is in progress */
+			ereport(WARNING,
+					(errcode(ERRCODE_CRASH_SHUTDOWN),
+					 errmsg("terminating connection because of crash of another server process"),
+					 errdetail("The postmaster has commanded this server process to roll back"
+							   " the current transaction and exit, because another"
+							   " server process exited abnormally and possibly corrupted"
+							   " shared memory."),
+					 errhint("In a moment you should be able to reconnect to the"
+							 " database and repeat your command.")));
+			break;
+		case PMQUIT_FOR_STOP:
+			/* Immediate-mode stop */
+			ereport(WARNING,
+					(errcode(ERRCODE_ADMIN_SHUTDOWN),
+					 errmsg("terminating connection due to immediate shutdown command")));
+			break;
+	}
 
 	/*
 	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here

@@ -218,6 +218,7 @@ int			ReservedBackends;
 /* The socket(s) we're listening to. */
 #define MAXLISTEN	64
 static pgsocket ListenSocket[MAXLISTEN];
+
 /*
  * These globals control the behavior of the postmaster in case some
  * backend dumps core.  Normally, it kills all peers of the dead backend
@@ -2887,6 +2888,8 @@ pmdie(SIGNAL_ARGS)
 			sd_notify(0, "STOPPING=1");
 #endif
 
+			/* tell children to shut down ASAP */
+			SetQuitSignalReason(PMQUIT_FOR_STOP);
 			TerminateChildren(SIGQUIT);
 			pmState = PM_WAIT_BACKENDS;
 
@@ -3464,6 +3467,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 		LogChildExit(LOG, procname, pid, exitstatus);
 		ereport(LOG,
 				(errmsg("terminating any other active server processes")));
+		SetQuitSignalReason(PMQUIT_FOR_CRASH);
 	}
 
 	/* Process background workers. */
