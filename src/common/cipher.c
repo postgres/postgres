@@ -19,7 +19,7 @@
 
 #include "common/cipher.h"
 
-static cipher_failure(void);
+static void cipher_failure(void);
 
 PgCipherCtx *
 pg_cipher_ctx_create(int cipher, uint8 *key, int klen, bool enc)
@@ -46,12 +46,12 @@ bool
 pg_cipher_decrypt(PgCipherCtx *ctx, const unsigned char *ciphertext,
 				  const int inlen, unsigned char *plaintext, int *outlen,
 				  const unsigned char *iv, const int ivlen,
-				  const unsigned char *intag, const int taglen)
+				  unsigned char *intag, const int taglen)
 {
 	cipher_failure();
 }
 
-static
+static void
 cipher_failure(void)
 {
 #ifndef FRONTEND
