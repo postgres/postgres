@@ -346,6 +346,13 @@ SET SESSION AUTHORIZATION regress_priv_user1;
 SELECT * FROM atest3; -- fail
 ERROR:  permission denied for table atest3
 DELETE FROM atest3; -- ok
+BEGIN;
+RESET SESSION AUTHORIZATION;
+ALTER ROLE regress_priv_user1 NOINHERIT;
+SET SESSION AUTHORIZATION regress_priv_user1;
+DELETE FROM atest3;
+ERROR:  permission denied for table atest3
+ROLLBACK;
 -- views
 SET SESSION AUTHORIZATION regress_priv_user3;
 CREATE VIEW atestv1 AS SELECT * FROM atest1; -- ok
