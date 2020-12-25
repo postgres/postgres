@@ -298,6 +298,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-R <replaceable class="parameter">file-descriptor</replaceable></option></term>
+      <listitem>
+       <para>
+        Makes <command>postgres</command> prompt for a passphrase or PIN
+        from the specified open numeric file descriptor.  The descriptor
+        is closed after the key is read.  The file descriptor number
+        <literal>-1</literal> duplicates standard error for the terminal;
+        this is useful for single-user mode.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-s</option></term>
       <listitem>
        <para>

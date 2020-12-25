@@ -324,6 +324,7 @@ help(const char *progname)
 #endif
 	printf(_("  -N MAX-CONNECT     maximum number of allowed connections\n"));
 	printf(_("  -p PORT            port number to listen on\n"));
+	printf(_("  -R fd              prompt for the cluster key\n"));
 	printf(_("  -s                 show statistics after each query\n"));
 	printf(_("  -S WORK-MEM        set amount of memory for sorts (in kB)\n"));
 	printf(_("  -V, --version      output version information, then exit\n"));
@@ -351,7 +352,9 @@ help(const char *progname)
 	printf(_("\nOptions for bootstrapping mode:\n"));
 	printf(_("  --boot             selects bootstrapping mode (must be first argument)\n"));
 	printf(_("  DBNAME             database name (mandatory argument in bootstrapping mode)\n"));
+	printf(_("  -K LEN             enable cluster file encryption with specified key length\n"));
 	printf(_("  -r FILENAME        send stdout and stderr to given file\n"));
+	printf(_("  -u DATADIR         copy encryption keys from datadir\n"));
 	printf(_("  -x NUM             internal use\n"));
 
 	printf(_("\nPlease read the documentation for the complete list of run-time\n"

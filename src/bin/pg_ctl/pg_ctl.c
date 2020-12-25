@@ -79,6 +79,7 @@ typedef enum
 static bool do_wait = true;
 static int	wait_seconds = DEFAULT_WAIT;
 static bool wait_seconds_arg = false;
+static bool pass_terminal_fd = false;
 static bool silent_mode = false;
 static ShutdownMode shutdown_mode = FAST_MODE;
 static int	sig = SIGINT;		/* default */
@@ -442,7 +443,7 @@ free_readfile(char **optlines)
 static pgpid_t
 start_postmaster(void)
 {
-	char		cmd[MAXPGPATH];
+	char		cmd[MAXPGPATH], *term_fd_opt = NULL;
 
 #ifndef WIN32
 	pgpid_t		pm_pid;
@@ -467,6 +468,19 @@ start_postmaster(void)
 
 	/* fork succeeded, in child */
 
+	if (pass_terminal_fd)
+	{
+		int terminal_fd = open("/dev/tty", O_RDWR, 0);
+
+		if (terminal_fd < 0)
+		{
+			write_stderr(_("%s: could not open terminal: %s\n"),
+						 progname, strerror(errno));
+			exit(1);
+		}
+		term_fd_opt = psprintf(" -R %d", terminal_fd);
+	}
+
 	/*
 	 * If possible, detach the postmaster process from the launching process
 	 * group and make it a group leader, so that it doesn't get signaled along
@@ -487,12 +501,14 @@ start_postmaster(void)
 	 * has the same PID as the current child process.
 	 */
 	if (log_file != NULL)
-		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1",
+		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s%s < \"%s\" >> \"%s\" 2>&1",
 				 exec_path, pgdata_opt, post_opts,
+				 term_fd_opt ? term_fd_opt : "",
 				 DEVNULL, log_file);
 	else
-		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s < \"%s\" 2>&1",
-				 exec_path, pgdata_opt, post_opts, DEVNULL);
+		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s%s < \"%s\" 2>&1",
+				 exec_path, pgdata_opt, post_opts,
+				 term_fd_opt ? term_fd_opt : "", DEVNULL);
 
 	(void) execl("/bin/sh", "/bin/sh", "-c", cmd, (char *) NULL);
 
@@ -512,6 +528,21 @@ start_postmaster(void)
 	 */
 	PROCESS_INFORMATION pi;
 	const char *comspec;
+
+	if (pass_terminal_fd)
+	{
+		/*  Hopefully we can read and write CONOUT, see simple_prompt() XXX */
+		/*  Do CreateRestrictedProcess() children even inherit open file descriptors? XXX */
+		int terminal_fd = open("CONOUT$", O_RDWR, 0);
+
+		if (terminal_fd < 0)
+		{
+			write_stderr(_("%s: could not open terminal: %s\n"),
+						 progname, strerror(errno));
+			exit(1);
+		}
+		term_fd_opt = psprintf(" -R %d", terminal_fd);
+	}
 
 	/* Find CMD.EXE location using COMSPEC, if it's set */
 	comspec = getenv("COMSPEC");
@@ -553,12 +584,14 @@ start_postmaster(void)
 		else
 			close(fd);
 
-		snprintf(cmd, MAXPGPATH, "\"%s\" /C \"\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1\"",
-				 comspec, exec_path, pgdata_opt, post_opts, DEVNULL, log_file);
+		snprintf(cmd, MAXPGPATH, "\"%s\" /C \"\"%s\" %s%s%s < \"%s\" >> \"%s\" 2>&1\"",
+				 comspec, exec_path, pgdata_opt, post_opts,
+				 term_fd_opt ? term_fd_opt : "", DEVNULL, log_file);
 	}
 	else
-		snprintf(cmd, MAXPGPATH, "\"%s\" /C \"\"%s\" %s%s < \"%s\" 2>&1\"",
-				 comspec, exec_path, pgdata_opt, post_opts, DEVNULL);
+		snprintf(cmd, MAXPGPATH, "\"%s\" /C \"\"%s\" %s%s%s < \"%s\" 2>&1\"",
+				 comspec, exec_path, pgdata_opt, post_opts,
+				 term_fd_opt ? term_fd_opt : "", DEVNULL);
 
 	if (!CreateRestrictedProcess(cmd, &pi, false))
 	{
@@ -689,7 +722,8 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 			}
 			else
 #endif
-				print_msg(".");
+				if (!pass_terminal_fd)
+					print_msg(".");
 		}
 
 		pg_usleep(USEC_PER_SEC / WAITS_PER_SEC);
@@ -2066,6 +2100,7 @@ do_help(void)
 	printf(_("  -o, --options=OPTIONS  command line options to pass to postgres\n"
 			 "                         (PostgreSQL server executable) or initdb\n"));
 	printf(_("  -p PATH-TO-POSTGRES    normally not necessary\n"));
+	printf(_("  -R, --authprompt       prompt for a paasphrase or PIN\n"));
 	printf(_("\nOptions for stop or restart:\n"));
 	printf(_("  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"));
 
@@ -2260,6 +2295,7 @@ main(int argc, char **argv)
 		{"mode", required_argument, NULL, 'm'},
 		{"pgdata", required_argument, NULL, 'D'},
 		{"options", required_argument, NULL, 'o'},
+		{"authprompt", no_argument, NULL, 'R'},
 		{"silent", no_argument, NULL, 's'},
 		{"timeout", required_argument, NULL, 't'},
 		{"core-files", no_argument, NULL, 'c'},
@@ -2332,7 +2368,7 @@ main(int argc, char **argv)
 	/* process command-line options */
 	while (optind < argc)
 	{
-		while ((c = getopt_long(argc, argv, "cD:e:l:m:N:o:p:P:sS:t:U:wW",
+		while ((c = getopt_long(argc, argv, "cD:e:l:m:N:o:p:P:RsS:t:U:wW",
 								long_options, &option_index)) != -1)
 		{
 			switch (c)
@@ -2384,6 +2420,9 @@ main(int argc, char **argv)
 					break;
 				case 'P':
 					register_password = pg_strdup(optarg);
+					break;
+				case 'R':
+					pass_terminal_fd = true;
 					break;
 				case 's':
 					silent_mode = true;

@@ -47,6 +47,7 @@
 #include "commands/vacuum.h"
 #include "commands/variable.h"
 #include "common/string.h"
+#include "crypto/kmgr.h"
 #include "funcapi.h"
 #include "jit/jit.h"
 #include "libpq/auth.h"
@@ -745,6 +746,8 @@ const char *const config_group_names[] =
 	gettext_noop("Statistics / Monitoring"),
 	/* STATS_COLLECTOR */
 	gettext_noop("Statistics / Query and Index Statistics Collector"),
+	/* ENCRYPTION */
+	gettext_noop("Encryption"),
 	/* AUTOVACUUM */
 	gettext_noop("Autovacuum"),
 	/* CLIENT_CONN */
@@ -3389,6 +3392,17 @@ static struct config_int ConfigureNamesInt[] =
 		check_huge_page_size, NULL, NULL
 	},
 
+	{
+		{"file_encryption_keylen", PGC_INTERNAL, PRESET_OPTIONS,
+		 gettext_noop("Shows the bit length of the file encryption key."),
+		 NULL,
+		 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&file_encryption_keylen,
+		0, 0, 256,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, 0, 0, 0, NULL, NULL, NULL
@@ -4379,6 +4393,16 @@ static struct config_string ConfigureNamesString[] =
 			GUC_SUPERUSER_ONLY
 		},
 		&ssl_passphrase_command,
+		"",
+		NULL, NULL, NULL
+	},
+
+	{
+		{"cluster_key_command", PGC_SIGHUP, ENCRYPTION,
+			gettext_noop("Command to obtain cluster key for cluster file encryption."),
+			NULL
+		},
+		&cluster_key_command,
 		"",
 		NULL, NULL, NULL
 	},

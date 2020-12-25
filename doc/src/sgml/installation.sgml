@@ -976,8 +976,9 @@ build-postgresql:
        <listitem>
         <para>
          Build with support for <acronym>SSL</acronym> (encrypted)
-         connections. This requires the <productname>OpenSSL</productname>
-         package to be installed.  <filename>configure</filename> will check
+         connections and cluster file encryption. This requires the
+         <productname>OpenSSL</productname> package to be installed.
+         <filename>configure</filename> will check
          for the required header files and libraries to make sure that
          your <productname>OpenSSL</productname> installation is sufficient
          before proceeding.

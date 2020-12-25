@@ -18,6 +18,7 @@
 
 #include "access/xlog_internal.h"	/* for pg_start/stop_backup */
 #include "catalog/pg_type.h"
+#include "common/kmgr_utils.h"
 #include "common/file_perm.h"
 #include "commands/progress.h"
 #include "lib/stringinfo.h"
@@ -152,6 +153,10 @@ struct exclude_list_item
  */
 static const char *const excludeDirContents[] =
 {
+	/* Skip temporary crypto key directories */
+	NEW_KMGR_DIR,
+	OLD_KMGR_DIR,
+
 	/*
 	 * Skip temporary statistics files. PG_STAT_TMP_DIR must be skipped even
 	 * when stats_temp_directory is set because PGSS_TEXT_FILE is always

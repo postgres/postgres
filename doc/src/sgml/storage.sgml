@@ -78,6 +78,11 @@ Item
 </row>
 
 <row>
+ <entry><filename>pg_cryptokeys</filename></entry>
+ <entry>Subdirectory containing file encryption keys</entry>
+</row>
+
+<row>
  <entry><filename>pg_dynshmem</filename></entry>
  <entry>Subdirectory containing files used by the dynamic shared memory
   subsystem</entry>

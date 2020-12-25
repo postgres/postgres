@@ -28,12 +28,14 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "common/link-canary.h"
+#include "crypto/kmgr.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "pg_getopt.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
+#include "postmaster/postmaster.h"
 #include "postmaster/startup.h"
 #include "postmaster/walwriter.h"
 #include "replication/walreceiver.h"
@@ -51,6 +53,8 @@
 #include "utils/relmapper.h"
 
 uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
+int			bootstrap_file_encryption_keylen = 0;	/* disabled */
+char		*bootstrap_old_key_datadir = NULL;	/* disabled */
 
 
 static void CheckerModeMain(void);
@@ -224,7 +228,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	/* If no -x argument, we are a CheckerProcess */
 	MyAuxProcType = CheckerProcess;
 
-	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:X:-:")) != -1)
+	while ((flag = getopt(argc, argv, "B:c:d:D:FkK:r:R:u:x:X:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -253,8 +257,17 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			case 'k':
 				bootstrap_data_checksum_version = PG_DATA_CHECKSUM_VERSION;
 				break;
+			case 'K':
+				bootstrap_file_encryption_keylen = atoi(optarg);
+				break;
+			case 'u':
+				bootstrap_old_key_datadir = pstrdup(optarg);
+				break;
 			case 'r':
 				strlcpy(OutputFileName, optarg, MAXPGPATH);
+				break;
+			case 'R':
+				terminal_fd = atoi(optarg);
 				break;
 			case 'x':
 				MyAuxProcType = atoi(optarg);
@@ -311,6 +324,12 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		write_stderr("%s: invalid command-line arguments\n", progname);
 		proc_exit(1);
 	}
+
+	if (bootstrap_file_encryption_keylen != 0 &&
+		bootstrap_file_encryption_keylen != 128 &&
+		bootstrap_file_encryption_keylen != 192 &&
+		bootstrap_file_encryption_keylen != 256)
+		elog(PANIC, "unrecognized file encryption length: %d", bootstrap_file_encryption_keylen);
 
 	switch (MyAuxProcType)
 	{

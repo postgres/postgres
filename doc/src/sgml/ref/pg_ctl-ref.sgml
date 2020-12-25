@@ -38,6 +38,7 @@ PostgreSQL documentation
    <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-o</option> <replaceable>options</replaceable></arg>
    <arg choice="opt"><option>-p</option> <replaceable>path</replaceable></arg>
+   <arg choice="opt"><option>-R</option></arg>
    <arg choice="opt"><option>-c</option></arg>
   </cmdsynopsis>
 
@@ -72,6 +73,7 @@ PostgreSQL documentation
    <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
    <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-o</option> <replaceable>options</replaceable></arg>
+   <arg choice="opt"><option>-R</option></arg>
    <arg choice="opt"><option>-c</option></arg>
   </cmdsynopsis>
 
@@ -369,6 +371,17 @@ PostgreSQL documentation
         In <literal>init</literal> mode, this option analogously
         specifies the location of the <filename>initdb</filename>
         executable.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-R</option></term>
+      <term><option>--authprompt</option></term>
+      <listitem>
+       <para>
+        Allows the <option>--cluster-key-command</option> command
+        to prompt for a passphrase or PIN.
        </para>
       </listitem>
      </varlistentry>

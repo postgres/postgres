@@ -25,6 +25,7 @@
 #include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
+#include "common/kmgr_utils.h"
 #include "common/logging.h"
 #include "getopt_long.h"
 #include "pg_getopt.h"
@@ -334,5 +335,7 @@ main(int argc, char *argv[])
 		   ControlFile->data_checksum_version);
 	printf(_("Mock authentication nonce:            %s\n"),
 		   mock_auth_nonce_str);
+	printf(_("File encryption key length:           %d\n"),
+		   ControlFile->file_encryption_keylen);
 	return 0;
 }

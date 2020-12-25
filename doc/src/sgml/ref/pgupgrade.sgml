@@ -168,6 +168,13 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-R</option></term>
+      <term><option>--authprompt</option></term>
+      <listitem><para>allows prompting for a passphrase or PIN
+      </para></listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-s</option> <replaceable>dir</replaceable></term>
       <term><option>--socketdir=</option><replaceable>dir</replaceable></term>
       <listitem><para>directory to use for postmaster sockets during upgrade;
@@ -309,7 +316,9 @@ make prefix=/usr/local/pgsql.new install
      Again, use compatible <command>initdb</command>
      flags that match the old cluster. Many
      prebuilt installers do this step automatically. There is no need to
-     start the new cluster.
+     start the new cluster.  If upgrading a cluster that uses
+     cluster file encryption, the <command>initdb</command> option
+     <option>--copy-encryption-keys</option> must be specified.
     </para>
    </step>
 
@@ -838,6 +847,13 @@ psql --username=postgres --file=script.sql postgres
    is down.
   </para>
 
+  <para>
+   If the old cluster uses file encryption, the new cluster must use
+   the same keys, so <command>pg_upgrade</command> copies them to the
+   new cluster.  It is necessary to initialize the new cluster with
+   the same <varname>cluster_key_command</varname> and the same
+   file encryption key length.
+  </para>
  </refsect1>
 
  <refsect1>

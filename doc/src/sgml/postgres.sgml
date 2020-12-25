@@ -171,6 +171,7 @@ break is not needed in a wider output rendering.
   &wal;
   &logical-replication;
   &jit;
+  &database-encryption;
   &regress;
 
  </part>

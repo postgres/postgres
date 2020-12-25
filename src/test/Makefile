@@ -30,7 +30,7 @@ endif
 endif
 ifeq ($(with_openssl),yes)
 ifneq (,$(filter ssl,$(PG_TEST_EXTRA)))
-SUBDIRS += ssl
+SUBDIRS += ssl crypto
 endif
 endif
 

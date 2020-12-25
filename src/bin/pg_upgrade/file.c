@@ -11,6 +11,7 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <dirent.h>
 #ifdef HAVE_COPYFILE_H
 #include <copyfile.h>
 #endif
@@ -21,6 +22,7 @@
 
 #include "access/visibilitymap.h"
 #include "common/file_perm.h"
+#include "common/file_utils.h"
 #include "pg_upgrade.h"
 #include "storage/bufpage.h"
 #include "storage/checksum.h"
