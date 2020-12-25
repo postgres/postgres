@@ -19,7 +19,7 @@
 
 #include "common/cipher.h"
 
-static void cipher_failure(void);
+static void cipher_failure(void) pg_attribute_noreturn();
 
 PgCipherCtx *
 pg_cipher_ctx_create(int cipher, uint8 *key, int klen, bool enc)
