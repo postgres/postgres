@@ -81,7 +81,7 @@ kmgr_wrap_key(PgCipherCtx *ctx, CryptoKey *in, CryptoKey *out)
 						   &enclen, /* Resulting length, must match input for us */
 						   iv, /* Generated IV from above */
 						   sizeof(iv), /* Length of the IV */
-						   (unsigned char *) &out->tag, /* Resulting tag */
+						   out->tag, /* Resulting tag */
 						   sizeof(out->tag))) /* Length of our tag */
 		return false;
 
@@ -106,7 +106,7 @@ kmgr_unwrap_key(PgCipherCtx *ctx, CryptoKey *in, CryptoKey *out)
 
 	out->pgkey_id = in->pgkey_id;
 	out->counter = in->counter;
-	out->tag = in->tag;
+	memcpy(out->tag, in->tag, sizeof(in->tag));
 
 	/* Construct the IV we are going to use, see kmgr_utils.h */
 	memcpy(iv, &out->pgkey_id, sizeof(out->pgkey_id));
@@ -120,7 +120,7 @@ kmgr_unwrap_key(PgCipherCtx *ctx, CryptoKey *in, CryptoKey *out)
 						   &declen, /* Length of plaintext */
 						   iv, /* IV we constructed above */
 						   sizeof(iv), /* Size of our IV */
-						   (unsigned char *) &in->tag, /* Tag which will be verified */
+						   in->tag, /* Tag which will be verified */
 						   sizeof(in->tag))) /* Size of our tag */
 		return false;
 

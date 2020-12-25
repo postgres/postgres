@@ -82,7 +82,7 @@ typedef struct CryptoKey
 {
 	uint64	pgkey_id;								/* Upper half of IV */
 	uint64	counter;								/* Lower half of IV */
-	uint128	tag;									/* GCM tag */
+	unsigned char tag[16];							/* GCM tag */
 	unsigned char encrypted_key[sizeof(int) + KMGR_MAX_KEY_LEN_BYTES];
 } CryptoKey;
 
