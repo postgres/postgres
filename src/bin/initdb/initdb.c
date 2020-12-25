@@ -2326,6 +2326,8 @@ usage(const char *progname)
 	printf(_("  -R, --authprompt          prompt for a passphrase or PIN\n"));
 	printf(_("  -s, --show                show internal settings\n"));
 	printf(_("  -S, --sync-only           only sync data directory\n"));
+	printf(_("  -u, --copy-encryption-keys=DATADIR\n"
+			 "                            copy the file encryption key from another cluster\n"));
 	printf(_("\nOther options:\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));

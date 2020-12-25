@@ -13,7 +13,7 @@
   log from being able to access the data stored in those files.
   For example, when using cluster file encryption, users who have read
   access to the cluster directories for backup purposes will not be able
-  to decrypt the data stored in the these files.
+  to decrypt the data stored in these files.
  </para>
 
  <para>
@@ -24,7 +24,7 @@
   Key one is used to encrypt write-ahead log (WAL) files.  Two different
   keys are used so that primary and standby servers can use different zero
   (heap/index/temp) keys, but the same one (WAL) key, so that these keys
-  can eventually be rotated by switching the primary to the standby as
+  can eventually be rotated by switching the primary to the standby
   and then changing the WAL key.
  </para>
 
@@ -68,7 +68,7 @@ initdb -D dbname --cluster-key-command='ckey_passphrase.sh'
    During the <command>initdb</command> process, if
    <option>--cluster-key-command</option> is specified, two data-level
    encryption keys are created.   These two keys are then encrypted with
-   the key enryption key (KEK) supplied by the cluster key command before
+   the key encryption key (KEK) supplied by the cluster key command before
    being stored in the database directory.  The key or passphrase that
    derives the key must be supplied from the terminal or stored in a
    trusted key store, such as key vault software, hardware security module.
@@ -87,7 +87,7 @@ initdb -D dbname --cluster-key-command='ckey_passphrase.sh'
   </para>
 
   <para>
-   The data encryption keys are randomly generated and are of 128, 192,
+   The data encryption keys are randomly generated and are 128, 192,
    or 256-bits in length.  They are encrypted by the key encryption key
    (KEK) using Advanced Encryption Standard (<acronym>AES256</acronym>)
    encryption in Galois/Counter Mode (<acronym>GCM</acronym>), which also
