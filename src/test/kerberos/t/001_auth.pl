@@ -163,10 +163,16 @@ note "setting up PostgreSQL instance";
 
 my $node = get_new_node('node');
 $node->init;
-$node->append_conf('postgresql.conf', "listen_addresses = '$hostaddr'");
-$node->append_conf('postgresql.conf', "krb_server_keyfile = '$keytab'");
-$node->append_conf('postgresql.conf', "logging_collector = on");
-$node->append_conf('postgresql.conf', "log_connections = on");
+$node->append_conf(
+	'postgresql.conf', qq{
+listen_addresses = '$hostaddr'
+krb_server_keyfile = '$keytab'
+logging_collector = on
+log_connections = on
+# these ensure stability of test results:
+log_rotation_age = 0
+lc_messages = 'C'
+});
 $node->start;
 
 $node->safe_psql('postgres', 'CREATE USER test1;');
