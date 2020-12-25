@@ -216,6 +216,12 @@ SET SESSION AUTHORIZATION regress_priv_user1;
 SELECT * FROM atest3; -- fail
 DELETE FROM atest3; -- ok
 
+BEGIN;
+RESET SESSION AUTHORIZATION;
+ALTER ROLE regress_priv_user1 NOINHERIT;
+SET SESSION AUTHORIZATION regress_priv_user1;
+DELETE FROM atest3;
+ROLLBACK;
 
 -- views
 
