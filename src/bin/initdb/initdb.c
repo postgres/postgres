@@ -2318,7 +2318,7 @@ usage(const char *progname)
 			 "                            to obtain the cluster key\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
 	printf(_("  -k, --data-checksums      use data page checksums\n"));
-	printf(_("  -K, --file-encryption-keylen\n"
+	printf(_("  -K, --file-encryption-keylen=LENGTH\n"
 			 "                            bit length of the file encryption key\n"));
 	printf(_("  -L DIRECTORY              where to find the input files\n"));
 	printf(_("  -n, --no-clean            do not clean up after errors\n"));
@@ -3008,7 +3008,7 @@ main(int argc, char *argv[])
 		{"wal-segsize", required_argument, NULL, 12},
 		{"data-checksums", no_argument, NULL, 'k'},
 		{"authprompt", no_argument, NULL, 'R'},
-		{"file-encryption-keylen", no_argument, NULL, 'K'},
+		{"file-encryption-keylen", required_argument, NULL, 'K'},
 		{"allow-group-access", no_argument, NULL, 'g'},
 		{"cluster-key-command", required_argument, NULL, 'c'},
 		{"copy-encryption-keys", required_argument, NULL, 'u'},

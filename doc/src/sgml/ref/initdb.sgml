@@ -236,8 +236,8 @@ PostgreSQL documentation
 
      <varlistentry id="app-initdb-file-encryption-keylen"
       xreflabel="file encryption">
-      <term><option>-K</option></term>
-      <term><option>--file-encryption-keylen</option></term>
+      <term><option>-K <replaceable class="parameter">length</replaceable></option></term>
+      <term><option>--file-encryption-keylen=<replaceable class="parameter">length</replaceable></option></term>
       <listitem>
        <para>
         Specifies the number of bits for the file encryption keys.  The
