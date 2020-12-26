@@ -1,0 +1,186 @@
+<!--
+doc/src/sgml/ref/pg_alterckey.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="app-pg_alterckey">
+ <indexterm zone="app-pg_alterckey">
+  <primary>pg_alterckey</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle><application>pg_alterckey</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_alterckey</refname>
+  <refpurpose>alter the <productname>PostgreSQL</productname> cluster key</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_alterckey</command>
+   <group choice="opt">
+    <arg choice="plain"><option>-R</option></arg>
+    <arg choice="plain"><option>--authprompt</option></arg>
+   </group>
+   <replaceable class="parameter">old_cluster_key_command</replaceable>
+   <replaceable class="parameter">new_cluster_key_command</replaceable>
+   <group choice="opt">
+    <group choice="opt">
+     <arg choice="plain"><option>-D</option></arg>
+     <arg choice="plain"><option>--pgdata</option></arg>
+    </group>
+    <replaceable class="parameter">datadir</replaceable>
+   </group>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
+   <command>pg_alterckey</command>
+   <group choice="opt">
+    <arg choice="plain"><option>-R</option></arg>
+    <arg choice="plain"><option>--authprompt</option></arg>
+   </group>
+   <group choice="plain">
+    <arg choice="plain"><option>-r</option></arg>
+    <arg choice="plain"><option>--repair</option></arg>
+   </group>
+   <group choice="opt">
+    <group choice="opt">
+     <arg choice="plain"><option>-D</option></arg>
+     <arg choice="plain"><option>--pgdata</option></arg>
+    </group>
+    <replaceable class="parameter">datadir</replaceable>
+   </group>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="r1-app-pg_alterckey-1">
+  <title>Description</title>
+  <para>
+   <command>pg_alterckey</command> alters the cluster key used
+   for cluster file encryption.  The cluster key is initially set
+   during <xref linkend="app-initdb"/>.  The command can be run while the
+   server is running or stopped.  The new password must be used the next
+   time the server is started.
+  </para>
+
+  <para>
+   Technically, <command>pg_alterckey</command> changes the key
+   encryption key (<acronym>KEK</acronym>) which encrypts the data
+   encryption keys;  it does not change the data encryption keys.  It does
+   this by decrypting each data encryption key using the <replaceable
+   class="parameter">old_cluster_key_command</replaceable>,
+   re-encrypting it using the <replaceable
+   class="parameter">new_cluster_key_command</replaceable>, and
+   then writes the result back to the cluster directory.
+  </para>
+
+  <para>
+   See the <xref linkend="app-initdb"/> documentation for how to define
+   the old and new passphrase commands.  You can use different executables
+   for these commands, or you can use the same executable with different
+   arguments to specify retrieval of the old or new key.
+  </para>
+
+  <para>
+   When started, <command>pg_alterckey</command> repairs any files that
+   remain from previous <command>pg_alterckey</command> failures before
+   altering the cluster key.  To perform only the repair task,
+   use the <option>--repair</option> option.  The server will not start
+   if repair is needed, though a running server is unaffected by an
+   unrepaired cluster key configuration.
+  </para>
+
+  <para>
+   You can specify the data directory on the command line, or use
+   the environment variable <envar>PGDATA</envar>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+   <para>
+     <varlistentry>
+      <term><option>-R</option></term>
+      <term><option>--authprompt</option></term>
+      <listitem>
+       <para>
+        Allows the <option>old_cluster_key_command</option> and
+        <option>new_cluster_key_command</option> commands
+        to prompt for a passphrase or PIN.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    Other options:
+
+    <variablelist>
+     <varlistentry>
+       <term><option>-V</option></term>
+       <term><option>--version</option></term>
+       <listitem>
+       <para>
+       Print the <application>pg_alterckey</application> version and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-?</option></term>
+       <term><option>--help</option></term>
+       <listitem>
+       <para>
+       Show help about <application>pg_alterckey</application> command line
+       arguments, and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGDATA</envar></term>
+
+    <listitem>
+     <para>
+      Default data directory location
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>PG_COLOR</envar></term>
+    <listitem>
+     <para>
+      Specifies whether to use color in diagnostic messages. Possible values
+      are <literal>always</literal>, <literal>auto</literal> and
+      <literal>never</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-initdb"/></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>
