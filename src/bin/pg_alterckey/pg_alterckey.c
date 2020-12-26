@@ -343,16 +343,17 @@ create_lockfile(void)
  		unlink(pid_path);
 
  		/* Sleep to reduce the likelihood of concurrent unlink */
- 		sleep(2);
+		pg_usleep(2000000L);    /* 2 seconds */
 	}
 
 	/* Create our own lockfile? */
-	lock_fd = open(pid_path, O_RDWR | O_CREAT | O_EXCL
-#ifdef WIN32
-				   /* delete on close */
-				   | O_TEMPORARY
+#ifndef WIN32
+	lock_fd = open(pid_path, O_RDWR | O_CREAT | O_EXCL, pg_file_create_mode);
+#else
+	/* delete on close */
+	lock_fd = open(pid_path, O_RDWR | O_CREAT | O_EXCL | O_TEMPORARY,
+				   pg_file_create_mode);
 #endif
-				   , pg_file_create_mode);
 
 	if (lock_fd == -1)
 	{
