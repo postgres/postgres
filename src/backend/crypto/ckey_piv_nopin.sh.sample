@@ -1,0 +1,63 @@
+#!/bin/sh
+
+# This uses the public/private keys on a PIV device, like a CAC or Yubikey.
+# It  uses a PIN stored in a file.
+# It uses OpenSSL with PKCS11 enabled via OpenSC.
+
+[ "$#" -ne 1 ] && echo "cluster_key_command usage: $0 \"%d\"" 1>&2 && exit 1
+# Supports environment variable PIV_PIN_FILE
+# No need for %R or -R since we are not prompting for a PIN
+
+DIR="$1"
+[ ! -e "$DIR" ] && echo "$DIR does not exist" 1>&2 && exit 1
+[ ! -d "$DIR" ] && echo "$DIR is not a directory" 1>&2 && exit 1
+
+# Set these here or pass in as environment variables.
+# File that stores the PIN to unlock the PIV
+#PIV_PIN_FILE=''
+# PIV slot 3 is the "Key Management" slot, so we use '0:3'
+PIV_SLOT='0:3'
+
+# File containing the cluster key encrypted with the PIV_SLOT's public key
+KEY_FILE="$DIR/pivpass.key"
+
+
+# ----------------------------------------------------------------------
+
+[ ! "$PIV_PIN_FILE" ] && echo 'PIV_PIN_FILE undefined' 1>&2 && exit 1
+[ ! -e "$PIV_PIN_FILE" ] && echo "$PIV_PIN_FILE does not exist" 1>&2 && exit 1
+[ -d "$PIV_PIN_FILE" ] && echo "$PIV_PIN_FILE is a directory" 1>&2 && exit 1
+
+[ ! "$KEY_FILE" ] && echo 'KEY_FILE undefined' 1>&2 && exit 1
+[ -d "$KEY_FILE" ] && echo "$KEY_FILE is a directory" 1>&2 && exit 1
+
+# Create a cluster key encrypted with the PIV_SLOT's public key?
+if [ ! -e "$KEY_FILE" ]
+then	# The 'postgres' operating system user must have permission to
+	# access the PIV device.
+
+	openssl rand -hex 32 |
+	if ! openssl rsautl -engine pkcs11 -keyform engine -encrypt \
+		-inkey "$PIV_SLOT" -passin file:"$PIV_PIN_FILE" -out "$KEY_FILE"
+	then	echo 'cluster key generation failed' 1>&2
+		exit 1
+	fi
+
+	# Warn the user to save the cluster key in a safe place
+	cat 1>&2 <<END
+
+WARNING:  The PIV device can be locked and require a reset if too many PIN
+attempts fail.  It is recommended to run this command manually and save
+the cluster key in a secure location for possible recovery.
+END
+
+fi
+
+# Decrypt the cluster key encrypted with the PIV_SLOT's public key
+if ! openssl rsautl -engine pkcs11 -keyform engine -decrypt \
+	-inkey "$PIV_SLOT" -passin file:"$PIV_PIN_FILE" -in "$KEY_FILE"
+then	echo 'cluster key decryption failed' 1>&2
+	exit 1
+fi
+
+exit 0
