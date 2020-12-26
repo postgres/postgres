@@ -36,9 +36,3 @@ uninstall:
 clean distclean maintainer-clean:
 	rm -f pg_alterckey$(X) $(OBJS)
 	rm -rf tmp_check
-
-check:
-	$(prove_check)
-
-installcheck:
-	$(prove_installcheck)
