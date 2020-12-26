@@ -348,7 +348,7 @@ open_pipe_stream(const char *command)
 		return NULL;
 	}
 	buf[0] = '"';
-	mempcy(&buf[1], command, cmdlen);
+	memcpy(&buf[1], command, cmdlen);
 	buf[cmdlen + 1] = '"';
 	buf[cmdlen + 2] = '\0';
 
