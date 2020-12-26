@@ -22,38 +22,48 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_alterckey</command>
-   <group choice="opt">
+
+   <group choice="plain">
     <arg choice="plain"><option>-R</option></arg>
     <arg choice="plain"><option>--authprompt</option></arg>
    </group>
-   <replaceable class="parameter">old_cluster_key_command</replaceable>
-   <replaceable class="parameter">new_cluster_key_command</replaceable>
-   <group choice="opt">
-    <group choice="opt">
+
+   <arg choice="plain">
+    <replaceable class="parameter">old_cluster_key_command</replaceable>
+    <replaceable class="parameter">new_cluster_key_command</replaceable>
+   </arg>
+
+   <arg choice="opt">
+    <group choice="plain">
      <arg choice="plain"><option>-D</option></arg>
      <arg choice="plain"><option>--pgdata</option></arg>
     </group>
     <replaceable class="parameter">datadir</replaceable>
-   </group>
+   </arg>
+
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>pg_alterckey</command>
+
    <group choice="opt">
     <arg choice="plain"><option>-R</option></arg>
     <arg choice="plain"><option>--authprompt</option></arg>
    </group>
+
    <group choice="plain">
     <arg choice="plain"><option>-r</option></arg>
     <arg choice="plain"><option>--repair</option></arg>
    </group>
-   <group choice="opt">
+
+   <arg choice="opt">
     <group choice="opt">
      <arg choice="plain"><option>-D</option></arg>
      <arg choice="plain"><option>--pgdata</option></arg>
     </group>
     <replaceable class="parameter">datadir</replaceable>
-   </group>
+   </arg>
+
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -104,6 +114,7 @@ PostgreSQL documentation
   <title>Options</title>
 
    <para>
+    <variablelist>
      <varlistentry>
       <term><option>-R</option></term>
       <term><option>--authprompt</option></term>
@@ -172,7 +183,7 @@ PostgreSQL documentation
      </para>
     </listitem>
    </varlistentry>
-
+  </variablelist>
  </refsect1>
 
  <refsect1>
