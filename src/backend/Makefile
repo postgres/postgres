@@ -54,15 +54,6 @@ ifeq ($(with_systemd),yes)
 LIBS += -lsystemd
 endif
 
-CRYPTO_SCRIPTDIR=auth_commands
-CRYPTO_SCRIPTS = \
-	ckey_aws.sh.sample \
-	ckey_direct.sh.sample \
-	ckey_passphrase.sh.sample \
-	ckey_piv_nopin.sh.sample  \
-	ckey_piv_pin.sh.sample \
-	ssl_passphrase.sh.sample
-
 ##########################################################################
 
 all: submake-libpgport submake-catalog-headers submake-utils-headers postgres $(POSTGRES_IMP)
@@ -221,7 +212,12 @@ endif
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample '$(DESTDIR)$(datadir)/pg_hba.conf.sample'
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample '$(DESTDIR)$(datadir)/pg_ident.conf.sample'
 	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample '$(DESTDIR)$(datadir)/postgresql.conf.sample'
-	$(INSTALL_DATA) $(addprefix 'crypto/', $(CRYPTO_SCRIPTS)) '$(DESTDIR)$(datadir)/$(CRYPTO_SCRIPTDIR)'
+	$(INSTALL_DATA) $(srcdir)/crypto/ckey_aws.sh.sample '$(DESTDIR)$(datadir)/auth_commands/ckey_aws.sh.sample'
+	$(INSTALL_DATA) $(srcdir)/crypto/ckey_direct.sh.sample '$(DESTDIR)$(datadir)/auth_commands/ckey_direct.sh.sample'
+	$(INSTALL_DATA) $(srcdir)/crypto/ckey_passphrase.sh.sample '$(DESTDIR)$(datadir)/auth_commands/ckey_passphrase.sh.sample'
+	$(INSTALL_DATA) $(srcdir)/crypto/ckey_piv_nopin.sh.sample '$(DESTDIR)$(datadir)/auth_commands/ckey_piv_nopin.sh.sample'
+	$(INSTALL_DATA) $(srcdir)/crypto/ckey_piv_pin.sh.sample '$(DESTDIR)$(datadir)/auth_commands/ckey_piv_pin.sh.sample'
+	$(INSTALL_DATA) $(srcdir)/crypto/ssl_passphrase.sh.sample '$(DESTDIR)$(datadir)/auth_commands/ssl_passphrase.sh.sample'
 
 ifeq ($(with_llvm), yes)
 install-bin: install-postgres-bitcode
@@ -247,7 +243,7 @@ endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)' '$(DESTDIR)$(datadir)'
-	$(MKDIR_P) '$(DESTDIR)$(datadir)' '$(DESTDIR)$(datadir)/$(CRYPTO_SCRIPTDIR)'
+	$(MKDIR_P) '$(DESTDIR)$(datadir)' '$(DESTDIR)$(datadir)/auth_commands'
 ifeq ($(PORTNAME), cygwin)
 ifeq ($(MAKE_DLL), true)
 	$(MKDIR_P) '$(DESTDIR)$(libdir)'
@@ -268,7 +264,6 @@ endif
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/postgres$(X)' '$(DESTDIR)$(bindir)/postmaster'
-	rm -f $(addprefix '$(DESTDIR)$(datadir)/$(CRYPTO_SCRIPTDIR)'/, $(CRYPTO_SCRIPTS))
 ifeq ($(MAKE_EXPORTS), true)
 	rm -f '$(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)'
 	rm -f '$(DESTDIR)$(pgxsdir)/$(MKLDEXPORT_DIR)/mkldexport.sh'
@@ -288,7 +283,13 @@ endif
 	$(MAKE) -C utils uninstall-data
 	rm -f '$(DESTDIR)$(datadir)/pg_hba.conf.sample' \
 	      '$(DESTDIR)$(datadir)/pg_ident.conf.sample' \
-	      '$(DESTDIR)$(datadir)/postgresql.conf.sample'
+	      '$(DESTDIR)$(datadir)/postgresql.conf.sample' \
+	      '$(DESTDIR)$(datadir)/auth_commands/ckey_aws.sh.sample' \
+	      '$(DESTDIR)$(datadir)/auth_commands/ckey_direct.sh.sample' \
+	      '$(DESTDIR)$(datadir)/auth_commands/ckey_passphrase.sh.sample' \
+	      '$(DESTDIR)$(datadir)/auth_commands/ckey_piv_nopin.sh.sample' \
+	      '$(DESTDIR)$(datadir)/auth_commands/ckey_piv_pin.sh.sample' \
+	      '$(DESTDIR)$(datadir)/auth_commands/ssl_passphrase.sh.sample'
 ifeq ($(with_llvm), yes)
 	$(call uninstall_llvm_module,postgres)
 endif
