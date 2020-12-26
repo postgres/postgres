@@ -380,8 +380,9 @@ PostgreSQL documentation
       <term><option>--authprompt</option></term>
       <listitem>
        <para>
-        Allows the <option>--cluster-key-command</option> command
-        to prompt for a passphrase or PIN.
+        Allows <option>ssl_passphrase_command</option> or
+        <option>cluster_key_command</option> to prompt for a passphrase
+        or PIN.
        </para>
       </listitem>
      </varlistentry>

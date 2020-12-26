@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "postmaster/postmaster.h"
 #include "common/string.h"
 #include "libpq/libpq.h"
 #include "storage/fd.h"
@@ -61,6 +62,19 @@ run_ssl_passphrase_command(const char *prompt, bool is_server_start, char *buf, 
 					appendStringInfoString(&command, prompt);
 					p++;
 					break;
+				case 'R':
+					{
+						char fd_str[20];
+
+						if (terminal_fd == -1)
+							ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									 errmsg("ssl_passphrase_command referenced %%R, but -R not specified")));
+						p++;
+						snprintf(fd_str, sizeof(fd_str), "%d", terminal_fd);
+						appendStringInfoString(&command, fd_str);
+						break;
+					}
 				case '%':
 					appendStringInfoChar(&command, '%');
 					p++;

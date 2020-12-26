@@ -170,7 +170,9 @@ PostgreSQL documentation
      <varlistentry>
       <term><option>-R</option></term>
       <term><option>--authprompt</option></term>
-      <listitem><para>allows prompting for a passphrase or PIN
+      <listitem><para>allows <option>ssl_passphrase_command</option> or
+      <option>cluster_key_command</option> to prompt for a passphrase
+      or PIN.
       </para></listitem>
      </varlistentry>
 
