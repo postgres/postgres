@@ -457,6 +457,27 @@ select v||'a', case when grouping(v||'a') = 1 then 1 else 0 end, count(*)
   from unnest(array[1,1], array['a','b']) u(i,v)
  group by rollup(i, v||'a') order by 1,3;
 
+-- Bug #16784
+CREATE TABLE bug_16784(i INT, j INT);
+ANALYZE bug_16784;
+ALTER TABLE bug_16784 SET (autovacuum_enabled = 'false');
+UPDATE pg_class SET reltuples = 10 WHERE relname='bug_16784';
+
+INSERT INTO bug_16784 SELECT g/10, g FROM generate_series(1,40) g;
+
+SET work_mem='64kB';
+
+explain (costs off) select * from
+  (values (1),(2)) v(a),
+  lateral (select v.a, i, j, count(*) from
+             bug_16784 group by cube(i,j)) s
+  order by v.a, i, j;
+select * from
+  (values (1),(2)) v(a),
+  lateral (select a, i, j, count(*) from
+             bug_16784 group by cube(i,j)) s
+  order by v.a, i, j;
+
 --
 -- Compare results between plans using sorting and plans using hash
 -- aggregation. Force spilling in both cases by setting work_mem low
