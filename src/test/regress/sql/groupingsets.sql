@@ -458,14 +458,15 @@ select v||'a', case when grouping(v||'a') = 1 then 1 else 0 end, count(*)
  group by rollup(i, v||'a') order by 1,3;
 
 -- Bug #16784
-CREATE TABLE bug_16784(i INT, j INT);
-ANALYZE bug_16784;
-ALTER TABLE bug_16784 SET (autovacuum_enabled = 'false');
-UPDATE pg_class SET reltuples = 10 WHERE relname='bug_16784';
+create table bug_16784(i int, j int);
+analyze bug_16784;
+alter table bug_16784 set (autovacuum_enabled = 'false');
+update pg_class set reltuples = 10 where relname='bug_16784';
 
-INSERT INTO bug_16784 SELECT g/10, g FROM generate_series(1,40) g;
+insert into bug_16784 select g/10, g from generate_series(1,40) g;
 
-SET work_mem='64kB';
+set work_mem='64kB';
+set enable_sort = false;
 
 explain (costs off) select * from
   (values (1),(2)) v(a),
@@ -492,10 +493,11 @@ analyze gs_data_1;
 alter table gs_data_1 set (autovacuum_enabled = 'false');
 update pg_class set reltuples = 10 where relname='gs_data_1';
 
-SET work_mem='64kB';
+set work_mem='64kB';
 
 -- Produce results with sorting.
 
+set enable_sort = true;
 set enable_hashagg = false;
 set jit_above_cost = 0;
 
