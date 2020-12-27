@@ -1673,25 +1673,6 @@ update pg_class set reltuples = 10 where relname='bug_16784';
 insert into bug_16784 select g/10, g from generate_series(1,40) g;
 set work_mem='64kB';
 set enable_sort = false;
-explain (costs off) select * from
-  (values (1),(2)) v(a),
-  lateral (select v.a, i, j, count(*) from
-             bug_16784 group by cube(i,j)) s
-  order by v.a, i, j;
-                        QUERY PLAN                        
-----------------------------------------------------------
- Sort
-   Sort Key: "*VALUES*".column1, bug_16784.i, bug_16784.j
-   ->  Nested Loop
-         ->  Values Scan on "*VALUES*"
-         ->  MixedAggregate
-               Hash Key: bug_16784.i, bug_16784.j
-               Hash Key: bug_16784.i
-               Hash Key: bug_16784.j
-               Group Key: ()
-               ->  Seq Scan on bug_16784
-(10 rows)
-
 select * from
   (values (1),(2)) v(a),
   lateral (select a, i, j, count(*) from
