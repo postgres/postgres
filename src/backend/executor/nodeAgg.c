@@ -1750,9 +1750,15 @@ hashagg_recompile_expressions(AggState *aggstate, bool minslot, bool nullcheck)
 		const TupleTableSlotOps *outerops = aggstate->ss.ps.outerops;
 		bool		outerfixed = aggstate->ss.ps.outeropsfixed;
 		bool		dohash = true;
-		bool		dosort;
+		bool		dosort = false;
 
-		dosort = aggstate->aggstrategy == AGG_MIXED ? true : false;
+		/*
+		 * If minslot is true, that means we are processing a spilled batch
+		 * (inside agg_refill_hash_table()), and we must not advance the
+		 * sorted grouping sets.
+		 */
+		if (aggstate->aggstrategy == AGG_MIXED && !minslot)
+			dosort = true;
 
 		/* temporarily change the outerops while compiling the expression */
 		if (minslot)
@@ -2593,11 +2599,15 @@ agg_refill_hash_table(AggState *aggstate)
 						batch->used_bits, &aggstate->hash_mem_limit,
 						&aggstate->hash_ngroups_limit, NULL);
 
-	/* there could be residual pergroup pointers; clear them */
-	for (int setoff = 0;
-		 setoff < aggstate->maxsets + aggstate->num_hashes;
-		 setoff++)
-		aggstate->all_pergroups[setoff] = NULL;
+	/*
+	 * Each batch only processes one grouping set; set the rest to NULL so
+	 * that advance_aggregates() knows to ignore them. We don't touch
+	 * pergroups for sorted grouping sets here, because they will be needed if
+	 * we rescan later. The expressions for sorted grouping sets will not be
+	 * evaluated after we recompile anyway.
+	 */
+	MemSet(aggstate->hash_pergroup, 0,
+		   sizeof(AggStatePerGroup) * aggstate->num_hashes);
 
 	/* free memory and reset hash tables */
 	ReScanExprContext(aggstate->hashcontext);
