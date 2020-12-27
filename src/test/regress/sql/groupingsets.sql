@@ -468,11 +468,6 @@ insert into bug_16784 select g/10, g from generate_series(1,40) g;
 set work_mem='64kB';
 set enable_sort = false;
 
-explain (costs off) select * from
-  (values (1),(2)) v(a),
-  lateral (select v.a, i, j, count(*) from
-             bug_16784 group by cube(i,j)) s
-  order by v.a, i, j;
 select * from
   (values (1),(2)) v(a),
   lateral (select a, i, j, count(*) from
