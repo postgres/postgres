@@ -215,7 +215,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"Database-Password-File", "", 64,
 	offsetof(struct pg_conn, pgpassfile)},
 
-	{"channel_binding", "PGCHANNELBINDING", NULL, NULL,
+	{"channel_binding", "PGCHANNELBINDING", DefaultChannelBinding, NULL,
 		"Channel-Binding", "", 8,	/* sizeof("require") == 8 */
 	offsetof(struct pg_conn, channel_binding)},
 
