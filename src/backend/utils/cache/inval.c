@@ -619,9 +619,9 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 	else if (msg->id == SHAREDINVALSNAPSHOT_ID)
 	{
 		/* We only care about our own database and shared catalogs */
-		if (msg->rm.dbId == InvalidOid)
+		if (msg->sn.dbId == InvalidOid)
 			InvalidateCatalogSnapshot();
-		else if (msg->rm.dbId == MyDatabaseId)
+		else if (msg->sn.dbId == MyDatabaseId)
 			InvalidateCatalogSnapshot();
 	}
 	else
