@@ -647,17 +647,14 @@ pqsecure_open_gss(PGconn *conn)
 	if (output.length == 0)
 	{
 		/*
-		 * We're done - hooray!  Kind of gross, but we need to disable SSL
-		 * here so that we don't accidentally tunnel one over the other.
+		 * We're done - hooray!  Set flag to tell the low-level I/O routines
+		 * to do GSS wrapping/unwrapping.
 		 */
-#ifdef USE_SSL
-		conn->allow_ssl_try = false;
-#endif
+		conn->gssenc = true;
 
 		/* Clean up */
 		gss_release_cred(&minor, &conn->gcred);
 		conn->gcred = GSS_C_NO_CREDENTIAL;
-		conn->gssenc = true;
 		gss_release_buffer(&minor, &output);
 
 		/*

@@ -2814,11 +2814,16 @@ keep_going:						/* We will come back to here until there is
 #ifdef USE_SSL
 
 				/*
-				 * If SSL is enabled and we haven't already got it running,
-				 * request it instead of sending the startup message.
+				 * If SSL is enabled and we haven't already got encryption of
+				 * some sort running, request SSL instead of sending the
+				 * startup message.
 				 */
 				if (conn->allow_ssl_try && !conn->wait_ssl_try &&
-					!conn->ssl_in_use)
+					!conn->ssl_in_use
+#ifdef ENABLE_GSS
+					&& !conn->gssenc
+#endif
+					)
 				{
 					ProtocolVersion pv;
 
@@ -2947,6 +2952,7 @@ keep_going:						/* We will come back to here until there is
 						}
 						/* Otherwise, proceed with normal startup */
 						conn->allow_ssl_try = false;
+						/* We can proceed using this connection */
 						conn->status = CONNECTION_MADE;
 						return PGRES_POLLING_WRITING;
 					}
@@ -3044,8 +3050,7 @@ keep_going:						/* We will come back to here until there is
 						 * don't hang up the socket, though.
 						 */
 						conn->try_gss = false;
-						pqDropConnection(conn, true);
-						conn->status = CONNECTION_NEEDED;
+						need_new_connection = true;
 						goto keep_going;
 					}
 
@@ -3063,6 +3068,7 @@ keep_going:						/* We will come back to here until there is
 						}
 
 						conn->try_gss = false;
+						/* We can proceed using this connection */
 						conn->status = CONNECTION_MADE;
 						return PGRES_POLLING_WRITING;
 					}
@@ -3091,8 +3097,7 @@ keep_going:						/* We will come back to here until there is
 					 * the current connection to do so, though.
 					 */
 					conn->try_gss = false;
-					pqDropConnection(conn, true);
-					conn->status = CONNECTION_NEEDED;
+					need_new_connection = true;
 					goto keep_going;
 				}
 				return pollres;
@@ -3263,10 +3268,9 @@ keep_going:						/* We will come back to here until there is
 					 */
 					if (conn->gssenc && conn->gssencmode[0] == 'p')
 					{
-						/* postmaster expects us to drop the connection */
+						/* only retry once */
 						conn->try_gss = false;
-						pqDropConnection(conn, true);
-						conn->status = CONNECTION_NEEDED;
+						need_new_connection = true;
 						goto keep_going;
 					}
 #endif
