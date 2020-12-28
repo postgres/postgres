@@ -141,6 +141,30 @@ $$;
 
 CALL test_proc7(100, -1, -1);
 
+-- inner COMMIT with output arguments
+
+CREATE PROCEDURE test_proc7c(x int, INOUT a int, INOUT b numeric)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  a := x / 10;
+  b := x / 2;
+  COMMIT;
+END;
+$$;
+
+CREATE PROCEDURE test_proc7cc(_x int)
+LANGUAGE plpgsql
+AS $$
+DECLARE _a int; _b numeric;
+BEGIN
+  CALL test_proc7c(_x, _a, _b);
+  RAISE NOTICE '_x: %,_a: %, _b: %', _x, _a, _b;
+END
+$$;
+
+CALL test_proc7cc(10);
+
 
 -- named parameters and defaults
 
