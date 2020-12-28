@@ -2212,8 +2212,8 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			int			i;
 			ListCell   *lc;
 
-			/* Use eval_mcontext for any cruft accumulated here */
-			oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
+			/* Use stmt_mcontext for any cruft accumulated here */
+			oldcontext = MemoryContextSwitchTo(get_stmt_mcontext(estate));
 
 			/*
 			 * Get the parsed CallStmt, and look up the called procedure
