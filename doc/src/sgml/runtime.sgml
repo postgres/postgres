@@ -2549,7 +2549,7 @@ openssl x509 -req -in server.csr -text -days 365 \
    <productname>PostgreSQL</productname> also has native support for
    using <acronym>GSSAPI</acronym> to encrypt client/server communications for
    increased security.  Support requires that a <acronym>GSSAPI</acronym>
-   implementation (such as MIT krb5) is installed on both client and server
+   implementation (such as MIT Kerberos) is installed on both client and server
    systems, and that support in <productname>PostgreSQL</productname> is
    enabled at build time (see <xref linkend="installation"/>).
   </para>
@@ -2566,6 +2566,16 @@ openssl x509 -req -in server.csr -text -days 365 \
     downgraded by an attacker); see <xref linkend="auth-pg-hba-conf"/> about
     setting up the server to require the use of <acronym>GSSAPI</acronym> for
     some or all connections.
+   </para>
+
+   <para>
+    When using <acronym>GSSAPI</acronym> for encryption, it is common to
+    use <acronym>GSSAPI</acronym> for authentication as well, since the
+    underlying mechanism will determine both client and server identities
+    (according to the <acronym>GSSAPI</acronym> implementation) in any
+    case.  But this is not required;
+    another <productname>PostgreSQL</productname> authentication method
+    can be chosen to perform additional verification.
    </para>
 
    <para>

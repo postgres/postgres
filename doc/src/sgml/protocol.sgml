@@ -1454,6 +1454,10 @@ SELCT 1/0;<!-- this typo is intentional -->
     <acronym>SSL</acronym>-encrypted.  To continue after
     <literal>N</literal>, send the usual StartupMessage and proceed without
     encryption.
+    (Alternatively, it is permissible to issue a GSSENCRequest message
+    after an <literal>N</literal> response to try to
+    use <acronym>GSSAPI</acronym> encryption instead
+    of <acronym>SSL</acronym>.)
    </para>
 
    <para>
@@ -1508,7 +1512,34 @@ SELCT 1/0;<!-- this typo is intentional -->
     result from the server, until it returns no output.  When sending the
     results of <function>gss_init_sec_context()</function> to the server,
     prepend the length of the message as a four byte integer in network byte
-    order.  If this is successful, then use <function>gss_wrap()</function> to
+    order.
+    To continue after
+    <literal>N</literal>, send the usual StartupMessage and proceed without
+    encryption.
+    (Alternatively, it is permissible to issue an SSLRequest message
+    after an <literal>N</literal> response to try to
+    use <acronym>SSL</acronym> encryption instead
+    of <acronym>GSSAPI</acronym>.)
+   </para>
+
+   <para>
+    The frontend should also be prepared to handle an ErrorMessage
+    response to GSSENCRequest from the server.  This would only occur if
+    the server predates the addition of <acronym>GSSAPI</acronym> encryption
+    support to <productname>PostgreSQL</productname>.  In this case the
+    connection must be closed, but the frontend might choose to open a fresh
+    connection and proceed without requesting <acronym>GSSAPI</acronym>
+    encryption.
+   </para>
+
+   <para>
+    An initial GSSENCRequest can also be used in a connection that is being
+    opened to send a CancelRequest message.
+   </para>
+
+   <para>
+    Once <acronym>GSSAPI</acronym> encryption has been successfully
+    established, use <function>gss_wrap()</function> to
     encrypt the usual StartupMessage and all subsequent data, prepending the
     length of the result from <function>gss_wrap()</function> as a four byte
     integer in network byte order to the actual encrypted payload.  Note that
@@ -1519,26 +1550,7 @@ SELCT 1/0;<!-- this typo is intentional -->
     <function>gss_wrap()</function> calls.  Typical segments are 8kB of
     unencrypted data, resulting in encrypted packets of slightly larger than 8kB
     but well within the 16kB maximum.  The server can be expected to not send
-    encrypted packets of larger than 16kB to the client.  To continue after
-    <literal>N</literal>, send the usual StartupMessage and proceed without
-    encryption.
-   </para>
-
-   <para>
-    The frontend should also be prepared to handle an ErrorMessage
-    response to GSSENCRequest from the server.  This would only occur if
-    the server predates the addition of <acronym>GSSAPI</acronym> encryption
-    support to <productname>PostgreSQL</productname>.  In this case the
-    connection must be closed, but the frontend might choose to open a fresh
-    connection and proceed without requesting <acronym>GSSAPI</acronym>
-    encryption.  Given the length limits specified above, the ErrorMessage can
-    not be confused with a proper response from the server with an appropriate
-    length.
-   </para>
-
-   <para>
-    An initial GSSENCRequest can also be used in a connection that is being
-    opened to send a CancelRequest message.
+    encrypted packets of larger than 16kB to the client.
    </para>
 
    <para>
