@@ -62,7 +62,6 @@ OBJS_COMMON = \
 	ip.o \
 	jsonapi.o \
 	keywords.o \
-	kmgr_utils.o \
 	kwlookup.o \
 	link-canary.o \
 	md5_common.o \
@@ -83,12 +82,10 @@ OBJS_COMMON = \
 
 ifeq ($(with_openssl),yes)
 OBJS_COMMON += \
-	cipher_openssl.o \
 	protocol_openssl.o \
 	cryptohash_openssl.o
 else
 OBJS_COMMON += \
-	cipher.o \
 	cryptohash.o \
 	md5.o \
 	sha2.o

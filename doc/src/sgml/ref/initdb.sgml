@@ -163,17 +163,6 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry id="app-initdb-cluster-key-command" xreflabel="cluster key command">
-      <term><option>--cluster-key-command=<replaceable class="parameter">command</replaceable></option></term>
-      <listitem>
-       <para>
-        This option specifies an external command to obtain the cluster-level
-        key for cluster file encryption during server initialization and
-        server start;  see <xref linkend="guc-cluster-key-command"/> for details.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry>
       <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
       <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>
@@ -230,18 +219,6 @@ PostgreSQL documentation
         failures will be reported in the
         <link linkend="monitoring-pg-stat-database-view">
         <structname>pg_stat_database</structname></link> view.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="app-initdb-file-encryption-keylen"
-      xreflabel="file encryption">
-      <term><option>-K <replaceable class="parameter">length</replaceable></option></term>
-      <term><option>--file-encryption-keylen=<replaceable class="parameter">length</replaceable></option></term>
-      <listitem>
-       <para>
-        Specifies the number of bits for the file encryption keys.  The
-        default is 128 bits.
        </para>
       </listitem>
      </varlistentry>
@@ -309,17 +286,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-R</option></term>
-      <term><option>--authprompt</option></term>
-      <listitem>
-       <para>
-        Allows the <option>--cluster-key-command</option> command
-        to prompt for a passphrase or PIN.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-S</option></term>
       <term><option>--sync-only</option></term>
       <listitem>
@@ -337,18 +303,6 @@ PostgreSQL documentation
        <para>
         Sets the default text search configuration.
         See <xref linkend="guc-default-text-search-config"/> for further information.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-u <replaceable>datadir</replaceable></option></term>
-      <term><option>--copy-encryption-keys=<replaceable>datadir</replaceable></option></term>
-      <listitem>
-       <para>
-        Copies cluster file encryption keys from another cluster; required
-        when using <application>pg_upgrade</application> on a cluster
-        with cluster file encryption enabled.
        </para>
       </listitem>
      </varlistentry>

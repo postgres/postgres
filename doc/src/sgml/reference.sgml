@@ -240,7 +240,6 @@
    </para>
   </partintro>
 
-   &pgalterckey;
    &clusterdb;
    &createdb;
    &createuser;
