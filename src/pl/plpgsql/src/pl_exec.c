@@ -2259,7 +2259,7 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			row->varnos = (int *) palloc(sizeof(int) * list_length(funcargs));
 
 			if (!local_plan)
-				MemoryContextSwitchTo(get_eval_mcontext(estate));
+				MemoryContextSwitchTo(get_stmt_mcontext(estate));
 
 			/*
 			 * Examine procedure's argument list.  Each output arg position
