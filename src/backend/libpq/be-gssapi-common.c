@@ -17,8 +17,9 @@
 #include "libpq/be-gssapi-common.h"
 
 /*
- * Helper function for getting all strings of a GSSAPI error (of specified
- * stat).  Call once for GSS_CODE and once for MECH_CODE.
+ * Fetch all errors of a specific type and append to "s" (buffer of size len).
+ * If we obtain more than one string, separate them with spaces.
+ * Call once for GSS_CODE and once for MECH_CODE.
  */
 static void
 pg_GSS_error_int(char *s, size_t len, OM_uint32 stat, int type)
@@ -28,31 +29,49 @@ pg_GSS_error_int(char *s, size_t len, OM_uint32 stat, int type)
 	OM_uint32	lmin_s,
 				msg_ctx = 0;
 
-	gmsg.value = NULL;
-	gmsg.length = 0;
+	s[0] = '\0';				/* just in case gss_display_status fails */
 
 	do
 	{
-		gss_display_status(&lmin_s, stat, type,
-						   GSS_C_NO_OID, &msg_ctx, &gmsg);
-		strlcpy(s + i, gmsg.value, len - i);
+		if (gss_display_status(&lmin_s, stat, type, GSS_C_NO_OID,
+							   &msg_ctx, &gmsg) != GSS_S_COMPLETE)
+			break;
+		if (i > 0)
+		{
+			if (i < len)
+				s[i] = ' ';
+			i++;
+		}
+		if (i < len)
+			strlcpy(s + i, gmsg.value, len - i);
 		i += gmsg.length;
 		gss_release_buffer(&lmin_s, &gmsg);
 	}
-	while (msg_ctx && i < len);
+	while (msg_ctx);
 
-	if (msg_ctx || i == len)
-		ereport(WARNING,
-				(errmsg_internal("incomplete GSS error report")));
+	if (i >= len)
+	{
+		elog(COMMERROR, "incomplete GSS error report");
+		s[len - 1] = '\0';		/* ensure string is nul-terminated */
+	}
 }
 
 /*
- * Fetch and report all error messages from GSSAPI.  To avoid allocation,
- * total error size is capped (at 128 bytes for each of major and minor).  No
- * known mechanisms will produce error messages beyond this cap.
+ * Report the GSSAPI error described by maj_stat/min_stat.
+ *
+ * errmsg should be an already-translated primary error message.
+ * The GSSAPI info is appended as errdetail.
+ *
+ * The error is always reported with elevel COMMERROR; we daren't try to
+ * send it to the client, as that'd likely lead to infinite recursion
+ * when elog.c tries to write to the client.
+ *
+ * To avoid memory allocation, total error size is capped (at 128 bytes for
+ * each of major and minor).  No known mechanisms will produce error messages
+ * beyond this cap.
  */
 void
-pg_GSS_error(int severity, const char *errmsg,
+pg_GSS_error(const char *errmsg,
 			 OM_uint32 maj_stat, OM_uint32 min_stat)
 {
 	char		msg_major[128],
@@ -68,7 +87,7 @@ pg_GSS_error(int severity, const char *errmsg,
 	 * errmsg_internal, since translation of the first part must be done
 	 * before calling this function anyway.
 	 */
-	ereport(severity,
+	ereport(COMMERROR,
 			(errmsg_internal("%s", errmsg),
 			 errdetail_internal("%s: %s", msg_major, msg_minor)));
 }

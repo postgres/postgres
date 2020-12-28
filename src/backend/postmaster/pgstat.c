@@ -2669,6 +2669,11 @@ BackendStatusShmemSize(void)
 	size = add_size(size,
 					mul_size(sizeof(PgBackendSSLStatus), NumBackendStatSlots));
 #endif
+#ifdef ENABLE_GSS
+	/* BackendGssStatusBuffer: */
+	size = add_size(size,
+					mul_size(sizeof(PgBackendGSSStatus), NumBackendStatSlots));
+#endif
 	return size;
 }
 
@@ -3000,12 +3005,13 @@ pgstat_bestart(void)
 #ifdef ENABLE_GSS
 	if (MyProcPort && MyProcPort->gss != NULL)
 	{
+		const char *princ = be_gssapi_get_princ(MyProcPort);
+
 		lbeentry.st_gss = true;
 		lgssstatus.gss_auth = be_gssapi_get_auth(MyProcPort);
 		lgssstatus.gss_enc = be_gssapi_get_enc(MyProcPort);
-
-		if (lgssstatus.gss_auth)
-			strlcpy(lgssstatus.gss_princ, be_gssapi_get_princ(MyProcPort), NAMEDATALEN);
+		if (princ)
+			strlcpy(lgssstatus.gss_princ, princ, NAMEDATALEN);
 	}
 	else
 	{

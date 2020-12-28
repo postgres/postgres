@@ -2044,6 +2044,7 @@ retry1:
 	else if (proto == NEGOTIATE_GSS_CODE && !gss_done)
 	{
 		char		GSSok = 'N';
+
 #ifdef ENABLE_GSS
 		/* No GSSAPI encryption when on Unix socket */
 		if (!IS_AF_UNIX(port->laddr.addr.ss_family))
@@ -2506,37 +2507,19 @@ ConnCreate(int serverFd)
 		return NULL;
 	}
 
-	/*
-	 * Allocate GSSAPI specific state struct
-	 */
-#ifndef EXEC_BACKEND
-#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
-	port->gss = (pg_gssinfo *) calloc(1, sizeof(pg_gssinfo));
-	if (!port->gss)
-	{
-		ereport(LOG,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-		ExitPostmaster(1);
-	}
-#endif
-#endif
-
 	return port;
 }
 
 
 /*
  * ConnFree -- free a local connection data structure
+ *
+ * Caller has already closed the socket if any, so there's not much
+ * to do here.
  */
 static void
 ConnFree(Port *conn)
 {
-#ifdef USE_SSL
-	secure_close(conn);
-#endif
-	if (conn->gss)
-		free(conn->gss);
 	free(conn);
 }
 
@@ -4889,18 +4872,6 @@ SubPostmasterMain(int argc, char *argv[])
 	 * Set reference point for stack-depth checking
 	 */
 	set_stack_base();
-
-	/*
-	 * Set up memory area for GSS information. Mirrors the code in ConnCreate
-	 * for the non-exec case.
-	 */
-#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
-	port.gss = (pg_gssinfo *) calloc(1, sizeof(pg_gssinfo));
-	if (!port.gss)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-#endif
 
 	/*
 	 * If appropriate, physically re-attach to shared memory segment. We want

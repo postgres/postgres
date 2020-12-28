@@ -258,29 +258,26 @@ socket_close(int code, Datum arg)
 	/* Nothing to do in a standalone backend, where MyProcPort is NULL. */
 	if (MyProcPort != NULL)
 	{
-#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 #ifdef ENABLE_GSS
-		OM_uint32	min_s;
-
 		/*
 		 * Shutdown GSSAPI layer.  This section does nothing when interrupting
 		 * BackendInitialize(), because pg_GSS_recvauth() makes first use of
 		 * "ctx" and "cred".
+		 *
+		 * Note that we don't bother to free MyProcPort->gss, since we're
+		 * about to exit anyway.
 		 */
-		if (MyProcPort->gss->ctx != GSS_C_NO_CONTEXT)
-			gss_delete_sec_context(&min_s, &MyProcPort->gss->ctx, NULL);
+		if (MyProcPort->gss)
+		{
+			OM_uint32	min_s;
 
-		if (MyProcPort->gss->cred != GSS_C_NO_CREDENTIAL)
-			gss_release_cred(&min_s, &MyProcPort->gss->cred);
+			if (MyProcPort->gss->ctx != GSS_C_NO_CONTEXT)
+				gss_delete_sec_context(&min_s, &MyProcPort->gss->ctx, NULL);
+
+			if (MyProcPort->gss->cred != GSS_C_NO_CREDENTIAL)
+				gss_release_cred(&min_s, &MyProcPort->gss->cred);
+		}
 #endif							/* ENABLE_GSS */
-
-		/*
-		 * GSS and SSPI share the port->gss struct.  Since nowhere else does a
-		 * postmaster child free this, doing so is safe when interrupting
-		 * BackendInitialize().
-		 */
-		free(MyProcPort->gss);
-#endif							/* ENABLE_GSS || ENABLE_SSPI */
 
 		/*
 		 * Cleanly shut down SSL layer.  Nowhere else does a postmaster child

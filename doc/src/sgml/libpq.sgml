@@ -1474,6 +1474,16 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         connection.<indexterm><primary>SSL</primary><secondary
         sortas="libpq">with libpq</secondary></indexterm>
        </para>
+
+       <para>
+        Note that if <acronym>GSSAPI</acronym> encryption is possible,
+        that will be used in preference to <acronym>SSL</acronym>
+        encryption, regardless of the value of <literal>sslmode</literal>.
+        To force use of <acronym>SSL</acronym> encryption in an
+        environment that has working <acronym>GSSAPI</acronym>
+        infrastructure (such as a Kerberos server), also
+        set <literal>gssencmode</literal> to <literal>disable</literal>.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -1615,6 +1625,15 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         This must match the service name specified in the server
         configuration for Kerberos authentication to succeed. (See also
         <xref linkend="gssapi-auth"/>.)
+        The default value is normally <literal>postgres</literal>,
+        but that can be changed when
+        building <productname>PostgreSQL</productname> via
+        the <option>--with-krb-srvnam</option> option
+        of <application>configure</application>.
+        In most environments, this parameter never needs to be changed.
+        Some Kerberos implementations might require a different service name,
+        such as Microsoft Active Directory which requires the service name
+        to be in upper case (<literal>POSTGRES</literal>).
        </para>
       </listitem>
      </varlistentry>

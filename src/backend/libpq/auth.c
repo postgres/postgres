@@ -381,17 +381,6 @@ ClientAuthentication(Port *port)
 					 errmsg("connection requires a valid client certificate")));
 	}
 
-#ifdef ENABLE_GSS
-	if (port->gss->enc && port->hba->auth_method != uaReject &&
-		port->hba->auth_method != uaImplicitReject &&
-		port->hba->auth_method != uaTrust &&
-		port->hba->auth_method != uaGSS)
-	{
-		ereport(FATAL, (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						errmsg("GSSAPI encryption can only be used with gss, trust, or reject authentication methods")));
-	}
-#endif
-
 	/*
 	 * Now proceed to do the actual authentication check
 	 */
@@ -532,7 +521,17 @@ ClientAuthentication(Port *port)
 
 		case uaGSS:
 #ifdef ENABLE_GSS
+			/* We might or might not have the gss workspace already */
+			if (port->gss == NULL)
+				port->gss = (pg_gssinfo *)
+					MemoryContextAllocZero(TopMemoryContext,
+										   sizeof(pg_gssinfo));
 			port->gss->auth = true;
+
+			/*
+			 * If GSS state was set up while enabling encryption, we can just
+			 * check the client's principal.  Otherwise, ask for it.
+			 */
 			if (port->gss->enc)
 				status = pg_GSS_checkauth(port);
 			else
@@ -547,6 +546,10 @@ ClientAuthentication(Port *port)
 
 		case uaSSPI:
 #ifdef ENABLE_SSPI
+			if (port->gss == NULL)
+				port->gss = (pg_gssinfo *)
+					MemoryContextAllocZero(TopMemoryContext,
+										   sizeof(pg_gssinfo));
 			sendAuthRequest(port, AUTH_REQ_SSPI, NULL, 0);
 			status = pg_SSPI_recvauth(port);
 #else
@@ -1189,9 +1192,9 @@ pg_GSS_recvauth(Port *port)
 		if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
 		{
 			gss_delete_sec_context(&lmin_s, &port->gss->ctx, GSS_C_NO_BUFFER);
-			pg_GSS_error(ERROR,
-						 _("accepting GSS security context failed"),
+			pg_GSS_error(_("accepting GSS security context failed"),
 						 maj_stat, min_stat);
+			return STATUS_ERROR;
 		}
 
 		if (maj_stat == GSS_S_CONTINUE_NEEDED)
@@ -1228,9 +1231,11 @@ pg_GSS_checkauth(Port *port)
 	 */
 	maj_stat = gss_display_name(&min_stat, port->gss->name, &gbuf, NULL);
 	if (maj_stat != GSS_S_COMPLETE)
-		pg_GSS_error(ERROR,
-					 _("retrieving GSS user name failed"),
+	{
+		pg_GSS_error(_("retrieving GSS user name failed"),
 					 maj_stat, min_stat);
+		return STATUS_ERROR;
+	}
 
 	/*
 	 * Copy the original name of the authenticated principal into our backend
