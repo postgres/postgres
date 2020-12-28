@@ -270,11 +270,22 @@ PerformAuthentication(Port *port)
 							 be_tls_get_compression(port) ? _("on") : _("off"));
 #endif
 #ifdef ENABLE_GSS
-		if (be_gssapi_get_princ(port))
-			appendStringInfo(&logmsg, _(" GSS (authenticated=%s, encrypted=%s, principal=%s)"),
-							 be_gssapi_get_auth(port) ? _("yes") : _("no"),
-							 be_gssapi_get_enc(port) ? _("yes") : _("no"),
-							 be_gssapi_get_princ(port));
+		if (port->gss)
+		{
+			const char *princ = be_gssapi_get_princ(port);
+
+			if (princ)
+				appendStringInfo(&logmsg,
+								 _(" GSS (authenticated=%s, encrypted=%s, principal=%s)"),
+								 be_gssapi_get_auth(port) ? _("yes") : _("no"),
+								 be_gssapi_get_enc(port) ? _("yes") : _("no"),
+								 princ);
+			else
+				appendStringInfo(&logmsg,
+								 _(" GSS (authenticated=%s, encrypted=%s)"),
+								 be_gssapi_get_auth(port) ? _("yes") : _("no"),
+								 be_gssapi_get_enc(port) ? _("yes") : _("no"));
+		}
 #endif
 
 		ereport(LOG, errmsg_internal("%s", logmsg.data));
