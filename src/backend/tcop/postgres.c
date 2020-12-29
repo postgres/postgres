@@ -2789,6 +2789,18 @@ quickdie(SIGNAL_ARGS)
 	 * wrong, so there's not much to lose.  Assuming the postmaster is still
 	 * running, it will SIGKILL us soon if we get stuck for some reason.
 	 *
+	 * One thing we can do to make this a tad safer is to clear the error
+	 * context stack, so that context callbacks are not called.  That's a lot
+	 * less code that could be reached here, and the context info is unlikely
+	 * to be very relevant to a SIGQUIT report anyway.
+	 */
+	error_context_stack = NULL;
+
+	/*
+	 * When responding to a postmaster-issued signal, we send the message only
+	 * to the client; sending to the server log just creates log spam, plus
+	 * it's more code that we need to hope will work in a signal handler.
+	 *
 	 * Ideally these should be ereport(FATAL), but then we'd not get control
 	 * back to force the correct type of process exit.
 	 */
@@ -2802,7 +2814,7 @@ quickdie(SIGNAL_ARGS)
 			break;
 		case PMQUIT_FOR_CRASH:
 			/* A crash-and-restart cycle is in progress */
-			ereport(WARNING,
+			ereport(WARNING_CLIENT_ONLY,
 					(errcode(ERRCODE_CRASH_SHUTDOWN),
 					 errmsg("terminating connection because of crash of another server process"),
 					 errdetail("The postmaster has commanded this server process to roll back"
@@ -2814,7 +2826,7 @@ quickdie(SIGNAL_ARGS)
 			break;
 		case PMQUIT_FOR_STOP:
 			/* Immediate-mode stop */
-			ereport(WARNING,
+			ereport(WARNING_CLIENT_ONLY,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
 					 errmsg("terminating connection due to immediate shutdown command")));
 			break;
