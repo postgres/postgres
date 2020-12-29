@@ -103,7 +103,7 @@ less -x4
     message text.  In addition there are optional elements, the most
     common of which is an error identifier code that follows the SQL spec's
     SQLSTATE conventions.
-    <function>ereport</function> itself is just a shell macro, that exists
+    <function>ereport</function> itself is just a shell macro that exists
     mainly for the syntactic convenience of making message generation
     look like a single function call in the C source code.  The only parameter
     accepted directly by <function>ereport</function> is the severity level.
