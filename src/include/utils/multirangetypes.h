@@ -129,5 +129,7 @@ extern void multirange_get_bounds(TypeCacheEntry *rangetyp,
 								  RangeBound *lower, RangeBound *upper);
 extern RangeType *multirange_get_range(TypeCacheEntry *rangetyp,
 									   const MultirangeType *multirange, int i);
+extern RangeType *multirange_get_union_range(TypeCacheEntry *rangetyp,
+											 const MultirangeType *mr);
 
 #endif							/* MULTIRANGETYPES_H */

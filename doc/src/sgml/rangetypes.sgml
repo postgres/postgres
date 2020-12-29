@@ -469,11 +469,13 @@ SELECT '[11:10, 23:00]'::timerange;
 
   <para>
    GiST and SP-GiST indexes can be created for table columns of range types.
+   GiST indexes can be also created for table columns of multirange types.
    For instance, to create a GiST index:
 <programlisting>
 CREATE INDEX reservation_idx ON reservation USING GIST (during);
 </programlisting>
-   A GiST or SP-GiST index can accelerate queries involving these range operators:
+   A GiST or SP-GiST index on ranges can accelerate queries involving these
+   range operators:
    <literal>=</literal>,
    <literal>&amp;&amp;</literal>,
    <literal>&lt;@</literal>,
@@ -482,8 +484,21 @@ CREATE INDEX reservation_idx ON reservation USING GIST (during);
    <literal>&gt;&gt;</literal>,
    <literal>-|-</literal>,
    <literal>&amp;&lt;</literal>, and
-   <literal>&amp;&gt;</literal>
-   (see <xref linkend="range-operators-table"/> for more information).
+   <literal>&amp;&gt;</literal>.
+   A GiST index on multiranges can accelerate queries involving the same
+   set of multirange operators.
+   A GiST index on ranges and GiST index on multiranges can also accelerate
+   queries involving these cross-type range to multirange and multirange to
+   range operators correspondingly:
+   <literal>&amp;&amp;</literal>,
+   <literal>&lt;@</literal>,
+   <literal>@&gt;</literal>,
+   <literal>&lt;&lt;</literal>,
+   <literal>&gt;&gt;</literal>,
+   <literal>-|-</literal>,
+   <literal>&amp;&lt;</literal>, and
+   <literal>&amp;&gt;</literal>.
+   See <xref linkend="range-operators-table"/> for more information.
   </para>
 
   <para>

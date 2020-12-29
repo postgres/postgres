@@ -236,6 +236,8 @@
   opcintype => 'anymultirange' },
 { opcmethod => 'hash', opcname => 'multirange_ops', opcfamily => 'hash/multirange_ops',
   opcintype => 'anymultirange' },
+{ opcmethod => 'gist', opcname => 'multirange_ops', opcfamily => 'gist/multirange_ops',
+  opcintype => 'anymultirange', opckeytype => 'anyrange' },
 { opcmethod => 'spgist', opcname => 'box_ops', opcfamily => 'spgist/box_ops',
   opcintype => 'box' },
 { opcmethod => 'spgist', opcname => 'quad_point_ops',

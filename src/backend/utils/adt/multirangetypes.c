@@ -769,6 +769,27 @@ multirange_get_bounds(TypeCacheEntry *rangetyp,
 }
 
 /*
+ * Construct union range from the multirange.
+ */
+RangeType *
+multirange_get_union_range(TypeCacheEntry *rangetyp,
+						   const MultirangeType *mr)
+{
+	RangeBound	lower,
+				upper,
+				tmp;
+
+	if (MultirangeIsEmpty(mr))
+		return make_empty_range(rangetyp);
+
+	multirange_get_bounds(rangetyp, mr, 0, &lower, &tmp);
+	multirange_get_bounds(rangetyp, mr, mr->rangeCount - 1, &tmp, &upper);
+
+	return make_range(rangetyp, &lower, &upper, false);
+}
+
+
+/*
  * multirange_deserialize: deconstruct a multirange value
  *
  * NB: the given multirange object must be fully detoasted; it cannot have a

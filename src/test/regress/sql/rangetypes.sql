@@ -232,6 +232,15 @@ select count(*) from test_range_gist where ir >> int4range(100,500);
 select count(*) from test_range_gist where ir &< int4range(100,500);
 select count(*) from test_range_gist where ir &> int4range(100,500);
 select count(*) from test_range_gist where ir -|- int4range(100,500);
+select count(*) from test_range_gist where ir @> '{}'::int4multirange;
+select count(*) from test_range_gist where ir @> int4multirange(int4range(10,20), int4range(30,40));
+select count(*) from test_range_gist where ir && '{(10,20),(30,40),(50,60)}'::int4multirange;
+select count(*) from test_range_gist where ir <@ '{(10,30),(40,60),(70,90)}'::int4multirange;
+select count(*) from test_range_gist where ir << int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir >> int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir &< int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir &> int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir -|- int4multirange(int4range(100,200), int4range(400,500));
 
 -- now check same queries using index
 SET enable_seqscan    = f;
@@ -249,6 +258,15 @@ select count(*) from test_range_gist where ir >> int4range(100,500);
 select count(*) from test_range_gist where ir &< int4range(100,500);
 select count(*) from test_range_gist where ir &> int4range(100,500);
 select count(*) from test_range_gist where ir -|- int4range(100,500);
+select count(*) from test_range_gist where ir @> '{}'::int4multirange;
+select count(*) from test_range_gist where ir @> int4multirange(int4range(10,20), int4range(30,40));
+select count(*) from test_range_gist where ir && '{(10,20),(30,40),(50,60)}'::int4multirange;
+select count(*) from test_range_gist where ir <@ '{(10,30),(40,60),(70,90)}'::int4multirange;
+select count(*) from test_range_gist where ir << int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir >> int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir &< int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir &> int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir -|- int4multirange(int4range(100,200), int4range(400,500));
 
 -- now check same queries using a bulk-loaded index
 drop index test_range_gist_idx;
@@ -265,6 +283,15 @@ select count(*) from test_range_gist where ir >> int4range(100,500);
 select count(*) from test_range_gist where ir &< int4range(100,500);
 select count(*) from test_range_gist where ir &> int4range(100,500);
 select count(*) from test_range_gist where ir -|- int4range(100,500);
+select count(*) from test_range_gist where ir @> '{}'::int4multirange;
+select count(*) from test_range_gist where ir @> int4multirange(int4range(10,20), int4range(30,40));
+select count(*) from test_range_gist where ir && '{(10,20),(30,40),(50,60)}'::int4multirange;
+select count(*) from test_range_gist where ir <@ '{(10,30),(40,60),(70,90)}'::int4multirange;
+select count(*) from test_range_gist where ir << int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir >> int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir &< int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir &> int4multirange(int4range(100,200), int4range(400,500));
+select count(*) from test_range_gist where ir -|- int4multirange(int4range(100,200), int4range(400,500));
 
 -- test SP-GiST index that's been built incrementally
 create table test_range_spgist(ir int4range);

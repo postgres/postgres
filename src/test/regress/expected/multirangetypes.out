@@ -2219,6 +2219,263 @@ SELECT '{[1,4), [7,10)}'::nummultirange * '{[0,2), [3,8), [9,12)}'::nummultirang
  {[1,2),[3,4),[7,8),[9,10)}
 (1 row)
 
+-- test GiST index
+create table test_multirange_gist(mr int4multirange);
+insert into test_multirange_gist select int4multirange(int4range(g, g+10),int4range(g+20, g+30),int4range(g+40, g+50)) from generate_series(1,2000) g;
+insert into test_multirange_gist select '{}'::int4multirange from generate_series(1,500) g;
+insert into test_multirange_gist select int4multirange(int4range(g, g+10000)) from generate_series(1,1000) g;
+insert into test_multirange_gist select int4multirange(int4range(NULL, g*10, '(]'), int4range(g*10, g*20, '(]')) from generate_series(1,100) g;
+insert into test_multirange_gist select int4multirange(int4range(g*10, g*20, '(]'), int4range(g*20, NULL, '(]')) from generate_series(1,100) g;
+create index test_mulrirange_gist_idx on test_multirange_gist using gist (mr);
+-- first, verify non-indexed results
+SET enable_seqscan    = t;
+SET enable_indexscan  = f;
+SET enable_bitmapscan = f;
+select count(*) from test_multirange_gist where mr @> 'empty'::int4range;
+ count 
+-------
+  3700
+(1 row)
+
+select count(*) from test_multirange_gist where mr = int4multirange(int4range(10,20), int4range(30,40), int4range(50,60));
+ count 
+-------
+     1
+(1 row)
+
+select count(*) from test_multirange_gist where mr @> 10;
+ count 
+-------
+   120
+(1 row)
+
+select count(*) from test_multirange_gist where mr @> int4range(10,20);
+ count 
+-------
+   111
+(1 row)
+
+select count(*) from test_multirange_gist where mr && int4range(10,20);
+ count 
+-------
+   139
+(1 row)
+
+select count(*) from test_multirange_gist where mr <@ int4range(10,50);
+ count 
+-------
+   500
+(1 row)
+
+select count(*) from test_multirange_gist where mr << int4range(100,500);
+ count 
+-------
+    54
+(1 row)
+
+select count(*) from test_multirange_gist where mr >> int4range(100,500);
+ count 
+-------
+  2053
+(1 row)
+
+select count(*) from test_multirange_gist where mr &< int4range(100,500);
+ count 
+-------
+   474
+(1 row)
+
+select count(*) from test_multirange_gist where mr &> int4range(100,500);
+ count 
+-------
+  2893
+(1 row)
+
+select count(*) from test_multirange_gist where mr -|- int4range(100,500);
+ count 
+-------
+     3
+(1 row)
+
+select count(*) from test_multirange_gist where mr @> '{}'::int4multirange;
+ count 
+-------
+  3700
+(1 row)
+
+select count(*) from test_multirange_gist where mr @> int4multirange(int4range(10,20), int4range(30,40));
+ count 
+-------
+   110
+(1 row)
+
+select count(*) from test_multirange_gist where mr && '{(10,20),(30,40),(50,60)}'::int4multirange;
+ count 
+-------
+   218
+(1 row)
+
+select count(*) from test_multirange_gist where mr <@ '{(10,30),(40,60),(70,90)}'::int4multirange;
+ count 
+-------
+   500
+(1 row)
+
+select count(*) from test_multirange_gist where mr << int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+    54
+(1 row)
+
+select count(*) from test_multirange_gist where mr >> int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  2053
+(1 row)
+
+select count(*) from test_multirange_gist where mr &< int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+   474
+(1 row)
+
+select count(*) from test_multirange_gist where mr &> int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  2893
+(1 row)
+
+select count(*) from test_multirange_gist where mr -|- int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+     3
+(1 row)
+
+-- now check same queries using index
+SET enable_seqscan    = f;
+SET enable_indexscan  = t;
+SET enable_bitmapscan = f;
+select count(*) from test_multirange_gist where mr @> 'empty'::int4range;
+ count 
+-------
+  3700
+(1 row)
+
+select count(*) from test_multirange_gist where mr = int4multirange(int4range(10,20), int4range(30,40), int4range(50,60));
+ count 
+-------
+     1
+(1 row)
+
+select count(*) from test_multirange_gist where mr @> 10;
+ count 
+-------
+   120
+(1 row)
+
+select count(*) from test_multirange_gist where mr @> int4range(10,20);
+ count 
+-------
+   111
+(1 row)
+
+select count(*) from test_multirange_gist where mr && int4range(10,20);
+ count 
+-------
+   139
+(1 row)
+
+select count(*) from test_multirange_gist where mr <@ int4range(10,50);
+ count 
+-------
+   500
+(1 row)
+
+select count(*) from test_multirange_gist where mr << int4range(100,500);
+ count 
+-------
+    54
+(1 row)
+
+select count(*) from test_multirange_gist where mr >> int4range(100,500);
+ count 
+-------
+  2053
+(1 row)
+
+select count(*) from test_multirange_gist where mr &< int4range(100,500);
+ count 
+-------
+   474
+(1 row)
+
+select count(*) from test_multirange_gist where mr &> int4range(100,500);
+ count 
+-------
+  2893
+(1 row)
+
+select count(*) from test_multirange_gist where mr -|- int4range(100,500);
+ count 
+-------
+     3
+(1 row)
+
+select count(*) from test_multirange_gist where mr @> '{}'::int4multirange;
+ count 
+-------
+  3700
+(1 row)
+
+select count(*) from test_multirange_gist where mr @> int4multirange(int4range(10,20), int4range(30,40));
+ count 
+-------
+   110
+(1 row)
+
+select count(*) from test_multirange_gist where mr && '{(10,20),(30,40),(50,60)}'::int4multirange;
+ count 
+-------
+   218
+(1 row)
+
+select count(*) from test_multirange_gist where mr <@ '{(10,30),(40,60),(70,90)}'::int4multirange;
+ count 
+-------
+   500
+(1 row)
+
+select count(*) from test_multirange_gist where mr << int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+    54
+(1 row)
+
+select count(*) from test_multirange_gist where mr >> int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  2053
+(1 row)
+
+select count(*) from test_multirange_gist where mr &< int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+   474
+(1 row)
+
+select count(*) from test_multirange_gist where mr &> int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  2893
+(1 row)
+
+select count(*) from test_multirange_gist where mr -|- int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+     3
+(1 row)
+
+drop table test_multirange_gist;
 --
 -- range_agg function
 --

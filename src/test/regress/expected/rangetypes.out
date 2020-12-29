@@ -862,6 +862,60 @@ select count(*) from test_range_gist where ir -|- int4range(100,500);
      5
 (1 row)
 
+select count(*) from test_range_gist where ir @> '{}'::int4multirange;
+ count 
+-------
+  6200
+(1 row)
+
+select count(*) from test_range_gist where ir @> int4multirange(int4range(10,20), int4range(30,40));
+ count 
+-------
+   107
+(1 row)
+
+select count(*) from test_range_gist where ir && '{(10,20),(30,40),(50,60)}'::int4multirange;
+ count 
+-------
+   271
+(1 row)
+
+select count(*) from test_range_gist where ir <@ '{(10,30),(40,60),(70,90)}'::int4multirange;
+ count 
+-------
+  1060
+(1 row)
+
+select count(*) from test_range_gist where ir << int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from test_range_gist where ir >> int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  3554
+(1 row)
+
+select count(*) from test_range_gist where ir &< int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  1029
+(1 row)
+
+select count(*) from test_range_gist where ir &> int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  4794
+(1 row)
+
+select count(*) from test_range_gist where ir -|- int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+     5
+(1 row)
+
 -- now check same queries using index
 SET enable_seqscan    = f;
 SET enable_indexscan  = t;
@@ -932,6 +986,60 @@ select count(*) from test_range_gist where ir -|- int4range(100,500);
      5
 (1 row)
 
+select count(*) from test_range_gist where ir @> '{}'::int4multirange;
+ count 
+-------
+  6200
+(1 row)
+
+select count(*) from test_range_gist where ir @> int4multirange(int4range(10,20), int4range(30,40));
+ count 
+-------
+   107
+(1 row)
+
+select count(*) from test_range_gist where ir && '{(10,20),(30,40),(50,60)}'::int4multirange;
+ count 
+-------
+   271
+(1 row)
+
+select count(*) from test_range_gist where ir <@ '{(10,30),(40,60),(70,90)}'::int4multirange;
+ count 
+-------
+  1060
+(1 row)
+
+select count(*) from test_range_gist where ir << int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from test_range_gist where ir >> int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  3554
+(1 row)
+
+select count(*) from test_range_gist where ir &< int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  1029
+(1 row)
+
+select count(*) from test_range_gist where ir &> int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  4794
+(1 row)
+
+select count(*) from test_range_gist where ir -|- int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+     5
+(1 row)
+
 -- now check same queries using a bulk-loaded index
 drop index test_range_gist_idx;
 create index test_range_gist_idx on test_range_gist using gist (ir);
@@ -996,6 +1104,60 @@ select count(*) from test_range_gist where ir &> int4range(100,500);
 (1 row)
 
 select count(*) from test_range_gist where ir -|- int4range(100,500);
+ count 
+-------
+     5
+(1 row)
+
+select count(*) from test_range_gist where ir @> '{}'::int4multirange;
+ count 
+-------
+  6200
+(1 row)
+
+select count(*) from test_range_gist where ir @> int4multirange(int4range(10,20), int4range(30,40));
+ count 
+-------
+   107
+(1 row)
+
+select count(*) from test_range_gist where ir && '{(10,20),(30,40),(50,60)}'::int4multirange;
+ count 
+-------
+   271
+(1 row)
+
+select count(*) from test_range_gist where ir <@ '{(10,30),(40,60),(70,90)}'::int4multirange;
+ count 
+-------
+  1060
+(1 row)
+
+select count(*) from test_range_gist where ir << int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from test_range_gist where ir >> int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  3554
+(1 row)
+
+select count(*) from test_range_gist where ir &< int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  1029
+(1 row)
+
+select count(*) from test_range_gist where ir &> int4multirange(int4range(100,200), int4range(400,500));
+ count 
+-------
+  4794
+(1 row)
+
+select count(*) from test_range_gist where ir -|- int4multirange(int4range(100,200), int4range(400,500));
  count 
 -------
      5
