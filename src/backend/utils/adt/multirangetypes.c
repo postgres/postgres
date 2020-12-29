@@ -1660,7 +1660,7 @@ multirange_range_contains_bsearch_comparison(TypeCacheEntry *typcache,
 	if (range_cmp_bounds(typcache, keyUpper, lower) < 0)
 		return -1;
 	if (range_cmp_bounds(typcache, keyLower, upper) > 0)
-		return -1;
+		return 1;
 
 	/*
 	 * At this point we found overlapping range.  But we have to check if it
@@ -1825,7 +1825,7 @@ multirange_range_overlaps_bsearch_comparison(TypeCacheEntry *typcache,
 	if (range_cmp_bounds(typcache, keyUpper, lower) < 0)
 		return -1;
 	if (range_cmp_bounds(typcache, keyLower, upper) > 0)
-		return -1;
+		return 1;
 
 	*match = true;
 	return 0;

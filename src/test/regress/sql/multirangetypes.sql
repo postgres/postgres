@@ -162,6 +162,7 @@ SELECT nummultirange(numrange(1,2), numrange(7,8)) && nummultirange(numrange(3,4
 SELECT nummultirange(numrange(3,4)) && nummultirange(numrange(1,2), numrange(3.5,8));
 SELECT nummultirange(numrange(1,2), numrange(3.5,8)) && numrange(3,4);
 SELECT nummultirange(numrange(1,2), numrange(3.5,8)) && nummultirange(numrange(3,4));
+select '{(10,20),(30,40),(50,60)}'::nummultirange && '(42,92)'::numrange;
 
 -- contains
 SELECT nummultirange() @> nummultirange();
@@ -186,6 +187,7 @@ SELECT '{[-4,-2), [1,5)}'::nummultirange @> '{[1,5)}';
 SELECT '{[1,5), [8,9)}'::nummultirange @> '{[1,5)}';
 SELECT '{[1,5), [8,9)}'::nummultirange @> '{[6,7)}';
 SELECT '{[1,5), [6,9)}'::nummultirange @> '{[6,7)}';
+select '{(10,20),(30,40),(50,60)}'::nummultirange @> '(52,56)'::numrange;
 
 -- is contained by
 SELECT nummultirange() <@ nummultirange();
