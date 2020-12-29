@@ -40,7 +40,7 @@ PostgreSQL documentation
 
   <para>
    It is important to note that the validation which is performed by
-   <application>pg_verifybackup</application> does not and can not include
+   <application>pg_verifybackup</application> does not and cannot include
    every check which will be performed by a running server when attempting
    to make use of the backup. Even if you use this tool, you should still
    perform test restores and verify that the resulting databases work as
