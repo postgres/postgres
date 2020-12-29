@@ -979,6 +979,126 @@ select '{(10,20),(30,40),(50,60)}'::nummultirange @> '(52,56)'::numrange;
  t
 (1 row)
 
+SELECT numrange(null,null) @> nummultirange(numrange(1,2));
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT numrange(null,null) @> nummultirange(numrange(null,2));
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT numrange(null,null) @> nummultirange(numrange(2,null));
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT numrange(null,5) @> nummultirange(numrange(null,3));
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT numrange(null,5) @> nummultirange(numrange(null,8));
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT numrange(5,null) @> nummultirange(numrange(8,null));
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT numrange(5,null) @> nummultirange(numrange(3,null));
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT numrange(1,5) @> nummultirange(numrange(8,9));
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT numrange(1,5) @> nummultirange(numrange(3,9));
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT numrange(1,5) @> nummultirange(numrange(1,4));
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT numrange(1,5) @> nummultirange(numrange(1,5));
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT numrange(1,9) @> nummultirange(numrange(-4,-2), numrange(1,5));
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT numrange(1,9) @> nummultirange(numrange(1,5), numrange(8,9));
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT numrange(1,9) @> nummultirange(numrange(1,5), numrange(6,9));
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT numrange(1,9) @> nummultirange(numrange(1,5), numrange(6,10));
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT '{[1,9)}' @> '{[1,5)}'::nummultirange;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '{[1,9)}' @> '{[-4,-2), [1,5)}'::nummultirange;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT '{[1,9)}' @> '{[1,5), [8,9)}'::nummultirange;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '{[1,9)}' @> '{[1,5), [6,9)}'::nummultirange;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '{[1,9)}' @> '{[1,5), [6,10)}'::nummultirange;
+ ?column? 
+----------
+ f
+(1 row)
+
 -- is contained by
 SELECT nummultirange() <@ nummultirange();
  ?column? 
@@ -1110,6 +1230,126 @@ SELECT '{[6,7)}' <@ '{[1,5), [6,9)}'::nummultirange;
  ?column? 
 ----------
  t
+(1 row)
+
+SELECT nummultirange(numrange(1,2)) <@ numrange(null,null);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT nummultirange(numrange(null,2)) <@ numrange(null,null);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT nummultirange(numrange(2,null)) <@ numrange(null,null);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT nummultirange(numrange(null,3)) <@ numrange(null,5);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT nummultirange(numrange(null,8)) <@ numrange(null,5);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT nummultirange(numrange(8,null)) <@ numrange(5,null);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT nummultirange(numrange(3,null)) <@ numrange(5,null);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT nummultirange(numrange(8,9)) <@ numrange(1,5);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT nummultirange(numrange(3,9)) <@ numrange(1,5);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT nummultirange(numrange(1,4)) <@ numrange(1,5);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT nummultirange(numrange(1,5)) <@ numrange(1,5);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT nummultirange(numrange(-4,-2), numrange(1,5)) <@ numrange(1,9);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT nummultirange(numrange(1,5), numrange(8,9)) <@ numrange(1,9);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT nummultirange(numrange(1,5), numrange(6,9)) <@ numrange(1,9);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT nummultirange(numrange(1,5), numrange(6,10)) <@ numrange(1,9);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT '{[1,5)}'::nummultirange <@ '{[1,9)}';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '{[-4,-2), [1,5)}'::nummultirange <@ '{[1,9)}';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT '{[1,5), [8,9)}'::nummultirange <@ '{[1,9)}';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '{[1,5), [6,9)}'::nummultirange <@ '{[1,9)}';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '{[1,5), [6,10)}'::nummultirange <@ '{[1,9)}';
+ ?column? 
+----------
+ f
 (1 row)
 
 -- overleft

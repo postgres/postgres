@@ -1631,6 +1631,18 @@ multirange_contains_range(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(multirange_contains_range_internal(typcache, mr, r));
 }
 
+Datum
+range_contains_multirange(PG_FUNCTION_ARGS)
+{
+	RangeType  *r = PG_GETARG_RANGE_P(0);
+	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(1);
+	TypeCacheEntry *typcache;
+
+	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+
+	PG_RETURN_BOOL(range_contains_multirange_internal(typcache, r, mr));
+}
+
 /* contained by? */
 Datum
 range_contained_by_multirange(PG_FUNCTION_ARGS)
@@ -1642,6 +1654,18 @@ range_contained_by_multirange(PG_FUNCTION_ARGS)
 	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(multirange_contains_range_internal(typcache, mr, r));
+}
+
+Datum
+multirange_contained_by_range(PG_FUNCTION_ARGS)
+{
+	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
+	RangeType  *r = PG_GETARG_RANGE_P(1);
+	TypeCacheEntry *typcache;
+
+	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+
+	PG_RETURN_BOOL(range_contains_multirange_internal(typcache, r, mr));
 }
 
 /*
@@ -1699,6 +1723,42 @@ multirange_contains_range_internal(TypeCacheEntry *typcache, MultirangeType *mr,
 
 	return multirange_bsearch_match(rangetyp, mr, bounds,
 									multirange_range_contains_bsearch_comparison);
+}
+
+/*
+ * Test whether range r contains a multirange mr.
+ */
+bool
+range_contains_multirange_internal(TypeCacheEntry *typcache, RangeType *r,
+								   MultirangeType *mr)
+{
+	TypeCacheEntry *rangetyp;
+	RangeBound	lower1,
+				upper1,
+				lower2,
+				upper2,
+				tmp;
+	bool		empty;
+
+	rangetyp = typcache->rngtype;
+
+	/*
+	 * Every range contains an infinite number of empty multiranges, even an
+	 * empty one.
+	 */
+	if (MultirangeIsEmpty(mr))
+		return true;
+
+	if (RangeIsEmpty(r))
+		return false;
+
+	/* Range contains multirange iff it contains its union range. */
+	range_deserialize(rangetyp, r, &lower1, &upper1, &empty);
+	Assert(!empty);
+	multirange_get_bounds(rangetyp, mr, 0, &lower2, &tmp);
+	multirange_get_bounds(rangetyp, mr, mr->rangeCount - 1, &tmp, &upper2);
+
+	return range_bounds_contains(rangetyp, &lower1, &upper1, &lower2, &upper2);
 }
 
 

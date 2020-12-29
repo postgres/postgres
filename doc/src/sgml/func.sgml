@@ -18184,6 +18184,20 @@ SELECT NULLIF(value, '(none)') ...
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>@&gt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the range contain the multirange?
+       </para>
+       <para>
+        <literal>'[2,4)'::int4range @&gt; '{[2,3)}'::int4multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
         <type>anymultirange</type> <literal>&lt;@</literal> <type>anymultirange</type>
         <returnvalue>boolean</returnvalue>
        </para>
