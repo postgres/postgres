@@ -14,8 +14,8 @@
 #ifndef MULTIRANGETYPES_H
 #define MULTIRANGETYPES_H
 
+#include "utils/rangetypes.h"
 #include "utils/typcache.h"
-#include "utils/expandeddatum.h"
 
 
 /*
@@ -56,33 +56,48 @@ typedef struct
  */
 
 /* internal versions of the above */
-extern bool multirange_eq_internal(TypeCacheEntry *typcache, MultirangeType *mr1,
-								   MultirangeType *mr2);
-extern bool multirange_ne_internal(TypeCacheEntry *typcache, MultirangeType *mr1,
-								   MultirangeType *mr2);
-extern bool multirange_contains_elem_internal(TypeCacheEntry *typcache, MultirangeType *mr,
+extern bool multirange_eq_internal(TypeCacheEntry *rangetyp,
+								   const MultirangeType *mr1,
+								   const MultirangeType *mr2);
+extern bool multirange_ne_internal(TypeCacheEntry *rangetyp,
+								   const MultirangeType *mr1,
+								   const MultirangeType *mr2);
+extern bool multirange_contains_elem_internal(TypeCacheEntry *rangetyp,
+											  const MultirangeType *mr,
 											  Datum elem);
-extern bool multirange_contains_range_internal(TypeCacheEntry *typcache, MultirangeType *mr,
-											   RangeType *r);
-extern bool range_contains_multirange_internal(TypeCacheEntry *typcache, RangeType *r,
-											   MultirangeType *mr);
-extern bool multirange_contains_multirange_internal(TypeCacheEntry *typcache,
-													MultirangeType *mr1,
-													MultirangeType *mr2);
-extern bool range_overlaps_multirange_internal(TypeCacheEntry *typcache, RangeType *r,
-											   MultirangeType *mr);
-extern bool multirange_overlaps_multirange_internal(TypeCacheEntry *typcache,
-													MultirangeType *mr1,
-													MultirangeType *mr2);
-extern bool range_before_multirange_internal(TypeCacheEntry *typcache, RangeType *r,
-											 MultirangeType *mr);
-extern bool range_after_multirange_internal(TypeCacheEntry *typcache, RangeType *r,
-											MultirangeType *mr);
-extern bool range_adjacent_multirange_internal(TypeCacheEntry *typcache, RangeType *r,
-											   MultirangeType *mr);
-extern bool multirange_before_multirange_internal(TypeCacheEntry *typcache,
-												  MultirangeType *mr1,
-												  MultirangeType *mr2);
+extern bool multirange_contains_range_internal(TypeCacheEntry *rangetyp,
+											   const MultirangeType *mr,
+											   const RangeType *r);
+extern bool range_contains_multirange_internal(TypeCacheEntry *rangetyp,
+											   const RangeType *r,
+											   const MultirangeType *mr);
+extern bool multirange_contains_multirange_internal(TypeCacheEntry *rangetyp,
+													const MultirangeType *mr1,
+													const MultirangeType *mr2);
+extern bool range_overlaps_multirange_internal(TypeCacheEntry *rangetyp,
+											   const RangeType *r,
+											   const MultirangeType *mr);
+extern bool multirange_overlaps_multirange_internal(TypeCacheEntry *rangetyp,
+													const MultirangeType *mr1,
+													const MultirangeType *mr2);
+extern bool range_overleft_multirange_internal(TypeCacheEntry *rangetyp,
+											   const RangeType *r,
+											   const MultirangeType *mr);
+extern bool range_overright_multirange_internal(TypeCacheEntry *rangetyp,
+												const RangeType *r,
+												const MultirangeType *mr);
+extern bool range_before_multirange_internal(TypeCacheEntry *rangetyp,
+											 const RangeType *r,
+											 const MultirangeType *mr);
+extern bool range_after_multirange_internal(TypeCacheEntry *rangetyp,
+											const RangeType *r,
+											const MultirangeType *mr);
+extern bool range_adjacent_multirange_internal(TypeCacheEntry *rangetyp,
+											   const RangeType *r,
+											   const MultirangeType *mr);
+extern bool multirange_before_multirange_internal(TypeCacheEntry *rangetyp,
+												  const MultirangeType *mr1,
+												  const MultirangeType *mr2);
 extern MultirangeType *multirange_minus_internal(Oid mltrngtypoid,
 												 TypeCacheEntry *rangetyp,
 												 int32 range_count1,
