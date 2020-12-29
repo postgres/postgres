@@ -332,7 +332,6 @@ struct _archiveHandle
 	int			compression;	/*---------
 								 * Compression requested on open().
 								 * Possible values for compression:
-								 * -2	ZSTD_COMPRESSION
 								 * -1	Z_DEFAULT_COMPRESSION
 								 *  0	COMPRESSION_NONE
 								 * 1-9 levels for gzip compression
