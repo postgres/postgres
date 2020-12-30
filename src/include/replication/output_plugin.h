@@ -100,6 +100,45 @@ typedef bool (*LogicalDecodeFilterByOriginCB) (struct LogicalDecodingContext *ct
 typedef void (*LogicalDecodeShutdownCB) (struct LogicalDecodingContext *ctx);
 
 /*
+ * Called before decoding of PREPARE record to decide whether this
+ * transaction should be decoded with separate calls to prepare and
+ * commit_prepared/rollback_prepared callbacks or wait till COMMIT PREPARED
+ * and sent as usual transaction.
+ */
+typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx,
+											  const char *gid);
+
+/*
+ * Callback called for every BEGIN of a prepared trnsaction.
+ */
+typedef void (*LogicalDecodeBeginPrepareCB) (struct LogicalDecodingContext *ctx,
+											 ReorderBufferTXN *txn);
+
+/*
+ * Called for PREPARE record unless it was filtered by filter_prepare()
+ * callback.
+ */
+typedef void (*LogicalDecodePrepareCB) (struct LogicalDecodingContext *ctx,
+										ReorderBufferTXN *txn,
+										XLogRecPtr prepare_lsn);
+
+/*
+ * Called for COMMIT PREPARED.
+ */
+typedef void (*LogicalDecodeCommitPreparedCB) (struct LogicalDecodingContext *ctx,
+											   ReorderBufferTXN *txn,
+											   XLogRecPtr commit_lsn);
+
+/*
+ * Called for ROLLBACK PREPARED.
+ */
+typedef void (*LogicalDecodeRollbackPreparedCB) (struct LogicalDecodingContext *ctx,
+												 ReorderBufferTXN *txn,
+												 XLogRecPtr prepare_end_lsn,
+												 TimestampTz prepare_time);
+
+
+/*
  * Called when starting to stream a block of changes from in-progress
  * transaction (may be called repeatedly, if it's streamed in multiple
  * chunks).
@@ -122,6 +161,14 @@ typedef void (*LogicalDecodeStreamStopCB) (struct LogicalDecodingContext *ctx,
 typedef void (*LogicalDecodeStreamAbortCB) (struct LogicalDecodingContext *ctx,
 											ReorderBufferTXN *txn,
 											XLogRecPtr abort_lsn);
+
+/*
+ * Called to prepare changes streamed to remote node from in-progress
+ * transaction. This is called as part of a two-phase commit.
+ */
+typedef void (*LogicalDecodeStreamPrepareCB) (struct LogicalDecodingContext *ctx,
+											  ReorderBufferTXN *txn,
+											  XLogRecPtr prepare_lsn);
 
 /*
  * Called to apply changes streamed to remote node from in-progress
@@ -173,10 +220,19 @@ typedef struct OutputPluginCallbacks
 	LogicalDecodeMessageCB message_cb;
 	LogicalDecodeFilterByOriginCB filter_by_origin_cb;
 	LogicalDecodeShutdownCB shutdown_cb;
+
+	/* streaming of changes at prepare time */
+	LogicalDecodeFilterPrepareCB filter_prepare_cb;
+	LogicalDecodeBeginPrepareCB begin_prepare_cb;
+	LogicalDecodePrepareCB prepare_cb;
+	LogicalDecodeCommitPreparedCB commit_prepared_cb;
+	LogicalDecodeRollbackPreparedCB rollback_prepared_cb;
+
 	/* streaming of changes */
 	LogicalDecodeStreamStartCB stream_start_cb;
 	LogicalDecodeStreamStopCB stream_stop_cb;
 	LogicalDecodeStreamAbortCB stream_abort_cb;
+	LogicalDecodeStreamPrepareCB stream_prepare_cb;
 	LogicalDecodeStreamCommitCB stream_commit_cb;
 	LogicalDecodeStreamChangeCB stream_change_cb;
 	LogicalDecodeStreamMessageCB stream_message_cb;

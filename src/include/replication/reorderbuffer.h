@@ -245,6 +245,12 @@ typedef struct ReorderBufferTXN
 	TransactionId toplevel_xid;
 
 	/*
+	 * Global transaction id required for identification of prepared
+	 * transactions.
+	 */
+	char	   *gid;
+
+	/*
 	 * LSN of the first data carrying, WAL record with knowledge about this
 	 * xid. This is allowed to *not* be first record adorned with this xid, if
 	 * the previous records aren't relevant for logical decoding.
@@ -418,6 +424,26 @@ typedef void (*ReorderBufferMessageCB) (ReorderBuffer *rb,
 										const char *prefix, Size sz,
 										const char *message);
 
+/* begin prepare callback signature */
+typedef void (*ReorderBufferBeginPrepareCB) (ReorderBuffer *rb,
+											 ReorderBufferTXN *txn);
+
+/* prepare callback signature */
+typedef void (*ReorderBufferPrepareCB) (ReorderBuffer *rb,
+										ReorderBufferTXN *txn,
+										XLogRecPtr prepare_lsn);
+
+/* commit prepared callback signature */
+typedef void (*ReorderBufferCommitPreparedCB) (ReorderBuffer *rb,
+											   ReorderBufferTXN *txn,
+											   XLogRecPtr commit_lsn);
+
+/* rollback  prepared callback signature */
+typedef void (*ReorderBufferRollbackPreparedCB) (ReorderBuffer *rb,
+												 ReorderBufferTXN *txn,
+												 XLogRecPtr prepare_end_lsn,
+												 TimestampTz prepare_time);
+
 /* start streaming transaction callback signature */
 typedef void (*ReorderBufferStreamStartCB) (
 											ReorderBuffer *rb,
@@ -435,6 +461,12 @@ typedef void (*ReorderBufferStreamAbortCB) (
 											ReorderBuffer *rb,
 											ReorderBufferTXN *txn,
 											XLogRecPtr abort_lsn);
+
+/* prepare streamed transaction callback signature */
+typedef void (*ReorderBufferStreamPrepareCB) (
+											  ReorderBuffer *rb,
+											  ReorderBufferTXN *txn,
+											  XLogRecPtr prepare_lsn);
 
 /* commit streamed transaction callback signature */
 typedef void (*ReorderBufferStreamCommitCB) (
@@ -505,11 +537,20 @@ struct ReorderBuffer
 	ReorderBufferMessageCB message;
 
 	/*
+	 * Callbacks to be called when streaming a transaction at prepare time.
+	 */
+	ReorderBufferBeginCB begin_prepare;
+	ReorderBufferPrepareCB prepare;
+	ReorderBufferCommitPreparedCB commit_prepared;
+	ReorderBufferRollbackPreparedCB rollback_prepared;
+
+	/*
 	 * Callbacks to be called when streaming a transaction.
 	 */
 	ReorderBufferStreamStartCB stream_start;
 	ReorderBufferStreamStopCB stream_stop;
 	ReorderBufferStreamAbortCB stream_abort;
+	ReorderBufferStreamPrepareCB stream_prepare;
 	ReorderBufferStreamCommitCB stream_commit;
 	ReorderBufferStreamChangeCB stream_change;
 	ReorderBufferStreamMessageCB stream_message;
