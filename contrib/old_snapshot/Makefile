@@ -4,7 +4,6 @@ MODULE_big = old_snapshot
 OBJS = \
 	$(WIN32RES) \
 	time_mapping.o
-PG_CPPFLAGS = -I$(libpq_srcdir)
 
 EXTENSION = old_snapshot
 DATA = old_snapshot--1.0.sql

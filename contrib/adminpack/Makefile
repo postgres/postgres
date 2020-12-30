@@ -4,7 +4,6 @@ MODULE_big = adminpack
 OBJS = \
 	$(WIN32RES) \
 	adminpack.o
-PG_CPPFLAGS = -I$(libpq_srcdir)
 
 EXTENSION = adminpack
 DATA = adminpack--1.0.sql adminpack--1.0--1.1.sql adminpack--1.1--2.0.sql\
