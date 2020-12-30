@@ -177,7 +177,12 @@ if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 		esac
 		fix_sql="$fix_sql
 				 DROP FUNCTION IF EXISTS
-					public.oldstyle_length(integer, text);	-- last in 9.6";
+					public.oldstyle_length(integer, text);	-- last in 9.6
+				 DROP OPERATOR IF EXISTS	-- last in v13
+					public.#@# (pg_catalog.int8, NONE),
+					public.#%# (pg_catalog.int8, NONE),
+					public.!=- (pg_catalog.int8, NONE),
+					public.#@%# (pg_catalog.int8, NONE);"
 		psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
 	fi
 
