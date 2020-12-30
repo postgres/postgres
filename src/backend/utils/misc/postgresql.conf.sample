@@ -92,7 +92,7 @@
 #db_user_namespace = off
 
 # GSSAPI using Kerberos
-#krb_server_keyfile = ''
+#krb_server_keyfile = 'FILE:${sysconfdir}/krb5.keytab'
 #krb_caseins_users = off
 
 # - SSL -
