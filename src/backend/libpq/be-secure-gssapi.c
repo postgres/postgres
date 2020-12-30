@@ -525,8 +525,16 @@ secure_open_gssapi(Port *port)
 	 * Use the configured keytab, if there is one.  Unfortunately, Heimdal
 	 * doesn't support the cred store extensions, so use the env var.
 	 */
-	if (pg_krb_server_keyfile != NULL && strlen(pg_krb_server_keyfile) > 0)
-		setenv("KRB5_KTNAME", pg_krb_server_keyfile, 1);
+	if (pg_krb_server_keyfile != NULL && pg_krb_server_keyfile[0] != '\0')
+	{
+		if (setenv("KRB5_KTNAME", pg_krb_server_keyfile, 1) != 0)
+		{
+			/* The only likely failure cause is OOM, so use that errcode */
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("could not set environment: %m")));
+		}
+	}
 
 	while (true)
 	{
