@@ -128,9 +128,9 @@ multirange_in(PG_FUNCTION_ARGS)
 	MultirangeType *ret;
 	MultirangeParseState parse_state;
 	const char *ptr = input_str;
-	const char *range_str = NULL;
+	const char *range_str_begin = NULL;
 	int32		range_str_len;
-	char	   *range_str_copy;
+	char	   *range_str;
 
 	cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_input);
 	rangetyp = cache->typcache->rngtype;
@@ -170,7 +170,7 @@ multirange_in(PG_FUNCTION_ARGS)
 			case MULTIRANGE_BEFORE_RANGE:
 				if (ch == '[' || ch == '(')
 				{
-					range_str = ptr;
+					range_str_begin = ptr;
 					parse_state = MULTIRANGE_IN_RANGE;
 				}
 				else if (ch == '}' && ranges_seen == 0)
@@ -191,14 +191,10 @@ multirange_in(PG_FUNCTION_ARGS)
 							 errdetail("Expected range start.")));
 				break;
 			case MULTIRANGE_IN_RANGE:
-				if (ch == '"')
-					parse_state = MULTIRANGE_IN_RANGE_QUOTED;
-				else if (ch == '\\')
-					parse_state = MULTIRANGE_IN_RANGE_ESCAPED;
-				else if (ch == ']' || ch == ')')
+				if (ch == ']' || ch == ')')
 				{
-					range_str_len = ptr - range_str + 1;
-					range_str_copy = pnstrdup(range_str, range_str_len);
+					range_str_len = ptr - range_str_begin + 1;
+					range_str = pnstrdup(range_str_begin, range_str_len);
 					if (range_capacity == range_count)
 					{
 						range_capacity *= 2;
@@ -207,7 +203,7 @@ multirange_in(PG_FUNCTION_ARGS)
 					}
 					ranges_seen++;
 					range = DatumGetRangeTypeP(InputFunctionCall(&cache->typioproc,
-																 range_str_copy,
+																 range_str,
 																 cache->typioparam,
 																 typmod));
 					if (!RangeIsEmpty(range))
@@ -215,10 +211,22 @@ multirange_in(PG_FUNCTION_ARGS)
 					parse_state = MULTIRANGE_AFTER_RANGE;
 				}
 				else
-					 /* include it in range_str */ ;
+				{
+					if (ch == '"')
+						parse_state = MULTIRANGE_IN_RANGE_QUOTED;
+					else if (ch == '\\')
+						parse_state = MULTIRANGE_IN_RANGE_ESCAPED;
+					/*
+					 * We will include this character into range_str once we
+					 * find the end of the range value.
+					 */
+				}
 				break;
 			case MULTIRANGE_IN_RANGE_ESCAPED:
-				/* include it in range_str */
+				/*
+				 * We will include this character into range_str once we find
+				 * the end of the range value.
+				 */
 				parse_state = MULTIRANGE_IN_RANGE;
 				break;
 			case MULTIRANGE_IN_RANGE_QUOTED:
@@ -232,8 +240,11 @@ multirange_in(PG_FUNCTION_ARGS)
 						parse_state = MULTIRANGE_IN_RANGE;
 				else if (ch == '\\')
 					parse_state = MULTIRANGE_IN_RANGE_QUOTED_ESCAPED;
-				else
-					 /* include it in range_str */ ;
+
+				/*
+				 * We will include this character into range_str once we
+				 * find the end of the range value.
+				 */
 				break;
 			case MULTIRANGE_AFTER_RANGE:
 				if (ch == ',')
@@ -248,7 +259,10 @@ multirange_in(PG_FUNCTION_ARGS)
 							 errdetail("Expected comma or end of multirange.")));
 				break;
 			case MULTIRANGE_IN_RANGE_QUOTED_ESCAPED:
-				/* include it in range_str */
+				/*
+				 * We will include this character into range_str once we find
+				 * the end of the range value.
+				 */
 				parse_state = MULTIRANGE_IN_RANGE_QUOTED;
 				break;
 			default:
