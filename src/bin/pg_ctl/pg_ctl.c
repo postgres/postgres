@@ -889,11 +889,10 @@ do_start(void)
 	 */
 #ifndef WIN32
 	{
-		static char env_var[32];
+		char		env_var[32];
 
-		snprintf(env_var, sizeof(env_var), "PG_GRANDPARENT_PID=%d",
-				 (int) getppid());
-		putenv(env_var);
+		snprintf(env_var, sizeof(env_var), "%d", (int) getppid());
+		setenv("PG_GRANDPARENT_PID", env_var, 1);
 	}
 #endif
 
@@ -2340,12 +2339,10 @@ main(int argc, char **argv)
 				case 'D':
 					{
 						char	   *pgdata_D;
-						char	   *env_var;
 
 						pgdata_D = pg_strdup(optarg);
 						canonicalize_path(pgdata_D);
-						env_var = psprintf("PGDATA=%s", pgdata_D);
-						putenv(env_var);
+						setenv("PGDATA", pgdata_D, 1);
 
 						/*
 						 * We could pass PGDATA just in an environment
@@ -2353,6 +2350,7 @@ main(int argc, char **argv)
 						 * 'ps' display
 						 */
 						pgdata_opt = psprintf("-D \"%s\" ", pgdata_D);
+						free(pgdata_D);
 						break;
 					}
 				case 'e':

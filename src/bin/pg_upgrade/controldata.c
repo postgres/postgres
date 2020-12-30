@@ -97,20 +97,20 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	if (getenv("LC_MESSAGES"))
 		lc_messages = pg_strdup(getenv("LC_MESSAGES"));
 
-	pg_putenv("LC_COLLATE", NULL);
-	pg_putenv("LC_CTYPE", NULL);
-	pg_putenv("LC_MONETARY", NULL);
-	pg_putenv("LC_NUMERIC", NULL);
-	pg_putenv("LC_TIME", NULL);
+	unsetenv("LC_COLLATE");
+	unsetenv("LC_CTYPE");
+	unsetenv("LC_MONETARY");
+	unsetenv("LC_NUMERIC");
+	unsetenv("LC_TIME");
 #ifndef WIN32
-	pg_putenv("LANG", NULL);
+	unsetenv("LANG");
 #else
 	/* On Windows the default locale may not be English, so force it */
-	pg_putenv("LANG", "en");
+	setenv("LANG", "en", 1);
 #endif
-	pg_putenv("LANGUAGE", NULL);
-	pg_putenv("LC_ALL", NULL);
-	pg_putenv("LC_MESSAGES", "C");
+	unsetenv("LANGUAGE");
+	unsetenv("LC_ALL");
+	setenv("LC_MESSAGES", "C", 1);
 
 	/*
 	 * Check for clean shutdown
@@ -490,17 +490,31 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pclose(output);
 
 	/*
-	 * Restore environment variables
+	 * Restore environment variables.  Note all but LANG and LC_MESSAGES were
+	 * unset above.
 	 */
-	pg_putenv("LC_COLLATE", lc_collate);
-	pg_putenv("LC_CTYPE", lc_ctype);
-	pg_putenv("LC_MONETARY", lc_monetary);
-	pg_putenv("LC_NUMERIC", lc_numeric);
-	pg_putenv("LC_TIME", lc_time);
-	pg_putenv("LANG", lang);
-	pg_putenv("LANGUAGE", language);
-	pg_putenv("LC_ALL", lc_all);
-	pg_putenv("LC_MESSAGES", lc_messages);
+	if (lc_collate)
+		setenv("LC_COLLATE", lc_collate, 1);
+	if (lc_ctype)
+		setenv("LC_CTYPE", lc_ctype, 1);
+	if (lc_monetary)
+		setenv("LC_MONETARY", lc_monetary, 1);
+	if (lc_numeric)
+		setenv("LC_NUMERIC", lc_numeric, 1);
+	if (lc_time)
+		setenv("LC_TIME", lc_time, 1);
+	if (lang)
+		setenv("LANG", lang, 1);
+	else
+		unsetenv("LANG");
+	if (language)
+		setenv("LANGUAGE", language, 1);
+	if (lc_all)
+		setenv("LC_ALL", lc_all, 1);
+	if (lc_messages)
+		setenv("LC_MESSAGES", lc_messages, 1);
+	else
+		unsetenv("LC_MESSAGES");
 
 	pg_free(lc_collate);
 	pg_free(lc_ctype);

@@ -2355,8 +2355,7 @@ check_need_password(const char *authmethodlocal, const char *authmethodhost)
 void
 setup_pgdata(void)
 {
-	char	   *pgdata_get_env,
-			   *pgdata_set_env;
+	char	   *pgdata_get_env;
 
 	if (!pg_data)
 	{
@@ -2386,8 +2385,11 @@ setup_pgdata(void)
 	 * need quotes otherwise on Windows because paths there are most likely to
 	 * have embedded spaces.
 	 */
-	pgdata_set_env = psprintf("PGDATA=%s", pg_data);
-	putenv(pgdata_set_env);
+	if (setenv("PGDATA", pg_data, 1) != 0)
+	{
+		pg_log_error("could not set environment");
+		exit(1);
+	}
 }
 
 

@@ -105,20 +105,6 @@ char	   *localized_full_months[12 + 1];
 static bool CurrentLocaleConvValid = false;
 static bool CurrentLCTimeValid = false;
 
-/* Environment variable storage area */
-
-#define LC_ENV_BUFSIZE (NAMEDATALEN + 20)
-
-static char lc_collate_envbuf[LC_ENV_BUFSIZE];
-static char lc_ctype_envbuf[LC_ENV_BUFSIZE];
-
-#ifdef LC_MESSAGES
-static char lc_messages_envbuf[LC_ENV_BUFSIZE];
-#endif
-static char lc_monetary_envbuf[LC_ENV_BUFSIZE];
-static char lc_numeric_envbuf[LC_ENV_BUFSIZE];
-static char lc_time_envbuf[LC_ENV_BUFSIZE];
-
 /* Cache for collation-related knowledge */
 
 typedef struct
@@ -163,7 +149,6 @@ pg_perm_setlocale(int category, const char *locale)
 {
 	char	   *result;
 	const char *envvar;
-	char	   *envbuf;
 
 #ifndef WIN32
 	result = setlocale(category, locale);
@@ -199,7 +184,7 @@ pg_perm_setlocale(int category, const char *locale)
 	 */
 	if (category == LC_CTYPE)
 	{
-		static char save_lc_ctype[LC_ENV_BUFSIZE];
+		static char save_lc_ctype[NAMEDATALEN + 20];
 
 		/* copy setlocale() return value before callee invokes it again */
 		strlcpy(save_lc_ctype, result, sizeof(save_lc_ctype));
@@ -216,16 +201,13 @@ pg_perm_setlocale(int category, const char *locale)
 	{
 		case LC_COLLATE:
 			envvar = "LC_COLLATE";
-			envbuf = lc_collate_envbuf;
 			break;
 		case LC_CTYPE:
 			envvar = "LC_CTYPE";
-			envbuf = lc_ctype_envbuf;
 			break;
 #ifdef LC_MESSAGES
 		case LC_MESSAGES:
 			envvar = "LC_MESSAGES";
-			envbuf = lc_messages_envbuf;
 #ifdef WIN32
 			result = IsoLocaleName(locale);
 			if (result == NULL)
@@ -236,26 +218,19 @@ pg_perm_setlocale(int category, const char *locale)
 #endif							/* LC_MESSAGES */
 		case LC_MONETARY:
 			envvar = "LC_MONETARY";
-			envbuf = lc_monetary_envbuf;
 			break;
 		case LC_NUMERIC:
 			envvar = "LC_NUMERIC";
-			envbuf = lc_numeric_envbuf;
 			break;
 		case LC_TIME:
 			envvar = "LC_TIME";
-			envbuf = lc_time_envbuf;
 			break;
 		default:
 			elog(FATAL, "unrecognized LC category: %d", category);
-			envvar = NULL;		/* keep compiler quiet */
-			envbuf = NULL;
-			return NULL;
+			return NULL;		/* keep compiler quiet */
 	}
 
-	snprintf(envbuf, LC_ENV_BUFSIZE - 1, "%s=%s", envvar, result);
-
-	if (putenv(envbuf))
+	if (setenv(envvar, result, 1) != 0)
 		return NULL;
 
 	return result;

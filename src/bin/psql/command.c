@@ -2296,17 +2296,8 @@ exec_command_setenv(PsqlScanState scan_state, bool active_branch,
 		else
 		{
 			/* Set variable to the value of the next argument */
-			char	   *newval;
-
-			newval = psprintf("%s=%s", envvar, envval);
-			putenv(newval);
+			setenv(envvar, envval, 1);
 			success = true;
-
-			/*
-			 * Do not free newval here, it will screw up the environment if
-			 * you do. See putenv man page for details. That means we leak a
-			 * bit of memory here, but not enough to worry about.
-			 */
 		}
 		free(envvar);
 		free(envval);

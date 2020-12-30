@@ -16,13 +16,20 @@
 #include "c.h"
 
 
-void
+int
 unsetenv(const char *name)
 {
 	char	   *envstr;
 
+	/* Error conditions, per POSIX */
+	if (name == NULL || name[0] == '\0' || strchr(name, '=') != NULL)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
 	if (getenv(name) == NULL)
-		return;					/* no work */
+		return 0;				/* no work */
 
 	/*
 	 * The technique embodied here works if libc follows the Single Unix Spec
@@ -40,11 +47,12 @@ unsetenv(const char *name)
 
 	envstr = (char *) malloc(strlen(name) + 2);
 	if (!envstr)				/* not much we can do if no memory */
-		return;
+		return -1;
 
 	/* Override the existing setting by forcibly defining the var */
 	sprintf(envstr, "%s=", name);
-	putenv(envstr);
+	if (putenv(envstr))
+		return -1;
 
 	/* Now we can clobber the variable definition this way: */
 	strcpy(envstr, "=");
@@ -53,5 +61,5 @@ unsetenv(const char *name)
 	 * This last putenv cleans up if we have multiple zero-length names as a
 	 * result of unsetting multiple things.
 	 */
-	putenv(envstr);
+	return putenv(envstr);
 }

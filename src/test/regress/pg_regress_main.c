@@ -91,8 +91,9 @@ psql_start_test(const char *testname,
 		exit(2);
 	}
 
-	appnameenv = psprintf("PGAPPNAME=pg_regress/%s", testname);
-	putenv(appnameenv);
+	appnameenv = psprintf("pg_regress/%s", testname);
+	setenv("PGAPPNAME", appnameenv, 1);
+	free(appnameenv);
 
 	pid = spawn_process(psql_cmd);
 
@@ -104,7 +105,6 @@ psql_start_test(const char *testname,
 	}
 
 	unsetenv("PGAPPNAME");
-	free(appnameenv);
 
 	return pid;
 }

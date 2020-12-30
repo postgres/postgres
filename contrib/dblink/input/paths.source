@@ -1,8 +1,8 @@
 -- Initialization that requires path substitution.
 
-CREATE FUNCTION putenv(text)
+CREATE FUNCTION setenv(text, text)
    RETURNS void
-   AS '@libdir@/regress@DLSUFFIX@', 'regress_putenv'
+   AS '@libdir@/regress@DLSUFFIX@', 'regress_setenv'
    LANGUAGE C STRICT;
 
 CREATE FUNCTION wait_pid(int)
@@ -11,4 +11,4 @@ CREATE FUNCTION wait_pid(int)
    LANGUAGE C STRICT;
 
 CREATE FUNCTION set_pgservicefile(text) RETURNS void LANGUAGE SQL
-    AS $$SELECT putenv('PGSERVICEFILE=@abs_srcdir@/' || $1)$$;
+    AS $$SELECT setenv('PGSERVICEFILE', '@abs_srcdir@/' || $1)$$;

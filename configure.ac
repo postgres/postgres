@@ -1757,11 +1757,13 @@ fi
 case $host_os in
         # Windows uses a specialised env handler
         mingw*)
+                AC_DEFINE(HAVE_SETENV, 1, [Define to 1 because replacement version used.])
                 AC_DEFINE(HAVE_UNSETENV, 1, [Define to 1 because replacement version used.])
+                ac_cv_func_setenv=yes
                 ac_cv_func_unsetenv=yes
                 ;;
         *)
-                AC_REPLACE_FUNCS([unsetenv])
+                AC_REPLACE_FUNCS([setenv unsetenv])
                 ;;
 esac
 

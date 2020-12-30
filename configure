@@ -15959,12 +15959,29 @@ case $host_os in
         # Windows uses a specialised env handler
         mingw*)
 
+$as_echo "#define HAVE_SETENV 1" >>confdefs.h
+
+
 $as_echo "#define HAVE_UNSETENV 1" >>confdefs.h
 
+                ac_cv_func_setenv=yes
                 ac_cv_func_unsetenv=yes
                 ;;
         *)
-                ac_fn_c_check_func "$LINENO" "unsetenv" "ac_cv_func_unsetenv"
+                ac_fn_c_check_func "$LINENO" "setenv" "ac_cv_func_setenv"
+if test "x$ac_cv_func_setenv" = xyes; then :
+  $as_echo "#define HAVE_SETENV 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" setenv.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS setenv.$ac_objext"
+ ;;
+esac
+
+fi
+
+ac_fn_c_check_func "$LINENO" "unsetenv" "ac_cv_func_unsetenv"
 if test "x$ac_cv_func_unsetenv" = xyes; then :
   $as_echo "#define HAVE_UNSETENV 1" >>confdefs.h
 

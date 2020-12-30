@@ -436,7 +436,6 @@ void		end_progress_output(void);
 void		prep_status(const char *fmt,...) pg_attribute_printf(1, 2);
 void		check_ok(void);
 unsigned int str2uint(const char *str);
-void		pg_putenv(const char *var, const char *val);
 
 
 /* version.c */

@@ -1,8 +1,10 @@
 /*-------------------------------------------------------------------------
  *
  * win32env.c
- *	  putenv() and unsetenv() for win32, which update both process environment
- *	  and caches in (potentially multiple) C run-time library (CRT) versions.
+ *	  putenv(), setenv(), and unsetenv() for win32.
+ *
+ * These functions update both the process environment and caches in
+ * (potentially multiple) C run-time library (CRT) versions.
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -16,6 +18,11 @@
 
 #include "c.h"
 
+
+/*
+ * Note that unlike POSIX putenv(), this doesn't use the passed-in string
+ * as permanent storage.
+ */
 int
 pgwin32_putenv(const char *envval)
 {
@@ -64,7 +71,7 @@ pgwin32_putenv(const char *envval)
 	}
 	*cp = '\0';
 	cp++;
-	if (strlen(cp))
+	if (*cp)
 	{
 		/*
 		 * Only call SetEnvironmentVariable() when we are adding a variable,
@@ -110,16 +117,47 @@ pgwin32_putenv(const char *envval)
 	return _putenv(envval);
 }
 
-void
+int
+pgwin32_setenv(const char *name, const char *value, int overwrite)
+{
+	int			res;
+	char	   *envstr;
+
+	/* Error conditions, per POSIX */
+	if (name == NULL || name[0] == '\0' || strchr(name, '=') != NULL ||
+		value == NULL)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	/* No work if variable exists and we're not to replace it */
+	if (overwrite == 0 && getenv(name) != NULL)
+		return 0;
+
+	envstr = (char *) malloc(strlen(name) + strlen(value) + 2);
+	if (!envstr)				/* not much we can do if no memory */
+		return -1;
+
+	sprintf(envstr, "%s=%s", name, value);
+
+	res = pgwin32_putenv(envstr);
+	free(envstr);
+	return res;
+}
+
+int
 pgwin32_unsetenv(const char *name)
 {
+	int			res;
 	char	   *envbuf;
 
 	envbuf = (char *) malloc(strlen(name) + 2);
 	if (!envbuf)
-		return;
+		return -1;
 
 	sprintf(envbuf, "%s=", name);
-	pgwin32_putenv(envbuf);
+	res = pgwin32_putenv(envbuf);
 	free(envbuf);
+	return res;
 }

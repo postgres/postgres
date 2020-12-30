@@ -624,22 +624,18 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(newtup->t_data);
 }
 
-PG_FUNCTION_INFO_V1(regress_putenv);
+PG_FUNCTION_INFO_V1(regress_setenv);
 
 Datum
-regress_putenv(PG_FUNCTION_ARGS)
+regress_setenv(PG_FUNCTION_ARGS)
 {
-	MemoryContext oldcontext;
-	char	   *envbuf;
+	char	   *envvar = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *envval = text_to_cstring(PG_GETARG_TEXT_PP(1));
 
 	if (!superuser())
 		elog(ERROR, "must be superuser to change environment variables");
 
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-	envbuf = text_to_cstring((text *) PG_GETARG_POINTER(0));
-	MemoryContextSwitchTo(oldcontext);
-
-	if (putenv(envbuf) != 0)
+	if (setenv(envvar, envval, 1) != 0)
 		elog(ERROR, "could not set environment variable: %m");
 
 	PG_RETURN_VOID();

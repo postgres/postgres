@@ -725,18 +725,6 @@ get_expectfile(const char *testname, const char *file)
 }
 
 /*
- * Handy subroutine for setting an environment variable "var" to "val"
- */
-static void
-doputenv(const char *var, const char *val)
-{
-	char	   *s;
-
-	s = psprintf("%s=%s", var, val);
-	putenv(s);
-}
-
-/*
  * Prepare environment variables for running regression tests
  */
 static void
@@ -746,7 +734,7 @@ initialize_environment(void)
 	 * Set default application_name.  (The test_function may choose to
 	 * override this, but if it doesn't, we have something useful in place.)
 	 */
-	putenv("PGAPPNAME=pg_regress");
+	setenv("PGAPPNAME", "pg_regress", 1);
 
 	if (nolocale)
 	{
@@ -769,7 +757,7 @@ initialize_environment(void)
 		 * variables unset; see PostmasterMain().
 		 */
 #if defined(WIN32) || defined(__CYGWIN__) || defined(__darwin__)
-		putenv("LANG=C");
+		setenv("LANG", "C", 1);
 #endif
 	}
 
@@ -781,21 +769,21 @@ initialize_environment(void)
 	 */
 	unsetenv("LANGUAGE");
 	unsetenv("LC_ALL");
-	putenv("LC_MESSAGES=C");
+	setenv("LC_MESSAGES", "C", 1);
 
 	/*
 	 * Set encoding as requested
 	 */
 	if (encoding)
-		doputenv("PGCLIENTENCODING", encoding);
+		setenv("PGCLIENTENCODING", encoding, 1);
 	else
 		unsetenv("PGCLIENTENCODING");
 
 	/*
 	 * Set timezone and datestyle for datetime-related tests
 	 */
-	putenv("PGTZ=PST8PDT");
-	putenv("PGDATESTYLE=Postgres, MDY");
+	setenv("PGTZ", "PST8PDT", 1);
+	setenv("PGDATESTYLE", "Postgres, MDY", 1);
 
 	/*
 	 * Likewise set intervalstyle to ensure consistent results.  This is a bit
@@ -809,9 +797,10 @@ initialize_environment(void)
 
 		if (!old_pgoptions)
 			old_pgoptions = "";
-		new_pgoptions = psprintf("PGOPTIONS=%s %s",
+		new_pgoptions = psprintf("%s %s",
 								 old_pgoptions, my_pgoptions);
-		putenv(new_pgoptions);
+		setenv("PGOPTIONS", new_pgoptions, 1);
+		free(new_pgoptions);
 	}
 
 	if (temp_instance)
@@ -832,17 +821,17 @@ initialize_environment(void)
 		unsetenv("PGDATA");
 #ifdef HAVE_UNIX_SOCKETS
 		if (hostname != NULL)
-			doputenv("PGHOST", hostname);
+			setenv("PGHOST", hostname, 1);
 		else
 		{
 			sockdir = getenv("PG_REGRESS_SOCK_DIR");
 			if (!sockdir)
 				sockdir = make_temp_sockdir();
-			doputenv("PGHOST", sockdir);
+			setenv("PGHOST", sockdir, 1);
 		}
 #else
 		Assert(hostname != NULL);
-		doputenv("PGHOST", hostname);
+		setenv("PGHOST", hostname, 1);
 #endif
 		unsetenv("PGHOSTADDR");
 		if (port != -1)
@@ -850,7 +839,7 @@ initialize_environment(void)
 			char		s[16];
 
 			sprintf(s, "%d", port);
-			doputenv("PGPORT", s);
+			setenv("PGPORT", s, 1);
 		}
 	}
 	else
@@ -864,7 +853,7 @@ initialize_environment(void)
 		 */
 		if (hostname != NULL)
 		{
-			doputenv("PGHOST", hostname);
+			setenv("PGHOST", hostname, 1);
 			unsetenv("PGHOSTADDR");
 		}
 		if (port != -1)
@@ -872,10 +861,10 @@ initialize_environment(void)
 			char		s[16];
 
 			sprintf(s, "%d", port);
-			doputenv("PGPORT", s);
+			setenv("PGPORT", s, 1);
 		}
 		if (user != NULL)
-			doputenv("PGUSER", user);
+			setenv("PGUSER", user, 1);
 
 		/*
 		 * However, we *don't* honor PGDATABASE, since we certainly don't wish
@@ -2431,7 +2420,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				fprintf(stderr, _("port %d apparently in use, trying %d\n"), port, port + 1);
 				port++;
 				sprintf(s, "%d", port);
-				doputenv("PGPORT", s);
+				setenv("PGPORT", s, 1);
 			}
 			else
 				break;
