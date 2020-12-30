@@ -1054,29 +1054,18 @@ pg_GSS_recvauth(Port *port)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("GSSAPI is not supported in protocol version 2")));
 
-	if (pg_krb_server_keyfile && strlen(pg_krb_server_keyfile) > 0)
+	/*
+	 * Use the configured keytab, if there is one.  Unfortunately, Heimdal
+	 * doesn't support the cred store extensions, so use the env var.
+	 */
+	if (pg_krb_server_keyfile != NULL && pg_krb_server_keyfile[0] != '\0')
 	{
-		/*
-		 * Set default Kerberos keytab file for the Krb5 mechanism.
-		 *
-		 * setenv("KRB5_KTNAME", pg_krb_server_keyfile, 0); except setenv()
-		 * not always available.
-		 */
-		if (getenv("KRB5_KTNAME") == NULL)
+		if (setenv("KRB5_KTNAME", pg_krb_server_keyfile, 1) != 0)
 		{
-			size_t		kt_len = strlen(pg_krb_server_keyfile) + 14;
-			char	   *kt_path = malloc(kt_len);
-
-			if (!kt_path ||
-				snprintf(kt_path, kt_len, "KRB5_KTNAME=%s",
-						 pg_krb_server_keyfile) != kt_len - 2 ||
-				putenv(kt_path) != 0)
-			{
-				ereport(LOG,
-						(errcode(ERRCODE_OUT_OF_MEMORY),
-						 errmsg("out of memory")));
-				return STATUS_ERROR;
-			}
+			/* The only likely failure cause is OOM, so use that errcode */
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("could not set environment: %m")));
 		}
 	}
 

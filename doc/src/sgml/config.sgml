@@ -1057,10 +1057,16 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Sets the location of the Kerberos server key file. See
-        <xref linkend="gssapi-auth"/>
-        for details. This parameter can only be set in the
+        Sets the location of the server's Kerberos key file.  The default is
+        <filename>FILE:/usr/local/pgsql/etc/krb5.keytab</filename>
+        (where the directory part is whatever was specified
+        as <varname>sysconfdir</varname> at build time; use
+        <literal>pg_config --sysconfdir</literal> to determine that).
+        If this parameter is set to an empty string, it is ignored and a
+        system-dependent default is used.
+        This parameter can only be set in the
         <filename>postgresql.conf</filename> file or on the server command line.
+        See <xref linkend="gssapi-auth"/> for more information.
        </para>
       </listitem>
      </varlistentry>

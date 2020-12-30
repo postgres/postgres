@@ -1265,11 +1265,7 @@ omicron         bryanh                  guest1
 
    <para>
     The location of the server's keytab file is specified by the <xref
-    linkend="guc-krb-server-keyfile"/> configuration
-    parameter. The default is
-    <filename>FILE:/usr/local/pgsql/etc/krb5.keytab</filename>
-    (where the directory part is whatever was specified
-    as <varname>sysconfdir</varname> at build time).
+    linkend="guc-krb-server-keyfile"/> configuration parameter.
     For security reasons, it is recommended to use a separate keytab
     just for the <productname>PostgreSQL</productname> server rather
     than allowing the server to read the system keytab file.
