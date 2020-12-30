@@ -8191,13 +8191,29 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
   </para>
 
   <para>
+   In addition, the usual comparison operators shown in
+   <xref linkend="functions-comparison-op-table"/> are available for the
+   date/time types.  Dates and timestamps (with or without time zone) are
+   all comparable, while times (with or without time zone) and intervals
+   can only be compared to other values of the same data type.  When
+   comparing a timestamp without time zone to a timestamp with time zone,
+   the former value is assumed to be given in the time zone specified by
+   the <xref linkend="guc-timezone"/> configuration parameter, and is
+   rotated to UTC for comparison to the latter value (which is already
+   in UTC internally).  Similarly, a date value is assumed to represent
+   midnight in the <varname>TimeZone</varname> zone when comparing it
+   to a timestamp.
+  </para>
+
+  <para>
    All the functions and operators described below that take <type>time</type> or <type>timestamp</type>
    inputs actually come in two variants: one that takes <type>time with time zone</type> or <type>timestamp
    with time zone</type>, and one that takes <type>time without time zone</type> or <type>timestamp without time zone</type>.
    For brevity, these variants are not shown separately.  Also, the
    <literal>+</literal> and <literal>*</literal> operators come in commutative pairs (for
-   example both date + integer and integer + date); we show only one of each
-   such pair.
+   example both <type>date</type> <literal>+</literal> <type>integer</type>
+   and <type>integer</type> <literal>+</literal> <type>date</type>); we show
+   only one of each such pair.
   </para>
 
     <table id="operators-datetime-table">
