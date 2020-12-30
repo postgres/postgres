@@ -169,17 +169,17 @@ createdb "regression$dbname3" || createdb_status=$?
 if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 	oldpgversion=`psql -X -A -t -d regression -c "SHOW server_version_num"`
 
-	# before dumping, get rid of objects not existing in later versions
+	# before dumping, get rid of objects not feasible in later versions
 	if [ "$newsrc" != "$oldsrc" ]; then
 		fix_sql=""
 		case $oldpgversion in
 			804??)
-				fix_sql="DROP FUNCTION public.myfunc(integer); DROP FUNCTION public.oldstyle_length(integer, text);"
-				;;
-			*)
-				fix_sql="DROP FUNCTION public.oldstyle_length(integer, text);"
+				fix_sql="DROP FUNCTION public.myfunc(integer);"
 				;;
 		esac
+		fix_sql="$fix_sql
+				 DROP FUNCTION IF EXISTS
+					public.oldstyle_length(integer, text);	-- last in 9.6";
 		psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
 	fi
 
