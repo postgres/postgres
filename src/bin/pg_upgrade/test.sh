@@ -178,6 +178,8 @@ if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 		fix_sql="$fix_sql
 				 DROP FUNCTION IF EXISTS
 					public.oldstyle_length(integer, text);	-- last in 9.6
+				 DROP FUNCTION IF EXISTS
+					public.putenv(text);	-- last in v13
 				 DROP OPERATOR IF EXISTS	-- last in v13
 					public.#@# (pg_catalog.int8, NONE),
 					public.#%# (pg_catalog.int8, NONE),
