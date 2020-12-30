@@ -29,4 +29,6 @@ extern int	GetIntoRelEFlags(IntoClause *intoClause);
 
 extern DestReceiver *CreateIntoRelDestReceiver(IntoClause *intoClause);
 
+extern bool CreateTableAsRelExists(CreateTableAsStmt *ctas);
+
 #endif							/* CREATEAS_H */

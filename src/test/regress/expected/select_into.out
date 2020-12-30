@@ -178,3 +178,45 @@ INSERT INTO b SELECT 1 INTO f;
 ERROR:  SELECT ... INTO is not allowed here
 LINE 1: INSERT INTO b SELECT 1 INTO f;
                                     ^
+-- Test CREATE TABLE AS ... IF NOT EXISTS
+CREATE TABLE ctas_ine_tbl AS SELECT 1;
+CREATE TABLE ctas_ine_tbl AS SELECT 1 / 0; -- error
+ERROR:  relation "ctas_ine_tbl" already exists
+CREATE TABLE IF NOT EXISTS ctas_ine_tbl AS SELECT 1 / 0; -- ok
+NOTICE:  relation "ctas_ine_tbl" already exists, skipping
+CREATE TABLE ctas_ine_tbl AS SELECT 1 / 0 WITH NO DATA; -- error
+ERROR:  relation "ctas_ine_tbl" already exists
+CREATE TABLE IF NOT EXISTS ctas_ine_tbl AS SELECT 1 / 0 WITH NO DATA; -- ok
+NOTICE:  relation "ctas_ine_tbl" already exists, skipping
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE ctas_ine_tbl AS SELECT 1 / 0; -- error
+ERROR:  relation "ctas_ine_tbl" already exists
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE IF NOT EXISTS ctas_ine_tbl AS SELECT 1 / 0; -- ok
+NOTICE:  relation "ctas_ine_tbl" already exists, skipping
+ QUERY PLAN 
+------------
+(0 rows)
+
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE ctas_ine_tbl AS SELECT 1 / 0 WITH NO DATA; -- error
+ERROR:  relation "ctas_ine_tbl" already exists
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE IF NOT EXISTS ctas_ine_tbl AS SELECT 1 / 0 WITH NO DATA; -- ok
+NOTICE:  relation "ctas_ine_tbl" already exists, skipping
+ QUERY PLAN 
+------------
+(0 rows)
+
+PREPARE ctas_ine_query AS SELECT 1 / 0;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE ctas_ine_tbl AS EXECUTE ctas_ine_query; -- error
+ERROR:  relation "ctas_ine_tbl" already exists
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE TABLE IF NOT EXISTS ctas_ine_tbl AS EXECUTE ctas_ine_query; -- ok
+NOTICE:  relation "ctas_ine_tbl" already exists, skipping
+ QUERY PLAN 
+------------
+(0 rows)
+
+DROP TABLE ctas_ine_tbl;

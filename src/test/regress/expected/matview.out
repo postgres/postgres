@@ -630,3 +630,41 @@ drop cascades to materialized view matview_schema.mv_withdata2
 drop cascades to materialized view matview_schema.mv_nodata1
 drop cascades to materialized view matview_schema.mv_nodata2
 DROP USER regress_matview_user;
+-- CREATE MATERIALIZED VIEW ... IF NOT EXISTS
+CREATE MATERIALIZED VIEW matview_ine_tab AS SELECT 1;
+CREATE MATERIALIZED VIEW matview_ine_tab AS SELECT 1 / 0; -- error
+ERROR:  relation "matview_ine_tab" already exists
+CREATE MATERIALIZED VIEW IF NOT EXISTS matview_ine_tab AS
+  SELECT 1 / 0; -- ok
+NOTICE:  relation "matview_ine_tab" already exists, skipping
+CREATE MATERIALIZED VIEW matview_ine_tab AS
+  SELECT 1 / 0 WITH NO DATA; -- error
+ERROR:  relation "matview_ine_tab" already exists
+CREATE MATERIALIZED VIEW IF NOT EXISTS matview_ine_tab AS
+  SELECT 1 / 0 WITH NO DATA; -- ok
+NOTICE:  relation "matview_ine_tab" already exists, skipping
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE MATERIALIZED VIEW matview_ine_tab AS
+    SELECT 1 / 0; -- error
+ERROR:  relation "matview_ine_tab" already exists
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE MATERIALIZED VIEW IF NOT EXISTS matview_ine_tab AS
+    SELECT 1 / 0; -- ok
+NOTICE:  relation "matview_ine_tab" already exists, skipping
+ QUERY PLAN 
+------------
+(0 rows)
+
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE MATERIALIZED VIEW matview_ine_tab AS
+    SELECT 1 / 0 WITH NO DATA; -- error
+ERROR:  relation "matview_ine_tab" already exists
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+  CREATE MATERIALIZED VIEW IF NOT EXISTS matview_ine_tab AS
+    SELECT 1 / 0 WITH NO DATA; -- ok
+NOTICE:  relation "matview_ine_tab" already exists, skipping
+ QUERY PLAN 
+------------
+(0 rows)
+
+DROP MATERIALIZED VIEW matview_ine_tab;

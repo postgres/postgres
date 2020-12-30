@@ -239,21 +239,9 @@ ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
 
-	if (stmt->if_not_exists)
-	{
-		Oid			nspid;
-
-		nspid = RangeVarGetCreationNamespace(stmt->into->rel);
-
-		if (get_relname_relid(stmt->into->rel->relname, nspid))
-		{
-			ereport(NOTICE,
-					(errcode(ERRCODE_DUPLICATE_TABLE),
-					 errmsg("relation \"%s\" already exists, skipping",
-							stmt->into->rel->relname)));
-			return InvalidObjectAddress;
-		}
-	}
+	/* Check if the relation exists or not */
+	if (CreateTableAsRelExists(stmt))
+		return InvalidObjectAddress;
 
 	/*
 	 * Create the tuple receiver object and insert info it will need
@@ -398,6 +386,41 @@ GetIntoRelEFlags(IntoClause *intoClause)
 		flags |= EXEC_FLAG_WITH_NO_DATA;
 
 	return flags;
+}
+
+/*
+ * CreateTableAsRelExists --- check existence of relation for CreateTableAsStmt
+ *
+ * Utility wrapper checking if the relation pending for creation in this
+ * CreateTableAsStmt query already exists or not.  Returns true if the
+ * relation exists, otherwise false.
+ */
+bool
+CreateTableAsRelExists(CreateTableAsStmt *ctas)
+{
+	Oid			nspid;
+	IntoClause *into = ctas->into;
+
+	nspid = RangeVarGetCreationNamespace(into->rel);
+
+	if (get_relname_relid(into->rel->relname, nspid))
+	{
+		if (!ctas->if_not_exists)
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_TABLE),
+					 errmsg("relation \"%s\" already exists",
+							into->rel->relname)));
+
+		/* The relation exists and IF NOT EXISTS has been specified */
+		ereport(NOTICE,
+				(errcode(ERRCODE_DUPLICATE_TABLE),
+				 errmsg("relation \"%s\" already exists, skipping",
+						into->rel->relname)));
+		return true;
+	}
+
+	/* Relation does not exist, it can be created */
+	return false;
 }
 
 /*

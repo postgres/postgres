@@ -435,6 +435,22 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		CreateTableAsStmt *ctas = (CreateTableAsStmt *) utilityStmt;
 		List	   *rewritten;
 
+		/*
+		 * Check if the relation exists or not.  This is done at this stage to
+		 * avoid query planning or execution.
+		 */
+		if (CreateTableAsRelExists(ctas))
+		{
+			if (ctas->objtype == OBJECT_TABLE)
+				ExplainDummyGroup("CREATE TABLE AS", NULL, es);
+			else if (ctas->objtype == OBJECT_MATVIEW)
+				ExplainDummyGroup("CREATE MATERIALIZED VIEW", NULL, es);
+			else
+				elog(ERROR,	"unexpected object type: %d",
+					 (int) ctas->objtype);
+			return;
+		}
+
 		rewritten = QueryRewrite(castNode(Query, copyObject(ctas->query)));
 		Assert(list_length(rewritten) == 1);
 		ExplainOneQuery(linitial_node(Query, rewritten),
