@@ -4995,8 +4995,8 @@ SELECT * FROM pg_attribute
     <table id="datatype-pseudotypes-table">
      <title>Pseudo-Types</title>
      <tgroup cols="2">
-      <colspec colname="col1" colwidth="1*"/>
-      <colspec colname="col2" colwidth="2*"/>
+      <colspec colname="col1" colwidth="2*"/>
+      <colspec colname="col2" colwidth="3*"/>
       <thead>
        <row>
         <entry>Name</entry>

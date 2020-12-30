@@ -54,6 +54,9 @@
   <table id="gist-builtin-opclasses-table">
    <title>Built-in <acronym>GiST</acronym> Operator Classes</title>
    <tgroup cols="3">
+     <colspec colname="col1" colwidth="2*"/>
+     <colspec colname="col2" colwidth="3*"/>
+     <colspec colname="col3" colwidth="2*"/>
     <thead>
      <row>
       <entry>Name</entry>
@@ -64,145 +67,145 @@
     <tbody>
      <row>
       <entry valign="middle" morerows="13"><literal>box_ops</literal></entry>
-      <entry><literal>&lt;&lt; (box,box)</literal></entry>
-      <entry valign="middle" morerows="13"><literal>&lt;-&gt; (box,point)</literal></entry>
+      <entry><literal>&lt;&lt; (box, box)</literal></entry>
+      <entry valign="middle" morerows="13"><literal>&lt;-&gt; (box, point)</literal></entry>
      </row>
-     <row><entry><literal>&amp;&lt; (box,box)</literal></entry></row>
-     <row><entry><literal>&amp;&amp; (box,box)</literal></entry></row>
-     <row><entry><literal>&amp;&gt; (box,box)</literal></entry></row>
-     <row><entry><literal>&gt;&gt; (box,box)</literal></entry></row>
-     <row><entry><literal>~= (box,box)</literal></entry></row>
-     <row><entry><literal>@&gt; (box,box)</literal></entry></row>
-     <row><entry><literal>&lt;@ (box,box)</literal></entry></row>
-     <row><entry><literal>&amp;&lt;| (box,box)</literal></entry></row>
-     <row><entry><literal>&lt;&lt;| (box,box)</literal></entry></row>
-     <row><entry><literal>|&gt;&gt; (box,box)</literal></entry></row>
-     <row><entry><literal>|&amp;&gt; (box,box)</literal></entry></row>
-     <row><entry><literal>~ (box,box)</literal></entry></row>
-     <row><entry><literal>@ (box,box)</literal></entry></row>
+     <row><entry><literal>&amp;&lt; (box, box)</literal></entry></row>
+     <row><entry><literal>&amp;&amp; (box, box)</literal></entry></row>
+     <row><entry><literal>&amp;&gt; (box, box)</literal></entry></row>
+     <row><entry><literal>&gt;&gt; (box, box)</literal></entry></row>
+     <row><entry><literal>~= (box, box)</literal></entry></row>
+     <row><entry><literal>@&gt; (box, box)</literal></entry></row>
+     <row><entry><literal>&lt;@ (box, box)</literal></entry></row>
+     <row><entry><literal>&amp;&lt;| (box, box)</literal></entry></row>
+     <row><entry><literal>&lt;&lt;| (box, box)</literal></entry></row>
+     <row><entry><literal>|&gt;&gt; (box, box)</literal></entry></row>
+     <row><entry><literal>|&amp;&gt; (box, box)</literal></entry></row>
+     <row><entry><literal>~ (box, box)</literal></entry></row>
+     <row><entry><literal>@ (box, box)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="13"><literal>circle_ops</literal></entry>
-      <entry><literal>&lt;&lt; (circle,circle)</literal></entry>
-      <entry valign="middle" morerows="13"><literal>&lt;-&gt; (circle,point)</literal></entry>
+      <entry><literal>&lt;&lt; (circle, circle)</literal></entry>
+      <entry valign="middle" morerows="13"><literal>&lt;-&gt; (circle, point)</literal></entry>
      </row>
-     <row><entry><literal>&amp;&lt; (circle,circle)</literal></entry></row>
-     <row><entry><literal>&amp;&gt; (circle,circle)</literal></entry></row>
-     <row><entry><literal>&gt;&gt; (circle,circle)</literal></entry></row>
-     <row><entry><literal>&lt;@ (circle,circle)</literal></entry></row>
-     <row><entry><literal>@&gt; (circle,circle)</literal></entry></row>
-     <row><entry><literal>~= (circle,circle)</literal></entry></row>
-     <row><entry><literal>&amp;&amp; (circle,circle)</literal></entry></row>
-     <row><entry><literal>|&gt;&gt; (circle,circle)</literal></entry></row>
-     <row><entry><literal>&lt;&lt;| (circle,circle)</literal></entry></row>
-     <row><entry><literal>&amp;&lt;| (circle,circle)</literal></entry></row>
-     <row><entry><literal>|&amp;&gt; (circle,circle)</literal></entry></row>
-     <row><entry><literal>@ (circle,circle)</literal></entry></row>
-     <row><entry><literal>~ (circle,circle)</literal></entry></row>
+     <row><entry><literal>&amp;&lt; (circle, circle)</literal></entry></row>
+     <row><entry><literal>&amp;&gt; (circle, circle)</literal></entry></row>
+     <row><entry><literal>&gt;&gt; (circle, circle)</literal></entry></row>
+     <row><entry><literal>&lt;@ (circle, circle)</literal></entry></row>
+     <row><entry><literal>@&gt; (circle, circle)</literal></entry></row>
+     <row><entry><literal>~= (circle, circle)</literal></entry></row>
+     <row><entry><literal>&amp;&amp; (circle, circle)</literal></entry></row>
+     <row><entry><literal>|&gt;&gt; (circle, circle)</literal></entry></row>
+     <row><entry><literal>&lt;&lt;| (circle, circle)</literal></entry></row>
+     <row><entry><literal>&amp;&lt;| (circle, circle)</literal></entry></row>
+     <row><entry><literal>|&amp;&gt; (circle, circle)</literal></entry></row>
+     <row><entry><literal>@ (circle, circle)</literal></entry></row>
+     <row><entry><literal>~ (circle, circle)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="10"><literal>inet_ops</literal></entry>
-      <entry><literal>&lt;&lt; (inet,inet)</literal></entry>
+      <entry><literal>&lt;&lt; (inet, inet)</literal></entry>
       <entry valign="middle" morerows="10"></entry>
      </row>
-     <row><entry><literal>&lt;&lt;= (inet,inet)</literal></entry></row>
-     <row><entry><literal>&gt;&gt; (inet,inet)</literal></entry></row>
-     <row><entry><literal>&gt;&gt;= (inet,inet)</literal></entry></row>
-     <row><entry><literal>= (inet,inet)</literal></entry></row>
-     <row><entry><literal>&lt;&gt; (inet,inet)</literal></entry></row>
-     <row><entry><literal>&lt; (inet,inet)</literal></entry></row>
-     <row><entry><literal>&lt;= (inet,inet)</literal></entry></row>
-     <row><entry><literal>&gt; (inet,inet)</literal></entry></row>
-     <row><entry><literal>&gt;= (inet,inet)</literal></entry></row>
-     <row><entry><literal>&amp;&amp; (inet,inet)</literal></entry></row>
+     <row><entry><literal>&lt;&lt;= (inet, inet)</literal></entry></row>
+     <row><entry><literal>&gt;&gt; (inet, inet)</literal></entry></row>
+     <row><entry><literal>&gt;&gt;= (inet, inet)</literal></entry></row>
+     <row><entry><literal>= (inet, inet)</literal></entry></row>
+     <row><entry><literal>&lt;&gt; (inet, inet)</literal></entry></row>
+     <row><entry><literal>&lt; (inet, inet)</literal></entry></row>
+     <row><entry><literal>&lt;= (inet, inet)</literal></entry></row>
+     <row><entry><literal>&gt; (inet, inet)</literal></entry></row>
+     <row><entry><literal>&gt;= (inet, inet)</literal></entry></row>
+     <row><entry><literal>&amp;&amp; (inet, inet)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="17"><literal>multirange_ops</literal></entry>
-      <entry><literal>= (anymultirange,anymultirange)</literal></entry>
+      <entry><literal>= (anymultirange, anymultirange)</literal></entry>
       <entry valign="middle" morerows="17"></entry>
      </row>
-     <row><entry><literal>&amp;&amp; (anymultirange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&amp;&amp; (anymultirange,anyrange)</literal></entry></row>
-     <row><entry><literal>@&gt; (anymultirange,anyelement)</literal></entry></row>
-     <row><entry><literal>@&gt; (anymultirange,anymultirange)</literal></entry></row>
-     <row><entry><literal>@&gt; (anymultirange,anyrange)</literal></entry></row>
-     <row><entry><literal>&lt;@ (anymultirange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&lt;@ (anymultirange,anyrange)</literal></entry></row>
-     <row><entry><literal>&lt;&lt; (anymultirange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&lt;&lt; (anymultirange,anyrange)</literal></entry></row>
-     <row><entry><literal>&gt;&gt; (anymultirange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&gt;&gt; (anymultirange,anyrange)</literal></entry></row>
-     <row><entry><literal>&amp;&lt; (anymultirange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&amp;&lt; (anymultirange,anyrange)</literal></entry></row>
-     <row><entry><literal>&amp;&gt; (anymultirange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&amp;&gt; (anymultirange,anyrange)</literal></entry></row>
-     <row><entry><literal>-|- (anymultirange,anymultirange)</literal></entry></row>
-     <row><entry><literal>-|- (anymultirange,anyrange)</literal></entry></row>
+     <row><entry><literal>&amp;&amp; (anymultirange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&amp;&amp; (anymultirange, anyrange)</literal></entry></row>
+     <row><entry><literal>@&gt; (anymultirange, anyelement)</literal></entry></row>
+     <row><entry><literal>@&gt; (anymultirange, anymultirange)</literal></entry></row>
+     <row><entry><literal>@&gt; (anymultirange, anyrange)</literal></entry></row>
+     <row><entry><literal>&lt;@ (anymultirange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&lt;@ (anymultirange, anyrange)</literal></entry></row>
+     <row><entry><literal>&lt;&lt; (anymultirange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&lt;&lt; (anymultirange, anyrange)</literal></entry></row>
+     <row><entry><literal>&gt;&gt; (anymultirange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&gt;&gt; (anymultirange, anyrange)</literal></entry></row>
+     <row><entry><literal>&amp;&lt; (anymultirange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&amp;&lt; (anymultirange, anyrange)</literal></entry></row>
+     <row><entry><literal>&amp;&gt; (anymultirange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&amp;&gt; (anymultirange, anyrange)</literal></entry></row>
+     <row><entry><literal>-|- (anymultirange, anymultirange)</literal></entry></row>
+     <row><entry><literal>-|- (anymultirange, anyrange)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="7"><literal>point_ops</literal></entry>
-      <entry><literal>|&gt;&gt; (point,point)</literal></entry>
-      <entry valign="middle" morerows="7"><literal>&lt;-&gt; (point,point)</literal></entry>
+      <entry><literal>|&gt;&gt; (point, point)</literal></entry>
+      <entry valign="middle" morerows="7"><literal>&lt;-&gt; (point, point)</literal></entry>
      </row>
-     <row><entry><literal>&lt;&lt; (point,point)</literal></entry></row>
-     <row><entry><literal>&gt;&gt; (point,point)</literal></entry></row>
-     <row><entry><literal>&lt;&lt;| (point,point)</literal></entry></row>
-     <row><entry><literal>~= (point,point)</literal></entry></row>
-     <row><entry><literal>&lt;@ (point,box)</literal></entry></row>
-     <row><entry><literal>&lt;@ (point,polygon)</literal></entry></row>
-     <row><entry><literal>&lt;@ (point,circle)</literal></entry></row>
+     <row><entry><literal>&lt;&lt; (point, point)</literal></entry></row>
+     <row><entry><literal>&gt;&gt; (point, point)</literal></entry></row>
+     <row><entry><literal>&lt;&lt;| (point, point)</literal></entry></row>
+     <row><entry><literal>~= (point, point)</literal></entry></row>
+     <row><entry><literal>&lt;@ (point, box)</literal></entry></row>
+     <row><entry><literal>&lt;@ (point, polygon)</literal></entry></row>
+     <row><entry><literal>&lt;@ (point, circle)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="13"><literal>poly_ops</literal></entry>
-      <entry><literal>&lt;&lt; (polygon,polygon)</literal></entry>
-      <entry valign="middle" morerows="13"><literal>&lt;-&gt; (polygon,point)</literal></entry>
+      <entry><literal>&lt;&lt; (polygon, polygon)</literal></entry>
+      <entry valign="middle" morerows="13"><literal>&lt;-&gt; (polygon, point)</literal></entry>
      </row>
-     <row><entry><literal>&amp;&lt; (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>&amp;&gt; (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>&gt;&gt; (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>&lt;@ (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>@&gt; (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>~= (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>&amp;&amp; (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>&lt;&lt;| (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>&amp;&lt;| (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>|&amp;&gt; (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>|&gt;&gt; (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>@ (polygon,polygon)</literal></entry></row>
-     <row><entry><literal>~ (polygon,polygon)</literal></entry></row>
+     <row><entry><literal>&amp;&lt; (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>&amp;&gt; (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>&gt;&gt; (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>&lt;@ (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>@&gt; (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>~= (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>&amp;&amp; (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>&lt;&lt;| (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>&amp;&lt;| (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>|&amp;&gt; (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>|&gt;&gt; (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>@ (polygon, polygon)</literal></entry></row>
+     <row><entry><literal>~ (polygon, polygon)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="17"><literal>range_ops</literal></entry>
-      <entry><literal>= (anyrange,anyrange)</literal></entry>
+      <entry><literal>= (anyrange, anyrange)</literal></entry>
       <entry valign="middle" morerows="17"></entry>
      </row>
-     <row><entry><literal>&amp;&amp; (anyrange,anyrange)</literal></entry></row>
-     <row><entry><literal>&amp;&amp; (anyrange,anymultirange)</literal></entry></row>
-     <row><entry><literal>@&gt; (anyrange,anyelement)</literal></entry></row>
-     <row><entry><literal>@&gt; (anyrange,anyrange)</literal></entry></row>
-     <row><entry><literal>@&gt; (anyrange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&lt;@ (anyrange,anyrange)</literal></entry></row>
-     <row><entry><literal>&lt;@ (anyrange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&lt;&lt; (anyrange,anyrange)</literal></entry></row>
-     <row><entry><literal>&lt;&lt; (anyrange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&gt;&gt; (anyrange,anyrange)</literal></entry></row>
-     <row><entry><literal>&gt;&gt; (anyrange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&amp;&lt; (anyrange,anyrange)</literal></entry></row>
-     <row><entry><literal>&amp;&lt; (anyrange,anymultirange)</literal></entry></row>
-     <row><entry><literal>&amp;&gt; (anyrange,anyrange)</literal></entry></row>
-     <row><entry><literal>&amp;&gt; (anyrange,anymultirange)</literal></entry></row>
-     <row><entry><literal>-|- (anyrange,anyrange)</literal></entry></row>
-     <row><entry><literal>-|- (anyrange,anymultirange)</literal></entry></row>
+     <row><entry><literal>&amp;&amp; (anyrange, anyrange)</literal></entry></row>
+     <row><entry><literal>&amp;&amp; (anyrange, anymultirange)</literal></entry></row>
+     <row><entry><literal>@&gt; (anyrange, anyelement)</literal></entry></row>
+     <row><entry><literal>@&gt; (anyrange, anyrange)</literal></entry></row>
+     <row><entry><literal>@&gt; (anyrange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&lt;@ (anyrange, anyrange)</literal></entry></row>
+     <row><entry><literal>&lt;@ (anyrange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&lt;&lt; (anyrange, anyrange)</literal></entry></row>
+     <row><entry><literal>&lt;&lt; (anyrange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&gt;&gt; (anyrange, anyrange)</literal></entry></row>
+     <row><entry><literal>&gt;&gt; (anyrange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&amp;&lt; (anyrange, anyrange)</literal></entry></row>
+     <row><entry><literal>&amp;&lt; (anyrange, anymultirange)</literal></entry></row>
+     <row><entry><literal>&amp;&gt; (anyrange, anyrange)</literal></entry></row>
+     <row><entry><literal>&amp;&gt; (anyrange, anymultirange)</literal></entry></row>
+     <row><entry><literal>-|- (anyrange, anyrange)</literal></entry></row>
+     <row><entry><literal>-|- (anyrange, anymultirange)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="1"><literal>tsquery_ops</literal></entry>
-      <entry><literal>&lt;@ (tsquery,tsquery)</literal></entry>
+      <entry><literal>&lt;@ (tsquery, tsquery)</literal></entry>
       <entry valign="middle" morerows="1"></entry>
      </row>
-     <row><entry><literal>@&gt; (tsquery,tsquery)</literal></entry></row>
+     <row><entry><literal>@&gt; (tsquery, tsquery)</literal></entry></row>
      <row>
       <entry valign="middle"><literal>tsvector_ops</literal></entry>
-      <entry><literal>@@ (tsvector,tsquery)</literal></entry>
+      <entry><literal>@@ (tsvector, tsquery)</literal></entry>
       <entry></entry>
      </row>
     </tbody>
