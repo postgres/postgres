@@ -216,6 +216,12 @@ insert into test_range_gist select int4range(NULL,g*10,'(]') from generate_serie
 insert into test_range_gist select int4range(g*10,NULL,'(]') from generate_series(1,100) g;
 insert into test_range_gist select int4range(g, g+10) from generate_series(1,2000) g;
 
+-- test statistics and selectivity estimation as well
+--
+-- We don't check the accuracy of selectivity estimation, but at least check
+-- it doesn't fall.
+analyze test_range_gist;
+
 -- first, verify non-indexed results
 SET enable_seqscan    = t;
 SET enable_indexscan  = f;

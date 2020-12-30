@@ -649,6 +649,7 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 
 		case OID_MULTIRANGE_RANGE_CONTAINED_OP:
 		case OID_MULTIRANGE_MULTIRANGE_CONTAINED_OP:
+		case OID_RANGE_MULTIRANGE_CONTAINED_OP:
 			if (const_lower.infinite)
 			{
 				/*

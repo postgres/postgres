@@ -423,6 +423,12 @@ insert into test_multirange_gist select int4multirange(int4range(NULL, g*10, '(]
 insert into test_multirange_gist select int4multirange(int4range(g*10, g*20, '(]'), int4range(g*20, NULL, '(]')) from generate_series(1,100) g;
 create index test_mulrirange_gist_idx on test_multirange_gist using gist (mr);
 
+-- test statistics and selectivity estimation as well
+--
+-- We don't check the accuracy of selectivity estimation, but at least check
+-- it doesn't fall.
+analyze test_multirange_gist;
+
 -- first, verify non-indexed results
 SET enable_seqscan    = t;
 SET enable_indexscan  = f;
