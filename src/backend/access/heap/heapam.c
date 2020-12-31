@@ -7075,10 +7075,10 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 			xid_horizon_prefetch_buffer(rel, &prefetch_state, 1);
 #endif
 
+			LockBuffer(buf, BUFFER_LOCK_SHARE);
+
 			page = BufferGetPage(buf);
 			maxoff = PageGetMaxOffsetNumber(page);
-
-			LockBuffer(buf, BUFFER_LOCK_SHARE);
 		}
 
 		/*
