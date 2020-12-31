@@ -305,13 +305,15 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 	VirtualTransactionId *backends;
 
 	/*
-	 * If we get passed InvalidTransactionId then we are a little surprised,
-	 * but it is theoretically possible in normal running. It also happens
-	 * when replaying already applied WAL records after a standby crash or
-	 * restart, or when replaying an XLOG_HEAP2_VISIBLE record that marks as
-	 * frozen a page which was already all-visible.  If latestRemovedXid is
-	 * invalid then there is no conflict. That rule applies across all record
-	 * types that suffer from this conflict.
+	 * If we get passed InvalidTransactionId then we do nothing (no conflict).
+	 *
+	 * This can happen when replaying already-applied WAL records after a
+	 * standby crash or restart, or when replaying an XLOG_HEAP2_VISIBLE
+	 * record that marks as frozen a page which was already all-visible.  It's
+	 * also quite common with records generated during index deletion
+	 * (original execution of the deletion can reason that a recovery conflict
+	 * which is sufficient for the deletion operation must take place before
+	 * replay of the deletion record itself).
 	 */
 	if (!TransactionIdIsValid(latestRemovedXid))
 		return;

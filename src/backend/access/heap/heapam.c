@@ -6997,10 +6997,13 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 									ItemPointerData *tids,
 									int nitems)
 {
+	/* Initial assumption is that earlier pruning took care of conflict */
 	TransactionId latestRemovedXid = InvalidTransactionId;
-	BlockNumber hblkno;
+	BlockNumber blkno = InvalidBlockNumber;
 	Buffer		buf = InvalidBuffer;
-	Page		hpage;
+	Page		page = NULL;
+	OffsetNumber maxoff = InvalidOffsetNumber;
+	TransactionId priorXmax;
 #ifdef USE_PREFETCH
 	XidHorizonPrefetchState prefetch_state;
 	int			prefetch_distance;
@@ -7040,20 +7043,17 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 #endif
 
 	/* Iterate over all tids, and check their horizon */
-	hblkno = InvalidBlockNumber;
-	hpage = NULL;
 	for (int i = 0; i < nitems; i++)
 	{
 		ItemPointer htid = &tids[i];
-		ItemId		hitemid;
-		OffsetNumber hoffnum;
+		OffsetNumber offnum;
 
 		/*
 		 * Read heap buffer, but avoid refetching if it's the same block as
 		 * required for the last tid.
 		 */
-		if (hblkno == InvalidBlockNumber ||
-			ItemPointerGetBlockNumber(htid) != hblkno)
+		if (blkno == InvalidBlockNumber ||
+			ItemPointerGetBlockNumber(htid) != blkno)
 		{
 			/* release old buffer */
 			if (BufferIsValid(buf))
@@ -7062,9 +7062,9 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 				ReleaseBuffer(buf);
 			}
 
-			hblkno = ItemPointerGetBlockNumber(htid);
+			blkno = ItemPointerGetBlockNumber(htid);
 
-			buf = ReadBuffer(rel, hblkno);
+			buf = ReadBuffer(rel, blkno);
 
 #ifdef USE_PREFETCH
 
@@ -7075,49 +7075,79 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 			xid_horizon_prefetch_buffer(rel, &prefetch_state, 1);
 #endif
 
-			hpage = BufferGetPage(buf);
+			page = BufferGetPage(buf);
+			maxoff = PageGetMaxOffsetNumber(page);
 
 			LockBuffer(buf, BUFFER_LOCK_SHARE);
 		}
 
-		hoffnum = ItemPointerGetOffsetNumber(htid);
-		hitemid = PageGetItemId(hpage, hoffnum);
-
 		/*
-		 * Follow any redirections until we find something useful.
+		 * Maintain latestRemovedXid value for deletion operation as a whole
+		 * by advancing current value using heap tuple headers.  This is
+		 * loosely based on the logic for pruning a HOT chain.
 		 */
-		while (ItemIdIsRedirected(hitemid))
+		offnum = ItemPointerGetOffsetNumber(htid);
+		priorXmax = InvalidTransactionId;	/* cannot check first XMIN */
+		for (;;)
 		{
-			hoffnum = ItemIdGetRedirect(hitemid);
-			hitemid = PageGetItemId(hpage, hoffnum);
-		}
+			ItemId		lp;
+			HeapTupleHeader htup;
 
-		/*
-		 * If the heap item has storage, then read the header and use that to
-		 * set latestRemovedXid.
-		 *
-		 * Some LP_DEAD items may not be accessible, so we ignore them.
-		 */
-		if (ItemIdHasStorage(hitemid))
-		{
-			HeapTupleHeader htuphdr;
+			/* Some sanity checks */
+			if (offnum < FirstOffsetNumber || offnum > maxoff)
+			{
+				Assert(false);
+				break;
+			}
 
-			htuphdr = (HeapTupleHeader) PageGetItem(hpage, hitemid);
+			lp = PageGetItemId(page, offnum);
+			if (ItemIdIsRedirected(lp))
+			{
+				offnum = ItemIdGetRedirect(lp);
+				continue;
+			}
 
-			HeapTupleHeaderAdvanceLatestRemovedXid(htuphdr, &latestRemovedXid);
-		}
-		else if (ItemIdIsDead(hitemid))
-		{
 			/*
-			 * Conjecture: if hitemid is dead then it had xids before the xids
-			 * marked on LP_NORMAL items. So we just ignore this item and move
-			 * onto the next, for the purposes of calculating
-			 * latestRemovedXid.
+			 * We'll often encounter LP_DEAD line pointers.  No need to do
+			 * anything more with htid when that happens.  This is okay
+			 * because the earlier pruning operation that made the line
+			 * pointer LP_DEAD in the first place must have considered the
+			 * tuple header as part of generating its own latestRemovedXid
+			 * value.
+			 *
+			 * Relying on XLOG_HEAP2_CLEANUP_INFO records like this is the
+			 * same strategy that index vacuuming uses in all cases.  Index
+			 * VACUUM WAL records don't even have a latestRemovedXid field of
+			 * their own for this reason.
 			 */
-		}
-		else
-			Assert(!ItemIdIsUsed(hitemid));
+			if (!ItemIdIsNormal(lp))
+				break;
 
+			htup = (HeapTupleHeader) PageGetItem(page, lp);
+
+			/*
+			 * Check the tuple XMIN against prior XMAX, if any
+			 */
+			if (TransactionIdIsValid(priorXmax) &&
+				!TransactionIdEquals(HeapTupleHeaderGetXmin(htup), priorXmax))
+				break;
+
+			HeapTupleHeaderAdvanceLatestRemovedXid(htup, &latestRemovedXid);
+
+			/*
+			 * If the tuple is not HOT-updated, then we are at the end of this
+			 * HOT-chain.  No need to visit later tuples from the same update
+			 * chain (they get their own index entries) -- just move on to
+			 * next htid from index AM caller.
+			 */
+			if (!HeapTupleHeaderIsHotUpdated(htup))
+				break;
+
+			/* Advance to next HOT chain member */
+			Assert(ItemPointerGetBlockNumber(&htup->t_ctid) == blkno);
+			offnum = ItemPointerGetOffsetNumber(&htup->t_ctid);
+			priorXmax = HeapTupleHeaderGetUpdateXid(htup);
+		}
 	}
 
 	if (BufferIsValid(buf))
@@ -7125,14 +7155,6 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buf);
 	}
-
-	/*
-	 * If all heap tuples were LP_DEAD then we will be returning
-	 * InvalidTransactionId here, which avoids conflicts. This matches
-	 * existing logic which assumes that LP_DEAD tuples must already be older
-	 * than the latestRemovedXid on the cleanup record that set them as
-	 * LP_DEAD, hence must already have generated a conflict.
-	 */
 
 	return latestRemovedXid;
 }
