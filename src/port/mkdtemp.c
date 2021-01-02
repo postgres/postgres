@@ -3,7 +3,7 @@
  * mkdtemp.c
  *	  create a mode-0700 temporary directory
  *
- * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

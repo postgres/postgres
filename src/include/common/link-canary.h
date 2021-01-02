@@ -3,7 +3,7 @@
  * link-canary.h
  *	  Detect whether src/common functions came from frontend or backend.
  *
- * Copyright (c) 2018-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2018-2021, PostgreSQL Global Development Group
  *
  * src/include/common/link-canary.h
  *

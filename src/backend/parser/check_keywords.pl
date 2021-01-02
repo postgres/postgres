@@ -4,7 +4,7 @@
 # Usage: check_keywords.pl gram.y kwlist.h
 
 # src/backend/parser/check_keywords.pl
-# Copyright (c) 2009-2020, PostgreSQL Global Development Group
+# Copyright (c) 2009-2021, PostgreSQL Global Development Group
 
 use strict;
 use warnings;

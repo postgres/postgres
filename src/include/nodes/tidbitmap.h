@@ -13,7 +13,7 @@
  * fact that a particular page needs to be visited.
  *
  *
- * Copyright (c) 2003-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2021, PostgreSQL Global Development Group
  *
  * src/include/nodes/tidbitmap.h
  *

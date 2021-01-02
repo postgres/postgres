@@ -4,7 +4,7 @@
  *	  implementation of Value nodes
  *
  *
- * Copyright (c) 2003-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2021, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

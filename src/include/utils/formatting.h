@@ -4,7 +4,7 @@
  * src/include/utils/formatting.h
  *
  *
- *	 Portions Copyright (c) 1999-2020, PostgreSQL Global Development Group
+ *	 Portions Copyright (c) 1999-2021, PostgreSQL Global Development Group
  *
  *	 The PostgreSQL routines for a DateTime/int/float/numeric formatting,
  *	 inspired by the Oracle TO_CHAR() / TO_DATE() / TO_NUMBER() routines.

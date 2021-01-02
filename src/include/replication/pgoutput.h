@@ -3,7 +3,7 @@
  * pgoutput.h
  *		Logical Replication output plugin
  *
- * Copyright (c) 2015-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2021, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		pgoutput.h

@@ -5,7 +5,7 @@
  * NOTE! The caller must ensure that only one method is instantiated in
  *		 any given program, and that it's only instantiated once!
  *
- * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/walmethods.c

@@ -3,7 +3,7 @@
  * xid8.h
  *	  Header file for the "xid8" ADT.
  *
- * Copyright (c) 2020, PostgreSQL Global Development Group
+ * Copyright (c) 2020-2021, PostgreSQL Global Development Group
  *
  * src/include/utils/xid8.h
  *

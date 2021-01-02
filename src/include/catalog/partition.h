@@ -4,7 +4,7 @@
  *		Header file for structures and utility functions related to
  *		partitioning
  *
- * Copyright (c) 2007-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2021, PostgreSQL Global Development Group
  *
  * src/include/catalog/partition.h
  *

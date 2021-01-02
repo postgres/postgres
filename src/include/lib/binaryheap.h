@@ -3,7 +3,7 @@
  *
  * A simple binary heap implementation
  *
- * Portions Copyright (c) 2012-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2021, PostgreSQL Global Development Group
  *
  * src/include/lib/binaryheap.h
  */

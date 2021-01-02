@@ -5,7 +5,7 @@
  *	  in a page which can be different when the WAL is generated
  *	  and when the WAL is applied.
  *
- * Portions Copyright (c) 2016-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2021, PostgreSQL Global Development Group
  *
  * Contains common routines required for masking a page.
  *

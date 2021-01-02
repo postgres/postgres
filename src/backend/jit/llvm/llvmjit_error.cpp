@@ -6,7 +6,7 @@
  * Unfortunately neither (re)setting the C++ new handler, nor the LLVM OOM
  * handler are exposed to C. Therefore this file wraps the necessary code.
  *
- * Copyright (c) 2016-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2021, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/jit/llvm/llvmjit_error.cpp

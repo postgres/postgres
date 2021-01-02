@@ -3,7 +3,7 @@
  * logicalworker.h
  *	  Exports for logical replication workers.
  *
- * Portions Copyright (c) 2016-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2021, PostgreSQL Global Development Group
  *
  * src/include/replication/logicalworker.h
  *

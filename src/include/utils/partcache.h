@@ -2,7 +2,7 @@
  *
  * partcache.h
  *
- * Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2021, PostgreSQL Global Development Group
  *
  * src/include/utils/partcache.h
  *

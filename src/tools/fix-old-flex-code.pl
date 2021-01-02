@@ -8,7 +8,7 @@
 # let's suppress it by inserting a dummy reference to the variable.
 # (That's exactly what 2.5.36 and later do ...)
 #
-# Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/tools/fix-old-flex-code.pl

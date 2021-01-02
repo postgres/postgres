@@ -4,7 +4,7 @@
  *
  * Routines to handle DML permission checks
  *
- * Copyright (c) 2010-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2021, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */

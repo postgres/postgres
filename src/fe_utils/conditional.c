@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * A stack of automaton states to handle nested conditionals.
  *
- * Copyright (c) 2000-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2021, PostgreSQL Global Development Group
  *
  * src/fe_utils/conditional.c
  *

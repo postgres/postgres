@@ -2,7 +2,7 @@
  * message.h
  *	   Exports from replication/logical/message.c
  *
- * Copyright (c) 2013-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2021, PostgreSQL Global Development Group
  *
  * src/include/replication/message.h
  *-------------------------------------------------------------------------

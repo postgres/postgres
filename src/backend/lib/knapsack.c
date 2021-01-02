@@ -15,7 +15,7 @@
  * allows approximate solutions in polynomial time (the general case of the
  * exact problem is NP-hard).
  *
- * Copyright (c) 2017-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2021, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/lib/knapsack.c

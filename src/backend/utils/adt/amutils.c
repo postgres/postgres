@@ -3,7 +3,7 @@
  * amutils.c
  *	  SQL-level APIs related to index access methods.
  *
- * Copyright (c) 2016-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2021, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

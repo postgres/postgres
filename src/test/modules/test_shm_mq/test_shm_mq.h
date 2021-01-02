@@ -3,7 +3,7 @@
  * test_shm_mq.h
  *		Definitions for shared memory message queues
  *
- * Copyright (c) 2013-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2021, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_shm_mq/test_shm_mq.h

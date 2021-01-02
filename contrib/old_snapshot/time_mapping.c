@@ -3,7 +3,7 @@
  * time_mapping.c
  *	  time to XID mapping information
  *
- * Copyright (c) 2020, PostgreSQL Global Development Group
+ * Copyright (c) 2020-2021, PostgreSQL Global Development Group
  *
  *	  contrib/old_snapshot/time_mapping.c
  *-------------------------------------------------------------------------

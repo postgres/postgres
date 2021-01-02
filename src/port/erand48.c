@@ -14,7 +14,7 @@
  * erand48() is strangely coded to be almost-but-not-quite thread-safe,
  * which doesn't matter for the backend but is important for pgbench.
  *
- * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  *
  * Portions Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.

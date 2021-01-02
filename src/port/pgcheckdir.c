@@ -5,7 +5,7 @@
  * A simple subroutine to check whether a directory exists and is empty or not.
  * Useful in both initdb and the backend.
  *
- * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------

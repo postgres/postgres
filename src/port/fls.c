@@ -3,7 +3,7 @@
  * fls.c
  *	  finds the last (most significant) bit that is set
  *
- * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

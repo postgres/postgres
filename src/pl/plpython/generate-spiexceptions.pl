@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Generate the spiexceptions.h header from errcodes.txt
-# Copyright (c) 2000-2020, PostgreSQL Global Development Group
+# Copyright (c) 2000-2021, PostgreSQL Global Development Group
 
 use strict;
 use warnings;

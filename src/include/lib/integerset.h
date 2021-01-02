@@ -2,7 +2,7 @@
  * integerset.h
  *	  In-memory data structure to hold a large set of integers efficiently
  *
- * Portions Copyright (c) 2012-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2021, PostgreSQL Global Development Group
  *
  * src/include/lib/integerset.h
  */

@@ -4,7 +4,7 @@
 # characters, using Unicode data files as input.  Pass UnicodeData.txt
 # as argument.  The output is on stdout.
 #
-# Copyright (c) 2019, PostgreSQL Global Development Group
+# Copyright (c) 2019-2021, PostgreSQL Global Development Group
 
 use strict;
 use warnings;

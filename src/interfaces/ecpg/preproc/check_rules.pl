@@ -3,7 +3,7 @@
 # test parser generator for ecpg
 # call with backend grammar as stdin
 #
-# Copyright (c) 2009-2020, PostgreSQL Global Development Group
+# Copyright (c) 2009-2021, PostgreSQL Global Development Group
 #
 # Written by Michael Meskes <meskes@postgresql.org>
 #            Andy Colson <andy@squeakycode.net>

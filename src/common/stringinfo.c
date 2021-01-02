@@ -7,7 +7,7 @@
  * (null-terminated text) or arbitrary binary data.  All storage is allocated
  * with palloc() (falling back to malloc in frontend code).
  *
- * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	  src/common/stringinfo.c

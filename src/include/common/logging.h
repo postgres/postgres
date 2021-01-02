@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * Logging framework for frontend programs
  *
- * Copyright (c) 2018-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2018-2021, PostgreSQL Global Development Group
  *
  * src/include/common/logging.h
  *

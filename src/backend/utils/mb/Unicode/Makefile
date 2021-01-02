@@ -2,7 +2,7 @@
 #
 # Makefile for src/backend/utils/mb/Unicode
 #
-# Copyright (c) 2001-2020, PostgreSQL Global Development Group
+# Copyright (c) 2001-2021, PostgreSQL Global Development Group
 #
 # src/backend/utils/mb/Unicode/Makefile
 #

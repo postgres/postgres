@@ -2,7 +2,7 @@
  * controldata_utils.h
  *		Common code for pg_controldata output
  *
- *	Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ *	Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/include/common/controldata_utils.h

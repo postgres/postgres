@@ -6,7 +6,7 @@
  * Generation is a custom MemoryContext implementation designed for cases of
  * chunks with similar lifespan.
  *
- * Portions Copyright (c) 2017-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2017-2021, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/mmgr/generation.c

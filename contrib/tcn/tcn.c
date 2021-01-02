@@ -3,7 +3,7 @@
  * tcn.c
  *	  triggered change notification support for PostgreSQL
  *
- * Portions Copyright (c) 2011-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2011-2021, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

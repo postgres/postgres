@@ -5,7 +5,7 @@
  *
  * This is a fairly simple bitmap.
  *
- * Copyright (c) 2013-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2021, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

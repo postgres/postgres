@@ -15,7 +15,7 @@
  * users.  The txid_XXX variants should eventually be dropped.
  *
  *
- *	Copyright (c) 2003-2020, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2021, PostgreSQL Global Development Group
  *	Author: Jan Wieck, Afilias USA INC.
  *	64-bit txids: Marko Kreen, Skype Technologies
  *

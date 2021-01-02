@@ -8,7 +8,7 @@
  *
  * See src/tools/testint128.c for a simple test harness for this file.
  *
- * Copyright (c) 2017-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2021, PostgreSQL Global Development Group
  *
  * src/include/common/int128.h
  *

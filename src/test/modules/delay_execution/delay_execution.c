@@ -10,7 +10,7 @@
  * test behaviors where some specified action happens in another backend
  * between parsing and execution of any desired query.
  *
- * Copyright (c) 2020, PostgreSQL Global Development Group
+ * Copyright (c) 2020-2021, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/test/modules/delay_execution/delay_execution.c

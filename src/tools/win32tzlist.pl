@@ -2,7 +2,7 @@
 #
 # win32tzlist.pl -- compare Windows timezone information
 #
-# Copyright (c) 2008-2020, PostgreSQL Global Development Group
+# Copyright (c) 2008-2021, PostgreSQL Global Development Group
 #
 # src/tools/win32tzlist.pl
 #################################################################

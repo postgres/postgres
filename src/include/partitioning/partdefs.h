@@ -3,7 +3,7 @@
  * partdefs.h
  *		Base definitions for partitioned table handling
  *
- * Copyright (c) 2007-2020, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2021, PostgreSQL Global Development Group
  *
  * src/include/partitioning/partdefs.h
  *
