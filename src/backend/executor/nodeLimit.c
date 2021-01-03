@@ -154,7 +154,8 @@ ExecLimit(PlanState *pstate)
 				if (!node->noCount &&
 					node->position - node->offset >= node->count)
 				{
-					if (node->limitOption == LIMIT_OPTION_COUNT)
+					if (node->limitOption == LIMIT_OPTION_COUNT ||
+						node->limitOption == LIMIT_OPTION_DEFAULT)
 					{
 						node->lstate = LIMIT_WINDOWEND;
 						return NULL;
