@@ -277,6 +277,9 @@ xehexesc		[\\]x[0-9A-Fa-f]{1,2}
 xeunicode		[\\](u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})
 xeunicodefail	[\\](u[0-9A-Fa-f]{0,3}|U[0-9A-Fa-f]{0,7})
 
+/* Normalized escaped string */
+xe_normalized  [eE]\?
+
 /* Extended quote
  * xqdouble implements embedded quote, ''''
  */
@@ -343,8 +346,9 @@ xcinside		[^*/]+
 digit			[0-9]
 ident_start		[A-Za-z\200-\377_]
 ident_cont		[A-Za-z\200-\377_0-9\$]
+ident_end     [\?]
 
-identifier		{ident_start}{ident_cont}*
+identifier		{ident_start}{ident_cont}*{ident_end}*
 
 /* Assorted special-case operators and operator-like tokens */
 typecast		"::"
@@ -375,7 +379,7 @@ not_equals		"!="
  * If you change either set, adjust the character lists appearing in the
  * rule for "operator"!
  */
-self			[,()\[\].;\:\+\-\*\/\%\^\<\>\=]
+self			[,()\[\].;\:\+\-\*\/\%\^\<\>\=\?]
 op_chars		[\~\!\@\#\^\&\|\`\?\+\-\*\/\%\<\>\=]
 operator		{op_chars}+
 
@@ -811,6 +815,11 @@ other			.
 					return IDENT;
 				}
 
+{xe_normalized} {
+					/* ignore E */
+					return yytext[1];
+				}
+
 {typecast}		{
 					SET_YYLLOC();
 					return TYPECAST;
@@ -917,6 +926,26 @@ other			.
 						}
 					}
 
+					/* We don't accept leading ? in any multi-character operators
+					 * except for those in use by hstore, JSON and geometric operators.
+					 *
+					 * We don't accept contained or trailing ? in any
+					 * multi-character operators, except for those in use by JSON operators.
+					 *
+					 * This is necessary in order to support normalized queries without
+					 * spacing between ? as a substition character and a simple operator (e.g. "?=?")
+					 */
+					if (yytext[0] == '?' &&
+					  strcmp(yytext, "?|") != 0 && strcmp(yytext, "?&") != 0 &&
+					  strcmp(yytext, "?#") != 0 && strcmp(yytext, "?-") != 0 &&
+					  strcmp(yytext, "?-|") != 0 && strcmp(yytext, "?||") != 0)
+						nchars = 1;
+
+					if (yytext[0] != '?' && strchr(yytext, '?') &&
+					  strcmp(yytext, "@?") != 0)
+						/* Lex up to just before the ? character */
+						nchars = strchr(yytext, '?') - yytext;
+
 					SET_YYLLOC();
 
 					if (nchars < yyleng)
@@ -930,7 +959,7 @@ other			.
 						 * that the "self" rule would have.
 						 */
 						if (nchars == 1 &&
-							strchr(",()[].;:+-*/%^<>=", yytext[0]))
+							strchr(",()[].;:+-*/%^<>=?", yytext[0]))
 							return yytext[0];
 						/*
 						 * Likewise, if what we have left is two chars, and
@@ -1012,14 +1041,19 @@ other			.
 {identifier}	{
 					int			kwnum;
 					char	   *ident;
+					char *keyword_text = pstrdup(yytext);
 
 					SET_YYLLOC();
 
 					/* Is it a keyword? */
-					kwnum = ScanKeywordLookup(yytext,
+					if (yytext[yyleng - 1] == '?')
+					  keyword_text[yyleng - 1] = '\0';
+					kwnum = ScanKeywordLookup(keyword_text,
 											  yyextra->keywordlist);
 					if (kwnum >= 0)
 					{
+						if (keyword_text[yyleng - 1] == '\0')
+						  yyless(yyleng - 1);
 						yylval->keyword = GetScanKeyword(kwnum,
 														 yyextra->keywordlist);
 						return yyextra->keyword_tokens[kwnum];

@@ -164,6 +164,7 @@ static Node *makeAConst(Value *v, int location);
 static Node *makeBoolAConst(bool state, int location);
 static Node *makeParamRef(int number, int location);
 static Node *makeParamRefCast(int number, int location, TypeName *typename);
+static Node *makeInterval_or_AExprOp(Node *lexpr, Node *rexpr, int location);
 static RoleSpec *makeRoleSpec(RoleSpecType type, int location);
 static void check_qualified_name(List *names, core_yyscan_t yyscanner);
 static List *check_func_name(List *names, core_yyscan_t yyscanner);
@@ -745,6 +746,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %nonassoc	'<' '>' '=' LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 %nonassoc	BETWEEN IN_P LIKE ILIKE SIMILAR NOT_LA
 %nonassoc	ESCAPE			/* ESCAPE must be just above LIKE/ILIKE/SIMILAR */
+%left		'?'
 %left		POSTFIXOP		/* dummy for postfix Op rules */
 /*
  * To support target_el without AS, we must give IDENT an explicit priority
@@ -1033,6 +1035,11 @@ AlterOptRoleElem:
 					$$ = makeDefElem("password",
 						(Node *)makeParamRef($2, @2), @1);
 				}
+			| PASSWORD '?'
+				{
+					$$ = makeDefElem("password",
+						(Node *)makeParamRef(0, @2), @1);
+				}
 			| PASSWORD NULL_P
 				{
 					$$ = makeDefElem("password", NULL, @1);
@@ -1056,6 +1063,16 @@ AlterOptRoleElem:
 					 */
 					$$ = makeDefElem("password",
 									 (Node *)makeParamRef($3, @3), @1);
+				}
+			| ENCRYPTED PASSWORD '?'
+				{
+					/*
+					 * These days, passwords are always stored in encrypted
+					 * form, so there is no difference between PASSWORD and
+					 * ENCRYPTED PASSWORD.
+					 */
+					$$ = makeDefElem("password",
+									 (Node *)makeParamRef(0, @3), @1);
 				}
 			| UNENCRYPTED PASSWORD Sconst
 				{
@@ -1552,6 +1569,14 @@ set_rest_more:	/* Generic SET syntaxes: */
 					n->args = list_make1(makeParamRef($2, @2));
 					$$ = n;
 				}
+			| SCHEMA '?'
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->kind = VAR_SET_VALUE;
+					n->name = "search_path";
+					n->args = list_make1(makeParamRef(0, @2));
+					$$ = n;
+				}
 			| NAMES opt_encoding
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -1579,6 +1604,14 @@ set_rest_more:	/* Generic SET syntaxes: */
 					n->args = list_make1(makeParamRef($2, @2));
 					$$ = n;
 				}
+			| ROLE '?'
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->kind = VAR_SET_VALUE;
+					n->name = "role";
+					n->args = list_make1(makeParamRef(0, @2));
+					$$ = n;
+				}
 			| SESSION AUTHORIZATION NonReservedWord_or_Sconst
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -1593,6 +1626,14 @@ set_rest_more:	/* Generic SET syntaxes: */
 					n->kind = VAR_SET_VALUE;
 					n->name = "session_authorization";
 					n->args = list_make1(makeParamRef($3, @3));
+					$$ = n;
+				}
+			| SESSION AUTHORIZATION '?'
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->kind = VAR_SET_VALUE;
+					n->name = "session_authorization";
+					n->args = list_make1(makeParamRef(0, @3));
 					$$ = n;
 				}
 			| SESSION AUTHORIZATION DEFAULT
@@ -1636,6 +1677,8 @@ var_value:	opt_boolean_or_string
 				{ $$ = makeAConst($1, @1); }
 			| PARAM
 				{ $$ = makeParamRef($1, @1); }
+			| '?'
+				{ $$ = makeParamRef(0, @1); }
 		;
 
 iso_level:	READ UNCOMMITTED						{ $$ = "read uncommitted"; }
@@ -1672,6 +1715,10 @@ zone_value:
 			| PARAM
 				{
 					$$ = makeParamRef($1, @1);
+				}
+			| '?'
+				{
+					$$ = makeParamRef(0, @1);
 				}
 			| IDENT
 				{
@@ -13276,6 +13323,11 @@ a_expr:		c_expr									{ $$ = $1; }
 			| a_expr qual_Op					%prec POSTFIXOP
 				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, NULL, @2); }
 
+			| a_expr '?' a_expr
+				{ $$ = makeInterval_or_AExprOp($1, $3, @2); }
+			| a_expr '?'
+				{ $$ = makeInterval_or_AExprOp($1, NULL, @2); }
+
 			| a_expr AND a_expr
 				{ $$ = makeAndExpr($1, $3, @2); }
 			| a_expr OR a_expr
@@ -13684,6 +13736,10 @@ b_expr:		c_expr
 				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $3, @2); }
 			| b_expr NOT_EQUALS b_expr
 				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "<>", $1, $3, @2); }
+			| b_expr '?' b_expr
+				{ $$ = makeInterval_or_AExprOp($1, $3, @2); }
+			| b_expr '?'
+				{ $$ = makeInterval_or_AExprOp($1, NULL, @2); }
 			| b_expr qual_Op b_expr				%prec Op
 				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, $3, @2); }
 			| qual_Op b_expr					%prec Op
@@ -13733,6 +13789,21 @@ c_expr:		columnref								{ $$ = $1; }
 				{
 					ParamRef *p = makeNode(ParamRef);
 					p->number = $1;
+					p->location = @1;
+					if ($2)
+					{
+						A_Indirection *n = makeNode(A_Indirection);
+						n->arg = (Node *) p;
+						n->indirection = check_indirection($2, yyscanner);
+						$$ = (Node *) n;
+					}
+					else
+						$$ = (Node *) p;
+				}
+			| '?' opt_indirection
+				{
+					ParamRef *p = makeNode(ParamRef);
+					p->number = 0;
 					p->location = @1;
 					if ($2)
 					{
@@ -14585,6 +14656,7 @@ MathOp:		 '+'									{ $$ = "+"; }
 			| LESS_EQUALS							{ $$ = "<="; }
 			| GREATER_EQUALS						{ $$ = ">="; }
 			| NOT_EQUALS							{ $$ = "<>"; }
+			| '?'									{ $$ = "?"; }
 		;
 
 qual_Op:	Op
@@ -14699,6 +14771,10 @@ extract_list:
 			| PARAM FROM a_expr
 				{
 					$$ = list_make2(makeParamRef($1, @1), $3);
+				}
+			| '?' FROM a_expr
+				{
+					$$ = list_make2(makeParamRef(0, @1), $3);
 				}
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
@@ -15208,7 +15284,7 @@ AexprConst: Iconst
 				{
 					TypeName *t = $1;
 					t->typmods = $3;
-					$$ = makeParamRefCast($2, @3, t);
+					$$ = makeParamRefCast($2, @2, t);
 				}
 			| ConstInterval '(' Iconst ')' PARAM
 				{
@@ -15216,6 +15292,14 @@ AexprConst: Iconst
 					t->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
 											makeIntConst($3, @3));
 					$$ = makeParamRefCast($5, @5, t);
+				}
+			/* Version without () is handled in a_expr/b_expr logic due to ? mis-parsing as operator */
+			| ConstInterval '(' Iconst ')' '?'
+				{
+					TypeName *t = $1;
+					t->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
+											makeIntConst($3, @3));
+					$$ = makeParamRefCast(0, @5, t);
 				}
 			| TRUE_P
 				{
@@ -16087,6 +16171,33 @@ makeParamRefCast(int number, int location, TypeName *typename)
 {
 	Node *p = makeParamRef(number, location);
 	return makeTypeCast(p, typename, -1);
+}
+
+/*
+ * Makes INTERVAL-like nodes for "INTERVAL ?" and "INTERVAL ? opt_interval", otherwise treat as A_EXPR
+ */
+static Node *
+makeInterval_or_AExprOp(Node *lexpr, Node *rexpr, int location)
+{
+	if (lexpr && IsA(lexpr, ColumnRef))
+	{
+		ColumnRef *c = (ColumnRef *) lexpr;
+		if (strcmp(strVal(linitial(c->fields)), "interval") == 0 )
+		{
+			TypeName *t = SystemTypeName("interval");
+			t->location = c->location;
+
+			/* Its too difficult to tell the parser to give us the right typemod,
+			 * just use a dummy one if present
+			 */
+			if (rexpr)
+				t->typmods = list_make1(makeIntConst(0, -1));
+
+			return makeParamRefCast(0, location, t);
+		}
+	}
+
+	return (Node *) makeA_Expr(AEXPR_OP, list_make1(makeString("?")), lexpr, rexpr, location);
 }
 
 /* makeRoleSpec
