@@ -517,6 +517,7 @@ other			.
 					{
 						/* If NCHAR isn't a keyword, just return "n" */
 						yylval->str = pstrdup("n");
+						yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
 						return IDENT;
 					}
 				}
@@ -585,9 +586,11 @@ other			.
 					{
 						case xb:
 							yylval->str = litbufdup(yyscanner);
+							yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
 							return BCONST;
 						case xh:
 							yylval->str = litbufdup(yyscanner);
+							yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
 							return XCONST;
 						case xq:
 						case xe:
@@ -600,9 +603,11 @@ other			.
 											   yyextra->literallen,
 											   false);
 							yylval->str = litbufdup(yyscanner);
+							yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
 							return SCONST;
 						case xus:
 							yylval->str = litbufdup(yyscanner);
+							yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
 							return USCONST;
 						default:
 							yyerror("unhandled previous state in xqs");
@@ -740,6 +745,7 @@ other			.
 						yyextra->dolqstart = NULL;
 						BEGIN(INITIAL);
 						yylval->str = litbufdup(yyscanner);
+						yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
 						return SCONST;
 					}
 					else
@@ -785,6 +791,7 @@ other			.
 					if (yyextra->literallen >= NAMEDATALEN)
 						truncate_identifier(ident, yyextra->literallen, true);
 					yylval->str = ident;
+					yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
 					return IDENT;
 				}
 <xui>{dquote}	{
@@ -793,6 +800,7 @@ other			.
 						yyerror("zero-length delimited identifier");
 					/* can't truncate till after we de-escape the ident */
 					yylval->str = litbufdup(yyscanner);
+					yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
 					return UIDENT;
 				}
 <xd,xui>{xddouble}	{
@@ -812,6 +820,7 @@ other			.
 					/* and treat it as {identifier} */
 					ident = downcase_truncate_identifier(yytext, yyleng, true);
 					yylval->str = ident;
+					yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
 					return IDENT;
 				}
 
@@ -1065,6 +1074,7 @@ other			.
 					 */
 					ident = downcase_truncate_identifier(yytext, yyleng, true);
 					yylval->str = ident;
+					yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
 					return IDENT;
 				}
 
