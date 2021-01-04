@@ -508,6 +508,7 @@ SPI_execute(const char *src, bool read_only, long tcount)
 
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
 	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
 
 	_SPI_prepare_oneshot_plan(src, &plan);
@@ -681,6 +682,7 @@ SPI_execute_with_args(const char *src,
 
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
 	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
 	plan.nargs = nargs;
 	plan.argtypes = argtypes;
@@ -726,6 +728,7 @@ SPI_execute_with_receiver(const char *src,
 
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
 	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
 	if (params)
 	{
@@ -768,11 +771,48 @@ SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
 
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
 	plan.cursor_options = cursorOptions;
 	plan.nargs = nargs;
 	plan.argtypes = argtypes;
 	plan.parserSetup = NULL;
 	plan.parserSetupArg = NULL;
+
+	_SPI_prepare_plan(src, &plan);
+
+	/* copy plan to procedure context */
+	result = _SPI_make_plan_non_temp(&plan);
+
+	_SPI_end_call(true);
+
+	return result;
+}
+
+SPIPlanPtr
+SPI_prepare_extended(const char *src,
+					 const SPIPrepareOptions *options)
+{
+	_SPI_plan	plan;
+	SPIPlanPtr	result;
+
+	if (src == NULL || options == NULL)
+	{
+		SPI_result = SPI_ERROR_ARGUMENT;
+		return NULL;
+	}
+
+	SPI_result = _SPI_begin_call(true);
+	if (SPI_result < 0)
+		return NULL;
+
+	memset(&plan, 0, sizeof(_SPI_plan));
+	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = options->parseMode;
+	plan.cursor_options = options->cursorOptions;
+	plan.nargs = 0;
+	plan.argtypes = NULL;
+	plan.parserSetup = options->parserSetup;
+	plan.parserSetupArg = options->parserSetupArg;
 
 	_SPI_prepare_plan(src, &plan);
 
@@ -805,6 +845,7 @@ SPI_prepare_params(const char *src,
 
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
 	plan.cursor_options = cursorOptions;
 	plan.nargs = 0;
 	plan.argtypes = NULL;
@@ -1340,6 +1381,7 @@ SPI_cursor_open_with_args(const char *name,
 
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
 	plan.cursor_options = cursorOptions;
 	plan.nargs = nargs;
 	plan.argtypes = argtypes;
@@ -1400,6 +1442,7 @@ SPI_cursor_parse_open_with_paramlist(const char *name,
 
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
 	plan.cursor_options = cursorOptions;
 	if (params)
 	{
@@ -2036,7 +2079,8 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
  * Parse and analyze a querystring.
  *
  * At entry, plan->argtypes and plan->nargs (or alternatively plan->parserSetup
- * and plan->parserSetupArg) must be valid, as must plan->cursor_options.
+ * and plan->parserSetupArg) must be valid, as must plan->parse_mode and
+ * plan->cursor_options.
  *
  * Results are stored into *plan (specifically, plan->plancache_list).
  * Note that the result data is all in CurrentMemoryContext or child contexts
@@ -2063,7 +2107,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 	/*
 	 * Parse the request string into a list of raw parse trees.
 	 */
-	raw_parsetree_list = pg_parse_query(src);
+	raw_parsetree_list = raw_parser(src, plan->parse_mode);
 
 	/*
 	 * Do parse analysis and rule rewrite for each raw parsetree, storing the
@@ -2168,7 +2212,7 @@ _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan)
 	/*
 	 * Parse the request string into a list of raw parse trees.
 	 */
-	raw_parsetree_list = pg_parse_query(src);
+	raw_parsetree_list = raw_parser(src, plan->parse_mode);
 
 	/*
 	 * Construct plancache entries, but don't do parse analysis yet.
@@ -2866,6 +2910,7 @@ _SPI_make_plan_non_temp(SPIPlanPtr plan)
 	newplan = (SPIPlanPtr) palloc0(sizeof(_SPI_plan));
 	newplan->magic = _SPI_PLAN_MAGIC;
 	newplan->plancxt = plancxt;
+	newplan->parse_mode = plan->parse_mode;
 	newplan->cursor_options = plan->cursor_options;
 	newplan->nargs = plan->nargs;
 	if (plan->nargs > 0)
@@ -2930,6 +2975,7 @@ _SPI_save_plan(SPIPlanPtr plan)
 	newplan = (SPIPlanPtr) palloc0(sizeof(_SPI_plan));
 	newplan->magic = _SPI_PLAN_MAGIC;
 	newplan->plancxt = plancxt;
+	newplan->parse_mode = plan->parse_mode;
 	newplan->cursor_options = plan->cursor_options;
 	newplan->nargs = plan->nargs;
 	if (plan->nargs > 0)

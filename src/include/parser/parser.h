@@ -18,6 +18,24 @@
 #include "nodes/parsenodes.h"
 
 
+/*
+ * RawParseMode determines the form of the string that raw_parser() accepts:
+ *
+ * RAW_PARSE_DEFAULT: parse a semicolon-separated list of SQL commands,
+ * and return a List of RawStmt nodes.
+ *
+ * RAW_PARSE_TYPE_NAME: parse a type name, and return a one-element List
+ * containing a TypeName node.
+ *
+ * ... more to come ...
+ */
+typedef enum
+{
+	RAW_PARSE_DEFAULT = 0,
+	RAW_PARSE_TYPE_NAME
+} RawParseMode;
+
+/* Values for the backslash_quote GUC */
 typedef enum
 {
 	BACKSLASH_QUOTE_OFF,
@@ -32,7 +50,7 @@ extern PGDLLIMPORT bool standard_conforming_strings;
 
 
 /* Primary entry point for the raw parsing functions */
-extern List *raw_parser(const char *str);
+extern List *raw_parser(const char *str, RawParseMode mode);
 
 /* Utility functions exported by gram.y (perhaps these should be elsewhere) */
 extern List *SystemFuncName(char *name);

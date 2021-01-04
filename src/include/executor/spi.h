@@ -15,7 +15,7 @@
 
 #include "commands/trigger.h"
 #include "lib/ilist.h"
-#include "nodes/parsenodes.h"
+#include "parser/parser.h"
 #include "utils/portal.h"
 
 
@@ -32,6 +32,15 @@ typedef struct SPITupleTable
 	slist_node	next;			/* link for internal bookkeeping */
 	SubTransactionId subid;		/* subxact in which tuptable was created */
 } SPITupleTable;
+
+/* Optional arguments for SPI_prepare_extended */
+typedef struct SPIPrepareOptions
+{
+	ParserSetupHook parserSetup;
+	void	   *parserSetupArg;
+	RawParseMode parseMode;
+	int			cursorOptions;
+} SPIPrepareOptions;
 
 /* Plans are opaque structs for standard users of SPI */
 typedef struct _SPI_plan *SPIPlanPtr;
@@ -113,6 +122,8 @@ extern int	SPI_execute_with_receiver(const char *src,
 extern SPIPlanPtr SPI_prepare(const char *src, int nargs, Oid *argtypes);
 extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
 									 int cursorOptions);
+extern SPIPlanPtr SPI_prepare_extended(const char *src,
+									   const SPIPrepareOptions *options);
 extern SPIPlanPtr SPI_prepare_params(const char *src,
 									 ParserSetupHook parserSetup,
 									 void *parserSetupArg,

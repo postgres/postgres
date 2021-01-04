@@ -95,6 +95,7 @@ typedef struct _SPI_plan
 	bool		no_snapshots;	/* let the caller handle the snapshots */
 	List	   *plancache_list; /* one CachedPlanSource per parsetree */
 	MemoryContext plancxt;		/* Context containing _SPI_plan and data */
+	RawParseMode parse_mode;	/* raw_parser() mode */
 	int			cursor_options; /* Cursor options used for planning */
 	int			nargs;			/* number of plan arguments */
 	Oid		   *argtypes;		/* Argument types (NULL if nargs is 0) */

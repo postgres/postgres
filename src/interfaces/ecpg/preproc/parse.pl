@@ -63,7 +63,7 @@ my %replace_types = (
 	'opt_array_bounds' => '<index>',
 
 	# "ignore" means: do not create type and rules for this non-term-id
-	'stmtblock'          => 'ignore',
+	'parse_toplevel'     => 'ignore',
 	'stmtmulti'          => 'ignore',
 	'CreateAsStmt'       => 'ignore',
 	'DeallocateStmt'     => 'ignore',

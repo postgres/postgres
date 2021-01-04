@@ -1541,7 +1541,7 @@ select_common_typmod(ParseState *pstate, List *exprs, Oid common_type)
 
 	foreach(lc, exprs)
 	{
-		Node   *expr = (Node *) lfirst(lc);
+		Node	   *expr = (Node *) lfirst(lc);
 
 		/* Types must match */
 		if (exprType(expr) != common_type)
@@ -2380,7 +2380,8 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			if (!OidIsValid(elem_typeid))
 			{
 				/*
-				 * if we don't have an element type yet, use the one we just got
+				 * if we don't have an element type yet, use the one we just
+				 * got
 				 */
 				elem_typeid = range_typelem;
 			}

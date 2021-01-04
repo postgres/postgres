@@ -1105,6 +1105,11 @@ SPIPlanPtr SPI_prepare_cursor(const char * <parameter>command</parameter>, int <
    for the <structfield>options</structfield> field of <structname>DeclareCursorStmt</structname>.
    <function>SPI_prepare</function> always takes the cursor options as zero.
   </para>
+
+  <para>
+   This function is now deprecated in favor
+   of <function>SPI_prepare_extended</function>.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -1176,6 +1181,122 @@ SPIPlanPtr SPI_prepare_cursor(const char * <parameter>command</parameter>, int <
 
 <!-- *********************************************** -->
 
+<refentry id="spi-spi-prepare-extended">
+ <indexterm><primary>SPI_prepare_extended</primary></indexterm>
+
+ <refmeta>
+  <refentrytitle>SPI_prepare_extended</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_prepare_extended</refname>
+  <refpurpose>prepare a statement, without executing it yet</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+SPIPlanPtr SPI_prepare_extended(const char * <parameter>command</parameter>,
+                                const SPIPrepareOptions * <parameter>options</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_prepare_extended</function> creates and returns a prepared
+   statement for the specified command, but doesn't execute the command.
+   This function is equivalent to <function>SPI_prepare</function>,
+   with the addition that the caller can specify options to control
+   the parsing of external parameter references, as well as other facets
+   of query parsing and planning.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>const char * <parameter>command</parameter></literal></term>
+    <listitem>
+     <para>
+      command string
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>const SPIPrepareOptions * <parameter>options</parameter></literal></term>
+    <listitem>
+     <para>
+      struct containing optional arguments
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   Callers should always zero out the entire <parameter>options</parameter>
+   struct, then fill whichever fields they want to set.  This ensures forward
+   compatibility of code, since any fields that are added to the struct in
+   future will be defined to behave backwards-compatibly if they are zero.
+   The currently available <parameter>options</parameter> fields are:
+  </para>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>ParserSetupHook <parameter>parserSetup</parameter></literal></term>
+    <listitem>
+     <para>
+      Parser hook setup function
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>void * <parameter>parserSetupArg</parameter></literal></term>
+    <listitem>
+     <para>
+      pass-through argument for <parameter>parserSetup</parameter>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RawParseMode <parameter>parseMode</parameter></literal></term>
+    <listitem>
+     <para>
+      mode for raw parsing; <literal>RAW_PARSE_DEFAULT</literal> (zero)
+      produces default behavior
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>int <parameter>cursorOptions</parameter></literal></term>
+    <listitem>
+     <para>
+      integer bit mask of cursor options; zero produces default behavior
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   <function>SPI_prepare_extended</function> has the same return conventions as
+   <function>SPI_prepare</function>.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
 <refentry id="spi-spi-prepare-params">
  <indexterm><primary>SPI_prepare_params</primary></indexterm>
 
@@ -1207,6 +1328,11 @@ SPIPlanPtr SPI_prepare_params(const char * <parameter>command</parameter>,
    This function is equivalent to <function>SPI_prepare_cursor</function>,
    with the addition that the caller can specify parser hook functions
    to control the parsing of external parameter references.
+  </para>
+
+  <para>
+   This function is now deprecated in favor
+   of <function>SPI_prepare_extended</function>.
   </para>
  </refsect1>
 

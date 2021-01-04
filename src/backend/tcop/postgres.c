@@ -635,7 +635,7 @@ pg_parse_query(const char *query_string)
 	if (log_parser_stats)
 		ResetUsage();
 
-	raw_parsetree_list = raw_parser(query_string);
+	raw_parsetree_list = raw_parser(query_string, RAW_PARSE_DEFAULT);
 
 	if (log_parser_stats)
 		ShowUsage("PARSER STATISTICS");

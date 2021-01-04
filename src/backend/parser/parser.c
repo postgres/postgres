@@ -35,11 +35,11 @@ static char *str_udeescape(const char *str, char escape,
  * raw_parser
  *		Given a query in string form, do lexical and grammatical analysis.
  *
- * Returns a list of raw (un-analyzed) parse trees.  The immediate elements
- * of the list are always RawStmt nodes.
+ * Returns a list of raw (un-analyzed) parse trees.  The contents of the
+ * list have the form required by the specified RawParseMode.
  */
 List *
-raw_parser(const char *str)
+raw_parser(const char *str, RawParseMode mode)
 {
 	core_yyscan_t yyscanner;
 	base_yy_extra_type yyextra;
@@ -49,8 +49,22 @@ raw_parser(const char *str)
 	yyscanner = scanner_init(str, &yyextra.core_yy_extra,
 							 &ScanKeywords, ScanKeywordTokens);
 
-	/* base_yylex() only needs this much initialization */
-	yyextra.have_lookahead = false;
+	/* base_yylex() only needs us to initialize the lookahead token, if any */
+	if (mode == RAW_PARSE_DEFAULT)
+		yyextra.have_lookahead = false;
+	else
+	{
+		/* this array is indexed by RawParseMode enum */
+		static const int mode_token[] = {
+			0,					/* RAW_PARSE_DEFAULT */
+			MODE_TYPE_NAME		/* RAW_PARSE_TYPE_NAME */
+		};
+
+		yyextra.have_lookahead = true;
+		yyextra.lookahead_token = mode_token[mode];
+		yyextra.lookahead_yylloc = 0;
+		yyextra.lookahead_end = NULL;
+	}
 
 	/* initialize the bison parser */
 	parser_init(&yyextra);
@@ -104,7 +118,8 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		cur_token = yyextra->lookahead_token;
 		lvalp->core_yystype = yyextra->lookahead_yylval;
 		*llocp = yyextra->lookahead_yylloc;
-		*(yyextra->lookahead_end) = yyextra->lookahead_hold_char;
+		if (yyextra->lookahead_end)
+			*(yyextra->lookahead_end) = yyextra->lookahead_hold_char;
 		yyextra->have_lookahead = false;
 	}
 	else

@@ -12095,7 +12095,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 	 * parse_analyze() or the rewriter, but instead we need to pass them
 	 * through parse_utilcmd.c to make them ready for execution.
 	 */
-	raw_parsetree_list = raw_parser(cmd);
+	raw_parsetree_list = raw_parser(cmd, RAW_PARSE_DEFAULT);
 	querytree_list = NIL;
 	foreach(list_item, raw_parsetree_list)
 	{

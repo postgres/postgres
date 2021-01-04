@@ -4168,6 +4168,7 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 				  bool keepplan)
 {
 	SPIPlanPtr	plan;
+	SPIPrepareOptions options;
 
 	/*
 	 * The grammar can't conveniently set expr->func while building the parse
@@ -4178,12 +4179,14 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 	/*
 	 * Generate and save the plan
 	 */
-	plan = SPI_prepare_params(expr->query,
-							  (ParserSetupHook) plpgsql_parser_setup,
-							  (void *) expr,
-							  cursorOptions);
+	memset(&options, 0, sizeof(options));
+	options.parserSetup = (ParserSetupHook) plpgsql_parser_setup;
+	options.parserSetupArg = (void *) expr;
+	options.parseMode = RAW_PARSE_DEFAULT;
+	options.cursorOptions = cursorOptions;
+	plan = SPI_prepare_extended(expr->query, &options);
 	if (plan == NULL)
-		elog(ERROR, "SPI_prepare_params failed for \"%s\": %s",
+		elog(ERROR, "SPI_prepare_extended failed for \"%s\": %s",
 			 expr->query, SPI_result_code_string(SPI_result));
 	if (keepplan)
 		SPI_keepplan(plan);
