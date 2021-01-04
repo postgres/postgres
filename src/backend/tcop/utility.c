@@ -2313,6 +2313,10 @@ CreateCommandTag(Node *parsetree)
 			tag = CMDTAG_SELECT;
 			break;
 
+		case T_PLAssignStmt:
+			tag = CMDTAG_SELECT;
+			break;
+
 			/* utility statements --- same whether raw or cooked */
 		case T_TransactionStmt:
 			{
@@ -3179,6 +3183,10 @@ GetCommandLogLevel(Node *parsetree)
 				lev = LOGSTMT_DDL;	/* SELECT INTO */
 			else
 				lev = LOGSTMT_ALL;
+			break;
+
+		case T_PLAssignStmt:
+			lev = LOGSTMT_ALL;
 			break;
 
 			/* utility statements --- same whether raw or cooked */

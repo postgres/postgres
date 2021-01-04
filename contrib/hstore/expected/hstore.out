@@ -1583,6 +1583,10 @@ select f2 from test_json_agg;
  "d"=>NULL, "x"=>"xyzzy"
 (3 rows)
 
+-- Test subscripting in plpgsql
+do $$ declare h hstore;
+begin h['a'] := 'b'; raise notice 'h = %, h[a] = %', h, h['a']; end $$;
+NOTICE:  h = "a"=>"b", h[a] = b
 -- Check the hstore_hash() and hstore_hash_extended() function explicitly.
 SELECT v as value, hstore_hash(v)::bit(32) as standard,
        hstore_hash_extended(v, 0)::bit(32) as extended0,

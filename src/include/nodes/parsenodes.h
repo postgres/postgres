@@ -1675,6 +1675,25 @@ typedef struct SetOperationStmt
 } SetOperationStmt;
 
 
+/* ----------------------
+ *		PL/pgSQL Assignment Statement
+ *
+ * Like SelectStmt, this is transformed into a SELECT Query.
+ * However, the targetlist of the result looks more like an UPDATE.
+ * ----------------------
+ */
+typedef struct PLAssignStmt
+{
+	NodeTag		type;
+
+	char	   *name;			/* initial column name */
+	List	   *indirection;	/* subscripts and field names, if any */
+	int			nnames;			/* number of names to use in ColumnRef */
+	SelectStmt *val;			/* the PL/pgSQL expression to assign */
+	int			location;		/* name's token location, or -1 if unknown */
+} PLAssignStmt;
+
+
 /*****************************************************************************
  *		Other Statements (no optimizations required)
  *

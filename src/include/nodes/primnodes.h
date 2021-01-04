@@ -457,6 +457,7 @@ typedef enum CoercionContext
 {
 	COERCION_IMPLICIT,			/* coercion in context of expression */
 	COERCION_ASSIGNMENT,		/* coercion in context of assignment */
+	COERCION_PLPGSQL,			/* if no assignment cast, use CoerceViaIO */
 	COERCION_EXPLICIT			/* explicit cast operation */
 } CoercionContext;
 

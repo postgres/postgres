@@ -42,8 +42,10 @@
 #include "parser/parse_param.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
+#include "parser/parse_type.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/builtins.h"
 #include "utils/rel.h"
 
 
@@ -70,6 +72,8 @@ static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static List *transformReturningList(ParseState *pstate, List *returningList);
 static List *transformUpdateTargetList(ParseState *pstate,
 									   List *targetList);
+static Query *transformPLAssignStmt(ParseState *pstate,
+									PLAssignStmt *stmt);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
 										 DeclareCursorStmt *stmt);
 static Query *transformExplainStmt(ParseState *pstate,
@@ -304,6 +308,11 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			}
 			break;
 
+		case T_PLAssignStmt:
+			result = transformPLAssignStmt(pstate,
+										   (PLAssignStmt *) parseTree);
+			break;
+
 			/*
 			 * Special cases
 			 */
@@ -367,6 +376,7 @@ analyze_requires_snapshot(RawStmt *parseTree)
 		case T_DeleteStmt:
 		case T_UpdateStmt:
 		case T_SelectStmt:
+		case T_PLAssignStmt:
 			result = true;
 			break;
 
@@ -2390,6 +2400,236 @@ transformReturningList(ParseState *pstate, List *returningList)
 	pstate->p_next_resno = save_next_resno;
 
 	return rlist;
+}
+
+
+/*
+ * transformPLAssignStmt -
+ *	  transform a PL/pgSQL assignment statement
+ *
+ * If there is no opt_indirection, the transformed statement looks like
+ * "SELECT a_expr ...", except the expression has been cast to the type of
+ * the target.  With indirection, it's still a SELECT, but the expression will
+ * incorporate FieldStore and/or assignment SubscriptingRef nodes to compute a
+ * new value for a container-type variable represented by the target.  The
+ * expression references the target as the container source.
+ */
+static Query *
+transformPLAssignStmt(ParseState *pstate, PLAssignStmt *stmt)
+{
+	Query	   *qry = makeNode(Query);
+	ColumnRef  *cref = makeNode(ColumnRef);
+	List	   *indirection = stmt->indirection;
+	int			nnames = stmt->nnames;
+	SelectStmt *sstmt = stmt->val;
+	Node	   *target;
+	Oid			targettype;
+	int32		targettypmod;
+	Oid			targetcollation;
+	List	   *tlist;
+	TargetEntry *tle;
+	Oid			type_id;
+	Node	   *qual;
+	ListCell   *l;
+
+	/*
+	 * First, construct a ColumnRef for the target variable.  If the target
+	 * has more than one dotted name, we have to pull the extra names out of
+	 * the indirection list.
+	 */
+	cref->fields = list_make1(makeString(stmt->name));
+	cref->location = stmt->location;
+	if (nnames > 1)
+	{
+		/* avoid munging the raw parsetree */
+		indirection = list_copy(indirection);
+		while (--nnames > 0 && indirection != NIL)
+		{
+			Node	   *ind = (Node *) linitial(indirection);
+
+			if (!IsA(ind, String))
+				elog(ERROR, "invalid name count in PLAssignStmt");
+			cref->fields = lappend(cref->fields, ind);
+			indirection = list_delete_first(indirection);
+		}
+	}
+
+	/*
+	 * Transform the target reference.  Typically we will get back a Param
+	 * node, but there's no reason to be too picky about its type.
+	 */
+	target = transformExpr(pstate, (Node *) cref,
+						   EXPR_KIND_UPDATE_TARGET);
+	targettype = exprType(target);
+	targettypmod = exprTypmod(target);
+	targetcollation = exprCollation(target);
+
+	/*
+	 * The rest mostly matches transformSelectStmt, except that we needn't
+	 * consider WITH or DISTINCT, and we build a targetlist our own way.
+	 */
+	qry->commandType = CMD_SELECT;
+	pstate->p_is_insert = false;
+
+	/* make FOR UPDATE/FOR SHARE info available to addRangeTableEntry */
+	pstate->p_locking_clause = sstmt->lockingClause;
+
+	/* make WINDOW info available for window functions, too */
+	pstate->p_windowdefs = sstmt->windowClause;
+
+	/* process the FROM clause */
+	transformFromClause(pstate, sstmt->fromClause);
+
+	/* initially transform the targetlist as if in SELECT */
+	tlist = transformTargetList(pstate, sstmt->targetList,
+								EXPR_KIND_SELECT_TARGET);
+
+	/* we should have exactly one targetlist item */
+	if (list_length(tlist) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg_plural("assignment source returned %d column",
+							   "assignment source returned %d columns",
+							   list_length(tlist),
+							   list_length(tlist))));
+
+	tle = linitial_node(TargetEntry, tlist);
+
+	/*
+	 * This next bit is similar to transformAssignedExpr; the key difference
+	 * is we use COERCION_PLPGSQL not COERCION_ASSIGNMENT.
+	 */
+	type_id = exprType((Node *) tle->expr);
+
+	pstate->p_expr_kind = EXPR_KIND_UPDATE_TARGET;
+
+	if (indirection)
+	{
+		tle->expr = (Expr *)
+			transformAssignmentIndirection(pstate,
+										   target,
+										   stmt->name,
+										   false,
+										   targettype,
+										   targettypmod,
+										   targetcollation,
+										   indirection,
+										   list_head(indirection),
+										   (Node *) tle->expr,
+										   COERCION_PLPGSQL,
+										   exprLocation(target));
+	}
+	else if (targettype != type_id &&
+			 (targettype == RECORDOID || ISCOMPLEX(targettype)) &&
+			 (type_id == RECORDOID || ISCOMPLEX(type_id)))
+	{
+		/*
+		 * Hack: do not let coerce_to_target_type() deal with inconsistent
+		 * composite types.  Just pass the expression result through as-is,
+		 * and let the PL/pgSQL executor do the conversion its way.  This is
+		 * rather bogus, but it's needed for backwards compatibility.
+		 */
+	}
+	else
+	{
+		/*
+		 * For normal non-qualified target column, do type checking and
+		 * coercion.
+		 */
+		Node	   *orig_expr = (Node *) tle->expr;
+
+		tle->expr = (Expr *)
+			coerce_to_target_type(pstate,
+								  orig_expr, type_id,
+								  targettype, targettypmod,
+								  COERCION_PLPGSQL,
+								  COERCE_IMPLICIT_CAST,
+								  -1);
+		/* With COERCION_PLPGSQL, this error is probably unreachable */
+		if (tle->expr == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("variable \"%s\" is of type %s"
+							" but expression is of type %s",
+							stmt->name,
+							format_type_be(targettype),
+							format_type_be(type_id)),
+					 errhint("You will need to rewrite or cast the expression."),
+					 parser_errposition(pstate, exprLocation(orig_expr))));
+	}
+
+	pstate->p_expr_kind = EXPR_KIND_NONE;
+
+	qry->targetList = list_make1(tle);
+
+	/* transform WHERE */
+	qual = transformWhereClause(pstate, sstmt->whereClause,
+								EXPR_KIND_WHERE, "WHERE");
+
+	/* initial processing of HAVING clause is much like WHERE clause */
+	qry->havingQual = transformWhereClause(pstate, sstmt->havingClause,
+										   EXPR_KIND_HAVING, "HAVING");
+
+	/*
+	 * Transform sorting/grouping stuff.  Do ORDER BY first because both
+	 * transformGroupClause and transformDistinctClause need the results. Note
+	 * that these functions can also change the targetList, so it's passed to
+	 * them by reference.
+	 */
+	qry->sortClause = transformSortClause(pstate,
+										  sstmt->sortClause,
+										  &qry->targetList,
+										  EXPR_KIND_ORDER_BY,
+										  false /* allow SQL92 rules */ );
+
+	qry->groupClause = transformGroupClause(pstate,
+											sstmt->groupClause,
+											&qry->groupingSets,
+											&qry->targetList,
+											qry->sortClause,
+											EXPR_KIND_GROUP_BY,
+											false /* allow SQL92 rules */ );
+
+	/* No DISTINCT clause */
+	Assert(!sstmt->distinctClause);
+	qry->distinctClause = NIL;
+	qry->hasDistinctOn = false;
+
+	/* transform LIMIT */
+	qry->limitOffset = transformLimitClause(pstate, sstmt->limitOffset,
+											EXPR_KIND_OFFSET, "OFFSET",
+											sstmt->limitOption);
+	qry->limitCount = transformLimitClause(pstate, sstmt->limitCount,
+										   EXPR_KIND_LIMIT, "LIMIT",
+										   sstmt->limitOption);
+	qry->limitOption = sstmt->limitOption;
+
+	/* transform window clauses after we have seen all window functions */
+	qry->windowClause = transformWindowDefinitions(pstate,
+												   pstate->p_windowdefs,
+												   &qry->targetList);
+
+	qry->rtable = pstate->p_rtable;
+	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
+
+	qry->hasSubLinks = pstate->p_hasSubLinks;
+	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
+	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
+	qry->hasAggs = pstate->p_hasAggs;
+
+	foreach(l, sstmt->lockingClause)
+	{
+		transformLockingClause(pstate, qry,
+							   (LockingClause *) lfirst(l), false);
+	}
+
+	assign_query_collations(pstate, qry);
+
+	/* this must be done after collations, for reliable comparison of exprs */
+	if (pstate->p_hasAggs || qry->groupClause || qry->groupingSets || qry->havingQual)
+		parseCheckAggregates(pstate, qry);
+
+	return qry;
 }
 
 

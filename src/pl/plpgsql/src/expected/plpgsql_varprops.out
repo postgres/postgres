@@ -76,7 +76,7 @@ begin
   raise notice 'x = %', x;
 end$$;
 ERROR:  division by zero
-CONTEXT:  SQL statement "SELECT 1/0"
+CONTEXT:  SQL expression "1/0"
 PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
 do $$
 declare x bigint[] := array[1,3,5];

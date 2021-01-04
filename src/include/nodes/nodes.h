@@ -314,6 +314,7 @@ typedef enum NodeTag
 	T_DeleteStmt,
 	T_UpdateStmt,
 	T_SelectStmt,
+	T_PLAssignStmt,
 	T_AlterTableStmt,
 	T_AlterTableCmd,
 	T_AlterDomainStmt,

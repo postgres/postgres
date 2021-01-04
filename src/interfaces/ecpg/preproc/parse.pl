@@ -70,7 +70,11 @@ my %replace_types = (
 	'ColId'              => 'ignore',
 	'type_function_name' => 'ignore',
 	'ColLabel'           => 'ignore',
-	'Sconst'             => 'ignore',);
+	'Sconst'             => 'ignore',
+	'PLpgSQL_Expr'       => 'ignore',
+	'PLAssignStmt'       => 'ignore',
+	'plassign_target'    => 'ignore',
+	'plassign_equals'    => 'ignore',);
 
 # these replace_line commands excise certain keywords from the core keyword
 # lists.  Be sure to account for these in ColLabel and related productions.

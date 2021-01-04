@@ -34,17 +34,6 @@
 
 static void markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 								 Var *var, int levelsup);
-static Node *transformAssignmentIndirection(ParseState *pstate,
-											Node *basenode,
-											const char *targetName,
-											bool targetIsSubscripting,
-											Oid targetTypeId,
-											int32 targetTypMod,
-											Oid targetCollation,
-											List *indirection,
-											ListCell *indirection_cell,
-											Node *rhs,
-											int location);
 static Node *transformAssignmentSubscripts(ParseState *pstate,
 										   Node *basenode,
 										   const char *targetName,
@@ -56,6 +45,7 @@ static Node *transformAssignmentSubscripts(ParseState *pstate,
 										   List *indirection,
 										   ListCell *next_indirection,
 										   Node *rhs,
+										   CoercionContext ccontext,
 										   int location);
 static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 								 bool make_target_entry);
@@ -561,6 +551,7 @@ transformAssignedExpr(ParseState *pstate,
 										   indirection,
 										   list_head(indirection),
 										   (Node *) expr,
+										   COERCION_ASSIGNMENT,
 										   location);
 	}
 	else
@@ -642,15 +633,15 @@ updateTargetListEntry(ParseState *pstate,
 
 /*
  * Process indirection (field selection or subscripting) of the target
- * column in INSERT/UPDATE.  This routine recurses for multiple levels
- * of indirection --- but note that several adjacent A_Indices nodes in
- * the indirection list are treated as a single multidimensional subscript
+ * column in INSERT/UPDATE/assignment.  This routine recurses for multiple
+ * levels of indirection --- but note that several adjacent A_Indices nodes
+ * in the indirection list are treated as a single multidimensional subscript
  * operation.
  *
  * In the initial call, basenode is a Var for the target column in UPDATE,
- * or a null Const of the target's type in INSERT.  In recursive calls,
- * basenode is NULL, indicating that a substitute node should be consed up if
- * needed.
+ * or a null Const of the target's type in INSERT, or a Param for the target
+ * variable in PL/pgSQL assignment.  In recursive calls, basenode is NULL,
+ * indicating that a substitute node should be consed up if needed.
  *
  * targetName is the name of the field or subfield we're assigning to, and
  * targetIsSubscripting is true if we're subscripting it.  These are just for
@@ -667,12 +658,16 @@ updateTargetListEntry(ParseState *pstate,
  * rhs is the already-transformed value to be assigned; note it has not been
  * coerced to any particular type.
  *
+ * ccontext is the coercion level to use while coercing the rhs.  For
+ * normal statements it'll be COERCION_ASSIGNMENT, but PL/pgSQL uses
+ * a special value.
+ *
  * location is the cursor error position for any errors.  (Note: this points
  * to the head of the target clause, eg "foo" in "foo.bar[baz]".  Later we
  * might want to decorate indirection cells with their own location info,
  * in which case the location argument could probably be dropped.)
  */
-static Node *
+Node *
 transformAssignmentIndirection(ParseState *pstate,
 							   Node *basenode,
 							   const char *targetName,
@@ -683,6 +678,7 @@ transformAssignmentIndirection(ParseState *pstate,
 							   List *indirection,
 							   ListCell *indirection_cell,
 							   Node *rhs,
+							   CoercionContext ccontext,
 							   int location)
 {
 	Node	   *result;
@@ -757,6 +753,7 @@ transformAssignmentIndirection(ParseState *pstate,
 													 indirection,
 													 i,
 													 rhs,
+													 ccontext,
 													 location);
 			}
 
@@ -807,6 +804,7 @@ transformAssignmentIndirection(ParseState *pstate,
 												 indirection,
 												 lnext(indirection, i),
 												 rhs,
+												 ccontext,
 												 location);
 
 			/* and build a FieldStore node */
@@ -845,6 +843,7 @@ transformAssignmentIndirection(ParseState *pstate,
 											 indirection,
 											 NULL,
 											 rhs,
+											 ccontext,
 											 location);
 	}
 
@@ -853,7 +852,7 @@ transformAssignmentIndirection(ParseState *pstate,
 	result = coerce_to_target_type(pstate,
 								   rhs, exprType(rhs),
 								   targetTypeId, targetTypMod,
-								   COERCION_ASSIGNMENT,
+								   ccontext,
 								   COERCE_IMPLICIT_CAST,
 								   -1);
 	if (result == NULL)
@@ -898,6 +897,7 @@ transformAssignmentSubscripts(ParseState *pstate,
 							  List *indirection,
 							  ListCell *next_indirection,
 							  Node *rhs,
+							  CoercionContext ccontext,
 							  int location)
 {
 	Node	   *result;
@@ -949,6 +949,7 @@ transformAssignmentSubscripts(ParseState *pstate,
 										 indirection,
 										 next_indirection,
 										 rhs,
+										 ccontext,
 										 location);
 
 	/*
@@ -969,7 +970,7 @@ transformAssignmentSubscripts(ParseState *pstate,
 		result = coerce_to_target_type(pstate,
 									   result, resulttype,
 									   targetTypeId, targetTypMod,
-									   COERCION_ASSIGNMENT,
+									   ccontext,
 									   COERCE_IMPLICIT_CAST,
 									   -1);
 		/* can fail if we had int2vector/oidvector, but not for true domains */

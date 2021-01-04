@@ -27,12 +27,21 @@
  * RAW_PARSE_TYPE_NAME: parse a type name, and return a one-element List
  * containing a TypeName node.
  *
- * ... more to come ...
+ * RAW_PARSE_PLPGSQL_EXPR: parse a PL/pgSQL expression, and return
+ * a one-element List containing a RawStmt node.
+ *
+ * RAW_PARSE_PLPGSQL_ASSIGNn: parse a PL/pgSQL assignment statement,
+ * and return a one-element List containing a RawStmt node.  "n"
+ * gives the number of dotted names comprising the target ColumnRef.
  */
 typedef enum
 {
 	RAW_PARSE_DEFAULT = 0,
-	RAW_PARSE_TYPE_NAME
+	RAW_PARSE_TYPE_NAME,
+	RAW_PARSE_PLPGSQL_EXPR,
+	RAW_PARSE_PLPGSQL_ASSIGN1,
+	RAW_PARSE_PLPGSQL_ASSIGN2,
+	RAW_PARSE_PLPGSQL_ASSIGN3
 } RawParseMode;
 
 /* Values for the backslash_quote GUC */

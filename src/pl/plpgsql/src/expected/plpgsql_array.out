@@ -1,0 +1,94 @@
+--
+-- Tests for PL/pgSQL handling of array variables
+--
+-- We also check arrays of composites here, so this has some overlap
+-- with the plpgsql_record tests.
+--
+create type complex as (r float8, i float8);
+create type quadarray as (c1 complex[], c2 complex);
+do $$ declare a int[];
+begin a := array[1,2]; a[3] := 4; raise notice 'a = %', a; end$$;
+NOTICE:  a = {1,2,4}
+do $$ declare a int[];
+begin a[3] := 4; raise notice 'a = %', a; end$$;
+NOTICE:  a = [3:3]={4}
+do $$ declare a int[];
+begin a[1][4] := 4; raise notice 'a = %', a; end$$;
+NOTICE:  a = [1:1][4:4]={{4}}
+do $$ declare a int[];
+begin a[1] := 23::text; raise notice 'a = %', a; end$$;  -- lax typing
+NOTICE:  a = {23}
+do $$ declare a int[];
+begin a := array[1,2]; a[2:3] := array[3,4]; raise notice 'a = %', a; end$$;
+NOTICE:  a = {1,3,4}
+do $$ declare a int[];
+begin a := array[1,2]; a[2] := a[2] + 1; raise notice 'a = %', a; end$$;
+NOTICE:  a = {1,3}
+do $$ declare a int[];
+begin a[1:2] := array[3,4]; raise notice 'a = %', a; end$$;
+NOTICE:  a = {3,4}
+do $$ declare a int[];
+begin a[1:2] := 4; raise notice 'a = %', a; end$$;  -- error
+ERROR:  malformed array literal: "4"
+DETAIL:  Array value must start with "{" or dimension information.
+CONTEXT:  PL/pgSQL function inline_code_block line 2 at assignment
+do $$ declare a complex[];
+begin a[1] := (1,2); a[1].i := 11; raise notice 'a = %', a; end$$;
+NOTICE:  a = {"(1,11)"}
+do $$ declare a complex[];
+begin a[1].i := 11; raise notice 'a = %, a[1].i = %', a, a[1].i; end$$;
+NOTICE:  a = {"(,11)"}, a[1].i = 11
+-- perhaps this ought to work, but for now it doesn't:
+do $$ declare a complex[];
+begin a[1:2].i := array[11,12]; raise notice 'a = %', a; end$$;
+ERROR:  cannot assign to field "i" of column "a" because its type complex[] is not a composite type
+LINE 1: a[1:2].i := array[11,12]
+        ^
+QUERY:  a[1:2].i := array[11,12]
+CONTEXT:  PL/pgSQL function inline_code_block line 2 at assignment
+do $$ declare a quadarray;
+begin a.c1[1].i := 11; raise notice 'a = %, a.c1[1].i = %', a, a.c1[1].i; end$$;
+NOTICE:  a = ("{""(,11)""}",), a.c1[1].i = 11
+do $$ declare a int[];
+begin a := array_agg(x) from (values(1),(2),(3)) v(x); raise notice 'a = %', a; end$$;
+NOTICE:  a = {1,2,3}
+create temp table onecol as select array[1,2] as f1;
+do $$ declare a int[];
+begin a := f1 from onecol; raise notice 'a = %', a; end$$;
+NOTICE:  a = {1,2}
+do $$ declare a int[];
+begin a := * from onecol for update; raise notice 'a = %', a; end$$;
+NOTICE:  a = {1,2}
+-- error cases:
+do $$ declare a int[];
+begin a := from onecol; raise notice 'a = %', a; end$$;
+ERROR:  assignment source returned 0 columns
+CONTEXT:  PL/pgSQL assignment "a := from onecol"
+PL/pgSQL function inline_code_block line 2 at assignment
+do $$ declare a int[];
+begin a := f1, f1 from onecol; raise notice 'a = %', a; end$$;
+ERROR:  assignment source returned 2 columns
+CONTEXT:  PL/pgSQL assignment "a := f1, f1 from onecol"
+PL/pgSQL function inline_code_block line 2 at assignment
+insert into onecol values(array[11]);
+do $$ declare a int[];
+begin a := f1 from onecol; raise notice 'a = %', a; end$$;
+ERROR:  query "a := f1 from onecol" returned more than one row
+CONTEXT:  PL/pgSQL function inline_code_block line 2 at assignment
+do $$ declare a int[];
+begin a := f1 from onecol limit 1; raise notice 'a = %', a; end$$;
+NOTICE:  a = {1,2}
+do $$ declare a real;
+begin a[1] := 2; raise notice 'a = %', a; end$$;
+ERROR:  cannot subscript type real because it does not support subscripting
+LINE 1: a[1] := 2
+        ^
+QUERY:  a[1] := 2
+CONTEXT:  PL/pgSQL function inline_code_block line 2 at assignment
+do $$ declare a complex;
+begin a.r[1] := 2; raise notice 'a = %', a; end$$;
+ERROR:  cannot subscript type double precision because it does not support subscripting
+LINE 1: a.r[1] := 2
+        ^
+QUERY:  a.r[1] := 2
+CONTEXT:  PL/pgSQL function inline_code_block line 2 at assignment

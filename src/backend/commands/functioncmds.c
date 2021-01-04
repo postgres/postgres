@@ -1628,6 +1628,7 @@ CreateCast(CreateCastStmt *stmt)
 		case COERCION_ASSIGNMENT:
 			castcontext = COERCION_CODE_ASSIGNMENT;
 			break;
+			/* COERCION_PLPGSQL is intentionally not covered here */
 		case COERCION_EXPLICIT:
 			castcontext = COERCION_CODE_EXPLICIT;
 			break;

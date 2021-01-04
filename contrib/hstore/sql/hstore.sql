@@ -372,6 +372,10 @@ select f2['d':'e'] from test_json_agg;  -- error
 update test_json_agg set f2['d'] = f2['e'], f2['x'] = 'xyzzy';
 select f2 from test_json_agg;
 
+-- Test subscripting in plpgsql
+do $$ declare h hstore;
+begin h['a'] := 'b'; raise notice 'h = %, h[a] = %', h, h['a']; end $$;
+
 -- Check the hstore_hash() and hstore_hash_extended() function explicitly.
 SELECT v as value, hstore_hash(v)::bit(32) as standard,
        hstore_hash_extended(v, 0)::bit(32) as extended0,

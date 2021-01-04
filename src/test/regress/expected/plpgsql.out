@@ -1761,10 +1761,10 @@ select f1(42) as int, f1(4.5) as num;
 
 select f1(point(3,4));  -- fail for lack of + operator
 ERROR:  operator does not exist: point + integer
-LINE 1: SELECT x + 1
-                 ^
+LINE 1: x + 1
+          ^
 HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
-QUERY:  SELECT x + 1
+QUERY:  x + 1
 CONTEXT:  PL/pgSQL function f1(anyelement) line 3 at RETURN
 drop function f1(x anyelement);
 create function f1(x anyelement) returns anyarray as $$
@@ -2361,7 +2361,7 @@ begin
 end $$ language plpgsql;
 select namedparmcursor_test7();
 ERROR:  division by zero
-CONTEXT:  SQL statement "SELECT 42/0 AS p1, 77 AS p2;"
+CONTEXT:  SQL expression "42/0 AS p1, 77 AS p2"
 PL/pgSQL function namedparmcursor_test7() line 6 at OPEN
 -- check that line comments work correctly within the argument list (there
 -- is some special handling of this case in the code: the newline after the
@@ -2574,9 +2574,9 @@ end; $$ language plpgsql;
 -- blocks
 select excpt_test1();
 ERROR:  column "sqlstate" does not exist
-LINE 1: SELECT sqlstate
-               ^
-QUERY:  SELECT sqlstate
+LINE 1: sqlstate
+        ^
+QUERY:  sqlstate
 CONTEXT:  PL/pgSQL function excpt_test1() line 3 at RAISE
 create function excpt_test2() returns void as $$
 begin
@@ -2589,9 +2589,9 @@ end; $$ language plpgsql;
 -- should fail
 select excpt_test2();
 ERROR:  column "sqlstate" does not exist
-LINE 1: SELECT sqlstate
-               ^
-QUERY:  SELECT sqlstate
+LINE 1: sqlstate
+        ^
+QUERY:  sqlstate
 CONTEXT:  PL/pgSQL function excpt_test2() line 5 at RAISE
 create function excpt_test3() returns void as $$
 begin
@@ -4467,11 +4467,11 @@ end
 $$;
 select fail();
 ERROR:  division by zero
-CONTEXT:  SQL statement "SELECT 1/0"
+CONTEXT:  SQL expression "1/0"
 PL/pgSQL function fail() line 3 at RETURN
 select fail();
 ERROR:  division by zero
-CONTEXT:  SQL statement "SELECT 1/0"
+CONTEXT:  SQL expression "1/0"
 PL/pgSQL function fail() line 3 at RETURN
 drop function fail();
 -- Test handling of string literals.
@@ -4497,10 +4497,10 @@ HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
 select strtest();
 NOTICE:  foo\bar!baz
 WARNING:  nonstandard use of \\ in a string literal
-LINE 1: SELECT 'foo\\bar\041baz'
-               ^
+LINE 1: 'foo\\bar\041baz'
+        ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-QUERY:  SELECT 'foo\\bar\041baz'
+QUERY:  'foo\\bar\041baz'
    strtest   
 -------------
  foo\bar!baz
@@ -5621,9 +5621,9 @@ ALTER TABLE alter_table_under_transition_tables
 UPDATE alter_table_under_transition_tables
   SET id = id;
 ERROR:  column "name" does not exist
-LINE 1: SELECT (SELECT string_agg(id || '=' || name, ',') FROM d)
-                                               ^
-QUERY:  SELECT (SELECT string_agg(id || '=' || name, ',') FROM d)
+LINE 1: (SELECT string_agg(id || '=' || name, ',') FROM d)
+                                        ^
+QUERY:  (SELECT string_agg(id || '=' || name, ',') FROM d)
 CONTEXT:  PL/pgSQL function alter_table_under_transition_tables_upd_func() line 3 at RAISE
 --
 -- Test multiple reference to a transition table

@@ -4,6 +4,7 @@
 
 create type two_int4s as (f1 int4, f2 int4);
 create type two_int8s as (q1 int8, q2 int8);
+create type nested_int8s as (c1 two_int8s, c2 two_int8s);
 
 -- base-case return of a composite type
 create function retc(int) returns two_int8s language plpgsql as
@@ -58,6 +59,47 @@ begin
   raise notice 'c4 = %', c4;
   raise notice 'c8 = %', c8;
 end$$;
+
+do $$ declare c two_int8s; d nested_int8s;
+begin
+  c := row(1,2);
+  d := row(c, row(c.q1, c.q2+1));
+  raise notice 'c = %, d = %', c, d;
+  c.q1 := 10;
+  d.c1 := row(11,12);
+  d.c2.q2 := 42;
+  raise notice 'c = %, d = %', c, d;
+  raise notice 'c.q1 = %, d.c2 = %', c.q1, d.c2;
+  raise notice '(d).c2.q2 = %', (d).c2.q2;  -- doesn't work without parens
+  raise notice '(d.c2).q2 = %', (d.c2).q2;  -- doesn't work without parens
+end$$;
+
+-- block-qualified naming
+do $$ <<b>> declare c two_int8s; d nested_int8s;
+begin
+  b.c := row(1,2);
+  b.d := row(b.c, row(b.c.q1, b.c.q2+1));
+  raise notice 'b.c = %, b.d = %', b.c, b.d;
+  b.c.q1 := 10;
+  b.d.c1 := row(11,12);
+  b.d.c2.q2 := 42;
+  raise notice 'b.c = %, b.d = %', b.c, b.d;
+  raise notice 'b.c.q1 = %, b.d.c2 = %', b.c.q1, b.d.c2;
+  raise notice '(b.d).c2.q2 = %', (b.d).c2.q2;  -- doesn't work without parens
+  raise notice '(b.d.c2).q2 = %', (b.d.c2).q2;  -- doesn't work without parens
+end$$;
+
+-- error cases
+do $$ declare c two_int8s; begin c.x = 1; end $$;
+do $$ declare c nested_int8s; begin c.x = 1; end $$;
+do $$ declare c nested_int8s; begin c.x.q1 = 1; end $$;
+do $$ declare c nested_int8s; begin c.c2.x = 1; end $$;
+do $$ declare c nested_int8s; begin d.c2.x = 1; end $$;
+do $$ <<b>> declare c two_int8s; begin b.c.x = 1; end $$;
+do $$ <<b>> declare c nested_int8s; begin b.c.x = 1; end $$;
+do $$ <<b>> declare c nested_int8s; begin b.c.x.q1 = 1; end $$;
+do $$ <<b>> declare c nested_int8s; begin b.c.c2.x = 1; end $$;
+do $$ <<b>> declare c nested_int8s; begin b.d.c2.x = 1; end $$;
 
 -- check passing composite result to another function
 create function getq1(two_int8s) returns int8 language plpgsql as $$

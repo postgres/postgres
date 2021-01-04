@@ -4182,7 +4182,7 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 	memset(&options, 0, sizeof(options));
 	options.parserSetup = (ParserSetupHook) plpgsql_parser_setup;
 	options.parserSetupArg = (void *) expr;
-	options.parseMode = RAW_PARSE_DEFAULT;
+	options.parseMode = expr->parseMode;
 	options.cursorOptions = cursorOptions;
 	plan = SPI_prepare_extended(expr->query, &options);
 	if (plan == NULL)
@@ -8006,10 +8006,14 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 		placeholder->collation = get_typcollation(srctype);
 
 		/*
-		 * Apply coercion.  We use ASSIGNMENT coercion because that's the
-		 * closest match to plpgsql's historical behavior; in particular,
-		 * EXPLICIT coercion would allow silent truncation to a destination
-		 * varchar/bpchar's length, which we do not want.
+		 * Apply coercion.  We use the special coercion context
+		 * COERCION_PLPGSQL to match plpgsql's historical behavior, namely
+		 * that any cast not available at ASSIGNMENT level will be implemented
+		 * as an I/O coercion.  (It's somewhat dubious that we prefer I/O
+		 * coercion over cast pathways that exist at EXPLICIT level.  Changing
+		 * that would cause assorted minor behavioral differences though, and
+		 * a user who wants the explicit-cast behavior can always write an
+		 * explicit cast.)
 		 *
 		 * If source type is UNKNOWN, coerce_to_target_type will fail (it only
 		 * expects to see that for Const input nodes), so don't call it; we'll
@@ -8022,7 +8026,7 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 			cast_expr = coerce_to_target_type(NULL,
 											  (Node *) placeholder, srctype,
 											  dsttype, dsttypmod,
-											  COERCION_ASSIGNMENT,
+											  COERCION_PLPGSQL,
 											  COERCE_IMPLICIT_CAST,
 											  -1);
 
@@ -8030,7 +8034,8 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 		 * If there's no cast path according to the parser, fall back to using
 		 * an I/O coercion; this is semantically dubious but matches plpgsql's
 		 * historical behavior.  We would need something of the sort for
-		 * UNKNOWN literals in any case.
+		 * UNKNOWN literals in any case.  (This is probably now only reachable
+		 * in the case where srctype is UNKNOWN/RECORD.)
 		 */
 		if (cast_expr == NULL)
 		{
@@ -8339,7 +8344,8 @@ exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno)
 		return;
 
 	/*
-	 * Top level of expression must be a simple FuncExpr or OpExpr.
+	 * Top level of expression must be a simple FuncExpr, OpExpr, or
+	 * SubscriptingRef.
 	 */
 	if (IsA(expr->expr_simple_expr, FuncExpr))
 	{
@@ -8354,6 +8360,33 @@ exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno)
 
 		funcid = opexpr->opfuncid;
 		fargs = opexpr->args;
+	}
+	else if (IsA(expr->expr_simple_expr, SubscriptingRef))
+	{
+		SubscriptingRef *sbsref = (SubscriptingRef *) expr->expr_simple_expr;
+
+		/* We only trust standard varlena arrays to be safe */
+		if (get_typsubscript(sbsref->refcontainertype, NULL) !=
+			F_ARRAY_SUBSCRIPT_HANDLER)
+			return;
+
+		/* refexpr can be a simple Param, otherwise must not contain target */
+		if (!(sbsref->refexpr && IsA(sbsref->refexpr, Param)) &&
+			contains_target_param((Node *) sbsref->refexpr, &target_dno))
+			return;
+
+		/* the other subexpressions must not contain target */
+		if (contains_target_param((Node *) sbsref->refupperindexpr,
+								  &target_dno) ||
+			contains_target_param((Node *) sbsref->reflowerindexpr,
+								  &target_dno) ||
+			contains_target_param((Node *) sbsref->refassgnexpr,
+								  &target_dno))
+			return;
+
+		/* OK, we can pass target as a read-write parameter */
+		expr->rwparam = target_dno;
+		return;
 	}
 	else
 		return;

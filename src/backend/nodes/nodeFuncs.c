@@ -3669,6 +3669,16 @@ raw_expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_PLAssignStmt:
+			{
+				PLAssignStmt *stmt = (PLAssignStmt *) node;
+
+				if (walker(stmt->indirection, context))
+					return true;
+				if (walker(stmt->val, context))
+					return true;
+			}
+			break;
 		case T_A_Expr:
 			{
 				A_Expr	   *expr = (A_Expr *) node;

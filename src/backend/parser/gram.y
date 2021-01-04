@@ -294,6 +294,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <node>	select_no_parens select_with_parens select_clause
 				simple_select values_clause
+				PLpgSQL_Expr PLAssignStmt
 
 %type <node>	alter_column_default opclass_item opclass_drop alter_using
 %type <ival>	add_drop opt_asc_desc opt_nulls_order
@@ -535,7 +536,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <str>		ColId ColLabel BareColLabel
 %type <str>		NonReservedWord NonReservedWord_or_Sconst
 %type <str>		var_name type_function_name param_name
-%type <str>		createdb_opt_name
+%type <str>		createdb_opt_name plassign_target
 %type <node>	var_value zone_value
 %type <rolespec> auth_ident RoleSpec opt_granted_by
 
@@ -731,6 +732,10 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
  * something other than the usual list of SQL commands.
  */
 %token		MODE_TYPE_NAME
+%token		MODE_PLPGSQL_EXPR
+%token		MODE_PLPGSQL_ASSIGN1
+%token		MODE_PLPGSQL_ASSIGN2
+%token		MODE_PLPGSQL_ASSIGN3
 
 
 /* Precedence: lowest to highest */
@@ -809,6 +814,32 @@ parse_toplevel:
 			| MODE_TYPE_NAME Typename
 			{
 				pg_yyget_extra(yyscanner)->parsetree = list_make1($2);
+			}
+			| MODE_PLPGSQL_EXPR PLpgSQL_Expr
+			{
+				pg_yyget_extra(yyscanner)->parsetree =
+					list_make1(makeRawStmt($2, 0));
+			}
+			| MODE_PLPGSQL_ASSIGN1 PLAssignStmt
+			{
+				PLAssignStmt *n = (PLAssignStmt *) $2;
+				n->nnames = 1;
+				pg_yyget_extra(yyscanner)->parsetree =
+					list_make1(makeRawStmt((Node *) n, 0));
+			}
+			| MODE_PLPGSQL_ASSIGN2 PLAssignStmt
+			{
+				PLAssignStmt *n = (PLAssignStmt *) $2;
+				n->nnames = 2;
+				pg_yyget_extra(yyscanner)->parsetree =
+					list_make1(makeRawStmt((Node *) n, 0));
+			}
+			| MODE_PLPGSQL_ASSIGN3 PLAssignStmt
+			{
+				PLAssignStmt *n = (PLAssignStmt *) $2;
+				n->nnames = 3;
+				pg_yyget_extra(yyscanner)->parsetree =
+					list_make1(makeRawStmt((Node *) n, 0));
 			}
 		;
 
@@ -15023,6 +15054,72 @@ role_list:	RoleSpec
 			| role_list ',' RoleSpec
 					{ $$ = lappend($1, $3); }
 		;
+
+
+/*****************************************************************************
+ *
+ * PL/pgSQL extensions
+ *
+ * You'd think a PL/pgSQL "expression" should be just an a_expr, but
+ * historically it can include just about anything that can follow SELECT.
+ * Therefore the returned struct is a SelectStmt.
+ *****************************************************************************/
+
+PLpgSQL_Expr: opt_target_list
+			from_clause where_clause
+			group_clause having_clause window_clause
+			opt_sort_clause opt_select_limit opt_for_locking_clause
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+
+					n->targetList = $1;
+					n->fromClause = $2;
+					n->whereClause = $3;
+					n->groupClause = $4;
+					n->havingClause = $5;
+					n->windowClause = $6;
+					n->sortClause = $7;
+					if ($8)
+					{
+						n->limitOffset = $8->limitOffset;
+						n->limitCount = $8->limitCount;
+						if (!n->sortClause &&
+							$8->limitOption == LIMIT_OPTION_WITH_TIES)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("WITH TIES cannot be specified without ORDER BY clause")));
+						n->limitOption = $8->limitOption;
+					}
+					n->lockingClause = $9;
+					$$ = (Node *) n;
+				}
+		;
+
+/*
+ * PL/pgSQL Assignment statement: name opt_indirection := PLpgSQL_Expr
+ */
+
+PLAssignStmt: plassign_target opt_indirection plassign_equals PLpgSQL_Expr
+				{
+					PLAssignStmt *n = makeNode(PLAssignStmt);
+
+					n->name = $1;
+					n->indirection = check_indirection($2, yyscanner);
+					/* nnames will be filled by calling production */
+					n->val = (SelectStmt *) $4;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+		;
+
+plassign_target: ColId							{ $$ = $1; }
+			| PARAM								{ $$ = psprintf("$%d", $1); }
+		;
+
+plassign_equals: COLON_EQUALS
+			| '='
+		;
+
 
 /*
  * Name classification hierarchy.

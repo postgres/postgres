@@ -3098,6 +3098,14 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		}
 	}
 
+	/*
+	 * When parsing PL/pgSQL assignments, allow an I/O cast to be used
+	 * whenever no normal coercion is available.
+	 */
+	if (result == COERCION_PATH_NONE &&
+		ccontext == COERCION_PLPGSQL)
+		result = COERCION_PATH_COERCEVIAIO;
+
 	return result;
 }
 

@@ -218,8 +218,9 @@ typedef struct PLpgSQL_type
  */
 typedef struct PLpgSQL_expr
 {
-	char	   *query;
-	SPIPlanPtr	plan;
+	char	   *query;			/* query string, verbatim from function body */
+	RawParseMode parseMode;		/* raw_parser() mode to use */
+	SPIPlanPtr	plan;			/* plan, or NULL if not made yet */
 	Bitmapset  *paramnos;		/* all dnos referenced by this query */
 	int			rwparam;		/* dno of read/write param, or -1 if none */
 

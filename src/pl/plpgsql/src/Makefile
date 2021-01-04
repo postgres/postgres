@@ -32,7 +32,7 @@ DATA = plpgsql.control plpgsql--1.0.sql
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB)
 
-REGRESS = plpgsql_call plpgsql_control plpgsql_copy plpgsql_domain \
+REGRESS = plpgsql_array plpgsql_call plpgsql_control plpgsql_copy plpgsql_domain \
 	plpgsql_record plpgsql_cache plpgsql_simple plpgsql_transaction \
 	plpgsql_trap plpgsql_trigger plpgsql_varprops
 
