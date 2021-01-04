@@ -1083,15 +1083,6 @@ filter_prepare_cb_wrapper(LogicalDecodingContext *ctx, const char *gid)
 
 	Assert(!ctx->fast_forward);
 
-	/*
-	 * Skip if decoding of two-phase transactions at PREPARE time is not
-	 * enabled. In that case, all two-phase transactions are considered
-	 * filtered out and will be applied as regular transactions at COMMIT
-	 * PREPARED.
-	 */
-	if (!ctx->twophase)
-		return true;
-
 	/* Push callback + info on the error context stack */
 	state.ctx = ctx;
 	state.callback_name = "filter_prepare";

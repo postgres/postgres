@@ -165,7 +165,58 @@ COMMIT 693
 <keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>
 $ pg_recvlogical -d postgres --slot=test --drop-slot
 </programlisting>
-  </sect1>
+
+  <para>
+  The following example shows SQL interface that can be used to decode prepared
+  transactions. Before you use two-phase commit commands, you must set
+  <varname>max_prepared_transactions</varname> to at least 1. You must also set
+  the option 'two-phase-commit' to 1 while calling
+  <function>pg_logical_slot_get_changes</function>. Note that we will stream
+  the entire transaction after the commit if it is not already decoded.
+  </para>
+<programlisting>
+postgres=# BEGIN;
+postgres=*# INSERT INTO data(data) VALUES('5');
+postgres=*# PREPARE TRANSACTION 'test_prepared1';
+
+postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'two-phase-commit', '1');
+    lsn    | xid |                          data                           
+-----------+-----+---------------------------------------------------------
+ 0/1689DC0 | 529 | BEGIN 529
+ 0/1689DC0 | 529 | table public.data: INSERT: id[integer]:3 data[text]:'5'
+ 0/1689FC0 | 529 | PREPARE TRANSACTION 'test_prepared1', txid 529
+(3 rows)
+
+postgres=# COMMIT PREPARED 'test_prepared1';
+postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'two-phase-commit', '1');
+    lsn    | xid |                    data                    
+-----------+-----+--------------------------------------------
+ 0/1689DC0 | 529 | BEGIN 529
+ 0/1689DC0 | 529 | table public.data: INSERT: id[integer]:3 data[text]:'5'
+ 0/1689FC0 | 529 | PREPARE TRANSACTION 'test_prepared1', txid 529
+ 0/168A060 | 529 | COMMIT PREPARED 'test_prepared1', txid 529
+(4 row)
+
+postgres=#-- you can also rollback a prepared transaction
+postgres=# BEGIN;
+postgres=*# INSERT INTO data(data) VALUES('6');
+postgres=*# PREPARE TRANSACTION 'test_prepared2';
+postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'two-phase-commit', '1');
+    lsn    | xid |                          data                           
+-----------+-----+---------------------------------------------------------
+ 0/168A180 | 530 | BEGIN 530
+ 0/168A1E8 | 530 | table public.data: INSERT: id[integer]:4 data[text]:'6'
+ 0/168A430 | 530 | PREPARE TRANSACTION 'test_prepared2', txid 530
+(3 rows)
+
+postgres=# ROLLBACK PREPARED 'test_prepared2';
+postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'two-phase-commit', '1');
+    lsn    | xid |                     data                     
+-----------+-----+----------------------------------------------
+ 0/168A4B8 | 530 | ROLLBACK PREPARED 'test_prepared2', txid 530
+(1 row)
+</programlisting>
+</sect1>
 
   <sect1 id="logicaldecoding-explanation">
    <title>Logical Decoding Concepts</title>
@@ -1123,6 +1174,57 @@ stream_commit_cb(...);  &lt;-- commit of the streamed transaction
    <para>
     Even when streaming large transactions, the changes are still applied in
     commit order, preserving the same guarantees as the non-streaming mode.
+   </para>
+
+  </sect1>
+
+  <sect1 id="logicaldecoding-two-phase-commits">
+   <title>Two-phase commit support for Logical Decoding</title>
+
+   <para>
+    With the basic output plugin callbacks (eg., <function>begin_cb</function>,
+    <function>change_cb</function>, <function>commit_cb</function> and
+    <function>message_cb</function>) two-phase commit commands like
+    <command>PREPARE TRANSACTION</command>, <command>COMMIT PREPARED</command>
+    and <command>ROLLBACK PREPARED</command> are not decoded. While the
+    <command>PREPARE TRANSACTION</command> is ignored,
+    <command>COMMIT PREPARED</command> is decoded as a <command>COMMIT</command>
+    and <command>ROLLBACK PREPARED</command> is decoded as a
+    <command>ROLLBACK</command>.
+   </para>
+
+   <para>
+    To support the streaming of two-phase commands, an output plugin needs to
+    provide additional callbacks. There are multiple two-phase commit callbacks
+    that are required, (<function>begin_prepare_cb</function>,
+    <function>prepare_cb</function>, <function>commit_prepared_cb</function>, 
+    <function>rollback_prepared_cb</function> and
+    <function>stream_prepare_cb</function>) and an optional callback
+    (<function>filter_prepare_cb</function>).
+   </para>
+
+   <para>
+    If the output plugin callbacks for decoding two-phase commit commands are
+    provided, then on <command>PREPARE TRANSACTION</command>, the changes of
+    that transaction are decoded, passed to the output plugin, and the
+    <function>prepare_cb</function> callback is invoked. This differs from the
+    basic decoding setup where changes are only passed to the output plugin
+    when a transaction is committed. The start of a prepared transaction is
+    indicated by the <function>begin_prepare_cb</function> callback.
+   </para>
+
+   <para>
+    When a prepared transaction is rollbacked using the
+    <command>ROLLBACK PREPARED</command>, then the
+    <function>rollback_prepared_cb</function> callback is invoked and when the
+    prepared transaction is committed using <command>COMMIT PREPARED</command>,
+    then the <function>commit_prepared_cb</function> callback is invoked.
+   </para>
+
+   <para>
+    Optionally the output plugin can specify a name pattern in the
+    <function>filter_prepare_cb</function> and transactions with gid containing
+    that name pattern will not be decoded as a two-phase commit transaction.
    </para>
 
   </sect1>
