@@ -82,12 +82,12 @@ check_safe_enum_use(HeapTuple enumval_tup)
 		return;
 
 	/*
-	 * Check if the enum value is blacklisted.  If not, it's safe, because it
+	 * Check if the enum value is uncommitted.  If not, it's safe, because it
 	 * was made during CREATE TYPE AS ENUM and can't be shorter-lived than its
 	 * owning type.  (This'd also be false for values made by other
 	 * transactions; but the previous tests should have handled all of those.)
 	 */
-	if (!EnumBlacklisted(en->oid))
+	if (!EnumUncommitted(en->oid))
 		return;
 
 	/*
