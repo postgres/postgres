@@ -131,6 +131,11 @@ SELECT SUBSTRING('1234567890' FROM 3) = '34567890' AS "34567890";
 
 SELECT SUBSTRING('1234567890' FROM 4 FOR 3) = '456' AS "456";
 
+-- test overflow cases
+SELECT SUBSTRING('string' FROM 2 FOR 2147483646) AS "tring";
+SELECT SUBSTRING('string' FROM -10 FOR 2147483646) AS "string";
+SELECT SUBSTRING('string' FROM -10 FOR -2147483646) AS "error";
+
 -- T581 regular expression substring (with SQL's bizarre regexp syntax)
 SELECT SUBSTRING('abcdefg' FROM 'a#"(b_d)#"%' FOR '#') AS "bcd";
 
@@ -683,6 +688,12 @@ SELECT chr(0);
 
 SELECT repeat('Pg', 4);
 SELECT repeat('Pg', -4);
+
+SELECT SUBSTRING('1234567890'::bytea FROM 3) "34567890";
+SELECT SUBSTRING('1234567890'::bytea FROM 4 FOR 3) AS "456";
+SELECT SUBSTRING('string'::bytea FROM 2 FOR 2147483646) AS "tring";
+SELECT SUBSTRING('string'::bytea FROM -10 FOR 2147483646) AS "string";
+SELECT SUBSTRING('string'::bytea FROM -10 FOR -2147483646) AS "error";
 
 SELECT trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea);
 SELECT btrim(E'\\000trim\\000'::bytea, E'\\000'::bytea);

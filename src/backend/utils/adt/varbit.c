@@ -1059,7 +1059,7 @@ bitsubstring(VarBit *arg, int32 s, int32 l, bool length_not_specified)
 				len,
 				ishift,
 				i;
-	int			e,
+	int32		e,
 				s1,
 				e1;
 	bits8	   *r,
@@ -1072,18 +1072,24 @@ bitsubstring(VarBit *arg, int32 s, int32 l, bool length_not_specified)
 	{
 		e1 = bitlen + 1;
 	}
+	else if (l < 0)
+	{
+		/* SQL99 says to throw an error for E < S, i.e., negative length */
+		ereport(ERROR,
+				(errcode(ERRCODE_SUBSTRING_ERROR),
+				 errmsg("negative substring length not allowed")));
+		e1 = -1;				/* silence stupider compilers */
+	}
+	else if (pg_add_s32_overflow(s, l, &e))
+	{
+		/*
+		 * L could be large enough for S + L to overflow, in which case the
+		 * substring must run to end of string.
+		 */
+		e1 = bitlen + 1;
+	}
 	else
 	{
-		e = s + l;
-
-		/*
-		 * A negative value for L is the only way for the end position to be
-		 * before the start. SQL99 says to throw an error.
-		 */
-		if (e < s)
-			ereport(ERROR,
-					(errcode(ERRCODE_SUBSTRING_ERROR),
-					 errmsg("negative substring length not allowed")));
 		e1 = Min(e, bitlen + 1);
 	}
 	if (s1 > bitlen || e1 <= s1)

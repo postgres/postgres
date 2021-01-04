@@ -396,6 +396,21 @@ SELECT SUBSTRING('1234567890' FROM 4 FOR 3) = '456' AS "456";
  t
 (1 row)
 
+-- test overflow cases
+SELECT SUBSTRING('string' FROM 2 FOR 2147483646) AS "tring";
+ tring 
+-------
+ tring
+(1 row)
+
+SELECT SUBSTRING('string' FROM -10 FOR 2147483646) AS "string";
+ string 
+--------
+ string
+(1 row)
+
+SELECT SUBSTRING('string' FROM -10 FOR -2147483646) AS "error";
+ERROR:  negative substring length not allowed
 -- T581 regular expression substring (with SQL's bizarre regexp syntax)
 SELECT SUBSTRING('abcdefg' FROM 'a#"(b_d)#"%' FOR '#') AS "bcd";
  bcd 
@@ -2005,6 +2020,32 @@ SELECT repeat('Pg', -4);
  
 (1 row)
 
+SELECT SUBSTRING('1234567890'::bytea FROM 3) "34567890";
+ 34567890 
+----------
+ 34567890
+(1 row)
+
+SELECT SUBSTRING('1234567890'::bytea FROM 4 FOR 3) AS "456";
+ 456 
+-----
+ 456
+(1 row)
+
+SELECT SUBSTRING('string'::bytea FROM 2 FOR 2147483646) AS "tring";
+ tring 
+-------
+ tring
+(1 row)
+
+SELECT SUBSTRING('string'::bytea FROM -10 FOR 2147483646) AS "string";
+ string 
+--------
+ string
+(1 row)
+
+SELECT SUBSTRING('string'::bytea FROM -10 FOR -2147483646) AS "error";
+ERROR:  negative substring length not allowed
 SELECT trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea);
  btrim 
 -------
