@@ -333,8 +333,7 @@ static void exec_prepare_plan(PLpgSQL_execstate *estate,
 							  bool keepplan);
 static void exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr);
 static void exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan);
-static void exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno);
-static bool contains_target_param(Node *node, int *target_dno);
+static void exec_check_rw_parameter(PLpgSQL_expr *expr);
 static bool exec_eval_simple_expr(PLpgSQL_execstate *estate,
 								  PLpgSQL_expr *expr,
 								  Datum *result,
@@ -4190,13 +4189,6 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 
 	/* Check to see if it's a simple expression */
 	exec_simple_check_plan(estate, expr);
-
-	/*
-	 * Mark expression as not using a read-write param.  exec_assign_value has
-	 * to take steps to override this if appropriate; that seems cleaner than
-	 * adding parameters to all other callers.
-	 */
-	expr->rwparam = -1;
 }
 
 
@@ -5024,16 +5016,23 @@ exec_assign_expr(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 	int32		valtypmod;
 
 	/*
-	 * If first time through, create a plan for this expression, and then see
-	 * if we can pass the target variable as a read-write parameter to the
-	 * expression.  (This is a bit messy, but it seems cleaner than modifying
-	 * the API of exec_eval_expr for the purpose.)
+	 * If first time through, create a plan for this expression.
 	 */
 	if (expr->plan == NULL)
 	{
-		exec_prepare_plan(estate, expr, 0, true);
+		/*
+		 * Mark the expression as being an assignment source, if target is a
+		 * simple variable.  (This is a bit messy, but it seems cleaner than
+		 * modifying the API of exec_prepare_plan for the purpose.  We need to
+		 * stash the target dno into the expr anyway, so that it will be
+		 * available if we have to replan.)
+		 */
 		if (target->dtype == PLPGSQL_DTYPE_VAR)
-			exec_check_rw_parameter(expr, target->dno);
+			expr->target_param = target->dno;
+		else
+			expr->target_param = -1;	/* should be that already */
+
+		exec_prepare_plan(estate, expr, 0, true);
 	}
 
 	value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
@@ -6098,6 +6097,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 			ReleaseCachedPlan(cplan, true);
 			/* Mark expression as non-simple, and fail */
 			expr->expr_simple_expr = NULL;
+			expr->expr_rw_param = NULL;
 			return false;
 		}
 
@@ -6109,10 +6109,6 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 
 		/* Extract desired scalar expression from cached plan */
 		exec_save_simple_expr(expr, cplan);
-
-		/* better recheck r/w safety, as it could change due to inlining */
-		if (expr->rwparam >= 0)
-			exec_check_rw_parameter(expr, expr->rwparam);
 	}
 
 	/*
@@ -6385,20 +6381,18 @@ plpgsql_param_fetch(ParamListInfo params,
 	prm->pflags = PARAM_FLAG_CONST;
 
 	/*
-	 * If it's a read/write expanded datum, convert reference to read-only,
-	 * unless it's safe to pass as read-write.
+	 * If it's a read/write expanded datum, convert reference to read-only.
+	 * (There's little point in trying to optimize read/write parameters,
+	 * given the cases in which this function is used.)
 	 */
-	if (dno != expr->rwparam)
-	{
-		if (datum->dtype == PLPGSQL_DTYPE_VAR)
-			prm->value = MakeExpandedObjectReadOnly(prm->value,
-													prm->isnull,
-													((PLpgSQL_var *) datum)->datatype->typlen);
-		else if (datum->dtype == PLPGSQL_DTYPE_REC)
-			prm->value = MakeExpandedObjectReadOnly(prm->value,
-													prm->isnull,
-													-1);
-	}
+	if (datum->dtype == PLPGSQL_DTYPE_VAR)
+		prm->value = MakeExpandedObjectReadOnly(prm->value,
+												prm->isnull,
+												((PLpgSQL_var *) datum)->datatype->typlen);
+	else if (datum->dtype == PLPGSQL_DTYPE_REC)
+		prm->value = MakeExpandedObjectReadOnly(prm->value,
+												prm->isnull,
+												-1);
 
 	return prm;
 }
@@ -6441,7 +6435,7 @@ plpgsql_param_compile(ParamListInfo params, Param *param,
 	 */
 	if (datum->dtype == PLPGSQL_DTYPE_VAR)
 	{
-		if (dno != expr->rwparam &&
+		if (param != expr->expr_rw_param &&
 			((PLpgSQL_var *) datum)->datatype->typlen == -1)
 			scratch.d.cparam.paramfunc = plpgsql_param_eval_var_ro;
 		else
@@ -6451,14 +6445,14 @@ plpgsql_param_compile(ParamListInfo params, Param *param,
 		scratch.d.cparam.paramfunc = plpgsql_param_eval_recfield;
 	else if (datum->dtype == PLPGSQL_DTYPE_PROMISE)
 	{
-		if (dno != expr->rwparam &&
+		if (param != expr->expr_rw_param &&
 			((PLpgSQL_var *) datum)->datatype->typlen == -1)
 			scratch.d.cparam.paramfunc = plpgsql_param_eval_generic_ro;
 		else
 			scratch.d.cparam.paramfunc = plpgsql_param_eval_generic;
 	}
 	else if (datum->dtype == PLPGSQL_DTYPE_REC &&
-			 dno != expr->rwparam)
+			 param != expr->expr_rw_param)
 		scratch.d.cparam.paramfunc = plpgsql_param_eval_generic_ro;
 	else
 		scratch.d.cparam.paramfunc = plpgsql_param_eval_generic;
@@ -7930,6 +7924,7 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	 * Initialize to "not simple".
 	 */
 	expr->expr_simple_expr = NULL;
+	expr->expr_rw_param = NULL;
 
 	/*
 	 * Check the analyzed-and-rewritten form of the query to see if we will be
@@ -8108,6 +8103,12 @@ exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 	expr->expr_simple_typmod = exprTypmod((Node *) tle_expr);
 	/* We also want to remember if it is immutable or not */
 	expr->expr_simple_mutable = contain_mutable_functions((Node *) tle_expr);
+
+	/*
+	 * Lastly, check to see if there's a possibility of optimizing a
+	 * read/write parameter.
+	 */
+	exec_check_rw_parameter(expr);
 }
 
 /*
@@ -8119,25 +8120,36 @@ exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
  * value as a read/write pointer and let the function modify the value
  * in-place.
  *
- * This function checks for a safe expression, and sets expr->rwparam to the
- * dno of the target variable (x) if safe, or -1 if not safe.
+ * This function checks for a safe expression, and sets expr->expr_rw_param
+ * to the address of any Param within the expression that can be passed as
+ * read/write (there can be only one); or to NULL when there is no safe Param.
+ *
+ * Note that this mechanism intentionally applies the safety labeling to just
+ * one Param; the expression could contain other Params referencing the target
+ * variable, but those must still be treated as read-only.
+ *
+ * Also note that we only apply this optimization within simple expressions.
+ * There's no point in it for non-simple expressions, because the
+ * exec_run_select code path will flatten any expanded result anyway.
+ * Also, it's safe to assume that an expr_simple_expr tree won't get copied
+ * somewhere before it gets compiled, so that looking for pointer equality
+ * to expr_rw_param will work for matching the target Param.  That'd be much
+ * shakier in the general case.
  */
 static void
-exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno)
+exec_check_rw_parameter(PLpgSQL_expr *expr)
 {
+	int			target_dno;
 	Oid			funcid;
 	List	   *fargs;
 	ListCell   *lc;
 
 	/* Assume unsafe */
-	expr->rwparam = -1;
+	expr->expr_rw_param = NULL;
 
-	/*
-	 * If the expression isn't simple, there's no point in trying to optimize
-	 * (because the exec_run_select code path will flatten any expanded result
-	 * anyway).  Even without that, this seems like a good safety restriction.
-	 */
-	if (expr->expr_simple_expr == NULL)
+	/* Done if expression isn't an assignment source */
+	target_dno = expr->target_param;
+	if (target_dno < 0)
 		return;
 
 	/*
@@ -8147,9 +8159,12 @@ exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno)
 	if (!bms_is_member(target_dno, expr->paramnos))
 		return;
 
+	/* Shouldn't be here for non-simple expression */
+	Assert(expr->expr_simple_expr != NULL);
+
 	/*
 	 * Top level of expression must be a simple FuncExpr, OpExpr, or
-	 * SubscriptingRef.
+	 * SubscriptingRef, else we can't optimize.
 	 */
 	if (IsA(expr->expr_simple_expr, FuncExpr))
 	{
@@ -8174,22 +8189,20 @@ exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno)
 			F_ARRAY_SUBSCRIPT_HANDLER)
 			return;
 
-		/* refexpr can be a simple Param, otherwise must not contain target */
-		if (!(sbsref->refexpr && IsA(sbsref->refexpr, Param)) &&
-			contains_target_param((Node *) sbsref->refexpr, &target_dno))
-			return;
+		/* We can optimize the refexpr if it's the target, otherwise not */
+		if (sbsref->refexpr && IsA(sbsref->refexpr, Param))
+		{
+			Param	   *param = (Param *) sbsref->refexpr;
 
-		/* the other subexpressions must not contain target */
-		if (contains_target_param((Node *) sbsref->refupperindexpr,
-								  &target_dno) ||
-			contains_target_param((Node *) sbsref->reflowerindexpr,
-								  &target_dno) ||
-			contains_target_param((Node *) sbsref->refassgnexpr,
-								  &target_dno))
-			return;
+			if (param->paramkind == PARAM_EXTERN &&
+				param->paramid == target_dno + 1)
+			{
+				/* Found the Param we want to pass as read/write */
+				expr->expr_rw_param = param;
+				return;
+			}
+		}
 
-		/* OK, we can pass target as a read-write parameter */
-		expr->rwparam = target_dno;
 		return;
 	}
 	else
@@ -8205,44 +8218,28 @@ exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno)
 		return;
 
 	/*
-	 * The target variable (in the form of a Param) must only appear as a
-	 * direct argument of the top-level function.
+	 * The target variable (in the form of a Param) must appear as a direct
+	 * argument of the top-level function.  References further down in the
+	 * tree can't be optimized; but on the other hand, they don't invalidate
+	 * optimizing the top-level call, since that will be executed last.
 	 */
 	foreach(lc, fargs)
 	{
 		Node	   *arg = (Node *) lfirst(lc);
 
-		/* A Param is OK, whether it's the target variable or not */
 		if (arg && IsA(arg, Param))
-			continue;
-		/* Otherwise, argument expression must not reference target */
-		if (contains_target_param(arg, &target_dno))
-			return;
+		{
+			Param	   *param = (Param *) arg;
+
+			if (param->paramkind == PARAM_EXTERN &&
+				param->paramid == target_dno + 1)
+			{
+				/* Found the Param we want to pass as read/write */
+				expr->expr_rw_param = param;
+				return;
+			}
+		}
 	}
-
-	/* OK, we can pass target as a read-write parameter */
-	expr->rwparam = target_dno;
-}
-
-/*
- * Recursively check for a Param referencing the target variable
- */
-static bool
-contains_target_param(Node *node, int *target_dno)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Param))
-	{
-		Param	   *param = (Param *) node;
-
-		if (param->paramkind == PARAM_EXTERN &&
-			param->paramid == *target_dno + 1)
-			return true;
-		return false;
-	}
-	return expression_tree_walker(node, contains_target_param,
-								  (void *) target_dno);
 }
 
 /* ----------

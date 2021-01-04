@@ -2820,7 +2820,7 @@ read_sql_construct(int until,
 	expr->parseMode		= parsemode;
 	expr->plan			= NULL;
 	expr->paramnos		= NULL;
-	expr->rwparam		= -1;
+	expr->target_param	= -1;
 	expr->ns			= plpgsql_ns_top();
 	pfree(ds.data);
 
@@ -3067,7 +3067,7 @@ make_execsql_stmt(int firsttoken, int location)
 	expr->parseMode		= RAW_PARSE_DEFAULT;
 	expr->plan			= NULL;
 	expr->paramnos		= NULL;
-	expr->rwparam		= -1;
+	expr->target_param	= -1;
 	expr->ns			= plpgsql_ns_top();
 	pfree(ds.data);
 
@@ -3949,7 +3949,7 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 	expr->parseMode		= RAW_PARSE_PLPGSQL_EXPR;
 	expr->plan			= NULL;
 	expr->paramnos		= NULL;
-	expr->rwparam		= -1;
+	expr->target_param	= -1;
 	expr->ns            = plpgsql_ns_top();
 	pfree(ds.data);
 

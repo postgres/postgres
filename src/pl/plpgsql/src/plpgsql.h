@@ -221,7 +221,6 @@ typedef struct PLpgSQL_expr
 	RawParseMode parseMode;		/* raw_parser() mode to use */
 	SPIPlanPtr	plan;			/* plan, or NULL if not made yet */
 	Bitmapset  *paramnos;		/* all dnos referenced by this query */
-	int			rwparam;		/* dno of read/write param, or -1 if none */
 
 	/* function containing this expr (not set until we first parse query) */
 	struct PLpgSQL_function *func;
@@ -234,6 +233,17 @@ typedef struct PLpgSQL_expr
 	Oid			expr_simple_type;	/* result type Oid, if simple */
 	int32		expr_simple_typmod; /* result typmod, if simple */
 	bool		expr_simple_mutable;	/* true if simple expr is mutable */
+
+	/*
+	 * These fields are used to optimize assignments to expanded-datum
+	 * variables.  If this expression is the source of an assignment to a
+	 * simple variable, target_param holds that variable's dno; else it's -1.
+	 * If we match a Param within expr_simple_expr to such a variable, that
+	 * Param's address is stored in expr_rw_param; then expression code
+	 * generation will allow the value for that Param to be passed read/write.
+	 */
+	int			target_param;	/* dno of assign target, or -1 if none */
+	Param	   *expr_rw_param;	/* read/write Param within expr, if any */
 
 	/*
 	 * If the expression was ever determined to be simple, we remember its
