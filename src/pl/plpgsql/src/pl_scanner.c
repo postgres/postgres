@@ -342,6 +342,11 @@ internal_yylex(TokenAuxData *auxdata)
 		{
 			auxdata->lval.str = pstrdup(yytext);
 		}
+
+		else if (token == SQL_COMMENT || token == C_COMMENT)
+		{
+			token = internal_yylex(auxdata);
+		}
 	}
 
 	return token;

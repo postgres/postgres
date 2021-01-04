@@ -236,6 +236,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %token <ival>	ICONST PARAM
 %token			TYPECAST DOT_DOT COLON_EQUALS EQUALS_GREATER
 %token			LESS_EQUALS GREATER_EQUALS NOT_EQUALS
+%token			SQL_COMMENT C_COMMENT
 
 /*
  * Other tokens recognized by plpgsql's lexer interface layer (pl_scanner.c).

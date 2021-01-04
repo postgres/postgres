@@ -131,6 +131,9 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		case USCONST:
 			cur_token_length = strlen(yyextra->core_yy_extra.scanbuf + *llocp);
 			break;
+		case SQL_COMMENT:
+		case C_COMMENT:
+			return base_yylex(lvalp, llocp, yyscanner);
 		default:
 			return cur_token;
 	}

@@ -84,6 +84,9 @@ filtered_base_yylex(void)
 		case UIDENT:
 		case USCONST:
 			break;
+		case SQL_COMMENT:
+		case C_COMMENT:
+			return filtered_base_yylex();
 		default:
 			return cur_token;
 	}

@@ -223,7 +223,7 @@ non_newline		[^\n\r]
 
 comment			("--"{non_newline}*)
 
-whitespace		({space}+|{comment})
+whitespace		({space}+)
 
 /*
  * SQL requires at least one newline in the whitespace separating
@@ -232,8 +232,8 @@ whitespace		({space}+|{comment})
  * it, whereas {whitespace} should generally have a * after it...
  */
 
-special_whitespace		({space}+|{comment}{newline})
-horiz_whitespace		({horiz_space}|{comment})
+special_whitespace		({space}+)
+horiz_whitespace		({horiz_space})
 whitespace_with_newline	({horiz_whitespace}*{newline}{special_whitespace}*)
 
 quote			'
@@ -423,6 +423,11 @@ other			.
 					/* ignore */
 				}
 
+{comment}	{
+					SET_YYLLOC();
+					return SQL_COMMENT;
+				}
+
 {xcstart}		{
 					/* Set location in case of syntax error in comment */
 					SET_YYLLOC();
@@ -441,7 +446,11 @@ other			.
 
 {xcstop}		{
 					if (yyextra->xcdepth <= 0)
+					{
 						BEGIN(INITIAL);
+						yyextra->yyllocend = yytext - yyextra->scanbuf + yyleng;
+						return C_COMMENT;
+					}
 					else
 						(yyextra->xcdepth)--;
 				}
