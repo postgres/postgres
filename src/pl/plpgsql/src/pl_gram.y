@@ -177,11 +177,10 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %type <list>	decl_cursor_arglist
 %type <nsitem>	decl_aliasitem
 
-%type <expr>	expr_until_semi expr_until_rightbracket
+%type <expr>	expr_until_semi
 %type <expr>	expr_until_then expr_until_loop opt_expr_until_when
 %type <expr>	opt_exitcond
 
-%type <datum>	assign_var
 %type <var>		cursor_variable
 %type <datum>	decl_cursor_arg
 %type <forvariable>	for_variable
@@ -1155,16 +1154,23 @@ getdiag_item :
 					}
 				;
 
-getdiag_target	: assign_var
+getdiag_target	: T_DATUM
 					{
-						if ($1->dtype == PLPGSQL_DTYPE_ROW ||
-							$1->dtype == PLPGSQL_DTYPE_REC)
+						/*
+						 * In principle we should support a getdiag_target
+						 * that is an array element, but for now we don't, so
+						 * just throw an error if next token is '['.
+						 */
+						if ($1.datum->dtype == PLPGSQL_DTYPE_ROW ||
+							$1.datum->dtype == PLPGSQL_DTYPE_REC ||
+							plpgsql_peek() == '[')
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("\"%s\" is not a scalar variable",
-											((PLpgSQL_variable *) $1)->refname),
+											NameOfDatum(&($1))),
 									 parser_errposition(@1)));
-						$$ = $1;
+						check_assignable($1.datum, @1);
+						$$ = $1.datum;
 					}
 				| T_WORD
 					{
@@ -1175,29 +1181,6 @@ getdiag_target	: assign_var
 					{
 						/* just to give a better message than "syntax error" */
 						cword_is_not_variable(&($1), @1);
-					}
-				;
-
-
-assign_var		: T_DATUM
-					{
-						check_assignable($1.datum, @1);
-						$$ = $1.datum;
-					}
-				| assign_var '[' expr_until_rightbracket
-					{
-						PLpgSQL_arrayelem	*new;
-
-						new = palloc0(sizeof(PLpgSQL_arrayelem));
-						new->dtype		= PLPGSQL_DTYPE_ARRAYELEM;
-						new->subscript	= $3;
-						new->arrayparentno = $1->dno;
-						/* initialize cached type data to "not valid" */
-						new->parenttypoid = InvalidOid;
-
-						plpgsql_adddatum((PLpgSQL_datum *) new);
-
-						$$ = (PLpgSQL_datum *) new;
 					}
 				;
 
@@ -2471,10 +2454,6 @@ expr_until_semi :
 					{ $$ = read_sql_expression(';', ";"); }
 				;
 
-expr_until_rightbracket :
-					{ $$ = read_sql_expression(']', "]"); }
-				;
-
 expr_until_then :
 					{ $$ = read_sql_expression(K_THEN, "THEN"); }
 				;
@@ -3491,11 +3470,6 @@ check_assignable(PLpgSQL_datum *datum, int location)
 		case PLPGSQL_DTYPE_RECFIELD:
 			/* assignable if parent record is */
 			check_assignable(plpgsql_Datums[((PLpgSQL_recfield *) datum)->recparentno],
-							 location);
-			break;
-		case PLPGSQL_DTYPE_ARRAYELEM:
-			/* assignable if parent array is */
-			check_assignable(plpgsql_Datums[((PLpgSQL_arrayelem *) datum)->arrayparentno],
 							 location);
 			break;
 		default:

@@ -64,7 +64,6 @@ typedef enum PLpgSQL_datum_type
 	PLPGSQL_DTYPE_ROW,
 	PLPGSQL_DTYPE_REC,
 	PLPGSQL_DTYPE_RECFIELD,
-	PLPGSQL_DTYPE_ARRAYELEM,
 	PLPGSQL_DTYPE_PROMISE
 } PLpgSQL_datum_type;
 
@@ -261,7 +260,7 @@ typedef struct PLpgSQL_expr
  * Generic datum array item
  *
  * PLpgSQL_datum is the common supertype for PLpgSQL_var, PLpgSQL_row,
- * PLpgSQL_rec, PLpgSQL_recfield, and PLpgSQL_arrayelem.
+ * PLpgSQL_rec, and PLpgSQL_recfield.
  */
 typedef struct PLpgSQL_datum
 {
@@ -421,30 +420,6 @@ typedef struct PLpgSQL_recfield
 	ExpandedRecordFieldInfo finfo;	/* field's attnum and type info */
 	/* if rectupledescid == INVALID_TUPLEDESC_IDENTIFIER, finfo isn't valid */
 } PLpgSQL_recfield;
-
-/*
- * Element of array variable
- */
-typedef struct PLpgSQL_arrayelem
-{
-	PLpgSQL_datum_type dtype;
-	int			dno;
-	/* end of PLpgSQL_datum fields */
-
-	PLpgSQL_expr *subscript;
-	int			arrayparentno;	/* dno of parent array variable */
-
-	/* Remaining fields are cached info about the array variable's type */
-	Oid			parenttypoid;	/* type of array variable; 0 if not yet set */
-	int32		parenttypmod;	/* typmod of array variable */
-	Oid			arraytypoid;	/* OID of actual array type */
-	int32		arraytypmod;	/* typmod of array (and its elements too) */
-	int16		arraytyplen;	/* typlen of array type */
-	Oid			elemtypoid;		/* OID of array element type */
-	int16		elemtyplen;		/* typlen of element type */
-	bool		elemtypbyval;	/* element type is pass-by-value? */
-	char		elemtypalign;	/* typalign of element type */
-} PLpgSQL_arrayelem;
 
 /*
  * Item in the compilers namespace tree

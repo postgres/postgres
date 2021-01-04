@@ -768,9 +768,6 @@ plpgsql_free_function_memory(PLpgSQL_function *func)
 				break;
 			case PLPGSQL_DTYPE_RECFIELD:
 				break;
-			case PLPGSQL_DTYPE_ARRAYELEM:
-				free_expr(((PLpgSQL_arrayelem *) d)->subscript);
-				break;
 			default:
 				elog(ERROR, "unrecognized data type: %d", d->dtype);
 		}
@@ -1703,12 +1700,6 @@ plpgsql_dumptree(PLpgSQL_function *func)
 				printf("RECFIELD %-16s of REC %d\n",
 					   ((PLpgSQL_recfield *) d)->fieldname,
 					   ((PLpgSQL_recfield *) d)->recparentno);
-				break;
-			case PLPGSQL_DTYPE_ARRAYELEM:
-				printf("ARRAYELEM of VAR %d subscript ",
-					   ((PLpgSQL_arrayelem *) d)->arrayparentno);
-				dump_expr(((PLpgSQL_arrayelem *) d)->subscript);
-				printf("\n");
 				break;
 			default:
 				printf("??? unknown data type %d\n", d->dtype);

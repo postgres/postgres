@@ -1311,12 +1311,11 @@ copy_plpgsql_datums(PLpgSQL_execstate *estate,
 
 			case PLPGSQL_DTYPE_ROW:
 			case PLPGSQL_DTYPE_RECFIELD:
-			case PLPGSQL_DTYPE_ARRAYELEM:
 
 				/*
 				 * These datum records are read-only at runtime, so no need to
-				 * copy them (well, RECFIELD and ARRAYELEM contain cached
-				 * data, but we'd just as soon centralize the caching anyway).
+				 * copy them (well, RECFIELD contains cached data, but we'd
+				 * just as soon centralize the caching anyway).
 				 */
 				outdatum = indatum;
 				break;
@@ -4136,9 +4135,6 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
  *
  * NB: the result of the evaluation is no longer valid after this is done,
  * unless it is a pass-by-value datatype.
- *
- * NB: if you change this code, see also the hacks in exec_assign_value's
- * PLPGSQL_DTYPE_ARRAYELEM case for partial cleanup after subscript evals.
  * ----------
  */
 static void
@@ -5288,198 +5284,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				break;
 			}
 
-		case PLPGSQL_DTYPE_ARRAYELEM:
-			{
-				/*
-				 * Target is an element of an array
-				 */
-				PLpgSQL_arrayelem *arrayelem;
-				int			nsubscripts;
-				int			i;
-				PLpgSQL_expr *subscripts[MAXDIM];
-				int			subscriptvals[MAXDIM];
-				Datum		oldarraydatum,
-							newarraydatum,
-							coerced_value;
-				bool		oldarrayisnull;
-				Oid			parenttypoid;
-				int32		parenttypmod;
-				SPITupleTable *save_eval_tuptable;
-				MemoryContext oldcontext;
-
-				/*
-				 * We need to do subscript evaluation, which might require
-				 * evaluating general expressions; and the caller might have
-				 * done that too in order to prepare the input Datum.  We have
-				 * to save and restore the caller's SPI_execute result, if
-				 * any.
-				 */
-				save_eval_tuptable = estate->eval_tuptable;
-				estate->eval_tuptable = NULL;
-
-				/*
-				 * To handle constructs like x[1][2] := something, we have to
-				 * be prepared to deal with a chain of arrayelem datums. Chase
-				 * back to find the base array datum, and save the subscript
-				 * expressions as we go.  (We are scanning right to left here,
-				 * but want to evaluate the subscripts left-to-right to
-				 * minimize surprises.)  Note that arrayelem is left pointing
-				 * to the leftmost arrayelem datum, where we will cache the
-				 * array element type data.
-				 */
-				nsubscripts = 0;
-				do
-				{
-					arrayelem = (PLpgSQL_arrayelem *) target;
-					if (nsubscripts >= MAXDIM)
-						ereport(ERROR,
-								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-								 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-										nsubscripts + 1, MAXDIM)));
-					subscripts[nsubscripts++] = arrayelem->subscript;
-					target = estate->datums[arrayelem->arrayparentno];
-				} while (target->dtype == PLPGSQL_DTYPE_ARRAYELEM);
-
-				/* Fetch current value of array datum */
-				exec_eval_datum(estate, target,
-								&parenttypoid, &parenttypmod,
-								&oldarraydatum, &oldarrayisnull);
-
-				/* Update cached type data if necessary */
-				if (arrayelem->parenttypoid != parenttypoid ||
-					arrayelem->parenttypmod != parenttypmod)
-				{
-					Oid			arraytypoid;
-					int32		arraytypmod = parenttypmod;
-					int16		arraytyplen;
-					Oid			elemtypoid;
-					int16		elemtyplen;
-					bool		elemtypbyval;
-					char		elemtypalign;
-
-					/* If target is domain over array, reduce to base type */
-					arraytypoid = getBaseTypeAndTypmod(parenttypoid,
-													   &arraytypmod);
-
-					/* ... and identify the element type */
-					elemtypoid = get_element_type(arraytypoid);
-					if (!OidIsValid(elemtypoid))
-						ereport(ERROR,
-								(errcode(ERRCODE_DATATYPE_MISMATCH),
-								 errmsg("subscripted object is not an array")));
-
-					/* Collect needed data about the types */
-					arraytyplen = get_typlen(arraytypoid);
-
-					get_typlenbyvalalign(elemtypoid,
-										 &elemtyplen,
-										 &elemtypbyval,
-										 &elemtypalign);
-
-					/* Now safe to update the cached data */
-					arrayelem->parenttypoid = parenttypoid;
-					arrayelem->parenttypmod = parenttypmod;
-					arrayelem->arraytypoid = arraytypoid;
-					arrayelem->arraytypmod = arraytypmod;
-					arrayelem->arraytyplen = arraytyplen;
-					arrayelem->elemtypoid = elemtypoid;
-					arrayelem->elemtyplen = elemtyplen;
-					arrayelem->elemtypbyval = elemtypbyval;
-					arrayelem->elemtypalign = elemtypalign;
-				}
-
-				/*
-				 * Evaluate the subscripts, switch into left-to-right order.
-				 * Like the expression built by ExecInitSubscriptingRef(),
-				 * complain if any subscript is null.
-				 */
-				for (i = 0; i < nsubscripts; i++)
-				{
-					bool		subisnull;
-
-					subscriptvals[i] =
-						exec_eval_integer(estate,
-										  subscripts[nsubscripts - 1 - i],
-										  &subisnull);
-					if (subisnull)
-						ereport(ERROR,
-								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-								 errmsg("array subscript in assignment must not be null")));
-
-					/*
-					 * Clean up in case the subscript expression wasn't
-					 * simple. We can't do exec_eval_cleanup, but we can do
-					 * this much (which is safe because the integer subscript
-					 * value is surely pass-by-value), and we must do it in
-					 * case the next subscript expression isn't simple either.
-					 */
-					if (estate->eval_tuptable != NULL)
-						SPI_freetuptable(estate->eval_tuptable);
-					estate->eval_tuptable = NULL;
-				}
-
-				/* Now we can restore caller's SPI_execute result if any. */
-				Assert(estate->eval_tuptable == NULL);
-				estate->eval_tuptable = save_eval_tuptable;
-
-				/* Coerce source value to match array element type. */
-				coerced_value = exec_cast_value(estate,
-												value,
-												&isNull,
-												valtype,
-												valtypmod,
-												arrayelem->elemtypoid,
-												arrayelem->arraytypmod);
-
-				/*
-				 * If the original array is null, cons up an empty array so
-				 * that the assignment can proceed; we'll end with a
-				 * one-element array containing just the assigned-to
-				 * subscript.  This only works for varlena arrays, though; for
-				 * fixed-length array types we skip the assignment.  We can't
-				 * support assignment of a null entry into a fixed-length
-				 * array, either, so that's a no-op too.  This is all ugly but
-				 * corresponds to the current behavior of execExpr*.c.
-				 */
-				if (arrayelem->arraytyplen > 0 &&	/* fixed-length array? */
-					(oldarrayisnull || isNull))
-					return;
-
-				/* empty array, if any, and newarraydatum are short-lived */
-				oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-
-				if (oldarrayisnull)
-					oldarraydatum = PointerGetDatum(construct_empty_array(arrayelem->elemtypoid));
-
-				/*
-				 * Build the modified array value.
-				 */
-				newarraydatum = array_set_element(oldarraydatum,
-												  nsubscripts,
-												  subscriptvals,
-												  coerced_value,
-												  isNull,
-												  arrayelem->arraytyplen,
-												  arrayelem->elemtyplen,
-												  arrayelem->elemtypbyval,
-												  arrayelem->elemtypalign);
-
-				MemoryContextSwitchTo(oldcontext);
-
-				/*
-				 * Assign the new array to the base variable.  It's never NULL
-				 * at this point.  Note that if the target is a domain,
-				 * coercing the base array type back up to the domain will
-				 * happen within exec_assign_value.
-				 */
-				exec_assign_value(estate, target,
-								  newarraydatum,
-								  false,
-								  arrayelem->arraytypoid,
-								  arrayelem->arraytypmod);
-				break;
-			}
-
 		default:
 			elog(ERROR, "unrecognized dtype: %d", target->dtype);
 	}
@@ -5490,8 +5294,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
  *
  * The type oid, typmod, value in Datum format, and null flag are returned.
  *
- * At present this doesn't handle PLpgSQL_expr or PLpgSQL_arrayelem datums;
- * that's not needed because we never pass references to such datums to SPI.
+ * At present this doesn't handle PLpgSQL_expr datums; that's not needed
+ * because we never pass references to such datums to SPI.
  *
  * NOTE: the returned Datum points right at the stored value in the case of
  * pass-by-reference datatypes.  Generally callers should take care not to
