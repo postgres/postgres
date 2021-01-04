@@ -106,6 +106,35 @@ SELECT v,
  01010101010 | 1010    | 01010    | 101010
 (4 rows)
 
+-- test overflow cases
+SELECT SUBSTRING('01010101'::bit(8) FROM 2 FOR 2147483646) AS "1010101";
+ 1010101 
+---------
+ 1010101
+(1 row)
+
+SELECT SUBSTRING('01010101'::bit(8) FROM -10 FOR 2147483646) AS "01010101";
+ 01010101 
+----------
+ 01010101
+(1 row)
+
+SELECT SUBSTRING('01010101'::bit(8) FROM -10 FOR -2147483646) AS "error";
+ERROR:  negative substring length not allowed
+SELECT SUBSTRING('01010101'::varbit FROM 2 FOR 2147483646) AS "1010101";
+ 1010101 
+---------
+ 1010101
+(1 row)
+
+SELECT SUBSTRING('01010101'::varbit FROM -10 FOR 2147483646) AS "01010101";
+ 01010101 
+----------
+ 01010101
+(1 row)
+
+SELECT SUBSTRING('01010101'::varbit FROM -10 FOR -2147483646) AS "error";
+ERROR:  negative substring length not allowed
 --- Bit operations
 DROP TABLE varbit_table;
 CREATE TABLE varbit_table (a BIT VARYING(16), b BIT VARYING(16));

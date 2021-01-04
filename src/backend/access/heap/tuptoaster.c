@@ -35,6 +35,7 @@
 #include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
+#include "common/int.h"
 #include "common/pg_lzcompress.h"
 #include "miscadmin.h"
 #include "utils/expandeddatum.h"
@@ -252,6 +253,9 @@ heap_tuple_untoast_attr(struct varlena *attr)
  *
  *		Public entry point to get back part of a toasted value
  *		from compression or external storage.
+ *
+ * sliceoffset is where to start (zero or more)
+ * If slicelength < 0, return everything beyond sliceoffset
  * ----------
  */
 struct varlena *
@@ -261,7 +265,20 @@ heap_tuple_untoast_attr_slice(struct varlena *attr,
 	struct varlena *preslice;
 	struct varlena *result;
 	char	   *attrdata;
+	int32		slicelimit;
 	int32		attrsize;
+
+	if (sliceoffset < 0)
+		elog(ERROR, "invalid sliceoffset: %d", sliceoffset);
+
+	/*
+	 * Compute slicelimit = offset + length, or -1 if we must fetch all of the
+	 * value.  In case of integer overflow, we must fetch all.
+	 */
+	if (slicelength < 0)
+		slicelimit = -1;
+	else if (pg_add_s32_overflow(sliceoffset, slicelength, &slicelimit))
+		slicelength = slicelimit = -1;
 
 	if (VARATT_IS_EXTERNAL_ONDISK(attr))
 	{
@@ -303,8 +320,8 @@ heap_tuple_untoast_attr_slice(struct varlena *attr,
 		struct varlena *tmp = preslice;
 
 		/* Decompress enough to encompass the slice and the offset */
-		if (slicelength > 0 && sliceoffset >= 0)
-			preslice = toast_decompress_datum_slice(tmp, slicelength + sliceoffset);
+		if (slicelimit >= 0)
+			preslice = toast_decompress_datum_slice(tmp, slicelimit);
 		else
 			preslice = toast_decompress_datum(tmp);
 
@@ -330,8 +347,7 @@ heap_tuple_untoast_attr_slice(struct varlena *attr,
 		sliceoffset = 0;
 		slicelength = 0;
 	}
-
-	if (((sliceoffset + slicelength) > attrsize) || slicelength < 0)
+	else if (slicelength < 0 || slicelimit > attrsize)
 		slicelength = attrsize - sliceoffset;
 
 	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
@@ -2086,7 +2102,12 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset, int32 length)
 		length = 0;
 	}
 
-	if (((sliceoffset + length) > attrsize) || length < 0)
+	/*
+	 * Adjust length request if needed.  (Note: our sole caller,
+	 * heap_tuple_untoast_attr_slice, protects us against sliceoffset + length
+	 * overflowing.)
+	 */
+	else if (((sliceoffset + length) > attrsize) || length < 0)
 		length = attrsize - sliceoffset;
 
 	result = (struct varlena *) palloc(length + VARHDRSZ);
