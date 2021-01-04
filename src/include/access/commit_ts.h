@@ -38,7 +38,6 @@ extern void BootStrapCommitTs(void);
 extern void StartupCommitTs(void);
 extern void CommitTsParameterChange(bool newvalue, bool oldvalue);
 extern void CompleteCommitTsInitialization(void);
-extern void ShutdownCommitTs(void);
 extern void CheckPointCommitTs(void);
 extern void ExtendCommitTs(TransactionId newestXact);
 extern void TruncateCommitTs(TransactionId oldestXact);
