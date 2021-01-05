@@ -54,12 +54,12 @@ $excludes ||= "$code_base/src/tools/pgindent/exclude_file_patterns"
 # some names we want to treat like typedefs, e.g. "bool" (which is a macro
 # according to <stdbool.h>), and may include some names we don't want
 # treated as typedefs, although various headers that some builds include
-# might make them so.  For the moment we just hardwire a whitelist of names
-# to add and a blacklist of names to remove; eventually this may need to be
+# might make them so.  For the moment we just hardwire a list of names
+# to add and a list of names to exclude; eventually this may need to be
 # easier to configure.  Note that the typedefs need trailing newlines.
-my @whitelist = ("bool\n");
+my @additional = ("bool\n");
 
-my %blacklist = map { +"$_\n" => 1 } qw(
+my %excluded = map { +"$_\n" => 1 } qw(
   ANY FD_SET U abs allocfunc boolean date digit ilist interval iterator other
   pointer printfunc reference string timestamp type wrap
 );
@@ -134,11 +134,11 @@ sub load_typedefs
 		}
 	}
 
-	# add whitelisted entries
-	push(@typedefs, @whitelist);
+	# add additional entries
+	push(@typedefs, @additional);
 
-	# remove blacklisted entries
-	@typedefs = grep { !$blacklist{$_} } @typedefs;
+	# remove excluded entries
+	@typedefs = grep { !$excluded{$_} } @typedefs;
 
 	# write filtered typedefs
 	my $filter_typedefs_fh = new File::Temp(TEMPLATE => "pgtypedefXXXXX");
