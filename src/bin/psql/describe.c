@@ -3718,6 +3718,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 					  " WHEN " CppAsString2(RELKIND_INDEX) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_SEQUENCE) " THEN '%s'"
 					  " WHEN 's' THEN '%s'"
+					  " WHEN " CppAsString2(RELKIND_TOASTVALUE) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_FOREIGN_TABLE) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_PARTITIONED_TABLE) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_PARTITIONED_INDEX) " THEN '%s'"
@@ -3731,6 +3732,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 					  gettext_noop("index"),
 					  gettext_noop("sequence"),
 					  gettext_noop("special"),
+					  gettext_noop("TOAST table"),
 					  gettext_noop("foreign table"),
 					  gettext_noop("partitioned table"),
 					  gettext_noop("partitioned index"),
@@ -3813,8 +3815,13 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 
 	appendPQExpBufferStr(&buf, "\nWHERE c.relkind IN (");
 	if (showTables)
+	{
 		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_RELATION) ","
 							 CppAsString2(RELKIND_PARTITIONED_TABLE) ",");
+		/* with 'S' or a pattern, allow 't' to match TOAST tables too */
+		if (showSystem || pattern)
+			appendPQExpBufferStr(&buf, CppAsString2(RELKIND_TOASTVALUE) ",");
+	}
 	if (showViews)
 		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_VIEW) ",");
 	if (showMatViews)
@@ -3834,16 +3841,8 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+							 "      AND n.nspname !~ '^pg_toast'\n"
 							 "      AND n.nspname <> 'information_schema'\n");
-
-	/*
-	 * TOAST objects are suppressed unconditionally.  Since we don't provide
-	 * any way to select RELKIND_TOASTVALUE above, we would never show toast
-	 * tables in any case; it seems a bit confusing to allow their indexes to
-	 * be shown.  Use plain \d if you really need to look at a TOAST
-	 * table/index.
-	 */
-	appendPQExpBufferStr(&buf, "      AND n.nspname !~ '^pg_toast'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.relname", NULL,
@@ -4057,16 +4056,8 @@ listPartitionedTables(const char *reltypes, const char *pattern, bool verbose)
 
 	if (!pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+							 "      AND n.nspname !~ '^pg_toast'\n"
 							 "      AND n.nspname <> 'information_schema'\n");
-
-	/*
-	 * TOAST objects are suppressed unconditionally.  Since we don't provide
-	 * any way to select RELKIND_TOASTVALUE above, we would never show toast
-	 * tables in any case; it seems a bit confusing to allow their indexes to
-	 * be shown.  Use plain \d if you really need to look at a TOAST
-	 * table/index.
-	 */
-	appendPQExpBufferStr(&buf, "      AND n.nspname !~ '^pg_toast'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.relname", NULL,
