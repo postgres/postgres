@@ -2119,13 +2119,13 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					 * Mapped catalog tuple without data, emitted while
 					 * catalog table was in the process of being rewritten. We
 					 * can fail to look up the relfilenode, because the
-					 * relmapper has no "historic" view, in contrast to normal
-					 * the normal catalog during decoding. Thus repeated
-					 * rewrites can cause a lookup failure. That's OK because
-					 * we do not decode catalog changes anyway. Normally such
-					 * tuples would be skipped over below, but we can't
-					 * identify whether the table should be logically logged
-					 * without mapping the relfilenode to the oid.
+					 * relmapper has no "historic" view, in contrast to the
+					 * normal catalog during decoding. Thus repeated rewrites
+					 * can cause a lookup failure. That's OK because we do not
+					 * decode catalog changes anyway. Normally such tuples
+					 * would be skipped over below, but we can't identify
+					 * whether the table should be logically logged without
+					 * mapping the relfilenode to the oid.
 					 */
 					if (reloid == InvalidOid &&
 						change->data.tp.newtuple == NULL &&
