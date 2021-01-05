@@ -8601,7 +8601,7 @@ power_var_int(const NumericVar *base, int exp, NumericVar *result, int rscale)
 	 * to around log10(abs(exp)) digits, so work with this many extra digits
 	 * of precision (plus a few more for good measure).
 	 */
-	sig_digits += (int) log(Abs(exp)) + 8;
+	sig_digits += (int) log(fabs(exp)) + 8;
 
 	/*
 	 * Now we can proceed with the multiplications.
