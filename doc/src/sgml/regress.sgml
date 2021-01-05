@@ -352,6 +352,31 @@ make check LANG=C ENCODING=EUC_JP
   </sect2>
 
   <sect2>
+   <title>Custom Server Settings</title>
+
+   <para>
+    Custom server settings to use when running a regression test suite can be
+    set in the <varname>PGOPTIONS</varname> environment variable (for settings
+    that allow this):
+<screen>
+make check PGOPTIONS="-c log_checkpoints=on -c work_mem=50MB"
+</screen>
+    When running against a temporary installation, custom settings can also be
+    set by supplying a pre-written <filename>postgresql.conf</filename>:
+<screen>
+echo 'log_checkpoints = on' > test_postgresql.conf
+echo 'work_mem = 50MB' >> test_postgresql.conf
+make check EXTRA_REGRESS_OPTS="--temp-config=test_postgresql.conf"
+</screen>
+   </para>
+
+   <para>
+    This can be useful to enable additional logging, adjust resource limits,
+    or enable extra run-time checks.
+   </para>
+  </sect2>
+
+  <sect2>
    <title>Extra Tests</title>
 
    <para>
