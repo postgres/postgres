@@ -909,6 +909,7 @@ select 3.789 ^ 21;
 select 3.789 ^ 35;
 select 1.2 ^ 345;
 select 0.12 ^ (-20);
+select 1.000000000123 ^ (-2147483648);
 
 -- cases that used to error out
 select 0.12 ^ (-25);
