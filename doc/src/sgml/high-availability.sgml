@@ -1859,8 +1859,11 @@ if (!triggered)
    </para>
 
    <para>
-    Users will be able to tell whether their session is read-only by
-    issuing <command>SHOW transaction_read_only</command>.  In addition, a set of
+    Users can determine whether hot standby is currently active for their
+    session by issuing <command>SHOW in_hot_standby</command>.
+    (In server versions before 14, the <varname>in_hot_standby</varname>
+    parameter did not exist; a workable substitute method for older servers
+    is <command>SHOW transaction_read_only</command>.)  In addition, a set of
     functions (<xref linkend="functions-recovery-info-table"/>) allow users to
     access information about the standby server. These allow you to write
     programs that are aware of the current state of the database. These

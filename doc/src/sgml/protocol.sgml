@@ -1278,6 +1278,7 @@ SELCT 1/0;<!-- this typo is intentional -->
     <varname>server_encoding</varname>,
     <varname>client_encoding</varname>,
     <varname>application_name</varname>,
+    <varname>in_hot_standby</varname>,
     <varname>is_superuser</varname>,
     <varname>session_authorization</varname>,
     <varname>DateStyle</varname>,
@@ -1290,7 +1291,10 @@ SELCT 1/0;<!-- this typo is intentional -->
     <varname>standard_conforming_strings</varname> was not reported by releases
     before 8.1;
     <varname>IntervalStyle</varname> was not reported by releases before 8.4;
-    <varname>application_name</varname> was not reported by releases before 9.0.)
+    <varname>application_name</varname> was not reported by releases before
+    9.0;
+    <varname>in_hot_standby</varname> was not reported by releases before
+    14.)
     Note that
     <varname>server_version</varname>,
     <varname>server_encoding</varname> and

@@ -16,7 +16,7 @@
 ## if an option is valid but shows up in only one file (guc.c but not
 ## postgresql.conf.sample), it should be listed here so that it
 ## can be ignored
-INTENTIONALLY_NOT_INCLUDED="debug_deadlocks \
+INTENTIONALLY_NOT_INCLUDED="debug_deadlocks in_hot_standby \
 is_superuser lc_collate lc_ctype lc_messages lc_monetary lc_numeric lc_time \
 pre_auth_delay role seed server_encoding server_version server_version_num \
 session_authorization trace_lock_oidmin trace_lock_table trace_locks trace_lwlocks \

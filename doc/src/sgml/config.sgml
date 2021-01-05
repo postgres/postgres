@@ -9600,13 +9600,14 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     <title>Preset Options</title>
 
     <para>
-     The following <quote>parameters</quote> are read-only, and are determined
-     when <productname>PostgreSQL</productname> is compiled or when it is
-     installed. As such, they have been excluded from the sample
+     The following <quote>parameters</quote> are read-only.
+     As such, they have been excluded from the sample
      <filename>postgresql.conf</filename> file.  These options report
      various aspects of <productname>PostgreSQL</productname> behavior
      that might be of interest to certain applications, particularly
      administrative front-ends.
+     Most of them are determined when <productname>PostgreSQL</productname>
+     is compiled or when it is installed.
     </para>
 
     <variablelist>
@@ -9651,10 +9652,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </term>
       <listitem>
        <para>
-        On Unix systems this parameter reports the permissions of the data
-        directory defined by (<xref linkend="guc-data-directory"/>) at startup.
+        On Unix systems this parameter reports the permissions the data
+        directory (defined by <xref linkend="guc-data-directory"/>)
+        had at server startup.
         (On Microsoft Windows this parameter will always display
-        <literal>0700</literal>). See
+        <literal>0700</literal>.) See
         <xref linkend="app-initdb-allow-group-access"/> for more information.
        </para>
       </listitem>
@@ -9691,6 +9693,23 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Reports whether <productname>PostgreSQL</productname> was built with support for
         64-bit-integer dates and times.  As of <productname>PostgreSQL</productname> 10,
         this is always <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-in-hot-standby" xreflabel="in_hot_standby">
+      <term><varname>in_hot_standby</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>in_hot_standby</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reports whether the server is currently in hot standby mode.  When
+        this is <literal>on</literal>, all transactions are forced to be
+        read-only.  Within a session, this can change only if the server is
+        promoted to be primary.  See <xref linkend="hot-standby"/> for more
+        information.
        </para>
       </listitem>
      </varlistentry>
