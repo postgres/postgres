@@ -312,7 +312,7 @@ check_hash_func_signature(Oid funcid, int16 amprocnum, Oid argtype)
 		 * that are different from but physically compatible with the opclass
 		 * datatype.  In some of these cases, even a "binary coercible" check
 		 * fails because there's no relevant cast.  For the moment, fix it by
-		 * having a whitelist of allowed cases.  Test the specific function
+		 * having a list of allowed cases.  Test the specific function
 		 * identity, not just its input type, because hashvarlena() takes
 		 * INTERNAL and allowing any such function seems too scary.
 		 */

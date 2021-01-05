@@ -64,7 +64,7 @@ with no prerequisite headers other than postgres.h (or postgres_fe.h
 or c.h, as appropriate).
 
 A small number of header files are exempted from this requirement,
-and are whitelisted in the headerscheck script.
+and are skipped by the headerscheck script.
 
 The easy way to run the script is to say "make -s headerscheck" in
 the top-level build directory after completing a build.  You should
@@ -86,7 +86,7 @@ the project's coding language is C, some people write extensions in C++,
 so it's helpful for include files to be C++-clean.
 
 A small number of header files are exempted from this requirement,
-and are whitelisted in the cpluspluscheck script.
+and are skipped by the cpluspluscheck script.
 
 The easy way to run the script is to say "make -s cpluspluscheck" in
 the top-level build directory after completing a build.  You should

@@ -77,7 +77,7 @@ typedef struct PgFdwRelationInfo
 	bool		use_remote_estimate;
 	Cost		fdw_startup_cost;
 	Cost		fdw_tuple_cost;
-	List	   *shippable_extensions;	/* OIDs of whitelisted extensions */
+	List	   *shippable_extensions;	/* OIDs of shippable extensions */
 
 	/* Cached catalog information. */
 	ForeignTable *table;
