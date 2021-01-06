@@ -1437,12 +1437,13 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
    </para>
 
    <para>
-    The default behavior of recovery is to recover along the same timeline
-    that was current when the base backup was taken.  If you wish to recover
-    into some child timeline (that is, you want to return to some state that
-    was itself generated after a recovery attempt), you need to specify the
-    target timeline ID in <xref linkend="guc-recovery-target-timeline"/>. You cannot recover into
-    timelines that branched off earlier than the base backup.
+    The default behavior of recovery is to recover to the latest timeline found
+    in the archive. If you wish to recover to the timeline that was current
+    when the base backup was taken or into a specific child timeline (that
+    is, you want to return to some state that was itself generated after a
+    recovery attempt), you need to specify <literal>current</literal> or the
+    target timeline ID in <xref linkend="guc-recovery-target-timeline"/>. You
+    cannot recover into timelines that branched off earlier than the base backup.
    </para>
   </sect2>
 
