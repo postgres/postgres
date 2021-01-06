@@ -1371,7 +1371,7 @@ stream_commit_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	ctx->write_xid = txn->xid;
 	ctx->write_location = txn->end_lsn;
 
-	/* in streaming mode, stream_abort_cb is required */
+	/* in streaming mode, stream_commit_cb is required */
 	if (ctx->callbacks.stream_commit_cb == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

@@ -685,10 +685,10 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	 * so during startup, to get to the first transaction the client needs. As
 	 * we have reset the catalog caches before starting to read WAL, and we
 	 * haven't yet touched any catalogs, there can't be anything to invalidate.
-	 * But if we're "forgetting" this commit because it's it happened in
-	 * another database, the invalidations might be important, because they
-	 * could be for shared catalogs and we might have loaded data into the
-	 * relevant syscaches.
+	 * But if we're "forgetting" this commit because it happened in another
+	 * database, the invalidations might be important, because they could be
+	 * for shared catalogs and we might have loaded data into the relevant
+	 * syscaches.
 	 * ---
 	 */
 	if (DecodeTXNNeedSkip(ctx, buf, parsed->dbId, origin_id))
