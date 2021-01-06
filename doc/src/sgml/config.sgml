@@ -8310,15 +8310,52 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-       Terminate any session with an open transaction that has been idle for
-       longer than the specified amount of time. This allows any
-       locks held by that session to be released and the connection slot to be reused;
-       it also allows tuples visible only to this transaction to be vacuumed.  See
-       <xref linkend="routine-vacuuming"/> for more details about this.
+        Terminate any session that has been idle (that is, waiting for a
+        client query) within an open transaction for longer than the
+        specified amount of time.
+        If this value is specified without units, it is taken as milliseconds.
+        A value of zero (the default) disables the timeout.
        </para>
+
        <para>
-       If this value is specified without units, it is taken as milliseconds.
-       A value of zero (the default) disables the timeout.
+        This option can be used to ensure that idle sessions do not hold
+        locks for an unreasonable amount of time.  Even when no significant
+        locks are held, an open transaction prevents vacuuming away
+        recently-dead tuples that may be visible only to this transaction;
+        so remaining idle for a long time can contribute to table bloat.
+        See <xref linkend="routine-vacuuming"/> for more details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-idle-session-timeout" xreflabel="idle_session_timeout">
+      <term><varname>idle_session_timeout</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>idle_session_timeout</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Terminate any session that has been idle (that is, waiting for a
+        client query), but not within an open transaction, for longer than
+        the specified amount of time.
+        If this value is specified without units, it is taken as milliseconds.
+        A value of zero (the default) disables the timeout.
+       </para>
+
+       <para>
+        Unlike the case with an open transaction, an idle session without a
+        transaction imposes no large costs on the server, so there is less
+        need to enable this timeout
+        than <varname>idle_in_transaction_session_timeout</varname>.
+       </para>
+
+       <para>
+        Be wary of enforcing this timeout on connections made through
+        connection-pooling software or other middleware, as such a layer
+        may not react well to unexpected connection closure.  It may be
+        helpful to enable this timeout only for interactive sessions,
+        perhaps by applying it only to particular users.
        </para>
       </listitem>
      </varlistentry>
