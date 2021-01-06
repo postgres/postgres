@@ -399,6 +399,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </entry>
      </row>
 
+     <row>
+      <entry><structname>pg_stat_progress_copy</structname><indexterm><primary>pg_stat_progress_copy</primary></indexterm></entry>
+      <entry>One row for each backend running <command>COPY</command>, showing current progress.
+       See <xref linkend='copy-progress-reporting'/>.
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -5247,6 +5253,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    which support progress reporting are <command>ANALYZE</command>,
    <command>CLUSTER</command>,
    <command>CREATE INDEX</command>, <command>VACUUM</command>,
+   <command>COPY</command>,
    and <xref linkend="protocol-replication-base-backup"/> (i.e., replication
    command that <xref linkend="app-pgbasebackup"/> issues to take
    a base backup).
@@ -6396,6 +6403,106 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   </table>
 
  </sect2>
+
+ <sect2 id="copy-progress-reporting">
+  <title>COPY Progress Reporting</title>
+
+  <indexterm>
+   <primary>pg_stat_progress_copy</primary>
+  </indexterm>
+
+  <para>
+   Whenever <command>COPY</command> is running, the
+   <structname>pg_stat_progress_copy</structname> view will contain one row
+   for each backend that is currently running <command>COPY</command> command.
+   The table bellow describes the information that will be reported and provide
+   information how to interpret it.
+  </para>
+
+  <table id="pg-stat-progress-copy-view" xreflabel="pg_stat_progress_copy">
+   <title><structname>pg_stat_progress_copy</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of backend.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>text</type>
+      </para>
+      <para>
+       OID of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the table on which the <command>COPY</command> command is executed.
+       It is set to 0 if <command>SELECT</command> query is provided.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>bytes_processed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of bytes already processed by <command>COPY</command> command.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>bytes_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Size of source file for <command>COPY FROM</command> command in bytes.
+       It is set to 0 if not available.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>lines_processed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of lines already processed by <command>COPY</command> command.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect2>
+
  </sect1>
 
  <sect1 id="dynamic-trace">

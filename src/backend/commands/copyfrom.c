@@ -25,6 +25,7 @@
 #include "access/xlog.h"
 #include "commands/copy.h"
 #include "commands/copyfrom_internal.h"
+#include "commands/progress.h"
 #include "commands/trigger.h"
 #include "executor/execPartition.h"
 #include "executor/executor.h"
@@ -35,6 +36,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "optimizer/optimizer.h"
+#include "pgstat.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/fd.h"
 #include "tcop/tcopprot.h"
@@ -1100,9 +1102,10 @@ CopyFrom(CopyFromState cstate)
 			/*
 			 * We count only tuples not suppressed by a BEFORE INSERT trigger
 			 * or FDW; this is the same definition used by nodeModifyTable.c
-			 * for counting tuples inserted by an INSERT command.
+			 * for counting tuples inserted by an INSERT command. Update
+			 * progress of the COPY command as well.
 			 */
-			processed++;
+			pgstat_progress_update_param(PROGRESS_COPY_LINES_PROCESSED, ++processed);
 		}
 	}
 
@@ -1415,6 +1418,12 @@ BeginCopyFrom(ParseState *pstate,
 		}
 	}
 
+
+	/* initialize progress */
+	pgstat_progress_start_command(PROGRESS_COMMAND_COPY,
+								  cstate->rel ? RelationGetRelid(cstate->rel) : InvalidOid);
+	cstate->bytes_processed = 0;
+
 	/* We keep those variables in cstate. */
 	cstate->in_functions = in_functions;
 	cstate->typioparams = typioparams;
@@ -1479,6 +1488,8 @@ BeginCopyFrom(ParseState *pstate,
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is a directory", cstate->filename)));
+
+			pgstat_progress_update_param(PROGRESS_COPY_BYTES_TOTAL, st.st_size);
 		}
 	}
 
@@ -1521,6 +1532,8 @@ EndCopyFrom(CopyFromState cstate)
 					 errmsg("could not close file \"%s\": %m",
 							cstate->filename)));
 	}
+
+	pgstat_progress_end_command();
 
 	MemoryContextDelete(cstate->copycontext);
 	pfree(cstate);

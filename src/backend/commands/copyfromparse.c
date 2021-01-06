@@ -20,11 +20,13 @@
 
 #include "commands/copy.h"
 #include "commands/copyfrom_internal.h"
+#include "commands/progress.h"
 #include "executor/executor.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "port/pg_bswap.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -384,6 +386,8 @@ CopyLoadRawBuf(CopyFromState cstate)
 	cstate->raw_buf[nbytes] = '\0';
 	cstate->raw_buf_index = 0;
 	cstate->raw_buf_len = nbytes;
+	cstate->bytes_processed += nbytes;
+	pgstat_progress_update_param(PROGRESS_COPY_BYTES_PROCESSED, cstate->bytes_processed);
 	return (inbytes > 0);
 }
 

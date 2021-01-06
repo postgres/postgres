@@ -494,6 +494,8 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 		cmdtype = PROGRESS_COMMAND_CREATE_INDEX;
 	else if (pg_strcasecmp(cmd, "BASEBACKUP") == 0)
 		cmdtype = PROGRESS_COMMAND_BASEBACKUP;
+	else if (pg_strcasecmp(cmd, "COPY") == 0)
+		cmdtype = PROGRESS_COMMAND_COPY;
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

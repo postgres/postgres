@@ -24,6 +24,7 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "commands/copy.h"
+#include "commands/progress.h"
 #include "executor/execdesc.h"
 #include "executor/executor.h"
 #include "executor/tuptable.h"
@@ -32,6 +33,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/optimizer.h"
+#include "pgstat.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/fd.h"
 #include "tcop/tcopprot.h"
@@ -95,6 +97,7 @@ typedef struct CopyToStateData
 
 	FmgrInfo   *out_functions;	/* lookup info for output functions */
 	MemoryContext rowcontext;	/* per-row evaluation context */
+	uint64		bytes_processed;	/* number of bytes processed so far */
 
 } CopyToStateData;
 
@@ -288,6 +291,10 @@ CopySendEndOfRow(CopyToState cstate)
 			break;
 	}
 
+	/* Update the progress */
+	cstate->bytes_processed += fe_msgbuf->len;
+	pgstat_progress_update_param(PROGRESS_COPY_BYTES_PROCESSED, cstate->bytes_processed);
+
 	resetStringInfo(fe_msgbuf);
 }
 
@@ -362,6 +369,8 @@ EndCopy(CopyToState cstate)
 					 errmsg("could not close file \"%s\": %m",
 							cstate->filename)));
 	}
+
+	pgstat_progress_end_command();
 
 	MemoryContextDelete(cstate->copycontext);
 	pfree(cstate);
@@ -760,6 +769,11 @@ BeginCopyTo(ParseState *pstate,
 		}
 	}
 
+	/* initialize progress */
+	pgstat_progress_start_command(PROGRESS_COMMAND_COPY,
+								  cstate->rel ? RelationGetRelid(cstate->rel) : InvalidOid);
+	cstate->bytes_processed = 0;
+
 	MemoryContextSwitchTo(oldcontext);
 
 	return cstate;
@@ -938,7 +952,9 @@ CopyTo(CopyToState cstate)
 
 			/* Format and send the data */
 			CopyOneRowTo(cstate, slot);
-			processed++;
+
+			/* Increment amount of processed tuples and update the progress */
+			pgstat_progress_update_param(PROGRESS_COPY_LINES_PROCESSED, ++processed);
 		}
 
 		ExecDropSingleTupleTableSlot(slot);
@@ -1303,7 +1319,9 @@ copy_dest_receive(TupleTableSlot *slot, DestReceiver *self)
 
 	/* Send the data */
 	CopyOneRowTo(cstate, slot);
-	myState->processed++;
+
+	/* Increment amount of processed tuples and update the progress */
+	pgstat_progress_update_param(PROGRESS_COPY_LINES_PROCESSED, ++myState->processed);
 
 	return true;
 }
