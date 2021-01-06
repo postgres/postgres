@@ -18,6 +18,7 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
+extern PGDLLIMPORT int debug_invalidate_system_caches_always;
 
 typedef void (*SyscacheCallbackFunction) (Datum arg, int cacheid, uint32 hashvalue);
 typedef void (*RelcacheCallbackFunction) (Datum arg, Oid relid);

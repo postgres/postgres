@@ -9989,6 +9989,43 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-debug-invalidate-system-caches-always" xreflabel="debug_invalidate_system_caches_always">
+      <term><varname>debug_invalidate_system_caches_always</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>debug_invalidate_system_caches_always</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        When set to 1, each cache lookup for a system catalog entry is
+        invalidated at the first possible opportunity, irrespective of whether
+        anything that would render it invalid really occurred.  Caching of
+        system catalogs is effectively disabled as a result, so the server
+        will run extremely slowly.  Higher values run the cache invalidation
+        recursively, which is even slower and useful only useful for testing
+        in very specific scenarios.
+       </para>
+
+       <para>
+        This option can be very helpful when trying to trigger
+        hard-to-reproduce bugs involving concurrency and catalog changes but
+        is otherwise rarely needed.  See the source code files
+        <filename>inval.c</filename> and
+        <filename>pg_config_manual.h</filename> for details.
+       </para>
+
+       <para>
+        This setting is supported but off by default (0) when
+        <symbol>CLOBBER_CACHE_ENABLED</symbol> is defined at compile time
+        (which happens automatically when using the
+        <literal>configure</literal> option
+        <option>--enable-cassert</option>).  In production builds, its value
+        will always be <literal>0</literal> and attempts to set it to another
+        value will raise an error.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-ignore-system-indexes" xreflabel="ignore_system_indexes">
       <term><varname>ignore_system_indexes</varname> (<type>boolean</type>)
       <indexterm>

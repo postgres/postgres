@@ -99,6 +99,7 @@
 #include "utils/rls.h"
 #include "utils/snapmgr.h"
 #include "utils/tzparser.h"
+#include "utils/inval.h"
 #include "utils/varlena.h"
 #include "utils/xml.h"
 
@@ -3400,6 +3401,29 @@ static struct config_int ConfigureNamesInt[] =
 		&huge_page_size,
 		0, 0, INT_MAX,
 		check_huge_page_size, NULL, NULL
+	},
+
+	{
+		{"debug_invalidate_system_caches_always", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("Aggressively invalidate system caches for debugging purposes."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&debug_invalidate_system_caches_always,
+#ifdef CLOBBER_CACHE_ENABLED
+		/* Set default based on older compile-time-only cache clobber macros */
+#if defined(CLOBBER_CACHE_RECURSIVELY)
+		3,
+#elif defined(CLOBBER_CACHE_ALWAYS)
+		1,
+#else
+		0,
+#endif
+		0, 5,
+#else	/* not CLOBBER_CACHE_ENABLED */
+		0, 0, 0,
+#endif	/* not CLOBBER_CACHE_ENABLED */
+		NULL, NULL, NULL
 	},
 
 	/* End-of-list marker */
