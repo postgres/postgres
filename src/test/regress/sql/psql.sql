@@ -1210,8 +1210,6 @@ drop role regress_partitioning_role;
 
 -- \d on toast table (use pg_statistic's toast table, which has a known name)
 \d pg_toast.pg_toast_2619
-\dt pg_toast.pg_toast_2619
-\di pg_toast.pg_toast_2619_index
 
 -- check printing info about access methods
 \dA

@@ -4895,20 +4895,6 @@ Owning table: "pg_catalog.pg_statistic"
 Indexes:
     "pg_toast_2619_index" PRIMARY KEY, btree (chunk_id, chunk_seq)
 
-\dt pg_toast.pg_toast_2619
-                 List of relations
-  Schema  |     Name      |    Type     |  Owner   
-----------+---------------+-------------+----------
- pg_toast | pg_toast_2619 | TOAST table | postgres
-(1 row)
-
-\di pg_toast.pg_toast_2619_index
-                         List of relations
-  Schema  |        Name         | Type  |  Owner   |     Table     
-----------+---------------------+-------+----------+---------------
- pg_toast | pg_toast_2619_index | index | postgres | pg_toast_2619
-(1 row)
-
 -- check printing info about access methods
 \dA
 List of access methods
