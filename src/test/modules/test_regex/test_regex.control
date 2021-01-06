@@ -1,0 +1,4 @@
+comment = 'Test code for backend/regex/'
+default_version = '1.0'
+module_pathname = '$libdir/test_regex'
+relocatable = true

@@ -22,6 +22,7 @@ SUBDIRS = \
 		  test_pg_dump \
 		  test_predtest \
 		  test_rbtree \
+		  test_regex \
 		  test_rls_hooks \
 		  test_shm_mq \
 		  unsafe_tests \
