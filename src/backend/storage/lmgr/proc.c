@@ -1784,6 +1784,9 @@ CheckDeadLockAlert(void)
 	 * Have to set the latch again, even if handle_sig_alarm already did. Back
 	 * then got_deadlock_timeout wasn't yet set... It's unlikely that this
 	 * ever would be a problem, but setting a set latch again is cheap.
+	 *
+	 * Note that, when this function runs inside procsignal_sigusr1_handler(),
+	 * the handler function sets the latch again after the latch is set here.
 	 */
 	SetLatch(MyLatch);
 	errno = save_errno;
