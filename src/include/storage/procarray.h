@@ -105,6 +105,8 @@ extern VirtualTransactionId *GetCurrentVirtualXIDs(TransactionId limitXmin,
 												   int *nvxids);
 extern VirtualTransactionId *GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid);
 extern pid_t CancelVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode);
+extern pid_t SignalVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode,
+									  bool conflictPending);
 
 extern bool MinimumActiveBackends(int min);
 extern int	CountDBBackends(Oid databaseid);

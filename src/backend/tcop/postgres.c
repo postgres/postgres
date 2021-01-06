@@ -2852,11 +2852,23 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 			case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
 
 				/*
-				 * If we aren't blocking the Startup process there is nothing
-				 * more to do.
+				 * If PROCSIG_RECOVERY_CONFLICT_BUFFERPIN is requested but we
+				 * aren't blocking the Startup process there is nothing more
+				 * to do.
+				 *
+				 * When PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK is
+				 * requested, if we're waiting for locks and the startup
+				 * process is not waiting for buffer pin (i.e., also waiting
+				 * for locks), we set the flag so that ProcSleep() will check
+				 * for deadlocks.
 				 */
 				if (!HoldingBufferPinThatDelaysRecovery())
+				{
+					if (reason == PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK &&
+						GetStartupBufferPinWaitBufId() < 0)
+						CheckDeadLockAlert();
 					return;
+				}
 
 				MyProc->recoveryConflictPending = true;
 
