@@ -307,7 +307,14 @@ schedule_alarm(TimestampTz now)
 		 * signal is still coming.
 		 *
 		 * Other race conditions involved with setting/checking signal_pending
-		 * are okay, for the reasons described above.
+		 * are okay, for the reasons described above.  One additional point is
+		 * that the signal handler could fire after we set signal_due_at, but
+		 * still before the setitimer() call.  Then the handler could
+		 * overwrite signal_due_at with a value it computes, which will be the
+		 * same as or perhaps later than what we just computed.  After we
+		 * perform setitimer(), the net effect would be that signal_due_at
+		 * gives a time later than when the interrupt will really happen;
+		 * which is a safe situation.
 		 */
 		signal_due_at = nearest_timeout;
 		signal_pending = true;
