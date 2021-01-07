@@ -6414,9 +6414,9 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <para>
    Whenever <command>COPY</command> is running, the
    <structname>pg_stat_progress_copy</structname> view will contain one row
-   for each backend that is currently running <command>COPY</command> command.
-   The table bellow describes the information that will be reported and provide
-   information how to interpret it.
+   for each backend that is currently running a <command>COPY</command> command.
+   The table below describes the information that will be reported and provides
+   information about how to interpret it.
   </para>
 
   <table id="pg-stat-progress-copy-view" xreflabel="pg_stat_progress_copy">
@@ -6445,7 +6445,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>datid</structfield> <type>text</type>
+       <structfield>datid</structfield> <type>oid</type>
       </para>
       <para>
        OID of the database to which this backend is connected.
@@ -6467,7 +6467,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       </para>
       <para>
        OID of the table on which the <command>COPY</command> command is executed.
-       It is set to 0 if <command>SELECT</command> query is provided.
+       It is set to 0 if copying from a <command>SELECT</command> query.
       </para></entry>
      </row>
 
