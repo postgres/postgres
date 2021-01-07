@@ -506,7 +506,7 @@ ERROR:  invalid regular expression: quantifier operand invalid
 select * from test_regex('?', '', '-');
 ERROR:  invalid regular expression: quantifier operand invalid
 -- These two are not yet incorporated in Tcl, cf
--- https://core.tcl-lang.org/tcl/artifact/106269fa65d96b83
+-- https://core.tcl-lang.org/tcl/tktview?name=5ea71fdcd3291c38
 -- expectError	6.21 -		{x(\w)(?=(\1))}	ESUBREG
 select * from test_regex('x(\w)(?=(\1))', '', '-');
 ERROR:  invalid regular expression: invalid backreference number

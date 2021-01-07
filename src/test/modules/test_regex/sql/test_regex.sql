@@ -171,7 +171,7 @@ select * from test_regex('+', '', '-');
 select * from test_regex('?', '', '-');
 
 -- These two are not yet incorporated in Tcl, cf
--- https://core.tcl-lang.org/tcl/artifact/106269fa65d96b83
+-- https://core.tcl-lang.org/tcl/tktview?name=5ea71fdcd3291c38
 -- expectError	6.21 -		{x(\w)(?=(\1))}	ESUBREG
 select * from test_regex('x(\w)(?=(\1))', '', '-');
 -- expectMatch	6.22 HP		{x(?=((foo)))}	xfoo	x
