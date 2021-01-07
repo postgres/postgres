@@ -4201,7 +4201,18 @@ PostgresMain(int argc, char *argv[],
 		firstchar = ReadCommand(&input_message);
 
 		/*
-		 * (4) disable async signal conditions again.
+		 * (4) turn off the idle-in-transaction timeout, if active.  We do
+		 * this before step (5) so that any last-moment timeout is certain to
+		 * be detected in step (5).
+		 */
+		if (disable_idle_in_transaction_timeout)
+		{
+			disable_timeout(IDLE_IN_TRANSACTION_SESSION_TIMEOUT, false);
+			disable_idle_in_transaction_timeout = false;
+		}
+
+		/*
+		 * (5) disable async signal conditions again.
 		 *
 		 * Query cancel is supposed to be a no-op when there is no query in
 		 * progress, so if a query cancel arrived while we were idle, just
@@ -4211,15 +4222,6 @@ PostgresMain(int argc, char *argv[],
 		 */
 		CHECK_FOR_INTERRUPTS();
 		DoingCommandRead = false;
-
-		/*
-		 * (5) turn off the idle-in-transaction timeout
-		 */
-		if (disable_idle_in_transaction_timeout)
-		{
-			disable_timeout(IDLE_IN_TRANSACTION_SESSION_TIMEOUT, false);
-			disable_idle_in_transaction_timeout = false;
-		}
 
 		/*
 		 * (6) check for any other interesting events that happened while we
