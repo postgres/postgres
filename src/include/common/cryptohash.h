@@ -25,12 +25,8 @@ typedef enum
 	PG_SHA512
 } pg_cryptohash_type;
 
-typedef struct pg_cryptohash_ctx
-{
-	pg_cryptohash_type type;
-	/* private area used by each hash implementation */
-	void	   *data;
-} pg_cryptohash_ctx;
+/* opaque context, private to each cryptohash implementation */
+typedef struct pg_cryptohash_ctx pg_cryptohash_ctx;
 
 extern pg_cryptohash_ctx *pg_cryptohash_create(pg_cryptohash_type type);
 extern int	pg_cryptohash_init(pg_cryptohash_ctx *ctx);

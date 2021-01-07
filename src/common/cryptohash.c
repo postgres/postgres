@@ -39,6 +39,21 @@
 #define FREE(ptr) free(ptr)
 #endif
 
+/* Internal pg_cryptohash_ctx structure */
+struct pg_cryptohash_ctx
+{
+	pg_cryptohash_type type;
+
+	union
+	{
+		pg_md5_ctx	md5;
+		pg_sha224_ctx sha224;
+		pg_sha256_ctx sha256;
+		pg_sha384_ctx sha384;
+		pg_sha512_ctx sha512;
+	}			data;
+};
+
 /*
  * pg_cryptohash_create
  *
@@ -50,37 +65,17 @@ pg_cryptohash_create(pg_cryptohash_type type)
 {
 	pg_cryptohash_ctx *ctx;
 
+	/*
+	 * Note that this always allocates enough space for the largest hash. A
+	 * smaller allocation would be enough for md5, sha224 and sha256, but the
+	 * small extra amount of memory does not make it worth complicating this
+	 * code.
+	 */
 	ctx = ALLOC(sizeof(pg_cryptohash_ctx));
 	if (ctx == NULL)
 		return NULL;
-
+	memset(ctx, 0, sizeof(pg_cryptohash_ctx));
 	ctx->type = type;
-
-	switch (type)
-	{
-		case PG_MD5:
-			ctx->data = ALLOC(sizeof(pg_md5_ctx));
-			break;
-		case PG_SHA224:
-			ctx->data = ALLOC(sizeof(pg_sha224_ctx));
-			break;
-		case PG_SHA256:
-			ctx->data = ALLOC(sizeof(pg_sha256_ctx));
-			break;
-		case PG_SHA384:
-			ctx->data = ALLOC(sizeof(pg_sha384_ctx));
-			break;
-		case PG_SHA512:
-			ctx->data = ALLOC(sizeof(pg_sha512_ctx));
-			break;
-	}
-
-	if (ctx->data == NULL)
-	{
-		explicit_bzero(ctx, sizeof(pg_cryptohash_ctx));
-		FREE(ctx);
-		return NULL;
-	}
 
 	return ctx;
 }
@@ -95,24 +90,24 @@ int
 pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 {
 	if (ctx == NULL)
-		return 0;
+		return -1;
 
 	switch (ctx->type)
 	{
 		case PG_MD5:
-			pg_md5_init((pg_md5_ctx *) ctx->data);
+			pg_md5_init(&ctx->data.md5);
 			break;
 		case PG_SHA224:
-			pg_sha224_init((pg_sha224_ctx *) ctx->data);
+			pg_sha224_init(&ctx->data.sha224);
 			break;
 		case PG_SHA256:
-			pg_sha256_init((pg_sha256_ctx *) ctx->data);
+			pg_sha256_init(&ctx->data.sha256);
 			break;
 		case PG_SHA384:
-			pg_sha384_init((pg_sha384_ctx *) ctx->data);
+			pg_sha384_init(&ctx->data.sha384);
 			break;
 		case PG_SHA512:
-			pg_sha512_init((pg_sha512_ctx *) ctx->data);
+			pg_sha512_init(&ctx->data.sha512);
 			break;
 	}
 
@@ -123,30 +118,31 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
  * pg_cryptohash_update
  *
  * Update a hash context.  Note that this implementation is designed
- * to never fail, so this always returns 0.
+ * to never fail, so this always returns 0 except if the caller has
+ * given a NULL context.
  */
 int
 pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
 {
 	if (ctx == NULL)
-		return 0;
+		return -1;
 
 	switch (ctx->type)
 	{
 		case PG_MD5:
-			pg_md5_update((pg_md5_ctx *) ctx->data, data, len);
+			pg_md5_update(&ctx->data.md5, data, len);
 			break;
 		case PG_SHA224:
-			pg_sha224_update((pg_sha224_ctx *) ctx->data, data, len);
+			pg_sha224_update(&ctx->data.sha224, data, len);
 			break;
 		case PG_SHA256:
-			pg_sha256_update((pg_sha256_ctx *) ctx->data, data, len);
+			pg_sha256_update(&ctx->data.sha256, data, len);
 			break;
 		case PG_SHA384:
-			pg_sha384_update((pg_sha384_ctx *) ctx->data, data, len);
+			pg_sha384_update(&ctx->data.sha384, data, len);
 			break;
 		case PG_SHA512:
-			pg_sha512_update((pg_sha512_ctx *) ctx->data, data, len);
+			pg_sha512_update(&ctx->data.sha512, data, len);
 			break;
 	}
 
@@ -157,30 +153,31 @@ pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
  * pg_cryptohash_final
  *
  * Finalize a hash context.  Note that this implementation is designed
- * to never fail, so this always returns 0.
+ * to never fail, so this always returns 0 except if the caller has
+ * given a NULL context.
  */
 int
 pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest)
 {
 	if (ctx == NULL)
-		return 0;
+		return -1;
 
 	switch (ctx->type)
 	{
 		case PG_MD5:
-			pg_md5_final((pg_md5_ctx *) ctx->data, dest);
+			pg_md5_final(&ctx->data.md5, dest);
 			break;
 		case PG_SHA224:
-			pg_sha224_final((pg_sha224_ctx *) ctx->data, dest);
+			pg_sha224_final(&ctx->data.sha224, dest);
 			break;
 		case PG_SHA256:
-			pg_sha256_final((pg_sha256_ctx *) ctx->data, dest);
+			pg_sha256_final(&ctx->data.sha256, dest);
 			break;
 		case PG_SHA384:
-			pg_sha384_final((pg_sha384_ctx *) ctx->data, dest);
+			pg_sha384_final(&ctx->data.sha384, dest);
 			break;
 		case PG_SHA512:
-			pg_sha512_final((pg_sha512_ctx *) ctx->data, dest);
+			pg_sha512_final(&ctx->data.sha512, dest);
 			break;
 	}
 
@@ -198,26 +195,6 @@ pg_cryptohash_free(pg_cryptohash_ctx *ctx)
 	if (ctx == NULL)
 		return;
 
-	switch (ctx->type)
-	{
-		case PG_MD5:
-			explicit_bzero(ctx->data, sizeof(pg_md5_ctx));
-			break;
-		case PG_SHA224:
-			explicit_bzero(ctx->data, sizeof(pg_sha224_ctx));
-			break;
-		case PG_SHA256:
-			explicit_bzero(ctx->data, sizeof(pg_sha256_ctx));
-			break;
-		case PG_SHA384:
-			explicit_bzero(ctx->data, sizeof(pg_sha384_ctx));
-			break;
-		case PG_SHA512:
-			explicit_bzero(ctx->data, sizeof(pg_sha512_ctx));
-			break;
-	}
-
-	FREE(ctx->data);
 	explicit_bzero(ctx, sizeof(pg_cryptohash_ctx));
 	FREE(ctx);
 }
