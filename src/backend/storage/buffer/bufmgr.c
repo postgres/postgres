@@ -3809,6 +3809,8 @@ LockBufferForCleanup(Buffer buffer)
 {
 	BufferDesc *bufHdr;
 	char	   *new_status = NULL;
+	TimestampTz waitStart = 0;
+	bool		logged_recovery_conflict = false;
 
 	Assert(BufferIsPinned(buffer));
 	Assert(PinCountWaitBuf == NULL);
@@ -3881,6 +3883,34 @@ LockBufferForCleanup(Buffer buffer)
 				set_ps_display(new_status);
 				new_status[len] = '\0'; /* truncate off " waiting" */
 			}
+
+			/*
+			 * Emit the log message if the startup process is waiting longer
+			 * than deadlock_timeout for recovery conflict on buffer pin.
+			 *
+			 * Skip this if first time through because the startup process has
+			 * not started waiting yet in this case. So, the wait start
+			 * timestamp is set after this logic.
+			 */
+			if (waitStart != 0 && !logged_recovery_conflict)
+			{
+				TimestampTz now = GetCurrentTimestamp();
+
+				if (TimestampDifferenceExceeds(waitStart, now,
+											   DeadlockTimeout))
+				{
+					LogRecoveryConflict(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN,
+										waitStart, now, NULL);
+					logged_recovery_conflict = true;
+				}
+			}
+
+			/*
+			 * Set the wait start timestamp if logging is enabled and first
+			 * time through.
+			 */
+			if (log_recovery_conflict_waits && waitStart == 0)
+				waitStart = GetCurrentTimestamp();
 
 			/* Publish the bufid that Startup process waits on */
 			SetStartupBufferPinWaitBufId(buffer - 1);

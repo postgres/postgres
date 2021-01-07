@@ -6952,6 +6952,28 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-log-recovery-conflict-waits" xreflabel="log_recovery_conflict_waits">
+      <term><varname>log_recovery_conflict_waits</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>log_recovery_conflict_waits</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Controls whether a log message is produced when the startup process
+        is waiting longer than <varname>deadlock_timeout</varname>
+        for recovery conflicts.  This is useful in determining if recovery
+        conflicts prevent the recovery from applying WAL.
+       </para>
+
+       <para>
+        The default is <literal>off</literal>.  This parameter can only be set
+        in the <filename>postgresql.conf</filename> file or on the server
+        command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-log-parameter-max-length" xreflabel="log_parameter_max_length">
       <term><varname>log_parameter_max_length</varname> (<type>integer</type>)
       <indexterm>

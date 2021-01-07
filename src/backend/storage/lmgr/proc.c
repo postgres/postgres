@@ -1064,8 +1064,10 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	LWLock	   *partitionLock = LockHashPartitionLock(hashcode);
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	LOCKMASK	myHeldLocks = MyProc->heldLocks;
+	TimestampTz standbyWaitStart = 0;
 	bool		early_deadlock = false;
 	bool		allow_autovacuum_cancel = true;
+	bool		logged_recovery_conflict = false;
 	ProcWaitStatus myWaitStatus;
 	PGPROC	   *proc;
 	PGPROC	   *leader = MyProc->lockGroupLeader;
@@ -1261,6 +1263,14 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		else
 			enable_timeout_after(DEADLOCK_TIMEOUT, DeadlockTimeout);
 	}
+	else if (log_recovery_conflict_waits)
+	{
+		/*
+		 * Set the wait start timestamp if logging is enabled and in hot
+		 * standby.
+		 */
+		standbyWaitStart = GetCurrentTimestamp();
+	}
 
 	/*
 	 * If somebody wakes us between LWLockRelease and WaitLatch, the latch
@@ -1280,8 +1290,42 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	{
 		if (InHotStandby)
 		{
-			/* Set a timer and wait for that or for the Lock to be granted */
-			ResolveRecoveryConflictWithLock(locallock->tag.lock);
+			bool		maybe_log_conflict =
+			(standbyWaitStart != 0 && !logged_recovery_conflict);
+
+			/* Set a timer and wait for that or for the lock to be granted */
+			ResolveRecoveryConflictWithLock(locallock->tag.lock,
+											maybe_log_conflict);
+
+			/*
+			 * Emit the log message if the startup process is waiting longer
+			 * than deadlock_timeout for recovery conflict on lock.
+			 */
+			if (maybe_log_conflict)
+			{
+				TimestampTz now = GetCurrentTimestamp();
+
+				if (TimestampDifferenceExceeds(standbyWaitStart, now,
+											   DeadlockTimeout))
+				{
+					VirtualTransactionId *vxids;
+					int			cnt;
+
+					vxids = GetLockConflicts(&locallock->tag.lock,
+											 AccessExclusiveLock, &cnt);
+
+					/*
+					 * Log the recovery conflict and the list of PIDs of
+					 * backends holding the conflicting lock. Note that we do
+					 * logging even if there are no such backends right now
+					 * because the startup process here has already waited
+					 * longer than deadlock_timeout.
+					 */
+					LogRecoveryConflict(PROCSIG_RECOVERY_CONFLICT_LOCK,
+										standbyWaitStart, now, cnt > 0 ? vxids : NULL);
+					logged_recovery_conflict = true;
+				}
+			}
 		}
 		else
 		{

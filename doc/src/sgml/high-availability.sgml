@@ -2071,6 +2071,12 @@ if (!triggered)
     server. The <structname>pg_stat_database</structname> system view also contains
     summary information.
    </para>
+
+   <para>
+    Users can control whether a log message is produced when WAL replay is waiting
+    longer than <varname>deadlock_timeout</varname> for conflicts. This
+    is controlled by the <xref linkend="guc-log-recovery-conflict-waits"/> parameter.
+   </para>
   </sect2>
 
   <sect2 id="hot-standby-admin">
