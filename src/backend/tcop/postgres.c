@@ -4323,22 +4323,11 @@ PostgresMain(int argc, char *argv[],
 		firstchar = ReadCommand(&input_message);
 
 		/*
-		 * (4) disable async signal conditions again.
+		 * (4) turn off the idle-in-transaction and idle-session timeouts, if
+		 * active.  We do this before step (5) so that any last-moment timeout
+		 * is certain to be detected in step (5).
 		 *
-		 * Query cancel is supposed to be a no-op when there is no query in
-		 * progress, so if a query cancel arrived while we were idle, just
-		 * reset QueryCancelPending. ProcessInterrupts() has that effect when
-		 * it's called when DoingCommandRead is set, so check for interrupts
-		 * before resetting DoingCommandRead.
-		 */
-		CHECK_FOR_INTERRUPTS();
-		DoingCommandRead = false;
-
-		/*
-		 * (5) turn off the idle-in-transaction and idle-session timeouts, if
-		 * active.
-		 *
-		 * At most one of these two will be active, so there's no need to
+		 * At most one of these timeouts will be active, so there's no need to
 		 * worry about combining the timeout.c calls into one.
 		 */
 		if (idle_in_transaction_timeout_enabled)
@@ -4351,6 +4340,18 @@ PostgresMain(int argc, char *argv[],
 			disable_timeout(IDLE_SESSION_TIMEOUT, false);
 			idle_session_timeout_enabled = false;
 		}
+
+		/*
+		 * (5) disable async signal conditions again.
+		 *
+		 * Query cancel is supposed to be a no-op when there is no query in
+		 * progress, so if a query cancel arrived while we were idle, just
+		 * reset QueryCancelPending. ProcessInterrupts() has that effect when
+		 * it's called when DoingCommandRead is set, so check for interrupts
+		 * before resetting DoingCommandRead.
+		 */
+		CHECK_FOR_INTERRUPTS();
+		DoingCommandRead = false;
 
 		/*
 		 * (6) check for any other interesting events that happened while we
