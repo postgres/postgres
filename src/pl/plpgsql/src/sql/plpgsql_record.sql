@@ -257,8 +257,8 @@ create function getf1(x record) returns int language plpgsql as
 $$ begin return x.f1; end $$;
 select getf1(1);
 select getf1(row(1,2));
--- a CLOBBER_CACHE_ALWAYS build will report this error with a different
--- context stack than other builds, so suppress context output
+-- the context stack is different when debug_invalidate_system_caches_always
+-- is set, so suppress context output
 \set SHOW_CONTEXT never
 select getf1(row(1,2)::two_int8s);
 \set SHOW_CONTEXT errors
@@ -316,7 +316,11 @@ select sillyaddone(42);
 -- for now see plpgsql_cache test
 
 alter table mutable drop column f1;
+-- the context stack is different when debug_invalidate_system_caches_always
+-- is set, so suppress context output
+\set SHOW_CONTEXT never
 select sillyaddone(42);  -- fail
+\set SHOW_CONTEXT errors
 
 create function getf3(x mutable) returns int language plpgsql as
 $$ begin return x.f3; end $$;
@@ -324,8 +328,8 @@ select getf3(null::mutable);  -- doesn't work yet
 alter table mutable add column f3 int;
 select getf3(null::mutable);  -- now it works
 alter table mutable drop column f3;
--- a CLOBBER_CACHE_ALWAYS build will report this error with a different
--- context stack than other builds, so suppress context output
+-- the context stack is different when debug_invalidate_system_caches_always
+-- is set, so suppress context output
 \set SHOW_CONTEXT never
 select getf3(null::mutable);  -- fails again
 \set SHOW_CONTEXT errors
@@ -342,7 +346,11 @@ select sillyaddtwo(42);  -- fail
 create table mutable2(f1 int, f2 text);
 select sillyaddtwo(42);
 drop table mutable2;
+-- the context stack is different when debug_invalidate_system_caches_always
+-- is set, so suppress context output
+\set SHOW_CONTEXT never
 select sillyaddtwo(42);  -- fail
+\set SHOW_CONTEXT errors
 create table mutable2(f0 text, f1 int, f2 text);
 select sillyaddtwo(42);
 select sillyaddtwo(43);
