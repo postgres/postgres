@@ -96,7 +96,8 @@ int_md5_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	pg_cryptohash_update(ctx, data, dlen);
+	if (pg_cryptohash_update(ctx, data, dlen) < 0)
+		elog(ERROR, "could not update %s context", "MD5");
 }
 
 static void
@@ -104,7 +105,8 @@ int_md5_reset(PX_MD *h)
 {
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	pg_cryptohash_init(ctx);
+	if (pg_cryptohash_init(ctx) < 0)
+		elog(ERROR, "could not initialize %s context", "MD5");
 }
 
 static void
@@ -112,7 +114,8 @@ int_md5_finish(PX_MD *h, uint8 *dst)
 {
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	pg_cryptohash_final(ctx, dst);
+	if (pg_cryptohash_final(ctx, dst) < 0)
+		elog(ERROR, "could not finalize %s context", "MD5");
 }
 
 static void

@@ -93,42 +93,42 @@ pg_checksum_init(pg_checksum_context *context, pg_checksum_type type)
 			INIT_CRC32C(context->raw_context.c_crc32c);
 			break;
 		case CHECKSUM_TYPE_SHA224:
-			context->raw_context.c_sha224 = pg_cryptohash_create(PG_SHA224);
-			if (context->raw_context.c_sha224 == NULL)
+			context->raw_context.c_sha2 = pg_cryptohash_create(PG_SHA224);
+			if (context->raw_context.c_sha2 == NULL)
 				return -1;
-			if (pg_cryptohash_init(context->raw_context.c_sha224) < 0)
+			if (pg_cryptohash_init(context->raw_context.c_sha2) < 0)
 			{
-				pg_cryptohash_free(context->raw_context.c_sha224);
+				pg_cryptohash_free(context->raw_context.c_sha2);
 				return -1;
 			}
 			break;
 		case CHECKSUM_TYPE_SHA256:
-			context->raw_context.c_sha256 = pg_cryptohash_create(PG_SHA256);
-			if (context->raw_context.c_sha256 == NULL)
+			context->raw_context.c_sha2 = pg_cryptohash_create(PG_SHA256);
+			if (context->raw_context.c_sha2 == NULL)
 				return -1;
-			if (pg_cryptohash_init(context->raw_context.c_sha256) < 0)
+			if (pg_cryptohash_init(context->raw_context.c_sha2) < 0)
 			{
-				pg_cryptohash_free(context->raw_context.c_sha256);
+				pg_cryptohash_free(context->raw_context.c_sha2);
 				return -1;
 			}
 			break;
 		case CHECKSUM_TYPE_SHA384:
-			context->raw_context.c_sha384 = pg_cryptohash_create(PG_SHA384);
-			if (context->raw_context.c_sha384 == NULL)
+			context->raw_context.c_sha2 = pg_cryptohash_create(PG_SHA384);
+			if (context->raw_context.c_sha2 == NULL)
 				return -1;
-			if (pg_cryptohash_init(context->raw_context.c_sha384) < 0)
+			if (pg_cryptohash_init(context->raw_context.c_sha2) < 0)
 			{
-				pg_cryptohash_free(context->raw_context.c_sha384);
+				pg_cryptohash_free(context->raw_context.c_sha2);
 				return -1;
 			}
 			break;
 		case CHECKSUM_TYPE_SHA512:
-			context->raw_context.c_sha512 = pg_cryptohash_create(PG_SHA512);
-			if (context->raw_context.c_sha512 == NULL)
+			context->raw_context.c_sha2 = pg_cryptohash_create(PG_SHA512);
+			if (context->raw_context.c_sha2 == NULL)
 				return -1;
-			if (pg_cryptohash_init(context->raw_context.c_sha512) < 0)
+			if (pg_cryptohash_init(context->raw_context.c_sha2) < 0)
 			{
-				pg_cryptohash_free(context->raw_context.c_sha512);
+				pg_cryptohash_free(context->raw_context.c_sha2);
 				return -1;
 			}
 			break;
@@ -154,19 +154,10 @@ pg_checksum_update(pg_checksum_context *context, const uint8 *input,
 			COMP_CRC32C(context->raw_context.c_crc32c, input, len);
 			break;
 		case CHECKSUM_TYPE_SHA224:
-			if (pg_cryptohash_update(context->raw_context.c_sha224, input, len) < 0)
-				return -1;
-			break;
 		case CHECKSUM_TYPE_SHA256:
-			if (pg_cryptohash_update(context->raw_context.c_sha256, input, len) < 0)
-				return -1;
-			break;
 		case CHECKSUM_TYPE_SHA384:
-			if (pg_cryptohash_update(context->raw_context.c_sha384, input, len) < 0)
-				return -1;
-			break;
 		case CHECKSUM_TYPE_SHA512:
-			if (pg_cryptohash_update(context->raw_context.c_sha512, input, len) < 0)
+			if (pg_cryptohash_update(context->raw_context.c_sha2, input, len) < 0)
 				return -1;
 			break;
 	}
@@ -207,27 +198,27 @@ pg_checksum_final(pg_checksum_context *context, uint8 *output)
 			memcpy(output, &context->raw_context.c_crc32c, retval);
 			break;
 		case CHECKSUM_TYPE_SHA224:
-			if (pg_cryptohash_final(context->raw_context.c_sha224, output) < 0)
+			if (pg_cryptohash_final(context->raw_context.c_sha2, output) < 0)
 				return -1;
-			pg_cryptohash_free(context->raw_context.c_sha224);
+			pg_cryptohash_free(context->raw_context.c_sha2);
 			retval = PG_SHA224_DIGEST_LENGTH;
 			break;
 		case CHECKSUM_TYPE_SHA256:
-			if (pg_cryptohash_final(context->raw_context.c_sha256, output) < 0)
+			if (pg_cryptohash_final(context->raw_context.c_sha2, output) < 0)
 				return -1;
-			pg_cryptohash_free(context->raw_context.c_sha256);
+			pg_cryptohash_free(context->raw_context.c_sha2);
 			retval = PG_SHA224_DIGEST_LENGTH;
 			break;
 		case CHECKSUM_TYPE_SHA384:
-			if (pg_cryptohash_final(context->raw_context.c_sha384, output) < 0)
+			if (pg_cryptohash_final(context->raw_context.c_sha2, output) < 0)
 				return -1;
-			pg_cryptohash_free(context->raw_context.c_sha384);
+			pg_cryptohash_free(context->raw_context.c_sha2);
 			retval = PG_SHA384_DIGEST_LENGTH;
 			break;
 		case CHECKSUM_TYPE_SHA512:
-			if (pg_cryptohash_final(context->raw_context.c_sha512, output) < 0)
+			if (pg_cryptohash_final(context->raw_context.c_sha2, output) < 0)
 				return -1;
-			pg_cryptohash_free(context->raw_context.c_sha512);
+			pg_cryptohash_free(context->raw_context.c_sha2);
 			retval = PG_SHA512_DIGEST_LENGTH;
 			break;
 	}

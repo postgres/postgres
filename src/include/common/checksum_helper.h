@@ -42,10 +42,7 @@ typedef enum pg_checksum_type
 typedef union pg_checksum_raw_context
 {
 	pg_crc32c	c_crc32c;
-	pg_cryptohash_ctx *c_sha224;
-	pg_cryptohash_ctx *c_sha256;
-	pg_cryptohash_ctx *c_sha384;
-	pg_cryptohash_ctx *c_sha512;
+	pg_cryptohash_ctx *c_sha2;
 } pg_checksum_raw_context;
 
 /*
