@@ -614,6 +614,14 @@ ERROR:  invalid regular expression: quantifier operand invalid
 -- expectError	7.15 -		a*+	BADRPT
 select * from test_regex('a*+', '', '-');
 ERROR:  invalid regular expression: quantifier operand invalid
+-- test for ancient brenext() bug; not currently in Tcl
+select * from test_regex('.*b', 'aaabbb', 'b');
+ test_regex 
+------------
+ {0}
+ {aaabbb}
+(2 rows)
+
 -- doing 8 "braces"
 -- expectMatch	8.1  NQ		"a{0,1}"	""	""
 select * from test_regex('a{0,1}', '', 'NQ');
