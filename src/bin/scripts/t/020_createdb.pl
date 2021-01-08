@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 19;
+use Test::More tests => 22;
 
 program_help_ok('createdb');
 program_version_ok('createdb');
@@ -31,12 +31,20 @@ $node->command_checks_all(
 	1,
 	[qr/^$/],
 	[qr/^createdb: error: "foo'; SELECT '1" is not a valid encoding name/s],
-	'createdb with incorrect --lc-collate');
+	'createdb with incorrect --encoding');
 $node->command_checks_all(
 	[ 'createdb', '--lc-collate', "foo'; SELECT '1", 'foobar2' ],
 	1,
 	[qr/^$/],
 	[
-		qr/^createdb: error: database creation failed: ERROR:  invalid locale name/s
+		qr/^createdb: error: database creation failed: ERROR:  invalid locale name|^createdb: error: database creation failed: ERROR:  new collation \(foo'; SELECT '1\) is incompatible with the collation of the template database/s
 	],
 	'createdb with incorrect --lc-collate');
+$node->command_checks_all(
+	[ 'createdb', '--lc-ctype', "foo'; SELECT '1", 'foobar2' ],
+	1,
+	[qr/^$/],
+	[
+		qr/^createdb: error: database creation failed: ERROR:  invalid locale name|^createdb: error: database creation failed: ERROR:  new LC_CTYPE \(foo'; SELECT '1\) is incompatible with the LC_CTYPE of the template database/s
+	],
+	'createdb with incorrect --lc-ctype');
