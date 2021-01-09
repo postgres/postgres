@@ -16,7 +16,7 @@ session "s1"
 setup { SET synchronous_commit=on; }
 
 step "s1init" {SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');}
-step "s1start" {SELECT data  FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'two-phase-commit', '1');}
+step "s1start" {SELECT data  FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'skip-empty-xacts', '1', 'two-phase-commit', '1');}
 step "s1insert" { INSERT INTO do_write DEFAULT VALUES; }
 
 session "s2"
