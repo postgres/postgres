@@ -528,26 +528,36 @@
    </para>
 
    <para>
-    The executor mechanism is used to evaluate all four basic SQL query types:
-    <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>, and
-    <command>DELETE</command>.  For <command>SELECT</command>, the top-level executor
-    code only needs to send each row returned by the query plan tree off
-    to the client.  For <command>INSERT</command>, each returned row is inserted
-    into the target table specified for the <command>INSERT</command>.  This is
-    done in a special top-level plan node called <literal>ModifyTable</literal>.
-    (A simple
-    <command>INSERT ... VALUES</command> command creates a trivial plan tree
-    consisting of a single <literal>Result</literal> node, which computes just one
-    result row, and <literal>ModifyTable</literal> above it to perform the insertion.
-    But <command>INSERT ... SELECT</command> can demand the full power
-    of the executor mechanism.)  For <command>UPDATE</command>, the planner arranges
-    that each computed row includes all the updated column values, plus
-    the <firstterm>TID</firstterm> (tuple ID, or row ID) of the original target row;
-    this data is fed into a <literal>ModifyTable</literal> node, which uses the
-    information to create a new updated row and mark the old row deleted.
-    For <command>DELETE</command>, the only column that is actually returned by the
-    plan is the TID, and the <literal>ModifyTable</literal> node simply uses the TID
-    to visit each target row and mark it deleted.
+    The executor mechanism is used to evaluate all four basic SQL query
+    types: <command>SELECT</command>, <command>INSERT</command>,
+    <command>UPDATE</command>, and <command>DELETE</command>.
+    For <command>SELECT</command>, the top-level executor code
+    only needs to send each row returned by the query plan tree
+    off to the client.  <command>INSERT ... SELECT</command>,
+    <command>UPDATE</command>, and <command>DELETE</command>
+    are effectively <command>SELECT</command>s under a special
+    top-level plan node called <literal>ModifyTable</literal>.
+   </para>
+
+   <para>
+    <command>INSERT ... SELECT</command> feeds the rows up
+    to <literal>ModifyTable</literal> for insertion.  For
+    <command>UPDATE</command>, the planner arranges that each
+    computed row includes all the updated column values, plus the
+    <firstterm>TID</firstterm> (tuple ID, or row ID) of the original
+    target row; this data is fed up to the <literal>ModifyTable</literal>
+    node, which uses the information to create a new updated row and
+    mark the old row deleted.  For <command>DELETE</command>, the only
+    column that is actually returned by the plan is the TID, and the
+    <literal>ModifyTable</literal> node simply uses the TID to visit each
+    target row and mark it deleted.
+   </para>
+
+   <para>
+    A simple <command>INSERT ... VALUES</command> command creates a
+    trivial plan tree consisting of a single <literal>Result</literal>
+    node, which computes just one result row, feeding that up
+    to<literal>ModifyTable</literal> to perform the insertion.
    </para>
 
   </sect1>
