@@ -1516,3 +1516,25 @@ AllocSetCheck(MemoryContext context)
 }
 
 #endif							/* MEMORY_CONTEXT_CHECKING */
+
+void
+AllocSetDeleteFreeList(MemoryContext context)
+{
+	AllocSet set = (AllocSet) context;
+	if (set->freeListIndex >= 0)
+	{
+		AllocSetFreeList *freelist = &context_freelists[set->freeListIndex];
+
+		while (freelist->first_free != NULL)
+		{
+			AllocSetContext *oldset = freelist->first_free;
+
+			freelist->first_free = (AllocSetContext *) oldset->header.nextchild;
+			freelist->num_free--;
+
+			/* All that remains is to free the header/initial block */
+			free(oldset);
+		}
+		Assert(freelist->num_free == 0);
+	}
+}
