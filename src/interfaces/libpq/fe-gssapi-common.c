@@ -46,7 +46,6 @@ void
 pg_GSS_error(const char *mprefix, PGconn *conn,
 			 OM_uint32 maj_stat, OM_uint32 min_stat)
 {
-	resetPQExpBuffer(&conn->errorMessage);
 	appendPQExpBuffer(&conn->errorMessage, "%s:", mprefix);
 	pg_GSS_error_int(&conn->errorMessage, maj_stat, GSS_C_GSS_CODE);
 	appendPQExpBufferChar(&conn->errorMessage, ':');
@@ -94,8 +93,8 @@ pg_GSS_load_servicename(PGconn *conn)
 	host = PQhost(conn);
 	if (!(host && host[0] != '\0'))
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("host name must be specified\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("host name must be specified\n"));
 		return STATUS_ERROR;
 	}
 
@@ -107,8 +106,8 @@ pg_GSS_load_servicename(PGconn *conn)
 	temp_gbuf.value = (char *) malloc(maxlen);
 	if (!temp_gbuf.value)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("out of memory\n"));
 		return STATUS_ERROR;
 	}
 	snprintf(temp_gbuf.value, maxlen, "%s@%s",

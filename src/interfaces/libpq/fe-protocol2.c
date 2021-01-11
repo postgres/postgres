@@ -83,7 +83,7 @@ pqSetenvPoll(PGconn *conn)
 			return PGRES_POLLING_OK;
 
 		default:
-			printfPQExpBuffer(&conn->errorMessage,
+			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("invalid setenv state %c, probably indicative of memory corruption\n"),
 							  conn->setenv_state);
 			goto error_return;
@@ -380,7 +380,7 @@ pqSetenvPoll(PGconn *conn)
 				}
 
 			default:
-				printfPQExpBuffer(&conn->errorMessage,
+				appendPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("invalid state %c, "
 												"probably indicative of memory corruption\n"),
 								  conn->setenv_state);
@@ -493,8 +493,8 @@ pqParseInput2(PGconn *conn)
 														   PGRES_COMMAND_OK);
 						if (!conn->result)
 						{
-							printfPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("out of memory"));
+							appendPQExpBufferStr(&conn->errorMessage,
+												 libpq_gettext("out of memory"));
 							pqSaveErrorResult(conn);
 						}
 					}
@@ -528,8 +528,8 @@ pqParseInput2(PGconn *conn)
 														   PGRES_EMPTY_QUERY);
 						if (!conn->result)
 						{
-							printfPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("out of memory"));
+							appendPQExpBufferStr(&conn->errorMessage,
+												 libpq_gettext("out of memory"));
 							pqSaveErrorResult(conn);
 						}
 					}
@@ -622,7 +622,7 @@ pqParseInput2(PGconn *conn)
 					 * never arrives from the server during protocol 2.0.
 					 */
 				default:
-					printfPQExpBuffer(&conn->errorMessage,
+					appendPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("unexpected response from server; first received character was \"%c\"\n"),
 									  id);
 					/* build an error result holding the error message */
@@ -754,7 +754,7 @@ advance_and_error:
 	if (!errmsg)
 		errmsg = libpq_gettext("out of memory for query result");
 
-	printfPQExpBuffer(&conn->errorMessage, "%s\n", errmsg);
+	appendPQExpBuffer(&conn->errorMessage, "%s\n", errmsg);
 
 	/*
 	 * XXX: if PQmakeEmptyPGresult() fails, there's probably not much we can
@@ -929,7 +929,7 @@ set_error_result:
 	if (!errmsg)
 		errmsg = libpq_gettext("out of memory for query result");
 
-	printfPQExpBuffer(&conn->errorMessage, "%s\n", errmsg);
+	appendPQExpBuffer(&conn->errorMessage, "%s\n", errmsg);
 
 	/*
 	 * XXX: if PQmakeEmptyPGresult() fails, there's probably not much we can
@@ -1042,12 +1042,11 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	{
 		pqClearAsyncResult(conn);	/* redundant, but be safe */
 		conn->result = res;
-		resetPQExpBuffer(&conn->errorMessage);
 		if (res && !PQExpBufferDataBroken(workBuf) && res->errMsg)
 			appendPQExpBufferStr(&conn->errorMessage, res->errMsg);
 		else
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("out of memory"));
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("out of memory"));
 		if (conn->xactStatus == PQTRANS_INTRANS)
 			conn->xactStatus = PQTRANS_INERROR;
 	}
@@ -1203,8 +1202,8 @@ pqGetCopyData2(PGconn *conn, char **buffer, int async)
 		*buffer = (char *) malloc(msgLength + 1);
 		if (*buffer == NULL)
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("out of memory\n"));
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("out of memory\n"));
 			return -2;
 		}
 		memcpy(*buffer, &conn->inBuffer[conn->inStart], msgLength);
@@ -1349,8 +1348,8 @@ pqEndcopy2(PGconn *conn)
 	if (conn->asyncStatus != PGASYNC_COPY_IN &&
 		conn->asyncStatus != PGASYNC_COPY_OUT)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("no COPY in progress\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("no COPY in progress\n"));
 		return 1;
 	}
 
@@ -1367,7 +1366,6 @@ pqEndcopy2(PGconn *conn)
 
 	/* Return to active duty */
 	conn->asyncStatus = PGASYNC_BUSY;
-	resetPQExpBuffer(&conn->errorMessage);
 
 	/* Wait for the completion response */
 	result = PQgetResult(conn);
@@ -1526,7 +1524,7 @@ pqFunctionCall2(PGconn *conn, Oid fnid,
 				else
 				{
 					/* The backend violates the protocol. */
-					printfPQExpBuffer(&conn->errorMessage,
+					appendPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("protocol error: id=0x%x\n"),
 									  id);
 					pqSaveErrorResult(conn);
@@ -1558,7 +1556,7 @@ pqFunctionCall2(PGconn *conn, Oid fnid,
 				return PQmakeEmptyPGresult(conn, status);
 			default:
 				/* The backend violates the protocol. */
-				printfPQExpBuffer(&conn->errorMessage,
+				appendPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("protocol error: id=0x%x\n"),
 								  id);
 				pqSaveErrorResult(conn);

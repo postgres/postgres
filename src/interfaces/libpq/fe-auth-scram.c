@@ -208,14 +208,14 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 	{
 		if (inputlen == 0)
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("malformed SCRAM message (empty message)\n"));
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("malformed SCRAM message (empty message)\n"));
 			goto error;
 		}
 		if (inputlen != strlen(input))
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("malformed SCRAM message (length mismatch)\n"));
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("malformed SCRAM message (length mismatch)\n"));
 			goto error;
 		}
 	}
@@ -258,15 +258,15 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 			 */
 			if (!verify_server_signature(state, success))
 			{
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("could not verify server signature\n"));
+				appendPQExpBufferStr(&conn->errorMessage,
+									 libpq_gettext("could not verify server signature\n"));
 				goto error;
 			}
 
 			if (!*success)
 			{
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("incorrect server signature\n"));
+				appendPQExpBufferStr(&conn->errorMessage,
+									 libpq_gettext("incorrect server signature\n"));
 			}
 			*done = true;
 			state->state = FE_SCRAM_FINISHED;
@@ -274,8 +274,8 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 
 		default:
 			/* shouldn't happen */
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("invalid SCRAM exchange state\n"));
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("invalid SCRAM exchange state\n"));
 			goto error;
 	}
 	return;
@@ -287,6 +287,11 @@ error:
 
 /*
  * Read value for an attribute part of a SCRAM message.
+ *
+ * The buffer at **input is destructively modified, and *input is
+ * advanced over the "attr=value" string and any following comma.
+ *
+ * On failure, append an error message to *errorMessage and return NULL.
  */
 static char *
 read_attr_value(char **input, char attr, PQExpBuffer errorMessage)
@@ -296,7 +301,7 @@ read_attr_value(char **input, char attr, PQExpBuffer errorMessage)
 
 	if (*begin != attr)
 	{
-		printfPQExpBuffer(errorMessage,
+		appendPQExpBuffer(errorMessage,
 						  libpq_gettext("malformed SCRAM message (attribute \"%c\" expected)\n"),
 						  attr);
 		return NULL;
@@ -305,7 +310,7 @@ read_attr_value(char **input, char attr, PQExpBuffer errorMessage)
 
 	if (*begin != '=')
 	{
-		printfPQExpBuffer(errorMessage,
+		appendPQExpBuffer(errorMessage,
 						  libpq_gettext("malformed SCRAM message (expected character \"=\" for attribute \"%c\")\n"),
 						  attr);
 		return NULL;
@@ -346,8 +351,8 @@ build_client_first_message(fe_scram_state *state)
 	 */
 	if (!pg_strong_random(raw_nonce, SCRAM_RAW_NONCE_LEN))
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not generate nonce\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("could not generate nonce\n"));
 		return NULL;
 	}
 
@@ -356,16 +361,16 @@ build_client_first_message(fe_scram_state *state)
 	state->client_nonce = malloc(encoded_len + 1);
 	if (state->client_nonce == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("out of memory\n"));
 		return NULL;
 	}
 	encoded_len = pg_b64_encode(raw_nonce, SCRAM_RAW_NONCE_LEN,
 								state->client_nonce, encoded_len);
 	if (encoded_len < 0)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not encode nonce\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("could not encode nonce\n"));
 		return NULL;
 	}
 	state->client_nonce[encoded_len] = '\0';
@@ -431,8 +436,8 @@ build_client_first_message(fe_scram_state *state)
 
 oom_error:
 	termPQExpBuffer(&buf);
-	printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext("out of memory\n"));
+	appendPQExpBufferStr(&conn->errorMessage,
+						 libpq_gettext("out of memory\n"));
 	return NULL;
 }
 
@@ -508,8 +513,8 @@ build_client_final_message(fe_scram_state *state)
 			free(cbind_data);
 			free(cbind_input);
 			termPQExpBuffer(&buf);
-			printfPQExpBuffer(&conn->errorMessage,
-							  "could not encode cbind data for channel binding\n");
+			appendPQExpBufferStr(&conn->errorMessage,
+								 "could not encode cbind data for channel binding\n");
 			return NULL;
 		}
 		buf.len += encoded_cbind_len;
@@ -523,8 +528,8 @@ build_client_final_message(fe_scram_state *state)
 		 * Shouldn't happen.
 		 */
 		termPQExpBuffer(&buf);
-		printfPQExpBuffer(&conn->errorMessage,
-						  "channel binding not supported by this build\n");
+		appendPQExpBufferStr(&conn->errorMessage,
+							 "channel binding not supported by this build\n");
 		return NULL;
 #endif							/* HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH */
 	}
@@ -553,8 +558,8 @@ build_client_final_message(fe_scram_state *state)
 								client_proof))
 	{
 		termPQExpBuffer(&buf);
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not calculate client proof\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("could not calculate client proof\n"));
 		return NULL;
 	}
 
@@ -569,8 +574,8 @@ build_client_final_message(fe_scram_state *state)
 	if (encoded_len < 0)
 	{
 		termPQExpBuffer(&buf);
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not encode client proof\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("could not encode client proof\n"));
 		return NULL;
 	}
 	buf.len += encoded_len;
@@ -585,8 +590,8 @@ build_client_final_message(fe_scram_state *state)
 
 oom_error:
 	termPQExpBuffer(&buf);
-	printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext("out of memory\n"));
+	appendPQExpBufferStr(&conn->errorMessage,
+						 libpq_gettext("out of memory\n"));
 	return NULL;
 }
 
@@ -606,8 +611,8 @@ read_server_first_message(fe_scram_state *state, char *input)
 	state->server_first_message = strdup(input);
 	if (state->server_first_message == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("out of memory\n"));
 		return false;
 	}
 
@@ -616,7 +621,7 @@ read_server_first_message(fe_scram_state *state, char *input)
 							&conn->errorMessage);
 	if (nonce == NULL)
 	{
-		/* read_attr_value() has generated an error string */
+		/* read_attr_value() has appended an error string */
 		return false;
 	}
 
@@ -624,31 +629,31 @@ read_server_first_message(fe_scram_state *state, char *input)
 	if (strlen(nonce) < strlen(state->client_nonce) ||
 		memcmp(nonce, state->client_nonce, strlen(state->client_nonce)) != 0)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("invalid SCRAM response (nonce mismatch)\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("invalid SCRAM response (nonce mismatch)\n"));
 		return false;
 	}
 
 	state->nonce = strdup(nonce);
 	if (state->nonce == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("out of memory\n"));
 		return false;
 	}
 
 	encoded_salt = read_attr_value(&input, 's', &conn->errorMessage);
 	if (encoded_salt == NULL)
 	{
-		/* read_attr_value() has generated an error string */
+		/* read_attr_value() has appended an error string */
 		return false;
 	}
 	decoded_salt_len = pg_b64_dec_len(strlen(encoded_salt));
 	state->salt = malloc(decoded_salt_len);
 	if (state->salt == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("out of memory\n"));
 		return false;
 	}
 	state->saltlen = pg_b64_decode(encoded_salt,
@@ -657,28 +662,28 @@ read_server_first_message(fe_scram_state *state, char *input)
 								   decoded_salt_len);
 	if (state->saltlen < 0)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("malformed SCRAM message (invalid salt)\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("malformed SCRAM message (invalid salt)\n"));
 		return false;
 	}
 
 	iterations_str = read_attr_value(&input, 'i', &conn->errorMessage);
 	if (iterations_str == NULL)
 	{
-		/* read_attr_value() has generated an error string */
+		/* read_attr_value() has appended an error string */
 		return false;
 	}
 	state->iterations = strtol(iterations_str, &endptr, 10);
 	if (*endptr != '\0' || state->iterations < 1)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("malformed SCRAM message (invalid iteration count)\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("malformed SCRAM message (invalid iteration count)\n"));
 		return false;
 	}
 
 	if (*input != '\0')
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("malformed SCRAM message (garbage at end of server-first-message)\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("malformed SCRAM message (garbage at end of server-first-message)\n"));
 
 	return true;
 }
@@ -697,8 +702,8 @@ read_server_final_message(fe_scram_state *state, char *input)
 	state->server_final_message = strdup(input);
 	if (!state->server_final_message)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("out of memory\n"));
 		return false;
 	}
 
@@ -708,7 +713,12 @@ read_server_final_message(fe_scram_state *state, char *input)
 		char	   *errmsg = read_attr_value(&input, 'e',
 											 &conn->errorMessage);
 
-		printfPQExpBuffer(&conn->errorMessage,
+		if (errmsg == NULL)
+		{
+			/* read_attr_value() has appended an error message */
+			return false;
+		}
+		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("error received from server in SCRAM exchange: %s\n"),
 						  errmsg);
 		return false;
@@ -719,20 +729,20 @@ read_server_final_message(fe_scram_state *state, char *input)
 											   &conn->errorMessage);
 	if (encoded_server_signature == NULL)
 	{
-		/* read_attr_value() has generated an error message */
+		/* read_attr_value() has appended an error message */
 		return false;
 	}
 
 	if (*input != '\0')
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("malformed SCRAM message (garbage at end of server-final-message)\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("malformed SCRAM message (garbage at end of server-final-message)\n"));
 
 	server_signature_len = pg_b64_dec_len(strlen(encoded_server_signature));
 	decoded_server_signature = malloc(server_signature_len);
 	if (!decoded_server_signature)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("out of memory\n"));
 		return false;
 	}
 
@@ -743,8 +753,8 @@ read_server_final_message(fe_scram_state *state, char *input)
 	if (server_signature_len != SCRAM_KEY_LEN)
 	{
 		free(decoded_server_signature);
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("malformed SCRAM message (invalid server signature)\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("malformed SCRAM message (invalid server signature)\n"));
 		return false;
 	}
 	memcpy(state->ServerSignature, decoded_server_signature, SCRAM_KEY_LEN);

@@ -53,7 +53,8 @@ static bool static_std_strings = false;
 static PGEvent *dupEvents(PGEvent *events, int count, size_t *memSize);
 static bool pqAddTuple(PGresult *res, PGresAttValue *tup,
 					   const char **errmsgp);
-static bool PQsendQueryStart(PGconn *conn);
+static int	PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery);
+static bool PQsendQueryStart(PGconn *conn, bool newQuery);
 static int	PQsendQueryGuts(PGconn *conn,
 							const char *command,
 							const char *stmtName,
@@ -668,25 +669,6 @@ pqSetResultError(PGresult *res, const char *msg)
 }
 
 /*
- * pqCatenateResultError -
- *		concatenate a new error message to the one already in a PGresult
- */
-void
-pqCatenateResultError(PGresult *res, const char *msg)
-{
-	PQExpBufferData errorBuf;
-
-	if (!res || !msg)
-		return;
-	initPQExpBuffer(&errorBuf);
-	if (res->errMsg)
-		appendPQExpBufferStr(&errorBuf, res->errMsg);
-	appendPQExpBufferStr(&errorBuf, msg);
-	pqSetResultError(res, errorBuf.data);
-	termPQExpBuffer(&errorBuf);
-}
-
-/*
  * PQclear -
  *	  free's the memory associated with a PGresult
  */
@@ -759,68 +741,46 @@ pqClearAsyncResult(PGconn *conn)
 /*
  * This subroutine deletes any existing async result, sets conn->result
  * to a PGresult with status PGRES_FATAL_ERROR, and stores the current
- * contents of conn->errorMessage into that result.  It differs from a
- * plain call on PQmakeEmptyPGresult() in that if there is already an
- * async result with status PGRES_FATAL_ERROR, the current error message
- * is APPENDED to the old error message instead of replacing it.  This
- * behavior lets us report multiple error conditions properly, if necessary.
- * (An example where this is needed is when the backend sends an 'E' message
- * and immediately closes the connection --- we want to report both the
- * backend error and the connection closure error.)
+ * contents of conn->errorMessage into that result.
  */
 void
 pqSaveErrorResult(PGconn *conn)
 {
-	/*
-	 * If no old async result, just let PQmakeEmptyPGresult make one. Likewise
-	 * if old result is not an error message.
-	 */
-	if (conn->result == NULL ||
-		conn->result->resultStatus != PGRES_FATAL_ERROR ||
-		conn->result->errMsg == NULL)
-	{
-		pqClearAsyncResult(conn);
-		conn->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
-	}
-	else
-	{
-		/* Else, concatenate error message to existing async result. */
-		pqCatenateResultError(conn->result, conn->errorMessage.data);
-	}
+	pqClearAsyncResult(conn);
+	conn->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 }
 
 /*
- * As above, and append conn->write_err_msg to whatever other error we have.
- * This is used when we've detected a write failure and have exhausted our
- * chances of reporting something else instead.
+ * As above, after appending conn->write_err_msg to whatever other error we
+ * have.  This is used when we've detected a write failure and have exhausted
+ * our chances of reporting something else instead.
  */
 static void
 pqSaveWriteError(PGconn *conn)
 {
 	/*
-	 * Ensure conn->result is an error result, and add anything in
-	 * conn->errorMessage to it.
+	 * If write_err_msg is null because of previous strdup failure, do what we
+	 * can.  (It's likely our machinations here will get OOM failures as well,
+	 * but might as well try.)
 	 */
-	pqSaveErrorResult(conn);
-
-	/*
-	 * Now append write_err_msg to that.  If it's null because of previous
-	 * strdup failure, do what we can.  (It's likely our machinations here are
-	 * all getting OOM failures as well, but ...)
-	 */
-	if (conn->write_err_msg && conn->write_err_msg[0] != '\0')
-		pqCatenateResultError(conn->result, conn->write_err_msg);
+	if (conn->write_err_msg)
+	{
+		appendPQExpBufferStr(&conn->errorMessage, conn->write_err_msg);
+		/* Avoid possibly appending the same message twice */
+		conn->write_err_msg[0] = '\0';
+	}
 	else
-		pqCatenateResultError(conn->result,
-							  libpq_gettext("write to server failed\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("write to server failed\n"));
+
+	pqSaveErrorResult(conn);
 }
 
 /*
  * This subroutine prepares an async result object for return to the caller.
  * If there is not already an async result object, build an error object
  * using whatever is in conn->errorMessage.  In any case, clear the async
- * result storage and make sure PQerrorMessage will agree with the result's
- * error string.
+ * result storage.
  */
 PGresult *
 pqPrepareAsyncResult(PGconn *conn)
@@ -835,16 +795,6 @@ pqPrepareAsyncResult(PGconn *conn)
 	res = conn->result;
 	if (!res)
 		res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
-	else
-	{
-		/*
-		 * Make sure PQerrorMessage agrees with result; it could be different
-		 * if we have concatenated messages.
-		 */
-		resetPQExpBuffer(&conn->errorMessage);
-		appendPQExpBufferStr(&conn->errorMessage,
-							 PQresultErrorMessage(res));
-	}
 
 	/*
 	 * Replace conn->result with next_result, if any.  In the normal case
@@ -1229,18 +1179,33 @@ fail:
  *
  * Returns: 1 if successfully submitted
  *			0 if error (conn->errorMessage is set)
+ *
+ * PQsendQueryContinue is a non-exported version that behaves identically
+ * except that it doesn't reset conn->errorMessage.
  */
 int
 PQsendQuery(PGconn *conn, const char *query)
 {
-	if (!PQsendQueryStart(conn))
+	return PQsendQueryInternal(conn, query, true);
+}
+
+int
+PQsendQueryContinue(PGconn *conn, const char *query)
+{
+	return PQsendQueryInternal(conn, query, false);
+}
+
+static int
+PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
+{
+	if (!PQsendQueryStart(conn, newQuery))
 		return 0;
 
 	/* check the argument */
 	if (!query)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("command string is a null pointer\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("command string is a null pointer\n"));
 		return 0;
 	}
 
@@ -1291,20 +1256,20 @@ PQsendQueryParams(PGconn *conn,
 				  const int *paramFormats,
 				  int resultFormat)
 {
-	if (!PQsendQueryStart(conn))
+	if (!PQsendQueryStart(conn, true))
 		return 0;
 
 	/* check the arguments */
 	if (!command)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("command string is a null pointer\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("command string is a null pointer\n"));
 		return 0;
 	}
 	if (nParams < 0 || nParams > 65535)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("number of parameters must be between 0 and 65535\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("number of parameters must be between 0 and 65535\n"));
 		return 0;
 	}
 
@@ -1331,34 +1296,34 @@ PQsendPrepare(PGconn *conn,
 			  const char *stmtName, const char *query,
 			  int nParams, const Oid *paramTypes)
 {
-	if (!PQsendQueryStart(conn))
+	if (!PQsendQueryStart(conn, true))
 		return 0;
 
 	/* check the arguments */
 	if (!stmtName)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("statement name is a null pointer\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("statement name is a null pointer\n"));
 		return 0;
 	}
 	if (!query)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("command string is a null pointer\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("command string is a null pointer\n"));
 		return 0;
 	}
 	if (nParams < 0 || nParams > 65535)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("number of parameters must be between 0 and 65535\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("number of parameters must be between 0 and 65535\n"));
 		return 0;
 	}
 
 	/* This isn't gonna work on a 2.0 server */
 	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("function requires at least protocol version 3.0\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("function requires at least protocol version 3.0\n"));
 		return 0;
 	}
 
@@ -1432,20 +1397,20 @@ PQsendQueryPrepared(PGconn *conn,
 					const int *paramFormats,
 					int resultFormat)
 {
-	if (!PQsendQueryStart(conn))
+	if (!PQsendQueryStart(conn, true))
 		return 0;
 
 	/* check the arguments */
 	if (!stmtName)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("statement name is a null pointer\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("statement name is a null pointer\n"));
 		return 0;
 	}
 	if (nParams < 0 || nParams > 65535)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("number of parameters must be between 0 and 65535\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("number of parameters must be between 0 and 65535\n"));
 		return 0;
 	}
 
@@ -1464,26 +1429,29 @@ PQsendQueryPrepared(PGconn *conn,
  * Common startup code for PQsendQuery and sibling routines
  */
 static bool
-PQsendQueryStart(PGconn *conn)
+PQsendQueryStart(PGconn *conn, bool newQuery)
 {
 	if (!conn)
 		return false;
 
-	/* clear the error string */
-	resetPQExpBuffer(&conn->errorMessage);
+	/*
+	 * If this is the beginning of a query cycle, reset the error buffer.
+	 */
+	if (newQuery)
+		resetPQExpBuffer(&conn->errorMessage);
 
 	/* Don't try to send if we know there's no live connection. */
 	if (conn->status != CONNECTION_OK)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("no connection to the server\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("no connection to the server\n"));
 		return false;
 	}
 	/* Can't send while already busy, either. */
 	if (conn->asyncStatus != PGASYNC_IDLE)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("another command is already in progress\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("another command is already in progress\n"));
 		return false;
 	}
 
@@ -1520,8 +1488,8 @@ PQsendQueryGuts(PGconn *conn,
 	/* This isn't gonna work on a 2.0 server */
 	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("function requires at least protocol version 3.0\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("function requires at least protocol version 3.0\n"));
 		return 0;
 	}
 
@@ -1596,8 +1564,8 @@ PQsendQueryGuts(PGconn *conn,
 					nbytes = paramLengths[i];
 				else
 				{
-					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("length must be given for binary parameter\n"));
+					appendPQExpBufferStr(&conn->errorMessage,
+										 libpq_gettext("length must be given for binary parameter\n"));
 					goto sendFailed;
 				}
 			}
@@ -1859,7 +1827,7 @@ PQgetResult(PGconn *conn)
 			res = getCopyResult(conn, PGRES_COPY_BOTH);
 			break;
 		default:
-			printfPQExpBuffer(&conn->errorMessage,
+			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("unexpected asyncStatus: %d\n"),
 							  (int) conn->asyncStatus);
 			res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
@@ -1879,7 +1847,7 @@ PQgetResult(PGconn *conn)
 			if (!res->events[i].proc(PGEVT_RESULTCREATE, &evt,
 									 res->events[i].passThrough))
 			{
-				printfPQExpBuffer(&conn->errorMessage,
+				appendPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"),
 								  res->events[i].name);
 				pqSetResultError(res, conn->errorMessage.data);
@@ -2026,6 +1994,11 @@ PQexecStart(PGconn *conn)
 		return false;
 
 	/*
+	 * Since this is the beginning of a query cycle, reset the error buffer.
+	 */
+	resetPQExpBuffer(&conn->errorMessage);
+
+	/*
 	 * Silently discard any prior query result that application didn't eat.
 	 * This is probably poor design, but it's here for backward compatibility.
 	 */
@@ -2047,8 +2020,8 @@ PQexecStart(PGconn *conn)
 			else
 			{
 				/* In older protocols we have to punt */
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("COPY IN state must be terminated first\n"));
+				appendPQExpBufferStr(&conn->errorMessage,
+									 libpq_gettext("COPY IN state must be terminated first\n"));
 				return false;
 			}
 		}
@@ -2067,16 +2040,16 @@ PQexecStart(PGconn *conn)
 			else
 			{
 				/* In older protocols we have to punt */
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("COPY OUT state must be terminated first\n"));
+				appendPQExpBufferStr(&conn->errorMessage,
+									 libpq_gettext("COPY OUT state must be terminated first\n"));
 				return false;
 			}
 		}
 		else if (resultStatus == PGRES_COPY_BOTH)
 		{
 			/* We don't allow PQexec during COPY BOTH */
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("PQexec not allowed during COPY BOTH\n"));
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("PQexec not allowed during COPY BOTH\n"));
 			return false;
 		}
 		/* check for loss of connection, too */
@@ -2099,8 +2072,9 @@ PQexecFinish(PGconn *conn)
 
 	/*
 	 * For backwards compatibility, return the last result if there are more
-	 * than one --- but merge error messages if we get more than one error
-	 * result.
+	 * than one.  (We used to have logic here to concatenate successive error
+	 * messages, but now that happens automatically, since conn->errorMessage
+	 * will continue to accumulate errors throughout this loop.)
 	 *
 	 * We have to stop if we see copy in/out/both, however. We will resume
 	 * parsing after application performs the data transfer.
@@ -2111,23 +2085,7 @@ PQexecFinish(PGconn *conn)
 	while ((result = PQgetResult(conn)) != NULL)
 	{
 		if (lastResult)
-		{
-			if (lastResult->resultStatus == PGRES_FATAL_ERROR &&
-				result->resultStatus == PGRES_FATAL_ERROR)
-			{
-				pqCatenateResultError(lastResult, result->errMsg);
-				PQclear(result);
-				result = lastResult;
-
-				/*
-				 * Make sure PQerrorMessage agrees with concatenated result
-				 */
-				resetPQExpBuffer(&conn->errorMessage);
-				appendPQExpBufferStr(&conn->errorMessage, result->errMsg);
-			}
-			else
-				PQclear(lastResult);
-		}
+			PQclear(lastResult);
 		lastResult = result;
 		if (result->resultStatus == PGRES_COPY_IN ||
 			result->resultStatus == PGRES_COPY_OUT ||
@@ -2223,14 +2181,14 @@ PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
 	if (!desc_target)
 		desc_target = "";
 
-	if (!PQsendQueryStart(conn))
+	if (!PQsendQueryStart(conn, true))
 		return 0;
 
 	/* This isn't gonna work on a 2.0 server */
 	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("function requires at least protocol version 3.0\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("function requires at least protocol version 3.0\n"));
 		return 0;
 	}
 
@@ -2321,8 +2279,8 @@ PQputCopyData(PGconn *conn, const char *buffer, int nbytes)
 	if (conn->asyncStatus != PGASYNC_COPY_IN &&
 		conn->asyncStatus != PGASYNC_COPY_BOTH)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("no COPY in progress\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("no COPY in progress\n"));
 		return -1;
 	}
 
@@ -2388,8 +2346,8 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 	if (conn->asyncStatus != PGASYNC_COPY_IN &&
 		conn->asyncStatus != PGASYNC_COPY_BOTH)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("no COPY in progress\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("no COPY in progress\n"));
 		return -1;
 	}
 
@@ -2431,8 +2389,8 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 		if (errormsg)
 		{
 			/* Oops, no way to do this in 2.0 */
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("function requires at least protocol version 3.0\n"));
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("function requires at least protocol version 3.0\n"));
 			return -1;
 		}
 		else
@@ -2450,7 +2408,6 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 		conn->asyncStatus = PGASYNC_COPY_OUT;
 	else
 		conn->asyncStatus = PGASYNC_BUSY;
-	resetPQExpBuffer(&conn->errorMessage);
 
 	/* Try to flush data */
 	if (pqFlush(conn) < 0)
@@ -2478,8 +2435,8 @@ PQgetCopyData(PGconn *conn, char **buffer, int async)
 	if (conn->asyncStatus != PGASYNC_COPY_OUT &&
 		conn->asyncStatus != PGASYNC_COPY_BOTH)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("no COPY in progress\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("no COPY in progress\n"));
 		return -2;
 	}
 	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
@@ -2662,14 +2619,16 @@ PQfn(PGconn *conn,
 	if (!conn)
 		return NULL;
 
-	/* clear the error string */
+	/*
+	 * Since this is the beginning of a query cycle, reset the error buffer.
+	 */
 	resetPQExpBuffer(&conn->errorMessage);
 
 	if (conn->sock == PGINVALID_SOCKET || conn->asyncStatus != PGASYNC_IDLE ||
 		conn->result != NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("connection in wrong state\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("connection in wrong state\n"));
 		return NULL;
 	}
 
@@ -3246,7 +3205,11 @@ PQsetnonblocking(PGconn *conn, int arg)
 	 * need to flush the send queue at this point in order to guarantee proper
 	 * behavior. this is ok because either they are making a transition _from_
 	 * or _to_ blocking mode, either way we can block them.
+	 *
+	 * Clear errorMessage in case pqFlush adds to it.
 	 */
+	resetPQExpBuffer(&conn->errorMessage);
+
 	/* if we are going from blocking to non-blocking flush here */
 	if (pqFlush(conn))
 		return -1;
@@ -3388,8 +3351,8 @@ PQescapeStringInternal(PGconn *conn,
 			if (error)
 				*error = 1;
 			if (conn)
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("incomplete multibyte character\n"));
+				appendPQExpBufferStr(&conn->errorMessage,
+									 libpq_gettext("incomplete multibyte character\n"));
 			for (; i < len; i++)
 			{
 				if (((size_t) (target - to)) / 2 >= length)
@@ -3419,6 +3382,9 @@ PQescapeStringConn(PGconn *conn,
 			*error = 1;
 		return 0;
 	}
+
+	resetPQExpBuffer(&conn->errorMessage);
+
 	return PQescapeStringInternal(conn, to, from, length, error,
 								  conn->client_encoding,
 								  conn->std_strings);
@@ -3455,6 +3421,8 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 	if (!conn)
 		return NULL;
 
+	resetPQExpBuffer(&conn->errorMessage);
+
 	/* Scan the string for characters that must be escaped. */
 	for (s = str; (s - str) < len && *s != '\0'; ++s)
 	{
@@ -3472,8 +3440,8 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 			/* Multibyte character overruns allowable length. */
 			if ((s - str) + charlen > len || memchr(s, 0, charlen) != NULL)
 			{
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("incomplete multibyte character\n"));
+				appendPQExpBufferStr(&conn->errorMessage,
+									 libpq_gettext("incomplete multibyte character\n"));
 				return NULL;
 			}
 
@@ -3490,8 +3458,8 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 	result = rp = (char *) malloc(result_size);
 	if (rp == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("out of memory\n"));
 		return NULL;
 	}
 
@@ -3655,8 +3623,8 @@ PQescapeByteaInternal(PGconn *conn,
 	if (rp == NULL)
 	{
 		if (conn)
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("out of memory\n"));
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("out of memory\n"));
 		return NULL;
 	}
 
@@ -3717,6 +3685,9 @@ PQescapeByteaConn(PGconn *conn,
 {
 	if (!conn)
 		return NULL;
+
+	resetPQExpBuffer(&conn->errorMessage);
+
 	return PQescapeByteaInternal(conn, from, from_length, to_length,
 								 conn->std_strings,
 								 (conn->sversion >= 90000));

@@ -522,7 +522,11 @@ struct pg_conn
 								 * connection */
 #endif
 
-	/* Buffer for current error message */
+	/*
+	 * Buffer for current error message.  This is cleared at the start of any
+	 * connection attempt or query cycle; after that, all code should append
+	 * messages to it, never overwrite.
+	 */
 	PQExpBufferData errorMessage;	/* expansible string */
 
 	/* Buffer for receiving various parts of messages */
@@ -600,7 +604,6 @@ extern pgthreadlock_t pg_g_threadlock;
 /* === in fe-exec.c === */
 
 extern void pqSetResultError(PGresult *res, const char *msg);
-extern void pqCatenateResultError(PGresult *res, const char *msg);
 extern void *pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary);
 extern char *pqResultStrdup(PGresult *res, const char *str);
 extern void pqClearAsyncResult(PGconn *conn);
@@ -612,6 +615,7 @@ extern void pqSaveMessageField(PGresult *res, char code,
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
 								  const char *value);
 extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
+extern int	PQsendQueryContinue(PGconn *conn, const char *query);
 
 /* === in fe-protocol2.c === */
 
@@ -708,7 +712,7 @@ extern void pgtls_init_library(bool do_ssl, int do_crypto);
  * The conn parameter is only used to be able to pass back an error
  * message - no connection-local setup is made here.
  *
- * Returns 0 if OK, -1 on failure (with a message in conn->errorMessage).
+ * Returns 0 if OK, -1 on failure (adding a message to conn->errorMessage).
  */
 extern int	pgtls_init(PGconn *conn);
 
@@ -725,8 +729,8 @@ extern void pgtls_close(PGconn *conn);
 /*
  *	Read data from a secure connection.
  *
- * On failure, this function is responsible for putting a suitable message
- * into conn->errorMessage.  The caller must still inspect errno, but only
+ * On failure, this function is responsible for appending a suitable message
+ * to conn->errorMessage.  The caller must still inspect errno, but only
  * to determine whether to continue/retry after error.
  */
 extern ssize_t pgtls_read(PGconn *conn, void *ptr, size_t len);
@@ -739,8 +743,8 @@ extern bool pgtls_read_pending(PGconn *conn);
 /*
  *	Write data to a secure connection.
  *
- * On failure, this function is responsible for putting a suitable message
- * into conn->errorMessage.  The caller must still inspect errno, but only
+ * On failure, this function is responsible for appending a suitable message
+ * to conn->errorMessage.  The caller must still inspect errno, but only
  * to determine whether to continue/retry after error.
  */
 extern ssize_t pgtls_write(PGconn *conn, const void *ptr, size_t len);

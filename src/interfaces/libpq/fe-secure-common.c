@@ -94,8 +94,8 @@ pq_verify_peer_name_matches_certificate_name(PGconn *conn,
 
 	if (!(host && host[0] != '\0'))
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("host name must be specified\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("host name must be specified\n"));
 		return -1;
 	}
 
@@ -106,8 +106,8 @@ pq_verify_peer_name_matches_certificate_name(PGconn *conn,
 	name = malloc(namelen + 1);
 	if (name == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("out of memory\n"));
 		return -1;
 	}
 	memcpy(name, namedata, namelen);
@@ -120,8 +120,8 @@ pq_verify_peer_name_matches_certificate_name(PGconn *conn,
 	if (namelen != strlen(name))
 	{
 		free(name);
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("SSL certificate's name contains embedded null\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("SSL certificate's name contains embedded null\n"));
 		return -1;
 	}
 
@@ -167,8 +167,8 @@ pq_verify_peer_name_matches_certificate(PGconn *conn)
 	/* Check that we have a hostname to compare with. */
 	if (!(host && host[0] != '\0'))
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("host name must be specified for a verified SSL connection\n"));
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("host name must be specified for a verified SSL connection\n"));
 		return false;
 	}
 
@@ -184,7 +184,7 @@ pq_verify_peer_name_matches_certificate(PGconn *conn)
 		 */
 		if (names_examined > 1)
 		{
-			printfPQExpBuffer(&conn->errorMessage,
+			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_ngettext("server certificate for \"%s\" (and %d other name) does not match host name \"%s\"\n",
 											 "server certificate for \"%s\" (and %d other names) does not match host name \"%s\"\n",
 											 names_examined - 1),
@@ -192,14 +192,14 @@ pq_verify_peer_name_matches_certificate(PGconn *conn)
 		}
 		else if (names_examined == 1)
 		{
-			printfPQExpBuffer(&conn->errorMessage,
+			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("server certificate for \"%s\" does not match host name \"%s\"\n"),
 							  first_name, host);
 		}
 		else
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not get server's host name from server certificate\n"));
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("could not get server's host name from server certificate\n"));
 		}
 	}
 
