@@ -431,6 +431,8 @@ extern ssize_t pg_pread(int fd, void *buf, size_t nbyte, off_t offset);
 extern ssize_t pg_pwrite(int fd, const void *buf, size_t nbyte, off_t offset);
 #endif
 
+/* For pg_pwritev() and pg_preadv(), see port/pg_iovec.h. */
+
 #if !HAVE_DECL_STRLCAT
 extern size_t strlcat(char *dst, const char *src, size_t siz);
 #endif

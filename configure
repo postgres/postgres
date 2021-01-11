@@ -13061,7 +13061,7 @@ $as_echo "#define HAVE_STDBOOL_H 1" >>confdefs.h
 fi
 
 
-for ac_header in atomic.h copyfile.h execinfo.h getopt.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/event.h sys/ipc.h sys/prctl.h sys/procctl.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/sockio.h sys/tas.h sys/un.h termios.h ucred.h wctype.h
+for ac_header in atomic.h copyfile.h execinfo.h getopt.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/event.h sys/ipc.h sys/prctl.h sys/procctl.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/sockio.h sys/tas.h sys/uio.h sys/un.h termios.h ucred.h wctype.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -15155,7 +15155,7 @@ fi
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-for ac_func in backtrace_symbols clock_gettime copyfile fdatasync getifaddrs getpeerucred getrlimit kqueue mbstowcs_l memset_s poll posix_fallocate ppoll pstat pthread_is_threaded_np readlink setproctitle setproctitle_fast setsid shm_open strchrnul strsignal symlink sync_file_range uselocale wcstombs_l
+for ac_func in backtrace_symbols clock_gettime copyfile fdatasync getifaddrs getpeerucred getrlimit kqueue mbstowcs_l memset_s poll posix_fallocate ppoll pread preadv pstat pthread_is_threaded_np pwrite pwritev readlink readv setproctitle setproctitle_fast setsid shm_open strchrnul strsignal symlink sync_file_range uselocale wcstombs_l writev
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -15827,32 +15827,6 @@ else
   case " $LIBOBJS " in
   *" mkdtemp.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS mkdtemp.$ac_objext"
- ;;
-esac
-
-fi
-
-ac_fn_c_check_func "$LINENO" "pread" "ac_cv_func_pread"
-if test "x$ac_cv_func_pread" = xyes; then :
-  $as_echo "#define HAVE_PREAD 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" pread.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS pread.$ac_objext"
- ;;
-esac
-
-fi
-
-ac_fn_c_check_func "$LINENO" "pwrite" "ac_cv_func_pwrite"
-if test "x$ac_cv_func_pwrite" = xyes; then :
-  $as_echo "#define HAVE_PWRITE 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" pwrite.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS pwrite.$ac_objext"
  ;;
 esac
 
