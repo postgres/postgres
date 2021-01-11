@@ -109,7 +109,6 @@ Section: Class 08 - Connection Exception
 08004    E    ERRCODE_SQLSERVER_REJECTED_ESTABLISHMENT_OF_SQLCONNECTION      sqlserver_rejected_establishment_of_sqlconnection
 08007    E    ERRCODE_TRANSACTION_RESOLUTION_UNKNOWN                         transaction_resolution_unknown
 08P01    E    ERRCODE_PROTOCOL_VIOLATION                                     protocol_violation
-08P02    E    ERRCODE_IDLE_SESSION_TIMEOUT                                   idle_session_timeout
 
 Section: Class 09 - Triggered Action Exception
 
@@ -429,6 +428,7 @@ Section: Class 57 - Operator Intervention
 57P02    E    ERRCODE_CRASH_SHUTDOWN                                         crash_shutdown
 57P03    E    ERRCODE_CANNOT_CONNECT_NOW                                     cannot_connect_now
 57P04    E    ERRCODE_DATABASE_DROPPED                                       database_dropped
+57P05    E    ERRCODE_IDLE_SESSION_TIMEOUT                                   idle_session_timeout
 
 Section: Class 58 - System Error (errors external to PostgreSQL itself)
 
