@@ -223,9 +223,9 @@ extern long changeDependencyFor(Oid classId, Oid objectId,
 								Oid refClassId, Oid oldRefObjectId,
 								Oid newRefObjectId);
 
-long changeDependenciesOf(Oid classId, Oid oldObjectId,
+extern long changeDependenciesOf(Oid classId, Oid oldObjectId,
 								 Oid newObjectId);
-long changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
+extern long changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
 								 Oid newRefObjectId);
 
 extern Oid	getExtensionOfObject(Oid classId, Oid objectId);
