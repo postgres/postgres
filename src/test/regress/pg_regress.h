@@ -27,11 +27,22 @@ typedef struct _stringlist
 	struct _stringlist *next;
 } _stringlist;
 
-typedef PID_TYPE(*test_function) (const char *,
-								  _stringlist **,
-								  _stringlist **,
-								  _stringlist **);
+/*
+ * Callback function signatures for test programs that use regression_main()
+ */
+
+/* Initialize at program start */
 typedef void (*init_function) (int argc, char **argv);
+
+/* Launch one test case */
+typedef PID_TYPE(*test_start_function) (const char *testname,
+										_stringlist **resultfiles,
+										_stringlist **expectfiles,
+										_stringlist **tags);
+
+/* Postprocess one result file (optional) */
+typedef void (*postprocess_result_function) (const char *filename);
+
 
 extern char *bindir;
 extern char *libdir;
@@ -48,7 +59,10 @@ extern const char *basic_diff_opts;
 extern const char *pretty_diff_opts;
 
 int			regression_main(int argc, char *argv[],
-							init_function ifunc, test_function tfunc);
+							init_function ifunc,
+							test_start_function startfunc,
+							postprocess_result_function postfunc);
+
 void		add_stringlist_item(_stringlist **listhead, const char *str);
 PID_TYPE	spawn_process(const char *cmdline);
 void		replace_string(struct StringInfoData *string,

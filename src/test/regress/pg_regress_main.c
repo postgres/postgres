@@ -119,5 +119,8 @@ psql_init(int argc, char **argv)
 int
 main(int argc, char *argv[])
 {
-	return regression_main(argc, argv, psql_init, psql_start_test);
+	return regression_main(argc, argv,
+						   psql_init,
+						   psql_start_test,
+						   NULL /* no postfunc needed */ );
 }

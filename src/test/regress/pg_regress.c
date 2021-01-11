@@ -731,7 +731,7 @@ static void
 initialize_environment(void)
 {
 	/*
-	 * Set default application_name.  (The test_function may choose to
+	 * Set default application_name.  (The test_start_function may choose to
 	 * override this, but if it doesn't, we have something useful in place.)
 	 */
 	setenv("PGAPPNAME", "pg_regress", 1);
@@ -1616,7 +1616,8 @@ log_child_failure(int exitstatus)
  * Run all the tests specified in one schedule file
  */
 static void
-run_schedule(const char *schedule, test_function tfunc)
+run_schedule(const char *schedule, test_start_function startfunc,
+			 postprocess_result_function postfunc)
 {
 #define MAX_PARALLEL_TESTS 100
 	char	   *tests[MAX_PARALLEL_TESTS];
@@ -1730,7 +1731,7 @@ run_schedule(const char *schedule, test_function tfunc)
 		if (num_tests == 1)
 		{
 			status(_("test %-28s ... "), tests[0]);
-			pids[0] = (tfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
+			pids[0] = (startfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
 			INSTR_TIME_SET_CURRENT(starttimes[0]);
 			wait_for_tests(pids, statuses, stoptimes, NULL, 1);
 			/* status line is finished below */
@@ -1756,7 +1757,7 @@ run_schedule(const char *schedule, test_function tfunc)
 								   tests + oldest, i - oldest);
 					oldest = i;
 				}
-				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
+				pids[i] = (startfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 				INSTR_TIME_SET_CURRENT(starttimes[i]);
 			}
 			wait_for_tests(pids + oldest, statuses + oldest,
@@ -1769,7 +1770,7 @@ run_schedule(const char *schedule, test_function tfunc)
 			status(_("parallel group (%d tests): "), num_tests);
 			for (i = 0; i < num_tests; i++)
 			{
-				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
+				pids[i] = (startfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 				INSTR_TIME_SET_CURRENT(starttimes[i]);
 			}
 			wait_for_tests(pids, statuses, stoptimes, tests, num_tests);
@@ -1801,6 +1802,8 @@ run_schedule(const char *schedule, test_function tfunc)
 			{
 				bool		newdiff;
 
+				if (postfunc)
+					(*postfunc) (rl->str);
 				newdiff = results_differ(tests[i], rl->str, el->str);
 				if (newdiff && tl)
 				{
@@ -1867,7 +1870,8 @@ run_schedule(const char *schedule, test_function tfunc)
  * Run a single test
  */
 static void
-run_single_test(const char *test, test_function tfunc)
+run_single_test(const char *test, test_start_function startfunc,
+				postprocess_result_function postfunc)
 {
 	PID_TYPE	pid;
 	instr_time	starttime;
@@ -1882,7 +1886,7 @@ run_single_test(const char *test, test_function tfunc)
 	bool		differ = false;
 
 	status(_("test %-28s ... "), test);
-	pid = (tfunc) (test, &resultfiles, &expectfiles, &tags);
+	pid = (startfunc) (test, &resultfiles, &expectfiles, &tags);
 	INSTR_TIME_SET_CURRENT(starttime);
 	wait_for_tests(&pid, &exit_status, &stoptime, NULL, 1);
 
@@ -1900,6 +1904,8 @@ run_single_test(const char *test, test_function tfunc)
 	{
 		bool		newdiff;
 
+		if (postfunc)
+			(*postfunc) (rl->str);
 		newdiff = results_differ(test, rl->str, el->str);
 		if (newdiff && tl)
 		{
@@ -2083,7 +2089,10 @@ help(void)
 }
 
 int
-regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc)
+regression_main(int argc, char *argv[],
+				init_function ifunc,
+				test_start_function startfunc,
+				postprocess_result_function postfunc)
 {
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
@@ -2554,12 +2563,12 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 
 	for (sl = schedulelist; sl != NULL; sl = sl->next)
 	{
-		run_schedule(sl->str, tfunc);
+		run_schedule(sl->str, startfunc, postfunc);
 	}
 
 	for (sl = extra_tests; sl != NULL; sl = sl->next)
 	{
-		run_single_test(sl->str, tfunc);
+		run_single_test(sl->str, startfunc, postfunc);
 	}
 
 	/*
