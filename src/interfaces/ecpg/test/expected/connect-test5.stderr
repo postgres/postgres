@@ -36,7 +36,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database <DEFAULT> on <DEFAULT> port <DEFAULT>  for user regress_ecpg_user2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: could not open database: FATAL:  database "regress_ecpg_user2" does not exist
+[NO_PID]: ECPGconnect: could not open database: could not connect: FATAL:  database "regress_ecpg_user2" does not exist
 
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection main closed
@@ -73,7 +73,7 @@
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ECPGconnect: opening database <DEFAULT> on <DEFAULT> port <DEFAULT>  for user regress_ecpg_user2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: could not open database: FATAL:  database "regress_ecpg_user2" does not exist
+[NO_PID]: ECPGconnect: could not open database: could not connect: FATAL:  database "regress_ecpg_user2" does not exist
 
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection main closed

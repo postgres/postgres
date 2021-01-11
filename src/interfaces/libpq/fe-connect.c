@@ -1669,15 +1669,17 @@ getHostaddr(PGconn *conn, char *host_addr, int host_addr_len)
 }
 
 /* ----------
- * connectFailureMessage -
- * create a friendly error message on connection failure.
+ * emitCouldNotConnect -
+ * Speculatively append "could not connect to ...: " to conn->errorMessage
+ * once we've identified the current connection target address.  This ensures
+ * that any subsequent error message will be properly attributed to the
+ * server we couldn't connect to.  conn->raddr must be valid, and the result
+ * of getHostaddr() must be supplied.
  * ----------
  */
 static void
-connectFailureMessage(PGconn *conn, int errorno)
+emitCouldNotConnect(PGconn *conn, const char *host_addr)
 {
-	char		sebuf[PG_STRERROR_R_BUFLEN];
-
 #ifdef HAVE_UNIX_SOCKETS
 	if (IS_AF_UNIX(conn->raddr.addr.ss_family))
 	{
@@ -1688,24 +1690,14 @@ connectFailureMessage(PGconn *conn, int errorno)
 						   service, sizeof(service),
 						   NI_NUMERICSERV);
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not connect to server: %s\n"
-										"\tIs the server running locally and accepting\n"
-										"\tconnections on Unix domain socket \"%s\"?\n"),
-						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
+						  libpq_gettext("could not connect to socket \"%s\": "),
 						  service);
 	}
 	else
 #endif							/* HAVE_UNIX_SOCKETS */
 	{
-		char		host_addr[NI_MAXHOST];
 		const char *displayed_host;
 		const char *displayed_port;
-
-		/*
-		 * Optionally display the network address with the hostname. This is
-		 * useful to distinguish between IPv4 and IPv6 connections.
-		 */
-		getHostaddr(conn, host_addr, NI_MAXHOST);
 
 		/* To which host and port were we actually connecting? */
 		if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
@@ -1722,24 +1714,44 @@ connectFailureMessage(PGconn *conn, int errorno)
 		 * looked-up IP address.
 		 */
 		if (conn->connhost[conn->whichhost].type != CHT_HOST_ADDRESS &&
-			strlen(host_addr) > 0 &&
+			host_addr[0] &&
 			strcmp(displayed_host, host_addr) != 0)
 			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not connect to server: %s\n"
-											"\tIs the server running on host \"%s\" (%s) and accepting\n"
-											"\tTCP/IP connections on port %s?\n"),
-							  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
+							  libpq_gettext("could not connect to host \"%s\" (%s), port %s: "),
 							  displayed_host, host_addr,
 							  displayed_port);
 		else
 			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not connect to server: %s\n"
-											"\tIs the server running on host \"%s\" and accepting\n"
-											"\tTCP/IP connections on port %s?\n"),
-							  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
+							  libpq_gettext("could not connect to host \"%s\", port %s: "),
 							  displayed_host,
 							  displayed_port);
 	}
+}
+
+/* ----------
+ * connectFailureMessage -
+ * create a friendly error message on connection failure,
+ * using the given errno value.  Use this for error cases that
+ * imply that there's no server there.
+ * ----------
+ */
+static void
+connectFailureMessage(PGconn *conn, int errorno)
+{
+	char		sebuf[PG_STRERROR_R_BUFLEN];
+
+	appendPQExpBuffer(&conn->errorMessage,
+					  "%s\n",
+					  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)));
+
+#ifdef HAVE_UNIX_SOCKETS
+	if (IS_AF_UNIX(conn->raddr.addr.ss_family))
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("\tIs the server running locally and accepting connections on that socket?\n"));
+	else
+#endif
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("\tIs the server running on that host and accepting TCP/IP connections?\n"));
 }
 
 /*
@@ -2476,30 +2488,30 @@ keep_going:						/* We will come back to here until there is
 						goto keep_going;
 					}
 
-					/* Remember current address for possible error msg */
+					/* Remember current address for possible use later */
 					memcpy(&conn->raddr.addr, addr_cur->ai_addr,
 						   addr_cur->ai_addrlen);
 					conn->raddr.salen = addr_cur->ai_addrlen;
 
-					/* set connip */
+					/*
+					 * Set connip, too.  Note we purposely ignore strdup
+					 * failure; not a big problem if it fails.
+					 */
 					if (conn->connip != NULL)
 					{
 						free(conn->connip);
 						conn->connip = NULL;
 					}
-
 					getHostaddr(conn, host_addr, NI_MAXHOST);
-					if (strlen(host_addr) > 0)
+					if (host_addr[0])
 						conn->connip = strdup(host_addr);
 
-					/*
-					 * purposely ignore strdup failure; not a big problem if
-					 * it fails anyway.
-					 */
-
+					/* Try to create the socket */
 					conn->sock = socket(addr_cur->ai_family, SOCK_STREAM, 0);
 					if (conn->sock == PGINVALID_SOCKET)
 					{
+						int			errorno = SOCK_ERRNO;
+
 						/*
 						 * Silently ignore socket() failure if we have more
 						 * addresses to try; this reduces useless chatter in
@@ -2512,11 +2524,19 @@ keep_going:						/* We will come back to here until there is
 							conn->try_next_addr = true;
 							goto keep_going;
 						}
+						emitCouldNotConnect(conn, host_addr);
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not create socket: %s\n"),
-										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+										  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
+
+					/*
+					 * Once we've identified a target address, all errors
+					 * except the preceding socket()-failure case should be
+					 * prefixed with "could not connect to <target>: ".
+					 */
+					emitCouldNotConnect(conn, host_addr);
 
 					/*
 					 * Select socket options: no delay of outgoing data for
@@ -3608,9 +3628,6 @@ keep_going:						/* We will come back to here until there is
 			}
 		case CONNECTION_CHECK_WRITABLE:
 			{
-				const char *displayed_host;
-				const char *displayed_port;
-
 				conn->status = CONNECTION_OK;
 				if (!PQconsumeInput(conn))
 					goto error_return;
@@ -3634,19 +3651,8 @@ keep_going:						/* We will come back to here until there is
 						PQclear(res);
 
 						/* Append error report to conn->errorMessage. */
-						if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
-							displayed_host = conn->connhost[conn->whichhost].hostaddr;
-						else
-							displayed_host = conn->connhost[conn->whichhost].host;
-						displayed_port = conn->connhost[conn->whichhost].port;
-						if (displayed_port == NULL || displayed_port[0] == '\0')
-							displayed_port = DEF_PGPORT_STR;
-
-						appendPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("could not make a writable "
-														"connection to server "
-														"\"%s:%s\"\n"),
-										  displayed_host, displayed_port);
+						appendPQExpBufferStr(&conn->errorMessage,
+											 libpq_gettext("session is read-only\n"));
 
 						/* Close connection politely. */
 						conn->status = CONNECTION_OK;
@@ -3679,17 +3685,8 @@ keep_going:						/* We will come back to here until there is
 					PQclear(res);
 
 				/* Append error report to conn->errorMessage. */
-				if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
-					displayed_host = conn->connhost[conn->whichhost].hostaddr;
-				else
-					displayed_host = conn->connhost[conn->whichhost].host;
-				displayed_port = conn->connhost[conn->whichhost].port;
-				if (displayed_port == NULL || displayed_port[0] == '\0')
-					displayed_port = DEF_PGPORT_STR;
-				appendPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("test \"SHOW transaction_read_only\" failed "
-												"on server \"%s:%s\"\n"),
-								  displayed_host, displayed_port);
+				appendPQExpBufferStr(&conn->errorMessage,
+									 libpq_gettext("test \"SHOW transaction_read_only\" failed\n"));
 
 				/* Close connection politely. */
 				conn->status = CONNECTION_OK;
