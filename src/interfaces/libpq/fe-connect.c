@@ -3315,6 +3315,20 @@ keep_going:						/* We will come back to here until there is
 					/* OK, we read the message; mark data consumed */
 					conn->inStart = conn->inCursor;
 
+					/*
+					 * If error is "cannot connect now", try the next host if
+					 * any (but we don't want to consider additional addresses
+					 * for this host, nor is there much point in changing SSL
+					 * or GSS mode).  This is helpful when dealing with
+					 * standby servers that might not be in hot-standby state.
+					 */
+					if (strcmp(conn->last_sqlstate,
+							   ERRCODE_CANNOT_CONNECT_NOW) == 0)
+					{
+						conn->try_next_host = true;
+						goto keep_going;
+					}
+
 					/* Check to see if we should mention pgpassfile */
 					pgpassfileWarning(conn);
 
