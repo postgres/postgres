@@ -48,6 +48,7 @@
 #include "pg_trace.h"
 #include "pgstat.h"
 #include "port/atomics.h"
+#include "port/pg_iovec.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/startup.h"
 #include "postmaster/walwriter.h"
@@ -3270,7 +3271,6 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	XLogSegNo	installed_segno;
 	XLogSegNo	max_segno;
 	int			fd;
-	int			nbytes;
 	int			save_errno;
 
 	XLogFilePath(path, ThisTimeLineID, logsegno, wal_segment_size);
@@ -3317,6 +3317,9 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	save_errno = 0;
 	if (wal_init_zero)
 	{
+		struct iovec iov[PG_IOV_MAX];
+		int			blocks;
+
 		/*
 		 * Zero-fill the file.  With this setting, we do this the hard way to
 		 * ensure that all the file space has really been allocated.  On
@@ -3326,15 +3329,28 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 		 * indirect blocks are down on disk.  Therefore, fdatasync(2) or
 		 * O_DSYNC will be sufficient to sync future writes to the log file.
 		 */
-		for (nbytes = 0; nbytes < wal_segment_size; nbytes += XLOG_BLCKSZ)
+
+		/* Prepare to write out a lot of copies of our zero buffer at once. */
+		for (int i = 0; i < lengthof(iov); ++i)
 		{
-			errno = 0;
-			if (write(fd, zbuffer.data, XLOG_BLCKSZ) != XLOG_BLCKSZ)
+			iov[i].iov_base = zbuffer.data;
+			iov[i].iov_len = XLOG_BLCKSZ;
+		}
+
+		/* Loop, writing as many blocks as we can for each system call. */
+		blocks = wal_segment_size / XLOG_BLCKSZ;
+		for (int i = 0; i < blocks;)
+		{
+			int 		iovcnt = Min(blocks - i, lengthof(iov));
+			off_t		offset = i * XLOG_BLCKSZ;
+
+			if (pg_pwritev_with_retry(fd, iov, iovcnt, offset) < 0)
 			{
-				/* if write didn't set errno, assume no disk space */
-				save_errno = errno ? errno : ENOSPC;
+				save_errno = errno;
 				break;
 			}
+
+			i += iovcnt;
 		}
 	}
 	else
