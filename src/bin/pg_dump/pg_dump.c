@@ -16532,7 +16532,7 @@ dumpIndexAttach(Archive *fout, IndexAttachInfo *attachinfo)
 					 attachinfo->dobj.name,
 					 attachinfo->dobj.namespace->dobj.name,
 					 NULL,
-					 "",
+					 attachinfo->parentIdx->indextable->rolname,
 					 false, "INDEX ATTACH", SECTION_POST_DATA,
 					 q->data, "", NULL,
 					 NULL, 0,
