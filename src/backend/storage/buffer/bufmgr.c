@@ -70,6 +70,14 @@
 
 #define RELS_BSEARCH_THRESHOLD		20
 
+/*
+ * This is the size (in the number of blocks) above which we scan the
+ * entire buffer pool to remove the buffers for all the pages of relation
+ * being dropped. For the relations with size below this threshold, we find
+ * the buffers by doing lookups in BufMapping table.
+ */
+#define BUF_DROP_FULL_SCAN_THRESHOLD		(uint32) (NBuffers / 32)
+
 typedef struct PrivateRefCountEntry
 {
 	Buffer		buffer;
@@ -473,6 +481,10 @@ static BufferDesc *BufferAlloc(SMgrRelation smgr,
 							   BufferAccessStrategy strategy,
 							   bool *foundPtr);
 static void FlushBuffer(BufferDesc *buf, SMgrRelation reln);
+static void FindAndDropRelFileNodeBuffers(RelFileNode rnode,
+										  ForkNumber forkNum,
+										  BlockNumber nForkBlock,
+										  BlockNumber firstDelBlock);
 static void AtProcExit_Buffers(int code, Datum arg);
 static void CheckForBufferLeaks(void);
 static int	rnode_comparator(const void *p1, const void *p2);
@@ -2965,19 +2977,19 @@ BufferGetLSNAtomic(Buffer buffer)
  *		later.  It is also the responsibility of higher-level code to ensure
  *		that no other process could be trying to load more pages of the
  *		relation into buffers.
- *
- *		XXX currently it sequentially searches the buffer pool, should be
- *		changed to more clever ways of searching.  However, this routine
- *		is used only in code paths that aren't very performance-critical,
- *		and we shouldn't slow down the hot paths to make it faster ...
  * --------------------------------------------------------------------
  */
 void
-DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber *forkNum,
+DropRelFileNodeBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
 					   int nforks, BlockNumber *firstDelBlock)
 {
 	int			i;
 	int			j;
+	RelFileNodeBackend rnode;
+	BlockNumber nForkBlock[MAX_FORKNUM];
+	BlockNumber nBlocksToInvalidate = 0;
+
+	rnode = smgr_reln->smgr_rnode;
 
 	/* If it's a local relation, it's localbuf.c's problem. */
 	if (RelFileNodeBackendIsTemp(rnode))
@@ -2988,6 +3000,56 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber *forkNum,
 				DropRelFileNodeLocalBuffers(rnode.node, forkNum[j],
 											firstDelBlock[j]);
 		}
+		return;
+	}
+
+	/*
+	 * To remove all the pages of the specified relation forks from the buffer
+	 * pool, we need to scan the entire buffer pool but we can optimize it by
+	 * finding the buffers from BufMapping table provided we know the exact
+	 * size of each fork of the relation. The exact size is required to ensure
+	 * that we don't leave any buffer for the relation being dropped as
+	 * otherwise the background writer or checkpointer can lead to a PANIC
+	 * error while flushing buffers corresponding to files that don't exist.
+	 *
+	 * To know the exact size, we rely on the size cached for each fork by us
+	 * during recovery which limits the optimization to recovery and on
+	 * standbys but we can easily extend it once we have shared cache for
+	 * relation size.
+	 *
+	 * In recovery, we cache the value returned by the first lseek(SEEK_END)
+	 * and the future writes keeps the cached value up-to-date. See
+	 * smgrextend. It is possible that the value of the first lseek is smaller
+	 * than the actual number of existing blocks in the file due to buggy
+	 * Linux kernels that might not have accounted for the recent write. But
+	 * that should be fine because there must not be any buffers after that
+	 * file size.
+	 */
+	for (i = 0; i < nforks; i++)
+	{
+		/* Get the number of blocks for a relation's fork */
+		nForkBlock[i] = smgrnblocks_cached(smgr_reln, forkNum[i]);
+
+		if (nForkBlock[i] == InvalidBlockNumber)
+		{
+			nBlocksToInvalidate = InvalidBlockNumber;
+			break;
+		}
+
+		/* calculate the number of blocks to be invalidated */
+		nBlocksToInvalidate += (nForkBlock[i] - firstDelBlock[i]);
+	}
+
+	/*
+	 * We apply the optimization iff the total number of blocks to invalidate
+	 * is below the BUF_DROP_FULL_SCAN_THRESHOLD.
+	 */
+	if (BlockNumberIsValid(nBlocksToInvalidate) &&
+		nBlocksToInvalidate < BUF_DROP_FULL_SCAN_THRESHOLD)
+	{
+		for (j = 0; j < nforks; j++)
+			FindAndDropRelFileNodeBuffers(rnode.node, forkNum[j],
+										  nForkBlock[j], firstDelBlock[j]);
 		return;
 	}
 
@@ -3134,6 +3196,65 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 }
 
 /* ---------------------------------------------------------------------
+ *		FindAndDropRelFileNodeBuffers
+ *
+ *		This function performs look up in BufMapping table and removes from the
+ *		buffer pool all the pages of the specified relation fork that has block
+ *		number >= firstDelBlock. (In particular, with firstDelBlock = 0, all
+ *		pages are removed.)
+ * --------------------------------------------------------------------
+ */
+static void
+FindAndDropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum,
+							  BlockNumber nForkBlock,
+							  BlockNumber firstDelBlock)
+{
+	BlockNumber curBlock;
+
+	for (curBlock = firstDelBlock; curBlock < nForkBlock; curBlock++)
+	{
+		uint32		bufHash;	/* hash value for tag */
+		BufferTag	bufTag;		/* identity of requested block */
+		LWLock	   *bufPartitionLock;	/* buffer partition lock for it */
+		int			buf_id;
+		BufferDesc *bufHdr;
+		uint32		buf_state;
+
+		/* create a tag so we can lookup the buffer */
+		INIT_BUFFERTAG(bufTag, rnode, forkNum, curBlock);
+
+		/* determine its hash code and partition lock ID */
+		bufHash = BufTableHashCode(&bufTag);
+		bufPartitionLock = BufMappingPartitionLock(bufHash);
+
+		/* Check that it is in the buffer pool. If not, do nothing. */
+		LWLockAcquire(bufPartitionLock, LW_SHARED);
+		buf_id = BufTableLookup(&bufTag, bufHash);
+		LWLockRelease(bufPartitionLock);
+
+		if (buf_id < 0)
+			continue;
+
+		bufHdr = GetBufferDescriptor(buf_id);
+
+		/*
+		 * We need to lock the buffer header and recheck if the buffer is
+		 * still associated with the same block because the buffer could be
+		 * evicted by some other backend loading blocks for a different
+		 * relation after we release lock on the BufMapping table.
+		 */
+		buf_state = LockBufHdr(bufHdr);
+
+		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode) &&
+			bufHdr->tag.forkNum == forkNum &&
+			bufHdr->tag.blockNum >= firstDelBlock)
+			InvalidateBuffer(bufHdr);	/* releases spinlock */
+		else
+			UnlockBufHdr(bufHdr, buf_state);
+	}
+}
+
+/* ---------------------------------------------------------------------
  *		DropDatabaseBuffers
  *
  *		This function removes all the buffers in the buffer cache for a
@@ -3245,8 +3366,7 @@ PrintPinnedBufs(void)
  *		XXX currently it sequentially searches the buffer pool, should be
  *		changed to more clever ways of searching.  This routine is not
  *		used in any performance-critical code paths, so it's not worth
- *		adding additional overhead to normal paths to make it go faster;
- *		but see also DropRelFileNodeBuffers.
+ *		adding additional overhead to normal paths to make it go faster.
  * --------------------------------------------------------------------
  */
 void
