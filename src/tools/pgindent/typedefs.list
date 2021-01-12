@@ -2061,6 +2061,7 @@ Regis
 RegisNode
 RegisteredBgWorker
 ReindexErrorInfo
+ReindexIndexInfo
 ReindexObjectType
 ReindexStmt
 ReindexType

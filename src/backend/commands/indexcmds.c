@@ -3061,6 +3061,12 @@ ReindexMultipleInternal(List *relids, int options)
 static bool
 ReindexRelationConcurrently(Oid relationOid, int options)
 {
+	typedef struct ReindexIndexInfo
+	{
+		Oid			indexId;
+		Oid			tableId;
+		Oid			amId;
+	} ReindexIndexInfo;
 	List	   *heapRelationIds = NIL;
 	List	   *indexIds = NIL;
 	List	   *newIndexIds = NIL;
@@ -3170,10 +3176,16 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 										get_rel_name(cellOid))));
 					else
 					{
+						ReindexIndexInfo *idx;
+
 						/* Save the list of relation OIDs in private context */
 						oldcontext = MemoryContextSwitchTo(private_context);
 
-						indexIds = lappend_oid(indexIds, cellOid);
+						idx = palloc(sizeof(ReindexIndexInfo));
+						idx->indexId = cellOid;
+						/* other fields set later */
+
+						indexIds = lappend(indexIds, idx);
 
 						MemoryContextSwitchTo(oldcontext);
 					}
@@ -3210,13 +3222,18 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 											get_rel_name(cellOid))));
 						else
 						{
+							ReindexIndexInfo *idx;
+
 							/*
 							 * Save the list of relation OIDs in private
 							 * context
 							 */
 							oldcontext = MemoryContextSwitchTo(private_context);
 
-							indexIds = lappend_oid(indexIds, cellOid);
+							idx = palloc(sizeof(ReindexIndexInfo));
+							idx->indexId = cellOid;
+							indexIds = lappend(indexIds, idx);
+							/* other fields set later */
 
 							MemoryContextSwitchTo(oldcontext);
 						}
@@ -3235,6 +3252,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 				Oid			heapId = IndexGetRelation(relationOid,
 													  (options & REINDEXOPT_MISSING_OK) != 0);
 				Relation	heapRelation;
+				ReindexIndexInfo *idx;
 
 				/* if relation is missing, leave */
 				if (!OidIsValid(heapId))
@@ -3285,7 +3303,10 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 				 * Save the list of relation OIDs in private context.  Note
 				 * that invalid indexes are allowed here.
 				 */
-				indexIds = lappend_oid(indexIds, relationOid);
+				idx = palloc(sizeof(ReindexIndexInfo));
+				idx->indexId = relationOid;
+				indexIds = lappend(indexIds, idx);
+				/* other fields set later */
 
 				MemoryContextSwitchTo(oldcontext);
 				break;
@@ -3344,31 +3365,36 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	foreach(lc, indexIds)
 	{
 		char	   *concurrentName;
-		Oid			indexId = lfirst_oid(lc);
+		ReindexIndexInfo *idx = lfirst(lc);
+		ReindexIndexInfo *newidx;
 		Oid			newIndexId;
 		Relation	indexRel;
 		Relation	heapRel;
 		Relation	newIndexRel;
 		LockRelId  *lockrelid;
 
-		indexRel = index_open(indexId, ShareUpdateExclusiveLock);
+		indexRel = index_open(idx->indexId, ShareUpdateExclusiveLock);
 		heapRel = table_open(indexRel->rd_index->indrelid,
 							 ShareUpdateExclusiveLock);
+
+		idx->tableId = RelationGetRelid(heapRel);
+		idx->amId = indexRel->rd_rel->relam;
 
 		/* This function shouldn't be called for temporary relations. */
 		if (indexRel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
 			elog(ERROR, "cannot reindex a temporary table concurrently");
 
 		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
-									  RelationGetRelid(heapRel));
+									  idx->tableId);
+
 		progress_vals[0] = PROGRESS_CREATEIDX_COMMAND_REINDEX_CONCURRENTLY;
 		progress_vals[1] = 0;	/* initializing */
-		progress_vals[2] = indexId;
-		progress_vals[3] = indexRel->rd_rel->relam;
+		progress_vals[2] = idx->indexId;
+		progress_vals[3] = idx->amId;
 		pgstat_progress_update_multi_param(4, progress_index, progress_vals);
 
 		/* Choose a temporary relation name for the new index */
-		concurrentName = ChooseRelationName(get_rel_name(indexId),
+		concurrentName = ChooseRelationName(get_rel_name(idx->indexId),
 											NULL,
 											"ccnew",
 											get_rel_namespace(indexRel->rd_index->indrelid),
@@ -3376,7 +3402,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 		/* Create new index definition based on given index */
 		newIndexId = index_concurrently_create_copy(heapRel,
-													indexId,
+													idx->indexId,
 													concurrentName);
 
 		/*
@@ -3390,7 +3416,12 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		 */
 		oldcontext = MemoryContextSwitchTo(private_context);
 
-		newIndexIds = lappend_oid(newIndexIds, newIndexId);
+		newidx = palloc(sizeof(ReindexIndexInfo));
+		newidx->indexId = newIndexId;
+		newidx->tableId = idx->tableId;
+		newidx->amId = idx->amId;
+
+		newIndexIds = lappend(newIndexIds, newidx);
 
 		/*
 		 * Save lockrelid to protect each relation from drop then close
@@ -3471,10 +3502,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 	foreach(lc, newIndexIds)
 	{
-		Relation	newIndexRel;
-		Oid			newIndexId = lfirst_oid(lc);
-		Oid			heapId;
-		Oid			indexam;
+		ReindexIndexInfo *newidx = lfirst(lc);
 
 		/* Start new transaction for this index's concurrent build */
 		StartTransactionCommand();
@@ -3490,27 +3518,18 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		PushActiveSnapshot(GetTransactionSnapshot());
 
 		/*
-		 * Index relation has been closed by previous commit, so reopen it to
-		 * get its information.
-		 */
-		newIndexRel = index_open(newIndexId, ShareUpdateExclusiveLock);
-		heapId = newIndexRel->rd_index->indrelid;
-		indexam = newIndexRel->rd_rel->relam;
-		index_close(newIndexRel, NoLock);
-
-		/*
 		 * Update progress for the index to build, with the correct parent
 		 * table involved.
 		 */
-		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX, heapId);
+		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX, newidx->tableId);
 		progress_vals[0] = PROGRESS_CREATEIDX_COMMAND_REINDEX_CONCURRENTLY;
 		progress_vals[1] = PROGRESS_CREATEIDX_PHASE_BUILD;
-		progress_vals[2] = newIndexId;
-		progress_vals[3] = indexam;
+		progress_vals[2] = newidx->indexId;
+		progress_vals[3] = newidx->amId;
 		pgstat_progress_update_multi_param(4, progress_index, progress_vals);
 
 		/* Perform concurrent build of new index */
-		index_concurrently_build(heapId, newIndexId);
+		index_concurrently_build(newidx->tableId, newidx->indexId);
 
 		PopActiveSnapshot();
 		CommitTransactionCommand();
@@ -3532,12 +3551,9 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 	foreach(lc, newIndexIds)
 	{
-		Oid			newIndexId = lfirst_oid(lc);
-		Oid			heapId;
+		ReindexIndexInfo *newidx = lfirst(lc);
 		TransactionId limitXmin;
 		Snapshot	snapshot;
-		Relation	newIndexRel;
-		Oid			indexam;
 
 		StartTransactionCommand();
 
@@ -3556,26 +3572,18 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		PushActiveSnapshot(snapshot);
 
 		/*
-		 * Index relation has been closed by previous commit, so reopen it to
-		 * get its information.
-		 */
-		newIndexRel = index_open(newIndexId, ShareUpdateExclusiveLock);
-		heapId = newIndexRel->rd_index->indrelid;
-		indexam = newIndexRel->rd_rel->relam;
-		index_close(newIndexRel, NoLock);
-
-		/*
 		 * Update progress for the index to build, with the correct parent
 		 * table involved.
 		 */
-		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX, heapId);
+		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
+									  newidx->tableId);
 		progress_vals[0] = PROGRESS_CREATEIDX_COMMAND_REINDEX_CONCURRENTLY;
 		progress_vals[1] = PROGRESS_CREATEIDX_PHASE_VALIDATE_IDXSCAN;
-		progress_vals[2] = newIndexId;
-		progress_vals[3] = indexam;
+		progress_vals[2] = newidx->indexId;
+		progress_vals[3] = newidx->amId;
 		pgstat_progress_update_multi_param(4, progress_index, progress_vals);
 
-		validate_index(heapId, newIndexId, snapshot);
+		validate_index(newidx->tableId, newidx->indexId, snapshot);
 
 		/*
 		 * We can now do away with our active snapshot, we still need to save
@@ -3622,10 +3630,9 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 	forboth(lc, indexIds, lc2, newIndexIds)
 	{
+		ReindexIndexInfo *oldidx = lfirst(lc);
+		ReindexIndexInfo *newidx = lfirst(lc2);
 		char	   *oldName;
-		Oid			oldIndexId = lfirst_oid(lc);
-		Oid			newIndexId = lfirst_oid(lc2);
-		Oid			heapId;
 
 		/*
 		 * Check for user-requested abort.  This is inside a transaction so as
@@ -3634,27 +3641,25 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		 */
 		CHECK_FOR_INTERRUPTS();
 
-		heapId = IndexGetRelation(oldIndexId, false);
-
 		/* Choose a relation name for old index */
-		oldName = ChooseRelationName(get_rel_name(oldIndexId),
+		oldName = ChooseRelationName(get_rel_name(oldidx->indexId),
 									 NULL,
 									 "ccold",
-									 get_rel_namespace(heapId),
+									 get_rel_namespace(oldidx->tableId),
 									 false);
 
 		/*
 		 * Swap old index with the new one.  This also marks the new one as
 		 * valid and the old one as not valid.
 		 */
-		index_concurrently_swap(newIndexId, oldIndexId, oldName);
+		index_concurrently_swap(newidx->indexId, oldidx->indexId, oldName);
 
 		/*
 		 * Invalidate the relcache for the table, so that after this commit
 		 * all sessions will refresh any cached plans that might reference the
 		 * index.
 		 */
-		CacheInvalidateRelcacheByRelid(heapId);
+		CacheInvalidateRelcacheByRelid(oldidx->tableId);
 
 		/*
 		 * CCI here so that subsequent iterations see the oldName in the
@@ -3684,8 +3689,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 	foreach(lc, indexIds)
 	{
-		Oid			oldIndexId = lfirst_oid(lc);
-		Oid			heapId;
+		ReindexIndexInfo *oldidx = lfirst(lc);
 
 		/*
 		 * Check for user-requested abort.  This is inside a transaction so as
@@ -3694,8 +3698,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		 */
 		CHECK_FOR_INTERRUPTS();
 
-		heapId = IndexGetRelation(oldIndexId, false);
-		index_concurrently_set_dead(heapId, oldIndexId);
+		index_concurrently_set_dead(oldidx->tableId, oldidx->indexId);
 	}
 
 	/* Commit this transaction to make the updates visible. */
@@ -3719,11 +3722,11 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 		foreach(lc, indexIds)
 		{
-			Oid			oldIndexId = lfirst_oid(lc);
+			ReindexIndexInfo *idx = lfirst(lc);
 			ObjectAddress object;
 
 			object.classId = RelationRelationId;
-			object.objectId = oldIndexId;
+			object.objectId = idx->indexId;
 			object.objectSubId = 0;
 
 			add_exact_object_address(&object, objects);
@@ -3766,7 +3769,8 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		{
 			foreach(lc, newIndexIds)
 			{
-				Oid			indOid = lfirst_oid(lc);
+				ReindexIndexInfo *idx = lfirst(lc);
+				Oid			indOid = idx->indexId;
 
 				ereport(INFO,
 						(errmsg("index \"%s.%s\" was reindexed",
