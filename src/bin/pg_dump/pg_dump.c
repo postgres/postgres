@@ -202,6 +202,7 @@ static void dumpTrigger(Archive *fout, TriggerInfo *tginfo);
 static void dumpEventTrigger(Archive *fout, EventTriggerInfo *evtinfo);
 static void dumpTable(Archive *fout, TableInfo *tbinfo);
 static void dumpTableSchema(Archive *fout, TableInfo *tbinfo);
+static void dumpTableAttach(Archive *fout, TableAttachInfo *tbinfo);
 static void dumpAttrDef(Archive *fout, AttrDefInfo *adinfo);
 static void dumpSequence(Archive *fout, TableInfo *tbinfo);
 static void dumpSequenceData(Archive *fout, TableDataInfo *tdinfo);
@@ -10176,6 +10177,9 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 		case DO_TABLE:
 			dumpTable(fout, (TableInfo *) dobj);
 			break;
+		case DO_TABLE_ATTACH:
+			dumpTableAttach(fout, (TableAttachInfo *) dobj);
+			break;
 		case DO_ATTRDEF:
 			dumpAttrDef(fout, (AttrDefInfo *) dobj);
 			break;
@@ -11183,7 +11187,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	if (dopt->binary_upgrade)
 		binary_upgrade_set_type_oids_by_type_oid(fout, q,
 												 tyinfo->dobj.catId.oid,
-												 true,		/* force array type */
+												 true,	/* force array type */
 												 false);	/* force multirange type */
 
 	qtypname = pg_strdup(fmtId(tyinfo->dobj.name));
@@ -16134,27 +16138,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		}
 
 		/*
-		 * For partitioned tables, emit the ATTACH PARTITION clause.  Note
-		 * that we always want to create partitions this way instead of using
-		 * CREATE TABLE .. PARTITION OF, mainly to preserve a possible column
-		 * layout discrepancy with the parent, but also to ensure it gets the
-		 * correct tablespace setting if it differs from the parent's.
-		 */
-		if (tbinfo->ispartition)
-		{
-			/* With partitions there can only be one parent */
-			if (tbinfo->numParents != 1)
-				fatal("invalid number of parents %d for table \"%s\"",
-					  tbinfo->numParents, tbinfo->dobj.name);
-
-			/* Perform ALTER TABLE on the parent */
-			appendPQExpBuffer(q,
-							  "ALTER TABLE ONLY %s ATTACH PARTITION %s %s;\n",
-							  fmtQualifiedDumpable(parents[0]),
-							  qualrelname, tbinfo->partbound);
-		}
-
-		/*
 		 * In binary_upgrade mode, arrange to restore the old relfrozenxid and
 		 * relminmxid of all vacuumable relations.  (While vacuum.c processes
 		 * TOAST tables semi-independently, here we see them only as children
@@ -16381,6 +16364,55 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	destroyPQExpBuffer(delq);
 	free(qrelname);
 	free(qualrelname);
+}
+
+/*
+ * dumpTableAttach
+ *	  write to fout the commands to attach a child partition
+ *
+ * Child partitions are always made by creating them separately
+ * and then using ATTACH PARTITION, rather than using
+ * CREATE TABLE ... PARTITION OF.  This is important for preserving
+ * any possible discrepancy in column layout, to allow assigning the
+ * correct tablespace if different, and so that it's possible to restore
+ * a partition without restoring its parent.  (You'll get an error from
+ * the ATTACH PARTITION command, but that can be ignored, or skipped
+ * using "pg_restore -L" if you prefer.)  The last point motivates
+ * treating ATTACH PARTITION as a completely separate ArchiveEntry
+ * rather than emitting it within the child partition's ArchiveEntry.
+ */
+static void
+dumpTableAttach(Archive *fout, TableAttachInfo *attachinfo)
+{
+	DumpOptions *dopt = fout->dopt;
+	PQExpBuffer q;
+
+	if (dopt->dataOnly)
+		return;
+
+	if (!(attachinfo->partitionTbl->dobj.dump & DUMP_COMPONENT_DEFINITION))
+		return;
+
+	q = createPQExpBuffer();
+
+	/* Perform ALTER TABLE on the parent */
+	appendPQExpBuffer(q,
+					  "ALTER TABLE ONLY %s ",
+					  fmtQualifiedDumpable(attachinfo->parentTbl));
+	appendPQExpBuffer(q,
+					  "ATTACH PARTITION %s %s;\n",
+					  fmtQualifiedDumpable(attachinfo->partitionTbl),
+					  attachinfo->partitionTbl->partbound);
+
+	ArchiveEntry(fout, attachinfo->dobj.catId, attachinfo->dobj.dumpId,
+				 ARCHIVE_OPTS(.tag = attachinfo->dobj.name,
+							  .namespace = attachinfo->dobj.namespace->dobj.name,
+							  .owner = attachinfo->partitionTbl->rolname,
+							  .description = "TABLE ATTACH",
+							  .section = SECTION_PRE_DATA,
+							  .createStmt = q->data));
+
+	destroyPQExpBuffer(q);
 }
 
 /*
@@ -18344,6 +18376,7 @@ addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 			case DO_COLLATION:
 			case DO_CONVERSION:
 			case DO_TABLE:
+			case DO_TABLE_ATTACH:
 			case DO_ATTRDEF:
 			case DO_PROCLANG:
 			case DO_CAST:

@@ -63,6 +63,7 @@ enum dbObjectTypePriorities
 	PRIO_FDW,
 	PRIO_FOREIGN_SERVER,
 	PRIO_TABLE,
+	PRIO_TABLE_ATTACH,
 	PRIO_DUMMY_TYPE,
 	PRIO_ATTRDEF,
 	PRIO_BLOB,
@@ -103,6 +104,7 @@ static const int dbObjectTypePriority[] =
 	PRIO_COLLATION,				/* DO_COLLATION */
 	PRIO_CONVERSION,			/* DO_CONVERSION */
 	PRIO_TABLE,					/* DO_TABLE */
+	PRIO_TABLE_ATTACH,			/* DO_TABLE_ATTACH */
 	PRIO_ATTRDEF,				/* DO_ATTRDEF */
 	PRIO_INDEX,					/* DO_INDEX */
 	PRIO_INDEX_ATTACH,			/* DO_INDEX_ATTACH */
@@ -1323,6 +1325,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 			snprintf(buf, bufsize,
 					 "TABLE %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_TABLE_ATTACH:
+			snprintf(buf, bufsize,
+					 "TABLE ATTACH %s  (ID %d)",
+					 obj->name, obj->dumpId);
 			return;
 		case DO_ATTRDEF:
 			snprintf(buf, bufsize,
