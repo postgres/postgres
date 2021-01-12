@@ -502,6 +502,7 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	MemoryContext old;
 	RelationSyncEntry *relentry;
 	TransactionId xid = InvalidTransactionId;
+	Relation	ancestor = NULL;
 
 	if (!is_publishable_relation(relation))
 		return;
@@ -552,7 +553,8 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 				if (relentry->publish_as_relid != RelationGetRelid(relation))
 				{
 					Assert(relation->rd_rel->relispartition);
-					relation = RelationIdGetRelation(relentry->publish_as_relid);
+					ancestor = RelationIdGetRelation(relentry->publish_as_relid);
+					relation = ancestor;
 					/* Convert tuple if needed. */
 					if (relentry->map)
 						tuple = execute_attr_map_tuple(tuple, relentry->map);
@@ -574,7 +576,8 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 				if (relentry->publish_as_relid != RelationGetRelid(relation))
 				{
 					Assert(relation->rd_rel->relispartition);
-					relation = RelationIdGetRelation(relentry->publish_as_relid);
+					ancestor = RelationIdGetRelation(relentry->publish_as_relid);
+					relation = ancestor;
 					/* Convert tuples if needed. */
 					if (relentry->map)
 					{
@@ -598,7 +601,8 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 				if (relentry->publish_as_relid != RelationGetRelid(relation))
 				{
 					Assert(relation->rd_rel->relispartition);
-					relation = RelationIdGetRelation(relentry->publish_as_relid);
+					ancestor = RelationIdGetRelation(relentry->publish_as_relid);
+					relation = ancestor;
 					/* Convert tuple if needed. */
 					if (relentry->map)
 						oldtuple = execute_attr_map_tuple(oldtuple, relentry->map);
@@ -614,6 +618,12 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 			break;
 		default:
 			Assert(false);
+	}
+
+	if (RelationIsValid(ancestor))
+	{
+		RelationClose(ancestor);
+		ancestor = NULL;
 	}
 
 	/* Cleanup */
