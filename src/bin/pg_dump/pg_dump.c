@@ -16404,6 +16404,13 @@ dumpTableAttach(Archive *fout, TableAttachInfo *attachinfo)
 					  fmtQualifiedDumpable(attachinfo->partitionTbl),
 					  attachinfo->partitionTbl->partbound);
 
+	/*
+	 * There is no point in creating a drop query as the drop is done by table
+	 * drop.  (If you think to change this, see also _printTocEntry().)
+	 * Although this object doesn't really have ownership as such, set the
+	 * owner field anyway to ensure that the command is run by the correct
+	 * role at restore time.
+	 */
 	ArchiveEntry(fout, attachinfo->dobj.catId, attachinfo->dobj.dumpId,
 				 ARCHIVE_OPTS(.tag = attachinfo->dobj.name,
 							  .namespace = attachinfo->dobj.namespace->dobj.name,
@@ -16685,9 +16692,17 @@ dumpIndexAttach(Archive *fout, IndexAttachInfo *attachinfo)
 		appendPQExpBuffer(q, "ATTACH PARTITION %s;\n",
 						  fmtQualifiedDumpable(attachinfo->partitionIdx));
 
+		/*
+		 * There is no point in creating a drop query as the drop is done by
+		 * index drop.  (If you think to change this, see also
+		 * _printTocEntry().)  Although this object doesn't really have
+		 * ownership as such, set the owner field anyway to ensure that the
+		 * command is run by the correct role at restore time.
+		 */
 		ArchiveEntry(fout, attachinfo->dobj.catId, attachinfo->dobj.dumpId,
 					 ARCHIVE_OPTS(.tag = attachinfo->dobj.name,
 								  .namespace = attachinfo->dobj.namespace->dobj.name,
+								  .owner = attachinfo->parentIdx->indextable->rolname,
 								  .description = "INDEX ATTACH",
 								  .section = SECTION_POST_DATA,
 								  .createStmt = q->data));
