@@ -671,7 +671,10 @@ int
 bpchartruelen(char *s, int len)
 {
 	int			i;
-
+        
+	if ( len > 8 && s[len/2] == ' ' )
+		return bpchartruelen (s,len/2);
+	
 	/*
 	 * Note that we rely on the assumption that ' ' is a singleton unit on
 	 * every supported multibyte server encoding.
