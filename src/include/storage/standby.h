@@ -40,7 +40,8 @@ extern void StandbyDeadLockHandler(void);
 extern void StandbyTimeoutHandler(void);
 extern void StandbyLockTimeoutHandler(void);
 extern void LogRecoveryConflict(ProcSignalReason reason, TimestampTz wait_start,
-								TimestampTz cur_ts, VirtualTransactionId *wait_list);
+								TimestampTz cur_ts, VirtualTransactionId *wait_list,
+								bool still_waiting);
 
 /*
  * Standby Rmgr (RM_STANDBY_ID)

@@ -6961,7 +6961,7 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
       <listitem>
        <para>
         Controls whether a log message is produced when the startup process
-        is waiting longer than <varname>deadlock_timeout</varname>
+        waits longer than <varname>deadlock_timeout</varname>
         for recovery conflicts.  This is useful in determining if recovery
         conflicts prevent the recovery from applying WAL.
        </para>

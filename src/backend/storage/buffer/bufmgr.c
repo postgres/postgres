@@ -4034,6 +4034,16 @@ LockBufferForCleanup(Buffer buffer)
 			/* Successfully acquired exclusive lock with pincount 1 */
 			UnlockBufHdr(bufHdr, buf_state);
 
+			/*
+			 * Emit the log message if recovery conflict on buffer pin was
+			 * resolved but the startup process waited longer than
+			 * deadlock_timeout for it.
+			 */
+			if (logged_recovery_conflict)
+				LogRecoveryConflict(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN,
+									waitStart, GetCurrentTimestamp(),
+									NULL, false);
+
 			/* Report change to non-waiting status */
 			if (new_status)
 			{
@@ -4088,7 +4098,7 @@ LockBufferForCleanup(Buffer buffer)
 											   DeadlockTimeout))
 				{
 					LogRecoveryConflict(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN,
-										waitStart, now, NULL);
+										waitStart, now, NULL, true);
 					logged_recovery_conflict = true;
 				}
 			}

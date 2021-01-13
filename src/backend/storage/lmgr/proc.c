@@ -1322,7 +1322,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 					 * longer than deadlock_timeout.
 					 */
 					LogRecoveryConflict(PROCSIG_RECOVERY_CONFLICT_LOCK,
-										standbyWaitStart, now, cnt > 0 ? vxids : NULL);
+										standbyWaitStart, now,
+										cnt > 0 ? vxids : NULL, true);
 					logged_recovery_conflict = true;
 				}
 			}
@@ -1606,6 +1607,15 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		else
 			disable_timeout(DEADLOCK_TIMEOUT, false);
 	}
+
+	/*
+	 * Emit the log message if recovery conflict on lock was resolved but the
+	 * startup process waited longer than deadlock_timeout for it.
+	 */
+	if (InHotStandby && logged_recovery_conflict)
+		LogRecoveryConflict(PROCSIG_RECOVERY_CONFLICT_LOCK,
+							standbyWaitStart, GetCurrentTimestamp(),
+							NULL, false);
 
 	/*
 	 * Re-acquire the lock table's partition lock.  We have to do this to hold

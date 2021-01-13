@@ -226,17 +226,26 @@ WaitExceedsMaxStandbyDelay(uint32 wait_event_info)
  * wait_start is the timestamp when the caller started to wait.
  * now is the timestamp when this function has been called.
  * wait_list is the list of virtual transaction ids assigned to
- * conflicting processes.
+ * conflicting processes. still_waiting indicates whether
+ * the startup process is still waiting for the recovery conflict
+ * to be resolved or not.
  */
 void
 LogRecoveryConflict(ProcSignalReason reason, TimestampTz wait_start,
-					TimestampTz now, VirtualTransactionId *wait_list)
+					TimestampTz now, VirtualTransactionId *wait_list,
+					bool still_waiting)
 {
 	long		secs;
 	int			usecs;
 	long		msecs;
 	StringInfoData buf;
 	int			nprocs = 0;
+
+	/*
+	 * There must be no conflicting processes when the recovery conflict has
+	 * already been resolved.
+	 */
+	Assert(still_waiting || wait_list == NULL);
 
 	TimestampDifference(wait_start, now, &secs, &usecs);
 	msecs = secs * 1000 + usecs / 1000;
@@ -275,12 +284,21 @@ LogRecoveryConflict(ProcSignalReason reason, TimestampTz wait_start,
 	 * conflicting backends in a detail message. Note that if all the backends
 	 * in the list are not active, no detail message is logged.
 	 */
-	ereport(LOG,
-			errmsg("recovery still waiting after %ld.%03d ms: %s",
-				   msecs, usecs, _(get_recovery_conflict_desc(reason))),
-			nprocs > 0 ? errdetail_log_plural("Conflicting process: %s.",
-											  "Conflicting processes: %s.",
-											  nprocs, buf.data) : 0);
+	if (still_waiting)
+	{
+		ereport(LOG,
+				errmsg("recovery still waiting after %ld.%03d ms: %s",
+					   msecs, usecs, _(get_recovery_conflict_desc(reason))),
+				nprocs > 0 ? errdetail_log_plural("Conflicting process: %s.",
+												  "Conflicting processes: %s.",
+												  nprocs, buf.data) : 0);
+	}
+	else
+	{
+		ereport(LOG,
+				errmsg("recovery finished waiting after %ld.%03d ms: %s",
+					   msecs, usecs, _(get_recovery_conflict_desc(reason))));
+	}
 
 	if (nprocs > 0)
 		pfree(buf.data);
@@ -375,13 +393,12 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 
 				/*
 				 * Emit the log message if the startup process is waiting
-				 * longer than deadlock_timeout for recovery conflict on
-				 * buffer pin.
+				 * longer than deadlock_timeout for recovery conflict.
 				 */
 				if (maybe_log_conflict &&
 					TimestampDifferenceExceeds(waitStart, now, DeadlockTimeout))
 				{
-					LogRecoveryConflict(reason, waitStart, now, waitlist);
+					LogRecoveryConflict(reason, waitStart, now, waitlist, true);
 					logged_recovery_conflict = true;
 				}
 			}
@@ -390,6 +407,14 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 		/* The virtual transaction is gone now, wait for the next one */
 		waitlist++;
 	}
+
+	/*
+	 * Emit the log message if recovery conflict was resolved but the startup
+	 * process waited longer than deadlock_timeout for it.
+	 */
+	if (logged_recovery_conflict)
+		LogRecoveryConflict(reason, waitStart, GetCurrentTimestamp(),
+							NULL, false);
 
 	/* Reset ps display if we changed it */
 	if (new_status)
