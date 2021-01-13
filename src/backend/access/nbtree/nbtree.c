@@ -199,6 +199,7 @@ bool
 btinsert(Relation rel, Datum *values, bool *isnull,
 		 ItemPointer ht_ctid, Relation heapRel,
 		 IndexUniqueCheck checkUnique,
+		 bool indexUnchanged,
 		 IndexInfo *indexInfo)
 {
 	bool		result;

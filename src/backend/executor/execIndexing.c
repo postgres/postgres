@@ -124,6 +124,15 @@ typedef enum
 	CEOUC_LIVELOCK_PREVENTING_WAIT
 } CEOUC_WAIT_MODE;
 
+/*
+ * The authoritative version of these macro are in executor/execMain.c.  Be
+ * sure to keep everything in sync.
+ */
+#define GetUpdatedColumns(relinfo, estate) \
+	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols)
+#define GetExtraUpdatedColumns(relinfo, estate) \
+	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->extraUpdatedCols)
+
 static bool check_exclusion_or_unique_constraint(Relation heap, Relation index,
 												 IndexInfo *indexInfo,
 												 ItemPointer tupleid,
@@ -136,6 +145,11 @@ static bool check_exclusion_or_unique_constraint(Relation heap, Relation index,
 static bool index_recheck_constraint(Relation index, Oid *constr_procs,
 									 Datum *existing_values, bool *existing_isnull,
 									 Datum *new_values);
+static bool index_unchanged_by_update(ResultRelInfo *resultRelInfo,
+									  EState *estate, IndexInfo *indexInfo,
+									  Relation indexRelation);
+static bool index_expression_changed_walker(Node *node,
+											Bitmapset *allUpdatedCols);
 
 /* ----------------------------------------------------------------
  *		ExecOpenIndices
@@ -254,6 +268,16 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  *		into all the relations indexing the result relation
  *		when a heap tuple is inserted into the result relation.
  *
+ *		When 'update' is true, executor is performing an UPDATE
+ *		that could not use an optimization like heapam's HOT (in
+ *		more general terms a call to table_tuple_update() took
+ *		place and set 'update_indexes' to true).  Receiving this
+ *		hint makes us consider if we should pass down the
+ *		'indexUnchanged' hint in turn.  That's something that we
+ *		figure out for each index_insert() call iff 'update' is
+ *		true.  (When 'update' is false we already know not to pass
+ *		the hint to any index.)
+ *
  *		Unique and exclusion constraints are enforced at the same
  *		time.  This returns a list of index OIDs for any unique or
  *		exclusion constraints that are deferred and that had
@@ -263,16 +287,13 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  *
  *		If 'arbiterIndexes' is nonempty, noDupErr applies only to
  *		those indexes.  NIL means noDupErr applies to all indexes.
- *
- *		CAUTION: this must not be called for a HOT update.
- *		We can't defend against that here for lack of info.
- *		Should we change the API to make it safer?
  * ----------------------------------------------------------------
  */
 List *
 ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 					  TupleTableSlot *slot,
 					  EState *estate,
+					  bool update,
 					  bool noDupErr,
 					  bool *specConflict,
 					  List *arbiterIndexes)
@@ -319,6 +340,7 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 		IndexInfo  *indexInfo;
 		bool		applyNoDupErr;
 		IndexUniqueCheck checkUnique;
+		bool		indexUnchanged;
 		bool		satisfiesConstraint;
 
 		if (indexRelation == NULL)
@@ -389,6 +411,16 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 		else
 			checkUnique = UNIQUE_CHECK_PARTIAL;
 
+		/*
+		 * There's definitely going to be an index_insert() call for this
+		 * index.  If we're being called as part of an UPDATE statement,
+		 * consider if the 'indexUnchanged' = true hint should be passed.
+		 */
+		indexUnchanged = update && index_unchanged_by_update(resultRelInfo,
+															 estate,
+															 indexInfo,
+															 indexRelation);
+
 		satisfiesConstraint =
 			index_insert(indexRelation, /* index relation */
 						 values,	/* array of index Datums */
@@ -396,6 +428,7 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 						 tupleid,	/* tid of heap tuple */
 						 heapRelation,	/* heap relation */
 						 checkUnique,	/* type of uniqueness check to do */
+						 indexUnchanged,	/* UPDATE without logical change? */
 						 indexInfo);	/* index AM may need this */
 
 		/*
@@ -898,4 +931,123 @@ index_recheck_constraint(Relation index, Oid *constr_procs,
 	}
 
 	return true;
+}
+
+/*
+ * Check if ExecInsertIndexTuples() should pass indexUnchanged hint.
+ *
+ * When the executor performs an UPDATE that requires a new round of index
+ * tuples, determine if we should pass 'indexUnchanged' = true hint for one
+ * single index.
+ */
+static bool
+index_unchanged_by_update(ResultRelInfo *resultRelInfo, EState *estate,
+						  IndexInfo *indexInfo, Relation indexRelation)
+{
+	Bitmapset  *updatedCols = GetUpdatedColumns(resultRelInfo, estate);
+	Bitmapset  *extraUpdatedCols = GetExtraUpdatedColumns(resultRelInfo, estate);
+	Bitmapset  *allUpdatedCols;
+	bool		hasexpression = false;
+	List	   *idxExprs;
+
+	/*
+	 * Check for indexed attribute overlap with updated columns.
+	 *
+	 * Only do this for key columns.  A change to a non-key column within an
+	 * INCLUDE index should not be counted here.  Non-key column values are
+	 * opaque payload state to the index AM, a little like an extra table TID.
+	 */
+	for (int attr = 0; attr < indexInfo->ii_NumIndexKeyAttrs; attr++)
+	{
+		int			keycol = indexInfo->ii_IndexAttrNumbers[attr];
+
+		if (keycol <= 0)
+		{
+			/*
+			 * Skip expressions for now, but remember to deal with them later
+			 * on
+			 */
+			hasexpression = true;
+			continue;
+		}
+
+		if (bms_is_member(keycol - FirstLowInvalidHeapAttributeNumber,
+						  updatedCols) ||
+			bms_is_member(keycol - FirstLowInvalidHeapAttributeNumber,
+						  extraUpdatedCols))
+		{
+			/* Changed key column -- don't hint for this index */
+			return false;
+		}
+	}
+
+	/*
+	 * When we get this far and index has no expressions, return true so that
+	 * index_insert() call will go on to pass 'indexUnchanged' = true hint.
+	 *
+	 * The _absence_ of an indexed key attribute that overlaps with updated
+	 * attributes (in addition to the total absence of indexed expressions)
+	 * shows that the index as a whole is logically unchanged by UPDATE.
+	 */
+	if (!hasexpression)
+		return true;
+
+	/*
+	 * Need to pass only one bms to expression_tree_walker helper function.
+	 * Avoid allocating memory in common case where there are no extra cols.
+	 */
+	if (!extraUpdatedCols)
+		allUpdatedCols = updatedCols;
+	else
+		allUpdatedCols = bms_union(updatedCols, extraUpdatedCols);
+
+	/*
+	 * We have to work slightly harder in the event of indexed expressions,
+	 * but the principle is the same as before: try to find columns (Vars,
+	 * actually) that overlap with known-updated columns.
+	 *
+	 * If we find any matching Vars, don't pass hint for index.  Otherwise
+	 * pass hint.
+	 */
+	idxExprs = RelationGetIndexExpressions(indexRelation);
+	hasexpression = index_expression_changed_walker((Node *) idxExprs,
+													allUpdatedCols);
+	list_free(idxExprs);
+	if (extraUpdatedCols)
+		bms_free(allUpdatedCols);
+
+	if (hasexpression)
+		return false;
+
+	return true;
+}
+
+/*
+ * Indexed expression helper for index_unchanged_by_update().
+ *
+ * Returns true when Var that appears within allUpdatedCols located.
+ */
+static bool
+index_expression_changed_walker(Node *node, Bitmapset *allUpdatedCols)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (bms_is_member(var->varattno - FirstLowInvalidHeapAttributeNumber,
+						  allUpdatedCols))
+		{
+			/* Var was updated -- indicates that we should not hint */
+			return true;
+		}
+
+		/* Still haven't found a reason to not pass the hint */
+		return false;
+	}
+
+	return expression_tree_walker(node, index_expression_changed_walker,
+								  (void *) allUpdatedCols);
 }

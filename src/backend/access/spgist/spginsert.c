@@ -207,6 +207,7 @@ bool
 spginsert(Relation index, Datum *values, bool *isnull,
 		  ItemPointer ht_ctid, Relation heapRel,
 		  IndexUniqueCheck checkUnique,
+		  bool indexUnchanged,
 		  IndexInfo *indexInfo)
 {
 	SpGistState spgstate;

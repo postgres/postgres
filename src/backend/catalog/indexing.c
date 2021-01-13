@@ -162,6 +162,7 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 					 heapRelation,
 					 index->rd_index->indisunique ?
 					 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO,
+					 false,
 					 indexInfo);
 	}
 

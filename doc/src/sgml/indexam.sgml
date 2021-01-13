@@ -293,6 +293,7 @@ aminsert (Relation indexRelation,
           ItemPointer heap_tid,
           Relation heapRelation,
           IndexUniqueCheck checkUnique,
+          bool indexUnchanged,
           IndexInfo *indexInfo);
 </programlisting>
    Insert a new tuple into an existing index.  The <literal>values</literal> and
@@ -306,6 +307,20 @@ aminsert (Relation indexRelation,
    Normally the access method only needs the <literal>heapRelation</literal>
    parameter when performing uniqueness checking (since then it will have to
    look into the heap to verify tuple liveness).
+  </para>
+
+  <para>
+   The <literal>indexUnchanged</literal> boolean value gives a hint
+   about the nature of the tuple to be indexed.  When it is true,
+   the tuple is a duplicate of some existing tuple in the index.  The
+   new tuple is a logically unchanged successor MVCC tuple version.  This
+   happens when an <command>UPDATE</command> takes place that does not
+   modify any columns covered by the index, but nevertheless requires a
+   new version in the index.  The index AM may use this hint to decide
+   to apply bottom-up index deletion in parts of the index where many
+   versions of the same logical row accumulate.  Note that updating a
+   non-key column does not affect the value of
+   <literal>indexUnchanged</literal>.
   </para>
 
   <para>

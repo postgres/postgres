@@ -116,6 +116,7 @@ extern void ginbuildempty(Relation index);
 extern bool gininsert(Relation index, Datum *values, bool *isnull,
 					  ItemPointer ht_ctid, Relation heapRel,
 					  IndexUniqueCheck checkUnique,
+					  bool indexUnchanged,
 					  struct IndexInfo *indexInfo);
 extern void ginEntryInsert(GinState *ginstate,
 						   OffsetNumber attnum, Datum key, GinNullCategory category,

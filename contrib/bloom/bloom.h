@@ -192,6 +192,7 @@ extern bool blvalidate(Oid opclassoid);
 extern bool blinsert(Relation index, Datum *values, bool *isnull,
 					 ItemPointer ht_ctid, Relation heapRel,
 					 IndexUniqueCheck checkUnique,
+					 bool indexUnchanged,
 					 struct IndexInfo *indexInfo);
 extern IndexScanDesc blbeginscan(Relation r, int nkeys, int norderbys);
 extern int64 blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm);

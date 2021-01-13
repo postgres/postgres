@@ -110,6 +110,7 @@ typedef bool (*aminsert_function) (Relation indexRelation,
 								   ItemPointer heap_tid,
 								   Relation heapRelation,
 								   IndexUniqueCheck checkUnique,
+								   bool indexUnchanged,
 								   struct IndexInfo *indexInfo);
 
 /* bulk delete */

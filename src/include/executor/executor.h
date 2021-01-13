@@ -581,6 +581,7 @@ extern void ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
 extern List *ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 								   TupleTableSlot *slot, EState *estate,
+								   bool update,
 								   bool noDupErr,
 								   bool *specConflict, List *arbiterIndexes);
 extern bool ExecCheckIndexConstraints(ResultRelInfo *resultRelInfo,

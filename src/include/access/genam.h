@@ -143,6 +143,7 @@ extern bool index_insert(Relation indexRelation,
 						 ItemPointer heap_t_ctid,
 						 Relation heapRelation,
 						 IndexUniqueCheck checkUnique,
+						 bool indexUnchanged,
 						 struct IndexInfo *indexInfo);
 
 extern IndexScanDesc index_beginscan(Relation heapRelation,

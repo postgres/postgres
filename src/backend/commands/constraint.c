@@ -175,7 +175,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 		 */
 		index_insert(indexRel, values, isnull, &checktid,
 					 trigdata->tg_relation, UNIQUE_CHECK_EXISTING,
-					 indexInfo);
+					 false, indexInfo);
 	}
 	else
 	{

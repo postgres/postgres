@@ -179,6 +179,7 @@ index_insert(Relation indexRelation,
 			 ItemPointer heap_t_ctid,
 			 Relation heapRelation,
 			 IndexUniqueCheck checkUnique,
+			 bool indexUnchanged,
 			 IndexInfo *indexInfo)
 {
 	RELATION_CHECKS;
@@ -191,7 +192,8 @@ index_insert(Relation indexRelation,
 
 	return indexRelation->rd_indam->aminsert(indexRelation, values, isnull,
 											 heap_t_ctid, heapRelation,
-											 checkUnique, indexInfo);
+											 checkUnique, indexUnchanged,
+											 indexInfo);
 }
 
 /*

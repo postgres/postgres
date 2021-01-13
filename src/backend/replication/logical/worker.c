@@ -1309,7 +1309,8 @@ apply_handle_update(StringInfo s)
 	InitResultRelInfo(resultRelInfo, rel->localrel, 1, NULL, 0);
 
 	/*
-	 * Populate updatedCols so that per-column triggers can fire.  This could
+	 * Populate updatedCols so that per-column triggers can fire, and so
+	 * executor can correctly pass down indexUnchanged hint.  This could
 	 * include more columns than were actually changed on the publisher
 	 * because the logical replication protocol doesn't contain that
 	 * information.  But it would for example exclude columns that only exist

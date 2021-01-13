@@ -996,6 +996,7 @@ extern void btbuildempty(Relation index);
 extern bool btinsert(Relation rel, Datum *values, bool *isnull,
 					 ItemPointer ht_ctid, Relation heapRel,
 					 IndexUniqueCheck checkUnique,
+					 bool indexUnchanged,
 					 struct IndexInfo *indexInfo);
 extern IndexScanDesc btbeginscan(Relation rel, int nkeys, int norderbys);
 extern Size btestimateparallelscan(void);

@@ -444,8 +444,8 @@ ExecSimpleRelationInsert(ResultRelInfo *resultRelInfo,
 
 		if (resultRelInfo->ri_NumIndices > 0)
 			recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
-												   slot, estate, false, NULL,
-												   NIL);
+												   slot, estate, false, false,
+												   NULL, NIL);
 
 		/* AFTER ROW INSERT Triggers */
 		ExecARInsertTriggers(estate, resultRelInfo, slot,
@@ -512,8 +512,8 @@ ExecSimpleRelationUpdate(ResultRelInfo *resultRelInfo,
 
 		if (resultRelInfo->ri_NumIndices > 0 && update_indexes)
 			recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
-												   slot, estate, false, NULL,
-												   NIL);
+												   slot, estate, true, false,
+												   NULL, NIL);
 
 		/* AFTER ROW UPDATE Triggers */
 		ExecARUpdateTriggers(estate, resultRelInfo,

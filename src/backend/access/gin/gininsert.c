@@ -488,6 +488,7 @@ bool
 gininsert(Relation index, Datum *values, bool *isnull,
 		  ItemPointer ht_ctid, Relation heapRel,
 		  IndexUniqueCheck checkUnique,
+		  bool indexUnchanged,
 		  IndexInfo *indexInfo)
 {
 	GinState   *ginstate = (GinState *) indexInfo->ii_AmCache;

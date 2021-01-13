@@ -71,10 +71,8 @@ int			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
 static int	MyTriggerDepth = 0;
 
 /*
- * Note that similar macros also exist in executor/execMain.c.  There does not
- * appear to be any good header to put them into, given the structures that
- * they use, so we let them be duplicated.  Be sure to update all if one needs
- * to be changed, however.
+ * The authoritative version of this macro is in executor/execMain.c.  Be sure
+ * to keep everything in sync.
  */
 #define GetAllUpdatedColumns(relinfo, estate) \
 	(bms_union(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols, \

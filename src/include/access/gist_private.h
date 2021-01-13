@@ -403,6 +403,7 @@ extern void gistbuildempty(Relation index);
 extern bool gistinsert(Relation r, Datum *values, bool *isnull,
 					   ItemPointer ht_ctid, Relation heapRel,
 					   IndexUniqueCheck checkUnique,
+					   bool indexUnchanged,
 					   struct IndexInfo *indexInfo);
 extern MemoryContext createTempGistContext(void);
 extern GISTSTATE *initGISTstate(Relation index);

@@ -342,8 +342,8 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 			cstate->cur_lineno = buffer->linenos[i];
 			recheckIndexes =
 				ExecInsertIndexTuples(resultRelInfo,
-									  buffer->slots[i], estate, false, NULL,
-									  NIL);
+									  buffer->slots[i], estate, false, false,
+									  NULL, NIL);
 			ExecARInsertTriggers(estate, resultRelInfo,
 								 slots[i], recheckIndexes,
 								 cstate->transition_capture);
@@ -1086,6 +1086,7 @@ CopyFrom(CopyFromState cstate)
 							recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
 																   myslot,
 																   estate,
+																   false,
 																   false,
 																   NULL,
 																   NIL);

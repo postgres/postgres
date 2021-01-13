@@ -101,10 +101,10 @@ static char *ExecBuildSlotValueDescription(Oid reloid,
 static void EvalPlanQualStart(EPQState *epqstate, Plan *planTree);
 
 /*
- * Note that GetAllUpdatedColumns() also exists in commands/trigger.c.  There does
- * not appear to be any good header to put it into, given the structures that
- * it uses, so we let them be duplicated.  Be sure to update both if one needs
- * to be changed, however.
+ * Note that variants of these macros exists in commands/trigger.c and in
+ * execIndexing.c.  There does not appear to be any good header to put it
+ * into, given the structures that it uses, so we let them be duplicated.  Be
+ * sure to keep everything in sync.
  */
 #define GetInsertedColumns(relinfo, estate) \
 	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->insertedCols)

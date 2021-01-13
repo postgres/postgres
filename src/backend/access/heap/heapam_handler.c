@@ -1956,6 +1956,7 @@ heapam_index_validate_scan(Relation heapRelation,
 						 heapRelation,
 						 indexInfo->ii_Unique ?
 						 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO,
+						 false,
 						 indexInfo);
 
 			state->tups_inserted += 1;

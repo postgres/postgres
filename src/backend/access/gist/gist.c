@@ -156,6 +156,7 @@ bool
 gistinsert(Relation r, Datum *values, bool *isnull,
 		   ItemPointer ht_ctid, Relation heapRel,
 		   IndexUniqueCheck checkUnique,
+		   bool indexUnchanged,
 		   IndexInfo *indexInfo)
 {
 	GISTSTATE  *giststate = (GISTSTATE *) indexInfo->ii_AmCache;
