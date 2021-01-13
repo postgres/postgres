@@ -3262,7 +3262,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         </indexterm>
         <function>right</function> ( <parameter>string</parameter> <type>text</type>,
          <parameter>n</parameter> <type>integer</type> )
-<type></type> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -3284,7 +3283,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <function>rpad</function> ( <parameter>string</parameter> <type>text</type>,
         <parameter>length</parameter> <type>integer</type>
         <optional>, <parameter>fill</parameter> <type>text</type> </optional> )
-<type></type> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
