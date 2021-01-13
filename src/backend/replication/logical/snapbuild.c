@@ -1486,7 +1486,7 @@ static void
 SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 {
 	Size		needed_length;
-	SnapBuildOnDisk *ondisk;
+	SnapBuildOnDisk *ondisk = NULL;
 	char	   *ondisk_c;
 	int			fd;
 	char		tmppath[MAXPGPATH];
@@ -1681,6 +1681,9 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 out:
 	ReorderBufferSetRestartPoint(builder->reorder,
 								 builder->last_serialized_snapshot);
+	/* be tidy */
+	if (ondisk)
+		pfree(ondisk);
 }
 
 /*
