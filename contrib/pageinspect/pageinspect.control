@@ -1,5 +1,5 @@
 # pageinspect extension
 comment = 'inspect the contents of database pages at a low level'
-default_version = '1.8'
+default_version = '1.9'
 module_pathname = '$libdir/pageinspect'
 relocatable = true

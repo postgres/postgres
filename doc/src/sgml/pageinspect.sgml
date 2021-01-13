@@ -672,6 +672,95 @@ test=# SELECT first_tid, nbytes, tids[0:5] AS some_tids
  </sect2>
 
  <sect2>
+  <title>GiST Functions</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <function>gist_page_opaque_info(page bytea) returns record</function>
+     <indexterm>
+      <primary>gist_page_opaque_info</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>gist_page_opaque_info</function> returns information about
+      a <acronym>GiST</acronym> index opaque area, like the NSN, rightlink and
+      page type.
+      For example:
+<screen>
+test=# SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
+ lsn | nsn | rightlink | flags  
+-----+-----+-----------+--------
+ 0/1 | 0/0 |         1 | {leaf}
+(1 row)
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>gist_page_items(page bytea, index oid) returns setof record</function>
+     <indexterm>
+      <primary>gist_page_items</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>gist_page_items</function> returns information about
+      the data stored in a page of <acronym>GiST</acronym> index.  For example:
+<screen>
+test=# SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 0), 'test_gist_idx');
+ itemoffset |   ctid    | itemlen |       keys        
+------------+-----------+---------+-------------------
+          1 | (1,65535) |      40 | (p)=((166,166))
+          2 | (2,65535) |      40 | (p)=((332,332))
+          3 | (3,65535) |      40 | (p)=((498,498))
+          4 | (4,65535) |      40 | (p)=((664,664))
+          5 | (5,65535) |      40 | (p)=((830,830))
+          6 | (6,65535) |      40 | (p)=((996,996))
+          7 | (7,65535) |      40 | (p)=((1000,1000))
+(7 rows)
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>gist_page_items_bytea(page bytea) returns setof record</function>
+     <indexterm>
+      <primary>gist_page_items_bytea</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Same as <function>gist_page_items</function>, but returns the key data as a raw
+      bytea blob. For example:
+<screen>
+test=# SELECT * FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 0));
+ itemoffset |   ctid    | itemlen |                                      key_data                                      
+------------+-----------+---------+------------------------------------------------------------------------------------
+          1 | (1,65535) |      40 | \x00000100ffff28000000000000c064400000000000c06440000000000000f03f000000000000f03f
+          2 | (2,65535) |      40 | \x00000200ffff28000000000000c074400000000000c074400000000000e064400000000000e06440
+          3 | (3,65535) |      40 | \x00000300ffff28000000000000207f400000000000207f400000000000d074400000000000d07440
+          4 | (4,65535) |      40 | \x00000400ffff28000000000000c084400000000000c084400000000000307f400000000000307f40
+          5 | (5,65535) |      40 | \x00000500ffff28000000000000f089400000000000f089400000000000c884400000000000c88440
+          6 | (6,65535) |      40 | \x00000600ffff28000000000000208f400000000000208f400000000000f889400000000000f88940
+          7 | (7,65535) |      40 | \x00000700ffff28000000000000408f400000000000408f400000000000288f400000000000288f40
+(7 rows)
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
+
+ <sect2>
   <title>Hash Functions</title>
 
   <variablelist>
