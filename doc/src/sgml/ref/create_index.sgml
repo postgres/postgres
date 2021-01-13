@@ -787,6 +787,12 @@ Indexes:
   </para>
 
   <para>
+   Like any long-running transaction, <command>CREATE INDEX</command> on a
+   table can affect which tuples can be removed by concurrent
+   <command>VACUUM</command> on any other table.
+  </para>
+
+  <para>
    Prior releases of <productname>PostgreSQL</productname> also had an
    R-tree index method.  This method has been removed because
    it had no significant advantages over the GiST method.
