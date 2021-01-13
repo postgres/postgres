@@ -1128,7 +1128,7 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 }
 
 /*
- *	SearchCatCacheInternal
+ *	SearchCatCache
  *
  *		This call searches a system cache for a tuple, opening the relation
  *		if necessary (on the first access to a particular cache).
