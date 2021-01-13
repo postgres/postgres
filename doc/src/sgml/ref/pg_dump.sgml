@@ -176,8 +176,8 @@ PostgreSQL documentation
        </para>
 
        <para>
-        This option is only meaningful for the plain-text format.  For
-        the archive formats, you can specify the option when you
+        This option is ignored when emitting an archive (non-text) output
+        file.  For the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -197,8 +197,8 @@ PostgreSQL documentation
        </para>
 
        <para>
-        This option is only meaningful for the plain-text format.  For
-        the archive formats, you can specify the option when you
+        This option is ignored when emitting an archive (non-text) output
+        file.  For the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -458,8 +458,8 @@ PostgreSQL documentation
        </para>
 
        <para>
-        This option is only meaningful for the plain-text format.  For
-        the archive formats, you can specify the option when you
+        This option is ignored when emitting an archive (non-text) output
+        file.  For the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -699,8 +699,8 @@ PostgreSQL documentation
        </para>
 
        <para>
-        This option is only meaningful for the plain-text format.  For
-        the archive formats, you can specify the option when you
+        This option is ignored when emitting an archive (non-text) output
+        file.  For the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -853,8 +853,8 @@ PostgreSQL documentation
        </para>
 
        <para>
-        This option is only meaningful for the plain-text format.  For
-        the archive formats, you can specify the option when you
+        This option is ignored when emitting an archive (non-text) output
+        file.  For the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
