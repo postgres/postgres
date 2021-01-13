@@ -391,6 +391,12 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 		return;
 
 	/*
+	 * Get rid of any remaining buffers for the relations.  bufmgr will just
+	 * drop them without bothering to write the contents.
+	 */
+	DropRelFileNodesAllBuffers(rels, nrels);
+
+	/*
 	 * create an array which contains all relations to be dropped, and close
 	 * each relation's forks at the smgr level while at it
 	 */
@@ -406,12 +412,6 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 			smgrsw[which].smgr_close(rels[i], forknum);
 	}
-
-	/*
-	 * Get rid of any remaining buffers for the relations.  bufmgr will just
-	 * drop them without bothering to write the contents.
-	 */
-	DropRelFileNodesAllBuffers(rnodes, nrels);
 
 	/*
 	 * It'd be nice to tell the stats collector to forget them immediately,

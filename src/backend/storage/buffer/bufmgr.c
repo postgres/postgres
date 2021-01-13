@@ -3104,28 +3104,33 @@ DropRelFileNodeBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
  * --------------------------------------------------------------------
  */
 void
-DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
+DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
 {
-	int			i,
-				n = 0;
+	int			i;
+	int			j;
+	int			n = 0;
+	SMgrRelation *rels;
+	BlockNumber (*block)[MAX_FORKNUM + 1];
+	BlockNumber nBlocksToInvalidate = 0;
 	RelFileNode *nodes;
+	bool		cached = true;
 	bool		use_bsearch;
 
 	if (nnodes == 0)
 		return;
 
-	nodes = palloc(sizeof(RelFileNode) * nnodes);	/* non-local relations */
+	rels = palloc(sizeof(SMgrRelation) * nnodes);	/* non-local relations */
 
 	/* If it's a local relation, it's localbuf.c's problem. */
 	for (i = 0; i < nnodes; i++)
 	{
-		if (RelFileNodeBackendIsTemp(rnodes[i]))
+		if (RelFileNodeBackendIsTemp(smgr_reln[i]->smgr_rnode))
 		{
-			if (rnodes[i].backend == MyBackendId)
-				DropRelFileNodeAllLocalBuffers(rnodes[i].node);
+			if (smgr_reln[i]->smgr_rnode.backend == MyBackendId)
+				DropRelFileNodeAllLocalBuffers(smgr_reln[i]->smgr_rnode.node);
 		}
 		else
-			nodes[n++] = rnodes[i].node;
+			rels[n++] = smgr_reln[i];
 	}
 
 	/*
@@ -3134,9 +3139,71 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 	 */
 	if (n == 0)
 	{
-		pfree(nodes);
+		pfree(rels);
 		return;
 	}
+
+	/*
+	 * This is used to remember the number of blocks for all the relations
+	 * forks.
+	 */
+	block = (BlockNumber (*)[MAX_FORKNUM + 1])
+		palloc(sizeof(BlockNumber) * n * (MAX_FORKNUM + 1));
+
+	/*
+	 * We can avoid scanning the entire buffer pool if we know the exact size
+	 * of each of the given relation forks. See DropRelFileNodeBuffers.
+	 */
+	for (i = 0; i < n && cached; i++)
+	{
+		for (j = 0; j <= MAX_FORKNUM; j++)
+		{
+			/* Get the number of blocks for a relation's fork. */
+			block[i][j] = smgrnblocks_cached(rels[i], j);
+
+			/* We need to only consider the relation forks that exists. */
+			if (block[i][j] == InvalidBlockNumber)
+			{
+				if (!smgrexists(rels[i], j))
+					continue;
+				cached = false;
+				break;
+			}
+
+			/* calculate the total number of blocks to be invalidated */
+			nBlocksToInvalidate += block[i][j];
+		}
+	}
+
+	/*
+	 * We apply the optimization iff the total number of blocks to invalidate
+	 * is below the BUF_DROP_FULL_SCAN_THRESHOLD.
+	 */
+	if (cached && nBlocksToInvalidate < BUF_DROP_FULL_SCAN_THRESHOLD)
+	{
+		for (i = 0; i < n; i++)
+		{
+			for (j = 0; j <= MAX_FORKNUM; j++)
+			{
+				/* ignore relation forks that doesn't exist */
+				if (!BlockNumberIsValid(block[i][j]))
+					continue;
+
+				/* drop all the buffers for a particular relation fork */
+				FindAndDropRelFileNodeBuffers(rels[i]->smgr_rnode.node,
+											  j, block[i][j], 0);
+			}
+		}
+
+		pfree(block);
+		pfree(rels);
+		return;
+	}
+
+	pfree(block);
+	nodes = palloc(sizeof(RelFileNode) * n);	/* non-local relations */
+	for (i = 0; i < n; i++)
+		nodes[i] = rels[i]->smgr_rnode.node;
 
 	/*
 	 * For low number of relations to drop just use a simple walk through, to
@@ -3193,6 +3260,7 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 	}
 
 	pfree(nodes);
+	pfree(rels);
 }
 
 /* ---------------------------------------------------------------------
