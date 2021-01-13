@@ -9,10 +9,9 @@ SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
 
 SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 0), 'test_gist_idx');
 SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 1), 'test_gist_idx') LIMIT 5;
-SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 2), 'test_gist_idx') LIMIT 5;
 
-SELECT * FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 0));
-SELECT * FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 1)) LIMIT 5;
-SELECT * FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 2)) LIMIT 5;
+-- gist_page_items_bytea prints the raw key data as a bytea. The output of that is
+-- platform-dependent (endianess), so omit the actual key data from the output.
+SELECT itemoffset, ctid, itemlen FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 0));
 
 DROP TABLE test_gist;
