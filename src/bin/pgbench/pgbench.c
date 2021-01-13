@@ -1356,6 +1356,7 @@ makeVariableValue(Variable *var)
  * "src/bin/pgbench/exprscan.l".  Also see parseVariable(), below.
  *
  * Note: this static function is copied from "src/bin/psql/variables.c"
+ * but changed to disallow variable names starting with a digit.
  */
 static bool
 valid_variable_name(const char *name)
@@ -1366,6 +1367,15 @@ valid_variable_name(const char *name)
 	if (*ptr == '\0')
 		return false;
 
+	/* must not start with [0-9] */
+	if (IS_HIGHBIT_SET(*ptr) ||
+		strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz"
+			   "_", *ptr) != NULL)
+		ptr++;
+	else
+		return false;
+
+	/* remaining characters can include [0-9] */
 	while (*ptr)
 	{
 		if (IS_HIGHBIT_SET(*ptr) ||
@@ -1487,23 +1497,27 @@ putVariableInt(CState *st, const char *context, char *name, int64 value)
  *
  * "sql" points at a colon.  If what follows it looks like a valid
  * variable name, return a malloc'd string containing the variable name,
- * and set *eaten to the number of characters consumed.
+ * and set *eaten to the number of characters consumed (including the colon).
  * Otherwise, return NULL.
  */
 static char *
 parseVariable(const char *sql, int *eaten)
 {
-	int			i = 0;
+	int			i = 1;			/* starting at 1 skips the colon */
 	char	   *name;
 
-	do
-	{
+	/* keep this logic in sync with valid_variable_name() */
+	if (IS_HIGHBIT_SET(sql[i]) ||
+		strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz"
+			   "_", sql[i]) != NULL)
 		i++;
-	} while (IS_HIGHBIT_SET(sql[i]) ||
-			 strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz"
-					"_0123456789", sql[i]) != NULL);
-	if (i == 1)
-		return NULL;			/* no valid variable name chars */
+	else
+		return NULL;
+
+	while (IS_HIGHBIT_SET(sql[i]) ||
+		   strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz"
+				  "_0123456789", sql[i]) != NULL)
+		i++;
 
 	name = pg_malloc(i);
 	memcpy(name, &sql[1], i - 1);
