@@ -99,24 +99,21 @@ SELECT name(high_pay()) AS overpaid;
 -----------------------------
 -- Creating SQL Functions with multiple SQL statements
 --	you can also create functions that do more than just a SELECT.
---
--- 14MAR99 Clark Evans: Does not quite work, commented out for now.
---
 -----------------------------
 
 -- you may have noticed that Andy has a negative salary. We'll create a
 -- function that removes employees with negative salaries.
---
--- SELECT * FROM EMP;
---
--- CREATE FUNCTION clean_EMP () RETURNS integer
---	  AS 'DELETE FROM EMP WHERE EMP.salary <= 0;
---		  SELECT 1 AS ignore_this'
---	  LANGUAGE SQL;
---
--- SELECT clean_EMP();
---
--- SELECT * FROM EMP;
+
+SELECT * FROM EMP;
+
+CREATE FUNCTION clean_EMP () RETURNS integer
+   AS 'DELETE FROM EMP WHERE EMP.salary <= 0;
+       SELECT 1 AS ignore_this'
+   LANGUAGE SQL;
+
+SELECT clean_EMP();
+
+SELECT * FROM EMP;
 
 
 -----------------------------
