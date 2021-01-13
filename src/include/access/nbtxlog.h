@@ -177,24 +177,6 @@ typedef struct xl_btree_dedup
 #define SizeOfBtreeDedup 	(offsetof(xl_btree_dedup, nintervals) + sizeof(uint16))
 
 /*
- * This is what we need to know about delete of individual leaf index tuples.
- * The WAL record can represent deletion of any number of index tuples on a
- * single index page when *not* executed by VACUUM.  Deletion of a subset of
- * the TIDs within a posting list tuple is not supported.
- *
- * Backup Blk 0: index page
- */
-typedef struct xl_btree_delete
-{
-	TransactionId latestRemovedXid;
-	uint32		ndeleted;
-
-	/* DELETED TARGET OFFSET NUMBERS FOLLOW */
-} xl_btree_delete;
-
-#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, ndeleted) + sizeof(uint32))
-
-/*
  * This is what we need to know about page reuse within btree.  This record
  * only exists to generate a conflict point for Hot Standby.
  *
@@ -211,9 +193,61 @@ typedef struct xl_btree_reuse_page
 #define SizeOfBtreeReusePage	(sizeof(xl_btree_reuse_page))
 
 /*
- * This is what we need to know about which TIDs to remove from an individual
- * posting list tuple during vacuuming.  An array of these may appear at the
- * end of xl_btree_vacuum records.
+ * xl_btree_vacuum and xl_btree_delete records describe deletion of index
+ * tuples on a leaf page.  The former variant is used by VACUUM, while the
+ * latter variant is used by the ad-hoc deletions that sometimes take place
+ * when btinsert() is called.
+ *
+ * The records are very similar.  The only difference is that xl_btree_delete
+ * has to include a latestRemovedXid field to generate recovery conflicts.
+ * (VACUUM operations can just rely on earlier conflicts generated during
+ * pruning of the table whose TIDs the to-be-deleted index tuples point to.
+ * There are also small differences between each REDO routine that we don't go
+ * into here.)
+ *
+ * xl_btree_vacuum and xl_btree_delete both represent deletion of any number
+ * of index tuples on a single leaf page using page offset numbers.  Both also
+ * support "updates" of index tuples, which is how deletes of a subset of TIDs
+ * contained in an existing posting list tuple are implemented.
+ *
+ * Updated posting list tuples are represented using xl_btree_update metadata.
+ * The REDO routines each use the xl_btree_update entries (plus each
+ * corresponding original index tuple from the target leaf page) to generate
+ * the final updated tuple.
+ *
+ * Updates are only used when there will be some remaining TIDs left by the
+ * REDO routine.  Otherwise the posting list tuple just gets deleted outright.
+ */
+typedef struct xl_btree_vacuum
+{
+	uint16		ndeleted;
+	uint16		nupdated;
+
+	/* DELETED TARGET OFFSET NUMBERS FOLLOW */
+	/* UPDATED TARGET OFFSET NUMBERS FOLLOW */
+	/* UPDATED TUPLES METADATA (xl_btree_update) ARRAY FOLLOWS */
+} xl_btree_vacuum;
+
+#define SizeOfBtreeVacuum	(offsetof(xl_btree_vacuum, nupdated) + sizeof(uint16))
+
+typedef struct xl_btree_delete
+{
+	TransactionId latestRemovedXid;
+	uint16		ndeleted;
+	uint16		nupdated;
+
+	/* DELETED TARGET OFFSET NUMBERS FOLLOW */
+	/* UPDATED TARGET OFFSET NUMBERS FOLLOW */
+	/* UPDATED TUPLES METADATA (xl_btree_update) ARRAY FOLLOWS */
+} xl_btree_delete;
+
+#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, nupdated) + sizeof(uint16))
+
+/*
+ * The offsets that appear in xl_btree_update metadata are offsets into the
+ * original posting list from tuple, not page offset numbers.  These are
+ * 0-based.  The page offset number for the original posting list tuple comes
+ * from the main xl_btree_vacuum/xl_btree_delete record.
  */
 typedef struct xl_btree_update
 {
@@ -223,31 +257,6 @@ typedef struct xl_btree_update
 } xl_btree_update;
 
 #define SizeOfBtreeUpdate	(offsetof(xl_btree_update, ndeletedtids) + sizeof(uint16))
-
-/*
- * This is what we need to know about a VACUUM of a leaf page.  The WAL record
- * can represent deletion of any number of index tuples on a single index page
- * when executed by VACUUM.  It can also support "updates" of index tuples,
- * which is how deletes of a subset of TIDs contained in an existing posting
- * list tuple are implemented. (Updates are only used when there will be some
- * remaining TIDs once VACUUM finishes; otherwise the posting list tuple can
- * just be deleted).
- *
- * Updated posting list tuples are represented using xl_btree_update metadata.
- * The REDO routine uses each xl_btree_update (plus its corresponding original
- * index tuple from the target leaf page) to generate the final updated tuple.
- */
-typedef struct xl_btree_vacuum
-{
-	uint16		ndeleted;
-	uint16		nupdated;
-
-	/* DELETED TARGET OFFSET NUMBERS FOLLOW */
-	/* UPDATED TARGET OFFSET NUMBERS FOLLOW */
-	/* UPDATED TUPLES METADATA ARRAY FOLLOWS */
-} xl_btree_vacuum;
-
-#define SizeOfBtreeVacuum	(offsetof(xl_btree_vacuum, nupdated) + sizeof(uint16))
 
 /*
  * This is what we need to know about marking an empty subtree for deletion.

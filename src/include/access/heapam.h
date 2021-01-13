@@ -166,9 +166,8 @@ extern void simple_heap_delete(Relation relation, ItemPointer tid);
 extern void simple_heap_update(Relation relation, ItemPointer otid,
 							   HeapTuple tup);
 
-extern TransactionId heap_compute_xid_horizon_for_tuples(Relation rel,
-														 ItemPointerData *items,
-														 int nitems);
+extern TransactionId heap_index_delete_tuples(Relation rel,
+											  TM_IndexDeleteOp *delstate);
 
 /* in heap/pruneheap.c */
 struct GlobalVisState;

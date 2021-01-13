@@ -557,6 +557,47 @@ btree_xlog_dedup(XLogReaderState *record)
 }
 
 static void
+btree_xlog_updates(Page page, OffsetNumber *updatedoffsets,
+				   xl_btree_update *updates, int nupdated)
+{
+	BTVacuumPosting vacposting;
+	IndexTuple	origtuple;
+	ItemId		itemid;
+	Size		itemsz;
+
+	for (int i = 0; i < nupdated; i++)
+	{
+		itemid = PageGetItemId(page, updatedoffsets[i]);
+		origtuple = (IndexTuple) PageGetItem(page, itemid);
+
+		vacposting = palloc(offsetof(BTVacuumPostingData, deletetids) +
+							updates->ndeletedtids * sizeof(uint16));
+		vacposting->updatedoffset = updatedoffsets[i];
+		vacposting->itup = origtuple;
+		vacposting->ndeletedtids = updates->ndeletedtids;
+		memcpy(vacposting->deletetids,
+			   (char *) updates + SizeOfBtreeUpdate,
+			   updates->ndeletedtids * sizeof(uint16));
+
+		_bt_update_posting(vacposting);
+
+		/* Overwrite updated version of tuple */
+		itemsz = MAXALIGN(IndexTupleSize(vacposting->itup));
+		if (!PageIndexTupleOverwrite(page, updatedoffsets[i],
+									 (Item) vacposting->itup, itemsz))
+			elog(PANIC, "failed to update partially dead item");
+
+		pfree(vacposting->itup);
+		pfree(vacposting);
+
+		/* advance to next xl_btree_update from array */
+		updates = (xl_btree_update *)
+			((char *) updates + SizeOfBtreeUpdate +
+			 updates->ndeletedtids * sizeof(uint16));
+	}
+}
+
+static void
 btree_xlog_vacuum(XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
@@ -589,41 +630,7 @@ btree_xlog_vacuum(XLogReaderState *record)
 										   xlrec->nupdated *
 										   sizeof(OffsetNumber));
 
-			for (int i = 0; i < xlrec->nupdated; i++)
-			{
-				BTVacuumPosting vacposting;
-				IndexTuple	origtuple;
-				ItemId		itemid;
-				Size		itemsz;
-
-				itemid = PageGetItemId(page, updatedoffsets[i]);
-				origtuple = (IndexTuple) PageGetItem(page, itemid);
-
-				vacposting = palloc(offsetof(BTVacuumPostingData, deletetids) +
-									updates->ndeletedtids * sizeof(uint16));
-				vacposting->updatedoffset = updatedoffsets[i];
-				vacposting->itup = origtuple;
-				vacposting->ndeletedtids = updates->ndeletedtids;
-				memcpy(vacposting->deletetids,
-					   (char *) updates + SizeOfBtreeUpdate,
-					   updates->ndeletedtids * sizeof(uint16));
-
-				_bt_update_posting(vacposting);
-
-				/* Overwrite updated version of tuple */
-				itemsz = MAXALIGN(IndexTupleSize(vacposting->itup));
-				if (!PageIndexTupleOverwrite(page, updatedoffsets[i],
-											 (Item) vacposting->itup, itemsz))
-					elog(PANIC, "failed to update partially dead item");
-
-				pfree(vacposting->itup);
-				pfree(vacposting);
-
-				/* advance to next xl_btree_update from array */
-				updates = (xl_btree_update *)
-					((char *) updates + SizeOfBtreeUpdate +
-					 updates->ndeletedtids * sizeof(uint16));
-			}
+			btree_xlog_updates(page, updatedoffsets, updates, xlrec->nupdated);
 		}
 
 		if (xlrec->ndeleted > 0)
@@ -675,7 +682,22 @@ btree_xlog_delete(XLogReaderState *record)
 
 		page = (Page) BufferGetPage(buffer);
 
-		PageIndexMultiDelete(page, (OffsetNumber *) ptr, xlrec->ndeleted);
+		if (xlrec->nupdated > 0)
+		{
+			OffsetNumber *updatedoffsets;
+			xl_btree_update *updates;
+
+			updatedoffsets = (OffsetNumber *)
+				(ptr + xlrec->ndeleted * sizeof(OffsetNumber));
+			updates = (xl_btree_update *) ((char *) updatedoffsets +
+										   xlrec->nupdated *
+										   sizeof(OffsetNumber));
+
+			btree_xlog_updates(page, updatedoffsets, updates, xlrec->nupdated);
+		}
+
+		if (xlrec->ndeleted > 0)
+			PageIndexMultiDelete(page, (OffsetNumber *) ptr, xlrec->ndeleted);
 
 		/* Mark the page as not containing any LP_DEAD items */
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);

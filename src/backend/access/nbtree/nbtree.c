@@ -209,7 +209,7 @@ btinsert(Relation rel, Datum *values, bool *isnull,
 	itup = index_form_tuple(RelationGetDescr(rel), values, isnull);
 	itup->t_tid = *ht_ctid;
 
-	result = _bt_doinsert(rel, itup, checkUnique, heapRel);
+	result = _bt_doinsert(rel, itup, checkUnique, indexUnchanged, heapRel);
 
 	pfree(itup);
 
@@ -1282,10 +1282,10 @@ backtrack:
 				 * as long as the callback function only considers whether the
 				 * index tuple refers to pre-cutoff heap tuples that were
 				 * certainly already pruned away during VACUUM's initial heap
-				 * scan by the time we get here. (XLOG_HEAP2_CLEANUP_INFO
-				 * records produce conflicts using a latestRemovedXid value
-				 * for the entire VACUUM, so there is no need to produce our
-				 * own conflict now.)
+				 * scan by the time we get here. (heapam's XLOG_HEAP2_CLEAN
+				 * and XLOG_HEAP2_CLEANUP_INFO records produce conflicts using
+				 * a latestRemovedXid value for the pointed-to heap tuples, so
+				 * there is no need to produce our own conflict now.)
 				 *
 				 * Backends with snapshots acquired after a VACUUM starts but
 				 * before it finishes could have visibility cutoff with a

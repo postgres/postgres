@@ -386,17 +386,39 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
      <para>
       The fillfactor for an index is a percentage that determines how full
       the index method will try to pack index pages.  For B-trees, leaf pages
-      are filled to this percentage during initial index build, and also
+      are filled to this percentage during initial index builds, and also
       when extending the index at the right (adding new largest key values).
       If pages
       subsequently become completely full, they will be split, leading to
-      gradual degradation in the index's efficiency.  B-trees use a default
+      fragmentation of the on-disk index structure.  B-trees use a default
       fillfactor of 90, but any integer value from 10 to 100 can be selected.
-      If the table is static then fillfactor 100 is best to minimize the
-      index's physical size, but for heavily updated tables a smaller
-      fillfactor is better to minimize the need for page splits.  The
-      other index methods use fillfactor in different but roughly analogous
-      ways; the default fillfactor varies between methods.
+     </para>
+     <para>
+      B-tree indexes on tables where many inserts and/or updates are
+      anticipated can benefit from lower fillfactor settings at
+      <command>CREATE INDEX</command> time (following bulk loading into the
+      table).  Values in the range of 50 - 90 can usefully <quote>smooth
+       out</quote> the <emphasis>rate</emphasis> of page splits during the
+      early life of the B-tree index (lowering fillfactor like this may even
+      lower the absolute number of page splits, though this effect is highly
+      workload dependent).  The B-tree bottom-up index deletion technique
+      described in <xref linkend="btree-deletion"/> is dependent on having
+      some <quote>extra</quote> space on pages to store <quote>extra</quote>
+      tuple versions, and so can be affected by fillfactor (though the effect
+      is usually not significant).
+     </para>
+     <para>
+      In other specific cases it might be useful to increase fillfactor to
+      100 at <command>CREATE INDEX</command> time as a way of maximizing
+      space utilization.  You should only consider this when you are
+      completely sure that the table is static (i.e. that it will never be
+      affected by either inserts or updates).  A fillfactor setting of 100
+      otherwise risks <emphasis>harming</emphasis> performance: even a few
+      updates or inserts will cause a sudden flood of page splits.
+     </para>
+     <para>
+      The other index methods use fillfactor in different but roughly
+      analogous ways; the default fillfactor varies between methods.
      </para>
     </listitem>
    </varlistentry>

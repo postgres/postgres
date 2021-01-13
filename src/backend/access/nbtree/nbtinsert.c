@@ -17,9 +17,9 @@
 
 #include "access/nbtree.h"
 #include "access/nbtxlog.h"
-#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xloginsert.h"
+#include "lib/qunique.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
@@ -37,6 +37,7 @@ static TransactionId _bt_check_unique(Relation rel, BTInsertState insertstate,
 static OffsetNumber _bt_findinsertloc(Relation rel,
 									  BTInsertState insertstate,
 									  bool checkingunique,
+									  bool indexUnchanged,
 									  BTStack stack,
 									  Relation heapRel);
 static void _bt_stepright(Relation rel, BTInsertState insertstate, BTStack stack);
@@ -60,8 +61,16 @@ static inline bool _bt_pgaddtup(Page page, Size itemsize, IndexTuple itup,
 								OffsetNumber itup_off, bool newfirstdataitem);
 static void _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
 										 BTInsertState insertstate,
-										 bool lpdeadonly, bool checkingunique,
-										 bool uniquedup);
+										 bool simpleonly, bool checkingunique,
+										 bool uniquedup, bool indexUnchanged);
+static void _bt_simpledel_pass(Relation rel, Buffer buffer, Relation heapRel,
+							   OffsetNumber *deletable, int ndeletable,
+							   IndexTuple newitem, OffsetNumber minoff,
+							   OffsetNumber maxoff);
+static BlockNumber *_bt_deadblocks(Page page, OffsetNumber *deletable,
+								   int ndeletable, IndexTuple newitem,
+								   int *nblocks);
+static inline int _bt_blk_cmp(const void *arg1, const void *arg2);
 
 /*
  *	_bt_doinsert() -- Handle insertion of a single index tuple in the tree.
@@ -75,6 +84,11 @@ static void _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
  *		For UNIQUE_CHECK_EXISTING we merely run the duplicate check, and
  *		don't actually insert.
  *
+ *		indexUnchanged executor hint indicates if itup is from an
+ *		UPDATE that didn't logically change the indexed value, but
+ *		must nevertheless have a new entry to point to a successor
+ *		version.
+ *
  *		The result value is only significant for UNIQUE_CHECK_PARTIAL:
  *		it must be true if the entry is known unique, else false.
  *		(In the current implementation we'll also return true after a
@@ -83,7 +97,8 @@ static void _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
  */
 bool
 _bt_doinsert(Relation rel, IndexTuple itup,
-			 IndexUniqueCheck checkUnique, Relation heapRel)
+			 IndexUniqueCheck checkUnique, bool indexUnchanged,
+			 Relation heapRel)
 {
 	bool		is_unique = false;
 	BTInsertStateData insertstate;
@@ -238,7 +253,7 @@ search:
 		 * checkingunique.
 		 */
 		newitemoff = _bt_findinsertloc(rel, &insertstate, checkingunique,
-									   stack, heapRel);
+									   indexUnchanged, stack, heapRel);
 		_bt_insertonpg(rel, itup_key, insertstate.buf, InvalidBuffer, stack,
 					   itup, insertstate.itemsz, newitemoff,
 					   insertstate.postingoff, false);
@@ -480,11 +495,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 			 * items as quickly as we can.  We only apply _bt_compare() when
 			 * we get to a non-killed item.  We could reuse the bounds to
 			 * avoid _bt_compare() calls for known equal tuples, but it
-			 * doesn't seem worth it.  Workloads with heavy update activity
-			 * tend to have many deduplication passes, so we'll often avoid
-			 * most of those comparisons, too (we call _bt_compare() when the
-			 * posting list tuple is initially encountered, though not when
-			 * processing later TIDs from the same tuple).
+			 * doesn't seem worth it.
 			 */
 			if (!inposting)
 				curitemid = PageGetItemId(page, offset);
@@ -777,6 +788,17 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
  *		room for the new tuple, this function moves right, trying to find a
  *		legal page that does.)
  *
+ *		If 'indexUnchanged' is true, this is for an UPDATE that didn't
+ *		logically change the indexed value, but must nevertheless have a new
+ *		entry to point to a successor version.  This hint from the executor
+ *		will influence our behavior when the page might have to be split and
+ *		we must consider our options.  Bottom-up index deletion can avoid
+ *		pathological version-driven page splits, but we only want to go to the
+ *		trouble of trying it when we already have moderate confidence that
+ *		it's appropriate.  The hint should not significantly affect our
+ *		behavior over time unless practically all inserts on to the leaf page
+ *		get the hint.
+ *
  *		On exit, insertstate buffer contains the chosen insertion page, and
  *		the offset within that page is returned.  If _bt_findinsertloc needed
  *		to move right, the lock and pin on the original page are released, and
@@ -793,6 +815,7 @@ static OffsetNumber
 _bt_findinsertloc(Relation rel,
 				  BTInsertState insertstate,
 				  bool checkingunique,
+				  bool indexUnchanged,
 				  BTStack stack,
 				  Relation heapRel)
 {
@@ -817,7 +840,7 @@ _bt_findinsertloc(Relation rel,
 	if (itup_key->heapkeyspace)
 	{
 		/* Keep track of whether checkingunique duplicate seen */
-		bool		uniquedup = false;
+		bool		uniquedup = indexUnchanged;
 
 		/*
 		 * If we're inserting into a unique index, we may have to walk right
@@ -874,14 +897,13 @@ _bt_findinsertloc(Relation rel,
 		}
 
 		/*
-		 * If the target page is full, see if we can obtain enough space using
-		 * one or more strategies (e.g. erasing LP_DEAD items, deduplication).
-		 * Page splits are expensive, and should only go ahead when truly
-		 * necessary.
+		 * If the target page cannot fit newitem, try to avoid splitting the
+		 * page on insert by performing deletion or deduplication now
 		 */
 		if (PageGetFreeSpace(page) < insertstate->itemsz)
 			_bt_delete_or_dedup_one_page(rel, heapRel, insertstate, false,
-										 checkingunique, uniquedup);
+										 checkingunique, uniquedup,
+										 indexUnchanged);
 	}
 	else
 	{
@@ -921,9 +943,9 @@ _bt_findinsertloc(Relation rel,
 			 */
 			if (P_HAS_GARBAGE(opaque))
 			{
-				/* Erase LP_DEAD items (won't deduplicate) */
+				/* Perform simple deletion */
 				_bt_delete_or_dedup_one_page(rel, heapRel, insertstate, true,
-											 checkingunique, false);
+											 false, false, false);
 
 				if (PageGetFreeSpace(page) >= insertstate->itemsz)
 					break;		/* OK, now we have enough space */
@@ -970,14 +992,11 @@ _bt_findinsertloc(Relation rel,
 		/*
 		 * There is an overlapping posting list tuple with its LP_DEAD bit
 		 * set.  We don't want to unnecessarily unset its LP_DEAD bit while
-		 * performing a posting list split, so delete all LP_DEAD items early.
-		 * This is the only case where LP_DEAD deletes happen even though
-		 * there is space for newitem on the page.
-		 *
-		 * This can only erase LP_DEAD items (it won't deduplicate).
+		 * performing a posting list split, so perform simple index tuple
+		 * deletion early.
 		 */
 		_bt_delete_or_dedup_one_page(rel, heapRel, insertstate, true,
-									 checkingunique, false);
+									 false, false, false);
 
 		/*
 		 * Do new binary search.  New insert location cannot overlap with any
@@ -2606,21 +2625,19 @@ _bt_pgaddtup(Page page,
 }
 
 /*
- * _bt_delete_or_dedup_one_page - Try to avoid a leaf page split by attempting
- * a variety of operations.
+ * _bt_delete_or_dedup_one_page - Try to avoid a leaf page split.
  *
- * There are two operations performed here: deleting items already marked
- * LP_DEAD, and deduplication.  If both operations fail to free enough space
- * for the incoming item then caller will go on to split the page.  We always
- * attempt our preferred strategy (which is to delete items whose LP_DEAD bit
- * are set) first.  If that doesn't work out we move on to deduplication.
+ * There are three operations performed here: simple index deletion, bottom-up
+ * index deletion, and deduplication.  If all three operations fail to free
+ * enough space for the incoming item then caller will go on to split the
+ * page.  We always consider simple deletion first.  If that doesn't work out
+ * we consider alternatives.  Callers that only want us to consider simple
+ * deletion (without any fallback) ask for that using the 'simpleonly'
+ * argument.
  *
- * Caller's checkingunique and uniquedup arguments help us decide if we should
- * perform deduplication, which is primarily useful with low cardinality data,
- * but can sometimes absorb version churn.
- *
- * Callers that only want us to look for/delete LP_DEAD items can ask for that
- * directly by passing true 'lpdeadonly' argument.
+ * We usually pick only one alternative "complex" operation when simple
+ * deletion alone won't prevent a page split.  The 'checkingunique',
+ * 'uniquedup', and 'indexUnchanged' arguments are used for that.
  *
  * Note: We used to only delete LP_DEAD items when the BTP_HAS_GARBAGE page
  * level flag was found set.  The flag was useful back when there wasn't
@@ -2638,12 +2655,13 @@ _bt_pgaddtup(Page page,
 static void
 _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
 							 BTInsertState insertstate,
-							 bool lpdeadonly, bool checkingunique,
-							 bool uniquedup)
+							 bool simpleonly, bool checkingunique,
+							 bool uniquedup, bool indexUnchanged)
 {
 	OffsetNumber deletable[MaxIndexTuplesPerPage];
 	int			ndeletable = 0;
 	OffsetNumber offnum,
+				minoff,
 				maxoff;
 	Buffer		buffer = insertstate->buf;
 	BTScanInsert itup_key = insertstate->itup_key;
@@ -2651,14 +2669,19 @@ _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	Assert(P_ISLEAF(opaque));
-	Assert(lpdeadonly || itup_key->heapkeyspace);
+	Assert(simpleonly || itup_key->heapkeyspace);
+	Assert(!simpleonly || (!checkingunique && !uniquedup && !indexUnchanged));
 
 	/*
 	 * Scan over all items to see which ones need to be deleted according to
-	 * LP_DEAD flags.
+	 * LP_DEAD flags.  We'll usually manage to delete a few extra items that
+	 * are not marked LP_DEAD in passing.  Often the extra items that actually
+	 * end up getting deleted are items that would have had their LP_DEAD bit
+	 * set before long anyway (if we opted not to include them as extras).
 	 */
+	minoff = P_FIRSTDATAKEY(opaque);
 	maxoff = PageGetMaxOffsetNumber(page);
-	for (offnum = P_FIRSTDATAKEY(opaque);
+	for (offnum = minoff;
 		 offnum <= maxoff;
 		 offnum = OffsetNumberNext(offnum))
 	{
@@ -2670,7 +2693,8 @@ _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
 
 	if (ndeletable > 0)
 	{
-		_bt_delitems_delete(rel, buffer, deletable, ndeletable, heapRel);
+		_bt_simpledel_pass(rel, buffer, heapRel, deletable, ndeletable,
+						   insertstate->itup, minoff, maxoff);
 		insertstate->bounds_valid = false;
 
 		/* Return when a page split has already been avoided */
@@ -2682,37 +2706,288 @@ _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
 	}
 
 	/*
-	 * Some callers only want to delete LP_DEAD items.  Return early for these
-	 * callers.
+	 * We're done with simple deletion.  Return early with callers that only
+	 * call here so that simple deletion can be considered.  This includes
+	 * callers that explicitly ask for this and checkingunique callers that
+	 * probably don't have any version churn duplicates on the page.
 	 *
 	 * Note: The page's BTP_HAS_GARBAGE hint flag may still be set when we
 	 * return at this point (or when we go on the try either or both of our
 	 * other strategies and they also fail).  We do not bother expending a
 	 * separate write to clear it, however.  Caller will definitely clear it
-	 * when it goes on to split the page (plus deduplication knows to clear
-	 * the flag when it actually modifies the page).
+	 * when it goes on to split the page (note also that the deduplication
+	 * process will clear the flag in passing, just to keep things tidy).
 	 */
-	if (lpdeadonly)
+	if (simpleonly || (checkingunique && !uniquedup))
+	{
+		Assert(!indexUnchanged);
 		return;
-
-	/*
-	 * We can get called in the checkingunique case when there is no reason to
-	 * believe that there are any duplicates on the page; we should at least
-	 * still check for LP_DEAD items.  If that didn't work out, give up and
-	 * let caller split the page.  Deduplication cannot be justified given
-	 * there is no reason to think that there are duplicates.
-	 */
-	if (checkingunique && !uniquedup)
-		return;
+	}
 
 	/* Assume bounds about to be invalidated (this is almost certain now) */
 	insertstate->bounds_valid = false;
 
 	/*
-	 * Perform deduplication pass, though only when it is enabled for the
-	 * index and known to be safe (it must be an allequalimage index).
+	 * Perform bottom-up index deletion pass when executor hint indicated that
+	 * incoming item is logically unchanged, or for a unique index that is
+	 * known to have physical duplicates for some other reason.  (There is a
+	 * large overlap between these two cases for a unique index.  It's worth
+	 * having both triggering conditions in order to apply the optimization in
+	 * the event of successive related INSERT and DELETE statements.)
+	 *
+	 * We'll go on to do a deduplication pass when a bottom-up pass fails to
+	 * delete an acceptable amount of free space (a significant fraction of
+	 * the page, or space for the new item, whichever is greater).
+	 *
+	 * Note: Bottom-up index deletion uses the same equality/equivalence
+	 * routines as deduplication internally.  However, it does not merge
+	 * together index tuples, so the same correctness considerations do not
+	 * apply.  We deliberately omit an index-is-allequalimage test here.
 	 */
+	if ((indexUnchanged || uniquedup) &&
+		_bt_bottomupdel_pass(rel, buffer, heapRel, insertstate->itemsz))
+		return;
+
+	/* Perform deduplication pass (when enabled and index-is-allequalimage) */
 	if (BTGetDeduplicateItems(rel) && itup_key->allequalimage)
 		_bt_dedup_pass(rel, buffer, heapRel, insertstate->itup,
 					   insertstate->itemsz, checkingunique);
+}
+
+/*
+ * _bt_simpledel_pass - Simple index tuple deletion pass.
+ *
+ * We delete all LP_DEAD-set index tuples on a leaf page.  The offset numbers
+ * of all such tuples are determined by caller (caller passes these to us as
+ * its 'deletable' argument).
+ *
+ * We might also delete extra index tuples that turn out to be safe to delete
+ * in passing (though they must be cheap to check in passing to begin with).
+ * There is no certainty that any extra tuples will be deleted, though.  The
+ * high level goal of the approach we take is to get the most out of each call
+ * here (without noticeably increasing the per-call overhead compared to what
+ * we need to do just to be able to delete the page's LP_DEAD-marked index
+ * tuples).
+ *
+ * The number of extra index tuples that turn out to be deletable might
+ * greatly exceed the number of LP_DEAD-marked index tuples due to various
+ * locality related effects.  For example, it's possible that the total number
+ * of table blocks (pointed to by all TIDs on the leaf page) is naturally
+ * quite low, in which case we might end up checking if it's possible to
+ * delete _most_ index tuples on the page (without the tableam needing to
+ * access additional table blocks).  The tableam will sometimes stumble upon
+ * _many_ extra deletable index tuples in indexes where this pattern is
+ * common.
+ *
+ * See nbtree/README for further details on simple index tuple deletion.
+ */
+static void
+_bt_simpledel_pass(Relation rel, Buffer buffer, Relation heapRel,
+				   OffsetNumber *deletable, int ndeletable, IndexTuple newitem,
+				   OffsetNumber minoff, OffsetNumber maxoff)
+{
+	Page		page = BufferGetPage(buffer);
+	BlockNumber *deadblocks;
+	int			ndeadblocks;
+	TM_IndexDeleteOp delstate;
+	OffsetNumber offnum;
+
+	/* Get array of table blocks pointed to by LP_DEAD-set tuples */
+	deadblocks = _bt_deadblocks(page, deletable, ndeletable, newitem,
+								&ndeadblocks);
+
+	/* Initialize tableam state that describes index deletion operation */
+	delstate.bottomup = false;
+	delstate.bottomupfreespace = 0;
+	delstate.ndeltids = 0;
+	delstate.deltids = palloc(MaxTIDsPerBTreePage * sizeof(TM_IndexDelete));
+	delstate.status = palloc(MaxTIDsPerBTreePage * sizeof(TM_IndexStatus));
+
+	for (offnum = minoff;
+		 offnum <= maxoff;
+		 offnum = OffsetNumberNext(offnum))
+	{
+		ItemId		itemid = PageGetItemId(page, offnum);
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, itemid);
+		TM_IndexDelete *odeltid = &delstate.deltids[delstate.ndeltids];
+		TM_IndexStatus *ostatus = &delstate.status[delstate.ndeltids];
+		BlockNumber tidblock;
+		void	   *match;
+
+		if (!BTreeTupleIsPosting(itup))
+		{
+			tidblock = ItemPointerGetBlockNumber(&itup->t_tid);
+			match = bsearch(&tidblock, deadblocks, ndeadblocks,
+							sizeof(BlockNumber), _bt_blk_cmp);
+
+			if (!match)
+			{
+				Assert(!ItemIdIsDead(itemid));
+				continue;
+			}
+
+			/*
+			 * TID's table block is among those pointed to by the TIDs from
+			 * LP_DEAD-bit set tuples on page -- add TID to deltids
+			 */
+			odeltid->tid = itup->t_tid;
+			odeltid->id = delstate.ndeltids;
+			ostatus->idxoffnum = offnum;
+			ostatus->knowndeletable = ItemIdIsDead(itemid);
+			ostatus->promising = false; /* unused */
+			ostatus->freespace = 0; /* unused */
+
+			delstate.ndeltids++;
+		}
+		else
+		{
+			int			nitem = BTreeTupleGetNPosting(itup);
+
+			for (int p = 0; p < nitem; p++)
+			{
+				ItemPointer tid = BTreeTupleGetPostingN(itup, p);
+
+				tidblock = ItemPointerGetBlockNumber(tid);
+				match = bsearch(&tidblock, deadblocks, ndeadblocks,
+								sizeof(BlockNumber), _bt_blk_cmp);
+
+				if (!match)
+				{
+					Assert(!ItemIdIsDead(itemid));
+					continue;
+				}
+
+				/*
+				 * TID's table block is among those pointed to by the TIDs
+				 * from LP_DEAD-bit set tuples on page -- add TID to deltids
+				 */
+				odeltid->tid = *tid;
+				odeltid->id = delstate.ndeltids;
+				ostatus->idxoffnum = offnum;
+				ostatus->knowndeletable = ItemIdIsDead(itemid);
+				ostatus->promising = false; /* unused */
+				ostatus->freespace = 0; /* unused */
+
+				odeltid++;
+				ostatus++;
+				delstate.ndeltids++;
+			}
+		}
+	}
+
+	pfree(deadblocks);
+
+	Assert(delstate.ndeltids >= ndeletable);
+
+	/* Physically delete LP_DEAD tuples (plus any delete-safe extra TIDs) */
+	_bt_delitems_delete_check(rel, buffer, heapRel, &delstate);
+
+	pfree(delstate.deltids);
+	pfree(delstate.status);
+}
+
+/*
+ * _bt_deadblocks() -- Get LP_DEAD related table blocks.
+ *
+ * Builds sorted and unique-ified array of table block numbers from index
+ * tuple TIDs whose line pointers are marked LP_DEAD.  Also adds the table
+ * block from incoming newitem just in case it isn't among the LP_DEAD-related
+ * table blocks.
+ *
+ * Always counting the newitem's table block as an LP_DEAD related block makes
+ * sense because the cost is consistently low; it is practically certain that
+ * the table block will not incur a buffer miss in tableam.  On the other hand
+ * the benefit is often quite high.  There is a decent chance that there will
+ * be some deletable items from this block, since in general most garbage
+ * tuples became garbage in the recent past (in many cases this won't be the
+ * first logical row that core code added to/modified in table block
+ * recently).
+ *
+ * Returns final array, and sets *nblocks to its final size for caller.
+ */
+static BlockNumber *
+_bt_deadblocks(Page page, OffsetNumber *deletable, int ndeletable,
+			   IndexTuple newitem, int *nblocks)
+{
+	int			spacentids,
+				ntids;
+	BlockNumber *tidblocks;
+
+	/*
+	 * Accumulate each TID's block in array whose initial size has space for
+	 * one table block per LP_DEAD-set tuple (plus space for the newitem table
+	 * block).  Array will only need to grow when there are LP_DEAD-marked
+	 * posting list tuples (which is not that common).
+	 */
+	spacentids = ndeletable + 1;
+	ntids = 0;
+	tidblocks = (BlockNumber *) palloc(sizeof(BlockNumber) * spacentids);
+
+	/*
+	 * First add the table block for the incoming newitem.  This is the one
+	 * case where simple deletion can visit a table block that doesn't have
+	 * any known deletable items.
+	 */
+	Assert(!BTreeTupleIsPosting(newitem) && !BTreeTupleIsPivot(newitem));
+	tidblocks[ntids++] = ItemPointerGetBlockNumber(&newitem->t_tid);
+
+	for (int i = 0; i < ndeletable; i++)
+	{
+		ItemId		itemid = PageGetItemId(page, deletable[i]);
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, itemid);
+
+		Assert(ItemIdIsDead(itemid));
+
+		if (!BTreeTupleIsPosting(itup))
+		{
+			if (ntids + 1 > spacentids)
+			{
+				spacentids *= 2;
+				tidblocks = (BlockNumber *)
+					repalloc(tidblocks, sizeof(BlockNumber) * spacentids);
+			}
+
+			tidblocks[ntids++] = ItemPointerGetBlockNumber(&itup->t_tid);
+		}
+		else
+		{
+			int			nposting = BTreeTupleGetNPosting(itup);
+
+			if (ntids + nposting > spacentids)
+			{
+				spacentids = Max(spacentids * 2, ntids + nposting);
+				tidblocks = (BlockNumber *)
+					repalloc(tidblocks, sizeof(BlockNumber) * spacentids);
+			}
+
+			for (int j = 0; j < nposting; j++)
+			{
+				ItemPointer tid = BTreeTupleGetPostingN(itup, j);
+
+				tidblocks[ntids++] = ItemPointerGetBlockNumber(tid);
+			}
+		}
+	}
+
+	qsort(tidblocks, ntids, sizeof(BlockNumber), _bt_blk_cmp);
+	*nblocks = qunique(tidblocks, ntids, sizeof(BlockNumber), _bt_blk_cmp);
+
+	return tidblocks;
+}
+
+/*
+ * _bt_blk_cmp() -- qsort comparison function for _bt_simpledel_pass
+ */
+static inline int
+_bt_blk_cmp(const void *arg1, const void *arg2)
+{
+	BlockNumber b1 = *((BlockNumber *) arg1);
+	BlockNumber b2 = *((BlockNumber *) arg2);
+
+	if (b1 < b2)
+		return -1;
+	else if (b1 > b2)
+		return 1;
+
+	return 0;
 }

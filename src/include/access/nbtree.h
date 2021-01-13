@@ -17,6 +17,7 @@
 #include "access/amapi.h"
 #include "access/itup.h"
 #include "access/sdir.h"
+#include "access/tableam.h"
 #include "access/xlogreader.h"
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_index.h"
@@ -168,7 +169,7 @@ typedef struct BTMetaPageData
 /*
  * MaxTIDsPerBTreePage is an upper bound on the number of heap TIDs tuples
  * that may be stored on a btree leaf page.  It is used to size the
- * per-page temporary buffers used by index scans.
+ * per-page temporary buffers.
  *
  * Note: we don't bother considering per-tuple overheads here to keep
  * things simple (value is based on how many elements a single array of
@@ -766,8 +767,9 @@ typedef struct BTDedupStateData
 typedef BTDedupStateData *BTDedupState;
 
 /*
- * BTVacuumPostingData is state that represents how to VACUUM a posting list
- * tuple when some (though not all) of its TIDs are to be deleted.
+ * BTVacuumPostingData is state that represents how to VACUUM (or delete) a
+ * posting list tuple when some (though not all) of its TIDs are to be
+ * deleted.
  *
  * Convention is that itup field is the original posting list tuple on input,
  * and palloc()'d final tuple used to overwrite existing tuple on output.
@@ -1031,6 +1033,8 @@ extern void _bt_parallel_advance_array_keys(IndexScanDesc scan);
 extern void _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel,
 						   IndexTuple newitem, Size newitemsz,
 						   bool checkingunique);
+extern bool _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
+								 Size newitemsz);
 extern void _bt_dedup_start_pending(BTDedupState state, IndexTuple base,
 									OffsetNumber baseoff);
 extern bool _bt_dedup_save_htid(BTDedupState state, IndexTuple itup);
@@ -1045,7 +1049,8 @@ extern IndexTuple _bt_swap_posting(IndexTuple newitem, IndexTuple oposting,
  * prototypes for functions in nbtinsert.c
  */
 extern bool _bt_doinsert(Relation rel, IndexTuple itup,
-						 IndexUniqueCheck checkUnique, Relation heapRel);
+						 IndexUniqueCheck checkUnique, bool indexUnchanged,
+						 Relation heapRel);
 extern void _bt_finish_split(Relation rel, Buffer lbuf, BTStack stack);
 extern Buffer _bt_getstackbuf(Relation rel, BTStack stack, BlockNumber child);
 
@@ -1083,9 +1088,9 @@ extern bool _bt_page_recyclable(Page page);
 extern void _bt_delitems_vacuum(Relation rel, Buffer buf,
 								OffsetNumber *deletable, int ndeletable,
 								BTVacuumPosting *updatable, int nupdatable);
-extern void _bt_delitems_delete(Relation rel, Buffer buf,
-								OffsetNumber *deletable, int ndeletable,
-								Relation heapRel);
+extern void _bt_delitems_delete_check(Relation rel, Buffer buf,
+									  Relation heapRel,
+									  TM_IndexDeleteOp *delstate);
 extern uint32 _bt_pagedel(Relation rel, Buffer leafbuf,
 						  TransactionId *oldestBtpoXact);
 

@@ -2563,7 +2563,7 @@ static const TableAmRoutine heapam_methods = {
 	.tuple_get_latest_tid = heap_get_latest_tid,
 	.tuple_tid_valid = heapam_tuple_tid_valid,
 	.tuple_satisfies_snapshot = heapam_tuple_satisfies_snapshot,
-	.compute_xid_horizon_for_tuples = heap_compute_xid_horizon_for_tuples,
+	.index_delete_tuples = heap_index_delete_tuples,
 
 	.relation_set_new_filenode = heapam_relation_set_new_filenode,
 	.relation_nontransactional_truncate = heapam_relation_nontransactional_truncate,

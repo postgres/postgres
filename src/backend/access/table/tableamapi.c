@@ -66,7 +66,7 @@ GetTableAmRoutine(Oid amhandler)
 	Assert(routine->tuple_tid_valid != NULL);
 	Assert(routine->tuple_get_latest_tid != NULL);
 	Assert(routine->tuple_satisfies_snapshot != NULL);
-	Assert(routine->compute_xid_horizon_for_tuples != NULL);
+	Assert(routine->index_delete_tuples != NULL);
 
 	Assert(routine->tuple_insert != NULL);
 

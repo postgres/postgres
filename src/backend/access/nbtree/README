@@ -82,8 +82,8 @@ page.)  A backwards scan has one additional bit of complexity: after
 following the left-link we must account for the possibility that the
 left sibling page got split before we could read it.  So, we have to
 move right until we find a page whose right-link matches the page we
-came from.  (Actually, it's even harder than that; see deletion discussion
-below.)
+came from.  (Actually, it's even harder than that; see page deletion
+discussion below.)
 
 Page read locks are held only for as long as a scan is examining a page.
 To minimize lock/unlock traffic, an index scan always searches a leaf page
@@ -163,16 +163,16 @@ pages (though suffix truncation is also considered).  Note we must include
 the incoming item in this calculation, otherwise it is possible to find
 that the incoming item doesn't fit on the split page where it needs to go!
 
-The Deletion Algorithm
-----------------------
+Deleting index tuples during VACUUM
+-----------------------------------
 
 Before deleting a leaf item, we get a super-exclusive lock on the target
 page, so that no other backend has a pin on the page when the deletion
 starts.  This is not necessary for correctness in terms of the btree index
 operations themselves; as explained above, index scans logically stop
 "between" pages and so can't lose their place.  The reason we do it is to
-provide an interlock between non-full VACUUM and indexscans.  Since VACUUM
-deletes index entries before reclaiming heap tuple line pointers, the
+provide an interlock between VACUUM and indexscans.  Since VACUUM deletes
+index entries before reclaiming heap tuple line pointers, the
 super-exclusive lock guarantees that VACUUM can't reclaim for re-use a
 line pointer that an indexscanning process might be about to visit.  This
 guarantee works only for simple indexscans that visit the heap in sync
@@ -202,7 +202,8 @@ from the page have been processed.  This guarantees that the btbulkdelete
 call cannot return while any indexscan is still holding a copy of a
 deleted index tuple if the scan could be confused by that.  Note that this
 requirement does not say that btbulkdelete must visit the pages in any
-particular order.  (See also on-the-fly deletion, below.)
+particular order.  (See also simple deletion and bottom-up deletion,
+below.)
 
 There is no such interlocking for deletion of items in internal pages,
 since backends keep no lock nor pin on a page they have descended past.
@@ -213,8 +214,8 @@ page).  Since we hold a lock on the lower page (per L&Y) until we have
 re-found the parent item that links to it, we can be assured that the
 parent item does still exist and can't have been deleted.
 
-Page Deletion
--------------
+Deleting entire pages during VACUUM
+-----------------------------------
 
 We consider deleting an entire page from the btree only when it's become
 completely empty of items.  (Merging partly-full pages would allow better
@@ -419,8 +420,8 @@ without a backend's cached page also being detected as invalidated, but
 only when we happen to recycle a block that once again gets recycled as the
 rightmost leaf page.
 
-On-the-Fly Deletion Of Index Tuples
------------------------------------
+Simple deletion
+---------------
 
 If a process visits a heap tuple and finds that it's dead and removable
 (ie, dead to all open transactions, not only that process), then we can
@@ -434,24 +435,27 @@ LP_DEAD bits are often set when checking a unique index for conflicts on
 insert (this is simpler because it takes place when we hold an exclusive
 lock on the leaf page).
 
-Once an index tuple has been marked LP_DEAD it can actually be removed
+Once an index tuple has been marked LP_DEAD it can actually be deleted
 from the index immediately; since index scans only stop "between" pages,
 no scan can lose its place from such a deletion.  We separate the steps
 because we allow LP_DEAD to be set with only a share lock (it's exactly
 like a hint bit for a heap tuple), but physically removing tuples requires
-exclusive lock.  In the current code we try to remove LP_DEAD tuples when
-we are otherwise faced with having to split a page to do an insertion (and
-hence have exclusive lock on it already).  Deduplication can also prevent
-a page split, but removing LP_DEAD tuples is the preferred approach.
-(Note that posting list tuples can only have their LP_DEAD bit set when
-every table TID within the posting list is known dead.)
+exclusive lock.  Also, delaying the deletion often allows us to pick up
+extra index tuples that weren't initially safe for index scans to mark
+LP_DEAD.  We do this with index tuples whose TIDs point to the same table
+blocks as an LP_DEAD-marked tuple.  They're practically free to check in
+passing, and have a pretty good chance of being safe to delete due to
+various locality effects.
 
-This leaves the index in a state where it has no entry for a dead tuple
-that still exists in the heap.  This is not a problem for the current
-implementation of VACUUM, but it could be a problem for anything that
-explicitly tries to find index entries for dead tuples.  (However, the
-same situation is created by REINDEX, since it doesn't enter dead
-tuples into the index.)
+We only try to delete LP_DEAD tuples (and nearby tuples) when we are
+otherwise faced with having to split a page to do an insertion (and hence
+have exclusive lock on it already).  Deduplication and bottom-up index
+deletion can also prevent a page split, but simple deletion is always our
+preferred approach.  (Note that posting list tuples can only have their
+LP_DEAD bit set when every table TID within the posting list is known
+dead.  This isn't much of a problem in practice because LP_DEAD bits are
+just a starting point for simple deletion -- we still manage to perform
+granular deletes of posting list TIDs quite often.)
 
 It's sufficient to have an exclusive lock on the index page, not a
 super-exclusive lock, to do deletion of LP_DEAD items.  It might seem
@@ -468,6 +472,70 @@ drops its pin in the meantime.  It must conservatively also remember the
 LSN of the page, and only act to set LP_DEAD bits when the LSN has not
 changed at all. (Avoiding dropping the pin entirely also makes it safe, of
 course.)
+
+Bottom-Up deletion
+------------------
+
+We attempt to delete whatever duplicates happen to be present on the page
+when the duplicates are suspected to be caused by version churn from
+successive UPDATEs.  This only happens when we receive an executor hint
+indicating that optimizations like heapam's HOT have not worked out for
+the index -- the incoming tuple must be a logically unchanged duplicate
+which is needed for MVCC purposes, suggesting that that might well be the
+dominant source of new index tuples on the leaf page in question.  (Also,
+bottom-up deletion is triggered within unique indexes in cases with
+continual INSERT and DELETE related churn, since that is easy to detect
+without any external hint.)
+
+Simple deletion will already have failed to prevent a page split when a
+bottom-up deletion pass takes place (often because no LP_DEAD bits were
+ever set on the page).  The two mechanisms have closely related
+implementations.  The same WAL records are used for each operation, and
+the same tableam infrastructure is used to determine what TIDs/tuples are
+actually safe to delete.  The implementations only differ in how they pick
+TIDs to consider for deletion, and whether or not the tableam will give up
+before accessing all table blocks (bottom-up deletion lives with the
+uncertainty of its success by keeping the cost of failure low).  Even
+still, the two mechanisms are clearly distinct at the conceptual level.
+
+Bottom-up index deletion is driven entirely by heuristics (whereas simple
+deletion is guaranteed to delete at least those index tuples that are
+already LP_DEAD marked -- there must be at least one).  We have no
+certainty that we'll find even one index tuple to delete.  That's why we
+closely cooperate with the tableam to keep the costs it pays in balance
+with the benefits we receive.  The interface that we use for this is
+described in detail in access/tableam.h.
+
+Bottom-up index deletion can be thought of as a backstop mechanism against
+unnecessary version-driven page splits.  It is based in part on an idea
+from generational garbage collection: the "generational hypothesis".  This
+is the empirical observation that "most objects die young".  Within
+nbtree, new index tuples often quickly appear in the same place, and then
+quickly become garbage.  There can be intense concentrations of garbage in
+relatively few leaf pages with certain workloads (or there could be in
+earlier versions of PostgreSQL without bottom-up index deletion, at
+least).  See doc/src/sgml/btree.sgml for a high-level description of the
+design principles behind bottom-up index deletion in nbtree, including
+details of how it complements VACUUM.
+
+We expect to find a reasonably large number of tuples that are safe to
+delete within each bottom-up pass.  If we don't then we won't need to
+consider the question of bottom-up deletion for the same leaf page for
+quite a while (usually because the page splits, which resolves the
+situation for the time being).  We expect to perform regular bottom-up
+deletion operations against pages that are at constant risk of unnecessary
+page splits caused only by version churn.  When the mechanism works well
+we'll constantly be "on the verge" of having version-churn-driven page
+splits, but never actually have even one.
+
+Our duplicate heuristics work well despite being fairly simple.
+Unnecessary page splits only occur when there are truly pathological
+levels of version churn (in theory a small amount of version churn could
+make a page split occur earlier than strictly necessary, but that's pretty
+harmless).  We don't have to understand the underlying workload; we only
+have to understand the general nature of the pathology that we target.
+Version churn is easy to spot when it is truly pathological.  Affected
+leaf pages are fairly homogeneous.
 
 WAL Considerations
 ------------------
@@ -767,9 +835,10 @@ into a single physical tuple with a posting list (a simple array of heap
 TIDs with the standard item pointer format).  Deduplication is always
 applied lazily, at the point where it would otherwise be necessary to
 perform a page split.  It occurs only when LP_DEAD items have been
-removed, as our last line of defense against splitting a leaf page.  We
-can set the LP_DEAD bit with posting list tuples, though only when all
-TIDs are known dead.
+removed, as our last line of defense against splitting a leaf page
+(bottom-up index deletion may be attempted first, as our second last line
+of defense).  We can set the LP_DEAD bit with posting list tuples, though
+only when all TIDs are known dead.
 
 Our lazy approach to deduplication allows the page space accounting used
 during page splits to have absolutely minimal special case logic for
@@ -788,7 +857,10 @@ page space accounting (see later section), so it's not clear how
 compression could be integrated with nbtree.  Besides, posting list
 compression does not offer a compelling trade-off for nbtree, since in
 general nbtree is optimized for consistent performance with many
-concurrent readers and writers.
+concurrent readers and writers.  Compression would also make the deletion
+of a subset of TIDs from a posting list slow and complicated, which would
+be a big problem for workloads that depend heavily on bottom-up index
+deletion.
 
 A major goal of our lazy approach to deduplication is to limit the
 performance impact of deduplication with random updates.  Even concurrent
@@ -825,6 +897,16 @@ okay because our ultimate goal is to delay leaf page splits _indefinitely_
 delay a split that is probably inevitable anyway.  This allows us to avoid
 the overhead of attempting to deduplicate with unique indexes that always
 have few or no duplicates.
+
+Note: Avoiding "unnecessary" page splits driven by version churn is also
+the goal of bottom-up index deletion, which was added to PostgreSQL 14.
+Bottom-up index deletion is now the preferred way to deal with this
+problem (with all kinds of indexes, though especially with unique
+indexes).  Still, deduplication can sometimes augment bottom-up index
+deletion.  When deletion cannot free tuples (due to an old snapshot
+holding up cleanup), falling back on deduplication provides additional
+capacity.  Delaying the page split by deduplicating can allow a future
+bottom-up deletion pass of the same page to succeed.
 
 Posting list splits
 -------------------

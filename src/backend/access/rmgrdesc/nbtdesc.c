@@ -63,8 +63,8 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-				appendStringInfo(buf, "latestRemovedXid %u; ndeleted %u",
-								 xlrec->latestRemovedXid, xlrec->ndeleted);
+				appendStringInfo(buf, "latestRemovedXid %u; ndeleted %u; nupdated %u",
+								 xlrec->latestRemovedXid, xlrec->ndeleted, xlrec->nupdated);
 				break;
 			}
 		case XLOG_BTREE_MARK_PAGE_HALFDEAD:

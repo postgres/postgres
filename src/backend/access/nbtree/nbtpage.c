@@ -38,8 +38,14 @@
 static BTMetaPageData *_bt_getmeta(Relation rel, Buffer metabuf);
 static void _bt_log_reuse_page(Relation rel, BlockNumber blkno,
 							   TransactionId latestRemovedXid);
-static TransactionId _bt_xid_horizon(Relation rel, Relation heapRel, Page page,
-									 OffsetNumber *deletable, int ndeletable);
+static void _bt_delitems_delete(Relation rel, Buffer buf,
+								TransactionId latestRemovedXid,
+								OffsetNumber *deletable, int ndeletable,
+								BTVacuumPosting *updatable, int nupdatable,
+								Relation heapRel);
+static char *_bt_delitems_update(BTVacuumPosting *updatable, int nupdatable,
+								 OffsetNumber *updatedoffsets,
+								 Size *updatedbuflen, bool needswal);
 static bool _bt_mark_page_halfdead(Relation rel, Buffer leafbuf,
 								   BTStack stack);
 static bool _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf,
@@ -1110,15 +1116,16 @@ _bt_page_recyclable(Page page)
  * sorted in ascending order.
  *
  * Routine deals with deleting TIDs when some (but not all) of the heap TIDs
- * in an existing posting list item are to be removed by VACUUM.  This works
- * by updating/overwriting an existing item with caller's new version of the
- * item (a version that lacks the TIDs that are to be deleted).
+ * in an existing posting list item are to be removed.  This works by
+ * updating/overwriting an existing item with caller's new version of the item
+ * (a version that lacks the TIDs that are to be deleted).
  *
  * We record VACUUMs and b-tree deletes differently in WAL.  Deletes must
- * generate their own latestRemovedXid by accessing the heap directly, whereas
- * VACUUMs rely on the initial heap scan taking care of it indirectly.  Also,
- * only VACUUM can perform granular deletes of individual TIDs in posting list
- * tuples.
+ * generate their own latestRemovedXid by accessing the table directly,
+ * whereas VACUUMs rely on the initial VACUUM table scan performing
+ * WAL-logging that takes care of the issue for the table's indexes
+ * indirectly.  Also, we remove the VACUUM cycle ID from pages, which b-tree
+ * deletes don't do.
  */
 void
 _bt_delitems_vacuum(Relation rel, Buffer buf,
@@ -1127,7 +1134,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
-	Size		itemsz;
+	bool		needswal = RelationNeedsWAL(rel);
 	char	   *updatedbuf = NULL;
 	Size		updatedbuflen = 0;
 	OffsetNumber updatedoffsets[MaxIndexTuplesPerPage];
@@ -1135,45 +1142,11 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	/* Shouldn't be called unless there's something to do */
 	Assert(ndeletable > 0 || nupdatable > 0);
 
-	for (int i = 0; i < nupdatable; i++)
-	{
-		/* Replace work area IndexTuple with updated version */
-		_bt_update_posting(updatable[i]);
-
-		/* Maintain array of updatable page offsets for WAL record */
-		updatedoffsets[i] = updatable[i]->updatedoffset;
-	}
-
-	/* XLOG stuff -- allocate and fill buffer before critical section */
-	if (nupdatable > 0 && RelationNeedsWAL(rel))
-	{
-		Size		offset = 0;
-
-		for (int i = 0; i < nupdatable; i++)
-		{
-			BTVacuumPosting vacposting = updatable[i];
-
-			itemsz = SizeOfBtreeUpdate +
-				vacposting->ndeletedtids * sizeof(uint16);
-			updatedbuflen += itemsz;
-		}
-
-		updatedbuf = palloc(updatedbuflen);
-		for (int i = 0; i < nupdatable; i++)
-		{
-			BTVacuumPosting vacposting = updatable[i];
-			xl_btree_update update;
-
-			update.ndeletedtids = vacposting->ndeletedtids;
-			memcpy(updatedbuf + offset, &update.ndeletedtids,
-				   SizeOfBtreeUpdate);
-			offset += SizeOfBtreeUpdate;
-
-			itemsz = update.ndeletedtids * sizeof(uint16);
-			memcpy(updatedbuf + offset, vacposting->deletetids, itemsz);
-			offset += itemsz;
-		}
-	}
+	/* Generate new version of posting lists without deleted TIDs */
+	if (nupdatable > 0)
+		updatedbuf = _bt_delitems_update(updatable, nupdatable,
+										 updatedoffsets, &updatedbuflen,
+										 needswal);
 
 	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
@@ -1194,6 +1167,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	{
 		OffsetNumber updatedoffset = updatedoffsets[i];
 		IndexTuple	itup;
+		Size		itemsz;
 
 		itup = updatable[i]->itup;
 		itemsz = MAXALIGN(IndexTupleSize(itup));
@@ -1218,7 +1192,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	 * Clear the BTP_HAS_GARBAGE page flag.
 	 *
 	 * This flag indicates the presence of LP_DEAD items on the page (though
-	 * not reliably).  Note that we only trust it with pg_upgrade'd
+	 * not reliably).  Note that we only rely on it with pg_upgrade'd
 	 * !heapkeyspace indexes.  That's why clearing it here won't usually
 	 * interfere with _bt_delitems_delete().
 	 */
@@ -1227,7 +1201,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	MarkBufferDirty(buf);
 
 	/* XLOG stuff */
-	if (RelationNeedsWAL(rel))
+	if (needswal)
 	{
 		XLogRecPtr	recptr;
 		xl_btree_vacuum xlrec_vacuum;
@@ -1260,7 +1234,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	/* can't leak memory here */
 	if (updatedbuf != NULL)
 		pfree(updatedbuf);
-	/* free tuples generated by calling _bt_update_posting() */
+	/* free tuples allocated within _bt_delitems_update() */
 	for (int i = 0; i < nupdatable; i++)
 		pfree(updatable[i]->itup);
 }
@@ -1269,40 +1243,66 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
  * Delete item(s) from a btree leaf page during single-page cleanup.
  *
  * This routine assumes that the caller has pinned and write locked the
- * buffer.  Also, the given deletable array *must* be sorted in ascending
- * order.
+ * buffer.  Also, the given deletable and updatable arrays *must* be sorted in
+ * ascending order.
+ *
+ * Routine deals with deleting TIDs when some (but not all) of the heap TIDs
+ * in an existing posting list item are to be removed.  This works by
+ * updating/overwriting an existing item with caller's new version of the item
+ * (a version that lacks the TIDs that are to be deleted).
  *
  * This is nearly the same as _bt_delitems_vacuum as far as what it does to
- * the page, but it needs to generate its own latestRemovedXid by accessing
- * the heap.  This is used by the REDO routine to generate recovery conflicts.
- * Also, it doesn't handle posting list tuples unless the entire tuple can be
- * deleted as a whole (since there is only one LP_DEAD bit per line pointer).
+ * the page, but it needs its own latestRemovedXid from caller (caller gets
+ * this from tableam).  This is used by the REDO routine to generate recovery
+ * conflicts.  The other difference is that only _bt_delitems_vacuum will
+ * clear page's VACUUM cycle ID.
  */
-void
-_bt_delitems_delete(Relation rel, Buffer buf,
+static void
+_bt_delitems_delete(Relation rel, Buffer buf, TransactionId latestRemovedXid,
 					OffsetNumber *deletable, int ndeletable,
+					BTVacuumPosting *updatable, int nupdatable,
 					Relation heapRel)
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
-	TransactionId latestRemovedXid = InvalidTransactionId;
+	bool		needswal = RelationNeedsWAL(rel);
+	char	   *updatedbuf = NULL;
+	Size		updatedbuflen = 0;
+	OffsetNumber updatedoffsets[MaxIndexTuplesPerPage];
 
 	/* Shouldn't be called unless there's something to do */
-	Assert(ndeletable > 0);
+	Assert(ndeletable > 0 || nupdatable > 0);
 
-	if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
-		latestRemovedXid =
-			_bt_xid_horizon(rel, heapRel, page, deletable, ndeletable);
+	/* Generate new versions of posting lists without deleted TIDs */
+	if (nupdatable > 0)
+		updatedbuf = _bt_delitems_update(updatable, nupdatable,
+										 updatedoffsets, &updatedbuflen,
+										 needswal);
 
 	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
 
-	/* Fix the page */
-	PageIndexMultiDelete(page, deletable, ndeletable);
+	/* Handle updates and deletes just like _bt_delitems_vacuum */
+	for (int i = 0; i < nupdatable; i++)
+	{
+		OffsetNumber updatedoffset = updatedoffsets[i];
+		IndexTuple	itup;
+		Size		itemsz;
+
+		itup = updatable[i]->itup;
+		itemsz = MAXALIGN(IndexTupleSize(itup));
+		if (!PageIndexTupleOverwrite(page, updatedoffset, (Item) itup,
+									 itemsz))
+			elog(PANIC, "failed to update partially dead item in block %u of index \"%s\"",
+				 BufferGetBlockNumber(buf), RelationGetRelationName(rel));
+	}
+
+	if (ndeletable > 0)
+		PageIndexMultiDelete(page, deletable, ndeletable);
 
 	/*
-	 * Unlike _bt_delitems_vacuum, we *must not* clear the vacuum cycle ID,
-	 * because this is not called by VACUUM
+	 * Unlike _bt_delitems_vacuum, we *must not* clear the vacuum cycle ID at
+	 * this point.  The VACUUM command alone controls vacuum cycle IDs.
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -1310,7 +1310,7 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 	 * Clear the BTP_HAS_GARBAGE page flag.
 	 *
 	 * This flag indicates the presence of LP_DEAD items on the page (though
-	 * not reliably).  Note that we only trust it with pg_upgrade'd
+	 * not reliably).  Note that we only rely on it with pg_upgrade'd
 	 * !heapkeyspace indexes.
 	 */
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
@@ -1318,25 +1318,29 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 	MarkBufferDirty(buf);
 
 	/* XLOG stuff */
-	if (RelationNeedsWAL(rel))
+	if (needswal)
 	{
 		XLogRecPtr	recptr;
 		xl_btree_delete xlrec_delete;
 
 		xlrec_delete.latestRemovedXid = latestRemovedXid;
 		xlrec_delete.ndeleted = ndeletable;
+		xlrec_delete.nupdated = nupdatable;
 
 		XLogBeginInsert();
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
 		XLogRegisterData((char *) &xlrec_delete, SizeOfBtreeDelete);
 
-		/*
-		 * The deletable array is not in the buffer, but pretend that it is.
-		 * When XLogInsert stores the whole buffer, the array need not be
-		 * stored too.
-		 */
-		XLogRegisterBufData(0, (char *) deletable,
-							ndeletable * sizeof(OffsetNumber));
+		if (ndeletable > 0)
+			XLogRegisterBufData(0, (char *) deletable,
+								ndeletable * sizeof(OffsetNumber));
+
+		if (nupdatable > 0)
+		{
+			XLogRegisterBufData(0, (char *) updatedoffsets,
+								nupdatable * sizeof(OffsetNumber));
+			XLogRegisterBufData(0, updatedbuf, updatedbuflen);
+		}
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE);
 
@@ -1344,83 +1348,313 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 	}
 
 	END_CRIT_SECTION();
+
+	/* can't leak memory here */
+	if (updatedbuf != NULL)
+		pfree(updatedbuf);
+	/* free tuples allocated within _bt_delitems_update() */
+	for (int i = 0; i < nupdatable; i++)
+		pfree(updatable[i]->itup);
 }
 
 /*
- * Get the latestRemovedXid from the table entries pointed to by the non-pivot
- * tuples being deleted.
+ * Set up state needed to delete TIDs from posting list tuples via "updating"
+ * the tuple.  Performs steps common to both _bt_delitems_vacuum and
+ * _bt_delitems_delete.  These steps must take place before each function's
+ * critical section begins.
  *
- * This is a specialized version of index_compute_xid_horizon_for_tuples().
- * It's needed because btree tuples don't always store table TID using the
- * standard index tuple header field.
+ * updatabable and nupdatable are inputs, though note that we will use
+ * _bt_update_posting() to replace the original itup with a pointer to a final
+ * version in palloc()'d memory.  Caller should free the tuples when its done.
+ *
+ * The first nupdatable entries from updatedoffsets are set to the page offset
+ * number for posting list tuples that caller updates.  This is mostly useful
+ * because caller may need to WAL-log the page offsets (though we always do
+ * this for caller out of convenience).
+ *
+ * Returns buffer consisting of an array of xl_btree_update structs that
+ * describe the steps we perform here for caller (though only when needswal is
+ * true).  Also sets *updatedbuflen to the final size of the buffer.  This
+ * buffer is used by caller when WAL logging is required.
  */
-static TransactionId
-_bt_xid_horizon(Relation rel, Relation heapRel, Page page,
-				OffsetNumber *deletable, int ndeletable)
+static char *
+_bt_delitems_update(BTVacuumPosting *updatable, int nupdatable,
+					OffsetNumber *updatedoffsets, Size *updatedbuflen,
+					bool needswal)
 {
-	TransactionId latestRemovedXid = InvalidTransactionId;
-	int			spacenhtids;
-	int			nhtids;
-	ItemPointer htids;
+	char	   *updatedbuf = NULL;
+	Size		buflen = 0;
 
-	/* Array will grow iff there are posting list tuples to consider */
-	spacenhtids = ndeletable;
-	nhtids = 0;
-	htids = (ItemPointer) palloc(sizeof(ItemPointerData) * spacenhtids);
-	for (int i = 0; i < ndeletable; i++)
+	/* Shouldn't be called unless there's something to do */
+	Assert(nupdatable > 0);
+
+	for (int i = 0; i < nupdatable; i++)
 	{
-		ItemId		itemid;
-		IndexTuple	itup;
+		BTVacuumPosting vacposting = updatable[i];
+		Size		itemsz;
 
-		itemid = PageGetItemId(page, deletable[i]);
-		itup = (IndexTuple) PageGetItem(page, itemid);
+		/* Replace work area IndexTuple with updated version */
+		_bt_update_posting(vacposting);
 
-		Assert(ItemIdIsDead(itemid));
-		Assert(!BTreeTupleIsPivot(itup));
+		/* Keep track of size of xl_btree_update for updatedbuf in passing */
+		itemsz = SizeOfBtreeUpdate + vacposting->ndeletedtids * sizeof(uint16);
+		buflen += itemsz;
 
-		if (!BTreeTupleIsPosting(itup))
+		/* Build updatedoffsets buffer in passing */
+		updatedoffsets[i] = vacposting->updatedoffset;
+	}
+
+	/* XLOG stuff */
+	if (needswal)
+	{
+		Size		offset = 0;
+
+		/* Allocate, set final size for caller */
+		updatedbuf = palloc(buflen);
+		*updatedbuflen = buflen;
+		for (int i = 0; i < nupdatable; i++)
 		{
-			if (nhtids + 1 > spacenhtids)
-			{
-				spacenhtids *= 2;
-				htids = (ItemPointer)
-					repalloc(htids, sizeof(ItemPointerData) * spacenhtids);
-			}
+			BTVacuumPosting vacposting = updatable[i];
+			Size		itemsz;
+			xl_btree_update update;
 
-			Assert(ItemPointerIsValid(&itup->t_tid));
-			ItemPointerCopy(&itup->t_tid, &htids[nhtids]);
-			nhtids++;
-		}
-		else
-		{
-			int			nposting = BTreeTupleGetNPosting(itup);
+			update.ndeletedtids = vacposting->ndeletedtids;
+			memcpy(updatedbuf + offset, &update.ndeletedtids,
+				   SizeOfBtreeUpdate);
+			offset += SizeOfBtreeUpdate;
 
-			if (nhtids + nposting > spacenhtids)
-			{
-				spacenhtids = Max(spacenhtids * 2, nhtids + nposting);
-				htids = (ItemPointer)
-					repalloc(htids, sizeof(ItemPointerData) * spacenhtids);
-			}
-
-			for (int j = 0; j < nposting; j++)
-			{
-				ItemPointer htid = BTreeTupleGetPostingN(itup, j);
-
-				Assert(ItemPointerIsValid(htid));
-				ItemPointerCopy(htid, &htids[nhtids]);
-				nhtids++;
-			}
+			itemsz = update.ndeletedtids * sizeof(uint16);
+			memcpy(updatedbuf + offset, vacposting->deletetids, itemsz);
+			offset += itemsz;
 		}
 	}
 
-	Assert(nhtids >= ndeletable);
+	return updatedbuf;
+}
 
-	latestRemovedXid =
-		table_compute_xid_horizon_for_tuples(heapRel, htids, nhtids);
+/*
+ * Comparator used by _bt_delitems_delete_check() to restore deltids array
+ * back to its original leaf-page-wise sort order
+ */
+static int
+_bt_delitems_cmp(const void *a, const void *b)
+{
+	TM_IndexDelete *indexdelete1 = (TM_IndexDelete *) a;
+	TM_IndexDelete *indexdelete2 = (TM_IndexDelete *) b;
 
-	pfree(htids);
+	if (indexdelete1->id > indexdelete2->id)
+		return 1;
+	if (indexdelete1->id < indexdelete2->id)
+		return -1;
 
-	return latestRemovedXid;
+	Assert(false);
+
+	return 0;
+}
+
+/*
+ * Try to delete item(s) from a btree leaf page during single-page cleanup.
+ *
+ * nbtree interface to table_index_delete_tuples().  Deletes a subset of index
+ * tuples from caller's deltids array: those whose TIDs are found safe to
+ * delete by the tableam (or already marked LP_DEAD in index, and so already
+ * known to be deletable by our simple index deletion caller).  We physically
+ * delete index tuples from buf leaf page last of all (for index tuples where
+ * that is known to be safe following our table_index_delete_tuples() call).
+ *
+ * Simple index deletion caller only includes TIDs from index tuples marked
+ * LP_DEAD, as well as extra TIDs it found on the same leaf page that can be
+ * included without increasing the total number of distinct table blocks for
+ * the deletion operation as a whole.  This approach often allows us to delete
+ * some extra index tuples that were practically free for tableam to check in
+ * passing (when they actually turn out to be safe to delete).  It probably
+ * only makes sense for the tableam to go ahead with these extra checks when
+ * it is block-orientated (otherwise the checks probably won't be practically
+ * free, which we rely on).  The tableam interface requires the tableam side
+ * to handle the problem, though, so this is okay (we as an index AM are free
+ * to make the simplifying assumption that all tableams must be block-based).
+ *
+ * Bottom-up index deletion caller provides all the TIDs from the leaf page,
+ * without expecting that tableam will check most of them.  The tableam has
+ * considerable discretion around which entries/blocks it checks.  Our role in
+ * costing the bottom-up deletion operation is strictly advisory.
+ *
+ * Note: Caller must have added deltids entries (i.e. entries that go in
+ * delstate's main array) in leaf-page-wise order: page offset number order,
+ * TID order among entries taken from the same posting list tuple (tiebreak on
+ * TID).  This order is convenient to work with here.
+ *
+ * Note: We also rely on the id field of each deltids element "capturing" this
+ * original leaf-page-wise order.  That is, we expect to be able to get back
+ * to the original leaf-page-wise order just by sorting deltids on the id
+ * field (tableam will sort deltids for its own reasons, so we'll need to put
+ * it back in leaf-page-wise order afterwards).
+ */
+void
+_bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
+						  TM_IndexDeleteOp *delstate)
+{
+	Page		page = BufferGetPage(buf);
+	TransactionId latestRemovedXid;
+	OffsetNumber postingidxoffnum = InvalidOffsetNumber;
+	int			ndeletable = 0,
+				nupdatable = 0;
+	OffsetNumber deletable[MaxIndexTuplesPerPage];
+	BTVacuumPosting updatable[MaxIndexTuplesPerPage];
+
+	/* Use tableam interface to determine which tuples to delete first */
+	latestRemovedXid = table_index_delete_tuples(heapRel, delstate);
+
+	/* Should not WAL-log latestRemovedXid unless it's required */
+	if (!XLogStandbyInfoActive() || !RelationNeedsWAL(rel))
+		latestRemovedXid = InvalidTransactionId;
+
+	/*
+	 * Construct a leaf-page-wise description of what _bt_delitems_delete()
+	 * needs to do to physically delete index tuples from the page.
+	 *
+	 * Must sort deltids array to restore leaf-page-wise order (original order
+	 * before call to tableam).  This is the order that the loop expects.
+	 *
+	 * Note that deltids array might be a lot smaller now.  It might even have
+	 * no entries at all (with bottom-up deletion caller), in which case there
+	 * is nothing left to do.
+	 */
+	qsort(delstate->deltids, delstate->ndeltids, sizeof(TM_IndexDelete),
+		  _bt_delitems_cmp);
+	if (delstate->ndeltids == 0)
+	{
+		Assert(delstate->bottomup);
+		return;
+	}
+
+	/* We definitely have to delete at least one index tuple (or one TID) */
+	for (int i = 0; i < delstate->ndeltids; i++)
+	{
+		TM_IndexStatus *dstatus = delstate->status + delstate->deltids[i].id;
+		OffsetNumber idxoffnum = dstatus->idxoffnum;
+		ItemId		itemid = PageGetItemId(page, idxoffnum);
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, itemid);
+		int			nestedi,
+					nitem;
+		BTVacuumPosting vacposting;
+
+		Assert(OffsetNumberIsValid(idxoffnum));
+
+		if (idxoffnum == postingidxoffnum)
+		{
+			/*
+			 * This deltid entry is a TID from a posting list tuple that has
+			 * already been completely processed
+			 */
+			Assert(BTreeTupleIsPosting(itup));
+			Assert(ItemPointerCompare(BTreeTupleGetHeapTID(itup),
+									  &delstate->deltids[i].tid) < 0);
+			Assert(ItemPointerCompare(BTreeTupleGetMaxHeapTID(itup),
+									  &delstate->deltids[i].tid) >= 0);
+			continue;
+		}
+
+		if (!BTreeTupleIsPosting(itup))
+		{
+			/* Plain non-pivot tuple */
+			Assert(ItemPointerEquals(&itup->t_tid, &delstate->deltids[i].tid));
+			if (dstatus->knowndeletable)
+				deletable[ndeletable++] = idxoffnum;
+			continue;
+		}
+
+		/*
+		 * itup is a posting list tuple whose lowest deltids entry (which may
+		 * or may not be for the first TID from itup) is considered here now.
+		 * We should process all of the deltids entries for the posting list
+		 * together now, though (not just the lowest).  Remember to skip over
+		 * later itup-related entries during later iterations of outermost
+		 * loop.
+		 */
+		postingidxoffnum = idxoffnum;	/* Remember work in outermost loop */
+		nestedi = i;			/* Initialize for first itup deltids entry */
+		vacposting = NULL;		/* Describes final action for itup */
+		nitem = BTreeTupleGetNPosting(itup);
+		for (int p = 0; p < nitem; p++)
+		{
+			ItemPointer ptid = BTreeTupleGetPostingN(itup, p);
+			int			ptidcmp = -1;
+
+			/*
+			 * This nested loop reuses work across ptid TIDs taken from itup.
+			 * We take advantage of the fact that both itup's TIDs and deltids
+			 * entries (within a single itup/posting list grouping) must both
+			 * be in ascending TID order.
+			 */
+			for (; nestedi < delstate->ndeltids; nestedi++)
+			{
+				TM_IndexDelete *tcdeltid = &delstate->deltids[nestedi];
+				TM_IndexStatus *tdstatus = (delstate->status + tcdeltid->id);
+
+				/* Stop once we get past all itup related deltids entries */
+				Assert(tdstatus->idxoffnum >= idxoffnum);
+				if (tdstatus->idxoffnum != idxoffnum)
+					break;
+
+				/* Skip past non-deletable itup related entries up front */
+				if (!tdstatus->knowndeletable)
+					continue;
+
+				/* Entry is first partial ptid match (or an exact match)? */
+				ptidcmp = ItemPointerCompare(&tcdeltid->tid, ptid);
+				if (ptidcmp >= 0)
+				{
+					/* Greater than or equal (partial or exact) match... */
+					break;
+				}
+			}
+
+			/* ...exact ptid match to a deletable deltids entry? */
+			if (ptidcmp != 0)
+				continue;
+
+			/* Exact match for deletable deltids entry -- ptid gets deleted */
+			if (vacposting == NULL)
+			{
+				vacposting = palloc(offsetof(BTVacuumPostingData, deletetids) +
+									nitem * sizeof(uint16));
+				vacposting->itup = itup;
+				vacposting->updatedoffset = idxoffnum;
+				vacposting->ndeletedtids = 0;
+			}
+			vacposting->deletetids[vacposting->ndeletedtids++] = p;
+		}
+
+		/* Final decision on itup, a posting list tuple */
+
+		if (vacposting == NULL)
+		{
+			/* No TIDs to delete from itup -- do nothing */
+		}
+		else if (vacposting->ndeletedtids == nitem)
+		{
+			/* Straight delete of itup (to delete all TIDs) */
+			deletable[ndeletable++] = idxoffnum;
+			/* Turns out we won't need granular information */
+			pfree(vacposting);
+		}
+		else
+		{
+			/* Delete some (but not all) TIDs from itup */
+			Assert(vacposting->ndeletedtids > 0 &&
+				   vacposting->ndeletedtids < nitem);
+			updatable[nupdatable++] = vacposting;
+		}
+	}
+
+	/* Physically delete tuples (or TIDs) using deletable (or updatable) */
+	_bt_delitems_delete(rel, buf, latestRemovedXid, deletable, ndeletable,
+						updatable, nupdatable, heapRel);
+
+	/* be tidy */
+	for (int i = 0; i < nupdatable; i++)
+		pfree(updatable[i]);
 }
 
 /*
