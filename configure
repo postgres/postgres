@@ -15155,7 +15155,7 @@ fi
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-for ac_func in backtrace_symbols clock_gettime copyfile fdatasync getifaddrs getpeerucred getrlimit kqueue mbstowcs_l memset_s poll posix_fallocate ppoll pread preadv pstat pthread_is_threaded_np pwrite pwritev readlink readv setproctitle setproctitle_fast setsid shm_open strchrnul strsignal symlink sync_file_range uselocale wcstombs_l writev
+for ac_func in backtrace_symbols clock_gettime copyfile fdatasync getifaddrs getpeerucred getrlimit kqueue mbstowcs_l memset_s poll posix_fallocate ppoll pstat pthread_is_threaded_np readlink readv setproctitle setproctitle_fast setsid shm_open strchrnul strsignal symlink sync_file_range uselocale wcstombs_l writev
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -15827,6 +15827,58 @@ else
   case " $LIBOBJS " in
   *" mkdtemp.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS mkdtemp.$ac_objext"
+ ;;
+esac
+
+fi
+
+ac_fn_c_check_func "$LINENO" "pread" "ac_cv_func_pread"
+if test "x$ac_cv_func_pread" = xyes; then :
+  $as_echo "#define HAVE_PREAD 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" pread.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS pread.$ac_objext"
+ ;;
+esac
+
+fi
+
+ac_fn_c_check_func "$LINENO" "preadv" "ac_cv_func_preadv"
+if test "x$ac_cv_func_preadv" = xyes; then :
+  $as_echo "#define HAVE_PREADV 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" preadv.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS preadv.$ac_objext"
+ ;;
+esac
+
+fi
+
+ac_fn_c_check_func "$LINENO" "pwrite" "ac_cv_func_pwrite"
+if test "x$ac_cv_func_pwrite" = xyes; then :
+  $as_echo "#define HAVE_PWRITE 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" pwrite.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS pwrite.$ac_objext"
+ ;;
+esac
+
+fi
+
+ac_fn_c_check_func "$LINENO" "pwritev" "ac_cv_func_pwritev"
+if test "x$ac_cv_func_pwritev" = xyes; then :
+  $as_echo "#define HAVE_PWRITEV 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" pwritev.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS pwritev.$ac_objext"
  ;;
 esac
 

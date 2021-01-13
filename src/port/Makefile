@@ -53,8 +53,6 @@ OBJS = \
 	pgstrcasecmp.o \
 	pgstrsignal.o \
 	pqsignal.o \
-	pread.o \
-	pwrite.o \
 	qsort.o \
 	qsort_arg.o \
 	quotes.o \

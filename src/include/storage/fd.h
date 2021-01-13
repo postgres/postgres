@@ -45,6 +45,7 @@
 
 #include <dirent.h>
 
+struct iovec;					/* avoid including port/pg_iovec.h here */
 
 typedef int File;
 
@@ -161,6 +162,10 @@ extern int	durable_unlink(const char *fname, int loglevel);
 extern int	durable_rename_excl(const char *oldfile, const char *newfile, int loglevel);
 extern void SyncDataDirectory(void);
 extern int	data_sync_elevel(int elevel);
+extern ssize_t pg_pwritev_with_retry(int fd,
+									 const struct iovec *iov,
+									 int iovcnt,
+									 off_t offset);
 
 /* Filename components */
 #define PG_TEMP_FILES_DIR "pgsql_tmp"

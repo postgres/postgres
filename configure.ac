@@ -1661,12 +1661,8 @@ AC_CHECK_FUNCS(m4_normalize([
 	poll
 	posix_fallocate
 	ppoll
-	pread
-	preadv
 	pstat
 	pthread_is_threaded_np
-	pwrite
-	pwritev
 	readlink
 	readv
 	setproctitle
@@ -1740,6 +1736,10 @@ AC_REPLACE_FUNCS(m4_normalize([
 	inet_aton
 	link
 	mkdtemp
+	pread
+	preadv
+	pwrite
+	pwritev
 	random
 	srandom
 	strlcat
