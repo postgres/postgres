@@ -981,8 +981,8 @@
 
 # record_ops
 { amopfamily => 'hash/record_ops', amoplefttype => 'record',
-  amoprighttype => 'record', amopstrategy => '1',
-  amopopr => '=(record,record)', amopmethod => 'hash' },
+  amoprighttype => 'record', amopstrategy => '1', amopopr => '=(record,record)',
+  amopmethod => 'hash' },
 
 # text_ops
 { amopfamily => 'hash/text_ops', amoplefttype => 'text',
