@@ -70,8 +70,8 @@ pg_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 		return -1;
 	return writev(fd, iov, iovcnt);
 #else
-	ssize_t 	sum = 0;
-	ssize_t 	part;
+	ssize_t		sum = 0;
+	ssize_t		part;
 
 	for (int i = 0; i < iovcnt; ++i)
 	{
@@ -137,14 +137,14 @@ pg_pwritev_with_retry(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 		/* Are they all done? */
 		if (iovcnt == 0)
 		{
-			if (part > 0)
-				elog(ERROR, "unexpectedly wrote more than requested");
+			/* We don't expect the kernel to write more than requested. */
+			Assert(part == 0);
 			break;
 		}
 
 		/*
-		 * Move whatever's left to the front of our mutable copy and adjust the
-		 * leading iovec.
+		 * Move whatever's left to the front of our mutable copy and adjust
+		 * the leading iovec.
 		 */
 		Assert(iovcnt > 0);
 		memmove(iov_copy, iov, sizeof(*iov) * iovcnt);
