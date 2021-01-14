@@ -31,9 +31,6 @@ extern void domain_check(Datum value, bool isnull, Oid domainType,
 extern int	errdatatype(Oid datatypeOid);
 extern int	errdomainconstraint(Oid datatypeOid, const char *conname);
 
-/* encode.c */
-extern uint64 hex_encode(const char *src, size_t len, char *dst);
-
 /* int.c */
 extern int2vector *buildint2vector(const int16 *int2s, int n);
 
