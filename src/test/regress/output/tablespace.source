@@ -712,6 +712,11 @@ ERROR:  directory "/no/such/location" does not exist
 -- No such tablespace
 CREATE TABLE bar (i int) TABLESPACE regress_nosuchspace;
 ERROR:  tablespace "regress_nosuchspace" does not exist
+-- Fail, in use for some partitioned object
+DROP TABLESPACE regress_tblspace;
+ERROR:  tablespace "regress_tblspace" cannot be dropped because some objects depend on it
+DETAIL:  tablespace for index testschema.part_a_idx
+ALTER INDEX testschema.part_a_idx SET TABLESPACE pg_default;
 -- Fail, not empty
 DROP TABLESPACE regress_tblspace;
 ERROR:  tablespace "regress_tblspace" is not empty
