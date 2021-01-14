@@ -440,6 +440,15 @@ heap_create(const char *relname,
 		}
 	}
 
+	/*
+	 * If a tablespace is specified, removal of that tablespace is normally
+	 * protected by the existence of a physical file; but for relations with
+	 * no files, add a pg_shdepend entry to account for that.
+	 */
+	if (!create_storage && reltablespace != InvalidOid)
+		recordDependencyOnTablespace(RelationRelationId, relid,
+									 reltablespace);
+
 	return rel;
 }
 
