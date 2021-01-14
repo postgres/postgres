@@ -613,8 +613,8 @@ typedef struct _PublicationInfo
 typedef struct _PublicationRelInfo
 {
 	DumpableObject dobj;
+	PublicationInfo *publication;
 	TableInfo  *pubtable;
-	char	   *pubname;
 } PublicationRelInfo;
 
 /*
@@ -672,6 +672,7 @@ extern OprInfo *findOprByOid(Oid oid);
 extern CollInfo *findCollationByOid(Oid oid);
 extern NamespaceInfo *findNamespaceByOid(Oid oid);
 extern ExtensionInfo *findExtensionByOid(Oid oid);
+extern PublicationInfo *findPublicationByOid(Oid oid);
 
 extern void setExtensionMembership(ExtensionMemberId *extmems, int nextmems);
 extern ExtensionInfo *findOwningExtension(CatalogId catalogId);
@@ -724,7 +725,8 @@ extern void processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 								   int numExtensions);
 extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
 extern void getPolicies(Archive *fout, TableInfo tblinfo[], int numTables);
-extern void getPublications(Archive *fout);
+extern PublicationInfo *getPublications(Archive *fout,
+										int *numPublications);
 extern void getPublicationTables(Archive *fout, TableInfo tblinfo[],
 								 int numTables);
 extern void getSubscriptions(Archive *fout);
