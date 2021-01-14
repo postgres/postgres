@@ -11845,6 +11845,10 @@ ATExecPartedIdxSetTableSpace(Relation rel, Oid newTableSpace)
 	rd_rel->reltablespace = (newTableSpace == MyDatabaseTableSpace) ? InvalidOid : newTableSpace;
 	CatalogTupleUpdate(pg_class, &tuple->t_self, tuple);
 
+	/* Record dependency on tablespace */
+	changeDependencyOnTablespace(RelationRelationId,
+								 indexOid, rd_rel->reltablespace);
+
 	InvokeObjectPostAlterHook(RelationRelationId, indexOid, 0);
 
 	heap_freetuple(tuple);
