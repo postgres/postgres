@@ -52,6 +52,7 @@ static DumpableObject **oprinfoindex;
 static DumpableObject **collinfoindex;
 static DumpableObject **nspinfoindex;
 static DumpableObject **extinfoindex;
+static DumpableObject **pubinfoindex;
 static int	numTables;
 static int	numTypes;
 static int	numFuncs;
@@ -59,6 +60,7 @@ static int	numOperators;
 static int	numCollations;
 static int	numNamespaces;
 static int	numExtensions;
+static int	numPublications;
 
 /* This is an array of object identities, not actual DumpableObjects */
 static ExtensionMemberId *extmembers;
@@ -93,6 +95,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	CollInfo   *collinfo;
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
+	PublicationInfo *pubinfo;
 	InhInfo    *inhinfo;
 	int			numAggregates;
 	int			numInherits;
@@ -247,7 +250,9 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	getPolicies(fout, tblinfo, numTables);
 
 	pg_log_info("reading publications");
-	getPublications(fout);
+	pubinfo = getPublications(fout, &numPublications);
+	pubinfoindex = buildIndexArray(pubinfo, numPublications,
+								   sizeof(PublicationInfo));
 
 	pg_log_info("reading publication membership");
 	getPublicationTables(fout, tblinfo, numTables);
@@ -935,6 +940,17 @@ ExtensionInfo *
 findExtensionByOid(Oid oid)
 {
 	return (ExtensionInfo *) findObjectByOid(oid, extinfoindex, numExtensions);
+}
+
+/*
+ * findPublicationByOid
+ *	  finds the entry (in pubinfo) of the publication with the given oid
+ *	  returns NULL if not found
+ */
+PublicationInfo *
+findPublicationByOid(Oid oid)
+{
+	return (PublicationInfo *) findObjectByOid(oid, pubinfoindex, numPublications);
 }
 
 /*
