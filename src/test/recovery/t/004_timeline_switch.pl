@@ -75,6 +75,10 @@ is($result, qq(2000), 'check content of standby 2');
 # Initialize primary node
 my $node_primary_2 = get_new_node('primary_2');
 $node_primary_2->init(allows_streaming => 1, has_archiving => 1);
+$node_primary_2->append_conf(
+	'postgresql.conf', qq(
+wal_keep_size = 512MB
+));
 $node_primary_2->start;
 
 # Take backup
