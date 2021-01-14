@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_iovec.h
- *	  Header for the vectored I/O functions in src/port/p{read,write}.c.
+ *	  Header for vectored I/O functions, to use in place of <sys/uio.h>.
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -50,10 +50,5 @@ extern ssize_t pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offs
 #else
 extern ssize_t pg_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset);
 #endif
-
-extern ssize_t pg_pwritev_with_retry(int fd,
-									 const struct iovec *iov,
-									 int iovcnt,
-									 off_t offset);
 
 #endif							/* PG_IOVEC_H */

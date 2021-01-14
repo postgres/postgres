@@ -154,6 +154,10 @@ extern int	pg_fsync_no_writethrough(int fd);
 extern int	pg_fsync_writethrough(int fd);
 extern int	pg_fdatasync(int fd);
 extern void pg_flush_data(int fd, off_t offset, off_t amount);
+extern ssize_t pg_pwritev_with_retry(int fd,
+									 const struct iovec *iov,
+									 int iovcnt,
+									 off_t offset);
 extern int	pg_truncate(const char *path, off_t length);
 extern void fsync_fname(const char *fname, bool isdir);
 extern int	fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel);
@@ -162,10 +166,6 @@ extern int	durable_unlink(const char *fname, int loglevel);
 extern int	durable_rename_excl(const char *oldfile, const char *newfile, int loglevel);
 extern void SyncDataDirectory(void);
 extern int	data_sync_elevel(int elevel);
-extern ssize_t pg_pwritev_with_retry(int fd,
-									 const struct iovec *iov,
-									 int iovcnt,
-									 off_t offset);
 
 /* Filename components */
 #define PG_TEMP_FILES_DIR "pgsql_tmp"
