@@ -976,6 +976,11 @@ static const SchemaQuery Query_for_list_of_statistics = {
 "       and pg_catalog.pg_table_is_visible(c2.oid)"\
 "       and c2.relispartition = 'true'"
 
+#define Query_for_list_of_cursors \
+" SELECT pg_catalog.quote_ident(name) "\
+"   FROM pg_catalog.pg_cursors "\
+"  WHERE substring(pg_catalog.quote_ident(name),1,%d)='%s'"
+
 /*
  * These object types were introduced later than our support cutoff of
  * server version 7.4.  We use the VersionedQuery infrastructure so that
@@ -2284,6 +2289,10 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_VERSIONED_SCHEMA_QUERY(Query_for_list_of_procedures, NULL);
 	else if (Matches("CALL", MatchAny))
 		COMPLETE_WITH("(");
+/* CLOSE */
+	else if (Matches("CLOSE"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_cursors
+							" UNION SELECT 'ALL'");
 /* CLUSTER */
 	else if (Matches("CLUSTER"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_clusterables, "UNION SELECT 'VERBOSE'");
@@ -3002,11 +3011,44 @@ psql_completion(const char *text, int start, int end)
 							" UNION SELECT 'ALL'");
 
 /* DECLARE */
+
+	/*
+	 * Complete DECLARE <name> with one of BINARY, INSENSITIVE, SCROLL, NO
+	 * SCROLL, and CURSOR.
+	 */
 	else if (Matches("DECLARE", MatchAny))
 		COMPLETE_WITH("BINARY", "INSENSITIVE", "SCROLL", "NO SCROLL",
 					  "CURSOR");
+
+	/*
+	 * Complete DECLARE ... <option> with other options. The PostgreSQL parser
+	 * allows DECLARE options to be specified in any order. But the
+	 * tab-completion follows the ordering of them that the SQL standard
+	 * provides, like the syntax of DECLARE command in the documentation
+	 * indicates.
+	 */
+	else if (HeadMatches("DECLARE") && TailMatches("BINARY"))
+		COMPLETE_WITH("INSENSITIVE", "SCROLL", "NO SCROLL", "CURSOR");
+	else if (HeadMatches("DECLARE") && TailMatches("INSENSITIVE"))
+		COMPLETE_WITH("SCROLL", "NO SCROLL", "CURSOR");
+	else if (HeadMatches("DECLARE") && TailMatches("SCROLL"))
+		COMPLETE_WITH("CURSOR");
+	/* Complete DECLARE ... [options] NO with SCROLL */
+	else if (HeadMatches("DECLARE") && TailMatches("NO"))
+		COMPLETE_WITH("SCROLL");
+
+	/*
+	 * Complete DECLARE ... CURSOR with one of WITH HOLD, WITHOUT HOLD, and
+	 * FOR
+	 */
 	else if (HeadMatches("DECLARE") && TailMatches("CURSOR"))
 		COMPLETE_WITH("WITH HOLD", "WITHOUT HOLD", "FOR");
+	/* Complete DECLARE ... CURSOR WITH|WITHOUT with HOLD */
+	else if (HeadMatches("DECLARE") && TailMatches("CURSOR", "WITH|WITHOUT"))
+		COMPLETE_WITH("HOLD");
+	/* Complete DECLARE ... CURSOR WITH|WITHOUT HOLD with FOR */
+	else if (HeadMatches("DECLARE") && TailMatches("CURSOR", "WITH|WITHOUT", "HOLD"))
+		COMPLETE_WITH("FOR");
 
 /* DELETE --- can be inside EXPLAIN, RULE, etc */
 	/* ... despite which, only complete DELETE with FROM at start of line */
@@ -3167,15 +3209,31 @@ psql_completion(const char *text, int start, int end)
 
 	/*
 	 * Complete FETCH with one of ABSOLUTE, BACKWARD, FORWARD, RELATIVE, ALL,
-	 * NEXT, PRIOR, FIRST, LAST
+	 * NEXT, PRIOR, FIRST, LAST, FROM, IN, and a list of cursors
 	 */
 	else if (Matches("FETCH|MOVE"))
-		COMPLETE_WITH("ABSOLUTE", "BACKWARD", "FORWARD", "RELATIVE",
-					  "ALL", "NEXT", "PRIOR", "FIRST", "LAST");
+		COMPLETE_WITH_QUERY(Query_for_list_of_cursors
+							" UNION SELECT 'ABSOLUTE'"
+							" UNION SELECT 'BACKWARD'"
+							" UNION SELECT 'FORWARD'"
+							" UNION SELECT 'RELATIVE'"
+							" UNION SELECT 'ALL'"
+							" UNION SELECT 'NEXT'"
+							" UNION SELECT 'PRIOR'"
+							" UNION SELECT 'FIRST'"
+							" UNION SELECT 'LAST'"
+							" UNION SELECT 'FROM'"
+							" UNION SELECT 'IN'");
 
-	/* Complete FETCH BACKWARD or FORWARD with one of ALL, FROM, IN */
+	/*
+	 * Complete FETCH BACKWARD or FORWARD with one of ALL, FROM, IN, and a
+	 * list of cursors
+	 */
 	else if (Matches("FETCH|MOVE", "BACKWARD|FORWARD"))
-		COMPLETE_WITH("ALL", "FROM", "IN");
+		COMPLETE_WITH_QUERY(Query_for_list_of_cursors
+							" UNION SELECT 'ALL'"
+							" UNION SELECT 'FROM'"
+							" UNION SELECT 'IN'");
 
 	/*
 	 * Complete FETCH <direction> with "FROM" or "IN". These are equivalent,
@@ -3185,7 +3243,13 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("FETCH|MOVE", "ABSOLUTE|BACKWARD|FORWARD|RELATIVE",
 					 MatchAnyExcept("FROM|IN")) ||
 			 Matches("FETCH|MOVE", "ALL|NEXT|PRIOR|FIRST|LAST"))
-		COMPLETE_WITH("FROM", "IN");
+		COMPLETE_WITH_QUERY(Query_for_list_of_cursors
+							" UNION SELECT 'FROM'"
+							" UNION SELECT 'IN'");
+	/* Complete FETCH <direction> "FROM" or "IN" with a list of cursors */
+	else if (HeadMatches("FETCH|MOVE") &&
+			 TailMatches("FROM|IN"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_cursors);
 
 /* FOREIGN DATA WRAPPER */
 	/* applies in ALTER/DROP FDW and in CREATE SERVER */
