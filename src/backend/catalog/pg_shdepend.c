@@ -59,6 +59,7 @@
 #include "commands/schemacmds.h"
 #include "commands/subscriptioncmds.h"
 #include "commands/tablecmds.h"
+#include "commands/tablespace.h"
 #include "commands/typecmds.h"
 #include "storage/lmgr.h"
 #include "miscadmin.h"
@@ -187,11 +188,14 @@ recordDependencyOnOwner(Oid classId, Oid objectId, Oid owner)
  *
  * There must be no more than one existing entry for the given dependent
  * object and dependency type!	So in practice this can only be used for
- * updating SHARED_DEPENDENCY_OWNER entries, which should have that property.
+ * updating SHARED_DEPENDENCY_OWNER and SHARED_DEPENDENCY_TABLESPACE
+ * entries, which should have that property.
  *
  * If there is no previous entry, we assume it was referencing a PINned
  * object, so we create a new entry.  If the new referenced object is
  * PINned, we don't create an entry (and drop the old one, if any).
+ * (For tablespaces, we don't record dependencies in certain cases, so
+ * there are other possible reasons for entries to be missing.)
  *
  * sdepRel must be the pg_shdepend relation, already opened and suitably
  * locked.
@@ -341,6 +345,58 @@ changeDependencyOnOwner(Oid classId, Oid objectId, Oid newOwnerId)
 	shdepDropDependency(sdepRel, classId, objectId, 0, true,
 						AuthIdRelationId, newOwnerId,
 						SHARED_DEPENDENCY_ACL);
+
+	table_close(sdepRel, RowExclusiveLock);
+}
+
+/*
+ * recordDependencyOnTablespace
+ *
+ * A convenient wrapper of recordSharedDependencyOn -- register the specified
+ * tablespace as default for the given object.
+ *
+ * Note: it's the caller's responsibility to ensure that there isn't a
+ * tablespace entry for the object already.
+ */
+void
+recordDependencyOnTablespace(Oid classId, Oid objectId, Oid tablespace)
+{
+	ObjectAddress myself,
+				  referenced;
+
+	ObjectAddressSet(myself, classId, objectId);
+	ObjectAddressSet(referenced, TableSpaceRelationId, tablespace);
+
+	recordSharedDependencyOn(&myself, &referenced,
+							 SHARED_DEPENDENCY_TABLESPACE);
+}
+
+/*
+ * changeDependencyOnTablespace
+ *
+ * Update the shared dependencies to account for the new tablespace.
+ *
+ * Note: we don't need an objsubid argument because only whole objects
+ * have tablespaces.
+ */
+void
+changeDependencyOnTablespace(Oid classId, Oid objectId, Oid newTablespaceId)
+{
+	Relation	sdepRel;
+
+	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
+
+	if (newTablespaceId != DEFAULTTABLESPACE_OID &&
+		newTablespaceId != InvalidOid)
+		shdepChangeDep(sdepRel,
+					   classId, objectId, 0,
+					   TableSpaceRelationId, newTablespaceId,
+					   SHARED_DEPENDENCY_TABLESPACE);
+	else
+		shdepDropDependency(sdepRel,
+							classId, objectId, 0, true,
+							InvalidOid, InvalidOid,
+							SHARED_DEPENDENCY_INVALID);
 
 	table_close(sdepRel, RowExclusiveLock);
 }
@@ -1084,13 +1140,6 @@ shdepLockAndCheckObject(Oid classId, Oid objectId)
 								objectId)));
 			break;
 
-			/*
-			 * Currently, this routine need not support any other shared
-			 * object types besides roles.  If we wanted to record explicit
-			 * dependencies on databases or tablespaces, we'd need code along
-			 * these lines:
-			 */
-#ifdef NOT_USED
 		case TableSpaceRelationId:
 			{
 				/* For lack of a syscache on pg_tablespace, do this: */
@@ -1104,7 +1153,6 @@ shdepLockAndCheckObject(Oid classId, Oid objectId)
 				pfree(tablespace);
 				break;
 			}
-#endif
 
 		case DatabaseRelationId:
 			{
@@ -1164,6 +1212,8 @@ storeObjectDescription(StringInfo descs,
 				appendStringInfo(descs, _("privileges for %s"), objdesc);
 			else if (deptype == SHARED_DEPENDENCY_POLICY)
 				appendStringInfo(descs, _("target of %s"), objdesc);
+			else if (deptype == SHARED_DEPENDENCY_TABLESPACE)
+				appendStringInfo(descs, _("tablespace for %s"), objdesc);
 			else
 				elog(ERROR, "unrecognized dependency type: %d",
 					 (int) deptype);

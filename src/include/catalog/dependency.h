@@ -67,6 +67,12 @@ typedef enum DependencyType
  * a role mentioned in a policy object.  The referenced object must be a
  * pg_authid entry.
  *
+ * (e) a SHARED_DEPENDENCY_TABLESPACE entry means that the referenced
+ * object is a tablespace mentioned in a relation without storage.  The
+ * referenced object must be a pg_tablespace entry.  (Relations that have
+ * storage don't need this: they are protected by the existence of a physical
+ * file in the tablespace.)
+ *
  * SHARED_DEPENDENCY_INVALID is a value used as a parameter in internal
  * routines, and is not valid in the catalog itself.
  */
@@ -76,6 +82,7 @@ typedef enum SharedDependencyType
 	SHARED_DEPENDENCY_OWNER = 'o',
 	SHARED_DEPENDENCY_ACL = 'a',
 	SHARED_DEPENDENCY_POLICY = 'r',
+	SHARED_DEPENDENCY_TABLESPACE = 't',
 	SHARED_DEPENDENCY_INVALID = 0
 } SharedDependencyType;
 
@@ -236,6 +243,12 @@ extern void recordDependencyOnOwner(Oid classId, Oid objectId, Oid owner);
 
 extern void changeDependencyOnOwner(Oid classId, Oid objectId,
 									Oid newOwnerId);
+
+extern void recordDependencyOnTablespace(Oid classId, Oid objectId,
+										 Oid tablespace);
+
+extern void changeDependencyOnTablespace(Oid classId, Oid objectId,
+										 Oid newTablespaceId);
 
 extern void updateAclDependencies(Oid classId, Oid objectId, int32 objectSubId,
 								  Oid ownerId,
