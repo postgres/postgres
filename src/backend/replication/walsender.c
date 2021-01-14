@@ -2491,7 +2491,7 @@ WalSndSegmentOpen(XLogReaderState *state, XLogSegNo nextSegNo,
 		XLogSegNo	endSegNo;
 
 		XLByteToSeg(sendTimeLineValidUpto, endSegNo, state->segcxt.ws_segsize);
-		if (state->seg.ws_segno == endSegNo)
+		if (nextSegNo == endSegNo)
 			*tli_p = sendTimeLineNextTLI;
 	}
 
