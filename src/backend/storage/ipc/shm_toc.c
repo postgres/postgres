@@ -265,8 +265,8 @@ shm_toc_estimate(shm_toc_estimator *e)
 	Size		sz;
 
 	sz = offsetof(shm_toc, toc_entry);
-	sz += add_size(sz, mul_size(e->number_of_keys, sizeof(shm_toc_entry)));
-	sz += add_size(sz, e->space_for_chunks);
+	sz = add_size(sz, mul_size(e->number_of_keys, sizeof(shm_toc_entry)));
+	sz = add_size(sz, e->space_for_chunks);
 
 	return BUFFERALIGN(sz);
 }
