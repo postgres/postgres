@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/relscan.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -124,6 +125,13 @@ CreateStatistics(CreateStatsStmt *stmt)
 		if (!pg_class_ownercheck(RelationGetRelid(rel), stxowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(rel->rd_rel->relkind),
 						   RelationGetRelationName(rel));
+
+		/* Creating statistics on system catalogs is not allowed */
+		if (!allowSystemTableMods && IsSystemRelation(rel))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied: \"%s\" is a system catalog",
+							RelationGetRelationName(rel))));
 	}
 
 	Assert(rel);
