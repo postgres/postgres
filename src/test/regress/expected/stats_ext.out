@@ -25,6 +25,7 @@ begin
 end;
 $$;
 -- Verify failures
+CREATE TABLE ext_stats_test (x int, y int, z int);
 CREATE STATISTICS tst;
 ERROR:  syntax error at or near ";"
 LINE 1: CREATE STATISTICS tst;
@@ -39,16 +40,17 @@ LINE 1: CREATE STATISTICS tst FROM sometab;
                               ^
 CREATE STATISTICS tst ON a, b FROM nonexistent;
 ERROR:  relation "nonexistent" does not exist
-CREATE STATISTICS tst ON a, b FROM pg_class;
+CREATE STATISTICS tst ON a, b FROM ext_stats_test;
 ERROR:  column "a" does not exist
-CREATE STATISTICS tst ON relname, relname, relnatts FROM pg_class;
+CREATE STATISTICS tst ON x, x, y FROM ext_stats_test;
 ERROR:  duplicate column name in statistics definition
-CREATE STATISTICS tst ON relnatts + relpages FROM pg_class;
+CREATE STATISTICS tst ON x + y FROM ext_stats_test;
 ERROR:  only simple column references are allowed in CREATE STATISTICS
-CREATE STATISTICS tst ON (relpages, reltuples) FROM pg_class;
+CREATE STATISTICS tst ON (x, y) FROM ext_stats_test;
 ERROR:  only simple column references are allowed in CREATE STATISTICS
-CREATE STATISTICS tst (unrecognized) ON relname, relnatts FROM pg_class;
+CREATE STATISTICS tst (unrecognized) ON x, y FROM ext_stats_test;
 ERROR:  unrecognized statistics kind "unrecognized"
+DROP TABLE ext_stats_test;
 -- Ensure stats are dropped sanely, and test IF NOT EXISTS while at it
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
 CREATE STATISTICS IF NOT EXISTS ab1_a_b_stats ON a, b FROM ab1;

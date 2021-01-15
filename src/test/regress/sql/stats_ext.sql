@@ -28,15 +28,17 @@ end;
 $$;
 
 -- Verify failures
+CREATE TABLE ext_stats_test (x int, y int, z int);
 CREATE STATISTICS tst;
 CREATE STATISTICS tst ON a, b;
 CREATE STATISTICS tst FROM sometab;
 CREATE STATISTICS tst ON a, b FROM nonexistent;
-CREATE STATISTICS tst ON a, b FROM pg_class;
-CREATE STATISTICS tst ON relname, relname, relnatts FROM pg_class;
-CREATE STATISTICS tst ON relnatts + relpages FROM pg_class;
-CREATE STATISTICS tst ON (relpages, reltuples) FROM pg_class;
-CREATE STATISTICS tst (unrecognized) ON relname, relnatts FROM pg_class;
+CREATE STATISTICS tst ON a, b FROM ext_stats_test;
+CREATE STATISTICS tst ON x, x, y FROM ext_stats_test;
+CREATE STATISTICS tst ON x + y FROM ext_stats_test;
+CREATE STATISTICS tst ON (x, y) FROM ext_stats_test;
+CREATE STATISTICS tst (unrecognized) ON x, y FROM ext_stats_test;
+DROP TABLE ext_stats_test;
 
 -- Ensure stats are dropped sanely, and test IF NOT EXISTS while at it
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
