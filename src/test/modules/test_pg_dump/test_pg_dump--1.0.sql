@@ -28,6 +28,15 @@ GRANT SELECT(col1) ON regress_pg_dump_table TO public;
 GRANT SELECT(col2) ON regress_pg_dump_table TO regress_dump_test_role;
 REVOKE SELECT(col2) ON regress_pg_dump_table FROM regress_dump_test_role;
 
+CREATE FUNCTION wgo_then_no_access() RETURNS int LANGUAGE SQL AS 'SELECT 1';
+GRANT ALL ON FUNCTION wgo_then_no_access()
+	TO pg_signal_backend WITH GRANT OPTION;
+
+CREATE SEQUENCE wgo_then_regular;
+GRANT ALL ON SEQUENCE wgo_then_regular TO pg_signal_backend WITH GRANT OPTION;
+REVOKE GRANT OPTION FOR SELECT ON SEQUENCE wgo_then_regular
+	FROM pg_signal_backend;
+
 CREATE ACCESS METHOD regress_test_am TYPE INDEX HANDLER bthandler;
 
 -- Create a set of objects that are part of the schema created by

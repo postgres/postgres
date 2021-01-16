@@ -394,6 +394,57 @@ my %tests = (
 		},
 	},
 
+	'REVOKE ALL ON FUNCTION wgo_then_no_access' => {
+		create_order => 3,
+		create_sql   => q{
+			DO $$BEGIN EXECUTE format(
+				'REVOKE ALL ON FUNCTION wgo_then_no_access()
+				 FROM pg_signal_backend, public, %I',
+				(SELECT usename
+				 FROM pg_user JOIN pg_proc ON proowner = usesysid
+				 WHERE proname = 'wgo_then_no_access')); END$$;},
+		regexp => qr/^
+			\QREVOKE ALL ON FUNCTION public.wgo_then_no_access() FROM PUBLIC;\E
+			\n\QREVOKE ALL ON FUNCTION public.wgo_then_no_access() FROM \E.*;
+			\n\QREVOKE ALL ON FUNCTION public.wgo_then_no_access() FROM pg_signal_backend;\E
+			/xm,
+		like => {
+			binary_upgrade   => 1,
+			clean            => 1,
+			clean_if_exists  => 1,
+			createdb         => 1,
+			defaults         => 1,
+			no_owner         => 1,
+			schema_only      => 1,
+			section_pre_data => 1, },
+		unlike => {
+			no_privs           => 1,
+			pg_dumpall_globals => 1,
+			section_post_data  => 1, }, },
+
+	'REVOKE GRANT OPTION FOR UPDATE ON SEQUENCE wgo_then_regular' => {
+		create_order => 3,
+		create_sql   => 'REVOKE GRANT OPTION FOR UPDATE ON SEQUENCE
+							wgo_then_regular FROM pg_signal_backend;',
+		regexp => qr/^
+			\QREVOKE ALL ON SEQUENCE public.wgo_then_regular FROM pg_signal_backend;\E
+			\n\QGRANT SELECT,UPDATE ON SEQUENCE public.wgo_then_regular TO pg_signal_backend;\E
+			\n\QGRANT USAGE ON SEQUENCE public.wgo_then_regular TO pg_signal_backend WITH GRANT OPTION;\E
+			/xm,
+		like => {
+			binary_upgrade   => 1,
+			clean            => 1,
+			clean_if_exists  => 1,
+			createdb         => 1,
+			defaults         => 1,
+			no_owner         => 1,
+			schema_only      => 1,
+			section_pre_data => 1, },
+		unlike => {
+			no_privs           => 1,
+			pg_dumpall_globals => 1,
+			section_post_data  => 1, }, },
+
 	'CREATE ACCESS METHOD regress_test_am' => {
 		regexp => qr/^
 			\QCREATE ACCESS METHOD regress_test_am TYPE INDEX HANDLER bthandler;\E
