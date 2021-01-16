@@ -1231,11 +1231,6 @@ SimpleLruTruncate(SlruCtl ctl, int cutoffPage)
 	pgstat_count_slru_truncate(shared->slru_stats_idx);
 
 	/*
-	 * The cutoff point is the start of the segment containing cutoffPage.
-	 */
-	cutoffPage -= cutoffPage % SLRU_PAGES_PER_SEGMENT;
-
-	/*
 	 * Scan shared memory and remove any pages preceding the cutoff page, to
 	 * ensure we won't rewrite them later.  (Since this is normally called in
 	 * or just after a checkpoint, any dirty pages should have been flushed
@@ -1247,9 +1242,7 @@ restart:;
 
 	/*
 	 * While we are holding the lock, make an important safety check: the
-	 * planned cutoff point must be <= the current endpoint page. Otherwise we
-	 * have already wrapped around, and proceeding with the truncation would
-	 * risk removing the current segment.
+	 * current endpoint page must not be eligible for removal.
 	 */
 	if (ctl->PagePrecedes(shared->latest_page_number, cutoffPage))
 	{
@@ -1281,8 +1274,11 @@ restart:;
 		 * Hmm, we have (or may have) I/O operations acting on the page, so
 		 * we've got to wait for them to finish and then start again. This is
 		 * the same logic as in SlruSelectLRUPage.  (XXX if page is dirty,
-		 * wouldn't it be OK to just discard it without writing it?  For now,
-		 * keep the logic the same as it was.)
+		 * wouldn't it be OK to just discard it without writing it?
+		 * SlruMayDeleteSegment() uses a stricter qualification, so we might
+		 * not delete this page in the end; even if we don't delete it, we
+		 * won't have cause to read its data again.  For now, keep the logic
+		 * the same as it was.)
 		 */
 		if (shared->page_status[slotno] == SLRU_PAGE_VALID)
 			SlruInternalWritePage(ctl, slotno, NULL);
@@ -1373,18 +1369,133 @@ restart:
 }
 
 /*
+ * Determine whether a segment is okay to delete.
+ *
+ * segpage is the first page of the segment, and cutoffPage is the oldest (in
+ * PagePrecedes order) page in the SLRU containing still-useful data.  Since
+ * every core PagePrecedes callback implements "wrap around", check the
+ * segment's first and last pages:
+ *
+ * first<cutoff  && last<cutoff:  yes
+ * first<cutoff  && last>=cutoff: no; cutoff falls inside this segment
+ * first>=cutoff && last<cutoff:  no; wrap point falls inside this segment
+ * first>=cutoff && last>=cutoff: no; every page of this segment is too young
+ */
+static bool
+SlruMayDeleteSegment(SlruCtl ctl, int segpage, int cutoffPage)
+{
+	int			seg_last_page = segpage + SLRU_PAGES_PER_SEGMENT - 1;
+
+	Assert(segpage % SLRU_PAGES_PER_SEGMENT == 0);
+
+	return (ctl->PagePrecedes(segpage, cutoffPage) &&
+			ctl->PagePrecedes(seg_last_page, cutoffPage));
+}
+
+#ifdef USE_ASSERT_CHECKING
+static void
+SlruPagePrecedesTestOffset(SlruCtl ctl, int per_page, uint32 offset)
+{
+	TransactionId lhs,
+				rhs;
+	int			newestPage,
+				oldestPage;
+	TransactionId newestXact,
+				oldestXact;
+
+	/*
+	 * Compare an XID pair having undefined order (see RFC 1982), a pair at
+	 * "opposite ends" of the XID space.  TransactionIdPrecedes() treats each
+	 * as preceding the other.  If RHS is oldestXact, LHS is the first XID we
+	 * must not assign.
+	 */
+	lhs = per_page + offset;	/* skip first page to avoid non-normal XIDs */
+	rhs = lhs + (1U << 31);
+	Assert(TransactionIdPrecedes(lhs, rhs));
+	Assert(TransactionIdPrecedes(rhs, lhs));
+	Assert(!TransactionIdPrecedes(lhs - 1, rhs));
+	Assert(TransactionIdPrecedes(rhs, lhs - 1));
+	Assert(TransactionIdPrecedes(lhs + 1, rhs));
+	Assert(!TransactionIdPrecedes(rhs, lhs + 1));
+	Assert(!TransactionIdFollowsOrEquals(lhs, rhs));
+	Assert(!TransactionIdFollowsOrEquals(rhs, lhs));
+	Assert(!ctl->PagePrecedes(lhs / per_page, lhs / per_page));
+	Assert(!ctl->PagePrecedes(lhs / per_page, rhs / per_page));
+	Assert(!ctl->PagePrecedes(rhs / per_page, lhs / per_page));
+	Assert(!ctl->PagePrecedes((lhs - per_page) / per_page, rhs / per_page));
+	Assert(ctl->PagePrecedes(rhs / per_page, (lhs - 3 * per_page) / per_page));
+	Assert(ctl->PagePrecedes(rhs / per_page, (lhs - 2 * per_page) / per_page));
+	Assert(ctl->PagePrecedes(rhs / per_page, (lhs - 1 * per_page) / per_page)
+		   || (1U << 31) % per_page != 0);	/* See CommitTsPagePrecedes() */
+	Assert(ctl->PagePrecedes((lhs + 1 * per_page) / per_page, rhs / per_page)
+		   || (1U << 31) % per_page != 0);
+	Assert(ctl->PagePrecedes((lhs + 2 * per_page) / per_page, rhs / per_page));
+	Assert(ctl->PagePrecedes((lhs + 3 * per_page) / per_page, rhs / per_page));
+	Assert(!ctl->PagePrecedes(rhs / per_page, (lhs + per_page) / per_page));
+
+	/*
+	 * GetNewTransactionId() has assigned the last XID it can safely use, and
+	 * that XID is in the *LAST* page of the second segment.  We must not
+	 * delete that segment.
+	 */
+	newestPage = 2 * SLRU_PAGES_PER_SEGMENT - 1;
+	newestXact = newestPage * per_page + offset;
+	Assert(newestXact / per_page == newestPage);
+	oldestXact = newestXact + 1;
+	oldestXact -= 1U << 31;
+	oldestPage = oldestXact / per_page;
+	Assert(!SlruMayDeleteSegment(ctl,
+								 (newestPage -
+								  newestPage % SLRU_PAGES_PER_SEGMENT),
+								 oldestPage));
+
+	/*
+	 * GetNewTransactionId() has assigned the last XID it can safely use, and
+	 * that XID is in the *FIRST* page of the second segment.  We must not
+	 * delete that segment.
+	 */
+	newestPage = SLRU_PAGES_PER_SEGMENT;
+	newestXact = newestPage * per_page + offset;
+	Assert(newestXact / per_page == newestPage);
+	oldestXact = newestXact + 1;
+	oldestXact -= 1U << 31;
+	oldestPage = oldestXact / per_page;
+	Assert(!SlruMayDeleteSegment(ctl,
+								 (newestPage -
+								  newestPage % SLRU_PAGES_PER_SEGMENT),
+								 oldestPage));
+}
+
+/*
+ * Unit-test a PagePrecedes function.
+ *
+ * This assumes every uint32 >= FirstNormalTransactionId is a valid key.  It
+ * assumes each value occupies a contiguous, fixed-size region of SLRU bytes.
+ * (MultiXactMemberCtl separates flags from XIDs.  AsyncCtl has
+ * variable-length entries, no keys, and no random access.  These unit tests
+ * do not apply to them.)
+ */
+void
+SlruPagePrecedesUnitTests(SlruCtl ctl, int per_page)
+{
+	/* Test first, middle and last entries of a page. */
+	SlruPagePrecedesTestOffset(ctl, per_page, 0);
+	SlruPagePrecedesTestOffset(ctl, per_page, per_page / 2);
+	SlruPagePrecedesTestOffset(ctl, per_page, per_page - 1);
+}
+#endif
+
+/*
  * SlruScanDirectory callback
- *		This callback reports true if there's any segment prior to the one
- *		containing the page passed as "data".
+ *		This callback reports true if there's any segment wholly prior to the
+ *		one containing the page passed as "data".
  */
 bool
 SlruScanDirCbReportPresence(SlruCtl ctl, char *filename, int segpage, void *data)
 {
 	int			cutoffPage = *(int *) data;
 
-	cutoffPage -= cutoffPage % SLRU_PAGES_PER_SEGMENT;
-
-	if (ctl->PagePrecedes(segpage, cutoffPage))
+	if (SlruMayDeleteSegment(ctl, segpage, cutoffPage))
 		return true;			/* found one; don't iterate any more */
 
 	return false;				/* keep going */
@@ -1399,7 +1510,7 @@ SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
 {
 	int			cutoffPage = *(int *) data;
 
-	if (ctl->PagePrecedes(segpage, cutoffPage))
+	if (SlruMayDeleteSegment(ctl, segpage, cutoffPage))
 		SlruInternalDeleteSegment(ctl, filename);
 
 	return false;				/* keep going */
