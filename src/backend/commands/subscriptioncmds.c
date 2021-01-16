@@ -1267,7 +1267,7 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 		relname = TextDatumGetCString(slot_getattr(slot, 2, &isnull));
 		Assert(!isnull);
 
-		rv = makeRangeVar(pstrdup(nspname), pstrdup(relname), -1);
+		rv = makeRangeVar(nspname, relname, -1);
 		tablelist = lappend(tablelist, rv);
 
 		ExecClearTuple(slot);
