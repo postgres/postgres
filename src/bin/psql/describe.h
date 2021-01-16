@@ -102,6 +102,9 @@ extern bool listExtensions(const char *pattern);
 /* \dx+ */
 extern bool listExtensionContents(const char *pattern);
 
+/* \dX */
+extern bool listExtendedStats(const char *pattern, bool verbose);
+
 /* \dy */
 extern bool listEventTriggers(const char *pattern, bool verbose);
 

@@ -1727,6 +1727,100 @@ INSERT INTO tststats.priv_test_tbl
 CREATE STATISTICS tststats.priv_test_stats (mcv) ON a, b
   FROM tststats.priv_test_tbl;
 ANALYZE tststats.priv_test_tbl;
+-- Check printing info about extended statistics by \dX
+create table stts_t1 (a int, b int);
+create statistics stts_1 (ndistinct) on a, b from stts_t1;
+create statistics stts_2 (ndistinct, dependencies) on a, b from stts_t1;
+create statistics stts_3 (ndistinct, dependencies, mcv) on a, b from stts_t1;
+create table stts_t2 (a int, b int, c int);
+create statistics stts_4 on b, c from stts_t2;
+create table stts_t3 (col1 int, col2 int, col3 int);
+create statistics stts_hoge on col1, col2, col3 from stts_t3;
+create schema stts_s1;
+create schema stts_s2;
+create statistics stts_s1.stts_foo on col1, col2 from stts_t3;
+create statistics stts_s2.stts_yama (dependencies, mcv) on col1, col3 from stts_t3;
+insert into stts_t1 select i,i from generate_series(1,100) i;
+analyze stts_t1;
+\dX
+                                           List of extended statistics
+  Schema  |          Name          |              Definition              | Ndistinct | Dependencies |    MCV    
+----------+------------------------+--------------------------------------+-----------+--------------+-----------
+ public   | func_deps_stat         | a, b, c FROM functional_dependencies |           | built        | 
+ public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays        |           |              | built
+ public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool          |           |              | built
+ public   | mcv_lists_stats        | a, b, d FROM mcv_lists               |           |              | built
+ public   | stts_1                 | a, b FROM stts_t1                    | built     |              | 
+ public   | stts_2                 | a, b FROM stts_t1                    | built     | built        | 
+ public   | stts_3                 | a, b FROM stts_t1                    | built     | built        | built
+ public   | stts_4                 | b, c FROM stts_t2                    | requested | requested    | requested
+ public   | stts_hoge              | col1, col2, col3 FROM stts_t3        | requested | requested    | requested
+ stts_s1  | stts_foo               | col1, col2 FROM stts_t3              | requested | requested    | requested
+ stts_s2  | stts_yama              | col1, col3 FROM stts_t3              |           | requested    | requested
+ tststats | priv_test_stats        | a, b FROM tststats.priv_test_tbl     |           |              | built
+(12 rows)
+
+\dX stts_?
+                        List of extended statistics
+ Schema |  Name  |    Definition     | Ndistinct | Dependencies |    MCV    
+--------+--------+-------------------+-----------+--------------+-----------
+ public | stts_1 | a, b FROM stts_t1 | built     |              | 
+ public | stts_2 | a, b FROM stts_t1 | built     | built        | 
+ public | stts_3 | a, b FROM stts_t1 | built     | built        | built
+ public | stts_4 | b, c FROM stts_t2 | requested | requested    | requested
+(4 rows)
+
+\dX *stts_hoge
+                                List of extended statistics
+ Schema |   Name    |          Definition           | Ndistinct | Dependencies |    MCV    
+--------+-----------+-------------------------------+-----------+--------------+-----------
+ public | stts_hoge | col1, col2, col3 FROM stts_t3 | requested | requested    | requested
+(1 row)
+
+\dX+
+                                                                    List of extended statistics
+  Schema  |          Name          |              Definition              | Ndistinct | Dependencies |    MCV    | Ndistinct_size | Dependencies_size |  MCV_size  
+----------+------------------------+--------------------------------------+-----------+--------------+-----------+----------------+-------------------+------------
+ public   | func_deps_stat         | a, b, c FROM functional_dependencies |           | built        |           |                | 106 bytes         | 
+ public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays        |           |              | built     |                |                   | 24 kB
+ public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool          |           |              | built     |                |                   | 386 bytes
+ public   | mcv_lists_stats        | a, b, d FROM mcv_lists               |           |              | built     |                |                   | 294 bytes
+ public   | stts_1                 | a, b FROM stts_t1                    | built     |              |           | 13 bytes       |                   | 
+ public   | stts_2                 | a, b FROM stts_t1                    | built     | built        |           | 13 bytes       | 40 bytes          | 
+ public   | stts_3                 | a, b FROM stts_t1                    | built     | built        | built     | 13 bytes       | 40 bytes          | 6126 bytes
+ public   | stts_4                 | b, c FROM stts_t2                    | requested | requested    | requested | 0 bytes        | 0 bytes           | 0 bytes
+ public   | stts_hoge              | col1, col2, col3 FROM stts_t3        | requested | requested    | requested | 0 bytes        | 0 bytes           | 0 bytes
+ stts_s1  | stts_foo               | col1, col2 FROM stts_t3              | requested | requested    | requested | 0 bytes        | 0 bytes           | 0 bytes
+ stts_s2  | stts_yama              | col1, col3 FROM stts_t3              |           | requested    | requested |                | 0 bytes           | 0 bytes
+ tststats | priv_test_stats        | a, b FROM tststats.priv_test_tbl     |           |              | built     |                |                   | 686 bytes
+(12 rows)
+
+\dX+ stts_?
+                                                 List of extended statistics
+ Schema |  Name  |    Definition     | Ndistinct | Dependencies |    MCV    | Ndistinct_size | Dependencies_size |  MCV_size  
+--------+--------+-------------------+-----------+--------------+-----------+----------------+-------------------+------------
+ public | stts_1 | a, b FROM stts_t1 | built     |              |           | 13 bytes       |                   | 
+ public | stts_2 | a, b FROM stts_t1 | built     | built        |           | 13 bytes       | 40 bytes          | 
+ public | stts_3 | a, b FROM stts_t1 | built     | built        | built     | 13 bytes       | 40 bytes          | 6126 bytes
+ public | stts_4 | b, c FROM stts_t2 | requested | requested    | requested | 0 bytes        | 0 bytes           | 0 bytes
+(4 rows)
+
+\dX+ *stts_hoge
+                                                        List of extended statistics
+ Schema |   Name    |          Definition           | Ndistinct | Dependencies |    MCV    | Ndistinct_size | Dependencies_size | MCV_size 
+--------+-----------+-------------------------------+-----------+--------------+-----------+----------------+-------------------+----------
+ public | stts_hoge | col1, col2, col3 FROM stts_t3 | requested | requested    | requested | 0 bytes        | 0 bytes           | 0 bytes
+(1 row)
+
+\dX+ stts_s2.stts_yama
+                                                     List of extended statistics
+ Schema  |   Name    |       Definition        | Ndistinct | Dependencies |    MCV    | Ndistinct_size | Dependencies_size | MCV_size 
+---------+-----------+-------------------------+-----------+--------------+-----------+----------------+-------------------+----------
+ stts_s2 | stts_yama | col1, col3 FROM stts_t3 |           | requested    | requested |                | 0 bytes           | 0 bytes
+(1 row)
+
+drop table stts_t1, stts_t2, stts_t3;
+drop schema stts_s1, stts_s2 cascade;
 -- User with no access
 CREATE USER regress_stats_user1;
 GRANT USAGE ON SCHEMA tststats TO regress_stats_user1;
