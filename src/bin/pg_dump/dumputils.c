@@ -168,48 +168,28 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 		for (i = 0; i < nraclitems; i++)
 		{
 			if (!parseAclItem(raclitems[i], type, name, subname, remoteVersion,
-							  grantee, grantor, privs, privswgo))
+							  grantee, grantor, privs, NULL))
 			{
 				ok = false;
 				break;
 			}
 
-			if (privs->len > 0 || privswgo->len > 0)
+			if (privs->len > 0)
 			{
-				if (privs->len > 0)
-				{
-					appendPQExpBuffer(firstsql, "%sREVOKE %s ON %s ",
-									  prefix, privs->data, type);
-					if (nspname && *nspname)
-						appendPQExpBuffer(firstsql, "%s.", fmtId(nspname));
-					appendPQExpBuffer(firstsql, "%s FROM ", name);
-					if (grantee->len == 0)
-						appendPQExpBufferStr(firstsql, "PUBLIC;\n");
-					else if (strncmp(grantee->data, "group ",
-									 strlen("group ")) == 0)
-						appendPQExpBuffer(firstsql, "GROUP %s;\n",
-										  fmtId(grantee->data + strlen("group ")));
-					else
-						appendPQExpBuffer(firstsql, "%s;\n",
-										  fmtId(grantee->data));
-				}
-				if (privswgo->len > 0)
-				{
-					appendPQExpBuffer(firstsql,
-									  "%sREVOKE GRANT OPTION FOR %s ON %s ",
-									  prefix, privswgo->data, type);
-					if (nspname && *nspname)
-						appendPQExpBuffer(firstsql, "%s.", fmtId(nspname));
-					appendPQExpBuffer(firstsql, "%s FROM ", name);
-					if (grantee->len == 0)
-						appendPQExpBufferStr(firstsql, "PUBLIC");
-					else if (strncmp(grantee->data, "group ",
-									 strlen("group ")) == 0)
-						appendPQExpBuffer(firstsql, "GROUP %s",
-										  fmtId(grantee->data + strlen("group ")));
-					else
-						appendPQExpBufferStr(firstsql, fmtId(grantee->data));
-				}
+				appendPQExpBuffer(firstsql, "%sREVOKE %s ON %s ",
+								  prefix, privs->data, type);
+				if (nspname && *nspname)
+					appendPQExpBuffer(firstsql, "%s.", fmtId(nspname));
+				appendPQExpBuffer(firstsql, "%s FROM ", name);
+				if (grantee->len == 0)
+					appendPQExpBufferStr(firstsql, "PUBLIC;\n");
+				else if (strncmp(grantee->data, "group ",
+								 strlen("group ")) == 0)
+					appendPQExpBuffer(firstsql, "GROUP %s;\n",
+									  fmtId(grantee->data + strlen("group ")));
+				else
+					appendPQExpBuffer(firstsql, "%s;\n",
+									  fmtId(grantee->data));
 			}
 		}
 	}
@@ -462,8 +442,11 @@ buildDefaultACLCommands(const char *type, const char *nspname,
  * The returned grantee string will be the dequoted username or groupname
  * (preceded with "group " in the latter case).  Note that a grant to PUBLIC
  * is represented by an empty grantee string.  The returned grantor is the
- * dequoted grantor name.  Privilege characters are decoded and split between
- * privileges with grant option (privswgo) and without (privs).
+ * dequoted grantor name.  Privilege characters are translated to GRANT/REVOKE
+ * comma-separated privileges lists.  If "privswgo" is non-NULL, the result is
+ * separate lists for privileges with grant option ("privswgo") and without
+ * ("privs").  Otherwise, "privs" bears every relevant privilege, ignoring the
+ * grant option distinction.
  *
  * Note: for cross-version compatibility, it's important to use ALL to
  * represent the privilege sets whenever appropriate.
@@ -514,7 +497,7 @@ parseAclItem(const char *item, const char *type,
 do { \
 	if ((pos = strchr(eqpos + 1, code))) \
 	{ \
-		if (*(pos + 1) == '*') \
+		if (*(pos + 1) == '*' && privswgo != NULL) \
 		{ \
 			AddAcl(privswgo, keywd, subname); \
 			all_without_go = false; \
