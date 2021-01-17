@@ -555,6 +555,18 @@ setup_test_matches(text *orig_str,
 	 */
 	if (matchctx->nmatches == 0 && re_flags->partial && re_flags->indices)
 	{
+		/* enlarge output space if needed */
+		while (array_idx + matchctx->npatterns * 2 + 1 > array_len)
+		{
+			array_len += array_len + 1; /* 2^n-1 => 2^(n+1)-1 */
+			if (array_len > MaxAllocSize / sizeof(int))
+				ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("too many regular expression matches")));
+			matchctx->match_locs = (int *) repalloc(matchctx->match_locs,
+													sizeof(int) * array_len);
+		}
+
 		matchctx->match_locs[array_idx++] = matchctx->details.rm_extend.rm_so;
 		matchctx->match_locs[array_idx++] = matchctx->details.rm_extend.rm_eo;
 		/* we don't have pmatch data, so emit -1 */
@@ -565,6 +577,8 @@ setup_test_matches(text *orig_str,
 		}
 		matchctx->nmatches++;
 	}
+
+	Assert(array_idx <= array_len);
 
 	if (eml > 1)
 	{
