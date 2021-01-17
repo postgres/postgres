@@ -41,6 +41,16 @@ typedef enum TrackFunctionsLevel
 	TRACK_FUNC_ALL
 }			TrackFunctionsLevel;
 
+/* Values to track the cause of session termination */
+typedef enum SessionEndType
+{
+	DISCONNECT_NOT_YET,			/* still active */
+	DISCONNECT_NORMAL,
+	DISCONNECT_CLIENT_EOF,
+	DISCONNECT_FATAL,
+	DISCONNECT_KILLED
+} SessionEndType;
+
 /* ----------
  * The types of backend -> collector messages
  * ----------
@@ -71,6 +81,7 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_DEADLOCK,
 	PGSTAT_MTYPE_CHECKSUMFAILURE,
 	PGSTAT_MTYPE_REPLSLOT,
+	PGSTAT_MTYPE_CONNECTION,
 } StatMsgType;
 
 /* ----------
@@ -622,6 +633,21 @@ typedef struct PgStat_MsgChecksumFailure
 	TimestampTz m_failure_time;
 } PgStat_MsgChecksumFailure;
 
+/* ----------
+ * PgStat_MsgConn			Sent by the backend to update connection statistics.
+ * ----------
+ */
+typedef struct PgStat_MsgConn
+{
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
+	PgStat_Counter m_count;
+	PgStat_Counter m_session_time;
+	PgStat_Counter m_active_time;
+	PgStat_Counter m_idle_in_xact_time;
+	SessionEndType m_disconnect;
+} PgStat_MsgConn;
+
 
 /* ----------
  * PgStat_Msg					Union over all possible messages.
@@ -654,6 +680,7 @@ typedef union PgStat_Msg
 	PgStat_MsgTempFile msg_tempfile;
 	PgStat_MsgChecksumFailure msg_checksumfailure;
 	PgStat_MsgReplSlot msg_replslot;
+	PgStat_MsgConn msg_conn;
 } PgStat_Msg;
 
 
@@ -696,6 +723,13 @@ typedef struct PgStat_StatDBEntry
 	TimestampTz last_checksum_failure;
 	PgStat_Counter n_block_read_time;	/* times in microseconds */
 	PgStat_Counter n_block_write_time;
+	PgStat_Counter n_sessions;
+	PgStat_Counter total_session_time;
+	PgStat_Counter total_active_time;
+	PgStat_Counter total_idle_in_xact_time;
+	PgStat_Counter n_sessions_abandoned;
+	PgStat_Counter n_sessions_fatal;
+	PgStat_Counter n_sessions_killed;
 
 	TimestampTz stat_reset_timestamp;
 	TimestampTz stats_timestamp;	/* time of db stats file update */
@@ -1353,6 +1387,11 @@ extern PgStat_MsgWal WalStats;
  */
 extern PgStat_Counter pgStatBlockReadTime;
 extern PgStat_Counter pgStatBlockWriteTime;
+
+/*
+ * Updated by the traffic cop and in errfinish()
+ */
+extern SessionEndType pgStatSessionEndCause;
 
 /* ----------
  * Functions called from postmaster

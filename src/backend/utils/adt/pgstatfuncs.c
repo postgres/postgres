@@ -1632,6 +1632,100 @@ pg_stat_get_db_blk_write_time(PG_FUNCTION_ARGS)
 }
 
 Datum
+pg_stat_get_db_session_time(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	double		result = 0.0;
+	PgStat_StatDBEntry *dbentry;
+
+	/* convert counter from microsec to millisec for display */
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
+		result = ((double) dbentry->total_session_time) / 1000.0;
+
+	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+pg_stat_get_db_active_time(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	double		result = 0.0;
+	PgStat_StatDBEntry *dbentry;
+
+	/* convert counter from microsec to millisec for display */
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
+		result = ((double) dbentry->total_active_time) / 1000.0;
+
+	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+pg_stat_get_db_idle_in_transaction_time(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	double		result = 0.0;
+	PgStat_StatDBEntry *dbentry;
+
+	/* convert counter from microsec to millisec for display */
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
+		result = ((double) dbentry->total_idle_in_xact_time) / 1000.0;
+
+	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+pg_stat_get_db_sessions(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result = 0;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
+		result = (int64) (dbentry->n_sessions);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_db_sessions_abandoned(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result = 0;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
+		result = (int64) (dbentry->n_sessions_abandoned);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_db_sessions_fatal(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result = 0;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
+		result = (int64) (dbentry->n_sessions_fatal);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_db_sessions_killed(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result = 0;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
+		result = (int64) (dbentry->n_sessions_killed);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
 pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT64(pgstat_fetch_global()->timed_checkpoints);

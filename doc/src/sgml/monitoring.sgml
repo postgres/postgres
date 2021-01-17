@@ -3739,6 +3739,83 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>session_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Time spent by database sessions in this database, in milliseconds
+       (note that statistics are only updated when the state of a session
+       changes, so if sessions have been idle for a long time, this idle time
+       won't be included)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>active_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Time spent executing SQL statements in this database, in milliseconds
+       (this corresponds to the states <literal>active</literal> and
+       <literal>fastpath function call</literal> in
+       <link linkend="monitoring-pg-stat-activity-view">
+       <structname>pg_stat_activity</structname></link>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>idle_in_transaction_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Time spent idling while in a transaction in this database, in milliseconds
+       (this corresponds to the states <literal>idle in transaction</literal> and
+       <literal>idle in transaction (aborted)</literal> in
+       <link linkend="monitoring-pg-stat-activity-view">
+       <structname>pg_stat_activity</structname></link>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sessions</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of sessions established to this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sessions_abandoned</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of database sessions to this database that were terminated
+       because connection to the client was lost
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sessions_fatal</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of database sessions to this database that were terminated
+       by fatal errors
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sessions_killed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of database sessions to this database that were terminated
+       by operator intervention
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
       </para>
       <para>

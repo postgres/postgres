@@ -72,6 +72,7 @@
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/bgworker.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
@@ -655,6 +656,13 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 */
 		fflush(stdout);
 		fflush(stderr);
+
+		/*
+		 * Let the statistics collector know. Only mark the session as
+		 * terminated by fatal error if there is no other known cause.
+		 */
+		if (pgStatSessionEndCause == DISCONNECT_NORMAL)
+			pgStatSessionEndCause = DISCONNECT_FATAL;
 
 		/*
 		 * Do normal process-exit cleanup, then return exit code 1 to indicate

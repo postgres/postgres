@@ -2865,6 +2865,9 @@ die(SIGNAL_ARGS)
 		ProcDiePending = true;
 	}
 
+	/* for the statistics collector */
+	pgStatSessionEndCause = DISCONNECT_KILLED;
+
 	/* If we're still here, waken anything waiting on the process latch */
 	SetLatch(MyLatch);
 
@@ -4579,8 +4582,14 @@ PostgresMain(int argc, char *argv[],
 				 * means unexpected loss of frontend connection. Either way,
 				 * perform normal shutdown.
 				 */
-			case 'X':
 			case EOF:
+
+				/* for the statistics collector */
+				pgStatSessionEndCause = DISCONNECT_CLIENT_EOF;
+
+				/* FALLTHROUGH */
+
+			case 'X':
 
 				/*
 				 * Reset whereToSendOutput to prevent ereport from attempting

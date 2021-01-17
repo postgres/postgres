@@ -1848,6 +1848,13 @@ pg_stat_database| SELECT d.oid AS datid,
     pg_stat_get_db_checksum_last_failure(d.oid) AS checksum_last_failure,
     pg_stat_get_db_blk_read_time(d.oid) AS blk_read_time,
     pg_stat_get_db_blk_write_time(d.oid) AS blk_write_time,
+    pg_stat_get_db_session_time(d.oid) AS session_time,
+    pg_stat_get_db_active_time(d.oid) AS active_time,
+    pg_stat_get_db_idle_in_transaction_time(d.oid) AS idle_in_transaction_time,
+    pg_stat_get_db_sessions(d.oid) AS sessions,
+    pg_stat_get_db_sessions_abandoned(d.oid) AS sessions_abandoned,
+    pg_stat_get_db_sessions_fatal(d.oid) AS sessions_fatal,
+    pg_stat_get_db_sessions_killed(d.oid) AS sessions_killed,
     pg_stat_get_db_stat_reset_time(d.oid) AS stats_reset
    FROM ( SELECT 0 AS oid,
             NULL::name AS datname
