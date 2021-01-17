@@ -928,9 +928,6 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 				else
 					success = listExtensions(pattern);
 				break;
-			case 'X':			/* Extended Statistics */
-				success = listExtendedStats(pattern, show_verbose);
-				break;
 			case 'y':			/* Event Triggers */
 				success = listEventTriggers(pattern, show_verbose);
 				break;

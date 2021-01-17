@@ -914,37 +914,6 @@ CREATE STATISTICS tststats.priv_test_stats (mcv) ON a, b
 
 ANALYZE tststats.priv_test_tbl;
 
--- Check printing info about extended statistics by \dX
-create table stts_t1 (a int, b int);
-create statistics stts_1 (ndistinct) on a, b from stts_t1;
-create statistics stts_2 (ndistinct, dependencies) on a, b from stts_t1;
-create statistics stts_3 (ndistinct, dependencies, mcv) on a, b from stts_t1;
-
-create table stts_t2 (a int, b int, c int);
-create statistics stts_4 on b, c from stts_t2;
-
-create table stts_t3 (col1 int, col2 int, col3 int);
-create statistics stts_hoge on col1, col2, col3 from stts_t3;
-
-create schema stts_s1;
-create schema stts_s2;
-create statistics stts_s1.stts_foo on col1, col2 from stts_t3;
-create statistics stts_s2.stts_yama (dependencies, mcv) on col1, col3 from stts_t3;
-
-insert into stts_t1 select i,i from generate_series(1,100) i;
-analyze stts_t1;
-
-\dX
-\dX stts_?
-\dX *stts_hoge
-\dX+
-\dX+ stts_?
-\dX+ *stts_hoge
-\dX+ stts_s2.stts_yama
-
-drop table stts_t1, stts_t2, stts_t3;
-drop schema stts_s1, stts_s2 cascade;
-
 -- User with no access
 CREATE USER regress_stats_user1;
 GRANT USAGE ON SCHEMA tststats TO regress_stats_user1;

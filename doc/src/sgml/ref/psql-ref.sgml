@@ -1918,28 +1918,6 @@ testdb=&gt;
         </para>
         </listitem>
       </varlistentry>
-      
-      <varlistentry>
-        <term><literal>\dX [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-        <listitem>
-        <para>
-        Lists extended statistics.
-        If <replaceable class="parameter">pattern</replaceable>
-        is specified, only those extended statistics whose names match the
-        pattern are listed.
-        If <literal>+</literal> is appended to the command name, each extended
-        statistics is listed with its size.
-        </para>
-
-        <para>
-        The column of the kind of extended stats (e.g. Ndistinct) shows some statuses.
-        "requested" means that it needs to collect statistics by <link
-        linkend="sql-analyze"><command>ANALYZE</command></link>. 
-        "built" means <link linkend="sql-analyze"><command>ANALYZE</command></link> was 
-        finished, and the planner can use it. NULL means that it doesn't exists. 
-        </para>
-        </listitem>
-      </varlistentry>
 
       <varlistentry>
         <term><literal>\dy[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
