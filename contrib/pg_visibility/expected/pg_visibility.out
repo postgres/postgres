@@ -179,6 +179,69 @@ select pg_truncate_visibility_map('test_partition');
  
 (1 row)
 
+-- test copy freeze
+create table copyfreeze (a int, b char(1500));
+-- load all rows via COPY FREEZE and ensure that all pages are set all-visible
+-- and all-frozen.
+begin;
+truncate copyfreeze;
+copy copyfreeze from stdin freeze;
+commit;
+select * from pg_visibility_map('copyfreeze');
+ blkno | all_visible | all_frozen 
+-------+-------------+------------
+     0 | t           | t
+     1 | t           | t
+     2 | t           | t
+(3 rows)
+
+select * from pg_check_frozen('copyfreeze');
+ t_ctid 
+--------
+(0 rows)
+
+-- load half the rows via regular COPY and rest via COPY FREEZE. The pages
+-- which are touched by regular COPY must not be set all-visible/all-frozen. On
+-- the other hand, pages allocated by COPY FREEZE should be marked
+-- all-frozen/all-visible.
+begin;
+truncate copyfreeze;
+copy copyfreeze from stdin;
+copy copyfreeze from stdin freeze;
+commit;
+select * from pg_visibility_map('copyfreeze');
+ blkno | all_visible | all_frozen 
+-------+-------------+------------
+     0 | f           | f
+     1 | f           | f
+     2 | t           | t
+(3 rows)
+
+select * from pg_check_frozen('copyfreeze');
+ t_ctid 
+--------
+(0 rows)
+
+-- Try a mix of regular COPY and COPY FREEZE.
+begin;
+truncate copyfreeze;
+copy copyfreeze from stdin freeze;
+copy copyfreeze from stdin;
+copy copyfreeze from stdin freeze;
+commit;
+select * from pg_visibility_map('copyfreeze');
+ blkno | all_visible | all_frozen 
+-------+-------------+------------
+     0 | t           | t
+     1 | f           | f
+     2 | t           | t
+(3 rows)
+
+select * from pg_check_frozen('copyfreeze');
+ t_ctid 
+--------
+(0 rows)
+
 -- cleanup
 drop table test_partitioned;
 drop view test_view;
@@ -188,3 +251,4 @@ drop server dummy_server;
 drop foreign data wrapper dummy;
 drop materialized view matview_visibility_test;
 drop table regular_table;
+drop table copyfreeze;

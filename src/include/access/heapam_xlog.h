@@ -69,6 +69,9 @@
 #define XLH_INSERT_CONTAINS_NEW_TUPLE			(1<<3)
 #define XLH_INSERT_ON_TOAST_RELATION			(1<<4)
 
+/* all_frozen_set always implies all_visible_set */
+#define XLH_INSERT_ALL_FROZEN_SET				(1<<5)
+
 /*
  * xl_heap_update flag values, 8 bits are available.
  */

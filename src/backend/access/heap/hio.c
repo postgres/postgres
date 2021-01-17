@@ -433,6 +433,14 @@ loop:
 			buffer = ReadBufferBI(relation, targetBlock, RBM_NORMAL, bistate);
 			if (PageIsAllVisible(BufferGetPage(buffer)))
 				visibilitymap_pin(relation, targetBlock, vmbuffer);
+
+			/*
+			 * If the page is empty, pin vmbuffer to set all_frozen bit later.
+			 */
+			if ((options & HEAP_INSERT_FROZEN) &&
+				(PageGetMaxOffsetNumber(BufferGetPage(buffer)) == 0))
+				visibilitymap_pin(relation, targetBlock, vmbuffer);
+
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		}
 		else if (otherBlock == targetBlock)
@@ -618,6 +626,15 @@ loop:
 
 	PageInit(page, BufferGetPageSize(buffer), 0);
 	MarkBufferDirty(buffer);
+
+	/*
+	 * The page is empty, pin vmbuffer to set all_frozen bit.
+	 */
+	if (options & HEAP_INSERT_FROZEN)
+	{
+		Assert(PageGetMaxOffsetNumber(BufferGetPage(buffer)) == 0);
+		visibilitymap_pin(relation, BufferGetBlockNumber(buffer), vmbuffer);
+	}
 
 	/*
 	 * Release the file-extension lock; it's now OK for someone else to extend
