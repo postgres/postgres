@@ -393,7 +393,7 @@ SET client_min_messages = DEBUG1;
  <para>
   <filename>amcheck</filename> can be effective at detecting various types of
   failure modes that <link
-  linkend="app-initdb-data-checksums"><application>data page
+  linkend="app-initdb-data-checksums"><application>data
   checksums</application></link> will fail to catch.  These include:
 
   <itemizedlist>
@@ -497,7 +497,7 @@ SET client_min_messages = DEBUG1;
   Structural corruption can happen due to faulty storage hardware, or
   relation files being overwritten or modified by unrelated software.
   This kind of corruption can also be detected with
-  <link linkend="app-initdb-data-checksums"><application>data page
+  <link linkend="checksums"><application>data page
   checksums</application></link>.
  </para>
 

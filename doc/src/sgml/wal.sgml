@@ -196,7 +196,7 @@
       Data pages are not currently checksummed by default, though full page images
       recorded in WAL records will be protected; see <link
       linkend="app-initdb-data-checksums"><application>initdb</application></link>
-      for details about enabling data page checksums.
+      for details about enabling data checksums.
      </para>
     </listitem>
     <listitem>
@@ -228,6 +228,53 @@
    and it is assumed you will operate using RAM that uses industry standard
    Error Correcting Codes (ECC) or better protection.
   </para>
+ </sect1>
+
+ <sect1 id="checksums">
+  <title>Data Checksums</title>
+  <indexterm>
+   <primary>checksums</primary>
+  </indexterm>
+
+  <para>
+   Data pages are not checksum protected by default, but this can optionally be
+   enabled for a cluster.  When enabled, each data page will be assigned a
+   checksum that is updated when the page is written and verified every time
+   the page is read. Only data pages are protected by checksums, internal data
+   structures and temporary files are not.
+  </para>
+
+  <para>
+   Checksums are normally enabled when the cluster is initialized using <link
+   linkend="app-initdb-data-checksums"><application>initdb</application></link>.
+   They can also be enabled or disabled at a later time as an offline
+   operation. Data checksums are enabled or disabled at the full cluster
+   level, and cannot be specified individually for databases or tables.
+  </para>
+
+  <para>
+   The current state of checksums in the cluster can be verified by viewing the
+   value of the read-only configuration variable <xref
+   linkend="guc-data-checksums" /> by issuing the command <command>SHOW
+   data_checksums</command>.
+  </para>
+
+  <para>
+   When attempting to recover from corrupt data it may be necessary to bypass
+   the checksum protection in order to recover data. To do this, temporarily
+   set the configuration parameter <xref linkend="guc-ignore-checksum-failure" />.
+  </para>
+
+  <sect2 id="checksums-offline-enable-disable">
+   <title>Off-line Enabling of Checksums</title>
+
+   <para>
+    The <link linkend="app-pgchecksums"><application>pg_checksums</application></link>
+    application can be used to enable or disable data checksums, as well as 
+    verify checksums, on an offline cluster.
+   </para>
+
+  </sect2>
  </sect1>
 
   <sect1 id="wal-intro">

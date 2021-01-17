@@ -219,6 +219,7 @@ PostgreSQL documentation
         failures will be reported in the
         <link linkend="monitoring-pg-stat-database-view">
         <structname>pg_stat_database</structname></link> view.
+        See <xref linkend="checksums" /> for details.
        </para>
       </listitem>
      </varlistentry>
