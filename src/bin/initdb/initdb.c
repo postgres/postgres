@@ -139,6 +139,7 @@ static const char *authmethodhost = NULL;
 static const char *authmethodlocal = NULL;
 static bool debug = false;
 static bool noclean = false;
+static bool noinstructions = false;
 static bool do_sync = true;
 static bool sync_only = false;
 static bool show_setting = false;
@@ -2294,6 +2295,7 @@ usage(const char *progname)
 	printf(_("  -L DIRECTORY              where to find the input files\n"));
 	printf(_("  -n, --no-clean            do not clean up after errors\n"));
 	printf(_("  -N, --no-sync             do not wait for changes to be written safely to disk\n"));
+	printf(_("      --no-instructions     do not print instructions for next steps\n"));
 	printf(_("  -s, --show                show internal settings\n"));
 	printf(_("  -S, --sync-only           only sync data directory\n"));
 	printf(_("\nOther options:\n"));
@@ -2955,6 +2957,7 @@ main(int argc, char *argv[])
 		{"no-clean", no_argument, NULL, 'n'},
 		{"nosync", no_argument, NULL, 'N'}, /* for backwards compatibility */
 		{"no-sync", no_argument, NULL, 'N'},
+		{"no-instructions", no_argument, NULL, 13},
 		{"sync-only", no_argument, NULL, 'S'},
 		{"waldir", required_argument, NULL, 'X'},
 		{"wal-segsize", required_argument, NULL, 12},
@@ -3094,6 +3097,9 @@ main(int argc, char *argv[])
 				break;
 			case 12:
 				str_wal_segment_size_mb = pg_strdup(optarg);
+				break;
+			case 13:
+				noinstructions = true;
 				break;
 			case 'g':
 				SetDataDirectoryCreatePerm(PG_DIR_MODE_GROUP);
@@ -3245,34 +3251,40 @@ main(int argc, char *argv[])
 						  "--auth-local and --auth-host, the next time you run initdb.\n"));
 	}
 
-	/*
-	 * Build up a shell command to tell the user how to start the server
-	 */
-	start_db_cmd = createPQExpBuffer();
+	if (!noinstructions)
+	{
+		/*
+		 * Build up a shell command to tell the user how to start the server
+		 */
+		start_db_cmd = createPQExpBuffer();
 
-	/* Get directory specification used to start initdb ... */
-	strlcpy(pg_ctl_path, argv[0], sizeof(pg_ctl_path));
-	canonicalize_path(pg_ctl_path);
-	get_parent_directory(pg_ctl_path);
-	/* ... and tag on pg_ctl instead */
-	join_path_components(pg_ctl_path, pg_ctl_path, "pg_ctl");
+		/* Get directory specification used to start initdb ... */
+		strlcpy(pg_ctl_path, argv[0], sizeof(pg_ctl_path));
+		canonicalize_path(pg_ctl_path);
+		get_parent_directory(pg_ctl_path);
+		/* ... and tag on pg_ctl instead */
+		join_path_components(pg_ctl_path, pg_ctl_path, "pg_ctl");
 
-	/* path to pg_ctl, properly quoted */
-	appendShellString(start_db_cmd, pg_ctl_path);
+		/* path to pg_ctl, properly quoted */
+		appendShellString(start_db_cmd, pg_ctl_path);
 
-	/* add -D switch, with properly quoted data directory */
-	appendPQExpBufferStr(start_db_cmd, " -D ");
-	appendShellString(start_db_cmd, pgdata_native);
+		/* add -D switch, with properly quoted data directory */
+		appendPQExpBufferStr(start_db_cmd, " -D ");
+		appendShellString(start_db_cmd, pgdata_native);
 
-	/* add suggested -l switch and "start" command */
-	/* translator: This is a placeholder in a shell command. */
-	appendPQExpBuffer(start_db_cmd, " -l %s start", _("logfile"));
+		/* add suggested -l switch and "start" command */
+		/* translator: This is a placeholder in a shell command. */
+		appendPQExpBuffer(start_db_cmd, " -l %s start", _("logfile"));
 
-	printf(_("\nSuccess. You can now start the database server using:\n\n"
-			 "    %s\n\n"),
-		   start_db_cmd->data);
+		printf(_("\nSuccess. You can now start the database server using:\n\n"
+				 "    %s\n\n"),
+			   start_db_cmd->data);
 
-	destroyPQExpBuffer(start_db_cmd);
+		destroyPQExpBuffer(start_db_cmd);
+
+		printf(_("\nSuccess.\n"));
+	}
+
 
 	success = true;
 	return 0;
