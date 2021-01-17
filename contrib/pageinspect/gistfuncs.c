@@ -92,65 +92,56 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 	return HeapTupleGetDatum(resultTuple);
 }
 
-typedef struct gist_page_items_state
-{
-	Page		page;
-	TupleDesc	tupd;
-	OffsetNumber offset;
-	Relation	rel;
-} gist_page_items_state;
-
 Datum
 gist_page_items_bytea(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
-	FuncCallContext *fctx;
-	gist_page_items_state *inter_call_data;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	bool		randomAccess;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext oldcontext;
+	Page		page;
+	OffsetNumber offset;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	if (SRF_IS_FIRSTCALL())
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
+	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	page = get_page_from_raw(raw_page);
+
+	if (GistPageIsDeleted(page))
+		elog(NOTICE, "page is deleted");
+
+	for (offset = FirstOffsetNumber;
+		 offset <= PageGetMaxOffsetNumber(page);
+		 offset++)
 	{
-		TupleDesc	tupdesc;
-		MemoryContext mctx;
-		Page		page;
-
-		fctx = SRF_FIRSTCALL_INIT();
-		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
-
-		page = get_page_from_raw(raw_page);
-
-		inter_call_data = palloc(sizeof(gist_page_items_state));
-
-		/* Build a tuple descriptor for our result type */
-		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-			elog(ERROR, "return type must be a row type");
-
-		if (GistPageIsDeleted(page))
-			elog(NOTICE, "page is deleted");
-
-		inter_call_data->page = page;
-		inter_call_data->tupd = tupdesc;
-		inter_call_data->offset = FirstOffsetNumber;
-
-		fctx->max_calls = PageGetMaxOffsetNumber(page);
-		fctx->user_fctx = inter_call_data;
-
-		MemoryContextSwitchTo(mctx);
-	}
-
-	fctx = SRF_PERCALL_SETUP();
-	inter_call_data = fctx->user_fctx;
-
-	if (fctx->call_cntr < fctx->max_calls)
-	{
-		Page		page = inter_call_data->page;
-		OffsetNumber offset = inter_call_data->offset;
-		HeapTuple	resultTuple;
-		Datum		result;
 		Datum		values[4];
 		bool		nulls[4];
 		ItemId		id;
@@ -177,15 +168,10 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 		memcpy(VARDATA(tuple_bytea), itup, tuple_len);
 		values[3] = PointerGetDatum(tuple_bytea);
 
-		/* Build and return the result tuple. */
-		resultTuple = heap_form_tuple(inter_call_data->tupd, values, nulls);
-		result = HeapTupleGetDatum(resultTuple);
-
-		inter_call_data->offset++;
-		SRF_RETURN_NEXT(fctx, result);
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
-	SRF_RETURN_DONE(fctx);
+	return (Datum) 0;
 }
 
 Datum
@@ -193,58 +179,56 @@ gist_page_items(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	Oid			indexRelid = PG_GETARG_OID(1);
-	FuncCallContext *fctx;
-	gist_page_items_state *inter_call_data;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	bool		randomAccess;
+	Relation	indexRel;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext oldcontext;
+	Page		page;
+	OffsetNumber offset;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	if (SRF_IS_FIRSTCALL())
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
+	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Open the relation */
+	indexRel = index_open(indexRelid, AccessShareLock);
+
+	page = get_page_from_raw(raw_page);
+
+	if (GistPageIsDeleted(page))
+		elog(NOTICE, "page is deleted");
+
+	for (offset = FirstOffsetNumber;
+		 offset <= PageGetMaxOffsetNumber(page);
+		 offset++)
 	{
-		Relation	indexRel;
-		TupleDesc	tupdesc;
-		MemoryContext mctx;
-		Page		page;
-
-		fctx = SRF_FIRSTCALL_INIT();
-		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
-
-		page = get_page_from_raw(raw_page);
-
-		inter_call_data = palloc(sizeof(gist_page_items_state));
-
-		/* Open the relation */
-		indexRel = index_open(indexRelid, AccessShareLock);
-
-		/* Build a tuple descriptor for our result type */
-		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-			elog(ERROR, "return type must be a row type");
-
-		if (GistPageIsDeleted(page))
-			elog(NOTICE, "page is deleted");
-
-		inter_call_data->page = page;
-		inter_call_data->tupd = tupdesc;
-		inter_call_data->offset = FirstOffsetNumber;
-		inter_call_data->rel = indexRel;
-
-		fctx->max_calls = PageGetMaxOffsetNumber(page);
-		fctx->user_fctx = inter_call_data;
-
-		MemoryContextSwitchTo(mctx);
-	}
-
-	fctx = SRF_PERCALL_SETUP();
-	inter_call_data = fctx->user_fctx;
-
-	if (fctx->call_cntr < fctx->max_calls)
-	{
-		Page		page = inter_call_data->page;
-		OffsetNumber offset = inter_call_data->offset;
-		HeapTuple	resultTuple;
-		Datum		result;
 		Datum		values[4];
 		bool		nulls[4];
 		ItemId		id;
@@ -260,11 +244,10 @@ gist_page_items(PG_FUNCTION_ARGS)
 
 		itup = (IndexTuple) PageGetItem(page, id);
 
-		index_deform_tuple(itup, RelationGetDescr(inter_call_data->rel),
+		index_deform_tuple(itup, RelationGetDescr(indexRel),
 						   itup_values, itup_isnull);
 
-		key_desc = BuildIndexValueDescription(inter_call_data->rel, itup_values,
-											  itup_isnull);
+		key_desc = BuildIndexValueDescription(indexRel, itup_values, itup_isnull);
 
 		memset(nulls, 0, sizeof(nulls));
 
@@ -273,15 +256,10 @@ gist_page_items(PG_FUNCTION_ARGS)
 		values[2] = Int32GetDatum((int) IndexTupleSize(itup));
 		values[3] = CStringGetTextDatum(key_desc);
 
-		/* Build and return the result tuple. */
-		resultTuple = heap_form_tuple(inter_call_data->tupd, values, nulls);
-		result = HeapTupleGetDatum(resultTuple);
-
-		inter_call_data->offset++;
-		SRF_RETURN_NEXT(fctx, result);
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
-	relation_close(inter_call_data->rel, AccessShareLock);
+	relation_close(indexRel, AccessShareLock);
 
-	SRF_RETURN_DONE(fctx);
+	return (Datum) 0;
 }
