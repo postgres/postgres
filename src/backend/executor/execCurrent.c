@@ -317,7 +317,12 @@ search_plan_tree(PlanState *node, Oid table_oid,
 	switch (nodeTag(node))
 	{
 			/*
-			 * Relation scan nodes can all be treated alike
+			 * Relation scan nodes can all be treated alike.  Note that
+			 * ForeignScan and CustomScan might not have a currentRelation, in
+			 * which case we just ignore them.  (We dare not descend to any
+			 * child plan nodes they might have, since we do not know the
+			 * relationship of such a node's current output tuple to the
+			 * children's current outputs.)
 			 */
 		case T_SeqScanState:
 		case T_SampleScanState:
@@ -330,7 +335,8 @@ search_plan_tree(PlanState *node, Oid table_oid,
 			{
 				ScanState  *sstate = (ScanState *) node;
 
-				if (RelationGetRelid(sstate->ss_currentRelation) == table_oid)
+				if (sstate->ss_currentRelation &&
+					RelationGetRelid(sstate->ss_currentRelation) == table_oid)
 					result = sstate;
 				break;
 			}
