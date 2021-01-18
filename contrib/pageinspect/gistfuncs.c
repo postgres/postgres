@@ -247,14 +247,20 @@ gist_page_items(PG_FUNCTION_ARGS)
 		index_deform_tuple(itup, RelationGetDescr(indexRel),
 						   itup_values, itup_isnull);
 
-		key_desc = BuildIndexValueDescription(indexRel, itup_values, itup_isnull);
-
 		memset(nulls, 0, sizeof(nulls));
 
 		values[0] = DatumGetInt16(offset);
 		values[1] = ItemPointerGetDatum(&itup->t_tid);
 		values[2] = Int32GetDatum((int) IndexTupleSize(itup));
-		values[3] = CStringGetTextDatum(key_desc);
+
+		key_desc = BuildIndexValueDescription(indexRel, itup_values, itup_isnull);
+		if (key_desc)
+			values[3] = CStringGetTextDatum(key_desc);
+		else
+		{
+			values[3] = (Datum) 0;
+			nulls[3] = true;
+		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
