@@ -493,7 +493,9 @@ OPTIONS (ADD password_required 'false');
       each connection is valid or not. <literal>false</literal> is returned
       if the foreign server connection is used in the current local
       transaction but its foreign server or user mapping is changed or
-      dropped, and then such invalid connection will be closed at
+      dropped (Note that server name of an invalid connection will be
+      <literal>NULL</literal> if the server is dropped),
+      and then such invalid connection will be closed at
       the end of that transaction. <literal>true</literal> is returned
       otherwise. If there are no open connections, no record is returned.
       Example usage of the function:
