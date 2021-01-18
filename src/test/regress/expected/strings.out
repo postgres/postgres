@@ -2131,6 +2131,18 @@ SELECT trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea);
  Tom
 (1 row)
 
+SELECT trim(leading E'\\000'::bytea from E'\\000Tom\\000'::bytea);
+  ltrim  
+---------
+ Tom\000
+(1 row)
+
+SELECT trim(trailing E'\\000'::bytea from E'\\000Tom\\000'::bytea);
+  rtrim  
+---------
+ \000Tom
+(1 row)
+
 SELECT btrim(E'\\000trim\\000'::bytea, E'\\000'::bytea);
  btrim 
 -------

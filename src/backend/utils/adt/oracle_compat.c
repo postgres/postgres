@@ -24,6 +24,8 @@
 static text *dotrim(const char *string, int stringlen,
 					const char *set, int setlen,
 					bool doltrim, bool dortrim);
+static bytea *dobyteatrim(bytea *string, bytea *set,
+						  bool doltrim, bool dortrim);
 
 
 /********************************************************************
@@ -521,6 +523,76 @@ dotrim(const char *string, int stringlen,
 	return cstring_to_text_with_len(string, stringlen);
 }
 
+/*
+ * Common implementation for bytea versions of btrim, ltrim, rtrim
+ */
+bytea *
+dobyteatrim(bytea *string, bytea *set, bool doltrim, bool dortrim)
+{
+	bytea	   *ret;
+	char	   *ptr,
+			   *end,
+			   *ptr2,
+			   *ptr2start,
+			   *end2;
+	int			m,
+				stringlen,
+				setlen;
+
+	stringlen = VARSIZE_ANY_EXHDR(string);
+	setlen = VARSIZE_ANY_EXHDR(set);
+
+	if (stringlen <= 0 || setlen <= 0)
+		return string;
+
+	m = stringlen;
+	ptr = VARDATA_ANY(string);
+	end = ptr + stringlen - 1;
+	ptr2start = VARDATA_ANY(set);
+	end2 = ptr2start + setlen - 1;
+
+	if (doltrim)
+	{
+		while (m > 0)
+		{
+			ptr2 = ptr2start;
+			while (ptr2 <= end2)
+			{
+				if (*ptr == *ptr2)
+					break;
+				++ptr2;
+			}
+			if (ptr2 > end2)
+				break;
+			ptr++;
+			m--;
+		}
+	}
+
+	if (dortrim)
+	{
+		while (m > 0)
+		{
+			ptr2 = ptr2start;
+			while (ptr2 <= end2)
+			{
+				if (*end == *ptr2)
+					break;
+				++ptr2;
+			}
+			if (ptr2 > end2)
+				break;
+			end--;
+			m--;
+		}
+	}
+
+	ret = (bytea *) palloc(VARHDRSZ + m);
+	SET_VARSIZE(ret, VARHDRSZ + m);
+	memcpy(VARDATA(ret), ptr, m);
+	return ret;
+}
+
 /********************************************************************
  *
  * byteatrim
@@ -543,60 +615,62 @@ byteatrim(PG_FUNCTION_ARGS)
 	bytea	   *string = PG_GETARG_BYTEA_PP(0);
 	bytea	   *set = PG_GETARG_BYTEA_PP(1);
 	bytea	   *ret;
-	char	   *ptr,
-			   *end,
-			   *ptr2,
-			   *ptr2start,
-			   *end2;
-	int			m,
-				stringlen,
-				setlen;
 
-	stringlen = VARSIZE_ANY_EXHDR(string);
-	setlen = VARSIZE_ANY_EXHDR(set);
+	ret = dobyteatrim(string, set, true, true);
 
-	if (stringlen <= 0 || setlen <= 0)
-		PG_RETURN_BYTEA_P(string);
+	PG_RETURN_BYTEA_P(ret);
+}
 
-	m = stringlen;
-	ptr = VARDATA_ANY(string);
-	end = ptr + stringlen - 1;
-	ptr2start = VARDATA_ANY(set);
-	end2 = ptr2start + setlen - 1;
+/********************************************************************
+ *
+ * bytealtrim
+ *
+ * Syntax:
+ *
+ *	 bytea bytealtrim(bytea string, bytea set)
+ *
+ * Purpose:
+ *
+ *	 Returns string with initial characters removed up to the first
+ *	 character not in set.
+ *
+ ********************************************************************/
 
-	while (m > 0)
-	{
-		ptr2 = ptr2start;
-		while (ptr2 <= end2)
-		{
-			if (*ptr == *ptr2)
-				break;
-			++ptr2;
-		}
-		if (ptr2 > end2)
-			break;
-		ptr++;
-		m--;
-	}
+Datum
+bytealtrim(PG_FUNCTION_ARGS)
+{
+	bytea	   *string = PG_GETARG_BYTEA_PP(0);
+	bytea	   *set = PG_GETARG_BYTEA_PP(1);
+	bytea	   *ret;
 
-	while (m > 0)
-	{
-		ptr2 = ptr2start;
-		while (ptr2 <= end2)
-		{
-			if (*end == *ptr2)
-				break;
-			++ptr2;
-		}
-		if (ptr2 > end2)
-			break;
-		end--;
-		m--;
-	}
+	ret = dobyteatrim(string, set, true, false);
 
-	ret = (bytea *) palloc(VARHDRSZ + m);
-	SET_VARSIZE(ret, VARHDRSZ + m);
-	memcpy(VARDATA(ret), ptr, m);
+	PG_RETURN_BYTEA_P(ret);
+}
+
+/********************************************************************
+ *
+ * byteartrim
+ *
+ * Syntax:
+ *
+ *	 bytea byteartrim(bytea string, bytea set)
+ *
+ * Purpose:
+ *
+ *	 Returns string with final characters removed after the last
+ *	 character not in set.
+ *
+ ********************************************************************/
+
+Datum
+byteartrim(PG_FUNCTION_ARGS)
+{
+	bytea	   *string = PG_GETARG_BYTEA_PP(0);
+	bytea	   *set = PG_GETARG_BYTEA_PP(1);
+	bytea	   *ret;
+
+	ret = dobyteatrim(string, set, false, true);
 
 	PG_RETURN_BYTEA_P(ret);
 }

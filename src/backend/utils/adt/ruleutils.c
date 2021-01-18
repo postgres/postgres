@@ -9680,6 +9680,7 @@ get_func_sql_syntax(FuncExpr *expr, deparse_context *context)
 			appendStringInfoChar(buf, ')');
 			return true;
 
+		case F_LTRIM_BYTEA_BYTEA:
 		case F_LTRIM_TEXT:
 		case F_LTRIM_TEXT_TEXT:
 			/* TRIM() */
@@ -9694,6 +9695,7 @@ get_func_sql_syntax(FuncExpr *expr, deparse_context *context)
 			appendStringInfoChar(buf, ')');
 			return true;
 
+		case F_RTRIM_BYTEA_BYTEA:
 		case F_RTRIM_TEXT:
 		case F_RTRIM_TEXT_TEXT:
 			/* TRIM() */

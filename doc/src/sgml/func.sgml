@@ -3948,15 +3948,16 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>trim</primary>
         </indexterm>
-        <function>trim</function> ( <optional> <literal>BOTH</literal> </optional>
+        <function>trim</function> ( <optional> <literal>LEADING</literal> | <literal>TRAILING</literal> | <literal>BOTH</literal> </optional>
         <parameter>bytesremoved</parameter> <type>bytea</type> <literal>FROM</literal>
         <parameter>bytes</parameter> <type>bytea</type> )
         <returnvalue>bytea</returnvalue>
        </para>
        <para>
         Removes the longest string containing only bytes appearing in
-        <parameter>bytesremoved</parameter> from the start
-        and end of <parameter>bytes</parameter>.
+        <parameter>bytesremoved</parameter> from the start,
+        end, or both ends (<literal>BOTH</literal> is the default)
+        of <parameter>bytes</parameter>.
        </para>
        <para>
         <literal>trim('\x9012'::bytea from '\x1234567890'::bytea)</literal>
@@ -3966,7 +3967,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>trim</function> ( <optional> <literal>BOTH</literal> </optional> <optional> <literal>FROM</literal> </optional>
+        <function>trim</function> ( <optional> <literal>LEADING</literal> | <literal>TRAILING</literal> | <literal>BOTH</literal> </optional> <optional> <literal>FROM</literal> </optional>
         <parameter>bytes</parameter> <type>bytea</type>,
         <parameter>bytesremoved</parameter> <type>bytea</type> )
         <returnvalue>bytea</returnvalue>
@@ -4110,6 +4111,26 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       </row>
 
       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>ltrim</primary>
+         </indexterm>
+         <function>ltrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+         <parameter>bytesremoved</parameter> <type>bytea</type> )
+         <returnvalue>bytea</returnvalue>
+        </para>
+        <para>
+         Removes the longest string containing only bytes appearing in
+         <parameter>bytesremoved</parameter> from the start of
+         <parameter>bytes</parameter>.
+        </para>
+        <para>
+         <literal>ltrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
+         <returnvalue>\x34567890</returnvalue>
+        </para></entry>
+       </row>
+
+      <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>md5</primary>
@@ -4126,6 +4147,26 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <returnvalue>8ab2d3c9689aaf18&zwsp;b4958c334c82d8b1</returnvalue>
        </para></entry>
       </row>
+
+      <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>rtrim</primary>
+         </indexterm>
+         <function>rtrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+         <parameter>bytesremoved</parameter> <type>bytea</type> )
+         <returnvalue>bytea</returnvalue>
+        </para>
+        <para>
+         Removes the longest string containing only bytes appearing in
+         <parameter>bytesremoved</parameter> from the end of
+         <parameter>bytes</parameter>.
+        </para>
+        <para>
+         <literal>rtrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
+         <returnvalue>\x12345678</returnvalue>
+        </para></entry>
+       </row>
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">

@@ -605,7 +605,10 @@ select
   substring('foo' from 'oo') as ssf,  -- historically-permitted abuse
   trim(' ' from ' foo ') as bt,
   trim(leading ' ' from ' foo ') as lt,
-  trim(trailing ' foo ') as rt;
+  trim(trailing ' foo ') as rt,
+  trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea) as btb,
+  trim(leading E'\\000'::bytea from E'\\000Tom\\000'::bytea) as ltb,
+  trim(trailing E'\\000'::bytea from E'\\000Tom\\000'::bytea) as rtb;
 select pg_get_viewdef('tt201v', true);
 
 -- corner cases with empty join conditions

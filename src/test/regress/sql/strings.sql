@@ -722,6 +722,8 @@ SELECT SUBSTRING('string'::bytea FROM -10 FOR 2147483646) AS "string";
 SELECT SUBSTRING('string'::bytea FROM -10 FOR -2147483646) AS "error";
 
 SELECT trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea);
+SELECT trim(leading E'\\000'::bytea from E'\\000Tom\\000'::bytea);
+SELECT trim(trailing E'\\000'::bytea from E'\\000Tom\\000'::bytea);
 SELECT btrim(E'\\000trim\\000'::bytea, E'\\000'::bytea);
 SELECT btrim(''::bytea, E'\\000'::bytea);
 SELECT btrim(E'\\000trim\\000'::bytea, ''::bytea);

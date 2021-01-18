@@ -1735,7 +1735,10 @@ select
   substring('foo' from 'oo') as ssf,  -- historically-permitted abuse
   trim(' ' from ' foo ') as bt,
   trim(leading ' ' from ' foo ') as lt,
-  trim(trailing ' foo ') as rt;
+  trim(trailing ' foo ') as rt,
+  trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea) as btb,
+  trim(leading E'\\000'::bytea from E'\\000Tom\\000'::bytea) as ltb,
+  trim(trailing E'\\000'::bytea from E'\\000Tom\\000'::bytea) as rtb;
 select pg_get_viewdef('tt201v', true);
                                         pg_get_viewdef                                         
 -----------------------------------------------------------------------------------------------
@@ -1753,7 +1756,10 @@ select pg_get_viewdef('tt201v', true);
      "substring"('foo'::text, 'oo'::text) AS ssf,                                             +
      TRIM(BOTH ' '::text FROM ' foo '::text) AS bt,                                           +
      TRIM(LEADING ' '::text FROM ' foo '::text) AS lt,                                        +
-     TRIM(TRAILING FROM ' foo '::text) AS rt;
+     TRIM(TRAILING FROM ' foo '::text) AS rt,                                                 +
+     TRIM(BOTH '\x00'::bytea FROM '\x00546f6d00'::bytea) AS btb,                              +
+     TRIM(LEADING '\x00'::bytea FROM '\x00546f6d00'::bytea) AS ltb,                           +
+     TRIM(TRAILING '\x00'::bytea FROM '\x00546f6d00'::bytea) AS rtb;
 (1 row)
 
 -- corner cases with empty join conditions
