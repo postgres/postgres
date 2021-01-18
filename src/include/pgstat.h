@@ -692,7 +692,7 @@ typedef union PgStat_Msg
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BC9F
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BCA0
 
 /* ----------
  * PgStat_StatDBEntry			The collector's data per database
