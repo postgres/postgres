@@ -16,12 +16,14 @@
 #include "access/xact.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
+#include "funcapi.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postgres_fdw.h"
 #include "storage/fd.h"
 #include "storage/latch.h"
+#include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
@@ -73,6 +75,11 @@ static unsigned int prep_stmt_number = 0;
 
 /* tracks whether any work is needed in callback functions */
 static bool xact_got_connection = false;
+
+/*
+ * SQL functions
+ */
+PG_FUNCTION_INFO_V1(postgres_fdw_get_connections);
 
 /* prototypes of private functions */
 static void make_new_connection(ConnCacheEntry *entry, UserMapping *user);
@@ -1334,4 +1341,132 @@ exit:	;
 	else
 		*result = last_res;
 	return timed_out;
+}
+
+/*
+ * List active foreign server connections.
+ *
+ * This function takes no input parameter and returns setof record made of
+ * following values:
+ * - server_name - server name of active connection. In case the foreign server
+ *   is dropped but still the connection is active, then the server name will
+ *   be NULL in output.
+ * - valid - true/false representing whether the connection is valid or not.
+ * 	 Note that the connections can get invalidated in pgfdw_inval_callback.
+ *
+ * No records are returned when there are no cached connections at all.
+ */
+Datum
+postgres_fdw_get_connections(PG_FUNCTION_ARGS)
+{
+#define POSTGRES_FDW_GET_CONNECTIONS_COLS	2
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	HASH_SEQ_STATUS scan;
+	ConnCacheEntry *entry;
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	/* Build tuplestore to hold the result rows */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/* If cache doesn't exist, we return no records */
+	if (!ConnectionHash)
+	{
+		/* clean up and return the tuplestore */
+		tuplestore_donestoring(tupstore);
+
+		PG_RETURN_VOID();
+	}
+
+	hash_seq_init(&scan, ConnectionHash);
+	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan)))
+	{
+		ForeignServer *server;
+		Datum		values[POSTGRES_FDW_GET_CONNECTIONS_COLS];
+		bool		nulls[POSTGRES_FDW_GET_CONNECTIONS_COLS];
+
+		/* We only look for open remote connections */
+		if (!entry->conn)
+			continue;
+
+		server = GetForeignServerExtended(entry->serverid, FSV_MISSING_OK);
+
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, 0, sizeof(nulls));
+
+		/*
+		 * The foreign server may have been dropped in current explicit
+		 * transaction. It is not possible to drop the server from another
+		 * session when the connection associated with it is in use in the
+		 * current transaction, if tried so, the drop query in another session
+		 * blocks until the current transaction finishes.
+		 *
+		 * Even though the server is dropped in the current transaction, the
+		 * cache can still have associated active connection entry, say we
+		 * call such connections dangling. Since we can not fetch the server
+		 * name from system catalogs for dangling connections, instead we
+		 * show NULL value for server name in output.
+		 *
+		 * We could have done better by storing the server name in the cache
+		 * entry instead of server oid so that it could be used in the output.
+		 * But the server name in each cache entry requires 64 bytes of
+		 * memory, which is huge, when there are many cached connections and
+		 * the use case i.e. dropping the foreign server within the explicit
+		 * current transaction seems rare. So, we chose to show NULL value for
+		 * server name in output.
+		 *
+		 * Such dangling connections get closed either in next use or at the
+		 * end of current explicit transaction in pgfdw_xact_callback.
+		 */
+		if (!server)
+		{
+			/*
+			 * If the server has been dropped in the current explicit
+			 * transaction, then this entry would have been invalidated in
+			 * pgfdw_inval_callback at the end of drop sever command. Note
+			 * that this connection would not have been closed in
+			 * pgfdw_inval_callback because it is still being used in the
+			 * current explicit transaction. So, assert that here.
+			 */
+			Assert(entry->conn && entry->xact_depth > 0 && entry->invalidated);
+
+			/* Show null, if no server name was found */
+			nulls[0] = true;
+		}
+		else
+			values[0] = CStringGetTextDatum(server->servername);
+
+		values[1] = BoolGetDatum(!entry->invalidated);
+
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	}
+
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	PG_RETURN_VOID();
 }

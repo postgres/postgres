@@ -15,6 +15,11 @@ DO $d$
             OPTIONS (dbname '$$||current_database()||$$',
                      port '$$||current_setting('port')||$$'
             )$$;
+        EXECUTE $$CREATE SERVER loopback3 FOREIGN DATA WRAPPER postgres_fdw
+            OPTIONS (dbname '$$||current_database()||$$',
+                     port '$$||current_setting('port')||$$'
+            )$$;
+
     END;
 $d$;
 
@@ -22,6 +27,7 @@ CREATE USER MAPPING FOR public SERVER testserver1
 	OPTIONS (user 'value', password 'value');
 CREATE USER MAPPING FOR CURRENT_USER SERVER loopback;
 CREATE USER MAPPING FOR CURRENT_USER SERVER loopback2;
+CREATE USER MAPPING FOR public SERVER loopback3;
 
 -- ===================================================================
 -- create objects used through FDW loopback server
@@ -141,6 +147,12 @@ CREATE FOREIGN TABLE ft6 (
 	c2 int NOT NULL,
 	c3 text
 ) SERVER loopback2 OPTIONS (schema_name 'S 1', table_name 'T 4');
+
+CREATE FOREIGN TABLE ft7 (
+	c1 int NOT NULL,
+	c2 int NOT NULL,
+	c3 text
+) SERVER loopback3 OPTIONS (schema_name 'S 1', table_name 'T 4');
 
 -- ===================================================================
 -- tests for validator
@@ -2703,11 +2715,26 @@ DROP PROCEDURE terminate_backend_and_wait(text);
 -- ===================================================================
 -- This test case is for closing the connection in pgfdw_xact_callback
 BEGIN;
+-- List all the existing cached connections. Only loopback2 should be output.
+SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
 -- Connection xact depth becomes 1 i.e. the connection is in midst of the xact.
 SELECT 1 FROM ft1 LIMIT 1;
+SELECT 1 FROM ft7 LIMIT 1;
+-- List all the existing cached connections. loopback and loopback3
+-- also should be output as valid connections.
+SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
 -- Connection is not closed at the end of the alter statement in
 -- pgfdw_inval_callback. That's because the connection is in midst of this
 -- xact, it is just marked as invalid.
 ALTER SERVER loopback OPTIONS (ADD use_remote_estimate 'off');
+DROP SERVER loopback3 CASCADE;
+-- List all the existing cached connections. loopback and loopback3
+-- should be output as invalid connections. Also the server name for
+-- loopback3 should be NULL because the server was dropped.
+SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
 -- The invalid connection gets closed in pgfdw_xact_callback during commit.
 COMMIT;
+-- List all the existing cached connections. loopback and loopback3
+-- should not be output because they should be closed at the end of
+-- the above transaction.
+SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
