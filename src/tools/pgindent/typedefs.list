@@ -347,6 +347,7 @@ ClosePortalStmt
 ClosePtrType
 Clump
 ClusterInfo
+ClusterParams
 ClusterStmt
 CmdType
 CoalesceExpr
@@ -2063,6 +2064,7 @@ RegisteredBgWorker
 ReindexErrorInfo
 ReindexIndexInfo
 ReindexObjectType
+ReindexParams
 ReindexStmt
 ReindexType
 RelFileNode

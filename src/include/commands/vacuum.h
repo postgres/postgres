@@ -174,17 +174,15 @@ typedef struct VacAttrStats
 	int			rowstride;
 } VacAttrStats;
 
-typedef enum VacuumOption
-{
-	VACOPT_VACUUM = 1 << 0,		/* do VACUUM */
-	VACOPT_ANALYZE = 1 << 1,	/* do ANALYZE */
-	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
-	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
-	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
-	VACOPT_SKIP_LOCKED = 1 << 5,	/* skip if cannot get lock */
-	VACOPT_SKIPTOAST = 1 << 6,	/* don't process the TOAST table, if any */
-	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7	/* don't skip any pages */
-} VacuumOption;
+/* flag bits for VacuumParams->options */
+#define VACOPT_VACUUM 0x01		/* do VACUUM */
+#define VACOPT_ANALYZE 0x02		/* do ANALYZE */
+#define VACOPT_VERBOSE 0x04		/* print progress info */
+#define VACOPT_FREEZE 0x08		/* FREEZE option */
+#define VACOPT_FULL 0x10		/* FULL (non-concurrent) vacuum */
+#define VACOPT_SKIP_LOCKED 0x20 /* skip if cannot get lock */
+#define VACOPT_SKIPTOAST 0x40	/* don't process the TOAST table, if any */
+#define VACOPT_DISABLE_PAGE_SKIPPING 0x80	/* don't skip any pages */
 
 /*
  * A ternary value used by vacuum parameters.
@@ -207,7 +205,7 @@ typedef enum VacOptTernaryValue
  */
 typedef struct VacuumParams
 {
-	int			options;		/* bitmask of VacuumOption */
+	bits32		options;		/* bitmask of VACOPT_* */
 	int			freeze_min_age; /* min freeze age, -1 to use default */
 	int			freeze_table_age;	/* age at which to scan whole table */
 	int			multixact_freeze_min_age;	/* min multixact freeze age, -1 to
@@ -275,9 +273,10 @@ extern void vacuum_set_xid_limits(Relation rel,
 extern void vac_update_datfrozenxid(void);
 extern void vacuum_delay_point(void);
 extern bool vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple,
-									 int options);
+									 bits32 options);
 extern Relation vacuum_open_relation(Oid relid, RangeVar *relation,
-									 int options, bool verbose, LOCKMODE lmode);
+									 bits32 options, bool verbose,
+									 LOCKMODE lmode);
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, RangeVar *relation,

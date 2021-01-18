@@ -530,7 +530,7 @@ vacuum(List *relations, VacuumParams *params,
  * ANALYZE.
  */
 bool
-vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple, int options)
+vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple, bits32 options)
 {
 	char	   *relname;
 
@@ -604,7 +604,7 @@ vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple, int options)
  * or locked, a log is emitted if possible.
  */
 Relation
-vacuum_open_relation(Oid relid, RangeVar *relation, int options,
+vacuum_open_relation(Oid relid, RangeVar *relation, bits32 options,
 					 bool verbose, LOCKMODE lmode)
 {
 	Relation	onerel;
@@ -1916,17 +1916,17 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	 */
 	if (params->options & VACOPT_FULL)
 	{
-		int			cluster_options = 0;
+		ClusterParams cluster_params = {0};
 
 		/* close relation before vacuuming, but hold lock until commit */
 		relation_close(onerel, NoLock);
 		onerel = NULL;
 
 		if ((params->options & VACOPT_VERBOSE) != 0)
-			cluster_options |= CLUOPT_VERBOSE;
+			cluster_params.options |= CLUOPT_VERBOSE;
 
 		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
-		cluster_rel(relid, InvalidOid, cluster_options);
+		cluster_rel(relid, InvalidOid, &cluster_params);
 	}
 	else
 		table_relation_vacuum(onerel, params, vac_strategy);

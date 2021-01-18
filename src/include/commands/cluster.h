@@ -19,15 +19,18 @@
 #include "utils/relcache.h"
 
 
+/* flag bits for ClusterParams->flags */
+#define CLUOPT_RECHECK 0x01		/* recheck relation state */
+#define CLUOPT_VERBOSE 0x02		/* print progress info */
+
 /* options for CLUSTER */
-typedef enum ClusterOption
+typedef struct ClusterParams
 {
-	CLUOPT_RECHECK = 1 << 0,	/* recheck relation state */
-	CLUOPT_VERBOSE = 1 << 1		/* print progress info */
-} ClusterOption;
+	bits32		options;		/* bitmask of CLUOPT_* */
+} ClusterParams;
 
 extern void cluster(ParseState *pstate, ClusterStmt *stmt, bool isTopLevel);
-extern void cluster_rel(Oid tableOid, Oid indexOid, int options);
+extern void cluster_rel(Oid tableOid, Oid indexOid, ClusterParams *params);
 extern void check_index_is_clusterable(Relation OldHeap, Oid indexOid,
 									   bool recheck, LOCKMODE lockmode);
 extern void mark_index_clustered(Relation rel, Oid indexOid, bool is_internal);
