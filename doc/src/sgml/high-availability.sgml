@@ -2129,18 +2129,14 @@ LOG:  database system is ready to accept read only connections
    </para>
 
    <para>
-    The setting of some parameters on the standby will need reconfiguration
-    if they have been changed on the primary. For these parameters,
-    the value on the standby must
-    be equal to or greater than the value on the primary.
-    Therefore, if you want to increase these values, you should do so on all
-    standby servers first, before applying the changes to the primary server.
-    Conversely, if you want to decrease these values, you should do so on the
-    primary server first, before applying the changes to all standby servers.
-    If these parameters
-    are not set high enough then the standby will refuse to start.
-    Higher values can then be supplied and the server
-    restarted to begin recovery again.  These parameters are:
+    The settings of some parameters determine the size of shared memory for
+    tracking transaction IDs, locks, and prepared transactions.  These shared
+    memory structures must be no smaller on a standby than on the primary in
+    order to ensure that the standby does not run out of shared memory during
+    recovery.  For example, if the primary had used a prepared transaction but
+    the standby had not allocated any shared memory for tracking prepared
+    transactions, then recovery could not continue until the standby's
+    configuration is changed.  The parameters affected are:
 
       <itemizedlist>
        <listitem>
@@ -2169,6 +2165,37 @@ LOG:  database system is ready to accept read only connections
         </para>
        </listitem>
       </itemizedlist>
+
+    The easiest way to ensure this does not become a problem is to have these
+    parameters set on the standbys to values equal to or greater than on the
+    primary.  Therefore, if you want to increase these values, you should do
+    so on all standby servers first, before applying the changes to the
+    primary server.  Conversely, if you want to decrease these values, you
+    should do so on the primary server first, before applying the changes to
+    all standby servers.  Keep in mind that when a standby is promoted, it
+    becomes the new reference for the required parameter settings for the
+    standbys that follow it.  Therefore, to avoid this becoming a problem
+    during a switchover or failover, it is recommended to keep these settings
+    the same on all standby servers.
+   </para>
+
+   <para>
+    The WAL tracks changes to these parameters on the
+    primary.  If a hot standby processes WAL that indicates that the current
+    value on the primary is higher than its own value, it will log a warning
+    and pause recovery, for example:
+<screen>
+WARNING:  hot standby is not possible because of insufficient parameter settings
+DETAIL:  max_connections = 80 is a lower setting than on the primary server, where its value was 100.
+LOG:  recovery has paused
+DETAIL:  If recovery is unpaused, the server will shut down.
+HINT:  You can then restart the server after making the necessary configuration changes.
+</screen>
+    At that point, the settings on the standby need to be updated and the
+    instance restarted before recovery can continue.  If the standby is not a
+    hot standby, then when it encounters the incompatible parameter change, it
+    will shut down immediately without pausing, since there is then no value
+    in keeping it up.
    </para>
 
    <para>

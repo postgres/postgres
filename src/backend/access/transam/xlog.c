@@ -6261,12 +6261,61 @@ static void
 RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue)
 {
 	if (currValue < minValue)
-		ereport(ERROR,
+	{
+		if (LocalHotStandbyActive)
+		{
+			bool		warned_for_promote = false;
+
+			ereport(WARNING,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("hot standby is not possible because of insufficient parameter settings"),
+					 errdetail("%s = %d is a lower setting than on the primary server, where its value was %d.",
+							   param_name,
+							   currValue,
+							   minValue)));
+
+			SetRecoveryPause(true);
+
+			ereport(LOG,
+					(errmsg("recovery has paused"),
+					 errdetail("If recovery is unpaused, the server will shut down."),
+					 errhint("You can then restart the server after making the necessary configuration changes.")));
+
+			while (RecoveryIsPaused())
+			{
+				HandleStartupProcInterrupts();
+
+				if (CheckForStandbyTrigger())
+				{
+					if (!warned_for_promote)
+						ereport(WARNING,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("promotion is not possible because of insufficient parameter settings"),
+								 /* Repeat the detail from above so it's easy to find in the log. */
+								 errdetail("%s = %d is a lower setting than on the primary server, where its value was %d.",
+										   param_name,
+										   currValue,
+										   minValue),
+								 errhint("Restart the server after making the necessary configuration changes.")));
+					warned_for_promote = true;
+				}
+
+				pgstat_report_wait_start(WAIT_EVENT_RECOVERY_PAUSE);
+				pg_usleep(1000000L);	/* 1000 ms */
+				pgstat_report_wait_end();
+			}
+		}
+
+		ereport(FATAL,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("hot standby is not possible because %s = %d is a lower setting than on the primary server (its value was %d)",
-						param_name,
-						currValue,
-						minValue)));
+				 errmsg("recovery aborted because of insufficient parameter settings"),
+				 /* Repeat the detail from above so it's easy to find in the log. */
+				 errdetail("%s = %d is a lower setting than on the primary server, where its value was %d.",
+						   param_name,
+						   currValue,
+						   minValue),
+				 errhint("You can restart the server after making the necessary configuration changes.")));
+	}
 }
 
 /*
