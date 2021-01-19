@@ -225,7 +225,7 @@ static void maybe_reread_subscription(void);
 static void apply_dispatch(StringInfo s);
 
 static void apply_handle_commit_internal(StringInfo s,
-										 LogicalRepCommitData* commit_data);
+										 LogicalRepCommitData *commit_data);
 static void apply_handle_insert_internal(ResultRelInfo *relinfo,
 										 EState *estate, TupleTableSlot *remoteslot);
 static void apply_handle_update_internal(ResultRelInfo *relinfo,
@@ -752,10 +752,10 @@ apply_handle_stream_start(StringInfo s)
 
 	/*
 	 * Start a transaction on stream start, this transaction will be committed
-	 * on the stream stop unless it is a tablesync worker in which case it will
-	 * be committed after processing all the messages. We need the transaction
-	 * for handling the buffile, used for serializing the streaming data and
-	 * subxact info.
+	 * on the stream stop unless it is a tablesync worker in which case it
+	 * will be committed after processing all the messages. We need the
+	 * transaction for handling the buffile, used for serializing the
+	 * streaming data and subxact info.
 	 */
 	ensure_transaction();
 
@@ -1060,7 +1060,7 @@ apply_handle_stream_commit(StringInfo s)
  * Helper function for apply_handle_commit and apply_handle_stream_commit.
  */
 static void
-apply_handle_commit_internal(StringInfo s, LogicalRepCommitData* commit_data)
+apply_handle_commit_internal(StringInfo s, LogicalRepCommitData *commit_data)
 {
 	/* The synchronization worker runs in single transaction. */
 	if (IsTransactionState() && !am_tablesync_worker())
