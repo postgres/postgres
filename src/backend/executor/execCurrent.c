@@ -299,6 +299,10 @@ fetch_cursor_param_value(ExprContext *econtext, int paramId)
  * Search through a PlanState tree for a scan node on the specified table.
  * Return NULL if not found or multiple candidates.
  *
+ * CAUTION: this function is not charged simply with finding some candidate
+ * scan, but with ensuring that that scan returned the plan tree's current
+ * output row.  That's why we must reject multiple-match cases.
+ *
  * If a candidate is found, set *pending_rescan to true if that candidate
  * or any node above it has a pending rescan action, i.e. chgParam != NULL.
  * That indicates that we shouldn't consider the node to be positioned on a
@@ -317,7 +321,9 @@ search_plan_tree(PlanState *node, Oid table_oid,
 	switch (nodeTag(node))
 	{
 			/*
-			 * Relation scan nodes can all be treated alike.  Note that
+			 * Relation scan nodes can all be treated alike: check to see if
+			 * they are scanning the specified table.
+			 *
 			 * ForeignScan and CustomScan might not have a currentRelation, in
 			 * which case we just ignore them.  (We dare not descend to any
 			 * child plan nodes they might have, since we do not know the
@@ -342,8 +348,26 @@ search_plan_tree(PlanState *node, Oid table_oid,
 			}
 
 			/*
-			 * For Append, we must look through the members; watch out for
-			 * multiple matches (possible if it was from UNION ALL)
+			 * For Append, we can check each input node.  It is safe to
+			 * descend to the inputs because only the input that resulted in
+			 * the Append's current output node could be positioned on a tuple
+			 * at all; the other inputs are either at EOF or not yet started.
+			 * Hence, if the desired table is scanned by some
+			 * currently-inactive input node, we will find that node but then
+			 * our caller will realize that it didn't emit the tuple of
+			 * interest.
+			 *
+			 * We do need to watch out for multiple matches (possible if
+			 * Append was from UNION ALL rather than an inheritance tree).
+			 *
+			 * Note: we can NOT descend through MergeAppend similarly, since
+			 * its inputs are likely all active, and we don't know which one
+			 * returned the current output tuple.  (Perhaps that could be
+			 * fixed if we were to let this code know more about MergeAppend's
+			 * internal state, but it does not seem worth the trouble.  Users
+			 * should not expect plans for ORDER BY queries to be considered
+			 * simply-updatable, since they won't be if the sorting is
+			 * implemented by a Sort node.)
 			 */
 		case T_AppendState:
 			{
@@ -353,29 +377,6 @@ search_plan_tree(PlanState *node, Oid table_oid,
 				for (i = 0; i < astate->as_nplans; i++)
 				{
 					ScanState  *elem = search_plan_tree(astate->appendplans[i],
-														table_oid,
-														pending_rescan);
-
-					if (!elem)
-						continue;
-					if (result)
-						return NULL;	/* multiple matches */
-					result = elem;
-				}
-				break;
-			}
-
-			/*
-			 * Similarly for MergeAppend
-			 */
-		case T_MergeAppendState:
-			{
-				MergeAppendState *mstate = (MergeAppendState *) node;
-				int			i;
-
-				for (i = 0; i < mstate->ms_nplans; i++)
-				{
-					ScanState  *elem = search_plan_tree(mstate->mergeplans[i],
 														table_oid,
 														pending_rescan);
 
