@@ -14,6 +14,8 @@ oldest_xact             | 0
 last_cleanup_num_tuples | -1
 allequalimage           | t
 
+SELECT * FROM bt_page_stats('test1_a_idx', -1);
+ERROR:  invalid block number
 SELECT * FROM bt_page_stats('test1_a_idx', 0);
 ERROR:  block 0 is a meta page
 SELECT * FROM bt_page_stats('test1_a_idx', 1);
@@ -32,6 +34,8 @@ btpo_flags    | 3
 
 SELECT * FROM bt_page_stats('test1_a_idx', 2);
 ERROR:  block number out of range
+SELECT * FROM bt_page_items('test1_a_idx', -1);
+ERROR:  invalid block number
 SELECT * FROM bt_page_items('test1_a_idx', 0);
 ERROR:  block 0 is a meta page
 SELECT * FROM bt_page_items('test1_a_idx', 1);
@@ -48,6 +52,8 @@ tids       |
 
 SELECT * FROM bt_page_items('test1_a_idx', 2);
 ERROR:  block number out of range
+SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', -1));
+ERROR:  invalid block number
 SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 0));
 ERROR:  block is a meta page
 SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 1));

@@ -17,3 +17,5 @@ SELECT COUNT(*) > 0
 FROM gin_leafpage_items(get_raw_page('test1_y_idx',
                         (pg_relation_size('test1_y_idx') /
                          current_setting('block_size')::bigint)::int - 1));
+
+DROP TABLE test1;

@@ -390,7 +390,7 @@ Datum
 hash_bitmap_info(PG_FUNCTION_ARGS)
 {
 	Oid			indexRelid = PG_GETARG_OID(0);
-	uint64		ovflblkno = PG_GETARG_INT64(1);
+	int64		ovflblkno = PG_GETARG_INT64(1);
 	HashMetaPage metap;
 	Buffer		metabuf,
 				mapbuf;
@@ -425,11 +425,16 @@ hash_bitmap_info(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot access temporary tables of other sessions")));
 
+	if (ovflblkno < 0 || ovflblkno > MaxBlockNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid block number")));
+
 	if (ovflblkno >= RelationGetNumberOfBlocks(indexRel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("block number " UINT64_FORMAT " is out of range for relation \"%s\"",
-						ovflblkno, RelationGetRelationName(indexRel))));
+				 errmsg("block number %lld is out of range for relation \"%s\"",
+						(long long int) ovflblkno, RelationGetRelationName(indexRel))));
 
 	/* Read the metapage so we can determine which bitmap page to use */
 	metabuf = _hash_getbuf(indexRel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);

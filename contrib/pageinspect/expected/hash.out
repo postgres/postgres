@@ -28,6 +28,8 @@ hash_page_type | bitmap
 
 SELECT hash_page_type(get_raw_page('test_hash_a_idx', 6));
 ERROR:  block number 6 is out of range for relation "test_hash_a_idx"
+SELECT * FROM hash_bitmap_info('test_hash_a_idx', -1);
+ERROR:  invalid block number
 SELECT * FROM hash_bitmap_info('test_hash_a_idx', 0);
 ERROR:  invalid overflow block number 0
 SELECT * FROM hash_bitmap_info('test_hash_a_idx', 1);
@@ -40,6 +42,8 @@ SELECT * FROM hash_bitmap_info('test_hash_a_idx', 4);
 ERROR:  invalid overflow block number 4
 SELECT * FROM hash_bitmap_info('test_hash_a_idx', 5);
 ERROR:  invalid overflow block number 5
+SELECT * FROM hash_bitmap_info('test_hash_a_idx', 6);
+ERROR:  block number 6 is out of range for relation "test_hash_a_idx"
 SELECT magic, version, ntuples, bsize, bmsize, bmshift, maxbucket, highmask,
 lowmask, ovflpoint, firstfree, nmaps, procid, spares, mapp FROM
 hash_metapage_info(get_raw_page('test_hash_a_idx', 0));

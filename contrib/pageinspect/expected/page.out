@@ -32,6 +32,8 @@ SELECT octet_length(get_raw_page('test1', 'vm', 0)) AS vm_0;
 
 SELECT octet_length(get_raw_page('test1', 'vm', 1)) AS vm_1;
 ERROR:  block number 1 is out of range for relation "test1"
+SELECT octet_length(get_raw_page('test1', 'main', -1));
+ERROR:  invalid block number
 SELECT octet_length(get_raw_page('xxx', 'main', 0));
 ERROR:  relation "xxx" does not exist
 SELECT octet_length(get_raw_page('test1', 'xxx', 0));
@@ -55,6 +57,8 @@ SELECT page_checksum(get_raw_page('test1', 0), 0) IS NOT NULL AS silly_checksum_
  t
 (1 row)
 
+SELECT page_checksum(get_raw_page('test1', 0), -1);
+ERROR:  invalid block number
 SELECT tuple_data_split('test1'::regclass, t_data, t_infomask, t_infomask2, t_bits)
     FROM heap_page_items(get_raw_page('test1', 0));
        tuple_data_split        

@@ -21,7 +21,7 @@ DATA =  pageinspect--1.8--1.9.sql \
 	pageinspect--1.0--1.1.sql
 PGFILEDESC = "pageinspect - functions to inspect contents of database pages"
 
-REGRESS = page btree brin gin gist hash checksum
+REGRESS = page btree brin gin gist hash checksum oldextversions
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

@@ -35,3 +35,4 @@ FROM gin_leafpage_items(get_raw_page('test1_y_idx',
 -[ RECORD 1 ]
 ?column? | t
 
+DROP TABLE test1;

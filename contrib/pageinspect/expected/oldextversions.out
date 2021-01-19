@@ -1,0 +1,40 @@
+-- test old extension version entry points
+DROP EXTENSION pageinspect;
+CREATE EXTENSION pageinspect VERSION '1.8';
+CREATE TABLE test1 (a int8, b text);
+INSERT INTO test1 VALUES (72057594037927937, 'text');
+CREATE INDEX test1_a_idx ON test1 USING btree (a);
+-- from page.sql
+SELECT octet_length(get_raw_page('test1', 0)) AS main_0;
+ main_0 
+--------
+   8192
+(1 row)
+
+SELECT octet_length(get_raw_page('test1', 'main', 0)) AS main_0;
+ main_0 
+--------
+   8192
+(1 row)
+
+SELECT page_checksum(get_raw_page('test1', 0), 0) IS NOT NULL AS silly_checksum_test;
+ silly_checksum_test 
+---------------------
+ t
+(1 row)
+
+-- from btree.sql
+SELECT * FROM bt_page_stats('test1_a_idx', 1);
+ blkno | type | live_items | dead_items | avg_item_size | page_size | free_size | btpo_prev | btpo_next | btpo | btpo_flags 
+-------+------+------------+------------+---------------+-----------+-----------+-----------+-----------+------+------------
+     1 | l    |          1 |          0 |            16 |      8192 |      8128 |         0 |         0 |    0 |          3
+(1 row)
+
+SELECT * FROM bt_page_items('test1_a_idx', 1);
+ itemoffset | ctid  | itemlen | nulls | vars |          data           | dead | htid  | tids 
+------------+-------+---------+-------+------+-------------------------+------+-------+------
+          1 | (0,1) |      16 | f     | f    | 01 00 00 00 00 00 00 01 | f    | (0,1) | 
+(1 row)
+
+DROP TABLE test1;
+DROP EXTENSION pageinspect;
