@@ -773,7 +773,7 @@ EXPLAIN ANALYZE UPDATE tenk1 SET hundred = hundred + 1 WHERE unique1 &lt; 100;
 
                                                            QUERY PLAN
 -------------------------------------------------------------------&zwsp;-------------------------------------------------------------
- Update on tenk1  (cost=5.07..229.46 rows=101 width=250) (actual time=14.628..14.628 rows=0 loops=1)
+ Update on tenk1  (cost=5.07..229.46 rows=0 width=0) (actual time=14.628..14.628 rows=0 loops=1)
    -&gt;  Bitmap Heap Scan on tenk1  (cost=5.07..229.46 rows=101 width=250) (actual time=0.101..0.439 rows=100 loops=1)
          Recheck Cond: (unique1 &lt; 100)
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0) (actual time=0.043..0.043 rows=100 loops=1)
@@ -809,7 +809,7 @@ ROLLBACK;
 EXPLAIN UPDATE parent SET f2 = f2 + 1 WHERE f1 = 101;
                                     QUERY PLAN
 -------------------------------------------------------------------&zwsp;----------------
- Update on parent  (cost=0.00..24.53 rows=4 width=14)
+ Update on parent  (cost=0.00..24.53 rows=0 width=0)
    Update on parent
    Update on child1
    Update on child2
