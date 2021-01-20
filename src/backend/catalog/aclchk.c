@@ -1328,6 +1328,9 @@ SetDefaultACL(InternalDefaultACL *iacls)
 		ReleaseSysCache(tuple);
 
 	heap_close(rel, RowExclusiveLock);
+
+	/* prevent error when processing duplicate objects */
+	CommandCounterIncrement();
 }
 
 
