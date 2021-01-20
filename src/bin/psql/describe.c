@@ -4393,6 +4393,89 @@ listEventTriggers(const char *pattern, bool verbose)
 }
 
 /*
+ * \dX
+ *
+ * Describes extended statistics.
+ */
+bool
+listExtendedStats(const char *pattern)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	if (pset.sversion < 100000)
+	{
+		char		sverbuf[32];
+
+		pg_log_error("The server (version %s) does not support extended statistics.",
+					 formatPGVersionNumber(pset.sversion, false,
+										   sverbuf, sizeof(sverbuf)));
+		return true;
+	}
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT \n"
+					  "es.stxnamespace::pg_catalog.regnamespace::text AS \"%s\", \n"
+					  "es.stxname AS \"%s\", \n"
+					  "pg_catalog.format('%%s FROM %%s', \n"
+					  "  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(a.attname),', ') \n"
+					  "   FROM pg_catalog.unnest(es.stxkeys) s(attnum) \n"
+					  "   JOIN pg_catalog.pg_attribute a \n"
+					  "   ON (es.stxrelid = a.attrelid \n"
+					  "   AND a.attnum = s.attnum \n"
+					  "   AND NOT a.attisdropped)), \n"
+					  "es.stxrelid::regclass) AS \"%s\"",
+					  gettext_noop("Schema"),
+					  gettext_noop("Name"),
+					  gettext_noop("Definition"));
+
+	appendPQExpBuffer(&buf,
+					  ",\nCASE WHEN 'd' = any(es.stxkind) THEN 'defined' \n"
+					  "END AS \"%s\", \n"
+					  "CASE WHEN 'f' = any(es.stxkind) THEN 'defined' \n"
+					  "END AS \"%s\"",
+					  gettext_noop("Ndistinct"),
+					  gettext_noop("Dependencies"));
+
+	/*
+	 * Include the MCV statistics kind.
+	 */
+	if (pset.sversion >= 120000)
+	{
+		appendPQExpBuffer(&buf,
+						  ",\nCASE WHEN 'm' = any(es.stxkind) THEN 'defined' \n"
+						  "END AS \"%s\" ",
+						  gettext_noop("MCV"));
+	}
+
+	appendPQExpBufferStr(&buf,
+						 " \nFROM pg_catalog.pg_statistic_ext es \n");
+
+	processSQLNamePattern(pset.db, &buf, pattern,
+						  false, false,
+						  "es.stxnamespace::pg_catalog.regnamespace::text", "es.stxname",
+						  NULL, NULL);
+
+	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
+
+	res = PSQLexec(buf.data);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of extended statistics");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+/*
  * \dC
  *
  * Describes casts.

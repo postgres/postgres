@@ -1920,6 +1920,27 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
+        <term><literal>\dX [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <listitem>
+        <para>
+        Lists extended statistics.
+        If <replaceable class="parameter">pattern</replaceable>
+        is specified, only those extended statistics whose names match the
+        pattern are listed.
+        </para>
+
+        <para>
+        The column of the kind of extended stats (e.g. Ndistinct) shows its status.
+        NULL means that it doesn't exists. "defined" means that it was requested
+        when creating the statistics.
+        You can use pg_stats_ext if you'd like to know whether <link linkend="sql-analyze">
+        <command>ANALYZE</command></link> was run and statistics are available to the
+        planner.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><literal>\dy[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
