@@ -3,7 +3,7 @@ CREATE EXTENSION pageinspect;
 CREATE TABLE test1 (a int, b int);
 INSERT INTO test1 VALUES (16777217, 131584);
 
-VACUUM test1;  -- set up FSM
+VACUUM (DISABLE_PAGE_SKIPPING) test1;  -- set up FSM
 
 -- The page contents can vary, so just test that it can be read
 -- successfully, but don't keep the output.
