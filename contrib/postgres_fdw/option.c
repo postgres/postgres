@@ -142,6 +142,17 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 						 errmsg("%s requires a non-negative integer value",
 								def->defname)));
 		}
+		else if (strcmp(def->defname, "batch_size") == 0)
+		{
+			int			batch_size;
+
+			batch_size = strtol(defGetString(def), NULL, 10);
+			if (batch_size <= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("%s requires a non-negative integer value",
+								def->defname)));
+		}
 		else if (strcmp(def->defname, "password_required") == 0)
 		{
 			bool		pw_required = defGetBoolean(def);
@@ -203,6 +214,9 @@ InitPgFdwOptions(void)
 		/* fetch_size is available on both server and table */
 		{"fetch_size", ForeignServerRelationId, false},
 		{"fetch_size", ForeignTableRelationId, false},
+		/* batch_size is available on both server and table */
+		{"batch_size", ForeignServerRelationId, false},
+		{"batch_size", ForeignTableRelationId, false},
 		{"password_required", UserMappingRelationId, false},
 
 		/*

@@ -446,6 +446,12 @@ typedef struct ResultRelInfo
 	/* true when modifying foreign table directly */
 	bool		ri_usesFdwDirectModify;
 
+	/* batch insert stuff */
+	int			ri_NumSlots;		/* number of slots in the array */
+	int			ri_BatchSize;		/* max slots inserted in a single batch */
+	TupleTableSlot **ri_Slots;		/* input tuples for batch insert */
+	TupleTableSlot **ri_PlanSlots;
+
 	/* list of WithCheckOption's to be checked */
 	List	   *ri_WithCheckOptions;
 

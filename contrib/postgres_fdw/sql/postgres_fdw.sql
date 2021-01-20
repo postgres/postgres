@@ -2738,3 +2738,96 @@ COMMIT;
 -- should not be output because they should be closed at the end of
 -- the above transaction.
 SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
+
+-- ===================================================================
+-- batch insert
+-- ===================================================================
+
+BEGIN;
+
+CREATE SERVER batch10 FOREIGN DATA WRAPPER postgres_fdw OPTIONS( batch_size '10' );
+
+SELECT count(*)
+FROM pg_foreign_server
+WHERE srvname = 'batch10'
+AND srvoptions @> array['batch_size=10'];
+
+ALTER SERVER batch10 OPTIONS( SET batch_size '20' );
+
+SELECT count(*)
+FROM pg_foreign_server
+WHERE srvname = 'batch10'
+AND srvoptions @> array['batch_size=10'];
+
+SELECT count(*)
+FROM pg_foreign_server
+WHERE srvname = 'batch10'
+AND srvoptions @> array['batch_size=20'];
+
+CREATE FOREIGN TABLE table30 ( x int ) SERVER batch10 OPTIONS ( batch_size '30' );
+
+SELECT COUNT(*)
+FROM pg_foreign_table
+WHERE ftrelid = 'table30'::regclass
+AND ftoptions @> array['batch_size=30'];
+
+ALTER FOREIGN TABLE table30 OPTIONS ( SET batch_size '40');
+
+SELECT COUNT(*)
+FROM pg_foreign_table
+WHERE ftrelid = 'table30'::regclass
+AND ftoptions @> array['batch_size=30'];
+
+SELECT COUNT(*)
+FROM pg_foreign_table
+WHERE ftrelid = 'table30'::regclass
+AND ftoptions @> array['batch_size=40'];
+
+ROLLBACK;
+
+CREATE TABLE batch_table ( x int );
+
+CREATE FOREIGN TABLE ftable ( x int ) SERVER loopback OPTIONS ( table_name 'batch_table', batch_size '10' );
+EXPLAIN (VERBOSE, COSTS OFF) INSERT INTO ftable SELECT * FROM generate_series(1, 10) i;
+INSERT INTO ftable SELECT * FROM generate_series(1, 10) i;
+INSERT INTO ftable SELECT * FROM generate_series(11, 31) i;
+INSERT INTO ftable VALUES (32);
+INSERT INTO ftable VALUES (33), (34);
+SELECT COUNT(*) FROM ftable;
+TRUNCATE batch_table;
+DROP FOREIGN TABLE ftable;
+
+-- Disable batch insert
+CREATE FOREIGN TABLE ftable ( x int ) SERVER loopback OPTIONS ( table_name 'batch_table', batch_size '1' );
+EXPLAIN (VERBOSE, COSTS OFF) INSERT INTO ftable VALUES (1), (2);
+INSERT INTO ftable VALUES (1), (2);
+SELECT COUNT(*) FROM ftable;
+DROP FOREIGN TABLE ftable;
+DROP TABLE batch_table;
+
+-- Use partitioning
+CREATE TABLE batch_table ( x int ) PARTITION BY HASH (x);
+
+CREATE TABLE batch_table_p0 (LIKE batch_table);
+CREATE FOREIGN TABLE batch_table_p0f
+	PARTITION OF batch_table
+	FOR VALUES WITH (MODULUS 3, REMAINDER 0)
+	SERVER loopback
+	OPTIONS (table_name 'batch_table_p0', batch_size '10');
+
+CREATE TABLE batch_table_p1 (LIKE batch_table);
+CREATE FOREIGN TABLE batch_table_p1f
+	PARTITION OF batch_table
+	FOR VALUES WITH (MODULUS 3, REMAINDER 1)
+	SERVER loopback
+	OPTIONS (table_name 'batch_table_p1', batch_size '1');
+
+CREATE TABLE batch_table_p2
+	PARTITION OF batch_table
+	FOR VALUES WITH (MODULUS 3, REMAINDER 2);
+
+INSERT INTO batch_table SELECT * FROM generate_series(1, 66) i;
+SELECT COUNT(*) FROM batch_table;
+
+-- Clean up
+DROP TABLE batch_table CASCADE;

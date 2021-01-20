@@ -3887,9 +3887,10 @@ EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st7;
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Insert on public.ft1
    Remote SQL: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+   Batch Size: 1
    ->  Result
          Output: NULL::integer, 1001, 101, 'foo'::text, NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying, 'ft1       '::character(10), NULL::user_enum
-(4 rows)
+(5 rows)
 
 ALTER TABLE "S 1"."T 1" RENAME TO "T 0";
 ALTER FOREIGN TABLE ft1 OPTIONS (SET table_name 'T 0');
@@ -3920,9 +3921,10 @@ EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st7;
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Insert on public.ft1
    Remote SQL: INSERT INTO "S 1"."T 0"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+   Batch Size: 1
    ->  Result
          Output: NULL::integer, 1001, 101, 'foo'::text, NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying, 'ft1       '::character(10), NULL::user_enum
-(4 rows)
+(5 rows)
 
 ALTER TABLE "S 1"."T 0" RENAME TO "T 1";
 ALTER FOREIGN TABLE ft1 OPTIONS (SET table_name 'T 1');
@@ -4244,12 +4246,13 @@ INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Insert on public.ft2
    Remote SQL: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+   Batch Size: 1
    ->  Subquery Scan on "*SELECT*"
          Output: "*SELECT*"."?column?", "*SELECT*"."?column?_1", NULL::integer, "*SELECT*"."?column?_2", NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying, 'ft2       '::character(10), NULL::user_enum
          ->  Foreign Scan on public.ft2 ft2_1
                Output: (ft2_1.c1 + 1000), (ft2_1.c2 + 100), (ft2_1.c3 || ft2_1.c3)
                Remote SQL: SELECT "C 1", c2, c3 FROM "S 1"."T 1" LIMIT 20::bigint
-(7 rows)
+(8 rows)
 
 INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
 INSERT INTO ft2 (c1,c2,c3)
@@ -5360,9 +5363,10 @@ INSERT INTO ft2 (c1,c2,c3) VALUES (1200,999,'foo') RETURNING tableoid::regclass;
  Insert on public.ft2
    Output: (ft2.tableoid)::regclass
    Remote SQL: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+   Batch Size: 1
    ->  Result
          Output: 1200, 999, NULL::integer, 'foo'::text, NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying, 'ft2       '::character(10), NULL::user_enum
-(5 rows)
+(6 rows)
 
 INSERT INTO ft2 (c1,c2,c3) VALUES (1200,999,'foo') RETURNING tableoid::regclass;
  tableoid 
@@ -6212,9 +6216,10 @@ INSERT INTO rw_view VALUES (0, 5);
 --------------------------------------------------------------------------------
  Insert on public.foreign_tbl
    Remote SQL: INSERT INTO public.base_tbl(a, b) VALUES ($1, $2) RETURNING a, b
+   Batch Size: 1
    ->  Result
          Output: 0, 5
-(4 rows)
+(5 rows)
 
 INSERT INTO rw_view VALUES (0, 5); -- should fail
 ERROR:  new row violates check option for view "rw_view"
@@ -6225,9 +6230,10 @@ INSERT INTO rw_view VALUES (0, 15);
 --------------------------------------------------------------------------------
  Insert on public.foreign_tbl
    Remote SQL: INSERT INTO public.base_tbl(a, b) VALUES ($1, $2) RETURNING a, b
+   Batch Size: 1
    ->  Result
          Output: 0, 15
-(4 rows)
+(5 rows)
 
 INSERT INTO rw_view VALUES (0, 15); -- ok
 SELECT * FROM foreign_tbl;
@@ -8923,7 +8929,7 @@ DO $d$
     END;
 $d$;
 ERROR:  invalid option "password"
-HINT:  Valid options in this context are: service, passfile, channel_binding, connect_timeout, dbname, host, hostaddr, port, options, application_name, keepalives, keepalives_idle, keepalives_interval, keepalives_count, tcp_user_timeout, sslmode, sslcompression, sslcert, sslkey, sslrootcert, sslcrl, requirepeer, ssl_min_protocol_version, ssl_max_protocol_version, gssencmode, krbsrvname, gsslib, target_session_attrs, use_remote_estimate, fdw_startup_cost, fdw_tuple_cost, extensions, updatable, fetch_size
+HINT:  Valid options in this context are: service, passfile, channel_binding, connect_timeout, dbname, host, hostaddr, port, options, application_name, keepalives, keepalives_idle, keepalives_interval, keepalives_count, tcp_user_timeout, sslmode, sslcompression, sslcert, sslkey, sslrootcert, sslcrl, requirepeer, ssl_min_protocol_version, ssl_max_protocol_version, gssencmode, krbsrvname, gsslib, target_session_attrs, use_remote_estimate, fdw_startup_cost, fdw_tuple_cost, extensions, updatable, fetch_size, batch_size
 CONTEXT:  SQL statement "ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw')"
 PL/pgSQL function inline_code_block line 3 at EXECUTE
 -- If we add a password for our user mapping instead, we should get a different
@@ -9112,3 +9118,138 @@ SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
  loopback2   | t
 (1 row)
 
+-- ===================================================================
+-- batch insert
+-- ===================================================================
+BEGIN;
+CREATE SERVER batch10 FOREIGN DATA WRAPPER postgres_fdw OPTIONS( batch_size '10' );
+SELECT count(*)
+FROM pg_foreign_server
+WHERE srvname = 'batch10'
+AND srvoptions @> array['batch_size=10'];
+ count 
+-------
+     1
+(1 row)
+
+ALTER SERVER batch10 OPTIONS( SET batch_size '20' );
+SELECT count(*)
+FROM pg_foreign_server
+WHERE srvname = 'batch10'
+AND srvoptions @> array['batch_size=10'];
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*)
+FROM pg_foreign_server
+WHERE srvname = 'batch10'
+AND srvoptions @> array['batch_size=20'];
+ count 
+-------
+     1
+(1 row)
+
+CREATE FOREIGN TABLE table30 ( x int ) SERVER batch10 OPTIONS ( batch_size '30' );
+SELECT COUNT(*)
+FROM pg_foreign_table
+WHERE ftrelid = 'table30'::regclass
+AND ftoptions @> array['batch_size=30'];
+ count 
+-------
+     1
+(1 row)
+
+ALTER FOREIGN TABLE table30 OPTIONS ( SET batch_size '40');
+SELECT COUNT(*)
+FROM pg_foreign_table
+WHERE ftrelid = 'table30'::regclass
+AND ftoptions @> array['batch_size=30'];
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(*)
+FROM pg_foreign_table
+WHERE ftrelid = 'table30'::regclass
+AND ftoptions @> array['batch_size=40'];
+ count 
+-------
+     1
+(1 row)
+
+ROLLBACK;
+CREATE TABLE batch_table ( x int );
+CREATE FOREIGN TABLE ftable ( x int ) SERVER loopback OPTIONS ( table_name 'batch_table', batch_size '10' );
+EXPLAIN (VERBOSE, COSTS OFF) INSERT INTO ftable SELECT * FROM generate_series(1, 10) i;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Insert on public.ftable
+   Remote SQL: INSERT INTO public.batch_table(x) VALUES ($1)
+   Batch Size: 10
+   ->  Function Scan on pg_catalog.generate_series i
+         Output: i.i
+         Function Call: generate_series(1, 10)
+(6 rows)
+
+INSERT INTO ftable SELECT * FROM generate_series(1, 10) i;
+INSERT INTO ftable SELECT * FROM generate_series(11, 31) i;
+INSERT INTO ftable VALUES (32);
+INSERT INTO ftable VALUES (33), (34);
+SELECT COUNT(*) FROM ftable;
+ count 
+-------
+    34
+(1 row)
+
+TRUNCATE batch_table;
+DROP FOREIGN TABLE ftable;
+-- Disable batch insert
+CREATE FOREIGN TABLE ftable ( x int ) SERVER loopback OPTIONS ( table_name 'batch_table', batch_size '1' );
+EXPLAIN (VERBOSE, COSTS OFF) INSERT INTO ftable VALUES (1), (2);
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Insert on public.ftable
+   Remote SQL: INSERT INTO public.batch_table(x) VALUES ($1)
+   Batch Size: 1
+   ->  Values Scan on "*VALUES*"
+         Output: "*VALUES*".column1
+(5 rows)
+
+INSERT INTO ftable VALUES (1), (2);
+SELECT COUNT(*) FROM ftable;
+ count 
+-------
+     2
+(1 row)
+
+DROP FOREIGN TABLE ftable;
+DROP TABLE batch_table;
+-- Use partitioning
+CREATE TABLE batch_table ( x int ) PARTITION BY HASH (x);
+CREATE TABLE batch_table_p0 (LIKE batch_table);
+CREATE FOREIGN TABLE batch_table_p0f
+	PARTITION OF batch_table
+	FOR VALUES WITH (MODULUS 3, REMAINDER 0)
+	SERVER loopback
+	OPTIONS (table_name 'batch_table_p0', batch_size '10');
+CREATE TABLE batch_table_p1 (LIKE batch_table);
+CREATE FOREIGN TABLE batch_table_p1f
+	PARTITION OF batch_table
+	FOR VALUES WITH (MODULUS 3, REMAINDER 1)
+	SERVER loopback
+	OPTIONS (table_name 'batch_table_p1', batch_size '1');
+CREATE TABLE batch_table_p2
+	PARTITION OF batch_table
+	FOR VALUES WITH (MODULUS 3, REMAINDER 2);
+INSERT INTO batch_table SELECT * FROM generate_series(1, 66) i;
+SELECT COUNT(*) FROM batch_table;
+ count 
+-------
+    66
+(1 row)
+
+-- Clean up
+DROP TABLE batch_table CASCADE;

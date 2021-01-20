@@ -85,6 +85,14 @@ typedef TupleTableSlot *(*ExecForeignInsert_function) (EState *estate,
 													   TupleTableSlot *slot,
 													   TupleTableSlot *planSlot);
 
+typedef TupleTableSlot **(*ExecForeignBatchInsert_function) (EState *estate,
+													   ResultRelInfo *rinfo,
+													   TupleTableSlot **slots,
+													   TupleTableSlot **planSlots,
+													   int *numSlots);
+
+typedef int (*GetForeignModifyBatchSize_function) (ResultRelInfo *rinfo);
+
 typedef TupleTableSlot *(*ExecForeignUpdate_function) (EState *estate,
 													   ResultRelInfo *rinfo,
 													   TupleTableSlot *slot,
@@ -209,6 +217,8 @@ typedef struct FdwRoutine
 	PlanForeignModify_function PlanForeignModify;
 	BeginForeignModify_function BeginForeignModify;
 	ExecForeignInsert_function ExecForeignInsert;
+	ExecForeignBatchInsert_function ExecForeignBatchInsert;
+	GetForeignModifyBatchSize_function GetForeignModifyBatchSize;
 	ExecForeignUpdate_function ExecForeignUpdate;
 	ExecForeignDelete_function ExecForeignDelete;
 	EndForeignModify_function EndForeignModify;

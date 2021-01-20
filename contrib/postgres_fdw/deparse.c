@@ -1705,13 +1705,16 @@ deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
  * The statement text is appended to buf, and we also create an integer List
  * of the columns being retrieved by WITH CHECK OPTION or RETURNING (if any),
  * which is returned to *retrieved_attrs.
+ *
+ * This also stores end position of the VALUES clause, so that we can rebuild
+ * an INSERT for a batch of rows later.
  */
 void
 deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 				 Index rtindex, Relation rel,
 				 List *targetAttrs, bool doNothing,
 				 List *withCheckOptionList, List *returningList,
-				 List **retrieved_attrs)
+				 List **retrieved_attrs, int *values_end_len)
 {
 	AttrNumber	pindex;
 	bool		first;
@@ -1754,6 +1757,7 @@ deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 	}
 	else
 		appendStringInfoString(buf, " DEFAULT VALUES");
+	*values_end_len = buf->len;
 
 	if (doNothing)
 		appendStringInfoString(buf, " ON CONFLICT DO NOTHING");
@@ -1761,6 +1765,54 @@ deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 	deparseReturningList(buf, rte, rtindex, rel,
 						 rel->trigdesc && rel->trigdesc->trig_insert_after_row,
 						 withCheckOptionList, returningList, retrieved_attrs);
+}
+
+/*
+ * rebuild remote INSERT statement
+ *
+ * Provided a number of rows in a batch, builds INSERT statement with the
+ * right number of parameters.
+ */
+void
+rebuildInsertSql(StringInfo buf, char *orig_query,
+				 int values_end_len, int num_cols,
+				 int num_rows)
+{
+	int			i, j;
+	int			pindex;
+	bool		first;
+
+	/* Make sure the values_end_len is sensible */
+	Assert((values_end_len > 0) && (values_end_len <= strlen(orig_query)));
+
+	/* Copy up to the end of the first record from the original query */
+	appendBinaryStringInfo(buf, orig_query, values_end_len);
+
+	/*
+	 * Add records to VALUES clause (we already have parameters for the
+	 * first row, so start at the right offset).
+	 */
+	pindex = num_cols + 1;
+	for (i = 0; i < num_rows; i++)
+	{
+		appendStringInfoString(buf, ", (");
+
+		first = true;
+		for (j = 0; j < num_cols; j++)
+		{
+			if (!first)
+				appendStringInfoString(buf, ", ");
+			first = false;
+
+			appendStringInfo(buf, "$%d", pindex);
+			pindex++;
+		}
+
+		appendStringInfoChar(buf, ')');
+	}
+
+	/* Copy stuff after VALUES clause from the original query */
+	appendStringInfoString(buf, orig_query + values_end_len);
 }
 
 /*

@@ -523,8 +523,9 @@ BeginForeignModify(ModifyTableState *mtstate,
      Begin executing a foreign table modification operation.  This routine is
      called during executor startup.  It should perform any initialization
      needed prior to the actual table modifications.  Subsequently,
-     <function>ExecForeignInsert</function>, <function>ExecForeignUpdate</function> or
-     <function>ExecForeignDelete</function> will be called for each tuple to be
+     <function>ExecForeignInsert/ExecForeignBatchInsert</function>,
+     <function>ExecForeignUpdate</function> or
+     <function>ExecForeignDelete</function> will be called for tuple(s) to be
      inserted, updated, or deleted.
     </para>
 
@@ -610,6 +611,81 @@ ExecForeignInsert(EState *estate,
      a foreign table, in which case it is called in a different way than it
      is in the <command>INSERT</command> case.  See the callback functions
      described below that allow the FDW to support that.
+    </para>
+
+    <para>
+<programlisting>
+TupleTableSlot **
+ExecForeignBatchInsert(EState *estate,
+                  ResultRelInfo *rinfo,
+                  TupleTableSlot **slots,
+                  TupleTableSlot *planSlots,
+                  int *numSlots);
+</programlisting>
+
+     Insert multiple tuples in bulk into the foreign table.
+     The parameters are the same for <function>ExecForeignInsert</function>
+     except <literal>slots</literal> and <literal>planSlots</literal> contain
+     multiple tuples and <literal>*numSlots></literal> specifies the number of
+     tuples in those arrays.
+    </para>
+
+    <para>
+     The return value is an array of slots containing the data that was
+     actually inserted (this might differ from the data supplied, for
+     example as a result of trigger actions.)
+     The passed-in <literal>slots</literal> can be re-used for this purpose.
+     The number of successfully inserted tuples is returned in
+     <literal>*numSlots</literal>.
+    </para>
+
+    <para>
+     The data in the returned slot is used only if the <command>INSERT</command>
+     statement involves a view
+     <literal>WITH CHECK OPTION</literal>; or if the foreign table has
+     an <literal>AFTER ROW</literal> trigger.  Triggers require all columns,
+     but the FDW could choose to optimize away returning some or all columns
+     depending on the contents of the
+     <literal>WITH CHECK OPTION</literal> constraints.
+    </para>
+
+    <para>
+     If the <function>ExecForeignBatchInsert</function> or
+     <function>GetForeignModifyBatchSize</function> pointer is set to
+     <literal>NULL</literal>, attempts to insert into the foreign table will
+     use <function>ExecForeignInsert</function>.
+     This function is not used if the <command>INSERT</command> has the
+     <literal>RETURNING></literal> clause.
+    </para>
+
+    <para>
+     Note that this function is also called when inserting routed tuples into
+     a foreign-table partition.  See the callback functions
+     described below that allow the FDW to support that.
+    </para>
+
+    <para>
+<programlisting>
+int
+GetForeignModifyBatchSize(ResultRelInfo *rinfo);
+</programlisting>
+
+     Report the maximum number of tuples that a single
+     <function>ExecForeignBatchInsert</function> call can handle for
+     the specified foreign table.  That is, The executor passes at most
+     the number of tuples that this function returns to
+     <function>ExecForeignBatchInsert</function>.
+     <literal>rinfo</literal> is the <structname>ResultRelInfo</structname> struct describing
+     the target foreign table.
+     The FDW is expected to provide a foreign server and/or foreign
+     table option for the user to set this value, or some hard-coded value.
+    </para>
+
+    <para>
+     If the <function>ExecForeignBatchInsert</function> or
+     <function>GetForeignModifyBatchSize</function> pointer is set to
+     <literal>NULL</literal>, attempts to insert into the foreign table will
+     use <function>ExecForeignInsert</function>.
     </para>
 
     <para>
@@ -741,8 +817,9 @@ BeginForeignInsert(ModifyTableState *mtstate,
      in both cases when it is the partition chosen for tuple routing and the
      target specified in a <command>COPY FROM</command> command.  It should
      perform any initialization needed prior to the actual insertion.
-     Subsequently, <function>ExecForeignInsert</function> will be called for
-     each tuple to be inserted into the foreign table.
+     Subsequently, <function>ExecForeignInsert</function> or
+     <function>ExecForeignBatchInsert</function> will be called for
+     tuple(s) to be inserted into the foreign table.
     </para>
 
     <para>
@@ -773,8 +850,8 @@ BeginForeignInsert(ModifyTableState *mtstate,
     <para>
      Note that if the FDW does not support routable foreign-table partitions
      and/or executing <command>COPY FROM</command> on foreign tables, this
-     function or <function>ExecForeignInsert</function> subsequently called
-     must throw error as needed.
+     function or <function>ExecForeignInsert/ExecForeignBatchInsert</function>
+     subsequently called must throw error as needed.
     </para>
 
     <para>

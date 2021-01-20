@@ -354,6 +354,19 @@ OPTIONS (ADD password_required 'false');
      </listitem>
     </varlistentry>
 
+    <varlistentry>
+     <term><literal>batch_size</literal></term>
+     <listitem>
+      <para>
+       This option specifies the number of rows <filename>postgres_fdw</filename>
+       should insert in each insert operation. It can be specified for a
+       foreign table or a foreign server. The option specified on a table
+       overrides an option specified for the server.
+       The default is <literal>1</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
    </variablelist>
 
   </sect3>
