@@ -248,6 +248,9 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 	if (GistFollowRight(page))
 		elog(ERROR, "concurrent GiST page split was incomplete");
 
+	/* should never try to insert to a deleted page */
+	Assert(!GistPageIsDeleted(page));
+
 	*splitinfo = NIL;
 
 	/*
@@ -863,7 +866,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 					 */
 				}
 				else if ((GistFollowRight(stack->page) ||
-						  stack->parent->lsn < GistPageGetNSN(stack->page)) &&
+						  stack->parent->lsn < GistPageGetNSN(stack->page)) ||
 						 GistPageIsDeleted(stack->page))
 				{
 					/*
