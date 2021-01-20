@@ -51,13 +51,13 @@ select pg_truncate_visibility_map('test_foreign_table');
 -- check some of the allowed relkinds
 create table regular_table (a int);
 insert into regular_table values (1), (2);
-vacuum regular_table;
+vacuum (disable_page_skipping) regular_table;
 select count(*) > 0 from pg_visibility('regular_table');
 truncate regular_table;
 select count(*) > 0 from pg_visibility('regular_table');
 
 create materialized view matview_visibility_test as select * from regular_table;
-vacuum matview_visibility_test;
+vacuum (disable_page_skipping) matview_visibility_test;
 select count(*) > 0 from pg_visibility('matview_visibility_test');
 insert into regular_table values (1), (2);
 refresh materialized view matview_visibility_test;
@@ -65,7 +65,7 @@ select count(*) > 0 from pg_visibility('matview_visibility_test');
 
 -- regular tables which are part of a partition *do* have visibility maps
 insert into test_partition values (1);
-vacuum test_partition;
+vacuum (disable_page_skipping) test_partition;
 select count(*) > 0 from pg_visibility('test_partition', 0);
 select count(*) > 0 from pg_visibility_map('test_partition');
 select count(*) > 0 from pg_visibility_map_summary('test_partition');
