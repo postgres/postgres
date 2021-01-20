@@ -1049,6 +1049,26 @@ ALTER DEFAULT PRIVILEGES REVOKE ALL ON SCHEMAS FROM regress_priv_user2;
 
 COMMIT;
 
+-- Test for DROP OWNED BY with shared dependencies.  This is done in a
+-- separate, rollbacked, transaction to avoid any trouble with other
+-- regression sessions.
+BEGIN;
+ALTER DEFAULT PRIVILEGES GRANT ALL ON FUNCTIONS TO regress_priv_user2;
+ALTER DEFAULT PRIVILEGES GRANT ALL ON SCHEMAS TO regress_priv_user2;
+ALTER DEFAULT PRIVILEGES GRANT ALL ON SEQUENCES TO regress_priv_user2;
+ALTER DEFAULT PRIVILEGES GRANT ALL ON TABLES TO regress_priv_user2;
+ALTER DEFAULT PRIVILEGES GRANT ALL ON TYPES TO regress_priv_user2;
+SELECT count(*) FROM pg_shdepend
+  WHERE deptype = 'a' AND
+        refobjid = 'regress_priv_user2'::regrole AND
+	classid = 'pg_default_acl'::regclass;
+DROP OWNED BY regress_priv_user2, regress_priv_user2;
+SELECT count(*) FROM pg_shdepend
+  WHERE deptype = 'a' AND
+        refobjid = 'regress_priv_user2'::regrole AND
+	classid = 'pg_default_acl'::regclass;
+ROLLBACK;
+
 CREATE SCHEMA testns5;
 
 SELECT has_schema_privilege('regress_priv_user2', 'testns5', 'USAGE'); -- no
