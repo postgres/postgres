@@ -71,7 +71,7 @@ select pg_truncate_visibility_map('test_foreign_table');
 create table regular_table (a int, b text);
 alter table regular_table alter column b set storage external;
 insert into regular_table values (1, repeat('one', 1000)), (2, repeat('two', 1000));
-vacuum regular_table;
+vacuum (disable_page_skipping) regular_table;
 select count(*) > 0 from pg_visibility('regular_table');
 select count(*) > 0 from pg_visibility((select reltoastrelid from pg_class where relname = 'regular_table'));
 truncate regular_table;
@@ -79,7 +79,7 @@ select count(*) > 0 from pg_visibility('regular_table');
 select count(*) > 0 from pg_visibility((select reltoastrelid from pg_class where relname = 'regular_table'));
 
 create materialized view matview_visibility_test as select * from regular_table;
-vacuum matview_visibility_test;
+vacuum (disable_page_skipping) matview_visibility_test;
 select count(*) > 0 from pg_visibility('matview_visibility_test');
 insert into regular_table values (1), (2);
 refresh materialized view matview_visibility_test;
@@ -87,7 +87,7 @@ select count(*) > 0 from pg_visibility('matview_visibility_test');
 
 -- regular tables which are part of a partition *do* have visibility maps
 insert into test_partition values (1);
-vacuum test_partition;
+vacuum (disable_page_skipping) test_partition;
 select count(*) > 0 from pg_visibility('test_partition', 0);
 select count(*) > 0 from pg_visibility_map('test_partition');
 select count(*) > 0 from pg_visibility_map_summary('test_partition');

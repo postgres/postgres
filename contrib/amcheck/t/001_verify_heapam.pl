@@ -46,7 +46,7 @@ detects_heap_corruption(
 # Check a corrupt table with all-frozen data
 #
 fresh_test_table('test');
-$node->safe_psql('postgres', q(VACUUM FREEZE test));
+$node->safe_psql('postgres', q(VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) test));
 corrupt_first_page('test');
 detects_heap_corruption("verify_heapam('test')",
 	"all-frozen corrupted table");

@@ -51,7 +51,7 @@ SELECT * FROM verify_heapam(relation := 'heaptest', startblock := 0, endblock :=
 SELECT * FROM verify_heapam(relation := 'heaptest', startblock := 10000, endblock := 11000);
 
 -- Vacuum freeze to change the xids encountered in subsequent tests
-VACUUM FREEZE heaptest;
+VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) heaptest;
 
 -- Check that valid options are not rejected nor corruption reported
 -- for a non-empty frozen table
