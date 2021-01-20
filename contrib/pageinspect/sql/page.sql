@@ -3,7 +3,7 @@ CREATE EXTENSION pageinspect;
 CREATE TABLE test1 (a int, b int);
 INSERT INTO test1 VALUES (16777217, 131584);
 
-VACUUM test1;  -- set up FSM
+VACUUM (DISABLE_PAGE_SKIPPING) test1;  -- set up FSM
 
 -- The page contents can vary, so just test that it can be read
 -- successfully, but don't keep the output.
@@ -32,15 +32,9 @@ SELECT tuple_data_split('test1'::regclass, t_data, t_infomask, t_infomask2, t_bi
 SELECT * FROM fsm_page_contents(get_raw_page('test1', 'fsm', 0));
 
 -- If we freeze the only tuple on test1, the infomask should
--- always be the same in all test runs. we show raw flags by
--- default: HEAP_XMIN_COMMITTED and HEAP_XMIN_INVALID.
-VACUUM FREEZE test1;
+-- always be the same in all test runs.
+VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) test1;
 
-SELECT t_infomask, t_infomask2, raw_flags, combined_flags
-FROM heap_page_items(get_raw_page('test1', 0)),
-     LATERAL heap_tuple_infomask_flags(t_infomask, t_infomask2);
-
--- output the decoded flag HEAP_XMIN_FROZEN instead
 SELECT t_infomask, t_infomask2, raw_flags, combined_flags
 FROM heap_page_items(get_raw_page('test1', 0)),
      LATERAL heap_tuple_infomask_flags(t_infomask, t_infomask2);
