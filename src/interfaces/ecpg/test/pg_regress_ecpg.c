@@ -80,7 +80,7 @@ ecpg_filter_source(const char *sourcefile, const char *outfile)
 }
 
 /*
- * Remove the details of "could not connect to ...: " error messages
+ * Remove the details of connection failure error messages
  * in a test result file, since the target host/pathname and/or port
  * can vary.  Rewrite the result file in-place.
  *
@@ -113,15 +113,15 @@ ecpg_filter_stderr(const char *resultfile, const char *tmpfile)
 
 	while (pg_get_line_buf(s, &linebuf))
 	{
-		char	   *p1 = strstr(linebuf.data, "could not connect to ");
+		char	   *p1 = strstr(linebuf.data, "connection to server ");
 
 		if (p1)
 		{
-			char	   *p2 = strstr(p1, ": ");
+			char	   *p2 = strstr(p1, "failed: ");
 
 			if (p2)
 			{
-				memmove(p1 + 17, p2, strlen(p2) + 1);
+				memmove(p1 + 21, p2, strlen(p2) + 1);
 				/* we don't bother to fix up linebuf.len */
 			}
 		}

@@ -1668,17 +1668,16 @@ getHostaddr(PGconn *conn, char *host_addr, int host_addr_len)
 		host_addr[0] = '\0';
 }
 
-/* ----------
- * emitCouldNotConnect -
- * Speculatively append "could not connect to ...: " to conn->errorMessage
- * once we've identified the current connection target address.  This ensures
- * that any subsequent error message will be properly attributed to the
- * server we couldn't connect to.  conn->raddr must be valid, and the result
- * of getHostaddr() must be supplied.
- * ----------
+/*
+ * emitHostIdentityInfo -
+ * Speculatively append "connection to server so-and-so failed: " to
+ * conn->errorMessage once we've identified the current connection target
+ * address.  This ensures that any subsequent error message will be properly
+ * attributed to the server we couldn't connect to.  conn->raddr must be
+ * valid, and the result of getHostaddr() must be supplied.
  */
 static void
-emitCouldNotConnect(PGconn *conn, const char *host_addr)
+emitHostIdentityInfo(PGconn *conn, const char *host_addr)
 {
 #ifdef HAVE_UNIX_SOCKETS
 	if (IS_AF_UNIX(conn->raddr.addr.ss_family))
@@ -1690,7 +1689,7 @@ emitCouldNotConnect(PGconn *conn, const char *host_addr)
 						   service, sizeof(service),
 						   NI_NUMERICSERV);
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not connect to socket \"%s\": "),
+						  libpq_gettext("connection to server on socket \"%s\" failed: "),
 						  service);
 	}
 	else
@@ -1717,12 +1716,12 @@ emitCouldNotConnect(PGconn *conn, const char *host_addr)
 			host_addr[0] &&
 			strcmp(displayed_host, host_addr) != 0)
 			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not connect to host \"%s\" (%s), port %s: "),
+							  libpq_gettext("connection to server at \"%s\" (%s), port %s failed: "),
 							  displayed_host, host_addr,
 							  displayed_port);
 		else
 			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not connect to host \"%s\", port %s: "),
+							  libpq_gettext("connection to server at \"%s\", port %s failed: "),
 							  displayed_host,
 							  displayed_port);
 	}
@@ -2524,7 +2523,7 @@ keep_going:						/* We will come back to here until there is
 							conn->try_next_addr = true;
 							goto keep_going;
 						}
-						emitCouldNotConnect(conn, host_addr);
+						emitHostIdentityInfo(conn, host_addr);
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not create socket: %s\n"),
 										  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)));
@@ -2534,9 +2533,11 @@ keep_going:						/* We will come back to here until there is
 					/*
 					 * Once we've identified a target address, all errors
 					 * except the preceding socket()-failure case should be
-					 * prefixed with "could not connect to <target>: ".
+					 * prefixed with host-identity information.  (If the
+					 * connection succeeds, the contents of conn->errorMessage
+					 * won't matter, so this is harmless.)
 					 */
-					emitCouldNotConnect(conn, host_addr);
+					emitHostIdentityInfo(conn, host_addr);
 
 					/*
 					 * Select socket options: no delay of outgoing data for
