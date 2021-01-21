@@ -18,10 +18,11 @@
 
 
 /* Convenience macro for the common case of a valid-everywhere qual */
-#define make_simple_restrictinfo(clause)  \
-	make_restrictinfo(clause, true, false, false, 0, NULL, NULL, NULL)
+#define make_simple_restrictinfo(root, clause)  \
+	make_restrictinfo(root, clause, true, false, false, 0, NULL, NULL, NULL)
 
-extern RestrictInfo *make_restrictinfo(Expr *clause,
+extern RestrictInfo *make_restrictinfo(PlannerInfo *root,
+									   Expr *clause,
 									   bool is_pushed_down,
 									   bool outerjoin_delayed,
 									   bool pseudoconstant,

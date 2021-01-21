@@ -5882,7 +5882,8 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 * RestrictInfos, so we must make our own.
 			 */
 			Assert(!IsA(expr, RestrictInfo));
-			rinfo = make_restrictinfo(expr,
+			rinfo = make_restrictinfo(root,
+									  expr,
 									  true,
 									  false,
 									  false,

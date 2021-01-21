@@ -268,7 +268,8 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 	 * Build a RestrictInfo from the new OR clause.  We can assume it's valid
 	 * as a base restriction clause.
 	 */
-	or_rinfo = make_restrictinfo(orclause,
+	or_rinfo = make_restrictinfo(root,
+								 orclause,
 								 true,
 								 false,
 								 false,

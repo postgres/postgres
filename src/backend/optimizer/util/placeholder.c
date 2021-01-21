@@ -98,7 +98,7 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 	 * ph_eval_at.  If no referenced rels are within the syntactic scope,
 	 * force evaluation at the syntactic location.
 	 */
-	rels_used = pull_varnos((Node *) phv->phexpr);
+	rels_used = pull_varnos(root, (Node *) phv->phexpr);
 	phinfo->ph_lateral = bms_difference(rels_used, phv->phrels);
 	if (bms_is_empty(phinfo->ph_lateral))
 		phinfo->ph_lateral = NULL;	/* make it exactly NULL if empty */

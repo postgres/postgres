@@ -21,7 +21,8 @@
 #include "optimizer/restrictinfo.h"
 
 
-static RestrictInfo *make_restrictinfo_internal(Expr *clause,
+static RestrictInfo *make_restrictinfo_internal(PlannerInfo *root,
+												Expr *clause,
 												Expr *orclause,
 												bool is_pushed_down,
 												bool outerjoin_delayed,
@@ -30,7 +31,8 @@ static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 												Relids required_relids,
 												Relids outer_relids,
 												Relids nullable_relids);
-static Expr *make_sub_restrictinfos(Expr *clause,
+static Expr *make_sub_restrictinfos(PlannerInfo *root,
+									Expr *clause,
 									bool is_pushed_down,
 									bool outerjoin_delayed,
 									bool pseudoconstant,
@@ -56,7 +58,8 @@ static Expr *make_sub_restrictinfos(Expr *clause,
  * later.
  */
 RestrictInfo *
-make_restrictinfo(Expr *clause,
+make_restrictinfo(PlannerInfo *root,
+				  Expr *clause,
 				  bool is_pushed_down,
 				  bool outerjoin_delayed,
 				  bool pseudoconstant,
@@ -70,7 +73,8 @@ make_restrictinfo(Expr *clause,
 	 * above each subclause of the top-level AND/OR structure.
 	 */
 	if (is_orclause(clause))
-		return (RestrictInfo *) make_sub_restrictinfos(clause,
+		return (RestrictInfo *) make_sub_restrictinfos(root,
+													   clause,
 													   is_pushed_down,
 													   outerjoin_delayed,
 													   pseudoconstant,
@@ -82,7 +86,8 @@ make_restrictinfo(Expr *clause,
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
 	Assert(!is_andclause(clause));
 
-	return make_restrictinfo_internal(clause,
+	return make_restrictinfo_internal(root,
+									  clause,
 									  NULL,
 									  is_pushed_down,
 									  outerjoin_delayed,
@@ -99,7 +104,8 @@ make_restrictinfo(Expr *clause,
  * Common code for the main entry points and the recursive cases.
  */
 static RestrictInfo *
-make_restrictinfo_internal(Expr *clause,
+make_restrictinfo_internal(PlannerInfo *root,
+						   Expr *clause,
 						   Expr *orclause,
 						   bool is_pushed_down,
 						   bool outerjoin_delayed,
@@ -137,8 +143,8 @@ make_restrictinfo_internal(Expr *clause,
 	 */
 	if (is_opclause(clause) && list_length(((OpExpr *) clause)->args) == 2)
 	{
-		restrictinfo->left_relids = pull_varnos(get_leftop(clause));
-		restrictinfo->right_relids = pull_varnos(get_rightop(clause));
+		restrictinfo->left_relids = pull_varnos(root, get_leftop(clause));
+		restrictinfo->right_relids = pull_varnos(root, get_rightop(clause));
 
 		restrictinfo->clause_relids = bms_union(restrictinfo->left_relids,
 												restrictinfo->right_relids);
@@ -165,7 +171,7 @@ make_restrictinfo_internal(Expr *clause,
 		restrictinfo->left_relids = NULL;
 		restrictinfo->right_relids = NULL;
 		/* and get the total relid set the hard way */
-		restrictinfo->clause_relids = pull_varnos((Node *) clause);
+		restrictinfo->clause_relids = pull_varnos(root, (Node *) clause);
 	}
 
 	/* required_relids defaults to clause_relids */
@@ -225,7 +231,8 @@ make_restrictinfo_internal(Expr *clause,
  * contained rels.
  */
 static Expr *
-make_sub_restrictinfos(Expr *clause,
+make_sub_restrictinfos(PlannerInfo *root,
+					   Expr *clause,
 					   bool is_pushed_down,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
@@ -241,7 +248,8 @@ make_sub_restrictinfos(Expr *clause,
 
 		foreach(temp, ((BoolExpr *) clause)->args)
 			orlist = lappend(orlist,
-							 make_sub_restrictinfos(lfirst(temp),
+							 make_sub_restrictinfos(root,
+													lfirst(temp),
 													is_pushed_down,
 													outerjoin_delayed,
 													pseudoconstant,
@@ -249,7 +257,8 @@ make_sub_restrictinfos(Expr *clause,
 													NULL,
 													outer_relids,
 													nullable_relids));
-		return (Expr *) make_restrictinfo_internal(clause,
+		return (Expr *) make_restrictinfo_internal(root,
+												   clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
 												   outerjoin_delayed,
@@ -266,7 +275,8 @@ make_sub_restrictinfos(Expr *clause,
 
 		foreach(temp, ((BoolExpr *) clause)->args)
 			andlist = lappend(andlist,
-							  make_sub_restrictinfos(lfirst(temp),
+							  make_sub_restrictinfos(root,
+													 lfirst(temp),
 													 is_pushed_down,
 													 outerjoin_delayed,
 													 pseudoconstant,
@@ -277,7 +287,8 @@ make_sub_restrictinfos(Expr *clause,
 		return make_andclause(andlist);
 	}
 	else
-		return (Expr *) make_restrictinfo_internal(clause,
+		return (Expr *) make_restrictinfo_internal(root,
+												   clause,
 												   NULL,
 												   is_pushed_down,
 												   outerjoin_delayed,
