@@ -44,6 +44,9 @@
 #include "utils/sampling.h"
 #include "utils/selfuncs.h"
 
+/* source-code-compatibility hacks for pull_varnos() API change */
+#define make_restrictinfo(a,b,c,d,e,f,g,h,i) make_restrictinfo_new(a,b,c,d,e,f,g,h,i)
+
 PG_MODULE_MAGIC;
 
 /* Default CPU cost to start up a foreign query. */
@@ -5665,7 +5668,8 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 * RestrictInfos, so we must make our own.
 			 */
 			Assert(!IsA(expr, RestrictInfo));
-			rinfo = make_restrictinfo(expr,
+			rinfo = make_restrictinfo(root,
+									  expr,
 									  true,
 									  false,
 									  false,

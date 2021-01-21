@@ -32,6 +32,10 @@
 #include "utils/lsyscache.h"
 
 
+/* source-code-compatibility hacks for pull_varnos() API change */
+#define pull_varnos(a,b) pull_varnos_new(a,b)
+#define make_restrictinfo(a,b,c,d,e,f,g,h,i) make_restrictinfo_new(a,b,c,d,e,f,g,h,i)
+
 static EquivalenceMember *add_eq_member(EquivalenceClass *ec,
 										Expr *expr, Relids relids, Relids nullable_relids,
 										bool is_child, Oid datatype);
@@ -191,7 +195,8 @@ process_equivalence(PlannerInfo *root,
 			ntest->location = -1;
 
 			*p_restrictinfo =
-				make_restrictinfo((Expr *) ntest,
+				make_restrictinfo(root,
+								  (Expr *) ntest,
 								  restrictinfo->is_pushed_down,
 								  restrictinfo->outerjoin_delayed,
 								  restrictinfo->pseudoconstant,
@@ -708,7 +713,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	/*
 	 * Get the precise set of nullable relids appearing in the expression.
 	 */
-	expr_relids = pull_varnos((Node *) expr);
+	expr_relids = pull_varnos(root, (Node *) expr);
 	nullable_relids = bms_intersect(nullable_relids, expr_relids);
 
 	newem = add_eq_member(newec, copyObject(expr), expr_relids,
@@ -1449,7 +1454,8 @@ create_join_clause(PlannerInfo *root,
 	 */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
-	rinfo = build_implied_join_equality(opno,
+	rinfo = build_implied_join_equality(root,
+										opno,
 										ec->ec_collation,
 										leftem->em_expr,
 										rightem->em_expr,
@@ -1763,7 +1769,8 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 											 cur_em->em_datatype);
 			if (!OidIsValid(eq_op))
 				continue;		/* can't generate equality */
-			newrinfo = build_implied_join_equality(eq_op,
+			newrinfo = build_implied_join_equality(root,
+												   eq_op,
 												   cur_ec->ec_collation,
 												   innervar,
 												   cur_em->em_expr,
@@ -1906,7 +1913,8 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 											 cur_em->em_datatype);
 			if (OidIsValid(eq_op))
 			{
-				newrinfo = build_implied_join_equality(eq_op,
+				newrinfo = build_implied_join_equality(root,
+													   eq_op,
 													   cur_ec->ec_collation,
 													   leftvar,
 													   cur_em->em_expr,
@@ -1921,7 +1929,8 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 											 cur_em->em_datatype);
 			if (OidIsValid(eq_op))
 			{
-				newrinfo = build_implied_join_equality(eq_op,
+				newrinfo = build_implied_join_equality(root,
+													   eq_op,
 													   cur_ec->ec_collation,
 													   rightvar,
 													   cur_em->em_expr,

@@ -29,6 +29,15 @@ extern RestrictInfo *make_restrictinfo(Expr *clause,
 									   Relids required_relids,
 									   Relids outer_relids,
 									   Relids nullable_relids);
+extern RestrictInfo *make_restrictinfo_new(PlannerInfo *root,
+										   Expr *clause,
+										   bool is_pushed_down,
+										   bool outerjoin_delayed,
+										   bool pseudoconstant,
+										   Index security_level,
+										   Relids required_relids,
+										   Relids outer_relids,
+										   Relids nullable_relids);
 extern RestrictInfo *commute_restrictinfo(RestrictInfo *rinfo, Oid comm_op);
 extern bool restriction_is_or_clause(RestrictInfo *restrictinfo);
 extern bool restriction_is_securely_promotable(RestrictInfo *restrictinfo,

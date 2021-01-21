@@ -32,6 +32,9 @@
 #include "optimizer/tlist.h"
 #include "utils/lsyscache.h"
 
+/* source-code-compatibility hacks for pull_varnos() API change */
+#define pull_varnos(a,b) pull_varnos_new(a,b)
+
 /* local functions */
 static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
 static void remove_rel_from_query(PlannerInfo *root, int relid,
@@ -232,7 +235,7 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 			continue;			/* it definitely doesn't reference innerrel */
 		if (bms_is_subset(phinfo->ph_eval_at, innerrel->relids))
 			return false;		/* there isn't any other place to eval PHV */
-		if (bms_overlap(pull_varnos((Node *) phinfo->ph_var->phexpr),
+		if (bms_overlap(pull_varnos(root, (Node *) phinfo->ph_var->phexpr),
 						innerrel->relids))
 			return false;		/* it does reference innerrel */
 	}

@@ -39,6 +39,10 @@
 #include "rewrite/rewriteManip.h"
 
 
+/* source-code-compatibility hacks for pull_varnos() API change */
+#define pull_varnos(a,b) pull_varnos_new(a,b)
+#define pull_varnos_of_level(a,b,c) pull_varnos_of_level_new(a,b,c)
+
 typedef struct pullup_replace_vars_context
 {
 	PlannerInfo *root;
@@ -81,7 +85,8 @@ static void pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root,
 									   int childRToffset);
 static void make_setop_translation_list(Query *query, Index newvarno,
 										List **translated_vars);
-static bool is_simple_subquery(Query *subquery, RangeTblEntry *rte,
+static bool is_simple_subquery(PlannerInfo *root, Query *subquery,
+							   RangeTblEntry *rte,
 							   JoinExpr *lowest_outer_join);
 static Node *pull_up_simple_values(PlannerInfo *root, Node *jtnode,
 								   RangeTblEntry *rte);
@@ -90,7 +95,8 @@ static bool is_simple_union_all(Query *subquery);
 static bool is_simple_union_all_recurse(Node *setOp, Query *setOpQuery,
 										List *colTypes);
 static bool is_safe_append_member(Query *subquery);
-static bool jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
+static bool jointree_contains_lateral_outer_refs(PlannerInfo *root,
+												 Node *jtnode, bool restricted,
 												 Relids safe_upper_varnos);
 static void replace_vars_in_jointree(Node *jtnode,
 									 pullup_replace_vars_context *context,
@@ -723,7 +729,7 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 		 * unless is_safe_append_member says so.
 		 */
 		if (rte->rtekind == RTE_SUBQUERY &&
-			is_simple_subquery(rte->subquery, rte, lowest_outer_join) &&
+			is_simple_subquery(root, rte->subquery, rte, lowest_outer_join) &&
 			(containing_appendrel == NULL ||
 			 is_safe_append_member(rte->subquery)))
 			return pull_up_simple_subquery(root, jtnode, rte,
@@ -942,7 +948,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * easier just to keep this "if" looking the same as the one in
 	 * pull_up_subqueries_recurse.
 	 */
-	if (is_simple_subquery(subquery, rte, lowest_outer_join) &&
+	if (is_simple_subquery(root, subquery, rte, lowest_outer_join) &&
 		(containing_appendrel == NULL || is_safe_append_member(subquery)))
 	{
 		/* good to go */
@@ -1420,7 +1426,7 @@ make_setop_translation_list(Query *query, Index newvarno,
  * lowest_outer_join is the lowest outer join above the subquery, or NULL.
  */
 static bool
-is_simple_subquery(Query *subquery, RangeTblEntry *rte,
+is_simple_subquery(PlannerInfo *root, Query *subquery, RangeTblEntry *rte,
 				   JoinExpr *lowest_outer_join)
 {
 	/*
@@ -1499,7 +1505,8 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 			safe_upper_varnos = NULL;	/* doesn't matter */
 		}
 
-		if (jointree_contains_lateral_outer_refs((Node *) subquery->jointree,
+		if (jointree_contains_lateral_outer_refs(root,
+												 (Node *) subquery->jointree,
 												 restricted, safe_upper_varnos))
 			return false;
 
@@ -1518,7 +1525,9 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 		 */
 		if (lowest_outer_join != NULL)
 		{
-			Relids		lvarnos = pull_varnos_of_level((Node *) subquery->targetList, 1);
+			Relids		lvarnos = pull_varnos_of_level(root,
+													   (Node *) subquery->targetList,
+													   1);
 
 			if (!bms_is_subset(lvarnos, safe_upper_varnos))
 				return false;
@@ -1838,7 +1847,8 @@ is_safe_append_member(Query *subquery)
  * in safe_upper_varnos.
  */
 static bool
-jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
+jointree_contains_lateral_outer_refs(PlannerInfo *root, Node *jtnode,
+									 bool restricted,
 									 Relids safe_upper_varnos)
 {
 	if (jtnode == NULL)
@@ -1853,7 +1863,8 @@ jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
 		/* First, recurse to check child joins */
 		foreach(l, f->fromlist)
 		{
-			if (jointree_contains_lateral_outer_refs(lfirst(l),
+			if (jointree_contains_lateral_outer_refs(root,
+													 lfirst(l),
 													 restricted,
 													 safe_upper_varnos))
 				return true;
@@ -1861,7 +1872,7 @@ jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
 
 		/* Then check the top-level quals */
 		if (restricted &&
-			!bms_is_subset(pull_varnos_of_level(f->quals, 1),
+			!bms_is_subset(pull_varnos_of_level(root, f->quals, 1),
 						   safe_upper_varnos))
 			return true;
 	}
@@ -1880,18 +1891,20 @@ jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
 		}
 
 		/* Check the child joins */
-		if (jointree_contains_lateral_outer_refs(j->larg,
+		if (jointree_contains_lateral_outer_refs(root,
+												 j->larg,
 												 restricted,
 												 safe_upper_varnos))
 			return true;
-		if (jointree_contains_lateral_outer_refs(j->rarg,
+		if (jointree_contains_lateral_outer_refs(root,
+												 j->rarg,
 												 restricted,
 												 safe_upper_varnos))
 			return true;
 
 		/* Check the JOIN's qual clauses */
 		if (restricted &&
-			!bms_is_subset(pull_varnos_of_level(j->quals, 1),
+			!bms_is_subset(pull_varnos_of_level(root, j->quals, 1),
 						   safe_upper_varnos))
 			return true;
 	}
@@ -2187,7 +2200,8 @@ pullup_replace_vars_callback(Var *var,
 				 * level-zero var must belong to the subquery.
 				 */
 				if ((rcon->target_rte->lateral ?
-					 bms_overlap(pull_varnos((Node *) newnode), rcon->relids) :
+					 bms_overlap(pull_varnos(rcon->root, (Node *) newnode),
+								 rcon->relids) :
 					 contain_vars_of_level((Node *) newnode, 0)) &&
 					!contain_nonstrict_functions((Node *) newnode))
 				{
@@ -2626,7 +2640,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 			overlap = list_intersection(local_nonnullable_vars,
 										forced_null_vars);
 			if (overlap != NIL &&
-				bms_overlap(pull_varnos((Node *) overlap),
+				bms_overlap(pull_varnos(root, (Node *) overlap),
 							right_state->relids))
 				jointype = JOIN_ANTI;
 		}

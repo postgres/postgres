@@ -4593,6 +4593,42 @@ where ss.stringu2 !~* ss.case1;
 (1 row)
 
 rollback;
+-- test case to expose miscomputation of required relid set for a PHV
+explain (verbose, costs off)
+select i8.*, ss.v, t.unique2
+  from int8_tbl i8
+    left join int4_tbl i4 on i4.f1 = 1
+    left join lateral (select i4.f1 + 1 as v) as ss on true
+    left join tenk1 t on t.unique2 = ss.v
+where q2 = 456;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Nested Loop Left Join
+   Output: i8.q1, i8.q2, ((i4.f1 + 1)), t.unique2
+   ->  Nested Loop Left Join
+         Output: i8.q1, i8.q2, (i4.f1 + 1)
+         ->  Seq Scan on public.int8_tbl i8
+               Output: i8.q1, i8.q2
+               Filter: (i8.q2 = 456)
+         ->  Seq Scan on public.int4_tbl i4
+               Output: i4.f1
+               Filter: (i4.f1 = 1)
+   ->  Index Only Scan using tenk1_unique2 on public.tenk1 t
+         Output: t.unique2
+         Index Cond: (t.unique2 = ((i4.f1 + 1)))
+(13 rows)
+
+select i8.*, ss.v, t.unique2
+  from int8_tbl i8
+    left join int4_tbl i4 on i4.f1 = 1
+    left join lateral (select i4.f1 + 1 as v) as ss on true
+    left join tenk1 t on t.unique2 = ss.v
+where q2 = 456;
+ q1  | q2  | v | unique2 
+-----+-----+---+---------
+ 123 | 456 |   |        
+(1 row)
+
 -- bug #8444: we've historically allowed duplicate aliases within aliased JOINs
 select * from
   int8_tbl x join (int4_tbl x cross join int4_tbl y) j on q1 = f1; -- error

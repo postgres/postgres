@@ -24,6 +24,9 @@
 #include "optimizer/restrictinfo.h"
 
 
+/* source-code-compatibility hacks for pull_varnos() API change */
+#define make_restrictinfo(a,b,c,d,e,f,g,h,i) make_restrictinfo_new(a,b,c,d,e,f,g,h,i)
+
 static bool is_safe_restriction_clause_for(RestrictInfo *rinfo, RelOptInfo *rel);
 static Expr *extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel);
 static void consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
@@ -268,7 +271,8 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 	 * Build a RestrictInfo from the new OR clause.  We can assume it's valid
 	 * as a base restriction clause.
 	 */
-	or_rinfo = make_restrictinfo(orclause,
+	or_rinfo = make_restrictinfo(root,
+								 orclause,
 								 true,
 								 false,
 								 false,
