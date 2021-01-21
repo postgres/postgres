@@ -2797,18 +2797,29 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * Determine if the FDW supports batch insert and determine the batch
 	 * size (a FDW may support batching, but it may be disabled for the
 	 * server/table).
+	 *
+	 * We only do this for INSERT, so that for UPDATE/DELETE the batch
+	 * size remains set to 0.
 	 */
-	if (!resultRelInfo->ri_usesFdwDirectModify &&
-		operation == CMD_INSERT &&
-		resultRelInfo->ri_FdwRoutine != NULL &&
-		resultRelInfo->ri_FdwRoutine->GetForeignModifyBatchSize &&
-		resultRelInfo->ri_FdwRoutine->ExecForeignBatchInsert)
-		resultRelInfo->ri_BatchSize =
-			resultRelInfo->ri_FdwRoutine->GetForeignModifyBatchSize(resultRelInfo);
-	else
-		resultRelInfo->ri_BatchSize = 1;
+	if (operation == CMD_INSERT)
+	{
+		resultRelInfo = mtstate->resultRelInfo;
+		for (i = 0; i < nplans; i++)
+		{
+			if (!resultRelInfo->ri_usesFdwDirectModify &&
+				resultRelInfo->ri_FdwRoutine != NULL &&
+				resultRelInfo->ri_FdwRoutine->GetForeignModifyBatchSize &&
+				resultRelInfo->ri_FdwRoutine->ExecForeignBatchInsert)
+				resultRelInfo->ri_BatchSize =
+					resultRelInfo->ri_FdwRoutine->GetForeignModifyBatchSize(resultRelInfo);
+			else
+				resultRelInfo->ri_BatchSize = 1;
 
-	Assert(resultRelInfo->ri_BatchSize >= 1);
+			Assert(resultRelInfo->ri_BatchSize >= 1);
+
+			resultRelInfo++;
+		}
+	}
 
 	/*
 	 * Lastly, if this is not the primary (canSetTag) ModifyTable node, add it
