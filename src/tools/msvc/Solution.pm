@@ -62,7 +62,7 @@ sub DeterminePlatform
 	if ($^O eq "MSWin32")
 	{
 		# Examine CL help output to determine if we are in 32 or 64-bit mode.
-		my $output = `cl /? 2>&1`;
+		my $output = `cl /help 2>&1`;
 		$? >> 8 == 0 or die "cl command not found";
 		$self->{platform} =
 		  ($output =~ /^\/favor:<.+AMD64/m) ? 'x64' : 'Win32';
