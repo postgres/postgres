@@ -598,7 +598,7 @@ build_index_pathkeys(PlannerInfo *root,
 			 * should stop considering index columns; any lower-order sort
 			 * keys won't be useful either.
 			 */
-			if (!indexcol_is_bool_constant_for_query(index, i))
+			if (!indexcol_is_bool_constant_for_query(root, index, i))
 				break;
 		}
 

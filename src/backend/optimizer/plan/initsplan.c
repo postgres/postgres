@@ -34,6 +34,10 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
+/* source-code-compatibility hacks for pull_varnos() API change */
+#define pull_varnos(a,b) pull_varnos_new(a,b)
+#define make_restrictinfo(a,b,c,d,e,f,g,h,i) make_restrictinfo_new(a,b,c,d,e,f,g,h,i)
+
 /* These parameters are set by GUC */
 int			from_collapse_limit;
 int			join_collapse_limit;
@@ -60,7 +64,8 @@ static SpecialJoinInfo *make_outerjoininfo(PlannerInfo *root,
 										   Relids left_rels, Relids right_rels,
 										   Relids inner_join_rels,
 										   JoinType jointype, List *clause);
-static void compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause);
+static void compute_semijoin_info(PlannerInfo *root, SpecialJoinInfo *sjinfo,
+								  List *clause);
 static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 									bool is_deduced,
 									bool below_outer_join,
@@ -1200,7 +1205,7 @@ make_outerjoininfo(PlannerInfo *root,
 	/* this always starts out false */
 	sjinfo->delay_upper_joins = false;
 
-	compute_semijoin_info(sjinfo, clause);
+	compute_semijoin_info(root, sjinfo, clause);
 
 	/* If it's a full join, no need to be very smart */
 	if (jointype == JOIN_FULL)
@@ -1214,7 +1219,7 @@ make_outerjoininfo(PlannerInfo *root,
 	/*
 	 * Retrieve all relids mentioned within the join clause.
 	 */
-	clause_relids = pull_varnos((Node *) clause);
+	clause_relids = pull_varnos(root, (Node *) clause);
 
 	/*
 	 * For which relids is the clause strict, ie, it cannot succeed if the
@@ -1394,7 +1399,7 @@ make_outerjoininfo(PlannerInfo *root,
  * SpecialJoinInfo; the rest may not be set yet.
  */
 static void
-compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
+compute_semijoin_info(PlannerInfo *root, SpecialJoinInfo *sjinfo, List *clause)
 {
 	List	   *semi_operators;
 	List	   *semi_rhs_exprs;
@@ -1458,7 +1463,7 @@ compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
 			list_length(op->args) != 2)
 		{
 			/* No, but does it reference both sides? */
-			all_varnos = pull_varnos((Node *) op);
+			all_varnos = pull_varnos(root, (Node *) op);
 			if (!bms_overlap(all_varnos, sjinfo->syn_righthand) ||
 				bms_is_subset(all_varnos, sjinfo->syn_righthand))
 			{
@@ -1479,8 +1484,8 @@ compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
 		opno = op->opno;
 		left_expr = linitial(op->args);
 		right_expr = lsecond(op->args);
-		left_varnos = pull_varnos(left_expr);
-		right_varnos = pull_varnos(right_expr);
+		left_varnos = pull_varnos(root, left_expr);
+		right_varnos = pull_varnos(root, right_expr);
 		all_varnos = bms_union(left_varnos, right_varnos);
 		opinputtype = exprType(left_expr);
 
@@ -1634,7 +1639,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	/*
 	 * Retrieve all relids mentioned within the clause.
 	 */
-	relids = pull_varnos(clause);
+	relids = pull_varnos(root, clause);
 
 	/*
 	 * In ordinary SQL, a WHERE or JOIN/ON clause can't reference any rels
@@ -1866,7 +1871,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	/*
 	 * Build the RestrictInfo node itself.
 	 */
-	restrictinfo = make_restrictinfo((Expr *) clause,
+	restrictinfo = make_restrictinfo(root,
+									 (Expr *) clause,
 									 is_pushed_down,
 									 outerjoin_delayed,
 									 pseudoconstant,
@@ -2350,7 +2356,8 @@ process_implied_equality(PlannerInfo *root,
  * caller's responsibility that left_ec/right_ec be set as necessary.
  */
 RestrictInfo *
-build_implied_join_equality(Oid opno,
+build_implied_join_equality(PlannerInfo *root,
+							Oid opno,
 							Oid collation,
 							Expr *item1,
 							Expr *item2,
@@ -2376,7 +2383,8 @@ build_implied_join_equality(Oid opno,
 	/*
 	 * Build the RestrictInfo node itself.
 	 */
-	restrictinfo = make_restrictinfo(clause,
+	restrictinfo = make_restrictinfo(root,
+									 clause,
 									 true,	/* is_pushed_down */
 									 false, /* outerjoin_delayed */
 									 false, /* pseudoconstant */

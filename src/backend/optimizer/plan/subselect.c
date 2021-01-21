@@ -39,6 +39,9 @@
 #include "utils/syscache.h"
 
 
+/* source-code-compatibility hacks for pull_varnos() API change */
+#define pull_varnos(a,b) pull_varnos_new(a,b)
+
 typedef struct convert_testexpr_context
 {
 	PlannerInfo *root;
@@ -1272,7 +1275,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * it's not gonna be a join.  (Note that it won't have Vars referring to
 	 * the subquery, rather Params.)
 	 */
-	upper_varnos = pull_varnos(sublink->testexpr);
+	upper_varnos = pull_varnos(root, sublink->testexpr);
 	if (bms_is_empty(upper_varnos))
 		return NULL;
 
@@ -1456,7 +1459,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * The ones <= rtoffset belong to the upper query; the ones > rtoffset do
 	 * not.
 	 */
-	clause_varnos = pull_varnos(whereClause);
+	clause_varnos = pull_varnos(root, whereClause);
 	upper_varnos = NULL;
 	while ((varno = bms_first_member(clause_varnos)) >= 0)
 	{

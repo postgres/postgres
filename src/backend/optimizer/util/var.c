@@ -23,6 +23,7 @@
 #include "access/sysattr.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/placeholder.h"
 #include "optimizer/prep.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
@@ -31,6 +32,7 @@
 typedef struct
 {
 	Relids		varnos;
+	PlannerInfo *root;
 	int			sublevels_up;
 } pull_varnos_context;
 
@@ -94,9 +96,16 @@ static Relids alias_relid_set(Query *query, Relids relids);
 Relids
 pull_varnos(Node *node)
 {
+	return pull_varnos_new(NULL, node);
+}
+
+Relids
+pull_varnos_new(PlannerInfo *root, Node *node)
+{
 	pull_varnos_context context;
 
 	context.varnos = NULL;
+	context.root = root;
 	context.sublevels_up = 0;
 
 	/*
@@ -119,9 +128,16 @@ pull_varnos(Node *node)
 Relids
 pull_varnos_of_level(Node *node, int levelsup)
 {
+	return pull_varnos_of_level_new(NULL, node, levelsup);
+}
+
+Relids
+pull_varnos_of_level_new(PlannerInfo *root, Node *node, int levelsup)
+{
 	pull_varnos_context context;
 
 	context.varnos = NULL;
+	context.root = root;
 	context.sublevels_up = levelsup;
 
 	/*
@@ -159,33 +175,56 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 	}
 	if (IsA(node, PlaceHolderVar))
 	{
-		/*
-		 * A PlaceHolderVar acts as a variable of its syntactic scope, or
-		 * lower than that if it references only a subset of the rels in its
-		 * syntactic scope.  It might also contain lateral references, but we
-		 * should ignore such references when computing the set of varnos in
-		 * an expression tree.  Also, if the PHV contains no variables within
-		 * its syntactic scope, it will be forced to be evaluated exactly at
-		 * the syntactic scope, so take that as the relid set.
-		 */
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-		pull_varnos_context subcontext;
 
-		subcontext.varnos = NULL;
-		subcontext.sublevels_up = context->sublevels_up;
-		(void) pull_varnos_walker((Node *) phv->phexpr, &subcontext);
+		/*
+		 * If a PlaceHolderVar is not of the target query level, ignore it,
+		 * instead recursing into its expression to see if it contains any
+		 * vars that are of the target level.
+		 */
 		if (phv->phlevelsup == context->sublevels_up)
 		{
-			subcontext.varnos = bms_int_members(subcontext.varnos,
-												phv->phrels);
-			if (bms_is_empty(subcontext.varnos))
+			/*
+			 * Ideally, the PHV's contribution to context->varnos is its
+			 * ph_eval_at set.  However, this code can be invoked before
+			 * that's been computed.  If we cannot find a PlaceHolderInfo,
+			 * fall back to the conservative assumption that the PHV will be
+			 * evaluated at its syntactic level (phv->phrels).
+			 *
+			 * There is a second hazard: this code is also used to examine
+			 * qual clauses during deconstruct_jointree, when we may have a
+			 * PlaceHolderInfo but its ph_eval_at value is not yet final, so
+			 * that theoretically we could obtain a relid set that's smaller
+			 * than we'd see later on.  That should never happen though,
+			 * because we deconstruct the jointree working upwards.  Any outer
+			 * join that forces delay of evaluation of a given qual clause
+			 * will be processed before we examine that clause here, so the
+			 * ph_eval_at value should have been updated to include it.
+			 */
+			PlaceHolderInfo *phinfo = NULL;
+
+			if (phv->phlevelsup == 0 && context->root)
+			{
+				ListCell   *lc;
+
+				foreach(lc, context->root->placeholder_list)
+				{
+					phinfo = (PlaceHolderInfo *) lfirst(lc);
+					if (phinfo->phid == phv->phid)
+						break;
+					phinfo = NULL;
+				}
+			}
+			if (phinfo != NULL)
+				context->varnos = bms_add_members(context->varnos,
+												  phinfo->ph_eval_at);
+			else
 				context->varnos = bms_add_members(context->varnos,
 												  phv->phrels);
+			return false;		/* don't recurse into expression */
 		}
-		context->varnos = bms_join(context->varnos, subcontext.varnos);
-		return false;
 	}
-	if (IsA(node, Query))
+	else if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
 		bool		result;

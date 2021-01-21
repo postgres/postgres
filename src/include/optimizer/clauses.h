@@ -50,6 +50,7 @@ extern bool is_pseudo_constant_clause(Node *clause);
 extern bool is_pseudo_constant_clause_relids(Node *clause, Relids relids);
 
 extern int	NumRelids(Node *clause);
+extern int	NumRelids_new(PlannerInfo *root, Node *clause);
 
 extern void CommuteOpExpr(OpExpr *clause);
 

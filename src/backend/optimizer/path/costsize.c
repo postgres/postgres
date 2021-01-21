@@ -98,6 +98,9 @@
 #include "utils/tuplesort.h"
 
 
+/* source-code-compatibility hacks for pull_varnos() API change */
+#define pull_varnos(a,b) pull_varnos_new(a,b)
+
 #define LOG2(x)  (log(x) / 0.693147180559945)
 
 /*
@@ -1848,7 +1851,7 @@ cost_incremental_sort(Path *path,
 		 * Check if the expression contains Var with "varno 0" so that we
 		 * don't call estimate_num_groups in that case.
 		 */
-		if (bms_is_member(0, pull_varnos((Node *) member->em_expr)))
+		if (bms_is_member(0, pull_varnos(root, (Node *) member->em_expr)))
 		{
 			unknown_varno = true;
 			break;
