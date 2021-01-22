@@ -2216,6 +2216,17 @@ make MAX_CONNECTIONS=5 check
    </indexterm>
 
    <para>
+    To build <productname>PostgreSQL</productname> from source
+    on <productname>macOS</productname>, you will need to install Apple's
+    command line developer tools, which can be done by issuing
+<programlisting>
+xcode-select --install
+</programlisting>
+    (note that this will pop up a GUI dialog window for confirmation).
+    You may or may not wish to also install Xcode.
+   </para>
+
+   <para>
     On recent <productname>macOS</productname> releases, it's necessary to
     embed the <quote>sysroot</quote> path in the include switches used to
     find some system header files.  This results in the outputs of
@@ -2231,7 +2242,7 @@ make PG_SYSROOT=<replaceable>/desired/path</replaceable> all
 </programlisting>
     To find out the appropriate path on your machine, run
 <programlisting>
-xcodebuild -version -sdk macosx Path
+xcrun --show-sdk-path
 </programlisting>
     Note that building an extension using a different sysroot version than
     was used to build the core server is not really recommended; in the
@@ -2245,6 +2256,19 @@ xcodebuild -version -sdk macosx Path
 <programlisting>
 ./configure ... PG_SYSROOT=<replaceable>/desired/path</replaceable>
 </programlisting>
+    This would primarily be useful to cross-compile for some other
+    macOS version.  There is no guarantee that the resulting executables
+    will run on the current host.
+   </para>
+
+   <para>
+    To suppress the <option>-isysroot</option> options altogether, use
+<programlisting>
+./configure ... PG_SYSROOT=none
+</programlisting>
+    (any nonexistent pathname will work).  This might be useful if you wish
+    to build with a non-Apple compiler, but beware that that case is not
+    tested or supported by the PostgreSQL developers.
    </para>
 
    <para>
