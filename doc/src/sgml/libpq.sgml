@@ -645,8 +645,8 @@ void PQreset(PGconn *conn);
 
       <para>
        This function will close the connection
-       to the server and attempt to  reestablish  a  new
-       connection to the same server, using all the same
+       to the server and attempt to establish a new
+       connection, using all the same
        parameters previously used.  This might be useful for
        error recovery if a working connection is lost.
       </para>
@@ -669,7 +669,7 @@ PostgresPollingStatusType PQresetPoll(PGconn *conn);
 
       <para>
        These functions will close the connection to the server and attempt to
-       reestablish a new connection to the same server, using all the same
+       establish a new connection, using all the same
        parameters previously used. This can be useful for error recovery if a
        working connection is lost. They differ from <function>PQreset</function> (above) in that they
        act in a nonblocking manner. These functions suffer from the same
