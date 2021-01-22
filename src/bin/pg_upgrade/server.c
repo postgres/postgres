@@ -30,8 +30,7 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 
 	if (conn == NULL || PQstatus(conn) != CONNECTION_OK)
 	{
-		pg_log(PG_REPORT, "connection to database failed: %s",
-			   PQerrorMessage(conn));
+		pg_log(PG_REPORT, "%s", PQerrorMessage(conn));
 
 		if (conn)
 			PQfinish(conn);
@@ -50,6 +49,8 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
  * get_db_conn()
  *
  * get database connection, using named database + standard params for cluster
+ *
+ * Caller must check for connection failure!
  */
 static PGconn *
 get_db_conn(ClusterInfo *cluster, const char *db_name)
@@ -294,8 +295,7 @@ start_postmaster(ClusterInfo *cluster, bool report_and_exit_on_error)
 	if ((conn = get_db_conn(cluster, "template1")) == NULL ||
 		PQstatus(conn) != CONNECTION_OK)
 	{
-		pg_log(PG_REPORT, "\nconnection to database failed: %s",
-			   PQerrorMessage(conn));
+		pg_log(PG_REPORT, "\n%s", PQerrorMessage(conn));
 		if (conn)
 			PQfinish(conn);
 		if (cluster == &old_cluster)

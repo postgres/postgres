@@ -1768,8 +1768,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 	{
 		if (fail_on_error)
 		{
-			pg_log_error("could not connect to database \"%s\": %s",
-						 dbname, PQerrorMessage(conn));
+			pg_log_error("%s", PQerrorMessage(conn));
 			exit_nicely(1);
 		}
 		else

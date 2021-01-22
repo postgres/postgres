@@ -652,7 +652,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		const char *errmsg = PQerrorMessage(this->connection);
 		const char *db = realname ? realname : ecpg_gettext("<DEFAULT>");
 
-		ecpg_log("ECPGconnect: could not open database: %s\n", errmsg);
+		/* PQerrorMessage's result already has a trailing newline */
+		ecpg_log("ECPGconnect: %s", errmsg);
 
 		ecpg_finish(this);
 #ifdef ENABLE_THREAD_SAFETY

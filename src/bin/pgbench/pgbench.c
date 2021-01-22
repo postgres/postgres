@@ -1225,8 +1225,7 @@ doConnect(void)
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		pg_log_error("connection to database \"%s\" failed: %s",
-					 dbName, PQerrorMessage(conn));
+		pg_log_error("%s", PQerrorMessage(conn));
 		PQfinish(conn);
 		return NULL;
 	}

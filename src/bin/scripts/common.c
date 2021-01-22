@@ -150,8 +150,7 @@ connectDatabase(const ConnParams *cparams, const char *progname,
 			PQfinish(conn);
 			return NULL;
 		}
-		pg_log_error("could not connect to database %s: %s",
-					 cparams->dbname, PQerrorMessage(conn));
+		pg_log_error("%s", PQerrorMessage(conn));
 		exit(1);
 	}
 

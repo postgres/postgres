@@ -44,7 +44,7 @@ main(int argc, char **argv)
 	conn = PQconnectdb(sql.data);
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "connection error:  %s\n", PQerrorMessage(conn));
+		fprintf(stderr, "%s", PQerrorMessage(conn));
 		exit(EXIT_FAILURE);
 	}
 

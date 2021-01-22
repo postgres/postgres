@@ -188,12 +188,10 @@ ConnectDatabase(Archive *AHX,
 	if (PQstatus(AH->connection) == CONNECTION_BAD)
 	{
 		if (isReconnect)
-			fatal("reconnection to database \"%s\" failed: %s",
-				  PQdb(AH->connection) ? PQdb(AH->connection) : "",
+			fatal("reconnection failed: %s",
 				  PQerrorMessage(AH->connection));
 		else
-			fatal("connection to database \"%s\" failed: %s",
-				  PQdb(AH->connection) ? PQdb(AH->connection) : "",
+			fatal("%s",
 				  PQerrorMessage(AH->connection));
 	}
 

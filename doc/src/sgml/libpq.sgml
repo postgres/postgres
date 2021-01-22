@@ -6837,8 +6837,8 @@ main(void)
 
     if (PQstatus(conn) != CONNECTION_OK)
     {
-        fprintf(stderr, "Connection to database failed: %s",
-                PQerrorMessage(conn));
+        /* PQerrorMessage's result includes a trailing newline */
+        fprintf(stderr, "%s", PQerrorMessage(conn));
         PQfinish(conn);
         return 1;
     }
@@ -8296,8 +8296,7 @@ main(int argc, char **argv)
     /* Check to see that the backend connection was successfully made */
     if (PQstatus(conn) != CONNECTION_OK)
     {
-        fprintf(stderr, "Connection to database failed: %s",
-                PQerrorMessage(conn));
+        fprintf(stderr, "%s", PQerrorMessage(conn));
         exit_nicely(conn);
     }
 
@@ -8466,8 +8465,7 @@ main(int argc, char **argv)
     /* Check to see that the backend connection was successfully made */
     if (PQstatus(conn) != CONNECTION_OK)
     {
-        fprintf(stderr, "Connection to database failed: %s",
-                PQerrorMessage(conn));
+        fprintf(stderr, "%s", PQerrorMessage(conn));
         exit_nicely(conn);
     }
 
@@ -8694,8 +8692,7 @@ main(int argc, char **argv)
     /* Check to see that the backend connection was successfully made */
     if (PQstatus(conn) != CONNECTION_OK)
     {
-        fprintf(stderr, "Connection to database failed: %s",
-                PQerrorMessage(conn));
+        fprintf(stderr, "%s", PQerrorMessage(conn));
         exit_nicely(conn);
     }
 

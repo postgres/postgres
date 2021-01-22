@@ -167,7 +167,7 @@ main(int argc, char **argv)
 		conns[i] = PQconnectdb(conninfo);
 		if (PQstatus(conns[i]) != CONNECTION_OK)
 		{
-			fprintf(stderr, "Connection %d to database failed: %s",
+			fprintf(stderr, "Connection %d failed: %s",
 					i, PQerrorMessage(conns[i]));
 			exit(1);
 		}
