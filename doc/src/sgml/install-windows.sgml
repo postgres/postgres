@@ -257,7 +257,8 @@ $ENV{MSBFLAGS}="/m";
 
      <note>
        <para>
-       The obsolete <literal>winflex</literal> binaries distributed on the PostgreSQL FTP site
+       The obsolete <literal>winflex</literal> binaries distributed in the
+       downloads section of the PostgreSQL web site
        and referenced in older documentation will fail with <quote>flex: fatal
        internal error, exec failed</quote> on 64-bit Windows hosts. Use Flex from
        MSYS instead.
