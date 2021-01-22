@@ -381,6 +381,9 @@ be_tls_open_server(Port *port)
 		return -1;
 	}
 
+	/* set up debugging/info callback */
+	SSL_CTX_set_info_callback(SSL_context, info_cb);
+
 	if (!(port->ssl = SSL_new(SSL_context)))
 	{
 		ereport(COMMERROR,
@@ -561,9 +564,6 @@ aloop:
 		}
 		port->peer_cert_valid = true;
 	}
-
-	/* set up debugging/info callback */
-	SSL_CTX_set_info_callback(SSL_context, info_cb);
 
 	return 0;
 }
@@ -999,39 +999,43 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 static void
 info_cb(const SSL *ssl, int type, int args)
 {
+	const char *desc;
+
+	desc = SSL_state_string_long(ssl);
+
 	switch (type)
 	{
 		case SSL_CB_HANDSHAKE_START:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: handshake start")));
+					(errmsg_internal("SSL: handshake start: \"%s\"", desc)));
 			break;
 		case SSL_CB_HANDSHAKE_DONE:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: handshake done")));
+					(errmsg_internal("SSL: handshake done: \"%s\"", desc)));
 			break;
 		case SSL_CB_ACCEPT_LOOP:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: accept loop")));
+					(errmsg_internal("SSL: accept loop: \"%s\"", desc)));
 			break;
 		case SSL_CB_ACCEPT_EXIT:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: accept exit (%d)", args)));
+					(errmsg_internal("SSL: accept exit (%d): \"%s\"", args, desc)));
 			break;
 		case SSL_CB_CONNECT_LOOP:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: connect loop")));
+					(errmsg_internal("SSL: connect loop: \"%s\"", desc)));
 			break;
 		case SSL_CB_CONNECT_EXIT:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: connect exit (%d)", args)));
+					(errmsg_internal("SSL: connect exit (%d): \"%s\"", args, desc)));
 			break;
 		case SSL_CB_READ_ALERT:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: read alert (0x%04x)", args)));
+					(errmsg_internal("SSL: read alert (0x%04x): \"%s\"", args, desc)));
 			break;
 		case SSL_CB_WRITE_ALERT:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: write alert (0x%04x)", args)));
+					(errmsg_internal("SSL: write alert (0x%04x): \"%s\"", args, desc)));
 			break;
 	}
 }

@@ -14,7 +14,7 @@
  * NOTES
  *
  *	  We don't provide informational callbacks here (like
- *	  info_cb() in be-secure.c), since there's no good mechanism to
+ *	  info_cb() in be-secure-openssl.c), since there's no good mechanism to
  *	  display such information to the user.
  *
  *-------------------------------------------------------------------------
