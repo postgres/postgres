@@ -7,7 +7,7 @@
    <title>Author</title>
    <para>
     This chapter originated as part of
-    <xref linkend="sim98"/>, Stefan Simkovics'
+    <xref linkend="sim98"/> Stefan Simkovics'
     Master's Thesis prepared at Vienna University of Technology under the direction
     of O.Univ.Prof.Dr. Georg Gottlob and Univ.Ass. Mag. Katrin Seyr.
    </para>
@@ -17,10 +17,7 @@
    This chapter gives an overview of the internal structure of the
    backend of <productname>PostgreSQL</productname>.  After having
    read the following sections you should have an idea of how a query
-   is processed. This chapter does not aim to provide a detailed
-   description of the internal operation of
-   <productname>PostgreSQL</productname>, as such a document would be
-   very extensive. Rather, this chapter is intended to help the reader
+   is processed.  This chapter is intended to help the reader
    understand the general sequence of operations that occur within the
    backend from the point at which a query is received, to the point
    at which the results are returned to the client.
@@ -30,8 +27,8 @@
    <title>The Path of a Query</title>
 
    <para>
-    Here we give a short overview of the stages a query has to pass in
-    order to obtain a result.
+    Here we give a short overview of the stages a query has to pass 
+    to obtain a result.
    </para>
 
    <procedure>
@@ -125,10 +122,10 @@
     use a <firstterm>supervisor process</firstterm> (also
     <firstterm>master process</firstterm>) that spawns a new
     server process every time a connection is requested. This supervisor
-    process is called <literal>postgres</literal> and listens at a
+    process is called <literal>postmaster</literal> and listens at a
     specified TCP/IP port for incoming connections. Whenever a request
-    for a connection is detected the <literal>postgres</literal>
-    process spawns a new server process. The server tasks
+    for a connection is detected the <literal>postmaster</literal>
+    process spawns a new server process. The server processes
     communicate with each other using <firstterm>semaphores</firstterm> and
     <firstterm>shared memory</firstterm> to ensure data integrity
     throughout concurrent data access.
@@ -230,7 +227,7 @@
     <para>
      A detailed description of <application>bison</application> or
      the grammar rules given in <filename>gram.y</filename> would be
-     beyond the scope of this paper. There are many books and
+     beyond the scope of this manual. There are many books and
      documents dealing with <application>flex</application> and
      <application>bison</application>. You should be familiar with
      <application>bison</application> before you start to study the
@@ -343,8 +340,8 @@
    <note>
     <para>
      In some situations, examining each possible way in which a query
-     can be executed would take an excessive amount of time and memory
-     space. In particular, this occurs when executing queries
+     can be executed would take an excessive amount of time and memory.
+     In particular, this occurs when executing queries
      involving large numbers of join operations. In order to determine
      a reasonable (not necessarily optimal) query plan in a reasonable amount
      of time, <productname>PostgreSQL</productname> uses a <firstterm>Genetic
@@ -411,7 +408,7 @@
         <firstterm>merge join</firstterm>: Each relation is sorted on the join
         attributes before the join starts. Then the two relations are
         scanned in parallel, and matching rows are combined to form
-        join rows. This kind of join is more
+        join rows. This kind of join is
         attractive because each relation has to be scanned only once.
         The required sorting might be achieved either by an explicit sort
         step, or by scanning the relation in the proper order using an
@@ -442,7 +439,7 @@
      If the query uses fewer than <xref linkend="guc-geqo-threshold"/>
      relations, a near-exhaustive search is conducted to find the best
      join sequence.  The planner preferentially considers joins between any
-     two relations for which there exist a corresponding join clause in the
+     two relations for which there exists a corresponding join clause in the
      <literal>WHERE</literal> qualification (i.e., for
      which a restriction like <literal>where rel1.attr1=rel2.attr2</literal>
      exists). Join pairs with no join clause are considered only when there
