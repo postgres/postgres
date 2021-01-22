@@ -389,7 +389,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				OptTableElementList TableElementList OptInherit definition
 				OptTypedTableElementList TypedTableElementList
 				reloptions opt_reloptions
-				OptWith distinct_clause opt_definition func_args func_args_list
+				OptWith opt_definition func_args func_args_list
 				func_args_with_defaults func_args_with_defaults_list
 				aggr_args aggr_args_list
 				func_as createfunc_opt_list alterfunc_opt_list
@@ -401,6 +401,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				name_list role_list from_clause from_list opt_array_bounds
 				qualified_name_list any_name any_name_list type_name_list
 				any_operator expr_list attrs
+				distinct_clause opt_distinct_clause
 				target_list opt_target_list insert_column_list set_target_list
 				set_clause_list set_clause
 				def_list operator_def_list indirection opt_indirection
@@ -11260,6 +11261,11 @@ select_clause:
  * As with select_no_parens, simple_select cannot have outer parentheses,
  * but can have parenthesized subclauses.
  *
+ * It might appear that we could fold the first two alternatives into one
+ * by using opt_distinct_clause.  However, that causes a shift/reduce conflict
+ * against INSERT ... SELECT ... ON CONFLICT.  We avoid the ambiguity by
+ * requiring SELECT DISTINCT [ON] to be followed by a non-empty target_list.
+ *
  * Note that sort clauses cannot be included at this level --- SQL requires
  *		SELECT foo UNION SELECT bar ORDER BY baz
  * to be parsed as
@@ -11497,8 +11503,13 @@ opt_all_clause:
 			| /*EMPTY*/
 		;
 
+opt_distinct_clause:
+			distinct_clause							{ $$ = $1; }
+			| opt_all_clause						{ $$ = NIL; }
+		;
+
 opt_sort_clause:
-			sort_clause								{ $$ = $1;}
+			sort_clause								{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -15065,32 +15076,33 @@ role_list:	RoleSpec
  * Therefore the returned struct is a SelectStmt.
  *****************************************************************************/
 
-PLpgSQL_Expr: opt_target_list
+PLpgSQL_Expr: opt_distinct_clause opt_target_list
 			from_clause where_clause
 			group_clause having_clause window_clause
 			opt_sort_clause opt_select_limit opt_for_locking_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 
-					n->targetList = $1;
-					n->fromClause = $2;
-					n->whereClause = $3;
-					n->groupClause = $4;
-					n->havingClause = $5;
-					n->windowClause = $6;
-					n->sortClause = $7;
-					if ($8)
+					n->distinctClause = $1;
+					n->targetList = $2;
+					n->fromClause = $3;
+					n->whereClause = $4;
+					n->groupClause = $5;
+					n->havingClause = $6;
+					n->windowClause = $7;
+					n->sortClause = $8;
+					if ($9)
 					{
-						n->limitOffset = $8->limitOffset;
-						n->limitCount = $8->limitCount;
+						n->limitOffset = $9->limitOffset;
+						n->limitCount = $9->limitCount;
 						if (!n->sortClause &&
-							$8->limitOption == LIMIT_OPTION_WITH_TIES)
+							$9->limitOption == LIMIT_OPTION_WITH_TIES)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("WITH TIES cannot be specified without ORDER BY clause")));
-						n->limitOption = $8->limitOption;
+						n->limitOption = $9->limitOption;
 					}
-					n->lockingClause = $9;
+					n->lockingClause = $10;
 					$$ = (Node *) n;
 				}
 		;

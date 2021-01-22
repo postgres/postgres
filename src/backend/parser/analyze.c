@@ -2466,7 +2466,7 @@ transformPLAssignStmt(ParseState *pstate, PLAssignStmt *stmt)
 
 	/*
 	 * The rest mostly matches transformSelectStmt, except that we needn't
-	 * consider WITH or DISTINCT, and we build a targetlist our own way.
+	 * consider WITH or INTO, and we build a targetlist our own way.
 	 */
 	qry->commandType = CMD_SELECT;
 	pstate->p_is_insert = false;
@@ -2590,10 +2590,29 @@ transformPLAssignStmt(ParseState *pstate, PLAssignStmt *stmt)
 											EXPR_KIND_GROUP_BY,
 											false /* allow SQL92 rules */ );
 
-	/* No DISTINCT clause */
-	Assert(!sstmt->distinctClause);
-	qry->distinctClause = NIL;
-	qry->hasDistinctOn = false;
+	if (sstmt->distinctClause == NIL)
+	{
+		qry->distinctClause = NIL;
+		qry->hasDistinctOn = false;
+	}
+	else if (linitial(sstmt->distinctClause) == NULL)
+	{
+		/* We had SELECT DISTINCT */
+		qry->distinctClause = transformDistinctClause(pstate,
+													  &qry->targetList,
+													  qry->sortClause,
+													  false);
+		qry->hasDistinctOn = false;
+	}
+	else
+	{
+		/* We had SELECT DISTINCT ON */
+		qry->distinctClause = transformDistinctOnClause(pstate,
+														sstmt->distinctClause,
+														&qry->targetList,
+														qry->sortClause);
+		qry->hasDistinctOn = true;
+	}
 
 	/* transform LIMIT */
 	qry->limitOffset = transformLimitClause(pstate, sstmt->limitOffset,

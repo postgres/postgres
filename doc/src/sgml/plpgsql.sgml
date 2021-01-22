@@ -917,6 +917,24 @@ PREPARE <replaceable>statement_name</replaceable>(integer, integer) AS SELECT $1
      they are useful to know when trying to diagnose a problem.
      More information appears in <xref linkend="plpgsql-plan-caching"/>.
     </para>
+
+    <para>
+     Since an <replaceable>expression</replaceable> is converted to a
+     <literal>SELECT</literal> command, it can contain the same clauses
+     that an ordinary <literal>SELECT</literal> would, except that it
+     cannot include a top-level <literal>UNION</literal>,
+     <literal>INTERSECT</literal>, or <literal>EXCEPT</literal> clause.
+     Thus for example one could test whether a table is non-empty with
+<programlisting>
+IF count(*) &gt; 0 FROM my_table THEN ...
+</programlisting>
+     since the <replaceable>expression</replaceable>
+     between <literal>IF</literal> and <literal>THEN</literal> is parsed as
+     though it were <literal>SELECT count(*) &gt; 0 FROM my_table</literal>.
+     The <literal>SELECT</literal> must produce a single column, and not
+     more than one row.  (If it produces no rows, the result is taken as
+     NULL.)
+    </para>
   </sect1>
 
   <sect1 id="plpgsql-statements">
@@ -972,20 +990,6 @@ my_array[j] := 20;
 my_array[1:3] := array[1,2,3];
 complex_array[n].realpart = 12.3;
 </programlisting>
-    </para>
-
-    <para>
-     It's useful to know that what follows the assignment operator is
-     essentially treated as a <literal>SELECT</literal> command; as long
-     as it returns a single row and column, it will work.  Thus for example
-     one can write something like
-<programlisting>
-total_sales := sum(quantity) from sales;
-</programlisting>
-     This provides an effect similar to the single-row <literal>SELECT
-     ... INTO</literal> syntax described in
-     <xref linkend="plpgsql-statements-sql-onerow"/>.  However, that syntax
-     is more portable.
     </para>
    </sect2>
 
