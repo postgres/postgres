@@ -16,8 +16,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <DEFAULT>  for user regress_ecpg_user2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: could not open database: FATAL:  database "regress_ecpg_user2" does not exist
-
+[NO_PID]: ECPGconnect: connection to server failed: FATAL:  database "regress_ecpg_user2" does not exist
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -31,8 +30,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <DEFAULT>  for user regress_ecpg_user2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: could not open database: FATAL:  database "regress_ecpg_user2" does not exist
-
+[NO_PID]: ECPGconnect: connection to server failed: FATAL:  database "regress_ecpg_user2" does not exist
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection (null) closed
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -54,8 +52,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database nonexistent on localhost port <DEFAULT>  for user regress_ecpg_user1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: could not open database: FATAL:  database "nonexistent" does not exist
-
+[NO_PID]: ECPGconnect: connection to server failed: FATAL:  database "nonexistent" does not exist
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection nonexistent closed
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -65,10 +62,8 @@
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ECPGconnect: opening database ecpg2_regression on 127.0.0.1 port <REGRESSION_PORT>  for user regress_ecpg_user1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: could not open database: could not connect to server: Connection refused
-	Is the server running on host "127.0.0.1" and accepting
-	TCP/IP connections on port 20?
-
+[NO_PID]: ECPGconnect: connection to server failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection ecpg2_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000
