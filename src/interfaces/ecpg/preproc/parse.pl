@@ -71,6 +71,7 @@ my %replace_types = (
 	'type_function_name' => 'ignore',
 	'ColLabel'           => 'ignore',
 	'Sconst'             => 'ignore',
+	'opt_distinct_clause' => 'ignore',
 	'PLpgSQL_Expr'       => 'ignore',
 	'PLAssignStmt'       => 'ignore',
 	'plassign_target'    => 'ignore',
