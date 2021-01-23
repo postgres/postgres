@@ -919,22 +919,18 @@ if test "$with_ossp_uuid" = yes ; then
   with_uuid=ossp
 fi
 
-if test "$with_uuid" = bsd ; then
-  AC_DEFINE([HAVE_UUID_BSD], 1, [Define to 1 if you have BSD UUID support.])
-  UUID_EXTRA_OBJS="sha1.o"
-elif test "$with_uuid" = e2fs ; then
-  AC_DEFINE([HAVE_UUID_E2FS], 1, [Define to 1 if you have E2FS UUID support.])
-  UUID_EXTRA_OBJS="sha1.o"
-elif test "$with_uuid" = ossp ; then
-  AC_DEFINE([HAVE_UUID_OSSP], 1, [Define to 1 if you have OSSP UUID support.])
-  UUID_EXTRA_OBJS=""
-elif test "$with_uuid" = no ; then
-  UUID_EXTRA_OBJS=""
-else
-  AC_MSG_ERROR([--with-uuid must specify one of bsd, e2fs, or ossp])
+if test "$with_uuid" != no ; then
+  if test "$with_uuid" = bsd ; then
+    AC_DEFINE([HAVE_UUID_BSD], 1, [Define to 1 if you have BSD UUID support.])
+  elif test "$with_uuid" = e2fs ; then
+    AC_DEFINE([HAVE_UUID_E2FS], 1, [Define to 1 if you have E2FS UUID support.])
+  elif test "$with_uuid" = ossp ; then
+    AC_DEFINE([HAVE_UUID_OSSP], 1, [Define to 1 if you have OSSP UUID support.])
+  else
+    AC_MSG_ERROR([--with-uuid must specify one of bsd, e2fs, or ossp])
+  fi
 fi
 AC_SUBST(with_uuid)
-AC_SUBST(UUID_EXTRA_OBJS)
 
 
 #

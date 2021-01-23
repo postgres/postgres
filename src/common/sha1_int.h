@@ -1,4 +1,17 @@
-/*	contrib/pgcrypto/sha1.h */
+/*-------------------------------------------------------------------------
+ *
+ * sha1_int.h
+ *	  Internal headers for fallback implementation of SHA1
+ *
+ * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *		  src/common/sha1_int.h
+ *
+ *-------------------------------------------------------------------------
+ */
+
 /*	   $KAME: sha1.h,v 1.4 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -35,10 +48,12 @@
  * implemented by Jun-ichiro itojun Itoh <itojun@itojun.org>
  */
 
-#ifndef _NETINET6_SHA1_H_
-#define _NETINET6_SHA1_H_
+#ifndef PG_SHA1_INT_H
+#define PG_SHA1_INT_H
 
-struct sha1_ctxt
+#include "common/sha1.h"
+
+typedef struct
 {
 	union
 	{
@@ -56,20 +71,11 @@ struct sha1_ctxt
 		uint32		b32[16];
 	}			m;
 	uint8		count;
-};
+} pg_sha1_ctx;
 
-extern void sha1_init(struct sha1_ctxt *);
-extern void sha1_pad(struct sha1_ctxt *);
-extern void sha1_loop(struct sha1_ctxt *, const uint8 *, size_t);
-extern void sha1_result(struct sha1_ctxt *, uint8 *);
+/* Interface routines for SHA1 */
+extern void pg_sha1_init(pg_sha1_ctx *ctx);
+extern void pg_sha1_update(pg_sha1_ctx *ctx, const uint8 *data, size_t len);
+extern void pg_sha1_final(pg_sha1_ctx *ctx, uint8 *dest);
 
-/* compatibility with other SHA1 source codes */
-typedef struct sha1_ctxt SHA1_CTX;
-
-#define SHA1Init(x)		sha1_init((x))
-#define SHA1Update(x, y, z) sha1_loop((x), (y), (z))
-#define SHA1Final(x, y)		sha1_result((y), (x))
-
-#define SHA1_RESULTLEN	(160/8)
-
-#endif							/* _NETINET6_SHA1_H_ */
+#endif							/* PG_SHA1_INT_H */

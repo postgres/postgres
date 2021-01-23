@@ -705,7 +705,6 @@ XML2_LIBS
 XML2_CFLAGS
 XML2_CONFIG
 with_libxml
-UUID_EXTRA_OBJS
 with_uuid
 with_readline
 with_systemd
@@ -8303,27 +8302,23 @@ if test "$with_ossp_uuid" = yes ; then
   with_uuid=ossp
 fi
 
-if test "$with_uuid" = bsd ; then
+if test "$with_uuid" != no ; then
+  if test "$with_uuid" = bsd ; then
 
 $as_echo "#define HAVE_UUID_BSD 1" >>confdefs.h
 
-  UUID_EXTRA_OBJS="sha1.o"
-elif test "$with_uuid" = e2fs ; then
+  elif test "$with_uuid" = e2fs ; then
 
 $as_echo "#define HAVE_UUID_E2FS 1" >>confdefs.h
 
-  UUID_EXTRA_OBJS="sha1.o"
-elif test "$with_uuid" = ossp ; then
+  elif test "$with_uuid" = ossp ; then
 
 $as_echo "#define HAVE_UUID_OSSP 1" >>confdefs.h
 
-  UUID_EXTRA_OBJS=""
-elif test "$with_uuid" = no ; then
-  UUID_EXTRA_OBJS=""
-else
-  as_fn_error $? "--with-uuid must specify one of bsd, e2fs, or ossp" "$LINENO" 5
+  else
+    as_fn_error $? "--with-uuid must specify one of bsd, e2fs, or ossp" "$LINENO" 5
+  fi
 fi
-
 
 
 

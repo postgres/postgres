@@ -136,6 +136,7 @@ sub mkvcbuild
 	{
 		push(@pgcommonallfiles, 'cryptohash.c');
 		push(@pgcommonallfiles, 'md5.c');
+		push(@pgcommonallfiles, 'sha1.c');
 		push(@pgcommonallfiles, 'sha2.c');
 	}
 
@@ -465,10 +466,10 @@ sub mkvcbuild
 	else
 	{
 		$pgcrypto->AddFiles(
-			'contrib/pgcrypto',   'sha1.c',
-			'internal.c',         'internal-sha2.c',
-			'blf.c',              'rijndael.c',
-			'pgp-mpi-internal.c', 'imath.c');
+			'contrib/pgcrypto', 'internal.c',
+			'internal-sha2.c',  'blf.c',
+			'rijndael.c',       'pgp-mpi-internal.c',
+			'imath.c');
 	}
 	$pgcrypto->AddReference($postgres);
 	$pgcrypto->AddLibrary('ws2_32.lib');

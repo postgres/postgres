@@ -2,7 +2,6 @@
 
 MODULE_big = uuid-ossp
 OBJS = \
-	$(UUID_EXTRA_OBJS) \
 	$(WIN32RES) \
 	uuid-ossp.o
 
@@ -19,8 +18,6 @@ pgcrypto_src = $(top_srcdir)/contrib/pgcrypto
 
 PG_CPPFLAGS = -I$(pgcrypto_src)
 
-EXTRA_CLEAN = sha1.c
-
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
@@ -31,6 +28,3 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
-
-sha1.c: % : $(pgcrypto_src)/%
-	rm -f $@ && $(LN_S) $< .

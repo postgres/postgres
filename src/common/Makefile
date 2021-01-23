@@ -88,6 +88,7 @@ else
 OBJS_COMMON += \
 	cryptohash.o \
 	md5.o \
+	sha1.o \
 	sha2.o
 endif
 

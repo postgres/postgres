@@ -1,6 +1,6 @@
 # contrib/pgcrypto/Makefile
 
-INT_SRCS = sha1.c internal.c internal-sha2.c blf.c rijndael.c \
+INT_SRCS = internal.c internal-sha2.c blf.c rijndael.c \
 		pgp-mpi-internal.c imath.c
 INT_TESTS = sha2
 

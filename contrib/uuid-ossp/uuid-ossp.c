@@ -15,6 +15,7 @@
 
 #include "fmgr.h"
 #include "common/cryptohash.h"
+#include "common/sha1.h"
 #include "port/pg_bswap.h"
 #include "utils/builtins.h"
 #include "utils/uuid.h"
@@ -39,15 +40,6 @@
 #endif
 
 #undef uuid_hash
-
-/*
- * Some BSD variants offer sha1 implementation but Linux does not, so we use
- * a copy from pgcrypto.  Not needed with OSSP, though.
- */
-#ifndef HAVE_UUID_OSSP
-#include "sha1.h"
-#endif
-
 
 /* Check our UUID length against OSSP's; better both be 16 */
 #if defined(HAVE_UUID_OSSP) && (UUID_LEN != UUID_LEN_BIN)
@@ -338,13 +330,18 @@ uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 				}
 				else
 				{
-					SHA1_CTX	ctx;
-					unsigned char sha1result[SHA1_RESULTLEN];
+					pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_SHA1);
+					unsigned char sha1result[SHA1_DIGEST_LENGTH];
 
-					SHA1Init(&ctx);
-					SHA1Update(&ctx, ns, sizeof(uu));
-					SHA1Update(&ctx, (unsigned char *) ptr, len);
-					SHA1Final(sha1result, &ctx);
+					if (pg_cryptohash_init(ctx) < 0)
+						elog(ERROR, "could not initialize %s context", "SHA1");
+					if (pg_cryptohash_update(ctx, ns, sizeof(uu)) < 0 ||
+						pg_cryptohash_update(ctx, (unsigned char *) ptr, len) < 0)
+						elog(ERROR, "could not update %s context", "SHA1");
+					if (pg_cryptohash_final(ctx, sha1result) < 0)
+						elog(ERROR, "could not finalize %s context", "SHA1");
+					pg_cryptohash_free(ctx);
+
 					memcpy(&uu, sha1result, sizeof(uu));
 				}
 

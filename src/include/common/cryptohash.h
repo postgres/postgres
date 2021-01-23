@@ -19,6 +19,7 @@
 typedef enum
 {
 	PG_MD5 = 0,
+	PG_SHA1,
 	PG_SHA224,
 	PG_SHA256,
 	PG_SHA384,

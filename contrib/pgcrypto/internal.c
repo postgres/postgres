@@ -36,18 +36,10 @@
 #include "blf.h"
 #include "px.h"
 #include "rijndael.h"
-#include "sha1.h"
 
 #include "common/cryptohash.h"
 #include "common/md5.h"
-
-#ifndef SHA1_DIGEST_LENGTH
-#ifdef SHA1_RESULTLEN
-#define SHA1_DIGEST_LENGTH SHA1_RESULTLEN
-#else
-#define SHA1_DIGEST_LENGTH 20
-#endif
-#endif
+#include "common/sha1.h"
 
 #define SHA1_BLOCK_SIZE 64
 #define MD5_BLOCK_SIZE 64
@@ -144,34 +136,36 @@ int_sha1_block_len(PX_MD *h)
 static void
 int_sha1_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
-	SHA1_CTX   *ctx = (SHA1_CTX *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	SHA1Update(ctx, data, dlen);
+	if (pg_cryptohash_update(ctx, data, dlen) < 0)
+		elog(ERROR, "could not update %s context", "SHA1");
 }
 
 static void
 int_sha1_reset(PX_MD *h)
 {
-	SHA1_CTX   *ctx = (SHA1_CTX *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	SHA1Init(ctx);
+	if (pg_cryptohash_init(ctx) < 0)
+		elog(ERROR, "could not initialize %s context", "SHA1");
 }
 
 static void
 int_sha1_finish(PX_MD *h, uint8 *dst)
 {
-	SHA1_CTX   *ctx = (SHA1_CTX *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	SHA1Final(dst, ctx);
+	if (pg_cryptohash_final(ctx, dst) < 0)
+		elog(ERROR, "could not finalize %s context", "SHA1");
 }
 
 static void
 int_sha1_free(PX_MD *h)
 {
-	SHA1_CTX   *ctx = (SHA1_CTX *) h->p.ptr;
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	px_memset(ctx, 0, sizeof(*ctx));
-	pfree(ctx);
+	pg_cryptohash_free(ctx);
 	pfree(h);
 }
 
@@ -199,9 +193,9 @@ init_md5(PX_MD *md)
 static void
 init_sha1(PX_MD *md)
 {
-	SHA1_CTX   *ctx;
+	pg_cryptohash_ctx *ctx;
 
-	ctx = palloc0(sizeof(*ctx));
+	ctx = pg_cryptohash_create(PG_SHA1);
 
 	md->p.ptr = ctx;
 

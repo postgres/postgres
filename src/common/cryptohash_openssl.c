@@ -131,6 +131,9 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 		case PG_MD5:
 			status = EVP_DigestInit_ex(ctx->evpctx, EVP_md5(), NULL);
 			break;
+		case PG_SHA1:
+			status = EVP_DigestInit_ex(ctx->evpctx, EVP_sha1(), NULL);
+			break;
 		case PG_SHA224:
 			status = EVP_DigestInit_ex(ctx->evpctx, EVP_sha224(), NULL);
 			break;
