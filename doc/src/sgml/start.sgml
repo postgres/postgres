@@ -176,19 +176,18 @@ createdb: command not found
    <para>
     Another response could be this:
 <screen>
-createdb: could not connect to database postgres: could not connect to server: No such file or directory
-        Is the server running locally and accepting
-        connections on Unix domain socket "/tmp/.s.PGSQL.5432"?
+createdb: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such file or directory
+        Is the server running locally and accepting connections on that socket?
 </screen>
-    This means that the server was not started, or it was not started
-    where <command>createdb</command> expected it.  Again, check the
+    This means that the server was not started, or it is not listening
+    where <command>createdb</command> expects to contact it.  Again, check the
     installation instructions or consult the administrator.
    </para>
 
    <para>
     Another response could be this:
 <screen>
-createdb: could not connect to database postgres: FATAL:  role "joe" does not exist
+createdb: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: FATAL:  role "joe" does not exist
 </screen>
     where your own login name is mentioned.  This will happen if the
     administrator has not created a <productname>PostgreSQL</productname> user account
@@ -208,7 +207,7 @@ createdb: could not connect to database postgres: FATAL:  role "joe" does not ex
     If you have a user account but it does not have the privileges required to
     create a database, you will see the following:
 <screen>
-createdb: database creation failed: ERROR:  permission denied to create database
+createdb: error: database creation failed: ERROR:  permission denied to create database
 </screen>
     Not every user has authorization to create new databases.  If
     <productname>PostgreSQL</productname> refuses to create databases

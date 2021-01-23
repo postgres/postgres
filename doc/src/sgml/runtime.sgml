@@ -629,9 +629,8 @@ DETAIL:  Failed system call was semget(5440126, 17, 03600).
 
     <para>
 <screen>
-psql: could not connect to server: Connection refused
-        Is the server running on host "server.joe.com" and accepting
-        TCP/IP connections on port 5432?
+psql: error: connection to server at "server.joe.com" (123.123.123.123), port 5432 failed: Connection refused
+        Is the server running on that host and accepting TCP/IP connections?
 </screen>
      This is the generic <quote>I couldn't find a server to talk
      to</quote> failure. It looks like the above when TCP/IP
@@ -640,19 +639,22 @@ psql: could not connect to server: Connection refused
     </para>
 
     <para>
-     Alternatively, you'll get this when attempting Unix-domain socket
+     Alternatively, you might get this when attempting Unix-domain socket
      communication to a local server:
 <screen>
-psql: could not connect to server: No such file or directory
-        Is the server running locally and accepting
-        connections on Unix domain socket "/tmp/.s.PGSQL.5432"?
+psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such file or directory
+        Is the server running locally and accepting connections on that socket?
 </screen>
+     If the server is indeed running, check that the client's idea of the
+     socket path (here <literal>/tmp</literal>) agrees with the server's
+     <xref linkend="guc-unix-socket-directories"/> setting.
     </para>
 
     <para>
-     The last line is useful in verifying that the client is trying to
+     A connection failure message always shows the server address or socket
+     path name, which is useful in verifying that the client is trying to
      connect to the right place. If there is in fact no server
-     running there, the kernel error message will typically be either
+     listening there, the kernel error message will typically be either
      <computeroutput>Connection refused</computeroutput> or
      <computeroutput>No such file or directory</computeroutput>, as
      illustrated. (It is important to realize that
@@ -663,7 +665,7 @@ psql: could not connect to server: No such file or directory
      linkend="client-authentication-problems"/>.) Other error messages
      such as <computeroutput>Connection timed out</computeroutput> might
      indicate more fundamental problems, like lack of network
-     connectivity.
+     connectivity, or a firewall blocking the connection.
     </para>
    </sect2>
   </sect1>
