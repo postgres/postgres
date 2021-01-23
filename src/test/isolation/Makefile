@@ -56,4 +56,4 @@ installcheck-prepared-txns: all temp-install
 	./pg_isolation_regress --bindir='$(bindir)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
 
 check-prepared-txns: all temp-install
-	./pg_isolation_regress --temp-instance=./tmp_check $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
+	$(with_temp_install) ./pg_isolation_regress --temp-instance=./tmp_check --inputdir=$(srcdir) --bindir= $(EXTRA_REGRESS_OPTS) --schedule=$(srcdir)/isolation_schedule prepared-transactions
