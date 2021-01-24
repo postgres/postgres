@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# src/tools/make_diff/rmorig
-
-if [ "$#" -eq 0 ]
-then	APATH="."
-else	APATH="$1"
-fi
-find $APATH -name '*.orig' -exec rm {} \;
