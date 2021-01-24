@@ -14,6 +14,7 @@
 #ifndef STANDBY_H
 #define STANDBY_H
 
+#include "datatype/timestamp.h"
 #include "storage/lock.h"
 #include "storage/procsignal.h"
 #include "storage/relfilenode.h"
