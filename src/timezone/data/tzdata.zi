@@ -1,4 +1,4 @@
-# version 2020d
+# version 2021a
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -86,17 +86,24 @@ R K 2014 o - Jul 31 24 1 S
 R K 2014 o - S lastTh 24 0 -
 Z Africa/Cairo 2:5:9 - LMT 1900 O
 2 K EE%sT
-R GH 1920 1942 - S 1 0 0:20 -
-R GH 1920 1942 - D 31 0 0 -
-Z Africa/Accra -0:0:52 - LMT 1918
-0 GH GMT/+0020
+R GH 1919 o - N 24 0 0:20 +0020
+R GH 1920 1942 - Ja 1 2 0 GMT
+R GH 1920 1939 - S 1 2 0:20 +0020
+R GH 1940 1941 - May 1 2 0:20 +0020
+R GH 1950 1955 - S 1 2 0:30 +0030
+R GH 1951 1956 - Ja 1 2 0 GMT
+Z Africa/Accra -0:0:52 - LMT 1915 N 2
+0 GH %s 1942 F 8
+0:30 - +0030 1946 Ja 6
+0 GH %s
 Z Africa/Bissau -1:2:20 - LMT 1912 Ja 1 1u
 -1 - -01 1975
 0 - GMT
-Z Africa/Nairobi 2:27:16 - LMT 1928 Jul
-3 - EAT 1930
-2:30 - +0230 1940
-2:45 - +0245 1960
+Z Africa/Nairobi 2:27:16 - LMT 1908 May
+2:30 - +0230 1928 Jun 30 24
+3 - EAT 1930 Ja 4 24
+2:30 - +0230 1936 D 31 24
+2:45 - +0245 1942 Jul 31 24
 3 - EAT
 L Africa/Nairobi Africa/Addis_Ababa
 L Africa/Nairobi Africa/Asmara
@@ -353,7 +360,10 @@ Z Africa/Windhoek 1:8:24 - LMT 1892 F 8
 2 1 SAST 1943 Mar 21 2
 2 - SAST 1990 Mar 21
 2 NA %s
-Z Africa/Lagos 0:13:36 - LMT 1919 S
+Z Africa/Lagos 0:13:35 - LMT 1905 Jul
+0 - GMT 1908 Jul
+0:13:35 - LMT 1914
+0:30 - +0030 1919 S
 1 - WAT
 L Africa/Lagos Africa/Bangui
 L Africa/Lagos Africa/Brazzaville
@@ -371,7 +381,7 @@ Z Africa/Sao_Tome 0:26:56 - LMT 1884
 0 - GMT 2018 Ja 1 1
 1 - WAT 2019 Ja 1 2
 0 - GMT
-Z Indian/Mahe 3:41:48 - LMT 1906 Jun
+Z Indian/Mahe 3:41:48 - LMT 1907
 4 - +04
 R SA 1942 1943 - S Su>=15 2 1 -
 R SA 1943 1944 - Mar Su>=15 2 0 -
@@ -390,7 +400,8 @@ Z Africa/Khartoum 2:10:8 - LMT 1931
 2 - CAT
 Z Africa/Juba 2:6:28 - LMT 1931
 2 SD CA%sT 2000 Ja 15 12
-3 - EAT
+3 - EAT 2021 F
+2 - CAT
 R n 1939 o - Ap 15 23s 1 S
 R n 1939 o - N 18 23s 0 -
 R n 1940 o - F 25 23s 1 S
@@ -782,68 +793,66 @@ Z Asia/Baghdad 2:57:40 - LMT 1890
 2:57:36 - BMT 1918
 3 - +03 1982 May
 3 IQ +03/+04
-R Z 1940 o - Jun 1 0 1 D
-R Z 1942 1944 - N 1 0 0 S
-R Z 1943 o - Ap 1 2 1 D
-R Z 1944 o - Ap 1 0 1 D
-R Z 1945 o - Ap 16 0 1 D
-R Z 1945 o - N 1 2 0 S
-R Z 1946 o - Ap 16 2 1 D
-R Z 1946 o - N 1 0 0 S
-R Z 1948 o - May 23 0 2 DD
-R Z 1948 o - S 1 0 1 D
-R Z 1948 1949 - N 1 2 0 S
-R Z 1949 o - May 1 0 1 D
-R Z 1950 o - Ap 16 0 1 D
-R Z 1950 o - S 15 3 0 S
-R Z 1951 o - Ap 1 0 1 D
-R Z 1951 o - N 11 3 0 S
-R Z 1952 o - Ap 20 2 1 D
-R Z 1952 o - O 19 3 0 S
-R Z 1953 o - Ap 12 2 1 D
-R Z 1953 o - S 13 3 0 S
-R Z 1954 o - Jun 13 0 1 D
-R Z 1954 o - S 12 0 0 S
-R Z 1955 o - Jun 11 2 1 D
-R Z 1955 o - S 11 0 0 S
-R Z 1956 o - Jun 3 0 1 D
-R Z 1956 o - S 30 3 0 S
-R Z 1957 o - Ap 29 2 1 D
-R Z 1957 o - S 22 0 0 S
-R Z 1974 o - Jul 7 0 1 D
-R Z 1974 o - O 13 0 0 S
-R Z 1975 o - Ap 20 0 1 D
-R Z 1975 o - Au 31 0 0 S
-R Z 1980 o - Au 2 0 1 D
-R Z 1980 o - S 13 1 0 S
-R Z 1984 o - May 5 0 1 D
-R Z 1984 o - Au 25 1 0 S
-R Z 1985 o - Ap 14 0 1 D
-R Z 1985 o - S 15 0 0 S
-R Z 1986 o - May 18 0 1 D
-R Z 1986 o - S 7 0 0 S
-R Z 1987 o - Ap 15 0 1 D
-R Z 1987 o - S 13 0 0 S
-R Z 1988 o - Ap 10 0 1 D
-R Z 1988 o - S 4 0 0 S
-R Z 1989 o - Ap 30 0 1 D
-R Z 1989 o - S 3 0 0 S
-R Z 1990 o - Mar 25 0 1 D
-R Z 1990 o - Au 26 0 0 S
-R Z 1991 o - Mar 24 0 1 D
-R Z 1991 o - S 1 0 0 S
-R Z 1992 o - Mar 29 0 1 D
-R Z 1992 o - S 6 0 0 S
+R Z 1940 o - May 31 24u 1 D
+R Z 1940 o - S 30 24u 0 S
+R Z 1940 o - N 16 24u 1 D
+R Z 1942 1946 - O 31 24u 0 S
+R Z 1943 1944 - Mar 31 24u 1 D
+R Z 1945 1946 - Ap 15 24u 1 D
+R Z 1948 o - May 22 24u 2 DD
+R Z 1948 o - Au 31 24u 1 D
+R Z 1948 1949 - O 31 24u 0 S
+R Z 1949 o - Ap 30 24u 1 D
+R Z 1950 o - Ap 15 24u 1 D
+R Z 1950 o - S 14 24u 0 S
+R Z 1951 o - Mar 31 24u 1 D
+R Z 1951 o - N 10 24u 0 S
+R Z 1952 o - Ap 19 24u 1 D
+R Z 1952 o - O 18 24u 0 S
+R Z 1953 o - Ap 11 24u 1 D
+R Z 1953 o - S 12 24u 0 S
+R Z 1954 o - Jun 12 24u 1 D
+R Z 1954 o - S 11 24u 0 S
+R Z 1955 o - Jun 11 24u 1 D
+R Z 1955 o - S 10 24u 0 S
+R Z 1956 o - Jun 2 24u 1 D
+R Z 1956 o - S 29 24u 0 S
+R Z 1957 o - Ap 27 24u 1 D
+R Z 1957 o - S 21 24u 0 S
+R Z 1974 o - Jul 6 24 1 D
+R Z 1974 o - O 12 24 0 S
+R Z 1975 o - Ap 19 24 1 D
+R Z 1975 o - Au 30 24 0 S
+R Z 1980 o - Au 2 24s 1 D
+R Z 1980 o - S 13 24s 0 S
+R Z 1984 o - May 5 24s 1 D
+R Z 1984 o - Au 25 24s 0 S
+R Z 1985 o - Ap 13 24 1 D
+R Z 1985 o - Au 31 24 0 S
+R Z 1986 o - May 17 24 1 D
+R Z 1986 o - S 6 24 0 S
+R Z 1987 o - Ap 14 24 1 D
+R Z 1987 o - S 12 24 0 S
+R Z 1988 o - Ap 9 24 1 D
+R Z 1988 o - S 3 24 0 S
+R Z 1989 o - Ap 29 24 1 D
+R Z 1989 o - S 2 24 0 S
+R Z 1990 o - Mar 24 24 1 D
+R Z 1990 o - Au 25 24 0 S
+R Z 1991 o - Mar 23 24 1 D
+R Z 1991 o - Au 31 24 0 S
+R Z 1992 o - Mar 28 24 1 D
+R Z 1992 o - S 5 24 0 S
 R Z 1993 o - Ap 2 0 1 D
 R Z 1993 o - S 5 0 0 S
 R Z 1994 o - Ap 1 0 1 D
 R Z 1994 o - Au 28 0 0 S
 R Z 1995 o - Mar 31 0 1 D
 R Z 1995 o - S 3 0 0 S
-R Z 1996 o - Mar 15 0 1 D
-R Z 1996 o - S 16 0 0 S
-R Z 1997 o - Mar 21 0 1 D
-R Z 1997 o - S 14 0 0 S
+R Z 1996 o - Mar 14 24 1 D
+R Z 1996 o - S 15 24 0 S
+R Z 1997 o - Mar 20 24 1 D
+R Z 1997 o - S 13 24 0 S
 R Z 1998 o - Mar 20 0 1 D
 R Z 1998 o - S 6 0 0 S
 R Z 1999 o - Ap 2 2 1 D
@@ -1256,13 +1265,13 @@ Z Asia/Ho_Chi_Minh 7:6:40 - LMT 1906 Jul
 7 - +07 1959 D 31 23
 8 - +08 1975 Jun 13
 7 - +07
-R AU 1917 o - Ja 1 0:1 1 D
-R AU 1917 o - Mar 25 2 0 S
-R AU 1942 o - Ja 1 2 1 D
-R AU 1942 o - Mar 29 2 0 S
-R AU 1942 o - S 27 2 1 D
-R AU 1943 1944 - Mar lastSu 2 0 S
-R AU 1943 o - O 3 2 1 D
+R AU 1917 o - Ja 1 2s 1 D
+R AU 1917 o - Mar lastSu 2s 0 S
+R AU 1942 o - Ja 1 2s 1 D
+R AU 1942 o - Mar lastSu 2s 0 S
+R AU 1942 o - S 27 2s 1 D
+R AU 1943 1944 - Mar lastSu 2s 0 S
+R AU 1943 o - O 3 2s 1 D
 Z Australia/Darwin 8:43:20 - LMT 1895 F
 9 - ACST 1899 May
 9:30 AU AC%sT
@@ -1313,8 +1322,12 @@ Z Australia/Adelaide 9:14:20 - LMT 1895 F
 9 - ACST 1899 May
 9:30 AU AC%sT 1971
 9:30 AS AC%sT
+R AT 1916 o - O Su>=1 2s 1 D
+R AT 1917 o - Mar lastSu 2s 0 S
+R AT 1917 1918 - O Su>=22 2s 1 D
+R AT 1918 1919 - Mar Su>=1 2s 0 S
 R AT 1967 o - O Su>=1 2s 1 D
-R AT 1968 o - Mar lastSu 2s 0 S
+R AT 1968 o - Mar Su>=29 2s 0 S
 R AT 1968 1985 - O lastSu 2s 1 D
 R AT 1969 1971 - Mar Su>=8 2s 0 S
 R AT 1972 o - F lastSu 2s 0 S
@@ -1333,14 +1346,8 @@ R AT 2006 o - Ap Su>=1 2s 0 S
 R AT 2007 o - Mar lastSu 2s 0 S
 R AT 2008 ma - Ap Su>=1 2s 0 S
 Z Australia/Hobart 9:49:16 - LMT 1895 S
-10 - AEST 1916 O 1 2
-10 1 AEDT 1917 F
+10 AT AE%sT 1919 O 24
 10 AU AE%sT 1967
-10 AT AE%sT
-Z Australia/Currie 9:35:28 - LMT 1895 S
-10 - AEST 1916 O 1 2
-10 1 AEDT 1917 F
-10 AU AE%sT 1971 Jul
 10 AT AE%sT
 R AV 1971 1985 - O lastSu 2s 1 D
 R AV 1972 o - F lastSu 2s 0 S
@@ -1615,12 +1622,12 @@ Z Pacific/Funafuti 11:56:52 - LMT 1901
 12 - +12
 Z Pacific/Wake 11:6:28 - LMT 1901
 12 - +12
-R VU 1983 o - S 25 0 1 -
-R VU 1984 1991 - Mar Su>=23 0 0 -
-R VU 1984 o - O 23 0 1 -
-R VU 1985 1991 - S Su>=23 0 1 -
-R VU 1992 1993 - Ja Su>=23 0 0 -
-R VU 1992 o - O Su>=23 0 1 -
+R VU 1973 o - D 22 12u 1 -
+R VU 1974 o - Mar 30 12u 0 -
+R VU 1983 1991 - S Sa>=22 24 1 -
+R VU 1984 1991 - Mar Sa>=22 24 0 -
+R VU 1992 1993 - Ja Sa>=22 24 0 -
+R VU 1992 o - O Sa>=22 24 1 -
 Z Pacific/Efate 11:13:16 - LMT 1912 Ja 13
 11 VU +11/+12
 Z Pacific/Wallis 12:15:20 - LMT 1901
@@ -2463,7 +2470,8 @@ Z Europe/Volgograd 2:57:40 - LMT 1920 Ja 3
 3 R +03/+04 2011 Mar 27 2s
 4 - +04 2014 O 26 2s
 3 - +03 2018 O 28 2s
-4 - +04
+4 - +04 2020 D 27 2s
+3 - +03
 Z Europe/Saratov 3:4:18 - LMT 1919 Jul 1 0u
 3 - +03 1930 Jun 21
 4 R +04/+05 1988 Mar 27 2s
@@ -3546,6 +3554,11 @@ Z America/Tijuana -7:48:4 - LMT 1922 Ja 1 0:11:56
 -8 u P%sT 2002 F 20
 -8 m P%sT 2010
 -8 u P%sT
+R BS 1942 o - May 1 24 1 W
+R BS 1944 o - D 31 24 0 S
+R BS 1945 o - F 1 0 1 W
+R BS 1945 o - Au 14 23u 1 P
+R BS 1945 o - O 17 24 0 S
 R BS 1964 1975 - O lastSu 2 0 S
 R BS 1964 1975 - Ap lastSu 2 1 D
 Z America/Nassau -5:9:30 - LMT 1912 Mar 2
@@ -3559,16 +3572,38 @@ R BB 1980 o - S 25 2 0 S
 Z America/Barbados -3:58:29 - LMT 1924
 -3:58:29 - BMT 1932
 -4 BB A%sT
-R BZ 1918 1942 - O Su>=2 0 0:30 -0530
-R BZ 1919 1943 - F Su>=9 0 0 CST
+R BZ 1918 1941 - O Sa>=1 24 0:30 -0530
+R BZ 1919 1942 - F Sa>=8 24 0 CST
+R BZ 1942 o - Jun 27 24 1 CWT
+R BZ 1945 o - Au 14 23u 1 CPT
+R BZ 1945 o - D 15 24 0 CST
+R BZ 1947 1967 - O Sa>=1 24 0:30 -0530
+R BZ 1948 1968 - F Sa>=8 24 0 CST
 R BZ 1973 o - D 5 0 1 CDT
 R BZ 1974 o - F 9 0 0 CST
 R BZ 1982 o - D 18 0 1 CDT
 R BZ 1983 o - F 12 0 0 CST
 Z America/Belize -5:52:48 - LMT 1912 Ap
 -6 BZ %s
-Z Atlantic/Bermuda -4:19:18 - LMT 1930 Ja 1 2
--4 - AST 1974 Ap 28 2
+R Be 1917 o - Ap 5 24 1 -
+R Be 1917 o - S 30 24 0 -
+R Be 1918 o - Ap 13 24 1 -
+R Be 1918 o - S 15 24 0 S
+R Be 1942 o - Ja 11 2 1 D
+R Be 1942 o - O 18 2 0 S
+R Be 1943 o - Mar 21 2 1 D
+R Be 1943 o - O 31 2 0 S
+R Be 1944 1945 - Mar Su>=8 2 1 D
+R Be 1944 1945 - N Su>=1 2 0 S
+R Be 1947 o - May Su>=15 2 1 D
+R Be 1947 o - S Su>=8 2 0 S
+R Be 1948 1952 - May Su>=22 2 1 D
+R Be 1948 1952 - S Su>=1 2 0 S
+R Be 1956 o - May Su>=22 2 1 D
+R Be 1956 o - O lastSu 2 0 S
+Z Atlantic/Bermuda -4:19:18 - LMT 1890
+-4:19:18 Be BMT/BST 1930 Ja 1 2
+-4 Be A%sT 1974 Ap 28 2
 -4 C A%sT 1976
 -4 u A%sT
 R CR 1979 1980 - F lastSu 0 1 D
@@ -3707,7 +3742,7 @@ Z America/Miquelon -3:44:40 - LMT 1911 May 15
 Z America/Grand_Turk -4:44:32 - LMT 1890
 -5:7:10 - KMT 1912 F
 -5 - EST 1979
--5 u E%sT 2015 N Su>=1 2
+-5 u E%sT 2015 Mar 8 2
 -4 - AST 2018 Mar 11 3
 -5 u E%sT
 R A 1930 o - D 1 0 1 -
@@ -4343,6 +4378,7 @@ L Atlantic/Faroe Atlantic/Faeroe
 L Europe/Oslo Atlantic/Jan_Mayen
 L Australia/Sydney Australia/ACT
 L Australia/Sydney Australia/Canberra
+L Australia/Hobart Australia/Currie
 L Australia/Lord_Howe Australia/LHI
 L Australia/Sydney Australia/NSW
 L Australia/Darwin Australia/North
