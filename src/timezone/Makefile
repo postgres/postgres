@@ -60,9 +60,10 @@ ifeq (,$(with_system_tzdata))
 endif
 	$(MAKE) -C tznames $@
 
+# Note: -P code currently depends on '-b fat'.  Not worth fixing right now.
 abbrevs.txt: zic $(TZDATAFILES)
 	mkdir junkdir
-	$(ZIC) -P -d junkdir $(TZDATAFILES) | LANG=C sort | uniq >abbrevs.txt
+	$(ZIC) -P -b fat -d junkdir $(TZDATAFILES) | LANG=C sort | uniq >abbrevs.txt
 	rm -rf junkdir
 
 installdirs:
