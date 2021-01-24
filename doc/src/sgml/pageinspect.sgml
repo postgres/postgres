@@ -685,9 +685,9 @@ test=# SELECT first_tid, nbytes, tids[0:5] AS some_tids
 
     <listitem>
      <para>
-      <function>gist_page_opaque_info</function> returns information about
-      a <acronym>GiST</acronym> index opaque area, like the NSN, rightlink and
-      page type.
+      <function>gist_page_opaque_info</function> returns information from
+      a <acronym>GiST</acronym> index page's opaque area, such as the NSN,
+      rightlink and page type.
       For example:
 <screen>
 test=# SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
@@ -702,7 +702,7 @@ test=# SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
 
    <varlistentry>
     <term>
-     <function>gist_page_items(page bytea, index oid) returns setof record</function>
+     <function>gist_page_items(page bytea, index_oid regclass) returns setof record</function>
      <indexterm>
       <primary>gist_page_items</primary>
      </indexterm>
@@ -711,7 +711,7 @@ test=# SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
     <listitem>
      <para>
       <function>gist_page_items</function> returns information about
-      the data stored in a page of <acronym>GiST</acronym> index.  For example:
+      the data stored in a page of a <acronym>GiST</acronym> index.  For example:
 <screen>
 test=# SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 0), 'test_gist_idx');
  itemoffset |   ctid    | itemlen |       keys        
@@ -739,19 +739,21 @@ test=# SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 0), 'test_gis
 
     <listitem>
      <para>
-      Same as <function>gist_page_items</function>, but returns the key data as a raw
-      bytea blob. For example:
+      Same as <function>gist_page_items</function>, but returns the key data
+      as a raw <type>bytea</type> blob.  Since it does not attempt to decode
+      the key, it does not need to know which index is involved.  For
+      example:
 <screen>
 test=# SELECT * FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 0));
  itemoffset |   ctid    | itemlen |                                      key_data                                      
-------------+-----------+---------+------------------------------------------------------------------------------------
-          1 | (1,65535) |      40 | \x00000100ffff28000000000000c064400000000000c06440000000000000f03f000000000000f03f
-          2 | (2,65535) |      40 | \x00000200ffff28000000000000c074400000000000c074400000000000e064400000000000e06440
-          3 | (3,65535) |      40 | \x00000300ffff28000000000000207f400000000000207f400000000000d074400000000000d07440
-          4 | (4,65535) |      40 | \x00000400ffff28000000000000c084400000000000c084400000000000307f400000000000307f40
-          5 | (5,65535) |      40 | \x00000500ffff28000000000000f089400000000000f089400000000000c884400000000000c88440
-          6 | (6,65535) |      40 | \x00000600ffff28000000000000208f400000000000208f400000000000f889400000000000f88940
-          7 | (7,65535) |      40 | \x00000700ffff28000000000000408f400000000000408f400000000000288f400000000000288f40
+------------+-----------+---------+-------------------------------------------&zwsp;-----------------------------------------
+          1 | (1,65535) |      40 | \x00000100ffff28000000000000c0644000000000&zwsp;00c06440000000000000f03f000000000000f03f
+          2 | (2,65535) |      40 | \x00000200ffff28000000000000c0744000000000&zwsp;00c074400000000000e064400000000000e06440
+          3 | (3,65535) |      40 | \x00000300ffff28000000000000207f4000000000&zwsp;00207f400000000000d074400000000000d07440
+          4 | (4,65535) |      40 | \x00000400ffff28000000000000c0844000000000&zwsp;00c084400000000000307f400000000000307f40
+          5 | (5,65535) |      40 | \x00000500ffff28000000000000f0894000000000&zwsp;00f089400000000000c884400000000000c88440
+          6 | (6,65535) |      40 | \x00000600ffff28000000000000208f4000000000&zwsp;00208f400000000000f889400000000000f88940
+          7 | (7,65535) |      40 | \x00000700ffff28000000000000408f4000000000&zwsp;00408f400000000000288f400000000000288f40
 (7 rows)
 </screen>
      </para>
