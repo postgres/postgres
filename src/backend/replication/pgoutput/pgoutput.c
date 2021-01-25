@@ -1179,5 +1179,16 @@ rel_sync_cache_publication_cb(Datum arg, int cacheid, uint32 hashvalue)
 	 */
 	hash_seq_init(&status, RelationSyncCache);
 	while ((entry = (RelationSyncEntry *) hash_seq_search(&status)) != NULL)
+	{
 		entry->replicate_valid = false;
+
+		/*
+		 * There might be some relations dropped from the publication so we
+		 * don't need to publish the changes for them.
+		 */
+		entry->pubactions.pubinsert = false;
+		entry->pubactions.pubupdate = false;
+		entry->pubactions.pubdelete = false;
+		entry->pubactions.pubtruncate = false;
+	}
 }
