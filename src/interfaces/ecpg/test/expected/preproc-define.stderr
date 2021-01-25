@@ -2,53 +2,53 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 53: query: create table test ( name char ( 8 ) , amount int , letter char ( 1 ) ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 52: query: create table test ( name char ( 8 ) , amount int , letter char ( 1 ) ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 53: using PQexec
+[NO_PID]: ecpg_execute on line 52: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 53: OK: CREATE TABLE
+[NO_PID]: ecpg_process_output on line 52: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 54: action "commit"; connection "ecpg1_regression"
+[NO_PID]: ECPGtrans on line 53: action "commit"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 56: query: insert into Test ( name , amount , letter ) values ( 'false' , 1 , 'f' ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_execute on line 55: query: insert into Test ( name , amount , letter ) values ( 'false' , 1 , 'f' ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 55: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 55: OK: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 56: query: insert into test ( name , amount , letter ) values ( 'true' , 2 , 't' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 56: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 56: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 57: query: insert into test ( name , amount , letter ) values ( 'true' , 2 , 't' ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ECPGtrans on line 57: action "commit"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 57: using PQexec
+[NO_PID]: ecpg_execute on line 59: query: select * from test; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 57: OK: INSERT 0 1
+[NO_PID]: ecpg_execute on line 59: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 58: action "commit"; connection "ecpg1_regression"
+[NO_PID]: ecpg_process_output on line 59: correctly got 2 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 60: query: select * from test; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: ecpg_get_data on line 59: RESULT: false    offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 60: using PQexec
+[NO_PID]: ecpg_get_data on line 59: RESULT: true     offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 60: correctly got 2 tuples with 3 fields
+[NO_PID]: ecpg_get_data on line 59: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 60: RESULT: false    offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 59: RESULT: 2 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 60: RESULT: true     offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 59: RESULT: f offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 60: RESULT: 1 offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 59: RESULT: t offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 60: RESULT: 2 offset: -1; array: no
+[NO_PID]: ecpg_execute on line 73: query: drop table test; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 60: RESULT: f offset: -1; array: no
+[NO_PID]: ecpg_execute on line 73: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 60: RESULT: t offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 73: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 74: query: drop table test; with 0 parameter(s) on connection ecpg1_regression
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 74: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 74: OK: DROP TABLE
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 75: action "commit"; connection "ecpg1_regression"
+[NO_PID]: ECPGtrans on line 74: action "commit"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000
