@@ -40,15 +40,18 @@ SELECT test1arr(array['aa=>bb, cc=>NULL'::hstore, 'dd=>ee']);
 
 
 -- test python -> hstore
-CREATE FUNCTION test2() RETURNS hstore
+CREATE FUNCTION test2(a int, b text) RETURNS hstore
 LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
-val = {'a': 1, 'b': 'boo', 'c': None}
+val = {'a': a, 'b': b, 'c': None}
 return val
 $$;
 
-SELECT test2();
+SELECT test2(1, 'boo');
+
+--- test ruleutils
+\sf test2
 
 
 -- test python -> hstore[]
