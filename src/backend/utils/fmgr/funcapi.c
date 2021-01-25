@@ -1182,7 +1182,9 @@ get_func_arg_info(HeapTuple procTup,
 /*
  * get_func_trftypes
  *
- * Returns the number of transformed types used by function.
+ * Returns the number of transformed types used by the function.
+ * If there are any, a palloc'd array of the type OIDs is returned
+ * into *p_trftypes.
  */
 int
 get_func_trftypes(HeapTuple procTup,
@@ -1211,7 +1213,6 @@ get_func_trftypes(HeapTuple procTup,
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != OIDOID)
 			elog(ERROR, "protrftypes is not a 1-D Oid array");
-		Assert(nelems >= ((Form_pg_proc) GETSTRUCT(procTup))->pronargs);
 		*p_trftypes = (Oid *) palloc(nelems * sizeof(Oid));
 		memcpy(*p_trftypes, ARR_DATA_PTR(arr),
 			   nelems * sizeof(Oid));
