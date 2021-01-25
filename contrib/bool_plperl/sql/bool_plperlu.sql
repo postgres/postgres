@@ -33,7 +33,7 @@ SELECT perl2undef() IS NULL AS p;
 
 CREATE FUNCTION bool2perl(bool, bool, bool) RETURNS void
 LANGUAGE plperlu
-TRANSFORM FOR TYPE bool
+TRANSFORM FOR TYPE bool, for type boolean  -- duplicate to test ruleutils
 AS $$
 my ($x, $y, $z) = @_;
 
@@ -45,6 +45,10 @@ die("FALSE mistransformed") if ($y);
 $$;
 
 SELECT bool2perl (true, false, NULL);
+
+--- test ruleutils
+
+\sf bool2perl
 
 --- test selecting bool through SPI
 
