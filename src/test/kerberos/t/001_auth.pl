@@ -67,6 +67,7 @@ my $realm    = 'EXAMPLE.COM';
 
 my $krb5_conf   = "${TestLib::tmp_check}/krb5.conf";
 my $kdc_conf    = "${TestLib::tmp_check}/kdc.conf";
+my $krb5_cache  = "${TestLib::tmp_check}/krb5cc";
 my $krb5_log    = "${TestLib::log_path}/krb5libs.log";
 my $kdc_log     = "${TestLib::log_path}/krb5kdc.log";
 my $kdc_port    = get_free_port();
@@ -134,8 +135,10 @@ $realm = {
 
 mkdir $kdc_datadir or die;
 
+# Ensure that we use test's config and cache files, not global ones.
 $ENV{'KRB5_CONFIG'}      = $krb5_conf;
 $ENV{'KRB5_KDC_PROFILE'} = $kdc_conf;
+$ENV{'KRB5CCNAME'}       = $krb5_cache;
 
 my $service_principal = "$ENV{with_krb_srvnam}/$host";
 
