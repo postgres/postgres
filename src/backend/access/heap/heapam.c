@@ -567,8 +567,14 @@ heapgettup(HeapScanDesc scan,
 			 * forward scanners.
 			 */
 			scan->rs_syncscan = false;
-			/* start from last page of the scan */
-			if (scan->rs_startblock > 0)
+
+			/*
+			 * Start from last page of the scan.  Ensure we take into account
+			 * rs_numblocks if it's been adjusted by heap_setscanlimits().
+			 */
+			if (scan->rs_numblocks != InvalidBlockNumber)
+				page = (scan->rs_startblock + scan->rs_numblocks - 1) % scan->rs_nblocks;
+			else if (scan->rs_startblock > 0)
 				page = scan->rs_startblock - 1;
 			else
 				page = scan->rs_nblocks - 1;
@@ -866,8 +872,14 @@ heapgettup_pagemode(HeapScanDesc scan,
 			 * forward scanners.
 			 */
 			scan->rs_syncscan = false;
-			/* start from last page of the scan */
-			if (scan->rs_startblock > 0)
+
+			/*
+			 * Start from last page of the scan.  Ensure we take into account
+			 * rs_numblocks if it's been adjusted by heap_setscanlimits().
+			 */
+			if (scan->rs_numblocks != InvalidBlockNumber)
+				page = (scan->rs_startblock + scan->rs_numblocks - 1) % scan->rs_nblocks;
+			else if (scan->rs_startblock > 0)
 				page = scan->rs_startblock - 1;
 			else
 				page = scan->rs_nblocks - 1;
