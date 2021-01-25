@@ -15,7 +15,7 @@ SInvalWriteLock						6
 WALBufMappingLock					7
 WALWriteLock						8
 ControlFileLock						9
-CheckpointLock						10
+# 10 was CheckpointLock
 XactSLRULock						11
 SubtransSLRULock					12
 MultiXactGenLock					13

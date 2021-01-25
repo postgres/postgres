@@ -430,10 +430,6 @@ static XLogRecPtr RedoStartLSN = InvalidXLogRecPtr;
  * ControlFileLock: must be held to read/update control file or create
  * new log file.
  *
- * CheckpointLock: must be held to do a checkpoint or restartpoint (ensures
- * only one checkpointer at a time; currently, with all checkpoints done by
- * the checkpointer, this is just pro forma).
- *
  *----------
  */
 
@@ -8865,14 +8861,6 @@ CreateCheckPoint(int flags)
 	InitXLogInsert();
 
 	/*
-	 * Acquire CheckpointLock to ensure only one checkpoint happens at a time.
-	 * (This is just pro forma, since in the present system structure there is
-	 * only one process that is allowed to issue checkpoints at any given
-	 * time.)
-	 */
-	LWLockAcquire(CheckpointLock, LW_EXCLUSIVE);
-
-	/*
 	 * Prepare to accumulate statistics.
 	 *
 	 * Note: because it is possible for log_checkpoints to change while a
@@ -8941,7 +8929,6 @@ CreateCheckPoint(int flags)
 		if (last_important_lsn == ControlFile->checkPoint)
 		{
 			WALInsertLockRelease();
-			LWLockRelease(CheckpointLock);
 			END_CRIT_SECTION();
 			ereport(DEBUG1,
 					(errmsg("checkpoint skipped because system is idle")));
@@ -9241,15 +9228,12 @@ CreateCheckPoint(int flags)
 									 CheckpointStats.ckpt_segs_added,
 									 CheckpointStats.ckpt_segs_removed,
 									 CheckpointStats.ckpt_segs_recycled);
-
-	LWLockRelease(CheckpointLock);
 }
 
 /*
  * Mark the end of recovery in WAL though without running a full checkpoint.
  * We can expect that a restartpoint is likely to be in progress as we
- * do this, though we are unwilling to wait for it to complete. So be
- * careful to avoid taking the CheckpointLock anywhere here.
+ * do this, though we are unwilling to wait for it to complete.
  *
  * CreateRestartPoint() allows for the case where recovery may end before
  * the restartpoint completes so there is no concern of concurrent behaviour.
@@ -9399,12 +9383,6 @@ CreateRestartPoint(int flags)
 	XLogSegNo	_logSegNo;
 	TimestampTz xtime;
 
-	/*
-	 * Acquire CheckpointLock to ensure only one restartpoint or checkpoint
-	 * happens at a time.
-	 */
-	LWLockAcquire(CheckpointLock, LW_EXCLUSIVE);
-
 	/* Get a local copy of the last safe checkpoint record. */
 	SpinLockAcquire(&XLogCtl->info_lck);
 	lastCheckPointRecPtr = XLogCtl->lastCheckPointRecPtr;
@@ -9420,7 +9398,6 @@ CreateRestartPoint(int flags)
 	{
 		ereport(DEBUG2,
 				(errmsg("skipping restartpoint, recovery has already ended")));
-		LWLockRelease(CheckpointLock);
 		return false;
 	}
 
@@ -9455,7 +9432,6 @@ CreateRestartPoint(int flags)
 			UpdateControlFile();
 			LWLockRelease(ControlFileLock);
 		}
-		LWLockRelease(CheckpointLock);
 		return false;
 	}
 
@@ -9620,8 +9596,6 @@ CreateRestartPoint(int flags)
 					(uint32) (lastCheckPoint.redo >> 32), (uint32) lastCheckPoint.redo),
 			 xtime ? errdetail("Last completed transaction was at log time %s.",
 							   timestamptz_to_str(xtime)) : 0));
-
-	LWLockRelease(CheckpointLock);
 
 	/*
 	 * Finally, execute archive_cleanup_command, if any.

@@ -1881,10 +1881,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        pool.</entry>
      </row>
      <row>
-      <entry><literal>Checkpoint</literal></entry>
-      <entry>Waiting to begin a checkpoint.</entry>
-     </row>
-     <row>
       <entry><literal>CheckpointerComm</literal></entry>
       <entry>Waiting to manage fsync requests.</entry>
      </row>
