@@ -5874,7 +5874,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       An array with the data types of the function arguments.  This includes
+       An array of the data types of the function arguments.  This includes
        only input arguments (including <literal>INOUT</literal> and
        <literal>VARIADIC</literal> arguments), as well as
        <literal>OUT</literal> parameters of procedures, and thus represents
@@ -5888,7 +5888,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       An array with the data types of the function arguments.  This includes
+       An array of the data types of the function arguments.  This includes
        all arguments (including <literal>OUT</literal> and
        <literal>INOUT</literal> arguments); however, if all the
        arguments are <literal>IN</literal> arguments, this field will be null.
@@ -5902,7 +5902,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>proargmodes</structfield> <type>char[]</type>
       </para>
       <para>
-       An array with the modes of the function arguments, encoded as
+       An array of the modes of the function arguments, encoded as
        <literal>i</literal> for <literal>IN</literal> arguments,
        <literal>o</literal> for <literal>OUT</literal> arguments,
        <literal>b</literal> for <literal>INOUT</literal> arguments,
@@ -5920,7 +5920,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>proargnames</structfield> <type>text[]</type>
       </para>
       <para>
-       An array with the names of the function arguments.
+       An array of the names of the function arguments.
        Arguments without a name are set to empty strings in the array.
        If none of the arguments have a name, this field will be null.
        Note that subscripts correspond to positions of
@@ -5945,9 +5945,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>protrftypes</structfield> <type>oid[]</type>
+       (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Data type OIDs for which to apply transforms.
+       An array of the argument/result data type(s) for which to apply
+       transforms (from the function's <literal>TRANSFORM</literal>
+       clause).  Null if none.
       </para></entry>
      </row>
 
