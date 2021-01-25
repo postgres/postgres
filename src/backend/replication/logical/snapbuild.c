@@ -1385,7 +1385,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
  * a) allow isolationtester to notice that we're currently waiting for
  *	  something.
  * b) log a new xl_running_xacts record where it'd be helpful, without having
- *	  to write for bgwriter or checkpointer.
+ *	  to wait for bgwriter or checkpointer.
  * ---
  */
 static void
@@ -1414,7 +1414,7 @@ SnapBuildWaitSnapshot(xl_running_xacts *running, TransactionId cutoff)
 	/*
 	 * All transactions we needed to finish finished - try to ensure there is
 	 * another xl_running_xacts record in a timely manner, without having to
-	 * write for bgwriter or checkpointer to log one.  During recovery we
+	 * wait for bgwriter or checkpointer to log one.  During recovery we
 	 * can't enforce that, so we'll have to wait.
 	 */
 	if (!RecoveryInProgress())
