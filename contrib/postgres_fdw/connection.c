@@ -80,6 +80,8 @@ static bool xact_got_connection = false;
  * SQL functions
  */
 PG_FUNCTION_INFO_V1(postgres_fdw_get_connections);
+PG_FUNCTION_INFO_V1(postgres_fdw_disconnect);
+PG_FUNCTION_INFO_V1(postgres_fdw_disconnect_all);
 
 /* prototypes of private functions */
 static void make_new_connection(ConnCacheEntry *entry, UserMapping *user);
@@ -102,6 +104,7 @@ static bool pgfdw_exec_cleanup_query(PGconn *conn, const char *query,
 static bool pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
 									 PGresult **result);
 static bool UserMappingPasswordRequired(UserMapping *user);
+static bool disconnect_cached_connections(Oid serverid);
 
 /*
  * Get a PGconn which can be used to execute queries on the remote PostgreSQL
@@ -1428,8 +1431,8 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 		 * Even though the server is dropped in the current transaction, the
 		 * cache can still have associated active connection entry, say we
 		 * call such connections dangling. Since we can not fetch the server
-		 * name from system catalogs for dangling connections, instead we
-		 * show NULL value for server name in output.
+		 * name from system catalogs for dangling connections, instead we show
+		 * NULL value for server name in output.
 		 *
 		 * We could have done better by storing the server name in the cache
 		 * entry instead of server oid so that it could be used in the output.
@@ -1447,7 +1450,7 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 			/*
 			 * If the server has been dropped in the current explicit
 			 * transaction, then this entry would have been invalidated in
-			 * pgfdw_inval_callback at the end of drop sever command. Note
+			 * pgfdw_inval_callback at the end of drop server command. Note
 			 * that this connection would not have been closed in
 			 * pgfdw_inval_callback because it is still being used in the
 			 * current explicit transaction. So, assert that here.
@@ -1469,4 +1472,130 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 	tuplestore_donestoring(tupstore);
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * Disconnect the specified cached connections.
+ *
+ * This function discards the open connections that are established by
+ * postgres_fdw from the local session to the foreign server with
+ * the given name. Note that there can be multiple connections to
+ * the given server using different user mappings. If the connections
+ * are used in the current local transaction, they are not disconnected
+ * and warning messages are reported. This function returns true
+ * if it disconnects at least one connection, otherwise false. If no
+ * foreign server with the given name is found, an error is reported.
+ */
+Datum
+postgres_fdw_disconnect(PG_FUNCTION_ARGS)
+{
+	ForeignServer *server;
+	char	   *servername;
+
+	servername = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	server = GetForeignServerByName(servername, false);
+
+	PG_RETURN_BOOL(disconnect_cached_connections(server->serverid));
+}
+
+/*
+ * Disconnect all the cached connections.
+ *
+ * This function discards all the open connections that are established by
+ * postgres_fdw from the local session to the foreign servers.
+ * If the connections are used in the current local transaction, they are
+ * not disconnected and warning messages are reported. This function
+ * returns true if it disconnects at least one connection, otherwise false.
+ */
+Datum
+postgres_fdw_disconnect_all(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(disconnect_cached_connections(InvalidOid));
+}
+
+/*
+ * Workhorse to disconnect cached connections.
+ *
+ * This function scans all the connection cache entries and disconnects
+ * the open connections whose foreign server OID matches with
+ * the specified one. If InvalidOid is specified, it disconnects all
+ * the cached connections.
+ *
+ * This function emits a warning for each connection that's used in
+ * the current transaction and doesn't close it. It returns true if
+ * it disconnects at least one connection, otherwise false.
+ *
+ * Note that this function disconnects even the connections that are
+ * established by other users in the same local session using different
+ * user mappings. This leads even non-superuser to be able to close
+ * the connections established by superusers in the same local session.
+ *
+ * XXX As of now we don't see any security risk doing this. But we should
+ * set some restrictions on that, for example, prevent non-superuser
+ * from closing the connections established by superusers even
+ * in the same session?
+ */
+static bool
+disconnect_cached_connections(Oid serverid)
+{
+	HASH_SEQ_STATUS scan;
+	ConnCacheEntry *entry;
+	bool		all = !OidIsValid(serverid);
+	bool		result = false;
+
+	/*
+	 * Connection cache hashtable has not been initialized yet in this
+	 * session, so return false.
+	 */
+	if (!ConnectionHash)
+		return false;
+
+	hash_seq_init(&scan, ConnectionHash);
+	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan)))
+	{
+		/* Ignore cache entry if no open connection right now. */
+		if (!entry->conn)
+			continue;
+
+		if (all || entry->serverid == serverid)
+		{
+			/*
+			 * Emit a warning because the connection to close is used in the
+			 * current transaction and cannot be disconnected right now.
+			 */
+			if (entry->xact_depth > 0)
+			{
+				ForeignServer *server;
+
+				server = GetForeignServerExtended(entry->serverid,
+												  FSV_MISSING_OK);
+
+				if (!server)
+				{
+					/*
+					 * If the foreign server was dropped while its connection
+					 * was used in the current transaction, the connection
+					 * must have been marked as invalid by
+					 * pgfdw_inval_callback at the end of DROP SERVER command.
+					 */
+					Assert(entry->invalidated);
+
+					ereport(WARNING,
+							(errmsg("cannot close dropped server connection because it is still in use")));
+				}
+				else
+					ereport(WARNING,
+							(errmsg("cannot close connection for server \"%s\" because it is still in use",
+									server->servername)));
+			}
+			else
+			{
+				elog(DEBUG3, "discarding connection %p", entry->conn);
+				disconnect_pg_server(entry);
+				result = true;
+			}
+		}
+	}
+
+	return result;
 }
