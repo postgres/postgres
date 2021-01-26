@@ -2801,18 +2801,18 @@ SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
 -- =============================================================================
 -- test case for having multiple cached connections for a foreign server
 -- =============================================================================
-CREATE ROLE multi_conn_user1 SUPERUSER;
-CREATE ROLE multi_conn_user2 SUPERUSER;
-CREATE USER MAPPING FOR multi_conn_user1 SERVER loopback;
-CREATE USER MAPPING FOR multi_conn_user2 SERVER loopback;
+CREATE ROLE regress_multi_conn_user1 SUPERUSER;
+CREATE ROLE regress_multi_conn_user2 SUPERUSER;
+CREATE USER MAPPING FOR regress_multi_conn_user1 SERVER loopback;
+CREATE USER MAPPING FOR regress_multi_conn_user2 SERVER loopback;
 
--- Will cache loopback connection with user mapping for multi_conn_user1
-SET ROLE multi_conn_user1;
+-- Will cache loopback connection with user mapping for regress_multi_conn_user1
+SET ROLE regress_multi_conn_user1;
 SELECT 1 FROM ft1 LIMIT 1;
 RESET ROLE;
 
--- Will cache loopback connection with user mapping for multi_conn_user2
-SET ROLE multi_conn_user2;
+-- Will cache loopback connection with user mapping for regress_multi_conn_user2
+SET ROLE regress_multi_conn_user2;
 SELECT 1 FROM ft1 LIMIT 1;
 RESET ROLE;
 
@@ -2827,10 +2827,10 @@ SELECT postgres_fdw_disconnect('loopback');
 SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
 
 -- Clean up
-DROP USER MAPPING FOR multi_conn_user1 SERVER loopback;
-DROP USER MAPPING FOR multi_conn_user2 SERVER loopback;
-DROP ROLE multi_conn_user1;
-DROP ROLE multi_conn_user2;
+DROP USER MAPPING FOR regress_multi_conn_user1 SERVER loopback;
+DROP USER MAPPING FOR regress_multi_conn_user2 SERVER loopback;
+DROP ROLE regress_multi_conn_user1;
+DROP ROLE regress_multi_conn_user2;
 
 -- ===================================================================
 -- batch insert
