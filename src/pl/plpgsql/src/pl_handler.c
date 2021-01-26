@@ -224,8 +224,8 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	bool		nonatomic;
 	PLpgSQL_function *func;
 	PLpgSQL_execstate *save_cur_estate;
-	ResourceOwner procedure_resowner = NULL;
-	Datum		retval;
+	ResourceOwner procedure_resowner;
+	volatile Datum retval = (Datum) 0;
 	int			rc;
 
 	nonatomic = fcinfo->context &&
@@ -254,9 +254,9 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	 * Therefore, be very wary of adding any code between here and the PG_TRY
 	 * block.
 	 */
-	if (nonatomic && func->requires_procedure_resowner)
-		procedure_resowner =
-			ResourceOwnerCreate(NULL, "PL/pgSQL procedure resources");
+	procedure_resowner =
+		(nonatomic && func->requires_procedure_resowner) ?
+		ResourceOwnerCreate(NULL, "PL/pgSQL procedure resources") : NULL;
 
 	PG_TRY();
 	{
@@ -271,7 +271,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 		{
 			plpgsql_exec_event_trigger(func,
 									   (EventTriggerData *) fcinfo->context);
-			retval = (Datum) 0;
+			/* there's no return value in this case */
 		}
 		else
 			retval = plpgsql_exec_function(func, fcinfo,
