@@ -130,7 +130,7 @@ vacuumlo(const char *database, const struct _param *param)
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
 		fprintf(stderr, "Connection to database \"%s\" failed:\n%s",
-				database, PQerrorMessage(conn));
+				PQdb(conn) ? PQdb(conn) : "", PQerrorMessage(conn));
 		PQfinish(conn);
 		return -1;
 	}
