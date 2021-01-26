@@ -522,6 +522,7 @@ helpSQL(const char *topic, unsigned short int pager)
 		int			i;
 		int			j;
 
+		/* Find screen width to determine how many columns will fit */
 #ifdef TIOCGWINSZ
 		struct winsize screen_size;
 
@@ -559,49 +560,53 @@ helpSQL(const char *topic, unsigned short int pager)
 	else
 	{
 		int			i,
-					j,
-					x = 0;
-		bool		help_found = false;
+					pass;
 		FILE	   *output = NULL;
 		size_t		len,
-					wordlen;
-		int			nl_count = 0;
+					wordlen,
+					j;
+		int			nl_count;
 
 		/*
+		 * len is the amount of the input to compare to the help topic names.
 		 * We first try exact match, then first + second words, then first
 		 * word only.
 		 */
 		len = strlen(topic);
 
-		for (x = 1; x <= 3; x++)
+		for (pass = 1; pass <= 3; pass++)
 		{
-			if (x > 1)			/* Nothing on first pass - try the opening
+			if (pass > 1)		/* Nothing on first pass - try the opening
 								 * word(s) */
 			{
 				wordlen = j = 1;
-				while (topic[j] != ' ' && j++ < len)
+				while (j < len && topic[j++] != ' ')
 					wordlen++;
-				if (x == 2)
+				if (pass == 2 && j < len)
 				{
-					j++;
-					while (topic[j] != ' ' && j++ <= len)
+					wordlen++;
+					while (j < len && topic[j++] != ' ')
 						wordlen++;
 				}
-				if (wordlen >= len) /* Don't try again if the same word */
+				if (wordlen >= len)
 				{
-					if (!output)
-						output = PageOutput(nl_count, pager ? &(pset.popt.topt) : NULL);
-					break;
+					/* Failed to shorten input, so try next pass if any */
+					continue;
 				}
 				len = wordlen;
 			}
 
-			/* Count newlines for pager */
+			/*
+			 * Count newlines for pager.  This logic must agree with what the
+			 * following loop will do!
+			 */
+			nl_count = 0;
 			for (i = 0; QL_HELP[i].cmd; i++)
 			{
 				if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
 					strcmp(topic, "*") == 0)
 				{
+					/* magic constant here must match format below! */
 					nl_count += 5 + QL_HELP[i].nl_count;
 
 					/* If we have an exact match, exit.  Fixes \h SELECT */
@@ -609,6 +614,9 @@ helpSQL(const char *topic, unsigned short int pager)
 						break;
 				}
 			}
+			/* If no matches, don't open the output yet */
+			if (nl_count == 0)
+				continue;
 
 			if (!output)
 				output = PageOutput(nl_count, pager ? &(pset.popt.topt) : NULL);
@@ -622,24 +630,31 @@ helpSQL(const char *topic, unsigned short int pager)
 
 					initPQExpBuffer(&buffer);
 					QL_HELP[i].syntaxfunc(&buffer);
-					help_found = true;
+					/* # of newlines in format must match constant above! */
 					fprintf(output, _("Command:     %s\n"
 									  "Description: %s\n"
 									  "Syntax:\n%s\n\n"),
 							QL_HELP[i].cmd,
 							_(QL_HELP[i].help),
 							buffer.data);
+					termPQExpBuffer(&buffer);
+
 					/* If we have an exact match, exit.  Fixes \h SELECT */
 					if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
 						break;
 				}
 			}
-			if (help_found)		/* Don't keep trying if we got a match */
-				break;
+			break;
 		}
 
-		if (!help_found)
-			fprintf(output, _("No help available for \"%s\".\nTry \\h with no arguments to see available help.\n"), topic);
+		/* If we never found anything, report that */
+		if (!output)
+		{
+			output = PageOutput(2, pager ? &(pset.popt.topt) : NULL);
+			fprintf(output, _("No help available for \"%s\".\n"
+							  "Try \\h with no arguments to see available help.\n"),
+					topic);
+		}
 
 		ClosePager(output);
 	}
