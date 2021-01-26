@@ -1228,7 +1228,7 @@ doConnect(void)
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
 		pg_log_error("connection to database \"%s\" failed: %s",
-					 dbName, PQerrorMessage(conn));
+					 PQdb(conn), PQerrorMessage(conn));
 		PQfinish(conn);
 		return NULL;
 	}
@@ -6047,7 +6047,7 @@ main(int argc, char **argv)
 	if (PQstatus(con) == CONNECTION_BAD)
 	{
 		pg_log_fatal("connection to database \"%s\" failed: %s",
-					 dbName, PQerrorMessage(con));
+					 PQdb(con) ? PQdb(con) : "", PQerrorMessage(con));
 		exit(1);
 	}
 

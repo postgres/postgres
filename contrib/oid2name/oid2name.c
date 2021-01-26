@@ -348,8 +348,8 @@ sql_conn(struct options *my_opts)
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		pg_log_error("could not connect to database %s: %s",
-					 my_opts->dbname, PQerrorMessage(conn));
+		pg_log_error("could not connect to database \"%s\": %s",
+					 PQdb(conn) ? PQdb(conn) : "", PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}

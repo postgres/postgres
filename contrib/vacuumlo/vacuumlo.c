@@ -129,7 +129,7 @@ vacuumlo(const char *database, const struct _param *param)
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
 		pg_log_error("connection to database \"%s\" failed: %s",
-					 database, PQerrorMessage(conn));
+					 PQdb(conn) ? PQdb(conn) : "", PQerrorMessage(conn));
 		PQfinish(conn);
 		return -1;
 	}
