@@ -2779,7 +2779,10 @@ SELECT 1 FROM ft8 LIMIT 1;
 SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
 DROP SERVER loopback4 CASCADE;
 -- Return false as connections are still in use, warnings are issued.
+-- But disable warnings temporarily because the order of them is not stable.
+SET client_min_messages = 'ERROR';
 SELECT postgres_fdw_disconnect_all();
+RESET client_min_messages;
 COMMIT;
 -- Close loopback2 connection and return true.
 SELECT postgres_fdw_disconnect('loopback2');
