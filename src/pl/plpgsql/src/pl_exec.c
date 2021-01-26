@@ -3603,6 +3603,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 		Oid			restype;
 		int32		restypmod;
 		char	   *querystr;
+		SPIExecuteOptions options;
 
 		/*
 		 * Evaluate the string expression after the EXECUTE keyword. Its
@@ -3625,14 +3626,15 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 		exec_eval_cleanup(estate);
 
 		/* Execute query, passing params if necessary */
-		rc = SPI_execute_with_receiver(querystr,
-									   exec_eval_using_params(estate,
-															  stmt->params),
-									   estate->readonly_func,
-									   0,
-									   treceiver);
+		memset(&options, 0, sizeof(options));
+		options.params = exec_eval_using_params(estate,
+												stmt->params);
+		options.read_only = estate->readonly_func;
+		options.dest = treceiver;
+
+		rc = SPI_execute_extended(querystr, &options);
 		if (rc < 0)
-			elog(ERROR, "SPI_execute_with_receiver failed executing query \"%s\": %s",
+			elog(ERROR, "SPI_execute_extended failed executing query \"%s\": %s",
 				 querystr, SPI_result_code_string(rc));
 	}
 
@@ -4402,6 +4404,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	char	   *querystr;
 	int			exec_res;
 	ParamListInfo paramLI;
+	SPIExecuteOptions options;
 	MemoryContext stmt_mcontext = get_stmt_mcontext(estate);
 
 	/*
@@ -4426,8 +4429,12 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	 * Execute the query without preparing a saved plan.
 	 */
 	paramLI = exec_eval_using_params(estate, stmt->params);
-	exec_res = SPI_execute_with_receiver(querystr, paramLI,
-										 estate->readonly_func, 0, NULL);
+
+	memset(&options, 0, sizeof(options));
+	options.params = paramLI;
+	options.read_only = estate->readonly_func;
+
+	exec_res = SPI_execute_extended(querystr, &options);
 
 	switch (exec_res)
 	{
@@ -4479,7 +4486,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 			break;
 
 		default:
-			elog(ERROR, "SPI_execute_with_receiver failed executing query \"%s\": %s",
+			elog(ERROR, "SPI_execute_extended failed executing query \"%s\": %s",
 				 querystr, SPI_result_code_string(exec_res));
 			break;
 	}
@@ -8582,6 +8589,7 @@ exec_dynquery_with_params(PLpgSQL_execstate *estate,
 	Oid			restype;
 	int32		restypmod;
 	char	   *querystr;
+	SPIParseOpenOptions options;
 	MemoryContext stmt_mcontext = get_stmt_mcontext(estate);
 
 	/*
@@ -8603,16 +8611,16 @@ exec_dynquery_with_params(PLpgSQL_execstate *estate,
 	exec_eval_cleanup(estate);
 
 	/*
-	 * Open an implicit cursor for the query.  We use
-	 * SPI_cursor_parse_open_with_paramlist even when there are no params,
-	 * because this avoids making and freeing one copy of the plan.
+	 * Open an implicit cursor for the query.  We use SPI_cursor_parse_open
+	 * even when there are no params, because this avoids making and freeing
+	 * one copy of the plan.
 	 */
-	portal = SPI_cursor_parse_open_with_paramlist(portalname,
-												  querystr,
-												  exec_eval_using_params(estate,
-																		 params),
-												  estate->readonly_func,
-												  cursorOptions);
+	memset(&options, 0, sizeof(options));
+	options.params = exec_eval_using_params(estate, params);
+	options.cursorOptions = cursorOptions;
+	options.read_only = estate->readonly_func;
+
+	portal = SPI_cursor_parse_open(portalname, querystr, &options);
 
 	if (portal == NULL)
 		elog(ERROR, "could not open implicit cursor for query \"%s\": %s",

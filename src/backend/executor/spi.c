@@ -538,6 +538,43 @@ SPI_exec(const char *src, long tcount)
 	return SPI_execute(src, false, tcount);
 }
 
+/* Parse, plan, and execute a query string, with extensible options */
+int
+SPI_execute_extended(const char *src,
+					 const SPIExecuteOptions *options)
+{
+	int			res;
+	_SPI_plan	plan;
+
+	if (src == NULL || options == NULL)
+		return SPI_ERROR_ARGUMENT;
+
+	res = _SPI_begin_call(true);
+	if (res < 0)
+		return res;
+
+	memset(&plan, 0, sizeof(_SPI_plan));
+	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
+	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
+	if (options->params)
+	{
+		plan.parserSetup = options->params->parserSetup;
+		plan.parserSetupArg = options->params->parserSetupArg;
+	}
+
+	_SPI_prepare_oneshot_plan(src, &plan);
+
+	res = _SPI_execute_plan(&plan, options->params,
+							InvalidSnapshot, InvalidSnapshot,
+							options->read_only, options->no_snapshots,
+							true, options->tcount,
+							options->dest, options->owner);
+
+	_SPI_end_call(true);
+	return res;
+}
+
 /* Execute a previously prepared plan */
 int
 SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
@@ -710,52 +747,6 @@ SPI_execute_with_args(const char *src,
 							read_only, false,
 							true, tcount,
 							NULL, NULL);
-
-	_SPI_end_call(true);
-	return res;
-}
-
-/*
- * SPI_execute_with_receiver -- plan and execute a query with arguments
- *
- * This is the same as SPI_execute_with_args except that parameters are
- * supplied through a ParamListInfo, and (if dest isn't NULL) we send
- * result tuples to the caller-supplied DestReceiver rather than through
- * the usual SPI output arrangements.
- */
-int
-SPI_execute_with_receiver(const char *src,
-						  ParamListInfo params,
-						  bool read_only, long tcount,
-						  DestReceiver *dest)
-{
-	int			res;
-	_SPI_plan	plan;
-
-	if (src == NULL || tcount < 0)
-		return SPI_ERROR_ARGUMENT;
-
-	res = _SPI_begin_call(true);
-	if (res < 0)
-		return res;
-
-	memset(&plan, 0, sizeof(_SPI_plan));
-	plan.magic = _SPI_PLAN_MAGIC;
-	plan.parse_mode = RAW_PARSE_DEFAULT;
-	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
-	if (params)
-	{
-		plan.parserSetup = params->parserSetup;
-		plan.parserSetupArg = params->parserSetupArg;
-	}
-
-	_SPI_prepare_oneshot_plan(src, &plan);
-
-	res = _SPI_execute_plan(&plan, params,
-							InvalidSnapshot, InvalidSnapshot,
-							read_only, false,
-							true, tcount,
-							dest, NULL);
 
 	_SPI_end_call(true);
 	return res;
@@ -1433,43 +1424,38 @@ SPI_cursor_open_with_paramlist(const char *name, SPIPlanPtr plan,
 	return SPI_cursor_open_internal(name, plan, params, read_only);
 }
 
-/*
- * SPI_cursor_parse_open_with_paramlist()
- *
- * Same as SPI_cursor_open_with_args except that parameters (if any) are passed
- * as a ParamListInfo, which supports dynamic parameter set determination
- */
+/* Parse a query and open it as a cursor */
 Portal
-SPI_cursor_parse_open_with_paramlist(const char *name,
-									 const char *src,
-									 ParamListInfo params,
-									 bool read_only, int cursorOptions)
+SPI_cursor_parse_open(const char *name,
+					  const char *src,
+					  const SPIParseOpenOptions *options)
 {
 	Portal		result;
 	_SPI_plan	plan;
 
-	if (src == NULL)
-		elog(ERROR, "SPI_cursor_parse_open_with_paramlist called with invalid arguments");
+	if (src == NULL || options == NULL)
+		elog(ERROR, "SPI_cursor_parse_open called with invalid arguments");
 
 	SPI_result = _SPI_begin_call(true);
 	if (SPI_result < 0)
-		elog(ERROR, "SPI_cursor_parse_open_with_paramlist called while not connected");
+		elog(ERROR, "SPI_cursor_parse_open called while not connected");
 
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
 	plan.parse_mode = RAW_PARSE_DEFAULT;
-	plan.cursor_options = cursorOptions;
-	if (params)
+	plan.cursor_options = options->cursorOptions;
+	if (options->params)
 	{
-		plan.parserSetup = params->parserSetup;
-		plan.parserSetupArg = params->parserSetupArg;
+		plan.parserSetup = options->params->parserSetup;
+		plan.parserSetupArg = options->params->parserSetupArg;
 	}
 
 	_SPI_prepare_plan(src, &plan);
 
 	/* We needn't copy the plan; SPI_cursor_open_internal will do so */
 
-	result = SPI_cursor_open_internal(name, &plan, params, read_only);
+	result = SPI_cursor_open_internal(name, &plan,
+									  options->params, options->read_only);
 
 	/* And clean up */
 	_SPI_end_call(true);
