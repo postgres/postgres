@@ -4063,6 +4063,7 @@ deallocate_query(PgFdwModifyState *fmstate)
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pgfdw_report_error(ERROR, res, fmstate->conn, true, sql);
 	PQclear(res);
+	pfree(fmstate->p_name);
 	fmstate->p_name = NULL;
 }
 
