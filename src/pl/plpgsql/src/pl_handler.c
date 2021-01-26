@@ -224,6 +224,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	bool		nonatomic;
 	PLpgSQL_function *func;
 	PLpgSQL_execstate *save_cur_estate;
+	ResourceOwner procedure_resowner = NULL;
 	Datum		retval;
 	int			rc;
 
@@ -246,6 +247,17 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	/* Mark the function as busy, so it can't be deleted from under us */
 	func->use_count++;
 
+	/*
+	 * If we'll need a procedure-lifespan resowner to execute any CALL or DO
+	 * statements, create it now.  Since this resowner is not tied to any
+	 * parent, failing to free it would result in process-lifespan leaks.
+	 * Therefore, be very wary of adding any code between here and the PG_TRY
+	 * block.
+	 */
+	if (nonatomic && func->requires_procedure_resowner)
+		procedure_resowner =
+			ResourceOwnerCreate(NULL, "PL/pgSQL procedure resources");
+
 	PG_TRY();
 	{
 		/*
@@ -264,6 +276,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 		else
 			retval = plpgsql_exec_function(func, fcinfo,
 										   NULL, NULL,
+										   procedure_resowner,
 										   !nonatomic);
 	}
 	PG_FINALLY();
@@ -271,6 +284,13 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 		/* Decrement use-count, restore cur_estate */
 		func->use_count--;
 		func->cur_estate = save_cur_estate;
+
+		/* Be sure to release the procedure resowner if any */
+		if (procedure_resowner)
+		{
+			ResourceOwnerReleaseAllPlanCacheRefs(procedure_resowner);
+			ResourceOwnerDelete(procedure_resowner);
+		}
 	}
 	PG_END_TRY();
 
@@ -333,6 +353,10 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	 * unconditionally try to clean them up below.  (Hence, be wary of adding
 	 * anything that could fail between here and the PG_TRY block.)  See the
 	 * comments for shared_simple_eval_estate.
+	 *
+	 * Because this resowner isn't tied to the calling transaction, we can
+	 * also use it as the "procedure" resowner for any CALL statements.  That
+	 * helps reduce the opportunities for failure here.
 	 */
 	simple_eval_estate = CreateExecutorState();
 	simple_eval_resowner =
@@ -344,6 +368,7 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 		retval = plpgsql_exec_function(func, fake_fcinfo,
 									   simple_eval_estate,
 									   simple_eval_resowner,
+									   simple_eval_resowner,	/* see above */
 									   codeblock->atomic);
 	}
 	PG_CATCH();

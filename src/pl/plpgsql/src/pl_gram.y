@@ -951,6 +951,9 @@ stmt_call		: K_CALL
 						new->expr = read_sql_stmt();
 						new->is_call = true;
 
+						/* Remember we may need a procedure resource owner */
+						plpgsql_curr_compile->requires_procedure_resowner = true;
+
 						$$ = (PLpgSQL_stmt *)new;
 
 					}
@@ -966,6 +969,9 @@ stmt_call		: K_CALL
 						plpgsql_push_back_token(K_DO);
 						new->expr = read_sql_stmt();
 						new->is_call = false;
+
+						/* Remember we may need a procedure resource owner */
+						plpgsql_curr_compile->requires_procedure_resowner = true;
 
 						$$ = (PLpgSQL_stmt *)new;
 

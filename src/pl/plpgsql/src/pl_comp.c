@@ -369,6 +369,7 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_prokind = procStruct->prokind;
 
 	function->nstatements = 0;
+	function->requires_procedure_resowner = false;
 
 	/*
 	 * Initialize the compiler, particularly the namespace stack.  The
@@ -903,6 +904,7 @@ plpgsql_compile_inline(char *proc_source)
 	function->extra_errors = 0;
 
 	function->nstatements = 0;
+	function->requires_procedure_resowner = false;
 
 	plpgsql_ns_init();
 	plpgsql_ns_push(func_name, PLPGSQL_LABEL_BLOCK);

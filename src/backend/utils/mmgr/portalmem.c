@@ -310,7 +310,7 @@ PortalReleaseCachedPlan(Portal portal)
 {
 	if (portal->cplan)
 	{
-		ReleaseCachedPlan(portal->cplan, false);
+		ReleaseCachedPlan(portal->cplan, NULL);
 		portal->cplan = NULL;
 
 		/*

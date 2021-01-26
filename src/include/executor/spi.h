@@ -42,6 +42,17 @@ typedef struct SPIPrepareOptions
 	int			cursorOptions;
 } SPIPrepareOptions;
 
+/* Optional arguments for SPI_execute_plan_extended */
+typedef struct SPIExecuteOptions
+{
+	ParamListInfo params;
+	bool		read_only;
+	bool		no_snapshots;
+	uint64		tcount;
+	DestReceiver *dest;
+	ResourceOwner owner;
+} SPIExecuteOptions;
+
 /* Plans are opaque structs for standard users of SPI */
 typedef struct _SPI_plan *SPIPlanPtr;
 
@@ -96,13 +107,11 @@ extern int	SPI_finish(void);
 extern int	SPI_execute(const char *src, bool read_only, long tcount);
 extern int	SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 							 bool read_only, long tcount);
+extern int	SPI_execute_plan_extended(SPIPlanPtr plan,
+									  const SPIExecuteOptions *options);
 extern int	SPI_execute_plan_with_paramlist(SPIPlanPtr plan,
 											ParamListInfo params,
 											bool read_only, long tcount);
-extern int	SPI_execute_plan_with_receiver(SPIPlanPtr plan,
-										   ParamListInfo params,
-										   bool read_only, long tcount,
-										   DestReceiver *dest);
 extern int	SPI_exec(const char *src, long tcount);
 extern int	SPI_execp(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 					  long tcount);
