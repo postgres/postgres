@@ -17905,7 +17905,8 @@ SELECT NULLIF(value, '(none)') ...
         <returnvalue>setof anyelement</returnvalue>
        </para>
        <para>
-        Expands an array to a set of rows.
+        Expands an array into a set of rows.
+        The array's elements are read out in storage order.
        </para>
        <para>
         <literal>unnest(ARRAY[1,2])</literal>
@@ -17913,6 +17914,16 @@ SELECT NULLIF(value, '(none)') ...
 <programlisting>
  1
  2
+</programlisting>
+       </para>
+       <para>
+        <literal>unnest(ARRAY[['foo','bar'],['baz','quux']])</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ foo
+ bar
+ baz
+ quux
 </programlisting>
        </para></entry>
       </row>
@@ -17923,10 +17934,10 @@ SELECT NULLIF(value, '(none)') ...
         <returnvalue>setof anyelement, anyelement [, ... ]</returnvalue>
        </para>
        <para>
-        Expands multiple arrays (possibly of different data types) to a set of
+        Expands multiple arrays (possibly of different data types) into a set of
         rows.  If the arrays are not all the same length then the shorter ones
-        are padded with <literal>NULL</literal>s.  This is only allowed in a
-        query's FROM clause; see <xref linkend="queries-tablefunctions"/>.
+        are padded with <literal>NULL</literal>s.  This form is only allowed
+        in a query's FROM clause; see <xref linkend="queries-tablefunctions"/>.
        </para>
        <para>
         <literal>select * from unnest(ARRAY[1,2], ARRAY['foo','bar','baz']) as x(a,b)</literal>
