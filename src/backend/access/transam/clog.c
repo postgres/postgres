@@ -774,11 +774,6 @@ TrimCLOG(void)
 	LWLockAcquire(XactSLRULock, LW_EXCLUSIVE);
 
 	/*
-	 * Re-Initialize our idea of the latest page number.
-	 */
-	XactCtl->shared->latest_page_number = pageno;
-
-	/*
 	 * Zero out the remainder of the current clog page.  Under normal
 	 * circumstances it should be zeroes already, but it seems at least
 	 * theoretically possible that XLOG replay will have settled on a nextXID
