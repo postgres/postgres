@@ -1740,7 +1740,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      <term><literal>TRUNCATE</literal></term>
      <listitem>
       <para>
-       Allows <command>TRUNCATE</command> on a table, view, etc.
+       Allows <command>TRUNCATE</command> on a table.
       </para>
      </listitem>
     </varlistentry>
