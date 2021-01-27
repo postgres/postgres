@@ -1011,12 +1011,6 @@ clog_redo(XLogReaderState *record)
 
 		memcpy(&xlrec, XLogRecGetData(record), sizeof(xl_clog_truncate));
 
-		/*
-		 * During XLOG replay, latest_page_number isn't set up yet; insert a
-		 * suitable value to bypass the sanity test in SimpleLruTruncate.
-		 */
-		XactCtl->shared->latest_page_number = xlrec.pageno;
-
 		AdvanceOldestClogXid(xlrec.oldestXact);
 
 		SimpleLruTruncate(XactCtl, xlrec.pageno);
