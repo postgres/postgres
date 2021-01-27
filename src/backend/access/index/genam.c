@@ -301,6 +301,8 @@ index_compute_xid_horizon_for_tuples(Relation irel,
 	Page		ipage = BufferGetPage(ibuf);
 	IndexTuple	itup;
 
+	Assert(nitems > 0);
+
 	delstate.bottomup = false;
 	delstate.bottomupfreespace = 0;
 	delstate.ndeltids = 0;

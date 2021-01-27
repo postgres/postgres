@@ -1645,7 +1645,6 @@ gistprunepage(Relation rel, Page page, Buffer buffer, Relation heapRel)
 	int			ndeletable = 0;
 	OffsetNumber offnum,
 				maxoff;
-	TransactionId latestRemovedXid = InvalidTransactionId;
 
 	Assert(GistPageIsLeaf(page));
 
@@ -1664,13 +1663,15 @@ gistprunepage(Relation rel, Page page, Buffer buffer, Relation heapRel)
 			deletable[ndeletable++] = offnum;
 	}
 
-	if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
-		latestRemovedXid =
-			index_compute_xid_horizon_for_tuples(rel, heapRel, buffer,
-												 deletable, ndeletable);
-
 	if (ndeletable > 0)
 	{
+		TransactionId latestRemovedXid = InvalidTransactionId;
+
+		if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
+			latestRemovedXid =
+				index_compute_xid_horizon_for_tuples(rel, heapRel, buffer,
+													 deletable, ndeletable);
+
 		START_CRIT_SECTION();
 
 		PageIndexMultiDelete(page, deletable, ndeletable);
