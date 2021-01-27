@@ -1736,7 +1736,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      <term><literal>TRUNCATE</literal></term>
      <listitem>
       <para>
-       Allows <xref linkend="sql-truncate"/> on a table, view, etc.
+       Allows <xref linkend="sql-truncate"/> on a table.
       </para>
      </listitem>
     </varlistentry>
