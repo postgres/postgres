@@ -2116,7 +2116,7 @@ include_dir 'conf.d'
          The estimated cost for vacuuming a buffer that has to be read from
          disk.  This represents the effort to lock the buffer pool,
          lookup the shared hash table, read the desired block in from
-         the disk and scan its content. The default value is 10.
+         the disk and scan its content. The default value is 2.
         </para>
        </listitem>
       </varlistentry>
