@@ -476,9 +476,17 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         result sets, but any function can be used.)  This acts as
         though the function's output were created as a temporary table for the
         duration of this single <command>SELECT</command> command.
-        When the optional <command>WITH ORDINALITY</command> clause is
-        added to the function call, a new column is appended after
-        all the function's output columns with numbering for each row.
+        If the function's result type is composite (including the case of a
+        function with multiple <literal>OUT</literal> parameters), each
+        attribute becomes a separate column in the implicit table.
+       </para>
+
+       <para>
+        When the optional <command>WITH ORDINALITY</command> clause is added
+        to the function call, an additional column of type <type>bigint</type>
+        will be appended to the function's result column(s).  This column
+        numbers the rows of the function's result set, starting from 1.
+        By default, this column is named <literal>ordinality</literal>.
        </para>
 
        <para>
@@ -486,8 +494,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         If an alias is written, a column
         alias list can also be written to provide substitute names for
         one or more attributes of the function's composite return
-        type, including the column added by <literal>ORDINALITY</literal>
-        if present.
+        type, including the ordinality column if present.
        </para>
 
        <para>
