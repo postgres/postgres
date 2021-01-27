@@ -6856,6 +6856,13 @@ StartupXLOG(void)
 	StartupReorderBuffer();
 
 	/*
+	 * Startup CLOG. This must be done after ShmemVariableCache->nextXid
+	 * has been initialized and before we accept connections or begin WAL
+	 * replay.
+	 */
+	StartupCLOG();
+
+	/*
 	 * Startup MultiXact. We need to do this early to be able to replay
 	 * truncations.
 	 */
@@ -7125,11 +7132,10 @@ StartupXLOG(void)
 			ProcArrayInitRecovery(XidFromFullTransactionId(ShmemVariableCache->nextXid));
 
 			/*
-			 * Startup commit log and subtrans only.  MultiXact and commit
+			 * Startup subtrans only.  CLOG, MultiXact and commit
 			 * timestamp have already been started up and other SLRUs are not
 			 * maintained during recovery and need not be started yet.
 			 */
-			StartupCLOG();
 			StartupSUBTRANS(oldestActiveXID);
 
 			/*
@@ -7945,14 +7951,11 @@ StartupXLOG(void)
 	LWLockRelease(ProcArrayLock);
 
 	/*
-	 * Start up the commit log and subtrans, if not already done for hot
-	 * standby.  (commit timestamps are started below, if necessary.)
+	 * Start up subtrans, if not already done for hot standby.  (commit
+	 * timestamps are started below, if necessary.)
 	 */
 	if (standbyState == STANDBY_DISABLED)
-	{
-		StartupCLOG();
 		StartupSUBTRANS(oldestActiveXID);
-	}
 
 	/*
 	 * Perform end of recovery actions for any SLRUs that need it.
