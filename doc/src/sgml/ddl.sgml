@@ -4027,8 +4027,8 @@ ALTER INDEX measurement_city_id_logdate_key
 
      <listitem>
       <para>
-       <literal>BEFORE ROW</literal> triggers cannot change which partition
-       is the final destination for a new row.
+       <literal>BEFORE ROW</literal> triggers on <literal>INSERT</literal>
+       cannot change which partition is the final destination for a new row.
       </para>
      </listitem>
 

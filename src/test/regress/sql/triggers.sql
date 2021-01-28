@@ -1633,12 +1633,38 @@ insert into parted values (1, 1, 'uno uno v4');    -- fail
 update parted set c = c || 'v5';                   -- fail
 create or replace function parted_trigfunc() returns trigger language plpgsql as $$
 begin
-  new.c = new.c || ' and so';
+  new.c = new.c || ' did '|| TG_OP;
   return new;
 end;
 $$;
 insert into parted values (1, 1, 'uno uno');       -- works
 update parted set c = c || ' v6';                   -- works
+select tableoid::regclass, * from parted;
+
+-- update itself moves tuple to new partition; trigger still works
+truncate table parted;
+create table parted_2 partition of parted for values in (2);
+insert into parted values (1, 1, 'uno uno v5');
+update parted set a = 2;
+select tableoid::regclass, * from parted;
+
+-- both trigger and update change the partition
+create or replace function parted_trigfunc2() returns trigger language plpgsql as $$
+begin
+  new.a = new.a + 1;
+  return new;
+end;
+$$;
+create trigger t2 before update on parted
+  for each row execute function parted_trigfunc2();
+truncate table parted;
+insert into parted values (1, 1, 'uno uno v6');
+create table parted_3 partition of parted for values in (3);
+update parted set a = a + 1;
+select tableoid::regclass, * from parted;
+-- there's no partition for a=0, but this update works anyway because
+-- the trigger causes the tuple to be routed to another partition
+update parted set a = 0;
 select tableoid::regclass, * from parted;
 
 drop table parted;

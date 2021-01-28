@@ -2799,16 +2799,6 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		{
 			ExecForceStoreHeapTuple(newtuple, newslot, false);
 
-			if (trigger->tgisclone &&
-				!ExecPartitionCheck(relinfo, newslot, estate, false))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("moving row to another partition during a BEFORE trigger is not supported"),
-						 errdetail("Before executing trigger \"%s\", the row was to be in partition \"%s.%s\".",
-								   trigger->tgname,
-								   get_namespace_name(RelationGetNamespace(relinfo->ri_RelationDesc)),
-								   RelationGetRelationName(relinfo->ri_RelationDesc))));
-
 			/*
 			 * If the tuple returned by the trigger / being stored, is the old
 			 * row version, and the heap tuple passed to the trigger was
