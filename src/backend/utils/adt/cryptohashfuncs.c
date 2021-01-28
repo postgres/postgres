@@ -68,6 +68,60 @@ md5_bytea(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text(hexsum));
 }
 
+/*
+ * Internal routine to compute a cryptohash with the given bytea input.
+ */
+static inline bytea *
+cryptohash_internal(pg_cryptohash_type type, bytea *input)
+{
+	const uint8 *data;
+	const char *typestr = NULL;
+	int			digest_len = 0;
+	size_t		len;
+	pg_cryptohash_ctx *ctx;
+	bytea	   *result;
+
+	switch (type)
+	{
+		case PG_SHA224:
+			typestr = "SHA224";
+			digest_len = PG_SHA224_DIGEST_LENGTH;
+			break;
+		case PG_SHA256:
+			typestr = "SHA256";
+			digest_len = PG_SHA256_DIGEST_LENGTH;
+			break;
+		case PG_SHA384:
+			typestr = "SHA384";
+			digest_len = PG_SHA384_DIGEST_LENGTH;
+			break;
+		case PG_SHA512:
+			typestr = "SHA512";
+			digest_len = PG_SHA512_DIGEST_LENGTH;
+			break;
+		case PG_MD5:
+		case PG_SHA1:
+			elog(ERROR, "unsupported cryptohash type %d", type);
+			break;
+	}
+
+	result = palloc0(digest_len + VARHDRSZ);
+	len = VARSIZE_ANY_EXHDR(input);
+	data = (unsigned char *) VARDATA_ANY(input);
+
+	ctx = pg_cryptohash_create(type);
+	if (pg_cryptohash_init(ctx) < 0)
+		elog(ERROR, "could not initialize %s context", typestr);
+	if (pg_cryptohash_update(ctx, data, len) < 0)
+		elog(ERROR, "could not update %s context", typestr);
+	if (pg_cryptohash_final(ctx, (unsigned char *) VARDATA(result)) < 0)
+		elog(ERROR, "could not finalize %s context", typestr);
+	pg_cryptohash_free(ctx);
+
+	SET_VARSIZE(result, digest_len + VARHDRSZ);
+
+	return result;
+}
 
 /*
  * SHA-2 variants
@@ -76,28 +130,7 @@ md5_bytea(PG_FUNCTION_ARGS)
 Datum
 sha224_bytea(PG_FUNCTION_ARGS)
 {
-	bytea	   *in = PG_GETARG_BYTEA_PP(0);
-	const uint8 *data;
-	size_t		len;
-	pg_cryptohash_ctx *ctx;
-	unsigned char buf[PG_SHA224_DIGEST_LENGTH];
-	bytea	   *result;
-
-	len = VARSIZE_ANY_EXHDR(in);
-	data = (unsigned char *) VARDATA_ANY(in);
-
-	ctx = pg_cryptohash_create(PG_SHA224);
-	if (pg_cryptohash_init(ctx) < 0)
-		elog(ERROR, "could not initialize %s context", "SHA224");
-	if (pg_cryptohash_update(ctx, data, len) < 0)
-		elog(ERROR, "could not update %s context", "SHA224");
-	if (pg_cryptohash_final(ctx, buf) < 0)
-		elog(ERROR, "could not finalize %s context", "SHA224");
-	pg_cryptohash_free(ctx);
-
-	result = palloc(sizeof(buf) + VARHDRSZ);
-	SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
-	memcpy(VARDATA(result), buf, sizeof(buf));
+	bytea	   *result = cryptohash_internal(PG_SHA224, PG_GETARG_BYTEA_PP(0));
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -105,28 +138,7 @@ sha224_bytea(PG_FUNCTION_ARGS)
 Datum
 sha256_bytea(PG_FUNCTION_ARGS)
 {
-	bytea	   *in = PG_GETARG_BYTEA_PP(0);
-	const uint8 *data;
-	size_t		len;
-	pg_cryptohash_ctx *ctx;
-	unsigned char buf[PG_SHA256_DIGEST_LENGTH];
-	bytea	   *result;
-
-	len = VARSIZE_ANY_EXHDR(in);
-	data = (unsigned char *) VARDATA_ANY(in);
-
-	ctx = pg_cryptohash_create(PG_SHA256);
-	if (pg_cryptohash_init(ctx) < 0)
-		elog(ERROR, "could not initialize %s context", "SHA256");
-	if (pg_cryptohash_update(ctx, data, len) < 0)
-		elog(ERROR, "could not update %s context", "SHA256");
-	if (pg_cryptohash_final(ctx, buf) < 0)
-		elog(ERROR, "could not finalize %s context", "SHA256");
-	pg_cryptohash_free(ctx);
-
-	result = palloc(sizeof(buf) + VARHDRSZ);
-	SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
-	memcpy(VARDATA(result), buf, sizeof(buf));
+	bytea	   *result = cryptohash_internal(PG_SHA256, PG_GETARG_BYTEA_PP(0));
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -134,28 +146,7 @@ sha256_bytea(PG_FUNCTION_ARGS)
 Datum
 sha384_bytea(PG_FUNCTION_ARGS)
 {
-	bytea	   *in = PG_GETARG_BYTEA_PP(0);
-	const uint8 *data;
-	size_t		len;
-	pg_cryptohash_ctx *ctx;
-	unsigned char buf[PG_SHA384_DIGEST_LENGTH];
-	bytea	   *result;
-
-	len = VARSIZE_ANY_EXHDR(in);
-	data = (unsigned char *) VARDATA_ANY(in);
-
-	ctx = pg_cryptohash_create(PG_SHA384);
-	if (pg_cryptohash_init(ctx) < 0)
-		elog(ERROR, "could not initialize %s context", "SHA384");
-	if (pg_cryptohash_update(ctx, data, len) < 0)
-		elog(ERROR, "could not update %s context", "SHA384");
-	if (pg_cryptohash_final(ctx, buf) < 0)
-		elog(ERROR, "could not finalize %s context", "SHA384");
-	pg_cryptohash_free(ctx);
-
-	result = palloc(sizeof(buf) + VARHDRSZ);
-	SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
-	memcpy(VARDATA(result), buf, sizeof(buf));
+	bytea	   *result = cryptohash_internal(PG_SHA384, PG_GETARG_BYTEA_PP(0));
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -163,28 +154,7 @@ sha384_bytea(PG_FUNCTION_ARGS)
 Datum
 sha512_bytea(PG_FUNCTION_ARGS)
 {
-	bytea	   *in = PG_GETARG_BYTEA_PP(0);
-	const uint8 *data;
-	size_t		len;
-	pg_cryptohash_ctx *ctx;
-	unsigned char buf[PG_SHA512_DIGEST_LENGTH];
-	bytea	   *result;
-
-	len = VARSIZE_ANY_EXHDR(in);
-	data = (unsigned char *) VARDATA_ANY(in);
-
-	ctx = pg_cryptohash_create(PG_SHA512);
-	if (pg_cryptohash_init(ctx) < 0)
-		elog(ERROR, "could not initialize %s context", "SHA512");
-	if (pg_cryptohash_update(ctx, data, len) < 0)
-		elog(ERROR, "could not update %s context", "SHA512");
-	if (pg_cryptohash_final(ctx, buf) < 0)
-		elog(ERROR, "could not finalize %s context", "SHA512");
-	pg_cryptohash_free(ctx);
-
-	result = palloc(sizeof(buf) + VARHDRSZ);
-	SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
-	memcpy(VARDATA(result), buf, sizeof(buf));
+	bytea	   *result = cryptohash_internal(PG_SHA512, PG_GETARG_BYTEA_PP(0));
 
 	PG_RETURN_BYTEA_P(result);
 }
