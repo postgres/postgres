@@ -3060,8 +3060,10 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 				scratch.resnull = &trans_fcinfo->args[argno + 1].isnull;
 
 				ExprEvalPushStep(state, &scratch);
-				adjust_bailout = lappend_int(adjust_bailout,
-											 state->steps_len - 1);
+				/* don't add an adjustment unless the function is strict */
+				if (pertrans->deserialfn.fn_strict)
+					adjust_bailout = lappend_int(adjust_bailout,
+												 state->steps_len - 1);
 
 				/* restore normal settings of scratch fields */
 				scratch.resvalue = &state->resvalue;
