@@ -3310,14 +3310,6 @@ main(int argc, char **argv)
 	if (con == NULL)
 		exit(1);
 
-	if (PQstatus(con) == CONNECTION_BAD)
-	{
-		fprintf(stderr, "connection to database \"%s\" failed\n",
-				PQdb(con) ? PQdb(con) : "");
-		fprintf(stderr, "%s", PQerrorMessage(con));
-		exit(1);
-	}
-
 	if (ttype != 3)
 	{
 		/*
