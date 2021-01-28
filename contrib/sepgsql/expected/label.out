@@ -6,7 +6,7 @@
 --
 CREATE TABLE t1 (a int, b text);
 INSERT INTO t1 VALUES (1, 'aaa'), (2, 'bbb'), (3, 'ccc');
-SELECT * INTO t2 FROM t1 WHERE a % 2 = 0;
+CREATE TABLE t2 AS SELECT * FROM t1 WHERE a % 2 = 0;
 CREATE FUNCTION f1 () RETURNS text
     AS 'SELECT sepgsql_getcon()'
     LANGUAGE sql;

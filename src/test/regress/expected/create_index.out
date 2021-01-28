@@ -1582,7 +1582,7 @@ DROP TABLE syscol_table;
 --
 -- Tests for IS NULL/IS NOT NULL with b-tree indexes
 --
-SELECT unique1, unique2 INTO onek_with_null FROM onek;
+CREATE TABLE onek_with_null AS SELECT unique1, unique2 FROM onek;
 INSERT INTO onek_with_null (unique1,unique2) VALUES (NULL, -1), (NULL, NULL);
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2,unique1);
 SET enable_seqscan = OFF;

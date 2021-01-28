@@ -883,7 +883,7 @@ SELECT * FROM each('aaa=&gt;bq, b=&gt;NULL, ""=&gt;1');
   <para>
    Using a table:
 <programlisting>
-SELECT (each(h)).key, (each(h)).value INTO stat FROM testhstore;
+CREATE TABLE stat AS SELECT (each(h)).key, (each(h)).value FROM testhstore;
 </programlisting>
   </para>
 
