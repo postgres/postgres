@@ -92,7 +92,6 @@ static int	partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
 									Oid *partcollation,
 									PartitionBoundInfo boundinfo,
 									PartitionRangeBound *probe, bool *is_equal);
-static int	get_partition_bound_num_indexes(PartitionBoundInfo b);
 static Expr *make_partition_op_expr(PartitionKey key, int keynum,
 									uint16 strategy, Expr *arg1, Expr *arg2);
 static Oid	get_partition_operator(PartitionKey key, int col,
@@ -266,6 +265,7 @@ create_hash_bounds(PartitionBoundSpec **boundspecs, int nparts,
 
 	boundinfo->ndatums = ndatums;
 	boundinfo->datums = (Datum **) palloc0(ndatums * sizeof(Datum *));
+	boundinfo->nindexes = greatest_modulus;
 	boundinfo->indexes = (int *) palloc(greatest_modulus * sizeof(int));
 	for (i = 0; i < greatest_modulus; i++)
 		boundinfo->indexes[i] = -1;
@@ -398,6 +398,7 @@ create_list_bounds(PartitionBoundSpec **boundspecs, int nparts,
 
 	boundinfo->ndatums = ndatums;
 	boundinfo->datums = (Datum **) palloc0(ndatums * sizeof(Datum *));
+	boundinfo->nindexes = ndatums;
 	boundinfo->indexes = (int *) palloc(ndatums * sizeof(int));
 
 	/*
@@ -593,8 +594,9 @@ create_range_bounds(PartitionBoundSpec **boundspecs, int nparts,
 
 	/*
 	 * For range partitioning, an additional value of -1 is stored as the last
-	 * element.
+	 * element of the indexes[] array.
 	 */
+	boundinfo->nindexes = ndatums + 1;
 	boundinfo->indexes = (int *) palloc((ndatums + 1) * sizeof(int));
 
 	for (i = 0; i < ndatums; i++)
@@ -675,45 +677,41 @@ partition_bounds_equal(int partnatts, int16 *parttyplen, bool *parttypbyval,
 	if (b1->ndatums != b2->ndatums)
 		return false;
 
+	if (b1->nindexes != b2->nindexes)
+		return false;
+
 	if (b1->null_index != b2->null_index)
 		return false;
 
 	if (b1->default_index != b2->default_index)
 		return false;
 
+	/* For all partition strategies, the indexes[] arrays have to match */
+	for (i = 0; i < b1->nindexes; i++)
+	{
+		if (b1->indexes[i] != b2->indexes[i])
+			return false;
+	}
+
+	/* Finally, compare the datums[] arrays */
 	if (b1->strategy == PARTITION_STRATEGY_HASH)
 	{
-		int			greatest_modulus = get_hash_partition_greatest_modulus(b1);
-
-		/*
-		 * If two hash partitioned tables have different greatest moduli,
-		 * their partition schemes don't match.
-		 */
-		if (greatest_modulus != get_hash_partition_greatest_modulus(b2))
-			return false;
-
 		/*
 		 * We arrange the partitions in the ascending order of their moduli
 		 * and remainders.  Also every modulus is factor of next larger
 		 * modulus.  Therefore we can safely store index of a given partition
 		 * in indexes array at remainder of that partition.  Also entries at
 		 * (remainder + N * modulus) positions in indexes array are all same
-		 * for (modulus, remainder) specification for any partition.  Thus
-		 * datums array from both the given bounds are same, if and only if
-		 * their indexes array will be same.  So, it suffices to compare
-		 * indexes array.
-		 */
-		for (i = 0; i < greatest_modulus; i++)
-			if (b1->indexes[i] != b2->indexes[i])
-				return false;
-
-#ifdef USE_ASSERT_CHECKING
-
-		/*
-		 * Nonetheless make sure that the bounds are indeed same when the
+		 * for (modulus, remainder) specification for any partition.  Thus the
+		 * datums arrays from the given bounds are the same, if and only if
+		 * their indexes arrays are the same.  So, it suffices to compare the
+		 * indexes arrays.
+		 *
+		 * Nonetheless make sure that the bounds are indeed the same when the
 		 * indexes match.  Hash partition bound stores modulus and remainder
 		 * at b1->datums[i][0] and b1->datums[i][1] position respectively.
 		 */
+#ifdef USE_ASSERT_CHECKING
 		for (i = 0; i < b1->ndatums; i++)
 			Assert((b1->datums[i][0] == b2->datums[i][0] &&
 					b1->datums[i][1] == b2->datums[i][1]));
@@ -759,15 +757,7 @@ partition_bounds_equal(int partnatts, int16 *parttyplen, bool *parttypbyval,
 								  parttypbyval[j], parttyplen[j]))
 					return false;
 			}
-
-			if (b1->indexes[i] != b2->indexes[i])
-				return false;
 		}
-
-		/* There are ndatums+1 indexes in case of range partitions */
-		if (b1->strategy == PARTITION_STRATEGY_RANGE &&
-			b1->indexes[i] != b2->indexes[i])
-			return false;
 	}
 	return true;
 }
@@ -783,16 +773,15 @@ partition_bounds_copy(PartitionBoundInfo src,
 	PartitionBoundInfo dest;
 	int			i;
 	int			ndatums;
+	int			nindexes;
 	int			partnatts;
-	int			num_indexes;
 
 	dest = (PartitionBoundInfo) palloc(sizeof(PartitionBoundInfoData));
 
 	dest->strategy = src->strategy;
 	ndatums = dest->ndatums = src->ndatums;
+	nindexes = dest->nindexes = src->nindexes;
 	partnatts = key->partnatts;
-
-	num_indexes = get_partition_bound_num_indexes(src);
 
 	/* List partitioned tables have only a single partition key. */
 	Assert(key->strategy != PARTITION_STRATEGY_LIST || partnatts == 1);
@@ -851,8 +840,8 @@ partition_bounds_copy(PartitionBoundInfo src,
 		}
 	}
 
-	dest->indexes = (int *) palloc(sizeof(int) * num_indexes);
-	memcpy(dest->indexes, src->indexes, sizeof(int) * num_indexes);
+	dest->indexes = (int *) palloc(sizeof(int) * nindexes);
+	memcpy(dest->indexes, src->indexes, sizeof(int) * nindexes);
 
 	dest->null_index = src->null_index;
 	dest->default_index = src->default_index;
@@ -1016,7 +1005,7 @@ check_new_partition_bound(char *relname, Relation parent,
 								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 								 errmsg("every hash partition modulus must be a factor of the next larger modulus")));
 
-					greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
+					greatest_modulus = boundinfo->nindexes;
 					remainder = spec->remainder;
 
 					/*
@@ -1380,18 +1369,15 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 /*
  * get_hash_partition_greatest_modulus
  *
- * Returns the greatest modulus of the hash partition bound. The greatest
- * modulus will be at the end of the datums array because hash partitions are
- * arranged in the ascending order of their moduli and remainders.
+ * Returns the greatest modulus of the hash partition bound.
+ * This is no longer used in the core code, but we keep it around
+ * in case external modules are using it.
  */
 int
 get_hash_partition_greatest_modulus(PartitionBoundInfo bound)
 {
 	Assert(bound && bound->strategy == PARTITION_STRATEGY_HASH);
-	Assert(bound->datums && bound->ndatums > 0);
-	Assert(DatumGetInt32(bound->datums[bound->ndatums - 1][0]) > 0);
-
-	return DatumGetInt32(bound->datums[bound->ndatums - 1][0]);
+	return bound->nindexes;
 }
 
 /*
@@ -1786,46 +1772,6 @@ qsort_partition_rbound_cmp(const void *a, const void *b, void *arg)
 	return partition_rbound_cmp(key->partnatts, key->partsupfunc,
 								key->partcollation, b1->datums, b1->kind,
 								b1->lower, b2);
-}
-
-/*
- * get_partition_bound_num_indexes
- *
- * Returns the number of the entries in the partition bound indexes array.
- */
-static int
-get_partition_bound_num_indexes(PartitionBoundInfo bound)
-{
-	int			num_indexes;
-
-	Assert(bound);
-
-	switch (bound->strategy)
-	{
-		case PARTITION_STRATEGY_HASH:
-
-			/*
-			 * The number of the entries in the indexes array is same as the
-			 * greatest modulus.
-			 */
-			num_indexes = get_hash_partition_greatest_modulus(bound);
-			break;
-
-		case PARTITION_STRATEGY_LIST:
-			num_indexes = bound->ndatums;
-			break;
-
-		case PARTITION_STRATEGY_RANGE:
-			/* Range partitioned table has an extra index. */
-			num_indexes = bound->ndatums + 1;
-			break;
-
-		default:
-			elog(ERROR, "unexpected partition strategy: %d",
-				 (int) bound->strategy);
-	}
-
-	return num_indexes;
 }
 
 /*
