@@ -622,6 +622,7 @@ RelationBuildPartitionDesc(Relation rel)
 					/* Moduli are stored in ascending order */
 					int			greatest_modulus = hbounds[ndatums - 1]->modulus;
 
+					boundinfo->nindexes = greatest_modulus;
 					boundinfo->indexes = (int *) palloc(greatest_modulus *
 														sizeof(int));
 
@@ -655,6 +656,7 @@ RelationBuildPartitionDesc(Relation rel)
 
 			case PARTITION_STRATEGY_LIST:
 				{
+					boundinfo->nindexes = ndatums;
 					boundinfo->indexes = (int *) palloc(ndatums * sizeof(int));
 
 					/*
@@ -719,6 +721,7 @@ RelationBuildPartitionDesc(Relation rel)
 					boundinfo->kind = (PartitionRangeDatumKind **)
 						palloc(ndatums *
 							   sizeof(PartitionRangeDatumKind *));
+					boundinfo->nindexes = ndatums + 1;
 					boundinfo->indexes = (int *) palloc((ndatums + 1) *
 														sizeof(int));
 

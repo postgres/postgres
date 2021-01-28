@@ -1159,15 +1159,13 @@ get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 	{
 		case PARTITION_STRATEGY_HASH:
 			{
-				int			greatest_modulus;
 				uint64		rowHash;
 
-				greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
 				rowHash = compute_partition_hash_value(key->partnatts,
 													   key->partsupfunc,
 													   values, isnull);
 
-				part_index = boundinfo->indexes[rowHash % greatest_modulus];
+				part_index = boundinfo->indexes[rowHash % boundinfo->nindexes];
 			}
 			break;
 
