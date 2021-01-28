@@ -6040,13 +6040,6 @@ main(int argc, char **argv)
 	if (con == NULL)
 		exit(1);
 
-	if (PQstatus(con) == CONNECTION_BAD)
-	{
-		pg_log_fatal("connection to database \"%s\" failed: %s",
-					 dbName, PQerrorMessage(con));
-		exit(1);
-	}
-
 	if (internal_script_used)
 		GetTableInfo(con, scale_given);
 
