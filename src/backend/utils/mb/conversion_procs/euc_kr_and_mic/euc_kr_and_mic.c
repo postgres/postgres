@@ -76,7 +76,7 @@ euc_kr2mic(const unsigned char *euc, unsigned char *p, int len)
 		c1 = *euc;
 		if (IS_HIGHBIT_SET(c1))
 		{
-			l = pg_encoding_verifymb(PG_EUC_KR, (const char *) euc, len);
+			l = pg_encoding_verifymbchar(PG_EUC_KR, (const char *) euc, len);
 			if (l != 2)
 				report_invalid_encoding(PG_EUC_KR,
 										(const char *) euc, len);
@@ -122,7 +122,7 @@ mic2euc_kr(const unsigned char *mic, unsigned char *p, int len)
 			len--;
 			continue;
 		}
-		l = pg_encoding_verifymb(PG_MULE_INTERNAL, (const char *) mic, len);
+		l = pg_encoding_verifymbchar(PG_MULE_INTERNAL, (const char *) mic, len);
 		if (l < 0)
 			report_invalid_encoding(PG_MULE_INTERNAL,
 									(const char *) mic, len);

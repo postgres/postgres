@@ -87,7 +87,7 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
 			continue;
 		}
 
-		l = pg_encoding_verifymb(PG_EUC_JIS_2004, (const char *) euc, len);
+		l = pg_encoding_verifymbchar(PG_EUC_JIS_2004, (const char *) euc, len);
 
 		if (l < 0)
 			report_invalid_encoding(PG_EUC_JIS_2004,
@@ -238,7 +238,7 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 			continue;
 		}
 
-		l = pg_encoding_verifymb(PG_SHIFT_JIS_2004, (const char *) sjis, len);
+		l = pg_encoding_verifymbchar(PG_SHIFT_JIS_2004, (const char *) sjis, len);
 
 		if (l < 0 || l > len)
 			report_invalid_encoding(PG_SHIFT_JIS_2004,

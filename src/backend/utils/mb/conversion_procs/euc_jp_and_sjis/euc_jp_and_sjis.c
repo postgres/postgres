@@ -291,7 +291,7 @@ mic2sjis(const unsigned char *mic, unsigned char *p, int len)
 			len--;
 			continue;
 		}
-		l = pg_encoding_verifymb(PG_MULE_INTERNAL, (const char *) mic, len);
+		l = pg_encoding_verifymbchar(PG_MULE_INTERNAL, (const char *) mic, len);
 		if (l < 0)
 			report_invalid_encoding(PG_MULE_INTERNAL,
 									(const char *) mic, len);
@@ -381,7 +381,7 @@ euc_jp2mic(const unsigned char *euc, unsigned char *p, int len)
 			len--;
 			continue;
 		}
-		l = pg_encoding_verifymb(PG_EUC_JP, (const char *) euc, len);
+		l = pg_encoding_verifymbchar(PG_EUC_JP, (const char *) euc, len);
 		if (l < 0)
 			report_invalid_encoding(PG_EUC_JP,
 									(const char *) euc, len);
@@ -431,7 +431,7 @@ mic2euc_jp(const unsigned char *mic, unsigned char *p, int len)
 			len--;
 			continue;
 		}
-		l = pg_encoding_verifymb(PG_MULE_INTERNAL, (const char *) mic, len);
+		l = pg_encoding_verifymbchar(PG_MULE_INTERNAL, (const char *) mic, len);
 		if (l < 0)
 			report_invalid_encoding(PG_MULE_INTERNAL,
 									(const char *) mic, len);
@@ -485,7 +485,7 @@ euc_jp2sjis(const unsigned char *euc, unsigned char *p, int len)
 			len--;
 			continue;
 		}
-		l = pg_encoding_verifymb(PG_EUC_JP, (const char *) euc, len);
+		l = pg_encoding_verifymbchar(PG_EUC_JP, (const char *) euc, len);
 		if (l < 0)
 			report_invalid_encoding(PG_EUC_JP,
 									(const char *) euc, len);
@@ -580,7 +580,7 @@ sjis2euc_jp(const unsigned char *sjis, unsigned char *p, int len)
 			len--;
 			continue;
 		}
-		l = pg_encoding_verifymb(PG_SJIS, (const char *) sjis, len);
+		l = pg_encoding_verifymbchar(PG_SJIS, (const char *) sjis, len);
 		if (l < 0)
 			report_invalid_encoding(PG_SJIS,
 									(const char *) sjis, len);

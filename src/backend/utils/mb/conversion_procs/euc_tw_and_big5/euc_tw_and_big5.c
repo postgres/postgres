@@ -148,7 +148,7 @@ euc_tw2mic(const unsigned char *euc, unsigned char *p, int len)
 		c1 = *euc;
 		if (IS_HIGHBIT_SET(c1))
 		{
-			l = pg_encoding_verifymb(PG_EUC_TW, (const char *) euc, len);
+			l = pg_encoding_verifymbchar(PG_EUC_TW, (const char *) euc, len);
 			if (l < 0)
 				report_invalid_encoding(PG_EUC_TW,
 										(const char *) euc, len);
@@ -213,7 +213,7 @@ mic2euc_tw(const unsigned char *mic, unsigned char *p, int len)
 			len--;
 			continue;
 		}
-		l = pg_encoding_verifymb(PG_MULE_INTERNAL, (const char *) mic, len);
+		l = pg_encoding_verifymbchar(PG_MULE_INTERNAL, (const char *) mic, len);
 		if (l < 0)
 			report_invalid_encoding(PG_MULE_INTERNAL,
 									(const char *) mic, len);
@@ -272,7 +272,7 @@ big52mic(const unsigned char *big5, unsigned char *p, int len)
 			len--;
 			continue;
 		}
-		l = pg_encoding_verifymb(PG_BIG5, (const char *) big5, len);
+		l = pg_encoding_verifymbchar(PG_BIG5, (const char *) big5, len);
 		if (l < 0)
 			report_invalid_encoding(PG_BIG5,
 									(const char *) big5, len);
@@ -321,7 +321,7 @@ mic2big5(const unsigned char *mic, unsigned char *p, int len)
 			len--;
 			continue;
 		}
-		l = pg_encoding_verifymb(PG_MULE_INTERNAL, (const char *) mic, len);
+		l = pg_encoding_verifymbchar(PG_MULE_INTERNAL, (const char *) mic, len);
 		if (l < 0)
 			report_invalid_encoding(PG_MULE_INTERNAL,
 									(const char *) mic, len);

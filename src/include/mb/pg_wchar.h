@@ -371,7 +371,9 @@ typedef int (*mbdisplaylen_converter) (const unsigned char *mbstr);
 
 typedef bool (*mbcharacter_incrementer) (unsigned char *mbstr, int len);
 
-typedef int (*mbverifier) (const unsigned char *mbstr, int len);
+typedef int (*mbchar_verifier) (const unsigned char *mbstr, int len);
+
+typedef int (*mbstr_verifier) (const unsigned char *mbstr, int len);
 
 typedef struct
 {
@@ -381,7 +383,8 @@ typedef struct
 													 * to a multibyte */
 	mblen_converter mblen;		/* get byte length of a char */
 	mbdisplaylen_converter dsplen;	/* get display width of a char */
-	mbverifier	mbverify;		/* verify multibyte sequence */
+	mbchar_verifier mbverifychar;	/* verify multibyte character */
+	mbstr_verifier mbverifystr; /* verify multibyte string */
 	int			maxmblen;		/* max bytes for a char in this encoding */
 } pg_wchar_tbl;
 
@@ -554,7 +557,8 @@ extern int	pg_valid_server_encoding_id(int encoding);
  */
 extern int	pg_encoding_mblen(int encoding, const char *mbstr);
 extern int	pg_encoding_dsplen(int encoding, const char *mbstr);
-extern int	pg_encoding_verifymb(int encoding, const char *mbstr, int len);
+extern int	pg_encoding_verifymbchar(int encoding, const char *mbstr, int len);
+extern int	pg_encoding_verifymbstr(int encoding, const char *mbstr, int len);
 extern int	pg_encoding_max_length(int encoding);
 extern int	pg_valid_client_encoding(const char *name);
 extern int	pg_valid_server_encoding(const char *name);

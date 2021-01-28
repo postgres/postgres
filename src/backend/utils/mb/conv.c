@@ -653,7 +653,7 @@ LocalToUtf(const unsigned char *iso, int len,
 			continue;
 		}
 
-		l = pg_encoding_verifymb(encoding, (const char *) iso, len);
+		l = pg_encoding_verifymbchar(encoding, (const char *) iso, len);
 		if (l < 0)
 			break;
 

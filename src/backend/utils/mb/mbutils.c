@@ -519,7 +519,7 @@ pg_convert(PG_FUNCTION_ARGS)
 	/* make sure that source string is valid */
 	len = VARSIZE_ANY_EXHDR(string);
 	src_str = VARDATA_ANY(string);
-	pg_verify_mbstr_len(src_encoding, src_str, len, false);
+	(void) pg_verify_mbstr(src_encoding, src_str, len, false);
 
 	/* perform conversion */
 	dest_str = (char *) pg_do_encoding_conversion((unsigned char *) unconstify(char *, src_str),
@@ -1215,10 +1215,10 @@ static bool
 pg_generic_charinc(unsigned char *charptr, int len)
 {
 	unsigned char *lastbyte = charptr + len - 1;
-	mbverifier	mbverify;
+	mbchar_verifier mbverify;
 
 	/* We can just invoke the character verifier directly. */
-	mbverify = pg_wchar_table[GetDatabaseEncoding()].mbverify;
+	mbverify = pg_wchar_table[GetDatabaseEncoding()].mbverifychar;
 
 	while (*lastbyte < (unsigned char) 255)
 	{
@@ -1445,8 +1445,7 @@ pg_database_encoding_max_length(void)
 bool
 pg_verifymbstr(const char *mbstr, int len, bool noError)
 {
-	return
-		pg_verify_mbstr_len(GetDatabaseEncoding(), mbstr, len, noError) >= 0;
+	return pg_verify_mbstr(GetDatabaseEncoding(), mbstr, len, noError);
 }
 
 /*
@@ -1456,7 +1455,18 @@ pg_verifymbstr(const char *mbstr, int len, bool noError)
 bool
 pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
 {
-	return pg_verify_mbstr_len(encoding, mbstr, len, noError) >= 0;
+	int			oklen;
+
+	Assert(PG_VALID_ENCODING(encoding));
+
+	oklen = pg_wchar_table[encoding].mbverifystr((const unsigned char *) mbstr, len);
+	if (oklen != len)
+	{
+		if (noError)
+			return false;
+		report_invalid_encoding(encoding, mbstr + oklen, len - oklen);
+	}
+	return true;
 }
 
 /*
@@ -1469,11 +1479,14 @@ pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
  * If OK, return length of string in the encoding.
  * If a problem is found, return -1 when noError is
  * true; when noError is false, ereport() a descriptive message.
+ *
+ * Note: We cannot use the faster encoding-specific mbverifystr() function
+ * here, because we need to count the number of characters in the string.
  */
 int
 pg_verify_mbstr_len(int encoding, const char *mbstr, int len, bool noError)
 {
-	mbverifier	mbverify;
+	mbchar_verifier mbverifychar;
 	int			mb_len;
 
 	Assert(PG_VALID_ENCODING(encoding));
@@ -1493,7 +1506,7 @@ pg_verify_mbstr_len(int encoding, const char *mbstr, int len, bool noError)
 	}
 
 	/* fetch function pointer just once */
-	mbverify = pg_wchar_table[encoding].mbverify;
+	mbverifychar = pg_wchar_table[encoding].mbverifychar;
 
 	mb_len = 0;
 
@@ -1516,7 +1529,7 @@ pg_verify_mbstr_len(int encoding, const char *mbstr, int len, bool noError)
 			report_invalid_encoding(encoding, mbstr, len);
 		}
 
-		l = (*mbverify) ((const unsigned char *) mbstr, len);
+		l = (*mbverifychar) ((const unsigned char *) mbstr, len);
 
 		if (l < 0)
 		{

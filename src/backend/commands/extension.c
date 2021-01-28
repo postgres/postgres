@@ -682,7 +682,7 @@ read_extension_script_file(const ExtensionControlFile *control,
 		src_encoding = control->encoding;
 
 	/* make sure that source string is valid in the expected encoding */
-	pg_verify_mbstr_len(src_encoding, src_str, len, false);
+	(void) pg_verify_mbstr(src_encoding, src_str, len, false);
 
 	/*
 	 * Convert the encoding to the database encoding. read_whole_file
