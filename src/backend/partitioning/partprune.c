@@ -776,7 +776,10 @@ get_matching_partitions(PartitionPruneContext *context, List *pruning_steps)
 	scan_default = final_result->scan_default;
 	while ((i = bms_next_member(final_result->bound_offsets, i)) >= 0)
 	{
-		int			partindex = context->boundinfo->indexes[i];
+		int			partindex;
+
+		Assert(i < context->boundinfo->nindexes);
+		partindex = context->boundinfo->indexes[i];
 
 		if (partindex < 0)
 		{
@@ -2509,20 +2512,19 @@ get_matching_hash_bounds(PartitionPruneContext *context,
 		for (i = 0; i < partnatts; i++)
 			isnull[i] = bms_is_member(i, nullkeys);
 
-		greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
 		rowHash = compute_partition_hash_value(partnatts, partsupfunc, partcollation,
 											   values, isnull);
 
+		greatest_modulus = boundinfo->nindexes;
 		if (partindices[rowHash % greatest_modulus] >= 0)
 			result->bound_offsets =
 				bms_make_singleton(rowHash % greatest_modulus);
 	}
 	else
 	{
-		/* Getting here means at least one hash partition exists. */
-		Assert(boundinfo->ndatums > 0);
+		/* Report all valid offsets into the boundinfo->indexes array. */
 		result->bound_offsets = bms_add_range(NULL, 0,
-											  boundinfo->ndatums - 1);
+											  boundinfo->nindexes - 1);
 	}
 
 	/*
@@ -3383,30 +3385,20 @@ perform_pruning_combine_step(PartitionPruneContext *context,
 							 PartitionPruneStepCombine *cstep,
 							 PruneStepResult **step_results)
 {
-	ListCell   *lc1;
-	PruneStepResult *result = NULL;
+	PruneStepResult *result = (PruneStepResult *) palloc0(sizeof(PruneStepResult));
 	bool		firststep;
+	ListCell   *lc1;
 
 	/*
 	 * A combine step without any source steps is an indication to not perform
 	 * any partition pruning.  Return all datum indexes in that case.
 	 */
-	result = (PruneStepResult *) palloc0(sizeof(PruneStepResult));
-	if (list_length(cstep->source_stepids) == 0)
+	if (cstep->source_stepids == NIL)
 	{
 		PartitionBoundInfo boundinfo = context->boundinfo;
-		int			rangemax;
-
-		/*
-		 * Add all valid offsets into the boundinfo->indexes array.  For range
-		 * partitioning, boundinfo->indexes contains (boundinfo->ndatums + 1)
-		 * valid entries; otherwise there are boundinfo->ndatums.
-		 */
-		rangemax = context->strategy == PARTITION_STRATEGY_RANGE ?
-			boundinfo->ndatums : boundinfo->ndatums - 1;
 
 		result->bound_offsets =
-			bms_add_range(result->bound_offsets, 0, rangemax);
+			bms_add_range(NULL, 0, boundinfo->nindexes - 1);
 		result->scan_default = partition_bound_has_default(boundinfo);
 		result->scan_null = partition_bound_accepts_nulls(boundinfo);
 		return result;
