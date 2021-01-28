@@ -1898,6 +1898,11 @@ pg_stat_statements_info(PG_FUNCTION_ARGS)
 	Datum		values[PG_STAT_STATEMENTS_INFO_COLS];
 	bool		nulls[PG_STAT_STATEMENTS_INFO_COLS];
 
+	if (!pgss || !pgss_hash)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("pg_stat_statements must be loaded via shared_preload_libraries")));
+
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
