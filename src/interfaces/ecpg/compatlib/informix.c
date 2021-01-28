@@ -533,7 +533,7 @@ rtoday(date * d)
 }
 
 int
-rjulmdy(date d, short mdy[3])
+rjulmdy(date d, short *mdy)
 {
 	int			mdy_int[3];
 
@@ -584,7 +584,7 @@ rfmtdate(date d, const char *fmt, char *str)
 }
 
 int
-rmdyjul(short mdy[3], date * d)
+rmdyjul(short *mdy, date * d)
 {
 	int			mdy_int[3];
 
