@@ -3041,11 +3041,11 @@ SetRelationHasSubclass(Oid relationId, bool relhassubclass)
  * CheckRelationTableSpaceMove
  *		Check if relation can be moved to new tablespace.
  *
- * NOTE: Caller must be holding an appropriate lock on the relation.
- * ShareUpdateExclusiveLock is sufficient.
+ * NOTE: The caller must hold AccessExclusiveLock on the relation.
  *
- * Returns true if the relation can be moved to the new tablespace;
- * false otherwise.
+ * Returns true if the relation can be moved to the new tablespace; raises
+ * an error if it is not possible to do the move; returns false if the move
+ * would have no effect.
  */
 bool
 CheckRelationTableSpaceMove(Relation rel, Oid newTableSpaceId)
@@ -3094,11 +3094,10 @@ CheckRelationTableSpaceMove(Relation rel, Oid newTableSpaceId)
  *		Set new reltablespace and relfilenode in pg_class entry.
  *
  * newTableSpaceId is the new tablespace for the relation, and
- * newRelFileNode its new filenode.  If newrelfilenode is InvalidOid,
+ * newRelFileNode its new filenode.  If newRelFileNode is InvalidOid,
  * this field is not updated.
  *
- * NOTE: Caller must be holding an appropriate lock on the relation.
- * ShareUpdateExclusiveLock is sufficient.
+ * NOTE: The caller must hold AccessExclusiveLock on the relation.
  *
  * The caller of this routine had better check if a relation can be
  * moved to this new tablespace by calling CheckRelationTableSpaceMove()
