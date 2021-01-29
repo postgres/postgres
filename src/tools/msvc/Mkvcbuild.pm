@@ -34,8 +34,8 @@ my @unlink_on_exit;
 # Set of variables for modules in contrib/ and src/test/modules/
 my $contrib_defines = { 'refint' => 'REFINT_VERBOSE' };
 my @contrib_uselibpq = ('dblink', 'oid2name', 'postgres_fdw', 'vacuumlo');
-my @contrib_uselibpgport   = ('oid2name', 'pg_standby', 'vacuumlo');
-my @contrib_uselibpgcommon = ('oid2name', 'pg_standby', 'vacuumlo');
+my @contrib_uselibpgport   = ('oid2name', 'vacuumlo');
+my @contrib_uselibpgcommon = ('oid2name', 'vacuumlo');
 my $contrib_extralibs      = undef;
 my $contrib_extraincludes = { 'dblink' => ['src/backend'] };
 my $contrib_extrasource = {

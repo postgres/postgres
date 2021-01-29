@@ -192,13 +192,12 @@ pages.
   <title>Server Applications</title>
 
   <para>
-   This section covers <productname>PostgreSQL</productname> server-related
-   applications in <literal>contrib</literal>.  They are typically run on the
-   host where the database server resides.  See also <xref
+   Some applications run on the <productname>PostgreSQL</productname> server
+   itself.  Currently, no such applications are included in the
+   <literal>contrib</literal> directory.  See also <xref
    linkend="reference-server"/> for information about server applications that
    are part of the core <productname>PostgreSQL</productname> distribution.
   </para>
 
- &pgstandby;
  </sect1>
 </appendix>

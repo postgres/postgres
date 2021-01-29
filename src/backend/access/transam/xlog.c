@@ -4199,7 +4199,7 @@ RemoveXlogFile(const char *segname, XLogSegNo recycleSegNo,
 
 	/*
 	 * Before deleting the file, see if it can be recycled as a future log
-	 * segment. Only recycle normal files, pg_standby for example can create
+	 * segment. Only recycle normal files, because we don't want to recycle
 	 * symbolic links pointing to a separate archive directory.
 	 */
 	if (wal_recycle &&

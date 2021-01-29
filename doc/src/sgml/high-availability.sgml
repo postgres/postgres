@@ -699,11 +699,9 @@ protocol to make nodes agree on a serializable transactional order.
 
    <note>
      <para>
-     Do not use pg_standby or similar tools with the built-in standby mode
-     described here. <xref linkend="guc-restore-command"/> should return immediately
+     <xref linkend="guc-restore-command"/> should return immediately
      if the file does not exist; the server will retry the command again if
-     necessary. See <xref linkend="log-shipping-alternative"/>
-     for using tools like pg_standby.
+     necessary.
     </para>
    </note>
 
@@ -1494,8 +1492,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    <para>
     An alternative to the built-in standby mode described in the previous
     sections is to use a <varname>restore_command</varname> that polls the archive location.
-    This was the only option available in versions 8.4 and below. See the
-    <xref linkend="pgstandby"/> module for a reference implementation of this.
+    This was the only option available in versions 8.4 and below.
    </para>
 
    <para>
@@ -1549,14 +1546,6 @@ while (!NextWALFileReady() &amp;&amp; !triggered)
 if (!triggered)
         CopyWALFileForRecovery();
 </programlisting>
-   </para>
-
-   <para>
-    A working example of a waiting <varname>restore_command</varname> is provided
-    in the <xref linkend="pgstandby"/> module. It
-    should be used as a reference on how to correctly implement the logic
-    described above. It can also be extended as needed to support specific
-    configurations and environments.
    </para>
 
    <para>
