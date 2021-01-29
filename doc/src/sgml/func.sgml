@@ -13149,6 +13149,24 @@ table2-mapping
 </programlisting>
    </para>
 
+   <para>
+    The <literal>.**</literal> accessor can lead to surprising results
+    when using the lax mode. For instance, the following query selects every
+    <literal>HR</literal> value twice:
+<programlisting>
+lax $.**.HR
+</programlisting>
+    This happens because the <literal>.**</literal> accessor selects both
+    the <literal>segments</literal> array and each of its elements, while
+    the <literal>.HR</literal> accessor automatically unwraps arrays when
+    using the lax mode. To avoid surprising results, we recommend using
+    the <literal>.**</literal> accessor only in the strict mode. The
+    following query selects each <literal>HR</literal> value just once:
+<programlisting>
+strict $.**.HR
+</programlisting>
+   </para>
+
    </sect3>
 
    <sect3 id="jsonpath-regular-expressions">
