@@ -290,7 +290,7 @@ static const char *fmtCopyColumnList(const TableInfo *ti, PQExpBuffer buffer);
 static bool nonemptyReloptions(const char *reloptions);
 static void appendIndexCollationVersion(PQExpBuffer buffer, IndxInfo *indxinfo,
 										int enc, bool coll_unknown,
-										Archive *fount);
+										Archive *fout);
 static void appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 									const char *prefix, Archive *fout);
 static char *get_synchronized_snapshot(Archive *fout);
