@@ -129,7 +129,7 @@ SHOW ALL
 
   <para>
    The function <function>current_setting</function> produces
-   equivalent output; see <xref linkend="functions-admin"/>.
+   equivalent output; see <xref linkend="functions-admin-set"/>.
    Also, the
    <link linkend="view-pg-settings"><structname>pg_settings</structname></link>
    system view produces the same information.

@@ -24593,8 +24593,9 @@ SELECT collation for ('foo' COLLATE "de_DE");
         setting <parameter>setting_name</parameter>.  If there is no such
         setting, <function>current_setting</function> throws an error
         unless <parameter>missing_ok</parameter> is supplied and
-        is <literal>true</literal>.  This function corresponds to
-        the <acronym>SQL</acronym> command <command>SHOW</command>.
+        is <literal>true</literal> (in which case NULL is returned).
+        This function corresponds to
+        the <acronym>SQL</acronym> command <xref linkend="sql-show"/>.
        </para>
        <para>
         <literal>current_setting('datestyle')</literal>
@@ -24617,10 +24618,10 @@ SELECT collation for ('foo' COLLATE "de_DE");
         Sets the parameter <parameter>setting_name</parameter>
         to <parameter>new_value</parameter>, and returns that value.
         If <parameter>is_local</parameter> is <literal>true</literal>, the new
-        value will only apply for the current transaction. If you want the new
-        value to apply for the current session, use <literal>false</literal>
-        instead. This function corresponds to the SQL
-        command <command>SET</command>.
+        value will only apply during the current transaction. If you want the
+        new value to apply for the rest of the current session,
+        use <literal>false</literal> instead. This function corresponds to
+        the SQL command <xref linkend="sql-set"/>.
        </para>
        <para>
         <literal>set_config('log_statement_stats', 'off', false)</literal>

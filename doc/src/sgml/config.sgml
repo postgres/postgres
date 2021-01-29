@@ -263,8 +263,9 @@ shared_buffers = 128MB
      <listitem>
      <para>
       The <link linkend="sql-show"><command>SHOW</command></link> command allows inspection of the
-      current value of all parameters.  The corresponding function is
-      <function>current_setting(setting_name text)</function>.
+      current value of any parameter.  The corresponding SQL function is
+      <function>current_setting(setting_name text)</function>
+      (see <xref linkend="functions-admin-set"/>).
      </para>
      </listitem>
 
@@ -273,8 +274,9 @@ shared_buffers = 128MB
        The <link linkend="sql-set"><command>SET</command></link> command allows modification of the
        current value of those parameters that can be set locally to a
        session; it has no effect on other sessions.
-       The corresponding function is
-       <function>set_config(setting_name, new_value, is_local)</function>.
+       The corresponding SQL function is
+       <function>set_config(setting_name, new_value, is_local)</function>
+       (see <xref linkend="functions-admin-set"/>).
       </para>
      </listitem>
     </itemizedlist>
