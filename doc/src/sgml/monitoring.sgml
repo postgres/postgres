@@ -317,7 +317,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><structname>pg_stat_replication_slots</structname><indexterm><primary>pg_stat_replication_slots</primary></indexterm></entry>
       <entry>One row per replication slot, showing statistics about
-       replication slot usage.
+       the replication slot's usage.
        See <link linkend="monitoring-pg-stat-replication-slots-view">
        <structname>pg_stat_replication_slots</structname></link> for details.
       </entry>
@@ -2604,10 +2604,10 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <structfield>spill_txns</structfield> <type>bigint</type>
        </para>
        <para>
-        Number of transactions spilled to disk after the memory used by
-        logical decoding of changes from WAL for this slot exceeds
+        Number of transactions spilled to disk once the memory used by
+        logical decoding to decode changes from WAL has exceeded
         <literal>logical_decoding_work_mem</literal>. The counter gets
-        incremented both for toplevel transactions and subtransactions.
+        incremented for both toplevel transactions and subtransactions.
       </para></entry>
      </row>
 
@@ -2616,9 +2616,10 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <structfield>spill_count</structfield> <type>bigint</type>
        </para>
        <para>
-        Number of times transactions were spilled to disk while decoding changes
-        from WAL for this slot. Transactions may get spilled repeatedly, and
-        this counter gets incremented on every such invocation.
+        Number of times transactions were spilled to disk while decoding
+        changes from WAL for this slot. This counter is incremented each time
+        a transaction is spilled, and the same transaction may be spilled
+        multiple times.
       </para></entry>
      </row>
 
@@ -2639,11 +2640,12 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <structfield>stream_txns</structfield> <type>bigint</type>
        </para>
        <para>
-        Number of in-progress transactions streamed to the decoding output plugin
-        after the memory used by logical decoding of changes from WAL for this
-        slot exceeds <literal>logical_decoding_work_mem</literal>. Streaming only
+        Number of in-progress transactions streamed to the decoding output
+        plugin after the memory used by logical decoding to decode changes
+        from WAL for this slot has exceeded
+        <literal>logical_decoding_work_mem</literal>. Streaming only
         works with toplevel transactions (subtransactions can't be streamed
-        independently), so the counter does not get incremented for subtransactions.
+        independently), so the counter is not incremented for subtransactions.
        </para></entry>
      </row>
 
@@ -2653,9 +2655,9 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        </para>
        <para>
         Number of times in-progress transactions were streamed to the decoding
-        output plugin while decoding changes from WAL for this slot. Transactions
-        may get streamed repeatedly, and this counter gets incremented on every
-        such invocation.
+        output plugin while decoding changes from WAL for this slot. This
+        counter is incremented each time a transaction is streamed, and the
+        same transaction may be streamed multiple times.
       </para></entry>
      </row>
 
@@ -5042,7 +5044,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       </row>
 
       <row>
-        <entry role="func_table_entry"><para role="func_signature">
+       <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
           <primary>pg_stat_reset_replication_slot</primary>
         </indexterm>
@@ -5050,11 +5052,9 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <returnvalue>void</returnvalue>
        </para>
        <para>
-         Resets statistics to zero for a single replication slot, or for all
-         replication slots in the cluster.  The argument can be either the name
-         of the slot to reset the stats or NULL.  If the argument is NULL, all
-         counters shown in the <structname>pg_stat_replication_slots</structname>
-         view for all replication slots are reset.
+        Resets statistics of the replication slot defined by the argument. If
+        the argument is <literal>NULL</literal>, resets statistics for all
+        the replication slots.
        </para>
        <para>
          This function is restricted to superusers by default, but other users
