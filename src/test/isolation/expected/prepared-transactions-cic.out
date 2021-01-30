@@ -1,0 +1,18 @@
+Parsed test spec with 2 sessions
+
+starting permutation: w1 p1 cic2 c1 r2
+step w1: BEGIN; INSERT INTO cic_test VALUES (1);
+step p1: PREPARE TRANSACTION 's1';
+step cic2: 
+    CREATE INDEX CONCURRENTLY on cic_test(a);
+
+ERROR:  canceling statement due to lock timeout
+step c1: COMMIT PREPARED 's1';
+step r2: 
+    SET enable_seqscan to off;
+    SET enable_bitmapscan to off;
+    SELECT * FROM cic_test WHERE a = 1;
+
+a              
+
+1              

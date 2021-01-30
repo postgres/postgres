@@ -47,10 +47,10 @@ extern bool Debug_deadlocks;
 
 /*
  * Top-level transactions are identified by VirtualTransactionIDs comprising
- * the BackendId of the backend running the xact, plus a locally-assigned
- * LocalTransactionId.  These are guaranteed unique over the short term,
- * but will be reused after a database restart; hence they should never
- * be stored on disk.
+ * PGPROC fields backendId and lxid.  For prepared transactions, the
+ * LocalTransactionId is an ordinary XID.  These are guaranteed unique over
+ * the short term, but will be reused after a database restart or XID
+ * wraparound; hence they should never be stored on disk.
  *
  * Note that struct VirtualTransactionId can not be assumed to be atomically
  * assignable as a whole.  However, type LocalTransactionId is assumed to
@@ -62,15 +62,16 @@ extern bool Debug_deadlocks;
  */
 typedef struct
 {
-	BackendId	backendId;		/* determined at backend startup */
-	LocalTransactionId localTransactionId;	/* backend-local transaction id */
+	BackendId	backendId;		/* backendId from PGPROC */
+	LocalTransactionId localTransactionId;	/* lxid from PGPROC */
 } VirtualTransactionId;
 
 #define InvalidLocalTransactionId		0
 #define LocalTransactionIdIsValid(lxid) ((lxid) != InvalidLocalTransactionId)
 #define VirtualTransactionIdIsValid(vxid) \
-	(((vxid).backendId != InvalidBackendId) && \
-	 LocalTransactionIdIsValid((vxid).localTransactionId))
+	(LocalTransactionIdIsValid((vxid).localTransactionId))
+#define VirtualTransactionIdIsPreparedXact(vxid) \
+	((vxid).backendId == InvalidBackendId)
 #define VirtualTransactionIdEquals(vxid1, vxid2) \
 	((vxid1).backendId == (vxid2).backendId && \
 	 (vxid1).localTransactionId == (vxid2).localTransactionId)
