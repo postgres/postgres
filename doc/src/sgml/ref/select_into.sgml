@@ -138,9 +138,11 @@ SELECT * INTO films_recent FROM films WHERE date_prod &gt;= '2002-01-01';
    in <application>ECPG</application> (see <xref linkend="ecpg"/>) and
    <application>PL/pgSQL</application> (see <xref linkend="plpgsql"/>).
    The <productname>PostgreSQL</productname> usage of <command>SELECT
-   INTO</command> to represent table creation is historical.  It is
-   best to use <command>CREATE TABLE AS</command> for this purpose in
-   new code.
+   INTO</command> to represent table creation is historical.  Some other SQL
+   implementations also use <command>SELECT INTO</command> in this way (but
+   most SQL implementations support <command>CREATE TABLE AS</command>
+   instead).  Apart from such compatibility considerations, it is best to use
+   <command>CREATE TABLE AS</command> for this purpose in new code.
   </para>
  </refsect1>
 
