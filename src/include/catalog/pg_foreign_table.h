@@ -44,7 +44,7 @@ typedef FormData_pg_foreign_table *Form_pg_foreign_table;
 
 DECLARE_TOAST(pg_foreign_table, 4153, 4154);
 
-DECLARE_UNIQUE_INDEX(pg_foreign_table_relid_index, 3119, on pg_foreign_table using btree(ftrelid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_foreign_table_relid_index, 3119, on pg_foreign_table using btree(ftrelid oid_ops));
 #define ForeignTableRelidIndexId 3119
 
 #endif							/* PG_FOREIGN_TABLE_H */

@@ -55,6 +55,7 @@ my %catalog_data;
 my @toast_decls;
 my @index_decls;
 my %oidcounts;
+my @system_constraints;
 
 foreach my $header (@ARGV)
 {
@@ -137,6 +138,17 @@ foreach my $header (@ARGV)
 		  $index->{index_name}, $index->{index_oid},
 		  $index->{index_decl};
 		$oidcounts{ $index->{index_oid} }++;
+
+		if ($index->{is_unique})
+		{
+			$index->{index_decl} =~ /on (\w+) using/;
+			my $tblname = $1;
+			push @system_constraints,
+			  sprintf "ALTER TABLE %s ADD %s USING INDEX %s;",
+			  $tblname,
+			  $index->{is_pkey} ? "PRIMARY KEY" : "UNIQUE",
+			  $index->{index_name};
+		}
 	}
 }
 
@@ -388,6 +400,9 @@ open my $bki, '>', $bkifile . $tmpext
 my $schemafile = $output_path . 'schemapg.h';
 open my $schemapg, '>', $schemafile . $tmpext
   or die "can't open $schemafile$tmpext: $!";
+my $constraints_file = $output_path . 'system_constraints.sql';
+open my $constraints, '>', $constraints_file . $tmpext
+  or die "can't open $constraints_file$tmpext: $!";
 
 # Generate postgres.bki and pg_*_d.h headers.
 
@@ -648,6 +663,12 @@ die
   "genbki OID counter reached $GenbkiNextOid, overrunning FirstBootstrapObjectId\n"
   if $GenbkiNextOid > $FirstBootstrapObjectId;
 
+# Now generate system_constraints.sql
+
+foreach my $c (@system_constraints)
+{
+	print $constraints $c, "\n";
+}
 
 # Now generate schemapg.h
 
@@ -688,10 +709,12 @@ print $schemapg "\n#endif\t\t\t\t\t\t\t/* SCHEMAPG_H */\n";
 # We're done emitting data
 close $bki;
 close $schemapg;
+close $constraints;
 
 # Finally, rename the completed files into place.
 Catalog::RenameTempFile($bkifile,    $tmpext);
 Catalog::RenameTempFile($schemafile, $tmpext);
+Catalog::RenameTempFile($constraints_file, $tmpext);
 
 exit 0;
 

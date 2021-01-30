@@ -110,7 +110,7 @@ typedef FormData_pg_aggregate *Form_pg_aggregate;
 
 DECLARE_TOAST(pg_aggregate, 4159, 4160);
 
-DECLARE_UNIQUE_INDEX(pg_aggregate_fnoid_index, 2650, on pg_aggregate using btree(aggfnoid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_aggregate_fnoid_index, 2650, on pg_aggregate using btree(aggfnoid oid_ops));
 #define AggregateFnoidIndexId  2650
 
 #ifdef EXPOSE_TO_CLIENT_CODE

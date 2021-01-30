@@ -51,7 +51,7 @@ DECLARE_TOAST(pg_default_acl, 4143, 4144);
 
 DECLARE_UNIQUE_INDEX(pg_default_acl_role_nsp_obj_index, 827, on pg_default_acl using btree(defaclrole oid_ops, defaclnamespace oid_ops, defaclobjtype char_ops));
 #define DefaultAclRoleNspObjIndexId 827
-DECLARE_UNIQUE_INDEX(pg_default_acl_oid_index, 828, on pg_default_acl using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_default_acl_oid_index, 828, on pg_default_acl using btree(oid oid_ops));
 #define DefaultAclOidIndexId	828
 
 #ifdef EXPOSE_TO_CLIENT_CODE

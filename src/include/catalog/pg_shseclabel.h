@@ -42,7 +42,7 @@ DECLARE_TOAST(pg_shseclabel, 4060, 4061);
 #define PgShseclabelToastTable 4060
 #define PgShseclabelToastIndex 4061
 
-DECLARE_UNIQUE_INDEX(pg_shseclabel_object_index, 3593, on pg_shseclabel using btree(objoid oid_ops, classoid oid_ops, provider text_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_shseclabel_object_index, 3593, on pg_shseclabel using btree(objoid oid_ops, classoid oid_ops, provider text_ops));
 #define SharedSecLabelObjectIndexId			3593
 
 #endif							/* PG_SHSECLABEL_H */

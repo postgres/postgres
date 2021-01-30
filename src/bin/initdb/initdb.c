@@ -159,6 +159,7 @@ static char *conf_file;
 static char *dictionary_file;
 static char *info_schema_file;
 static char *features_file;
+static char *system_constraints_file;
 static char *system_views_file;
 static bool success = false;
 static bool made_new_pgdata = false;
@@ -251,10 +252,9 @@ static void bootstrap_template1(void);
 static void setup_auth(FILE *cmdfd);
 static void get_su_pwd(void);
 static void setup_depend(FILE *cmdfd);
-static void setup_sysviews(FILE *cmdfd);
+static void setup_run_file(FILE *cmdfd, const char *filename);
 static void setup_description(FILE *cmdfd);
 static void setup_collation(FILE *cmdfd);
-static void setup_dictionary(FILE *cmdfd);
 static void setup_privileges(FILE *cmdfd);
 static void set_info_version(void);
 static void setup_schema(FILE *cmdfd);
@@ -1600,17 +1600,16 @@ setup_depend(FILE *cmdfd)
 }
 
 /*
- * set up system views
+ * Run external file
  */
 static void
-setup_sysviews(FILE *cmdfd)
+setup_run_file(FILE *cmdfd, const char *filename)
 {
-	char	  **line;
-	char	  **sysviews_setup;
+	char	  **lines;
 
-	sysviews_setup = readfile(system_views_file);
+	lines = readfile(filename);
 
-	for (line = sysviews_setup; *line != NULL; line++)
+	for (char **line = lines; *line != NULL; line++)
 	{
 		PG_CMD_PUTS(*line);
 		free(*line);
@@ -1618,7 +1617,7 @@ setup_sysviews(FILE *cmdfd)
 
 	PG_CMD_PUTS("\n\n");
 
-	free(sysviews_setup);
+	free(lines);
 }
 
 /*
@@ -1659,27 +1658,6 @@ setup_collation(FILE *cmdfd)
 
 	/* Now import all collations we can find in the operating system */
 	PG_CMD_PUTS("SELECT pg_import_system_collations('pg_catalog');\n\n");
-}
-
-/*
- * load extra dictionaries (Snowball stemmers)
- */
-static void
-setup_dictionary(FILE *cmdfd)
-{
-	char	  **line;
-	char	  **conv_lines;
-
-	conv_lines = readfile(dictionary_file);
-	for (line = conv_lines; *line != NULL; line++)
-	{
-		PG_CMD_PUTS(*line);
-		free(*line);
-	}
-
-	PG_CMD_PUTS("\n\n");
-
-	free(conv_lines);
 }
 
 /*
@@ -1882,20 +1860,7 @@ set_info_version(void)
 static void
 setup_schema(FILE *cmdfd)
 {
-	char	  **line;
-	char	  **lines;
-
-	lines = readfile(info_schema_file);
-
-	for (line = lines; *line != NULL; line++)
-	{
-		PG_CMD_PUTS(*line);
-		free(*line);
-	}
-
-	PG_CMD_PUTS("\n\n");
-
-	free(lines);
+	setup_run_file(cmdfd, info_schema_file);
 
 	PG_CMD_PRINTF("UPDATE information_schema.sql_implementation_info "
 				  "  SET character_value = '%s' "
@@ -2534,6 +2499,7 @@ setup_data_file_paths(void)
 	set_input(&dictionary_file, "snowball_create.sql");
 	set_input(&info_schema_file, "information_schema.sql");
 	set_input(&features_file, "sql_features.txt");
+	set_input(&system_constraints_file, "system_constraints.sql");
 	set_input(&system_views_file, "system_views.sql");
 
 	if (show_setting || debug)
@@ -2895,6 +2861,8 @@ initialize_data_directory(void)
 
 	setup_auth(cmdfd);
 
+	setup_run_file(cmdfd, system_constraints_file);
+
 	setup_depend(cmdfd);
 
 	/*
@@ -2902,13 +2870,13 @@ initialize_data_directory(void)
 	 * They are all droppable at the whim of the DBA.
 	 */
 
-	setup_sysviews(cmdfd);
+	setup_run_file(cmdfd, system_views_file);
 
 	setup_description(cmdfd);
 
 	setup_collation(cmdfd);
 
-	setup_dictionary(cmdfd);
+	setup_run_file(cmdfd, dictionary_file);
 
 	setup_privileges(cmdfd);
 

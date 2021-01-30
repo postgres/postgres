@@ -16,7 +16,7 @@ DETAIL:  System catalog modifications are currently disallowed.
 CREATE TABLE t1x (a int, b anyarray);
 ERROR:  column "b" has pseudo-type anyarray
 -- index on system catalog
-ALTER TABLE pg_namespace ADD UNIQUE USING INDEX pg_namespace_oid_index;
+ALTER TABLE pg_namespace ADD CONSTRAINT foo UNIQUE USING INDEX pg_namespace_nspname_index;
 ERROR:  permission denied: "pg_namespace" is a system catalog
 -- write to system catalog table as superuser
 -- (allowed even without allow_system_table_mods)
@@ -102,7 +102,8 @@ CREATE TABLE t1 (a int, b anyarray);
 ROLLBACK;
 -- index on system catalog
 BEGIN;
-ALTER TABLE pg_namespace ADD UNIQUE USING INDEX pg_namespace_oid_index;
+ALTER TABLE pg_namespace ADD CONSTRAINT foo UNIQUE USING INDEX pg_namespace_nspname_index;
+NOTICE:  ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index "pg_namespace_nspname_index" to "foo"
 ROLLBACK;
 -- write to system catalog table as superuser
 BEGIN;
@@ -146,7 +147,6 @@ ALTER TABLE pg_description ALTER COLUMN description SET STATISTICS -1;
 ROLLBACK;
 -- foreign key referencing catalog
 BEGIN;
-ALTER TABLE pg_description ADD PRIMARY KEY USING INDEX pg_description_o_c_o_index;
 CREATE TABLE foo (a oid, b oid, c int, FOREIGN KEY (a, b, c) REFERENCES pg_description);
 ROLLBACK;
 -- RangeVarCallbackOwnsRelation()

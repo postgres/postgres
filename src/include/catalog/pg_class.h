@@ -152,7 +152,7 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
  */
 typedef FormData_pg_class *Form_pg_class;
 
-DECLARE_UNIQUE_INDEX(pg_class_oid_index, 2662, on pg_class using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_class_oid_index, 2662, on pg_class using btree(oid oid_ops));
 #define ClassOidIndexId  2662
 DECLARE_UNIQUE_INDEX(pg_class_relname_nsp_index, 2663, on pg_class using btree(relname name_ops, relnamespace oid_ops));
 #define ClassNameNspIndexId  2663

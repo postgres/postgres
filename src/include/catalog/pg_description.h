@@ -65,7 +65,7 @@ typedef FormData_pg_description * Form_pg_description;
 
 DECLARE_TOAST(pg_description, 2834, 2835);
 
-DECLARE_UNIQUE_INDEX(pg_description_o_c_o_index, 2675, on pg_description using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_description_o_c_o_index, 2675, on pg_description using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops));
 #define DescriptionObjIndexId  2675
 
 #endif							/* PG_DESCRIPTION_H */

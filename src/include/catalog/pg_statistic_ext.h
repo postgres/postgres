@@ -65,7 +65,7 @@ typedef FormData_pg_statistic_ext *Form_pg_statistic_ext;
 
 DECLARE_TOAST(pg_statistic_ext, 3439, 3440);
 
-DECLARE_UNIQUE_INDEX(pg_statistic_ext_oid_index, 3380, on pg_statistic_ext using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_statistic_ext_oid_index, 3380, on pg_statistic_ext using btree(oid oid_ops));
 #define StatisticExtOidIndexId	3380
 DECLARE_UNIQUE_INDEX(pg_statistic_ext_name_index, 3997, on pg_statistic_ext using btree(stxname name_ops, stxnamespace oid_ops));
 #define StatisticExtNameIndexId 3997

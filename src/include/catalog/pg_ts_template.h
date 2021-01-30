@@ -47,7 +47,7 @@ typedef FormData_pg_ts_template *Form_pg_ts_template;
 
 DECLARE_UNIQUE_INDEX(pg_ts_template_tmplname_index, 3766, on pg_ts_template using btree(tmplname name_ops, tmplnamespace oid_ops));
 #define TSTemplateNameNspIndexId	3766
-DECLARE_UNIQUE_INDEX(pg_ts_template_oid_index, 3767, on pg_ts_template using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_ts_template_oid_index, 3767, on pg_ts_template using btree(oid oid_ops));
 #define TSTemplateOidIndexId	3767
 
 #endif							/* PG_TS_TEMPLATE_H */

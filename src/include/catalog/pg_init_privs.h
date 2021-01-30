@@ -64,7 +64,7 @@ typedef FormData_pg_init_privs * Form_pg_init_privs;
 
 DECLARE_TOAST(pg_init_privs, 4155, 4156);
 
-DECLARE_UNIQUE_INDEX(pg_init_privs_o_c_o_index, 3395, on pg_init_privs using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_init_privs_o_c_o_index, 3395, on pg_init_privs using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops));
 #define InitPrivsObjIndexId  3395
 
 /*

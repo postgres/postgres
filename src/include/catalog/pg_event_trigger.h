@@ -52,7 +52,7 @@ DECLARE_TOAST(pg_event_trigger, 4145, 4146);
 
 DECLARE_UNIQUE_INDEX(pg_event_trigger_evtname_index, 3467, on pg_event_trigger using btree(evtname name_ops));
 #define EventTriggerNameIndexId  3467
-DECLARE_UNIQUE_INDEX(pg_event_trigger_oid_index, 3468, on pg_event_trigger using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_event_trigger_oid_index, 3468, on pg_event_trigger using btree(oid oid_ops));
 #define EventTriggerOidIndexId	3468
 
 #endif							/* PG_EVENT_TRIGGER_H */

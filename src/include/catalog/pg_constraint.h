@@ -161,7 +161,7 @@ DECLARE_UNIQUE_INDEX(pg_constraint_conrelid_contypid_conname_index, 2665, on pg_
 #define ConstraintRelidTypidNameIndexId	2665
 DECLARE_INDEX(pg_constraint_contypid_index, 2666, on pg_constraint using btree(contypid oid_ops));
 #define ConstraintTypidIndexId	2666
-DECLARE_UNIQUE_INDEX(pg_constraint_oid_index, 2667, on pg_constraint using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_constraint_oid_index, 2667, on pg_constraint using btree(oid oid_ops));
 #define ConstraintOidIndexId  2667
 DECLARE_INDEX(pg_constraint_conparentid_index, 2579, on pg_constraint using btree(conparentid oid_ops));
 #define ConstraintParentIndexId	2579

@@ -44,6 +44,9 @@ WHERE refclassid = 0 OR refobjid = 0 OR
 -- whatever OID the test is complaining about must have been added later
 -- in initdb, where it intentionally isn't pinned.  Legitimate exceptions
 -- to that rule are listed in the comments in setup_depend().
+-- Currently, pg_rewrite is also listed by this check, even though it is
+-- covered by setup_depend().  That happens because there are no rules in
+-- the pinned data, but initdb creates some intentionally-not-pinned views.
 
 do $$
 declare relnm text;
@@ -94,3 +97,24 @@ WHERE c.oid < 16384 AND
       relkind = 'r' AND
       attstorage != 'p'
 ORDER BY 1, 2;
+
+
+-- system catalogs without primary keys
+--
+-- Current exceptions:
+-- * pg_depend, pg_shdepend don't have a unique key
+SELECT relname
+FROM pg_class
+WHERE relnamespace = 'pg_catalog'::regnamespace AND relkind = 'r'
+      AND pg_class.oid NOT IN (SELECT indrelid FROM pg_index WHERE indisprimary)
+ORDER BY 1;
+
+
+-- system catalog unique indexes not wrapped in a constraint
+-- (There should be none.)
+SELECT relname
+FROM pg_class c JOIN pg_index i ON c.oid = i.indexrelid
+WHERE relnamespace = 'pg_catalog'::regnamespace AND relkind = 'i'
+      AND i.indisunique
+      AND c.oid NOT IN (SELECT conindid FROM pg_constraint)
+ORDER BY 1;

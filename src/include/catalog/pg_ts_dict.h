@@ -55,7 +55,7 @@ DECLARE_TOAST(pg_ts_dict, 4169, 4170);
 
 DECLARE_UNIQUE_INDEX(pg_ts_dict_dictname_index, 3604, on pg_ts_dict using btree(dictname name_ops, dictnamespace oid_ops));
 #define TSDictionaryNameNspIndexId	3604
-DECLARE_UNIQUE_INDEX(pg_ts_dict_oid_index, 3605, on pg_ts_dict using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_ts_dict_oid_index, 3605, on pg_ts_dict using btree(oid oid_ops));
 #define TSDictionaryOidIndexId	3605
 
 #endif							/* PG_TS_DICT_H */
