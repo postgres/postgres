@@ -26,58 +26,71 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     ON { [ TABLE ] <replaceable class="parameter">table_name</replaceable> [, ...]
          | ALL TABLES IN SCHEMA <replaceable class="parameter">schema_name</replaceable> [, ...] }
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( <replaceable class="parameter">column_name</replaceable> [, ...] )
     [, ...] | ALL [ PRIVILEGES ] ( <replaceable class="parameter">column_name</replaceable> [, ...] ) }
     ON [ TABLE ] <replaceable class="parameter">table_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { { USAGE | SELECT | UPDATE }
     [, ...] | ALL [ PRIVILEGES ] }
     ON { SEQUENCE <replaceable class="parameter">sequence_name</replaceable> [, ...]
          | ALL SEQUENCES IN SCHEMA <replaceable class="parameter">schema_name</replaceable> [, ...] }
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [, ...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>database_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON DOMAIN <replaceable>domain_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON FOREIGN DATA WRAPPER <replaceable>fdw_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON FOREIGN SERVER <replaceable>server_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
     ON { { FUNCTION | PROCEDURE | ROUTINE } <replaceable>routine_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_type</replaceable> [, ...] ] ) ] [, ...]
          | ALL { FUNCTIONS | PROCEDURES | ROUTINES } IN SCHEMA <replaceable class="parameter">schema_name</replaceable> [, ...] }
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON LANGUAGE <replaceable>lang_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { { SELECT | UPDATE } [, ...] | ALL [ PRIVILEGES ] }
     ON LARGE OBJECT <replaceable class="parameter">loid</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { { CREATE | USAGE } [, ...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schema_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { CREATE | ALL [ PRIVILEGES ] }
     ON TABLESPACE <replaceable>tablespace_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON TYPE <replaceable>type_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ WITH ADMIN OPTION ]
@@ -131,6 +144,12 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    of the privilege can in turn grant it to others.  Without a grant
    option, the recipient cannot do that.  Grant options cannot be granted
    to <literal>PUBLIC</literal>.
+  </para>
+
+  <para>
+   If <literal>GRANTED BY</literal> is specified, the specified grantor must
+   be the current user.  This clause is currently present in this form only
+   for SQL compatibility.
   </para>
 
   <para>
@@ -410,9 +429,9 @@ GRANT admins TO joe;
 
    <para>
     The SQL standard allows the <literal>GRANTED BY</literal> option to
-    be used in all forms of <command>GRANT</command>.  PostgreSQL only
-    supports it when granting role membership, and even then only superusers
-    may use it in nontrivial ways.
+    specify only <literal>CURRENT_USER</literal> or
+    <literal>CURRENT_ROLE</literal>.  The other variants are PostgreSQL
+    extensions.
    </para>
 
    <para>

@@ -3270,6 +3270,7 @@ _copyGrantStmt(const GrantStmt *from)
 	COPY_NODE_FIELD(privileges);
 	COPY_NODE_FIELD(grantees);
 	COPY_SCALAR_FIELD(grant_option);
+	COPY_NODE_FIELD(grantor);
 	COPY_SCALAR_FIELD(behavior);
 
 	return newnode;

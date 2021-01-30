@@ -363,6 +363,22 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	const char *errormsg;
 	AclMode		all_privileges;
 
+	if (stmt->grantor)
+	{
+		Oid			grantor;
+
+		grantor = get_rolespec_oid(stmt->grantor, false);
+
+		/*
+		 * Currently, this clause is only for SQL compatibility, not very
+		 * interesting otherwise.
+		 */
+		if (grantor != GetUserId())
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("grantor must be current user")));
+	}
+
 	/*
 	 * Turn the regular GrantStmt into the InternalGrant form.
 	 */

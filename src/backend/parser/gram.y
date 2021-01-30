@@ -6772,7 +6772,7 @@ opt_from_in:	from_in
  *****************************************************************************/
 
 GrantStmt:	GRANT privileges ON privilege_target TO grantee_list
-			opt_grant_grant_option
+			opt_grant_grant_option opt_granted_by
 				{
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = true;
@@ -6782,13 +6782,14 @@ GrantStmt:	GRANT privileges ON privilege_target TO grantee_list
 					n->objects = ($4)->objs;
 					n->grantees = $6;
 					n->grant_option = $7;
+					n->grantor = $8;
 					$$ = (Node*)n;
 				}
 		;
 
 RevokeStmt:
 			REVOKE privileges ON privilege_target
-			FROM grantee_list opt_drop_behavior
+			FROM grantee_list opt_granted_by opt_drop_behavior
 				{
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
@@ -6798,11 +6799,12 @@ RevokeStmt:
 					n->objtype = ($4)->objtype;
 					n->objects = ($4)->objs;
 					n->grantees = $6;
-					n->behavior = $7;
+					n->grantor = $7;
+					n->behavior = $8;
 					$$ = (Node *)n;
 				}
 			| REVOKE GRANT OPTION FOR privileges ON privilege_target
-			FROM grantee_list opt_drop_behavior
+			FROM grantee_list opt_granted_by opt_drop_behavior
 				{
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
@@ -6812,7 +6814,8 @@ RevokeStmt:
 					n->objtype = ($7)->objtype;
 					n->objects = ($7)->objs;
 					n->grantees = $9;
-					n->behavior = $10;
+					n->grantor = $10;
+					n->behavior = $11;
 					$$ = (Node *)n;
 				}
 		;

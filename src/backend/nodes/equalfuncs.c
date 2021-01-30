@@ -1145,6 +1145,7 @@ _equalGrantStmt(const GrantStmt *a, const GrantStmt *b)
 	COMPARE_NODE_FIELD(privileges);
 	COMPARE_NODE_FIELD(grantees);
 	COMPARE_SCALAR_FIELD(grant_option);
+	COMPARE_NODE_FIELD(grantor);
 	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;

@@ -70,8 +70,10 @@ SELECT * FROM atest1;
 CREATE TABLE atest2 (col1 varchar(10), col2 boolean);
 GRANT SELECT ON atest2 TO regress_priv_user2;
 GRANT UPDATE ON atest2 TO regress_priv_user3;
-GRANT INSERT ON atest2 TO regress_priv_user4;
-GRANT TRUNCATE ON atest2 TO regress_priv_user5;
+GRANT INSERT ON atest2 TO regress_priv_user4 GRANTED BY CURRENT_USER;
+GRANT TRUNCATE ON atest2 TO regress_priv_user5 GRANTED BY CURRENT_ROLE;
+GRANT TRUNCATE ON atest2 TO regress_priv_user4 GRANTED BY regress_priv_user5;  -- error
+ERROR:  grantor must be current user
 SET SESSION AUTHORIZATION regress_priv_user2;
 SELECT session_user, current_user;
     session_user    |    current_user    

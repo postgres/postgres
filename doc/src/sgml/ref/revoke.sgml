@@ -27,6 +27,7 @@ REVOKE [ GRANT OPTION FOR ]
     ON { [ TABLE ] <replaceable class="parameter">table_name</replaceable> [, ...]
          | ALL TABLES IN SCHEMA <replaceable>schema_name</replaceable> [, ...] }
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
@@ -34,6 +35,7 @@ REVOKE [ GRANT OPTION FOR ]
     [, ...] | ALL [ PRIVILEGES ] ( <replaceable class="parameter">column_name</replaceable> [, ...] ) }
     ON [ TABLE ] <replaceable class="parameter">table_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
@@ -42,30 +44,35 @@ REVOKE [ GRANT OPTION FOR ]
     ON { SEQUENCE <replaceable class="parameter">sequence_name</replaceable> [, ...]
          | ALL SEQUENCES IN SCHEMA <replaceable>schema_name</replaceable> [, ...] }
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { CREATE | CONNECT | TEMPORARY | TEMP } [, ...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>database_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON DOMAIN <replaceable>domain_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON FOREIGN DATA WRAPPER <replaceable>fdw_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON FOREIGN SERVER <replaceable>server_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
@@ -73,36 +80,42 @@ REVOKE [ GRANT OPTION FOR ]
     ON { { FUNCTION | PROCEDURE | ROUTINE } <replaceable>function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_type</replaceable> [, ...] ] ) ] [, ...]
          | ALL { FUNCTIONS | PROCEDURES | ROUTINES } IN SCHEMA <replaceable>schema_name</replaceable> [, ...] }
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON LANGUAGE <replaceable>lang_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { SELECT | UPDATE } [, ...] | ALL [ PRIVILEGES ] }
     ON LARGE OBJECT <replaceable class="parameter">loid</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { CREATE | USAGE } [, ...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schema_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { CREATE | ALL [ PRIVILEGES ] }
     ON TABLESPACE <replaceable>tablespace_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON TYPE <replaceable>type_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ ADMIN OPTION FOR ]
