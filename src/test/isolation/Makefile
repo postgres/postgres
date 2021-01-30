@@ -48,12 +48,11 @@ installcheck: all
 check: all
 	$(with_temp_install) ./pg_isolation_regress --temp-instance=./tmp_check $(TEMP_CONF) --inputdir=$(srcdir) --bindir= $(EXTRA_REGRESS_OPTS) --schedule=$(srcdir)/isolation_schedule
 
-# Versions of the check tests that include the prepared_transactions test
-# It only makes sense to run these if set up to use prepared transactions,
-# via TEMP_CONFIG for the check case, or via the postgresql.conf for the
-# installcheck case.
+# Non-default tests.  It only makes sense to run these if set up to use
+# prepared transactions, via TEMP_CONFIG for the check case, or via the
+# postgresql.conf for the installcheck case.
 installcheck-prepared-txns: all temp-install
-	./pg_isolation_regress --bindir='$(bindir)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
+	./pg_isolation_regress --bindir='$(bindir)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions prepared-transactions-cic
 
 check-prepared-txns: all temp-install
-	$(with_temp_install) ./pg_isolation_regress --temp-instance=./tmp_check $(TEMP_CONF) --inputdir=$(srcdir) --bindir= $(EXTRA_REGRESS_OPTS) --schedule=$(srcdir)/isolation_schedule prepared-transactions
+	$(with_temp_install) ./pg_isolation_regress --temp-instance=./tmp_check $(TEMP_CONF) --inputdir=$(srcdir) --bindir= $(EXTRA_REGRESS_OPTS) --schedule=$(srcdir)/isolation_schedule prepared-transactions prepared-transactions-cic
