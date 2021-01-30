@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 23;
+use Test::More tests => 24;
 
 # Initialize publisher node
 my $node_publisher = get_new_node('publisher');
@@ -358,3 +358,21 @@ is($result, qq(0), 'check replication origin was dropped on subscriber');
 
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
+
+# CREATE PUBLICATION while wal_level=minimal should succeed, with a WARNING
+$node_publisher->append_conf(
+	'postgresql.conf', qq(
+wal_level=minimal
+max_wal_senders=0
+));
+$node_publisher->start;
+($result, my $retout, my $reterr) = $node_publisher->psql(
+	'postgres', qq{
+BEGIN;
+CREATE TABLE skip_wal();
+CREATE PUBLICATION tap_pub2 FOR TABLE skip_wal;
+ROLLBACK;
+});
+ok( $reterr =~
+	  m/WARNING:  wal_level is insufficient to publish logical changes/,
+	'CREATE PUBLICATION while wal_level=minimal');
