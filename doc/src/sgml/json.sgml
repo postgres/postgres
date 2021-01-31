@@ -615,7 +615,23 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
   </para>
 
   <para>
+   <command>UPDATE</command> statements may use subscripting in the
+   <literal>SET</literal> clause to modify <type>jsonb</type> values. Subscript
+   paths must be traversible for all affected values insofar as they exist. For
+   instance, the path <literal>val['a']['b']['c']</literal> can be traversed all
+   the way to <literal>c</literal> if every <literal>val</literal>,
+   <literal>val['a']</literal>, and <literal>val['a']['b']</literal> is an
+   object. If any <literal>val['a']</literal> or <literal>val['a']['b']</literal>
+   is not defined, it will be created as an empty object and filled as
+   necessary. However, if any <literal>val</literal> itself or one of the
+   intermediary values is defined as a non-object such as a string, number, or
+   <literal>jsonb</literal> <literal>null</literal>, traversal cannot proceed so
+   an error is raised and the transaction aborted.
+  </para>
+
+  <para>
    An example of subscripting syntax:
+
 <programlisting>
 
 -- Extract object value by key
@@ -631,6 +647,10 @@ SELECT ('[1, "2", null]'::jsonb)[1];
 -- value must be of the jsonb type as well
 UPDATE table_name SET jsonb_field['key'] = '1';
 
+-- This will raise an error if any record's jsonb_field['a']['b'] is something
+-- other than an object. For example, the value {"a": 1} has no 'b' key.
+UPDATE table_name SET jsonb_field['a']['b']['c'] = '1';
+
 -- Filter records using a WHERE clause with subscripting. Since the result of
 -- subscripting is jsonb, the value we compare it against must also be jsonb.
 -- The double quotes make "value" also a valid jsonb string.
@@ -639,8 +659,9 @@ SELECT * FROM table_name WHERE jsonb_field['key'] = '"value"';
 
    <type>jsonb</type> assignment via subscripting handles a few edge cases
    differently from <literal>jsonb_set</literal>. When a source <type>jsonb</type>
-   is <literal>NULL</literal>, assignment via subscripting will proceed as if
-   it was an empty JSON object:
+   value is <literal>NULL</literal>, assignment via subscripting will proceed
+   as if it was an empty JSON value of the type (object or array) implied by the
+   subscript key:
 
 <programlisting>
 -- Where jsonb_field was NULL, it is now {"a": 1}
@@ -661,17 +682,19 @@ UPDATE table_name SET jsonb_field[2] = '2';
 </programlisting>
 
    A <type>jsonb</type> value will accept assignments to nonexistent subscript
-   paths as long as the last existing path key is an object or an array. Since
-   the final subscript is not traversed, it may be an object key. Nested arrays
-   will be created and <literal>NULL</literal>-padded according to the path until
-   the value can be placed appropriately.
+   paths as long as the last existing element to be traversed is an object or
+   array, as implied by the corresponding subscript (the element indicated by
+   the last subscript in the path is not traversed and may be anything). Nested
+   array and object structures will be created, and in the former case
+   <literal>null</literal>-padded, as specified by the subscript path until the
+   assigned value can be placed.
 
 <programlisting>
 -- Where jsonb_field was {}, it is now {'a': [{'b': 1}]}
 UPDATE table_name SET jsonb_field['a'][0]['b'] = '1';
 
--- Where jsonb_field was [], it is now [{'a': 1}]
-UPDATE table_name SET jsonb_field[0]['a'] = '1';
+-- Where jsonb_field was [], it is now [null, {'a': 1}]
+UPDATE table_name SET jsonb_field[1]['a'] = '1';
 </programlisting>
 
   </para>

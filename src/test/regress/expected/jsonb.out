@@ -5134,6 +5134,33 @@ select * from test_jsonb_subscript;
   1 | {"a": [null, {"c": [null, null, 1]}]}
 (1 row)
 
+-- trying replace assuming a composite object, but it's an element or a value
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{"a": 1}');
+update test_jsonb_subscript set test_json['a']['b'] = '1';
+ERROR:  cannot replace existing key
+DETAIL:  The path assumes key is a composite object, but it is a scalar value.
+update test_jsonb_subscript set test_json['a']['b']['c'] = '1';
+ERROR:  cannot replace existing key
+DETAIL:  The path assumes key is a composite object, but it is a scalar value.
+update test_jsonb_subscript set test_json['a'][0] = '1';
+ERROR:  cannot replace existing key
+DETAIL:  The path assumes key is a composite object, but it is a scalar value.
+update test_jsonb_subscript set test_json['a'][0]['c'] = '1';
+ERROR:  cannot replace existing key
+DETAIL:  The path assumes key is a composite object, but it is a scalar value.
+update test_jsonb_subscript set test_json['a'][0][0] = '1';
+ERROR:  cannot replace existing key
+DETAIL:  The path assumes key is a composite object, but it is a scalar value.
+-- trying replace assuming a composite object, but it's a raw scalar
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, 'null');
+update test_jsonb_subscript set test_json[0] = '1';
+ERROR:  cannot replace existing key
+DETAIL:  The path assumes key is a composite object, but it is a scalar value.
+update test_jsonb_subscript set test_json[0][0] = '1';
+ERROR:  cannot replace existing key
+DETAIL:  The path assumes key is a composite object, but it is a scalar value.
 -- jsonb to tsvector
 select to_tsvector('{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::jsonb);
                                 to_tsvector                                

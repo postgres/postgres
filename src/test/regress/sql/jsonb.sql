@@ -1371,6 +1371,23 @@ insert into test_jsonb_subscript values (1, '{"a": []}');
 update test_jsonb_subscript set test_json['a'][1]['c'][2] = '1';
 select * from test_jsonb_subscript;
 
+-- trying replace assuming a composite object, but it's an element or a value
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{"a": 1}');
+update test_jsonb_subscript set test_json['a']['b'] = '1';
+update test_jsonb_subscript set test_json['a']['b']['c'] = '1';
+update test_jsonb_subscript set test_json['a'][0] = '1';
+update test_jsonb_subscript set test_json['a'][0]['c'] = '1';
+update test_jsonb_subscript set test_json['a'][0][0] = '1';
+
+-- trying replace assuming a composite object, but it's a raw scalar
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, 'null');
+update test_jsonb_subscript set test_json[0] = '1';
+update test_jsonb_subscript set test_json[0][0] = '1';
+
 -- jsonb to tsvector
 select to_tsvector('{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::jsonb);
 

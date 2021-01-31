@@ -4931,6 +4931,21 @@ setPath(JsonbIterator **it, Datum *path_elems,
 	switch (r)
 	{
 		case WJB_BEGIN_ARRAY:
+
+			/*
+			 * If instructed complain about attempts to replace whithin a raw
+			 * scalar value. This happens even when current level is equal to
+			 * path_len, because the last path key should also correspond to
+			 * an object or an array, not raw scalar.
+			 */
+			if ((op_type & JB_PATH_FILL_GAPS) && (level <= path_len - 1) &&
+				v.val.array.rawScalar)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("cannot replace existing key"),
+						 errdetail("The path assumes key is a composite object, "
+								   "but it is a scalar value.")));
+
 			(void) pushJsonbValue(st, r, NULL);
 			setPathArray(it, path_elems, path_nulls, path_len, st, level,
 						 newval, v.val.array.nElems, op_type);
@@ -4948,6 +4963,20 @@ setPath(JsonbIterator **it, Datum *path_elems,
 			break;
 		case WJB_ELEM:
 		case WJB_VALUE:
+
+			/*
+			 * If instructed complain about attempts to replace whithin a
+			 * scalar value. This happens even when current level is equal to
+			 * path_len, because the last path key should also correspond to
+			 * an object or an array, not an element or value.
+			 */
+			if ((op_type & JB_PATH_FILL_GAPS) && (level <= path_len - 1))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("cannot replace existing key"),
+						 errdetail("The path assumes key is a composite object, "
+								   "but it is a scalar value.")));
+
 			res = pushJsonbValue(st, r, &v);
 			break;
 		default:
