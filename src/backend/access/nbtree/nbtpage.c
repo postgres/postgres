@@ -41,8 +41,7 @@ static void _bt_log_reuse_page(Relation rel, BlockNumber blkno,
 static void _bt_delitems_delete(Relation rel, Buffer buf,
 								TransactionId latestRemovedXid,
 								OffsetNumber *deletable, int ndeletable,
-								BTVacuumPosting *updatable, int nupdatable,
-								Relation heapRel);
+								BTVacuumPosting *updatable, int nupdatable);
 static char *_bt_delitems_update(BTVacuumPosting *updatable, int nupdatable,
 								 OffsetNumber *updatedoffsets,
 								 Size *updatedbuflen, bool needswal);
@@ -1260,8 +1259,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 static void
 _bt_delitems_delete(Relation rel, Buffer buf, TransactionId latestRemovedXid,
 					OffsetNumber *deletable, int ndeletable,
-					BTVacuumPosting *updatable, int nupdatable,
-					Relation heapRel)
+					BTVacuumPosting *updatable, int nupdatable)
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
@@ -1650,7 +1648,7 @@ _bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
 
 	/* Physically delete tuples (or TIDs) using deletable (or updatable) */
 	_bt_delitems_delete(rel, buf, latestRemovedXid, deletable, ndeletable,
-						updatable, nupdatable, heapRel);
+						updatable, nupdatable);
 
 	/* be tidy */
 	for (int i = 0; i < nupdatable; i++)
