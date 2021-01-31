@@ -650,6 +650,30 @@ UPDATE table_name SET jsonb_field['a'] = '1';
 UPDATE table_name SET jsonb_field[0] = '1';
 </programlisting>
 
+   If an index is specified for an array containing too few elements,
+   <literal>NULL</literal> elements will be appended until the index is reachable
+   and the value can be set.
+
+<programlisting>
+-- Where jsonb_field was [], it is now [null, null, 2];
+-- where jsonb_field was [0], it is now [0, null, 2]
+UPDATE table_name SET jsonb_field[2] = '2';
+</programlisting>
+
+   A <type>jsonb</type> value will accept assignments to nonexistent subscript
+   paths as long as the last existing path key is an object or an array. Since
+   the final subscript is not traversed, it may be an object key. Nested arrays
+   will be created and <literal>NULL</literal>-padded according to the path until
+   the value can be placed appropriately.
+
+<programlisting>
+-- Where jsonb_field was {}, it is now {'a': [{'b': 1}]}
+UPDATE table_name SET jsonb_field['a'][0]['b'] = '1';
+
+-- Where jsonb_field was [], it is now [{'a': 1}]
+UPDATE table_name SET jsonb_field[0]['a'] = '1';
+</programlisting>
+
   </para>
  </sect2>
 

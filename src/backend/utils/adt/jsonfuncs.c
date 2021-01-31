@@ -44,6 +44,8 @@
 #define JB_PATH_INSERT_AFTER			0x0010
 #define JB_PATH_CREATE_OR_INSERT \
 	(JB_PATH_INSERT_BEFORE | JB_PATH_INSERT_AFTER | JB_PATH_CREATE)
+#define JB_PATH_FILL_GAPS				0x0020
+#define JB_PATH_CONSISTENT_POSITION		0x0040
 
 /* state for json_object_keys */
 typedef struct OkeysState
@@ -1634,12 +1636,115 @@ jsonb_set_element(Jsonb *jb, Datum *path, int path_len,
 
 	it = JsonbIteratorInit(&jb->root);
 
-	res = setPath(&it, path, path_nulls, path_len, &state, 0,
-				  newval, JB_PATH_CREATE);
+	res = setPath(&it, path, path_nulls, path_len, &state, 0, newval,
+				  JB_PATH_CREATE | JB_PATH_FILL_GAPS |
+				  JB_PATH_CONSISTENT_POSITION);
 
 	pfree(path_nulls);
 
 	PG_RETURN_JSONB_P(JsonbValueToJsonb(res));
+}
+
+static void
+push_null_elements(JsonbParseState **ps, int num)
+{
+	JsonbValue	null;
+
+	null.type = jbvNull;
+
+	while (num-- > 0)
+		pushJsonbValue(ps, WJB_ELEM, &null);
+}
+
+/*
+ * Prepare a new structure containing nested empty objects and arrays
+ * corresponding to the specified path, and assign a new value at the end of
+ * this path. E.g. the path [a][0][b] with the new value 1 will produce the
+ * structure {a: [{b: 1}]}.
+ *
+ * Called is responsible to make sure such path does not exist yet.
+ */
+static void
+push_path(JsonbParseState **st, int level, Datum *path_elems,
+		  bool *path_nulls, int path_len, JsonbValue *newval)
+{
+	/*
+	 * tpath contains expected type of an empty jsonb created at each level
+	 * higher or equal than the current one, either jbvObject or jbvArray.
+	 * Since it contains only information about path slice from level to the
+	 * end, the access index must be normalized by level.
+	 */
+	enum jbvType *tpath = palloc0((path_len - level) * sizeof(enum jbvType));
+	long		lindex;
+	JsonbValue	newkey;
+
+	/*
+	 * Create first part of the chain with beginning tokens. For the current
+	 * level WJB_BEGIN_OBJECT/WJB_BEGIN_ARRAY was already created, so start
+	 * with the next one.
+	 */
+	for (int i = level + 1; i < path_len; i++)
+	{
+		char	   *c,
+				   *badp;
+
+		if (path_nulls[i])
+			break;
+
+		/*
+		 * Try to convert to an integer to find out the expected type, object
+		 * or array.
+		 */
+		c = TextDatumGetCString(path_elems[i]);
+		errno = 0;
+		lindex = strtol(c, &badp, 10);
+		if (errno != 0 || badp == c || *badp != '\0' || lindex > INT_MAX ||
+			lindex < INT_MIN)
+		{
+			/* text, an object is expected */
+			newkey.type = jbvString;
+			newkey.val.string.len = VARSIZE_ANY_EXHDR(path_elems[i]);
+			newkey.val.string.val = VARDATA_ANY(path_elems[i]);
+
+			(void) pushJsonbValue(st, WJB_BEGIN_OBJECT, NULL);
+			(void) pushJsonbValue(st, WJB_KEY, &newkey);
+
+			tpath[i - level] = jbvObject;
+		}
+		else
+		{
+			/* integer, an array is expected */
+			(void) pushJsonbValue(st, WJB_BEGIN_ARRAY, NULL);
+
+			push_null_elements(st, lindex);
+
+			tpath[i - level] = jbvArray;
+		}
+
+	}
+
+	/* Insert an actual value for either an object or array */
+	if (tpath[(path_len - level) - 1] == jbvArray)
+	{
+		(void) pushJsonbValue(st, WJB_ELEM, newval);
+	}
+	else
+		(void) pushJsonbValue(st, WJB_VALUE, newval);
+
+	/*
+	 * Close everything up to the last but one level. The last one will be
+	 * closed outside of this function.
+	 */
+	for (int i = path_len - 1; i > level; i--)
+	{
+		if (path_nulls[i])
+			break;
+
+		if (tpath[i - level] == jbvObject)
+			(void) pushJsonbValue(st, WJB_END_OBJECT, NULL);
+		else
+			(void) pushJsonbValue(st, WJB_END_ARRAY, NULL);
+	}
 }
 
 /*
@@ -4786,6 +4891,21 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
  * Bits JB_PATH_INSERT_BEFORE and JB_PATH_INSERT_AFTER in op_type
  * behave as JB_PATH_CREATE if new value is inserted in JsonbObject.
  *
+ * If JB_PATH_FILL_GAPS bit is set, this will change an assignment logic in
+ * case if target is an array. The assignment index will not be restricted by
+ * number of elements in the array, and if there are any empty slots between
+ * last element of the array and a new one they will be filled with nulls. If
+ * the index is negative, it still will be considered an an index from the end
+ * of the array. Of a part of the path is not present and this part is more
+ * than just one last element, this flag will instruct to create the whole
+ * chain of corresponding objects and insert the value.
+ *
+ * JB_PATH_CONSISTENT_POSITION for an array indicates that the called wants to
+ * keep values with fixed indices. Indices for existing elements could be
+ * changed (shifted forward) in case if the array is prepended with a new value
+ * and a negative index out of the range, so this behavior will be prevented
+ * and return an error.
+ *
  * All path elements before the last must already exist
  * whatever bits in op_type are set, or nothing is done.
  */
@@ -4880,6 +5000,8 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			memcmp(k.val.string.val, VARDATA_ANY(path_elems[level]),
 				   k.val.string.len) == 0)
 		{
+			done = true;
+
 			if (level == path_len - 1)
 			{
 				/*
@@ -4899,7 +5021,6 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 					(void) pushJsonbValue(st, WJB_KEY, &k);
 					(void) pushJsonbValue(st, WJB_VALUE, newval);
 				}
-				done = true;
 			}
 			else
 			{
@@ -4944,6 +5065,31 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			}
 		}
 	}
+
+	/*--
+	 * If we got here there are only few possibilities:
+	 * - no target path was found, and an open object with some keys/values was
+	 *   pushed into the state
+	 * - an object is empty, only WJB_BEGIN_OBJECT is pushed
+	 *
+	 * In both cases if instructed to create the path when not present,
+	 * generate the whole chain of empty objects and insert the new value
+	 * there.
+	 */
+	if (!done && (op_type & JB_PATH_FILL_GAPS) && (level < path_len - 1))
+	{
+		JsonbValue	newkey;
+
+		newkey.type = jbvString;
+		newkey.val.string.len = VARSIZE_ANY_EXHDR(path_elems[level]);
+		newkey.val.string.val = VARDATA_ANY(path_elems[level]);
+
+		(void) pushJsonbValue(st, WJB_KEY, &newkey);
+		(void) push_path(st, level, path_elems, path_nulls,
+						 path_len, newval);
+
+		/* Result is closed with WJB_END_OBJECT outside of this function */
+	}
 }
 
 /*
@@ -4982,25 +5128,48 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 	if (idx < 0)
 	{
 		if (-idx > nelems)
-			idx = INT_MIN;
+		{
+			/*
+			 * If asked to keep elements position consistent, it's not allowed
+			 * to prepend the array.
+			 */
+			if (op_type & JB_PATH_CONSISTENT_POSITION)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("path element at position %d is out of range: %d",
+								level + 1, idx)));
+			else
+				idx = INT_MIN;
+		}
 		else
 			idx = nelems + idx;
 	}
 
-	if (idx > 0 && idx > nelems)
-		idx = nelems;
+	/*
+	 * Filling the gaps means there are no limits on the positive index are
+	 * imposed, we can set any element. Otherwise limit the index by nelems.
+	 */
+	if (!(op_type & JB_PATH_FILL_GAPS))
+	{
+		if (idx > 0 && idx > nelems)
+			idx = nelems;
+	}
 
 	/*
 	 * if we're creating, and idx == INT_MIN, we prepend the new value to the
 	 * array also if the array is empty - in which case we don't really care
 	 * what the idx value is
 	 */
-
 	if ((idx == INT_MIN || nelems == 0) && (level == path_len - 1) &&
 		(op_type & JB_PATH_CREATE_OR_INSERT))
 	{
 		Assert(newval != NULL);
+
+		if (op_type & JB_PATH_FILL_GAPS && nelems == 0 && idx > 0)
+			push_null_elements(st, idx);
+
 		(void) pushJsonbValue(st, WJB_ELEM, newval);
+
 		done = true;
 	}
 
@@ -5011,6 +5180,8 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 
 		if (i == idx && level < path_len)
 		{
+			done = true;
+
 			if (level == path_len - 1)
 			{
 				r = JsonbIteratorNext(it, &v, true);	/* skip */
@@ -5028,8 +5199,6 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 
 				if (op_type & (JB_PATH_INSERT_AFTER | JB_PATH_REPLACE))
 					(void) pushJsonbValue(st, WJB_ELEM, newval);
-
-				done = true;
 			}
 			else
 				(void) setPath(it, path_elems, path_nulls, path_len,
@@ -5057,13 +5226,41 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 					(void) pushJsonbValue(st, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
 				}
 			}
-
-			if ((op_type & JB_PATH_CREATE_OR_INSERT) && !done &&
-				level == path_len - 1 && i == nelems - 1)
-			{
-				(void) pushJsonbValue(st, WJB_ELEM, newval);
-			}
 		}
+	}
+
+	if ((op_type & JB_PATH_CREATE_OR_INSERT) && !done && level == path_len - 1)
+	{
+		/*
+		 * If asked to fill the gaps, idx could be bigger than nelems, so
+		 * prepend the new element with nulls if that's the case.
+		 */
+		if (op_type & JB_PATH_FILL_GAPS && idx > nelems)
+			push_null_elements(st, idx - nelems);
+
+		(void) pushJsonbValue(st, WJB_ELEM, newval);
+		done = true;
+	}
+
+	/*--
+	 * If we got here there are only few possibilities:
+	 * - no target path was found, and an open array with some keys/values was
+	 *   pushed into the state
+	 * - an array is empty, only WJB_BEGIN_ARRAY is pushed
+	 *
+	 * In both cases if instructed to create the path when not present,
+	 * generate the whole chain of empty objects and insert the new value
+	 * there.
+	 */
+	if (!done && (op_type & JB_PATH_FILL_GAPS) && (level < path_len - 1))
+	{
+		if (idx > 0)
+			push_null_elements(st, idx - nelems);
+
+		(void) push_path(st, level, path_elems, path_nulls,
+						 path_len, newval);
+
+		/* Result is closed with WJB_END_OBJECT outside of this function */
 	}
 }
 

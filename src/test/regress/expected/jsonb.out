@@ -4999,6 +4999,141 @@ select * from test_jsonb_subscript;
   3 | [1]
 (3 rows)
 
+-- Fill the gaps logic
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '[0]');
+update test_jsonb_subscript set test_json[5] = '1';
+select * from test_jsonb_subscript;
+ id |           test_json            
+----+--------------------------------
+  1 | [0, null, null, null, null, 1]
+(1 row)
+
+update test_jsonb_subscript set test_json[-4] = '1';
+select * from test_jsonb_subscript;
+ id |          test_json          
+----+-----------------------------
+  1 | [0, null, 1, null, null, 1]
+(1 row)
+
+update test_jsonb_subscript set test_json[-8] = '1';
+ERROR:  path element at position 1 is out of range: -8
+select * from test_jsonb_subscript;
+ id |          test_json          
+----+-----------------------------
+  1 | [0, null, 1, null, null, 1]
+(1 row)
+
+-- keep consistent values position
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '[]');
+update test_jsonb_subscript set test_json[5] = '1';
+select * from test_jsonb_subscript;
+ id |             test_json             
+----+-----------------------------------
+  1 | [null, null, null, null, null, 1]
+(1 row)
+
+-- create the whole path
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{}');
+update test_jsonb_subscript set test_json['a'][0]['b'][0]['c'] = '1';
+select * from test_jsonb_subscript;
+ id |         test_json          
+----+----------------------------
+  1 | {"a": [{"b": [{"c": 1}]}]}
+(1 row)
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{}');
+update test_jsonb_subscript set test_json['a'][2]['b'][2]['c'][2] = '1';
+select * from test_jsonb_subscript;
+ id |                            test_json                             
+----+------------------------------------------------------------------
+  1 | {"a": [null, null, {"b": [null, null, {"c": [null, null, 1]}]}]}
+(1 row)
+
+-- create the whole path with already existing keys
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{"b": 1}');
+update test_jsonb_subscript set test_json['a'][0] = '2';
+select * from test_jsonb_subscript;
+ id |     test_json      
+----+--------------------
+  1 | {"a": [2], "b": 1}
+(1 row)
+
+-- the start jsonb is an object, first subscript is treated as a key
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{}');
+update test_jsonb_subscript set test_json[0]['a'] = '1';
+select * from test_jsonb_subscript;
+ id |    test_json    
+----+-----------------
+  1 | {"0": {"a": 1}}
+(1 row)
+
+-- the start jsonb is an array
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '[]');
+update test_jsonb_subscript set test_json[0]['a'] = '1';
+update test_jsonb_subscript set test_json[2]['b'] = '2';
+select * from test_jsonb_subscript;
+ id |         test_json          
+----+----------------------------
+  1 | [{"a": 1}, null, {"b": 2}]
+(1 row)
+
+-- overwriting an existing path
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{}');
+update test_jsonb_subscript set test_json['a']['b'][1] = '1';
+update test_jsonb_subscript set test_json['a']['b'][10] = '1';
+select * from test_jsonb_subscript;
+ id |                                 test_json                                  
+----+----------------------------------------------------------------------------
+  1 | {"a": {"b": [null, 1, null, null, null, null, null, null, null, null, 1]}}
+(1 row)
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '[]');
+update test_jsonb_subscript set test_json[0][0][0] = '1';
+update test_jsonb_subscript set test_json[0][0][1] = '1';
+select * from test_jsonb_subscript;
+ id | test_json  
+----+------------
+  1 | [[[1, 1]]]
+(1 row)
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{}');
+update test_jsonb_subscript set test_json['a']['b'][10] = '1';
+update test_jsonb_subscript set test_json['a'][10][10] = '1';
+select * from test_jsonb_subscript;
+ id |                                                                      test_json                                                                       
+----+------------------------------------------------------------------------------------------------------------------------------------------------------
+  1 | {"a": {"b": [null, null, null, null, null, null, null, null, null, null, 1], "10": [null, null, null, null, null, null, null, null, null, null, 1]}}
+(1 row)
+
+-- an empty sub element
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{"a": {}}');
+update test_jsonb_subscript set test_json['a']['b']['c'][2] = '1';
+select * from test_jsonb_subscript;
+ id |              test_json               
+----+--------------------------------------
+  1 | {"a": {"b": {"c": [null, null, 1]}}}
+(1 row)
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{"a": []}');
+update test_jsonb_subscript set test_json['a'][1]['c'][2] = '1';
+select * from test_jsonb_subscript;
+ id |               test_json               
+----+---------------------------------------
+  1 | {"a": [null, {"c": [null, null, 1]}]}
+(1 row)
+
 -- jsonb to tsvector
 select to_tsvector('{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::jsonb);
                                 to_tsvector                                

@@ -1290,6 +1290,87 @@ update test_jsonb_subscript set test_json = NULL where id = 3;
 update test_jsonb_subscript set test_json[0] = '1';
 select * from test_jsonb_subscript;
 
+-- Fill the gaps logic
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '[0]');
+
+update test_jsonb_subscript set test_json[5] = '1';
+select * from test_jsonb_subscript;
+
+update test_jsonb_subscript set test_json[-4] = '1';
+select * from test_jsonb_subscript;
+
+update test_jsonb_subscript set test_json[-8] = '1';
+select * from test_jsonb_subscript;
+
+-- keep consistent values position
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '[]');
+
+update test_jsonb_subscript set test_json[5] = '1';
+select * from test_jsonb_subscript;
+
+-- create the whole path
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{}');
+update test_jsonb_subscript set test_json['a'][0]['b'][0]['c'] = '1';
+select * from test_jsonb_subscript;
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{}');
+update test_jsonb_subscript set test_json['a'][2]['b'][2]['c'][2] = '1';
+select * from test_jsonb_subscript;
+
+-- create the whole path with already existing keys
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{"b": 1}');
+update test_jsonb_subscript set test_json['a'][0] = '2';
+select * from test_jsonb_subscript;
+
+-- the start jsonb is an object, first subscript is treated as a key
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{}');
+update test_jsonb_subscript set test_json[0]['a'] = '1';
+select * from test_jsonb_subscript;
+
+-- the start jsonb is an array
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '[]');
+update test_jsonb_subscript set test_json[0]['a'] = '1';
+update test_jsonb_subscript set test_json[2]['b'] = '2';
+select * from test_jsonb_subscript;
+
+-- overwriting an existing path
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{}');
+update test_jsonb_subscript set test_json['a']['b'][1] = '1';
+update test_jsonb_subscript set test_json['a']['b'][10] = '1';
+select * from test_jsonb_subscript;
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '[]');
+update test_jsonb_subscript set test_json[0][0][0] = '1';
+update test_jsonb_subscript set test_json[0][0][1] = '1';
+select * from test_jsonb_subscript;
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{}');
+update test_jsonb_subscript set test_json['a']['b'][10] = '1';
+update test_jsonb_subscript set test_json['a'][10][10] = '1';
+select * from test_jsonb_subscript;
+
+-- an empty sub element
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{"a": {}}');
+update test_jsonb_subscript set test_json['a']['b']['c'][2] = '1';
+select * from test_jsonb_subscript;
+
+delete from test_jsonb_subscript;
+insert into test_jsonb_subscript values (1, '{"a": []}');
+update test_jsonb_subscript set test_json['a'][1]['c'][2] = '1';
+select * from test_jsonb_subscript;
+
 -- jsonb to tsvector
 select to_tsvector('{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::jsonb);
 
