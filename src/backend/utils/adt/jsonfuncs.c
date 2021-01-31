@@ -463,16 +463,16 @@ static JsonbValue *IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 								  JsonbParseState **state);
 static JsonbValue *setPath(JsonbIterator **it, Datum *path_elems,
 						   bool *path_nulls, int path_len,
-						   JsonbParseState **st, int level, Jsonb *newval,
+						   JsonbParseState **st, int level, JsonbValue *newval,
 						   int op_type);
 static void setPathObject(JsonbIterator **it, Datum *path_elems,
 						  bool *path_nulls, int path_len, JsonbParseState **st,
 						  int level,
-						  Jsonb *newval, uint32 npairs, int op_type);
+						  JsonbValue *newval, uint32 npairs, int op_type);
 static void setPathArray(JsonbIterator **it, Datum *path_elems,
 						 bool *path_nulls, int path_len, JsonbParseState **st,
-						 int level, Jsonb *newval, uint32 nelems, int op_type);
-static void addJsonbToParseState(JsonbParseState **jbps, Jsonb *jb);
+						 int level,
+						 JsonbValue *newval, uint32 nelems, int op_type);
 
 /* function supporting iterate_json_values */
 static void iterate_values_scalar(void *state, char *token, JsonTokenType tokentype);
@@ -1448,13 +1448,9 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
 	Datum	   *pathtext;
 	bool	   *pathnulls;
+	bool		isnull;
 	int			npath;
-	int			i;
-	bool		have_object = false,
-				have_array = false;
-	JsonbValue *jbvp = NULL;
-	JsonbValue	jbvbuf;
-	JsonbContainer *container;
+	Datum		res;
 
 	/*
 	 * If the array contains any null elements, return NULL, on the grounds
@@ -1469,9 +1465,26 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	deconstruct_array(path, TEXTOID, -1, false, TYPALIGN_INT,
 					  &pathtext, &pathnulls, &npath);
 
-	/* Identify whether we have object, array, or scalar at top-level */
-	container = &jb->root;
+	res = jsonb_get_element(jb, pathtext, npath, &isnull, as_text);
 
+	if (isnull)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_DATUM(res);
+}
+
+Datum
+jsonb_get_element(Jsonb *jb, Datum *path, int npath, bool *isnull, bool as_text)
+{
+	JsonbContainer *container = &jb->root;
+	JsonbValue *jbvp = NULL;
+	int			i;
+	bool		have_object = false,
+				have_array = false;
+
+	*isnull = false;
+
+	/* Identify whether we have object, array, or scalar at top-level */
 	if (JB_ROOT_IS_OBJECT(jb))
 		have_object = true;
 	else if (JB_ROOT_IS_ARRAY(jb) && !JB_ROOT_IS_SCALAR(jb))
@@ -1496,9 +1509,9 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	{
 		if (as_text)
 		{
-			PG_RETURN_TEXT_P(cstring_to_text(JsonbToCString(NULL,
-															container,
-															VARSIZE(jb))));
+			return PointerGetDatum(cstring_to_text(JsonbToCString(NULL,
+																  container,
+																  VARSIZE(jb))));
 		}
 		else
 		{
@@ -1512,22 +1525,25 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 		if (have_object)
 		{
 			jbvp = getKeyJsonValueFromContainer(container,
-												VARDATA(pathtext[i]),
-												VARSIZE(pathtext[i]) - VARHDRSZ,
-												&jbvbuf);
+												VARDATA(path[i]),
+												VARSIZE(path[i]) - VARHDRSZ,
+												NULL);
 		}
 		else if (have_array)
 		{
 			long		lindex;
 			uint32		index;
-			char	   *indextext = TextDatumGetCString(pathtext[i]);
+			char	   *indextext = TextDatumGetCString(path[i]);
 			char	   *endptr;
 
 			errno = 0;
 			lindex = strtol(indextext, &endptr, 10);
 			if (endptr == indextext || *endptr != '\0' || errno != 0 ||
 				lindex > INT_MAX || lindex < INT_MIN)
-				PG_RETURN_NULL();
+			{
+				*isnull = true;
+				return PointerGetDatum(NULL);
+			}
 
 			if (lindex >= 0)
 			{
@@ -1545,7 +1561,10 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 				nelements = JsonContainerSize(container);
 
 				if (-lindex > nelements)
-					PG_RETURN_NULL();
+				{
+					*isnull = true;
+					return PointerGetDatum(NULL);
+				}
 				else
 					index = nelements + lindex;
 			}
@@ -1555,11 +1574,15 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 		else
 		{
 			/* scalar, extraction yields a null */
-			PG_RETURN_NULL();
+			*isnull = true;
+			return PointerGetDatum(NULL);
 		}
 
 		if (jbvp == NULL)
-			PG_RETURN_NULL();
+		{
+			*isnull = true;
+			return PointerGetDatum(NULL);
+		}
 		else if (i == npath - 1)
 			break;
 
@@ -1581,9 +1604,12 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	if (as_text)
 	{
 		if (jbvp->type == jbvNull)
-			PG_RETURN_NULL();
+		{
+			*isnull = true;
+			return PointerGetDatum(NULL);
+		}
 
-		PG_RETURN_TEXT_P(JsonbValueAsText(jbvp));
+		return PointerGetDatum(JsonbValueAsText(jbvp));
 	}
 	else
 	{
@@ -1592,6 +1618,28 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 		/* not text mode - just hand back the jsonb */
 		PG_RETURN_JSONB_P(res);
 	}
+}
+
+Datum
+jsonb_set_element(Jsonb *jb, Datum *path, int path_len,
+				  JsonbValue *newval)
+{
+	JsonbValue *res;
+	JsonbParseState *state = NULL;
+	JsonbIterator *it;
+	bool	   *path_nulls = palloc0(path_len * sizeof(bool));
+
+	if (newval->type == jbvArray && newval->val.array.rawScalar)
+		*newval = newval->val.array.elems[0];
+
+	it = JsonbIteratorInit(&jb->root);
+
+	res = setPath(&it, path, path_nulls, path_len, &state, 0,
+				  newval, JB_PATH_CREATE);
+
+	pfree(path_nulls);
+
+	PG_RETURN_JSONB_P(JsonbValueToJsonb(res));
 }
 
 /*
@@ -4152,58 +4200,6 @@ jsonb_strip_nulls(PG_FUNCTION_ARGS)
 }
 
 /*
- * Add values from the jsonb to the parse state.
- *
- * If the parse state container is an object, the jsonb is pushed as
- * a value, not a key.
- *
- * This needs to be done using an iterator because pushJsonbValue doesn't
- * like getting jbvBinary values, so we can't just push jb as a whole.
- */
-static void
-addJsonbToParseState(JsonbParseState **jbps, Jsonb *jb)
-{
-	JsonbIterator *it;
-	JsonbValue *o = &(*jbps)->contVal;
-	JsonbValue	v;
-	JsonbIteratorToken type;
-
-	it = JsonbIteratorInit(&jb->root);
-
-	Assert(o->type == jbvArray || o->type == jbvObject);
-
-	if (JB_ROOT_IS_SCALAR(jb))
-	{
-		(void) JsonbIteratorNext(&it, &v, false);	/* skip array header */
-		Assert(v.type == jbvArray);
-		(void) JsonbIteratorNext(&it, &v, false);	/* fetch scalar value */
-
-		switch (o->type)
-		{
-			case jbvArray:
-				(void) pushJsonbValue(jbps, WJB_ELEM, &v);
-				break;
-			case jbvObject:
-				(void) pushJsonbValue(jbps, WJB_VALUE, &v);
-				break;
-			default:
-				elog(ERROR, "unexpected parent of nested structure");
-		}
-	}
-	else
-	{
-		while ((type = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
-		{
-			if (type == WJB_KEY || type == WJB_VALUE || type == WJB_ELEM)
-				(void) pushJsonbValue(jbps, type, &v);
-			else
-				(void) pushJsonbValue(jbps, type, NULL);
-		}
-	}
-
-}
-
-/*
  * SQL function jsonb_pretty (jsonb)
  *
  * Pretty-printed text for the jsonb
@@ -4474,7 +4470,8 @@ jsonb_set(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
-	Jsonb	   *newval = PG_GETARG_JSONB_P(2);
+	Jsonb	   *newjsonb = PG_GETARG_JSONB_P(2);
+	JsonbValue	newval;
 	bool		create = PG_GETARG_BOOL(3);
 	JsonbValue *res = NULL;
 	Datum	   *path_elems;
@@ -4482,6 +4479,8 @@ jsonb_set(PG_FUNCTION_ARGS)
 	int			path_len;
 	JsonbIterator *it;
 	JsonbParseState *st = NULL;
+
+	JsonbToJsonbValue(newjsonb, &newval);
 
 	if (ARR_NDIM(path) > 1)
 		ereport(ERROR,
@@ -4505,7 +4504,7 @@ jsonb_set(PG_FUNCTION_ARGS)
 	it = JsonbIteratorInit(&in->root);
 
 	res = setPath(&it, path_elems, path_nulls, path_len, &st,
-				  0, newval, create ? JB_PATH_CREATE : JB_PATH_REPLACE);
+				  0, &newval, create ? JB_PATH_CREATE : JB_PATH_REPLACE);
 
 	Assert(res != NULL);
 
@@ -4632,7 +4631,8 @@ jsonb_insert(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
-	Jsonb	   *newval = PG_GETARG_JSONB_P(2);
+	Jsonb	   *newjsonb = PG_GETARG_JSONB_P(2);
+	JsonbValue	newval;
 	bool		after = PG_GETARG_BOOL(3);
 	JsonbValue *res = NULL;
 	Datum	   *path_elems;
@@ -4640,6 +4640,8 @@ jsonb_insert(PG_FUNCTION_ARGS)
 	int			path_len;
 	JsonbIterator *it;
 	JsonbParseState *st = NULL;
+
+	JsonbToJsonbValue(newjsonb, &newval);
 
 	if (ARR_NDIM(path) > 1)
 		ereport(ERROR,
@@ -4659,7 +4661,7 @@ jsonb_insert(PG_FUNCTION_ARGS)
 
 	it = JsonbIteratorInit(&in->root);
 
-	res = setPath(&it, path_elems, path_nulls, path_len, &st, 0, newval,
+	res = setPath(&it, path_elems, path_nulls, path_len, &st, 0, &newval,
 				  after ? JB_PATH_INSERT_AFTER : JB_PATH_INSERT_BEFORE);
 
 	Assert(res != NULL);
@@ -4790,7 +4792,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 static JsonbValue *
 setPath(JsonbIterator **it, Datum *path_elems,
 		bool *path_nulls, int path_len,
-		JsonbParseState **st, int level, Jsonb *newval, int op_type)
+		JsonbParseState **st, int level, JsonbValue *newval, int op_type)
 {
 	JsonbValue	v;
 	JsonbIteratorToken r;
@@ -4843,11 +4845,11 @@ setPath(JsonbIterator **it, Datum *path_elems,
 static void
 setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			  int path_len, JsonbParseState **st, int level,
-			  Jsonb *newval, uint32 npairs, int op_type)
+			  JsonbValue *newval, uint32 npairs, int op_type)
 {
-	JsonbValue	v;
 	int			i;
-	JsonbValue	k;
+	JsonbValue	k,
+				v;
 	bool		done = false;
 
 	if (level >= path_len || path_nulls[level])
@@ -4864,7 +4866,7 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 		newkey.val.string.val = VARDATA_ANY(path_elems[level]);
 
 		(void) pushJsonbValue(st, WJB_KEY, &newkey);
-		addJsonbToParseState(st, newval);
+		(void) pushJsonbValue(st, WJB_VALUE, newval);
 	}
 
 	for (i = 0; i < npairs; i++)
@@ -4895,7 +4897,7 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 				if (!(op_type & JB_PATH_DELETE))
 				{
 					(void) pushJsonbValue(st, WJB_KEY, &k);
-					addJsonbToParseState(st, newval);
+					(void) pushJsonbValue(st, WJB_VALUE, newval);
 				}
 				done = true;
 			}
@@ -4918,7 +4920,7 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 				newkey.val.string.val = VARDATA_ANY(path_elems[level]);
 
 				(void) pushJsonbValue(st, WJB_KEY, &newkey);
-				addJsonbToParseState(st, newval);
+				(void) pushJsonbValue(st, WJB_VALUE, newval);
 			}
 
 			(void) pushJsonbValue(st, r, &k);
@@ -4950,7 +4952,7 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 static void
 setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			 int path_len, JsonbParseState **st, int level,
-			 Jsonb *newval, uint32 nelems, int op_type)
+			 JsonbValue *newval, uint32 nelems, int op_type)
 {
 	JsonbValue	v;
 	int			idx,
@@ -4998,7 +5000,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 		(op_type & JB_PATH_CREATE_OR_INSERT))
 	{
 		Assert(newval != NULL);
-		addJsonbToParseState(st, newval);
+		(void) pushJsonbValue(st, WJB_ELEM, newval);
 		done = true;
 	}
 
@@ -5014,7 +5016,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 				r = JsonbIteratorNext(it, &v, true);	/* skip */
 
 				if (op_type & (JB_PATH_INSERT_BEFORE | JB_PATH_CREATE))
-					addJsonbToParseState(st, newval);
+					(void) pushJsonbValue(st, WJB_ELEM, newval);
 
 				/*
 				 * We should keep current value only in case of
@@ -5025,7 +5027,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 					(void) pushJsonbValue(st, r, &v);
 
 				if (op_type & (JB_PATH_INSERT_AFTER | JB_PATH_REPLACE))
-					addJsonbToParseState(st, newval);
+					(void) pushJsonbValue(st, WJB_ELEM, newval);
 
 				done = true;
 			}
@@ -5059,7 +5061,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			if ((op_type & JB_PATH_CREATE_OR_INSERT) && !done &&
 				level == path_len - 1 && i == nelems - 1)
 			{
-				addJsonbToParseState(st, newval);
+				(void) pushJsonbValue(st, WJB_ELEM, newval);
 			}
 		}
 	}

@@ -11300,6 +11300,10 @@
 { oid => '9256', descr => 'raw array subscripting support',
   proname => 'raw_array_subscript_handler', prorettype => 'internal',
   proargtypes => 'internal', prosrc => 'raw_array_subscript_handler' },
+# type subscripting support
+{ oid => '6098', descr => 'jsonb subscripting logic',
+  proname => 'jsonb_subscript_handler', prorettype => 'internal',
+  proargtypes => 'internal', prosrc => 'jsonb_subscript_handler' },
 
 # collation management functions
 { oid => '3445', descr => 'import collations from operating system',

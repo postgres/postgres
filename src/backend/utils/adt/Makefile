@@ -50,6 +50,7 @@ OBJS = \
 	jsonb_op.o \
 	jsonb_util.o \
 	jsonfuncs.o \
+	jsonbsubs.o \
 	jsonpath.o \
 	jsonpath_exec.o \
 	jsonpath_gram.o \

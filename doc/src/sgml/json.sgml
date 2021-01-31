@@ -602,6 +602,57 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
   </para>
  </sect2>
 
+ <sect2 id="jsonb-subscripting">
+  <title><type>jsonb</type> Subscripting</title>
+  <para>
+   The <type>jsonb</type> data type supports array-style subscripting expressions
+   to extract and modify elements. Nested values can be indicated by chaining
+   subscripting expressions, following the same rules as the <literal>path</literal>
+   argument in the <literal>jsonb_set</literal> function. If a <type>jsonb</type>
+   value is an array, numeric subscripts start at zero, and negative integers count
+   backwards from the last element of the array. Slice expressions are not supported.
+   The result of a subscripting expression is always of the jsonb data type.
+  </para>
+
+  <para>
+   An example of subscripting syntax:
+<programlisting>
+
+-- Extract object value by key
+SELECT ('{"a": 1}'::jsonb)['a'];
+
+-- Extract nested object value by key path
+SELECT ('{"a": {"b": {"c": 1}}}'::jsonb)['a']['b']['c'];
+
+-- Extract array element by index
+SELECT ('[1, "2", null]'::jsonb)[1];
+
+-- Update object value by key. Note the quotes around '1': the assigned
+-- value must be of the jsonb type as well
+UPDATE table_name SET jsonb_field['key'] = '1';
+
+-- Filter records using a WHERE clause with subscripting. Since the result of
+-- subscripting is jsonb, the value we compare it against must also be jsonb.
+-- The double quotes make "value" also a valid jsonb string.
+SELECT * FROM table_name WHERE jsonb_field['key'] = '"value"';
+</programlisting>
+
+   <type>jsonb</type> assignment via subscripting handles a few edge cases
+   differently from <literal>jsonb_set</literal>. When a source <type>jsonb</type>
+   is <literal>NULL</literal>, assignment via subscripting will proceed as if
+   it was an empty JSON object:
+
+<programlisting>
+-- Where jsonb_field was NULL, it is now {"a": 1}
+UPDATE table_name SET jsonb_field['a'] = '1';
+
+-- Where jsonb_field was NULL, it is now [1]
+UPDATE table_name SET jsonb_field[0] = '1';
+</programlisting>
+
+  </para>
+ </sect2>
+
  <sect2>
   <title>Transforms</title>
 

@@ -1198,6 +1198,7 @@ JsonbIterator
 JsonbIteratorToken
 JsonbPair
 JsonbParseState
+JsonbSubWorkspace
 JsonbTypeCategory
 JsonbValue
 JunkFilter

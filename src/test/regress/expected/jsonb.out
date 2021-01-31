@@ -4599,7 +4599,7 @@ select jsonb_set_lax('{"a":1,"b":2}', '{b}', null, null_value_treatment => 'use_
  {"a": 1, "b": null}
 (1 row)
 
-\pset null
+\pset null ''
 -- jsonb_insert
 select jsonb_insert('{"a": [0,1,2]}', '{a, 1}', '"new_value"');
          jsonb_insert          
@@ -4729,6 +4729,276 @@ HINT:  Try using the function jsonb_set to replace key value.
 select jsonb_insert('{"a": {"b": "value"}}', '{a, b}', '"new_value"', true);
 ERROR:  cannot replace existing key
 HINT:  Try using the function jsonb_set to replace key value.
+-- jsonb subscript
+select ('123'::jsonb)['a'];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('123'::jsonb)[0];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('123'::jsonb)[NULL];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('{"a": 1}'::jsonb)['a'];
+ jsonb 
+-------
+ 1
+(1 row)
+
+select ('{"a": 1}'::jsonb)[0];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('{"a": 1}'::jsonb)['not_exist'];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('{"a": 1}'::jsonb)[NULL];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('[1, "2", null]'::jsonb)['a'];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('[1, "2", null]'::jsonb)[0];
+ jsonb 
+-------
+ 1
+(1 row)
+
+select ('[1, "2", null]'::jsonb)['1'];
+ jsonb 
+-------
+ "2"
+(1 row)
+
+select ('[1, "2", null]'::jsonb)[1.0];
+ERROR:  subscript type is not supported
+LINE 1: select ('[1, "2", null]'::jsonb)[1.0];
+                                         ^
+HINT:  Jsonb subscript must be coerced to either integer or text
+select ('[1, "2", null]'::jsonb)[2];
+ jsonb 
+-------
+ null
+(1 row)
+
+select ('[1, "2", null]'::jsonb)[3];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('[1, "2", null]'::jsonb)[-2];
+ jsonb 
+-------
+ "2"
+(1 row)
+
+select ('[1, "2", null]'::jsonb)[1]['a'];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('[1, "2", null]'::jsonb)[1][0];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb)['b'];
+ jsonb 
+-------
+ "c"
+(1 row)
+
+select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb)['d'];
+   jsonb   
+-----------
+ [1, 2, 3]
+(1 row)
+
+select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb)['d'][1];
+ jsonb 
+-------
+ 2
+(1 row)
+
+select ('{"a": 1, "b": "c", "d": [1, 2, 3]}'::jsonb)['d']['a'];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('{"a": {"a1": {"a2": "aaa"}}, "b": "bbb", "c": "ccc"}'::jsonb)['a']['a1'];
+     jsonb     
+---------------
+ {"a2": "aaa"}
+(1 row)
+
+select ('{"a": {"a1": {"a2": "aaa"}}, "b": "bbb", "c": "ccc"}'::jsonb)['a']['a1']['a2'];
+ jsonb 
+-------
+ "aaa"
+(1 row)
+
+select ('{"a": {"a1": {"a2": "aaa"}}, "b": "bbb", "c": "ccc"}'::jsonb)['a']['a1']['a2']['a3'];
+ jsonb 
+-------
+ 
+(1 row)
+
+select ('{"a": ["a1", {"b1": ["aaa", "bbb", "ccc"]}], "b": "bb"}'::jsonb)['a'][1]['b1'];
+         jsonb         
+-----------------------
+ ["aaa", "bbb", "ccc"]
+(1 row)
+
+select ('{"a": ["a1", {"b1": ["aaa", "bbb", "ccc"]}], "b": "bb"}'::jsonb)['a'][1]['b1'][2];
+ jsonb 
+-------
+ "ccc"
+(1 row)
+
+-- slices are not supported
+select ('{"a": 1}'::jsonb)['a':'b'];
+ERROR:  jsonb subscript does not support slices
+LINE 1: select ('{"a": 1}'::jsonb)['a':'b'];
+                                       ^
+select ('[1, "2", null]'::jsonb)[1:2];
+ERROR:  jsonb subscript does not support slices
+LINE 1: select ('[1, "2", null]'::jsonb)[1:2];
+                                           ^
+select ('[1, "2", null]'::jsonb)[:2];
+ERROR:  jsonb subscript does not support slices
+LINE 1: select ('[1, "2", null]'::jsonb)[:2];
+                                          ^
+select ('[1, "2", null]'::jsonb)[1:];
+ERROR:  jsonb subscript does not support slices
+LINE 1: select ('[1, "2", null]'::jsonb)[1:];
+                                         ^
+select ('[1, "2", null]'::jsonb)[:];
+ERROR:  jsonb subscript does not support slices
+create TEMP TABLE test_jsonb_subscript (
+       id int,
+       test_json jsonb
+);
+insert into test_jsonb_subscript values
+(1, '{}'), -- empty jsonb
+(2, '{"key": "value"}'); -- jsonb with data
+-- update empty jsonb
+update test_jsonb_subscript set test_json['a'] = '1' where id = 1;
+select * from test_jsonb_subscript;
+ id |    test_json     
+----+------------------
+  2 | {"key": "value"}
+  1 | {"a": 1}
+(2 rows)
+
+-- update jsonb with some data
+update test_jsonb_subscript set test_json['a'] = '1' where id = 2;
+select * from test_jsonb_subscript;
+ id |        test_json         
+----+--------------------------
+  1 | {"a": 1}
+  2 | {"a": 1, "key": "value"}
+(2 rows)
+
+-- replace jsonb
+update test_jsonb_subscript set test_json['a'] = '"test"';
+select * from test_jsonb_subscript;
+ id |           test_json           
+----+-------------------------------
+  1 | {"a": "test"}
+  2 | {"a": "test", "key": "value"}
+(2 rows)
+
+-- replace by object
+update test_jsonb_subscript set test_json['a'] = '{"b": 1}'::jsonb;
+select * from test_jsonb_subscript;
+ id |            test_json            
+----+---------------------------------
+  1 | {"a": {"b": 1}}
+  2 | {"a": {"b": 1}, "key": "value"}
+(2 rows)
+
+-- replace by array
+update test_jsonb_subscript set test_json['a'] = '[1, 2, 3]'::jsonb;
+select * from test_jsonb_subscript;
+ id |            test_json             
+----+----------------------------------
+  1 | {"a": [1, 2, 3]}
+  2 | {"a": [1, 2, 3], "key": "value"}
+(2 rows)
+
+-- use jsonb subscription in where clause
+select * from test_jsonb_subscript where test_json['key'] = '"value"';
+ id |            test_json             
+----+----------------------------------
+  2 | {"a": [1, 2, 3], "key": "value"}
+(1 row)
+
+select * from test_jsonb_subscript where test_json['key_doesnt_exists'] = '"value"';
+ id | test_json 
+----+-----------
+(0 rows)
+
+select * from test_jsonb_subscript where test_json['key'] = '"wrong_value"';
+ id | test_json 
+----+-----------
+(0 rows)
+
+-- NULL
+update test_jsonb_subscript set test_json[NULL] = '1';
+ERROR:  jsonb subscript in assignment must not be null
+update test_jsonb_subscript set test_json['another_key'] = NULL;
+select * from test_jsonb_subscript;
+ id |                       test_json                       
+----+-------------------------------------------------------
+  1 | {"a": [1, 2, 3], "another_key": null}
+  2 | {"a": [1, 2, 3], "key": "value", "another_key": null}
+(2 rows)
+
+-- NULL as jsonb source
+insert into test_jsonb_subscript values (3, NULL);
+update test_jsonb_subscript set test_json['a'] = '1' where id = 3;
+select * from test_jsonb_subscript;
+ id |                       test_json                       
+----+-------------------------------------------------------
+  1 | {"a": [1, 2, 3], "another_key": null}
+  2 | {"a": [1, 2, 3], "key": "value", "another_key": null}
+  3 | {"a": 1}
+(3 rows)
+
+update test_jsonb_subscript set test_json = NULL where id = 3;
+update test_jsonb_subscript set test_json[0] = '1';
+select * from test_jsonb_subscript;
+ id |                           test_json                           
+----+---------------------------------------------------------------
+  1 | {"0": 1, "a": [1, 2, 3], "another_key": null}
+  2 | {"0": 1, "a": [1, 2, 3], "key": "value", "another_key": null}
+  3 | [1]
+(3 rows)
+
 -- jsonb to tsvector
 select to_tsvector('{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::jsonb);
                                 to_tsvector                                
