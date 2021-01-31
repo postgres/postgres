@@ -1997,31 +1997,31 @@ ALTER TABLE test_tsquery ADD COLUMN keyword tsquery;
 UPDATE test_tsquery SET keyword = to_tsquery('english', txtkeyword);
 ALTER TABLE test_tsquery ADD COLUMN sample tsquery;
 UPDATE test_tsquery SET sample = to_tsquery('english', txtsample::text);
-SELECT COUNT(*) FROM test_tsquery WHERE keyword <  'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword <  'new <-> york';
  count 
 -------
      2
 (1 row)
 
-SELECT COUNT(*) FROM test_tsquery WHERE keyword <= 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword <= 'new <-> york';
  count 
 -------
      3
 (1 row)
 
-SELECT COUNT(*) FROM test_tsquery WHERE keyword = 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword = 'new <-> york';
  count 
 -------
      1
 (1 row)
 
-SELECT COUNT(*) FROM test_tsquery WHERE keyword >= 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword >= 'new <-> york';
  count 
 -------
      4
 (1 row)
 
-SELECT COUNT(*) FROM test_tsquery WHERE keyword >  'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword >  'new <-> york';
  count 
 -------
      3
@@ -2029,31 +2029,31 @@ SELECT COUNT(*) FROM test_tsquery WHERE keyword >  'new & york';
 
 CREATE UNIQUE INDEX bt_tsq ON test_tsquery (keyword);
 SET enable_seqscan=OFF;
-SELECT COUNT(*) FROM test_tsquery WHERE keyword <  'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword <  'new <-> york';
  count 
 -------
      2
 (1 row)
 
-SELECT COUNT(*) FROM test_tsquery WHERE keyword <= 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword <= 'new <-> york';
  count 
 -------
      3
 (1 row)
 
-SELECT COUNT(*) FROM test_tsquery WHERE keyword = 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword = 'new <-> york';
  count 
 -------
      1
 (1 row)
 
-SELECT COUNT(*) FROM test_tsquery WHERE keyword >= 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword >= 'new <-> york';
  count 
 -------
      4
 (1 row)
 
-SELECT COUNT(*) FROM test_tsquery WHERE keyword >  'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword >  'new <-> york';
  count 
 -------
      3
@@ -2085,10 +2085,10 @@ SELECT ts_rewrite('moscow & hotel', 'SELECT keyword, sample FROM test_tsquery'::
  'hotel' & ( 'moskva' | 'moscow' )
 (1 row)
 
-SELECT ts_rewrite('bar & new & qq & foo & york', 'SELECT keyword, sample FROM test_tsquery'::text );
-                                   ts_rewrite                                    
----------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' & 'appl' | 'new' & 'york' )
+SELECT ts_rewrite('bar & qq & foo & (new <-> york)', 'SELECT keyword, sample FROM test_tsquery'::text );
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' <-> 'appl' | 'new' <-> 'york' )
 (1 row)
 
 SELECT ts_rewrite( 'moscow', 'SELECT keyword, sample FROM test_tsquery');
@@ -2103,10 +2103,10 @@ SELECT ts_rewrite( 'moscow & hotel', 'SELECT keyword, sample FROM test_tsquery')
  'hotel' & ( 'moskva' | 'moscow' )
 (1 row)
 
-SELECT ts_rewrite( 'bar & new & qq & foo & york', 'SELECT keyword, sample FROM test_tsquery');
-                                   ts_rewrite                                    
----------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' & 'appl' | 'new' & 'york' )
+SELECT ts_rewrite( 'bar & qq & foo & (new <-> york)', 'SELECT keyword, sample FROM test_tsquery');
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' <-> 'appl' | 'new' <-> 'york' )
 (1 row)
 
 SELECT ts_rewrite('1 & (2 <-> 3)', 'SELECT keyword, sample FROM test_tsquery'::text );
@@ -2149,9 +2149,9 @@ NOTICE:  text-search query doesn't contain lexemes: ""
 (1 row)
 
 SELECT keyword FROM test_tsquery WHERE keyword @> 'new';
-    keyword     
-----------------
- 'new' & 'york'
+     keyword      
+------------------
+ 'new' <-> 'york'
 (1 row)
 
 SELECT keyword FROM test_tsquery WHERE keyword @> 'moscow';
@@ -2183,10 +2183,10 @@ SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_t
  'hotel' & ( 'moskva' | 'moscow' )
 (1 row)
 
-SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'bar &  new & qq & foo & york') AS query;
-                                   ts_rewrite                                    
----------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' & 'appl' | 'new' & 'york' )
+SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'bar & qq & foo & (new <-> york)') AS query;
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' <-> 'appl' | 'new' <-> 'york' )
 (1 row)
 
 SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'moscow') AS query;
@@ -2201,18 +2201,18 @@ SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_t
  'hotel' & ( 'moskva' | 'moscow' )
 (1 row)
 
-SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'bar & new & qq & foo & york') AS query;
-                                   ts_rewrite                                    
----------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' & 'appl' | 'new' & 'york' )
+SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'bar & qq & foo & (new <-> york)') AS query;
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' <-> 'appl' | 'new' <-> 'york' )
 (1 row)
 
 CREATE INDEX qq ON test_tsquery USING gist (keyword tsquery_ops);
 SET enable_seqscan=OFF;
 SELECT keyword FROM test_tsquery WHERE keyword @> 'new';
-    keyword     
-----------------
- 'new' & 'york'
+     keyword      
+------------------
+ 'new' <-> 'york'
 (1 row)
 
 SELECT keyword FROM test_tsquery WHERE keyword @> 'moscow';
@@ -2244,10 +2244,10 @@ SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_t
  'hotel' & ( 'moskva' | 'moscow' )
 (1 row)
 
-SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'bar & new & qq & foo & york') AS query;
-                                   ts_rewrite                                    
----------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' & 'appl' | 'new' & 'york' )
+SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'bar & qq & foo & (new <-> york)') AS query;
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' <-> 'appl' | 'new' <-> 'york' )
 (1 row)
 
 SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'moscow') AS query;
@@ -2262,10 +2262,10 @@ SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_t
  'hotel' & ( 'moskva' | 'moscow' )
 (1 row)
 
-SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'bar &  new & qq & foo & york') AS query;
-                                   ts_rewrite                                    
----------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' & 'appl' | 'new' & 'york' )
+SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'bar & qq & foo & (new <-> york)') AS query;
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' <-> 'appl' | 'new' <-> 'york' )
 (1 row)
 
 SELECT ts_rewrite(tsquery_phrase('foo', 'foo'), 'foo', 'bar | baz');
@@ -2456,19 +2456,19 @@ select websearch_to_tsquery('simple', 'fat:A : cat:B');
 select websearch_to_tsquery('simple', 'fat*rat');
  websearch_to_tsquery 
 ----------------------
- 'fat' & 'rat'
+ 'fat' <-> 'rat'
 (1 row)
 
 select websearch_to_tsquery('simple', 'fat-rat');
-   websearch_to_tsquery    
----------------------------
- 'fat-rat' & 'fat' & 'rat'
+     websearch_to_tsquery      
+-------------------------------
+ 'fat-rat' <-> 'fat' <-> 'rat'
 (1 row)
 
 select websearch_to_tsquery('simple', 'fat_rat');
  websearch_to_tsquery 
 ----------------------
- 'fat' & 'rat'
+ 'fat' <-> 'rat'
 (1 row)
 
 -- weights are completely ignored
@@ -2665,64 +2665,64 @@ select websearch_to_tsquery('simple', 'abc OR1234');
 (1 row)
 
 select websearch_to_tsquery('simple', 'abc or-abc');
-      websearch_to_tsquery       
----------------------------------
- 'abc' & 'or-abc' & 'or' & 'abc'
+        websearch_to_tsquery         
+-------------------------------------
+ 'abc' & 'or-abc' <-> 'or' <-> 'abc'
 (1 row)
 
 select websearch_to_tsquery('simple', 'abc OR_abc');
- websearch_to_tsquery 
-----------------------
- 'abc' & 'or' & 'abc'
+  websearch_to_tsquery  
+------------------------
+ 'abc' & 'or' <-> 'abc'
 (1 row)
 
 -- test quotes
 select websearch_to_tsquery('english', '"pg_class pg');
- websearch_to_tsquery  
------------------------
- 'pg' & 'class' & 'pg'
+  websearch_to_tsquery   
+-------------------------
+ 'pg' <-> 'class' & 'pg'
 (1 row)
 
 select websearch_to_tsquery('english', 'pg_class pg"');
- websearch_to_tsquery  
------------------------
- 'pg' & 'class' & 'pg'
+  websearch_to_tsquery   
+-------------------------
+ 'pg' <-> 'class' & 'pg'
 (1 row)
 
 select websearch_to_tsquery('english', '"pg_class pg"');
-    websearch_to_tsquery     
------------------------------
- ( 'pg' & 'class' ) <-> 'pg'
+   websearch_to_tsquery    
+---------------------------
+ 'pg' <-> 'class' <-> 'pg'
 (1 row)
 
 select websearch_to_tsquery('english', 'abc "pg_class pg"');
-        websearch_to_tsquery         
--------------------------------------
- 'abc' & ( 'pg' & 'class' ) <-> 'pg'
+       websearch_to_tsquery        
+-----------------------------------
+ 'abc' & 'pg' <-> 'class' <-> 'pg'
 (1 row)
 
 select websearch_to_tsquery('english', '"pg_class pg" def');
-        websearch_to_tsquery         
--------------------------------------
- ( 'pg' & 'class' ) <-> 'pg' & 'def'
+       websearch_to_tsquery        
+-----------------------------------
+ 'pg' <-> 'class' <-> 'pg' & 'def'
 (1 row)
 
 select websearch_to_tsquery('english', 'abc "pg pg_class pg" def');
-                 websearch_to_tsquery                 
-------------------------------------------------------
- 'abc' & 'pg' <-> ( 'pg' & 'class' ) <-> 'pg' & 'def'
+                  websearch_to_tsquery                  
+--------------------------------------------------------
+ 'abc' & 'pg' <-> ( 'pg' <-> 'class' ) <-> 'pg' & 'def'
 (1 row)
 
 select websearch_to_tsquery('english', ' or "pg pg_class pg" or ');
-         websearch_to_tsquery         
---------------------------------------
- 'pg' <-> ( 'pg' & 'class' ) <-> 'pg'
+          websearch_to_tsquery          
+----------------------------------------
+ 'pg' <-> ( 'pg' <-> 'class' ) <-> 'pg'
 (1 row)
 
 select websearch_to_tsquery('english', '""pg pg_class pg""');
-     websearch_to_tsquery     
-------------------------------
- 'pg' & 'pg' & 'class' & 'pg'
+      websearch_to_tsquery      
+--------------------------------
+ 'pg' & 'pg' <-> 'class' & 'pg'
 (1 row)
 
 select websearch_to_tsquery('english', 'abc """"" def');
@@ -2829,7 +2829,7 @@ NOTICE:  text-search query contains only stop words or doesn't contain lexemes, 
 select websearch_to_tsquery('''abc''''def''');
  websearch_to_tsquery 
 ----------------------
- 'abc' & 'def'
+ 'abc' <-> 'def'
 (1 row)
 
 select websearch_to_tsquery('\abc');
