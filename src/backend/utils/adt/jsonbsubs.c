@@ -356,7 +356,7 @@ jsonb_subscript_fetch_old(ExprState *state,
 static void
 jsonb_exec_setup(const SubscriptingRef *sbsref,
 				 SubscriptingRefState *sbsrefstate,
-				 SubscriptExecSteps * methods)
+				 SubscriptExecSteps *methods)
 {
 	JsonbSubWorkspace *workspace;
 	ListCell   *lc;
@@ -368,9 +368,14 @@ jsonb_exec_setup(const SubscriptingRef *sbsref,
 						nupper * (sizeof(Datum) + sizeof(Oid)));
 	workspace->expectArray = false;
 	ptr = ((char *) workspace) + MAXALIGN(sizeof(JsonbSubWorkspace));
-	workspace->indexOid = (Oid *) ptr;
-	ptr += nupper * sizeof(Oid);
+
+	/*
+	 * This coding assumes sizeof(Datum) >= sizeof(Oid), else we might
+	 * misalign the indexOid pointer
+	 */
 	workspace->index = (Datum *) ptr;
+	ptr += nupper * sizeof(Datum);
+	workspace->indexOid = (Oid *) ptr;
 
 	sbsrefstate->workspace = workspace;
 
