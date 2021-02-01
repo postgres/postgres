@@ -283,7 +283,7 @@ jsonb_subscript_assign(ExprState *state,
 	 */
 	if (*op->resnull)
 	{
-		JsonbValue *newSource = (JsonbValue *) palloc(sizeof(JsonbValue));
+		JsonbValue	newSource;
 
 		/*
 		 * To avoid any surprising results, set up an empty jsonb array in
@@ -292,17 +292,17 @@ jsonb_subscript_assign(ExprState *state,
 		 */
 		if (workspace->expectArray)
 		{
-			newSource->type = jbvArray;
-			newSource->val.array.nElems = 0;
-			newSource->val.array.rawScalar = false;
+			newSource.type = jbvArray;
+			newSource.val.array.nElems = 0;
+			newSource.val.array.rawScalar = false;
 		}
 		else
 		{
-			newSource->type = jbvObject;
-			newSource->val.object.nPairs = 0;
+			newSource.type = jbvObject;
+			newSource.val.object.nPairs = 0;
 		}
 
-		jsonbSource = JsonbValueToJsonb(newSource);
+		jsonbSource = JsonbValueToJsonb(&newSource);
 		*op->resnull = false;
 	}
 	else
