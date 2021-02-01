@@ -5266,7 +5266,7 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
         String matches regular expression, case sensitively
        </para>
        <para>
-        <literal>'thomas' ~ '.*thom.*'</literal>
+        <literal>'thomas' ~ 't.*ma'</literal>
         <returnvalue>t</returnvalue>
        </para></entry>
        </row>
@@ -5280,7 +5280,7 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
         String matches regular expression, case insensitively
        </para>
        <para>
-        <literal>'thomas' ~* '.*Thom.*'</literal>
+        <literal>'thomas' ~* 'T.*ma'</literal>
         <returnvalue>t</returnvalue>
        </para></entry>
        </row>
@@ -5294,8 +5294,8 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
         String does not match regular expression, case sensitively
        </para>
        <para>
-        <literal>'thomas' !~ '.*thomas.*'</literal>
-        <returnvalue>f</returnvalue>
+        <literal>'thomas' !~ 't.*max'</literal>
+        <returnvalue>t</returnvalue>
        </para></entry>
        </row>
 
@@ -5308,8 +5308,8 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
         String does not match regular expression, case insensitively
        </para>
        <para>
-        <literal>'thomas' !~* '.*vadim.*'</literal>
-        <returnvalue>t</returnvalue>
+        <literal>'thomas' !~* 'T.*ma'</literal>
+        <returnvalue>f</returnvalue>
        </para></entry>
        </row>
       </tbody>
@@ -5343,10 +5343,12 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
     <para>
      Some examples:
 <programlisting>
-'abc' ~ 'abc'    <lineannotation>true</lineannotation>
-'abc' ~ '^a'     <lineannotation>true</lineannotation>
-'abc' ~ '(b|d)'  <lineannotation>true</lineannotation>
-'abc' ~ '^(b|c)' <lineannotation>false</lineannotation>
+'abcd' ~ 'bc'     <lineannotation>true</lineannotation>
+'abcd' ~ 'a.c'    <lineannotation>true &mdash; dot matches any character</lineannotation>
+'abcd' ~ 'a.*d'   <lineannotation>true &mdash; <literal>*</literal> repeats the preceding pattern item</lineannotation>
+'abcd' ~ '(b|x)'  <lineannotation>true &mdash; <literal>|</literal> means OR, parentheses group</lineannotation>
+'abcd' ~ '^a'     <lineannotation>true &mdash; <literal>^</literal> anchors to start of string</lineannotation>
+'abcd' ~ '^(b|c)' <lineannotation>false &mdash; would match except for anchoring</lineannotation>
 </programlisting>
     </para>
 
