@@ -653,6 +653,7 @@ LIBOBJS
 UUID_LIBS
 LDAP_LIBS_BE
 LDAP_LIBS_FE
+with_ssl
 PTHREAD_CFLAGS
 PTHREAD_LIBS
 PTHREAD_CC
@@ -709,7 +710,6 @@ with_uuid
 with_readline
 with_systemd
 with_selinux
-with_openssl
 with_ldap
 with_krb_srvnam
 krb_srvtab
@@ -854,7 +854,6 @@ with_pam
 with_bsd_auth
 with_ldap
 with_bonjour
-with_openssl
 with_selinux
 with_systemd
 with_readline
@@ -866,6 +865,8 @@ with_libxslt
 with_system_tzdata
 with_zlib
 with_gnu_ld
+with_ssl
+with_openssl
 enable_largefile
 '
       ac_precious_vars='build_alias
@@ -1556,7 +1557,6 @@ Optional Packages:
   --with-bsd-auth         build with BSD Authentication support
   --with-ldap             build with LDAP support
   --with-bonjour          build with Bonjour support
-  --with-openssl          build with OpenSSL support
   --with-selinux          build with SELinux support
   --with-systemd          build with systemd support
   --without-readline      do not use GNU Readline nor BSD Libedit for editing
@@ -1570,6 +1570,8 @@ Optional Packages:
                           use system time zone data in DIR
   --without-zlib          do not use Zlib
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
+  --with-ssl=LIB          use LIB for SSL/TLS support (openssl)
+  --with-openssl          obsolete spelling of --with-ssl=openssl
 
 Some influential environment variables:
   CC          C compiler command
@@ -8071,41 +8073,6 @@ $as_echo "$with_bonjour" >&6; }
 
 
 #
-# OpenSSL
-#
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with OpenSSL support" >&5
-$as_echo_n "checking whether to build with OpenSSL support... " >&6; }
-
-
-
-# Check whether --with-openssl was given.
-if test "${with_openssl+set}" = set; then :
-  withval=$with_openssl;
-  case $withval in
-    yes)
-
-$as_echo "#define USE_OPENSSL 1" >>confdefs.h
-
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --with-openssl option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  with_openssl=no
-
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_openssl" >&5
-$as_echo "$with_openssl" >&6; }
-
-
-#
 # SELinux
 #
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with SELinux support" >&5
@@ -12174,7 +12141,64 @@ fi
   fi
 fi
 
+#
+# SSL Library
+#
+# There is currently only one supported SSL/TLS library: OpenSSL.
+#
+
+
+
+# Check whether --with-ssl was given.
+if test "${with_ssl+set}" = set; then :
+  withval=$with_ssl;
+  case $withval in
+    yes)
+      as_fn_error $? "argument required for --with-ssl option" "$LINENO" 5
+      ;;
+    no)
+      as_fn_error $? "argument required for --with-ssl option" "$LINENO" 5
+      ;;
+    *)
+
+      ;;
+  esac
+
+fi
+
+
+if test x"$with_ssl" = x"" ; then
+  with_ssl=no
+fi
+
+
+
+# Check whether --with-openssl was given.
+if test "${with_openssl+set}" = set; then :
+  withval=$with_openssl;
+  case $withval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --with-openssl option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  with_openssl=no
+
+fi
+
+
 if test "$with_openssl" = yes ; then
+  with_ssl=openssl
+fi
+
+if test "$with_ssl" = openssl ; then
     # Minimum required OpenSSL version is 1.0.1
 
 $as_echo "#define OPENSSL_API_COMPAT 0x10001000L" >>confdefs.h
@@ -12435,7 +12459,13 @@ _ACEOF
 fi
 done
 
+
+$as_echo "#define USE_OPENSSL 1" >>confdefs.h
+
+elif test "$with_ssl" != no ; then
+  as_fn_error $? "--with-ssl must specify openssl" "$LINENO" 5
 fi
+
 
 if test "$with_pam" = yes ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pam_start in -lpam" >&5
@@ -13322,7 +13352,7 @@ done
 
 fi
 
-if test "$with_openssl" = yes ; then
+if test "$with_ssl" = openssl ; then
   ac_fn_c_check_header_mongrel "$LINENO" "openssl/ssl.h" "ac_cv_header_openssl_ssl_h" "$ac_includes_default"
 if test "x$ac_cv_header_openssl_ssl_h" = xyes; then :
 
@@ -18098,7 +18128,7 @@ fi
 # will be used.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking which random number source to use" >&5
 $as_echo_n "checking which random number source to use... " >&6; }
-if test x"$with_openssl" = x"yes" ; then
+if test x"$with_ssl" = x"openssl" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: OpenSSL" >&5
 $as_echo "OpenSSL" >&6; }
 elif test x"$PORTNAME" = x"win32" ; then

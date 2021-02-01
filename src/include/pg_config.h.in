@@ -899,7 +899,7 @@
 /* Define to select named POSIX semaphores. */
 #undef USE_NAMED_POSIX_SEMAPHORES
 
-/* Define to build with OpenSSL support. (--with-openssl) */
+/* Define to build with OpenSSL support. (--with-ssl=openssl) */
 #undef USE_OPENSSL
 
 /* Define to 1 to build with PAM support. (--with-pam) */

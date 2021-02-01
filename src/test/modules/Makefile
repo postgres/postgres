@@ -28,7 +28,7 @@ SUBDIRS = \
 		  unsafe_tests \
 		  worker_spi
 
-ifeq ($(with_openssl),yes)
+ifeq ($(with_ssl),openssl)
 SUBDIRS += ssl_passphrase_callback
 else
 ALWAYS_SUBDIRS += ssl_passphrase_callback

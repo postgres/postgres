@@ -51,7 +51,7 @@ SUBDIRS = \
 		unaccent	\
 		vacuumlo
 
-ifeq ($(with_openssl),yes)
+ifeq ($(with_ssl),openssl)
 SUBDIRS += sslinfo
 else
 ALWAYS_SUBDIRS += sslinfo

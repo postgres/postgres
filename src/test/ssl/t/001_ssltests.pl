@@ -11,13 +11,13 @@ use lib $FindBin::RealBin;
 
 use SSLServer;
 
-if ($ENV{with_openssl} eq 'yes')
+if ($ENV{with_ssl} ne 'openssl')
 {
-	plan tests => 93;
+	plan skip_all => 'OpenSSL not supported by this build';
 }
 else
 {
-	plan skip_all => 'SSL not supported by this build';
+	plan tests => 93;
 }
 
 #### Some configuration

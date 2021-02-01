@@ -13,9 +13,9 @@ use lib $FindBin::RealBin;
 
 use SSLServer;
 
-if ($ENV{with_openssl} ne 'yes')
+if ($ENV{with_ssl} ne 'openssl')
 {
-	plan skip_all => 'SSL not supported by this build';
+	plan skip_all => 'OpenSSL not supported by this build';
 }
 
 # This is the hostname used to connect to the server.

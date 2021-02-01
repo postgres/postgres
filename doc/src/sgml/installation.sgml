@@ -967,7 +967,7 @@ build-postgresql:
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-openssl</option>
+       <term><option>--with-ssl=<replaceable>LIBRARY</replaceable></option>
        <indexterm>
         <primary>OpenSSL</primary>
         <seealso>SSL</seealso>
@@ -976,11 +976,22 @@ build-postgresql:
        <listitem>
         <para>
          Build with support for <acronym>SSL</acronym> (encrypted)
-         connections. This requires the <productname>OpenSSL</productname>
-         package to be installed.  <filename>configure</filename> will check
-         for the required header files and libraries to make sure that
-         your <productname>OpenSSL</productname> installation is sufficient
-         before proceeding.
+         connections. The only <replaceable>LIBRARY</replaceable>
+         supported is <option>openssl</option>. This requires the
+         <productname>OpenSSL</productname> package to be installed.
+         <filename>configure</filename> will check for the required
+         header files and libraries to make sure that your
+         <productname>OpenSSL</productname> installation is sufficient
+         before proceeding. 
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-openssl</option></term>
+       <listitem>
+        <para>
+         Obsolete equivalent of <literal>--with-ssl=openssl</literal>.
         </para>
        </listitem>
       </varlistentry>
