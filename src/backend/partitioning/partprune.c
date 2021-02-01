@@ -220,7 +220,7 @@ static void partkey_datum_from_expr(PartitionPruneContext *context,
  */
 PartitionPruneInfo *
 make_partition_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
-						 List *subpaths, List *unused_partitioned_rels,
+						 List *subpaths,
 						 List *prunequal)
 {
 	PartitionPruneInfo *pruneinfo;

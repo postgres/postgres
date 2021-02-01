@@ -1403,9 +1403,6 @@ typedef struct CustomPath
 typedef struct AppendPath
 {
 	Path		path;
-	List	   *partitioned_rels;	/* List of Relids containing RT indexes of
-									 * non-leaf tables for each partition
-									 * hierarchy whose paths are in 'subpaths' */
 	List	   *subpaths;		/* list of component Paths */
 	/* Index of first partial path in subpaths; list_length(subpaths) if none */
 	int			first_partial_path;
@@ -1430,9 +1427,6 @@ extern bool is_dummy_rel(RelOptInfo *rel);
 typedef struct MergeAppendPath
 {
 	Path		path;
-	List	   *partitioned_rels;	/* List of Relids containing RT indexes of
-									 * non-leaf tables for each partition
-									 * hierarchy whose paths are in 'subpaths' */
 	List	   *subpaths;		/* list of component Paths */
 	double		limit_tuples;	/* hard limit on output tuples, or -1 */
 } MergeAppendPath;

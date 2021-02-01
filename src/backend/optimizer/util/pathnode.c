@@ -1217,7 +1217,7 @@ create_append_path(PlannerInfo *root,
 				   List *subpaths, List *partial_subpaths,
 				   List *pathkeys, Relids required_outer,
 				   int parallel_workers, bool parallel_aware,
-				   List *partitioned_rels, double rows)
+				   double rows)
 {
 	AppendPath *pathnode = makeNode(AppendPath);
 	ListCell   *l;
@@ -1249,7 +1249,6 @@ create_append_path(PlannerInfo *root,
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = parallel_workers;
 	pathnode->path.pathkeys = pathkeys;
-	pathnode->partitioned_rels = list_copy(partitioned_rels);
 
 	/*
 	 * For parallel append, non-partial paths are sorted by descending total
@@ -1377,8 +1376,7 @@ create_merge_append_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 List *subpaths,
 						 List *pathkeys,
-						 Relids required_outer,
-						 List *partitioned_rels)
+						 Relids required_outer)
 {
 	MergeAppendPath *pathnode = makeNode(MergeAppendPath);
 	Cost		input_startup_cost;
@@ -1394,7 +1392,6 @@ create_merge_append_path(PlannerInfo *root,
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = 0;
 	pathnode->path.pathkeys = pathkeys;
-	pathnode->partitioned_rels = list_copy(partitioned_rels);
 	pathnode->subpaths = subpaths;
 
 	/*
@@ -3847,7 +3844,6 @@ reparameterize_path(PlannerInfo *root, Path *path,
 									   apath->path.pathkeys, required_outer,
 									   apath->path.parallel_workers,
 									   apath->path.parallel_aware,
-									   apath->partitioned_rels,
 									   -1);
 			}
 		default:
