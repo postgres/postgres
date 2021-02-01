@@ -38,6 +38,7 @@
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
+#include "rewrite/rewriteSearchCycle.h"
 #include "rewrite/rowsecurity.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -2078,6 +2079,23 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 	int			origResultRelation = parsetree->resultRelation;
 	int			rt_index;
 	ListCell   *lc;
+
+	/*
+	 * Expand SEARCH and CYCLE clauses in CTEs.
+	 *
+	 * This is just a convenient place to do this, since we are already
+	 * looking at each Query.
+	 */
+	foreach(lc, parsetree->cteList)
+	{
+		CommonTableExpr *cte = lfirst_node(CommonTableExpr, lc);
+
+		if (cte->search_clause || cte->cycle_clause)
+		{
+			cte = rewriteSearchAndCycle(cte);
+			lfirst(lc) = cte;
+		}
+	}
 
 	/*
 	 * don't try to convert this into a foreach loop, because rtable list can

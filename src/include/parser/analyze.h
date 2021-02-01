@@ -46,4 +46,6 @@ extern void applyLockingClause(Query *qry, Index rtindex,
 extern List *BuildOnConflictExcludedTargetlist(Relation targetrel,
 											   Index exclRelIndex);
 
+extern SortGroupClause *makeSortGroupClauseForSetOp(Oid rescoltype);
+
 #endif							/* ANALYZE_H */

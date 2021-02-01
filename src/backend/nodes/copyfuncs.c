@@ -2589,6 +2589,38 @@ _copyOnConflictClause(const OnConflictClause *from)
 	return newnode;
 }
 
+static CTESearchClause *
+_copyCTESearchClause(const CTESearchClause *from)
+{
+	CTESearchClause *newnode = makeNode(CTESearchClause);
+
+	COPY_NODE_FIELD(search_col_list);
+	COPY_SCALAR_FIELD(search_breadth_first);
+	COPY_STRING_FIELD(search_seq_column);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static CTECycleClause *
+_copyCTECycleClause(const CTECycleClause *from)
+{
+	CTECycleClause *newnode = makeNode(CTECycleClause);
+
+	COPY_NODE_FIELD(cycle_col_list);
+	COPY_STRING_FIELD(cycle_mark_column);
+	COPY_NODE_FIELD(cycle_mark_value);
+	COPY_NODE_FIELD(cycle_mark_default);
+	COPY_STRING_FIELD(cycle_path_column);
+	COPY_LOCATION_FIELD(location);
+	COPY_SCALAR_FIELD(cycle_mark_type);
+	COPY_SCALAR_FIELD(cycle_mark_typmod);
+	COPY_SCALAR_FIELD(cycle_mark_collation);
+	COPY_SCALAR_FIELD(cycle_mark_neop);
+
+	return newnode;
+}
+
 static CommonTableExpr *
 _copyCommonTableExpr(const CommonTableExpr *from)
 {
@@ -2598,6 +2630,8 @@ _copyCommonTableExpr(const CommonTableExpr *from)
 	COPY_NODE_FIELD(aliascolnames);
 	COPY_SCALAR_FIELD(ctematerialized);
 	COPY_NODE_FIELD(ctequery);
+	COPY_NODE_FIELD(search_clause);
+	COPY_NODE_FIELD(cycle_clause);
 	COPY_LOCATION_FIELD(location);
 	COPY_SCALAR_FIELD(cterecursive);
 	COPY_SCALAR_FIELD(cterefcount);
@@ -5681,6 +5715,12 @@ copyObjectImpl(const void *from)
 			break;
 		case T_OnConflictClause:
 			retval = _copyOnConflictClause(from);
+			break;
+		case T_CTESearchClause:
+			retval = _copyCTESearchClause(from);
+			break;
+		case T_CTECycleClause:
+			retval = _copyCTECycleClause(from);
 			break;
 		case T_CommonTableExpr:
 			retval = _copyCommonTableExpr(from);

@@ -2218,6 +2218,39 @@ SELECT * FROM search_tree <emphasis>ORDER BY depth</emphasis>;
      in any case.
     </para>
    </tip>
+
+   <para>
+    There is built-in syntax to compute a depth- or breadth-first sort column.
+    For example:
+
+<programlisting>
+WITH RECURSIVE search_tree(id, link, data) AS (
+    SELECT t.id, t.link, t.data
+    FROM tree t
+  UNION ALL
+    SELECT t.id, t.link, t.data
+    FROM tree t, search_tree st
+    WHERE t.id = st.link
+) <emphasis>SEARCH DEPTH FIRST BY id SET ordercol</emphasis>
+SELECT * FROM search_tree ORDER BY ordercol;
+
+WITH RECURSIVE search_tree(id, link, data) AS (
+    SELECT t.id, t.link, t.data
+    FROM tree t
+  UNION ALL
+    SELECT t.id, t.link, t.data
+    FROM tree t, search_tree st
+    WHERE t.id = st.link
+) <emphasis>SEARCH BREADTH FIRST BY id SET ordercol</emphasis>
+SELECT * FROM search_tree ORDER BY ordercol;
+</programlisting>
+    This syntax is internally expanded to something similar to the above
+    hand-written forms.  The <literal>SEARCH</literal> clause specifies whether
+    depth- or breadth first search is wanted, the list of columns to track for
+    sorting, and a column name that will contain the result data that can be
+    used for sorting.  That column will implicitly be added to the output rows
+    of the CTE.
+   </para>
   </sect3>
 
   <sect3 id="queries-with-cycle">
@@ -2305,10 +2338,39 @@ SELECT * FROM search_graph;
    </para>
   </tip>
 
+  <para>
+   There is built-in syntax to simplify cycle detection.  The above query can
+   also be written like this:
+<programlisting>
+WITH RECURSIVE search_graph(id, link, data, depth) AS (
+    SELECT g.id, g.link, g.data, 1
+    FROM graph g
+  UNION ALL
+    SELECT g.id, g.link, g.data, sg.depth + 1
+    FROM graph g, search_graph sg
+    WHERE g.id = sg.link
+) <emphasis>CYCLE id SET is_cycle TO true DEFAULT false USING path</emphasis>
+SELECT * FROM search_graph;
+</programlisting>
+   and it will be internally rewritten to the above form.  The
+   <literal>CYCLE</literal> clause specifies first the list of columns to
+   track for cycle detection, then a column name that will show whether a
+   cycle has been detected, then two values to use in that column for the yes
+   and no cases, and finally the name of another column that will track the
+   path.  The cycle and path columns will implicitly be added to the output
+   rows of the CTE.
+  </para>
+
   <tip>
    <para>
     The cycle path column is computed in the same way as the depth-first
-    ordering column show in the previous section.
+    ordering column show in the previous section.  A query can have both a
+    <literal>SEARCH</literal> and a <literal>CYCLE</literal> clause, but a
+    depth-first search specification and a cycle detection specification would
+    create redundant computations, so it's more efficient to just use the
+    <literal>CYCLE</literal> clause and order by the path column.  If
+    breadth-first ordering is wanted, then specifying both
+    <literal>SEARCH</literal> and <literal>CYCLE</literal> can be useful.
    </para>
   </tip>
 

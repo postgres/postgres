@@ -2235,6 +2235,8 @@ addRangeTableEntryForCTE(ParseState *pstate,
 	int			numaliases;
 	int			varattno;
 	ListCell   *lc;
+	int			n_dontexpand_columns = 0;
+	ParseNamespaceItem *psi;
 
 	Assert(pstate != NULL);
 
@@ -2267,9 +2269,9 @@ addRangeTableEntryForCTE(ParseState *pstate,
 					 parser_errposition(pstate, rv->location)));
 	}
 
-	rte->coltypes = cte->ctecoltypes;
-	rte->coltypmods = cte->ctecoltypmods;
-	rte->colcollations = cte->ctecolcollations;
+	rte->coltypes = list_copy(cte->ctecoltypes);
+	rte->coltypmods = list_copy(cte->ctecoltypmods);
+	rte->colcollations = list_copy(cte->ctecolcollations);
 
 	rte->alias = alias;
 	if (alias)
@@ -2293,6 +2295,34 @@ addRangeTableEntryForCTE(ParseState *pstate,
 						refname, varattno, numaliases)));
 
 	rte->eref = eref;
+
+	if (cte->search_clause)
+	{
+		rte->eref->colnames = lappend(rte->eref->colnames, makeString(cte->search_clause->search_seq_column));
+		if (cte->search_clause->search_breadth_first)
+			rte->coltypes = lappend_oid(rte->coltypes, RECORDOID);
+		else
+			rte->coltypes = lappend_oid(rte->coltypes, RECORDARRAYOID);
+		rte->coltypmods = lappend_int(rte->coltypmods, -1);
+		rte->colcollations = lappend_oid(rte->colcollations, InvalidOid);
+
+		n_dontexpand_columns += 1;
+	}
+
+	if (cte->cycle_clause)
+	{
+		rte->eref->colnames = lappend(rte->eref->colnames, makeString(cte->cycle_clause->cycle_mark_column));
+		rte->coltypes = lappend_oid(rte->coltypes, cte->cycle_clause->cycle_mark_type);
+		rte->coltypmods = lappend_int(rte->coltypmods, cte->cycle_clause->cycle_mark_typmod);
+		rte->colcollations = lappend_oid(rte->colcollations, cte->cycle_clause->cycle_mark_collation);
+
+		rte->eref->colnames = lappend(rte->eref->colnames, makeString(cte->cycle_clause->cycle_path_column));
+		rte->coltypes = lappend_oid(rte->coltypes, RECORDARRAYOID);
+		rte->coltypmods = lappend_int(rte->coltypmods, -1);
+		rte->colcollations = lappend_oid(rte->colcollations, InvalidOid);
+
+		n_dontexpand_columns += 2;
+	}
 
 	/*
 	 * Set flags and access permissions.
@@ -2321,9 +2351,19 @@ addRangeTableEntryForCTE(ParseState *pstate,
 	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
 	 * list --- caller must do that if appropriate.
 	 */
-	return buildNSItemFromLists(rte, list_length(pstate->p_rtable),
+	psi = buildNSItemFromLists(rte, list_length(pstate->p_rtable),
 								rte->coltypes, rte->coltypmods,
 								rte->colcollations);
+
+	/*
+	 * The columns added by search and cycle clauses are not included in star
+	 * expansion in queries contained in the CTE.
+	 */
+	if (rte->ctelevelsup > 0)
+		for (int i = 0; i < n_dontexpand_columns; i++)
+			psi->p_nscolumns[list_length(psi->p_rte->eref->colnames) - 1 - i].p_dontexpand = true;
+
+	return psi;
 }
 
 /*
@@ -3008,7 +3048,11 @@ expandNSItemVars(ParseNamespaceItem *nsitem,
 		const char *colname = strVal(colnameval);
 		ParseNamespaceColumn *nscol = nsitem->p_nscolumns + colindex;
 
-		if (colname[0])
+		if (nscol->p_dontexpand)
+		{
+			/* skip */
+		}
+		else if (colname[0])
 		{
 			Var		   *var;
 

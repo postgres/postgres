@@ -399,8 +399,23 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 			{
 				CommonTableExpr *cte = GetCTEForRTE(pstate, rte, netlevelsup);
 				TargetEntry *ste;
+				List	   *tl = GetCTETargetList(cte);
+				int			extra_cols = 0;
 
-				ste = get_tle_by_resno(GetCTETargetList(cte), attnum);
+				/*
+				 * RTE for CTE will already have the search and cycle columns
+				 * added, but the subquery won't, so skip looking those up.
+				 */
+				if (cte->search_clause)
+					extra_cols += 1;
+				if (cte->cycle_clause)
+					extra_cols += 2;
+				if (extra_cols &&
+					attnum > list_length(tl) &&
+					attnum <= list_length(tl) + extra_cols)
+					break;
+
+				ste = get_tle_by_resno(tl, attnum);
 				if (ste == NULL || ste->resjunk)
 					elog(ERROR, "CTE %s does not have attribute %d",
 						 rte->eref->aliasname, attnum);

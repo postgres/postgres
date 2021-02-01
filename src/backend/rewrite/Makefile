@@ -17,6 +17,7 @@ OBJS = \
 	rewriteHandler.o \
 	rewriteManip.o \
 	rewriteRemove.o \
+	rewriteSearchCycle.o \
 	rewriteSupport.o \
 	rowsecurity.o
 

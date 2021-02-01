@@ -471,6 +471,8 @@ typedef enum NodeTag
 	T_WithClause,
 	T_InferClause,
 	T_OnConflictClause,
+	T_CTESearchClause,
+	T_CTECycleClause,
 	T_CommonTableExpr,
 	T_RoleSpec,
 	T_TriggerTransition,

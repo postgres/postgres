@@ -73,6 +73,8 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
 <phrase>and <replaceable class="parameter">with_query</replaceable> is:</phrase>
 
     <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS [ [ NOT ] MATERIALIZED ] ( <replaceable class="parameter">select</replaceable> | <replaceable class="parameter">values</replaceable> | <replaceable class="parameter">insert</replaceable> | <replaceable class="parameter">update</replaceable> | <replaceable class="parameter">delete</replaceable> )
+        [ SEARCH { BREADTH | DEPTH } FIRST BY <replaceable>column_name</replaceable> [, ...] SET <replaceable>search_seq_col_name</replaceable> ]
+        [ CYCLE <replaceable>column_name</replaceable> [, ...] SET <replaceable>cycle_mark_col_name</replaceable> TO <replaceable>cycle_mark_value</replaceable> DEFAULT <replaceable>cycle_mark_default</replaceable> USING <replaceable>cycle_path_col_name</replaceable> ]
 
 TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
 </synopsis>
@@ -274,6 +276,48 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
     immediately after <literal>WITH</literal>.  It applies to all queries
     in the <literal>WITH</literal> clause, though it has no effect on
     queries that do not use recursion or forward references.
+   </para>
+
+   <para>
+    The optional <literal>SEARCH</literal> clause computes a <firstterm>search
+    sequence column</firstterm> that can be used for ordering the results of a
+    recursive query in either breadth-first or depth-first order.  The
+    supplied column name list specifies the row key that is to be used for
+    keeping track of visited rows.  A column named
+    <replaceable>search_seq_col_name</replaceable> will be added to the result
+    column list of the <literal>WITH</literal> query.  This column can be
+    ordered by in the outer query to achieve the respective ordering.  See
+    <xref linkend="queries-with-search"/> for examples.
+   </para>
+
+   <para>
+    The optional <literal>CYCLE</literal> clause is used to detect cycles in
+    recursive queries.  The supplied column name list specifies the row key
+    that is to be used for keeping track of visited rows.  A column named
+    <replaceable>cycle_mark_col_name</replaceable> will be added to the result
+    column list of the <literal>WITH</literal> query.  This column will be set
+    to <replaceable>cycle_mark_value</replaceable> when a cycle has been
+    detected, else to <replaceable>cycle_mark_default</replaceable>.
+    Furthermore, processing of the recursive union will stop when a cycle has
+    been detected.  <replaceable>cycle_mark_value</replaceable> and
+    <replaceable>cycle_mark_default</replaceable> must be constants and they
+    must be coercible to a common data type, and the data type must have an
+    inequality operator.  (The SQL standard requires that they be character
+    strings, but PostgreSQL does not require that.)  Furthermore, a column
+    named <replaceable>cycle_path_col_name</replaceable> will be added to the
+    result column list of the <literal>WITH</literal> query.  This column is
+    used internally for tracking visited rows.  See <xref
+    linkend="queries-with-cycle"/> for examples.
+   </para>
+
+   <para>
+    Both the <literal>SEARCH</literal> and the <literal>CYCLE</literal> clause
+    are only valid for recursive <literal>WITH</literal> queries.  The
+    <replaceable>with_query</replaceable> must be a <literal>UNION</literal>
+    (or <literal>UNION ALL</literal>) of two <literal>SELECT</literal> (or
+    equivalent) commands (no nested <literal>UNION</literal>s).  If both
+    clauses are used, the column added by the <literal>SEARCH</literal> clause
+    appears before the columns added by the <literal>CYCLE</literal> clause.
    </para>
 
    <para>

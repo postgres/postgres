@@ -2264,6 +2264,21 @@ find_expr_references_walker(Node *node,
 							   context->addrs);
 		/* fall through to examine substructure */
 	}
+	else if (IsA(node, CTECycleClause))
+	{
+		CTECycleClause *cc = (CTECycleClause *) node;
+
+		if (OidIsValid(cc->cycle_mark_type))
+			add_object_address(OCLASS_TYPE, cc->cycle_mark_type, 0,
+							   context->addrs);
+		if (OidIsValid(cc->cycle_mark_collation))
+			add_object_address(OCLASS_COLLATION, cc->cycle_mark_collation, 0,
+							   context->addrs);
+		if (OidIsValid(cc->cycle_mark_neop))
+			add_object_address(OCLASS_OPERATOR, cc->cycle_mark_neop, 0,
+							   context->addrs);
+		/* fall through to examine substructure */
+	}
 	else if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */

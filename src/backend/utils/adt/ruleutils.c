@@ -5168,6 +5168,53 @@ get_with_clause(Query *query, deparse_context *context)
 		if (PRETTY_INDENT(context))
 			appendContextKeyword(context, "", 0, 0, 0);
 		appendStringInfoChar(buf, ')');
+
+		if (cte->search_clause)
+		{
+			bool		first = true;
+			ListCell   *lc;
+
+			appendStringInfo(buf, " SEARCH %s FIRST BY ",
+							 cte->search_clause->search_breadth_first ? "BREADTH" : "DEPTH");
+
+			foreach(lc, cte->search_clause->search_col_list)
+			{
+				if (first)
+					first = false;
+				else
+					appendStringInfoString(buf, ", ");
+				appendStringInfoString(buf,
+									   quote_identifier(strVal(lfirst(lc))));
+			}
+
+			appendStringInfo(buf, " SET %s", quote_identifier(cte->search_clause->search_seq_column));
+		}
+
+		if (cte->cycle_clause)
+		{
+			bool		first = true;
+			ListCell   *lc;
+
+			appendStringInfoString(buf, " CYCLE ");
+
+			foreach(lc, cte->cycle_clause->cycle_col_list)
+			{
+				if (first)
+					first = false;
+				else
+					appendStringInfoString(buf, ", ");
+				appendStringInfoString(buf,
+									   quote_identifier(strVal(lfirst(lc))));
+			}
+
+			appendStringInfo(buf, " SET %s", quote_identifier(cte->cycle_clause->cycle_mark_column));
+			appendStringInfoString(buf, " TO ");
+			get_rule_expr(cte->cycle_clause->cycle_mark_value, context, false);
+			appendStringInfoString(buf, " DEFAULT ");
+			get_rule_expr(cte->cycle_clause->cycle_mark_default, context, false);
+			appendStringInfo(buf, " USING %s", quote_identifier(cte->cycle_clause->cycle_path_column));
+		}
+
 		sep = ", ";
 	}
 

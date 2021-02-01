@@ -545,6 +545,10 @@ check_agglevels_and_constraints(ParseState *pstate, Node *expr)
 
 			break;
 
+		case EXPR_KIND_CYCLE_MARK:
+			errkind = true;
+			break;
+
 			/*
 			 * There is intentionally no default: case here, so that the
 			 * compiler will warn if we add a new ParseExprKind without
@@ -932,6 +936,9 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 			break;
 		case EXPR_KIND_GENERATED_COLUMN:
 			err = _("window functions are not allowed in column generation expressions");
+			break;
+		case EXPR_KIND_CYCLE_MARK:
+			errkind = true;
 			break;
 
 			/*

@@ -410,6 +410,44 @@ _readRowMarkClause(void)
 }
 
 /*
+ * _readCTESearchClause
+ */
+static CTESearchClause *
+_readCTESearchClause(void)
+{
+	READ_LOCALS(CTESearchClause);
+
+	READ_NODE_FIELD(search_col_list);
+	READ_BOOL_FIELD(search_breadth_first);
+	READ_STRING_FIELD(search_seq_column);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
+ * _readCTECycleClause
+ */
+static CTECycleClause *
+_readCTECycleClause(void)
+{
+	READ_LOCALS(CTECycleClause);
+
+	READ_NODE_FIELD(cycle_col_list);
+	READ_STRING_FIELD(cycle_mark_column);
+	READ_NODE_FIELD(cycle_mark_value);
+	READ_NODE_FIELD(cycle_mark_default);
+	READ_STRING_FIELD(cycle_path_column);
+	READ_LOCATION_FIELD(location);
+	READ_OID_FIELD(cycle_mark_type);
+	READ_INT_FIELD(cycle_mark_typmod);
+	READ_OID_FIELD(cycle_mark_collation);
+	READ_OID_FIELD(cycle_mark_neop);
+
+	READ_DONE();
+}
+
+/*
  * _readCommonTableExpr
  */
 static CommonTableExpr *
@@ -421,6 +459,8 @@ _readCommonTableExpr(void)
 	READ_NODE_FIELD(aliascolnames);
 	READ_ENUM_FIELD(ctematerialized, CTEMaterialize);
 	READ_NODE_FIELD(ctequery);
+	READ_NODE_FIELD(search_clause);
+	READ_NODE_FIELD(cycle_clause);
 	READ_LOCATION_FIELD(location);
 	READ_BOOL_FIELD(cterecursive);
 	READ_INT_FIELD(cterefcount);
@@ -2653,6 +2693,10 @@ parseNodeString(void)
 		return_value = _readWindowClause();
 	else if (MATCH("ROWMARKCLAUSE", 13))
 		return_value = _readRowMarkClause();
+	else if (MATCH("CTESEARCHCLAUSE", 15))
+		return_value = _readCTESearchClause();
+	else if (MATCH("CTECYCLECLAUSE", 14))
+		return_value = _readCTECycleClause();
 	else if (MATCH("COMMONTABLEEXPR", 15))
 		return_value = _readCommonTableExpr();
 	else if (MATCH("SETOPERATIONSTMT", 16))
