@@ -1227,8 +1227,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 	 * pruning during execution.  Gather information needed by the executor to
 	 * do partition pruning.
 	 */
-	if (enable_partition_pruning &&
-		best_path->partitioned_rels != NIL)
+	if (enable_partition_pruning)
 	{
 		List	   *prunequal;
 
@@ -1393,8 +1392,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 	 * pruning during execution.  Gather information needed by the executor to
 	 * do partition pruning.
 	 */
-	if (enable_partition_pruning &&
-		best_path->partitioned_rels != NIL)
+	if (enable_partition_pruning)
 	{
 		List	   *prunequal;
 
