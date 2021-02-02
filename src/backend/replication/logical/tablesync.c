@@ -640,7 +640,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 	StringInfoData cmd;
 	TupleTableSlot *slot;
 	Oid			tableRow[] = {OIDOID, CHAROID, CHAROID};
-	Oid			attrRow[] = {TEXTOID, OIDOID, INT4OID, BOOLOID};
+	Oid			attrRow[] = {TEXTOID, OIDOID, BOOLOID};
 	bool		isnull;
 	int			natt;
 
@@ -685,7 +685,6 @@ fetch_remote_table_info(char *nspname, char *relname,
 	appendStringInfo(&cmd,
 					 "SELECT a.attname,"
 					 "       a.atttypid,"
-					 "       a.atttypmod,"
 					 "       a.attnum = ANY(i.indkey)"
 					 "  FROM pg_catalog.pg_attribute a"
 					 "  LEFT JOIN pg_catalog.pg_index i"
@@ -718,7 +717,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 		Assert(!isnull);
 		lrel->atttyps[natt] = DatumGetObjectId(slot_getattr(slot, 2, &isnull));
 		Assert(!isnull);
-		if (DatumGetBool(slot_getattr(slot, 4, &isnull)))
+		if (DatumGetBool(slot_getattr(slot, 3, &isnull)))
 			lrel->attkeys = bms_add_member(lrel->attkeys, natt);
 
 		/* Should never happen. */
