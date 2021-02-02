@@ -81,6 +81,11 @@
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
 
+#include "walinsertlock.h"
+#include "xlogreq.h"
+#include "xlogctl.h"
+#include "xlogrecord_internal.h"
+
 extern uint32 bootstrap_data_checksum_version;
 
 /* Unsupported old recovery command file names (relative to $PGDATA) */
@@ -116,13 +121,6 @@ bool		XLOG_DEBUG = false;
 #endif
 
 int			wal_segment_size = DEFAULT_XLOG_SEG_SIZE;
-
-/*
- * Number of WAL insertion locks to use. A higher value allows more insertions
- * to happen concurrently, but adds some CPU overhead to flushing the WAL,
- * which needs to iterate all the locks.
- */
-#define NUM_XLOGINSERT_LOCKS  8
 
 /*
  * Max distance from last checkpoint, before triggering a new xlog-based
@@ -396,347 +394,11 @@ static bool doRequestWalReceiverReply;
  */
 static XLogRecPtr RedoStartLSN = InvalidXLogRecPtr;
 
-/*----------
- * Shared-memory data structures for XLOG control
- *
- * LogwrtRqst indicates a byte position that we need to write and/or fsync
- * the log up to (all records before that point must be written or fsynced).
- * LogwrtResult indicates the byte positions we have already written/fsynced.
- * These structs are identical but are declared separately to indicate their
- * slightly different functions.
- *
- * To read XLogCtl->LogwrtResult, you must hold either info_lck or
- * WALWriteLock.  To update it, you need to hold both locks.  The point of
- * this arrangement is that the value can be examined by code that already
- * holds WALWriteLock without needing to grab info_lck as well.  In addition
- * to the shared variable, each backend has a private copy of LogwrtResult,
- * which is updated when convenient.
- *
- * The request bookkeeping is simpler: there is a shared XLogCtl->LogwrtRqst
- * (protected by info_lck), but we don't need to cache any copies of it.
- *
- * info_lck is only held long enough to read/update the protected variables,
- * so it's a plain spinlock.  The other locks are held longer (potentially
- * over I/O operations), so we use LWLocks for them.  These locks are:
- *
- * WALBufMappingLock: must be held to replace a page in the WAL buffer cache.
- * It is only held while initializing and changing the mapping.  If the
- * contents of the buffer being replaced haven't been written yet, the mapping
- * lock is released while the write is done, and reacquired afterwards.
- *
- * WALWriteLock: must be held to write WAL buffers to disk (XLogWrite or
- * XLogFlush).
- *
- * ControlFileLock: must be held to read/update control file or create
- * new log file.
- *
- *----------
- */
-
-typedef struct XLogwrtRqst
-{
-	XLogRecPtr	Write;			/* last byte + 1 to write out */
-	XLogRecPtr	Flush;			/* last byte + 1 to flush */
-} XLogwrtRqst;
-
-typedef struct XLogwrtResult
-{
-	XLogRecPtr	Write;			/* last byte + 1 written out */
-	XLogRecPtr	Flush;			/* last byte + 1 flushed */
-} XLogwrtResult;
-
-/*
- * Inserting to WAL is protected by a small fixed number of WAL insertion
- * locks. To insert to the WAL, you must hold one of the locks - it doesn't
- * matter which one. To lock out other concurrent insertions, you must hold
- * of them. Each WAL insertion lock consists of a lightweight lock, plus an
- * indicator of how far the insertion has progressed (insertingAt).
- *
- * The insertingAt values are read when a process wants to flush WAL from
- * the in-memory buffers to disk, to check that all the insertions to the
- * region the process is about to write out have finished. You could simply
- * wait for all currently in-progress insertions to finish, but the
- * insertingAt indicator allows you to ignore insertions to later in the WAL,
- * so that you only wait for the insertions that are modifying the buffers
- * you're about to write out.
- *
- * This isn't just an optimization. If all the WAL buffers are dirty, an
- * inserter that's holding a WAL insert lock might need to evict an old WAL
- * buffer, which requires flushing the WAL. If it's possible for an inserter
- * to block on another inserter unnecessarily, deadlock can arise when two
- * inserters holding a WAL insert lock wait for each other to finish their
- * insertion.
- *
- * Small WAL records that don't cross a page boundary never update the value,
- * the WAL record is just copied to the page and the lock is released. But
- * to avoid the deadlock-scenario explained above, the indicator is always
- * updated before sleeping while holding an insertion lock.
- *
- * lastImportantAt contains the LSN of the last important WAL record inserted
- * using a given lock. This value is used to detect if there has been
- * important WAL activity since the last time some action, like a checkpoint,
- * was performed - allowing to not repeat the action if not. The LSN is
- * updated for all insertions, unless the XLOG_MARK_UNIMPORTANT flag was
- * set. lastImportantAt is never cleared, only overwritten by the LSN of newer
- * records.  Tracking the WAL activity directly in WALInsertLock has the
- * advantage of not needing any additional locks to update the value.
- */
-typedef struct
-{
-	LWLock		lock;
-	XLogRecPtr	insertingAt;
-	XLogRecPtr	lastImportantAt;
-} WALInsertLock;
-
-/*
- * All the WAL insertion locks are allocated as an array in shared memory. We
- * force the array stride to be a power of 2, which saves a few cycles in
- * indexing, but more importantly also ensures that individual slots don't
- * cross cache line boundaries. (Of course, we have to also ensure that the
- * array start address is suitably aligned.)
- */
-typedef union WALInsertLockPadded
-{
-	WALInsertLock l;
-	char		pad[PG_CACHE_LINE_SIZE];
-} WALInsertLockPadded;
-
-/*
- * State of an exclusive backup, necessary to control concurrent activities
- * across sessions when working on exclusive backups.
- *
- * EXCLUSIVE_BACKUP_NONE means that there is no exclusive backup actually
- * running, to be more precise pg_start_backup() is not being executed for
- * an exclusive backup and there is no exclusive backup in progress.
- * EXCLUSIVE_BACKUP_STARTING means that pg_start_backup() is starting an
- * exclusive backup.
- * EXCLUSIVE_BACKUP_IN_PROGRESS means that pg_start_backup() has finished
- * running and an exclusive backup is in progress. pg_stop_backup() is
- * needed to finish it.
- * EXCLUSIVE_BACKUP_STOPPING means that pg_stop_backup() is stopping an
- * exclusive backup.
- */
-typedef enum ExclusiveBackupState
-{
-	EXCLUSIVE_BACKUP_NONE = 0,
-	EXCLUSIVE_BACKUP_STARTING,
-	EXCLUSIVE_BACKUP_IN_PROGRESS,
-	EXCLUSIVE_BACKUP_STOPPING
-} ExclusiveBackupState;
-
 /*
  * Session status of running backup, used for sanity checks in SQL-callable
  * functions to start and stop backups.
  */
 static SessionBackupState sessionBackupState = SESSION_BACKUP_NONE;
-
-/*
- * Shared state data for WAL insertion.
- */
-typedef struct XLogCtlInsert
-{
-	slock_t		insertpos_lck;	/* protects CurrBytePos and PrevBytePos */
-
-	/*
-	 * CurrBytePos is the end of reserved WAL. The next record will be
-	 * inserted at that position. PrevBytePos is the start position of the
-	 * previously inserted (or rather, reserved) record - it is copied to the
-	 * prev-link of the next record. These are stored as "usable byte
-	 * positions" rather than XLogRecPtrs (see XLogBytePosToRecPtr()).
-	 */
-	uint64		CurrBytePos;
-	uint64		PrevBytePos;
-
-	/*
-	 * Make sure the above heavily-contended spinlock and byte positions are
-	 * on their own cache line. In particular, the RedoRecPtr and full page
-	 * write variables below should be on a different cache line. They are
-	 * read on every WAL insertion, but updated rarely, and we don't want
-	 * those reads to steal the cache line containing Curr/PrevBytePos.
-	 */
-	char		pad[PG_CACHE_LINE_SIZE];
-
-	/*
-	 * fullPageWrites is the authoritative value used by all backends to
-	 * determine whether to write full-page image to WAL. This shared value,
-	 * instead of the process-local fullPageWrites, is required because, when
-	 * full_page_writes is changed by SIGHUP, we must WAL-log it before it
-	 * actually affects WAL-logging by backends.  Checkpointer sets at startup
-	 * or after SIGHUP.
-	 *
-	 * To read these fields, you must hold an insertion lock. To modify them,
-	 * you must hold ALL the locks.
-	 */
-	XLogRecPtr	RedoRecPtr;		/* current redo point for insertions */
-	bool		forcePageWrites;	/* forcing full-page writes for PITR? */
-	bool		fullPageWrites;
-
-	/*
-	 * exclusiveBackupState indicates the state of an exclusive backup (see
-	 * comments of ExclusiveBackupState for more details). nonExclusiveBackups
-	 * is a counter indicating the number of streaming base backups currently
-	 * in progress. forcePageWrites is set to true when either of these is
-	 * non-zero. lastBackupStart is the latest checkpoint redo location used
-	 * as a starting point for an online backup.
-	 */
-	ExclusiveBackupState exclusiveBackupState;
-	int			nonExclusiveBackups;
-	XLogRecPtr	lastBackupStart;
-
-	/*
-	 * WAL insertion locks.
-	 */
-	WALInsertLockPadded *WALInsertLocks;
-} XLogCtlInsert;
-
-/*
- * Total shared-memory state for XLOG.
- */
-typedef struct XLogCtlData
-{
-	XLogCtlInsert Insert;
-
-	/* Protected by info_lck: */
-	XLogwrtRqst LogwrtRqst;
-	XLogRecPtr	RedoRecPtr;		/* a recent copy of Insert->RedoRecPtr */
-	FullTransactionId ckptFullXid;	/* nextXid of latest checkpoint */
-	XLogRecPtr	asyncXactLSN;	/* LSN of newest async commit/abort */
-	XLogRecPtr	replicationSlotMinLSN;	/* oldest LSN needed by any slot */
-
-	XLogSegNo	lastRemovedSegNo;	/* latest removed/recycled XLOG segment */
-
-	/* Fake LSN counter, for unlogged relations. Protected by ulsn_lck. */
-	XLogRecPtr	unloggedLSN;
-	slock_t		ulsn_lck;
-
-	/* Time and LSN of last xlog segment switch. Protected by WALWriteLock. */
-	pg_time_t	lastSegSwitchTime;
-	XLogRecPtr	lastSegSwitchLSN;
-
-	/*
-	 * Protected by info_lck and WALWriteLock (you must hold either lock to
-	 * read it, but both to update)
-	 */
-	XLogwrtResult LogwrtResult;
-
-	/*
-	 * Latest initialized page in the cache (last byte position + 1).
-	 *
-	 * To change the identity of a buffer (and InitializedUpTo), you need to
-	 * hold WALBufMappingLock.  To change the identity of a buffer that's
-	 * still dirty, the old page needs to be written out first, and for that
-	 * you need WALWriteLock, and you need to ensure that there are no
-	 * in-progress insertions to the page by calling
-	 * WaitXLogInsertionsToFinish().
-	 */
-	XLogRecPtr	InitializedUpTo;
-
-	/*
-	 * These values do not change after startup, although the pointed-to pages
-	 * and xlblocks values certainly do.  xlblocks values are protected by
-	 * WALBufMappingLock.
-	 */
-	char	   *pages;			/* buffers for unwritten XLOG pages */
-	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + XLOG_BLCKSZ */
-	int			XLogCacheBlck;	/* highest allocated xlog buffer index */
-
-	/*
-	 * Shared copy of ThisTimeLineID. Does not change after end-of-recovery.
-	 * If we created a new timeline when the system was started up,
-	 * PrevTimeLineID is the old timeline's ID that we forked off from.
-	 * Otherwise it's equal to ThisTimeLineID.
-	 */
-	TimeLineID	ThisTimeLineID;
-	TimeLineID	PrevTimeLineID;
-
-	/*
-	 * SharedRecoveryState indicates if we're still in crash or archive
-	 * recovery.  Protected by info_lck.
-	 */
-	RecoveryState SharedRecoveryState;
-
-	/*
-	 * SharedHotStandbyActive indicates if we allow hot standby queries to be
-	 * run.  Protected by info_lck.
-	 */
-	bool		SharedHotStandbyActive;
-
-	/*
-	 * SharedPromoteIsTriggered indicates if a standby promotion has been
-	 * triggered.  Protected by info_lck.
-	 */
-	bool		SharedPromoteIsTriggered;
-
-	/*
-	 * WalWriterSleeping indicates whether the WAL writer is currently in
-	 * low-power mode (and hence should be nudged if an async commit occurs).
-	 * Protected by info_lck.
-	 */
-	bool		WalWriterSleeping;
-
-	/*
-	 * recoveryWakeupLatch is used to wake up the startup process to continue
-	 * WAL replay, if it is waiting for WAL to arrive or failover trigger file
-	 * to appear.
-	 *
-	 * Note that the startup process also uses another latch, its procLatch,
-	 * to wait for recovery conflict. If we get rid of recoveryWakeupLatch for
-	 * signaling the startup process in favor of using its procLatch, which
-	 * comports better with possible generic signal handlers using that latch.
-	 * But we should not do that because the startup process doesn't assume
-	 * that it's waken up by walreceiver process or SIGHUP signal handler
-	 * while it's waiting for recovery conflict. The separate latches,
-	 * recoveryWakeupLatch and procLatch, should be used for inter-process
-	 * communication for WAL replay and recovery conflict, respectively.
-	 */
-	Latch		recoveryWakeupLatch;
-
-	/*
-	 * During recovery, we keep a copy of the latest checkpoint record here.
-	 * lastCheckPointRecPtr points to start of checkpoint record and
-	 * lastCheckPointEndPtr points to end+1 of checkpoint record.  Used by the
-	 * checkpointer when it wants to create a restartpoint.
-	 *
-	 * Protected by info_lck.
-	 */
-	XLogRecPtr	lastCheckPointRecPtr;
-	XLogRecPtr	lastCheckPointEndPtr;
-	CheckPoint	lastCheckPoint;
-
-	/*
-	 * lastReplayedEndRecPtr points to end+1 of the last record successfully
-	 * replayed. When we're currently replaying a record, ie. in a redo
-	 * function, replayEndRecPtr points to the end+1 of the record being
-	 * replayed, otherwise it's equal to lastReplayedEndRecPtr.
-	 */
-	XLogRecPtr	lastReplayedEndRecPtr;
-	TimeLineID	lastReplayedTLI;
-	XLogRecPtr	replayEndRecPtr;
-	TimeLineID	replayEndTLI;
-	/* timestamp of last COMMIT/ABORT record replayed (or being replayed) */
-	TimestampTz recoveryLastXTime;
-
-	/*
-	 * timestamp of when we started replaying the current chunk of WAL data,
-	 * only relevant for replication or archive recovery
-	 */
-	TimestampTz currentChunkStartTime;
-	/* Are we requested to pause recovery? */
-	bool		recoveryPause;
-
-	/*
-	 * lastFpwDisableRecPtr points to the start of the last replayed
-	 * XLOG_FPW_CHANGE record that instructs full_page_writes is disabled.
-	 */
-	XLogRecPtr	lastFpwDisableRecPtr;
-
-	slock_t		info_lck;		/* locks shared variables shown above */
-} XLogCtlData;
-
-static XLogCtlData *XLogCtl = NULL;
-
-/* a private copy of XLogCtl->Insert.WALInsertLocks, for convenience */
-static WALInsertLockPadded *WALInsertLocks = NULL;
 
 /*
  * We maintain an image of pg_control in shared memory.
@@ -753,28 +415,6 @@ static ControlFileData *ControlFile = NULL;
 /* Macro to advance to next buffer index. */
 #define NextBufIdx(idx)		\
 		(((idx) == XLogCtl->XLogCacheBlck) ? 0 : ((idx) + 1))
-
-/*
- * XLogRecPtrToBufIdx returns the index of the WAL buffer that holds, or
- * would hold if it was in cache, the page containing 'recptr'.
- */
-#define XLogRecPtrToBufIdx(recptr)	\
-	(((recptr) / XLOG_BLCKSZ) % (XLogCtl->XLogCacheBlck + 1))
-
-/*
- * These are the number of bytes in a WAL page usable for WAL data.
- */
-#define UsableBytesInPage (XLOG_BLCKSZ - SizeOfXLogShortPHD)
-
-/*
- * Convert values of GUCs measured in megabytes to equiv. segment count.
- * Rounds down.
- */
-#define ConvertToXSegs(x, segsize)	XLogMBVarToSegs((x), (segsize))
-
-/* The number of bytes in a WAL segment usable for WAL data. */
-static int	UsableBytesInSegment;
-
 /*
  * Private, possibly out-of-date copy of shared LogwrtResult.
  * See discussion above.
@@ -881,10 +521,6 @@ static bool InRedo = false;
 /* Have we launched bgwriter during recovery? */
 static bool bgwriterLaunched = false;
 
-/* For WALInsertLockAcquire/Release functions */
-static int	MyLockNo = 0;
-static bool holdingAllLocks = false;
-
 #ifdef WAL_DEBUG
 static MemoryContext walDebugCxt = NULL;
 #endif
@@ -908,7 +544,6 @@ static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
 static void KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo);
 static XLogRecPtr XLogGetReplicationSlotMinimumLSN(void);
 
-static void AdvanceXLInsertBuffer(XLogRecPtr upto, bool opportunistic);
 static bool XLogCheckpointNeeded(XLogSegNo new_segno);
 static void XLogWrite(XLogwrtRqst WriteRqst, bool flexible);
 static bool InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
@@ -967,16 +602,7 @@ static void ReserveXLogInsertLocation(int size, XLogRecPtr *StartPos,
 static bool ReserveXLogSwitch(XLogRecPtr *StartPos, XLogRecPtr *EndPos,
 							  XLogRecPtr *PrevPtr);
 static XLogRecPtr WaitXLogInsertionsToFinish(XLogRecPtr upto);
-static char *GetXLogBuffer(XLogRecPtr ptr);
-static XLogRecPtr XLogBytePosToRecPtr(uint64 bytepos);
-static XLogRecPtr XLogBytePosToEndRecPtr(uint64 bytepos);
-static uint64 XLogRecPtrToBytePos(XLogRecPtr ptr);
 static void checkXLogConsistency(XLogReaderState *record);
-
-static void WALInsertLockAcquire(void);
-static void WALInsertLockAcquireExclusive(void);
-static void WALInsertLockRelease(void);
-static void WALInsertLockUpdateInsertingAt(XLogRecPtr insertingAt);
 
 /*
  * Insert an XLOG record represented by an already-constructed chain of data
@@ -1656,128 +1282,6 @@ CopyXLogRecordToWAL(int write_len, bool isLogSwitch, XLogRecData *rdata,
 }
 
 /*
- * Acquire a WAL insertion lock, for inserting to WAL.
- */
-static void
-WALInsertLockAcquire(void)
-{
-	bool		immed;
-
-	/*
-	 * It doesn't matter which of the WAL insertion locks we acquire, so try
-	 * the one we used last time.  If the system isn't particularly busy, it's
-	 * a good bet that it's still available, and it's good to have some
-	 * affinity to a particular lock so that you don't unnecessarily bounce
-	 * cache lines between processes when there's no contention.
-	 *
-	 * If this is the first time through in this backend, pick a lock
-	 * (semi-)randomly.  This allows the locks to be used evenly if you have a
-	 * lot of very short connections.
-	 */
-	static int	lockToTry = -1;
-
-	if (lockToTry == -1)
-		lockToTry = MyProc->pgprocno % NUM_XLOGINSERT_LOCKS;
-	MyLockNo = lockToTry;
-
-	/*
-	 * The insertingAt value is initially set to 0, as we don't know our
-	 * insert location yet.
-	 */
-	immed = LWLockAcquire(&WALInsertLocks[MyLockNo].l.lock, LW_EXCLUSIVE);
-	if (!immed)
-	{
-		/*
-		 * If we couldn't get the lock immediately, try another lock next
-		 * time.  On a system with more insertion locks than concurrent
-		 * inserters, this causes all the inserters to eventually migrate to a
-		 * lock that no-one else is using.  On a system with more inserters
-		 * than locks, it still helps to distribute the inserters evenly
-		 * across the locks.
-		 */
-		lockToTry = (lockToTry + 1) % NUM_XLOGINSERT_LOCKS;
-	}
-}
-
-/*
- * Acquire all WAL insertion locks, to prevent other backends from inserting
- * to WAL.
- */
-static void
-WALInsertLockAcquireExclusive(void)
-{
-	int			i;
-
-	/*
-	 * When holding all the locks, all but the last lock's insertingAt
-	 * indicator is set to 0xFFFFFFFFFFFFFFFF, which is higher than any real
-	 * XLogRecPtr value, to make sure that no-one blocks waiting on those.
-	 */
-	for (i = 0; i < NUM_XLOGINSERT_LOCKS - 1; i++)
-	{
-		LWLockAcquire(&WALInsertLocks[i].l.lock, LW_EXCLUSIVE);
-		LWLockUpdateVar(&WALInsertLocks[i].l.lock,
-						&WALInsertLocks[i].l.insertingAt,
-						PG_UINT64_MAX);
-	}
-	/* Variable value reset to 0 at release */
-	LWLockAcquire(&WALInsertLocks[i].l.lock, LW_EXCLUSIVE);
-
-	holdingAllLocks = true;
-}
-
-/*
- * Release our insertion lock (or locks, if we're holding them all).
- *
- * NB: Reset all variables to 0, so they cause LWLockWaitForVar to block the
- * next time the lock is acquired.
- */
-static void
-WALInsertLockRelease(void)
-{
-	if (holdingAllLocks)
-	{
-		int			i;
-
-		for (i = 0; i < NUM_XLOGINSERT_LOCKS; i++)
-			LWLockReleaseClearVar(&WALInsertLocks[i].l.lock,
-								  &WALInsertLocks[i].l.insertingAt,
-								  0);
-
-		holdingAllLocks = false;
-	}
-	else
-	{
-		LWLockReleaseClearVar(&WALInsertLocks[MyLockNo].l.lock,
-							  &WALInsertLocks[MyLockNo].l.insertingAt,
-							  0);
-	}
-}
-
-/*
- * Update our insertingAt value, to let others know that we've finished
- * inserting up to that point.
- */
-static void
-WALInsertLockUpdateInsertingAt(XLogRecPtr insertingAt)
-{
-	if (holdingAllLocks)
-	{
-		/*
-		 * We use the last lock to mark our actual position, see comments in
-		 * WALInsertLockAcquireExclusive.
-		 */
-		LWLockUpdateVar(&WALInsertLocks[NUM_XLOGINSERT_LOCKS - 1].l.lock,
-						&WALInsertLocks[NUM_XLOGINSERT_LOCKS - 1].l.insertingAt,
-						insertingAt);
-	}
-	else
-		LWLockUpdateVar(&WALInsertLocks[MyLockNo].l.lock,
-						&WALInsertLocks[MyLockNo].l.insertingAt,
-						insertingAt);
-}
-
-/*
  * Wait for any WAL insertions < upto to finish.
  *
  * Returns the location of the oldest insertion that is still in-progress.
@@ -1876,260 +1380,13 @@ WaitXLogInsertionsToFinish(XLogRecPtr upto)
 }
 
 /*
- * Get a pointer to the right location in the WAL buffer containing the
- * given XLogRecPtr.
- *
- * If the page is not initialized yet, it is initialized. That might require
- * evicting an old dirty buffer from the buffer cache, which means I/O.
- *
- * The caller must ensure that the page containing the requested location
- * isn't evicted yet, and won't be evicted. The way to ensure that is to
- * hold onto a WAL insertion lock with the insertingAt position set to
- * something <= ptr. GetXLogBuffer() will update insertingAt if it needs
- * to evict an old page from the buffer. (This means that once you call
- * GetXLogBuffer() with a given 'ptr', you must not access anything before
- * that point anymore, and must not call GetXLogBuffer() with an older 'ptr'
- * later, because older buffers might be recycled already)
- */
-static char *
-GetXLogBuffer(XLogRecPtr ptr)
-{
-	int			idx;
-	XLogRecPtr	endptr;
-	static uint64 cachedPage = 0;
-	static char *cachedPos = NULL;
-	XLogRecPtr	expectedEndPtr;
-
-	/*
-	 * Fast path for the common case that we need to access again the same
-	 * page as last time.
-	 */
-	if (ptr / XLOG_BLCKSZ == cachedPage)
-	{
-		Assert(((XLogPageHeader) cachedPos)->xlp_magic == XLOG_PAGE_MAGIC);
-		Assert(((XLogPageHeader) cachedPos)->xlp_pageaddr == ptr - (ptr % XLOG_BLCKSZ));
-		return cachedPos + ptr % XLOG_BLCKSZ;
-	}
-
-	/*
-	 * The XLog buffer cache is organized so that a page is always loaded to a
-	 * particular buffer.  That way we can easily calculate the buffer a given
-	 * page must be loaded into, from the XLogRecPtr alone.
-	 */
-	idx = XLogRecPtrToBufIdx(ptr);
-
-	/*
-	 * See what page is loaded in the buffer at the moment. It could be the
-	 * page we're looking for, or something older. It can't be anything newer
-	 * - that would imply the page we're looking for has already been written
-	 * out to disk and evicted, and the caller is responsible for making sure
-	 * that doesn't happen.
-	 *
-	 * However, we don't hold a lock while we read the value. If someone has
-	 * just initialized the page, it's possible that we get a "torn read" of
-	 * the XLogRecPtr if 64-bit fetches are not atomic on this platform. In
-	 * that case we will see a bogus value. That's ok, we'll grab the mapping
-	 * lock (in AdvanceXLInsertBuffer) and retry if we see anything else than
-	 * the page we're looking for. But it means that when we do this unlocked
-	 * read, we might see a value that appears to be ahead of the page we're
-	 * looking for. Don't PANIC on that, until we've verified the value while
-	 * holding the lock.
-	 */
-	expectedEndPtr = ptr;
-	expectedEndPtr += XLOG_BLCKSZ - ptr % XLOG_BLCKSZ;
-
-	endptr = XLogCtl->xlblocks[idx];
-	if (expectedEndPtr != endptr)
-	{
-		XLogRecPtr	initializedUpto;
-
-		/*
-		 * Before calling AdvanceXLInsertBuffer(), which can block, let others
-		 * know how far we're finished with inserting the record.
-		 *
-		 * NB: If 'ptr' points to just after the page header, advertise a
-		 * position at the beginning of the page rather than 'ptr' itself. If
-		 * there are no other insertions running, someone might try to flush
-		 * up to our advertised location. If we advertised a position after
-		 * the page header, someone might try to flush the page header, even
-		 * though page might actually not be initialized yet. As the first
-		 * inserter on the page, we are effectively responsible for making
-		 * sure that it's initialized, before we let insertingAt to move past
-		 * the page header.
-		 */
-		if (ptr % XLOG_BLCKSZ == SizeOfXLogShortPHD &&
-			XLogSegmentOffset(ptr, wal_segment_size) > XLOG_BLCKSZ)
-			initializedUpto = ptr - SizeOfXLogShortPHD;
-		else if (ptr % XLOG_BLCKSZ == SizeOfXLogLongPHD &&
-				 XLogSegmentOffset(ptr, wal_segment_size) < XLOG_BLCKSZ)
-			initializedUpto = ptr - SizeOfXLogLongPHD;
-		else
-			initializedUpto = ptr;
-
-		WALInsertLockUpdateInsertingAt(initializedUpto);
-
-		AdvanceXLInsertBuffer(ptr, false);
-		endptr = XLogCtl->xlblocks[idx];
-
-		if (expectedEndPtr != endptr)
-			elog(PANIC, "could not find WAL buffer for %X/%X",
-				 (uint32) (ptr >> 32), (uint32) ptr);
-	}
-	else
-	{
-		/*
-		 * Make sure the initialization of the page is visible to us, and
-		 * won't arrive later to overwrite the WAL data we write on the page.
-		 */
-		pg_memory_barrier();
-	}
-
-	/*
-	 * Found the buffer holding this page. Return a pointer to the right
-	 * offset within the page.
-	 */
-	cachedPage = ptr / XLOG_BLCKSZ;
-	cachedPos = XLogCtl->pages + idx * (Size) XLOG_BLCKSZ;
-
-	Assert(((XLogPageHeader) cachedPos)->xlp_magic == XLOG_PAGE_MAGIC);
-	Assert(((XLogPageHeader) cachedPos)->xlp_pageaddr == ptr - (ptr % XLOG_BLCKSZ));
-
-	return cachedPos + ptr % XLOG_BLCKSZ;
-}
-
-/*
- * Converts a "usable byte position" to XLogRecPtr. A usable byte position
- * is the position starting from the beginning of WAL, excluding all WAL
- * page headers.
- */
-static XLogRecPtr
-XLogBytePosToRecPtr(uint64 bytepos)
-{
-	uint64		fullsegs;
-	uint64		fullpages;
-	uint64		bytesleft;
-	uint32		seg_offset;
-	XLogRecPtr	result;
-
-	fullsegs = bytepos / UsableBytesInSegment;
-	bytesleft = bytepos % UsableBytesInSegment;
-
-	if (bytesleft < XLOG_BLCKSZ - SizeOfXLogLongPHD)
-	{
-		/* fits on first page of segment */
-		seg_offset = bytesleft + SizeOfXLogLongPHD;
-	}
-	else
-	{
-		/* account for the first page on segment with long header */
-		seg_offset = XLOG_BLCKSZ;
-		bytesleft -= XLOG_BLCKSZ - SizeOfXLogLongPHD;
-
-		fullpages = bytesleft / UsableBytesInPage;
-		bytesleft = bytesleft % UsableBytesInPage;
-
-		seg_offset += fullpages * XLOG_BLCKSZ + bytesleft + SizeOfXLogShortPHD;
-	}
-
-	XLogSegNoOffsetToRecPtr(fullsegs, seg_offset, wal_segment_size, result);
-
-	return result;
-}
-
-/*
- * Like XLogBytePosToRecPtr, but if the position is at a page boundary,
- * returns a pointer to the beginning of the page (ie. before page header),
- * not to where the first xlog record on that page would go to. This is used
- * when converting a pointer to the end of a record.
- */
-static XLogRecPtr
-XLogBytePosToEndRecPtr(uint64 bytepos)
-{
-	uint64		fullsegs;
-	uint64		fullpages;
-	uint64		bytesleft;
-	uint32		seg_offset;
-	XLogRecPtr	result;
-
-	fullsegs = bytepos / UsableBytesInSegment;
-	bytesleft = bytepos % UsableBytesInSegment;
-
-	if (bytesleft < XLOG_BLCKSZ - SizeOfXLogLongPHD)
-	{
-		/* fits on first page of segment */
-		if (bytesleft == 0)
-			seg_offset = 0;
-		else
-			seg_offset = bytesleft + SizeOfXLogLongPHD;
-	}
-	else
-	{
-		/* account for the first page on segment with long header */
-		seg_offset = XLOG_BLCKSZ;
-		bytesleft -= XLOG_BLCKSZ - SizeOfXLogLongPHD;
-
-		fullpages = bytesleft / UsableBytesInPage;
-		bytesleft = bytesleft % UsableBytesInPage;
-
-		if (bytesleft == 0)
-			seg_offset += fullpages * XLOG_BLCKSZ + bytesleft;
-		else
-			seg_offset += fullpages * XLOG_BLCKSZ + bytesleft + SizeOfXLogShortPHD;
-	}
-
-	XLogSegNoOffsetToRecPtr(fullsegs, seg_offset, wal_segment_size, result);
-
-	return result;
-}
-
-/*
- * Convert an XLogRecPtr to a "usable byte position".
- */
-static uint64
-XLogRecPtrToBytePos(XLogRecPtr ptr)
-{
-	uint64		fullsegs;
-	uint32		fullpages;
-	uint32		offset;
-	uint64		result;
-
-	XLByteToSeg(ptr, fullsegs, wal_segment_size);
-
-	fullpages = (XLogSegmentOffset(ptr, wal_segment_size)) / XLOG_BLCKSZ;
-	offset = ptr % XLOG_BLCKSZ;
-
-	if (fullpages == 0)
-	{
-		result = fullsegs * UsableBytesInSegment;
-		if (offset > 0)
-		{
-			Assert(offset >= SizeOfXLogLongPHD);
-			result += offset - SizeOfXLogLongPHD;
-		}
-	}
-	else
-	{
-		result = fullsegs * UsableBytesInSegment +
-			(XLOG_BLCKSZ - SizeOfXLogLongPHD) + /* account for first page */
-			(fullpages - 1) * UsableBytesInPage;	/* full pages */
-		if (offset > 0)
-		{
-			Assert(offset >= SizeOfXLogShortPHD);
-			result += offset - SizeOfXLogShortPHD;
-		}
-	}
-
-	return result;
-}
-
-/*
  * Initialize XLOG buffers, writing out old buffers if they still contain
  * unwritten data, upto the page containing 'upto'. Or if 'opportunistic' is
  * true, initialize as many pages as we can without having to write out
  * unwritten data. Any new pages are initialized to zeros, with pages headers
  * initialized properly.
  */
-static void
+void
 AdvanceXLInsertBuffer(XLogRecPtr upto, bool opportunistic)
 {
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
@@ -4908,10 +4165,6 @@ ReadControlFile(void)
 	if (ConvertToXSegs(max_wal_size_mb, wal_segment_size) < 2)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("\"max_wal_size\" must be at least twice \"wal_segment_size\"")));
-
-	UsableBytesInSegment =
-		(wal_segment_size / XLOG_BLCKSZ * UsableBytesInPage) -
-		(SizeOfXLogLongPHD - SizeOfXLogShortPHD);
 
 	CalculateCheckpointSegments();
 

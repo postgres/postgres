@@ -26,12 +26,14 @@ OBJS = \
 	twophase.o \
 	twophase_rmgr.o \
 	varsup.o \
+	walinsertlock.o \
 	xact.o \
 	xlog.o \
 	xlogarchive.o \
 	xlogfuncs.o \
 	xloginsert.o \
 	xlogreader.o \
+	xlogrecord.o \
 	xlogutils.o
 
 include $(top_srcdir)/src/backend/common.mk
