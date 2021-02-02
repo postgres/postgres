@@ -3045,7 +3045,7 @@ index_build(Relation heapRelation,
 
 	/* Set up initial progress report status */
 	{
-		const int	index[] = {
+		const int	progress_index[] = {
 			PROGRESS_CREATEIDX_PHASE,
 			PROGRESS_CREATEIDX_SUBPHASE,
 			PROGRESS_CREATEIDX_TUPLES_DONE,
@@ -3053,13 +3053,13 @@ index_build(Relation heapRelation,
 			PROGRESS_SCAN_BLOCKS_DONE,
 			PROGRESS_SCAN_BLOCKS_TOTAL
 		};
-		const int64 val[] = {
+		const int64 progress_vals[] = {
 			PROGRESS_CREATEIDX_PHASE_BUILD,
 			PROGRESS_CREATEIDX_SUBPHASE_INITIALIZE,
 			0, 0, 0, 0
 		};
 
-		pgstat_progress_update_multi_param(6, index, val);
+		pgstat_progress_update_multi_param(6, progress_index, progress_vals);
 	}
 
 	/*
@@ -3351,19 +3351,19 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	int			save_nestlevel;
 
 	{
-		const int	index[] = {
+		const int	progress_index[] = {
 			PROGRESS_CREATEIDX_PHASE,
 			PROGRESS_CREATEIDX_TUPLES_DONE,
 			PROGRESS_CREATEIDX_TUPLES_TOTAL,
 			PROGRESS_SCAN_BLOCKS_DONE,
 			PROGRESS_SCAN_BLOCKS_TOTAL
 		};
-		const int64 val[] = {
+		const int64 progress_vals[] = {
 			PROGRESS_CREATEIDX_PHASE_VALIDATE_IDXSCAN,
 			0, 0, 0, 0
 		};
 
-		pgstat_progress_update_multi_param(5, index, val);
+		pgstat_progress_update_multi_param(5, progress_index, progress_vals);
 	}
 
 	/* Open and lock the parent heap relation */
@@ -3420,17 +3420,17 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 
 	/* Execute the sort */
 	{
-		const int	index[] = {
+		const int	progress_index[] = {
 			PROGRESS_CREATEIDX_PHASE,
 			PROGRESS_SCAN_BLOCKS_DONE,
 			PROGRESS_SCAN_BLOCKS_TOTAL
 		};
-		const int64 val[] = {
+		const int64 progress_vals[] = {
 			PROGRESS_CREATEIDX_PHASE_VALIDATE_SORT,
 			0, 0
 		};
 
-		pgstat_progress_update_multi_param(3, index, val);
+		pgstat_progress_update_multi_param(3, progress_index, progress_vals);
 	}
 	tuplesort_performsort(state.tuplesort);
 
