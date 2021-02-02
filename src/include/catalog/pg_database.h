@@ -35,7 +35,7 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	NameData	datname;
 
 	/* owner of database */
-	Oid			datdba BKI_DEFAULT(PGUID);
+	Oid			datdba BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
 
 	/* character encoding */
 	int32		encoding;

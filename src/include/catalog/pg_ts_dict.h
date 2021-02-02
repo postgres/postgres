@@ -35,10 +35,10 @@ CATALOG(pg_ts_dict,3600,TSDictionaryRelationId)
 	NameData	dictname;
 
 	/* name space */
-	Oid			dictnamespace BKI_DEFAULT(PGNSP);
+	Oid			dictnamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
 
 	/* owner */
-	Oid			dictowner BKI_DEFAULT(PGUID);
+	Oid			dictowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
 
 	/* dictionary's template */
 	Oid			dicttemplate BKI_LOOKUP(pg_ts_template);

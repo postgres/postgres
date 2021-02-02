@@ -46,7 +46,8 @@
 CATALOG(pg_init_privs,3394,InitPrivsRelationId)
 {
 	Oid			objoid;			/* OID of object itself */
-	Oid			classoid;		/* OID of table containing object */
+	Oid			classoid BKI_LOOKUP(pg_class);	/* OID of table containing
+												 * object */
 	int32		objsubid;		/* column number, or 0 if not used */
 	char		privtype;		/* from initdb or extension? */
 

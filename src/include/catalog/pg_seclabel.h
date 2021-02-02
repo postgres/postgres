@@ -28,7 +28,8 @@
 CATALOG(pg_seclabel,3596,SecLabelRelationId)
 {
 	Oid			objoid;			/* OID of the object itself */
-	Oid			classoid;		/* OID of table containing the object */
+	Oid			classoid BKI_LOOKUP(pg_class);	/* OID of table containing the
+												 * object */
 	int32		objsubid;		/* column number, or 0 if not used */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */

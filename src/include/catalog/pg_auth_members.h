@@ -29,9 +29,9 @@
  */
 CATALOG(pg_auth_members,1261,AuthMemRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2843,AuthMemRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
-	Oid			roleid;			/* ID of a role */
-	Oid			member;			/* ID of a member of that role */
-	Oid			grantor;		/* who granted the membership */
+	Oid			roleid BKI_LOOKUP(pg_authid);	/* ID of a role */
+	Oid			member BKI_LOOKUP(pg_authid);	/* ID of a member of that role */
+	Oid			grantor BKI_LOOKUP(pg_authid);	/* who granted the membership */
 	bool		admin_option;	/* granted with admin option? */
 } FormData_pg_auth_members;
 

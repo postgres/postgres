@@ -33,7 +33,7 @@ CATALOG(pg_rewrite,2618,RewriteRelationId)
 {
 	Oid			oid;			/* oid */
 	NameData	rulename;
-	Oid			ev_class;
+	Oid			ev_class BKI_LOOKUP(pg_class);
 	char		ev_type;
 	char		ev_enabled;
 	bool		is_instead;

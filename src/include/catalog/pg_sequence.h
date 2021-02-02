@@ -22,8 +22,8 @@
 
 CATALOG(pg_sequence,2224,SequenceRelationId)
 {
-	Oid			seqrelid;
-	Oid			seqtypid;
+	Oid			seqrelid BKI_LOOKUP(pg_class);
+	Oid			seqtypid BKI_LOOKUP(pg_type);
 	int64		seqstart;
 	int64		seqincrement;
 	int64		seqmax;

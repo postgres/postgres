@@ -34,18 +34,25 @@
 CATALOG(pg_trigger,2620,TriggerRelationId)
 {
 	Oid			oid;			/* oid */
-	Oid			tgrelid;		/* relation trigger is attached to */
-	Oid			tgparentid;		/* OID of parent trigger, if any */
+	Oid			tgrelid BKI_LOOKUP(pg_class);	/* relation trigger is
+												 * attached to */
+	Oid			tgparentid BKI_LOOKUP_OPT(pg_trigger);	/* OID of parent
+														 * trigger, if any */
 	NameData	tgname;			/* trigger's name */
-	Oid			tgfoid;			/* OID of function to be called */
+	Oid			tgfoid BKI_LOOKUP(pg_proc); /* OID of function to be called */
 	int16		tgtype;			/* BEFORE/AFTER/INSTEAD, UPDATE/DELETE/INSERT,
 								 * ROW/STATEMENT; see below */
 	char		tgenabled;		/* trigger's firing configuration WRT
 								 * session_replication_role */
 	bool		tgisinternal;	/* trigger is system-generated */
-	Oid			tgconstrrelid;	/* constraint's FROM table, if any */
-	Oid			tgconstrindid;	/* constraint's supporting index, if any */
-	Oid			tgconstraint;	/* associated pg_constraint entry, if any */
+	Oid			tgconstrrelid BKI_LOOKUP_OPT(pg_class); /* constraint's FROM
+														 * table, if any */
+	Oid			tgconstrindid BKI_LOOKUP_OPT(pg_class); /* constraint's
+														 * supporting index, if
+														 * any */
+	Oid			tgconstraint BKI_LOOKUP_OPT(pg_constraint); /* associated
+															 * pg_constraint entry,
+															 * if any */
 	bool		tgdeferrable;	/* constraint trigger is deferrable */
 	bool		tginitdeferred; /* constraint trigger is deferred initially */
 	int16		tgnargs;		/* # of extra arguments in tgargs */
@@ -80,6 +87,8 @@ DECLARE_UNIQUE_INDEX(pg_trigger_tgrelid_tgname_index, 2701, on pg_trigger using 
 #define TriggerRelidNameIndexId  2701
 DECLARE_UNIQUE_INDEX_PKEY(pg_trigger_oid_index, 2702, on pg_trigger using btree(oid oid_ops));
 #define TriggerOidIndexId  2702
+
+DECLARE_ARRAY_FOREIGN_KEY((tgrelid, tgattr), pg_attribute, (attrelid, attnum));
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 

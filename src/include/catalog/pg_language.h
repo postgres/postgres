@@ -34,7 +34,7 @@ CATALOG(pg_language,2612,LanguageRelationId)
 	NameData	lanname;
 
 	/* Language's owner */
-	Oid			lanowner BKI_DEFAULT(PGUID);
+	Oid			lanowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
 
 	/* Is a procedural language */
 	bool		lanispl BKI_DEFAULT(f);
@@ -43,13 +43,13 @@ CATALOG(pg_language,2612,LanguageRelationId)
 	bool		lanpltrusted BKI_DEFAULT(f);
 
 	/* Call handler, if it's a PL */
-	Oid			lanplcallfoid BKI_DEFAULT(0) BKI_LOOKUP(pg_proc);
+	Oid			lanplcallfoid BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_proc);
 
 	/* Optional anonymous-block handler function */
-	Oid			laninline BKI_DEFAULT(0) BKI_LOOKUP(pg_proc);
+	Oid			laninline BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_proc);
 
 	/* Optional validation function */
-	Oid			lanvalidator BKI_DEFAULT(0) BKI_LOOKUP(pg_proc);
+	Oid			lanvalidator BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_proc);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* Access privileges */

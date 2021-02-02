@@ -29,9 +29,11 @@ CATALOG(pg_user_mapping,1418,UserMappingRelationId)
 {
 	Oid			oid;			/* oid */
 
-	Oid			umuser;			/* Id of the user, InvalidOid if PUBLIC is
-								 * wanted */
-	Oid			umserver;		/* server of this mapping */
+	Oid			umuser BKI_LOOKUP_OPT(pg_authid);	/* Id of the user,
+													 * InvalidOid if PUBLIC is
+													 * wanted */
+	Oid			umserver BKI_LOOKUP(pg_foreign_server); /* server of this
+														 * mapping */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		umoptions[1];	/* user mapping options */

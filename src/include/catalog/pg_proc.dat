@@ -2405,7 +2405,7 @@
 { oid => '1215', descr => 'get description for object id and catalog name',
   proname => 'obj_description', prolang => 'sql', procost => '100',
   provolatile => 's', prorettype => 'text', proargtypes => 'oid name',
-  prosrc => 'select description from pg_catalog.pg_description where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP) and objsubid = 0' },
+  prosrc => 'select description from pg_catalog.pg_description where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = \'pg_catalog\'::pg_catalog.regnamespace) and objsubid = 0' },
 { oid => '1216', descr => 'get description for table column',
   proname => 'col_description', prolang => 'sql', procost => '100',
   provolatile => 's', prorettype => 'text', proargtypes => 'oid int4',
@@ -2414,7 +2414,7 @@
   descr => 'get description for object id and shared catalog name',
   proname => 'shobj_description', prolang => 'sql', procost => '100',
   provolatile => 's', prorettype => 'text', proargtypes => 'oid name',
-  prosrc => 'select description from pg_catalog.pg_shdescription where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP)' },
+  prosrc => 'select description from pg_catalog.pg_shdescription where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = \'pg_catalog\'::pg_catalog.regnamespace)' },
 
 { oid => '1217',
   descr => 'truncate timestamp with time zone to specified units',
@@ -3697,6 +3697,14 @@
   proargmodes => '{o,o,o,o,o}',
   proargnames => '{word,catcode,barelabel,catdesc,baredesc}',
   prosrc => 'pg_get_keywords' },
+
+{ oid => '8103', descr => 'list of catalog foreign key relationships',
+  proname => 'pg_get_catalog_foreign_keys', procost => '10', prorows => '250',
+  proretset => 't', provolatile => 's', prorettype => 'record',
+  proargtypes => '', proallargtypes => '{regclass,_text,regclass,_text,bool,bool}',
+  proargmodes => '{o,o,o,o,o,o}',
+  proargnames => '{fktable,fkcols,pktable,pkcols,is_array,is_opt}',
+  prosrc => 'pg_get_catalog_foreign_keys' },
 
 { oid => '2289', descr => 'convert generic options array to name/value table',
   proname => 'pg_options_to_table', prorows => '3', proretset => 't',

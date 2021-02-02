@@ -22792,6 +22792,38 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_get_catalog_foreign_keys</primary>
+        </indexterm>
+        <function>pg_get_catalog_foreign_keys</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>fktable</parameter> <type>regclass</type>,
+          <parameter>fkcols</parameter> <type>text[]</type>,
+          <parameter>pktable</parameter> <type>regclass</type>,
+          <parameter>pkcols</parameter> <type>text[]</type>,
+          <parameter>is_array</parameter> <type>boolean</type>,
+          <parameter>is_opt</parameter> <type>boolean</type> )
+       </para>
+       <para>
+        Returns a set of records describing the foreign key relationships
+        that exist within the <productname>PostgreSQL</productname> system
+        catalogs.
+        The <parameter>fktable</parameter> column contains the name of the
+        referencing catalog, and the <parameter>fkcols</parameter> column
+        contains the name(s) of the referencing column(s).  Similarly,
+        the <parameter>pktable</parameter> column contains the name of the
+        referenced catalog, and the <parameter>pkcols</parameter> column
+        contains the name(s) of the referenced column(s).
+        If <parameter>is_array</parameter> is true, the last referencing
+        column is an array, each of whose elements should match some entry
+        in the referenced catalog.
+        If <parameter>is_opt</parameter> is true, the referencing column(s)
+        are allowed to contain zeroes instead of a valid reference.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_get_constraintdef</primary>
         </indexterm>
         <function>pg_get_constraintdef</function> ( <parameter>constraint</parameter> <type>oid</type> <optional>, <parameter>pretty</parameter> <type>boolean</type> </optional> )

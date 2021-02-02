@@ -47,6 +47,7 @@ if exist src\include\utils\fmgrprotos.h del /q src\include\utils\fmgrprotos.h
 if exist src\include\storage\lwlocknames.h del /q src\include\storage\lwlocknames.h
 if exist src\include\utils\probes.h del /q src\include\utils\probes.h
 if exist src\include\catalog\schemapg.h del /q src\include\catalog\schemapg.h
+if exist src\include\catalog\system_fk_info.h del /q src\include\catalog\system_fk_info.h
 if exist src\include\catalog\pg_*_d.h del /q src\include\catalog\pg_*_d.h
 if exist src\include\catalog\header-stamp del /q src\include\catalog\header-stamp
 if exist doc\src\sgml\version.sgml del /q doc\src\sgml\version.sgml
@@ -73,6 +74,7 @@ if %DIST%==1 if exist src\interfaces\ecpg\preproc\preproc.y del /q src\interface
 if %DIST%==1 if exist src\backend\catalog\postgres.bki del /q src\backend\catalog\postgres.bki
 if %DIST%==1 if exist src\backend\catalog\system_constraints.sql del /q src\backend\catalog\system_constraints.sql
 if %DIST%==1 if exist src\backend\catalog\schemapg.h del /q src\backend\catalog\schemapg.h
+if %DIST%==1 if exist src\backend\catalog\system_fk_info.h del /q src\backend\catalog\system_fk_info.h
 if %DIST%==1 if exist src\backend\catalog\pg_*_d.h del /q src\backend\catalog\pg_*_d.h
 if %DIST%==1 if exist src\backend\catalog\bki-stamp del /q src\backend\catalog\bki-stamp
 if %DIST%==1 if exist src\backend\parser\scan.c del /q src\backend\parser\scan.c

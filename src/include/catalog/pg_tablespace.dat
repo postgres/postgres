@@ -13,10 +13,8 @@
 [
 
 { oid => '1663', oid_symbol => 'DEFAULTTABLESPACE_OID',
-  spcname => 'pg_default', spcowner => 'PGUID', spcacl => '_null_',
-  spcoptions => '_null_' },
+  spcname => 'pg_default', spcacl => '_null_', spcoptions => '_null_' },
 { oid => '1664', oid_symbol => 'GLOBALTABLESPACE_OID',
-  spcname => 'pg_global', spcowner => 'PGUID', spcacl => '_null_',
-  spcoptions => '_null_' },
+  spcname => 'pg_global', spcacl => '_null_', spcoptions => '_null_' },
 
 ]

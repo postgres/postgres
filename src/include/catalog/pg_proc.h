@@ -35,10 +35,10 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 	NameData	proname;
 
 	/* OID of namespace containing this proc */
-	Oid			pronamespace BKI_DEFAULT(PGNSP);
+	Oid			pronamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
 
 	/* procedure owner */
-	Oid			proowner BKI_DEFAULT(PGUID);
+	Oid			proowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
 
 	/* OID of pg_language entry */
 	Oid			prolang BKI_DEFAULT(internal) BKI_LOOKUP(pg_language);
@@ -49,11 +49,11 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 	/* estimated # of rows out (if proretset) */
 	float4		prorows BKI_DEFAULT(0);
 
-	/* element type of variadic array, or 0 */
-	Oid			provariadic BKI_DEFAULT(0) BKI_LOOKUP(pg_type);
+	/* element type of variadic array, or 0 if not variadic */
+	Oid			provariadic BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_type);
 
 	/* planner support function for this function, or 0 if none */
-	regproc		prosupport BKI_DEFAULT(0) BKI_LOOKUP(pg_proc);
+	regproc		prosupport BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_proc);
 
 	/* see PROKIND_ categories below */
 	char		prokind BKI_DEFAULT(f);
@@ -109,7 +109,7 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 	pg_node_tree proargdefaults BKI_DEFAULT(_null_);
 
 	/* types for which to apply transforms */
-	Oid			protrftypes[1] BKI_DEFAULT(_null_);
+	Oid			protrftypes[1] BKI_DEFAULT(_null_) BKI_LOOKUP(pg_type);
 
 	/* procedure source text */
 	text		prosrc BKI_FORCE_NOT_NULL;

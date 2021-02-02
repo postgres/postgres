@@ -35,10 +35,10 @@ CATALOG(pg_conversion,2607,ConversionRelationId)
 	NameData	conname;
 
 	/* namespace that the conversion belongs to */
-	Oid			connamespace BKI_DEFAULT(PGNSP);
+	Oid			connamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
 
 	/* owner of the conversion */
-	Oid			conowner BKI_DEFAULT(PGUID);
+	Oid			conowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
 
 	/* FOR encoding id */
 	int32		conforencoding BKI_LOOKUP(encoding);

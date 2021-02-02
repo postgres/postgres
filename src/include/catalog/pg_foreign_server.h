@@ -29,8 +29,8 @@ CATALOG(pg_foreign_server,1417,ForeignServerRelationId)
 {
 	Oid			oid;			/* oid */
 	NameData	srvname;		/* foreign server name */
-	Oid			srvowner;		/* server owner */
-	Oid			srvfdw;			/* server FDW */
+	Oid			srvowner BKI_LOOKUP(pg_authid); /* server owner */
+	Oid			srvfdw BKI_LOOKUP(pg_foreign_data_wrapper); /* server FDW */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		srvtype;

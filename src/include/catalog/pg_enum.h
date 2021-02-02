@@ -31,7 +31,7 @@
 CATALOG(pg_enum,3501,EnumRelationId)
 {
 	Oid			oid;			/* oid */
-	Oid			enumtypid;		/* OID of owning enum type */
+	Oid			enumtypid BKI_LOOKUP(pg_type);	/* OID of owning enum type */
 	float4		enumsortorder;	/* sort position of this enum value */
 	NameData	enumlabel;		/* text representation of enum value */
 } FormData_pg_enum;

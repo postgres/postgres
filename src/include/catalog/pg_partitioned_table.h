@@ -29,11 +29,11 @@
  */
 CATALOG(pg_partitioned_table,3350,PartitionedRelationId)
 {
-	Oid			partrelid;		/* partitioned table oid */
+	Oid			partrelid BKI_LOOKUP(pg_class); /* partitioned table oid */
 	char		partstrat;		/* partitioning strategy */
 	int16		partnatts;		/* number of partition key columns */
-	Oid			partdefid;		/* default partition oid; InvalidOid if there
-								 * isn't one */
+	Oid			partdefid BKI_LOOKUP_OPT(pg_class); /* default partition oid;
+													 * 0 if there isn't one */
 
 	/*
 	 * variable-length fields start here, but we allow direct access to
@@ -48,10 +48,10 @@ CATALOG(pg_partitioned_table,3350,PartitionedRelationId)
 												 * an expression */
 
 #ifdef CATALOG_VARLEN
-	oidvector	partclass BKI_FORCE_NOT_NULL;	/* operator class to compare
-												 * keys */
-	oidvector	partcollation BKI_FORCE_NOT_NULL;	/* user-specified
-													 * collation for keys */
+	oidvector	partclass BKI_LOOKUP(pg_opclass) BKI_FORCE_NOT_NULL;	/* operator class to
+																		 * compare keys */
+	oidvector	partcollation BKI_LOOKUP_OPT(pg_collation) BKI_FORCE_NOT_NULL;	/* user-specified
+																				 * collation for keys */
 	pg_node_tree partexprs;		/* list of expressions in the partition key;
 								 * one item for each zero entry in partattrs[] */
 #endif
@@ -68,5 +68,8 @@ DECLARE_TOAST(pg_partitioned_table, 4165, 4166);
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_partitioned_table_partrelid_index, 3351, on pg_partitioned_table using btree(partrelid oid_ops));
 #define PartitionedRelidIndexId			 3351
+
+/* partattrs can contain zero (InvalidAttrNumber) to represent expressions */
+DECLARE_ARRAY_FOREIGN_KEY_OPT((partrelid, partattrs), pg_attribute, (attrelid, attnum));
 
 #endif							/* PG_PARTITIONED_TABLE_H */

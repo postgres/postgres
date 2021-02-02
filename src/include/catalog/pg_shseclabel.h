@@ -28,7 +28,8 @@
 CATALOG(pg_shseclabel,3592,SharedSecLabelRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(4066,SharedSecLabelRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
 	Oid			objoid;			/* OID of the shared object itself */
-	Oid			classoid;		/* OID of table containing the shared object */
+	Oid			classoid BKI_LOOKUP(pg_class);	/* OID of table containing the
+												 * shared object */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		provider BKI_FORCE_NOT_NULL;	/* name of label provider */

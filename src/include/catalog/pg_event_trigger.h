@@ -31,8 +31,9 @@ CATALOG(pg_event_trigger,3466,EventTriggerRelationId)
 	Oid			oid;			/* oid */
 	NameData	evtname;		/* trigger's name */
 	NameData	evtevent;		/* trigger's event */
-	Oid			evtowner;		/* trigger's owner */
-	Oid			evtfoid;		/* OID of function to be called */
+	Oid			evtowner BKI_LOOKUP(pg_authid); /* trigger's owner */
+	Oid			evtfoid BKI_LOOKUP(pg_proc);	/* OID of function to be
+												 * called */
 	char		evtenabled;		/* trigger's firing configuration WRT
 								 * session_replication_role */
 

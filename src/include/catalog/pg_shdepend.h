@@ -42,8 +42,10 @@ CATALOG(pg_shdepend,1214,SharedDependRelationId) BKI_SHARED_RELATION
 	 * These fields are all zeroes for a DEPENDENCY_PIN entry.  Also, dbid can
 	 * be zero to denote a shared object.
 	 */
-	Oid			dbid;			/* OID of database containing object */
-	Oid			classid;		/* OID of table containing object */
+	Oid			dbid BKI_LOOKUP_OPT(pg_database);	/* OID of database
+													 * containing object */
+	Oid			classid BKI_LOOKUP_OPT(pg_class);	/* OID of table containing
+													 * object */
 	Oid			objid;			/* OID of object itself */
 	int32		objsubid;		/* column number, or 0 if not used */
 
@@ -52,7 +54,8 @@ CATALOG(pg_shdepend,1214,SharedDependRelationId) BKI_SHARED_RELATION
 	 * a shared object, so we need no database ID field.  We don't bother with
 	 * a sub-object ID either.
 	 */
-	Oid			refclassid;		/* OID of table containing object */
+	Oid			refclassid BKI_LOOKUP(pg_class);	/* OID of table containing
+													 * object */
 	Oid			refobjid;		/* OID of object itself */
 
 	/*

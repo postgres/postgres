@@ -46,7 +46,8 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	 * conrelid + contypid + conname.
 	 */
 	NameData	conname;		/* name of this constraint */
-	Oid			connamespace;	/* OID of namespace containing constraint */
+	Oid			connamespace BKI_LOOKUP(pg_namespace);	/* OID of namespace
+														 * containing constraint */
 	char		contype;		/* constraint type; see codes below */
 	bool		condeferrable;	/* deferrable constraint? */
 	bool		condeferred;	/* deferred by default? */
@@ -57,7 +58,8 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	 * specific relation (this excludes domain constraints and assertions).
 	 * Otherwise conrelid is 0 and conkey is NULL.
 	 */
-	Oid			conrelid;		/* relation this constraint constrains */
+	Oid			conrelid BKI_LOOKUP_OPT(pg_class);	/* relation this
+													 * constraint constrains */
 
 	/*
 	 * contypid links to the pg_type row for a domain if this is a domain
@@ -66,7 +68,8 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	 * For SQL-style global ASSERTIONs, both conrelid and contypid would be
 	 * zero. This is not presently supported, however.
 	 */
-	Oid			contypid;		/* domain this constraint constrains */
+	Oid			contypid BKI_LOOKUP_OPT(pg_type);	/* domain this constraint
+													 * constrains */
 
 	/*
 	 * conindid links to the index supporting the constraint, if any;
@@ -76,19 +79,21 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	 * columns).  Notice that the index is on conrelid in the first case but
 	 * confrelid in the second.
 	 */
-	Oid			conindid;		/* index supporting this constraint */
+	Oid			conindid BKI_LOOKUP_OPT(pg_class);	/* index supporting this
+													 * constraint */
 
 	/*
 	 * If this constraint is on a partition inherited from a partitioned
 	 * table, this is the OID of the corresponding constraint in the parent.
 	 */
-	Oid			conparentid;
+	Oid			conparentid BKI_LOOKUP_OPT(pg_constraint);
 
 	/*
 	 * These fields, plus confkey, are only meaningful for a foreign-key
 	 * constraint.  Otherwise confrelid is 0 and the char fields are spaces.
 	 */
-	Oid			confrelid;		/* relation referenced by foreign key */
+	Oid			confrelid BKI_LOOKUP_OPT(pg_class); /* relation referenced by
+													 * foreign key */
 	char		confupdtype;	/* foreign key's ON UPDATE action */
 	char		confdeltype;	/* foreign key's ON DELETE action */
 	char		confmatchtype;	/* foreign key's match type */
@@ -119,25 +124,25 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	 * If a foreign key, the OIDs of the PK = FK equality operators for each
 	 * column of the constraint
 	 */
-	Oid			conpfeqop[1];
+	Oid			conpfeqop[1] BKI_LOOKUP(pg_operator);
 
 	/*
 	 * If a foreign key, the OIDs of the PK = PK equality operators for each
 	 * column of the constraint (i.e., equality for the referenced columns)
 	 */
-	Oid			conppeqop[1];
+	Oid			conppeqop[1] BKI_LOOKUP(pg_operator);
 
 	/*
 	 * If a foreign key, the OIDs of the FK = FK equality operators for each
 	 * column of the constraint (i.e., equality for the referencing columns)
 	 */
-	Oid			conffeqop[1];
+	Oid			conffeqop[1] BKI_LOOKUP(pg_operator);
 
 	/*
 	 * If an exclusion constraint, the OIDs of the exclusion operators for
 	 * each column of the constraint
 	 */
-	Oid			conexclop[1];
+	Oid			conexclop[1] BKI_LOOKUP(pg_operator);
 
 	/*
 	 * If a check constraint, nodeToString representation of expression
@@ -165,6 +170,10 @@ DECLARE_UNIQUE_INDEX_PKEY(pg_constraint_oid_index, 2667, on pg_constraint using 
 #define ConstraintOidIndexId  2667
 DECLARE_INDEX(pg_constraint_conparentid_index, 2579, on pg_constraint using btree(conparentid oid_ops));
 #define ConstraintParentIndexId	2579
+
+/* conkey can contain zero (InvalidAttrNumber) if a whole-row Var is used */
+DECLARE_ARRAY_FOREIGN_KEY_OPT((conrelid, conkey), pg_attribute, (attrelid, attnum));
+DECLARE_ARRAY_FOREIGN_KEY((confrelid, confkey), pg_attribute, (attrelid, attnum));
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 

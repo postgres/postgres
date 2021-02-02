@@ -29,7 +29,7 @@ test: strings numerology point lseg line box path polygon circle date time timet
 # geometry depends on point, lseg, box, path, polygon and circle
 # horology depends on interval, timetz, timestamp, timestamptz
 # ----------
-test: geometry horology regex oidjoins type_sanity opr_sanity misc_sanity comments expressions unicode xid
+test: geometry horology regex type_sanity opr_sanity misc_sanity comments expressions unicode xid
 
 # ----------
 # These four each depend on the previous one
@@ -117,7 +117,8 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion tr
 test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain
 
 # event triggers cannot run concurrently with any test that runs DDL
-test: event_trigger
+# oidjoins is read-only, though, and should run late for best coverage
+test: event_trigger oidjoins
 # this test also uses event triggers, so likewise run it by itself
 test: fast_default
 

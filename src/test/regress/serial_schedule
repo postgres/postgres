@@ -45,7 +45,6 @@ test: tstypes
 test: geometry
 test: horology
 test: regex
-test: oidjoins
 test: type_sanity
 test: opr_sanity
 test: misc_sanity
@@ -201,5 +200,6 @@ test: partition_info
 test: tuplesort
 test: explain
 test: event_trigger
+test: oidjoins
 test: fast_default
 test: stats

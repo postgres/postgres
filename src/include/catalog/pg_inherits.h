@@ -31,8 +31,8 @@
  */
 CATALOG(pg_inherits,2611,InheritsRelationId)
 {
-	Oid			inhrelid;
-	Oid			inhparent;
+	Oid			inhrelid BKI_LOOKUP(pg_class);
+	Oid			inhparent BKI_LOOKUP(pg_class);
 	int32		inhseqno;
 } FormData_pg_inherits;
 

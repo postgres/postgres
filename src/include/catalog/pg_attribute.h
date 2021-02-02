@@ -36,7 +36,8 @@
  */
 CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,AttributeRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
-	Oid			attrelid;		/* OID of relation containing this attribute */
+	Oid			attrelid BKI_LOOKUP(pg_class);	/* OID of relation containing
+												 * this attribute */
 	NameData	attname;		/* name of attribute */
 
 	/*
@@ -44,9 +45,12 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	 * defines the data type of this attribute (e.g. int4).  Information in
 	 * that instance is redundant with the attlen, attbyval, and attalign
 	 * attributes of this instance, so they had better match or Postgres will
-	 * fail.
+	 * fail.  In an entry for a dropped column, this field is set to zero
+	 * since the pg_type entry may no longer exist; but we rely on attlen,
+	 * attbyval, and attalign to still tell us how large the values in the
+	 * table are.
 	 */
-	Oid			atttypid;
+	Oid			atttypid BKI_LOOKUP_OPT(pg_type);
 
 	/*
 	 * attstattarget is the target number of statistics datapoints to collect
@@ -153,8 +157,8 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	/* Number of times inherited from direct parent relation(s) */
 	int32		attinhcount BKI_DEFAULT(0);
 
-	/* attribute's collation */
-	Oid			attcollation;
+	/* attribute's collation, if any */
+	Oid			attcollation BKI_LOOKUP_OPT(pg_collation);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* NOTE: The following fields are not present in tuple descriptors. */

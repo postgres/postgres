@@ -34,13 +34,15 @@ CATALOG(pg_statistic_ext,3381,StatisticExtRelationId)
 {
 	Oid			oid;			/* oid */
 
-	Oid			stxrelid;		/* relation containing attributes */
+	Oid			stxrelid BKI_LOOKUP(pg_class);	/* relation containing
+												 * attributes */
 
 	/* These two fields form the unique key for the entry: */
 	NameData	stxname;		/* statistics object name */
-	Oid			stxnamespace;	/* OID of statistics object's namespace */
+	Oid			stxnamespace BKI_LOOKUP(pg_namespace);	/* OID of statistics
+														 * object's namespace */
 
-	Oid			stxowner;		/* statistics object's owner */
+	Oid			stxowner BKI_LOOKUP(pg_authid); /* statistics object's owner */
 	int32		stxstattarget BKI_DEFAULT(-1);	/* statistics target */
 
 	/*
@@ -71,6 +73,8 @@ DECLARE_UNIQUE_INDEX(pg_statistic_ext_name_index, 3997, on pg_statistic_ext usin
 #define StatisticExtNameIndexId 3997
 DECLARE_INDEX(pg_statistic_ext_relid_index, 3379, on pg_statistic_ext using btree(stxrelid oid_ops));
 #define StatisticExtRelidIndexId 3379
+
+DECLARE_ARRAY_FOREIGN_KEY((stxrelid, stxkeys), pg_attribute, (attrelid, attnum));
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 

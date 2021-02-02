@@ -32,7 +32,7 @@ CATALOG(pg_publication,6104,PublicationRelationId)
 
 	NameData	pubname;		/* name of the publication */
 
-	Oid			pubowner;		/* publication owner */
+	Oid			pubowner BKI_LOOKUP(pg_authid); /* publication owner */
 
 	/*
 	 * indicates that this is special publication which should encompass all

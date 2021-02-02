@@ -34,7 +34,7 @@ CATALOG(pg_ts_parser,3601,TSParserRelationId)
 	NameData	prsname;
 
 	/* name space */
-	Oid			prsnamespace BKI_DEFAULT(PGNSP);
+	Oid			prsnamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
 
 	/* init parsing session */
 	regproc		prsstart BKI_LOOKUP(pg_proc);
@@ -46,7 +46,7 @@ CATALOG(pg_ts_parser,3601,TSParserRelationId)
 	regproc		prsend BKI_LOOKUP(pg_proc);
 
 	/* return data for headline creation */
-	regproc		prsheadline BKI_LOOKUP(pg_proc);
+	regproc		prsheadline BKI_LOOKUP_OPT(pg_proc);
 
 	/* return descriptions of lexeme's types */
 	regproc		prslextype BKI_LOOKUP(pg_proc);

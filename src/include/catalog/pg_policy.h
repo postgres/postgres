@@ -30,13 +30,14 @@ CATALOG(pg_policy,3256,PolicyRelationId)
 {
 	Oid			oid;			/* oid */
 	NameData	polname;		/* Policy name. */
-	Oid			polrelid;		/* Oid of the relation with policy. */
+	Oid			polrelid BKI_LOOKUP(pg_class);	/* Oid of the relation with
+												 * policy. */
 	char		polcmd;			/* One of ACL_*_CHR, or '*' for all */
 	bool		polpermissive;	/* restrictive or permissive policy */
 
 #ifdef CATALOG_VARLEN
-	Oid			polroles[1] BKI_FORCE_NOT_NULL; /* Roles associated with
-												 * policy */
+	/* Roles to which the policy is applied; zero means PUBLIC */
+	Oid			polroles[1] BKI_LOOKUP_OPT(pg_authid) BKI_FORCE_NOT_NULL;
 	pg_node_tree polqual;		/* Policy quals. */
 	pg_node_tree polwithcheck;	/* WITH CHECK quals. */
 #endif

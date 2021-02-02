@@ -30,7 +30,8 @@
  */
 CATALOG(pg_statistic_ext_data,3429,StatisticExtDataRelationId)
 {
-	Oid			stxoid;			/* statistics object this data is for */
+	Oid			stxoid BKI_LOOKUP(pg_statistic_ext);	/* statistics object
+														 * this data is for */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 

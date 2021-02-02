@@ -57,10 +57,10 @@ CATALOG(pg_opclass,2616,OperatorClassRelationId)
 	NameData	opcname;
 
 	/* namespace of this opclass */
-	Oid			opcnamespace BKI_DEFAULT(PGNSP);
+	Oid			opcnamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
 
 	/* opclass owner */
-	Oid			opcowner BKI_DEFAULT(PGUID);
+	Oid			opcowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
 
 	/* containing operator family */
 	Oid			opcfamily BKI_LOOKUP(pg_opfamily);
@@ -71,8 +71,8 @@ CATALOG(pg_opclass,2616,OperatorClassRelationId)
 	/* T if opclass is default for opcintype */
 	bool		opcdefault BKI_DEFAULT(t);
 
-	/* type of data in index, or InvalidOid */
-	Oid			opckeytype BKI_DEFAULT(0) BKI_LOOKUP(pg_type);
+	/* type of data in index, or InvalidOid if same as input column type */
+	Oid			opckeytype BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_type);
 } FormData_pg_opclass;
 
 /* ----------------

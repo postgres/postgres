@@ -40,7 +40,7 @@ CATALOG(pg_cast,2605,CastRelationId)
 	Oid			casttarget BKI_LOOKUP(pg_type);
 
 	/* cast function; 0 = binary coercible */
-	Oid			castfunc BKI_LOOKUP(pg_proc);
+	Oid			castfunc BKI_LOOKUP_OPT(pg_proc);
 
 	/* contexts in which cast can be used */
 	char		castcontext;

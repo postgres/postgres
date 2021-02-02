@@ -25,6 +25,7 @@
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
+#include "catalog/system_fk_info.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
 #include "common/keywords.h"
@@ -37,6 +38,7 @@
 #include "storage/fd.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/ruleutils.h"
 #include "utils/timestamp.h"
@@ -481,6 +483,84 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 		}
 
 		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+
+		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
+	}
+
+	SRF_RETURN_DONE(funcctx);
+}
+
+
+/* Function to return the list of catalog foreign key relationships */
+Datum
+pg_get_catalog_foreign_keys(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	FmgrInfo   *arrayinp;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext oldcontext;
+		TupleDesc	tupdesc;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		tupdesc = CreateTemplateTupleDesc(6);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "fktable",
+						   REGCLASSOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "fkcols",
+						   TEXTARRAYOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "pktable",
+						   REGCLASSOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "pkcols",
+						   TEXTARRAYOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "is_array",
+						   BOOLOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "is_opt",
+						   BOOLOID, -1, 0);
+
+		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
+
+		/*
+		 * We use array_in to convert the C strings in sys_fk_relationships[]
+		 * to text arrays.  But we cannot use DirectFunctionCallN to call
+		 * array_in, and it wouldn't be very efficient if we could.  Fill an
+		 * FmgrInfo to use for the call.
+		 */
+		arrayinp = (FmgrInfo *) palloc(sizeof(FmgrInfo));
+		fmgr_info(F_ARRAY_IN, arrayinp);
+		funcctx->user_fctx = arrayinp;
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	arrayinp = (FmgrInfo *) funcctx->user_fctx;
+
+	if (funcctx->call_cntr < lengthof(sys_fk_relationships))
+	{
+		const SysFKRelationship *fkrel = &sys_fk_relationships[funcctx->call_cntr];
+		Datum		values[6];
+		bool		nulls[6];
+		HeapTuple	tuple;
+
+		memset(nulls, false, sizeof(nulls));
+
+		values[0] = ObjectIdGetDatum(fkrel->fk_table);
+		values[1] = FunctionCall3(arrayinp,
+								  CStringGetDatum(fkrel->fk_columns),
+								  ObjectIdGetDatum(TEXTOID),
+								  Int32GetDatum(-1));
+		values[2] = ObjectIdGetDatum(fkrel->pk_table);
+		values[3] = FunctionCall3(arrayinp,
+								  CStringGetDatum(fkrel->pk_columns),
+								  ObjectIdGetDatum(TEXTOID),
+								  Int32GetDatum(-1));
+		values[4] = BoolGetDatum(fkrel->is_array);
+		values[5] = BoolGetDatum(fkrel->is_opt);
+
+		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 
 		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
 	}

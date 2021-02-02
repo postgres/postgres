@@ -29,10 +29,10 @@
 CATALOG(pg_transform,3576,TransformRelationId)
 {
 	Oid			oid;			/* oid */
-	Oid			trftype;
-	Oid			trflang;
-	regproc		trffromsql;
-	regproc		trftosql;
+	Oid			trftype BKI_LOOKUP(pg_type);
+	Oid			trflang BKI_LOOKUP(pg_language);
+	regproc		trffromsql BKI_LOOKUP_OPT(pg_proc);
+	regproc		trftosql BKI_LOOKUP_OPT(pg_proc);
 } FormData_pg_transform;
 
 /* ----------------

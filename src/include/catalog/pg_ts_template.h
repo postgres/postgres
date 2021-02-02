@@ -34,10 +34,10 @@ CATALOG(pg_ts_template,3764,TSTemplateRelationId)
 	NameData	tmplname;
 
 	/* name space */
-	Oid			tmplnamespace BKI_DEFAULT(PGNSP);
+	Oid			tmplnamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
 
 	/* initialization method of dict (may be 0) */
-	regproc		tmplinit BKI_LOOKUP(pg_proc);
+	regproc		tmplinit BKI_LOOKUP_OPT(pg_proc);
 
 	/* base method of dictionary */
 	regproc		tmpllexize BKI_LOOKUP(pg_proc);

@@ -30,8 +30,8 @@
  */
 CATALOG(pg_subscription_rel,6102,SubscriptionRelRelationId)
 {
-	Oid			srsubid;		/* Oid of subscription */
-	Oid			srrelid;		/* Oid of relation */
+	Oid			srsubid BKI_LOOKUP(pg_subscription);	/* Oid of subscription */
+	Oid			srrelid BKI_LOOKUP(pg_class);	/* Oid of relation */
 	char		srsubstate;		/* state of the relation in subscription */
 
 	/*

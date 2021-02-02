@@ -77,7 +77,7 @@ CATALOG(pg_amop,2602,AccessMethodOperatorRelationId)
 	Oid			amopmethod BKI_LOOKUP(pg_am);
 
 	/* ordering opfamily OID, or 0 if search op */
-	Oid			amopsortfamily BKI_DEFAULT(0) BKI_LOOKUP(pg_opfamily);
+	Oid			amopsortfamily BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_opfamily);
 } FormData_pg_amop;
 
 /* ----------------

@@ -30,8 +30,10 @@
 CATALOG(pg_default_acl,826,DefaultAclRelationId)
 {
 	Oid			oid;			/* oid */
-	Oid			defaclrole;		/* OID of role owning this ACL */
-	Oid			defaclnamespace;	/* OID of namespace, or 0 for all */
+	Oid			defaclrole BKI_LOOKUP(pg_authid);	/* OID of role owning this
+													 * ACL */
+	Oid			defaclnamespace BKI_LOOKUP_OPT(pg_namespace);	/* OID of namespace, or
+																 * 0 for all */
 	char		defaclobjtype;	/* see DEFACLOBJ_xxx constants below */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */

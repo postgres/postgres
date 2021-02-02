@@ -41,10 +41,10 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	NameData	typname;
 
 	/* OID of namespace containing this type */
-	Oid			typnamespace BKI_DEFAULT(PGNSP);
+	Oid			typnamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
 
 	/* type owner */
-	Oid			typowner BKI_DEFAULT(PGUID);
+	Oid			typowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
 
 	/*
 	 * For a fixed-size type, typlen is the number of bytes we use to
@@ -98,7 +98,7 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	char		typdelim BKI_DEFAULT(',');
 
 	/* associated pg_class OID if a composite type, else 0 */
-	Oid			typrelid BKI_DEFAULT(0) BKI_ARRAY_DEFAULT(0) BKI_LOOKUP(pg_class);
+	Oid			typrelid BKI_DEFAULT(0) BKI_ARRAY_DEFAULT(0) BKI_LOOKUP_OPT(pg_class);
 
 	/*
 	 * Type-specific subscripting handler.  If typsubscript is 0, it means
@@ -106,7 +106,7 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	 * of the system deem types to be "true" array types only if their
 	 * typsubscript is array_subscript_handler.
 	 */
-	regproc		typsubscript BKI_DEFAULT(-) BKI_ARRAY_DEFAULT(array_subscript_handler) BKI_LOOKUP(pg_proc);
+	regproc		typsubscript BKI_DEFAULT(-) BKI_ARRAY_DEFAULT(array_subscript_handler) BKI_LOOKUP_OPT(pg_proc);
 
 	/*
 	 * If typelem is not 0 then it identifies another row in pg_type, defining
@@ -117,13 +117,13 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	 * of the element type in this type; so DDL changes on the element type
 	 * might be restricted by the presence of this type.
 	 */
-	Oid			typelem BKI_DEFAULT(0) BKI_LOOKUP(pg_type);
+	Oid			typelem BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_type);
 
 	/*
 	 * If there is a "true" array type having this type as element type,
 	 * typarray links to it.  Zero if no associated "true" array type.
 	 */
-	Oid			typarray BKI_DEFAULT(0) BKI_ARRAY_DEFAULT(0) BKI_LOOKUP(pg_type);
+	Oid			typarray BKI_DEFAULT(0) BKI_ARRAY_DEFAULT(0) BKI_LOOKUP_OPT(pg_type);
 
 	/*
 	 * I/O conversion procedures for the datatype.
@@ -134,19 +134,19 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	regproc		typoutput BKI_ARRAY_DEFAULT(array_out) BKI_LOOKUP(pg_proc);
 
 	/* binary format (optional) */
-	regproc		typreceive BKI_ARRAY_DEFAULT(array_recv) BKI_LOOKUP(pg_proc);
-	regproc		typsend BKI_ARRAY_DEFAULT(array_send) BKI_LOOKUP(pg_proc);
+	regproc		typreceive BKI_ARRAY_DEFAULT(array_recv) BKI_LOOKUP_OPT(pg_proc);
+	regproc		typsend BKI_ARRAY_DEFAULT(array_send) BKI_LOOKUP_OPT(pg_proc);
 
 	/*
 	 * I/O functions for optional type modifiers.
 	 */
-	regproc		typmodin BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
-	regproc		typmodout BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
+	regproc		typmodin BKI_DEFAULT(-) BKI_LOOKUP_OPT(pg_proc);
+	regproc		typmodout BKI_DEFAULT(-) BKI_LOOKUP_OPT(pg_proc);
 
 	/*
 	 * Custom ANALYZE procedure for the datatype (0 selects the default).
 	 */
-	regproc		typanalyze BKI_DEFAULT(-) BKI_ARRAY_DEFAULT(array_typanalyze) BKI_LOOKUP(pg_proc);
+	regproc		typanalyze BKI_DEFAULT(-) BKI_ARRAY_DEFAULT(array_typanalyze) BKI_LOOKUP_OPT(pg_proc);
 
 	/* ----------------
 	 * typalign is the alignment required when storing a value of this
@@ -205,7 +205,7 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	 * Domains use typbasetype to show the base (or domain) type that the
 	 * domain is based on.  Zero if the type is not a domain.
 	 */
-	Oid			typbasetype BKI_DEFAULT(0);
+	Oid			typbasetype BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_type);
 
 	/*
 	 * Domains use typtypmod to record the typmod to be applied to their base
@@ -225,7 +225,7 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	 * DEFAULT_COLLATION_OID) for collatable base types, possibly some other
 	 * OID for domains over collatable types
 	 */
-	Oid			typcollation BKI_DEFAULT(0) BKI_LOOKUP(pg_collation);
+	Oid			typcollation BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_collation);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 

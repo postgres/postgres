@@ -62,4 +62,7 @@ DECLARE_TOAST(pg_shdescription, 2846, 2847);
 DECLARE_UNIQUE_INDEX_PKEY(pg_shdescription_o_c_index, 2397, on pg_shdescription using btree(objoid oid_ops, classoid oid_ops));
 #define SharedDescriptionObjIndexId 2397
 
+/* We do not use BKI_LOOKUP here because it causes problems for genbki.pl */
+DECLARE_FOREIGN_KEY((classoid), pg_class, (oid));
+
 #endif							/* PG_SHDESCRIPTION_H */
