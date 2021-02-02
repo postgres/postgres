@@ -1304,7 +1304,6 @@ stmt_for		: opt_loop_label K_FOR for_control loop_body
 
 							new = (PLpgSQL_stmt_fori *) $3;
 							new->lineno   = plpgsql_location_to_lineno(@2);
-							new->stmtid	  = ++plpgsql_curr_compile->nstatements;
 							new->label	  = $1;
 							new->body	  = $4.stmts;
 							$$ = (PLpgSQL_stmt *) new;
@@ -1319,7 +1318,6 @@ stmt_for		: opt_loop_label K_FOR for_control loop_body
 							/* forq is the common supertype of all three */
 							new = (PLpgSQL_stmt_forq *) $3;
 							new->lineno   = plpgsql_location_to_lineno(@2);
-							new->stmtid	  = ++plpgsql_curr_compile->nstatements;
 							new->label	  = $1;
 							new->body	  = $4.stmts;
 							$$ = (PLpgSQL_stmt *) new;
