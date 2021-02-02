@@ -1150,7 +1150,7 @@
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The data type of this column
+       The data type of this column (zero for a dropped column)
       </para></entry>
      </row>
 
@@ -1351,7 +1351,7 @@
       </para>
       <para>
        The defined collation of the column, or zero if the column is
-       not of a collatable data type.
+       not of a collatable data type
       </para></entry>
      </row>
 
@@ -1899,8 +1899,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        The OID of the data type that corresponds to this table's row type,
-       if any (zero for indexes, sequences, and toast tables, which have
-       no <structname>pg_type</structname> entry)
+       if any; zero for indexes, sequences, and toast tables, which have
+       no <structname>pg_type</structname> entry
       </para></entry>
      </row>
 
@@ -1910,7 +1910,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       For typed tables, the OID of the underlying composite type,
+       For typed tables, the OID of the underlying composite type;
        zero for all other relations
       </para></entry>
      </row>
@@ -1932,7 +1932,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        If this is a table or an index, the access method used (heap,
-       B-tree, hash, etc.)
+       B-tree, hash, etc.); otherwise zero (zero occurs for sequences,
+       as well as relations without storage, such as views)
       </para></entry>
      </row>
 
@@ -2007,7 +2008,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       OID of the TOAST table associated with this table, 0 if none.  The
+       OID of the TOAST table associated with this table, zero if none.  The
        TOAST table stores large attributes <quote>out of line</quote> in a
        secondary table.
       </para></entry>
@@ -2174,8 +2175,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        For new relations being written during a DDL operation that requires a
        table rewrite, this contains the OID of the original relation;
-       otherwise 0.  That state is only visible internally; this field should
-       never contain anything other than 0 for a user-visible relation.
+       otherwise zero.  That state is only visible internally; this field should
+       never contain anything other than zero for a user-visible relation.
       </para></entry>
      </row>
 
@@ -2507,7 +2508,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The table this constraint is on; 0 if not a table constraint
+       The table this constraint is on; zero if not a table constraint
       </para></entry>
      </row>
 
@@ -2517,7 +2518,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The domain this constraint is on; 0 if not a domain constraint
+       The domain this constraint is on; zero if not a domain constraint
       </para></entry>
      </row>
 
@@ -2528,7 +2529,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        The index supporting this constraint, if it's a unique, primary
-       key, foreign key, or exclusion constraint; else 0
+       key, foreign key, or exclusion constraint; else zero
       </para></entry>
      </row>
 
@@ -2538,8 +2539,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The corresponding constraint in the parent partitioned table,
-       if this is a constraint in a partition; else 0
+       The corresponding constraint of the parent partitioned table,
+       if this is a constraint on a partition; else zero
       </para></entry>
      </row>
 
@@ -2549,7 +2550,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       If a foreign key, the referenced table; else 0
+       If a foreign key, the referenced table; else zero
       </para></entry>
      </row>
 
@@ -3142,7 +3143,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        The OID of the namespace associated with this entry,
-       or 0 if none
+       or zero if none
       </para></entry>
      </row>
 
@@ -3176,7 +3177,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    A <structname>pg_default_acl</structname> entry shows the initial privileges to
    be assigned to an object belonging to the indicated user.  There are
    currently two types of entry: <quote>global</quote> entries with
-   <structfield>defaclnamespace</structfield> = 0, and <quote>per-schema</quote> entries
+   <structfield>defaclnamespace</structfield> = zero, and <quote>per-schema</quote> entries
    that reference a particular schema.  If a global entry is present then
    it <emphasis>overrides</emphasis> the normal hard-wired default privileges
    for the object type.  A per-schema entry, if present, represents privileges
@@ -3236,7 +3237,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the system catalog the dependent object is in
+       The OID of the system catalog the dependent object is in,
+       or zero for a <symbol>DEPENDENCY_PIN</symbol> entry
       </para></entry>
      </row>
 
@@ -3246,7 +3248,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references any OID column)
       </para>
       <para>
-       The OID of the specific dependent object
+       The OID of the specific dependent object,
+       or zero for a <symbol>DEPENDENCY_PIN</symbol> entry
       </para></entry>
      </row>
 
@@ -4687,7 +4690,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        For noninternal languages this references the language
        handler, which is a special function that is responsible for
        executing all functions that are written in the particular
-       language
+       language. Zero for internal languages.
       </para></entry>
      </row>
 
@@ -5189,7 +5192,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Type of the left operand (0 if none)
+       Type of the left operand (zero for a prefix operator)
       </para></entry>
      </row>
 
@@ -5210,6 +5213,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        Type of the result
+       (zero for a not-yet-defined <quote>shell</quote> operator)
       </para></entry>
      </row>
 
@@ -5219,7 +5223,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Commutator of this operator, if any
+       Commutator of this operator (zero if none)
       </para></entry>
      </row>
 
@@ -5229,7 +5233,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Negator of this operator, if any
+       Negator of this operator (zero if none)
       </para></entry>
      </row>
 
@@ -5240,6 +5244,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        Function that implements this operator
+       (zero for a not-yet-defined <quote>shell</quote> operator)
       </para></entry>
      </row>
 
@@ -5250,6 +5255,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        Restriction selectivity estimation function for this operator
+       (zero if none)
       </para></entry>
      </row>
 
@@ -5260,16 +5266,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        Join selectivity estimation function for this operator
+       (zero if none)
       </para></entry>
      </row>
     </tbody>
    </tgroup>
   </table>
-
-  <para>
-   Unused columns contain zeroes. For example, <structfield>oprleft</structfield>
-   is zero for a prefix operator.
-  </para>
 
  </sect1>
 
@@ -5426,7 +5428,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>partnatts</structfield> <type>int2</type>
       </para>
       <para>
-       The number of columns in partition key
+       The number of columns in the partition key
       </para></entry>
      </row>
 
@@ -5438,7 +5440,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        The OID of the <link linkend="catalog-pg-class"><structname>pg_class</structname></link> entry for the default partition
        of this partitioned table, or zero if this partitioned table does not
-       have a default partition.
+       have a default partition
       </para></entry>
      </row>
 
@@ -5588,7 +5590,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The roles to which the policy is applied
+       The roles to which the policy is applied;
+       zero means <literal>PUBLIC</literal>
+       (and normally appears alone in the array)
       </para></entry>
      </row>
 
@@ -5744,8 +5748,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Optional planner support function for this function
-       (see <xref linkend="xfunc-optimization"/>)
+       Planner support function for this function
+       (see <xref linkend="xfunc-optimization"/>), or zero if none
       </para></entry>
      </row>
 
@@ -6256,7 +6260,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       OID of the collation used for range comparisons, or 0 if none
+       OID of the collation used for range comparisons, or zero if none
       </para></entry>
      </row>
 
@@ -6277,7 +6281,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        OID of the function to convert a range value into canonical form,
-       or 0 if none
+       or zero if none
       </para></entry>
      </row>
 
@@ -6288,7 +6292,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        OID of the function to return the difference between two element
-       values as <type>double precision</type>, or 0 if none
+       values as <type>double precision</type>, or zero if none
       </para></entry>
      </row>
     </tbody>
@@ -6733,6 +6737,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        The OID of the database the dependent object is in,
        or zero for a shared object
+       or a <symbol>SHARED_DEPENDENCY_PIN</symbol> entry
       </para></entry>
      </row>
 
@@ -6742,7 +6747,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the system catalog the dependent object is in
+       The OID of the system catalog the dependent object is in,
+       or zero for a <symbol>SHARED_DEPENDENCY_PIN</symbol> entry
       </para></entry>
      </row>
 
@@ -6752,7 +6758,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references any OID column)
       </para>
       <para>
-       The OID of the specific dependent object
+       The OID of the specific dependent object,
+       or zero for a <symbol>SHARED_DEPENDENCY_PIN</symbol> entry
       </para></entry>
      </row>
 
@@ -7192,6 +7199,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <replaceable>N</replaceable>th <quote>slot</quote>.  For example, a
        histogram slot would show the <literal>&lt;</literal> operator
        that defines the sort order of the data.
+       Zero if the statistics kind does not require an operator.
       </para></entry>
      </row>
 
@@ -7836,7 +7844,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        The OID of the function to use when converting the data type for input
        to the procedural language (e.g., function parameters).  Zero is stored
-       if this operation is not supported.
+       if the default behavior should be used.
       </para></entry>
      </row>
 
@@ -7848,7 +7856,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        The OID of the function to use when converting output from the
        procedural language (e.g., return values) to the data type.  Zero is
-       stored if this operation is not supported.
+       stored if the default behavior should be used.
       </para></entry>
      </row>
     </tbody>
@@ -7911,9 +7919,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-trigger"><structname>pg_trigger</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Parent trigger that this trigger is cloned from, zero if not a clone;
-       this happens when partitions are created or attached to a partitioned
-       table.
+       Parent trigger that this trigger is cloned from (this happens when
+       partitions are created or attached to a partitioned table);
+       zero if not a clone
       </para></entry>
      </row>
 
@@ -7976,6 +7984,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        The table referenced by a referential integrity constraint
+       (zero if trigger is not for a referential integrity constraint)
       </para></entry>
      </row>
 
@@ -7987,6 +7996,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        The index supporting a unique, primary key, referential integrity,
        or exclusion constraint
+       (zero if trigger is not for one of these types of constraint)
       </para></entry>
      </row>
 
@@ -7996,7 +8006,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The <link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link> entry associated with the trigger, if any
+       The <link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link> entry associated with the trigger
+       (zero if trigger is not for a constraint)
       </para></entry>
      </row>
 
@@ -8478,7 +8489,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       OID of the parser's headline function
+       OID of the parser's headline function (zero if none)
       </para></entry>
      </row>
 
@@ -8566,7 +8577,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       OID of the template's initialization function
+       OID of the template's initialization function (zero if none)
       </para></entry>
      </row>
 
@@ -8786,11 +8797,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       If <structfield>typelem</structfield> is not 0 then it
+       If <structfield>typelem</structfield> is not zero then it
        identifies another row in <structname>pg_type</structname>,
-       defining the type yielded by subscripting.  This should be 0
-       if <structfield>typsubscript</structfield> is 0.  However, it can
-       be 0 when <structfield>typsubscript</structfield> isn't 0, if the
+       defining the type yielded by subscripting.  This should be zero
+       if <structfield>typsubscript</structfield> is zero.  However, it can
+       be zero when <structfield>typsubscript</structfield> isn't zero, if the
        handler doesn't need <structfield>typelem</structfield> to
        determine the subscripting result type.
        Note that a <structfield>typelem</structfield> dependency is
@@ -8806,7 +8817,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       If <structfield>typarray</structfield> is not 0 then it
+       If <structfield>typarray</structfield> is not zero then it
        identifies another row in <structname>pg_type</structname>, which
        is the <quote>true</quote> array type having this type as element
       </para></entry>
@@ -8838,7 +8849,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Input conversion function (binary format), or 0 if none
+       Input conversion function (binary format), or zero if none
       </para></entry>
      </row>
 
@@ -8848,7 +8859,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Output conversion function (binary format), or 0 if none
+       Output conversion function (binary format), or zero if none
       </para></entry>
      </row>
 
@@ -8858,7 +8869,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Type modifier input function, or 0 if type does not support modifiers
+       Type modifier input function, or zero if type does not support modifiers
       </para></entry>
      </row>
 
@@ -8868,7 +8879,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Type modifier output function, or 0 to use the standard format
+       Type modifier output function, or zero to use the standard format
       </para></entry>
      </row>
 
@@ -8878,7 +8889,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Custom <xref linkend="sql-analyze"/> function, or 0 to use the standard function
+       Custom <xref linkend="sql-analyze"/> function,
+       or zero to use the standard function
       </para></entry>
      </row>
 
@@ -9198,7 +9210,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       OID of the local role being mapped, 0 if the user mapping is public
+       OID of the local role being mapped, or zero if the user mapping is public
       </para></entry>
      </row>
 
@@ -13403,7 +13415,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       OID of the local role being mapped, 0 if the user mapping is public
+       OID of the local role being mapped, or zero if the user mapping is public
       </para></entry>
      </row>
 
