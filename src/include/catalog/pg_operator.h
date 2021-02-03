@@ -36,10 +36,10 @@ CATALOG(pg_operator,2617,OperatorRelationId)
 	NameData	oprname;
 
 	/* OID of namespace containing this oper */
-	Oid			oprnamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
+	Oid			oprnamespace BKI_DEFAULT(pg_catalog) BKI_LOOKUP(pg_namespace);
 
 	/* operator owner */
-	Oid			oprowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
+	Oid			oprowner BKI_DEFAULT(POSTGRES) BKI_LOOKUP(pg_authid);
 
 	/* 'l' for prefix or 'b' for infix */
 	char		oprkind BKI_DEFAULT(b);

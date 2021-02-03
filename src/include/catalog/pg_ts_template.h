@@ -34,7 +34,7 @@ CATALOG(pg_ts_template,3764,TSTemplateRelationId)
 	NameData	tmplname;
 
 	/* name space */
-	Oid			tmplnamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
+	Oid			tmplnamespace BKI_DEFAULT(pg_catalog) BKI_LOOKUP(pg_namespace);
 
 	/* initialization method of dict (may be 0) */
 	regproc		tmplinit BKI_LOOKUP_OPT(pg_proc);

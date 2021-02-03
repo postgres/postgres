@@ -37,7 +37,7 @@ CATALOG(pg_namespace,2615,NamespaceRelationId)
 	Oid			oid;			/* oid */
 
 	NameData	nspname;
-	Oid			nspowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
+	Oid			nspowner BKI_DEFAULT(POSTGRES) BKI_LOOKUP(pg_authid);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	aclitem		nspacl[1];

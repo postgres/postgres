@@ -35,10 +35,10 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 	NameData	proname;
 
 	/* OID of namespace containing this proc */
-	Oid			pronamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
+	Oid			pronamespace BKI_DEFAULT(pg_catalog) BKI_LOOKUP(pg_namespace);
 
 	/* procedure owner */
-	Oid			proowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
+	Oid			proowner BKI_DEFAULT(POSTGRES) BKI_LOOKUP(pg_authid);
 
 	/* OID of pg_language entry */
 	Oid			prolang BKI_DEFAULT(internal) BKI_LOOKUP(pg_language);

@@ -184,15 +184,9 @@ my $GenbkiNextOid = $FirstGenbkiObjectId;
 # within a given Postgres release, such as fixed OIDs.  Do not substitute
 # anything that could depend on platform or configuration.  (The right place
 # to handle those sorts of things is in initdb.c's bootstrap_template1().)
-my $BOOTSTRAP_SUPERUSERID =
-  Catalog::FindDefinedSymbolFromData($catalog_data{pg_authid},
-	'BOOTSTRAP_SUPERUSERID');
 my $C_COLLATION_OID =
   Catalog::FindDefinedSymbolFromData($catalog_data{pg_collation},
 	'C_COLLATION_OID');
-my $PG_CATALOG_NAMESPACE =
-  Catalog::FindDefinedSymbolFromData($catalog_data{pg_namespace},
-	'PG_CATALOG_NAMESPACE');
 
 
 # Fill in pg_class.relnatts by looking at the referenced catalog's schema.
@@ -213,11 +207,12 @@ foreach my $row (@{ $catalog_data{pg_am} })
 	$amoids{ $row->{amname} } = $row->{oid};
 }
 
-# There is only one authid at bootstrap time, and we handle it specially:
-# the usually-defaulted symbol PGUID becomes the bootstrap superuser's OID.
-# (We could drop this in favor of writing out BKI_DEFAULT(POSTGRES) ...)
+# role OID lookup
 my %authidoids;
-$authidoids{'PGUID'} = $BOOTSTRAP_SUPERUSERID;
+foreach my $row (@{ $catalog_data{pg_authid} })
+{
+	$authidoids{ $row->{rolname} } = $row->{oid};
+}
 
 # class (relation) OID lookup (note this only covers bootstrap catalogs!)
 my %classoids;
@@ -240,11 +235,12 @@ foreach my $row (@{ $catalog_data{pg_language} })
 	$langoids{ $row->{lanname} } = $row->{oid};
 }
 
-# There is only one namespace at bootstrap time, and we handle it specially:
-# the usually-defaulted symbol PGNSP becomes the pg_catalog namespace's OID.
-# (We could drop this in favor of writing out BKI_DEFAULT(pg_catalog) ...)
+# namespace (schema) OID lookup
 my %namespaceoids;
-$namespaceoids{'PGNSP'} = $PG_CATALOG_NAMESPACE;
+foreach my $row (@{ $catalog_data{pg_namespace} })
+{
+	$namespaceoids{ $row->{nspname} } = $row->{oid};
+}
 
 # opclass OID lookup
 my %opcoids;

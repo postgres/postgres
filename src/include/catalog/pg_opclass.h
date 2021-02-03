@@ -57,10 +57,10 @@ CATALOG(pg_opclass,2616,OperatorClassRelationId)
 	NameData	opcname;
 
 	/* namespace of this opclass */
-	Oid			opcnamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
+	Oid			opcnamespace BKI_DEFAULT(pg_catalog) BKI_LOOKUP(pg_namespace);
 
 	/* opclass owner */
-	Oid			opcowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
+	Oid			opcowner BKI_DEFAULT(POSTGRES) BKI_LOOKUP(pg_authid);
 
 	/* containing operator family */
 	Oid			opcfamily BKI_LOOKUP(pg_opfamily);

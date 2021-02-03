@@ -540,17 +540,6 @@
       expected to be in the <literal>pg_catalog</literal> schema.
      </para>
     </listitem>
-
-    <listitem>
-     <para>
-      In addition to the generic lookup mechanisms, there is a special
-      convention that <literal>PGNSP</literal> is replaced by the OID of
-      the <literal>pg_catalog</literal> schema,
-      and <literal>PGUID</literal> is replaced by the OID of the bootstrap
-      superuser role.  These usages are somewhat historical but so far
-      there hasn't been a need to generalize them.
-     </para>
-    </listitem>
    </itemizedlist>
 
    <para>

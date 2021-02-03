@@ -38,7 +38,7 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	NameData	relname;
 
 	/* OID of namespace containing this class */
-	Oid			relnamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
+	Oid			relnamespace BKI_DEFAULT(pg_catalog) BKI_LOOKUP(pg_namespace);
 
 	/* OID of entry in pg_type for relation's implicit row type, if any */
 	Oid			reltype BKI_LOOKUP_OPT(pg_type);
@@ -47,7 +47,7 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	Oid			reloftype BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_type);
 
 	/* class owner */
-	Oid			relowner BKI_DEFAULT(PGUID) BKI_LOOKUP(pg_authid);
+	Oid			relowner BKI_DEFAULT(POSTGRES) BKI_LOOKUP(pg_authid);
 
 	/* access method; 0 if not a table / index */
 	Oid			relam BKI_DEFAULT(heap) BKI_LOOKUP_OPT(pg_am);

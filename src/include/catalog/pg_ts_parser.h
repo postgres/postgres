@@ -34,7 +34,7 @@ CATALOG(pg_ts_parser,3601,TSParserRelationId)
 	NameData	prsname;
 
 	/* name space */
-	Oid			prsnamespace BKI_DEFAULT(PGNSP) BKI_LOOKUP(pg_namespace);
+	Oid			prsnamespace BKI_DEFAULT(pg_catalog) BKI_LOOKUP(pg_namespace);
 
 	/* init parsing session */
 	regproc		prsstart BKI_LOOKUP(pg_proc);
