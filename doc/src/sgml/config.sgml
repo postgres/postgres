@@ -1593,14 +1593,14 @@ include_dir 'conf.d'
 
        <para>
         Huge pages are known as large pages on Windows.  To use them, you need to
-        assign the user right Lock Pages in Memory to the Windows user account
+        assign the user right <quote>Lock pages in memory</quote> to the Windows user account
         that runs <productname>PostgreSQL</productname>.
         You can use Windows Group Policy tool (gpedit.msc) to assign the user right
-        Lock Pages in Memory.
+        <quote>Lock pages in memory</quote>.
         To start the database server on the command prompt as a standalone process,
         not as a Windows service, the command prompt must be run as an administrator or
         User Access Control (UAC) must be disabled. When the UAC is enabled, the normal
-        command prompt revokes the user right Lock Pages in Memory when started.
+        command prompt revokes the user right <quote>Lock pages in memory</quote> when started.
        </para>
 
        <para>

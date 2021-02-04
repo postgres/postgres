@@ -141,7 +141,10 @@ EnableLockPagesPrivilege(int elevel)
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
 	{
 		ereport(elevel,
-				(errmsg("could not enable Lock Pages in Memory user right: error code %lu", GetLastError()),
+				(errmsg("could not enable user right \"%s\": error code %lu",
+						/* translator: This is a term from Windows and should be translated to match the Windows localization. */
+						_("Lock pages in memory"),
+						GetLastError()),
 				 errdetail("Failed system call was %s.", "OpenProcessToken")));
 		return FALSE;
 	}
@@ -149,7 +152,7 @@ EnableLockPagesPrivilege(int elevel)
 	if (!LookupPrivilegeValue(NULL, SE_LOCK_MEMORY_NAME, &luid))
 	{
 		ereport(elevel,
-				(errmsg("could not enable Lock Pages in Memory user right: error code %lu", GetLastError()),
+				(errmsg("could not enable user right \"%s\": error code %lu", _("Lock pages in memory"), GetLastError()),
 				 errdetail("Failed system call was %s.", "LookupPrivilegeValue")));
 		CloseHandle(hToken);
 		return FALSE;
@@ -161,7 +164,7 @@ EnableLockPagesPrivilege(int elevel)
 	if (!AdjustTokenPrivileges(hToken, FALSE, &tp, 0, NULL, NULL))
 	{
 		ereport(elevel,
-				(errmsg("could not enable Lock Pages in Memory user right: error code %lu", GetLastError()),
+				(errmsg("could not enable user right \"%s\": error code %lu", _("Lock pages in memory"), GetLastError()),
 				 errdetail("Failed system call was %s.", "AdjustTokenPrivileges")));
 		CloseHandle(hToken);
 		return FALSE;
@@ -172,11 +175,12 @@ EnableLockPagesPrivilege(int elevel)
 		if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
 			ereport(elevel,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("could not enable Lock Pages in Memory user right"),
-					 errhint("Assign Lock Pages in Memory user right to the Windows user account which runs PostgreSQL.")));
+					 errmsg("could not enable user right \"%s\"", _("Lock pages in memory")),
+					 errhint("Assign user right \"%s\" to the Windows user account which runs PostgreSQL.",
+							 _("Lock pages in memory"))));
 		else
 			ereport(elevel,
-					(errmsg("could not enable Lock Pages in Memory user right: error code %lu", GetLastError()),
+					(errmsg("could not enable user right \"%s\": error code %lu", _("Lock pages in memory"), GetLastError()),
 					 errdetail("Failed system call was %s.", "AdjustTokenPrivileges")));
 		CloseHandle(hToken);
 		return FALSE;
