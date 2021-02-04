@@ -3712,6 +3712,12 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	{
 		/* Update its pg_class row */
 		SetRelationTableSpace(iRel, params->tablespaceOid, InvalidOid);
+
+		/*
+		 * Schedule unlinking of the old index storage at transaction
+		 * commit.
+		 */
+		RelationDropStorage(iRel);
 		RelationAssumeNewRelfilenode(iRel);
 
 		/* Make sure the reltablespace change is visible */
