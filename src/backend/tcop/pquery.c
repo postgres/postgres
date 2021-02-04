@@ -1313,18 +1313,29 @@ PortalRunMulti(Portal portal,
 		}
 
 		/*
-		 * Increment command counter between queries, but not after the last
-		 * one.
-		 */
-		if (lnext(portal->stmts, stmtlist_item) != NULL)
-			CommandCounterIncrement();
-
-		/*
 		 * Clear subsidiary contexts to recover temporary memory.
 		 */
 		Assert(portal->portalContext == CurrentMemoryContext);
 
 		MemoryContextDeleteChildren(portal->portalContext);
+
+		/*
+		 * Avoid crashing if portal->stmts has been reset.  This can only
+		 * occur if a CALL or DO utility statement executed an internal
+		 * COMMIT/ROLLBACK (cf PortalReleaseCachedPlan).  The CALL or DO must
+		 * have been the only statement in the portal, so there's nothing left
+		 * for us to do; but we don't want to dereference a now-dangling list
+		 * pointer.
+		 */
+		if (portal->stmts == NIL)
+			break;
+
+		/*
+		 * Increment command counter between queries, but not after the last
+		 * one.
+		 */
+		if (lnext(portal->stmts, stmtlist_item) != NULL)
+			CommandCounterIncrement();
 	}
 
 	/* Pop the snapshot if we pushed one. */
