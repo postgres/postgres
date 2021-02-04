@@ -52,9 +52,8 @@
  *	  CATCHUP -> SYNCDONE -> READY.
  *
  *	  The catalog pg_subscription_rel is used to keep information about
- *	  subscribed tables and their state.  Some transient state during data
- *	  synchronization is kept in shared memory.  The states SYNCWAIT and
- *	  CATCHUP only appear in memory.
+ *	  subscribed tables and their state.  The catalog holds all states
+ *	  except SYNCWAIT and CATCHUP which are only in shared memory.
  *
  *	  Example flows look like this:
  *	   - Apply is in front:
