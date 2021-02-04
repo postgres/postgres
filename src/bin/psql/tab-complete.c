@@ -3641,7 +3641,9 @@ psql_completion(const char *text, int start, int end)
 		 * one word, so the above test is correct.
 		 */
 		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
-			COMPLETE_WITH("CONCURRENTLY", "VERBOSE");
+			COMPLETE_WITH("CONCURRENTLY", "TABLESPACE", "VERBOSE");
+		else if (TailMatches("TABLESPACE"))
+			COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
 	}
 
 /* SECURITY LABEL */

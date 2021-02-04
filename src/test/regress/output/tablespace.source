@@ -20,6 +20,185 @@ ERROR:  unrecognized parameter "some_nonexistent_parameter"
 ALTER TABLESPACE regress_tblspace RESET (random_page_cost = 2.0); -- fail
 ERROR:  RESET must not include values for parameters
 ALTER TABLESPACE regress_tblspace RESET (random_page_cost, effective_io_concurrency); -- ok
+-- REINDEX (TABLESPACE)
+-- catalogs and system tablespaces
+-- system catalog, fail
+REINDEX (TABLESPACE regress_tblspace) TABLE pg_am;
+ERROR:  cannot move system relation "pg_am_name_index"
+REINDEX (TABLESPACE regress_tblspace) TABLE CONCURRENTLY pg_am;
+ERROR:  cannot reindex system catalogs concurrently
+-- shared catalog, fail
+REINDEX (TABLESPACE regress_tblspace) TABLE pg_authid;
+ERROR:  cannot move system relation "pg_authid_rolname_index"
+REINDEX (TABLESPACE regress_tblspace) TABLE CONCURRENTLY pg_authid;
+ERROR:  cannot reindex system catalogs concurrently
+-- toast relations, fail
+REINDEX (TABLESPACE regress_tblspace) INDEX pg_toast.pg_toast_1260_index;
+ERROR:  cannot move system relation "pg_toast_1260_index"
+REINDEX (TABLESPACE regress_tblspace) INDEX CONCURRENTLY pg_toast.pg_toast_1260_index;
+ERROR:  cannot reindex system catalogs concurrently
+REINDEX (TABLESPACE regress_tblspace) TABLE pg_toast.pg_toast_1260;
+ERROR:  cannot move system relation "pg_toast_1260_index"
+REINDEX (TABLESPACE regress_tblspace) TABLE CONCURRENTLY pg_toast.pg_toast_1260;
+ERROR:  cannot reindex system catalogs concurrently
+-- system catalog, fail
+REINDEX (TABLESPACE pg_global) TABLE pg_authid;
+ERROR:  cannot move system relation "pg_authid_rolname_index"
+REINDEX (TABLESPACE pg_global) TABLE CONCURRENTLY pg_authid;
+ERROR:  cannot reindex system catalogs concurrently
+-- table with toast relation
+CREATE TABLE regress_tblspace_test_tbl (num1 bigint, num2 double precision, t text);
+INSERT INTO regress_tblspace_test_tbl (num1, num2, t)
+  SELECT round(random()*100), random(), 'text'
+  FROM generate_series(1, 10) s(i);
+CREATE INDEX regress_tblspace_test_tbl_idx ON regress_tblspace_test_tbl (num1);
+-- move to global tablespace, fail
+REINDEX (TABLESPACE pg_global) INDEX regress_tblspace_test_tbl_idx;
+ERROR:  only shared relations can be placed in pg_global tablespace
+REINDEX (TABLESPACE pg_global) INDEX CONCURRENTLY regress_tblspace_test_tbl_idx;
+ERROR:  cannot move non-shared relation to tablespace "pg_global"
+-- check transactional behavior of REINDEX (TABLESPACE)
+BEGIN;
+REINDEX (TABLESPACE regress_tblspace) INDEX regress_tblspace_test_tbl_idx;
+REINDEX (TABLESPACE regress_tblspace) TABLE regress_tblspace_test_tbl;
+ROLLBACK;
+-- no relation moved to the new tablespace
+SELECT c.relname FROM pg_class c, pg_tablespace s
+  WHERE c.reltablespace = s.oid AND s.spcname = 'regress_tblspace';
+ relname 
+---------
+(0 rows)
+
+-- check that all indexes are moved to a new tablespace with different
+-- relfilenode.
+-- Save first the existing relfilenode for the toast and main relations.
+SELECT relfilenode as main_filenode FROM pg_class
+  WHERE relname = 'regress_tblspace_test_tbl_idx' \gset
+SELECT relfilenode as toast_filenode FROM pg_class
+  WHERE oid =
+    (SELECT i.indexrelid
+       FROM pg_class c,
+            pg_index i
+       WHERE i.indrelid = c.reltoastrelid AND
+             c.relname = 'regress_tblspace_test_tbl') \gset
+REINDEX (TABLESPACE regress_tblspace) TABLE regress_tblspace_test_tbl;
+SELECT c.relname FROM pg_class c, pg_tablespace s
+  WHERE c.reltablespace = s.oid AND s.spcname = 'regress_tblspace'
+  ORDER BY c.relname;
+            relname            
+-------------------------------
+ regress_tblspace_test_tbl_idx
+(1 row)
+
+ALTER TABLE regress_tblspace_test_tbl SET TABLESPACE regress_tblspace;
+ALTER TABLE regress_tblspace_test_tbl SET TABLESPACE pg_default;
+SELECT c.relname FROM pg_class c, pg_tablespace s
+  WHERE c.reltablespace = s.oid AND s.spcname = 'regress_tblspace'
+  ORDER BY c.relname;
+            relname            
+-------------------------------
+ regress_tblspace_test_tbl_idx
+(1 row)
+
+-- Move back to the default tablespace.
+ALTER INDEX regress_tblspace_test_tbl_idx SET TABLESPACE pg_default;
+SELECT c.relname FROM pg_class c, pg_tablespace s
+  WHERE c.reltablespace = s.oid AND s.spcname = 'regress_tblspace'
+  ORDER BY c.relname;
+ relname 
+---------
+(0 rows)
+
+REINDEX (TABLESPACE regress_tblspace, CONCURRENTLY) TABLE regress_tblspace_test_tbl;
+SELECT c.relname FROM pg_class c, pg_tablespace s
+  WHERE c.reltablespace = s.oid AND s.spcname = 'regress_tblspace'
+  ORDER BY c.relname;
+            relname            
+-------------------------------
+ regress_tblspace_test_tbl_idx
+(1 row)
+
+SELECT relfilenode = :main_filenode AS main_same FROM pg_class
+  WHERE relname = 'regress_tblspace_test_tbl_idx';
+ main_same 
+-----------
+ f
+(1 row)
+
+SELECT relfilenode = :toast_filenode as toast_same FROM pg_class
+  WHERE oid =
+    (SELECT i.indexrelid
+       FROM pg_class c,
+            pg_index i
+       WHERE i.indrelid = c.reltoastrelid AND
+             c.relname = 'regress_tblspace_test_tbl');
+ toast_same 
+------------
+ f
+(1 row)
+
+DROP TABLE regress_tblspace_test_tbl;
+-- REINDEX (TABLESPACE) with partitions
+-- Create a partition tree and check the set of relations reindexed
+-- with their new tablespace.
+CREATE TABLE tbspace_reindex_part (c1 int, c2 int) PARTITION BY RANGE (c1);
+CREATE TABLE tbspace_reindex_part_0 PARTITION OF tbspace_reindex_part
+  FOR VALUES FROM (0) TO (10) PARTITION BY list (c2);
+CREATE TABLE tbspace_reindex_part_0_1 PARTITION OF tbspace_reindex_part_0
+  FOR VALUES IN (1);
+CREATE TABLE tbspace_reindex_part_0_2 PARTITION OF tbspace_reindex_part_0
+  FOR VALUES IN (2);
+-- This partitioned table will have no partitions.
+CREATE TABLE tbspace_reindex_part_10 PARTITION OF tbspace_reindex_part
+   FOR VALUES FROM (10) TO (20) PARTITION BY list (c2);
+-- Create some partitioned indexes
+CREATE INDEX tbspace_reindex_part_index ON ONLY tbspace_reindex_part (c1);
+CREATE INDEX tbspace_reindex_part_index_0 ON ONLY tbspace_reindex_part_0 (c1);
+ALTER INDEX tbspace_reindex_part_index ATTACH PARTITION tbspace_reindex_part_index_0;
+-- This partitioned index will have no partitions.
+CREATE INDEX tbspace_reindex_part_index_10 ON ONLY tbspace_reindex_part_10 (c1);
+ALTER INDEX tbspace_reindex_part_index ATTACH PARTITION tbspace_reindex_part_index_10;
+CREATE INDEX tbspace_reindex_part_index_0_1 ON ONLY tbspace_reindex_part_0_1 (c1);
+ALTER INDEX tbspace_reindex_part_index_0 ATTACH PARTITION tbspace_reindex_part_index_0_1;
+CREATE INDEX tbspace_reindex_part_index_0_2 ON ONLY tbspace_reindex_part_0_2 (c1);
+ALTER INDEX tbspace_reindex_part_index_0 ATTACH PARTITION tbspace_reindex_part_index_0_2;
+SELECT relid, parentrelid, level FROM pg_partition_tree('tbspace_reindex_part_index')
+  ORDER BY relid, level;
+             relid              |         parentrelid          | level 
+--------------------------------+------------------------------+-------
+ tbspace_reindex_part_index     |                              |     0
+ tbspace_reindex_part_index_0   | tbspace_reindex_part_index   |     1
+ tbspace_reindex_part_index_10  | tbspace_reindex_part_index   |     1
+ tbspace_reindex_part_index_0_1 | tbspace_reindex_part_index_0 |     2
+ tbspace_reindex_part_index_0_2 | tbspace_reindex_part_index_0 |     2
+(5 rows)
+
+-- Track the original tablespace, relfilenode and OID of each index
+-- in the tree.
+CREATE TEMP TABLE reindex_temp_before AS
+  SELECT oid, relname, relfilenode, reltablespace
+  FROM pg_class
+    WHERE relname ~ 'tbspace_reindex_part_index';
+REINDEX (TABLESPACE regress_tblspace, CONCURRENTLY) TABLE tbspace_reindex_part;
+-- REINDEX CONCURRENTLY changes the OID of the old relation, hence a check
+-- based on the relation name below.
+SELECT b.relname,
+       CASE WHEN a.relfilenode = b.relfilenode THEN 'relfilenode is unchanged'
+       ELSE 'relfilenode has changed' END AS filenode,
+       CASE WHEN a.reltablespace = b.reltablespace THEN 'reltablespace is unchanged'
+       ELSE 'reltablespace has changed' END AS tbspace
+  FROM reindex_temp_before b JOIN pg_class a ON b.relname = a.relname
+  ORDER BY 1;
+            relname             |         filenode         |          tbspace           
+--------------------------------+--------------------------+----------------------------
+ tbspace_reindex_part_index     | relfilenode is unchanged | reltablespace is unchanged
+ tbspace_reindex_part_index_0   | relfilenode is unchanged | reltablespace is unchanged
+ tbspace_reindex_part_index_0_1 | relfilenode has changed  | reltablespace has changed
+ tbspace_reindex_part_index_0_2 | relfilenode has changed  | reltablespace has changed
+ tbspace_reindex_part_index_10  | relfilenode is unchanged | reltablespace is unchanged
+(5 rows)
+
+DROP TABLE tbspace_reindex_part;
 -- create a schema we can use
 CREATE SCHEMA testschema;
 -- try a table
@@ -732,6 +911,10 @@ SET SESSION ROLE regress_tablespace_user2;
 CREATE TABLE tablespace_table (i int) TABLESPACE regress_tblspace; -- fail
 ERROR:  permission denied for tablespace regress_tblspace
 ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
+REINDEX (TABLESPACE regress_tblspace) TABLE tablespace_table; -- fail
+ERROR:  permission denied for tablespace regress_tblspace
+REINDEX (TABLESPACE regress_tblspace, CONCURRENTLY) TABLE tablespace_table; -- fail
+ERROR:  permission denied for tablespace regress_tblspace
 RESET ROLE;
 ALTER TABLESPACE regress_tblspace RENAME TO regress_tblspace_renamed;
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
