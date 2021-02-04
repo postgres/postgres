@@ -386,7 +386,7 @@ CopyLoadRawBuf(CopyFromState cstate)
 	cstate->raw_buf[nbytes] = '\0';
 	cstate->raw_buf_index = 0;
 	cstate->raw_buf_len = nbytes;
-	cstate->bytes_processed += nbytes;
+	cstate->bytes_processed += inbytes;
 	pgstat_progress_update_param(PROGRESS_COPY_BYTES_PROCESSED, cstate->bytes_processed);
 	return (inbytes > 0);
 }
