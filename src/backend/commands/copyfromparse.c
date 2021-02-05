@@ -1084,7 +1084,7 @@ CopyReadLineText(CopyFromState cstate)
 				break;
 			}
 			else if (!cstate->opts.csv_mode)
-
+			{
 				/*
 				 * If we are here, it means we found a backslash followed by
 				 * something other than a period.  In non-CSV mode, anything
@@ -1095,8 +1095,16 @@ CopyReadLineText(CopyFromState cstate)
 				 * backslashes are not special, so we want to process the
 				 * character after the backslash just like a normal character,
 				 * so we don't increment in those cases.
+				 *
+				 * Set 'c' to skip whole character correctly in multi-byte
+				 * encodings.  If we don't have the whole character in the
+				 * buffer yet, we might loop back to process it, after all,
+				 * but that's OK because multi-byte characters cannot have any
+				 * special meaning.
 				 */
 				raw_buf_ptr++;
+				c = c2;
+			}
 		}
 
 		/*
