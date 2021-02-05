@@ -675,6 +675,17 @@ select * from (select * from t order by a) s order by a, b limit 70;
  9 | 70
 (70 rows)
 
+-- Checks case where we hit a group boundary at the last tuple of a batch.
+select * from (select * from t order by a) s order by a, b limit 5;
+ a | b 
+---+---
+ 1 | 1
+ 2 | 2
+ 3 | 3
+ 4 | 4
+ 9 | 5
+(5 rows)
+
 -- Test rescan.
 begin;
 -- We force the planner to choose a plan with incremental sort on the right side

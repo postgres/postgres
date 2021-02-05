@@ -394,6 +394,13 @@ switchToPresortedPrefixMode(PlanState *pstate)
 				 * current prefix key group.
 				 */
 				ExecClearTuple(node->group_pivot);
+
+				/*
+				 * Also make sure we take the didn't-consume-all-the-tuples
+				 * path below, even if this happened to be the last tuple of
+				 * the batch.
+				 */
+				lastTuple = false;
 				break;
 			}
 		}
