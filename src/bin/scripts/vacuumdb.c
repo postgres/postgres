@@ -713,6 +713,7 @@ vacuum_one_database(const ConnParams *cparams,
 		 * Execute the vacuum.  All errors are handled in processQueryResult
 		 * through ParallelSlotsGetIdle.
 		 */
+		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
 		run_vacuum_command(free_slot->connection, sql.data,
 						   echo, tabname);
 

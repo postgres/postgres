@@ -466,6 +466,7 @@ reindex_one_database(const ConnParams *cparams, ReindexType type,
 			goto finish;
 		}
 
+		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
 		run_reindex_command(free_slot->connection, process_type, objname,
 							echo, verbose, concurrently, true);
 
