@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- *	scripts_parallel.c
- *		Parallel support for bin/scripts/
+ *	parallel_slot.c
+ *		Parallel support for front-end parallel database connections
  *
  *
  * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/bin/scripts/scripts_parallel.c
+ * src/fe_utils/parallel_slot.c
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,15 @@
 #include <sys/select.h>
 #endif
 
-#include "common.h"
 #include "common/logging.h"
 #include "fe_utils/cancel.h"
-#include "scripts_parallel.h"
+#include "fe_utils/parallel_slot.h"
+
+#define ERRCODE_UNDEFINED_TABLE  "42P01"
 
 static void init_slot(ParallelSlot *slot, PGconn *conn);
 static int	select_loop(int maxFd, fd_set *workerset);
+static bool processQueryResult(PGconn *conn, PGresult *result);
 
 static void
 init_slot(ParallelSlot *slot, PGconn *conn)
@@ -36,6 +38,57 @@ init_slot(ParallelSlot *slot, PGconn *conn)
 	slot->connection = conn;
 	/* Initially assume connection is idle */
 	slot->isFree = true;
+}
+
+/*
+ * Process (and delete) a query result.  Returns true if there's no error,
+ * false otherwise -- but errors about trying to work on a missing relation
+ * are reported and subsequently ignored.
+ */
+static bool
+processQueryResult(PGconn *conn, PGresult *result)
+{
+	/*
+	 * If it's an error, report it.  Errors about a missing table are harmless
+	 * so we continue processing; but die for other errors.
+	 */
+	if (PQresultStatus(result) != PGRES_COMMAND_OK)
+	{
+		char	   *sqlState = PQresultErrorField(result, PG_DIAG_SQLSTATE);
+
+		pg_log_error("processing of database \"%s\" failed: %s",
+					 PQdb(conn), PQerrorMessage(conn));
+
+		if (sqlState && strcmp(sqlState, ERRCODE_UNDEFINED_TABLE) != 0)
+		{
+			PQclear(result);
+			return false;
+		}
+	}
+
+	PQclear(result);
+	return true;
+}
+
+/*
+ * Consume all the results generated for the given connection until
+ * nothing remains.  If at least one error is encountered, return false.
+ * Note that this will block if the connection is busy.
+ */
+static bool
+consumeQueryResult(PGconn *conn)
+{
+	bool		ok = true;
+	PGresult   *result;
+
+	SetCancelConn(conn);
+	while ((result = PQgetResult(conn)) != NULL)
+	{
+		if (!processQueryResult(conn, result))
+			ok = false;
+	}
+	ResetCancelConn();
+	return ok;
 }
 
 /*

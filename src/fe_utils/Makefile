@@ -23,9 +23,13 @@ OBJS = \
 	archive.o \
 	cancel.o \
 	conditional.o \
+	connect_utils.o \
 	mbprint.o \
+	option_utils.o \
+	parallel_slot.o \
 	print.o \
 	psqlscan.o \
+	query_utils.o \
 	recovery_gen.o \
 	simple_list.o \
 	string_utils.o

@@ -147,8 +147,9 @@ sub mkvcbuild
 	our @pgcommonbkndfiles = @pgcommonallfiles;
 
 	our @pgfeutilsfiles = qw(
-	  archive.c cancel.c conditional.c mbprint.c print.c psqlscan.l
-	  psqlscan.c simple_list.c string_utils.c recovery_gen.c);
+	  archive.c cancel.c conditional.c connect_utils.c mbprint.c option_utils.c
+	  parallel_slot.c print.c psqlscan.l psqlscan.c query_utils.c simple_list.c
+	  string_utils.c recovery_gen.c);
 
 	$libpgport = $solution->AddProject('libpgport', 'lib', 'misc');
 	$libpgport->AddDefine('FRONTEND');

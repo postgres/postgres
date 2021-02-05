@@ -16,9 +16,11 @@
 #include "common/connect.h"
 #include "common/logging.h"
 #include "fe_utils/cancel.h"
+#include "fe_utils/option_utils.h"
+#include "fe_utils/parallel_slot.h"
+#include "fe_utils/query_utils.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
-#include "scripts_parallel.h"
 
 typedef enum ReindexType
 {

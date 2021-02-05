@@ -1,20 +1,19 @@
 /*-------------------------------------------------------------------------
  *
- *	scripts_parallel.h
+ *	parallel_slot.h
  *		Parallel support for bin/scripts/
  *
  *	Copyright (c) 2003-2021, PostgreSQL Global Development Group
  *
- *	src/bin/scripts/scripts_parallel.h
+ *	src/include/fe_utils/parallel_slot.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef SCRIPTS_PARALLEL_H
-#define SCRIPTS_PARALLEL_H
+#ifndef PARALLEL_SLOT_H
+#define PARALLEL_SLOT_H
 
-#include "common.h"
+#include "fe_utils/connect_utils.h"
 #include "libpq-fe.h"
-
 
 typedef struct ParallelSlot
 {
@@ -33,4 +32,4 @@ extern void ParallelSlotsTerminate(ParallelSlot *slots, int numslots);
 extern bool ParallelSlotsWaitCompletion(ParallelSlot *slots, int numslots);
 
 
-#endif							/* SCRIPTS_PARALLEL_H */
+#endif							/* PARALLEL_SLOT_H */

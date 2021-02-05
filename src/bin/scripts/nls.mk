@@ -7,7 +7,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    clusterdb.c vacuumdb.c reindexdb.c \
                    pg_isready.c \
                    common.c \
-                   scripts_parallel.c \
+                   ../../fe_utils/parallel_slot.c \
                    ../../fe_utils/cancel.c ../../fe_utils/print.c \
                    ../../common/fe_memutils.c ../../common/username.c
 GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS) simple_prompt yesno_prompt

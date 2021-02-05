@@ -13,6 +13,7 @@
 
 #include "common.h"
 #include "common/logging.h"
+#include "fe_utils/option_utils.h"
 #include "fe_utils/string_utils.h"
 
 
