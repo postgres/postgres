@@ -2693,16 +2693,27 @@ select reltoastrelid, relkind, relfrozenxid
 (1 row)
 
 drop view rules_fooview;
--- trying to convert a partitioned table to view is not allowed
+-- cannot convert an inheritance parent or child to a view, though
+create table rules_fooview (x int, y text);
+create table rules_fooview_child () inherits (rules_fooview);
+create rule "_RETURN" as on select to rules_fooview do instead
+  select 1 as x, 'aaa'::text as y;
+ERROR:  could not convert table "rules_fooview" to a view because it has child tables
+create rule "_RETURN" as on select to rules_fooview_child do instead
+  select 1 as x, 'aaa'::text as y;
+ERROR:  could not convert table "rules_fooview_child" to a view because it has parent tables
+drop table rules_fooview cascade;
+NOTICE:  drop cascades to table rules_fooview_child
+-- likewise, converting a partitioned table or partition to view is not allowed
 create table rules_fooview (x int, y text) partition by list (x);
 create rule "_RETURN" as on select to rules_fooview do instead
   select 1 as x, 'aaa'::text as y;
 ERROR:  cannot convert partitioned table "rules_fooview" to a view
--- nor can one convert a partition to view
 create table rules_fooview_part partition of rules_fooview for values in (1);
 create rule "_RETURN" as on select to rules_fooview_part do instead
   select 1 as x, 'aaa'::text as y;
 ERROR:  cannot convert partition "rules_fooview_part" to a view
+drop table rules_fooview;
 --
 -- check for planner problems with complex inherited UPDATES
 --
