@@ -3,8 +3,8 @@
  * pg_inherits.c
  *	  routines to support manipulation of the pg_inherits relation
  *
- * Note: currently, this module only contains inquiry functions; the actual
- * creation and deletion of pg_inherits entries is done in tablecmds.c.
+ * Note: currently, this module mostly contains inquiry functions; actual
+ * creation and deletion of pg_inherits entries is mostly done in tablecmds.c.
  * Perhaps someday that code should be moved here, but it'd have to be
  * disentangled from other stuff such as pg_depend updates.
  *
@@ -278,9 +278,11 @@ has_subclass(Oid relationId)
 }
 
 /*
- * has_superclass - does this relation inherit from another?  The caller
- * should hold a lock on the given relation so that it can't be concurrently
- * added to or removed from an inheritance hierarchy.
+ * has_superclass - does this relation inherit from another?
+ *
+ * Unlike has_subclass, this can be relied on to give an accurate answer.
+ * However, the caller must hold a lock on the given relation so that it
+ * can't be concurrently added to or removed from an inheritance hierarchy.
  */
 bool
 has_superclass(Oid relationId)

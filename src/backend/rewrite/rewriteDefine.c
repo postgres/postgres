@@ -26,6 +26,7 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_inherits.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/storage.h"
 #include "commands/policy.h"
@@ -413,13 +414,14 @@ DefineQueryRewrite(const char *rulename,
 		 * Are we converting a relation to a view?
 		 *
 		 * If so, check that the relation is empty because the storage for the
-		 * relation is going to be deleted.  Also insist that the rel not have
-		 * any triggers, indexes, child tables, policies, or RLS enabled.
-		 * (Note: these tests are too strict, because they will reject
-		 * relations that once had such but don't anymore.  But we don't
-		 * really care, because this whole business of converting relations to
-		 * views is just a kluge to allow dump/reload of views that
-		 * participate in circular dependencies.)
+		 * relation is going to be deleted.  Also insist that the rel not be
+		 * involved in partitioning, nor have any triggers, indexes, child or
+		 * parent tables, RLS policies, or RLS enabled.  (Note: some of these
+		 * tests are too strict, because they will reject relations that once
+		 * had such but don't anymore.  But we don't really care, because this
+		 * whole business of converting relations to views is just an obsolete
+		 * kluge to allow dump/reload of views that participate in circular
+		 * dependencies.)
 		 */
 		if (event_relation->rd_rel->relkind != RELKIND_VIEW &&
 			event_relation->rd_rel->relkind != RELKIND_MATVIEW)
@@ -433,6 +435,9 @@ DefineQueryRewrite(const char *rulename,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("cannot convert partitioned table \"%s\" to a view",
 								RelationGetRelationName(event_relation))));
+
+			/* only case left: */
+			Assert(event_relation->rd_rel->relkind == RELKIND_RELATION);
 
 			if (event_relation->rd_rel->relispartition)
 				ereport(ERROR,
@@ -469,6 +474,12 @@ DefineQueryRewrite(const char *rulename,
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it has child tables",
+								RelationGetRelationName(event_relation))));
+
+			if (has_superclass(RelationGetRelid(event_relation)))
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("could not convert table \"%s\" to a view because it has parent tables",
 								RelationGetRelationName(event_relation))));
 
 			if (event_relation->rd_rel->relrowsecurity)
