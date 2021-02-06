@@ -898,15 +898,27 @@ select reltoastrelid, relkind, relfrozenxid
 
 drop view fooview;
 
--- trying to convert a partitioned table to view is not allowed
+-- cannot convert an inheritance parent or child to a view, though
+create table fooview (x int, y text);
+create table fooview_child () inherits (fooview);
+
+create rule "_RETURN" as on select to fooview do instead
+  select 1 as x, 'aaa'::text as y;
+create rule "_RETURN" as on select to fooview_child do instead
+  select 1 as x, 'aaa'::text as y;
+
+drop table fooview cascade;
+
+-- likewise, converting a partitioned table or partition to view is not allowed
 create table fooview (x int, y text) partition by list (x);
 create rule "_RETURN" as on select to fooview do instead
   select 1 as x, 'aaa'::text as y;
 
--- nor can one convert a partition to view
 create table fooview_part partition of fooview for values in (1);
 create rule "_RETURN" as on select to fooview_part do instead
   select 1 as x, 'aaa'::text as y;
+
+drop table fooview;
 
 --
 -- check for planner problems with complex inherited UPDATES
