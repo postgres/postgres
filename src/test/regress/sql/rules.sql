@@ -898,6 +898,17 @@ select reltoastrelid, relkind, relfrozenxid
 
 drop view fooview;
 
+-- cannot convert an inheritance parent or child to a view, though
+create table fooview (x int, y text);
+create table fooview_child () inherits (fooview);
+
+create rule "_RETURN" as on select to fooview do instead
+  select 1 as x, 'aaa'::text as y;
+create rule "_RETURN" as on select to fooview_child do instead
+  select 1 as x, 'aaa'::text as y;
+
+drop table fooview cascade;
+
 --
 -- check for planner problems with complex inherited UPDATES
 --
