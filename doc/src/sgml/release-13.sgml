@@ -362,20 +362,6 @@ Branch: REL9_5_STABLE [59ed45e27] 2020-11-24 21:36:09 +0000
 
     <listitem>
 <!--
-Author: Thomas Munro <tmunro@postgresql.org>
-Branch: master Release: REL_13_BR [d061ea21f] 2020-01-31 17:29:38 +1300
-Branch: REL_12_STABLE [2ded1f1fb] 2020-11-20 10:51:30 +1300
-Branch: REL_11_STABLE [0455f78dd] 2020-11-20 10:52:38 +1300
-Branch: REL_10_STABLE [f5332503e] 2020-11-20 10:53:08 +1300
--->
-     <para>
-      Adjust settings to make it more difficult to run out of DSM slots
-      during heavy usage of parallel queries (Thomas Munro)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Fujii Masao <fujii@postgresql.org>
 Branch: master [2ad78a87f] 2021-01-15 12:44:17 +0900
 Branch: REL_13_STABLE [60369db86] 2021-01-15 12:45:25 +0900
@@ -540,6 +526,23 @@ Branch: REL_10_STABLE [c22539756] 2021-01-15 23:34:02 +0100
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [dd705a039] 2021-02-06 15:17:01 -0500
+Branch: REL_13_STABLE [4353bc878] 2021-02-06 15:17:01 -0500
+Branch: REL_12_STABLE [f73321957] 2021-02-06 15:17:01 -0500
+Branch: REL_11_STABLE [580069037] 2021-02-06 15:17:02 -0500
+Branch: REL_10_STABLE [ad85e5efa] 2021-02-06 15:17:02 -0500
+Branch: REL9_6_STABLE [7736ab05f] 2021-02-06 15:17:02 -0500
+Branch: REL9_5_STABLE [5ad03374b] 2021-02-06 15:17:02 -0500
+-->
+     <para>
+      Disallow converting an inheritance child table to a view
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Thomas Munro <tmunro@postgresql.org>
 Branch: master [9f35f9437] 2020-12-01 13:21:03 +1300
 Branch: REL_13_STABLE [fd3a75d82] 2020-12-01 13:22:01 +1300
@@ -649,7 +652,7 @@ Branch: REL9_6_STABLE [8a4069766] 2020-11-28 14:03:40 -0500
 Branch: REL9_5_STABLE [60d6c7143] 2020-11-28 14:03:40 -0500
 -->
      <para>
-      Fix recently-introduced race conditions
+      Fix recently-introduced race condition
       in <command>LISTEN</command>/<command>NOTIFY</command> queue
       handling (Tom Lane)
      </para>
@@ -657,15 +660,6 @@ Branch: REL9_5_STABLE [60d6c7143] 2020-11-28 14:03:40 -0500
      <para>
       A newly-listening backend could attempt to read SLRU pages that
       were in process of being truncated, possibly causing an error.
-     </para>
-
-     <para>
-      In release branches before 13, the queue tail pointer could become
-      set to a value that's not equal to the queue position of any
-      backend, resulting in effective disabling of the queue truncation
-      logic.  Continued use of <command>NOTIFY</command> then led to
-      queue-fill warnings, and eventually to inability to send any more
-      notifies until the server is restarted.
      </para>
     </listitem>
 
