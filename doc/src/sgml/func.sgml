@@ -25102,11 +25102,11 @@ SELECT collation for ('foo' COLLATE "de_DE");
         <indexterm>
          <primary>pg_wal_lsn_diff</primary>
         </indexterm>
-        <function>pg_wal_lsn_diff</function> ( <parameter>lsn</parameter> <type>pg_lsn</type>, <parameter>lsn</parameter> <type>pg_lsn</type> )
+        <function>pg_wal_lsn_diff</function> ( <parameter>lsn1</parameter> <type>pg_lsn</type>, <parameter>lsn2</parameter> <type>pg_lsn</type> )
         <returnvalue>numeric</returnvalue>
        </para>
        <para>
-        Calculates the difference in bytes between two write-ahead log
+        Calculates the difference in bytes (<parameter>lsn1</parameter> - <parameter>lsn2</parameter>) between two write-ahead log
         locations.  This can be used
         with <structname>pg_stat_replication</structname> or some of the
         functions shown in <xref linkend="functions-admin-backup-table"/> to
