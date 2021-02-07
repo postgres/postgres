@@ -914,7 +914,7 @@ gistPageRecyclable(Page page)
 		 */
 		FullTransactionId deletexid_full = GistPageGetDeleteXid(page);
 
-		return GlobalVisIsRemovableFullXid(NULL, deletexid_full);
+		return GlobalVisCheckRemovableFullXid(NULL, deletexid_full);
 	}
 	return false;
 }

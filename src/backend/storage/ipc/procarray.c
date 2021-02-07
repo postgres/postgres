@@ -4146,7 +4146,7 @@ GlobalVisTestNonRemovableHorizon(GlobalVisState *state)
  * GlobalVisTestIsRemovableFullXid(), see their comments.
  */
 bool
-GlobalVisIsRemovableFullXid(Relation rel, FullTransactionId fxid)
+GlobalVisCheckRemovableFullXid(Relation rel, FullTransactionId fxid)
 {
 	GlobalVisState *state;
 

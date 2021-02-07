@@ -388,7 +388,7 @@ gistRedoPageReuse(XLogReaderState *record)
 	 * pages in the index via the FSM.  That's all they do though.
 	 *
 	 * latestRemovedXid was the page's deleteXid.  The
-	 * GlobalVisIsRemovableFullXid(deleteXid) test in gistPageRecyclable()
+	 * GlobalVisCheckRemovableFullXid(deleteXid) test in gistPageRecyclable()
 	 * conceptually mirrors the PGPROC->xmin > limitXmin test in
 	 * GetConflictingVirtualXIDs().  Consequently, one XID value achieves the
 	 * same exclusion effect on primary and standby.
