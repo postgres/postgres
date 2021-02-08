@@ -397,6 +397,44 @@ UPDATE t1 SET c3 = 10; -- fail, but see columns with SELECT rights, or being mod
 SET SESSION AUTHORIZATION regress_priv_user1;
 DROP TABLE t1;
 
+-- check error reporting with column privs on a partitioned table
+CREATE TABLE errtst(a text, b text NOT NULL, c text, secret1 text, secret2 text) PARTITION BY LIST (a);
+CREATE TABLE errtst_part_1(secret2 text, c text, a text, b text NOT NULL, secret1 text);
+CREATE TABLE errtst_part_2(secret1 text, secret2 text, a text, c text, b text NOT NULL);
+
+ALTER TABLE errtst ATTACH PARTITION errtst_part_1 FOR VALUES IN ('aaa');
+ALTER TABLE errtst ATTACH PARTITION errtst_part_2 FOR VALUES IN ('aaaa');
+
+GRANT SELECT (a, b, c) ON TABLE errtst TO regress_priv_user2;
+GRANT UPDATE (a, b, c) ON TABLE errtst TO regress_priv_user2;
+GRANT INSERT (a, b, c) ON TABLE errtst TO regress_priv_user2;
+
+INSERT INTO errtst_part_1 (a, b, c, secret1, secret2)
+VALUES ('aaa', 'bbb', 'ccc', 'the body', 'is in the attic');
+
+SET SESSION AUTHORIZATION regress_priv_user2;
+
+-- Perform a few updates that violate the NOT NULL constraint. Make sure
+-- the error messages don't leak the secret fields.
+
+-- simple insert.
+INSERT INTO errtst (a, b) VALUES ('aaa', NULL);
+-- simple update.
+UPDATE errtst SET b = NULL;
+-- partitioning key is updated, doesn't move the row.
+UPDATE errtst SET a = 'aaa', b = NULL;
+-- row is moved to another partition.
+UPDATE errtst SET a = 'aaaa', b = NULL;
+
+-- row is moved to another partition. This differs from the previous case in
+-- that the new partition is excluded by constraint exclusion, so its
+-- ResultRelInfo is not created at ExecInitModifyTable, but needs to be
+-- constructed on the fly when the updated tuple is routed to it.
+UPDATE errtst SET a = 'aaaa', b = NULL WHERE a = 'aaa';
+
+SET SESSION AUTHORIZATION regress_priv_user1;
+DROP TABLE errtst;
+
 -- test column-level privileges when involved with DELETE
 SET SESSION AUTHORIZATION regress_priv_user1;
 ALTER TABLE atest6 ADD COLUMN three integer;

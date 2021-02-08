@@ -51,6 +51,7 @@
 #include "access/tableam.h"
 #include "access/transam.h"
 #include "executor/executor.h"
+#include "executor/execPartition.h"
 #include "jit/jit.h"
 #include "mb/pg_wchar.h"
 #include "nodes/nodeFuncs.h"
@@ -1174,4 +1175,92 @@ ExecGetReturningSlot(EState *estate, ResultRelInfo *relInfo)
 	}
 
 	return relInfo->ri_ReturningSlot;
+}
+
+/* Return a bitmap representing columns being inserted */
+Bitmapset *
+ExecGetInsertedCols(ResultRelInfo *relinfo, EState *estate)
+{
+	/*
+	 * The columns are stored in the range table entry. If this ResultRelInfo
+	 * doesn't have an entry in the range table (i.e. if it represents a
+	 * partition routing target), fetch the parent's RTE and map the columns
+	 * to the order they are in the partition.
+	 */
+	if (relinfo->ri_RangeTableIndex != 0)
+	{
+		RangeTblEntry *rte = exec_rt_fetch(relinfo->ri_RangeTableIndex, estate);
+
+		return rte->insertedCols;
+	}
+	else
+	{
+		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
+		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
+		PartitionRoutingInfo *partrouteinfo = relinfo->ri_PartitionInfo;
+
+		if (partrouteinfo->pi_RootToPartitionMap != NULL)
+			return execute_attr_map_cols(rte->insertedCols,
+										 partrouteinfo->pi_RootToPartitionMap);
+		else
+			return rte->insertedCols;
+	}
+}
+
+/* Return a bitmap representing columns being updated */
+Bitmapset *
+ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate)
+{
+	/* see ExecGetInsertedCols() */
+	if (relinfo->ri_RangeTableIndex != 0)
+	{
+		RangeTblEntry *rte = exec_rt_fetch(relinfo->ri_RangeTableIndex, estate);
+
+		return rte->updatedCols;
+	}
+	else
+	{
+		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
+		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
+		PartitionRoutingInfo *partrouteinfo = relinfo->ri_PartitionInfo;
+
+		if (partrouteinfo->pi_RootToPartitionMap != NULL)
+			return execute_attr_map_cols(rte->updatedCols,
+										 partrouteinfo->pi_RootToPartitionMap);
+		else
+			return rte->updatedCols;
+	}
+}
+
+/* Return a bitmap representing generated columns being updated */
+Bitmapset *
+ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
+{
+	/* see ExecGetInsertedCols() */
+	if (relinfo->ri_RangeTableIndex != 0)
+	{
+		RangeTblEntry *rte = exec_rt_fetch(relinfo->ri_RangeTableIndex, estate);
+
+		return rte->extraUpdatedCols;
+	}
+	else
+	{
+		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
+		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
+		PartitionRoutingInfo *partrouteinfo = relinfo->ri_PartitionInfo;
+
+		if (partrouteinfo->pi_RootToPartitionMap != NULL)
+			return execute_attr_map_cols(rte->extraUpdatedCols,
+										 partrouteinfo->pi_RootToPartitionMap);
+		else
+			return rte->extraUpdatedCols;
+	}
+}
+
+/* Return columns being updated, including generated columns */
+Bitmapset *
+ExecGetAllUpdatedCols(ResultRelInfo *relinfo, EState *estate)
+{
+	return bms_union(ExecGetUpdatedCols(relinfo, estate),
+					 ExecGetExtraUpdatedCols(relinfo, estate));
 }

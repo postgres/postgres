@@ -17,6 +17,7 @@
 #include "access/htup.h"
 #include "access/tupdesc.h"
 #include "executor/tuptable.h"
+#include "nodes/bitmapset.h"
 
 
 typedef struct TupleConversionMap
@@ -49,6 +50,7 @@ extern AttrNumber *convert_tuples_by_name_map_if_req(TupleDesc indesc,
 extern HeapTuple execute_attr_map_tuple(HeapTuple tuple, TupleConversionMap *map);
 extern TupleTableSlot *execute_attr_map_slot(AttrNumber *attrMap,
 											 TupleTableSlot *in_slot, TupleTableSlot *out_slot);
+extern Bitmapset *execute_attr_map_cols(Bitmapset *inbitmap, TupleConversionMap *map);
 
 extern void free_conversion_map(TupleConversionMap *map);
 

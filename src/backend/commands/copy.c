@@ -2858,6 +2858,7 @@ CopyFrom(CopyState cstate)
 	mtstate->ps.state = estate;
 	mtstate->operation = CMD_INSERT;
 	mtstate->resultRelInfo = estate->es_result_relations;
+	mtstate->rootResultRelInfo = estate->es_result_relations;
 
 	if (resultRelInfo->ri_FdwRoutine != NULL &&
 		resultRelInfo->ri_FdwRoutine->BeginForeignInsert != NULL)
