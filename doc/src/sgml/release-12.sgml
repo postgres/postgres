@@ -23,7 +23,7 @@
    </para>
 
    <para>
-    However, see the first two changelog items below,
+    However, see the second and third changelog items below,
     which describe cases in which reindexing indexes after the upgrade
     may be advisable.
    </para>
@@ -38,6 +38,30 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [6214e2b22] 2021-02-08 11:01:51 +0200
+Branch: REL_13_STABLE [8e56684d5] 2021-02-08 11:01:55 +0200
+Branch: REL_12_STABLE [f50e88899] 2021-02-08 11:01:55 +0200
+Branch: REL_11_STABLE [cb5868cc1] 2021-02-08 11:01:55 +0200
+-->
+     <para>
+      Fix information leakage in constraint-violation error messages
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      If an <command>UPDATE</command> command attempts to move a row to a
+      different partition but finds that it violates some constraint on
+      the new partition, and the columns in that partition are in
+      different physical positions than in the parent table, the error
+      message could reveal the contents of columns that the user does not
+      have <literal>SELECT</literal> privilege on.
+      (CVE-2021-3393)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
