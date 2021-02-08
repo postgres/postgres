@@ -107,7 +107,7 @@ static void find_matching_subplans_recurse(PartitionPruningData *prunedata,
  * the partitions to route tuples to.  See ExecPrepareTupleRouting.
  */
 PartitionTupleRouting *
-ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
+ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, ResultRelInfo *rootResultRelInfo)
 {
 	List	   *leaf_parts;
 	ListCell   *cell;
@@ -123,10 +123,12 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 	 * Get the information about the partition tree after locking all the
 	 * partitions.
 	 */
-	(void) find_all_inheritors(RelationGetRelid(rel), RowExclusiveLock, NULL);
+	(void) find_all_inheritors(RelationGetRelid(rootResultRelInfo->ri_RelationDesc),
+							   RowExclusiveLock, NULL);
 	proute = (PartitionTupleRouting *) palloc0(sizeof(PartitionTupleRouting));
 	proute->partition_dispatch_info =
-		RelationGetPartitionDispatchInfo(rel, &proute->num_dispatch,
+		RelationGetPartitionDispatchInfo(rootResultRelInfo->ri_RelationDesc,
+										 &proute->num_dispatch,
 										 &leaf_parts);
 	proute->num_partitions = nparts = list_length(leaf_parts);
 	proute->partitions =
@@ -186,7 +188,7 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 			 * descriptor.  When generating the per-subplan result rels, this
 			 * was not set.
 			 */
-			leaf_part_rri->ri_PartitionRoot = rel;
+			leaf_part_rri->ri_RootResultRelInfo = rootResultRelInfo;
 
 			/* Remember the subplan offset for this ResultRelInfo */
 			proute->subplan_partition_offsets[update_rri_index] = i;
@@ -366,13 +368,13 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
  */
 ResultRelInfo *
 ExecInitPartitionInfo(ModifyTableState *mtstate,
-					  ResultRelInfo *resultRelInfo,
+					  ResultRelInfo *rootResultRelInfo,
 					  PartitionTupleRouting *proute,
 					  EState *estate, int partidx)
 {
 	ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
-	Relation	rootrel = resultRelInfo->ri_RelationDesc,
-				partrel;
+	Relation	partrel;
+	int			firstVarno = mtstate->resultRelInfo[0].ri_RangeTableIndex;
 	Relation	firstResultRel = mtstate->resultRelInfo[0].ri_RelationDesc;
 	ResultRelInfo *leaf_part_rri;
 	MemoryContext oldContext;
@@ -394,8 +396,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 	leaf_part_rri = makeNode(ResultRelInfo);
 	InitResultRelInfo(leaf_part_rri,
 					  partrel,
-					  node ? node->nominalRelation : 1,
-					  rootrel,
+					  0,
+					  rootResultRelInfo,
 					  estate->es_instrument);
 
 	/*
@@ -441,7 +443,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 		List	   *wcoList;
 		List	   *wcoExprs = NIL;
 		ListCell   *ll;
-		int			firstVarno = mtstate->resultRelInfo[0].ri_RangeTableIndex;
 
 		/*
 		 * In the case of INSERT on a partitioned table, there is only one
@@ -507,7 +508,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 		TupleTableSlot *slot;
 		ExprContext *econtext;
 		List	   *returningList;
-		int			firstVarno = mtstate->resultRelInfo[0].ri_RangeTableIndex;
 
 		/* See the comment above for WCO lists. */
 		Assert((node->operation == CMD_INSERT &&
@@ -568,7 +568,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 	if (node && node->onConflictAction != ONCONFLICT_NONE)
 	{
 		TupleConversionMap *map = proute->parent_child_tupconv_maps[partidx];
-		int			firstVarno = mtstate->resultRelInfo[0].ri_RangeTableIndex;
 		TupleDesc	partrelDesc = RelationGetDescr(partrel);
 		ExprContext *econtext = mtstate->ps.ps_ExprContext;
 		ListCell   *lc;
@@ -580,7 +579,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 		 * list and searching for ancestry relationships to each index in the
 		 * ancestor table.
 		 */
-		if (list_length(resultRelInfo->ri_onConflictArbiterIndexes) > 0)
+		if (list_length(rootResultRelInfo->ri_onConflictArbiterIndexes) > 0)
 		{
 			List	   *childIdxs;
 
@@ -593,7 +592,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 				ListCell   *lc2;
 
 				ancestors = get_partition_ancestors(childIdx);
-				foreach(lc2, resultRelInfo->ri_onConflictArbiterIndexes)
+				foreach(lc2, rootResultRelInfo->ri_onConflictArbiterIndexes)
 				{
 					if (list_member_oid(ancestors, lfirst_oid(lc2)))
 						arbiterIndexes = lappend_oid(arbiterIndexes, childIdx);
@@ -607,7 +606,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 		 * (This shouldn't happen, since arbiter index selection should not
 		 * pick up an invalid index.)
 		 */
-		if (list_length(resultRelInfo->ri_onConflictArbiterIndexes) !=
+		if (list_length(rootResultRelInfo->ri_onConflictArbiterIndexes) !=
 			list_length(arbiterIndexes))
 			elog(ERROR, "invalid arbiter index list");
 		leaf_part_rri->ri_onConflictArbiterIndexes = arbiterIndexes;
@@ -618,7 +617,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 		if (node->onConflictAction == ONCONFLICT_UPDATE)
 		{
 			Assert(node->onConflictSet != NIL);
-			Assert(resultRelInfo->ri_onConflict != NULL);
+			Assert(rootResultRelInfo->ri_onConflict != NULL);
 
 			/*
 			 * If the partition's tuple descriptor matches exactly the root
@@ -627,7 +626,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 			 * need to create state specific to this partition.
 			 */
 			if (map == NULL)
-				leaf_part_rri->ri_onConflict = resultRelInfo->ri_onConflict;
+				leaf_part_rri->ri_onConflict = rootResultRelInfo->ri_onConflict;
 			else
 			{
 				List	   *onconflset;
@@ -737,6 +736,7 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 					ResultRelInfo *partRelInfo,
 					int partidx)
 {
+	ResultRelInfo *rootRelInfo = partRelInfo->ri_RootResultRelInfo;
 	MemoryContext oldContext;
 
 	/*
@@ -749,7 +749,7 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 	 * partition from the parent's type to the partition's.
 	 */
 	proute->parent_child_tupconv_maps[partidx] =
-		convert_tuples_by_name(RelationGetDescr(partRelInfo->ri_PartitionRoot),
+		convert_tuples_by_name(RelationGetDescr(rootRelInfo->ri_RelationDesc),
 							   RelationGetDescr(partRelInfo->ri_RelationDesc),
 							   gettext_noop("could not convert row type"));
 

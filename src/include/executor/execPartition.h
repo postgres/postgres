@@ -173,13 +173,13 @@ typedef struct PartitionPruneState
 } PartitionPruneState;
 
 extern PartitionTupleRouting *ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
-							   Relation rel);
+							   ResultRelInfo *rootResultRelInfo);
 extern int ExecFindPartition(ResultRelInfo *resultRelInfo,
 				  PartitionDispatch *pd,
 				  TupleTableSlot *slot,
 				  EState *estate);
 extern ResultRelInfo *ExecInitPartitionInfo(ModifyTableState *mtstate,
-					  ResultRelInfo *resultRelInfo,
+					  ResultRelInfo *rootResultRelInfo,
 					  PartitionTupleRouting *proute,
 					  EState *estate, int partidx);
 extern void ExecInitRoutingInfo(ModifyTableState *mtstate,

@@ -2021,7 +2021,7 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 	PgFdwModifyState *fmstate;
 	ModifyTable *plan = castNode(ModifyTable, mtstate->ps.plan);
 	EState	   *estate = mtstate->ps.state;
-	Index		resultRelation = resultRelInfo->ri_RangeTableIndex;
+	Index		resultRelation;
 	Relation	rel = resultRelInfo->ri_RelationDesc;
 	RangeTblEntry *rte;
 	TupleDesc	tupdesc = RelationGetDescr(rel);
@@ -2072,7 +2072,8 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 	}
 
 	/*
-	 * If the foreign table is a partition, we need to create a new RTE
+	 * If the foreign table is a partition that doesn't have a corresponding
+	 * RTE entry, we need to create a new RTE
 	 * describing the foreign table for use by deparseInsertSql and
 	 * create_foreign_modify() below, after first copying the parent's RTE and
 	 * modifying some fields to describe the foreign partition to work on.
@@ -2080,9 +2081,11 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 	 * correspond to this partition if it is one of the UPDATE subplan target
 	 * rels; in that case, we can just use the existing RTE as-is.
 	 */
-	rte = list_nth(estate->es_range_table, resultRelation - 1);
-	if (rte->relid != RelationGetRelid(rel))
+	if (resultRelInfo->ri_RangeTableIndex == 0)
 	{
+		ResultRelInfo *rootResultRelInfo = resultRelInfo->ri_RootResultRelInfo;
+
+		rte = list_nth(estate->es_range_table, rootResultRelInfo->ri_RangeTableIndex - 1);
 		rte = copyObject(rte);
 		rte->relid = RelationGetRelid(rel);
 		rte->relkind = RELKIND_FOREIGN_TABLE;
@@ -2094,8 +2097,15 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 		 * Vars contained in those expressions.
 		 */
 		if (plan && plan->operation == CMD_UPDATE &&
-			resultRelation == plan->nominalRelation)
+			rootResultRelInfo->ri_RangeTableIndex == plan->nominalRelation)
 			resultRelation = mtstate->resultRelInfo[0].ri_RangeTableIndex;
+		else
+			resultRelation = rootResultRelInfo->ri_RangeTableIndex;
+	}
+	else
+	{
+		resultRelation = resultRelInfo->ri_RangeTableIndex;
+		rte = list_nth(estate->es_range_table, resultRelation - 1);
 	}
 
 	/* Construct the SQL command string. */
