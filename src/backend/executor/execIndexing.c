@@ -124,15 +124,6 @@ typedef enum
 	CEOUC_LIVELOCK_PREVENTING_WAIT
 } CEOUC_WAIT_MODE;
 
-/*
- * The authoritative version of these macro are in executor/execMain.c.  Be
- * sure to keep everything in sync.
- */
-#define GetUpdatedColumns(relinfo, estate) \
-	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols)
-#define GetExtraUpdatedColumns(relinfo, estate) \
-	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->extraUpdatedCols)
-
 static bool check_exclusion_or_unique_constraint(Relation heap, Relation index,
 												 IndexInfo *indexInfo,
 												 ItemPointer tupleid,
@@ -944,8 +935,8 @@ static bool
 index_unchanged_by_update(ResultRelInfo *resultRelInfo, EState *estate,
 						  IndexInfo *indexInfo, Relation indexRelation)
 {
-	Bitmapset  *updatedCols = GetUpdatedColumns(resultRelInfo, estate);
-	Bitmapset  *extraUpdatedCols = GetExtraUpdatedColumns(resultRelInfo, estate);
+	Bitmapset  *updatedCols = ExecGetUpdatedCols(resultRelInfo, estate);
+	Bitmapset  *extraUpdatedCols = ExecGetExtraUpdatedCols(resultRelInfo, estate);
 	Bitmapset  *allUpdatedCols;
 	bool		hasexpression = false;
 	List	   *idxExprs;

@@ -291,7 +291,7 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 				if (cmdtype == CMD_UPDATE &&
 					!(rel->trigdesc && rel->trigdesc->trig_update_before_row) &&
 					!bms_is_member(i + 1 - FirstLowInvalidHeapAttributeNumber,
-								   exec_rt_fetch(resultRelInfo->ri_RangeTableIndex, estate)->extraUpdatedCols))
+								   ExecGetExtraUpdatedCols(resultRelInfo, estate)))
 				{
 					resultRelInfo->ri_GeneratedExprs[i] = NULL;
 					continue;
@@ -565,7 +565,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 * if there's no BR trigger defined on the partition.
 		 */
 		if (resultRelationDesc->rd_rel->relispartition &&
-			(resultRelInfo->ri_PartitionRoot == NULL ||
+			(resultRelInfo->ri_RootResultRelInfo == NULL ||
 			 (resultRelInfo->ri_TrigDesc &&
 			  resultRelInfo->ri_TrigDesc->trig_insert_before_row)))
 			ExecPartitionCheck(resultRelInfo, slot, estate, true);

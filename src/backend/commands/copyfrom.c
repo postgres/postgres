@@ -666,6 +666,7 @@ CopyFrom(CopyFromState cstate)
 	mtstate->ps.state = estate;
 	mtstate->operation = CMD_INSERT;
 	mtstate->resultRelInfo = resultRelInfo;
+	mtstate->rootResultRelInfo = resultRelInfo;
 
 	if (resultRelInfo->ri_FdwRoutine != NULL &&
 		resultRelInfo->ri_FdwRoutine->BeginForeignInsert != NULL)

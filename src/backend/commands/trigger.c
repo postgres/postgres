@@ -70,14 +70,6 @@ int			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
 /* How many levels deep into trigger execution are we? */
 static int	MyTriggerDepth = 0;
 
-/*
- * The authoritative version of this macro is in executor/execMain.c.  Be sure
- * to keep everything in sync.
- */
-#define GetAllUpdatedColumns(relinfo, estate) \
-	(bms_union(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols, \
-			   exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->extraUpdatedCols))
-
 /* Local function prototypes */
 static void SetTriggerFlags(TriggerDesc *trigdesc, Trigger *trigger);
 static bool GetTupleForTrigger(EState *estate,
@@ -2643,7 +2635,10 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 								   CMD_UPDATE))
 		return;
 
-	updatedCols = GetAllUpdatedColumns(relinfo, estate);
+	/* statement-level triggers operate on the parent table */
+	Assert(relinfo->ri_RootResultRelInfo == NULL);
+
+	updatedCols = ExecGetAllUpdatedCols(relinfo, estate);
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
@@ -2684,10 +2679,13 @@ ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
+	/* statement-level triggers operate on the parent table */
+	Assert(relinfo->ri_RootResultRelInfo == NULL);
+
 	if (trigdesc && trigdesc->trig_update_after_statement)
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_UPDATE,
 							  false, NULL, NULL, NIL,
-							  GetAllUpdatedColumns(relinfo, estate),
+							  ExecGetAllUpdatedCols(relinfo, estate),
 							  transition_capture);
 }
 
@@ -2757,7 +2755,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		TRIGGER_EVENT_ROW |
 		TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
-	updatedCols = GetAllUpdatedColumns(relinfo, estate);
+	updatedCols = ExecGetAllUpdatedCols(relinfo, estate);
 	LocTriggerData.tg_updatedcols = updatedCols;
 	for (i = 0; i < trigdesc->numtriggers; i++)
 	{
@@ -2858,7 +2856,7 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_UPDATE,
 							  true, oldslot, newslot, recheckIndexes,
-							  GetAllUpdatedColumns(relinfo, estate),
+							  ExecGetAllUpdatedCols(relinfo, estate),
 							  transition_capture);
 	}
 }

@@ -488,12 +488,16 @@ typedef struct ResultRelInfo
 	/*
 	 * Information needed by tuple routing target relations
 	 *
-	 * PartitionRoot gives the target relation mentioned in the query.
+	 * RootResultRelInfo gives the target relation mentioned in the query, if
+	 * it's a partitioned table. It is not set if the target relation
+	 * mentioned in the query is an inherited table, nor when tuple routing is
+	 * not needed.
+	 *
 	 * RootToPartitionMap and PartitionTupleSlot, initialized by
 	 * ExecInitRoutingInfo, are non-NULL if partition has a different tuple
 	 * format than the root table.
 	 */
-	Relation	ri_PartitionRoot;
+	struct ResultRelInfo *ri_RootResultRelInfo;
 	TupleConversionMap *ri_RootToPartitionMap;
 	TupleTableSlot *ri_PartitionTupleSlot;
 
