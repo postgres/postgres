@@ -227,6 +227,57 @@ execute_attr_map_slot(AttrMap *attrMap,
 }
 
 /*
+ * Perform conversion of bitmap of columns according to the map.
+ *
+ * The input and output bitmaps are offset by
+ * FirstLowInvalidHeapAttributeNumber to accommodate system cols, like the
+ * column-bitmaps in RangeTblEntry.
+ */
+Bitmapset *
+execute_attr_map_cols(AttrMap *attrMap, Bitmapset *in_cols)
+{
+	Bitmapset *out_cols;
+	int			out_attnum;
+
+	/* fast path for the common trivial case */
+	if (in_cols == NULL)
+		return NULL;
+
+	/*
+	 * For each output column, check which input column it corresponds to.
+	 */
+	out_cols = NULL;
+
+	for (out_attnum = FirstLowInvalidHeapAttributeNumber + 1;
+		 out_attnum <= attrMap->maplen;
+		 out_attnum++)
+	{
+		int			in_attnum;
+
+		if (out_attnum < 0)
+		{
+			/* System column. No mapping. */
+			in_attnum = out_attnum;
+		}
+		else if (out_attnum == 0)
+			continue;
+		else
+		{
+			/* normal user column */
+			in_attnum = attrMap->attnums[out_attnum - 1];
+
+			if (in_attnum == 0)
+				continue;
+		}
+
+		if (bms_is_member(in_attnum - FirstLowInvalidHeapAttributeNumber, in_cols))
+			out_cols = bms_add_member(out_cols, out_attnum - FirstLowInvalidHeapAttributeNumber);
+	}
+
+	return out_cols;
+}
+
+/*
  * Free a TupleConversionMap structure.
  */
 void
