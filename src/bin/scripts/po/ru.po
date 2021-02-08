@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-11-09 07:34+0300\n"
+"POT-Creation-Date: 2020-11-20 15:13+0300\n"
 "PO-Revision-Date: 2020-09-15 18:56+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -63,14 +63,9 @@ msgstr "распознать имя пользователя не удалось
 msgid "Cancel request sent\n"
 msgstr "Сигнал отмены отправлен\n"
 
-#: ../../fe_utils/cancel.c:165
+#: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
 msgid "Could not send cancel request: "
 msgstr "Отправить сигнал отмены не удалось: "
-
-#: ../../fe_utils/cancel.c:210
-#, c-format
-msgid "Could not send cancel request: %s"
-msgstr "Отправить сигнал отмены не удалось: %s"
 
 #: ../../fe_utils/print.c:350
 #, c-format
@@ -1247,6 +1242,9 @@ msgid ""
 msgstr ""
 "\n"
 "Подробнее об очистке вы можете узнать в описании SQL-команды VACUUM.\n"
+
+#~ msgid "Could not send cancel request: %s"
+#~ msgstr "Отправить сигнал отмены не удалось: %s"
 
 #~ msgid ""
 #~ "\n"

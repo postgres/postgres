@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-11-09 07:34+0300\n"
+"POT-Creation-Date: 2020-12-11 07:48+0300\n"
 "PO-Revision-Date: 2020-11-09 08:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -115,13 +115,13 @@ msgstr "восстановить файл \"%s\" из архива не удал
 
 #: ../../fe_utils/recovery_gen.c:35 ../../fe_utils/recovery_gen.c:49
 #: ../../fe_utils/recovery_gen.c:77 ../../fe_utils/recovery_gen.c:100
-#: ../../fe_utils/recovery_gen.c:171 parsexlog.c:73 parsexlog.c:125
-#: parsexlog.c:185
+#: ../../fe_utils/recovery_gen.c:171 parsexlog.c:76 parsexlog.c:134
+#: parsexlog.c:194
 #, c-format
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: ../../fe_utils/recovery_gen.c:134 parsexlog.c:298
+#: ../../fe_utils/recovery_gen.c:134 parsexlog.c:307
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не удалось открыть файл \"%s\": %m"
@@ -180,7 +180,7 @@ msgstr "не удалось открыть исходный файл \"%s\": %m"
 msgid "could not seek in source file: %m"
 msgstr "не удалось переместиться в исходном файле: %m"
 
-#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:336
+#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:345
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не удалось прочитать файл \"%s\": %m"
@@ -260,7 +260,7 @@ msgstr "ошибка при удалении символической ссыл
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не удалось открыть файл \"%s\" для чтения: %m"
 
-#: file_ops.c:314 parsexlog.c:338
+#: file_ops.c:314 parsexlog.c:347
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "не удалось прочитать файл \"%s\" (прочитано байт: %d из %zu)"
@@ -425,32 +425,32 @@ msgstr "не удалось отправить сообщение о завер�
 msgid "unexpected result while sending file list: %s"
 msgstr "неожиданный результат при передаче списка: %s"
 
-#: parsexlog.c:85 parsexlog.c:132
+#: parsexlog.c:88 parsexlog.c:141
 #, c-format
 msgid "could not read WAL record at %X/%X: %s"
 msgstr "не удалось прочитать запись WAL в позиции %X/%X: %s"
 
-#: parsexlog.c:89 parsexlog.c:135
+#: parsexlog.c:92 parsexlog.c:144
 #, c-format
 msgid "could not read WAL record at %X/%X"
 msgstr "не удалось прочитать запись WAL в позиции %X/%X"
 
-#: parsexlog.c:198
+#: parsexlog.c:207
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s"
 msgstr "не удалось найти предыдущую запись WAL в позиции %X/%X: %s"
 
-#: parsexlog.c:202
+#: parsexlog.c:211
 #, c-format
 msgid "could not find previous WAL record at %X/%X"
 msgstr "не удалось найти предыдущую запись WAL в позиции %X/%X"
 
-#: parsexlog.c:327
+#: parsexlog.c:336
 #, c-format
 msgid "could not seek in file \"%s\": %m"
 msgstr "не удалось переместиться в файле \"%s\": %m"
 
-#: parsexlog.c:407
+#: parsexlog.c:416
 #, c-format
 msgid ""
 "WAL record modifies a relation, but record type is not recognized: lsn: %X/"
@@ -587,28 +587,28 @@ msgstr ""
 msgid "%s home page: <%s>\n"
 msgstr "Домашняя страница %s: <%s>\n"
 
-#: pg_rewind.c:159 pg_rewind.c:208 pg_rewind.c:215 pg_rewind.c:222
-#: pg_rewind.c:229 pg_rewind.c:237
+#: pg_rewind.c:160 pg_rewind.c:209 pg_rewind.c:216 pg_rewind.c:223
+#: pg_rewind.c:230 pg_rewind.c:238
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_rewind.c:207
+#: pg_rewind.c:208
 #, c-format
 msgid "no source specified (--source-pgdata or --source-server)"
 msgstr "источник не указан (требуется --source-pgdata или --source-server)"
 
-#: pg_rewind.c:214
+#: pg_rewind.c:215
 #, c-format
 msgid "only one of --source-pgdata or --source-server can be specified"
 msgstr "указать можно только --source-pgdata либо --source-server"
 
-#: pg_rewind.c:221
+#: pg_rewind.c:222
 #, c-format
 msgid "no target data directory specified (--target-pgdata)"
 msgstr "целевой каталог данных не указан (--target-pgdata)"
 
-#: pg_rewind.c:228
+#: pg_rewind.c:229
 #, c-format
 msgid ""
 "no source server information (--source-server) specified for --write-"
@@ -617,94 +617,94 @@ msgstr ""
 "отсутствует информация об исходном сервере (--source-server) для --write-"
 "recovery-conf"
 
-#: pg_rewind.c:235
+#: pg_rewind.c:236
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "слишком много аргументов командной строки (первый: \"%s\")"
 
-#: pg_rewind.c:250
+#: pg_rewind.c:251
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "программу не должен запускать root"
 
-#: pg_rewind.c:251
+#: pg_rewind.c:252
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
 msgstr "Запускать %s нужно от имени суперпользователя PostgreSQL.\n"
 
-#: pg_rewind.c:262
+#: pg_rewind.c:263
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "не удалось считать права на каталог \"%s\": %m"
 
-#: pg_rewind.c:316
+#: pg_rewind.c:317
 #, c-format
 msgid "source and target cluster are on the same timeline"
 msgstr "исходный и целевой кластер уже на одной линии времени"
 
-#: pg_rewind.c:322
+#: pg_rewind.c:326
 #, c-format
 msgid "servers diverged at WAL location %X/%X on timeline %u"
 msgstr "серверы разошлись в позиции WAL %X/%X на линии времени %u"
 
-#: pg_rewind.c:360
+#: pg_rewind.c:374
 #, c-format
 msgid "no rewind required"
 msgstr "перемотка не требуется"
 
-#: pg_rewind.c:369
+#: pg_rewind.c:383
 #, c-format
 msgid "rewinding from last common checkpoint at %X/%X on timeline %u"
 msgstr ""
 "перемотка от последней общей контрольной точки в позиции %X/%X на линии "
 "времени %u"
 
-#: pg_rewind.c:378
+#: pg_rewind.c:392
 #, c-format
 msgid "reading source file list"
 msgstr "чтение списка исходных файлов"
 
-#: pg_rewind.c:381
+#: pg_rewind.c:395
 #, c-format
 msgid "reading target file list"
 msgstr "чтение списка целевых файлов"
 
-#: pg_rewind.c:392
+#: pg_rewind.c:404
 #, c-format
 msgid "reading WAL in target"
 msgstr "чтение WAL в целевом кластере"
 
-#: pg_rewind.c:409
+#: pg_rewind.c:421
 #, c-format
 msgid "need to copy %lu MB (total source directory size is %lu MB)"
 msgstr "требуется скопировать %lu МБ (общий размер исходного каталога: %lu МБ)"
 
-#: pg_rewind.c:427
+#: pg_rewind.c:439
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "создание метки копии и модификация управляющего файла"
 
-#: pg_rewind.c:457
+#: pg_rewind.c:469
 #, c-format
 msgid "syncing target data directory"
 msgstr "синхронизация целевого каталога данных"
 
-#: pg_rewind.c:464
+#: pg_rewind.c:476
 #, c-format
 msgid "Done!"
 msgstr "Готово!"
 
-#: pg_rewind.c:476
+#: pg_rewind.c:488
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "исходный и целевой кластеры относятся к разным системам"
 
-#: pg_rewind.c:484
+#: pg_rewind.c:496
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "кластеры несовместимы с этой версией pg_rewind"
 
-#: pg_rewind.c:494
+#: pg_rewind.c:506
 #, c-format
 msgid ""
 "target server needs to use either data checksums or \"wal_log_hints = on\""
@@ -712,49 +712,49 @@ msgstr ""
 "на целевом сервере должны быть контрольные суммы данных или \"wal_log_hints "
 "= on\""
 
-#: pg_rewind.c:505
+#: pg_rewind.c:517
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "целевой сервер должен быть выключен штатно"
 
-#: pg_rewind.c:515
+#: pg_rewind.c:527
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "работа с исходным каталогом данных должна быть завершена штатно"
 
-#: pg_rewind.c:567
+#: pg_rewind.c:579
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s КБ (%d%%) скопировано"
 
-#: pg_rewind.c:630
+#: pg_rewind.c:642
 #, c-format
 msgid "invalid control file"
 msgstr "неверный управляющий файл"
 
-#: pg_rewind.c:714
+#: pg_rewind.c:726
 #, c-format
 msgid ""
 "could not find common ancestor of the source and target cluster's timelines"
 msgstr ""
 "не удалось найти общего предка линий времени исходного и целевого кластеров"
 
-#: pg_rewind.c:755
+#: pg_rewind.c:767
 #, c-format
 msgid "backup label buffer too small"
 msgstr "буфер для метки копии слишком мал"
 
-#: pg_rewind.c:778
+#: pg_rewind.c:790
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "неверная контрольная сумма управляющего файла"
 
-#: pg_rewind.c:788
+#: pg_rewind.c:800
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "неверный размер управляющего файла (%d), ожидалось: %d"
 
-#: pg_rewind.c:797
+#: pg_rewind.c:809
 #, c-format
 msgid ""
 "WAL segment size must be a power of two between 1 MB and 1 GB, but the "
@@ -772,7 +772,7 @@ msgstr[2] ""
 "Размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до 1 "
 "ГБ, но в управляющем файле указано значение: %d"
 
-#: pg_rewind.c:854 pg_rewind.c:912
+#: pg_rewind.c:866 pg_rewind.c:924
 #, c-format
 msgid ""
 "The program \"%s\" is needed by %s but was not found in the\n"
@@ -783,7 +783,7 @@ msgstr ""
 "в каталоге \"%s\".\n"
 "Проверьте правильность установки СУБД."
 
-#: pg_rewind.c:859 pg_rewind.c:917
+#: pg_rewind.c:871 pg_rewind.c:929
 #, c-format
 msgid ""
 "The program \"%s\" was found by \"%s\"\n"
@@ -794,25 +794,25 @@ msgstr ""
 "но её версия отличается от версии %s.\n"
 "Проверьте правильность установки СУБД."
 
-#: pg_rewind.c:880
+#: pg_rewind.c:892
 #, c-format
 msgid "restore_command is not set in the target cluster"
 msgstr "команда restore_command в целевом кластере не определена"
 
-#: pg_rewind.c:923
+#: pg_rewind.c:935
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr ""
 "выполнение \"%s\" для восстановления согласованности на целевом сервере"
 
-#: pg_rewind.c:943
+#: pg_rewind.c:955
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr ""
 "не удалось запустить postgres в целевом кластере в однопользовательском "
 "режиме"
 
-#: pg_rewind.c:944
+#: pg_rewind.c:956
 #, c-format
 msgid "Command was: %s"
 msgstr "Выполнялась команда: %s"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-08-21 15:51+0900\n"
-"PO-Revision-Date: 2020-09-13 08:58+0200\n"
+"PO-Revision-Date: 2021-02-05 07:57+0100\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -9889,7 +9889,7 @@ msgstr "必要ならば手作業でこのディレクトリを削除すること
 #: commands/trigger.c:204 commands/trigger.c:215
 #, c-format
 msgid "\"%s\" is a table"
-msgstr "\"%s\"はテーブルではありません"
+msgstr "\"%s\"はテーブルです"
 
 #: commands/trigger.c:206 commands/trigger.c:217
 #, c-format
@@ -26735,9 +26735,6 @@ msgstr "異なるデータベースからのスナップショットを読み込
 
 #~ msgid "partition key expressions cannot contain whole-row references"
 #~ msgstr "パーティションキー式は行全体参照を含むことはできません"
-
-#~ msgid "Partitioned tables cannot have BEFORE / FOR EACH ROW triggers."
-#~ msgstr "パーティションテーブルは BEFORE /  FOR EACH ROW トリガを持つことができません。"
 
 #~ msgid "Found referenced table's UPDATE trigger."
 #~ msgstr "被参照テーブルのUPDATEトリガが見つかりました。"

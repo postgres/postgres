@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-11-09 07:34+0300\n"
+"POT-Creation-Date: 2021-01-26 17:52+0300\n"
 "PO-Revision-Date: 2020-09-07 15:43+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -57,11 +57,11 @@ msgstr "не удалось сгенерировать разовый код\n"
 #: fe-auth-scram.c:691 fe-auth-scram.c:725 fe-auth.c:289 fe-auth.c:359
 #: fe-auth.c:394 fe-auth.c:611 fe-auth.c:770 fe-auth.c:1129 fe-auth.c:1277
 #: fe-connect.c:892 fe-connect.c:1419 fe-connect.c:1595 fe-connect.c:2200
-#: fe-connect.c:2223 fe-connect.c:2952 fe-connect.c:4601 fe-connect.c:4857
-#: fe-connect.c:4976 fe-connect.c:5229 fe-connect.c:5309 fe-connect.c:5408
-#: fe-connect.c:5664 fe-connect.c:5693 fe-connect.c:5765 fe-connect.c:5789
-#: fe-connect.c:5807 fe-connect.c:5908 fe-connect.c:5917 fe-connect.c:6273
-#: fe-connect.c:6423 fe-exec.c:2747 fe-exec.c:3494 fe-exec.c:3659
+#: fe-connect.c:2223 fe-connect.c:2957 fe-connect.c:4605 fe-connect.c:4861
+#: fe-connect.c:4980 fe-connect.c:5233 fe-connect.c:5313 fe-connect.c:5412
+#: fe-connect.c:5668 fe-connect.c:5697 fe-connect.c:5769 fe-connect.c:5793
+#: fe-connect.c:5811 fe-connect.c:5912 fe-connect.c:5921 fe-connect.c:6277
+#: fe-connect.c:6427 fe-exec.c:2747 fe-exec.c:3494 fe-exec.c:3659
 #: fe-gssapi-common.c:111 fe-lobj.c:895 fe-protocol2.c:1207 fe-protocol3.c:995
 #: fe-protocol3.c:1699 fe-secure-common.c:110 fe-secure-gssapi.c:504
 #: fe-secure-openssl.c:440 fe-secure-openssl.c:1091
@@ -459,152 +459,152 @@ msgstr ""
 "отсутствует кеш учётных данных, нет поддержки на сервере или используется "
 "локальный сокет)\n"
 
-#: fe-connect.c:2926
+#: fe-connect.c:2931
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "не удалось отправить пакет согласования SSL: %s\n"
 
-#: fe-connect.c:2965
+#: fe-connect.c:2970
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "не удалось отправить стартовый пакет: %s\n"
 
-#: fe-connect.c:3035
+#: fe-connect.c:3040
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "затребовано подключение через SSL, но сервер не поддерживает SSL\n"
 
-#: fe-connect.c:3061
+#: fe-connect.c:3067
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "получен неверный ответ при согласовании SSL: %c\n"
 
-#: fe-connect.c:3151
+#: fe-connect.c:3156
 msgid "server doesn't support GSSAPI encryption, but it was required\n"
 msgstr "затребовано шифрование GSSAPI, но сервер его не поддерживает\n"
 
-#: fe-connect.c:3162
+#: fe-connect.c:3168
 #, c-format
 msgid "received invalid response to GSSAPI negotiation: %c\n"
 msgstr "получен неверный ответ при согласовании GSSAPI: %c\n"
 
-#: fe-connect.c:3229 fe-connect.c:3260
+#: fe-connect.c:3234 fe-connect.c:3265
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr "ожидался запрос аутентификации от сервера, но получено: %c\n"
 
-#: fe-connect.c:3502
+#: fe-connect.c:3506
 msgid "unexpected message from server during startup\n"
 msgstr "неожиданное сообщение от сервера в начале работы\n"
 
-#: fe-connect.c:3707
+#: fe-connect.c:3711
 #, c-format
 msgid "could not make a writable connection to server \"%s:%s\"\n"
 msgstr ""
 "не удалось установить подключение для чтения/записи к серверу \"%s:%s\"\n"
 
-#: fe-connect.c:3753
+#: fe-connect.c:3757
 #, c-format
 msgid "test \"SHOW transaction_read_only\" failed on server \"%s:%s\"\n"
 msgstr ""
 "проверка \"SHOW transaction_read_only\" не пройдена на сервере \"%s:%s\"\n"
 
-#: fe-connect.c:3768
+#: fe-connect.c:3772
 #, c-format
 msgid "invalid connection state %d, probably indicative of memory corruption\n"
 msgstr "неверное состояние соединения %d - возможно разрушение памяти\n"
 
-#: fe-connect.c:4207 fe-connect.c:4267
+#: fe-connect.c:4211 fe-connect.c:4271
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
 msgstr "ошибка в PGEventProc \"%s\" при обработке события PGEVT_CONNRESET\n"
 
-#: fe-connect.c:4614
+#: fe-connect.c:4618
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "некорректный адрес LDAP \"%s\": схема должна быть ldap://\n"
 
-#: fe-connect.c:4629
+#: fe-connect.c:4633
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "некорректный адрес LDAP \"%s\": отсутствует уникальное имя\n"
 
-#: fe-connect.c:4641 fe-connect.c:4696
+#: fe-connect.c:4645 fe-connect.c:4700
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "некорректный адрес LDAP \"%s\": должен быть только один атрибут\n"
 
-#: fe-connect.c:4652 fe-connect.c:4711
+#: fe-connect.c:4656 fe-connect.c:4715
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr ""
 "некорректный адрес LDAP \"%s\": не указана область поиска (base/one/sub)\n"
 
-#: fe-connect.c:4663
+#: fe-connect.c:4667
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "некорректный адрес LDAP \"%s\": нет фильтра\n"
 
-#: fe-connect.c:4684
+#: fe-connect.c:4688
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "некорректный адрес LDAP \"%s\": неверный номер порта\n"
 
-#: fe-connect.c:4720
+#: fe-connect.c:4724
 msgid "could not create LDAP structure\n"
 msgstr "не удалось создать структуру LDAP\n"
 
-#: fe-connect.c:4796
+#: fe-connect.c:4800
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "ошибка поиска на сервере LDAP: %s\n"
 
-#: fe-connect.c:4807
+#: fe-connect.c:4811
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "при поиске LDAP найдено более одного вхождения\n"
 
-#: fe-connect.c:4808 fe-connect.c:4820
+#: fe-connect.c:4812 fe-connect.c:4824
 msgid "no entry found on LDAP lookup\n"
 msgstr "при поиске LDAP ничего не найдено\n"
 
-#: fe-connect.c:4831 fe-connect.c:4844
+#: fe-connect.c:4835 fe-connect.c:4848
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "атрибут не содержит значений при поиске LDAP\n"
 
-#: fe-connect.c:4896 fe-connect.c:4915 fe-connect.c:5447
+#: fe-connect.c:4900 fe-connect.c:4919 fe-connect.c:5451
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "в строке соединения нет \"=\" после \"%s\"\n"
 
-#: fe-connect.c:4988 fe-connect.c:5632 fe-connect.c:6406
+#: fe-connect.c:4992 fe-connect.c:5636 fe-connect.c:6410
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "неверный параметр соединения \"%s\"\n"
 
-#: fe-connect.c:5004 fe-connect.c:5496
+#: fe-connect.c:5008 fe-connect.c:5500
 msgid "unterminated quoted string in connection info string\n"
 msgstr "в строке соединения не хватает закрывающей кавычки\n"
 
-#: fe-connect.c:5087
+#: fe-connect.c:5091
 #, c-format
 msgid "definition of service \"%s\" not found\n"
 msgstr "определение службы \"%s\" не найдено\n"
 
-#: fe-connect.c:5110
+#: fe-connect.c:5114
 #, c-format
 msgid "service file \"%s\" not found\n"
 msgstr "файл определений служб \"%s\" не найден\n"
 
-#: fe-connect.c:5125
+#: fe-connect.c:5129
 #, c-format
 msgid "line %d too long in service file \"%s\"\n"
 msgstr "слишком длинная строка (%d) в файле определений служб \"%s\"\n"
 
-#: fe-connect.c:5197 fe-connect.c:5241
+#: fe-connect.c:5201 fe-connect.c:5245
 #, c-format
 msgid "syntax error in service file \"%s\", line %d\n"
 msgstr "синтаксическая ошибка в файле определения служб \"%s\" (строка %d)\n"
 
-#: fe-connect.c:5208
+#: fe-connect.c:5212
 #, c-format
 msgid ""
 "nested service specifications not supported in service file \"%s\", line %d\n"
@@ -612,24 +612,24 @@ msgstr ""
 "рекурсивные определения служб не поддерживаются (файл определения служб \"%s"
 "\", строка %d)\n"
 
-#: fe-connect.c:5928
+#: fe-connect.c:5932
 #, c-format
 msgid "invalid URI propagated to internal parser routine: \"%s\"\n"
 msgstr "во внутреннюю процедуру разбора строки передан ошибочный URI: \"%s\"\n"
 
-#: fe-connect.c:6005
+#: fe-connect.c:6009
 #, c-format
 msgid ""
 "end of string reached when looking for matching \"]\" in IPv6 host address "
 "in URI: \"%s\"\n"
 msgstr "URI не содержит символ \"]\" после адреса IPv6: \"%s\"\n"
 
-#: fe-connect.c:6012
+#: fe-connect.c:6016
 #, c-format
 msgid "IPv6 host address may not be empty in URI: \"%s\"\n"
 msgstr "IPv6, содержащийся в URI, не может быть пустым: \"%s\"\n"
 
-#: fe-connect.c:6027
+#: fe-connect.c:6031
 #, c-format
 msgid ""
 "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): "
@@ -638,41 +638,41 @@ msgstr ""
 "неожиданный символ \"%c\" в позиции %d в URI (ожидалось \":\" или \"/\"): "
 "\"%s\"\n"
 
-#: fe-connect.c:6156
+#: fe-connect.c:6160
 #, c-format
 msgid "extra key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "лишний разделитель ключа/значения \"=\" в параметрах URI: \"%s\"\n"
 
-#: fe-connect.c:6176
+#: fe-connect.c:6180
 #, c-format
 msgid "missing key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "в параметрах URI не хватает разделителя ключа/значения \"=\": \"%s\"\n"
 
-#: fe-connect.c:6227
+#: fe-connect.c:6231
 #, c-format
 msgid "invalid URI query parameter: \"%s\"\n"
 msgstr "неверный параметр в URI: \"%s\"\n"
 
-#: fe-connect.c:6301
+#: fe-connect.c:6305
 #, c-format
 msgid "invalid percent-encoded token: \"%s\"\n"
 msgstr "неверный символ, закодированный с %%: \"%s\"\n"
 
-#: fe-connect.c:6311
+#: fe-connect.c:6315
 #, c-format
 msgid "forbidden value %%00 in percent-encoded value: \"%s\"\n"
 msgstr "недопустимое значение %%00 для символа, закодированного с %%: \"%s\"\n"
 
-#: fe-connect.c:6674
+#: fe-connect.c:6678
 msgid "connection pointer is NULL\n"
 msgstr "нулевой указатель соединения\n"
 
-#: fe-connect.c:6970
+#: fe-connect.c:6974
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: файл паролей \"%s\" - не обычный файл\n"
 
-#: fe-connect.c:6979
+#: fe-connect.c:6983
 #, c-format
 msgid ""
 "WARNING: password file \"%s\" has group or world access; permissions should "
@@ -681,7 +681,7 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: к файлу паролей \"%s\" имеют доступ все или группа; права "
 "должны быть u=rw (0600) или более ограниченные\n"
 
-#: fe-connect.c:7087
+#: fe-connect.c:7091
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "пароль получен из файла \"%s\"\n"
@@ -1159,11 +1159,11 @@ msgstr "входящее сообщение GSSAPI не защищено\n"
 msgid "could not initiate GSSAPI security context"
 msgstr "не удалось инициализировать контекст безопасности GSSAPI"
 
-#: fe-secure-gssapi.c:673
+#: fe-secure-gssapi.c:670
 msgid "GSSAPI size check error"
 msgstr "ошибка проверки размера в GSSAPI"
 
-#: fe-secure-gssapi.c:684
+#: fe-secure-gssapi.c:681
 msgid "GSSAPI context establishment error"
 msgstr "ошибка установления контекста в GSSAPI"
 

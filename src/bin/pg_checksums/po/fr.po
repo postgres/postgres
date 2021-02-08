@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-16 06:17+0000\n"
-"PO-Revision-Date: 2020-04-16 13:40+0200\n"
+"POT-Creation-Date: 2020-12-23 15:18+0000\n"
+"PO-Revision-Date: 2020-12-24 11:45+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: ../../../src/common/logging.c:236
 #, c-format
@@ -138,127 +138,127 @@ msgstr "page d'accueil de %s : <%s>\n"
 msgid "%*s/%s MB (%d%%) computed"
 msgstr "%*s/%s Mo (%d%%) traités"
 
-#: pg_checksums.c:204
+#: pg_checksums.c:207
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
 
-#: pg_checksums.c:220
+#: pg_checksums.c:223
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
 msgstr "n'a pas pu lire le bloc %u dans le fichier « %s » : %m"
 
-#: pg_checksums.c:223
+#: pg_checksums.c:226
 #, c-format
 msgid "could not read block %u in file \"%s\": read %d of %d"
 msgstr "n'a pas pu lire le bloc %u dans le fichier « %s » : %d lus sur %d"
 
-#: pg_checksums.c:240
+#: pg_checksums.c:243
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
 msgstr "échec de la vérification de la somme de contrôle dans le fichier « %s », bloc %u : somme de contrôle calculée %X, alors que le bloc contient %X"
 
-#: pg_checksums.c:255
+#: pg_checksums.c:258
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
 msgstr "n'a pas pu rechercher le bloc %u dans le fichier « %s » : %m"
 
-#: pg_checksums.c:264
+#: pg_checksums.c:267
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
 msgstr "n'a pas pu écrire le bloc %u dans le fichier « %s » : %m"
 
-#: pg_checksums.c:267
+#: pg_checksums.c:270
 #, c-format
 msgid "could not write block %u in file \"%s\": wrote %d of %d"
 msgstr "n'a pas pu écrire le bloc %u du fichier « %s » : a écrit %d octets sur %d"
 
-#: pg_checksums.c:280
+#: pg_checksums.c:283
 #, c-format
 msgid "checksums verified in file \"%s\""
 msgstr "sommes de contrôle vérifiées dans le fichier « %s »"
 
-#: pg_checksums.c:282
+#: pg_checksums.c:285
 #, c-format
 msgid "checksums enabled in file \"%s\""
 msgstr "sommes de contrôle activées dans le fichier « %s »"
 
-#: pg_checksums.c:307
+#: pg_checksums.c:310
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "n'a pas pu ouvrir le répertoire « %s » : %m"
 
-#: pg_checksums.c:334 pg_checksums.c:413
+#: pg_checksums.c:337 pg_checksums.c:416
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "n'a pas pu tester le fichier « %s » : %m"
 
-#: pg_checksums.c:361
+#: pg_checksums.c:364
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
 msgstr "numéro de segment %d invalide dans le nom de fichier « %s »"
 
-#: pg_checksums.c:494
+#: pg_checksums.c:497
 #, c-format
 msgid "invalid filenode specification, must be numeric: %s"
 msgstr "spécification invalide du relfilnode, doit être numérique : %s"
 
-#: pg_checksums.c:512 pg_checksums.c:528 pg_checksums.c:538 pg_checksums.c:547
+#: pg_checksums.c:515 pg_checksums.c:531 pg_checksums.c:541 pg_checksums.c:550
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
-#: pg_checksums.c:527
+#: pg_checksums.c:530
 #, c-format
 msgid "no data directory specified"
 msgstr "aucun répertoire de données indiqué"
 
-#: pg_checksums.c:536
+#: pg_checksums.c:539
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "trop d'arguments en ligne de commande (le premier étant « %s »)"
 
-#: pg_checksums.c:546
+#: pg_checksums.c:549
 #, c-format
 msgid "option -f/--filenode can only be used with --check"
 msgstr "l'option « -f/--filenode » peut seulement être utilisée avec --check"
 
-#: pg_checksums.c:556
+#: pg_checksums.c:559
 #, c-format
 msgid "pg_control CRC value is incorrect"
 msgstr "la valeur CRC de pg_control n'est pas correcte"
 
-#: pg_checksums.c:562
+#: pg_checksums.c:565
 #, c-format
 msgid "cluster is not compatible with this version of pg_checksums"
 msgstr "l'instance n'est pas compatible avec cette version de pg_checksums"
 
-#: pg_checksums.c:568
+#: pg_checksums.c:571
 #, c-format
 msgid "database cluster is not compatible"
 msgstr "l'instance n'est pas compatible"
 
-#: pg_checksums.c:569
+#: pg_checksums.c:572
 #, c-format
 msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.\n"
 msgstr "L'instance a été initialisée avec une taille de bloc à %u alors que pg_checksums a été compilé avec une taille de bloc à %u.\n"
 
-#: pg_checksums.c:582
+#: pg_checksums.c:585
 #, c-format
 msgid "cluster must be shut down"
 msgstr "l'instance doit être arrêtée"
 
-#: pg_checksums.c:589
+#: pg_checksums.c:592
 #, c-format
 msgid "data checksums are not enabled in cluster"
 msgstr "les sommes de contrôle sur les données ne sont pas activées sur cette instance"
 
-#: pg_checksums.c:596
+#: pg_checksums.c:599
 #, c-format
 msgid "data checksums are already disabled in cluster"
 msgstr "les sommes de contrôle sur les données sont déjà désactivées sur cette instance"
 
-#: pg_checksums.c:603
+#: pg_checksums.c:606
 #, c-format
 msgid "data checksums are already enabled in cluster"
 msgstr "les sommes de contrôle sur les données sont déjà activées sur cette instance"
@@ -285,8 +285,8 @@ msgstr "Mauvaises sommes de contrôle : %s\n"
 
 #: pg_checksums.c:638 pg_checksums.c:665
 #, c-format
-msgid "Data checksum version: %d\n"
-msgstr "Version des sommes de contrôle sur les données : %d\n"
+msgid "Data checksum version: %u\n"
+msgstr "Version des sommes de contrôle sur les données : %u\n"
 
 #: pg_checksums.c:657
 #, c-format
@@ -308,26 +308,26 @@ msgstr "Sommes de contrôle sur les données activées sur cette instance\n"
 msgid "Checksums disabled in cluster\n"
 msgstr "Sommes de contrôle sur les données désactivées sur cette instance\n"
 
-#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
-#~ msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
-
-#~ msgid "%s: no data directory specified\n"
-#~ msgstr "%s : aucun répertoire de données indiqué\n"
-
-#~ msgid "%s: could not stat file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu récupérer les informations sur le fichier « %s » : %s\n"
-
-#~ msgid "%s: could not open directory \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le répertoire « %s » : %s\n"
-
-#~ msgid "%s: could not open file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le fichier « %s » : %s\n"
-
-#~ msgid "  -?, --help             show this help, then exit\n"
-#~ msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgstr "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
 
 #~ msgid "  -V, --version          output version information, then exit\n"
 #~ msgstr "  -V, --version              affiche la version puis quitte\n"
 
-#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgid "  -?, --help             show this help, then exit\n"
+#~ msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+
+#~ msgid "%s: could not open file \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu ouvrir le fichier « %s » : %s\n"
+
+#~ msgid "%s: could not open directory \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu ouvrir le répertoire « %s » : %s\n"
+
+#~ msgid "%s: could not stat file \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu récupérer les informations sur le fichier « %s » : %s\n"
+
+#~ msgid "%s: no data directory specified\n"
+#~ msgstr "%s : aucun répertoire de données indiqué\n"
+
+#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
+#~ msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
