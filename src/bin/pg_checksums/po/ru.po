@@ -1,10 +1,10 @@
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2019, 2020.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2019, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-08-24 13:17+0300\n"
-"PO-Revision-Date: 2019-09-09 13:32+0300\n"
+"POT-Creation-Date: 2020-12-11 07:49+0300\n"
+"PO-Revision-Date: 2021-02-08 07:59+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -294,8 +294,8 @@ msgstr "Неверные контрольные суммы: %s\n"
 
 #: pg_checksums.c:637 pg_checksums.c:664
 #, c-format
-msgid "Data checksum version: %d\n"
-msgstr "Версия контрольных сумм данных: %d\n"
+msgid "Data checksum version: %u\n"
+msgstr "Версия контрольных сумм данных: %u\n"
 
 #: pg_checksums.c:656
 #, c-format

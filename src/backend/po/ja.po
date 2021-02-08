@@ -10064,7 +10064,7 @@ msgstr "テーブルは INSTEAD OF トリガーを持つことができません
 #: commands/trigger.c:240
 #, c-format
 msgid "Partitioned tables cannot have BEFORE / FOR EACH ROW triggers."
-msgstr "パーティションテーブルは BEFORE /  FOR EACH ROW トリガを持つことができません。"
+msgstr "パーティションテーブルは BEFORE / FOR EACH ROW トリガを持つことができません。"
 
 #: commands/trigger.c:258
 #, c-format
