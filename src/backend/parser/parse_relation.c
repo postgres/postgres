@@ -68,7 +68,7 @@ static int	scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 							 const char *colname, int location,
 							 int fuzzy_rte_penalty,
 							 FuzzyAttrMatchState *fuzzystate);
-static void markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
+static void markRTEForSelectPriv(ParseState *pstate,
 								 int rtindex, AttrNumber col);
 static void expandRelation(Oid relid, Alias *eref,
 						   int rtindex, int sublevels_up,
@@ -660,8 +660,8 @@ updateFuzzyAttrMatchState(int fuzzy_rte_penalty,
  *	  If found, return an appropriate Var node, else return NULL.
  *	  If the name proves ambiguous within this nsitem, raise error.
  *
- * Side effect: if we find a match, mark the item's RTE as requiring read
- * access for the column.
+ * Side effect: if we find a match, mark the corresponding RTE as requiring
+ * read access for the column.
  */
 Node *
 scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
@@ -990,21 +990,15 @@ searchRangeTableForCol(ParseState *pstate, const char *alias, const char *colnam
 
 /*
  * markRTEForSelectPriv
- *	   Mark the specified column of an RTE as requiring SELECT privilege
+ *	   Mark the specified column of the RTE with index rtindex
+ *	   as requiring SELECT privilege
  *
  * col == InvalidAttrNumber means a "whole row" reference
- *
- * External callers should always pass the Var's RTE.  Internally, we
- * allow NULL to be passed for the RTE and then look it up if needed;
- * this takes less code than requiring each internal recursion site
- * to perform a lookup.
  */
 static void
-markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
-					 int rtindex, AttrNumber col)
+markRTEForSelectPriv(ParseState *pstate, int rtindex, AttrNumber col)
 {
-	if (rte == NULL)
-		rte = rt_fetch(rtindex, pstate->p_rtable);
+	RangeTblEntry *rte = rt_fetch(rtindex, pstate->p_rtable);
 
 	if (rte->rtekind == RTE_RELATION)
 	{
@@ -1036,13 +1030,13 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 			{
 				int			varno = ((RangeTblRef *) j->larg)->rtindex;
 
-				markRTEForSelectPriv(pstate, NULL, varno, InvalidAttrNumber);
+				markRTEForSelectPriv(pstate, varno, InvalidAttrNumber);
 			}
 			else if (IsA(j->larg, JoinExpr))
 			{
 				int			varno = ((JoinExpr *) j->larg)->rtindex;
 
-				markRTEForSelectPriv(pstate, NULL, varno, InvalidAttrNumber);
+				markRTEForSelectPriv(pstate, varno, InvalidAttrNumber);
 			}
 			else
 				elog(ERROR, "unrecognized node type: %d",
@@ -1051,13 +1045,13 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 			{
 				int			varno = ((RangeTblRef *) j->rarg)->rtindex;
 
-				markRTEForSelectPriv(pstate, NULL, varno, InvalidAttrNumber);
+				markRTEForSelectPriv(pstate, varno, InvalidAttrNumber);
 			}
 			else if (IsA(j->rarg, JoinExpr))
 			{
 				int			varno = ((JoinExpr *) j->rarg)->rtindex;
 
-				markRTEForSelectPriv(pstate, NULL, varno, InvalidAttrNumber);
+				markRTEForSelectPriv(pstate, varno, InvalidAttrNumber);
 			}
 			else
 				elog(ERROR, "unrecognized node type: %d",
@@ -1078,7 +1072,10 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 
 /*
  * markVarForSelectPriv
- *	   Mark the RTE referenced by a Var as requiring SELECT privilege
+ *	   Mark the RTE referenced by the Var as requiring SELECT privilege
+ *	   for the Var's column (the Var could be a whole-row Var, too)
+ *
+ * The rte argument is unused and will be removed later.
  */
 void
 markVarForSelectPriv(ParseState *pstate, Var *var, RangeTblEntry *rte)
@@ -1089,7 +1086,7 @@ markVarForSelectPriv(ParseState *pstate, Var *var, RangeTblEntry *rte)
 	/* Find the appropriate pstate if it's an uplevel Var */
 	for (lv = 0; lv < var->varlevelsup; lv++)
 		pstate = pstate->parentParseState;
-	markRTEForSelectPriv(pstate, rte, var->varno, var->varattno);
+	markRTEForSelectPriv(pstate, var->varno, var->varattno);
 }
 
 /*
@@ -3031,9 +3028,13 @@ expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
 	/*
 	 * Require read access to the table.  This is normally redundant with the
 	 * markVarForSelectPriv calls below, but not if the table has zero
-	 * columns.
+	 * columns.  We need not do anything if the nsitem is for a join: its
+	 * component tables will have been marked ACL_SELECT when they were added
+	 * to the rangetable.  (This step changes things only for the target
+	 * relation of UPDATE/DELETE, which cannot be under a join.)
 	 */
-	rte->requiredPerms |= ACL_SELECT;
+	if (rte->rtekind == RTE_RELATION)
+		rte->requiredPerms |= ACL_SELECT;
 
 	forboth(name, names, var, vars)
 	{

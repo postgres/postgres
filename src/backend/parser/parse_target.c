@@ -1356,9 +1356,13 @@ ExpandSingleTable(ParseState *pstate, ParseNamespaceItem *nsitem,
 		/*
 		 * Require read access to the table.  This is normally redundant with
 		 * the markVarForSelectPriv calls below, but not if the table has zero
-		 * columns.
+		 * columns.  We need not do anything if the nsitem is for a join: its
+		 * component tables will have been marked ACL_SELECT when they were
+		 * added to the rangetable.  (This step changes things only for the
+		 * target relation of UPDATE/DELETE, which cannot be under a join.)
 		 */
-		rte->requiredPerms |= ACL_SELECT;
+		if (rte->rtekind == RTE_RELATION)
+			rte->requiredPerms |= ACL_SELECT;
 
 		/* Require read access to each column */
 		foreach(l, vars)
