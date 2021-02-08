@@ -23,9 +23,10 @@
    </para>
 
    <para>
-    However, see the first two changelog items below,
-    which describe cases in which reindexing indexes after the upgrade
-    may be advisable.
+    However, see the first changelog item below concerning a possible
+    need to update stored views.  Also see the third and fourth changelog
+    items, which describe cases in which reindexing indexes after the
+    upgrade may be advisable.
    </para>
   </sect2>
 
@@ -33,6 +34,67 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c028faf2a] 2021-02-08 10:14:09 -0500
+Branch: REL_13_STABLE [d525fbcfd] 2021-02-08 10:14:09 -0500
+-->
+     <para>
+      Fix failure to check per-column <literal>SELECT</literal> privileges
+      in some join queries (Tom Lane)
+     </para>
+
+     <para>
+      In some cases involving joins, the parser failed to record all the
+      columns read by a query in the column-usage bitmaps that are used
+      for permissions checking.  Although the executor would still insist
+      on some sort of <literal>SELECT</literal> privilege to run the
+      query, this meant that a user having <literal>SELECT</literal>
+      privilege on only one column of a table could nonetheless read all
+      its columns through a suitably crafted query.
+     </para>
+
+     <para>
+      A stored view that is subject to this problem will have incomplete
+      column-usage bitmaps, and thus permissions will still not be
+      enforced properly on the view after updating.  In installations that
+      depend on column-level permissions for security, it is recommended
+      to <command>CREATE OR REPLACE</command> all user-defined views to
+      cause them to be re-parsed.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Sven Klemm for reporting this problem.
+      (CVE-2021-20229)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [6214e2b22] 2021-02-08 11:01:51 +0200
+Branch: REL_13_STABLE [8e56684d5] 2021-02-08 11:01:55 +0200
+Branch: REL_12_STABLE [f50e88899] 2021-02-08 11:01:55 +0200
+Branch: REL_11_STABLE [cb5868cc1] 2021-02-08 11:01:55 +0200
+-->
+     <para>
+      Fix information leakage in constraint-violation error messages
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      If an <command>UPDATE</command> command attempts to move a row to a
+      different partition but finds that it violates some constraint on
+      the new partition, and the columns in that partition are in
+      different physical positions than in the parent table, the error
+      message could reveal the contents of columns that the user does not
+      have <literal>SELECT</literal> privilege on.
+      (CVE-2021-3393)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
