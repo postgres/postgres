@@ -303,7 +303,26 @@ SELECT 1 FROM atest5; -- ok
 SELECT 1 FROM atest5 a JOIN atest5 b USING (one); -- ok
 SELECT 1 FROM atest5 a JOIN atest5 b USING (two); -- fail
 SELECT 1 FROM atest5 a NATURAL JOIN atest5 b; -- fail
+SELECT * FROM (atest5 a JOIN atest5 b USING (one)) j; -- fail
+SELECT j.* FROM (atest5 a JOIN atest5 b USING (one)) j; -- fail
 SELECT (j.*) IS NULL FROM (atest5 a JOIN atest5 b USING (one)) j; -- fail
+SELECT one FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- ok
+SELECT j.one FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- ok
+SELECT two FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- fail
+SELECT j.two FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- fail
+SELECT y FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- fail
+SELECT j.y FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- fail
+SELECT * FROM (atest5 a JOIN atest5 b USING (one)); -- fail
+SELECT a.* FROM (atest5 a JOIN atest5 b USING (one)); -- fail
+SELECT (a.*) IS NULL FROM (atest5 a JOIN atest5 b USING (one)); -- fail
+SELECT two FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+SELECT a.two FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+SELECT y FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+SELECT b.y FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+SELECT y FROM (atest5 a LEFT JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+SELECT b.y FROM (atest5 a LEFT JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+SELECT y FROM (atest5 a FULL JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+SELECT b.y FROM (atest5 a FULL JOIN atest5 b(one,x,y,z) USING (one)); -- fail
 SELECT 1 FROM atest5 WHERE two = 2; -- fail
 SELECT * FROM atest1, atest5; -- fail
 SELECT atest1.* FROM atest1, atest5; -- ok

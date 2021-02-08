@@ -476,7 +476,53 @@ SELECT 1 FROM atest5 a JOIN atest5 b USING (two); -- fail
 ERROR:  permission denied for table atest5
 SELECT 1 FROM atest5 a NATURAL JOIN atest5 b; -- fail
 ERROR:  permission denied for table atest5
+SELECT * FROM (atest5 a JOIN atest5 b USING (one)) j; -- fail
+ERROR:  permission denied for table atest5
+SELECT j.* FROM (atest5 a JOIN atest5 b USING (one)) j; -- fail
+ERROR:  permission denied for table atest5
 SELECT (j.*) IS NULL FROM (atest5 a JOIN atest5 b USING (one)) j; -- fail
+ERROR:  permission denied for table atest5
+SELECT one FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- ok
+ one 
+-----
+   1
+(1 row)
+
+SELECT j.one FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- ok
+ one 
+-----
+   1
+(1 row)
+
+SELECT two FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- fail
+ERROR:  permission denied for table atest5
+SELECT j.two FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- fail
+ERROR:  permission denied for table atest5
+SELECT y FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- fail
+ERROR:  permission denied for table atest5
+SELECT j.y FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)) j; -- fail
+ERROR:  permission denied for table atest5
+SELECT * FROM (atest5 a JOIN atest5 b USING (one)); -- fail
+ERROR:  permission denied for table atest5
+SELECT a.* FROM (atest5 a JOIN atest5 b USING (one)); -- fail
+ERROR:  permission denied for table atest5
+SELECT (a.*) IS NULL FROM (atest5 a JOIN atest5 b USING (one)); -- fail
+ERROR:  permission denied for table atest5
+SELECT two FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+ERROR:  permission denied for table atest5
+SELECT a.two FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+ERROR:  permission denied for table atest5
+SELECT y FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+ERROR:  permission denied for table atest5
+SELECT b.y FROM (atest5 a JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+ERROR:  permission denied for table atest5
+SELECT y FROM (atest5 a LEFT JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+ERROR:  permission denied for table atest5
+SELECT b.y FROM (atest5 a LEFT JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+ERROR:  permission denied for table atest5
+SELECT y FROM (atest5 a FULL JOIN atest5 b(one,x,y,z) USING (one)); -- fail
+ERROR:  permission denied for table atest5
+SELECT b.y FROM (atest5 a FULL JOIN atest5 b(one,x,y,z) USING (one)); -- fail
 ERROR:  permission denied for table atest5
 SELECT 1 FROM atest5 WHERE two = 2; -- fail
 ERROR:  permission denied for table atest5
