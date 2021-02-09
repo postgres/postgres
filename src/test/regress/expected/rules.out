@@ -1394,9 +1394,8 @@ pg_locks| SELECT l.locktype,
     l.pid,
     l.mode,
     l.granted,
-    l.fastpath,
-    l.waitstart
-   FROM pg_lock_status() l(locktype, database, relation, page, tuple, virtualxid, transactionid, classid, objid, objsubid, virtualtransaction, pid, mode, granted, fastpath, waitstart);
+    l.fastpath
+   FROM pg_lock_status() l(locktype, database, relation, page, tuple, virtualxid, transactionid, classid, objid, objsubid, virtualtransaction, pid, mode, granted, fastpath);
 pg_matviews| SELECT n.nspname AS schemaname,
     c.relname AS matviewname,
     pg_get_userbyid(c.relowner) AS matviewowner,

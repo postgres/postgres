@@ -3619,12 +3619,6 @@ GetLockStatusData(void)
 			instance->leaderPid = proc->pid;
 			instance->fastpath = true;
 
-			/*
-			 * Successfully taking fast path lock means there were no
-			 * conflicting locks.
-			 */
-			instance->waitStart = 0;
-
 			el++;
 		}
 
@@ -3652,7 +3646,6 @@ GetLockStatusData(void)
 			instance->pid = proc->pid;
 			instance->leaderPid = proc->pid;
 			instance->fastpath = true;
-			instance->waitStart = 0;
 
 			el++;
 		}
@@ -3705,7 +3698,6 @@ GetLockStatusData(void)
 		instance->pid = proc->pid;
 		instance->leaderPid = proclock->groupLeader->pid;
 		instance->fastpath = false;
-		instance->waitStart = (TimestampTz) pg_atomic_read_u64(&proc->waitStart);
 
 		el++;
 	}
