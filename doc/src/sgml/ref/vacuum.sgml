@@ -33,6 +33,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     DISABLE_PAGE_SKIPPING [ <replaceable class="parameter">boolean</replaceable> ]
     SKIP_LOCKED [ <replaceable class="parameter">boolean</replaceable> ]
     INDEX_CLEANUP [ <replaceable class="parameter">boolean</replaceable> ]
+    PROCESS_TOAST [ <replaceable class="parameter">boolean</replaceable> ]
     TRUNCATE [ <replaceable class="parameter">boolean</replaceable> ]
     PARALLEL <replaceable class="parameter">integer</replaceable>
 
@@ -205,6 +206,20 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       and the table itself will accumulate dead line pointers that cannot be
       removed until index cleanup is completed.  This option has no effect
       for tables that do not have an index and is ignored if the
+      <literal>FULL</literal> option is used.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PROCESS_TOAST</literal></term>
+    <listitem>
+     <para>
+      Specifies that <command>VACUUM</command> should attempt to process the
+      corresponding <literal>TOAST</literal> table for each relation, if one
+      exists. This is normally the desired behavior and is the default.
+      Setting this option to false may be useful when it is only necessary to
+      vacuum the main relation. This option is required when the
       <literal>FULL</literal> option is used.
      </para>
     </listitem>

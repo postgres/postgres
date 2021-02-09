@@ -181,7 +181,7 @@ typedef struct VacAttrStats
 #define VACOPT_FREEZE 0x08		/* FREEZE option */
 #define VACOPT_FULL 0x10		/* FULL (non-concurrent) vacuum */
 #define VACOPT_SKIP_LOCKED 0x20 /* skip if cannot get lock */
-#define VACOPT_SKIPTOAST 0x40	/* don't process the TOAST table, if any */
+#define VACOPT_PROCESS_TOAST 0x40	/* process the TOAST table, if any */
 #define VACOPT_DISABLE_PAGE_SKIPPING 0x80	/* don't skip any pages */
 
 /*
