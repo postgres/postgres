@@ -540,12 +540,34 @@ void
 ResolveRecoveryConflictWithLock(LOCKTAG locktag, bool logging_conflict)
 {
 	TimestampTz ltime;
+	TimestampTz now;
 
 	Assert(InHotStandby);
 
 	ltime = GetStandbyLimitTime();
+	now = GetCurrentTimestamp();
 
-	if (GetCurrentTimestamp() >= ltime && ltime != 0)
+	/*
+	 * Update waitStart if first time through after the startup process
+	 * started waiting for the lock. It should not be updated every time
+	 * ResolveRecoveryConflictWithLock() is called during the wait.
+	 *
+	 * Use the current time obtained for comparison with ltime as waitStart
+	 * (i.e., the time when this process started waiting for the lock). Since
+	 * getting the current time newly can cause overhead, we reuse the
+	 * already-obtained time to avoid that overhead.
+	 *
+	 * Note that waitStart is updated without holding the lock table's
+	 * partition lock, to avoid the overhead by additional lock acquisition.
+	 * This can cause "waitstart" in pg_locks to become NULL for a very short
+	 * period of time after the wait started even though "granted" is false.
+	 * This is OK in practice because we can assume that users are likely to
+	 * look at "waitstart" when waiting for the lock for a long time.
+	 */
+	if (pg_atomic_read_u64(&MyProc->waitStart) == 0)
+		pg_atomic_write_u64(&MyProc->waitStart, now);
+
+	if (now >= ltime && ltime != 0)
 	{
 		/*
 		 * We're already behind, so clear a path as quickly as possible.
