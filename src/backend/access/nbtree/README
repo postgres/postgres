@@ -347,14 +347,11 @@ guaranteed to be "visible to everyone".  As collateral damage, this
 implementation also waits for running XIDs with no snapshots and for
 snapshots taken until the next transaction to allocate an XID commits.
 
-Reclaiming a page doesn't actually change its state on disk --- we simply
-record it in the shared-memory free space map, from which it will be
-handed out the next time a new page is needed for a page split.  The
-deleted page's contents will be overwritten by the split operation.
-(Note: if we find a deleted page with an extremely old transaction
-number, it'd be worthwhile to re-mark it with FrozenTransactionId so that
-a later xid wraparound can't cause us to think the page is unreclaimable.
-But in more normal situations this would be a waste of a disk write.)
+Reclaiming a page doesn't actually change the state of the page --- we
+simply record it in the free space map, from which it will be handed out
+the next time a new page is needed for a page split.  The deleted page's
+contents will be overwritten by the split operation (it will become the
+new right page).
 
 Because we never delete the rightmost page of any level (and in particular
 never delete the root), it's impossible for the height of the tree to
