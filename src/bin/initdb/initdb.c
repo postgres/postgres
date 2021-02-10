@@ -3249,8 +3249,6 @@ main(int argc, char *argv[])
 			   start_db_cmd->data);
 
 		destroyPQExpBuffer(start_db_cmd);
-
-		printf(_("\nSuccess.\n"));
 	}
 
 
