@@ -1728,6 +1728,62 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 	/* Copy data of pg_statistic from the old index to the new one */
 	CopyStatistics(oldIndexId, newIndexId);
 
+	/* Copy pg_attribute.attstattarget for each index attribute */
+	{
+		HeapTuple	attrTuple;
+		Relation	pg_attribute;
+		SysScanDesc scan;
+		ScanKeyData key[1];
+
+		pg_attribute = table_open(AttributeRelationId, RowExclusiveLock);
+		ScanKeyInit(&key[0],
+					Anum_pg_attribute_attrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(newIndexId));
+		scan = systable_beginscan(pg_attribute, AttributeRelidNumIndexId,
+								  true, NULL, 1, key);
+
+		while (HeapTupleIsValid((attrTuple = systable_getnext(scan))))
+		{
+			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(attrTuple);
+			Datum		repl_val[Natts_pg_attribute];
+			bool		repl_null[Natts_pg_attribute];
+			bool		repl_repl[Natts_pg_attribute];
+			int			attstattarget;
+			HeapTuple	newTuple;
+
+			/* Ignore dropped columns */
+			if (att->attisdropped)
+				continue;
+
+			/*
+			 * Get attstattarget from the old index and refresh the new value.
+			 */
+			attstattarget = get_attstattarget(oldIndexId, att->attnum);
+
+			/* no need for a refresh if both match */
+			if (attstattarget == att->attstattarget)
+				continue;
+
+			memset(repl_val, 0, sizeof(repl_val));
+			memset(repl_null, false, sizeof(repl_null));
+			memset(repl_repl, false, sizeof(repl_repl));
+
+			repl_repl[Anum_pg_attribute_attstattarget - 1] = true;
+			repl_val[Anum_pg_attribute_attstattarget - 1] = Int32GetDatum(attstattarget);
+
+			newTuple = heap_modify_tuple(attrTuple,
+										 RelationGetDescr(pg_attribute),
+										 repl_val, repl_null, repl_repl);
+			CatalogTupleUpdate(pg_attribute, &newTuple->t_self, newTuple);
+
+			heap_freetuple(newTuple);
+		}
+
+		systable_endscan(scan);
+		table_close(pg_attribute, RowExclusiveLock);
+	}
+
 	/* Close relations */
 	table_close(pg_class, RowExclusiveLock);
 	table_close(pg_index, RowExclusiveLock);
