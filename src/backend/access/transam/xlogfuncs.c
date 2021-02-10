@@ -781,6 +781,9 @@ pg_promote(PG_FUNCTION_ARGS)
 	}
 
 	ereport(WARNING,
-			(errmsg("server did not promote within %d seconds", wait_seconds)));
+			(errmsg_plural("server did not promote within %d second",
+						   "server did not promote within %d seconds",
+						   wait_seconds,
+						   wait_seconds)));
 	PG_RETURN_BOOL(false);
 }
