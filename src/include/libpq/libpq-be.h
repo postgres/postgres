@@ -194,7 +194,7 @@ typedef struct Port
 
 	/*
 	 * OpenSSL structures. (Keep these last so that the locations of other
-	 * fields are the same whether or not you build with OpenSSL.)
+	 * fields are the same whether or not you build with SSL enabled.)
 	 */
 #ifdef USE_OPENSSL
 	SSL		   *ssl;
