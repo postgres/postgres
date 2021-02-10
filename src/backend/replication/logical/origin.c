@@ -322,26 +322,14 @@ replorigin_create(char *roname)
 	return roident;
 }
 
-
 /*
- * Drop replication origin.
- *
- * Needs to be called in a transaction.
+ * Helper function to drop a replication origin.
  */
-void
-replorigin_drop(RepOriginId roident, bool nowait)
+static void
+replorigin_drop_guts(Relation rel, RepOriginId roident, bool nowait)
 {
 	HeapTuple	tuple;
-	Relation	rel;
 	int			i;
-
-	Assert(IsTransactionState());
-
-	/*
-	 * To interlock against concurrent drops, we hold ExclusiveLock on
-	 * pg_replication_origin throughout this function.
-	 */
-	rel = table_open(ReplicationOriginRelationId, ExclusiveLock);
 
 	/*
 	 * First, clean up the slot state info, if there is any matching slot.
@@ -415,11 +403,40 @@ restart:
 	ReleaseSysCache(tuple);
 
 	CommandCounterIncrement();
-
-	/* now release lock again */
-	table_close(rel, ExclusiveLock);
 }
 
+/*
+ * Drop replication origin (by name).
+ *
+ * Needs to be called in a transaction.
+ */
+void
+replorigin_drop_by_name(char *name, bool missing_ok, bool nowait)
+{
+	RepOriginId roident;
+	Relation	rel;
+
+	Assert(IsTransactionState());
+
+	/*
+	 * To interlock against concurrent drops, we hold ExclusiveLock on
+	 * pg_replication_origin till xact commit.
+	 *
+	 * XXX We can optimize this by acquiring the lock on a specific origin by
+	 * using LockSharedObject if required. However, for that, we first to
+	 * acquire a lock on ReplicationOriginRelationId, get the origin_id, lock
+	 * the specific origin and then re-check if the origin still exists.
+	 */
+	rel = table_open(ReplicationOriginRelationId, ExclusiveLock);
+
+	roident = replorigin_by_name(name, missing_ok);
+
+	if (OidIsValid(roident))
+		replorigin_drop_guts(rel, roident, nowait);
+
+	/* We keep the lock on pg_replication_origin until commit */
+	table_close(rel, NoLock);
+}
 
 /*
  * Lookup replication origin via its oid and return the name.
@@ -1256,16 +1273,12 @@ Datum
 pg_replication_origin_drop(PG_FUNCTION_ARGS)
 {
 	char	   *name;
-	RepOriginId roident;
 
 	replorigin_check_prerequisites(false, false);
 
 	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
 
-	roident = replorigin_by_name(name, false);
-	Assert(OidIsValid(roident));
-
-	replorigin_drop(roident, true);
+	replorigin_drop_by_name(name, false, true);
 
 	pfree(name);
 

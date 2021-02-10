@@ -926,7 +926,6 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	ListCell   *lc;
 	char		originname[NAMEDATALEN];
 	char	   *err = NULL;
-	RepOriginId originid;
 	WalReceiverConn *wrconn = NULL;
 	StringInfoData cmd;
 	Form_pg_subscription form;
@@ -1050,9 +1049,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 
 	/* Remove the origin tracking if exists. */
 	snprintf(originname, sizeof(originname), "pg_%u", subid);
-	originid = replorigin_by_name(originname, true);
-	if (originid != InvalidRepOriginId)
-		replorigin_drop(originid, false);
+	replorigin_drop_by_name(originname, true, false);
 
 	/*
 	 * If there is no slot associated with the subscription, we can finish
