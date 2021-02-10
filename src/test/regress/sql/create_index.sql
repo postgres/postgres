@@ -1028,7 +1028,7 @@ SELECT attrelid::regclass, attnum, attstattarget
     'concur_exprs_index_expr'::regclass,
     'concur_exprs_index_pred'::regclass,
     'concur_exprs_index_pred_2'::regclass)
-  ORDER BY 'concur_exprs_index_expr'::regclass::text, attnum;
+  ORDER BY attrelid::regclass::text, attnum;
 DROP TABLE concur_exprs_tab;
 
 -- Temporary tables and on-commit actions, where CONCURRENTLY is ignored.
