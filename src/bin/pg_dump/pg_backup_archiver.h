@@ -382,7 +382,7 @@ struct _tocEntry
 	int			nDeps;			/* number of dependencies */
 
 	DataDumperPtr dataDumper;	/* Routine to dump data for object */
-	void	   *dataDumperArg;	/* Arg for above routine */
+	const void *dataDumperArg;	/* Arg for above routine */
 	void	   *formatData;		/* TOC Entry data specific to file format */
 
 	/* working state while dumping/restoring */
@@ -421,7 +421,7 @@ typedef struct _archiveOpts
 	const DumpId *deps;
 	int			nDeps;
 	DataDumperPtr dumpFn;
-	void	   *dumpArg;
+	const void *dumpArg;
 } ArchiveOpts;
 #define ARCHIVE_OPTS(...) &(ArchiveOpts){__VA_ARGS__}
 /* Called to add a TOC entry */

@@ -712,7 +712,7 @@ extern ProcLangInfo *getProcLangs(Archive *fout, int *numProcLangs);
 extern CastInfo *getCasts(Archive *fout, int *numCasts);
 extern TransformInfo *getTransforms(Archive *fout, int *numTransforms);
 extern void getTableAttrs(Archive *fout, TableInfo *tbinfo, int numTables);
-extern bool shouldPrintColumn(DumpOptions *dopt, TableInfo *tbinfo, int colno);
+extern bool shouldPrintColumn(const DumpOptions *dopt, const TableInfo *tbinfo, int colno);
 extern TSParserInfo *getTSParsers(Archive *fout, int *numTSParsers);
 extern TSDictInfo *getTSDictionaries(Archive *fout, int *numTSDicts);
 extern TSTemplateInfo *getTSTemplates(Archive *fout, int *numTSTemplates);
