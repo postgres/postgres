@@ -19,6 +19,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "common/jsonapi.h"
+#include "common/string.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
@@ -1026,15 +1027,15 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 		 */
 		if (*tpath[i] != '\0')
 		{
-			long		ind;
+			int			ind;
 			char	   *endptr;
 
 			errno = 0;
-			ind = strtol(tpath[i], &endptr, 10);
-			if (*endptr == '\0' && errno == 0 && ind <= INT_MAX && ind >= INT_MIN)
-				ipath[i] = (int) ind;
-			else
+			ind = strtoint(tpath[i], &endptr, 10);
+			if (endptr == tpath[i] || *endptr != '\0' || errno != 0)
 				ipath[i] = INT_MIN;
+			else
+				ipath[i] = ind;
 		}
 		else
 			ipath[i] = INT_MIN;
@@ -1533,15 +1534,14 @@ jsonb_get_element(Jsonb *jb, Datum *path, int npath, bool *isnull, bool as_text)
 		}
 		else if (have_array)
 		{
-			long		lindex;
+			int			lindex;
 			uint32		index;
 			char	   *indextext = TextDatumGetCString(path[i]);
 			char	   *endptr;
 
 			errno = 0;
-			lindex = strtol(indextext, &endptr, 10);
-			if (endptr == indextext || *endptr != '\0' || errno != 0 ||
-				lindex > INT_MAX || lindex < INT_MIN)
+			lindex = strtoint(indextext, &endptr, 10);
+			if (endptr == indextext || *endptr != '\0' || errno != 0)
 			{
 				*isnull = true;
 				return PointerGetDatum(NULL);
@@ -1562,7 +1562,7 @@ jsonb_get_element(Jsonb *jb, Datum *path, int npath, bool *isnull, bool as_text)
 
 				nelements = JsonContainerSize(container);
 
-				if (-lindex > nelements)
+				if (lindex == INT_MIN || -lindex > nelements)
 				{
 					*isnull = true;
 					return PointerGetDatum(NULL);
@@ -1675,7 +1675,6 @@ push_path(JsonbParseState **st, int level, Datum *path_elems,
 	 * end, the access index must be normalized by level.
 	 */
 	enum jbvType *tpath = palloc0((path_len - level) * sizeof(enum jbvType));
-	long		lindex;
 	JsonbValue	newkey;
 
 	/*
@@ -1687,6 +1686,7 @@ push_path(JsonbParseState **st, int level, Datum *path_elems,
 	{
 		char	   *c,
 				   *badp;
+		int			lindex;
 
 		if (path_nulls[i])
 			break;
@@ -1697,9 +1697,8 @@ push_path(JsonbParseState **st, int level, Datum *path_elems,
 		 */
 		c = TextDatumGetCString(path_elems[i]);
 		errno = 0;
-		lindex = strtol(c, &badp, 10);
-		if (errno != 0 || badp == c || *badp != '\0' || lindex > INT_MAX ||
-			lindex < INT_MIN)
+		lindex = strtoint(c, &badp, 10);
+		if (badp == c || *badp != '\0' || errno != 0)
 		{
 			/* text, an object is expected */
 			newkey.type = jbvString;
@@ -1720,7 +1719,6 @@ push_path(JsonbParseState **st, int level, Datum *path_elems,
 
 			tpath[i - level] = jbvArray;
 		}
-
 	}
 
 	/* Insert an actual value for either an object or array */
@@ -5138,18 +5136,15 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 	if (level < path_len && !path_nulls[level])
 	{
 		char	   *c = TextDatumGetCString(path_elems[level]);
-		long		lindex;
 		char	   *badp;
 
 		errno = 0;
-		lindex = strtol(c, &badp, 10);
-		if (errno != 0 || badp == c || *badp != '\0' || lindex > INT_MAX ||
-			lindex < INT_MIN)
+		idx = strtoint(c, &badp, 10);
+		if (badp == c || *badp != '\0' || errno != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("path element at position %d is not an integer: \"%s\"",
 							level + 1, c)));
-		idx = lindex;
 	}
 	else
 		idx = nelems;
