@@ -2525,7 +2525,7 @@ transformWholeRowRef(ParseState *pstate, ParseNamespaceItem *nsitem,
 	result->location = location;
 
 	/* mark relation as requiring whole-row SELECT access */
-	markVarForSelectPriv(pstate, result, nsitem->p_rte);
+	markVarForSelectPriv(pstate, result);
 
 	return (Node *) result;
 }

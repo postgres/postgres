@@ -740,7 +740,7 @@ scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
 	var->location = location;
 
 	/* Require read access to the column */
-	markVarForSelectPriv(pstate, var, rte);
+	markVarForSelectPriv(pstate, var);
 
 	return (Node *) var;
 }
@@ -1074,11 +1074,9 @@ markRTEForSelectPriv(ParseState *pstate, int rtindex, AttrNumber col)
  * markVarForSelectPriv
  *	   Mark the RTE referenced by the Var as requiring SELECT privilege
  *	   for the Var's column (the Var could be a whole-row Var, too)
- *
- * The rte argument is unused and will be removed later.
  */
 void
-markVarForSelectPriv(ParseState *pstate, Var *var, RangeTblEntry *rte)
+markVarForSelectPriv(ParseState *pstate, Var *var)
 {
 	Index		lv;
 
@@ -3123,7 +3121,7 @@ expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
 		te_list = lappend(te_list, te);
 
 		/* Require read access to each column */
-		markVarForSelectPriv(pstate, varnode, rte);
+		markVarForSelectPriv(pstate, varnode);
 	}
 
 	Assert(name == NULL && var == NULL);	/* lists not the same length? */

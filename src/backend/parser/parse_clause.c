@@ -58,7 +58,6 @@ static int	extractRemainingColumns(ParseNamespaceColumn *src_nscolumns,
 									List **res_colnames, List **res_colvars,
 									ParseNamespaceColumn *res_nscolumns);
 static Node *transformJoinUsingClause(ParseState *pstate,
-									  RangeTblEntry *leftRTE, RangeTblEntry *rightRTE,
 									  List *leftVars, List *rightVars);
 static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 								   List *namespace);
@@ -302,7 +301,6 @@ extractRemainingColumns(ParseNamespaceColumn *src_nscolumns,
  */
 static Node *
 transformJoinUsingClause(ParseState *pstate,
-						 RangeTblEntry *leftRTE, RangeTblEntry *rightRTE,
 						 List *leftVars, List *rightVars)
 {
 	Node	   *result;
@@ -325,8 +323,8 @@ transformJoinUsingClause(ParseState *pstate,
 		A_Expr	   *e;
 
 		/* Require read access to the join variables */
-		markVarForSelectPriv(pstate, lvar, leftRTE);
-		markVarForSelectPriv(pstate, rvar, rightRTE);
+		markVarForSelectPriv(pstate, lvar);
+		markVarForSelectPriv(pstate, rvar);
 
 		/* Now create the lvar = rvar join condition */
 		e = makeSimpleA_Expr(AEXPR_OP, "=",
@@ -1411,8 +1409,6 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 			}
 
 			j->quals = transformJoinUsingClause(pstate,
-												l_nsitem->p_rte,
-												r_nsitem->p_rte,
 												l_usingvars,
 												r_usingvars);
 		}

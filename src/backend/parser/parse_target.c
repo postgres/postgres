@@ -1397,7 +1397,7 @@ ExpandSingleTable(ParseState *pstate, ParseNamespaceItem *nsitem,
 		{
 			Var		   *var = (Var *) lfirst(l);
 
-			markVarForSelectPriv(pstate, var, rte);
+			markVarForSelectPriv(pstate, var);
 		}
 
 		return vars;
