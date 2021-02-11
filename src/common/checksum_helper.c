@@ -180,13 +180,13 @@ pg_checksum_final(pg_checksum_context *context, uint8 *output)
 	StaticAssertStmt(sizeof(pg_crc32c) <= PG_CHECKSUM_MAX_LENGTH,
 					 "CRC-32C digest too big for PG_CHECKSUM_MAX_LENGTH");
 	StaticAssertStmt(PG_SHA224_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
-					 "SHA224 digest too for PG_CHECKSUM_MAX_LENGTH");
+					 "SHA224 digest too big for PG_CHECKSUM_MAX_LENGTH");
 	StaticAssertStmt(PG_SHA256_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
-					 "SHA256 digest too for PG_CHECKSUM_MAX_LENGTH");
+					 "SHA256 digest too big for PG_CHECKSUM_MAX_LENGTH");
 	StaticAssertStmt(PG_SHA384_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
-					 "SHA384 digest too for PG_CHECKSUM_MAX_LENGTH");
+					 "SHA384 digest too big for PG_CHECKSUM_MAX_LENGTH");
 	StaticAssertStmt(PG_SHA512_DIGEST_LENGTH <= PG_CHECKSUM_MAX_LENGTH,
-					 "SHA512 digest too for PG_CHECKSUM_MAX_LENGTH");
+					 "SHA512 digest too big for PG_CHECKSUM_MAX_LENGTH");
 
 	switch (context->type)
 	{
@@ -207,7 +207,7 @@ pg_checksum_final(pg_checksum_context *context, uint8 *output)
 			if (pg_cryptohash_final(context->raw_context.c_sha2, output) < 0)
 				return -1;
 			pg_cryptohash_free(context->raw_context.c_sha2);
-			retval = PG_SHA224_DIGEST_LENGTH;
+			retval = PG_SHA256_DIGEST_LENGTH;
 			break;
 		case CHECKSUM_TYPE_SHA384:
 			if (pg_cryptohash_final(context->raw_context.c_sha2, output) < 0)
