@@ -120,7 +120,7 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
 
     <listitem>
      <simpara>
-      <literal>unix:postgresql://<replaceable>hostname</replaceable><optional>:<replaceable>port</replaceable></optional><optional>/<replaceable>dbname</replaceable></optional><optional>?<replaceable>options</replaceable></optional></literal>
+      <literal>unix:postgresql://localhost<optional>:<replaceable>port</replaceable></optional><optional>/<replaceable>dbname</replaceable></optional><optional>?<replaceable>options</replaceable></optional></literal>
      </simpara>
     </listitem>
 
@@ -143,15 +143,24 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
     </listitem>
    </itemizedlist>
 
-   If you specify the connection target literally (that is, not
-   through a variable reference) and you don't quote the value, then
-   the case-insensitivity rules of normal SQL are applied.  In that
-   case you can also double-quote the individual parameters separately
-   as needed.  In practice, it is probably less error-prone to use a
-   (single-quoted) string literal or a variable reference.  The
-   connection target <literal>DEFAULT</literal> initiates a connection
+   The connection target <literal>DEFAULT</literal> initiates a connection
    to the default database under the default user name.  No separate
    user name or connection name can be specified in that case.
+  </para>
+
+  <para>
+   If you specify the connection target directly (that is, not as a string
+   literal or variable reference), then the components of the target are
+   passed through normal SQL parsing; this means that, for example,
+   the <replaceable>hostname</replaceable> must look like one or more SQL
+   identifiers separated by dots, and those identifiers will be
+   case-folded unless double-quoted.  Values of
+   any <replaceable>options</replaceable> must be SQL identifiers,
+   integers, or variable references.  Of course, you can put nearly
+   anything into an SQL identifier by double-quoting it.
+   In practice, it is probably less error-prone to use a (single-quoted)
+   string literal or a variable reference than to write the connection
+   target directly.
   </para>
 
   <para>
@@ -202,12 +211,51 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
   </para>
 
   <para>
+   Notice that when specifying a socket connection
+   (with the <literal>unix:</literal> prefix), the host name must be
+   exactly <literal>localhost</literal>.  To select a non-default
+   socket directory, write the directory's pathname as the value of
+   a <varname>host</varname> option in
+   the <replaceable>options</replaceable> part of the target.
+  </para>
+
+  <para>
    The <replaceable>connection-name</replaceable> is used to handle
    multiple connections in one program.  It can be omitted if a
    program uses only one connection.  The most recently opened
    connection becomes the current connection, which is used by default
    when an SQL statement is to be executed (see later in this
    chapter).
+  </para>
+
+  <para>
+   Here are some examples of <command>CONNECT</command> statements:
+<programlisting>
+EXEC SQL CONNECT TO mydb@sql.mydomain.com;
+
+EXEC SQL CONNECT TO tcp:postgresql://sql.mydomain.com/mydb AS myconnection USER john;
+
+EXEC SQL BEGIN DECLARE SECTION;
+const char *target = "mydb@sql.mydomain.com";
+const char *user = "john";
+const char *passwd = "secret";
+EXEC SQL END DECLARE SECTION;
+ ...
+EXEC SQL CONNECT TO :target USER :user USING :passwd;
+/* or EXEC SQL CONNECT TO :target USER :user/:passwd; */
+</programlisting>
+   The last example makes use of the feature referred to above as
+   character variable references.  You will see in later sections how C
+   variables can be used in SQL statements when you prefix them with a
+   colon.
+  </para>
+
+  <para>
+   Be advised that the format of the connection target is not
+   specified in the SQL standard.  So if you want to develop portable
+   applications, you might want to use something based on the last
+   example above to encapsulate the connection target string
+   somewhere.
   </para>
 
   <para>
@@ -220,36 +268,6 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
    issue <literal>EXEC SQL SELECT pg_catalog.set_config('search_path', '',
    false);</literal> after connecting.  This consideration is not specific to
    ECPG; it applies to every interface for executing arbitrary SQL commands.
-  </para>
-
-  <para>
-   Here are some examples of <command>CONNECT</command> statements:
-<programlisting>
-EXEC SQL CONNECT TO mydb@sql.mydomain.com;
-
-EXEC SQL CONNECT TO unix:postgresql://sql.mydomain.com/mydb AS myconnection USER john;
-
-EXEC SQL BEGIN DECLARE SECTION;
-const char *target = "mydb@sql.mydomain.com";
-const char *user = "john";
-const char *passwd = "secret";
-EXEC SQL END DECLARE SECTION;
- ...
-EXEC SQL CONNECT TO :target USER :user USING :passwd;
-/* or EXEC SQL CONNECT TO :target USER :user/:passwd; */
-</programlisting>
-   The last form makes use of the variant referred to above as
-   character variable reference.  You will see in later sections how C
-   variables can be used in SQL statements when you prefix them with a
-   colon.
-  </para>
-
-  <para>
-   Be advised that the format of the connection target is not
-   specified in the SQL standard.  So if you want to develop portable
-   applications, you might want to use something based on the last
-   example above to encapsulate the connection target string
-   somewhere.
   </para>
   </sect2>
 
