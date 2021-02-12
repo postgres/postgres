@@ -982,6 +982,7 @@ libpqrcv_exec(WalReceiverConn *conn, const char *query,
 {
 	PGresult   *pgres = NULL;
 	WalRcvExecResult *walres = palloc0(sizeof(WalRcvExecResult));
+	char	   *diag_sqlstate;
 
 	if (MyDatabaseId == InvalidOid)
 		ereport(ERROR,
@@ -1025,6 +1026,13 @@ libpqrcv_exec(WalReceiverConn *conn, const char *query,
 		case PGRES_BAD_RESPONSE:
 			walres->status = WALRCV_ERROR;
 			walres->err = pchomp(PQerrorMessage(conn->streamConn));
+			diag_sqlstate = PQresultErrorField(pgres, PG_DIAG_SQLSTATE);
+			if (diag_sqlstate)
+				walres->sqlstate = MAKE_SQLSTATE(diag_sqlstate[0],
+												 diag_sqlstate[1],
+												 diag_sqlstate[2],
+												 diag_sqlstate[3],
+												 diag_sqlstate[4]);
 			break;
 	}
 

@@ -1786,7 +1786,8 @@ ProcessUtilitySlow(ParseState *pstate,
 				break;
 
 			case T_AlterSubscriptionStmt:
-				address = AlterSubscription((AlterSubscriptionStmt *) parsetree);
+				address = AlterSubscription((AlterSubscriptionStmt *) parsetree,
+											isTopLevel);
 				break;
 
 			case T_DropSubscriptionStmt:

@@ -186,9 +186,10 @@
 
   <para>
    Each subscription will receive changes via one replication slot (see
-   <xref linkend="streaming-replication-slots"/>).  Additional temporary
-   replication slots may be required for the initial data synchronization
-   of pre-existing table data.
+   <xref linkend="streaming-replication-slots"/>).  Additional replication
+   slots may be required for the initial data synchronization of
+   pre-existing table data and those will be dropped at the end of data
+   synchronization.
   </para>
 
   <para>
@@ -248,13 +249,23 @@
 
    <para>
     As mentioned earlier, each (active) subscription receives changes from a
-    replication slot on the remote (publishing) side.  Normally, the remote
-    replication slot is created automatically when the subscription is created
-    using <command>CREATE SUBSCRIPTION</command> and it is dropped
-    automatically when the subscription is dropped using <command>DROP
-    SUBSCRIPTION</command>.  In some situations, however, it can be useful or
-    necessary to manipulate the subscription and the underlying replication
-    slot separately.  Here are some scenarios:
+    replication slot on the remote (publishing) side.
+   </para>
+   <para>
+    Additional table synchronization slots are normally transient, created
+    internally to perform initial table synchronization and dropped
+    automatically when they are no longer needed. These table synchronization
+    slots have generated names: <quote><literal>pg_%u_sync_%u_%llu</literal></quote>
+    (parameters: Subscription <parameter>oid</parameter>,
+    Table <parameter>relid</parameter>, system identifier <parameter>sysid</parameter>)
+   </para>
+   <para>
+    Normally, the remote replication slot is created automatically when the
+    subscription is created using <command>CREATE SUBSCRIPTION</command> and it
+    is dropped automatically when the subscription is dropped using
+    <command>DROP SUBSCRIPTION</command>.  In some situations, however, it can
+    be useful or necessary to manipulate the subscription and the underlying
+    replication slot separately.  Here are some scenarios:
 
     <itemizedlist>
      <listitem>
@@ -294,8 +305,9 @@
        using <command>ALTER SUBSCRIPTION</command> before attempting to drop
        the subscription.  If the remote database instance no longer exists, no
        further action is then necessary.  If, however, the remote database
-       instance is just unreachable, the replication slot should then be
-       dropped manually; otherwise it would continue to reserve WAL and might
+       instance is just unreachable, the replication slot (and any still 
+       remaining table synchronization slots) should then be
+       dropped manually; otherwise it/they would continue to reserve WAL and might
        eventually cause the disk to fill up.  Such cases should be carefully
        investigated.
       </para>
@@ -468,16 +480,19 @@
   <sect2 id="logical-replication-snapshot">
     <title>Initial Snapshot</title>
     <para>
-      The initial data in existing subscribed tables are snapshotted and
-      copied in a parallel instance of a special kind of apply process.
-      This process will create its own temporary replication slot and
-      copy the existing data. Once existing data is copied, the worker
-      enters synchronization mode, which ensures that the table is brought
-      up to a synchronized state with the main apply process by streaming
-      any changes that happened during the initial data copy using standard
-      logical replication. Once the synchronization is done, the control
-      of the replication of the table is given back to the main apply
-      process where the replication continues as normal.
+     The initial data in existing subscribed tables are snapshotted and
+     copied in a parallel instance of a special kind of apply process.
+     This process will create its own replication slot and copy the existing
+     data.  As soon as the copy is finished the table contents will become
+     visible to other backends.  Once existing data is copied, the worker
+     enters synchronization mode, which ensures that the table is brought
+     up to a synchronized state with the main apply process by streaming
+     any changes that happened during the initial data copy using standard
+     logical replication.  During this synchronization phase, the changes
+     are applied and committed in the same order as they happened on the
+     publisher.  Once the synchronization is done, the control of the
+     replication of the table is given back to the main apply process where
+     the replication continues as normal.
     </para>
   </sect2>
  </sect1>

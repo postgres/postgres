@@ -210,6 +210,7 @@ typedef enum
 typedef struct WalRcvExecResult
 {
 	WalRcvExecStatus status;
+	int			sqlstate;
 	char	   *err;
 	Tuplestorestate *tuplestore;
 	TupleDesc	tupledesc;

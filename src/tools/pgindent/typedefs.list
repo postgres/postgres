@@ -2397,7 +2397,6 @@ StdAnalyzeData
 StdRdOptions
 Step
 StopList
-StopWorkersData
 StrategyNumber
 StreamCtl
 StreamXidHash
@@ -2408,6 +2407,7 @@ SubLink
 SubLinkType
 SubPlan
 SubPlanState
+SubRemoveRels
 SubTransactionId
 SubXactCallback
 SubXactCallbackItem
