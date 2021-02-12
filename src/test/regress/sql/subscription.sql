@@ -147,8 +147,10 @@ ALTER SUBSCRIPTION regress_testsub SET (slot_name = NONE);
 
 DROP SUBSCRIPTION regress_testsub;
 
-CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=postgres' PUBLICATION mypub
-       WITH (enabled = true, create_slot = false, copy_data = false);
+CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION mypub
+       WITH (connect = false, create_slot = false, copy_data = false);
+
+ALTER SUBSCRIPTION regress_testsub ENABLE;
 
 -- fail - ALTER SUBSCRIPTION with refresh is not allowed in a transaction
 -- block or function
