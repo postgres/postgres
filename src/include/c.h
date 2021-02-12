@@ -138,7 +138,7 @@
  * Testing can be done with "-fsanitize=alignment -fsanitize-trap=alignment"
  * on clang, or "-fsanitize=alignment -fno-sanitize-recover=alignment" on gcc.
  */
-#if __clang_major__ >= 7 || __GNUC__ >= 5
+#if __clang_major__ >= 7 || __GNUC__ >= 8
 #define pg_attribute_no_sanitize_alignment() __attribute__((no_sanitize("alignment")))
 #else
 #define pg_attribute_no_sanitize_alignment()
