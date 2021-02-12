@@ -1442,9 +1442,18 @@ regex_selectivity(const char *patt, int pattlen, bool case_insensitive,
 		sel *= FULL_WILDCARD_SEL;
 	}
 
-	/* If there's a fixed prefix, discount its selectivity */
+	/*
+	 * If there's a fixed prefix, discount its selectivity.  We have to be
+	 * careful here since a very long prefix could result in pow's result
+	 * underflowing to zero (in which case "sel" probably has as well).
+	 */
 	if (fixed_prefix_len > 0)
-		sel /= pow(FIXED_CHAR_SEL, fixed_prefix_len);
+	{
+		double		prefixsel = pow(FIXED_CHAR_SEL, fixed_prefix_len);
+
+		if (prefixsel > 0.0)
+			sel /= prefixsel;
+	}
 
 	/* Make sure result stays in range */
 	CLAMP_PROBABILITY(sel);
