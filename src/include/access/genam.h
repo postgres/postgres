@@ -63,16 +63,14 @@ typedef struct IndexVacuumInfo
  * of which this is just the first field; this provides a way for ambulkdelete
  * to communicate additional private data to amvacuumcleanup.
  *
- * Note: pages_removed is the amount by which the index physically shrank,
- * if any (ie the change in its total size on disk).  pages_deleted and
- * pages_free refer to free space within the index file.  Some index AMs
- * may compute num_index_tuples by reference to num_heap_tuples, in which
- * case they should copy the estimated_count field from IndexVacuumInfo.
+ * Note: pages_deleted and pages_free refer to free space within the index
+ * file.  Some index AMs may compute num_index_tuples by reference to
+ * num_heap_tuples, in which case they should copy the estimated_count field
+ * from IndexVacuumInfo.
  */
 typedef struct IndexBulkDeleteResult
 {
 	BlockNumber num_pages;		/* pages remaining in index */
-	BlockNumber pages_removed;	/* # removed during vacuum operation */
 	bool		estimated_count;	/* num_index_tuples is an estimate */
 	double		num_index_tuples;	/* tuples remaining */
 	double		tuples_removed; /* # removed during vacuum operation */

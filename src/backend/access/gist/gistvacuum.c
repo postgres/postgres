@@ -546,9 +546,6 @@ gistvacuum_delete_empty_pages(IndexVacuumInfo *info, GistVacState *vstate)
 
 		ReleaseBuffer(buffer);
 
-		/* update stats */
-		vstate->stats->pages_removed += deleted;
-
 		/*
 		 * We can stop the scan as soon as we have seen the downlinks, even if
 		 * we were not able to remove them all.
