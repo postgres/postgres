@@ -18,6 +18,7 @@
 
 #include <nmmintrin.h>
 
+pg_attribute_no_sanitize_alignment()
 pg_crc32c
 pg_comp_crc32c_sse42(pg_crc32c crc, const void *data, size_t len)
 {
