@@ -51,6 +51,7 @@
 #define F_HAS_GARBAGE		(1 << 4)	/* some tuples on the page are dead,
 										 * but not deleted yet */
 
+/* NSN - node sequence number, a special-purpose LSN */
 typedef XLogRecPtr GistNSN;
 
 /*

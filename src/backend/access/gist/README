@@ -92,10 +92,10 @@ index child page to be split between the time we make a queue entry for it
 (while visiting its parent page) and the time we actually reach and scan
 the child page.  To avoid missing the entries that were moved to the right
 sibling, we detect whether a split has occurred by comparing the child
-page's NSN to the LSN that the parent had when visited.  If it did, the
-sibling page is immediately added to the front of the queue, ensuring that
-its items will be scanned in the same order as if they were still on the
-original child page.
+page's NSN (node sequence number, a special-purpose LSN) to the LSN that
+the parent had when visited.  If it did, the sibling page is immediately
+added to the front of the queue, ensuring that its items will be scanned
+in the same order as if they were still on the original child page.
 
 As is usual in Postgres, the search algorithm only guarantees to find index
 entries that existed before the scan started; index entries added during
