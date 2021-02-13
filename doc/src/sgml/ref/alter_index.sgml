@@ -24,7 +24,7 @@ PostgreSQL documentation
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
 ALTER INDEX <replaceable class="parameter">name</replaceable> ATTACH PARTITION <replaceable class="parameter">index_name</replaceable>
-ALTER INDEX <replaceable class="parameter">name</replaceable> DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable>
+ALTER INDEX <replaceable class="parameter">name</replaceable> [ NO ] DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable>
 ALTER INDEX <replaceable class="parameter">name</replaceable> ALTER COLLATION <replaceable class="parameter">collation_name</replaceable> REFRESH VERSION
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RESET ( <replaceable class="parameter">storage_parameter</replaceable> [, ... ] )

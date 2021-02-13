@@ -30,7 +30,7 @@ ALTER ROUTINE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parame
 ALTER ROUTINE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
     SET SCHEMA <replaceable>new_schema</replaceable>
 ALTER ROUTINE <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
-    DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
+    [ NO ] DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
 
 <phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 

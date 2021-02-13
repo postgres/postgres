@@ -24,7 +24,7 @@ PostgreSQL documentation
 ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <replaceable class="parameter">action</replaceable> [, ... ]
 ALTER MATERIALIZED VIEW <replaceable class="parameter">name</replaceable>
-    DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable>
+    [ NO ] DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable>
 ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     RENAME [ COLUMN ] <replaceable class="parameter">column_name</replaceable> TO <replaceable class="parameter">new_column_name</replaceable>
 ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
