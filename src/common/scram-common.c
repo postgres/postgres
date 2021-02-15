@@ -51,7 +51,7 @@ scram_HMAC_init(scram_HMAC_ctx *ctx, const uint8 *key, int keylen)
 			return -1;
 		if (pg_cryptohash_init(sha256_ctx) < 0 ||
 			pg_cryptohash_update(sha256_ctx, key, keylen) < 0 ||
-			pg_cryptohash_final(sha256_ctx, keybuf) < 0)
+			pg_cryptohash_final(sha256_ctx, keybuf, sizeof(keybuf)) < 0)
 		{
 			pg_cryptohash_free(sha256_ctx);
 			return -1;
@@ -112,7 +112,7 @@ scram_HMAC_final(uint8 *result, scram_HMAC_ctx *ctx)
 
 	Assert(ctx->sha256ctx != NULL);
 
-	if (pg_cryptohash_final(ctx->sha256ctx, h) < 0)
+	if (pg_cryptohash_final(ctx->sha256ctx, h, sizeof(h)) < 0)
 	{
 		pg_cryptohash_free(ctx->sha256ctx);
 		return -1;
@@ -122,7 +122,7 @@ scram_HMAC_final(uint8 *result, scram_HMAC_ctx *ctx)
 	if (pg_cryptohash_init(ctx->sha256ctx) < 0 ||
 		pg_cryptohash_update(ctx->sha256ctx, ctx->k_opad, SHA256_HMAC_B) < 0 ||
 		pg_cryptohash_update(ctx->sha256ctx, h, SCRAM_KEY_LEN) < 0 ||
-		pg_cryptohash_final(ctx->sha256ctx, result) < 0)
+		pg_cryptohash_final(ctx->sha256ctx, result, SCRAM_KEY_LEN) < 0)
 	{
 		pg_cryptohash_free(ctx->sha256ctx);
 		return -1;
@@ -202,7 +202,7 @@ scram_H(const uint8 *input, int len, uint8 *result)
 
 	if (pg_cryptohash_init(ctx) < 0 ||
 		pg_cryptohash_update(ctx, input, len) < 0 ||
-		pg_cryptohash_final(ctx, result) < 0)
+		pg_cryptohash_final(ctx, result, SCRAM_KEY_LEN) < 0)
 	{
 		pg_cryptohash_free(ctx);
 		return -1;

@@ -160,12 +160,12 @@ pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
 /*
  * pg_cryptohash_final
  *
- * Finalize a hash context.  Note that this implementation is designed
- * to never fail, so this always returns 0 except if the caller has
- * given a NULL context.
+ * Finalize a hash context.  Note that this implementation is designed to
+ * never fail, so this always returns 0 except if the destination buffer
+ * is not large enough.
  */
 int
-pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest)
+pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 {
 	if (ctx == NULL)
 		return -1;
@@ -173,21 +173,33 @@ pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest)
 	switch (ctx->type)
 	{
 		case PG_MD5:
+			if (len < MD5_DIGEST_LENGTH)
+				return -1;
 			pg_md5_final(&ctx->data.md5, dest);
 			break;
 		case PG_SHA1:
+			if (len < SHA1_DIGEST_LENGTH)
+				return -1;
 			pg_sha1_final(&ctx->data.sha1, dest);
 			break;
 		case PG_SHA224:
+			if (len < PG_SHA224_DIGEST_LENGTH)
+				return -1;
 			pg_sha224_final(&ctx->data.sha224, dest);
 			break;
 		case PG_SHA256:
+			if (len < PG_SHA256_DIGEST_LENGTH)
+				return -1;
 			pg_sha256_final(&ctx->data.sha256, dest);
 			break;
 		case PG_SHA384:
+			if (len < PG_SHA384_DIGEST_LENGTH)
+				return -1;
 			pg_sha384_final(&ctx->data.sha384, dest);
 			break;
 		case PG_SHA512:
+			if (len < PG_SHA512_DIGEST_LENGTH)
+				return -1;
 			pg_sha512_final(&ctx->data.sha512, dest);
 			break;
 	}

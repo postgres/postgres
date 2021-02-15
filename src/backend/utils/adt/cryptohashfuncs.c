@@ -114,7 +114,8 @@ cryptohash_internal(pg_cryptohash_type type, bytea *input)
 		elog(ERROR, "could not initialize %s context", typestr);
 	if (pg_cryptohash_update(ctx, data, len) < 0)
 		elog(ERROR, "could not update %s context", typestr);
-	if (pg_cryptohash_final(ctx, (unsigned char *) VARDATA(result)) < 0)
+	if (pg_cryptohash_final(ctx, (unsigned char *) VARDATA(result),
+							digest_len) < 0)
 		elog(ERROR, "could not finalize %s context", typestr);
 	pg_cryptohash_free(ctx);
 

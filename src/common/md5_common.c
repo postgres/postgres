@@ -78,7 +78,7 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum)
 
 	if (pg_cryptohash_init(ctx) < 0 ||
 		pg_cryptohash_update(ctx, buff, len) < 0 ||
-		pg_cryptohash_final(ctx, sum) < 0)
+		pg_cryptohash_final(ctx, sum, sizeof(sum)) < 0)
 	{
 		pg_cryptohash_free(ctx);
 		return false;
@@ -100,7 +100,7 @@ pg_md5_binary(const void *buff, size_t len, void *outbuf)
 
 	if (pg_cryptohash_init(ctx) < 0 ||
 		pg_cryptohash_update(ctx, buff, len) < 0 ||
-		pg_cryptohash_final(ctx, outbuf) < 0)
+		pg_cryptohash_final(ctx, outbuf, MD5_DIGEST_LENGTH) < 0)
 	{
 		pg_cryptohash_free(ctx);
 		return false;

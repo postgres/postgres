@@ -659,7 +659,8 @@ verify_manifest_checksum(JsonManifestParseState *parse, char *buffer,
 		context->error_cb(context, "could not initialize checksum of manifest");
 	if (pg_cryptohash_update(manifest_ctx, (uint8 *) buffer, penultimate_newline + 1) < 0)
 		context->error_cb(context, "could not update checksum of manifest");
-	if (pg_cryptohash_final(manifest_ctx, manifest_checksum_actual) < 0)
+	if (pg_cryptohash_final(manifest_ctx, manifest_checksum_actual,
+							sizeof(manifest_checksum_actual)) < 0)
 		context->error_cb(context, "could not finalize checksum of manifest");
 
 	/* Now verify it. */

@@ -118,7 +118,7 @@ int_sha2_finish(PX_MD *h, uint8 *dst)
 {
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
-	if (pg_cryptohash_final(ctx, dst) < 0)
+	if (pg_cryptohash_final(ctx, dst, h->result_size(h)) < 0)
 		elog(ERROR, "could not finalize %s context", "SHA2");
 }
 

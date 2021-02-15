@@ -32,7 +32,7 @@ typedef struct pg_cryptohash_ctx pg_cryptohash_ctx;
 extern pg_cryptohash_ctx *pg_cryptohash_create(pg_cryptohash_type type);
 extern int	pg_cryptohash_init(pg_cryptohash_ctx *ctx);
 extern int	pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len);
-extern int	pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest);
+extern int	pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len);
 extern void pg_cryptohash_free(pg_cryptohash_ctx *ctx);
 
 #endif							/* PG_CRYPTOHASH_H */

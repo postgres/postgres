@@ -1429,7 +1429,7 @@ scram_mock_salt(const char *username)
 	if (pg_cryptohash_init(ctx) < 0 ||
 		pg_cryptohash_update(ctx, (uint8 *) username, strlen(username)) < 0 ||
 		pg_cryptohash_update(ctx, (uint8 *) mock_auth_nonce, MOCK_AUTH_NONCE_LEN) < 0 ||
-		pg_cryptohash_final(ctx, sha_digest) < 0)
+		pg_cryptohash_final(ctx, sha_digest, sizeof(sha_digest)) < 0)
 	{
 		pg_cryptohash_free(ctx);
 		return NULL;

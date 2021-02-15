@@ -24,6 +24,9 @@
 #include <openssl/evp.h>
 
 #include "common/cryptohash.h"
+#include "common/md5.h"
+#include "common/sha1.h"
+#include "common/sha2.h"
 #ifndef FRONTEND
 #include "utils/memutils.h"
 #include "utils/resowner.h"
@@ -181,12 +184,40 @@ pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
  * Finalize a hash context.  Returns 0 on success, and -1 on failure.
  */
 int
-pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest)
+pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 {
 	int			status = 0;
 
 	if (ctx == NULL)
 		return -1;
+
+	switch (ctx->type)
+	{
+		case PG_MD5:
+			if (len < MD5_DIGEST_LENGTH)
+				return -1;
+			break;
+		case PG_SHA1:
+			if (len < SHA1_DIGEST_LENGTH)
+				return -1;
+			break;
+		case PG_SHA224:
+			if (len < PG_SHA224_DIGEST_LENGTH)
+				return -1;
+			break;
+		case PG_SHA256:
+			if (len < PG_SHA256_DIGEST_LENGTH)
+				return -1;
+			break;
+		case PG_SHA384:
+			if (len < PG_SHA384_DIGEST_LENGTH)
+				return -1;
+			break;
+		case PG_SHA512:
+			if (len < PG_SHA512_DIGEST_LENGTH)
+				return -1;
+			break;
+	}
 
 	status = EVP_DigestFinal_ex(ctx->evpctx, dest, 0);
 

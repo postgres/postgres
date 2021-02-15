@@ -330,12 +330,13 @@ SendBackupManifest(backup_manifest_info *manifest)
 	 * twice.
 	 */
 	manifest->still_checksumming = false;
-	if (pg_cryptohash_final(manifest->manifest_ctx, checksumbuf) < 0)
+	if (pg_cryptohash_final(manifest->manifest_ctx, checksumbuf,
+							sizeof(checksumbuf)) < 0)
 		elog(ERROR, "failed to finalize checksum of backup manifest");
 	AppendStringToManifest(manifest, "\"Manifest-Checksum\": \"");
-	dstlen = pg_hex_enc_len(PG_SHA256_DIGEST_LENGTH);
+	dstlen = pg_hex_enc_len(sizeof(checksumbuf));
 	checksumstringbuf = palloc0(dstlen + 1);	/* includes \0 */
-	pg_hex_encode((char *) checksumbuf, sizeof checksumbuf,
+	pg_hex_encode((char *) checksumbuf, sizeof(checksumbuf),
 				  checksumstringbuf, dstlen);
 	checksumstringbuf[dstlen] = '\0';
 	AppendStringToManifest(manifest, checksumstringbuf);
