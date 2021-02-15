@@ -22,6 +22,7 @@ CREATE FUNCTION gist_page_items_bytea(IN page bytea,
     OUT itemoffset smallint,
     OUT ctid tid,
     OUT itemlen smallint,
+    OUT dead boolean,
     OUT key_data bytea)
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'gist_page_items_bytea'
@@ -35,6 +36,7 @@ CREATE FUNCTION gist_page_items(IN page bytea,
     OUT itemoffset smallint,
     OUT ctid tid,
     OUT itemlen smallint,
+    OUT dead boolean,
     OUT keys text)
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'gist_page_items'

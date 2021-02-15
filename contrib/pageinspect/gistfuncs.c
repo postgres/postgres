@@ -146,8 +146,8 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 		 offset <= maxoff;
 		 offset++)
 	{
-		Datum		values[4];
-		bool		nulls[4];
+		Datum		values[5];
+		bool		nulls[5];
 		ItemId		id;
 		IndexTuple	itup;
 		bytea	   *tuple_bytea;
@@ -170,7 +170,8 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 		tuple_bytea = (bytea *) palloc(tuple_len + VARHDRSZ);
 		SET_VARSIZE(tuple_bytea, tuple_len + VARHDRSZ);
 		memcpy(VARDATA(tuple_bytea), itup, tuple_len);
-		values[3] = PointerGetDatum(tuple_bytea);
+		values[3] = BoolGetDatum(ItemIdIsDead(id));
+		values[4] = PointerGetDatum(tuple_bytea);
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
@@ -237,8 +238,8 @@ gist_page_items(PG_FUNCTION_ARGS)
 		 offset <= maxoff;
 		 offset++)
 	{
-		Datum		values[4];
-		bool		nulls[4];
+		Datum		values[5];
+		bool		nulls[5];
 		ItemId		id;
 		IndexTuple	itup;
 		Datum		itup_values[INDEX_MAX_KEYS];
@@ -260,14 +261,15 @@ gist_page_items(PG_FUNCTION_ARGS)
 		values[0] = DatumGetInt16(offset);
 		values[1] = ItemPointerGetDatum(&itup->t_tid);
 		values[2] = Int32GetDatum((int) IndexTupleSize(itup));
+		values[3] = BoolGetDatum(ItemIdIsDead(id));
 
 		key_desc = BuildIndexValueDescription(indexRel, itup_values, itup_isnull);
 		if (key_desc)
-			values[3] = CStringGetTextDatum(key_desc);
+			values[4] = CStringGetTextDatum(key_desc);
 		else
 		{
-			values[3] = (Datum) 0;
-			nulls[3] = true;
+			values[4] = (Datum) 0;
+			nulls[4] = true;
 		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
