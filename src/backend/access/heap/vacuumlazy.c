@@ -765,9 +765,9 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 				next_fsm_block_to_vacuum;
 	double		num_tuples,		/* total number of nonremovable tuples */
 				live_tuples,	/* live tuples (reltuples estimate) */
-				tups_vacuumed,	/* tuples cleaned up by vacuum */
+				tups_vacuumed,	/* tuples cleaned up by current vacuum */
 				nkeep,			/* dead-but-not-removable tuples */
-				nunused;		/* unused line pointers */
+				nunused;		/* # existing unused line pointers */
 	IndexBulkDeleteResult **indstats;
 	int			i;
 	PGRUsage	ru0;
@@ -1234,7 +1234,8 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		/*
 		 * Prune all HOT-update chains in this page.
 		 *
-		 * We count tuples removed by the pruning step as removed by VACUUM.
+		 * We count tuples removed by the pruning step as removed by VACUUM
+		 * (existing LP_DEAD line pointers don't count).
 		 */
 		tups_vacuumed += heap_page_prune(onerel, buf, vistest, false,
 										 InvalidTransactionId, 0,
@@ -1286,10 +1287,13 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 
 			/*
-			 * DEAD line pointers are to be vacuumed normally; but we don't
+			 * LP_DEAD line pointers are to be vacuumed normally; but we don't
 			 * count them in tups_vacuumed, else we'd be double-counting (at
 			 * least in the common case where heap_page_prune() just freed up
-			 * a non-HOT tuple).
+			 * a non-HOT tuple).  Note also that the final tups_vacuumed value
+			 * might be very low for tables where opportunistic page pruning
+			 * happens to occur very frequently (via heap_page_prune_opt()
+			 * calls that free up non-HOT tuples).
 			 */
 			if (ItemIdIsDead(itemid))
 			{
@@ -1742,10 +1746,6 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 						vacrelstats->relname,
 						tups_vacuumed, vacuumed_pages)));
 
-	/*
-	 * This is pretty messy, but we split it up so that we can skip emitting
-	 * individual parts of the message when not applicable.
-	 */
 	initStringInfo(&buf);
 	appendStringInfo(&buf,
 					 _("%.0f dead row versions cannot be removed yet, oldest xmin: %u\n"),

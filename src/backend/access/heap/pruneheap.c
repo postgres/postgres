@@ -213,11 +213,12 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * send its own new total to pgstats, and we don't want this delta applied
  * on top of that.)
  *
+ * Sets latestRemovedXid for caller on return.
+ *
  * off_loc is the offset location required by the caller to use in error
  * callback.
  *
- * Returns the number of tuples deleted from the page and sets
- * latestRemovedXid.
+ * Returns the number of tuples deleted from the page during this call.
  */
 int
 heap_page_prune(Relation relation, Buffer buffer,
