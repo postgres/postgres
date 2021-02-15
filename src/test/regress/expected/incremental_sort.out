@@ -676,6 +676,21 @@ select * from (select * from t order by a) s order by a, b limit 70;
 (70 rows)
 
 -- Checks case where we hit a group boundary at the last tuple of a batch.
+-- Because the full sort state is bounded, we scan 64 tuples (the mode
+-- transition point) but only retain 5. Thus when we transition modes, all
+-- tuples in the full sort state have different prefix keys.
+explain (costs off) select * from (select * from t order by a) s order by a, b limit 5;
+           QUERY PLAN            
+---------------------------------
+ Limit
+   ->  Incremental Sort
+         Sort Key: t.a, t.b
+         Presorted Key: t.a
+         ->  Sort
+               Sort Key: t.a
+               ->  Seq Scan on t
+(7 rows)
+
 select * from (select * from t order by a) s order by a, b limit 5;
  a | b 
 ---+---

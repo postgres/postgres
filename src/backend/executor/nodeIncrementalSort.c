@@ -288,9 +288,7 @@ switchToPresortedPrefixMode(PlanState *pstate)
 {
 	IncrementalSortState *node = castNode(IncrementalSortState, pstate);
 	ScanDirection dir;
-	int64		nTuples = 0;
-	bool		lastTuple = false;
-	bool		firstTuple = true;
+	int64		nTuples;
 	TupleDesc	tupDesc;
 	PlanState  *outerNode;
 	IncrementalSort *plannode = castNode(IncrementalSort, node->ss.ps.plan);
@@ -343,20 +341,16 @@ switchToPresortedPrefixMode(PlanState *pstate)
 	 * Copy as many tuples as we can (i.e., in the same prefix key group) from
 	 * the full sort state to the prefix sort state.
 	 */
-	for (;;)
+	for (nTuples = 0; nTuples < node->n_fullsort_remaining; nTuples++)
 	{
-		lastTuple = node->n_fullsort_remaining - nTuples == 1;
-
 		/*
 		 * When we encounter multiple prefix key groups inside the full sort
 		 * tuplesort we have to carry over the last read tuple into the next
 		 * batch.
 		 */
-		if (firstTuple && !TupIsNull(node->transfer_tuple))
+		if (nTuples == 0 && !TupIsNull(node->transfer_tuple))
 		{
 			tuplesort_puttupleslot(node->prefixsort_state, node->transfer_tuple);
-			nTuples++;
-
 			/* The carried over tuple is our new group pivot tuple. */
 			ExecCopySlot(node->group_pivot, node->transfer_tuple);
 		}
@@ -376,7 +370,6 @@ switchToPresortedPrefixMode(PlanState *pstate)
 			if (isCurrentGroup(node, node->group_pivot, node->transfer_tuple))
 			{
 				tuplesort_puttupleslot(node->prefixsort_state, node->transfer_tuple);
-				nTuples++;
 			}
 			else
 			{
@@ -395,27 +388,10 @@ switchToPresortedPrefixMode(PlanState *pstate)
 				 */
 				ExecClearTuple(node->group_pivot);
 
-				/*
-				 * Also make sure we take the didn't-consume-all-the-tuples
-				 * path below, even if this happened to be the last tuple of
-				 * the batch.
-				 */
-				lastTuple = false;
+				/* Break out of for-loop early */
 				break;
 			}
 		}
-
-		firstTuple = false;
-
-		/*
-		 * If we've copied all of the tuples from the full sort state into the
-		 * prefix sort state, then we don't actually know that we've yet found
-		 * the last tuple in that prefix key group until we check the next
-		 * tuple from the outer plan node, so we retain the current group
-		 * pivot tuple prefix key group comparison.
-		 */
-		if (lastTuple)
-			break;
 	}
 
 	/*
@@ -428,14 +404,15 @@ switchToPresortedPrefixMode(PlanState *pstate)
 	node->n_fullsort_remaining -= nTuples;
 	SO1_printf("Setting n_fullsort_remaining to " INT64_FORMAT "\n", node->n_fullsort_remaining);
 
-	if (lastTuple)
+	if (node->n_fullsort_remaining == 0)
 	{
 		/*
-		 * We've confirmed that all tuples remaining in the full sort batch is
-		 * in the same prefix key group and moved all of those tuples into the
-		 * presorted prefix tuplesort. Now we can save our pivot comparison
-		 * tuple and continue fetching tuples from the outer execution node to
-		 * load into the presorted prefix tuplesort.
+		 * We've found that all tuples remaining in the full sort batch are in
+		 * the same prefix key group and moved all of those tuples into the
+		 * presorted prefix tuplesort.  We don't know that we've yet found the
+		 * last tuple in the current prefix key group, so save our pivot
+		 * comparison tuple and continue fetching tuples from the outer
+		 * execution node to load into the presorted prefix tuplesort.
 		 */
 		ExecCopySlot(node->group_pivot, node->transfer_tuple);
 		SO_printf("Setting execution_status to INCSORT_LOADPREFIXSORT (switchToPresortedPrefixMode)\n");
@@ -1104,7 +1081,7 @@ ExecEndIncrementalSort(IncrementalSortState *node)
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 	/* must drop pointer to sort result tuple */
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	/* must drop stanalone tuple slots from outer node */
+	/* must drop standalone tuple slots from outer node */
 	ExecDropSingleTupleTableSlot(node->group_pivot);
 	ExecDropSingleTupleTableSlot(node->transfer_tuple);
 
