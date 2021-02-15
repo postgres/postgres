@@ -733,7 +733,7 @@ ActivateCommitTs(void)
 	if (ShmemVariableCache->oldestCommitTsXid == InvalidTransactionId)
 	{
 		ShmemVariableCache->oldestCommitTsXid =
-			ShmemVariableCache->newestCommitTsXid = ReadNewTransactionId();
+			ShmemVariableCache->newestCommitTsXid = ReadNextTransactionId();
 	}
 	LWLockRelease(CommitTsLock);
 

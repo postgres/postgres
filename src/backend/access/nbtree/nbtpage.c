@@ -2266,7 +2266,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
  *
  * We maintain *oldestBtpoXact for pages that are deleted by the current
  * VACUUM operation here.  This must be handled here because we conservatively
- * assume that there needs to be a new call to ReadNewTransactionId() each
+ * assume that there needs to be a new call to ReadNextTransactionId() each
  * time a page gets deleted.  See comments about the underlying assumption
  * below.
  *
@@ -2559,7 +2559,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	 * Mark the page itself deleted.  It can be recycled when all current
 	 * transactions are gone.  Storing GetTopTransactionId() would work, but
 	 * we're in VACUUM and would not otherwise have an XID.  Having already
-	 * updated links to the target, ReadNewTransactionId() suffices as an
+	 * updated links to the target, ReadNextTransactionId() suffices as an
 	 * upper bound.  Any scan having retained a now-stale link is advertising
 	 * in its PGPROC an xmin less than or equal to the value we read here.  It
 	 * will continue to do so, holding back the xmin horizon, for the duration
@@ -2570,7 +2570,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	Assert(P_ISHALFDEAD(opaque) || !P_ISLEAF(opaque));
 	opaque->btpo_flags &= ~BTP_HALF_DEAD;
 	opaque->btpo_flags |= BTP_DELETED;
-	opaque->btpo.xact = ReadNewTransactionId();
+	opaque->btpo.xact = ReadNextTransactionId();
 
 	/*
 	 * Remove the remaining tuples on the page.  This keeps things simple for

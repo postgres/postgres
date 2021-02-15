@@ -305,7 +305,7 @@ extern void AssertTransactionIdInAllowableRange(TransactionId xid);
  * For callers that just need the XID part of the next transaction ID.
  */
 static inline TransactionId
-ReadNewTransactionId(void)
+ReadNextTransactionId(void)
 {
 	return XidFromFullTransactionId(ReadNextFullTransactionId());
 }

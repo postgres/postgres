@@ -548,7 +548,7 @@ GetStableLatestTransactionId(void)
 		lxid = MyProc->lxid;
 		stablexid = GetTopTransactionIdIfAny();
 		if (!TransactionIdIsValid(stablexid))
-			stablexid = ReadNewTransactionId();
+			stablexid = ReadNextTransactionId();
 	}
 
 	Assert(TransactionIdIsValid(stablexid));

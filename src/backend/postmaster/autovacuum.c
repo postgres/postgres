@@ -1190,7 +1190,7 @@ do_start_worker(void)
 	 * pass without forcing a vacuum.  (This limit can be tightened for
 	 * particular tables, but not loosened.)
 	 */
-	recentXid = ReadNewTransactionId();
+	recentXid = ReadNextTransactionId();
 	xidForceLimit = recentXid - autovacuum_freeze_max_age;
 	/* ensure it's a "normal" XID, else TransactionIdPrecedes misbehaves */
 	/* this can cause the limit to go backwards by 3, but that's OK */
@@ -1709,7 +1709,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 			pg_usleep(PostAuthDelay * 1000000L);
 
 		/* And do an appropriate amount of work */
-		recentXid = ReadNewTransactionId();
+		recentXid = ReadNextTransactionId();
 		recentMulti = ReadNextMultiXactId();
 		do_autovacuum();
 	}
