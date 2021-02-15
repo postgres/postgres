@@ -1210,10 +1210,10 @@ Bitmapset *
 ExecGetInsertedCols(ResultRelInfo *relinfo, EState *estate)
 {
 	/*
-	 * The columns are stored in the range table entry. If this ResultRelInfo
-	 * doesn't have an entry in the range table (i.e. if it represents a
-	 * partition routing target), fetch the parent's RTE and map the columns
-	 * to the order they are in the partition.
+	 * The columns are stored in the range table entry.  If this ResultRelInfo
+	 * represents a partition routing target, and doesn't have an entry of its
+	 * own in the range table, fetch the parent's RTE and map the columns to
+	 * the order they are in the partition.
 	 */
 	if (relinfo->ri_RangeTableIndex != 0)
 	{
@@ -1221,7 +1221,7 @@ ExecGetInsertedCols(ResultRelInfo *relinfo, EState *estate)
 
 		return rte->insertedCols;
 	}
-	else
+	else if (relinfo->ri_RootResultRelInfo)
 	{
 		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
 		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
@@ -1232,6 +1232,16 @@ ExecGetInsertedCols(ResultRelInfo *relinfo, EState *estate)
 										 rte->insertedCols);
 		else
 			return rte->insertedCols;
+	}
+	else
+	{
+		/*
+		 * The relation isn't in the range table and it isn't a partition
+		 * routing target.  This ResultRelInfo must've been created only for
+		 * firing triggers and the relation is not being inserted into.  (See
+		 * ExecGetTriggerResultRel.)
+		 */
+		return NULL;
 	}
 }
 
@@ -1246,7 +1256,7 @@ ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 
 		return rte->updatedCols;
 	}
-	else
+	else if (relinfo->ri_RootResultRelInfo)
 	{
 		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
 		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
@@ -1258,6 +1268,8 @@ ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 		else
 			return rte->updatedCols;
 	}
+	else
+		return NULL;
 }
 
 /* Return a bitmap representing generated columns being updated */
@@ -1271,7 +1283,7 @@ ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 
 		return rte->extraUpdatedCols;
 	}
-	else
+	else if (relinfo->ri_RootResultRelInfo)
 	{
 		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
 		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
@@ -1283,6 +1295,8 @@ ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 		else
 			return rte->extraUpdatedCols;
 	}
+	else
+		return NULL;
 }
 
 /* Return columns being updated, including generated columns */
