@@ -715,7 +715,8 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 					 * the origin might be already removed. For these reasons,
 					 * passing missing_ok = true.
 					 */
-					ReplicationOriginNameForTablesync(sub->oid, relid, originname);
+					ReplicationOriginNameForTablesync(sub->oid, relid, originname,
+													  sizeof(originname));
 					replorigin_drop_by_name(originname, true, false);
 				}
 
@@ -749,7 +750,8 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 				 * dropped slots and fail. For these reasons, we allow
 				 * missing_ok = true for the drop.
 				 */
-				ReplicationSlotNameForTablesync(sub->oid, sub_remove_rels[off].relid, syncslotname);
+				ReplicationSlotNameForTablesync(sub->oid, sub_remove_rels[off].relid,
+												syncslotname, sizeof(syncslotname));
 				ReplicationSlotDropAtPubNode(wrconn, syncslotname, true);
 			}
 		}
@@ -1174,7 +1176,8 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		 * worker so passing missing_ok = true. This can happen for the states
 		 * before SUBREL_STATE_FINISHEDCOPY.
 		 */
-		ReplicationOriginNameForTablesync(subid, relid, originname);
+		ReplicationOriginNameForTablesync(subid, relid, originname,
+										  sizeof(originname));
 		replorigin_drop_by_name(originname, true, false);
 	}
 
@@ -1254,7 +1257,8 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 			{
 				char		syncslotname[NAMEDATALEN] = {0};
 
-				ReplicationSlotNameForTablesync(subid, relid, syncslotname);
+				ReplicationSlotNameForTablesync(subid, relid, syncslotname,
+												sizeof(syncslotname));
 				ReplicationSlotDropAtPubNode(wrconn, syncslotname, true);
 			}
 		}
@@ -1532,7 +1536,8 @@ ReportSlotConnectionError(List *rstates, Oid subid, char *slotname, char *err)
 		{
 			char		syncslotname[NAMEDATALEN] = {0};
 
-			ReplicationSlotNameForTablesync(subid, relid, syncslotname);
+			ReplicationSlotNameForTablesync(subid, relid, syncslotname,
+											sizeof(syncslotname));
 			elog(WARNING, "could not drop tablesync replication slot \"%s\"",
 				 syncslotname);
 		}
