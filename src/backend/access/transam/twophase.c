@@ -873,8 +873,15 @@ PGPROC *
 TwoPhaseGetDummyProc(TransactionId xid, bool lock_held)
 {
 	GlobalTransaction gxact = TwoPhaseGetGXact(xid, lock_held);
+	PGPROC	   *dummy = &ProcGlobal->allProcs[gxact->pgprocno];
 
-	return &ProcGlobal->allProcs[gxact->pgprocno];
+	/*
+	 * Initialize atomic variable in dummy proc so that GetLockStatusData()
+	 * can read it later.
+	 */
+	pg_atomic_init_u64(&dummy->waitStart, 0);
+
+	return dummy;
 }
 
 /************************************************************************/
