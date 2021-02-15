@@ -368,7 +368,15 @@ struct cnfa
 	struct carc *arcs;			/* the area for the lists */
 };
 
+/*
+ * When debugging, it's helpful if an un-filled CNFA is all-zeroes.
+ * In production, though, we only require nstates to be zero.
+ */
+#ifdef REG_DEBUG
+#define ZAPCNFA(cnfa)	memset(&(cnfa), 0, sizeof(cnfa))
+#else
 #define ZAPCNFA(cnfa)	((cnfa).nstates = 0)
+#endif
 #define NULLCNFA(cnfa)	((cnfa).nstates == 0)
 
 /*

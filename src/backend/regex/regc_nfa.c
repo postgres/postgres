@@ -2951,11 +2951,11 @@ carc_cmp(const void *a, const void *b)
 static void
 freecnfa(struct cnfa *cnfa)
 {
-	assert(cnfa->nstates != 0); /* not empty already */
-	cnfa->nstates = 0;
+	assert(!NULLCNFA(*cnfa));	/* not empty already */
 	FREE(cnfa->stflags);
 	FREE(cnfa->states);
 	FREE(cnfa->arcs);
+	ZAPCNFA(*cnfa);
 }
 
 /*
@@ -3012,13 +3012,13 @@ dumpstate(struct state *s,
 		fprintf(f, "\tno out arcs\n");
 	else
 		dumparcs(s, f);
-	fflush(f);
 	for (a = s->ins; a != NULL; a = a->inchain)
 	{
 		if (a->to != s)
 			fprintf(f, "\tlink from %d to %d on %d's in-chain\n",
 					a->from->no, a->to->no, s->no);
 	}
+	fflush(f);
 }
 
 /*
