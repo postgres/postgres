@@ -103,6 +103,7 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	Page		page;
 	OffsetNumber offset;
+	OffsetNumber maxoff = InvalidOffsetNumber;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -135,11 +136,14 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 
 	page = get_page_from_raw(raw_page);
 
+	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))
 		elog(NOTICE, "page is deleted");
+	else
+		maxoff = PageGetMaxOffsetNumber(page);
 
 	for (offset = FirstOffsetNumber;
-		 offset <= PageGetMaxOffsetNumber(page);
+		 offset <= maxoff;
 		 offset++)
 	{
 		Datum		values[4];
@@ -187,6 +191,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	Page		page;
 	OffsetNumber offset;
+	OffsetNumber maxoff = InvalidOffsetNumber;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -222,11 +227,14 @@ gist_page_items(PG_FUNCTION_ARGS)
 
 	page = get_page_from_raw(raw_page);
 
+	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))
 		elog(NOTICE, "page is deleted");
+	else
+		maxoff = PageGetMaxOffsetNumber(page);
 
 	for (offset = FirstOffsetNumber;
-		 offset <= PageGetMaxOffsetNumber(page);
+		 offset <= maxoff;
 		 offset++)
 	{
 		Datum		values[4];
