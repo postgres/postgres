@@ -1237,8 +1237,8 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		 * We count tuples removed by the pruning step as removed by VACUUM
 		 * (existing LP_DEAD line pointers don't count).
 		 */
-		tups_vacuumed += heap_page_prune(onerel, buf, vistest, false,
-										 InvalidTransactionId, 0,
+		tups_vacuumed += heap_page_prune(onerel, buf, vistest,
+										 InvalidTransactionId, 0, false,
 										 &vacrelstats->latestRemovedXid,
 										 &vacrelstats->offnum);
 
