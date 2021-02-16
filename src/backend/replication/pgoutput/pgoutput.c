@@ -342,10 +342,6 @@ pgoutput_begin_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn)
 	{
 		char	   *origin;
 
-		/* Message boundary */
-		OutputPluginWrite(ctx, false);
-		OutputPluginPrepareWrite(ctx, true);
-
 		/*----------
 		 * XXX: which behaviour do we want here?
 		 *
@@ -357,7 +353,13 @@ pgoutput_begin_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn)
 		 *----------
 		 */
 		if (replorigin_by_oid(txn->origin_id, true, &origin))
+		{
+			/* Message boundary */
+			OutputPluginWrite(ctx, false);
+			OutputPluginPrepareWrite(ctx, true);
 			logicalrep_write_origin(ctx->out, origin, txn->origin_lsn);
+		}
+
 	}
 
 	OutputPluginWrite(ctx, true);
@@ -780,12 +782,13 @@ pgoutput_stream_start(struct LogicalDecodingContext *ctx,
 	{
 		char	   *origin;
 
-		/* Message boundary */
-		OutputPluginWrite(ctx, false);
-		OutputPluginPrepareWrite(ctx, true);
-
 		if (replorigin_by_oid(txn->origin_id, true, &origin))
+		{
+			/* Message boundary */
+			OutputPluginWrite(ctx, false);
+			OutputPluginPrepareWrite(ctx, true);
 			logicalrep_write_origin(ctx->out, origin, InvalidXLogRecPtr);
+		}
 	}
 
 	OutputPluginWrite(ctx, true);
