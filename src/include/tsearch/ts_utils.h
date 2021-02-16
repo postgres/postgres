@@ -199,6 +199,9 @@ typedef TSTernaryValue (*TSExecuteCallback) (void *arg, QueryOperand *val,
 
 extern bool TS_execute(QueryItem *curitem, void *arg, uint32 flags,
 					   TSExecuteCallback chkcond);
+extern TSTernaryValue TS_execute_ternary(QueryItem *curitem, void *arg,
+										 uint32 flags,
+										 TSExecuteCallback chkcond);
 extern bool tsquery_requires_match(QueryItem *curitem);
 
 /*

@@ -1855,6 +1855,18 @@ TS_execute(QueryItem *curitem, void *arg, uint32 flags,
 }
 
 /*
+ * Evaluate tsquery boolean expression.
+ *
+ * This is the same as TS_execute except that TS_MAYBE is returned as-is.
+ */
+TSTernaryValue
+TS_execute_ternary(QueryItem *curitem, void *arg, uint32 flags,
+				   TSExecuteCallback chkcond)
+{
+	return TS_execute_recurse(curitem, arg, flags, chkcond);
+}
+
+/*
  * TS_execute recursion for operators above any phrase operator.  Here we do
  * not need to worry about lexeme positions.  As soon as we hit an OP_PHRASE
  * operator, we pass it off to TS_phrase_execute which does worry.
