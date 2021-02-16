@@ -175,7 +175,6 @@ typedef struct
 	QueryItem  *first_item;
 	GinTernaryValue *check;
 	int		   *map_item_operand;
-	bool	   *need_recheck;
 } GinChkVal;
 
 /*
@@ -186,25 +185,22 @@ checkcondition_gin(void *checkval, QueryOperand *val, ExecPhraseData *data)
 {
 	GinChkVal  *gcv = (GinChkVal *) checkval;
 	int			j;
-
-	/*
-	 * if any val requiring a weight is used or caller needs position
-	 * information then set recheck flag
-	 */
-	if (val->weight != 0 || data != NULL)
-		*(gcv->need_recheck) = true;
+	GinTernaryValue result;
 
 	/* convert item's number to corresponding entry's (operand's) number */
 	j = gcv->map_item_operand[((QueryItem *) val) - gcv->first_item];
 
+	/* determine presence of current entry in indexed value */
+	result = gcv->check[j];
+
 	/*
-	 * return presence of current entry in indexed value; but TRUE becomes
-	 * MAYBE in the presence of a query requiring recheck
+	 * If any val requiring a weight is used or caller needs position
+	 * information then we must recheck, so replace TRUE with MAYBE.
 	 */
-	if (gcv->check[j] == GIN_TRUE)
+	if (result == GIN_TRUE)
 	{
 		if (val->weight != 0 || data != NULL)
-			return TS_MAYBE;
+			result = GIN_MAYBE;
 	}
 
 	/*
@@ -212,7 +208,7 @@ checkcondition_gin(void *checkval, QueryOperand *val, ExecPhraseData *data)
 	 * assignments.  We could use a switch statement to map the values if that
 	 * ever stops being true, but it seems unlikely to happen.
 	 */
-	return (TSTernaryValue) gcv->check[j];
+	return (TSTernaryValue) result;
 }
 
 Datum
@@ -244,12 +240,23 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 						 "sizes of GinTernaryValue and bool are not equal");
 		gcv.check = (GinTernaryValue *) check;
 		gcv.map_item_operand = (int *) (extra_data[0]);
-		gcv.need_recheck = recheck;
 
-		res = TS_execute(GETQUERY(query),
-						 &gcv,
-						 TS_EXEC_PHRASE_NO_POS,
-						 checkcondition_gin);
+		switch (TS_execute_ternary(GETQUERY(query),
+								   &gcv,
+								   TS_EXEC_PHRASE_NO_POS,
+								   checkcondition_gin))
+		{
+			case TS_NO:
+				res = false;
+				break;
+			case TS_YES:
+				res = true;
+				break;
+			case TS_MAYBE:
+				res = true;
+				*recheck = true;
+				break;
+		}
 	}
 
 	PG_RETURN_BOOL(res);
@@ -266,10 +273,6 @@ gin_tsquery_triconsistent(PG_FUNCTION_ARGS)
 	/* int32	nkeys = PG_GETARG_INT32(3); */
 	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
 	GinTernaryValue res = GIN_FALSE;
-	bool		recheck;
-
-	/* Initially assume query doesn't require recheck */
-	recheck = false;
 
 	if (query->size > 0)
 	{
@@ -282,13 +285,11 @@ gin_tsquery_triconsistent(PG_FUNCTION_ARGS)
 		gcv.first_item = GETQUERY(query);
 		gcv.check = check;
 		gcv.map_item_operand = (int *) (extra_data[0]);
-		gcv.need_recheck = &recheck;
 
-		if (TS_execute(GETQUERY(query),
-					   &gcv,
-					   TS_EXEC_PHRASE_NO_POS,
-					   checkcondition_gin))
-			res = recheck ? GIN_MAYBE : GIN_TRUE;
+		res = TS_execute_ternary(GETQUERY(query),
+								 &gcv,
+								 TS_EXEC_PHRASE_NO_POS,
+								 checkcondition_gin);
 	}
 
 	PG_RETURN_GIN_TERNARY_VALUE(res);
