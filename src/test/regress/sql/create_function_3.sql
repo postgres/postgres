@@ -177,6 +177,30 @@ SELECT routine_name, ordinal_position, parameter_name, parameter_default
 
 DROP FUNCTION functest_IS_1(int, int, text), functest_IS_2(int), functest_IS_3(int);
 
+-- routine usage views
+
+CREATE FUNCTION functest_IS_4a() RETURNS int LANGUAGE SQL AS 'SELECT 1';
+CREATE FUNCTION functest_IS_4b(x int DEFAULT functest_IS_4a()) RETURNS int LANGUAGE SQL AS 'SELECT x';
+
+CREATE SEQUENCE functest1;
+CREATE FUNCTION functest_IS_5(x int DEFAULT nextval('functest1'))
+    RETURNS int
+    LANGUAGE SQL
+    AS 'SELECT x';
+
+SELECT r0.routine_name, r1.routine_name
+  FROM information_schema.routine_routine_usage rru
+       JOIN information_schema.routines r0 ON r0.specific_name = rru.specific_name
+       JOIN information_schema.routines r1 ON r1.specific_name = rru.routine_name;
+SELECT routine_name, sequence_name FROM information_schema.routine_sequence_usage;
+-- currently empty
+SELECT routine_name, table_name, column_name FROM information_schema.routine_column_usage;
+SELECT routine_name, table_name FROM information_schema.routine_table_usage;
+
+DROP FUNCTION functest_IS_4a CASCADE;
+DROP SEQUENCE functest1 CASCADE;
+
+
 -- overload
 CREATE FUNCTION functest_B_2(bigint) RETURNS bool LANGUAGE 'sql'
        IMMUTABLE AS 'SELECT $1 > 0';

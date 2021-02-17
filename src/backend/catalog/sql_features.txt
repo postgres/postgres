@@ -243,7 +243,7 @@ F312	MERGE statement			NO	consider INSERT ... ON CONFLICT DO UPDATE
 F313	Enhanced MERGE statement			NO	
 F314	MERGE statement with DELETE branch			NO	
 F321	User authorization			YES	
-F341	Usage tables			NO	no ROUTINE_*_USAGE tables
+F341	Usage tables			YES	
 F361	Subprogram support			YES	
 F381	Extended schema manipulation			YES	
 F381	Extended schema manipulation	01	ALTER TABLE statement: ALTER COLUMN clause	YES	

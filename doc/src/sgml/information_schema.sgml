@@ -4841,6 +4841,126 @@ ORDER BY c.ordinal_position;
   </table>
  </sect1>
 
+ <sect1 id="infoschema-routine-column-usage">
+  <title><literal>routine_column_usage</literal></title>
+
+  <para>
+   The view <literal>routine_column_usage</literal> is meant to identify all
+   columns that are used by a function or procedure.  This information is
+   currently not tracked by <productname>PostgreSQL</productname>.
+  </para>
+
+  <table>
+   <title><literal>routine_column_usage</literal> Columns</title>
+
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database containing the function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema containing the function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       The <quote>specific name</quote> of the function.  See <xref linkend="infoschema-routines"/> for more information.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database containing the function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema containing the function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the function (might be duplicated in case of overloading)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>table_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database that contains the table that is used by the
+       function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>table_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema that contains the table that is used by the function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>table_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the table that is used by the function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>column_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the column that is used by the function
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-routine-privileges">
   <title><literal>routine_privileges</literal></title>
 
@@ -4953,6 +5073,329 @@ ORDER BY c.ordinal_position;
       </para>
       <para>
        <literal>YES</literal> if the privilege is grantable, <literal>NO</literal> if not
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-routine-routine-usage">
+  <title><literal>routine_routine_usage</literal></title>
+
+  <para>
+   The view <literal>routine_routine_usage</literal> is meant to identify all
+   functions or procedures that are used by another (or the same) function or
+   procedure, either in the body or in parameter default expressions.
+   Currently, only functions used in parameter default expressions are
+   tracked.  An entry is included here only if the used function is owned by a
+   currently enabled role.  (There is no such restriction on the using
+   function.)
+  </para>
+
+  <para>
+   Note that the entries for both functions in the view refer to the
+   <quote>specific</quote> name of the routine, even though the column names
+   are used in a way that is inconsistent with other information schema views
+   about routines.  This is per SQL standard, although it is arguably a
+   misdesign.  See <xref linkend="infoschema-routines"/> for more information
+   about specific names.
+  </para>
+
+  <table>
+   <title><literal>routine_routine_usage</literal> Columns</title>
+
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database containing the using function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema containing the using function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       The <quote>specific name</quote> of the using function.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database that contains the function that is used by the
+       first function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema that contains the function that is used by the first
+       function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       The <quote>specific name</quote> of the function that is used by the
+       first function.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-routine-sequence-usage">
+  <title><literal>routine_sequence_usage</literal></title>
+
+  <para>
+   The view <literal>routine_sequence_usage</literal> is meant to identify all
+   sequences that are used by a function or procedure, either in the body or
+   in parameter default expressions.  Currently, only sequences used in
+   parameter default expressions are tracked.  A sequence is only included if
+   that sequence is owned by a currently enabled role.
+  </para>
+
+  <table>
+   <title><literal>routine_sequence_usage</literal> Columns</title>
+
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database containing the function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema containing the function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       The <quote>specific name</quote> of the function.  See <xref linkend="infoschema-routines"/> for more information.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database containing the function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema containing the function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the function (might be duplicated in case of overloading)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schema_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database that contains the sequence that is used by the
+       function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sequence_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema that contains the sequence that is used by the function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sequence_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the sequence that is used by the function
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-routine-table-usage">
+  <title><literal>routine_table_usage</literal></title>
+
+  <para>
+   The view <literal>routine_table_usage</literal> is meant to identify all
+   tables that are used by a function or procedure.  This information is
+   currently not tracked by <productname>PostgreSQL</productname>.
+  </para>
+
+  <table>
+   <title><literal>routine_table_usage</literal> Columns</title>
+
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database containing the function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema containing the function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>specific_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       The <quote>specific name</quote> of the function.  See <xref linkend="infoschema-routines"/> for more information.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database containing the function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema containing the function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>routine_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the function (might be duplicated in case of overloading)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>table_catalog</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the database that contains the table that is used by the
+       function (always the current database)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>table_schema</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the schema that contains the table that is used by the function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>table_name</structfield> <type>sql_identifier</type>
+      </para>
+      <para>
+       Name of the table that is used by the function
       </para></entry>
      </row>
     </tbody>

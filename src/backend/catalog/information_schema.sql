@@ -1325,7 +1325,33 @@ GRANT SELECT ON role_column_grants TO PUBLIC;
  * ROUTINE_COLUMN_USAGE view
  */
 
--- not tracked by PostgreSQL
+CREATE VIEW routine_column_usage AS
+    SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
+           CAST(np.nspname AS sql_identifier) AS specific_schema,
+           CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
+           CAST(current_database() AS sql_identifier) AS routine_catalog,
+           CAST(np.nspname AS sql_identifier) AS routine_schema,
+           CAST(p.proname AS sql_identifier) AS routine_name,
+           CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nt.nspname AS sql_identifier) AS table_schema,
+           CAST(t.relname AS sql_identifier) AS table_name,
+           CAST(a.attname AS sql_identifier) AS column_name
+
+    FROM pg_namespace np, pg_proc p, pg_depend d,
+         pg_class t, pg_namespace nt, pg_attribute a
+
+    WHERE np.oid = p.pronamespace
+          AND p.oid = d.objid
+          AND d.classid = 'pg_catalog.pg_proc'::regclass
+          AND d.refobjid = t.oid
+          AND d.refclassid = 'pg_catalog.pg_class'::regclass
+          AND t.relnamespace = nt.oid
+          AND t.relkind IN ('r', 'v', 'f', 'p')
+          AND t.oid = a.attrelid
+          AND d.refobjsubid = a.attnum
+          AND pg_has_role(t.relowner, 'USAGE');
+
+GRANT SELECT ON routine_column_usage TO PUBLIC;
 
 
 /*
@@ -1408,7 +1434,27 @@ GRANT SELECT ON role_routine_grants TO PUBLIC;
  * ROUTINE_ROUTINE_USAGE view
  */
 
--- not tracked by PostgreSQL
+CREATE VIEW routine_routine_usage AS
+    SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
+           CAST(np.nspname AS sql_identifier) AS specific_schema,
+           CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
+           CAST(current_database() AS sql_identifier) AS routine_catalog,
+           CAST(np1.nspname AS sql_identifier) AS routine_schema,
+           CAST(nameconcatoid(p1.proname, p1.oid) AS sql_identifier) AS routine_name
+
+    FROM pg_namespace np, pg_proc p, pg_depend d,
+         pg_proc p1, pg_namespace np1
+
+    WHERE np.oid = p.pronamespace
+          AND p.oid = d.objid
+          AND d.classid = 'pg_catalog.pg_proc'::regclass
+          AND d.refobjid = p1.oid
+          AND d.refclassid = 'pg_catalog.pg_proc'::regclass
+          AND p1.pronamespace = np1.oid
+          AND p.prokind IN ('f', 'p') AND p1.prokind IN ('f', 'p')
+          AND pg_has_role(p1.proowner, 'USAGE');
+
+GRANT SELECT ON routine_routine_usage TO PUBLIC;
 
 
 /*
@@ -1416,7 +1462,30 @@ GRANT SELECT ON role_routine_grants TO PUBLIC;
  * ROUTINE_SEQUENCE_USAGE view
  */
 
--- not tracked by PostgreSQL
+CREATE VIEW routine_sequence_usage AS
+    SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
+           CAST(np.nspname AS sql_identifier) AS specific_schema,
+           CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
+           CAST(current_database() AS sql_identifier) AS routine_catalog,
+           CAST(np.nspname AS sql_identifier) AS routine_schema,
+           CAST(p.proname AS sql_identifier) AS routine_name,
+           CAST(current_database() AS sql_identifier) AS sequence_catalog,
+           CAST(ns.nspname AS sql_identifier) AS sequence_schema,
+           CAST(s.relname AS sql_identifier) AS sequence_name
+
+    FROM pg_namespace np, pg_proc p, pg_depend d,
+         pg_class s, pg_namespace ns
+
+    WHERE np.oid = p.pronamespace
+          AND p.oid = d.objid
+          AND d.classid = 'pg_catalog.pg_proc'::regclass
+          AND d.refobjid = s.oid
+          AND d.refclassid = 'pg_catalog.pg_class'::regclass
+          AND s.relnamespace = ns.oid
+          AND s.relkind = 'S'
+          AND pg_has_role(s.relowner, 'USAGE');
+
+GRANT SELECT ON routine_sequence_usage TO PUBLIC;
 
 
 /*
@@ -1424,7 +1493,30 @@ GRANT SELECT ON role_routine_grants TO PUBLIC;
  * ROUTINE_TABLE_USAGE view
  */
 
--- not tracked by PostgreSQL
+CREATE VIEW routine_table_usage AS
+    SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
+           CAST(np.nspname AS sql_identifier) AS specific_schema,
+           CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
+           CAST(current_database() AS sql_identifier) AS routine_catalog,
+           CAST(np.nspname AS sql_identifier) AS routine_schema,
+           CAST(p.proname AS sql_identifier) AS routine_name,
+           CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nt.nspname AS sql_identifier) AS table_schema,
+           CAST(t.relname AS sql_identifier) AS table_name
+
+    FROM pg_namespace np, pg_proc p, pg_depend d,
+         pg_class t, pg_namespace nt
+
+    WHERE np.oid = p.pronamespace
+          AND p.oid = d.objid
+          AND d.classid = 'pg_catalog.pg_proc'::regclass
+          AND d.refobjid = t.oid
+          AND d.refclassid = 'pg_catalog.pg_class'::regclass
+          AND t.relnamespace = nt.oid
+          AND t.relkind IN ('r', 'v', 'f', 'p')
+          AND pg_has_role(t.relowner, 'USAGE');
+
+GRANT SELECT ON routine_table_usage TO PUBLIC;
 
 
 /*
