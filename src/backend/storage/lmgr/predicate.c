@@ -1602,7 +1602,7 @@ GetSafeSnapshot(Snapshot origSnapshot)
 		/* else, need to retry... */
 		ereport(DEBUG2,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-				 errmsg("deferrable snapshot was unsafe; trying a new one")));
+				 errmsg_internal("deferrable snapshot was unsafe; trying a new one")));
 		ReleasePredicateLocks(false, false);
 	}
 

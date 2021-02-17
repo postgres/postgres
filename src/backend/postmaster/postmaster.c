@@ -5787,7 +5787,7 @@ do_start_bgworker(RegisteredBgWorker *rw)
 	}
 
 	ereport(DEBUG1,
-			(errmsg("starting background worker process \"%s\"",
+			(errmsg_internal("starting background worker process \"%s\"",
 					rw->rw_worker.bgw_name)));
 
 #ifdef EXEC_BACKEND

@@ -647,7 +647,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 										copy_data ? SUBREL_STATE_INIT : SUBREL_STATE_READY,
 										InvalidXLogRecPtr);
 				ereport(DEBUG1,
-						(errmsg("table \"%s.%s\" added to subscription \"%s\"",
+						(errmsg_internal("table \"%s.%s\" added to subscription \"%s\"",
 								rv->schemaname, rv->relname, sub->name)));
 			}
 		}
@@ -721,7 +721,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 				}
 
 				ereport(DEBUG1,
-						(errmsg("table \"%s.%s\" removed from subscription \"%s\"",
+						(errmsg_internal("table \"%s.%s\" removed from subscription \"%s\"",
 								get_namespace_name(get_rel_namespace(relid)),
 								get_rel_name(relid),
 								sub->name)));

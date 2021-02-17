@@ -282,7 +282,7 @@ logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname, Oid userid,
 	TimestampTz now;
 
 	ereport(DEBUG1,
-			(errmsg("starting logical replication worker for subscription \"%s\"",
+			(errmsg_internal("starting logical replication worker for subscription \"%s\"",
 					subname)));
 
 	/* Report this after the initial starting message for consistency. */
@@ -805,7 +805,7 @@ ApplyLauncherMain(Datum main_arg)
 	TimestampTz last_start_time = 0;
 
 	ereport(DEBUG1,
-			(errmsg("logical replication launcher started")));
+			(errmsg_internal("logical replication launcher started")));
 
 	before_shmem_exit(logicalrep_launcher_onexit, (Datum) 0);
 

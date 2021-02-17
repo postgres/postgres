@@ -1085,7 +1085,7 @@ DefineIndex(Oid relationId,
 		}
 
 		ereport(DEBUG1,
-				(errmsg("%s %s will create implicit index \"%s\" for table \"%s\"",
+				(errmsg_internal("%s %s will create implicit index \"%s\" for table \"%s\"",
 						is_alter_table ? "ALTER TABLE / ADD" : "CREATE TABLE /",
 						constraint_type,
 						indexRelationName, RelationGetRelationName(rel))));

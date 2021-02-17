@@ -1315,7 +1315,7 @@ SlruInternalDeleteSegment(SlruCtl ctl, int segno)
 
 	/* Unlink the file. */
 	SlruFileName(ctl, path, segno);
-	ereport(DEBUG2, (errmsg("removing file \"%s\"", path)));
+	ereport(DEBUG2, (errmsg_internal("removing file \"%s\"", path)));
 	unlink(path);
 }
 

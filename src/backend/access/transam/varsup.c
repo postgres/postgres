@@ -425,7 +425,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 
 	/* Log the info */
 	ereport(DEBUG1,
-			(errmsg("transaction ID wrap limit is %u, limited by database with OID %u",
+			(errmsg_internal("transaction ID wrap limit is %u, limited by database with OID %u",
 					xidWrapLimit, oldest_datoid)));
 
 	/*

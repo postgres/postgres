@@ -2837,7 +2837,7 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 			minRecoveryPointTLI = newMinRecoveryPointTLI;
 
 			ereport(DEBUG2,
-					(errmsg("updated min recovery point to %X/%X on timeline %u",
+					(errmsg_internal("updated min recovery point to %X/%X on timeline %u",
 							(uint32) (minRecoveryPoint >> 32),
 							(uint32) minRecoveryPoint,
 							newMinRecoveryPointTLI)));
@@ -4209,7 +4209,7 @@ RemoveXlogFile(const char *segname, XLogSegNo recycleSegNo,
 							   true, recycleSegNo, true))
 	{
 		ereport(DEBUG2,
-				(errmsg("recycled write-ahead log file \"%s\"",
+				(errmsg_internal("recycled write-ahead log file \"%s\"",
 						segname)));
 		CheckpointStats.ckpt_segs_recycled++;
 		/* Needn't recheck that slot on future iterations */
@@ -4221,7 +4221,7 @@ RemoveXlogFile(const char *segname, XLogSegNo recycleSegNo,
 		int			rc;
 
 		ereport(DEBUG2,
-				(errmsg("removing write-ahead log file \"%s\"",
+				(errmsg_internal("removing write-ahead log file \"%s\"",
 						segname)));
 
 #ifdef WIN32
@@ -6597,7 +6597,7 @@ StartupXLOG(void)
 			memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
 			wasShutdown = ((record->xl_info & ~XLR_INFO_MASK) == XLOG_CHECKPOINT_SHUTDOWN);
 			ereport(DEBUG1,
-					(errmsg("checkpoint record is at %X/%X",
+					(errmsg_internal("checkpoint record is at %X/%X",
 							(uint32) (checkPointLoc >> 32), (uint32) checkPointLoc)));
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
 
@@ -6730,7 +6730,7 @@ StartupXLOG(void)
 		if (record != NULL)
 		{
 			ereport(DEBUG1,
-					(errmsg("checkpoint record is at %X/%X",
+					(errmsg_internal("checkpoint record is at %X/%X",
 							(uint32) (checkPointLoc >> 32), (uint32) checkPointLoc)));
 		}
 		else
@@ -7118,7 +7118,7 @@ StartupXLOG(void)
 			int			nxids;
 
 			ereport(DEBUG1,
-					(errmsg("initializing for hot standby")));
+					(errmsg_internal("initializing for hot standby")));
 
 			InitRecoveryTransactionEnvironment();
 
@@ -8933,7 +8933,7 @@ CreateCheckPoint(int flags)
 			WALInsertLockRelease();
 			END_CRIT_SECTION();
 			ereport(DEBUG1,
-					(errmsg("checkpoint skipped because system is idle")));
+					(errmsg_internal("checkpoint skipped because system is idle")));
 			return;
 		}
 	}
@@ -9399,7 +9399,7 @@ CreateRestartPoint(int flags)
 	if (!RecoveryInProgress())
 	{
 		ereport(DEBUG2,
-				(errmsg("skipping restartpoint, recovery has already ended")));
+				(errmsg_internal("skipping restartpoint, recovery has already ended")));
 		return false;
 	}
 
@@ -9421,7 +9421,7 @@ CreateRestartPoint(int flags)
 		lastCheckPoint.redo <= ControlFile->checkPointCopy.redo)
 	{
 		ereport(DEBUG2,
-				(errmsg("skipping restartpoint, already performed at %X/%X",
+				(errmsg_internal("skipping restartpoint, already performed at %X/%X",
 						(uint32) (lastCheckPoint.redo >> 32),
 						(uint32) lastCheckPoint.redo)));
 
@@ -11763,12 +11763,12 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 	 */
 	if (fscanf(lfp, "START TIME: %127[^\n]\n", backuptime) == 1)
 		ereport(DEBUG1,
-				(errmsg("backup time %s in file \"%s\"",
+				(errmsg_internal("backup time %s in file \"%s\"",
 						backuptime, BACKUP_LABEL_FILE)));
 
 	if (fscanf(lfp, "LABEL: %1023[^\n]\n", backuplabel) == 1)
 		ereport(DEBUG1,
-				(errmsg("backup label %s in file \"%s\"",
+				(errmsg_internal("backup label %s in file \"%s\"",
 						backuplabel, BACKUP_LABEL_FILE)));
 
 	/*
@@ -11785,7 +11785,7 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 							   tli_from_file, tli_from_walseg)));
 
 		ereport(DEBUG1,
-				(errmsg("backup timeline %u in file \"%s\"",
+				(errmsg_internal("backup timeline %u in file \"%s\"",
 						tli_from_file, BACKUP_LABEL_FILE)));
 	}
 

@@ -3081,14 +3081,12 @@ index_build(Relation heapRelation,
 
 	if (indexInfo->ii_ParallelWorkers == 0)
 		ereport(DEBUG1,
-				(errmsg("building index \"%s\" on table \"%s\" serially",
+				(errmsg_internal("building index \"%s\" on table \"%s\" serially",
 						RelationGetRelationName(indexRelation),
 						RelationGetRelationName(heapRelation))));
 	else
 		ereport(DEBUG1,
-				(errmsg_plural("building index \"%s\" on table \"%s\" with request for %d parallel worker",
-							   "building index \"%s\" on table \"%s\" with request for %d parallel workers",
-							   indexInfo->ii_ParallelWorkers,
+				(errmsg_internal("building index \"%s\" on table \"%s\" with request for %d parallel workers",
 							   RelationGetRelationName(indexRelation),
 							   RelationGetRelationName(heapRelation),
 							   indexInfo->ii_ParallelWorkers)));

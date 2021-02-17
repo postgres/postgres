@@ -1413,13 +1413,13 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 					initStringInfo(&logbuf);
 					DescribeLockTag(&locktagbuf, &locktag_copy);
 					appendStringInfo(&logbuf,
-									 _("Process %d waits for %s on %s."),
+									 "Process %d waits for %s on %s.",
 									 MyProcPid,
 									 GetLockmodeName(lockmethod_copy, lockmode),
 									 locktagbuf.data);
 
 					ereport(DEBUG1,
-							(errmsg("sending cancel to blocking autovacuum PID %d",
+							(errmsg_internal("sending cancel to blocking autovacuum PID %d",
 									pid),
 							 errdetail_log("%s", logbuf.data)));
 

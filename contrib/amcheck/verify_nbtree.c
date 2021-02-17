@@ -535,7 +535,7 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 	if (metad->btm_fastroot != metad->btm_root)
 		ereport(DEBUG1,
 				(errcode(ERRCODE_NO_DATA),
-				 errmsg("harmless fast root mismatch in index %s",
+				 errmsg_internal("harmless fast root mismatch in index %s",
 						RelationGetRelationName(rel)),
 				 errdetail_internal("Fast root block %u (level %u) differs from true root block %u (level %u).",
 									metad->btm_fastroot, metad->btm_fastlevel,
@@ -721,7 +721,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 			else
 				ereport(DEBUG1,
 						(errcode(ERRCODE_NO_DATA),
-						 errmsg("block %u of index \"%s\" ignored",
+						 errmsg_internal("block %u of index \"%s\" ignored",
 								current, RelationGetRelationName(state->rel))));
 			goto nextpage;
 		}
@@ -979,7 +979,7 @@ bt_recheck_sibling_links(BtreeCheckState *state,
 			/* Report split in left sibling, not target (or new target) */
 			ereport(DEBUG1,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("harmless concurrent page split detected in index \"%s\"",
+					 errmsg_internal("harmless concurrent page split detected in index \"%s\"",
 							RelationGetRelationName(state->rel)),
 					 errdetail_internal("Block=%u new right sibling=%u original right sibling=%u.",
 										leftcurrent, newtargetblock,
@@ -1605,7 +1605,7 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 		targetnext = opaque->btpo_next;
 		ereport(DEBUG1,
 				(errcode(ERRCODE_NO_DATA),
-				 errmsg("level %u leftmost page of index \"%s\" was found deleted or half dead",
+				 errmsg_internal("level %u leftmost page of index \"%s\" was found deleted or half dead",
 						opaque->btpo.level, RelationGetRelationName(state->rel)),
 				 errdetail_internal("Deleted page found when building scankey from right sibling.")));
 
@@ -1733,7 +1733,7 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 		 */
 		ereport(DEBUG1,
 				(errcode(ERRCODE_NO_DATA),
-				 errmsg("%s block %u of index \"%s\" has no first data item",
+				 errmsg_internal("%s block %u of index \"%s\" has no first data item",
 						P_ISLEAF(opaque) ? "leaf" : "internal", targetnext,
 						RelationGetRelationName(state->rel))));
 		return NULL;
@@ -2287,7 +2287,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 	{
 		ereport(DEBUG1,
 				(errcode(ERRCODE_NO_DATA),
-				 errmsg("harmless interrupted page split detected in index %s",
+				 errmsg_internal("harmless interrupted page split detected in index %s",
 						RelationGetRelationName(state->rel)),
 				 errdetail_internal("Block=%u level=%u left sibling=%u page lsn=%X/%X.",
 									blkno, opaque->btpo.level,

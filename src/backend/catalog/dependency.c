@@ -1198,7 +1198,7 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 			 * log_min_messages are different.
 			 */
 			ereport(DEBUG2,
-					(errmsg("drop auto-cascades to %s",
+					(errmsg_internal("drop auto-cascades to %s",
 							objDesc)));
 		}
 		else if (behavior == DROP_RESTRICT)

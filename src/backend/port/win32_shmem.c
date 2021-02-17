@@ -236,12 +236,12 @@ PGSharedMemoryCreate(Size size,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("the processor does not support large pages")));
 			ereport(DEBUG1,
-					(errmsg("disabling huge pages")));
+					(errmsg_internal("disabling huge pages")));
 		}
 		else if (!EnableLockPagesPrivilege(huge_pages == HUGE_PAGES_ON ? FATAL : DEBUG1))
 		{
 			ereport(DEBUG1,
-					(errmsg("disabling huge pages")));
+					(errmsg_internal("disabling huge pages")));
 		}
 		else
 		{

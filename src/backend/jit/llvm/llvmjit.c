@@ -768,7 +768,7 @@ llvm_compile_module(LLVMJitContext *context)
 	MemoryContextSwitchTo(oldcontext);
 
 	ereport(DEBUG1,
-			(errmsg("time to inline: %.3fs, opt: %.3fs, emit: %.3fs",
+			(errmsg_internal("time to inline: %.3fs, opt: %.3fs, emit: %.3fs",
 					INSTR_TIME_GET_DOUBLE(context->base.instr.inlining_counter),
 					INSTR_TIME_GET_DOUBLE(context->base.instr.optimization_counter),
 					INSTR_TIME_GET_DOUBLE(context->base.instr.emission_counter)),

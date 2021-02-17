@@ -697,7 +697,7 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 	apw_state->pid_using_dumpfile = InvalidPid;
 
 	ereport(DEBUG1,
-			(errmsg("wrote block details for %d blocks", num_blocks)));
+			(errmsg_internal("wrote block details for %d blocks", num_blocks)));
 	return num_blocks;
 }
 

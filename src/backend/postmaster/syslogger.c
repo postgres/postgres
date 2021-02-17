@@ -518,7 +518,7 @@ SysLoggerMain(int argc, char *argv[])
 			 * it DEBUG1 to suppress in normal use.
 			 */
 			ereport(DEBUG1,
-					(errmsg("logger shutting down")));
+					(errmsg_internal("logger shutting down")));
 
 			/*
 			 * Normal exit from the syslogger is here.  Note that we

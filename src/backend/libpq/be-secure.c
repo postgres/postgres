@@ -119,7 +119,7 @@ secure_open_server(Port *port)
 	r = be_tls_open_server(port);
 
 	ereport(DEBUG2,
-			(errmsg("SSL connection from \"%s\"",
+			(errmsg_internal("SSL connection from \"%s\"",
 					port->peer_cn ? port->peer_cn : "(anonymous)")));
 #endif
 

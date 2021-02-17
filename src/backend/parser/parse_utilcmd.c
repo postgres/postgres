@@ -443,7 +443,7 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	}
 
 	ereport(DEBUG1,
-			(errmsg("%s will create implicit sequence \"%s\" for serial column \"%s.%s\"",
+			(errmsg_internal("%s will create implicit sequence \"%s\" for serial column \"%s.%s\"",
 					cxt->stmtType, sname,
 					cxt->relation->relname, column->colname)));
 

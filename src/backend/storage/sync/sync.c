@@ -419,7 +419,7 @@ ProcessSyncRequests(void)
 				else
 					ereport(DEBUG1,
 							(errcode_for_file_access(),
-							 errmsg("could not fsync file \"%s\" but retrying: %m",
+							 errmsg_internal("could not fsync file \"%s\" but retrying: %m",
 									path)));
 
 				/*
