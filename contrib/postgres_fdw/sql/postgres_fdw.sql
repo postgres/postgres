@@ -2909,5 +2909,22 @@ CREATE TABLE batch_table_p2
 INSERT INTO batch_table SELECT * FROM generate_series(1, 66) i;
 SELECT COUNT(*) FROM batch_table;
 
+-- Check that enabling batched inserts doesn't interfere with cross-partition
+-- updates
+CREATE TABLE batch_cp_upd_test (a int) PARTITION BY LIST (a);
+CREATE TABLE batch_cp_upd_test1 (LIKE batch_cp_upd_test);
+CREATE FOREIGN TABLE batch_cp_upd_test1_f
+	PARTITION OF batch_cp_upd_test
+	FOR VALUES IN (1)
+	SERVER loopback
+	OPTIONS (table_name 'batch_cp_upd_test1', batch_size '10');
+CREATE TABLE batch_cp_up_test1 PARTITION OF batch_cp_upd_test
+	FOR VALUES IN (2);
+INSERT INTO batch_cp_upd_test VALUES (1), (2);
+
+-- The following moves a row from the local partition to the foreign one
+UPDATE batch_cp_upd_test t SET a = 1 FROM (VALUES (1), (2)) s(a) WHERE t.a = s.a;
+SELECT tableoid::regclass, * FROM batch_cp_upd_test;
+
 -- Clean up
-DROP TABLE batch_table CASCADE;
+DROP TABLE batch_table, batch_cp_upd_test CASCADE;
