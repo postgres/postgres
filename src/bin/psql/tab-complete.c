@@ -1614,14 +1614,24 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER AGGREGATE,FUNCTION,PROCEDURE,ROUTINE <name> */
 	else if (Matches("ALTER", "AGGREGATE|FUNCTION|PROCEDURE|ROUTINE", MatchAny))
 		COMPLETE_WITH("(");
-	/* ALTER AGGREGATE,FUNCTION,PROCEDURE,ROUTINE <name> (...) */
-	else if (Matches("ALTER", "AGGREGATE|FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny))
+	/* ALTER AGGREGATE <name> (...) */
+	else if (Matches("ALTER", "AGGREGATE", MatchAny, MatchAny))
 	{
 		if (ends_with(prev_wd, ')'))
 			COMPLETE_WITH("OWNER TO", "RENAME TO", "SET SCHEMA");
 		else
 			COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
 	}
+	/* ALTER FUNCTION,PROCEDURE,ROUTINE <name> (...) */
+	else if (Matches("ALTER", "FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny))
+	{
+		if (ends_with(prev_wd, ')'))
+			COMPLETE_WITH("OWNER TO", "RENAME TO", "SET SCHEMA",
+						  "DEPENDS ON EXTENSION", "NO DEPENDS ON EXTENSION");
+		else
+			COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
+	}
+
 	/* ALTER PUBLICATION <name> */
 	else if (Matches("ALTER", "PUBLICATION", MatchAny))
 		COMPLETE_WITH("ADD TABLE", "DROP TABLE", "OWNER TO", "RENAME TO", "SET");
@@ -1735,7 +1745,8 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER INDEX <name> */
 	else if (Matches("ALTER", "INDEX", MatchAny))
 		COMPLETE_WITH("ALTER COLUMN", "OWNER TO", "RENAME TO", "SET",
-					  "RESET", "ATTACH PARTITION", "DEPENDS", "NO DEPENDS",
+					  "RESET", "ATTACH PARTITION",
+					  "DEPENDS ON EXTENSION", "NO DEPENDS ON EXTENSION",
 					  "ALTER COLLATION");
 	else if (Matches("ALTER", "INDEX", MatchAny, "ATTACH"))
 		COMPLETE_WITH("PARTITION");
@@ -1782,10 +1793,6 @@ psql_completion(const char *text, int start, int end)
 					  "buffering =",	/* GiST */
 					  "pages_per_range =", "autosummarize ="	/* BRIN */
 			);
-	else if (Matches("ALTER", "INDEX", MatchAny, "NO", "DEPENDS"))
-		COMPLETE_WITH("ON EXTENSION");
-	else if (Matches("ALTER", "INDEX", MatchAny, "DEPENDS"))
-		COMPLETE_WITH("ON EXTENSION");
 	/* ALTER INDEX <name> ALTER COLLATION */
 	else if (Matches("ALTER", "INDEX", MatchAny, "ALTER", "COLLATION"))
 	{
@@ -1920,7 +1927,8 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER MATERIALIZED VIEW <name> */
 	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny))
 		COMPLETE_WITH("ALTER COLUMN", "CLUSTER ON", "DEPENDS ON EXTENSION",
-					  "OWNER TO", "RENAME", "RESET (", "SET");
+					  "NO DEPENDS ON EXTENSION", "OWNER TO", "RENAME",
+					  "RESET (", "SET");
 	/* ALTER MATERIALIZED VIEW xxx RENAME */
 	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny, "RENAME"))
 		COMPLETE_WITH_ATTR(prev2_wd, " UNION SELECT 'COLUMN' UNION SELECT 'TO'");
@@ -1997,7 +2005,8 @@ psql_completion(const char *text, int start, int end)
 
 	/* ALTER TRIGGER <name> ON <name> */
 	else if (Matches("ALTER", "TRIGGER", MatchAny, "ON", MatchAny))
-		COMPLETE_WITH("RENAME TO");
+		COMPLETE_WITH("RENAME TO", "DEPENDS ON EXTENSION",
+					  "NO DEPENDS ON EXTENSION");
 
 	/*
 	 * If we detect ALTER TABLE <name>, suggest sub commands
