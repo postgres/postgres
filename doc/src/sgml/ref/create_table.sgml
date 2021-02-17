@@ -946,7 +946,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
      <para>
       When placed on a partitioned table, <literal>PRIMARY KEY</literal>
-      constraints share the restrictions previously decribed
+      constraints share the restrictions previously described
       for <literal>UNIQUE</literal> constraints.
      </para>
 
