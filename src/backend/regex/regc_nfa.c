@@ -2902,7 +2902,7 @@ compact(struct nfa *nfa,
 					break;
 				default:
 					NERR(REG_ASSERT);
-					break;
+					return;
 			}
 		carcsort(first, ca - first);
 		ca->co = COLORLESS;

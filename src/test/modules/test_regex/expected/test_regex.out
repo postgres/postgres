@@ -3315,6 +3315,21 @@ select * from test_regex('(?=b)b', 'a', 'HP');
  {0,REG_ULOOKAROUND,REG_UNONPOSIX}
 (1 row)
 
+-- expectMatch	23.9 HP		...(?!.)	abcde	cde
+select * from test_regex('...(?!.)', 'abcde', 'HP');
+            test_regex             
+-----------------------------------
+ {0,REG_ULOOKAROUND,REG_UNONPOSIX}
+ {cde}
+(2 rows)
+
+-- expectNomatch	23.10 HP	...(?=.)	abc
+select * from test_regex('...(?=.)', 'abc', 'HP');
+            test_regex             
+-----------------------------------
+ {0,REG_ULOOKAROUND,REG_UNONPOSIX}
+(1 row)
+
 -- Postgres addition: lookbehind constraints
 -- expectMatch	23.11 HPN		(?<=a)b*	ab	b
 select * from test_regex('(?<=a)b*', 'ab', 'HPN');
@@ -3375,6 +3390,39 @@ select * from test_regex('(?<=b)b', 'b', 'HP');
 -----------------------------------
  {0,REG_ULOOKAROUND,REG_UNONPOSIX}
 (1 row)
+
+-- expectMatch	23.19 HP		(?<=.)..	abcde	bc
+select * from test_regex('(?<=.)..', 'abcde', 'HP');
+            test_regex             
+-----------------------------------
+ {0,REG_ULOOKAROUND,REG_UNONPOSIX}
+ {bc}
+(2 rows)
+
+-- expectMatch	23.20 HP		(?<=..)a*	aaabb	a
+select * from test_regex('(?<=..)a*', 'aaabb', 'HP');
+            test_regex             
+-----------------------------------
+ {0,REG_ULOOKAROUND,REG_UNONPOSIX}
+ {a}
+(2 rows)
+
+-- expectMatch	23.21 HP		(?<=..)b*	aaabb	{}
+-- Note: empty match here is correct, it matches after the first 2 characters
+select * from test_regex('(?<=..)b*', 'aaabb', 'HP');
+            test_regex             
+-----------------------------------
+ {0,REG_ULOOKAROUND,REG_UNONPOSIX}
+ {""}
+(2 rows)
+
+-- expectMatch	23.22 HP		(?<=..)b+	aaabb	bb
+select * from test_regex('(?<=..)b+', 'aaabb', 'HP');
+            test_regex             
+-----------------------------------
+ {0,REG_ULOOKAROUND,REG_UNONPOSIX}
+ {bb}
+(2 rows)
 
 -- doing 24 "non-greedy quantifiers"
 -- expectMatch	24.1  PT	ab+?		abb	ab

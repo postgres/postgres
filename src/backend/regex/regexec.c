@@ -324,6 +324,11 @@ cleanup:
 	if (v->lblastcp != NULL)
 		FREE(v->lblastcp);
 
+#ifdef REG_DEBUG
+	if (v->eflags & (REG_FTRACE | REG_MTRACE))
+		fflush(stdout);
+#endif
+
 	return st;
 }
 
@@ -668,7 +673,7 @@ subset(struct vars *v,
 	if ((size_t) n >= v->nmatch)
 		return;
 
-	MDEBUG(("setting %d\n", n));
+	MDEBUG(("%d: setting %d = %ld-%ld\n", sub->id, n, LOFF(begin), LOFF(end)));
 	v->pmatch[n].rm_so = OFF(begin);
 	v->pmatch[n].rm_eo = OFF(end);
 }
@@ -697,7 +702,7 @@ cdissect(struct vars *v,
 	int			er;
 
 	assert(t != NULL);
-	MDEBUG(("cdissect %ld-%ld %c\n", LOFF(begin), LOFF(end), t->op));
+	MDEBUG(("%d: cdissect %c %ld-%ld\n", t->id, t->op, LOFF(begin), LOFF(end)));
 
 	/* handy place to check for operation cancel */
 	if (CANCEL_REQUESTED(v->re))
@@ -779,14 +784,14 @@ ccondissect(struct vars *v,
 	NOERR();
 	d2 = getsubdfa(v, t->right);
 	NOERR();
-	MDEBUG(("cconcat %d\n", t->id));
+	MDEBUG(("%d: ccondissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
 
 	/* pick a tentative midpoint */
 	mid = longest(v, d, begin, end, (int *) NULL);
 	NOERR();
 	if (mid == NULL)
 		return REG_NOMATCH;
-	MDEBUG(("tentative midpoint %ld\n", LOFF(mid)));
+	MDEBUG(("%d: tentative midpoint %ld\n", t->id, LOFF(mid)));
 
 	/* iterate until satisfaction or failure */
 	for (;;)
@@ -801,7 +806,7 @@ ccondissect(struct vars *v,
 				if (er == REG_OKAY)
 				{
 					/* satisfaction */
-					MDEBUG(("successful\n"));
+					MDEBUG(("%d: successful\n", t->id));
 					return REG_OKAY;
 				}
 			}
@@ -814,7 +819,7 @@ ccondissect(struct vars *v,
 		if (mid == begin)
 		{
 			/* all possibilities exhausted */
-			MDEBUG(("%d no midpoint\n", t->id));
+			MDEBUG(("%d: no midpoint\n", t->id));
 			return REG_NOMATCH;
 		}
 		mid = longest(v, d, begin, mid - 1, (int *) NULL);
@@ -822,7 +827,7 @@ ccondissect(struct vars *v,
 		if (mid == NULL)
 		{
 			/* failed to find a new one */
-			MDEBUG(("%d failed midpoint\n", t->id));
+			MDEBUG(("%d: failed midpoint\n", t->id));
 			return REG_NOMATCH;
 		}
 		MDEBUG(("%d: new midpoint %ld\n", t->id, LOFF(mid)));
@@ -857,14 +862,14 @@ crevcondissect(struct vars *v,
 	NOERR();
 	d2 = getsubdfa(v, t->right);
 	NOERR();
-	MDEBUG(("crevcon %d\n", t->id));
+	MDEBUG(("%d: crevcondissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
 
 	/* pick a tentative midpoint */
 	mid = shortest(v, d, begin, begin, end, (chr **) NULL, (int *) NULL);
 	NOERR();
 	if (mid == NULL)
 		return REG_NOMATCH;
-	MDEBUG(("tentative midpoint %ld\n", LOFF(mid)));
+	MDEBUG(("%d: tentative midpoint %ld\n", t->id, LOFF(mid)));
 
 	/* iterate until satisfaction or failure */
 	for (;;)
@@ -879,7 +884,7 @@ crevcondissect(struct vars *v,
 				if (er == REG_OKAY)
 				{
 					/* satisfaction */
-					MDEBUG(("successful\n"));
+					MDEBUG(("%d: successful\n", t->id));
 					return REG_OKAY;
 				}
 			}
@@ -892,7 +897,7 @@ crevcondissect(struct vars *v,
 		if (mid == end)
 		{
 			/* all possibilities exhausted */
-			MDEBUG(("%d no midpoint\n", t->id));
+			MDEBUG(("%d: no midpoint\n", t->id));
 			return REG_NOMATCH;
 		}
 		mid = shortest(v, d, begin, mid + 1, end, (chr **) NULL, (int *) NULL);
@@ -900,7 +905,7 @@ crevcondissect(struct vars *v,
 		if (mid == NULL)
 		{
 			/* failed to find a new one */
-			MDEBUG(("%d failed midpoint\n", t->id));
+			MDEBUG(("%d: failed midpoint\n", t->id));
 			return REG_NOMATCH;
 		}
 		MDEBUG(("%d: new midpoint %ld\n", t->id, LOFF(mid)));
@@ -935,7 +940,8 @@ cbrdissect(struct vars *v,
 	assert(n >= 0);
 	assert((size_t) n < v->nmatch);
 
-	MDEBUG(("cbackref n%d %d{%d-%d}\n", t->id, n, min, max));
+	MDEBUG(("%d: cbrdissect %d{%d-%d} %ld-%ld\n", t->id, n, min, max,
+			LOFF(begin), LOFF(end)));
 
 	/* get the backreferenced string */
 	if (v->pmatch[n].rm_so == -1)
@@ -952,7 +958,7 @@ cbrdissect(struct vars *v,
 		 */
 		if (begin == end && min <= max)
 		{
-			MDEBUG(("cbackref matched trivially\n"));
+			MDEBUG(("%d: backref matched trivially\n", t->id));
 			return REG_OKAY;
 		}
 		return REG_NOMATCH;
@@ -962,7 +968,7 @@ cbrdissect(struct vars *v,
 		/* matches only if zero repetitions are okay */
 		if (min == 0)
 		{
-			MDEBUG(("cbackref matched trivially\n"));
+			MDEBUG(("%d: backref matched trivially\n", t->id));
 			return REG_OKAY;
 		}
 		return REG_NOMATCH;
@@ -989,7 +995,7 @@ cbrdissect(struct vars *v,
 		p += brlen;
 	}
 
-	MDEBUG(("cbackref matched\n"));
+	MDEBUG(("%d: backref matched\n", t->id));
 	return REG_OKAY;
 }
 
@@ -1011,13 +1017,13 @@ caltdissect(struct vars *v,
 		assert(t->op == '|');
 		assert(t->left != NULL && t->left->cnfa.nstates > 0);
 
-		MDEBUG(("calt n%d\n", t->id));
+		MDEBUG(("%d: caltdissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
 
 		d = getsubdfa(v, t->left);
 		NOERR();
 		if (longest(v, d, begin, end, (int *) NULL) == end)
 		{
-			MDEBUG(("calt matched\n"));
+			MDEBUG(("%d: caltdissect matched\n", t->id));
 			er = cdissect(v, t->left, begin, end);
 			if (er != REG_NOMATCH)
 				return er;
@@ -1053,6 +1059,8 @@ citerdissect(struct vars *v,
 	assert(t->left != NULL && t->left->cnfa.nstates > 0);
 	assert(!(t->left->flags & SHORTER));
 	assert(begin <= end);
+
+	MDEBUG(("%d: citerdissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
 
 	/*
 	 * For the moment, assume the minimum number of matches is 1.  If zero
@@ -1092,7 +1100,6 @@ citerdissect(struct vars *v,
 		FREE(endpts);
 		return v->err;
 	}
-	MDEBUG(("citer %d\n", t->id));
 
 	/*
 	 * Our strategy is to first find a set of sub-match endpoints that are
@@ -1182,7 +1189,7 @@ citerdissect(struct vars *v,
 		if (i > k)
 		{
 			/* satisfaction */
-			MDEBUG(("%d successful\n", t->id));
+			MDEBUG(("%d: successful\n", t->id));
 			FREE(endpts);
 			return REG_OKAY;
 		}
@@ -1223,11 +1230,11 @@ backtrack:
 	 */
 	if (t->min == 0 && begin == end)
 	{
-		MDEBUG(("%d allowing zero matches\n", t->id));
+		MDEBUG(("%d: allowing zero matches\n", t->id));
 		return REG_OKAY;
 	}
 
-	MDEBUG(("%d failed\n", t->id));
+	MDEBUG(("%d: failed\n", t->id));
 	return REG_NOMATCH;
 }
 
@@ -1255,6 +1262,8 @@ creviterdissect(struct vars *v,
 	assert(t->left->flags & SHORTER);
 	assert(begin <= end);
 
+	MDEBUG(("%d: creviterdissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
+
 	/*
 	 * If zero matches are allowed, and target string is empty, just declare
 	 * victory.  OTOH, if target string isn't empty, zero matches can't work
@@ -1264,7 +1273,10 @@ creviterdissect(struct vars *v,
 	if (min_matches <= 0)
 	{
 		if (begin == end)
+		{
+			MDEBUG(("%d: allowing zero matches\n", t->id));
 			return REG_OKAY;
+		}
 		min_matches = 1;
 	}
 
@@ -1293,7 +1305,6 @@ creviterdissect(struct vars *v,
 		FREE(endpts);
 		return v->err;
 	}
-	MDEBUG(("creviter %d\n", t->id));
 
 	/*
 	 * Our strategy is to first find a set of sub-match endpoints that are
@@ -1389,7 +1400,7 @@ creviterdissect(struct vars *v,
 		if (i > k)
 		{
 			/* satisfaction */
-			MDEBUG(("%d successful\n", t->id));
+			MDEBUG(("%d: successful\n", t->id));
 			FREE(endpts);
 			return REG_OKAY;
 		}
@@ -1415,7 +1426,7 @@ backtrack:
 	}
 
 	/* all possibilities exhausted */
-	MDEBUG(("%d failed\n", t->id));
+	MDEBUG(("%d: failed\n", t->id));
 	FREE(endpts);
 	return REG_NOMATCH;
 }

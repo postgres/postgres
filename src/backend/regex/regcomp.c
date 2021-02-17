@@ -942,7 +942,6 @@ parseqatom(struct vars *v,
 				subno = v->nsubexp;
 				if ((size_t) subno >= v->nsubs)
 					moresubs(v, subno);
-				assert((size_t) subno < v->nsubs);
 			}
 			else
 				atomtype = PLAIN;	/* something that's not '(' */
@@ -960,6 +959,7 @@ parseqatom(struct vars *v,
 			NOERR();
 			if (cap)
 			{
+				assert(v->subs[subno] == NULL);
 				v->subs[subno] = atom;
 				t = subre(v, '(', atom->flags | CAP, lp, rp);
 				NOERR();
