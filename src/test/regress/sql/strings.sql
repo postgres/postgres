@@ -300,6 +300,12 @@ SELECT 'indio' NOT LIKE 'in__o' AS "false";
 SELECT 'indio' LIKE 'in_o' AS "false";
 SELECT 'indio' NOT LIKE 'in_o' AS "true";
 
+SELECT 'abc'::name LIKE '_b_' AS "true";
+SELECT 'abc'::name NOT LIKE '_b_' AS "false";
+
+SELECT 'abc'::bytea LIKE '_b_'::bytea AS "true";
+SELECT 'abc'::bytea NOT LIKE '_b_'::bytea AS "false";
+
 -- unused escape character
 SELECT 'hawkeye' LIKE 'h%' ESCAPE '#' AS "true";
 SELECT 'hawkeye' NOT LIKE 'h%' ESCAPE '#' AS "false";
@@ -332,6 +338,9 @@ SELECT 'i_dio' NOT LIKE 'i$_nd_o' ESCAPE '$' AS "true";
 
 SELECT 'i_dio' LIKE 'i$_d%o' ESCAPE '$' AS "true";
 SELECT 'i_dio' NOT LIKE 'i$_d%o' ESCAPE '$' AS "false";
+
+SELECT 'a_c'::bytea LIKE 'a$__'::bytea ESCAPE '$'::bytea AS "true";
+SELECT 'a_c'::bytea NOT LIKE 'a$__'::bytea ESCAPE '$'::bytea AS "false";
 
 -- escape character same as pattern character
 SELECT 'maca' LIKE 'm%aca' ESCAPE '%' AS "true";
@@ -366,6 +375,9 @@ SELECT 'hawkeye' NOT ILIKE 'H%Eye' AS "false";
 
 SELECT 'Hawkeye' ILIKE 'h%' AS "true";
 SELECT 'Hawkeye' NOT ILIKE 'h%' AS "false";
+
+SELECT 'ABC'::name ILIKE '_b_' AS "true";
+SELECT 'ABC'::name NOT ILIKE '_b_' AS "false";
 
 --
 -- test %/_ combination cases, cf bugs #4821 and #5478
