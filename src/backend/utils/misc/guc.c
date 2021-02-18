@@ -4356,6 +4356,16 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"ssl_crl_dir", PGC_SIGHUP, CONN_AUTH_SSL,
+			gettext_noop("Location of the SSL certificate revocation list directory."),
+			NULL
+		},
+		&ssl_crl_dir,
+		"",
+		NULL, NULL, NULL
+	},
+
+	{
 		{"stats_temp_directory", PGC_SIGHUP, STATS_COLLECTOR,
 			gettext_noop("Writes temporary statistics files to the specified directory."),
 			NULL,

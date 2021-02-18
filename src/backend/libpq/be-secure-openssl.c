@@ -285,24 +285,44 @@ be_tls_init(bool isServerStart)
 	 * http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,00.html
 	 *----------
 	 */
-	if (ssl_crl_file[0])
+	if (ssl_crl_file[0] || ssl_crl_dir[0])
 	{
 		X509_STORE *cvstore = SSL_CTX_get_cert_store(context);
 
 		if (cvstore)
 		{
 			/* Set the flags to check against the complete CRL chain */
-			if (X509_STORE_load_locations(cvstore, ssl_crl_file, NULL) == 1)
+			if (X509_STORE_load_locations(cvstore,
+										  ssl_crl_file[0] ? ssl_crl_file : NULL,
+										  ssl_crl_dir[0]  ? ssl_crl_dir : NULL)
+				== 1)
 			{
 				X509_STORE_set_flags(cvstore,
 									 X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 			}
-			else
+			else if (ssl_crl_dir[0] == 0)
 			{
 				ereport(isServerStart ? FATAL : LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("could not load SSL certificate revocation list file \"%s\": %s",
 								ssl_crl_file, SSLerrmessage(ERR_get_error()))));
+				goto error;
+			}
+			else if (ssl_crl_file[0] == 0)
+			{
+				ereport(isServerStart ? FATAL : LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("could not load SSL certificate revocation list directory \"%s\": %s",
+								ssl_crl_dir, SSLerrmessage(ERR_get_error()))));
+				goto error;
+			}
+			else
+			{
+				ereport(isServerStart ? FATAL : LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("could not load SSL certificate revocation list file \"%s\" or directory \"%s\": %s",
+								ssl_crl_file, ssl_crl_dir,
+								SSLerrmessage(ERR_get_error()))));
 				goto error;
 			}
 		}

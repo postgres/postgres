@@ -794,7 +794,8 @@ initialize_SSL(PGconn *conn)
 	if (!(conn->sslcert && strlen(conn->sslcert) > 0) ||
 		!(conn->sslkey && strlen(conn->sslkey) > 0) ||
 		!(conn->sslrootcert && strlen(conn->sslrootcert) > 0) ||
-		!(conn->sslcrl && strlen(conn->sslcrl) > 0))
+		!((conn->sslcrl && strlen(conn->sslcrl) > 0) ||
+		  (conn->sslcrldir && strlen(conn->sslcrldir) > 0)))
 		have_homedir = pqGetHomeDirectory(homedir, sizeof(homedir));
 	else						/* won't need it */
 		have_homedir = false;
@@ -936,20 +937,29 @@ initialize_SSL(PGconn *conn)
 
 		if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
 		{
+			char   *fname = NULL;
+			char   *dname = NULL;
+
 			if (conn->sslcrl && strlen(conn->sslcrl) > 0)
-				strlcpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
-			else if (have_homedir)
+				fname = conn->sslcrl;
+			if (conn->sslcrldir && strlen(conn->sslcrldir) > 0)
+				dname = conn->sslcrldir;
+
+			/* defaults to use the default CRL file */
+			if (!fname && !dname && have_homedir)
+			{
 				snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
-			else
-				fnbuf[0] = '\0';
+				fname = fnbuf;
+			}
 
 			/* Set the flags to check against the complete CRL chain */
-			if (fnbuf[0] != '\0' &&
-				X509_STORE_load_locations(cvstore, fnbuf, NULL) == 1)
+			if ((fname || dname) &&
+				X509_STORE_load_locations(cvstore, fname, dname) == 1)
 			{
 				X509_STORE_set_flags(cvstore,
 									 X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 			}
+
 			/* if not found, silently ignore;  we do not require CRL */
 			ERR_clear_error();
 		}

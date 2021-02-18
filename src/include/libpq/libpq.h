@@ -82,6 +82,7 @@ extern char *ssl_cert_file;
 extern char *ssl_key_file;
 extern char *ssl_ca_file;
 extern char *ssl_crl_file;
+extern char *ssl_crl_dir;
 extern char *ssl_dh_params_file;
 extern PGDLLIMPORT char *ssl_passphrase_command;
 extern PGDLLIMPORT bool ssl_passphrase_command_supports_reload;

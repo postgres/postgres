@@ -1723,8 +1723,34 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         This parameter specifies the file name of the SSL certificate
         revocation list (CRL).  Certificates listed in this file, if it
         exists, will be rejected while attempting to authenticate the
-        server's certificate.  The default is
+        server's certificate.  If neither
+        <xref linkend='libpq-connect-sslcrl'/> nor
+        <xref linkend='libpq-connect-sslcrldir'/> is set, this setting is
+        taken as
         <filename>~/.postgresql/root.crl</filename>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-sslcrldir" xreflabel="sslcrldir">
+      <term><literal>sslcrldir</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the directory name of the SSL certificate
+        revocation list (CRL).  Certificates listed in the files in this
+        directory, if it exists, will be rejected while attempting to
+        authenticate the server's certificate.
+       </para>
+
+       <para>
+        The directory needs to be prepared with the OpenSSL command
+        <literal>openssl rehash</literal> or <literal>c_rehash</literal>.  See
+        its documentation for details.
+       </para>
+
+       <para>
+        Both <literal>sslcrl</literal> and <literal>sslcrldir</literal> can be
+        specified together.
        </para>
       </listitem>
      </varlistentry>

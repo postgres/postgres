@@ -1216,7 +1216,41 @@ include_dir 'conf.d'
         Relative paths are relative to the data directory.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
-        The default is empty, meaning no CRL file is loaded.
+        The default is empty, meaning no CRL file is loaded (unless
+        <xref linkend="guc-ssl-crl-dir"/> is set).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-ssl-crl-dir" xreflabel="ssl_crl_dir">
+      <term><varname>ssl_crl_dir</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>ssl_crl_dir</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the name of the directory containing the SSL server
+        certificate revocation list (CRL).  Relative paths are relative to the
+        data directory.  This parameter can only be set in
+        the <filename>postgresql.conf</filename> file or on the server command
+        line.  The default is empty, meaning no CRLs are used (unless
+        <xref linkend="guc-ssl-crl-file"/> is set).
+       </para>
+
+       <para>
+        The directory needs to be prepared with the OpenSSL command
+        <literal>openssl rehash</literal> or <literal>c_rehash</literal>.  See
+        its documentation for details.
+       </para>
+
+       <para>
+        When using this setting, CRLs in the specified directory are loaded
+        on-demand at connection time.  New CRLs can be added to the directory
+        and will be used immediately.  This is unlike <xref
+        linkend="guc-ssl-crl-file"/>, which causes the CRL in the file to be
+        loaded at server start time or when the configuration is reloaded.
+        Both settings can be used together.
        </para>
       </listitem>
      </varlistentry>

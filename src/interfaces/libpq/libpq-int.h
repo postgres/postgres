@@ -362,6 +362,7 @@ struct pg_conn
 	char	   *sslpassword;	/* client key file password */
 	char	   *sslrootcert;	/* root certificate filename */
 	char	   *sslcrl;			/* certificate revocation list filename */
+	char	   *sslcrldir;		/* certificate revocation list directory name */
 	char	   *requirepeer;	/* required peer credentials for local sockets */
 	char	   *gssencmode;		/* GSS mode (require,prefer,disable) */
 	char	   *krbsrvname;		/* Kerberos service name */
