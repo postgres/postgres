@@ -83,6 +83,13 @@ select count(*) = 1 as ok from pg_stat_wal;
  t
 (1 row)
 
+-- We expect no walreceiver running in this test
+select count(*) = 0 as ok from pg_stat_wal_receiver;
+ ok 
+----
+ t
+(1 row)
+
 -- This is to record the prevailing planner enable_foo settings during
 -- a regression test run.
 select name, setting from pg_settings where name like 'enable%';
