@@ -63,6 +63,7 @@ WalRcvShmemInit(void)
 		MemSet(WalRcv, 0, WalRcvShmemSize());
 		WalRcv->walRcvState = WALRCV_STOPPED;
 		SpinLockInit(&WalRcv->mutex);
+		pg_atomic_init_u64(&WalRcv->writtenUpto, 0);
 		WalRcv->latch = NULL;
 	}
 }
