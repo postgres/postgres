@@ -329,19 +329,26 @@ down in the chain.  This is repeated until there are no internal pages left
 in the chain.  Finally, the half-dead leaf page itself is unlinked from its
 siblings.
 
-A deleted page cannot be reclaimed immediately, since there may be other
+A deleted page cannot be recycled immediately, since there may be other
 processes waiting to reference it (ie, search processes that just left the
 parent, or scans moving right or left from one of the siblings).  These
-processes must observe that the page is marked dead and recover
-accordingly.  Searches and forward scans simply follow the right-link
-until they find a non-dead page --- this will be where the deleted page's
-key-space moved to.
+processes must be able to observe a deleted page for some time after the
+deletion operation, in order to be able to at least recover from it (they
+recover by moving right, as with concurrent page splits).  Searchers never
+have to worry about concurrent page recycling.
+
+See "Placing deleted pages in the FSM" section below for a description of
+when and how deleted pages become safe for VACUUM to make recyclable.
+
+Page deletion and backwards scans
+---------------------------------
 
 Moving left in a backward scan is complicated because we must consider
 the possibility that the left sibling was just split (meaning we must find
 the rightmost page derived from the left sibling), plus the possibility
 that the page we were just on has now been deleted and hence isn't in the
 sibling chain at all anymore.  So the move-left algorithm becomes:
+
 0. Remember the page we are on as the "original page".
 1. Follow the original page's left-link (we're done if this is zero).
 2. If the current page is live and its right-link matches the "original
@@ -358,28 +365,15 @@ sibling chain at all anymore.  So the move-left algorithm becomes:
    current left-link).  If it is dead, move right until a non-dead page
    is found (there must be one, since rightmost pages are never deleted),
    mark that as the new "original page", and return to step 1.
+
 This algorithm is correct because the live page found by step 4 will have
 the same left keyspace boundary as the page we started from.  Therefore,
 when we ultimately exit, it must be on a page whose right keyspace
 boundary matches the left boundary of where we started --- which is what
 we need to be sure we don't miss or re-scan any items.
 
-A deleted page can only be reclaimed once there is no scan or search that
-has a reference to it; until then, it must stay in place with its
-right-link undisturbed.  We implement this by waiting until all active
-snapshots and registered snapshots as of the deletion are gone; which is
-overly strong, but is simple to implement within Postgres.  When marked
-dead, a deleted page is labeled with the next-transaction counter value.
-VACUUM can reclaim the page for re-use when this transaction number is
-guaranteed to be "visible to everyone".  As collateral damage, this
-implementation also waits for running XIDs with no snapshots and for
-snapshots taken until the next transaction to allocate an XID commits.
-
-Reclaiming a page doesn't actually change the state of the page --- we
-simply record it in the free space map, from which it will be handed out
-the next time a new page is needed for a page split.  The deleted page's
-contents will be overwritten by the split operation (it will become the
-new right page).
+Page deletion and tree height
+-----------------------------
 
 Because we never delete the rightmost page of any level (and in particular
 never delete the root), it's impossible for the height of the tree to
@@ -398,6 +392,43 @@ atomic update for the insertion into the parent level; in the delete case
 as part of the atomic update for the delete (either way, the metapage has
 to be the last page locked in the update to avoid deadlock risks).  This
 avoids race conditions if two such operations are executing concurrently.
+
+Placing deleted pages in the FSM
+--------------------------------
+
+Recycling a page is decoupled from page deletion.  A deleted page can only
+be put in the FSM to be recycled once there is no possible scan or search
+that has a reference to it; until then, it must stay in place with its
+sibling links undisturbed, as a tombstone that allows concurrent searches
+to detect and then recover from concurrent deletions (which are rather
+like concurrent page splits to searchers).  This design is an
+implementation of what Lanin and Shasha call "the drain technique".
+
+We implement the technique by waiting until all active snapshots and
+registered snapshots as of the page deletion are gone; which is overly
+strong, but is simple to implement within Postgres.  When marked fully
+dead, a deleted page is labeled with the next-transaction counter value.
+VACUUM can reclaim the page for re-use when the stored XID is guaranteed
+to be "visible to everyone".  As collateral damage, we wait for snapshots
+taken until the next transaction to allocate an XID commits.  We also wait
+for running XIDs with no snapshots.
+
+The need for this additional indirection after a page deletion operation
+takes place is a natural consequence of the highly permissive rules for
+index scans with Lehman and Yao's design.  In general an index scan
+doesn't have to hold a lock or even a pin on any page when it descends the
+tree (nothing that you'd usually think of as an interlock is held "between
+levels").  At the same time, index scans cannot be allowed to land on a
+truly unrelated page due to concurrent recycling (not to be confused with
+concurrent deletion), because that results in wrong answers to queries.
+Simpler approaches to page deletion that don't need to defer recycling are
+possible, but none seem compatible with Lehman and Yao's design.
+
+Placing an already-deleted page in the FSM to be recycled when needed
+doesn't actually change the state of the page.  The page will be changed
+whenever it is subsequently taken from the FSM for reuse.  The deleted
+page's contents will be overwritten by the split operation (it will become
+the new right sibling page).
 
 Fastpath For Index Insertion
 ----------------------------
