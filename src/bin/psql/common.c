@@ -1346,12 +1346,13 @@ SendQuery(const char *query)
 
 				/*
 				 * Do nothing if they are messing with savepoints themselves:
-				 * If the user did RELEASE or ROLLBACK, our savepoint is gone.
-				 * If they issued a SAVEPOINT, releasing ours would remove
-				 * theirs.
+				 * If the user did COMMIT AND CHAIN, RELEASE or ROLLBACK, our
+				 * savepoint is gone. If they issued a SAVEPOINT, releasing
+				 * ours would remove theirs.
 				 */
 				if (results &&
-					(strcmp(PQcmdStatus(results), "SAVEPOINT") == 0 ||
+					(strcmp(PQcmdStatus(results), "COMMIT") == 0 ||
+					 strcmp(PQcmdStatus(results), "SAVEPOINT") == 0 ||
 					 strcmp(PQcmdStatus(results), "RELEASE") == 0 ||
 					 strcmp(PQcmdStatus(results), "ROLLBACK") == 0))
 					svptcmd = NULL;
