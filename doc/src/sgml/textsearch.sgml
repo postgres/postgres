@@ -3837,6 +3837,7 @@ Parser: "pg_catalog.default"
    Schema   |      Name       |                        Description
 ------------+-----------------+-----------------------------------------------------------
  pg_catalog | arabic_stem     | snowball stemmer for arabic language
+ pg_catalog | armenian_stem   | snowball stemmer for armenian language
  pg_catalog | basque_stem     | snowball stemmer for basque language
  pg_catalog | catalan_stem    | snowball stemmer for catalan language
  pg_catalog | danish_stem     | snowball stemmer for danish language
@@ -3857,11 +3858,13 @@ Parser: "pg_catalog.default"
  pg_catalog | portuguese_stem | snowball stemmer for portuguese language
  pg_catalog | romanian_stem   | snowball stemmer for romanian language
  pg_catalog | russian_stem    | snowball stemmer for russian language
+ pg_catalog | serbian_stem    | snowball stemmer for serbian language
  pg_catalog | simple          | simple dictionary: just lower case and check for stopword
  pg_catalog | spanish_stem    | snowball stemmer for spanish language
  pg_catalog | swedish_stem    | snowball stemmer for swedish language
  pg_catalog | tamil_stem      | snowball stemmer for tamil language
  pg_catalog | turkish_stem    | snowball stemmer for turkish language
+ pg_catalog | yiddish_stem    | snowball stemmer for yiddish language
 </screen>
      </para>
     </listitem>

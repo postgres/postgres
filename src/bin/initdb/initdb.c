@@ -656,6 +656,8 @@ static const struct tsearch_config_match tsearch_config_languages[] =
 {
 	{"arabic", "ar"},
 	{"arabic", "Arabic"},
+	{"armenian", "hy"},
+	{"armenian", "Armenian"},
 	{"basque", "eu"},
 	{"basque", "Basque"},
 	{"catalan", "ca"},
@@ -697,6 +699,8 @@ static const struct tsearch_config_match tsearch_config_languages[] =
 	{"romanian", "ro"},
 	{"russian", "ru"},
 	{"russian", "Russian"},
+	{"serbian", "sr"},
+	{"serbian", "Serbian"},
 	{"spanish", "es"},
 	{"spanish", "Spanish"},
 	{"swedish", "sv"},
@@ -705,6 +709,8 @@ static const struct tsearch_config_match tsearch_config_languages[] =
 	{"tamil", "Tamil"},
 	{"turkish", "tr"},
 	{"turkish", "Turkish"},
+	{"yiddish", "yi"},
+	{"yiddish", "Yiddish"},
 	{NULL, NULL}				/* end marker */
 };
 

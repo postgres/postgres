@@ -43,6 +43,7 @@ OBJS += \
 	stem_ISO_8859_2_romanian.o \
 	stem_KOI8_R_russian.o \
 	stem_UTF_8_arabic.o \
+	stem_UTF_8_armenian.o \
 	stem_UTF_8_basque.o \
 	stem_UTF_8_catalan.o \
 	stem_UTF_8_danish.o \
@@ -64,10 +65,12 @@ OBJS += \
 	stem_UTF_8_portuguese.o \
 	stem_UTF_8_romanian.o \
 	stem_UTF_8_russian.o \
+	stem_UTF_8_serbian.o \
 	stem_UTF_8_spanish.o \
 	stem_UTF_8_swedish.o \
 	stem_UTF_8_tamil.o \
-	stem_UTF_8_turkish.o
+	stem_UTF_8_turkish.o \
+	stem_UTF_8_yiddish.o
 
 # first column is language name and also name of dictionary for not-all-ASCII
 # words, second is name of dictionary for all-ASCII words
@@ -75,6 +78,7 @@ OBJS += \
 # must come after creation of that language
 LANGUAGES=  \
 	arabic		arabic		\
+	armenian	armenian	\
 	basque		basque		\
 	catalan		catalan		\
 	danish		danish		\
@@ -95,10 +99,12 @@ LANGUAGES=  \
 	portuguese	portuguese	\
 	romanian	romanian	\
 	russian		english		\
+	serbian		serbian		\
 	spanish		spanish		\
 	swedish		swedish		\
 	tamil		tamil		\
-	turkish		turkish
+	turkish		turkish		\
+	yiddish		yiddish
 
 
 SQLSCRIPT= snowball_create.sql

@@ -46,6 +46,7 @@
 #include "snowball/libstemmer/stem_ISO_8859_2_romanian.h"
 #include "snowball/libstemmer/stem_KOI8_R_russian.h"
 #include "snowball/libstemmer/stem_UTF_8_arabic.h"
+#include "snowball/libstemmer/stem_UTF_8_armenian.h"
 #include "snowball/libstemmer/stem_UTF_8_basque.h"
 #include "snowball/libstemmer/stem_UTF_8_catalan.h"
 #include "snowball/libstemmer/stem_UTF_8_danish.h"
@@ -67,10 +68,12 @@
 #include "snowball/libstemmer/stem_UTF_8_portuguese.h"
 #include "snowball/libstemmer/stem_UTF_8_romanian.h"
 #include "snowball/libstemmer/stem_UTF_8_russian.h"
+#include "snowball/libstemmer/stem_UTF_8_serbian.h"
 #include "snowball/libstemmer/stem_UTF_8_spanish.h"
 #include "snowball/libstemmer/stem_UTF_8_swedish.h"
 #include "snowball/libstemmer/stem_UTF_8_tamil.h"
 #include "snowball/libstemmer/stem_UTF_8_turkish.h"
+#include "snowball/libstemmer/stem_UTF_8_yiddish.h"
 
 PG_MODULE_MAGIC;
 
@@ -117,6 +120,7 @@ static const stemmer_module stemmer_modules[] =
 	STEMMER_MODULE(romanian, PG_LATIN2, ISO_8859_2),
 	STEMMER_MODULE(russian, PG_KOI8R, KOI8_R),
 	STEMMER_MODULE(arabic, PG_UTF8, UTF_8),
+	STEMMER_MODULE(armenian, PG_UTF8, UTF_8),
 	STEMMER_MODULE(basque, PG_UTF8, UTF_8),
 	STEMMER_MODULE(catalan, PG_UTF8, UTF_8),
 	STEMMER_MODULE(danish, PG_UTF8, UTF_8),
@@ -138,10 +142,12 @@ static const stemmer_module stemmer_modules[] =
 	STEMMER_MODULE(portuguese, PG_UTF8, UTF_8),
 	STEMMER_MODULE(romanian, PG_UTF8, UTF_8),
 	STEMMER_MODULE(russian, PG_UTF8, UTF_8),
+	STEMMER_MODULE(serbian, PG_UTF8, UTF_8),
 	STEMMER_MODULE(spanish, PG_UTF8, UTF_8),
 	STEMMER_MODULE(swedish, PG_UTF8, UTF_8),
 	STEMMER_MODULE(tamil, PG_UTF8, UTF_8),
 	STEMMER_MODULE(turkish, PG_UTF8, UTF_8),
+	STEMMER_MODULE(yiddish, PG_UTF8, UTF_8),
 
 	/*
 	 * Stemmer with PG_SQL_ASCII encoding should be valid for any server
