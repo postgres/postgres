@@ -214,8 +214,9 @@ select * from test_regex('a?*', '', '-');
 select * from test_regex('a+*', '', '-');
 -- expectError	7.15 -		a*+	BADRPT
 select * from test_regex('a*+', '', '-');
--- test for ancient brenext() bug; not currently in Tcl
+-- tests for ancient brenext() bugs; not currently in Tcl
 select * from test_regex('.*b', 'aaabbb', 'b');
+select * from test_regex('.\{1,10\}', 'abcdef', 'bQ');
 
 -- doing 8 "braces"
 
