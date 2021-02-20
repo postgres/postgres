@@ -422,9 +422,9 @@ BEGIN;
 COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL(b), FORCE_NULL(c));
 COMMIT;
 SELECT b, c FROM forcetest WHERE a = 1;
- b |  c   
----+------
-   | NULL
+ b |    c     
+---+----------
+   | notempty
 (1 row)
 
 -- should succeed, FORCE_NULL and FORCE_NOT_NULL can be both specified
@@ -432,17 +432,17 @@ BEGIN;
 COPY forcetest (a, b, c, d) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL(c,d), FORCE_NULL(c,d));
 COMMIT;
 SELECT c, d FROM forcetest WHERE a = 2;
- c |  d   
----+------
-   | NULL
+ c |    d     
+---+----------
+   | notempty
 (1 row)
 
 -- should fail with not-null constraint violation
 BEGIN;
 COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NULL(b), FORCE_NOT_NULL(c));
 ERROR:  null value in column "b" of relation "forcetest" violates not-null constraint
-DETAIL:  Failing row contains (3, null, , null, null).
-CONTEXT:  COPY forcetest, line 1: "3,,"""
+DETAIL:  Failing row contains (3, null, notempty, null, null).
+CONTEXT:  COPY forcetest, line 1: "3,,"notempty""
 ROLLBACK;
 -- should fail with "not referenced by COPY" error
 BEGIN;
