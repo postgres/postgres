@@ -5716,6 +5716,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       <para>
        When creating an index on a partitioned table, this column is set to
        the total number of partitions on which the index is to be created.
+       This field is <literal>0</literal> during a <literal>REINDEX</literal>.
       </para></entry>
      </row>
 
@@ -5726,6 +5727,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       <para>
        When creating an index on a partitioned table, this column is set to
        the number of partitions on which the index has been completed.
+       This field is <literal>0</literal> during a <literal>REINDEX</literal>.
       </para></entry>
      </row>
     </tbody>
