@@ -331,6 +331,9 @@ struct nfa
 	struct colormap *cm;		/* the color map */
 	color		bos[2];			/* colors, if any, assigned to BOS and BOL */
 	color		eos[2];			/* colors, if any, assigned to EOS and EOL */
+	int			flags;			/* flags to pass forward to cNFA */
+	int			minmatchall;	/* min number of chrs to match, if matchall */
+	int			maxmatchall;	/* max number of chrs to match, or DUPINF */
 	struct vars *v;				/* simplifies compile error reporting */
 	struct nfa *parent;			/* parent NFA, if any */
 };
@@ -353,6 +356,14 @@ struct nfa
  *
  * Note that in a plain arc, "co" can be RAINBOW; since that's negative,
  * it doesn't break the rule about how to recognize LACON arcs.
+ *
+ * We have special markings for "trivial" NFAs that can match any string
+ * (possibly with limits on the number of characters therein).  In such a
+ * case, flags & MATCHALL is set (and HASLACONS can't be set).  Then the
+ * fields minmatchall and maxmatchall give the minimum and maximum numbers
+ * of characters to match.  For example, ".*" produces minmatchall = 0
+ * and maxmatchall = DUPINF, while ".+" produces minmatchall = 1 and
+ * maxmatchall = DUPINF.
  */
 struct carc
 {
@@ -366,6 +377,7 @@ struct cnfa
 	int			ncolors;		/* number of colors (max color in use + 1) */
 	int			flags;
 #define  HASLACONS	01			/* uses lookaround constraints */
+#define  MATCHALL	02			/* matches all strings of a range of lengths */
 	int			pre;			/* setup state number */
 	int			post;			/* teardown state number */
 	color		bos[2];			/* colors, if any, assigned to BOS and BOL */
@@ -375,6 +387,9 @@ struct cnfa
 	struct carc **states;		/* vector of pointers to outarc lists */
 	/* states[n] are pointers into a single malloc'd array of arcs */
 	struct carc *arcs;			/* the area for the lists */
+	/* these fields are used only in a MATCHALL NFA (else they're -1): */
+	int			minmatchall;	/* min number of chrs to match */
+	int			maxmatchall;	/* max number of chrs to match, or DUPINF */
 };
 
 /*

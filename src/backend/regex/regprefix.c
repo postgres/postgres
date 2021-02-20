@@ -77,6 +77,10 @@ pg_regprefix(regex_t *re,
 	assert(g->tree != NULL);
 	cnfa = &g->tree->cnfa;
 
+	/* matchall NFAs never have a fixed prefix */
+	if (cnfa->flags & MATCHALL)
+		return REG_NOMATCH;
+
 	/*
 	 * Since a correct NFA should never contain any exit-free loops, it should
 	 * not be possible for our traversal to return to a previously visited NFA

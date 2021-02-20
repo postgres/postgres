@@ -58,6 +58,29 @@ longest(struct vars *v,
 	if (hitstopp != NULL)
 		*hitstopp = 0;
 
+	/* fast path for matchall NFAs */
+	if (d->cnfa->flags & MATCHALL)
+	{
+		size_t		nchr = stop - start;
+		size_t		maxmatchall = d->cnfa->maxmatchall;
+
+		if (nchr < d->cnfa->minmatchall)
+			return NULL;
+		if (maxmatchall == DUPINF)
+		{
+			if (stop == v->stop && hitstopp != NULL)
+				*hitstopp = 1;
+		}
+		else
+		{
+			if (stop == v->stop && nchr <= maxmatchall + 1 && hitstopp != NULL)
+				*hitstopp = 1;
+			if (nchr > maxmatchall)
+				return start + maxmatchall;
+		}
+		return stop;
+	}
+
 	/* initialize */
 	css = initialize(v, d, start);
 	if (css == NULL)
@@ -187,6 +210,24 @@ shortest(struct vars *v,
 	if (hitstopp != NULL)
 		*hitstopp = 0;
 
+	/* fast path for matchall NFAs */
+	if (d->cnfa->flags & MATCHALL)
+	{
+		size_t		nchr = min - start;
+
+		if (d->cnfa->maxmatchall != DUPINF &&
+			nchr > d->cnfa->maxmatchall)
+			return NULL;
+		if ((max - start) < d->cnfa->minmatchall)
+			return NULL;
+		if (nchr < d->cnfa->minmatchall)
+			min = start + d->cnfa->minmatchall;
+		if (coldp != NULL)
+			*coldp = start;
+		/* there is no case where we should set *hitstopp */
+		return min;
+	}
+
 	/* initialize */
 	css = initialize(v, d, start);
 	if (css == NULL)
@@ -311,6 +352,22 @@ matchuntil(struct vars *v,
 	struct sset *css = *lastcss;
 	struct sset *ss;
 	struct colormap *cm = d->cm;
+
+	/* fast path for matchall NFAs */
+	if (d->cnfa->flags & MATCHALL)
+	{
+		size_t		nchr = probe - v->start;
+
+		/*
+		 * It might seem that we should check maxmatchall too, but the .* at
+		 * the front of the pattern absorbs any extra characters (and it was
+		 * tacked on *after* computing minmatchall/maxmatchall).  Thus, we
+		 * should match if there are at least minmatchall characters.
+		 */
+		if (nchr < d->cnfa->minmatchall)
+			return 0;
+		return 1;
+	}
 
 	/* initialize and startup, or restart, if necessary */
 	if (cp == NULL || cp > probe)
