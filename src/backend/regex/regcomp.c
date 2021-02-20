@@ -1123,14 +1123,24 @@ parseqatom(struct vars *v,
 	t->left = atom;
 	atomp = &t->left;
 
-	/* here we should recurse... but we must postpone that to the end */
+	/*
+	 * Here we should recurse to fill t->right ... but we must postpone that
+	 * to the end.
+	 */
 
-	/* split top into prefix and remaining */
+	/*
+	 * Convert top node to a concatenation of the prefix (top->left, covering
+	 * whatever we parsed previously) and remaining (t).  Note that the prefix
+	 * could be empty, in which case this concatenation node is unnecessary.
+	 * To keep things simple, we operate in a general way for now, and get rid
+	 * of unnecessary subres below.
+	 */
 	assert(top->op == '=' && top->left == NULL && top->right == NULL);
 	top->left = subre(v, '=', top->flags, top->begin, lp);
 	NOERR();
 	top->op = '.';
 	top->right = t;
+	/* top->flags will get updated later */
 
 	/* if it's a backref, now is the time to replicate the subNFA */
 	if (atomtype == BACKREF)
@@ -1220,16 +1230,75 @@ parseqatom(struct vars *v,
 	/* and finally, look after that postponed recursion */
 	t = top->right;
 	if (!(SEE('|') || SEE(stopper) || SEE(EOS)))
+	{
+		/* parse all the rest of the branch, and insert in t->right */
 		t->right = parsebranch(v, stopper, type, s2, rp, 1);
+		NOERR();
+		assert(SEE('|') || SEE(stopper) || SEE(EOS));
+
+		/* here's the promised update of the flags */
+		t->flags |= COMBINE(t->flags, t->right->flags);
+		top->flags |= COMBINE(top->flags, t->flags);
+
+		/*
+		 * At this point both top and t are concatenation (op == '.') subres,
+		 * and we have top->left = prefix of branch, top->right = t, t->left =
+		 * messy atom (with quantification superstructure if needed), t->right
+		 * = rest of branch.
+		 *
+		 * If the messy atom was the first thing in the branch, then top->left
+		 * is vacuous and we can get rid of one level of concatenation.  Since
+		 * the caller is holding a pointer to the top node, we can't remove
+		 * that node; but we're allowed to change its properties.
+		 */
+		assert(top->left->op == '=');
+		if (top->left->begin == top->left->end)
+		{
+			assert(!MESSY(top->left->flags));
+			freesubre(v, top->left);
+			top->left = t->left;
+			top->right = t->right;
+			t->left = t->right = NULL;
+			freesubre(v, t);
+		}
+	}
 	else
 	{
+		/*
+		 * There's nothing left in the branch, so we don't need the second
+		 * concatenation node 't'.  Just link s2 straight to rp.
+		 */
 		EMPTYARC(s2, rp);
-		t->right = subre(v, '=', 0, s2, rp);
+		top->right = t->left;
+		top->flags |= COMBINE(top->flags, top->right->flags);
+		t->left = t->right = NULL;
+		freesubre(v, t);
+
+		/*
+		 * Again, it could be that top->left is vacuous (if the messy atom was
+		 * in fact the only thing in the branch).  In that case we need no
+		 * concatenation at all; just replace top with top->right.
+		 */
+		assert(top->left->op == '=');
+		if (top->left->begin == top->left->end)
+		{
+			assert(!MESSY(top->left->flags));
+			freesubre(v, top->left);
+			t = top->right;
+			top->op = t->op;
+			top->flags = t->flags;
+			top->id = t->id;
+			top->subno = t->subno;
+			top->min = t->min;
+			top->max = t->max;
+			top->left = t->left;
+			top->right = t->right;
+			top->begin = t->begin;
+			top->end = t->end;
+			t->left = t->right = NULL;
+			freesubre(v, t);
+		}
 	}
-	NOERR();
-	assert(SEE('|') || SEE(stopper) || SEE(EOS));
-	t->flags |= COMBINE(t->flags, t->right->flags);
-	top->flags |= COMBINE(top->flags, t->flags);
 }
 
 /*
