@@ -282,8 +282,8 @@ typedef struct
 typedef int TrgmColor;
 
 /* We assume that colors returned by the regexp engine cannot be these: */
-#define COLOR_UNKNOWN	(-1)
-#define COLOR_BLANK		(-2)
+#define COLOR_UNKNOWN	(-3)
+#define COLOR_BLANK		(-4)
 
 typedef struct
 {
@@ -780,7 +780,8 @@ getColorInfo(regex_t *regex, TrgmNFA *trgmNFA)
 		palloc0(colorsCount * sizeof(TrgmColorInfo));
 
 	/*
-	 * Loop over colors, filling TrgmColorInfo about each.
+	 * Loop over colors, filling TrgmColorInfo about each.  Note we include
+	 * WHITE (0) even though we know it'll be reported as non-expandable.
 	 */
 	for (i = 0; i < colorsCount; i++)
 	{
@@ -1098,9 +1099,9 @@ addKey(TrgmNFA *trgmNFA, TrgmState *state, TrgmStateKey *key)
 			/* Add enter key to this state */
 			addKeyToQueue(trgmNFA, &destKey);
 		}
-		else
+		else if (arc->co >= 0)
 		{
-			/* Regular color */
+			/* Regular color (including WHITE) */
 			TrgmColorInfo *colorInfo = &trgmNFA->colorInfo[arc->co];
 
 			if (colorInfo->expandable)
@@ -1155,6 +1156,14 @@ addKey(TrgmNFA *trgmNFA, TrgmState *state, TrgmStateKey *key)
 				destKey.nstate = arc->to;
 				addKeyToQueue(trgmNFA, &destKey);
 			}
+		}
+		else
+		{
+			/* RAINBOW: treat as unexpandable color */
+			destKey.prefix.colors[0] = COLOR_UNKNOWN;
+			destKey.prefix.colors[1] = COLOR_UNKNOWN;
+			destKey.nstate = arc->to;
+			addKeyToQueue(trgmNFA, &destKey);
 		}
 	}
 
@@ -1216,10 +1225,10 @@ addArcs(TrgmNFA *trgmNFA, TrgmState *state)
 			/*
 			 * Ignore non-expandable colors; addKey already handled the case.
 			 *
-			 * We need no special check for begin/end pseudocolors here.  We
-			 * don't need to do any processing for them, and they will be
-			 * marked non-expandable since the regex engine will have reported
-			 * them that way.
+			 * We need no special check for WHITE or begin/end pseudocolors
+			 * here.  We don't need to do any processing for them, and they
+			 * will be marked non-expandable since the regex engine will have
+			 * reported them that way.
 			 */
 			if (!colorInfo->expandable)
 				continue;

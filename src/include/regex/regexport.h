@@ -30,6 +30,10 @@
 
 #include "regex/regex.h"
 
+/* These macros must match corresponding ones in regguts.h: */
+#define COLOR_WHITE		0		/* color for chars not appearing in regex */
+#define COLOR_RAINBOW	(-2)	/* represents all colors except pseudocolors */
+
 /* information about one arc of a regex's NFA */
 typedef struct
 {

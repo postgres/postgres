@@ -130,11 +130,16 @@
 /*
  * As soon as possible, we map chrs into equivalence classes -- "colors" --
  * which are of much more manageable number.
+ *
+ * To further reduce the number of arcs in NFAs and DFAs, we also have a
+ * special RAINBOW "color" that can be assigned to an arc.  This is not a
+ * real color, in that it has no entry in color maps.
  */
 typedef short color;			/* colors of characters */
 
 #define MAX_COLOR	32767		/* max color (must fit in 'color' datatype) */
 #define COLORLESS	(-1)		/* impossible color */
+#define RAINBOW		(-2)		/* represents all colors except pseudocolors */
 #define WHITE		0			/* default color, parent of all others */
 /* Note: various places in the code know that WHITE is zero */
 
@@ -276,7 +281,7 @@ struct state;
 struct arc
 {
 	int			type;			/* 0 if free, else an NFA arc type code */
-	color		co;
+	color		co;				/* color the arc matches (possibly RAINBOW) */
 	struct state *from;			/* where it's from (and contained within) */
 	struct state *to;			/* where it's to */
 	struct arc *outchain;		/* link in *from's outs chain or free chain */
@@ -284,6 +289,7 @@ struct arc
 #define  freechain	outchain	/* we do not maintain "freechainRev" */
 	struct arc *inchain;		/* link in *to's ins chain */
 	struct arc *inchainRev;		/* back-link in *to's ins chain */
+	/* these fields are not used when co == RAINBOW: */
 	struct arc *colorchain;		/* link in color's arc chain */
 	struct arc *colorchainRev;	/* back-link in color's arc chain */
 };
@@ -344,6 +350,9 @@ struct nfa
  * Plain arcs just store the transition color number as "co".  LACON arcs
  * store the lookaround constraint number plus cnfa.ncolors as "co".  LACON
  * arcs can be distinguished from plain by testing for co >= cnfa.ncolors.
+ *
+ * Note that in a plain arc, "co" can be RAINBOW; since that's negative,
+ * it doesn't break the rule about how to recognize LACON arcs.
  */
 struct carc
 {

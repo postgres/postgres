@@ -271,6 +271,11 @@ destroystate(struct nfa *nfa,
  *
  * This function checks to make sure that no duplicate arcs are created.
  * In general we never want duplicates.
+ *
+ * However: in principle, a RAINBOW arc is redundant with any plain arc
+ * (unless that arc is for a pseudocolor).  But we don't try to recognize
+ * that redundancy, either here or in allied operations such as moveins().
+ * The pseudocolor consideration makes that more costly than it seems worth.
  */
 static void
 newarc(struct nfa *nfa,
@@ -1170,6 +1175,9 @@ copyouts(struct nfa *nfa,
 
 /*
  * cloneouts - copy out arcs of a state to another state pair, modifying type
+ *
+ * This is only used to convert PLAIN arcs to AHEAD/BEHIND arcs, which share
+ * the same interpretation of "co".  It wouldn't be sensible with LACONs.
  */
 static void
 cloneouts(struct nfa *nfa,
@@ -1181,9 +1189,13 @@ cloneouts(struct nfa *nfa,
 	struct arc *a;
 
 	assert(old != from);
+	assert(type == AHEAD || type == BEHIND);
 
 	for (a = old->outs; a != NULL; a = a->outchain)
+	{
+		assert(a->type == PLAIN);
 		newarc(nfa, type, a->co, from, to);
+	}
 }
 
 /*
@@ -1597,7 +1609,7 @@ pull(struct nfa *nfa,
 	for (a = from->ins; a != NULL && !NISERR(); a = nexta)
 	{
 		nexta = a->inchain;
-		switch (combine(con, a))
+		switch (combine(nfa, con, a))
 		{
 			case INCOMPATIBLE:	/* destroy the arc */
 				freearc(nfa, a);
@@ -1622,6 +1634,10 @@ pull(struct nfa *nfa,
 				}
 				cparc(nfa, con, a->from, s);
 				cparc(nfa, a, s, to);
+				freearc(nfa, a);
+				break;
+			case REPLACEARC:	/* replace arc's color */
+				newarc(nfa, a->type, con->co, a->from, to);
 				freearc(nfa, a);
 				break;
 			default:
@@ -1764,7 +1780,7 @@ push(struct nfa *nfa,
 	for (a = to->outs; a != NULL && !NISERR(); a = nexta)
 	{
 		nexta = a->outchain;
-		switch (combine(con, a))
+		switch (combine(nfa, con, a))
 		{
 			case INCOMPATIBLE:	/* destroy the arc */
 				freearc(nfa, a);
@@ -1791,6 +1807,10 @@ push(struct nfa *nfa,
 				cparc(nfa, a, from, s);
 				freearc(nfa, a);
 				break;
+			case REPLACEARC:	/* replace arc's color */
+				newarc(nfa, a->type, con->co, from, a->to);
+				freearc(nfa, a);
+				break;
 			default:
 				assert(NOTREACHED);
 				break;
@@ -1810,9 +1830,11 @@ push(struct nfa *nfa,
  * #def INCOMPATIBLE	1	// destroys arc
  * #def SATISFIED		2	// constraint satisfied
  * #def COMPATIBLE		3	// compatible but not satisfied yet
+ * #def REPLACEARC		4	// replace arc's color with constraint color
  */
 static int
-combine(struct arc *con,
+combine(struct nfa *nfa,
+		struct arc *con,
 		struct arc *a)
 {
 #define  CA(ct,at)	 (((ct)<<CHAR_BIT) | (at))
@@ -1827,14 +1849,46 @@ combine(struct arc *con,
 		case CA(BEHIND, PLAIN):
 			if (con->co == a->co)
 				return SATISFIED;
+			if (con->co == RAINBOW)
+			{
+				/* con is satisfied unless arc's color is a pseudocolor */
+				if (!(nfa->cm->cd[a->co].flags & PSEUDO))
+					return SATISFIED;
+			}
+			else if (a->co == RAINBOW)
+			{
+				/* con is incompatible if it's for a pseudocolor */
+				if (nfa->cm->cd[con->co].flags & PSEUDO)
+					return INCOMPATIBLE;
+				/* otherwise, constraint constrains arc to be only its color */
+				return REPLACEARC;
+			}
 			return INCOMPATIBLE;
 			break;
 		case CA('^', '^'):		/* collision, similar constraints */
 		case CA('$', '$'):
-		case CA(AHEAD, AHEAD):
+			if (con->co == a->co)	/* true duplication */
+				return SATISFIED;
+			return INCOMPATIBLE;
+			break;
+		case CA(AHEAD, AHEAD):	/* collision, similar constraints */
 		case CA(BEHIND, BEHIND):
 			if (con->co == a->co)	/* true duplication */
 				return SATISFIED;
+			if (con->co == RAINBOW)
+			{
+				/* con is satisfied unless arc's color is a pseudocolor */
+				if (!(nfa->cm->cd[a->co].flags & PSEUDO))
+					return SATISFIED;
+			}
+			else if (a->co == RAINBOW)
+			{
+				/* con is incompatible if it's for a pseudocolor */
+				if (nfa->cm->cd[con->co].flags & PSEUDO)
+					return INCOMPATIBLE;
+				/* otherwise, constraint constrains arc to be only its color */
+				return REPLACEARC;
+			}
 			return INCOMPATIBLE;
 			break;
 		case CA('^', BEHIND):	/* collision, dissimilar constraints */
@@ -2895,6 +2949,7 @@ compact(struct nfa *nfa,
 					break;
 				case LACON:
 					assert(s->no != cnfa->pre);
+					assert(a->co >= 0);
 					ca->co = (color) (cnfa->ncolors + a->co);
 					ca->to = a->to->no;
 					ca++;
@@ -3068,13 +3123,22 @@ dumparc(struct arc *a,
 	switch (a->type)
 	{
 		case PLAIN:
-			fprintf(f, "[%ld]", (long) a->co);
+			if (a->co == RAINBOW)
+				fprintf(f, "[*]");
+			else
+				fprintf(f, "[%ld]", (long) a->co);
 			break;
 		case AHEAD:
-			fprintf(f, ">%ld>", (long) a->co);
+			if (a->co == RAINBOW)
+				fprintf(f, ">*>");
+			else
+				fprintf(f, ">%ld>", (long) a->co);
 			break;
 		case BEHIND:
-			fprintf(f, "<%ld<", (long) a->co);
+			if (a->co == RAINBOW)
+				fprintf(f, "<*<");
+			else
+				fprintf(f, "<%ld<", (long) a->co);
 			break;
 		case LACON:
 			fprintf(f, ":%ld:", (long) a->co);
@@ -3161,7 +3225,9 @@ dumpcstate(int st,
 	pos = 1;
 	for (ca = cnfa->states[st]; ca->co != COLORLESS; ca++)
 	{
-		if (ca->co < cnfa->ncolors)
+		if (ca->co == RAINBOW)
+			fprintf(f, "\t[*]->%d", ca->to);
+		else if (ca->co < cnfa->ncolors)
 			fprintf(f, "\t[%ld]->%d", (long) ca->co, ca->to);
 		else
 			fprintf(f, "\t:%ld:->%d", (long) (ca->co - cnfa->ncolors), ca->to);

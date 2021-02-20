@@ -158,7 +158,8 @@ static int	push(struct nfa *, struct arc *, struct state **);
 #define INCOMPATIBLE	1		/* destroys arc */
 #define SATISFIED	2			/* constraint satisfied */
 #define COMPATIBLE	3			/* compatible but not satisfied yet */
-static int	combine(struct arc *, struct arc *);
+#define REPLACEARC	4			/* replace arc's color with constraint color */
+static int	combine(struct nfa *nfa, struct arc *con, struct arc *a);
 static void fixempties(struct nfa *, FILE *);
 static struct state *emptyreachable(struct nfa *, struct state *,
 									struct state *, struct arc **);
@@ -289,9 +290,11 @@ struct vars
 #define SBEGIN	'A'				/* beginning of string (even if not BOL) */
 #define SEND	'Z'				/* end of string (even if not EOL) */
 
-/* is an arc colored, and hence on a color chain? */
+/* is an arc colored, and hence should belong to a color chain? */
+/* the test on "co" eliminates RAINBOW arcs, which we don't bother to chain */
 #define COLORED(a) \
-	((a)->type == PLAIN || (a)->type == AHEAD || (a)->type == BEHIND)
+	((a)->co >= 0 && \
+	 ((a)->type == PLAIN || (a)->type == AHEAD || (a)->type == BEHIND))
 
 
 /* static function list */
@@ -1393,7 +1396,8 @@ bracket(struct vars *v,
  * cbracket - handle complemented bracket expression
  * We do it by calling bracket() with dummy endpoints, and then complementing
  * the result.  The alternative would be to invoke rainbow(), and then delete
- * arcs as the b.e. is seen... but that gets messy.
+ * arcs as the b.e. is seen... but that gets messy, and is really quite
+ * infeasible now that rainbow() just puts out one RAINBOW arc.
  */
 static void
 cbracket(struct vars *v,

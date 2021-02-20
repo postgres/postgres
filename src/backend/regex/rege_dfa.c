@@ -612,6 +612,7 @@ miss(struct vars *v,
 	unsigned	h;
 	struct carc *ca;
 	struct sset *p;
+	int			ispseudocolor;
 	int			ispost;
 	int			noprogress;
 	int			gotstate;
@@ -643,13 +644,15 @@ miss(struct vars *v,
 	 */
 	for (i = 0; i < d->wordsper; i++)
 		d->work[i] = 0;			/* build new stateset bitmap in d->work */
+	ispseudocolor = d->cm->cd[co].flags & PSEUDO;
 	ispost = 0;
 	noprogress = 1;
 	gotstate = 0;
 	for (i = 0; i < d->nstates; i++)
 		if (ISBSET(css->states, i))
 			for (ca = cnfa->states[i]; ca->co != COLORLESS; ca++)
-				if (ca->co == co)
+				if (ca->co == co ||
+					(ca->co == RAINBOW && !ispseudocolor))
 				{
 					BSET(d->work, ca->to);
 					gotstate = 1;

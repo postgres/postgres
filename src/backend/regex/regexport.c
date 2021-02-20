@@ -222,7 +222,8 @@ pg_reg_colorisend(const regex_t *regex, int co)
  * Get number of member chrs of color number "co".
  *
  * Note: we return -1 if the color number is invalid, or if it is a special
- * color (WHITE or a pseudocolor), or if the number of members is uncertain.
+ * color (WHITE, RAINBOW, or a pseudocolor), or if the number of members is
+ * uncertain.
  * Callers should not try to extract the members if -1 is returned.
  */
 int
@@ -233,7 +234,7 @@ pg_reg_getnumcharacters(const regex_t *regex, int co)
 	assert(regex != NULL && regex->re_magic == REMAGIC);
 	cm = &((struct guts *) regex->re_guts)->cmap;
 
-	if (co <= 0 || co > cm->max)	/* we reject 0 which is WHITE */
+	if (co <= 0 || co > cm->max)	/* <= 0 rejects WHITE and RAINBOW */
 		return -1;
 	if (cm->cd[co].flags & PSEUDO)	/* also pseudocolors (BOS etc) */
 		return -1;
@@ -257,7 +258,7 @@ pg_reg_getnumcharacters(const regex_t *regex, int co)
  * whose length chars_len must be at least as long as indicated by
  * pg_reg_getnumcharacters(), else not all chars will be returned.
  *
- * Fetching the members of WHITE or a pseudocolor is not supported.
+ * Fetching the members of WHITE, RAINBOW, or a pseudocolor is not supported.
  *
  * Caution: this is a relatively expensive operation.
  */

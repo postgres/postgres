@@ -165,9 +165,13 @@ findprefix(struct cnfa *cnfa,
 			/* We can ignore BOS/BOL arcs */
 			if (ca->co == cnfa->bos[0] || ca->co == cnfa->bos[1])
 				continue;
-			/* ... but EOS/EOL arcs terminate the search, as do LACONs */
+
+			/*
+			 * ... but EOS/EOL arcs terminate the search, as do RAINBOW arcs
+			 * and LACONs
+			 */
 			if (ca->co == cnfa->eos[0] || ca->co == cnfa->eos[1] ||
-				ca->co >= cnfa->ncolors)
+				ca->co == RAINBOW || ca->co >= cnfa->ncolors)
 			{
 				thiscolor = COLORLESS;
 				break;
