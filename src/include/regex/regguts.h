@@ -423,15 +423,17 @@ struct cnfa
  *		'='  plain regex without interesting substructure (implemented as DFA)
  *		'b'  back-reference (has no substructure either)
  *		'('  capture node: captures the match of its single child
- *		'.'  concatenation: matches a match for left, then a match for right
- *		'|'  alternation: matches a match for left or a match for right
+ *		'.'  concatenation: matches a match for first child, then second child
+ *		'|'  alternation: matches a match for any of its children
  *		'*'  iteration: matches some number of matches of its single child
  *
- * Note: the right child of an alternation must be another alternation or
- * NULL; hence, an N-way branch requires N alternation nodes, not N-1 as you
- * might expect.  This could stand to be changed.  Actually I'd rather see
- * a single alternation node with N children, but that will take revising
- * the representation of struct subre.
+ * An alternation node can have any number of children (but at least two),
+ * linked through their sibling fields.
+ *
+ * A concatenation node must have exactly two children.  It might be useful
+ * to support more, but that would complicate the executor.  Note that it is
+ * the first child's greediness that determines the node's preference for
+ * where to split a match.
  *
  * Note: when a backref is directly quantified, we stick the min/max counts
  * into the backref rather than plastering an iteration node on top.  This is
@@ -460,8 +462,8 @@ struct subre
 								 * LATYPE code for lookaround constraint */
 	short		min;			/* min repetitions for iteration or backref */
 	short		max;			/* max repetitions for iteration or backref */
-	struct subre *left;			/* left child, if any (also freelist chain) */
-	struct subre *right;		/* right child, if any */
+	struct subre *child;		/* first child, if any (also freelist chain) */
+	struct subre *sibling;		/* next child of same parent, if any */
 	struct state *begin;		/* outarcs from here... */
 	struct state *end;			/* ...ending in inarcs here */
 	struct cnfa cnfa;			/* compacted NFA, if any */

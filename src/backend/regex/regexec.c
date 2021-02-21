@@ -640,6 +640,8 @@ static void
 zaptreesubs(struct vars *v,
 			struct subre *t)
 {
+	struct subre *t2;
+
 	if (t->op == '(')
 	{
 		int			n = t->subno;
@@ -652,10 +654,8 @@ zaptreesubs(struct vars *v,
 		}
 	}
 
-	if (t->left != NULL)
-		zaptreesubs(v, t->left);
-	if (t->right != NULL)
-		zaptreesubs(v, t->right);
+	for (t2 = t->child; t2 != NULL; t2 = t2->sibling)
+		zaptreesubs(v, t2);
 }
 
 /*
@@ -714,35 +714,35 @@ cdissect(struct vars *v,
 	switch (t->op)
 	{
 		case '=':				/* terminal node */
-			assert(t->left == NULL && t->right == NULL);
+			assert(t->child == NULL);
 			er = REG_OKAY;		/* no action, parent did the work */
 			break;
 		case 'b':				/* back reference */
-			assert(t->left == NULL && t->right == NULL);
+			assert(t->child == NULL);
 			er = cbrdissect(v, t, begin, end);
 			break;
 		case '.':				/* concatenation */
-			assert(t->left != NULL && t->right != NULL);
-			if (t->left->flags & SHORTER)	/* reverse scan */
+			assert(t->child != NULL);
+			if (t->child->flags & SHORTER)	/* reverse scan */
 				er = crevcondissect(v, t, begin, end);
 			else
 				er = ccondissect(v, t, begin, end);
 			break;
 		case '|':				/* alternation */
-			assert(t->left != NULL);
+			assert(t->child != NULL);
 			er = caltdissect(v, t, begin, end);
 			break;
 		case '*':				/* iteration */
-			assert(t->left != NULL);
-			if (t->left->flags & SHORTER)	/* reverse scan */
+			assert(t->child != NULL);
+			if (t->child->flags & SHORTER)	/* reverse scan */
 				er = creviterdissect(v, t, begin, end);
 			else
 				er = citerdissect(v, t, begin, end);
 			break;
 		case '(':				/* capturing */
-			assert(t->left != NULL && t->right == NULL);
+			assert(t->child != NULL);
 			assert(t->subno > 0);
-			er = cdissect(v, t->left, begin, end);
+			er = cdissect(v, t->child, begin, end);
 			if (er == REG_OKAY)
 				subset(v, t, begin, end);
 			break;
@@ -770,19 +770,22 @@ ccondissect(struct vars *v,
 			chr *begin,			/* beginning of relevant substring */
 			chr *end)			/* end of same */
 {
+	struct subre *left = t->child;
+	struct subre *right = left->sibling;
 	struct dfa *d;
 	struct dfa *d2;
 	chr		   *mid;
 	int			er;
 
 	assert(t->op == '.');
-	assert(t->left != NULL && t->left->cnfa.nstates > 0);
-	assert(t->right != NULL && t->right->cnfa.nstates > 0);
-	assert(!(t->left->flags & SHORTER));
+	assert(left != NULL && left->cnfa.nstates > 0);
+	assert(right != NULL && right->cnfa.nstates > 0);
+	assert(right->sibling == NULL);
+	assert(!(left->flags & SHORTER));
 
-	d = getsubdfa(v, t->left);
+	d = getsubdfa(v, left);
 	NOERR();
-	d2 = getsubdfa(v, t->right);
+	d2 = getsubdfa(v, right);
 	NOERR();
 	MDEBUG(("%d: ccondissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
 
@@ -799,10 +802,10 @@ ccondissect(struct vars *v,
 		/* try this midpoint on for size */
 		if (longest(v, d2, mid, end, (int *) NULL) == end)
 		{
-			er = cdissect(v, t->left, begin, mid);
+			er = cdissect(v, left, begin, mid);
 			if (er == REG_OKAY)
 			{
-				er = cdissect(v, t->right, mid, end);
+				er = cdissect(v, right, mid, end);
 				if (er == REG_OKAY)
 				{
 					/* satisfaction */
@@ -831,8 +834,8 @@ ccondissect(struct vars *v,
 			return REG_NOMATCH;
 		}
 		MDEBUG(("%d: new midpoint %ld\n", t->id, LOFF(mid)));
-		zaptreesubs(v, t->left);
-		zaptreesubs(v, t->right);
+		zaptreesubs(v, left);
+		zaptreesubs(v, right);
 	}
 
 	/* can't get here */
@@ -848,19 +851,22 @@ crevcondissect(struct vars *v,
 			   chr *begin,		/* beginning of relevant substring */
 			   chr *end)		/* end of same */
 {
+	struct subre *left = t->child;
+	struct subre *right = left->sibling;
 	struct dfa *d;
 	struct dfa *d2;
 	chr		   *mid;
 	int			er;
 
 	assert(t->op == '.');
-	assert(t->left != NULL && t->left->cnfa.nstates > 0);
-	assert(t->right != NULL && t->right->cnfa.nstates > 0);
-	assert(t->left->flags & SHORTER);
+	assert(left != NULL && left->cnfa.nstates > 0);
+	assert(right != NULL && right->cnfa.nstates > 0);
+	assert(right->sibling == NULL);
+	assert(left->flags & SHORTER);
 
-	d = getsubdfa(v, t->left);
+	d = getsubdfa(v, left);
 	NOERR();
-	d2 = getsubdfa(v, t->right);
+	d2 = getsubdfa(v, right);
 	NOERR();
 	MDEBUG(("%d: crevcondissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
 
@@ -877,10 +883,10 @@ crevcondissect(struct vars *v,
 		/* try this midpoint on for size */
 		if (longest(v, d2, mid, end, (int *) NULL) == end)
 		{
-			er = cdissect(v, t->left, begin, mid);
+			er = cdissect(v, left, begin, mid);
 			if (er == REG_OKAY)
 			{
-				er = cdissect(v, t->right, mid, end);
+				er = cdissect(v, right, mid, end);
 				if (er == REG_OKAY)
 				{
 					/* satisfaction */
@@ -909,8 +915,8 @@ crevcondissect(struct vars *v,
 			return REG_NOMATCH;
 		}
 		MDEBUG(("%d: new midpoint %ld\n", t->id, LOFF(mid)));
-		zaptreesubs(v, t->left);
-		zaptreesubs(v, t->right);
+		zaptreesubs(v, left);
+		zaptreesubs(v, right);
 	}
 
 	/* can't get here */
@@ -1011,26 +1017,30 @@ caltdissect(struct vars *v,
 	struct dfa *d;
 	int			er;
 
-	/* We loop, rather than tail-recurse, to handle a chain of alternatives */
+	assert(t->op == '|');
+
+	t = t->child;
+	/* there should be at least 2 alternatives */
+	assert(t != NULL && t->sibling != NULL);
+
 	while (t != NULL)
 	{
-		assert(t->op == '|');
-		assert(t->left != NULL && t->left->cnfa.nstates > 0);
+		assert(t->cnfa.nstates > 0);
 
 		MDEBUG(("%d: caltdissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
 
-		d = getsubdfa(v, t->left);
+		d = getsubdfa(v, t);
 		NOERR();
 		if (longest(v, d, begin, end, (int *) NULL) == end)
 		{
 			MDEBUG(("%d: caltdissect matched\n", t->id));
-			er = cdissect(v, t->left, begin, end);
+			er = cdissect(v, t, begin, end);
 			if (er != REG_NOMATCH)
 				return er;
 		}
 		NOERR();
 
-		t = t->right;
+		t = t->sibling;
 	}
 
 	return REG_NOMATCH;
@@ -1056,8 +1066,8 @@ citerdissect(struct vars *v,
 	int			er;
 
 	assert(t->op == '*');
-	assert(t->left != NULL && t->left->cnfa.nstates > 0);
-	assert(!(t->left->flags & SHORTER));
+	assert(t->child != NULL && t->child->cnfa.nstates > 0);
+	assert(!(t->child->flags & SHORTER));
 	assert(begin <= end);
 
 	MDEBUG(("%d: citerdissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
@@ -1094,7 +1104,7 @@ citerdissect(struct vars *v,
 		return REG_ESPACE;
 	endpts[0] = begin;
 
-	d = getsubdfa(v, t->left);
+	d = getsubdfa(v, t->child);
 	if (ISERR())
 	{
 		FREE(endpts);
@@ -1172,8 +1182,8 @@ citerdissect(struct vars *v,
 
 		for (i = nverified + 1; i <= k; i++)
 		{
-			zaptreesubs(v, t->left);
-			er = cdissect(v, t->left, endpts[i - 1], endpts[i]);
+			zaptreesubs(v, t->child);
+			er = cdissect(v, t->child, endpts[i - 1], endpts[i]);
 			if (er == REG_OKAY)
 			{
 				nverified = i;
@@ -1258,8 +1268,8 @@ creviterdissect(struct vars *v,
 	int			er;
 
 	assert(t->op == '*');
-	assert(t->left != NULL && t->left->cnfa.nstates > 0);
-	assert(t->left->flags & SHORTER);
+	assert(t->child != NULL && t->child->cnfa.nstates > 0);
+	assert(t->child->flags & SHORTER);
 	assert(begin <= end);
 
 	MDEBUG(("%d: creviterdissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
@@ -1299,7 +1309,7 @@ creviterdissect(struct vars *v,
 		return REG_ESPACE;
 	endpts[0] = begin;
 
-	d = getsubdfa(v, t->left);
+	d = getsubdfa(v, t->child);
 	if (ISERR())
 	{
 		FREE(endpts);
@@ -1383,8 +1393,8 @@ creviterdissect(struct vars *v,
 
 		for (i = nverified + 1; i <= k; i++)
 		{
-			zaptreesubs(v, t->left);
-			er = cdissect(v, t->left, endpts[i - 1], endpts[i]);
+			zaptreesubs(v, t->child);
+			er = cdissect(v, t->child, endpts[i - 1], endpts[i]);
 			if (er == REG_OKAY)
 			{
 				nverified = i;

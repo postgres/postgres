@@ -129,9 +129,9 @@ If not, we can reject the match immediately without iterating through many
 possibilities.
 
 As an example, consider the regex "(a[bc]+)\1".  The compiled
-representation will have a top-level concatenation subre node.  Its left
+representation will have a top-level concatenation subre node.  Its first
 child is a capture node, and the child of that is a plain DFA node for
-"a[bc]+".  The concatenation's right child is a backref node for \1.
+"a[bc]+".  The concatenation's second child is a backref node for \1.
 The DFA associated with the concatenation node will be "a[bc]+a[bc]+",
 where the backref has been replaced by a copy of the DFA for its referent
 expression.  When executed, the concatenation node will have to search for

@@ -58,6 +58,7 @@ static void processlacon(struct vars *, struct state *, struct state *, int,
 						 struct state *, struct state *);
 static struct subre *subre(struct vars *, int, int, struct state *, struct state *);
 static void freesubre(struct vars *, struct subre *);
+static void freesubreandsiblings(struct vars *, struct subre *);
 static void freesrnode(struct vars *, struct subre *);
 static void optst(struct vars *, struct subre *);
 static int	numst(struct subre *, int);
@@ -652,8 +653,8 @@ makesearch(struct vars *v,
  * parse - parse an RE
  *
  * This is actually just the top level, which parses a bunch of branches
- * tied together with '|'.  They appear in the tree as the left children
- * of a chain of '|' subres.
+ * tied together with '|'.  If there's more than one, they appear in the
+ * tree as the children of a '|' subre.
  */
 static struct subre *
 parse(struct vars *v,
@@ -662,41 +663,34 @@ parse(struct vars *v,
 	  struct state *init,		/* initial state */
 	  struct state *final)		/* final state */
 {
-	struct state *left;			/* scaffolding for branch */
-	struct state *right;
 	struct subre *branches;		/* top level */
-	struct subre *branch;		/* current branch */
-	struct subre *t;			/* temporary */
-	int			firstbranch;	/* is this the first branch? */
+	struct subre *lastbranch;	/* latest branch */
 
 	assert(stopper == ')' || stopper == EOS);
 
 	branches = subre(v, '|', LONGER, init, final);
 	NOERRN();
-	branch = branches;
-	firstbranch = 1;
+	lastbranch = NULL;
 	do
 	{							/* a branch */
-		if (!firstbranch)
-		{
-			/* need a place to hang it */
-			branch->right = subre(v, '|', LONGER, init, final);
-			NOERRN();
-			branch = branch->right;
-		}
-		firstbranch = 0;
+		struct subre *branch;
+		struct state *left;		/* scaffolding for branch */
+		struct state *right;
+
 		left = newstate(v->nfa);
 		right = newstate(v->nfa);
 		NOERRN();
 		EMPTYARC(init, left);
 		EMPTYARC(right, final);
 		NOERRN();
-		branch->left = parsebranch(v, stopper, type, left, right, 0);
+		branch = parsebranch(v, stopper, type, left, right, 0);
 		NOERRN();
-		branch->flags |= UP(branch->flags | branch->left->flags);
-		if ((branch->flags & ~branches->flags) != 0)	/* new flags */
-			for (t = branches; t != branch; t = t->right)
-				t->flags |= branch->flags;
+		if (lastbranch)
+			lastbranch->sibling = branch;
+		else
+			branches->child = branch;
+		branches->flags |= UP(branches->flags | branch->flags);
+		lastbranch = branch;
 	} while (EAT('|'));
 	assert(SEE(stopper) || SEE(EOS));
 
@@ -707,20 +701,16 @@ parse(struct vars *v,
 	}
 
 	/* optimize out simple cases */
-	if (branch == branches)
+	if (lastbranch == branches->child)
 	{							/* only one branch */
-		assert(branch->right == NULL);
-		t = branch->left;
-		branch->left = NULL;
-		freesubre(v, branches);
-		branches = t;
+		assert(lastbranch->sibling == NULL);
+		freesrnode(v, branches);
+		branches = lastbranch;
 	}
 	else if (!MESSY(branches->flags))
 	{							/* no interesting innards */
-		freesubre(v, branches->left);
-		branches->left = NULL;
-		freesubre(v, branches->right);
-		branches->right = NULL;
+		freesubreandsiblings(v, branches->child);
+		branches->child = NULL;
 		branches->op = '=';
 	}
 
@@ -972,7 +962,7 @@ parseqatom(struct vars *v,
 				t = subre(v, '(', atom->flags | CAP, lp, rp);
 				NOERR();
 				t->subno = subno;
-				t->left = atom;
+				t->child = atom;
 				atom = t;
 			}
 			/* postpone everything else pending possible {0} */
@@ -1120,26 +1110,27 @@ parseqatom(struct vars *v,
 	/* break remaining subRE into x{...} and what follows */
 	t = subre(v, '.', COMBINE(qprefer, atom->flags), lp, rp);
 	NOERR();
-	t->left = atom;
-	atomp = &t->left;
+	t->child = atom;
+	atomp = &t->child;
 
 	/*
-	 * Here we should recurse to fill t->right ... but we must postpone that
-	 * to the end.
+	 * Here we should recurse to fill t->child->sibling ... but we must
+	 * postpone that to the end.  One reason is that t->child may be replaced
+	 * below, and we don't want to worry about its sibling link.
 	 */
 
 	/*
-	 * Convert top node to a concatenation of the prefix (top->left, covering
+	 * Convert top node to a concatenation of the prefix (top->child, covering
 	 * whatever we parsed previously) and remaining (t).  Note that the prefix
 	 * could be empty, in which case this concatenation node is unnecessary.
 	 * To keep things simple, we operate in a general way for now, and get rid
 	 * of unnecessary subres below.
 	 */
-	assert(top->op == '=' && top->left == NULL && top->right == NULL);
-	top->left = subre(v, '=', top->flags, top->begin, lp);
+	assert(top->op == '=' && top->child == NULL);
+	top->child = subre(v, '=', top->flags, top->begin, lp);
 	NOERR();
 	top->op = '.';
-	top->right = t;
+	top->child->sibling = t;
 	/* top->flags will get updated later */
 
 	/* if it's a backref, now is the time to replicate the subNFA */
@@ -1201,9 +1192,9 @@ parseqatom(struct vars *v,
 		f = COMBINE(qprefer, atom->flags);
 		t = subre(v, '.', f, s, atom->end); /* prefix and atom */
 		NOERR();
-		t->left = subre(v, '=', PREF(f), s, atom->begin);
+		t->child = subre(v, '=', PREF(f), s, atom->begin);
 		NOERR();
-		t->right = atom;
+		t->child->sibling = atom;
 		*atomp = t;
 		/* rest of branch can be strung starting from atom->end */
 		s2 = atom->end;
@@ -1222,44 +1213,43 @@ parseqatom(struct vars *v,
 		NOERR();
 		t->min = (short) m;
 		t->max = (short) n;
-		t->left = atom;
+		t->child = atom;
 		*atomp = t;
 		/* rest of branch is to be strung from iteration's end state */
 	}
 
 	/* and finally, look after that postponed recursion */
-	t = top->right;
+	t = top->child->sibling;
 	if (!(SEE('|') || SEE(stopper) || SEE(EOS)))
 	{
-		/* parse all the rest of the branch, and insert in t->right */
-		t->right = parsebranch(v, stopper, type, s2, rp, 1);
+		/* parse all the rest of the branch, and insert in t->child->sibling */
+		t->child->sibling = parsebranch(v, stopper, type, s2, rp, 1);
 		NOERR();
 		assert(SEE('|') || SEE(stopper) || SEE(EOS));
 
 		/* here's the promised update of the flags */
-		t->flags |= COMBINE(t->flags, t->right->flags);
+		t->flags |= COMBINE(t->flags, t->child->sibling->flags);
 		top->flags |= COMBINE(top->flags, t->flags);
 
 		/*
 		 * At this point both top and t are concatenation (op == '.') subres,
-		 * and we have top->left = prefix of branch, top->right = t, t->left =
-		 * messy atom (with quantification superstructure if needed), t->right
-		 * = rest of branch.
+		 * and we have top->child = prefix of branch, top->child->sibling = t,
+		 * t->child = messy atom (with quantification superstructure if
+		 * needed), t->child->sibling = rest of branch.
 		 *
-		 * If the messy atom was the first thing in the branch, then top->left
-		 * is vacuous and we can get rid of one level of concatenation.  Since
-		 * the caller is holding a pointer to the top node, we can't remove
-		 * that node; but we're allowed to change its properties.
+		 * If the messy atom was the first thing in the branch, then
+		 * top->child is vacuous and we can get rid of one level of
+		 * concatenation.  Since the caller is holding a pointer to the top
+		 * node, we can't remove that node; but we're allowed to change its
+		 * properties.
 		 */
-		assert(top->left->op == '=');
-		if (top->left->begin == top->left->end)
+		assert(top->child->op == '=');
+		if (top->child->begin == top->child->end)
 		{
-			assert(!MESSY(top->left->flags));
-			freesubre(v, top->left);
-			top->left = t->left;
-			top->right = t->right;
-			t->left = t->right = NULL;
-			freesubre(v, t);
+			assert(!MESSY(top->child->flags));
+			freesubre(v, top->child);
+			top->child = t->child;
+			freesrnode(v, t);
 		}
 	}
 	else
@@ -1269,34 +1259,31 @@ parseqatom(struct vars *v,
 		 * concatenation node 't'.  Just link s2 straight to rp.
 		 */
 		EMPTYARC(s2, rp);
-		top->right = t->left;
-		top->flags |= COMBINE(top->flags, top->right->flags);
-		t->left = t->right = NULL;
-		freesubre(v, t);
+		top->child->sibling = t->child;
+		top->flags |= COMBINE(top->flags, top->child->sibling->flags);
+		freesrnode(v, t);
 
 		/*
-		 * Again, it could be that top->left is vacuous (if the messy atom was
-		 * in fact the only thing in the branch).  In that case we need no
-		 * concatenation at all; just replace top with top->right.
+		 * Again, it could be that top->child is vacuous (if the messy atom
+		 * was in fact the only thing in the branch).  In that case we need no
+		 * concatenation at all; just replace top with top->child->sibling.
 		 */
-		assert(top->left->op == '=');
-		if (top->left->begin == top->left->end)
+		assert(top->child->op == '=');
+		if (top->child->begin == top->child->end)
 		{
-			assert(!MESSY(top->left->flags));
-			freesubre(v, top->left);
-			t = top->right;
+			assert(!MESSY(top->child->flags));
+			t = top->child->sibling;
+			freesubre(v, top->child);
 			top->op = t->op;
 			top->flags = t->flags;
 			top->id = t->id;
 			top->subno = t->subno;
 			top->min = t->min;
 			top->max = t->max;
-			top->left = t->left;
-			top->right = t->right;
+			top->child = t->child;
 			top->begin = t->begin;
 			top->end = t->end;
-			t->left = t->right = NULL;
-			freesubre(v, t);
+			freesrnode(v, t);
 		}
 	}
 }
@@ -1786,7 +1773,7 @@ subre(struct vars *v,
 	}
 
 	if (ret != NULL)
-		v->treefree = ret->left;
+		v->treefree = ret->child;
 	else
 	{
 		ret = (struct subre *) MALLOC(sizeof(struct subre));
@@ -1806,8 +1793,8 @@ subre(struct vars *v,
 	ret->id = 0;				/* will be assigned later */
 	ret->subno = 0;
 	ret->min = ret->max = 1;
-	ret->left = NULL;
-	ret->right = NULL;
+	ret->child = NULL;
+	ret->sibling = NULL;
 	ret->begin = begin;
 	ret->end = end;
 	ZAPCNFA(ret->cnfa);
@@ -1817,6 +1804,9 @@ subre(struct vars *v,
 
 /*
  * freesubre - free a subRE subtree
+ *
+ * This frees child node(s) of the given subRE too,
+ * but not its siblings.
  */
 static void
 freesubre(struct vars *v,		/* might be NULL */
@@ -1825,12 +1815,29 @@ freesubre(struct vars *v,		/* might be NULL */
 	if (sr == NULL)
 		return;
 
-	if (sr->left != NULL)
-		freesubre(v, sr->left);
-	if (sr->right != NULL)
-		freesubre(v, sr->right);
+	if (sr->child != NULL)
+		freesubreandsiblings(v, sr->child);
 
 	freesrnode(v, sr);
+}
+
+/*
+ * freesubreandsiblings - free a subRE subtree
+ *
+ * This frees child node(s) of the given subRE too,
+ * as well as any following siblings.
+ */
+static void
+freesubreandsiblings(struct vars *v,	/* might be NULL */
+					 struct subre *sr)
+{
+	while (sr != NULL)
+	{
+		struct subre *next = sr->sibling;
+
+		freesubre(v, sr);
+		sr = next;
+	}
 }
 
 /*
@@ -1850,7 +1857,7 @@ freesrnode(struct vars *v,		/* might be NULL */
 	if (v != NULL && v->treechain != NULL)
 	{
 		/* we're still parsing, maybe we can reuse the subre */
-		sr->left = v->treefree;
+		sr->child = v->treefree;
 		v->treefree = sr;
 	}
 	else
@@ -1881,15 +1888,14 @@ numst(struct subre *t,
 	  int start)				/* starting point for subtree numbers */
 {
 	int			i;
+	struct subre *t2;
 
 	assert(t != NULL);
 
 	i = start;
 	t->id = (short) i++;
-	if (t->left != NULL)
-		i = numst(t->left, i);
-	if (t->right != NULL)
-		i = numst(t->right, i);
+	for (t2 = t->child; t2 != NULL; t2 = t2->sibling)
+		i = numst(t2, i);
 	return i;
 }
 
@@ -1913,13 +1919,13 @@ numst(struct subre *t,
 static void
 markst(struct subre *t)
 {
+	struct subre *t2;
+
 	assert(t != NULL);
 
 	t->flags |= INUSE;
-	if (t->left != NULL)
-		markst(t->left);
-	if (t->right != NULL)
-		markst(t->right);
+	for (t2 = t->child; t2 != NULL; t2 = t2->sibling)
+		markst(t2);
 }
 
 /*
@@ -1949,12 +1955,12 @@ nfatree(struct vars *v,
 		struct subre *t,
 		FILE *f)				/* for debug output */
 {
+	struct subre *t2;
+
 	assert(t != NULL && t->begin != NULL);
 
-	if (t->left != NULL)
-		(DISCARD) nfatree(v, t->left, f);
-	if (t->right != NULL)
-		(DISCARD) nfatree(v, t->right, f);
+	for (t2 = t->child; t2 != NULL; t2 = t2->sibling)
+		(DISCARD) nfatree(v, t2, f);
 
 	return nfanode(v, t, 0, f);
 }
@@ -2206,6 +2212,7 @@ stdump(struct subre *t,
 	   int nfapresent)			/* is the original NFA still around? */
 {
 	char		idbuf[50];
+	struct subre *t2;
 
 	fprintf(f, "%s. `%c'", stid(t, idbuf, sizeof(idbuf)), t->op);
 	if (t->flags & LONGER)
@@ -2231,20 +2238,21 @@ stdump(struct subre *t,
 	}
 	if (nfapresent)
 		fprintf(f, " %ld-%ld", (long) t->begin->no, (long) t->end->no);
-	if (t->left != NULL)
-		fprintf(f, " L:%s", stid(t->left, idbuf, sizeof(idbuf)));
-	if (t->right != NULL)
-		fprintf(f, " R:%s", stid(t->right, idbuf, sizeof(idbuf)));
+	if (t->child != NULL)
+		fprintf(f, " C:%s", stid(t->child, idbuf, sizeof(idbuf)));
+	/* printing second child isn't necessary, but it is often helpful */
+	if (t->child != NULL && t->child->sibling != NULL)
+		fprintf(f, " C2:%s", stid(t->child->sibling, idbuf, sizeof(idbuf)));
+	if (t->sibling != NULL)
+		fprintf(f, " S:%s", stid(t->sibling, idbuf, sizeof(idbuf)));
 	if (!NULLCNFA(t->cnfa))
 	{
 		fprintf(f, "\n");
 		dumpcnfa(&t->cnfa, f);
 	}
 	fprintf(f, "\n");
-	if (t->left != NULL)
-		stdump(t->left, f, nfapresent);
-	if (t->right != NULL)
-		stdump(t->right, f, nfapresent);
+	for (t2 = t->child; t2 != NULL; t2 = t2->sibling)
+		stdump(t2, f, nfapresent);
 }
 
 /*
