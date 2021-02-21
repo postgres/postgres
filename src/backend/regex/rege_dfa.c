@@ -825,12 +825,12 @@ lacon(struct vars *v,
 	d = getladfa(v, n);
 	if (d == NULL)
 		return 0;
-	if (LATYPE_IS_AHEAD(sub->subno))
+	if (LATYPE_IS_AHEAD(sub->latype))
 	{
 		/* used to use longest() here, but shortest() could be much cheaper */
 		end = shortest(v, d, cp, cp, v->stop,
 					   (chr **) NULL, (int *) NULL);
-		satisfied = LATYPE_IS_POS(sub->subno) ? (end != NULL) : (end == NULL);
+		satisfied = LATYPE_IS_POS(sub->latype) ? (end != NULL) : (end == NULL);
 	}
 	else
 	{
@@ -843,7 +843,7 @@ lacon(struct vars *v,
 		 * nominal match.
 		 */
 		satisfied = matchuntil(v, d, cp, &v->lblastcss[n], &v->lblastcp[n]);
-		if (!LATYPE_IS_POS(sub->subno))
+		if (!LATYPE_IS_POS(sub->latype))
 			satisfied = !satisfied;
 	}
 	FDEBUG(("=== lacon %d satisfied %d\n", n, satisfied));

@@ -422,7 +422,7 @@ struct cnfa
  * "op" is one of:
  *		'='  plain regex without interesting substructure (implemented as DFA)
  *		'b'  back-reference (has no substructure either)
- *		'('  capture node: captures the match of its single child
+ *		'('  no-op capture node: captures the match of its single child
  *		'.'  concatenation: matches a match for first child, then second child
  *		'|'  alternation: matches a match for any of its children
  *		'*'  iteration: matches some number of matches of its single child
@@ -446,8 +446,8 @@ struct subre
 #define  LONGER  01				/* prefers longer match */
 #define  SHORTER 02				/* prefers shorter match */
 #define  MIXED	 04				/* mixed preference below */
-#define  CAP	 010			/* capturing parens below */
-#define  BACKR	 020			/* back reference below */
+#define  CAP	 010			/* capturing parens here or below */
+#define  BACKR	 020			/* back reference here or below */
 #define  INUSE	 0100			/* in use in final tree */
 #define  NOPROP  03				/* bits which may not propagate up */
 #define  LMIX(f) ((f)<<2)		/* LONGER -> MIXED */
@@ -457,9 +457,10 @@ struct subre
 #define  PREF(f) ((f)&NOPROP)
 #define  PREF2(f1, f2)	 ((PREF(f1) != 0) ? PREF(f1) : PREF(f2))
 #define  COMBINE(f1, f2) (UP((f1)|(f2)) | PREF2(f1, f2))
-	short		id;				/* ID of subre (1..ntree-1) */
-	int			subno;			/* subexpression number for 'b' and '(', or
-								 * LATYPE code for lookaround constraint */
+	char		latype;			/* LATYPE code, if lookaround constraint */
+	int			id;				/* ID of subre (1..ntree-1) */
+	int			capno;			/* if capture node, subno to capture into */
+	int			backno;			/* if backref node, subno it refers to */
 	short		min;			/* min repetitions for iteration or backref */
 	short		max;			/* max repetitions for iteration or backref */
 	struct subre *child;		/* first child, if any (also freelist chain) */

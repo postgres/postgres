@@ -640,13 +640,11 @@ static void
 zaptreesubs(struct vars *v,
 			struct subre *t)
 {
+	int			n = t->capno;
 	struct subre *t2;
 
-	if (t->op == '(')
+	if (n > 0)
 	{
-		int			n = t->subno;
-
-		assert(n > 0);
 		if ((size_t) n < v->nmatch)
 		{
 			v->pmatch[n].rm_so = -1;
@@ -667,7 +665,7 @@ subset(struct vars *v,
 	   chr *begin,
 	   chr *end)
 {
-	int			n = sub->subno;
+	int			n = sub->capno;
 
 	assert(n > 0);
 	if ((size_t) n >= v->nmatch)
@@ -739,12 +737,10 @@ cdissect(struct vars *v,
 			else
 				er = citerdissect(v, t, begin, end);
 			break;
-		case '(':				/* capturing */
+		case '(':				/* no-op capture node */
 			assert(t->child != NULL);
-			assert(t->subno > 0);
+			assert(t->capno > 0);
 			er = cdissect(v, t->child, begin, end);
-			if (er == REG_OKAY)
-				subset(v, t, begin, end);
 			break;
 		default:
 			er = REG_ASSERT;
@@ -757,6 +753,12 @@ cdissect(struct vars *v,
 	 * inconsistency between the DFA and the node's innards.
 	 */
 	assert(er != REG_NOMATCH || (t->flags & BACKR));
+
+	/*
+	 * If this node is marked as capturing, save successful match's location.
+	 */
+	if (t->capno > 0 && er == REG_OKAY)
+		subset(v, t, begin, end);
 
 	return er;
 }
@@ -932,7 +934,7 @@ cbrdissect(struct vars *v,
 		   chr *begin,			/* beginning of relevant substring */
 		   chr *end)			/* end of same */
 {
-	int			n = t->subno;
+	int			n = t->backno;
 	size_t		numreps;
 	size_t		tlen;
 	size_t		brlen;

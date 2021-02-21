@@ -130,8 +130,8 @@ possibilities.
 
 As an example, consider the regex "(a[bc]+)\1".  The compiled
 representation will have a top-level concatenation subre node.  Its first
-child is a capture node, and the child of that is a plain DFA node for
-"a[bc]+".  The concatenation's second child is a backref node for \1.
+child is a plain DFA node for "a[bc]+" (which is marked as being a capture
+node).  The concatenation's second child is a backref node for \1.
 The DFA associated with the concatenation node will be "a[bc]+a[bc]+",
 where the backref has been replaced by a copy of the DFA for its referent
 expression.  When executed, the concatenation node will have to search for
@@ -146,6 +146,17 @@ string division point.  In many cases, this prefiltering makes the search
 run much faster than a pure NFA engine could do.  It is this behavior that
 justifies using the phrase "hybrid DFA/NFA engine" to describe Spencer's
 library.
+
+It's perhaps worth noting that separate capture subre nodes are a rarity:
+normally, we just mark a subre as capturing and that's it.  However, it's
+legal to write a regex like "((x))" in which the same substring has to be
+captured by multiple sets of parentheses.  Since a subre has room for only
+one "capno" field, a single subre can't handle that.  We handle such cases
+by wrapping the base subre (which captures the innermost parens) in a
+no-op capture node, or even more than one for "(((x)))" etc.  This is a
+little bit inefficient because we end up with multiple identical NFAs,
+but since the case is pointless and infrequent, it's not worth working
+harder.
 
 
 Colors and colormapping

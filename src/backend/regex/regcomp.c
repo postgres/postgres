@@ -452,7 +452,7 @@ pg_regcomp(regex_t *re,
 #endif
 
 		/* Prepend .* to pattern if it's a lookbehind LACON */
-		nfanode(v, lasub, !LATYPE_IS_AHEAD(lasub->subno), debug);
+		nfanode(v, lasub, !LATYPE_IS_AHEAD(lasub->latype), debug);
 	}
 	CNOERR();
 	if (v->tree->flags & SHORTER)
@@ -944,7 +944,13 @@ parseqatom(struct vars *v,
 			else
 				atomtype = PLAIN;	/* something that's not '(' */
 			NEXT();
-			/* need new endpoints because tree will contain pointers */
+
+			/*
+			 * Make separate endpoints to ensure we keep this sub-NFA cleanly
+			 * separate from what surrounds it.  We need to be sure that when
+			 * we duplicate the sub-NFA for a backref, we get the right states
+			 * and no others.
+			 */
 			s = newstate(v->nfa);
 			s2 = newstate(v->nfa);
 			NOERR();
@@ -959,11 +965,21 @@ parseqatom(struct vars *v,
 			{
 				assert(v->subs[subno] == NULL);
 				v->subs[subno] = atom;
-				t = subre(v, '(', atom->flags | CAP, lp, rp);
-				NOERR();
-				t->subno = subno;
-				t->child = atom;
-				atom = t;
+				if (atom->capno == 0)
+				{
+					/* normal case: just mark the atom as capturing */
+					atom->flags |= CAP;
+					atom->capno = subno;
+				}
+				else
+				{
+					/* generate no-op wrapper node to handle "((x))" */
+					t = subre(v, '(', atom->flags | CAP, lp, rp);
+					NOERR();
+					t->capno = subno;
+					t->child = atom;
+					atom = t;
+				}
 			}
 			/* postpone everything else pending possible {0} */
 			break;
@@ -976,7 +992,7 @@ parseqatom(struct vars *v,
 			atom = subre(v, 'b', BACKR, lp, rp);
 			NOERR();
 			subno = v->nextvalue;
-			atom->subno = subno;
+			atom->backno = subno;
 			EMPTYARC(lp, rp);	/* temporarily, so there's something */
 			NEXT();
 			break;
@@ -1276,8 +1292,10 @@ parseqatom(struct vars *v,
 			freesubre(v, top->child);
 			top->op = t->op;
 			top->flags = t->flags;
+			top->latype = t->latype;
 			top->id = t->id;
-			top->subno = t->subno;
+			top->capno = t->capno;
+			top->backno = t->backno;
 			top->min = t->min;
 			top->max = t->max;
 			top->child = t->child;
@@ -1790,8 +1808,10 @@ subre(struct vars *v,
 
 	ret->op = op;
 	ret->flags = flags;
+	ret->latype = (char) -1;
 	ret->id = 0;				/* will be assigned later */
-	ret->subno = 0;
+	ret->capno = 0;
+	ret->backno = 0;
 	ret->min = ret->max = 1;
 	ret->child = NULL;
 	ret->sibling = NULL;
@@ -1893,7 +1913,7 @@ numst(struct subre *t,
 	assert(t != NULL);
 
 	i = start;
-	t->id = (short) i++;
+	t->id = i++;
 	for (t2 = t->child; t2 != NULL; t2 = t2->sibling)
 		i = numst(t2, i);
 	return i;
@@ -2040,7 +2060,7 @@ newlacon(struct vars *v,
 	sub = &v->lacons[n];
 	sub->begin = begin;
 	sub->end = end;
-	sub->subno = latype;
+	sub->latype = latype;
 	ZAPCNFA(sub->cnfa);
 	return n;
 }
@@ -2163,7 +2183,7 @@ dump(regex_t *re,
 		struct subre *lasub = &g->lacons[i];
 		const char *latype;
 
-		switch (lasub->subno)
+		switch (lasub->latype)
 		{
 			case LATYPE_AHEAD_POS:
 				latype = "positive lookahead";
@@ -2227,8 +2247,12 @@ stdump(struct subre *t,
 		fprintf(f, " hasbackref");
 	if (!(t->flags & INUSE))
 		fprintf(f, " UNUSED");
-	if (t->subno != 0)
-		fprintf(f, " (#%d)", t->subno);
+	if (t->latype != (char) -1)
+		fprintf(f, " latype(%d)", t->latype);
+	if (t->capno != 0)
+		fprintf(f, " capture(%d)", t->capno);
+	if (t->backno != 0)
+		fprintf(f, " backref(%d)", t->backno);
 	if (t->min != 1 || t->max != 1)
 	{
 		fprintf(f, " {%d,", t->min);
