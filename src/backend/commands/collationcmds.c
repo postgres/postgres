@@ -268,7 +268,7 @@ IsThereCollationInNamespace(const char *collname, Oid nspOid)
 }
 
 Datum
-pg_collation_actual_version(PG_FUNCTION_ARGS)
+pg_collation_current_version(PG_FUNCTION_ARGS)
 {
 	Oid			collid = PG_GETARG_OID(0);
 	char	   *version;

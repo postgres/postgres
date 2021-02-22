@@ -26227,14 +26227,14 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-         <primary>pg_collation_actual_version</primary>
+         <primary>pg_collation_current_version</primary>
         </indexterm>
-        <function>pg_collation_actual_version</function> ( <type>oid</type> )
+        <function>pg_collation_current_version</function> ( <type>oid</type> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Returns the actual version of the collation object as it is currently
-        installed in the operating system.  <literal>null</literal> is returned
+        Returns the version of the collation object as reported by the ICU
+        library or operating system.  <literal>null</literal> is returned
         on operating systems where <productname>PostgreSQL</productname>
         doesn't have support for versions.
        </para></entry>

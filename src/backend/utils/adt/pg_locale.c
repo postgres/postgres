@@ -127,8 +127,8 @@ static char *IsoLocaleName(const char *);	/* MSVC specific */
 static void icu_set_collation_attributes(UCollator *collator, const char *loc);
 #endif
 
-static char *get_collation_actual_version(char collprovider,
-										  const char *collcollate);
+static char *get_collation_current_version(char collprovider,
+										   const char *collcollate);
 
 /*
  * pg_perm_setlocale
@@ -1610,7 +1610,7 @@ pg_newlocale_from_collation(Oid collid)
  * the operating system/library.
  */
 static char *
-get_collation_actual_version(char collprovider, const char *collcollate)
+get_collation_current_version(char collprovider, const char *collcollate)
 {
 	char	   *collversion = NULL;
 
@@ -1743,8 +1743,8 @@ get_collation_version_for_oid(Oid oid, bool missing_ok)
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
 		dbform = (Form_pg_database) GETSTRUCT(tp);
-		version = get_collation_actual_version(COLLPROVIDER_LIBC,
-											   NameStr(dbform->datcollate));
+		version = get_collation_current_version(COLLPROVIDER_LIBC,
+												NameStr(dbform->datcollate));
 	}
 	else
 	{
@@ -1758,8 +1758,8 @@ get_collation_version_for_oid(Oid oid, bool missing_ok)
 			elog(ERROR, "cache lookup failed for collation %u", oid);
 		}
 		collform = (Form_pg_collation) GETSTRUCT(tp);
-		version = get_collation_actual_version(collform->collprovider,
-											   NameStr(collform->collcollate));
+		version = get_collation_current_version(collform->collprovider,
+												NameStr(collform->collcollate));
 	}
 
 	ReleaseSysCache(tp);

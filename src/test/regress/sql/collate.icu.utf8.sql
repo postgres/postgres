@@ -820,7 +820,7 @@ SELECT objid::regclass::text collate "C", refobjid::regcollation::text collate "
 CASE
 WHEN refobjid = 'default'::regcollation THEN 'XXX' -- depends on libc version support
 WHEN refobjversion IS NULL THEN 'version not tracked'
-WHEN refobjversion = pg_collation_actual_version(refobjid) THEN 'up to date'
+WHEN refobjversion = pg_collation_current_version(refobjid) THEN 'up to date'
 ELSE 'out of date'
 END AS version
 FROM pg_depend d
@@ -885,6 +885,6 @@ RESET client_min_messages;
 CREATE COLLATION coll_icu_upgrade FROM "und-x-icu";
 
 -- Test user-visible function for inspecting versions
-SELECT pg_collation_actual_version('"en-x-icu"'::regcollation) is not null;
+SELECT pg_collation_current_version('"en-x-icu"'::regcollation) is not null;
 -- Invalid OIDs are silently ignored
-SELECT pg_collation_actual_version(0) is null;
+SELECT pg_collation_current_version(0) is null;

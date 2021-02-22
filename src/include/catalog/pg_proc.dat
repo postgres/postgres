@@ -11321,9 +11321,9 @@
 
 { oid => '3448',
   descr => 'get actual version of collation from operating system',
-  proname => 'pg_collation_actual_version', procost => '100',
+  proname => 'pg_collation_current_version', procost => '100',
   provolatile => 'v', prorettype => 'text', proargtypes => 'oid',
-  prosrc => 'pg_collation_actual_version' },
+  prosrc => 'pg_collation_current_version' },
 
 # system management/monitoring related functions
 { oid => '3353', descr => 'list files in the log directory',
