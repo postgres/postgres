@@ -783,9 +783,11 @@ CREATE TABLE hpart_3 PARTITION OF hash_parted FOR VALUES WITH (MODULUS 200, REMA
 -- modulus 25 is factor of modulus of 50 but 10 is not factor of 25.
 CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES WITH (MODULUS 25, REMAINDER 3);
 ERROR:  every hash partition modulus must be a factor of the next larger modulus
+DETAIL:  The new modulus 25 is not divisible by 10, the modulus of existing partition "hpart_1".
 -- previous modulus 50 is factor of 150 but this modulus is not factor of next modulus 200.
 CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES WITH (MODULUS 150, REMAINDER 3);
 ERROR:  every hash partition modulus must be a factor of the next larger modulus
+DETAIL:  The new modulus 150 is not factor of 200, the modulus of existing partition "hpart_3".
 -- trying to specify range for the hash partitioned table
 CREATE TABLE fail_part PARTITION OF hash_parted FOR VALUES FROM ('a', 1) TO ('z');
 ERROR:  invalid bound specification for a hash partition

@@ -2832,14 +2832,9 @@ check_new_partition_bound(char *relname, Relation parent,
 
 				if (partdesc->nparts > 0)
 				{
-					Datum	  **datums = boundinfo->datums;
-					int			ndatums = boundinfo->ndatums;
 					int			greatest_modulus;
 					int			remainder;
 					int			offset;
-					bool		valid_modulus = true;
-					int			prev_modulus,	/* Previous largest modulus */
-								next_modulus;	/* Next largest modulus */
 
 					/*
 					 * Check rule that every modulus must be a factor of the
@@ -2849,7 +2844,9 @@ check_new_partition_bound(char *relname, Relation parent,
 					 * modulus 15, but you cannot add both a partition with
 					 * modulus 10 and a partition with modulus 15, because 10
 					 * is not a factor of 15.
-					 *
+					 */
+
+					/*
 					 * Get the greatest (modulus, remainder) pair contained in
 					 * boundinfo->datums that is less than or equal to the
 					 * (spec->modulus, spec->remainder) pair.
@@ -2859,25 +2856,54 @@ check_new_partition_bound(char *relname, Relation parent,
 													spec->remainder);
 					if (offset < 0)
 					{
-						next_modulus = DatumGetInt32(datums[0][0]);
-						valid_modulus = (next_modulus % spec->modulus) == 0;
+						int			next_modulus;
+
+						/*
+						 * All existing moduli are greater or equal, so the
+						 * new one must be a factor of the smallest one, which
+						 * is first in the boundinfo.
+						 */
+						next_modulus = DatumGetInt32(boundinfo->datums[0][0]);
+						if (next_modulus % spec->modulus != 0)
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+									 errmsg("every hash partition modulus must be a factor of the next larger modulus"),
+									 errdetail("The new modulus %d is not a factor of %d, the modulus of existing partition \"%s\".",
+											   spec->modulus, next_modulus,
+											   get_rel_name(partdesc->oids[boundinfo->indexes[0]]))));
 					}
 					else
 					{
-						prev_modulus = DatumGetInt32(datums[offset][0]);
-						valid_modulus = (spec->modulus % prev_modulus) == 0;
+						int			prev_modulus;
 
-						if (valid_modulus && (offset + 1) < ndatums)
+						/* We found the largest modulus less than or equal to ours. */
+						prev_modulus = DatumGetInt32(boundinfo->datums[offset][0]);
+
+						if (spec->modulus % prev_modulus != 0)
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+									 errmsg("every hash partition modulus must be a factor of the next larger modulus"),
+									 errdetail("The new modulus %d is not divisible by %d, the modulus of existing partition \"%s\".",
+											   spec->modulus,
+											   prev_modulus,
+											   get_rel_name(partdesc->oids[boundinfo->indexes[offset]]))));
+
+						if (offset + 1 < boundinfo->ndatums)
 						{
-							next_modulus = DatumGetInt32(datums[offset + 1][0]);
-							valid_modulus = (next_modulus % spec->modulus) == 0;
+							int			next_modulus;
+
+							/* Look at the next higher modulus */
+							next_modulus = DatumGetInt32(boundinfo->datums[offset + 1][0]);
+
+							if (next_modulus % spec->modulus != 0)
+								ereport(ERROR,
+										(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+										 errmsg("every hash partition modulus must be a factor of the next larger modulus"),
+										 errdetail("The new modulus %d is not factor of %d, the modulus of existing partition \"%s\".",
+												   spec->modulus, next_modulus,
+												   get_rel_name(partdesc->oids[boundinfo->indexes[offset + 1]]))));
 						}
 					}
-
-					if (!valid_modulus)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								 errmsg("every hash partition modulus must be a factor of the next larger modulus")));
 
 					greatest_modulus = boundinfo->nindexes;
 					remainder = spec->remainder;
