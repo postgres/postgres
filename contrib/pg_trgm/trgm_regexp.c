@@ -1220,7 +1220,7 @@ addArcs(TrgmNFA *trgmNFA, TrgmState *state)
 		for (i = 0; i < arcsCount; i++)
 		{
 			regex_arc_t *arc = &arcs[i];
-			TrgmColorInfo *colorInfo = &trgmNFA->colorInfo[arc->co];
+			TrgmColorInfo *colorInfo;
 
 			/*
 			 * Ignore non-expandable colors; addKey already handled the case.
@@ -1228,8 +1228,14 @@ addArcs(TrgmNFA *trgmNFA, TrgmState *state)
 			 * We need no special check for WHITE or begin/end pseudocolors
 			 * here.  We don't need to do any processing for them, and they
 			 * will be marked non-expandable since the regex engine will have
-			 * reported them that way.
+			 * reported them that way.  We do have to watch out for RAINBOW,
+			 * which has a negative color number.
 			 */
+			if (arc->co < 0)
+				continue;
+			Assert(arc->co < trgmNFA->ncolors);
+
+			colorInfo = &trgmNFA->colorInfo[arc->co];
 			if (!colorInfo->expandable)
 				continue;
 
