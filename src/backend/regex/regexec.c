@@ -77,8 +77,8 @@ struct dfa
 	chr		   *lastpost;		/* location of last cache-flushed success */
 	chr		   *lastnopr;		/* location of last cache-flushed NOPROGRESS */
 	struct sset *search;		/* replacement-search-pointer memory */
-	int			cptsmalloced;	/* were the areas individually malloced? */
-	char	   *mallocarea;		/* self, or master malloced area, or NULL */
+	bool		ismalloced;		/* should this struct dfa be freed? */
+	bool		arraysmalloced; /* should its subsidiary arrays be freed? */
 };
 
 #define WORK	1				/* number of work bitvectors needed */
@@ -88,7 +88,7 @@ struct dfa
 #define FEWCOLORS	15
 struct smalldfa
 {
-	struct dfa	dfa;
+	struct dfa	dfa;			/* must be first */
 	struct sset ssets[FEWSTATES * 2];
 	unsigned	statesarea[FEWSTATES * 2 + WORK];
 	struct sset *outsarea[FEWSTATES * 2 * FEWCOLORS];

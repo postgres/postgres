@@ -499,7 +499,7 @@ newdfa(struct vars *v,
 	struct dfa *d;
 	size_t		nss = cnfa->nstates * 2;
 	int			wordsper = (cnfa->nstates + UBITS - 1) / UBITS;
-	struct smalldfa *smallwas = sml;
+	bool		ismalloced = false;
 
 	assert(cnfa != NULL && cnfa->nstates != 0);
 
@@ -514,6 +514,7 @@ newdfa(struct vars *v,
 				ERR(REG_ESPACE);
 				return NULL;
 			}
+			ismalloced = true;
 		}
 		d = &sml->dfa;
 		d->ssets = sml->ssets;
@@ -521,8 +522,8 @@ newdfa(struct vars *v,
 		d->work = &d->statesarea[nss];
 		d->outsarea = sml->outsarea;
 		d->incarea = sml->incarea;
-		d->cptsmalloced = 0;
-		d->mallocarea = (smallwas == NULL) ? (char *) sml : NULL;
+		d->ismalloced = ismalloced;
+		d->arraysmalloced = false;	/* not separately allocated, anyway */
 	}
 	else
 	{
@@ -540,8 +541,9 @@ newdfa(struct vars *v,
 											  sizeof(struct sset *));
 		d->incarea = (struct arcp *) MALLOC(nss * cnfa->ncolors *
 											sizeof(struct arcp));
-		d->cptsmalloced = 1;
-		d->mallocarea = (char *) d;
+		d->ismalloced = true;
+		d->arraysmalloced = true;
+		/* now freedfa() will behave sanely */
 		if (d->ssets == NULL || d->statesarea == NULL ||
 			d->outsarea == NULL || d->incarea == NULL)
 		{
@@ -573,7 +575,7 @@ newdfa(struct vars *v,
 static void
 freedfa(struct dfa *d)
 {
-	if (d->cptsmalloced)
+	if (d->arraysmalloced)
 	{
 		if (d->ssets != NULL)
 			FREE(d->ssets);
@@ -585,8 +587,8 @@ freedfa(struct dfa *d)
 			FREE(d->incarea);
 	}
 
-	if (d->mallocarea != NULL)
-		FREE(d->mallocarea);
+	if (d->ismalloced)
+		FREE(d);
 }
 
 /*
