@@ -1601,7 +1601,7 @@ TransactionIdIsActive(TransactionId xid)
  * well as "internally" by GlobalVisUpdate() (see comment above struct
  * GlobalVisState).
  *
- * See the definition of ComputedXidHorizonsResult for the various computed
+ * See the definition of ComputeXidHorizonsResult for the various computed
  * horizons.
  *
  * For VACUUM separate horizons (used to decide which deleted tuples must
