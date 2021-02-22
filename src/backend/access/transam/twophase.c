@@ -475,6 +475,7 @@ MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid, const char *gid,
 	proc->lwWaitMode = 0;
 	proc->waitLock = NULL;
 	proc->waitProcLock = NULL;
+	pg_atomic_init_u64(&proc->waitStart, 0);
 	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
 		SHMQueueInit(&(proc->myProcLocks[i]));
 	/* subxid data must be filled later by GXactLoadSubxactData */
@@ -873,15 +874,8 @@ PGPROC *
 TwoPhaseGetDummyProc(TransactionId xid, bool lock_held)
 {
 	GlobalTransaction gxact = TwoPhaseGetGXact(xid, lock_held);
-	PGPROC	   *dummy = &ProcGlobal->allProcs[gxact->pgprocno];
 
-	/*
-	 * Initialize atomic variable in dummy proc so that GetLockStatusData()
-	 * can read it later.
-	 */
-	pg_atomic_init_u64(&dummy->waitStart, 0);
-
-	return dummy;
+	return &ProcGlobal->allProcs[gxact->pgprocno];
 }
 
 /************************************************************************/
