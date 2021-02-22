@@ -443,11 +443,10 @@ do { \
 )
 
 #define HeapTupleHeaderIndicatesMovedPartitions(tup) \
-	(ItemPointerGetOffsetNumber(&(tup)->t_ctid) == MovedPartitionsOffsetNumber && \
-	 ItemPointerGetBlockNumberNoCheck(&(tup)->t_ctid) == MovedPartitionsBlockNumber)
+	ItemPointerIndicatesMovedPartitions(&(tup)->t_ctid)
 
 #define HeapTupleHeaderSetMovedPartitions(tup) \
-	ItemPointerSet(&(tup)->t_ctid, MovedPartitionsBlockNumber, MovedPartitionsOffsetNumber)
+	ItemPointerSetMovedPartitions(&(tup)->t_ctid)
 
 #define HeapTupleHeaderGetDatumLength(tup) \
 	VARSIZE(tup)
