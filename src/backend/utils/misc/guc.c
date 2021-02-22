@@ -2951,7 +2951,7 @@ static struct config_int ConfigureNamesInt[] =
 			PGC_USERSET,
 			RESOURCES_ASYNCHRONOUS,
 			gettext_noop("Number of simultaneous requests that can be handled efficiently by the disk subsystem."),
-			gettext_noop("For RAID arrays, this should be approximately the number of drive spindles in the array."),
+			NULL,
 			GUC_EXPLAIN
 		},
 		&effective_io_concurrency,
