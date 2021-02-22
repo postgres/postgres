@@ -116,7 +116,8 @@ recordMultipleDependencies(const ObjectAddress *depender,
 					referenced->objectId == POSIX_COLLATION_OID)
 					continue;
 
-				version = get_collation_version_for_oid(referenced->objectId);
+				version = get_collation_version_for_oid(referenced->objectId,
+														false);
 
 				/*
 				 * Default collation is pinned, so we need to force recording

@@ -883,3 +883,8 @@ RESET client_min_messages;
 
 -- leave a collation for pg_upgrade test
 CREATE COLLATION coll_icu_upgrade FROM "und-x-icu";
+
+-- Test user-visible function for inspecting versions
+SELECT pg_collation_actual_version('"en-x-icu"'::regcollation) is not null;
+-- Invalid OIDs are silently ignored
+SELECT pg_collation_actual_version(0) is null;

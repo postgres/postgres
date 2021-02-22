@@ -273,7 +273,7 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 	Oid			collid = PG_GETARG_OID(0);
 	char	   *version;
 
-	version = get_collation_version_for_oid(collid);
+	version = get_collation_version_for_oid(collid, true);
 
 	if (version)
 		PG_RETURN_TEXT_P(cstring_to_text(version));
