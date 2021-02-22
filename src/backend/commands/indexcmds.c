@@ -1457,10 +1457,21 @@ DefineIndex(Oid relationId,
 		set_indexsafe_procflags();
 
 	/*
-	 * The index is now visible, so we can report the OID.
+	 * The index is now visible, so we can report the OID.  While on it,
+	 * include the report for the beginning of phase 2.
 	 */
-	pgstat_progress_update_param(PROGRESS_CREATEIDX_INDEX_OID,
-								 indexRelationId);
+	{
+		const int	progress_cols[] = {
+			PROGRESS_CREATEIDX_INDEX_OID,
+			PROGRESS_CREATEIDX_PHASE
+		};
+		const int64 progress_vals[] = {
+			indexRelationId,
+			PROGRESS_CREATEIDX_PHASE_WAIT_1
+		};
+
+		pgstat_progress_update_multi_param(2, progress_cols, progress_vals);
+	}
 
 	/*
 	 * Phase 2 of concurrent index build (see comments for validate_index()
@@ -1478,8 +1489,6 @@ DefineIndex(Oid relationId,
 	 * exclusive lock on our table.  The lock code will detect deadlock and
 	 * error out properly.
 	 */
-	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
-								 PROGRESS_CREATEIDX_PHASE_WAIT_1);
 	WaitForLockers(heaplocktag, ShareLock, true);
 
 	/*

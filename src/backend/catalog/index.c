@@ -3686,12 +3686,18 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 
 	if (progress)
 	{
+		const int	progress_cols[] = {
+			PROGRESS_CREATEIDX_COMMAND,
+			PROGRESS_CREATEIDX_INDEX_OID
+		};
+		const int64 progress_vals[] = {
+			PROGRESS_CREATEIDX_COMMAND_REINDEX,
+			indexId
+		};
+
 		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
 									  heapId);
-		pgstat_progress_update_param(PROGRESS_CREATEIDX_COMMAND,
-									 PROGRESS_CREATEIDX_COMMAND_REINDEX);
-		pgstat_progress_update_param(PROGRESS_CREATEIDX_INDEX_OID,
-									 indexId);
+		pgstat_progress_update_multi_param(2, progress_cols, progress_vals);
 	}
 
 	/*
