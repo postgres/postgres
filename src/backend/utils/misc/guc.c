@@ -2583,7 +2583,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&vacuum_defer_cleanup_age,
-		0, 0, 1000000,
+		0, 0, 1000000,		/* see ComputeXidHorizons */
 		NULL, NULL, NULL
 	},
 
