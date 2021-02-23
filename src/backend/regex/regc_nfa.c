@@ -3082,8 +3082,13 @@ checkmatchall_recurse(struct nfa *nfa, struct state *s,
 		{
 			/* We found an all-RAINBOW path to the post state */
 			result = true;
+			/* ... which should not be adjacent to the pre state */
+			if (depth < 0)
+			{
+				NERR(REG_ASSERT);
+				return false;
+			}
 			/* Record potential match lengths */
-			assert(depth >= 0);
 			hasmatch[depth] = true;
 			if (foundloop)
 			{
