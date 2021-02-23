@@ -816,10 +816,8 @@ parse_required_wal(verifier_context *context, char *pg_waldump_path,
 
 		pg_waldump_cmd = psprintf("\"%s\" --quiet --path=\"%s\" --timeline=%u --start=%X/%X --end=%X/%X\n",
 								  pg_waldump_path, wal_directory, this_wal_range->tli,
-								  (uint32) (this_wal_range->start_lsn >> 32),
-								  (uint32) this_wal_range->start_lsn,
-								  (uint32) (this_wal_range->end_lsn >> 32),
-								  (uint32) this_wal_range->end_lsn);
+								  LSN_FORMAT_ARGS(this_wal_range->start_lsn),
+								  LSN_FORMAT_ARGS(this_wal_range->end_lsn));
 		if (system(pg_waldump_cmd) != 0)
 			report_backup_error(context,
 								"WAL parsing failed for timeline %u",

@@ -1219,8 +1219,7 @@ XLogInsertRecord(XLogRecData *rdata,
 		oldCxt = MemoryContextSwitchTo(walDebugCxt);
 
 		initStringInfo(&buf);
-		appendStringInfo(&buf, "INSERT @ %X/%X: ",
-						 (uint32) (EndPos >> 32), (uint32) EndPos);
+		appendStringInfo(&buf, "INSERT @ %X/%X: ", LSN_FORMAT_ARGS(EndPos));
 
 		/*
 		 * We have to piece together the WAL record data from the XLogRecData
@@ -1821,8 +1820,7 @@ WaitXLogInsertionsToFinish(XLogRecPtr upto)
 	{
 		ereport(LOG,
 				(errmsg("request to flush past end of generated WAL; request %X/%X, current position %X/%X",
-						(uint32) (upto >> 32), (uint32) upto,
-						(uint32) (reservedUpto >> 32), (uint32) reservedUpto)));
+						LSN_FORMAT_ARGS(upto), LSN_FORMAT_ARGS(reservedUpto))));
 		upto = reservedUpto;
 	}
 
@@ -1973,7 +1971,7 @@ GetXLogBuffer(XLogRecPtr ptr)
 
 		if (expectedEndPtr != endptr)
 			elog(PANIC, "could not find WAL buffer for %X/%X",
-				 (uint32) (ptr >> 32), (uint32) ptr);
+				 LSN_FORMAT_ARGS(ptr));
 	}
 	else
 	{
@@ -2290,7 +2288,7 @@ AdvanceXLInsertBuffer(XLogRecPtr upto, bool opportunistic)
 	if (XLOG_DEBUG && npages > 0)
 	{
 		elog(DEBUG1, "initialized %d pages, up to %X/%X",
-			 npages, (uint32) (NewPageEndPtr >> 32), (uint32) NewPageEndPtr);
+			 npages, LSN_FORMAT_ARGS(NewPageEndPtr));
 	}
 #endif
 }
@@ -2471,9 +2469,8 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 
 		if (LogwrtResult.Write >= EndPtr)
 			elog(PANIC, "xlog write request %X/%X is past end of log %X/%X",
-				 (uint32) (LogwrtResult.Write >> 32),
-				 (uint32) LogwrtResult.Write,
-				 (uint32) (EndPtr >> 32), (uint32) EndPtr);
+				 LSN_FORMAT_ARGS(LogwrtResult.Write),
+				 LSN_FORMAT_ARGS(EndPtr));
 
 		/* Advance LogwrtResult.Write to end of current buffer page */
 		LogwrtResult.Write = EndPtr;
@@ -2823,9 +2820,7 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 		if (!force && newMinRecoveryPoint < lsn)
 			elog(WARNING,
 				 "xlog min recovery request %X/%X is past current point %X/%X",
-				 (uint32) (lsn >> 32), (uint32) lsn,
-				 (uint32) (newMinRecoveryPoint >> 32),
-				 (uint32) newMinRecoveryPoint);
+				 LSN_FORMAT_ARGS(lsn), LSN_FORMAT_ARGS(newMinRecoveryPoint));
 
 		/* update control file */
 		if (ControlFile->minRecoveryPoint < newMinRecoveryPoint)
@@ -2838,8 +2833,7 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 
 			ereport(DEBUG2,
 					(errmsg_internal("updated min recovery point to %X/%X on timeline %u",
-							(uint32) (minRecoveryPoint >> 32),
-							(uint32) minRecoveryPoint,
+							LSN_FORMAT_ARGS(minRecoveryPoint),
 							newMinRecoveryPointTLI)));
 		}
 	}
@@ -2878,9 +2872,9 @@ XLogFlush(XLogRecPtr record)
 #ifdef WAL_DEBUG
 	if (XLOG_DEBUG)
 		elog(LOG, "xlog flush request %X/%X; write %X/%X; flush %X/%X",
-			 (uint32) (record >> 32), (uint32) record,
-			 (uint32) (LogwrtResult.Write >> 32), (uint32) LogwrtResult.Write,
-			 (uint32) (LogwrtResult.Flush >> 32), (uint32) LogwrtResult.Flush);
+			 LSN_FORMAT_ARGS(record),
+			 LSN_FORMAT_ARGS(LogwrtResult.Write),
+			 LSN_FORMAT_ARGS(LogwrtResult.Flush));
 #endif
 
 	START_CRIT_SECTION();
@@ -3013,8 +3007,8 @@ XLogFlush(XLogRecPtr record)
 	if (LogwrtResult.Flush < record)
 		elog(ERROR,
 			 "xlog flush request %X/%X is not satisfied --- flushed only to %X/%X",
-			 (uint32) (record >> 32), (uint32) record,
-			 (uint32) (LogwrtResult.Flush >> 32), (uint32) LogwrtResult.Flush);
+			 LSN_FORMAT_ARGS(record),
+			 LSN_FORMAT_ARGS(LogwrtResult.Flush));
 }
 
 /*
@@ -3129,10 +3123,10 @@ XLogBackgroundFlush(void)
 #ifdef WAL_DEBUG
 	if (XLOG_DEBUG)
 		elog(LOG, "xlog bg flush request write %X/%X; flush: %X/%X, current is write %X/%X; flush %X/%X",
-			 (uint32) (WriteRqst.Write >> 32), (uint32) WriteRqst.Write,
-			 (uint32) (WriteRqst.Flush >> 32), (uint32) WriteRqst.Flush,
-			 (uint32) (LogwrtResult.Write >> 32), (uint32) LogwrtResult.Write,
-			 (uint32) (LogwrtResult.Flush >> 32), (uint32) LogwrtResult.Flush);
+			 LSN_FORMAT_ARGS(WriteRqst.Write),
+			 LSN_FORMAT_ARGS(WriteRqst.Flush),
+			 LSN_FORMAT_ARGS(LogwrtResult.Write),
+			 LSN_FORMAT_ARGS(LogwrtResult.Flush));
 #endif
 
 	START_CRIT_SECTION();
@@ -4560,7 +4554,7 @@ rescanLatestTimeLine(void)
 				(errmsg("new timeline %u forked off current database system timeline %u before current recovery point %X/%X",
 						newtarget,
 						ThisTimeLineID,
-						(uint32) (EndRecPtr >> 32), (uint32) EndRecPtr)));
+						LSN_FORMAT_ARGS(EndRecPtr))));
 		return false;
 	}
 
@@ -5754,8 +5748,7 @@ recoveryStopsBefore(XLogReaderState *record)
 		recoveryStopName[0] = '\0';
 		ereport(LOG,
 				(errmsg("recovery stopping before WAL location (LSN) \"%X/%X\"",
-						(uint32) (recoveryStopLSN >> 32),
-						(uint32) recoveryStopLSN)));
+						LSN_FORMAT_ARGS(recoveryStopLSN))));
 		return true;
 	}
 
@@ -5918,8 +5911,7 @@ recoveryStopsAfter(XLogReaderState *record)
 		recoveryStopName[0] = '\0';
 		ereport(LOG,
 				(errmsg("recovery stopping after WAL location (LSN) \"%X/%X\"",
-						(uint32) (recoveryStopLSN >> 32),
-						(uint32) recoveryStopLSN)));
+						LSN_FORMAT_ARGS(recoveryStopLSN))));
 		return true;
 	}
 
@@ -6531,8 +6523,7 @@ StartupXLOG(void)
 		else if (recoveryTarget == RECOVERY_TARGET_LSN)
 			ereport(LOG,
 					(errmsg("starting point-in-time recovery to WAL location (LSN) \"%X/%X\"",
-							(uint32) (recoveryTargetLSN >> 32),
-							(uint32) recoveryTargetLSN)));
+							LSN_FORMAT_ARGS(recoveryTargetLSN))));
 		else if (recoveryTarget == RECOVERY_TARGET_IMMEDIATE)
 			ereport(LOG,
 					(errmsg("starting point-in-time recovery to earliest consistent point")));
@@ -6598,7 +6589,7 @@ StartupXLOG(void)
 			wasShutdown = ((record->xl_info & ~XLR_INFO_MASK) == XLOG_CHECKPOINT_SHUTDOWN);
 			ereport(DEBUG1,
 					(errmsg_internal("checkpoint record is at %X/%X",
-							(uint32) (checkPointLoc >> 32), (uint32) checkPointLoc)));
+									 LSN_FORMAT_ARGS(checkPointLoc))));
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
 
 			/*
@@ -6731,7 +6722,7 @@ StartupXLOG(void)
 		{
 			ereport(DEBUG1,
 					(errmsg_internal("checkpoint record is at %X/%X",
-							(uint32) (checkPointLoc >> 32), (uint32) checkPointLoc)));
+									 LSN_FORMAT_ARGS(checkPointLoc))));
 		}
 		else
 		{
@@ -6783,11 +6774,9 @@ StartupXLOG(void)
 				(errmsg("requested timeline %u is not a child of this server's history",
 						recoveryTargetTLI),
 				 errdetail("Latest checkpoint is at %X/%X on timeline %u, but in the history of the requested timeline, the server forked off from that timeline at %X/%X.",
-						   (uint32) (ControlFile->checkPoint >> 32),
-						   (uint32) ControlFile->checkPoint,
+						   LSN_FORMAT_ARGS(ControlFile->checkPoint),
 						   ControlFile->checkPointCopy.ThisTimeLineID,
-						   (uint32) (switchpoint >> 32),
-						   (uint32) switchpoint)));
+						   LSN_FORMAT_ARGS(switchpoint))));
 	}
 
 	/*
@@ -6800,15 +6789,14 @@ StartupXLOG(void)
 		ereport(FATAL,
 				(errmsg("requested timeline %u does not contain minimum recovery point %X/%X on timeline %u",
 						recoveryTargetTLI,
-						(uint32) (ControlFile->minRecoveryPoint >> 32),
-						(uint32) ControlFile->minRecoveryPoint,
+						LSN_FORMAT_ARGS(ControlFile->minRecoveryPoint),
 						ControlFile->minRecoveryPointTLI)));
 
 	LastRec = RecPtr = checkPointLoc;
 
 	ereport(DEBUG1,
 			(errmsg_internal("redo record is at %X/%X; shutdown %s",
-							 (uint32) (checkPoint.redo >> 32), (uint32) checkPoint.redo,
+							 LSN_FORMAT_ARGS(checkPoint.redo),
 							 wasShutdown ? "true" : "false")));
 	ereport(DEBUG1,
 			(errmsg_internal("next transaction ID: " UINT64_FORMAT "; next OID: %u",
@@ -7254,7 +7242,7 @@ StartupXLOG(void)
 
 			ereport(LOG,
 					(errmsg("redo starts at %X/%X",
-							(uint32) (ReadRecPtr >> 32), (uint32) ReadRecPtr)));
+							LSN_FORMAT_ARGS(ReadRecPtr))));
 
 			/*
 			 * main redo apply loop
@@ -7272,8 +7260,8 @@ StartupXLOG(void)
 
 					initStringInfo(&buf);
 					appendStringInfo(&buf, "REDO @ %X/%X; LSN %X/%X: ",
-									 (uint32) (ReadRecPtr >> 32), (uint32) ReadRecPtr,
-									 (uint32) (EndRecPtr >> 32), (uint32) EndRecPtr);
+									 LSN_FORMAT_ARGS(ReadRecPtr),
+									 LSN_FORMAT_ARGS(EndRecPtr));
 					xlog_outrec(&buf, xlogreader);
 					appendStringInfoString(&buf, " - ");
 					xlog_outdesc(&buf, xlogreader);
@@ -7516,7 +7504,7 @@ StartupXLOG(void)
 
 			ereport(LOG,
 					(errmsg("redo done at %X/%X system usage: %s",
-							(uint32) (ReadRecPtr >> 32), (uint32) ReadRecPtr,
+							LSN_FORMAT_ARGS(ReadRecPtr),
 							pg_rusage_show(&ru0))));
 			xtime = GetLatestXTime();
 			if (xtime)
@@ -7684,8 +7672,7 @@ StartupXLOG(void)
 			snprintf(reason, sizeof(reason),
 					 "%s LSN %X/%X\n",
 					 recoveryStopAfter ? "after" : "before",
-					 (uint32) (recoveryStopLSN >> 32),
-					 (uint32) recoveryStopLSN);
+					 LSN_FORMAT_ARGS(recoveryStopLSN));
 		else if (recoveryTarget == RECOVERY_TARGET_NAME)
 			snprintf(reason, sizeof(reason),
 					 "at restore point \"%s\"",
@@ -8109,8 +8096,7 @@ CheckRecoveryConsistency(void)
 		reachedConsistency = true;
 		ereport(LOG,
 				(errmsg("consistent recovery state reached at %X/%X",
-						(uint32) (lastReplayedEndRecPtr >> 32),
-						(uint32) lastReplayedEndRecPtr)));
+						LSN_FORMAT_ARGS(lastReplayedEndRecPtr))));
 	}
 
 	/*
@@ -9344,8 +9330,7 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 		elog(trace_recovery(DEBUG2),
 			 "could not record restart point at %X/%X because there "
 			 "are unresolved references to invalid pages",
-			 (uint32) (checkPoint->redo >> 32),
-			 (uint32) checkPoint->redo);
+			 LSN_FORMAT_ARGS(checkPoint->redo));
 		return;
 	}
 
@@ -9422,8 +9407,7 @@ CreateRestartPoint(int flags)
 	{
 		ereport(DEBUG2,
 				(errmsg_internal("skipping restartpoint, already performed at %X/%X",
-						(uint32) (lastCheckPoint.redo >> 32),
-						(uint32) lastCheckPoint.redo)));
+								 LSN_FORMAT_ARGS(lastCheckPoint.redo))));
 
 		UpdateMinRecoveryPoint(InvalidXLogRecPtr, true);
 		if (flags & CHECKPOINT_IS_SHUTDOWN)
@@ -9595,7 +9579,7 @@ CreateRestartPoint(int flags)
 	xtime = GetLatestXTime();
 	ereport((log_checkpoints ? LOG : DEBUG2),
 			(errmsg("recovery restart point at %X/%X",
-					(uint32) (lastCheckPoint.redo >> 32), (uint32) lastCheckPoint.redo),
+					LSN_FORMAT_ARGS(lastCheckPoint.redo)),
 			 xtime ? errdetail("Last completed transaction was at log time %s.",
 							   timestamptz_to_str(xtime)) : 0));
 
@@ -9837,7 +9821,7 @@ XLogRestorePoint(const char *rpName)
 
 	ereport(LOG,
 			(errmsg("restore point \"%s\" created at %X/%X",
-					rpName, (uint32) (RecPtr >> 32), (uint32) RecPtr)));
+					rpName, LSN_FORMAT_ARGS(RecPtr))));
 
 	return RecPtr;
 }
@@ -10008,8 +9992,7 @@ checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI, TimeLineID prevTLI)
 		ereport(PANIC,
 				(errmsg("unexpected timeline ID %u in checkpoint record, before reaching minimum recovery point %X/%X on timeline %u",
 						newTLI,
-						(uint32) (minRecoveryPoint >> 32),
-						(uint32) minRecoveryPoint,
+						LSN_FORMAT_ARGS(minRecoveryPoint),
 						minRecoveryPointTLI)));
 
 	/* Looks good */
@@ -10365,8 +10348,7 @@ static void
 xlog_outrec(StringInfo buf, XLogReaderState *record)
 {
 	appendStringInfo(buf, "prev %X/%X; xid %u",
-					 (uint32) (XLogRecGetPrev(record) >> 32),
-					 (uint32) XLogRecGetPrev(record),
+					 LSN_FORMAT_ARGS(XLogRecGetPrev(record)),
 					 XLogRecGetXid(record));
 
 	appendStringInfo(buf, "; len %u",
@@ -10952,9 +10934,9 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 					"%Y-%m-%d %H:%M:%S %Z",
 					pg_localtime(&stamp_time, log_timezone));
 		appendStringInfo(labelfile, "START WAL LOCATION: %X/%X (file %s)\n",
-						 (uint32) (startpoint >> 32), (uint32) startpoint, xlogfilename);
+						 LSN_FORMAT_ARGS(startpoint), xlogfilename);
 		appendStringInfo(labelfile, "CHECKPOINT LOCATION: %X/%X\n",
-						 (uint32) (checkpointloc >> 32), (uint32) checkpointloc);
+						 LSN_FORMAT_ARGS(checkpointloc));
 		appendStringInfo(labelfile, "BACKUP METHOD: %s\n",
 						 exclusive ? "pg_start_backup" : "streamed");
 		appendStringInfo(labelfile, "BACKUP FROM: %s\n",
@@ -11440,9 +11422,9 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 					 errmsg("could not create file \"%s\": %m",
 							histfilepath)));
 		fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
-				(uint32) (startpoint >> 32), (uint32) startpoint, startxlogfilename);
+				LSN_FORMAT_ARGS(startpoint), startxlogfilename);
 		fprintf(fp, "STOP WAL LOCATION: %X/%X (file %s)\n",
-				(uint32) (stoppoint >> 32), (uint32) stoppoint, stopxlogfilename);
+				LSN_FORMAT_ARGS(stoppoint), stopxlogfilename);
 
 		/*
 		 * Transfer remaining lines including label and start timeline to
@@ -11895,8 +11877,7 @@ rm_redo_error_callback(void *arg)
 
 	/* translator: %s is a WAL record description */
 	errcontext("WAL redo at %X/%X for %s",
-			   (uint32) (record->ReadRecPtr >> 32),
-			   (uint32) record->ReadRecPtr,
+			   LSN_FORMAT_ARGS(record->ReadRecPtr),
 			   buf.data);
 
 	pfree(buf.data);
@@ -12494,8 +12475,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 
 							if (curFileTLI > 0 && tli < curFileTLI)
 								elog(ERROR, "according to history file, WAL location %X/%X belongs to timeline %u, but previous recovered WAL file came from timeline %u",
-									 (uint32) (tliRecPtr >> 32),
-									 (uint32) tliRecPtr,
+									 LSN_FORMAT_ARGS(tliRecPtr),
 									 tli, curFileTLI);
 						}
 						curFileTLI = tli;

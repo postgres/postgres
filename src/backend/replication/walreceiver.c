@@ -392,13 +392,11 @@ WalReceiverMain(void)
 			if (first_stream)
 				ereport(LOG,
 						(errmsg("started streaming WAL from primary at %X/%X on timeline %u",
-								(uint32) (startpoint >> 32), (uint32) startpoint,
-								startpointTLI)));
+								LSN_FORMAT_ARGS(startpoint), startpointTLI)));
 			else
 				ereport(LOG,
 						(errmsg("restarted WAL streaming at %X/%X on timeline %u",
-								(uint32) (startpoint >> 32), (uint32) startpoint,
-								startpointTLI)));
+								LSN_FORMAT_ARGS(startpoint), startpointTLI)));
 			first_stream = false;
 
 			/* Initialize LogstreamResult and buffers for processing messages */
@@ -465,7 +463,7 @@ WalReceiverMain(void)
 									(errmsg("replication terminated by primary server"),
 									 errdetail("End of WAL reached on timeline %u at %X/%X.",
 											   startpointTLI,
-											   (uint32) (LogstreamResult.Write >> 32), (uint32) LogstreamResult.Write)));
+											   LSN_FORMAT_ARGS(LogstreamResult.Write))));
 							endofwal = true;
 							break;
 						}
@@ -699,8 +697,7 @@ WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 		char		activitymsg[50];
 
 		snprintf(activitymsg, sizeof(activitymsg), "restarting at %X/%X",
-				 (uint32) (*startpoint >> 32),
-				 (uint32) *startpoint);
+				 LSN_FORMAT_ARGS(*startpoint));
 		set_ps_display(activitymsg);
 	}
 }
@@ -1002,8 +999,7 @@ XLogWalRcvFlush(bool dying)
 			char		activitymsg[50];
 
 			snprintf(activitymsg, sizeof(activitymsg), "streaming %X/%X",
-					 (uint32) (LogstreamResult.Write >> 32),
-					 (uint32) LogstreamResult.Write);
+					 LSN_FORMAT_ARGS(LogstreamResult.Write));
 			set_ps_display(activitymsg);
 		}
 
@@ -1080,9 +1076,9 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 
 	/* Send it */
 	elog(DEBUG2, "sending write %X/%X flush %X/%X apply %X/%X%s",
-		 (uint32) (writePtr >> 32), (uint32) writePtr,
-		 (uint32) (flushPtr >> 32), (uint32) flushPtr,
-		 (uint32) (applyPtr >> 32), (uint32) applyPtr,
+		 LSN_FORMAT_ARGS(writePtr),
+		 LSN_FORMAT_ARGS(flushPtr),
+		 LSN_FORMAT_ARGS(applyPtr),
 		 requestReply ? " (reply requested)" : "");
 
 	walrcv_send(wrconn, reply_message.data, reply_message.len);

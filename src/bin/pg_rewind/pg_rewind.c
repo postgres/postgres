@@ -344,7 +344,7 @@ main(int argc, char **argv)
 
 		findCommonAncestorTimeline(&divergerec, &lastcommontliIndex);
 		pg_log_info("servers diverged at WAL location %X/%X on timeline %u",
-					(uint32) (divergerec >> 32), (uint32) divergerec,
+					LSN_FORMAT_ARGS(divergerec),
 					targetHistory[lastcommontliIndex].tli);
 
 		/*
@@ -401,8 +401,7 @@ main(int argc, char **argv)
 	findLastCheckpoint(datadir_target, divergerec, lastcommontliIndex,
 					   &chkptrec, &chkpttli, &chkptredo, restore_command);
 	pg_log_info("rewinding from last common checkpoint at %X/%X on timeline %u",
-				(uint32) (chkptrec >> 32), (uint32) chkptrec,
-				chkpttli);
+				LSN_FORMAT_ARGS(chkptrec), chkpttli);
 
 	/* Initialize the hash table to track the status of each file */
 	filehash_init();
@@ -859,8 +858,8 @@ getTimelineHistory(ControlFileData *controlFile, int *nentries)
 
 			entry = &history[i];
 			pg_log_debug("%d: %X/%X - %X/%X", entry->tli,
-						 (uint32) (entry->begin >> 32), (uint32) (entry->begin),
-						 (uint32) (entry->end >> 32), (uint32) (entry->end));
+						 LSN_FORMAT_ARGS(entry->begin),
+						 LSN_FORMAT_ARGS(entry->end));
 		}
 	}
 
@@ -954,8 +953,8 @@ createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli, XLogRecPtr checkpo
 				   "BACKUP FROM: standby\n"
 				   "START TIME: %s\n",
 	/* omit LABEL: line */
-				   (uint32) (startpoint >> 32), (uint32) startpoint, xlogfilename,
-				   (uint32) (checkpointloc >> 32), (uint32) checkpointloc,
+				   LSN_FORMAT_ARGS(startpoint), xlogfilename,
+				   LSN_FORMAT_ARGS(checkpointloc),
 				   strfbuf);
 	if (len >= sizeof(buf))
 		pg_fatal("backup label buffer too small");	/* shouldn't happen */

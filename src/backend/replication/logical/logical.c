@@ -514,9 +514,8 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 		 * replication.
 		 */
 		elog(DEBUG1, "cannot stream from %X/%X, minimum is %X/%X, forwarding",
-			 (uint32) (start_lsn >> 32), (uint32) start_lsn,
-			 (uint32) (slot->data.confirmed_flush >> 32),
-			 (uint32) slot->data.confirmed_flush);
+			 LSN_FORMAT_ARGS(start_lsn),
+			 LSN_FORMAT_ARGS(slot->data.confirmed_flush));
 
 		start_lsn = slot->data.confirmed_flush;
 	}
@@ -538,10 +537,8 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 			(errmsg("starting logical decoding for slot \"%s\"",
 					NameStr(slot->data.name)),
 			 errdetail("Streaming transactions committing after %X/%X, reading WAL from %X/%X.",
-					   (uint32) (slot->data.confirmed_flush >> 32),
-					   (uint32) slot->data.confirmed_flush,
-					   (uint32) (slot->data.restart_lsn >> 32),
-					   (uint32) slot->data.restart_lsn)));
+					   LSN_FORMAT_ARGS(slot->data.confirmed_flush),
+					   LSN_FORMAT_ARGS(slot->data.restart_lsn))));
 
 	return ctx;
 }
@@ -567,8 +564,7 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 	XLogBeginRead(ctx->reader, slot->data.restart_lsn);
 
 	elog(DEBUG1, "searching for logical decoding starting point, starting at %X/%X",
-		 (uint32) (slot->data.restart_lsn >> 32),
-		 (uint32) slot->data.restart_lsn);
+		 LSN_FORMAT_ARGS(slot->data.restart_lsn));
 
 	/* Wait for a consistent starting point */
 	for (;;)
@@ -688,8 +684,7 @@ output_plugin_error_callback(void *arg)
 				   NameStr(state->ctx->slot->data.name),
 				   NameStr(state->ctx->slot->data.plugin),
 				   state->callback_name,
-				   (uint32) (state->report_location >> 32),
-				   (uint32) state->report_location);
+				   LSN_FORMAT_ARGS(state->report_location));
 	else
 		errcontext("slot \"%s\", output plugin \"%s\", in the %s callback",
 				   NameStr(state->ctx->slot->data.name),
@@ -1623,8 +1618,8 @@ LogicalIncreaseRestartDecodingForSlot(XLogRecPtr current_lsn, XLogRecPtr restart
 		SpinLockRelease(&slot->mutex);
 
 		elog(DEBUG1, "got new restart lsn %X/%X at %X/%X",
-			 (uint32) (restart_lsn >> 32), (uint32) restart_lsn,
-			 (uint32) (current_lsn >> 32), (uint32) current_lsn);
+			 LSN_FORMAT_ARGS(restart_lsn),
+			 LSN_FORMAT_ARGS(current_lsn));
 	}
 	else
 	{
@@ -1638,14 +1633,11 @@ LogicalIncreaseRestartDecodingForSlot(XLogRecPtr current_lsn, XLogRecPtr restart
 		SpinLockRelease(&slot->mutex);
 
 		elog(DEBUG1, "failed to increase restart lsn: proposed %X/%X, after %X/%X, current candidate %X/%X, current after %X/%X, flushed up to %X/%X",
-			 (uint32) (restart_lsn >> 32), (uint32) restart_lsn,
-			 (uint32) (current_lsn >> 32), (uint32) current_lsn,
-			 (uint32) (candidate_restart_lsn >> 32),
-			 (uint32) candidate_restart_lsn,
-			 (uint32) (candidate_restart_valid >> 32),
-			 (uint32) candidate_restart_valid,
-			 (uint32) (confirmed_flush >> 32),
-			 (uint32) confirmed_flush);
+			 LSN_FORMAT_ARGS(restart_lsn),
+			 LSN_FORMAT_ARGS(current_lsn),
+			 LSN_FORMAT_ARGS(candidate_restart_lsn),
+			 LSN_FORMAT_ARGS(candidate_restart_valid),
+			 LSN_FORMAT_ARGS(confirmed_flush));
 	}
 
 	/* candidates are already valid with the current flush position, apply */

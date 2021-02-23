@@ -4366,8 +4366,7 @@ ReorderBufferSerializedPath(char *path, ReplicationSlot *slot, TransactionId xid
 
 	snprintf(path, MAXPGPATH, "pg_replslot/%s/xid-%u-lsn-%X-%X.spill",
 			 NameStr(MyReplicationSlot->data.name),
-			 xid,
-			 (uint32) (recptr >> 32), (uint32) recptr);
+			 xid, LSN_FORMAT_ARGS(recptr));
 }
 
 /*

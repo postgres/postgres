@@ -83,14 +83,8 @@ pg_lsn_out(PG_FUNCTION_ARGS)
 	XLogRecPtr	lsn = PG_GETARG_LSN(0);
 	char		buf[MAXPG_LSNLEN + 1];
 	char	   *result;
-	uint32		id,
-				off;
 
-	/* Decode ID and offset */
-	id = (uint32) (lsn >> 32);
-	off = (uint32) lsn;
-
-	snprintf(buf, sizeof buf, "%X/%X", id, off);
+	snprintf(buf, sizeof buf, "%X/%X", LSN_FORMAT_ARGS(lsn));
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }

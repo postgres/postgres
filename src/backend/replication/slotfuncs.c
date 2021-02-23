@@ -659,8 +659,7 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("cannot advance replication slot to %X/%X, minimum is %X/%X",
-						(uint32) (moveto >> 32), (uint32) moveto,
-						(uint32) (minlsn >> 32), (uint32) minlsn)));
+						LSN_FORMAT_ARGS(moveto), LSN_FORMAT_ARGS(minlsn))));
 
 	/* Do the actual slot update, depending on the slot type */
 	if (OidIsValid(MyReplicationSlot->data.database))

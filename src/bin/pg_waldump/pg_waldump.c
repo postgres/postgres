@@ -467,8 +467,8 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 		   desc->rm_name,
 		   rec_len, XLogRecGetTotalLen(record),
 		   XLogRecGetXid(record),
-		   (uint32) (record->ReadRecPtr >> 32), (uint32) record->ReadRecPtr,
-		   (uint32) (xl_prev >> 32), (uint32) xl_prev);
+		   LSN_FORMAT_ARGS(record->ReadRecPtr),
+		   LSN_FORMAT_ARGS(xl_prev));
 
 	id = desc->rm_identify(info);
 	if (id == NULL)
@@ -972,8 +972,7 @@ main(int argc, char **argv)
 		else if (!XLByteInSeg(private.startptr, segno, WalSegSz))
 		{
 			pg_log_error("start WAL location %X/%X is not inside file \"%s\"",
-						 (uint32) (private.startptr >> 32),
-						 (uint32) private.startptr,
+						 LSN_FORMAT_ARGS(private.startptr),
 						 fname);
 			goto bad_argument;
 		}
@@ -1015,8 +1014,7 @@ main(int argc, char **argv)
 			private.endptr != (segno + 1) * WalSegSz)
 		{
 			pg_log_error("end WAL location %X/%X is not inside file \"%s\"",
-						 (uint32) (private.endptr >> 32),
-						 (uint32) private.endptr,
+						 LSN_FORMAT_ARGS(private.endptr),
 						 argv[argc - 1]);
 			goto bad_argument;
 		}
@@ -1048,8 +1046,7 @@ main(int argc, char **argv)
 
 	if (first_record == InvalidXLogRecPtr)
 		fatal_error("could not find a valid record after %X/%X",
-					(uint32) (private.startptr >> 32),
-					(uint32) private.startptr);
+					LSN_FORMAT_ARGS(private.startptr));
 
 	/*
 	 * Display a message that we're skipping data if `from` wasn't a pointer
@@ -1061,8 +1058,8 @@ main(int argc, char **argv)
 		printf(ngettext("first record is after %X/%X, at %X/%X, skipping over %u byte\n",
 						"first record is after %X/%X, at %X/%X, skipping over %u bytes\n",
 						(first_record - private.startptr)),
-			   (uint32) (private.startptr >> 32), (uint32) private.startptr,
-			   (uint32) (first_record >> 32), (uint32) first_record,
+			   LSN_FORMAT_ARGS(private.startptr),
+			   LSN_FORMAT_ARGS(first_record),
 			   (uint32) (first_record - private.startptr));
 
 	for (;;)
@@ -1110,8 +1107,7 @@ main(int argc, char **argv)
 
 	if (errormsg)
 		fatal_error("error in WAL record at %X/%X: %s",
-					(uint32) (xlogreader_state->ReadRecPtr >> 32),
-					(uint32) xlogreader_state->ReadRecPtr,
+					LSN_FORMAT_ARGS(xlogreader_state->ReadRecPtr),
 					errormsg);
 
 	XLogReaderFree(xlogreader_state);

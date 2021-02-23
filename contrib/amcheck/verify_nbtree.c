@@ -1078,8 +1078,7 @@ bt_target_page_check(BtreeCheckState *state)
 										state->targetblock,
 										BTreeTupleGetNAtts(itup, state->rel),
 										P_ISLEAF(topaque) ? "heap" : "index",
-										(uint32) (state->targetlsn >> 32),
-										(uint32) state->targetlsn)));
+										LSN_FORMAT_ARGS(state->targetlsn))));
 		}
 	}
 
@@ -1120,8 +1119,7 @@ bt_target_page_check(BtreeCheckState *state)
 					 errdetail_internal("Index tid=(%u,%u) tuple size=%zu lp_len=%u page lsn=%X/%X.",
 										state->targetblock, offset,
 										tupsize, ItemIdGetLength(itemid),
-										(uint32) (state->targetlsn >> 32),
-										(uint32) state->targetlsn),
+										LSN_FORMAT_ARGS(state->targetlsn)),
 					 errhint("This could be a torn page problem.")));
 
 		/* Check the number of index tuple attributes */
@@ -1147,8 +1145,7 @@ bt_target_page_check(BtreeCheckState *state)
 										BTreeTupleGetNAtts(itup, state->rel),
 										P_ISLEAF(topaque) ? "heap" : "index",
 										htid,
-										(uint32) (state->targetlsn >> 32),
-										(uint32) state->targetlsn)));
+										LSN_FORMAT_ARGS(state->targetlsn))));
 		}
 
 		/*
@@ -1195,8 +1192,7 @@ bt_target_page_check(BtreeCheckState *state)
 							RelationGetRelationName(state->rel)),
 					 errdetail_internal("Index tid=%s points to heap tid=%s page lsn=%X/%X.",
 										itid, htid,
-										(uint32) (state->targetlsn >> 32),
-										(uint32) state->targetlsn)));
+										LSN_FORMAT_ARGS(state->targetlsn))));
 		}
 
 		/*
@@ -1225,8 +1221,7 @@ bt_target_page_check(BtreeCheckState *state)
 											 RelationGetRelationName(state->rel)),
 							 errdetail_internal("Index tid=%s posting list offset=%d page lsn=%X/%X.",
 												itid, i,
-												(uint32) (state->targetlsn >> 32),
-												(uint32) state->targetlsn)));
+												LSN_FORMAT_ARGS(state->targetlsn))));
 				}
 
 				ItemPointerCopy(current, &last);
@@ -1282,8 +1277,7 @@ bt_target_page_check(BtreeCheckState *state)
 										itid,
 										P_ISLEAF(topaque) ? "heap" : "index",
 										htid,
-										(uint32) (state->targetlsn >> 32),
-										(uint32) state->targetlsn)));
+										LSN_FORMAT_ARGS(state->targetlsn))));
 		}
 
 		/* Fingerprint leaf page tuples (those that point to the heap) */
@@ -1390,8 +1384,7 @@ bt_target_page_check(BtreeCheckState *state)
 										itid,
 										P_ISLEAF(topaque) ? "heap" : "index",
 										htid,
-										(uint32) (state->targetlsn >> 32),
-										(uint32) state->targetlsn)));
+										LSN_FORMAT_ARGS(state->targetlsn))));
 		}
 		/* Reset, in case scantid was set to (itup) posting tuple's max TID */
 		skey->scantid = scantid;
@@ -1442,8 +1435,7 @@ bt_target_page_check(BtreeCheckState *state)
 										nitid,
 										P_ISLEAF(topaque) ? "heap" : "index",
 										nhtid,
-										(uint32) (state->targetlsn >> 32),
-										(uint32) state->targetlsn)));
+										LSN_FORMAT_ARGS(state->targetlsn))));
 		}
 
 		/*
@@ -1500,8 +1492,7 @@ bt_target_page_check(BtreeCheckState *state)
 								RelationGetRelationName(state->rel)),
 						 errdetail_internal("Last item on page tid=(%u,%u) page lsn=%X/%X.",
 											state->targetblock, offset,
-											(uint32) (state->targetlsn >> 32),
-											(uint32) state->targetlsn)));
+											LSN_FORMAT_ARGS(state->targetlsn))));
 			}
 		}
 
@@ -1907,8 +1898,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 							RelationGetRelationName(state->rel)),
 					 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%X.",
 										state->targetblock, blkno,
-										(uint32) (state->targetlsn >> 32),
-										(uint32) state->targetlsn)));
+										LSN_FORMAT_ARGS(state->targetlsn))));
 
 		/* Check level for non-ignorable page */
 		if (!P_IGNORE(opaque) && opaque->btpo.level != target_level - 1)
@@ -1993,8 +1983,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 										RelationGetRelationName(state->rel)),
 								 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%X.",
 													state->targetblock, blkno,
-													(uint32) (state->targetlsn >> 32),
-													(uint32) state->targetlsn)));
+													LSN_FORMAT_ARGS(state->targetlsn))));
 					pivotkey_offset = P_HIKEY;
 				}
 				itemid = PageGetItemIdCareful(state, state->targetblock,
@@ -2024,8 +2013,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 									RelationGetRelationName(state->rel)),
 							 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%X.",
 												state->targetblock, blkno,
-												(uint32) (state->targetlsn >> 32),
-												(uint32) state->targetlsn)));
+												LSN_FORMAT_ARGS(state->targetlsn))));
 				itup = state->lowkey;
 			}
 
@@ -2037,8 +2025,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 								RelationGetRelationName(state->rel)),
 						 errdetail_internal("Target block=%u child block=%u target page lsn=%X/%X.",
 											state->targetblock, blkno,
-											(uint32) (state->targetlsn >> 32),
-											(uint32) state->targetlsn)));
+											LSN_FORMAT_ARGS(state->targetlsn))));
 			}
 		}
 
@@ -2178,8 +2165,7 @@ bt_child_check(BtreeCheckState *state, BTScanInsert targetkey,
 						RelationGetRelationName(state->rel)),
 				 errdetail_internal("Parent block=%u child block=%u parent page lsn=%X/%X.",
 									state->targetblock, childblock,
-									(uint32) (state->targetlsn >> 32),
-									(uint32) state->targetlsn)));
+									LSN_FORMAT_ARGS(state->targetlsn))));
 
 	for (offset = P_FIRSTDATAKEY(copaque);
 		 offset <= maxoffset;
@@ -2220,8 +2206,7 @@ bt_child_check(BtreeCheckState *state, BTScanInsert targetkey,
 							RelationGetRelationName(state->rel)),
 					 errdetail_internal("Parent block=%u child index tid=(%u,%u) parent page lsn=%X/%X.",
 										state->targetblock, childblock, offset,
-										(uint32) (state->targetlsn >> 32),
-										(uint32) state->targetlsn)));
+										LSN_FORMAT_ARGS(state->targetlsn))));
 	}
 
 	pfree(child);
@@ -2292,8 +2277,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 				 errdetail_internal("Block=%u level=%u left sibling=%u page lsn=%X/%X.",
 									blkno, opaque->btpo.level,
 									opaque->btpo_prev,
-									(uint32) (pagelsn >> 32),
-									(uint32) pagelsn)));
+									LSN_FORMAT_ARGS(pagelsn))));
 		return;
 	}
 
@@ -2314,8 +2298,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 						RelationGetRelationName(state->rel)),
 				 errdetail_internal("Block=%u page lsn=%X/%X.",
 									blkno,
-									(uint32) (pagelsn >> 32),
-									(uint32) pagelsn)));
+									LSN_FORMAT_ARGS(pagelsn))));
 
 	/* Descend from the given page, which is an internal page */
 	elog(DEBUG1, "checking for interrupted multi-level deletion due to missing downlink in index \"%s\"",
@@ -2381,8 +2364,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 								 RelationGetRelationName(state->rel)),
 				 errdetail_internal("Top parent/target block=%u leaf block=%u top parent/under check lsn=%X/%X.",
 									blkno, childblk,
-									(uint32) (pagelsn >> 32),
-									(uint32) pagelsn)));
+									LSN_FORMAT_ARGS(pagelsn))));
 
 	/*
 	 * Iff leaf page is half-dead, its high key top parent link should point
@@ -2408,8 +2390,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 					RelationGetRelationName(state->rel)),
 			 errdetail_internal("Block=%u level=%u page lsn=%X/%X.",
 								blkno, opaque->btpo.level,
-								(uint32) (pagelsn >> 32),
-								(uint32) pagelsn)));
+								LSN_FORMAT_ARGS(pagelsn))));
 }
 
 /*

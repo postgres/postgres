@@ -801,7 +801,7 @@ SnapBuildDistributeNewCatalogSnapshot(SnapBuild *builder, XLogRecPtr lsn)
 			continue;
 
 		elog(DEBUG2, "adding a new snapshot to %u at %X/%X",
-			 txn->xid, (uint32) (lsn >> 32), (uint32) lsn);
+			 txn->xid, LSN_FORMAT_ARGS(lsn));
 
 		/*
 		 * increase the snapshot's refcount for the transaction we are handing
@@ -1191,7 +1191,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	{
 		ereport(DEBUG1,
 				(errmsg_internal("skipping snapshot at %X/%X while building logical decoding snapshot, xmin horizon too low",
-								 (uint32) (lsn >> 32), (uint32) lsn),
+								 LSN_FORMAT_ARGS(lsn)),
 				 errdetail_internal("initial xmin horizon of %u vs the snapshot's %u",
 									builder->initial_xmin_horizon, running->oldestRunningXid)));
 
@@ -1230,7 +1230,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 
 		ereport(LOG,
 				(errmsg("logical decoding found consistent point at %X/%X",
-						(uint32) (lsn >> 32), (uint32) lsn),
+						LSN_FORMAT_ARGS(lsn)),
 				 errdetail("There are no running transactions.")));
 
 		return false;
@@ -1274,7 +1274,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 
 		ereport(LOG,
 				(errmsg("logical decoding found initial starting point at %X/%X",
-						(uint32) (lsn >> 32), (uint32) lsn),
+						LSN_FORMAT_ARGS(lsn)),
 				 errdetail("Waiting for transactions (approximately %d) older than %u to end.",
 						   running->xcnt, running->nextXid)));
 
@@ -1298,7 +1298,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 
 		ereport(LOG,
 				(errmsg("logical decoding found initial consistent point at %X/%X",
-						(uint32) (lsn >> 32), (uint32) lsn),
+						LSN_FORMAT_ARGS(lsn)),
 				 errdetail("Waiting for transactions (approximately %d) older than %u to end.",
 						   running->xcnt, running->nextXid)));
 
@@ -1323,7 +1323,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 
 		ereport(LOG,
 				(errmsg("logical decoding found consistent point at %X/%X",
-						(uint32) (lsn >> 32), (uint32) lsn),
+						LSN_FORMAT_ARGS(lsn)),
 				 errdetail("There are no old transactions anymore.")));
 	}
 
@@ -1477,7 +1477,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	 * no hope continuing to decode anyway.
 	 */
 	sprintf(path, "pg_logical/snapshots/%X-%X.snap",
-			(uint32) (lsn >> 32), (uint32) lsn);
+			LSN_FORMAT_ARGS(lsn));
 
 	/*
 	 * first check whether some other backend already has written the snapshot
@@ -1520,7 +1520,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 
 	/* to make sure only we will write to this tempfile, include pid */
 	sprintf(tmppath, "pg_logical/snapshots/%X-%X.snap.%u.tmp",
-			(uint32) (lsn >> 32), (uint32) lsn, MyProcPid);
+			LSN_FORMAT_ARGS(lsn), MyProcPid);
 
 	/*
 	 * Unlink temporary file if it already exists, needs to have been before a
@@ -1670,7 +1670,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 		return false;
 
 	sprintf(path, "pg_logical/snapshots/%X-%X.snap",
-			(uint32) (lsn >> 32), (uint32) lsn);
+			LSN_FORMAT_ARGS(lsn));
 
 	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 
@@ -1854,7 +1854,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	ereport(LOG,
 			(errmsg("logical decoding found consistent point at %X/%X",
-					(uint32) (lsn >> 32), (uint32) lsn),
+					LSN_FORMAT_ARGS(lsn)),
 			 errdetail("Logical decoding will begin using saved snapshot.")));
 	return true;
 

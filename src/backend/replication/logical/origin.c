@@ -789,8 +789,7 @@ StartupReplicationOrigin(void)
 		ereport(LOG,
 				(errmsg("recovered replication state of node %u to %X/%X",
 						disk_state.roident,
-						(uint32) (disk_state.remote_lsn >> 32),
-						(uint32) disk_state.remote_lsn)));
+						LSN_FORMAT_ARGS(disk_state.remote_lsn))));
 	}
 
 	/* now check checksum */

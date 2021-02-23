@@ -776,8 +776,7 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
 
 		elog(DEBUG3, "switched to timeline %u valid until %X/%X",
 			 state->currTLI,
-			 (uint32) (state->currTLIValidUntil >> 32),
-			 (uint32) (state->currTLIValidUntil));
+			 LSN_FORMAT_ARGS(state->currTLIValidUntil));
 	}
 }
 

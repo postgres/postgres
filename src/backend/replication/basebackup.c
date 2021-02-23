@@ -1075,7 +1075,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	pq_sendint16(&buf, 2);		/* number of columns */
 
 	len = snprintf(str, sizeof(str),
-				   "%X/%X", (uint32) (ptr >> 32), (uint32) ptr);
+				   "%X/%X", LSN_FORMAT_ARGS(ptr));
 	pq_sendint32(&buf, len);
 	pq_sendbytes(&buf, str, len);
 

@@ -402,7 +402,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 			 "%s%u\t%X/%X\t%s\n",
 			 (srcfd < 0) ? "" : "\n",
 			 parentTLI,
-			 (uint32) (switchpoint >> 32), (uint32) (switchpoint),
+			 LSN_FORMAT_ARGS(switchpoint),
 			 reason);
 
 	nbytes = strlen(buffer);

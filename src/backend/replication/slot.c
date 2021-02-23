@@ -1242,8 +1242,7 @@ restart:
 		ereport(LOG,
 				(errmsg("invalidating slot \"%s\" because its restart_lsn %X/%X exceeds max_slot_wal_keep_size",
 						NameStr(slotname),
-						(uint32) (restart_lsn >> 32),
-						(uint32) restart_lsn)));
+						LSN_FORMAT_ARGS(restart_lsn))));
 
 		SpinLockAcquire(&s->mutex);
 		s->data.invalidated_at = s->data.restart_lsn;

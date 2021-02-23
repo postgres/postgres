@@ -2359,10 +2359,9 @@ send_feedback(XLogRecPtr recvpos, bool force, bool requestReply)
 
 	elog(DEBUG2, "sending feedback (force %d) to recv %X/%X, write %X/%X, flush %X/%X",
 		 force,
-		 (uint32) (recvpos >> 32), (uint32) recvpos,
-		 (uint32) (writepos >> 32), (uint32) writepos,
-		 (uint32) (flushpos >> 32), (uint32) flushpos
-		);
+		 LSN_FORMAT_ARGS(recvpos),
+		 LSN_FORMAT_ARGS(writepos),
+		 LSN_FORMAT_ARGS(flushpos));
 
 	walrcv_send(wrconn, reply_message->data, reply_message->len);
 

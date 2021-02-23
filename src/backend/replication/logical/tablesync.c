@@ -1120,9 +1120,7 @@ copy_table_done:
 
 	elog(DEBUG1,
 		 "LogicalRepSyncTableStart: '%s' origin_startpos lsn %X/%X",
-		 originname,
-		 (uint32) (*origin_startpos >> 32),
-		 (uint32) *origin_startpos);
+		 originname, LSN_FORMAT_ARGS(*origin_startpos));
 
 	/*
 	 * We are done with the initial data synchronization, update the state.
