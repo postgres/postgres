@@ -2679,7 +2679,7 @@ ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 	XLogRecPtr	prepare_end_lsn;
 	TimestampTz prepare_time;
 
-	txn = ReorderBufferTXNByXid(rb, xid, true, NULL, commit_lsn, false);
+	txn = ReorderBufferTXNByXid(rb, xid, false, NULL, commit_lsn, false);
 
 	/* unknown transaction, nothing to do */
 	if (txn == NULL)
