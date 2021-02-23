@@ -608,13 +608,6 @@ check_tuple_header_and_visibilty(HeapTupleHeader tuphdr, HeapCheckContext *ctx)
 								   ctx->tuphdr->t_hoff, ctx->lp_len));
 		header_garbled = true;
 	}
-	if ((ctx->tuphdr->t_infomask & HEAP_XMAX_LOCK_ONLY) &&
-		(ctx->tuphdr->t_infomask2 & HEAP_KEYS_UPDATED))
-	{
-		report_corruption(ctx,
-						  pstrdup("tuple is marked as only locked, but also claims key columns were updated"));
-		header_garbled = true;
-	}
 
 	if ((ctx->tuphdr->t_infomask & HEAP_XMAX_COMMITTED) &&
 		(ctx->tuphdr->t_infomask & HEAP_XMAX_IS_MULTI))
