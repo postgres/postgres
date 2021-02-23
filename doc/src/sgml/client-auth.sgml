@@ -229,8 +229,10 @@ hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceabl
        members of the role, directly or indirectly, and not just by
        virtue of being a superuser.
        The value <literal>replication</literal> specifies that the record
-       matches if a physical replication connection is requested (note that
-       replication connections do not specify any particular database).
+       matches if a physical replication connection is requested, however, it
+       doesn't match with logical replication connections. Note that physical
+       replication connections do not specify any particular database whereas
+       logical replication connections do specify it.
        Otherwise, this is the name of
        a specific <productname>PostgreSQL</productname> database.
        Multiple database names can be supplied by separating them with

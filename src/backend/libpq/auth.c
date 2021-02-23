@@ -417,7 +417,7 @@ ClientAuthentication(Port *port)
 #endif
 					_("no encryption");
 
-				if (am_walsender)
+				if (am_walsender && !am_db_walsender)
 					ereport(FATAL,
 							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					/* translator: last %s describes encryption state */
@@ -484,7 +484,7 @@ ClientAuthentication(Port *port)
 								  gai_strerror(port->remote_hostname_errcode)) : \
 					0))
 
-				if (am_walsender)
+				if (am_walsender && !am_db_walsender)
 					ereport(FATAL,
 							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					/* translator: last %s describes encryption state */
