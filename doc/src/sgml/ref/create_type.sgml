@@ -790,7 +790,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    Before <productname>PostgreSQL</productname> version 8.3, the name of
    a generated array type was always exactly the element type's name with one
    underscore character (<literal>_</literal>) prepended.  (Type names were
-   therefore restricted in length to one less character than other names.)
+   therefore restricted in length to one fewer character than other names.)
    While this is still usually the case, the array type name may vary from
    this in case of maximum-length names or collisions with user type names
    that begin with underscore.  Writing code that depends on this convention
