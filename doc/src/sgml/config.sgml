@@ -4503,15 +4503,16 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        view.  The standby will report
        the last write-ahead log location it has written, the last position it
        has flushed to disk, and the last position it has applied.
-       This parameter's
-       value is the maximum amount of time between reports.  Updates are
-       sent each time the write or flush positions change, or at least as
-       often as specified by this parameter.  Thus, the apply position may
-       lag slightly behind the true position.
+       This parameter's value is the maximum amount of time between reports.
+       Updates are sent each time the write or flush positions change, or as
+       often as specified by this parameter if set to a non-zero value.
+       There are additional cases where updates are sent while ignoring this
+       parameter; for example, when processing of the existing WAL completes
+       or when <varname>synchronous_commit</varname> is set to
+       <literal>remote_apply</literal>.
+       Thus, the apply position may lag slightly behind the true position.
        If this value is specified without units, it is taken as seconds.
-       The default value is 10 seconds.
-       Setting this parameter to zero disables status updates completely.
-       This parameter can only be set in
+       The default value is 10 seconds. This parameter can only be set in
        the <filename>postgresql.conf</filename> file or on the server
        command line.
       </para>
