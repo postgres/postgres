@@ -2075,7 +2075,7 @@ GetSnapshotDataReuse(Snapshot snapshot)
 	 * holding ProcArrayLock) exclusively). Thus the xactCompletionCount check
 	 * ensures we would detect if the snapshot would have changed.
 	 *
-	 * As the snapshot contents are the same as it was before, it is is safe
+	 * As the snapshot contents are the same as it was before, it is safe
 	 * to re-enter the snapshot's xmin into the PGPROC array. None of the rows
 	 * visible under the snapshot could already have been removed (that'd
 	 * require the set of running transactions to change) and it fulfills the

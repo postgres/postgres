@@ -424,7 +424,7 @@ SELECT f1, f1::polygon FROM CIRCLE_TBL WHERE f1 >= '<(0,0),1>';
 -- To polygon with less points
 SELECT f1, polygon(8, f1) FROM CIRCLE_TBL WHERE f1 >= '<(0,0),1>';
 
--- Too less points error
+-- Error for insufficient number of points
 SELECT f1, polygon(1, f1) FROM CIRCLE_TBL WHERE f1 >= '<(0,0),1>';
 
 -- Zero radius error

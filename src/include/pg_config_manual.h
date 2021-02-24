@@ -21,7 +21,7 @@
 
 /*
  * Maximum length for identifiers (e.g. table names, column names,
- * function names).  Names actually are limited to one less byte than this,
+ * function names).  Names actually are limited to one fewer byte than this,
  * because the length must include a trailing zero byte.
  *
  * Changing this requires an initdb.

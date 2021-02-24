@@ -448,7 +448,7 @@
      of <type>anycompatible</type> and <type>anycompatiblenonarray</type>
      inputs, the array element types of <type>anycompatiblearray</type>
      inputs, the range subtypes of <type>anycompatiblerange</type> inputs,
-     and the multirange subtypes of <type>anycompatiablemultirange</type>
+     and the multirange subtypes of <type>anycompatiblemultirange</type>
      inputs.  If <type>anycompatiblenonarray</type> is present then the
      common type is required to be a non-array type.  Once a common type is
      identified, arguments in <type>anycompatible</type>

@@ -6458,7 +6458,7 @@ threadRun(void *arg)
 
 			/*
 			 * If advanceConnectionState changed client to finished state,
-			 * that's one less client that remains.
+			 * that's one fewer client that remains.
 			 */
 			if (st->state == CSTATE_FINISHED || st->state == CSTATE_ABORTED)
 				remains--;

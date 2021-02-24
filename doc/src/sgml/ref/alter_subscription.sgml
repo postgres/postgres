@@ -56,7 +56,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
    allocated for the subscription on the remote host are released. If due to
    network breakdown or some other error, <productname>PostgreSQL</productname>
    is unable to remove the slots, an ERROR will be reported. To proceed in this
-   situation, either the user need to retry the operation or disassociate the
+   situation, the user either needs to retry the operation or disassociate the
    slot from the subscription and drop the subscription as explained in
    <xref linkend="sql-dropsubscription"/>.
   </para>

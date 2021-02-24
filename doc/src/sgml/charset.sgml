@@ -619,7 +619,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     name such as <literal>de_DE</literal> can be considered unique
     within a given database even though it would not be unique globally.
     Use of the stripped collation names is recommended, since it will
-    make one less thing you need to change if you decide to change to
+    make one fewer thing you need to change if you decide to change to
     another database encoding.  Note however that the <literal>default</literal>,
     <literal>C</literal>, and <literal>POSIX</literal> collations can be used regardless of
     the database encoding.

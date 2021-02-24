@@ -791,9 +791,9 @@ typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
      <para>
        The optional <function>filter_prepare_cb</function> callback
        is called to determine whether data that is part of the current
-       two-phase commit transaction should be considered for decode
-       at this prepare stage or as a regular one-phase transaction at
-       <command>COMMIT PREPARED</command> time later. To signal that
+       two-phase commit transaction should be considered for decoding
+       at this prepare stage or later as a regular one-phase transaction at
+       <command>COMMIT PREPARED</command> time. To signal that
        decoding should be skipped, return <literal>true</literal>;
        <literal>false</literal> otherwise. When the callback is not
        defined, <literal>false</literal> is assumed (i.e. nothing is
@@ -820,12 +820,12 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
       The required <function>begin_prepare_cb</function> callback is called
       whenever the start of a prepared transaction has been decoded. The
       <parameter>gid</parameter> field, which is part of the
-      <parameter>txn</parameter> parameter can be used in this callback to
-      check if the plugin has already received this prepare in which case it
-      can skip the remaining changes of the transaction. This can only happen
-      if the user restarts the decoding after receiving the prepare for a
-      transaction but before receiving the commit prepared say because of some
-      error.
+      <parameter>txn</parameter> parameter, can be used in this callback to
+      check if the plugin has already received this <command>PREPARE</command>
+      in which case it can skip the remaining changes of the transaction.
+      This can only happen if the user restarts the decoding after receiving
+      the <command>PREPARE</command> for a transaction but before receiving
+      the <command>COMMIT PREPARED</command>, say because of some error.
       <programlisting>
        typedef void (*LogicalDecodeBeginPrepareCB) (struct LogicalDecodingContext *ctx,
                                                     ReorderBufferTXN *txn);
@@ -842,7 +842,7 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
       decoded. The <function>change_cb</function> callback for all modified
       rows will have been called before this, if there have been any modified
       rows. The <parameter>gid</parameter> field, which is part of the
-      <parameter>txn</parameter> parameter can be used in this callback.
+      <parameter>txn</parameter> parameter, can be used in this callback.
       <programlisting>
        typedef void (*LogicalDecodePrepareCB) (struct LogicalDecodingContext *ctx,
                                                ReorderBufferTXN *txn,
@@ -856,9 +856,9 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
 
      <para>
       The required <function>commit_prepared_cb</function> callback is called
-      whenever a transaction commit prepared has been decoded. The
-      <parameter>gid</parameter> field, which is part of the
-      <parameter>txn</parameter> parameter can be used in this callback.
+      whenever a transaction <command>COMMIT PREPARED</command> has been decoded.
+      The <parameter>gid</parameter> field, which is part of the
+      <parameter>txn</parameter> parameter, can be used in this callback.
       <programlisting>
        typedef void (*LogicalDecodeCommitPreparedCB) (struct LogicalDecodingContext *ctx,
                                                       ReorderBufferTXN *txn,
@@ -872,15 +872,15 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
 
      <para>
       The required <function>rollback_prepared_cb</function> callback is called
-      whenever a transaction rollback prepared has been decoded. The
-      <parameter>gid</parameter> field, which is part of the
-      <parameter>txn</parameter> parameter can be used in this callback. The
+      whenever a transaction <command>ROLLBACK PREPARED</command> has been
+      decoded. The <parameter>gid</parameter> field, which is part of the
+      <parameter>txn</parameter> parameter, can be used in this callback. The
       parameters <parameter>prepare_end_lsn</parameter> and
       <parameter>prepare_time</parameter> can be used to check if the plugin
-      has received this prepare transaction in which case it can apply the
-      rollback, otherwise, it can skip the rollback operation. The
+      has received this <command>PREPARE TRANSACTION</command> in which case
+      it can apply the rollback, otherwise, it can skip the rollback operation. The
       <parameter>gid</parameter> alone is not sufficient because the downstream
-      node can have prepared transaction with same identifier.
+      node can have a prepared transaction with same identifier.
       <programlisting>
        typedef void (*LogicalDecodeRollbackPreparedCB) (struct LogicalDecodingContext *ctx,
                                                         ReorderBufferTXN *txn,
@@ -1122,7 +1122,8 @@ OutputPluginWrite(ctx, true);
     the <function>stream_commit_cb</function> callback
     (or possibly aborted using the <function>stream_abort_cb</function> callback).
     If two-phase commits are supported, the transaction can be prepared using the
-    <function>stream_prepare_cb</function> callback, commit prepared using the
+    <function>stream_prepare_cb</function> callback,
+    <command>COMMIT PREPARED</command> using the
     <function>commit_prepared_cb</function> callback or aborted using the
     <function>rollback_prepared_cb</function>.
    </para>
@@ -1214,7 +1215,7 @@ stream_commit_cb(...);  &lt;-- commit of the streamed transaction
    </para>
 
    <para>
-    When a prepared transaction is rollbacked using the
+    When a prepared transaction is rolled back using the
     <command>ROLLBACK PREPARED</command>, then the
     <function>rollback_prepared_cb</function> callback is invoked and when the
     prepared transaction is committed using <command>COMMIT PREPARED</command>,

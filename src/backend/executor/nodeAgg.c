@@ -2070,8 +2070,7 @@ initialize_hash_entry(AggState *aggstate, TupleHashTable hashtable,
 }
 
 /*
- * Look up hash entries for the current tuple in all hashed grouping sets,
- * returning an array of pergroup pointers suitable for advance_aggregates.
+ * Look up hash entries for the current tuple in all hashed grouping sets.
  *
  * Be aware that lookup_hash_entry can reset the tmpcontext.
  *

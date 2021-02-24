@@ -626,7 +626,7 @@ ExecForeignBatchInsert(EState *estate,
      Insert multiple tuples in bulk into the foreign table.
      The parameters are the same for <function>ExecForeignInsert</function>
      except <literal>slots</literal> and <literal>planSlots</literal> contain
-     multiple tuples and <literal>*numSlots></literal> specifies the number of
+     multiple tuples and <literal>*numSlots</literal> specifies the number of
      tuples in those arrays.
     </para>
 
@@ -655,7 +655,7 @@ ExecForeignBatchInsert(EState *estate,
      <literal>NULL</literal>, attempts to insert into the foreign table will
      use <function>ExecForeignInsert</function>.
      This function is not used if the <command>INSERT</command> has the
-     <literal>RETURNING></literal> clause.
+     <literal>RETURNING</literal> clause.
     </para>
 
     <para>
@@ -672,9 +672,8 @@ GetForeignModifyBatchSize(ResultRelInfo *rinfo);
 
      Report the maximum number of tuples that a single
      <function>ExecForeignBatchInsert</function> call can handle for
-     the specified foreign table.  That is, The executor passes at most
-     the number of tuples that this function returns to
-     <function>ExecForeignBatchInsert</function>.
+     the specified foreign table.  The executor passes at most
+     the given number of tuples to <function>ExecForeignBatchInsert</function>.
      <literal>rinfo</literal> is the <structname>ResultRelInfo</structname> struct describing
      the target foreign table.
      The FDW is expected to provide a foreign server and/or foreign

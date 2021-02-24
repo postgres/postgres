@@ -719,11 +719,11 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 }
 
 /*
- * Expand a tuple which has less attributes than required. For each attribute
+ * Expand a tuple which has fewer attributes than required. For each attribute
  * not present in the sourceTuple, if there is a missing value that will be
  * used. Otherwise the attribute will be set to NULL.
  *
- * The source tuple must have less attributes than the required number.
+ * The source tuple must have fewer attributes than the required number.
  *
  * Only one of targetHeapTuple and targetMinimalTuple may be supplied. The
  * other argument must be NULL.

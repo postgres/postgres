@@ -186,7 +186,7 @@ get_am_oid(const char *amname, bool missing_ok)
 }
 
 /*
- * get_am_name - given an access method OID name and type, look up its name.
+ * get_am_name - given an access method OID, look up its name.
  */
 char *
 get_am_name(Oid amOid)

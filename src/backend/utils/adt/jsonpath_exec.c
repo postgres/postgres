@@ -263,7 +263,7 @@ static int	compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
  *		implement @? and @@ operators, which in turn are intended to have an
  *		index support.  Thus, it's desirable to make it easier to achieve
  *		consistency between index scan results and sequential scan results.
- *		So, we throw as less errors as possible.  Regarding this function,
+ *		So, we throw as few errors as possible.  Regarding this function,
  *		such behavior also matches behavior of JSON_EXISTS() clause of
  *		SQL/JSON.  Regarding jsonb_path_match(), this function doesn't have
  *		an analogy in SQL/JSON, so we define its behavior on our own.

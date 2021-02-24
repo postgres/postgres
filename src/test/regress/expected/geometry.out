@@ -4325,7 +4325,7 @@ SELECT f1, polygon(8, f1) FROM CIRCLE_TBL WHERE f1 >= '<(0,0),1>';
  <(100,1),115>  | ((-15,1),(18.6827201635,82.3172798365),(100,116),(181.317279836,82.3172798365),(215,1),(181.317279836,-80.3172798365),(100,-114),(18.6827201635,-80.3172798365))
 (6 rows)
 
--- Too less points error
+-- Error for insufficient number of points
 SELECT f1, polygon(1, f1) FROM CIRCLE_TBL WHERE f1 >= '<(0,0),1>';
 ERROR:  must request at least 2 points
 -- Zero radius error

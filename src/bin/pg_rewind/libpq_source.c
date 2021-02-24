@@ -539,7 +539,7 @@ process_queued_fetch_requests(libpq_source *src)
 						 chunkoff, rq->path, (int64) rq->offset);
 
 			/*
-			 * We should not receive receive more data than we requested, or
+			 * We should not receive more data than we requested, or
 			 * pg_read_binary_file() messed up.  We could receive less,
 			 * though, if the file was truncated in the source after we
 			 * checked its size. That's OK, there should be a WAL record of

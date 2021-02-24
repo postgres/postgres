@@ -645,7 +645,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt, bool iseq,
 
 			/*
 			 * The calculation so far gave us a selectivity for the "<=" case.
-			 * We'll have one less tuple for "<" and one additional tuple for
+			 * We'll have one fewer tuple for "<" and one additional tuple for
 			 * ">=", the latter of which we'll reverse the selectivity for
 			 * below, so we can simply subtract one tuple for both cases.  The
 			 * cases that need this adjustment can be identified by iseq being
