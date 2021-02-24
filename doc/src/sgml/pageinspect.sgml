@@ -211,7 +211,7 @@ test=# SELECT tuple_data_split('pg_class'::regclass, t_data, t_infomask, t_infom
      </para>
      <para>
       If <parameter>do_detoast</parameter> is <literal>true</literal>,
-      attribute that will be detoasted as needed. Default value is
+      attributes will be detoasted as needed. Default value is
       <literal>false</literal>.
      </para>
     </listitem>
