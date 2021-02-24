@@ -1265,7 +1265,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
 <para>
     The query trees generated from rule actions are thrown into the
     rewrite system again, and maybe more rules get applied resulting
-    in more or less query trees.
+    in additional or fewer query trees.
     So a rule's actions must have either a different
     command type or a different result relation than the rule itself is
     on, otherwise this recursive process will end up in an infinite loop.
