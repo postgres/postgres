@@ -48,7 +48,7 @@ SELECT satisfies_hash_partition('mchash'::regclass, 3, 1, NULL::int);
 ERROR:  number of partitioning columns (2) does not match number of partition keys provided (1)
 -- wrong argument type
 SELECT satisfies_hash_partition('mchash'::regclass, 2, 1, NULL::int, NULL::int);
-ERROR:  column 2 of the partition key has type "text", but supplied value is of type "integer"
+ERROR:  column 2 of the partition key has type text, but supplied value is of type integer
 -- ok, should be false
 SELECT satisfies_hash_partition('mchash'::regclass, 4, 0, 0, ''::text);
  satisfies_hash_partition 

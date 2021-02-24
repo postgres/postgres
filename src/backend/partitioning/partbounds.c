@@ -4755,7 +4755,7 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 				if (argtype != key->parttypid[j] && !IsBinaryCoercible(argtype, key->parttypid[j]))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("column %d of the partition key has type \"%s\", but supplied value is of type \"%s\"",
+							 errmsg("column %d of the partition key has type %s, but supplied value is of type %s",
 									j + 1, format_type_be(key->parttypid[j]), format_type_be(argtype))));
 
 				fmgr_info_copy(&my_extra->partsupfunc[j],
