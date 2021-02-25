@@ -936,7 +936,16 @@ okcolors(struct nfa *nfa,
 		}
 		else if (cd->nschrs == 0 && cd->nuchrs == 0)
 		{
-			/* parent empty, its arcs change color to subcolor */
+			/*
+			 * Parent is now empty, so just change all its arcs to the
+			 * subcolor, then free the parent.
+			 *
+			 * It is not obvious that simply relabeling the arcs like this is
+			 * OK; it appears to risk creating duplicate arcs.  We are
+			 * basically relying on the assumption that processing of a
+			 * bracket expression can't create arcs of both a color and its
+			 * subcolor between the bracket's endpoints.
+			 */
 			cd->sub = NOSUB;
 			scd = &cm->cd[sco];
 			assert(scd->nschrs > 0 || scd->nuchrs > 0);
@@ -1062,6 +1071,7 @@ colorcomplement(struct nfa *nfa,
 	struct colordesc *cd;
 	struct colordesc *end = CDEND(cm);
 	color		co;
+	struct arc *a;
 
 	assert(of != from);
 
@@ -1069,10 +1079,26 @@ colorcomplement(struct nfa *nfa,
 	if (findarc(of, PLAIN, RAINBOW) != NULL)
 		return;
 
+	/* Otherwise, transiently mark the colors that appear in of's out-arcs */
+	for (a = of->outs; a != NULL; a = a->outchain)
+	{
+		if (a->type == PLAIN)
+		{
+			assert(a->co >= 0);
+			cd = &cm->cd[a->co];
+			assert(!UNUSEDCOLOR(cd));
+			cd->flags |= COLMARK;
+		}
+	}
+
+	/* Scan colors, clear transient marks, add arcs for unmarked colors */
 	for (cd = cm->cd, co = 0; cd < end && !CISERR(); cd++, co++)
-		if (!UNUSEDCOLOR(cd) && !(cd->flags & PSEUDO))
-			if (findarc(of, PLAIN, co) == NULL)
-				newarc(nfa, type, co, from, to);
+	{
+		if (cd->flags & COLMARK)
+			cd->flags &= ~COLMARK;
+		else if (!UNUSEDCOLOR(cd) && !(cd->flags & PSEUDO))
+			newarc(nfa, type, co, from, to);
+	}
 }
 
 

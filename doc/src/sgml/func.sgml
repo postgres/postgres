@@ -6097,6 +6097,9 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
     non-ASCII characters to belong to any of these classes.)
     In addition to these standard character
     classes, <productname>PostgreSQL</productname> defines
+    the <literal>word</literal> character class, which is the same as
+    <literal>alnum</literal> plus the underscore (<literal>_</literal>)
+    character, and
     the <literal>ascii</literal> character class, which contains exactly
     the 7-bit ASCII set.
    </para>
@@ -6108,9 +6111,9 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
     matching empty strings at the beginning
     and end of a word respectively.  A word is defined as a sequence
     of word characters that is neither preceded nor followed by word
-    characters.  A word character is an <literal>alnum</literal> character (as
-    defined by the <acronym>POSIX</acronym> character class described above)
-    or an underscore.  This is an extension, compatible with but not
+    characters.  A word character is any character belonging to the
+    <literal>word</literal> character class, that is, any letter, digit,
+    or underscore.  This is an extension, compatible with but not
     specified by <acronym>POSIX</acronym> 1003.2, and should be used with
     caution in software intended to be portable to other systems.
     The constraint escapes described below are usually preferable; they
@@ -6330,8 +6333,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
 
        <row>
        <entry> <literal>\w</literal> </entry>
-       <entry> <literal>[[:alnum:]_]</literal>
-       (note underscore is included) </entry>
+       <entry> <literal>[[:word:]]</literal> </entry>
        </row>
 
        <row>
@@ -6346,21 +6348,18 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
 
        <row>
        <entry> <literal>\W</literal> </entry>
-       <entry> <literal>[^[:alnum:]_]</literal>
-       (note underscore is included) </entry>
+       <entry> <literal>[^[:word:]]</literal> </entry>
        </row>
       </tbody>
      </tgroup>
     </table>
 
    <para>
-    Within bracket expressions, <literal>\d</literal>, <literal>\s</literal>,
-    and <literal>\w</literal> lose their outer brackets,
-    and <literal>\D</literal>, <literal>\S</literal>, and <literal>\W</literal> are illegal.
-    (So, for example, <literal>[a-c\d]</literal> is equivalent to
+    The class-shorthand escapes also work within bracket expressions,
+    although the definitions shown above are not quite syntactically
+    valid in that context.
+    For example, <literal>[a-c\d]</literal> is equivalent to
     <literal>[a-c[:digit:]]</literal>.
-    Also, <literal>[a-c\D]</literal>, which is equivalent to
-    <literal>[a-c^[:digit:]]</literal>, is illegal.)
    </para>
 
    <table id="posix-constraint-escapes-table">

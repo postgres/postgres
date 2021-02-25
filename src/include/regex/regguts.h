@@ -128,6 +128,18 @@
 
 
 /*
+ * known character classes
+ */
+enum char_classes
+{
+	CC_ALNUM, CC_ALPHA, CC_ASCII, CC_BLANK, CC_CNTRL, CC_DIGIT, CC_GRAPH,
+	CC_LOWER, CC_PRINT, CC_PUNCT, CC_SPACE, CC_UPPER, CC_XDIGIT, CC_WORD
+};
+
+#define NUM_CCLASSES 14
+
+
+/*
  * As soon as possible, we map chrs into equivalence classes -- "colors" --
  * which are of much more manageable number.
  *
@@ -164,11 +176,13 @@ struct colordesc
 #define  NOSUB	 COLORLESS		/* value of "sub" when no open subcolor */
 	struct arc *arcs;			/* chain of all arcs of this color */
 	chr			firstchr;		/* simple char first assigned to this color */
-	int			flags;			/* bit values defined next */
+	int			flags;			/* bitmask of the following flags: */
 #define  FREECOL 01				/* currently free */
 #define  PSEUDO  02				/* pseudocolor, no real chars */
-#define  UNUSEDCOLOR(cd) ((cd)->flags & FREECOL)
+#define  COLMARK 04				/* temporary marker used in some functions */
 };
+
+#define  UNUSEDCOLOR(cd) ((cd)->flags & FREECOL)
 
 /*
  * The color map itself
@@ -198,8 +212,6 @@ struct colordesc
  * The colormapranges are required to be nonempty, nonoverlapping, and to
  * appear in increasing chr-value order.
  */
-
-#define NUM_CCLASSES 13			/* must match data in regc_locale.c */
 
 typedef struct colormaprange
 {

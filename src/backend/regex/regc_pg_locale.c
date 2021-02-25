@@ -401,6 +401,15 @@ pg_wc_isalnum(pg_wchar c)
 }
 
 static int
+pg_wc_isword(pg_wchar c)
+{
+	/* We define word characters as alnum class plus underscore */
+	if (c == CHR('_'))
+		return 1;
+	return pg_wc_isalnum(c);
+}
+
+static int
 pg_wc_isupper(pg_wchar c)
 {
 	switch (pg_regex_strategy)

@@ -46,13 +46,18 @@ static struct subre *parsebranch(struct vars *, int, int, struct state *, struct
 static void parseqatom(struct vars *, int, int, struct state *, struct state *, struct subre *);
 static void nonword(struct vars *, int, struct state *, struct state *);
 static void word(struct vars *, int, struct state *, struct state *);
+static void charclass(struct vars *, enum char_classes,
+					  struct state *, struct state *);
+static void charclasscomplement(struct vars *, enum char_classes,
+								struct state *, struct state *);
 static int	scannum(struct vars *);
 static void repeat(struct vars *, struct state *, struct state *, int, int);
 static void bracket(struct vars *, struct state *, struct state *);
 static void cbracket(struct vars *, struct state *, struct state *);
-static void brackpart(struct vars *, struct state *, struct state *);
+static void brackpart(struct vars *, struct state *, struct state *, bool *);
 static const chr *scanplain(struct vars *);
 static void onechr(struct vars *, chr, struct state *, struct state *);
+static void optimizebracket(struct vars *, struct state *, struct state *);
 static void wordchrs(struct vars *);
 static void processlacon(struct vars *, struct state *, struct state *, int,
 						 struct state *, struct state *);
@@ -81,8 +86,6 @@ static const char *stid(struct subre *, char *, size_t);
 /* === regc_lex.c === */
 static void lexstart(struct vars *);
 static void prefixes(struct vars *);
-static void lexnest(struct vars *, const chr *, const chr *);
-static void lexword(struct vars *);
 static int	next(struct vars *);
 static int	lexescape(struct vars *);
 static chr	lexdigits(struct vars *, int, int, int);
@@ -206,6 +209,7 @@ static void freecvec(struct cvec *);
 static int	pg_wc_isdigit(pg_wchar c);
 static int	pg_wc_isalpha(pg_wchar c);
 static int	pg_wc_isalnum(pg_wchar c);
+static int	pg_wc_isword(pg_wchar c);
 static int	pg_wc_isupper(pg_wchar c);
 static int	pg_wc_islower(pg_wchar c);
 static int	pg_wc_isgraph(pg_wchar c);
@@ -220,7 +224,8 @@ static chr	element(struct vars *, const chr *, const chr *);
 static struct cvec *range(struct vars *, chr, chr, int);
 static int	before(chr, chr);
 static struct cvec *eclass(struct vars *, chr, int);
-static struct cvec *cclass(struct vars *, const chr *, const chr *, int);
+static enum char_classes lookupcclass(struct vars *, const chr *, const chr *);
+static struct cvec *cclasscvec(struct vars *, enum char_classes, int);
 static int	cclass_column_index(struct colormap *, chr);
 static struct cvec *allcases(struct vars *, chr);
 static int	cmp(const chr *, const chr *, size_t);
@@ -233,14 +238,12 @@ struct vars
 	regex_t    *re;
 	const chr  *now;			/* scan pointer into string */
 	const chr  *stop;			/* end of string */
-	const chr  *savenow;		/* saved now and stop for "subroutine call" */
-	const chr  *savestop;
 	int			err;			/* error code (0 if none) */
 	int			cflags;			/* copy of compile flags */
 	int			lasttype;		/* type of previous token */
 	int			nexttype;		/* type of next token */
 	chr			nextvalue;		/* value (if any) of next token */
-	int			lexcon;			/* lexical context type (see lex.c) */
+	int			lexcon;			/* lexical context type (see regc_lex.c) */
 	int			nsubexp;		/* subexpression count */
 	struct subre **subs;		/* subRE pointer vector */
 	size_t		nsubs;			/* length of vector */
@@ -287,6 +290,8 @@ struct vars
 #define ECLASS	'E'				/* start of [= */
 #define CCLASS	'C'				/* start of [: */
 #define END 'X'					/* end of [. [= [: */
+#define CCLASSS	's'				/* char class shorthand escape */
+#define CCLASSC	'c'				/* complement char class shorthand escape */
 #define RANGE	'R'				/* - within [] which might be range delim. */
 #define LACON	'L'				/* lookaround constraint subRE */
 #define AHEAD	'a'				/* color-lookahead arc */
@@ -356,7 +361,6 @@ pg_regcomp(regex_t *re,
 	v->re = re;
 	v->now = string;
 	v->stop = v->now + len;
-	v->savenow = v->savestop = NULL;
 	v->err = 0;
 	v->cflags = flags;
 	v->nsubexp = 0;
@@ -835,23 +839,25 @@ parseqatom(struct vars *v,
 			return;
 			break;
 		case '<':
-			wordchrs(v);		/* does NEXT() */
+			wordchrs(v);
 			s = newstate(v->nfa);
 			NOERR();
 			nonword(v, BEHIND, lp, s);
 			word(v, AHEAD, s, rp);
+			NEXT();
 			return;
 			break;
 		case '>':
-			wordchrs(v);		/* does NEXT() */
+			wordchrs(v);
 			s = newstate(v->nfa);
 			NOERR();
 			word(v, BEHIND, lp, s);
 			nonword(v, AHEAD, s, rp);
+			NEXT();
 			return;
 			break;
 		case WBDRY:
-			wordchrs(v);		/* does NEXT() */
+			wordchrs(v);
 			s = newstate(v->nfa);
 			NOERR();
 			nonword(v, BEHIND, lp, s);
@@ -860,10 +866,11 @@ parseqatom(struct vars *v,
 			NOERR();
 			word(v, BEHIND, lp, s);
 			nonword(v, AHEAD, s, rp);
+			NEXT();
 			return;
 			break;
 		case NWBDRY:
-			wordchrs(v);		/* does NEXT() */
+			wordchrs(v);
 			s = newstate(v->nfa);
 			NOERR();
 			word(v, BEHIND, lp, s);
@@ -872,6 +879,7 @@ parseqatom(struct vars *v,
 			NOERR();
 			nonword(v, BEHIND, lp, s);
 			nonword(v, AHEAD, s, rp);
+			NEXT();
 			return;
 			break;
 		case LACON:				/* lookaround constraint */
@@ -923,6 +931,16 @@ parseqatom(struct vars *v,
 			else
 				cbracket(v, lp, rp);
 			assert(SEE(']') || ISERR());
+			NEXT();
+			break;
+		case CCLASSS:
+			charclass(v, (enum char_classes) v->nextvalue, lp, rp);
+			okcolors(v->nfa, v->cm);
+			NEXT();
+			break;
+		case CCLASSC:
+			charclasscomplement(v, (enum char_classes) v->nextvalue, lp, rp);
+			/* charclasscomplement() did okcolors() internally */
 			NEXT();
 			break;
 		case '.':
@@ -1339,6 +1357,75 @@ word(struct vars *v,
 }
 
 /*
+ * charclass - generate arcs for a character class
+ *
+ * This is used for both atoms (\w and sibling escapes) and for elements
+ * of bracket expressions.  The caller is responsible for calling okcolors()
+ * at the end of processing the atom or bracket.
+ */
+static void
+charclass(struct vars *v,
+		  enum char_classes cls,
+		  struct state *lp,
+		  struct state *rp)
+{
+	struct cvec *cv;
+
+	/* obtain possibly-cached cvec for char class */
+	NOTE(REG_ULOCALE);
+	cv = cclasscvec(v, cls, (v->cflags & REG_ICASE));
+	NOERR();
+
+	/* build the arcs; this may cause color splitting */
+	subcolorcvec(v, cv, lp, rp);
+}
+
+/*
+ * charclasscomplement - generate arcs for a complemented character class
+ *
+ * This is used for both atoms (\W and sibling escapes) and for elements
+ * of bracket expressions.  In bracket expressions, it is the caller's
+ * responsibility that there not be any open subcolors when this is called.
+ */
+static void
+charclasscomplement(struct vars *v,
+					enum char_classes cls,
+					struct state *lp,
+					struct state *rp)
+{
+	struct state *cstate;
+	struct cvec *cv;
+
+	/* make dummy state to hang temporary arcs on */
+	cstate = newstate(v->nfa);
+	NOERR();
+
+	/* obtain possibly-cached cvec for char class */
+	NOTE(REG_ULOCALE);
+	cv = cclasscvec(v, cls, (v->cflags & REG_ICASE));
+	NOERR();
+
+	/* build arcs for char class; this may cause color splitting */
+	subcolorcvec(v, cv, cstate, cstate);
+
+	/* in NLSTOP mode, ensure newline is not part of the result set */
+	if (v->cflags & REG_NLSTOP)
+		newarc(v->nfa, PLAIN, v->nlcolor, cstate, cstate);
+	NOERR();
+
+	/* clean up any subcolors in the arc set */
+	okcolors(v->nfa, v->cm);
+	NOERR();
+
+	/* now build output arcs for the complement of the char class */
+	colorcomplement(v->nfa, v->cm, PLAIN, cstate, lp, rp);
+	NOERR();
+
+	/* clean up dummy state */
+	dropstate(v->nfa, cstate);
+}
+
+/*
  * scannum - scan a number
  */
 static int						/* value, <= DUPMAX */
@@ -1456,6 +1543,7 @@ repeat(struct vars *v,
 
 /*
  * bracket - handle non-complemented bracket expression
+ *
  * Also called from cbracket for complemented bracket expressions.
  */
 static void
@@ -1463,16 +1551,52 @@ bracket(struct vars *v,
 		struct state *lp,
 		struct state *rp)
 {
+	/*
+	 * We can't process complemented char classes (e.g. \W) immediately while
+	 * scanning the bracket expression, else color bookkeeping gets confused.
+	 * Instead, remember whether we saw any in have_cclassc[], and process
+	 * them at the end.
+	 */
+	bool		have_cclassc[NUM_CCLASSES];
+	bool		any_cclassc;
+	int			i;
+
+	memset(have_cclassc, false, sizeof(have_cclassc));
+
 	assert(SEE('['));
 	NEXT();
 	while (!SEE(']') && !SEE(EOS))
-		brackpart(v, lp, rp);
+		brackpart(v, lp, rp, have_cclassc);
 	assert(SEE(']') || ISERR());
+
+	/* close up open subcolors from the positive bracket elements */
 	okcolors(v->nfa, v->cm);
+	NOERR();
+
+	/* now handle any complemented elements */
+	any_cclassc = false;
+	for (i = 0; i < NUM_CCLASSES; i++)
+	{
+		if (have_cclassc[i])
+		{
+			charclasscomplement(v, (enum char_classes) i, lp, rp);
+			NOERR();
+			any_cclassc = true;
+		}
+	}
+
+	/*
+	 * If we had any complemented elements, see if we can optimize the bracket
+	 * into a rainbow.  Since a complemented element is the only way a WHITE
+	 * arc could get into the result, there's no point in checking otherwise.
+	 */
+	if (any_cclassc)
+		optimizebracket(v, lp, rp);
 }
 
 /*
  * cbracket - handle complemented bracket expression
+ *
  * We do it by calling bracket() with dummy endpoints, and then complementing
  * the result.  The alternative would be to invoke rainbow(), and then delete
  * arcs as the b.e. is seen... but that gets messy, and is really quite
@@ -1496,7 +1620,9 @@ cbracket(struct vars *v,
 
 	/*
 	 * Easy part of complementing, and all there is to do since the MCCE code
-	 * was removed.
+	 * was removed.  Note that the result of colorcomplement() cannot be a
+	 * rainbow, since we don't allow empty brackets; so there's no point in
+	 * calling optimizebracket() again.
 	 */
 	colorcomplement(v->nfa, v->cm, PLAIN, left, lp, rp);
 	NOERR();
@@ -1511,14 +1637,15 @@ cbracket(struct vars *v,
 static void
 brackpart(struct vars *v,
 		  struct state *lp,
-		  struct state *rp)
+		  struct state *rp,
+		  bool *have_cclassc)
 {
 	chr			startc;
 	chr			endc;
 	struct cvec *cv;
+	enum char_classes cls;
 	const chr  *startp;
 	const chr  *endp;
-	chr			c[1];
 
 	/* parse something, get rid of special cases, take shortcuts */
 	switch (v->nexttype)
@@ -1528,15 +1655,14 @@ brackpart(struct vars *v,
 			return;
 			break;
 		case PLAIN:
-			c[0] = v->nextvalue;
+			startc = v->nextvalue;
 			NEXT();
 			/* shortcut for ordinary chr (not range) */
 			if (!SEE(RANGE))
 			{
-				onechr(v, c[0], lp, rp);
+				onechr(v, startc, lp, rp);
 				return;
 			}
-			startc = element(v, c, c + 1);
 			NOERR();
 			break;
 		case COLLEL:
@@ -1564,9 +1690,20 @@ brackpart(struct vars *v,
 			endp = scanplain(v);
 			INSIST(startp < endp, REG_ECTYPE);
 			NOERR();
-			cv = cclass(v, startp, endp, (v->cflags & REG_ICASE));
+			cls = lookupcclass(v, startp, endp);
 			NOERR();
-			subcolorcvec(v, cv, lp, rp);
+			charclass(v, cls, lp, rp);
+			return;
+			break;
+		case CCLASSS:
+			charclass(v, (enum char_classes) v->nextvalue, lp, rp);
+			NEXT();
+			return;
+			break;
+		case CCLASSC:
+			/* we cannot call charclasscomplement() immediately */
+			have_cclassc[v->nextvalue] = true;
+			NEXT();
 			return;
 			break;
 		default:
@@ -1582,9 +1719,8 @@ brackpart(struct vars *v,
 		{
 			case PLAIN:
 			case RANGE:
-				c[0] = v->nextvalue;
+				endc = v->nextvalue;
 				NEXT();
-				endc = element(v, c, c + 1);
 				NOERR();
 				break;
 			case COLLEL:
@@ -1618,7 +1754,7 @@ brackpart(struct vars *v,
 /*
  * scanplain - scan PLAIN contents of [. etc.
  *
- * Certain bits of trickery in lex.c know that this code does not try
+ * Certain bits of trickery in regc_lex.c know that this code does not try
  * to look past the final bracket of the [. etc.
  */
 static const chr *				/* just after end of sequence */
@@ -1665,38 +1801,97 @@ onechr(struct vars *v,
 }
 
 /*
+ * optimizebracket - see if bracket expression can be converted to RAINBOW
+ *
+ * Cases such as "[\s\S]" can produce a set of arcs of all colors, which we
+ * can replace by a single RAINBOW arc for efficiency.  (This might seem
+ * like a silly way to write ".", but it's seemingly a common locution in
+ * some other flavors of regex, so take the trouble to support it well.)
+ */
+static void
+optimizebracket(struct vars *v,
+				struct state *lp,
+				struct state *rp)
+{
+	struct colordesc *cd;
+	struct colordesc *end = CDEND(v->cm);
+	struct arc *a;
+	bool		israinbow;
+
+	/*
+	 * Scan lp's out-arcs and transiently mark the mentioned colors.  We
+	 * expect that all of lp's out-arcs are plain, non-RAINBOW arcs to rp.
+	 * (Note: there shouldn't be any pseudocolors yet, but check anyway.)
+	 */
+	for (a = lp->outs; a != NULL; a = a->outchain)
+	{
+		assert(a->type == PLAIN);
+		assert(a->co >= 0);		/* i.e. not RAINBOW */
+		assert(a->to == rp);
+		cd = &v->cm->cd[a->co];
+		assert(!UNUSEDCOLOR(cd) && !(cd->flags & PSEUDO));
+		cd->flags |= COLMARK;
+	}
+
+	/* Scan colors, clear transient marks, check for unmarked live colors */
+	israinbow = true;
+	for (cd = v->cm->cd; cd < end; cd++)
+	{
+		if (cd->flags & COLMARK)
+			cd->flags &= ~COLMARK;
+		else if (!UNUSEDCOLOR(cd) && !(cd->flags & PSEUDO))
+			israinbow = false;
+	}
+
+	/* Can't do anything if not all colors have arcs */
+	if (!israinbow)
+		return;
+
+	/* OK, drop existing arcs and replace with a rainbow */
+	while ((a = lp->outs) != NULL)
+		freearc(v->nfa, a);
+	newarc(v->nfa, PLAIN, RAINBOW, lp, rp);
+}
+
+/*
  * wordchrs - set up word-chr list for word-boundary stuff, if needed
  *
- * The list is kept as a bunch of arcs between two dummy states; it's
- * disposed of by the unreachable-states sweep in NFA optimization.
- * Does NEXT().  Must not be called from any unusual lexical context.
- * This should be reconciled with the \w etc. handling in lex.c, and
- * should be cleaned up to reduce dependencies on input scanning.
+ * The list is kept as a bunch of circular arcs on an otherwise-unused state.
+ *
+ * Note that this must not be called while we have any open subcolors,
+ * else construction of the list would confuse color bookkeeping.
+ * Hence, we can't currently apply a similar optimization in
+ * charclass[complement](), as those need to be usable within bracket
+ * expressions.
  */
 static void
 wordchrs(struct vars *v)
 {
-	struct state *left;
-	struct state *right;
+	struct state *cstate;
+	struct cvec *cv;
 
 	if (v->wordchrs != NULL)
-	{
-		NEXT();					/* for consistency */
-		return;
-	}
+		return;					/* done already */
 
-	left = newstate(v->nfa);
-	right = newstate(v->nfa);
+	/* make dummy state to hang the cache arcs on */
+	cstate = newstate(v->nfa);
 	NOERR();
-	/* fine point:	implemented with [::], and lexer will set REG_ULOCALE */
-	lexword(v);
-	NEXT();
-	assert(v->savenow != NULL && SEE('['));
-	bracket(v, left, right);
-	assert((v->savenow != NULL && SEE(']')) || ISERR());
-	NEXT();
+
+	/* obtain possibly-cached cvec for \w characters */
+	NOTE(REG_ULOCALE);
+	cv = cclasscvec(v, CC_WORD, (v->cflags & REG_ICASE));
 	NOERR();
-	v->wordchrs = left;
+
+	/* build the arcs; this may cause color splitting */
+	subcolorcvec(v, cv, cstate, cstate);
+	NOERR();
+
+	/* close new open subcolors to ensure the cache entry is self-contained */
+	okcolors(v->nfa, v->cm);
+	NOERR();
+
+	/* success! save the cache pointer */
+	v->wordchrs = cstate;
 }
 
 /*

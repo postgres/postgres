@@ -597,6 +597,50 @@ select * from test_regex('a[\s]b', 'a b', 'LPE');
 -- expectMatch	12.18 LPE	{a[\w]b}	axb	axb
 select * from test_regex('a[\w]b', 'axb', 'LPE');
 
+-- these should be invalid
+select * from test_regex('[\w-~]*', 'ab01_~-`**', 'LNPSE');
+select * from test_regex('[~-\w]*', 'ab01_~-`**', 'LNPSE');
+select * from test_regex('[[:alnum:]-~]*', 'ab01~-`**', 'LNS');
+select * from test_regex('[~-[:alnum:]]*', 'ab01~-`**', 'LNS');
+
+-- test complemented char classes within brackets
+select * from test_regex('[\D]', '0123456789abc*', 'LPE');
+select * from test_regex('[^\D]', 'abc0123456789*', 'LPE');
+select * from test_regex('[1\D7]', '0123456789abc*', 'LPE');
+select * from test_regex('[7\D1]', '0123456789abc*', 'LPE');
+select * from test_regex('[^0\D1]', 'abc0123456789*', 'LPE');
+select * from test_regex('[^1\D0]', 'abc0123456789*', 'LPE');
+select * from test_regex('\W', '0123456789abc_*', 'LP');
+select * from test_regex('[\W]', '0123456789abc_*', 'LPE');
+select * from test_regex('[\s\S]*', '012  3456789abc_*', 'LNPE');
+
+-- check char classes' handling of newlines
+select * from test_regex('\s+', E'abc  \n  def', 'LP');
+select * from test_regex('\s+', E'abc  \n  def', 'nLP');
+select * from test_regex('[\s]+', E'abc  \n  def', 'LPE');
+select * from test_regex('[\s]+', E'abc  \n  def', 'nLPE');
+select * from test_regex('\S+', E'abc\ndef', 'LP');
+select * from test_regex('\S+', E'abc\ndef', 'nLP');
+select * from test_regex('[\S]+', E'abc\ndef', 'LPE');
+select * from test_regex('[\S]+', E'abc\ndef', 'nLPE');
+select * from test_regex('\d+', E'012\n345', 'LP');
+select * from test_regex('\d+', E'012\n345', 'nLP');
+select * from test_regex('[\d]+', E'012\n345', 'LPE');
+select * from test_regex('[\d]+', E'012\n345', 'nLPE');
+select * from test_regex('\D+', E'abc\ndef345', 'LP');
+select * from test_regex('\D+', E'abc\ndef345', 'nLP');
+select * from test_regex('[\D]+', E'abc\ndef345', 'LPE');
+select * from test_regex('[\D]+', E'abc\ndef345', 'nLPE');
+select * from test_regex('\w+', E'abc_012\ndef', 'LP');
+select * from test_regex('\w+', E'abc_012\ndef', 'nLP');
+select * from test_regex('[\w]+', E'abc_012\ndef', 'LPE');
+select * from test_regex('[\w]+', E'abc_012\ndef', 'nLPE');
+select * from test_regex('\W+', E'***\n@@@___', 'LP');
+select * from test_regex('\W+', E'***\n@@@___', 'nLP');
+select * from test_regex('[\W]+', E'***\n@@@___', 'LPE');
+select * from test_regex('[\W]+', E'***\n@@@___', 'nLPE');
+
+
 -- doing 13 "escapes"
 
 -- expectError	13.1  &		"a\\"		EESCAPE

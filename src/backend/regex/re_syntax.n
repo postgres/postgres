@@ -519,15 +519,10 @@ character classes:
 (note underscore)
 .RE
 .PP
-Within bracket expressions, `\fB\ed\fR', `\fB\es\fR',
-and `\fB\ew\fR'\&
-lose their outer brackets,
-and `\fB\eD\fR', `\fB\eS\fR',
-and `\fB\eW\fR'\&
-are illegal.
-.VS 8.2
-(So, for example, \fB[a-c\ed]\fR is equivalent to \fB[a-c[:digit:]]\fR.
-Also, \fB[a-c\eD]\fR, which is equivalent to \fB[a-c^[:digit:]]\fR, is illegal.)
+The class-shorthand escapes also work within bracket expressions,
+although the definitions shown above are not quite syntactically
+valid in that context.
+For example, \fB[a-c\ed]\fR is equivalent to \fB[a-c[:digit:]]\fR.
 .VE 8.2
 .PP
 A constraint escape (AREs only) is a constraint,

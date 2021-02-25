@@ -350,17 +350,13 @@ static const struct cname
 };
 
 /*
- * The following arrays define the valid character class names.
+ * The following array defines the valid character class names.
+ * The entries must match enum char_classes in regguts.h.
  */
 static const char *const classNames[NUM_CCLASSES + 1] = {
 	"alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph",
-	"lower", "print", "punct", "space", "upper", "xdigit", NULL
-};
-
-enum classes
-{
-	CC_ALNUM, CC_ALPHA, CC_ASCII, CC_BLANK, CC_CNTRL, CC_DIGIT, CC_GRAPH,
-	CC_LOWER, CC_PRINT, CC_PUNCT, CC_SPACE, CC_UPPER, CC_XDIGIT
+	"lower", "print", "punct", "space", "upper", "xdigit", "word",
+	NULL
 };
 
 /*
@@ -536,7 +532,36 @@ eclass(struct vars *v,			/* context */
 }
 
 /*
- * cclass - supply cvec for a character class
+ * lookupcclass - lookup a character class identified by name
+ *
+ * On failure, sets an error code in *v; the result is then garbage.
+ */
+static enum char_classes
+lookupcclass(struct vars *v,	/* context (for returning errors) */
+			 const chr *startp, /* where the name starts */
+			 const chr *endp)	/* just past the end of the name */
+{
+	size_t		len;
+	const char *const *namePtr;
+	int			i;
+
+	/*
+	 * Map the name to the corresponding enumerated value.
+	 */
+	len = endp - startp;
+	for (namePtr = classNames, i = 0; *namePtr != NULL; namePtr++, i++)
+	{
+		if (strlen(*namePtr) == len &&
+			pg_char_and_wchar_strncmp(*namePtr, startp, len) == 0)
+			return (enum char_classes) i;
+	}
+
+	ERR(REG_ECTYPE);
+	return (enum char_classes) 0;
+}
+
+/*
+ * cclasscvec - supply cvec for a character class
  *
  * Must include case counterparts if "cases" is true.
  *
@@ -545,45 +570,20 @@ eclass(struct vars *v,			/* context */
  * because callers are not supposed to explicitly free the result either way.
  */
 static struct cvec *
-cclass(struct vars *v,			/* context */
-	   const chr *startp,		/* where the name starts */
-	   const chr *endp,			/* just past the end of the name */
-	   int cases)				/* case-independent? */
+cclasscvec(struct vars *v,		/* context */
+		   enum char_classes cclasscode,	/* class to build a cvec for */
+		   int cases)			/* case-independent? */
 {
-	size_t		len;
 	struct cvec *cv = NULL;
-	const char *const *namePtr;
-	int			i,
-				index;
-
-	/*
-	 * Map the name to the corresponding enumerated value.
-	 */
-	len = endp - startp;
-	index = -1;
-	for (namePtr = classNames, i = 0; *namePtr != NULL; namePtr++, i++)
-	{
-		if (strlen(*namePtr) == len &&
-			pg_char_and_wchar_strncmp(*namePtr, startp, len) == 0)
-		{
-			index = i;
-			break;
-		}
-	}
-	if (index == -1)
-	{
-		ERR(REG_ECTYPE);
-		return NULL;
-	}
 
 	/*
 	 * Remap lower and upper to alpha if the match is case insensitive.
 	 */
 
 	if (cases &&
-		((enum classes) index == CC_LOWER ||
-		 (enum classes) index == CC_UPPER))
-		index = (int) CC_ALPHA;
+		(cclasscode == CC_LOWER ||
+		 cclasscode == CC_UPPER))
+		cclasscode = CC_ALPHA;
 
 	/*
 	 * Now compute the character class contents.  For classes that are based
@@ -595,16 +595,19 @@ cclass(struct vars *v,			/* context */
 	 * NB: keep this code in sync with cclass_column_index(), below.
 	 */
 
-	switch ((enum classes) index)
+	switch (cclasscode)
 	{
 		case CC_PRINT:
-			cv = pg_ctype_get_cache(pg_wc_isprint, index);
+			cv = pg_ctype_get_cache(pg_wc_isprint, cclasscode);
 			break;
 		case CC_ALNUM:
-			cv = pg_ctype_get_cache(pg_wc_isalnum, index);
+			cv = pg_ctype_get_cache(pg_wc_isalnum, cclasscode);
 			break;
 		case CC_ALPHA:
-			cv = pg_ctype_get_cache(pg_wc_isalpha, index);
+			cv = pg_ctype_get_cache(pg_wc_isalpha, cclasscode);
+			break;
+		case CC_WORD:
+			cv = pg_ctype_get_cache(pg_wc_isword, cclasscode);
 			break;
 		case CC_ASCII:
 			/* hard-wired meaning */
@@ -625,10 +628,10 @@ cclass(struct vars *v,			/* context */
 			addrange(cv, 0x7f, 0x9f);
 			break;
 		case CC_DIGIT:
-			cv = pg_ctype_get_cache(pg_wc_isdigit, index);
+			cv = pg_ctype_get_cache(pg_wc_isdigit, cclasscode);
 			break;
 		case CC_PUNCT:
-			cv = pg_ctype_get_cache(pg_wc_ispunct, index);
+			cv = pg_ctype_get_cache(pg_wc_ispunct, cclasscode);
 			break;
 		case CC_XDIGIT:
 
@@ -646,16 +649,16 @@ cclass(struct vars *v,			/* context */
 			}
 			break;
 		case CC_SPACE:
-			cv = pg_ctype_get_cache(pg_wc_isspace, index);
+			cv = pg_ctype_get_cache(pg_wc_isspace, cclasscode);
 			break;
 		case CC_LOWER:
-			cv = pg_ctype_get_cache(pg_wc_islower, index);
+			cv = pg_ctype_get_cache(pg_wc_islower, cclasscode);
 			break;
 		case CC_UPPER:
-			cv = pg_ctype_get_cache(pg_wc_isupper, index);
+			cv = pg_ctype_get_cache(pg_wc_isupper, cclasscode);
 			break;
 		case CC_GRAPH:
-			cv = pg_ctype_get_cache(pg_wc_isgraph, index);
+			cv = pg_ctype_get_cache(pg_wc_isgraph, cclasscode);
 			break;
 	}
 
@@ -678,7 +681,7 @@ cclass_column_index(struct colormap *cm, chr c)
 
 	/*
 	 * Note: we should not see requests to consider cclasses that are not
-	 * treated as locale-specific by cclass(), above.
+	 * treated as locale-specific by cclasscvec(), above.
 	 */
 	if (cm->classbits[CC_PRINT] && pg_wc_isprint(c))
 		colnum |= cm->classbits[CC_PRINT];
@@ -686,6 +689,8 @@ cclass_column_index(struct colormap *cm, chr c)
 		colnum |= cm->classbits[CC_ALNUM];
 	if (cm->classbits[CC_ALPHA] && pg_wc_isalpha(c))
 		colnum |= cm->classbits[CC_ALPHA];
+	if (cm->classbits[CC_WORD] && pg_wc_isword(c))
+		colnum |= cm->classbits[CC_WORD];
 	assert(cm->classbits[CC_ASCII] == 0);
 	assert(cm->classbits[CC_BLANK] == 0);
 	assert(cm->classbits[CC_CNTRL] == 0);
