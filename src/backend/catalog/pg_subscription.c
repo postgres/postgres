@@ -353,6 +353,7 @@ GetSubscriptionRelState(Oid subid, Oid relid, XLogRecPtr *sublsn)
 
 	if (!HeapTupleIsValid(tup))
 	{
+		table_close(rel, AccessShareLock);
 		*sublsn = InvalidXLogRecPtr;
 		return SUBREL_STATE_UNKNOWN;
 	}
