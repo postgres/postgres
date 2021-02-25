@@ -1407,10 +1407,6 @@ charclasscomplement(struct vars *v,
 
 	/* build arcs for char class; this may cause color splitting */
 	subcolorcvec(v, cv, cstate, cstate);
-
-	/* in NLSTOP mode, ensure newline is not part of the result set */
-	if (v->cflags & REG_NLSTOP)
-		newarc(v->nfa, PLAIN, v->nlcolor, cstate, cstate);
 	NOERR();
 
 	/* clean up any subcolors in the arc set */
@@ -1612,6 +1608,8 @@ cbracket(struct vars *v,
 
 	NOERR();
 	bracket(v, left, right);
+
+	/* in NLSTOP mode, ensure newline is not part of the result set */
 	if (v->cflags & REG_NLSTOP)
 		newarc(v->nfa, PLAIN, v->nlcolor, left, right);
 	NOERR();

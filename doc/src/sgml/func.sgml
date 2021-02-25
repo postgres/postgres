@@ -6323,32 +6323,38 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
       <tbody>
        <row>
        <entry> <literal>\d</literal> </entry>
-       <entry> <literal>[[:digit:]]</literal> </entry>
+       <entry> matches any digit, like
+        <literal>[[:digit:]]</literal> </entry>
        </row>
 
        <row>
        <entry> <literal>\s</literal> </entry>
-       <entry> <literal>[[:space:]]</literal> </entry>
+       <entry> matches any whitespace character, like
+        <literal>[[:space:]]</literal> </entry>
        </row>
 
        <row>
        <entry> <literal>\w</literal> </entry>
-       <entry> <literal>[[:word:]]</literal> </entry>
+       <entry> matches any word character, like
+        <literal>[[:word:]]</literal> </entry>
        </row>
 
        <row>
        <entry> <literal>\D</literal> </entry>
-       <entry> <literal>[^[:digit:]]</literal> </entry>
+       <entry> matches any non-digit, like
+        <literal>[^[:digit:]]</literal> </entry>
        </row>
 
        <row>
        <entry> <literal>\S</literal> </entry>
-       <entry> <literal>[^[:space:]]</literal> </entry>
+       <entry> matches any non-whitespace character, like
+        <literal>[^[:space:]]</literal> </entry>
        </row>
 
        <row>
        <entry> <literal>\W</literal> </entry>
-       <entry> <literal>[^[:word:]]</literal> </entry>
+       <entry> matches any non-word character, like
+        <literal>[^[:word:]]</literal> </entry>
        </row>
       </tbody>
      </tgroup>
@@ -6813,14 +6819,20 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     If newline-sensitive matching is specified, <literal>.</literal>
     and bracket expressions using <literal>^</literal>
     will never match the newline character
-    (so that matches will never cross newlines unless the RE
-    explicitly arranges it)
+    (so that matches will not cross lines unless the RE
+    explicitly includes a newline)
     and <literal>^</literal> and <literal>$</literal>
     will match the empty string after and before a newline
     respectively, in addition to matching at beginning and end of string
     respectively.
     But the ARE escapes <literal>\A</literal> and <literal>\Z</literal>
     continue to match beginning or end of string <emphasis>only</emphasis>.
+    Also, the character class shorthands <literal>\D</literal>
+    and <literal>\W</literal> will match a newline regardless of this mode.
+    (Before <productname>PostgreSQL</productname> 14, they did not match
+    newlines when in newline-sensitive mode.
+    Write <literal>[^[:digit:]]</literal>
+    or <literal>[^[:word:]]</literal> to get the old behavior.)
    </para>
 
    <para>

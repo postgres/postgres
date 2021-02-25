@@ -2144,7 +2144,8 @@ select * from test_regex('\D+', E'abc\ndef345', 'nLP');
           test_regex           
 -------------------------------
  {0,REG_UNONPOSIX,REG_ULOCALE}
- {abc}
+ {"abc                        +
+ def"}
 (2 rows)
 
 select * from test_regex('[\D]+', E'abc\ndef345', 'LPE');
@@ -2159,7 +2160,8 @@ select * from test_regex('[\D]+', E'abc\ndef345', 'nLPE');
                test_regex               
 ----------------------------------------
  {0,REG_UBBS,REG_UNONPOSIX,REG_ULOCALE}
- {abc}
+ {"abc                                 +
+ def"}
 (2 rows)
 
 select * from test_regex('\w+', E'abc_012\ndef', 'LP');
@@ -2202,7 +2204,8 @@ select * from test_regex('\W+', E'***\n@@@___', 'nLP');
           test_regex           
 -------------------------------
  {0,REG_UNONPOSIX,REG_ULOCALE}
- {***}
+ {"***                        +
+ @@@"}
 (2 rows)
 
 select * from test_regex('[\W]+', E'***\n@@@___', 'LPE');
@@ -2217,7 +2220,8 @@ select * from test_regex('[\W]+', E'***\n@@@___', 'nLPE');
                test_regex               
 ----------------------------------------
  {0,REG_UBBS,REG_UNONPOSIX,REG_ULOCALE}
- {***}
+ {"***                                 +
+ @@@"}
 (2 rows)
 
 -- doing 13 "escapes"

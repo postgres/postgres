@@ -804,7 +804,7 @@ and bracket expressions using
 \fB^\fR
 will never match the newline character
 (so that matches will never cross newlines unless the RE
-explicitly arranges it)
+explicitly includes a newline)
 and
 \fB^\fR
 and
@@ -817,6 +817,11 @@ ARE
 and
 \fB\eZ\fR
 continue to match beginning or end of string \fIonly\fR.
+Also, the character class shorthands
+\fB\eD\fR
+and
+\fB\eW\fR
+will match a newline regardless of this mode.
 .PP
 If partial newline-sensitive matching is specified,
 this affects \fB.\fR
