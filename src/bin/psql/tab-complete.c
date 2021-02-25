@@ -3832,7 +3832,20 @@ psql_completion(const char *text, int start, int end)
 
 /* TRUNCATE */
 	else if (Matches("TRUNCATE"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   " UNION SELECT 'TABLE'"
+								   " UNION SELECT 'ONLY'");
+	else if (Matches("TRUNCATE", "TABLE"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   " UNION SELECT 'ONLY'");
+	else if (HeadMatches("TRUNCATE") && TailMatches("ONLY"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+	else if (Matches("TRUNCATE", MatchAny) ||
+			 Matches("TRUNCATE", "TABLE|ONLY", MatchAny) ||
+			 Matches("TRUNCATE", "TABLE", "ONLY", MatchAny))
+		COMPLETE_WITH("RESTART IDENTITY", "CONTINUE IDENTITY", "CASCADE", "RESTRICT");
+	else if (HeadMatches("TRUNCATE") && TailMatches("IDENTITY"))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
 
 /* UNLISTEN */
 	else if (Matches("UNLISTEN"))
