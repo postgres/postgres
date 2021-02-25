@@ -13,6 +13,7 @@
 #ifndef NBTXLOG_H
 #define NBTXLOG_H
 
+#include "access/transam.h"
 #include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 #include "storage/off.h"
@@ -52,7 +53,7 @@ typedef struct xl_btree_metadata
 	uint32		level;
 	BlockNumber fastroot;
 	uint32		fastlevel;
-	TransactionId oldest_btpo_xact;
+	uint32		last_cleanup_num_delpages;
 	float8		last_cleanup_num_heap_tuples;
 	bool		allequalimage;
 } xl_btree_metadata;
@@ -187,7 +188,7 @@ typedef struct xl_btree_reuse_page
 {
 	RelFileNode node;
 	BlockNumber block;
-	TransactionId latestRemovedXid;
+	FullTransactionId latestRemovedFullXid;
 } xl_btree_reuse_page;
 
 #define SizeOfBtreeReusePage	(sizeof(xl_btree_reuse_page))
@@ -282,9 +283,12 @@ typedef struct xl_btree_mark_page_halfdead
 #define SizeOfBtreeMarkPageHalfDead (offsetof(xl_btree_mark_page_halfdead, topparent) + sizeof(BlockNumber))
 
 /*
- * This is what we need to know about deletion of a btree page.  Note we do
- * not store any content for the deleted page --- it is just rewritten as empty
- * during recovery, apart from resetting the btpo.xact.
+ * This is what we need to know about deletion of a btree page.  Note that we
+ * only leave behind a small amount of bookkeeping information in deleted
+ * pages (deleted pages must be kept around as tombstones for a while).  It is
+ * convenient for the REDO routine to regenerate its target page from scratch.
+ * This is why WAL record describes certain details that are actually directly
+ * available from the target page.
  *
  * Backup Blk 0: target block being deleted
  * Backup Blk 1: target block's left sibling, if any
@@ -296,20 +300,24 @@ typedef struct xl_btree_unlink_page
 {
 	BlockNumber leftsib;		/* target block's left sibling, if any */
 	BlockNumber rightsib;		/* target block's right sibling */
+	uint32		level;			/* target block's level */
+	FullTransactionId safexid;	/* target block's BTPageSetDeleted() XID */
 
 	/*
-	 * Information needed to recreate the leaf page, when target is an
-	 * internal page.
+	 * Information needed to recreate a half-dead leaf page with correct
+	 * topparent link.  The fields are only used when deletion operation's
+	 * target page is an internal page.  REDO routine creates half-dead page
+	 * from scratch to keep things simple (this is the same convenient
+	 * approach used for the target page itself).
 	 */
 	BlockNumber leafleftsib;
 	BlockNumber leafrightsib;
-	BlockNumber topparent;		/* next child down in the subtree */
+	BlockNumber leaftopparent;	/* next child down in the subtree */
 
-	TransactionId btpo_xact;	/* value of btpo.xact for use in recovery */
 	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_UNLINK_PAGE_META */
 } xl_btree_unlink_page;
 
-#define SizeOfBtreeUnlinkPage	(offsetof(xl_btree_unlink_page, btpo_xact) + sizeof(TransactionId))
+#define SizeOfBtreeUnlinkPage	(offsetof(xl_btree_unlink_page, leaftopparent) + sizeof(BlockNumber))
 
 /*
  * New root log record.  There are zero tuples if this is to establish an

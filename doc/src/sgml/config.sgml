@@ -8529,11 +8529,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
         If no tuples were deleted from the heap, B-tree indexes are still
-        scanned at the <command>VACUUM</command> cleanup stage when at least one
-        of the following conditions is met: the index statistics are stale, or
-        the index contains deleted pages that can be recycled during cleanup.
-        Index statistics are considered to be stale if the number of newly
-        inserted tuples exceeds the <varname>vacuum_cleanup_index_scale_factor</varname>
+        scanned at the <command>VACUUM</command> cleanup stage when the
+        index's statistics are stale.  Index statistics are considered
+        stale if the number of newly inserted tuples exceeds the
+        <varname>vacuum_cleanup_index_scale_factor</varname>
         fraction of the total number of heap tuples detected by the previous
         statistics collection. The total number of heap tuples is stored in
         the index meta-page. Note that the meta-page does not include this data

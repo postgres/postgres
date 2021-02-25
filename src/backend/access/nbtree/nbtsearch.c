@@ -169,7 +169,7 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 		 * we're on the level 1 and asked to lock leaf page in write mode,
 		 * then lock next page in write mode, because it must be a leaf.
 		 */
-		if (opaque->btpo.level == 1 && access == BT_WRITE)
+		if (opaque->btpo_level == 1 && access == BT_WRITE)
 			page_access = BT_WRITE;
 
 		/* drop the read lock on the page, then acquire one on its child */
@@ -2341,9 +2341,9 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
 		}
 
 		/* Done? */
-		if (opaque->btpo.level == level)
+		if (opaque->btpo_level == level)
 			break;
-		if (opaque->btpo.level < level)
+		if (opaque->btpo_level < level)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg_internal("btree level %u not found in index \"%s\"",

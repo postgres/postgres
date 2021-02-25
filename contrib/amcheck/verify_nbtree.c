@@ -769,7 +769,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 											  P_FIRSTDATAKEY(opaque));
 				itup = (IndexTuple) PageGetItem(state->target, itemid);
 				nextleveldown.leftmost = BTreeTupleGetDownLink(itup);
-				nextleveldown.level = opaque->btpo.level - 1;
+				nextleveldown.level = opaque->btpo_level - 1;
 			}
 			else
 			{
@@ -794,14 +794,14 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 		if (opaque->btpo_prev != leftcurrent)
 			bt_recheck_sibling_links(state, opaque->btpo_prev, leftcurrent);
 
-		/* Check level, which must be valid for non-ignorable page */
-		if (level.level != opaque->btpo.level)
+		/* Check level */
+		if (level.level != opaque->btpo_level)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("leftmost down link for level points to block in index \"%s\" whose level is not one level down",
 							RelationGetRelationName(state->rel)),
 					 errdetail_internal("Block pointed to=%u expected level=%u level in pointed to block=%u.",
-										current, level.level, opaque->btpo.level)));
+										current, level.level, opaque->btpo_level)));
 
 		/* Verify invariants for page */
 		bt_target_page_check(state);
@@ -1164,7 +1164,7 @@ bt_target_page_check(BtreeCheckState *state)
 				bt_child_highkey_check(state,
 									   offset,
 									   NULL,
-									   topaque->btpo.level);
+									   topaque->btpo_level);
 			}
 			continue;
 		}
@@ -1520,7 +1520,7 @@ bt_target_page_check(BtreeCheckState *state)
 	if (!P_ISLEAF(topaque) && P_RIGHTMOST(topaque) && state->readonly)
 	{
 		bt_child_highkey_check(state, InvalidOffsetNumber,
-							   NULL, topaque->btpo.level);
+							   NULL, topaque->btpo_level);
 	}
 }
 
@@ -1597,7 +1597,7 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 		ereport(DEBUG1,
 				(errcode(ERRCODE_NO_DATA),
 				 errmsg_internal("level %u leftmost page of index \"%s\" was found deleted or half dead",
-						opaque->btpo.level, RelationGetRelationName(state->rel)),
+						opaque->btpo_level, RelationGetRelationName(state->rel)),
 				 errdetail_internal("Deleted page found when building scankey from right sibling.")));
 
 		/* Be slightly more pro-active in freeing this memory, just in case */
@@ -1900,14 +1900,15 @@ bt_child_highkey_check(BtreeCheckState *state,
 										state->targetblock, blkno,
 										LSN_FORMAT_ARGS(state->targetlsn))));
 
-		/* Check level for non-ignorable page */
-		if (!P_IGNORE(opaque) && opaque->btpo.level != target_level - 1)
+		/* Do level sanity check */
+		if ((!P_ISDELETED(opaque) || P_HAS_FULLXID(opaque)) &&
+			opaque->btpo_level != target_level - 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("block found while following rightlinks from child of index \"%s\" has invalid level",
 							RelationGetRelationName(state->rel)),
 					 errdetail_internal("Block pointed to=%u expected level=%u level in pointed to block=%u.",
-										blkno, target_level - 1, opaque->btpo.level)));
+										blkno, target_level - 1, opaque->btpo_level)));
 
 		/* Try to detect circular links */
 		if ((!first && blkno == state->prevrightlink) || blkno == opaque->btpo_prev)
@@ -2132,7 +2133,7 @@ bt_child_check(BtreeCheckState *state, BTScanInsert targetkey,
 	 * check for downlink connectivity.
 	 */
 	bt_child_highkey_check(state, downlinkoffnum,
-						   child, topaque->btpo.level);
+						   child, topaque->btpo_level);
 
 	/*
 	 * Since there cannot be a concurrent VACUUM operation in readonly mode,
@@ -2275,7 +2276,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 				 errmsg_internal("harmless interrupted page split detected in index %s",
 						RelationGetRelationName(state->rel)),
 				 errdetail_internal("Block=%u level=%u left sibling=%u page lsn=%X/%X.",
-									blkno, opaque->btpo.level,
+									blkno, opaque->btpo_level,
 									opaque->btpo_prev,
 									LSN_FORMAT_ARGS(pagelsn))));
 		return;
@@ -2304,7 +2305,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 	elog(DEBUG1, "checking for interrupted multi-level deletion due to missing downlink in index \"%s\"",
 		 RelationGetRelationName(state->rel));
 
-	level = opaque->btpo.level;
+	level = opaque->btpo_level;
 	itemid = PageGetItemIdCareful(state, blkno, page, P_FIRSTDATAKEY(opaque));
 	itup = (IndexTuple) PageGetItem(page, itemid);
 	childblk = BTreeTupleGetDownLink(itup);
@@ -2319,16 +2320,16 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 			break;
 
 		/* Do an extra sanity check in passing on internal pages */
-		if (copaque->btpo.level != level - 1)
+		if (copaque->btpo_level != level - 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg_internal("downlink points to block in index \"%s\" whose level is not one level down",
 									 RelationGetRelationName(state->rel)),
 					 errdetail_internal("Top parent/under check block=%u block pointed to=%u expected level=%u level in pointed to block=%u.",
 										blkno, childblk,
-										level - 1, copaque->btpo.level)));
+										level - 1, copaque->btpo_level)));
 
-		level = copaque->btpo.level;
+		level = copaque->btpo_level;
 		itemid = PageGetItemIdCareful(state, childblk, child,
 									  P_FIRSTDATAKEY(copaque));
 		itup = (IndexTuple) PageGetItem(child, itemid);
@@ -2389,7 +2390,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 			 errmsg("internal index block lacks downlink in index \"%s\"",
 					RelationGetRelationName(state->rel)),
 			 errdetail_internal("Block=%u level=%u page lsn=%X/%X.",
-								blkno, opaque->btpo.level,
+								blkno, opaque->btpo_level,
 								LSN_FORMAT_ARGS(pagelsn))));
 }
 
@@ -2983,21 +2984,28 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 	}
 
 	/*
-	 * Deleted pages have no sane "level" field, so can only check non-deleted
-	 * page level
+	 * Deleted pages that still use the old 32-bit XID representation have no
+	 * sane "level" field because they type pun the field, but all other pages
+	 * (including pages deleted on Postgres 14+) have a valid value.
 	 */
-	if (P_ISLEAF(opaque) && !P_ISDELETED(opaque) && opaque->btpo.level != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("invalid leaf page level %u for block %u in index \"%s\"",
-						opaque->btpo.level, blocknum, RelationGetRelationName(state->rel))));
+	if (!P_ISDELETED(opaque) || P_HAS_FULLXID(opaque))
+	{
+		/* Okay, no reason not to trust btpo_level field from page */
 
-	if (!P_ISLEAF(opaque) && !P_ISDELETED(opaque) &&
-		opaque->btpo.level == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("invalid internal page level 0 for block %u in index \"%s\"",
-						blocknum, RelationGetRelationName(state->rel))));
+		if (P_ISLEAF(opaque) && opaque->btpo_level != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg_internal("invalid leaf page level %u for block %u in index \"%s\"",
+									 opaque->btpo_level, blocknum,
+									 RelationGetRelationName(state->rel))));
+
+		if (!P_ISLEAF(opaque) && opaque->btpo_level == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg_internal("invalid internal page level 0 for block %u in index \"%s\"",
+									 blocknum,
+									 RelationGetRelationName(state->rel))));
+	}
 
 	/*
 	 * Sanity checks for number of items on page.
@@ -3044,8 +3052,6 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 	 * state.  This state is nonetheless treated as corruption by VACUUM on
 	 * from version 9.4 on, so do the same here.  See _bt_pagedel() for full
 	 * details.
-	 *
-	 * Internal pages should never have garbage items, either.
 	 */
 	if (!P_ISLEAF(opaque) && P_ISHALFDEAD(opaque))
 		ereport(ERROR,
@@ -3054,11 +3060,27 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 						blocknum, RelationGetRelationName(state->rel)),
 				 errhint("This can be caused by an interrupted VACUUM in version 9.3 or older, before upgrade. Please REINDEX it.")));
 
+	/*
+	 * Check that internal pages have no garbage items, and that no page has
+	 * an invalid combination of deletion-related page level flags
+	 */
 	if (!P_ISLEAF(opaque) && P_HAS_GARBAGE(opaque))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("internal page block %u in index \"%s\" has garbage items",
-						blocknum, RelationGetRelationName(state->rel))));
+				 errmsg_internal("internal page block %u in index \"%s\" has garbage items",
+								 blocknum, RelationGetRelationName(state->rel))));
+
+	if (P_HAS_FULLXID(opaque) && !P_ISDELETED(opaque))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("full transaction id page flag appears in non-deleted block %u in index \"%s\"",
+								 blocknum, RelationGetRelationName(state->rel))));
+
+	if (P_ISDELETED(opaque) && P_ISHALFDEAD(opaque))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("deleted page block %u in index \"%s\" is half-dead",
+								 blocknum, RelationGetRelationName(state->rel))));
 
 	return page;
 }

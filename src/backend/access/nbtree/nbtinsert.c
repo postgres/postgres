@@ -1241,7 +1241,7 @@ _bt_insertonpg(Relation rel,
 			metapg = BufferGetPage(metabuf);
 			metad = BTPageGetMeta(metapg);
 
-			if (metad->btm_fastlevel >= opaque->btpo.level)
+			if (metad->btm_fastlevel >= opaque->btpo_level)
 			{
 				/* no update wanted */
 				_bt_relbuf(rel, metabuf);
@@ -1268,7 +1268,7 @@ _bt_insertonpg(Relation rel,
 			if (metad->btm_version < BTREE_NOVAC_VERSION)
 				_bt_upgrademetapage(metapg);
 			metad->btm_fastroot = BufferGetBlockNumber(buf);
-			metad->btm_fastlevel = opaque->btpo.level;
+			metad->btm_fastlevel = opaque->btpo_level;
 			MarkBufferDirty(metabuf);
 		}
 
@@ -1331,7 +1331,7 @@ _bt_insertonpg(Relation rel,
 					xlmeta.level = metad->btm_level;
 					xlmeta.fastroot = metad->btm_fastroot;
 					xlmeta.fastlevel = metad->btm_fastlevel;
-					xlmeta.oldest_btpo_xact = metad->btm_oldest_btpo_xact;
+					xlmeta.last_cleanup_num_delpages = metad->btm_last_cleanup_num_delpages;
 					xlmeta.last_cleanup_num_heap_tuples =
 						metad->btm_last_cleanup_num_heap_tuples;
 					xlmeta.allequalimage = metad->btm_allequalimage;
@@ -1537,7 +1537,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	lopaque->btpo_flags |= BTP_INCOMPLETE_SPLIT;
 	lopaque->btpo_prev = oopaque->btpo_prev;
 	/* handle btpo_next after rightpage buffer acquired */
-	lopaque->btpo.level = oopaque->btpo.level;
+	lopaque->btpo_level = oopaque->btpo_level;
 	/* handle btpo_cycleid after rightpage buffer acquired */
 
 	/*
@@ -1722,7 +1722,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	ropaque->btpo_flags &= ~(BTP_ROOT | BTP_SPLIT_END | BTP_HAS_GARBAGE);
 	ropaque->btpo_prev = origpagenumber;
 	ropaque->btpo_next = oopaque->btpo_next;
-	ropaque->btpo.level = oopaque->btpo.level;
+	ropaque->btpo_level = oopaque->btpo_level;
 	ropaque->btpo_cycleid = lopaque->btpo_cycleid;
 
 	/*
@@ -1950,7 +1950,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 		uint8		xlinfo;
 		XLogRecPtr	recptr;
 
-		xlrec.level = ropaque->btpo.level;
+		xlrec.level = ropaque->btpo_level;
 		/* See comments below on newitem, orignewitem, and posting lists */
 		xlrec.firstrightoff = firstrightoff;
 		xlrec.newitemoff = newitemoff;
@@ -2142,7 +2142,7 @@ _bt_insert_parent(Relation rel,
 					 BlockNumberIsValid(RelationGetTargetBlock(rel))));
 
 			/* Find the leftmost page at the next level up */
-			pbuf = _bt_get_endpoint(rel, opaque->btpo.level + 1, false, NULL);
+			pbuf = _bt_get_endpoint(rel, opaque->btpo_level + 1, false, NULL);
 			/* Set up a phony stack entry pointing there */
 			stack = &fakestack;
 			stack->bts_blkno = BufferGetBlockNumber(pbuf);
@@ -2480,15 +2480,15 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 	rootopaque->btpo_prev = rootopaque->btpo_next = P_NONE;
 	rootopaque->btpo_flags = BTP_ROOT;
-	rootopaque->btpo.level =
-		((BTPageOpaque) PageGetSpecialPointer(lpage))->btpo.level + 1;
+	rootopaque->btpo_level =
+		((BTPageOpaque) PageGetSpecialPointer(lpage))->btpo_level + 1;
 	rootopaque->btpo_cycleid = 0;
 
 	/* update metapage data */
 	metad->btm_root = rootblknum;
-	metad->btm_level = rootopaque->btpo.level;
+	metad->btm_level = rootopaque->btpo_level;
 	metad->btm_fastroot = rootblknum;
-	metad->btm_fastlevel = rootopaque->btpo.level;
+	metad->btm_fastlevel = rootopaque->btpo_level;
 
 	/*
 	 * Insert the left page pointer into the new root page.  The root page is
@@ -2548,7 +2548,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		md.level = metad->btm_level;
 		md.fastroot = rootblknum;
 		md.fastlevel = metad->btm_level;
-		md.oldest_btpo_xact = metad->btm_oldest_btpo_xact;
+		md.last_cleanup_num_delpages = metad->btm_last_cleanup_num_delpages;
 		md.last_cleanup_num_heap_tuples = metad->btm_last_cleanup_num_heap_tuples;
 		md.allequalimage = metad->btm_allequalimage;
 

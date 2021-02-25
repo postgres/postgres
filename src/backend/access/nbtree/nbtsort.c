@@ -620,7 +620,7 @@ _bt_blnewpage(uint32 level)
 	/* Initialize BT opaque state */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_prev = opaque->btpo_next = P_NONE;
-	opaque->btpo.level = level;
+	opaque->btpo_level = level;
 	opaque->btpo_flags = (level > 0) ? 0 : BTP_LEAF;
 	opaque->btpo_cycleid = 0;
 

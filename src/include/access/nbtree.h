@@ -37,8 +37,9 @@ typedef uint16 BTCycleId;
  *
  *	In addition, we store the page's btree level (counting upwards from
  *	zero at a leaf page) as well as some flag bits indicating the page type
- *	and status.  If the page is deleted, we replace the level with the
- *	next-transaction-ID value indicating when it is safe to reclaim the page.
+ *	and status.  If the page is deleted, a BTDeletedPageData struct is stored
+ *	in the page's tuple area, while a standard BTPageOpaqueData struct is
+ *	stored in the page special area.
  *
  *	We also store a "vacuum cycle ID".  When a page is split while VACUUM is
  *	processing the index, a nonzero value associated with the VACUUM run is
@@ -52,17 +53,17 @@ typedef uint16 BTCycleId;
  *
  *	NOTE: the BTP_LEAF flag bit is redundant since level==0 could be tested
  *	instead.
+ *
+ *	NOTE: the btpo_level field used to be a union type in order to allow
+ *	deleted pages to store a 32-bit safexid in the same field.  We now store
+ *	64-bit/full safexid values using BTDeletedPageData instead.
  */
 
 typedef struct BTPageOpaqueData
 {
 	BlockNumber btpo_prev;		/* left sibling, or P_NONE if leftmost */
 	BlockNumber btpo_next;		/* right sibling, or P_NONE if rightmost */
-	union
-	{
-		uint32		level;		/* tree level --- zero for leaf pages */
-		TransactionId xact;		/* next transaction ID, if deleted */
-	}			btpo;
+	uint32		btpo_level;		/* tree level --- zero for leaf pages */
 	uint16		btpo_flags;		/* flag bits, see below */
 	BTCycleId	btpo_cycleid;	/* vacuum cycle ID of latest split */
 } BTPageOpaqueData;
@@ -78,6 +79,7 @@ typedef BTPageOpaqueData *BTPageOpaque;
 #define BTP_SPLIT_END	(1 << 5)	/* rightmost page of split group */
 #define BTP_HAS_GARBAGE (1 << 6)	/* page has LP_DEAD tuples (deprecated) */
 #define BTP_INCOMPLETE_SPLIT (1 << 7)	/* right sibling's downlink is missing */
+#define BTP_HAS_FULLXID	(1 << 8)	/* contains BTDeletedPageData */
 
 /*
  * The max allowed value of a cycle ID is a bit less than 64K.  This is
@@ -105,10 +107,12 @@ typedef struct BTMetaPageData
 	BlockNumber btm_fastroot;	/* current "fast" root location */
 	uint32		btm_fastlevel;	/* tree level of the "fast" root page */
 	/* remaining fields only valid when btm_version >= BTREE_NOVAC_VERSION */
-	TransactionId btm_oldest_btpo_xact; /* oldest btpo_xact among all deleted
-										 * pages */
-	float8		btm_last_cleanup_num_heap_tuples;	/* number of heap tuples
-													 * during last cleanup */
+
+	/* number of deleted, non-recyclable pages during last cleanup */
+	uint32		btm_last_cleanup_num_delpages;
+	/* number of heap tuples during last cleanup */
+	float8		btm_last_cleanup_num_heap_tuples;
+
 	bool		btm_allequalimage;	/* are all columns "equalimage"? */
 } BTMetaPageData;
 
@@ -220,6 +224,93 @@ typedef struct BTMetaPageData
 #define P_IGNORE(opaque)		(((opaque)->btpo_flags & (BTP_DELETED|BTP_HALF_DEAD)) != 0)
 #define P_HAS_GARBAGE(opaque)	(((opaque)->btpo_flags & BTP_HAS_GARBAGE) != 0)
 #define P_INCOMPLETE_SPLIT(opaque)	(((opaque)->btpo_flags & BTP_INCOMPLETE_SPLIT) != 0)
+#define P_HAS_FULLXID(opaque)	(((opaque)->btpo_flags & BTP_HAS_FULLXID) != 0)
+
+/*
+ * BTDeletedPageData is the page contents of a deleted page
+ */
+typedef struct BTDeletedPageData
+{
+	FullTransactionId safexid;	/* See BTPageIsRecyclable() */
+} BTDeletedPageData;
+
+static inline void
+BTPageSetDeleted(Page page, FullTransactionId safexid)
+{
+	BTPageOpaque opaque;
+	PageHeader	header;
+	BTDeletedPageData *contents;
+
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	header = ((PageHeader) page);
+
+	opaque->btpo_flags &= ~BTP_HALF_DEAD;
+	opaque->btpo_flags |= BTP_DELETED | BTP_HAS_FULLXID;
+	header->pd_lower = MAXALIGN(SizeOfPageHeaderData) +
+		sizeof(BTDeletedPageData);
+	header->pd_upper = header->pd_special;
+
+	/* Set safexid in deleted page */
+	contents = ((BTDeletedPageData *) PageGetContents(page));
+	contents->safexid = safexid;
+}
+
+static inline FullTransactionId
+BTPageGetDeleteXid(Page page)
+{
+	BTPageOpaque opaque;
+	BTDeletedPageData *contents;
+
+	/* We only expect to be called with a deleted page */
+	Assert(!PageIsNew(page));
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	Assert(P_ISDELETED(opaque));
+
+	/* pg_upgrade'd deleted page -- must be safe to delete now */
+	if (!P_HAS_FULLXID(opaque))
+		return FirstNormalFullTransactionId;
+
+	/* Get safexid from deleted page */
+	contents = ((BTDeletedPageData *) PageGetContents(page));
+	return contents->safexid;
+}
+
+/*
+ * Is an existing page recyclable?
+ *
+ * This exists to centralize the policy on which deleted pages are now safe to
+ * re-use.
+ *
+ * Note: PageIsNew() pages are always safe to recycle, but we can't deal with
+ * them here (caller is responsible for that case themselves).  Caller might
+ * well need special handling for new pages anyway.
+ */
+static inline bool
+BTPageIsRecyclable(Page page)
+{
+	BTPageOpaque opaque;
+
+	Assert(!PageIsNew(page));
+
+	/* Recycling okay iff page is deleted and safexid is old enough */
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	if (P_ISDELETED(opaque))
+	{
+		/*
+		 * The page was deleted, but when? If it was just deleted, a scan
+		 * might have seen the downlink to it, and will read the page later.
+		 * As long as that can happen, we must keep the deleted page around as
+		 * a tombstone.
+		 *
+		 * For that check if the deletion XID could still be visible to
+		 * anyone. If not, then no scan that's still in progress could have
+		 * seen its downlink, and we can recycle it.
+		 */
+		return GlobalVisCheckRemovableFullXid(NULL, BTPageGetDeleteXid(page));
+	}
+
+	return false;
+}
 
 /*
  *	Lehman and Yao's algorithm requires a ``high key'' on every non-rightmost
@@ -962,7 +1053,7 @@ typedef struct BTOptions
 {
 	int32		varlena_header_;	/* varlena header (do not touch directly!) */
 	int			fillfactor;		/* page fill factor in percent (0..100) */
-	/* fraction of newly inserted tuples prior to trigger index cleanup */
+	/* fraction of newly inserted tuples needed to trigger index cleanup */
 	float8		vacuum_cleanup_index_scale_factor;
 	bool		deduplicate_items;	/* Try to deduplicate items? */
 } BTOptions;
@@ -1066,8 +1157,8 @@ extern OffsetNumber _bt_findsplitloc(Relation rel, Page origpage,
  */
 extern void _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level,
 							 bool allequalimage);
-extern void _bt_update_meta_cleanup_info(Relation rel,
-										 TransactionId oldestBtpoXact, float8 numHeapTuples);
+extern void _bt_set_cleanup_info(Relation rel, BlockNumber num_delpages,
+								 float8 num_heap_tuples);
 extern void _bt_upgrademetapage(Page page);
 extern Buffer _bt_getroot(Relation rel, int access);
 extern Buffer _bt_gettrueroot(Relation rel);
@@ -1084,15 +1175,13 @@ extern void _bt_unlockbuf(Relation rel, Buffer buf);
 extern bool _bt_conditionallockbuf(Relation rel, Buffer buf);
 extern void _bt_upgradelockbufcleanup(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
-extern bool _bt_page_recyclable(Page page);
 extern void _bt_delitems_vacuum(Relation rel, Buffer buf,
 								OffsetNumber *deletable, int ndeletable,
 								BTVacuumPosting *updatable, int nupdatable);
 extern void _bt_delitems_delete_check(Relation rel, Buffer buf,
 									  Relation heapRel,
 									  TM_IndexDeleteOp *delstate);
-extern uint32 _bt_pagedel(Relation rel, Buffer leafbuf,
-						  TransactionId *oldestBtpoXact);
+extern uint32 _bt_pagedel(Relation rel, Buffer leafbuf);
 
 /*
  * prototypes for functions in nbtsearch.c

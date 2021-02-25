@@ -283,8 +283,12 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 		page = BufferGetPage(buffer);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
-		/* Determine page type, and update totals */
-
+		/*
+		 * Determine page type, and update totals.
+		 *
+		 * Note that we arbitrarily bucket deleted pages together without
+		 * considering if they're leaf pages or internal pages.
+		 */
 		if (P_ISDELETED(opaque))
 			indexStat.deleted_pages++;
 		else if (P_IGNORE(opaque))

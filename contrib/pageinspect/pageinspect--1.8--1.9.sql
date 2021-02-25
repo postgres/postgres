@@ -67,6 +67,23 @@ AS 'MODULE_PATHNAME', 'page_checksum_1_9'
 LANGUAGE C STRICT PARALLEL SAFE;
 
 --
+-- bt_metap()
+--
+DROP FUNCTION bt_metap(text);
+CREATE FUNCTION bt_metap(IN relname text,
+    OUT magic int4,
+    OUT version int4,
+    OUT root int8,
+    OUT level int8,
+    OUT fastroot int8,
+    OUT fastlevel int8,
+    OUT last_cleanup_num_delpages int8,
+    OUT last_cleanup_num_tuples float8,
+    OUT allequalimage boolean)
+AS 'MODULE_PATHNAME', 'bt_metap'
+LANGUAGE C STRICT PARALLEL SAFE;
+
+--
 -- bt_page_stats()
 --
 DROP FUNCTION bt_page_stats(text, int4);
@@ -80,7 +97,7 @@ CREATE FUNCTION bt_page_stats(IN relname text, IN blkno int8,
     OUT free_size int4,
     OUT btpo_prev int8,
     OUT btpo_next int8,
-    OUT btpo int4,
+    OUT btpo_level int8,
     OUT btpo_flags int4)
 AS 'MODULE_PATHNAME', 'bt_page_stats_1_9'
 LANGUAGE C STRICT PARALLEL SAFE;

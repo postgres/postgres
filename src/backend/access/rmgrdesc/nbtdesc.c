@@ -80,12 +80,13 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_unlink_page *xlrec = (xl_btree_unlink_page *) rec;
 
-				appendStringInfo(buf, "left %u; right %u; btpo_xact %u; ",
-								 xlrec->leftsib, xlrec->rightsib,
-								 xlrec->btpo_xact);
-				appendStringInfo(buf, "leafleft %u; leafright %u; topparent %u",
+				appendStringInfo(buf, "left %u; right %u; level %u; safexid %u:%u; ",
+								 xlrec->leftsib, xlrec->rightsib, xlrec->level,
+								 EpochFromFullTransactionId(xlrec->safexid),
+								 XidFromFullTransactionId(xlrec->safexid));
+				appendStringInfo(buf, "leafleft %u; leafright %u; leaftopparent %u",
 								 xlrec->leafleftsib, xlrec->leafrightsib,
-								 xlrec->topparent);
+								 xlrec->leaftopparent);
 				break;
 			}
 		case XLOG_BTREE_NEWROOT:
@@ -99,9 +100,11 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_reuse_page *xlrec = (xl_btree_reuse_page *) rec;
 
-				appendStringInfo(buf, "rel %u/%u/%u; latestRemovedXid %u",
+				appendStringInfo(buf, "rel %u/%u/%u; latestRemovedXid %u:%u",
 								 xlrec->node.spcNode, xlrec->node.dbNode,
-								 xlrec->node.relNode, xlrec->latestRemovedXid);
+								 xlrec->node.relNode,
+								 EpochFromFullTransactionId(xlrec->latestRemovedFullXid),
+								 XidFromFullTransactionId(xlrec->latestRemovedFullXid));
 				break;
 			}
 		case XLOG_BTREE_META_CLEANUP:
@@ -110,8 +113,8 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 
 				xlrec = (xl_btree_metadata *) XLogRecGetBlockData(record, 0,
 																  NULL);
-				appendStringInfo(buf, "oldest_btpo_xact %u; last_cleanup_num_heap_tuples: %f",
-								 xlrec->oldest_btpo_xact,
+				appendStringInfo(buf, "last_cleanup_num_delpages %u; last_cleanup_num_heap_tuples: %f",
+								 xlrec->last_cleanup_num_delpages,
 								 xlrec->last_cleanup_num_heap_tuples);
 				break;
 			}

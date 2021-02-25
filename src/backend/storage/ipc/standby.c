@@ -452,6 +452,34 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 										   true);
 }
 
+/*
+ * Variant of ResolveRecoveryConflictWithSnapshot that works with
+ * FullTransactionId values
+ */
+void
+ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXid,
+										   RelFileNode node)
+{
+	/*
+	 * ResolveRecoveryConflictWithSnapshot operates on 32-bit TransactionIds,
+	 * so truncate the logged FullTransactionId.  If the logged value is very
+	 * old, so that XID wrap-around already happened on it, there can't be any
+	 * snapshots that still see it.
+	 */
+	FullTransactionId nextXid = ReadNextFullTransactionId();
+	uint64			  diff;
+
+	diff = U64FromFullTransactionId(nextXid) -
+		U64FromFullTransactionId(latestRemovedFullXid);
+	if (diff < MaxTransactionId / 2)
+	{
+		TransactionId latestRemovedXid;
+
+		latestRemovedXid = XidFromFullTransactionId(latestRemovedFullXid);
+		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, node);
+	}
+}
+
 void
 ResolveRecoveryConflictWithTablespace(Oid tsid)
 {

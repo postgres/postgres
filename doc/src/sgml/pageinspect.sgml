@@ -298,16 +298,16 @@ test=# SELECT t_ctid, raw_flags, combined_flags
       index's metapage.  For example:
 <screen>
 test=# SELECT * FROM bt_metap('pg_cast_oid_index');
--[ RECORD 1 ]-----------+-------
-magic                   | 340322
-version                 | 4
-root                    | 1
-level                   | 0
-fastroot                | 1
-fastlevel               | 0
-oldest_xact             | 582
-last_cleanup_num_tuples | 1000
-allequalimage           | f
+-[ RECORD 1 ]-------------+-------
+magic                     | 340322
+version                   | 4
+root                      | 1
+level                     | 0
+fastroot                  | 1
+fastlevel                 | 0
+last_cleanup_num_delpages | 0
+last_cleanup_num_tuples   | 230
+allequalimage             | f
 </screen>
      </para>
     </listitem>
@@ -337,7 +337,7 @@ page_size     | 8192
 free_size     | 3668
 btpo_prev     | 0
 btpo_next     | 0
-btpo          | 0
+btpo_level    | 0
 btpo_flags    | 3
 </screen>
      </para>
