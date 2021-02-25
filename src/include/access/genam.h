@@ -63,8 +63,11 @@ typedef struct IndexVacuumInfo
  * of which this is just the first field; this provides a way for ambulkdelete
  * to communicate additional private data to amvacuumcleanup.
  *
- * Note: pages_deleted and pages_free refer to free space within the index
- * file.  Some index AMs may compute num_index_tuples by reference to
+ * Note: pages_newly_deleted is the number of pages in the index that were
+ * deleted by the current vacuum operation.  pages_deleted and pages_free
+ * refer to free space within the index file.
+ *
+ * Note: Some index AMs may compute num_index_tuples by reference to
  * num_heap_tuples, in which case they should copy the estimated_count field
  * from IndexVacuumInfo.
  */
@@ -74,7 +77,8 @@ typedef struct IndexBulkDeleteResult
 	bool		estimated_count;	/* num_index_tuples is an estimate */
 	double		num_index_tuples;	/* tuples remaining */
 	double		tuples_removed; /* # removed during vacuum operation */
-	BlockNumber pages_deleted;	/* # unused pages in index */
+	BlockNumber pages_newly_deleted;	/* # pages marked deleted by us  */
+	BlockNumber pages_deleted;	/* # pages marked deleted (could be by us) */
 	BlockNumber pages_free;		/* # pages available for reuse */
 } IndexBulkDeleteResult;
 

@@ -2521,9 +2521,11 @@ lazy_cleanup_index(Relation indrel,
 						(*stats)->num_index_tuples,
 						(*stats)->num_pages),
 				 errdetail("%.0f index row versions were removed.\n"
-						   "%u index pages have been deleted, %u are currently reusable.\n"
+						   "%u index pages were newly deleted.\n"
+						   "%u index pages are currently deleted, of which %u are currently reusable.\n"
 						   "%s.",
 						   (*stats)->tuples_removed,
+						   (*stats)->pages_newly_deleted,
 						   (*stats)->pages_deleted, (*stats)->pages_free,
 						   pg_rusage_show(&ru0))));
 	}

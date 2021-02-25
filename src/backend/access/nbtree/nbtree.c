@@ -38,17 +38,6 @@
 #include "utils/memutils.h"
 
 
-/* Working state needed by btvacuumpage */
-typedef struct
-{
-	IndexVacuumInfo *info;
-	IndexBulkDeleteResult *stats;
-	IndexBulkDeleteCallback callback;
-	void	   *callback_state;
-	BTCycleId	cycleid;
-	MemoryContext pagedelcontext;
-} BTVacState;
-
 /*
  * BTPARALLEL_NOT_INITIALIZED indicates that the scan has not started.
  *
@@ -1016,9 +1005,9 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * avoids double-counting in the case where a single VACUUM command
 	 * requires multiple scans of the index.
 	 *
-	 * Avoid resetting the tuples_removed field here, since it tracks
-	 * information about the VACUUM command, and so must last across each call
-	 * to btvacuumscan().
+	 * Avoid resetting the tuples_removed and pages_newly_deleted fields here,
+	 * since they track information about the VACUUM command, and so must last
+	 * across each call to btvacuumscan().
 	 *
 	 * (Note that pages_free is treated as state about the whole index, not
 	 * the current VACUUM.  This is appropriate because RecordFreeIndexPage()
@@ -1237,11 +1226,13 @@ backtrack:
 	}
 	else if (P_ISHALFDEAD(opaque))
 	{
-		/*
-		 * Half-dead leaf page.  Try to delete now.  Might update
-		 * pages_deleted below.
-		 */
+		/* Half-dead leaf page (from interrupted VACUUM) -- finish deleting */
 		attempt_pagedel = true;
+
+		/*
+		 * _bt_pagedel() will increment both pages_newly_deleted and
+		 * pages_deleted stats in all cases (barring corruption)
+		 */
 	}
 	else if (P_ISLEAF(opaque))
 	{
@@ -1451,12 +1442,12 @@ backtrack:
 		oldcontext = MemoryContextSwitchTo(vstate->pagedelcontext);
 
 		/*
-		 * We trust the _bt_pagedel return value because it does not include
-		 * any page that a future call here from btvacuumscan is expected to
-		 * count.  There will be no double-counting.
+		 * _bt_pagedel maintains the bulk delete stats on our behalf;
+		 * pages_newly_deleted and pages_deleted are likely to be incremented
+		 * during call
 		 */
 		Assert(blkno == scanblkno);
-		stats->pages_deleted += _bt_pagedel(rel, buf);
+		_bt_pagedel(rel, buf, vstate);
 
 		MemoryContextSwitchTo(oldcontext);
 		/* pagedel released buffer, so we shouldn't */

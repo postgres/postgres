@@ -313,6 +313,20 @@ BTPageIsRecyclable(Page page)
 }
 
 /*
+ * BTVacState is private nbtree.c state used during VACUUM.  It is exported
+ * for use by page deletion related code in nbtpage.c.
+ */
+typedef struct BTVacState
+{
+	IndexVacuumInfo *info;
+	IndexBulkDeleteResult *stats;
+	IndexBulkDeleteCallback callback;
+	void	   *callback_state;
+	BTCycleId	cycleid;
+	MemoryContext pagedelcontext;
+} BTVacState;
+
+/*
  *	Lehman and Yao's algorithm requires a ``high key'' on every non-rightmost
  *	page.  The high key is not a tuple that is used to visit the heap.  It is
  *	a pivot tuple (see "Notes on B-Tree tuple format" below for definition).
@@ -1181,7 +1195,7 @@ extern void _bt_delitems_vacuum(Relation rel, Buffer buf,
 extern void _bt_delitems_delete_check(Relation rel, Buffer buf,
 									  Relation heapRel,
 									  TM_IndexDeleteOp *delstate);
-extern uint32 _bt_pagedel(Relation rel, Buffer leafbuf);
+extern void _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate);
 
 /*
  * prototypes for functions in nbtsearch.c

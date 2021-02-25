@@ -891,6 +891,7 @@ spgvacuumscan(spgBulkDeleteState *bds)
 
 	/* Report final stats */
 	bds->stats->num_pages = num_pages;
+	bds->stats->pages_newly_deleted = bds->stats->pages_deleted;
 	bds->stats->pages_free = bds->stats->pages_deleted;
 }
 
