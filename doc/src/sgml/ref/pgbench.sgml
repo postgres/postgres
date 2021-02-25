@@ -152,6 +152,18 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
     <variablelist>
 
      <varlistentry>
+      <term><replaceable class="parameter">dbname</replaceable></term>
+      <listitem>
+       <para>
+        Specifies the name of the database to test in. If this is
+        not specified, the environment variable
+        <envar>PGDATABASE</envar> is used. If that is not set, the
+        user name specified for the connection is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-i</option></term>
       <term><option>--initialize</option></term>
       <listitem>
@@ -841,6 +853,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
 
   <variablelist>
    <varlistentry>
+    <term><envar>PGDATABASE</envar></term>
     <term><envar>PGHOST</envar></term>
     <term><envar>PGPORT</envar></term>
     <term><envar>PGUSER</envar></term>
