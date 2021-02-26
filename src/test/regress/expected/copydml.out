@@ -84,10 +84,10 @@ drop rule qqq on copydml_test;
 create function qqq_trig() returns trigger as $$
 begin
 if tg_op in ('INSERT', 'UPDATE') then
-    raise notice '% %', tg_op, new.id;
+    raise notice '% % %', tg_when, tg_op, new.id;
     return new;
 else
-    raise notice '% %', tg_op, old.id;
+    raise notice '% % %', tg_when, tg_op, old.id;
     return old;
 end if;
 end
@@ -97,16 +97,16 @@ create trigger qqqbef before insert or update or delete on copydml_test
 create trigger qqqaf after insert or update or delete on copydml_test
     for each row execute procedure qqq_trig();
 copy (insert into copydml_test (t) values ('f') returning id) to stdout;
-NOTICE:  INSERT 8
+NOTICE:  BEFORE INSERT 8
 8
-NOTICE:  INSERT 8
+NOTICE:  AFTER INSERT 8
 copy (update copydml_test set t = 'g' where t = 'f' returning id) to stdout;
-NOTICE:  UPDATE 8
+NOTICE:  BEFORE UPDATE 8
 8
-NOTICE:  UPDATE 8
+NOTICE:  AFTER UPDATE 8
 copy (delete from copydml_test where t = 'g' returning id) to stdout;
-NOTICE:  DELETE 8
+NOTICE:  BEFORE DELETE 8
 8
-NOTICE:  DELETE 8
+NOTICE:  AFTER DELETE 8
 drop table copydml_test;
 drop function qqq_trig();
