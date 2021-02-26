@@ -1520,11 +1520,11 @@ tar -rf /var/lib/pgsql/backup.tar /var/lib/pgsql/archive/
       If archive storage size is a concern, you can use
       <application>gzip</application> to compress the archive files:
 <programlisting>
-archive_command = 'gzip &lt; %p &gt; /var/lib/pgsql/archive/%f'
+archive_command = 'gzip &lt; %p &gt; /mnt/server/archivedir/%f.gz'
 </programlisting>
       You will then need to use <application>gunzip</application> during recovery:
 <programlisting>
-restore_command = 'gunzip &lt; /mnt/server/archivedir/%f &gt; %p'
+restore_command = 'gunzip &lt; /mnt/server/archivedir/%f.gz &gt; %p'
 </programlisting>
      </para>
     </sect3>
