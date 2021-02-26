@@ -865,7 +865,7 @@ PQsslKeyPassHook_OpenSSL_type PQgetSSLKeyPassHook_OpenSSL(void);
    <para>
     Several <application>libpq</application> functions parse a user-specified string to obtain
     connection parameters.  There are two accepted formats for these strings:
-    plain <literal>keyword = value</literal> strings
+    plain keyword/value strings
     and URIs.  URIs generally follow
     <ulink url="https://tools.ietf.org/html/rfc3986">RFC
     3986</ulink>, except that multi-host connection strings are allowed
@@ -876,12 +876,14 @@ PQsslKeyPassHook_OpenSSL_type PQgetSSLKeyPassHook_OpenSSL(void);
     <title>Keyword/Value Connection Strings</title>
 
    <para>
-    In the first format, each parameter setting is in the form
-    <literal>keyword = value</literal>.  Spaces around the equal sign are
+    In the keyword/value format, each parameter setting is in the form
+    <replaceable>keyword</replaceable> <literal>=</literal>
+    <replaceable>value</replaceable>, with space(s) between settings.
+    Spaces around a setting's equal sign are
     optional. To write an empty value, or a value containing spaces, surround it
-    with single quotes, e.g., <literal>keyword = 'a value'</literal>. Single
-    quotes and backslashes within
-    the value must be escaped with a backslash, i.e., <literal>\'</literal> and
+    with single quotes, for example <literal>keyword = 'a value'</literal>.
+    Single quotes and backslashes within
+    a value must be escaped with a backslash, i.e., <literal>\'</literal> and
     <literal>\\</literal>.
    </para>
 
@@ -904,7 +906,19 @@ host=localhost port=5432 dbname=mydb connect_timeout=10
    <para>
    The general form for a connection <acronym>URI</acronym> is:
 <synopsis>
-postgresql://[user[:password]@][host][:port][,...][/dbname][?param1=value1&amp;...]
+postgresql://<optional><replaceable>userspec</replaceable>@</optional><optional><replaceable>hostspec</replaceable></optional><optional>/<replaceable>dbname</replaceable></optional><optional>?<replaceable>paramspec</replaceable></optional>
+
+<phrase>where <replaceable>userspec</replaceable> is:</phrase>
+
+<replaceable>user</replaceable><optional>:<replaceable>password</replaceable></optional>
+
+<phrase>and <replaceable>hostspec</replaceable> is:</phrase>
+
+<optional><replaceable>host</replaceable></optional><optional>:<replaceable>port</replaceable></optional><optional>,...</optional>
+
+<phrase>and <replaceable>paramspec</replaceable> is:</phrase>
+
+<replaceable>name</replaceable>=<replaceable>value</replaceable><optional>&amp;...</optional>
 </synopsis>
    </para>
 
@@ -977,7 +991,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
     port component, in a single URI.  A URI of the form
     <literal>postgresql://host1:port1,host2:port2,host3:port3/</literal>
     is equivalent to a connection string of the form
-    <literal>host=host1,host2,host3 port=port1,port2,port3</literal>.  Each
+    <literal>host=host1,host2,host3 port=port1,port2,port3</literal>.
+    As further described below, each
     host will be tried in turn until a connection is successfully established.
    </para>
    </sect3>
@@ -988,8 +1003,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
      <para>
        It is possible to specify multiple hosts to connect to, so that they are
        tried in the given order. In the Keyword/Value format, the <literal>host</literal>,
-       <literal>hostaddr</literal>, and <literal>port</literal> options accept a comma-separated
-       list of values. The same number of elements must be given in each
+       <literal>hostaddr</literal>, and <literal>port</literal> options accept comma-separated
+       lists of values. The same number of elements must be given in each
        option that is specified, such
        that e.g., the first <literal>hostaddr</literal> corresponds to the first host name,
        the second <literal>hostaddr</literal> corresponds to the second host name, and so
@@ -999,7 +1014,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
 
      <para>
        In the connection URI format, you can list multiple <literal>host:port</literal> pairs
-       separated by commas, in the <literal>host</literal> component of the URI.
+       separated by commas in the <literal>host</literal> component of the URI.
      </para>
 
      <para>
