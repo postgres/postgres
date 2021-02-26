@@ -537,15 +537,15 @@ makeDependencyGraphWalker(Node *node, CteState *cstate)
 				 * In the non-RECURSIVE case, query names are visible to the
 				 * WITH items after them and to the main query.
 				 */
-				ListCell   *cell1;
-
 				cstate->innerwiths = lcons(NIL, cstate->innerwiths);
-				cell1 = list_head(cstate->innerwiths);
 				foreach(lc, stmt->withClause->ctes)
 				{
 					CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+					ListCell   *cell1;
 
 					(void) makeDependencyGraphWalker(cte->ctequery, cstate);
+					/* note that recursion could mutate innerwiths list */
+					cell1 = list_head(cstate->innerwiths);
 					lfirst(cell1) = lappend((List *) lfirst(cell1), cte);
 				}
 				(void) raw_expression_tree_walker(node,
@@ -813,15 +813,15 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 				 * In the non-RECURSIVE case, query names are visible to the
 				 * WITH items after them and to the main query.
 				 */
-				ListCell   *cell1;
-
 				cstate->innerwiths = lcons(NIL, cstate->innerwiths);
-				cell1 = list_head(cstate->innerwiths);
 				foreach(lc, stmt->withClause->ctes)
 				{
 					CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+					ListCell   *cell1;
 
 					(void) checkWellFormedRecursionWalker(cte->ctequery, cstate);
+					/* note that recursion could mutate innerwiths list */
+					cell1 = list_head(cstate->innerwiths);
 					lfirst(cell1) = lappend((List *) lfirst(cell1), cte);
 				}
 				checkWellFormedSelectStmt(stmt, cstate);
