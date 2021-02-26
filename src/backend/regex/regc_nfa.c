@@ -57,9 +57,15 @@ newnfa(struct vars *v,
 		return NULL;
 	}
 
+	/* Make the NFA minimally valid, so freenfa() will behave sanely */
 	nfa->states = NULL;
 	nfa->slast = NULL;
-	nfa->free = NULL;
+	nfa->freestates = NULL;
+	nfa->freearcs = NULL;
+	nfa->lastsb = NULL;
+	nfa->lastab = NULL;
+	nfa->lastsbused = 0;
+	nfa->lastabused = 0;
 	nfa->nstates = 0;
 	nfa->cm = cm;
 	nfa->v = v;
@@ -68,9 +74,10 @@ newnfa(struct vars *v,
 	nfa->flags = 0;
 	nfa->minmatchall = nfa->maxmatchall = -1;
 	nfa->parent = parent;		/* Precedes newfstate so parent is valid. */
+
+	/* Create required infrastructure */
 	nfa->post = newfstate(nfa, '@');	/* number 0 */
 	nfa->pre = newfstate(nfa, '>'); /* number 1 */
-
 	nfa->init = newstate(nfa);	/* may become invalid later */
 	nfa->final = newstate(nfa);
 	if (ISERR())
@@ -99,23 +106,27 @@ newnfa(struct vars *v,
 static void
 freenfa(struct nfa *nfa)
 {
-	struct state *s;
+	struct statebatch *sb;
+	struct statebatch *sbnext;
+	struct arcbatch *ab;
+	struct arcbatch *abnext;
 
-	while ((s = nfa->states) != NULL)
+	for (sb = nfa->lastsb; sb != NULL; sb = sbnext)
 	{
-		s->nins = s->nouts = 0; /* don't worry about arcs */
-		freestate(nfa, s);
+		sbnext = sb->next;
+		nfa->v->spaceused -= STATEBATCHSIZE(sb->nstates);
+		FREE(sb);
 	}
-	while ((s = nfa->free) != NULL)
+	nfa->lastsb = NULL;
+	for (ab = nfa->lastab; ab != NULL; ab = abnext)
 	{
-		nfa->free = s->next;
-		destroystate(nfa, s);
+		abnext = ab->next;
+		nfa->v->spaceused -= ARCBATCHSIZE(ab->narcs);
+		FREE(ab);
 	}
+	nfa->lastab = NULL;
 
-	nfa->slast = NULL;
 	nfa->nstates = -1;
-	nfa->pre = NULL;
-	nfa->post = NULL;
 	FREE(nfa);
 }
 
@@ -138,28 +149,43 @@ newstate(struct nfa *nfa)
 		return NULL;
 	}
 
-	if (nfa->free != NULL)
+	/* first, recycle anything that's on the freelist */
+	if (nfa->freestates != NULL)
 	{
-		s = nfa->free;
-		nfa->free = s->next;
+		s = nfa->freestates;
+		nfa->freestates = s->next;
 	}
+	/* otherwise, is there anything left in the last statebatch? */
+	else if (nfa->lastsb != NULL && nfa->lastsbused < nfa->lastsb->nstates)
+	{
+		s = &nfa->lastsb->s[nfa->lastsbused++];
+	}
+	/* otherwise, need to allocate a new statebatch */
 	else
 	{
+		struct statebatch *newSb;
+		size_t		nstates;
+
 		if (nfa->v->spaceused >= REG_MAX_COMPILE_SPACE)
 		{
 			NERR(REG_ETOOBIG);
 			return NULL;
 		}
-		s = (struct state *) MALLOC(sizeof(struct state));
-		if (s == NULL)
+		nstates = (nfa->lastsb != NULL) ? nfa->lastsb->nstates * 2 : FIRSTSBSIZE;
+		if (nstates > MAXSBSIZE)
+			nstates = MAXSBSIZE;
+		newSb = (struct statebatch *) MALLOC(STATEBATCHSIZE(nstates));
+		if (newSb == NULL)
 		{
 			NERR(REG_ESPACE);
 			return NULL;
 		}
-		nfa->v->spaceused += sizeof(struct state);
-		s->oas.next = NULL;
-		s->free = NULL;
-		s->noas = 0;
+		nfa->v->spaceused += STATEBATCHSIZE(nstates);
+		newSb->nstates = nstates;
+		newSb->next = nfa->lastsb;
+		nfa->lastsb = newSb;
+		nfa->lastsbused = 1;
+		s = &newSb->s[0];
 	}
 
 	assert(nfa->nstates >= 0);
@@ -240,32 +266,8 @@ freestate(struct nfa *nfa,
 		nfa->states = s->next;
 	}
 	s->prev = NULL;
-	s->next = nfa->free;		/* don't delete it, put it on the free list */
-	nfa->free = s;
-}
-
-/*
- * destroystate - really get rid of an already-freed state
- */
-static void
-destroystate(struct nfa *nfa,
-			 struct state *s)
-{
-	struct arcbatch *ab;
-	struct arcbatch *abnext;
-
-	assert(s->no == FREESTATE);
-	for (ab = s->oas.next; ab != NULL; ab = abnext)
-	{
-		abnext = ab->next;
-		FREE(ab);
-		nfa->v->spaceused -= sizeof(struct arcbatch);
-	}
-	s->ins = NULL;
-	s->outs = NULL;
-	s->next = NULL;
-	FREE(s);
-	nfa->v->spaceused -= sizeof(struct state);
+	s->next = nfa->freestates;	/* don't delete it, put it on the free list */
+	nfa->freestates = s;
 }
 
 /*
@@ -334,8 +336,7 @@ createarc(struct nfa *nfa,
 {
 	struct arc *a;
 
-	/* the arc is physically allocated within its from-state */
-	a = allocarc(nfa, from);
+	a = allocarc(nfa);
 	if (NISERR())
 		return;
 	assert(a != NULL);
@@ -369,55 +370,52 @@ createarc(struct nfa *nfa,
 }
 
 /*
- * allocarc - allocate a new out-arc within a state
+ * allocarc - allocate a new arc within an NFA
  */
 static struct arc *				/* NULL for failure */
-allocarc(struct nfa *nfa,
-		 struct state *s)
+allocarc(struct nfa *nfa)
 {
 	struct arc *a;
 
-	/* shortcut */
-	if (s->free == NULL && s->noas < ABSIZE)
+	/* first, recycle anything that's on the freelist */
+	if (nfa->freearcs != NULL)
 	{
-		a = &s->oas.a[s->noas];
-		s->noas++;
-		return a;
+		a = nfa->freearcs;
+		nfa->freearcs = a->freechain;
 	}
-
-	/* if none at hand, get more */
-	if (s->free == NULL)
+	/* otherwise, is there anything left in the last arcbatch? */
+	else if (nfa->lastab != NULL && nfa->lastabused < nfa->lastab->narcs)
+	{
+		a = &nfa->lastab->a[nfa->lastabused++];
+	}
+	/* otherwise, need to allocate a new arcbatch */
+	else
 	{
 		struct arcbatch *newAb;
-		int			i;
+		size_t		narcs;
 
 		if (nfa->v->spaceused >= REG_MAX_COMPILE_SPACE)
 		{
 			NERR(REG_ETOOBIG);
 			return NULL;
 		}
-		newAb = (struct arcbatch *) MALLOC(sizeof(struct arcbatch));
+		narcs = (nfa->lastab != NULL) ? nfa->lastab->narcs * 2 : FIRSTABSIZE;
+		if (narcs > MAXABSIZE)
+			narcs = MAXABSIZE;
+		newAb = (struct arcbatch *) MALLOC(ARCBATCHSIZE(narcs));
 		if (newAb == NULL)
 		{
 			NERR(REG_ESPACE);
 			return NULL;
 		}
-		nfa->v->spaceused += sizeof(struct arcbatch);
-		newAb->next = s->oas.next;
-		s->oas.next = newAb;
-
-		for (i = 0; i < ABSIZE; i++)
-		{
-			newAb->a[i].type = 0;
-			newAb->a[i].freechain = &newAb->a[i + 1];
-		}
-		newAb->a[ABSIZE - 1].freechain = NULL;
-		s->free = &newAb->a[0];
+		nfa->v->spaceused += ARCBATCHSIZE(narcs);
+		newAb->narcs = narcs;
+		newAb->next = nfa->lastab;
+		nfa->lastab = newAb;
+		nfa->lastabused = 1;
+		a = &newAb->a[0];
 	}
-	assert(s->free != NULL);
 
-	a = s->free;
-	s->free = a->freechain;
 	return a;
 }
 
@@ -478,7 +476,7 @@ freearc(struct nfa *nfa,
 	}
 	to->nins--;
 
-	/* clean up and place on from-state's free list */
+	/* clean up and place on NFA's free list */
 	victim->type = 0;
 	victim->from = NULL;		/* precautions... */
 	victim->to = NULL;
@@ -486,17 +484,58 @@ freearc(struct nfa *nfa,
 	victim->inchainRev = NULL;
 	victim->outchain = NULL;
 	victim->outchainRev = NULL;
-	victim->freechain = from->free;
-	from->free = victim;
+	victim->freechain = nfa->freearcs;
+	nfa->freearcs = victim;
+}
+
+/*
+ * changearcsource - flip an arc to have a different from state
+ *
+ * Caller must have verified that there is no pre-existing duplicate arc.
+ */
+static void
+changearcsource(struct arc *a, struct state *newfrom)
+{
+	struct state *oldfrom = a->from;
+	struct arc *predecessor;
+
+	assert(oldfrom != newfrom);
+
+	/* take it off old source's out-chain */
+	assert(oldfrom != NULL);
+	predecessor = a->outchainRev;
+	if (predecessor == NULL)
+	{
+		assert(oldfrom->outs == a);
+		oldfrom->outs = a->outchain;
+	}
+	else
+	{
+		assert(predecessor->outchain == a);
+		predecessor->outchain = a->outchain;
+	}
+	if (a->outchain != NULL)
+	{
+		assert(a->outchain->outchainRev == a);
+		a->outchain->outchainRev = predecessor;
+	}
+	oldfrom->nouts--;
+
+	a->from = newfrom;
+
+	/* prepend it to new source's out-chain */
+	a->outchain = newfrom->outs;
+	a->outchainRev = NULL;
+	if (newfrom->outs)
+		newfrom->outs->outchainRev = a;
+	newfrom->outs = a;
+	newfrom->nouts++;
 }
 
 /*
  * changearctarget - flip an arc to have a different to state
  *
  * Caller must have verified that there is no pre-existing duplicate arc.
- *
- * Note that because we store arcs in their from state, we can't easily have
- * a similar changearcsource function.
  */
 static void
 changearctarget(struct arc *a, struct state *newto)
@@ -1009,6 +1048,8 @@ mergeins(struct nfa *nfa,
 
 /*
  * moveouts - move all out arcs of a state to another state
+ *
+ * See comments for moveins()
  */
 static void
 moveouts(struct nfa *nfa,
@@ -1031,9 +1072,9 @@ moveouts(struct nfa *nfa,
 	else
 	{
 		/*
-		 * With many arcs, use a sort-merge approach.  Note that createarc()
-		 * will put new arcs onto the front of newState's chain, so it does
-		 * not break our walk through the sorted part of the chain.
+		 * With many arcs, use a sort-merge approach.  Note changearcsource()
+		 * will put the arc onto the front of newState's chain, so it does not
+		 * break our walk through the sorted part of the chain.
 		 */
 		struct arc *oa;
 		struct arc *na;
@@ -1063,8 +1104,12 @@ moveouts(struct nfa *nfa,
 				case -1:
 					/* newState does not have anything matching oa */
 					oa = oa->outchain;
-					createarc(nfa, a->type, a->co, newState, a->to);
-					freearc(nfa, a);
+
+					/*
+					 * Rather than doing createarc+freearc, we can just unlink
+					 * and relink the existing arc struct.
+					 */
+					changearcsource(a, newState);
 					break;
 				case 0:
 					/* match, advance in both lists */
@@ -1087,8 +1132,7 @@ moveouts(struct nfa *nfa,
 			struct arc *a = oa;
 
 			oa = oa->outchain;
-			createarc(nfa, a->type, a->co, newState, a->to);
-			freearc(nfa, a);
+			changearcsource(a, newState);
 		}
 	}
 
@@ -3413,7 +3457,6 @@ dumparc(struct arc *a,
 		FILE *f)
 {
 	struct arc *aa;
-	struct arcbatch *ab;
 
 	fprintf(f, "\t");
 	switch (a->type)
@@ -3451,16 +3494,11 @@ dumparc(struct arc *a,
 	}
 	if (a->from != s)
 		fprintf(f, "?%d?", a->from->no);
-	for (ab = &a->from->oas; ab != NULL; ab = ab->next)
-	{
-		for (aa = &ab->a[0]; aa < &ab->a[ABSIZE]; aa++)
-			if (aa == a)
-				break;			/* NOTE BREAK OUT */
-		if (aa < &ab->a[ABSIZE])	/* propagate break */
+	for (aa = a->from->outs; aa != NULL; aa = aa->outchain)
+		if (aa == a)
 			break;				/* NOTE BREAK OUT */
-	}
-	if (ab == NULL)
-		fprintf(f, "?!?");		/* not in allocated space */
+	if (aa == NULL)
+		fprintf(f, "?!?");		/* missing from out-chain */
 	fprintf(f, "->");
 	if (a->to == NULL)
 	{

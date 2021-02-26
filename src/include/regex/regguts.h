@@ -284,9 +284,6 @@ struct cvec
 
 /*
  * definitions for NFA internal representation
- *
- * Having a "from" pointer within each arc may seem redundant, but it
- * saves a lot of hassle.
  */
 struct state;
 
@@ -294,7 +291,7 @@ struct arc
 {
 	int			type;			/* 0 if free, else an NFA arc type code */
 	color		co;				/* color the arc matches (possibly RAINBOW) */
-	struct state *from;			/* where it's from (and contained within) */
+	struct state *from;			/* where it's from */
 	struct state *to;			/* where it's to */
 	struct arc *outchain;		/* link in *from's outs chain or free chain */
 	struct arc *outchainRev;	/* back-link in *from's outs chain */
@@ -308,27 +305,40 @@ struct arc
 
 struct arcbatch
 {								/* for bulk allocation of arcs */
-	struct arcbatch *next;
-#define  ABSIZE  10
-	struct arc	a[ABSIZE];
+	struct arcbatch *next;		/* chain link */
+	size_t		narcs;			/* number of arcs allocated in this arcbatch */
+	struct arc	a[FLEXIBLE_ARRAY_MEMBER];
 };
+#define  ARCBATCHSIZE(n)  ((n) * sizeof(struct arc) + offsetof(struct arcbatch, a))
+/* first batch will have FIRSTABSIZE arcs; then double it until MAXABSIZE */
+#define  FIRSTABSIZE	64
+#define  MAXABSIZE		1024
 
 struct state
 {
-	int			no;
+	int			no;				/* state number, zero and up; or FREESTATE */
 #define  FREESTATE	 (-1)
 	char		flag;			/* marks special states */
 	int			nins;			/* number of inarcs */
-	struct arc *ins;			/* chain of inarcs */
 	int			nouts;			/* number of outarcs */
+	struct arc *ins;			/* chain of inarcs */
 	struct arc *outs;			/* chain of outarcs */
-	struct arc *free;			/* chain of free arcs */
 	struct state *tmp;			/* temporary for traversal algorithms */
-	struct state *next;			/* chain for traversing all */
-	struct state *prev;			/* back chain */
-	struct arcbatch oas;		/* first arcbatch, avoid malloc in easy case */
-	int			noas;			/* number of arcs used in first arcbatch */
+	struct state *next;			/* chain for traversing all live states */
+	/* the "next" field is also used to chain free states together */
+	struct state *prev;			/* back-link in chain of all live states */
 };
+
+struct statebatch
+{								/* for bulk allocation of states */
+	struct statebatch *next;	/* chain link */
+	size_t		nstates;		/* number of states allocated in this batch */
+	struct state s[FLEXIBLE_ARRAY_MEMBER];
+};
+#define  STATEBATCHSIZE(n)  ((n) * sizeof(struct state) + offsetof(struct statebatch, s))
+/* first batch will have FIRSTSBSIZE states; then double it until MAXSBSIZE */
+#define  FIRSTSBSIZE	32
+#define  MAXSBSIZE		1024
 
 struct nfa
 {
@@ -337,9 +347,14 @@ struct nfa
 	struct state *final;		/* final state */
 	struct state *post;			/* post-final state */
 	int			nstates;		/* for numbering states */
-	struct state *states;		/* state-chain header */
+	struct state *states;		/* chain of live states */
 	struct state *slast;		/* tail of the chain */
-	struct state *free;			/* free list */
+	struct state *freestates;	/* chain of free states */
+	struct arc *freearcs;		/* chain of free arcs */
+	struct statebatch *lastsb;	/* chain of statebatches */
+	struct arcbatch *lastab;	/* chain of arcbatches */
+	size_t		lastsbused;		/* number of states consumed from *lastsb */
+	size_t		lastabused;		/* number of arcs consumed from *lastab */
 	struct colormap *cm;		/* the color map */
 	color		bos[2];			/* colors, if any, assigned to BOS and BOL */
 	color		eos[2];			/* colors, if any, assigned to EOS and EOL */
@@ -387,7 +402,7 @@ struct cnfa
 {
 	int			nstates;		/* number of states */
 	int			ncolors;		/* number of colors (max color in use + 1) */
-	int			flags;
+	int			flags;			/* bitmask of the following flags: */
 #define  HASLACONS	01			/* uses lookaround constraints */
 #define  MATCHALL	02			/* matches all strings of a range of lengths */
 	int			pre;			/* setup state number */
@@ -422,10 +437,12 @@ struct cnfa
  * transient data is generally not large enough to notice compared to those.
  * Note that we do not charge anything for the final output data structures
  * (the compacted NFA and the colormap).
+ * The scaling here is based on an empirical measurement that very large
+ * NFAs tend to have about 4 arcs/state.
  */
 #ifndef REG_MAX_COMPILE_SPACE
 #define REG_MAX_COMPILE_SPACE  \
-	(100000 * sizeof(struct state) + 100000 * sizeof(struct arcbatch))
+	(500000 * (sizeof(struct state) + 4 * sizeof(struct arc)))
 #endif
 
 /*
