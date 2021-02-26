@@ -398,7 +398,7 @@ parse_filename_for_nontemp_relation(const char *name, int *oidchars,
 
 		for (segchar = 1; isdigit((unsigned char) name[pos + segchar]); ++segchar)
 			;
-		if (segchar <= 1)
+		if (segchar == 1)
 			return false;
 		pos += segchar;
 	}
