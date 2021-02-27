@@ -68,9 +68,8 @@ SELECT 'test_prepared1' AS relation, locktype, mode
 FROM pg_locks
 WHERE locktype = 'relation'
   AND relation = 'test_prepared1'::regclass;
--- The above CLUSTER command shouldn't cause a timeout on 2pc decoding. The
--- call should return within a second.
-SET statement_timeout = '1s';
+-- The above CLUSTER command shouldn't cause a timeout on 2pc decoding.
+SET statement_timeout = '180s';
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'two-phase-commit', '1', 'include-xids', '0', 'skip-empty-xacts', '1');
 RESET statement_timeout;
 COMMIT PREPARED 'test_prepared_lock';
