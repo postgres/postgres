@@ -11442,6 +11442,17 @@ opt_cycle_clause:
 				n->location = @1;
 				$$ = (Node *) n;
 			}
+		| CYCLE columnList SET ColId USING ColId
+			{
+				CTECycleClause *n = makeNode(CTECycleClause);
+				n->cycle_col_list = $2;
+				n->cycle_mark_column = $4;
+				n->cycle_mark_value = makeBoolAConst(true, -1);
+				n->cycle_mark_default = makeBoolAConst(false, -1);
+				n->cycle_path_column = $6;
+				n->location = @1;
+				$$ = (Node *) n;
+			}
 		| /*EMPTY*/
 			{
 				$$ = NULL;

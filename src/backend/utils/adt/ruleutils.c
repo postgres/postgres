@@ -5208,10 +5208,21 @@ get_with_clause(Query *query, deparse_context *context)
 			}
 
 			appendStringInfo(buf, " SET %s", quote_identifier(cte->cycle_clause->cycle_mark_column));
-			appendStringInfoString(buf, " TO ");
-			get_rule_expr(cte->cycle_clause->cycle_mark_value, context, false);
-			appendStringInfoString(buf, " DEFAULT ");
-			get_rule_expr(cte->cycle_clause->cycle_mark_default, context, false);
+
+			{
+				Const	   *cmv = castNode(Const, cte->cycle_clause->cycle_mark_value);
+				Const	   *cmd = castNode(Const, cte->cycle_clause->cycle_mark_default);
+
+				if (!(cmv->consttype == BOOLOID && !cmv->constisnull && DatumGetBool(cmv->constvalue) == true &&
+					  cmd->consttype == BOOLOID && !cmd->constisnull && DatumGetBool(cmd->constvalue) == false))
+				{
+					appendStringInfoString(buf, " TO ");
+					get_rule_expr(cte->cycle_clause->cycle_mark_value, context, false);
+					appendStringInfoString(buf, " DEFAULT ");
+					get_rule_expr(cte->cycle_clause->cycle_mark_default, context, false);
+				}
+			}
+
 			appendStringInfo(buf, " USING %s", quote_identifier(cte->cycle_clause->cycle_path_column));
 		}
 

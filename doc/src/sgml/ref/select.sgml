@@ -74,7 +74,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
 
     <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS [ [ NOT ] MATERIALIZED ] ( <replaceable class="parameter">select</replaceable> | <replaceable class="parameter">values</replaceable> | <replaceable class="parameter">insert</replaceable> | <replaceable class="parameter">update</replaceable> | <replaceable class="parameter">delete</replaceable> )
         [ SEARCH { BREADTH | DEPTH } FIRST BY <replaceable>column_name</replaceable> [, ...] SET <replaceable>search_seq_col_name</replaceable> ]
-        [ CYCLE <replaceable>column_name</replaceable> [, ...] SET <replaceable>cycle_mark_col_name</replaceable> TO <replaceable>cycle_mark_value</replaceable> DEFAULT <replaceable>cycle_mark_default</replaceable> USING <replaceable>cycle_path_col_name</replaceable> ]
+        [ CYCLE <replaceable>column_name</replaceable> [, ...] SET <replaceable>cycle_mark_col_name</replaceable> [ TO <replaceable>cycle_mark_value</replaceable> DEFAULT <replaceable>cycle_mark_default</replaceable> ] USING <replaceable>cycle_path_col_name</replaceable> ]
 
 TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
 </synopsis>
@@ -302,8 +302,10 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
     been detected.  <replaceable>cycle_mark_value</replaceable> and
     <replaceable>cycle_mark_default</replaceable> must be constants and they
     must be coercible to a common data type, and the data type must have an
-    inequality operator.  (The SQL standard requires that they be character
-    strings, but PostgreSQL does not require that.)  Furthermore, a column
+    inequality operator.  (The SQL standard requires that they be Boolean
+    constants or character strings, but PostgreSQL does not require that.)  By
+    default, <literal>TRUE</literal> and <literal>FALSE</literal> (of type
+    <type>boolean</type>) are used.  Furthermore, a column
     named <replaceable>cycle_path_col_name</replaceable> will be added to the
     result column list of the <literal>WITH</literal> query.  This column is
     used internally for tracking visited rows.  See <xref

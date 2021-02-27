@@ -425,6 +425,7 @@ T121	WITH (excluding RECURSIVE) in query expression			YES
 T122	WITH (excluding RECURSIVE) in subquery			YES	
 T131	Recursive query			YES	
 T132	Recursive query in subquery			YES	
+T133	Enhanced cycle mark values			YES	SQL:202x draft
 T141	SIMILAR predicate			YES	
 T151	DISTINCT predicate			YES	
 T152	DISTINCT predicate with negation			YES	

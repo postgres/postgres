@@ -2349,14 +2349,13 @@ WITH RECURSIVE search_graph(id, link, data, depth) AS (
     SELECT g.id, g.link, g.data, sg.depth + 1
     FROM graph g, search_graph sg
     WHERE g.id = sg.link
-) <emphasis>CYCLE id SET is_cycle TO true DEFAULT false USING path</emphasis>
+) <emphasis>CYCLE id SET is_cycle USING path</emphasis>
 SELECT * FROM search_graph;
 </programlisting>
    and it will be internally rewritten to the above form.  The
    <literal>CYCLE</literal> clause specifies first the list of columns to
    track for cycle detection, then a column name that will show whether a
-   cycle has been detected, then two values to use in that column for the yes
-   and no cases, and finally the name of another column that will track the
+   cycle has been detected, and finally the name of another column that will track the
    path.  The cycle and path columns will implicitly be added to the output
    rows of the CTE.
   </para>

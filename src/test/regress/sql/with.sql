@@ -509,7 +509,7 @@ with recursive search_graph(f, t, label) as (
 	select g.*
 	from graph g, search_graph sg
 	where g.f = sg.t
-) cycle f, t set is_cycle to true default false using path
+) cycle f, t set is_cycle using path
 select * from search_graph;
 
 with recursive search_graph(f, t, label) as (
@@ -545,7 +545,7 @@ with recursive a as (
 	select 1 as b
 	union all
 	select * from a
-) cycle b set c to true default false using p
+) cycle b set c using p
 select * from a;
 
 -- search+cycle
@@ -556,7 +556,7 @@ with recursive search_graph(f, t, label) as (
 	from graph g, search_graph sg
 	where g.f = sg.t
 ) search depth first by f, t set seq
-  cycle f, t set is_cycle to true default false using path
+  cycle f, t set is_cycle using path
 select * from search_graph;
 
 with recursive search_graph(f, t, label) as (
@@ -566,7 +566,7 @@ with recursive search_graph(f, t, label) as (
 	from graph g, search_graph sg
 	where g.f = sg.t
 ) search breadth first by f, t set seq
-  cycle f, t set is_cycle to true default false using path
+  cycle f, t set is_cycle using path
 select * from search_graph;
 
 -- various syntax errors
@@ -576,7 +576,7 @@ with recursive search_graph(f, t, label) as (
 	select g.*
 	from graph g, search_graph sg
 	where g.f = sg.t
-) cycle foo, tar set is_cycle to true default false using path
+) cycle foo, tar set is_cycle using path
 select * from search_graph;
 
 with recursive search_graph(f, t, label) as (
@@ -654,19 +654,31 @@ with recursive search_graph(f, t, label) as (
 select * from search_graph;
 
 -- test ruleutils and view expansion
-create temp view v_cycle as
+create temp view v_cycle1 as
 with recursive search_graph(f, t, label) as (
 	select * from graph g
 	union all
 	select g.*
 	from graph g, search_graph sg
 	where g.f = sg.t
-) cycle f, t set is_cycle to true default false using path
+) cycle f, t set is_cycle using path
 select f, t, label from search_graph;
 
-select pg_get_viewdef('v_cycle');
+create temp view v_cycle2 as
+with recursive search_graph(f, t, label) as (
+	select * from graph g
+	union all
+	select g.*
+	from graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set is_cycle to 'Y' default 'N' using path
+select f, t, label from search_graph;
 
-select * from v_cycle;
+select pg_get_viewdef('v_cycle1');
+select pg_get_viewdef('v_cycle2');
+
+select * from v_cycle1;
+select * from v_cycle2;
 
 --
 -- test multiple WITH queries
