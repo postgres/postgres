@@ -3832,6 +3832,8 @@ static void AfterTriggerExecute(EState *estate,
 								TupleTableSlot *trig_tuple_slot2);
 static AfterTriggersTableData *GetAfterTriggersTableData(Oid relid,
 														 CmdType cmdType);
+static TupleTableSlot *GetAfterTriggersStoreSlot(AfterTriggersTableData *table,
+												 TupleDesc tupdesc);
 static void AfterTriggerFreeQuery(AfterTriggersQueryData *qs);
 static SetConstraintState SetConstraintStateCreate(int numalloc);
 static SetConstraintState SetConstraintStateCopy(SetConstraintState state);
@@ -4634,6 +4636,31 @@ GetAfterTriggersTableData(Oid relid, CmdType cmdType)
 	return table;
 }
 
+/*
+ * Returns a TupleTableSlot suitable for holding the tuples to be put
+ * into AfterTriggersTableData's transition table tuplestores.
+ */
+static TupleTableSlot *
+GetAfterTriggersStoreSlot(AfterTriggersTableData *table,
+						  TupleDesc tupdesc)
+{
+	/* Create it if not already done. */
+	if (!table->storeslot)
+	{
+		MemoryContext	oldcxt;
+
+		/*
+		 * We only need this slot only until AfterTriggerEndQuery, but making
+		 * it last till end-of-subxact is good enough.  It'll be freed by
+		 * AfterTriggerFreeQuery().
+		 */
+		oldcxt = MemoryContextSwitchTo(CurTransactionContext);
+		table->storeslot = MakeSingleTupleTableSlot(tupdesc, &TTSOpsVirtual);
+		MemoryContextSwitchTo(oldcxt);
+	}
+
+	return table->storeslot;
+}
 
 /*
  * MakeTransitionCaptureState
@@ -4922,6 +4949,8 @@ AfterTriggerFreeQuery(AfterTriggersQueryData *qs)
 		table->new_tuplestore = NULL;
 		if (ts)
 			tuplestore_end(ts);
+		if (table->storeslot)
+			ExecDropSingleTupleTableSlot(table->storeslot);
 	}
 
 	/*
@@ -5771,17 +5800,10 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 
 			if (map != NULL)
 			{
+				AfterTriggersTableData *table = transition_capture->tcs_private;
 				TupleTableSlot *storeslot;
 
-				storeslot = transition_capture->tcs_private->storeslot;
-				if (!storeslot)
-				{
-					storeslot = ExecAllocTableSlot(&estate->es_tupleTable,
-												   map->outdesc,
-												   &TTSOpsVirtual);
-					transition_capture->tcs_private->storeslot = storeslot;
-				}
-
+				storeslot = GetAfterTriggersStoreSlot(table, map->outdesc);
 				execute_attr_map_slot(map->attrMap, oldslot, storeslot);
 				tuplestore_puttupleslot(old_tuplestore, storeslot);
 			}
@@ -5801,18 +5823,10 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 										original_insert_tuple);
 			else if (map != NULL)
 			{
+				AfterTriggersTableData *table = transition_capture->tcs_private;
 				TupleTableSlot *storeslot;
 
-				storeslot = transition_capture->tcs_private->storeslot;
-
-				if (!storeslot)
-				{
-					storeslot = ExecAllocTableSlot(&estate->es_tupleTable,
-												   map->outdesc,
-												   &TTSOpsVirtual);
-					transition_capture->tcs_private->storeslot = storeslot;
-				}
-
+				storeslot = GetAfterTriggersStoreSlot(table, map->outdesc);
 				execute_attr_map_slot(map->attrMap, newslot, storeslot);
 				tuplestore_puttupleslot(new_tuplestore, storeslot);
 			}
