@@ -427,7 +427,6 @@ typedef struct
 
 	/* per client collected stats */
 	int64		cnt;			/* client transaction count, for -t */
-	int			ecnt;			/* error count */
 } CState;
 
 /*
@@ -2716,7 +2715,6 @@ sendCommand(CState *st, Command *command)
 	if (r == 0)
 	{
 		pg_log_debug("client %d could not send %s", st->id, command->argv[0]);
-		st->ecnt++;
 		return false;
 	}
 	else
@@ -2828,14 +2826,12 @@ readCommandResponse(CState *st, MetaCommand meta, char *varprefix)
 	if (qrynum == 0)
 	{
 		pg_log_error("client %d command %d: no results", st->id, st->command);
-		st->ecnt++;
 		return false;
 	}
 
 	return true;
 
 error:
-	st->ecnt++;
 	PQclear(res);
 	PQclear(next_res);
 	do
