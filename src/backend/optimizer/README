@@ -374,6 +374,7 @@ RelOptInfo      - a relation or joined relations
   IndexPath     - index scan
   BitmapHeapPath - top of a bitmapped index scan
   TidPath       - scan by CTID
+  TidRangePath  - scan a contiguous range of CTIDs
   SubqueryScanPath - scan a subquery-in-FROM
   ForeignPath   - scan a foreign table, foreign join or foreign upper-relation
   CustomPath    - for custom scan providers

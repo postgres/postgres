@@ -138,6 +138,7 @@ test: sysviews
 test: tsrf
 test: tid
 test: tidscan
+test: tidrangescan
 test: collate.icu.utf8
 test: rules
 test: psql

@@ -36,6 +36,10 @@ typedef struct TableScanDescData
 	int			rs_nkeys;		/* number of scan keys */
 	struct ScanKeyData *rs_key; /* array of scan key descriptors */
 
+	/* Range of ItemPointers for table_scan_getnextslot_tidrange() to scan. */
+	ItemPointerData rs_mintid;
+	ItemPointerData rs_maxtid;
+
 	/*
 	 * Information about type and behaviour of the scan, a bitmask of members
 	 * of the ScanOptions enum (see tableam.h).

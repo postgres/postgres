@@ -1625,6 +1625,24 @@ typedef struct TidScanState
 } TidScanState;
 
 /* ----------------
+ *	 TidRangeScanState information
+ *
+ *		trss_tidexprs		list of TidOpExpr structs (see nodeTidrangescan.c)
+ *		trss_mintid			the lowest TID in the scan range
+ *		trss_maxtid			the highest TID in the scan range
+ *		trss_inScan			is a scan currently in progress?
+ * ----------------
+ */
+typedef struct TidRangeScanState
+{
+	ScanState	ss;				/* its first field is NodeTag */
+	List	   *trss_tidexprs;
+	ItemPointerData trss_mintid;
+	ItemPointerData trss_maxtid;
+	bool		trss_inScan;
+} TidRangeScanState;
+
+/* ----------------
  *	 SubqueryScanState information
  *
  *		SubqueryScanState is used for scanning a sub-query in the range table.

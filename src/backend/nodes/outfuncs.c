@@ -609,6 +609,16 @@ _outTidScan(StringInfo str, const TidScan *node)
 }
 
 static void
+_outTidRangeScan(StringInfo str, const TidRangeScan *node)
+{
+	WRITE_NODE_TYPE("TIDRANGESCAN");
+
+	_outScanInfo(str, (const Scan *) node);
+
+	WRITE_NODE_FIELD(tidrangequals);
+}
+
+static void
 _outSubqueryScan(StringInfo str, const SubqueryScan *node)
 {
 	WRITE_NODE_TYPE("SUBQUERYSCAN");
@@ -2314,6 +2324,7 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_NODE_FIELD(subroot);
 	WRITE_NODE_FIELD(subplan_params);
 	WRITE_INT_FIELD(rel_parallel_workers);
+	WRITE_UINT_FIELD(amflags);
 	WRITE_OID_FIELD(serverid);
 	WRITE_OID_FIELD(userid);
 	WRITE_BOOL_FIELD(useridiscurrent);
@@ -3809,6 +3820,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_TidScan:
 				_outTidScan(str, obj);
+				break;
+			case T_TidRangeScan:
+				_outTidRangeScan(str, obj);
 				break;
 			case T_SubqueryScan:
 				_outSubqueryScan(str, obj);

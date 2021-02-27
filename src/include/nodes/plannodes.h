@@ -486,6 +486,19 @@ typedef struct TidScan
 } TidScan;
 
 /* ----------------
+ *		tid range scan node
+ *
+ * tidrangequals is an implicitly AND'ed list of qual expressions of the form
+ * "CTID relop pseudoconstant", where relop is one of >,>=,<,<=.
+ * ----------------
+ */
+typedef struct TidRangeScan
+{
+	Scan		scan;
+	List	   *tidrangequals;	/* qual(s) involving CTID op something */
+} TidRangeScan;
+
+/* ----------------
  *		subquery scan node
  *
  * SubqueryScan is for scanning the output of a sub-query in the range table.

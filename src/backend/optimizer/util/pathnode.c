@@ -1204,6 +1204,35 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
 }
 
 /*
+ * create_tidrangescan_path
+ *	  Creates a path corresponding to a scan by a range of TIDs, returning
+ *	  the pathnode.
+ */
+TidRangePath *
+create_tidrangescan_path(PlannerInfo *root, RelOptInfo *rel,
+						 List *tidrangequals, Relids required_outer)
+{
+	TidRangePath *pathnode = makeNode(TidRangePath);
+
+	pathnode->path.pathtype = T_TidRangeScan;
+	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = rel->reltarget;
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+														  required_outer);
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel;
+	pathnode->path.parallel_workers = 0;
+	pathnode->path.pathkeys = NIL;	/* always unordered */
+
+	pathnode->tidrangequals = tidrangequals;
+
+	cost_tidrangescan(&pathnode->path, root, rel, tidrangequals,
+					  pathnode->path.param_info);
+
+	return pathnode;
+}
+
+/*
  * create_append_path
  *	  Creates a path corresponding to an Append plan, returning the
  *	  pathnode.

@@ -49,18 +49,19 @@ typedef enum ScanOptions
 	SO_TYPE_BITMAPSCAN = 1 << 1,
 	SO_TYPE_SAMPLESCAN = 1 << 2,
 	SO_TYPE_TIDSCAN = 1 << 3,
-	SO_TYPE_ANALYZE = 1 << 4,
+	SO_TYPE_TIDRANGESCAN = 1 << 4,
+	SO_TYPE_ANALYZE = 1 << 5,
 
 	/* several of SO_ALLOW_* may be specified */
 	/* allow or disallow use of access strategy */
-	SO_ALLOW_STRAT = 1 << 5,
+	SO_ALLOW_STRAT = 1 << 6,
 	/* report location to syncscan logic? */
-	SO_ALLOW_SYNC = 1 << 6,
+	SO_ALLOW_SYNC = 1 << 7,
 	/* verify visibility page-at-a-time? */
-	SO_ALLOW_PAGEMODE = 1 << 7,
+	SO_ALLOW_PAGEMODE = 1 << 8,
 
 	/* unregister snapshot at scan end? */
-	SO_TEMP_SNAPSHOT = 1 << 8
+	SO_TEMP_SNAPSHOT = 1 << 9
 } ScanOptions;
 
 /*
@@ -325,6 +326,34 @@ typedef struct TableAmRoutine
 									 ScanDirection direction,
 									 TupleTableSlot *slot);
 
+	/*-----------
+	 * Optional functions to provide scanning for ranges of ItemPointers.
+	 * Implementations must either provide both of these functions, or neither
+	 * of them.
+	 *
+	 * Implementations of scan_set_tidrange must themselves handle
+	 * ItemPointers of any value. i.e, they must handle each of the following:
+	 *
+	 * 1) mintid or maxtid is beyond the end of the table; and
+	 * 2) mintid is above maxtid; and
+	 * 3) item offset for mintid or maxtid is beyond the maximum offset
+	 * allowed by the AM.
+	 *
+	 * Implementations can assume that scan_set_tidrange is always called
+	 * before can_getnextslot_tidrange or after scan_rescan and before any
+	 * further calls to scan_getnextslot_tidrange.
+	 */
+	void		(*scan_set_tidrange) (TableScanDesc scan,
+									  ItemPointer mintid,
+									  ItemPointer maxtid);
+
+	/*
+	 * Return next tuple from `scan` that's in the range of TIDs defined by
+	 * scan_set_tidrange.
+	 */
+	bool		(*scan_getnextslot_tidrange) (TableScanDesc scan,
+											  ScanDirection direction,
+											  TupleTableSlot *slot);
 
 	/* ------------------------------------------------------------------------
 	 * Parallel table scan related functions.
@@ -1013,6 +1042,64 @@ table_scan_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableS
 		elog(ERROR, "unexpected table_scan_getnextslot call during logical decoding");
 
 	return sscan->rs_rd->rd_tableam->scan_getnextslot(sscan, direction, slot);
+}
+
+/* ----------------------------------------------------------------------------
+ * TID Range scanning related functions.
+ * ----------------------------------------------------------------------------
+ */
+
+/*
+ * table_beginscan_tidrange is the entry point for setting up a TableScanDesc
+ * for a TID range scan.
+ */
+static inline TableScanDesc
+table_beginscan_tidrange(Relation rel, Snapshot snapshot,
+						 ItemPointer mintid,
+						 ItemPointer maxtid)
+{
+	TableScanDesc sscan;
+	uint32		flags = SO_TYPE_TIDRANGESCAN | SO_ALLOW_PAGEMODE;
+
+	sscan = rel->rd_tableam->scan_begin(rel, snapshot, 0, NULL, NULL, flags);
+
+	/* Set the range of TIDs to scan */
+	sscan->rs_rd->rd_tableam->scan_set_tidrange(sscan, mintid, maxtid);
+
+	return sscan;
+}
+
+/*
+ * table_rescan_tidrange resets the scan position and sets the minimum and
+ * maximum TID range to scan for a TableScanDesc created by
+ * table_beginscan_tidrange.
+ */
+static inline void
+table_rescan_tidrange(TableScanDesc sscan, ItemPointer mintid,
+					  ItemPointer maxtid)
+{
+	/* Ensure table_beginscan_tidrange() was used. */
+	Assert((sscan->rs_flags & SO_TYPE_TIDRANGESCAN) != 0);
+
+	sscan->rs_rd->rd_tableam->scan_rescan(sscan, NULL, false, false, false, false);
+	sscan->rs_rd->rd_tableam->scan_set_tidrange(sscan, mintid, maxtid);
+}
+
+/*
+ * Fetch the next tuple from `sscan` for a TID range scan created by
+ * table_beginscan_tidrange().  Stores the tuple in `slot` and returns true,
+ * or returns false if no more tuples exist in the range.
+ */
+static inline bool
+table_scan_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
+								TupleTableSlot *slot)
+{
+	/* Ensure table_beginscan_tidrange() was used. */
+	Assert((sscan->rs_flags & SO_TYPE_TIDRANGESCAN) != 0);
+
+	return sscan->rs_rd->rd_tableam->scan_getnextslot_tidrange(sscan,
+															   direction,
+															   slot);
 }
 
 
