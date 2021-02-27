@@ -2470,3 +2470,68 @@ create trigger aft_row after insert or update on trigger_parted
 create table trigger_parted_p1 partition of trigger_parted for values in (1)
   partition by list (a);
 create table trigger_parted_p1_1 partition of trigger_parted_p1 for values in (1);
+
+-- verify transition table conversion slot's lifetime
+-- https://postgr.es/m/39a71864-b120-5a5c-8cc5-c632b6f16761@amazon.com
+create table convslot_test_parent (col1 text primary key);
+create table convslot_test_child (col1 text primary key,
+	foreign key (col1) references convslot_test_parent(col1) on delete cascade on update cascade
+);
+
+alter table convslot_test_child add column col2 text not null default 'tutu';
+insert into convslot_test_parent(col1) values ('1');
+insert into convslot_test_child(col1) values ('1');
+insert into convslot_test_parent(col1) values ('3');
+insert into convslot_test_child(col1) values ('3');
+
+create or replace function trigger_function1()
+returns trigger
+language plpgsql
+AS $$
+begin
+raise notice 'trigger = %, old_table = %',
+          TG_NAME,
+          (select string_agg(old_table::text, ', ' order by col1) from old_table);
+return null;
+end; $$;
+
+create or replace function trigger_function2()
+returns trigger
+language plpgsql
+AS $$
+begin
+raise notice 'trigger = %, new table = %',
+          TG_NAME,
+          (select string_agg(new_table::text, ', ' order by col1) from new_table);
+return null;
+end; $$;
+
+create trigger but_trigger after update on convslot_test_child
+referencing new table as new_table
+for each statement execute function trigger_function2();
+
+update convslot_test_parent set col1 = col1 || '1';
+
+create or replace function trigger_function3()
+returns trigger
+language plpgsql
+AS $$
+begin
+raise notice 'trigger = %, old_table = %, new table = %',
+          TG_NAME,
+          (select string_agg(old_table::text, ', ' order by col1) from old_table),
+          (select string_agg(new_table::text, ', ' order by col1) from new_table);
+return null;
+end; $$;
+
+create trigger but_trigger2 after update on convslot_test_child
+referencing old table as old_table new table as new_table
+for each statement execute function trigger_function3();
+update convslot_test_parent set col1 = col1 || '1';
+
+create trigger bdt_trigger after delete on convslot_test_child
+referencing old table as old_table
+for each statement execute function trigger_function1();
+delete from convslot_test_parent;
+
+drop table convslot_test_child, convslot_test_parent;
