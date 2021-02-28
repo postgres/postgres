@@ -118,6 +118,11 @@ InitPostmasterChild(void)
 	/* We don't want the postmaster's proc_exit() handlers */
 	on_exit_reset();
 
+	/* In EXEC_BACKEND case we will not have inherited BlockSig etc values */
+#ifdef EXEC_BACKEND
+	pqinitmask();
+#endif
+
 	/* Initialize process-local latch support */
 	InitializeLatchSupport();
 	MyLatch = &LocalLatchData;
@@ -133,11 +138,6 @@ InitPostmasterChild(void)
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
 		elog(FATAL, "setsid() failed: %m");
-#endif
-
-	/* In EXEC_BACKEND case we will not have inherited BlockSig etc values */
-#ifdef EXEC_BACKEND
-	pqinitmask();
 #endif
 
 	/*

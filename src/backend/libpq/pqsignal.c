@@ -35,12 +35,14 @@ sigset_t	UnBlockSig,
  * collection; it's essentially BlockSig minus SIGTERM, SIGQUIT, SIGALRM.
  *
  * UnBlockSig is the set of signals to block when we don't want to block
- * signals (is this ever nonzero??)
+ * signals.
  */
 void
 pqinitmask(void)
 {
 	sigemptyset(&UnBlockSig);
+
+	/* Note: InitializeLatchSupport() modifies UnBlockSig. */
 
 	/* First set all signals, then clear some. */
 	sigfillset(&BlockSig);
