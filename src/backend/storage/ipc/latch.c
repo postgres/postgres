@@ -666,31 +666,12 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 		/* treat this as though epoll_create1 itself returned EMFILE */
 		elog(ERROR, "epoll_create1 failed: %m");
 	}
-#ifdef EPOLL_CLOEXEC
 	set->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
 	if (set->epoll_fd < 0)
 	{
 		ReleaseExternalFD();
 		elog(ERROR, "epoll_create1 failed: %m");
 	}
-#else
-	/* cope with ancient glibc lacking epoll_create1 (e.g., RHEL5) */
-	set->epoll_fd = epoll_create(nevents);
-	if (set->epoll_fd < 0)
-	{
-		ReleaseExternalFD();
-		elog(ERROR, "epoll_create failed: %m");
-	}
-	if (fcntl(set->epoll_fd, F_SETFD, FD_CLOEXEC) == -1)
-	{
-		int			save_errno = errno;
-
-		close(set->epoll_fd);
-		ReleaseExternalFD();
-		errno = save_errno;
-		elog(ERROR, "fcntl(F_SETFD) failed on epoll descriptor: %m");
-	}
-#endif							/* EPOLL_CLOEXEC */
 #elif defined(WAIT_USE_KQUEUE)
 	if (!AcquireExternalFD())
 	{
@@ -736,7 +717,7 @@ CreateWaitEventSet(MemoryContext context, int nevents)
  *
  * Note: preferably, this shouldn't have to free any resources that could be
  * inherited across an exec().  If it did, we'd likely leak those resources in
- * many scenarios.  For the epoll case, we ensure that by setting FD_CLOEXEC
+ * many scenarios.  For the epoll case, we ensure that by setting EPOLL_CLOEXEC
  * when the FD is created.  For the Windows case, we assume that the handles
  * involved are non-inheritable.
  */
