@@ -16,7 +16,7 @@
  *
  * When SetLatch is called from the same process that owns the latch,
  * SetLatch writes the byte directly to the pipe. If it's owned by another
- * process, SIGUSR1 is sent and the signal handler in the waiting process
+ * process, SIGURG is sent and the signal handler in the waiting process
  * writes the byte to the pipe on behalf of the signaling process.
  *
  * The Windows implementation uses Windows events that are inherited by all
@@ -148,6 +148,7 @@ static int	selfpipe_writefd = -1;
 static int	selfpipe_owner_pid = 0;
 
 /* Private function prototypes */
+static void latch_sigurg_handler(SIGNAL_ARGS);
 static void sendSelfPipeByte(void);
 static void drainSelfPipe(void);
 #endif							/* WIN32 */
@@ -244,6 +245,8 @@ InitializeLatchSupport(void)
 	/* Tell fd.c about these two long-lived FDs */
 	ReserveExternalFD();
 	ReserveExternalFD();
+
+	pqsignal(SIGURG, latch_sigurg_handler);
 #else
 	/* currently, nothing to do here for Windows */
 #endif
@@ -265,6 +268,24 @@ InitializeLatchWaitSet(void)
 						  PGINVALID_SOCKET, NULL, NULL);
 
 	Assert(latch_pos == LatchWaitSetLatchPos);
+}
+
+void
+ShutdownLatchSupport(void)
+{
+	pqsignal(SIGURG, SIG_IGN);
+
+	if (LatchWaitSet)
+	{
+		FreeWaitEventSet(LatchWaitSet);
+		LatchWaitSet = NULL;
+	}
+
+	close(selfpipe_readfd);
+	close(selfpipe_writefd);
+	selfpipe_readfd = -1;
+	selfpipe_writefd = -1;
+	selfpipe_owner_pid = InvalidPid;
 }
 
 /*
@@ -335,10 +356,6 @@ InitSharedLatch(Latch *latch)
  * any sort of locking here, meaning that we could fail to detect the error
  * if two processes try to own the same latch at about the same time.  If
  * there is any risk of that, caller must provide an interlock to prevent it.
- *
- * In any process that calls OwnLatch(), make sure that
- * latch_sigusr1_handler() is called from the SIGUSR1 signal handler,
- * as shared latches use SIGUSR1 for inter-process communication.
  */
 void
 OwnLatch(Latch *latch)
@@ -562,7 +579,7 @@ SetLatch(Latch *latch)
 			sendSelfPipeByte();
 	}
 	else
-		kill(owner_pid, SIGUSR1);
+		kill(owner_pid, SIGURG);
 #else
 
 	/*
@@ -1266,7 +1283,7 @@ WaitEventSetWait(WaitEventSet *set, long timeout,
 		 * the pipe-buffer fill up we're still ok, because the pipe is in
 		 * nonblocking mode. It's unlikely for that to happen, because the
 		 * self pipe isn't filled unless we're blocking (waiting = true), or
-		 * from inside a signal handler in latch_sigusr1_handler().
+		 * from inside a signal handler in latch_sigurg_handler().
 		 *
 		 * On windows, we'll also notice if there's a pending event for the
 		 * latch when blocking, but there's no danger of anything filling up,
@@ -1934,22 +1951,21 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 }
 #endif
 
-/*
- * SetLatch uses SIGUSR1 to wake up the process waiting on the latch.
- *
- * Wake up WaitLatch, if we're waiting.  (We might not be, since SIGUSR1 is
- * overloaded for multiple purposes; or we might not have reached WaitLatch
- * yet, in which case we don't need to fill the pipe either.)
- *
- * NB: when calling this in a signal handler, be sure to save and restore
- * errno around it.
- */
 #ifndef WIN32
-void
-latch_sigusr1_handler(void)
+/*
+ * SetLatch uses SIGURG to wake up the process waiting on the latch.
+ *
+ * Wake up WaitLatch, if we're waiting.
+ */
+static void
+latch_sigurg_handler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	if (waiting)
 		sendSelfPipeByte();
+
+	errno = save_errno;
 }
 #endif							/* !WIN32 */
 

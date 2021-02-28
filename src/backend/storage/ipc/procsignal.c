@@ -688,7 +688,5 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 
 	SetLatch(MyLatch);
 
-	latch_sigusr1_handler();
-
 	errno = save_errno;
 }

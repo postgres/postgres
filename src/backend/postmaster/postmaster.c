@@ -656,6 +656,10 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal_pm(SIGUSR2, dummy_handler);	/* unused, reserve for children */
 	pqsignal_pm(SIGCHLD, reaper);	/* handle child termination */
 
+#ifdef SIGURG
+	pqsignal_pm(SIGURG, SIG_IGN);	/* ignored */
+#endif
+
 	/*
 	 * No other place in Postgres should touch SIGTTIN/SIGTTOU handling.  We
 	 * ignore those signals in a postmaster environment, so that there is no
