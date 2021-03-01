@@ -165,8 +165,6 @@ ConditionVariableTimedSleep(ConditionVariable *cv, long timeout,
 		/* Reset latch before examining the state of the wait list. */
 		ResetLatch(MyLatch);
 
-		CHECK_FOR_INTERRUPTS();
-
 		/*
 		 * If this process has been taken out of the wait list, then we know
 		 * that it has been signaled by ConditionVariableSignal (or
@@ -189,6 +187,15 @@ ConditionVariableTimedSleep(ConditionVariable *cv, long timeout,
 			proclist_push_tail(&cv->wakeup, MyProc->pgprocno, cvWaitLink);
 		}
 		SpinLockRelease(&cv->mutex);
+
+		/*
+		 * Check for interrupts, and return spuriously if that caused the
+		 * current sleep target to change (meaning that interrupt handler code
+		 * waited for a different condition variable).
+		 */
+		CHECK_FOR_INTERRUPTS();
+		if (cv != cv_sleep_target)
+			done = true;
 
 		/* We were signaled, so return */
 		if (done)
