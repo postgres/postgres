@@ -386,11 +386,6 @@ EmitProcSignalBarrier(ProcSignalBarrierType type)
 /*
  * WaitForProcSignalBarrier - wait until it is guaranteed that all changes
  * requested by a specific call to EmitProcSignalBarrier() have taken effect.
- *
- * We expect that the barrier will normally be absorbed very quickly by other
- * backends, so we start by waiting just 1/8 of a second and then back off
- * by a factor of two every time we time out, to a maximum wait time of
- * 1 second.
  */
 void
 WaitForProcSignalBarrier(uint64 generation)
