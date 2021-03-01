@@ -535,10 +535,12 @@ json_lex(JsonLexContext *lex)
 	while (len < lex->input_length &&
 		   (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r'))
 	{
-		if (*s == '\n')
+		if (*s++ == '\n')
+		{
 			++lex->line_number;
-		++s;
-		++len;
+			lex->line_start = s;
+		}
+		len++;
 	}
 	lex->token_start = s;
 

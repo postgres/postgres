@@ -79,8 +79,8 @@ typedef struct JsonLexContext
 	char	   *prev_token_terminator;
 	JsonTokenType token_type;
 	int			lex_level;
-	int			line_number;
-	char	   *line_start;
+	int			line_number;	/* line number, starting from 1 */
+	char	   *line_start;		/* where that line starts within input */
 	StringInfo	strval;
 } JsonLexContext;
 

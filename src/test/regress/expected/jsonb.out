@@ -272,6 +272,37 @@ LINE 1: SELECT '    '::jsonb;
                ^
 DETAIL:  The input string ended unexpectedly.
 CONTEXT:  JSON data, line 1:     
+-- Multi-line JSON input to check ERROR reporting
+SELECT '{
+		"one": 1,
+		"two":"two",
+		"three":
+		true}'::jsonb; -- OK
+                  jsonb                  
+-----------------------------------------
+ {"one": 1, "two": "two", "three": true}
+(1 row)
+
+SELECT '{
+		"one": 1,
+		"two":,"two",  -- ERROR extraneous comma before field "two"
+		"three":
+		true}'::jsonb;
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '{
+               ^
+DETAIL:  Expected JSON value, but found ",".
+CONTEXT:  JSON data, line 3: 		"two":,...
+SELECT '{
+		"one": 1,
+		"two":"two",
+		"averyveryveryveryveryveryveryveryveryverylongfieldname":}'::jsonb;
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '{
+               ^
+DETAIL:  Expected JSON value, but found "}".
+CONTEXT:  JSON data, line 4: ...yveryveryveryveryveryveryveryverylongfieldname":}
+-- ERROR missing value for last field
 -- make sure jsonb is passed through json generators without being escaped
 SELECT array_to_json(ARRAY [jsonb '{"a":1}', jsonb '{"b":[2,3]}']);
       array_to_json       

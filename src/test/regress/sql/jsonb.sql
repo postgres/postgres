@@ -59,6 +59,23 @@ SELECT 'trues'::jsonb;			-- ERROR, not a keyword
 SELECT ''::jsonb;				-- ERROR, no value
 SELECT '    '::jsonb;			-- ERROR, no value
 
+-- Multi-line JSON input to check ERROR reporting
+SELECT '{
+		"one": 1,
+		"two":"two",
+		"three":
+		true}'::jsonb; -- OK
+SELECT '{
+		"one": 1,
+		"two":,"two",  -- ERROR extraneous comma before field "two"
+		"three":
+		true}'::jsonb;
+SELECT '{
+		"one": 1,
+		"two":"two",
+		"averyveryveryveryveryveryveryveryveryverylongfieldname":}'::jsonb;
+-- ERROR missing value for last field
+
 -- make sure jsonb is passed through json generators without being escaped
 SELECT array_to_json(ARRAY [jsonb '{"a":1}', jsonb '{"b":[2,3]}']);
 

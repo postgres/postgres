@@ -641,30 +641,19 @@ report_json_context(JsonLexContext *lex)
 	const char *context_start;
 	const char *context_end;
 	const char *line_start;
-	int			line_number;
 	char	   *ctxt;
 	int			ctxtlen;
 	const char *prefix;
 	const char *suffix;
 
 	/* Choose boundaries for the part of the input we will display */
-	context_start = lex->input;
+	line_start = lex->line_start;
+	context_start = line_start;
 	context_end = lex->token_terminator;
-	line_start = context_start;
-	line_number = 1;
-	for (;;)
+
+	/* Advance until we are close enough to context_end */
+	while (context_end - context_start >= 50 && context_start < context_end)
 	{
-		/* Always advance over newlines */
-		if (context_start < context_end && *context_start == '\n')
-		{
-			context_start++;
-			line_start = context_start;
-			line_number++;
-			continue;
-		}
-		/* Otherwise, done as soon as we are close enough to context_end */
-		if (context_end - context_start < 50)
-			break;
 		/* Advance to next multibyte character */
 		if (IS_HIGHBIT_SET(*context_start))
 			context_start += pg_mblen(context_start);
@@ -694,7 +683,7 @@ report_json_context(JsonLexContext *lex)
 	suffix = (lex->token_type != JSON_TOKEN_END && context_end - lex->input < lex->input_length && *context_end != '\n' && *context_end != '\r') ? "..." : "";
 
 	return errcontext("JSON data, line %d: %s%s%s",
-					  line_number, prefix, ctxt, suffix);
+					  lex->line_number, prefix, ctxt, suffix);
 }
 
 
