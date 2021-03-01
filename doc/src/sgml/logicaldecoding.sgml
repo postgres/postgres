@@ -1228,5 +1228,29 @@ stream_commit_cb(...);  &lt;-- commit of the streamed transaction
     that name pattern will not be decoded as a two-phase commit transaction.
    </para>
 
+   <para>
+    The users that want to decode prepared transactions need to be careful about
+    below mentioned points:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       If the prepared transaction has locked [user] catalog tables exclusively
+       then decoding prepare can block till the main transaction is committed.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The logical replication solution that builds distributed two phase commit
+       using this feature can deadlock if the prepared transaction has locked
+       [user] catalog tables exclusively. They need to inform users to not have
+       locks on catalog tables (via explicit <command>LOCK</command> command) in
+       such transactions.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
   </sect1>
  </chapter>
