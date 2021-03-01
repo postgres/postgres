@@ -165,6 +165,17 @@ struct SnapBuild
 	XLogRecPtr	start_decoding_at;
 
 	/*
+	 * LSN at which we found a consistent point at the time of slot creation.
+	 * This is also the point where we have exported a snapshot for the
+	 * initial copy.
+	 *
+	 * The prepared transactions that are not covered by initial snapshot
+	 * needs to be sent later along with commit prepared and they must be
+	 * before this point.
+	 */
+	XLogRecPtr	initial_consistent_point;
+
+	/*
 	 * Don't start decoding WAL until the "xl_running_xacts" information
 	 * indicates there are no running xids with an xid smaller than this.
 	 */
@@ -269,7 +280,8 @@ SnapBuild *
 AllocateSnapshotBuilder(ReorderBuffer *reorder,
 						TransactionId xmin_horizon,
 						XLogRecPtr start_lsn,
-						bool need_full_snapshot)
+						bool need_full_snapshot,
+						XLogRecPtr initial_consistent_point)
 {
 	MemoryContext context;
 	MemoryContext oldcontext;
@@ -297,6 +309,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 	builder->initial_xmin_horizon = xmin_horizon;
 	builder->start_decoding_at = start_lsn;
 	builder->building_full_snapshot = need_full_snapshot;
+	builder->initial_consistent_point = initial_consistent_point;
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -354,6 +367,15 @@ SnapBuildState
 SnapBuildCurrentState(SnapBuild *builder)
 {
 	return builder->state;
+}
+
+/*
+ * Return the LSN at which the snapshot was exported
+ */
+XLogRecPtr
+SnapBuildInitialConsistentPoint(SnapBuild *builder)
+{
+	return builder->initial_consistent_point;
 }
 
 /*
@@ -1422,7 +1444,7 @@ typedef struct SnapBuildOnDisk
 	offsetof(SnapBuildOnDisk, version)
 
 #define SNAPBUILD_MAGIC 0x51A1E001
-#define SNAPBUILD_VERSION 3
+#define SNAPBUILD_VERSION 4
 
 /*
  * Store/Load a snapshot from disk, depending on the snapshot builder's state.

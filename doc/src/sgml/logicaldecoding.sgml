@@ -191,9 +191,6 @@ postgres=# COMMIT PREPARED 'test_prepared1';
 postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'two-phase-commit', '1');
     lsn    | xid |                    data                    
 -----------+-----+--------------------------------------------
- 0/1689DC0 | 529 | BEGIN 529
- 0/1689DC0 | 529 | table public.data: INSERT: id[integer]:3 data[text]:'5'
- 0/1689FC0 | 529 | PREPARE TRANSACTION 'test_prepared1', txid 529
  0/168A060 | 529 | COMMIT PREPARED 'test_prepared1', txid 529
 (4 row)
 
@@ -822,10 +819,8 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
       <parameter>gid</parameter> field, which is part of the
       <parameter>txn</parameter> parameter, can be used in this callback to
       check if the plugin has already received this <command>PREPARE</command>
-      in which case it can skip the remaining changes of the transaction.
-      This can only happen if the user restarts the decoding after receiving
-      the <command>PREPARE</command> for a transaction but before receiving
-      the <command>COMMIT PREPARED</command>, say because of some error.
+      in which case it can either error out or skip the remaining changes of 
+      the transaction.
       <programlisting>
        typedef void (*LogicalDecodeBeginPrepareCB) (struct LogicalDecodingContext *ctx,
                                                     ReorderBufferTXN *txn);

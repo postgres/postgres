@@ -91,6 +91,13 @@ typedef struct ReplicationSlotPersistentData
 	 */
 	XLogRecPtr	confirmed_flush;
 
+	/*
+	 * LSN at which we found a consistent point at the time of slot creation.
+	 * This is also the point where we have exported a snapshot for the
+	 * initial copy.
+	 */
+	XLogRecPtr	initial_consistent_point;
+
 	/* plugin name */
 	NameData	plugin;
 } ReplicationSlotPersistentData;
