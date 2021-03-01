@@ -191,6 +191,9 @@ WaitEventSet *FeBeWaitSet;
 void
 pq_init(void)
 {
+	int		socket_pos PG_USED_FOR_ASSERTS_ONLY;
+	int		latch_pos PG_USED_FOR_ASSERTS_ONLY;
+
 	/* initialize state variables */
 	PqSendBufferSize = PQ_SEND_BUFFER_SIZE;
 	PqSendBuffer = MemoryContextAlloc(TopMemoryContext, PqSendBufferSize);
@@ -219,10 +222,19 @@ pq_init(void)
 #endif
 
 	FeBeWaitSet = CreateWaitEventSet(TopMemoryContext, 3);
-	AddWaitEventToSet(FeBeWaitSet, WL_SOCKET_WRITEABLE, MyProcPort->sock,
+	socket_pos = AddWaitEventToSet(FeBeWaitSet, WL_SOCKET_WRITEABLE,
+								   MyProcPort->sock, NULL, NULL);
+	latch_pos = AddWaitEventToSet(FeBeWaitSet, WL_LATCH_SET, PGINVALID_SOCKET,
+								  MyLatch, NULL);
+	AddWaitEventToSet(FeBeWaitSet, WL_POSTMASTER_DEATH, PGINVALID_SOCKET,
 					  NULL, NULL);
-	AddWaitEventToSet(FeBeWaitSet, WL_LATCH_SET, -1, MyLatch, NULL);
-	AddWaitEventToSet(FeBeWaitSet, WL_POSTMASTER_DEATH, -1, NULL, NULL);
+
+	/*
+	 * The event positions match the order we added them, but let's sanity
+	 * check them to be sure.
+	 */
+	Assert(socket_pos == FeBeWaitSetSocketPos);
+	Assert(latch_pos == FeBeWaitSetLatchPos);
 }
 
 /* --------------------------------

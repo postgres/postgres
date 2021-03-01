@@ -55,6 +55,9 @@ extern const PGDLLIMPORT PQcommMethods *PqCommMethods;
  */
 extern WaitEventSet *FeBeWaitSet;
 
+#define FeBeWaitSetSocketPos 0
+#define FeBeWaitSetLatchPos 1
+
 extern int	StreamServerPort(int family, const char *hostName,
 							 unsigned short portNumber, const char *unixSocketDir,
 							 pgsocket ListenSocket[], int MaxListen);
