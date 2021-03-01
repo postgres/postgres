@@ -151,6 +151,10 @@ ok(send_query_and_wait(\%psql_standby,
 					   qr/will_commit.*\n\(1 row\)$/m),
    'finished prepared visible');
 
+# explicitly shut down psql instances - they cause hangs on windows
+$psql_primary{run}->kill_kill;
+$psql_standby{run}->kill_kill;
+
 $node_primary->stop;
 $node_standby->stop;
 
