@@ -2191,6 +2191,7 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
        <varname>server_encoding</varname>,
        <varname>client_encoding</varname>,
        <varname>application_name</varname>,
+       <varname>default_transaction_read_only</varname>,
        <varname>in_hot_standby</varname>,
        <varname>is_superuser</varname>,
        <varname>session_authorization</varname>,
@@ -2206,7 +2207,8 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
        <varname>IntervalStyle</varname> was not reported by releases before 8.4;
        <varname>application_name</varname> was not reported by releases before
        9.0;
-       <varname>in_hot_standby</varname> was not reported by releases before
+       <varname>default_transaction_read_only</varname> and
+       <varname>in_hot_standby</varname> were not reported by releases before
        14.)
        Note that
        <varname>server_version</varname>,
