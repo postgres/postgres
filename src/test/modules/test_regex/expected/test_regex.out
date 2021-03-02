@@ -2636,6 +2636,28 @@ select * from test_regex('^(.+)( \1)+$', 'abc abc abd', 'RP');
  {2,REG_UBACKREF,REG_UNONPOSIX}
 (1 row)
 
+-- back reference only matches the string, not any constraints
+select * from test_regex('(^\w+).*\1', 'abc abc abc', 'LRP');
+                 test_regex                 
+--------------------------------------------
+ {1,REG_UBACKREF,REG_UNONPOSIX,REG_ULOCALE}
+ {"abc abc abc",abc}
+(2 rows)
+
+select * from test_regex('(^\w+\M).*\1', 'abc abcd abd', 'LRP');
+                 test_regex                 
+--------------------------------------------
+ {1,REG_UBACKREF,REG_UNONPOSIX,REG_ULOCALE}
+ {"abc abc",abc}
+(2 rows)
+
+select * from test_regex('(\w+(?= )).*\1', 'abc abcd abd', 'HLRP');
+                         test_regex                         
+------------------------------------------------------------
+ {1,REG_UBACKREF,REG_ULOOKAROUND,REG_UNONPOSIX,REG_ULOCALE}
+ {"abc abc",abc}
+(2 rows)
+
 -- doing 15 "octal escapes vs back references"
 -- # initial zero is always octal
 -- expectMatch	15.1  MP	"a\\010b"	"a\bb"	"a\bb"

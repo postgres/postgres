@@ -6166,6 +6166,9 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
     The subexpression must entirely precede the back reference in the RE.
     Subexpressions are numbered in the order of their leading parentheses.
     Non-capturing parentheses do not define subexpressions.
+    The back reference considers only the string characters matched by the
+    referenced subexpression, not any constraints contained in it.  For
+    example, <literal>(^\d)\1</literal> will match <literal>22</literal>.
    </para>
 
    <table id="posix-character-entry-escapes-table">

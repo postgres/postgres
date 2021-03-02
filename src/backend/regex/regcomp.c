@@ -150,6 +150,8 @@ static void delsub(struct nfa *, struct state *, struct state *);
 static void deltraverse(struct nfa *, struct state *, struct state *);
 static void dupnfa(struct nfa *, struct state *, struct state *, struct state *, struct state *);
 static void duptraverse(struct nfa *, struct state *, struct state *);
+static void removeconstraints(struct nfa *, struct state *, struct state *);
+static void removetraverse(struct nfa *, struct state *);
 static void cleartraverse(struct nfa *, struct state *);
 static struct state *single_color_transition(struct state *, struct state *);
 static void specialcolors(struct nfa *);
@@ -1181,6 +1183,10 @@ parseqatom(struct vars *v,
 		 */
 		dupnfa(v->nfa, v->subs[subno]->begin, v->subs[subno]->end,
 			   atom->begin, atom->end);
+		NOERR();
+
+		/* The backref node's NFA should not enforce any constraints */
+		removeconstraints(v->nfa, atom->begin, atom->end);
 		NOERR();
 	}
 

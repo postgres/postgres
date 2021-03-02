@@ -1383,6 +1383,77 @@ duptraverse(struct nfa *nfa,
 }
 
 /*
+ * removeconstraints - remove any constraints in an NFA
+ *
+ * Constraint arcs are replaced by empty arcs, essentially treating all
+ * constraints as automatically satisfied.
+ */
+static void
+removeconstraints(struct nfa *nfa,
+				  struct state *start,	/* process subNFA starting here */
+				  struct state *stop)	/* and stopping here */
+{
+	if (start == stop)
+		return;
+
+	stop->tmp = stop;
+	removetraverse(nfa, start);
+	/* done, except for clearing out the tmp pointers */
+
+	stop->tmp = NULL;
+	cleartraverse(nfa, start);
+}
+
+/*
+ * removetraverse - recursive heart of removeconstraints
+ */
+static void
+removetraverse(struct nfa *nfa,
+			   struct state *s)
+{
+	struct arc *a;
+	struct arc *oa;
+
+	/* Since this is recursive, it could be driven to stack overflow */
+	if (STACK_TOO_DEEP(nfa->v->re))
+	{
+		NERR(REG_ETOOBIG);
+		return;
+	}
+
+	if (s->tmp != NULL)
+		return;					/* already done */
+
+	s->tmp = s;
+	for (a = s->outs; a != NULL && !NISERR(); a = oa)
+	{
+		removetraverse(nfa, a->to);
+		if (NISERR())
+			break;
+		oa = a->outchain;
+		switch (a->type)
+		{
+			case PLAIN:
+			case EMPTY:
+				/* nothing to do */
+				break;
+			case AHEAD:
+			case BEHIND:
+			case '^':
+			case '$':
+			case LACON:
+				/* replace it */
+				newarc(nfa, EMPTY, 0, s, a->to);
+				freearc(nfa, a);
+				break;
+			default:
+				NERR(REG_ASSERT);
+				break;
+		}
+	}
+}
+
+/*
  * cleartraverse - recursive cleanup for algorithms that leave tmp ptrs set
  */
 static void

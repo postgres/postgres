@@ -770,6 +770,11 @@ select * from test_regex('^(.+)( \1)+$', 'abc abd abc', 'RP');
 -- expectNomatch	14.29 RP	{^(.+)( \1)+$}	{abc abc abd}
 select * from test_regex('^(.+)( \1)+$', 'abc abc abd', 'RP');
 
+-- back reference only matches the string, not any constraints
+select * from test_regex('(^\w+).*\1', 'abc abc abc', 'LRP');
+select * from test_regex('(^\w+\M).*\1', 'abc abcd abd', 'LRP');
+select * from test_regex('(\w+(?= )).*\1', 'abc abcd abd', 'HLRP');
+
 -- doing 15 "octal escapes vs back references"
 
 -- # initial zero is always octal
