@@ -2420,20 +2420,21 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	 * only one vacuum process running at a time.
 	 */
 	if (P_RIGHTMOST(opaque) || P_ISROOT(opaque) || P_ISDELETED(opaque))
-		elog(ERROR, "half-dead page changed status unexpectedly in block %u of index \"%s\"",
+		elog(ERROR, "target page changed status unexpectedly in block %u of index \"%s\"",
 			 target, RelationGetRelationName(rel));
 
 	if (opaque->btpo_prev != leftsib)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg_internal("left link changed unexpectedly in block %u of index \"%s\"",
-								 target, RelationGetRelationName(rel))));
+				 errmsg_internal("target page left link unexpectedly changed from %u to %u in block %u of index \"%s\"",
+								 leftsib, opaque->btpo_prev, target,
+								 RelationGetRelationName(rel))));
 
 	if (target == leafblkno)
 	{
 		if (P_FIRSTDATAKEY(opaque) <= PageGetMaxOffsetNumber(page) ||
 			!P_ISLEAF(opaque) || !P_ISHALFDEAD(opaque))
-			elog(ERROR, "half-dead page changed status unexpectedly in block %u of index \"%s\"",
+			elog(ERROR, "target leaf page changed status unexpectedly in block %u of index \"%s\"",
 				 target, RelationGetRelationName(rel));
 
 		/* Leaf page is also target page: don't set leaftopparent */
@@ -2445,8 +2446,8 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 
 		if (P_FIRSTDATAKEY(opaque) != PageGetMaxOffsetNumber(page) ||
 			P_ISLEAF(opaque))
-			elog(ERROR, "half-dead page changed status unexpectedly in block %u of index \"%s\"",
-				 target, RelationGetRelationName(rel));
+			elog(ERROR, "target internal page on level %u changed status unexpectedly in block %u of index \"%s\"",
+				 targetlevel, target, RelationGetRelationName(rel));
 
 		/* Target is internal: set leaftopparent for next call here...  */
 		itemid = PageGetItemId(page, P_FIRSTDATAKEY(opaque));
