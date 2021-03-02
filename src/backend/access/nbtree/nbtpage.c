@@ -2458,6 +2458,9 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 			leaftopparent = InvalidBlockNumber;
 	}
 
+	/* No leaftopparent for level 0 (leaf page) or level 1 target */
+	Assert(!BlockNumberIsValid(leaftopparent) || targetlevel > 1);
+
 	/*
 	 * And next write-lock the (current) right sibling.
 	 */

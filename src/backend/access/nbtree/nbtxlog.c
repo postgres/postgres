@@ -818,7 +818,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 	safexid = xlrec->safexid;
 
 	/* No leaftopparent for level 0 (leaf page) or level 1 target */
-	Assert(xlrec->leaftopparent == InvalidBlockNumber || level > 1);
+	Assert(!BlockNumberIsValid(xlrec->leaftopparent) || level > 1);
 
 	/*
 	 * In normal operation, we would lock all the pages this WAL record
