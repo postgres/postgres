@@ -58,6 +58,19 @@ longest(struct vars *v,
 	if (hitstopp != NULL)
 		*hitstopp = 0;
 
+	/* if this is a backref to a known string, just match against that */
+	if (d->backno >= 0)
+	{
+		assert((size_t) d->backno < v->nmatch);
+		if (v->pmatch[d->backno].rm_so >= 0)
+		{
+			cp = dfa_backref(v, d, start, start, stop, false);
+			if (cp == v->stop && stop == v->stop && hitstopp != NULL)
+				*hitstopp = 1;
+			return cp;
+		}
+	}
+
 	/* fast path for matchall NFAs */
 	if (d->cnfa->flags & MATCHALL)
 	{
@@ -209,6 +222,20 @@ shortest(struct vars *v,
 		*coldp = NULL;
 	if (hitstopp != NULL)
 		*hitstopp = 0;
+
+	/* if this is a backref to a known string, just match against that */
+	if (d->backno >= 0)
+	{
+		assert((size_t) d->backno < v->nmatch);
+		if (v->pmatch[d->backno].rm_so >= 0)
+		{
+			cp = dfa_backref(v, d, start, min, max, true);
+			if (cp != NULL && coldp != NULL)
+				*coldp = start;
+			/* there is no case where we should set *hitstopp */
+			return cp;
+		}
+	}
 
 	/* fast path for matchall NFAs */
 	if (d->cnfa->flags & MATCHALL)
@@ -468,6 +495,94 @@ matchuntil(struct vars *v,
 }
 
 /*
+ * dfa_backref - find best match length for a known backref string
+ *
+ * When the backref's referent is already available, we can deliver an exact
+ * answer with considerably less work than running the backref node's NFA.
+ *
+ * Return match endpoint for longest or shortest valid repeated match,
+ * or NULL if there is no valid match.
+ *
+ * Should be in sync with cbrdissect(), although that has the different task
+ * of checking a match to a predetermined section of the string.
+ */
+static chr *
+dfa_backref(struct vars *v,
+			struct dfa *d,
+			chr *start,			/* where the match should start */
+			chr *min,			/* match must end at or after here */
+			chr *max,			/* match must end at or before here */
+			bool shortest)
+{
+	int			n = d->backno;
+	int			backmin = d->backmin;
+	int			backmax = d->backmax;
+	size_t		numreps;
+	size_t		minreps;
+	size_t		maxreps;
+	size_t		brlen;
+	chr		   *brstring;
+	chr		   *p;
+
+	/* get the backreferenced string (caller should have checked this) */
+	if (v->pmatch[n].rm_so == -1)
+		return NULL;
+	brstring = v->start + v->pmatch[n].rm_so;
+	brlen = v->pmatch[n].rm_eo - v->pmatch[n].rm_so;
+
+	/* special-case zero-length backreference to avoid divide by zero */
+	if (brlen == 0)
+	{
+		/*
+		 * matches only a zero-length string, but any number of repetitions
+		 * can be considered to be present
+		 */
+		if (min == start && backmin <= backmax)
+			return start;
+		return NULL;
+	}
+
+	/*
+	 * convert min and max into numbers of possible repetitions of the backref
+	 * string, rounding appropriately
+	 */
+	if (min <= start)
+		minreps = 0;
+	else
+		minreps = (min - start - 1) / brlen + 1;
+	maxreps = (max - start) / brlen;
+
+	/* apply bounds, then see if there is any allowed match length */
+	if (minreps < backmin)
+		minreps = backmin;
+	if (backmax != DUPINF && maxreps > backmax)
+		maxreps = backmax;
+	if (maxreps < minreps)
+		return NULL;
+
+	/* quick exit if zero-repetitions match is valid and preferred */
+	if (shortest && minreps == 0)
+		return start;
+
+	/* okay, compare the actual string contents */
+	p = start;
+	numreps = 0;
+	while (numreps < maxreps)
+	{
+		if ((*v->g->compare) (brstring, p, brlen) != 0)
+			break;
+		p += brlen;
+		numreps++;
+		if (shortest && numreps >= minreps)
+			break;
+	}
+
+	if (numreps >= minreps)
+		return p;
+	return NULL;
+}
+
+/*
  * lastcold - determine last point at which no progress had been made
  */
 static chr *					/* endpoint, or NULL */
@@ -563,6 +678,8 @@ newdfa(struct vars *v,
 	d->lastpost = NULL;
 	d->lastnopr = NULL;
 	d->search = d->ssets;
+	d->backno = -1;				/* may be set by caller */
+	d->backmin = d->backmax = 0;
 
 	/* initialization of sset fields is done as needed */
 
