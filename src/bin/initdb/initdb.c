@@ -3350,6 +3350,9 @@ main(int argc, char *argv[])
 	/* ... and tag on pg_ctl instead */
 	join_path_components(pg_ctl_path, pg_ctl_path, "pg_ctl");
 
+	/* Convert the path to use native separators */
+	make_native_path(pg_ctl_path);
+
 	/* path to pg_ctl, properly quoted */
 	appendShellString(start_db_cmd, pg_ctl_path);
 
