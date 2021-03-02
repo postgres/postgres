@@ -237,19 +237,19 @@
   </indexterm>
 
   <para>
-   By default, data pages are not protected by checksums, but this can optionally be
-   enabled for a cluster.  When enabled, each data page will be ASSIGNED a
-   checksum that is updated when the page is written and verified each time
+   By default, data pages are not protected by checksums, but this can
+   optionally be enabled for a cluster. When enabled, each data page includes
+   a checksum that is updated when the page is written and verified each time
    the page is read. Only data pages are protected by checksums; internal data
    structures and temporary files are not.
   </para>
 
   <para>
-   Checksums verification is normally ENABLED when the cluster is initialized using <link
+   Checksums are normally enabled when the cluster is initialized using <link
    linkend="app-initdb-data-checksums"><application>initdb</application></link>.
    They can also be enabled or disabled at a later time as an offline
    operation. Data checksums are enabled or disabled at the full cluster
-   level, and cannot be specified for individual databases or tables.
+   level, and cannot be specified individually for databases or tables.
   </para>
 
   <para>
@@ -260,9 +260,9 @@
   </para>
 
   <para>
-   When attempting to recover from corrupt data, it may be necessary to bypass
-   the checksum protection. To do this, temporarily set the configuration
-   parameter <xref linkend="guc-ignore-checksum-failure" />.
+   When attempting to recover from page corruptions, it may be necessary to
+   bypass the checksum protection. To do this, temporarily set the
+   configuration parameter <xref linkend="guc-ignore-checksum-failure" />.
   </para>
 
   <sect2 id="checksums-offline-enable-disable">
