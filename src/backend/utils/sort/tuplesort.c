@@ -676,8 +676,27 @@ static void tuplesort_updatemax(Tuplesortstate *state);
  * reduces to ApplySortComparator(), that is single-key MinimalTuple sorts
  * and Datum sorts.
  */
-#include "qsort_tuple.c"
 
+#define ST_SORT qsort_tuple
+#define ST_ELEMENT_TYPE SortTuple
+#define ST_COMPARE_RUNTIME_POINTER
+#define ST_COMPARE_ARG_TYPE Tuplesortstate
+#define ST_CHECK_FOR_INTERRUPTS
+#define ST_SCOPE static
+#define ST_DECLARE
+#define ST_DEFINE
+#include "lib/sort_template.h"
+
+#define ST_SORT qsort_ssup
+#define ST_ELEMENT_TYPE SortTuple
+#define ST_COMPARE(a, b, ssup) \
+	ApplySortComparator((a)->datum1, (a)->isnull1, \
+						(b)->datum1, (b)->isnull1, (ssup))
+#define ST_COMPARE_ARG_TYPE SortSupportData
+#define ST_CHECK_FOR_INTERRUPTS
+#define ST_SCOPE static
+#define ST_DEFINE
+#include "lib/sort_template.h"
 
 /*
  *		tuplesort_begin_xxx
