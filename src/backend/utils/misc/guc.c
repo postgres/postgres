@@ -1101,7 +1101,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"enable_partition_pruning", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Enables plan-time and run-time partition pruning."),
+			gettext_noop("Enables plan-time and execution-time partition pruning."),
 			gettext_noop("Allows the query planner and executor to compare partition "
 						 "bounds to conditions in the query to determine which "
 						 "partitions must be scanned."),
@@ -1945,7 +1945,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"parallel_leader_participation", PGC_USERSET, RESOURCES_ASYNCHRONOUS,
 			gettext_noop("Controls whether Gather and Gather Merge also run subplans."),
-			gettext_noop("Should gather nodes also run subplans, or just gather tuples?"),
+			gettext_noop("Should gather nodes also run subplans or just gather tuples?"),
 			GUC_EXPLAIN
 		},
 		&parallel_leader_participation,
@@ -1966,7 +1966,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"jit_debugging_support", PGC_SU_BACKEND, DEVELOPER_OPTIONS,
-			gettext_noop("Register JIT compiled function with debugger."),
+			gettext_noop("Register JIT-compiled functions with debugger."),
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
@@ -2005,7 +2005,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"jit_profiling_support", PGC_SU_BACKEND, DEVELOPER_OPTIONS,
-			gettext_noop("Register JIT compiled function with perf profiler."),
+			gettext_noop("Register JIT-compiled functions with perf profiler."),
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
@@ -3546,7 +3546,7 @@ static struct config_real ConfigureNamesReal[] =
 
 	{
 		{"jit_optimize_above_cost", PGC_USERSET, QUERY_TUNING_COST,
-			gettext_noop("Optimize JITed functions if query is more expensive."),
+			gettext_noop("Optimize JIT-compiled functions if query is more expensive."),
 			gettext_noop("-1 disables optimization."),
 			GUC_EXPLAIN
 		},
@@ -3716,7 +3716,7 @@ static struct config_real ConfigureNamesReal[] =
 
 	{
 		{"log_transaction_sample_rate", PGC_SUSET, LOGGING_WHEN,
-			gettext_noop("Set the fraction of transactions to log for new transactions."),
+			gettext_noop("Sets the fraction of transactions to log for new transactions."),
 			gettext_noop("Logs all statements from a fraction of transactions. "
 						 "Use a value between 0.0 (never log) and 1.0 (log all "
 						 "statements for all transactions).")
@@ -4714,7 +4714,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"wal_level", PGC_POSTMASTER, WAL_SETTINGS,
-			gettext_noop("Set the level of information written to the WAL."),
+			gettext_noop("Sets the level of information written to the WAL."),
 			NULL
 		},
 		&wal_level,
