@@ -125,6 +125,7 @@ extern void pgfnames_cleanup(char **filenames);
 extern void set_pglocale_pgservice(const char *argv0, const char *app);
 
 /* Portable way to find and execute binaries (in exec.c) */
+extern int	validate_exec(const char *path);
 extern int	find_my_exec(const char *argv0, char *retpath);
 extern int	find_other_exec(const char *argv0, const char *target,
 							const char *versionstr, char *retpath);
