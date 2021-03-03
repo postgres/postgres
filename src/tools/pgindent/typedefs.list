@@ -2208,6 +2208,8 @@ SSLExtensionInfoContext
 SSL_CTX
 STARTUPINFO
 STRLEN
+ST_ELEMENT_TYPE
+ST_POINTER_TYPE
 SV
 SampleScan
 SampleScanGetSampleSize_function
