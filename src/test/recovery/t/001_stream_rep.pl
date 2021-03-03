@@ -85,7 +85,8 @@ sub test_target_session_attrs
 	my $node2_port = $node2->port;
 	my $node2_name = $node2->name;
 
-	my $target_name = $target_node->name if (defined $target_node);
+	my $target_name = undef;
+	$target_name = $target_node->name if (defined $target_node);
 
 	# Build connection string for connection attempt.
 	my $connstr = "host=$node1_host,$node2_host ";
