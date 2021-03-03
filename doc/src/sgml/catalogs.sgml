@@ -11529,6 +11529,16 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        is <literal>-1</literal>.
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>two_phase</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if the slot is enabled for decoding prepared transactions.  Always
+       false for physical slots.
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

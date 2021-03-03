@@ -56,6 +56,7 @@ typedef struct CreateReplicationSlotCmd
 	ReplicationKind kind;
 	char	   *plugin;
 	bool		temporary;
+	bool		two_phase;
 	List	   *options;
 } CreateReplicationSlotCmd;
 

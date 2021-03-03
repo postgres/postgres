@@ -164,7 +164,6 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 	ListCell   *option;
 	TestDecodingData *data;
 	bool		enable_streaming = false;
-	bool		enable_twophase = false;
 
 	data = palloc0(sizeof(TestDecodingData));
 	data->context = AllocSetContextCreate(ctx->context,
@@ -265,16 +264,6 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
 								strVal(elem->arg), elem->defname)));
 		}
-		else if (strcmp(elem->defname, "two-phase-commit") == 0)
-		{
-			if (elem->arg == NULL)
-				continue;
-			else if (!parse_bool(strVal(elem->arg), &enable_twophase))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
-								strVal(elem->arg), elem->defname)));
-		}
 		else
 		{
 			ereport(ERROR,
@@ -286,7 +275,6 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 	}
 
 	ctx->streaming &= enable_streaming;
-	ctx->twophase &= enable_twophase;
 }
 
 /* cleanup this plugin's resources */

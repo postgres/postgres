@@ -431,6 +431,12 @@ CreateInitDecodingContext(const char *plugin,
 		startup_cb_wrapper(ctx, &ctx->options, true);
 	MemoryContextSwitchTo(old_context);
 
+	/*
+	 * We allow decoding of prepared transactions iff the two_phase option is
+	 * enabled at the time of slot creation.
+	 */
+	ctx->twophase &= MyReplicationSlot->data.two_phase;
+
 	ctx->reorder->output_rewrites = ctx->options.receive_rewrites;
 
 	return ctx;
@@ -530,6 +536,12 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 	if (ctx->callbacks.startup_cb != NULL)
 		startup_cb_wrapper(ctx, &ctx->options, false);
 	MemoryContextSwitchTo(old_context);
+
+	/*
+	 * We allow decoding of prepared transactions iff the two_phase option is
+	 * enabled at the time of slot creation.
+	 */
+	ctx->twophase &= MyReplicationSlot->data.two_phase;
 
 	ctx->reorder->output_rewrites = ctx->options.receive_rewrites;
 

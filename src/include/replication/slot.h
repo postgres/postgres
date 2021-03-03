@@ -98,6 +98,11 @@ typedef struct ReplicationSlotPersistentData
 	 */
 	XLogRecPtr	initial_consistent_point;
 
+	/*
+	 * Allow decoding of prepared transactions?
+	 */
+	bool		two_phase;
+
 	/* plugin name */
 	NameData	plugin;
 } ReplicationSlotPersistentData;
@@ -199,7 +204,7 @@ extern void ReplicationSlotsShmemInit(void);
 
 /* management of individual slots */
 extern void ReplicationSlotCreate(const char *name, bool db_specific,
-								  ReplicationSlotPersistency p);
+								  ReplicationSlotPersistency p, bool two_phase);
 extern void ReplicationSlotPersist(void);
 extern void ReplicationSlotDrop(const char *name, bool nowait);
 

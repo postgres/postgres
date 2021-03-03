@@ -55,7 +55,7 @@
 
 <programlisting>
 postgres=# -- Create a slot named 'regression_slot' using the output plugin 'test_decoding'
-postgres=# SELECT * FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+postgres=# SELECT * FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding', false, true);
     slot_name    |    lsn
 -----------------+-----------
  regression_slot | 0/16B1970
@@ -169,17 +169,18 @@ $ pg_recvlogical -d postgres --slot=test --drop-slot
   <para>
   The following example shows SQL interface that can be used to decode prepared
   transactions. Before you use two-phase commit commands, you must set
-  <varname>max_prepared_transactions</varname> to at least 1. You must also set
-  the option 'two-phase-commit' to 1 while calling
-  <function>pg_logical_slot_get_changes</function>. Note that we will stream
-  the entire transaction after the commit if it is not already decoded.
+  <varname>max_prepared_transactions</varname> to at least 1. You must also have
+  set the two-phase parameter as 'true' while creating the slot using
+  <function>pg_create_logical_replication_slot</function>
+  Note that we will stream the entire transaction after the commit if it
+  is not already decoded.
   </para>
 <programlisting>
 postgres=# BEGIN;
 postgres=*# INSERT INTO data(data) VALUES('5');
 postgres=*# PREPARE TRANSACTION 'test_prepared1';
 
-postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'two-phase-commit', '1');
+postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL);
     lsn    | xid |                          data                           
 -----------+-----+---------------------------------------------------------
  0/1689DC0 | 529 | BEGIN 529
@@ -188,7 +189,7 @@ postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NU
 (3 rows)
 
 postgres=# COMMIT PREPARED 'test_prepared1';
-postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'two-phase-commit', '1');
+postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
     lsn    | xid |                    data                    
 -----------+-----+--------------------------------------------
  0/168A060 | 529 | COMMIT PREPARED 'test_prepared1', txid 529
@@ -198,7 +199,7 @@ postgres=#-- you can also rollback a prepared transaction
 postgres=# BEGIN;
 postgres=*# INSERT INTO data(data) VALUES('6');
 postgres=*# PREPARE TRANSACTION 'test_prepared2';
-postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'two-phase-commit', '1');
+postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
     lsn    | xid |                          data                           
 -----------+-----+---------------------------------------------------------
  0/168A180 | 530 | BEGIN 530
@@ -207,7 +208,7 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
 (3 rows)
 
 postgres=# ROLLBACK PREPARED 'test_prepared2';
-postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'two-phase-commit', '1');
+postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
     lsn    | xid |                     data                     
 -----------+-----+----------------------------------------------
  0/168A4B8 | 530 | ROLLBACK PREPARED 'test_prepared2', txid 530

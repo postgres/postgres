@@ -938,7 +938,8 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	if (cmd->kind == REPLICATION_KIND_PHYSICAL)
 	{
 		ReplicationSlotCreate(cmd->slotname, false,
-							  cmd->temporary ? RS_TEMPORARY : RS_PERSISTENT);
+							  cmd->temporary ? RS_TEMPORARY : RS_PERSISTENT,
+							  false);
 	}
 	else
 	{
@@ -952,7 +953,8 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		 * they get dropped on error as well.
 		 */
 		ReplicationSlotCreate(cmd->slotname, true,
-							  cmd->temporary ? RS_TEMPORARY : RS_EPHEMERAL);
+							  cmd->temporary ? RS_TEMPORARY : RS_EPHEMERAL,
+							  cmd->two_phase);
 	}
 
 	if (cmd->kind == REPLICATION_KIND_LOGICAL)

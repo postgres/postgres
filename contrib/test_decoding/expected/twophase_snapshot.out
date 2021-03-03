@@ -6,7 +6,7 @@ step s2txid: SELECT pg_current_xact_id() IS NULL;
 ?column?       
 
 f              
-step s1init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding'); <waiting ...>
+step s1init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding', false, true); <waiting ...>
 step s3b: BEGIN;
 step s3txid: SELECT pg_current_xact_id() IS NULL;
 ?column?       
@@ -22,14 +22,14 @@ step s1init: <... completed>
 
 init           
 step s1insert: INSERT INTO do_write DEFAULT VALUES;
-step s1start: SELECT data  FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'skip-empty-xacts', '1', 'two-phase-commit', '1');
+step s1start: SELECT data  FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'skip-empty-xacts', '1');
 data           
 
 BEGIN          
 table public.do_write: INSERT: id[integer]:2
 COMMIT         
 step s2cp: COMMIT PREPARED 'test1';
-step s1start: SELECT data  FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'skip-empty-xacts', '1', 'two-phase-commit', '1');
+step s1start: SELECT data  FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'skip-empty-xacts', '1');
 data           
 
 BEGIN          
