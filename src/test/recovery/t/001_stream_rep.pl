@@ -68,8 +68,8 @@ is($node_standby_2->psql('postgres', 'INSERT INTO tab_int VALUES (1)'),
 # Tests for connection parameter target_session_attrs
 note "testing connection parameter \"target_session_attrs\"";
 
-# Routine designed to run tests on the connection parameter
-# target_session_attrs with multiple nodes.
+# Attempt to connect to $node1, then $node2, using target_session_attrs=$mode.
+# Expect to connect to $target_node (undef for failure) with given $status.
 sub test_target_session_attrs
 {
 	my $node1       = shift;
@@ -84,7 +84,8 @@ sub test_target_session_attrs
 	my $node2_host = $node2->host;
 	my $node2_port = $node2->port;
 	my $node2_name = $node2->name;
-
+	my $target_port = undef;
+	$target_port = $target_node->port if (defined $target_node);
 	my $target_name = undef;
 	$target_name = $target_node->name if (defined $target_node);
 
@@ -93,16 +94,18 @@ sub test_target_session_attrs
 	$connstr .= "port=$node1_port,$node2_port ";
 	$connstr .= "target_session_attrs=$mode";
 
-	# The client used for the connection does not matter, only the backend
-	# point does.
+	# Attempt to connect, and if successful, get the server port number
+	# we connected to.  Note we must pass the SQL command via the command
+	# line not stdin, else Perl may spit up trying to write to stdin of
+	# an already-failed psql process.
 	my ($ret, $stdout, $stderr) =
-	  $node1->psql('postgres', 'SHOW port;',
-		extra_params => [ '-d', $connstr ]);
+	  $node1->psql('postgres', undef,
+		extra_params => [ '-d', $connstr, '-c', 'SHOW port;' ]);
 	if ($status == 0)
 	{
-		is( $status == $ret && $stdout eq $target_node->port,
+		is( $status == $ret && $stdout eq $target_port,
 			1,
-			"connect to node $target_name if mode \"$mode\" and $node1_name,$node2_name listed"
+			"connect to node $target_name with mode \"$mode\" and $node1_name,$node2_name listed"
 		);
 	}
 	else
@@ -112,9 +115,9 @@ sub test_target_session_attrs
 		print "stdout = $stdout\n";
 		print "stderr = $stderr\n";
 
-		is( $status == $ret,
+		is( $status == $ret && !defined $target_node,
 			1,
-			"fail to connect to any nodes if mode \"$mode\" and $node1_name,$node2_name listed"
+			"fail to connect with mode \"$mode\" and $node1_name,$node2_name listed"
 		);
 	}
 
