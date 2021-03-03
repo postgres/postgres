@@ -63,12 +63,11 @@ typedef enum
 	CONNECTION_SETENV,			/* Negotiating environment. */
 	CONNECTION_SSL_STARTUP,		/* Negotiating SSL. */
 	CONNECTION_NEEDED,			/* Internal state: connect() needed */
-	CONNECTION_CHECK_WRITABLE,	/* Check if we could make a writable
-								 * connection. */
-	CONNECTION_CONSUME,			/* Wait for any pending message and consume
-								 * them. */
+	CONNECTION_CHECK_WRITABLE,	/* Checking if session is read-write. */
+	CONNECTION_CONSUME,			/* Consuming any extra messages. */
 	CONNECTION_GSS_STARTUP,		/* Negotiating GSSAPI. */
-	CONNECTION_CHECK_TARGET		/* Check if we have a proper target connection */
+	CONNECTION_CHECK_TARGET,	/* Checking target server properties. */
+	CONNECTION_CHECK_STANDBY	/* Checking if server is in standby mode. */
 } ConnStatusType;
 
 typedef enum

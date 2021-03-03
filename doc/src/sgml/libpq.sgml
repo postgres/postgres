@@ -1877,18 +1877,75 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>target_session_attrs</literal></term>
       <listitem>
        <para>
-        If this parameter is set to <literal>read-write</literal>, only a
-        connection in which read-write transactions are accepted by default
-        is considered acceptable.  The query
-        <literal>SHOW transaction_read_only</literal> will be sent upon any
-        successful connection; if it returns <literal>on</literal>, the connection
-        will be closed.  If multiple hosts were specified in the connection
-        string, any remaining servers will be tried just as if the connection
-        attempt had failed.  The default value of this parameter,
-        <literal>any</literal>, regards all connections as acceptable.
-      </para>
+        This option determines whether the session must have certain
+        properties to be acceptable.  It's typically used in combination
+        with multiple host names to select the first acceptable alternative
+        among several hosts.  There are six modes:
+
+        <variablelist>
+         <varlistentry>
+          <term><literal>any</literal> (default)</term>
+          <listitem>
+           <para>
+            any successful connection is acceptable
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>read-write</literal></term>
+          <listitem>
+           <para>
+            session must accept read-write transactions by default (that
+            is, the server must not be in hot standby mode and
+            the <varname>default_transaction_read_only</varname> parameter
+            must be <literal>off</literal>)
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>read-only</literal></term>
+          <listitem>
+           <para>
+            session must not accept read-write transactions by default (the
+            converse)
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>primary</literal></term>
+          <listitem>
+           <para>
+            server must not be in hot standby mode
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>standby</literal></term>
+          <listitem>
+           <para>
+            server must be in hot standby mode
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>prefer-standby</literal></term>
+          <listitem>
+           <para>
+            first try to find a standby server, but if none of the listed
+            hosts is a standby server, try again in <literal>all</literal>
+            mode
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+       </para>
       </listitem>
-    </varlistentry>
+     </varlistentry>
     </variablelist>
    </para>
   </sect2>

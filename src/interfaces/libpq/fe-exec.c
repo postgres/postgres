@@ -1008,11 +1008,11 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 	}
 
 	/*
-	 * Special hacks: remember client_encoding and
-	 * standard_conforming_strings, and convert server version to a numeric
-	 * form.  We keep the first two of these in static variables as well, so
-	 * that PQescapeString and PQescapeBytea can behave somewhat sanely (at
-	 * least in single-connection-using programs).
+	 * Save values of settings that are of interest to libpq in fields of the
+	 * PGconn object.  We keep client_encoding and standard_conforming_strings
+	 * in static variables as well, so that PQescapeString and PQescapeBytea
+	 * can behave somewhat sanely (at least in single-connection-using
+	 * programs).
 	 */
 	if (strcmp(name, "client_encoding") == 0)
 	{
@@ -1029,6 +1029,7 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 	}
 	else if (strcmp(name, "server_version") == 0)
 	{
+		/* We convert the server version to numeric form. */
 		int			cnt;
 		int			vmaj,
 					vmin,
@@ -1061,6 +1062,16 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 		}
 		else
 			conn->sversion = 0; /* unknown */
+	}
+	else if (strcmp(name, "default_transaction_read_only") == 0)
+	{
+		conn->default_transaction_read_only =
+			(strcmp(value, "on") == 0) ? PG_BOOL_YES : PG_BOOL_NO;
+	}
+	else if (strcmp(name, "in_hot_standby") == 0)
+	{
+		conn->in_hot_standby =
+			(strcmp(value, "on") == 0) ? PG_BOOL_YES : PG_BOOL_NO;
 	}
 }
 
