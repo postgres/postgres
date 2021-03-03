@@ -577,11 +577,11 @@
 
   <para>
    The subscriber also requires the <varname>max_replication_slots</varname>
-   to be set.  In this case it should be set to at least the number of
-   subscriptions that will be added to the subscriber.
-   <varname>max_logical_replication_workers</varname> must be set to at
-   least the number of subscriptions, again plus some reserve for the table
-   synchronization.  Additionally the <varname>max_worker_processes</varname>
+   be set to configure how many replication origins can be tracked.  In this
+   case it should be set to at least the number of subscriptions that will be
+   added to the subscriber.  <varname>max_logical_replication_workers</varname>
+   must be set to at least the number of subscriptions, again plus some reserve
+   for the table synchronization.  Additionally the <varname>max_worker_processes</varname>
    may need to be adjusted to accommodate for replication workers, at least
    (<varname>max_logical_replication_workers</varname>
    + <literal>1</literal>).  Note that some extensions and parallel queries
