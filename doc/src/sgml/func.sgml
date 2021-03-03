@@ -17933,6 +17933,24 @@ SELECT NULLIF(value, '(none)') ...
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>trim_array</primary>
+        </indexterm>
+        <function>trim_array</function> ( <parameter>array</parameter> <type>anyarray</type>, <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Trims an array by removing the last <parameter>n</parameter> elements.
+        If the array is multidimensional, only the first dimension is trimmed.
+       </para>
+       <para>
+        <literal>trim_array(ARRAY[1,2,3,4,5,6], 2)</literal>
+        <returnvalue>{1,2,3,4}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>unnest</primary>
         </indexterm>
         <function>unnest</function> ( <type>anyarray</type> )

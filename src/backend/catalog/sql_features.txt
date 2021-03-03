@@ -398,7 +398,7 @@ S301	Enhanced UNNEST			YES
 S401	Distinct types based on array types			NO	
 S402	Distinct types based on distinct types			NO	
 S403	ARRAY_MAX_CARDINALITY			NO	
-S404	TRIM_ARRAY			NO	
+S404	TRIM_ARRAY			YES	
 T011	Timestamp in Information Schema			NO	
 T021	BINARY and VARBINARY data types			NO	
 T022	Advanced support for BINARY and VARBINARY data types			NO	
