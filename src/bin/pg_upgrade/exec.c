@@ -15,9 +15,9 @@
 #include "pg_upgrade.h"
 
 static void check_data_dir(ClusterInfo *cluster);
-static void check_bin_dir(ClusterInfo *cluster);
+static void check_bin_dir(ClusterInfo *cluster, bool check_versions);
 static void get_bin_version(ClusterInfo *cluster);
-static void check_exec(const char *dir, const char *program);
+static void check_exec(const char *dir, const char *program, bool check_version);
 
 #ifdef WIN32
 static int	win32_check_directory_write_permissions(void);
@@ -257,9 +257,9 @@ verify_directories(void)
 #endif
 		pg_fatal("You must have read and write access in the current directory.\n");
 
-	check_bin_dir(&old_cluster);
+	check_bin_dir(&old_cluster, false);
 	check_data_dir(&old_cluster);
-	check_bin_dir(&new_cluster);
+	check_bin_dir(&new_cluster, true);
 	check_data_dir(&new_cluster);
 }
 
@@ -362,9 +362,13 @@ check_data_dir(ClusterInfo *cluster)
  *	in the binaries directory.  If we find that a required executable
  *	is missing (or secured against us), we display an error message and
  *	exit().
+ *
+ *	If check_versions is true, then the versions of the binaries are checked
+ *	against the version of this pg_upgrade.  This is for checking the target
+ *	bindir.
  */
 static void
-check_bin_dir(ClusterInfo *cluster)
+check_bin_dir(ClusterInfo *cluster, bool check_versions)
 {
 	struct stat statBuf;
 
@@ -376,9 +380,9 @@ check_bin_dir(ClusterInfo *cluster)
 		report_status(PG_FATAL, "\"%s\" is not a directory\n",
 					  cluster->bindir);
 
-	check_exec(cluster->bindir, "postgres");
-	check_exec(cluster->bindir, "pg_controldata");
-	check_exec(cluster->bindir, "pg_ctl");
+	check_exec(cluster->bindir, "postgres", check_versions);
+	check_exec(cluster->bindir, "pg_controldata", check_versions);
+	check_exec(cluster->bindir, "pg_ctl", check_versions);
 
 	/*
 	 * Fetch the binary version after checking for the existence of pg_ctl.
@@ -389,9 +393,9 @@ check_bin_dir(ClusterInfo *cluster)
 
 	/* pg_resetxlog has been renamed to pg_resetwal in version 10 */
 	if (GET_MAJOR_VERSION(cluster->bin_version) <= 906)
-		check_exec(cluster->bindir, "pg_resetxlog");
+		check_exec(cluster->bindir, "pg_resetxlog", check_versions);
 	else
-		check_exec(cluster->bindir, "pg_resetwal");
+		check_exec(cluster->bindir, "pg_resetwal", check_versions);
 
 	if (cluster == &new_cluster)
 	{
@@ -400,17 +404,17 @@ check_bin_dir(ClusterInfo *cluster)
 		 * pg_dumpall are used to dump the old cluster, but must be of the
 		 * target version.
 		 */
-		check_exec(cluster->bindir, "initdb");
-		check_exec(cluster->bindir, "pg_dump");
-		check_exec(cluster->bindir, "pg_dumpall");
-		check_exec(cluster->bindir, "pg_restore");
-		check_exec(cluster->bindir, "psql");
-		check_exec(cluster->bindir, "vacuumdb");
+		check_exec(cluster->bindir, "initdb", check_versions);
+		check_exec(cluster->bindir, "pg_dump", check_versions);
+		check_exec(cluster->bindir, "pg_dumpall", check_versions);
+		check_exec(cluster->bindir, "pg_restore", check_versions);
+		check_exec(cluster->bindir, "psql", check_versions);
+		check_exec(cluster->bindir, "vacuumdb", check_versions);
 	}
 }
 
 static void
-check_exec(const char *dir, const char *program)
+check_exec(const char *dir, const char *program, bool check_version)
 {
 	char	path[MAXPGPATH];
 	char	line[MAXPGPATH];
@@ -435,11 +439,14 @@ check_exec(const char *dir, const char *program)
 		pg_fatal("check for \"%s\" failed: cannot execute\n",
 				 path);
 
-	pg_strip_crlf(line);
+	if (check_version)
+	{
+		pg_strip_crlf(line);
 
-	snprintf(versionstr, sizeof(versionstr), "%s (PostgreSQL) " PG_VERSION, program);
+		snprintf(versionstr, sizeof(versionstr), "%s (PostgreSQL) " PG_VERSION, program);
 
-	if (strcmp(line, versionstr) != 0)
-		pg_fatal("check for \"%s\" failed: incorrect version: found \"%s\", expected \"%s\"\n",
-				 path, line, versionstr);
+		if (strcmp(line, versionstr) != 0)
+			pg_fatal("check for \"%s\" failed: incorrect version: found \"%s\", expected \"%s\"\n",
+					 path, line, versionstr);
+	}
 }
