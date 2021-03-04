@@ -3277,10 +3277,15 @@ keep_going:						/* We will come back to here until there is
 					conn->inStart = conn->inCursor;
 
 					/*
-					 * The postmaster typically won't end its message with a
-					 * newline, so add one to conform to libpq conventions.
+					 * Before 7.2, the postmaster didn't always end its
+					 * messages with a newline, so add one if needed to
+					 * conform to libpq conventions.
 					 */
-					appendPQExpBufferChar(&conn->errorMessage, '\n');
+					if (conn->errorMessage.len == 0 ||
+						conn->errorMessage.data[conn->errorMessage.len - 1] != '\n')
+					{
+						appendPQExpBufferChar(&conn->errorMessage, '\n');
+					}
 
 					goto error_return;
 				}
