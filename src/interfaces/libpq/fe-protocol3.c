@@ -1843,7 +1843,7 @@ pqEndcopy3(PGconn *conn)
 	if (conn->asyncStatus == PGASYNC_COPY_IN ||
 		conn->asyncStatus == PGASYNC_COPY_BOTH)
 	{
-		if (pqPutMsgStart('c', false, conn) < 0 ||
+		if (pqPutMsgStart('c', conn) < 0 ||
 			pqPutMsgEnd(conn) < 0)
 			return 1;
 
@@ -1853,7 +1853,7 @@ pqEndcopy3(PGconn *conn)
 		 */
 		if (conn->queryclass != PGQUERY_SIMPLE)
 		{
-			if (pqPutMsgStart('S', false, conn) < 0 ||
+			if (pqPutMsgStart('S', conn) < 0 ||
 				pqPutMsgEnd(conn) < 0)
 				return 1;
 		}
@@ -1933,7 +1933,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 
 	/* PQfn already validated connection state */
 
-	if (pqPutMsgStart('F', false, conn) < 0 ||	/* function call msg */
+	if (pqPutMsgStart('F', conn) < 0 || /* function call msg */
 		pqPutInt(fnid, 4, conn) < 0 ||	/* function id */
 		pqPutInt(1, 2, conn) < 0 || /* # of format codes */
 		pqPutInt(1, 2, conn) < 0 || /* format code: BINARY */

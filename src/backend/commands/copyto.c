@@ -50,8 +50,7 @@
 typedef enum CopyDest
 {
 	COPY_FILE,					/* to file (or a piped program) */
-	COPY_OLD_FE,				/* to frontend (2.0 protocol) */
-	COPY_NEW_FE,				/* to frontend (3.0 protocol) */
+	COPY_FRONTEND,				/* to frontend */
 } CopyDest;
 
 /*
@@ -116,7 +115,6 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 /* non-export function prototypes */
 static void EndCopy(CopyToState cstate);
 static void ClosePipeToProgram(CopyToState cstate);
-static uint64 CopyTo(CopyToState cstate);
 static void CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot);
 static void CopyAttributeOutText(CopyToState cstate, char *string);
 static void CopyAttributeOutCSV(CopyToState cstate, char *string,
@@ -140,53 +138,27 @@ static void CopySendInt16(CopyToState cstate, int16 val);
 static void
 SendCopyBegin(CopyToState cstate)
 {
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
-	{
-		/* new way */
-		StringInfoData buf;
-		int			natts = list_length(cstate->attnumlist);
-		int16		format = (cstate->opts.binary ? 1 : 0);
-		int			i;
+	StringInfoData buf;
+	int			natts = list_length(cstate->attnumlist);
+	int16		format = (cstate->opts.binary ? 1 : 0);
+	int			i;
 
-		pq_beginmessage(&buf, 'H');
-		pq_sendbyte(&buf, format);	/* overall format */
-		pq_sendint16(&buf, natts);
-		for (i = 0; i < natts; i++)
-			pq_sendint16(&buf, format); /* per-column formats */
-		pq_endmessage(&buf);
-		cstate->copy_dest = COPY_NEW_FE;
-	}
-	else
-	{
-		/* old way */
-		if (cstate->opts.binary)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("COPY BINARY is not supported to stdout or from stdin")));
-		pq_putemptymessage('H');
-		/* grottiness needed for old COPY OUT protocol */
-		pq_startcopyout();
-		cstate->copy_dest = COPY_OLD_FE;
-	}
+	pq_beginmessage(&buf, 'H');
+	pq_sendbyte(&buf, format);	/* overall format */
+	pq_sendint16(&buf, natts);
+	for (i = 0; i < natts; i++)
+		pq_sendint16(&buf, format); /* per-column formats */
+	pq_endmessage(&buf);
+	cstate->copy_dest = COPY_FRONTEND;
 }
 
 static void
 SendCopyEnd(CopyToState cstate)
 {
-	if (cstate->copy_dest == COPY_NEW_FE)
-	{
-		/* Shouldn't have any unsent data */
-		Assert(cstate->fe_msgbuf->len == 0);
-		/* Send Copy Done message */
-		pq_putemptymessage('c');
-	}
-	else
-	{
-		CopySendData(cstate, "\\.", 2);
-		/* Need to flush out the trailer (this also appends a newline) */
-		CopySendEndOfRow(cstate);
-		pq_endcopyout(false);
-	}
+	/* Shouldn't have any unsent data */
+	Assert(cstate->fe_msgbuf->len == 0);
+	/* Send Copy Done message */
+	pq_putemptymessage('c');
 }
 
 /*----------
@@ -268,20 +240,7 @@ CopySendEndOfRow(CopyToState cstate)
 							 errmsg("could not write to COPY file: %m")));
 			}
 			break;
-		case COPY_OLD_FE:
-			/* The FE/BE protocol uses \n as newline for all platforms */
-			if (!cstate->opts.binary)
-				CopySendChar(cstate, '\n');
-
-			if (pq_putbytes(fe_msgbuf->data, fe_msgbuf->len))
-			{
-				/* no hope of recovering connection sync, so FATAL */
-				ereport(FATAL,
-						(errcode(ERRCODE_CONNECTION_FAILURE),
-						 errmsg("connection lost during COPY to stdout")));
-			}
-			break;
-		case COPY_NEW_FE:
+		case COPY_FRONTEND:
 			/* The FE/BE protocol uses \n as newline for all platforms */
 			if (!cstate->opts.binary)
 				CopySendChar(cstate, '\n');
@@ -780,42 +739,6 @@ BeginCopyTo(ParseState *pstate,
 }
 
 /*
- * This intermediate routine exists mainly to localize the effects of setjmp
- * so we don't need to plaster a lot of variables with "volatile".
- */
-uint64
-DoCopyTo(CopyToState cstate)
-{
-	bool		pipe = (cstate->filename == NULL);
-	bool		fe_copy = (pipe && whereToSendOutput == DestRemote);
-	uint64		processed;
-
-	PG_TRY();
-	{
-		if (fe_copy)
-			SendCopyBegin(cstate);
-
-		processed = CopyTo(cstate);
-
-		if (fe_copy)
-			SendCopyEnd(cstate);
-	}
-	PG_CATCH();
-	{
-		/*
-		 * Make sure we turn off old-style COPY OUT mode upon error. It is
-		 * okay to do this in all cases, since it does nothing if the mode is
-		 * not on.
-		 */
-		pq_endcopyout(true);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	return processed;
-}
-
-/*
  * Clean up storage and release resources for COPY TO.
  */
 void
@@ -837,13 +760,18 @@ EndCopyTo(CopyToState cstate)
 /*
  * Copy from relation or query TO file.
  */
-static uint64
-CopyTo(CopyToState cstate)
+uint64
+DoCopyTo(CopyToState cstate)
 {
+	bool		pipe = (cstate->filename == NULL);
+	bool		fe_copy = (pipe && whereToSendOutput == DestRemote);
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
 	ListCell   *cur;
 	uint64		processed;
+
+	if (fe_copy)
+		SendCopyBegin(cstate);
 
 	if (cstate->rel)
 		tupDesc = RelationGetDescr(cstate->rel);
@@ -977,11 +905,14 @@ CopyTo(CopyToState cstate)
 
 	MemoryContextDelete(cstate->rowcontext);
 
+	if (fe_copy)
+		SendCopyEnd(cstate);
+
 	return processed;
 }
 
 /*
- * Emit one row during CopyTo().
+ * Emit one row during DoCopyTo().
  */
 static void
 CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot)

@@ -653,35 +653,26 @@ static char *
 recv_password_packet(Port *port)
 {
 	StringInfoData buf;
+	int			mtype;
 
 	pq_startmsgread();
-	if (PG_PROTOCOL_MAJOR(port->proto) >= 3)
-	{
-		/* Expect 'p' message type */
-		int			mtype;
 
-		mtype = pq_getbyte();
-		if (mtype != 'p')
-		{
-			/*
-			 * If the client just disconnects without offering a password,
-			 * don't make a log entry.  This is legal per protocol spec and in
-			 * fact commonly done by psql, so complaining just clutters the
-			 * log.
-			 */
-			if (mtype != EOF)
-				ereport(ERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("expected password response, got message type %d",
-								mtype)));
-			return NULL;		/* EOF or bad message type */
-		}
-	}
-	else
+	/* Expect 'p' message type */
+	mtype = pq_getbyte();
+	if (mtype != 'p')
 	{
-		/* For pre-3.0 clients, avoid log entry if they just disconnect */
-		if (pq_peekbyte() == EOF)
-			return NULL;		/* EOF */
+		/*
+		 * If the client just disconnects without offering a password,
+		 * don't make a log entry.  This is legal per protocol spec and in
+		 * fact commonly done by psql, so complaining just clutters the
+		 * log.
+		 */
+		if (mtype != EOF)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("expected password response, got message type %d",
+							mtype)));
+		return NULL;		/* EOF or bad message type */
 	}
 
 	initStringInfo(&buf);
@@ -880,19 +871,6 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	bool		initial;
 
 	/*
-	 * SASL auth is not supported for protocol versions before 3, because it
-	 * relies on the overall message length word to determine the SASL payload
-	 * size in AuthenticationSASLContinue and PasswordMessage messages.  (We
-	 * used to have a hard rule that protocol messages must be parsable
-	 * without relying on the length word, but we hardly care about older
-	 * protocol version anymore.)
-	 */
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-		ereport(FATAL,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SASL authentication is not supported in protocol version 2")));
-
-	/*
 	 * Send the SASL authentication request to user.  It includes the list of
 	 * authentication mechanisms that are supported.
 	 */
@@ -1040,19 +1018,6 @@ pg_GSS_recvauth(Port *port)
 	int			mtype;
 	StringInfoData buf;
 	gss_buffer_desc gbuf;
-
-	/*
-	 * GSS auth is not supported for protocol versions before 3, because it
-	 * relies on the overall message length word to determine the GSS payload
-	 * size in AuthenticationGSSContinue and PasswordMessage messages. (This
-	 * is, in fact, a design error in our GSS support, because protocol
-	 * messages are supposed to be parsable without relying on the length
-	 * word; but it's not worth changing it now.)
-	 */
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-		ereport(FATAL,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("GSSAPI is not supported in protocol version 2")));
 
 	/*
 	 * Use the configured keytab, if there is one.  Unfortunately, Heimdal
@@ -1322,19 +1287,6 @@ pg_SSPI_recvauth(Port *port)
 	HMODULE		secur32;
 
 	QUERY_SECURITY_CONTEXT_TOKEN_FN _QuerySecurityContextToken;
-
-	/*
-	 * SSPI auth is not supported for protocol versions before 3, because it
-	 * relies on the overall message length word to determine the SSPI payload
-	 * size in AuthenticationGSSContinue and PasswordMessage messages. (This
-	 * is, in fact, a design error in our SSPI support, because protocol
-	 * messages are supposed to be parsable without relying on the length
-	 * word; but it's not worth changing it now.)
-	 */
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-		ereport(FATAL,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SSPI is not supported in protocol version 2")));
 
 	/*
 	 * Acquire a handle to the server credentials.

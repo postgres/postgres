@@ -1221,7 +1221,7 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 	}
 
 	/* construct the outgoing Query message */
-	if (pqPutMsgStart('Q', false, conn) < 0 ||
+	if (pqPutMsgStart('Q', conn) < 0 ||
 		pqPuts(query, conn) < 0 ||
 		pqPutMsgEnd(conn) < 0)
 	{
@@ -1255,7 +1255,7 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 
 /*
  * PQsendQueryParams
- *		Like PQsendQuery, but use protocol 3.0 so we can pass parameters
+ *		Like PQsendQuery, but use extended query protocol so we can pass parameters
  */
 int
 PQsendQueryParams(PGconn *conn,
@@ -1330,16 +1330,8 @@ PQsendPrepare(PGconn *conn,
 		return 0;
 	}
 
-	/* This isn't gonna work on a 2.0 server */
-	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
-	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("function requires at least protocol version 3.0\n"));
-		return 0;
-	}
-
 	/* construct the Parse message */
-	if (pqPutMsgStart('P', false, conn) < 0 ||
+	if (pqPutMsgStart('P', conn) < 0 ||
 		pqPuts(stmtName, conn) < 0 ||
 		pqPuts(query, conn) < 0)
 		goto sendFailed;
@@ -1365,7 +1357,7 @@ PQsendPrepare(PGconn *conn,
 		goto sendFailed;
 
 	/* construct the Sync message */
-	if (pqPutMsgStart('S', false, conn) < 0 ||
+	if (pqPutMsgStart('S', conn) < 0 ||
 		pqPutMsgEnd(conn) < 0)
 		goto sendFailed;
 
@@ -1397,7 +1389,7 @@ sendFailed:
 /*
  * PQsendQueryPrepared
  *		Like PQsendQuery, but execute a previously prepared statement,
- *		using protocol 3.0 so we can pass parameters
+ *		using extended query protocol so we can pass parameters
  */
 int
 PQsendQueryPrepared(PGconn *conn,
@@ -1478,7 +1470,7 @@ PQsendQueryStart(PGconn *conn, bool newQuery)
 
 /*
  * PQsendQueryGuts
- *		Common code for protocol-3.0 query sending
+ *		Common code for sending a query with extended query protocol
  *		PQsendQueryStart should be done already
  *
  * command may be NULL to indicate we use an already-prepared statement
@@ -1496,14 +1488,6 @@ PQsendQueryGuts(PGconn *conn,
 {
 	int			i;
 
-	/* This isn't gonna work on a 2.0 server */
-	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
-	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("function requires at least protocol version 3.0\n"));
-		return 0;
-	}
-
 	/*
 	 * We will send Parse (if needed), Bind, Describe Portal, Execute, Sync,
 	 * using specified statement name and the unnamed portal.
@@ -1512,7 +1496,7 @@ PQsendQueryGuts(PGconn *conn,
 	if (command)
 	{
 		/* construct the Parse message */
-		if (pqPutMsgStart('P', false, conn) < 0 ||
+		if (pqPutMsgStart('P', conn) < 0 ||
 			pqPuts(stmtName, conn) < 0 ||
 			pqPuts(command, conn) < 0)
 			goto sendFailed;
@@ -1536,7 +1520,7 @@ PQsendQueryGuts(PGconn *conn,
 	}
 
 	/* Construct the Bind message */
-	if (pqPutMsgStart('B', false, conn) < 0 ||
+	if (pqPutMsgStart('B', conn) < 0 ||
 		pqPuts("", conn) < 0 ||
 		pqPuts(stmtName, conn) < 0)
 		goto sendFailed;
@@ -1603,21 +1587,21 @@ PQsendQueryGuts(PGconn *conn,
 		goto sendFailed;
 
 	/* construct the Describe Portal message */
-	if (pqPutMsgStart('D', false, conn) < 0 ||
+	if (pqPutMsgStart('D', conn) < 0 ||
 		pqPutc('P', conn) < 0 ||
 		pqPuts("", conn) < 0 ||
 		pqPutMsgEnd(conn) < 0)
 		goto sendFailed;
 
 	/* construct the Execute message */
-	if (pqPutMsgStart('E', false, conn) < 0 ||
+	if (pqPutMsgStart('E', conn) < 0 ||
 		pqPuts("", conn) < 0 ||
 		pqPutInt(0, 4, conn) < 0 ||
 		pqPutMsgEnd(conn) < 0)
 		goto sendFailed;
 
 	/* construct the Sync message */
-	if (pqPutMsgStart('S', false, conn) < 0 ||
+	if (pqPutMsgStart('S', conn) < 0 ||
 		pqPutMsgEnd(conn) < 0)
 		goto sendFailed;
 
@@ -1718,10 +1702,7 @@ PQconsumeInput(PGconn *conn)
 static void
 parseInput(PGconn *conn)
 {
-	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-		pqParseInput3(conn);
-	else
-		pqParseInput2(conn);
+	pqParseInput3(conn);
 }
 
 /*
@@ -1926,7 +1907,7 @@ PQexec(PGconn *conn, const char *query)
 
 /*
  * PQexecParams
- *		Like PQexec, but use protocol 3.0 so we can pass parameters
+ *		Like PQexec, but use extended query protocol so we can pass parameters
  */
 PGresult *
 PQexecParams(PGconn *conn,
@@ -1949,7 +1930,7 @@ PQexecParams(PGconn *conn,
 
 /*
  * PQprepare
- *	  Creates a prepared statement by issuing a v3.0 parse message.
+ *	  Creates a prepared statement by issuing a Parse message.
  *
  * If the query was not even sent, return NULL; conn->errorMessage is set to
  * a relevant message.
@@ -1973,7 +1954,7 @@ PQprepare(PGconn *conn,
 /*
  * PQexecPrepared
  *		Like PQexec, but execute a previously prepared statement,
- *		using protocol 3.0 so we can pass parameters
+ *		using extended query protocol so we can pass parameters
  */
 PGresult *
 PQexecPrepared(PGconn *conn,
@@ -2020,41 +2001,20 @@ PQexecStart(PGconn *conn)
 		PQclear(result);		/* only need its status */
 		if (resultStatus == PGRES_COPY_IN)
 		{
-			if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-			{
-				/* In protocol 3, we can get out of a COPY IN state */
-				if (PQputCopyEnd(conn,
-								 libpq_gettext("COPY terminated by new PQexec")) < 0)
-					return false;
-				/* keep waiting to swallow the copy's failure message */
-			}
-			else
-			{
-				/* In older protocols we have to punt */
-				appendPQExpBufferStr(&conn->errorMessage,
-									 libpq_gettext("COPY IN state must be terminated first\n"));
+			/* get out of a COPY IN state */
+			if (PQputCopyEnd(conn,
+							 libpq_gettext("COPY terminated by new PQexec")) < 0)
 				return false;
-			}
+			/* keep waiting to swallow the copy's failure message */
 		}
 		else if (resultStatus == PGRES_COPY_OUT)
 		{
-			if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-			{
-				/*
-				 * In protocol 3, we can get out of a COPY OUT state: we just
-				 * switch back to BUSY and allow the remaining COPY data to be
-				 * dropped on the floor.
-				 */
-				conn->asyncStatus = PGASYNC_BUSY;
-				/* keep waiting to swallow the copy's completion message */
-			}
-			else
-			{
-				/* In older protocols we have to punt */
-				appendPQExpBufferStr(&conn->errorMessage,
-									 libpq_gettext("COPY OUT state must be terminated first\n"));
-				return false;
-			}
+			/*
+			 * Get out of a COPY OUT state: we just switch back to BUSY and
+			 * allow the remaining COPY data to be dropped on the floor.
+			 */
+			conn->asyncStatus = PGASYNC_BUSY;
+			/* keep waiting to swallow the copy's completion message */
 		}
 		else if (resultStatus == PGRES_COPY_BOTH)
 		{
@@ -2195,23 +2155,15 @@ PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
 	if (!PQsendQueryStart(conn, true))
 		return 0;
 
-	/* This isn't gonna work on a 2.0 server */
-	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
-	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("function requires at least protocol version 3.0\n"));
-		return 0;
-	}
-
 	/* construct the Describe message */
-	if (pqPutMsgStart('D', false, conn) < 0 ||
+	if (pqPutMsgStart('D', conn) < 0 ||
 		pqPutc(desc_type, conn) < 0 ||
 		pqPuts(desc_target, conn) < 0 ||
 		pqPutMsgEnd(conn) < 0)
 		goto sendFailed;
 
 	/* construct the Sync message */
-	if (pqPutMsgStart('S', false, conn) < 0 ||
+	if (pqPutMsgStart('S', conn) < 0 ||
 		pqPutMsgEnd(conn) < 0)
 		goto sendFailed;
 
@@ -2311,8 +2263,7 @@ PQputCopyData(PGconn *conn, const char *buffer, int nbytes)
 		 * Try to flush any previously sent data in preference to growing the
 		 * output buffer.  If we can't enlarge the buffer enough to hold the
 		 * data, return 0 in the nonblock case, else hard error. (For
-		 * simplicity, always assume 5 bytes of overhead even in protocol 2.0
-		 * case.)
+		 * simplicity, always assume 5 bytes of overhead.)
 		 */
 		if ((conn->outBufSize - conn->outCount - 5) < nbytes)
 		{
@@ -2323,20 +2274,10 @@ PQputCopyData(PGconn *conn, const char *buffer, int nbytes)
 				return pqIsnonblocking(conn) ? 0 : -1;
 		}
 		/* Send the data (too simple to delegate to fe-protocol files) */
-		if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-		{
-			if (pqPutMsgStart('d', false, conn) < 0 ||
-				pqPutnchar(buffer, nbytes, conn) < 0 ||
-				pqPutMsgEnd(conn) < 0)
-				return -1;
-		}
-		else
-		{
-			if (pqPutMsgStart(0, false, conn) < 0 ||
-				pqPutnchar(buffer, nbytes, conn) < 0 ||
-				pqPutMsgEnd(conn) < 0)
-				return -1;
-		}
+		if (pqPutMsgStart('d', conn) < 0 ||
+			pqPutnchar(buffer, nbytes, conn) < 0 ||
+			pqPutMsgEnd(conn) < 0)
+			return -1;
 	}
 	return 1;
 }
@@ -2366,52 +2307,31 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 	 * Send the COPY END indicator.  This is simple enough that we don't
 	 * bother delegating it to the fe-protocol files.
 	 */
-	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+	if (errormsg)
 	{
-		if (errormsg)
-		{
-			/* Send COPY FAIL */
-			if (pqPutMsgStart('f', false, conn) < 0 ||
-				pqPuts(errormsg, conn) < 0 ||
-				pqPutMsgEnd(conn) < 0)
-				return -1;
-		}
-		else
-		{
-			/* Send COPY DONE */
-			if (pqPutMsgStart('c', false, conn) < 0 ||
-				pqPutMsgEnd(conn) < 0)
-				return -1;
-		}
-
-		/*
-		 * If we sent the COPY command in extended-query mode, we must issue a
-		 * Sync as well.
-		 */
-		if (conn->queryclass != PGQUERY_SIMPLE)
-		{
-			if (pqPutMsgStart('S', false, conn) < 0 ||
-				pqPutMsgEnd(conn) < 0)
-				return -1;
-		}
+		/* Send COPY FAIL */
+		if (pqPutMsgStart('f', conn) < 0 ||
+			pqPuts(errormsg, conn) < 0 ||
+			pqPutMsgEnd(conn) < 0)
+			return -1;
 	}
 	else
 	{
-		if (errormsg)
-		{
-			/* Oops, no way to do this in 2.0 */
-			appendPQExpBufferStr(&conn->errorMessage,
-								 libpq_gettext("function requires at least protocol version 3.0\n"));
+		/* Send COPY DONE */
+		if (pqPutMsgStart('c', conn) < 0 ||
+			pqPutMsgEnd(conn) < 0)
 			return -1;
-		}
-		else
-		{
-			/* Send old-style end-of-data marker */
-			if (pqPutMsgStart(0, false, conn) < 0 ||
-				pqPutnchar("\\.\n", 3, conn) < 0 ||
-				pqPutMsgEnd(conn) < 0)
-				return -1;
-		}
+	}
+
+	/*
+	 * If we sent the COPY command in extended-query mode, we must issue a
+	 * Sync as well.
+	 */
+	if (conn->queryclass != PGQUERY_SIMPLE)
+	{
+		if (pqPutMsgStart('S', conn) < 0 ||
+			pqPutMsgEnd(conn) < 0)
+			return -1;
 	}
 
 	/* Return to active duty */
@@ -2450,10 +2370,7 @@ PQgetCopyData(PGconn *conn, char **buffer, int async)
 							 libpq_gettext("no COPY in progress\n"));
 		return -2;
 	}
-	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-		return pqGetCopyData3(conn, buffer, async);
-	else
-		return pqGetCopyData2(conn, buffer, async);
+	return pqGetCopyData3(conn, buffer, async);
 }
 
 /*
@@ -2492,10 +2409,7 @@ PQgetline(PGconn *conn, char *s, int maxlen)
 	if (!conn)
 		return EOF;
 
-	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-		return pqGetline3(conn, s, maxlen);
-	else
-		return pqGetline2(conn, s, maxlen);
+	return pqGetline3(conn, s, maxlen);
 }
 
 /*
@@ -2535,10 +2449,7 @@ PQgetlineAsync(PGconn *conn, char *buffer, int bufsize)
 	if (!conn)
 		return -1;
 
-	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-		return pqGetlineAsync3(conn, buffer, bufsize);
-	else
-		return pqGetlineAsync2(conn, buffer, bufsize);
+	return pqGetlineAsync3(conn, buffer, bufsize);
 }
 
 /*
@@ -2573,10 +2484,8 @@ PQputnbytes(PGconn *conn, const char *buffer, int nbytes)
  *		After completing the data transfer portion of a copy in/out,
  *		the application must call this routine to finish the command protocol.
  *
- * When using protocol 3.0 this is deprecated; it's cleaner to use PQgetResult
- * to get the transfer status.  Note however that when using 2.0 protocol,
- * recovering from a copy failure often requires a PQreset.  PQendcopy will
- * take care of that, PQgetResult won't.
+ * This is deprecated; it's cleaner to use PQgetResult to get the transfer
+ * status.
  *
  * RETURNS:
  *		0 on success
@@ -2588,10 +2497,7 @@ PQendcopy(PGconn *conn)
 	if (!conn)
 		return 0;
 
-	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-		return pqEndcopy3(conn);
-	else
-		return pqEndcopy2(conn);
+	return pqEndcopy3(conn);
 }
 
 
@@ -2643,16 +2549,10 @@ PQfn(PGconn *conn,
 		return NULL;
 	}
 
-	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-		return pqFunctionCall3(conn, fnid,
-							   result_buf, result_len,
-							   result_is_int,
-							   args, nargs);
-	else
-		return pqFunctionCall2(conn, fnid,
-							   result_buf, result_len,
-							   result_is_int,
-							   args, nargs);
+	return pqFunctionCall3(conn, fnid,
+						   result_buf, result_len,
+						   result_is_int,
+						   args, nargs);
 }
 
 
@@ -2701,13 +2601,6 @@ PQresultVerboseErrorMessage(const PGresult *res,
 
 	initPQExpBuffer(&workBuf);
 
-	/*
-	 * Currently, we pass this off to fe-protocol3.c in all cases; it will
-	 * behave reasonably sanely with an error reported by fe-protocol2.c as
-	 * well.  If necessary, we could record the protocol version in PGresults
-	 * so as to be able to invoke a version-specific message formatter, but
-	 * for now there's no need.
-	 */
 	pqBuildErrorMessage3(&workBuf, res, verbosity, show_context);
 
 	/* If insufficient memory to format the message, fail cleanly */

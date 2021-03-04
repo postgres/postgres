@@ -33,8 +33,6 @@ static int	mq_flush_if_writable(void);
 static bool mq_is_send_pending(void);
 static int	mq_putmessage(char msgtype, const char *s, size_t len);
 static void mq_putmessage_noblock(char msgtype, const char *s, size_t len);
-static void mq_startcopyout(void);
-static void mq_endcopyout(bool errorAbort);
 
 static const PQcommMethods PqCommMqMethods = {
 	mq_comm_reset,
@@ -42,9 +40,7 @@ static const PQcommMethods PqCommMqMethods = {
 	mq_flush_if_writable,
 	mq_is_send_pending,
 	mq_putmessage,
-	mq_putmessage_noblock,
-	mq_startcopyout,
-	mq_endcopyout
+	mq_putmessage_noblock
 };
 
 /*
@@ -193,18 +189,6 @@ mq_putmessage_noblock(char msgtype, const char *s, size_t len)
 	 * don't need it.
 	 */
 	elog(ERROR, "not currently supported");
-}
-
-static void
-mq_startcopyout(void)
-{
-	/* Nothing to do. */
-}
-
-static void
-mq_endcopyout(bool errorAbort)
-{
-	/* Nothing to do. */
 }
 
 /*

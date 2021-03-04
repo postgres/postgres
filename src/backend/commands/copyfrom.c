@@ -1126,13 +1126,6 @@ CopyFrom(CopyFromState cstate)
 
 	MemoryContextSwitchTo(oldcontext);
 
-	/*
-	 * In the old protocol, tell pqcomm that we can process normal protocol
-	 * messages again.
-	 */
-	if (cstate->copy_src == COPY_OLD_FE)
-		pq_endmsgread();
-
 	/* Execute AFTER STATEMENT insertion triggers */
 	ExecASInsertTriggers(estate, target_resultRelInfo, cstate->transition_capture);
 

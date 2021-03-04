@@ -252,22 +252,6 @@ typedef enum
 	PG_BOOL_NO					/* No (false) */
 } PGTernaryBool;
 
-/* PGSetenvStatusType defines the state of the pqSetenv state machine */
-
-/* (this is used only for 2.0-protocol connections) */
-typedef enum
-{
-	SETENV_STATE_CLIENT_ENCODING_SEND,	/* About to send an Environment Option */
-	SETENV_STATE_CLIENT_ENCODING_WAIT,	/* Waiting for above send to complete */
-	SETENV_STATE_OPTION_SEND,	/* About to send an Environment Option */
-	SETENV_STATE_OPTION_WAIT,	/* Waiting for above send to complete */
-	SETENV_STATE_QUERY1_SEND,	/* About to send a status query */
-	SETENV_STATE_QUERY1_WAIT,	/* Waiting for query to complete */
-	SETENV_STATE_QUERY2_SEND,	/* About to send a status query */
-	SETENV_STATE_QUERY2_WAIT,	/* Waiting for query to complete */
-	SETENV_STATE_IDLE
-} PGSetenvStatusType;
-
 /* Typedef for the EnvironmentOptions[] array */
 typedef struct PQEnvironmentOption
 {
@@ -446,8 +430,6 @@ struct pg_conn
 	struct addrinfo *addrlist;	/* list of addresses for current connhost */
 	struct addrinfo *addr_cur;	/* the one currently being tried */
 	int			addrlist_family;	/* needed to know how to free addrlist */
-	PGSetenvStatusType setenv_state;	/* for 2.0 protocol only */
-	const PQEnvironmentOption *next_eo;
 	bool		send_appname;	/* okay to send application_name? */
 
 	/* Miscellaneous stuff */
@@ -639,22 +621,6 @@ extern void pqSaveParameterStatus(PGconn *conn, const char *name,
 extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
 extern int	PQsendQueryContinue(PGconn *conn, const char *query);
 
-/* === in fe-protocol2.c === */
-
-extern PostgresPollingStatusType pqSetenvPoll(PGconn *conn);
-
-extern char *pqBuildStartupPacket2(PGconn *conn, int *packetlen,
-								   const PQEnvironmentOption *options);
-extern void pqParseInput2(PGconn *conn);
-extern int	pqGetCopyData2(PGconn *conn, char **buffer, int async);
-extern int	pqGetline2(PGconn *conn, char *s, int maxlen);
-extern int	pqGetlineAsync2(PGconn *conn, char *buffer, int bufsize);
-extern int	pqEndcopy2(PGconn *conn);
-extern PGresult *pqFunctionCall2(PGconn *conn, Oid fnid,
-								 int *result_buf, int *actual_result_len,
-								 int result_is_int,
-								 const PQArgBlock *args, int nargs);
-
 /* === in fe-protocol3.c === */
 
 extern char *pqBuildStartupPacket3(PGconn *conn, int *packetlen,
@@ -691,7 +657,7 @@ extern int	pqSkipnchar(size_t len, PGconn *conn);
 extern int	pqPutnchar(const char *s, size_t len, PGconn *conn);
 extern int	pqGetInt(int *result, size_t bytes, PGconn *conn);
 extern int	pqPutInt(int value, size_t bytes, PGconn *conn);
-extern int	pqPutMsgStart(char msg_type, bool force_len, PGconn *conn);
+extern int	pqPutMsgStart(char msg_type, PGconn *conn);
 extern int	pqPutMsgEnd(PGconn *conn);
 extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);

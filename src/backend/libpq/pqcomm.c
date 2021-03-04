@@ -5,23 +5,13 @@
  *
  * These routines handle the low-level details of communication between
  * frontend and backend.  They just shove data across the communication
- * channel, and are ignorant of the semantics of the data --- or would be,
- * except for major brain damage in the design of the old COPY OUT protocol.
- * Unfortunately, COPY OUT was designed to commandeer the communication
- * channel (it just transfers data without wrapping it into messages).
- * No other messages can be sent while COPY OUT is in progress; and if the
- * copy is aborted by an ereport(ERROR), we need to close out the copy so that
- * the frontend gets back into sync.  Therefore, these routines have to be
- * aware of COPY OUT state.  (New COPY-OUT is message-based and does *not*
- * set the DoingCopyOut flag.)
+ * channel, and are ignorant of the semantics of the data.
  *
- * NOTE: generally, it's a bad idea to emit outgoing messages directly with
- * pq_putbytes(), especially if the message would require multiple calls
- * to send.  Instead, use the routines in pqformat.c to construct the message
- * in a buffer and then emit it in one call to pq_putmessage.  This ensures
- * that the channel will not be clogged by an incomplete message if execution
- * is aborted by ereport(ERROR) partway through the message.  The only
- * non-libpq code that should call pq_putbytes directly is old-style COPY OUT.
+ * To emit an outgoing message, use the routines in pqformat.c to construct
+ * the message in a buffer and then emit it in one call to pq_putmessage.
+ * There are no functions to send raw bytes or partial messages; this
+ * ensures that the channel will not be clogged by an incomplete message if
+ * execution is aborted by ereport(ERROR) partway through the message.
  *
  * At one time, libpq was shared between frontend and backend, but now
  * the backend's "backend/libpq" is quite separate from "interfaces/libpq".
@@ -49,20 +39,16 @@
  *
  * low-level I/O:
  *		pq_getbytes		- get a known number of bytes from connection
- *		pq_getstring	- get a null terminated string from connection
  *		pq_getmessage	- get a message with length word from connection
  *		pq_getbyte		- get next byte from connection
  *		pq_peekbyte		- peek at next byte from connection
- *		pq_putbytes		- send bytes to connection (not flushed until pq_flush)
  *		pq_flush		- flush pending output
  *		pq_flush_if_writable - flush pending output if writable without blocking
  *		pq_getbyte_if_available - get a byte if available without blocking
  *
- * message-level I/O (and old-style-COPY-OUT cruft):
+ * message-level I/O
  *		pq_putmessage	- send a normal message (suppressed in COPY OUT mode)
  *		pq_putmessage_noblock - buffer a normal message (suppressed in COPY OUT)
- *		pq_startcopyout - inform libpq that a COPY OUT transfer is beginning
- *		pq_endcopyout	- end a COPY OUT transfer
  *
  *------------------------
  */
@@ -146,7 +132,6 @@ static int	PqRecvLength;		/* End of data available in PqRecvBuffer */
  */
 static bool PqCommBusy;			/* busy sending data to the client */
 static bool PqCommReadingMsg;	/* in the middle of reading a message */
-static bool DoingCopyOut;		/* in old-protocol COPY OUT processing */
 
 
 /* Internal functions */
@@ -158,8 +143,6 @@ static int	socket_flush_if_writable(void);
 static bool socket_is_send_pending(void);
 static int	socket_putmessage(char msgtype, const char *s, size_t len);
 static void socket_putmessage_noblock(char msgtype, const char *s, size_t len);
-static void socket_startcopyout(void);
-static void socket_endcopyout(bool errorAbort);
 static int	internal_putbytes(const char *s, size_t len);
 static int	internal_flush(void);
 
@@ -174,9 +157,7 @@ static const PQcommMethods PqCommSocketMethods = {
 	socket_flush_if_writable,
 	socket_is_send_pending,
 	socket_putmessage,
-	socket_putmessage_noblock,
-	socket_startcopyout,
-	socket_endcopyout
+	socket_putmessage_noblock
 };
 
 const PQcommMethods *PqCommMethods = &PqCommSocketMethods;
@@ -200,7 +181,6 @@ pq_init(void)
 	PqSendPointer = PqSendStart = PqRecvPointer = PqRecvLength = 0;
 	PqCommBusy = false;
 	PqCommReadingMsg = false;
-	DoingCopyOut = false;
 
 	/* set up process-exit hook to close the socket */
 	on_proc_exit(socket_close, 0);
@@ -250,8 +230,6 @@ socket_comm_reset(void)
 {
 	/* Do not throw away pending data, but do reset the busy flag */
 	PqCommBusy = false;
-	/* We can abort any old-style COPY OUT, too */
-	pq_endcopyout(true);
 }
 
 /* --------------------------------
@@ -1158,58 +1136,6 @@ pq_discardbytes(size_t len)
 	return 0;
 }
 
-/* --------------------------------
- *		pq_getstring	- get a null terminated string from connection
- *
- *		The return value is placed in an expansible StringInfo, which has
- *		already been initialized by the caller.
- *
- *		This is used only for dealing with old-protocol clients.  The idea
- *		is to produce a StringInfo that looks the same as we would get from
- *		pq_getmessage() with a newer client; we will then process it with
- *		pq_getmsgstring.  Therefore, no character set conversion is done here,
- *		even though this is presumably useful only for text.
- *
- *		returns 0 if OK, EOF if trouble
- * --------------------------------
- */
-int
-pq_getstring(StringInfo s)
-{
-	int			i;
-
-	Assert(PqCommReadingMsg);
-
-	resetStringInfo(s);
-
-	/* Read until we get the terminating '\0' */
-	for (;;)
-	{
-		while (PqRecvPointer >= PqRecvLength)
-		{
-			if (pq_recvbuf())	/* If nothing in buffer, then recv some */
-				return EOF;		/* Failed to recv data */
-		}
-
-		for (i = PqRecvPointer; i < PqRecvLength; i++)
-		{
-			if (PqRecvBuffer[i] == '\0')
-			{
-				/* include the '\0' in the copy */
-				appendBinaryStringInfo(s, PqRecvBuffer + PqRecvPointer,
-									   i - PqRecvPointer + 1);
-				PqRecvPointer = i + 1;	/* advance past \0 */
-				return 0;
-			}
-		}
-
-		/* If we're here we haven't got the \0 in the buffer yet. */
-		appendBinaryStringInfo(s, PqRecvBuffer + PqRecvPointer,
-							   PqRecvLength - PqRecvPointer);
-		PqRecvPointer = PqRecvLength;
-	}
-}
-
 
 /* --------------------------------
  *		pq_startmsgread - begin reading a message from the client.
@@ -1236,9 +1162,9 @@ pq_startmsgread(void)
 /* --------------------------------
  *		pq_endmsgread	- finish reading message.
  *
- *		This must be called after reading a V2 protocol message with
- *		pq_getstring() and friends, to indicate that we have read the whole
- *		message. In V3 protocol, pq_getmessage() does this implicitly.
+ *		This must be called after reading a message with pq_getbytes()
+ *		and friends, to indicate that we have read the whole message.
+ *		pq_getmessage() does this implicitly.
  * --------------------------------
  */
 void
@@ -1353,28 +1279,6 @@ pq_getmessage(StringInfo s, int maxlen)
 	return 0;
 }
 
-
-/* --------------------------------
- *		pq_putbytes		- send bytes to connection (not flushed until pq_flush)
- *
- *		returns 0 if OK, EOF if trouble
- * --------------------------------
- */
-int
-pq_putbytes(const char *s, size_t len)
-{
-	int			res;
-
-	/* Should only be called by old-style COPY OUT */
-	Assert(DoingCopyOut);
-	/* No-op if reentrant call */
-	if (PqCommBusy)
-		return 0;
-	PqCommBusy = true;
-	res = internal_putbytes(s, len);
-	PqCommBusy = false;
-	return res;
-}
 
 static int
 internal_putbytes(const char *s, size_t len)
@@ -1536,8 +1440,6 @@ socket_is_send_pending(void)
 
 /* --------------------------------
  * Message-level I/O routines begin here.
- *
- * These routines understand about the old-style COPY OUT protocol.
  * --------------------------------
  */
 
@@ -1545,20 +1447,13 @@ socket_is_send_pending(void)
 /* --------------------------------
  *		socket_putmessage - send a normal message (suppressed in COPY OUT mode)
  *
- *		If msgtype is not '\0', it is a message type code to place before
- *		the message body.  If msgtype is '\0', then the message has no type
- *		code (this is only valid in pre-3.0 protocols).
+ *		msgtype is a message type code to place before the message body.
  *
- *		len is the length of the message body data at *s.  In protocol 3.0
- *		and later, a message length word (equal to len+4 because it counts
- *		itself too) is inserted by this routine.
+ *		len is the length of the message body data at *s.  A message length
+ *		word (equal to len+4 because it counts itself too) is inserted by this
+ *		routine.
  *
- *		All normal messages are suppressed while old-style COPY OUT is in
- *		progress.  (In practice only a few notice messages might get emitted
- *		then; dropping them is annoying, but at least they will still appear
- *		in the postmaster log.)
- *
- *		We also suppress messages generated while pqcomm.c is busy.  This
+ *		We suppress messages generated while pqcomm.c is busy.  This
  *		avoids any possibility of messages being inserted within other
  *		messages.  The only known trouble case arises if SIGQUIT occurs
  *		during a pqcomm.c routine --- quickdie() will try to send a warning
@@ -1570,20 +1465,20 @@ socket_is_send_pending(void)
 static int
 socket_putmessage(char msgtype, const char *s, size_t len)
 {
-	if (DoingCopyOut || PqCommBusy)
+	uint32		n32;
+
+	Assert(msgtype != 0);
+
+	if (PqCommBusy)
 		return 0;
 	PqCommBusy = true;
-	if (msgtype)
-		if (internal_putbytes(&msgtype, 1))
-			goto fail;
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
-	{
-		uint32		n32;
+	if (internal_putbytes(&msgtype, 1))
+		goto fail;
 
-		n32 = pg_hton32((uint32) (len + 4));
-		if (internal_putbytes((char *) &n32, 4))
-			goto fail;
-	}
+	n32 = pg_hton32((uint32) (len + 4));
+	if (internal_putbytes((char *) &n32, 4))
+		goto fail;
+
 	if (internal_putbytes(s, len))
 		goto fail;
 	PqCommBusy = false;
@@ -1621,37 +1516,41 @@ socket_putmessage_noblock(char msgtype, const char *s, size_t len)
 								 * buffer */
 }
 
-
 /* --------------------------------
- *		socket_startcopyout - inform libpq that an old-style COPY OUT transfer
- *			is beginning
- * --------------------------------
- */
-static void
-socket_startcopyout(void)
-{
-	DoingCopyOut = true;
-}
-
-/* --------------------------------
- *		socket_endcopyout	- end an old-style COPY OUT transfer
+ *		pq_putmessage_v2 - send a message in protocol version 2
  *
- *		If errorAbort is indicated, we are aborting a COPY OUT due to an error,
- *		and must send a terminator line.  Since a partial data line might have
- *		been emitted, send a couple of newlines first (the first one could
- *		get absorbed by a backslash...)  Note that old-style COPY OUT does
- *		not allow binary transfers, so a textual terminator is always correct.
+ *		msgtype is a message type code to place before the message body.
+ *
+ *		We no longer support protocol version 2, but we have kept this
+ *		function so that if a client tries to connect with protocol version 2,
+ *		as a courtesy we can still send the "unsupported protocol version"
+ *		error to the client in the old format.
+ *
+ *		Like in pq_putmessage(), we suppress messages generated while
+ *		pqcomm.c is busy.
+ *
+ *		returns 0 if OK, EOF if trouble
  * --------------------------------
  */
-static void
-socket_endcopyout(bool errorAbort)
+int
+pq_putmessage_v2(char msgtype, const char *s, size_t len)
 {
-	if (!DoingCopyOut)
-		return;
-	if (errorAbort)
-		pq_putbytes("\n\n\\.\n", 5);
-	/* in non-error case, copyto.c will have emitted the terminator line */
-	DoingCopyOut = false;
+	Assert(msgtype != 0);
+
+	if (PqCommBusy)
+		return 0;
+	PqCommBusy = true;
+	if (internal_putbytes(&msgtype, 1))
+		goto fail;
+
+	if (internal_putbytes(s, len))
+		goto fail;
+	PqCommBusy = false;
+	return 0;
+
+fail:
+	PqCommBusy = false;
+	return EOF;
 }
 
 /*

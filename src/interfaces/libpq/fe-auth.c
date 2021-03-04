@@ -579,7 +579,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 	/*
 	 * Build a SASLInitialResponse message, and send it.
 	 */
-	if (pqPutMsgStart('p', true, conn))
+	if (pqPutMsgStart('p', conn))
 		goto error;
 	if (pqPuts(selected_mechanism, conn))
 		goto error;
@@ -798,11 +798,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 		default:
 			return STATUS_ERROR;
 	}
-	/* Packet has a message type as of protocol 3.0 */
-	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-		ret = pqPacketSend(conn, 'p', pwd_to_send, strlen(pwd_to_send) + 1);
-	else
-		ret = pqPacketSend(conn, 0, pwd_to_send, strlen(pwd_to_send) + 1);
+	ret = pqPacketSend(conn, 'p', pwd_to_send, strlen(pwd_to_send) + 1);
 	if (crypt_pwd)
 		free(crypt_pwd);
 	return ret;

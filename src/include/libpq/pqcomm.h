@@ -114,9 +114,12 @@ is_unixsock_path(const char *path)
 #define PG_PROTOCOL_MINOR(v)	((v) & 0x0000ffff)
 #define PG_PROTOCOL(m,n)	(((m) << 16) | (n))
 
-/* The earliest and latest frontend/backend protocol version supported. */
+/*
+ * The earliest and latest frontend/backend protocol version supported.
+ * (Only protocol version 3 is currently supported)
+ */
 
-#define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(2,0)
+#define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(3,0)
 #define PG_PROTOCOL_LATEST		PG_PROTOCOL(3,0)
 
 typedef uint32 ProtocolVersion; /* FE/BE protocol version number */
@@ -131,32 +134,6 @@ typedef ProtocolVersion MsgType;
  */
 
 typedef uint32 PacketLen;
-
-
-/*
- * Old-style startup packet layout with fixed-width fields.  This is used in
- * protocol 1.0 and 2.0, but not in later versions.  Note that the fields
- * in this layout are '\0' terminated only if there is room.
- */
-
-#define SM_DATABASE		64
-#define SM_USER			32
-/* We append database name if db_user_namespace true. */
-#define SM_DATABASE_USER (SM_DATABASE+SM_USER+1)	/* +1 for @ */
-#define SM_OPTIONS		64
-#define SM_UNUSED		64
-#define SM_TTY			64
-
-typedef struct StartupPacket
-{
-	ProtocolVersion protoVersion;	/* Protocol version */
-	char		database[SM_DATABASE];	/* Database name */
-	/* Db_user_namespace appends dbname */
-	char		user[SM_USER];	/* User name */
-	char		options[SM_OPTIONS];	/* Optional additional args */
-	char		unused[SM_UNUSED];	/* Unused */
-	char		tty[SM_TTY];	/* Tty for debug output */
-} StartupPacket;
 
 extern bool Db_user_namespace;
 

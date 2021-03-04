@@ -2275,20 +2275,6 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
       </para>
 
       <para>
-       Pre-3.0-protocol servers do not report parameter settings, but
-       <application>libpq</application> includes logic to obtain values for
-       <varname>server_version</varname> and <varname>client_encoding</varname> anyway.
-       Applications are encouraged to use <xref linkend="libpq-PQparameterStatus"/>
-       rather than <foreignphrase>ad hoc</foreignphrase> code to determine these values.
-       (Beware however that on a pre-3.0 connection, changing
-       <varname>client_encoding</varname> via <command>SET</command> after connection
-       startup will not be reflected by <xref linkend="libpq-PQparameterStatus"/>.)
-       For <varname>server_version</varname>, see also
-       <xref linkend="libpq-PQserverVersion"/>, which returns the information in a
-       numeric form that is much easier to compare against.
-      </para>
-
-      <para>
        If no value for <varname>standard_conforming_strings</varname> is reported,
        applications can assume it is <literal>off</literal>, that is, backslashes
        are treated as escapes in string literals.  Also, the presence of
@@ -2314,15 +2300,12 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
 int PQprotocolVersion(const PGconn *conn);
 </synopsis>
        Applications might wish to use this function to determine whether certain
-       features are supported.  Currently, the possible values are 2 (2.0
-       protocol), 3 (3.0 protocol), or zero (connection bad).  The
-       protocol version will
+       features are supported.  Currently, the possible values are 3
+       (3.0 protocol), or zero (connection bad).  The protocol version will
        not change after connection startup is complete, but it could
-       theoretically change during a connection reset.  The 3.0 protocol
-       will normally be used when communicating with
-       <productname>PostgreSQL</productname> 7.4 or later servers; pre-7.4 servers
-       support only protocol 2.0.  (Protocol 1.0 is obsolete and not
-       supported by <application>libpq</application>.)
+       theoretically change during a connection reset.  The 3.0 protocol is
+       supported by <productname>PostgreSQL</productname> server versions 7.4
+       and above.
       </para>
      </listitem>
     </varlistentry>
@@ -2739,8 +2722,7 @@ PGresult *PQexecParams(PGconn *conn,
         <xref linkend="libpq-PQexecParams"/> is like <xref linkend="libpq-PQexec"/>, but offers additional
         functionality: parameter values can be specified separately from the command
         string proper, and query results can be requested in either text or binary
-        format.  <xref linkend="libpq-PQexecParams"/> is supported only in protocol 3.0 and later
-        connections; it will fail when using protocol 2.0.
+        format.
        </para>
 
        <para>
@@ -2917,8 +2899,6 @@ PGresult *PQprepare(PGconn *conn,
         execution with <xref linkend="libpq-PQexecPrepared"/>.  This feature allows
         commands to be executed repeatedly without being parsed and
         planned each time;  see <xref linkend="sql-prepare"/> for details.
-        <xref linkend="libpq-PQprepare"/> is supported only in protocol 3.0 and later
-        connections; it will fail when using protocol 2.0.
        </para>
 
        <para>
@@ -2992,9 +2972,7 @@ PGresult *PQexecPrepared(PGconn *conn,
         This feature allows commands that will be used repeatedly to be
         parsed and planned just once, rather than each time they are
         executed.  The statement must have been prepared previously in
-        the current session.  <xref linkend="libpq-PQexecPrepared"/> is supported
-        only in protocol 3.0 and later connections; it will fail when
-        using protocol 2.0.
+        the current session.
        </para>
 
        <para>
@@ -3021,8 +2999,6 @@ PGresult *PQdescribePrepared(PGconn *conn, const char *stmtName);
        <para>
         <xref linkend="libpq-PQdescribePrepared"/> allows an application to obtain
         information about a previously prepared statement.
-        <xref linkend="libpq-PQdescribePrepared"/> is supported only in protocol 3.0
-        and later connections; it will fail when using protocol 2.0.
        </para>
 
        <para>
@@ -3059,8 +3035,6 @@ PGresult *PQdescribePortal(PGconn *conn, const char *portalName);
         (<application>libpq</application> does not provide any direct access to
         portals, but you can use this function to inspect the properties
         of a cursor created with a <command>DECLARE CURSOR</command> SQL command.)
-        <xref linkend="libpq-PQdescribePortal"/> is supported only in protocol 3.0
-        and later connections; it will fail when using protocol 2.0.
        </para>
 
        <para>
@@ -3566,8 +3540,6 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
        <para>
         Errors generated internally by <application>libpq</application> will
         have severity and primary message, but typically no other fields.
-        Errors returned by a pre-3.0-protocol server will include severity and
-        primary message, and sometimes a detail message, but no other fields.
        </para>
 
        <para>
@@ -3728,8 +3700,7 @@ Oid PQftable(const PGresult *res,
 
       <para>
        <literal>InvalidOid</literal> is returned if the column number is out of range,
-       or if the specified column is not a simple reference to a table column,
-       or when using pre-3.0 protocol.
+       or if the specified column is not a simple reference to a table column.
        You can query the system table <literal>pg_class</literal> to determine
        exactly which table is referenced.
       </para>
@@ -3759,8 +3730,7 @@ int PQftablecol(const PGresult *res,
 
       <para>
        Zero is returned if the column number is out of range, or if the
-       specified column is not a simple reference to a table column, or
-       when using pre-3.0 protocol.
+       specified column is not a simple reference to a table column.
       </para>
      </listitem>
     </varlistentry>
@@ -4593,8 +4563,8 @@ int PQsendQueryParams(PGconn *conn,
        query parameters can be specified separately from the query string.
        The function's parameters are handled identically to
        <xref linkend="libpq-PQexecParams"/>.  Like
-       <xref linkend="libpq-PQexecParams"/>, it will not work on 2.0-protocol
-       connections, and it allows only one command in the query string.
+       <xref linkend="libpq-PQexecParams"/>, it allows only one command in the
+       query string.
       </para>
      </listitem>
     </varlistentry>
@@ -4619,9 +4589,7 @@ int PQsendPrepare(PGconn *conn,
        After a successful call, call <xref linkend="libpq-PQgetResult"/> to
        determine whether the server successfully created the prepared
        statement.  The function's parameters are handled identically to
-       <xref linkend="libpq-PQprepare"/>.  Like
-       <xref linkend="libpq-PQprepare"/>, it will not work on 2.0-protocol
-       connections.
+       <xref linkend="libpq-PQprepare"/>.
       </para>
      </listitem>
     </varlistentry>
@@ -4647,9 +4615,7 @@ int PQsendQueryPrepared(PGconn *conn,
        the command to be executed is specified by naming a
        previously-prepared statement, instead of giving a query string.
        The function's parameters are handled identically to
-       <xref linkend="libpq-PQexecPrepared"/>.  Like
-       <xref linkend="libpq-PQexecPrepared"/>, it will not work on
-       2.0-protocol connections.
+       <xref linkend="libpq-PQexecPrepared"/>.
       </para>
      </listitem>
     </varlistentry>
@@ -4669,9 +4635,7 @@ int PQsendDescribePrepared(PGconn *conn, const char *stmtName);
        it returns 1 if it was able to dispatch the request, and 0 if not.
        After a successful call, call <xref linkend="libpq-PQgetResult"/> to
        obtain the results.  The function's parameters are handled
-       identically to <xref linkend="libpq-PQdescribePrepared"/>.  Like
-       <xref linkend="libpq-PQdescribePrepared"/>, it will not work on
-       2.0-protocol connections.
+       identically to <xref linkend="libpq-PQdescribePrepared"/>.
       </para>
      </listitem>
     </varlistentry>
@@ -4691,9 +4655,7 @@ int PQsendDescribePortal(PGconn *conn, const char *portalName);
        it returns 1 if it was able to dispatch the request, and 0 if not.
        After a successful call, call <xref linkend="libpq-PQgetResult"/> to
        obtain the results.  The function's parameters are handled
-       identically to <xref linkend="libpq-PQdescribePortal"/>.  Like
-       <xref linkend="libpq-PQdescribePortal"/>, it will not work on
-       2.0-protocol connections.
+       identically to <xref linkend="libpq-PQdescribePortal"/>.
       </para>
      </listitem>
     </varlistentry>
@@ -5460,13 +5422,6 @@ typedef struct pgNotify
    </variablelist>
   </para>
 
-  <note>
-   <para>
-    These additional data values are only available when using protocol
-    3.0.  When using protocol 2.0, all these functions will return 0.
-   </para>
-  </note>
-
   <sect2 id="libpq-copy-send">
    <title>Functions for Sending <command>COPY</command> Data</title>
 
@@ -5531,9 +5486,7 @@ int PQputCopyEnd(PGconn *conn,
        <parameter>errormsg</parameter> used as the error message.  (One should not
        assume that this exact error message will come back from the server,
        however, as the server might have already failed the
-       <command>COPY</command> for its own reasons.  Also note that the option
-       to force failure does not work when using pre-3.0-protocol
-       connections.)
+       <command>COPY</command> for its own reasons.)
       </para>
 
       <para>

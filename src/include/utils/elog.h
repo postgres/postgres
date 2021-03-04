@@ -207,7 +207,6 @@ extern int	errhidecontext(bool hide_ctx);
 
 extern int	errbacktrace(void);
 
-extern int	errfunction(const char *funcname);
 extern int	errposition(int cursorpos);
 
 extern int	internalerrposition(int cursorpos);
@@ -367,7 +366,6 @@ typedef struct ErrorData
 	int			elevel;			/* error level */
 	bool		output_to_server;	/* will report to server log? */
 	bool		output_to_client;	/* will report to client? */
-	bool		show_funcname;	/* true to force funcname inclusion */
 	bool		hide_stmt;		/* true to prevent STATEMENT: inclusion */
 	bool		hide_ctx;		/* true to prevent CONTEXT: inclusion */
 	const char *filename;		/* __FILE__ of ereport() call */

@@ -484,9 +484,6 @@ pqCheckInBufferSpace(size_t bytes_needed, PGconn *conn)
  * msg_type is the message type byte, or 0 for a message without type byte
  * (only startup messages have no type byte)
  *
- * force_len forces the message to have a length word; otherwise, we add
- * a length word if protocol 3.
- *
  * Returns 0 on success, EOF on error
  *
  * The idea here is that we construct the message in conn->outBuffer,
@@ -497,12 +494,11 @@ pqCheckInBufferSpace(size_t bytes_needed, PGconn *conn)
  *
  * The state variable conn->outMsgStart points to the incomplete message's
  * length word: it is either outCount or outCount+1 depending on whether
- * there is a type byte.  If we are sending a message without length word
- * (pre protocol 3.0 only), then outMsgStart is -1.  The state variable
- * conn->outMsgEnd is the end of the data collected so far.
+ * there is a type byte.  The state variable conn->outMsgEnd is the end of
+ * the data collected so far.
  */
 int
-pqPutMsgStart(char msg_type, bool force_len, PGconn *conn)
+pqPutMsgStart(char msg_type, PGconn *conn)
 {
 	int			lenPos;
 	int			endPos;
@@ -514,14 +510,9 @@ pqPutMsgStart(char msg_type, bool force_len, PGconn *conn)
 		endPos = conn->outCount;
 
 	/* do we want a length word? */
-	if (force_len || PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-	{
-		lenPos = endPos;
-		/* allow room for message length */
-		endPos += 4;
-	}
-	else
-		lenPos = -1;
+	lenPos = endPos;
+	/* allow room for message length */
+	endPos += 4;
 
 	/* make sure there is room for message header */
 	if (pqCheckOutBufferSpace(endPos, conn))

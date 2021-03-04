@@ -6306,11 +6306,9 @@ BeginReportingGUCOptions(void)
 	int			i;
 
 	/*
-	 * Don't do anything unless talking to an interactive frontend of protocol
-	 * 3.0 or later.
+	 * Don't do anything unless talking to an interactive frontend.
 	 */
-	if (whereToSendOutput != DestRemote ||
-		PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
+	if (whereToSendOutput != DestRemote)
 		return;
 
 	reporting_enabled = true;

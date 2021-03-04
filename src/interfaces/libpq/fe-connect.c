@@ -2289,10 +2289,6 @@ PQconnectPoll(PGconn *conn)
 		case CONNECTION_MADE:
 			break;
 
-			/* We allow pqSetenvPoll to decide whether to proceed. */
-		case CONNECTION_SETENV:
-			break;
-
 			/* Special cases: proceed without waiting. */
 		case CONNECTION_SSL_STARTUP:
 		case CONNECTION_NEEDED:
@@ -2956,12 +2952,8 @@ keep_going:						/* We will come back to here until there is
 				/*
 				 * Build the startup packet.
 				 */
-				if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-					startpacket = pqBuildStartupPacket3(conn, &packetlen,
-														EnvironmentOptions);
-				else
-					startpacket = pqBuildStartupPacket2(conn, &packetlen,
-														EnvironmentOptions);
+				startpacket = pqBuildStartupPacket3(conn, &packetlen,
+													EnvironmentOptions);
 				if (!startpacket)
 				{
 					appendPQExpBufferStr(&conn->errorMessage,
@@ -3247,19 +3239,11 @@ keep_going:						/* We will come back to here until there is
 					goto error_return;
 				}
 
-				if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+				/* Read message length word */
+				if (pqGetInt(&msgLength, 4, conn))
 				{
-					/* Read message length word */
-					if (pqGetInt(&msgLength, 4, conn))
-					{
-						/* We'll come back when there is more data */
-						return PGRES_POLLING_READING;
-					}
-				}
-				else
-				{
-					/* Set phony message length to disable checks below */
-					msgLength = 8;
+					/* We'll come back when there is more data */
+					return PGRES_POLLING_READING;
 				}
 
 				/*
@@ -3268,7 +3252,9 @@ keep_going:						/* We will come back to here until there is
 				 * auth requests may not be that small.  Errors can be a
 				 * little larger, but not huge.  If we see a large apparent
 				 * length in an error, it means we're really talking to a
-				 * pre-3.0-protocol server; cope.
+				 * pre-3.0-protocol server; cope.  (Before version 14, the
+				 * server also used the old protocol for errors that happened
+				 * before processing the startup packet.)
 				 */
 				if (beresp == 'R' && (msgLength < 8 || msgLength > 2000))
 				{
@@ -3296,25 +3282,11 @@ keep_going:						/* We will come back to here until there is
 					 */
 					appendPQExpBufferChar(&conn->errorMessage, '\n');
 
-					/*
-					 * If we tried to open the connection in 3.0 protocol,
-					 * fall back to 2.0 protocol.
-					 */
-					if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-					{
-						conn->pversion = PG_PROTOCOL(2, 0);
-						need_new_connection = true;
-						goto keep_going;
-					}
-
 					goto error_return;
 				}
 
 				/*
 				 * Can't process if message body isn't all here yet.
-				 *
-				 * (In protocol 2.0 case, we are assuming messages carry at
-				 * least 4 bytes of data.)
 				 */
 				msgLength -= 4;
 				avail = conn->inEnd - conn->inCursor;
@@ -3335,21 +3307,10 @@ keep_going:						/* We will come back to here until there is
 				/* Handle errors. */
 				if (beresp == 'E')
 				{
-					if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+					if (pqGetErrorNotice3(conn, true))
 					{
-						if (pqGetErrorNotice3(conn, true))
-						{
-							/* We'll come back when there is more data */
-							return PGRES_POLLING_READING;
-						}
-					}
-					else
-					{
-						if (pqGets_append(&conn->errorMessage, conn))
-						{
-							/* We'll come back when there is more data */
-							return PGRES_POLLING_READING;
-						}
+						/* We'll come back when there is more data */
+						return PGRES_POLLING_READING;
 					}
 					/* OK, we read the message; mark data consumed */
 					conn->inStart = conn->inCursor;
@@ -3432,33 +3393,6 @@ keep_going:						/* We will come back to here until there is
 					return PGRES_POLLING_READING;
 				}
 				msgLength -= 4;
-
-				/*
-				 * Ensure the password salt is in the input buffer, if it's an
-				 * MD5 request.  All the other authentication methods that
-				 * contain extra data in the authentication request are only
-				 * supported in protocol version 3, in which case we already
-				 * read the whole message above.
-				 */
-				if (areq == AUTH_REQ_MD5 && PG_PROTOCOL_MAJOR(conn->pversion) < 3)
-				{
-					msgLength += 4;
-
-					avail = conn->inEnd - conn->inCursor;
-					if (avail < 4)
-					{
-						/*
-						 * Before returning, try to enlarge the input buffer
-						 * if needed to hold the whole message; see notes in
-						 * pqParseInput3.
-						 */
-						if (pqCheckInBufferSpace(conn->inCursor + (size_t) 4,
-												 conn))
-							goto error_return;
-						/* We'll come back when there is more data */
-						return PGRES_POLLING_READING;
-					}
-				}
 
 				/*
 				 * Process the rest of the authentication request message, and
@@ -3567,15 +3501,6 @@ keep_going:						/* We will come back to here until there is
 					goto error_return;
 				}
 
-				/* Fire up post-connection housekeeping if needed */
-				if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
-				{
-					conn->status = CONNECTION_SETENV;
-					conn->setenv_state = SETENV_STATE_CLIENT_ENCODING_SEND;
-					conn->next_eo = EnvironmentOptions;
-					return PGRES_POLLING_WRITING;
-				}
-
 				/* Almost there now ... */
 				conn->status = CONNECTION_CHECK_TARGET;
 				goto keep_going;
@@ -3596,17 +3521,9 @@ keep_going:						/* We will come back to here until there is
 					 * If the server didn't report
 					 * "default_transaction_read_only" or "in_hot_standby" at
 					 * startup, we must determine its state by sending the
-					 * query "SHOW transaction_read_only".  Servers before 7.4
-					 * lack the transaction_read_only GUC, but by the same
-					 * token they don't have any read-only mode, so we may
-					 * just assume the results.
+					 * query "SHOW transaction_read_only".  This GUC exists in
+					 * all server versions that support 3.0 protocol.
 					 */
-					if (conn->sversion < 70400)
-					{
-						conn->default_transaction_read_only = PG_BOOL_NO;
-						conn->in_hot_standby = PG_BOOL_NO;
-					}
-
 					if (conn->default_transaction_read_only == PG_BOOL_UNKNOWN ||
 						conn->in_hot_standby == PG_BOOL_UNKNOWN)
 					{
@@ -3717,39 +3634,6 @@ keep_going:						/* We will come back to here until there is
 				/* We are open for business! */
 				conn->status = CONNECTION_OK;
 				return PGRES_POLLING_OK;
-			}
-
-		case CONNECTION_SETENV:
-			{
-				/*
-				 * Do post-connection housekeeping (only needed in protocol
-				 * 2.0).
-				 *
-				 * We pretend that the connection is OK for the duration of
-				 * these queries.
-				 */
-				conn->status = CONNECTION_OK;
-
-				switch (pqSetenvPoll(conn))
-				{
-					case PGRES_POLLING_OK:	/* Success */
-						break;
-
-					case PGRES_POLLING_READING: /* Still going */
-						conn->status = CONNECTION_SETENV;
-						return PGRES_POLLING_READING;
-
-					case PGRES_POLLING_WRITING: /* Still going */
-						conn->status = CONNECTION_SETENV;
-						return PGRES_POLLING_WRITING;
-
-					default:
-						goto error_return;
-				}
-
-				/* Almost there now ... */
-				conn->status = CONNECTION_CHECK_TARGET;
-				goto keep_going;
 			}
 
 		case CONNECTION_CONSUME:
@@ -4042,7 +3926,6 @@ makeEmptyPGconn(void)
 	conn->xactStatus = PQTRANS_IDLE;
 	conn->options_valid = false;
 	conn->nonblocking = false;
-	conn->setenv_state = SETENV_STATE_IDLE;
 	conn->client_encoding = PG_SQL_ASCII;
 	conn->std_strings = false;	/* unless server says differently */
 	conn->default_transaction_read_only = PG_BOOL_UNKNOWN;
@@ -4259,7 +4142,7 @@ sendTerminateConn(PGconn *conn)
 		 * Try to send "close connection" message to backend. Ignore any
 		 * error.
 		 */
-		pqPutMsgStart('X', false, conn);
+		pqPutMsgStart('X', conn);
 		pqPutMsgEnd(conn);
 		(void) pqFlush(conn);
 	}
@@ -4652,16 +4535,13 @@ PQrequestCancel(PGconn *conn)
  *
  * RETURNS: STATUS_ERROR if the write fails, STATUS_OK otherwise.
  * SIDE_EFFECTS: may block.
- *
- * Note: all messages sent with this routine have a length word, whether
- * it's protocol 2.0 or 3.0.
  */
 int
 pqPacketSend(PGconn *conn, char pack_type,
 			 const void *buf, size_t buf_len)
 {
 	/* Start the message. */
-	if (pqPutMsgStart(pack_type, true, conn))
+	if (pqPutMsgStart(pack_type, conn))
 		return STATUS_ERROR;
 
 	/* Send the message body. */
@@ -6917,13 +6797,9 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	else
 	{
 		/*
-		 * In protocol 2 we have to assume the setting will stick, and adjust
-		 * our state immediately.  In protocol 3 and up we can rely on the
-		 * backend to report the parameter value, and we'll change state at
-		 * that time.
+		 * We rely on the backend to report the parameter value, and we'll
+		 * change state at that time.
 		 */
-		if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
-			pqSaveParameterStatus(conn, "client_encoding", encoding);
 		status = 0;				/* everything is ok */
 	}
 	PQclear(res);

@@ -589,16 +589,6 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		PG_RE_THROW();
 	}
 
-	/*
-	 * If we are doing FATAL or PANIC, abort any old-style COPY OUT in
-	 * progress, so that we can report the message before dying.  (Without
-	 * this, pq_putmessage will refuse to send the message at all, which is
-	 * what we want for NOTICE messages, but not for fatal exits.) This hack
-	 * is necessary because of poor design of old-style copy protocol.
-	 */
-	if (elevel >= FATAL && whereToSendOutput == DestRemote)
-		pq_endcopyout(true);
-
 	/* Emit the message to the right places */
 	EmitErrorReport();
 
@@ -1257,28 +1247,6 @@ errhidecontext(bool hide_ctx)
 	CHECK_STACK_DEPTH();
 
 	edata->hide_ctx = hide_ctx;
-
-	return 0;					/* return value does not matter */
-}
-
-
-/*
- * errfunction --- add reporting function name to the current error
- *
- * This is used when backwards compatibility demands that the function
- * name appear in messages sent to old-protocol clients.  Note that the
- * passed string is expected to be a non-freeable constant string.
- */
-int
-errfunction(const char *funcname)
-{
-	ErrorData  *edata = &errordata[errordata_stack_depth];
-
-	/* we don't bother incrementing recursion_depth */
-	CHECK_STACK_DEPTH();
-
-	edata->funcname = funcname;
-	edata->show_funcname = true;
 
 	return 0;					/* return value does not matter */
 }
@@ -3291,16 +3259,23 @@ send_message_to_frontend(ErrorData *edata)
 {
 	StringInfoData msgbuf;
 
-	/* 'N' (Notice) is for nonfatal conditions, 'E' is for errors */
-	pq_beginmessage(&msgbuf, (edata->elevel < ERROR) ? 'N' : 'E');
-
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+	/*
+	 * We no longer support pre-3.0 FE/BE protocol, except here.  If a client
+	 * tries to connect using an older protocol version, it's nice to send the
+	 * "protocol version not supported" error in a format the client
+	 * understands.  If protocol hasn't been set yet, early in backend
+	 * startup, assume modern protocol.
+	 */
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3 || FrontendProtocol == 0)
 	{
 		/* New style with separate fields */
 		const char *sev;
 		char		tbuf[12];
 		int			ssval;
 		int			i;
+
+		/* 'N' (Notice) is for nonfatal conditions, 'E' is for errors */
+		pq_beginmessage(&msgbuf, (edata->elevel < ERROR) ? 'N' : 'E');
 
 		sev = error_severity(edata->elevel);
 		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY);
@@ -3417,6 +3392,8 @@ send_message_to_frontend(ErrorData *edata)
 		}
 
 		pq_sendbyte(&msgbuf, '\0'); /* terminator */
+
+		pq_endmessage(&msgbuf);
 	}
 	else
 	{
@@ -3427,29 +3404,18 @@ send_message_to_frontend(ErrorData *edata)
 
 		appendStringInfo(&buf, "%s:  ", _(error_severity(edata->elevel)));
 
-		if (edata->show_funcname && edata->funcname)
-			appendStringInfo(&buf, "%s: ", edata->funcname);
-
 		if (edata->message)
 			appendStringInfoString(&buf, edata->message);
 		else
 			appendStringInfoString(&buf, _("missing error text"));
 
-		if (edata->cursorpos > 0)
-			appendStringInfo(&buf, _(" at character %d"),
-							 edata->cursorpos);
-		else if (edata->internalpos > 0)
-			appendStringInfo(&buf, _(" at character %d"),
-							 edata->internalpos);
-
 		appendStringInfoChar(&buf, '\n');
 
-		err_sendstring(&msgbuf, buf.data);
+		/* 'N' (Notice) is for nonfatal conditions, 'E' is for errors */
+		pq_putmessage_v2((edata->elevel < ERROR) ? 'N' : 'E', buf.data, buf.len + 1);
 
 		pfree(buf.data);
 	}
-
-	pq_endmessage(&msgbuf);
 
 	/*
 	 * This flush is normally not necessary, since postgres.c will flush out

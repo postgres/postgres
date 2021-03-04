@@ -1934,7 +1934,7 @@ static int
 ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 {
 	int32		len;
-	void	   *buf;
+	char	   *buf;
 	ProtocolVersion proto;
 	MemoryContext oldcontext;
 
@@ -1984,15 +1984,12 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 	}
 
 	/*
-	 * Allocate at least the size of an old-style startup packet, plus one
-	 * extra byte, and make sure all are zeroes.  This ensures we will have
-	 * null termination of all strings, in both fixed- and variable-length
-	 * packet layouts.
+	 * Allocate space to hold the startup packet, plus one extra byte that's
+	 * initialized to be zero.  This ensures we will have null termination of
+	 * all strings inside the packet.
 	 */
-	if (len <= (int32) sizeof(StartupPacket))
-		buf = palloc0(sizeof(StartupPacket) + 1);
-	else
-		buf = palloc0(len + 1);
+	buf = palloc(len + 1);
+	buf[len] = '\0';
 
 	if (pq_getbytes(buf, len) == EOF)
 	{
@@ -2115,7 +2112,7 @@ retry1:
 	 */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
-	if (PG_PROTOCOL_MAJOR(proto) >= 3)
+	/* Handle protocol version 3 startup packet */
 	{
 		int32		offset = sizeof(ProtocolVersion);
 		List	   *unrecognized_protocol_options = NIL;
@@ -2129,7 +2126,7 @@ retry1:
 
 		while (offset < len)
 		{
-			char	   *nameptr = ((char *) buf) + offset;
+			char	   *nameptr = buf + offset;
 			int32		valoffset;
 			char	   *valptr;
 
@@ -2138,7 +2135,7 @@ retry1:
 			valoffset = offset + strlen(nameptr) + 1;
 			if (valoffset >= len)
 				break;			/* missing value, will complain below */
-			valptr = ((char *) buf) + valoffset;
+			valptr = buf + valoffset;
 
 			if (strcmp(nameptr, "database") == 0)
 				port->database_name = pstrdup(valptr);
@@ -2222,27 +2219,6 @@ retry1:
 		if (PG_PROTOCOL_MINOR(proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST) ||
 			unrecognized_protocol_options != NIL)
 			SendNegotiateProtocolVersion(unrecognized_protocol_options);
-	}
-	else
-	{
-		/*
-		 * Get the parameters from the old-style, fixed-width-fields startup
-		 * packet as C strings.  The packet destination was cleared first so a
-		 * short packet has zeros silently added.  We have to be prepared to
-		 * truncate the pstrdup result for oversize fields, though.
-		 */
-		StartupPacket *packet = (StartupPacket *) buf;
-
-		port->database_name = pstrdup(packet->database);
-		if (strlen(port->database_name) > sizeof(packet->database))
-			port->database_name[sizeof(packet->database)] = '\0';
-		port->user_name = pstrdup(packet->user);
-		if (strlen(port->user_name) > sizeof(packet->user))
-			port->user_name[sizeof(packet->user)] = '\0';
-		port->cmdline_options = pstrdup(packet->options);
-		if (strlen(port->cmdline_options) > sizeof(packet->options))
-			port->cmdline_options[sizeof(packet->options)] = '\0';
-		port->guc_options = NIL;
 	}
 
 	/* Check a user name was given. */

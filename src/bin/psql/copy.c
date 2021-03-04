@@ -662,7 +662,9 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 
 	/*
 	 * Terminate data transfer.  We can't send an error message if we're using
-	 * protocol version 2.
+	 * protocol version 2.  (libpq no longer supports protocol version 2, but
+	 * keep the version checks just in case you're using a pre-v14 libpq.so at
+	 * runtime)
 	 */
 	if (PQputCopyEnd(conn,
 					 (OK || PQprotocolVersion(conn) < 3) ? NULL :

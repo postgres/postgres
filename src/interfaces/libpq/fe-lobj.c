@@ -884,38 +884,26 @@ lo_initialize(PGconn *conn)
 	MemSet((char *) lobjfuncs, 0, sizeof(PGlobjfuncs));
 
 	/*
-	 * Execute the query to get all the functions at once.  In 7.3 and later
-	 * we need to be schema-safe.  lo_create only exists in 8.1 and up.
-	 * lo_truncate only exists in 8.3 and up.
+	 * Execute the query to get all the functions at once.  (Not all of them
+	 * may exist in older server versions.)
 	 */
-	if (conn->sversion >= 70300)
-		query = "select proname, oid from pg_catalog.pg_proc "
-			"where proname in ("
-			"'lo_open', "
-			"'lo_close', "
-			"'lo_creat', "
-			"'lo_create', "
-			"'lo_unlink', "
-			"'lo_lseek', "
-			"'lo_lseek64', "
-			"'lo_tell', "
-			"'lo_tell64', "
-			"'lo_truncate', "
-			"'lo_truncate64', "
-			"'loread', "
-			"'lowrite') "
-			"and pronamespace = (select oid from pg_catalog.pg_namespace "
-			"where nspname = 'pg_catalog')";
-	else
-		query = "select proname, oid from pg_proc "
-			"where proname = 'lo_open' "
-			"or proname = 'lo_close' "
-			"or proname = 'lo_creat' "
-			"or proname = 'lo_unlink' "
-			"or proname = 'lo_lseek' "
-			"or proname = 'lo_tell' "
-			"or proname = 'loread' "
-			"or proname = 'lowrite'";
+	query = "select proname, oid from pg_catalog.pg_proc "
+		"where proname in ("
+		"'lo_open', "
+		"'lo_close', "
+		"'lo_creat', "
+		"'lo_create', "
+		"'lo_unlink', "
+		"'lo_lseek', "
+		"'lo_lseek64', "
+		"'lo_tell', "
+		"'lo_tell64', "
+		"'lo_truncate', "
+		"'lo_truncate64', "
+		"'loread', "
+		"'lowrite') "
+		"and pronamespace = (select oid from pg_catalog.pg_namespace "
+		"where nspname = 'pg_catalog')";
 
 	res = PQexec(conn, query);
 	if (res == NULL)
