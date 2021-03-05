@@ -365,14 +365,6 @@
   </table>
 
   <para>
-   (Before PostgreSQL 8.2, the containment operators <literal>@&gt;</literal> and
-   <literal>&lt;@</literal> were respectively called <literal>@</literal> and <literal>~</literal>.
-   These names are still available, but are deprecated and will eventually be
-   retired.  Notice that the old names are reversed from the convention
-   formerly followed by the core geometric data types!)
-  </para>
-
-  <para>
    The operators <literal>&amp;&amp;</literal>, <literal>@&gt;</literal> and
    <literal>&lt;@</literal> are equivalent to <productname>PostgreSQL</productname>'s built-in
    operators of the same names, except that they work only on integer arrays

@@ -353,14 +353,6 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   </table>
 
   <para>
-   (Before PostgreSQL 8.2, the containment operators <literal>@&gt;</literal> and <literal>&lt;@</literal> were
-   respectively called <literal>@</literal> and <literal>~</literal>.  These names are still available, but are
-   deprecated and will eventually be retired.  Notice that the old names
-   are reversed from the convention formerly followed by the core geometric
-   data types!)
-  </para>
-
-  <para>
    In addition to the above operators, the usual comparison
    operators shown in <xref linkend="functions-comparison-op-table"/> are
    available for type <type>seg</type>.  These operators

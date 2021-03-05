@@ -1,6 +1,6 @@
 # seg extension
 comment = 'data type for representing line segments or floating-point intervals'
-default_version = '1.3'
+default_version = '1.4'
 module_pathname = '$libdir/seg'
 relocatable = true
 trusted = true

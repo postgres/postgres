@@ -11,3 +11,7 @@ LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 ALTER TYPE hstore SET (
   SUBSCRIPT = hstore_subscript_handler
 );
+
+-- Remove @ and ~
+DROP OPERATOR @ (hstore, hstore);
+DROP OPERATOR ~ (hstore, hstore);
