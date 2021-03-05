@@ -496,6 +496,24 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
     </varlistentry>
    </variablelist>
   </para>
+
+  <para>
+   The TAP tests run with <command>vcregress</command> support the
+   environment variables <varname>PROVE_TESTS</varname>, that is expanded
+   automatically using the name patterns given, and
+   <varname>PROVE_FLAGS</varname>. These can be set on a Windows terminal,
+   before running <command>vcregress</command>:
+<programlisting>
+set PROVE_FLAGS=--timer --jobs 2
+set PROVE_TESTS=t/020*.pl t/010*.pl
+</programlisting>
+   It is also possible to set up those parameters in
+   <filename>buildenv.pl</filename>:
+<programlisting>
+$ENV{PROVE_FLAGS}='--timer --jobs 2'
+$ENV{PROVE_TESTS}='t/020*.pl t/010*.pl'
+</programlisting>
+  </para>
  </sect2>
 
  </sect1>
