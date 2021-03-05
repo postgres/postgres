@@ -703,12 +703,12 @@ typedef struct BrinOpcInfo
      <entry>Operator Strategy 7</entry>
     </row>
     <row>
-     <entry>Operator Strategy 7, 13, 16, 24, 25</entry>
+     <entry>Operator Strategy 7, 16, 24, 25</entry>
      <entry>operator contains-or-equal-to</entry>
      <entry></entry>
     </row>
     <row>
-     <entry>Operator Strategy 8, 14, 26, 27</entry>
+     <entry>Operator Strategy 8, 26, 27</entry>
      <entry>operator is-contained-by-or-equal-to</entry>
      <entry>Operator Strategy 3</entry>
     </row>
