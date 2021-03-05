@@ -82,6 +82,12 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
    specified, data is transmitted via the connection between the
    client and the server.
   </para>
+
+  <para>
+    Each backend running <command>COPY</command> will report its progress
+    in the <structname>pg_stat_progress_copy</structname> view. See
+    <xref linkend="copy-progress-reporting"/> for details.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -1051,5 +1057,13 @@ COPY [ BINARY ] <replaceable class="parameter">table_name</replaceable>
     [ [USING] DELIMITERS '<replaceable class="parameter">delimiter_character</replaceable>' ]
     [ WITH NULL AS '<replaceable class="parameter">null_string</replaceable>' ]
 </synopsis></para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="copy-progress-reporting"/></member>
+  </simplelist>
  </refsect1>
 </refentry>

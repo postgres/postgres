@@ -273,6 +273,12 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
     will not record new statistics for that table.  Any existing statistics
     will be retained.
   </para>
+
+  <para>
+    Each backend running <command>ANALYZE</command> will report its progress
+    in the <structname>pg_stat_progress_analyze</structname> view. See
+    <xref linkend="analyze-progress-reporting"/> for details.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -291,6 +297,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
    <member><xref linkend="app-vacuumdb"/></member>
    <member><xref linkend="runtime-config-resource-vacuum-cost"/></member>
    <member><xref linkend="autovacuum"/></member>
+   <member><xref linkend="analyze-progress-reporting"/></member>
   </simplelist>
  </refsect1>
 </refentry>

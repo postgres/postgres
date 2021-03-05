@@ -393,6 +393,15 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     information about automatic and manual vacuuming, see
     <xref linkend="routine-vacuuming"/>.
    </para>
+   <para>
+    Each backend running <command>VACUUM</command> without the
+    <literal>FULL</literal> option will report its progress in the
+    <structname>pg_stat_progress_vacuum</structname> view. Backends running
+    <command>VACUUM FULL</command> will instead report their progress in the
+    <structname>pg_stat_progress_cluster</structname> view. See 
+    <xref linkend="vacuum-progress-reporting"/> and
+    <xref linkend="cluster-progress-reporting"/> for details.
+   </para>
  </refsect1>
 
  <refsect1>
@@ -422,6 +431,8 @@ VACUUM (VERBOSE, ANALYZE) onek;
    <member><xref linkend="app-vacuumdb"/></member>
    <member><xref linkend="runtime-config-resource-vacuum-cost"/></member>
    <member><xref linkend="autovacuum"/></member>
+   <member><xref linkend="vacuum-progress-reporting"/></member>
+   <member><xref linkend="cluster-progress-reporting"/></member>
   </simplelist>
  </refsect1>
 </refentry>

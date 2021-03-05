@@ -495,6 +495,12 @@ Indexes:
     is reindexed concurrently, those indexes will be skipped.  (It is possible
     to reindex such indexes without the <command>CONCURRENTLY</command> option.)
    </para>
+
+  <para>
+    Each backend running <command>REINDEX</command> will report its progress
+    in the <structname>pg_stat_progress_create_index</structname> view. See
+    <xref linkend="create-index-progress-reporting"/> for details.
+  </para>
   </refsect2>
  </refsect1>
 
@@ -553,6 +559,7 @@ REINDEX TABLE CONCURRENTLY my_broken_table;
    <member><xref linkend="sql-createindex"/></member>
    <member><xref linkend="sql-dropindex"/></member>
    <member><xref linkend="app-reindexdb"/></member>
+   <member><xref linkend="create-index-progress-reporting"/></member>
   </simplelist>
  </refsect1>
 </refentry>

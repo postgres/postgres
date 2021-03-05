@@ -867,6 +867,12 @@ Indexes:
    will interpret it as <literal>USING gist</literal>, to simplify conversion
    of old databases to GiST.
   </para>
+
+  <para>
+    Each backend running <command>CREATE INDEX</command> will report its
+    progress in the <structname>pg_stat_progress_create_index</structname>
+    view. See <xref linkend="create-index-progress-reporting"/> for details.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -980,6 +986,7 @@ CREATE INDEX CONCURRENTLY sales_quantity_index ON sales_table (quantity);
    <member><xref linkend="sql-alterindex"/></member>
    <member><xref linkend="sql-dropindex"/></member>
    <member><xref linkend="sql-reindex"/></member>
+   <member><xref linkend="create-index-progress-reporting"/></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -192,6 +192,11 @@ CLUSTER [VERBOSE]
     are periodically reclustered.
    </para>
 
+  <para>
+    Each backend running <command>CLUSTER</command> will report its progress
+    in the <structname>pg_stat_progress_cluster</structname> view. See
+    <xref linkend="cluster-progress-reporting"/> for details.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -242,6 +247,7 @@ CLUSTER <replaceable class="parameter">index_name</replaceable> ON <replaceable 
 
   <simplelist type="inline">
    <member><xref linkend="app-clusterdb"/></member>
+   <member><xref linkend="cluster-progress-reporting"/></member>
   </simplelist>
  </refsect1>
 </refentry>

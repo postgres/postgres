@@ -904,6 +904,7 @@ PostgreSQL documentation
 
   <simplelist type="inline">
    <member><xref linkend="app-pgdump"/></member>
+   <member><xref linkend="basebackup-progress-reporting"/></member>
   </simplelist>
  </refsect1>
 
