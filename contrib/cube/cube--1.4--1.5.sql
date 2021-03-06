@@ -6,3 +6,16 @@
 -- Remove @ and ~
 DROP OPERATOR @ (cube, cube);
 DROP OPERATOR ~ (cube, cube);
+
+-- Add binary input/output handlers
+CREATE FUNCTION cube_recv(internal)
+RETURNS cube
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION cube_send(cube)
+RETURNS bytea
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+ALTER TYPE cube SET ( RECEIVE = cube_recv, SEND = cube_send );
