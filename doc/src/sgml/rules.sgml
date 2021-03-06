@@ -797,6 +797,10 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     relation points at a subquery range-table entry, which will not
     work.  There are several ways in which <productname>PostgreSQL</productname>
     can support the appearance of updating a view, however.
+    In order of user-experienced complexity those are: automatically substitute
+    in the underlying table for the view, execute a user-defined trigger,
+    or rewrite the query per a user-defined rule.
+    These options are discussed below.
 </para>
 
 <para>
@@ -812,7 +816,8 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 
 <para>
     Alternatively, the operation may be handled by a user-provided
-    <literal>INSTEAD OF</literal> trigger on the view.
+    <literal>INSTEAD OF</literal> trigger on the view
+    (see <xref linkend="sql-createtrigger"/>).
     Rewriting works slightly differently
     in this case.  For <command>INSERT</command>, the rewriter does
     nothing at all with the view, leaving it as the result relation
