@@ -212,7 +212,8 @@ CREATE TEMPORARY TABLE bitwise_test(
 -- empty case
 SELECT
   BIT_AND(i2) AS "?",
-  BIT_OR(i4)  AS "?"
+  BIT_OR(i4)  AS "?",
+  BIT_XOR(i8) AS "?"
 FROM bitwise_test;
 
 COPY bitwise_test FROM STDIN NULL 'null';
@@ -234,7 +235,14 @@ SELECT
   BIT_OR(i8)  AS "7",
   BIT_OR(i)   AS "?",
   BIT_OR(x)   AS "7",
-  BIT_OR(y)   AS "1101"
+  BIT_OR(y)   AS "1101",
+
+  BIT_XOR(i2) AS "5",
+  BIT_XOR(i4) AS "5",
+  BIT_XOR(i8) AS "5",
+  BIT_XOR(i)  AS "?",
+  BIT_XOR(x)  AS "7",
+  BIT_XOR(y)  AS "1101"
 FROM bitwise_test;
 
 --

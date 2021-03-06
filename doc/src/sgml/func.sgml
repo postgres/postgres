@@ -19227,6 +19227,33 @@ SELECT NULLIF(value, '(none)') ...
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>bit_xor</primary>
+        </indexterm>
+        <function>bit_xor</function> ( <type>smallint</type> )
+        <returnvalue>smallint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_xor</function> ( <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_xor</function> ( <type>bigint</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_xor</function> ( <type>bit</type> )
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Computes the bitwise exclusive OR of all non-null input values.
+        Can be useful as a checksum for an unordered set of values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>bool_and</primary>
         </indexterm>
         <function>bool_and</function> ( <type>boolean</type> )
