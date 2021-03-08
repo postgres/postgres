@@ -604,6 +604,8 @@ lastcold(struct vars *v,
 
 /*
  * newdfa - set up a fresh DFA
+ *
+ * Returns NULL (and sets v->err) on failure.
  */
 static struct dfa *
 newdfa(struct vars *v,

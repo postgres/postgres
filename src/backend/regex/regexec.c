@@ -351,7 +351,7 @@ getsubdfa(struct vars *v,
 	if (d == NULL)
 	{
 		d = newdfa(v, &t->cnfa, &v->g->cmap, DOMALLOC);
-		if (ISERR())
+		if (d == NULL)
 			return NULL;
 		/* set up additional info if this is a backref node */
 		if (t->op == 'b')
@@ -381,8 +381,6 @@ getladfa(struct vars *v,
 		struct subre *sub = &v->g->lacons[n];
 
 		v->ladfas[n] = newdfa(v, &sub->cnfa, &v->g->cmap, DOMALLOC);
-		if (ISERR())
-			return NULL;
 		/* a LACON can't contain a backref, so nothing else to do */
 	}
 	return v->ladfas[n];
@@ -408,8 +406,8 @@ find(struct vars *v,
 
 	/* first, a shot with the search RE */
 	s = newdfa(v, &v->g->search, cm, &v->dfa1);
-	assert(!(ISERR() && s != NULL));
-	NOERR();
+	if (s == NULL)
+		return v->err;
 	MDEBUG(("\nsearch at %ld\n", LOFF(v->start)));
 	cold = NULL;
 	close = shortest(v, s, v->search_start, v->search_start, v->stop,
@@ -436,8 +434,8 @@ find(struct vars *v,
 	cold = NULL;
 	MDEBUG(("between %ld and %ld\n", LOFF(open), LOFF(close)));
 	d = newdfa(v, cnfa, cm, &v->dfa1);
-	assert(!(ISERR() && d != NULL));
-	NOERR();
+	if (d == NULL)
+		return v->err;
 	for (begin = open; begin <= close; begin++)
 	{
 		MDEBUG(("\nfind trying at %ld\n", LOFF(begin)));
@@ -493,11 +491,11 @@ cfind(struct vars *v,
 	int			ret;
 
 	s = newdfa(v, &v->g->search, cm, &v->dfa1);
-	NOERR();
+	if (s == NULL)
+		return v->err;
 	d = newdfa(v, cnfa, cm, &v->dfa2);
-	if (ISERR())
+	if (d == NULL)
 	{
-		assert(d == NULL);
 		freedfa(s);
 		return v->err;
 	}
