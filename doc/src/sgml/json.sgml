@@ -648,7 +648,8 @@ SELECT ('[1, "2", null]'::jsonb)[1];
 UPDATE table_name SET jsonb_field['key'] = '1';
 
 -- This will raise an error if any record's jsonb_field['a']['b'] is something
--- other than an object. For example, the value {"a": 1} has no 'b' key.
+-- other than an object. For example, the value {"a": 1} has a numeric value
+-- of the key 'a'.
 UPDATE table_name SET jsonb_field['a']['b']['c'] = '1';
 
 -- Filter records using a WHERE clause with subscripting. Since the result of
