@@ -264,11 +264,10 @@ PerformAuthentication(Port *port)
 
 #ifdef USE_SSL
 		if (port->ssl_in_use)
-			appendStringInfo(&logmsg, _(" SSL enabled (protocol=%s, cipher=%s, bits=%d, compression=%s)"),
+			appendStringInfo(&logmsg, _(" SSL enabled (protocol=%s, cipher=%s, bits=%d)"),
 							 be_tls_get_version(port),
 							 be_tls_get_cipher(port),
-							 be_tls_get_cipher_bits(port),
-							 be_tls_get_compression(port) ? _("on") : _("off"));
+							 be_tls_get_cipher_bits(port));
 #endif
 #ifdef ENABLE_GSS
 		if (port->gss)

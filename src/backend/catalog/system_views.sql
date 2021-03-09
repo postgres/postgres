@@ -863,7 +863,6 @@ CREATE VIEW pg_stat_ssl AS
             S.sslversion AS version,
             S.sslcipher AS cipher,
             S.sslbits AS bits,
-            S.sslcompression AS compression,
             S.ssl_client_dn AS client_dn,
             S.ssl_client_serial AS client_serial,
             S.ssl_issuer_dn AS issuer_dn

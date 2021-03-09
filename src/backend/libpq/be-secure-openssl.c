@@ -245,6 +245,9 @@ be_tls_init(bool isServerStart)
 	/* disallow SSL session caching, too */
 	SSL_CTX_set_session_cache_mode(context, SSL_SESS_CACHE_OFF);
 
+	/* disallow SSL compression */
+	SSL_CTX_set_options(context, SSL_OP_NO_COMPRESSION);
+
 	/* set up ephemeral DH and ECDH keys */
 	if (!initialize_dh(context, isServerStart))
 		goto error;
@@ -1180,15 +1183,6 @@ be_tls_get_cipher_bits(Port *port)
 	}
 	else
 		return 0;
-}
-
-bool
-be_tls_get_compression(Port *port)
-{
-	if (port->ssl)
-		return (SSL_get_current_compression(port->ssl) != NULL);
-	else
-		return false;
 }
 
 const char *

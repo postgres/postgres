@@ -1635,24 +1635,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>sslcompression</literal></term>
       <listitem>
        <para>
-        If set to 1, data sent over SSL connections will be compressed.  If
-        set to 0, compression will be disabled.  The default is 0.  This
-        parameter is ignored if a connection without SSL is made.
-       </para>
-
-       <para>
-        SSL compression is nowadays considered insecure and its use is no
-        longer recommended.  <productname>OpenSSL</productname> 1.1.0 disables
-        compression by default, and many operating system distributions
-        disable it in prior versions as well, so setting this parameter to on
-        will not have any effect if the server does not accept compression.
-       </para>
-
-       <para>
-        If security is not a primary concern, compression can improve
-        throughput if the network is the bottleneck.  Disabling compression
-        can improve response time and throughput if CPU performance is the
-        limiting factor.
+        Ignored (formerly, this specified whether to attempt SSL compression).
        </para>
       </listitem>
      </varlistentry>
@@ -2545,9 +2528,7 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
          <term><literal>compression</literal></term>
           <listitem>
            <para>
-            If SSL compression is in use, returns the name of the compression
-            algorithm, or "on" if compression is used but the algorithm is
-            not known. If compression is not in use, returns "off".
+            SSL compression is no longer supported, always returns "off".
            </para>
           </listitem>
          </varlistentry>
@@ -7179,16 +7160,6 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       This environment variable is deprecated in favor of the
       <envar>PGSSLMODE</envar> variable; setting both variables suppresses the
       effect of this one.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <indexterm>
-       <primary><envar>PGSSLCOMPRESSION</envar></primary>
-      </indexterm>
-      <envar>PGSSLCOMPRESSION</envar> behaves the same as the <xref
-      linkend="libpq-connect-sslcompression"/> connection parameter.
      </para>
     </listitem>
 

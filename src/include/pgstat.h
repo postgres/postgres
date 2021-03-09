@@ -1135,7 +1135,6 @@ typedef struct PgBackendSSLStatus
 {
 	/* Information about SSL connection */
 	int			ssl_bits;
-	bool		ssl_compression;
 	char		ssl_version[NAMEDATALEN];
 	char		ssl_cipher[NAMEDATALEN];
 	char		ssl_client_dn[NAMEDATALEN];

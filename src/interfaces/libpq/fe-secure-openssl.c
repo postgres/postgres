@@ -1257,13 +1257,8 @@ initialize_SSL(PGconn *conn)
 	if (have_rootcert)
 		SSL_set_verify(conn->ssl, SSL_VERIFY_PEER, verify_cb);
 
-	/*
-	 * Set compression option if necessary.
-	 */
-	if (conn->sslcompression && conn->sslcompression[0] == '0')
-		SSL_set_options(conn->ssl, SSL_OP_NO_COMPRESSION);
-	else
-		SSL_clear_options(conn->ssl, SSL_OP_NO_COMPRESSION);
+	/* disable SSL compression */
+	SSL_set_options(conn->ssl, SSL_OP_NO_COMPRESSION);
 
 	return 0;
 }
@@ -1553,8 +1548,12 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 	if (strcmp(attribute_name, "cipher") == 0)
 		return SSL_get_cipher(conn->ssl);
 
+	/*
+	 * SSL compression is disabled, so even if connecting to an older server
+	 * which still supports it, it will not be active.
+	 */
 	if (strcmp(attribute_name, "compression") == 0)
-		return SSL_get_current_compression(conn->ssl) ? "on" : "off";
+		return "off";
 
 	if (strcmp(attribute_name, "protocol") == 0)
 		return SSL_get_version(conn->ssl);

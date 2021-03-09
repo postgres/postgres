@@ -3067,16 +3067,6 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>compression</structfield> <type>boolean</type>
-      </para>
-      <para>
-       True if SSL compression is in use, false if not,
-       or NULL if SSL is not in use on this connection
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>client_dn</structfield> <type>text</type>
       </para>
       <para>

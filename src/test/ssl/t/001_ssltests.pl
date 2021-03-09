@@ -17,7 +17,7 @@ if ($ENV{with_ssl} ne 'openssl')
 }
 else
 {
-	plan tests => 100;
+	plan tests => 101;
 }
 
 #### Some configuration
@@ -156,6 +156,13 @@ test_connect_fails(
 	"sslrootcert=invalid sslmode=verify-full",
 	qr/root certificate file "invalid" does not exist/,
 	"connect without server root cert sslmode=verify-full");
+
+# Test deprecated SSL parameters, still accepted for backwards
+# compatibility.
+test_connect_ok(
+	$common_connstr,
+	"sslrootcert=invalid sslmode=require sslcompression=1 requiressl=1",
+	"connect with deprecated connection parameters");
 
 # Try with wrong root cert, should fail. (We're using the client CA as the
 # root, but the server's key is signed by the server CA.)
@@ -376,8 +383,8 @@ command_like(
 		"$common_connstr sslrootcert=invalid", '-c',
 		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
-	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\r?\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,_null_,_null_,_null_\r?$}mx,
+	qr{^pid,ssl,version,cipher,bits,client_dn,client_serial,issuer_dn\r?\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,_null_,_null_,_null_\r?$}mx,
 	'pg_stat_ssl view without client certificate');
 
 # Test min/max SSL protocol versions.
@@ -493,8 +500,8 @@ command_like(
 		'-c',
 		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
-	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\r?\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,/CN=ssltestuser,1,\Q/CN=Test CA for PostgreSQL SSL regression test client certs\E\r?$}mx,
+	qr{^pid,ssl,version,cipher,bits,client_dn,client_serial,issuer_dn\r?\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,/CN=ssltestuser,1,\Q/CN=Test CA for PostgreSQL SSL regression test client certs\E\r?$}mx,
 	'pg_stat_ssl with client certificate');
 
 # client key with wrong permissions

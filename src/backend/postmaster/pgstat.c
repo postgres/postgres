@@ -3215,7 +3215,6 @@ pgstat_bestart(void)
 	{
 		lbeentry.st_ssl = true;
 		lsslstatus.ssl_bits = be_tls_get_cipher_bits(MyProcPort);
-		lsslstatus.ssl_compression = be_tls_get_compression(MyProcPort);
 		strlcpy(lsslstatus.ssl_version, be_tls_get_version(MyProcPort), NAMEDATALEN);
 		strlcpy(lsslstatus.ssl_cipher, be_tls_get_cipher(MyProcPort), NAMEDATALEN);
 		be_tls_get_peer_subject_name(MyProcPort, lsslstatus.ssl_client_dn, NAMEDATALEN);

@@ -266,7 +266,6 @@ extern ssize_t be_tls_write(Port *port, void *ptr, size_t len, int *waitfor);
  * Return information about the SSL connection.
  */
 extern int	be_tls_get_cipher_bits(Port *port);
-extern bool be_tls_get_compression(Port *port);
 extern const char *be_tls_get_version(Port *port);
 extern const char *be_tls_get_cipher(Port *port);
 extern void be_tls_get_peer_subject_name(Port *port, char *ptr, size_t len);
