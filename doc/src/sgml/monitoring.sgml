@@ -6531,8 +6531,33 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        <structfield>relid</structfield> <type>oid</type>
       </para>
       <para>
-       OID of the table on which the <command>COPY</command> command is executed.
-       It is set to 0 if copying from a <command>SELECT</command> query.
+       OID of the table on which the <command>COPY</command> command is
+       executed. It is set to <literal>0</literal> if copying from a
+       <command>SELECT</command> query.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>command</structfield> <type>text</type>
+      </para>
+      <para>
+       The command that is running: <literal>COPY FROM</literal>, or
+       <literal>COPY TO</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>type</structfield> <type>text</type>
+      </para>
+      <para>
+       The io type that the data is read from or written to:
+       <literal>FILE</literal>, <literal>PROGRAM</literal>,
+       <literal>PIPE</literal> (for <command>COPY FROM STDIN</command> and
+       <command>COPY TO STDOUT</command>), or <literal>CALLBACK</literal>
+       (used for example during the initial table synchronization in
+       logical replication).
       </para></entry>
      </row>
 
@@ -6551,16 +6576,26 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       </para>
       <para>
        Size of source file for <command>COPY FROM</command> command in bytes.
-       It is set to 0 if not available.
+       It is set to <literal>0</literal> if not available.
       </para></entry>
      </row>
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>lines_processed</structfield> <type>bigint</type>
+       <structfield>tuples_processed</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of lines already processed by <command>COPY</command> command.
+       Number of tuples already processed by <command>COPY</command> command.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tuples_excluded</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of tuples not processed because they were excluded by the
+       <command>WHERE</command> clause of the <command>COPY</command> command.
       </para></entry>
      </row>
     </tbody>
