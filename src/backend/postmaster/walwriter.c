@@ -253,6 +253,9 @@ WalWriterMain(void)
 		else if (left_till_hibernate > 0)
 			left_till_hibernate--;
 
+		/* Send WAL statistics to the stats collector */
+		pgstat_send_wal(false);
+
 		/*
 		 * Sleep until we are signaled or WalWriterDelay has elapsed.  If we
 		 * haven't done anything useful for quite some time, lengthen the

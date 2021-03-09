@@ -767,6 +767,35 @@
    <acronym>WAL</acronym> call being logged to the server log. This
    option might be replaced by a more general mechanism in the future.
   </para>
+
+  <para>
+   There are two internal functions to write WAL data to disk:
+   <function>XLogWrite</function> and <function>issue_xlog_fsync</function>.
+   When <xref linkend="guc-track-wal-io-timing"/> is enabled, the total
+   amounts of time <function>XLogWrite</function> writes and
+   <function>issue_xlog_fsync</function> syncs WAL data to disk are counted as
+   <literal>wal_write_time</literal> and <literal>wal_sync_time</literal> in
+   <xref linkend="pg-stat-wal-view"/>, respectively.
+   <function>XLogWrite</function> is normally called by 
+   <function>XLogInsertRecord</function> (when there is no space for the new
+   record in WAL buffers), <function>XLogFlush</function> and the WAL writer,
+   to write WAL buffers to disk and call <function>issue_xlog_fsync</function>.
+   <function>issue_xlog_fsync</function> is normally called by
+   <function>XLogWrite</function> to sync WAL files to disk.
+   If <varname>wal_sync_method</varname> is either
+   <literal>open_datasync</literal> or <literal>open_sync</literal>,
+   a write operation in <function>XLogWrite</function> guarantees to sync written
+   WAL data to disk and <function>issue_xlog_fsync</function> does nothing.
+   If <varname>wal_sync_method</varname> is either <literal>fdatasync</literal>,
+   <literal>fsync</literal>, or <literal>fsync_writethrough</literal>,
+   the write operation moves WAL buffers to kernel cache and
+   <function>issue_xlog_fsync</function> syncs them to disk. Regardless
+   of the setting of <varname>track_wal_io_timing</varname>, the numbers
+   of times <function>XLogWrite</function> writes and
+   <function>issue_xlog_fsync</function> syncs WAL data to disk are also
+   counted as <literal>wal_write</literal> and <literal>wal_sync</literal>
+   in <structname>pg_stat_wal</structname>, respectively.
+  </para>
  </sect1>
 
  <sect1 id="wal-internals">

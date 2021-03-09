@@ -505,7 +505,7 @@ CheckpointerMain(void)
 		pgstat_send_bgwriter();
 
 		/* Send WAL statistics to the stats collector. */
-		pgstat_send_wal();
+		pgstat_report_wal();
 
 		/*
 		 * If any checkpoint flags have been set, redo the loop to handle the

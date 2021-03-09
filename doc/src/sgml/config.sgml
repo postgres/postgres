@@ -7450,7 +7450,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Enables timing of database I/O calls.  This parameter is off by
-        default, because it will repeatedly query the operating system for
+        default, as it will repeatedly query the operating system for
         the current time, which may cause significant overhead on some
         platforms.  You can use the <xref linkend="pgtesttiming"/> tool to
         measure the overhead of timing on your system.
@@ -7459,6 +7459,27 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <structname>pg_stat_database</structname></link>, in the output of
         <xref linkend="sql-explain"/> when the <literal>BUFFERS</literal> option is
         used, and by <xref linkend="pgstatstatements"/>.  Only superusers can
+        change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-track-wal-io-timing" xreflabel="track_wal_io_timing">
+      <term><varname>track_wal_io_timing</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>track_wal_io_timing</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables timing of WAL I/O calls. This parameter is off by default,
+        as it will repeatedly query the operating system for the current time,
+        which may cause significant overhead on some platforms.
+        You can use the <application>pg_test_timing</application> tool to
+        measure the overhead of timing on your system.
+        I/O timing information is
+        displayed in <link linkend="monitoring-pg-stat-wal-view">
+        <structname>pg_stat_wal</structname></link>.  Only superusers can
         change this setting.
        </para>
       </listitem>
