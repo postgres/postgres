@@ -181,6 +181,7 @@ ALTER SERVER testserver1 OPTIONS (
 	sslcert 'value',
 	sslkey 'value',
 	sslrootcert 'value',
+	sslcompression 'value',
 	sslcrl 'value',
 	--requirepeer 'value',
 	krbsrvname 'value',

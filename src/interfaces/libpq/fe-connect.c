@@ -298,7 +298,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	 * compatibility.
 	 */
 	{"sslcompression", NULL, NULL, NULL,
-	"SSL-Compression", "D", 1, -1},
+	"SSL-Compression", "", 1, -1},
 
 	{"sslcert", "PGSSLCERT", NULL, NULL,
 		"SSL-Client-Cert", "", 64,
