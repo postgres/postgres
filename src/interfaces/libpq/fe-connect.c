@@ -120,9 +120,7 @@ static int	ldapServiceLookup(const char *purl, PQconninfoOption *options,
  * by environment variables
  */
 #define DefaultHost		"localhost"
-#define DefaultTty		""
 #define DefaultOption	""
-#define DefaultAuthtype		  ""
 #ifdef USE_SSL
 #define DefaultChannelBinding	"prefer"
 #else
@@ -192,14 +190,6 @@ typedef struct _internalPQconninfoOption
 } internalPQconninfoOption;
 
 static const internalPQconninfoOption PQconninfoOptions[] = {
-	/*
-	 * "authtype" is no longer used, so mark it "don't show".  We keep it in
-	 * the array so as not to reject conninfo strings from old apps that might
-	 * still try to set it.
-	 */
-	{"authtype", "PGAUTHTYPE", DefaultAuthtype, NULL,
-	"Database-Authtype", "D", 20, -1},
-
 	{"service", "PGSERVICE", NULL, NULL,
 	"Database-Service", "", 20, -1},
 
@@ -242,14 +232,6 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"client_encoding", "PGCLIENTENCODING", NULL, NULL,
 		"Client-Encoding", "", 10,
 	offsetof(struct pg_conn, client_encoding_initial)},
-
-	/*
-	 * "tty" is no longer used either, but keep it present for backwards
-	 * compatibility.
-	 */
-	{"tty", "PGTTY", DefaultTty, NULL,
-		"Backend-Debug-TTY", "D", 40,
-	offsetof(struct pg_conn, pgtty)},
 
 	{"options", "PGOPTIONS", DefaultOption, NULL,
 		"Backend-Options", "", 40,
@@ -1578,15 +1560,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 			free(conn->pgoptions);
 		conn->pgoptions = strdup(pgoptions);
 		if (!conn->pgoptions)
-			goto oom_error;
-	}
-
-	if (pgtty && pgtty[0] != '\0')
-	{
-		if (conn->pgtty)
-			free(conn->pgtty);
-		conn->pgtty = strdup(pgtty);
-		if (!conn->pgtty)
 			goto oom_error;
 	}
 
@@ -4031,8 +4004,6 @@ freePGconn(PGconn *conn)
 		free(conn->pghostaddr);
 	if (conn->pgport)
 		free(conn->pgport);
-	if (conn->pgtty)
-		free(conn->pgtty);
 	if (conn->connect_timeout)
 		free(conn->connect_timeout);
 	if (conn->pgtcp_user_timeout)
@@ -6633,12 +6604,16 @@ PQport(const PGconn *conn)
 	return "";
 }
 
+/*
+ * No longer does anything, but the function remains for API backwards
+ * compatibility.
+ */
 char *
 PQtty(const PGconn *conn)
 {
 	if (!conn)
 		return NULL;
-	return conn->pgtty;
+	return "";
 }
 
 char *

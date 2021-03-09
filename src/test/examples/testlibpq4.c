@@ -50,8 +50,7 @@ main(int argc, char **argv)
 {
 	char	   *pghost,
 			   *pgport,
-			   *pgoptions,
-			   *pgtty;
+			   *pgoptions;
 	char	   *dbName1,
 			   *dbName2;
 	char	   *tblName;
@@ -88,13 +87,12 @@ main(int argc, char **argv)
 	pgport = NULL;				/* port of the backend */
 	pgoptions = NULL;			/* special options to start up the backend
 								 * server */
-	pgtty = NULL;				/* debugging tty for the backend */
 
 	/* make a connection to the database */
-	conn1 = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName1);
+	conn1 = PQsetdb(pghost, pgport, pgoptions, NULL, dbName1);
 	check_prepare_conn(conn1, dbName1);
 
-	conn2 = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName2);
+	conn2 = PQsetdb(pghost, pgport, pgoptions, NULL, dbName2);
 	check_prepare_conn(conn2, dbName2);
 
 	/* start a transaction block */

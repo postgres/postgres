@@ -338,8 +338,6 @@ struct pg_conn
 								 * precedence over pghost. */
 	char	   *pgport;			/* the server's communication port number, or
 								 * a comma-separated list of ports */
-	char	   *pgtty;			/* tty on which the backend messages is
-								 * displayed (OBSOLETE, NOT USED) */
 	char	   *connect_timeout;	/* connection timeout (numeric string) */
 	char	   *pgtcp_user_timeout; /* tcp user timeout (numeric string) */
 	char	   *client_encoding_initial;	/* encoding to use */

@@ -232,6 +232,11 @@ PGconn *PQsetdbLogin(const char *pghost,
         if it had been passed to <xref linkend="libpq-PQconnectdb"/>, and the remaining
         parameters are then applied as specified for <xref linkend="libpq-PQconnectdbParams"/>.
       </para>
+
+      <para>
+        <literal>pgtty</literal> is no longer used and any value passed will
+        be ignored.
+      </para>
      </listitem>
     </varlistentry>
 
@@ -2119,10 +2124,10 @@ char *PQport(const PGconn *conn);
 
      <listitem>
       <para>
-       Returns the debug <acronym>TTY</acronym> of the connection.
-       (This is obsolete, since the server no longer pays attention
-       to the <acronym>TTY</acronym> setting, but the function remains
-       for backward compatibility.)
+       This function no longer does anything, but it remains for backwards
+       compatibility.  The function always return an empty string, or
+       <symbol>NULL</symbol> if the <parameter>conn</parameter> argument is
+       <symbol>NULL</symbol>.
 
 <synopsis>
 char *PQtty(const PGconn *conn);
