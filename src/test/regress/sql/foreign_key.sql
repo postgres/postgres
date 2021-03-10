@@ -1738,3 +1738,19 @@ DELETE FROM fkpart9.pk WHERE a=35;
 SELECT * FROM fkpart9.pk;
 SELECT * FROM fkpart9.fk;
 DROP SCHEMA fkpart9 CASCADE;
+
+-- test that ri_Check_Pk_Match() scans the correct partition for a deferred
+-- ON DELETE/UPDATE NO ACTION constraint
+CREATE SCHEMA fkpart10
+  CREATE TABLE tbl1(f1 int PRIMARY KEY) PARTITION BY RANGE(f1)
+  CREATE TABLE tbl1_p1 PARTITION OF tbl1 FOR VALUES FROM (minvalue) TO (1)
+  CREATE TABLE tbl1_p2 PARTITION OF tbl1 FOR VALUES FROM (1) TO (maxvalue)
+  CREATE TABLE tbl2(f1 int REFERENCES tbl1 DEFERRABLE INITIALLY DEFERRED);
+INSERT INTO fkpart10.tbl1 VALUES (0), (1);
+INSERT INTO fkpart10.tbl2 VALUES (0), (1);
+BEGIN;
+DELETE FROM fkpart10.tbl1 WHERE f1 = 0;
+UPDATE fkpart10.tbl1 SET f1 = 2 WHERE f1 = 1;
+INSERT INTO fkpart10.tbl1 VALUES (0), (1);
+COMMIT;
+DROP SCHEMA fkpart10 CASCADE;
