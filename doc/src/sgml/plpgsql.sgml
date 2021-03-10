@@ -1959,7 +1959,8 @@ SELECT * FROM get_available_flightid(CURRENT_DATE);
      or <command>DO</command> block can call a procedure
      using <command>CALL</command>.  Output parameters are handled
      differently from the way that <command>CALL</command> works in plain
-     SQL.  Each <literal>INOUT</literal> parameter of the procedure must
+     SQL.  Each <literal>OUT</literal> or <literal>INOUT</literal>
+     parameter of the procedure must
      correspond to a variable in the <command>CALL</command> statement, and
      whatever the procedure returns is assigned back to that variable after
      it returns.  For example:
