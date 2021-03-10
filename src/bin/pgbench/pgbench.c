@@ -121,6 +121,7 @@ typedef struct socket_set
 #define THREAD_T HANDLE
 #define THREAD_FUNC_RETURN_TYPE unsigned
 #define THREAD_FUNC_RETURN return 0
+#define THREAD_FUNC_CC __stdcall
 #define THREAD_CREATE(handle, function, arg) \
 	((*(handle) = (HANDLE) _beginthreadex(NULL, 0, (function), (arg), 0, NULL)) == 0 ? errno : 0)
 #define THREAD_JOIN(handle) \
@@ -139,6 +140,7 @@ typedef struct socket_set
 #define THREAD_T pthread_t
 #define THREAD_FUNC_RETURN_TYPE void *
 #define THREAD_FUNC_RETURN return NULL
+#define THREAD_FUNC_CC
 #define THREAD_CREATE(handle, function, arg) \
 	pthread_create((handle), NULL, (function), (arg))
 #define THREAD_JOIN(handle) \
@@ -153,6 +155,7 @@ typedef struct socket_set
 #define THREAD_T void *
 #define THREAD_FUNC_RETURN_TYPE void *
 #define THREAD_FUNC_RETURN return NULL
+#define THREAD_FUNC_CC
 #define THREAD_BARRIER_T int
 #define THREAD_BARRIER_INIT(barrier, n) (*(barrier) = 0)
 #define THREAD_BARRIER_WAIT(barrier)
@@ -639,7 +642,7 @@ static void doLog(TState *thread, CState *st,
 static void processXactStats(TState *thread, CState *st, pg_time_usec_t *now,
 							 bool skipped, StatsData *agg);
 static void addScript(ParsedScript script);
-static THREAD_FUNC_RETURN_TYPE threadRun(void *arg);
+static THREAD_FUNC_RETURN_TYPE THREAD_FUNC_CC threadRun(void *arg);
 static void finishCon(CState *st);
 static void setalarm(int seconds);
 static socket_set *alloc_socket_set(int count);
@@ -3565,10 +3568,12 @@ doLog(TState *thread, CState *st,
 	{
 		/* no, print raw transactions */
 		if (skipped)
-			fprintf(logfile, "%d " INT64_FORMAT " skipped %d %ld %ld",
+			fprintf(logfile, "%d " INT64_FORMAT " skipped %d " INT64_FORMAT " "
+					INT64_FORMAT,
 					st->id, st->cnt, st->use_file, now / 1000000, now % 1000000);
 		else
-			fprintf(logfile, "%d " INT64_FORMAT " %.0f %d %ld %ld",
+			fprintf(logfile, "%d " INT64_FORMAT " %.0f %d " INT64_FORMAT " "
+					INT64_FORMAT,
 					st->id, st->cnt, latency, st->use_file,
 					now / 1000000, now % 1000000);
 		if (throttle_delay)
@@ -6222,7 +6227,7 @@ main(int argc, char **argv)
 	return exit_code;
 }
 
-static THREAD_FUNC_RETURN_TYPE
+static THREAD_FUNC_RETURN_TYPE THREAD_FUNC_CC
 threadRun(void *arg)
 {
 	TState	   *thread = (TState *) arg;
