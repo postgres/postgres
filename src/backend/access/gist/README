@@ -10,6 +10,7 @@ GiST stands for Generalized Search Tree. It was introduced in the seminal paper
 Jeffrey F. Naughton, Avi Pfeffer:
 
     http://www.sai.msu.su/~megera/postgres/gist/papers/gist.ps
+    https://dsf.berkeley.edu/papers/sigmod97-gist.pdf
 
 and implemented by J. Hellerstein and P. Aoki in an early version of
 PostgreSQL (more details are available from The GiST Indexing Project

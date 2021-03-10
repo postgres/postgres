@@ -51,13 +51,20 @@
 #define F_HAS_GARBAGE		(1 << 4)	/* some tuples on the page are dead,
 										 * but not deleted yet */
 
-/* NSN - node sequence number, a special-purpose LSN */
+/*
+ * NSN (node sequence number) is a special-purpose LSN which is stored on each
+ * index page in GISTPageOpaqueData and updated only during page splits.  By
+ * recording the parent's LSN in GISTSearchItem.parentlsn, it is possible to
+ * detect concurrent child page splits by checking if parentlsn < child's NSN,
+ * and handle them properly.  The child page's LSN is insufficient for this
+ * purpose since it is updated for every page change.
+ */
 typedef XLogRecPtr GistNSN;
 
 /*
- * A bogus LSN / NSN value used during index build. Must be smaller than any
- * real or fake unlogged LSN, so that after an index build finishes, all the
- * splits are considered completed.
+ * A fake LSN / NSN value used during index builds. Must be smaller than any
+ * real or fake (unlogged) LSN generated after the index build completes so
+ * that all splits are considered complete.
  */
 #define GistBuildLSN	((XLogRecPtr) 1)
 
