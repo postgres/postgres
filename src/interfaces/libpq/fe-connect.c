@@ -275,12 +275,9 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"SSL-Mode", "", 12,		/* sizeof("verify-full") == 12 */
 	offsetof(struct pg_conn, sslmode)},
 
-	/*
-	 * "sslcompression" is no longer used, but keep it present for backwards
-	 * compatibility.
-	 */
-	{"sslcompression", NULL, NULL, NULL,
-	"SSL-Compression", "", 1, -1},
+	{"sslcompression", "PGSSLCOMPRESSION", "0", NULL,
+		"SSL-Compression", "", 1,
+	offsetof(struct pg_conn, sslcompression)},
 
 	{"sslcert", "PGSSLCERT", NULL, NULL,
 		"SSL-Client-Cert", "", 64,
@@ -4054,6 +4051,8 @@ freePGconn(PGconn *conn)
 		free(conn->sslcrl);
 	if (conn->sslcrldir)
 		free(conn->sslcrldir);
+	if (conn->sslcompression)
+		free(conn->sslcompression);
 	if (conn->requirepeer)
 		free(conn->requirepeer);
 	if (conn->ssl_min_protocol_version)
