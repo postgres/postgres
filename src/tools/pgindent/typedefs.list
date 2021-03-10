@@ -3295,6 +3295,7 @@ proclist_mutable_iter
 proclist_node
 promptStatus_t
 pthread_attr_t
+pthread_barrier_t
 pthread_key_t
 pthread_mutex_t
 pthread_once_t

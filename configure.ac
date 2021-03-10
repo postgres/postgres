@@ -1143,6 +1143,7 @@ AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 AC_SEARCH_LIBS(shm_open, rt)
 AC_SEARCH_LIBS(shm_unlink, rt)
 AC_SEARCH_LIBS(clock_gettime, [rt posix4])
+AC_SEARCH_LIBS(pthread_barrier_wait, pthread)
 # Solaris:
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
 # Required for thread_test.c on Solaris
@@ -1743,6 +1744,7 @@ AC_REPLACE_FUNCS(m4_normalize([
 	mkdtemp
 	pread
 	preadv
+	pthread_barrier_wait
 	pwrite
 	pwritev
 	random
