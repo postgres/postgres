@@ -614,9 +614,10 @@ is_parallel_safe(PlannerInfo *root, Node *node)
 	context.max_hazard = PROPARALLEL_SAFE;
 	context.max_interesting = PROPARALLEL_RESTRICTED;
 	context.safe_param_ids = NIL;
-	context.command_type = node != NULL && IsA(node, Query) ?
-		castNode(Query, node)->commandType : CMD_UNKNOWN;
-	context.planner_global = root->glob;
+	/* We don't need to evaluate target relation's parallel-safety here. */
+	context.target_rte = NULL;
+	context.command_type = CMD_UNKNOWN;
+	context.planner_global = NULL;
 
 	/*
 	 * The params that refer to the same or parent query level are considered
