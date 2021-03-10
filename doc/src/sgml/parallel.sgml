@@ -146,7 +146,9 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         a CTE, no parallel plans for that query will be generated.  As an
         exception, the commands <literal>CREATE TABLE ... AS</literal>, <literal>SELECT
         INTO</literal>, and <literal>CREATE MATERIALIZED VIEW</literal> which create a new
-        table and populate it can use a parallel plan.
+        table and populate it can use a parallel plan. Another exception is the command
+        <literal>INSERT INTO ... SELECT ...</literal> which can use a parallel plan for
+        the underlying <literal>SELECT</literal> part of the query.
       </para>
     </listitem>
 

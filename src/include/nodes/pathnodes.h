@@ -120,6 +120,8 @@ typedef struct PlannerGlobal
 
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
+	List	   *partitionOids;	/* OIDs of partitions the plan depends on */
+
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
 
 	List	   *paramExecTypes; /* type OIDs for PARAM_EXEC Params */

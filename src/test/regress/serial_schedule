@@ -148,6 +148,7 @@ test: stats_ext
 test: collate.linux.utf8
 test: select_parallel
 test: write_parallel
+test: insert_parallel
 test: publication
 test: subscription
 test: select_views
