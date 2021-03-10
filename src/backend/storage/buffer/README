@@ -145,14 +145,11 @@ held within the buffer.  Each buffer header also contains an LWLock, the
 "buffer content lock", that *does* represent the right to access the data
 in the buffer.  It is used per the rules above.
 
-There is yet another set of per-buffer LWLocks, the io_in_progress locks,
-that are used to wait for I/O on a buffer to complete.  The process doing
-a read or write takes exclusive lock for the duration, and processes that
-need to wait for completion try to take shared locks (which they release
-immediately upon obtaining).  XXX on systems where an LWLock represents
-nontrivial resources, it's fairly annoying to need so many locks.  Possibly
-we could use per-backend LWLocks instead (a buffer header would then contain
-a field to show which backend is doing its I/O).
+* The BM_IO_IN_PROGRESS flag acts as a kind of lock, used to wait for I/O on a
+buffer to complete (and in releases before 14, it was accompanied by a
+per-buffer LWLock).  The process doing a read or write sets the flag for the
+duration, and processes that need to wait for it to be cleared sleep on a
+condition variable.
 
 
 Normal Buffer Replacement Strategy

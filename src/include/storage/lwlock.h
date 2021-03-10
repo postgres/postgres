@@ -48,29 +48,8 @@ typedef struct LWLock
  * even more padding so that each LWLock takes up an entire cache line; this is
  * useful, for example, in the main LWLock array, where the overall number of
  * locks is small but some are heavily contended.
- *
- * When allocating a tranche that contains data other than LWLocks, it is
- * probably best to include a bare LWLock and then pad the resulting structure
- * as necessary for performance.  For an array that contains only LWLocks,
- * LWLockMinimallyPadded can be used for cases where we just want to ensure
- * that we don't cross cache line boundaries within a single lock, while
- * LWLockPadded can be used for cases where we want each lock to be an entire
- * cache line.
- *
- * An LWLockMinimallyPadded might contain more than the absolute minimum amount
- * of padding required to keep a lock from crossing a cache line boundary,
- * because an unpadded LWLock will normally fit into 16 bytes.  We ignore that
- * possibility when determining the minimal amount of padding.  Older releases
- * had larger LWLocks, so 32 really was the minimum, and packing them in
- * tighter might hurt performance.
- *
- * LWLOCK_MINIMAL_SIZE should be 32 on basically all common platforms, but
- * because pg_atomic_uint32 is more than 4 bytes on some obscure platforms, we
- * allow for the possibility that it might be 64.  Even on those platforms,
- * we probably won't exceed 32 bytes unless LOCK_DEBUG is defined.
  */
 #define LWLOCK_PADDED_SIZE	PG_CACHE_LINE_SIZE
-#define LWLOCK_MINIMAL_SIZE (sizeof(LWLock) <= 32 ? 32 : 64)
 
 /* LWLock, padded to a full cache line size */
 typedef union LWLockPadded
@@ -78,13 +57,6 @@ typedef union LWLockPadded
 	LWLock		lock;
 	char		pad[LWLOCK_PADDED_SIZE];
 } LWLockPadded;
-
-/* LWLock, minimally padded */
-typedef union LWLockMinimallyPadded
-{
-	LWLock		lock;
-	char		pad[LWLOCK_MINIMAL_SIZE];
-} LWLockMinimallyPadded;
 
 extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 
@@ -202,7 +174,6 @@ typedef enum BuiltinTrancheIds
 	LWTRANCHE_SERIAL_BUFFER,
 	LWTRANCHE_WAL_INSERT,
 	LWTRANCHE_BUFFER_CONTENT,
-	LWTRANCHE_BUFFER_IO,
 	LWTRANCHE_REPLICATION_ORIGIN_STATE,
 	LWTRANCHE_REPLICATION_SLOT_IO,
 	LWTRANCHE_LOCK_FASTPATH,

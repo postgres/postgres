@@ -1352,9 +1352,10 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	LWLockRelease(newPartitionLock);
 
 	/*
-	 * Buffer contents are currently invalid.  Try to get the io_in_progress
-	 * lock.  If StartBufferIO returns false, then someone else managed to
-	 * read it before we did, so there's nothing left for BufferAlloc() to do.
+	 * Buffer contents are currently invalid.  Try to obtain the right to
+	 * start I/O.  If StartBufferIO returns false, then someone else managed
+	 * to read it before we did, so there's nothing left for BufferAlloc() to
+	 * do.
 	 */
 	if (StartBufferIO(buf, true))
 		*foundPtr = false;
@@ -1777,9 +1778,8 @@ UnpinBuffer(BufferDesc *buf, bool fixOwner)
 		 */
 		VALGRIND_MAKE_MEM_NOACCESS(BufHdrGetBlock(buf), BLCKSZ);
 
-		/* I'd better not still hold any locks on the buffer */
+		/* I'd better not still hold the buffer content lock */
 		Assert(!LWLockHeldByMe(BufferDescriptorGetContentLock(buf)));
-		Assert(!LWLockHeldByMe(BufferDescriptorGetIOLock(buf)));
 
 		/*
 		 * Decrement the shared reference count.
@@ -2742,9 +2742,9 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 	uint32		buf_state;
 
 	/*
-	 * Acquire the buffer's io_in_progress lock.  If StartBufferIO returns
-	 * false, then someone else flushed the buffer before we could, so we need
-	 * not do anything.
+	 * Try to start an I/O operation.  If StartBufferIO returns false, then
+	 * someone else flushed the buffer before we could, so we need not do
+	 * anything.
 	 */
 	if (!StartBufferIO(buf, false))
 		return;
@@ -2800,7 +2800,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 	/*
 	 * Now it's safe to write buffer to disk. Note that no one else should
 	 * have been able to write it while we were busy with log flushing because
-	 * we have the io_in_progress lock.
+	 * only one process at a time can set the BM_IO_IN_PROGRESS bit.
 	 */
 	bufBlock = BufHdrGetBlock(buf);
 
@@ -2835,7 +2835,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 
 	/*
 	 * Mark the buffer as clean (unless BM_JUST_DIRTIED has become set) and
-	 * end the io_in_progress state.
+	 * end the BM_IO_IN_PROGRESS state.
 	 */
 	TerminateBufferIO(buf, true, 0);
 
@@ -4271,7 +4271,7 @@ IsBufferCleanupOK(Buffer buffer)
  *	Functions for buffer I/O handling
  *
  *	Note: We assume that nested buffer I/O never occurs.
- *	i.e at most one io_in_progress lock is held per proc.
+ *	i.e at most one BM_IO_IN_PROGRESS bit is set per proc.
  *
  *	Also note that these are used only for shared buffers, not local ones.
  */
@@ -4282,13 +4282,9 @@ IsBufferCleanupOK(Buffer buffer)
 static void
 WaitIO(BufferDesc *buf)
 {
-	/*
-	 * Changed to wait until there's no IO - Inoue 01/13/2000
-	 *
-	 * Note this is *necessary* because an error abort in the process doing
-	 * I/O could release the io_in_progress_lock prematurely. See
-	 * AbortBufferIO.
-	 */
+	ConditionVariable *cv = BufferDescriptorGetIOCV(buf);
+
+	ConditionVariablePrepareToSleep(cv);
 	for (;;)
 	{
 		uint32		buf_state;
@@ -4303,9 +4299,9 @@ WaitIO(BufferDesc *buf)
 
 		if (!(buf_state & BM_IO_IN_PROGRESS))
 			break;
-		LWLockAcquire(BufferDescriptorGetIOLock(buf), LW_SHARED);
-		LWLockRelease(BufferDescriptorGetIOLock(buf));
+		ConditionVariableSleep(cv, WAIT_EVENT_BUFFER_IO);
 	}
+	ConditionVariableCancelSleep();
 }
 
 /*
@@ -4317,7 +4313,7 @@ WaitIO(BufferDesc *buf)
  * In some scenarios there are race conditions in which multiple backends
  * could attempt the same I/O operation concurrently.  If someone else
  * has already started I/O on this buffer then we will block on the
- * io_in_progress lock until he's done.
+ * I/O condition variable until he's done.
  *
  * Input operations are only attempted on buffers that are not BM_VALID,
  * and output operations only on buffers that are BM_VALID and BM_DIRTY,
@@ -4335,25 +4331,11 @@ StartBufferIO(BufferDesc *buf, bool forInput)
 
 	for (;;)
 	{
-		/*
-		 * Grab the io_in_progress lock so that other processes can wait for
-		 * me to finish the I/O.
-		 */
-		LWLockAcquire(BufferDescriptorGetIOLock(buf), LW_EXCLUSIVE);
-
 		buf_state = LockBufHdr(buf);
 
 		if (!(buf_state & BM_IO_IN_PROGRESS))
 			break;
-
-		/*
-		 * The only way BM_IO_IN_PROGRESS could be set when the io_in_progress
-		 * lock isn't held is if the process doing the I/O is recovering from
-		 * an error (see AbortBufferIO).  If that's the case, we must wait for
-		 * him to get unwedged.
-		 */
 		UnlockBufHdr(buf, buf_state);
-		LWLockRelease(BufferDescriptorGetIOLock(buf));
 		WaitIO(buf);
 	}
 
@@ -4363,7 +4345,6 @@ StartBufferIO(BufferDesc *buf, bool forInput)
 	{
 		/* someone else already did the I/O */
 		UnlockBufHdr(buf, buf_state);
-		LWLockRelease(BufferDescriptorGetIOLock(buf));
 		return false;
 	}
 
@@ -4381,7 +4362,6 @@ StartBufferIO(BufferDesc *buf, bool forInput)
  *	(Assumptions)
  *	My process is executing IO for the buffer
  *	BM_IO_IN_PROGRESS bit is set for the buffer
- *	We hold the buffer's io_in_progress lock
  *	The buffer is Pinned
  *
  * If clear_dirty is true and BM_JUST_DIRTIED is not set, we clear the
@@ -4413,7 +4393,7 @@ TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint32 set_flag_bits)
 
 	InProgressBuf = NULL;
 
-	LWLockRelease(BufferDescriptorGetIOLock(buf));
+	ConditionVariableBroadcast(BufferDescriptorGetIOCV(buf));
 }
 
 /*
@@ -4433,14 +4413,6 @@ AbortBufferIO(void)
 	if (buf)
 	{
 		uint32		buf_state;
-
-		/*
-		 * Since LWLockReleaseAll has already been called, we're not holding
-		 * the buffer's io_in_progress_lock. We have to re-acquire it so that
-		 * we can use TerminateBufferIO. Anyone who's executing WaitIO on the
-		 * buffer will be in a busy spin until we succeed in doing this.
-		 */
-		LWLockAcquire(BufferDescriptorGetIOLock(buf), LW_EXCLUSIVE);
 
 		buf_state = LockBufHdr(buf);
 		Assert(buf_state & BM_IO_IN_PROGRESS);

@@ -31,6 +31,17 @@ typedef struct
 	proclist_head wakeup;		/* list of wake-able processes */
 } ConditionVariable;
 
+/*
+ * Pad a condition variable to a power-of-two size so that an array of
+ * condition variables does not cross a cache line boundary.
+ */
+#define CV_MINIMAL_SIZE		(sizeof(ConditionVariable) <= 16 ? 16 : 32)
+typedef union ConditionVariableMinimallyPadded
+{
+	ConditionVariable cv;
+	char		pad[CV_MINIMAL_SIZE];
+} ConditionVariableMinimallyPadded;
+
 /* Initialize a condition variable. */
 extern void ConditionVariableInit(ConditionVariable *cv);
 

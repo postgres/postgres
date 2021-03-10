@@ -1587,6 +1587,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        scan to become available.</entry>
      </row>
      <row>
+      <entry><literal>BufferIO</literal></entry>
+      <entry>Waiting for buffer I/O to complete.</entry>
+     </row>
+     <row>
       <entry><literal>CheckpointDone</literal></entry>
       <entry>Waiting for a checkpoint to complete.</entry>
      </row>
@@ -1875,10 +1879,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>BufferContent</literal></entry>
       <entry>Waiting to access a data page in memory.</entry>
-     </row>
-     <row>
-      <entry><literal>BufferIO</literal></entry>
-      <entry>Waiting for I/O on a data page.</entry>
      </row>
      <row>
       <entry><literal>BufferMapping</literal></entry>

@@ -398,6 +398,7 @@ CompressionAlgorithm
 CompressorState
 ComputeXidHorizonsResult
 ConditionVariable
+ConditionVariableMinimallyPadded
 ConditionalStack
 ConfigData
 ConfigVariable
