@@ -63,7 +63,8 @@
 
   <para>
    Throughout this chapter, it can be useful to look at the reference
-   page of the <xref linkend="sql-createfunction"/> command to
+   page of the <link linkend="sql-createfunction"><command>CREATE
+   FUNCTION</command></link> command to
    understand the examples better.  Some examples from this chapter
    can be found in <filename>funcs.sql</filename> and
    <filename>funcs.c</filename> in the <filename>src/tutorial</filename>
@@ -81,21 +82,55 @@
   </indexterm>
 
    <para>
-    A procedure is a database object similar to a function.  The difference is
-    that a procedure does not return a value, so there is no return type
-    declaration.  While a function is called as part of a query or DML
-    command, a procedure is called in isolation using
-    the <link linkend="sql-call"><command>CALL</command></link> command.  If the <command>CALL</command> command is not
-    part of an explicit transaction, a procedure in many server-side
-    languages can commit, rollback, and begin new transactions during
-    its execution, which is not possible in functions.
+    A procedure is a database object similar to a function.
+    The key differences are:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Procedures are defined with
+       the <link linkend="sql-createprocedure"><command>CREATE
+       PROCEDURE</command></link> command, not <command>CREATE
+       FUNCTION</command>.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Procedures do not return a function value; hence <command>CREATE
+       PROCEDURE</command> lacks a <literal>RETURNS</literal> clause.
+       However, procedures can instead return data to their callers via
+       output parameters.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       While a function is called as part of a query or DML command, a
+       procedure is called in isolation using
+       the <link linkend="sql-call"><command>CALL</command></link> command.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A procedure can commit or roll back transactions during its
+       execution (then automatically beginning a new transaction), so long
+       as the invoking <command>CALL</command> command is not part of an
+       explicit transaction block.  A function cannot do that.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Certain function attributes, such as strictness, don't apply to
+       procedures.  Those attributes control how the function is
+       used in a query, which isn't relevant to procedures.
+      </para>
+     </listitem>
+    </itemizedlist>
    </para>
 
    <para>
-    The explanations on how to define user-defined functions in the rest of
-    this chapter apply to procedures as well, except that
-    the <link linkend="sql-createprocedure"><command>CREATE PROCEDURE</command></link> command is used instead, there is
-    no return type, and some other features such as strictness don't apply.
+    The explanations in the following sections about how to define
+    user-defined functions apply to procedures as well, except for the
+    points made above.
    </para>
 
    <para>

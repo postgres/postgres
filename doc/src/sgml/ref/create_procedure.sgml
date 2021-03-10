@@ -76,6 +76,11 @@ CREATE [ OR REPLACE ] PROCEDURE
    To be able to create a procedure, you must have <literal>USAGE</literal>
    privilege on the argument types.
   </para>
+
+  <para>
+   Refer to <xref linkend="xproc"/> for further information on writing
+   procedures.
+  </para>
  </refsect1>
 
  <refsect1>
