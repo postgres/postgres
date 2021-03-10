@@ -1514,7 +1514,7 @@ apply_handle_delete_internal(ResultRelInfo *relinfo, EState *estate,
 	{
 		/* The tuple to be deleted could not be found. */
 		elog(DEBUG1,
-			 "logical replication could not find row for delete "
+			 "logical replication did not find row for delete "
 			 "in replication target relation \"%s\"",
 			 RelationGetRelationName(localrel));
 	}
