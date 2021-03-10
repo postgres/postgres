@@ -253,4 +253,32 @@ GetTimerFrequency(void)
 #define INSTR_TIME_SET_CURRENT_LAZY(t) \
 	(INSTR_TIME_IS_ZERO(t) ? INSTR_TIME_SET_CURRENT(t), true : false)
 
+/*
+ * Simpler convenient interface
+ *
+ * The instr_time type is expensive when dealing with time arithmetic.
+ * Define a type to hold microseconds on top of this, suitable for
+ * benchmarking performance measures, eg in "pgbench".
+ *
+ * Type int64 is good enough for about 584500 years.
+ */
+typedef int64 pg_time_usec_t;
+
+static inline pg_time_usec_t
+pg_time_now(void)
+{
+	instr_time now;
+
+	INSTR_TIME_SET_CURRENT(now);
+	return (pg_time_usec_t) INSTR_TIME_GET_MICROSEC(now);
+}
+
+static inline void
+pg_time_now_lazy(pg_time_usec_t *now)
+{
+	if ((*now) == 0)
+		(*now) = pg_time_now();
+}
+
+#define PG_TIME_GET_DOUBLE(t) (0.000001 * (t))
 #endif							/* INSTR_TIME_H */
