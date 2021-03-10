@@ -585,7 +585,6 @@ sub upgradecheck
 	my $outputdir          = "$tmp_root/regress";
 	my @EXTRA_REGRESS_OPTS = ("--outputdir=$outputdir");
 	mkdir "$outputdir"                || die $!;
-	mkdir "$outputdir/testtablespace" || die $!;
 
 	my $logdir = "$topdir/src/bin/pg_upgrade/log";
 	rmtree($logdir);
