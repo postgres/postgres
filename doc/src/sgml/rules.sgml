@@ -1946,7 +1946,7 @@ DELETE FROM shoelace WHERE EXISTS
              WHERE sl_name = shoelace.sl_name);
 </programlisting>
 
-    <foreignphrase>Voil&agrave;</foreignphrase>:
+    The results are:
 
 <programlisting>
 SELECT * FROM shoelace;

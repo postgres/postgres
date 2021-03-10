@@ -40,7 +40,7 @@ has an associated data type which determines its behavior and allowed usage.
 <productname>PostgreSQL</productname> has an extensible type system that is
 more general and flexible than other <acronym>SQL</acronym> implementations.
 Hence, most type conversion behavior in <productname>PostgreSQL</productname>
-is governed by general rules rather than by <foreignphrase>ad hoc</foreignphrase>
+is governed by general rules rather than by ad hoc
 heuristics.  This allows the use of mixed-type expressions even with
 user-defined types.
 </para>

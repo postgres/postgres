@@ -358,7 +358,7 @@ in sync when changing the above synopsis!
 
   <para>
    The <literal>VALID UNTIL</literal> clause defines an expiration time for a
-   password only, not for the role <foreignphrase>per se</foreignphrase>.  In
+   password only, not for the role per se.  In
    particular, the expiration time is not enforced when logging in using
    a non-password-based authentication method.
   </para>
