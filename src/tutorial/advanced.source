@@ -23,7 +23,7 @@
 CREATE TABLE cities (
 	name		text,
 	population	float8,
-	altitude	int		-- (in ft)
+	elevation	int		-- (in ft)
 );
 
 CREATE TABLE capitals (
@@ -42,17 +42,17 @@ SELECT * FROM cities;
 SELECT * FROM capitals;
 
 -- You can find all cities, including capitals, that
--- are located at an altitude of 500 ft or higher by:
+-- are located at an elevation of 500 ft or higher by:
 
-SELECT c.name, c.altitude
+SELECT c.name, c.elevation
 FROM cities c
-WHERE c.altitude > 500;
+WHERE c.elevation > 500;
 
 -- To scan rows of the parent table only, use ONLY:
 
-SELECT name, altitude
+SELECT name, elevation
 FROM ONLY cities
-WHERE altitude > 500;
+WHERE elevation > 500;
 
 
 -- clean up (you must remove the children first)
