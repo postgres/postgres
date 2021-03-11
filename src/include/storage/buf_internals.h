@@ -174,6 +174,10 @@ typedef struct buftag
  * Be careful to avoid increasing the size of the struct when adding or
  * reordering members.  Keeping it below 64 bytes (the most common CPU
  * cache line size) is fairly important for performance.
+ *
+ * Per-buffer I/O condition variables are currently kept outside this struct in
+ * a separate array.  They could be moved in here and still fit within that
+ * limit on common systems, but for now that is not done.
  */
 typedef struct BufferDesc
 {
