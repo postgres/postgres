@@ -825,9 +825,10 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 	 * calls.  That is, we can end up scanning the entire index without ever
 	 * placing even 1 of the prev_num_delpages pages in the free space map, at
 	 * least in certain narrow cases (see nbtree/README section on recycling
-	 * deleted pages for details).  This rarely matters in practice.
+	 * deleted pages for details).  This rarely comes up in practice.
 	 */
-	if (prev_num_delpages > RelationGetNumberOfBlocks(info->index) / 20)
+	if (prev_num_delpages > 0 &&
+		prev_num_delpages > RelationGetNumberOfBlocks(info->index) / 20)
 		return true;
 
 	return false;
@@ -916,17 +917,12 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	}
 
 	/*
-	 * By here, we know for sure that this VACUUM operation won't be skipping
-	 * its btvacuumscan() call.  Maintain num_delpages value in metapage.
-	 * This information will be used by _bt_vacuum_needs_cleanup() during
-	 * future VACUUM operations that don't need to call btbulkdelete().
+	 * Maintain num_delpages value in metapage for _bt_vacuum_needs_cleanup().
 	 *
 	 * num_delpages is the number of deleted pages now in the index that were
 	 * not safe to place in the FSM to be recycled just yet.  We expect that
 	 * it will almost certainly be possible to place all of these pages in the
-	 * FSM during the next VACUUM operation.  _bt_vacuum_needs_cleanup() will
-	 * force the next VACUUM to consider this before allowing btvacuumscan()
-	 * to be skipped entirely.
+	 * FSM during the next VACUUM operation.
 	 */
 	Assert(stats->pages_deleted >= stats->pages_free);
 	num_delpages = stats->pages_deleted - stats->pages_free;
