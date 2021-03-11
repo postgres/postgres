@@ -312,6 +312,7 @@ select reloptions from pg_class WHERE oid = 'btree_idx1'::regclass;
  {vacuum_cleanup_index_scale_factor=70.0}
 (1 row)
 
+drop index btree_idx1;
 --
 -- Test for multilevel page deletion
 --
