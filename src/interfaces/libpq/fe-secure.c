@@ -159,12 +159,12 @@ PQinitOpenSSL(int do_ssl, int do_crypto)
  *	Initialize global SSL context
  */
 int
-pqsecure_initialize(PGconn *conn)
+pqsecure_initialize(PGconn *conn, bool do_ssl, bool do_crypto)
 {
 	int			r = 0;
 
 #ifdef USE_SSL
-	r = pgtls_init(conn);
+	r = pgtls_init(conn, do_ssl, do_crypto);
 #endif
 
 	return r;
@@ -191,8 +191,7 @@ void
 pqsecure_close(PGconn *conn)
 {
 #ifdef USE_SSL
-	if (conn->ssl_in_use)
-		pgtls_close(conn);
+	pgtls_close(conn);
 #endif
 }
 

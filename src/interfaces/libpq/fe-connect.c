@@ -2888,6 +2888,16 @@ keep_going:						/* We will come back to here until there is
 #ifdef USE_SSL
 
 				/*
+				 * Enable the libcrypto callbacks before checking if SSL needs
+				 * to be done.  This is done before sending the startup packet
+				 * as depending on the type of authentication done, like MD5
+				 * or SCRAM that use cryptohashes, the callbacks would be
+				 * required even without a SSL connection
+				 */
+				if (pqsecure_initialize(conn, false, true) < 0)
+					goto error_return;
+
+				/*
 				 * If SSL is enabled and we haven't already got encryption of
 				 * some sort running, request SSL instead of sending the
 				 * startup message.
@@ -2998,8 +3008,14 @@ keep_going:						/* We will come back to here until there is
 					{
 						/* mark byte consumed */
 						conn->inStart = conn->inCursor;
-						/* Set up global SSL state if required */
-						if (pqsecure_initialize(conn) != 0)
+
+						/*
+						 * Set up global SSL state if required.  The crypto
+						 * state has already been set if libpq took care of
+						 * doing that, so there is no need to make that happen
+						 * again.
+						 */
+						if (pqsecure_initialize(conn, true, false) != 0)
 							goto error_return;
 					}
 					else if (SSLok == 'N')

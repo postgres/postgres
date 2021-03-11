@@ -85,7 +85,7 @@ static bool pq_init_crypto_lib = true;
 static bool ssl_lib_initialized = false;
 
 #ifdef ENABLE_THREAD_SAFETY
-static long ssl_open_connections = 0;
+static long crypto_open_connections = 0;
 
 #ifndef WIN32
 static pthread_mutex_t ssl_config_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -111,7 +111,7 @@ pgtls_init_library(bool do_ssl, int do_crypto)
 	 * Disallow changing the flags while we have open connections, else we'd
 	 * get completely confused.
 	 */
-	if (ssl_open_connections != 0)
+	if (crypto_open_connections != 0)
 		return;
 #endif
 
@@ -635,7 +635,7 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
  * override it.
  */
 int
-pgtls_init(PGconn *conn)
+pgtls_init(PGconn *conn, bool do_ssl, bool do_crypto)
 {
 #ifdef ENABLE_THREAD_SAFETY
 #ifdef WIN32
@@ -684,22 +684,28 @@ pgtls_init(PGconn *conn)
 			}
 		}
 
-		if (ssl_open_connections++ == 0)
+		if (do_crypto && !conn->crypto_loaded)
 		{
-			/*
-			 * These are only required for threaded libcrypto applications,
-			 * but make sure we don't stomp on them if they're already set.
-			 */
-			if (CRYPTO_get_id_callback() == NULL)
-				CRYPTO_set_id_callback(pq_threadidcallback);
-			if (CRYPTO_get_locking_callback() == NULL)
-				CRYPTO_set_locking_callback(pq_lockingcallback);
+			if (crypto_open_connections++ == 0)
+			{
+				/*
+				 * These are only required for threaded libcrypto
+				 * applications, but make sure we don't stomp on them if
+				 * they're already set.
+				 */
+				if (CRYPTO_get_id_callback() == NULL)
+					CRYPTO_set_id_callback(pq_threadidcallback);
+				if (CRYPTO_get_locking_callback() == NULL)
+					CRYPTO_set_locking_callback(pq_lockingcallback);
+			}
+
+			conn->crypto_loaded = true;
 		}
 	}
 #endif							/* HAVE_CRYPTO_LOCK */
 #endif							/* ENABLE_THREAD_SAFETY */
 
-	if (!ssl_lib_initialized)
+	if (!ssl_lib_initialized && do_ssl)
 	{
 		if (pq_init_ssl_lib)
 		{
@@ -740,10 +746,10 @@ destroy_ssl_system(void)
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return;
 
-	if (pq_init_crypto_lib && ssl_open_connections > 0)
-		--ssl_open_connections;
+	if (pq_init_crypto_lib && crypto_open_connections > 0)
+		--crypto_open_connections;
 
-	if (pq_init_crypto_lib && ssl_open_connections == 0)
+	if (pq_init_crypto_lib && crypto_open_connections == 0)
 	{
 		/*
 		 * No connections left, unregister libcrypto callbacks, if no one
@@ -1402,46 +1408,63 @@ pgtls_close(PGconn *conn)
 {
 	bool		destroy_needed = false;
 
-	if (conn->ssl)
+	if (conn->ssl_in_use)
 	{
-		/*
-		 * We can't destroy everything SSL-related here due to the possible
-		 * later calls to OpenSSL routines which may need our thread
-		 * callbacks, so set a flag here and check at the end.
-		 */
-		destroy_needed = true;
+		if (conn->ssl)
+		{
+			/*
+			 * We can't destroy everything SSL-related here due to the
+			 * possible later calls to OpenSSL routines which may need our
+			 * thread callbacks, so set a flag here and check at the end.
+			 */
 
-		SSL_shutdown(conn->ssl);
-		SSL_free(conn->ssl);
-		conn->ssl = NULL;
-		conn->ssl_in_use = false;
-	}
+			SSL_shutdown(conn->ssl);
+			SSL_free(conn->ssl);
+			conn->ssl = NULL;
+			conn->ssl_in_use = false;
 
-	if (conn->peer)
-	{
-		X509_free(conn->peer);
-		conn->peer = NULL;
-	}
+			destroy_needed = true;
+		}
+
+		if (conn->peer)
+		{
+			X509_free(conn->peer);
+			conn->peer = NULL;
+		}
 
 #ifdef USE_SSL_ENGINE
-	if (conn->engine)
-	{
-		ENGINE_finish(conn->engine);
-		ENGINE_free(conn->engine);
-		conn->engine = NULL;
-	}
+		if (conn->engine)
+		{
+			ENGINE_finish(conn->engine);
+			ENGINE_free(conn->engine);
+			conn->engine = NULL;
+		}
 #endif
+	}
+	else
+	{
+		/*
+		 * In the non-SSL case, just remove the crypto callbacks if the
+		 * connection has then loaded.  This code path has no dependency
+		 * on any pending SSL calls.
+		 */
+		if (conn->crypto_loaded)
+			destroy_needed = true;
+	}
 
 	/*
-	 * This will remove our SSL locking hooks, if this is the last SSL
-	 * connection, which means we must wait to call it until after all SSL
-	 * calls have been made, otherwise we can end up with a race condition and
-	 * possible deadlocks.
+	 * This will remove our crypto locking hooks if this is the last
+	 * connection using libcrypto which means we must wait to call it until
+	 * after all the potential SSL calls have been made, otherwise we can end
+	 * up with a race condition and possible deadlocks.
 	 *
 	 * See comments above destroy_ssl_system().
 	 */
 	if (destroy_needed)
+	{
 		destroy_ssl_system();
+		conn->crypto_loaded = false;
+	}
 }
 
 
