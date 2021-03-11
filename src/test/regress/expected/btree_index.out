@@ -313,6 +313,7 @@ select reloptions from pg_class WHERE oid = 'btree_idx1'::regclass;
 (1 row)
 
 drop index btree_idx1;
+drop index btree_idx_err;
 --
 -- Test for multilevel page deletion
 --
