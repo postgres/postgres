@@ -794,6 +794,9 @@ _bt_parallel_advance_array_keys(IndexScanDesc scan)
  * When we return false, VACUUM can even skip the cleanup-only call to
  * btvacuumscan (i.e. there will be no btvacuumscan call for this index at
  * all).  Otherwise, a cleanup-only btvacuumscan call is required.
+ *
+ * Postgres 13 ignores btm_last_cleanup_num_heap_tuples value here following
+ * backbranch disabling of vacuum_cleanup_index_scale_factor.
  */
 static bool
 _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
@@ -801,60 +804,44 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 	Buffer		metabuf;
 	Page		metapg;
 	BTMetaPageData *metad;
-	bool		result = false;
+	uint32		btm_version;
+	TransactionId prev_btm_oldest_btpo_xact;
 
+	/*
+	 * Copy details from metapage to local variables quickly.
+	 *
+	 * Note that we deliberately avoid using cached version of metapage here.
+	 */
 	metabuf = _bt_getbuf(info->index, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
+	btm_version = metad->btm_version;
 
-	if (metad->btm_version < BTREE_NOVAC_VERSION)
+	if (btm_version < BTREE_NOVAC_VERSION)
 	{
 		/*
-		 * Do cleanup if metapage needs upgrade, because we don't have
-		 * cleanup-related meta-information yet.
+		 * Metapage needs to be dynamically upgraded to store fields that are
+		 * only present when btm_version >= BTREE_NOVAC_VERSION
 		 */
-		result = true;
+		_bt_relbuf(info->index, metabuf);
+		return true;
 	}
-	else if (TransactionIdIsValid(metad->btm_oldest_btpo_xact) &&
-			 TransactionIdPrecedes(metad->btm_oldest_btpo_xact,
-								   RecentGlobalXmin))
+
+	prev_btm_oldest_btpo_xact = metad->btm_oldest_btpo_xact;
+	_bt_relbuf(info->index, metabuf);
+
+	if (TransactionIdIsValid(prev_btm_oldest_btpo_xact) &&
+		TransactionIdPrecedes(prev_btm_oldest_btpo_xact, RecentGlobalXmin))
 	{
 		/*
 		 * If any oldest btpo.xact from a previously deleted page in the index
 		 * is older than RecentGlobalXmin, then at least one deleted page can
 		 * be recycled -- don't skip cleanup.
 		 */
-		result = true;
-	}
-	else
-	{
-		BTOptions  *relopts;
-		float8		cleanup_scale_factor;
-		float8		prev_num_heap_tuples;
-
-		/*
-		 * If table receives enough insertions and no cleanup was performed,
-		 * then index would appear have stale statistics.  If scale factor is
-		 * set, we avoid that by performing cleanup if the number of inserted
-		 * tuples exceeds vacuum_cleanup_index_scale_factor fraction of
-		 * original tuples count.
-		 */
-		relopts = (BTOptions *) info->index->rd_options;
-		cleanup_scale_factor = (relopts &&
-								relopts->vacuum_cleanup_index_scale_factor >= 0)
-			? relopts->vacuum_cleanup_index_scale_factor
-			: vacuum_cleanup_index_scale_factor;
-		prev_num_heap_tuples = metad->btm_last_cleanup_num_heap_tuples;
-
-		if (cleanup_scale_factor <= 0 ||
-			prev_num_heap_tuples <= 0 ||
-			(info->num_heap_tuples - prev_num_heap_tuples) /
-			prev_num_heap_tuples >= cleanup_scale_factor)
-			result = true;
+		return true;
 	}
 
-	_bt_relbuf(info->index, metabuf);
-	return result;
+	return false;
 }
 
 /*
@@ -907,9 +894,6 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 * still need to do a pass over the index, to recycle any newly-recyclable
 	 * pages or to obtain index statistics.  _bt_vacuum_needs_cleanup
 	 * determines if either are needed.
-	 *
-	 * Since we aren't going to actually delete any leaf items, there's no
-	 * need to go through all the vacuum-cycle-ID pushups.
 	 */
 	if (stats == NULL)
 	{
@@ -917,8 +901,23 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		if (!_bt_vacuum_needs_cleanup(info))
 			return NULL;
 
+		/*
+		 * Since we aren't going to actually delete any leaf items, there's no
+		 * need to go through all the vacuum-cycle-ID pushups here.
+		 *
+		 * Posting list tuples are a source of inaccuracy for cleanup-only
+		 * scans.  btvacuumscan() will assume that the number of index tuples
+		 * from each page can be used as num_index_tuples, even though
+		 * num_index_tuples is supposed to represent the number of TIDs in the
+		 * index.  This naive approach can underestimate the number of tuples
+		 * in the index significantly.
+		 *
+		 * We handle the problem by making num_index_tuples an estimate in
+		 * cleanup-only case.
+		 */
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 		btvacuumscan(info, stats, NULL, NULL, 0);
+		stats->estimated_count = true;
 	}
 
 	/*
@@ -926,12 +925,6 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 * double-counting some index tuples, so disbelieve any total that exceeds
 	 * the underlying heap's count ... if we know that accurately.  Otherwise
 	 * this might just make matters worse.
-	 *
-	 * Posting list tuples are another source of inaccuracy.  Cleanup-only
-	 * btvacuumscan calls assume that the number of index tuples can be used
-	 * as num_index_tuples, even though num_index_tuples is supposed to
-	 * represent the number of TIDs in the index.  This naive approach can
-	 * underestimate the number of tuples in the index.
 	 */
 	if (!info->estimated_count)
 	{
@@ -971,7 +964,6 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * Reset counts that will be incremented during the scan; needed in case
 	 * of multiple scans during a single VACUUM command
 	 */
-	stats->estimated_count = false;
 	stats->num_index_tuples = 0;
 	stats->pages_deleted = 0;
 
@@ -1059,8 +1051,12 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		IndexFreeSpaceMapVacuum(rel);
 
 	/*
-	 * Maintain the oldest btpo.xact and a count of the current number of heap
-	 * tuples in the metapage (for the benefit of _bt_vacuum_needs_cleanup).
+	 * Maintain the oldest btpo.xact using _bt_update_meta_cleanup_info, for
+	 * the benefit of _bt_vacuum_needs_cleanup.
+	 *
+	 * Note: We deliberately don't store the count of heap tuples here
+	 * anymore.  The numHeapTuples argument to _bt_update_meta_cleanup_info()
+	 * is left in place on Postgres 13.
 	 *
 	 * The page with the oldest btpo.xact is typically a page deleted by this
 	 * VACUUM operation, since pages deleted by a previous VACUUM operation
@@ -1070,8 +1066,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * statistics, despite not counting as deleted pages for the purposes of
 	 * determining the oldest btpo.xact.)
 	 */
-	_bt_update_meta_cleanup_info(rel, vstate.oldestBtpoXact,
-								 info->num_heap_tuples);
+	_bt_update_meta_cleanup_info(rel, vstate.oldestBtpoXact, -1);
 
 	/* update statistics */
 	stats->num_pages = num_pages;
@@ -1399,7 +1394,10 @@ backtrack:
 		 * We don't count the number of live TIDs during cleanup-only calls to
 		 * btvacuumscan (i.e. when callback is not set).  We count the number
 		 * of index tuples directly instead.  This avoids the expense of
-		 * directly examining all of the tuples on each page.
+		 * directly examining all of the tuples on each page.  VACUUM will
+		 * treat num_index_tuples as an estimate in cleanup-only case, so it
+		 * doesn't matter that this underestimates num_index_tuples
+		 * significantly in some cases.
 		 */
 		if (minoff > maxoff)
 			attempt_pagedel = (blkno == scanblkno);
