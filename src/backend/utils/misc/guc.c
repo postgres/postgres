@@ -3704,16 +3704,6 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
-		{"vacuum_cleanup_index_scale_factor", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Number of tuple inserts prior to index cleanup as a fraction of reltuples."),
-			NULL
-		},
-		&vacuum_cleanup_index_scale_factor,
-		0.1, 0.0, 1e10,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"log_statement_sample_rate", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Fraction of statements exceeding log_min_duration_sample to be logged."),
 			gettext_noop("Use a value between 0.0 (never log) and 1.0 (always log).")

@@ -461,15 +461,6 @@ static relopt_real realRelOpts[] =
 		},
 		0, -1.0, DBL_MAX
 	},
-	{
-		{
-			"vacuum_cleanup_index_scale_factor",
-			"Number of tuple inserts prior to index cleanup as a fraction of reltuples.",
-			RELOPT_KIND_BTREE,
-			ShareUpdateExclusiveLock
-		},
-		-1, 0.0, 1e10
-	},
 	/* list terminator */
 	{{NULL}}
 };

@@ -1332,8 +1332,6 @@ _bt_insertonpg(Relation rel,
 					xlmeta.fastroot = metad->btm_fastroot;
 					xlmeta.fastlevel = metad->btm_fastlevel;
 					xlmeta.last_cleanup_num_delpages = metad->btm_last_cleanup_num_delpages;
-					xlmeta.last_cleanup_num_heap_tuples =
-						metad->btm_last_cleanup_num_heap_tuples;
 					xlmeta.allequalimage = metad->btm_allequalimage;
 
 					XLogRegisterBuffer(2, metabuf,
@@ -2549,7 +2547,6 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		md.fastroot = rootblknum;
 		md.fastlevel = metad->btm_level;
 		md.last_cleanup_num_delpages = metad->btm_last_cleanup_num_delpages;
-		md.last_cleanup_num_heap_tuples = metad->btm_last_cleanup_num_heap_tuples;
 		md.allequalimage = metad->btm_allequalimage;
 
 		XLogRegisterBufData(2, (char *) &md, sizeof(xl_btree_metadata));

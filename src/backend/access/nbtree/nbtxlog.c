@@ -113,7 +113,7 @@ _bt_restore_meta(XLogReaderState *record, uint8 block_id)
 	/* Cannot log BTREE_MIN_VERSION index metapage without upgrade */
 	Assert(md->btm_version >= BTREE_NOVAC_VERSION);
 	md->btm_last_cleanup_num_delpages = xlrec->last_cleanup_num_delpages;
-	md->btm_last_cleanup_num_heap_tuples = xlrec->last_cleanup_num_heap_tuples;
+	md->btm_last_cleanup_num_heap_tuples = -1.0;
 	md->btm_allequalimage = xlrec->allequalimage;
 
 	pageop = (BTPageOpaque) PageGetSpecialPointer(metapg);

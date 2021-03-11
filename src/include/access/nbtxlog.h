@@ -54,7 +54,6 @@ typedef struct xl_btree_metadata
 	BlockNumber fastroot;
 	uint32		fastlevel;
 	uint32		last_cleanup_num_delpages;
-	float8		last_cleanup_num_heap_tuples;
 	bool		allequalimage;
 } xl_btree_metadata;
 

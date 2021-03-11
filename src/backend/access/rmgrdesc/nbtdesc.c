@@ -113,9 +113,8 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 
 				xlrec = (xl_btree_metadata *) XLogRecGetBlockData(record, 0,
 																  NULL);
-				appendStringInfo(buf, "last_cleanup_num_delpages %u; last_cleanup_num_heap_tuples: %f",
-								 xlrec->last_cleanup_num_delpages,
-								 xlrec->last_cleanup_num_heap_tuples);
+				appendStringInfo(buf, "last_cleanup_num_delpages %u",
+								 xlrec->last_cleanup_num_delpages);
 				break;
 			}
 	}

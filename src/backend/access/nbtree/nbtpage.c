@@ -175,26 +175,15 @@ _bt_getmeta(Relation rel, Buffer metabuf)
  *		_bt_vacuum_needs_cleanup() to decide whether or not a btvacuumscan()
  *		call should go ahead for an entire VACUUM operation.
  *
- *		See btvacuumcleanup() and _bt_vacuum_needs_cleanup() for details of
- *		the two fields that we maintain here.
- *
- *		The information that we maintain for btvacuumcleanup() describes the
- *		state of the index (as well as the table it indexes) just _after_ the
- *		ongoing VACUUM operation.  The next _bt_vacuum_needs_cleanup() call
- *		will consider the information we saved for it during the next VACUUM
- *		operation (assuming that there will be no btbulkdelete() call during
- *		the next VACUUM operation -- if there is then the question of skipping
- *		btvacuumscan() doesn't even arise).
+ *		See btvacuumcleanup() and _bt_vacuum_needs_cleanup() for the
+ *		definition of num_delpages.
  */
 void
-_bt_set_cleanup_info(Relation rel, BlockNumber num_delpages,
-					 float8 num_heap_tuples)
+_bt_set_cleanup_info(Relation rel, BlockNumber num_delpages)
 {
 	Buffer		metabuf;
 	Page		metapg;
 	BTMetaPageData *metad;
-	bool		rewrite = false;
-	XLogRecPtr	recptr;
 
 	/*
 	 * On-disk compatibility note: The btm_last_cleanup_num_delpages metapage
@@ -209,21 +198,20 @@ _bt_set_cleanup_info(Relation rel, BlockNumber num_delpages,
 	 * in reality there are only one or two.  The worst that can happen is
 	 * that there will be a call to btvacuumscan a little earlier, which will
 	 * set btm_last_cleanup_num_delpages to a sane value when we're called.
+	 *
+	 * Note also that the metapage's btm_last_cleanup_num_heap_tuples field is
+	 * no longer used as of PostgreSQL 14.  We set it to -1.0 on rewrite, just
+	 * to be consistent.
 	 */
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 
-	/* Always dynamically upgrade index/metapage when BTREE_MIN_VERSION */
-	if (metad->btm_version < BTREE_NOVAC_VERSION)
-		rewrite = true;
-	else if (metad->btm_last_cleanup_num_delpages != num_delpages)
-		rewrite = true;
-	else if (metad->btm_last_cleanup_num_heap_tuples != num_heap_tuples)
-		rewrite = true;
-
-	if (!rewrite)
+	/* Don't miss chance to upgrade index/metapage when BTREE_MIN_VERSION */
+	if (metad->btm_version >= BTREE_NOVAC_VERSION &&
+		metad->btm_last_cleanup_num_delpages == num_delpages)
 	{
+		/* Usually means index continues to have num_delpages of 0 */
 		_bt_relbuf(rel, metabuf);
 		return;
 	}
@@ -240,13 +228,14 @@ _bt_set_cleanup_info(Relation rel, BlockNumber num_delpages,
 
 	/* update cleanup-related information */
 	metad->btm_last_cleanup_num_delpages = num_delpages;
-	metad->btm_last_cleanup_num_heap_tuples = num_heap_tuples;
+	metad->btm_last_cleanup_num_heap_tuples = -1.0;
 	MarkBufferDirty(metabuf);
 
 	/* write wal record if needed */
 	if (RelationNeedsWAL(rel))
 	{
 		xl_btree_metadata md;
+		XLogRecPtr	recptr;
 
 		XLogBeginInsert();
 		XLogRegisterBuffer(0, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
@@ -258,7 +247,6 @@ _bt_set_cleanup_info(Relation rel, BlockNumber num_delpages,
 		md.fastroot = metad->btm_fastroot;
 		md.fastlevel = metad->btm_fastlevel;
 		md.last_cleanup_num_delpages = num_delpages;
-		md.last_cleanup_num_heap_tuples = num_heap_tuples;
 		md.allequalimage = metad->btm_allequalimage;
 
 		XLogRegisterBufData(0, (char *) &md, sizeof(xl_btree_metadata));
@@ -443,7 +431,6 @@ _bt_getroot(Relation rel, int access)
 			md.fastroot = rootblkno;
 			md.fastlevel = 0;
 			md.last_cleanup_num_delpages = 0;
-			md.last_cleanup_num_heap_tuples = -1.0;
 			md.allequalimage = metad->btm_allequalimage;
 
 			XLogRegisterBufData(2, (char *) &md, sizeof(xl_btree_metadata));
@@ -2632,7 +2619,6 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 			xlmeta.fastroot = metad->btm_fastroot;
 			xlmeta.fastlevel = metad->btm_fastlevel;
 			xlmeta.last_cleanup_num_delpages = metad->btm_last_cleanup_num_delpages;
-			xlmeta.last_cleanup_num_heap_tuples = metad->btm_last_cleanup_num_heap_tuples;
 			xlmeta.allequalimage = metad->btm_allequalimage;
 
 			XLogRegisterBufData(4, (char *) &xlmeta, sizeof(xl_btree_metadata));

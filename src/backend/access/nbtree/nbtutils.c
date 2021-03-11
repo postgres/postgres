@@ -2105,8 +2105,6 @@ btoptions(Datum reloptions, bool validate)
 {
 	static const relopt_parse_elt tab[] = {
 		{"fillfactor", RELOPT_TYPE_INT, offsetof(BTOptions, fillfactor)},
-		{"vacuum_cleanup_index_scale_factor", RELOPT_TYPE_REAL,
-		offsetof(BTOptions, vacuum_cleanup_index_scale_factor)},
 		{"deduplicate_items", RELOPT_TYPE_BOOL,
 		offsetof(BTOptions, deduplicate_items)}
 
