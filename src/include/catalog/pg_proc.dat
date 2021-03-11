@@ -6234,6 +6234,10 @@
   proname => 'pg_is_wal_replay_paused', provolatile => 'v',
   prorettype => 'bool', proargtypes => '',
   prosrc => 'pg_is_wal_replay_paused' },
+{ oid => '1137', descr => 'get wal replay pause state',
+  proname => 'pg_get_wal_replay_pause_state', provolatile => 'v',
+  prorettype => 'text', proargtypes => '',
+  prosrc => 'pg_get_wal_replay_pause_state' },
 
 { oid => '2621', descr => 'reload configuration files',
   proname => 'pg_reload_conf', provolatile => 'v', prorettype => 'bool',

@@ -722,8 +722,8 @@ typedef struct XLogCtlData
 	 * only relevant for replication or archive recovery
 	 */
 	TimestampTz currentChunkStartTime;
-	/* Are we requested to pause recovery? */
-	bool		recoveryPause;
+	/* Recovery pause state */
+	RecoveryPauseState	recoveryPauseState;
 
 	/*
 	 * lastFpwDisableRecPtr points to the start of the last replayed
@@ -895,6 +895,7 @@ static void validateRecoveryParameters(void);
 static void exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog);
 static bool recoveryStopsBefore(XLogReaderState *record);
 static bool recoveryStopsAfter(XLogReaderState *record);
+static void ConfirmRecoveryPaused(void);
 static void recoveryPausesHere(bool endOfRecovery);
 static bool recoveryApplyDelay(XLogReaderState *record);
 static void SetLatestXTime(TimestampTz xtime);
@@ -6034,7 +6035,7 @@ recoveryStopsAfter(XLogReaderState *record)
 }
 
 /*
- * Wait until shared recoveryPause flag is cleared.
+ * Wait until shared recoveryPauseState is set to RECOVERY_NOT_PAUSED.
  *
  * endOfRecovery is true if the recovery target is reached and
  * the paused state starts at the end of recovery because of
@@ -6064,34 +6065,72 @@ recoveryPausesHere(bool endOfRecovery)
 				(errmsg("recovery has paused"),
 				 errhint("Execute pg_wal_replay_resume() to continue.")));
 
-	while (RecoveryIsPaused())
+	/* loop until recoveryPauseState is set to RECOVERY_NOT_PAUSED */
+	while (GetRecoveryPauseState() != RECOVERY_NOT_PAUSED)
 	{
 		HandleStartupProcInterrupts();
 		if (CheckForStandbyTrigger())
 			return;
 		pgstat_report_wait_start(WAIT_EVENT_RECOVERY_PAUSE);
+
+		/*
+		 * If recovery pause is requested then set it paused.  While we are in
+		 * the loop, user might resume and pause again so set this every time.
+		 */
+		ConfirmRecoveryPaused();
+
 		pg_usleep(1000000L);	/* 1000 ms */
 		pgstat_report_wait_end();
 	}
 }
 
-bool
-RecoveryIsPaused(void)
+/*
+ * Get the current state of the recovery pause request.
+ */
+RecoveryPauseState
+GetRecoveryPauseState(void)
 {
-	bool		recoveryPause;
+	RecoveryPauseState	state;
 
 	SpinLockAcquire(&XLogCtl->info_lck);
-	recoveryPause = XLogCtl->recoveryPause;
+	state = XLogCtl->recoveryPauseState;
 	SpinLockRelease(&XLogCtl->info_lck);
 
-	return recoveryPause;
+	return state;
 }
 
+/*
+ * Set the recovery pause state.
+ *
+ * If recovery pause is requested then sets the recovery pause state to
+ * 'pause requested' if it is not already 'paused'.  Otherwise, sets it
+ * to 'not paused' to resume the recovery.  The recovery pause will be
+ * confirmed by the ConfirmRecoveryPaused.
+ */
 void
 SetRecoveryPause(bool recoveryPause)
 {
 	SpinLockAcquire(&XLogCtl->info_lck);
-	XLogCtl->recoveryPause = recoveryPause;
+
+	if (!recoveryPause)
+		XLogCtl->recoveryPauseState = RECOVERY_NOT_PAUSED;
+	else if (XLogCtl->recoveryPauseState == RECOVERY_NOT_PAUSED)
+		XLogCtl->recoveryPauseState = RECOVERY_PAUSE_REQUESTED;
+
+	SpinLockRelease(&XLogCtl->info_lck);
+}
+
+/*
+ * Confirm the recovery pause by setting the recovery pause state to
+ * RECOVERY_PAUSED.
+ */
+static void
+ConfirmRecoveryPaused(void)
+{
+	/* If recovery pause is requested then set it paused */
+	SpinLockAcquire(&XLogCtl->info_lck);
+	if (XLogCtl->recoveryPauseState == RECOVERY_PAUSE_REQUESTED)
+		XLogCtl->recoveryPauseState = RECOVERY_PAUSED;
 	SpinLockRelease(&XLogCtl->info_lck);
 }
 
@@ -6292,7 +6331,7 @@ RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue
 					 errdetail("If recovery is unpaused, the server will shut down."),
 					 errhint("You can then restart the server after making the necessary configuration changes.")));
 
-			while (RecoveryIsPaused())
+			while (GetRecoveryPauseState() != RECOVERY_NOT_PAUSED)
 			{
 				HandleStartupProcInterrupts();
 
@@ -6310,6 +6349,13 @@ RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue
 								 errhint("Restart the server after making the necessary configuration changes.")));
 					warned_for_promote = true;
 				}
+
+				/*
+				 * If recovery pause is requested then set it paused.  While we
+				 * are in the loop, user might resume and pause again so set
+				 * this every time.
+				 */
+				ConfirmRecoveryPaused();
 
 				pgstat_report_wait_start(WAIT_EVENT_RECOVERY_PAUSE);
 				pg_usleep(1000000L);	/* 1000 ms */
@@ -7205,7 +7251,7 @@ StartupXLOG(void)
 		XLogCtl->lastReplayedTLI = XLogCtl->replayEndTLI;
 		XLogCtl->recoveryLastXTime = 0;
 		XLogCtl->currentChunkStartTime = 0;
-		XLogCtl->recoveryPause = false;
+		XLogCtl->recoveryPauseState = RECOVERY_NOT_PAUSED;
 		SpinLockRelease(&XLogCtl->info_lck);
 
 		/* Also ensure XLogReceiptTime has a sane value */
@@ -7309,7 +7355,8 @@ StartupXLOG(void)
 				 * otherwise would is a minor issue, so it doesn't seem worth
 				 * adding another spinlock cycle to prevent that.
 				 */
-				if (((volatile XLogCtlData *) XLogCtl)->recoveryPause)
+				if (((volatile XLogCtlData *) XLogCtl)->recoveryPauseState !=
+					RECOVERY_NOT_PAUSED)
 					recoveryPausesHere(false);
 
 				/*
@@ -7334,7 +7381,8 @@ StartupXLOG(void)
 					 * here otherwise pausing during the delay-wait wouldn't
 					 * work.
 					 */
-					if (((volatile XLogCtlData *) XLogCtl)->recoveryPause)
+					if (((volatile XLogCtlData *) XLogCtl)->recoveryPauseState !=
+						RECOVERY_NOT_PAUSED)
 						recoveryPausesHere(false);
 				}
 
@@ -12655,6 +12703,14 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 			default:
 				elog(ERROR, "unexpected WAL source %d", currentSource);
 		}
+
+		/*
+		 * Check for recovery pause here so that we can confirm more quickly
+		 * that a requested pause has actually taken effect.
+		 */
+		if (((volatile XLogCtlData *) XLogCtl)->recoveryPauseState !=
+			RECOVERY_NOT_PAUSED)
+			recoveryPausesHere(false);
 
 		/*
 		 * This possibly-long loop needs to handle interrupts of startup

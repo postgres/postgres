@@ -517,7 +517,7 @@ pg_walfile_name(PG_FUNCTION_ARGS)
 }
 
 /*
- * pg_wal_replay_pause - pause recovery now
+ * pg_wal_replay_pause - Request to pause recovery
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
@@ -539,6 +539,9 @@ pg_wal_replay_pause(PG_FUNCTION_ARGS)
 						 "pg_wal_replay_pause()")));
 
 	SetRecoveryPause(true);
+
+	/* wake up the recovery process so that it can process the pause request */
+	WakeupRecovery();
 
 	PG_RETURN_VOID();
 }
@@ -582,7 +585,45 @@ pg_is_wal_replay_paused(PG_FUNCTION_ARGS)
 				 errmsg("recovery is not in progress"),
 				 errhint("Recovery control functions can only be executed during recovery.")));
 
-	PG_RETURN_BOOL(RecoveryIsPaused());
+	PG_RETURN_BOOL(GetRecoveryPauseState() != RECOVERY_NOT_PAUSED);
+}
+
+/*
+ * pg_get_wal_replay_pause_state - Returns the recovery pause state.
+ *
+ * Returned values:
+ *
+ * 'not paused' - if pause is not requested
+ * 'pause requested' - if pause is requested but recovery is not yet paused
+ * 'paused' - if recovery is paused
+ */
+Datum
+pg_get_wal_replay_pause_state(PG_FUNCTION_ARGS)
+{
+	char	*statestr = NULL;
+
+	if (!RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is not in progress"),
+				 errhint("Recovery control functions can only be executed during recovery.")));
+
+	/* get the recovery pause state */
+	switch(GetRecoveryPauseState())
+	{
+		case RECOVERY_NOT_PAUSED:
+			statestr = "not paused";
+			break;
+		case RECOVERY_PAUSE_REQUESTED:
+			statestr = "pause requested";
+			break;
+		case RECOVERY_PAUSED:
+			statestr = "paused";
+			break;
+	}
+
+	Assert(statestr != NULL);
+	PG_RETURN_TEXT_P(cstring_to_text(statestr));
 }
 
 /*

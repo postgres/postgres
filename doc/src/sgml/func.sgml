@@ -25344,7 +25344,24 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        Returns true if recovery is paused.
+        Returns true if recovery pause is requested.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_wal_replay_pause_state</primary>
+        </indexterm>
+        <function>pg_get_wal_replay_pause_state</function> ()
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns recovery pause state.  The return values are <literal>
+        not paused</literal> if pause is not requested, <literal>
+        pause requested</literal> if pause is requested but recovery is
+        not yet paused and, <literal>paused</literal> if the recovery is
+        actually paused.
        </para></entry>
       </row>
 
@@ -25383,10 +25400,15 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <returnvalue>void</returnvalue>
        </para>
        <para>
-        Pauses recovery.  While recovery is paused, no further database
-        changes are applied.  If hot standby is active, all new queries will
-        see the same consistent snapshot of the database, and no further query
-        conflicts will be generated until recovery is resumed.
+        Request to pause recovery.  A request doesn't mean that recovery stops
+        right away.  If you want a guarantee that recovery is actually paused,
+        you need to check for the recovery pause state returned by
+        <function>pg_get_wal_replay_pause_state()</function>.  Note that
+        <function>pg_is_wal_replay_paused()</function> returns whether a request
+        is made.  While recovery is paused, no further database changes are applied.
+        If hot standby is active, all new queries will see the same consistent
+        snapshot of the database, and no further query conflicts will be generated
+        until recovery is resumed.
        </para>
        <para>
         This function is restricted to superusers by default, but other users
