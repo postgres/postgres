@@ -21,7 +21,7 @@ typedef bool (*ParallelSlotResultHandler) (PGresult *res, PGconn *conn,
 typedef struct ParallelSlot
 {
 	PGconn	   *connection;		/* One connection */
-	bool		isFree;			/* Is it known to be idle? */
+	bool		inUse;			/* Is the slot being used? */
 
 	/*
 	 * Prior to issuing a command or query on 'connection', a handler callback
@@ -32,6 +32,16 @@ typedef struct ParallelSlot
 	ParallelSlotResultHandler handler;
 	void	   *handler_context;
 } ParallelSlot;
+
+typedef struct ParallelSlotArray
+{
+	int			numslots;
+	ConnParams *cparams;
+	const char *progname;
+	bool		echo;
+	const char *initcmd;
+	ParallelSlot slots[FLEXIBLE_ARRAY_MEMBER];
+} ParallelSlotArray;
 
 static inline void
 ParallelSlotSetHandler(ParallelSlot *slot, ParallelSlotResultHandler handler,
@@ -48,15 +58,18 @@ ParallelSlotClearHandler(ParallelSlot *slot)
 	slot->handler_context = NULL;
 }
 
-extern ParallelSlot *ParallelSlotsGetIdle(ParallelSlot *slots, int numslots);
+extern ParallelSlot *ParallelSlotsGetIdle(ParallelSlotArray *slots,
+										  const char *dbname);
 
-extern ParallelSlot *ParallelSlotsSetup(const ConnParams *cparams,
-										const char *progname, bool echo,
-										PGconn *conn, int numslots);
+extern ParallelSlotArray *ParallelSlotsSetup(int numslots, ConnParams *cparams,
+											 const char *progname, bool echo,
+											 const char *initcmd);
 
-extern void ParallelSlotsTerminate(ParallelSlot *slots, int numslots);
+extern void ParallelSlotsAdoptConn(ParallelSlotArray *sa, PGconn *conn);
 
-extern bool ParallelSlotsWaitCompletion(ParallelSlot *slots, int numslots);
+extern void ParallelSlotsTerminate(ParallelSlotArray *sa);
+
+extern bool ParallelSlotsWaitCompletion(ParallelSlotArray *sa);
 
 extern bool TableCommandResultHandler(PGresult *res, PGconn *conn,
 									  void *context);

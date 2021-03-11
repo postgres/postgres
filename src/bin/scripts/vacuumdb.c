@@ -45,7 +45,7 @@ typedef struct vacuumingOptions
 } vacuumingOptions;
 
 
-static void vacuum_one_database(const ConnParams *cparams,
+static void vacuum_one_database(ConnParams *cparams,
 								vacuumingOptions *vacopts,
 								int stage,
 								SimpleStringList *tables,
@@ -408,7 +408,7 @@ main(int argc, char *argv[])
  * a list of tables from the database.
  */
 static void
-vacuum_one_database(const ConnParams *cparams,
+vacuum_one_database(ConnParams *cparams,
 					vacuumingOptions *vacopts,
 					int stage,
 					SimpleStringList *tables,
@@ -421,13 +421,14 @@ vacuum_one_database(const ConnParams *cparams,
 	PGresult   *res;
 	PGconn	   *conn;
 	SimpleStringListCell *cell;
-	ParallelSlot *slots;
+	ParallelSlotArray *sa;
 	SimpleStringList dbtables = {NULL, NULL};
 	int			i;
 	int			ntups;
 	bool		failed = false;
 	bool		tables_listed = false;
 	bool		has_where = false;
+	const char *initcmd;
 	const char *stage_commands[] = {
 		"SET default_statistics_target=1; SET vacuum_cost_delay=0;",
 		"SET default_statistics_target=10; RESET vacuum_cost_delay;",
@@ -684,26 +685,25 @@ vacuum_one_database(const ConnParams *cparams,
 		concurrentCons = 1;
 
 	/*
+	 * All slots need to be prepared to run the appropriate analyze stage, if
+	 * caller requested that mode.  We have to prepare the initial connection
+	 * ourselves before setting up the slots.
+	 */
+	if (stage == ANALYZE_NO_STAGE)
+		initcmd = NULL;
+	else
+	{
+		initcmd = stage_commands[stage];
+		executeCommand(conn, initcmd, echo);
+	}
+
+	/*
 	 * Setup the database connections. We reuse the connection we already have
 	 * for the first slot.  If not in parallel mode, the first slot in the
 	 * array contains the connection.
 	 */
-	slots = ParallelSlotsSetup(cparams, progname, echo, conn, concurrentCons);
-
-	/*
-	 * Prepare all the connections to run the appropriate analyze stage, if
-	 * caller requested that mode.
-	 */
-	if (stage != ANALYZE_NO_STAGE)
-	{
-		int			j;
-
-		/* We already emitted the message above */
-
-		for (j = 0; j < concurrentCons; j++)
-			executeCommand((slots + j)->connection,
-						   stage_commands[stage], echo);
-	}
+	sa = ParallelSlotsSetup(concurrentCons, cparams, progname, echo, initcmd);
+	ParallelSlotsAdoptConn(sa, conn);
 
 	initPQExpBuffer(&sql);
 
@@ -719,7 +719,7 @@ vacuum_one_database(const ConnParams *cparams,
 			goto finish;
 		}
 
-		free_slot = ParallelSlotsGetIdle(slots, concurrentCons);
+		free_slot = ParallelSlotsGetIdle(sa, NULL);
 		if (!free_slot)
 		{
 			failed = true;
@@ -740,12 +740,12 @@ vacuum_one_database(const ConnParams *cparams,
 		cell = cell->next;
 	} while (cell != NULL);
 
-	if (!ParallelSlotsWaitCompletion(slots, concurrentCons))
+	if (!ParallelSlotsWaitCompletion(sa))
 		failed = true;
 
 finish:
-	ParallelSlotsTerminate(slots, concurrentCons);
-	pg_free(slots);
+	ParallelSlotsTerminate(sa);
+	pg_free(sa);
 
 	termPQExpBuffer(&sql);
 

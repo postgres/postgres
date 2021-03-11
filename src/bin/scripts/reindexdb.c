@@ -36,7 +36,7 @@ static SimpleStringList *get_parallel_object_list(PGconn *conn,
 												  ReindexType type,
 												  SimpleStringList *user_list,
 												  bool echo);
-static void reindex_one_database(const ConnParams *cparams, ReindexType type,
+static void reindex_one_database(ConnParams *cparams, ReindexType type,
 								 SimpleStringList *user_list,
 								 const char *progname,
 								 bool echo, bool verbose, bool concurrently,
@@ -330,7 +330,7 @@ main(int argc, char *argv[])
 }
 
 static void
-reindex_one_database(const ConnParams *cparams, ReindexType type,
+reindex_one_database(ConnParams *cparams, ReindexType type,
 					 SimpleStringList *user_list,
 					 const char *progname, bool echo,
 					 bool verbose, bool concurrently, int concurrentCons,
@@ -341,7 +341,7 @@ reindex_one_database(const ConnParams *cparams, ReindexType type,
 	bool		parallel = concurrentCons > 1;
 	SimpleStringList *process_list = user_list;
 	ReindexType process_type = type;
-	ParallelSlot *slots;
+	ParallelSlotArray *sa;
 	bool		failed = false;
 	int			items_count = 0;
 
@@ -461,7 +461,8 @@ reindex_one_database(const ConnParams *cparams, ReindexType type,
 
 	Assert(process_list != NULL);
 
-	slots = ParallelSlotsSetup(cparams, progname, echo, conn, concurrentCons);
+	sa = ParallelSlotsSetup(concurrentCons, cparams, progname, echo, NULL);
+	ParallelSlotsAdoptConn(sa, conn);
 
 	cell = process_list->head;
 	do
@@ -475,7 +476,7 @@ reindex_one_database(const ConnParams *cparams, ReindexType type,
 			goto finish;
 		}
 
-		free_slot = ParallelSlotsGetIdle(slots, concurrentCons);
+		free_slot = ParallelSlotsGetIdle(sa, NULL);
 		if (!free_slot)
 		{
 			failed = true;
@@ -489,7 +490,7 @@ reindex_one_database(const ConnParams *cparams, ReindexType type,
 		cell = cell->next;
 	} while (cell != NULL);
 
-	if (!ParallelSlotsWaitCompletion(slots, concurrentCons))
+	if (!ParallelSlotsWaitCompletion(sa))
 		failed = true;
 
 finish:
@@ -499,8 +500,8 @@ finish:
 		pg_free(process_list);
 	}
 
-	ParallelSlotsTerminate(slots, concurrentCons);
-	pfree(slots);
+	ParallelSlotsTerminate(sa);
+	pfree(sa);
 
 	if (failed)
 		exit(1);

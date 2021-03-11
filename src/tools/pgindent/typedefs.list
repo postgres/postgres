@@ -404,6 +404,7 @@ ConfigData
 ConfigVariable
 ConnCacheEntry
 ConnCacheKey
+ConnParams
 ConnStatusType
 ConnType
 ConnectionStateEnum
@@ -1730,6 +1731,7 @@ ParallelHashJoinState
 ParallelIndexScanDesc
 ParallelReadyList
 ParallelSlot
+ParallelSlotArray
 ParallelState
 ParallelTableScanDesc
 ParallelTableScanDescData
