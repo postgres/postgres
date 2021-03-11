@@ -111,3 +111,4 @@ create index btree_idx_err on btree_test(a) with (vacuum_cleanup_index_scale_fac
 -- Simple ALTER INDEX
 alter index btree_idx1 set (vacuum_cleanup_index_scale_factor = 70.0);
 select reloptions from pg_class WHERE oid = 'btree_idx1'::regclass;
+drop index btree_idx1;
