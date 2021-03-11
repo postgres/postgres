@@ -461,6 +461,15 @@ static relopt_real realRelOpts[] =
 		},
 		0, -1.0, DBL_MAX
 	},
+	{
+		{
+			"vacuum_cleanup_index_scale_factor",
+			"Deprecated B-Tree parameter.",
+			RELOPT_KIND_BTREE,
+			ShareUpdateExclusiveLock
+		},
+		-1, 0.0, 1e10
+	},
 	/* list terminator */
 	{{NULL}}
 };
