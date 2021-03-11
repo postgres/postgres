@@ -425,7 +425,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </variablelist>
 
    <para>
-    B-tree indexes also accept these parameters:
+    B-tree indexes additionally accept this parameter:
    </para>
 
    <variablelist>
