@@ -53,10 +53,10 @@ use Test::More;
 # We choose to read and write binary copies of our table's tuples, using perl's
 # pack() and unpack() functions.  Perl uses a packing code system in which:
 #
+#	l = "signed 32-bit Long",
 #	L = "Unsigned 32-bit Long",
 #	S = "Unsigned 16-bit Short",
 #	C = "Unsigned 8-bit Octet",
-#	c = "signed 8-bit octet",
 #	q = "signed 64-bit quadword"
 #
 # Each tuple in our table has a layout as follows:
@@ -72,16 +72,16 @@ use Test::More;
 #    xx                     t_hoff: x			offset = 22		C
 #    xx                     t_bits: x			offset = 23		C
 #    xx xx xx xx xx xx xx xx   'a': xxxxxxxx	offset = 24		q
-#    xx xx xx xx xx xx xx xx   'b': xxxxxxxx	offset = 32		Cccccccc
-#    xx xx xx xx xx xx xx xx   'c': xxxxxxxx	offset = 40		SSSS
-#    xx xx xx xx xx xx xx xx      : xxxxxxxx	 ...continued	SSSS
-#    xx xx                        : xx      	 ...continued	S
+#    xx xx xx xx xx xx xx xx   'b': xxxxxxxx	offset = 32		CCCCCCCC
+#    xx xx xx xx xx xx xx xx   'c': xxxxxxxx	offset = 40		CCllLL
+#    xx xx xx xx xx xx xx xx      : xxxxxxxx	 ...continued
+#    xx xx                        : xx      	 ...continued
 #
 # We could choose to read and write columns 'b' and 'c' in other ways, but
 # it is convenient enough to do it this way.  We define packing code
 # constants here, where they can be compared easily against the layout.
 
-use constant HEAPTUPLE_PACK_CODE => 'LLLSSSSSCCqCcccccccSSSSSSSSS';
+use constant HEAPTUPLE_PACK_CODE => 'LLLSSSSSCCqCCCCCCCCCCllLL';
 use constant HEAPTUPLE_PACK_LENGTH => 58;     # Total size
 
 # Read a tuple of our table from a heap page.
@@ -121,15 +121,12 @@ sub read_tuple
 			b_body5 => shift,
 			b_body6 => shift,
 			b_body7 => shift,
-			c1 => shift,
-			c2 => shift,
-			c3 => shift,
-			c4 => shift,
-			c5 => shift,
-			c6 => shift,
-			c7 => shift,
-			c8 => shift,
-			c9 => shift);
+			c_va_header => shift,
+			c_va_vartag => shift,
+			c_va_rawsize => shift,
+			c_va_extsize => shift,
+			c_va_valueid => shift,
+			c_va_toastrelid => shift);
 	# Stitch together the text for column 'b'
 	$tup{b} = join('', map { chr($tup{"b_body$_"}) } (1..7));
 	return \%tup;
@@ -168,15 +165,12 @@ sub write_tuple
 					$tup->{b_body5},
 					$tup->{b_body6},
 					$tup->{b_body7},
-					$tup->{c1},
-					$tup->{c2},
-					$tup->{c3},
-					$tup->{c4},
-					$tup->{c5},
-					$tup->{c6},
-					$tup->{c7},
-					$tup->{c8},
-					$tup->{c9});
+					$tup->{c_va_header},
+					$tup->{c_va_vartag},
+					$tup->{c_va_rawsize},
+					$tup->{c_va_extsize},
+					$tup->{c_va_valueid},
+					$tup->{c_va_toastrelid});
 	seek($fh, $offset, 0)
 		or BAIL_OUT("seek failed: $!");
 	defined(syswrite($fh, $buffer, HEAPTUPLE_PACK_LENGTH))
@@ -273,6 +267,7 @@ open($file, '+<', $relpath)
 	or BAIL_OUT("open failed: $!");
 binmode $file;
 
+my $ENDIANNESS;
 for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 {
 	my $offnum = $tupidx + 1;  # offnum is 1-based, not zero-based
@@ -289,6 +284,9 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		plan skip_all => qq(Page layout differs from our expectations: expected (12345678, "abcdefg"), got ($a, "$b"));
 		exit;
 	}
+
+	# Determine endianness of current platform from the 1-byte varlena header
+	$ENDIANNESS = $tup->{b_header} == 0x11 ? "little" : "big";
 }
 close($file)
 	or BAIL_OUT("close failed: $!");
@@ -459,22 +457,36 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 	}
 	elsif ($offnum == 12)
 	{
-		# Corrupt the bits in column 'b' 1-byte varlena header
-		$tup->{b_header} = 0x80;
+		# Overwrite column 'b' 1-byte varlena header and initial characters to
+		# look like a long 4-byte varlena
+		#
+		# On little endian machines, bytes ending in two zero bits (xxxxxx00 bytes)
+		# are 4-byte length word, aligned, uncompressed data (up to 1G).  We set the
+		# high six bits to 111111 and the lower two bits to 00, then the next three
+		# bytes with 0xFF using 0xFCFFFFFF.
+		#
+		# On big endian machines, bytes starting in two zero bits (00xxxxxx bytes)
+		# are 4-byte length word, aligned, uncompressed data (up to 1G).  We set the
+		# low six bits to 111111 and the high two bits to 00, then the next three
+		# bytes with 0xFF using 0x3FFFFFFF.
+		#
+		$tup->{b_header} = $ENDIANNESS eq 'little' ? 0xFC : 0x3F;
+		$tup->{b_body1} = 0xFF;
+		$tup->{b_body2} = 0xFF;
+		$tup->{b_body3} = 0xFF;
 
 		$header = header(0, $offnum, 1);
 		push @expected,
-			qr/${header}attribute 1 with length 4294967295 ends at offset 416848000 beyond total tuple length 58/;
+			qr/${header}attribute \d+ with length \d+ ends at offset \d+ beyond total tuple length \d+/;
 	}
 	elsif ($offnum == 13)
 	{
 		# Corrupt the bits in column 'c' toast pointer
-		$tup->{c6} = 41;
-		$tup->{c7} = 41;
+		$tup->{c_va_valueid} = 0xFFFFFFFF;
 
 		$header = header(0, $offnum, 2);
 		push @expected,
-			qr/${header}final toast chunk number 0 differs from expected value 6/,
+			qr/${header}final toast chunk number 0 differs from expected value \d+/,
 			qr/${header}toasted value for attribute 2 missing from toast table/;
 	}
 	elsif ($offnum == 14)
