@@ -19,6 +19,7 @@
 #include "port/atomics.h"
 #include "replication/logicalproto.h"
 #include "replication/walsender.h"
+#include "storage/condition_variable.h"
 #include "storage/latch.h"
 #include "storage/spin.h"
 #include "utils/tuplestore.h"
@@ -62,6 +63,7 @@ typedef struct
 	 */
 	pid_t		pid;
 	WalRcvState walRcvState;
+	ConditionVariable walRcvStoppedCV;
 	pg_time_t	startTime;
 
 	/*

@@ -207,6 +207,7 @@ WalReceiverMain(void)
 
 		case WALRCV_STOPPED:
 			SpinLockRelease(&walrcv->mutex);
+			ConditionVariableBroadcast(&walrcv->walRcvStoppedCV);
 			proc_exit(1);
 			break;
 
@@ -783,6 +784,8 @@ WalRcvDie(int code, Datum arg)
 	walrcv->ready_to_display = false;
 	walrcv->latch = NULL;
 	SpinLockRelease(&walrcv->mutex);
+
+	ConditionVariableBroadcast(&walrcv->walRcvStoppedCV);
 
 	/* Terminate the connection gracefully. */
 	if (wrconn != NULL)

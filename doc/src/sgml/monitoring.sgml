@@ -1767,6 +1767,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        replication.</entry>
      </row>
      <row>
+      <entry><literal>WalrcvExit</literal></entry>
+      <entry>Waiting for the walreceiver to exit.</entry>
+     </row>
+     <row>
       <entry><literal>XactGroupUpdate</literal></entry>
       <entry>Waiting for the group leader to update transaction status at
        end of a parallel operation.</entry>
