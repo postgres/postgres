@@ -10,7 +10,7 @@ my ($node, $port, %corrupt_page, %remove_relation);
 # Returns the filesystem path for the named relation.
 #
 # Assumes the test node is running
-sub relation_filepath($$)
+sub relation_filepath
 {
 	my ($dbname, $relname) = @_;
 
@@ -24,7 +24,7 @@ sub relation_filepath($$)
 # Returns the name of the toast relation associated with the named relation.
 #
 # Assumes the test node is running
-sub relation_toast($$)
+sub relation_toast
 {
 	my ($dbname, $relname) = @_;
 
@@ -34,7 +34,6 @@ sub relation_toast($$)
 			WHERE c.oid = '$relname'::regclass
 			  AND c.reltoastrelid != 0
 			));
-	return undef unless defined $rel;
 	return $rel;
 }
 
@@ -42,7 +41,7 @@ sub relation_toast($$)
 # to be corrupted by means of overwriting junk in the first page.
 #
 # Assumes the test node is running.
-sub plan_to_corrupt_first_page($$)
+sub plan_to_corrupt_first_page
 {
 	my ($dbname, $relname) = @_;
 	my $relpath = relation_filepath($dbname, $relname);
@@ -53,7 +52,7 @@ sub plan_to_corrupt_first_page($$)
 # to be corrupted by means of removing the file..
 #
 # Assumes the test node is running
-sub plan_to_remove_relation_file($$)
+sub plan_to_remove_relation_file
 {
 	my ($dbname, $relname) = @_;
 	my $relpath = relation_filepath($dbname, $relname);
@@ -65,7 +64,7 @@ sub plan_to_remove_relation_file($$)
 # corrupted by means of removing the file.
 #
 # Assumes the test node is running.
-sub plan_to_remove_toast_file($$)
+sub plan_to_remove_toast_file
 {
 	my ($dbname, $relname) = @_;
 	my $toastname = relation_toast($dbname, $relname);
@@ -73,7 +72,7 @@ sub plan_to_remove_toast_file($$)
 }
 
 # Corrupts the first page of the given file path
-sub corrupt_first_page($)
+sub corrupt_first_page
 {
 	my ($relpath) = @_;
 

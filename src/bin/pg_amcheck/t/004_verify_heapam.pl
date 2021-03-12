@@ -92,7 +92,7 @@ use constant HEAPTUPLE_PACK_LENGTH => 58;     # Total size
 # perl hash with named fields.  These fields exactly match the ones understood
 # by write_tuple(), below.  Returns a reference to this hash.
 #
-sub read_tuple ($$)
+sub read_tuple
 {
 	my ($fh, $offset) = @_;
 	my ($buffer, %tup);
@@ -145,7 +145,7 @@ sub read_tuple ($$)
 # subset of fields modified.  The function does no error checking.  Use
 # cautiously.
 #
-sub write_tuple($$$)
+sub write_tuple
 {
 	my ($fh, $offset, $tup) = @_;
 	my $buffer = pack(HEAPTUPLE_PACK_CODE,
