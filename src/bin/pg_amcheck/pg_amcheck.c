@@ -2058,7 +2058,7 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 	{
 		int			pattern_id = -1;
 		bool		is_heap = false;
-		bool		is_btree = false PG_USED_FOR_ASSERTS_ONLY;
+		bool		is_btree PG_USED_FOR_ASSERTS_ONLY = false;
 		Oid			oid = InvalidOid;
 		const char *nspname = NULL;
 		const char *relname = NULL;
