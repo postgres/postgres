@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <pwd.h>
+#include <utime.h>
 #ifndef WIN32
 #include <sys/stat.h>			/* for stat() */
 #include <fcntl.h>				/* open() flags */
@@ -3709,7 +3710,6 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 	const char *fname;
 	bool		error = false;
 	int			fd;
-
 	struct stat before,
 				after;
 
@@ -3734,13 +3734,13 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 						 !ret ? strerror(errno) : "");
 			return false;
 		}
+#endif
 
 		/*
 		 * No canonicalize_path() here. EDIT.EXE run from CMD.EXE prepends the
 		 * current directory to the supplied path unless we use only
 		 * backslashes, so we do that.
 		 */
-#endif
 #ifndef WIN32
 		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d.sql", tmpdir,
 				 "/", (int) getpid());
@@ -3790,6 +3790,24 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 					pg_log_error("%s: %m", fname);
 				error = true;
 			}
+			else
+			{
+				struct utimbuf ut;
+
+				/*
+				 * Try to set the file modification time of the temporary file
+				 * a few seconds in the past.  Otherwise, the low granularity
+				 * (one second, or even worse on some filesystems) that we can
+				 * portably measure with stat(2) could lead us to not
+				 * recognize a modification, if the user typed very quickly.
+				 *
+				 * This is a rather unlikely race condition, so don't error
+				 * out if the utime(2) call fails --- that would make the cure
+				 * worse than the disease.
+				 */
+				ut.modtime = ut.actime = time(NULL) - 2;
+				(void) utime(fname, &ut);
+			}
 		}
 	}
 
@@ -3809,7 +3827,10 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 		error = true;
 	}
 
-	if (!error && before.st_mtime != after.st_mtime)
+	/* file was edited if the size or modification time has changed */
+	if (!error &&
+		(before.st_size != after.st_size ||
+		 before.st_mtime != after.st_mtime))
 	{
 		stream = fopen(fname, PG_BINARY_R);
 		if (!stream)
