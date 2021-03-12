@@ -724,6 +724,7 @@ typedef struct XLogCtlData
 	TimestampTz currentChunkStartTime;
 	/* Recovery pause state */
 	RecoveryPauseState	recoveryPauseState;
+	ConditionVariable recoveryNotPausedCV;
 
 	/*
 	 * lastFpwDisableRecPtr points to the start of the last replayed
@@ -5228,6 +5229,7 @@ XLOGShmemInit(void)
 	SpinLockInit(&XLogCtl->info_lck);
 	SpinLockInit(&XLogCtl->ulsn_lck);
 	InitSharedLatch(&XLogCtl->recoveryWakeupLatch);
+	ConditionVariableInit(&XLogCtl->recoveryNotPausedCV);
 }
 
 /*
@@ -6040,10 +6042,6 @@ recoveryStopsAfter(XLogReaderState *record)
  * endOfRecovery is true if the recovery target is reached and
  * the paused state starts at the end of recovery because of
  * recovery_target_action=pause, and false otherwise.
- *
- * XXX Could also be done with shared latch, avoiding the pg_usleep loop.
- * Probably not worth the trouble though.  This state shouldn't be one that
- * anyone cares about server power consumption in.
  */
 static void
 recoveryPausesHere(bool endOfRecovery)
@@ -6071,7 +6069,6 @@ recoveryPausesHere(bool endOfRecovery)
 		HandleStartupProcInterrupts();
 		if (CheckForStandbyTrigger())
 			return;
-		pgstat_report_wait_start(WAIT_EVENT_RECOVERY_PAUSE);
 
 		/*
 		 * If recovery pause is requested then set it paused.  While we are in
@@ -6079,9 +6076,15 @@ recoveryPausesHere(bool endOfRecovery)
 		 */
 		ConfirmRecoveryPaused();
 
-		pg_usleep(1000000L);	/* 1000 ms */
-		pgstat_report_wait_end();
+		/*
+		 * We wait on a condition variable that will wake us as soon as the
+		 * pause ends, but we use a timeout so we can check the above exit
+		 * condition periodically too.
+		 */
+		ConditionVariableTimedSleep(&XLogCtl->recoveryNotPausedCV, 1000,
+									WAIT_EVENT_RECOVERY_PAUSE);
 	}
+	ConditionVariableCancelSleep();
 }
 
 /*
@@ -6118,6 +6121,9 @@ SetRecoveryPause(bool recoveryPause)
 		XLogCtl->recoveryPauseState = RECOVERY_PAUSE_REQUESTED;
 
 	SpinLockRelease(&XLogCtl->info_lck);
+
+	if (!recoveryPause)
+		ConditionVariableBroadcast(&XLogCtl->recoveryNotPausedCV);
 }
 
 /*
@@ -6357,10 +6363,15 @@ RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue
 				 */
 				ConfirmRecoveryPaused();
 
-				pgstat_report_wait_start(WAIT_EVENT_RECOVERY_PAUSE);
-				pg_usleep(1000000L);	/* 1000 ms */
-				pgstat_report_wait_end();
+				/*
+				 * We wait on a condition variable that will wake us as soon as
+				 * the pause ends, but we use a timeout so we can check the
+				 * above conditions periodically too.
+				 */
+				ConditionVariableTimedSleep(&XLogCtl->recoveryNotPausedCV, 1000,
+											WAIT_EVENT_RECOVERY_PAUSE);
 			}
+			ConditionVariableCancelSleep();
 		}
 
 		ereport(FATAL,
