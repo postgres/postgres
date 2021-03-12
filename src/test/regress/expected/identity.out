@@ -386,3 +386,16 @@ CREATE TABLE itest_child PARTITION OF itest_parent (
 ) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01'); -- error
 ERROR:  identity columns are not supported on partitions
 DROP TABLE itest_parent;
+-- Identity columns must be NOT NULL (cf bug #16913)
+CREATE TABLE itest15 (id integer GENERATED ALWAYS AS IDENTITY NULL); -- fail
+ERROR:  conflicting NULL/NOT NULL declarations for column "id" of table "itest15"
+LINE 1: ...ABLE itest15 (id integer GENERATED ALWAYS AS IDENTITY NULL);
+                                                                 ^
+CREATE TABLE itest15 (id integer NULL GENERATED ALWAYS AS IDENTITY); -- fail
+ERROR:  conflicting NULL/NOT NULL declarations for column "id" of table "itest15"
+LINE 1: CREATE TABLE itest15 (id integer NULL GENERATED ALWAYS AS ID...
+                                              ^
+CREATE TABLE itest15 (id integer GENERATED ALWAYS AS IDENTITY NOT NULL);
+DROP TABLE itest15;
+CREATE TABLE itest15 (id integer NOT NULL GENERATED ALWAYS AS IDENTITY);
+DROP TABLE itest15;
