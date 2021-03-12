@@ -246,6 +246,7 @@
    &dropdb;
    &dropuser;
    &ecpgRef;
+   &pgamcheck;
    &pgBasebackup;
    &pgbench;
    &pgConfig;

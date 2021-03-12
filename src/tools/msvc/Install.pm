@@ -20,12 +20,12 @@ our (@ISA, @EXPORT_OK);
 my $insttype;
 my @client_contribs = ('oid2name', 'pgbench', 'vacuumlo');
 my @client_program_files = (
-	'clusterdb',      'createdb',   'createuser',    'dropdb',
-	'dropuser',       'ecpg',       'libecpg',       'libecpg_compat',
-	'libpgtypes',     'libpq',      'pg_basebackup', 'pg_config',
-	'pg_dump',        'pg_dumpall', 'pg_isready',    'pg_receivewal',
-	'pg_recvlogical', 'pg_restore', 'psql',          'reindexdb',
-	'vacuumdb',       @client_contribs);
+	'clusterdb',     'createdb',       'createuser', 'dropdb',
+	'dropuser',      'ecpg',           'libecpg',    'libecpg_compat',
+	'libpgtypes',    'libpq',          'pg_amcheck', 'pg_basebackup',
+	'pg_config',     'pg_dump',        'pg_dumpall', 'pg_isready',
+	'pg_receivewal', 'pg_recvlogical', 'pg_restore', 'psql',
+	'reindexdb',     'vacuumdb',       @client_contribs);
 
 sub lcopy
 {

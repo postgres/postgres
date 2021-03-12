@@ -1,0 +1,609 @@
+<!--
+doc/src/sgml/ref/pg_amcheck.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="app-pgamcheck">
+ <indexterm zone="app-pgamcheck">
+  <primary>pg_amcheck</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle><application>pg_amcheck</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_amcheck</refname>
+  <refpurpose>checks for corruption in one or more
+  <productname>PostgreSQL</productname> databases</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_amcheck</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <arg><replaceable>dbname</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <application>pg_amcheck</application> supports running
+   <xref linkend="amcheck"/>'s corruption checking functions against one or
+   more databases, with options to select which schemas, tables and indexes to
+   check, which kinds of checking to perform, and whether to perform the checks
+   in parallel, and if so, the number of parallel connections to establish and
+   use.
+  </para>
+
+  <para>
+   Only table relations and btree indexes are currently supported.  Other
+   relation types are silently skipped.
+  </para>
+
+  <para>
+   If <literal>dbname</literal> is specified, it should be the name of a
+   single database to check, and no other database selection options should
+   be present. Otherwise, if any database selection options are present,
+   all matching databases will be checked. If no such options are present,
+   the default database will be checked. Database selection options include
+   <option>--all</option>, <option>--database</option> and
+   <option>--exclude-database</option>. They also include
+   <option>--relation</option>, <option>--exclude-relation</option>,
+   <option>--table</option>, <option>--exclude-table</option>,
+   <option>--index</option>, and <option>--exclude-index</option>,
+   but only when such options are used with a three-part pattern
+   (e.g. <option>mydb*.myschema*.myrel*</option>).  Finally, they include
+   <option>--schema</option> and <option>--exclude-schema</option>
+   when such options are used with a two-part pattern
+   (e.g. <option>mydb*.myschema*</option>).
+  </para>
+
+  <para>
+   <replaceable>dbname</replaceable> can also be a
+   <link linkend="libpq-connstring">connection string</link>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+  <para>
+   pg_amcheck accepts the following command-line arguments:
+
+   <variablelist>
+    <varlistentry>
+     <term><option>-a</option></term>
+     <term><option>--all</option></term>
+       <listitem>
+      <para>
+       Check all databases, except for any excluded via
+       <option>--exclude-database</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-d <replaceable class="parameter">pattern</replaceable></option></term>
+     <term><option>--database=<replaceable class="parameter">pattern</replaceable></option></term>
+     <listitem>
+      <para>
+       Check databases matching the specified
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link>,
+       except for any excluded by <option>--exclude-database</option>.
+       This option can be specified more than once.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-D <replaceable class="parameter">pattern</replaceable></option></term>
+     <term><option>--exclude-database=<replaceable class="parameter">pattern</replaceable></option></term>
+     <listitem>
+      <para>
+       Exclude databases matching the given
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link>.
+       This option can be specified more than once.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-e</option></term>
+     <term><option>--echo</option></term>
+     <listitem>
+      <para>
+      Echo to stdout all SQL sent to the server.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--endblock=<replaceable class="parameter">block</replaceable></option></term>
+     <listitem>
+      <para>
+       End checking at the specified block number.  An error will occur if the
+       table relation being checked has fewer than this number of blocks.
+       This option does not apply to indexes, and is probably only useful when
+       checking a single table relation. If both a regular table and a toast
+       table are checked, this option will apply to both, but higher-numbered
+       toast blocks may still be accessed while validating toast pointers,
+       unless that is suppressed using
+       <option>--exclude-toast-pointers</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--exclude-toast-pointers</option></term>
+     <listitem>
+      <para>
+       By default, whenever a toast pointer is encountered in a table,
+       a lookup is performed to ensure that it references apparently-valid
+       entries in the toast table. These checks can be quite slow, and this
+       option can be used to skip them.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--heapallindexed</option></term>
+     <listitem>
+      <para>
+       For each index checked, verify the presence of all heap tuples as index
+       tuples in the index using <xref linkend="amcheck"/>'s
+       <option>heapallindexed</option> option.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-?</option></term>
+     <term><option>--help</option></term>
+     <listitem>
+      <para>
+       Show help about <application>pg_amcheck</application> command line
+       arguments, and exit.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-h <replaceable class="parameter">hostname</replaceable></option></term>
+     <term><option>--host=<replaceable class="parameter">hostname</replaceable></option></term>
+     <listitem>
+      <para>
+       Specifies the host name of the machine on which the server is running.
+       If the value begins with a slash, it is used as the directory for the
+       Unix domain socket.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-i <replaceable class="parameter">pattern</replaceable></option></term>
+     <term><option>--index=<replaceable class="parameter">pattern</replaceable></option></term>
+     <listitem>
+      <para>
+       Check indexes matching the specified
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link>,
+       unless they are otherwise excluded.
+       This option can be specified more than once.
+      </para>
+      <para>
+       This is similar to the <option>--relation</option> option, except that
+       it applies only to indexes, not tables.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-I <replaceable class="parameter">pattern</replaceable></option></term>
+     <term><option>--exclude-index=<replaceable class="parameter">pattern</replaceable></option></term>
+     <listitem>
+      <para>
+       Exclude indexes matching the specified
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link>.
+       This option can be specified more than once.
+      </para>
+      <para>
+       This is similar to the <option>--exclude-relation</option> option,
+       except that it applies only to indexes, not tables.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-j <replaceable class="parameter">num</replaceable></option></term>
+     <term><option>--jobs=<replaceable class="parameter">num</replaceable></option></term>
+     <listitem>
+      <para>
+       Use <replaceable>num</replaceable> concurrent connections to the server,
+       or one per object to be checked, whichever is less.
+      </para>
+      <para>
+       The default is to use a single connection.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--maintenance-db=<replaceable class="parameter">dbname</replaceable></option></term>
+     <listitem>
+      <para>
+       Specifies a database or
+       <link linkend="libpq-connstring">connection string</link> to be
+       used to discover the list of databases to be checked. If neither
+       <option>--all</option> nor any option including a database pattern is
+       used, no such connection is required and this option does nothing.
+       Otherwise, any connection string parameters other than
+       the database name which are included in the value for this option
+       will also be used when connecting to the databases
+       being checked. If this option is omitted, the default is
+       <literal>postgres</literal> or, if that fails,
+       <literal>template1</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--no-dependent-indexes</option></term>
+     <listitem>
+      <para>
+       By default, if a table is checked, any btree indexes of that table
+       will also be checked, even if they are not explicitly selected by
+       an option such as <literal>--index</literal> or
+       <literal>--relation</literal>. This option suppresses that behavior.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--no-strict-names</option></term>
+     <listitem>
+      <para>
+       By default, if an argument to <literal>--database</literal>,
+       <literal>--table</literal>, <literal>--index</literal>,
+       or <literal>--relation</literal> matches no objects, it is a fatal
+       error. This option downgrades that error to a warning.
+       If this option is used with <literal>--quiet</literal>, the warning
+       will be supressed as well.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--no-dependent-toast</option></term>
+     <listitem>
+      <para>
+       By default, if a table is checked, its toast table, if any, will also
+       be checked, even if it is not explicitly selected by an option
+       such as <literal>--table</literal> or <literal>--relation</literal>.
+       This option suppresses that behavior.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--on-error-stop</option></term>
+     <listitem>
+      <para>
+       After reporting all corruptions on the first page of a table where
+       corruption is found, stop processing that table relation and move on
+       to the next table or index.
+      </para>
+      <para>
+       Note that index checking always stops after the first corrupt page.
+       This option only has meaning relative to table relations.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--parent-check</option></term>
+     <listitem>
+      <para>
+       For each btree index checked, use <xref linkend="amcheck"/>'s
+       <function>bt_index_parent_check</function> function, which performs
+       additional checks of parent/child relationships during index checking.
+      </para>
+      <para>
+       The default is to use <application>amcheck</application>'s
+       <function>bt_index_check</function> function, but note that use of the
+       <option>--rootdescend</option> option implicitly selects
+       <function>bt_index_parent_check</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
+     <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
+     <listitem>
+      <para>
+       Specifies the TCP port or local Unix domain socket file extension on
+       which the server is listening for connections.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-P</option></term>
+     <term><option>--progress</option></term>
+     <listitem>
+      <para>
+       Show progress information. Progress information includes the number
+       of relations for which checking has been completed, and the total
+       size of those relations. It also includes the total number of relations
+       that will eventually be checked, and the estimated size of those
+       relations.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-q</option></term>
+     <term><option>--quiet</option></term>
+     <listitem>
+      <para>
+       Print fewer messages, and less detail regarding any server errors.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-r <replaceable class="parameter">pattern</replaceable></option></term>
+     <term><option>--relation=<replaceable class="parameter">pattern</replaceable></option></term>
+     <listitem>
+      <para>
+       Check relations matching the specified
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link>,
+       unless they are otherwise excluded.
+       This option can be specified more than once.
+      </para>
+      <para>
+       Patterns may be unqualified, e.g. <literal>myrel*</literal>, or they
+       may be schema-qualified, e.g. <literal>myschema*.myrel*</literal> or
+       database-qualified and schema-qualified, e.g.
+       <literal>mydb*.myscheam*.myrel*</literal>. A database-qualified
+       pattern will add matching databases to the list of databases to be
+       checked.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-R <replaceable class="parameter">pattern</replaceable></option></term>
+     <term><option>--exclude-relation=<replaceable class="parameter">pattern</replaceable></option></term>
+     <listitem>
+      <para>
+       Exclude relations matching the specified
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link>.
+       This option can be specified more than once.
+      </para>
+      <para>
+       As with <option>--relation</option>, the
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> may be unqualified, schema-qualified,
+       or database- and schema-qualified.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--rootdescend</option></term>
+     <listitem>
+      <para>
+       For each index checked, re-find tuples on the leaf level by performing a
+       new search from the root page for each tuple using
+       <xref linkend="amcheck"/>'s <option>rootdescend</option> option.
+      </para>
+      <para>
+       Use of this option implicitly also selects the
+       <option>--parent-check</option> option.
+      </para>
+      <para>
+       This form of verification was originally written to help in the
+       development of btree index features.  It may be of limited use or even
+       of no use in helping detect the kinds of corruption that occur in
+       practice.  It may also cause corruption checking to take considerably
+       longer and consume considerably more resources on the server.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-s <replaceable class="parameter">pattern</replaceable></option></term>
+     <term><option>--schema=<replaceable class="parameter">pattern</replaceable></option></term>
+     <listitem>
+      <para>
+       Check tables and indexes in schemas matching the specified
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link>, unless they are otherwise excluded.
+       This option can be specified more than once.
+      </para>
+      <para>
+       To select only tables in schemas matching a particular pattern,
+       consider using something like
+       <literal>--table=SCHEMAPAT.* --no-dependent-indexes</literal>.
+       To select only indexes, consider using something like
+       <literal>--index=SCHEMAPAT.*</literal>.
+      </para>
+      <para>
+       A schema pattern may be database-qualified. For example, you may
+       write <literal>--schema=mydb*.myschema*</literal> to select
+       schemas matching <literal>myschema*</literal> in databases matching
+       <literal>mydb*</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-S <replaceable class="parameter">pattern</replaceable></option></term>
+     <term><option>--exclude-schema=<replaceable class="parameter">pattern</replaceable></option></term>
+     <listitem>
+      <para>
+       Exclude tables and indexes in schemas matching the specified
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link>.
+       This option can be specified more than once.
+      </para>
+      <para>
+       As with <option>--schema</option>, the pattern may be
+       database-qualified.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--skip=<replaceable class="parameter">option</replaceable></option></term>
+     <listitem>
+      <para>
+       If <literal>"all-frozen"</literal> is given, table corruption checks
+       will skip over pages in all tables that are marked as all frozen.
+      </para>
+      <para>
+       If <literal>all-visible</literal> is given, table corruption checks
+       will skip over pages in all tables that are marked as all visible.
+      </para>
+      <para>
+       By default, no pages are skipped.  This can be specified as
+       <literal>none</literal>, but since this is the default, it need not be
+       mentioned.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--startblock=<replaceable class="parameter">block</replaceable></option></term>
+     <listitem>
+      <para>
+       Start checking at the specified block number. An error will occur if
+       the table relation being checked has fewer than this number of blocks.
+       This option does not apply to indexes, and is probably only useful
+       when checking a single table relation. See <literal>--endblock</literal>
+       for further caveats.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-t <replaceable class="parameter">pattern</replaceable></option></term>
+     <term><option>--table=<replaceable class="parameter">pattern</replaceable></option></term>
+     <listitem>
+      <para>
+       Check tables matching the specified
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link>,
+       unless they are otherwise excluded.
+       This option can be specified more than once.
+      </para>
+      <para>
+       This is similar to the <option>--relation</option> option, except that
+       it applies only to tables, not indexes.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-T <replaceable class="parameter">pattern</replaceable></option></term>
+     <term><option>--exclude-table=<replaceable class="parameter">pattern</replaceable></option></term>
+     <listitem>
+      <para>
+       Exclude tables matching the specified
+       <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link>.
+       This option can be specified more than once.
+      </para>
+      <para>
+       This is similar to the <option>--exclude-relation</option> option,
+       except that it applies only to tables, not indexes.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-U</option></term>
+     <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
+     <listitem>
+      <para>
+       User name to connect as.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-v</option></term>
+     <term><option>--verbose</option></term>
+     <listitem>
+      <para>
+       Print more messages. In particular, this will print a message for
+       each relation being checked, and will increase the level of detail
+       shown for server errors.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-V</option></term>
+     <term><option>--version</option></term>
+     <listitem>
+      <para>
+       Print the <application>pg_amcheck</application> version and exit.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-w</option></term>
+     <term><option>--no-password</option></term>
+     <listitem>
+      <para>
+       Never issue a password prompt.  If the server requires password
+       authentication and a password is not available by other means such as
+       a <filename>.pgpass</filename> file, the connection attempt will fail.
+       This option can be useful in batch jobs and scripts where no user is
+       present to enter a password.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-W</option></term>
+     <term><option>--password</option></term>
+     <listitem>
+      <para>
+       Force <application>pg_amcheck</application> to prompt for a password
+       before connecting to a database.
+      </para>
+      <para>
+       This option is never essential, since
+       <application>pg_amcheck</application> will automatically prompt for a
+       password if the server demands password authentication.  However,
+       <application>pg_amcheck</application> will waste a connection attempt
+       finding out that the server wants a password.  In some cases it is
+       worth typing <option>-W</option> to avoid the extra connection attempt.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <application>pg_amcheck</application> is designed to work with
+   <productname>PostgreSQL</productname> 14.0 and later.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="amcheck"/></member>
+  </simplelist>
+ </refsect1>
+</refentry>

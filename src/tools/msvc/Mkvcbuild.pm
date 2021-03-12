@@ -54,17 +54,18 @@ my @contrib_excludes = (
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
-my @frontend_uselibpq = ('pg_ctl', 'pg_upgrade', 'pgbench', 'psql', 'initdb');
+my @frontend_uselibpq = ('pg_amcheck', 'pg_ctl', 'pg_upgrade', 'pgbench', 'psql', 'initdb');
 my @frontend_uselibpgport = (
-	'pg_archivecleanup', 'pg_test_fsync',
+	'pg_amcheck',        'pg_archivecleanup', 'pg_test_fsync',
 	'pg_test_timing',    'pg_upgrade',
 	'pg_waldump',        'pgbench');
 my @frontend_uselibpgcommon = (
-	'pg_archivecleanup', 'pg_test_fsync',
+	'pg_amcheck',        'pg_archivecleanup', 'pg_test_fsync',
 	'pg_test_timing',    'pg_upgrade',
 	'pg_waldump',        'pgbench');
 my $frontend_extralibs = {
 	'initdb'     => ['ws2_32.lib'],
+	'pg_amcheck' => ['ws2_32.lib'],
 	'pg_restore' => ['ws2_32.lib'],
 	'pgbench'    => ['ws2_32.lib'],
 	'psql'       => ['ws2_32.lib']
