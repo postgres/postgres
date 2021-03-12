@@ -706,7 +706,17 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 
 					column->identity = constraint->generated_when;
 					saw_identity = true;
+
+					/* An identity column is implicitly NOT NULL */
+					if (saw_nullable && !column->is_not_null)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("conflicting NULL/NOT NULL declarations for column \"%s\" of table \"%s\"",
+										column->colname, cxt->relation->relname),
+								 parser_errposition(cxt->pstate,
+													constraint->location)));
 					column->is_not_null = true;
+					saw_nullable = true;
 					break;
 				}
 
