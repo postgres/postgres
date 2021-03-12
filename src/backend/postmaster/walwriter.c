@@ -78,6 +78,9 @@ int			WalWriterFlushAfter = 128;
 #define LOOPS_UNTIL_HIBERNATE		50
 #define HIBERNATE_FACTOR			25
 
+/* Prototypes for private functions */
+static void HandleWalWriterInterrupts(void);
+
 /*
  * Main entry point for walwriter process
  *
@@ -242,7 +245,8 @@ WalWriterMain(void)
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
 
-		HandleMainLoopInterrupts();
+		/* Process any signals received recently */
+		HandleWalWriterInterrupts();
 
 		/*
 		 * Do what we're here for; then, if XLogBackgroundFlush() found useful
@@ -270,5 +274,36 @@ WalWriterMain(void)
 						 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 						 cur_timeout,
 						 WAIT_EVENT_WAL_WRITER_MAIN);
+	}
+}
+
+/*
+ * Interrupt handler for main loops of WAL writer process.
+ */
+static void
+HandleWalWriterInterrupts(void)
+{
+	if (ProcSignalBarrierPending)
+		ProcessProcSignalBarrier();
+
+	if (ConfigReloadPending)
+	{
+		ConfigReloadPending = false;
+		ProcessConfigFile(PGC_SIGHUP);
+	}
+
+	if (ShutdownRequestPending)
+	{
+		/*
+		 * Force to send remaining WAL statistics to the stats collector at
+		 * process exit.
+		 *
+		 * Since pgstat_send_wal is invoked with 'force' is false in main loop
+		 * to avoid overloading to the stats collector, there may exist unsent
+		 * stats counters for the WAL writer.
+		 */
+		pgstat_send_wal(true);
+
+		proc_exit(0);
 	}
 }
