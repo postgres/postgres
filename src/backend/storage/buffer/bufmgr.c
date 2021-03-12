@@ -76,7 +76,7 @@
  * being dropped. For the relations with size below this threshold, we find
  * the buffers by doing lookups in BufMapping table.
  */
-#define BUF_DROP_FULL_SCAN_THRESHOLD		(uint32) (NBuffers / 32)
+#define BUF_DROP_FULL_SCAN_THRESHOLD		(uint64) (NBuffers / 32)
 
 typedef struct PrivateRefCountEntry
 {
@@ -2987,7 +2987,7 @@ DropRelFileNodeBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
 	int			j;
 	RelFileNodeBackend rnode;
 	BlockNumber nForkBlock[MAX_FORKNUM];
-	BlockNumber nBlocksToInvalidate = 0;
+	uint64 		nBlocksToInvalidate = 0;
 
 	rnode = smgr_reln->smgr_rnode;
 
@@ -3111,7 +3111,7 @@ DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
 	int			n = 0;
 	SMgrRelation *rels;
 	BlockNumber (*block)[MAX_FORKNUM + 1];
-	BlockNumber nBlocksToInvalidate = 0;
+	uint64 		nBlocksToInvalidate = 0;
 	RelFileNode *nodes;
 	bool		cached = true;
 	bool		use_bsearch;
