@@ -774,67 +774,6 @@ _bt_parallel_advance_array_keys(IndexScanDesc scan)
 }
 
 /*
- * _bt_vacuum_needs_cleanup() -- Checks if index needs cleanup
- *
- * Called by btvacuumcleanup when btbulkdelete was never called because no
- * tuples needed to be deleted by VACUUM.
- *
- * When we return false, VACUUM can even skip the cleanup-only call to
- * btvacuumscan (i.e. there will be no btvacuumscan call for this index at
- * all).  Otherwise, a cleanup-only btvacuumscan call is required.
- */
-static bool
-_bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
-{
-	Buffer		metabuf;
-	Page		metapg;
-	BTMetaPageData *metad;
-	uint32		btm_version;
-	BlockNumber prev_num_delpages;
-
-	/*
-	 * Copy details from metapage to local variables quickly.
-	 *
-	 * Note that we deliberately avoid using cached version of metapage here.
-	 */
-	metabuf = _bt_getbuf(info->index, BTREE_METAPAGE, BT_READ);
-	metapg = BufferGetPage(metabuf);
-	metad = BTPageGetMeta(metapg);
-	btm_version = metad->btm_version;
-
-	if (btm_version < BTREE_NOVAC_VERSION)
-	{
-		/*
-		 * Metapage needs to be dynamically upgraded to store fields that are
-		 * only present when btm_version >= BTREE_NOVAC_VERSION
-		 */
-		_bt_relbuf(info->index, metabuf);
-		return true;
-	}
-
-	prev_num_delpages = metad->btm_last_cleanup_num_delpages;
-	_bt_relbuf(info->index, metabuf);
-
-	/*
-	 * Trigger cleanup in rare cases where prev_num_delpages exceeds 5% of the
-	 * total size of the index.  We can reasonably expect (though are not
-	 * guaranteed) to be able to recycle this many pages if we decide to do a
-	 * btvacuumscan call during the ongoing btvacuumcleanup.
-	 *
-	 * Our approach won't reliably avoid "wasted" cleanup-only btvacuumscan
-	 * calls.  That is, we can end up scanning the entire index without ever
-	 * placing even 1 of the prev_num_delpages pages in the free space map, at
-	 * least in certain narrow cases (see nbtree/README section on recycling
-	 * deleted pages for details).  This rarely comes up in practice.
-	 */
-	if (prev_num_delpages > 0 &&
-		prev_num_delpages > RelationGetNumberOfBlocks(info->index) / 20)
-		return true;
-
-	return false;
-}
-
-/*
  * Bulk deletion of all index entries pointing to a set of heap tuples.
  * The set of target tuples is specified via a callback routine that tells
  * whether any given heap tuple (identified by ItemPointer) is being deleted.
@@ -894,7 +833,7 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	if (stats == NULL)
 	{
 		/* Check if VACUUM operation can entirely avoid btvacuumscan() call */
-		if (!_bt_vacuum_needs_cleanup(info))
+		if (!_bt_vacuum_needs_cleanup(info->index))
 			return NULL;
 
 		/*

@@ -168,15 +168,67 @@ _bt_getmeta(Relation rel, Buffer metabuf)
 }
 
 /*
- *	_bt_set_cleanup_info() -- Update metapage for btvacuumcleanup().
+ * _bt_vacuum_needs_cleanup() -- Checks if index needs cleanup
  *
- *		This routine is called at the end of each VACUUM's btvacuumcleanup()
- *		call.  Its purpose is to maintain the metapage fields that are used by
- *		_bt_vacuum_needs_cleanup() to decide whether or not a btvacuumscan()
- *		call should go ahead for an entire VACUUM operation.
+ * Called by btvacuumcleanup when btbulkdelete was never called because no
+ * index tuples needed to be deleted.
+ */
+bool
+_bt_vacuum_needs_cleanup(Relation rel)
+{
+	Buffer		metabuf;
+	Page		metapg;
+	BTMetaPageData *metad;
+	uint32		btm_version;
+	BlockNumber prev_num_delpages;
+
+	/*
+	 * Copy details from metapage to local variables quickly.
+	 *
+	 * Note that we deliberately avoid using cached version of metapage here.
+	 */
+	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
+	metapg = BufferGetPage(metabuf);
+	metad = BTPageGetMeta(metapg);
+	btm_version = metad->btm_version;
+
+	if (btm_version < BTREE_NOVAC_VERSION)
+	{
+		/*
+		 * Metapage needs to be dynamically upgraded to store fields that are
+		 * only present when btm_version >= BTREE_NOVAC_VERSION
+		 */
+		_bt_relbuf(rel, metabuf);
+		return true;
+	}
+
+	prev_num_delpages = metad->btm_last_cleanup_num_delpages;
+	_bt_relbuf(rel, metabuf);
+
+	/*
+	 * Trigger cleanup in rare cases where prev_num_delpages exceeds 5% of the
+	 * total size of the index.  We can reasonably expect (though are not
+	 * guaranteed) to be able to recycle this many pages if we decide to do a
+	 * btvacuumscan call during the ongoing btvacuumcleanup.
+	 *
+	 * Our approach won't reliably avoid "wasted" cleanup-only btvacuumscan
+	 * calls.  That is, we can end up scanning the entire index without ever
+	 * placing even 1 of the prev_num_delpages pages in the free space map, at
+	 * least in certain narrow cases (see nbtree/README section on recycling
+	 * deleted pages for details).  This rarely comes up in practice.
+	 */
+	if (prev_num_delpages > 0 &&
+		prev_num_delpages > RelationGetNumberOfBlocks(rel) / 20)
+		return true;
+
+	return false;
+}
+
+/*
+ * _bt_set_cleanup_info() -- Update metapage for btvacuumcleanup.
  *
- *		See btvacuumcleanup() and _bt_vacuum_needs_cleanup() for the
- *		definition of num_delpages.
+ * Called at the end of btvacuumcleanup, when num_delpages value has been
+ * finalized.
  */
 void
 _bt_set_cleanup_info(Relation rel, BlockNumber num_delpages)
