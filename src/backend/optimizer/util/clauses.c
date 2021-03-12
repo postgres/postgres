@@ -114,7 +114,7 @@ static bool target_rel_max_parallel_hazard(max_parallel_hazard_context *context)
 static bool target_rel_max_parallel_hazard_recurse(Relation relation,
 												   CmdType command_type,
 												   max_parallel_hazard_context *context);
-static bool target_rel_trigger_max_parallel_hazard(TriggerDesc *trigdesc,
+static bool target_rel_trigger_max_parallel_hazard(Relation rel,
 												   max_parallel_hazard_context *context);
 static bool target_rel_index_max_parallel_hazard(Relation rel,
 												 max_parallel_hazard_context *context);
@@ -926,7 +926,7 @@ target_rel_max_parallel_hazard_recurse(Relation rel,
 	/*
 	 * If any triggers exist, check that they are parallel-safe.
 	 */
-	if (target_rel_trigger_max_parallel_hazard(rel->trigdesc, context))
+	if (target_rel_trigger_max_parallel_hazard(rel, context))
 		return true;
 
 	/*
@@ -952,23 +952,29 @@ target_rel_max_parallel_hazard_recurse(Relation rel,
 /*
  * target_rel_trigger_max_parallel_hazard
  *
- * Finds the maximum parallel-mode hazard level for the specified trigger data.
+ * Finds the maximum parallel-mode hazard level for the specified relation's
+ * trigger data.
  */
 static bool
-target_rel_trigger_max_parallel_hazard(TriggerDesc *trigdesc,
+target_rel_trigger_max_parallel_hazard(Relation rel,
 									   max_parallel_hazard_context *context)
 {
 	int			i;
 
-	if (trigdesc == NULL)
+	if (rel->trigdesc == NULL)
 		return false;
 
-	for (i = 0; i < trigdesc->numtriggers; i++)
+	/*
+	 * Care is needed here to avoid using the same relcache TriggerDesc field
+	 * across other cache accesses, because relcache doesn't guarantee that it
+	 * won't move.
+	 */
+	for (i = 0; i < rel->trigdesc->numtriggers; i++)
 	{
 		int			trigtype;
-		Trigger    *trigger = &trigdesc->triggers[i];
+		Oid			tgfoid = rel->trigdesc->triggers[i].tgfoid;
 
-		if (max_parallel_hazard_test(func_parallel(trigger->tgfoid), context))
+		if (max_parallel_hazard_test(func_parallel(tgfoid), context))
 			return true;
 
 		/*
@@ -977,7 +983,7 @@ target_rel_trigger_max_parallel_hazard(TriggerDesc *trigdesc,
 		 * on insert/update and this isn't supported in a parallel worker (but
 		 * is safe in the parallel leader).
 		 */
-		trigtype = RI_FKey_trigger_type(trigger->tgfoid);
+		trigtype = RI_FKey_trigger_type(tgfoid);
 		if (trigtype == RI_TRIGGER_FK)
 		{
 			if (max_parallel_hazard_test(PROPARALLEL_RESTRICTED, context))
