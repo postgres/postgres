@@ -1643,6 +1643,8 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 		}
 		else
 		{
+			DatabaseInfo *dat;
+
 			/* Current record pertains to a database */
 			Assert(datname != NULL);
 
@@ -1650,12 +1652,11 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 			if (initial_dbname != NULL && strcmp(initial_dbname, datname) == 0)
 				continue;
 
-			DatabaseInfo *dat = (DatabaseInfo *) pg_malloc0(sizeof(DatabaseInfo));
-
 			/* This database is included.  Add to list */
 			if (opts.verbose)
 				pg_log_info("including database: \"%s\"", datname);
 
+			dat = (DatabaseInfo *) pg_malloc0(sizeof(DatabaseInfo));
 			dat->datname = pstrdup(datname);
 			simple_ptr_list_append(databases, dat);
 		}
@@ -2057,7 +2058,7 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 	{
 		int			pattern_id = -1;
 		bool		is_heap = false;
-		bool		is_btree = false;
+		bool		is_btree = false PG_USED_FOR_ASSERTS_ONLY;
 		Oid			oid = InvalidOid;
 		const char *nspname = NULL;
 		const char *relname = NULL;
