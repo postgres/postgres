@@ -572,8 +572,19 @@ HandleCheckpointerInterrupts(void)
 		 * back to the sigsetjmp block above
 		 */
 		ExitOnAnyError = true;
-		/* Close down the database */
+
+		/*
+		 * Close down the database.
+		 *
+		 * Since ShutdownXLOG() creates restartpoint or checkpoint, and
+		 * updates the statistics, increment the checkpoint request and send
+		 * the statistics to the stats collector.
+		 */
+		BgWriterStats.m_requested_checkpoints++;
 		ShutdownXLOG(0, 0);
+		pgstat_send_bgwriter();
+		pgstat_report_wal();
+
 		/* Normal exit from the checkpointer is here */
 		proc_exit(0);			/* done */
 	}
