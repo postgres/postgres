@@ -840,6 +840,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       column</firstterm>.  It will have an implicit sequence attached to it
       and the column in new rows will automatically have values from the
       sequence assigned to it.
+      Such a column is implicitly <literal>NOT NULL</literal>.
      </para>
 
      <para>
