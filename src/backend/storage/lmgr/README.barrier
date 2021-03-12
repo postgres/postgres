@@ -38,7 +38,7 @@ Surprisingly, however, the second backend could also end up with foo = 0
 and bar = 1.  The compiler might swap the order of the two stores performed
 by the first backend, or the two loads performed by the second backend.
 Even if it doesn't, on a machine with weak memory ordering (such as PowerPC
-or Itanium) the CPU might choose to execute either the loads or the stores
+or ARM) the CPU might choose to execute either the loads or the stores
 out of order.  This surprising result can lead to bugs.
 
 A common pattern where this actually does result in a bug is when adding items
