@@ -468,7 +468,7 @@ command_fails_like(
 	'pg_amcheck rejects garbage startblock');
 
 command_fails_like(
-	[ @cmd, 'db1', '-s', 's5', '--endblock', '1234junk' ],
+	[ @cmd, '-s', 's5', '--endblock', '1234junk', 'db1' ],
 	qr/invalid end block/,
 	'pg_amcheck rejects garbage endblock');
 
