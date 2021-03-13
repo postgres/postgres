@@ -375,7 +375,7 @@ $node->command_checks_all(
 # are quiet.
 #
 $node->command_checks_all(
-	[ @cmd, 'db1', '-t', 's1.*', '--no-dependent-indexes' ],
+	[ @cmd, '-t', 's1.*', '--no-dependent-indexes', 'db1' ],
 	0,
 	[ $no_output_re ],
 	[ $no_output_re ],
@@ -384,7 +384,7 @@ $node->command_checks_all(
 # Checking db2.s1 should show table corruptions if indexes are excluded
 #
 $node->command_checks_all(
-	[ @cmd, 'db2', '-t', 's1.*', '--no-dependent-indexes' ],
+	[ @cmd, '-t', 's1.*', '--no-dependent-indexes', 'db2' ],
 	2,
 	[ $missing_file_re ],
 	[ $no_output_re ],
@@ -394,7 +394,7 @@ $node->command_checks_all(
 # corruption messages on stdout, and nothing on stderr.
 #
 $node->command_checks_all(
-	[ @cmd, 'db1', '-s', 's3' ],
+	[ @cmd, '-s', 's3', 'db1' ],
 	2,
 	[ $index_missing_relation_fork_re,
 	  $line_pointer_corruption_re,
@@ -407,14 +407,14 @@ $node->command_checks_all(
 # options the toast corruption is reported, but when excluding toast we get no
 # error reports.
 $node->command_checks_all(
-	[ @cmd, 'db1', '-s', 's4' ],
+	[ @cmd, '-s', 's4', 'db1' ],
 	2,
 	[ $missing_file_re ],
 	[ $no_output_re ],
 	'pg_amcheck in schema s4 reports toast corruption');
 
 $node->command_checks_all(
-	[ @cmd, '--no-dependent-toast', '--exclude-toast-pointers', 'db1', '-s', 's4' ],
+	[ @cmd, '--no-dependent-toast', '--exclude-toast-pointers', '-s', 's4', 'db1' ],
 	0,
 	[ $no_output_re ],
 	[ $no_output_re ],
@@ -422,7 +422,7 @@ $node->command_checks_all(
 
 # Check that no corruption is reported in schema db1.s5
 $node->command_checks_all(
-	[ @cmd, 'db1', '-s', 's5' ],
+	[ @cmd, '-s', 's5', 'db1' ],
 	0,
 	[ $no_output_re ],
 	[ $no_output_re ],
@@ -432,7 +432,7 @@ $node->command_checks_all(
 # the indexes, no corruption is reported about the schema.
 #
 $node->command_checks_all(
-	[ @cmd, 'db1', '-s', 's1', '-I', 't1_btree', '-I', 't2_btree' ],
+	[ @cmd, '-s', 's1', '-I', 't1_btree', '-I', 't2_btree', 'db1' ],
 	0,
 	[ $no_output_re ],
 	[ $no_output_re ],
@@ -443,7 +443,7 @@ $node->command_checks_all(
 # about the schema.
 #
 $node->command_checks_all(
-	[ @cmd, 'db1', '-t', 's1.*', '--no-dependent-indexes' ],
+	[ @cmd, '-t', 's1.*', '--no-dependent-indexes', 'db1' ],
 	0,
 	[ $no_output_re ],
 	[ $no_output_re ],
@@ -453,7 +453,7 @@ $node->command_checks_all(
 # tables that no corruption is reported.
 #
 $node->command_checks_all(
-	[ @cmd, 'db1', '-s', 's2', '-T', 't1', '-T', 't2' ],
+	[ @cmd, '-s', 's2', '-T', 't1', '-T', 't2', 'db1' ],
 	0,
 	[ $no_output_re ],
 	[ $no_output_re ],
@@ -463,7 +463,7 @@ $node->command_checks_all(
 # to avoid getting messages about corrupt tables or indexes.
 #
 command_fails_like(
-	[ @cmd, 'db1', '-s', 's5', '--startblock', 'junk' ],
+	[ @cmd, '-s', 's5', '--startblock', 'junk', 'db1' ],
 	qr/invalid start block/,
 	'pg_amcheck rejects garbage startblock');
 
@@ -473,7 +473,7 @@ command_fails_like(
 	'pg_amcheck rejects garbage endblock');
 
 command_fails_like(
-	[ @cmd, 'db1', '-s', 's5', '--startblock', '5', '--endblock', '4' ],
+	[ @cmd, '-s', 's5', '--startblock', '5', '--endblock', '4', 'db1' ],
 	qr/end block precedes start block/,
 	'pg_amcheck rejects invalid block range');
 
@@ -482,14 +482,14 @@ command_fails_like(
 # arguments are handled sensibly.
 #
 $node->command_checks_all(
-	[ @cmd, 'db1', '-s', 's1', '-i', 't1_btree', '--parent-check' ],
+	[ @cmd, '-s', 's1', '-i', 't1_btree', '--parent-check', 'db1' ],
 	2,
 	[ $index_missing_relation_fork_re ],
 	[ $no_output_re ],
 	'pg_amcheck smoke test --parent-check');
 
 $node->command_checks_all(
-	[ @cmd, 'db1', '-s', 's1', '-i', 't1_btree', '--heapallindexed', '--rootdescend' ],
+	[ @cmd, '-s', 's1', '-i', 't1_btree', '--heapallindexed', '--rootdescend', 'db1' ],
 	2,
 	[ $index_missing_relation_fork_re ],
 	[ $no_output_re ],
