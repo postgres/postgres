@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 75;
+use Test::More tests => 72;
 
 # Test set-up
 my ($node, $port);
@@ -70,15 +70,6 @@ $node->command_checks_all(
 	[ qr/^$/ ],
 	[ ],
 	'checking with a non-existent user');
-
-# Failing to connect to the initial database due to bad username is an still an
-# error under --no-strict-names.
-$node->command_checks_all(
-	[ 'pg_amcheck', '--no-strict-names', '-U', 'no_such_user', 'postgres' ],
-	1,
-	[ qr/^$/ ],
-	[ qr/role "no_such_user" does not exist/ ],
-	'checking with a non-existent user under --no-strict-names');
 
 #########################################
 # Test checking databases without amcheck installed
