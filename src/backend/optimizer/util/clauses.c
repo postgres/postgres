@@ -971,24 +971,10 @@ target_rel_trigger_max_parallel_hazard(Relation rel,
 	 */
 	for (i = 0; i < rel->trigdesc->numtriggers; i++)
 	{
-		int			trigtype;
 		Oid			tgfoid = rel->trigdesc->triggers[i].tgfoid;
 
 		if (max_parallel_hazard_test(func_parallel(tgfoid), context))
 			return true;
-
-		/*
-		 * If the trigger type is RI_TRIGGER_FK, this indicates a FK exists in
-		 * the relation, and this would result in creation of new CommandIds
-		 * on insert/update and this isn't supported in a parallel worker (but
-		 * is safe in the parallel leader).
-		 */
-		trigtype = RI_FKey_trigger_type(tgfoid);
-		if (trigtype == RI_TRIGGER_FK)
-		{
-			if (max_parallel_hazard_test(PROPARALLEL_RESTRICTED, context))
-				return true;
-		}
 	}
 
 	return false;
