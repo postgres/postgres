@@ -239,7 +239,7 @@ $node->command_checks_all(
 		'-s', 'pg_toast',
 		'-s', 'information_schema',
 		'-t', 'pg_catalog.pg_class',
-		'-S', '*'
+		'-S*'
 	],
 	1,
 	[ qr/^$/ ],
