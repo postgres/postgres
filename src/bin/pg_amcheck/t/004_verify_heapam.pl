@@ -57,7 +57,6 @@ use Test::More;
 #	L = "Unsigned 32-bit Long",
 #	S = "Unsigned 16-bit Short",
 #	C = "Unsigned 8-bit Octet",
-#	q = "signed 64-bit quadword"
 #
 # Each tuple in our table has a layout as follows:
 #
@@ -71,7 +70,7 @@ use Test::More;
 #    xx xx              t_infomask: xx			offset = 20		S
 #    xx                     t_hoff: x			offset = 22		C
 #    xx                     t_bits: x			offset = 23		C
-#    xx xx xx xx xx xx xx xx   'a': xxxxxxxx	offset = 24		q
+#    xx xx xx xx xx xx xx xx   'a': xxxxxxxx	offset = 24		LL
 #    xx xx xx xx xx xx xx xx   'b': xxxxxxxx	offset = 32		CCCCCCCC
 #    xx xx xx xx xx xx xx xx   'c': xxxxxxxx	offset = 40		CCllLL
 #    xx xx xx xx xx xx xx xx      : xxxxxxxx	 ...continued
@@ -81,7 +80,7 @@ use Test::More;
 # it is convenient enough to do it this way.  We define packing code
 # constants here, where they can be compared easily against the layout.
 
-use constant HEAPTUPLE_PACK_CODE => 'LLLSSSSSCCqCCCCCCCCCCllLL';
+use constant HEAPTUPLE_PACK_CODE => 'LLLSSSSSCCLLCCCCCCCCCCllLL';
 use constant HEAPTUPLE_PACK_LENGTH => 58;     # Total size
 
 # Read a tuple of our table from a heap page.
@@ -112,7 +111,8 @@ sub read_tuple
 			t_infomask => shift,
 			t_hoff => shift,
 			t_bits => shift,
-			a => shift,
+			a_1 => shift,
+			a_2 => shift,
 			b_header => shift,
 			b_body1 => shift,
 			b_body2 => shift,
@@ -156,7 +156,8 @@ sub write_tuple
 					$tup->{t_infomask},
 					$tup->{t_hoff},
 					$tup->{t_bits},
-					$tup->{a},
+					$tup->{a_1},
+					$tup->{a_2},
 					$tup->{b_header},
 					$tup->{b_body1},
 					$tup->{b_body2},
@@ -227,7 +228,7 @@ use constant ROWCOUNT => 16;
 $node->safe_psql('postgres', qq(
 	INSERT INTO public.test (a, b, c)
 		VALUES (
-			12345678,
+			x'DEADF9F9DEADF9F9'::bigint,
 			'abcdefg',
 			repeat('w', 10000)
 		);
@@ -275,13 +276,15 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 	my $tup = read_tuple($file, $offset);
 
 	# Sanity-check that the data appears on the page where we expect.
-	my $a = $tup->{a};
+	my $a_1 = $tup->{a_1};
+	my $a_2 = $tup->{a_2};
 	my $b = $tup->{b};
-	if ($a ne '12345678' || $b ne 'abcdefg')
+	if ($a_1 != 0xDEADF9F9 || $a_2 != 0xDEADF9F9 || $b ne 'abcdefg')
 	{
 		close($file);  # ignore errors on close; we're exiting anyway
 		$node->clean_node;
-		plan skip_all => qq(Page layout differs from our expectations: expected (12345678, "abcdefg"), got ($a, "$b"));
+		plan skip_all => sprintf("Page layout differs from our expectations: expected (%x, %x, \"%s\"), got (%x, %x, \"%s\")",
+								 0xDEADF9F9, 0xDEADF9F9, "abcdefg", $a_1, $a_2, $b);
 		exit;
 	}
 
