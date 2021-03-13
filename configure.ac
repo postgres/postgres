@@ -1143,7 +1143,6 @@ AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 AC_SEARCH_LIBS(shm_open, rt)
 AC_SEARCH_LIBS(shm_unlink, rt)
 AC_SEARCH_LIBS(clock_gettime, [rt posix4])
-AC_SEARCH_LIBS(pthread_barrier_wait, pthread)
 # Solaris:
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
 # Required for thread_test.c on Solaris
@@ -1155,6 +1154,10 @@ AC_SEARCH_LIBS(gethostbyname_r, nsl)
 AC_SEARCH_LIBS(shmget, cygipc)
 # *BSD:
 AC_SEARCH_LIBS(backtrace_symbols, execinfo)
+
+if test "$enable_thread_safety" = yes; then
+  AC_SEARCH_LIBS(pthread_barrier_wait, pthread)
+fi
 
 if test "$with_readline" = yes; then
   PGAC_CHECK_READLINE
@@ -1744,7 +1747,6 @@ AC_REPLACE_FUNCS(m4_normalize([
 	mkdtemp
 	pread
 	preadv
-	pthread_barrier_wait
 	pwrite
 	pwritev
 	random
@@ -1754,6 +1756,10 @@ AC_REPLACE_FUNCS(m4_normalize([
 	strnlen
 	strtof
 ]))
+
+if test "$enable_thread_safety" = yes; then
+  AC_REPLACE_FUNCS(pthread_barrier_wait)
+fi
 
 if test "$PORTNAME" = "win32" -o "$PORTNAME" = "cygwin"; then
 	# Cygwin and (apparently, based on test results) Mingw both
