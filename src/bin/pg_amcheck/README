@@ -1,0 +1,19 @@
+src/bin/pg_amcheck/README
+
+pg_amcheck is a command-line tool for running the amcheck extension.
+
+Running the regression tests
+============================
+
+NOTE: You must have given the --enable-tap-tests argument to configure.
+Also, to use "make installcheck", you must have built and installed
+contrib/amcheck and contrib/pageinspect in addition to the core code.
+
+Run
+    make check
+or
+    make installcheck
+You can use "make installcheck" if you previously did "make install".
+In that case, the code in the installation tree is tested.  With
+"make check", a temporary installation tree is built from the current
+sources and then tested.
