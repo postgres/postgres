@@ -1572,6 +1572,7 @@ PGresAttValue
 PGresParamDesc
 PGresult
 PGresult_data
+PgArchData
 PHANDLE
 PLAINTREE
 PLUID_AND_ATTRIBUTES
