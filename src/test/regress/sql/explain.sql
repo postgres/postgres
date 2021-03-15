@@ -83,9 +83,7 @@ rollback;
 -- in any detail.  We can check that it parses correctly as JSON, and then
 -- remove it from the displayed results.
 
--- Serializable isolation would disable parallel query, so explicitly use an
--- arbitrary other level.
-begin isolation level repeatable read;
+begin;
 -- encourage use of parallel plans
 set parallel_setup_cost=0;
 set parallel_tuple_cost=0;

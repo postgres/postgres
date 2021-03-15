@@ -2,9 +2,7 @@
 -- PARALLEL
 --
 
--- Serializable isolation would disable parallel query, so explicitly use an
--- arbitrary other level.
-begin isolation level repeatable read;
+begin;
 
 -- encourage use of parallel plans
 set parallel_setup_cost=0;
@@ -13,7 +11,7 @@ set min_parallel_table_scan_size=0;
 set max_parallel_workers_per_gather=4;
 
 --
--- Test write operations that has an underlying query that is eligble
+-- Test write operations that has an underlying query that is eligible
 -- for parallel plans
 --
 explain (costs off) create table parallel_write as

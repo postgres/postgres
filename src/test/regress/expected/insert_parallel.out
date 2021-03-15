@@ -52,9 +52,7 @@ insert into test_data select * from generate_series(1,10);
 --
 -- END: setup some tables and data needed by the tests.
 --
--- Serializable isolation would disable parallel query, so explicitly use an
--- arbitrary other level.
-begin isolation level repeatable read;
+begin;
 -- encourage use of parallel plans
 set parallel_setup_cost=0;
 set parallel_tuple_cost=0;
