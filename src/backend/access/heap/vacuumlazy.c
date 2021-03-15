@@ -945,7 +945,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		bool		all_visible_according_to_vm = false;
 		bool		all_visible;
 		bool		all_frozen = true;	/* provided all_visible is also true */
-		bool		has_dead_tuples;
+		bool		has_dead_items;		/* includes existing LP_DEAD items */
 		TransactionId visibility_cutoff_xid = InvalidTransactionId;
 
 		/* see note above about forcing scanning of last page */
@@ -1248,7 +1248,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		 * requiring freezing.
 		 */
 		all_visible = true;
-		has_dead_tuples = false;
+		has_dead_items = false;
 		nfrozen = 0;
 		hastup = false;
 		prev_dead_count = dead_tuples->num_tuples;
@@ -1300,6 +1300,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 			{
 				lazy_record_dead_tuple(dead_tuples, &(tuple.t_self));
 				all_visible = false;
+				has_dead_items = true;
 				continue;
 			}
 
@@ -1448,7 +1449,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 				HeapTupleHeaderAdvanceLatestRemovedXid(tuple.t_data,
 													   &vacrelstats->latestRemovedXid);
 				tups_vacuumed += 1;
-				has_dead_tuples = true;
+				has_dead_items = true;
 			}
 			else
 			{
@@ -1527,7 +1528,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 				/* Remove tuples from heap if the table has no index */
 				lazy_vacuum_page(onerel, blkno, buf, 0, vacrelstats, &vmbuffer);
 				vacuumed_pages++;
-				has_dead_tuples = false;
+				has_dead_items = false;
 			}
 			else
 			{
@@ -1625,7 +1626,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		 * There should never be dead tuples on a page with PD_ALL_VISIBLE
 		 * set, however.
 		 */
-		else if (PageIsAllVisible(page) && has_dead_tuples)
+		else if (PageIsAllVisible(page) && has_dead_items)
 		{
 			elog(WARNING, "page containing dead tuples is marked as all-visible in relation \"%s\" page %u",
 				 vacrelstats->relname, blkno);
