@@ -179,3 +179,7 @@ PQgetgssctx               176
 PQsetSSLKeyPassHook_OpenSSL         177
 PQgetSSLKeyPassHook_OpenSSL         178
 PQdefaultSSLKeyPassHook_OpenSSL     179
+PQenterPipelineMode       180
+PQexitPipelineMode        181
+PQpipelineSync            182
+PQpipelineStatus          183

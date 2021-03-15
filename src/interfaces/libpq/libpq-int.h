@@ -217,20 +217,15 @@ typedef enum
 {
 	PGASYNC_IDLE,				/* nothing's happening, dude */
 	PGASYNC_BUSY,				/* query in progress */
-	PGASYNC_READY,				/* result ready for PQgetResult */
+	PGASYNC_READY,				/* query done, waiting for client to fetch
+								 * result */
+	PGASYNC_READY_MORE,			/* query done, waiting for client to fetch
+								 * result, more results expected from this
+								 * query */
 	PGASYNC_COPY_IN,			/* Copy In data transfer in progress */
 	PGASYNC_COPY_OUT,			/* Copy Out data transfer in progress */
 	PGASYNC_COPY_BOTH			/* Copy In/Out data transfer in progress */
 } PGAsyncStatusType;
-
-/* PGQueryClass tracks which query protocol we are now executing */
-typedef enum
-{
-	PGQUERY_SIMPLE,				/* simple Query protocol (PQexec) */
-	PGQUERY_EXTENDED,			/* full Extended protocol (PQexecParams) */
-	PGQUERY_PREPARE,			/* Parse only (PQprepare) */
-	PGQUERY_DESCRIBE			/* Describe Statement or Portal */
-} PGQueryClass;
 
 /* Target server type (decoded value of target_session_attrs) */
 typedef enum
@@ -304,6 +299,29 @@ typedef enum pg_conn_host_type
 	CHT_HOST_ADDRESS,
 	CHT_UNIX_SOCKET
 } pg_conn_host_type;
+
+/*
+ * PGQueryClass tracks which query protocol is in use for each command queue
+ * entry, or special operation in execution
+ */
+typedef enum
+{
+	PGQUERY_SIMPLE,				/* simple Query protocol (PQexec) */
+	PGQUERY_EXTENDED,			/* full Extended protocol (PQexecParams) */
+	PGQUERY_PREPARE,			/* Parse only (PQprepare) */
+	PGQUERY_DESCRIBE,			/* Describe Statement or Portal */
+	PGQUERY_SYNC				/* Sync (at end of a pipeline) */
+} PGQueryClass;
+
+/*
+ * An entry in the pending command queue.
+ */
+typedef struct PGcmdQueueEntry
+{
+	PGQueryClass queryclass;	/* Query type */
+	char	   *query;			/* SQL command, or NULL if none/unknown/OOM */
+	struct PGcmdQueueEntry *next;	/* list link */
+} PGcmdQueueEntry;
 
 /*
  * pg_conn_host stores all information about each of possibly several hosts
@@ -389,12 +407,11 @@ struct pg_conn
 	ConnStatusType status;
 	PGAsyncStatusType asyncStatus;
 	PGTransactionStatusType xactStatus; /* never changes to ACTIVE */
-	PGQueryClass queryclass;
-	char	   *last_query;		/* last SQL command, or NULL if unknown */
 	char		last_sqlstate[6];	/* last reported SQLSTATE */
 	bool		options_valid;	/* true if OK to attempt connection */
 	bool		nonblocking;	/* whether this connection is using nonblock
 								 * sending semantics */
+	PGpipelineStatus pipelineStatus;	/* status of pipeline mode */
 	bool		singleRowMode;	/* return current query result row-by-row? */
 	char		copy_is_binary; /* 1 = copy binary, 0 = copy text */
 	int			copy_already_done;	/* # bytes already returned in COPY OUT */
@@ -406,6 +423,19 @@ struct pg_conn
 	int			whichhost;		/* host we're currently trying/connected to */
 	pg_conn_host *connhost;		/* details about each named host */
 	char	   *connip;			/* IP address for current network connection */
+
+	/*
+	 * The pending command queue as a singly-linked list.  Head is the command
+	 * currently in execution, tail is where new commands are added.
+	 */
+	PGcmdQueueEntry *cmd_queue_head;
+	PGcmdQueueEntry *cmd_queue_tail;
+
+	/*
+	 * To save malloc traffic, we don't free entries right away; instead we
+	 * save them in this list for possible reuse.
+	 */
+	PGcmdQueueEntry *cmd_queue_recycle;
 
 	/* Connection data */
 	pgsocket	sock;			/* FD for socket, PGINVALID_SOCKET if
@@ -622,6 +652,7 @@ extern void pqSaveMessageField(PGresult *res, char code,
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
 								  const char *value);
 extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
+extern void pqCommandQueueAdvance(PGconn *conn);
 extern int	PQsendQueryContinue(PGconn *conn, const char *query);
 
 /* === in fe-protocol3.c === */
@@ -794,6 +825,11 @@ extern ssize_t pg_GSS_read(PGconn *conn, void *ptr, size_t len);
  * without the overhead of a function call
  */
 #define pqIsnonblocking(conn)	((conn)->nonblocking)
+
+/*
+ * Connection's outbuffer threshold, for pipeline mode.
+ */
+#define OUTBUFFER_THRESHOLD	65536
 
 #ifdef ENABLE_NLS
 extern char *libpq_gettext(const char *msgid) pg_attribute_format_arg(1);

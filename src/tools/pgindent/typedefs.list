@@ -1563,10 +1563,12 @@ PG_Locale_Strategy
 PG_Lock_Status
 PG_init_t
 PGcancel
+PGcmdQueueEntry
 PGconn
 PGdataValue
 PGlobjfuncs
 PGnotify
+PGpipelineStatus
 PGresAttDesc
 PGresAttValue
 PGresParamDesc
