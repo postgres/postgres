@@ -1335,14 +1335,21 @@ extern unsigned long long strtoull(const char *str, char **endptr, int base);
 
 /*
  * When there is no sigsetjmp, its functionality is provided by plain
- * setjmp. Incidentally, nothing provides setjmp's functionality in
- * that case.  We now support the case only on Windows.
+ * setjmp.  We now support the case only on Windows.  However, it seems
+ * that MinGW-64 has some longstanding issues in its setjmp support,
+ * so on that toolchain we cheat and use gcc's builtins.
  */
 #ifdef WIN32
+#ifdef __MINGW64__
+typedef intptr_t sigjmp_buf[5];
+#define sigsetjmp(x,y) __builtin_setjmp(x)
+#define siglongjmp __builtin_longjmp
+#else							/* !__MINGW64__ */
 #define sigjmp_buf jmp_buf
 #define sigsetjmp(x,y) setjmp(x)
 #define siglongjmp longjmp
-#endif
+#endif							/* __MINGW64__ */
+#endif							/* WIN32 */
 
 /* EXEC_BACKEND defines */
 #ifdef EXEC_BACKEND
