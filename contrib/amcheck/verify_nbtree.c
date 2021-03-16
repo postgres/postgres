@@ -721,7 +721,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 			else
 				ereport(DEBUG1,
 						(errcode(ERRCODE_NO_DATA),
-						 errmsg_internal("block %u of index \"%s\" ignored",
+						 errmsg_internal("block %u of index \"%s\" concurrently deleted",
 								current, RelationGetRelationName(state->rel))));
 			goto nextpage;
 		}
@@ -1592,13 +1592,17 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 		if (!P_IGNORE(opaque) || P_RIGHTMOST(opaque))
 			break;
 
-		/* We landed on a deleted page, so step right to find a live page */
-		targetnext = opaque->btpo_next;
-		ereport(DEBUG1,
+		/*
+		 * We landed on a deleted or half-dead sibling page.  Step right until
+		 * we locate a live sibling page.
+		 */
+		ereport(DEBUG2,
 				(errcode(ERRCODE_NO_DATA),
-				 errmsg_internal("level %u leftmost page of index \"%s\" was found deleted or half dead",
-						opaque->btpo_level, RelationGetRelationName(state->rel)),
+				 errmsg_internal("level %u sibling page in block %u of index \"%s\" was found deleted or half dead",
+						opaque->btpo_level, targetnext, RelationGetRelationName(state->rel)),
 				 errdetail_internal("Deleted page found when building scankey from right sibling.")));
+
+		targetnext = opaque->btpo_next;
 
 		/* Be slightly more pro-active in freeing this memory, just in case */
 		pfree(rightpage);
@@ -1722,7 +1726,7 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 		 * possible that it's an internal page with only a negative infinity
 		 * item.
 		 */
-		ereport(DEBUG1,
+		ereport(DEBUG2,
 				(errcode(ERRCODE_NO_DATA),
 				 errmsg_internal("%s block %u of index \"%s\" has no first data item",
 						P_ISLEAF(opaque) ? "leaf" : "internal", targetnext,
