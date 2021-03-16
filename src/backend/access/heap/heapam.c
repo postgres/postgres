@@ -7879,8 +7879,10 @@ bottomup_sort_and_shrink(TM_IndexDeleteOp *delstate)
 	/*
 	 * We're about ready to sort block groups to determine the optimal order
 	 * for visiting heap blocks.  But before we do, round the number of
-	 * promising tuples for each block group up to the nearest power-of-two
-	 * (except for block groups where npromisingtids is already 0).
+	 * promising tuples for each block group up to the next power-of-two,
+	 * unless it is very low (less than 4), in which case we round up to 4.
+	 * npromisingtids is far too noisy to trust when choosing between a pair
+	 * of block groups that both have very low values.
 	 *
 	 * This scheme divides heap blocks/block groups into buckets.  Each bucket
 	 * contains blocks that have _approximately_ the same number of promising
