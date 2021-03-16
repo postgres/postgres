@@ -7457,9 +7457,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         I/O timing information is
         displayed in <link linkend="monitoring-pg-stat-database-view">
         <structname>pg_stat_database</structname></link>, in the output of
-        <xref linkend="sql-explain"/> when the <literal>BUFFERS</literal> option is
-        used, and by <xref linkend="pgstatstatements"/>.  Only superusers can
-        change this setting.
+        <xref linkend="sql-explain"/> when the <literal>BUFFERS</literal> option
+        is used, by autovacuum for auto-vacuums and auto-analyzes, when
+        <xref linkend="guc-log-autovacuum-min-duration"/> is set and by
+        <xref linkend="pgstatstatements"/>.  Only superusers can change this
+        setting.
        </para>
       </listitem>
      </varlistentry>

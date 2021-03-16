@@ -441,6 +441,8 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 	TransactionId new_frozen_xid;
 	MultiXactId new_min_multi;
 	ErrorContextCallback errcallback;
+	PgStat_Counter startreadtime = 0;
+	PgStat_Counter startwritetime = 0;
 
 	Assert(params != NULL);
 	Assert(params->index_cleanup != VACOPT_TERNARY_DEFAULT);
@@ -455,6 +457,11 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 	{
 		pg_rusage_init(&ru0);
 		starttime = GetCurrentTimestamp();
+		if (track_io_timing)
+		{
+			startreadtime = pgStatBlockReadTime;
+			startwritetime = pgStatBlockWriteTime;
+		}
 	}
 
 	if (params->options & VACOPT_VERBOSE)
@@ -675,6 +682,17 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 							 (long long) VacuumPageDirty);
 			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
 							 read_rate, write_rate);
+			if (track_io_timing)
+			{
+				appendStringInfoString(&buf, _("I/O Timings:"));
+				if (pgStatBlockReadTime - startreadtime > 0)
+					appendStringInfo(&buf, _(" read=%.3f"),
+									 (double) (pgStatBlockReadTime - startreadtime) / 1000);
+				if (pgStatBlockWriteTime - startwritetime > 0)
+					appendStringInfo(&buf, _(" write=%.3f"),
+									 (double) (pgStatBlockWriteTime - startwritetime) / 1000);
+				appendStringInfoChar(&buf, '\n');
+			}
 			appendStringInfo(&buf, _("system usage: %s\n"), pg_rusage_show(&ru0));
 			appendStringInfo(&buf,
 							 _("WAL usage: %ld records, %ld full page images, %llu bytes"),
