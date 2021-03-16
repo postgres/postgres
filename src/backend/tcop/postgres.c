@@ -102,7 +102,18 @@ int			max_stack_depth = 100;
 /* wait N seconds to allow attach from a debugger */
 int			PostAuthDelay = 0;
 
+/* ----------------
+ *		private typedefs etc
+ * ----------------
+ */
 
+/* type of argument for bind_param_error_callback */
+typedef struct BindParamCbData
+{
+	const char *portalName;
+	int			paramno;		/* zero-based param number, or -1 initially */
+	const char *paramval;		/* textual input string, if available */
+} BindParamCbData;
 
 /* ----------------
  *		private variables
@@ -183,6 +194,7 @@ static int	errdetail_execute(List *raw_parsetree_list);
 static int	errdetail_params(ParamListInfo params);
 static int	errdetail_abort(void);
 static int	errdetail_recovery_conflict(void);
+static void bind_param_error_callback(void *arg);
 static void start_xact_command(void);
 static void finish_xact_command(void);
 static bool IsTransactionExitStmt(Node *parsetree);
@@ -1698,6 +1710,19 @@ exec_bind_message(StringInfo input_message)
 	if (numParams > 0)
 	{
 		char	  **knownTextValues = NULL; /* allocate on first use */
+		BindParamCbData one_param_data;
+
+		/*
+		 * Set up an error callback so that if there's an error in this phase,
+		 * we can report the specific parameter causing the problem.
+		 */
+		one_param_data.portalName = portal->name;
+		one_param_data.paramno = -1;
+		one_param_data.paramval = NULL;
+		params_errcxt.previous = error_context_stack;
+		params_errcxt.callback = bind_param_error_callback;
+		params_errcxt.arg = (void *) &one_param_data;
+		error_context_stack = &params_errcxt;
 
 		params = makeParamList(numParams);
 
@@ -1710,6 +1735,9 @@ exec_bind_message(StringInfo input_message)
 			StringInfoData pbuf;
 			char		csave;
 			int16		pformat;
+
+			one_param_data.paramno = paramno;
+			one_param_data.paramval = NULL;
 
 			plength = pq_getmsgint(input_message, 4);
 			isNull = (plength == -1);
@@ -1764,7 +1792,12 @@ exec_bind_message(StringInfo input_message)
 				else
 					pstring = pg_client_to_server(pbuf.data, plength);
 
+				/* Now we can log the input string in case of error */
+				one_param_data.paramval = pstring;
+
 				pval = OidInputFunctionCall(typinput, pstring, typioparam, -1);
+
+				one_param_data.paramval = NULL;
 
 				/*
 				 * If we might need to log parameters later, save a copy of
@@ -1855,10 +1888,13 @@ exec_bind_message(StringInfo input_message)
 			params->params[paramno].ptype = ptype;
 		}
 
+		/* Pop the per-parameter error callback */
+		error_context_stack = error_context_stack->previous;
+
 		/*
 		 * Once all parameters have been received, prepare for printing them
-		 * in errors, if configured to do so.  (This is saved in the portal,
-		 * so that they'll appear when the query is executed later.)
+		 * in future errors, if configured to do so.  (This is saved in the
+		 * portal, so that they'll appear when the query is executed later.)
 		 */
 		if (log_parameter_max_length_on_error != 0)
 			params->paramValuesStr =
@@ -1872,7 +1908,10 @@ exec_bind_message(StringInfo input_message)
 	/* Done storing stuff in portal's context */
 	MemoryContextSwitchTo(oldContext);
 
-	/* Set the error callback so that parameters are logged, as needed  */
+	/*
+	 * Set up another error callback so that all the parameters are logged if
+	 * we get an error during the rest of the BIND processing.
+	 */
 	params_data.portalName = portal->name;
 	params_data.params = params;
 	params_errcxt.previous = error_context_stack;
@@ -2411,6 +2450,55 @@ errdetail_recovery_conflict(void)
 	}
 
 	return 0;
+}
+
+/*
+ * bind_param_error_callback
+ *
+ * Error context callback used while parsing parameters in a Bind message
+ */
+static void
+bind_param_error_callback(void *arg)
+{
+	BindParamCbData *data = (BindParamCbData *) arg;
+	StringInfoData buf;
+	char	   *quotedval;
+
+	if (data->paramno < 0)
+		return;
+
+	/* If we have a textual value, quote it, and trim if necessary */
+	if (data->paramval)
+	{
+		initStringInfo(&buf);
+		appendStringInfoStringQuoted(&buf, data->paramval,
+									 log_parameter_max_length_on_error);
+		quotedval = buf.data;
+	}
+	else
+		quotedval = NULL;
+
+	if (data->portalName && data->portalName[0] != '\0')
+	{
+		if (quotedval)
+			errcontext("portal \"%s\" parameter $%d = %s",
+					   data->portalName, data->paramno + 1, quotedval);
+		else
+			errcontext("portal \"%s\" parameter $%d",
+					   data->portalName, data->paramno + 1);
+	}
+	else
+	{
+		if (quotedval)
+			errcontext("unnamed portal parameter $%d = %s",
+					   data->paramno + 1, quotedval);
+		else
+			errcontext("unnamed portal parameter $%d",
+					   data->paramno + 1);
+	}
+
+	if (quotedval)
+		pfree(quotedval);
 }
 
 /*

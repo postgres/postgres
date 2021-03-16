@@ -389,6 +389,22 @@ like(
 	"parameter report truncates");
 $log = undef;
 
+# Check that bad parameters are reported during typinput phase of BIND
+pgbench(
+	'-n -t1 -c1 -M prepared',
+	2,
+	[],
+	[
+		qr{ERROR:  invalid input syntax for type smallint: "1a"},
+		qr{CONTEXT:  unnamed portal parameter \$2 = '1a'}
+	],
+	'server parameter logging',
+	{
+		'001_param_6' => q{select 42 as value1, '1a' as value2 \gset
+select :value1::smallint, :value2::smallint;
+}
+	});
+
 # Restore default logging config
 $node->append_conf('postgresql.conf',
 	    "log_min_duration_statement = -1\n"
