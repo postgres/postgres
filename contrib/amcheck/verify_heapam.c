@@ -1100,14 +1100,14 @@ check_tuple_attribute(HeapCheckContext *ctx)
 		check_toast_tuple(toasttup, ctx);
 		ctx->chunkno++;
 	}
-	if (ctx->chunkno != (ctx->endchunk + 1))
-		report_corruption(ctx,
-						  psprintf("final toast chunk number %u differs from expected value %u",
-								   ctx->chunkno, (ctx->endchunk + 1)));
 	if (!found_toasttup)
 		report_corruption(ctx,
 						  psprintf("toasted value for attribute %u missing from toast table",
 								   ctx->attnum));
+	else if (ctx->chunkno != (ctx->endchunk + 1))
+		report_corruption(ctx,
+						  psprintf("final toast chunk number %u differs from expected value %u",
+								   ctx->chunkno, (ctx->endchunk + 1)));
 	systable_endscan_ordered(toastscan);
 
 	return true;

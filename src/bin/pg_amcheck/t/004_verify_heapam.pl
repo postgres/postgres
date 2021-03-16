@@ -296,7 +296,7 @@ close($file)
 $node->start;
 
 # Ok, Xids and page layout look ok.  We can run corruption tests.
-plan tests => 20;
+plan tests => 19;
 
 # Check that pg_amcheck runs against the uncorrupted table without error.
 $node->command_ok(['pg_amcheck', '-p', $port, 'postgres'],
@@ -489,7 +489,6 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 
 		$header = header(0, $offnum, 2);
 		push @expected,
-			qr/${header}final toast chunk number 0 differs from expected value \d+/,
 			qr/${header}toasted value for attribute 2 missing from toast table/;
 	}
 	elsif ($offnum == 14)
