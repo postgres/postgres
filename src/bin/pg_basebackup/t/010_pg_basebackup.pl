@@ -6,7 +6,7 @@ use File::Basename qw(basename dirname);
 use File::Path qw(rmtree);
 use PostgresNode;
 use TestLib;
-use Test::More tests => 109;
+use Test::More tests => 110;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -229,6 +229,7 @@ dir_symlink("$tempdir/pg_replslot", "$pgdata/pg_replslot")
 
 $node->start;
 
+# Test backup of a tablespace using tar format.
 # Create a temporary directory in the system location and symlink it
 # to our physical temp location.  That way we can use shorter names
 # for the tablespace directories, which hopefully won't run afoul of
@@ -242,14 +243,52 @@ my $real_tempdir = TestLib::perl2host($tempdir);
 $node->safe_psql('postgres',
 	"CREATE TABLESPACE tblspc1 LOCATION '$realTsDir';");
 $node->safe_psql('postgres',
-	"CREATE TABLE test1 (a int) TABLESPACE tblspc1;");
-$node->command_ok(
-	[ 'pg_basebackup', '-D', "$real_tempdir/tarbackup2", '-Ft' ],
-	'tar format with tablespaces');
-ok(-f "$tempdir/tarbackup2/base.tar", 'backup tar was created');
-my @tblspc_tars = glob "$tempdir/tarbackup2/[0-9]*.tar";
+	    "CREATE TABLE test1 (a int) TABLESPACE tblspc1;"
+	  . "INSERT INTO test1 VALUES (1234);");
+$node->backup('tarbackup2', backup_options => ['-Ft']);
+# empty test1, just so that it's different from the to-be-restored data
+$node->safe_psql('postgres', "TRUNCATE TABLE test1;");
+
+# basic checks on the output
+my $backupdir = $node->backup_dir . '/tarbackup2';
+ok(-f "$backupdir/base.tar",   'backup tar was created');
+ok(-f "$backupdir/pg_wal.tar", 'WAL tar was created');
+my @tblspc_tars = glob "$backupdir/[0-9]*.tar";
 is(scalar(@tblspc_tars), 1, 'one tablespace tar was created');
-rmtree("$tempdir/tarbackup2");
+
+# Try to verify the tar-format backup by restoring it.
+# For this, we use the tar program identified by configure.
+SKIP:
+{
+	my $tar = $ENV{TAR};
+	skip "no tar program available", 1
+	  if (!defined $tar || $tar eq '');
+
+	my $node2 = get_new_node('replica');
+
+	# Recover main data directory
+	$node2->init_from_backup($node, 'tarbackup2', tar_program => $tar);
+
+	# Recover tablespace into a new directory (not where it was!)
+	mkdir "$tempdir/tblspc1replica";
+	my $realRepTsDir = TestLib::perl2host("$shorter_tempdir/tblspc1replica");
+	TestLib::system_or_bail($tar, 'xf', $tblspc_tars[0], '-C', $realRepTsDir);
+
+	# Update tablespace map to point to new directory.
+	# XXX Ideally pg_basebackup would handle this.
+	$tblspc_tars[0] =~ m|/([0-9]*)\.tar$|;
+	my $tblspcoid       = $1;
+	my $escapedRepTsDir = $realRepTsDir;
+	$escapedRepTsDir =~ s/\\/\\\\/g;
+	open my $mapfile, '>', $node2->data_dir . '/tablespace_map';
+	print $mapfile "$tblspcoid $escapedRepTsDir\n";
+	close $mapfile;
+
+	$node2->start;
+	my $result = $node2->safe_psql('postgres', 'SELECT * FROM test1');
+	is($result, '1234', "tablespace data restored from tar-format backup");
+	$node2->stop;
+}
 
 # Create an unlogged table to test that forks other than init are not copied.
 $node->safe_psql('postgres',

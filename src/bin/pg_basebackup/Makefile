@@ -18,6 +18,9 @@ subdir = src/bin/pg_basebackup
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+# make this available to TAP test scripts
+export TAR
+
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
