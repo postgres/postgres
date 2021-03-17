@@ -773,7 +773,7 @@ CREATE FOREIGN TABLE ft_part2 (a INT NOT NULL) SERVER s0;
 ALTER TABLE lt1 ATTACH PARTITION ft_part2
   FOR VALUES FROM (1000) TO (2000);                             -- ERROR
 ERROR:  cannot attach foreign table "ft_part2" as partition of partitioned table "lt1"
-DETAIL:  Table "lt1" contains unique indexes.
+DETAIL:  Partitioned table "lt1" contains unique indexes.
 DROP TABLE lt1;
 DROP FOREIGN TABLE ft_part2;
 CREATE TABLE lt1 (a INT) PARTITION BY RANGE (a);
@@ -801,7 +801,7 @@ DETAIL:  Table "lt1_part1" contains indexes that are unique.
 CREATE FOREIGN TABLE ft_part_1_2 (a INT NOT NULL) SERVER s0;
 ALTER TABLE lt1_part1 ATTACH PARTITION ft_part_1_2 FOR VALUES FROM (100) TO (200);
 ERROR:  cannot attach foreign table "ft_part_1_2" as partition of partitioned table "lt1_part1"
-DETAIL:  Table "lt1_part1" contains unique indexes.
+DETAIL:  Partitioned table "lt1_part1" contains unique indexes.
 DROP TABLE lt1;
 DROP FOREIGN TABLE ft_part_1_2;
 -- ALTER FOREIGN TABLE

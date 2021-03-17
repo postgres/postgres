@@ -16673,7 +16673,7 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 						 errmsg("cannot attach foreign table \"%s\" as partition of partitioned table \"%s\"",
 								RelationGetRelationName(attachrel),
 								RelationGetRelationName(rel)),
-						 errdetail("Table \"%s\" contains unique indexes.",
+						 errdetail("Partitioned table \"%s\" contains unique indexes.",
 								   RelationGetRelationName(rel))));
 			index_close(idxRel, AccessShareLock);
 		}
