@@ -101,6 +101,22 @@ SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count F
  regression_slot | t          | t
 (1 row)
 
+-- Ensure stats can be repeatedly accessed using the same stats snapshot. See
+-- https://postgr.es/m/20210317230447.c7uc4g3vbs4wi32i%40alap3.anarazel.de
+BEGIN;
+SELECT slot_name FROM pg_stat_replication_slots;
+    slot_name    
+-----------------
+ regression_slot
+(1 row)
+
+SELECT slot_name FROM pg_stat_replication_slots;
+    slot_name    
+-----------------
+ regression_slot
+(1 row)
+
+COMMIT;
 DROP FUNCTION wait_for_decode_stats(bool);
 DROP TABLE stats_test;
 SELECT pg_drop_replication_slot('regression_slot');

@@ -59,6 +59,13 @@ SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL,
 SELECT wait_for_decode_stats(false);
 SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
 
+-- Ensure stats can be repeatedly accessed using the same stats snapshot. See
+-- https://postgr.es/m/20210317230447.c7uc4g3vbs4wi32i%40alap3.anarazel.de
+BEGIN;
+SELECT slot_name FROM pg_stat_replication_slots;
+SELECT slot_name FROM pg_stat_replication_slots;
+COMMIT;
+
 DROP FUNCTION wait_for_decode_stats(bool);
 DROP TABLE stats_test;
 SELECT pg_drop_replication_slot('regression_slot');

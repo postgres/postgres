@@ -5568,7 +5568,9 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 						 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* Allocate the space for replication slot statistics */
-	replSlotStats = palloc0(max_replication_slots * sizeof(PgStat_ReplSlotStats));
+	replSlotStats = MemoryContextAllocZero(pgStatLocalContext,
+										   max_replication_slots
+										   * sizeof(PgStat_ReplSlotStats));
 	nReplSlotStats = 0;
 
 	/*
@@ -6323,6 +6325,8 @@ pgstat_clear_snapshot(void)
 	pgStatDBHash = NULL;
 	localBackendStatusTable = NULL;
 	localNumBackends = 0;
+	replSlotStats = NULL;
+	nReplSlotStats = 0;
 }
 
 
