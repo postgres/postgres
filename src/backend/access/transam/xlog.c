@@ -10702,18 +10702,16 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
  * active at the same time, and they don't conflict with an exclusive backup
  * either.
  *
- * tablespaces is required only when this function is called while
- * the streaming base backup requested by pg_basebackup is running.
- * NULL should be specified otherwise.
+ * labelfile and tblspcmapfile must be passed as NULL when starting an
+ * exclusive backup, and as initially-empty StringInfos for a non-exclusive
+ * backup.
+ *
+ * If "tablespaces" isn't NULL, it receives a list of tablespaceinfo structs
+ * describing the cluster's tablespaces.
  *
  * tblspcmapfile is required mainly for tar format in windows as native windows
  * utilities are not able to create symlinks while extracting files from tar.
  * However for consistency, the same is used for all platforms.
- *
- * needtblspcmapfile is true for the cases (exclusive backup and for
- * non-exclusive backup only when tar format is used for taking backup)
- * when backup needs to generate tablespace_map file, it is used to
- * embed escape character before newline character in tablespace path.
  *
  * Returns the minimum WAL location that must be present to restore from this
  * backup, and the corresponding timeline ID in *starttli_p.
@@ -10727,7 +10725,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 XLogRecPtr
 do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 				   StringInfo labelfile, List **tablespaces,
-				   StringInfo tblspcmapfile, bool needtblspcmapfile)
+				   StringInfo tblspcmapfile)
 {
 	bool		exclusive = (labelfile == NULL);
 	bool		backup_started_in_recovery = false;
@@ -10940,9 +10938,10 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		XLogFileName(xlogfilename, starttli, _logSegNo, wal_segment_size);
 
 		/*
-		 * Construct tablespace_map file
+		 * Construct tablespace_map file.  If caller isn't interested in this,
+		 * we make a local StringInfo.
 		 */
-		if (exclusive)
+		if (tblspcmapfile == NULL)
 			tblspcmapfile = makeStringInfo();
 
 		datadirpathlen = strlen(DataDir);
@@ -10955,11 +10954,11 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 			char		linkpath[MAXPGPATH];
 			char	   *relpath = NULL;
 			int			rllen;
-			StringInfoData buflinkpath;
-			char	   *s = linkpath;
+			StringInfoData escapedpath;
+			char	   *s;
 
-			/* Skip special stuff */
-			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+			/* Skip anything that doesn't look like a tablespace */
+			if (strspn(de->d_name, "0123456789") != strlen(de->d_name))
 				continue;
 
 			snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
@@ -10983,18 +10982,15 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 			linkpath[rllen] = '\0';
 
 			/*
-			 * Add the escape character '\\' before newline in a string to
-			 * ensure that we can distinguish between the newline in the
-			 * tablespace path and end of line while reading tablespace_map
-			 * file during archive recovery.
+			 * Build a backslash-escaped version of the link path to include
+			 * in the tablespace map file.
 			 */
-			initStringInfo(&buflinkpath);
-
-			while (*s)
+			initStringInfo(&escapedpath);
+			for (s = linkpath; *s; s++)
 			{
-				if ((*s == '\n' || *s == '\r') && needtblspcmapfile)
-					appendStringInfoChar(&buflinkpath, '\\');
-				appendStringInfoChar(&buflinkpath, *s++);
+				if (*s == '\n' || *s == '\r' || *s == '\\')
+					appendStringInfoChar(&escapedpath, '\\');
+				appendStringInfoChar(&escapedpath, *s);
 			}
 
 			/*
@@ -11009,16 +11005,17 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 
 			ti = palloc(sizeof(tablespaceinfo));
 			ti->oid = pstrdup(de->d_name);
-			ti->path = pstrdup(buflinkpath.data);
+			ti->path = pstrdup(linkpath);
 			ti->rpath = relpath ? pstrdup(relpath) : NULL;
 			ti->size = -1;
 
 			if (tablespaces)
 				*tablespaces = lappend(*tablespaces, ti);
 
-			appendStringInfo(tblspcmapfile, "%s %s\n", ti->oid, ti->path);
+			appendStringInfo(tblspcmapfile, "%s %s\n",
+							 ti->oid, escapedpath.data);
 
-			pfree(buflinkpath.data);
+			pfree(escapedpath.data);
 #else
 
 			/*
@@ -11034,9 +11031,10 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		FreeDir(tblspcdir);
 
 		/*
-		 * Construct backup label file
+		 * Construct backup label file.  If caller isn't interested in this,
+		 * we make a local StringInfo.
 		 */
-		if (exclusive)
+		if (labelfile == NULL)
 			labelfile = makeStringInfo();
 
 		/* Use the log timezone here, not the session timezone */
@@ -11898,22 +11896,20 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
  * recovering from a backup dump file, and we therefore need to create symlinks
  * as per the information present in tablespace_map file.
  *
- * Returns true if a tablespace_map file was found (and fills the link
- * information for all the tablespace links present in file); returns false
- * if not.
+ * Returns true if a tablespace_map file was found (and fills *tablespaces
+ * with a tablespaceinfo struct for each tablespace listed in the file);
+ * returns false if not.
  */
 static bool
 read_tablespace_map(List **tablespaces)
 {
 	tablespaceinfo *ti;
 	FILE	   *lfp;
-	char		tbsoid[MAXPGPATH];
-	char	   *tbslinkpath;
 	char		str[MAXPGPATH];
 	int			ch,
-				prev_ch = -1,
-				i = 0,
+				i,
 				n;
+	bool		was_backslash;
 
 	/*
 	 * See if tablespace_map file is present
@@ -11932,37 +11928,54 @@ read_tablespace_map(List **tablespaces)
 	/*
 	 * Read and parse the link name and path lines from tablespace_map file
 	 * (this code is pretty crude, but we are not expecting any variability in
-	 * the file format).  While taking backup we embed escape character '\\'
-	 * before newline in tablespace path, so that during reading of
-	 * tablespace_map file, we could distinguish newline in tablespace path
-	 * and end of line.  Now while reading tablespace_map file, remove the
-	 * escape character that has been added in tablespace path during backup.
+	 * the file format).  De-escape any backslashes that were inserted.
 	 */
+	i = 0;
+	was_backslash = false;
 	while ((ch = fgetc(lfp)) != EOF)
 	{
-		if ((ch == '\n' || ch == '\r') && prev_ch != '\\')
+		if (!was_backslash && (ch == '\n' || ch == '\r'))
 		{
+			if (i == 0)
+				continue;		/* \r immediately followed by \n */
+
+			/*
+			 * The de-escaped line should contain an OID followed by exactly
+			 * one space followed by a path.  The path might start with
+			 * spaces, so don't be too liberal about parsing.
+			 */
 			str[i] = '\0';
-			if (sscanf(str, "%s %n", tbsoid, &n) != 1)
+			n = 0;
+			while (str[n] && str[n] != ' ')
+				n++;
+			if (n < 1 || n >= i - 1)
 				ereport(FATAL,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("invalid data in file \"%s\"", TABLESPACE_MAP)));
-			tbslinkpath = str + n;
-			i = 0;
+			str[n++] = '\0';
 
-			ti = palloc(sizeof(tablespaceinfo));
-			ti->oid = pstrdup(tbsoid);
-			ti->path = pstrdup(tbslinkpath);
-
+			ti = palloc0(sizeof(tablespaceinfo));
+			ti->oid = pstrdup(str);
+			ti->path = pstrdup(str + n);
 			*tablespaces = lappend(*tablespaces, ti);
+
+			i = 0;
 			continue;
 		}
-		else if ((ch == '\n' || ch == '\r') && prev_ch == '\\')
-			str[i - 1] = ch;
-		else if (i < sizeof(str) - 1)
-			str[i++] = ch;
-		prev_ch = ch;
+		else if (!was_backslash && ch == '\\')
+			was_backslash = true;
+		else
+		{
+			if (i < sizeof(str) - 1)
+				str[i++] = ch;
+			was_backslash = false;
+		}
 	}
+
+	if (i != 0 || was_backslash)	/* last line not terminated? */
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("invalid data in file \"%s\"", TABLESPACE_MAP)));
 
 	if (ferror(lfp) || FreeFile(lfp))
 		ereport(FATAL,

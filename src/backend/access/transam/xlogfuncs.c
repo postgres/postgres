@@ -76,7 +76,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	if (exclusive)
 	{
 		startpoint = do_pg_start_backup(backupidstr, fast, NULL, NULL,
-										NULL, NULL, true);
+										NULL, NULL);
 	}
 	else
 	{
@@ -94,7 +94,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		register_persistent_abort_backup_handler();
 
 		startpoint = do_pg_start_backup(backupidstr, fast, NULL, label_file,
-										NULL, tblspc_map_file, true);
+										NULL, tblspc_map_file);
 	}
 
 	PG_RETURN_LSN(startpoint);
