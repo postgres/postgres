@@ -144,11 +144,27 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         The query writes any data or locks any database rows. If a query
         contains a data-modifying operation either at the top level or within
         a CTE, no parallel plans for that query will be generated.  As an
-        exception, the commands <literal>CREATE TABLE ... AS</literal>, <literal>SELECT
-        INTO</literal>, and <literal>CREATE MATERIALIZED VIEW</literal> which create a new
-        table and populate it can use a parallel plan. Another exception is the command
-        <literal>INSERT INTO ... SELECT ...</literal> which can use a parallel plan for
-        the underlying <literal>SELECT</literal> part of the query.
+        exception, the following commands which create a new table and populate
+        it can use a parallel plan for the underlying <literal>SELECT</literal>
+        part of the query:
+
+        <itemizedlist>
+          <listitem>
+            <para><command>CREATE TABLE ... AS</command></para>
+          </listitem>
+          <listitem>
+            <para><command>SELECT INTO</command></para>
+          </listitem>
+          <listitem>
+            <para><command>INSERT INTO ... SELECT</command></para>
+          </listitem>
+          <listitem>
+            <para><command>CREATE MATERIALIZED VIEW</command></para>
+          </listitem>
+          <listitem>
+            <para><command>REFRESH MATERIALIZED VIEW</command></para>
+          </listitem>
+        </itemizedlist>
       </para>
     </listitem>
 
