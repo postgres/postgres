@@ -39,30 +39,26 @@
  *
  * One barrier called build_barrier is used to coordinate the hashing phases.
  * The phase is represented by an integer which begins at zero and increments
- * one by one, but in the code it is referred to by symbolic names as follows.
- * An asterisk indicates a phase that is performed by a single arbitrarily
- * chosen process.
+ * one by one, but in the code it is referred to by symbolic names as follows:
  *
- *   PHJ_BUILD_ELECT                 -- initial state
- *   PHJ_BUILD_ALLOCATE*             -- one sets up the batches and table 0
- *   PHJ_BUILD_HASH_INNER            -- all hash the inner rel
- *   PHJ_BUILD_HASH_OUTER            -- (multi-batch only) all hash the outer
- *   PHJ_BUILD_RUN                   -- building done, probing can begin
- *   PHJ_BUILD_FREE*                 -- all work complete, one frees batches
+ *   PHJ_BUILD_ELECTING              -- initial state
+ *   PHJ_BUILD_ALLOCATING            -- one sets up the batches and table 0
+ *   PHJ_BUILD_HASHING_INNER         -- all hash the inner rel
+ *   PHJ_BUILD_HASHING_OUTER         -- (multi-batch only) all hash the outer
+ *   PHJ_BUILD_DONE                  -- building done, probing can begin
  *
- * While in the phase PHJ_BUILD_HASH_INNER a separate pair of barriers may
+ * While in the phase PHJ_BUILD_HASHING_INNER a separate pair of barriers may
  * be used repeatedly as required to coordinate expansions in the number of
  * batches or buckets.  Their phases are as follows:
  *
- *   PHJ_GROW_BATCHES_ELECT          -- initial state
- *   PHJ_GROW_BATCHES_REALLOCATE*    -- one allocates new batches
- *   PHJ_GROW_BATCHES_REPARTITION    -- all repartition
- *   PHJ_GROW_BATCHES_DECIDE*        -- one detects skew and cleans up
- *   PHJ_GROW_BATCHES_FINISH         -- finished one growth cycle
+ *   PHJ_GROW_BATCHES_ELECTING       -- initial state
+ *   PHJ_GROW_BATCHES_ALLOCATING     -- one allocates new batches
+ *   PHJ_GROW_BATCHES_REPARTITIONING -- all repartition
+ *   PHJ_GROW_BATCHES_FINISHING      -- one cleans up, detects skew
  *
- *   PHJ_GROW_BUCKETS_ELECT          -- initial state
- *   PHJ_GROW_BUCKETS_REALLOCATE*    -- one allocates new buckets
- *   PHJ_GROW_BUCKETS_REINSERT       -- all insert tuples
+ *   PHJ_GROW_BUCKETS_ELECTING       -- initial state
+ *   PHJ_GROW_BUCKETS_ALLOCATING     -- one allocates new buckets
+ *   PHJ_GROW_BUCKETS_REINSERTING    -- all insert tuples
  *
  * If the planner got the number of batches and buckets right, those won't be
  * necessary, but on the other hand we might finish up needing to expand the
@@ -70,27 +66,27 @@
  * within our memory budget and load factor target.  For that reason it's a
  * separate pair of barriers using circular phases.
  *
- * The PHJ_BUILD_HASH_OUTER phase is required only for multi-batch joins,
+ * The PHJ_BUILD_HASHING_OUTER phase is required only for multi-batch joins,
  * because we need to divide the outer relation into batches up front in order
  * to be able to process batches entirely independently.  In contrast, the
  * parallel-oblivious algorithm simply throws tuples 'forward' to 'later'
  * batches whenever it encounters them while scanning and probing, which it
  * can do because it processes batches in serial order.
  *
- * Once PHJ_BUILD_RUN is reached, backends then split up and process
+ * Once PHJ_BUILD_DONE is reached, backends then split up and process
  * different batches, or gang up and work together on probing batches if there
  * aren't enough to go around.  For each batch there is a separate barrier
  * with the following phases:
  *
- *  PHJ_BATCH_ELECT          -- initial state
- *  PHJ_BATCH_ALLOCATE*      -- one allocates buckets
- *  PHJ_BATCH_LOAD           -- all load the hash table from disk
- *  PHJ_BATCH_PROBE          -- all probe
- *  PHJ_BATCH_FREE*          -- one frees memory
+ *  PHJ_BATCH_ELECTING       -- initial state
+ *  PHJ_BATCH_ALLOCATING     -- one allocates buckets
+ *  PHJ_BATCH_LOADING        -- all load the hash table from disk
+ *  PHJ_BATCH_PROBING        -- all probe
+ *  PHJ_BATCH_DONE           -- end
  *
  * Batch 0 is a special case, because it starts out in phase
- * PHJ_BATCH_PROBE; populating batch 0's hash table is done during
- * PHJ_BUILD_HASH_INNER so we can skip loading.
+ * PHJ_BATCH_PROBING; populating batch 0's hash table is done during
+ * PHJ_BUILD_HASHING_INNER so we can skip loading.
  *
  * Initially we try to plan for a single-batch hash join using the combined
  * hash_mem of all participants to create a large shared hash table.  If that
@@ -99,16 +95,11 @@
  *
  * To avoid deadlocks, we never wait for any barrier unless it is known that
  * all other backends attached to it are actively executing the node or have
- * finished.  Practically, that means that we never emit a tuple while attached
- * to a barrier, unless the barrier has reached a phase that means that no
- * process will wait on it again.  We emit tuples while attached to the build
- * barrier in phase PHJ_BUILD_RUN, and to a per-batch barrier in phase
- * PHJ_BATCH_PROBE.  These are advanced to PHJ_BUILD_FREE and PHJ_BATCH_FREE
- * respectively without waiting, using BarrierArriveAndDetach().  The last to
- * detach receives a different return value so that it knows that it's safe to
- * clean up.  Any straggler process that attaches after that phase is reached
- * will see that it's too late to participate or access the relevant shared
- * memory objects.
+ * already arrived.  Practically, that means that we never return a tuple
+ * while attached to a barrier, unless the barrier has reached its final
+ * state.  In the slightly special case of the per-batch barrier, we return
+ * tuples while in PHJ_BATCH_PROBING phase, but that's OK because we use
+ * BarrierArriveAndDetach() to advance it to PHJ_BATCH_DONE without waiting.
  *
  *-------------------------------------------------------------------------
  */
@@ -325,10 +316,9 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 					Barrier    *build_barrier;
 
 					build_barrier = &parallel_state->build_barrier;
-					Assert(BarrierPhase(build_barrier) == PHJ_BUILD_HASH_OUTER ||
-						   BarrierPhase(build_barrier) == PHJ_BUILD_RUN ||
-						   BarrierPhase(build_barrier) == PHJ_BUILD_FREE);
-					if (BarrierPhase(build_barrier) == PHJ_BUILD_HASH_OUTER)
+					Assert(BarrierPhase(build_barrier) == PHJ_BUILD_HASHING_OUTER ||
+						   BarrierPhase(build_barrier) == PHJ_BUILD_DONE);
+					if (BarrierPhase(build_barrier) == PHJ_BUILD_HASHING_OUTER)
 					{
 						/*
 						 * If multi-batch, we need to hash the outer relation
@@ -339,18 +329,9 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 						BarrierArriveAndWait(build_barrier,
 											 WAIT_EVENT_HASH_BUILD_HASH_OUTER);
 					}
-					else if (BarrierPhase(build_barrier) == PHJ_BUILD_FREE)
-					{
-						/*
-						 * If we attached so late that the job is finished and
-						 * the batch state has been freed, we can return
-						 * immediately.
-						 */
-						return NULL;
-					}
+					Assert(BarrierPhase(build_barrier) == PHJ_BUILD_DONE);
 
 					/* Each backend should now select a batch to work on. */
-					Assert(BarrierPhase(build_barrier) == PHJ_BUILD_RUN);
 					hashtable->curbatch = -1;
 					node->hj_JoinState = HJ_NEED_NEW_BATCH;
 
@@ -1110,6 +1091,14 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 	int			batchno;
 
 	/*
+	 * If we started up so late that the batch tracking array has been freed
+	 * already by ExecHashTableDetach(), then we are finished.  See also
+	 * ExecParallelHashEnsureBatchAccessors().
+	 */
+	if (hashtable->batches == NULL)
+		return false;
+
+	/*
 	 * If we were already attached to a batch, remember not to bother checking
 	 * it again, and detach from it (possibly freeing the hash table if we are
 	 * last to detach).
@@ -1142,7 +1131,7 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 
 			switch (BarrierAttach(batch_barrier))
 			{
-				case PHJ_BATCH_ELECT:
+				case PHJ_BATCH_ELECTING:
 
 					/* One backend allocates the hash table. */
 					if (BarrierArriveAndWait(batch_barrier,
@@ -1150,13 +1139,13 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 						ExecParallelHashTableAlloc(hashtable, batchno);
 					/* Fall through. */
 
-				case PHJ_BATCH_ALLOCATE:
+				case PHJ_BATCH_ALLOCATING:
 					/* Wait for allocation to complete. */
 					BarrierArriveAndWait(batch_barrier,
 										 WAIT_EVENT_HASH_BATCH_ALLOCATE);
 					/* Fall through. */
 
-				case PHJ_BATCH_LOAD:
+				case PHJ_BATCH_LOADING:
 					/* Start (or join in) loading tuples. */
 					ExecParallelHashTableSetCurrentBatch(hashtable, batchno);
 					inner_tuples = hashtable->batches[batchno].inner_tuples;
@@ -1176,7 +1165,7 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 										 WAIT_EVENT_HASH_BATCH_LOAD);
 					/* Fall through. */
 
-				case PHJ_BATCH_PROBE:
+				case PHJ_BATCH_PROBING:
 
 					/*
 					 * This batch is ready to probe.  Return control to
@@ -1186,13 +1175,13 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 					 * this barrier again (or else a deadlock could occur).
 					 * All attached participants must eventually call
 					 * BarrierArriveAndDetach() so that the final phase
-					 * PHJ_BATCH_FREE can be reached.
+					 * PHJ_BATCH_DONE can be reached.
 					 */
 					ExecParallelHashTableSetCurrentBatch(hashtable, batchno);
 					sts_begin_parallel_scan(hashtable->batches[batchno].outer_tuples);
 					return true;
 
-				case PHJ_BATCH_FREE:
+				case PHJ_BATCH_DONE:
 
 					/*
 					 * Already done.  Detach and go around again (if any
@@ -1519,7 +1508,7 @@ ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *cxt)
 	/*
 	 * It would be possible to reuse the shared hash table in single-batch
 	 * cases by resetting and then fast-forwarding build_barrier to
-	 * PHJ_BUILD_FREE and batch 0's batch_barrier to PHJ_BATCH_PROBE, but
+	 * PHJ_BUILD_DONE and batch 0's batch_barrier to PHJ_BATCH_PROBING, but
 	 * currently shared hash tables are already freed by now (by the last
 	 * participant to detach from the batch).  We could consider keeping it
 	 * around for single-batch joins.  We'd also need to adjust
@@ -1538,7 +1527,7 @@ ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *cxt)
 	/* Clear any shared batch files. */
 	SharedFileSetDeleteAll(&pstate->fileset);
 
-	/* Reset build_barrier to PHJ_BUILD_ELECT so we can go around again. */
+	/* Reset build_barrier to PHJ_BUILD_ELECTING so we can go around again. */
 	BarrierInit(&pstate->build_barrier, 0);
 }
 
