@@ -4043,8 +4043,8 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_HASH_BUILD_HASH_OUTER:
 			event_name = "HashBuildHashOuter";
 			break;
-		case WAIT_EVENT_HASH_GROW_BATCHES_ALLOCATE:
-			event_name = "HashGrowBatchesAllocate";
+		case WAIT_EVENT_HASH_GROW_BATCHES_REALLOCATE:
+			event_name = "HashGrowBatchesReallocate";
 			break;
 		case WAIT_EVENT_HASH_GROW_BATCHES_DECIDE:
 			event_name = "HashGrowBatchesDecide";
@@ -4058,8 +4058,8 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_HASH_GROW_BATCHES_REPARTITION:
 			event_name = "HashGrowBatchesRepartition";
 			break;
-		case WAIT_EVENT_HASH_GROW_BUCKETS_ALLOCATE:
-			event_name = "HashGrowBucketsAllocate";
+		case WAIT_EVENT_HASH_GROW_BUCKETS_REALLOCATE:
+			event_name = "HashGrowBucketsReallocate";
 			break;
 		case WAIT_EVENT_HASH_GROW_BUCKETS_ELECT:
 			event_name = "HashGrowBucketsElect";
