@@ -894,7 +894,7 @@ SELECT <replaceable>expression</replaceable>
 </synopsis>
      to the main SQL engine.  While forming the <command>SELECT</command> command,
      any occurrences of <application>PL/pgSQL</application> variable names
-     are replaced by parameters, as discussed in detail in
+     are replaced by query parameters, as discussed in detail in
      <xref linkend="plpgsql-var-subst"/>.
      This allows the query plan for the <command>SELECT</command> to
      be prepared just once and then reused for subsequent
@@ -946,8 +946,7 @@ IF count(*) &gt; 0 FROM my_table THEN ...
     <application>PL/pgSQL</application>.
     Anything not recognized as one of these statement types is presumed
     to be an SQL command and is sent to the main database engine to execute,
-    as described in <xref linkend="plpgsql-statements-sql-noresult"/>
-    and <xref linkend="plpgsql-statements-sql-onerow"/>.
+    as described in <xref linkend="plpgsql-statements-general-sql"/>.
    </para>
 
    <sect2 id="plpgsql-statements-assignment">
@@ -993,29 +992,76 @@ complex_array[n].realpart = 12.3;
     </para>
    </sect2>
 
-   <sect2 id="plpgsql-statements-sql-noresult">
-    <title>Executing a Command with No Result</title>
+   <sect2 id="plpgsql-statements-general-sql">
+    <title>Executing SQL Commands</title>
 
     <para>
-     For any SQL command that does not return rows, for example
-     <command>INSERT</command> without a <literal>RETURNING</literal> clause, you can
-     execute the command within a <application>PL/pgSQL</application> function
-     just by writing the command.
+     In general, any SQL command that does not return rows can be executed
+     within a <application>PL/pgSQL</application> function just by writing
+     the command.  For example, you could create and fill a table by writing
+<programlisting>
+CREATE TABLE mytable (id int primary key, data text);
+INSERT INTO mytable VALUES (1,'one'), (2,'two');
+</programlisting>
     </para>
 
     <para>
-     Any <application>PL/pgSQL</application> variable name appearing
-     in the command text is treated as a parameter, and then the
+     If the command does return rows (for example <command>SELECT</command>,
+     or <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>
+     with <literal>RETURNING</literal>), there are two ways to proceed.
+     When the command will return at most one row, or you only care about
+     the first row of output, write the command as usual but add
+     an <literal>INTO</literal> clause to capture the output, as described
+     in <xref linkend="plpgsql-statements-sql-onerow"/>.
+     To process all of the output rows, write the command as the data
+     source for a <command>FOR</command> loop, as described in
+     <xref linkend="plpgsql-records-iterating"/>.
+    </para>
+
+    <para>
+     Usually it is not sufficient just to execute statically-defined SQL
+     commands.  Typically you'll want a command to use varying data values,
+     or even to vary in more fundamental ways such as by using different
+     table names at different times.  Again, there are two ways to proceed
+     depending on the situation.
+    </para>
+
+    <para>
+     <application>PL/pgSQL</application> variable values can be
+     automatically inserted into optimizable SQL commands, which
+     are <command>SELECT</command>, <command>INSERT</command>,
+     <command>UPDATE</command>, <command>DELETE</command>, and certain
+     utility commands that incorporate one of these, such
+     as <command>EXPLAIN</command> and <command>CREATE TABLE ... AS
+     SELECT</command>.  In these commands,
+     any <application>PL/pgSQL</application> variable name appearing
+     in the command text is replaced by a query parameter, and then the
      current value of the variable is provided as the parameter value
      at run time.  This is exactly like the processing described earlier
      for expressions; for details see <xref linkend="plpgsql-var-subst"/>.
     </para>
 
     <para>
-     When executing a SQL command in this way,
+     When executing an optimizable SQL command in this way,
      <application>PL/pgSQL</application> may cache and re-use the execution
      plan for the command, as discussed in
      <xref linkend="plpgsql-plan-caching"/>.
+    </para>
+
+    <para>
+     Non-optimizable SQL commands (also called utility commands) are not
+     capable of accepting query parameters.  So automatic substitution
+     of <application>PL/pgSQL</application> variables does not work in such
+     commands.  To include non-constant text in a utility command executed
+     from <application>PL/pgSQL</application>, you must build the utility
+     command as a string and then <command>EXECUTE</command> it, as
+     discussed in <xref linkend="plpgsql-statements-executing-dyn"/>.
+    </para>
+
+    <para>
+     <command>EXECUTE</command> must also be used if you want to modify
+     the command in some other way than supplying a data value, for example
+     by changing a table name.
     </para>
 
     <para>
@@ -1037,7 +1083,7 @@ PERFORM <replaceable>query</replaceable>;
      place the query in parentheses.  (In this case, the query can only
      return one row.)
      <application>PL/pgSQL</application> variables will be
-     substituted into the query just as for commands that return no result,
+     substituted into the query just as described above,
      and the plan is cached in the same way.  Also, the special variable
      <literal>FOUND</literal> is set to true if the query produced at
      least one row, or false if it produced no rows (see
@@ -1065,7 +1111,7 @@ PERFORM create_mv('cs_session_page_requests_mv', my_query);
    </sect2>
 
    <sect2 id="plpgsql-statements-sql-onerow">
-    <title>Executing a Query with a Single-Row Result</title>
+    <title>Executing a Command with a Single-Row Result</title>
 
     <indexterm zone="plpgsql-statements-sql-onerow">
      <primary>SELECT INTO</primary>
@@ -1094,12 +1140,13 @@ DELETE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRIC
      variable, or a comma-separated list of simple variables and
      record/row fields.
      <application>PL/pgSQL</application> variables will be
-     substituted into the rest of the query, and the plan is cached,
-     just as described above for commands that do not return rows.
+     substituted into the rest of the command (that is, everything but the
+     <literal>INTO</literal> clause) just as described above,
+     and the plan is cached in the same way.
      This works for <command>SELECT</command>,
      <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command> with
-     <literal>RETURNING</literal>, and utility commands that return row-set
-     results (such as <command>EXPLAIN</command>).
+     <literal>RETURNING</literal>, and certain utility commands
+     that return row sets, such as <command>EXPLAIN</command>.
      Except for the <literal>INTO</literal> clause, the SQL command is the same
      as it would be written outside <application>PL/pgSQL</application>.
     </para>
@@ -1117,11 +1164,12 @@ DELETE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRIC
    </tip>
 
     <para>
-     If a row or a variable list is used as target, the query's result columns
+     If a row variable or a variable list is used as target,
+     the command's result columns
      must exactly match the structure of the target as to number and data
      types, or else a run-time error
      occurs.  When a record variable is the target, it automatically
-     configures itself to the row type of the query result columns.
+     configures itself to the row type of the command's result columns.
     </para>
 
     <para>
@@ -1137,7 +1185,7 @@ DELETE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRIC
     <para>
      If <literal>STRICT</literal> is not specified in the <literal>INTO</literal>
      clause, then <replaceable>target</replaceable> will be set to the first
-     row returned by the query, or to nulls if the query returned no rows.
+     row returned by the command, or to nulls if the command returned no rows.
      (Note that <quote>the first row</quote> is not
      well-defined unless you've used <literal>ORDER BY</literal>.)  Any result rows
      after the first row are discarded.
@@ -1152,7 +1200,7 @@ IF NOT FOUND THEN
 END IF;
 </programlisting>
 
-     If the <literal>STRICT</literal> option is specified, the query must
+     If the <literal>STRICT</literal> option is specified, the command must
      return exactly one row or a run-time error will be reported, either
      <literal>NO_DATA_FOUND</literal> (no rows) or <literal>TOO_MANY_ROWS</literal>
      (more than one row). You can use an exception block if you wish
@@ -1186,7 +1234,7 @@ END;
      then when an error is thrown because the requirements
      of <literal>STRICT</literal> are not met, the <literal>DETAIL</literal> part of
      the error message will include information about the parameters
-     passed to the query.
+     passed to the command.
      You can change the <literal>print_strict_params</literal>
      setting for all functions by setting
      <varname>plpgsql.print_strict_params</varname>, though only subsequent
@@ -1219,11 +1267,6 @@ CONTEXT:  PL/pgSQL function get_userid(text) line 6 at SQL statement
       Oracle PL/SQL's <command>SELECT INTO</command> and related statements.
      </para>
     </note>
-
-    <para>
-     To handle cases where you need to process multiple result rows
-     from a SQL query, see <xref linkend="plpgsql-records-iterating"/>.
-    </para>
 
    </sect2>
 
@@ -1270,20 +1313,20 @@ EXECUTE <replaceable class="command">command-string</replaceable> <optional> INT
 
     <para>
      The <literal>INTO</literal> clause specifies where the results of
-     a SQL command returning rows should be assigned. If a row
+     a SQL command returning rows should be assigned. If a row variable
      or variable list is provided, it must exactly match the structure
-     of the query's results (when a
-     record variable is used, it will configure itself to match the
-     result structure automatically). If multiple rows are returned,
+     of the command's results; if a
+     record variable is provided, it will configure itself to match the
+     result structure automatically. If multiple rows are returned,
      only the first will be assigned to the <literal>INTO</literal>
-     variable. If no rows are returned, NULL is assigned to the
+     variable(s). If no rows are returned, NULL is assigned to the
      <literal>INTO</literal> variable(s). If no <literal>INTO</literal>
-     clause is specified, the query results are discarded.
+     clause is specified, the command results are discarded.
     </para>
 
     <para>
      If the <literal>STRICT</literal> option is given, an error is reported
-     unless the query produces exactly one row.
+     unless the command produces exactly one row.
     </para>
 
     <para>
@@ -1316,17 +1359,23 @@ EXECUTE 'SELECT count(*) FROM '
    USING checked_user, checked_date;
 </programlisting>
      A cleaner approach is to use <function>format()</function>'s <literal>%I</literal>
-     specification for table or column names (strings separated by a
-     newline are concatenated):
+     specification to insert table or column names with automatic quoting:
 <programlisting>
 EXECUTE format('SELECT count(*) FROM %I '
    'WHERE inserted_by = $1 AND inserted &lt;= $2', tabname)
    INTO c
    USING checked_user, checked_date;
 </programlisting>
+     (This example relies on the SQL rule that string literals separated by a
+     newline are implicitly concatenated.)
+    </para>
+
+    <para>
      Another restriction on parameter symbols is that they only work in
-     <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>, and
-     <command>DELETE</command> commands.  In other statement
+     optimizable SQL commands
+     (<command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>,
+     <command>DELETE</command>, and certain commands containing one of these).
+     In other statement
      types (generically called utility statements), you must insert
      values textually even if they are just data values.
     </para>
@@ -2567,7 +2616,7 @@ $$ LANGUAGE plpgsql;
     </para>
 
     <para>
-     <application>PL/pgSQL</application> variables are substituted into the query text,
+     <application>PL/pgSQL</application> variables are replaced by query parameters,
      and the query plan is cached for possible re-use, as discussed in
      detail in <xref linkend="plpgsql-var-subst"/> and
      <xref linkend="plpgsql-plan-caching"/>.
@@ -4643,26 +4692,29 @@ CREATE EVENT TRIGGER snitch ON ddl_command_start EXECUTE FUNCTION snitch();
     SQL statements and expressions within a <application>PL/pgSQL</application> function
     can refer to variables and parameters of the function.  Behind the scenes,
     <application>PL/pgSQL</application> substitutes query parameters for such references.
-    Parameters will only be substituted in places where a parameter or
-    column reference is syntactically allowed.  As an extreme case, consider
+    Query parameters will only be substituted in places where they are
+    syntactically permissible.  As an extreme case, consider
     this example of poor programming style:
 <programlisting>
-INSERT INTO foo (foo) VALUES (foo);
+INSERT INTO foo (foo) VALUES (foo(foo));
 </programlisting>
     The first occurrence of <literal>foo</literal> must syntactically be a table
     name, so it will not be substituted, even if the function has a variable
     named <literal>foo</literal>.  The second occurrence must be the name of a
-    column of the table, so it will not be substituted either.  Only the
-    third occurrence is a candidate to be a reference to the function's
-    variable.
+    column of that table, so it will not be substituted either.  Likewise
+    the third occurrence must be a function name, so it also will not be
+    substituted for.  Only the last occurrence is a candidate to be a
+    reference to a variable of the <application>PL/pgSQL</application>
+    function.
    </para>
 
-   <note>
-    <para>
-     <productname>PostgreSQL</productname> versions before 9.0 would try
-     to substitute the variable in all three cases, leading to syntax errors.
-    </para>
-   </note>
+   <para>
+    Another way to understand this is that variable substitution can only
+    insert data values into a SQL command; it cannot dynamically change which
+    database objects are referenced by the command.  (If you want to do
+    that, you must build a command string dynamically, as explained in
+    <xref linkend="plpgsql-statements-executing-dyn"/>.)
+   </para>
 
    <para>
     Since the names of variables are syntactically no different from the names
@@ -4790,7 +4842,7 @@ $$ LANGUAGE plpgsql;
    </para>
 
    <para>
-    Variable substitution does not happen in the command string given
+    Variable substitution does not happen in a command string given
     to <command>EXECUTE</command> or one of its variants.  If you need to
     insert a varying value into such a command, do so as part of
     constructing the string value, or use <literal>USING</literal>, as illustrated in
@@ -4799,7 +4851,10 @@ $$ LANGUAGE plpgsql;
 
    <para>
     Variable substitution currently works only in <command>SELECT</command>,
-    <command>INSERT</command>, <command>UPDATE</command>, and <command>DELETE</command> commands,
+    <command>INSERT</command>, <command>UPDATE</command>,
+    <command>DELETE</command>, and commands containing one of
+    these (such as <command>EXPLAIN</command> and <command>CREATE TABLE
+    ... AS SELECT</command>),
     because the main SQL engine allows query parameters only in these
     commands.  To use a non-constant name or value in other statement
     types (generically called utility statements), you must construct
@@ -5314,11 +5369,12 @@ HINT:  Make sure the query returns the exact list of columns.
      <listitem>
       <para>
        If a name used in a SQL command could be either a column name of a
-       table or a reference to a variable of the function,
-       <application>PL/SQL</application> treats it as a column name.  This corresponds
-       to <application>PL/pgSQL</application>'s
+       table used in the command or a reference to a variable of the function,
+       <application>PL/SQL</application> treats it as a column name.
+       By default, <application>PL/pgSQL</application> will throw an error
+       complaining that the name is ambiguous.  You can specify
        <literal>plpgsql.variable_conflict</literal> = <literal>use_column</literal>
-       behavior, which is not the default,
+       to change this behavior to match <application>PL/SQL</application>,
        as explained in <xref linkend="plpgsql-var-subst"/>.
        It's often best to avoid such ambiguities in the first place,
        but if you have to port a large amount of code that depends on
