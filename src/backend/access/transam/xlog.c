@@ -11485,7 +11485,7 @@ read_tablespace_map(List **tablespaces)
 		}
 		else if ((ch == '\n' || ch == '\r') && prev_ch == '\\')
 			str[i - 1] = ch;
-		else
+		else if (i < sizeof(str) - 1)
 			str[i++] = ch;
 		prev_ch = ch;
 	}

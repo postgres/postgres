@@ -155,7 +155,8 @@ PostgreSQL documentation
             the target directory. If the cluster contains additional
             tablespaces, the main data directory will be placed in the
             target directory, but all other tablespaces will be placed
-            in the same absolute path as they have on the server.
+            in the same absolute path as they have on the source server.
+            (See <option>--tablespace-mapping</option> to change that.)
            </para>
            <para>
             This is the default format.
@@ -250,7 +251,12 @@ PostgreSQL documentation
         the main data directory are updated to point to the new location.  So
         the new data directory is ready to be used for a new server instance
         with all tablespaces in the updated locations.
-        </para>
+       </para>
+
+       <para>
+        Currently, this option only works with plain output format; it is
+        ignored if tar format is selected.
+       </para>
       </listitem>
      </varlistentry>
 
