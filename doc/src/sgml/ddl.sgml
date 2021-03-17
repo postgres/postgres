@@ -2495,12 +2495,6 @@ CREATE POLICY admin_local_only ON passwd AS RESTRICTIVE TO admin
  127.0.0.1
 (1 row)
 
-=&gt; SELECT current_user;
- current_user 
---------------
- admin
-(1 row)
-
 =&gt; TABLE passwd;
  user_name | pwhash | uid | gid | real_name | home_phone | extra_info | home_dir | shell
 -----------+--------+-----+-----+-----------+------------+------------+----------+-------
