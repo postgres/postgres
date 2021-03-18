@@ -246,7 +246,7 @@ pg_read_file(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to read files with adminpack 1.0"),
-				  errhint("Consider using pg_file_read(), which is part of core, instead."))));
+				  errhint("Consider using pg_read_file(), which is part of core, instead."))));
 
 	/* handle optional arguments */
 	if (PG_NARGS() >= 3)
