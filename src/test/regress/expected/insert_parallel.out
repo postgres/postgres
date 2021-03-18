@@ -61,11 +61,44 @@ set max_parallel_workers_per_gather=4;
 create table para_insert_p1 (
 	unique1		int4	PRIMARY KEY,
 	stringu1	name
-);
+) with (parallel_insert_enabled = off);
 create table para_insert_f1 (
 	unique1		int4	REFERENCES para_insert_p1(unique1),
 	stringu1	name
 );
+--
+-- Disable guc option enable_parallel_insert
+--
+set enable_parallel_insert = off;
+-- Test INSERT with underlying query when enable_parallel_insert=off and reloption.parallel_insert_enabled=off.
+-- (should create plan with serial INSERT + SELECT)
+--
+explain(costs off) insert into para_insert_p1 select unique1, stringu1 from tenk1;
+        QUERY PLAN        
+--------------------------
+ Insert on para_insert_p1
+   ->  Seq Scan on tenk1
+(2 rows)
+
+--
+-- Reset guc option enable_parallel_insert
+--
+reset enable_parallel_insert;
+--
+-- Test INSERT with underlying query when enable_parallel_insert=on and reloption.parallel_insert_enabled=off.
+-- (should create plan with serial INSERT + SELECT)
+--
+explain(costs off) insert into para_insert_p1 select unique1, stringu1 from tenk1;
+        QUERY PLAN        
+--------------------------
+ Insert on para_insert_p1
+   ->  Seq Scan on tenk1
+(2 rows)
+
+--
+-- Enable reloption parallel_insert_enabled
+--
+alter table para_insert_p1 set (parallel_insert_enabled = on);
 --
 -- Test INSERT with underlying query.
 -- (should create plan with parallel SELECT, Gather parent node)
@@ -362,9 +395,28 @@ explain (costs off) insert into testdef(a,d) select a,a*8 from test_data;
 --
 -- Test INSERT into partition with underlying query.
 --
-create table parttable1 (a int, b name) partition by range (a);
+create table parttable1 (a int, b name) partition by range (a) with (parallel_insert_enabled=off);
 create table parttable1_1 partition of parttable1 for values from (0) to (5000);
 create table parttable1_2 partition of parttable1 for values from (5000) to (10000);
+--
+-- Test INSERT into partition when reloption.parallel_insert_enabled=off
+-- (should not create a parallel plan)
+--
+explain (costs off) insert into parttable1 select unique1,stringu1 from tenk1;
+       QUERY PLAN        
+-------------------------
+ Insert on parttable1
+   ->  Seq Scan on tenk1
+(2 rows)
+
+--
+-- Enable reloption parallel_insert_enabled
+--
+alter table parttable1 set (parallel_insert_enabled = on);
+--
+-- Test INSERT into partition when reloption.parallel_insert_enabled=on
+-- (should create a parallel plan)
+--
 explain (costs off) insert into parttable1 select unique1,stringu1 from tenk1;
                QUERY PLAN               
 ----------------------------------------

@@ -129,6 +129,8 @@ Cost		disable_cost = 1.0e10;
 
 int			max_parallel_workers_per_gather = 2;
 
+bool		enable_parallel_insert = true;
+
 bool		enable_seqscan = true;
 bool		enable_indexscan = true;
 bool		enable_indexonlyscan = true;

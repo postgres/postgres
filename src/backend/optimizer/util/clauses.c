@@ -1265,8 +1265,10 @@ target_rel_chk_constr_max_parallel_hazard(Relation rel,
  *
  * It's not possible in the following cases:
  *
- *  1) INSERT...ON CONFLICT...DO UPDATE
- *  2) INSERT without SELECT
+ *  1) enable_parallel_insert is off
+ *  2) INSERT...ON CONFLICT...DO UPDATE
+ *  3) INSERT without SELECT
+ *  4) the reloption parallel_insert_enabled is set to off
  *
  * (Note: we don't do in-depth parallel-safety checks here, we do only the
  * cheaper tests that can quickly exclude obvious cases for which
@@ -1277,10 +1279,15 @@ bool
 is_parallel_allowed_for_modify(Query *parse)
 {
 	bool		hasSubQuery;
+	bool		parallel_enabled;
 	RangeTblEntry *rte;
 	ListCell   *lc;
+	Relation	rel;
 
 	if (!IsModifySupportedInParallelMode(parse->commandType))
+		return false;
+
+	if (!enable_parallel_insert)
 		return false;
 
 	/*
@@ -1313,7 +1320,28 @@ is_parallel_allowed_for_modify(Query *parse)
 		}
 	}
 
-	return hasSubQuery;
+	if (!hasSubQuery)
+		return false;
+
+	/*
+	 * Check if parallel_insert_enabled is enabled for the target table, if
+	 * not, skip the safety checks.
+	 *
+	 * (Note: if the target table is partitioned, the parallel_insert_enabled
+	 * option setting of the partitions are ignored).
+	 */
+	rte = rt_fetch(parse->resultRelation, parse->rtable);
+
+	/*
+	 * The target table is already locked by the caller (this is done in the
+	 * parse/analyze phase), and remains locked until end-of-transaction.
+	 */
+	rel = table_open(rte->relid, NoLock);
+
+	parallel_enabled = RelationGetParallelInsert(rel, true);
+	table_close(rel, NoLock);
+
+	return parallel_enabled;
 }
 
 /*****************************************************************************
