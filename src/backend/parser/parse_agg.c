@@ -1844,11 +1844,11 @@ expand_grouping_sets(List *groupingSets, bool groupDistinct, int limit)
 		list_sort(result, cmp_list_len_contents_asc);
 
 		/* Finally, remove duplicates */
-		prev = list_nth_node(List, result, 0);
+		prev = linitial_node(List, result);
 		for_each_from(cell, result, 1)
 		{
 			if (equal(lfirst(cell), prev))
-				foreach_delete_current(result, cell);
+				result = foreach_delete_current(result, cell);
 			else
 				prev = lfirst(cell);
 		}
