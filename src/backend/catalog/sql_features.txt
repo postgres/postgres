@@ -482,7 +482,7 @@ T351	Bracketed SQL comments (/*...*/ comments)			YES
 T431	Extended grouping capabilities			YES	
 T432	Nested and concatenated GROUPING SETS			YES	
 T433	Multiargument GROUPING function			YES	
-T434	GROUP BY DISTINCT			NO	
+T434	GROUP BY DISTINCT			YES	
 T441	ABS and MOD functions			YES	
 T461	Symmetric BETWEEN predicate			YES	
 T471	Result sets return value			NO	

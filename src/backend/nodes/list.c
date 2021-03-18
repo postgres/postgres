@@ -1507,6 +1507,22 @@ list_sort(List *list, list_sort_comparator cmp)
 }
 
 /*
+ * list_sort comparator for sorting a list into ascending int order.
+ */
+int
+list_int_cmp(const ListCell *p1, const ListCell *p2)
+{
+	int			v1 = lfirst_int(p1);
+	int			v2 = lfirst_int(p2);
+
+	if (v1 < v2)
+		return -1;
+	if (v1 > v2)
+		return 1;
+	return 0;
+}
+
+/*
  * list_sort comparator for sorting a list into ascending OID order.
  */
 int
