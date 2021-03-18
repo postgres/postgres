@@ -242,6 +242,7 @@ bool		Db_user_namespace = false;
 bool		enable_bonjour = false;
 char	   *bonjour_name;
 bool		restart_after_crash = true;
+bool		remove_temp_files_after_crash = true;
 
 /* PIDs of special child processes; 0 when not running */
 static pid_t StartupPID = 0,
@@ -3975,6 +3976,10 @@ PostmasterStateMachine(void)
 	{
 		ereport(LOG,
 				(errmsg("all server processes terminated; reinitializing")));
+
+		/* remove leftover temporary files after a crash */
+		if (remove_temp_files_after_crash)
+			RemovePgTempFiles();
 
 		/* allow background workers to immediately restart */
 		ResetBackgroundWorkerCrashTimes();

@@ -3024,11 +3024,13 @@ CleanupTempFiles(bool isCommit, bool isProcExit)
  * remove any leftover files created by OpenTemporaryFile and any leftover
  * temporary relation files created by mdcreate.
  *
- * NOTE: we could, but don't, call this during a post-backend-crash restart
- * cycle.  The argument for not doing it is that someone might want to examine
- * the temp files for debugging purposes.  This does however mean that
- * OpenTemporaryFile had better allow for collision with an existing temp
- * file name.
+ * During post-backend-crash restart cycle, this routine is called when
+ * remove_temp_files_after_crash GUC is enabled. Multiple crashes while
+ * queries are using temp files could result in useless storage usage that can
+ * only be reclaimed by a service restart. The argument against enabling it is
+ * that someone might want to examine the temporary files for debugging
+ * purposes. This does however mean that OpenTemporaryFile had better allow for
+ * collision with an existing temp file name.
  *
  * NOTE: this function and its subroutines generally report syscall failures
  * with ereport(LOG) and keep going.  Removing temp files is not so critical

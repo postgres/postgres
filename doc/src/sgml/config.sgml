@@ -9671,6 +9671,23 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-remove-temp-files-after-crash" xreflabel="remove_temp_files_after_crash">
+      <term><varname>remove_temp_files_after_crash</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>remove_temp_files_after_crash</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        When set to <literal>on</literal>, which is the default,
+        <productname>PostgreSQL</productname> will automatically remove
+        temporary files after a backend crash. If disabled, the files will be
+        retained and may be used for debugging, for example. Repeated crashes 
+        may however result in accumulation of useless files.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-data-sync-retry" xreflabel="data_sync_retry">
       <term><varname>data_sync_retry</varname> (<type>boolean</type>)
       <indexterm>
