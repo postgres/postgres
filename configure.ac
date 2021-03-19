@@ -1701,6 +1701,7 @@ AC_CHECK_FUNCS(m4_normalize([
 	strchrnul
 	strsignal
 	symlink
+	syncfs
 	sync_file_range
 	uselocale
 	wcstombs_l

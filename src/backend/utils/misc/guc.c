@@ -488,6 +488,14 @@ const struct config_enum_entry ssl_protocol_versions_info[] = {
 StaticAssertDecl(lengthof(ssl_protocol_versions_info) == (PG_TLS1_3_VERSION + 2),
 				 "array length mismatch");
 
+static struct config_enum_entry recovery_init_sync_method_options[] = {
+	{"fsync", RECOVERY_INIT_SYNC_METHOD_FSYNC, false},
+#ifdef HAVE_SYNCFS
+	{"syncfs", RECOVERY_INIT_SYNC_METHOD_SYNCFS, false},
+#endif
+	{NULL, 0, false}
+};
+
 static struct config_enum_entry shared_memory_options[] = {
 #ifndef WIN32
 	{"sysv", SHMEM_TYPE_SYSV, false},
@@ -4868,6 +4876,15 @@ static struct config_enum ConfigureNamesEnum[] =
 		&ssl_max_protocol_version,
 		PG_TLS_ANY,
 		ssl_protocol_versions_info,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"recovery_init_sync_method", PGC_POSTMASTER, ERROR_HANDLING_OPTIONS,
+			gettext_noop("Sets the method for synchronizing the data directory before crash recovery."),
+		},
+		&recovery_init_sync_method,
+		RECOVERY_INIT_SYNC_METHOD_FSYNC, recovery_init_sync_method_options,
 		NULL, NULL, NULL
 	},
 

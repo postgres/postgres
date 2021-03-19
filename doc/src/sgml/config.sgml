@@ -9721,6 +9721,41 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-recovery-init-sync-method" xreflabel="recovery_init_sync_method">
+      <term><varname>recovery_init_sync_method</varname> (<type>enum</type>)
+       <indexterm>
+        <primary><varname>recovery_init_sync_method</varname> configuration parameter</primary>
+       </indexterm>
+      </term>
+      <listitem>
+       <para>
+        When set to <literal>fsync</literal>, which is the default,
+        <productname>PostgreSQL</productname> will recursively open and
+        synchronize all files in the data directory before crash recovery
+        begins.  The search for files will follow symbolic links for the WAL
+        directory and each configured tablespace (but not any other symbolic
+        links).  This is intended to make sure that all WAL and data files are
+        durably stored on disk before replaying changes.  This applies whenever
+        starting a database cluster that did not shut down cleanly, including
+        copies created with <application>pg_basebackup</application>.
+       </para>
+       <para>
+        On Linux, <literal>syncfs</literal> may be used instead, to ask the
+        operating system to synchronize the whole file systems that contain the
+        data directory, the WAL files and each tablespace (but not any other
+        file systems that may be reachable through symbolic links).  This may
+        be a lot faster than the <literal>fsync</literal> setting, because it
+        doesn't need to open each file one by one.  On the other hand, it may
+        be slower if a file system is shared by other applications that
+        modify a lot of files, since those files will also be written to disk.
+        Furthermore, on versions of Linux before 5.8, I/O errors encountered
+        while writing data to disk may not be reported to
+        <productname>PostgreSQL</productname>, and relevant error messages may
+        appear only in kernel logs.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
 
    </sect1>

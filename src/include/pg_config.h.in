@@ -590,6 +590,9 @@
 /* Define to 1 if you have the `symlink' function. */
 #undef HAVE_SYMLINK
 
+/* Define to 1 if you have the `syncfs' function. */
+#undef HAVE_SYNCFS
+
 /* Define to 1 if you have the `sync_file_range' function. */
 #undef HAVE_SYNC_FILE_RANGE
 
