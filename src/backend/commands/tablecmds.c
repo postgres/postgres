@@ -11953,8 +11953,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	attTup->attalign = tform->typalign;
 	attTup->attstorage = tform->typstorage;
 
-	ReleaseSysCache(typeTuple);
-
 	/* Setup attribute compression */
 	if (rel->rd_rel->relkind == RELKIND_RELATION ||
 		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
@@ -11971,6 +11969,8 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	}
 	else
 		attTup->attcompression = InvalidCompressionMethod;
+
+	ReleaseSysCache(typeTuple);
 
 	CatalogTupleUpdate(attrelation, &heapTup->t_self, heapTup);
 
