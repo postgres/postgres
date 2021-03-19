@@ -12,6 +12,7 @@
 #ifndef TOAST_INTERNALS_H
 #define TOAST_INTERNALS_H
 
+#include "access/toast_compression.h"
 #include "storage/lockdefs.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
@@ -22,22 +23,26 @@
 typedef struct toast_compress_header
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	int32		rawsize;
+	uint32		tcinfo;			/* 2 bits for compression method and 30 bits
+								 * rawsize */
 } toast_compress_header;
 
 /*
  * Utilities for manipulation of header information for compressed
  * toast entries.
  */
-#define TOAST_COMPRESS_HDRSZ		((int32) sizeof(toast_compress_header))
-#define TOAST_COMPRESS_RAWSIZE(ptr) (((toast_compress_header *) (ptr))->rawsize)
-#define TOAST_COMPRESS_SIZE(ptr)	((int32) VARSIZE_ANY(ptr) - TOAST_COMPRESS_HDRSZ)
-#define TOAST_COMPRESS_RAWDATA(ptr) \
-	(((char *) (ptr)) + TOAST_COMPRESS_HDRSZ)
-#define TOAST_COMPRESS_SET_RAWSIZE(ptr, len) \
-	(((toast_compress_header *) (ptr))->rawsize = (len))
+#define TOAST_COMPRESS_METHOD(ptr)	\
+		(((toast_compress_header *) (ptr))->tcinfo >> VARLENA_RAWSIZE_BITS)
+#define TOAST_COMPRESS_SET_SIZE_AND_METHOD(ptr, len, cm_method) \
+	do { \
+		Assert((len) > 0 && (len) <= VARLENA_RAWSIZE_MASK); \
+		Assert((cm_method) == TOAST_PGLZ_COMPRESSION_ID || \
+			   (cm_method) == TOAST_LZ4_COMPRESSION_ID); \
+		((toast_compress_header *) (ptr))->tcinfo = \
+			   ((len) | (cm_method) << VARLENA_RAWSIZE_BITS); \
+	} while (0)
 
-extern Datum toast_compress_datum(Datum value);
+extern Datum toast_compress_datum(Datum value, char cmethod);
 extern Oid	toast_get_valid_index(Oid toastoid, LOCKMODE lock);
 
 extern void toast_delete_datum(Relation rel, Datum value, bool is_speculative);

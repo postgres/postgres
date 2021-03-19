@@ -4641,7 +4641,7 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				   VARSIZE(chunk) - VARHDRSZ);
 			data_done += VARSIZE(chunk) - VARHDRSZ;
 		}
-		Assert(data_done == toast_pointer.va_extsize);
+		Assert(data_done == VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer));
 
 		/* make sure its marked as compressed or not */
 		if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))

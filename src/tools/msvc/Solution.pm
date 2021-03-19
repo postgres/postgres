@@ -485,6 +485,7 @@ sub GenerateFiles
 		USE_ICU => $self->{options}->{icu} ? 1 : undef,
 		USE_LIBXML                 => undef,
 		USE_LIBXSLT                => undef,
+		USE_LZ4                    => undef,
 		USE_LDAP                   => $self->{options}->{ldap} ? 1 : undef,
 		USE_LLVM                   => undef,
 		USE_NAMED_POSIX_SEMAPHORES => undef,

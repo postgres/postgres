@@ -33,6 +33,7 @@
 #include "access/gin.h"
 #include "access/rmgr.h"
 #include "access/tableam.h"
+#include "access/toast_compression.h"
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/xact.h"
@@ -3932,6 +3933,17 @@ static struct config_string ConfigureNamesString[] =
 		&default_table_access_method,
 		DEFAULT_TABLE_ACCESS_METHOD,
 		check_default_table_access_method, NULL, NULL
+	},
+
+	{
+		{"default_toast_compression", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the default compression for new columns."),
+			NULL,
+			GUC_IS_NAME
+		},
+		&default_toast_compression,
+		DEFAULT_TOAST_COMPRESSION,
+		check_default_toast_compression, NULL, NULL
 	},
 
 	{

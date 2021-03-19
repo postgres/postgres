@@ -21,6 +21,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/tableam.h"
+#include "access/toast_compression.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
 #include "bootstrap/bootstrap.h"
@@ -733,6 +734,10 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
 	attrtypes[attnum]->attislocal = true;
+	if (IsStorageCompressible(attrtypes[attnum]->attstorage))
+		attrtypes[attnum]->attcompression = GetDefaultToastCompression();
+	else
+		attrtypes[attnum]->attcompression = InvalidCompressionMethod;
 
 	if (nullness == BOOTCOL_NULL_FORCE_NOT_NULL)
 	{

@@ -124,7 +124,7 @@ sub read_tuple
 			c_va_header => shift,
 			c_va_vartag => shift,
 			c_va_rawsize => shift,
-			c_va_extsize => shift,
+			c_va_extinfo => shift,
 			c_va_valueid => shift,
 			c_va_toastrelid => shift);
 	# Stitch together the text for column 'b'
@@ -169,7 +169,7 @@ sub write_tuple
 					$tup->{c_va_header},
 					$tup->{c_va_vartag},
 					$tup->{c_va_rawsize},
-					$tup->{c_va_extsize},
+					$tup->{c_va_extinfo},
 					$tup->{c_va_valueid},
 					$tup->{c_va_toastrelid});
 	seek($fh, $offset, 0)

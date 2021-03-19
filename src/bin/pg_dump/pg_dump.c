@@ -387,6 +387,7 @@ main(int argc, char **argv)
 		{"no-synchronized-snapshots", no_argument, &dopt.no_synchronized_snapshots, 1},
 		{"no-unlogged-table-data", no_argument, &dopt.no_unlogged_table_data, 1},
 		{"no-subscriptions", no_argument, &dopt.no_subscriptions, 1},
+		{"no-toast-compression", no_argument, &dopt.no_toast_compression, 1},
 		{"no-sync", no_argument, NULL, 7},
 		{"on-conflict-do-nothing", no_argument, &dopt.do_nothing, 1},
 		{"rows-per-insert", required_argument, NULL, 10},
@@ -1047,6 +1048,7 @@ help(const char *progname)
 	printf(_("  --no-publications            do not dump publications\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-subscriptions           do not dump subscriptions\n"));
+	printf(_("  --no-toast-compression      do not dump toast compression methods\n"));
 	printf(_("  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
@@ -8617,6 +8619,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 {
 	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer q = createPQExpBuffer();
+	bool		createWithCompression;
 
 	for (int i = 0; i < numTables; i++)
 	{
@@ -8702,6 +8705,15 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			appendPQExpBufferStr(q,
 								 "'' AS attidentity,\n");
 
+		createWithCompression = (fout->remoteVersion >= 140000);
+
+		if (createWithCompression)
+			appendPQExpBuffer(q,
+							  "a.attcompression AS attcompression,\n");
+		else
+			appendPQExpBuffer(q,
+							  "NULL AS attcompression,\n");
+
 		if (fout->remoteVersion >= 110000)
 			appendPQExpBufferStr(q,
 								 "CASE WHEN a.atthasmissing AND NOT a.attisdropped "
@@ -8747,6 +8759,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		tbinfo->attcollation = (Oid *) pg_malloc(ntups * sizeof(Oid));
 		tbinfo->attfdwoptions = (char **) pg_malloc(ntups * sizeof(char *));
 		tbinfo->attmissingval = (char **) pg_malloc(ntups * sizeof(char *));
+		tbinfo->attcompression = (char *) pg_malloc(ntups * sizeof(char *));
 		tbinfo->notnull = (bool *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->inhNotNull = (bool *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->attrdefs = (AttrDefInfo **) pg_malloc(ntups * sizeof(AttrDefInfo *));
@@ -8775,6 +8788,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			tbinfo->attcollation[j] = atooid(PQgetvalue(res, j, PQfnumber(res, "attcollation")));
 			tbinfo->attfdwoptions[j] = pg_strdup(PQgetvalue(res, j, PQfnumber(res, "attfdwoptions")));
 			tbinfo->attmissingval[j] = pg_strdup(PQgetvalue(res, j, PQfnumber(res, "attmissingval")));
+			tbinfo->attcompression[j] = *(PQgetvalue(res, j, PQfnumber(res, "attcompression")));
 			tbinfo->attrdefs[j] = NULL; /* fix below */
 			if (PQgetvalue(res, j, PQfnumber(res, "atthasdef"))[0] == 't')
 				hasdefaults = true;
@@ -15889,6 +15903,31 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 					{
 						appendPQExpBuffer(q, " %s",
 										  tbinfo->atttypnames[j]);
+					}
+
+					/*
+					 * Attribute compression
+					 */
+					if (!dopt->no_toast_compression &&
+						tbinfo->attcompression != NULL)
+					{
+						char	   *cmname;
+
+						switch (tbinfo->attcompression[j])
+						{
+							case 'p':
+								cmname = "pglz";
+								break;
+							case 'l':
+								cmname = "lz4";
+								break;
+							default:
+								cmname = NULL;
+								break;
+						}
+
+						if (cmname != NULL)
+							appendPQExpBuffer(q, " COMPRESSION %s", cmname);
 					}
 
 					if (print_default)

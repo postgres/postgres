@@ -348,6 +348,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->attbyval = from->attbyval;
 			to->attstorage = from->attstorage;
 			to->attalign = from->attalign;
+			to->attcompression = from->attcompression;
 		}
 		else
 		{

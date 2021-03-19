@@ -78,11 +78,11 @@ psql_start_test(const char *testname,
 	 * against different AMs without unnecessary differences.
 	 */
 	offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-					   "\"%s%spsql\" -X -a -q -d \"%s\" -v %s < \"%s\" > \"%s\" 2>&1",
+					   "\"%s%spsql\" -X -a -q -d \"%s\" %s < \"%s\" > \"%s\" 2>&1",
 					   bindir ? bindir : "",
 					   bindir ? "/" : "",
 					   dblist->str,
-					   "HIDE_TABLEAM=\"on\"",
+					   "-v HIDE_TABLEAM=on -v HIDE_TOAST_COMPRESSION=on",
 					   infile,
 					   outfile);
 	if (offset >= sizeof(psql_cmd))

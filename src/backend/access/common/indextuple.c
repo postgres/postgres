@@ -103,7 +103,8 @@ index_form_tuple(TupleDesc tupleDescriptor,
 			(att->attstorage == TYPSTORAGE_EXTENDED ||
 			 att->attstorage == TYPSTORAGE_MAIN))
 		{
-			Datum		cvalue = toast_compress_datum(untoasted_values[i]);
+			Datum		cvalue = toast_compress_datum(untoasted_values[i],
+													  att->attcompression);
 
 			if (DatumGetPointer(cvalue) != NULL)
 			{

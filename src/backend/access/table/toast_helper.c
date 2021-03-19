@@ -54,6 +54,7 @@ toast_tuple_init(ToastTupleContext *ttc)
 
 		ttc->ttc_attr[i].tai_colflags = 0;
 		ttc->ttc_attr[i].tai_oldexternal = NULL;
+		ttc->ttc_attr[i].tai_compression = att->attcompression;
 
 		if (ttc->ttc_oldvalues != NULL)
 		{
@@ -226,8 +227,10 @@ void
 toast_tuple_try_compression(ToastTupleContext *ttc, int attribute)
 {
 	Datum	   *value = &ttc->ttc_values[attribute];
-	Datum		new_value = toast_compress_datum(*value);
+	Datum		new_value;
 	ToastAttrInfo *attr = &ttc->ttc_attr[attribute];
+
+	new_value = toast_compress_datum(*value, attr->tai_compression);
 
 	if (DatumGetPointer(new_value) != NULL)
 	{

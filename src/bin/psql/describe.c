@@ -1459,7 +1459,7 @@ describeOneTableDetails(const char *schemaname,
 	bool		printTableInitialized = false;
 	int			i;
 	char	   *view_def = NULL;
-	char	   *headers[11];
+	char	   *headers[12];
 	PQExpBufferData title;
 	PQExpBufferData tmpbuf;
 	int			cols;
@@ -1475,7 +1475,8 @@ describeOneTableDetails(const char *schemaname,
 				fdwopts_col = -1,
 				attstorage_col = -1,
 				attstattarget_col = -1,
-				attdescr_col = -1;
+				attdescr_col = -1,
+				attcompression_col = -1;
 	int			numrows;
 	struct
 	{
@@ -1892,6 +1893,17 @@ describeOneTableDetails(const char *schemaname,
 		appendPQExpBufferStr(&buf, ",\n  a.attstorage");
 		attstorage_col = cols++;
 
+		/* compression info */
+		if (pset.sversion >= 140000 &&
+			!pset.hide_compression &&
+			(tableinfo.relkind == RELKIND_RELATION ||
+			 tableinfo.relkind == RELKIND_PARTITIONED_TABLE ||
+			 tableinfo.relkind == RELKIND_MATVIEW))
+		{
+			appendPQExpBufferStr(&buf, ",\n  a.attcompression AS attcompression");
+			attcompression_col = cols++;
+		}
+
 		/* stats target, if relevant to relkind */
 		if (tableinfo.relkind == RELKIND_RELATION ||
 			tableinfo.relkind == RELKIND_INDEX ||
@@ -2018,6 +2030,8 @@ describeOneTableDetails(const char *schemaname,
 		headers[cols++] = gettext_noop("FDW options");
 	if (attstorage_col >= 0)
 		headers[cols++] = gettext_noop("Storage");
+	if (attcompression_col >= 0)
+		headers[cols++] = gettext_noop("Compression");
 	if (attstattarget_col >= 0)
 		headers[cols++] = gettext_noop("Stats target");
 	if (attdescr_col >= 0)
@@ -2094,6 +2108,19 @@ describeOneTableDetails(const char *schemaname,
 									   (storage[0] == 'x' ? "extended" :
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
+							  false, false);
+		}
+
+		/* Column compression. */
+		if (attcompression_col >= 0)
+		{
+			char	   *compression = PQgetvalue(res, i, attcompression_col);
+
+			/* these strings are literal in our syntax, so not translated. */
+			printTableAddCell(&cont, (compression[0] == 'p' ? "pglz" :
+									  (compression[0] == 'l' ? "lz4" :
+									   (compression[0] == '\0' ? "" :
+										"???"))),
 							  false, false);
 		}
 

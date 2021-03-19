@@ -1357,6 +1357,18 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>attcompression</structfield> <type>char</type>
+      </para>
+      <para>
+       The current compression method of the column.  If it is an invalid
+       compression method (<literal>'\0'</literal>) then column data will not
+       be compressed.  Otherwise, <literal>'p'</literal> = pglz compression or
+       <literal>'l'</literal> = lz4 compression.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>attacl</structfield> <type>aclitem[]</type>
       </para>
       <para>

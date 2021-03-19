@@ -2284,9 +2284,9 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE TABLE dump_test.test_table (\E\n
 			\s+\Qcol1 integer NOT NULL,\E\n
-			\s+\Qcol2 text,\E\n
-			\s+\Qcol3 text,\E\n
-			\s+\Qcol4 text,\E\n
+			\s+\Qcol2 text COMPRESSION\E\D*,\n
+			\s+\Qcol3 text COMPRESSION\E\D*,\n
+			\s+\Qcol4 text COMPRESSION\E\D*,\n
 			\s+\QCONSTRAINT test_table_col1_check CHECK ((col1 <= 1000))\E\n
 			\Q)\E\n
 			\QWITH (autovacuum_enabled='false', fillfactor='80');\E\n/xm,
@@ -2326,7 +2326,7 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE TABLE dump_test.test_second_table (\E
 			\n\s+\Qcol1 integer,\E
-			\n\s+\Qcol2 text\E
+			\n\s+\Qcol2 text COMPRESSION\E\D*
 			\n\);
 			/xm,
 		like =>
@@ -2441,7 +2441,7 @@ my %tests = (
 			\n\s+\Qcol1 integer,\E
 			\n\s+\Qcol2 boolean,\E
 			\n\s+\Qcol3 boolean,\E
-			\n\s+\Qcol4 bit(5),\E
+			\n\s+\Qcol4 bit(5) COMPRESSION\E\D*,
 			\n\s+\Qcol5 double precision\E
 			\n\);
 			/xm,
@@ -2459,7 +2459,7 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE TABLE dump_test.test_table_identity (\E\n
 			\s+\Qcol1 integer NOT NULL,\E\n
-			\s+\Qcol2 text\E\n
+			\s+\Qcol2 text COMPRESSION\E\D*\n
 			\);
 			.*
 			\QALTER TABLE dump_test.test_table_identity ALTER COLUMN col1 ADD GENERATED ALWAYS AS IDENTITY (\E\n

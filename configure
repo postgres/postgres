@@ -699,6 +699,9 @@ with_gnu_ld
 LD
 LDFLAGS_SL
 LDFLAGS_EX
+LZ4_LIBS
+LZ4_CFLAGS
+with_lz4
 with_zlib
 with_system_tzdata
 with_libxslt
@@ -864,6 +867,7 @@ with_libxml
 with_libxslt
 with_system_tzdata
 with_zlib
+with_lz4
 with_gnu_ld
 with_ssl
 with_openssl
@@ -891,6 +895,8 @@ ICU_LIBS
 XML2_CONFIG
 XML2_CFLAGS
 XML2_LIBS
+LZ4_CFLAGS
+LZ4_LIBS
 LDFLAGS_EX
 LDFLAGS_SL
 PERL
@@ -1569,6 +1575,7 @@ Optional Packages:
   --with-system-tzdata=DIR
                           use system time zone data in DIR
   --without-zlib          do not use Zlib
+  --with-lz4              build with LZ4 support
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-ssl=LIB          use LIB for SSL/TLS support (openssl)
   --with-openssl          obsolete spelling of --with-ssl=openssl
@@ -1596,6 +1603,8 @@ Some influential environment variables:
   XML2_CONFIG path to xml2-config utility
   XML2_CFLAGS C compiler flags for XML2, overriding pkg-config
   XML2_LIBS   linker flags for XML2, overriding pkg-config
+  LZ4_CFLAGS  C compiler flags for LZ4, overriding pkg-config
+  LZ4_LIBS    linker flags for LZ4, overriding pkg-config
   LDFLAGS_EX  extra linker flags for linking executables only
   LDFLAGS_SL  extra linker flags for linking shared libraries only
   PERL        Perl program
@@ -8564,6 +8573,137 @@ fi
 
 
 #
+# LZ4
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with LZ4 support" >&5
+$as_echo_n "checking whether to build with LZ4 support... " >&6; }
+
+
+
+# Check whether --with-lz4 was given.
+if test "${with_lz4+set}" = set; then :
+  withval=$with_lz4;
+  case $withval in
+    yes)
+
+$as_echo "#define USE_LZ4 1" >>confdefs.h
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --with-lz4 option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  with_lz4=no
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_lz4" >&5
+$as_echo "$with_lz4" >&6; }
+
+
+if test "$with_lz4" = yes; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for liblz4" >&5
+$as_echo_n "checking for liblz4... " >&6; }
+
+if test -n "$LZ4_CFLAGS"; then
+    pkg_cv_LZ4_CFLAGS="$LZ4_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"liblz4\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "liblz4") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LZ4_CFLAGS=`$PKG_CONFIG --cflags "liblz4" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LZ4_LIBS"; then
+    pkg_cv_LZ4_LIBS="$LZ4_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"liblz4\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "liblz4") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LZ4_LIBS=`$PKG_CONFIG --libs "liblz4" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LZ4_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "liblz4" 2>&1`
+        else
+	        LZ4_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "liblz4" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LZ4_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (liblz4) were not met:
+
+$LZ4_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables LZ4_CFLAGS
+and LZ4_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables LZ4_CFLAGS
+and LZ4_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	LZ4_CFLAGS=$pkg_cv_LZ4_CFLAGS
+	LZ4_LIBS=$pkg_cv_LZ4_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+  LIBS="$LZ4_LIBS $LIBS"
+  CFLAGS="$LZ4_CFLAGS $CFLAGS"
+fi
+
+#
 # Assignments
 #
 
@@ -13378,6 +13518,36 @@ failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support." "$LINENO" 5
 fi
 
+
+fi
+
+if test "$with_lz4" = yes; then
+  for ac_header in lz4/lz4.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "lz4/lz4.h" "ac_cv_header_lz4_lz4_h" "$ac_includes_default"
+if test "x$ac_cv_header_lz4_lz4_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LZ4_LZ4_H 1
+_ACEOF
+
+else
+  for ac_header in lz4.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "lz4.h" "ac_cv_header_lz4_h" "$ac_includes_default"
+if test "x$ac_cv_header_lz4_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LZ4_H 1
+_ACEOF
+
+else
+  as_fn_error $? "lz4.h header file is required for LZ4" "$LINENO" 5
+fi
+
+done
+
+fi
+
+done
 
 fi
 

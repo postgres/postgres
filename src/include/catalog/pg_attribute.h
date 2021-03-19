@@ -160,6 +160,12 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	/* attribute's collation, if any */
 	Oid			attcollation BKI_LOOKUP_OPT(pg_collation);
 
+	/*
+	 * compression method.  Must be InvalidCompressionMethod if and only if
+	 * typstorage is 'plain' or 'external'.
+	 */
+	char		attcompression BKI_DEFAULT('\0');
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* NOTE: The following fields are not present in tuple descriptors. */
 
@@ -187,7 +193,7 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
  * can access fields beyond attcollation except in a real tuple!
  */
 #define ATTRIBUTE_FIXED_PART_SIZE \
-	(offsetof(FormData_pg_attribute,attcollation) + sizeof(Oid))
+	(offsetof(FormData_pg_attribute,attcompression) + sizeof(char))
 
 /* ----------------
  *		Form_pg_attribute corresponds to a pointer to a tuple with

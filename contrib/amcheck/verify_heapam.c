@@ -1069,7 +1069,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	 */
 	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
 
-	ctx->attrsize = toast_pointer.va_extsize;
+	ctx->attrsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
 	ctx->endchunk = (ctx->attrsize - 1) / TOAST_MAX_CHUNK_SIZE;
 	ctx->totalchunks = ctx->endchunk + 1;
 

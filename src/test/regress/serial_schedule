@@ -201,6 +201,7 @@ test: partition_aggregate
 test: partition_info
 test: tuplesort
 test: explain
+test: compression
 test: event_trigger
 test: oidjoins
 test: fast_default

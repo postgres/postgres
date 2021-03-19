@@ -25992,8 +25992,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    <para>
     The functions shown in <xref linkend="functions-admin-dbsize"/> calculate
     the disk space usage of database objects, or assist in presentation
-    of usage results.
-    All these functions return sizes measured in bytes.  If an OID that does
+    or understanding of usage results.  <literal>bigint</literal> results
+    are measured in bytes.  If an OID that does
     not represent an existing object is passed to one of these
     functions, <literal>NULL</literal> is returned.
    </para>
@@ -26025,6 +26025,20 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         Shows the number of bytes used to store any individual data value.  If
         applied directly to a table column value, this reflects any
         compression that was done.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_column_compression</primary>
+        </indexterm>
+        <function>pg_column_compression</function> ( <type>"any"</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Shows the compression algorithm that was used to compress a
+        an individual variable-length value.
        </para></entry>
       </row>
 

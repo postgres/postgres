@@ -213,7 +213,10 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 				(atttype->typstorage == TYPSTORAGE_EXTENDED ||
 				 atttype->typstorage == TYPSTORAGE_MAIN))
 			{
-				Datum		cvalue = toast_compress_datum(value);
+				Form_pg_attribute att = TupleDescAttr(brdesc->bd_tupdesc,
+													  keyno);
+				Datum		cvalue = toast_compress_datum(value,
+														  att->attcompression);
 
 				if (DatumGetPointer(cvalue) != NULL)
 				{

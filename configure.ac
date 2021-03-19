@@ -987,6 +987,21 @@ PGAC_ARG_BOOL(with, zlib, yes,
 AC_SUBST(with_zlib)
 
 #
+# LZ4
+#
+AC_MSG_CHECKING([whether to build with LZ4 support])
+PGAC_ARG_BOOL(with, lz4, no, [build with LZ4 support],
+              [AC_DEFINE([USE_LZ4], 1, [Define to 1 to build with LZ4 support. (--with-lz4)])])
+AC_MSG_RESULT([$with_lz4])
+AC_SUBST(with_lz4)
+
+if test "$with_lz4" = yes; then
+  PKG_CHECK_MODULES(LZ4, liblz4)
+  LIBS="$LZ4_LIBS $LIBS"
+  CFLAGS="$LZ4_CFLAGS $CFLAGS"
+fi
+
+#
 # Assignments
 #
 
@@ -1408,6 +1423,11 @@ if test "$with_zlib" = yes; then
 If you have zlib already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support.])])
+fi
+
+if test "$with_lz4" = yes; then
+  AC_CHECK_HEADERS(lz4/lz4.h, [],
+       [AC_CHECK_HEADERS(lz4.h, [], [AC_MSG_ERROR([lz4.h header file is required for LZ4])])])
 fi
 
 if test "$with_gssapi" = yes ; then

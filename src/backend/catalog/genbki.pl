@@ -906,6 +906,9 @@ sub morph_row_for_pgattr
 	$row->{attcollation} =
 	  $type->{typcollation} ne '0' ? $C_COLLATION_OID : 0;
 
+	$row->{attcompression} =
+	  $type->{typstorage} ne 'p' && $type->{typstorage} ne 'e' ? 'p' : '\0';
+
 	if (defined $attr->{forcenotnull})
 	{
 		$row->{attnotnull} = 't';
