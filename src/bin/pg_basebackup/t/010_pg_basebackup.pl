@@ -270,9 +270,10 @@ SKIP:
 	$node2->init_from_backup($node, 'tarbackup2', tar_program => $tar);
 
 	# Recover tablespace into a new directory (not where it was!)
-	mkdir "$tempdir/tblspc1replica";
+	my $repTsDir     = "$tempdir/tblspc1replica";
 	my $realRepTsDir = TestLib::perl2host("$shorter_tempdir/tblspc1replica");
-	TestLib::system_or_bail($tar, 'xf', $tblspc_tars[0], '-C', $realRepTsDir);
+	mkdir $repTsDir;
+	TestLib::system_or_bail($tar, 'xf', $tblspc_tars[0], '-C', $repTsDir);
 
 	# Update tablespace map to point to new directory.
 	# XXX Ideally pg_basebackup would handle this.
