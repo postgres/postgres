@@ -244,9 +244,15 @@ libpqrcv_check_conninfo(const char *conninfo)
 
 	opts = PQconninfoParse(conninfo, &err);
 	if (opts == NULL)
+	{
+		/* The error string is malloc'd, so we must free it explicitly */
+		char	   *errcopy = err ? pstrdup(err) : "out of memory";
+
+		PQfreemem(err);
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("invalid connection string syntax: %s", err)));
+				 errmsg("invalid connection string syntax: %s", errcopy)));
+	}
 
 	PQconninfoFree(opts);
 }
