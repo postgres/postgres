@@ -79,8 +79,8 @@ my $killme2 = IPC::Run::start(
 # Insert one tuple and leave the transaction open
 $killme_stdin2 .= q[
 BEGIN;
-SELECT $$insert-tuple-to-lock-next-insert$$;
 INSERT INTO tab_crash (a) VALUES(1);
+SELECT $$insert-tuple-to-lock-next-insert$$;
 ];
 pump_until($killme2, \$killme_stdout2, qr/insert-tuple-to-lock-next-insert/m);
 $killme_stdout2 = '';
@@ -99,6 +99,26 @@ ok(pump_until($killme, \$killme_stdout, qr/in-progress-before-sigkill/m),
 	'insert in-progress-before-sigkill');
 $killme_stdout = '';
 $killme_stderr = '';
+
+# Wait until the batch insert gets stuck on the lock.
+$killme_stdin2 .= q[
+DO $c$
+DECLARE
+  c INT;
+BEGIN
+  LOOP
+    SELECT COUNT(*) INTO c FROM pg_locks WHERE pid = ] . $pid . q[ AND NOT granted;
+    IF c > 0 THEN
+      EXIT;
+    END IF;
+  END LOOP;
+END; $c$;
+SELECT $$insert-tuple-lock-waiting$$;
+];
+
+pump_until($killme2, \$killme_stdout2, qr/insert-tuple-lock-waiting/m);
+$killme_stdout2 = '';
+$killme_stderr2 = '';
 
 # Kill with SIGKILL
 my $ret = TestLib::system_log('pg_ctl', 'kill', 'KILL', $pid);
@@ -147,8 +167,8 @@ $killme2->run();
 # Insert one tuple and leave the transaction open
 $killme_stdin2 .= q[
 BEGIN;
-SELECT $$insert-tuple-to-lock-next-insert$$;
 INSERT INTO tab_crash (a) VALUES(1);
+SELECT $$insert-tuple-to-lock-next-insert$$;
 ];
 pump_until($killme2, \$killme_stdout2, qr/insert-tuple-to-lock-next-insert/m);
 $killme_stdout2 = '';
@@ -167,6 +187,26 @@ ok(pump_until($killme, \$killme_stdout, qr/in-progress-before-sigkill/m),
 	'insert in-progress-before-sigkill');
 $killme_stdout = '';
 $killme_stderr = '';
+
+# Wait until the batch insert gets stuck on the lock.
+$killme_stdin2 .= q[
+DO $c$
+DECLARE
+  c INT;
+BEGIN
+  LOOP
+    SELECT COUNT(*) INTO c FROM pg_locks WHERE pid = ] . $pid . q[ AND NOT granted;
+    IF c > 0 THEN
+      EXIT;
+    END IF;
+  END LOOP;
+END; $c$;
+SELECT $$insert-tuple-lock-waiting$$;
+];
+
+pump_until($killme2, \$killme_stdout2, qr/insert-tuple-lock-waiting/m);
+$killme_stdout2 = '';
+$killme_stderr2 = '';
 
 # Kill with SIGKILL
 $ret = TestLib::system_log('pg_ctl', 'kill', 'KILL', $pid);
