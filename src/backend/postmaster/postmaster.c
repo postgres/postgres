@@ -3472,7 +3472,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 			 *
 			 * SIGQUIT is the special signal that says exit without proc_exit
 			 * and let the user know what's going on. But if SendStop is set
-			 * (-s on command line), then we send SIGSTOP instead, so that we
+			 * (-T on command line), then we send SIGSTOP instead, so that we
 			 * can get core dumps from all backends by hand.
 			 */
 			if (take_action)
@@ -3515,7 +3515,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 			 *
 			 * SIGQUIT is the special signal that says exit without proc_exit
 			 * and let the user know what's going on. But if SendStop is set
-			 * (-s on command line), then we send SIGSTOP instead, so that we
+			 * (-T on command line), then we send SIGSTOP instead, so that we
 			 * can get core dumps from all backends by hand.
 			 *
 			 * We could exclude dead_end children here, but at least in the
