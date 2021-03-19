@@ -3543,6 +3543,13 @@ RelationBuildLocalRelation(const char *relname,
 
 	rel->rd_rel->relam = accessmtd;
 
+	/*
+	 * RelationInitTableAccessMethod will do syscache lookups, so we mustn't
+	 * run it in CacheMemoryContext.  Fortunately, the remaining steps don't
+	 * require a long-lived current context.
+	 */
+	MemoryContextSwitchTo(oldcxt);
+
 	if (relkind == RELKIND_RELATION ||
 		relkind == RELKIND_SEQUENCE ||
 		relkind == RELKIND_TOASTVALUE ||
@@ -3565,11 +3572,6 @@ RelationBuildLocalRelation(const char *relname,
 	 * can't do this before storing relid in it.
 	 */
 	EOXactListAdd(rel);
-
-	/*
-	 * done building relcache entry.
-	 */
-	MemoryContextSwitchTo(oldcxt);
 
 	/* It's fully valid */
 	rel->rd_isvalid = true;
