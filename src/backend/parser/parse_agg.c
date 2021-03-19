@@ -1750,8 +1750,8 @@ cmp_list_len_contents_asc(const ListCell *a, const ListCell *b)
 
 		forboth(lca, la, lcb, lb)
 		{
-			int		va = intVal(lca);
-			int		vb = intVal(lcb);
+			int		va = lfirst_int(lca);
+			int		vb = lfirst_int(lcb);
 			if (va > vb)
 				return 1;
 			if (va < vb)
