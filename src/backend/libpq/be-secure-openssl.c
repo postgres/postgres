@@ -850,6 +850,7 @@ load_dh_file(char *filename, bool isServerStart)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("invalid DH parameters: %s",
 						SSLerrmessage(ERR_get_error()))));
+		DH_free(dh);
 		return NULL;
 	}
 	if (codes & DH_CHECK_P_NOT_PRIME)
@@ -857,6 +858,7 @@ load_dh_file(char *filename, bool isServerStart)
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("invalid DH parameters: p is not prime")));
+		DH_free(dh);
 		return NULL;
 	}
 	if ((codes & DH_NOT_SUITABLE_GENERATOR) &&
@@ -865,6 +867,7 @@ load_dh_file(char *filename, bool isServerStart)
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("invalid DH parameters: neither suitable generator or safe prime")));
+		DH_free(dh);
 		return NULL;
 	}
 
