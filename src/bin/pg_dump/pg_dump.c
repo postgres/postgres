@@ -270,6 +270,7 @@ static void dumpDatabaseConfig(Archive *AH, PQExpBuffer outbuf,
 static void dumpEncoding(Archive *AH);
 static void dumpStdStrings(Archive *AH);
 static void dumpSearchPath(Archive *AH);
+static void dumpToastCompression(Archive *AH);
 static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 													 PQExpBuffer upgrade_buffer,
 													 Oid pg_type_oid,
@@ -384,10 +385,10 @@ main(int argc, char **argv)
 		{"no-comments", no_argument, &dopt.no_comments, 1},
 		{"no-publications", no_argument, &dopt.no_publications, 1},
 		{"no-security-labels", no_argument, &dopt.no_security_labels, 1},
-		{"no-synchronized-snapshots", no_argument, &dopt.no_synchronized_snapshots, 1},
-		{"no-unlogged-table-data", no_argument, &dopt.no_unlogged_table_data, 1},
 		{"no-subscriptions", no_argument, &dopt.no_subscriptions, 1},
+		{"no-synchronized-snapshots", no_argument, &dopt.no_synchronized_snapshots, 1},
 		{"no-toast-compression", no_argument, &dopt.no_toast_compression, 1},
+		{"no-unlogged-table-data", no_argument, &dopt.no_unlogged_table_data, 1},
 		{"no-sync", no_argument, NULL, 7},
 		{"on-conflict-do-nothing", no_argument, &dopt.do_nothing, 1},
 		{"rows-per-insert", required_argument, NULL, 10},
@@ -909,10 +910,14 @@ main(int argc, char **argv)
 	 * order.
 	 */
 
-	/* First the special ENCODING, STDSTRINGS, and SEARCHPATH entries. */
+	/*
+	 * First the special entries for ENCODING, STDSTRINGS, SEARCHPATH and
+	 * TOASTCOMPRESSION.
+	 */
 	dumpEncoding(fout);
 	dumpStdStrings(fout);
 	dumpSearchPath(fout);
+	dumpToastCompression(fout);
 
 	/* The database items are always next, unless we don't want them at all */
 	if (dopt.outputCreateDB)
@@ -1048,9 +1053,9 @@ help(const char *progname)
 	printf(_("  --no-publications            do not dump publications\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-subscriptions           do not dump subscriptions\n"));
-	printf(_("  --no-toast-compression      do not dump toast compression methods\n"));
 	printf(_("  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
+	printf(_("  --no-toast-compression       do not dump toast compression methods\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
 	printf(_("  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"));
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
@@ -3319,6 +3324,49 @@ dumpSearchPath(Archive *AH)
 	PQclear(res);
 	destroyPQExpBuffer(qry);
 	destroyPQExpBuffer(path);
+}
+
+/*
+ * dumpToastCompression: save the dump-time default TOAST compression in the
+ * archive
+ */
+static void
+dumpToastCompression(Archive *AH)
+{
+	const char *toast_compression;
+	PQExpBuffer qry;
+	PGresult   *res;
+
+	if (AH->remoteVersion < 140000 || AH->dopt->no_toast_compression)
+	{
+		/* server doesn't support compression, or we don't care */
+		return;
+	}
+
+	res = ExecuteSqlQueryForSingleRow(AH, "SHOW default_toast_compression");
+	toast_compression = PQgetvalue(res, 0, 0);
+
+	qry = createPQExpBuffer();
+	appendPQExpBufferStr(qry, "SET default_toast_compression = ");
+	appendStringLiteralAH(qry, toast_compression, AH);
+	appendPQExpBufferStr(qry, ";\n");
+
+	pg_log_info("saving default_toast_compression = %s", toast_compression);
+
+	ArchiveEntry(AH, nilCatalogId, createDumpId(),
+				 ARCHIVE_OPTS(.tag = "TOASTCOMPRESSION",
+							  .description = "TOASTCOMPRESSION",
+							  .section = SECTION_PRE_DATA,
+							  .createStmt = qry->data));
+
+	/*
+	 * Also save it in AH->default_toast_compression, in case we're doing
+	 * plain text dump.
+	 */
+	AH->default_toast_compression = pg_strdup(toast_compression);
+
+	PQclear(res);
+	destroyPQExpBuffer(qry);
 }
 
 
@@ -8619,7 +8667,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 {
 	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer q = createPQExpBuffer();
-	bool		createWithCompression;
 
 	for (int i = 0; i < numTables; i++)
 	{
@@ -8686,6 +8733,13 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			appendPQExpBufferStr(q,
 								 "0 AS attcollation,\n");
 
+		if (fout->remoteVersion >= 140000)
+			appendPQExpBuffer(q,
+							  "a.attcompression AS attcompression,\n");
+		else
+			appendPQExpBuffer(q,
+							  "'' AS attcompression,\n");
+
 		if (fout->remoteVersion >= 90200)
 			appendPQExpBufferStr(q,
 								 "pg_catalog.array_to_string(ARRAY("
@@ -8704,15 +8758,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		else
 			appendPQExpBufferStr(q,
 								 "'' AS attidentity,\n");
-
-		createWithCompression = (fout->remoteVersion >= 140000);
-
-		if (createWithCompression)
-			appendPQExpBuffer(q,
-							  "a.attcompression AS attcompression,\n");
-		else
-			appendPQExpBuffer(q,
-							  "NULL AS attcompression,\n");
 
 		if (fout->remoteVersion >= 110000)
 			appendPQExpBufferStr(q,
@@ -8757,9 +8802,9 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		tbinfo->attislocal = (bool *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->attoptions = (char **) pg_malloc(ntups * sizeof(char *));
 		tbinfo->attcollation = (Oid *) pg_malloc(ntups * sizeof(Oid));
+		tbinfo->attcompression = (char *) pg_malloc(ntups * sizeof(char));
 		tbinfo->attfdwoptions = (char **) pg_malloc(ntups * sizeof(char *));
 		tbinfo->attmissingval = (char **) pg_malloc(ntups * sizeof(char *));
-		tbinfo->attcompression = (char *) pg_malloc(ntups * sizeof(char *));
 		tbinfo->notnull = (bool *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->inhNotNull = (bool *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->attrdefs = (AttrDefInfo **) pg_malloc(ntups * sizeof(AttrDefInfo *));
@@ -8786,9 +8831,9 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			tbinfo->notnull[j] = (PQgetvalue(res, j, PQfnumber(res, "attnotnull"))[0] == 't');
 			tbinfo->attoptions[j] = pg_strdup(PQgetvalue(res, j, PQfnumber(res, "attoptions")));
 			tbinfo->attcollation[j] = atooid(PQgetvalue(res, j, PQfnumber(res, "attcollation")));
+			tbinfo->attcompression[j] = *(PQgetvalue(res, j, PQfnumber(res, "attcompression")));
 			tbinfo->attfdwoptions[j] = pg_strdup(PQgetvalue(res, j, PQfnumber(res, "attfdwoptions")));
 			tbinfo->attmissingval[j] = pg_strdup(PQgetvalue(res, j, PQfnumber(res, "attmissingval")));
-			tbinfo->attcompression[j] = *(PQgetvalue(res, j, PQfnumber(res, "attcompression")));
 			tbinfo->attrdefs[j] = NULL; /* fix below */
 			if (PQgetvalue(res, j, PQfnumber(res, "atthasdef"))[0] == 't')
 				hasdefaults = true;
@@ -15905,31 +15950,6 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 										  tbinfo->atttypnames[j]);
 					}
 
-					/*
-					 * Attribute compression
-					 */
-					if (!dopt->no_toast_compression &&
-						tbinfo->attcompression != NULL)
-					{
-						char	   *cmname;
-
-						switch (tbinfo->attcompression[j])
-						{
-							case 'p':
-								cmname = "pglz";
-								break;
-							case 'l':
-								cmname = "lz4";
-								break;
-							default:
-								cmname = NULL;
-								break;
-						}
-
-						if (cmname != NULL)
-							appendPQExpBuffer(q, " COMPRESSION %s", cmname);
-					}
-
 					if (print_default)
 					{
 						if (tbinfo->attgenerated[j] == ATTRIBUTE_GENERATED_STORED)
@@ -16348,7 +16368,36 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 								  qualrelname,
 								  fmtId(tbinfo->attnames[j]),
 								  tbinfo->attfdwoptions[j]);
-		}
+
+			/*
+			 * Dump per-column compression, if different from default.
+			 */
+			if (!dopt->no_toast_compression)
+			{
+				const char *cmname;
+
+				switch (tbinfo->attcompression[j])
+				{
+					case 'p':
+						cmname = "pglz";
+						break;
+					case 'l':
+						cmname = "lz4";
+						break;
+					default:
+						cmname = NULL;
+						break;
+				}
+
+				if (cmname != NULL &&
+					(fout->default_toast_compression == NULL ||
+					 strcmp(cmname, fout->default_toast_compression) != 0))
+					appendPQExpBuffer(q, "ALTER %sTABLE ONLY %s ALTER COLUMN %s SET COMPRESSION %s;\n",
+									  foreign, qualrelname,
+									  fmtId(tbinfo->attnames[j]),
+									  cmname);
+			}
+		}						/* end loop over columns */
 
 		if (ftoptions)
 			free(ftoptions);

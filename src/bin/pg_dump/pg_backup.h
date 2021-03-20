@@ -159,8 +159,8 @@ typedef struct _dumpOptions
 	int			no_publications;
 	int			no_subscriptions;
 	int			no_synchronized_snapshots;
-	int			no_unlogged_table_data;
 	int			no_toast_compression;
+	int			no_unlogged_table_data;
 	int			serializable_deferrable;
 	int			disable_triggers;
 	int			outputNoTablespaces;
@@ -209,6 +209,8 @@ typedef struct Archive
 
 	/* other important stuff */
 	char	   *searchpath;		/* search_path to set during restore */
+	char	   *default_toast_compression;	/* default TOAST compression to
+											 * set during restore */
 	char	   *use_role;		/* Issue SET ROLE to this */
 
 	/* error handling */
