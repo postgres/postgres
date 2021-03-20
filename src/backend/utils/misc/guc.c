@@ -7121,6 +7121,10 @@ parse_and_validate_value(struct config_generic *record,
  * its standard choice of ereport level.  However some callers need to be
  * able to override that choice; they should pass the ereport level to use.
  *
+ * is_reload should be true only when called from read_nondefault_variables()
+ * or RestoreGUCState(), where we are trying to load some other process's
+ * GUC settings into a new process.
+ *
  * Return value:
  *	+1: the value is valid and was successfully applied.
  *	0:	the name or value is invalid (but see below).
@@ -10259,12 +10263,6 @@ read_nondefault_variables(void)
 	GucContext	varscontext;
 
 	/*
-	 * Assert that PGC_BACKEND/PGC_SU_BACKEND case in set_config_option() will
-	 * do the right thing.
-	 */
-	Assert(IsInitProcessingMode());
-
-	/*
 	 * Open file
 	 */
 	fp = AllocateFile(CONFIG_EXEC_PARAMS, "r");
@@ -10317,30 +10315,43 @@ read_nondefault_variables(void)
 
 /*
  * can_skip_gucvar:
- * When serializing, determine whether to skip this GUC.  When restoring, the
- * negation of this test determines whether to restore the compiled-in default
- * value before processing serialized values.
+ * Decide whether SerializeGUCState can skip sending this GUC variable,
+ * or whether RestoreGUCState can skip resetting this GUC to default.
  *
- * A PGC_S_DEFAULT setting on the serialize side will typically match new
- * postmaster children, but that can be false when got_SIGHUP == true and the
- * pending configuration change modifies this setting.  Nonetheless, we omit
- * PGC_S_DEFAULT settings from serialization and make up for that by restoring
- * defaults before applying serialized values.
- *
- * PGC_POSTMASTER variables always have the same value in every child of a
- * particular postmaster.  Most PGC_INTERNAL variables are compile-time
- * constants; a few, like server_encoding and lc_ctype, are handled specially
- * outside the serialize/restore procedure.  Therefore, SerializeGUCState()
- * never sends these, and RestoreGUCState() never changes them.
- *
- * Role is a special variable in the sense that its current value can be an
- * invalid value and there are multiple ways by which that can happen (like
- * after setting the role, someone drops it).  So we handle it outside of
- * serialize/restore machinery.
+ * It is somewhat magical and fragile that the same test works for both cases.
+ * Realize in particular that we are very likely selecting different sets of
+ * GUCs on the leader and worker sides!  Be sure you've understood the
+ * comments here and in RestoreGUCState thoroughly before changing this.
  */
 static bool
 can_skip_gucvar(struct config_generic *gconf)
 {
+	/*
+	 * We can skip GUCs that are guaranteed to have the same values in leaders
+	 * and workers.  (Note it is critical that the leader and worker have the
+	 * same idea of which GUCs fall into this category.  It's okay to consider
+	 * context and name for this purpose, since those are unchanging
+	 * properties of a GUC.)
+	 *
+	 * PGC_POSTMASTER variables always have the same value in every child of a
+	 * particular postmaster, so the worker will certainly have the right
+	 * value already.  Likewise, PGC_INTERNAL variables are set by special
+	 * mechanisms (if indeed they aren't compile-time constants).  So we may
+	 * always skip these.
+	 *
+	 * Role must be handled specially because its current value can be an
+	 * invalid value (for instance, if someone dropped the role since we set
+	 * it).  So if we tried to serialize it normally, we might get a failure.
+	 * We skip it here, and use another mechanism to ensure the worker has the
+	 * right value.
+	 *
+	 * For all other GUCs, we skip if the GUC has its compiled-in default
+	 * value (i.e., source == PGC_S_DEFAULT).  On the leader side, this means
+	 * we don't send GUCs that have their default values, which typically
+	 * saves lots of work.  On the worker side, this means we don't need to
+	 * reset the GUC to default because it already has that value.  See
+	 * comments in RestoreGUCState for more info.
+	 */
 	return gconf->context == PGC_POSTMASTER ||
 		gconf->context == PGC_INTERNAL || gconf->source == PGC_S_DEFAULT ||
 		strcmp(gconf->name, "role") == 0;
@@ -10358,6 +10369,7 @@ estimate_variable_size(struct config_generic *gconf)
 	Size		size;
 	Size		valsize = 0;
 
+	/* Skippable GUCs consume zero space. */
 	if (can_skip_gucvar(gconf))
 		return 0;
 
@@ -10522,6 +10534,7 @@ static void
 serialize_variable(char **destptr, Size *maxbytes,
 				   struct config_generic *gconf)
 {
+	/* Ignore skippable GUCs. */
 	if (can_skip_gucvar(gconf))
 		return;
 
@@ -10669,8 +10682,14 @@ guc_restore_error_context_callback(void *arg)
 
 /*
  * RestoreGUCState:
- * Reads the GUC state at the specified address and updates the GUCs with the
- * values read from the GUC state.
+ * Reads the GUC state at the specified address and sets this process's
+ * GUCs to match.
+ *
+ * Note that this provides the worker with only a very shallow view of the
+ * leader's GUC state: we'll know about the currently active values, but not
+ * about stacked or reset values.  That's fine since the worker is just
+ * executing one part of a query, within which the active values won't change
+ * and the stacked values are invisible.
  */
 void
 RestoreGUCState(void *gucstate)
@@ -10687,10 +10706,100 @@ RestoreGUCState(void *gucstate)
 	int			i;
 	ErrorContextCallback error_context_callback;
 
-	/* See comment at can_skip_gucvar(). */
+	/*
+	 * First, ensure that all potentially-shippable GUCs are reset to their
+	 * default values.  We must not touch those GUCs that the leader will
+	 * never ship, while there is no need to touch those that are shippable
+	 * but already have their default values.  Thus, this ends up being the
+	 * same test that SerializeGUCState uses, even though the sets of
+	 * variables involved may well be different since the leader's set of
+	 * variables-not-at-default-values can differ from the set that are
+	 * not-default in this freshly started worker.
+	 *
+	 * Once we have set all the potentially-shippable GUCs to default values,
+	 * restoring the GUCs that the leader sent (because they had non-default
+	 * values over there) leads us to exactly the set of GUC values that the
+	 * leader has.  This is true even though the worker may have initially
+	 * absorbed postgresql.conf settings that the leader hasn't yet seen, or
+	 * ALTER USER/DATABASE SET settings that were established after the leader
+	 * started.
+	 *
+	 * Note that ensuring all the potential target GUCs are at PGC_S_DEFAULT
+	 * also ensures that set_config_option won't refuse to set them because of
+	 * source-priority comparisons.
+	 */
 	for (i = 0; i < num_guc_variables; i++)
-		if (!can_skip_gucvar(guc_variables[i]))
-			InitializeOneGUCOption(guc_variables[i]);
+	{
+		struct config_generic *gconf = guc_variables[i];
+
+		/* Do nothing if non-shippable or if already at PGC_S_DEFAULT. */
+		if (can_skip_gucvar(gconf))
+			continue;
+
+		/*
+		 * We can use InitializeOneGUCOption to reset the GUC to default, but
+		 * first we must free any existing subsidiary data to avoid leaking
+		 * memory.  The stack must be empty, but we have to clean up all other
+		 * fields.  Beware that there might be duplicate value or "extra"
+		 * pointers.
+		 */
+		Assert(gconf->stack == NULL);
+		if (gconf->extra)
+			free(gconf->extra);
+		if (gconf->last_reported)	/* probably can't happen */
+			free(gconf->last_reported);
+		if (gconf->sourcefile)
+			free(gconf->sourcefile);
+		switch (gconf->vartype)
+		{
+			case PGC_BOOL:
+				{
+					struct config_bool *conf = (struct config_bool *) gconf;
+
+					if (conf->reset_extra && conf->reset_extra != gconf->extra)
+						free(conf->reset_extra);
+					break;
+				}
+			case PGC_INT:
+				{
+					struct config_int *conf = (struct config_int *) gconf;
+
+					if (conf->reset_extra && conf->reset_extra != gconf->extra)
+						free(conf->reset_extra);
+					break;
+				}
+			case PGC_REAL:
+				{
+					struct config_real *conf = (struct config_real *) gconf;
+
+					if (conf->reset_extra && conf->reset_extra != gconf->extra)
+						free(conf->reset_extra);
+					break;
+				}
+			case PGC_STRING:
+				{
+					struct config_string *conf = (struct config_string *) gconf;
+
+					if (*conf->variable)
+						free(*conf->variable);
+					if (conf->reset_val && conf->reset_val != *conf->variable)
+						free(conf->reset_val);
+					if (conf->reset_extra && conf->reset_extra != gconf->extra)
+						free(conf->reset_extra);
+					break;
+				}
+			case PGC_ENUM:
+				{
+					struct config_enum *conf = (struct config_enum *) gconf;
+
+					if (conf->reset_extra && conf->reset_extra != gconf->extra)
+						free(conf->reset_extra);
+					break;
+				}
+		}
+		/* Now we can reset the struct to PGS_S_DEFAULT state. */
+		InitializeOneGUCOption(gconf);
+	}
 
 	/* First item is the length of the subsequent data */
 	memcpy(&len, gucstate, sizeof(len));
@@ -10704,6 +10813,7 @@ RestoreGUCState(void *gucstate)
 	error_context_callback.arg = NULL;
 	error_context_stack = &error_context_callback;
 
+	/* Restore all the listed GUCs. */
 	while (srcptr < srcend)
 	{
 		int			result;
