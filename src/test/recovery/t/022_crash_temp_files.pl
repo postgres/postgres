@@ -124,8 +124,10 @@ $killme_stderr2 = '';
 my $ret = TestLib::system_log('pg_ctl', 'kill', 'KILL', $pid);
 is($ret, 0, 'killed process with KILL');
 
-# Close psql session
+# Explicitly shut down psql gracefully - to avoid hangs or worse on windows
+$killme_stdin .= "\\q\n";
 $killme->finish;
+$killme_stdin2 .= "\\q\n";
 $killme2->finish;
 
 # Wait till server restarts
@@ -212,8 +214,10 @@ $killme_stderr2 = '';
 $ret = TestLib::system_log('pg_ctl', 'kill', 'KILL', $pid);
 is($ret, 0, 'killed process with KILL');
 
-# Close psql session
+# Explicitly shut down psql gracefully - to avoid hangs or worse on windows
+$killme_stdin .= "\\q\n";
 $killme->finish;
+$killme_stdin2 .= "\\q\n";
 $killme2->finish;
 
 # Wait till server restarts
