@@ -1,5 +1,8 @@
 \set HIDE_TOAST_COMPRESSION false
 
+-- ensure we get stable results regardless of installation's default
+SET default_toast_compression = 'pglz';
+
 -- test creating table with compression method
 CREATE TABLE cmdata(f1 text COMPRESSION pglz);
 CREATE INDEX idx ON cmdata(f1);
@@ -100,6 +103,7 @@ SET default_toast_compression = 'lz4';
 DROP TABLE cmdata2;
 CREATE TABLE cmdata2 (f1 text);
 \d+ cmdata2
+SET default_toast_compression = 'pglz';
 
 -- test alter compression method
 ALTER TABLE cmdata ALTER COLUMN f1 SET COMPRESSION lz4;
