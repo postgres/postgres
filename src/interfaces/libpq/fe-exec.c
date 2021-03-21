@@ -1299,10 +1299,6 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 	if (!PQsendQueryStart(conn, newQuery))
 		return 0;
 
-	entry = pqAllocCmdQueueEntry(conn);
-	if (entry == NULL)
-		return 0;				/* error msg already set */
-
 	/* check the argument */
 	if (!query)
 	{
@@ -1310,6 +1306,10 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 							 libpq_gettext("command string is a null pointer\n"));
 		return 0;
 	}
+
+	entry = pqAllocCmdQueueEntry(conn);
+	if (entry == NULL)
+		return 0;				/* error msg already set */
 
 	/* Send the query message(s) */
 	if (conn->pipelineStatus == PQ_PIPELINE_OFF)
@@ -1320,6 +1320,7 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 			pqPutMsgEnd(conn) < 0)
 		{
 			/* error message should be set up already */
+			pqRecycleCmdQueueEntry(conn, entry);
 			return 0;
 		}
 
