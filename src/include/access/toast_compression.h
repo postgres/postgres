@@ -69,6 +69,7 @@ GetCompressionMethodName(char method)
 			return "lz4";
 		default:
 			elog(ERROR, "invalid compression method %c", method);
+			return NULL;		/* keep compiler quiet */
 	}
 }
 

@@ -487,6 +487,7 @@ toast_decompress_datum(struct varlena *attr)
 			return lz4_decompress_datum(attr);
 		default:
 			elog(ERROR, "invalid compression method id %d", cmid);
+			return NULL;		/* keep compiler quiet */
 	}
 }
 
@@ -518,6 +519,7 @@ toast_decompress_datum_slice(struct varlena *attr, int32 slicelength)
 			return lz4_decompress_datum_slice(attr, slicelength);
 		default:
 			elog(ERROR, "invalid compression method id %d", cmid);
+			return NULL;		/* keep compiler quiet */
 	}
 }
 

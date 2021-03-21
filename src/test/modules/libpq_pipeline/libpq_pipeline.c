@@ -60,6 +60,7 @@ exit_nicely(PGconn *conn)
  */
 #define pg_fatal(...) pg_fatal_impl(__LINE__, __VA_ARGS__)
 static void
+pg_attribute_noreturn()
 pg_fatal_impl(int line, const char *fmt,...)
 {
 	va_list		args;
@@ -570,6 +571,7 @@ test_pipelined_insert(PGconn *conn, int n_rows)
 
 			default:
 				pg_fatal("invalid state");
+				sql = NULL;		/* keep compiler quiet */
 		}
 
 		pg_debug("sending: %s\n", sql);
@@ -679,8 +681,8 @@ test_pipelined_insert(PGconn *conn, int n_rows)
 						break;
 					case BI_DONE:
 						/* unreachable */
-						description = "";
-						abort();
+						pg_fatal("unreachable state");
+						cmdtag = NULL;	/* keep compiler quiet */
 				}
 
 				if (PQresultStatus(res) != status)

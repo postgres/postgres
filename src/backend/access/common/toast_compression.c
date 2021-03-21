@@ -135,6 +135,7 @@ lz4_compress_datum(const struct varlena *value)
 {
 #ifndef USE_LZ4
 	NO_LZ4_SUPPORT();
+	return NULL;				/* keep compiler quiet */
 #else
 	int32		valsize;
 	int32		len;
@@ -177,6 +178,7 @@ lz4_decompress_datum(const struct varlena *value)
 {
 #ifndef USE_LZ4
 	NO_LZ4_SUPPORT();
+	return NULL;				/* keep compiler quiet */
 #else
 	int32		rawsize;
 	struct varlena *result;
@@ -209,6 +211,7 @@ lz4_decompress_datum_slice(const struct varlena *value, int32 slicelength)
 {
 #ifndef USE_LZ4
 	NO_LZ4_SUPPORT();
+	return NULL;				/* keep compiler quiet */
 #else
 	int32		rawsize;
 	struct varlena *result;
