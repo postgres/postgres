@@ -32,7 +32,9 @@
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
+#include "storage/procarray.h"
 #include "utils/memdebug.h"
+#include "utils/memutils.h"
 #include "utils/snapmgr.h"
 
 static BTMetaPageData *_bt_getmeta(Relation rel, Buffer metabuf);
@@ -57,6 +59,8 @@ static bool _bt_lock_subtree_parent(Relation rel, BlockNumber child,
 									OffsetNumber *poffset,
 									BlockNumber *topparent,
 									BlockNumber *topparentrightsib);
+static void _bt_pendingfsm_add(BTVacState *vstate, BlockNumber target,
+							   FullTransactionId safexid);
 
 /*
  *	_bt_initmetapage() -- Fill a page buffer with a correct metapage image
@@ -209,13 +213,9 @@ _bt_vacuum_needs_cleanup(Relation rel)
 	 * Trigger cleanup in rare cases where prev_num_delpages exceeds 5% of the
 	 * total size of the index.  We can reasonably expect (though are not
 	 * guaranteed) to be able to recycle this many pages if we decide to do a
-	 * btvacuumscan call during the ongoing btvacuumcleanup.
-	 *
-	 * Our approach won't reliably avoid "wasted" cleanup-only btvacuumscan
-	 * calls.  That is, we can end up scanning the entire index without ever
-	 * placing even 1 of the prev_num_delpages pages in the free space map, at
-	 * least in certain narrow cases (see nbtree/README section on recycling
-	 * deleted pages for details).  This rarely comes up in practice.
+	 * btvacuumscan call during the ongoing btvacuumcleanup.  For further
+	 * details see the nbtree/README section on placing deleted pages in the
+	 * FSM.
 	 */
 	if (prev_num_delpages > 0 &&
 		prev_num_delpages > RelationGetNumberOfBlocks(rel) / 20)
@@ -2729,6 +2729,14 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	if (target <= scanblkno)
 		stats->pages_deleted++;
 
+	/*
+	 * Remember information about the target page (now a newly deleted page)
+	 * in dedicated vstate space for later.  The page will be considered as a
+	 * candidate to place in the FSM at the end of the current btvacuumscan()
+	 * call.
+	 */
+	_bt_pendingfsm_add(vstate, target, safexid);
+
 	return true;
 }
 
@@ -2872,4 +2880,178 @@ _bt_lock_subtree_parent(Relation rel, BlockNumber child, BTStack stack,
 	return _bt_lock_subtree_parent(rel, parent, stack->bts_parent,
 								   subtreeparent, poffset,
 								   topparent, topparentrightsib);
+}
+
+/*
+ * Initialize local memory state used by VACUUM for _bt_pendingfsm_finalize
+ * optimization.
+ *
+ * Called at the start of a btvacuumscan().  Caller's cleanuponly argument
+ * indicates if ongoing VACUUM has not (and will not) call btbulkdelete().
+ *
+ * We expect to allocate memory inside VACUUM's top-level memory context here.
+ * The working buffer is subject to a limit based on work_mem.  Our strategy
+ * when the array can no longer grow within the bounds of that limit is to
+ * stop saving additional newly deleted pages, while proceeding as usual with
+ * the pages that we can fit.
+ */
+void
+_bt_pendingfsm_init(Relation rel, BTVacState *vstate, bool cleanuponly)
+{
+	int64		maxbufsize;
+
+	/*
+	 * Don't bother with optimization in cleanup-only case -- we don't expect
+	 * any newly deleted pages.  Besides, cleanup-only calls to btvacuumscan()
+	 * can only take place because this optimization didn't work out during
+	 * the last VACUUM.
+	 */
+	if (cleanuponly)
+		return;
+
+	/*
+	 * Cap maximum size of array so that we always respect work_mem.  Avoid
+	 * int overflow here.
+	 */
+	vstate->bufsize = 256;
+	maxbufsize = (work_mem * 1024L) / sizeof(BTPendingFSM);
+	maxbufsize = Min(maxbufsize, INT_MAX);
+	maxbufsize = Min(maxbufsize, MaxAllocSize / sizeof(BTPendingFSM));
+	/* Stay sane with small work_mem */
+	maxbufsize = Max(maxbufsize, vstate->bufsize);
+	vstate->maxbufsize = maxbufsize;
+
+	/* Allocate buffer, indicate that there are currently 0 pending pages */
+	vstate->pendingpages = palloc(sizeof(BTPendingFSM) * vstate->bufsize);
+	vstate->npendingpages = 0;
+}
+
+/*
+ * Place any newly deleted pages (i.e. pages that _bt_pagedel() deleted during
+ * the ongoing VACUUM operation) into the free space map -- though only when
+ * it is actually safe to do so by now.
+ *
+ * Called at the end of a btvacuumscan(), just before free space map vacuuming
+ * takes place.
+ *
+ * Frees memory allocated by _bt_pendingfsm_init(), if any.
+ */
+void
+_bt_pendingfsm_finalize(Relation rel, BTVacState *vstate)
+{
+	IndexBulkDeleteResult *stats = vstate->stats;
+
+	Assert(stats->pages_newly_deleted >= vstate->npendingpages);
+
+	if (vstate->npendingpages == 0)
+	{
+		/* Just free memory when nothing to do */
+		if (vstate->pendingpages)
+			pfree(vstate->pendingpages);
+
+		return;
+	}
+
+#ifdef DEBUG_BTREE_PENDING_FSM
+
+	/*
+	 * Debugging aid: Sleep for 5 seconds to greatly increase the chances of
+	 * placing pending pages in the FSM.  Note that the optimization will
+	 * never be effective without some other backend concurrently consuming an
+	 * XID.
+	 */
+	pg_usleep(5000000L);
+#endif
+
+	/*
+	 * Recompute VACUUM XID boundaries.
+	 *
+	 * We don't actually care about the oldest non-removable XID.  Computing
+	 * the oldest such XID has a useful side-effect that we rely on: it
+	 * forcibly updates the XID horizon state for this backend.  This step is
+	 * essential; GlobalVisCheckRemovableFullXid() will not reliably recognize
+	 * that it is now safe to recycle newly deleted pages without this step.
+	 */
+	GetOldestNonRemovableTransactionId(NULL);
+
+	for (int i = 0; i < vstate->npendingpages; i++)
+	{
+		BlockNumber target = vstate->pendingpages[i].target;
+		FullTransactionId safexid = vstate->pendingpages[i].safexid;
+
+		/*
+		 * Do the equivalent of checking BTPageIsRecyclable(), but without
+		 * accessing the page again a second time.
+		 *
+		 * Give up on finding the first non-recyclable page -- all later pages
+		 * must be non-recyclable too, since _bt_pendingfsm_add() adds pages
+		 * to the array in safexid order.
+		 */
+		if (!GlobalVisCheckRemovableFullXid(NULL, safexid))
+			break;
+
+		RecordFreeIndexPage(rel, target);
+		stats->pages_free++;
+	}
+
+	pfree(vstate->pendingpages);
+}
+
+/*
+ * Maintain array of pages that were deleted during current btvacuumscan()
+ * call, for use in _bt_pendingfsm_finalize()
+ */
+static void
+_bt_pendingfsm_add(BTVacState *vstate,
+				   BlockNumber target,
+				   FullTransactionId safexid)
+{
+	Assert(vstate->npendingpages <= vstate->bufsize);
+	Assert(vstate->bufsize <= vstate->maxbufsize);
+
+#ifdef USE_ASSERT_CHECKING
+
+	/*
+	 * Verify an assumption made by _bt_pendingfsm_finalize(): pages from the
+	 * array will always be in safexid order (since that is the order that we
+	 * save them in here)
+	 */
+	if (vstate->npendingpages > 0)
+	{
+		FullTransactionId lastsafexid =
+		vstate->pendingpages[vstate->npendingpages - 1].safexid;
+
+		Assert(FullTransactionIdFollowsOrEquals(safexid, lastsafexid));
+	}
+#endif
+
+	/*
+	 * If temp buffer reaches maxbufsize/work_mem capacity then we discard
+	 * information about this page.
+	 *
+	 * Note that this also covers the case where we opted to not use the
+	 * optimization in _bt_pendingfsm_init().
+	 */
+	if (vstate->npendingpages == vstate->maxbufsize)
+		return;
+
+	/* Consider enlarging buffer */
+	if (vstate->npendingpages == vstate->bufsize)
+	{
+		int			newbufsize = vstate->bufsize * 2;
+
+		/* Respect work_mem */
+		if (newbufsize > vstate->maxbufsize)
+			newbufsize = vstate->maxbufsize;
+
+		vstate->bufsize = newbufsize;
+		vstate->pendingpages =
+			repalloc(vstate->pendingpages,
+					 sizeof(BTPendingFSM) * vstate->bufsize);
+	}
+
+	/* Save metadata for newly deleted page */
+	vstate->pendingpages[vstate->npendingpages].target = target;
+	vstate->pendingpages[vstate->npendingpages].safexid = safexid;
+	vstate->npendingpages++;
 }

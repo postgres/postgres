@@ -413,7 +413,30 @@ to be "visible to everyone".  As collateral damage, we wait for snapshots
 taken until the next transaction to allocate an XID commits.  We also wait
 for running XIDs with no snapshots.
 
-The need for this additional indirection after a page deletion operation
+Prior to PostgreSQL 14, VACUUM would only place _old_ deleted pages that
+it encounters during its linear scan (pages deleted by a previous VACUUM
+operation) in the FSM.  Newly deleted pages were never placed in the FSM,
+because that was assumed to _always_ be unsafe.  That assumption was
+unnecessarily pessimistic in practice, though -- it often doesn't take
+very long for newly deleted pages to become safe to place in the FSM.
+There is no truly principled way to predict when deleted pages will become
+safe to place in the FSM for recycling -- it might become safe almost
+immediately (long before the current VACUUM completes), or it might not
+even be safe by the time the next VACUUM takes place.  Recycle safety is
+purely a question of maintaining the consistency (or at least the apparent
+consistency) of a physical data structure.  The state within the backend
+running VACUUM is simply not relevant.
+
+PostgreSQL 14 added the ability for VACUUM to consider if it's possible to
+recycle newly deleted pages at the end of the full index scan where the
+page deletion took place.  It is convenient to check if it's safe at that
+point.  This does require that VACUUM keep around a little bookkeeping
+information about newly deleted pages, but that's very cheap.  Using
+in-memory state for this avoids the need to revisit newly deleted pages a
+second time later on -- we can just use safexid values from the local
+bookkeeping state to determine recycle safety in a deferred fashion.
+
+The need for additional FSM indirection after a page deletion operation
 takes place is a natural consequence of the highly permissive rules for
 index scans with Lehman and Yao's design.  In general an index scan
 doesn't have to hold a lock or even a pin on any page when it descends the
