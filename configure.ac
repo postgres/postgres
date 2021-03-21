@@ -997,8 +997,18 @@ AC_SUBST(with_lz4)
 
 if test "$with_lz4" = yes; then
   PKG_CHECK_MODULES(LZ4, liblz4)
-  LIBS="$LZ4_LIBS $LIBS"
-  CFLAGS="$LZ4_CFLAGS $CFLAGS"
+  # We only care about -I, -D, and -L switches;
+  # note that -llz4 will be added by AC_CHECK_LIB below.
+  for pgac_option in $LZ4_CFLAGS; do
+    case $pgac_option in
+      -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+    esac
+  done
+  for pgac_option in $LZ4_LIBS; do
+    case $pgac_option in
+      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+    esac
+  done
 fi
 
 #
@@ -1269,6 +1279,10 @@ fi
 
 if test "$with_libxslt" = yes ; then
   AC_CHECK_LIB(xslt, xsltCleanupGlobals, [], [AC_MSG_ERROR([library 'xslt' is required for XSLT support])])
+fi
+
+if test "$with_lz4" = yes ; then
+  AC_CHECK_LIB(lz4, LZ4_compress_default, [], [AC_MSG_ERROR([library 'lz4' is required for LZ4 support])])
 fi
 
 # Note: We can test for libldap_r only after we know PTHREAD_LIBS
