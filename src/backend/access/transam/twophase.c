@@ -1321,7 +1321,11 @@ ReadTwoPhaseFile(TransactionId xid, bool missing_ok)
  * twophase files and ReadTwoPhaseFile should be used instead.
  *
  * Note clearly that this function can access WAL during normal operation,
- * similarly to the way WALSender or Logical Decoding would do.
+ * similarly to the way WALSender or Logical Decoding would do.  While
+ * accessing WAL, read_local_xlog_page() may change ThisTimeLineID,
+ * particularly if this routine is called for the end-of-recovery checkpoint
+ * in the checkpointer itself, so save the current timeline number value
+ * and restore it once done.
  */
 static void
 XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
@@ -1329,6 +1333,7 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 	XLogRecord *record;
 	XLogReaderState *xlogreader;
 	char	   *errormsg;
+	TimeLineID	save_currtli = ThisTimeLineID;
 
 	xlogreader = XLogReaderAllocate(wal_segment_size, NULL,
 									XL_ROUTINE(.page_read = &read_local_xlog_page,
@@ -1343,6 +1348,14 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 
 	XLogBeginRead(xlogreader, lsn);
 	record = XLogReadRecord(xlogreader, &errormsg);
+
+	/*
+	 * Restore immediately the timeline where it was previously, as
+	 * read_local_xlog_page() could have changed it if the record was read
+	 * while recovery was finishing or if the timeline has jumped in-between.
+	 */
+	ThisTimeLineID = save_currtli;
+
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
