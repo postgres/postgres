@@ -15071,9 +15071,6 @@ ATExecSetCompression(AlteredTableInfo *tab,
 	char	   *compression;
 	char		typstorage;
 	Oid			cmoid;
-	Datum		values[Natts_pg_attribute];
-	bool		nulls[Natts_pg_attribute];
-	bool		replace[Natts_pg_attribute];
 	ObjectAddress address;
 
 	Assert(IsA(newValue, String));
@@ -15081,7 +15078,8 @@ ATExecSetCompression(AlteredTableInfo *tab,
 
 	attrel = table_open(AttributeRelationId, RowExclusiveLock);
 
-	tuple = SearchSysCacheAttName(RelationGetRelid(rel), column);
+	/* copy the cache entry so we can scribble on it below */
+	tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), column);
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -15105,32 +15103,32 @@ ATExecSetCompression(AlteredTableInfo *tab,
 					errmsg("column data type %s does not support compression",
 						format_type_be(atttableform->atttypid))));
 
-	/* initialize buffers for new tuple values */
-	memset(values, 0, sizeof(values));
-	memset(nulls, false, sizeof(nulls));
-	memset(replace, false, sizeof(replace));
-
 	/* get the attribute compression method. */
 	cmoid = GetAttributeCompression(atttableform, compression);
 
+	/* update pg_attribute entry */
 	atttableform->attcompression = cmoid;
 	CatalogTupleUpdate(attrel, &tuple->t_self, tuple);
 
 	InvokeObjectPostAlterHook(RelationRelationId,
 							  RelationGetRelid(rel),
-							  atttableform->attnum);
+							  attnum);
 
-	ReleaseSysCache(tuple);
-
-	/* apply changes to the index column as well */
+	/*
+	 * Apply the change to indexes as well (only for simple index columns,
+	 * matching behavior of index.c ConstructTupleDescriptor()).
+	 */
 	SetIndexStorageProperties(rel, attrel, attnum, cmoid, '\0', lockmode);
+
+	heap_freetuple(tuple);
+
 	table_close(attrel, RowExclusiveLock);
 
 	/* make changes visible */
 	CommandCounterIncrement();
 
 	ObjectAddressSubSet(address, RelationRelationId,
-						RelationGetRelid(rel), atttableform->attnum);
+						RelationGetRelid(rel), attnum);
 	return address;
 }
 
