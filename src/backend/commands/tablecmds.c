@@ -7847,6 +7847,7 @@ SetIndexStorageProperties(Relation rel, Relation attrelation,
 		index_close(indrel, lockmode);
 	}
 }
+
 /*
  * ALTER TABLE ALTER COLUMN SET STORAGE
  *
@@ -15070,7 +15071,7 @@ ATExecSetCompression(AlteredTableInfo *tab,
 	AttrNumber	attnum;
 	char	   *compression;
 	char		typstorage;
-	Oid			cmoid;
+	char		cmethod;
 	ObjectAddress address;
 
 	Assert(IsA(newValue, String));
@@ -15104,10 +15105,10 @@ ATExecSetCompression(AlteredTableInfo *tab,
 						format_type_be(atttableform->atttypid))));
 
 	/* get the attribute compression method. */
-	cmoid = GetAttributeCompression(atttableform, compression);
+	cmethod = GetAttributeCompression(atttableform, compression);
 
 	/* update pg_attribute entry */
-	atttableform->attcompression = cmoid;
+	atttableform->attcompression = cmethod;
 	CatalogTupleUpdate(attrel, &tuple->t_self, tuple);
 
 	InvokeObjectPostAlterHook(RelationRelationId,
@@ -15118,7 +15119,7 @@ ATExecSetCompression(AlteredTableInfo *tab,
 	 * Apply the change to indexes as well (only for simple index columns,
 	 * matching behavior of index.c ConstructTupleDescriptor()).
 	 */
-	SetIndexStorageProperties(rel, attrel, attnum, cmoid, '\0', lockmode);
+	SetIndexStorageProperties(rel, attrel, attnum, cmethod, '\0', lockmode);
 
 	heap_freetuple(tuple);
 

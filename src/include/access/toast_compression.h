@@ -50,8 +50,6 @@ typedef enum ToastCompressionId
 			 errdetail("This functionality requires the server to be built with lz4 support."), \
 			 errhint("You need to rebuild PostgreSQL using --with-lz4.")))
 
-#define IsValidCompression(cm)  ((cm) != InvalidCompressionMethod)
-
 #define IsStorageCompressible(storage) ((storage) != TYPSTORAGE_PLAIN && \
 										(storage) != TYPSTORAGE_EXTERNAL)
 
