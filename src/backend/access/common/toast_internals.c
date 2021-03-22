@@ -91,7 +91,7 @@ toast_compress_datum(Datum value, char cmethod)
 	{
 		/* successful compression */
 		Assert(cmid != TOAST_INVALID_COMPRESSION_ID);
-		TOAST_COMPRESS_SET_SIZE_AND_METHOD(tmp, valsize, cmid);
+		TOAST_COMPRESS_SET_SIZE_AND_COMPRESS_METHOD(tmp, valsize, cmid);
 		return PointerGetDatum(tmp);
 	}
 	else
@@ -181,11 +181,11 @@ toast_save_datum(Relation rel, Datum value,
 		data_p = VARDATA(dval);
 		data_todo = VARSIZE(dval) - VARHDRSZ;
 		/* rawsize in a compressed datum is just the size of the payload */
-		toast_pointer.va_rawsize = VARRAWSIZE_4B_C(dval) + VARHDRSZ;
+		toast_pointer.va_rawsize = VARDATA_COMPRESSED_GET_EXTSIZE(dval) + VARHDRSZ;
 
 		/* set external size and compression method */
-		VARATT_EXTERNAL_SET_SIZE_AND_COMPRESSION(toast_pointer, data_todo,
-												 VARCOMPRESS_4B_C(dval));
+		VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, data_todo,
+													 VARDATA_COMPRESSED_GET_COMPRESS_METHOD(dval));
 		/* Assert that the numbers look like it's compressed */
 		Assert(VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer));
 	}

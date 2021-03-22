@@ -53,11 +53,11 @@ pglz_compress_datum(const struct varlena *value)
 	 * that will be needed for varlena overhead, and allocate that amount.
 	 */
 	tmp = (struct varlena *) palloc(PGLZ_MAX_OUTPUT(valsize) +
-									VARHDRSZ_COMPRESS);
+									VARHDRSZ_COMPRESSED);
 
 	len = pglz_compress(VARDATA_ANY(value),
 						valsize,
-						(char *) tmp + VARHDRSZ_COMPRESS,
+						(char *) tmp + VARHDRSZ_COMPRESSED,
 						NULL);
 	if (len < 0)
 	{
@@ -65,7 +65,7 @@ pglz_compress_datum(const struct varlena *value)
 		return NULL;
 	}
 
-	SET_VARSIZE_COMPRESSED(tmp, len + VARHDRSZ_COMPRESS);
+	SET_VARSIZE_COMPRESSED(tmp, len + VARHDRSZ_COMPRESSED);
 
 	return tmp;
 }
@@ -80,13 +80,13 @@ pglz_decompress_datum(const struct varlena *value)
 	int32		rawsize;
 
 	/* allocate memory for the uncompressed data */
-	result = (struct varlena *) palloc(VARRAWSIZE_4B_C(value) + VARHDRSZ);
+	result = (struct varlena *) palloc(VARDATA_COMPRESSED_GET_EXTSIZE(value) + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESS,
-							  VARSIZE(value) - VARHDRSZ_COMPRESS,
+	rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESSED,
+							  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 							  VARDATA(result),
-							  VARRAWSIZE_4B_C(value), true);
+							  VARDATA_COMPRESSED_GET_EXTSIZE(value), true);
 	if (rawsize < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -111,8 +111,8 @@ pglz_decompress_datum_slice(const struct varlena *value,
 	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESS,
-							  VARSIZE(value) - VARHDRSZ_COMPRESS,
+	rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESSED,
+							  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 							  VARDATA(result),
 							  slicelength, false);
 	if (rawsize < 0)
@@ -149,10 +149,10 @@ lz4_compress_datum(const struct varlena *value)
 	 * that will be needed for varlena overhead, and allocate that amount.
 	 */
 	max_size = LZ4_compressBound(valsize);
-	tmp = (struct varlena *) palloc(max_size + VARHDRSZ_COMPRESS);
+	tmp = (struct varlena *) palloc(max_size + VARHDRSZ_COMPRESSED);
 
 	len = LZ4_compress_default(VARDATA_ANY(value),
-							   (char *) tmp + VARHDRSZ_COMPRESS,
+							   (char *) tmp + VARHDRSZ_COMPRESSED,
 							   valsize, max_size);
 	if (len <= 0)
 		elog(ERROR, "lz4 compression failed");
@@ -164,7 +164,7 @@ lz4_compress_datum(const struct varlena *value)
 		return NULL;
 	}
 
-	SET_VARSIZE_COMPRESSED(tmp, len + VARHDRSZ_COMPRESS);
+	SET_VARSIZE_COMPRESSED(tmp, len + VARHDRSZ_COMPRESSED);
 
 	return tmp;
 #endif
@@ -184,13 +184,13 @@ lz4_decompress_datum(const struct varlena *value)
 	struct varlena *result;
 
 	/* allocate memory for the uncompressed data */
-	result = (struct varlena *) palloc(VARRAWSIZE_4B_C(value) + VARHDRSZ);
+	result = (struct varlena *) palloc(VARDATA_COMPRESSED_GET_EXTSIZE(value) + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = LZ4_decompress_safe((char *) value + VARHDRSZ_COMPRESS,
+	rawsize = LZ4_decompress_safe((char *) value + VARHDRSZ_COMPRESSED,
 								  VARDATA(result),
-								  VARSIZE(value) - VARHDRSZ_COMPRESS,
-								  VARRAWSIZE_4B_C(value));
+								  VARSIZE(value) - VARHDRSZ_COMPRESSED,
+								  VARDATA_COMPRESSED_GET_EXTSIZE(value));
 	if (rawsize < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -224,9 +224,9 @@ lz4_decompress_datum_slice(const struct varlena *value, int32 slicelength)
 	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = LZ4_decompress_safe_partial((char *) value + VARHDRSZ_COMPRESS,
+	rawsize = LZ4_decompress_safe_partial((char *) value + VARHDRSZ_COMPRESSED,
 										  VARDATA(result),
-										  VARSIZE(value) - VARHDRSZ_COMPRESS,
+										  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 										  slicelength,
 										  slicelength);
 	if (rawsize < 0)
@@ -262,10 +262,10 @@ toast_get_compression_id(struct varlena *attr)
 		VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
 
 		if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
-			cmid = VARATT_EXTERNAL_GET_COMPRESSION(toast_pointer);
+			cmid = VARATT_EXTERNAL_GET_COMPRESS_METHOD(toast_pointer);
 	}
 	else if (VARATT_IS_COMPRESSED(attr))
-		cmid = VARCOMPRESS_4B_C(attr);
+		cmid = VARDATA_COMPRESSED_GET_COMPRESS_METHOD(attr);
 
 	return cmid;
 }

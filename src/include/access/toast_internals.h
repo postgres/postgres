@@ -24,22 +24,23 @@ typedef struct toast_compress_header
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint32		tcinfo;			/* 2 bits for compression method and 30 bits
-								 * rawsize */
+								 * external size; see va_extinfo */
 } toast_compress_header;
 
 /*
  * Utilities for manipulation of header information for compressed
  * toast entries.
  */
-#define TOAST_COMPRESS_METHOD(ptr)	\
-		(((toast_compress_header *) (ptr))->tcinfo >> VARLENA_RAWSIZE_BITS)
-#define TOAST_COMPRESS_SET_SIZE_AND_METHOD(ptr, len, cm_method) \
+#define TOAST_COMPRESS_METHOD(ptr) \
+	(((toast_compress_header *) (ptr))->tcinfo >> VARLENA_EXTSIZE_BITS)
+
+#define TOAST_COMPRESS_SET_SIZE_AND_COMPRESS_METHOD(ptr, len, cm_method) \
 	do { \
-		Assert((len) > 0 && (len) <= VARLENA_RAWSIZE_MASK); \
+		Assert((len) > 0 && (len) <= VARLENA_EXTSIZE_MASK); \
 		Assert((cm_method) == TOAST_PGLZ_COMPRESSION_ID || \
 			   (cm_method) == TOAST_LZ4_COMPRESSION_ID); \
 		((toast_compress_header *) (ptr))->tcinfo = \
-			   ((len) | (cm_method) << VARLENA_RAWSIZE_BITS); \
+			(len) | ((uint32) (cm_method) << VARLENA_EXTSIZE_BITS); \
 	} while (0)
 
 extern Datum toast_compress_datum(Datum value, char cmethod);

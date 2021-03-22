@@ -251,7 +251,7 @@ detoast_attr_slice(struct varlena *attr,
 			 * determine how much compressed data we need to be sure of being
 			 * able to decompress the required slice.
 			 */
-			if (VARATT_EXTERNAL_GET_COMPRESSION(toast_pointer) ==
+			if (VARATT_EXTERNAL_GET_COMPRESS_METHOD(toast_pointer) ==
 				TOAST_PGLZ_COMPRESSION_ID)
 				max_size = pglz_maximum_compressed_size(slicelimit, max_size);
 
@@ -562,7 +562,7 @@ toast_raw_datum_size(Datum value)
 	else if (VARATT_IS_COMPRESSED(attr))
 	{
 		/* here, va_rawsize is just the payload size */
-		result = VARRAWSIZE_4B_C(attr) + VARHDRSZ;
+		result = VARDATA_COMPRESSED_GET_EXTSIZE(attr) + VARHDRSZ;
 	}
 	else if (VARATT_IS_SHORT(attr))
 	{
