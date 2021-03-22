@@ -97,8 +97,8 @@ brinvalidate(Oid opclassoid)
 				break;
 			case BRIN_PROCNUM_CONSISTENT:
 				ok = check_amproc_signature(procform->amproc, BOOLOID, true,
-											3, 3, INTERNALOID, INTERNALOID,
-											INTERNALOID);
+											4, 4, INTERNALOID, INTERNALOID,
+											INTERNALOID, INT4OID);
 				break;
 			case BRIN_PROCNUM_UNION:
 				ok = check_amproc_signature(procform->amproc, BOOLOID, true,
