@@ -373,6 +373,9 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	int		   *nkeys,
 			   *nnullkeys;
 	int			keyno;
+	char	   *ptr;
+	Size		len;
+	char	   *tmp PG_USED_FOR_ASSERTS_ONLY;
 
 	opaque = (BrinOpaque *) scan->opaque;
 	bdesc = opaque->bo_bdesc;
@@ -403,15 +406,52 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	 * We keep null and regular keys separate, so that we can pass just the
 	 * regular keys to the consistent function easily.
 	 *
+	 * To reduce the allocation overhead, we allocate one big chunk and then
+	 * carve it into smaller arrays ourselves. All the pieces have exactly the
+	 * same lifetime, so that's OK.
+	 *
 	 * XXX The widest index can have 32 attributes, so the amount of wasted
 	 * memory is negligible. We could invent a more compact approach (with
 	 * just space for used attributes) but that would make the matching more
 	 * complex so it's not a good trade-off.
 	 */
-	keys = palloc0(sizeof(ScanKey *) * bdesc->bd_tupdesc->natts);
-	nullkeys = palloc0(sizeof(ScanKey *) * bdesc->bd_tupdesc->natts);
-	nkeys = palloc0(sizeof(int) * bdesc->bd_tupdesc->natts);
-	nnullkeys = palloc0(sizeof(int) * bdesc->bd_tupdesc->natts);
+	len =
+		MAXALIGN(sizeof(ScanKey *) * bdesc->bd_tupdesc->natts) +	/* regular keys */
+		MAXALIGN(sizeof(ScanKey) * scan->numberOfKeys) * bdesc->bd_tupdesc->natts +
+		MAXALIGN(sizeof(int) * bdesc->bd_tupdesc->natts) +
+		MAXALIGN(sizeof(ScanKey *) * bdesc->bd_tupdesc->natts) +	/* NULL keys */
+		MAXALIGN(sizeof(ScanKey) * scan->numberOfKeys) * bdesc->bd_tupdesc->natts +
+		MAXALIGN(sizeof(int) * bdesc->bd_tupdesc->natts);
+
+	ptr = palloc(len);
+	tmp = ptr;
+
+	keys = (ScanKey **) ptr;
+	ptr += MAXALIGN(sizeof(ScanKey *) * bdesc->bd_tupdesc->natts);
+
+	nullkeys = (ScanKey **) ptr;
+	ptr += MAXALIGN(sizeof(ScanKey *) * bdesc->bd_tupdesc->natts);
+
+	nkeys = (int *) ptr;
+	ptr += MAXALIGN(sizeof(int) * bdesc->bd_tupdesc->natts);
+
+	nnullkeys = (int *) ptr;
+	ptr += MAXALIGN(sizeof(int) * bdesc->bd_tupdesc->natts);
+
+	for (int i = 0; i < bdesc->bd_tupdesc->natts; i++)
+	{
+		keys[i] = (ScanKey *) ptr;
+		ptr += MAXALIGN(sizeof(ScanKey) * scan->numberOfKeys);
+
+		nullkeys[i] = (ScanKey *) ptr;
+		ptr += MAXALIGN(sizeof(ScanKey) * scan->numberOfKeys);
+	}
+
+	Assert(tmp + len == ptr);
+
+	/* zero the number of keys */
+	memset(nkeys, 0, sizeof(int) * bdesc->bd_tupdesc->natts);
+	memset(nnullkeys, 0, sizeof(int) * bdesc->bd_tupdesc->natts);
 
 	/* Preprocess the scan keys - split them into per-attribute arrays. */
 	for (keyno = 0; keyno < scan->numberOfKeys; keyno++)
@@ -443,9 +483,9 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		{
 			FmgrInfo   *tmp;
 
-			/* No key/null arrays for this attribute. */
-			Assert((keys[keyattno - 1] == NULL) && (nkeys[keyattno - 1] == 0));
-			Assert((nullkeys[keyattno - 1] == NULL) && (nnullkeys[keyattno - 1] == 0));
+			/* First time we see this attribute, so no key/null keys. */
+			Assert(nkeys[keyattno - 1] == 0);
+			Assert(nnullkeys[keyattno - 1] == 0);
 
 			tmp = index_getprocinfo(idxRel, keyattno,
 									BRIN_PROCNUM_CONSISTENT);
@@ -456,17 +496,11 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		/* Add key to the proper per-attribute array. */
 		if (key->sk_flags & SK_ISNULL)
 		{
-			if (!nullkeys[keyattno - 1])
-				nullkeys[keyattno - 1] = palloc0(sizeof(ScanKey) * scan->numberOfKeys);
-
 			nullkeys[keyattno - 1][nnullkeys[keyattno - 1]] = key;
 			nnullkeys[keyattno - 1]++;
 		}
 		else
 		{
-			if (!keys[keyattno - 1])
-				keys[keyattno - 1] = palloc0(sizeof(ScanKey) * scan->numberOfKeys);
-
 			keys[keyattno - 1][nkeys[keyattno - 1]] = key;
 			nkeys[keyattno - 1]++;
 		}
