@@ -508,6 +508,11 @@ typedef int (*qsort_arg_comparator) (const void *a, const void *b, void *arg);
 extern void qsort_arg(void *base, size_t nel, size_t elsize,
 					  qsort_arg_comparator cmp, void *arg);
 
+extern void *bsearch_arg(const void *key, const void *base,
+						 size_t nmemb, size_t size,
+						 int (*compar) (const void *, const void *, void *),
+						 void *arg);
+
 /* port/chklocale.c */
 extern int	pg_get_encoding_from_locale(const char *ctype, bool write_message);
 

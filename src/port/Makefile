@@ -40,6 +40,7 @@ LIBS += $(PTHREAD_LIBS)
 OBJS = \
 	$(LIBOBJS) \
 	$(PG_CRC32C_OBJS) \
+	bsearch_arg.o \
 	chklocale.o \
 	erand48.o \
 	inet_net_ntop.o \

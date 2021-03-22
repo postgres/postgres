@@ -85,11 +85,6 @@ extern int	multi_sort_compare_dims(int start, int end, const SortItem *a,
 extern int	compare_scalars_simple(const void *a, const void *b, void *arg);
 extern int	compare_datums_simple(Datum a, Datum b, SortSupport ssup);
 
-extern void *bsearch_arg(const void *key, const void *base,
-						 size_t nmemb, size_t size,
-						 int (*compar) (const void *, const void *, void *),
-						 void *arg);
-
 extern AttrNumber *build_attnums_array(Bitmapset *attrs, int *numattrs);
 
 extern SortItem *build_sorted_items(int numrows, int *nitems, HeapTuple *rows,
