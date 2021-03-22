@@ -17863,9 +17863,13 @@ GetAttributeCompression(Form_pg_attribute att, char *compression)
 
 	/* fallback to default compression if it's not specified */
 	if (compression == NULL)
-		cmethod = GetDefaultToastCompression();
-	else
-		cmethod = CompressionNameToMethod(compression);
+		return GetDefaultToastCompression();
+
+	cmethod = CompressionNameToMethod(compression);
+	if (!CompressionMethodIsValid(cmethod))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("invalid compression method \"%s\"", compression)));
 
 	return cmethod;
 }

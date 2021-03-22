@@ -137,4 +137,9 @@ SELECT length(f1) FROM cmmove1;
 SELECT length(f1) FROM cmmove2;
 SELECT length(f1) FROM cmmove3;
 
+CREATE TABLE badcompresstbl (a text COMPRESSION I_Do_Not_Exist_Compression); -- fails
+CREATE TABLE badcompresstbl (a text);
+ALTER TABLE badcompresstbl ALTER a SET COMPRESSION I_Do_Not_Exist_Compression; -- fails
+DROP TABLE badcompresstbl;
+
 \set HIDE_TOAST_COMPRESSION true

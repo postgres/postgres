@@ -340,4 +340,10 @@ SELECT length(f1) FROM cmmove3;
   10000
 (1 row)
 
+CREATE TABLE badcompresstbl (a text COMPRESSION I_Do_Not_Exist_Compression); -- fails
+ERROR:  invalid compression method "i_do_not_exist_compression"
+CREATE TABLE badcompresstbl (a text);
+ALTER TABLE badcompresstbl ALTER a SET COMPRESSION I_Do_Not_Exist_Compression; -- fails
+ERROR:  invalid compression method "i_do_not_exist_compression"
+DROP TABLE badcompresstbl;
 \set HIDE_TOAST_COMPRESSION true
