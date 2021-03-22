@@ -8,11 +8,9 @@ use File::Compare;
 
 # Initialize and start primary node with WAL archiving
 my $node_primary = get_new_node('primary');
-$node_primary->init(has_archiving => 1);
+$node_primary->init(has_archiving => 1, allows_streaming => 1);
 $node_primary->append_conf(
 	'postgresql.conf', qq{
-max_wal_senders = 10
-wal_level = 'replica'
 max_prepared_transactions = 10});
 $node_primary->start;
 
@@ -30,7 +28,6 @@ $node_pitr->init_from_backup(
 	has_restoring => 1);
 $node_pitr->append_conf(
 	'postgresql.conf', qq{
-max_prepared_transactions = 10
 recovery_target_name = 'rp'
 recovery_target_action = 'promote'});
 
