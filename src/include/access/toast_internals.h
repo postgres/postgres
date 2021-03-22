@@ -31,6 +31,8 @@ typedef struct toast_compress_header
  * Utilities for manipulation of header information for compressed
  * toast entries.
  */
+#define TOAST_COMPRESS_EXTSIZE(ptr) \
+	(((toast_compress_header *) (ptr))->tcinfo & VARLENA_EXTSIZE_MASK)
 #define TOAST_COMPRESS_METHOD(ptr) \
 	(((toast_compress_header *) (ptr))->tcinfo >> VARLENA_EXTSIZE_BITS)
 

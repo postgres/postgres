@@ -507,6 +507,17 @@ toast_decompress_datum_slice(struct varlena *attr, int32 slicelength)
 	Assert(VARATT_IS_COMPRESSED(attr));
 
 	/*
+	 * Some callers may pass a slicelength that's more than the actual
+	 * decompressed size.  If so, just decompress normally.  This avoids
+	 * possibly allocating a larger-than-necessary result object, and may be
+	 * faster and/or more robust as well.  Notably, some versions of liblz4
+	 * have been seen to give wrong results if passed an output size that is
+	 * more than the data's true decompressed size.
+	 */
+	if ((uint32) slicelength >= TOAST_COMPRESS_EXTSIZE(attr))
+		return toast_decompress_datum(attr);
+
+	/*
 	 * Fetch the compression method id stored in the compression header and
 	 * decompress the data slice using the appropriate decompression routine.
 	 */
