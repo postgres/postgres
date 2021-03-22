@@ -364,9 +364,6 @@
 /* Define to 1 if you have the <lz4.h> header file. */
 #undef HAVE_LZ4_H
 
-/* Define to 1 if you have the <lz4/lz4.h> header file. */
-#undef HAVE_LZ4_LZ4_H
-
 /* Define to 1 if you have the <mbarrier.h> header file. */
 #undef HAVE_MBARRIER_H
 

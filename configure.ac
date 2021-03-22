@@ -1440,8 +1440,7 @@ Use --without-zlib to disable zlib support.])])
 fi
 
 if test "$with_lz4" = yes; then
-  AC_CHECK_HEADERS(lz4/lz4.h, [],
-       [AC_CHECK_HEADERS(lz4.h, [], [AC_MSG_ERROR([lz4.h header file is required for LZ4])])])
+  AC_CHECK_HEADERS(lz4.h, [], [AC_MSG_ERROR([lz4.h header file is required for LZ4])])
 fi
 
 if test "$with_gssapi" = yes ; then

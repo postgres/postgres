@@ -313,7 +313,6 @@ sub GenerateFiles
 		HAVE_LONG_INT_64            => undef,
 		HAVE_LONG_LONG_INT_64       => 1,
 		HAVE_LZ4_H                  => undef,
-		HAVE_LZ4_LZ4_H              => undef,
 		HAVE_MBARRIER_H             => undef,
 		HAVE_MBSTOWCS_L             => 1,
 		HAVE_MEMORY_H               => 1,
