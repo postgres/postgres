@@ -48,6 +48,7 @@ brin_minmax_opcinfo(PG_FUNCTION_ARGS)
 	result = palloc0(MAXALIGN(SizeofBrinOpcInfo(2)) +
 					 sizeof(MinmaxOpaque));
 	result->oi_nstored = 2;
+	result->oi_regular_nulls = true;
 	result->oi_opaque = (MinmaxOpaque *)
 		MAXALIGN((char *) result + SizeofBrinOpcInfo(2));
 	result->oi_typcache[0] = result->oi_typcache[1] =
@@ -69,7 +70,7 @@ brin_minmax_add_value(PG_FUNCTION_ARGS)
 	BrinDesc   *bdesc = (BrinDesc *) PG_GETARG_POINTER(0);
 	BrinValues *column = (BrinValues *) PG_GETARG_POINTER(1);
 	Datum		newval = PG_GETARG_DATUM(2);
-	bool		isnull = PG_GETARG_DATUM(3);
+	bool		isnull PG_USED_FOR_ASSERTS_ONLY = PG_GETARG_DATUM(3);
 	Oid			colloid = PG_GET_COLLATION();
 	FmgrInfo   *cmpFn;
 	Datum		compar;
@@ -77,18 +78,7 @@ brin_minmax_add_value(PG_FUNCTION_ARGS)
 	Form_pg_attribute attr;
 	AttrNumber	attno;
 
-	/*
-	 * If the new value is null, we record that we saw it if it's the first
-	 * one; otherwise, there's nothing to do.
-	 */
-	if (isnull)
-	{
-		if (column->bv_hasnulls)
-			PG_RETURN_BOOL(false);
-
-		column->bv_hasnulls = true;
-		PG_RETURN_BOOL(true);
-	}
+	Assert(!isnull);
 
 	attno = column->bv_attno;
 	attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
@@ -156,52 +146,9 @@ brin_minmax_consistent(PG_FUNCTION_ARGS)
 	int			nkeys = PG_GETARG_INT32(3);
 	Oid			colloid = PG_GET_COLLATION();
 	int			keyno;
-	bool		has_regular_keys = false;
 
-	/* handle IS NULL/IS NOT NULL tests */
-	for (keyno = 0; keyno < nkeys; keyno++)
-	{
-		ScanKey		key = keys[keyno];
-
-		Assert(key->sk_attno == column->bv_attno);
-
-		/* Skip regular scan keys (and remember that we have some). */
-		if ((!key->sk_flags & SK_ISNULL))
-		{
-			has_regular_keys = true;
-			continue;
-		}
-
-		if (key->sk_flags & SK_SEARCHNULL)
-		{
-			if (column->bv_allnulls || column->bv_hasnulls)
-				continue;		/* this key is fine, continue */
-
-			PG_RETURN_BOOL(false);
-		}
-
-		/*
-		 * For IS NOT NULL, we can only skip ranges that are known to have
-		 * only nulls.
-		 */
-		if (key->sk_flags & SK_SEARCHNOTNULL)
-		{
-			if (column->bv_allnulls)
-				PG_RETURN_BOOL(false);
-
-			continue;
-		}
-
-		/*
-		 * Neither IS NULL nor IS NOT NULL was used; assume all indexable
-		 * operators are strict and return false.
-		 */
-		PG_RETURN_BOOL(false);
-	}
-
-	/* If there are no regular keys, the page range is considered consistent. */
-	if (!has_regular_keys)
-		PG_RETURN_BOOL(true);
+	/* make sure we got some scan keys */
+	Assert((nkeys > 0) && (keys != NULL));
 
 	/*
 	 * If is all nulls, it cannot possibly be consistent (at this point we
@@ -215,9 +162,8 @@ brin_minmax_consistent(PG_FUNCTION_ARGS)
 	{
 		ScanKey		key = keys[keyno];
 
-		/* ignore IS NULL/IS NOT NULL tests handled above */
-		if (key->sk_flags & SK_ISNULL)
-			continue;
+		/* NULL keys are handled and filtered-out in bringetbitmap */
+		Assert(!(key->sk_flags & SK_ISNULL));
 
 		/*
 		 * When there are multiple scan keys, failure to meet the criteria for
@@ -307,33 +253,10 @@ brin_minmax_union(PG_FUNCTION_ARGS)
 	bool		needsadj;
 
 	Assert(col_a->bv_attno == col_b->bv_attno);
-
-	/* Adjust "hasnulls" */
-	if (!col_a->bv_hasnulls && col_b->bv_hasnulls)
-		col_a->bv_hasnulls = true;
-
-	/* If there are no values in B, there's nothing left to do */
-	if (col_b->bv_allnulls)
-		PG_RETURN_VOID();
+	Assert(!col_a->bv_allnulls && !col_b->bv_allnulls);
 
 	attno = col_a->bv_attno;
 	attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
-
-	/*
-	 * Adjust "allnulls".  If A doesn't have values, just copy the values from
-	 * B into A, and we're done.  We cannot run the operators in this case,
-	 * because values in A might contain garbage.  Note we already established
-	 * that B contains values.
-	 */
-	if (col_a->bv_allnulls)
-	{
-		col_a->bv_allnulls = false;
-		col_a->bv_values[0] = datumCopy(col_b->bv_values[0],
-										attr->attbyval, attr->attlen);
-		col_a->bv_values[1] = datumCopy(col_b->bv_values[1],
-										attr->attbyval, attr->attlen);
-		PG_RETURN_VOID();
-	}
 
 	/* Adjust minimum, if B's min is less than A's min */
 	finfo = minmax_get_strategy_procinfo(bdesc, attno, attr->atttypid,

@@ -27,6 +27,9 @@ typedef struct BrinOpcInfo
 	/* Number of columns stored in an index column of this opclass */
 	uint16		oi_nstored;
 
+	/* Regular processing of NULLs in BrinValues? */
+	bool		oi_regular_nulls;
+
 	/* Opaque pointer for the opclass' private use */
 	void	   *oi_opaque;
 
