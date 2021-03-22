@@ -8108,6 +8108,28 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-default-toast-compression" xreflabel="default_toast_compression">
+      <term><varname>default_toast_compression</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>default_toast_compression</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This variable sets the default
+        <link linkend="storage-toast">TOAST</link>
+        compression method for columns of newly-created tables. The
+        <command>CREATE TABLE</command> statement can override this default
+        by specifying the <literal>COMPRESSION</literal> column option.
+
+        The supported compression methods are <literal>pglz</literal> and
+        (if configured at the time <productname>PostgreSQL</productname> was
+        built) <literal>lz4</literal>.
+        The default is <literal>pglz</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-default-tablespace" xreflabel="default_tablespace">
       <term><varname>default_tablespace</varname> (<type>string</type>)
       <indexterm>
