@@ -2953,7 +2953,16 @@ evaluateSleep(CState *st, int argc, char **argv, int *usecs)
 			pg_log_error("%s: undefined variable \"%s\"", argv[0], argv[1] + 1);
 			return false;
 		}
+
 		usec = atoi(var);
+
+		/* Raise an error if the value of a variable is not a number */
+		if (usec == 0 && !isdigit((unsigned char) *var))
+		{
+			pg_log_error("%s: invalid sleep time \"%s\" for variable \"%s\"",
+						 argv[0], var, argv[1] + 1);
+			return false;
+		}
 	}
 	else
 		usec = atoi(argv[1]);
@@ -4788,17 +4797,41 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 		 * will be parsed with atoi, which ignores trailing non-digit
 		 * characters.
 		 */
-		if (my_command->argc == 2 && my_command->argv[1][0] != ':')
+		if (my_command->argv[1][0] != ':')
 		{
 			char	   *c = my_command->argv[1];
+			bool		have_digit = false;
 
-			while (isdigit((unsigned char) *c))
+			/* Skip sign */
+			if (*c == '+' || *c == '-')
 				c++;
+
+			/* Require at least one digit */
+			if (*c && isdigit((unsigned char) *c))
+				have_digit = true;
+
+			/* Eat all digits */
+			while (*c && isdigit((unsigned char) *c))
+				c++;
+
 			if (*c)
 			{
-				my_command->argv[2] = c;
-				offsets[2] = offsets[1] + (c - my_command->argv[1]);
-				my_command->argc = 3;
+				if (my_command->argc == 2 && have_digit)
+				{
+					my_command->argv[2] = c;
+					offsets[2] = offsets[1] + (c - my_command->argv[1]);
+					my_command->argc = 3;
+				}
+				else
+				{
+					/*
+					 * Raise an error if argument starts with non-digit
+					 * character (after sign).
+					 */
+					syntax_error(source, lineno, my_command->first_line, my_command->argv[0],
+								 "invalid sleep time, must be an integer",
+								 my_command->argv[1], offsets[1] - start_offset);
+				}
 			}
 		}
 
