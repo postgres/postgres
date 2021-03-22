@@ -175,5 +175,5 @@ foreach my $i (0 .. 1800)
 }
 $logfile = slurp_file($node_standby->logfile());
 ok( $logfile =~
-	  qr/FATAL:  recovery ended before configured recovery target was reached/,
+	  qr/FATAL: .* recovery ended before configured recovery target was reached/,
 	'recovery end before target reached is a fatal error');
