@@ -153,7 +153,7 @@ statext_ndistinct_load(Oid mvoid)
 							Anum_pg_statistic_ext_data_stxdndistinct, &isnull);
 	if (isnull)
 		elog(ERROR,
-			 "requested statistic kind \"%c\" is not yet built for statistics object %u",
+			 "requested statistics kind \"%c\" is not yet built for statistics object %u",
 			 STATS_EXT_NDISTINCT, mvoid);
 
 	result = statext_ndistinct_deserialize(DatumGetByteaPP(ndist));

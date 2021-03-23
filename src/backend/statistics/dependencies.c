@@ -639,7 +639,7 @@ statext_dependencies_load(Oid mvoid)
 						   Anum_pg_statistic_ext_data_stxddependencies, &isnull);
 	if (isnull)
 		elog(ERROR,
-			 "requested statistic kind \"%c\" is not yet built for statistics object %u",
+			 "requested statistics kind \"%c\" is not yet built for statistics object %u",
 			 STATS_EXT_DEPENDENCIES, mvoid);
 
 	result = statext_dependencies_deserialize(DatumGetByteaPP(deps));
