@@ -662,7 +662,7 @@ heapam_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 			 * WAL log creation if the relation is persistent, or this is the
 			 * init fork of an unlogged relation.
 			 */
-			if (rel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT ||
+			if (RelationIsPermanent(rel) ||
 				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
 				 forkNum == INIT_FORKNUM))
 				log_smgrcreate(newrnode, forkNum);

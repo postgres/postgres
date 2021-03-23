@@ -126,8 +126,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	relation = table_open(relationObjectId, NoLock);
 
 	/* Temporary and unlogged relations are inaccessible during recovery. */
-	if (relation->rd_rel->relpersistence != RELPERSISTENCE_PERMANENT &&
-		RecoveryInProgress())
+	if (!RelationIsPermanent(relation) && RecoveryInProgress())
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot access temporary or unlogged relations during recovery")));

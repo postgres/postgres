@@ -37,8 +37,7 @@
  */
 #define RelationAllowsEarlyPruning(rel) \
 ( \
-	 (rel)->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT	\
-  && !IsCatalogRelation(rel) \
+	 RelationIsPermanent(rel) && !IsCatalogRelation(rel) \
   && !RelationIsAccessibleInLogicalDecoding(rel) \
 )
 

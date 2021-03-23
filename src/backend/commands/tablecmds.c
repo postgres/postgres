@@ -8650,13 +8650,13 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	switch (rel->rd_rel->relpersistence)
 	{
 		case RELPERSISTENCE_PERMANENT:
-			if (pkrel->rd_rel->relpersistence != RELPERSISTENCE_PERMANENT)
+			if (!RelationIsPermanent(pkrel))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("constraints on permanent tables may reference only permanent tables")));
 			break;
 		case RELPERSISTENCE_UNLOGGED:
-			if (pkrel->rd_rel->relpersistence != RELPERSISTENCE_PERMANENT
+			if (!RelationIsPermanent(pkrel)
 				&& pkrel->rd_rel->relpersistence != RELPERSISTENCE_UNLOGGED)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
@@ -13712,7 +13712,7 @@ index_copy_data(Relation rel, RelFileNode newrnode)
 			 * WAL log creation if the relation is persistent, or this is the
 			 * init fork of an unlogged relation.
 			 */
-			if (rel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT ||
+			if (RelationIsPermanent(rel) ||
 				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
 				 forkNum == INIT_FORKNUM))
 				log_smgrcreate(&newrnode, forkNum);
@@ -15230,7 +15230,7 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 
 			if (toLogged)
 			{
-				if (foreignrel->rd_rel->relpersistence != RELPERSISTENCE_PERMANENT)
+				if (!RelationIsPermanent(foreignrel))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 							 errmsg("could not change table \"%s\" to logged because it references unlogged table \"%s\"",
@@ -15240,7 +15240,7 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 			}
 			else
 			{
-				if (foreignrel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT)
+				if (RelationIsPermanent(foreignrel))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 							 errmsg("could not change table \"%s\" to unlogged because it references logged table \"%s\"",

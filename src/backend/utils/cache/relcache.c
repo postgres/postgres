@@ -2990,7 +2990,7 @@ static void
 AssertPendingSyncConsistency(Relation relation)
 {
 	bool		relcache_verdict =
-	relation->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT &&
+	RelationIsPermanent(relation) &&
 	((relation->rd_createSubid != InvalidSubTransactionId &&
 	  RELKIND_HAS_STORAGE(relation->rd_rel->relkind)) ||
 	 relation->rd_firstRelfilenodeSubid != InvalidSubTransactionId);
