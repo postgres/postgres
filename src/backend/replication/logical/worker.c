@@ -2740,14 +2740,14 @@ stream_cleanup_files(Oid subid, TransactionId xid)
 {
 	char		path[MAXPGPATH];
 	StreamXidHash *ent;
+	bool		found = false;
 
-	/* Remove the xid entry from the stream xid hash */
+	/* By this time we must have created the transaction entry */
 	ent = (StreamXidHash *) hash_search(xidhash,
 										(void *) &xid,
-										HASH_REMOVE,
-										NULL);
-	/* By this time we must have created the transaction entry */
-	Assert(ent != NULL);
+										HASH_FIND,
+										&found);
+	Assert(found);
 
 	/* Delete the change file and release the stream fileset memory */
 	changes_filename(path, subid, xid);
@@ -2763,6 +2763,9 @@ stream_cleanup_files(Oid subid, TransactionId xid)
 		pfree(ent->subxact_fileset);
 		ent->subxact_fileset = NULL;
 	}
+
+	/* Remove the xid entry from the stream xid hash */
+	hash_search(xidhash, (void *) &xid, HASH_REMOVE, NULL);
 }
 
 /*
