@@ -1172,11 +1172,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for SSL while attempting connection.</entry>
      </row>
      <row>
-      <entry><literal>WalReceiverWaitStart</literal></entry>
-      <entry>Waiting for startup process to send initial data for streaming
-       replication.</entry>
-     </row>
-     <row>
       <entry><literal>WalSenderWaitForWAL</literal></entry>
       <entry>Waiting for WAL to be flushed in WAL sender process.</entry>
      </row>
@@ -1770,6 +1765,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>WalrcvExit</literal></entry>
       <entry>Waiting for the walreceiver to exit.</entry>
+     </row>
+     <row>
+      <entry><literal>WalReceiverWaitStart</literal></entry>
+      <entry>Waiting for startup process to send initial data for streaming
+       replication.</entry>
      </row>
      <row>
       <entry><literal>XactGroupUpdate</literal></entry>
