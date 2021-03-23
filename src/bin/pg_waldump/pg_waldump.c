@@ -509,6 +509,15 @@ XLogDumpCountRecord(XLogDumpConfig *config, XLogDumpStats *stats,
 
 	recid = XLogRecGetInfo(record) >> 4;
 
+	/*
+	 * XACT records need to be handled differently. Those records use the
+	 * first bit of those four bits for an optional flag variable and the
+	 * following three bits for the opcode. We filter opcode out of xl_info
+	 * and use it as the identifier of the record.
+	 */
+	if (rmid == RM_XACT_ID)
+		recid &= 0x07;
+
 	stats->record_stats[rmid][recid].count++;
 	stats->record_stats[rmid][recid].rec_len += rec_len;
 	stats->record_stats[rmid][recid].fpi_len += fpi_len;
