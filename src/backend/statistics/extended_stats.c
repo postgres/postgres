@@ -64,7 +64,7 @@ typedef struct StatExtEntry
 	char	   *schema;			/* statistics object's schema */
 	char	   *name;			/* statistics object's name */
 	Bitmapset  *columns;		/* attribute numbers covered by the object */
-	List	   *types;			/* 'char' list of enabled statistic kinds */
+	List	   *types;			/* 'char' list of enabled statistics kinds */
 	int			stattarget;		/* statistics target (-1 for default) */
 } StatExtEntry;
 
