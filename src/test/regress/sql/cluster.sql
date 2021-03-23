@@ -196,6 +196,12 @@ drop table clstr_temp;
 
 RESET SESSION AUTHORIZATION;
 
+-- check clustering an empty table
+DROP TABLE clustertest;
+CREATE TABLE clustertest (f1 int PRIMARY KEY);
+CLUSTER clustertest USING clustertest_pkey;
+CLUSTER clustertest;
+
 -- Check that partitioned tables cannot be clustered
 CREATE TABLE clstrpart (a int) PARTITION BY RANGE (a);
 CREATE INDEX clstrpart_idx ON clstrpart (a);
