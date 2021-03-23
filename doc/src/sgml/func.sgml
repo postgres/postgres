@@ -4013,6 +4013,28 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>bit_count</primary>
+        </indexterm>
+        <indexterm>
+         <primary>popcount</primary>
+         <see>bit_count</see>
+        </indexterm>
+        <function>bit_count</function> ( <parameter>bytes</parameter> <type>bytea</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the number of bits set in the binary string (also known as
+        <quote>popcount</quote>).
+       </para>
+       <para>
+        <literal>bit_count('\x1234567890'::bytea)</literal>
+        <returnvalue>31</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>btrim</primary>
         </indexterm>
         <function>btrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
@@ -4714,6 +4736,24 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
      </thead>
 
      <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_count</primary>
+        </indexterm>
+        <function>bit_count</function> ( <type>bit</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the number of bits set in the bit string (also known as
+        <quote>popcount</quote>).
+       </para>
+       <para>
+        <literal>bit_count(B'10111')</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
+
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>

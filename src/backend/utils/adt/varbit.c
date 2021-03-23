@@ -36,6 +36,7 @@
 #include "libpq/pqformat.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/supportnodes.h"
+#include "port/pg_bitutils.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/varbit.h"
@@ -1199,6 +1200,19 @@ bit_overlay(VarBit *t1, VarBit *t2, int sp, int sl)
 	result = bit_catenate(result, s2);
 
 	return result;
+}
+
+/*
+ * bit_count
+ *
+ * Returns the number of bits set in a bit string.
+ */
+Datum
+bit_bit_count(PG_FUNCTION_ARGS)
+{
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+
+	PG_RETURN_INT64(pg_popcount((char *) VARBITS(arg), VARBITBYTES(arg)));
 }
 
 /*

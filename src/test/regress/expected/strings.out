@@ -2227,3 +2227,9 @@ SELECT encode(overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 5 
  Th\000o\x02\x03
 (1 row)
 
+SELECT bit_count('\x1234567890'::bytea);
+ bit_count 
+-----------
+        31
+(1 row)
+

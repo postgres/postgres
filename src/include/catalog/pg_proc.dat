@@ -1446,6 +1446,9 @@
 { oid => '752', descr => 'substitute portion of string',
   proname => 'overlay', prorettype => 'bytea',
   proargtypes => 'bytea bytea int4', prosrc => 'byteaoverlay_no_len' },
+{ oid => '8436', descr => 'number of set bits',
+  proname => 'bit_count', prorettype => 'int8', proargtypes => 'bytea',
+  prosrc => 'bytea_bit_count'},
 
 { oid => '725',
   proname => 'dist_pl', prorettype => 'float8', proargtypes => 'point line',
@@ -3876,6 +3879,9 @@
 { oid => '3033', descr => 'set bit',
   proname => 'set_bit', prorettype => 'bit', proargtypes => 'bit int4 int4',
   prosrc => 'bitsetbit' },
+{ oid => '8435', descr => 'number of set bits',
+  proname => 'bit_count', prorettype => 'int8', proargtypes => 'bit',
+  prosrc => 'bit_bit_count'},
 
 # for macaddr type support
 { oid => '436', descr => 'I/O',

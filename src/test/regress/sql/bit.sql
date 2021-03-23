@@ -215,6 +215,10 @@ SELECT overlay(B'0101011100' placing '101' from 6);
 SELECT overlay(B'0101011100' placing '001' from 11);
 SELECT overlay(B'0101011100' placing '001' from 20);
 
+-- bit_count
+SELECT bit_count(B'0101011100'::bit(10));
+SELECT bit_count(B'1111111111'::bit(10));
+
 -- This table is intentionally left around to exercise pg_dump/pg_upgrade
 CREATE TABLE bit_defaults(
   b1 bit(4) DEFAULT '1001',
