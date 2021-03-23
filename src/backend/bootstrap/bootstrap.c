@@ -934,6 +934,29 @@ gettype(char *type)
 				return app->am_oid;
 			}
 		}
+
+		/*
+		 * The type wasn't known; reload the pg_type contents and check again
+		 * to handle composite types, added since last populating the list.
+		 */
+
+		list_free_deep(Typ);
+		Typ = NIL;
+		populate_typ_list();
+
+		/*
+		 * Calling gettype would result in infinite recursion for types missing
+		 * in pg_type, so just repeat the lookup.
+		 */
+		foreach (lc, Typ)
+		{
+			struct typmap *app = lfirst(lc);
+			if (strncmp(NameStr(app->am_typ.typname), type, NAMEDATALEN) == 0)
+			{
+				Ap = app;
+				return app->am_oid;
+			}
+		}
 	}
 	else
 	{
