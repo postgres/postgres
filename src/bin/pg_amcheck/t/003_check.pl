@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 60;
+use Test::More tests => 63;
 
 my ($node, $port, %corrupt_page, %remove_relation);
 
@@ -117,6 +117,7 @@ sub perform_all_corruptions()
 # Test set-up
 $node = get_new_node('test');
 $node->init;
+$node->append_conf('postgresql.conf', 'autovacuum=off');
 $node->start;
 $port = $node->port;
 
@@ -308,11 +309,6 @@ plan_to_remove_relation_file('db2', 's1.t1_btree');
 # Leave 'db3' uncorrupted
 #
 
-# Perform the corruptions we planned above using only a single database restart.
-#
-perform_all_corruptions();
-
-
 # Standard first arguments to TestLib functions
 my @cmd = ('pg_amcheck', '--quiet', '-p', $port);
 
@@ -321,6 +317,22 @@ my $no_output_re = qr/^$/;
 my $line_pointer_corruption_re = qr/line pointer/;
 my $missing_file_re = qr/could not open file ".*": No such file or directory/;
 my $index_missing_relation_fork_re = qr/index ".*" lacks a main relation fork/;
+
+# We have created test databases with tables populated with data, but have not
+# yet corrupted anything.  As such, we expect no corruption and verify that
+# none is reported
+#
+$node->command_checks_all(
+	[ @cmd, '-d', 'db1', '-d', 'db2', '-d', 'db3' ],
+	0,
+	[ $no_output_re ],
+	[ $no_output_re ],
+	'pg_amcheck prior to corruption');
+
+# Perform the corruptions we planned above using only a single database restart.
+#
+perform_all_corruptions();
+
 
 # Checking databases with amcheck installed and corrupt relations, pg_amcheck
 # command itself should return exit status = 2, because tables and indexes are
