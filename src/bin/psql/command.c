@@ -3004,6 +3004,25 @@ do_connect(enum trivalue reuse_previous_specification,
 						if (strcmp(replci->keyword, "password") == 0)
 							have_password = true;
 					}
+					else if (!reuse_previous)
+					{
+						/*
+						 * When we have a connstring and are not re-using
+						 * parameters, swap *all* entries, even those not set
+						 * by the connstring.  This avoids absorbing
+						 * environment-dependent defaults from the result of
+						 * PQconndefaults().  We don't want to do that because
+						 * they'd override service-file entries if the
+						 * connstring specifies a service parameter, whereas
+						 * the priority should be the other way around.  libpq
+						 * can certainly recompute any defaults we don't pass
+						 * here.  (In this situation, it's a bit wasteful to
+						 * have called PQconndefaults() at all, but not doing
+						 * so would require yet another major code path here.)
+						 */
+						replci->val = ci->val;
+						ci->val = NULL;
+					}
 				}
 				Assert(ci->keyword == NULL && replci->keyword == NULL);
 
