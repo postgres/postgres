@@ -1132,16 +1132,6 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"enable_parallel_insert", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Enables the planner's use of parallel plans for INSERT commands."),
-			NULL,
-			GUC_EXPLAIN
-		},
-		&enable_parallel_insert,
-		true,
-		NULL, NULL, NULL
-	},
-	{
 		/* Not for general use --- used by SET SESSION AUTHORIZATION */
 		{"is_superuser", PGC_INTERNAL, UNGROUPED,
 			gettext_noop("Shows whether the current user is a superuser."),

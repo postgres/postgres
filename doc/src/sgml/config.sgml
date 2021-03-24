@@ -5072,29 +5072,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-enable-parallel-insert" xreflabel="enable_parallel_insert">
-      <term><varname>enable_parallel_insert</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>enable_parallel_insert</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Enables or disables the query planner's use of parallel plans for
-        <command>INSERT</command> commands. The default is <literal>on</literal>.
-        When enabled, the planner performs additional parallel-safety checks
-        on the target table's attributes and indexes, in order to determine
-        if it's safe to use a parallel plan for <command>INSERT</command>. In
-        cases such as when the target table has a large number of partitions,
-        and particularly also when that table uses something parallel-unsafe
-        that prevents parallelism, the overhead of these checks may become
-        prohibitively high. To address this potential overhead in these cases,
-        this option can be used to disable the use of parallel plans for
-        <command>INSERT</command>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      </variablelist>
      </sect2>
      <sect2 id="runtime-config-query-constants">

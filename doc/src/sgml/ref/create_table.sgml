@@ -1369,9 +1369,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     If a table parameter value is set and the
     equivalent <literal>toast.</literal> parameter is not, the TOAST table
     will use the table's parameter value.
-    These parameters, with the exception of
-    <literal>parallel_insert_enabled</literal>, are not supported on partitioned
-    tables, but may be specified for individual leaf partitions.
+    Specifying these parameters for partitioned tables is not supported,
+    but you may specify them for individual leaf partitions.
    </para>
 
    <variablelist>
@@ -1437,32 +1436,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       on the relation size.  The actual number of workers chosen by the planner
       or by utility statements that use parallel scans may be less, for example
       due to the setting of <xref linkend="guc-max-worker-processes"/>.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry id="reloption-parallel-insert-enabled" xreflabel="parallel_insert_enabled">
-    <term><literal>parallel_insert_enabled</literal> (<type>boolean</type>)
-     <indexterm>
-     <primary><varname>parallel_insert_enabled</varname> storage parameter</primary>
-    </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Enables or disables the query planner's use of parallel insert for
-      this table. When enabled (and provided that
-      <xref linkend="guc-enable-parallel-insert"/> is also <literal>true</literal>),
-      the planner performs additional parallel-safety checks on the table's
-      attributes and indexes, in order to determine if it's safe to use a
-      parallel plan for <command>INSERT</command>. The default is
-      <literal>true</literal>. In cases such as when the table has a large
-      number of partitions, and particularly also when that table uses a
-      parallel-unsafe feature that prevents parallelism, the overhead of these
-      checks may become prohibitively high. To address this potential overhead
-      in these cases, this option can be used to disable the use of parallel
-      insert for this table. Note that if the target table of the parallel
-      insert is partitioned, the <literal>parallel_insert_enabled</literal>
-      option values of the partitions are ignored.
      </para>
     </listitem>
    </varlistentry>

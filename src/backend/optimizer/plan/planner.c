@@ -305,7 +305,6 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	glob->resultRelations = NIL;
 	glob->appendRelations = NIL;
 	glob->relationOids = NIL;
-	glob->partitionOids = NIL;
 	glob->invalItems = NIL;
 	glob->paramExecTypes = NIL;
 	glob->lastPHId = 0;
@@ -317,16 +316,16 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	/*
 	 * Assess whether it's feasible to use parallel mode for this query. We
 	 * can't do this in a standalone backend, or if the command will try to
-	 * modify any data (except for Insert), or if this is a cursor operation,
-	 * or if GUCs are set to values that don't permit parallelism, or if
-	 * parallel-unsafe functions are present in the query tree.
+	 * modify any data, or if this is a cursor operation, or if GUCs are set
+	 * to values that don't permit parallelism, or if parallel-unsafe
+	 * functions are present in the query tree.
 	 *
-	 * (Note that we do allow CREATE TABLE AS, INSERT INTO...SELECT, SELECT
-	 * INTO, and CREATE MATERIALIZED VIEW to use parallel plans. However, as
-	 * of now, only the leader backend writes into a completely new table. In
-	 * the future, we can extend it to allow workers to write into the table.
-	 * However, to allow parallel updates and deletes, we have to solve other
-	 * problems, especially around combo CIDs.)
+	 * (Note that we do allow CREATE TABLE AS, SELECT INTO, and CREATE
+	 * MATERIALIZED VIEW to use parallel plans, but as of now, only the leader
+	 * backend writes into a completely new table.  In the future, we can
+	 * extend it to allow workers to write into the table.  However, to allow
+	 * parallel updates and deletes, we have to solve other problems,
+	 * especially around combo CIDs.)
 	 *
 	 * For now, we don't try to use parallel mode if we're running inside a
 	 * parallel worker.  We might eventually be able to relax this
@@ -335,14 +334,13 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	 */
 	if ((cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
 		IsUnderPostmaster &&
-		(parse->commandType == CMD_SELECT ||
-		 is_parallel_allowed_for_modify(parse)) &&
+		parse->commandType == CMD_SELECT &&
 		!parse->hasModifyingCTE &&
 		max_parallel_workers_per_gather > 0 &&
 		!IsParallelWorker())
 	{
 		/* all the cheap tests pass, so scan the query tree */
-		glob->maxParallelHazard = max_parallel_hazard(parse, glob);
+		glob->maxParallelHazard = max_parallel_hazard(parse);
 		glob->parallelModeOK = (glob->maxParallelHazard != PROPARALLEL_UNSAFE);
 	}
 	else
@@ -523,19 +521,6 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	result->rewindPlanIDs = glob->rewindPlanIDs;
 	result->rowMarks = glob->finalrowmarks;
 	result->relationOids = glob->relationOids;
-
-	/*
-	 * Register the Oids of parallel-safety-checked partitions as plan
-	 * dependencies. This is only really needed in the case of a parallel plan
-	 * so that if parallel-unsafe properties are subsequently defined on the
-	 * partitions, the cached parallel plan will be invalidated, and a
-	 * non-parallel plan will be generated.
-	 *
-	 * We also use this list to acquire locks on partitions before executing
-	 * cached plan. See AcquireExecutorLocks().
-	 */
-	if (glob->partitionOids != NIL && glob->parallelModeNeeded)
-		result->partitionOids = glob->partitionOids;
 	result->invalItems = glob->invalItems;
 	result->paramExecTypes = glob->paramExecTypes;
 	/* utilityStmt should be null, but we might as well copy it */

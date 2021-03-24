@@ -3748,11 +3748,11 @@
 
 # Generic referential integrity constraint triggers
 { oid => '1644', descr => 'referential integrity FOREIGN KEY ... REFERENCES',
-  proname => 'RI_FKey_check_ins', provolatile => 'v', proparallel => 'r',
-  prorettype => 'trigger', proargtypes => '', prosrc => 'RI_FKey_check_ins' },
+  proname => 'RI_FKey_check_ins', provolatile => 'v', prorettype => 'trigger',
+  proargtypes => '', prosrc => 'RI_FKey_check_ins' },
 { oid => '1645', descr => 'referential integrity FOREIGN KEY ... REFERENCES',
-  proname => 'RI_FKey_check_upd', provolatile => 'v', proparallel => 'r',
-  prorettype => 'trigger', proargtypes => '', prosrc => 'RI_FKey_check_upd' },
+  proname => 'RI_FKey_check_upd', provolatile => 'v', prorettype => 'trigger',
+  proargtypes => '', prosrc => 'RI_FKey_check_upd' },
 { oid => '1646', descr => 'referential integrity ON DELETE CASCADE',
   proname => 'RI_FKey_cascade_del', provolatile => 'v', prorettype => 'trigger',
   proargtypes => '', prosrc => 'RI_FKey_cascade_del' },

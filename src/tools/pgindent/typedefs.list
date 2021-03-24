@@ -1797,7 +1797,6 @@ PartitionSpec
 PartitionTupleRouting
 PartitionedRelPruneInfo
 PartitionedRelPruningData
-PartitionedTableRdOptions
 PartitionwiseAggregateType
 PasswordType
 Path

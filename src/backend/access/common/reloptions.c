@@ -168,15 +168,6 @@ static relopt_bool boolRelOpts[] =
 		},
 		true
 	},
-	{
-		{
-			"parallel_insert_enabled",
-			"Enables \"parallel insert\" feature for this table",
-			RELOPT_KIND_HEAP | RELOPT_KIND_PARTITIONED,
-			ShareUpdateExclusiveLock
-		},
-		true
-	},
 	/* list terminator */
 	{{NULL}}
 };
@@ -1868,9 +1859,7 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"vacuum_index_cleanup", RELOPT_TYPE_BOOL,
 		offsetof(StdRdOptions, vacuum_index_cleanup)},
 		{"vacuum_truncate", RELOPT_TYPE_BOOL,
-		offsetof(StdRdOptions, vacuum_truncate)},
-		{"parallel_insert_enabled", RELOPT_TYPE_BOOL,
-		offsetof(StdRdOptions, parallel_insert_enabled)}
+		offsetof(StdRdOptions, vacuum_truncate)}
 	};
 
 	return (bytea *) build_reloptions(reloptions, validate, kind,
@@ -1972,15 +1961,13 @@ build_local_reloptions(local_relopts *relopts, Datum options, bool validate)
 bytea *
 partitioned_table_reloptions(Datum reloptions, bool validate)
 {
-	static const relopt_parse_elt tab[] = {
-		{"parallel_insert_enabled", RELOPT_TYPE_BOOL,
-		offsetof(PartitionedTableRdOptions, parallel_insert_enabled)}
-	};
-
+	/*
+	 * There are no options for partitioned tables yet, but this is able to do
+	 * some validation.
+	 */
 	return (bytea *) build_reloptions(reloptions, validate,
 									  RELOPT_KIND_PARTITIONED,
-									  sizeof(PartitionedTableRdOptions),
-									  tab, lengthof(tab));
+									  0, NULL, 0);
 }
 
 /*
