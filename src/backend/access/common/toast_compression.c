@@ -23,8 +23,15 @@
 #include "fmgr.h"
 #include "utils/builtins.h"
 
-/* Compile-time default */
-char	   *default_toast_compression = DEFAULT_TOAST_COMPRESSION;
+/* GUC */
+int	   default_toast_compression = TOAST_PGLZ_COMPRESSION;
+
+#define NO_LZ4_SUPPORT() \
+	ereport(ERROR, \
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
+			 errmsg("unsupported LZ4 compression method"), \
+			 errdetail("This functionality requires the server to be built with lz4 support."), \
+			 errhint("You need to rebuild PostgreSQL using --with-lz4.")))
 
 /*
  * Compress a varlena using PGLZ.
@@ -271,46 +278,41 @@ toast_get_compression_id(struct varlena *attr)
 }
 
 /*
- * Validate a new value for the default_toast_compression GUC.
+ * CompressionNameToMethod - Get compression method from compression name
+ *
+ * Search in the available built-in methods.  If the compression not found
+ * in the built-in methods then return InvalidCompressionMethod.
  */
-bool
-check_default_toast_compression(char **newval, void **extra, GucSource source)
+char
+CompressionNameToMethod(const char *compression)
 {
-	if (**newval == '\0')
+	if (strcmp(compression, "pglz") == 0)
+		return TOAST_PGLZ_COMPRESSION;
+	else if (strcmp(compression, "lz4") == 0)
 	{
-		GUC_check_errdetail("%s cannot be empty.",
-							"default_toast_compression");
-		return false;
+#ifndef USE_LZ4
+		NO_LZ4_SUPPORT();
+#endif
+		return TOAST_LZ4_COMPRESSION;
 	}
 
-	if (strlen(*newval) >= NAMEDATALEN)
-	{
-		GUC_check_errdetail("%s is too long (maximum %d characters).",
-							"default_toast_compression", NAMEDATALEN - 1);
-		return false;
-	}
+	return InvalidCompressionMethod;
+}
 
-	if (!CompressionMethodIsValid(CompressionNameToMethod(*newval)))
+/*
+ * GetCompressionMethodName - Get compression method name
+ */
+const char *
+GetCompressionMethodName(char method)
+{
+	switch (method)
 	{
-		/*
-		 * When source == PGC_S_TEST, don't throw a hard error for a
-		 * nonexistent compression method, only a NOTICE. See comments in
-		 * guc.h.
-		 */
-		if (source == PGC_S_TEST)
-		{
-			ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("compression method \"%s\" does not exist",
-							*newval)));
-		}
-		else
-		{
-			GUC_check_errdetail("Compression method \"%s\" does not exist.",
-								*newval);
-			return false;
-		}
+		case TOAST_PGLZ_COMPRESSION:
+			return "pglz";
+		case TOAST_LZ4_COMPRESSION:
+			return "lz4";
+		default:
+			elog(ERROR, "invalid compression method %c", method);
+			return NULL;		/* keep compiler quiet */
 	}
-
-	return true;
 }

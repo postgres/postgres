@@ -227,14 +227,13 @@ DETAIL:  pglz versus lz4
 -- test default_toast_compression GUC
 SET default_toast_compression = '';
 ERROR:  invalid value for parameter "default_toast_compression": ""
-DETAIL:  default_toast_compression cannot be empty.
+HINT:  Available values: pglz.
 SET default_toast_compression = 'I do not exist compression';
 ERROR:  invalid value for parameter "default_toast_compression": "I do not exist compression"
-DETAIL:  Compression method "I do not exist compression" does not exist.
+HINT:  Available values: pglz.
 SET default_toast_compression = 'lz4';
-ERROR:  unsupported LZ4 compression method
-DETAIL:  This functionality requires the server to be built with lz4 support.
-HINT:  You need to rebuild PostgreSQL using --with-lz4.
+ERROR:  invalid value for parameter "default_toast_compression": "lz4"
+HINT:  Available values: pglz.
 DROP TABLE cmdata2;
 CREATE TABLE cmdata2 (f1 text);
 \d+ cmdata2

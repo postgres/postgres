@@ -509,6 +509,14 @@ static struct config_enum_entry shared_memory_options[] = {
 	{NULL, 0, false}
 };
 
+static struct config_enum_entry default_toast_compression_options[] = {
+	{"pglz", TOAST_PGLZ_COMPRESSION, false},
+#ifdef  USE_LZ4
+	{"lz4", TOAST_LZ4_COMPRESSION, false},
+#endif
+	{NULL, 0, false}
+};
+
 /*
  * Options for enum values stored in other modules
  */
@@ -3934,17 +3942,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"default_toast_compression", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the default compression for new columns."),
-			NULL,
-			GUC_IS_NAME
-		},
-		&default_toast_compression,
-		DEFAULT_TOAST_COMPRESSION,
-		check_default_toast_compression, NULL, NULL
-	},
-
-	{
 		{"default_tablespace", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the default tablespace to create tables and indexes in."),
 			gettext_noop("An empty string selects the database's default tablespace."),
@@ -4583,6 +4580,17 @@ static struct config_enum ConfigureNamesEnum[] =
 		&constraint_exclusion,
 		CONSTRAINT_EXCLUSION_PARTITION, constraint_exclusion_options,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"default_toast_compression", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the default compression for new columns."),
+			NULL,
+			GUC_IS_NAME
+		},
+		&default_toast_compression,
+		TOAST_PGLZ_COMPRESSION,
+		default_toast_compression_options, NULL, NULL
 	},
 
 	{
