@@ -224,7 +224,7 @@ ShutdownWalRcv(void)
 	ConditionVariablePrepareToSleep(&walrcv->walRcvStoppedCV);
 	while (WalRcvRunning())
 		ConditionVariableSleep(&walrcv->walRcvStoppedCV,
-							   WAIT_EVENT_WALRCV_EXIT);
+							   WAIT_EVENT_WAL_RECEIVER_EXIT);
 	ConditionVariableCancelSleep();
 }
 

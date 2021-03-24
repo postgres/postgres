@@ -4121,8 +4121,8 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_SYNC_REP:
 			event_name = "SyncRep";
 			break;
-		case WAIT_EVENT_WALRCV_EXIT:
-			event_name = "WalrcvExit";
+		case WAIT_EVENT_WAL_RECEIVER_EXIT:
+			event_name = "WalReceiverExit";
 			break;
 		case WAIT_EVENT_WAL_RECEIVER_WAIT_START:
 			event_name = "WalReceiverWaitStart";
