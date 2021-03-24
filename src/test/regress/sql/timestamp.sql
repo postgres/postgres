@@ -166,6 +166,68 @@ SELECT d1 - timestamp without time zone '1997-01-02' AS diff
 
 SELECT date_trunc( 'week', timestamp '2004-02-29 15:44:17.71393' ) AS week_trunc;
 
+-- verify date_bin behaves the same as date_trunc for relevant intervals
+
+-- case 1: AD dates, origin < input
+SELECT
+  str,
+  interval,
+  date_trunc(str, ts) = date_bin(interval::interval, ts, timestamp '2001-01-01') AS equal
+FROM (
+  VALUES
+  ('week', '7 d'),
+  ('day', '1 d'),
+  ('hour', '1 h'),
+  ('minute', '1 m'),
+  ('second', '1 s'),
+  ('millisecond', '1 ms'),
+  ('microsecond', '1 us')
+) intervals (str, interval),
+(VALUES (timestamp '2020-02-29 15:44:17.71393')) ts (ts);
+
+-- case 2: BC dates, origin < input
+SELECT
+  str,
+  interval,
+  date_trunc(str, ts) = date_bin(interval::interval, ts, timestamp '2000-01-01 BC') AS equal
+FROM (
+  VALUES
+  ('week', '7 d'),
+  ('day', '1 d'),
+  ('hour', '1 h'),
+  ('minute', '1 m'),
+  ('second', '1 s'),
+  ('millisecond', '1 ms'),
+  ('microsecond', '1 us')
+) intervals (str, interval),
+(VALUES (timestamp '0055-6-10 15:44:17.71393 BC')) ts (ts);
+
+-- bin timestamps into arbitrary intervals
+SELECT
+  interval,
+  ts,
+  origin,
+  date_bin(interval::interval, ts, origin)
+FROM (
+  VALUES
+  ('15 days'),
+  ('2 hours'),
+  ('1 hour 30 minutes'),
+  ('15 minutes'),
+  ('10 seconds'),
+  ('100 milliseconds'),
+  ('250 microseconds')
+) intervals (interval),
+(VALUES (timestamp '2020-02-11 15:44:17.71393')) ts (ts),
+(VALUES (timestamp '2001-01-01')) origin (origin);
+
+-- shift bins using the origin parameter:
+SELECT date_bin('5 min'::interval, timestamp '2020-02-01 01:01:01', timestamp '2020-02-01 00:02:30');
+
+-- disallow intervals with months or years
+SELECT date_bin('5 months'::interval, timestamp '2020-02-01 01:01:01', timestamp '2001-01-01');
+SELECT date_bin('5 years'::interval,  timestamp '2020-02-01 01:01:01', timestamp '2001-01-01');
+
 -- Test casting within a BETWEEN qualifier
 SELECT d1 - timestamp without time zone '1997-01-02' AS diff
   FROM TIMESTAMP_TBL

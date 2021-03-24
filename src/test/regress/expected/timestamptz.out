@@ -663,6 +663,72 @@ SELECT date_trunc('day', timestamp with time zone '2001-02-16 20:38:40+00', 'VET
  Thu Feb 15 20:00:00 2001 PST
 (1 row)
 
+-- verify date_bin behaves the same as date_trunc for relevant intervals
+SELECT
+  str,
+  interval,
+  date_trunc(str, ts, 'Australia/Sydney') = date_bin(interval::interval, ts, timestamp with time zone '2001-01-01+11') AS equal
+FROM (
+  VALUES
+  ('day', '1 d'),
+  ('hour', '1 h'),
+  ('minute', '1 m'),
+  ('second', '1 s'),
+  ('millisecond', '1 ms'),
+  ('microsecond', '1 us')
+) intervals (str, interval),
+(VALUES (timestamptz '2020-02-29 15:44:17.71393+00')) ts (ts);
+     str     | interval | equal 
+-------------+----------+-------
+ day         | 1 d      | t
+ hour        | 1 h      | t
+ minute      | 1 m      | t
+ second      | 1 s      | t
+ millisecond | 1 ms     | t
+ microsecond | 1 us     | t
+(6 rows)
+
+-- bin timestamps into arbitrary intervals
+SELECT
+  interval,
+  ts,
+  origin,
+  date_bin(interval::interval, ts, origin)
+FROM (
+  VALUES
+  ('15 days'),
+  ('2 hours'),
+  ('1 hour 30 minutes'),
+  ('15 minutes'),
+  ('10 seconds'),
+  ('100 milliseconds'),
+  ('250 microseconds')
+) intervals (interval),
+(VALUES (timestamptz '2020-02-11 15:44:17.71393')) ts (ts),
+(VALUES (timestamptz '2001-01-01')) origin (origin);
+     interval      |                 ts                 |            origin            |              date_bin              
+-------------------+------------------------------------+------------------------------+------------------------------------
+ 15 days           | Tue Feb 11 15:44:17.71393 2020 PST | Mon Jan 01 00:00:00 2001 PST | Thu Feb 06 00:00:00 2020 PST
+ 2 hours           | Tue Feb 11 15:44:17.71393 2020 PST | Mon Jan 01 00:00:00 2001 PST | Tue Feb 11 14:00:00 2020 PST
+ 1 hour 30 minutes | Tue Feb 11 15:44:17.71393 2020 PST | Mon Jan 01 00:00:00 2001 PST | Tue Feb 11 15:00:00 2020 PST
+ 15 minutes        | Tue Feb 11 15:44:17.71393 2020 PST | Mon Jan 01 00:00:00 2001 PST | Tue Feb 11 15:30:00 2020 PST
+ 10 seconds        | Tue Feb 11 15:44:17.71393 2020 PST | Mon Jan 01 00:00:00 2001 PST | Tue Feb 11 15:44:10 2020 PST
+ 100 milliseconds  | Tue Feb 11 15:44:17.71393 2020 PST | Mon Jan 01 00:00:00 2001 PST | Tue Feb 11 15:44:17.7 2020 PST
+ 250 microseconds  | Tue Feb 11 15:44:17.71393 2020 PST | Mon Jan 01 00:00:00 2001 PST | Tue Feb 11 15:44:17.71375 2020 PST
+(7 rows)
+
+-- shift bins using the origin parameter:
+SELECT date_bin('5 min'::interval, timestamptz '2020-02-01 01:01:01+00', timestamptz '2020-02-01 00:02:30+00');
+           date_bin           
+------------------------------
+ Fri Jan 31 16:57:30 2020 PST
+(1 row)
+
+-- disallow intervals with months or years
+SELECT date_bin('5 months'::interval, timestamp with time zone '2020-02-01 01:01:01+00', timestamp with time zone '2001-01-01+00');
+ERROR:  timestamps cannot be binned into intervals containing months or years
+SELECT date_bin('5 years'::interval,  timestamp with time zone '2020-02-01 01:01:01+00', timestamp with time zone '2001-01-01+00');
+ERROR:  timestamps cannot be binned into intervals containing months or years
 -- Test casting within a BETWEEN qualifier
 SELECT d1 - timestamp with time zone '1997-01-02' AS diff
   FROM TIMESTAMPTZ_TBL

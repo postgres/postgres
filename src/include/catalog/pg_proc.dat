@@ -5813,6 +5813,17 @@
 { oid => '2020', descr => 'truncate timestamp to specified units',
   proname => 'date_trunc', prorettype => 'timestamp',
   proargtypes => 'text timestamp', prosrc => 'timestamp_trunc' },
+
+{ oid => '8990',
+  descr => 'bin timestamp into specified interval',
+  proname => 'date_bin', prorettype => 'timestamp',
+  proargtypes => 'interval timestamp timestamp',
+  prosrc => 'timestamp_bin' },
+{ oid => '8993',
+  descr => 'bin timestamp with time zone into specified interval',
+  proname => 'date_bin', prorettype => 'timestamptz',
+  proargtypes => 'interval timestamptz timestamptz', prosrc => 'timestamptz_bin' },
+
 { oid => '2021', descr => 'extract field from timestamp',
   proname => 'date_part', prorettype => 'float8',
   proargtypes => 'text timestamp', prosrc => 'timestamp_part' },

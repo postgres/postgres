@@ -8732,6 +8732,20 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
        <row>
         <entry role="func_table_entry"><para role="func_signature">
+         <function>date_bin</function> ( <type>interval</type>, <type>timestamp</type>, <type>timestamp</type> )
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Bin input into specified interval aligned with specified origin; see <xref linkend="functions-datetime-bin"/>
+        </para>
+        <para>
+         <literal>date_bin('15 minutes', timestamp '2001-02-16 20:38:40', timestamp '2001-02-16 20:05:00')</literal>
+         <returnvalue>2001-02-16 20:35:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
          <indexterm>
           <primary>date_part</primary>
          </indexterm>
@@ -9865,6 +9879,42 @@ SELECT date_trunc('day', TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40+00', 'Aus
 SELECT date_trunc('hour', INTERVAL '3 days 02:47:33');
 <lineannotation>Result: </lineannotation><computeroutput>3 days 02:00:00</computeroutput>
 </screen>
+   </para>
+  </sect2>
+
+  <sect2 id="functions-datetime-bin">
+   <title><function>date_bin</function></title>
+
+   <indexterm>
+    <primary>date_bin</primary>
+   </indexterm>
+
+   <para>
+    The function <function>date_bin</function> <quote>bins</quote> the input
+    timestamp into the specified interval (the <firstterm>stride</firstterm>)
+    aligned with a specified origin.
+   </para>
+
+   <para>
+    Examples:
+<screen>
+SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-01-01');
+<lineannotation>Result: </lineannotation><computeroutput>2020-02-11 15:30:00</computeroutput>
+
+SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-01-01 00:02:30');
+<lineannotation>Result: </lineannotation><computeroutput>2020-02-11 15:32:30</computeroutput>
+</screen>
+   </para>
+
+   <para>
+    In cases full units (1 minute, 1 hour, etc.), it gives the same result as
+    the analogous <function>date_trunc</function> call, but the difference is
+    that <function>date_bin</function> can truncate to an arbitrary interval.
+   </para>
+
+   <para>
+    The <parameter>stride</parameter> interval cannot contain units of month
+    or larger.
    </para>
   </sect2>
 

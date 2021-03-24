@@ -3812,6 +3812,43 @@ timestamptz_age(PG_FUNCTION_ARGS)
  *---------------------------------------------------------*/
 
 
+/* timestamp_bin()
+ * Bin timestamp into specified interval.
+ */
+Datum
+timestamp_bin(PG_FUNCTION_ARGS)
+{
+	Interval   *stride = PG_GETARG_INTERVAL_P(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
+	Timestamp	origin = PG_GETARG_TIMESTAMP(2);
+	Timestamp	result,
+				tm_diff,
+				stride_usecs,
+				tm_delta;
+
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		PG_RETURN_TIMESTAMP(timestamp);
+
+	if (TIMESTAMP_NOT_FINITE(origin))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("origin out of range")));
+
+	if (stride->month != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("timestamps cannot be binned into intervals containing months or years")));
+
+	stride_usecs = stride->day * USECS_PER_DAY + stride->time;
+
+	tm_diff = timestamp - origin;
+	tm_delta = tm_diff - tm_diff % stride_usecs;;
+
+	result = origin + tm_delta;
+
+	PG_RETURN_TIMESTAMP(result);
+}
+
 /* timestamp_trunc()
  * Truncate timestamp to specified units.
  */
@@ -3944,6 +3981,43 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TIMESTAMP(result);
+}
+
+/* timestamptz_bin()
+ * Bin timestamptz into specified interval using specified origin.
+ */
+Datum
+timestamptz_bin(PG_FUNCTION_ARGS)
+{
+	Interval   *stride = PG_GETARG_INTERVAL_P(0);
+	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	origin = PG_GETARG_TIMESTAMPTZ(2);
+	TimestampTz	result,
+				stride_usecs,
+				tm_diff,
+				tm_delta;
+
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		PG_RETURN_TIMESTAMPTZ(timestamp);
+
+	if (TIMESTAMP_NOT_FINITE(origin))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("origin out of range")));
+
+	if (stride->month != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("timestamps cannot be binned into intervals containing months or years")));
+
+	stride_usecs = stride->day * USECS_PER_DAY + stride->time;
+
+	tm_diff = timestamp - origin;
+	tm_delta = tm_diff - tm_diff % stride_usecs;;
+
+	result = origin + tm_delta;
+
+	PG_RETURN_TIMESTAMPTZ(result);
 }
 
 /*
