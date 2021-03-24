@@ -64,6 +64,8 @@ static struct ECPGtype ecpg_query = {ECPGt_char_variable, NULL, NULL, NULL, {NUL
 
 static void vmmerror(int error_code, enum errortype type, const char *error, va_list ap) pg_attribute_printf(3, 0);
 
+static bool check_declared_list(const char*);
+
 /*
  * Handle parsing errors and warnings
  */
@@ -575,6 +577,29 @@ add_typedef(char *name, char *dimension, char *length, enum ECPGttype type_enum,
 
 		types = this;
 	}
+}
+
+/*
+ * check an SQL identifier is declared or not.
+ * If it is already declared, the global variable
+ * connection will be changed to the related connection.
+ */
+static bool
+check_declared_list(const char *name)
+{
+	struct declared_list *ptr = NULL;
+	for (ptr = g_declared_list; ptr != NULL; ptr = ptr -> next)
+	{
+		if (strcmp(name, ptr -> name) == 0)
+		{
+			if (ptr -> connection)
+				{
+					connection = mm_strdup(ptr -> connection);
+					return true;
+				}
+		}
+	}
+	return false;
 }
 %}
 

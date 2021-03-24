@@ -278,7 +278,7 @@ EXEC SQL CONNECT TO :target USER :user USING :passwd;
    SQL statements in embedded SQL programs are by default executed on
    the current connection, that is, the most recently opened one.  If
    an application needs to manage multiple connections, then there are
-   two ways to handle this.
+   three ways to handle this.
   </para>
 
   <para>
@@ -350,6 +350,46 @@ main()
 current=testdb3 (should be testdb3)
 current=testdb2 (should be testdb2)
 current=testdb1 (should be testdb1)
+</screen>
+  </para>
+
+  <para>
+  The third option is to declare sql identifier linked to
+  the connection, for example:
+<programlisting>
+EXEC SQL AT <replaceable>connection-name</replaceable> DECLARE <replaceable>statement-name</replaceable> STATEMENT;
+EXEC SQL PREPARE <replaceable>statement-name</replaceable> FROM :<replaceable>dyn-string</replaceable>;
+</programlisting>
+   Once you link a sql identifier to a connection, you execute a dynamic SQL
+   without AT clause. Note that this option behaves like preprocessor directives,
+   therefore the link is enabled only in the file.
+  </para>
+  <para>
+   Here is an example program using this option:
+<programlisting><![CDATA[
+#include <stdio.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+char dbname[128];
+char *dym_sql = "SELECT current_database()";
+EXEC SQL END DECLARE SECTION;
+
+int main(){
+  EXEC SQL CONNECT TO postgres AS con1;
+  EXEC SQL CONNECT TO testdb AS con2;
+  EXEC SQL AT con1 DECLARE stmt STATEMENT;
+  EXEC SQL PREPARE stmt FROM :dym_sql;
+  EXEC SQL EXECUTE stmt INTO :dbname;
+  printf("%s\n", dbname);
+
+  EXEC SQL DISCONNECT ALL;
+  return 0;
+}
+]]></programlisting>
+
+   This example would produce this output, even if the default connection is testdb:
+<screen>
+postgres
 </screen>
   </para>
   </sect2>
@@ -6851,6 +6891,104 @@ EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
      <member><xref linkend="ecpg-sql-open"/></member>
      <member><xref linkend="sql-close"/></member>
      <member><xref linkend="sql-declare"/></member>
+    </simplelist>
+   </refsect1>
+  </refentry>
+
+  <refentry id="ecpg-sql-declare-statement">
+   <refnamediv>
+    <refname>DECLARE STATEMENT</refname>
+    <refpurpose>declare SQL statement identifier</refpurpose>
+   </refnamediv>
+
+   <refsynopsisdiv>
+<synopsis>
+EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DECLARE <replaceable class="parameter">statement_name</replaceable> STATEMENT
+</synopsis>
+   </refsynopsisdiv>
+
+   <refsect1>
+    <title>Description</title>
+
+    <para>
+     <command>DECLARE STATEMENT</command> declares SQL statement identifier.
+     SQL statement identifier can be associated with the connection.
+     When the identifier is used by dynamic SQL statements, these SQLs are executed
+     by using the associated connection.
+     The namespace of the declaration is the precompile unit, and multiple declarations to
+     the same SQL statement identifier is not allowed.
+
+     Note that if the precompiler run in the Informix compatibility mode and some SQL statement
+     is declared, "database" can not be used as a cursor name.
+    </para>
+   </refsect1>
+
+   <refsect1>
+    <title>Parameters</title>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">connection_name</replaceable></term>
+      <listitem>
+       <para>
+        A database connection name established by the <command>CONNECT</command> command.
+       </para>
+       <para>
+        AT clause can be omitted, but such statement has no meaning.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">statement_name</replaceable></term>
+      <listitem>
+       <para>
+        The name of a SQL statement identifier, either as an SQL identifier or a host variable.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </refsect1>
+
+   <refsect1>
+    <title>Notes</title>
+    <para>
+     This association is valid only if the declaration is physically placed on top of a dynamic statement.
+    </para>
+   </refsect1>
+
+   <refsect1>
+    <title>Examples</title>
+
+<programlisting>
+EXEC SQL CONNECT TO postgres AS con1;
+EXEC SQL AT con1 DECLARE sql_stmt STATEMENT;
+EXEC SQL DECLARE cursor_name CURSOR FOR sql_stmt;
+EXEC SQL PREPARE sql_stmt FROM :dyn_string;
+EXEC SQL OPEN cursor_name;
+EXEC SQL FETCH cursor_name INTO :column1;
+EXEC SQL CLOSE cursor_name;
+</programlisting>
+   </refsect1>
+
+   <refsect1>
+    <title>Compatibility</title>
+
+    <para>
+     <command>DECLARE STATEMENT</command> is a extension of the SQL standard,
+     but can be used in famous DBMSs.
+    </para>
+   </refsect1>
+
+   <refsect1>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+     <member><xref linkend="ecpg-sql-connect"/></member>
+     <member><xref linkend="ecpg-sql-declare"/></member>
+     <member><xref linkend="ecpg-sql-open"/></member>
     </simplelist>
    </refsect1>
   </refentry>

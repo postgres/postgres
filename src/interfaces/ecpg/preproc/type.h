@@ -141,6 +141,13 @@ struct cursor
 	struct cursor *next;
 };
 
+struct declared_list
+{
+	char	   *name;
+	char	   *connection;
+	struct declared_list *next;
+};
+
 struct typedefs
 {
 	char	   *name;

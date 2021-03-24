@@ -291,6 +291,42 @@ prepared_name: name
 		;
 
 /*
+ * Declare Statement
+ */
+ECPGDeclareStmt: DECLARE prepared_name STATEMENT
+		{
+			struct declared_list *ptr = NULL;
+			/* Check whether the declared name has been defined or not */
+			for (ptr = g_declared_list; ptr != NULL; ptr = ptr->next)
+			{
+				if (strcmp($2, ptr->name) == 0)
+				{
+					/* re-definition is not allowed */
+					mmerror(PARSE_ERROR, ET_ERROR, "declared name %s is already defined", ptr->name);
+				}
+			}
+
+			/* Add a new declared name into the g_declared_list */
+			ptr = NULL;
+			ptr = (struct declared_list *)mm_alloc(sizeof(struct declared_list));
+			if (ptr)
+			{
+				/* initial definition */
+				ptr -> name = $2;
+				if (connection)
+					ptr -> connection = mm_strdup(connection);
+				else
+					ptr -> connection = NULL;
+
+				ptr -> next = g_declared_list;
+				g_declared_list = ptr;
+			}
+
+			$$ = cat_str(3 , mm_strdup("/* declare "), mm_strdup($2), mm_strdup(" as an SQL identifier */"));
+		}
+;
+
+/*
  * Declare a prepared cursor. The syntax is different from the standard
  * declare statement, so we create a new rule.
  */
@@ -300,9 +336,14 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			char *cursor_marker = $2[0] == ':' ? mm_strdup("$0") : mm_strdup($2);
 			int (* strcmp_fn)(const char *, const char *) = (($2[0] == ':' || $2[0] == '"') ? strcmp : pg_strcasecmp);
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
-			const char *con = connection ? connection : "NULL";
 			char *comment;
+			char *con;
 
+			if (INFORMIX_MODE && pg_strcasecmp($2, "database") == 0)
+                                mmfatal(PARSE_ERROR, "\"database\" cannot be used as cursor name in INFORMIX mode");
+
+                        check_declared_list($7);
+			con = connection ? connection : "NULL";
 			for (ptr = cur; ptr != NULL; ptr = ptr->next)
 			{
 				if (strcmp_fn($2, ptr->name) == 0)
@@ -321,7 +362,7 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			this->next = cur;
 			this->name = $2;
 			this->function = (current_function ? mm_strdup(current_function) : NULL);
-			this->connection = connection;
+			this->connection = connection ? mm_strdup(connection) : NULL;
 			this->command =  cat_str(6, mm_strdup("declare"), cursor_marker, $3, mm_strdup("cursor"), $5, mm_strdup("for $1"));
 			this->argsresult = NULL;
 			this->argsresult_oos = NULL;

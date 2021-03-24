@@ -53,6 +53,7 @@ test: sql/show
 test: sql/insupd
 test: sql/parser
 test: sql/prepareas
+test: sql/declare
 test: thread/thread
 test: thread/thread_implicit
 test: thread/prep

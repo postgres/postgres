@@ -47,6 +47,7 @@ extern struct _include_path *include_paths;
 extern struct cursor *cur;
 extern struct typedefs *types;
 extern struct _defines *defines;
+extern struct declared_list *g_declared_list;
 extern struct ECPGtype ecpg_no_indicator;
 extern struct variable no_indicator;
 extern struct arguments *argsinsert;

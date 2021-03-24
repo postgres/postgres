@@ -28,6 +28,7 @@ struct _include_path *include_paths = NULL;
 struct cursor *cur = NULL;
 struct typedefs *types = NULL;
 struct _defines *defines = NULL;
+struct declared_list *g_declared_list = NULL;
 
 static void
 help(const char *progname)
@@ -347,6 +348,7 @@ main(int argc, char *const argv[])
 				struct cursor *ptr;
 				struct _defines *defptr;
 				struct typedefs *typeptr;
+				struct declared_list *list;
 
 				/* remove old cursor definitions if any are still there */
 				for (ptr = cur; ptr != NULL;)
@@ -372,6 +374,13 @@ main(int argc, char *const argv[])
 					free(this);
 				}
 				cur = NULL;
+
+				/* remove old delared statements if any are still there */
+				for (list = g_declared_list; list != NULL;)
+				{
+					struct declared_list *this = list;
+					free(this);
+				}
 
 				/* remove non-pertinent old defines as well */
 				while (defines && !defines->pertinent)

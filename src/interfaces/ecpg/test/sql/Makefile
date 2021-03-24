@@ -26,6 +26,7 @@ TESTS = array array.c \
         insupd insupd.c \
         twophase twophase.c \
         insupd insupd.c \
+		declare declare.c \
 		bytea bytea.c \
 		prepareas prepareas.c
 
