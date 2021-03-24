@@ -3302,9 +3302,15 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Specifies the target of checkpoint completion, as a fraction of
-        total time between checkpoints. The default is 0.5.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
+        total time between checkpoints. The default is 0.9, which spreads the
+        checkpoint across almost all of the available interval, providing fairly
+        consistent I/O load while also leaving some time for checkpoint
+        completion overhead.  Reducing this parameter is not recommended because
+        it causes the checkpoint to complete faster.  This results in a higher
+        rate of I/O during the checkpoint followed by a period of less I/O between
+        the checkpoint completion and the next scheduled checkpoint.  This
+        parameter can only be set in the <filename>postgresql.conf</filename> file
+        or on the server command line.
        </para>
       </listitem>
      </varlistentry>

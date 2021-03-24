@@ -26,7 +26,6 @@ my $bravo = get_new_node('bravo');
 $bravo->init_from_backup($alpha, 'bkp', has_streaming => 1);
 $bravo->append_conf('postgresql.conf', <<EOF);
 checkpoint_timeout=1h
-checkpoint_completion_target=0.9
 EOF
 $bravo->start;
 

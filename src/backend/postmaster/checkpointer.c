@@ -145,7 +145,7 @@ static CheckpointerShmemStruct *CheckpointerShmem;
  */
 int			CheckPointTimeout = 300;
 int			CheckPointWarning = 30;
-double		CheckPointCompletionTarget = 0.5;
+double		CheckPointCompletionTarget = 0.9;
 
 /*
  * Private state
