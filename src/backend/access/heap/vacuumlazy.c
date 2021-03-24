@@ -703,7 +703,7 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 					continue;
 
 				appendStringInfo(&buf,
-								 _("index \"%s\": pages: %u remain, %u newly deleted, %u currently deleted, %u reusable\n"),
+								 _("index \"%s\": pages: %u in total, %u newly deleted, %u currently deleted, %u reusable\n"),
 								 indnames[i],
 								 stats->num_pages,
 								 stats->pages_newly_deleted,
