@@ -171,7 +171,7 @@ brin_minmax_consistent(PG_FUNCTION_ARGS)
 		 * break out of the loop as soon as a false return value is obtained.
 		 */
 		if (!minmax_consistent_key(bdesc, column, key, colloid))
-			PG_RETURN_DATUM(false);;
+			PG_RETURN_DATUM(false);
 	}
 
 	PG_RETURN_DATUM(true);

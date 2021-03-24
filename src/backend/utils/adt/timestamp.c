@@ -3842,7 +3842,7 @@ timestamp_bin(PG_FUNCTION_ARGS)
 	stride_usecs = stride->day * USECS_PER_DAY + stride->time;
 
 	tm_diff = timestamp - origin;
-	tm_delta = tm_diff - tm_diff % stride_usecs;;
+	tm_delta = tm_diff - tm_diff % stride_usecs;
 
 	result = origin + tm_delta;
 
@@ -4013,7 +4013,7 @@ timestamptz_bin(PG_FUNCTION_ARGS)
 	stride_usecs = stride->day * USECS_PER_DAY + stride->time;
 
 	tm_diff = timestamp - origin;
-	tm_delta = tm_diff - tm_diff % stride_usecs;;
+	tm_delta = tm_diff - tm_diff % stride_usecs;
 
 	result = origin + tm_delta;
 
