@@ -9907,7 +9907,7 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
    </para>
 
    <para>
-    In cases full units (1 minute, 1 hour, etc.), it gives the same result as
+    In the case of full units (1 minute, 1 hour, etc.), it gives the same result as
     the analogous <function>date_trunc</function> call, but the difference is
     that <function>date_bin</function> can truncate to an arbitrary interval.
    </para>
