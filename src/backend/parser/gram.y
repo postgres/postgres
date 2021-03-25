@@ -2425,7 +2425,7 @@ alter_table_cmd:
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> SET WITHOUT OIDS, for backward compat  */
+			/* ALTER TABLE <name> SET WITHOUT OIDS, for backward compat */
 			| SET WITHOUT OIDS
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -2448,14 +2448,14 @@ alter_table_cmd:
 					n->name = NULL;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> SET LOGGED  */
+			/* ALTER TABLE <name> SET LOGGED */
 			| SET LOGGED
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetLogged;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> SET UNLOGGED  */
+			/* ALTER TABLE <name> SET UNLOGGED */
 			| SET UNLOGGED
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -2619,7 +2619,7 @@ alter_table_cmd:
 					n->def = (Node *)$2;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> REPLICA IDENTITY  */
+			/* ALTER TABLE <name> REPLICA IDENTITY */
 			| REPLICA IDENTITY_P replica_identity
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -3837,7 +3837,7 @@ ConstraintElem:
 					$$ = (Node *)n;
 				}
 			| EXCLUDE access_method_clause '(' ExclusionConstraintList ')'
-				opt_c_include opt_definition OptConsTableSpace  OptWhereClause
+				opt_c_include opt_definition OptConsTableSpace OptWhereClause
 				ConstraintAttributeSpec
 				{
 					Constraint *n = makeNode(Constraint);
@@ -5310,8 +5310,8 @@ CreateTrigStmt:
 					n->columns = (List *) lsecond($6);
 					n->whenClause = $11;
 					n->transitionRels = $9;
-					n->deferrable	 = false;
-					n->initdeferred  = false;
+					n->deferrable = false;
+					n->initdeferred = false;
 					n->constrrel = NULL;
 					$$ = (Node *)n;
 				}
