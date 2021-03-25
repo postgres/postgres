@@ -3579,23 +3579,7 @@ IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 		}
 		else
 		{
-			Datum		values[Natts_pg_inherits];
-			bool		isnull[Natts_pg_inherits];
-
-			/*
-			 * No pg_inherits row exists, and we want a parent for this index,
-			 * so insert it.
-			 */
-			values[Anum_pg_inherits_inhrelid - 1] = ObjectIdGetDatum(partRelid);
-			values[Anum_pg_inherits_inhparent - 1] =
-				ObjectIdGetDatum(parentOid);
-			values[Anum_pg_inherits_inhseqno - 1] = Int32GetDatum(1);
-			memset(isnull, false, sizeof(isnull));
-
-			tuple = heap_form_tuple(RelationGetDescr(pg_inherits),
-									values, isnull);
-			CatalogTupleInsert(pg_inherits, tuple);
-
+			StoreSingleInheritance(partRelid, parentOid, 1);
 			fix_dependencies = true;
 		}
 	}
