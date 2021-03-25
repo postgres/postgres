@@ -946,6 +946,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       ties to the table from which it was detached.  Any indexes that were
       attached to the target table's indexes are detached.  Any triggers that
       were created as clones of those in the target table are removed.
+      <literal>SHARE</literal> lock is obtained on any tables that reference
+      this partitioned table in foreign key constraints.
      </para>
     </listitem>
    </varlistentry>
