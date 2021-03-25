@@ -51,7 +51,7 @@ SELECT ctid,cmin,* FROM combocidtest;
  (0,2) |    1 |      2
 (2 rows)
 
--- Test combo cids with portals
+-- Test combo CIDs with portals
 BEGIN;
 INSERT INTO combocidtest VALUES (333);
 DECLARE c CURSOR FOR SELECT ctid,cmin,* FROM combocidtest;

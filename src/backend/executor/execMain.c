@@ -149,7 +149,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 * planned to non-temporary tables.  EXPLAIN is considered read-only.
 	 *
 	 * Don't allow writes in parallel mode.  Supporting UPDATE and DELETE
-	 * would require (a) storing the combocid hash in shared memory, rather
+	 * would require (a) storing the combo CID hash in shared memory, rather
 	 * than synchronizing it just once at the start of parallelism, and (b) an
 	 * alternative to heap_update()'s reliance on xmax for mutual exclusion.
 	 * INSERT may have no such troubles, but we forbid it to simplify the

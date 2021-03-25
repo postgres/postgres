@@ -191,7 +191,7 @@ struct HeapTupleHeaderData
 #define HEAP_HASEXTERNAL		0x0004	/* has external stored attribute(s) */
 #define HEAP_HASOID_OLD			0x0008	/* has an object-id field */
 #define HEAP_XMAX_KEYSHR_LOCK	0x0010	/* xmax is a key-shared locker */
-#define HEAP_COMBOCID			0x0020	/* t_cid is a combo cid */
+#define HEAP_COMBOCID			0x0020	/* t_cid is a combo CID */
 #define HEAP_XMAX_EXCL_LOCK		0x0040	/* xmax is exclusive locker */
 #define HEAP_XMAX_LOCK_ONLY		0x0080	/* xmax, if valid, is only a locker */
 

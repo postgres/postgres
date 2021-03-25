@@ -4736,19 +4736,19 @@ ReorderBufferToastReset(ReorderBuffer *rb, ReorderBufferTXN *txn)
  * always rely on stored cmin/cmax values because of two scenarios:
  *
  * * A tuple got changed multiple times during a single transaction and thus
- *	 has got a combocid. Combocid's are only valid for the duration of a
+ *	 has got a combo CID. Combo CIDs are only valid for the duration of a
  *	 single transaction.
- * * A tuple with a cmin but no cmax (and thus no combocid) got
+ * * A tuple with a cmin but no cmax (and thus no combo CID) got
  *	 deleted/updated in another transaction than the one which created it
- *	 which we are looking at right now. As only one of cmin, cmax or combocid
+ *	 which we are looking at right now. As only one of cmin, cmax or combo CID
  *	 is actually stored in the heap we don't have access to the value we
  *	 need anymore.
  *
  * To resolve those problems we have a per-transaction hash of (cmin,
  * cmax) tuples keyed by (relfilenode, ctid) which contains the actual
- * (cmin, cmax) values. That also takes care of combocids by simply
+ * (cmin, cmax) values. That also takes care of combo CIDs by simply
  * not caring about them at all. As we have the real cmin/cmax values
- * combocids aren't interesting.
+ * combo CIDs aren't interesting.
  *
  * As we only care about catalog tuples here the overhead of this
  * hashtable should be acceptable.
@@ -4995,7 +4995,7 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 
 /*
  * Lookup cmin/cmax of a tuple, during logical decoding where we can't rely on
- * combocids.
+ * combo CIDs.
  */
 bool
 ResolveCminCmaxDuringDecoding(HTAB *tuplecid_data,

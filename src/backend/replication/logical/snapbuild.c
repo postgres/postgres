@@ -42,7 +42,7 @@
  * catalog in a transaction. During normal operation this is achieved by using
  * CommandIds/cmin/cmax. The problem with that however is that for space
  * efficiency reasons only one value of that is stored
- * (cf. combocid.c). Since ComboCids are only available in memory we log
+ * (cf. combocid.c). Since combo CIDs are only available in memory we log
  * additional information which allows us to get the original (cmin, cmax)
  * pair during visibility checks. Check the reorderbuffer.c's comment above
  * ResolveCminCmaxDuringDecoding() for details.
@@ -739,7 +739,7 @@ SnapBuildProcessChange(SnapBuild *builder, TransactionId xid, XLogRecPtr lsn)
 }
 
 /*
- * Do CommandId/ComboCid handling after reading an xl_heap_new_cid record.
+ * Do CommandId/combo CID handling after reading an xl_heap_new_cid record.
  * This implies that a transaction has done some form of write to system
  * catalogs.
  */
