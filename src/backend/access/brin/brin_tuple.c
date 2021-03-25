@@ -220,10 +220,12 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 
 				/*
 				 * If the BRIN summary and indexed attribute use the same data
-				 * type, we can use the same compression method. Otherwise we
-				 * have to use the default method.
+				 * type and it has a valid compression method, we can use the
+				 * same compression method. Otherwise we have to use the
+				 * default method.
 				 */
-				if (att->atttypid == atttype->type_id)
+				if (att->atttypid == atttype->type_id &&
+					CompressionMethodIsValid(att->attcompression))
 					compression = att->attcompression;
 				else
 					compression = GetDefaultToastCompression();

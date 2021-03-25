@@ -130,6 +130,13 @@ SELECT pg_column_compression(f1) FROM cmdata;
 VACUUM FULL cmdata;
 SELECT pg_column_compression(f1) FROM cmdata;
 
+-- test expression index
+DROP TABLE cmdata2;
+CREATE TABLE cmdata2 (f1 TEXT COMPRESSION pglz, f2 TEXT COMPRESSION lz4);
+CREATE UNIQUE INDEX idx1 ON cmdata2 ((f1 || f2));
+INSERT INTO cmdata2 VALUES((SELECT array_agg(md5(g::TEXT))::TEXT FROM
+generate_series(1, 50) g), VERSION());
+
 -- check data is ok
 SELECT length(f1) FROM cmdata;
 SELECT length(f1) FROM cmdata1;
