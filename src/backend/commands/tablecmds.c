@@ -157,6 +157,8 @@ typedef struct AlteredTableInfo
 	Oid			relid;			/* Relation to work on */
 	char		relkind;		/* Its relkind */
 	TupleDesc	oldDesc;		/* Pre-modification tuple descriptor */
+	/* Transiently set during Phase 2, normally set to NULL */
+	Relation	rel;
 	/* Information saved by Phase 1 for Phase 2: */
 	List	   *subcmds[AT_NUM_PASSES]; /* Lists of AlterTableCmd */
 	/* Information saved by Phases 1/2 for Phase 3: */
@@ -354,7 +356,7 @@ static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 					  AlterTableUtilityContext *context);
 static void ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
 							  AlterTableUtilityContext *context);
-static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
+static void ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 					  AlterTableCmd *cmd, LOCKMODE lockmode, int cur_pass,
 					  AlterTableUtilityContext *context);
 static AlterTableCmd *ATParseTransformCmd(List **wqueue, AlteredTableInfo *tab,
@@ -4569,7 +4571,6 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
 		{
 			AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
 			List	   *subcmds = tab->subcmds[pass];
-			Relation	rel;
 			ListCell   *lcmd;
 
 			if (subcmds == NIL)
@@ -4578,10 +4579,10 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
 			/*
 			 * Appropriate lock was obtained by phase 1, needn't get it again
 			 */
-			rel = relation_open(tab->relid, NoLock);
+			tab->rel = relation_open(tab->relid, NoLock);
 
 			foreach(lcmd, subcmds)
-				ATExecCmd(wqueue, tab, rel,
+				ATExecCmd(wqueue, tab,
 						  castNode(AlterTableCmd, lfirst(lcmd)),
 						  lockmode, pass, context);
 
@@ -4593,7 +4594,11 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
 			if (pass == AT_PASS_ALTER_TYPE)
 				ATPostAlterTypeCleanup(wqueue, tab, lockmode);
 
-			relation_close(rel, NoLock);
+			if (tab->rel)
+			{
+				relation_close(tab->rel, NoLock);
+				tab->rel = NULL;
+			}
 		}
 	}
 
@@ -4619,11 +4624,12 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
  * ATExecCmd: dispatch a subcommand to appropriate execution routine
  */
 static void
-ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
+ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 		  AlterTableCmd *cmd, LOCKMODE lockmode, int cur_pass,
 		  AlterTableUtilityContext *context)
 {
 	ObjectAddress address = InvalidObjectAddress;
+	Relation	rel = tab->rel;
 
 	switch (cmd->subtype)
 	{
@@ -5730,6 +5736,7 @@ ATGetQueueEntry(List **wqueue, Relation rel)
 	 */
 	tab = (AlteredTableInfo *) palloc0(sizeof(AlteredTableInfo));
 	tab->relid = relid;
+	tab->rel = NULL;			/* set later */
 	tab->relkind = rel->rd_rel->relkind;
 	tab->oldDesc = CreateTupleDescCopyConstr(RelationGetDescr(rel));
 	tab->newrelpersistence = RELPERSISTENCE_PERMANENT;
