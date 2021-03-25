@@ -341,6 +341,7 @@ generate_partition_qual(Relation rel)
 	bool		isnull;
 	List	   *my_qual = NIL,
 			   *result = NIL;
+	Oid			parentrelid;
 	Relation	parent;
 
 	/* Guard against stack overflow due to overly deep partition tree */
@@ -350,9 +351,14 @@ generate_partition_qual(Relation rel)
 	if (rel->rd_partcheckvalid)
 		return copyObject(rel->rd_partcheck);
 
-	/* Grab at least an AccessShareLock on the parent table */
-	parent = relation_open(get_partition_parent(RelationGetRelid(rel)),
-						   AccessShareLock);
+	/*
+	 * Grab at least an AccessShareLock on the parent table.  Must do this
+	 * even if the partition has been partially detached, because transactions
+	 * concurrent with the detach might still be trying to use a partition
+	 * descriptor that includes it.
+	 */
+	parentrelid = get_partition_parent(RelationGetRelid(rel), true);
+	parent = relation_open(parentrelid, AccessShareLock);
 
 	/* Get pg_class.relpartbound */
 	tuple = SearchSysCache1(RELOID, RelationGetRelid(rel));

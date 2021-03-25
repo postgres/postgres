@@ -37,6 +37,7 @@ typedef struct PartitionDirectoryData
 {
 	MemoryContext pdir_mcxt;
 	HTAB	   *pdir_hash;
+	bool		include_detached;
 }			PartitionDirectoryData;
 
 typedef struct PartitionDirectoryEntry
@@ -46,7 +47,7 @@ typedef struct PartitionDirectoryEntry
 	PartitionDesc pd;
 } PartitionDirectoryEntry;
 
-static void RelationBuildPartitionDesc(Relation rel);
+static void RelationBuildPartitionDesc(Relation rel, bool include_detached);
 
 
 /*
@@ -61,13 +62,14 @@ static void RelationBuildPartitionDesc(Relation rel);
  * that the data doesn't become stale.
  */
 PartitionDesc
-RelationGetPartitionDesc(Relation rel)
+RelationGetPartitionDesc(Relation rel, bool include_detached)
 {
 	if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		return NULL;
 
-	if (unlikely(rel->rd_partdesc == NULL))
-		RelationBuildPartitionDesc(rel);
+	if (unlikely(rel->rd_partdesc == NULL ||
+				 rel->rd_partdesc->includes_detached != include_detached))
+		RelationBuildPartitionDesc(rel, include_detached);
 
 	return rel->rd_partdesc;
 }
@@ -88,7 +90,7 @@ RelationGetPartitionDesc(Relation rel)
  * permanently.
  */
 static void
-RelationBuildPartitionDesc(Relation rel)
+RelationBuildPartitionDesc(Relation rel, bool include_detached)
 {
 	PartitionDesc partdesc;
 	PartitionBoundInfo boundinfo = NULL;
@@ -110,7 +112,8 @@ RelationBuildPartitionDesc(Relation rel)
 	 * concurrently, whatever this function returns will be accurate as of
 	 * some well-defined point in time.
 	 */
-	inhoids = find_inheritance_children(RelationGetRelid(rel), NoLock);
+	inhoids = find_inheritance_children(RelationGetRelid(rel), include_detached,
+										NoLock);
 	nparts = list_length(inhoids);
 
 	/* Allocate working arrays for OIDs, leaf flags, and boundspecs. */
@@ -238,6 +241,7 @@ RelationBuildPartitionDesc(Relation rel)
 		partdesc->boundinfo = partition_bounds_copy(boundinfo, key);
 		partdesc->oids = (Oid *) palloc(nparts * sizeof(Oid));
 		partdesc->is_leaf = (bool *) palloc(nparts * sizeof(bool));
+		partdesc->includes_detached = include_detached;
 
 		/*
 		 * Assign OIDs from the original array into mapped indexes of the
@@ -280,7 +284,7 @@ RelationBuildPartitionDesc(Relation rel)
  *		Create a new partition directory object.
  */
 PartitionDirectory
-CreatePartitionDirectory(MemoryContext mcxt)
+CreatePartitionDirectory(MemoryContext mcxt, bool include_detached)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(mcxt);
 	PartitionDirectory pdir;
@@ -295,6 +299,7 @@ CreatePartitionDirectory(MemoryContext mcxt)
 
 	pdir->pdir_hash = hash_create("partition directory", 256, &ctl,
 								  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+	pdir->include_detached = include_detached;
 
 	MemoryContextSwitchTo(oldcontext);
 	return pdir;
@@ -327,7 +332,7 @@ PartitionDirectoryLookup(PartitionDirectory pdir, Relation rel)
 		 */
 		RelationIncrementReferenceCount(rel);
 		pde->rel = rel;
-		pde->pd = RelationGetPartitionDesc(rel);
+		pde->pd = RelationGetPartitionDesc(rel, pdir->include_detached);
 		Assert(pde->pd != NULL);
 	}
 	return pde->pd;

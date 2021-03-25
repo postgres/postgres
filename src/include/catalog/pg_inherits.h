@@ -34,6 +34,7 @@ CATALOG(pg_inherits,2611,InheritsRelationId)
 	Oid			inhrelid BKI_LOOKUP(pg_class);
 	Oid			inhparent BKI_LOOKUP(pg_class);
 	int32		inhseqno;
+	bool		inhdetachpending;
 } FormData_pg_inherits;
 
 /* ----------------
@@ -49,7 +50,8 @@ DECLARE_INDEX(pg_inherits_parent_index, 2187, on pg_inherits using btree(inhpare
 #define InheritsParentIndexId  2187
 
 
-extern List *find_inheritance_children(Oid parentrelId, LOCKMODE lockmode);
+extern List *find_inheritance_children(Oid parentrelId, bool include_detached,
+									   LOCKMODE lockmode);
 extern List *find_all_inheritors(Oid parentrelId, LOCKMODE lockmode,
 								 List **parents);
 extern bool has_subclass(Oid relationId);
@@ -57,6 +59,8 @@ extern bool has_superclass(Oid relationId);
 extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 extern void StoreSingleInheritance(Oid relationId, Oid parentOid,
 								   int32 seqNumber);
-extern bool DeleteInheritsTuple(Oid inhrelid, Oid inhparent);
+extern bool DeleteInheritsTuple(Oid inhrelid, Oid inhparent, bool allow_detached,
+								const char *childname);
+extern bool PartitionHasPendingDetach(Oid partoid);
 
 #endif							/* PG_INHERITS_H */

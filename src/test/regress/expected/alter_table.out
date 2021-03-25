@@ -4163,6 +4163,35 @@ SELECT * from part_rp;
 (0 rows)
 
 DROP TABLE part_rp;
+-- concurrent detach
+CREATE TABLE range_parted2 (
+	a int
+) PARTITION BY RANGE(a);
+CREATE TABLE part_rp PARTITION OF range_parted2 FOR VALUES FROM (0) to (100);
+BEGIN;
+-- doesn't work in a partition block
+ALTER TABLE range_parted2 DETACH PARTITION part_rp CONCURRENTLY;
+ERROR:  ALTER TABLE ... DETACH CONCURRENTLY cannot run inside a transaction block
+COMMIT;
+CREATE TABLE part_rpd PARTITION OF range_parted2 DEFAULT;
+-- doesn't work if there's a default partition
+ALTER TABLE range_parted2 DETACH PARTITION part_rp CONCURRENTLY;
+ERROR:  cannot detach partitions concurrently when a default partition exists
+-- doesn't work for the default partition
+ALTER TABLE range_parted2 DETACH PARTITION part_rpd CONCURRENTLY;
+ERROR:  cannot detach partitions concurrently when a default partition exists
+DROP TABLE part_rpd;
+-- works fine
+ALTER TABLE range_parted2 DETACH PARTITION part_rp CONCURRENTLY;
+\d+ range_parted2
+                         Partitioned table "public.range_parted2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+Partition key: RANGE (a)
+Number of partitions: 0
+
+DROP TABLE range_parted2;
 -- Check ALTER TABLE commands for partitioned tables and partitions
 -- cannot add/drop column to/from *only* the parent
 ALTER TABLE ONLY list_parted2 ADD COLUMN c int;

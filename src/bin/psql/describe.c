@@ -2144,7 +2144,12 @@ describeOneTableDetails(const char *schemaname,
 
 		printfPQExpBuffer(&buf,
 						  "SELECT inhparent::pg_catalog.regclass,\n"
-						  "  pg_catalog.pg_get_expr(c.relpartbound, c.oid)");
+						  "  pg_catalog.pg_get_expr(c.relpartbound, c.oid),\n  ");
+
+		appendPQExpBuffer(&buf,
+						  pset.sversion >= 140000 ? "inhdetachpending" :
+						  "false as inhdetachpending");
+
 		/* If verbose, also request the partition constraint definition */
 		if (verbose)
 			appendPQExpBufferStr(&buf,
@@ -2162,17 +2167,19 @@ describeOneTableDetails(const char *schemaname,
 		{
 			char	   *parent_name = PQgetvalue(result, 0, 0);
 			char	   *partdef = PQgetvalue(result, 0, 1);
+			char	   *detached = PQgetvalue(result, 0, 2);
 
-			printfPQExpBuffer(&tmpbuf, _("Partition of: %s %s"), parent_name,
-							  partdef);
+			printfPQExpBuffer(&tmpbuf, _("Partition of: %s %s%s"), parent_name,
+							  partdef,
+							  strcmp(detached, "t") == 0 ? " DETACH PENDING" : "");
 			printTableAddFooter(&cont, tmpbuf.data);
 
 			if (verbose)
 			{
 				char	   *partconstraintdef = NULL;
 
-				if (!PQgetisnull(result, 0, 2))
-					partconstraintdef = PQgetvalue(result, 0, 2);
+				if (!PQgetisnull(result, 0, 3))
+					partconstraintdef = PQgetvalue(result, 0, 3);
 				/* If there isn't any constraint, show that explicitly */
 				if (partconstraintdef == NULL || partconstraintdef[0] == '\0')
 					printfPQExpBuffer(&tmpbuf, _("No partition constraint"));
@@ -3224,9 +3231,20 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* print child tables (with additional info if partitions) */
-		if (pset.sversion >= 100000)
+		if (pset.sversion >= 140000)
 			printfPQExpBuffer(&buf,
 							  "SELECT c.oid::pg_catalog.regclass, c.relkind,"
+							  " inhdetachpending,"
+							  " pg_catalog.pg_get_expr(c.relpartbound, c.oid)\n"
+							  "FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i\n"
+							  "WHERE c.oid = i.inhrelid AND i.inhparent = '%s'\n"
+							  "ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT',"
+							  " c.oid::pg_catalog.regclass::pg_catalog.text;",
+							  oid);
+		else if (pset.sversion >= 100000)
+			printfPQExpBuffer(&buf,
+							  "SELECT c.oid::pg_catalog.regclass, c.relkind,"
+							  " false AS inhdetachpending,"
 							  " pg_catalog.pg_get_expr(c.relpartbound, c.oid)\n"
 							  "FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i\n"
 							  "WHERE c.oid = i.inhrelid AND i.inhparent = '%s'\n"
@@ -3235,14 +3253,16 @@ describeOneTableDetails(const char *schemaname,
 							  oid);
 		else if (pset.sversion >= 80300)
 			printfPQExpBuffer(&buf,
-							  "SELECT c.oid::pg_catalog.regclass, c.relkind, NULL\n"
+							  "SELECT c.oid::pg_catalog.regclass, c.relkind,"
+							  " false AS inhdetachpending, NULL\n"
 							  "FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i\n"
 							  "WHERE c.oid = i.inhrelid AND i.inhparent = '%s'\n"
 							  "ORDER BY c.oid::pg_catalog.regclass::pg_catalog.text;",
 							  oid);
 		else
 			printfPQExpBuffer(&buf,
-							  "SELECT c.oid::pg_catalog.regclass, c.relkind, NULL\n"
+							  "SELECT c.oid::pg_catalog.regclass, c.relkind,"
+							  " false AS inhdetachpending, NULL\n"
 							  "FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i\n"
 							  "WHERE c.oid = i.inhrelid AND i.inhparent = '%s'\n"
 							  "ORDER BY c.relname;",
@@ -3292,11 +3312,13 @@ describeOneTableDetails(const char *schemaname,
 				else
 					printfPQExpBuffer(&buf, "%*s  %s",
 									  ctw, "", PQgetvalue(result, i, 0));
-				if (!PQgetisnull(result, i, 2))
-					appendPQExpBuffer(&buf, " %s", PQgetvalue(result, i, 2));
+				if (!PQgetisnull(result, i, 3))
+					appendPQExpBuffer(&buf, " %s", PQgetvalue(result, i, 3));
 				if (child_relkind == RELKIND_PARTITIONED_TABLE ||
 					child_relkind == RELKIND_PARTITIONED_INDEX)
 					appendPQExpBufferStr(&buf, ", PARTITIONED");
+				if (strcmp(PQgetvalue(result, i, 2), "t") == 0)
+					appendPQExpBuffer(&buf, " (DETACH PENDING)");
 				if (i < tuples - 1)
 					appendPQExpBufferChar(&buf, ',');
 

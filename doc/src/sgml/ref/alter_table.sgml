@@ -36,7 +36,7 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
 ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     ATTACH PARTITION <replaceable class="parameter">partition_name</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }
 ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
-    DETACH PARTITION <replaceable class="parameter">partition_name</replaceable>
+    DETACH PARTITION <replaceable class="parameter">partition_name</replaceable> [ CONCURRENTLY | FINALIZE ]
 
 <phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 
@@ -954,7 +954,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
-    <term><literal>DETACH PARTITION</literal> <replaceable class="parameter">partition_name</replaceable></term>
+    <term><literal>DETACH PARTITION <replaceable class="parameter">partition_name</replaceable> [ CONCURRENTLY | FINALIZE ]</literal></term>
+
     <listitem>
      <para>
       This form detaches the specified partition of the target table.  The detached
@@ -964,6 +965,27 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       were created as clones of those in the target table are removed.
       <literal>SHARE</literal> lock is obtained on any tables that reference
       this partitioned table in foreign key constraints.
+     </para>
+     <para>
+      If <literal>CONCURRENTLY</literal> is specified, it runs using a reduced
+      lock level to avoid blocking other sessions that might be accessing the
+      partitioned table.  In this mode, two transactions are used internally.
+      During the first transaction, a <literal>SHARE UPDATE EXCLUSIVE</literal>
+      lock is taken on both parent table and partition, and the partition is
+      marked as undergoing detach; at that point, the transaction is committed
+      and all other transactions using the partitioned table are waited for.
+      Once all those transactions have completed, the second transaction
+      acquires <literal>SHARE UPDATE EXCLUSIVE</literal> on the partitioned
+      table and <literal>ACCESS EXCLUSIVE</literal> on the partition,
+      and the detach process completes.  A <literal>CHECK</literal> constraint
+      that duplicates the partition constraint is added to the partition.
+      <literal>CONCURRENTLY</literal> cannot be run in a transaction block and
+      is not allowed if the partitioned table contains a default partition.
+     </para>
+     <para>
+      If <literal>FINALIZE</literal> is specified, a previous
+      <literal>DETACH CONCURRENTLY</literal> invocation that was cancelled or
+      interrupted is completed.
      </para>
     </listitem>
    </varlistentry>

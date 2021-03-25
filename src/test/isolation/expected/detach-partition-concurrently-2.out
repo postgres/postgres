@@ -1,0 +1,66 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s1b s1s s2d s3i1 s1c
+step s1b: BEGIN;
+step s1s: SELECT * FROM d_lp_fk;
+a              
+
+1              
+2              
+step s2d: ALTER TABLE d_lp_fk DETACH PARTITION d_lp_fk_1 CONCURRENTLY; <waiting ...>
+step s3i1: INSERT INTO d_lp_fk_r VALUES (1);
+ERROR:  insert or update on table "d_lp_fk_r" violates foreign key constraint "d_lp_fk_r_a_fkey"
+step s1c: COMMIT;
+step s2d: <... completed>
+
+starting permutation: s1b s1s s2d s3i2 s3i2 s1c
+step s1b: BEGIN;
+step s1s: SELECT * FROM d_lp_fk;
+a              
+
+1              
+2              
+step s2d: ALTER TABLE d_lp_fk DETACH PARTITION d_lp_fk_1 CONCURRENTLY; <waiting ...>
+step s3i2: INSERT INTO d_lp_fk_r VALUES (2);
+step s3i2: INSERT INTO d_lp_fk_r VALUES (2);
+step s1c: COMMIT;
+step s2d: <... completed>
+
+starting permutation: s1b s1s s3i1 s2d s1c
+step s1b: BEGIN;
+step s1s: SELECT * FROM d_lp_fk;
+a              
+
+1              
+2              
+step s3i1: INSERT INTO d_lp_fk_r VALUES (1);
+step s2d: ALTER TABLE d_lp_fk DETACH PARTITION d_lp_fk_1 CONCURRENTLY;
+ERROR:  removing partition "d_lp_fk_1" violates foreign key constraint "d_lp_fk_r_a_fkey1"
+step s1c: COMMIT;
+
+starting permutation: s1b s1s s3i2 s2d s1c
+step s1b: BEGIN;
+step s1s: SELECT * FROM d_lp_fk;
+a              
+
+1              
+2              
+step s3i2: INSERT INTO d_lp_fk_r VALUES (2);
+step s2d: ALTER TABLE d_lp_fk DETACH PARTITION d_lp_fk_1 CONCURRENTLY; <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+
+starting permutation: s1b s1s s3b s2d s3i1 s1c s3c
+step s1b: BEGIN;
+step s1s: SELECT * FROM d_lp_fk;
+a              
+
+1              
+2              
+step s3b: BEGIN;
+step s2d: ALTER TABLE d_lp_fk DETACH PARTITION d_lp_fk_1 CONCURRENTLY; <waiting ...>
+step s3i1: INSERT INTO d_lp_fk_r VALUES (1);
+ERROR:  insert or update on table "d_lp_fk_r" violates foreign key constraint "d_lp_fk_r_a_fkey"
+step s1c: COMMIT;
+step s2d: <... completed>
+step s3c: COMMIT;

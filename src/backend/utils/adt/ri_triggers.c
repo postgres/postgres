@@ -392,11 +392,15 @@ RI_FKey_check(TriggerData *trigdata)
 
 	/*
 	 * Now check that foreign key exists in PK table
+	 *
+	 * XXX detectNewRows must be true when a partitioned table is on the
+	 * referenced side.  The reason is that our snapshot must be fresh
+	 * in order for the hack in find_inheritance_children() to work.
 	 */
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
 					NULL, newslot,
-					false,
+					pk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE,
 					SPI_OK_SELECT);
 
 	if (SPI_finish() != SPI_OK_FINISH)

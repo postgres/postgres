@@ -2678,6 +2678,26 @@ DROP TABLE range_parted2;
 SELECT * from part_rp;
 DROP TABLE part_rp;
 
+-- concurrent detach
+CREATE TABLE range_parted2 (
+	a int
+) PARTITION BY RANGE(a);
+CREATE TABLE part_rp PARTITION OF range_parted2 FOR VALUES FROM (0) to (100);
+BEGIN;
+-- doesn't work in a partition block
+ALTER TABLE range_parted2 DETACH PARTITION part_rp CONCURRENTLY;
+COMMIT;
+CREATE TABLE part_rpd PARTITION OF range_parted2 DEFAULT;
+-- doesn't work if there's a default partition
+ALTER TABLE range_parted2 DETACH PARTITION part_rp CONCURRENTLY;
+-- doesn't work for the default partition
+ALTER TABLE range_parted2 DETACH PARTITION part_rpd CONCURRENTLY;
+DROP TABLE part_rpd;
+-- works fine
+ALTER TABLE range_parted2 DETACH PARTITION part_rp CONCURRENTLY;
+\d+ range_parted2
+DROP TABLE range_parted2;
+
 -- Check ALTER TABLE commands for partitioned tables and partitions
 
 -- cannot add/drop column to/from *only* the parent

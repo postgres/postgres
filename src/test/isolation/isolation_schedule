@@ -24,6 +24,10 @@ test: deadlock-hard
 test: deadlock-soft
 test: deadlock-soft-2
 test: deadlock-parallel
+test: detach-partition-concurrently-1
+test: detach-partition-concurrently-2
+test: detach-partition-concurrently-3
+test: detach-partition-concurrently-4
 test: fk-contention
 test: fk-deadlock
 test: fk-deadlock2

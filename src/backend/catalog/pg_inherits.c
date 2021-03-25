@@ -29,6 +29,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
 /*
@@ -50,9 +51,14 @@ typedef struct SeenRelsEntry
  * given rel; caller should already have locked it).  If lockmode is NoLock
  * then no locks are acquired, but caller must beware of race conditions
  * against possible DROPs of child relations.
+ *
+ * include_detached says to include all partitions, even if they're marked
+ * detached.  Passing it as false means they might or might not be included,
+ * depending on the visibility of the pg_inherits row for the active snapshot.
  */
 List *
-find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
+find_inheritance_children(Oid parentrelId, bool include_detached,
+						  LOCKMODE lockmode)
 {
 	List	   *list = NIL;
 	Relation	relation;
@@ -91,6 +97,30 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 
 	while ((inheritsTuple = systable_getnext(scan)) != NULL)
 	{
+		/*
+		 * Cope with partitions concurrently being detached.  When we see a
+		 * partition marked "detach pending", we only include it in the set of
+		 * visible partitions if caller requested all detached partitions, or
+		 * if its pg_inherits tuple's xmin is still visible to the active
+		 * snapshot.
+		 *
+		 * The reason for this check is that we want to avoid seeing the
+		 * partition as alive in RI queries during REPEATABLE READ or
+		 * SERIALIZABLE transactions.
+		 */
+		if (((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhdetachpending &&
+			!include_detached)
+		{
+			TransactionId xmin;
+			Snapshot snap;
+
+			xmin = HeapTupleHeaderGetXmin(inheritsTuple->t_data);
+			snap = GetActiveSnapshot();
+
+			if (!XidInMVCCSnapshot(xmin, snap))
+				continue;
+		}
+
 		inhrelid = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhrelid;
 		if (numoids >= maxoids)
 		{
@@ -160,6 +190,9 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
  * given rel; caller should already have locked it).  If lockmode is NoLock
  * then no locks are acquired, but caller must beware of race conditions
  * against possible DROPs of child relations.
+ *
+ * NB - No current callers of this routine are interested in children being
+ * concurrently detached, so there's no provision to include them.
  */
 List *
 find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
@@ -199,7 +232,8 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 		ListCell   *lc;
 
 		/* Get the direct children of this rel */
-		currentchildren = find_inheritance_children(currentrel, lockmode);
+		currentchildren = find_inheritance_children(currentrel, false,
+													lockmode);
 
 		/*
 		 * Add to the queue only those children not already seen. This avoids
@@ -430,6 +464,7 @@ StoreSingleInheritance(Oid relationId, Oid parentOid, int32 seqNumber)
 	values[Anum_pg_inherits_inhrelid - 1] = ObjectIdGetDatum(relationId);
 	values[Anum_pg_inherits_inhparent - 1] = ObjectIdGetDatum(parentOid);
 	values[Anum_pg_inherits_inhseqno - 1] = Int32GetDatum(seqNumber);
+	values[Anum_pg_inherits_inhdetachpending - 1] = BoolGetDatum(false);
 
 	memset(nulls, 0, sizeof(nulls));
 
@@ -449,10 +484,17 @@ StoreSingleInheritance(Oid relationId, Oid parentOid, int32 seqNumber)
  * as InvalidOid, in which case all tuples matching inhrelid are deleted;
  * otherwise only delete tuples with the specified inhparent.
  *
+ * expect_detach_pending is the expected state of the inhdetachpending flag.
+ * If the catalog row does not match that state, an error is raised.
+ *
+ * childname is the partition name, if a table; pass NULL for regular
+ * inheritance or when working with other relation kinds.
+ *
  * Returns whether at least one row was deleted.
  */
 bool
-DeleteInheritsTuple(Oid inhrelid, Oid inhparent)
+DeleteInheritsTuple(Oid inhrelid, Oid inhparent, bool expect_detach_pending,
+					const char *childname)
 {
 	bool		found = false;
 	Relation	catalogRelation;
@@ -479,6 +521,29 @@ DeleteInheritsTuple(Oid inhrelid, Oid inhparent)
 		parent = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhparent;
 		if (!OidIsValid(inhparent) || parent == inhparent)
 		{
+			bool	detach_pending;
+
+			detach_pending =
+				((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhdetachpending;
+
+			/*
+			 * Raise error depending on state.  This should only happen for
+			 * partitions, but we have no way to cross-check.
+			 */
+			if (detach_pending && !expect_detach_pending)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("cannot detach partition \"%s\"",
+								childname ? childname : "unknown relation"),
+						 errdetail("The partition is being detached concurrently or has an unfinished detach."),
+						 errhint("Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the pending detach operation")));
+			if (!detach_pending && expect_detach_pending)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("cannot complete detaching partition \"%s\"",
+								childname ? childname : "unknown relation"),
+						 errdetail("There's no pending concurrent detach.")));
+
 			CatalogTupleDelete(catalogRelation, &inheritsTuple->t_self);
 			found = true;
 		}
@@ -489,4 +554,47 @@ DeleteInheritsTuple(Oid inhrelid, Oid inhparent)
 	table_close(catalogRelation, RowExclusiveLock);
 
 	return found;
+}
+
+/*
+ * Return whether the pg_inherits tuple for a partition has the "detach
+ * pending" flag set.
+ */
+bool
+PartitionHasPendingDetach(Oid partoid)
+{
+	Relation	catalogRelation;
+	ScanKeyData key;
+	SysScanDesc scan;
+	HeapTuple	inheritsTuple;
+
+	/* We don't have a good way to verify it is in fact a partition */
+
+	/*
+	 * Find the pg_inherits entry by inhrelid.  (There should only be one.)
+	 */
+	catalogRelation = table_open(InheritsRelationId, RowExclusiveLock);
+	ScanKeyInit(&key,
+				Anum_pg_inherits_inhrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(partoid));
+	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndexId,
+							  true, NULL, 1, &key);
+
+	while (HeapTupleIsValid(inheritsTuple = systable_getnext(scan)))
+	{
+		bool	detached;
+
+		detached =
+			((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhdetachpending;
+
+		/* Done */
+		systable_endscan(scan);
+		table_close(catalogRelation, RowExclusiveLock);
+
+		return detached;
+	}
+
+	elog(ERROR, "relation %u is not a partition", partoid);
+	return false;				/* keep compiler quiet */
 }

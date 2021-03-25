@@ -2798,7 +2798,7 @@ check_new_partition_bound(char *relname, Relation parent,
 						  PartitionBoundSpec *spec, ParseState *pstate)
 {
 	PartitionKey key = RelationGetPartitionKey(parent);
-	PartitionDesc partdesc = RelationGetPartitionDesc(parent);
+	PartitionDesc partdesc = RelationGetPartitionDesc(parent, true);
 	PartitionBoundInfo boundinfo = partdesc->boundinfo;
 	int			with = -1;
 	bool		overlap = false;
@@ -3990,7 +3990,7 @@ get_qual_for_list(Relation parent, PartitionBoundSpec *spec)
 	{
 		int			i;
 		int			ndatums = 0;
-		PartitionDesc pdesc = RelationGetPartitionDesc(parent);
+		PartitionDesc pdesc = RelationGetPartitionDesc(parent, true);	/* XXX correct? */
 		PartitionBoundInfo boundinfo = pdesc->boundinfo;
 
 		if (boundinfo)
@@ -4190,7 +4190,7 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 	if (spec->is_default)
 	{
 		List	   *or_expr_args = NIL;
-		PartitionDesc pdesc = RelationGetPartitionDesc(parent);
+		PartitionDesc pdesc = RelationGetPartitionDesc(parent, true);	/* XXX correct? */
 		Oid		   *inhoids = pdesc->oids;
 		int			nparts = pdesc->nparts,
 					i;

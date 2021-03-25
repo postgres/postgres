@@ -21,6 +21,7 @@
 typedef struct PartitionDescData
 {
 	int			nparts;			/* Number of partitions */
+	bool		includes_detached;	/* Does it include detached partitions */
 	Oid		   *oids;			/* Array of 'nparts' elements containing
 								 * partition OIDs in order of the their bounds */
 	bool	   *is_leaf;		/* Array of 'nparts' elements storing whether
@@ -30,9 +31,9 @@ typedef struct PartitionDescData
 } PartitionDescData;
 
 
-extern PartitionDesc RelationGetPartitionDesc(Relation rel);
+extern PartitionDesc RelationGetPartitionDesc(Relation rel, bool include_detached);
 
-extern PartitionDirectory CreatePartitionDirectory(MemoryContext mcxt);
+extern PartitionDirectory CreatePartitionDirectory(MemoryContext mcxt, bool include_detached);
 extern PartitionDesc PartitionDirectoryLookup(PartitionDirectory, Relation);
 extern void DestroyPartitionDirectory(PartitionDirectory pdir);
 

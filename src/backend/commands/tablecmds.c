@@ -552,7 +552,8 @@ static PartitionSpec *transformPartitionSpec(Relation rel, PartitionSpec *partsp
 static void ComputePartitionAttrs(ParseState *pstate, Relation rel, List *partParams, AttrNumber *partattrs,
 								  List **partexprs, Oid *partopclass, Oid *partcollation, char strategy);
 static void CreateInheritance(Relation child_rel, Relation parent_rel);
-static void RemoveInheritance(Relation child_rel, Relation parent_rel);
+static void RemoveInheritance(Relation child_rel, Relation parent_rel,
+							  bool allow_detached);
 static ObjectAddress ATExecAttachPartition(List **wqueue, Relation rel,
 										   PartitionCmd *cmd,
 										   AlterTableUtilityContext *context);
@@ -561,8 +562,14 @@ static void QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
 											   List *partConstraint,
 											   bool validate_default);
 static void CloneRowTriggersToPartition(Relation parent, Relation partition);
+static void DetachAddConstraintIfNeeded(List **wqueue, Relation partRel);
 static void DropClonedTriggersFromPartition(Oid partitionId);
-static ObjectAddress ATExecDetachPartition(Relation rel, RangeVar *name);
+static ObjectAddress ATExecDetachPartition(List **wqueue, AlteredTableInfo *tab,
+										   Relation rel, RangeVar *name,
+										   bool concurrent);
+static void DetachPartitionFinalize(Relation rel, Relation partRel,
+									bool concurrent, Oid defaultPartOid);
+static ObjectAddress ATExecDetachPartitionFinalize(Relation rel, RangeVar *name);
 static ObjectAddress ATExecAttachPartitionIdx(List **wqueue, Relation rel,
 											  RangeVar *name);
 static void validatePartitionedIndex(Relation partedIdx, Relation partedTbl);
@@ -1010,7 +1017,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		 * lock the partition so as to avoid a deadlock.
 		 */
 		defaultPartOid =
-			get_default_oid_from_partdesc(RelationGetPartitionDesc(parent));
+			get_default_oid_from_partdesc(RelationGetPartitionDesc(parent,
+																   false));
 		if (OidIsValid(defaultPartOid))
 			defaultRel = table_open(defaultPartOid, AccessExclusiveLock);
 
@@ -1563,7 +1571,7 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	 */
 	if (is_partition && relOid != oldRelOid)
 	{
-		state->partParentOid = get_partition_parent(relOid);
+		state->partParentOid = get_partition_parent(relOid, true);
 		if (OidIsValid(state->partParentOid))
 			LockRelationOid(state->partParentOid, AccessExclusiveLock);
 	}
@@ -3323,7 +3331,7 @@ renameatt_internal(Oid myrelid,
 		 * expected_parents will only be 0 if we are not already recursing.
 		 */
 		if (expected_parents == 0 &&
-			find_inheritance_children(myrelid, NoLock) != NIL)
+			find_inheritance_children(myrelid, false, NoLock) != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("inherited column \"%s\" must be renamed in child tables too",
@@ -3522,7 +3530,7 @@ rename_constraint_internal(Oid myrelid,
 		else
 		{
 			if (expected_parents == 0 &&
-				find_inheritance_children(myrelid, NoLock) != NIL)
+				find_inheritance_children(myrelid, false, NoLock) != NIL)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("inherited constraint \"%s\" must be renamed in child tables too",
@@ -4142,7 +4150,14 @@ AlterTableGetLockLevel(List *cmds)
 				break;
 
 			case AT_DetachPartition:
-				cmd_lockmode = AccessExclusiveLock;
+				if (((PartitionCmd *) cmd->def)->concurrent)
+					cmd_lockmode = ShareUpdateExclusiveLock;
+				else
+					cmd_lockmode = AccessExclusiveLock;
+				break;
+
+			case AT_DetachPartitionFinalize:
+				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
 
 			case AT_CheckNotNull:
@@ -4225,6 +4240,19 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 
 	/* Find or create work queue entry for this table */
 	tab = ATGetQueueEntry(wqueue, rel);
+
+	/*
+	 * Disallow any ALTER TABLE other than ALTER TABLE DETACH FINALIZE on
+	 * partitions that are pending detach.
+	 */
+	if (rel->rd_rel->relispartition &&
+		cmd->subtype != AT_DetachPartitionFinalize &&
+		PartitionHasPendingDetach(RelationGetRelid(rel)))
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot alter partition \"%s\" with an incomplete detach",
+					   RelationGetRelationName(rel)),
+				errhint("Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the pending detach operation."));
 
 	/*
 	 * Copy the original subcommand for each table.  This avoids conflicts
@@ -4535,6 +4563,11 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_DetachPartition:
+			ATSimplePermissions(rel, ATT_TABLE);
+			/* No command-specific prep needed */
+			pass = AT_PASS_MISC;
+			break;
+		case AT_DetachPartitionFinalize:
 			ATSimplePermissions(rel, ATT_TABLE);
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
@@ -4930,7 +4963,12 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 			Assert(cmd != NULL);
 			/* ATPrepCmd ensures it must be a table */
 			Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
-			ATExecDetachPartition(rel, ((PartitionCmd *) cmd->def)->name);
+			ATExecDetachPartition(wqueue, tab, rel,
+								  ((PartitionCmd *) cmd->def)->name,
+								  ((PartitionCmd *) cmd->def)->concurrent);
+			break;
+		case AT_DetachPartitionFinalize:
+			ATExecDetachPartitionFinalize(rel, ((PartitionCmd *) cmd->def)->name);
 			break;
 		case AT_AlterCollationRefreshVersion:
 			/* ATPrepCmd ensured it must be an index */
@@ -6362,7 +6400,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 */
 	if (colDef->identity &&
 		recurse &&
-		find_inheritance_children(myrelid, NoLock) != NIL)
+		find_inheritance_children(myrelid, false, NoLock) != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot recursively add identity column to table that has child tables")));
@@ -6607,7 +6645,8 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * routines, we have to do this one level of recursion at a time; we can't
 	 * use find_all_inheritors to do it in one pass.
 	 */
-	children = find_inheritance_children(RelationGetRelid(rel), lockmode);
+	children =
+		find_inheritance_children(RelationGetRelid(rel), false, lockmode);
 
 	/*
 	 * If we are told not to recurse, there had better not be any child
@@ -6761,7 +6800,7 @@ ATPrepDropNotNull(Relation rel, bool recurse, bool recursing)
 	 */
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDesc partdesc = RelationGetPartitionDesc(rel);
+		PartitionDesc partdesc = RelationGetPartitionDesc(rel, false);
 
 		Assert(partdesc != NULL);
 		if (partdesc->nparts > 0 && !recurse && !recursing)
@@ -6860,7 +6899,7 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 	/* If rel is partition, shouldn't drop NOT NULL if parent has the same */
 	if (rel->rd_rel->relispartition)
 	{
-		Oid			parentId = get_partition_parent(RelationGetRelid(rel));
+		Oid			parentId = get_partition_parent(RelationGetRelid(rel), false);
 		Relation	parent = table_open(parentId, AccessShareLock);
 		TupleDesc	tupDesc = RelationGetDescr(parent);
 		AttrNumber	parent_attnum;
@@ -7470,7 +7509,7 @@ ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recurse, bool recurs
 	 * resulting state can be properly dumped and restored.
 	 */
 	if (!recurse &&
-		find_inheritance_children(RelationGetRelid(rel), lockmode))
+		find_inheritance_children(RelationGetRelid(rel), false, lockmode))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("ALTER TABLE / DROP EXPRESSION must be applied to child tables too")));
@@ -8077,7 +8116,8 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	 * routines, we have to do this one level of recursion at a time; we can't
 	 * use find_all_inheritors to do it in one pass.
 	 */
-	children = find_inheritance_children(RelationGetRelid(rel), lockmode);
+	children =
+		find_inheritance_children(RelationGetRelid(rel), false, lockmode);
 
 	if (children)
 	{
@@ -8541,7 +8581,8 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * routines, we have to do this one level of recursion at a time; we can't
 	 * use find_all_inheritors to do it in one pass.
 	 */
-	children = find_inheritance_children(RelationGetRelid(rel), lockmode);
+	children =
+		find_inheritance_children(RelationGetRelid(rel), false, lockmode);
 
 	/*
 	 * Check if ONLY was specified with ALTER TABLE.  If so, allow the
@@ -9156,7 +9197,7 @@ addFkRecurseReferenced(List **wqueue, Constraint *fkconstraint, Relation rel,
 	 */
 	if (pkrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDesc pd = RelationGetPartitionDesc(pkrel);
+		PartitionDesc pd = RelationGetPartitionDesc(pkrel, false);
 
 		for (int i = 0; i < pd->nparts; i++)
 		{
@@ -9290,7 +9331,7 @@ addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint, Relation rel,
 	}
 	else if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDesc pd = RelationGetPartitionDesc(rel);
+		PartitionDesc pd = RelationGetPartitionDesc(rel, false);
 
 		/*
 		 * Recurse to take appropriate action on each partition; either we
@@ -11074,7 +11115,8 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	if (!is_no_inherit_constraint)
-		children = find_inheritance_children(RelationGetRelid(rel), lockmode);
+		children =
+			find_inheritance_children(RelationGetRelid(rel), false, lockmode);
 	else
 		children = NIL;
 
@@ -11458,7 +11500,8 @@ ATPrepAlterColumnType(List **wqueue,
 		}
 	}
 	else if (!recursing &&
-			 find_inheritance_children(RelationGetRelid(rel), NoLock) != NIL)
+			 find_inheritance_children(RelationGetRelid(rel), false,
+									   NoLock) != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("type of inherited column \"%s\" must be changed in child tables too",
@@ -14296,7 +14339,7 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 	 */
 
 	/* Off to RemoveInheritance() where most of the work happens */
-	RemoveInheritance(rel, parent_rel);
+	RemoveInheritance(rel, parent_rel, false);
 
 	ObjectAddressSet(address, RelationRelationId,
 					 RelationGetRelid(parent_rel));
@@ -14308,11 +14351,71 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 }
 
 /*
+ * MarkInheritDetached
+ *
+ * Set inhdetachpending for a partition, for ATExecDetachPartition
+ * in concurrent mode.
+ */
+static void
+MarkInheritDetached(Relation child_rel, Relation parent_rel)
+{
+	Relation	catalogRelation;
+	SysScanDesc	scan;
+	ScanKeyData key;
+	HeapTuple	inheritsTuple;
+	bool		found = false;
+
+	Assert(child_rel->rd_rel->relkind == RELKIND_RELATION ||
+		   child_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+	Assert(parent_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+
+	/*
+	 * Find pg_inherits entries by inhrelid.
+	 */
+	catalogRelation = table_open(InheritsRelationId, RowExclusiveLock);
+	ScanKeyInit(&key,
+				Anum_pg_inherits_inhrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(child_rel)));
+	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndexId,
+							  true, NULL, 1, &key);
+
+	while (HeapTupleIsValid(inheritsTuple = systable_getnext(scan)))
+	{
+		HeapTuple	newtup;
+
+		if (((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhparent !=
+			RelationGetRelid(parent_rel))
+			elog(ERROR, "bad parent tuple found for partition %u",
+				 RelationGetRelid(child_rel));
+
+		newtup = heap_copytuple(inheritsTuple);
+		((Form_pg_inherits) GETSTRUCT(newtup))->inhdetachpending = true;
+
+		CatalogTupleUpdate(catalogRelation,
+						   &inheritsTuple->t_self,
+						   newtup);
+		found = true;
+	}
+
+	/* Done */
+	systable_endscan(scan);
+	table_close(catalogRelation, RowExclusiveLock);
+
+	if (!found)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation \"%s\" is not a partition of relation \"%s\"",
+						RelationGetRelationName(child_rel),
+						RelationGetRelationName(parent_rel))));
+}
+
+/*
  * RemoveInheritance
  *
  * Drop a parent from the child's parents. This just adjusts the attinhcount
  * and attislocal of the columns and removes the pg_inherit and pg_depend
- * entries.
+ * entries.  expect_detached is passed down to DeleteInheritsTuple, q.v..
  *
  * If attinhcount goes to 0 then attislocal gets set to true. If it goes back
  * up attislocal stays true, which means if a child is ever removed from a
@@ -14326,7 +14429,7 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
  * Common to ATExecDropInherit() and ATExecDetachPartition().
  */
 static void
-RemoveInheritance(Relation child_rel, Relation parent_rel)
+RemoveInheritance(Relation child_rel, Relation parent_rel, bool expect_detached)
 {
 	Relation	catalogRelation;
 	SysScanDesc scan;
@@ -14342,7 +14445,9 @@ RemoveInheritance(Relation child_rel, Relation parent_rel)
 		child_is_partition = true;
 
 	found = DeleteInheritsTuple(RelationGetRelid(child_rel),
-								RelationGetRelid(parent_rel));
+								RelationGetRelid(parent_rel),
+								expect_detached,
+								RelationGetRelationName(child_rel));
 	if (!found)
 	{
 		if (child_is_partition)
@@ -16508,7 +16613,7 @@ QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
 	}
 	else if (scanrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDesc partdesc = RelationGetPartitionDesc(scanrel);
+		PartitionDesc partdesc = RelationGetPartitionDesc(scanrel, false);
 		int			i;
 
 		for (i = 0; i < partdesc->nparts; i++)
@@ -16568,7 +16673,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 	 * new partition will change its partition constraint.
 	 */
 	defaultPartOid =
-		get_default_oid_from_partdesc(RelationGetPartitionDesc(rel));
+		get_default_oid_from_partdesc(RelationGetPartitionDesc(rel, false));
 	if (OidIsValid(defaultPartOid))
 		LockRelationOid(defaultPartOid, AccessExclusiveLock);
 
@@ -17157,105 +17262,213 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
  * ALTER TABLE DETACH PARTITION
  *
  * Return the address of the relation that is no longer a partition of rel.
+ *
+ * If concurrent mode is requested, we run in two transactions.  A side-
+ * effect is that this command cannot run in a multi-part ALTER TABLE.
+ * Currently, that's enforced by the grammar.
+ *
+ * The strategy for concurrency is to first modify the partition's
+ * pg_inherit catalog row to make it visible to everyone that the
+ * partition is detached, lock the partition against writes, and commit
+ * the transaction; anyone who requests the partition descriptor from
+ * that point onwards has to ignore such a partition.  In a second
+ * transaction, we wait until all transactions that could have seen the
+ * partition as attached are gone, then we remove the rest of partition
+ * metadata (pg_inherits and pg_class.relpartbounds).
  */
 static ObjectAddress
-ATExecDetachPartition(Relation rel, RangeVar *name)
+ATExecDetachPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
+					  RangeVar *name, bool concurrent)
 {
-	Relation	partRel,
-				classRel;
-	HeapTuple	tuple,
-				newtuple;
-	Datum		new_val[Natts_pg_class];
-	bool		new_null[Natts_pg_class],
-				new_repl[Natts_pg_class];
+	Relation	partRel;
 	ObjectAddress address;
 	Oid			defaultPartOid;
-	List	   *indexes;
-	List	   *fks;
-	ListCell   *cell;
 
 	/*
 	 * We must lock the default partition, because detaching this partition
 	 * will change its partition constraint.
 	 */
 	defaultPartOid =
-		get_default_oid_from_partdesc(RelationGetPartitionDesc(rel));
-	if (OidIsValid(defaultPartOid))
-		LockRelationOid(defaultPartOid, AccessExclusiveLock);
-
-	partRel = table_openrv(name, ShareUpdateExclusiveLock);
-
-	/* Ensure that foreign keys still hold after this detach */
-	ATDetachCheckNoForeignKeyRefs(partRel);
-
-	/* All inheritance related checks are performed within the function */
-	RemoveInheritance(partRel, rel);
-
-	/* Update pg_class tuple */
-	classRel = table_open(RelationRelationId, RowExclusiveLock);
-	tuple = SearchSysCacheCopy1(RELOID,
-								ObjectIdGetDatum(RelationGetRelid(partRel)));
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u",
-			 RelationGetRelid(partRel));
-	Assert(((Form_pg_class) GETSTRUCT(tuple))->relispartition);
-
-	/* Clear relpartbound and reset relispartition */
-	memset(new_val, 0, sizeof(new_val));
-	memset(new_null, false, sizeof(new_null));
-	memset(new_repl, false, sizeof(new_repl));
-	new_val[Anum_pg_class_relpartbound - 1] = (Datum) 0;
-	new_null[Anum_pg_class_relpartbound - 1] = true;
-	new_repl[Anum_pg_class_relpartbound - 1] = true;
-	newtuple = heap_modify_tuple(tuple, RelationGetDescr(classRel),
-								 new_val, new_null, new_repl);
-
-	((Form_pg_class) GETSTRUCT(newtuple))->relispartition = false;
-	CatalogTupleUpdate(classRel, &newtuple->t_self, newtuple);
-	heap_freetuple(newtuple);
-
+		get_default_oid_from_partdesc(RelationGetPartitionDesc(rel, false));
 	if (OidIsValid(defaultPartOid))
 	{
 		/*
-		 * If the relation being detached is the default partition itself,
-		 * remove it from the parent's pg_partitioned_table entry.
+		 * Concurrent detaching when a default partition exists is not
+		 * supported. The main problem is that the default partition
+		 * constraint would change.  And there's a definitional problem: what
+		 * should happen to the tuples that are being inserted that belong to
+		 * the partition being detached?  Putting them on the partition being
+		 * detached would be wrong, since they'd become "lost" after the but
+		 * we cannot put them in the default partition either until we alter
+		 * its partition constraint.
 		 *
-		 * If not, we must invalidate default partition's relcache entry, as
-		 * in StorePartitionBound: its partition constraint depends on every
-		 * other partition's partition constraint.
+		 * I think we could solve this problem if we effected the constraint
+		 * change before committing the first transaction.  But the lock would
+		 * have to remain AEL and it would cause concurrent query planning to
+		 * be blocked, so changing it that way would be even worse.
 		 */
-		if (RelationGetRelid(partRel) == defaultPartOid)
-			update_default_partition_oid(RelationGetRelid(rel), InvalidOid);
-		else
-			CacheInvalidateRelcacheByRelid(defaultPartOid);
+		if (concurrent)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("cannot detach partitions concurrently when a default partition exists")));
+		LockRelationOid(defaultPartOid, AccessExclusiveLock);
 	}
 
-	/* detach indexes too */
-	indexes = RelationGetIndexList(partRel);
-	foreach(cell, indexes)
+	/*
+	 * In concurrent mode, the partition is locked with share-update-exclusive
+	 * in the first transaction.  This allows concurrent transactions to be
+	 * doing DML to the partition.
+	 */
+	partRel = table_openrv(name, concurrent ? ShareUpdateExclusiveLock :
+						   AccessExclusiveLock);
+
+	/*
+	 * Check inheritance conditions and either delete the pg_inherits row
+	 * (in non-concurrent mode) or just set the inhdetachpending flag.
+	 */
+	if (!concurrent)
+		RemoveInheritance(partRel, rel, false);
+	else
+		MarkInheritDetached(partRel, rel);
+
+	/*
+	 * Ensure that foreign keys still hold after this detach.  This keeps
+	 * locks on the referencing tables, which prevents concurrent transactions
+	 * from adding rows that we wouldn't see.  For this to work in concurrent
+	 * mode, it is critical that the partition appears as no longer attached
+	 * for the RI queries as soon as the first transaction commits.
+	 */
+	ATDetachCheckNoForeignKeyRefs(partRel);
+
+	/*
+	 * Concurrent mode has to work harder; first we add a new constraint to
+	 * the partition that matches the partition constraint.  Then we close our
+	 * existing transaction, and in a new one wait for all processes to catch
+	 * up on the catalog updates we've done so far; at that point we can
+	 * complete the operation.
+	 */
+	if (concurrent)
 	{
-		Oid			idxid = lfirst_oid(cell);
-		Relation	idx;
-		Oid			constrOid;
+		Oid		partrelid,
+				parentrelid;
+		LOCKTAG		tag;
+		char   *parentrelname;
+		char   *partrelname;
 
-		if (!has_superclass(idxid))
-			continue;
+		/*
+		 * Add a new constraint to the partition being detached, which
+		 * supplants the partition constraint (unless there is one already).
+		 */
+		DetachAddConstraintIfNeeded(wqueue, partRel);
 
-		Assert((IndexGetRelation(get_partition_parent(idxid), false) ==
-				RelationGetRelid(rel)));
+		/*
+		 * We're almost done now; the only traces that remain are the
+		 * pg_inherits tuple and the partition's relpartbounds.  Before we can
+		 * remove those, we need to wait until all transactions that know that
+		 * this is a partition are gone.
+		 */
 
-		idx = index_open(idxid, AccessExclusiveLock);
-		IndexSetParentIndex(idx, InvalidOid);
+		/*
+		 * Remember relation OIDs to re-acquire them later; and relation names
+		 * too, for error messages if something is dropped in between.
+		 */
+		partrelid = RelationGetRelid(partRel);
+		parentrelid = RelationGetRelid(rel);
+		parentrelname = MemoryContextStrdup(PortalContext,
+											RelationGetRelationName(rel));
+		partrelname = MemoryContextStrdup(PortalContext,
+										  RelationGetRelationName(partRel));
 
-		/* If there's a constraint associated with the index, detach it too */
-		constrOid = get_relation_idx_constraint_oid(RelationGetRelid(partRel),
-													idxid);
-		if (OidIsValid(constrOid))
-			ConstraintSetParentConstraint(constrOid, InvalidOid, InvalidOid);
+		/* Invalidate relcache entries for the parent -- must be before close */
+		CacheInvalidateRelcache(rel);
 
-		index_close(idx, NoLock);
+		table_close(partRel, NoLock);
+		table_close(rel, NoLock);
+		tab->rel = NULL;
+
+		/* Make updated catalog entry visible */
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+
+		StartTransactionCommand();
+
+		/*
+		 * Now wait.  This ensures that all queries that were planned including
+		 * the partition are finished before we remove the rest of catalog
+		 * entries.  We don't need or indeed want to acquire this lock, though
+		 * -- that would block later queries.
+		 *
+		 * We don't need to concern ourselves with waiting for a lock on the
+		 * partition itself, since we will acquire AccessExclusiveLock below.
+		 */
+		SET_LOCKTAG_RELATION(tag, MyDatabaseId, parentrelid);
+		WaitForLockersMultiple(list_make1(&tag), AccessExclusiveLock, false);
+
+		/*
+		 * Now acquire locks in both relations again.  Note they may have been
+		 * removed in the meantime, so care is required.
+		 */
+		rel = try_relation_open(parentrelid, ShareUpdateExclusiveLock);
+		partRel = try_relation_open(partrelid, AccessExclusiveLock);
+
+		/* If the relations aren't there, something bad happened; bail out */
+		if (rel == NULL)
+		{
+			if (partRel != NULL)	/* shouldn't happen */
+				elog(WARNING, "dangling partition \"%s\" remains, can't fix",
+					 partrelname);
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("partitioned table \"%s\" was removed concurrently",
+							parentrelname)));
+		}
+		if (partRel == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("partition \"%s\" was removed concurrently", partrelname)));
+
+		tab->rel = rel;
 	}
-	table_close(classRel, RowExclusiveLock);
+
+	/* Do the final part of detaching */
+	DetachPartitionFinalize(rel, partRel, concurrent, defaultPartOid);
+
+	ObjectAddressSet(address, RelationRelationId, RelationGetRelid(partRel));
+
+	/* keep our lock until commit */
+	table_close(partRel, NoLock);
+
+	return address;
+}
+
+/*
+ * Second part of ALTER TABLE .. DETACH.
+ *
+ * This is separate so that it can be run independently when the second
+ * transaction of the concurrent algorithm fails (crash or abort).
+ */
+static void
+DetachPartitionFinalize(Relation rel, Relation partRel, bool concurrent,
+						Oid defaultPartOid)
+{
+	Relation	classRel;
+	List	   *fks;
+	ListCell   *cell;
+	List	   *indexes;
+	Datum		new_val[Natts_pg_class];
+	bool		new_null[Natts_pg_class],
+				new_repl[Natts_pg_class];
+	HeapTuple	tuple,
+				newtuple;
+
+	if (concurrent)
+	{
+		/*
+		 * We can remove the pg_inherits row now. (In the non-concurrent case,
+		 * this was already done).
+		 */
+		RemoveInheritance(partRel, rel, true);
+	}
 
 	/* Drop any triggers that were cloned on creation/attach. */
 	DropClonedTriggersFromPartition(RelationGetRelid(partRel));
@@ -17328,20 +17541,159 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		ObjectAddressSet(constraint, ConstraintRelationId, constrOid);
 		performDeletion(&constraint, DROP_RESTRICT, 0);
 	}
-	CommandCounterIncrement();
+
+	/* Now we can detach indexes */
+	indexes = RelationGetIndexList(partRel);
+	foreach(cell, indexes)
+	{
+		Oid			idxid = lfirst_oid(cell);
+		Relation	idx;
+		Oid			constrOid;
+
+		if (!has_superclass(idxid))
+			continue;
+
+		Assert((IndexGetRelation(get_partition_parent(idxid, false), false) ==
+				RelationGetRelid(rel)));
+
+		idx = index_open(idxid, AccessExclusiveLock);
+		IndexSetParentIndex(idx, InvalidOid);
+
+		/* If there's a constraint associated with the index, detach it too */
+		constrOid = get_relation_idx_constraint_oid(RelationGetRelid(partRel),
+													idxid);
+		if (OidIsValid(constrOid))
+			ConstraintSetParentConstraint(constrOid, InvalidOid, InvalidOid);
+
+		index_close(idx, NoLock);
+	}
+
+	/* Update pg_class tuple */
+	classRel = table_open(RelationRelationId, RowExclusiveLock);
+	tuple = SearchSysCacheCopy1(RELOID,
+								ObjectIdGetDatum(RelationGetRelid(partRel)));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u",
+			 RelationGetRelid(partRel));
+	Assert(((Form_pg_class) GETSTRUCT(tuple))->relispartition);
+
+	/* Clear relpartbound and reset relispartition */
+	memset(new_val, 0, sizeof(new_val));
+	memset(new_null, false, sizeof(new_null));
+	memset(new_repl, false, sizeof(new_repl));
+	new_val[Anum_pg_class_relpartbound - 1] = (Datum) 0;
+	new_null[Anum_pg_class_relpartbound - 1] = true;
+	new_repl[Anum_pg_class_relpartbound - 1] = true;
+	newtuple = heap_modify_tuple(tuple, RelationGetDescr(classRel),
+								 new_val, new_null, new_repl);
+
+	((Form_pg_class) GETSTRUCT(newtuple))->relispartition = false;
+	CatalogTupleUpdate(classRel, &newtuple->t_self, newtuple);
+	heap_freetuple(newtuple);
+	table_close(classRel, RowExclusiveLock);
+
+	if (OidIsValid(defaultPartOid))
+	{
+		/*
+		 * If the relation being detached is the default partition itself,
+		 * remove it from the parent's pg_partitioned_table entry.
+		 *
+		 * If not, we must invalidate default partition's relcache entry, as
+		 * in StorePartitionBound: its partition constraint depends on every
+		 * other partition's partition constraint.
+		 */
+		if (RelationGetRelid(partRel) == defaultPartOid)
+			update_default_partition_oid(RelationGetRelid(rel), InvalidOid);
+		else
+			CacheInvalidateRelcacheByRelid(defaultPartOid);
+	}
 
 	/*
 	 * Invalidate the parent's relcache so that the partition is no longer
 	 * included in its partition descriptor.
 	 */
 	CacheInvalidateRelcache(rel);
+}
+
+/*
+ * ALTER TABLE ... DETACH PARTITION ... FINALIZE
+ *
+ * To use when a DETACH PARTITION command previously did not run to
+ * completion; this completes the detaching process.
+ */
+static ObjectAddress
+ATExecDetachPartitionFinalize(Relation rel, RangeVar *name)
+{
+	Relation    partRel;
+	ObjectAddress address;
+	Snapshot	snap = GetActiveSnapshot();
+
+	partRel = table_openrv(name, AccessExclusiveLock);
+
+	/*
+	 * Wait until existing snapshots are gone.  This is important if the
+	 * second transaction of DETACH PARTITION CONCURRENTLY is canceled: the
+	 * user could immediately run DETACH FINALIZE without actually waiting for
+	 * existing transactions.  We must not complete the detach action until
+	 * all such queries are complete (otherwise we would present them with an
+	 * inconsistent view of catalogs).
+	 */
+	WaitForOlderSnapshots(snap->xmin, false);
+
+	DetachPartitionFinalize(rel, partRel, true, InvalidOid);
 
 	ObjectAddressSet(address, RelationRelationId, RelationGetRelid(partRel));
 
-	/* keep our lock until commit */
 	table_close(partRel, NoLock);
 
 	return address;
+}
+
+/*
+ * DetachAddConstraintIfNeeded
+ *		Subroutine for ATExecDetachPartition.  Create a constraint that
+ *		takes the place of the partition constraint, but avoid creating
+ *		a dupe if an equivalent constraint already exists.
+ */
+static void
+DetachAddConstraintIfNeeded(List **wqueue, Relation partRel)
+{
+	AlteredTableInfo *tab;
+	Expr	   *constraintExpr;
+	TupleDesc	td = RelationGetDescr(partRel);
+	Constraint *n;
+
+	constraintExpr = make_ands_explicit(RelationGetPartitionQual(partRel));
+
+	/* If an identical constraint exists, we don't need to create one */
+	if (td->constr && td->constr->num_check > 0)
+	{
+		for (int i = 0; i < td->constr->num_check; i++)
+		{
+			Node	*thisconstr;
+
+			thisconstr = stringToNode(td->constr->check[i].ccbin);
+
+			if (equal(constraintExpr, thisconstr))
+				return;
+		}
+	}
+
+	tab = ATGetQueueEntry(wqueue, partRel);
+
+	/* Add constraint on partition, equivalent to the partition constraint */
+	n = makeNode(Constraint);
+	n->contype = CONSTR_CHECK;
+	n->conname = NULL;
+	n->location = -1;
+	n->is_no_inherit = false;
+	n->raw_expr = NULL;
+	n->cooked_expr = nodeToString(constraintExpr);
+	n->initially_valid = true;
+	n->skip_validation = true;
+	/* It's a re-add, since it nominally already exists */
+	ATAddCheckConstraint(wqueue, tab, partRel, n,
+						 true, false, true, ShareUpdateExclusiveLock);
 }
 
 /*
@@ -17511,7 +17863,7 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 
 	/* Silently do nothing if already in the right state */
 	currParent = partIdx->rd_rel->relispartition ?
-		get_partition_parent(partIdxId) : InvalidOid;
+		get_partition_parent(partIdxId, false) : InvalidOid;
 	if (currParent != RelationGetRelid(parentIdx))
 	{
 		IndexInfo  *childInfo;
@@ -17539,7 +17891,7 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 							   RelationGetRelationName(partIdx))));
 
 		/* Make sure it indexes a partition of the other index's table */
-		partDesc = RelationGetPartitionDesc(parentTbl);
+		partDesc = RelationGetPartitionDesc(parentTbl, false);
 		found = false;
 		for (i = 0; i < partDesc->nparts; i++)
 		{
@@ -17693,7 +18045,7 @@ validatePartitionedIndex(Relation partedIdx, Relation partedTbl)
 	 * If we found as many inherited indexes as the partitioned table has
 	 * partitions, we're good; update pg_index to set indisvalid.
 	 */
-	if (tuples == RelationGetPartitionDesc(partedTbl)->nparts)
+	if (tuples == RelationGetPartitionDesc(partedTbl, false)->nparts)
 	{
 		Relation	idxRel;
 		HeapTuple	newtup;
@@ -17723,8 +18075,8 @@ validatePartitionedIndex(Relation partedIdx, Relation partedTbl)
 		/* make sure we see the validation we just did */
 		CommandCounterIncrement();
 
-		parentIdxId = get_partition_parent(RelationGetRelid(partedIdx));
-		parentTblId = get_partition_parent(RelationGetRelid(partedTbl));
+		parentIdxId = get_partition_parent(RelationGetRelid(partedIdx), false);
+		parentTblId = get_partition_parent(RelationGetRelid(partedTbl), false);
 		parentIdx = relation_open(parentIdxId, AccessExclusiveLock);
 		parentTbl = relation_open(parentTblId, AccessExclusiveLock);
 		Assert(!parentIdx->rd_index->indisvalid);
