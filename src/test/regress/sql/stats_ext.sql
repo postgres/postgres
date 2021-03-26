@@ -194,9 +194,9 @@ TRUNCATE TABLE ndistinct;
 
 -- under-estimates when using only per-column statistics
 INSERT INTO ndistinct (a, b, c, filler1)
-     SELECT mod(i,50), mod(i,51), mod(i,32),
-            cash_words(mod(i,33)::int::money)
-       FROM generate_series(1,5000) s(i);
+     SELECT mod(i,13), mod(i,17), mod(i,19),
+            cash_words(mod(i,23)::int::money)
+       FROM generate_series(1,1000) s(i);
 
 ANALYZE ndistinct;
 
@@ -251,7 +251,7 @@ CREATE INDEX fdeps_abc_idx ON functional_dependencies (a, b, c);
 
 -- random data (no functional dependencies)
 INSERT INTO functional_dependencies (a, b, c, filler1)
-     SELECT mod(i, 23), mod(i, 29), mod(i, 31), i FROM generate_series(1,5000) s(i);
+     SELECT mod(i, 5), mod(i, 7), mod(i, 11), i FROM generate_series(1,1000) s(i);
 
 ANALYZE functional_dependencies;
 
