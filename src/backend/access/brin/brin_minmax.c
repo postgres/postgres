@@ -30,8 +30,6 @@ typedef struct MinmaxOpaque
 
 static FmgrInfo *minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno,
 											  Oid subtype, uint16 strategynum);
-static bool minmax_consistent_key(BrinDesc *bdesc, BrinValues *column,
-								  ScanKey key, Oid colloid);
 
 
 Datum
@@ -133,64 +131,32 @@ brin_minmax_add_value(PG_FUNCTION_ARGS)
  * return whether the scan key is consistent with the index tuple's min/max
  * values.  Return true if so, false otherwise.
  *
- * We inspect the IS NULL scan keys first, which allows us to make a decision
- * without looking at the contents of the page range. Only when the page range
- * matches all those keys, we check the regular scan keys.
+ * We're no longer dealing with NULL keys in the consistent function, that is
+ * now handled by the AM code. That means we should not get any all-NULL ranges
+ * either, because those can't be consistent with regular (not [IS] NULL) keys.
  */
 Datum
 brin_minmax_consistent(PG_FUNCTION_ARGS)
 {
 	BrinDesc   *bdesc = (BrinDesc *) PG_GETARG_POINTER(0);
 	BrinValues *column = (BrinValues *) PG_GETARG_POINTER(1);
-	ScanKey    *keys = (ScanKey *) PG_GETARG_POINTER(2);
-	int			nkeys = PG_GETARG_INT32(3);
-	Oid			colloid = PG_GET_COLLATION();
-	int			keyno;
-
-	/* make sure we got some scan keys */
-	Assert((nkeys > 0) && (keys != NULL));
-
-	/*
-	 * If is all nulls, it cannot possibly be consistent (at this point we
-	 * know there are at least some regular scan keys).
-	 */
-	if (column->bv_allnulls)
-		PG_RETURN_BOOL(false);
-
-	/* Check that the range is consistent with all scan keys. */
-	for (keyno = 0; keyno < nkeys; keyno++)
-	{
-		ScanKey		key = keys[keyno];
-
-		/* NULL keys are handled and filtered-out in bringetbitmap */
-		Assert(!(key->sk_flags & SK_ISNULL));
-
-		/*
-		 * When there are multiple scan keys, failure to meet the criteria for
-		 * a single one of them is enough to discard the range as a whole, so
-		 * break out of the loop as soon as a false return value is obtained.
-		 */
-		if (!minmax_consistent_key(bdesc, column, key, colloid))
-			PG_RETURN_DATUM(false);
-	}
-
-	PG_RETURN_DATUM(true);
-}
-
-/*
- * minmax_consistent_key
- *		Determine if the range is consistent with a single scan key.
- */
-static bool
-minmax_consistent_key(BrinDesc *bdesc, BrinValues *column, ScanKey key,
-					  Oid colloid)
-{
-	FmgrInfo   *finfo;
-	AttrNumber	attno = key->sk_attno;
-	Oid			subtype = key->sk_subtype;
-	Datum		value = key->sk_argument;
+	ScanKey		key = (ScanKey) PG_GETARG_POINTER(2);
+	Oid			colloid = PG_GET_COLLATION(),
+				subtype;
+	AttrNumber	attno;
+	Datum		value;
 	Datum		matches;
+	FmgrInfo   *finfo;
 
+	/* This opclass uses the old signature with only three arguments. */
+	Assert(PG_NARGS() == 3);
+
+	/* Should not be dealing with all-NULL ranges. */
+	Assert(!column->bv_allnulls);
+
+	attno = key->sk_attno;
+	subtype = key->sk_subtype;
+	value = key->sk_argument;
 	switch (key->sk_strategy)
 	{
 		case BTLessStrategyNumber:
@@ -233,7 +199,7 @@ minmax_consistent_key(BrinDesc *bdesc, BrinValues *column, ScanKey key,
 			break;
 	}
 
-	return DatumGetBool(matches);
+	PG_RETURN_DATUM(matches);
 }
 
 /*

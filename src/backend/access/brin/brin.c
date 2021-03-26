@@ -635,25 +635,57 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 					}
 
 					/*
+					 * Collation from the first key (has to be the same for
+					 * all keys for the same attribue).
+					 */
+					collation = keys[attno - 1][0]->sk_collation;
+
+					/*
 					 * Check whether the scan key is consistent with the page
 					 * range values; if so, have the pages in the range added
 					 * to the output bitmap.
 					 *
-					 * XXX We simply use the collation from the first key (it
-					 * has to be the same for all keys for the same attribue).
+					 * The opclass may or may not support processing of multiple
+					 * scan keys. We can determine that based on the number of
+					 * arguments - functions with extra parameter (number of scan
+					 * keys) do support this, otherwise we have to simply pass the
+					 * scan keys one by one.
 					 */
-					collation = keys[attno - 1][0]->sk_collation;
+					if (consistentFn[attno - 1].fn_nargs >= 4)
+					{
+						/* Check all keys at once */
+						add = FunctionCall4Coll(&consistentFn[attno - 1],
+												collation,
+												PointerGetDatum(bdesc),
+												PointerGetDatum(bval),
+												PointerGetDatum(keys[attno - 1]),
+												Int32GetDatum(nkeys[attno - 1]));
+						addrange = DatumGetBool(add);
+					}
+					else
+					{
+						/*
+						 * Check keys one by one
+						 *
+						 * When there are multiple scan keys, failure to meet the
+						 * criteria for a single one of them is enough to discard
+						 * the range as a whole, so break out of the loop as soon
+						 * as a false return value is obtained.
+						 */
+						int			keyno;
 
-					/* Check all keys at once */
-					add = FunctionCall4Coll(&consistentFn[attno - 1],
-											collation,
-											PointerGetDatum(bdesc),
-											PointerGetDatum(bval),
-											PointerGetDatum(keys[attno - 1]),
-											Int32GetDatum(nkeys[attno - 1]));
-					addrange = DatumGetBool(add);
-					if (!addrange)
-						break;
+						for (keyno = 0; keyno < nkeys[attno - 1]; keyno++)
+						{
+							add = FunctionCall3Coll(&consistentFn[attno - 1],
+													keys[attno - 1][keyno]->sk_collation,
+													PointerGetDatum(bdesc),
+													PointerGetDatum(bval),
+													PointerGetDatum(keys[attno - 1][keyno]));
+							addrange = DatumGetBool(add);
+							if (!addrange)
+								break;
+						}
+					}
 				}
 			}
 		}
