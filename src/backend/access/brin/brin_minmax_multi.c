@@ -665,7 +665,20 @@ range_serialize(Ranges *range)
 	{
 		if (typbyval)			/* simple by-value data types */
 		{
-			memcpy(ptr, &range->values[i], typlen);
+			Datum		tmp;
+
+			/*
+			 * For values passed by value, we need to copy just the
+			 * significant bytes - we can't use memcpy directly, as that
+			 * assumes little endian behavior.  store_att_byval does
+			 * almost what we need, but it requires properly aligned
+			 * buffer - the output buffer does not guarantee that. So we
+			 * simply use a local Datum variable (which guarantees proper
+			 * alignment), and then copy the value from it.
+			 */
+			store_att_byval(&tmp, range->values[i], typlen);
+
+			memcpy(ptr, &tmp, typlen);
 			ptr += typlen;
 		}
 		else if (typlen > 0)	/* fixed-length by-ref types */
@@ -710,9 +723,11 @@ range_deserialize(int maxvalues, SerializedRanges *serialized)
 {
 	int			i,
 				nvalues;
-	char	   *ptr;
+	char	   *ptr,
+			   *dataptr;
 	bool		typbyval;
 	int			typlen;
+	Size		datalen;
 
 	Ranges	   *range;
 
@@ -740,9 +755,42 @@ range_deserialize(int maxvalues, SerializedRanges *serialized)
 	typlen = get_typlen(serialized->typid);
 
 	/*
-	 * And now deconstruct the values into Datum array. We don't need to copy
-	 * the values and will instead just point the values to the serialized
-	 * varlena value (assuming it will be kept around).
+	 * And now deconstruct the values into Datum array. We have to copy the
+	 * data because the serialized representation ignores alignment, and we
+	 * don't want to rely it will be kept around anyway.
+	 */
+	ptr = serialized->data;
+
+	/*
+	 * We don't want to allocate many pieces, so we just allocate everything
+	 * in one chunk. How much space will we need?
+	 *
+	 * XXX We don't need to copy simple by-value data types.
+	 */
+	datalen = 0;
+	dataptr = NULL;
+	for (i = 0; (i < nvalues) && (!typbyval); i++)
+	{
+		if (typlen > 0)	/* fixed-length by-ref types */
+			datalen += MAXALIGN(typlen);
+		else if (typlen == -1)	/* varlena */
+		{
+			datalen += MAXALIGN(VARSIZE_ANY(DatumGetPointer(ptr)));
+			ptr += VARSIZE_ANY(DatumGetPointer(ptr));
+		}
+		else if (typlen == -2)	/* cstring */
+		{
+			datalen += MAXALIGN(strlen(DatumGetPointer(ptr)) + 1);
+			ptr += strlen(DatumGetPointer(ptr)) + 1;
+		}
+	}
+
+	if (datalen > 0)
+		dataptr = palloc(datalen);
+
+	/*
+	 * Restore the source pointer (might have been modified when calculating
+	 * the space we need to allocate).
 	 */
 	ptr = serialized->data;
 
@@ -750,24 +798,38 @@ range_deserialize(int maxvalues, SerializedRanges *serialized)
 	{
 		if (typbyval)			/* simple by-value data types */
 		{
-			memcpy(&range->values[i], ptr, typlen);
+			Datum		v = 0;
+
+			memcpy(&v, ptr, typlen);
+
+			range->values[i] = fetch_att(&v, true, typlen);
 			ptr += typlen;
 		}
 		else if (typlen > 0)	/* fixed-length by-ref types */
 		{
-			/* no copy, just set the value to the pointer */
-			range->values[i] = PointerGetDatum(ptr);
+			range->values[i] = PointerGetDatum(dataptr);
+
+			memcpy(dataptr, ptr, typlen);
+			dataptr += MAXALIGN(typlen);
+
 			ptr += typlen;
 		}
 		else if (typlen == -1)	/* varlena */
 		{
-			range->values[i] = PointerGetDatum(ptr);
-			ptr += VARSIZE_ANY(DatumGetPointer(range->values[i]));
+			range->values[i] = PointerGetDatum(dataptr);
+
+			memcpy(dataptr, ptr, VARSIZE_ANY(ptr));
+			dataptr += MAXALIGN(VARSIZE_ANY(ptr));
+			ptr += VARSIZE_ANY(ptr);
 		}
 		else if (typlen == -2)	/* cstring */
 		{
-			range->values[i] = PointerGetDatum(ptr);
-			ptr += strlen(DatumGetPointer(range->values[i])) + 1;
+			Size	slen = strlen(ptr) + 1;
+			range->values[i] = PointerGetDatum(dataptr);
+
+			memcpy(dataptr, ptr, slen);
+			dataptr += MAXALIGN(slen);
+			ptr += (slen);
 		}
 
 		/* make sure we haven't overflown the buffer end */
@@ -2823,7 +2885,6 @@ minmax_multi_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 								ObjectIdGetDatum(attr->atttypid),
 								ObjectIdGetDatum(subtype),
 								Int16GetDatum(strategynum));
-
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 				 strategynum, attr->atttypid, subtype, opfamily);
