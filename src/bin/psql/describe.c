@@ -2712,7 +2712,104 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* print any extended statistics */
-		if (pset.sversion >= 100000)
+		if (pset.sversion >= 140000)
+		{
+			printfPQExpBuffer(&buf,
+							  "SELECT oid, "
+							  "stxrelid::pg_catalog.regclass, "
+							  "stxnamespace::pg_catalog.regnamespace AS nsp, "
+							  "stxname,\n"
+							  "pg_get_statisticsobjdef_columns(oid) AS columns,\n"
+							  "  'd' = any(stxkind) AS ndist_enabled,\n"
+							  "  'f' = any(stxkind) AS deps_enabled,\n"
+							  "  'm' = any(stxkind) AS mcv_enabled,\n"
+							  "stxstattarget\n"
+							  "FROM pg_catalog.pg_statistic_ext stat\n"
+							  "WHERE stxrelid = '%s'\n"
+							  "ORDER BY 1;",
+							  oid);
+
+			result = PSQLexec(buf.data);
+			if (!result)
+				goto error_return;
+			else
+				tuples = PQntuples(result);
+
+			if (tuples > 0)
+			{
+				printTableAddFooter(&cont, _("Statistics objects:"));
+
+				for (i = 0; i < tuples; i++)
+				{
+					bool		gotone = false;
+					bool		has_ndistinct;
+					bool		has_dependencies;
+					bool		has_mcv;
+					bool		has_all;
+					bool		has_some;
+
+					has_ndistinct = (strcmp(PQgetvalue(result, i, 5), "t") == 0);
+					has_dependencies = (strcmp(PQgetvalue(result, i, 6), "t") == 0);
+					has_mcv = (strcmp(PQgetvalue(result, i, 7), "t") == 0);
+
+					printfPQExpBuffer(&buf, "    ");
+
+					/* statistics object name (qualified with namespace) */
+					appendPQExpBuffer(&buf, "\"%s\".\"%s\"",
+									  PQgetvalue(result, i, 2),
+									  PQgetvalue(result, i, 3));
+
+					/*
+					 * When printing kinds we ignore expression statistics,
+					 * which is used only internally and can't be specified by
+					 * user. We don't print the kinds when either none are
+					 * specified (in which case it has to be statistics on a
+					 * single expr) or when all are specified (in which case
+					 * we assume it's expanded by CREATE STATISTICS).
+					 */
+					has_all = (has_ndistinct && has_dependencies && has_mcv);
+					has_some = (has_ndistinct || has_dependencies || has_mcv);
+
+					if (has_some && !has_all)
+					{
+						appendPQExpBuffer(&buf, " (");
+
+						/* options */
+						if (has_ndistinct)
+						{
+							appendPQExpBufferStr(&buf, "ndistinct");
+							gotone = true;
+						}
+
+						if (has_dependencies)
+						{
+							appendPQExpBuffer(&buf, "%sdependencies", gotone ? ", " : "");
+							gotone = true;
+						}
+
+						if (has_mcv)
+						{
+							appendPQExpBuffer(&buf, "%smcv", gotone ? ", " : "");
+						}
+
+						appendPQExpBuffer(&buf, ")");
+					}
+
+					appendPQExpBuffer(&buf, " ON %s FROM %s",
+									  PQgetvalue(result, i, 4),
+									  PQgetvalue(result, i, 1));
+
+					/* Show the stats target if it's not default */
+					if (strcmp(PQgetvalue(result, i, 8), "-1") != 0)
+						appendPQExpBuffer(&buf, "; STATISTICS %s",
+										  PQgetvalue(result, i, 8));
+
+					printTableAddFooter(&cont, buf.data);
+				}
+			}
+			PQclear(result);
+		}
+		else if (pset.sversion >= 100000)
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT oid, "
@@ -4468,18 +4565,27 @@ listExtendedStats(const char *pattern)
 	printfPQExpBuffer(&buf,
 					  "SELECT \n"
 					  "es.stxnamespace::pg_catalog.regnamespace::text AS \"%s\", \n"
-					  "es.stxname AS \"%s\", \n"
-					  "pg_catalog.format('%%s FROM %%s', \n"
-					  "  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(a.attname),', ') \n"
-					  "   FROM pg_catalog.unnest(es.stxkeys) s(attnum) \n"
-					  "   JOIN pg_catalog.pg_attribute a \n"
-					  "   ON (es.stxrelid = a.attrelid \n"
-					  "   AND a.attnum = s.attnum \n"
-					  "   AND NOT a.attisdropped)), \n"
-					  "es.stxrelid::regclass) AS \"%s\"",
+					  "es.stxname AS \"%s\", \n",
 					  gettext_noop("Schema"),
-					  gettext_noop("Name"),
-					  gettext_noop("Definition"));
+					  gettext_noop("Name"));
+
+	if (pset.sversion >= 140000)
+		appendPQExpBuffer(&buf,
+						  "pg_catalog.format('%%s FROM %%s', \n"
+						  "  pg_get_statisticsobjdef_columns(es.oid), \n"
+						  "  es.stxrelid::regclass) AS \"%s\"",
+						  gettext_noop("Definition"));
+	else
+		appendPQExpBuffer(&buf,
+						  "pg_catalog.format('%%s FROM %%s', \n"
+						  "  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(a.attname),', ') \n"
+						  "   FROM pg_catalog.unnest(es.stxkeys) s(attnum) \n"
+						  "   JOIN pg_catalog.pg_attribute a \n"
+						  "   ON (es.stxrelid = a.attrelid \n"
+						  "   AND a.attnum = s.attnum \n"
+						  "   AND NOT a.attisdropped)), \n"
+						  "es.stxrelid::regclass) AS \"%s\"",
+						  gettext_noop("Definition"));
 
 	appendPQExpBuffer(&buf,
 					  ",\nCASE WHEN 'd' = any(es.stxkind) THEN 'defined' \n"

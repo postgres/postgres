@@ -2980,6 +2980,17 @@ _copyIndexElem(const IndexElem *from)
 	return newnode;
 }
 
+static StatsElem *
+_copyStatsElem(const StatsElem *from)
+{
+	StatsElem  *newnode = makeNode(StatsElem);
+
+	COPY_STRING_FIELD(name);
+	COPY_NODE_FIELD(expr);
+
+	return newnode;
+}
+
 static ColumnDef *
 _copyColumnDef(const ColumnDef *from)
 {
@@ -5698,6 +5709,9 @@ copyObjectImpl(const void *from)
 			break;
 		case T_IndexElem:
 			retval = _copyIndexElem(from);
+			break;
+		case T_StatsElem:
+			retval = _copyStatsElem(from);
 			break;
 		case T_ColumnDef:
 			retval = _copyColumnDef(from);

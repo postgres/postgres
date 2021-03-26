@@ -2596,6 +2596,16 @@ _equalIndexElem(const IndexElem *a, const IndexElem *b)
 	return true;
 }
 
+
+static bool
+_equalStatsElem(const StatsElem *a, const StatsElem *b)
+{
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(expr);
+
+	return true;
+}
+
 static bool
 _equalColumnDef(const ColumnDef *a, const ColumnDef *b)
 {
@@ -3723,6 +3733,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_IndexElem:
 			retval = _equalIndexElem(a, b);
+			break;
+		case T_StatsElem:
+			retval = _equalStatsElem(a, b);
 			break;
 		case T_ColumnDef:
 			retval = _equalColumnDef(a, b);

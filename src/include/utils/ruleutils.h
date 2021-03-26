@@ -41,4 +41,6 @@ extern char *generate_collation_name(Oid collid);
 extern char *generate_opclass_name(Oid opclass);
 extern char *get_range_partbound_string(List *bound_datums);
 
+extern char *pg_get_statisticsobjdef_string(Oid statextid);
+
 #endif							/* RULEUTILS_H */

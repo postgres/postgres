@@ -336,7 +336,8 @@ static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 									bool attrsOnly, bool keysOnly,
 									bool showTblSpc, bool inherits,
 									int prettyFlags, bool missing_ok);
-static char *pg_get_statisticsobj_worker(Oid statextid, bool missing_ok);
+static char *pg_get_statisticsobj_worker(Oid statextid, bool columns_only,
+										 bool missing_ok);
 static char *pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 									  bool attrsOnly, bool missing_ok);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
@@ -1507,7 +1508,36 @@ pg_get_statisticsobjdef(PG_FUNCTION_ARGS)
 	Oid			statextid = PG_GETARG_OID(0);
 	char	   *res;
 
-	res = pg_get_statisticsobj_worker(statextid, true);
+	res = pg_get_statisticsobj_worker(statextid, false, true);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
+}
+
+/*
+ * Internal version for use by ALTER TABLE.
+ * Includes a tablespace clause in the result.
+ * Returns a palloc'd C string; no pretty-printing.
+ */
+char *
+pg_get_statisticsobjdef_string(Oid statextid)
+{
+	return pg_get_statisticsobj_worker(statextid, false, false);
+}
+
+/*
+ * pg_get_statisticsobjdef_columns
+ *		Get columns and expressions for an extended statistics object
+ */
+Datum
+pg_get_statisticsobjdef_columns(PG_FUNCTION_ARGS)
+{
+	Oid			statextid = PG_GETARG_OID(0);
+	char	   *res;
+
+	res = pg_get_statisticsobj_worker(statextid, true, true);
 
 	if (res == NULL)
 		PG_RETURN_NULL();
@@ -1519,7 +1549,7 @@ pg_get_statisticsobjdef(PG_FUNCTION_ARGS)
  * Internal workhorse to decompile an extended statistics object.
  */
 static char *
-pg_get_statisticsobj_worker(Oid statextid, bool missing_ok)
+pg_get_statisticsobj_worker(Oid statextid, bool columns_only, bool missing_ok)
 {
 	Form_pg_statistic_ext statextrec;
 	HeapTuple	statexttup;
@@ -1534,6 +1564,11 @@ pg_get_statisticsobj_worker(Oid statextid, bool missing_ok)
 	bool		dependencies_enabled;
 	bool		mcv_enabled;
 	int			i;
+	List	   *context;
+	ListCell   *lc;
+	List	   *exprs = NIL;
+	bool		has_exprs;
+	int			ncolumns;
 
 	statexttup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statextid));
 
@@ -1544,75 +1579,114 @@ pg_get_statisticsobj_worker(Oid statextid, bool missing_ok)
 		elog(ERROR, "cache lookup failed for statistics object %u", statextid);
 	}
 
+	/* has the statistics expressions? */
+	has_exprs = !heap_attisnull(statexttup, Anum_pg_statistic_ext_stxexprs, NULL);
+
 	statextrec = (Form_pg_statistic_ext) GETSTRUCT(statexttup);
+
+	/*
+	 * Get the statistics expressions, if any.  (NOTE: we do not use the
+	 * relcache versions of the expressions, because we want to display
+	 * non-const-folded expressions.)
+	 */
+	if (has_exprs)
+	{
+		Datum		exprsDatum;
+		bool		isnull;
+		char	   *exprsString;
+
+		exprsDatum = SysCacheGetAttr(STATEXTOID, statexttup,
+									 Anum_pg_statistic_ext_stxexprs, &isnull);
+		Assert(!isnull);
+		exprsString = TextDatumGetCString(exprsDatum);
+		exprs = (List *) stringToNode(exprsString);
+		pfree(exprsString);
+	}
+	else
+		exprs = NIL;
+
+	/* count the number of columns (attributes and expressions) */
+	ncolumns = statextrec->stxkeys.dim1 + list_length(exprs);
 
 	initStringInfo(&buf);
 
-	nsp = get_namespace_name(statextrec->stxnamespace);
-	appendStringInfo(&buf, "CREATE STATISTICS %s",
-					 quote_qualified_identifier(nsp,
-												NameStr(statextrec->stxname)));
-
-	/*
-	 * Decode the stxkind column so that we know which stats types to print.
-	 */
-	datum = SysCacheGetAttr(STATEXTOID, statexttup,
-							Anum_pg_statistic_ext_stxkind, &isnull);
-	Assert(!isnull);
-	arr = DatumGetArrayTypeP(datum);
-	if (ARR_NDIM(arr) != 1 ||
-		ARR_HASNULL(arr) ||
-		ARR_ELEMTYPE(arr) != CHAROID)
-		elog(ERROR, "stxkind is not a 1-D char array");
-	enabled = (char *) ARR_DATA_PTR(arr);
-
-	ndistinct_enabled = false;
-	dependencies_enabled = false;
-	mcv_enabled = false;
-
-	for (i = 0; i < ARR_DIMS(arr)[0]; i++)
+	if (!columns_only)
 	{
-		if (enabled[i] == STATS_EXT_NDISTINCT)
-			ndistinct_enabled = true;
-		if (enabled[i] == STATS_EXT_DEPENDENCIES)
-			dependencies_enabled = true;
-		if (enabled[i] == STATS_EXT_MCV)
-			mcv_enabled = true;
-	}
+		nsp = get_namespace_name(statextrec->stxnamespace);
+		appendStringInfo(&buf, "CREATE STATISTICS %s",
+						 quote_qualified_identifier(nsp,
+													NameStr(statextrec->stxname)));
 
-	/*
-	 * If any option is disabled, then we'll need to append the types clause
-	 * to show which options are enabled.  We omit the types clause on purpose
-	 * when all options are enabled, so a pg_dump/pg_restore will create all
-	 * statistics types on a newer postgres version, if the statistics had all
-	 * options enabled on the original version.
-	 */
-	if (!ndistinct_enabled || !dependencies_enabled || !mcv_enabled)
-	{
-		bool		gotone = false;
+		/*
+		 * Decode the stxkind column so that we know which stats types to
+		 * print.
+		 */
+		datum = SysCacheGetAttr(STATEXTOID, statexttup,
+								Anum_pg_statistic_ext_stxkind, &isnull);
+		Assert(!isnull);
+		arr = DatumGetArrayTypeP(datum);
+		if (ARR_NDIM(arr) != 1 ||
+			ARR_HASNULL(arr) ||
+			ARR_ELEMTYPE(arr) != CHAROID)
+			elog(ERROR, "stxkind is not a 1-D char array");
+		enabled = (char *) ARR_DATA_PTR(arr);
 
-		appendStringInfoString(&buf, " (");
+		ndistinct_enabled = false;
+		dependencies_enabled = false;
+		mcv_enabled = false;
 
-		if (ndistinct_enabled)
+		for (i = 0; i < ARR_DIMS(arr)[0]; i++)
 		{
-			appendStringInfoString(&buf, "ndistinct");
-			gotone = true;
+			if (enabled[i] == STATS_EXT_NDISTINCT)
+				ndistinct_enabled = true;
+			else if (enabled[i] == STATS_EXT_DEPENDENCIES)
+				dependencies_enabled = true;
+			else if (enabled[i] == STATS_EXT_MCV)
+				mcv_enabled = true;
+
+			/* ignore STATS_EXT_EXPRESSIONS (it's built automatically) */
 		}
 
-		if (dependencies_enabled)
+		/*
+		 * If any option is disabled, then we'll need to append the types
+		 * clause to show which options are enabled.  We omit the types clause
+		 * on purpose when all options are enabled, so a pg_dump/pg_restore
+		 * will create all statistics types on a newer postgres version, if
+		 * the statistics had all options enabled on the original version.
+		 *
+		 * But if the statistics is defined on just a single column, it has to
+		 * be an expression statistics. In that case we don't need to specify
+		 * kinds.
+		 */
+		if ((!ndistinct_enabled || !dependencies_enabled || !mcv_enabled) &&
+			(ncolumns > 1))
 		{
-			appendStringInfo(&buf, "%sdependencies", gotone ? ", " : "");
-			gotone = true;
+			bool		gotone = false;
+
+			appendStringInfoString(&buf, " (");
+
+			if (ndistinct_enabled)
+			{
+				appendStringInfoString(&buf, "ndistinct");
+				gotone = true;
+			}
+
+			if (dependencies_enabled)
+			{
+				appendStringInfo(&buf, "%sdependencies", gotone ? ", " : "");
+				gotone = true;
+			}
+
+			if (mcv_enabled)
+				appendStringInfo(&buf, "%smcv", gotone ? ", " : "");
+
+			appendStringInfoChar(&buf, ')');
 		}
 
-		if (mcv_enabled)
-			appendStringInfo(&buf, "%smcv", gotone ? ", " : "");
-
-		appendStringInfoChar(&buf, ')');
+		appendStringInfoString(&buf, " ON ");
 	}
 
-	appendStringInfoString(&buf, " ON ");
-
+	/* decode simple column references */
 	for (colno = 0; colno < statextrec->stxkeys.dim1; colno++)
 	{
 		AttrNumber	attnum = statextrec->stxkeys.values[colno];
@@ -1626,12 +1700,107 @@ pg_get_statisticsobj_worker(Oid statextid, bool missing_ok)
 		appendStringInfoString(&buf, quote_identifier(attname));
 	}
 
-	appendStringInfo(&buf, " FROM %s",
-					 generate_relation_name(statextrec->stxrelid, NIL));
+	context = deparse_context_for(get_relation_name(statextrec->stxrelid),
+								  statextrec->stxrelid);
+
+	foreach(lc, exprs)
+	{
+		Node	   *expr = (Node *) lfirst(lc);
+		char	   *str;
+		int			prettyFlags = PRETTYFLAG_INDENT;
+
+		str = deparse_expression_pretty(expr, context, false, false,
+										prettyFlags, 0);
+
+		if (colno > 0)
+			appendStringInfoString(&buf, ", ");
+
+		/* Need parens if it's not a bare function call */
+		if (looks_like_function(expr))
+			appendStringInfoString(&buf, str);
+		else
+			appendStringInfo(&buf, "(%s)", str);
+
+		colno++;
+	}
+
+	if (!columns_only)
+		appendStringInfo(&buf, " FROM %s",
+						 generate_relation_name(statextrec->stxrelid, NIL));
 
 	ReleaseSysCache(statexttup);
 
 	return buf.data;
+}
+
+/*
+ * Generate text array of expressions for statistics object.
+ */
+Datum
+pg_get_statisticsobjdef_expressions(PG_FUNCTION_ARGS)
+{
+	Oid			statextid = PG_GETARG_OID(0);
+	Form_pg_statistic_ext statextrec;
+	HeapTuple	statexttup;
+	Datum		datum;
+	bool		isnull;
+	List	   *context;
+	ListCell   *lc;
+	List	   *exprs = NIL;
+	bool		has_exprs;
+	char	   *tmp;
+	ArrayBuildState *astate = NULL;
+
+	statexttup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statextid));
+
+	if (!HeapTupleIsValid(statexttup))
+		elog(ERROR, "cache lookup failed for statistics object %u", statextid);
+
+	/* has the statistics expressions? */
+	has_exprs = !heap_attisnull(statexttup, Anum_pg_statistic_ext_stxexprs, NULL);
+
+	/* no expressions? we're done */
+	if (!has_exprs)
+	{
+		ReleaseSysCache(statexttup);
+		PG_RETURN_NULL();
+	}
+
+	statextrec = (Form_pg_statistic_ext) GETSTRUCT(statexttup);
+
+	/*
+	 * Get the statistics expressions, and deparse them into text values.
+	 */
+	datum = SysCacheGetAttr(STATEXTOID, statexttup,
+							Anum_pg_statistic_ext_stxexprs, &isnull);
+
+	Assert(!isnull);
+	tmp = TextDatumGetCString(datum);
+	exprs = (List *) stringToNode(tmp);
+	pfree(tmp);
+
+	context = deparse_context_for(get_relation_name(statextrec->stxrelid),
+								  statextrec->stxrelid);
+
+	foreach(lc, exprs)
+	{
+		Node	   *expr = (Node *) lfirst(lc);
+		char	   *str;
+		int			prettyFlags = PRETTYFLAG_INDENT;
+
+		str = deparse_expression_pretty(expr, context, false, false,
+										prettyFlags, 0);
+
+		astate = accumArrayResult(astate,
+								  PointerGetDatum(cstring_to_text(str)),
+								  false,
+								  TEXTOID,
+								  CurrentMemoryContext);
+	}
+
+	ReleaseSysCache(statexttup);
+
+	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
 }
 
 /*

@@ -22,8 +22,12 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_name</replaceable>
+    ON ( <replaceable class="parameter">expression</replaceable> )
+    FROM <replaceable class="parameter">table_name</replaceable>
+
+CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_name</replaceable>
     [ ( <replaceable class="parameter">statistics_kind</replaceable> [, ... ] ) ]
-    ON <replaceable class="parameter">column_name</replaceable>, <replaceable class="parameter">column_name</replaceable> [, ...]
+    ON { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) }, { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [, ...]
     FROM <replaceable class="parameter">table_name</replaceable>
 </synopsis>
 
@@ -37,6 +41,19 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
    object tracking data about the specified table, foreign table or
    materialized view.  The statistics object will be created in the current
    database and will be owned by the user issuing the command.
+  </para>
+
+  <para>
+   The <command>CREATE STATISTICS</command> command has two basic forms. The
+   first form allows univariate statistics for a single expression to be
+   collected, providing benefits similar to an expression index without the
+   overhead of index maintenance.  This form does not allow the statistics
+   kind to be specified, since the various statistics kinds refer only to
+   multivariate statistics.  The second form of the command allows
+   multivariate statistics on multiple columns and/or expressions to be
+   collected, optionally specifying which statistics kinds to include.  This
+   form will also automatically cause univariate statistics to be collected on
+   any expressions included in the list.
   </para>
 
   <para>
@@ -79,14 +96,16 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
     <term><replaceable class="parameter">statistics_kind</replaceable></term>
     <listitem>
      <para>
-      A statistics kind to be computed in this statistics object.
+      A multivariate statistics kind to be computed in this statistics object.
       Currently supported kinds are
       <literal>ndistinct</literal>, which enables n-distinct statistics,
       <literal>dependencies</literal>, which enables functional
       dependency statistics, and <literal>mcv</literal> which enables
       most-common values lists.
       If this clause is omitted, all supported statistics kinds are
-      included in the statistics object.
+      included in the statistics object. Univariate expression statistics are
+      built automatically if the statistics definition includes any complex
+      expressions rather than just simple column references.
       For more information, see <xref linkend="planner-stats-extended"/>
       and <xref linkend="multivariate-statistics-examples"/>.
      </para>
@@ -98,8 +117,22 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
     <listitem>
      <para>
       The name of a table column to be covered by the computed statistics.
-      At least two column names must be given;  the order of the column names
-      is insignificant.
+      This is only allowed when building multivariate statistics.  At least
+      two column names or expressions must be specified, and their order is
+      not significant.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">expression</replaceable></term>
+    <listitem>
+     <para>
+      An expression to be covered by the computed statistics.  This may be
+      used to build univariate statistics on a single expression, or as part
+      of a list of multiple column names and/or expressions to build
+      multivariate statistics.  In the latter case, separate univariate
+      statistics are built automatically for each expression in the list.
      </para>
     </listitem>
    </varlistentry>
@@ -124,6 +157,13 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
    You must be the owner of a table to create a statistics object
    reading it.  Once created, however, the ownership of the statistics
    object is independent of the underlying table(s).
+  </para>
+
+  <para>
+   Expression statistics are per-expression and are similar to creating an
+   index on the expression, except that they avoid the overhead of index
+   maintenance. Expression statistics are built automatically for each
+   expression in the statistics object definition.
   </para>
  </refsect1>
 
@@ -194,6 +234,72 @@ EXPLAIN ANALYZE SELECT * FROM t2 WHERE (a = 1) AND (b = 2);
    specific values that commonly appear in the table, as well as an upper
    bound on the selectivities of combinations of values that do not appear
    in the table, allowing it to generate better estimates in both cases.
+  </para>
+
+  <para>
+   Create table <structname>t3</structname> with a single timestamp column,
+   and run queries using expressions on that column.  Without extended
+   statistics, the planner has no information about the data distribution for
+   the expressions, and uses default estimates.  The planner also does not
+   realize that the value of the date truncated to the month is fully
+   determined by the value of the date truncated to the day. Then expression
+   and ndistinct statistics are built on those two expressions:
+
+<programlisting>
+CREATE TABLE t3 (
+    a   timestamp
+);
+
+INSERT INTO t3 SELECT i FROM generate_series('2020-01-01'::timestamp,
+                                             '2020-12-31'::timestamp,
+                                             '1 minute'::interval) s(i);
+
+ANALYZE t3;
+
+-- the number of matching rows will be drastically underestimated:
+EXPLAIN ANALYZE SELECT * FROM t3
+  WHERE date_trunc('month', a) = '2020-01-01'::timestamp;
+
+EXPLAIN ANALYZE SELECT * FROM t3
+  WHERE date_trunc('day', a) BETWEEN '2020-01-01'::timestamp
+                                 AND '2020-06-30'::timestamp;
+
+EXPLAIN ANALYZE SELECT date_trunc('month', a), date_trunc('day', a)
+   FROM t3 GROUP BY 1, 2;
+
+-- build ndistinct statistics on the pair of expressions (per-expression
+-- statistics are built automatically)
+CREATE STATISTICS s3 (ndistinct) ON date_trunc('month', a), date_trunc('day', a) FROM t3;
+
+ANALYZE t3;
+
+-- now the row count estimates are more accurate:
+EXPLAIN ANALYZE SELECT * FROM t3
+  WHERE date_trunc('month', a) = '2020-01-01'::timestamp;
+
+EXPLAIN ANALYZE SELECT * FROM t3
+  WHERE date_trunc('day', a) BETWEEN '2020-01-01'::timestamp
+                                 AND '2020-06-30'::timestamp;
+
+EXPLAIN ANALYZE SELECT date_trunc('month', a), date_trunc('day', a)
+   FROM t3 GROUP BY 1, 2;
+</programlisting>
+
+   Without expression and ndistinct statistics, the planner has no information
+   about the number of distinct values for the expressions, and has to rely
+   on default estimates. The equality and range conditions are assumed to have
+   0.5% selectivity, and the number of distinct values in the expression is
+   assumed to be the same as for the column (i.e. unique). This results in a
+   significant underestimate of the row count in the first two queries. Moreover,
+   the planner has no information about the relationship between the expressions,
+   so it assumes the two <literal>WHERE</literal> and <literal>GROUP BY</literal>
+   conditions are independent, and multiplies their selectivities together to
+   arrive at a severe overestimate of the group count in the aggregate query.
+   This is further exacerbated by the lack of accurate statistics for the
+   expressions, forcing the planner to use a default ndistinct estimate for the
+   expression derived from ndistinct for the column. With such statistics, the
+   planner recognizes that the conditions are correlated, and arrives at much
+   more accurate estimates.
   </para>
 
  </refsect1>

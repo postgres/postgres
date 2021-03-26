@@ -36,8 +36,7 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
-static double ndistinct_for_combination(double totalrows, int numrows,
-										HeapTuple *rows, VacAttrStats **stats,
+static double ndistinct_for_combination(double totalrows, StatsBuildData *data,
 										int k, int *combination);
 static double estimate_ndistinct(double totalrows, int numrows, int d, int f1);
 static int	n_choose_k(int n, int k);
@@ -81,15 +80,18 @@ static void generate_combinations(CombinationGenerator *state);
  *
  * This computes the ndistinct estimate using the same estimator used
  * in analyze.c and then computes the coefficient.
+ *
+ * To handle expressions easily, we treat them as system attributes with
+ * negative attnums, and offset everything by number of expressions to
+ * allow using Bitmapsets.
  */
 MVNDistinct *
-statext_ndistinct_build(double totalrows, int numrows, HeapTuple *rows,
-						Bitmapset *attrs, VacAttrStats **stats)
+statext_ndistinct_build(double totalrows, StatsBuildData *data)
 {
 	MVNDistinct *result;
 	int			k;
 	int			itemcnt;
-	int			numattrs = bms_num_members(attrs);
+	int			numattrs = data->nattnums;
 	int			numcombs = num_combinations(numattrs);
 
 	result = palloc(offsetof(MVNDistinct, items) +
@@ -112,13 +114,19 @@ statext_ndistinct_build(double totalrows, int numrows, HeapTuple *rows,
 			MVNDistinctItem *item = &result->items[itemcnt];
 			int			j;
 
-			item->attrs = NULL;
+			item->attributes = palloc(sizeof(AttrNumber) * k);
+			item->nattributes = k;
+
+			/* translate the indexes to attnums */
 			for (j = 0; j < k; j++)
-				item->attrs = bms_add_member(item->attrs,
-											 stats[combination[j]]->attr->attnum);
+			{
+				item->attributes[j] = data->attnums[combination[j]];
+
+				Assert(AttributeNumberIsValid(item->attributes[j]));
+			}
+
 			item->ndistinct =
-				ndistinct_for_combination(totalrows, numrows, rows,
-										  stats, k, combination);
+				ndistinct_for_combination(totalrows, data, k, combination);
 
 			itemcnt++;
 			Assert(itemcnt <= result->nitems);
@@ -189,7 +197,7 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 	{
 		int			nmembers;
 
-		nmembers = bms_num_members(ndistinct->items[i].attrs);
+		nmembers = ndistinct->items[i].nattributes;
 		Assert(nmembers >= 2);
 
 		len += SizeOfItem(nmembers);
@@ -214,22 +222,15 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 	for (i = 0; i < ndistinct->nitems; i++)
 	{
 		MVNDistinctItem item = ndistinct->items[i];
-		int			nmembers = bms_num_members(item.attrs);
-		int			x;
+		int			nmembers = item.nattributes;
 
 		memcpy(tmp, &item.ndistinct, sizeof(double));
 		tmp += sizeof(double);
 		memcpy(tmp, &nmembers, sizeof(int));
 		tmp += sizeof(int);
 
-		x = -1;
-		while ((x = bms_next_member(item.attrs, x)) >= 0)
-		{
-			AttrNumber	value = (AttrNumber) x;
-
-			memcpy(tmp, &value, sizeof(AttrNumber));
-			tmp += sizeof(AttrNumber);
-		}
+		memcpy(tmp, item.attributes, sizeof(AttrNumber) * nmembers);
+		tmp += nmembers * sizeof(AttrNumber);
 
 		/* protect against overflows */
 		Assert(tmp <= ((char *) output + len));
@@ -301,27 +302,21 @@ statext_ndistinct_deserialize(bytea *data)
 	for (i = 0; i < ndistinct->nitems; i++)
 	{
 		MVNDistinctItem *item = &ndistinct->items[i];
-		int			nelems;
-
-		item->attrs = NULL;
 
 		/* ndistinct value */
 		memcpy(&item->ndistinct, tmp, sizeof(double));
 		tmp += sizeof(double);
 
 		/* number of attributes */
-		memcpy(&nelems, tmp, sizeof(int));
+		memcpy(&item->nattributes, tmp, sizeof(int));
 		tmp += sizeof(int);
-		Assert((nelems >= 2) && (nelems <= STATS_MAX_DIMENSIONS));
+		Assert((item->nattributes >= 2) && (item->nattributes <= STATS_MAX_DIMENSIONS));
 
-		while (nelems-- > 0)
-		{
-			AttrNumber	attno;
+		item->attributes
+			= (AttrNumber *) palloc(item->nattributes * sizeof(AttrNumber));
 
-			memcpy(&attno, tmp, sizeof(AttrNumber));
-			tmp += sizeof(AttrNumber);
-			item->attrs = bms_add_member(item->attrs, attno);
-		}
+		memcpy(item->attributes, tmp, sizeof(AttrNumber) * item->nattributes);
+		tmp += sizeof(AttrNumber) * item->nattributes;
 
 		/* still within the bytea */
 		Assert(tmp <= ((char *) data + VARSIZE_ANY(data)));
@@ -369,17 +364,17 @@ pg_ndistinct_out(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < ndist->nitems; i++)
 	{
+		int			j;
 		MVNDistinctItem item = ndist->items[i];
-		int			x = -1;
-		bool		first = true;
 
 		if (i > 0)
 			appendStringInfoString(&str, ", ");
 
-		while ((x = bms_next_member(item.attrs, x)) >= 0)
+		for (j = 0; j < item.nattributes; j++)
 		{
-			appendStringInfo(&str, "%s%d", first ? "\"" : ", ", x);
-			first = false;
+			AttrNumber	attnum = item.attributes[j];
+
+			appendStringInfo(&str, "%s%d", (j == 0) ? "\"" : ", ", attnum);
 		}
 		appendStringInfo(&str, "\": %d", (int) item.ndistinct);
 	}
@@ -427,8 +422,8 @@ pg_ndistinct_send(PG_FUNCTION_ARGS)
  * combination of multiple columns.
  */
 static double
-ndistinct_for_combination(double totalrows, int numrows, HeapTuple *rows,
-						  VacAttrStats **stats, int k, int *combination)
+ndistinct_for_combination(double totalrows, StatsBuildData *data,
+						  int k, int *combination)
 {
 	int			i,
 				j;
@@ -439,6 +434,7 @@ ndistinct_for_combination(double totalrows, int numrows, HeapTuple *rows,
 	Datum	   *values;
 	SortItem   *items;
 	MultiSortSupport mss;
+	int			numrows = data->numrows;
 
 	mss = multi_sort_init(k);
 
@@ -467,25 +463,27 @@ ndistinct_for_combination(double totalrows, int numrows, HeapTuple *rows,
 	 */
 	for (i = 0; i < k; i++)
 	{
-		VacAttrStats *colstat = stats[combination[i]];
+		Oid			typid;
 		TypeCacheEntry *type;
+		Oid			collid = InvalidOid;
+		VacAttrStats *colstat = data->stats[combination[i]];
 
-		type = lookup_type_cache(colstat->attrtypid, TYPECACHE_LT_OPR);
+		typid = colstat->attrtypid;
+		collid = colstat->attrcollid;
+
+		type = lookup_type_cache(typid, TYPECACHE_LT_OPR);
 		if (type->lt_opr == InvalidOid) /* shouldn't happen */
 			elog(ERROR, "cache lookup failed for ordering operator for type %u",
-				 colstat->attrtypid);
+				 typid);
 
 		/* prepare the sort function for this dimension */
-		multi_sort_add_dimension(mss, i, type->lt_opr, colstat->attrcollid);
+		multi_sort_add_dimension(mss, i, type->lt_opr, collid);
 
 		/* accumulate all the data for this dimension into the arrays */
 		for (j = 0; j < numrows; j++)
 		{
-			items[j].values[i] =
-				heap_getattr(rows[j],
-							 colstat->attr->attnum,
-							 colstat->tupDesc,
-							 &items[j].isnull[i]);
+			items[j].values[i] = data->values[combination[i]][j];
+			items[j].isnull[i] = data->nulls[combination[i]][j];
 		}
 	}
 

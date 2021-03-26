@@ -2637,6 +2637,18 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
+	'CREATE STATISTICS extended_stats_expression' => {
+		create_order => 99,
+		create_sql   => 'CREATE STATISTICS dump_test.test_ext_stats_expr
+							ON (2 * col1) FROM dump_test.test_fifth_table',
+		regexp => qr/^
+			\QCREATE STATISTICS dump_test.test_ext_stats_expr ON ((2 * col1)) FROM dump_test.test_fifth_table;\E
+		    /xms,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
+
 	'CREATE SEQUENCE test_table_col1_seq' => {
 		regexp => qr/^
 			\QCREATE SEQUENCE dump_test.test_table_col1_seq\E

@@ -500,6 +500,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 		case EXPR_KIND_FUNCTION_DEFAULT:
 		case EXPR_KIND_INDEX_EXPRESSION:
 		case EXPR_KIND_INDEX_PREDICATE:
+		case EXPR_KIND_STATS_EXPRESSION:
 		case EXPR_KIND_ALTER_COL_TRANSFORM:
 		case EXPR_KIND_EXECUTE_PARAMETER:
 		case EXPR_KIND_TRIGGER_WHEN:
@@ -1740,6 +1741,9 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			break;
 		case EXPR_KIND_INDEX_PREDICATE:
 			err = _("cannot use subquery in index predicate");
+			break;
+		case EXPR_KIND_STATS_EXPRESSION:
+			err = _("cannot use subquery in statistics expression");
 			break;
 		case EXPR_KIND_ALTER_COL_TRANSFORM:
 			err = _("cannot use subquery in transform expression");
@@ -3030,6 +3034,8 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "index expression";
 		case EXPR_KIND_INDEX_PREDICATE:
 			return "index predicate";
+		case EXPR_KIND_STATS_EXPRESSION:
+			return "statistics expression";
 		case EXPR_KIND_ALTER_COL_TRANSFORM:
 			return "USING";
 		case EXPR_KIND_EXECUTE_PARAMETER:

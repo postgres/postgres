@@ -29,6 +29,8 @@
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "nodes/nodeFuncs.h"
+#include "optimizer/optimizer.h"
 #include "statistics/statistics.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -62,7 +64,8 @@ ObjectAddress
 CreateStatistics(CreateStatsStmt *stmt)
 {
 	int16		attnums[STATS_MAX_DIMENSIONS];
-	int			numcols = 0;
+	int			nattnums = 0;
+	int			numcols;
 	char	   *namestr;
 	NameData	stxname;
 	Oid			statoid;
@@ -74,21 +77,25 @@ CreateStatistics(CreateStatsStmt *stmt)
 	Datum		datavalues[Natts_pg_statistic_ext_data];
 	bool		datanulls[Natts_pg_statistic_ext_data];
 	int2vector *stxkeys;
+	List	   *stxexprs = NIL;
+	Datum		exprsDatum;
 	Relation	statrel;
 	Relation	datarel;
 	Relation	rel = NULL;
 	Oid			relid;
 	ObjectAddress parentobject,
 				myself;
-	Datum		types[3];		/* one for each possible type of statistic */
+	Datum		types[4];		/* one for each possible type of statistic */
 	int			ntypes;
 	ArrayType  *stxkind;
 	bool		build_ndistinct;
 	bool		build_dependencies;
 	bool		build_mcv;
+	bool		build_expressions;
 	bool		requested_type = false;
 	int			i;
 	ListCell   *cell;
+	ListCell   *cell2;
 
 	Assert(IsA(stmt, CreateStatsStmt));
 
@@ -190,101 +197,124 @@ CreateStatistics(CreateStatsStmt *stmt)
 	}
 
 	/*
-	 * Currently, we only allow simple column references in the expression
-	 * list.  That will change someday, and again the grammar already supports
-	 * it so we have to enforce restrictions here.  For now, we can convert
-	 * the expression list to a simple array of attnums.  While at it, enforce
-	 * some constraints.
+	 * Make sure no more than STATS_MAX_DIMENSIONS columns are used. There
+	 * might be duplicates and so on, but we'll deal with those later.
+	 */
+	numcols = list_length(stmt->exprs);
+	if (numcols > STATS_MAX_DIMENSIONS)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
+				 errmsg("cannot have more than %d columns in statistics",
+						STATS_MAX_DIMENSIONS)));
+
+	/*
+	 * Convert the expression list to a simple array of attnums, but also keep
+	 * a list of more complex expressions.  While at it, enforce some
+	 * constraints.
+	 *
+	 * XXX We do only the bare minimum to separate simple attribute and
+	 * complex expressions - for example "(a)" will be treated as a complex
+	 * expression. No matter how elaborate the check is, there'll always be a
+	 * way around it, if the user is determined (consider e.g. "(a+0)"), so
+	 * it's not worth protecting against it.
 	 */
 	foreach(cell, stmt->exprs)
 	{
 		Node	   *expr = (Node *) lfirst(cell);
-		ColumnRef  *cref;
-		char	   *attname;
+		StatsElem  *selem;
 		HeapTuple	atttuple;
 		Form_pg_attribute attForm;
 		TypeCacheEntry *type;
 
-		if (!IsA(expr, ColumnRef))
+		/*
+		 * We should not get anything else than StatsElem, given the grammar.
+		 * But let's keep it as a safety.
+		 */
+		if (!IsA(expr, StatsElem))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("only simple column references are allowed in CREATE STATISTICS")));
-		cref = (ColumnRef *) expr;
+					 errmsg("only simple column references and expressions are allowed in CREATE STATISTICS")));
 
-		if (list_length(cref->fields) != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("only simple column references are allowed in CREATE STATISTICS")));
-		attname = strVal((Value *) linitial(cref->fields));
+		selem = (StatsElem *) expr;
 
-		atttuple = SearchSysCacheAttName(relid, attname);
-		if (!HeapTupleIsValid(atttuple))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("column \"%s\" does not exist",
-							attname)));
-		attForm = (Form_pg_attribute) GETSTRUCT(atttuple);
+		if (selem->name)		/* column reference */
+		{
+			char	   *attname;
 
-		/* Disallow use of system attributes in extended stats */
-		if (attForm->attnum <= 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("statistics creation on system columns is not supported")));
+			attname = selem->name;
 
-		/* Disallow data types without a less-than operator */
-		type = lookup_type_cache(attForm->atttypid, TYPECACHE_LT_OPR);
-		if (type->lt_opr == InvalidOid)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("column \"%s\" cannot be used in statistics because its type %s has no default btree operator class",
-							attname, format_type_be(attForm->atttypid))));
+			atttuple = SearchSysCacheAttName(relid, attname);
+			if (!HeapTupleIsValid(atttuple))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" does not exist",
+								attname)));
+			attForm = (Form_pg_attribute) GETSTRUCT(atttuple);
 
-		/* Make sure no more than STATS_MAX_DIMENSIONS columns are used */
-		if (numcols >= STATS_MAX_DIMENSIONS)
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_COLUMNS),
-					 errmsg("cannot have more than %d columns in statistics",
-							STATS_MAX_DIMENSIONS)));
+			/* Disallow use of system attributes in extended stats */
+			if (attForm->attnum <= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("statistics creation on system columns is not supported")));
 
-		attnums[numcols] = attForm->attnum;
-		numcols++;
-		ReleaseSysCache(atttuple);
+			/* Disallow data types without a less-than operator */
+			type = lookup_type_cache(attForm->atttypid, TYPECACHE_LT_OPR);
+			if (type->lt_opr == InvalidOid)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("column \"%s\" cannot be used in statistics because its type %s has no default btree operator class",
+								attname, format_type_be(attForm->atttypid))));
+
+			attnums[nattnums] = attForm->attnum;
+			nattnums++;
+			ReleaseSysCache(atttuple);
+		}
+		else					/* expression */
+		{
+			Node	   *expr = selem->expr;
+			Oid			atttype;
+
+			Assert(expr != NULL);
+
+			/*
+			 * Disallow data types without a less-than operator.
+			 *
+			 * We ignore this for statistics on a single expression, in which
+			 * case we'll build the regular statistics only (and that code can
+			 * deal with such data types).
+			 */
+			if (list_length(stmt->exprs) > 1)
+			{
+				atttype = exprType(expr);
+				type = lookup_type_cache(atttype, TYPECACHE_LT_OPR);
+				if (type->lt_opr == InvalidOid)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("expression cannot be used in multivariate statistics because its type %s has no default btree operator class",
+									format_type_be(atttype))));
+			}
+
+			stxexprs = lappend(stxexprs, expr);
+		}
 	}
-
-	/*
-	 * Check that at least two columns were specified in the statement. The
-	 * upper bound was already checked in the loop above.
-	 */
-	if (numcols < 2)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("extended statistics require at least 2 columns")));
-
-	/*
-	 * Sort the attnums, which makes detecting duplicates somewhat easier, and
-	 * it does not hurt (it does not affect the efficiency, unlike for
-	 * indexes, for example).
-	 */
-	qsort(attnums, numcols, sizeof(int16), compare_int16);
-
-	/*
-	 * Check for duplicates in the list of columns. The attnums are sorted so
-	 * just check consecutive elements.
-	 */
-	for (i = 1; i < numcols; i++)
-	{
-		if (attnums[i] == attnums[i - 1])
-			ereport(ERROR,
-					(errcode(ERRCODE_DUPLICATE_COLUMN),
-					 errmsg("duplicate column name in statistics definition")));
-	}
-
-	/* Form an int2vector representation of the sorted column list */
-	stxkeys = buildint2vector(attnums, numcols);
 
 	/*
 	 * Parse the statistics kinds.
+	 *
+	 * First check that if this is the case with a single expression, there
+	 * are no statistics kinds specified (we don't allow that for the simple
+	 * CREATE STATISTICS form).
 	 */
+	if ((list_length(stmt->exprs) == 1) && (list_length(stxexprs) == 1))
+	{
+		/* statistics kinds not specified */
+		if (list_length(stmt->stat_types) > 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("when building statistics on a single expression, statistics kinds may not be specified")));
+	}
+
+	/* OK, let's check that we recognize the statistics kinds. */
 	build_ndistinct = false;
 	build_dependencies = false;
 	build_mcv = false;
@@ -313,13 +343,90 @@ CreateStatistics(CreateStatsStmt *stmt)
 					 errmsg("unrecognized statistics kind \"%s\"",
 							type)));
 	}
-	/* If no statistic type was specified, build them all. */
-	if (!requested_type)
+
+	/*
+	 * If no statistic type was specified, build them all (but only when the
+	 * statistics is defined on more than one column/expression).
+	 */
+	if ((!requested_type) && (numcols >= 2))
 	{
 		build_ndistinct = true;
 		build_dependencies = true;
 		build_mcv = true;
 	}
+
+	/*
+	 * When there are non-trivial expressions, build the expression stats
+	 * automatically. This allows calculating good estimates for stats that
+	 * consider per-clause estimates (e.g. functional dependencies).
+	 */
+	build_expressions = (list_length(stxexprs) > 0);
+
+	/*
+	 * Check that at least two columns were specified in the statement, or
+	 * that we're building statistics on a single expression.
+	 */
+	if ((numcols < 2) && (list_length(stxexprs) != 1))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("extended statistics require at least 2 columns")));
+
+	/*
+	 * Sort the attnums, which makes detecting duplicates somewhat easier, and
+	 * it does not hurt (it does not matter for the contents, unlike for
+	 * indexes, for example).
+	 */
+	qsort(attnums, nattnums, sizeof(int16), compare_int16);
+
+	/*
+	 * Check for duplicates in the list of columns. The attnums are sorted so
+	 * just check consecutive elements.
+	 */
+	for (i = 1; i < nattnums; i++)
+	{
+		if (attnums[i] == attnums[i - 1])
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_COLUMN),
+					 errmsg("duplicate column name in statistics definition")));
+	}
+
+	/*
+	 * Check for duplicate expressions. We do two loops, counting the
+	 * occurrences of each expression. This is O(N^2) but we only allow small
+	 * number of expressions and it's not executed often.
+	 *
+	 * XXX We don't cross-check attributes and expressions, because it does
+	 * not seem worth it. In principle we could check that expressions don't
+	 * contain trivial attribute references like "(a)", but the reasoning is
+	 * similar to why we don't bother with extracting columns from
+	 * expressions. It's either expensive or very easy to defeat for
+	 * determined user, and there's no risk if we allow such statistics (the
+	 * statistics is useless, but harmless).
+	 */
+	foreach(cell, stxexprs)
+	{
+		Node	   *expr1 = (Node *) lfirst(cell);
+		int			cnt = 0;
+
+		foreach(cell2, stxexprs)
+		{
+			Node	   *expr2 = (Node *) lfirst(cell2);
+
+			if (equal(expr1, expr2))
+				cnt += 1;
+		}
+
+		/* every expression should find at least itself */
+		Assert(cnt >= 1);
+
+		if (cnt > 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_COLUMN),
+					 errmsg("duplicate expression in statistics definition")));
+	}
+
+	/* Form an int2vector representation of the sorted column list */
+	stxkeys = buildint2vector(attnums, nattnums);
 
 	/* construct the char array of enabled statistic types */
 	ntypes = 0;
@@ -329,8 +436,22 @@ CreateStatistics(CreateStatsStmt *stmt)
 		types[ntypes++] = CharGetDatum(STATS_EXT_DEPENDENCIES);
 	if (build_mcv)
 		types[ntypes++] = CharGetDatum(STATS_EXT_MCV);
+	if (build_expressions)
+		types[ntypes++] = CharGetDatum(STATS_EXT_EXPRESSIONS);
 	Assert(ntypes > 0 && ntypes <= lengthof(types));
 	stxkind = construct_array(types, ntypes, CHAROID, 1, true, TYPALIGN_CHAR);
+
+	/* convert the expressions (if any) to a text datum */
+	if (stxexprs != NIL)
+	{
+		char	   *exprsString;
+
+		exprsString = nodeToString(stxexprs);
+		exprsDatum = CStringGetTextDatum(exprsString);
+		pfree(exprsString);
+	}
+	else
+		exprsDatum = (Datum) 0;
 
 	statrel = table_open(StatisticExtRelationId, RowExclusiveLock);
 
@@ -350,6 +471,10 @@ CreateStatistics(CreateStatsStmt *stmt)
 	values[Anum_pg_statistic_ext_stxowner - 1] = ObjectIdGetDatum(stxowner);
 	values[Anum_pg_statistic_ext_stxkeys - 1] = PointerGetDatum(stxkeys);
 	values[Anum_pg_statistic_ext_stxkind - 1] = PointerGetDatum(stxkind);
+
+	values[Anum_pg_statistic_ext_stxexprs - 1] = exprsDatum;
+	if (exprsDatum == (Datum) 0)
+		nulls[Anum_pg_statistic_ext_stxexprs - 1] = true;
 
 	/* insert it into pg_statistic_ext */
 	htup = heap_form_tuple(statrel->rd_att, values, nulls);
@@ -373,6 +498,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	datanulls[Anum_pg_statistic_ext_data_stxdndistinct - 1] = true;
 	datanulls[Anum_pg_statistic_ext_data_stxddependencies - 1] = true;
 	datanulls[Anum_pg_statistic_ext_data_stxdmcv - 1] = true;
+	datanulls[Anum_pg_statistic_ext_data_stxdexpr - 1] = true;
 
 	/* insert it into pg_statistic_ext_data */
 	htup = heap_form_tuple(datarel->rd_att, datavalues, datanulls);
@@ -396,11 +522,40 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 */
 	ObjectAddressSet(myself, StatisticExtRelationId, statoid);
 
-	for (i = 0; i < numcols; i++)
+	/* add dependencies for plain column references */
+	for (i = 0; i < nattnums; i++)
 	{
 		ObjectAddressSubSet(parentobject, RelationRelationId, relid, attnums[i]);
 		recordDependencyOn(&myself, &parentobject, DEPENDENCY_AUTO);
 	}
+
+	/*
+	 * If there are no dependencies on a column, give the statistics an auto
+	 * dependency on the whole table.  In most cases, this will be redundant,
+	 * but it might not be if the statistics expressions contain no Vars
+	 * (which might seem strange but possible). This is consistent with what
+	 * we do for indexes in index_create.
+	 *
+	 * XXX We intentionally don't consider the expressions before adding this
+	 * dependency, because recordDependencyOnSingleRelExpr may not create any
+	 * dependencies for whole-row Vars.
+	 */
+	if (!nattnums)
+	{
+		ObjectAddressSet(parentobject, RelationRelationId, relid);
+		recordDependencyOn(&myself, &parentobject, DEPENDENCY_AUTO);
+	}
+
+	/*
+	 * Store dependencies on anything mentioned in statistics expressions,
+	 * just like we do for index expressions.
+	 */
+	if (stxexprs)
+		recordDependencyOnSingleRelExpr(&myself,
+										(Node *) stxexprs,
+										relid,
+										DEPENDENCY_NORMAL,
+										DEPENDENCY_AUTO, false, true);
 
 	/*
 	 * Also add dependencies on namespace and owner.  These are required
@@ -583,87 +738,6 @@ RemoveStatisticsById(Oid statsOid)
 }
 
 /*
- * Update a statistics object for ALTER COLUMN TYPE on a source column.
- *
- * This could throw an error if the type change can't be supported.
- * If it can be supported, but the stats must be recomputed, a likely choice
- * would be to set the relevant column(s) of the pg_statistic_ext_data tuple
- * to null until the next ANALYZE.  (Note that the type change hasn't actually
- * happened yet, so one option that's *not* on the table is to recompute
- * immediately.)
- *
- * For both ndistinct and functional-dependencies stats, the on-disk
- * representation is independent of the source column data types, and it is
- * plausible to assume that the old statistic values will still be good for
- * the new column contents.  (Obviously, if the ALTER COLUMN TYPE has a USING
- * expression that substantially alters the semantic meaning of the column
- * values, this assumption could fail.  But that seems like a corner case
- * that doesn't justify zapping the stats in common cases.)
- *
- * For MCV lists that's not the case, as those statistics store the datums
- * internally. In this case we simply reset the statistics value to NULL.
- *
- * Note that "type change" includes collation change, which means we can rely
- * on the MCV list being consistent with the collation info in pg_attribute
- * during estimation.
- */
-void
-UpdateStatisticsForTypeChange(Oid statsOid, Oid relationOid, int attnum,
-							  Oid oldColumnType, Oid newColumnType)
-{
-	HeapTuple	stup,
-				oldtup;
-
-	Relation	rel;
-
-	Datum		values[Natts_pg_statistic_ext_data];
-	bool		nulls[Natts_pg_statistic_ext_data];
-	bool		replaces[Natts_pg_statistic_ext_data];
-
-	oldtup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(statsOid));
-	if (!HeapTupleIsValid(oldtup))
-		elog(ERROR, "cache lookup failed for statistics object %u", statsOid);
-
-	/*
-	 * When none of the defined statistics types contain datum values from the
-	 * table's columns then there's no need to reset the stats. Functional
-	 * dependencies and ndistinct stats should still hold true.
-	 */
-	if (!statext_is_kind_built(oldtup, STATS_EXT_MCV))
-	{
-		ReleaseSysCache(oldtup);
-		return;
-	}
-
-	/*
-	 * OK, we need to reset some statistics. So let's build the new tuple,
-	 * replacing the affected statistics types with NULL.
-	 */
-	memset(nulls, 0, Natts_pg_statistic_ext_data * sizeof(bool));
-	memset(replaces, 0, Natts_pg_statistic_ext_data * sizeof(bool));
-	memset(values, 0, Natts_pg_statistic_ext_data * sizeof(Datum));
-
-	replaces[Anum_pg_statistic_ext_data_stxdmcv - 1] = true;
-	nulls[Anum_pg_statistic_ext_data_stxdmcv - 1] = true;
-
-	rel = table_open(StatisticExtDataRelationId, RowExclusiveLock);
-
-	/* replace the old tuple */
-	stup = heap_modify_tuple(oldtup,
-							 RelationGetDescr(rel),
-							 values,
-							 nulls,
-							 replaces);
-
-	ReleaseSysCache(oldtup);
-	CatalogTupleUpdate(rel, &stup->t_self, stup);
-
-	heap_freetuple(stup);
-
-	table_close(rel, RowExclusiveLock);
-}
-
-/*
  * Select a nonconflicting name for a new statistics.
  *
  * name1, name2, and label are used the same way as for makeObjectName(),
@@ -731,17 +805,26 @@ ChooseExtendedStatisticNameAddition(List *exprs)
 	buf[0] = '\0';
 	foreach(lc, exprs)
 	{
-		ColumnRef  *cref = (ColumnRef *) lfirst(lc);
+		StatsElem  *selem = (StatsElem *) lfirst(lc);
 		const char *name;
 
 		/* It should be one of these, but just skip if it happens not to be */
-		if (!IsA(cref, ColumnRef))
+		if (!IsA(selem, StatsElem))
 			continue;
 
-		name = strVal((Value *) linitial(cref->fields));
+		name = selem->name;
 
 		if (buflen > 0)
 			buf[buflen++] = '_';	/* insert _ between names */
+
+		/*
+		 * We use fixed 'expr' for expressions, which have empty column names.
+		 * For indexes this is handled in ChooseIndexColumnNames, but we have
+		 * no such function for stats and it does not seem worth adding. If a
+		 * better name is needed, the user can specify it explicitly.
+		 */
+		if (!name)
+			name = "expr";
 
 		/*
 		 * At this point we have buflen <= NAMEDATALEN.  name should be less
@@ -753,4 +836,30 @@ ChooseExtendedStatisticNameAddition(List *exprs)
 			break;
 	}
 	return pstrdup(buf);
+}
+
+/*
+ * StatisticsGetRelation: given a statistics's relation OID, get the OID of
+ * the relation it is an statistics on.  Uses the system cache.
+ */
+Oid
+StatisticsGetRelation(Oid statId, bool missing_ok)
+{
+	HeapTuple	tuple;
+	Form_pg_statistic_ext stx;
+	Oid			result;
+
+	tuple = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statId));
+	if (!HeapTupleIsValid(tuple))
+	{
+		if (missing_ok)
+			return InvalidOid;
+		elog(ERROR, "cache lookup failed for statistics object %u", statId);
+	}
+	stx = (Form_pg_statistic_ext) GETSTRUCT(tuple);
+	Assert(stx->oid == statId);
+
+	result = stx->stxrelid;
+	ReleaseSysCache(tuple);
+	return result;
 }

@@ -49,15 +49,15 @@ include $(top_srcdir)/src/backend/common.mk
 
 # Note: the order of this list determines the order in which the catalog
 # header files are assembled into postgres.bki.  BKI_BOOTSTRAP catalogs
-# must appear first, and there are reputedly other, undocumented ordering
-# dependencies.
+# must appear first, and pg_statistic before pg_statistic_ext_data, and
+# there are reputedly other, undocumented ordering dependencies.
 CATALOG_HEADERS := \
 	pg_proc.h pg_type.h pg_attribute.h pg_class.h \
 	pg_attrdef.h pg_constraint.h pg_inherits.h pg_index.h pg_operator.h \
 	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
 	pg_language.h pg_largeobject_metadata.h pg_largeobject.h pg_aggregate.h \
-	pg_statistic_ext.h pg_statistic_ext_data.h \
-	pg_statistic.h pg_rewrite.h pg_trigger.h pg_event_trigger.h pg_description.h \
+	pg_statistic.h pg_statistic_ext.h pg_statistic_ext_data.h \
+	pg_rewrite.h pg_trigger.h pg_event_trigger.h pg_description.h \
 	pg_cast.h pg_enum.h pg_namespace.h pg_conversion.h pg_depend.h \
 	pg_database.h pg_db_role_setting.h pg_tablespace.h \
 	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h \
