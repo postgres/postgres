@@ -115,7 +115,8 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
   operator classes store the minimum and the maximum values appearing
   in the indexed column within the range.  The <firstterm>inclusion</firstterm>
   operator classes store a value which includes the values in the indexed
-  column within the range.
+  column within the range.  The <firstterm>bloom</firstterm> operator
+  classes build a Bloom filter for all values in the range.
  </para>
 
  <table id="brin-builtin-opclasses-table">
@@ -155,6 +156,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>|&gt;&gt; (box,box)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>bpchar_bloom_ops</literal></entry>
+     <entry><literal>= (character,character)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>bpchar_minmax_ops</literal></entry>
      <entry><literal>= (character,character)</literal></entry>
     </row>
@@ -162,6 +168,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&lt;= (character,character)</literal></entry></row>
     <row><entry><literal>&gt; (character,character)</literal></entry></row>
     <row><entry><literal>&gt;= (character,character)</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>bytea_bloom_ops</literal></entry>
+     <entry><literal>= (bytea,bytea)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>bytea_minmax_ops</literal></entry>
@@ -173,6 +184,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt;= (bytea,bytea)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>char_bloom_ops</literal></entry>
+     <entry><literal>= ("char","char")</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>char_minmax_ops</literal></entry>
      <entry><literal>= ("char","char")</literal></entry>
     </row>
@@ -180,6 +196,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&lt;= ("char","char")</literal></entry></row>
     <row><entry><literal>&gt; ("char","char")</literal></entry></row>
     <row><entry><literal>&gt;= ("char","char")</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>date_bloom_ops</literal></entry>
+     <entry><literal>= (date,date)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>date_minmax_ops</literal></entry>
@@ -191,6 +212,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt;= (date,date)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>float4_bloom_ops</literal></entry>
+     <entry><literal>= (float4,float4)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>float4_minmax_ops</literal></entry>
      <entry><literal>= (float4,float4)</literal></entry>
     </row>
@@ -198,6 +224,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt; (float4,float4)</literal></entry></row>
     <row><entry><literal>&lt;= (float4,float4)</literal></entry></row>
     <row><entry><literal>&gt;= (float4,float4)</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>float8_bloom_ops</literal></entry>
+     <entry><literal>= (float8,float8)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>float8_minmax_ops</literal></entry>
@@ -219,6 +250,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&amp;&amp; (inet,inet)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>inet_bloom_ops</literal></entry>
+     <entry><literal>= (inet,inet)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>inet_minmax_ops</literal></entry>
      <entry><literal>= (inet,inet)</literal></entry>
     </row>
@@ -226,6 +262,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&lt;= (inet,inet)</literal></entry></row>
     <row><entry><literal>&gt; (inet,inet)</literal></entry></row>
     <row><entry><literal>&gt;= (inet,inet)</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>int2_bloom_ops</literal></entry>
+     <entry><literal>= (int2,int2)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>int2_minmax_ops</literal></entry>
@@ -237,6 +278,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt;= (int2,int2)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>int4_bloom_ops</literal></entry>
+     <entry><literal>= (int4,int4)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>int4_minmax_ops</literal></entry>
      <entry><literal>= (int4,int4)</literal></entry>
     </row>
@@ -244,6 +290,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt; (int4,int4)</literal></entry></row>
     <row><entry><literal>&lt;= (int4,int4)</literal></entry></row>
     <row><entry><literal>&gt;= (int4,int4)</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>int8_bloom_ops</literal></entry>
+     <entry><literal>= (bigint,bigint)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>int8_minmax_ops</literal></entry>
@@ -255,6 +306,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt;= (bigint,bigint)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>interval_bloom_ops</literal></entry>
+     <entry><literal>= (interval,interval)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>interval_minmax_ops</literal></entry>
      <entry><literal>= (interval,interval)</literal></entry>
     </row>
@@ -262,6 +318,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&lt;= (interval,interval)</literal></entry></row>
     <row><entry><literal>&gt; (interval,interval)</literal></entry></row>
     <row><entry><literal>&gt;= (interval,interval)</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>macaddr_bloom_ops</literal></entry>
+     <entry><literal>= (macaddr,macaddr)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>macaddr_minmax_ops</literal></entry>
@@ -273,6 +334,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt;= (macaddr,macaddr)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>macaddr8_bloom_ops</literal></entry>
+     <entry><literal>= (macaddr8,macaddr8)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>macaddr8_minmax_ops</literal></entry>
      <entry><literal>= (macaddr8,macaddr8)</literal></entry>
     </row>
@@ -280,6 +346,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&lt;= (macaddr8,macaddr8)</literal></entry></row>
     <row><entry><literal>&gt; (macaddr8,macaddr8)</literal></entry></row>
     <row><entry><literal>&gt;= (macaddr8,macaddr8)</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>name_bloom_ops</literal></entry>
+     <entry><literal>= (name,name)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>name_minmax_ops</literal></entry>
@@ -291,6 +362,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt;= (name,name)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>numeric_bloom_ops</literal></entry>
+     <entry><literal>= (numeric,numeric)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>numeric_minmax_ops</literal></entry>
      <entry><literal>= (numeric,numeric)</literal></entry>
     </row>
@@ -300,6 +376,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt;= (numeric,numeric)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>oid_bloom_ops</literal></entry>
+     <entry><literal>= (oid,oid)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>oid_minmax_ops</literal></entry>
      <entry><literal>= (oid,oid)</literal></entry>
     </row>
@@ -307,6 +388,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt; (oid,oid)</literal></entry></row>
     <row><entry><literal>&lt;= (oid,oid)</literal></entry></row>
     <row><entry><literal>&gt;= (oid,oid)</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>pg_lsn_bloom_ops</literal></entry>
+     <entry><literal>= (pg_lsn,pg_lsn)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>pg_lsn_minmax_ops</literal></entry>
@@ -336,6 +422,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>-|- (anyrange,anyrange)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>text_bloom_ops</literal></entry>
+     <entry><literal>= (text,text)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>text_minmax_ops</literal></entry>
      <entry><literal>= (text,text)</literal></entry>
     </row>
@@ -343,6 +434,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&lt;= (text,text)</literal></entry></row>
     <row><entry><literal>&gt; (text,text)</literal></entry></row>
     <row><entry><literal>&gt;= (text,text)</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>tid_bloom_ops</literal></entry>
+     <entry><literal>= (tid,tid)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>tid_minmax_ops</literal></entry>
@@ -354,6 +450,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt;= (tid,tid)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>timestamp_bloom_ops</literal></entry>
+     <entry><literal>= (timestamp,timestamp)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>timestamp_minmax_ops</literal></entry>
      <entry><literal>= (timestamp,timestamp)</literal></entry>
     </row>
@@ -361,6 +462,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&lt;= (timestamp,timestamp)</literal></entry></row>
     <row><entry><literal>&gt; (timestamp,timestamp)</literal></entry></row>
     <row><entry><literal>&gt;= (timestamp,timestamp)</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>timestamptz_bloom_ops</literal></entry>
+     <entry><literal>= (timestamptz,timestamptz)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>timestamptz_minmax_ops</literal></entry>
@@ -372,6 +478,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt;= (timestamptz,timestamptz)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>time_bloom_ops</literal></entry>
+     <entry><literal>= (time,time)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>time_minmax_ops</literal></entry>
      <entry><literal>= (time,time)</literal></entry>
     </row>
@@ -381,6 +492,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&gt;= (time,time)</literal></entry></row>
 
     <row>
+     <entry valign="middle"><literal>timetz_bloom_ops</literal></entry>
+     <entry><literal>= (timetz,timetz)</literal></entry>
+    </row>
+
+    <row>
      <entry valign="middle" morerows="4"><literal>timetz_minmax_ops</literal></entry>
      <entry><literal>= (timetz,timetz)</literal></entry>
     </row>
@@ -388,6 +504,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row><entry><literal>&lt;= (timetz,timetz)</literal></entry></row>
     <row><entry><literal>&gt; (timetz,timetz)</literal></entry></row>
     <row><entry><literal>&gt;= (timetz,timetz)</literal></entry></row>
+
+    <row>
+     <entry valign="middle"><literal>uuid_bloom_ops</literal></entry>
+     <entry><literal>= (uuid,uuid)</literal></entry>
+    </row>
 
     <row>
      <entry valign="middle" morerows="4"><literal>uuid_minmax_ops</literal></entry>
@@ -409,6 +530,55 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
    </tbody>
   </tgroup>
  </table>
+
+  <sect2 id="brin-builtin-opclasses--parameters">
+   <title>Operator Class Parameters</title>
+
+   <para>
+    Some of the built-in operator classes allow specifying parameters affecting
+    behavior of the operator class.  Each operator class has its own set of
+    allowed parameters.  Only the <literal>bloom</literal> operator class
+    allows specifying parameters:
+   </para>
+
+   <para>
+    <acronym>bloom</acronym> operator classes accept these parameters:
+   </para>
+
+   <variablelist>
+   <varlistentry>
+    <term><literal>n_distinct_per_range</literal></term>
+    <listitem>
+    <para>
+     Defines the estimated number of distinct non-null values in the block
+     range, used by <acronym>BRIN</acronym> bloom indexes for sizing of the
+     Bloom filter. It behaves similarly to <literal>n_distinct</literal> option
+     for <xref linkend="sql-altertable"/>. When set to a positive value,
+     each block range is assumed to contain this number of distinct non-null
+     values. When set to a negative value, which must be greater than or
+     equal to -1, the number of distinct non-null is assumed linear with
+     the maximum possible number of tuples in the block range (about 290
+     rows per block). The default value is <literal>-0.1</literal>, and
+     the minimum number of distinct non-null values is <literal>16</literal>.
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>false_positive_rate</literal></term>
+    <listitem>
+    <para>
+     Defines the desired false positive rate used by <acronym>BRIN</acronym>
+     bloom indexes for sizing of the Bloom filter. The values must be
+     between 0.0001 and 0.25. The default value is 0.01, which is 1% false
+     positive rate.
+    </para>
+    </listitem>
+   </varlistentry>
+
+   </variablelist>
+  </sect2>
+
 </sect1>
 
 <sect1 id="brin-extensibility">
@@ -792,6 +962,60 @@ typedef struct BrinOpcInfo
     it is passed to the union function.  As the BRIN framework can shortcut
     some operations when the union is not changed, using this
     function can improve index performance.
+ </para>
+
+ <para>
+  To write an operator class for a data type that implements only an equality
+  operator and supports hashing, it is possible to use the bloom support procedures
+  alongside the corresponding operators, as shown in
+  <xref linkend="brin-extensibility-bloom-table"/>.
+  All operator class members (procedures and operators) are mandatory.
+ </para>
+
+ <table id="brin-extensibility-bloom-table">
+  <title>Procedure and Support Numbers for Bloom Operator Classes</title>
+  <tgroup cols="2">
+   <thead>
+    <row>
+     <entry>Operator class member</entry>
+     <entry>Object</entry>
+    </row>
+   </thead>
+   <tbody>
+    <row>
+     <entry>Support Procedure 1</entry>
+     <entry>internal function <function>brin_bloom_opcinfo()</function></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 2</entry>
+     <entry>internal function <function>brin_bloom_add_value()</function></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 3</entry>
+     <entry>internal function <function>brin_bloom_consistent()</function></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 4</entry>
+     <entry>internal function <function>brin_bloom_union()</function></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 11</entry>
+     <entry>function to compute hash of an element</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 1</entry>
+     <entry>operator equal-to</entry>
+    </row>
+   </tbody>
+  </tgroup>
+ </table>
+
+ <para>
+    Support procedure numbers 1-10 are reserved for the BRIN internal
+    functions, so the SQL level functions start with number 11.  Support
+    function number 11 is the main function required to build the index.
+    It should accept one argument with the same data type as the operator class,
+    and return a hash of the value.
  </para>
 
  <para>

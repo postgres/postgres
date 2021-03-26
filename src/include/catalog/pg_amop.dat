@@ -1814,6 +1814,11 @@
   amoprighttype => 'bytea', amopstrategy => '5', amopopr => '>(bytea,bytea)',
   amopmethod => 'brin' },
 
+# bloom bytea
+{ amopfamily => 'brin/bytea_bloom_ops', amoplefttype => 'bytea',
+  amoprighttype => 'bytea', amopstrategy => '1', amopopr => '=(bytea,bytea)',
+  amopmethod => 'brin' },
+
 # minmax "char"
 { amopfamily => 'brin/char_minmax_ops', amoplefttype => 'char',
   amoprighttype => 'char', amopstrategy => '1', amopopr => '<(char,char)',
@@ -1831,6 +1836,11 @@
   amoprighttype => 'char', amopstrategy => '5', amopopr => '>(char,char)',
   amopmethod => 'brin' },
 
+# bloom "char"
+{ amopfamily => 'brin/char_bloom_ops', amoplefttype => 'char',
+  amoprighttype => 'char', amopstrategy => '1', amopopr => '=(char,char)',
+  amopmethod => 'brin' },
+
 # minmax name
 { amopfamily => 'brin/name_minmax_ops', amoplefttype => 'name',
   amoprighttype => 'name', amopstrategy => '1', amopopr => '<(name,name)',
@@ -1846,6 +1856,11 @@
   amopmethod => 'brin' },
 { amopfamily => 'brin/name_minmax_ops', amoplefttype => 'name',
   amoprighttype => 'name', amopstrategy => '5', amopopr => '>(name,name)',
+  amopmethod => 'brin' },
+
+# bloom name
+{ amopfamily => 'brin/name_bloom_ops', amoplefttype => 'name',
+  amoprighttype => 'name', amopstrategy => '1', amopopr => '=(name,name)',
   amopmethod => 'brin' },
 
 # minmax integer
@@ -1994,6 +2009,20 @@
   amoprighttype => 'int8', amopstrategy => '5', amopopr => '>(int4,int8)',
   amopmethod => 'brin' },
 
+# bloom integer
+
+{ amopfamily => 'brin/integer_bloom_ops', amoplefttype => 'int8',
+  amoprighttype => 'int8', amopstrategy => '1', amopopr => '=(int8,int8)',
+  amopmethod => 'brin' },
+
+{ amopfamily => 'brin/integer_bloom_ops', amoplefttype => 'int2',
+  amoprighttype => 'int2', amopstrategy => '1', amopopr => '=(int2,int2)',
+  amopmethod => 'brin' },
+
+{ amopfamily => 'brin/integer_bloom_ops', amoplefttype => 'int4',
+  amoprighttype => 'int4', amopstrategy => '1', amopopr => '=(int4,int4)',
+  amopmethod => 'brin' },
+
 # minmax text
 { amopfamily => 'brin/text_minmax_ops', amoplefttype => 'text',
   amoprighttype => 'text', amopstrategy => '1', amopopr => '<(text,text)',
@@ -2009,6 +2038,11 @@
   amopmethod => 'brin' },
 { amopfamily => 'brin/text_minmax_ops', amoplefttype => 'text',
   amoprighttype => 'text', amopstrategy => '5', amopopr => '>(text,text)',
+  amopmethod => 'brin' },
+
+# bloom text
+{ amopfamily => 'brin/text_bloom_ops', amoplefttype => 'text',
+  amoprighttype => 'text', amopstrategy => '1', amopopr => '=(text,text)',
   amopmethod => 'brin' },
 
 # minmax oid
@@ -2028,6 +2062,11 @@
   amoprighttype => 'oid', amopstrategy => '5', amopopr => '>(oid,oid)',
   amopmethod => 'brin' },
 
+# bloom oid
+{ amopfamily => 'brin/oid_bloom_ops', amoplefttype => 'oid',
+  amoprighttype => 'oid', amopstrategy => '1', amopopr => '=(oid,oid)',
+  amopmethod => 'brin' },
+
 # minmax tid
 { amopfamily => 'brin/tid_minmax_ops', amoplefttype => 'tid',
   amoprighttype => 'tid', amopstrategy => '1', amopopr => '<(tid,tid)',
@@ -2043,6 +2082,11 @@
   amopmethod => 'brin' },
 { amopfamily => 'brin/tid_minmax_ops', amoplefttype => 'tid',
   amoprighttype => 'tid', amopstrategy => '5', amopopr => '>(tid,tid)',
+  amopmethod => 'brin' },
+
+# tid oid
+{ amopfamily => 'brin/tid_bloom_ops', amoplefttype => 'tid',
+  amoprighttype => 'tid', amopstrategy => '1', amopopr => '=(tid,tid)',
   amopmethod => 'brin' },
 
 # minmax float (float4, float8)
@@ -2111,6 +2155,14 @@
   amoprighttype => 'float8', amopstrategy => '5', amopopr => '>(float8,float8)',
   amopmethod => 'brin' },
 
+# bloom float
+{ amopfamily => 'brin/float_bloom_ops', amoplefttype => 'float4',
+  amoprighttype => 'float4', amopstrategy => '1', amopopr => '=(float4,float4)',
+  amopmethod => 'brin' },
+{ amopfamily => 'brin/float_bloom_ops', amoplefttype => 'float8',
+  amoprighttype => 'float8', amopstrategy => '1', amopopr => '=(float8,float8)',
+  amopmethod => 'brin' },
+
 # minmax macaddr
 { amopfamily => 'brin/macaddr_minmax_ops', amoplefttype => 'macaddr',
   amoprighttype => 'macaddr', amopstrategy => '1',
@@ -2127,6 +2179,11 @@
 { amopfamily => 'brin/macaddr_minmax_ops', amoplefttype => 'macaddr',
   amoprighttype => 'macaddr', amopstrategy => '5',
   amopopr => '>(macaddr,macaddr)', amopmethod => 'brin' },
+
+# bloom macaddr
+{ amopfamily => 'brin/macaddr_bloom_ops', amoplefttype => 'macaddr',
+  amoprighttype => 'macaddr', amopstrategy => '1',
+  amopopr => '=(macaddr,macaddr)', amopmethod => 'brin' },
 
 # minmax macaddr8
 { amopfamily => 'brin/macaddr8_minmax_ops', amoplefttype => 'macaddr8',
@@ -2145,6 +2202,11 @@
   amoprighttype => 'macaddr8', amopstrategy => '5',
   amopopr => '>(macaddr8,macaddr8)', amopmethod => 'brin' },
 
+# bloom macaddr8
+{ amopfamily => 'brin/macaddr8_bloom_ops', amoplefttype => 'macaddr8',
+  amoprighttype => 'macaddr8', amopstrategy => '1',
+  amopopr => '=(macaddr8,macaddr8)', amopmethod => 'brin' },
+
 # minmax inet
 { amopfamily => 'brin/network_minmax_ops', amoplefttype => 'inet',
   amoprighttype => 'inet', amopstrategy => '1', amopopr => '<(inet,inet)',
@@ -2160,6 +2222,11 @@
   amopmethod => 'brin' },
 { amopfamily => 'brin/network_minmax_ops', amoplefttype => 'inet',
   amoprighttype => 'inet', amopstrategy => '5', amopopr => '>(inet,inet)',
+  amopmethod => 'brin' },
+
+# bloom inet
+{ amopfamily => 'brin/network_bloom_ops', amoplefttype => 'inet',
+  amoprighttype => 'inet', amopstrategy => '1', amopopr => '=(inet,inet)',
   amopmethod => 'brin' },
 
 # inclusion inet
@@ -2199,6 +2266,11 @@
   amoprighttype => 'bpchar', amopstrategy => '5', amopopr => '>(bpchar,bpchar)',
   amopmethod => 'brin' },
 
+# bloom character
+{ amopfamily => 'brin/bpchar_bloom_ops', amoplefttype => 'bpchar',
+  amoprighttype => 'bpchar', amopstrategy => '1', amopopr => '=(bpchar,bpchar)',
+  amopmethod => 'brin' },
+
 # minmax time without time zone
 { amopfamily => 'brin/time_minmax_ops', amoplefttype => 'time',
   amoprighttype => 'time', amopstrategy => '1', amopopr => '<(time,time)',
@@ -2214,6 +2286,11 @@
   amopmethod => 'brin' },
 { amopfamily => 'brin/time_minmax_ops', amoplefttype => 'time',
   amoprighttype => 'time', amopstrategy => '5', amopopr => '>(time,time)',
+  amopmethod => 'brin' },
+
+# bloom time without time zone
+{ amopfamily => 'brin/time_bloom_ops', amoplefttype => 'time',
+  amoprighttype => 'time', amopstrategy => '1', amopopr => '=(time,time)',
   amopmethod => 'brin' },
 
 # minmax datetime (date, timestamp, timestamptz)
@@ -2362,6 +2439,20 @@
   amoprighttype => 'timestamptz', amopstrategy => '5',
   amopopr => '>(timestamptz,timestamptz)', amopmethod => 'brin' },
 
+# bloom datetime (date, timestamp, timestamptz)
+
+{ amopfamily => 'brin/datetime_bloom_ops', amoplefttype => 'timestamp',
+  amoprighttype => 'timestamp', amopstrategy => '1',
+  amopopr => '=(timestamp,timestamp)', amopmethod => 'brin' },
+
+{ amopfamily => 'brin/datetime_bloom_ops', amoplefttype => 'date',
+  amoprighttype => 'date', amopstrategy => '1', amopopr => '=(date,date)',
+  amopmethod => 'brin' },
+
+{ amopfamily => 'brin/datetime_bloom_ops', amoplefttype => 'timestamptz',
+  amoprighttype => 'timestamptz', amopstrategy => '1',
+  amopopr => '=(timestamptz,timestamptz)', amopmethod => 'brin' },
+
 # minmax interval
 { amopfamily => 'brin/interval_minmax_ops', amoplefttype => 'interval',
   amoprighttype => 'interval', amopstrategy => '1',
@@ -2379,6 +2470,11 @@
   amoprighttype => 'interval', amopstrategy => '5',
   amopopr => '>(interval,interval)', amopmethod => 'brin' },
 
+# bloom interval
+{ amopfamily => 'brin/interval_bloom_ops', amoplefttype => 'interval',
+  amoprighttype => 'interval', amopstrategy => '1',
+  amopopr => '=(interval,interval)', amopmethod => 'brin' },
+
 # minmax time with time zone
 { amopfamily => 'brin/timetz_minmax_ops', amoplefttype => 'timetz',
   amoprighttype => 'timetz', amopstrategy => '1', amopopr => '<(timetz,timetz)',
@@ -2394,6 +2490,11 @@
   amopopr => '>=(timetz,timetz)', amopmethod => 'brin' },
 { amopfamily => 'brin/timetz_minmax_ops', amoplefttype => 'timetz',
   amoprighttype => 'timetz', amopstrategy => '5', amopopr => '>(timetz,timetz)',
+  amopmethod => 'brin' },
+
+# bloom time with time zone
+{ amopfamily => 'brin/timetz_bloom_ops', amoplefttype => 'timetz',
+  amoprighttype => 'timetz', amopstrategy => '1', amopopr => '=(timetz,timetz)',
   amopmethod => 'brin' },
 
 # minmax bit
@@ -2447,6 +2548,11 @@
   amoprighttype => 'numeric', amopstrategy => '5',
   amopopr => '>(numeric,numeric)', amopmethod => 'brin' },
 
+# bloom numeric
+{ amopfamily => 'brin/numeric_bloom_ops', amoplefttype => 'numeric',
+  amoprighttype => 'numeric', amopstrategy => '1',
+  amopopr => '=(numeric,numeric)', amopmethod => 'brin' },
+
 # minmax uuid
 { amopfamily => 'brin/uuid_minmax_ops', amoplefttype => 'uuid',
   amoprighttype => 'uuid', amopstrategy => '1', amopopr => '<(uuid,uuid)',
@@ -2462,6 +2568,11 @@
   amopmethod => 'brin' },
 { amopfamily => 'brin/uuid_minmax_ops', amoplefttype => 'uuid',
   amoprighttype => 'uuid', amopstrategy => '5', amopopr => '>(uuid,uuid)',
+  amopmethod => 'brin' },
+
+# bloom uuid
+{ amopfamily => 'brin/uuid_bloom_ops', amoplefttype => 'uuid',
+  amoprighttype => 'uuid', amopstrategy => '1', amopopr => '=(uuid,uuid)',
   amopmethod => 'brin' },
 
 # inclusion range types
@@ -2523,6 +2634,11 @@
   amopopr => '>=(pg_lsn,pg_lsn)', amopmethod => 'brin' },
 { amopfamily => 'brin/pg_lsn_minmax_ops', amoplefttype => 'pg_lsn',
   amoprighttype => 'pg_lsn', amopstrategy => '5', amopopr => '>(pg_lsn,pg_lsn)',
+  amopmethod => 'brin' },
+
+# bloom pg_lsn
+{ amopfamily => 'brin/pg_lsn_bloom_ops', amoplefttype => 'pg_lsn',
+  amoprighttype => 'pg_lsn', amopstrategy => '1', amopopr => '=(pg_lsn,pg_lsn)',
   amopmethod => 'brin' },
 
 # inclusion box

@@ -4993,8 +4993,9 @@ List of access methods
                    List of operator classes
   AM  | Input type | Storage type | Operator class | Default? 
 ------+------------+--------------+----------------+----------
+ brin | oid        |              | oid_bloom_ops  | no
  brin | oid        |              | oid_minmax_ops | yes
-(1 row)
+(2 rows)
 
 \dAf spgist
           List of operator families

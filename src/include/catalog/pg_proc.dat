@@ -8255,6 +8255,26 @@
   proargtypes => 'internal internal internal',
   prosrc => 'brin_inclusion_union' },
 
+# BRIN bloom
+{ oid => '4591', descr => 'BRIN bloom support',
+  proname => 'brin_bloom_opcinfo', prorettype => 'internal',
+  proargtypes => 'internal', prosrc => 'brin_bloom_opcinfo' },
+{ oid => '4592', descr => 'BRIN bloom support',
+  proname => 'brin_bloom_add_value', prorettype => 'bool',
+  proargtypes => 'internal internal internal internal',
+  prosrc => 'brin_bloom_add_value' },
+{ oid => '4593', descr => 'BRIN bloom support',
+  proname => 'brin_bloom_consistent', prorettype => 'bool',
+  proargtypes => 'internal internal internal int4',
+  prosrc => 'brin_bloom_consistent' },
+{ oid => '4594', descr => 'BRIN bloom support',
+  proname => 'brin_bloom_union', prorettype => 'bool',
+  proargtypes => 'internal internal internal',
+  prosrc => 'brin_bloom_union' },
+{ oid => '4595', descr => 'BRIN bloom support',
+  proname => 'brin_bloom_options', prorettype => 'void', proisstrict => 'f',
+  proargtypes => 'internal', prosrc => 'brin_bloom_options' },
+
 # userlock replacements
 { oid => '2880', descr => 'obtain exclusive advisory lock',
   proname => 'pg_advisory_lock', provolatile => 'v', proparallel => 'r',
@@ -11427,5 +11447,19 @@
 { oid => '4351', descr => 'check Unicode normalization',
   proname => 'is_normalized', prorettype => 'bool', proargtypes => 'text text',
   prosrc => 'unicode_is_normalized' },
+
+{ oid => '4596', descr => 'I/O',
+  proname => 'brin_bloom_summary_in', prorettype => 'pg_brin_bloom_summary',
+  proargtypes => 'cstring', prosrc => 'brin_bloom_summary_in' },
+{ oid => '4597', descr => 'I/O',
+  proname => 'brin_bloom_summary_out', prorettype => 'cstring',
+  proargtypes => 'pg_brin_bloom_summary', prosrc => 'brin_bloom_summary_out' },
+{ oid => '4598', descr => 'I/O',
+  proname => 'brin_bloom_summary_recv', provolatile => 's',
+  prorettype => 'pg_brin_bloom_summary', proargtypes => 'internal',
+  prosrc => 'brin_bloom_summary_recv' },
+{ oid => '4599', descr => 'I/O',
+  proname => 'brin_bloom_summary_send', provolatile => 's', prorettype => 'bytea',
+  proargtypes => 'pg_brin_bloom_summary', prosrc => 'brin_bloom_summary_send' },
 
 ]

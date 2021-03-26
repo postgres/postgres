@@ -679,5 +679,10 @@
   typtype => 'p', typcategory => 'P', typinput => 'anycompatiblemultirange_in',
   typoutput => 'anycompatiblemultirange_out', typreceive => '-', typsend => '-',
   typalign => 'd', typstorage => 'x' },
-
+{ oid => '4600',
+  descr => 'BRIN bloom summary',
+  typname => 'pg_brin_bloom_summary', typlen => '-1', typbyval => 'f', typcategory => 'S',
+  typinput => 'brin_bloom_summary_in', typoutput => 'brin_bloom_summary_out',
+  typreceive => 'brin_bloom_summary_recv', typsend => 'brin_bloom_summary_send',
+  typalign => 'i', typstorage => 'x', typcollation => 'default' },
 ]
