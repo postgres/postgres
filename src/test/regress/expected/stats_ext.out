@@ -260,7 +260,7 @@ SELECT s.stxkind, d.stxdndistinct
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY ctid, a, b');
  estimated | actual 
 -----------+--------
-        11 |   1000
+      1000 |   1000
 (1 row)
 
 -- Hash Aggregate, thanks to estimates improved by the statistic
