@@ -3851,11 +3851,11 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 
 			attnum = ((Var *) varinfo->var)->varattno;
 
-			if (!AttrNumberIsForUserDefinedAttr(attnum))
+			if (AttrNumberIsForUserDefinedAttr(attnum) &&
+				bms_is_member(attnum, matched))
 				continue;
 
-			if (!bms_is_member(attnum, matched))
-				newlist = lappend(newlist, varinfo);
+			newlist = lappend(newlist, varinfo);
 		}
 
 		*varinfos = newlist;
