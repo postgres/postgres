@@ -161,18 +161,18 @@ FullTransactionIdAdvance(FullTransactionId *dest)
  *		development purposes (such as in-progress patches and forks);
  *		they should not appear in released versions.
  *
- *		OIDs 10000-11999 are reserved for assignment by genbki.pl, for use
+ *		OIDs 10000-12999 are reserved for assignment by genbki.pl, for use
  *		when the .dat files in src/include/catalog/ do not specify an OID
  *		for a catalog entry that requires one.
  *
- *		OIDS 12000-16383 are reserved for assignment during initdb
- *		using the OID generator.  (We start the generator at 12000.)
+ *		OIDS 13000-16383 are reserved for assignment during initdb
+ *		using the OID generator.  (We start the generator at 13000.)
  *
  *		OIDs beginning at 16384 are assigned from the OID generator
  *		during normal multiuser operation.  (We force the generator up to
  *		16384 as soon as we are in normal operation.)
  *
- * The choices of 8000, 10000 and 12000 are completely arbitrary, and can be
+ * The choices of 8000, 10000 and 13000 are completely arbitrary, and can be
  * moved if we run low on OIDs in any category.  Changing the macros below,
  * and updating relevant documentation (see bki.sgml and RELEASE_CHANGES),
  * should be sufficient to do this.  Moving the 16384 boundary between
@@ -186,7 +186,7 @@ FullTransactionIdAdvance(FullTransactionId *dest)
  * ----------
  */
 #define FirstGenbkiObjectId		10000
-#define FirstBootstrapObjectId	12000
+#define FirstBootstrapObjectId	13000
 #define FirstNormalObjectId		16384
 
 /*

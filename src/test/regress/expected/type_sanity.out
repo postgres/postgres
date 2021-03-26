@@ -67,14 +67,15 @@ WHERE p1.typtype not in ('p') AND p1.typname NOT LIKE E'\\_%'
      WHERE p2.typname = ('_' || p1.typname)::name AND
            p2.typelem = p1.oid and p1.typarray = p2.oid)
 ORDER BY p1.oid;
- oid  |        typname        
-------+-----------------------
+ oid  |           typname            
+------+------------------------------
   194 | pg_node_tree
  3361 | pg_ndistinct
  3402 | pg_dependencies
  4600 | pg_brin_bloom_summary
+ 4601 | pg_brin_minmax_multi_summary
  5017 | pg_mcv_list
-(5 rows)
+(6 rows)
 
 -- Make sure typarray points to a "true" array type of our own base
 SELECT p1.oid, p1.typname as basetype, p2.typname as arraytype,

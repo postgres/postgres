@@ -14,6 +14,11 @@
 #include "access/brin_internal.h"
 #include "access/tupdesc.h"
 
+/*
+ * The BRIN opclasses may register serialization callback, in case the on-disk
+ * and in-memory representations differ (e.g. for performance reasons).
+ */
+typedef void (*brin_serialize_callback_type) (BrinDesc *bdesc, Datum src, Datum *dst);
 
 /*
  * A BRIN index stores one index tuple per page range.  Each index tuple
@@ -27,6 +32,9 @@ typedef struct BrinValues
 	bool		bv_hasnulls;	/* are there any nulls in the page range? */
 	bool		bv_allnulls;	/* are all values nulls in the page range? */
 	Datum	   *bv_values;		/* current accumulated values */
+	Datum		bv_mem_value;	/* expanded accumulated values */
+	MemoryContext	bv_context;
+	brin_serialize_callback_type bv_serialize;
 } BrinValues;
 
 /*

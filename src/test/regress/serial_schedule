@@ -109,6 +109,7 @@ test: namespace
 test: prepared_xacts
 test: brin
 test: brin_bloom
+test: brin_multi
 test: gin
 test: gist
 test: spgist

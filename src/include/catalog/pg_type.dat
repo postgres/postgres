@@ -685,4 +685,10 @@
   typinput => 'brin_bloom_summary_in', typoutput => 'brin_bloom_summary_out',
   typreceive => 'brin_bloom_summary_recv', typsend => 'brin_bloom_summary_send',
   typalign => 'i', typstorage => 'x', typcollation => 'default' },
+{ oid => '4601',
+  descr => 'BRIN minmax-multi summary',
+  typname => 'pg_brin_minmax_multi_summary', typlen => '-1', typbyval => 'f', typcategory => 'S',
+  typinput => 'brin_minmax_multi_summary_in', typoutput => 'brin_minmax_multi_summary_out',
+  typreceive => 'brin_minmax_multi_summary_recv', typsend => 'brin_minmax_multi_summary_send',
+  typalign => 'i', typstorage => 'x', typcollation => 'default' },
 ]

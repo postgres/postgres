@@ -4990,12 +4990,13 @@ List of access methods
 (0 rows)
 
 \dAc brin pg*.oid*
-                   List of operator classes
-  AM  | Input type | Storage type | Operator class | Default? 
-------+------------+--------------+----------------+----------
- brin | oid        |              | oid_bloom_ops  | no
- brin | oid        |              | oid_minmax_ops | yes
-(2 rows)
+                      List of operator classes
+  AM  | Input type | Storage type |    Operator class    | Default? 
+------+------------+--------------+----------------------+----------
+ brin | oid        |              | oid_bloom_ops        | no
+ brin | oid        |              | oid_minmax_multi_ops | no
+ brin | oid        |              | oid_minmax_ops       | yes
+(3 rows)
 
 \dAf spgist
           List of operator families
