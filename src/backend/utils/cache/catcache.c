@@ -1076,8 +1076,9 @@ InitCatCachePhase2(CatCache *cache, bool touch_index)
  *		criticalRelcachesBuilt), we don't have to worry anymore.
  *
  *		Similarly, during backend startup we have to be able to use the
- *		pg_authid and pg_auth_members syscaches for authentication even if
- *		we don't yet have relcache entries for those catalogs' indexes.
+ *		pg_authid, pg_auth_members and pg_database syscaches for
+ *		authentication even if we don't yet have relcache entries for those
+ *		catalogs' indexes.
  */
 static bool
 IndexScanOK(CatCache *cache, ScanKey cur_skey)
@@ -1110,6 +1111,7 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 		case AUTHNAME:
 		case AUTHOID:
 		case AUTHMEMMEMROLE:
+		case DATABASEOID:
 
 			/*
 			 * Protect authentication lookups occurring before relcache has

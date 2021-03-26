@@ -255,7 +255,14 @@ CREATE VIEW applicable_roles AS
     SELECT CAST(a.rolname AS sql_identifier) AS grantee,
            CAST(b.rolname AS sql_identifier) AS role_name,
            CAST(CASE WHEN m.admin_option THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
-    FROM pg_auth_members m
+    FROM (SELECT member, roleid, admin_option FROM pg_auth_members
+          -- This UNION could be UNION ALL, but UNION works even if we start
+          -- to allow explicit pg_database_owner membership.
+          UNION
+          SELECT datdba, pg_authid.oid, false
+          FROM pg_database, pg_authid
+          WHERE datname = current_database() AND rolname = 'pg_database_owner'
+         )  m
          JOIN pg_authid a ON (m.member = a.oid)
          JOIN pg_authid b ON (m.roleid = b.oid)
     WHERE pg_has_role(a.oid, 'USAGE');

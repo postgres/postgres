@@ -3557,6 +3557,7 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 
 	printTableAddHeader(&cont, gettext_noop("Role name"), true, align);
 	printTableAddHeader(&cont, gettext_noop("Attributes"), true, align);
+	/* ignores implicit memberships from superuser & pg_database_owner */
 	printTableAddHeader(&cont, gettext_noop("Member of"), true, align);
 
 	if (verbose && pset.sversion >= 80200)

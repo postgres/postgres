@@ -541,6 +541,10 @@ DROP ROLE doomed_role;
        <literal>pg_stat_scan_tables</literal>.</entry>
       </row>
       <row>
+       <entry>pg_database_owner</entry>
+       <entry>None.  Membership consists, implicitly, of the current database owner.</entry>
+      </row>
+      <row>
        <entry>pg_signal_backend</entry>
        <entry>Signal another backend to cancel a query or terminate its session.</entry>
       </row>
@@ -570,6 +574,17 @@ DROP ROLE doomed_role;
   purpose of monitoring the database server. They grant a set of common privileges
   allowing the role to read various useful configuration settings, statistics and
   other system information normally restricted to superusers.
+  </para>
+
+  <para>
+  The <literal>pg_database_owner</literal> role has one implicit,
+  situation-dependent member, namely the owner of the current database.  The
+  role conveys no rights at first.  Like any role, it can own objects or
+  receive grants of access privileges.  Consequently, once
+  <literal>pg_database_owner</literal> has rights within a template database,
+  each owner of a database instantiated from that template will exercise those
+  rights.  <literal>pg_database_owner</literal> cannot be a member of any
+  role, and it cannot have non-implicit members.
   </para>
 
   <para>

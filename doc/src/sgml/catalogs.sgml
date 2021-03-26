@@ -10138,6 +10138,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    <primary>pg_group</primary>
   </indexterm>
 
+  <!-- Unlike information_schema.applicable_roles, this shows no members for
+       pg_database_owner.  The v8.1 catalog would have shown no members if
+       that role had existed at the time. -->
   <para>
    The view <structname>pg_group</structname> exists for backwards
    compatibility: it emulates a catalog that existed in

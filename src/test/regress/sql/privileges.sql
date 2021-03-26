@@ -1034,6 +1034,37 @@ SELECT * FROM pg_largeobject LIMIT 0;
 SET SESSION AUTHORIZATION regress_priv_user1;
 SELECT * FROM pg_largeobject LIMIT 0;			-- to be denied
 
+-- test pg_database_owner
+RESET SESSION AUTHORIZATION;
+GRANT pg_database_owner TO regress_priv_user1;
+GRANT regress_priv_user1 TO pg_database_owner;
+CREATE TABLE datdba_only ();
+ALTER TABLE datdba_only OWNER TO pg_database_owner;
+REVOKE DELETE ON datdba_only FROM pg_database_owner;
+SELECT
+	pg_has_role('regress_priv_user1', 'pg_database_owner', 'USAGE') as priv,
+	pg_has_role('regress_priv_user1', 'pg_database_owner', 'MEMBER') as mem,
+	pg_has_role('regress_priv_user1', 'pg_database_owner',
+				'MEMBER WITH ADMIN OPTION') as admin;
+
+BEGIN;
+DO $$BEGIN EXECUTE format(
+	'ALTER DATABASE %I OWNER TO regress_priv_group2', current_catalog); END$$;
+SELECT
+	pg_has_role('regress_priv_user1', 'pg_database_owner', 'USAGE') as priv,
+	pg_has_role('regress_priv_user1', 'pg_database_owner', 'MEMBER') as mem,
+	pg_has_role('regress_priv_user1', 'pg_database_owner',
+				'MEMBER WITH ADMIN OPTION') as admin;
+SET SESSION AUTHORIZATION regress_priv_user1;
+TABLE information_schema.enabled_roles ORDER BY role_name COLLATE "C";
+TABLE information_schema.applicable_roles ORDER BY role_name COLLATE "C";
+INSERT INTO datdba_only DEFAULT VALUES;
+SAVEPOINT q; DELETE FROM datdba_only; ROLLBACK TO q;
+SET SESSION AUTHORIZATION regress_priv_user2;
+TABLE information_schema.enabled_roles;
+INSERT INTO datdba_only DEFAULT VALUES;
+ROLLBACK;
+
 -- test default ACLs
 \c -
 

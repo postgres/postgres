@@ -22,6 +22,7 @@
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "commands/proclang.h"
@@ -68,6 +69,7 @@ enum RoleRecurseType
 };
 static Oid	cached_role[] = {InvalidOid, InvalidOid};
 static List *cached_roles[] = {NIL, NIL};
+static uint32 cached_db_hash;
 
 
 static const char *getid(const char *s, char *n);
@@ -4665,15 +4667,22 @@ initialize_acl(void)
 {
 	if (!IsBootstrapProcessingMode())
 	{
+		cached_db_hash =
+			GetSysCacheHashValue1(DATABASEOID,
+								  ObjectIdGetDatum(MyDatabaseId));
+
 		/*
 		 * In normal mode, set a callback on any syscache invalidation of rows
-		 * of pg_auth_members (for roles_is_member_of()) or pg_authid (for
-		 * has_rolinherit())
+		 * of pg_auth_members (for roles_is_member_of()), pg_authid (for
+		 * has_rolinherit()), or pg_database (for roles_is_member_of())
 		 */
 		CacheRegisterSyscacheCallback(AUTHMEMROLEMEM,
 									  RoleMembershipCacheCallback,
 									  (Datum) 0);
 		CacheRegisterSyscacheCallback(AUTHOID,
+									  RoleMembershipCacheCallback,
+									  (Datum) 0);
+		CacheRegisterSyscacheCallback(DATABASEOID,
 									  RoleMembershipCacheCallback,
 									  (Datum) 0);
 	}
@@ -4686,6 +4695,13 @@ initialize_acl(void)
 static void
 RoleMembershipCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 {
+	if (cacheid == DATABASEOID &&
+		hashvalue != cached_db_hash &&
+		hashvalue != 0)
+	{
+		return;					/* ignore pg_database changes for other DBs */
+	}
+
 	/* Force membership caches to be recomputed on next use */
 	cached_role[ROLERECURSE_PRIVS] = InvalidOid;
 	cached_role[ROLERECURSE_MEMBERS] = InvalidOid;
@@ -4728,6 +4744,7 @@ static List *
 roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 				   Oid admin_of, bool *is_admin)
 {
+	Oid			dba;
 	List	   *roles_list;
 	ListCell   *l;
 	List	   *new_cached_roles;
@@ -4739,6 +4756,24 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 	if (cached_role[type] == roleid && !OidIsValid(admin_of) &&
 		OidIsValid(cached_role[type]))
 		return cached_roles[type];
+
+	/*
+	 * Role expansion happens in a non-database backend when guc.c checks
+	 * DEFAULT_ROLE_READ_ALL_SETTINGS for a physical walsender SHOW command.
+	 * In that case, no role gets pg_database_owner.
+	 */
+	if (!OidIsValid(MyDatabaseId))
+		dba = InvalidOid;
+	else
+	{
+		HeapTuple	dbtup;
+
+		dbtup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+		if (!HeapTupleIsValid(dbtup))
+			elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
+		dba = ((Form_pg_database) GETSTRUCT(dbtup))->datdba;
+		ReleaseSysCache(dbtup);
+	}
 
 	/*
 	 * Find all the roles that roleid is a member of, including multi-level
@@ -4787,6 +4822,11 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 			roles_list = list_append_unique_oid(roles_list, otherid);
 		}
 		ReleaseSysCacheList(memlist);
+
+		/* implement pg_database_owner implicit membership */
+		if (memberid == dba && OidIsValid(dba))
+			roles_list = list_append_unique_oid(roles_list,
+												DEFAULT_ROLE_DATABASE_OWNER);
 	}
 
 	/*

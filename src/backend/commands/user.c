@@ -1497,6 +1497,18 @@ AddRoleMems(const char *rolename, Oid roleid,
 	}
 
 	/*
+	 * The charter of pg_database_owner is to have exactly one, implicit,
+	 * situation-dependent member.  There's no technical need for this
+	 * restriction.  (One could lift it and take the further step of making
+	 * pg_database_ownercheck() equivalent to has_privs_of_role(roleid,
+	 * DEFAULT_ROLE_DATABASE_OWNER), in which case explicit,
+	 * situation-independent members could act as the owner of any database.)
+	 */
+	if (roleid == DEFAULT_ROLE_DATABASE_OWNER)
+		ereport(ERROR,
+				errmsg("role \"%s\" cannot have explicit members", rolename));
+
+	/*
 	 * The role membership grantor of record has little significance at
 	 * present.  Nonetheless, inasmuch as users might look to it for a crude
 	 * audit trail, let only superusers impute the grant to a third party.
@@ -1523,6 +1535,30 @@ AddRoleMems(const char *rolename, Oid roleid,
 		Datum		new_record[Natts_pg_auth_members];
 		bool		new_record_nulls[Natts_pg_auth_members];
 		bool		new_record_repl[Natts_pg_auth_members];
+
+		/*
+		 * pg_database_owner is never a role member.  Lifting this restriction
+		 * would require a policy decision about membership loops.  One could
+		 * prevent loops, which would include making "ALTER DATABASE x OWNER
+		 * TO proposed_datdba" fail if is_member_of_role(pg_database_owner,
+		 * proposed_datdba).  Hence, gaining a membership could reduce what a
+		 * role could do.  Alternately, one could allow these memberships to
+		 * complete loops.  A role could then have actual WITH ADMIN OPTION on
+		 * itself, prompting a decision about is_admin_of_role() treatment of
+		 * the case.
+		 *
+		 * Lifting this restriction also has policy implications for ownership
+		 * of shared objects (databases and tablespaces).  We allow such
+		 * ownership, but we might find cause to ban it in the future.
+		 * Designing such a ban would more troublesome if the design had to
+		 * address pg_database_owner being a member of role FOO that owns a
+		 * shared object.  (The effect of such ownership is that any owner of
+		 * another database can act as the owner of affected shared objects.)
+		 */
+		if (memberid == DEFAULT_ROLE_DATABASE_OWNER)
+			ereport(ERROR,
+					errmsg("role \"%s\" cannot be a member of any role",
+						   get_rolespec_name(memberRole)));
 
 		/*
 		 * Refuse creation of membership loops, including the trivial case
