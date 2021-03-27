@@ -47,7 +47,7 @@ CREATE VIEW pg_shadow AS
     ON (pg_authid.oid = setrole AND setdatabase = 0)
     WHERE rolcanlogin;
 
-REVOKE ALL on pg_shadow FROM public;
+REVOKE ALL ON pg_shadow FROM public;
 
 CREATE VIEW pg_group AS
     SELECT
@@ -251,7 +251,7 @@ CREATE VIEW pg_stats WITH (security_barrier) AS
     AND has_column_privilege(c.oid, a.attnum, 'select')
     AND (c.relrowsecurity = false OR NOT row_security_active(c.oid));
 
-REVOKE ALL on pg_statistic FROM public;
+REVOKE ALL ON pg_statistic FROM public;
 
 CREATE VIEW pg_stats_ext WITH (security_barrier) AS
     SELECT cn.nspname AS schemaname,
@@ -360,7 +360,7 @@ CREATE VIEW pg_stats_ext_exprs WITH (security_barrier) AS
          ) stat ON (stat.expr IS NOT NULL);
 
 -- unprivileged users may read pg_statistic_ext but not pg_statistic_ext_data
-REVOKE ALL on pg_statistic_ext_data FROM public;
+REVOKE ALL ON pg_statistic_ext_data FROM public;
 
 CREATE VIEW pg_publication_tables AS
     SELECT
@@ -596,13 +596,13 @@ GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;
 CREATE VIEW pg_file_settings AS
    SELECT * FROM pg_show_all_file_settings() AS A;
 
-REVOKE ALL on pg_file_settings FROM PUBLIC;
+REVOKE ALL ON pg_file_settings FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION pg_show_all_file_settings() FROM PUBLIC;
 
 CREATE VIEW pg_hba_file_rules AS
    SELECT * FROM pg_hba_file_rules() AS A;
 
-REVOKE ALL on pg_hba_file_rules FROM PUBLIC;
+REVOKE ALL ON pg_hba_file_rules FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION pg_hba_file_rules() FROM PUBLIC;
 
 CREATE VIEW pg_timezone_abbrevs AS
@@ -614,7 +614,7 @@ CREATE VIEW pg_timezone_names AS
 CREATE VIEW pg_config AS
     SELECT * FROM pg_config();
 
-REVOKE ALL on pg_config FROM PUBLIC;
+REVOKE ALL ON pg_config FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION pg_config() FROM PUBLIC;
 
 CREATE VIEW pg_shmem_allocations AS
@@ -1239,7 +1239,7 @@ CREATE VIEW pg_user_mappings AS
         JOIN pg_foreign_server S ON (U.umserver = S.oid)
         LEFT JOIN pg_authid A ON (A.oid = U.umuser);
 
-REVOKE ALL on pg_user_mapping FROM public;
+REVOKE ALL ON pg_user_mapping FROM public;
 
 CREATE VIEW pg_replication_origin_status AS
     SELECT *
