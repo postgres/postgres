@@ -1335,119 +1335,119 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 
 DROP STATISTICS func_deps_stat;
 -- now try functional dependencies with expressions
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
          1 |     50
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND (b || ''X'') = ''1X'' AND (c + 1) = 2');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND upper(b) = ''1'' AND (c + 1) = 2');
  estimated | actual 
 -----------+--------
          1 |     50
 (1 row)
 
 -- IN
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
          1 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND (b || ''X'') IN (''1X'', ''2X'')');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND upper(b) IN (''1'', ''2'')');
  estimated | actual 
 -----------+--------
          1 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND (b || ''X'') IN (''1X'', ''2X'')');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND upper(b) IN (''1'', ''2'')');
  estimated | actual 
 -----------+--------
          1 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
          1 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 52, 102, 152) AND (b || ''X'') IN (''1X'', ''26X'') AND (c + 1) = 2');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 52, 102, 152) AND upper(b) IN (''1'', ''26'') AND (c + 1) = 2');
  estimated | actual 
 -----------+--------
          1 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 52, 102, 152) AND (b || ''X'') IN (''1X'', ''26X'') AND (c + 1) IN (2)');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 52, 102, 152) AND upper(b) IN (''1'', ''26'') AND (c + 1) IN (2)');
  estimated | actual 
 -----------+--------
          1 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 52, 54, 102, 104, 152, 154) AND (b || ''X'') IN (''1X'', ''2X'', ''26X'', ''27X'') AND (c + 1) IN (2, 3)');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 52, 54, 102, 104, 152, 154) AND upper(b) IN (''1'', ''2'', ''26'', ''27'') AND (c + 1) IN (2, 3)');
  estimated | actual 
 -----------+--------
          1 |    400
 (1 row)
 
 -- OR clauses referencing the same attribute
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 102) AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 102) AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
          1 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 102) AND ((b || ''X'') = ''1X'' OR (b || ''X'') = ''2X'')');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 102) AND (upper(b) = ''1'' OR upper(b) = ''2'')');
  estimated | actual 
 -----------+--------
          1 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 4 OR (a * 2) = 102 OR (a * 2) = 104) AND ((b || ''X'') = ''1X'' OR (b || ''X'') = ''2X'')');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 4 OR (a * 2) = 102 OR (a * 2) = 104) AND (upper(b) = ''1'' OR upper(b) = ''2'')');
  estimated | actual 
 -----------+--------
          1 |    200
 (1 row)
 
 -- OR clauses referencing different attributes
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (b || ''X'') = ''1X'') AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR upper(b) = ''1'') AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
          1 |    100
 (1 row)
 
 -- ANY
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 102]) AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 102]) AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
          1 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 102]) AND (b || ''X'') = ANY (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 102]) AND upper(b) = ANY (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
          1 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 4, 102, 104]) AND (b || ''X'') = ANY (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 4, 102, 104]) AND upper(b) = ANY (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
          1 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 52, 102, 152]) AND (b || ''X'') = ANY (ARRAY[''1X'', ''26X'']) AND (c + 1) = 2');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 52, 102, 152]) AND upper(b) = ANY (ARRAY[''1'', ''26'']) AND (c + 1) = 2');
  estimated | actual 
 -----------+--------
          1 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 52, 102, 152]) AND (b || ''X'') = ANY (ARRAY[''1X'', ''26X'']) AND (c + 1) = ANY (ARRAY[2])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 52, 102, 152]) AND upper(b) = ANY (ARRAY[''1'', ''26'']) AND (c + 1) = ANY (ARRAY[2])');
  estimated | actual 
 -----------+--------
          1 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 4, 52, 54, 102, 104, 152, 154]) AND (b || ''X'') = ANY (ARRAY[''1X'', ''2X'', ''26X'', ''27X'']) AND (c + 1) = ANY (ARRAY[2, 3])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 4, 52, 54, 102, 104, 152, 154]) AND upper(b) = ANY (ARRAY[''1'', ''2'', ''26'', ''27'']) AND (c + 1) = ANY (ARRAY[2, 3])');
  estimated | actual 
 -----------+--------
          1 |    400
@@ -1455,45 +1455,45 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 
 -- ANY with inequalities should not benefit from functional dependencies
 -- the estimates however improve thanks to having expression statistics
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) < ANY (ARRAY[2, 102]) AND (b || ''X'') > ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) < ANY (ARRAY[2, 102]) AND upper(b) > ''1''');
  estimated | actual 
 -----------+--------
-       926 |   1900
+       926 |   2400
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) >= ANY (ARRAY[2, 102]) AND (b || ''X'') <= ANY (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) >= ANY (ARRAY[2, 102]) AND upper(b) <= ANY (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
-      1543 |   2250
+      1543 |   1250
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) <= ANY (ARRAY[2, 4, 102, 104]) AND (b || ''X'') >= ANY (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) <= ANY (ARRAY[2, 4, 102, 104]) AND upper(b) >= ANY (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
-      2229 |   2050
+      2229 |   2550
 (1 row)
 
 -- ALL (should not benefit from functional dependencies)
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND (b || ''X'') = ALL (ARRAY[''1X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND upper(b) = ALL (ARRAY[''1''])');
  estimated | actual 
 -----------+--------
          1 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND (b || ''X'') = ALL (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND upper(b) = ALL (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
          1 |      0
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND (b || ''X'') = ALL (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND upper(b) = ALL (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
          1 |      0
 (1 row)
 
 -- create statistics on expressions
-CREATE STATISTICS func_deps_stat (dependencies) ON (a * 2), (b || 'X'), (c + 1) FROM functional_dependencies;
+CREATE STATISTICS func_deps_stat (dependencies) ON (a * 2), upper(b), (c + 1) FROM functional_dependencies;
 ANALYZE functional_dependencies;
 -- print the detected dependencies
 SELECT dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
@@ -1502,119 +1502,119 @@ SELECT dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
  {"-1 => -2": 1.000000, "-1 => -3": 1.000000, "-2 => -3": 1.000000, "-1, -2 => -3": 1.000000, "-1, -3 => -2": 1.000000}
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
         50 |     50
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND (b || ''X'') = ''1X'' AND (c + 1) = 2');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND upper(b) = ''1'' AND (c + 1) = 2');
  estimated | actual 
 -----------+--------
         50 |     50
 (1 row)
 
 -- IN
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
        100 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND (b || ''X'') IN (''1X'', ''2X'')');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND upper(b) IN (''1'', ''2'')');
  estimated | actual 
 -----------+--------
        100 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND (b || ''X'') IN (''1X'', ''2X'')');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND upper(b) IN (''1'', ''2'')');
  estimated | actual 
 -----------+--------
        200 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
        100 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 52, 102, 152) AND (b || ''X'') IN (''1X'', ''26X'') AND (c + 1) = 2');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 52, 102, 152) AND upper(b) IN (''1'', ''26'') AND (c + 1) = 2');
  estimated | actual 
 -----------+--------
        200 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 52, 102, 152) AND (b || ''X'') IN (''1X'', ''26X'') AND (c + 1) IN (2)');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 52, 102, 152) AND upper(b) IN (''1'', ''26'') AND (c + 1) IN (2)');
  estimated | actual 
 -----------+--------
        200 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 52, 54, 102, 104, 152, 154) AND (b || ''X'') IN (''1X'', ''2X'', ''26X'', ''27X'') AND (c + 1) IN (2, 3)');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 52, 54, 102, 104, 152, 154) AND upper(b) IN (''1'', ''2'', ''26'', ''27'') AND (c + 1) IN (2, 3)');
  estimated | actual 
 -----------+--------
        400 |    400
 (1 row)
 
 -- OR clauses referencing the same attribute
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 102) AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 102) AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
         99 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 102) AND ((b || ''X'') = ''1X'' OR (b || ''X'') = ''2X'')');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 102) AND (upper(b) = ''1'' OR upper(b) = ''2'')');
  estimated | actual 
 -----------+--------
         99 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 4 OR (a * 2) = 102 OR (a * 2) = 104) AND ((b || ''X'') = ''1X'' OR (b || ''X'') = ''2X'')');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (a * 2) = 4 OR (a * 2) = 102 OR (a * 2) = 104) AND (upper(b) = ''1'' OR upper(b) = ''2'')');
  estimated | actual 
 -----------+--------
        197 |    200
 (1 row)
 
 -- OR clauses referencing different attributes
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR (b || ''X'') = ''1X'') AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE ((a * 2) = 2 OR upper(b) = ''1'') AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
          3 |    100
 (1 row)
 
 -- ANY
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 102]) AND (b || ''X'') = ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 102]) AND upper(b) = ''1''');
  estimated | actual 
 -----------+--------
        100 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 102]) AND (b || ''X'') = ANY (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 102]) AND upper(b) = ANY (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
        100 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 4, 102, 104]) AND (b || ''X'') = ANY (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 4, 102, 104]) AND upper(b) = ANY (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
        200 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 52, 102, 152]) AND (b || ''X'') = ANY (ARRAY[''1X'', ''26X'']) AND (c + 1) = 2');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 52, 102, 152]) AND upper(b) = ANY (ARRAY[''1'', ''26'']) AND (c + 1) = 2');
  estimated | actual 
 -----------+--------
        200 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 52, 102, 152]) AND (b || ''X'') = ANY (ARRAY[''1X'', ''26X'']) AND (c + 1) = ANY (ARRAY[2])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 52, 102, 152]) AND upper(b) = ANY (ARRAY[''1'', ''26'']) AND (c + 1) = ANY (ARRAY[2])');
  estimated | actual 
 -----------+--------
        200 |    200
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 4, 52, 54, 102, 104, 152, 154]) AND (b || ''X'') = ANY (ARRAY[''1X'', ''2X'', ''26X'', ''27X'']) AND (c + 1) = ANY (ARRAY[2, 3])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = ANY (ARRAY[2, 4, 52, 54, 102, 104, 152, 154]) AND upper(b) = ANY (ARRAY[''1'', ''2'', ''26'', ''27'']) AND (c + 1) = ANY (ARRAY[2, 3])');
  estimated | actual 
 -----------+--------
        400 |    400
@@ -1622,38 +1622,38 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 
 -- ANY with inequalities should not benefit from functional dependencies
 -- the estimates however improve thanks to having expression statistics
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) < ANY (ARRAY[2, 102]) AND (b || ''X'') > ''1X''');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) < ANY (ARRAY[2, 102]) AND upper(b) > ''1''');
  estimated | actual 
 -----------+--------
-      1957 |   1900
+      2472 |   2400
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) >= ANY (ARRAY[2, 102]) AND (b || ''X'') <= ANY (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) >= ANY (ARRAY[2, 102]) AND upper(b) <= ANY (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
-      2933 |   2250
+      1441 |   1250
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) <= ANY (ARRAY[2, 4, 102, 104]) AND (b || ''X'') >= ANY (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) <= ANY (ARRAY[2, 4, 102, 104]) AND upper(b) >= ANY (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
-      3548 |   2050
+      3909 |   2550
 (1 row)
 
 -- ALL (should not benefit from functional dependencies)
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND (b || ''X'') = ALL (ARRAY[''1X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND upper(b) = ALL (ARRAY[''1''])');
  estimated | actual 
 -----------+--------
          2 |    100
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND (b || ''X'') = ALL (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 102) AND upper(b) = ALL (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
          1 |      0
 (1 row)
 
-SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND (b || ''X'') = ALL (ARRAY[''1X'', ''2X''])');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) IN (2, 4, 102, 104) AND upper(b) = ALL (ARRAY[''1'', ''2''])');
  estimated | actual 
 -----------+--------
          1 |      0
@@ -2969,21 +2969,21 @@ create statistics stts_s2.stts_yama (dependencies, mcv) on col1, col3 from stts_
 insert into stts_t1 select i,i from generate_series(1,100) i;
 analyze stts_t1;
 \dX
-                                                                List of extended statistics
-  Schema  |          Name          |                                    Definition                                    | Ndistinct | Dependencies |   MCV   
-----------+------------------------+----------------------------------------------------------------------------------+-----------+--------------+---------
- public   | func_deps_stat         | ((a * 2)), ((b || 'X'::text)), ((c + (1)::numeric)) FROM functional_dependencies |           | defined      | 
- public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                                    |           |              | defined
- public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                                      |           |              | defined
- public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                                           |           |              | defined
- public   | stts_1                 | a, b FROM stts_t1                                                                | defined   |              | 
- public   | stts_2                 | a, b FROM stts_t1                                                                | defined   | defined      | 
- public   | stts_3                 | a, b FROM stts_t1                                                                | defined   | defined      | defined
- public   | stts_4                 | b, c FROM stts_t2                                                                | defined   | defined      | defined
- public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                                    | defined   | defined      | defined
- stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                                          | defined   | defined      | defined
- stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                                          |           | defined      | defined
- tststats | priv_test_stats        | a, b FROM tststats.priv_test_tbl                                                 |           |              | defined
+                                                           List of extended statistics
+  Schema  |          Name          |                               Definition                               | Ndistinct | Dependencies |   MCV   
+----------+------------------------+------------------------------------------------------------------------+-----------+--------------+---------
+ public   | func_deps_stat         | ((a * 2)), upper(b), ((c + (1)::numeric)) FROM functional_dependencies |           | defined      | 
+ public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                          |           |              | defined
+ public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                            |           |              | defined
+ public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                                 |           |              | defined
+ public   | stts_1                 | a, b FROM stts_t1                                                      | defined   |              | 
+ public   | stts_2                 | a, b FROM stts_t1                                                      | defined   | defined      | 
+ public   | stts_3                 | a, b FROM stts_t1                                                      | defined   | defined      | defined
+ public   | stts_4                 | b, c FROM stts_t2                                                      | defined   | defined      | defined
+ public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                          | defined   | defined      | defined
+ stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                                | defined   | defined      | defined
+ stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                                |           | defined      | defined
+ tststats | priv_test_stats        | a, b FROM tststats.priv_test_tbl                                       |           |              | defined
 (12 rows)
 
 \dX stts_?
@@ -3004,21 +3004,21 @@ analyze stts_t1;
 (1 row)
 
 \dX+
-                                                                List of extended statistics
-  Schema  |          Name          |                                    Definition                                    | Ndistinct | Dependencies |   MCV   
-----------+------------------------+----------------------------------------------------------------------------------+-----------+--------------+---------
- public   | func_deps_stat         | ((a * 2)), ((b || 'X'::text)), ((c + (1)::numeric)) FROM functional_dependencies |           | defined      | 
- public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                                    |           |              | defined
- public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                                      |           |              | defined
- public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                                           |           |              | defined
- public   | stts_1                 | a, b FROM stts_t1                                                                | defined   |              | 
- public   | stts_2                 | a, b FROM stts_t1                                                                | defined   | defined      | 
- public   | stts_3                 | a, b FROM stts_t1                                                                | defined   | defined      | defined
- public   | stts_4                 | b, c FROM stts_t2                                                                | defined   | defined      | defined
- public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                                    | defined   | defined      | defined
- stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                                          | defined   | defined      | defined
- stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                                          |           | defined      | defined
- tststats | priv_test_stats        | a, b FROM tststats.priv_test_tbl                                                 |           |              | defined
+                                                           List of extended statistics
+  Schema  |          Name          |                               Definition                               | Ndistinct | Dependencies |   MCV   
+----------+------------------------+------------------------------------------------------------------------+-----------+--------------+---------
+ public   | func_deps_stat         | ((a * 2)), upper(b), ((c + (1)::numeric)) FROM functional_dependencies |           | defined      | 
+ public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                          |           |              | defined
+ public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                            |           |              | defined
+ public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                                 |           |              | defined
+ public   | stts_1                 | a, b FROM stts_t1                                                      | defined   |              | 
+ public   | stts_2                 | a, b FROM stts_t1                                                      | defined   | defined      | 
+ public   | stts_3                 | a, b FROM stts_t1                                                      | defined   | defined      | defined
+ public   | stts_4                 | b, c FROM stts_t2                                                      | defined   | defined      | defined
+ public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                          | defined   | defined      | defined
+ stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                                | defined   | defined      | defined
+ stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                                |           | defined      | defined
+ tststats | priv_test_stats        | a, b FROM tststats.priv_test_tbl                                       |           |              | defined
 (12 rows)
 
 \dX+ stts_?
@@ -3048,21 +3048,21 @@ analyze stts_t1;
 create role regress_stats_ext nosuperuser;
 set role regress_stats_ext;
 \dX
-                                                                List of extended statistics
-  Schema  |          Name          |                                    Definition                                    | Ndistinct | Dependencies |   MCV   
-----------+------------------------+----------------------------------------------------------------------------------+-----------+--------------+---------
- public   | func_deps_stat         | ((a * 2)), ((b || 'X'::text)), ((c + (1)::numeric)) FROM functional_dependencies |           | defined      | 
- public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                                    |           |              | defined
- public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                                      |           |              | defined
- public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                                           |           |              | defined
- public   | stts_1                 | a, b FROM stts_t1                                                                | defined   |              | 
- public   | stts_2                 | a, b FROM stts_t1                                                                | defined   | defined      | 
- public   | stts_3                 | a, b FROM stts_t1                                                                | defined   | defined      | defined
- public   | stts_4                 | b, c FROM stts_t2                                                                | defined   | defined      | defined
- public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                                    | defined   | defined      | defined
- stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                                          | defined   | defined      | defined
- stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                                          |           | defined      | defined
- tststats | priv_test_stats        | a, b FROM tststats.priv_test_tbl                                                 |           |              | defined
+                                                           List of extended statistics
+  Schema  |          Name          |                               Definition                               | Ndistinct | Dependencies |   MCV   
+----------+------------------------+------------------------------------------------------------------------+-----------+--------------+---------
+ public   | func_deps_stat         | ((a * 2)), upper(b), ((c + (1)::numeric)) FROM functional_dependencies |           | defined      | 
+ public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                          |           |              | defined
+ public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                            |           |              | defined
+ public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                                 |           |              | defined
+ public   | stts_1                 | a, b FROM stts_t1                                                      | defined   |              | 
+ public   | stts_2                 | a, b FROM stts_t1                                                      | defined   | defined      | 
+ public   | stts_3                 | a, b FROM stts_t1                                                      | defined   | defined      | defined
+ public   | stts_4                 | b, c FROM stts_t2                                                      | defined   | defined      | defined
+ public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                          | defined   | defined      | defined
+ stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                                | defined   | defined      | defined
+ stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                                |           | defined      | defined
+ tststats | priv_test_stats        | a, b FROM tststats.priv_test_tbl                                       |           |              | defined
 (12 rows)
 
 reset role;
