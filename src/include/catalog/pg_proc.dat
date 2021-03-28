@@ -11527,6 +11527,10 @@
   proname => 'is_normalized', prorettype => 'bool', proargtypes => 'text text',
   prosrc => 'unicode_is_normalized' },
 
+{ oid => '9822', descr => 'unescape Unicode characters',
+  proname => 'unistr', prorettype => 'text', proargtypes => 'text',
+  prosrc => 'unistr' },
+
 { oid => '4596', descr => 'I/O',
   proname => 'brin_bloom_summary_in', prorettype => 'pg_brin_bloom_summary',
   proargtypes => 'cstring', prosrc => 'brin_bloom_summary_in' },

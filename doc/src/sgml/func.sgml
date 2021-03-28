@@ -3551,6 +3551,52 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        </para></entry>
       </row>
 
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>unistr</primary>
+        </indexterm>
+        <function>unistr</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Evaluate escaped Unicode characters in argument.  Unicode characters
+        can be specified as
+        <literal>\<replaceable>XXXX</replaceable></literal> (4 hexadecimal
+        digits), <literal>\+<replaceable>XXXXXX</replaceable></literal> (6
+        hexadecimal digits),
+        <literal>\u<replaceable>XXXX</replaceable></literal> (4 hexadecimal
+        digits), or <literal>\U<replaceable>XXXXXXXX</replaceable></literal>
+        (8 hexadecimal digits).  To specify a backslash, write two
+        backslashes.  All other characters are taken literally.
+       </para>
+
+       <para>
+        If the server encoding is not UTF-8, the Unicode code point identified
+        by one of these escape sequences is converted to the actual server
+        encoding; an error is reported if that's not possible.
+       </para>
+
+       <para>
+        This function provides a (non-standard) alternative to string
+        constants with Unicode escapes (see <xref
+        linkend="sql-syntax-strings-uescape"/>).
+       </para>
+
+       <para>
+        <literal>unistr('\0441\043B\043E\043D')</literal>
+        <returnvalue>слон</returnvalue>
+       </para>
+       <para>
+        <literal>unistr('d\0061t\+000061')</literal>
+        <returnvalue>data</returnvalue>
+       </para>
+       <para>
+        <literal>unistr('d\u0061t\U00000061')</literal>
+        <returnvalue>data</returnvalue>
+       </para></entry>
+      </row>
+
      </tbody>
     </tgroup>
    </table>

@@ -6380,3 +6380,213 @@ unicode_is_normalized(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(result);
 }
+
+/*
+ * Check if first n chars are hexadecimal digits
+ */
+static bool
+isxdigits_n(const char *instr, size_t n)
+{
+	for (size_t i = 0; i < n; i++)
+		if (!isxdigit((unsigned char) instr[i]))
+			return false;
+
+	return true;
+}
+
+static unsigned int
+hexval(unsigned char c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'a' && c <= 'f')
+		return c - 'a' + 0xA;
+	if (c >= 'A' && c <= 'F')
+		return c - 'A' + 0xA;
+	elog(ERROR, "invalid hexadecimal digit");
+	return 0;					/* not reached */
+}
+
+/*
+ * Translate string with hexadecimal digits to number
+ */
+static unsigned int
+hexval_n(const char *instr, size_t n)
+{
+	unsigned int result = 0;
+
+	for (size_t i = 0; i < n; i++)
+		result += hexval(instr[i]) << (4 * (n - i - 1));
+
+	return result;
+}
+
+/*
+ * Replaces Unicode escape sequences by Unicode characters
+ */
+Datum
+unistr(PG_FUNCTION_ARGS)
+{
+	text	   *input_text = PG_GETARG_TEXT_PP(0);
+	char	   *instr;
+	int			len;
+	StringInfoData str;
+	text	   *result;
+	pg_wchar	pair_first = 0;
+	char		cbuf[MAX_UNICODE_EQUIVALENT_STRING + 1];
+
+	instr = VARDATA_ANY(input_text);
+	len = VARSIZE_ANY_EXHDR(input_text);
+
+	initStringInfo(&str);
+
+	while (len > 0)
+	{
+		if (instr[0] == '\\')
+		{
+			if (len >= 2 &&
+				instr[1] == '\\')
+			{
+				if (pair_first)
+					goto invalid_pair;
+				appendStringInfoChar(&str, '\\');
+				instr += 2;
+				len -= 2;
+			}
+			else if ((len >= 5 && isxdigits_n(instr + 1, 4)) ||
+					 (len >= 6 && instr[1] == 'u' && isxdigits_n(instr + 2, 4)))
+			{
+				pg_wchar	unicode;
+				int			offset = instr[1] == 'u' ? 2 : 1;
+
+				unicode = hexval_n(instr + offset, 4);
+
+				if (!is_valid_unicode_codepoint(unicode))
+					ereport(ERROR,
+							errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							errmsg("invalid Unicode code point: %04X", unicode));
+
+				if (pair_first)
+				{
+					if (is_utf16_surrogate_second(unicode))
+					{
+						unicode = surrogate_pair_to_codepoint(pair_first, unicode);
+						pair_first = 0;
+					}
+					else
+						goto invalid_pair;
+				}
+				else if (is_utf16_surrogate_second(unicode))
+					goto invalid_pair;
+
+				if (is_utf16_surrogate_first(unicode))
+					pair_first = unicode;
+				else
+				{
+					pg_unicode_to_server(unicode, (unsigned char *) cbuf);
+					appendStringInfoString(&str, cbuf);
+				}
+
+				instr += 4 + offset;
+				len -= 4 + offset;
+			}
+			else if (len >= 8 && instr[1] == '+' && isxdigits_n(instr + 2, 6))
+			{
+				pg_wchar	unicode;
+
+				unicode = hexval_n(instr + 2, 6);
+
+				if (!is_valid_unicode_codepoint(unicode))
+					ereport(ERROR,
+							errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							errmsg("invalid Unicode code point: %04X", unicode));
+
+				if (pair_first)
+				{
+					if (is_utf16_surrogate_second(unicode))
+					{
+						unicode = surrogate_pair_to_codepoint(pair_first, unicode);
+						pair_first = 0;
+					}
+					else
+						goto invalid_pair;
+				}
+				else if (is_utf16_surrogate_second(unicode))
+					goto invalid_pair;
+
+				if (is_utf16_surrogate_first(unicode))
+					pair_first = unicode;
+				else
+				{
+					pg_unicode_to_server(unicode, (unsigned char *) cbuf);
+					appendStringInfoString(&str, cbuf);
+				}
+
+				instr += 8;
+				len -= 8;
+			}
+			else if (len >= 10 && instr[1] == 'U' && isxdigits_n(instr + 2, 8))
+			{
+				pg_wchar	unicode;
+
+				unicode = hexval_n(instr + 2, 8);
+
+				if (!is_valid_unicode_codepoint(unicode))
+					ereport(ERROR,
+							errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							errmsg("invalid Unicode code point: %04X", unicode));
+
+				if (pair_first)
+				{
+					if (is_utf16_surrogate_second(unicode))
+					{
+						unicode = surrogate_pair_to_codepoint(pair_first, unicode);
+						pair_first = 0;
+					}
+					else
+						goto invalid_pair;
+				}
+				else if (is_utf16_surrogate_second(unicode))
+					goto invalid_pair;
+
+				if (is_utf16_surrogate_first(unicode))
+					pair_first = unicode;
+				else
+				{
+					pg_unicode_to_server(unicode, (unsigned char *) cbuf);
+					appendStringInfoString(&str, cbuf);
+				}
+
+				instr += 10;
+				len -= 10;
+			}
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("invalid Unicode escape"),
+						 errhint("Unicode escapes must be \\XXXX, \\+XXXXXX, \\uXXXX, or \\UXXXXXXXX.")));
+		}
+		else
+		{
+			if (pair_first)
+				goto invalid_pair;
+
+			appendStringInfoChar(&str, *instr++);
+			len--;
+		}
+	}
+
+	/* unfinished surrogate pair? */
+	if (pair_first)
+		goto invalid_pair;
+
+	result = cstring_to_text_with_len(str.data, str.len);
+	pfree(str.data);
+
+	PG_RETURN_TEXT_P(result);
+
+invalid_pair:
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("invalid Unicode surrogate pair")));
+}

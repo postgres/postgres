@@ -2234,3 +2234,39 @@ SELECT bit_count('\x1234567890'::bytea);
         15
 (1 row)
 
+SELECT unistr('\0064at\+0000610');
+ unistr 
+--------
+ data0
+(1 row)
+
+SELECT unistr('d\u0061t\U000000610');
+ unistr 
+--------
+ data0
+(1 row)
+
+SELECT unistr('a\\b');
+ unistr 
+--------
+ a\b
+(1 row)
+
+-- errors:
+SELECT unistr('wrong: \db99');
+ERROR:  invalid Unicode surrogate pair
+SELECT unistr('wrong: \db99\0061');
+ERROR:  invalid Unicode surrogate pair
+SELECT unistr('wrong: \+00db99\+000061');
+ERROR:  invalid Unicode surrogate pair
+SELECT unistr('wrong: \+2FFFFF');
+ERROR:  invalid Unicode code point: 2FFFFF
+SELECT unistr('wrong: \udb99\u0061');
+ERROR:  invalid Unicode surrogate pair
+SELECT unistr('wrong: \U0000db99\U00000061');
+ERROR:  invalid Unicode surrogate pair
+SELECT unistr('wrong: \U002FFFFF');
+ERROR:  invalid Unicode code point: 2FFFFF
+SELECT unistr('wrong: \xyz');
+ERROR:  invalid Unicode escape
+HINT:  Unicode escapes must be \XXXX, \+XXXXXX, \uXXXX, or \UXXXXXXXX.
