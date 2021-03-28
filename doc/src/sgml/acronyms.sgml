@@ -685,6 +685,16 @@
    </varlistentry>
 
    <varlistentry>
+    <term><acronym>TLS</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="https://en.wikipedia.org/wiki/Transport_Layer_Security">
+      Transport Layer Security</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><acronym>TOAST</acronym></term>
     <listitem>
      <para>
