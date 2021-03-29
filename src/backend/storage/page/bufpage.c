@@ -250,14 +250,18 @@ PageAddItemExtended(Page page,
 		/* if no free slot, we'll put it at limit (1st open slot) */
 		if (PageHasFreeLinePointers(phdr))
 		{
-			/*
-			 * Look for "recyclable" (unused) ItemId.  We check for no storage
-			 * as well, just to be paranoid --- unused items should never have
-			 * storage.
-			 */
+			/* Look for "recyclable" (unused) ItemId */
 			for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
 			{
 				itemId = PageGetItemId(phdr, offsetNumber);
+
+				/*
+				 * We check for no storage as well, just to be paranoid;
+				 * unused items should never have storage.  Assert() that the
+				 * invariant is respected too.
+				 */
+				Assert(ItemIdIsUsed(itemId) || !ItemIdHasStorage(itemId));
+
 				if (!ItemIdIsUsed(itemId) && !ItemIdHasStorage(itemId))
 					break;
 			}
@@ -676,7 +680,9 @@ compactify_tuples(itemIdCompact itemidbase, int nitems, Page page, bool presorte
  *
  * This routine is usable for heap pages only, but see PageIndexMultiDelete.
  *
- * As a side effect, the page's PD_HAS_FREE_LINES hint bit is updated.
+ * Caller had better have a super-exclusive lock on page's buffer.  As a side
+ * effect the page's PD_HAS_FREE_LINES hint bit will be set or unset as
+ * needed.
  */
 void
 PageRepairFragmentation(Page page)
@@ -771,7 +777,7 @@ PageRepairFragmentation(Page page)
 		compactify_tuples(itemidbase, nstorage, page, presorted);
 	}
 
-	/* Set hint bit for PageAddItem */
+	/* Set hint bit for PageAddItemExtended */
 	if (nunused > 0)
 		PageSetHasFreeLinePointers(page);
 	else
