@@ -3331,6 +3331,9 @@ printTable(const printTableContent *cont,
 		is_local_pager = is_pager;
 	}
 
+	/* clear any pre-existing error indication on the output stream */
+	clearerr(fout);
+
 	/* print the stuff */
 
 	if (flog)
