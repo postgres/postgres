@@ -138,6 +138,13 @@ make_restrictinfo_internal(PlannerInfo *root,
 		restrictinfo->leakproof = false;	/* really, "don't know" */
 
 	/*
+	 * Mark volatility as unknown.  The contain_volatile_functions function
+	 * will determine if there are any volatile functions when called for the
+	 * first time with this RestrictInfo.
+	 */
+	restrictinfo->has_volatile = VOLATILITY_UNKNOWN;
+
+	/*
 	 * If it's a binary opclause, set up left/right relids info. In any case
 	 * set up the total clause relids info.
 	 */

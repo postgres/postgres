@@ -1055,6 +1055,17 @@ typedef struct PathKey
 	bool		pk_nulls_first; /* do NULLs come before normal values? */
 } PathKey;
 
+/*
+ * VolatileFunctionStatus -- allows nodes to cache their
+ * contain_volatile_functions properties. VOLATILITY_UNKNOWN means not yet
+ * determined.
+ */
+typedef enum VolatileFunctionStatus
+{
+	VOLATILITY_UNKNOWN = 0,
+	VOLATILITY_VOLATILE,
+	VOLATILITY_NOVOLATILE
+} VolatileFunctionStatus;
 
 /*
  * PathTarget
@@ -1086,6 +1097,8 @@ typedef struct PathTarget
 	Index	   *sortgrouprefs;	/* corresponding sort/group refnos, or 0 */
 	QualCost	cost;			/* cost of evaluating the expressions */
 	int			width;			/* estimated avg width of result tuples */
+	VolatileFunctionStatus	has_volatile_expr;	/* indicates if exprs contain
+												 * any volatile functions. */
 } PathTarget;
 
 /* Convenience macro to get a sort/group refno from a PathTarget */
@@ -2015,6 +2028,9 @@ typedef struct RestrictInfo
 	bool		pseudoconstant; /* see comment above */
 
 	bool		leakproof;		/* true if known to contain no leaked Vars */
+
+	VolatileFunctionStatus	has_volatile;	/* to indicate if clause contains
+											 * any volatile functions. */
 
 	Index		security_level; /* see comment above */
 

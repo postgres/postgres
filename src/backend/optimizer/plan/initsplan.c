@@ -2657,7 +2657,7 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 	leftarg = linitial(((OpExpr *) clause)->args);
 
 	if (op_mergejoinable(opno, exprType(leftarg)) &&
-		!contain_volatile_functions((Node *) clause))
+		!contain_volatile_functions((Node *) restrictinfo))
 		restrictinfo->mergeopfamilies = get_mergejoin_opfamilies(opno);
 
 	/*
@@ -2694,6 +2694,6 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 	leftarg = linitial(((OpExpr *) clause)->args);
 
 	if (op_hashjoinable(opno, exprType(leftarg)) &&
-		!contain_volatile_functions((Node *) clause))
+		!contain_volatile_functions((Node *) restrictinfo))
 		restrictinfo->hashjoinoperator = opno;
 }

@@ -134,7 +134,8 @@ static void check_output_expressions(Query *subquery,
 static void compare_tlist_datatypes(List *tlist, List *colTypes,
 									pushdown_safety_info *safetyInfo);
 static bool targetIsInAllPartitionLists(TargetEntry *tle, Query *query);
-static bool qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
+static bool qual_is_pushdown_safe(Query *subquery, Index rti,
+								  RestrictInfo *rinfo,
 								  pushdown_safety_info *safetyInfo);
 static void subquery_push_qual(Query *subquery,
 							   RangeTblEntry *rte, Index rti, Node *qual);
@@ -2177,11 +2178,12 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		foreach(l, rel->baserestrictinfo)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-			Node	   *clause = (Node *) rinfo->clause;
 
 			if (!rinfo->pseudoconstant &&
-				qual_is_pushdown_safe(subquery, rti, clause, &safetyInfo))
+				qual_is_pushdown_safe(subquery, rti, rinfo, &safetyInfo))
 			{
+				Node	   *clause = (Node *) rinfo->clause;
+
 				/* Push it down */
 				subquery_push_qual(subquery, rte, rti, clause);
 			}
@@ -3390,37 +3392,39 @@ targetIsInAllPartitionLists(TargetEntry *tle, Query *query)
 }
 
 /*
- * qual_is_pushdown_safe - is a particular qual safe to push down?
+ * qual_is_pushdown_safe - is a particular rinfo safe to push down?
  *
- * qual is a restriction clause applying to the given subquery (whose RTE
+ * rinfo is a restriction clause applying to the given subquery (whose RTE
  * has index rti in the parent query).
  *
  * Conditions checked here:
  *
- * 1. The qual must not contain any SubPlans (mainly because I'm not sure
- * it will work correctly: SubLinks will already have been transformed into
- * SubPlans in the qual, but not in the subquery).  Note that SubLinks that
- * transform to initplans are safe, and will be accepted here because what
- * we'll see in the qual is just a Param referencing the initplan output.
+ * 1. rinfo's clause must not contain any SubPlans (mainly because it's
+ * unclear that it will work correctly: SubLinks will already have been
+ * transformed into SubPlans in the qual, but not in the subquery).  Note that
+ * SubLinks that transform to initplans are safe, and will be accepted here
+ * because what we'll see in the qual is just a Param referencing the initplan
+ * output.
  *
- * 2. If unsafeVolatile is set, the qual must not contain any volatile
+ * 2. If unsafeVolatile is set, rinfo's clause must not contain any volatile
  * functions.
  *
- * 3. If unsafeLeaky is set, the qual must not contain any leaky functions
- * that are passed Var nodes, and therefore might reveal values from the
- * subquery as side effects.
+ * 3. If unsafeLeaky is set, rinfo's clause must not contain any leaky
+ * functions that are passed Var nodes, and therefore might reveal values from
+ * the subquery as side effects.
  *
- * 4. The qual must not refer to the whole-row output of the subquery
+ * 4. rinfo's clause must not refer to the whole-row output of the subquery
  * (since there is no easy way to name that within the subquery itself).
  *
- * 5. The qual must not refer to any subquery output columns that were
+ * 5. rinfo's clause must not refer to any subquery output columns that were
  * found to be unsafe to reference by subquery_is_pushdown_safe().
  */
 static bool
-qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
+qual_is_pushdown_safe(Query *subquery, Index rti, RestrictInfo *rinfo,
 					  pushdown_safety_info *safetyInfo)
 {
 	bool		safe = true;
+	Node	   *qual = (Node *) rinfo->clause;
 	List	   *vars;
 	ListCell   *vl;
 
@@ -3430,7 +3434,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 
 	/* Refuse volatile quals if we found they'd be unsafe (point 2) */
 	if (safetyInfo->unsafeVolatile &&
-		contain_volatile_functions(qual))
+		contain_volatile_functions((Node *) rinfo))
 		return false;
 
 	/* Refuse leaky quals if told to (point 3) */

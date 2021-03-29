@@ -2471,6 +2471,7 @@ _outPathTarget(StringInfo str, const PathTarget *node)
 	WRITE_FLOAT_FIELD(cost.startup, "%.2f");
 	WRITE_FLOAT_FIELD(cost.per_tuple, "%.2f");
 	WRITE_INT_FIELD(width);
+	WRITE_ENUM_FIELD(has_volatile_expr, VolatileFunctionStatus);
 }
 
 static void
@@ -2495,6 +2496,7 @@ _outRestrictInfo(StringInfo str, const RestrictInfo *node)
 	WRITE_BOOL_FIELD(can_join);
 	WRITE_BOOL_FIELD(pseudoconstant);
 	WRITE_BOOL_FIELD(leakproof);
+	WRITE_ENUM_FIELD(has_volatile, VolatileFunctionStatus);
 	WRITE_UINT_FIELD(security_level);
 	WRITE_BITMAPSET_FIELD(clause_relids);
 	WRITE_BITMAPSET_FIELD(required_relids);

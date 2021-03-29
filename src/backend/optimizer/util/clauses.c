@@ -432,6 +432,16 @@ contain_mutable_functions_walker(Node *node, void *context)
  * subsequent planning need not consider volatility within those, since
  * the executor won't change its evaluation rules for a SubPlan based on
  * volatility.
+ *
+ * For some node types, for example, RestrictInfo and PathTarget, we cache
+ * whether we found any volatile functions or not and reuse that value in any
+ * future checks for that node.  All of the logic for determining if the
+ * cached value should be set to VOLATILITY_NOVOLATILE or VOLATILITY_VOLATILE
+ * belongs in this function.  Any code which makes changes to these nodes
+ * which could change the outcome this function must set the cached value back
+ * to VOLATILITY_UNKNOWN.  That allows this function to redetermine the
+ * correct value during the next call, should we need to redetermine if the
+ * node contains any volatile functions again in the future.
  */
 bool
 contain_volatile_functions(Node *clause)
@@ -459,6 +469,63 @@ contain_volatile_functions_walker(Node *node, void *context)
 	{
 		/* NextValueExpr is volatile */
 		return true;
+	}
+
+	if (IsA(node, RestrictInfo))
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) node;
+
+		/*
+		 * For RestrictInfo, check if we've checked the volatility of it
+		 * before.  If so, we can just use the cached value and not bother
+		 * checking it again.  Otherwise, check it and cache if whether we
+		 * found any volatile functions.
+		 */
+		if (rinfo->has_volatile == VOLATILITY_NOVOLATILE)
+			return false;
+		else if (rinfo->has_volatile == VOLATILITY_VOLATILE)
+			return true;
+		else
+		{
+			bool		hasvolatile;
+
+			hasvolatile = contain_volatile_functions_walker((Node *) rinfo->clause,
+															context);
+			if (hasvolatile)
+				rinfo->has_volatile = VOLATILITY_VOLATILE;
+			else
+				rinfo->has_volatile = VOLATILITY_NOVOLATILE;
+
+			return hasvolatile;
+		}
+	}
+
+	if (IsA(node, PathTarget))
+	{
+		PathTarget *target = (PathTarget *) node;
+
+		/*
+		 * We also do caching for PathTarget the same as we do above for
+		 * RestrictInfos.
+		 */
+		if (target->has_volatile_expr == VOLATILITY_NOVOLATILE)
+			return false;
+		else if (target->has_volatile_expr == VOLATILITY_VOLATILE)
+			return true;
+		else
+		{
+			bool		hasvolatile;
+
+			hasvolatile = contain_volatile_functions_walker((Node *) target->exprs,
+															context);
+
+			if (hasvolatile)
+				target->has_volatile_expr = VOLATILITY_VOLATILE;
+			else
+				target->has_volatile_expr = VOLATILITY_NOVOLATILE;
+
+			return hasvolatile;
+		}
 	}
 
 	/*
