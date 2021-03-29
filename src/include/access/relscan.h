@@ -46,7 +46,6 @@ typedef struct TableScanDescData
 	 */
 	uint32		rs_flags;
 
-	void	   *rs_private;		/* per-worker private memory for AM to use */
 	struct ParallelTableScanDescData *rs_parallel;	/* parallel scan
 													 * information */
 } TableScanDescData;

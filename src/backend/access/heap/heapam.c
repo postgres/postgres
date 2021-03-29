@@ -540,7 +540,7 @@ heapgettup(HeapScanDesc scan,
 				ParallelBlockTableScanDesc pbscan =
 				(ParallelBlockTableScanDesc) scan->rs_base.rs_parallel;
 				ParallelBlockTableScanWorker pbscanwork =
-				(ParallelBlockTableScanWorker) scan->rs_base.rs_private;
+				scan->rs_parallelworkerdata;
 
 				table_block_parallelscan_startblock_init(scan->rs_base.rs_rd,
 														 pbscanwork, pbscan);
@@ -748,7 +748,7 @@ heapgettup(HeapScanDesc scan,
 			ParallelBlockTableScanDesc pbscan =
 			(ParallelBlockTableScanDesc) scan->rs_base.rs_parallel;
 			ParallelBlockTableScanWorker pbscanwork =
-			(ParallelBlockTableScanWorker) scan->rs_base.rs_private;
+			scan->rs_parallelworkerdata;
 
 			page = table_block_parallelscan_nextpage(scan->rs_base.rs_rd,
 													 pbscanwork, pbscan);
@@ -864,7 +864,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 				ParallelBlockTableScanDesc pbscan =
 				(ParallelBlockTableScanDesc) scan->rs_base.rs_parallel;
 				ParallelBlockTableScanWorker pbscanwork =
-				(ParallelBlockTableScanWorker) scan->rs_base.rs_private;
+				scan->rs_parallelworkerdata;
 
 				table_block_parallelscan_startblock_init(scan->rs_base.rs_rd,
 														 pbscanwork, pbscan);
@@ -1057,7 +1057,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			ParallelBlockTableScanDesc pbscan =
 			(ParallelBlockTableScanDesc) scan->rs_base.rs_parallel;
 			ParallelBlockTableScanWorker pbscanwork =
-			(ParallelBlockTableScanWorker) scan->rs_base.rs_private;
+			scan->rs_parallelworkerdata;
 
 			page = table_block_parallelscan_nextpage(scan->rs_base.rs_rd,
 													 pbscanwork, pbscan);
@@ -1194,8 +1194,6 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	scan->rs_base.rs_nkeys = nkeys;
 	scan->rs_base.rs_flags = flags;
 	scan->rs_base.rs_parallel = parallel_scan;
-	scan->rs_base.rs_private =
-		palloc(sizeof(ParallelBlockTableScanWorkerData));
 	scan->rs_strategy = NULL;	/* set in initscan */
 
 	/*
@@ -1230,6 +1228,15 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 
 	/* we only need to set this up once */
 	scan->rs_ctup.t_tableOid = RelationGetRelid(relation);
+
+	/*
+	 * Allocate memory to keep track of page allocation for parallel workers
+	 * when doing a parallel scan.
+	 */
+	if (parallel_scan != NULL)
+		scan->rs_parallelworkerdata = palloc(sizeof(ParallelBlockTableScanWorkerData));
+	else
+		scan->rs_parallelworkerdata = NULL;
 
 	/*
 	 * we do this here instead of in initscan() because heap_rescan also calls
@@ -1305,6 +1312,9 @@ heap_endscan(TableScanDesc sscan)
 
 	if (scan->rs_strategy != NULL)
 		FreeAccessStrategy(scan->rs_strategy);
+
+	if (scan->rs_parallelworkerdata != NULL)
+		pfree(scan->rs_parallelworkerdata);
 
 	if (scan->rs_base.rs_flags & SO_TEMP_SNAPSHOT)
 		UnregisterSnapshot(scan->rs_base.rs_snapshot);
