@@ -239,8 +239,6 @@ SELECT f1 as "date",
 -- epoch
 --
 SELECT EXTRACT(EPOCH FROM DATE        '1970-01-01');     --  0
-SELECT EXTRACT(EPOCH FROM TIMESTAMP   '1970-01-01');     --  0
-SELECT EXTRACT(EPOCH FROM TIMESTAMPTZ '1970-01-01+00');  --  0
 --
 -- century
 --
@@ -275,12 +273,6 @@ SELECT EXTRACT(DECADE FROM DATE '0001-01-01 BC'); --   0
 SELECT EXTRACT(DECADE FROM DATE '0002-12-31 BC'); --  -1
 SELECT EXTRACT(DECADE FROM DATE '0011-01-01 BC'); --  -1
 SELECT EXTRACT(DECADE FROM DATE '0012-12-31 BC'); --  -2
---
--- some other types:
---
--- on a timestamp.
-SELECT EXTRACT(CENTURY FROM NOW())>=21 AS True;       -- true
-SELECT EXTRACT(CENTURY FROM TIMESTAMP '1970-03-20 04:30:00.00000'); -- 20
 --
 -- all possible fields
 --
@@ -327,14 +319,10 @@ select 'infinity'::date > 'today'::date as t;
 select '-infinity'::date < 'today'::date as t;
 select isfinite('infinity'::date), isfinite('-infinity'::date), isfinite('today'::date);
 --
--- oscillating fields from non-finite date/timestamptz:
+-- oscillating fields from non-finite date:
 --
 SELECT EXTRACT(HOUR FROM DATE 'infinity');      -- NULL
 SELECT EXTRACT(HOUR FROM DATE '-infinity');     -- NULL
-SELECT EXTRACT(HOUR FROM TIMESTAMP   'infinity');      -- NULL
-SELECT EXTRACT(HOUR FROM TIMESTAMP   '-infinity');     -- NULL
-SELECT EXTRACT(HOUR FROM TIMESTAMPTZ 'infinity');      -- NULL
-SELECT EXTRACT(HOUR FROM TIMESTAMPTZ '-infinity');     -- NULL
 -- all possible fields
 SELECT EXTRACT(MICROSECONDS  FROM DATE 'infinity');    -- NULL
 SELECT EXTRACT(MILLISECONDS  FROM DATE 'infinity');    -- NULL
@@ -352,14 +340,10 @@ SELECT EXTRACT(TIMEZONE      FROM DATE 'infinity');    -- NULL
 SELECT EXTRACT(TIMEZONE_M    FROM DATE 'infinity');    -- NULL
 SELECT EXTRACT(TIMEZONE_H    FROM DATE 'infinity');    -- NULL
 --
--- monotonic fields from non-finite date/timestamptz:
+-- monotonic fields from non-finite date:
 --
 SELECT EXTRACT(EPOCH FROM DATE 'infinity');         --  Infinity
 SELECT EXTRACT(EPOCH FROM DATE '-infinity');        -- -Infinity
-SELECT EXTRACT(EPOCH FROM TIMESTAMP   'infinity');  --  Infinity
-SELECT EXTRACT(EPOCH FROM TIMESTAMP   '-infinity'); -- -Infinity
-SELECT EXTRACT(EPOCH FROM TIMESTAMPTZ 'infinity');  --  Infinity
-SELECT EXTRACT(EPOCH FROM TIMESTAMPTZ '-infinity'); -- -Infinity
 -- all possible fields
 SELECT EXTRACT(YEAR       FROM DATE 'infinity');    --  Infinity
 SELECT EXTRACT(DECADE     FROM DATE 'infinity');    --  Infinity
