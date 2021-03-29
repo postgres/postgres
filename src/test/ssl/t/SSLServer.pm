@@ -109,6 +109,9 @@ sub configure_test_server_for_ssl
 	$node->psql('postgres', "CREATE USER yetanotheruser");
 	$node->psql('postgres', "CREATE DATABASE trustdb");
 	$node->psql('postgres', "CREATE DATABASE certdb");
+	$node->psql('postgres', "CREATE DATABASE certdb_dn");
+	$node->psql('postgres', "CREATE DATABASE certdb_dn_re");
+	$node->psql('postgres', "CREATE DATABASE certdb_cn");
 	$node->psql('postgres', "CREATE DATABASE verifydb");
 
 	# Update password of each user as needed.
@@ -217,7 +220,20 @@ sub configure_hba_for_ssl
 	  "hostssl verifydb        yetanotheruser  $servercidr            $authmethod        clientcert=verify-ca\n";
 	print $hba
 	  "hostssl certdb          all             $servercidr            cert\n";
+	print $hba
+	  "hostssl certdb_dn       all             $servercidr            cert clientname=DN map=dn\n",
+	  "hostssl certdb_dn_re    all             $servercidr            cert clientname=DN map=dnre\n",
+	  "hostssl certdb_cn       all             $servercidr            cert clientname=CN map=cn\n";
 	close $hba;
+
+	# Also set the ident maps. Note: fields with commas must be quoted
+	open my $map, ">", "$pgdata/pg_ident.conf";
+	print $map
+	  "# MAPNAME       SYSTEM-USERNAME                           PG-USERNAME\n",
+	  "dn             \"CN=ssltestuser-dn,OU=Testing,OU=Engineering,O=PGDG\"    ssltestuser\n",
+	  "dnre           \"/^.*OU=Testing,.*\$\"                    ssltestuser\n",
+	  "cn              ssltestuser-dn                            ssltestuser\n";
+
 	return;
 }
 

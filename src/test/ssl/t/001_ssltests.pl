@@ -17,7 +17,7 @@ if ($ENV{with_ssl} ne 'openssl')
 }
 else
 {
-	plan tests => 100;
+	plan tests => 103;
 }
 
 #### Some configuration
@@ -40,7 +40,7 @@ my $common_connstr;
 my @keys = (
 	"client",     "client-revoked",
 	"client-der", "client-encrypted-pem",
-	"client-encrypted-der");
+	"client-encrypted-der", "client-dn");
 foreach my $key (@keys)
 {
 	copy("ssl/${key}.key", "ssl/${key}_tmp.key")
@@ -452,6 +452,36 @@ test_connect_fails(
 	qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": bad decrypt\E!,
 	"certificate authorization fails with correct client cert and wrong password in encrypted PEM format"
 );
+
+
+# correct client cert using whole DN
+my $dn_connstr = "$common_connstr dbname=certdb_dn";
+
+test_connect_ok(
+	$dn_connstr,
+	"user=ssltestuser sslcert=ssl/client-dn.crt sslkey=ssl/client-dn_tmp.key",
+	"certificate authorization succeeds with DN mapping"
+);
+
+# same thing but with a regex
+$dn_connstr = "$common_connstr dbname=certdb_dn_re";
+
+test_connect_ok(
+	$dn_connstr,
+	"user=ssltestuser sslcert=ssl/client-dn.crt sslkey=ssl/client-dn_tmp.key",
+	"certificate authorization succeeds with DN regex mapping"
+);
+
+# same thing but using explicit CN
+$dn_connstr = "$common_connstr dbname=certdb_cn";
+
+test_connect_ok(
+	$dn_connstr,
+	"user=ssltestuser sslcert=ssl/client-dn.crt sslkey=ssl/client-dn_tmp.key",
+	"certificate authorization succeeds with CN mapping"
+);
+
+
 
 TODO:
 {

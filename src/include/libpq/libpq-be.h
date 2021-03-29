@@ -195,6 +195,7 @@ typedef struct Port
 	 */
 	bool		ssl_in_use;
 	char	   *peer_cn;
+	char	   *peer_dn;
 	bool		peer_cert_valid;
 
 	/*

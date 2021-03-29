@@ -71,6 +71,12 @@ typedef enum ClientCertMode
 	clientCertFull
 } ClientCertMode;
 
+typedef enum ClientCertName
+{
+	clientCertCN,
+	clientCertDN
+} ClientCertName;
+
 typedef struct HbaLine
 {
 	int			linenumber;
@@ -101,6 +107,7 @@ typedef struct HbaLine
 	char	   *ldapprefix;
 	char	   *ldapsuffix;
 	ClientCertMode clientcert;
+	ClientCertName clientcertname;
 	char	   *krb_realm;
 	bool		include_realm;
 	bool		compat_realm;

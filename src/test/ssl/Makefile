@@ -18,7 +18,7 @@ export with_ssl
 CERTIFICATES := server_ca server-cn-and-alt-names \
 	server-cn-only server-single-alt-name server-multiple-alt-names \
 	server-no-names server-revoked server-ss \
-	client_ca client client-revoked \
+	client_ca client client-dn client-revoked \
 	root_ca
 
 SSLFILES := $(CERTIFICATES:%=ssl/%.key) $(CERTIFICATES:%=ssl/%.crt) \
@@ -90,6 +90,13 @@ ssl/client.crt: ssl/client.key ssl/client_ca.crt
 	openssl ca -name client_ca -batch -out ssl/temp.crt -config cas.config -infiles ssl/client.csr
 	openssl x509 -in ssl/temp.crt -out ssl/client.crt # to keep just the PEM cert
 	rm ssl/client.csr ssl/temp.crt
+
+# Client certificate with multi-parth DN, signed by the client CA:
+ssl/client-dn.crt: ssl/client-dn.key ssl/client_ca.crt
+	openssl req -new -key ssl/client-dn.key -out ssl/client-dn.csr -config client-dn.config
+	openssl ca -name client_ca -batch -out ssl/temp.crt -config cas.config -infiles ssl/client-dn.csr
+	openssl x509 -in ssl/temp.crt -out ssl/client-dn.crt # to keep just the PEM cert
+	rm ssl/client-dn.csr ssl/temp.crt
 
 # Another client certificate, signed by the client CA. This one is revoked.
 ssl/client-revoked.crt: ssl/client-revoked.key ssl/client_ca.crt client.config
