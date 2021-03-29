@@ -2027,6 +2027,7 @@ select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, '
  a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\
 (1 row)
 
+reset standard_conforming_strings;
 --
 -- Additional string functions
 --
@@ -2230,6 +2231,6 @@ SELECT encode(overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 5 
 SELECT bit_count('\x1234567890'::bytea);
  bit_count 
 -----------
-        31
+        15
 (1 row)
 
