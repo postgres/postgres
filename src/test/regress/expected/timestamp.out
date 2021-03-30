@@ -1012,6 +1012,13 @@ SELECT d1 as "timestamp",
  Mon Jan 01 17:32:01 2001    |       200 |        21 |          3 |   2451912 |    978370321
 (65 rows)
 
+-- value near upper bound uses special case in code
+SELECT date_part('epoch', '294270-01-01 00:00:00'::timestamp);
+   date_part   
+---------------
+ 9224097091200
+(1 row)
+
 -- TO_CHAR()
 SELECT to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon')
    FROM TIMESTAMP_TBL;

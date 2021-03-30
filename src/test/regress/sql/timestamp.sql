@@ -261,6 +261,9 @@ SELECT d1 as "timestamp",
    date_part( 'epoch', d1) AS epoch
    FROM TIMESTAMP_TBL;
 
+-- value near upper bound uses special case in code
+SELECT date_part('epoch', '294270-01-01 00:00:00'::timestamp);
+
 -- TO_CHAR()
 SELECT to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon')
    FROM TIMESTAMP_TBL;
