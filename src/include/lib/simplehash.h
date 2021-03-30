@@ -110,6 +110,7 @@
 #define SH_RESET SH_MAKE_NAME(reset)
 #define SH_INSERT SH_MAKE_NAME(insert)
 #define SH_INSERT_HASH SH_MAKE_NAME(insert_hash)
+#define SH_DELETE_ITEM SH_MAKE_NAME(delete_item)
 #define SH_DELETE SH_MAKE_NAME(delete)
 #define SH_LOOKUP SH_MAKE_NAME(lookup)
 #define SH_LOOKUP_HASH SH_MAKE_NAME(lookup_hash)
@@ -216,6 +217,9 @@ SH_SCOPE	SH_ELEMENT_TYPE *SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key);
 /* <element> *<prefix>_lookup_hash(<prefix>_hash *tb, <key> key, uint32 hash) */
 SH_SCOPE	SH_ELEMENT_TYPE *SH_LOOKUP_HASH(SH_TYPE * tb, SH_KEY_TYPE key,
 											uint32 hash);
+
+/* void <prefix>_delete_item(<prefix>_hash *tb, <element> *entry) */
+SH_SCOPE void SH_DELETE_ITEM(SH_TYPE * tb, SH_ELEMENT_TYPE * entry);
 
 /* bool <prefix>_delete(<prefix>_hash *tb, <key> key) */
 SH_SCOPE bool SH_DELETE(SH_TYPE * tb, SH_KEY_TYPE key);
@@ -829,7 +833,7 @@ SH_LOOKUP_HASH(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash)
 }
 
 /*
- * Delete entry from hash table.  Returns whether to-be-deleted key was
+ * Delete entry from hash table by key.  Returns whether to-be-deleted key was
  * present.
  */
 SH_SCOPE bool
@@ -897,6 +901,61 @@ SH_DELETE(SH_TYPE * tb, SH_KEY_TYPE key)
 		/* TODO: return false; if distance too big */
 
 		curelem = SH_NEXT(tb, curelem, startelem);
+	}
+}
+
+/*
+ * Delete entry from hash table by entry pointer
+ */
+SH_SCOPE void
+SH_DELETE_ITEM(SH_TYPE * tb, SH_ELEMENT_TYPE * entry)
+{
+	SH_ELEMENT_TYPE *lastentry = entry;
+	uint32		hash = SH_ENTRY_HASH(tb, entry);
+	uint32		startelem = SH_INITIAL_BUCKET(tb, hash);
+	uint32		curelem;
+
+	/* Calculate the index of 'entry' */
+	curelem = entry - &tb->data[0];
+
+	tb->members--;
+
+	/*
+	 * Backward shift following elements till either an empty element or an
+	 * element at its optimal position is encountered.
+	 *
+	 * While that sounds expensive, the average chain length is short, and
+	 * deletions would otherwise require tombstones.
+	 */
+	while (true)
+	{
+		SH_ELEMENT_TYPE *curentry;
+		uint32		curhash;
+		uint32		curoptimal;
+
+		curelem = SH_NEXT(tb, curelem, startelem);
+		curentry = &tb->data[curelem];
+
+		if (curentry->status != SH_STATUS_IN_USE)
+		{
+			lastentry->status = SH_STATUS_EMPTY;
+			break;
+		}
+
+		curhash = SH_ENTRY_HASH(tb, curentry);
+		curoptimal = SH_INITIAL_BUCKET(tb, curhash);
+
+		/* current is at optimal position, done */
+		if (curoptimal == curelem)
+		{
+			lastentry->status = SH_STATUS_EMPTY;
+			break;
+		}
+
+		/* shift */
+		memcpy(lastentry, curentry, sizeof(SH_ELEMENT_TYPE));
+
+		lastentry = curentry;
 	}
 }
 
@@ -1102,6 +1161,7 @@ SH_STAT(SH_TYPE * tb)
 #undef SH_RESET
 #undef SH_INSERT
 #undef SH_INSERT_HASH
+#undef SH_DELETE_ITEM
 #undef SH_DELETE
 #undef SH_LOOKUP
 #undef SH_LOOKUP_HASH
