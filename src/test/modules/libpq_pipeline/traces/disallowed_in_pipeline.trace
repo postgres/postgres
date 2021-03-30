@@ -1,0 +1,9 @@
+F	27	Query	 "SET lc_messages TO "C""
+B	8	CommandComplete	 "SET"
+B	5	ReadyForQuery	 I
+F	13	Query	 "SELECT 1"
+B	33	RowDescription	 1 "?column?" NNNN 0 NNNN 4 -1 0
+B	11	DataRow	 1 1 '1'
+B	13	CommandComplete	 "SELECT 1"
+B	5	ReadyForQuery	 I
+F	4	Terminate

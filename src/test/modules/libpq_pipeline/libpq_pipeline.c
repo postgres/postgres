@@ -23,12 +23,16 @@
 #include "catalog/pg_type_d.h"
 #include "common/fe_memutils.h"
 #include "libpq-fe.h"
+#include "pg_getopt.h"
 #include "portability/instr_time.h"
 
 
 static void exit_nicely(PGconn *conn);
 
 const char *const progname = "libpq_pipeline";
+
+/* Options and defaults */
+char	   *tracefile = NULL;	/* path to PQtrace() file */
 
 
 #define DEBUG
@@ -1209,8 +1213,10 @@ usage(const char *progname)
 {
 	fprintf(stderr, "%s tests libpq's pipeline mode.\n\n", progname);
 	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "  %s tests", progname);
-	fprintf(stderr, "  %s testname [conninfo [number_of_rows]]\n", progname);
+	fprintf(stderr, "  %s [OPTION] tests\n", progname);
+	fprintf(stderr, "  %s [OPTION] TESTNAME [CONNINFO [NUMBER_OF_ROWS]\n", progname);
+	fprintf(stderr, "\nOptions:\n");
+	fprintf(stderr, "  -t TRACEFILE       generate a libpq trace to TRACEFILE\n");
 }
 
 static void
@@ -1231,37 +1237,54 @@ main(int argc, char **argv)
 {
 	const char *conninfo = "";
 	PGconn	   *conn;
+	FILE	   *trace;
+	char	   *testname;
 	int			numrows = 10000;
 	PGresult   *res;
+	int			c;
 
-	if (strcmp(argv[1], "tests") == 0)
+	while ((c = getopt(argc, argv, "t:")) != -1)
 	{
-		print_test_list();
-		exit(0);
+		switch (c)
+		{
+			case 't':			/* trace file */
+				tracefile = pg_strdup(optarg);
+				break;
+		}
 	}
 
-	/*
-	 * The testname parameter is mandatory; it can be followed by a conninfo
-	 * string and number of rows.
-	 */
-	if (argc < 2 || argc > 4)
+	if (optind < argc)
+	{
+		testname = argv[optind];
+		optind++;
+	}
+	else
 	{
 		usage(argv[0]);
 		exit(1);
 	}
 
-	if (argc >= 3)
-		conninfo = pg_strdup(argv[2]);
+	if (strcmp(testname, "tests") == 0)
+	{
+		print_test_list();
+		exit(0);
+	}
 
-	if (argc >= 4)
+	if (optind < argc)
+	{
+		conninfo = argv[optind];
+		optind++;
+	}
+	if (optind < argc)
 	{
 		errno = 0;
-		numrows = strtol(argv[3], NULL, 10);
+		numrows = strtol(argv[optind], NULL, 10);
 		if (errno != 0 || numrows <= 0)
 		{
-			fprintf(stderr, "couldn't parse \"%s\" as a positive integer\n", argv[3]);
+			fprintf(stderr, "couldn't parse \"%s\" as a positive integer\n", argv[optind]);
 			exit(1);
 		}
+		optind++;
 	}
 
 	/* Make a connection to the database */
@@ -1272,30 +1295,42 @@ main(int argc, char **argv)
 				PQerrorMessage(conn));
 		exit_nicely(conn);
 	}
+
+	/* Set the trace file, if requested */
+	if (tracefile != NULL)
+	{
+		trace = fopen(tracefile, "w+");
+
+		if (trace == NULL)
+			pg_fatal("could not open file \"%s\": %m", tracefile);
+		PQtrace(conn, trace);
+		PQtraceSetFlags(conn,
+						PQTRACE_SUPPRESS_TIMESTAMPS | PQTRACE_REGRESS_MODE);
+	}
+
 	res = PQexec(conn, "SET lc_messages TO \"C\"");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("failed to set lc_messages: %s", PQerrorMessage(conn));
 
-	if (strcmp(argv[1], "disallowed_in_pipeline") == 0)
+	if (strcmp(testname, "disallowed_in_pipeline") == 0)
 		test_disallowed_in_pipeline(conn);
-	else if (strcmp(argv[1], "multi_pipelines") == 0)
+	else if (strcmp(testname, "multi_pipelines") == 0)
 		test_multi_pipelines(conn);
-	else if (strcmp(argv[1], "pipeline_abort") == 0)
+	else if (strcmp(testname, "pipeline_abort") == 0)
 		test_pipeline_abort(conn);
-	else if (strcmp(argv[1], "pipelined_insert") == 0)
+	else if (strcmp(testname, "pipelined_insert") == 0)
 		test_pipelined_insert(conn, numrows);
-	else if (strcmp(argv[1], "prepared") == 0)
+	else if (strcmp(testname, "prepared") == 0)
 		test_prepared(conn);
-	else if (strcmp(argv[1], "simple_pipeline") == 0)
+	else if (strcmp(testname, "simple_pipeline") == 0)
 		test_simple_pipeline(conn);
-	else if (strcmp(argv[1], "singlerow") == 0)
+	else if (strcmp(testname, "singlerow") == 0)
 		test_singlerowmode(conn);
-	else if (strcmp(argv[1], "transaction") == 0)
+	else if (strcmp(testname, "transaction") == 0)
 		test_transaction(conn);
 	else
 	{
-		fprintf(stderr, "\"%s\" is not a recognized test name\n", argv[1]);
-		usage(argv[0]);
+		fprintf(stderr, "\"%s\" is not a recognized test name\n", testname);
 		exit(1);
 	}
 

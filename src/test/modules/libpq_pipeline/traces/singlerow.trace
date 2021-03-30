@@ -1,0 +1,42 @@
+F	27	Query	 "SET lc_messages TO "C""
+B	8	CommandComplete	 "SET"
+B	5	ReadyForQuery	 I
+F	38	Parse	 "" "SELECT generate_series(42, $1)" 0
+F	20	Bind	 "" "" 0 1 2 '44' 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	38	Parse	 "" "SELECT generate_series(42, $1)" 0
+F	20	Bind	 "" "" 0 1 2 '45' 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	38	Parse	 "" "SELECT generate_series(42, $1)" 0
+F	20	Bind	 "" "" 0 1 2 '46' 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	4	Sync
+B	4	ParseComplete
+B	4	BindComplete
+B	40	RowDescription	 1 "generate_series" NNNN 0 NNNN 4 -1 0
+B	12	DataRow	 1 2 '42'
+B	12	DataRow	 1 2 '43'
+B	12	DataRow	 1 2 '44'
+B	13	CommandComplete	 "SELECT 3"
+B	4	ParseComplete
+B	4	BindComplete
+B	40	RowDescription	 1 "generate_series" NNNN 0 NNNN 4 -1 0
+B	12	DataRow	 1 2 '42'
+B	12	DataRow	 1 2 '43'
+B	12	DataRow	 1 2 '44'
+B	12	DataRow	 1 2 '45'
+B	13	CommandComplete	 "SELECT 4"
+B	4	ParseComplete
+B	4	BindComplete
+B	40	RowDescription	 1 "generate_series" NNNN 0 NNNN 4 -1 0
+B	12	DataRow	 1 2 '42'
+B	12	DataRow	 1 2 '43'
+B	12	DataRow	 1 2 '44'
+B	12	DataRow	 1 2 '45'
+B	12	DataRow	 1 2 '46'
+B	13	CommandComplete	 "SELECT 5"
+B	5	ReadyForQuery	 I
+F	4	Terminate

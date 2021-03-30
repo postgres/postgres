@@ -1,0 +1,64 @@
+F	27	Query	 "SET lc_messages TO "C""
+B	8	CommandComplete	 "SET"
+B	5	ReadyForQuery	 I
+F	79	Query	 "DROP TABLE IF EXISTS pq_pipeline_tst;CREATE TABLE pq_pipeline_tst (id int)"
+B	122	NoticeResponse	 S "NOTICE" V "NOTICE" C "00000" M "table "pq_pipeline_tst" does not exist, skipping" F "SSSS" L "SSSS" R "SSSS" \x00
+B	15	CommandComplete	 "DROP TABLE"
+B	17	CommandComplete	 "CREATE TABLE"
+B	5	ReadyForQuery	 I
+F	24	Parse	 "rollback" "ROLLBACK" 0
+F	13	Parse	 "" "BEGIN" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	18	Parse	 "" "SELECT 0/0" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	22	Bind	 "" "rollback" 0 0 1 1
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	46	Parse	 "" "INSERT INTO pq_pipeline_tst VALUES (1)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	4	Sync
+F	46	Parse	 "" "INSERT INTO pq_pipeline_tst VALUES (2)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	4	Sync
+F	22	Bind	 "" "rollback" 0 0 1 1
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	46	Parse	 "" "INSERT INTO pq_pipeline_tst VALUES (3)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	4	Sync
+F	4	Sync
+B	4	ParseComplete
+B	4	ParseComplete
+B	4	BindComplete
+B	4	NoData
+B	10	CommandComplete	 "BEGIN"
+B	4	ParseComplete
+B	65	ErrorResponse	 S "ERROR" V "ERROR" C "22012" M "division by zero" F "SSSS" L "SSSS" R "SSSS" \x00
+B	5	ReadyForQuery	 E
+B	145	ErrorResponse	 S "ERROR" V "ERROR" C "25P02" M "current transaction is aborted, commands ignored until end of transaction block" F "SSSS" L "SSSS" R "SSSS" \x00
+B	5	ReadyForQuery	 E
+B	4	BindComplete
+B	4	NoData
+B	13	CommandComplete	 "ROLLBACK"
+B	4	ParseComplete
+B	4	BindComplete
+B	4	NoData
+B	15	CommandComplete	 "INSERT 0 1"
+B	5	ReadyForQuery	 I
+B	5	ReadyForQuery	 I
+F	34	Query	 "SELECT * FROM pq_pipeline_tst"
+B	27	RowDescription	 1 "id" NNNN 1 NNNN 4 -1 0
+B	11	DataRow	 1 1 '3'
+B	13	CommandComplete	 "SELECT 1"
+B	5	ReadyForQuery	 I
+F	4	Terminate
