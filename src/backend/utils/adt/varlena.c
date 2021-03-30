@@ -6589,4 +6589,5 @@ invalid_pair:
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("invalid Unicode surrogate pair")));
+	PG_RETURN_NULL();			/* keep compiler quiet */
 }
