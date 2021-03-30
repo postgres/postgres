@@ -303,7 +303,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 		}
 		if (po->header && !po->html3)
 			fprintf(fout, "(%d row%s)\n\n", PQntuples(res),
-					(PQntuples(res) == 1) ? "" : "s");
+					(abs(PQntuples(res)) == 1) ? "" : "s");
 		if (po->html3 && !po->expanded)
 			fputs("</table>\n", fout);
 		free(fieldMax);
@@ -662,7 +662,7 @@ PQdisplayTuples(const PGresult *res,
 
 	if (!quiet)
 		fprintf(fp, "\nQuery returned %d row%s.\n", PQntuples(res),
-				(PQntuples(res) == 1) ? "" : "s");
+				(abs(PQntuples(res)) == 1) ? "" : "s");
 
 	fflush(fp);
 

@@ -694,7 +694,7 @@ AddVerboseIntPart(char *cp, int value, const char *units,
 	}
 	else if (*is_before)
 		value = -value;
-	sprintf(cp, " %d %s%s", value, units, (value == 1) ? "" : "s");
+	sprintf(cp, " %d %s%s", value, units, (abs(value) == 1) ? "" : "s");
 	*is_zero = false;
 	return cp + strlen(cp);
 }
@@ -711,7 +711,7 @@ AddPostgresIntPart(char *cp, int value, const char *units,
 			(*is_before && value > 0) ? "+" : "",
 			value,
 			units,
-			(value != 1) ? "s" : "");
+			(abs(value) != 1) ? "s" : "");
 
 	/*
 	 * Each nonzero field sets is_before for (only) the next one.  This is a
