@@ -794,20 +794,25 @@ typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
        <command>COMMIT PREPARED</command> time. To signal that
        decoding should be skipped, return <literal>true</literal>;
        <literal>false</literal> otherwise. When the callback is not
-       defined, <literal>false</literal> is assumed (i.e. nothing is
-       filtered).
+       defined, <literal>false</literal> is assumed (i.e. no filtering, all
+       transactions using two-phase commit are decoded in two phases as well).
 <programlisting>
 typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx,
+                                              TransactionId xid,
                                               const char *gid);
 </programlisting>
-      The <parameter>ctx</parameter> parameter has the same contents as for the
-      other callbacks. The <parameter>gid</parameter> is the identifier that later
-      identifies this transaction for <command>COMMIT PREPARED</command> or
-      <command>ROLLBACK PREPARED</command>.
+       The <parameter>ctx</parameter> parameter has the same contents as for
+       the other callbacks. The parameters <parameter>xid</parameter>
+       and <parameter>gid</parameter> provide two different ways to identify
+       the transaction.  The later <command>COMMIT PREPARED</command> or
+       <command>ROLLBACK PREPARED</command> carries both identifiers,
+       providing an output plugin the choice of what to use.
      </para>
      <para>
-      The callback has to provide the same static answer for a given
-      <parameter>gid</parameter> every time it is called.
+       The callback may be invoked multiple times per transaction to decode
+       and must provide the same static answer for a given pair of
+       <parameter>xid</parameter> and <parameter>gid</parameter> every time
+       it is called.
      </para>
      </sect3>
 
@@ -1219,9 +1224,11 @@ stream_commit_cb(...);  &lt;-- commit of the streamed transaction
    </para>
 
    <para>
-    Optionally the output plugin can specify a name pattern in the
-    <function>filter_prepare_cb</function> and transactions with gid containing
-    that name pattern will not be decoded as a two-phase commit transaction.
+    Optionally the output plugin can define filtering rules via
+    <function>filter_prepare_cb</function> to decode only specific transaction
+    in two phases.  This can be achieved by pattern matching on the
+    <parameter>gid</parameter> or via lookups using the
+    <parameter>xid</parameter>.
    </para>
 
    <para>

@@ -1083,7 +1083,8 @@ truncate_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 }
 
 bool
-filter_prepare_cb_wrapper(LogicalDecodingContext *ctx, const char *gid)
+filter_prepare_cb_wrapper(LogicalDecodingContext *ctx, TransactionId xid,
+						  const char *gid)
 {
 	LogicalErrorCallbackState state;
 	ErrorContextCallback errcallback;
@@ -1104,7 +1105,7 @@ filter_prepare_cb_wrapper(LogicalDecodingContext *ctx, const char *gid)
 	ctx->accept_writes = false;
 
 	/* do the actual work: call callback */
-	ret = ctx->callbacks.filter_prepare_cb(ctx, gid);
+	ret = ctx->callbacks.filter_prepare_cb(ctx, xid, gid);
 
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;
