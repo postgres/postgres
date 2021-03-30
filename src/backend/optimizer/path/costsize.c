@@ -1969,7 +1969,8 @@ cost_incremental_sort(Path *path,
 
 	/* Estimate number of groups with equal presorted keys. */
 	if (!unknown_varno)
-		input_groups = estimate_num_groups(root, presortedExprs, input_tuples, NULL);
+		input_groups = estimate_num_groups(root, presortedExprs, input_tuples,
+										   NULL, NULL);
 
 	group_tuples = input_tuples / input_groups;
 	group_input_run_cost = input_run_cost / input_groups;

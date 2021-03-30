@@ -1990,6 +1990,7 @@ adjust_rowcount_for_semijoins(PlannerInfo *root,
 			nunique = estimate_num_groups(root,
 										  sjinfo->semi_rhs_exprs,
 										  nraw,
+										  NULL,
 										  NULL);
 			if (rowcount > nunique)
 				rowcount = nunique;

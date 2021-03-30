@@ -68,6 +68,20 @@
 			p = 1.0; \
 	} while (0)
 
+/*
+ * A set of flags which some selectivity estimation functions can pass back to
+ * callers to provide further details about some assumptions which were made
+ * during the estimation.
+ */
+#define SELFLAG_USED_DEFAULT		(1 << 0)	/* Estimation fell back on one
+												 * of the DEFAULTs as defined
+												 * above. */
+
+typedef struct EstimationInfo
+{
+	uint32			flags;		/* Flags, as defined above to mark special
+								 * properties of the estimation. */
+} EstimationInfo;
 
 /* Return data from examine_variable and friends */
 typedef struct VariableStatData
@@ -197,7 +211,8 @@ extern void mergejoinscansel(PlannerInfo *root, Node *clause,
 							 Selectivity *rightstart, Selectivity *rightend);
 
 extern double estimate_num_groups(PlannerInfo *root, List *groupExprs,
-								  double input_rows, List **pgset);
+								  double input_rows, List **pgset,
+								  EstimationInfo *estinfo);
 
 extern void estimate_hash_bucket_stats(PlannerInfo *root,
 									   Node *hashkey, double nbuckets,
