@@ -183,3 +183,4 @@ PQenterPipelineMode       180
 PQexitPipelineMode        181
 PQpipelineSync            182
 PQpipelineStatus          183
+PQtraceSetFlags           184

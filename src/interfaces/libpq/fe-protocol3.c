@@ -457,6 +457,10 @@ pqParseInput3(PGconn *conn)
 		/* Successfully consumed this message */
 		if (conn->inCursor == conn->inStart + 5 + msgLength)
 		{
+			/* trace server-to-client message */
+			if (conn->Pfdebug)
+				pqTraceOutputMessage(conn, conn->inBuffer + conn->inStart, false);
+
 			/* Normal case: parsing agrees with specified length */
 			conn->inStart = conn->inCursor;
 		}
@@ -1660,6 +1664,10 @@ getCopyDataMessage(PGconn *conn)
 				return -1;
 		}
 
+		/* trace server-to-client message */
+		if (conn->Pfdebug)
+			pqTraceOutputMessage(conn, conn->inBuffer + conn->inStart, false);
+
 		/* Drop the processed message and loop around for another */
 		conn->inStart = conn->inCursor;
 	}
@@ -2119,6 +2127,11 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 				conn->inStart += 5 + msgLength;
 				return pqPrepareAsyncResult(conn);
 		}
+
+		/* trace server-to-client message */
+		if (conn->Pfdebug)
+			pqTraceOutputMessage(conn, conn->inBuffer + conn->inStart, false);
+
 		/* Completed this message, keep going */
 		/* trust the specified message length as what to skip */
 		conn->inStart += 5 + msgLength;

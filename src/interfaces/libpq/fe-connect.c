@@ -6859,27 +6859,6 @@ PQsetErrorContextVisibility(PGconn *conn, PGContextVisibility show_context)
 	return old;
 }
 
-void
-PQtrace(PGconn *conn, FILE *debug_port)
-{
-	if (conn == NULL)
-		return;
-	PQuntrace(conn);
-	conn->Pfdebug = debug_port;
-}
-
-void
-PQuntrace(PGconn *conn)
-{
-	if (conn == NULL)
-		return;
-	if (conn->Pfdebug)
-	{
-		fflush(conn->Pfdebug);
-		conn->Pfdebug = NULL;
-	}
-}
-
 PQnoticeReceiver
 PQsetNoticeReceiver(PGconn *conn, PQnoticeReceiver proc, void *arg)
 {

@@ -263,7 +263,7 @@ typedef struct pgresAttDesc
  * ----------------
  */
 
-/* ===	in fe-connect.c === */
+/* === in fe-connect.c === */
 
 /* make a new client connection to the backend */
 /* Asynchronous (non-blocking) */
@@ -375,10 +375,6 @@ extern PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);
 extern PGContextVisibility PQsetErrorContextVisibility(PGconn *conn,
 													   PGContextVisibility show_context);
 
-/* Enable/disable tracing */
-extern void PQtrace(PGconn *conn, FILE *debug_port);
-extern void PQuntrace(PGconn *conn);
-
 /* Override default notice handling routines */
 extern PQnoticeReceiver PQsetNoticeReceiver(PGconn *conn,
 											PQnoticeReceiver proc,
@@ -397,6 +393,17 @@ extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
 typedef void (*pgthreadlock_t) (int acquire);
 
 extern pgthreadlock_t PQregisterThreadLock(pgthreadlock_t newhandler);
+
+/* === in fe-trace.c === */
+extern void PQtrace(PGconn *conn, FILE *debug_port);
+extern void PQuntrace(PGconn *conn);
+
+/* flags controlling trace output */
+/* omit timestamps from each line */
+#define PQTRACE_SUPPRESS_TIMESTAMPS		(1<<0)
+/* redact portions of some messages, for testing frameworks */
+#define PQTRACE_REGRESS_MODE			(1<<1)
+extern void PQtraceSetFlags(PGconn *conn, int flags);
 
 /* === in fe-exec.c === */
 

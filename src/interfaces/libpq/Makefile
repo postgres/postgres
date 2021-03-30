@@ -39,6 +39,7 @@ OBJS = \
 	fe-print.o \
 	fe-protocol3.o \
 	fe-secure.o \
+	fe-trace.o \
 	legacy-pqsignal.o \
 	libpq-events.o \
 	pqexpbuffer.o \

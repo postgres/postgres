@@ -84,9 +84,6 @@ pqGetc(char *result, PGconn *conn)
 
 	*result = conn->inBuffer[conn->inCursor++];
 
-	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "From backend> %c\n", *result);
-
 	return 0;
 }
 
@@ -99,9 +96,6 @@ pqPutc(char c, PGconn *conn)
 {
 	if (pqPutMsgBytes(&c, 1, conn))
 		return EOF;
-
-	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "To backend> %c\n", c);
 
 	return 0;
 }
@@ -138,10 +132,6 @@ pqGets_internal(PQExpBuffer buf, PGconn *conn, bool resetbuffer)
 
 	conn->inCursor = ++inCursor;
 
-	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "From backend> \"%s\"\n",
-				buf->data);
-
 	return 0;
 }
 
@@ -167,9 +157,6 @@ pqPuts(const char *s, PGconn *conn)
 	if (pqPutMsgBytes(s, strlen(s) + 1, conn))
 		return EOF;
 
-	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "To backend> \"%s\"\n", s);
-
 	return 0;
 }
 
@@ -188,13 +175,6 @@ pqGetnchar(char *s, size_t len, PGconn *conn)
 
 	conn->inCursor += len;
 
-	if (conn->Pfdebug)
-	{
-		fprintf(conn->Pfdebug, "From backend (%lu)> ", (unsigned long) len);
-		fwrite(s, 1, len, conn->Pfdebug);
-		fprintf(conn->Pfdebug, "\n");
-	}
-
 	return 0;
 }
 
@@ -212,13 +192,6 @@ pqSkipnchar(size_t len, PGconn *conn)
 	if (len > (size_t) (conn->inEnd - conn->inCursor))
 		return EOF;
 
-	if (conn->Pfdebug)
-	{
-		fprintf(conn->Pfdebug, "From backend (%lu)> ", (unsigned long) len);
-		fwrite(conn->inBuffer + conn->inCursor, 1, len, conn->Pfdebug);
-		fprintf(conn->Pfdebug, "\n");
-	}
-
 	conn->inCursor += len;
 
 	return 0;
@@ -233,13 +206,6 @@ pqPutnchar(const char *s, size_t len, PGconn *conn)
 {
 	if (pqPutMsgBytes(s, len, conn))
 		return EOF;
-
-	if (conn->Pfdebug)
-	{
-		fprintf(conn->Pfdebug, "To backend> ");
-		fwrite(s, 1, len, conn->Pfdebug);
-		fprintf(conn->Pfdebug, "\n");
-	}
 
 	return 0;
 }
@@ -278,9 +244,6 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 			return EOF;
 	}
 
-	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "From backend (#%lu)> %d\n", (unsigned long) bytes, *result);
-
 	return 0;
 }
 
@@ -313,9 +276,6 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 							 (unsigned long) bytes);
 			return EOF;
 	}
-
-	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "To backend (%lu#)> %d\n", (unsigned long) bytes, value);
 
 	return 0;
 }
@@ -525,10 +485,6 @@ pqPutMsgStart(char msg_type, PGconn *conn)
 	conn->outMsgEnd = endPos;
 	/* length word, if needed, will be filled in by pqPutMsgEnd */
 
-	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "To backend> Msg %c\n",
-				msg_type ? msg_type : ' ');
-
 	return 0;
 }
 
@@ -563,10 +519,6 @@ pqPutMsgBytes(const void *buf, size_t len, PGconn *conn)
 int
 pqPutMsgEnd(PGconn *conn)
 {
-	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "To backend> Msg complete, length %u\n",
-				conn->outMsgEnd - conn->outCount);
-
 	/* Fill in length word if needed */
 	if (conn->outMsgStart >= 0)
 	{
@@ -574,6 +526,16 @@ pqPutMsgEnd(PGconn *conn)
 
 		msgLen = pg_hton32(msgLen);
 		memcpy(conn->outBuffer + conn->outMsgStart, &msgLen, 4);
+	}
+
+	/* trace client-to-server message */
+	if (conn->Pfdebug)
+	{
+		if (conn->outCount < conn->outMsgStart)
+			pqTraceOutputMessage(conn, conn->outBuffer + conn->outCount, true);
+		else
+			pqTraceOutputNoTypeByteMessage(conn,
+										   conn->outBuffer + conn->outMsgStart);
 	}
 
 	/* Make message eligible to send */
@@ -1002,11 +964,13 @@ pqSendSome(PGconn *conn, int len)
 int
 pqFlush(PGconn *conn)
 {
-	if (conn->Pfdebug)
-		fflush(conn->Pfdebug);
-
 	if (conn->outCount > 0)
+	{
+		if (conn->Pfdebug)
+			fflush(conn->Pfdebug);
+
 		return pqSendSome(conn, conn->outCount);
+	}
 
 	return 0;
 }

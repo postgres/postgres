@@ -394,6 +394,7 @@ struct pg_conn
 
 	/* Optional file to write trace info to */
 	FILE	   *Pfdebug;
+	int			traceFlags;
 
 	/* Callback procedures for notice message processing */
 	PGNoticeHooks noticeHooks;
@@ -817,6 +818,12 @@ extern PostgresPollingStatusType pqsecure_open_gss(PGconn *conn);
 extern ssize_t pg_GSS_write(PGconn *conn, const void *ptr, size_t len);
 extern ssize_t pg_GSS_read(PGconn *conn, void *ptr, size_t len);
 #endif
+
+/* === in libpq-trace.c === */
+
+extern void pqTraceOutputMessage(PGconn *conn, const char *message,
+								 bool toServer);
+extern void pqTraceOutputNoTypeByteMessage(PGconn *conn, const char *message);
 
 /* === miscellaneous macros === */
 

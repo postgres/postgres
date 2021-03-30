@@ -6459,10 +6459,25 @@ PGContextVisibility PQsetErrorContextVisibility(PGconn *conn, PGContextVisibilit
 
     <listitem>
      <para>
-      Enables  tracing of the client/server communication to a debugging file stream.
+      Enables tracing of the client/server communication to a debugging file
+      stream.
 <synopsis>
 void PQtrace(PGconn *conn, FILE *stream);
 </synopsis>
+     </para>
+
+     <para>
+      Each line consists of: an optional timestamp, a direction indicator
+      (<literal>F</literal> for messages from client to server
+      or <literal>B</literal> for messages from server to client),
+      message length, message type, and message contents.
+      Non-message contents fields (timestamp, direction, length and message type)
+      are separated by a tab. Message contents are separated by a space.
+      Protocol strings are enclosed in double quotes, while strings used as data
+      values are enclosed in single quotes.  Non-printable chars are printed as
+      hexadecimal escapes.
+      Further message-type-specific detail can be found in
+      <xref linkend="protocol-message-formats"/>.
      </para>
 
      <note>
@@ -6475,6 +6490,31 @@ void PQtrace(PGconn *conn, FILE *stream);
        library and all applications using that library.
       </para>
      </note>
+
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="libpq-PQtraceSetFlags">
+    <term><function>PQtraceSetFlags</function><indexterm><primary>PQtraceSetFlags</primary></indexterm></term>
+
+    <listitem>
+     <para>
+      Controls the tracing behavior of client/server communication.
+<synopsis>
+void PQtraceSetFlags(PGconn *conn, int flags);
+</synopsis>
+     </para>
+
+     <para>
+      <literal>flags</literal> contains flag bits describing the operating mode
+      of tracing.
+      If <literal>flags</literal> contains <literal>PQTRACE_SUPPRESS_TIMESTAMPS</literal>,
+      then the timestamp is not included when printing each message.
+      If <literal>flags</literal> contains <literal>PQTRACE_REGRESS_MODE</literal>,
+      then some fields are redacted when printing each message, such as object
+      OIDs, to make the output more convenient to use in testing frameworks.
+      This function must be called after calling <function>PQtrace</function>.
+     </para>
 
     </listitem>
    </varlistentry>

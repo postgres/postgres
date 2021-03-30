@@ -970,10 +970,6 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 	pgParameterStatus *pstatus;
 	pgParameterStatus *prev;
 
-	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "pqSaveParameterStatus: '%s' = '%s'\n",
-				name, value);
-
 	/*
 	 * Forget any old information about the parameter
 	 */
