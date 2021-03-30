@@ -3333,18 +3333,28 @@ dumpSearchPath(Archive *AH)
 static void
 dumpToastCompression(Archive *AH)
 {
-	const char *toast_compression;
+	char	   *toast_compression;
 	PQExpBuffer qry;
-	PGresult   *res;
 
-	if (AH->remoteVersion < 140000 || AH->dopt->no_toast_compression)
+	if (AH->dopt->no_toast_compression)
 	{
-		/* server doesn't support compression, or we don't care */
+		/* we don't intend to dump the info, so no need to fetch it either */
 		return;
 	}
 
-	res = ExecuteSqlQueryForSingleRow(AH, "SHOW default_toast_compression");
-	toast_compression = PQgetvalue(res, 0, 0);
+	if (AH->remoteVersion < 140000)
+	{
+		/* pre-v14, the only method was pglz */
+		toast_compression = pg_strdup("pglz");
+	}
+	else
+	{
+		PGresult   *res;
+
+		res = ExecuteSqlQueryForSingleRow(AH, "SHOW default_toast_compression");
+		toast_compression = pg_strdup(PQgetvalue(res, 0, 0));
+		PQclear(res);
+	}
 
 	qry = createPQExpBuffer();
 	appendPQExpBufferStr(qry, "SET default_toast_compression = ");
@@ -3363,9 +3373,8 @@ dumpToastCompression(Archive *AH)
 	 * Also save it in AH->default_toast_compression, in case we're doing
 	 * plain text dump.
 	 */
-	AH->default_toast_compression = pg_strdup(toast_compression);
+	AH->default_toast_compression = toast_compression;
 
-	PQclear(res);
 	destroyPQExpBuffer(qry);
 }
 
