@@ -1099,9 +1099,9 @@ SELECT *
 FROM dblink('myconn',
     'SELECT * FROM (VALUES (''-1 2:03:04'')) i')
   AS i(i interval);
-         i         
--------------------
- -1 days -02:03:04
+        i         
+------------------
+ -1 day -02:03:04
 (1 row)
 
 -- Try swapping to another format to ensure the GUCs are tracked
