@@ -158,12 +158,15 @@ SELECT 'Wed Jul 11 10:51:14 PST+03:00 2001'::timestamptz;
 
 SELECT d1 FROM TIMESTAMPTZ_TBL;
 
--- Check behavior at the lower boundary of the timestamp range
+-- Check behavior at the boundaries of the timestamp range
 SELECT '4714-11-24 00:00:00+00 BC'::timestamptz;
 SELECT '4714-11-23 16:00:00-08 BC'::timestamptz;
 SELECT 'Sun Nov 23 16:00:00 4714 PST BC'::timestamptz;
 SELECT '4714-11-23 23:59:59+00 BC'::timestamptz;  -- out of range
--- The upper boundary differs between integer and float timestamps, so no check
+SELECT '294276-12-31 23:59:59+00'::timestamptz;
+SELECT '294276-12-31 15:59:59-08'::timestamptz;
+SELECT '294277-01-01 00:00:00+00'::timestamptz;  -- out of range
+SELECT '294277-12-31 16:00:00-08'::timestamptz;  -- out of range
 
 -- Demonstrate functions and operators
 SELECT d1 FROM TIMESTAMPTZ_TBL
