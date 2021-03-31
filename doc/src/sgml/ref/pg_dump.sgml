@@ -216,6 +216,38 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-e <replaceable class="parameter">pattern</replaceable></option></term>
+      <term><option>--extension=<replaceable class="parameter">pattern</replaceable></option></term>
+      <listitem>
+       <para>
+        Dump only extensions matching <replaceable
+        class="parameter">pattern</replaceable>.  When this option is not
+        specified, all non-system extensions in the target database will be
+        dumped.  Multiple extensions can be selected by writing multiple
+        <option>-e</option> switches.  The <replaceable
+        class="parameter">pattern</replaceable> parameter is interpreted as a
+        pattern according to the same rules used by
+        <application>psql</application>'s <literal>\d</literal> commands (see
+        <xref linkend="app-psql-patterns"/>), so multiple extensions can also
+        be selected by writing wildcard characters in the pattern.  When using
+        wildcards, be careful to quote the pattern if needed to prevent the
+        shell from expanding the wildcards.
+       </para>
+
+       <note>
+        <para>
+         When <option>-e</option> is specified,
+         <application>pg_dump</application> makes no attempt to dump any other
+         database objects that the selected extension(s) might depend upon.
+         Therefore, there is no guarantee that the results of a
+         specific-extension dump can be successfully restored by themselves
+         into a clean database.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-E <replaceable class="parameter">encoding</replaceable></option></term>
       <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></option></term>
       <listitem>
@@ -1079,11 +1111,12 @@ PostgreSQL documentation
       <term><option>--strict-names</option></term>
       <listitem>
        <para>
-        Require that each schema
-        (<option>-n</option>/<option>--schema</option>) and table
-        (<option>-t</option>/<option>--table</option>) qualifier match at
-        least one schema/table in the database to be dumped.  Note that if
-        none of the schema/table qualifiers find
+        Require that each
+        extension (<option>-e</option>/<option>--extension</option>),
+        schema (<option>-n</option>/<option>--schema</option>) and
+        table (<option>-t</option>/<option>--table</option>) qualifier
+        match at least one extension/schema/table in the database to be dumped.
+        Note that if none of the extension/schema/table qualifiers find
         matches, <application>pg_dump</application> will generate an error
         even without <option>--strict-names</option>.
        </para>
