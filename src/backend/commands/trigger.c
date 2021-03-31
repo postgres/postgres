@@ -2546,11 +2546,12 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 					 TransitionCaptureState *transition_capture)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
-	TupleTableSlot *slot = ExecGetTriggerOldSlot(estate, relinfo);
 
 	if ((trigdesc && trigdesc->trig_delete_after_row) ||
 		(transition_capture && transition_capture->tcs_delete_old_table))
 	{
+		TupleTableSlot *slot = ExecGetTriggerOldSlot(estate, relinfo);
+
 		Assert(HeapTupleIsValid(fdw_trigtuple) ^ ItemPointerIsValid(tupleid));
 		if (fdw_trigtuple == NULL)
 			GetTupleForTrigger(estate,
@@ -2829,9 +2830,6 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 					 TransitionCaptureState *transition_capture)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
-	TupleTableSlot *oldslot = ExecGetTriggerOldSlot(estate, relinfo);
-
-	ExecClearTuple(oldslot);
 
 	if ((trigdesc && trigdesc->trig_update_after_row) ||
 		(transition_capture &&
@@ -2844,6 +2842,8 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 		 * separately for DELETE and INSERT to capture transition table rows.
 		 * In such case, either old tuple or new tuple can be NULL.
 		 */
+		TupleTableSlot *oldslot = ExecGetTriggerOldSlot(estate, relinfo);
+
 		if (fdw_trigtuple == NULL && ItemPointerIsValid(tupleid))
 			GetTupleForTrigger(estate,
 							   NULL,
@@ -2854,6 +2854,8 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 							   NULL);
 		else if (fdw_trigtuple != NULL)
 			ExecForceStoreHeapTuple(fdw_trigtuple, oldslot, false);
+		else
+			ExecClearTuple(oldslot);
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_UPDATE,
 							  true, oldslot, newslot, recheckIndexes,
