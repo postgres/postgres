@@ -26,7 +26,6 @@
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
-#include "pgtime.h"
 #include "port/pg_bswap.h"
 
 /* Enable tracing */
@@ -81,16 +80,14 @@ static void
 pqTraceFormatTimestamp(char *timestr, size_t ts_len)
 {
 	struct timeval tval;
-	pg_time_t	stamp_time;
 
 	gettimeofday(&tval, NULL);
-	stamp_time = (pg_time_t) tval.tv_sec;
-
 	strftime(timestr, ts_len,
 			 "%Y-%m-%d %H:%M:%S",
-			 localtime(&stamp_time));
+			 localtime(&tval.tv_sec));
 	/* append microseconds */
-	sprintf(timestr + strlen(timestr), ".%06d", (int) (tval.tv_usec));
+	snprintf(timestr + strlen(timestr), ts_len - strlen(timestr),
+			 ".%06u", (unsigned int) (tval.tv_usec));
 }
 
 /*
