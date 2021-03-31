@@ -676,7 +676,11 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 
 		if (len + saveFreeSpace > pageFreeSpace)
 		{
-			/* Doesn't fit, so write out the existing page */
+			/*
+			 * Doesn't fit, so write out the existing page.  It always
+			 * contains a tuple.  Hence, unlike RelationGetBufferForTuple(),
+			 * enforce saveFreeSpace unconditionally.
+			 */
 
 			/* XLOG stuff */
 			if (RelationNeedsWAL(state->rs_new_rel))

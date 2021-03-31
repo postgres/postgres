@@ -38,6 +38,28 @@ select col1, col2, char_length(col3) from inserttest;
 drop table inserttest;
 
 --
+-- tuple larger than fillfactor
+--
+CREATE TABLE large_tuple_test (a int, b text) WITH (fillfactor = 10);
+ALTER TABLE large_tuple_test ALTER COLUMN b SET STORAGE plain;
+
+-- create page w/ free space in range [nearlyEmptyFreeSpace, MaxHeapTupleSize)
+INSERT INTO large_tuple_test (select 1, NULL);
+
+-- should still fit on the page
+INSERT INTO large_tuple_test (select 2, repeat('a', 1000));
+SELECT pg_size_pretty(pg_relation_size('large_tuple_test'::regclass, 'main'));
+
+-- add small record to the second page
+INSERT INTO large_tuple_test (select 3, NULL);
+
+-- now this tuple won't fit on the second page, but the insert should
+-- still succeed by extending the relation
+INSERT INTO large_tuple_test (select 4, repeat('a', 8126));
+
+DROP TABLE large_tuple_test;
+
+--
 -- check indirection (field/array assignment), cf bug #14265
 --
 -- these tests are aware that transformInsertStmt has 3 separate code paths

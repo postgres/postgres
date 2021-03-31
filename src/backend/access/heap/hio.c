@@ -317,10 +317,10 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
  *	BULKWRITE buffer selection strategy object to the buffer manager.
  *	Passing NULL for bistate selects the default behavior.
  *
- *	We always try to avoid filling existing pages further than the fillfactor.
- *	This is OK since this routine is not consulted when updating a tuple and
- *	keeping it on the same page, which is the scenario fillfactor is meant
- *	to reserve space for.
+ *	We don't fill existing pages further than the fillfactor, except for large
+ *	tuples in nearly-empty pages.  This is OK since this routine is not
+ *	consulted when updating a tuple and keeping it on the same page, which is
+ *	the scenario fillfactor is meant to reserve space for.
  *
  *	ereport(ERROR) is allowed here, so this routine *must* be called
  *	before any (unlogged) changes are made in buffer pool.
@@ -334,8 +334,10 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	bool		use_fsm = !(options & HEAP_INSERT_SKIP_FSM);
 	Buffer		buffer = InvalidBuffer;
 	Page		page;
-	Size		pageFreeSpace = 0,
-				saveFreeSpace = 0;
+	Size		nearlyEmptyFreeSpace,
+				pageFreeSpace = 0,
+				saveFreeSpace = 0,
+				targetFreeSpace = 0;
 	BlockNumber targetBlock,
 				otherBlock;
 	bool		needLock;
@@ -358,6 +360,19 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	saveFreeSpace = RelationGetTargetPageFreeSpace(relation,
 												   HEAP_DEFAULT_FILLFACTOR);
 
+	/*
+	 * Since pages without tuples can still have line pointers, we consider
+	 * pages "empty" when the unavailable space is slight.  This threshold is
+	 * somewhat arbitrary, but it should prevent most unnecessary relation
+	 * extensions while inserting large tuples into low-fillfactor tables.
+	 */
+	nearlyEmptyFreeSpace = MaxHeapTupleSize -
+		(MaxHeapTuplesPerPage / 8 * sizeof(ItemIdData));
+	if (len + saveFreeSpace > nearlyEmptyFreeSpace)
+		targetFreeSpace = Max(len, nearlyEmptyFreeSpace);
+	else
+		targetFreeSpace = len + saveFreeSpace;
+
 	if (otherBuffer != InvalidBuffer)
 		otherBlock = BufferGetBlockNumber(otherBuffer);
 	else
@@ -376,13 +391,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 * When use_fsm is false, we either put the tuple onto the existing target
 	 * page or extend the relation.
 	 */
-	if (len + saveFreeSpace > MaxHeapTupleSize)
-	{
-		/* can't fit, don't bother asking FSM */
-		targetBlock = InvalidBlockNumber;
-		use_fsm = false;
-	}
-	else if (bistate && bistate->current_buf != InvalidBuffer)
+	if (bistate && bistate->current_buf != InvalidBuffer)
 		targetBlock = BufferGetBlockNumber(bistate->current_buf);
 	else
 		targetBlock = RelationGetTargetBlock(relation);
@@ -393,7 +402,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		 * We have no cached target page, so ask the FSM for an initial
 		 * target.
 		 */
-		targetBlock = GetPageWithFreeSpace(relation, len + saveFreeSpace);
+		targetBlock = GetPageWithFreeSpace(relation, targetFreeSpace);
 	}
 
 	/*
@@ -517,7 +526,7 @@ loop:
 		}
 
 		pageFreeSpace = PageGetHeapFreeSpace(page);
-		if (len + saveFreeSpace <= pageFreeSpace)
+		if (targetFreeSpace <= pageFreeSpace)
 		{
 			/* use this page as future insert target, too */
 			RelationSetTargetBlock(relation, targetBlock);
@@ -550,7 +559,7 @@ loop:
 		targetBlock = RecordAndGetPageWithFreeSpace(relation,
 													targetBlock,
 													pageFreeSpace,
-													len + saveFreeSpace);
+													targetFreeSpace);
 	}
 
 	/*
@@ -582,7 +591,7 @@ loop:
 			 * Check if some other backend has extended a block for us while
 			 * we were waiting on the lock.
 			 */
-			targetBlock = GetPageWithFreeSpace(relation, len + saveFreeSpace);
+			targetBlock = GetPageWithFreeSpace(relation, targetFreeSpace);
 
 			/*
 			 * If some other waiter has already extended the relation, we
