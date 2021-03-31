@@ -2131,7 +2131,7 @@ typedef struct CreateStmt
 	RangeVar   *relation;		/* relation to create */
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
 	List	   *inhRelations;	/* relations to inherit from (list of
-								 * inhRelation) */
+								 * RangeVar) */
 	PartitionBoundSpec *partbound;	/* FOR VALUES clause */
 	PartitionSpec *partspec;	/* PARTITION BY clause */
 	TypeName   *ofTypename;		/* OF typename */
