@@ -978,7 +978,7 @@ build_attnums_array(Bitmapset *attrs, int nexprs, int *numattrs)
 	j = -1;
 	while ((j = bms_next_member(attrs, j)) >= 0)
 	{
-		AttrNumber	attnum = (j - nexprs);
+		int			attnum = (j - nexprs);
 
 		/*
 		 * Make sure the bitmap contains only user-defined attributes. As
