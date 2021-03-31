@@ -3584,10 +3584,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        </para>
 
        <para>
-        <literal>unistr('\0441\043B\043E\043D')</literal>
-        <returnvalue>слон</returnvalue>
-       </para>
-       <para>
         <literal>unistr('d\0061t\+000061')</literal>
         <returnvalue>data</returnvalue>
        </para>
