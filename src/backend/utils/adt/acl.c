@@ -2444,8 +2444,7 @@ column_privilege_check(Oid tableoid, AttrNumber attnum,
 					   Oid roleid, AclMode mode)
 {
 	AclResult	aclresult;
-	HeapTuple	attTuple;
-	Form_pg_attribute attributeForm;
+	bool		is_missing = false;
 
 	/*
 	 * If convert_column_name failed, we can just return -1 immediately.
@@ -2454,42 +2453,25 @@ column_privilege_check(Oid tableoid, AttrNumber attnum,
 		return -1;
 
 	/*
-	 * First check if we have the privilege at the table level.  We check
-	 * existence of the pg_class row before risking calling pg_class_aclcheck.
-	 * Note: it might seem there's a race condition against concurrent DROP,
-	 * but really it's safe because there will be no syscache flush between
-	 * here and there.  So if we see the row in the syscache, so will
-	 * pg_class_aclcheck.
+	 * Check for column-level privileges first. This serves in
+	 * part as a check on whether the column even exists, so we
+	 * need to do it before checking table-level privilege.
 	 */
-	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(tableoid)))
-		return -1;
-
-	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
-
+	aclresult = pg_attribute_aclcheck_ext(tableoid, attnum, roleid,
+										  mode, &is_missing);
 	if (aclresult == ACLCHECK_OK)
-		return true;
-
-	/*
-	 * No table privilege, so try per-column privileges.  Again, we have to
-	 * check for dropped attribute first, and we rely on the syscache not to
-	 * notice a concurrent drop before pg_attribute_aclcheck fetches the row.
-	 */
-	attTuple = SearchSysCache2(ATTNUM,
-							   ObjectIdGetDatum(tableoid),
-							   Int16GetDatum(attnum));
-	if (!HeapTupleIsValid(attTuple))
+		return 1;
+	else if (is_missing)
 		return -1;
-	attributeForm = (Form_pg_attribute) GETSTRUCT(attTuple);
-	if (attributeForm->attisdropped)
-	{
-		ReleaseSysCache(attTuple);
+
+	/* Next check if we have the privilege at the table level */
+	aclresult = pg_class_aclcheck_ext(tableoid, roleid, mode, &is_missing);
+	if (aclresult == ACLCHECK_OK)
+		return 1;
+	else if (is_missing)
 		return -1;
-	}
-	ReleaseSysCache(attTuple);
-
-	aclresult = pg_attribute_aclcheck(tableoid, attnum, roleid, mode);
-
-	return (aclresult == ACLCHECK_OK);
+	else
+		return 0;
 }
 
 /*

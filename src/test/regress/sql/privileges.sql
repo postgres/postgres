@@ -836,8 +836,10 @@ alter table mytable drop column f2;
 select has_column_privilege('mytable','f2','select');
 select has_column_privilege('mytable','........pg.dropped.2........','select');
 select has_column_privilege('mytable',2::int2,'select');
+select has_column_privilege('mytable',99::int2,'select');
 revoke select on table mytable from regress_priv_user3;
 select has_column_privilege('mytable',2::int2,'select');
+select has_column_privilege('mytable',99::int2,'select');
 drop table mytable;
 
 -- Grant options
