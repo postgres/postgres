@@ -199,7 +199,10 @@ PostgreSQL documentation
       <listitem>
 
        <para>
-        Creates a <filename>standby.signal</filename> file and appends
+        Creates a
+        <link linkend="file-standby-signal"><filename>standby.signal</filename></link>
+        <indexterm><primary><filename>standby.signal</filename></primary><secondary>pg_basebackup --write-recovery-conf</secondary></indexterm>
+        file and appends
         connection settings to the <filename>postgresql.auto.conf</filename>
         file in the target directory (or within the base archive file when
         using tar format).  This eases setting up a standby server using the

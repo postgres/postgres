@@ -613,8 +613,16 @@ protocol to make nodes agree on a serializable transactional order.
 
   </sect2>
 
-  <sect2 id="standby-server-operation">
+  <sect2 id="standby-server-operation" xreflabel="Standby Server Operation">
    <title>Standby Server Operation</title>
+
+   <para>
+    A server enters standby mode if a
+    <anchor id="file-standby-signal" xreflabel="standby.signal"/>
+    <filename>standby.signal</filename>
+    <indexterm><primary><filename>standby.signal</filename></primary></indexterm>
+    file exists in the data directory when the server is started.
+   </para>
 
    <para>
     In standby mode, the server continuously applies WAL received from the
@@ -689,7 +697,8 @@ protocol to make nodes agree on a serializable transactional order.
    <para>
     To set up the standby server, restore the base backup taken from primary
     server (see <xref linkend="backup-pitr-recovery"/>). Create a file
-    <filename>standby.signal</filename> in the standby's cluster data
+    <link linkend="file-standby-signal"><filename>standby.signal</filename></link><indexterm><primary>standby.signal</primary></indexterm>
+    in the standby's cluster data
     directory. Set <xref linkend="guc-restore-command"/> to a simple command to copy files from
     the WAL archive. If you plan to have multiple standby servers for high
     availability purposes, make sure that <varname>recovery_target_timeline</varname> is set to
@@ -1936,7 +1945,8 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
 
    <para>
     If <varname>hot_standby</varname> is <literal>on</literal> in <filename>postgresql.conf</filename>
-    (the default value) and there is a <filename>standby.signal</filename>
+    (the default value) and there is a
+    <link linkend="file-standby-signal"><filename>standby.signal</filename></link><indexterm><primary>standby.signal</primary><secondary>for hot standby</secondary></indexterm>
     file present, the server will run in Hot Standby mode.
     However, it may take some time for Hot Standby connections to be allowed,
     because the server will not accept connections until it has completed

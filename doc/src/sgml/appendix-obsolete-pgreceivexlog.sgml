@@ -1,0 +1,24 @@
+<!-- doc/src/sgml/obsolete-pgxlogdump.sgml -->
+<!--
+  See doc/src/sgml/obsolete.sgml for why this file exists. Do not change the id attribute.
+-->
+
+<sect1 id="app-pgreceivexlog" xreflabel="pg_receivexlog">
+  <title><command>pg_receivexlog</command> renamed to <command>pg_receivewal</command></title>
+
+   <indexterm>
+     <primary>pg_receivexlog</primary>
+     <see>pg_receivewal</see>
+   </indexterm>
+
+   <para>
+    PostgreSQL 9.6 and below provided a command named
+    <command>pg_receivexlog</command>
+    <indexterm><primary>pg_receivexlog</primary></indexterm>
+    to fetch write-ahead-log (WAL) files.  This command was renamed to <command>pg_receivewal</command>, see
+    <xref linkend="app-pgreceivewal"/> for documentation of <command>pg_receivewal</command> and see
+    <link linkend="release-prior">the release notes for PostgreSQL 10</link> for details
+    on this change.
+   </para>
+
+</sect1>

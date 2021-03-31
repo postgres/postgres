@@ -1,0 +1,41 @@
+<!-- doc/src/sgml/obsolete.sgml -->
+
+<appendix id="appendix-obsolete">
+ <title>Obsolete or Renamed Features</title>
+
+ <para>
+   Functionality is sometimes removed from PostgreSQL, feature, setting
+   and file names sometimes change, or documentation moves to different
+   places. This section directs users coming from old versions of the
+   documentation or from external links to the appropriate new location
+   for the information they need.
+ </para>
+
+ <!--
+  This section exists so that people following /current/ links to documentation
+  don't get a 404 when we move or rename things. And users who find old versions
+  of the docs in searches or old command names when checking the index can
+  follow links to the new commands.
+
+  Each subsection here should retain the same <chapter>, <appendix> and/or
+  <sect1> "id" attribute that was used for the relevant documentation before
+  it was renamed or moved. Do not prepend "obsolete-" or anything, keep it
+  exactly the same. These ids are used to determine the filenames for generated
+  HTML docs so changing them will break links.
+
+  Each entry should also insert index terms redirecting from the old to new
+  names. The recommended spelling is
+
+      <indexterm><primary>oldname</primary><see>newname</see></indexterm>
+
+  We don't bother with attempting to maintain down-version linking, e.g from
+  pg_waldump to pg_xlogdump. Users of old versions should use old docs. There
+  is no need to add index terms pointing from the new to old names.
+ -->
+
+ &obsolete-recovery-config;
+ &obsolete-pgxlogdump;
+ &obsolete-pgresetxlog;
+ &obsolete-pgreceivexlog;
+
+</appendix>
