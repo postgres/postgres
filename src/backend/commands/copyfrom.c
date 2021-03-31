@@ -666,6 +666,7 @@ CopyFrom(CopyFromState cstate)
 	mtstate->ps.plan = NULL;
 	mtstate->ps.state = estate;
 	mtstate->operation = CMD_INSERT;
+	mtstate->mt_nrels = 1;
 	mtstate->resultRelInfo = resultRelInfo;
 	mtstate->rootResultRelInfo = resultRelInfo;
 

@@ -1283,12 +1283,12 @@ SELECT * FROM rw_view1;
 (4 rows)
 
 EXPLAIN (verbose, costs off) UPDATE rw_view1 SET b = b + 1 RETURNING *;
-                         QUERY PLAN                          
--------------------------------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Update on public.base_tbl
    Output: base_tbl.a, base_tbl.b
    ->  Seq Scan on public.base_tbl
-         Output: base_tbl.a, (base_tbl.b + 1), base_tbl.ctid
+         Output: (base_tbl.b + 1), base_tbl.ctid
 (4 rows)
 
 UPDATE rw_view1 SET b = b + 1 RETURNING *;
@@ -1607,26 +1607,21 @@ UPDATE rw_view1 SET a = a + 1000 FROM other_tbl_parent WHERE a = id;
                                QUERY PLAN                                
 -------------------------------------------------------------------------
  Update on base_tbl_parent
-   Update on base_tbl_parent
-   Update on base_tbl_child base_tbl_parent_1
-   ->  Hash Join
-         Hash Cond: (other_tbl_parent.id = base_tbl_parent.a)
-         ->  Append
-               ->  Seq Scan on other_tbl_parent other_tbl_parent_1
-               ->  Seq Scan on other_tbl_child other_tbl_parent_2
-         ->  Hash
-               ->  Seq Scan on base_tbl_parent
+   Update on base_tbl_parent base_tbl_parent_1
+   Update on base_tbl_child base_tbl_parent_2
    ->  Merge Join
-         Merge Cond: (base_tbl_parent_1.a = other_tbl_parent.id)
+         Merge Cond: (base_tbl_parent.a = other_tbl_parent.id)
          ->  Sort
-               Sort Key: base_tbl_parent_1.a
-               ->  Seq Scan on base_tbl_child base_tbl_parent_1
+               Sort Key: base_tbl_parent.a
+               ->  Append
+                     ->  Seq Scan on base_tbl_parent base_tbl_parent_1
+                     ->  Seq Scan on base_tbl_child base_tbl_parent_2
          ->  Sort
                Sort Key: other_tbl_parent.id
                ->  Append
                      ->  Seq Scan on other_tbl_parent other_tbl_parent_1
                      ->  Seq Scan on other_tbl_child other_tbl_parent_2
-(20 rows)
+(15 rows)
 
 UPDATE rw_view1 SET a = a + 1000 FROM other_tbl_parent WHERE a = id;
 SELECT * FROM ONLY base_tbl_parent ORDER BY a;
@@ -2332,36 +2327,39 @@ SELECT * FROM v1 WHERE a=8;
 
 EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
-                                       QUERY PLAN                                        
------------------------------------------------------------------------------------------
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
  Update on public.t1
-   Update on public.t1
-   Update on public.t11 t1_1
-   Update on public.t12 t1_2
-   Update on public.t111 t1_3
-   ->  Index Scan using t1_a_idx on public.t1
-         Output: 100, t1.b, t1.c, t1.ctid
-         Index Cond: ((t1.a > 5) AND (t1.a < 7))
-         Filter: ((t1.a <> 6) AND (SubPlan 1) AND snoop(t1.a) AND leakproof(t1.a))
-         SubPlan 1
-           ->  Append
-                 ->  Seq Scan on public.t12 t12_1
-                       Filter: (t12_1.a = t1.a)
-                 ->  Seq Scan on public.t111 t12_2
-                       Filter: (t12_2.a = t1.a)
-   ->  Index Scan using t11_a_idx on public.t11 t1_1
-         Output: 100, t1_1.b, t1_1.c, t1_1.d, t1_1.ctid
-         Index Cond: ((t1_1.a > 5) AND (t1_1.a < 7))
-         Filter: ((t1_1.a <> 6) AND (SubPlan 1) AND snoop(t1_1.a) AND leakproof(t1_1.a))
-   ->  Index Scan using t12_a_idx on public.t12 t1_2
-         Output: 100, t1_2.b, t1_2.c, t1_2.e, t1_2.ctid
-         Index Cond: ((t1_2.a > 5) AND (t1_2.a < 7))
-         Filter: ((t1_2.a <> 6) AND (SubPlan 1) AND snoop(t1_2.a) AND leakproof(t1_2.a))
-   ->  Index Scan using t111_a_idx on public.t111 t1_3
-         Output: 100, t1_3.b, t1_3.c, t1_3.d, t1_3.e, t1_3.ctid
-         Index Cond: ((t1_3.a > 5) AND (t1_3.a < 7))
-         Filter: ((t1_3.a <> 6) AND (SubPlan 1) AND snoop(t1_3.a) AND leakproof(t1_3.a))
-(27 rows)
+   Update on public.t1 t1_1
+   Update on public.t11 t1_2
+   Update on public.t12 t1_3
+   Update on public.t111 t1_4
+   ->  Result
+         Output: 100, t1.tableoid, t1.ctid
+         ->  Append
+               ->  Index Scan using t1_a_idx on public.t1 t1_1
+                     Output: t1_1.tableoid, t1_1.ctid
+                     Index Cond: ((t1_1.a > 5) AND (t1_1.a < 7))
+                     Filter: ((t1_1.a <> 6) AND (SubPlan 1) AND snoop(t1_1.a) AND leakproof(t1_1.a))
+                     SubPlan 1
+                       ->  Append
+                             ->  Seq Scan on public.t12 t12_1
+                                   Filter: (t12_1.a = t1_1.a)
+                             ->  Seq Scan on public.t111 t12_2
+                                   Filter: (t12_2.a = t1_1.a)
+               ->  Index Scan using t11_a_idx on public.t11 t1_2
+                     Output: t1_2.tableoid, t1_2.ctid
+                     Index Cond: ((t1_2.a > 5) AND (t1_2.a < 7))
+                     Filter: ((t1_2.a <> 6) AND (SubPlan 1) AND snoop(t1_2.a) AND leakproof(t1_2.a))
+               ->  Index Scan using t12_a_idx on public.t12 t1_3
+                     Output: t1_3.tableoid, t1_3.ctid
+                     Index Cond: ((t1_3.a > 5) AND (t1_3.a < 7))
+                     Filter: ((t1_3.a <> 6) AND (SubPlan 1) AND snoop(t1_3.a) AND leakproof(t1_3.a))
+               ->  Index Scan using t111_a_idx on public.t111 t1_4
+                     Output: t1_4.tableoid, t1_4.ctid
+                     Index Cond: ((t1_4.a > 5) AND (t1_4.a < 7))
+                     Filter: ((t1_4.a <> 6) AND (SubPlan 1) AND snoop(t1_4.a) AND leakproof(t1_4.a))
+(30 rows)
 
 UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
 SELECT * FROM v1 WHERE a=100; -- Nothing should have been changed to 100
@@ -2376,36 +2374,39 @@ SELECT * FROM t1 WHERE a=100; -- Nothing should have been changed to 100
 
 EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
  Update on public.t1
-   Update on public.t1
-   Update on public.t11 t1_1
-   Update on public.t12 t1_2
-   Update on public.t111 t1_3
-   ->  Index Scan using t1_a_idx on public.t1
-         Output: (t1.a + 1), t1.b, t1.c, t1.ctid
-         Index Cond: ((t1.a > 5) AND (t1.a = 8))
-         Filter: ((SubPlan 1) AND snoop(t1.a) AND leakproof(t1.a))
-         SubPlan 1
-           ->  Append
-                 ->  Seq Scan on public.t12 t12_1
-                       Filter: (t12_1.a = t1.a)
-                 ->  Seq Scan on public.t111 t12_2
-                       Filter: (t12_2.a = t1.a)
-   ->  Index Scan using t11_a_idx on public.t11 t1_1
-         Output: (t1_1.a + 1), t1_1.b, t1_1.c, t1_1.d, t1_1.ctid
-         Index Cond: ((t1_1.a > 5) AND (t1_1.a = 8))
-         Filter: ((SubPlan 1) AND snoop(t1_1.a) AND leakproof(t1_1.a))
-   ->  Index Scan using t12_a_idx on public.t12 t1_2
-         Output: (t1_2.a + 1), t1_2.b, t1_2.c, t1_2.e, t1_2.ctid
-         Index Cond: ((t1_2.a > 5) AND (t1_2.a = 8))
-         Filter: ((SubPlan 1) AND snoop(t1_2.a) AND leakproof(t1_2.a))
-   ->  Index Scan using t111_a_idx on public.t111 t1_3
-         Output: (t1_3.a + 1), t1_3.b, t1_3.c, t1_3.d, t1_3.e, t1_3.ctid
-         Index Cond: ((t1_3.a > 5) AND (t1_3.a = 8))
-         Filter: ((SubPlan 1) AND snoop(t1_3.a) AND leakproof(t1_3.a))
-(27 rows)
+   Update on public.t1 t1_1
+   Update on public.t11 t1_2
+   Update on public.t12 t1_3
+   Update on public.t111 t1_4
+   ->  Result
+         Output: (t1.a + 1), t1.tableoid, t1.ctid
+         ->  Append
+               ->  Index Scan using t1_a_idx on public.t1 t1_1
+                     Output: t1_1.a, t1_1.tableoid, t1_1.ctid
+                     Index Cond: ((t1_1.a > 5) AND (t1_1.a = 8))
+                     Filter: ((SubPlan 1) AND snoop(t1_1.a) AND leakproof(t1_1.a))
+                     SubPlan 1
+                       ->  Append
+                             ->  Seq Scan on public.t12 t12_1
+                                   Filter: (t12_1.a = t1_1.a)
+                             ->  Seq Scan on public.t111 t12_2
+                                   Filter: (t12_2.a = t1_1.a)
+               ->  Index Scan using t11_a_idx on public.t11 t1_2
+                     Output: t1_2.a, t1_2.tableoid, t1_2.ctid
+                     Index Cond: ((t1_2.a > 5) AND (t1_2.a = 8))
+                     Filter: ((SubPlan 1) AND snoop(t1_2.a) AND leakproof(t1_2.a))
+               ->  Index Scan using t12_a_idx on public.t12 t1_3
+                     Output: t1_3.a, t1_3.tableoid, t1_3.ctid
+                     Index Cond: ((t1_3.a > 5) AND (t1_3.a = 8))
+                     Filter: ((SubPlan 1) AND snoop(t1_3.a) AND leakproof(t1_3.a))
+               ->  Index Scan using t111_a_idx on public.t111 t1_4
+                     Output: t1_4.a, t1_4.tableoid, t1_4.ctid
+                     Index Cond: ((t1_4.a > 5) AND (t1_4.a = 8))
+                     Filter: ((SubPlan 1) AND snoop(t1_4.a) AND leakproof(t1_4.a))
+(30 rows)
 
 UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
 NOTICE:  snooped value: 8

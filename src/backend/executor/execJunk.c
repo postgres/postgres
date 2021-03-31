@@ -59,42 +59,15 @@
 JunkFilter *
 ExecInitJunkFilter(List *targetList, TupleTableSlot *slot)
 {
+	JunkFilter *junkfilter;
 	TupleDesc	cleanTupType;
+	int			cleanLength;
+	AttrNumber *cleanMap;
 
 	/*
 	 * Compute the tuple descriptor for the cleaned tuple.
 	 */
 	cleanTupType = ExecCleanTypeFromTL(targetList);
-
-	/*
-	 * The rest is the same as ExecInitJunkFilterInsertion, ie, we want to map
-	 * every non-junk targetlist column into the output tuple.
-	 */
-	return ExecInitJunkFilterInsertion(targetList, cleanTupType, slot);
-}
-
-/*
- * ExecInitJunkFilterInsertion
- *
- * Initialize a JunkFilter for insertions into a table.
- *
- * Here, we are given the target "clean" tuple descriptor rather than
- * inferring it from the targetlist.  Although the target descriptor can
- * contain deleted columns, that is not of concern here, since the targetlist
- * should contain corresponding NULL constants (cf. ExecCheckPlanOutput).
- * It is assumed that the caller has checked that the table's columns match up
- * with the non-junk columns of the targetlist.
- */
-JunkFilter *
-ExecInitJunkFilterInsertion(List *targetList,
-							TupleDesc cleanTupType,
-							TupleTableSlot *slot)
-{
-	JunkFilter *junkfilter;
-	int			cleanLength;
-	AttrNumber *cleanMap;
-	ListCell   *t;
-	AttrNumber	cleanResno;
 
 	/*
 	 * Use the given slot, or make a new slot if we weren't given one.
@@ -117,6 +90,9 @@ ExecInitJunkFilterInsertion(List *targetList,
 	cleanLength = cleanTupType->natts;
 	if (cleanLength > 0)
 	{
+		AttrNumber	cleanResno;
+		ListCell   *t;
+
 		cleanMap = (AttrNumber *) palloc(cleanLength * sizeof(AttrNumber));
 		cleanResno = 0;
 		foreach(t, targetList)
@@ -260,22 +236,6 @@ ExecFindJunkAttributeInTlist(List *targetlist, const char *attrName)
 	}
 
 	return InvalidAttrNumber;
-}
-
-/*
- * ExecGetJunkAttribute
- *
- * Given a junk filter's input tuple (slot) and a junk attribute's number
- * previously found by ExecFindJunkAttribute, extract & return the value and
- * isNull flag of the attribute.
- */
-Datum
-ExecGetJunkAttribute(TupleTableSlot *slot, AttrNumber attno,
-					 bool *isNull)
-{
-	Assert(attno > 0);
-
-	return slot_getattr(slot, attno, isNull);
 }
 
 /*

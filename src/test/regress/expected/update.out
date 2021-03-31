@@ -172,14 +172,14 @@ EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE update_test t
   SET (a, b) = (SELECT b, a FROM update_test s WHERE s.a = t.a)
   WHERE CURRENT_USER = SESSION_USER;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Update on public.update_test t
    ->  Result
-         Output: $1, $2, t.c, (SubPlan 1 (returns $1,$2)), t.ctid
+         Output: $1, $2, (SubPlan 1 (returns $1,$2)), t.ctid
          One-Time Filter: (CURRENT_USER = SESSION_USER)
          ->  Seq Scan on public.update_test t
-               Output: t.c, t.a, t.ctid
+               Output: t.a, t.ctid
          SubPlan 1 (returns $1,$2)
            ->  Seq Scan on public.update_test s
                  Output: s.b, s.a
@@ -308,8 +308,8 @@ ALTER TABLE part_b_10_b_20 ATTACH PARTITION part_c_1_100 FOR VALUES FROM (1) TO 
 
 -- The order of subplans should be in bound order
 EXPLAIN (costs off) UPDATE range_parted set c = c - 50 WHERE c > 97;
-                   QUERY PLAN                    
--------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Update on range_parted
    Update on part_a_1_a_10 range_parted_1
    Update on part_a_10_a_20 range_parted_2
@@ -318,21 +318,22 @@ EXPLAIN (costs off) UPDATE range_parted set c = c - 50 WHERE c > 97;
    Update on part_d_1_15 range_parted_5
    Update on part_d_15_20 range_parted_6
    Update on part_b_20_b_30 range_parted_7
-   ->  Seq Scan on part_a_1_a_10 range_parted_1
-         Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_a_10_a_20 range_parted_2
-         Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_b_1_b_10 range_parted_3
-         Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_c_1_100 range_parted_4
-         Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_d_1_15 range_parted_5
-         Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_d_15_20 range_parted_6
-         Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_b_20_b_30 range_parted_7
-         Filter: (c > '97'::numeric)
-(22 rows)
+   ->  Append
+         ->  Seq Scan on part_a_1_a_10 range_parted_1
+               Filter: (c > '97'::numeric)
+         ->  Seq Scan on part_a_10_a_20 range_parted_2
+               Filter: (c > '97'::numeric)
+         ->  Seq Scan on part_b_1_b_10 range_parted_3
+               Filter: (c > '97'::numeric)
+         ->  Seq Scan on part_c_1_100 range_parted_4
+               Filter: (c > '97'::numeric)
+         ->  Seq Scan on part_d_1_15 range_parted_5
+               Filter: (c > '97'::numeric)
+         ->  Seq Scan on part_d_15_20 range_parted_6
+               Filter: (c > '97'::numeric)
+         ->  Seq Scan on part_b_20_b_30 range_parted_7
+               Filter: (c > '97'::numeric)
+(23 rows)
 
 -- fail, row movement happens only within the partition subtree.
 UPDATE part_c_100_200 set c = c - 20, d = c WHERE c = 105;

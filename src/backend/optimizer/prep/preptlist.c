@@ -3,30 +3,26 @@
  * preptlist.c
  *	  Routines to preprocess the parse tree target list
  *
- * For INSERT and UPDATE queries, the targetlist must contain an entry for
- * each attribute of the target relation in the correct order.  For UPDATE and
- * DELETE queries, it must also contain junk tlist entries needed to allow the
- * executor to identify the rows to be updated or deleted.  For all query
- * types, we may need to add junk tlist entries for Vars used in the RETURNING
- * list and row ID information needed for SELECT FOR UPDATE locking and/or
- * EvalPlanQual checking.
+ * For an INSERT, the targetlist must contain an entry for each attribute of
+ * the target relation in the correct order.
+ *
+ * For an UPDATE, the targetlist just contains the expressions for the new
+ * column values.
+ *
+ * For UPDATE and DELETE queries, the targetlist must also contain "junk"
+ * tlist entries needed to allow the executor to identify the rows to be
+ * updated or deleted; for example, the ctid of a heap row.  (The planner
+ * adds these; they're not in what we receive from the planner/rewriter.)
+ *
+ * For all query types, there can be additional junk tlist entries, such as
+ * sort keys, Vars needed for a RETURNING list, and row ID information needed
+ * for SELECT FOR UPDATE locking and/or EvalPlanQual checking.
  *
  * The query rewrite phase also does preprocessing of the targetlist (see
  * rewriteTargetListIU).  The division of labor between here and there is
- * partially historical, but it's not entirely arbitrary.  In particular,
- * consider an UPDATE across an inheritance tree.  What rewriteTargetListIU
- * does need be done only once (because it depends only on the properties of
- * the parent relation).  What's done here has to be done over again for each
- * child relation, because it depends on the properties of the child, which
- * might be of a different relation type, or have more columns and/or a
- * different column order than the parent.
- *
- * The fact that rewriteTargetListIU sorts non-resjunk tlist entries by column
- * position, which expand_targetlist depends on, violates the above comment
- * because the sorting is only valid for the parent relation.  In inherited
- * UPDATE cases, adjust_inherited_tlist runs in between to take care of fixing
- * the tlists for child tables to keep expand_targetlist happy.  We do it like
- * that because it's faster in typical non-inherited cases.
+ * partially historical, but it's not entirely arbitrary.  The stuff done
+ * here is closely connected to physical access to tables, whereas the
+ * rewriter's work is more concerned with SQL semantics.
  *
  *
  * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
@@ -40,18 +36,17 @@
 
 #include "postgres.h"
 
-#include "access/sysattr.h"
 #include "access/table.h"
-#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/appendinfo.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/prep.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_coerce.h"
 #include "parser/parsetree.h"
-#include "rewrite/rewriteHandler.h"
 #include "utils/rel.h"
 
+static List *extract_update_colnos(List *tlist);
 static List *expand_targetlist(List *tlist, int command_type,
 							   Index result_relation, Relation rel);
 
@@ -60,12 +55,15 @@ static List *expand_targetlist(List *tlist, int command_type,
  * preprocess_targetlist
  *	  Driver for preprocessing the parse tree targetlist.
  *
- *	  Returns the new targetlist.
+ * The preprocessed targetlist is returned in root->processed_tlist.
+ * Also, if this is an UPDATE, we return a list of target column numbers
+ * in root->update_colnos.  (Resnos in processed_tlist will be consecutive,
+ * so do not look at that to find out which columns are targets!)
  *
  * As a side effect, if there's an ON CONFLICT UPDATE clause, its targetlist
  * is also preprocessed (and updated in-place).
  */
-List *
+void
 preprocess_targetlist(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
@@ -99,23 +97,38 @@ preprocess_targetlist(PlannerInfo *root)
 		Assert(command_type == CMD_SELECT);
 
 	/*
-	 * For UPDATE/DELETE, add any junk column(s) needed to allow the executor
-	 * to identify the rows to be updated or deleted.  Note that this step
-	 * scribbles on parse->targetList, which is not very desirable, but we
-	 * keep it that way to avoid changing APIs used by FDWs.
-	 */
-	if (command_type == CMD_UPDATE || command_type == CMD_DELETE)
-		rewriteTargetListUD(parse, target_rte, target_relation);
-
-	/*
-	 * for heap_form_tuple to work, the targetlist must match the exact order
-	 * of the attributes. We also need to fill in any missing attributes. -ay
-	 * 10/94
+	 * In an INSERT, the executor expects the targetlist to match the exact
+	 * order of the target table's attributes, including entries for
+	 * attributes not mentioned in the source query.
+	 *
+	 * In an UPDATE, we don't rearrange the tlist order, but we need to make a
+	 * separate list of the target attribute numbers, in tlist order, and then
+	 * renumber the processed_tlist entries to be consecutive.
 	 */
 	tlist = parse->targetList;
-	if (command_type == CMD_INSERT || command_type == CMD_UPDATE)
+	if (command_type == CMD_INSERT)
 		tlist = expand_targetlist(tlist, command_type,
 								  result_relation, target_relation);
+	else if (command_type == CMD_UPDATE)
+		root->update_colnos = extract_update_colnos(tlist);
+
+	/*
+	 * For non-inherited UPDATE/DELETE, register any junk column(s) needed to
+	 * allow the executor to identify the rows to be updated or deleted.  In
+	 * the inheritance case, we do nothing now, leaving this to be dealt with
+	 * when expand_inherited_rtentry() makes the leaf target relations.  (But
+	 * there might not be any leaf target relations, in which case we must do
+	 * this in distribute_row_identity_vars().)
+	 */
+	if ((command_type == CMD_UPDATE || command_type == CMD_DELETE) &&
+		!target_rte->inh)
+	{
+		/* row-identity logic expects to add stuff to processed_tlist */
+		root->processed_tlist = tlist;
+		add_row_identity_columns(root, result_relation,
+								 target_rte, target_relation);
+		tlist = root->processed_tlist;
+	}
 
 	/*
 	 * Add necessary junk columns for rowmarked rels.  These values are needed
@@ -123,6 +136,14 @@ preprocess_targetlist(PlannerInfo *root)
 	 * rechecking.  See comments for PlanRowMark in plannodes.h.  If you
 	 * change this stanza, see also expand_inherited_rtentry(), which has to
 	 * be able to add on junk columns equivalent to these.
+	 *
+	 * (Someday it might be useful to fold these resjunk columns into the
+	 * row-identity-column management used for UPDATE/DELETE.  Today is not
+	 * that day, however.  One notable issue is that it seems important that
+	 * the whole-row Vars made here use the real table rowtype, not RECORD, so
+	 * that conversion to/from child relations' rowtypes will happen.  Also,
+	 * since these entries don't potentially bloat with more and more child
+	 * relations, there's not really much need for column sharing.)
 	 */
 	foreach(lc, root->rowMarks)
 	{
@@ -222,6 +243,8 @@ preprocess_targetlist(PlannerInfo *root)
 		list_free(vars);
 	}
 
+	root->processed_tlist = tlist;
+
 	/*
 	 * If there's an ON CONFLICT UPDATE clause, preprocess its targetlist too
 	 * while we have the relation open.
@@ -235,8 +258,35 @@ preprocess_targetlist(PlannerInfo *root)
 
 	if (target_relation)
 		table_close(target_relation, NoLock);
+}
 
-	return tlist;
+/*
+ * extract_update_colnos
+ * 		Extract a list of the target-table column numbers that
+ * 		an UPDATE's targetlist wants to assign to, then renumber.
+ *
+ * The convention in the parser and rewriter is that the resnos in an
+ * UPDATE's non-resjunk TLE entries are the target column numbers
+ * to assign to.  Here, we extract that info into a separate list, and
+ * then convert the tlist to the sequential-numbering convention that's
+ * used by all other query types.
+ */
+static List *
+extract_update_colnos(List *tlist)
+{
+	List	   *update_colnos = NIL;
+	AttrNumber	nextresno = 1;
+	ListCell   *lc;
+
+	foreach(lc, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		if (!tle->resjunk)
+			update_colnos = lappend_int(update_colnos, tle->resno);
+		tle->resno = nextresno++;
+	}
+	return update_colnos;
 }
 
 
@@ -251,6 +301,10 @@ preprocess_targetlist(PlannerInfo *root)
  *	  Given a target list as generated by the parser and a result relation,
  *	  add targetlist entries for any missing attributes, and ensure the
  *	  non-junk attributes appear in proper field order.
+ *
+ * command_type is a bit of an archaism now: it's CMD_INSERT when we're
+ * processing an INSERT, all right, but the only other use of this function
+ * is for ON CONFLICT UPDATE tlists, for which command_type is CMD_UPDATE.
  */
 static List *
 expand_targetlist(List *tlist, int command_type,

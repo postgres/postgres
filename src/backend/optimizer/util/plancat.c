@@ -1515,18 +1515,11 @@ relation_excluded_by_constraints(PlannerInfo *root,
 
 			/*
 			 * When constraint_exclusion is set to 'partition' we only handle
-			 * appendrel members.  Normally, they are RELOPT_OTHER_MEMBER_REL
-			 * relations, but we also consider inherited target relations as
-			 * appendrel members for the purposes of constraint exclusion
-			 * (since, indeed, they were appendrel members earlier in
-			 * inheritance_planner).
-			 *
-			 * In both cases, partition pruning was already applied, so there
-			 * is no need to consider the rel's partition constraints here.
+			 * appendrel members.  Partition pruning has already been applied,
+			 * so there is no need to consider the rel's partition constraints
+			 * here.
 			 */
-			if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL ||
-				(rel->relid == root->parse->resultRelation &&
-				 root->inhTargetKind != INHKIND_NONE))
+			if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
 				break;			/* appendrel member, so process it */
 			return false;
 
@@ -1539,9 +1532,7 @@ relation_excluded_by_constraints(PlannerInfo *root,
 			 * its partition constraints haven't been considered yet, so
 			 * include them in the processing here.
 			 */
-			if (rel->reloptkind == RELOPT_BASEREL &&
-				!(rel->relid == root->parse->resultRelation &&
-				  root->inhTargetKind != INHKIND_NONE))
+			if (rel->reloptkind == RELOPT_BASEREL)
 				include_partition = true;
 			break;				/* always try to exclude */
 	}

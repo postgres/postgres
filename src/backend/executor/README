@@ -32,10 +32,14 @@ includes a RETURNING clause, the ModifyTable node delivers the computed
 RETURNING rows as output, otherwise it returns nothing.  Handling INSERT
 is pretty straightforward: the tuples returned from the plan tree below
 ModifyTable are inserted into the correct result relation.  For UPDATE,
-the plan tree returns the computed tuples to be updated, plus a "junk"
-(hidden) CTID column identifying which table row is to be replaced by each
-one.  For DELETE, the plan tree need only deliver a CTID column, and the
-ModifyTable node visits each of those rows and marks the row deleted.
+the plan tree returns the new values of the updated columns, plus "junk"
+(hidden) column(s) identifying which table row is to be updated.  The
+ModifyTable node must fetch that row to extract values for the unchanged
+columns, combine the values into a new row, and apply the update.  (For a
+heap table, the row-identity junk column is a CTID, but other things may
+be used for other table types.)  For DELETE, the plan tree need only deliver
+junk row-identity column(s), and the ModifyTable node visits each of those
+rows and marks the row deleted.
 
 XXX a great deal more documentation needs to be written here...
 

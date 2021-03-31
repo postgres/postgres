@@ -129,9 +129,7 @@ typedef struct
 /* Local functions */
 static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
 static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
-static void inheritance_planner(PlannerInfo *root);
-static void grouping_planner(PlannerInfo *root, bool inheritance_update,
-							 double tuple_fraction);
+static void grouping_planner(PlannerInfo *root, double tuple_fraction);
 static grouping_sets_data *preprocess_grouping_sets(PlannerInfo *root);
 static List *remap_to_groupclause_idx(List *groupClause, List *gsets,
 									  int *tleref_to_colnum_map);
@@ -615,15 +613,19 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->multiexpr_params = NIL;
 	root->eq_classes = NIL;
 	root->ec_merging_done = false;
+	root->all_result_relids =
+		parse->resultRelation ? bms_make_singleton(parse->resultRelation) : NULL;
+	root->leaf_result_relids = NULL;	/* we'll find out leaf-ness later */
 	root->append_rel_list = NIL;
+	root->row_identity_vars = NIL;
 	root->rowMarks = NIL;
 	memset(root->upper_rels, 0, sizeof(root->upper_rels));
 	memset(root->upper_targets, 0, sizeof(root->upper_targets));
 	root->processed_tlist = NIL;
+	root->update_colnos = NIL;
 	root->grouping_map = NULL;
 	root->minmax_aggs = NIL;
 	root->qual_security_level = 0;
-	root->inhTargetKind = INHKIND_NONE;
 	root->hasPseudoConstantQuals = false;
 	root->hasAlternativeSubPlans = false;
 	root->hasRecursion = hasRecursion;
@@ -741,6 +743,19 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		if (rte->securityQuals)
 			root->qual_security_level = Max(root->qual_security_level,
 											list_length(rte->securityQuals));
+	}
+
+	/*
+	 * If we have now verified that the query target relation is
+	 * non-inheriting, mark it as a leaf target.
+	 */
+	if (parse->resultRelation)
+	{
+		RangeTblEntry *rte = rt_fetch(parse->resultRelation, parse->rtable);
+
+		if (!rte->inh)
+			root->leaf_result_relids =
+				bms_make_singleton(parse->resultRelation);
 	}
 
 	/*
@@ -999,14 +1014,9 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		remove_useless_result_rtes(root);
 
 	/*
-	 * Do the main planning.  If we have an inherited target relation, that
-	 * needs special processing, else go straight to grouping_planner.
+	 * Do the main planning.
 	 */
-	if (parse->resultRelation &&
-		rt_fetch(parse->resultRelation, parse->rtable)->inh)
-		inheritance_planner(root);
-	else
-		grouping_planner(root, false, tuple_fraction);
+	grouping_planner(root, tuple_fraction);
 
 	/*
 	 * Capture the set of outer-level param IDs we have access to, for use in
@@ -1180,632 +1190,12 @@ preprocess_phv_expression(PlannerInfo *root, Expr *expr)
 	return (Expr *) preprocess_expression(root, (Node *) expr, EXPRKIND_PHV);
 }
 
-/*
- * inheritance_planner
- *	  Generate Paths in the case where the result relation is an
- *	  inheritance set.
- *
- * We have to handle this case differently from cases where a source relation
- * is an inheritance set. Source inheritance is expanded at the bottom of the
- * plan tree (see allpaths.c), but target inheritance has to be expanded at
- * the top.  The reason is that for UPDATE, each target relation needs a
- * different targetlist matching its own column set.  Fortunately,
- * the UPDATE/DELETE target can never be the nullable side of an outer join,
- * so it's OK to generate the plan this way.
- *
- * Returns nothing; the useful output is in the Paths we attach to
- * the (UPPERREL_FINAL, NULL) upperrel stored in *root.
- *
- * Note that we have not done set_cheapest() on the final rel; it's convenient
- * to leave this to the caller.
- */
-static void
-inheritance_planner(PlannerInfo *root)
-{
-	Query	   *parse = root->parse;
-	int			top_parentRTindex = parse->resultRelation;
-	List	   *select_rtable;
-	List	   *select_appinfos;
-	List	   *child_appinfos;
-	List	   *old_child_rtis;
-	List	   *new_child_rtis;
-	Bitmapset  *subqueryRTindexes;
-	Index		next_subquery_rti;
-	int			nominalRelation = -1;
-	Index		rootRelation = 0;
-	List	   *final_rtable = NIL;
-	List	   *final_rowmarks = NIL;
-	List	   *final_appendrels = NIL;
-	int			save_rel_array_size = 0;
-	RelOptInfo **save_rel_array = NULL;
-	AppendRelInfo **save_append_rel_array = NULL;
-	List	   *subpaths = NIL;
-	List	   *subroots = NIL;
-	List	   *resultRelations = NIL;
-	List	   *withCheckOptionLists = NIL;
-	List	   *returningLists = NIL;
-	List	   *rowMarks;
-	RelOptInfo *final_rel;
-	ListCell   *lc;
-	ListCell   *lc2;
-	Index		rti;
-	RangeTblEntry *parent_rte;
-	Bitmapset  *parent_relids;
-	Query	  **parent_parses;
-
-	/* Should only get here for UPDATE or DELETE */
-	Assert(parse->commandType == CMD_UPDATE ||
-		   parse->commandType == CMD_DELETE);
-
-	/*
-	 * We generate a modified instance of the original Query for each target
-	 * relation, plan that, and put all the plans into a list that will be
-	 * controlled by a single ModifyTable node.  All the instances share the
-	 * same rangetable, but each instance must have its own set of subquery
-	 * RTEs within the finished rangetable because (1) they are likely to get
-	 * scribbled on during planning, and (2) it's not inconceivable that
-	 * subqueries could get planned differently in different cases.  We need
-	 * not create duplicate copies of other RTE kinds, in particular not the
-	 * target relations, because they don't have either of those issues.  Not
-	 * having to duplicate the target relations is important because doing so
-	 * (1) would result in a rangetable of length O(N^2) for N targets, with
-	 * at least O(N^3) work expended here; and (2) would greatly complicate
-	 * management of the rowMarks list.
-	 *
-	 * To begin with, generate a bitmapset of the relids of the subquery RTEs.
-	 */
-	subqueryRTindexes = NULL;
-	rti = 1;
-	foreach(lc, parse->rtable)
-	{
-		RangeTblEntry *rte = lfirst_node(RangeTblEntry, lc);
-
-		if (rte->rtekind == RTE_SUBQUERY)
-			subqueryRTindexes = bms_add_member(subqueryRTindexes, rti);
-		rti++;
-	}
-
-	/*
-	 * If the parent RTE is a partitioned table, we should use that as the
-	 * nominal target relation, because the RTEs added for partitioned tables
-	 * (including the root parent) as child members of the inheritance set do
-	 * not appear anywhere else in the plan, so the confusion explained below
-	 * for non-partitioning inheritance cases is not possible.
-	 */
-	parent_rte = rt_fetch(top_parentRTindex, parse->rtable);
-	Assert(parent_rte->inh);
-	if (parent_rte->relkind == RELKIND_PARTITIONED_TABLE)
-	{
-		nominalRelation = top_parentRTindex;
-		rootRelation = top_parentRTindex;
-	}
-
-	/*
-	 * Before generating the real per-child-relation plans, do a cycle of
-	 * planning as though the query were a SELECT.  The objective here is to
-	 * find out which child relations need to be processed, using the same
-	 * expansion and pruning logic as for a SELECT.  We'll then pull out the
-	 * RangeTblEntry-s generated for the child rels, and make use of the
-	 * AppendRelInfo entries for them to guide the real planning.  (This is
-	 * rather inefficient; we could perhaps stop short of making a full Path
-	 * tree.  But this whole function is inefficient and slated for
-	 * destruction, so let's not contort query_planner for that.)
-	 */
-	{
-		PlannerInfo *subroot;
-
-		/*
-		 * Flat-copy the PlannerInfo to prevent modification of the original.
-		 */
-		subroot = makeNode(PlannerInfo);
-		memcpy(subroot, root, sizeof(PlannerInfo));
-
-		/*
-		 * Make a deep copy of the parsetree for this planning cycle to mess
-		 * around with, and change it to look like a SELECT.  (Hack alert: the
-		 * target RTE still has updatedCols set if this is an UPDATE, so that
-		 * expand_partitioned_rtentry will correctly update
-		 * subroot->partColsUpdated.)
-		 */
-		subroot->parse = copyObject(root->parse);
-
-		subroot->parse->commandType = CMD_SELECT;
-		subroot->parse->resultRelation = 0;
-
-		/*
-		 * Ensure the subroot has its own copy of the original
-		 * append_rel_list, since it'll be scribbled on.  (Note that at this
-		 * point, the list only contains AppendRelInfos for flattened UNION
-		 * ALL subqueries.)
-		 */
-		subroot->append_rel_list = copyObject(root->append_rel_list);
-
-		/*
-		 * Better make a private copy of the rowMarks, too.
-		 */
-		subroot->rowMarks = copyObject(root->rowMarks);
-
-		/* There shouldn't be any OJ info to translate, as yet */
-		Assert(subroot->join_info_list == NIL);
-		/* and we haven't created PlaceHolderInfos, either */
-		Assert(subroot->placeholder_list == NIL);
-
-		/* Generate Path(s) for accessing this result relation */
-		grouping_planner(subroot, true, 0.0 /* retrieve all tuples */ );
-
-		/* Extract the info we need. */
-		select_rtable = subroot->parse->rtable;
-		select_appinfos = subroot->append_rel_list;
-
-		/*
-		 * We need to propagate partColsUpdated back, too.  (The later
-		 * planning cycles will not set this because they won't run
-		 * expand_partitioned_rtentry for the UPDATE target.)
-		 */
-		root->partColsUpdated = subroot->partColsUpdated;
-	}
-
-	/*----------
-	 * Since only one rangetable can exist in the final plan, we need to make
-	 * sure that it contains all the RTEs needed for any child plan.  This is
-	 * complicated by the need to use separate subquery RTEs for each child.
-	 * We arrange the final rtable as follows:
-	 * 1. All original rtable entries (with their original RT indexes).
-	 * 2. All the relation RTEs generated for children of the target table.
-	 * 3. Subquery RTEs for children after the first.  We need N * (K - 1)
-	 *    RT slots for this, if there are N subqueries and K child tables.
-	 * 4. Additional RTEs generated during the child planning runs, such as
-	 *    children of inheritable RTEs other than the target table.
-	 * We assume that each child planning run will create an identical set
-	 * of type-4 RTEs.
-	 *
-	 * So the next thing to do is append the type-2 RTEs (the target table's
-	 * children) to the original rtable.  We look through select_appinfos
-	 * to find them.
-	 *
-	 * To identify which AppendRelInfos are relevant as we thumb through
-	 * select_appinfos, we need to look for both direct and indirect children
-	 * of top_parentRTindex, so we use a bitmap of known parent relids.
-	 * expand_inherited_rtentry() always processes a parent before any of that
-	 * parent's children, so we should see an intermediate parent before its
-	 * children.
-	 *----------
-	 */
-	child_appinfos = NIL;
-	old_child_rtis = NIL;
-	new_child_rtis = NIL;
-	parent_relids = bms_make_singleton(top_parentRTindex);
-	foreach(lc, select_appinfos)
-	{
-		AppendRelInfo *appinfo = lfirst_node(AppendRelInfo, lc);
-		RangeTblEntry *child_rte;
-
-		/* append_rel_list contains all append rels; ignore others */
-		if (!bms_is_member(appinfo->parent_relid, parent_relids))
-			continue;
-
-		/* remember relevant AppendRelInfos for use below */
-		child_appinfos = lappend(child_appinfos, appinfo);
-
-		/* extract RTE for this child rel */
-		child_rte = rt_fetch(appinfo->child_relid, select_rtable);
-
-		/* and append it to the original rtable */
-		parse->rtable = lappend(parse->rtable, child_rte);
-
-		/* remember child's index in the SELECT rtable */
-		old_child_rtis = lappend_int(old_child_rtis, appinfo->child_relid);
-
-		/* and its new index in the final rtable */
-		new_child_rtis = lappend_int(new_child_rtis, list_length(parse->rtable));
-
-		/* if child is itself partitioned, update parent_relids */
-		if (child_rte->inh)
-		{
-			Assert(child_rte->relkind == RELKIND_PARTITIONED_TABLE);
-			parent_relids = bms_add_member(parent_relids, appinfo->child_relid);
-		}
-	}
-
-	/*
-	 * It's possible that the RTIs we just assigned for the child rels in the
-	 * final rtable are different from what they were in the SELECT query.
-	 * Adjust the AppendRelInfos so that they will correctly map RT indexes to
-	 * the final indexes.  We can do this left-to-right since no child rel's
-	 * final RT index could be greater than what it had in the SELECT query.
-	 */
-	forboth(lc, old_child_rtis, lc2, new_child_rtis)
-	{
-		int			old_child_rti = lfirst_int(lc);
-		int			new_child_rti = lfirst_int(lc2);
-
-		if (old_child_rti == new_child_rti)
-			continue;			/* nothing to do */
-
-		Assert(old_child_rti > new_child_rti);
-
-		ChangeVarNodes((Node *) child_appinfos,
-					   old_child_rti, new_child_rti, 0);
-	}
-
-	/*
-	 * Now set up rangetable entries for subqueries for additional children
-	 * (the first child will just use the original ones).  These all have to
-	 * look more or less real, or EXPLAIN will get unhappy; so we just make
-	 * them all clones of the original subqueries.
-	 */
-	next_subquery_rti = list_length(parse->rtable) + 1;
-	if (subqueryRTindexes != NULL)
-	{
-		int			n_children = list_length(child_appinfos);
-
-		while (n_children-- > 1)
-		{
-			int			oldrti = -1;
-
-			while ((oldrti = bms_next_member(subqueryRTindexes, oldrti)) >= 0)
-			{
-				RangeTblEntry *subqrte;
-
-				subqrte = rt_fetch(oldrti, parse->rtable);
-				parse->rtable = lappend(parse->rtable, copyObject(subqrte));
-			}
-		}
-	}
-
-	/*
-	 * The query for each child is obtained by translating the query for its
-	 * immediate parent, since the AppendRelInfo data we have shows deltas
-	 * between parents and children.  We use the parent_parses array to
-	 * remember the appropriate query trees.  This is indexed by parent relid.
-	 * Since the maximum number of parents is limited by the number of RTEs in
-	 * the SELECT query, we use that number to allocate the array.  An extra
-	 * entry is needed since relids start from 1.
-	 */
-	parent_parses = (Query **) palloc0((list_length(select_rtable) + 1) *
-									   sizeof(Query *));
-	parent_parses[top_parentRTindex] = parse;
-
-	/*
-	 * And now we can get on with generating a plan for each child table.
-	 */
-	foreach(lc, child_appinfos)
-	{
-		AppendRelInfo *appinfo = lfirst_node(AppendRelInfo, lc);
-		Index		this_subquery_rti = next_subquery_rti;
-		Query	   *parent_parse;
-		PlannerInfo *subroot;
-		RangeTblEntry *child_rte;
-		RelOptInfo *sub_final_rel;
-		Path	   *subpath;
-
-		/*
-		 * expand_inherited_rtentry() always processes a parent before any of
-		 * that parent's children, so the parent query for this relation
-		 * should already be available.
-		 */
-		parent_parse = parent_parses[appinfo->parent_relid];
-		Assert(parent_parse != NULL);
-
-		/*
-		 * We need a working copy of the PlannerInfo so that we can control
-		 * propagation of information back to the main copy.
-		 */
-		subroot = makeNode(PlannerInfo);
-		memcpy(subroot, root, sizeof(PlannerInfo));
-
-		/*
-		 * Generate modified query with this rel as target.  We first apply
-		 * adjust_appendrel_attrs, which copies the Query and changes
-		 * references to the parent RTE to refer to the current child RTE,
-		 * then fool around with subquery RTEs.
-		 */
-		subroot->parse = (Query *)
-			adjust_appendrel_attrs(subroot,
-								   (Node *) parent_parse,
-								   1, &appinfo);
-
-		/*
-		 * If there are securityQuals attached to the parent, move them to the
-		 * child rel (they've already been transformed properly for that).
-		 */
-		parent_rte = rt_fetch(appinfo->parent_relid, subroot->parse->rtable);
-		child_rte = rt_fetch(appinfo->child_relid, subroot->parse->rtable);
-		child_rte->securityQuals = parent_rte->securityQuals;
-		parent_rte->securityQuals = NIL;
-
-		/*
-		 * HACK: setting this to a value other than INHKIND_NONE signals to
-		 * relation_excluded_by_constraints() to treat the result relation as
-		 * being an appendrel member.
-		 */
-		subroot->inhTargetKind =
-			(rootRelation != 0) ? INHKIND_PARTITIONED : INHKIND_INHERITED;
-
-		/*
-		 * If this child is further partitioned, remember it as a parent.
-		 * Since a partitioned table does not have any data, we don't need to
-		 * create a plan for it, and we can stop processing it here.  We do,
-		 * however, need to remember its modified PlannerInfo for use when
-		 * processing its children, since we'll update their varnos based on
-		 * the delta from immediate parent to child, not from top to child.
-		 *
-		 * Note: a very non-obvious point is that we have not yet added
-		 * duplicate subquery RTEs to the subroot's rtable.  We mustn't,
-		 * because then its children would have two sets of duplicates,
-		 * confusing matters.
-		 */
-		if (child_rte->inh)
-		{
-			Assert(child_rte->relkind == RELKIND_PARTITIONED_TABLE);
-			parent_parses[appinfo->child_relid] = subroot->parse;
-			continue;
-		}
-
-		/*
-		 * Set the nominal target relation of the ModifyTable node if not
-		 * already done.  If the target is a partitioned table, we already set
-		 * nominalRelation to refer to the partition root, above.  For
-		 * non-partitioned inheritance cases, we'll use the first child
-		 * relation (even if it's excluded) as the nominal target relation.
-		 * Because of the way expand_inherited_rtentry works, that should be
-		 * the RTE representing the parent table in its role as a simple
-		 * member of the inheritance set.
-		 *
-		 * It would be logically cleaner to *always* use the inheritance
-		 * parent RTE as the nominal relation; but that RTE is not otherwise
-		 * referenced in the plan in the non-partitioned inheritance case.
-		 * Instead the duplicate child RTE created by expand_inherited_rtentry
-		 * is used elsewhere in the plan, so using the original parent RTE
-		 * would give rise to confusing use of multiple aliases in EXPLAIN
-		 * output for what the user will think is the "same" table.  OTOH,
-		 * it's not a problem in the partitioned inheritance case, because
-		 * there is no duplicate RTE for the parent.
-		 */
-		if (nominalRelation < 0)
-			nominalRelation = appinfo->child_relid;
-
-		/*
-		 * As above, each child plan run needs its own append_rel_list and
-		 * rowmarks, which should start out as pristine copies of the
-		 * originals.  There can't be any references to UPDATE/DELETE target
-		 * rels in them; but there could be subquery references, which we'll
-		 * fix up in a moment.
-		 */
-		subroot->append_rel_list = copyObject(root->append_rel_list);
-		subroot->rowMarks = copyObject(root->rowMarks);
-
-		/*
-		 * If this isn't the first child Query, adjust Vars and jointree
-		 * entries to reference the appropriate set of subquery RTEs.
-		 */
-		if (final_rtable != NIL && subqueryRTindexes != NULL)
-		{
-			int			oldrti = -1;
-
-			while ((oldrti = bms_next_member(subqueryRTindexes, oldrti)) >= 0)
-			{
-				Index		newrti = next_subquery_rti++;
-
-				ChangeVarNodes((Node *) subroot->parse, oldrti, newrti, 0);
-				ChangeVarNodes((Node *) subroot->append_rel_list,
-							   oldrti, newrti, 0);
-				ChangeVarNodes((Node *) subroot->rowMarks, oldrti, newrti, 0);
-			}
-		}
-
-		/* There shouldn't be any OJ info to translate, as yet */
-		Assert(subroot->join_info_list == NIL);
-		/* and we haven't created PlaceHolderInfos, either */
-		Assert(subroot->placeholder_list == NIL);
-
-		/* Generate Path(s) for accessing this result relation */
-		grouping_planner(subroot, true, 0.0 /* retrieve all tuples */ );
-
-		/*
-		 * Select cheapest path in case there's more than one.  We always run
-		 * modification queries to conclusion, so we care only for the
-		 * cheapest-total path.
-		 */
-		sub_final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
-		set_cheapest(sub_final_rel);
-		subpath = sub_final_rel->cheapest_total_path;
-
-		/*
-		 * If this child rel was excluded by constraint exclusion, exclude it
-		 * from the result plan.
-		 */
-		if (IS_DUMMY_REL(sub_final_rel))
-			continue;
-
-		/*
-		 * If this is the first non-excluded child, its post-planning rtable
-		 * becomes the initial contents of final_rtable; otherwise, copy its
-		 * modified subquery RTEs into final_rtable, to ensure we have sane
-		 * copies of those.  Also save the first non-excluded child's version
-		 * of the rowmarks list; we assume all children will end up with
-		 * equivalent versions of that.  Likewise for append_rel_list.
-		 */
-		if (final_rtable == NIL)
-		{
-			final_rtable = subroot->parse->rtable;
-			final_rowmarks = subroot->rowMarks;
-			final_appendrels = subroot->append_rel_list;
-		}
-		else
-		{
-			Assert(list_length(final_rtable) ==
-				   list_length(subroot->parse->rtable));
-			if (subqueryRTindexes != NULL)
-			{
-				int			oldrti = -1;
-
-				while ((oldrti = bms_next_member(subqueryRTindexes, oldrti)) >= 0)
-				{
-					Index		newrti = this_subquery_rti++;
-					RangeTblEntry *subqrte;
-					ListCell   *newrticell;
-
-					subqrte = rt_fetch(newrti, subroot->parse->rtable);
-					newrticell = list_nth_cell(final_rtable, newrti - 1);
-					lfirst(newrticell) = subqrte;
-				}
-			}
-		}
-
-		/*
-		 * We need to collect all the RelOptInfos from all child plans into
-		 * the main PlannerInfo, since setrefs.c will need them.  We use the
-		 * last child's simple_rel_array, so we have to propagate forward the
-		 * RelOptInfos that were already built in previous children.
-		 */
-		Assert(subroot->simple_rel_array_size >= save_rel_array_size);
-		for (rti = 1; rti < save_rel_array_size; rti++)
-		{
-			RelOptInfo *brel = save_rel_array[rti];
-
-			if (brel)
-				subroot->simple_rel_array[rti] = brel;
-		}
-		save_rel_array_size = subroot->simple_rel_array_size;
-		save_rel_array = subroot->simple_rel_array;
-		save_append_rel_array = subroot->append_rel_array;
-
-		/*
-		 * Make sure any initplans from this rel get into the outer list. Note
-		 * we're effectively assuming all children generate the same
-		 * init_plans.
-		 */
-		root->init_plans = subroot->init_plans;
-
-		/* Build list of sub-paths */
-		subpaths = lappend(subpaths, subpath);
-
-		/* Build list of modified subroots, too */
-		subroots = lappend(subroots, subroot);
-
-		/* Build list of target-relation RT indexes */
-		resultRelations = lappend_int(resultRelations, appinfo->child_relid);
-
-		/* Build lists of per-relation WCO and RETURNING targetlists */
-		if (parse->withCheckOptions)
-			withCheckOptionLists = lappend(withCheckOptionLists,
-										   subroot->parse->withCheckOptions);
-		if (parse->returningList)
-			returningLists = lappend(returningLists,
-									 subroot->parse->returningList);
-
-		Assert(!parse->onConflict);
-	}
-
-	/* Result path must go into outer query's FINAL upperrel */
-	final_rel = fetch_upper_rel(root, UPPERREL_FINAL, NULL);
-
-	/*
-	 * We don't currently worry about setting final_rel's consider_parallel
-	 * flag in this case, nor about allowing FDWs or create_upper_paths_hook
-	 * to get control here.
-	 */
-
-	if (subpaths == NIL)
-	{
-		/*
-		 * We managed to exclude every child rel, so generate a dummy path
-		 * representing the empty set.  Although it's clear that no data will
-		 * be updated or deleted, we will still need to have a ModifyTable
-		 * node so that any statement triggers are executed.  (This could be
-		 * cleaner if we fixed nodeModifyTable.c to support zero child nodes,
-		 * but that probably wouldn't be a net win.)
-		 */
-		Path	   *dummy_path;
-
-		/* tlist processing never got done, either */
-		root->processed_tlist = preprocess_targetlist(root);
-		final_rel->reltarget = create_pathtarget(root, root->processed_tlist);
-
-		/* Make a dummy path, cf set_dummy_rel_pathlist() */
-		dummy_path = (Path *) create_append_path(NULL, final_rel, NIL, NIL,
-												 NIL, NULL, 0, false,
-												 -1);
-
-		/* These lists must be nonempty to make a valid ModifyTable node */
-		subpaths = list_make1(dummy_path);
-		subroots = list_make1(root);
-		resultRelations = list_make1_int(parse->resultRelation);
-		if (parse->withCheckOptions)
-			withCheckOptionLists = list_make1(parse->withCheckOptions);
-		if (parse->returningList)
-			returningLists = list_make1(parse->returningList);
-		/* Disable tuple routing, too, just to be safe */
-		root->partColsUpdated = false;
-	}
-	else
-	{
-		/*
-		 * Put back the final adjusted rtable into the original copy of the
-		 * Query.  (We mustn't do this if we found no non-excluded children,
-		 * since we never saved an adjusted rtable at all.)
-		 */
-		parse->rtable = final_rtable;
-		root->simple_rel_array_size = save_rel_array_size;
-		root->simple_rel_array = save_rel_array;
-		root->append_rel_array = save_append_rel_array;
-
-		/* Must reconstruct original's simple_rte_array, too */
-		root->simple_rte_array = (RangeTblEntry **)
-			palloc0((list_length(final_rtable) + 1) * sizeof(RangeTblEntry *));
-		rti = 1;
-		foreach(lc, final_rtable)
-		{
-			RangeTblEntry *rte = lfirst_node(RangeTblEntry, lc);
-
-			root->simple_rte_array[rti++] = rte;
-		}
-
-		/* Put back adjusted rowmarks and appendrels, too */
-		root->rowMarks = final_rowmarks;
-		root->append_rel_list = final_appendrels;
-	}
-
-	/*
-	 * If there was a FOR [KEY] UPDATE/SHARE clause, the LockRows node will
-	 * have dealt with fetching non-locked marked rows, else we need to have
-	 * ModifyTable do that.
-	 */
-	if (parse->rowMarks)
-		rowMarks = NIL;
-	else
-		rowMarks = root->rowMarks;
-
-	/* Create Path representing a ModifyTable to do the UPDATE/DELETE work */
-	add_path(final_rel, (Path *)
-			 create_modifytable_path(root, final_rel,
-									 parse->commandType,
-									 parse->canSetTag,
-									 nominalRelation,
-									 rootRelation,
-									 root->partColsUpdated,
-									 resultRelations,
-									 subpaths,
-									 subroots,
-									 withCheckOptionLists,
-									 returningLists,
-									 rowMarks,
-									 NULL,
-									 assign_special_exec_param(root)));
-}
-
 /*--------------------
  * grouping_planner
  *	  Perform planning steps related to grouping, aggregation, etc.
  *
  * This function adds all required top-level processing to the scan/join
  * Path(s) produced by query_planner.
- *
- * If inheritance_update is true, we're being called from inheritance_planner
- * and should not include a ModifyTable step in the resulting Path(s).
- * (inheritance_planner will create a single ModifyTable node covering all the
- * target tables.)
  *
  * tuple_fraction is the fraction of tuples we expect will be retrieved.
  * tuple_fraction is interpreted as follows:
@@ -1824,8 +1214,7 @@ inheritance_planner(PlannerInfo *root)
  *--------------------
  */
 static void
-grouping_planner(PlannerInfo *root, bool inheritance_update,
-				 double tuple_fraction)
+grouping_planner(PlannerInfo *root, double tuple_fraction)
 {
 	Query	   *parse = root->parse;
 	int64		offset_est = 0;
@@ -1969,7 +1358,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * that we can transfer its decoration (resnames etc) to the topmost
 		 * tlist of the finished Plan.  This is kept in processed_tlist.
 		 */
-		root->processed_tlist = preprocess_targetlist(root);
+		preprocess_targetlist(root);
 
 		/*
 		 * Mark all the aggregates with resolved aggtranstypes, and detect
@@ -2307,15 +1696,116 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		}
 
 		/*
-		 * If this is an INSERT/UPDATE/DELETE, and we're not being called from
-		 * inheritance_planner, add the ModifyTable node.
+		 * If this is an INSERT/UPDATE/DELETE, add the ModifyTable node.
 		 */
-		if (parse->commandType != CMD_SELECT && !inheritance_update)
+		if (parse->commandType != CMD_SELECT)
 		{
 			Index		rootRelation;
-			List	   *withCheckOptionLists;
-			List	   *returningLists;
+			List	   *resultRelations = NIL;
+			List	   *updateColnosLists = NIL;
+			List	   *withCheckOptionLists = NIL;
+			List	   *returningLists = NIL;
 			List	   *rowMarks;
+
+			if (bms_membership(root->all_result_relids) == BMS_MULTIPLE)
+			{
+				/* Inherited UPDATE/DELETE */
+				RelOptInfo *top_result_rel = find_base_rel(root,
+														   parse->resultRelation);
+				int			resultRelation = -1;
+
+				/* Add only leaf children to ModifyTable. */
+				while ((resultRelation = bms_next_member(root->leaf_result_relids,
+														 resultRelation)) >= 0)
+				{
+					RelOptInfo *this_result_rel = find_base_rel(root,
+																resultRelation);
+
+					/*
+					 * Also exclude any leaf rels that have turned dummy since
+					 * being added to the list, for example, by being excluded
+					 * by constraint exclusion.
+					 */
+					if (IS_DUMMY_REL(this_result_rel))
+						continue;
+
+					/* Build per-target-rel lists needed by ModifyTable */
+					resultRelations = lappend_int(resultRelations,
+												  resultRelation);
+					if (parse->commandType == CMD_UPDATE)
+					{
+						List	   *update_colnos = root->update_colnos;
+
+						if (this_result_rel != top_result_rel)
+							update_colnos =
+								adjust_inherited_attnums_multilevel(root,
+																	update_colnos,
+																	this_result_rel->relid,
+																	top_result_rel->relid);
+						updateColnosLists = lappend(updateColnosLists,
+													update_colnos);
+					}
+					if (parse->withCheckOptions)
+					{
+						List	   *withCheckOptions = parse->withCheckOptions;
+
+						if (this_result_rel != top_result_rel)
+							withCheckOptions = (List *)
+								adjust_appendrel_attrs_multilevel(root,
+																  (Node *) withCheckOptions,
+																  this_result_rel->relids,
+																  top_result_rel->relids);
+						withCheckOptionLists = lappend(withCheckOptionLists,
+													   withCheckOptions);
+					}
+					if (parse->returningList)
+					{
+						List	   *returningList = parse->returningList;
+
+						if (this_result_rel != top_result_rel)
+							returningList = (List *)
+								adjust_appendrel_attrs_multilevel(root,
+																  (Node *) returningList,
+																  this_result_rel->relids,
+																  top_result_rel->relids);
+						returningLists = lappend(returningLists,
+												 returningList);
+					}
+				}
+
+				if (resultRelations == NIL)
+				{
+					/*
+					 * We managed to exclude every child rel, so generate a
+					 * dummy one-relation plan using info for the top target
+					 * rel (even though that may not be a leaf target).
+					 * Although it's clear that no data will be updated or
+					 * deleted, we still need to have a ModifyTable node so
+					 * that any statement triggers will be executed.  (This
+					 * could be cleaner if we fixed nodeModifyTable.c to allow
+					 * zero target relations, but that probably wouldn't be a
+					 * net win.)
+					 */
+					resultRelations = list_make1_int(parse->resultRelation);
+					if (parse->commandType == CMD_UPDATE)
+						updateColnosLists = list_make1(root->update_colnos);
+					if (parse->withCheckOptions)
+						withCheckOptionLists = list_make1(parse->withCheckOptions);
+					if (parse->returningList)
+						returningLists = list_make1(parse->returningList);
+				}
+			}
+			else
+			{
+				/* Single-relation INSERT/UPDATE/DELETE. */
+				resultRelations = list_make1_int(parse->resultRelation);
+				if (parse->commandType == CMD_UPDATE)
+					updateColnosLists = list_make1(root->update_colnos);
+				if (parse->withCheckOptions)
+					withCheckOptionLists = list_make1(parse->withCheckOptions);
+				if (parse->returningList)
+					returningLists = list_make1(parse->returningList);
+			}
 
 			/*
 			 * If target is a partition root table, we need to mark the
@@ -2326,20 +1816,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 				rootRelation = parse->resultRelation;
 			else
 				rootRelation = 0;
-
-			/*
-			 * Set up the WITH CHECK OPTION and RETURNING lists-of-lists, if
-			 * needed.
-			 */
-			if (parse->withCheckOptions)
-				withCheckOptionLists = list_make1(parse->withCheckOptions);
-			else
-				withCheckOptionLists = NIL;
-
-			if (parse->returningList)
-				returningLists = list_make1(parse->returningList);
-			else
-				returningLists = NIL;
 
 			/*
 			 * If there was a FOR [KEY] UPDATE/SHARE clause, the LockRows node
@@ -2353,14 +1829,14 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 
 			path = (Path *)
 				create_modifytable_path(root, final_rel,
+										path,
 										parse->commandType,
 										parse->canSetTag,
 										parse->resultRelation,
 										rootRelation,
-										false,
-										list_make1_int(parse->resultRelation),
-										list_make1(path),
-										list_make1(root),
+										root->partColsUpdated,
+										resultRelations,
+										updateColnosLists,
 										withCheckOptionLists,
 										returningLists,
 										rowMarks,

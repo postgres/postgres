@@ -78,7 +78,7 @@
   invoked by <command>UPDATE</command> statements executed on partitioned
   tables, but it currently does not handle the case where a remote partition
   chosen to insert a moved row into is also an <command>UPDATE</command>
-  target partition that will be updated later.
+  target partition that will be updated elsewhere in the same command.
  </para>
 
  <para>

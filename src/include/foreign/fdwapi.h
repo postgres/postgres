@@ -65,7 +65,8 @@ typedef void (*GetForeignUpperPaths_function) (PlannerInfo *root,
 											   RelOptInfo *output_rel,
 											   void *extra);
 
-typedef void (*AddForeignUpdateTargets_function) (Query *parsetree,
+typedef void (*AddForeignUpdateTargets_function) (PlannerInfo *root,
+												  Index rtindex,
 												  RangeTblEntry *target_rte,
 												  Relation target_relation);
 

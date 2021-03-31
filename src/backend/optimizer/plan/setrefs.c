@@ -868,6 +868,29 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					set_upper_references(root, plan, rtoffset);
 				else
 				{
+					/*
+					 * The tlist of a childless Result could contain
+					 * unresolved ROWID_VAR Vars, in case it's representing a
+					 * target relation which is completely empty because of
+					 * constraint exclusion.  Replace any such Vars by null
+					 * constants, as though they'd been resolved for a leaf
+					 * scan node that doesn't support them.  We could have
+					 * fix_scan_expr do this, but since the case is only
+					 * expected to occur here, it seems safer to special-case
+					 * it here and keep the assertions that ROWID_VARs
+					 * shouldn't be seen by fix_scan_expr.
+					 */
+					foreach(l, splan->plan.targetlist)
+					{
+						TargetEntry *tle = (TargetEntry *) lfirst(l);
+						Var		   *var = (Var *) tle->expr;
+
+						if (var && IsA(var, Var) && var->varno == ROWID_VAR)
+							tle->expr = (Expr *) makeNullConst(var->vartype,
+															   var->vartypmod,
+															   var->varcollid);
+					}
+
 					splan->plan.targetlist =
 						fix_scan_list(root, splan->plan.targetlist,
 									  rtoffset, NUM_EXEC_TLIST(plan));
@@ -897,23 +920,20 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				if (splan->returningLists)
 				{
 					List	   *newRL = NIL;
+					Plan	   *subplan = outerPlan(splan);
 					ListCell   *lcrl,
-							   *lcrr,
-							   *lcp;
+							   *lcrr;
 
 					/*
-					 * Pass each per-subplan returningList through
+					 * Pass each per-resultrel returningList through
 					 * set_returning_clause_references().
 					 */
 					Assert(list_length(splan->returningLists) == list_length(splan->resultRelations));
-					Assert(list_length(splan->returningLists) == list_length(splan->plans));
-					forthree(lcrl, splan->returningLists,
-							 lcrr, splan->resultRelations,
-							 lcp, splan->plans)
+					forboth(lcrl, splan->returningLists,
+							lcrr, splan->resultRelations)
 					{
 						List	   *rlist = (List *) lfirst(lcrl);
 						Index		resultrel = lfirst_int(lcrr);
-						Plan	   *subplan = (Plan *) lfirst(lcp);
 
 						rlist = set_returning_clause_references(root,
 																rlist,
@@ -982,12 +1002,6 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 
 					rc->rti += rtoffset;
 					rc->prti += rtoffset;
-				}
-				foreach(l, splan->plans)
-				{
-					lfirst(l) = set_plan_refs(root,
-											  (Plan *) lfirst(l),
-											  rtoffset);
 				}
 
 				/*
@@ -1792,6 +1806,13 @@ fix_alternative_subplan(PlannerInfo *root, AlternativeSubPlan *asplan,
  * choosing the best implementation for AlternativeSubPlans,
  * looking up operator opcode info for OpExpr and related nodes,
  * and adding OIDs from regclass Const nodes into root->glob->relationOids.
+ *
+ * 'node': the expression to be modified
+ * 'rtoffset': how much to increment varnos by
+ * 'num_exec': estimated number of executions of expression
+ *
+ * The expression tree is either copied-and-modified, or modified in-place
+ * if that seems safe.
  */
 static Node *
 fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset, double num_exec)
@@ -1840,11 +1861,12 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		Assert(var->varlevelsup == 0);
 
 		/*
-		 * We should not see any Vars marked INNER_VAR or OUTER_VAR.  But an
-		 * indexqual expression could contain INDEX_VAR Vars.
+		 * We should not see Vars marked INNER_VAR, OUTER_VAR, or ROWID_VAR.
+		 * But an indexqual expression could contain INDEX_VAR Vars.
 		 */
 		Assert(var->varno != INNER_VAR);
 		Assert(var->varno != OUTER_VAR);
+		Assert(var->varno != ROWID_VAR);
 		if (!IS_SPECIAL_VARNO(var->varno))
 			var->varno += context->rtoffset;
 		if (var->varnosyn > 0)
@@ -1907,6 +1929,7 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 {
 	if (node == NULL)
 		return false;
+	Assert(!(IsA(node, Var) && ((Var *) node)->varno == ROWID_VAR));
 	Assert(!IsA(node, PlaceHolderVar));
 	Assert(!IsA(node, AlternativeSubPlan));
 	fix_expr_common(context->root, node);

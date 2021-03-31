@@ -82,7 +82,7 @@
  *
  * subplan_resultrel_htab
  *		Hash table to store subplan ResultRelInfos by Oid.  This is used to
- *		cache ResultRelInfos from subplans of an UPDATE ModifyTable node;
+ *		cache ResultRelInfos from targets of an UPDATE ModifyTable node;
  *		NULL in other cases.  Some of these may be useful for tuple routing
  *		to save having to build duplicates.
  *
@@ -527,12 +527,12 @@ ExecHashSubPlanResultRelsByOid(ModifyTableState *mtstate,
 	ctl.entrysize = sizeof(SubplanResultRelHashElem);
 	ctl.hcxt = CurrentMemoryContext;
 
-	htab = hash_create("PartitionTupleRouting table", mtstate->mt_nplans,
+	htab = hash_create("PartitionTupleRouting table", mtstate->mt_nrels,
 					   &ctl, HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	proute->subplan_resultrel_htab = htab;
 
 	/* Hash all subplans by their Oid */
-	for (i = 0; i < mtstate->mt_nplans; i++)
+	for (i = 0; i < mtstate->mt_nrels; i++)
 	{
 		ResultRelInfo *rri = &mtstate->resultRelInfo[i];
 		bool		found;
@@ -628,10 +628,10 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		 */
 		Assert((node->operation == CMD_INSERT &&
 				list_length(node->withCheckOptionLists) == 1 &&
-				list_length(node->plans) == 1) ||
+				list_length(node->resultRelations) == 1) ||
 			   (node->operation == CMD_UPDATE &&
 				list_length(node->withCheckOptionLists) ==
-				list_length(node->plans)));
+				list_length(node->resultRelations)));
 
 		/*
 		 * Use the WCO list of the first plan as a reference to calculate
@@ -687,10 +687,10 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		/* See the comment above for WCO lists. */
 		Assert((node->operation == CMD_INSERT &&
 				list_length(node->returningLists) == 1 &&
-				list_length(node->plans) == 1) ||
+				list_length(node->resultRelations) == 1) ||
 			   (node->operation == CMD_UPDATE &&
 				list_length(node->returningLists) ==
-				list_length(node->plans)));
+				list_length(node->resultRelations)));
 
 		/*
 		 * Use the RETURNING list of the first plan as a reference to

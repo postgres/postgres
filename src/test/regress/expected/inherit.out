@@ -545,27 +545,25 @@ create table some_tab_child () inherits (some_tab);
 insert into some_tab_child values(1,2);
 explain (verbose, costs off)
 update some_tab set a = a + 1 where false;
-            QUERY PLAN            
-----------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  Update on public.some_tab
-   Update on public.some_tab
    ->  Result
-         Output: (a + 1), b, ctid
+         Output: (some_tab.a + 1), NULL::oid, NULL::tid
          One-Time Filter: false
-(5 rows)
+(4 rows)
 
 update some_tab set a = a + 1 where false;
 explain (verbose, costs off)
 update some_tab set a = a + 1 where false returning b, a;
-            QUERY PLAN            
-----------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  Update on public.some_tab
-   Output: b, a
-   Update on public.some_tab
+   Output: some_tab.b, some_tab.a
    ->  Result
-         Output: (a + 1), b, ctid
+         Output: (some_tab.a + 1), NULL::oid, NULL::tid
          One-Time Filter: false
-(6 rows)
+(5 rows)
 
 update some_tab set a = a + 1 where false returning b, a;
  b | a 
@@ -670,7 +668,7 @@ explain update parted_tab set a = 2 where false;
                        QUERY PLAN                       
 --------------------------------------------------------
  Update on parted_tab  (cost=0.00..0.00 rows=0 width=0)
-   ->  Result  (cost=0.00..0.00 rows=0 width=0)
+   ->  Result  (cost=0.00..0.00 rows=0 width=10)
          One-Time Filter: false
 (3 rows)
 

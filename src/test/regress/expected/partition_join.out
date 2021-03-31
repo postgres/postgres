@@ -1926,37 +1926,27 @@ WHERE EXISTS (
     FROM int4_tbl,
          LATERAL (SELECT int4_tbl.f1 FROM int8_tbl LIMIT 2) ss
     WHERE prt1_l.c IS NULL);
-                          QUERY PLAN                           
----------------------------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Delete on prt1_l
    Delete on prt1_l_p1 prt1_l_1
    Delete on prt1_l_p3_p1 prt1_l_2
    Delete on prt1_l_p3_p2 prt1_l_3
    ->  Nested Loop Semi Join
-         ->  Seq Scan on prt1_l_p1 prt1_l_1
-               Filter: (c IS NULL)
-         ->  Nested Loop
-               ->  Seq Scan on int4_tbl
-               ->  Subquery Scan on ss
-                     ->  Limit
-                           ->  Seq Scan on int8_tbl
-   ->  Nested Loop Semi Join
-         ->  Seq Scan on prt1_l_p3_p1 prt1_l_2
-               Filter: (c IS NULL)
-         ->  Nested Loop
-               ->  Seq Scan on int4_tbl
-               ->  Subquery Scan on ss_1
-                     ->  Limit
-                           ->  Seq Scan on int8_tbl int8_tbl_1
-   ->  Nested Loop Semi Join
-         ->  Seq Scan on prt1_l_p3_p2 prt1_l_3
-               Filter: (c IS NULL)
-         ->  Nested Loop
-               ->  Seq Scan on int4_tbl
-               ->  Subquery Scan on ss_2
-                     ->  Limit
-                           ->  Seq Scan on int8_tbl int8_tbl_2
-(28 rows)
+         ->  Append
+               ->  Seq Scan on prt1_l_p1 prt1_l_1
+                     Filter: (c IS NULL)
+               ->  Seq Scan on prt1_l_p3_p1 prt1_l_2
+                     Filter: (c IS NULL)
+               ->  Seq Scan on prt1_l_p3_p2 prt1_l_3
+                     Filter: (c IS NULL)
+         ->  Materialize
+               ->  Nested Loop
+                     ->  Seq Scan on int4_tbl
+                     ->  Subquery Scan on ss
+                           ->  Limit
+                                 ->  Seq Scan on int8_tbl
+(18 rows)
 
 --
 -- negative testcases

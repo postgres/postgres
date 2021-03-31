@@ -1149,7 +1149,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			Var		   *parentvar = (Var *) lfirst(parentvars);
 			Node	   *childvar = (Node *) lfirst(childvars);
 
-			if (IsA(parentvar, Var))
+			if (IsA(parentvar, Var) && parentvar->varno == parentRTindex)
 			{
 				int			pndx = parentvar->varattno - rel->min_attr;
 				int32		child_width = 0;
