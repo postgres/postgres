@@ -1320,17 +1320,15 @@ ReplicationSlotDropAtPubNode(WalReceiverConn *wrconn, char *slotname, bool missi
 		{
 			/* LOG. Error, but missing_ok = true. */
 			ereport(LOG,
-					(errmsg("could not drop the replication slot \"%s\" on publisher",
-							slotname),
-					 errdetail("The error was: %s", res->err)));
+					(errmsg("could not drop replication slot \"%s\" on publisher: %s",
+							slotname, res->err)));
 		}
 		else
 		{
 			/* ERROR. */
 			ereport(ERROR,
-					(errmsg("could not drop the replication slot \"%s\" on publisher",
-							slotname),
-					 errdetail("The error was: %s", res->err)));
+					(errmsg("could not drop replication slot \"%s\" on publisher: %s",
+							slotname, res->err)));
 		}
 
 		walrcv_clear_result(res);
@@ -1545,8 +1543,7 @@ ReportSlotConnectionError(List *rstates, Oid subid, char *slotname, char *err)
 
 	ereport(ERROR,
 			(errmsg("could not connect to publisher when attempting to "
-					"drop the replication slot \"%s\"", slotname),
-			 errdetail("The error was: %s", err),
+					"drop replication slot \"%s\": %s", slotname, err),
 	/* translator: %s is an SQL ALTER command */
 			 errhint("Use %s to disassociate the subscription from the slot.",
 					 "ALTER SUBSCRIPTION ... SET (slot_name = NONE)")));
