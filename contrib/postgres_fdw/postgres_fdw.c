@@ -6820,7 +6820,7 @@ void
 process_pending_request(AsyncRequest *areq)
 {
 	ForeignScanState *node = (ForeignScanState *) areq->requestee;
-	PgFdwScanState *fsstate = (PgFdwScanState *) node->fdw_state;
+	PgFdwScanState *fsstate PG_USED_FOR_ASSERTS_ONLY = (PgFdwScanState *) node->fdw_state;
 	EState	   *estate = node->ss.ps.state;
 	MemoryContext oldcontext;
 
