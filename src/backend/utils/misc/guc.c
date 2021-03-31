@@ -1037,6 +1037,16 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"enable_resultcache", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables the planner's use of result caching."),
+			NULL,
+			GUC_EXPLAIN
+		},
+		&enable_resultcache,
+		true,
+		NULL, NULL, NULL
+	},
+	{
 		{"enable_nestloop", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of nested-loop join plans."),
 			NULL,

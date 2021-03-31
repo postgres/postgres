@@ -847,6 +847,21 @@ _outMaterial(StringInfo str, const Material *node)
 }
 
 static void
+_outResultCache(StringInfo str, const ResultCache *node)
+{
+	WRITE_NODE_TYPE("RESULTCACHE");
+
+	_outPlanInfo(str, (const Plan *) node);
+
+	WRITE_INT_FIELD(numKeys);
+	WRITE_OID_ARRAY(hashOperators, node->numKeys);
+	WRITE_OID_ARRAY(collations, node->numKeys);
+	WRITE_NODE_FIELD(param_exprs);
+	WRITE_BOOL_FIELD(singlerow);
+	WRITE_UINT_FIELD(est_entries);
+}
+
+static void
 _outSortInfo(StringInfo str, const Sort *node)
 {
 	_outPlanInfo(str, (const Plan *) node);
@@ -1921,6 +1936,21 @@ _outMaterialPath(StringInfo str, const MaterialPath *node)
 }
 
 static void
+_outResultCachePath(StringInfo str, const ResultCachePath *node)
+{
+	WRITE_NODE_TYPE("RESULTCACHEPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_NODE_FIELD(hash_operators);
+	WRITE_NODE_FIELD(param_exprs);
+	WRITE_BOOL_FIELD(singlerow);
+	WRITE_FLOAT_FIELD(calls, "%.0f");
+	WRITE_UINT_FIELD(est_entries);
+}
+
+static void
 _outUniquePath(StringInfo str, const UniquePath *node)
 {
 	WRITE_NODE_TYPE("UNIQUEPATH");
@@ -2521,6 +2551,7 @@ _outRestrictInfo(StringInfo str, const RestrictInfo *node)
 	WRITE_NODE_FIELD(right_em);
 	WRITE_BOOL_FIELD(outer_is_left);
 	WRITE_OID_FIELD(hashjoinoperator);
+	WRITE_OID_FIELD(hasheqoperator);
 }
 
 static void
@@ -3907,6 +3938,9 @@ outNode(StringInfo str, const void *obj)
 			case T_Material:
 				_outMaterial(str, obj);
 				break;
+			case T_ResultCache:
+				_outResultCache(str, obj);
+				break;
 			case T_Sort:
 				_outSort(str, obj);
 				break;
@@ -4140,6 +4174,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_MaterialPath:
 				_outMaterialPath(str, obj);
+				break;
+			case T_ResultCachePath:
+				_outResultCachePath(str, obj);
 				break;
 			case T_UniquePath:
 				_outUniquePath(str, obj);

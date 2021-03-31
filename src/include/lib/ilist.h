@@ -395,6 +395,25 @@ dlist_move_head(dlist_head *head, dlist_node *node)
 }
 
 /*
+ * Move element from its current position in the list to the tail position in
+ * the same list.
+ *
+ * Undefined behaviour if 'node' is not already part of the list.
+ */
+static inline void
+dlist_move_tail(dlist_head *head, dlist_node *node)
+{
+	/* fast path if it's already at the tail */
+	if (head->head.prev == node)
+		return;
+
+	dlist_delete(node);
+	dlist_push_tail(head, node);
+
+	dlist_check(head);
+}
+
+/*
  * Check whether 'node' has a following node.
  * Caution: unreliable if 'node' is not in the list.
  */

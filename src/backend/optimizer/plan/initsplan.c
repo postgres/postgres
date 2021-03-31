@@ -33,6 +33,7 @@
 #include "parser/analyze.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
+#include "utils/typcache.h"
 
 /* These parameters are set by GUC */
 int			from_collapse_limit;
@@ -77,6 +78,7 @@ static bool check_equivalence_delay(PlannerInfo *root,
 static bool check_redundant_nullability_qual(PlannerInfo *root, Node *clause);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
+static void check_resultcacheable(RestrictInfo *restrictinfo);
 
 
 /*****************************************************************************
@@ -2209,6 +2211,13 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 			check_hashjoinable(restrictinfo);
 
 			/*
+			 * Likewise, check if the clause is suitable to be used with a
+			 * Result Cache node to cache inner tuples during a parameterized
+			 * nested loop.
+			 */
+			check_resultcacheable(restrictinfo);
+
+			/*
 			 * Add clause to the join lists of all the relevant relations.
 			 */
 			add_join_clause_to_rels(root, restrictinfo, relids);
@@ -2450,6 +2459,7 @@ build_implied_join_equality(PlannerInfo *root,
 	/* Set mergejoinability/hashjoinability flags */
 	check_mergejoinable(restrictinfo);
 	check_hashjoinable(restrictinfo);
+	check_resultcacheable(restrictinfo);
 
 	return restrictinfo;
 }
@@ -2696,4 +2706,35 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 	if (op_hashjoinable(opno, exprType(leftarg)) &&
 		!contain_volatile_functions((Node *) restrictinfo))
 		restrictinfo->hashjoinoperator = opno;
+}
+
+/*
+ * check_resultcacheable
+ *	  If the restrictinfo's clause is suitable to be used for a Result Cache
+ *	  node, set the hasheqoperator to the hash equality operator that will be
+ *	  needed during caching.
+ */
+static void
+check_resultcacheable(RestrictInfo *restrictinfo)
+{
+	TypeCacheEntry *typentry;
+	Expr	   *clause = restrictinfo->clause;
+	Node	   *leftarg;
+
+	if (restrictinfo->pseudoconstant)
+		return;
+	if (!is_opclause(clause))
+		return;
+	if (list_length(((OpExpr *) clause)->args) != 2)
+		return;
+
+	leftarg = linitial(((OpExpr *) clause)->args);
+
+	typentry = lookup_type_cache(exprType(leftarg), TYPECACHE_HASH_PROC |
+													TYPECACHE_EQ_OPR);
+
+	if (!OidIsValid(typentry->hash_proc) || !OidIsValid(typentry->eq_opr))
+		return;
+
+	restrictinfo->hasheqoperator = typentry->eq_opr;
 }

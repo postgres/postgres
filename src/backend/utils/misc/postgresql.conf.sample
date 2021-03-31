@@ -366,6 +366,7 @@
 #enable_seqscan = on
 #enable_sort = on
 #enable_incremental_sort = on
+#enable_resultcache = on
 #enable_tidscan = on
 #enable_partitionwise_join = off
 #enable_partitionwise_aggregate = off

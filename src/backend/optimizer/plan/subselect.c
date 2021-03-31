@@ -2745,6 +2745,11 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 			/* rescan_param does *not* get added to scan_params */
 			break;
 
+		case T_ResultCache:
+			finalize_primnode((Node *) ((ResultCache *) plan)->param_exprs,
+							  &context);
+			break;
+
 		case T_ProjectSet:
 		case T_Hash:
 		case T_Material:

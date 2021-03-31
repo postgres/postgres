@@ -79,6 +79,7 @@
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeHash.h"
+#include "executor/nodeResultCache.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -139,6 +140,7 @@ bool		enable_incremental_sort = true;
 bool		enable_hashagg = true;
 bool		enable_nestloop = true;
 bool		enable_material = true;
+bool		enable_resultcache = true;
 bool		enable_mergejoin = true;
 bool		enable_hashjoin = true;
 bool		enable_gathermerge = true;
@@ -2403,6 +2405,147 @@ cost_material(Path *path,
 }
 
 /*
+ * cost_resultcache_rescan
+ *	  Determines the estimated cost of rescanning a ResultCache node.
+ *
+ * In order to estimate this, we must gain knowledge of how often we expect to
+ * be called and how many distinct sets of parameters we are likely to be
+ * called with. If we expect a good cache hit ratio, then we can set our
+ * costs to account for that hit ratio, plus a little bit of cost for the
+ * caching itself.  Caching will not work out well if we expect to be called
+ * with too many distinct parameter values.  The worst-case here is that we
+ * never see any parameter value twice, in which case we'd never get a cache
+ * hit and caching would be a complete waste of effort.
+ */
+static void
+cost_resultcache_rescan(PlannerInfo *root, ResultCachePath *rcpath,
+						Cost *rescan_startup_cost, Cost *rescan_total_cost)
+{
+	EstimationInfo estinfo;
+	Cost		input_startup_cost = rcpath->subpath->startup_cost;
+	Cost		input_total_cost = rcpath->subpath->total_cost;
+	double		tuples = rcpath->subpath->rows;
+	double		calls = rcpath->calls;
+	int			width = rcpath->subpath->pathtarget->width;
+
+	double		hash_mem_bytes;
+	double		est_entry_bytes;
+	double		est_cache_entries;
+	double		ndistinct;
+	double		evict_ratio;
+	double		hit_ratio;
+	Cost		startup_cost;
+	Cost		total_cost;
+
+	/* available cache space */
+	hash_mem_bytes = get_hash_mem() * 1024L;
+
+	/*
+	 * Set the number of bytes each cache entry should consume in the cache.
+	 * To provide us with better estimations on how many cache entries we can
+	 * store at once, we make a call to the executor here to ask it what
+	 * memory overheads there are for a single cache entry.
+	 *
+	 * XXX we also store the cache key, but that's not accounted for here.
+	 */
+	est_entry_bytes = relation_byte_size(tuples, width) +
+		ExecEstimateCacheEntryOverheadBytes(tuples);
+
+	/* estimate on the upper limit of cache entries we can hold at once */
+	est_cache_entries = floor(hash_mem_bytes / est_entry_bytes);
+
+	/* estimate on the distinct number of parameter values */
+	ndistinct = estimate_num_groups(root, rcpath->param_exprs, calls, NULL,
+									&estinfo);
+
+	/*
+	 * When the estimation fell back on using a default value, it's a bit too
+	 * risky to assume that it's ok to use a Result Cache.  The use of a
+	 * default could cause us to use a Result Cache when it's really
+	 * inappropriate to do so.  If we see that this has been done, then we'll
+	 * assume that every call will have unique parameters, which will almost
+	 * certainly mean a ResultCachePath will never survive add_path().
+	 */
+	if ((estinfo.flags & SELFLAG_USED_DEFAULT) != 0)
+		ndistinct = calls;
+
+	/*
+	 * Since we've already estimated the maximum number of entries we can
+	 * store at once and know the estimated number of distinct values we'll be
+	 * called with, we'll take this opportunity to set the path's est_entries.
+	 * This will ultimately determine the hash table size that the executor
+	 * will use.  If we leave this at zero, the executor will just choose the
+	 * size itself.  Really this is not the right place to do this, but it's
+	 * convenient since everything is already calculated.
+	 */
+	rcpath->est_entries = Min(Min(ndistinct, est_cache_entries),
+							  PG_UINT32_MAX);
+
+	/*
+	 * When the number of distinct parameter values is above the amount we can
+	 * store in the cache, then we'll have to evict some entries from the
+	 * cache.  This is not free. Here we estimate how often we'll incur the
+	 * cost of that eviction.
+	 */
+	evict_ratio = 1.0 - Min(est_cache_entries, ndistinct) / ndistinct;
+
+	/*
+	 * In order to estimate how costly a single scan will be, we need to
+	 * attempt to estimate what the cache hit ratio will be.  To do that we
+	 * must look at how many scans are estimated in total for this node and
+	 * how many of those scans we expect to get a cache hit.
+	 */
+	hit_ratio = 1.0 / ndistinct * Min(est_cache_entries, ndistinct) -
+		(ndistinct / calls);
+
+	/* Ensure we don't go negative */
+	hit_ratio = Max(hit_ratio, 0.0);
+
+	/*
+	 * Set the total_cost accounting for the expected cache hit ratio.  We
+	 * also add on a cpu_operator_cost to account for a cache lookup. This
+	 * will happen regardless of whether it's a cache hit or not.
+	 */
+	total_cost = input_total_cost * (1.0 - hit_ratio) + cpu_operator_cost;
+
+	/* Now adjust the total cost to account for cache evictions */
+
+	/* Charge a cpu_tuple_cost for evicting the actual cache entry */
+	total_cost += cpu_tuple_cost * evict_ratio;
+
+	/*
+	 * Charge a 10th of cpu_operator_cost to evict every tuple in that entry.
+	 * The per-tuple eviction is really just a pfree, so charging a whole
+	 * cpu_operator_cost seems a little excessive.
+	 */
+	total_cost += cpu_operator_cost / 10.0 * evict_ratio * tuples;
+
+	/*
+	 * Now adjust for storing things in the cache, since that's not free
+	 * either.  Everything must go in the cache.  We don't proportion this
+	 * over any ratio, just apply it once for the scan.  We charge a
+	 * cpu_tuple_cost for the creation of the cache entry and also a
+	 * cpu_operator_cost for each tuple we expect to cache.
+	 */
+	total_cost += cpu_tuple_cost + cpu_operator_cost * tuples;
+
+	/*
+	 * Getting the first row must be also be proportioned according to the
+	 * expected cache hit ratio.
+	 */
+	startup_cost = input_startup_cost * (1.0 - hit_ratio);
+
+	/*
+	 * Additionally we charge a cpu_tuple_cost to account for cache lookups,
+	 * which we'll do regardless of whether it was a cache hit or not.
+	 */
+	startup_cost += cpu_tuple_cost;
+
+	*rescan_startup_cost = startup_cost;
+	*rescan_total_cost = total_cost;
+}
+
+/*
  * cost_agg
  *		Determines and returns the cost of performing an Agg plan node,
  *		including the cost of its input.
@@ -4141,6 +4284,11 @@ cost_rescan(PlannerInfo *root, Path *path,
 				*rescan_startup_cost = 0;
 				*rescan_total_cost = run_cost;
 			}
+			break;
+		case T_ResultCache:
+			/* All the hard work is done by cost_resultcache_rescan */
+			cost_resultcache_rescan(root, (ResultCachePath *) path,
+									rescan_startup_cost, rescan_total_cost);
 			break;
 		default:
 			*rescan_startup_cost = path->startup_cost;

@@ -1770,8 +1770,9 @@ include_dir 'conf.d'
         fact in mind when choosing the value.  Sort operations are used
         for <literal>ORDER BY</literal>, <literal>DISTINCT</literal>,
         and merge joins.
-        Hash tables are used in hash joins, hash-based aggregation, and
-        hash-based processing of <literal>IN</literal> subqueries.
+        Hash tables are used in hash joins, hash-based aggregation, result
+        cache nodes and hash-based processing of <literal>IN</literal>
+        subqueries.
        </para>
        <para>
         Hash-based operations are generally more sensitive to memory
@@ -4921,6 +4922,25 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         but turning this variable off prevents the planner from inserting
         materialize nodes except in cases where it is required for correctness.
         The default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-enable-resultcache" xreflabel="enable_resultcache">
+      <term><varname>enable_resultcache</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_resultcache</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of result cache plans for
+        caching results from parameterized scans inside nested-loop joins.
+        This plan type allows scans to the underlying plans to be skipped when
+        the results for the current parameters are already in the cache.  Less
+        commonly looked up results may be evicted from the cache when more
+        space is required for new entries. The default is
+        <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
