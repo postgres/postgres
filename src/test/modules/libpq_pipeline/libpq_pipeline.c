@@ -45,12 +45,16 @@ char	   *tracefile = NULL;	/* path to PQtrace() file */
 static const char *const drop_table_sql =
 "DROP TABLE IF EXISTS pq_pipeline_demo";
 static const char *const create_table_sql =
-"CREATE UNLOGGED TABLE pq_pipeline_demo(id serial primary key, itemno integer);";
+"CREATE UNLOGGED TABLE pq_pipeline_demo(id serial primary key, itemno integer,"
+"int8filler int8);";
 static const char *const insert_sql =
-"INSERT INTO pq_pipeline_demo(itemno) VALUES ($1);";
+"INSERT INTO pq_pipeline_demo(itemno) VALUES ($1)";
+static const char *const insert_sql2 =
+"INSERT INTO pq_pipeline_demo(itemno,int8filler) VALUES ($1, $2)";
 
-/* max char length of an int32, plus sign and null terminator */
+/* max char length of an int32/64, plus sign and null terminator */
 #define MAXINTLEN 12
+#define MAXINT8LEN 20
 
 static void
 exit_nicely(PGconn *conn)
@@ -243,6 +247,7 @@ test_pipeline_abort(PGconn *conn)
 	const char *dummy_params[1] = {"1"};
 	Oid			dummy_param_oids[1] = {INT4OID};
 	int			i;
+	int			gotrows;
 	bool		goterror;
 
 	fprintf(stderr, "aborted pipeline... ");
@@ -441,12 +446,14 @@ test_pipeline_abort(PGconn *conn)
 		pg_fatal("pipeline sync failed: %s", PQerrorMessage(conn));
 	PQsetSingleRowMode(conn);
 	goterror = false;
+	gotrows = 0;
 	while ((res = PQgetResult(conn)) != NULL)
 	{
 		switch (PQresultStatus(res))
 		{
 			case PGRES_SINGLE_TUPLE:
 				printf("got row: %s\n", PQgetvalue(res, 0, 0));
+				gotrows++;
 				break;
 			case PGRES_FATAL_ERROR:
 				if (strcmp(PQresultErrorField(res, PG_DIAG_SQLSTATE), "22012") != 0)
@@ -463,6 +470,8 @@ test_pipeline_abort(PGconn *conn)
 	}
 	if (!goterror)
 		pg_fatal("did not get division-by-zero error");
+	if (gotrows != 3)
+		pg_fatal("did not get three rows");
 	/* the third pipeline sync */
 	if ((res = PQgetResult(conn)) == NULL)
 		pg_fatal("Unexpected NULL result: %s", PQerrorMessage(conn));
@@ -534,15 +543,17 @@ enum PipelineInsertStep
 static void
 test_pipelined_insert(PGconn *conn, int n_rows)
 {
-	const char *insert_params[1];
-	Oid			insert_param_oids[1] = {INT4OID};
+	Oid			insert_param_oids[2] = {INT4OID, INT8OID};
+	const char *insert_params[2];
 	char		insert_param_0[MAXINTLEN];
+	char		insert_param_1[MAXINT8LEN];
 	enum PipelineInsertStep send_step = BI_BEGIN_TX,
 				recv_step = BI_BEGIN_TX;
 	int			rows_to_send,
 				rows_to_receive;
 
-	insert_params[0] = &insert_param_0[0];
+	insert_params[0] = insert_param_0;
+	insert_params[1] = insert_param_1;
 
 	rows_to_send = rows_to_receive = n_rows;
 
@@ -585,8 +596,8 @@ test_pipelined_insert(PGconn *conn, int n_rows)
 	}
 
 	Assert(send_step == BI_PREPARE);
-	pg_debug("sending: %s\n", insert_sql);
-	if (PQsendPrepare(conn, "my_insert", insert_sql, 1, insert_param_oids) != 1)
+	pg_debug("sending: %s\n", insert_sql2);
+	if (PQsendPrepare(conn, "my_insert", insert_sql2, 2, insert_param_oids) != 1)
 		pg_fatal("dispatching PREPARE failed: %s", PQerrorMessage(conn));
 	send_step = BI_INSERT_ROWS;
 
@@ -712,10 +723,12 @@ test_pipelined_insert(PGconn *conn, int n_rows)
 
 			if (send_step == BI_INSERT_ROWS)
 			{
-				snprintf(&insert_param_0[0], MAXINTLEN, "%d", rows_to_send);
+				snprintf(insert_param_0, MAXINTLEN, "%d", rows_to_send);
+				snprintf(insert_param_1, MAXINT8LEN, "%lld",
+						 (long long) rows_to_send);
 
 				if (PQsendQueryPrepared(conn, "my_insert",
-										1, insert_params, NULL, NULL, 0) == 1)
+										2, insert_params, NULL, NULL, 0) == 1)
 				{
 					pg_debug("sent row %d\n", rows_to_send);
 
