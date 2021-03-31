@@ -182,3 +182,10 @@
 
 <!-- back matter -->
 <!ENTITY biblio     SYSTEM "biblio.sgml">
+
+<!-- Stubs for removed entries to preserve public links -->
+<!ENTITY obsolete SYSTEM "appendix-obsolete.sgml">
+<!ENTITY obsolete-recovery-config SYSTEM "appendix-obsolete-recovery-config.sgml">
+<!ENTITY obsolete-pgxlogdump SYSTEM "appendix-obsolete-pgxlogdump.sgml">
+<!ENTITY obsolete-pgresetxlog SYSTEM "appendix-obsolete-pgresetxlog.sgml">
+<!ENTITY obsolete-pgreceivexlog SYSTEM "appendix-obsolete-pgreceivexlog.sgml">

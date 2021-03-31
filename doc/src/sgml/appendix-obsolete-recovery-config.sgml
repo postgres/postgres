@@ -1,0 +1,58 @@
+<!-- doc/src/sgml/obsolete-recovery-config.sgml -->
+<!--
+  See doc/src/sgml/obsolete.sgml for why this file exists. Do not change the id attribute.
+-->
+
+<sect1 id="recovery-config" xreflabel="recovery.conf">
+  <title><filename>recovery.conf</filename> file merged into <filename>postgresql.conf</filename></title>
+
+   <indexterm>
+     <primary><filename>recovery.conf</filename></primary>
+   </indexterm>
+
+   <para>
+    PostgreSQL 11 and below used a configuration file named
+    <filename>recovery.conf</filename>
+    <indexterm><primary>recovery.conf</primary></indexterm>
+    to manage replicas and standbys. Support for this file was removed in PostgreSQL 12. See
+    <link linkend="release-prior">the release notes for PostgreSQL 12</link> for details
+    on this change.
+   </para>
+
+   <para>
+    On PostgreSQL 12 and above,
+    <link linkend="continuous-archiving">archive recovery, streaming replication, and PITR</link>
+    are configured using
+    <link linkend="runtime-config-replication-standby">normal server configuration parameters</link>.
+    These are set in <filename>postgresql.conf</filename> or via
+    <link linkend="sql-altersystem">ALTER SYSTEM</link>
+    like any other parameter.
+   </para>
+
+   <para>
+    The server will not start if a <filename>recovery.conf</filename> exists.
+   </para>
+
+   <para>
+    The
+    <literal>trigger_file</literal>
+    <indexterm>
+     <primary>trigger_file</primary>
+     <see>promote_trigger_file</see>
+    </indexterm>
+    setting has been renamed to
+    <xref linkend="guc-promote-trigger-file"/>.
+   </para>
+
+   <para>
+    The
+    <literal>standby_mode</literal>
+    <indexterm>
+     <primary>standby_mode</primary>
+     <see>standby.signal</see>
+    </indexterm>
+    setting has been removed. A <filename>standby.signal</filename> file in the data directory
+    is used instead. See <xref linkend="standby-server-operation"/> for details.
+   </para>
+
+</sect1>
