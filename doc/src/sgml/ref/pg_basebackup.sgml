@@ -215,7 +215,9 @@ PostgreSQL documentation
       <listitem>
 
        <para>
-        Create <filename>standby.signal</filename> and append connection settings
+        Create <link linkend="file-standby-signal"><filename>standby.signal</filename></link>
+        <indexterm><primary><filename>standby.signal</filename></primary><secondary>pg_basebackup --write-recovery-conf</secondary></indexterm>
+        file and append connection settings
         to <filename>postgresql.auto.conf</filename> in the output
         directory (or into the base archive file when using tar format) to
         ease setting up a standby server.

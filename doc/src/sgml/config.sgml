@@ -4062,8 +4062,9 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
      <title>Standby Servers</title>
 
      <para>
-      These settings control the behavior of a standby server that is
-      to receive replication data.  Their values on the master server
+      These settings control the behavior of a
+      <link linkend="standby-server-operation">standby server</link>
+      that is to receive replication data.  Their values on the master server
       are irrelevant.
      </para>
 
