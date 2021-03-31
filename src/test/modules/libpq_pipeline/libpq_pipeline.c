@@ -646,7 +646,7 @@ test_pipelined_insert(PGconn *conn, int n_rows)
 			while (!PQisBusy(conn) && recv_step < BI_DONE)
 			{
 				PGresult   *res;
-				const char *cmdtag;
+				const char *cmdtag = "";
 				const char *description = "";
 				int			status;
 
@@ -697,7 +697,6 @@ test_pipelined_insert(PGconn *conn, int n_rows)
 					case BI_DONE:
 						/* unreachable */
 						pg_fatal("unreachable state");
-						cmdtag = NULL;	/* keep compiler quiet */
 				}
 
 				if (PQresultStatus(res) != status)
