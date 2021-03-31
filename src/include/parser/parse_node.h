@@ -228,7 +228,10 @@ struct ParseState
  * An element of a namespace list.
  *
  * p_names contains the table name and column names exposed by this nsitem.
- * (Currently, it's always equal to p_rte->eref.)
+ * (Typically it's equal to p_rte->eref, but for a JOIN USING alias it's
+ * equal to p_rte->join_using_alias.  Since the USING columns will be the
+ * join's first N columns, the net effect is just that we expose only those
+ * join columns via this nsitem.)
  *
  * p_rte and p_rtindex link to the underlying rangetable entry.
  *

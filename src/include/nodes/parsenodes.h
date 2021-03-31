@@ -1070,6 +1070,13 @@ typedef struct RangeTblEntry
 	List	   *joinrightcols;	/* right-side input column numbers */
 
 	/*
+	 * join_using_alias is an alias clause attached directly to JOIN/USING. It
+	 * is different from the alias field (below) in that it does not hide the
+	 * range variables of the tables being joined.
+	 */
+	Alias	   *join_using_alias;
+
+	/*
 	 * Fields valid for a function RTE (else NIL/zero):
 	 *
 	 * When funcordinality is true, the eref->colnames list includes an alias

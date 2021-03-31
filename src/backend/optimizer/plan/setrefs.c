@@ -457,6 +457,7 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
 	newrte->joinaliasvars = NIL;
 	newrte->joinleftcols = NIL;
 	newrte->joinrightcols = NIL;
+	newrte->join_using_alias = NULL;
 	newrte->functions = NIL;
 	newrte->tablefunc = NULL;
 	newrte->values_lists = NIL;

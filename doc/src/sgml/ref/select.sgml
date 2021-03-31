@@ -59,7 +59,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
     [ LATERAL ] ROWS FROM( <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] ) ] [, ...] )
                 [ WITH ORDINALITY ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
-    <replaceable class="parameter">from_item</replaceable> [ NATURAL ] <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> [ ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) ]
+    <replaceable class="parameter">from_item</replaceable> [ NATURAL ] <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> [ ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) [ AS <replaceable class="parameter">join_using_alias</replaceable> ] ]
 
 <phrase>and <replaceable class="parameter">grouping_element</replaceable> can be one of:</phrase>
 
@@ -676,7 +676,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
      </varlistentry>
 
      <varlistentry>
-      <term><literal>USING ( <replaceable class="parameter">join_column</replaceable> [, ...] )</literal></term>
+      <term><literal>USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) [ AS <replaceable class="parameter">join_using_alias</replaceable> ]</literal></term>
       <listitem>
        <para>
         A clause of the form <literal>USING ( a, b, ... )</literal> is
@@ -685,6 +685,18 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         <literal>USING</literal> implies that only one of each pair of
         equivalent columns will be included in the join output, not
         both.
+       </para>
+
+       <para>
+        If a <replaceable class="parameter">join_using_alias</replaceable>
+        name is specified, it provides a table alias for the join columns.
+        Only the join columns listed in the <literal>USING</literal> clause
+        are addressable by this name.  Unlike a regular <replaceable
+        class="parameter">alias</replaceable>, this does not hide the names of
+        the joined tables from the rest of the query.  Also unlike a regular
+        <replaceable class="parameter">alias</replaceable>, you cannot write a
+        column alias list &mdash; the output names of the join columns are the
+        same as they appear in the <literal>USING</literal> list.
        </para>
       </listitem>
      </varlistentry>

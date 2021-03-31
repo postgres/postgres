@@ -805,6 +805,51 @@ View definition:
     (tbl3
      CROSS JOIN tbl4) same;
 
+create table tbl1a (a int, c int);
+create view view_of_joins_2a as select * from tbl1 join tbl1a using (a);
+create view view_of_joins_2b as select * from tbl1 join tbl1a using (a) as x;
+create view view_of_joins_2c as select * from (tbl1 join tbl1a using (a)) as y;
+create view view_of_joins_2d as select * from (tbl1 join tbl1a using (a) as x) as y;
+select pg_get_viewdef('view_of_joins_2a', true);
+       pg_get_viewdef       
+----------------------------
+  SELECT tbl1.a,           +
+     tbl1.b,               +
+     tbl1a.c               +
+    FROM tbl1              +
+      JOIN tbl1a USING (a);
+(1 row)
+
+select pg_get_viewdef('view_of_joins_2b', true);
+         pg_get_viewdef          
+---------------------------------
+  SELECT tbl1.a,                +
+     tbl1.b,                    +
+     tbl1a.c                    +
+    FROM tbl1                   +
+      JOIN tbl1a USING (a) AS x;
+(1 row)
+
+select pg_get_viewdef('view_of_joins_2c', true);
+        pg_get_viewdef         
+-------------------------------
+  SELECT y.a,                 +
+     y.b,                     +
+     y.c                      +
+    FROM (tbl1                +
+      JOIN tbl1a USING (a)) y;
+(1 row)
+
+select pg_get_viewdef('view_of_joins_2d', true);
+           pg_get_viewdef           
+------------------------------------
+  SELECT y.a,                      +
+     y.b,                          +
+     y.c                           +
+    FROM (tbl1                     +
+      JOIN tbl1a USING (a) AS x) y;
+(1 row)
+
 -- Test view decompilation in the face of column addition/deletion/renaming
 create table tt2 (a int, b int, c int);
 create table tt3 (ax int8, b int2, c numeric);
@@ -1949,7 +1994,7 @@ drop cascades to view aliased_view_2
 drop cascades to view aliased_view_3
 drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 68 other objects
+NOTICE:  drop cascades to 73 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -1974,6 +2019,11 @@ drop cascades to view unspecified_types
 drop cascades to table tt1
 drop cascades to table tx1
 drop cascades to view view_of_joins
+drop cascades to table tbl1a
+drop cascades to view view_of_joins_2a
+drop cascades to view view_of_joins_2b
+drop cascades to view view_of_joins_2c
+drop cascades to view view_of_joins_2d
 drop cascades to table tt2
 drop cascades to table tt3
 drop cascades to table tt4

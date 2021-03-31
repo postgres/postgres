@@ -1499,6 +1499,11 @@ typedef struct RangeTblRef
  * alias has a critical impact on semantics, because a join with an alias
  * restricts visibility of the tables/columns inside it.
  *
+ * join_using_alias is an Alias node representing the join correlation
+ * name that SQL:2016 and later allow to be attached to JOIN/USING.
+ * Its column alias list includes only the common column names from USING,
+ * and it does not restrict visibility of the join's input tables.
+ *
  * During parse analysis, an RTE is created for the Join, and its index
  * is filled into rtindex.  This RTE is present mainly so that Vars can
  * be created that refer to the outputs of the join.  The planner sometimes
@@ -1514,6 +1519,7 @@ typedef struct JoinExpr
 	Node	   *larg;			/* left subtree */
 	Node	   *rarg;			/* right subtree */
 	List	   *usingClause;	/* USING clause, if any (list of String) */
+	Alias	   *join_using_alias;	/* alias attached to USING clause, if any */
 	Node	   *quals;			/* qualifiers on join, if any */
 	Alias	   *alias;			/* user-written alias clause, if any */
 	int			rtindex;		/* RT index assigned for join, or 0 */

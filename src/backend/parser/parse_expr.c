@@ -2512,26 +2512,61 @@ static Node *
 transformWholeRowRef(ParseState *pstate, ParseNamespaceItem *nsitem,
 					 int sublevels_up, int location)
 {
-	Var		   *result;
-
 	/*
-	 * Build the appropriate referencing node.  Note that if the RTE is a
-	 * function returning scalar, we create just a plain reference to the
-	 * function value, not a composite containing a single column.  This is
-	 * pretty inconsistent at first sight, but it's what we've done
-	 * historically.  One argument for it is that "rel" and "rel.*" mean the
-	 * same thing for composite relations, so why not for scalar functions...
+	 * Build the appropriate referencing node.  Normally this can be a
+	 * whole-row Var, but if the nsitem is a JOIN USING alias then it contains
+	 * only a subset of the columns of the underlying join RTE, so that will
+	 * not work.  Instead we immediately expand the reference into a RowExpr.
+	 * Since the JOIN USING's common columns are fully determined at this
+	 * point, there seems no harm in expanding it now rather than during
+	 * planning.
+	 *
+	 * Note that if the RTE is a function returning scalar, we create just a
+	 * plain reference to the function value, not a composite containing a
+	 * single column.  This is pretty inconsistent at first sight, but it's
+	 * what we've done historically.  One argument for it is that "rel" and
+	 * "rel.*" mean the same thing for composite relations, so why not for
+	 * scalar functions...
 	 */
-	result = makeWholeRowVar(nsitem->p_rte, nsitem->p_rtindex,
-							 sublevels_up, true);
+	if (nsitem->p_names == nsitem->p_rte->eref)
+	{
+		Var		   *result;
 
-	/* location is not filled in by makeWholeRowVar */
-	result->location = location;
+		result = makeWholeRowVar(nsitem->p_rte, nsitem->p_rtindex,
+								 sublevels_up, true);
 
-	/* mark relation as requiring whole-row SELECT access */
-	markVarForSelectPriv(pstate, result);
+		/* location is not filled in by makeWholeRowVar */
+		result->location = location;
 
-	return (Node *) result;
+		/* mark relation as requiring whole-row SELECT access */
+		markVarForSelectPriv(pstate, result);
+
+		return (Node *) result;
+	}
+	else
+	{
+		RowExpr    *rowexpr;
+		List	   *fields;
+
+		/*
+		 * We want only as many columns as are listed in p_names->colnames,
+		 * and we should use those names not whatever possibly-aliased names
+		 * are in the RTE.  We needn't worry about marking the RTE for SELECT
+		 * access, as the common columns are surely so marked already.
+		 */
+		expandRTE(nsitem->p_rte, nsitem->p_rtindex,
+				  sublevels_up, location, false,
+				  NULL, &fields);
+		rowexpr = makeNode(RowExpr);
+		rowexpr->args = list_truncate(fields,
+									  list_length(nsitem->p_names->colnames));
+		rowexpr->row_typeid = RECORDOID;
+		rowexpr->row_format = COERCE_IMPLICIT_CAST;
+		rowexpr->colnames = copyObject(nsitem->p_names->colnames);
+		rowexpr->location = location;
+
+		return (Node *) rowexpr;
+	}
 }
 
 /*

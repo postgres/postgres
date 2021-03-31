@@ -1744,6 +1744,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 										NIL,
 										NIL,
 										NULL,
+										NULL,
 										false);
 
 	sv_namespace = pstate->p_namespace;

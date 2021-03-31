@@ -328,6 +328,17 @@ select * from
 
 \d+ view_of_joins
 
+create table tbl1a (a int, c int);
+create view view_of_joins_2a as select * from tbl1 join tbl1a using (a);
+create view view_of_joins_2b as select * from tbl1 join tbl1a using (a) as x;
+create view view_of_joins_2c as select * from (tbl1 join tbl1a using (a)) as y;
+create view view_of_joins_2d as select * from (tbl1 join tbl1a using (a) as x) as y;
+
+select pg_get_viewdef('view_of_joins_2a', true);
+select pg_get_viewdef('view_of_joins_2b', true);
+select pg_get_viewdef('view_of_joins_2c', true);
+select pg_get_viewdef('view_of_joins_2d', true);
+
 -- Test view decompilation in the face of column addition/deletion/renaming
 
 create table tt2 (a int, b int, c int);

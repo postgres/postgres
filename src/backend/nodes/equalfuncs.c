@@ -790,6 +790,7 @@ _equalJoinExpr(const JoinExpr *a, const JoinExpr *b)
 	COMPARE_NODE_FIELD(larg);
 	COMPARE_NODE_FIELD(rarg);
 	COMPARE_NODE_FIELD(usingClause);
+	COMPARE_NODE_FIELD(join_using_alias);
 	COMPARE_NODE_FIELD(quals);
 	COMPARE_NODE_FIELD(alias);
 	COMPARE_SCALAR_FIELD(rtindex);
@@ -2703,6 +2704,7 @@ _equalRangeTblEntry(const RangeTblEntry *a, const RangeTblEntry *b)
 	COMPARE_NODE_FIELD(joinaliasvars);
 	COMPARE_NODE_FIELD(joinleftcols);
 	COMPARE_NODE_FIELD(joinrightcols);
+	COMPARE_NODE_FIELD(join_using_alias);
 	COMPARE_NODE_FIELD(functions);
 	COMPARE_SCALAR_FIELD(funcordinality);
 	COMPARE_NODE_FIELD(tablefunc);

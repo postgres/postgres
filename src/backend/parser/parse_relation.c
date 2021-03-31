@@ -753,6 +753,12 @@ scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
  *	  else return InvalidAttrNumber.
  *	  If the name proves ambiguous within this RTE, raise error.
  *
+ * Actually, we only search the names listed in "eref".  This can be either
+ * rte->eref, in which case we are indeed searching all the column names,
+ * or for a join it can be rte->join_using_alias, in which case we are only
+ * considering the common column names (which are the first N columns of the
+ * join, so everything works).
+ *
  * pstate and location are passed only for error-reporting purposes.
  *
  * Side effect: if fuzzystate is non-NULL, check non-system columns
@@ -2134,6 +2140,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 						  List *aliasvars,
 						  List *leftcols,
 						  List *rightcols,
+						  Alias *join_using_alias,
 						  Alias *alias,
 						  bool inFromCl)
 {
@@ -2162,6 +2169,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->joinaliasvars = aliasvars;
 	rte->joinleftcols = leftcols;
 	rte->joinrightcols = rightcols;
+	rte->join_using_alias = join_using_alias;
 	rte->alias = alias;
 
 	eref = alias ? copyObject(alias) : makeAlias("unnamed_join", NIL);

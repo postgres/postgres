@@ -1693,6 +1693,7 @@ _outJoinExpr(StringInfo str, const JoinExpr *node)
 	WRITE_NODE_FIELD(larg);
 	WRITE_NODE_FIELD(rarg);
 	WRITE_NODE_FIELD(usingClause);
+	WRITE_NODE_FIELD(join_using_alias);
 	WRITE_NODE_FIELD(quals);
 	WRITE_NODE_FIELD(alias);
 	WRITE_INT_FIELD(rtindex);
@@ -3193,6 +3194,7 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			WRITE_NODE_FIELD(joinaliasvars);
 			WRITE_NODE_FIELD(joinleftcols);
 			WRITE_NODE_FIELD(joinrightcols);
+			WRITE_NODE_FIELD(join_using_alias);
 			break;
 		case RTE_FUNCTION:
 			WRITE_NODE_FIELD(functions);
