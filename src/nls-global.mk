@@ -57,7 +57,7 @@ BACKEND_COMMON_GETTEXT_TRIGGERS = \
     $(FRONTEND_COMMON_GETTEXT_TRIGGERS) \
     errmsg errmsg_plural:1,2 \
     errdetail errdetail_log errdetail_plural:1,2 \
-    errhint \
+    errhint errhint_plural:1,2 \
     errcontext \
     XactLockTableWait:4 \
     MultiXactIdWait:6 \
@@ -66,7 +66,7 @@ BACKEND_COMMON_GETTEXT_FLAGS = \
     $(FRONTEND_COMMON_GETTEXT_FLAGS) \
     errmsg:1:c-format errmsg_plural:1:c-format errmsg_plural:2:c-format \
     errdetail:1:c-format errdetail_log:1:c-format errdetail_plural:1:c-format errdetail_plural:2:c-format \
-    errhint:1:c-format \
+    errhint:1:c-format errhint_plural:1:c-format errhint_plural:2:c-format \
     errcontext:1:c-format
 
 FRONTEND_COMMON_GETTEXT_FILES = $(top_srcdir)/src/common/logging.c

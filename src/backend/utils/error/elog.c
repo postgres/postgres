@@ -1167,6 +1167,29 @@ errhint(const char *fmt,...)
 
 
 /*
+ * errhint_plural --- add a hint error message text to the current error,
+ * with support for pluralization of the message text
+ */
+int
+errhint_plural(const char *fmt_singular, const char *fmt_plural,
+			   unsigned long n,...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+
+	EVALUATE_MESSAGE_PLURAL(edata->domain, hint, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
  * errcontext_msg --- add a context error message text to the current error
  *
  * Unlike other cases, multiple calls are allowed to build up a stack of

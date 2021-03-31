@@ -284,6 +284,14 @@ ereport(ERROR,
    </listitem>
    <listitem>
     <para>
+     <function>errhint_plural(const char *fmt_singular, const char *fmt_plural,
+     unsigned long n, ...)</function> is like <function>errhint</function>, but with
+     support for various plural forms of the message.
+     For more information see <xref linkend="nls-guidelines"/>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
      <function>errcontext(const char *msg, ...)</function> is not normally called
      directly from an <function>ereport</function> message site; rather it is used
      in <literal>error_context_stack</literal> callback functions to provide
