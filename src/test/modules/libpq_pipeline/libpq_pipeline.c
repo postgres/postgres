@@ -1319,10 +1319,13 @@ main(int argc, char **argv)
 	/* Set the trace file, if requested */
 	if (tracefile != NULL)
 	{
-		trace = fopen(tracefile, "w+");
-
+		trace = fopen(tracefile, "w");
 		if (trace == NULL)
 			pg_fatal("could not open file \"%s\": %m", tracefile);
+
+		/* Make it line-buffered */
+		setvbuf(trace, NULL, _IOLBF, 0);
+
 		PQtrace(conn, trace);
 		PQtraceSetFlags(conn,
 						PQTRACE_SUPPRESS_TIMESTAMPS | PQTRACE_REGRESS_MODE);

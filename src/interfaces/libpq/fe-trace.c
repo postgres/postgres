@@ -40,8 +40,6 @@ PQtrace(PGconn *conn, FILE *debug_port)
 	if (debug_port == NULL)
 		return;
 
-	/* Make the trace stream line-buffered */
-	setvbuf(debug_port, NULL, _IOLBF, 0);
 	conn->Pfdebug = debug_port;
 	conn->traceFlags = 0;
 }
