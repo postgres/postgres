@@ -1217,9 +1217,9 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		 * input column numbers more easily.
 		 */
 		l_nscolumns = l_nsitem->p_nscolumns;
-		l_colnames = l_nsitem->p_rte->eref->colnames;
+		l_colnames = l_nsitem->p_names->colnames;
 		r_nscolumns = r_nsitem->p_nscolumns;
-		r_colnames = r_nsitem->p_rte->eref->colnames;
+		r_colnames = r_nsitem->p_names->colnames;
 
 		/*
 		 * Natural join does not explicitly specify columns; must generate
@@ -1469,7 +1469,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		 * Now that we know the join RTE's rangetable index, we can fix up the
 		 * res_nscolumns data in places where it should contain that.
 		 */
-		Assert(res_colindex == list_length(nsitem->p_rte->eref->colnames));
+		Assert(res_colindex == list_length(nsitem->p_names->colnames));
 		for (k = 0; k < res_colindex; k++)
 		{
 			ParseNamespaceColumn *nscol = res_nscolumns + k;
