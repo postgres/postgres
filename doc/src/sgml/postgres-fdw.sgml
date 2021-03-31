@@ -372,6 +372,34 @@ OPTIONS (ADD password_required 'false');
   </sect3>
 
   <sect3>
+   <title>Asynchronous Execution Options</title>
+
+   <para>
+    <filename>postgres_fdw</filename> supports asynchronous execution, which
+    runs multiple parts of an <structname>Append</structname> node
+    concurrently rather than serially to improve performance.
+    This execution can be controled using the following option:
+   </para>
+
+   <variablelist>
+
+    <varlistentry>
+     <term><literal>async_capable</literal></term>
+     <listitem>
+      <para>
+       This option controls whether <filename>postgres_fdw</filename> allows
+       foreign tables to be scanned concurrently for asynchronous execution.
+       It can be specified for a foreign table or a foreign server.
+       A table-level option overrides a server-level option.
+       The default is <literal>false</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </sect3>
+
+  <sect3>
    <title>Updatability Options</title>
 
    <para>

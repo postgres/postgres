@@ -359,3 +359,43 @@ query returning the same set of scan tuples multiple times.  Likewise,
 SRFs are disallowed in an UPDATE's targetlist.  There, they would have the
 effect of the same row being updated multiple times, which is not very
 useful --- and updates after the first would have no effect anyway.
+
+
+Asynchronous Execution
+----------------------
+
+In cases where a node is waiting on an event external to the database system,
+such as a ForeignScan awaiting network I/O, it's desirable for the node to
+indicate that it cannot return any tuple immediately but may be able to do so
+at a later time.  A process which discovers this type of situation can always
+handle it simply by blocking, but this may waste time that could be spent
+executing some other part of the plan tree where progress could be made
+immediately.  This is particularly likely to occur when the plan tree contains
+an Append node.  Asynchronous execution runs multiple parts of an Append node
+concurrently rather than serially to improve performance.
+
+For asynchronous execution, an Append node must first request a tuple from an
+async-capable child node using ExecAsyncRequest.  Next, it must execute the
+asynchronous event loop using ExecAppendAsyncEventWait.  Eventually, when a
+child node to which an asynchronous request has been made produces a tuple,
+the Append node will receive it from the event loop via ExecAsyncResponse.  In
+the current implementation of asynchronous execution, the only node type that
+requests tuples from an async-capable child node is an Append, while the only
+node type that might be async-capable is a ForeignScan.
+
+Typically, the ExecAsyncResponse callback is the only one required for nodes
+that wish to request tuples asynchronously.  On the other hand, async-capable
+nodes generally need to implement three methods:
+
+1. When an asynchronous request is made, the node's ExecAsyncRequest callback
+   will be invoked; it should use ExecAsyncRequestPending to indicate that the
+   request is pending for a callback described below.  Alternatively, it can
+   instead use ExecAsyncRequestDone if a result is available immediately.
+
+2. When the event loop wishes to wait or poll for file descriptor events, the
+   node's ExecAsyncConfigureWait callback will be invoked to configure the
+   file descriptor event for which the node wishes to wait.
+
+3. When the file descriptor becomes ready, the node's ExecAsyncNotify callback
+   will be invoked; like #1, it should use ExecAsyncRequestPending for another
+   callback or ExecAsyncRequestDone to return a result immediately.

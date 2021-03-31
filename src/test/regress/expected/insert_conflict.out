@@ -204,6 +204,7 @@ explain (costs off, format json) insert into insertconflicttest values (0, 'Bilb
        "Node Type": "ModifyTable",                                     +
        "Operation": "Insert",                                          +
        "Parallel Aware": false,                                        +
+       "Async Capable": false,                                         +
        "Relation Name": "insertconflicttest",                          +
        "Alias": "insertconflicttest",                                  +
        "Conflict Resolution": "UPDATE",                                +
@@ -213,7 +214,8 @@ explain (costs off, format json) insert into insertconflicttest values (0, 'Bilb
          {                                                             +
            "Node Type": "Result",                                      +
            "Parent Relationship": "Member",                            +
-           "Parallel Aware": false                                     +
+           "Parallel Aware": false,                                    +
+           "Async Capable": false                                      +
          }                                                             +
        ]                                                               +
      }                                                                 +

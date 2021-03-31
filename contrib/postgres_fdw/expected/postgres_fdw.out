@@ -8946,7 +8946,7 @@ DO $d$
     END;
 $d$;
 ERROR:  invalid option "password"
-HINT:  Valid options in this context are: service, passfile, channel_binding, connect_timeout, dbname, host, hostaddr, port, options, application_name, keepalives, keepalives_idle, keepalives_interval, keepalives_count, tcp_user_timeout, sslmode, sslcompression, sslcert, sslkey, sslrootcert, sslcrl, sslcrldir, requirepeer, ssl_min_protocol_version, ssl_max_protocol_version, gssencmode, krbsrvname, gsslib, target_session_attrs, use_remote_estimate, fdw_startup_cost, fdw_tuple_cost, extensions, updatable, fetch_size, batch_size
+HINT:  Valid options in this context are: service, passfile, channel_binding, connect_timeout, dbname, host, hostaddr, port, options, application_name, keepalives, keepalives_idle, keepalives_interval, keepalives_count, tcp_user_timeout, sslmode, sslcompression, sslcert, sslkey, sslrootcert, sslcrl, sslcrldir, requirepeer, ssl_min_protocol_version, ssl_max_protocol_version, gssencmode, krbsrvname, gsslib, target_session_attrs, use_remote_estimate, fdw_startup_cost, fdw_tuple_cost, extensions, updatable, fetch_size, batch_size, async_capable
 CONTEXT:  SQL statement "ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw')"
 PL/pgSQL function inline_code_block line 3 at EXECUTE
 -- If we add a password for our user mapping instead, we should get a different
@@ -9437,3 +9437,510 @@ SELECT tableoid::regclass, * FROM batch_cp_upd_test;
 
 -- Clean up
 DROP TABLE batch_table, batch_cp_upd_test CASCADE;
+-- ===================================================================
+-- test asynchronous execution
+-- ===================================================================
+ALTER SERVER loopback OPTIONS (DROP extensions);
+ALTER SERVER loopback OPTIONS (ADD async_capable 'true');
+ALTER SERVER loopback2 OPTIONS (ADD async_capable 'true');
+CREATE TABLE async_pt (a int, b int, c text) PARTITION BY RANGE (a);
+CREATE TABLE base_tbl1 (a int, b int, c text);
+CREATE TABLE base_tbl2 (a int, b int, c text);
+CREATE FOREIGN TABLE async_p1 PARTITION OF async_pt FOR VALUES FROM (1000) TO (2000)
+  SERVER loopback OPTIONS (table_name 'base_tbl1');
+CREATE FOREIGN TABLE async_p2 PARTITION OF async_pt FOR VALUES FROM (2000) TO (3000)
+  SERVER loopback2 OPTIONS (table_name 'base_tbl2');
+INSERT INTO async_p1 SELECT 1000 + i, i, to_char(i, 'FM0000') FROM generate_series(0, 999, 5) i;
+INSERT INTO async_p2 SELECT 2000 + i, i, to_char(i, 'FM0000') FROM generate_series(0, 999, 5) i;
+ANALYZE async_pt;
+-- simple queries
+CREATE TABLE result_tbl (a int, b int, c text);
+EXPLAIN (VERBOSE, COSTS OFF)
+INSERT INTO result_tbl SELECT * FROM async_pt WHERE b % 100 = 0;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Insert on public.result_tbl
+   ->  Append
+         ->  Async Foreign Scan on public.async_p1 async_pt_1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE (((b % 100) = 0))
+         ->  Async Foreign Scan on public.async_p2 async_pt_2
+               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE (((b % 100) = 0))
+(8 rows)
+
+INSERT INTO result_tbl SELECT * FROM async_pt WHERE b % 100 = 0;
+SELECT * FROM result_tbl ORDER BY a;
+  a   |  b  |  c   
+------+-----+------
+ 1000 |   0 | 0000
+ 1100 | 100 | 0100
+ 1200 | 200 | 0200
+ 1300 | 300 | 0300
+ 1400 | 400 | 0400
+ 1500 | 500 | 0500
+ 1600 | 600 | 0600
+ 1700 | 700 | 0700
+ 1800 | 800 | 0800
+ 1900 | 900 | 0900
+ 2000 |   0 | 0000
+ 2100 | 100 | 0100
+ 2200 | 200 | 0200
+ 2300 | 300 | 0300
+ 2400 | 400 | 0400
+ 2500 | 500 | 0500
+ 2600 | 600 | 0600
+ 2700 | 700 | 0700
+ 2800 | 800 | 0800
+ 2900 | 900 | 0900
+(20 rows)
+
+DELETE FROM result_tbl;
+EXPLAIN (VERBOSE, COSTS OFF)
+INSERT INTO result_tbl SELECT * FROM async_pt WHERE b === 505;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Insert on public.result_tbl
+   ->  Append
+         ->  Async Foreign Scan on public.async_p1 async_pt_1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+               Filter: (async_pt_1.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1
+         ->  Async Foreign Scan on public.async_p2 async_pt_2
+               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+               Filter: (async_pt_2.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2
+(10 rows)
+
+INSERT INTO result_tbl SELECT * FROM async_pt WHERE b === 505;
+SELECT * FROM result_tbl ORDER BY a;
+  a   |  b  |  c   
+------+-----+------
+ 1505 | 505 | 0505
+ 2505 | 505 | 0505
+(2 rows)
+
+DELETE FROM result_tbl;
+-- Check case where multiple partitions use the same connection
+CREATE TABLE base_tbl3 (a int, b int, c text);
+CREATE FOREIGN TABLE async_p3 PARTITION OF async_pt FOR VALUES FROM (3000) TO (4000)
+  SERVER loopback2 OPTIONS (table_name 'base_tbl3');
+INSERT INTO async_p3 SELECT 3000 + i, i, to_char(i, 'FM0000') FROM generate_series(0, 999, 5) i;
+ANALYZE async_pt;
+EXPLAIN (VERBOSE, COSTS OFF)
+INSERT INTO result_tbl SELECT * FROM async_pt WHERE b === 505;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Insert on public.result_tbl
+   ->  Append
+         ->  Async Foreign Scan on public.async_p1 async_pt_1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+               Filter: (async_pt_1.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1
+         ->  Async Foreign Scan on public.async_p2 async_pt_2
+               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+               Filter: (async_pt_2.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2
+         ->  Async Foreign Scan on public.async_p3 async_pt_3
+               Output: async_pt_3.a, async_pt_3.b, async_pt_3.c
+               Filter: (async_pt_3.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl3
+(14 rows)
+
+INSERT INTO result_tbl SELECT * FROM async_pt WHERE b === 505;
+SELECT * FROM result_tbl ORDER BY a;
+  a   |  b  |  c   
+------+-----+------
+ 1505 | 505 | 0505
+ 2505 | 505 | 0505
+ 3505 | 505 | 0505
+(3 rows)
+
+DELETE FROM result_tbl;
+DROP FOREIGN TABLE async_p3;
+DROP TABLE base_tbl3;
+-- Check case where the partitioned table has local/remote partitions
+CREATE TABLE async_p3 PARTITION OF async_pt FOR VALUES FROM (3000) TO (4000);
+INSERT INTO async_p3 SELECT 3000 + i, i, to_char(i, 'FM0000') FROM generate_series(0, 999, 5) i;
+ANALYZE async_pt;
+EXPLAIN (VERBOSE, COSTS OFF)
+INSERT INTO result_tbl SELECT * FROM async_pt WHERE b === 505;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Insert on public.result_tbl
+   ->  Append
+         ->  Async Foreign Scan on public.async_p1 async_pt_1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+               Filter: (async_pt_1.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1
+         ->  Async Foreign Scan on public.async_p2 async_pt_2
+               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+               Filter: (async_pt_2.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2
+         ->  Seq Scan on public.async_p3 async_pt_3
+               Output: async_pt_3.a, async_pt_3.b, async_pt_3.c
+               Filter: (async_pt_3.b === 505)
+(13 rows)
+
+INSERT INTO result_tbl SELECT * FROM async_pt WHERE b === 505;
+SELECT * FROM result_tbl ORDER BY a;
+  a   |  b  |  c   
+------+-----+------
+ 1505 | 505 | 0505
+ 2505 | 505 | 0505
+ 3505 | 505 | 0505
+(3 rows)
+
+DELETE FROM result_tbl;
+-- partitionwise joins
+SET enable_partitionwise_join TO true;
+CREATE TABLE join_tbl (a1 int, b1 int, c1 text, a2 int, b2 int, c2 text);
+EXPLAIN (VERBOSE, COSTS OFF)
+INSERT INTO join_tbl SELECT * FROM async_pt t1, async_pt t2 WHERE t1.a = t2.a AND t1.b = t2.b AND t1.b % 100 = 0;
+                                                                                           QUERY PLAN                                                                                            
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Insert on public.join_tbl
+   ->  Append
+         ->  Async Foreign Scan
+               Output: t1_1.a, t1_1.b, t1_1.c, t2_1.a, t2_1.b, t2_1.c
+               Relations: (public.async_p1 t1_1) INNER JOIN (public.async_p1 t2_1)
+               Remote SQL: SELECT r5.a, r5.b, r5.c, r8.a, r8.b, r8.c FROM (public.base_tbl1 r5 INNER JOIN public.base_tbl1 r8 ON (((r5.a = r8.a)) AND ((r5.b = r8.b)) AND (((r5.b % 100) = 0))))
+         ->  Async Foreign Scan
+               Output: t1_2.a, t1_2.b, t1_2.c, t2_2.a, t2_2.b, t2_2.c
+               Relations: (public.async_p2 t1_2) INNER JOIN (public.async_p2 t2_2)
+               Remote SQL: SELECT r6.a, r6.b, r6.c, r9.a, r9.b, r9.c FROM (public.base_tbl2 r6 INNER JOIN public.base_tbl2 r9 ON (((r6.a = r9.a)) AND ((r6.b = r9.b)) AND (((r6.b % 100) = 0))))
+         ->  Hash Join
+               Output: t1_3.a, t1_3.b, t1_3.c, t2_3.a, t2_3.b, t2_3.c
+               Hash Cond: ((t2_3.a = t1_3.a) AND (t2_3.b = t1_3.b))
+               ->  Seq Scan on public.async_p3 t2_3
+                     Output: t2_3.a, t2_3.b, t2_3.c
+               ->  Hash
+                     Output: t1_3.a, t1_3.b, t1_3.c
+                     ->  Seq Scan on public.async_p3 t1_3
+                           Output: t1_3.a, t1_3.b, t1_3.c
+                           Filter: ((t1_3.b % 100) = 0)
+(20 rows)
+
+INSERT INTO join_tbl SELECT * FROM async_pt t1, async_pt t2 WHERE t1.a = t2.a AND t1.b = t2.b AND t1.b % 100 = 0;
+SELECT * FROM join_tbl ORDER BY a1;
+  a1  | b1  |  c1  |  a2  | b2  |  c2  
+------+-----+------+------+-----+------
+ 1000 |   0 | 0000 | 1000 |   0 | 0000
+ 1100 | 100 | 0100 | 1100 | 100 | 0100
+ 1200 | 200 | 0200 | 1200 | 200 | 0200
+ 1300 | 300 | 0300 | 1300 | 300 | 0300
+ 1400 | 400 | 0400 | 1400 | 400 | 0400
+ 1500 | 500 | 0500 | 1500 | 500 | 0500
+ 1600 | 600 | 0600 | 1600 | 600 | 0600
+ 1700 | 700 | 0700 | 1700 | 700 | 0700
+ 1800 | 800 | 0800 | 1800 | 800 | 0800
+ 1900 | 900 | 0900 | 1900 | 900 | 0900
+ 2000 |   0 | 0000 | 2000 |   0 | 0000
+ 2100 | 100 | 0100 | 2100 | 100 | 0100
+ 2200 | 200 | 0200 | 2200 | 200 | 0200
+ 2300 | 300 | 0300 | 2300 | 300 | 0300
+ 2400 | 400 | 0400 | 2400 | 400 | 0400
+ 2500 | 500 | 0500 | 2500 | 500 | 0500
+ 2600 | 600 | 0600 | 2600 | 600 | 0600
+ 2700 | 700 | 0700 | 2700 | 700 | 0700
+ 2800 | 800 | 0800 | 2800 | 800 | 0800
+ 2900 | 900 | 0900 | 2900 | 900 | 0900
+ 3000 |   0 | 0000 | 3000 |   0 | 0000
+ 3100 | 100 | 0100 | 3100 | 100 | 0100
+ 3200 | 200 | 0200 | 3200 | 200 | 0200
+ 3300 | 300 | 0300 | 3300 | 300 | 0300
+ 3400 | 400 | 0400 | 3400 | 400 | 0400
+ 3500 | 500 | 0500 | 3500 | 500 | 0500
+ 3600 | 600 | 0600 | 3600 | 600 | 0600
+ 3700 | 700 | 0700 | 3700 | 700 | 0700
+ 3800 | 800 | 0800 | 3800 | 800 | 0800
+ 3900 | 900 | 0900 | 3900 | 900 | 0900
+(30 rows)
+
+DELETE FROM join_tbl;
+RESET enable_partitionwise_join;
+-- Test interaction of async execution with plan-time partition pruning
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt WHERE a < 3000;
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Append
+   ->  Async Foreign Scan on public.async_p1 async_pt_1
+         Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+         Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < 3000))
+   ->  Async Foreign Scan on public.async_p2 async_pt_2
+         Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+         Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE ((a < 3000))
+(7 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt WHERE a < 2000;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Foreign Scan on public.async_p1 async_pt
+   Output: async_pt.a, async_pt.b, async_pt.c
+   Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < 2000))
+(3 rows)
+
+-- Test interaction of async execution with run-time partition pruning
+SET plan_cache_mode TO force_generic_plan;
+PREPARE async_pt_query (int, int) AS
+  INSERT INTO result_tbl SELECT * FROM async_pt WHERE a < $1 AND b === $2;
+EXPLAIN (VERBOSE, COSTS OFF)
+EXECUTE async_pt_query (3000, 505);
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Insert on public.result_tbl
+   ->  Append
+         Subplans Removed: 1
+         ->  Async Foreign Scan on public.async_p1 async_pt_1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+               Filter: (async_pt_1.b === $2)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < $1::integer))
+         ->  Async Foreign Scan on public.async_p2 async_pt_2
+               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+               Filter: (async_pt_2.b === $2)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE ((a < $1::integer))
+(11 rows)
+
+EXECUTE async_pt_query (3000, 505);
+SELECT * FROM result_tbl ORDER BY a;
+  a   |  b  |  c   
+------+-----+------
+ 1505 | 505 | 0505
+ 2505 | 505 | 0505
+(2 rows)
+
+DELETE FROM result_tbl;
+EXPLAIN (VERBOSE, COSTS OFF)
+EXECUTE async_pt_query (2000, 505);
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Insert on public.result_tbl
+   ->  Append
+         Subplans Removed: 2
+         ->  Async Foreign Scan on public.async_p1 async_pt_1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+               Filter: (async_pt_1.b === $2)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < $1::integer))
+(7 rows)
+
+EXECUTE async_pt_query (2000, 505);
+SELECT * FROM result_tbl ORDER BY a;
+  a   |  b  |  c   
+------+-----+------
+ 1505 | 505 | 0505
+(1 row)
+
+DELETE FROM result_tbl;
+RESET plan_cache_mode;
+CREATE TABLE local_tbl(a int, b int, c text);
+INSERT INTO local_tbl VALUES (1505, 505, 'foo'), (2505, 505, 'bar');
+ANALYZE local_tbl;
+CREATE INDEX base_tbl1_idx ON base_tbl1 (a);
+CREATE INDEX base_tbl2_idx ON base_tbl2 (a);
+CREATE INDEX async_p3_idx ON async_p3 (a);
+ANALYZE base_tbl1;
+ANALYZE base_tbl2;
+ANALYZE async_p3;
+ALTER FOREIGN TABLE async_p1 OPTIONS (use_remote_estimate 'true');
+ALTER FOREIGN TABLE async_p2 OPTIONS (use_remote_estimate 'true');
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM local_tbl, async_pt WHERE local_tbl.a = async_pt.a AND local_tbl.c = 'bar';
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: local_tbl.a, local_tbl.b, local_tbl.c, async_pt.a, async_pt.b, async_pt.c
+   ->  Seq Scan on public.local_tbl
+         Output: local_tbl.a, local_tbl.b, local_tbl.c
+         Filter: (local_tbl.c = 'bar'::text)
+   ->  Append
+         ->  Async Foreign Scan on public.async_p1 async_pt_1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE (($1::integer = a))
+         ->  Async Foreign Scan on public.async_p2 async_pt_2
+               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE (($1::integer = a))
+         ->  Seq Scan on public.async_p3 async_pt_3
+               Output: async_pt_3.a, async_pt_3.b, async_pt_3.c
+               Filter: (local_tbl.a = async_pt_3.a)
+(15 rows)
+
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+SELECT * FROM local_tbl, async_pt WHERE local_tbl.a = async_pt.a AND local_tbl.c = 'bar';
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Nested Loop (actual rows=1 loops=1)
+   ->  Seq Scan on local_tbl (actual rows=1 loops=1)
+         Filter: (c = 'bar'::text)
+         Rows Removed by Filter: 1
+   ->  Append (actual rows=1 loops=1)
+         ->  Async Foreign Scan on async_p1 async_pt_1 (never executed)
+         ->  Async Foreign Scan on async_p2 async_pt_2 (actual rows=1 loops=1)
+         ->  Seq Scan on async_p3 async_pt_3 (never executed)
+               Filter: (local_tbl.a = a)
+(9 rows)
+
+SELECT * FROM local_tbl, async_pt WHERE local_tbl.a = async_pt.a AND local_tbl.c = 'bar';
+  a   |  b  |  c  |  a   |  b  |  c   
+------+-----+-----+------+-----+------
+ 2505 | 505 | bar | 2505 | 505 | 0505
+(1 row)
+
+ALTER FOREIGN TABLE async_p1 OPTIONS (DROP use_remote_estimate);
+ALTER FOREIGN TABLE async_p2 OPTIONS (DROP use_remote_estimate);
+DROP TABLE local_tbl;
+DROP INDEX base_tbl1_idx;
+DROP INDEX base_tbl2_idx;
+DROP INDEX async_p3_idx;
+-- Test that pending requests are processed properly
+SET enable_mergejoin TO false;
+SET enable_hashjoin TO false;
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt t1, async_p2 t2 WHERE t1.a = t2.a AND t1.b === 505;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Nested Loop
+   Output: t1.a, t1.b, t1.c, t2.a, t2.b, t2.c
+   Join Filter: (t1.a = t2.a)
+   ->  Append
+         ->  Async Foreign Scan on public.async_p1 t1_1
+               Output: t1_1.a, t1_1.b, t1_1.c
+               Filter: (t1_1.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1
+         ->  Async Foreign Scan on public.async_p2 t1_2
+               Output: t1_2.a, t1_2.b, t1_2.c
+               Filter: (t1_2.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2
+         ->  Seq Scan on public.async_p3 t1_3
+               Output: t1_3.a, t1_3.b, t1_3.c
+               Filter: (t1_3.b === 505)
+   ->  Materialize
+         Output: t2.a, t2.b, t2.c
+         ->  Foreign Scan on public.async_p2 t2
+               Output: t2.a, t2.b, t2.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2
+(20 rows)
+
+SELECT * FROM async_pt t1, async_p2 t2 WHERE t1.a = t2.a AND t1.b === 505;
+  a   |  b  |  c   |  a   |  b  |  c   
+------+-----+------+------+-----+------
+ 2505 | 505 | 0505 | 2505 | 505 | 0505
+(1 row)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt t1 WHERE t1.b === 505 LIMIT 1;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Limit
+   Output: t1.a, t1.b, t1.c
+   ->  Append
+         ->  Async Foreign Scan on public.async_p1 t1_1
+               Output: t1_1.a, t1_1.b, t1_1.c
+               Filter: (t1_1.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1
+         ->  Async Foreign Scan on public.async_p2 t1_2
+               Output: t1_2.a, t1_2.b, t1_2.c
+               Filter: (t1_2.b === 505)
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2
+         ->  Seq Scan on public.async_p3 t1_3
+               Output: t1_3.a, t1_3.b, t1_3.c
+               Filter: (t1_3.b === 505)
+(14 rows)
+
+SELECT * FROM async_pt t1 WHERE t1.b === 505 LIMIT 1;
+  a   |  b  |  c   
+------+-----+------
+ 3505 | 505 | 0505
+(1 row)
+
+-- Check with foreign modify
+CREATE TABLE local_tbl (a int, b int, c text);
+INSERT INTO local_tbl VALUES (1505, 505, 'foo');
+CREATE TABLE base_tbl3 (a int, b int, c text);
+CREATE FOREIGN TABLE remote_tbl (a int, b int, c text)
+  SERVER loopback OPTIONS (table_name 'base_tbl3');
+INSERT INTO remote_tbl VALUES (2505, 505, 'bar');
+CREATE TABLE base_tbl4 (a int, b int, c text);
+CREATE FOREIGN TABLE insert_tbl (a int, b int, c text)
+  SERVER loopback OPTIONS (table_name 'base_tbl4');
+EXPLAIN (VERBOSE, COSTS OFF)
+INSERT INTO insert_tbl (SELECT * FROM local_tbl UNION ALL SELECT * FROM remote_tbl);
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Insert on public.insert_tbl
+   Remote SQL: INSERT INTO public.base_tbl4(a, b, c) VALUES ($1, $2, $3)
+   Batch Size: 1
+   ->  Append
+         ->  Seq Scan on public.local_tbl
+               Output: local_tbl.a, local_tbl.b, local_tbl.c
+         ->  Async Foreign Scan on public.remote_tbl
+               Output: remote_tbl.a, remote_tbl.b, remote_tbl.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl3
+(9 rows)
+
+INSERT INTO insert_tbl (SELECT * FROM local_tbl UNION ALL SELECT * FROM remote_tbl);
+SELECT * FROM insert_tbl ORDER BY a;
+  a   |  b  |  c  
+------+-----+-----
+ 1505 | 505 | foo
+ 2505 | 505 | bar
+(2 rows)
+
+-- Check with direct modify
+EXPLAIN (VERBOSE, COSTS OFF)
+WITH t AS (UPDATE remote_tbl SET c = c || c RETURNING *)
+INSERT INTO join_tbl SELECT * FROM async_pt LEFT JOIN t ON (async_pt.a = t.a AND async_pt.b = t.b) WHERE async_pt.b === 505;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Insert on public.join_tbl
+   CTE t
+     ->  Update on public.remote_tbl
+           Output: remote_tbl.a, remote_tbl.b, remote_tbl.c
+           ->  Foreign Update on public.remote_tbl
+                 Remote SQL: UPDATE public.base_tbl3 SET c = (c || c) RETURNING a, b, c
+   ->  Nested Loop Left Join
+         Output: async_pt.a, async_pt.b, async_pt.c, t.a, t.b, t.c
+         Join Filter: ((async_pt.a = t.a) AND (async_pt.b = t.b))
+         ->  Append
+               ->  Async Foreign Scan on public.async_p1 async_pt_1
+                     Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+                     Filter: (async_pt_1.b === 505)
+                     Remote SQL: SELECT a, b, c FROM public.base_tbl1
+               ->  Async Foreign Scan on public.async_p2 async_pt_2
+                     Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+                     Filter: (async_pt_2.b === 505)
+                     Remote SQL: SELECT a, b, c FROM public.base_tbl2
+               ->  Seq Scan on public.async_p3 async_pt_3
+                     Output: async_pt_3.a, async_pt_3.b, async_pt_3.c
+                     Filter: (async_pt_3.b === 505)
+         ->  CTE Scan on t
+               Output: t.a, t.b, t.c
+(23 rows)
+
+WITH t AS (UPDATE remote_tbl SET c = c || c RETURNING *)
+INSERT INTO join_tbl SELECT * FROM async_pt LEFT JOIN t ON (async_pt.a = t.a AND async_pt.b = t.b) WHERE async_pt.b === 505;
+SELECT * FROM join_tbl ORDER BY a1;
+  a1  | b1  |  c1  |  a2  | b2  |   c2   
+------+-----+------+------+-----+--------
+ 1505 | 505 | 0505 |      |     | 
+ 2505 | 505 | 0505 | 2505 | 505 | barbar
+ 3505 | 505 | 0505 |      |     | 
+(3 rows)
+
+DELETE FROM join_tbl;
+RESET enable_mergejoin;
+RESET enable_hashjoin;
+-- Clean up
+DROP TABLE async_pt;
+DROP TABLE base_tbl1;
+DROP TABLE base_tbl2;
+DROP TABLE result_tbl;
+DROP TABLE local_tbl;
+DROP FOREIGN TABLE remote_tbl;
+DROP FOREIGN TABLE insert_tbl;
+DROP TABLE base_tbl3;
+DROP TABLE base_tbl4;
+DROP TABLE join_tbl;
+ALTER SERVER loopback OPTIONS (DROP async_capable);
+ALTER SERVER loopback2 OPTIONS (DROP async_capable);

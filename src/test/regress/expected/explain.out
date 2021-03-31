@@ -87,6 +87,7 @@ select explain_filter('explain (analyze, buffers, format json) select * from int
      "Plan": {                     +
        "Node Type": "Seq Scan",    +
        "Parallel Aware": false,    +
+       "Async Capable": false,     +
        "Relation Name": "int8_tbl",+
        "Alias": "i8",              +
        "Startup Cost": N.N,        +
@@ -136,6 +137,7 @@ select explain_filter('explain (analyze, buffers, format xml) select * from int8
      <Plan>                                            +
        <Node-Type>Seq Scan</Node-Type>                 +
        <Parallel-Aware>false</Parallel-Aware>          +
+       <Async-Capable>false</Async-Capable>            +
        <Relation-Name>int8_tbl</Relation-Name>         +
        <Alias>i8</Alias>                               +
        <Startup-Cost>N.N</Startup-Cost>                +
@@ -183,6 +185,7 @@ select explain_filter('explain (analyze, buffers, format yaml) select * from int
  - Plan:                      +
      Node Type: "Seq Scan"    +
      Parallel Aware: false    +
+     Async Capable: false     +
      Relation Name: "int8_tbl"+
      Alias: "i8"              +
      Startup Cost: N.N        +
@@ -233,6 +236,7 @@ select explain_filter('explain (buffers, format json) select * from int8_tbl i8'
      "Plan": {                     +
        "Node Type": "Seq Scan",    +
        "Parallel Aware": false,    +
+       "Async Capable": false,     +
        "Relation Name": "int8_tbl",+
        "Alias": "i8",              +
        "Startup Cost": N.N,        +
@@ -346,6 +350,7 @@ select jsonb_pretty(
                              "Actual Rows": 0,              +
                              "Actual Loops": 0,             +
                              "Startup Cost": 0.0,           +
+                             "Async Capable": false,        +
                              "Relation Name": "tenk1",      +
                              "Parallel Aware": true,        +
                              "Local Hit Blocks": 0,         +
@@ -391,6 +396,7 @@ select jsonb_pretty(
                      "Actual Rows": 0,                      +
                      "Actual Loops": 0,                     +
                      "Startup Cost": 0.0,                   +
+                     "Async Capable": false,                +
                      "Parallel Aware": false,               +
                      "Sort Space Used": 0,                  +
                      "Local Hit Blocks": 0,                 +
@@ -433,6 +439,7 @@ select jsonb_pretty(
              "Actual Rows": 0,                              +
              "Actual Loops": 0,                             +
              "Startup Cost": 0.0,                           +
+             "Async Capable": false,                        +
              "Parallel Aware": false,                       +
              "Workers Planned": 0,                          +
              "Local Hit Blocks": 0,                         +

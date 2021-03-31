@@ -516,6 +516,22 @@ typedef struct ResultRelInfo
 } ResultRelInfo;
 
 /* ----------------
+ *	  AsyncRequest
+ *
+ * State for an asynchronous tuple request.
+ * ----------------
+ */
+typedef struct AsyncRequest
+{
+	struct PlanState *requestor;	/* Node that wants a tuple */
+	struct PlanState *requestee;	/* Node from which a tuple is wanted */
+	int			request_index;	/* Scratch space for requestor */
+	bool		callback_pending;	/* Callback is needed */
+	bool		request_complete;	/* Request complete, result valid */
+	TupleTableSlot *result;		/* Result (NULL if no more tuples) */
+} AsyncRequest;
+
+/* ----------------
  *	  EState information
  *
  * Working state for an Executor invocation
@@ -1199,12 +1215,12 @@ typedef struct ModifyTableState
  *	 AppendState information
  *
  *		nplans				how many plans are in the array
- *		whichplan			which plan is being executed (0 .. n-1), or a
- *							special negative value. See nodeAppend.c.
+ *		whichplan			which synchronous plan is being executed (0 .. n-1)
+ *							or a special negative value. See nodeAppend.c.
  *		prune_state			details required to allow partitions to be
  *							eliminated from the scan, or NULL if not possible.
- *		valid_subplans		for runtime pruning, valid appendplans indexes to
- *							scan.
+ *		valid_subplans		for runtime pruning, valid synchronous appendplans
+ *							indexes to scan.
  * ----------------
  */
 
@@ -1220,12 +1236,25 @@ struct AppendState
 	PlanState **appendplans;	/* array of PlanStates for my inputs */
 	int			as_nplans;
 	int			as_whichplan;
+	bool		as_begun;		/* false means need to initialize */
+	Bitmapset  *as_asyncplans;	/* asynchronous plans indexes */
+	int			as_nasyncplans;	/* # of asynchronous plans */
+	AsyncRequest **as_asyncrequests;	/* array of AsyncRequests */
+	TupleTableSlot **as_asyncresults;	/* unreturned results of async plans */
+	int			as_nasyncresults;	/* # of valid entries in as_asyncresults */
+	bool		as_syncdone;	/* true if all synchronous plans done in
+								 * asynchronous mode, else false */
+	int			as_nasyncremain;	/* # of remaining asynchronous plans */
+	Bitmapset  *as_needrequest;	/* asynchronous plans needing a new request */
+	struct WaitEventSet *as_eventset;	/* WaitEventSet used to configure
+										 * file descriptor wait events */
 	int			as_first_partial_plan;	/* Index of 'appendplans' containing
 										 * the first partial plan */
 	ParallelAppendState *as_pstate; /* parallel coordination info */
 	Size		pstate_len;		/* size of parallel coordination info */
 	struct PartitionPruneState *as_prune_state;
 	Bitmapset  *as_valid_subplans;
+	Bitmapset  *as_valid_asyncplans;	/* valid asynchronous plans indexes */
 	bool		(*choose_next_subplan) (AppendState *);
 };
 

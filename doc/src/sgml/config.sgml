@@ -4787,6 +4787,20 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </para>
 
      <variablelist>
+     <varlistentry id="guc-enable-async-append" xreflabel="enable_async_append">
+      <term><varname>enable_async_append</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_async_append</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of async-aware
+        append plan types. The default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-enable-bitmapscan" xreflabel="enable_bitmapscan">
       <term><varname>enable_bitmapscan</varname> (<type>boolean</type>)
       <indexterm>

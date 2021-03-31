@@ -371,6 +371,7 @@
 #enable_partitionwise_aggregate = off
 #enable_parallel_hash = on
 #enable_partition_pruning = on
+#enable_async_append = on
 
 # - Planner Cost Constants -
 

@@ -1483,6 +1483,96 @@ ShutdownForeignScan(ForeignScanState *node);
    </para>
    </sect2>
 
+   <sect2 id="fdw-callbacks-async">
+    <title>FDW Routines for Asynchronous Execution</title>
+    <para>
+     A <structname>ForeignScan</structname> node can, optionally, support
+     asynchronous execution as described in
+     <filename>src/backend/executor/README</filename>.  The following
+     functions are all optional, but are all required if asynchronous
+     execution is to be supported.
+    </para>
+
+    <para>
+<programlisting>
+bool
+IsForeignPathAsyncCapable(ForeignPath *path);
+</programlisting>
+     Test whether a given <structname>ForeignPath</structname> path can scan
+     the underlying foreign relation asynchronously.
+     This function will only be called at the end of query planning when the
+     given path is a direct child of an <structname>AppendPath</structname>
+     path and when the planner believes that asynchronous execution improves
+     performance, and should return true if the given path is able to scan the
+     foreign relation asynchronously.
+    </para>
+
+    <para>
+     If this function is not defined, it is assumed that the given path scans
+     the foreign relation using <function>IterateForeignScan</function>.
+     (This implies that the callback functions described below will never be
+     called, so they need not be provided either.)
+    </para>
+
+    <para>
+<programlisting>
+void
+ForeignAsyncRequest(AsyncRequest *areq);
+</programlisting>
+     Produce one tuple asynchronously from the
+     <structname>ForeignScan</structname> node.  <literal>areq</literal> is
+     the <structname>AsyncRequest</structname> struct describing the
+     <structname>ForeignScan</structname> node and the parent
+     <structname>Append</structname> node that requested the tuple from it.
+     This function should store the tuple into the slot specified by
+     <literal>areq-&gt;result</literal>, and set
+     <literal>areq-&gt;request_complete</literal> to <literal>true</literal>;
+     or if it needs to wait on an event external to the core server such as
+     network I/O, and cannot produce any tuple immediately, set the flag to
+     <literal>false</literal>, and set
+     <literal>areq-&gt;callback_pending</literal> to <literal>true</literal>
+     for the <structname>ForeignScan</structname> node to get a callback from
+     the callback functions described below.  If no more tuples are available,
+     set the slot to NULL, and the
+     <literal>areq-&gt;request_complete</literal> flag to
+     <literal>true</literal>.  It's recommended to use
+     <function>ExecAsyncRequestDone</function> or
+     <function>ExecAsyncRequestPending</function> to set the output parameters
+     in the <literal>areq</literal>.
+    </para>
+
+    <para>
+<programlisting>
+void
+ForeignAsyncConfigureWait(AsyncRequest *areq);
+</programlisting>
+     Configure a file descriptor event for which the 
+     <structname>ForeignScan</structname> node wishes to wait.
+     This function will only be called when the
+     <structname>ForeignScan</structname> node has the
+     <literal>areq-&gt;callback_pending</literal> flag set, and should add
+     the event to the <structfield>as_eventset</structfield> of the parent
+     <structname>Append</structname> node described by the
+     <literal>areq</literal>.  See the comments for
+     <function>ExecAsyncConfigureWait</function> in
+     <filename>src/backend/executor/execAsync.c</filename> for additional
+     information.  When the file descriptor event occurs,
+     <function>ForeignAsyncNotify</function> will be called.
+    </para>
+
+    <para>
+<programlisting>
+void
+ForeignAsyncNotify(AsyncRequest *areq);
+</programlisting>
+     Process a relevant event that has occurred, then produce one tuple
+     asynchronously from the <structname>ForeignScan</structname> node.
+     This function should set the output parameters in the
+     <literal>areq</literal> in the same way as
+     <function>ForeignAsyncRequest</function>.
+    </para>
+   </sect2>
+
    <sect2 id="fdw-callbacks-reparameterize-paths">
     <title>FDW Routines for Reparameterization of Paths</title>
 
