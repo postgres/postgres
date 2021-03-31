@@ -14,6 +14,7 @@
 
 #include "postgres_fe.h"
 
+#include <ctype.h>
 #include <limits.h>
 #include <time.h>
 
@@ -27,6 +28,7 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "port/pg_bswap.h"
+
 
 /* Enable tracing */
 void
@@ -102,7 +104,7 @@ pqTraceOutputByte1(FILE *pfdebug, const char *data, int *cursor)
 	 * Show non-printable data in hex format, including the terminating \0
 	 * that completes ErrorResponse and NoticeResponse messages.
 	 */
-	if (!isprint(*v))
+	if (!isprint((unsigned char) *v))
 		fprintf(pfdebug, " \\x%02x", *v);
 	else
 		fprintf(pfdebug, " %c", *v);
@@ -186,7 +188,7 @@ pqTraceOutputNchar(FILE *pfdebug, int len, const char *data, int *cursor)
 
 	for (next = i = 0; i < len; ++i)
 	{
-		if (isprint(v[i]))
+		if (isprint((unsigned char) v[i]))
 			continue;
 		else
 		{
