@@ -438,6 +438,7 @@ test_pipeline_abort(PGconn *conn)
 	if (PQresultStatus(res) != PGRES_PIPELINE_SYNC)
 		pg_fatal("Unexpected result code %s from pipeline sync",
 				 PQresStatus(PQresultStatus(res)));
+	fprintf(stderr, "ok\n");
 
 	/* Test single-row mode with an error partways */
 	if (PQsendQuery(conn, "SELECT 1.0/g FROM generate_series(3, -1, -1) g") != 1)
@@ -1308,6 +1309,13 @@ main(int argc, char **argv)
 		exit_nicely(conn);
 	}
 
+	res = PQexec(conn, "SET lc_messages TO \"C\"");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		pg_fatal("failed to set lc_messages: %s", PQerrorMessage(conn));
+	res = PQexec(conn, "SET force_parallel_mode = off");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		pg_fatal("failed to set force_parallel_mode: %s", PQerrorMessage(conn));
+
 	/* Set the trace file, if requested */
 	if (tracefile != NULL)
 	{
@@ -1319,10 +1327,6 @@ main(int argc, char **argv)
 		PQtraceSetFlags(conn,
 						PQTRACE_SUPPRESS_TIMESTAMPS | PQTRACE_REGRESS_MODE);
 	}
-
-	res = PQexec(conn, "SET lc_messages TO \"C\"");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pg_fatal("failed to set lc_messages: %s", PQerrorMessage(conn));
 
 	if (strcmp(testname, "disallowed_in_pipeline") == 0)
 		test_disallowed_in_pipeline(conn);

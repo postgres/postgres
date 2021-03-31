@@ -1,6 +1,3 @@
-F	27	Query	 "SET lc_messages TO "C""
-B	8	CommandComplete	 "SET"
-B	5	ReadyForQuery	 I
 F	79	Query	 "DROP TABLE IF EXISTS pq_pipeline_tst;CREATE TABLE pq_pipeline_tst (id int)"
 B	122	NoticeResponse	 S "NOTICE" V "NOTICE" C "00000" M "table "pq_pipeline_tst" does not exist, skipping" F "SSSS" L "SSSS" R "SSSS" \x00
 B	15	CommandComplete	 "DROP TABLE"

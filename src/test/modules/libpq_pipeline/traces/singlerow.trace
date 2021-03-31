@@ -1,6 +1,3 @@
-F	27	Query	 "SET lc_messages TO "C""
-B	8	CommandComplete	 "SET"
-B	5	ReadyForQuery	 I
 F	38	Parse	 "" "SELECT generate_series(42, $1)" 0
 F	20	Bind	 "" "" 0 1 2 '44' 1 0
 F	6	Describe	 P ""

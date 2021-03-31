@@ -1,6 +1,3 @@
-F	27	Query	 "SET lc_messages TO "C""
-B	8	CommandComplete	 "SET"
-B	5	ReadyForQuery	 I
 F	68	Parse	 "select_one" "SELECT $1, '42', $1::numeric, interval '1 sec'" 1 NNNN
 F	16	Describe	 S "select_one"
 F	4	Sync
