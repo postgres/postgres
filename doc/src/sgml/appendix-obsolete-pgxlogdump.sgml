@@ -1,0 +1,24 @@
+<!-- doc/src/sgml/obsolete-pgxlogdump.sgml -->
+<!--
+  See doc/src/sgml/obsolete.sgml for why this file exists. Do not change the id attribute.
+-->
+
+<sect1 id="pgxlogdump" xreflabel="pg_xlogdump">
+  <title><command>pg_xlogdump</command> renamed to <command>pg_waldump</command></title>
+
+   <indexterm>
+     <primary>pg_xlogdump</primary>
+     <see>pg_waldump</see>
+   </indexterm>
+
+   <para>
+    PostgreSQL 9.6 and below provided a command named
+    <command>pg_xlogdump</command>
+    <indexterm><primary>pg_xlogdump</primary></indexterm>
+    to read write-ahead-log (WAL) files.  This command was renamed to <command>pg_waldump</command>, see
+    <xref linkend="pgwaldump"/> for documentation of <command>pg_waldump</command> and see
+    <link linkend="release-prior">the release notes for PostgreSQL 10</link> for details
+    on this change.
+   </para>
+
+</sect1>

@@ -1,0 +1,24 @@
+<!-- doc/src/sgml/obsolete-pgresetxlog.sgml -->
+<!--
+  See doc/src/sgml/obsolete.sgml for why this file exists. Do not change the id attribute.
+-->
+
+<sect1 id="app-pgresetxlog" xreflabel="pg_resetxlog">
+  <title><command>pg_resetxlog</command> renamed to <command>pg_resetwal</command></title>
+
+   <indexterm>
+     <primary>pg_resetxlog</primary>
+     <see>pg_resetwal</see>
+   </indexterm>
+
+   <para>
+    PostgreSQL 9.6 and below provided a command named
+    <command>pg_resetxlog</command>
+    <indexterm><primary>pg_resetxlog</primary></indexterm>
+    to reset the write-ahead-log (WAL) files.  This command was renamed to <command>pg_resetwal</command>, see
+    <xref linkend="app-pgresetwal"/> for documentation of <command>pg_resetwal</command> and see
+    <link linkend="release-prior">the release notes for PostgreSQL 10</link> for details
+    on this change.
+   </para>
+
+</sect1>
