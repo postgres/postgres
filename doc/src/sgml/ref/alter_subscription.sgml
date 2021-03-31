@@ -51,8 +51,8 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
   
   <para>
    When refreshing a publication we remove the relations that are no longer
-   part of the publication and we also remove the tablesync slots if there are
-   any. It is necessary to remove tablesync slots so that the resources
+   part of the publication and we also remove the table synchronization slots
+   if there are any. It is necessary to remove these slots so that the resources
    allocated for the subscription on the remote host are released. If due to
    network breakdown or some other error, <productname>PostgreSQL</productname>
    is unable to remove the slots, an ERROR will be reported. To proceed in this
