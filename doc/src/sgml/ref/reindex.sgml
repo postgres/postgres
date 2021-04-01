@@ -282,14 +282,15 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
    <command>REINDEX</command> is similar to a drop and recreate of the index
    in that the index contents are rebuilt from scratch.  However, the locking
    considerations are rather different.  <command>REINDEX</command> locks out writes
-   but not reads of the index's parent table.  It also takes an exclusive lock
-   on the specific index being processed, which will block reads that attempt
-   to use that index.  In contrast, <command>DROP INDEX</command> momentarily takes
-   an exclusive lock on the parent table, blocking both writes and reads.  The
-   subsequent <command>CREATE INDEX</command> locks out writes but not reads; since
-   the index is not there, no read will attempt to use it, meaning that there
-   will be no blocking but reads might be forced into expensive sequential
-   scans.
+   but not reads of the index's parent table.  It also takes an
+   <literal>ACCESS EXCLUSIVE</literal> lock on the specific index being processed,
+   which will block reads that attempt to use that index.  In contrast,
+   <command>DROP INDEX</command> momentarily takes an
+   <literal>ACCESS EXCLUSIVE</literal> lock on the parent table, blocking both
+   writes and reads.  The subsequent <command>CREATE INDEX</command> locks out
+   writes but not reads; since the index is not there, no read will attempt to
+   use it, meaning that there will be no blocking but reads might be forced
+   into expensive sequential scans.
   </para>
 
   <para>

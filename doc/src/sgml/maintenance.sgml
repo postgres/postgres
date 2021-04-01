@@ -128,7 +128,8 @@
     <command>DELETE</command> will continue to function normally, though you
     will not be able to modify the definition of a table with commands such as
     <command>ALTER TABLE</command> while it is being vacuumed.)
-    <command>VACUUM FULL</command> requires exclusive lock on the table it is
+    <command>VACUUM FULL</command> requires an
+    <literal>ACCESS EXCLUSIVE</literal> lock on the table it is
     working on, and therefore cannot be done in parallel with other use
     of the table.  Generally, therefore,
     administrators should strive to use standard <command>VACUUM</command> and
@@ -231,7 +232,8 @@
     or one of the table-rewriting variants of
     <link linkend="sql-altertable"><command>ALTER TABLE</command></link>.
     These commands rewrite an entire new copy of the table and build
-    new indexes for it.  All these options require exclusive lock.  Note that
+    new indexes for it.  All these options require an
+    <literal>ACCESS EXCLUSIVE</literal> lock.  Note that
     they also temporarily use extra disk space approximately equal to the size
     of the table, since the old copies of the table and indexes can't be
     released until the new ones are complete.

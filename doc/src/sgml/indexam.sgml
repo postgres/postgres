@@ -980,8 +980,10 @@ amparallelrescan (IndexScanDesc scan);
    <literal>RowExclusiveLock</literal> when updating the index (including plain
    <command>VACUUM</command>).  Since these lock types do not conflict, the access
    method is responsible for handling any fine-grained locking it might need.
-   An exclusive lock on the index as a whole will be taken only during index
-   creation, destruction, or <command>REINDEX</command>.
+   An <literal>ACCESS EXCLUSIVE</literal> lock on the index as a whole will be
+   taken only during index creation, destruction, or <command>REINDEX</command>
+   (<literal>SHARE UPDATE EXCLUSIVE</literal> is taken instead with
+   <literal>CONCURRENTLY</literal>).
   </para>
 
   <para>
