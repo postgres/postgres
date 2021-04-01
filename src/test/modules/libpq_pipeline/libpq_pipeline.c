@@ -725,7 +725,7 @@ test_pipelined_insert(PGconn *conn, int n_rows)
 			{
 				snprintf(insert_param_0, MAXINTLEN, "%d", rows_to_send);
 				snprintf(insert_param_1, MAXINT8LEN, "%lld",
-						 (long long) rows_to_send);
+						 (1L << 62) + (long long) rows_to_send);
 
 				if (PQsendQueryPrepared(conn, "my_insert",
 										2, insert_params, NULL, NULL, 0) == 1)
@@ -1227,9 +1227,10 @@ usage(const char *progname)
 	fprintf(stderr, "%s tests libpq's pipeline mode.\n\n", progname);
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "  %s [OPTION] tests\n", progname);
-	fprintf(stderr, "  %s [OPTION] TESTNAME [CONNINFO [NUMBER_OF_ROWS]\n", progname);
+	fprintf(stderr, "  %s [OPTION] TESTNAME [CONNINFO]\n", progname);
 	fprintf(stderr, "\nOptions:\n");
 	fprintf(stderr, "  -t TRACEFILE       generate a libpq trace to TRACEFILE\n");
+	fprintf(stderr, "  -r NUMROWS         use NUMROWS as the test size\n");
 }
 
 static void
@@ -1256,19 +1257,29 @@ main(int argc, char **argv)
 	PGresult   *res;
 	int			c;
 
-	while ((c = getopt(argc, argv, "t:")) != -1)
+	while ((c = getopt(argc, argv, "t:r:")) != -1)
 	{
 		switch (c)
 		{
 			case 't':			/* trace file */
 				tracefile = pg_strdup(optarg);
 				break;
+			case 'r':			/* numrows */
+				errno = 0;
+				numrows = strtol(optarg, NULL, 10);
+				if (errno != 0 || numrows <= 0)
+				{
+					fprintf(stderr, "couldn't parse \"%s\" as a positive integer\n",
+							optarg);
+					exit(1);
+				}
+				break;
 		}
 	}
 
 	if (optind < argc)
 	{
-		testname = argv[optind];
+		testname = pg_strdup(argv[optind]);
 		optind++;
 	}
 	else
@@ -1285,18 +1296,7 @@ main(int argc, char **argv)
 
 	if (optind < argc)
 	{
-		conninfo = argv[optind];
-		optind++;
-	}
-	if (optind < argc)
-	{
-		errno = 0;
-		numrows = strtol(argv[optind], NULL, 10);
-		if (errno != 0 || numrows <= 0)
-		{
-			fprintf(stderr, "couldn't parse \"%s\" as a positive integer\n", argv[optind]);
-			exit(1);
-		}
+		conninfo = pg_strdup(argv[optind]);
 		optind++;
 	}
 

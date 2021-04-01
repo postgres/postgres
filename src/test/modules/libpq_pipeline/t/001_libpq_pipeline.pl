@@ -22,7 +22,7 @@ mkdir "$TestLib::tmp_check/traces";
 
 for my $testname (@tests)
 {
-	my @extraargs = ();
+	my @extraargs = ('-r', $numrows);
 	my $cmptrace  = grep(/^$testname$/,
 		qw(simple_pipeline multi_pipelines prepared singlerow
 		  pipeline_abort transaction disallowed_in_pipeline)) > 0;
@@ -38,8 +38,7 @@ for my $testname (@tests)
 	$node->command_ok(
 		[
 			'libpq_pipeline', @extraargs,
-			$testname,        $node->connstr('postgres'),
-			$numrows
+			$testname,        $node->connstr('postgres')
 		],
 		"libpq_pipeline $testname");
 
