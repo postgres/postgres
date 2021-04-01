@@ -2212,26 +2212,6 @@ _readMaterial(void)
 }
 
 /*
- * _readResultCache
- */
-static ResultCache *
-_readResultCache(void)
-{
-	READ_LOCALS(ResultCache);
-
-	ReadCommonPlan(&local_node->plan);
-
-	READ_INT_FIELD(numKeys);
-	READ_OID_ARRAY(hashOperators, local_node->numKeys);
-	READ_OID_ARRAY(collations, local_node->numKeys);
-	READ_NODE_FIELD(param_exprs);
-	READ_BOOL_FIELD(singlerow);
-	READ_UINT_FIELD(est_entries);
-
-	READ_DONE();
-}
-
-/*
  * ReadCommonSort
  *	Assign the basic stuff of all nodes that inherit from Sort
  */
@@ -2919,8 +2899,6 @@ parseNodeString(void)
 		return_value = _readHashJoin();
 	else if (MATCH("MATERIAL", 8))
 		return_value = _readMaterial();
-	else if (MATCH("RESULTCACHE", 11))
-		return_value = _readResultCache();
 	else if (MATCH("SORT", 4))
 		return_value = _readSort();
 	else if (MATCH("INCREMENTALSORT", 15))

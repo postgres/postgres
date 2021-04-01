@@ -44,7 +44,6 @@
 #include "executor/nodeProjectSet.h"
 #include "executor/nodeRecursiveunion.h"
 #include "executor/nodeResult.h"
-#include "executor/nodeResultCache.h"
 #include "executor/nodeSamplescan.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSetOp.h"
@@ -253,10 +252,6 @@ ExecReScan(PlanState *node)
 
 		case T_MaterialState:
 			ExecReScanMaterial((MaterialState *) node);
-			break;
-
-		case T_ResultCacheState:
-			ExecReScanResultCache((ResultCacheState *) node);
 			break;
 
 		case T_SortState:

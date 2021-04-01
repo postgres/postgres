@@ -102,7 +102,6 @@
 #include "executor/nodeProjectSet.h"
 #include "executor/nodeRecursiveunion.h"
 #include "executor/nodeResult.h"
-#include "executor/nodeResultCache.h"
 #include "executor/nodeSamplescan.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSetOp.h"
@@ -324,11 +323,6 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		case T_IncrementalSort:
 			result = (PlanState *) ExecInitIncrementalSort((IncrementalSort *) node,
 														   estate, eflags);
-			break;
-
-		case T_ResultCache:
-			result = (PlanState *) ExecInitResultCache((ResultCache *) node,
-													   estate, eflags);
 			break;
 
 		case T_Group:
@@ -717,10 +711,6 @@ ExecEndNode(PlanState *node)
 
 		case T_IncrementalSortState:
 			ExecEndIncrementalSort((IncrementalSortState *) node);
-			break;
-
-		case T_ResultCacheState:
-			ExecEndResultCache((ResultCacheState *) node);
 			break;
 
 		case T_GroupState:

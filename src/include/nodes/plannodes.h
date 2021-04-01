@@ -780,27 +780,6 @@ typedef struct Material
 } Material;
 
 /* ----------------
- *		result cache node
- * ----------------
- */
-typedef struct ResultCache
-{
-	Plan		plan;
-
-	int			numKeys;		/* size of the two arrays below */
-
-	Oid		   *hashOperators;	/* hash operators for each key */
-	Oid		   *collations;		/* cache keys */
-	List	   *param_exprs;	/* exprs containing parameters */
-	bool		singlerow;		/* true if the cache entry should be marked as
-								 * complete after we store the first tuple in
-								 * it. */
-	uint32		est_entries;	/* The maximum number of entries that the
-								 * planner expects will fit in the cache, or 0
-								 * if unknown */
-} ResultCache;
-
-/* ----------------
  *		sort node
  * ----------------
  */

@@ -203,7 +203,6 @@ test: partition_info
 test: tuplesort
 test: explain
 test: compression
-test: resultcache
 test: event_trigger
 test: oidjoins
 test: fast_default

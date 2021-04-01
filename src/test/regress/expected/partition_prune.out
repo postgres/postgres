@@ -1958,9 +1958,6 @@ begin
         ln := regexp_replace(ln, 'Workers Launched: \d+', 'Workers Launched: N');
         ln := regexp_replace(ln, 'actual rows=\d+ loops=\d+', 'actual rows=N loops=N');
         ln := regexp_replace(ln, 'Rows Removed by Filter: \d+', 'Rows Removed by Filter: N');
-        ln := regexp_replace(ln, 'Hits: \d+', 'Hits: N');
-        ln := regexp_replace(ln, 'Misses: \d+', 'Misses: N');
-        ln := regexp_replace(ln, 'Memory Usage: \d+', 'Memory Usage: N');
         return next ln;
     end loop;
 end;
@@ -2089,8 +2086,8 @@ create index ab_a3_b3_a_idx on ab_a3_b3 (a);
 set enable_hashjoin = 0;
 set enable_mergejoin = 0;
 select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(0, 0, 1)');
-                                           explain_parallel_append                                            
---------------------------------------------------------------------------------------------------------------
+                                        explain_parallel_append                                         
+--------------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=N loops=N)
    ->  Gather (actual rows=N loops=N)
          Workers Planned: 1
@@ -2099,36 +2096,32 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                ->  Nested Loop (actual rows=N loops=N)
                      ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
                            Filter: (a = ANY ('{0,0,1}'::integer[]))
-                     ->  Result Cache (actual rows=N loops=N)
-                           Cache Key: a.a
-                           Hits: N  Misses: N  Evictions: 0  Overflows: 0  Memory Usage: NkB
-                           Worker 0:  Hits: N  Misses: N  Evictions: 0  Overflows: 0  Memory Usage: NkB
-                           ->  Append (actual rows=N loops=N)
-                                 ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
-                                       Index Cond: (a = a.a)
-(31 rows)
+                     ->  Append (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
+                                 Index Cond: (a = a.a)
+(27 rows)
 
 -- Ensure the same partitions are pruned when we make the nested loop
 -- parameter an Expr rather than a plain Param.
 select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a + 0 where a.a in(0, 0, 1)');
-                                           explain_parallel_append                                            
---------------------------------------------------------------------------------------------------------------
+                                        explain_parallel_append                                         
+--------------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=N loops=N)
    ->  Gather (actual rows=N loops=N)
          Workers Planned: 1
@@ -2137,35 +2130,31 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                ->  Nested Loop (actual rows=N loops=N)
                      ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
                            Filter: (a = ANY ('{0,0,1}'::integer[]))
-                     ->  Result Cache (actual rows=N loops=N)
-                           Cache Key: (a.a + 0)
-                           Hits: N  Misses: N  Evictions: 0  Overflows: 0  Memory Usage: NkB
-                           Worker 0:  Hits: N  Misses: N  Evictions: 0  Overflows: 0  Memory Usage: NkB
-                           ->  Append (actual rows=N loops=N)
-                                 ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
-                                       Index Cond: (a = (a.a + 0))
-                                 ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
-                                       Index Cond: (a = (a.a + 0))
-                                 ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
-                                       Index Cond: (a = (a.a + 0))
-                                 ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
-                                       Index Cond: (a = (a.a + 0))
-                                 ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
-                                       Index Cond: (a = (a.a + 0))
-                                 ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
-                                       Index Cond: (a = (a.a + 0))
-                                 ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
-                                       Index Cond: (a = (a.a + 0))
-                                 ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
-                                       Index Cond: (a = (a.a + 0))
-                                 ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
-                                       Index Cond: (a = (a.a + 0))
-(31 rows)
+                     ->  Append (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
+                                 Index Cond: (a = (a.a + 0))
+(27 rows)
 
 insert into lprt_a values(3),(3);
 select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 3)');
-                                           explain_parallel_append                                            
---------------------------------------------------------------------------------------------------------------
+                                        explain_parallel_append                                         
+--------------------------------------------------------------------------------------------------------
  Finalize Aggregate (actual rows=N loops=N)
    ->  Gather (actual rows=N loops=N)
          Workers Planned: 1
@@ -2174,69 +2163,27 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                ->  Nested Loop (actual rows=N loops=N)
                      ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
                            Filter: (a = ANY ('{1,0,3}'::integer[]))
-                     ->  Result Cache (actual rows=N loops=N)
-                           Cache Key: a.a
-                           Hits: N  Misses: N  Evictions: 0  Overflows: 0  Memory Usage: NkB
-                           Worker 0:  Hits: N  Misses: N  Evictions: 0  Overflows: 0  Memory Usage: NkB
-                           ->  Append (actual rows=N loops=N)
-                                 ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-(31 rows)
+                     ->  Append (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+(27 rows)
 
-select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
-                                           explain_parallel_append                                            
---------------------------------------------------------------------------------------------------------------
- Finalize Aggregate (actual rows=N loops=N)
-   ->  Gather (actual rows=N loops=N)
-         Workers Planned: 1
-         Workers Launched: N
-         ->  Partial Aggregate (actual rows=N loops=N)
-               ->  Nested Loop (actual rows=N loops=N)
-                     ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
-                           Filter: (a = ANY ('{1,0,0}'::integer[]))
-                           Rows Removed by Filter: N
-                     ->  Result Cache (actual rows=N loops=N)
-                           Cache Key: a.a
-                           Hits: N  Misses: N  Evictions: 0  Overflows: 0  Memory Usage: NkB
-                           Worker 0:  Hits: N  Misses: N  Evictions: 0  Overflows: 0  Memory Usage: NkB
-                           ->  Append (actual rows=N loops=N)
-                                 ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
-                                       Index Cond: (a = a.a)
-(32 rows)
-
-delete from lprt_a where a = 1;
 select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
                                         explain_parallel_append                                         
 --------------------------------------------------------------------------------------------------------
@@ -2249,30 +2196,60 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
                            Rows Removed by Filter: N
-                     ->  Result Cache (actual rows=N loops=N)
-                           Cache Key: a.a
-                           Hits: N  Misses: N  Evictions: 0  Overflows: 0  Memory Usage: NkB
-                           Worker 0:  Hits: N  Misses: N  Evictions: 0  Overflows: 0  Memory Usage: NkB
-                           ->  Append (actual rows=N loops=N)
-                                 ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
-                                       Index Cond: (a = a.a)
-                                 ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
-                                       Index Cond: (a = a.a)
-(32 rows)
+                     ->  Append (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
+                                 Index Cond: (a = a.a)
+(28 rows)
+
+delete from lprt_a where a = 1;
+select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(1, 0, 0)');
+                                     explain_parallel_append                                     
+-------------------------------------------------------------------------------------------------
+ Finalize Aggregate (actual rows=N loops=N)
+   ->  Gather (actual rows=N loops=N)
+         Workers Planned: 1
+         Workers Launched: N
+         ->  Partial Aggregate (actual rows=N loops=N)
+               ->  Nested Loop (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
+                           Filter: (a = ANY ('{1,0,0}'::integer[]))
+                           Rows Removed by Filter: N
+                     ->  Append (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
+                                 Index Cond: (a = a.a)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
+                                 Index Cond: (a = a.a)
+(28 rows)
 
 reset enable_hashjoin;
 reset enable_mergejoin;

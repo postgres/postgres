@@ -275,13 +275,6 @@ extern ExprState *ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 										 const Oid *eqfunctions,
 										 const Oid *collations,
 										 PlanState *parent);
-extern ExprState *ExecBuildParamSetEqual(TupleDesc desc,
-										 const TupleTableSlotOps *lops,
-										 const TupleTableSlotOps *rops,
-										 const Oid *eqfunctions,
-										 const Oid *collations,
-										 const List *param_exprs,
-										 PlanState *parent);
 extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
 											   ExprContext *econtext,
 											   TupleTableSlot *slot,
