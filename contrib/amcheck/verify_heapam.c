@@ -46,6 +46,7 @@ typedef enum XidBoundsViolation
 typedef enum XidCommitStatus
 {
 	XID_COMMITTED,
+	XID_IS_CURRENT_XID,
 	XID_IN_PROGRESS,
 	XID_ABORTED
 } XidCommitStatus;
@@ -72,6 +73,8 @@ typedef struct HeapCheckContext
 	TransactionId oldest_xid;	/* ShmemVariableCache->oldestXid */
 	FullTransactionId oldest_fxid;	/* 64-bit version of oldest_xid, computed
 									 * relative to next_fxid */
+	TransactionId safe_xmin;	/* this XID and newer ones can't become
+								 * all-visible while we're running */
 
 	/*
 	 * Cached copy of value from MultiXactState
@@ -113,6 +116,9 @@ typedef struct HeapCheckContext
 	uint32		offset;			/* offset in tuple data */
 	AttrNumber	attnum;
 
+	/* True if tuple's xmax makes it eligible for pruning */
+	bool		tuple_could_be_pruned;
+
 	/* Values for iterating over toast for the attribute */
 	int32		chunkno;
 	int32		attrsize;
@@ -133,8 +139,8 @@ static void check_tuple(HeapCheckContext *ctx);
 static void check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx);
 
 static bool check_tuple_attribute(HeapCheckContext *ctx);
-static bool check_tuple_header_and_visibilty(HeapTupleHeader tuphdr,
-											 HeapCheckContext *ctx);
+static bool check_tuple_header(HeapCheckContext *ctx);
+static bool check_tuple_visibility(HeapCheckContext *ctx);
 
 static void report_corruption(HeapCheckContext *ctx, char *msg);
 static TupleDesc verify_heapam_tupdesc(void);
@@ -247,6 +253,12 @@ verify_heapam(PG_FUNCTION_ARGS)
 
 	memset(&ctx, 0, sizeof(HeapCheckContext));
 	ctx.cached_xid = InvalidTransactionId;
+
+	/*
+	 * Any xmin newer than the xmin of our snapshot can't become all-visible
+	 * while we're running.
+	 */
+	ctx.safe_xmin = GetTransactionSnapshot()->xmin;
 
 	/*
 	 * If we report corruption when not examining some individual attribute,
@@ -555,16 +567,11 @@ verify_heapam_tupdesc(void)
 }
 
 /*
- * Check for tuple header corruption and tuple visibility.
- *
- * Since we do not hold a snapshot, tuple visibility is not a question of
- * whether we should be able to see the tuple relative to any particular
- * snapshot, but rather a question of whether it is safe and reasonable to
- * check the tuple attributes.
+ * Check for tuple header corruption.
  *
  * Some kinds of corruption make it unsafe to check the tuple attributes, for
  * example when the line pointer refers to a range of bytes outside the page.
- * In such cases, we return false (not visible) after recording appropriate
+ * In such cases, we return false (not checkable) after recording appropriate
  * corruption messages.
  *
  * Some other kinds of tuple header corruption confuse the question of where
@@ -576,29 +583,18 @@ verify_heapam_tupdesc(void)
  *
  * Other kinds of tuple header corruption do not bear on the question of
  * whether the tuple attributes can be checked, so we record corruption
- * messages for them but do not base our visibility determination on them.  (In
- * other words, we do not return false merely because we detected them.)
+ * messages for them but we do not return false merely because we detected
+ * them.
  *
- * For visibility determination not specifically related to corruption, what we
- * want to know is if a tuple is potentially visible to any running
- * transaction.  If you are tempted to replace this function's visibility logic
- * with a call to another visibility checking function, keep in mind that this
- * function does not update hint bits, as it seems imprudent to write hint bits
- * (or anything at all) to a table during a corruption check.  Nor does this
- * function bother classifying tuple visibility beyond a boolean visible vs.
- * not visible.
- *
- * The caller should already have checked that xmin and xmax are not out of
- * bounds for the relation.
- *
- * Returns whether the tuple is both visible and sufficiently sensible to
- * undergo attribute checks.
+ * Returns whether the tuple is sufficiently sensible to undergo visibility and
+ * attribute checks.
  */
 static bool
-check_tuple_header_and_visibilty(HeapTupleHeader tuphdr, HeapCheckContext *ctx)
+check_tuple_header(HeapCheckContext *ctx)
 {
+	HeapTupleHeader tuphdr = ctx->tuphdr;
 	uint16		infomask = tuphdr->t_infomask;
-	bool		header_garbled = false;
+	bool		result = true;
 	unsigned	expected_hoff;
 
 	if (ctx->tuphdr->t_hoff > ctx->lp_len)
@@ -606,7 +602,7 @@ check_tuple_header_and_visibilty(HeapTupleHeader tuphdr, HeapCheckContext *ctx)
 		report_corruption(ctx,
 						  psprintf("data begins at offset %u beyond the tuple length %u",
 								   ctx->tuphdr->t_hoff, ctx->lp_len));
-		header_garbled = true;
+		result = false;
 	}
 
 	if ((ctx->tuphdr->t_infomask & HEAP_XMAX_COMMITTED) &&
@@ -616,9 +612,9 @@ check_tuple_header_and_visibilty(HeapTupleHeader tuphdr, HeapCheckContext *ctx)
 						  pstrdup("multixact should not be marked committed"));
 
 		/*
-		 * This condition is clearly wrong, but we do not consider the header
-		 * garbled, because we don't rely on this property for determining if
-		 * the tuple is visible or for interpreting other relevant header
+		 * This condition is clearly wrong, but it's not enough to justify
+		 * skipping further checks, because we don't rely on this to determine
+		 * whether the tuple is visible or to interpret other relevant header
 		 * fields.
 		 */
 	}
@@ -645,174 +641,448 @@ check_tuple_header_and_visibilty(HeapTupleHeader tuphdr, HeapCheckContext *ctx)
 			report_corruption(ctx,
 							  psprintf("tuple data should begin at byte %u, but actually begins at byte %u (%u attributes, no nulls)",
 									   expected_hoff, ctx->tuphdr->t_hoff, ctx->natts));
-		header_garbled = true;
+		result = false;
 	}
 
-	if (header_garbled)
-		return false;			/* checking of this tuple should not continue */
+	return result;
+}
+
+/*
+ * Checks tuple visibility so we know which further checks are safe to
+ * perform.
+ *
+ * If a tuple could have been inserted by a transaction that also added a
+ * column to the table, but which ultimately did not commit, or which has not
+ * yet committed, then the table's current TupleDesc might differ from the one
+ * used to construct this tuple, so we must not check it.
+ *
+ * As a special case, if our own transaction inserted the tuple, even if we
+ * added a column to the table, our TupleDesc should match.  We could check the
+ * tuple, but choose not to do so.
+ *
+ * If a tuple has been updated or deleted, we can still read the old tuple for
+ * corruption checking purposes, as long as we are careful about concurrent
+ * vacuums.  The main table tuple itself cannot be vacuumed away because we
+ * hold a buffer lock on the page, but if the deleting transaction is older
+ * than our transaction snapshot's xmin, then vacuum could remove the toast at
+ * any time, so we must not try to follow TOAST pointers.
+ *
+ * If xmin or xmax values are older than can be checked against clog, or appear
+ * to be in the future (possibly due to wrap-around), then we cannot make a
+ * determination about the visibility of the tuple, so we skip further checks.
+ *
+ * Returns true if the tuple itself should be checked, false otherwise.  Sets
+ * ctx->tuple_could_be_pruned if the tuple -- and thus also any associated
+ * TOAST tuples -- are eligible for pruning.
+ */
+static bool
+check_tuple_visibility(HeapCheckContext *ctx)
+{
+	TransactionId xmin;
+	TransactionId xvac;
+	TransactionId xmax;
+	XidCommitStatus xmin_status;
+	XidCommitStatus xvac_status;
+	XidCommitStatus xmax_status;
+	HeapTupleHeader tuphdr = ctx->tuphdr;
+
+	ctx->tuple_could_be_pruned = true;	/* have not yet proven otherwise */
+
+	/* If xmin is normal, it should be within valid range */
+	xmin = HeapTupleHeaderGetXmin(tuphdr);
+	switch (get_xid_status(xmin, ctx, &xmin_status))
+	{
+		case XID_INVALID:
+		case XID_BOUNDS_OK:
+			break;
+		case XID_IN_FUTURE:
+			report_corruption(ctx,
+							  psprintf("xmin %u equals or exceeds next valid transaction ID %u:%u",
+									   xmin,
+									   EpochFromFullTransactionId(ctx->next_fxid),
+									   XidFromFullTransactionId(ctx->next_fxid)));
+			return false;
+		case XID_PRECEDES_CLUSTERMIN:
+			report_corruption(ctx,
+							  psprintf("xmin %u precedes oldest valid transaction ID %u:%u",
+									   xmin,
+									   EpochFromFullTransactionId(ctx->oldest_fxid),
+									   XidFromFullTransactionId(ctx->oldest_fxid)));
+			return false;
+		case XID_PRECEDES_RELMIN:
+			report_corruption(ctx,
+							  psprintf("xmin %u precedes relation freeze threshold %u:%u",
+									   xmin,
+									   EpochFromFullTransactionId(ctx->relfrozenfxid),
+									   XidFromFullTransactionId(ctx->relfrozenfxid)));
+			return false;
+	}
 
 	/*
-	 * Ok, we can examine the header for tuple visibility purposes, though we
-	 * still need to be careful about a few remaining types of header
-	 * corruption.  This logic roughly follows that of
-	 * HeapTupleSatisfiesVacuum.  Where possible the comments indicate which
-	 * HTSV_Result we think that function might return for this tuple.
+	 * Has inserting transaction committed?
 	 */
 	if (!HeapTupleHeaderXminCommitted(tuphdr))
 	{
-		TransactionId raw_xmin = HeapTupleHeaderGetRawXmin(tuphdr);
-
 		if (HeapTupleHeaderXminInvalid(tuphdr))
-			return false;		/* HEAPTUPLE_DEAD */
+			return false;		/* inserter aborted, don't check */
 		/* Used by pre-9.0 binary upgrades */
-		else if (infomask & HEAP_MOVED_OFF ||
-				 infomask & HEAP_MOVED_IN)
+		else if (tuphdr->t_infomask & HEAP_MOVED_OFF)
 		{
-			XidCommitStatus status;
-			TransactionId xvac = HeapTupleHeaderGetXvac(tuphdr);
+			xvac = HeapTupleHeaderGetXvac(tuphdr);
 
-			switch (get_xid_status(xvac, ctx, &status))
+			switch (get_xid_status(xvac, ctx, &xvac_status))
 			{
 				case XID_INVALID:
 					report_corruption(ctx,
-									  pstrdup("old-style VACUUM FULL transaction ID is invalid"));
-					return false;	/* corrupt */
-				case XID_IN_FUTURE:
-					report_corruption(ctx,
-									  psprintf("old-style VACUUM FULL transaction ID %u equals or exceeds next valid transaction ID %u:%u",
-											   xvac,
-											   EpochFromFullTransactionId(ctx->next_fxid),
-											   XidFromFullTransactionId(ctx->next_fxid)));
-					return false;	/* corrupt */
-				case XID_PRECEDES_RELMIN:
-					report_corruption(ctx,
-									  psprintf("old-style VACUUM FULL transaction ID %u precedes relation freeze threshold %u:%u",
-											   xvac,
-											   EpochFromFullTransactionId(ctx->relfrozenfxid),
-											   XidFromFullTransactionId(ctx->relfrozenfxid)));
-					return false;	/* corrupt */
-					break;
-				case XID_PRECEDES_CLUSTERMIN:
-					report_corruption(ctx,
-									  psprintf("old-style VACUUM FULL transaction ID %u precedes oldest valid transaction ID %u:%u",
-											   xvac,
-											   EpochFromFullTransactionId(ctx->oldest_fxid),
-											   XidFromFullTransactionId(ctx->oldest_fxid)));
-					return false;	/* corrupt */
-					break;
-				case XID_BOUNDS_OK:
-					switch (status)
-					{
-						case XID_IN_PROGRESS:
-							return true;	/* HEAPTUPLE_DELETE_IN_PROGRESS */
-						case XID_COMMITTED:
-						case XID_ABORTED:
-							return false;	/* HEAPTUPLE_DEAD */
-					}
-			}
-		}
-		else
-		{
-			XidCommitStatus status;
-
-			switch (get_xid_status(raw_xmin, ctx, &status))
-			{
-				case XID_INVALID:
-					report_corruption(ctx,
-									  pstrdup("raw xmin is invalid"));
+									  pstrdup("old-style VACUUM FULL transaction ID for moved off tuple is invalid"));
 					return false;
 				case XID_IN_FUTURE:
 					report_corruption(ctx,
-									  psprintf("raw xmin %u equals or exceeds next valid transaction ID %u:%u",
-											   raw_xmin,
+									  psprintf("old-style VACUUM FULL transaction ID %u for moved off tuple equals or exceeds next valid transaction ID %u:%u",
+											   xvac,
 											   EpochFromFullTransactionId(ctx->next_fxid),
 											   XidFromFullTransactionId(ctx->next_fxid)));
-					return false;	/* corrupt */
+					return false;
 				case XID_PRECEDES_RELMIN:
 					report_corruption(ctx,
-									  psprintf("raw xmin %u precedes relation freeze threshold %u:%u",
-											   raw_xmin,
+									  psprintf("old-style VACUUM FULL transaction ID %u for moved off tuple precedes relation freeze threshold %u:%u",
+											   xvac,
 											   EpochFromFullTransactionId(ctx->relfrozenfxid),
 											   XidFromFullTransactionId(ctx->relfrozenfxid)));
-					return false;	/* corrupt */
+					return false;
 				case XID_PRECEDES_CLUSTERMIN:
 					report_corruption(ctx,
-									  psprintf("raw xmin %u precedes oldest valid transaction ID %u:%u",
-											   raw_xmin,
+									  psprintf("old-style VACUUM FULL transaction ID %u for moved off tuple precedes oldest valid transaction ID %u:%u",
+											   xvac,
 											   EpochFromFullTransactionId(ctx->oldest_fxid),
 											   XidFromFullTransactionId(ctx->oldest_fxid)));
-					return false;	/* corrupt */
+					return false;
 				case XID_BOUNDS_OK:
-					switch (status)
-					{
-						case XID_COMMITTED:
-							break;
-						case XID_IN_PROGRESS:
-							return true;	/* insert or delete in progress */
-						case XID_ABORTED:
-							return false;	/* HEAPTUPLE_DEAD */
-					}
+					break;
+			}
+
+			switch (xvac_status)
+			{
+				case XID_IS_CURRENT_XID:
+					report_corruption(ctx,
+									  psprintf("old-style VACUUM FULL transaction ID %u for moved off tuple matches our current transaction ID",
+											   xvac));
+					return false;
+				case XID_IN_PROGRESS:
+					report_corruption(ctx,
+									  psprintf("old-style VACUUM FULL transaction ID %u for moved off tuple appears to be in progress",
+											   xvac));
+					return false;
+
+				case XID_COMMITTED:
+					/*
+					 * The tuple is dead, because the xvac transaction moved
+					 * it off and comitted. It's checkable, but also prunable.
+					 */
+					return true;
+
+				case XID_ABORTED:
+					/*
+					 * The original xmin must have committed, because the xvac
+					 * transaction tried to move it later. Since xvac is
+					 * aborted, whether it's still alive now depends on the
+					 * status of xmax.
+					 */
+					break;
 			}
 		}
-	}
-
-	if (!(infomask & HEAP_XMAX_INVALID) && !HEAP_XMAX_IS_LOCKED_ONLY(infomask))
-	{
-		if (infomask & HEAP_XMAX_IS_MULTI)
+		/* Used by pre-9.0 binary upgrades */
+		else if (tuphdr->t_infomask & HEAP_MOVED_IN)
 		{
-			XidCommitStatus status;
-			TransactionId xmax = HeapTupleGetUpdateXid(tuphdr);
+			xvac = HeapTupleHeaderGetXvac(tuphdr);
 
-			switch (get_xid_status(xmax, ctx, &status))
+			switch (get_xid_status(xvac, ctx, &xvac_status))
 			{
-					/* not LOCKED_ONLY, so it has to have an xmax */
 				case XID_INVALID:
 					report_corruption(ctx,
-									  pstrdup("xmax is invalid"));
-					return false;	/* corrupt */
+									  pstrdup("old-style VACUUM FULL transaction ID for moved in tuple is invalid"));
+					return false;
 				case XID_IN_FUTURE:
 					report_corruption(ctx,
-									  psprintf("xmax %u equals or exceeds next valid transaction ID %u:%u",
-											   xmax,
+									  psprintf("old-style VACUUM FULL transaction ID %u for moved in tuple equals or exceeds next valid transaction ID %u:%u",
+											   xvac,
 											   EpochFromFullTransactionId(ctx->next_fxid),
 											   XidFromFullTransactionId(ctx->next_fxid)));
-					return false;	/* corrupt */
+					return false;
 				case XID_PRECEDES_RELMIN:
 					report_corruption(ctx,
-									  psprintf("xmax %u precedes relation freeze threshold %u:%u",
-											   xmax,
+									  psprintf("old-style VACUUM FULL transaction ID %u for moved in tuple precedes relation freeze threshold %u:%u",
+											   xvac,
 											   EpochFromFullTransactionId(ctx->relfrozenfxid),
 											   XidFromFullTransactionId(ctx->relfrozenfxid)));
-					return false;	/* corrupt */
+					return false;
 				case XID_PRECEDES_CLUSTERMIN:
 					report_corruption(ctx,
-									  psprintf("xmax %u precedes oldest valid transaction ID %u:%u",
-											   xmax,
+									  psprintf("old-style VACUUM FULL transaction ID %u for moved in tuple precedes oldest valid transaction ID %u:%u",
+											   xvac,
 											   EpochFromFullTransactionId(ctx->oldest_fxid),
 											   XidFromFullTransactionId(ctx->oldest_fxid)));
-					return false;	/* corrupt */
+					return false;
 				case XID_BOUNDS_OK:
-					switch (status)
-					{
-						case XID_IN_PROGRESS:
-							return true;	/* HEAPTUPLE_DELETE_IN_PROGRESS */
-						case XID_COMMITTED:
-						case XID_ABORTED:
-							return false;	/* HEAPTUPLE_RECENTLY_DEAD or
-											 * HEAPTUPLE_DEAD */
-					}
+					break;
 			}
 
-			/* Ok, the tuple is live */
+			switch (xvac_status)
+			{
+				case XID_IS_CURRENT_XID:
+					report_corruption(ctx,
+									  psprintf("old-style VACUUM FULL transaction ID %u for moved in tuple matches our current transaction ID",
+											   xvac));
+					return false;
+				case XID_IN_PROGRESS:
+					report_corruption(ctx,
+									  psprintf("old-style VACUUM FULL transaction ID %u for moved in tuple appears to be in progress",
+											   xvac));
+					return false;
+
+				case XID_COMMITTED:
+					/*
+					 * The original xmin must have committed, because the xvac
+					 * transaction moved it later. Whether it's still alive
+					 * now depends on the status of xmax.
+					 */
+					break;
+
+				case XID_ABORTED:
+					/*
+					 * The tuple is dead, because the xvac transaction moved
+					 * it off and comitted. It's checkable, but also prunable.
+					 */
+					return true;
+			}
 		}
-		else if (!(infomask & HEAP_XMAX_COMMITTED))
-			return true;		/* HEAPTUPLE_DELETE_IN_PROGRESS or
-								 * HEAPTUPLE_LIVE */
-		else
-			return false;		/* HEAPTUPLE_RECENTLY_DEAD or HEAPTUPLE_DEAD */
+		else if (xmin_status != XID_COMMITTED)
+		{
+			/*
+			 * Inserting transaction is not in progress, and not committed, so
+			 * it might have changed the TupleDesc in ways we don't know about.
+			 * Thus, don't try to check the tuple structure.
+			 *
+			 * If xmin_status happens to be XID_IS_CURRENT_XID, then in theory
+			 * any such DDL changes ought to be visible to us, so perhaps
+			 * we could check anyway in that case. But, for now, let's be
+			 * conservate and treat this like any other uncommitted insert.
+			 */
+			return false;
+		}
 	}
-	return true;				/* not dead */
+
+	/*
+	 * Okay, the inserter committed, so it was good at some point.  Now what
+	 * about the deleting transaction?
+	 */
+
+	if (tuphdr->t_infomask & HEAP_XMAX_IS_MULTI)
+	{
+		/*
+		 * xmax is a multixact, so sanity-check the MXID. Note that we do this
+		 * prior to checking for HEAP_XMAX_INVALID or HEAP_XMAX_IS_LOCKED_ONLY.
+		 * This might therefore complain about things that wouldn't actually
+		 * be a problem during a normal scan, but eventually we're going to
+		 * have to freeze, and that process will ignore hint bits.
+		 *
+		 * Even if the MXID is out of range, we still know that the original
+		 * insert committed, so we can check the tuple itself. However, we
+		 * can't rule out the possibility that this tuple is dead, so don't
+		 * clear ctx->tuple_could_be_pruned. Possibly we should go ahead and
+		 * clear that flag anyway if HEAP_XMAX_INVALID is set or if
+		 * HEAP_XMAX_IS_LOCKED_ONLY is true, but for now we err on the side
+		 * of avoiding possibly-bogus complaints about missing TOAST entries.
+		 */
+		xmax = HeapTupleHeaderGetRawXmax(tuphdr);
+		switch (check_mxid_valid_in_rel(xmax, ctx))
+		{
+			case XID_INVALID:
+				report_corruption(ctx,
+								  pstrdup("multitransaction ID is invalid"));
+				return true;
+			case XID_PRECEDES_RELMIN:
+				report_corruption(ctx,
+								  psprintf("multitransaction ID %u precedes relation minimum multitransaction ID threshold %u",
+										   xmax, ctx->relminmxid));
+				return true;
+			case XID_PRECEDES_CLUSTERMIN:
+				report_corruption(ctx,
+								  psprintf("multitransaction ID %u precedes oldest valid multitransaction ID threshold %u",
+										   xmax, ctx->oldest_mxact));
+				return true;
+			case XID_IN_FUTURE:
+				report_corruption(ctx,
+								  psprintf("multitransaction ID %u equals or exceeds next valid multitransaction ID %u",
+										   xmax,
+										   ctx->next_mxact));
+				return true;
+			case XID_BOUNDS_OK:
+				break;
+		}
+	}
+
+	if (tuphdr->t_infomask & HEAP_XMAX_INVALID)
+	{
+		/*
+		 * This tuple is live.  A concurrently running transaction could
+		 * delete it before we get around to checking the toast, but any such
+		 * running transaction is surely not less than our safe_xmin, so the
+		 * toast cannot be vacuumed out from under us.
+		 */
+		ctx->tuple_could_be_pruned = false;
+		return true;
+	}
+
+	if (HEAP_XMAX_IS_LOCKED_ONLY(tuphdr->t_infomask))
+	{
+		/*
+		 * "Deleting" xact really only locked it, so the tuple is live in any
+		 * case.  As above, a concurrently running transaction could delete
+		 * it, but it cannot be vacuumed out from under us.
+		 */
+		ctx->tuple_could_be_pruned = false;
+		return true;
+	}
+
+	if (tuphdr->t_infomask & HEAP_XMAX_IS_MULTI)
+	{
+		/*
+		 * We already checked above that this multixact is within limits for
+		 * this table.  Now check the update xid from this multixact.
+		 */
+		xmax = HeapTupleGetUpdateXid(tuphdr);
+		switch (get_xid_status(xmax, ctx, &xmax_status))
+		{
+			case XID_INVALID:
+				/* not LOCKED_ONLY, so it has to have an xmax */
+				report_corruption(ctx,
+								  pstrdup("update xid is invalid"));
+				return true;
+			case XID_IN_FUTURE:
+				report_corruption(ctx,
+								  psprintf("update xid %u equals or exceeds next valid transaction ID %u:%u",
+										   xmax,
+										   EpochFromFullTransactionId(ctx->next_fxid),
+										   XidFromFullTransactionId(ctx->next_fxid)));
+				return true;
+			case XID_PRECEDES_RELMIN:
+				report_corruption(ctx,
+								  psprintf("update xid %u precedes relation freeze threshold %u:%u",
+										   xmax,
+										   EpochFromFullTransactionId(ctx->relfrozenfxid),
+										   XidFromFullTransactionId(ctx->relfrozenfxid)));
+				return true;
+			case XID_PRECEDES_CLUSTERMIN:
+				report_corruption(ctx,
+								  psprintf("update xid %u precedes oldest valid transaction ID %u:%u",
+										   xmax,
+										   EpochFromFullTransactionId(ctx->oldest_fxid),
+										   XidFromFullTransactionId(ctx->oldest_fxid)));
+				return true;
+			case XID_BOUNDS_OK:
+				break;
+		}
+
+		switch (xmax_status)
+		{
+			case XID_IS_CURRENT_XID:
+			case XID_IN_PROGRESS:
+
+				/*
+				 * The delete is in progress, so it cannot be visible to our
+				 * snapshot.
+				 */
+				ctx->tuple_could_be_pruned = false;
+				break;
+			case XID_COMMITTED:
+
+				/*
+				 * The delete committed.  Whether the toast can be vacuumed
+				 * away depends on how old the deleting transaction is.
+				 */
+				ctx->tuple_could_be_pruned = TransactionIdPrecedes(xmax,
+																 ctx->safe_xmin);
+				break;
+			case XID_ABORTED:
+				/*
+				 * The delete aborted or crashed.  The tuple is still live.
+				 */
+				ctx->tuple_could_be_pruned = false;
+				break;
+		}
+
+		/* Tuple itself is checkable even if it's dead. */
+		return true;
+	}
+
+	/* xmax is an XID, not a MXID. Sanity check it. */
+	xmax = HeapTupleHeaderGetRawXmax(tuphdr);
+	switch (get_xid_status(xmax, ctx, &xmax_status))
+	{
+		case XID_IN_FUTURE:
+			report_corruption(ctx,
+							  psprintf("xmax %u equals or exceeds next valid transaction ID %u:%u",
+									   xmax,
+									   EpochFromFullTransactionId(ctx->next_fxid),
+									   XidFromFullTransactionId(ctx->next_fxid)));
+			return false;		/* corrupt */
+		case XID_PRECEDES_RELMIN:
+			report_corruption(ctx,
+							  psprintf("xmax %u precedes relation freeze threshold %u:%u",
+									   xmax,
+									   EpochFromFullTransactionId(ctx->relfrozenfxid),
+									   XidFromFullTransactionId(ctx->relfrozenfxid)));
+			return false;		/* corrupt */
+		case XID_PRECEDES_CLUSTERMIN:
+			report_corruption(ctx,
+							  psprintf("xmax %u precedes oldest valid transaction ID %u:%u",
+									   xmax,
+									   EpochFromFullTransactionId(ctx->oldest_fxid),
+									   XidFromFullTransactionId(ctx->oldest_fxid)));
+			return false;		/* corrupt */
+		case XID_BOUNDS_OK:
+		case XID_INVALID:
+			break;
+	}
+
+	/*
+	 * Whether the toast can be vacuumed away depends on how old the deleting
+	 * transaction is.
+	 */
+	switch (xmax_status)
+	{
+		case XID_IS_CURRENT_XID:
+		case XID_IN_PROGRESS:
+
+			/*
+			 * The delete is in progress, so it cannot be visible to our
+			 * snapshot.
+			 */
+			ctx->tuple_could_be_pruned = false;
+			break;
+
+		case XID_COMMITTED:
+			/*
+			 * The delete committed.  Whether the toast can be vacuumed away
+			 * depends on how old the deleting transaction is.
+			 */
+			ctx->tuple_could_be_pruned = TransactionIdPrecedes(xmax,
+															 ctx->safe_xmin);
+			break;
+
+		case XID_ABORTED:
+			/*
+			 * The delete aborted or crashed.  The tuple is still live.
+			 */
+			ctx->tuple_could_be_pruned = false;
+			break;
+	}
+
+	/* Tuple itself is checkable even if it's dead. */
+	return true;
 }
+
 
 /*
  * Check the current toast tuple against the state tracked in ctx, recording
@@ -1247,7 +1517,10 @@ check_tuple(HeapCheckContext *ctx)
 	 * corrupt to continue checking, or if the tuple is not visible to anyone,
 	 * we cannot continue with other checks.
 	 */
-	if (!check_tuple_header_and_visibilty(ctx->tuphdr, ctx))
+	if (!check_tuple_header(ctx))
+		return;
+
+	if (!check_tuple_visibility(ctx))
 		return;
 
 	/*
@@ -1448,13 +1721,13 @@ get_xid_status(TransactionId xid, HeapCheckContext *ctx,
 	if (FullTransactionIdPrecedesOrEquals(clog_horizon, fxid))
 	{
 		if (TransactionIdIsCurrentTransactionId(xid))
+			*status = XID_IS_CURRENT_XID;
+		else if (TransactionIdIsInProgress(xid))
 			*status = XID_IN_PROGRESS;
 		else if (TransactionIdDidCommit(xid))
 			*status = XID_COMMITTED;
-		else if (TransactionIdDidAbort(xid))
-			*status = XID_ABORTED;
 		else
-			*status = XID_IN_PROGRESS;
+			*status = XID_ABORTED;
 	}
 	LWLockRelease(XactTruncationLock);
 	ctx->cached_xid = xid;
