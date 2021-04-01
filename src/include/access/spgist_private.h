@@ -266,6 +266,14 @@ typedef struct SpGistCache
  * header/optional prefix/array of nodes, which are SpGistNodeTuples
  *
  * size and prefixSize must be multiples of MAXALIGN
+ *
+ * If the prefix datum is of a pass-by-value type, it is stored in its
+ * Datum representation, that is its on-disk representation is of length
+ * sizeof(Datum).  This is a fairly unfortunate choice, because in no other
+ * place does Postgres use Datum as an on-disk representation; it creates
+ * an unnecessary incompatibility between 32-bit and 64-bit builds.  But the
+ * compatibility loss is mostly theoretical since MAXIMUM_ALIGNOF typically
+ * differs between such builds, too.  Anyway we're stuck with it now.
  */
 typedef struct SpGistInnerTupleData
 {
@@ -307,8 +315,7 @@ typedef SpGistInnerTupleData *SpGistInnerTuple;
  * Node tuples use the same header as ordinary Postgres IndexTuples, but
  * we do not use a null bitmap, because we know there is only one column
  * so the INDEX_NULL_MASK bit suffices.  Also, pass-by-value datums are
- * stored as a full Datum, the same convention as for inner tuple prefixes
- * and leaf tuple datums.
+ * stored in Datum form, the same convention as for inner tuple prefixes.
  */
 
 typedef IndexTupleData SpGistNodeTupleData;
@@ -322,11 +329,14 @@ typedef SpGistNodeTupleData *SpGistNodeTuple;
 							 PointerGetDatum(SGNTDATAPTR(x)))
 
 /*
- * SPGiST leaf tuple: carries a datum and a heap tuple TID
+ * SPGiST leaf tuple: carries a leaf datum and a heap tuple TID
  *
- * In the simplest case, the datum is the same as the indexed value; but
- * it could also be a suffix or some other sort of delta that permits
+ * In the simplest case, the leaf datum is the same as the indexed value;
+ * but it could also be a suffix or some other sort of delta that permits
  * reconstruction given knowledge of the prefix path traversed to get here.
+ *
+ * If the leaf datum is NULL, it's not stored.  This is not represented
+ * explicitly; we infer it from the tuple being stored on a nulls page.
  *
  * The size field is wider than could possibly be needed for an on-disk leaf
  * tuple, but this allows us to form leaf tuples even when the datum is too
@@ -339,13 +349,8 @@ typedef SpGistNodeTupleData *SpGistNodeTuple;
  *
  * size must be a multiple of MAXALIGN; also, it must be at least SGDTSIZE
  * so that the tuple can be converted to REDIRECT status later.  (This
- * restriction only adds bytes for the null-datum case, otherwise alignment
- * restrictions force it anyway.)
- *
- * In a leaf tuple for a NULL indexed value, there's no useful datum value;
- * however, the SGDTSIZE limit ensures that's there's a Datum word there
- * anyway, so SGLTDATUM can be applied safely as long as you don't do
- * anything with the result.
+ * restriction only adds bytes for a NULL leaf datum stored on a 32-bit
+ * machine; otherwise alignment restrictions force it anyway.)
  */
 typedef struct SpGistLeafTupleData
 {
@@ -353,16 +358,16 @@ typedef struct SpGistLeafTupleData
 				size:30;		/* large enough for any palloc'able value */
 	OffsetNumber nextOffset;	/* next tuple in chain, or InvalidOffsetNumber */
 	ItemPointerData heapPtr;	/* TID of represented heap tuple */
-	/* leaf datum follows */
+	/* leaf datum follows on a MAXALIGN boundary */
 } SpGistLeafTupleData;
 
 typedef SpGistLeafTupleData *SpGistLeafTuple;
 
 #define SGLTHDRSZ			MAXALIGN(sizeof(SpGistLeafTupleData))
 #define SGLTDATAPTR(x)		(((char *) (x)) + SGLTHDRSZ)
-#define SGLTDATUM(x, s)		((s)->attLeafType.attbyval ? \
-							 *(Datum *) SGLTDATAPTR(x) : \
-							 PointerGetDatum(SGLTDATAPTR(x)))
+#define SGLTDATUM(x, s)		fetch_att(SGLTDATAPTR(x), \
+									  (s)->attLeafType.attbyval, \
+									  (s)->attLeafType.attlen)
 
 /*
  * SPGiST dead tuple: declaration for examining non-live tuples
@@ -455,7 +460,8 @@ extern void SpGistSetLastUsedPage(Relation index, Buffer buffer);
 extern void SpGistInitPage(Page page, uint16 f);
 extern void SpGistInitBuffer(Buffer b, uint16 f);
 extern void SpGistInitMetapage(Page page);
-extern unsigned int SpGistGetTypeSize(SpGistTypeDesc *att, Datum datum);
+extern unsigned int SpGistGetInnerTypeSize(SpGistTypeDesc *att, Datum datum);
+extern unsigned int SpGistGetLeafTypeSize(SpGistTypeDesc *att, Datum datum);
 extern SpGistLeafTuple spgFormLeafTuple(SpGistState *state,
 										ItemPointer heapPtr,
 										Datum datum, bool isnull);

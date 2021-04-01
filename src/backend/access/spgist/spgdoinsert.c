@@ -731,13 +731,6 @@ doPickSplit(Relation index, SpGistState *state,
 	 * also, count up the amount of space that will be freed from current.
 	 * (Note that in the non-root case, we won't actually delete the old
 	 * tuples, only replace them with redirects or placeholders.)
-	 *
-	 * Note: the SGLTDATUM calls here are safe even when dealing with a nulls
-	 * page.  For a pass-by-value data type we will fetch a word that must
-	 * exist even though it may contain garbage (because of the fact that leaf
-	 * tuples must have size at least SGDTSIZE).  For a pass-by-reference type
-	 * we are just computing a pointer that isn't going to get dereferenced.
-	 * So it's not worth guarding the calls with isNulls checks.
 	 */
 	nToInsert = 0;
 	nToDelete = 0;
@@ -757,7 +750,8 @@ doPickSplit(Relation index, SpGistState *state,
 											   PageGetItemId(current->page, i));
 			if (it->tupstate == SPGIST_LIVE)
 			{
-				in.datums[nToInsert] = SGLTDATUM(it, state);
+				in.datums[nToInsert] =
+					isNulls ? (Datum) 0 : SGLTDATUM(it, state);
 				heapPtrs[nToInsert] = it->heapPtr;
 				nToInsert++;
 				toDelete[nToDelete] = i;
@@ -782,7 +776,8 @@ doPickSplit(Relation index, SpGistState *state,
 											   PageGetItemId(current->page, i));
 			if (it->tupstate == SPGIST_LIVE)
 			{
-				in.datums[nToInsert] = SGLTDATUM(it, state);
+				in.datums[nToInsert] =
+					isNulls ? (Datum) 0 : SGLTDATUM(it, state);
 				heapPtrs[nToInsert] = it->heapPtr;
 				nToInsert++;
 				toDelete[nToDelete] = i;
@@ -814,7 +809,8 @@ doPickSplit(Relation index, SpGistState *state,
 	 * space to include it; and in any case it has to be included in the input
 	 * for the picksplit function.  So don't increment nToInsert yet.
 	 */
-	in.datums[in.nTuples] = SGLTDATUM(newLeafTuple, state);
+	in.datums[in.nTuples] =
+		isNulls ? (Datum) 0 : SGLTDATUM(newLeafTuple, state);
 	heapPtrs[in.nTuples] = newLeafTuple->heapPtr;
 	in.nTuples++;
 
@@ -1940,17 +1936,21 @@ spgdoinsert(Relation index, SpGistState *state,
 		leafDatum = (Datum) 0;
 
 	/*
-	 * Compute space needed for a leaf tuple containing the given datum.
-	 *
+	 * Compute space needed for a leaf tuple containing the given datum. This
+	 * must match spgFormLeafTuple.
+	 */
+	leafSize = SGLTHDRSZ;
+	if (!isnull)
+		leafSize += SpGistGetLeafTypeSize(&state->attLeafType, leafDatum);
+	if (leafSize < SGDTSIZE)
+		leafSize = SGDTSIZE;
+	/* Account for an item pointer, too */
+	leafSize += sizeof(ItemIdData);
+
+	/*
 	 * If it isn't gonna fit, and the opclass can't reduce the datum size by
 	 * suffixing, bail out now rather than getting into an endless loop.
 	 */
-	if (!isnull)
-		leafSize = SGLTHDRSZ + sizeof(ItemIdData) +
-			SpGistGetTypeSize(&state->attLeafType, leafDatum);
-	else
-		leafSize = SGDTSIZE + sizeof(ItemIdData);
-
 	if (leafSize > SPGIST_PAGE_CAPACITY && !state->config.longValuesOK)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
@@ -2161,8 +2161,9 @@ spgdoinsert(Relation index, SpGistState *state,
 					if (!isnull)
 					{
 						leafDatum = out.result.matchNode.restDatum;
-						leafSize = SGLTHDRSZ + sizeof(ItemIdData) +
-							SpGistGetTypeSize(&state->attLeafType, leafDatum);
+						leafSize = SGLTHDRSZ +
+							SpGistGetLeafTypeSize(&state->attLeafType, leafDatum);
+						leafSize += sizeof(ItemIdData);
 					}
 
 					/*

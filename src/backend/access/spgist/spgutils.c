@@ -603,13 +603,14 @@ spgoptions(Datum reloptions, bool validate)
 }
 
 /*
- * Get the space needed to store a non-null datum of the indicated type.
+ * Get the space needed to store a non-null datum of the indicated type
+ * in an inner tuple (that is, as a prefix or node label).
  * Note the result is already rounded up to a MAXALIGN boundary.
- * Also, we follow the SPGiST convention that pass-by-val types are
- * just stored in their Datum representation (compare memcpyDatum).
+ * Here we follow the convention that pass-by-val types are just stored
+ * in their Datum representation (compare memcpyInnerDatum).
  */
 unsigned int
-SpGistGetTypeSize(SpGistTypeDesc *att, Datum datum)
+SpGistGetInnerTypeSize(SpGistTypeDesc *att, Datum datum)
 {
 	unsigned int size;
 
@@ -624,16 +625,53 @@ SpGistGetTypeSize(SpGistTypeDesc *att, Datum datum)
 }
 
 /*
- * Copy the given non-null datum to *target
+ * Get the space needed to store a non-null datum of the indicated type
+ * in a leaf tuple.  This is just the usual storage space for the type,
+ * but rounded up to a MAXALIGN boundary.
+ */
+unsigned int
+SpGistGetLeafTypeSize(SpGistTypeDesc *att, Datum datum)
+{
+	unsigned int size;
+
+	if (att->attlen > 0)
+		size = att->attlen;
+	else
+		size = VARSIZE_ANY(datum);
+
+	return MAXALIGN(size);
+}
+
+/*
+ * Copy the given non-null datum to *target, in the inner-tuple case
  */
 static void
-memcpyDatum(void *target, SpGistTypeDesc *att, Datum datum)
+memcpyInnerDatum(void *target, SpGistTypeDesc *att, Datum datum)
 {
 	unsigned int size;
 
 	if (att->attbyval)
 	{
 		memcpy(target, &datum, sizeof(Datum));
+	}
+	else
+	{
+		size = (att->attlen > 0) ? att->attlen : VARSIZE_ANY(datum);
+		memcpy(target, DatumGetPointer(datum), size);
+	}
+}
+
+/*
+ * Copy the given non-null datum to *target, in the leaf-tuple case
+ */
+static void
+memcpyLeafDatum(void *target, SpGistTypeDesc *att, Datum datum)
+{
+	unsigned int size;
+
+	if (att->attbyval)
+	{
+		store_att_byval(target, datum, att->attlen);
 	}
 	else
 	{
@@ -655,7 +693,7 @@ spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
 	/* compute space needed (note result is already maxaligned) */
 	size = SGLTHDRSZ;
 	if (!isnull)
-		size += SpGistGetTypeSize(&state->attLeafType, datum);
+		size += SpGistGetLeafTypeSize(&state->attLeafType, datum);
 
 	/*
 	 * Ensure that we can replace the tuple with a dead tuple later.  This
@@ -671,7 +709,7 @@ spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
 	tup->nextOffset = InvalidOffsetNumber;
 	tup->heapPtr = *heapPtr;
 	if (!isnull)
-		memcpyDatum(SGLTDATAPTR(tup), &state->attLeafType, datum);
+		memcpyLeafDatum(SGLTDATAPTR(tup), &state->attLeafType, datum);
 
 	return tup;
 }
@@ -692,7 +730,7 @@ spgFormNodeTuple(SpGistState *state, Datum label, bool isnull)
 	/* compute space needed (note result is already maxaligned) */
 	size = SGNTHDRSZ;
 	if (!isnull)
-		size += SpGistGetTypeSize(&state->attLabelType, label);
+		size += SpGistGetInnerTypeSize(&state->attLabelType, label);
 
 	/*
 	 * Here we make sure that the size will fit in the field reserved for it
@@ -716,7 +754,7 @@ spgFormNodeTuple(SpGistState *state, Datum label, bool isnull)
 	ItemPointerSetInvalid(&tup->t_tid);
 
 	if (!isnull)
-		memcpyDatum(SGNTDATAPTR(tup), &state->attLabelType, label);
+		memcpyInnerDatum(SGNTDATAPTR(tup), &state->attLabelType, label);
 
 	return tup;
 }
@@ -736,7 +774,7 @@ spgFormInnerTuple(SpGistState *state, bool hasPrefix, Datum prefix,
 
 	/* Compute size needed */
 	if (hasPrefix)
-		prefixSize = SpGistGetTypeSize(&state->attPrefixType, prefix);
+		prefixSize = SpGistGetInnerTypeSize(&state->attPrefixType, prefix);
 	else
 		prefixSize = 0;
 
@@ -781,7 +819,7 @@ spgFormInnerTuple(SpGistState *state, bool hasPrefix, Datum prefix,
 	tup->size = size;
 
 	if (hasPrefix)
-		memcpyDatum(SGITDATAPTR(tup), &state->attPrefixType, prefix);
+		memcpyInnerDatum(SGITDATAPTR(tup), &state->attPrefixType, prefix);
 
 	ptr = (char *) SGITNODEPTR(tup);
 
