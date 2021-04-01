@@ -826,7 +826,8 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     tables are not dropped or modified in incompatible ways while the
     command executes.  (For example, <command>TRUNCATE</command> cannot safely be
     executed concurrently with other operations on the same table, so it
-    obtains an exclusive lock on the table to enforce that.)
+    obtains an <literal>ACCESS EXCLUSIVE</literal> lock on the table to
+    enforce that.)
    </para>
 
    <para>
