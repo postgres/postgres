@@ -2664,6 +2664,14 @@ ReorderBufferPrepare(ReorderBuffer *rb, TransactionId xid,
 
 	ReorderBufferReplay(txn, rb, xid, txn->final_lsn, txn->end_lsn,
 						txn->commit_time, txn->origin_id, txn->origin_lsn);
+
+	/*
+	 * We send the prepare for the concurrently aborted xacts so that later
+	 * when rollback prepared is decoded and sent, the downstream should be
+	 * able to rollback such a xact. See comments atop DecodePrepare.
+	 */
+	if (txn->concurrent_abort)
+		rb->prepare(rb, txn, txn->final_lsn);
 }
 
 /*

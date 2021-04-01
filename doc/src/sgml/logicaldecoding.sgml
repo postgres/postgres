@@ -545,12 +545,15 @@ CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
      executed within that transaction. A transaction that is prepared for
      a two-phase commit using <command>PREPARE TRANSACTION</command> will
      also be decoded if the output plugin callbacks needed for decoding
-     them are provided. It is possible that the current transaction which
-     is being decoded is aborted concurrently via a <command>ROLLBACK PREPARED</command>
-     command. In that case, the logical decoding of this transaction will
-     be aborted too. We will skip all the changes of such a transaction once
-     the abort is detected and abort the transaction when we read WAL for
-     <command>ROLLBACK PREPARED</command>.
+     them are provided. It is possible that the current prepared transaction
+     which is being decoded is aborted concurrently via a
+     <command>ROLLBACK PREPARED</command> command. In that case, the logical
+     decoding of this transaction will be aborted too. All the changes of such
+     a transaction are skipped once the abort is detected and the
+     <function>prepare_cb</function> callback is invoked. Thus even in case of
+     a concurrent abort, enough information is provided to the output plugin
+     for it to properly deal with <command>ROLLBACK PREPARED</command> once
+     that is decoded.
     </para>
 
     <note>
