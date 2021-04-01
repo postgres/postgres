@@ -610,8 +610,9 @@ UPDATE tablename SET hstorecol = hstorecol || '';
 <programlisting>
 ALTER TABLE tablename ALTER hstorecol TYPE hstore USING hstorecol || '';
 </programlisting>
-   The <command>ALTER TABLE</> method requires an exclusive lock on the table,
-   but does not result in bloating the table with old row versions.
+   The <command>ALTER TABLE</> method requires an <literal>ACCESS EXCLUSIVE</>
+   lock on the table, but does not result in bloating the table with old row
+   versions.
   </para>
 
  </sect2>
