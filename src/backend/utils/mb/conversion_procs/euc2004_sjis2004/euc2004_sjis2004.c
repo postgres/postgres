@@ -19,8 +19,8 @@ PG_MODULE_MAGIC;
 PG_FUNCTION_INFO_V1(euc_jis_2004_to_shift_jis_2004);
 PG_FUNCTION_INFO_V1(shift_jis_2004_to_euc_jis_2004);
 
-static void euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len);
-static void shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len);
+static int	euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len, bool noError);
+static int	shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len, bool noError);
 
 /* ----------
  * conv_proc(
@@ -28,8 +28,11 @@ static void shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char
  *		INTEGER,	-- destination encoding id
  *		CSTRING,	-- source string (null terminated C string)
  *		CSTRING,	-- destination string (null terminated C string)
- *		INTEGER		-- source string length
- * ) returns VOID;
+ *		INTEGER,	-- source string length
+ *		BOOL		-- if true, don't throw an error if conversion fails
+ * ) returns INTEGER;
+ *
+ * Returns the number of bytes successfully converted.
  * ----------
  */
 
@@ -39,12 +42,14 @@ euc_jis_2004_to_shift_jis_2004(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	bool		noError = PG_GETARG_BOOL(5);
+	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_JIS_2004, PG_SHIFT_JIS_2004);
 
-	euc_jis_20042shift_jis_2004(src, dest, len);
+	converted = euc_jis_20042shift_jis_2004(src, dest, len, noError);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(converted);
 }
 
 Datum
@@ -53,20 +58,23 @@ shift_jis_2004_to_euc_jis_2004(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	bool		noError = PG_GETARG_BOOL(5);
+	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_SHIFT_JIS_2004, PG_EUC_JIS_2004);
 
-	shift_jis_20042euc_jis_2004(src, dest, len);
+	converted = shift_jis_20042euc_jis_2004(src, dest, len, noError);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(converted);
 }
 
 /*
  * EUC_JIS_2004 -> SHIFT_JIS_2004
  */
-static void
-euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
+static int
+euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len, bool noError)
 {
+	const unsigned char *start = euc;
 	int			c1,
 				ku,
 				ten;
@@ -79,8 +87,12 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
 		{
 			/* ASCII */
 			if (c1 == 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_EUC_JIS_2004,
 										(const char *) euc, len);
+			}
 			*p++ = c1;
 			euc++;
 			len--;
@@ -90,8 +102,12 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
 		l = pg_encoding_verifymbchar(PG_EUC_JIS_2004, (const char *) euc, len);
 
 		if (l < 0)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(PG_EUC_JIS_2004,
 									(const char *) euc, len);
+		}
 
 		if (c1 == SS2 && l == 2)	/* JIS X 0201 kana? */
 		{
@@ -121,8 +137,12 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
 						*p++ = (ku + 0x19b) >> 1;
 					}
 					else
+					{
+						if (noError)
+							break;
 						report_invalid_encoding(PG_EUC_JIS_2004,
 												(const char *) euc, len);
+					}
 			}
 
 			if (ku % 2)
@@ -132,8 +152,12 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
 				else if (ten >= 64 && ten <= 94)
 					*p++ = ten + 0x40;
 				else
+				{
+					if (noError)
+						break;
 					report_invalid_encoding(PG_EUC_JIS_2004,
 											(const char *) euc, len);
+				}
 			}
 			else
 				*p++ = ten + 0x9e;
@@ -149,8 +173,12 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
 			else if (ku >= 63 && ku <= 94)
 				*p++ = (ku + 0x181) >> 1;
 			else
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_EUC_JIS_2004,
 										(const char *) euc, len);
+			}
 
 			if (ku % 2)
 			{
@@ -159,20 +187,30 @@ euc_jis_20042shift_jis_2004(const unsigned char *euc, unsigned char *p, int len)
 				else if (ten >= 64 && ten <= 94)
 					*p++ = ten + 0x40;
 				else
+				{
+					if (noError)
+						break;
 					report_invalid_encoding(PG_EUC_JIS_2004,
 											(const char *) euc, len);
+				}
 			}
 			else
 				*p++ = ten + 0x9e;
 		}
 		else
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(PG_EUC_JIS_2004,
 									(const char *) euc, len);
+		}
 
 		euc += l;
 		len -= l;
 	}
 	*p = '\0';
+
+	return euc - start;
 }
 
 /*
@@ -212,9 +250,10 @@ get_ten(int b, int *ku)
  * SHIFT_JIS_2004 ---> EUC_JIS_2004
  */
 
-static void
-shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len)
+static int
+shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len, bool noError)
 {
+	const unsigned char *start = sjis;
 	int			c1;
 	int			ku,
 				ten,
@@ -230,8 +269,12 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 		{
 			/* ASCII */
 			if (c1 == 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_SHIFT_JIS_2004,
 										(const char *) sjis, len);
+			}
 			*p++ = c1;
 			sjis++;
 			len--;
@@ -241,8 +284,12 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 		l = pg_encoding_verifymbchar(PG_SHIFT_JIS_2004, (const char *) sjis, len);
 
 		if (l < 0 || l > len)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(PG_SHIFT_JIS_2004,
 									(const char *) sjis, len);
+		}
 
 		if (c1 >= 0xa1 && c1 <= 0xdf && l == 1)
 		{
@@ -266,8 +313,12 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 				ku = (c1 << 1) - 0x100;
 				ten = get_ten(c2, &kubun);
 				if (ten < 0)
+				{
+					if (noError)
+						break;
 					report_invalid_encoding(PG_SHIFT_JIS_2004,
 											(const char *) sjis, len);
+				}
 				ku -= kubun;
 			}
 			else if (c1 >= 0xe0 && c1 <= 0xef)	/* plane 1 62ku-94ku */
@@ -275,9 +326,12 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 				ku = (c1 << 1) - 0x180;
 				ten = get_ten(c2, &kubun);
 				if (ten < 0)
+				{
+					if (noError)
+						break;
 					report_invalid_encoding(PG_SHIFT_JIS_2004,
-
 											(const char *) sjis, len);
+				}
 				ku -= kubun;
 			}
 			else if (c1 >= 0xf0 && c1 <= 0xf3)	/* plane 2
@@ -286,8 +340,12 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 				plane = 2;
 				ten = get_ten(c2, &kubun);
 				if (ten < 0)
+				{
+					if (noError)
+						break;
 					report_invalid_encoding(PG_SHIFT_JIS_2004,
 											(const char *) sjis, len);
+				}
 				switch (c1)
 				{
 					case 0xf0:
@@ -309,16 +367,24 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 				plane = 2;
 				ten = get_ten(c2, &kubun);
 				if (ten < 0)
+				{
+					if (noError)
+						break;
 					report_invalid_encoding(PG_SHIFT_JIS_2004,
 											(const char *) sjis, len);
+				}
 				if (c1 == 0xf4 && kubun == 1)
 					ku = 15;
 				else
 					ku = (c1 << 1) - 0x19a - kubun;
 			}
 			else
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_SHIFT_JIS_2004,
 										(const char *) sjis, len);
+			}
 
 			if (plane == 2)
 				*p++ = SS3;
@@ -330,4 +396,6 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 		len -= l;
 	}
 	*p = '\0';
+
+	return sjis - start;
 }

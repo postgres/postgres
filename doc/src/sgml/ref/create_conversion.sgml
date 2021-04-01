@@ -117,9 +117,15 @@ conv_proc(
     integer,  -- destination encoding ID
     cstring,  -- source string (null terminated C string)
     internal, -- destination (fill with a null terminated C string)
-    integer   -- source string length
-) RETURNS void;
-</programlisting></para>
+    integer,  -- source string length
+    boolean   -- if true, don't throw an error if conversion fails
+) RETURNS integer;
+</programlisting>
+       The return value is the number of source bytes that were successfully
+       converted. If the last argument is false, the function must throw an
+       error on invalid input, and the return value is always equal to the
+       source string length.
+      </para>
      </listitem>
     </varlistentry>
    </variablelist>

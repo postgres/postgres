@@ -2271,6 +2271,8 @@ write_console(const char *line, int len)
 	 * Conversion on non-win32 platforms is not implemented yet. It requires
 	 * non-throw version of pg_do_encoding_conversion(), that converts
 	 * unconvertable characters to '?' without errors.
+	 *
+	 * XXX: We have a no-throw version now. It doesn't convert to '?' though.
 	 */
 #endif
 

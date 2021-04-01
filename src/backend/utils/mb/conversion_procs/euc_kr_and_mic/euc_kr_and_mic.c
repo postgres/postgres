@@ -26,13 +26,16 @@ PG_FUNCTION_INFO_V1(mic_to_euc_kr);
  *		INTEGER,	-- destination encoding id
  *		CSTRING,	-- source string (null terminated C string)
  *		CSTRING,	-- destination string (null terminated C string)
- *		INTEGER		-- source string length
- * ) returns VOID;
+ *		INTEGER,	-- source string length
+ *		BOOL		-- if true, don't throw an error if conversion fails
+ * ) returns INTEGER;
+ *
+ * Returns the number of bytes successfully converted.
  * ----------
  */
 
-static void euc_kr2mic(const unsigned char *euc, unsigned char *p, int len);
-static void mic2euc_kr(const unsigned char *mic, unsigned char *p, int len);
+static int	euc_kr2mic(const unsigned char *euc, unsigned char *p, int len, bool noError);
+static int	mic2euc_kr(const unsigned char *mic, unsigned char *p, int len, bool noError);
 
 Datum
 euc_kr_to_mic(PG_FUNCTION_ARGS)
@@ -40,12 +43,14 @@ euc_kr_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	bool		noError = PG_GETARG_BOOL(5);
+	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_KR, PG_MULE_INTERNAL);
 
-	euc_kr2mic(src, dest, len);
+	converted = euc_kr2mic(src, dest, len, noError);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(converted);
 }
 
 Datum
@@ -54,20 +59,23 @@ mic_to_euc_kr(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	bool		noError = PG_GETARG_BOOL(5);
+	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_EUC_KR);
 
-	mic2euc_kr(src, dest, len);
+	converted = mic2euc_kr(src, dest, len, noError);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(converted);
 }
 
 /*
  * EUC_KR ---> MIC
  */
-static void
-euc_kr2mic(const unsigned char *euc, unsigned char *p, int len)
+static int
+euc_kr2mic(const unsigned char *euc, unsigned char *p, int len, bool noError)
 {
+	const unsigned char *start = euc;
 	int			c1;
 	int			l;
 
@@ -78,8 +86,12 @@ euc_kr2mic(const unsigned char *euc, unsigned char *p, int len)
 		{
 			l = pg_encoding_verifymbchar(PG_EUC_KR, (const char *) euc, len);
 			if (l != 2)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_EUC_KR,
 										(const char *) euc, len);
+			}
 			*p++ = LC_KS5601;
 			*p++ = c1;
 			*p++ = euc[1];
@@ -89,22 +101,29 @@ euc_kr2mic(const unsigned char *euc, unsigned char *p, int len)
 		else
 		{						/* should be ASCII */
 			if (c1 == 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_EUC_KR,
 										(const char *) euc, len);
+			}
 			*p++ = c1;
 			euc++;
 			len--;
 		}
 	}
 	*p = '\0';
+
+	return euc - start;
 }
 
 /*
  * MIC ---> EUC_KR
  */
-static void
-mic2euc_kr(const unsigned char *mic, unsigned char *p, int len)
+static int
+mic2euc_kr(const unsigned char *mic, unsigned char *p, int len, bool noError)
 {
+	const unsigned char *start = mic;
 	int			c1;
 	int			l;
 
@@ -115,8 +134,12 @@ mic2euc_kr(const unsigned char *mic, unsigned char *p, int len)
 		{
 			/* ASCII */
 			if (c1 == 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_MULE_INTERNAL,
 										(const char *) mic, len);
+			}
 			*p++ = c1;
 			mic++;
 			len--;
@@ -124,18 +147,28 @@ mic2euc_kr(const unsigned char *mic, unsigned char *p, int len)
 		}
 		l = pg_encoding_verifymbchar(PG_MULE_INTERNAL, (const char *) mic, len);
 		if (l < 0)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(PG_MULE_INTERNAL,
 									(const char *) mic, len);
+		}
 		if (c1 == LC_KS5601)
 		{
 			*p++ = mic[1];
 			*p++ = mic[2];
 		}
 		else
+		{
+			if (noError)
+				break;
 			report_untranslatable_char(PG_MULE_INTERNAL, PG_EUC_KR,
 									   (const char *) mic, len);
+		}
 		mic += l;
 		len -= l;
 	}
 	*p = '\0';
+
+	return mic - start;
 }

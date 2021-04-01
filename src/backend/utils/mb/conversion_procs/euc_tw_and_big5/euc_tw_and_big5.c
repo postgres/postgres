@@ -32,17 +32,20 @@ PG_FUNCTION_INFO_V1(mic_to_big5);
  *		INTEGER,	-- destination encoding id
  *		CSTRING,	-- source string (null terminated C string)
  *		CSTRING,	-- destination string (null terminated C string)
- *		INTEGER		-- source string length
- * ) returns VOID;
+ *		INTEGER,	-- source string length
+ *		BOOL		-- if true, don't throw an error if conversion fails
+ * ) returns INTEGER;
+ *
+ * Returns the number of bytes successfully converted.
  * ----------
  */
 
-static void euc_tw2big5(const unsigned char *euc, unsigned char *p, int len);
-static void big52euc_tw(const unsigned char *euc, unsigned char *p, int len);
-static void big52mic(const unsigned char *big5, unsigned char *p, int len);
-static void mic2big5(const unsigned char *mic, unsigned char *p, int len);
-static void euc_tw2mic(const unsigned char *euc, unsigned char *p, int len);
-static void mic2euc_tw(const unsigned char *mic, unsigned char *p, int len);
+static int	euc_tw2big5(const unsigned char *euc, unsigned char *p, int len, bool noError);
+static int	big52euc_tw(const unsigned char *euc, unsigned char *p, int len, bool noError);
+static int	big52mic(const unsigned char *big5, unsigned char *p, int len, bool noError);
+static int	mic2big5(const unsigned char *mic, unsigned char *p, int len, bool noError);
+static int	euc_tw2mic(const unsigned char *euc, unsigned char *p, int len, bool noError);
+static int	mic2euc_tw(const unsigned char *mic, unsigned char *p, int len, bool noError);
 
 Datum
 euc_tw_to_big5(PG_FUNCTION_ARGS)
@@ -50,12 +53,14 @@ euc_tw_to_big5(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	bool		noError = PG_GETARG_BOOL(5);
+	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_TW, PG_BIG5);
 
-	euc_tw2big5(src, dest, len);
+	converted = euc_tw2big5(src, dest, len, noError);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(converted);
 }
 
 Datum
@@ -64,12 +69,14 @@ big5_to_euc_tw(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	bool		noError = PG_GETARG_BOOL(5);
+	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_BIG5, PG_EUC_TW);
 
-	big52euc_tw(src, dest, len);
+	converted = big52euc_tw(src, dest, len, noError);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(converted);
 }
 
 Datum
@@ -78,12 +85,14 @@ euc_tw_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	bool		noError = PG_GETARG_BOOL(5);
+	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_TW, PG_MULE_INTERNAL);
 
-	euc_tw2mic(src, dest, len);
+	converted = euc_tw2mic(src, dest, len, noError);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(converted);
 }
 
 Datum
@@ -92,12 +101,14 @@ mic_to_euc_tw(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	bool		noError = PG_GETARG_BOOL(5);
+	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_EUC_TW);
 
-	mic2euc_tw(src, dest, len);
+	converted = mic2euc_tw(src, dest, len, noError);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(converted);
 }
 
 Datum
@@ -106,12 +117,14 @@ big5_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	bool		noError = PG_GETARG_BOOL(5);
+	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_BIG5, PG_MULE_INTERNAL);
 
-	big52mic(src, dest, len);
+	converted = big52mic(src, dest, len, noError);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(converted);
 }
 
 Datum
@@ -120,21 +133,24 @@ mic_to_big5(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	bool		noError = PG_GETARG_BOOL(5);
+	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_BIG5);
 
-	mic2big5(src, dest, len);
+	converted = mic2big5(src, dest, len, noError);
 
-	PG_RETURN_VOID();
+	PG_RETURN_INT32(converted);
 }
 
 
 /*
  * EUC_TW ---> Big5
  */
-static void
-euc_tw2big5(const unsigned char *euc, unsigned char *p, int len)
+static int
+euc_tw2big5(const unsigned char *euc, unsigned char *p, int len, bool noError)
 {
+	const unsigned char *start = euc;
 	unsigned char c1;
 	unsigned short big5buf,
 				cnsBuf;
@@ -149,8 +165,12 @@ euc_tw2big5(const unsigned char *euc, unsigned char *p, int len)
 			/* Verify and decode the next EUC_TW input character */
 			l = pg_encoding_verifymbchar(PG_EUC_TW, (const char *) euc, len);
 			if (l < 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_EUC_TW,
 										(const char *) euc, len);
+			}
 			if (c1 == SS2)
 			{
 				c1 = euc[1];	/* plane No. */
@@ -171,8 +191,12 @@ euc_tw2big5(const unsigned char *euc, unsigned char *p, int len)
 			/* Write it out in Big5 */
 			big5buf = CNStoBIG5(cnsBuf, lc);
 			if (big5buf == 0)
+			{
+				if (noError)
+					break;
 				report_untranslatable_char(PG_EUC_TW, PG_BIG5,
 										   (const char *) euc, len);
+			}
 			*p++ = (big5buf >> 8) & 0x00ff;
 			*p++ = big5buf & 0x00ff;
 
@@ -182,22 +206,29 @@ euc_tw2big5(const unsigned char *euc, unsigned char *p, int len)
 		else
 		{						/* should be ASCII */
 			if (c1 == 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_EUC_TW,
 										(const char *) euc, len);
+			}
 			*p++ = c1;
 			euc++;
 			len--;
 		}
 	}
 	*p = '\0';
+
+	return euc - start;
 }
 
 /*
  * Big5 ---> EUC_TW
  */
-static void
-big52euc_tw(const unsigned char *big5, unsigned char *p, int len)
+static int
+big52euc_tw(const unsigned char *big5, unsigned char *p, int len, bool noError)
 {
+	const unsigned char *start = big5;
 	unsigned short c1;
 	unsigned short big5buf,
 				cnsBuf;
@@ -212,8 +243,12 @@ big52euc_tw(const unsigned char *big5, unsigned char *p, int len)
 		{
 			l = pg_encoding_verifymbchar(PG_BIG5, (const char *) big5, len);
 			if (l < 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_BIG5,
 										(const char *) big5, len);
+			}
 			big5buf = (c1 << 8) | big5[1];
 			cnsBuf = BIG5toCNS(big5buf, &lc);
 
@@ -237,8 +272,12 @@ big52euc_tw(const unsigned char *big5, unsigned char *p, int len)
 				*p++ = cnsBuf & 0x00ff;
 			}
 			else
+			{
+				if (noError)
+					break;
 				report_untranslatable_char(PG_BIG5, PG_EUC_TW,
 										   (const char *) big5, len);
+			}
 
 			big5 += l;
 			len -= l;
@@ -256,14 +295,17 @@ big52euc_tw(const unsigned char *big5, unsigned char *p, int len)
 		}
 	}
 	*p = '\0';
+
+	return big5 - start;
 }
 
 /*
  * EUC_TW ---> MIC
  */
-static void
-euc_tw2mic(const unsigned char *euc, unsigned char *p, int len)
+static int
+euc_tw2mic(const unsigned char *euc, unsigned char *p, int len, bool noError)
 {
+	const unsigned char *start = euc;
 	int			c1;
 	int			l;
 
@@ -274,8 +316,12 @@ euc_tw2mic(const unsigned char *euc, unsigned char *p, int len)
 		{
 			l = pg_encoding_verifymbchar(PG_EUC_TW, (const char *) euc, len);
 			if (l < 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_EUC_TW,
 										(const char *) euc, len);
+			}
 			if (c1 == SS2)
 			{
 				c1 = euc[1];	/* plane No. */
@@ -304,22 +350,29 @@ euc_tw2mic(const unsigned char *euc, unsigned char *p, int len)
 		else
 		{						/* should be ASCII */
 			if (c1 == 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_EUC_TW,
 										(const char *) euc, len);
+			}
 			*p++ = c1;
 			euc++;
 			len--;
 		}
 	}
 	*p = '\0';
+
+	return euc - start;
 }
 
 /*
  * MIC ---> EUC_TW
  */
-static void
-mic2euc_tw(const unsigned char *mic, unsigned char *p, int len)
+static int
+mic2euc_tw(const unsigned char *mic, unsigned char *p, int len, bool noError)
 {
+	const unsigned char *start = mic;
 	int			c1;
 	int			l;
 
@@ -330,8 +383,12 @@ mic2euc_tw(const unsigned char *mic, unsigned char *p, int len)
 		{
 			/* ASCII */
 			if (c1 == 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_MULE_INTERNAL,
 										(const char *) mic, len);
+			}
 			*p++ = c1;
 			mic++;
 			len--;
@@ -339,8 +396,12 @@ mic2euc_tw(const unsigned char *mic, unsigned char *p, int len)
 		}
 		l = pg_encoding_verifymbchar(PG_MULE_INTERNAL, (const char *) mic, len);
 		if (l < 0)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(PG_MULE_INTERNAL,
 									(const char *) mic, len);
+		}
 		if (c1 == LC_CNS11643_1)
 		{
 			*p++ = mic[1];
@@ -362,20 +423,27 @@ mic2euc_tw(const unsigned char *mic, unsigned char *p, int len)
 			*p++ = mic[3];
 		}
 		else
+		{
+			if (noError)
+				break;
 			report_untranslatable_char(PG_MULE_INTERNAL, PG_EUC_TW,
 									   (const char *) mic, len);
+		}
 		mic += l;
 		len -= l;
 	}
 	*p = '\0';
+
+	return mic - start;
 }
 
 /*
  * Big5 ---> MIC
  */
-static void
-big52mic(const unsigned char *big5, unsigned char *p, int len)
+static int
+big52mic(const unsigned char *big5, unsigned char *p, int len, bool noError)
 {
+	const unsigned char *start = big5;
 	unsigned short c1;
 	unsigned short big5buf,
 				cnsBuf;
@@ -389,8 +457,12 @@ big52mic(const unsigned char *big5, unsigned char *p, int len)
 		{
 			/* ASCII */
 			if (c1 == 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_BIG5,
 										(const char *) big5, len);
+			}
 			*p++ = c1;
 			big5++;
 			len--;
@@ -398,8 +470,12 @@ big52mic(const unsigned char *big5, unsigned char *p, int len)
 		}
 		l = pg_encoding_verifymbchar(PG_BIG5, (const char *) big5, len);
 		if (l < 0)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(PG_BIG5,
 									(const char *) big5, len);
+		}
 		big5buf = (c1 << 8) | big5[1];
 		cnsBuf = BIG5toCNS(big5buf, &lc);
 		if (lc != 0)
@@ -412,20 +488,27 @@ big52mic(const unsigned char *big5, unsigned char *p, int len)
 			*p++ = cnsBuf & 0x00ff;
 		}
 		else
+		{
+			if (noError)
+				break;
 			report_untranslatable_char(PG_BIG5, PG_MULE_INTERNAL,
 									   (const char *) big5, len);
+		}
 		big5 += l;
 		len -= l;
 	}
 	*p = '\0';
+
+	return big5 - start;
 }
 
 /*
  * MIC ---> Big5
  */
-static void
-mic2big5(const unsigned char *mic, unsigned char *p, int len)
+static int
+mic2big5(const unsigned char *mic, unsigned char *p, int len, bool noError)
 {
+	const unsigned char *start = mic;
 	unsigned short c1;
 	unsigned short big5buf,
 				cnsBuf;
@@ -438,8 +521,12 @@ mic2big5(const unsigned char *mic, unsigned char *p, int len)
 		{
 			/* ASCII */
 			if (c1 == 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_MULE_INTERNAL,
 										(const char *) mic, len);
+			}
 			*p++ = c1;
 			mic++;
 			len--;
@@ -447,8 +534,12 @@ mic2big5(const unsigned char *mic, unsigned char *p, int len)
 		}
 		l = pg_encoding_verifymbchar(PG_MULE_INTERNAL, (const char *) mic, len);
 		if (l < 0)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(PG_MULE_INTERNAL,
 									(const char *) mic, len);
+		}
 		if (c1 == LC_CNS11643_1 || c1 == LC_CNS11643_2 || c1 == LCPRV2_B)
 		{
 			if (c1 == LCPRV2_B)
@@ -462,16 +553,26 @@ mic2big5(const unsigned char *mic, unsigned char *p, int len)
 			}
 			big5buf = CNStoBIG5(cnsBuf, c1);
 			if (big5buf == 0)
+			{
+				if (noError)
+					break;
 				report_untranslatable_char(PG_MULE_INTERNAL, PG_BIG5,
 										   (const char *) mic, len);
+			}
 			*p++ = (big5buf >> 8) & 0x00ff;
 			*p++ = big5buf & 0x00ff;
 		}
 		else
+		{
+			if (noError)
+				break;
 			report_untranslatable_char(PG_MULE_INTERNAL, PG_BIG5,
 									   (const char *) mic, len);
+		}
 		mic += l;
 		len -= l;
 	}
 	*p = '\0';
+
+	return mic - start;
 }

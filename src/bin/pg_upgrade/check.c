@@ -28,6 +28,7 @@ static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 static void check_for_jsonb_9_4_usage(ClusterInfo *cluster);
 static void check_for_pg_role_prefix(ClusterInfo *cluster);
 static void check_for_new_tablespace_dir(ClusterInfo *new_cluster);
+static void check_for_user_defined_encoding_conversions(ClusterInfo *cluster);
 static char *get_canonical_locale_name(int category, const char *locale);
 
 
@@ -101,6 +102,15 @@ check_and_dump_old_cluster(bool live_check)
 	check_for_prepared_transactions(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
+
+	/*
+	 * PG 14 changed the function signature of encoding conversion functions.
+	 * Conversions from older versions cannot be upgraded automatically
+	 * because the user-defined functions used by the encoding conversions
+	 * need to be changed to match the new signature.
+	 */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1300)
+		check_for_user_defined_encoding_conversions(&old_cluster);
 
 	/*
 	 * Pre-PG 14 allowed user defined postfix operators, which are not
@@ -1266,6 +1276,91 @@ check_for_pg_role_prefix(ClusterInfo *cluster)
 	PQfinish(conn);
 
 	check_ok();
+}
+
+/*
+ * Verify that no user-defined encoding conversions exist.
+ */
+static void
+check_for_user_defined_encoding_conversions(ClusterInfo *cluster)
+{
+	int			dbnum;
+	FILE	   *script = NULL;
+	bool		found = false;
+	char		output_path[MAXPGPATH];
+
+	prep_status("Checking for user-defined encoding conversions");
+
+	snprintf(output_path, sizeof(output_path),
+			 "encoding_conversions.txt");
+
+	/* Find any user defined encoding conversions */
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+	{
+		PGresult   *res;
+		bool		db_used = false;
+		int			ntups;
+		int			rowno;
+		int			i_conoid,
+					i_conname,
+					i_nspname;
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
+
+		/*
+		 * The query below hardcodes FirstNormalObjectId as 16384 rather than
+		 * interpolating that C #define into the query because, if that
+		 * #define is ever changed, the cutoff we want to use is the value
+		 * used by pre-version 14 servers, not that of some future version.
+		 */
+		res = executeQueryOrDie(conn,
+								"SELECT c.oid as conoid, c.conname, n.nspname "
+								"FROM pg_catalog.pg_conversion c, "
+								"     pg_catalog.pg_namespace n "
+								"WHERE c.connamespace = n.oid AND "
+								"      c.oid >= 16384");
+		ntups = PQntuples(res);
+		i_conoid = PQfnumber(res, "conoid");
+		i_conname = PQfnumber(res, "conname");
+		i_nspname = PQfnumber(res, "nspname");
+		for (rowno = 0; rowno < ntups; rowno++)
+		{
+			found = true;
+			if (script == NULL &&
+				(script = fopen_priv(output_path, "w")) == NULL)
+				pg_fatal("could not open file \"%s\": %s\n",
+						 output_path, strerror(errno));
+			if (!db_used)
+			{
+				fprintf(script, "In database: %s\n", active_db->db_name);
+				db_used = true;
+			}
+			fprintf(script, "  (oid=%s) %s.%s\n",
+					PQgetvalue(res, rowno, i_conoid),
+					PQgetvalue(res, rowno, i_nspname),
+					PQgetvalue(res, rowno, i_conname));
+		}
+
+		PQclear(res);
+
+		PQfinish(conn);
+	}
+
+	if (script)
+		fclose(script);
+
+	if (found)
+	{
+		pg_log(PG_REPORT, "fatal\n");
+		pg_fatal("Your installation contains user-defined encoding conversions.\n"
+				 "The conversion function parameters changed in PostgreSQL version 14\n"
+				 "so this cluster cannot currently be upgraded.  You can remove the\n"
+				 "encoding conversions in the old cluster and restart the upgrade.\n"
+				 "A list of user-defined encoding conversions is in the file:\n"
+				 "    %s\n\n", output_path);
+	}
+	else
+		check_ok();
 }
 
 

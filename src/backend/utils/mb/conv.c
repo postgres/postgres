@@ -25,15 +25,20 @@
  * tab holds conversion entries for the source charset
  * starting from 128 (0x80). each entry in the table holds the corresponding
  * code point for the target charset, or 0 if there is no equivalent code.
+ *
+ * Returns the number of input bytes consumed.  If noError is true, this can
+ * be less than 'len'.
  */
-void
+int
 local2local(const unsigned char *l,
 			unsigned char *p,
 			int len,
 			int src_encoding,
 			int dest_encoding,
-			const unsigned char *tab)
+			const unsigned char *tab,
+			bool noError)
 {
+	const unsigned char *start = l;
 	unsigned char c1,
 				c2;
 
@@ -41,7 +46,11 @@ local2local(const unsigned char *l,
 	{
 		c1 = *l;
 		if (c1 == 0)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(src_encoding, (const char *) l, len);
+		}
 		if (!IS_HIGHBIT_SET(c1))
 			*p++ = c1;
 		else
@@ -50,13 +59,19 @@ local2local(const unsigned char *l,
 			if (c2)
 				*p++ = c2;
 			else
+			{
+				if (noError)
+					break;
 				report_untranslatable_char(src_encoding, dest_encoding,
 										   (const char *) l, len);
+			}
 		}
 		l++;
 		len--;
 	}
 	*p = '\0';
+
+	return l - start;
 }
 
 /*
@@ -66,18 +81,26 @@ local2local(const unsigned char *l,
  * p is the output area (must be large enough!)
  * lc is the mule character set id for the local encoding
  * encoding is the PG identifier for the local encoding
+ *
+ * Returns the number of input bytes consumed.  If noError is true, this can
+ * be less than 'len'.
  */
-void
+int
 latin2mic(const unsigned char *l, unsigned char *p, int len,
-		  int lc, int encoding)
+		  int lc, int encoding, bool noError)
 {
+	const unsigned char *start = l;
 	int			c1;
 
 	while (len > 0)
 	{
 		c1 = *l;
 		if (c1 == 0)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(encoding, (const char *) l, len);
+		}
 		if (IS_HIGHBIT_SET(c1))
 			*p++ = lc;
 		*p++ = c1;
@@ -85,6 +108,8 @@ latin2mic(const unsigned char *l, unsigned char *p, int len,
 		len--;
 	}
 	*p = '\0';
+
+	return l - start;
 }
 
 /*
@@ -94,18 +119,26 @@ latin2mic(const unsigned char *l, unsigned char *p, int len,
  * p is the output area (must be large enough!)
  * lc is the mule character set id for the local encoding
  * encoding is the PG identifier for the local encoding
+ *
+ * Returns the number of input bytes consumed.  If noError is true, this can
+ * be less than 'len'.
  */
-void
+int
 mic2latin(const unsigned char *mic, unsigned char *p, int len,
-		  int lc, int encoding)
+		  int lc, int encoding, bool noError)
 {
+	const unsigned char *start = mic;
 	int			c1;
 
 	while (len > 0)
 	{
 		c1 = *mic;
 		if (c1 == 0)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic, len);
+		}
 		if (!IS_HIGHBIT_SET(c1))
 		{
 			/* easy for ASCII */
@@ -118,17 +151,27 @@ mic2latin(const unsigned char *mic, unsigned char *p, int len,
 			int			l = pg_mule_mblen(mic);
 
 			if (len < l)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic,
 										len);
+			}
 			if (l != 2 || c1 != lc || !IS_HIGHBIT_SET(mic[1]))
+			{
+				if (noError)
+					break;
 				report_untranslatable_char(PG_MULE_INTERNAL, encoding,
 										   (const char *) mic, len);
+			}
 			*p++ = mic[1];
 			mic += 2;
 			len -= 2;
 		}
 	}
 	*p = '\0';
+
+	return mic - start;
 }
 
 
@@ -143,15 +186,20 @@ mic2latin(const unsigned char *mic, unsigned char *p, int len,
  * tab holds conversion entries for the local charset
  * starting from 128 (0x80). each entry in the table holds the corresponding
  * code point for the mule encoding, or 0 if there is no equivalent code.
+ *
+ * Returns the number of input bytes consumed.  If noError is true, this can
+ * be less than 'len'.
  */
-void
+int
 latin2mic_with_table(const unsigned char *l,
 					 unsigned char *p,
 					 int len,
 					 int lc,
 					 int encoding,
-					 const unsigned char *tab)
+					 const unsigned char *tab,
+					 bool noError)
 {
+	const unsigned char *start = l;
 	unsigned char c1,
 				c2;
 
@@ -159,7 +207,11 @@ latin2mic_with_table(const unsigned char *l,
 	{
 		c1 = *l;
 		if (c1 == 0)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(encoding, (const char *) l, len);
+		}
 		if (!IS_HIGHBIT_SET(c1))
 			*p++ = c1;
 		else
@@ -171,13 +223,19 @@ latin2mic_with_table(const unsigned char *l,
 				*p++ = c2;
 			}
 			else
+			{
+				if (noError)
+					break;
 				report_untranslatable_char(encoding, PG_MULE_INTERNAL,
 										   (const char *) l, len);
+			}
 		}
 		l++;
 		len--;
 	}
 	*p = '\0';
+
+	return l - start;
 }
 
 /*
@@ -191,15 +249,20 @@ latin2mic_with_table(const unsigned char *l,
  * tab holds conversion entries for the mule internal code's second byte,
  * starting from 128 (0x80). each entry in the table holds the corresponding
  * code point for the local charset, or 0 if there is no equivalent code.
+ *
+ * Returns the number of input bytes consumed.  If noError is true, this can
+ * be less than 'len'.
  */
-void
+int
 mic2latin_with_table(const unsigned char *mic,
 					 unsigned char *p,
 					 int len,
 					 int lc,
 					 int encoding,
-					 const unsigned char *tab)
+					 const unsigned char *tab,
+					 bool noError)
 {
+	const unsigned char *start = mic;
 	unsigned char c1,
 				c2;
 
@@ -207,7 +270,11 @@ mic2latin_with_table(const unsigned char *mic,
 	{
 		c1 = *mic;
 		if (c1 == 0)
+		{
+			if (noError)
+				break;
 			report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic, len);
+		}
 		if (!IS_HIGHBIT_SET(c1))
 		{
 			/* easy for ASCII */
@@ -220,11 +287,17 @@ mic2latin_with_table(const unsigned char *mic,
 			int			l = pg_mule_mblen(mic);
 
 			if (len < l)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic,
 										len);
+			}
 			if (l != 2 || c1 != lc || !IS_HIGHBIT_SET(mic[1]) ||
 				(c2 = tab[mic[1] - HIGHBIT]) == 0)
 			{
+				if (noError)
+					break;
 				report_untranslatable_char(PG_MULE_INTERNAL, encoding,
 										   (const char *) mic, len);
 				break;			/* keep compiler quiet */
@@ -235,6 +308,8 @@ mic2latin_with_table(const unsigned char *mic,
 		}
 	}
 	*p = '\0';
+
+	return mic - start;
 }
 
 /*
@@ -424,18 +499,22 @@ pg_mb_radix_conv(const pg_mb_radix_tree *rt,
  * is applied.  An error is raised if no match is found.
  *
  * See pg_wchar.h for more details about the data structures used here.
+ *
+ * Returns the number of input bytes consumed.  If noError is true, this can
+ * be less than 'len'.
  */
-void
+int
 UtfToLocal(const unsigned char *utf, int len,
 		   unsigned char *iso,
 		   const pg_mb_radix_tree *map,
 		   const pg_utf_to_local_combined *cmap, int cmapsize,
 		   utf_local_conversion_func conv_func,
-		   int encoding)
+		   int encoding, bool noError)
 {
 	uint32		iutf;
 	int			l;
 	const pg_utf_to_local_combined *cp;
+	const unsigned char *start = utf;
 
 	if (!PG_VALID_ENCODING(encoding))
 		ereport(ERROR,
@@ -505,10 +584,19 @@ UtfToLocal(const unsigned char *utf, int len,
 
 			l = pg_utf_mblen(utf);
 			if (len < l)
+			{
+				/* need more data to decide if this is a combined char */
+				utf -= l_save;
 				break;
+			}
 
 			if (!pg_utf8_islegal(utf, l))
+			{
+				if (!noError)
+					report_invalid_encoding(PG_UTF8, (const char *) utf, len);
+				utf -= l_save;
 				break;
+			}
 
 			/* We assume ASCII character cannot be in combined map */
 			if (l > 1)
@@ -584,15 +672,20 @@ UtfToLocal(const unsigned char *utf, int len,
 		}
 
 		/* failed to translate this character */
+		utf -= l;
+		if (noError)
+			break;
 		report_untranslatable_char(PG_UTF8, encoding,
-								   (const char *) (utf - l), len);
+								   (const char *) utf, len);
 	}
 
 	/* if we broke out of loop early, must be invalid input */
-	if (len > 0)
+	if (len > 0 && !noError)
 		report_invalid_encoding(PG_UTF8, (const char *) utf, len);
 
 	*iso = '\0';
+
+	return utf - start;
 }
 
 /*
@@ -616,18 +709,23 @@ UtfToLocal(const unsigned char *utf, int len,
  * (if provided) is applied.  An error is raised if no match is found.
  *
  * See pg_wchar.h for more details about the data structures used here.
+ *
+ * Returns the number of input bytes consumed.  If noError is true, this can
+ * be less than 'len'.
  */
-void
+int
 LocalToUtf(const unsigned char *iso, int len,
 		   unsigned char *utf,
 		   const pg_mb_radix_tree *map,
 		   const pg_local_to_utf_combined *cmap, int cmapsize,
 		   utf_local_conversion_func conv_func,
-		   int encoding)
+		   int encoding,
+		   bool noError)
 {
 	uint32		iiso;
 	int			l;
 	const pg_local_to_utf_combined *cp;
+	const unsigned char *start = iso;
 
 	if (!PG_VALID_ENCODING(encoding))
 		ereport(ERROR,
@@ -723,13 +821,18 @@ LocalToUtf(const unsigned char *iso, int len,
 		}
 
 		/* failed to translate this character */
+		iso -= l;
+		if (noError)
+			break;
 		report_untranslatable_char(encoding, PG_UTF8,
-								   (const char *) (iso - l), len);
+								   (const char *) iso, len);
 	}
 
 	/* if we broke out of loop early, must be invalid input */
-	if (len > 0)
+	if (len > 0 && !noError)
 		report_invalid_encoding(encoding, (const char *) iso, len);
 
 	*utf = '\0';
+
+	return iso - start;
 }

@@ -616,6 +616,12 @@ extern int	pg_bind_textdomain_codeset(const char *domainname);
 extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
 												int src_encoding,
 												int dest_encoding);
+extern int	pg_do_encoding_conversion_buf(Oid proc,
+										  int src_encoding,
+										  int dest_encoding,
+										  unsigned char *src, int srclen,
+										  unsigned char *dst, int dstlen,
+										  bool noError);
 
 extern char *pg_client_to_server(const char *s, int len);
 extern char *pg_server_to_client(const char *s, int len);
@@ -627,18 +633,18 @@ extern void pg_unicode_to_server(pg_wchar c, unsigned char *s);
 extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
-extern void UtfToLocal(const unsigned char *utf, int len,
+extern int	UtfToLocal(const unsigned char *utf, int len,
 					   unsigned char *iso,
 					   const pg_mb_radix_tree *map,
 					   const pg_utf_to_local_combined *cmap, int cmapsize,
 					   utf_local_conversion_func conv_func,
-					   int encoding);
-extern void LocalToUtf(const unsigned char *iso, int len,
+					   int encoding, bool noError);
+extern int	LocalToUtf(const unsigned char *iso, int len,
 					   unsigned char *utf,
 					   const pg_mb_radix_tree *map,
 					   const pg_local_to_utf_combined *cmap, int cmapsize,
 					   utf_local_conversion_func conv_func,
-					   int encoding);
+					   int encoding, bool noError);
 
 extern bool pg_verifymbstr(const char *mbstr, int len, bool noError);
 extern bool pg_verify_mbstr(int encoding, const char *mbstr, int len,
@@ -656,18 +662,19 @@ extern void report_invalid_encoding(int encoding, const char *mbstr, int len) pg
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,
 									   const char *mbstr, int len) pg_attribute_noreturn();
 
-extern void local2local(const unsigned char *l, unsigned char *p, int len,
-						int src_encoding, int dest_encoding, const unsigned char *tab);
-extern void latin2mic(const unsigned char *l, unsigned char *p, int len,
-					  int lc, int encoding);
-extern void mic2latin(const unsigned char *mic, unsigned char *p, int len,
-					  int lc, int encoding);
-extern void latin2mic_with_table(const unsigned char *l, unsigned char *p,
+extern int	local2local(const unsigned char *l, unsigned char *p, int len,
+						int src_encoding, int dest_encoding,
+						const unsigned char *tab, bool noError);
+extern int	latin2mic(const unsigned char *l, unsigned char *p, int len,
+					  int lc, int encoding, bool noError);
+extern int	mic2latin(const unsigned char *mic, unsigned char *p, int len,
+					  int lc, int encoding, bool noError);
+extern int	latin2mic_with_table(const unsigned char *l, unsigned char *p,
 								 int len, int lc, int encoding,
-								 const unsigned char *tab);
-extern void mic2latin_with_table(const unsigned char *mic, unsigned char *p,
+								 const unsigned char *tab, bool noError);
+extern int	mic2latin_with_table(const unsigned char *mic, unsigned char *p,
 								 int len, int lc, int encoding,
-								 const unsigned char *tab);
+								 const unsigned char *tab, bool noError);
 
 #ifdef WIN32
 extern WCHAR *pgwin32_message_to_UTF16(const char *str, int len, int *utf16len);
