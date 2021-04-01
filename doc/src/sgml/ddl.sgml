@@ -2635,7 +2635,8 @@ SELECT * FROM information WHERE group_id = 2 FOR UPDATE;
    definer function.)  Also, heavy concurrent use of row share locks on the
    referenced table could pose a performance problem, especially if updates
    of it are frequent.  Another solution, practical if updates of the
-   referenced table are infrequent, is to take an exclusive lock on the
+   referenced table are infrequent, is to take an
+   <literal>ACCESS EXCLUSIVE</literal> lock on the
    referenced table when updating it, so that no concurrent transactions
    could be examining old row values.  Or one could just wait for all
    concurrent transactions to end after committing an update of the
