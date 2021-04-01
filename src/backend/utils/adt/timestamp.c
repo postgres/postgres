@@ -4844,7 +4844,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_TZ_MINUTE:
 				result = -tz;
-				result /= MINS_PER_HOUR;
+				result /= SECS_PER_MINUTE;
 				FMODULO(result, dummy, (double) MINS_PER_HOUR);
 				break;
 

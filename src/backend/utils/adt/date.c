@@ -2726,7 +2726,7 @@ timetz_part(PG_FUNCTION_ARGS)
 			case DTK_TZ_MINUTE:
 				result = -tz;
 				result /= SECS_PER_MINUTE;
-				FMODULO(result, dummy, (double) SECS_PER_MINUTE);
+				FMODULO(result, dummy, (double) MINS_PER_HOUR);
 				break;
 
 			case DTK_TZ_HOUR:
