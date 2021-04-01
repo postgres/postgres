@@ -724,8 +724,8 @@ test_pipelined_insert(PGconn *conn, int n_rows)
 			if (send_step == BI_INSERT_ROWS)
 			{
 				snprintf(insert_param_0, MAXINTLEN, "%d", rows_to_send);
-				snprintf(insert_param_1, MAXINT8LEN, "%lld",
-						 (1L << 62) + (long long) rows_to_send);
+				/* use up some buffer space with a wide value */
+				snprintf(insert_param_1, MAXINT8LEN, "%lld", 1LL << 62);
 
 				if (PQsendQueryPrepared(conn, "my_insert",
 										2, insert_params, NULL, NULL, 0) == 1)
@@ -1324,7 +1324,7 @@ main(int argc, char **argv)
 			pg_fatal("could not open file \"%s\": %m", tracefile);
 
 		/* Make it line-buffered */
-		setvbuf(trace, NULL, _IOLBF, 0);
+		setvbuf(trace, NULL, PG_IOLBF, 0);
 
 		PQtrace(conn, trace);
 		PQtraceSetFlags(conn,
