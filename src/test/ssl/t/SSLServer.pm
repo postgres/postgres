@@ -37,45 +37,7 @@ use Exporter 'import';
 our @EXPORT = qw(
   configure_test_server_for_ssl
   switch_server_cert
-  test_connect_fails
-  test_connect_ok
 );
-
-# Define a couple of helper functions to test connecting to the server.
-
-# The first argument is a base connection string to use for connection.
-# The second argument is a complementary connection string.
-sub test_connect_ok
-{
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	my ($common_connstr, $connstr, $test_name) = @_;
-
-	my $cmd = [
-		'psql', '-X', '-A', '-t', '-c',
-		"SELECT \$\$connected with $connstr\$\$",
-		'-d', "$common_connstr $connstr"
-	];
-
-	command_ok($cmd, $test_name);
-	return;
-}
-
-sub test_connect_fails
-{
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	my ($common_connstr, $connstr, $expected_stderr, $test_name) = @_;
-
-	my $cmd = [
-		'psql', '-X', '-A', '-t', '-c',
-		"SELECT \$\$connected with $connstr\$\$",
-		'-d', "$common_connstr $connstr"
-	];
-
-	command_fails_like($cmd, $expected_stderr, $test_name);
-	return;
-}
 
 # Copy a set of files, taking into account wildcards
 sub copy_files
