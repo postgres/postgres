@@ -228,12 +228,6 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 
 		ctx->hasSeek = checkSeek(ctx->tarFH);
 
-		/*
-		 * Forcibly unmark the header as read since we use the lookahead
-		 * buffer
-		 */
-		AH->readHeader = 0;
-
 		ctx->FH = (void *) tarOpen(AH, "toc.dat", 'r');
 		ReadHead(AH);
 		ReadToc(AH);
