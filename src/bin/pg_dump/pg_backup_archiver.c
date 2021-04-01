@@ -2106,6 +2106,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	if (AH->lookahead)
 		free(AH->lookahead);
 
+	AH->readHeader = 0;
 	AH->lookaheadSize = 512;
 	AH->lookahead = pg_malloc0(512);
 	AH->lookaheadLen = 0;
@@ -2179,60 +2180,9 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 
 	if (strncmp(sig, "PGDMP", 5) == 0)
 	{
-		int			byteread;
-
-		/*
-		 * Finish reading (most of) a custom-format header.
-		 *
-		 * NB: this code must agree with ReadHead().
-		 */
-		if ((byteread = fgetc(fh)) == EOF)
-			READ_ERROR_EXIT(fh);
-
-		AH->vmaj = byteread;
-
-		if ((byteread = fgetc(fh)) == EOF)
-			READ_ERROR_EXIT(fh);
-
-		AH->vmin = byteread;
-
-		/* Save these too... */
-		AH->lookahead[AH->lookaheadLen++] = AH->vmaj;
-		AH->lookahead[AH->lookaheadLen++] = AH->vmin;
-
-		/* Check header version; varies from V1.0 */
-		if (AH->vmaj > 1 || ((AH->vmaj == 1) && (AH->vmin > 0)))		/* Version > 1.0 */
-		{
-			if ((byteread = fgetc(fh)) == EOF)
-				READ_ERROR_EXIT(fh);
-
-			AH->vrev = byteread;
-			AH->lookahead[AH->lookaheadLen++] = AH->vrev;
-		}
-		else
-			AH->vrev = 0;
-
-		/* Make a convenient integer <maj><min><rev>00 */
-		AH->version = ((AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev) * 256 + 0;
-
-		if ((AH->intSize = fgetc(fh)) == EOF)
-			READ_ERROR_EXIT(fh);
-		AH->lookahead[AH->lookaheadLen++] = AH->intSize;
-
-		if (AH->version >= K_VERS_1_7)
-		{
-			if ((AH->offSize = fgetc(fh)) == EOF)
-				READ_ERROR_EXIT(fh);
-			AH->lookahead[AH->lookaheadLen++] = AH->offSize;
-		}
-		else
-			AH->offSize = AH->intSize;
-
-		if ((byteread = fgetc(fh)) == EOF)
-			READ_ERROR_EXIT(fh);
-
-		AH->format = byteread;
-		AH->lookahead[AH->lookaheadLen++] = AH->format;
+		/* It's custom format, stop here */
+		AH->format = archCustom;
+		AH->readHeader = 1;
 	}
 	else
 	{
@@ -2269,23 +2219,16 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		AH->format = archTar;
 	}
 
-	/* If we can't seek, then mark the header as read */
-	if (fseeko(fh, 0, SEEK_SET) != 0)
-	{
-		/*
-		 * NOTE: Formats that use the lookahead buffer can unset this in their
-		 * Init routine.
-		 */
-		AH->readHeader = 1;
-	}
-	else
-		AH->lookaheadLen = 0;	/* Don't bother since we've reset the file */
-
-	/* Close the file */
+	/* Close the file if we opened it */
 	if (wantClose)
+	{
 		if (fclose(fh) != 0)
 			exit_horribly(modulename, "could not close input file: %s\n",
 						  strerror(errno));
+		/* Forget lookahead, since we'll re-read header after re-opening */
+		AH->readHeader = 0;
+		AH->lookaheadLen = 0;
+	}
 
 	return AH->format;
 }
@@ -3671,7 +3614,6 @@ WriteHead(ArchiveHandle *AH)
 void
 ReadHead(ArchiveHandle *AH)
 {
-	char		tmpMag[7];
 	int			fmt;
 	struct tm	crtm;
 
@@ -3683,44 +3625,46 @@ ReadHead(ArchiveHandle *AH)
 	 */
 	if (!AH->readHeader)
 	{
+		char		tmpMag[7];
+
 		(*AH->ReadBufPtr) (AH, tmpMag, 5);
 
 		if (strncmp(tmpMag, "PGDMP", 5) != 0)
 			exit_horribly(modulename, "did not find magic string in file header\n");
-
-		AH->vmaj = (*AH->ReadBytePtr) (AH);
-		AH->vmin = (*AH->ReadBytePtr) (AH);
-
-		if (AH->vmaj > 1 || ((AH->vmaj == 1) && (AH->vmin > 0)))		/* Version > 1.0 */
-			AH->vrev = (*AH->ReadBytePtr) (AH);
-		else
-			AH->vrev = 0;
-
-		AH->version = ((AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev) * 256 + 0;
-
-		if (AH->version < K_VERS_1_0 || AH->version > K_VERS_MAX)
-			exit_horribly(modulename, "unsupported version (%d.%d) in file header\n",
-						  AH->vmaj, AH->vmin);
-
-		AH->intSize = (*AH->ReadBytePtr) (AH);
-		if (AH->intSize > 32)
-			exit_horribly(modulename, "sanity check on integer size (%lu) failed\n",
-						  (unsigned long) AH->intSize);
-
-		if (AH->intSize > sizeof(int))
-			write_msg(modulename, "WARNING: archive was made on a machine with larger integers, some operations might fail\n");
-
-		if (AH->version >= K_VERS_1_7)
-			AH->offSize = (*AH->ReadBytePtr) (AH);
-		else
-			AH->offSize = AH->intSize;
-
-		fmt = (*AH->ReadBytePtr) (AH);
-
-		if (AH->format != fmt)
-			exit_horribly(modulename, "expected format (%d) differs from format found in file (%d)\n",
-						  AH->format, fmt);
 	}
+
+	AH->vmaj = (*AH->ReadBytePtr) (AH);
+	AH->vmin = (*AH->ReadBytePtr) (AH);
+
+	if (AH->vmaj > 1 || ((AH->vmaj == 1) && (AH->vmin > 0)))	/* Version > 1.0 */
+		AH->vrev = (*AH->ReadBytePtr) (AH);
+	else
+		AH->vrev = 0;
+
+	AH->version = ((AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev) * 256 + 0;
+
+	if (AH->version < K_VERS_1_0 || AH->version > K_VERS_MAX)
+		exit_horribly(modulename, "unsupported version (%d.%d) in file header\n",
+					  AH->vmaj, AH->vmin);
+
+	AH->intSize = (*AH->ReadBytePtr) (AH);
+	if (AH->intSize > 32)
+		exit_horribly(modulename, "sanity check on integer size (%lu) failed\n",
+					  (unsigned long) AH->intSize);
+
+	if (AH->intSize > sizeof(int))
+		write_msg(modulename, "WARNING: archive was made on a machine with larger integers, some operations might fail\n");
+
+	if (AH->version >= K_VERS_1_7)
+		AH->offSize = (*AH->ReadBytePtr) (AH);
+	else
+		AH->offSize = AH->intSize;
+
+	fmt = (*AH->ReadBytePtr) (AH);
+
+	if (AH->format != fmt)
+		exit_horribly(modulename, "expected format (%d) differs from format found in file (%d)\n",
+					  AH->format, fmt);
 
 	if (AH->version >= K_VERS_1_2)
 	{
