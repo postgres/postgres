@@ -306,14 +306,32 @@ typedef enum pg_enc
 
 /*
  * When converting strings between different encodings, we assume that space
- * for converted result is 4-to-1 growth in the worst case. The rate for
+ * for converted result is 4-to-1 growth in the worst case.  The rate for
  * currently supported encoding pairs are within 3 (SJIS JIS X0201 half width
- * kanna -> UTF8 is the worst case).  So "4" should be enough for the moment.
+ * kana -> UTF8 is the worst case).  So "4" should be enough for the moment.
  *
  * Note that this is not the same as the maximum character width in any
  * particular encoding.
  */
 #define MAX_CONVERSION_GROWTH  4
+
+/*
+ * Maximum byte length of a string that's required in any encoding to convert
+ * at least one character to any other encoding.  In other words, if you feed
+ * MAX_CONVERSION_INPUT_LENGTH bytes to any encoding conversion function, it
+ * is guaranteed to be able to convert something without needing more input
+ * (assuming the input is valid).
+ *
+ * Currently, the maximum case is the conversion UTF8 -> SJIS JIS X0201 half
+ * width kana, where a pair of UTF-8 characters is converted into a single
+ * SHIFT_JIS_2004 character (the reverse of the worst case for
+ * MAX_CONVERSION_GROWTH).  It needs 6 bytes of input.  In theory, a
+ * user-defined conversion function might have more complicated cases, although
+ * for the reverse mapping you would probably also need to bump up
+ * MAX_CONVERSION_GROWTH.  But there is no need to be stingy here, so make it
+ * generous.
+ */
+#define MAX_CONVERSION_INPUT_LENGTH	16
 
 /*
  * Maximum byte length of the string equivalent to any one Unicode code point,

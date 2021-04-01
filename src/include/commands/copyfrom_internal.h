@@ -52,17 +52,6 @@ typedef enum CopyInsertMethod
 /*
  * This struct contains all the state variables used throughout a COPY FROM
  * operation.
- *
- * Multi-byte encodings: all supported client-side encodings encode multi-byte
- * characters by having the first byte's high bit set. Subsequent bytes of the
- * character can have the high bit not set. When scanning data in such an
- * encoding to look for a match to a single-byte (ie ASCII) character, we must
- * use the full pg_encoding_mblen() machinery to skip over multibyte
- * characters, else we might find a false match to a trailing byte. In
- * supported server encodings, there is no possibility of a false match, and
- * it's faster to make useless comparisons to trailing bytes than it is to
- * invoke pg_encoding_mblen() to skip over them. encoding_embeds_ascii is true
- * when we have to do it the hard way.
  */
 typedef struct CopyFromStateData
 {
@@ -70,13 +59,11 @@ typedef struct CopyFromStateData
 	CopySource	copy_src;		/* type of copy source */
 	FILE	   *copy_file;		/* used if copy_src == COPY_FILE */
 	StringInfo	fe_msgbuf;		/* used if copy_src == COPY_NEW_FE */
-	bool		reached_eof;	/* true if we read to end of copy data (not
-								 * all copy_src types maintain this) */
 
 	EolType		eol_type;		/* EOL type of input */
 	int			file_encoding;	/* file or remote side's character encoding */
 	bool		need_transcoding;	/* file encoding diff from server? */
-	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
+	Oid			conversion_proc;	/* encoding conversion function */
 
 	/* parameters from the COPY command */
 	Relation	rel;			/* relation to copy from */
@@ -131,31 +118,52 @@ typedef struct CopyFromStateData
 
 	/*
 	 * Similarly, line_buf holds the whole input line being processed. The
-	 * input cycle is first to read the whole line into line_buf, convert it
-	 * to server encoding there, and then extract the individual attribute
-	 * fields into attribute_buf.  line_buf is preserved unmodified so that we
-	 * can display it in error messages if appropriate.  (In binary mode,
-	 * line_buf is not used.)
+	 * input cycle is first to read the whole line into line_buf, and then
+	 * extract the individual attribute fields into attribute_buf.  line_buf
+	 * is preserved unmodified so that we can display it in error messages if
+	 * appropriate.  (In binary mode, line_buf is not used.)
 	 */
 	StringInfoData line_buf;
-	bool		line_buf_converted; /* converted to server encoding? */
 	bool		line_buf_valid; /* contains the row being processed? */
 
 	/*
-	 * Finally, raw_buf holds raw data read from the data source (file or
-	 * client connection).  In text mode, CopyReadLine parses this data
-	 * sufficiently to locate line boundaries, then transfers the data to
-	 * line_buf and converts it.  In binary mode, CopyReadBinaryData fetches
-	 * appropriate amounts of data from this buffer.  In both modes, we
-	 * guarantee that there is a \0 at raw_buf[raw_buf_len].
+	 * input_buf holds input data, already converted to database encoding.
+	 *
+	 * In text mode, CopyReadLine parses this data sufficiently to locate
+	 * line boundaries, then transfers the data to line_buf. We guarantee
+	 * that there is a \0 at input_buf[input_buf_len] at all times.  (In
+	 * binary mode, input_buf is not used.)
+	 *
+	 * If encoding conversion is not required, input_buf is not a separate
+	 * buffer but points directly to raw_buf.  In that case, input_buf_len
+	 * tracks the number of bytes that have been verified as valid in the
+	 * database encoding, and raw_buf_len is the total number of bytes
+	 * stored in the buffer.
+	 */
+#define INPUT_BUF_SIZE 65536	/* we palloc INPUT_BUF_SIZE+1 bytes */
+	char	   *input_buf;
+	int			input_buf_index;	/* next byte to process */
+	int			input_buf_len;		/* total # of bytes stored */
+	bool		input_reached_eof;	/* true if we reached EOF */
+	bool		input_reached_error; /* true if a conversion error happened */
+	/* Shorthand for number of unconsumed bytes available in input_buf */
+#define INPUT_BUF_BYTES(cstate) ((cstate)->input_buf_len - (cstate)->input_buf_index)
+
+	/*
+	 * raw_buf holds raw input data read from the data source (file or client
+	 * connection), not yet converted to the database encoding.  Like with
+	 * 'input_buf', we guarantee that there is a \0 at raw_buf[raw_buf_len].
 	 */
 #define RAW_BUF_SIZE 65536		/* we palloc RAW_BUF_SIZE+1 bytes */
 	char	   *raw_buf;
 	int			raw_buf_index;	/* next byte to process */
 	int			raw_buf_len;	/* total # of bytes stored */
-	uint64		bytes_processed;/* number of bytes processed so far */
+	bool		raw_reached_eof;	/* true if we reached EOF */
+
 	/* Shorthand for number of unconsumed bytes available in raw_buf */
 #define RAW_BUF_BYTES(cstate) ((cstate)->raw_buf_len - (cstate)->raw_buf_index)
+
+	uint64		bytes_processed;	/* number of bytes processed so far */
 } CopyFromStateData;
 
 extern void ReceiveCopyBegin(CopyFromState cstate);
