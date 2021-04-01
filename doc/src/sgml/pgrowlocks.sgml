@@ -97,8 +97,8 @@ pgrowlocks(text) returns setof record
   <orderedlist>
    <listitem>
     <para>
-    If the table as a whole is exclusive-locked by someone else,
-    <function>pgrowlocks</function> will be blocked.
+     If an <literal>ACCESS EXCLUSIVE</literal> lock is taken on the table,
+     <function>pgrowlocks</function> will be blocked.
     </para>
    </listitem>
    <listitem>
