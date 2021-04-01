@@ -188,6 +188,7 @@
 <!-- Stubs for removed entries to preserve public links -->
 <!ENTITY obsolete SYSTEM "appendix-obsolete.sgml">
 <!ENTITY obsolete-recovery-config SYSTEM "appendix-obsolete-recovery-config.sgml">
+<!ENTITY obsolete-default-roles SYSTEM "appendix-obsolete-default-roles.sgml">
 <!ENTITY obsolete-pgxlogdump SYSTEM "appendix-obsolete-pgxlogdump.sgml">
 <!ENTITY obsolete-pgresetxlog SYSTEM "appendix-obsolete-pgresetxlog.sgml">
 <!ENTITY obsolete-pgreceivexlog SYSTEM "appendix-obsolete-pgreceivexlog.sgml">

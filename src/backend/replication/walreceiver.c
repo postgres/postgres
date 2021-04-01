@@ -1361,7 +1361,7 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	/* Fetch values */
 	values[0] = Int32GetDatum(pid);
 
-	if (!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
+	if (!is_member_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
 	{
 		/*
 		 * Only superusers and members of pg_read_all_stats can see details.

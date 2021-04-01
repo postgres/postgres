@@ -187,8 +187,8 @@
 
  <para>
   Changing table-level options requires being a superuser or having the privileges
-  of the default role <literal>pg_read_server_files</literal> (to use a filename) or
-  the default role <literal>pg_execute_server_program</literal> (to use a program),
+  of the role <literal>pg_read_server_files</literal> (to use a filename) or
+  the role <literal>pg_execute_server_program</literal> (to use a program),
   for security reasons: only certain users should be able to control which file is
   read or which program is run.  In principle regular users could be allowed to
   change the other options, but that's not supported at present.

@@ -34,6 +34,7 @@
  -->
 
  &obsolete-recovery-config;
+ &obsolete-default-roles;
  &obsolete-pgxlogdump;
  &obsolete-pgresetxlog;
  &obsolete-pgreceivexlog;

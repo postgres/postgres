@@ -483,15 +483,15 @@ DROP ROLE doomed_role;
   </para>
  </sect1>
 
- <sect1 id="default-roles">
-  <title>Default Roles</title>
+ <sect1 id="predefined-roles">
+  <title>Predefined Roles</title>
 
-  <indexterm zone="default-roles">
+  <indexterm zone="predefined-roles">
    <primary>role</primary>
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname> provides a set of default roles
+   <productname>PostgreSQL</productname> provides a set of predefined roles
    that provide access to certain, commonly needed, privileged capabilities
    and information.  Administrators (including roles that have the
    <literal>CREATEROLE</literal> privilege) can <command>GRANT</command> these
@@ -500,14 +500,14 @@ DROP ROLE doomed_role;
   </para>
 
   <para>
-   The default roles are described in <xref linkend="default-roles-table"/>.
-   Note that the specific permissions for each of the default roles may
-   change in the future as additional capabilities are added.  Administrators
+   The predefined roles are described in <xref linkend="predefined-roles-table"/>.
+   Note that the specific permissions for each of the roles may change in
+   the future as additional capabilities are added.  Administrators
    should monitor the release notes for changes.
   </para>
 
-   <table tocentry="1" id="default-roles-table">
-    <title>Default Roles</title>
+   <table tocentry="1" id="predefined-roles-table">
+    <title>Predefined Roles</title>
     <tgroup cols="2">
      <colspec colname="col1" colwidth="1*"/>
      <colspec colname="col2" colwidth="2*"/>

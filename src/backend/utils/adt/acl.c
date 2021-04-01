@@ -4741,7 +4741,7 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 
 	/*
 	 * Role expansion happens in a non-database backend when guc.c checks
-	 * DEFAULT_ROLE_READ_ALL_SETTINGS for a physical walsender SHOW command.
+	 * ROLE_READ_ALL_SETTINGS for a physical walsender SHOW command.
 	 * In that case, no role gets pg_database_owner.
 	 */
 	if (!OidIsValid(MyDatabaseId))
@@ -4808,7 +4808,7 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 		/* implement pg_database_owner implicit membership */
 		if (memberid == dba && OidIsValid(dba))
 			roles_list = list_append_unique_oid(roles_list,
-												DEFAULT_ROLE_DATABASE_OWNER);
+												ROLE_DATABASE_OWNER);
 	}
 
 	/*

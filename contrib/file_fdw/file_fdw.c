@@ -269,13 +269,13 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 			 * otherwise there'd still be a security hole.
 			 */
 			if (strcmp(def->defname, "filename") == 0 &&
-				!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_SERVER_FILES))
+				!is_member_of_role(GetUserId(), ROLE_PG_READ_SERVER_FILES))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("only superuser or a member of the pg_read_server_files role may specify the filename option of a file_fdw foreign table")));
 
 			if (strcmp(def->defname, "program") == 0 &&
-				!is_member_of_role(GetUserId(), DEFAULT_ROLE_EXECUTE_SERVER_PROGRAM))
+				!is_member_of_role(GetUserId(), ROLE_PG_EXECUTE_SERVER_PROGRAM))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("only superuser or a member of the pg_execute_server_program role may specify the program option of a file_fdw foreign table")));

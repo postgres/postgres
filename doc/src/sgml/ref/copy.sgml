@@ -465,7 +465,7 @@ COPY <replaceable class="parameter">count</replaceable>
     by the server, not by the client application, must be executable by the
     <productname>PostgreSQL</productname> user.
     <command>COPY</command> naming a file or command is only allowed to
-    database superusers or users who are granted one of the default roles
+    database superusers or users who are granted one of the roles
     <literal>pg_read_server_files</literal>,
     <literal>pg_write_server_files</literal>,
     or <literal>pg_execute_server_program</literal>, since it allows reading
