@@ -24,6 +24,7 @@ begin
         ln := regexp_replace(ln, 'Evictions: \d+', 'Evictions: N');
         ln := regexp_replace(ln, 'Memory Usage: \d+', 'Memory Usage: N');
 	ln := regexp_replace(ln, 'Heap Fetches: \d+', 'Heap Fetches: N');
+	ln := regexp_replace(ln, 'loops=\d+', 'loops=N');
         return next ln;
     end loop;
 end;
@@ -32,6 +33,9 @@ $$;
 -- Ensure we get a result cache on the inner side of the nested loop
 SET enable_hashjoin TO off;
 SET enable_bitmapscan TO off;
+-- force_parallel_mode = regress can cause some instability in EXPLAIN ANALYZE
+-- output, so let's ensure that we turn it off.
+SET force_parallel_mode TO off;
 SELECT explain_resultcache('
 SELECT COUNT(*),AVG(t1.unique1) FROM tenk1 t1
 INNER JOIN tenk1 t2 ON t1.unique1 = t2.twenty
@@ -65,6 +69,7 @@ INNER JOIN tenk1 t2 ON t1.unique1 = t2.thousand
 WHERE t2.unique1 < 1200;', true);
 RESET enable_mergejoin;
 RESET work_mem;
+RESET force_parallel_mode;
 RESET enable_bitmapscan;
 RESET enable_hashjoin;
 
