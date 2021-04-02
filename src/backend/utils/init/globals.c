@@ -30,6 +30,7 @@ ProtocolVersion FrontendProtocol;
 volatile sig_atomic_t InterruptPending = false;
 volatile sig_atomic_t QueryCancelPending = false;
 volatile sig_atomic_t ProcDiePending = false;
+volatile sig_atomic_t CheckClientConnectionPending = false;
 volatile sig_atomic_t ClientConnectionLost = false;
 volatile sig_atomic_t IdleInTransactionSessionTimeoutPending = false;
 volatile sig_atomic_t IdleSessionTimeoutPending = false;

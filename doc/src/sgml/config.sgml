@@ -998,6 +998,43 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-client-connection-check-interval" xreflabel="client_connection_check_interval">
+      <term><varname>client_connection_check_interval</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>client_connection_check_interval</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the time interval between optional checks that the client is still
+        connected, while running queries.  The check is performed by polling
+        the socket, and allows long running queries to be aborted sooner if
+        the kernel reports that the connection is closed.
+       </para>
+       <para>
+        This option is currently available only on systems that support the
+        non-standard <symbol>POLLRDHUP</symbol> extension to the
+        <symbol>poll</symbol> system call, including Linux.
+       </para>
+       <para>
+        If the value is specified without units, it is taken as milliseconds.
+        The default value is <literal>0</literal>, which disables connection
+        checks.  Without connection checks, the server will detect the loss of
+        the connection only at the next interaction with the socket, when it
+        waits for, receives or sends data.
+       </para>
+       <para>
+        For the kernel itself to detect lost TCP connections reliably and within
+        a known timeframe in all scenarios including network failure, it may
+        also be necessary to adjust the TCP keepalive settings of the operating
+        system, or the <xref linkend="guc-tcp-keepalives-idle"/>,
+        <xref linkend="guc-tcp-keepalives-interval"/> and
+        <xref linkend="guc-tcp-keepalives-count"/> settings of
+        <productname>PostgreSQL</productname>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
      </sect2>
 
