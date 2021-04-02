@@ -137,6 +137,17 @@ SELECT *
   FROM CASE_TBL a, CASE2_TBL b
   WHERE COALESCE(f,b.i) = 2;
 
+-- Tests for constant subexpression simplification
+
+explain (costs off)
+SELECT * FROM CASE_TBL WHERE NULLIF(1, 2) = 2;
+
+explain (costs off)
+SELECT * FROM CASE_TBL WHERE NULLIF(1, 1) IS NOT NULL;
+
+explain (costs off)
+SELECT * FROM CASE_TBL WHERE NULLIF(1, null) = 2;
+
 --
 -- Examples of updates involving tables
 --
