@@ -286,8 +286,6 @@ entry_purge_tuples(ResultCacheState *rcstate, ResultCacheEntry *entry)
 
 	/* Update the memory accounting */
 	rcstate->mem_used -= freed_mem;
-
-	Assert(rcstate->mem_used >= 0);
 }
 
 /*
@@ -345,8 +343,6 @@ remove_cache_entry(ResultCacheState *rcstate, ResultCacheEntry *entry)
 	 * the amount used by the entry itself.
 	 */
 	rcstate->mem_used -= EMPTY_ENTRY_MEMORY_BYTES(entry);
-
-	Assert(rcstate->mem_used >= 0);
 
 	/* Remove the entry from the cache */
 	resultcache_delete_item(rcstate->hashtable, entry);
