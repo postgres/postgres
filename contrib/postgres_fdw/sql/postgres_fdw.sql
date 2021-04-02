@@ -2822,6 +2822,19 @@ DROP ROLE regress_multi_conn_user1;
 DROP ROLE regress_multi_conn_user2;
 
 -- ===================================================================
+-- Test foreign server level option keep_connections
+-- ===================================================================
+-- By default, the connections associated with foreign server are cached i.e.
+-- keep_connections option is on. Set it to off.
+ALTER SERVER loopback OPTIONS (keep_connections 'off');
+-- connection to loopback server is closed at the end of xact
+-- as keep_connections was set to off.
+SELECT 1 FROM ft1 LIMIT 1;
+-- No cached connections, so no records should be output.
+SELECT server_name FROM postgres_fdw_get_connections() ORDER BY 1;
+ALTER SERVER loopback OPTIONS (SET keep_connections 'on');
+
+-- ===================================================================
 -- batch insert
 -- ===================================================================
 

@@ -59,6 +59,8 @@ typedef struct ConnCacheEntry
 	bool		have_error;		/* have any subxacts aborted in this xact? */
 	bool		changing_xact_state;	/* xact state change in process */
 	bool		invalidated;	/* true if reconnect is pending */
+	bool		keep_connections;	/* setting value of keep_connections
+									 * server option */
 	Oid			serverid;		/* foreign server OID used to get server name */
 	uint32		server_hashvalue;	/* hash value of foreign server OID */
 	uint32		mapping_hashvalue;	/* hash value of user mapping OID */
@@ -286,6 +288,7 @@ static void
 make_new_connection(ConnCacheEntry *entry, UserMapping *user)
 {
 	ForeignServer *server = GetForeignServer(user->serverid);
+	ListCell   *lc;
 
 	Assert(entry->conn == NULL);
 
@@ -303,6 +306,26 @@ make_new_connection(ConnCacheEntry *entry, UserMapping *user)
 		GetSysCacheHashValue1(USERMAPPINGOID,
 							  ObjectIdGetDatum(user->umid));
 	memset(&entry->state, 0, sizeof(entry->state));
+
+	/*
+	 * Determine whether to keep the connection that we're about to make here
+	 * open even after the transaction using it ends, so that the subsequent
+	 * transactions can re-use it.
+	 *
+	 * It's enough to determine this only when making new connection because
+	 * all the connections to the foreign server whose keep_connections option
+	 * is changed will be closed and re-made later.
+	 *
+	 * By default, all the connections to any foreign servers are kept open.
+	 */
+	entry->keep_connections = true;
+	foreach(lc, server->options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "keep_connections") == 0)
+			entry->keep_connections = defGetBoolean(def);
+	}
 
 	/* Now try to make the connection */
 	entry->conn = connect_pg_server(server, user);
@@ -970,14 +993,16 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 		entry->xact_depth = 0;
 
 		/*
-		 * If the connection isn't in a good idle state or it is marked as
-		 * invalid, then discard it to recover. Next GetConnection will open a
-		 * new connection.
+		 * If the connection isn't in a good idle state, it is marked as
+		 * invalid or keep_connections option of its server is disabled, then
+		 * discard it to recover. Next GetConnection will open a new
+		 * connection.
 		 */
 		if (PQstatus(entry->conn) != CONNECTION_OK ||
 			PQtransactionStatus(entry->conn) != PQTRANS_IDLE ||
 			entry->changing_xact_state ||
-			entry->invalidated)
+			entry->invalidated ||
+			!entry->keep_connections)
 		{
 			elog(DEBUG3, "discarding connection %p", entry->conn);
 			disconnect_pg_server(entry);

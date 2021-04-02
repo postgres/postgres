@@ -518,6 +518,33 @@ OPTIONS (ADD password_required 'false');
    </para>
 
   </sect3>
+
+  <sect3>
+    <title>Connection Management Options</title>
+
+    <para>
+     By default all the open connections that <filename>postgres_fdw</filename>
+     established to the foreign servers are kept in local session for re-use.
+    </para>
+ 
+    <variablelist>
+ 
+     <varlistentry>
+      <term><literal>keep_connections</literal></term>
+      <listitem>
+       <para>
+        This option controls whether <filename>postgres_fdw</filename> keeps
+        the connections to the foreign server open so that the subsequent
+        queries can re-use them. It can only be specified for a foreign server.
+        The default is <literal>on</literal>. If set to <literal>off</literal>,
+        all connections to this foreign server will be discarded at the end of
+        transaction.
+      </para>
+      </listitem>
+     </varlistentry>
+ 
+    </variablelist>
+   </sect3>
  </sect2>
 
 <sect2>
@@ -605,8 +632,10 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   <para>
    <filename>postgres_fdw</filename> establishes a connection to a
    foreign server during the first query that uses a foreign table
-   associated with the foreign server.  This connection is kept and
-   re-used for subsequent queries in the same session.  However, if
+   associated with the foreign server.  By default this connection
+   is kept and re-used for subsequent queries in the same session.
+   This behavior can be controlled using
+   <literal>keep_connections</literal> option for a foreign server. If
    multiple user identities (user mappings) are used to access the foreign
    server, a connection is established for each user mapping.
   </para>
@@ -622,8 +651,10 @@ postgres=# SELECT postgres_fdw_disconnect_all();
 
   <para>
    Once a connection to a foreign server has been established,
-   it's usually kept until the local or corresponding remote
+   it's by default kept until the local or corresponding remote
    session exits.  To disconnect a connection explicitly,
+   <literal>keep_connections</literal> option for a foreign server
+   may be disabled, or
    <function>postgres_fdw_disconnect</function> and
    <function>postgres_fdw_disconnect_all</function> functions
    may be used.  For example, these are useful to close
