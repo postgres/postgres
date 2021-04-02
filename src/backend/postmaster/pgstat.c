@@ -1773,8 +1773,10 @@ pgstat_report_tempfile(size_t filesize)
  * ----------
  */
 void
-pgstat_report_replslot(const char *slotname, int spilltxns, int spillcount,
-					   int spillbytes, int streamtxns, int streamcount, int streambytes)
+pgstat_report_replslot(const char *slotname, PgStat_Counter spilltxns,
+					   PgStat_Counter spillcount, PgStat_Counter spillbytes,
+					   PgStat_Counter streamtxns, PgStat_Counter streamcount,
+					   PgStat_Counter streambytes)
 {
 	PgStat_MsgReplSlot msg;
 

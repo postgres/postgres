@@ -1450,8 +1450,10 @@ extern void pgstat_report_recovery_conflict(int reason);
 extern void pgstat_report_deadlock(void);
 extern void pgstat_report_checksum_failures_in_db(Oid dboid, int failurecount);
 extern void pgstat_report_checksum_failure(void);
-extern void pgstat_report_replslot(const char *slotname, int spilltxns, int spillcount,
-								   int spillbytes, int streamtxns, int streamcount, int streambytes);
+extern void pgstat_report_replslot(const char *slotname, PgStat_Counter spilltxns,
+								   PgStat_Counter spillcount, PgStat_Counter spillbytes,
+								   PgStat_Counter streamtxns, PgStat_Counter streamcount,
+								   PgStat_Counter streambytes);
 extern void pgstat_report_replslot_drop(const char *slotname);
 
 extern void pgstat_initialize(void);
