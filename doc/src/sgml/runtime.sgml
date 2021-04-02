@@ -1692,9 +1692,9 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    incompatibilities, so application programming changes might be required.
    All user-visible changes are listed in the release notes (<xref
    linkend="release"/>);  pay particular attention to the section
-   labeled "Migration".  If you are upgrading across several major
-   versions, be sure to read the release notes for each intervening
-   version.
+   labeled "Migration".  Though you can upgrade from one major version
+   to another without upgrading to intervening versions, you should read
+   the major release notes of all intervening versions.
   </para>
 
   <para>
