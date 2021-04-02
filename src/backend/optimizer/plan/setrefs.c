@@ -752,6 +752,16 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			set_hash_references(root, plan, rtoffset);
 			break;
 
+		case T_ResultCache:
+			{
+				ResultCache *rcplan = (ResultCache *) plan;
+
+				rcplan->param_exprs = fix_scan_list(root, rcplan->param_exprs,
+													rtoffset,
+													NUM_EXEC_TLIST(plan));
+				break;
+			}
+
 		case T_Material:
 		case T_Sort:
 		case T_IncrementalSort:

@@ -464,6 +464,9 @@ begin
         ln := regexp_replace(ln, 'Workers Launched: \d+', 'Workers Launched: N');
         ln := regexp_replace(ln, 'actual rows=\d+ loops=\d+', 'actual rows=N loops=N');
         ln := regexp_replace(ln, 'Rows Removed by Filter: \d+', 'Rows Removed by Filter: N');
+        ln := regexp_replace(ln, 'Hits: \d+', 'Hits: N');
+        ln := regexp_replace(ln, 'Misses: \d+', 'Misses: N');
+        ln := regexp_replace(ln, 'Memory Usage: \d+', 'Memory Usage: N');
         return next ln;
     end loop;
 end;
@@ -515,6 +518,7 @@ create index ab_a3_b3_a_idx on ab_a3_b3 (a);
 
 set enable_hashjoin = 0;
 set enable_mergejoin = 0;
+set enable_resultcache = 0;
 
 select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on ab.a = a.a where a.a in(0, 0, 1)');
 
@@ -533,6 +537,7 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
 
 reset enable_hashjoin;
 reset enable_mergejoin;
+reset enable_resultcache;
 reset parallel_setup_cost;
 reset parallel_tuple_cost;
 reset min_parallel_table_scan_size;

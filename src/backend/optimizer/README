@@ -382,6 +382,7 @@ RelOptInfo      - a relation or joined relations
   MergeAppendPath - merge multiple subpaths, preserving their common sort order
   GroupResultPath - childless Result plan node (used for degenerate grouping)
   MaterialPath  - a Material plan node
+  ResultCachePath - a result cache plan node for caching tuples from sub-paths
   UniquePath    - remove duplicate rows (either by hashing or sorting)
   GatherPath    - collect the results of parallel workers
   GatherMergePath - collect parallel results, preserving their common sort order

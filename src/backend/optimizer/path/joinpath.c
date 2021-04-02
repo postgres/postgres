@@ -18,10 +18,13 @@
 
 #include "executor/executor.h"
 #include "foreign/fdwapi.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/cost.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "utils/typcache.h"
 
 /* Hook for plugins to get control in add_paths_to_joinrel() */
 set_join_pathlist_hook_type set_join_pathlist_hook = NULL;
@@ -52,6 +55,9 @@ static void try_partial_mergejoin_path(PlannerInfo *root,
 static void sort_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 								 RelOptInfo *outerrel, RelOptInfo *innerrel,
 								 JoinType jointype, JoinPathExtraData *extra);
+static inline bool clause_sides_match_join(RestrictInfo *rinfo,
+										   RelOptInfo *outerrel,
+										   RelOptInfo *innerrel);
 static void match_unsorted_outer(PlannerInfo *root, RelOptInfo *joinrel,
 								 RelOptInfo *outerrel, RelOptInfo *innerrel,
 								 JoinType jointype, JoinPathExtraData *extra);
@@ -163,6 +169,11 @@ add_paths_to_joinrel(PlannerInfo *root,
 	{
 		case JOIN_SEMI:
 		case JOIN_ANTI:
+
+			/*
+			 * XXX it may be worth proving this to allow a ResultCache to be
+			 * considered for Nested Loop Semi/Anti Joins.
+			 */
 			extra.inner_unique = false; /* well, unproven */
 			break;
 		case JOIN_UNIQUE_INNER:
@@ -352,6 +363,180 @@ allow_star_schema_join(PlannerInfo *root,
 	 */
 	return (bms_overlap(inner_paramrels, outerrelids) &&
 			bms_nonempty_difference(inner_paramrels, outerrelids));
+}
+
+/*
+ * paraminfo_get_equal_hashops
+ *		Determine if param_info and innerrel's lateral_vars can be hashed.
+ *		Returns true the hashing is possible, otherwise return false.
+ *
+ * Additionally we also collect the outer exprs and the hash operators for
+ * each parameter to innerrel.  These set in 'param_exprs' and 'operators'
+ * when we return true.
+ */
+static bool
+paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
+							RelOptInfo *outerrel, RelOptInfo *innerrel,
+							List **param_exprs, List **operators)
+
+{
+	ListCell   *lc;
+
+	*param_exprs = NIL;
+	*operators = NIL;
+
+	if (param_info != NULL)
+	{
+		List	   *clauses = param_info->ppi_clauses;
+
+		foreach(lc, clauses)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+			OpExpr	   *opexpr;
+			Node	   *expr;
+
+			/* can't use result cache without a valid hash equals operator */
+			if (!OidIsValid(rinfo->hasheqoperator) ||
+				!clause_sides_match_join(rinfo, outerrel, innerrel))
+			{
+				list_free(*operators);
+				list_free(*param_exprs);
+				return false;
+			}
+
+			/*
+			 * We already checked that this is an OpExpr with 2 args when
+			 * setting hasheqoperator.
+			 */
+			opexpr = (OpExpr *) rinfo->clause;
+			if (rinfo->outer_is_left)
+				expr = (Node *) linitial(opexpr->args);
+			else
+				expr = (Node *) lsecond(opexpr->args);
+
+			*operators = lappend_oid(*operators, rinfo->hasheqoperator);
+			*param_exprs = lappend(*param_exprs, expr);
+		}
+	}
+
+	/* Now add any lateral vars to the cache key too */
+	foreach(lc, innerrel->lateral_vars)
+	{
+		Node	   *expr = (Node *) lfirst(lc);
+		TypeCacheEntry *typentry;
+
+		/* Reject if there are any volatile functions */
+		if (contain_volatile_functions(expr))
+		{
+			list_free(*operators);
+			list_free(*param_exprs);
+			return false;
+		}
+
+		typentry = lookup_type_cache(exprType(expr),
+									 TYPECACHE_HASH_PROC | TYPECACHE_EQ_OPR);
+
+		/* can't use result cache without a valid hash equals operator */
+		if (!OidIsValid(typentry->hash_proc) || !OidIsValid(typentry->eq_opr))
+		{
+			list_free(*operators);
+			list_free(*param_exprs);
+			return false;
+		}
+
+		*operators = lappend_oid(*operators, typentry->eq_opr);
+		*param_exprs = lappend(*param_exprs, expr);
+	}
+
+	/* We're okay to use result cache */
+	return true;
+}
+
+/*
+ * get_resultcache_path
+ *		If possible, make and return a Result Cache path atop of 'inner_path'.
+ *		Otherwise return NULL.
+ */
+static Path *
+get_resultcache_path(PlannerInfo *root, RelOptInfo *innerrel,
+					 RelOptInfo *outerrel, Path *inner_path,
+					 Path *outer_path, JoinType jointype,
+					 JoinPathExtraData *extra)
+{
+	List	   *param_exprs;
+	List	   *hash_operators;
+	ListCell   *lc;
+
+	/* Obviously not if it's disabled */
+	if (!enable_resultcache)
+		return NULL;
+
+	/*
+	 * We can safely not bother with all this unless we expect to perform more
+	 * than one inner scan.  The first scan is always going to be a cache
+	 * miss.  This would likely fail later anyway based on costs, so this is
+	 * really just to save some wasted effort.
+	 */
+	if (outer_path->parent->rows < 2)
+		return NULL;
+
+	/*
+	 * We can only have a result cache when there's some kind of cache key,
+	 * either parameterized path clauses or lateral Vars.  No cache key sounds
+	 * more like something a Materialize node might be more useful for.
+	 */
+	if ((inner_path->param_info == NULL ||
+		 inner_path->param_info->ppi_clauses == NIL) &&
+		innerrel->lateral_vars == NIL)
+		return NULL;
+
+	/*
+	 * Currently we don't do this for SEMI and ANTI joins unless they're
+	 * marked as inner_unique.  This is because nested loop SEMI/ANTI joins
+	 * don't scan the inner node to completion, which will mean result cache
+	 * cannot mark the cache entry as complete.
+	 *
+	 * XXX Currently we don't attempt to mark SEMI/ANTI joins as inner_unique
+	 * = true.  Should we?  See add_paths_to_joinrel()
+	 */
+	if (!extra->inner_unique && (jointype == JOIN_SEMI ||
+								 jointype == JOIN_ANTI))
+		return NULL;
+
+	/*
+	 * We can't use a result cache if there are volatile functions in the
+	 * inner rel's target list or restrict list.  A cache hit could reduce the
+	 * number of calls to these functions.
+	 */
+	if (contain_volatile_functions((Node *) innerrel->reltarget))
+		return NULL;
+
+	foreach(lc, innerrel->baserestrictinfo)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		if (contain_volatile_functions((Node *) rinfo))
+			return NULL;
+	}
+
+	/* Check if we have hash ops for each parameter to the path */
+	if (paraminfo_get_equal_hashops(root,
+									inner_path->param_info,
+									outerrel,
+									innerrel,
+									&param_exprs,
+									&hash_operators))
+	{
+		return (Path *) create_resultcache_path(root,
+												innerrel,
+												inner_path,
+												param_exprs,
+												hash_operators,
+												extra->inner_unique,
+												outer_path->parent->rows);
+	}
+
+	return NULL;
 }
 
 /*
@@ -1471,6 +1656,7 @@ match_unsorted_outer(PlannerInfo *root,
 			foreach(lc2, innerrel->cheapest_parameterized_paths)
 			{
 				Path	   *innerpath = (Path *) lfirst(lc2);
+				Path	   *rcpath;
 
 				try_nestloop_path(root,
 								  joinrel,
@@ -1479,6 +1665,22 @@ match_unsorted_outer(PlannerInfo *root,
 								  merge_pathkeys,
 								  jointype,
 								  extra);
+
+				/*
+				 * Try generating a result cache path and see if that makes
+				 * the nested loop any cheaper.
+				 */
+				rcpath = get_resultcache_path(root, innerrel, outerrel,
+											  innerpath, outerpath, jointype,
+											  extra);
+				if (rcpath != NULL)
+					try_nestloop_path(root,
+									  joinrel,
+									  outerpath,
+									  rcpath,
+									  merge_pathkeys,
+									  jointype,
+									  extra);
 			}
 
 			/* Also consider materialized form of the cheapest inner path */
@@ -1633,6 +1835,7 @@ consider_parallel_nestloop(PlannerInfo *root,
 		foreach(lc2, innerrel->cheapest_parameterized_paths)
 		{
 			Path	   *innerpath = (Path *) lfirst(lc2);
+			Path	   *rcpath;
 
 			/* Can't join to an inner path that is not parallel-safe */
 			if (!innerpath->parallel_safe)
@@ -1657,6 +1860,17 @@ consider_parallel_nestloop(PlannerInfo *root,
 
 			try_partial_nestloop_path(root, joinrel, outerpath, innerpath,
 									  pathkeys, jointype, extra);
+
+			/*
+			 * Try generating a result cache path and see if that makes the
+			 * nested loop any cheaper.
+			 */
+			rcpath = get_resultcache_path(root, innerrel, outerrel,
+										  innerpath, outerpath, jointype,
+										  extra);
+			if (rcpath != NULL)
+				try_partial_nestloop_path(root, joinrel, outerpath, rcpath,
+										  pathkeys, jointype, extra);
 		}
 	}
 }

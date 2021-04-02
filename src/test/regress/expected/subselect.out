@@ -1091,19 +1091,21 @@ select sum(o.four), sum(ss.a) from
     select * from x
   ) ss
 where o.ten = 1;
-                    QUERY PLAN                     
----------------------------------------------------
+                       QUERY PLAN                        
+---------------------------------------------------------
  Aggregate
    ->  Nested Loop
          ->  Seq Scan on onek o
                Filter: (ten = 1)
-         ->  CTE Scan on x
-               CTE x
-                 ->  Recursive Union
-                       ->  Result
-                       ->  WorkTable Scan on x x_1
-                             Filter: (a < 10)
-(10 rows)
+         ->  Result Cache
+               Cache Key: o.four
+               ->  CTE Scan on x
+                     CTE x
+                       ->  Recursive Union
+                             ->  Result
+                             ->  WorkTable Scan on x x_1
+                                   Filter: (a < 10)
+(12 rows)
 
 select sum(o.four), sum(ss.a) from
   onek o cross join lateral (

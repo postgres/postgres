@@ -1495,6 +1495,25 @@ typedef struct MaterialPath
 } MaterialPath;
 
 /*
+ * ResultCachePath represents a ResultCache plan node, i.e., a cache that
+ * caches tuples from parameterized paths to save the underlying node from
+ * having to be rescanned for parameter values which are already cached.
+ */
+typedef struct ResultCachePath
+{
+	Path		path;
+	Path	   *subpath;		/* outerpath to cache tuples from */
+	List	   *hash_operators; /* hash operators for each key */
+	List	   *param_exprs;	/* cache keys */
+	bool		singlerow;		/* true if the cache entry is to be marked as
+								 * complete after caching the first record. */
+	double		calls;			/* expected number of rescans */
+	uint32		est_entries;	/* The maximum number of entries that the
+								 * planner expects will fit in the cache, or 0
+								 * if unknown */
+} ResultCachePath;
+
+/*
  * UniquePath represents elimination of distinct rows from the output of
  * its subpath.
  *
@@ -2091,6 +2110,9 @@ typedef struct RestrictInfo
 	Selectivity right_bucketsize;	/* avg bucketsize of right side */
 	Selectivity left_mcvfreq;	/* left side's most common val's freq */
 	Selectivity right_mcvfreq;	/* right side's most common val's freq */
+
+	/* hash equality operator used for result cache, else InvalidOid */
+	Oid			hasheqoperator;
 } RestrictInfo;
 
 /*
