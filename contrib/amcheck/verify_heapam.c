@@ -777,7 +777,7 @@ check_tuple_visibility(HeapCheckContext *ctx)
 				case XID_COMMITTED:
 					/*
 					 * The tuple is dead, because the xvac transaction moved
-					 * it off and comitted. It's checkable, but also prunable.
+					 * it off and committed. It's checkable, but also prunable.
 					 */
 					return true;
 
@@ -851,7 +851,7 @@ check_tuple_visibility(HeapCheckContext *ctx)
 				case XID_ABORTED:
 					/*
 					 * The tuple is dead, because the xvac transaction moved
-					 * it off and comitted. It's checkable, but also prunable.
+					 * it off and committed. It's checkable, but also prunable.
 					 */
 					return true;
 			}
