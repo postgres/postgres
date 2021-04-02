@@ -53,9 +53,16 @@ RESET ROLE
   </para>
 
   <para>
-   The <literal>NONE</literal> and <literal>RESET</literal> forms reset the current
-   user identifier to be the current session user identifier.
-   These forms can be executed by any user.
+   <literal>SET ROLE NONE</literal> sets the current user identifier to the
+   current session user identifier, as returned by
+   <function>session_user</function>.  <literal>RESET ROLE</literal> sets the
+   current user identifier to the connection-time setting specified by the
+   <link linkend="libpq-connect-options">command-line options</link>,
+   <link linkend="sql-alterrole"><command>ALTER ROLE</command></link>, or
+   <link linkend="sql-alterdatabase"><command>ALTER DATABASE</command></link>,
+   if any such settings exist.  Otherwise, <literal>RESET ROLE</literal> sets
+   the current user identifier to the current session user identifier.  These
+   forms can be executed by any user.
   </para>
  </refsect1>
 
