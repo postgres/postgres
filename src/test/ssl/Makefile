@@ -91,7 +91,7 @@ ssl/client.crt: ssl/client.key ssl/client_ca.crt
 	openssl x509 -in ssl/temp.crt -out ssl/client.crt # to keep just the PEM cert
 	rm ssl/client.csr ssl/temp.crt
 
-# Client certificate with multi-parth DN, signed by the client CA:
+# Client certificate with multi-part DN, signed by the client CA:
 ssl/client-dn.crt: ssl/client-dn.key ssl/client_ca.crt
 	openssl req -new -key ssl/client-dn.key -out ssl/client-dn.csr -config client-dn.config
 	openssl ca -name client_ca -batch -out ssl/temp.crt -config cas.config -infiles ssl/client-dn.csr
