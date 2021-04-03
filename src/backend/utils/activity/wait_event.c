@@ -7,6 +7,17 @@
  *
  * IDENTIFICATION
  *	  src/backend/postmaster/wait_event.c
+ *
+ * NOTES
+ *
+ * To make pgstat_report_wait_start() and pgstat_report_wait_end() as
+ * lightweight as possible, they do not check if shared memory (MyProc
+ * specifically, where the wait event is stored) is already available. Instead
+ * we initially set my_wait_event_info to a process local variable, which then
+ * is redirected to shared memory using pgstat_set_wait_event_storage(). For
+ * the same reason pgstat_track_activities is not checked - the check adds
+ * more work than it saves.
+ *
  * ----------
  */
 #include "postgres.h"
@@ -22,6 +33,36 @@ static const char *pgstat_get_wait_ipc(WaitEventIPC w);
 static const char *pgstat_get_wait_timeout(WaitEventTimeout w);
 static const char *pgstat_get_wait_io(WaitEventIO w);
 
+
+static uint32 local_my_wait_event_info;
+uint32	   *my_wait_event_info = &local_my_wait_event_info;
+
+
+/*
+ * Configure wait event reporting to report wait events to *wait_event_info.
+ * *wait_event_info needs to be valid until pgstat_reset_wait_event_storage()
+ * is called.
+ *
+ * Expected to be called during backend startup, to point my_wait_event_info
+ * into shared memory.
+ */
+void
+pgstat_set_wait_event_storage(uint32 *wait_event_info)
+{
+	my_wait_event_info = wait_event_info;
+}
+
+/*
+ * Reset wait event storage location.
+ *
+ * Expected to be called during backend shutdown, before the location set up
+ * pgstat_set_wait_event_storage() becomes invalid.
+ */
+void
+pgstat_reset_wait_event_storage(void)
+{
+	my_wait_event_info = &local_my_wait_event_info;
+}
 
 /* ----------
  * pgstat_get_wait_event_type() -

@@ -11,9 +11,6 @@
 #define WAIT_EVENT_H
 
 
-#include "storage/proc.h" /* for MyProc */
-
-
 /* ----------
  * Wait Classes
  * ----------
@@ -234,13 +231,10 @@ extern const char *pgstat_get_wait_event(uint32 wait_event_info);
 extern const char *pgstat_get_wait_event_type(uint32 wait_event_info);
 static inline void pgstat_report_wait_start(uint32 wait_event_info);
 static inline void pgstat_report_wait_end(void);
+extern void pgstat_set_wait_event_storage(uint32 *wait_event_info);
+extern void pgstat_reset_wait_event_storage(void);
 
-
-/*
- * Repeated here for the inline functions because it is declared in pgstat.h,
- * which includes this header.
- */
-extern PGDLLIMPORT bool pgstat_track_activities;
+extern PGDLLIMPORT uint32 *my_wait_event_info;
 
 
 /* ----------
@@ -254,47 +248,35 @@ extern PGDLLIMPORT bool pgstat_track_activities;
  *	for wait event which is sufficient for current usage, 1-byte is
  *	reserved for future usage.
  *
- * NB: this *must* be able to survive being called before MyProc has been
- * initialized.
+ *	Historically we used to make this reporting conditional on
+ *	pgstat_track_activities, but the check for that seems to add more cost
+ *	than it saves.
+ *
+ *	my_wait_event_info initially points to local memory, making it safe to
+ *	call this before MyProc has been initialized.
  * ----------
  */
 static inline void
 pgstat_report_wait_start(uint32 wait_event_info)
 {
-	volatile PGPROC *proc = MyProc;
-
-	if (!pgstat_track_activities || !proc)
-		return;
-
 	/*
 	 * Since this is a four-byte field which is always read and written as
 	 * four-bytes, updates are atomic.
 	 */
-	proc->wait_event_info = wait_event_info;
+	*(volatile uint32 *) my_wait_event_info = wait_event_info;
 }
 
 /* ----------
  * pgstat_report_wait_end() -
  *
  *	Called to report end of a wait.
- *
- * NB: this *must* be able to survive being called before MyProc has been
- * initialized.
  * ----------
  */
 static inline void
 pgstat_report_wait_end(void)
 {
-	volatile PGPROC *proc = MyProc;
-
-	if (!pgstat_track_activities || !proc)
-		return;
-
-	/*
-	 * Since this is a four-byte field which is always read and written as
-	 * four-bytes, updates are atomic.
-	 */
-	proc->wait_event_info = 0;
+	/* see pgstat_report_wait_start() */
+	*(volatile uint32 *) my_wait_event_info = 0;
 }
 
 

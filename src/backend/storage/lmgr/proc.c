@@ -448,6 +448,9 @@ InitProcess(void)
 	OwnLatch(&MyProc->procLatch);
 	SwitchToSharedLatch();
 
+	/* now that we have a proc, report wait events to shared memory */
+	pgstat_set_wait_event_storage(&MyProc->wait_event_info);
+
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
 	 * be careful and reinitialize its value here.  (This is not strictly
@@ -600,6 +603,9 @@ InitAuxiliaryProcess(void)
 	 */
 	OwnLatch(&MyProc->procLatch);
 	SwitchToSharedLatch();
+
+	/* now that we have a proc, report wait events to shared memory */
+	pgstat_set_wait_event_storage(&MyProc->wait_event_info);
 
 	/* Check that group locking fields are in a proper initial state. */
 	Assert(MyProc->lockGroupLeader == NULL);
@@ -884,10 +890,15 @@ ProcKill(int code, Datum arg)
 	/*
 	 * Reset MyLatch to the process local one.  This is so that signal
 	 * handlers et al can continue using the latch after the shared latch
-	 * isn't ours anymore. After that clear MyProc and disown the shared
-	 * latch.
+	 * isn't ours anymore.
+	 *
+	 * Similarly, stop reporting wait events to MyProc->wait_event_info.
+	 *
+	 * After that clear MyProc and disown the shared latch.
 	 */
 	SwitchBackToLocalLatch();
+	pgstat_reset_wait_event_storage();
+
 	proc = MyProc;
 	MyProc = NULL;
 	DisownLatch(&proc->procLatch);
@@ -952,13 +963,10 @@ AuxiliaryProcKill(int code, Datum arg)
 	/* Cancel any pending condition variable sleep, too */
 	ConditionVariableCancelSleep();
 
-	/*
-	 * Reset MyLatch to the process local one.  This is so that signal
-	 * handlers et al can continue using the latch after the shared latch
-	 * isn't ours anymore. After that clear MyProc and disown the shared
-	 * latch.
-	 */
+	/* look at the equivalent ProcKill() code for comments */
 	SwitchBackToLocalLatch();
+	pgstat_reset_wait_event_storage();
+
 	proc = MyProc;
 	MyProc = NULL;
 	DisownLatch(&proc->procLatch);
