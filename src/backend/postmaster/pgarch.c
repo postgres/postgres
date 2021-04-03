@@ -44,7 +44,9 @@
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "storage/procsignal.h"
+#include "storage/shmem.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 

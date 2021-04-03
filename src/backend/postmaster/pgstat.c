@@ -61,6 +61,7 @@
 #include "storage/latch.h"
 #include "storage/lmgr.h"
 #include "storage/pg_shmem.h"
+#include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/sinvaladt.h"
 #include "utils/ascii.h"

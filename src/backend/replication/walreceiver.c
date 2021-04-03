@@ -69,6 +69,7 @@
 #include "replication/walsender.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
 #include "utils/acl.h"

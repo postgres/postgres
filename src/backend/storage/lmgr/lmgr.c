@@ -23,6 +23,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/lmgr.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "utils/inval.h"
