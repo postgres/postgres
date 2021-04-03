@@ -102,4 +102,11 @@ extern void ResourceOwnerRememberCryptoHash(ResourceOwner owner,
 extern void ResourceOwnerForgetCryptoHash(ResourceOwner owner,
 										  Datum handle);
 
+/* support for HMAC context management */
+extern void ResourceOwnerEnlargeHMAC(ResourceOwner owner);
+extern void ResourceOwnerRememberHMAC(ResourceOwner owner,
+									  Datum handle);
+extern void ResourceOwnerForgetHMAC(ResourceOwner owner,
+									Datum handle);
+
 #endif							/* RESOWNER_PRIVATE_H */

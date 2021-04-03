@@ -95,6 +95,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_control.h"
 #include "common/base64.h"
+#include "common/hmac.h"
 #include "common/saslprep.h"
 #include "common/scram-common.h"
 #include "common/sha2.h"
@@ -1100,7 +1101,7 @@ verify_client_proof(scram_state *state)
 	uint8		ClientSignature[SCRAM_KEY_LEN];
 	uint8		ClientKey[SCRAM_KEY_LEN];
 	uint8		client_StoredKey[SCRAM_KEY_LEN];
-	scram_HMAC_ctx ctx;
+	pg_hmac_ctx *ctx = pg_hmac_create(PG_SHA256);
 	int			i;
 
 	/*
@@ -1108,22 +1109,24 @@ verify_client_proof(scram_state *state)
 	 * here even when processing the calculations as this could involve a mock
 	 * authentication.
 	 */
-	if (scram_HMAC_init(&ctx, state->StoredKey, SCRAM_KEY_LEN) < 0 ||
-		scram_HMAC_update(&ctx,
-						  state->client_first_message_bare,
-						  strlen(state->client_first_message_bare)) < 0 ||
-		scram_HMAC_update(&ctx, ",", 1) < 0 ||
-		scram_HMAC_update(&ctx,
-						  state->server_first_message,
-						  strlen(state->server_first_message)) < 0 ||
-		scram_HMAC_update(&ctx, ",", 1) < 0 ||
-		scram_HMAC_update(&ctx,
-						  state->client_final_message_without_proof,
-						  strlen(state->client_final_message_without_proof)) < 0 ||
-		scram_HMAC_final(ClientSignature, &ctx) < 0)
+	if (pg_hmac_init(ctx, state->StoredKey, SCRAM_KEY_LEN) < 0 ||
+		pg_hmac_update(ctx,
+					   (uint8 *) state->client_first_message_bare,
+					   strlen(state->client_first_message_bare)) < 0 ||
+		pg_hmac_update(ctx, (uint8 *) ",", 1) < 0 ||
+		pg_hmac_update(ctx,
+					   (uint8 *) state->server_first_message,
+					   strlen(state->server_first_message)) < 0 ||
+		pg_hmac_update(ctx, (uint8 *) ",", 1) < 0 ||
+		pg_hmac_update(ctx,
+					   (uint8 *) state->client_final_message_without_proof,
+					   strlen(state->client_final_message_without_proof)) < 0 ||
+		pg_hmac_final(ctx, ClientSignature, sizeof(ClientSignature)) < 0)
 	{
 		elog(ERROR, "could not calculate client signature");
 	}
+
+	pg_hmac_free(ctx);
 
 	/* Extract the ClientKey that the client calculated from the proof */
 	for (i = 0; i < SCRAM_KEY_LEN; i++)
@@ -1359,25 +1362,27 @@ build_server_final_message(scram_state *state)
 	uint8		ServerSignature[SCRAM_KEY_LEN];
 	char	   *server_signature_base64;
 	int			siglen;
-	scram_HMAC_ctx ctx;
+	pg_hmac_ctx *ctx = pg_hmac_create(PG_SHA256);
 
 	/* calculate ServerSignature */
-	if (scram_HMAC_init(&ctx, state->ServerKey, SCRAM_KEY_LEN) < 0 ||
-		scram_HMAC_update(&ctx,
-						  state->client_first_message_bare,
-						  strlen(state->client_first_message_bare)) < 0 ||
-		scram_HMAC_update(&ctx, ",", 1) < 0 ||
-		scram_HMAC_update(&ctx,
-						  state->server_first_message,
-						  strlen(state->server_first_message)) < 0 ||
-		scram_HMAC_update(&ctx, ",", 1) < 0 ||
-		scram_HMAC_update(&ctx,
-						  state->client_final_message_without_proof,
-						  strlen(state->client_final_message_without_proof)) < 0 ||
-		scram_HMAC_final(ServerSignature, &ctx) < 0)
+	if (pg_hmac_init(ctx, state->ServerKey, SCRAM_KEY_LEN) < 0 ||
+		pg_hmac_update(ctx,
+					   (uint8 *) state->client_first_message_bare,
+					   strlen(state->client_first_message_bare)) < 0 ||
+		pg_hmac_update(ctx, (uint8 *) ",", 1) < 0 ||
+		pg_hmac_update(ctx,
+					   (uint8 *) state->server_first_message,
+					   strlen(state->server_first_message)) < 0 ||
+		pg_hmac_update(ctx, (uint8 *) ",", 1) < 0 ||
+		pg_hmac_update(ctx,
+					   (uint8 *) state->client_final_message_without_proof,
+					   strlen(state->client_final_message_without_proof)) < 0 ||
+		pg_hmac_final(ctx, ServerSignature, sizeof(ServerSignature)) < 0)
 	{
 		elog(ERROR, "could not calculate server signature");
 	}
+
+	pg_hmac_free(ctx);
 
 	siglen = pg_b64_enc_len(SCRAM_KEY_LEN);
 	/* don't forget the zero-terminator */

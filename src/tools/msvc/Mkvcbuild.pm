@@ -132,11 +132,13 @@ sub mkvcbuild
 	if ($solution->{options}->{openssl})
 	{
 		push(@pgcommonallfiles, 'cryptohash_openssl.c');
+		push(@pgcommonallfiles, 'hmac_openssl.c');
 		push(@pgcommonallfiles, 'protocol_openssl.c');
 	}
 	else
 	{
 		push(@pgcommonallfiles, 'cryptohash.c');
+		push(@pgcommonallfiles, 'hmac.c');
 		push(@pgcommonallfiles, 'md5.c');
 		push(@pgcommonallfiles, 'sha1.c');
 		push(@pgcommonallfiles, 'sha2.c');

@@ -3215,6 +3215,7 @@ pg_enc2gettext
 pg_enc2name
 pg_encname
 pg_gssinfo
+pg_hmac_ctx
 pg_int64
 pg_local_to_utf_combined
 pg_locale_t
@@ -3361,7 +3362,6 @@ role_auth_extra
 row_security_policy_hook_type
 rsv_callback
 save_buffer
-scram_HMAC_ctx
 scram_state
 scram_state_enum
 sem_t

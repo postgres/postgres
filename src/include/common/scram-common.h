@@ -46,19 +46,6 @@
  */
 #define SCRAM_DEFAULT_ITERATIONS	4096
 
-/*
- * Context data for HMAC used in SCRAM authentication.
- */
-typedef struct
-{
-	pg_cryptohash_ctx *sha256ctx;
-	uint8		k_opad[SHA256_HMAC_B];
-} scram_HMAC_ctx;
-
-extern int	scram_HMAC_init(scram_HMAC_ctx *ctx, const uint8 *key, int keylen);
-extern int	scram_HMAC_update(scram_HMAC_ctx *ctx, const char *str, int slen);
-extern int	scram_HMAC_final(uint8 *result, scram_HMAC_ctx *ctx);
-
 extern int	scram_SaltedPassword(const char *password, const char *salt,
 								 int saltlen, int iterations, uint8 *result);
 extern int	scram_H(const uint8 *str, int len, uint8 *result);

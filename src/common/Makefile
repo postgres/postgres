@@ -83,10 +83,12 @@ OBJS_COMMON = \
 ifeq ($(with_ssl),openssl)
 OBJS_COMMON += \
 	protocol_openssl.o \
-	cryptohash_openssl.o
+	cryptohash_openssl.o \
+	hmac_openssl.o
 else
 OBJS_COMMON += \
 	cryptohash.o \
+	hmac.o \
 	md5.o \
 	sha1.o \
 	sha2.o
