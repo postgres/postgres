@@ -158,22 +158,22 @@ $node->connect_fails(
 # root, but the server's key is signed by the server CA.)
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/client_ca.crt sslmode=require",
-	qr/SSL error/,
+	qr/SSL error: certificate verify failed/,
 	"connect with wrong server root cert sslmode=require");
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/client_ca.crt sslmode=verify-ca",
-	qr/SSL error/,
+	qr/SSL error: certificate verify failed/,
 	"connect with wrong server root cert sslmode=verify-ca");
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/client_ca.crt sslmode=verify-full",
-	qr/SSL error/,
+	qr/SSL error: certificate verify failed/,
 	"connect with wrong server root cert sslmode=verify-full");
 
 # Try with just the server CA's cert. This fails because the root file
 # must contain the whole chain up to the root CA.
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/server_ca.crt sslmode=verify-ca",
-	qr/SSL error/,
+	qr/SSL error: certificate verify failed/,
 	"connect with server CA cert, without root CA");
 
 # And finally, with the correct root cert.
@@ -206,13 +206,13 @@ $node->connect_ok(
 # A CRL belonging to a different CA is not accepted, fails
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrl=ssl/client.crl",
-	qr/SSL error/,
+	qr/SSL error: certificate verify failed/,
 	"CRL belonging to a different CA");
 
 # The same for CRL directory
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrldir=ssl/client-crldir",
-	qr/SSL error/,
+	qr/SSL error: certificate verify failed/,
 	"directory CRL belonging to a different CA");
 
 # With the correct CRL, succeeds (this cert is not revoked)
@@ -328,11 +328,11 @@ $node->connect_ok(
 	"connects without client-side CRL");
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrl=ssl/root+server.crl",
-	qr/SSL error/,
+	qr/SSL error: certificate verify failed/,
 	"does not connect with client-side CRL file");
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrldir=ssl/root+server-crldir",
-	qr/SSL error/,
+	qr/SSL error: certificate verify failed/,
 	"does not connect with client-side CRL directory");
 
 # pg_stat_ssl
@@ -499,7 +499,7 @@ $node->connect_fails(
 # revoked client cert
 $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
-	qr/SSL error/,
+	qr/SSL error: sslv3 alert certificate revoked/,
 	"certificate authorization fails with revoked client cert");
 
 # Check that connecting with auth-option verify-full in pg_hba:
@@ -515,7 +515,7 @@ $node->connect_ok(
 
 $node->connect_fails(
 	"$common_connstr user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
-	qr/FATAL/,
+	qr/FATAL: .* "trust" authentication failed for user "anotheruser"/,
 	"auth_option clientcert=verify-full fails with mismatching username and Common Name"
 );
 
@@ -536,7 +536,7 @@ $node->connect_ok(
 	"intermediate client certificate is provided by client");
 $node->connect_fails(
 	$common_connstr . " " . "sslmode=require sslcert=ssl/client.crt",
-	qr/SSL error/, "intermediate client certificate is missing");
+	qr/SSL error: tlsv1 alert unknown ca/, "intermediate client certificate is missing");
 
 # test server-side CRL directory
 switch_server_cert($node, 'server-cn-only', undef, undef, 'root+client-crldir');
@@ -544,7 +544,7 @@ switch_server_cert($node, 'server-cn-only', undef, undef, 'root+client-crldir');
 # revoked client cert
 $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
-	qr/SSL error/,
+	qr/SSL error: sslv3 alert certificate revoked/,
 	"certificate authorization fails with revoked client cert with server-side CRL directory");
 
 # clean up
