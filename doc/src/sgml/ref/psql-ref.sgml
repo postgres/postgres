@@ -1970,7 +1970,9 @@ testdb=&gt;
         </para>
 
         <para>
-        The new contents of the query buffer are then re-parsed according to
+        If you edit a file or the previous query, and you quit the editor without
+        modifying the file, the query buffer is cleared.
+        Otherwise, the new contents of the query buffer are re-parsed according to
         the normal rules of <application>psql</application>, treating the
         whole buffer as a single line.  Any complete queries are immediately
         executed; that is, if the query buffer contains or ends with a
@@ -2039,7 +2041,8 @@ Tue Oct 26 21:40:57 CEST 1999
          in the form of a <command>CREATE OR REPLACE FUNCTION</command> or
          <command>CREATE OR REPLACE PROCEDURE</command> command.
          Editing is done in the same way as for <literal>\edit</literal>.
-         After the editor exits, the updated command is executed immediately
+         If you quit the editor without saving, the statement is discarded.
+         If you save and exit the editor, the updated command is executed immediately
          if you added a semicolon to it.  Otherwise it is redisplayed;
          type semicolon or <literal>\g</literal> to send it, or <literal>\r</literal>
          to cancel.
@@ -2115,7 +2118,8 @@ Tue Oct 26 21:40:57 CEST 1999
          This command fetches and edits the definition of the named view,
          in the form of a <command>CREATE OR REPLACE VIEW</command> command.
          Editing is done in the same way as for <literal>\edit</literal>.
-         After the editor exits, the updated command is executed immediately
+         If you quit the editor without saving, the statement is discarded.
+         If you save and exit the editor, the updated command is executed immediately
          if you added a semicolon to it.  Otherwise it is redisplayed;
          type semicolon or <literal>\g</literal> to send it, or <literal>\r</literal>
          to cancel.
