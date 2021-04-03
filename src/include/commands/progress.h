@@ -2,7 +2,7 @@
  *
  * progress.h
  *	  Constants used with the progress reporting facilities defined in
- *	  pgstat.h.  These are possibly interesting to extensions, so we
+ *	  backend_status.h.  These are possibly interesting to extensions, so we
  *	  expose them via this header file.  Note that if you update these
  *	  constants, you probably also need to update the views based on them
  *	  in system_views.sql.

@@ -90,6 +90,7 @@
 #include "tcop/tcopprot.h"
 #include "tsearch/ts_cache.h"
 #include "utils/acl.h"
+#include "utils/backend_status.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/float.h"

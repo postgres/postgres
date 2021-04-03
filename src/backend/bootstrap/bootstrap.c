@@ -407,8 +407,11 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		 */
 		CreateAuxProcessResourceOwner();
 
-		/* Initialize backend status information */
+		/* Initialize statistics reporting */
 		pgstat_initialize();
+
+		/* Initialize backend status information */
+		pgstat_beinit();
 		pgstat_bestart();
 
 		/* register a before-shutdown callback for LWLock cleanup */
