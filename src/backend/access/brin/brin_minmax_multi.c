@@ -2794,7 +2794,7 @@ brin_minmax_multi_union(PG_FUNCTION_ARGS)
 											   BTLessStrategyNumber);
 
 	/* sort the expanded ranges */
-	sort_expanded_ranges(cmpFn, colloid, eranges, neranges);
+	neranges = sort_expanded_ranges(cmpFn, colloid, eranges, neranges);
 
 	/*
 	 * We've loaded two different lists of expanded ranges, so some of them
