@@ -749,8 +749,13 @@ spg_box_quad_leaf_consistent(PG_FUNCTION_ARGS)
 	/* All tests are exact. */
 	out->recheck = false;
 
-	/* leafDatum is what it is... */
-	out->leafValue = in->leafDatum;
+	/*
+	 * Don't return leafValue unless told to; this is used for both box and
+	 * polygon opclasses, and in the latter case the leaf datum is not even of
+	 * the right type to return.
+	 */
+	if (in->returnData)
+		out->leafValue = leaf;
 
 	/* Perform the required comparison(s) */
 	for (i = 0; i < in->nkeys; i++)
