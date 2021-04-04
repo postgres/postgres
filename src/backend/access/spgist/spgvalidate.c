@@ -43,6 +43,7 @@ spgvalidate(Oid opclassoid)
 	Form_pg_opclass classform;
 	Oid			opfamilyoid;
 	Oid			opcintype;
+	Oid			opckeytype;
 	char	   *opclassname;
 	HeapTuple	familytup;
 	Form_pg_opfamily familyform;
@@ -57,6 +58,7 @@ spgvalidate(Oid opclassoid)
 	spgConfigOut configOut;
 	Oid			configOutLefttype = InvalidOid;
 	Oid			configOutRighttype = InvalidOid;
+	Oid			configOutLeafType = InvalidOid;
 
 	/* Fetch opclass information */
 	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
@@ -66,6 +68,7 @@ spgvalidate(Oid opclassoid)
 
 	opfamilyoid = classform->opcfamily;
 	opcintype = classform->opcintype;
+	opckeytype = classform->opckeytype;
 	opclassname = NameStr(classform->opcname);
 
 	/* Fetch opfamily information */
@@ -118,13 +121,31 @@ spgvalidate(Oid opclassoid)
 				configOutLefttype = procform->amproclefttype;
 				configOutRighttype = procform->amprocrighttype;
 
+				/* Default leaf type is opckeytype or input type */
+				if (OidIsValid(opckeytype))
+					configOutLeafType = opckeytype;
+				else
+					configOutLeafType = procform->amproclefttype;
+
+				/* If some other leaf datum type is specified, warn */
+				if (OidIsValid(configOut.leafType) &&
+					configOutLeafType != configOut.leafType)
+				{
+					ereport(INFO,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("SP-GiST leaf data type %s does not match declared type %s",
+									format_type_be(configOut.leafType),
+									format_type_be(configOutLeafType))));
+					result = false;
+					configOutLeafType = configOut.leafType;
+				}
+
 				/*
 				 * When leaf and attribute types are the same, compress
 				 * function is not required and we set corresponding bit in
 				 * functionset for later group consistency check.
 				 */
-				if (!OidIsValid(configOut.leafType) ||
-					configOut.leafType == configIn.attType)
+				if (configOutLeafType == configIn.attType)
 				{
 					foreach(lc, grouplist)
 					{
@@ -156,7 +177,7 @@ spgvalidate(Oid opclassoid)
 					ok = false;
 				else
 					ok = check_amproc_signature(procform->amproc,
-												configOut.leafType, true,
+												configOutLeafType, true,
 												1, 1, procform->amproclefttype);
 				break;
 			case SPGIST_OPTIONS_PROC:

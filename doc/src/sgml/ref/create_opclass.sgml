@@ -234,7 +234,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
      <para>
       The data type actually stored in the index.  Normally this is
       the same as the column data type, but some index methods
-      (currently GiST, GIN and BRIN) allow it to be different.  The
+      (currently GiST, GIN, SP-GiST and BRIN) allow it to be different.  The
       <literal>STORAGE</literal> clause must be omitted unless the index
       method allows a different type to be used.
       If the column <replaceable class="parameter">data_type</replaceable> is specified

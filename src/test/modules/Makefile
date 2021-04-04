@@ -13,6 +13,7 @@ SUBDIRS = \
 		  libpq_pipeline \
 		  plsample \
 		  snapshot_too_old \
+		  spgist_name_ops \
 		  test_bloomfilter \
 		  test_ddl_deparse \
 		  test_extensions \

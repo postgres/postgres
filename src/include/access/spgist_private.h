@@ -151,8 +151,8 @@ typedef struct SpGistState
 typedef struct SpGistSearchItem
 {
 	pairingheap_node phNode;	/* pairing heap node */
-	Datum		value;			/* value reconstructed from parent or
-								 * leafValue if heaptuple */
+	Datum		value;			/* value reconstructed from parent, or
+								 * leafValue if isLeaf */
 	void	   *traversalValue; /* opclass-specific traverse value */
 	int			level;			/* level of items on this page */
 	ItemPointerData heapPtr;	/* heap info, if heap tuple */
@@ -208,7 +208,7 @@ typedef struct SpGistScanOpaqueData
 
 	/* These fields are only used in amgettuple scans: */
 	bool		want_itup;		/* are we reconstructing tuples? */
-	TupleDesc	indexTupDesc;	/* if so, tuple descriptor for them */
+	TupleDesc	indexTupDesc;	/* if so, descriptor for reconstructed tuples */
 	int			nPtrs;			/* number of TIDs found on current page */
 	int			iPtr;			/* index for scanning through same */
 	ItemPointerData heapPtrs[MaxIndexTuplesPerPage];	/* TIDs from cur page */

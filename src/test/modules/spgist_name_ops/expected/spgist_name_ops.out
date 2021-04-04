@@ -1,0 +1,95 @@
+create extension spgist_name_ops;
+select opcname, amvalidate(opc.oid)
+from pg_opclass opc join pg_am am on am.oid = opcmethod
+where amname = 'spgist' and opcname = 'name_ops';
+ opcname  | amvalidate 
+----------+------------
+ name_ops | t
+(1 row)
+
+-- warning expected here
+select opcname, amvalidate(opc.oid)
+from pg_opclass opc join pg_am am on am.oid = opcmethod
+where amname = 'spgist' and opcname = 'name_ops_old';
+INFO:  SP-GiST leaf data type text does not match declared type name
+   opcname    | amvalidate 
+--------------+------------
+ name_ops_old | f
+(1 row)
+
+create table t(f1 name);
+create index on t using spgist(f1);
+\d+ t_f1_idx
+                   Index "public.t_f1_idx"
+ Column | Type | Key? | Definition | Storage  | Stats target 
+--------+------+------+------------+----------+--------------
+ f1     | text | yes  | f1         | extended | 
+spgist, for table "public.t"
+
+insert into t select proname from pg_proc;
+vacuum analyze t;
+explain (costs off)
+select * from t
+  where f1 > 'binary_upgrade_set_n' and f1 < 'binary_upgrade_set_p'
+  order by 1;
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: f1
+   ->  Index Only Scan using t_f1_idx on t
+         Index Cond: ((f1 > 'binary_upgrade_set_n'::name) AND (f1 < 'binary_upgrade_set_p'::name))
+(4 rows)
+
+select * from t
+  where f1 > 'binary_upgrade_set_n' and f1 < 'binary_upgrade_set_p'
+  order by 1;
+                          f1                          
+------------------------------------------------------
+ binary_upgrade_set_next_array_pg_type_oid
+ binary_upgrade_set_next_heap_pg_class_oid
+ binary_upgrade_set_next_index_pg_class_oid
+ binary_upgrade_set_next_multirange_array_pg_type_oid
+ binary_upgrade_set_next_multirange_pg_type_oid
+ binary_upgrade_set_next_pg_authid_oid
+ binary_upgrade_set_next_pg_enum_oid
+ binary_upgrade_set_next_pg_type_oid
+ binary_upgrade_set_next_toast_pg_class_oid
+(9 rows)
+
+drop index t_f1_idx;
+create index on t using spgist(f1 name_ops_old);
+\d+ t_f1_idx
+                  Index "public.t_f1_idx"
+ Column | Type | Key? | Definition | Storage | Stats target 
+--------+------+------+------------+---------+--------------
+ f1     | name | yes  | f1         | plain   | 
+spgist, for table "public.t"
+
+explain (costs off)
+select * from t
+  where f1 > 'binary_upgrade_set_n' and f1 < 'binary_upgrade_set_p'
+  order by 1;
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: f1
+   ->  Index Only Scan using t_f1_idx on t
+         Index Cond: ((f1 > 'binary_upgrade_set_n'::name) AND (f1 < 'binary_upgrade_set_p'::name))
+(4 rows)
+
+select * from t
+  where f1 > 'binary_upgrade_set_n' and f1 < 'binary_upgrade_set_p'
+  order by 1;
+                          f1                          
+------------------------------------------------------
+ binary_upgrade_set_next_array_pg_type_oid
+ binary_upgrade_set_next_heap_pg_class_oid
+ binary_upgrade_set_next_index_pg_class_oid
+ binary_upgrade_set_next_multirange_array_pg_type_oid
+ binary_upgrade_set_next_multirange_pg_type_oid
+ binary_upgrade_set_next_pg_authid_oid
+ binary_upgrade_set_next_pg_enum_oid
+ binary_upgrade_set_next_pg_type_oid
+ binary_upgrade_set_next_toast_pg_class_oid
+(9 rows)
+

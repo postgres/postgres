@@ -205,10 +205,12 @@
  </para>
 
  <para>
-  Leaf tuples of an <acronym>SP-GiST</acronym> tree contain values of the
-  same data type as the indexed column.  Leaf tuples at the root level will
-  always contain the original indexed data value, but leaf tuples at lower
-  levels might contain only a compressed representation, such as a suffix.
+  Leaf tuples of an <acronym>SP-GiST</acronym> tree usually contain values
+  of the same data type as the indexed column, although it is also possible
+  for them to contain lossy representations of the indexed column.
+  Leaf tuples stored at the root level will directly represent
+  the original indexed data value, but leaf tuples at lower
+  levels might contain only a partial value, such as a suffix.
   In that case the operator class support functions must be able to
   reconstruct the original value using information accumulated from the
   inner tuples that are passed through to reach the leaf level.
@@ -330,19 +332,29 @@ typedef struct spgConfigOut
      </para>
 
      <para>
-      <structfield>leafType</structfield> is typically the same as
-      <structfield>attType</structfield>.  For the reasons of backward
-      compatibility, method <function>config</function> can
-      leave <structfield>leafType</structfield> uninitialized; that would
-      give the same effect as setting <structfield>leafType</structfield> equal
-      to <structfield>attType</structfield>.  When <structfield>attType</structfield>
-      and <structfield>leafType</structfield> are different, then optional
+      <structfield>leafType</structfield> should match the index storage type
+      defined by the operator class's <structfield>opckeytype</structfield>
+      catalog entry.
+      (Note that <structfield>opckeytype</structfield> can be zero,
+      implying the storage type is the same as the operator class's input
+      type, which is the most common situation.)
+      For reasons of backward compatibility, the <function>config</function>
+      method can set <structfield>leafType</structfield> to some other value,
+      and that value will be used; but this is deprecated since the index
+      contents are then incorrectly identified in the catalogs.
+      Also, it's permissible to
+      leave <structfield>leafType</structfield> uninitialized (zero);
+      that is interpreted as meaning the index storage type derived from
+      <structfield>opckeytype</structfield>.
+     </para>
+
+     <para>
+      When <structfield>attType</structfield>
+      and <structfield>leafType</structfield> are different, the optional
       method <function>compress</function> must be provided.
       Method <function>compress</function> is responsible
       for transformation of datums to be indexed from <structfield>attType</structfield>
       to <structfield>leafType</structfield>.
-      Note: both consistent functions will get <structfield>scankeys</structfield>
-      unchanged, without transformation using <function>compress</function>.
      </para>
      </listitem>
     </varlistentry>
@@ -677,8 +689,7 @@ typedef struct spgInnerConsistentOut
        <structfield>reconstructedValue</structfield> is the value reconstructed for the
        parent tuple; it is <literal>(Datum) 0</literal> at the root level or if the
        <function>inner_consistent</function> function did not provide a value at the
-       parent level. <structfield>reconstructedValue</structfield> is always of
-       <structname>spgConfigOut</structname>.<structfield>leafType</structfield> type.
+       parent level.
        <structfield>traversalValue</structfield> is a pointer to any traverse data
        passed down from the previous call of <function>inner_consistent</function>
        on the parent index tuple, or NULL at the root level.
@@ -713,9 +724,14 @@ typedef struct spgInnerConsistentOut
        necessarily so, so an array is used.)
        If value reconstruction is needed, set
        <structfield>reconstructedValues</structfield> to an array of the values
-       of <structname>spgConfigOut</structname>.<structfield>leafType</structfield> type
        reconstructed for each child node to be visited; otherwise, leave
        <structfield>reconstructedValues</structfield> as NULL.
+       The reconstructed values are assumed to be of type
+       <structname>spgConfigOut</structname>.<structfield>leafType</structfield>.
+       (However, since the core system will do nothing with them except
+       possibly copy them, it is sufficient for them to have the
+       same <literal>typlen</literal> and <literal>typbyval</literal>
+       properties as <structfield>leafType</structfield>.)
        If ordered search is performed, set <structfield>distances</structfield>
        to an array of distance values according to <structfield>orderbys</structfield>
        array (nodes with lowest distances will be processed first).  Leave it
@@ -797,8 +813,7 @@ typedef struct spgLeafConsistentOut
        <structfield>reconstructedValue</structfield> is the value reconstructed for the
        parent tuple; it is <literal>(Datum) 0</literal> at the root level or if the
        <function>inner_consistent</function> function did not provide a value at the
-       parent level. <structfield>reconstructedValue</structfield> is always of
-       <structname>spgConfigOut</structname>.<structfield>leafType</structfield> type.
+       parent level.
        <structfield>traversalValue</structfield> is a pointer to any traverse data
        passed down from the previous call of <function>inner_consistent</function>
        on the parent index tuple, or NULL at the root level.
@@ -816,8 +831,8 @@ typedef struct spgLeafConsistentOut
        The function must return <literal>true</literal> if the leaf tuple matches the
        query, or <literal>false</literal> if not.  In the <literal>true</literal> case,
        if <structfield>returnData</structfield> is <literal>true</literal> then
-       <structfield>leafValue</structfield> must be set to the value of
-       <structname>spgConfigIn</structname>.<structfield>attType</structfield> type
+       <structfield>leafValue</structfield> must be set to the value (of type
+       <structname>spgConfigIn</structname>.<structfield>attType</structfield>)
        originally supplied to be indexed for this leaf tuple.  Also,
        <structfield>recheck</structfield> may be set to <literal>true</literal> if the match
        is uncertain and so the operator(s) must be re-applied to the actual
@@ -834,7 +849,7 @@ typedef struct spgLeafConsistentOut
    </variablelist>
 
  <para>
-  The optional user-defined method are:
+  The optional user-defined methods are:
  </para>
 
  <variablelist>
@@ -842,15 +857,22 @@ typedef struct spgLeafConsistentOut
      <term><function>Datum compress(Datum in)</function></term>
      <listitem>
       <para>
-       Converts the data item into a format suitable for physical storage in
-       a leaf tuple of index page.  It accepts
+       Converts a data item into a format suitable for physical storage in
+       a leaf tuple of the index.  It accepts a value of type
        <structname>spgConfigIn</structname>.<structfield>attType</structfield>
-       value and returns
-       <structname>spgConfigOut</structname>.<structfield>leafType</structfield>
-       value.  Output value should not be toasted.
+       and returns a value of type
+       <structname>spgConfigOut</structname>.<structfield>leafType</structfield>.
+       The output value must not contain an out-of-line TOAST pointer.
+      </para>
+
+      <para>
+       Note: the <function>compress</function> method is only applied to
+       values to be stored.  The consistent methods receive query scankeys
+       unchanged, without transformation using <function>compress</function>.
       </para>
      </listitem>
     </varlistentry>
+
     <varlistentry>
      <term><function>options</function></term>
      <listitem>

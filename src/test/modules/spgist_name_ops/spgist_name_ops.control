@@ -1,0 +1,4 @@
+comment = 'Test opclass for SP-GiST'
+default_version = '1.0'
+module_pathname = '$libdir/spgist_name_ops'
+relocatable = true

@@ -23,6 +23,7 @@
 #include "access/xact.h"
 #include "catalog/pg_amop.h"
 #include "commands/vacuum.h"
+#include "nodes/nodeFuncs.h"
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
@@ -53,7 +54,7 @@ spghandler(PG_FUNCTION_ARGS)
 	amroutine->amoptionalkey = true;
 	amroutine->amsearcharray = false;
 	amroutine->amsearchnulls = true;
-	amroutine->amstorage = false;
+	amroutine->amstorage = true;
 	amroutine->amclusterable = false;
 	amroutine->ampredlocks = false;
 	amroutine->amcanparallel = false;
@@ -89,6 +90,66 @@ spghandler(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(amroutine);
 }
 
+/*
+ * GetIndexInputType
+ *		Determine the nominal input data type for an index column
+ *
+ * We define the "nominal" input type as the associated opclass's opcintype,
+ * or if that is a polymorphic type, the base type of the heap column or
+ * expression that is the index's input.  The reason for preferring the
+ * opcintype is that non-polymorphic opclasses probably don't want to hear
+ * about binary-compatible input types.  For instance, if a text opclass
+ * is being used with a varchar heap column, we want to report "text" not
+ * "varchar".  Likewise, opclasses don't want to hear about domain types,
+ * so if we do consult the actual input type, we make sure to flatten domains.
+ *
+ * At some point maybe this should go somewhere else, but it's not clear
+ * if any other index AMs have a use for it.
+ */
+static Oid
+GetIndexInputType(Relation index, AttrNumber indexcol)
+{
+	Oid			opcintype;
+	AttrNumber	heapcol;
+	List	   *indexprs;
+	ListCell   *indexpr_item;
+
+	Assert(index->rd_index != NULL);
+	Assert(indexcol > 0 && indexcol <= index->rd_index->indnkeyatts);
+	opcintype = index->rd_opcintype[indexcol - 1];
+	if (!IsPolymorphicType(opcintype))
+		return opcintype;
+	heapcol = index->rd_index->indkey.values[indexcol - 1];
+	if (heapcol != 0)			/* Simple index column? */
+		return getBaseType(get_atttype(index->rd_index->indrelid, heapcol));
+
+	/*
+	 * If the index expressions are already cached, skip calling
+	 * RelationGetIndexExpressions, as it will make a copy which is overkill.
+	 * We're not going to modify the trees, and we're not going to do anything
+	 * that would invalidate the relcache entry before we're done.
+	 */
+	if (index->rd_indexprs)
+		indexprs = index->rd_indexprs;
+	else
+		indexprs = RelationGetIndexExpressions(index);
+	indexpr_item = list_head(indexprs);
+	for (int i = 1; i <= index->rd_index->indnkeyatts; i++)
+	{
+		if (index->rd_index->indkey.values[i - 1] == 0)
+		{
+			/* expression column */
+			if (indexpr_item == NULL)
+				elog(ERROR, "wrong number of index expressions");
+			if (i == indexcol)
+				return getBaseType(exprType((Node *) lfirst(indexpr_item)));
+			indexpr_item = lnext(indexprs, indexpr_item);
+		}
+	}
+	elog(ERROR, "wrong number of index expressions");
+	return InvalidOid;			/* keep compiler quiet */
+}
+
 /* Fill in a SpGistTypeDesc struct with info about the specified data type */
 static void
 fillTypeDesc(SpGistTypeDesc *desc, Oid type)
@@ -121,11 +182,11 @@ spgGetCache(Relation index)
 		Assert(index->rd_att->natts == 1);
 
 		/*
-		 * Get the actual data type of the indexed column from the index
-		 * tupdesc.  We pass this to the opclass config function so that
+		 * Get the actual (well, nominal) data type of the column being
+		 * indexed.  We pass this to the opclass config function so that
 		 * polymorphic opclasses are possible.
 		 */
-		atttype = TupleDescAttr(index->rd_att, 0)->atttypid;
+		atttype = GetIndexInputType(index, 1);
 
 		/* Call the config function to get config info for the opclass */
 		in.attType = atttype;
@@ -136,11 +197,21 @@ spgGetCache(Relation index)
 						  PointerGetDatum(&in),
 						  PointerGetDatum(&cache->config));
 
+		/*
+		 * If leafType isn't specified, use the declared index column type,
+		 * which index.c will have derived from the opclass's opcintype.
+		 * (Although we now make spgvalidate.c warn if these aren't the same,
+		 * old user-defined opclasses may not set the STORAGE parameter
+		 * correctly, so believe leafType if it's given.)
+		 */
+		if (!OidIsValid(cache->config.leafType))
+			cache->config.leafType =
+				TupleDescAttr(RelationGetDescr(index), 0)->atttypid;
+
 		/* Get the information we need about each relevant datatype */
 		fillTypeDesc(&cache->attType, atttype);
 
-		if (OidIsValid(cache->config.leafType) &&
-			cache->config.leafType != atttype)
+		if (cache->config.leafType != atttype)
 		{
 			if (!OidIsValid(index_getprocid(index, 1, SPGIST_COMPRESS_PROC)))
 				ereport(ERROR,
@@ -151,6 +222,7 @@ spgGetCache(Relation index)
 		}
 		else
 		{
+			/* Save lookups in this common case */
 			cache->attLeafType = cache->attType;
 		}
 
