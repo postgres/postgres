@@ -257,12 +257,13 @@ typedef struct TwoPhasePgStatRecord
 	PgStat_Counter tuples_inserted; /* tuples inserted in xact */
 	PgStat_Counter tuples_updated;	/* tuples updated in xact */
 	PgStat_Counter tuples_deleted;	/* tuples deleted in xact */
-	PgStat_Counter inserted_pre_trunc;	/* tuples inserted prior to truncate */
-	PgStat_Counter updated_pre_trunc;	/* tuples updated prior to truncate */
-	PgStat_Counter deleted_pre_trunc;	/* tuples deleted prior to truncate */
+	/* tuples i/u/d prior to truncate/drop */
+	PgStat_Counter inserted_pre_truncdrop;
+	PgStat_Counter updated_pre_truncdrop;
+	PgStat_Counter deleted_pre_truncdrop;
 	Oid			t_id;			/* table's OID */
 	bool		t_shared;		/* is it a shared catalog? */
-	bool		t_truncated;	/* was the relation truncated? */
+	bool		t_truncdropped;	/* was the relation truncated/dropped? */
 } TwoPhasePgStatRecord;
 
 /*
@@ -2300,36 +2301,39 @@ pgstat_count_heap_delete(Relation rel)
 }
 
 /*
- * pgstat_truncate_save_counters
+ * pgstat_truncdrop_save_counters
  *
- * Whenever a table is truncated, we save its i/u/d counters so that they can
- * be cleared, and if the (sub)xact that executed the truncate later aborts,
- * the counters can be restored to the saved (pre-truncate) values.  Note we do
- * this on the first truncate in any particular subxact level only.
+ * Whenever a table is truncated/dropped, we save its i/u/d counters so that
+ * they can be cleared, and if the (sub)xact that executed the truncate/drop
+ * later aborts, the counters can be restored to the saved (pre-truncate/drop)
+ * values.
+ *
+ * Note that for truncate we do this on the first truncate in any particular
+ * subxact level only.
  */
 static void
-pgstat_truncate_save_counters(PgStat_TableXactStatus *trans)
+pgstat_truncdrop_save_counters(PgStat_TableXactStatus *trans, bool is_drop)
 {
-	if (!trans->truncated)
+	if (!trans->truncdropped || is_drop)
 	{
-		trans->inserted_pre_trunc = trans->tuples_inserted;
-		trans->updated_pre_trunc = trans->tuples_updated;
-		trans->deleted_pre_trunc = trans->tuples_deleted;
-		trans->truncated = true;
+		trans->inserted_pre_truncdrop = trans->tuples_inserted;
+		trans->updated_pre_truncdrop = trans->tuples_updated;
+		trans->deleted_pre_truncdrop = trans->tuples_deleted;
+		trans->truncdropped = true;
 	}
 }
 
 /*
- * pgstat_truncate_restore_counters - restore counters when a truncate aborts
+ * pgstat_truncdrop_restore_counters - restore counters when a truncate aborts
  */
 static void
-pgstat_truncate_restore_counters(PgStat_TableXactStatus *trans)
+pgstat_truncdrop_restore_counters(PgStat_TableXactStatus *trans)
 {
-	if (trans->truncated)
+	if (trans->truncdropped)
 	{
-		trans->tuples_inserted = trans->inserted_pre_trunc;
-		trans->tuples_updated = trans->updated_pre_trunc;
-		trans->tuples_deleted = trans->deleted_pre_trunc;
+		trans->tuples_inserted = trans->inserted_pre_truncdrop;
+		trans->tuples_updated = trans->updated_pre_truncdrop;
+		trans->tuples_deleted = trans->deleted_pre_truncdrop;
 	}
 }
 
@@ -2350,7 +2354,7 @@ pgstat_count_truncate(Relation rel)
 			pgstat_info->trans->nest_level != nest_level)
 			add_tabstat_xact_level(pgstat_info, nest_level);
 
-		pgstat_truncate_save_counters(pgstat_info->trans);
+		pgstat_truncdrop_save_counters(pgstat_info->trans, false);
 		pgstat_info->trans->tuples_inserted = 0;
 		pgstat_info->trans->tuples_updated = 0;
 		pgstat_info->trans->tuples_deleted = 0;
@@ -2395,17 +2399,17 @@ AtEOXact_PgStat_Relations(PgStat_SubXactStatus *xact_state, bool isCommit)
 		Assert(trans->upper == NULL);
 		tabstat = trans->parent;
 		Assert(tabstat->trans == trans);
-		/* restore pre-truncate stats (if any) in case of aborted xact */
+		/* restore pre-truncate/drop stats (if any) in case of aborted xact */
 		if (!isCommit)
-			pgstat_truncate_restore_counters(trans);
+			pgstat_truncdrop_restore_counters(trans);
 		/* count attempted actions regardless of commit/abort */
 		tabstat->t_counts.t_tuples_inserted += trans->tuples_inserted;
 		tabstat->t_counts.t_tuples_updated += trans->tuples_updated;
 		tabstat->t_counts.t_tuples_deleted += trans->tuples_deleted;
 		if (isCommit)
 		{
-			tabstat->t_counts.t_truncated = trans->truncated;
-			if (trans->truncated)
+			tabstat->t_counts.t_truncdropped = trans->truncdropped;
+			if (trans->truncdropped)
 			{
 				/* forget live/dead stats seen by backend thus far */
 				tabstat->t_counts.t_delta_live_tuples = 0;
@@ -2504,10 +2508,10 @@ AtEOSubXact_PgStat_Relations(PgStat_SubXactStatus *xact_state, bool isCommit, in
 		{
 			if (trans->upper && trans->upper->nest_level == nestDepth - 1)
 			{
-				if (trans->truncated)
+				if (trans->truncdropped)
 				{
-					/* propagate the truncate status one level up */
-					pgstat_truncate_save_counters(trans->upper);
+					/* propagate the truncate/drop status one level up */
+					pgstat_truncdrop_save_counters(trans->upper, false);
 					/* replace upper xact stats with ours */
 					trans->upper->tuples_inserted = trans->tuples_inserted;
 					trans->upper->tuples_updated = trans->tuples_updated;
@@ -2547,8 +2551,8 @@ AtEOSubXact_PgStat_Relations(PgStat_SubXactStatus *xact_state, bool isCommit, in
 			 * subtransaction
 			 */
 
-			/* first restore values obliterated by truncate */
-			pgstat_truncate_restore_counters(trans);
+			/* first restore values obliterated by truncate/drop */
+			pgstat_truncdrop_restore_counters(trans);
 			/* count attempted actions regardless of commit/abort */
 			tabstat->t_counts.t_tuples_inserted += trans->tuples_inserted;
 			tabstat->t_counts.t_tuples_updated += trans->tuples_updated;
@@ -2609,12 +2613,12 @@ AtPrepare_PgStat_Relations(PgStat_SubXactStatus *xact_state)
 		record.tuples_inserted = trans->tuples_inserted;
 		record.tuples_updated = trans->tuples_updated;
 		record.tuples_deleted = trans->tuples_deleted;
-		record.inserted_pre_trunc = trans->inserted_pre_trunc;
-		record.updated_pre_trunc = trans->updated_pre_trunc;
-		record.deleted_pre_trunc = trans->deleted_pre_trunc;
+		record.inserted_pre_truncdrop = trans->inserted_pre_truncdrop;
+		record.updated_pre_truncdrop = trans->updated_pre_truncdrop;
+		record.deleted_pre_truncdrop = trans->deleted_pre_truncdrop;
 		record.t_id = tabstat->t_id;
 		record.t_shared = tabstat->t_shared;
-		record.t_truncated = trans->truncated;
+		record.t_truncdropped = trans->truncdropped;
 
 		RegisterTwoPhaseRecord(TWOPHASE_RM_PGSTAT_ID, 0,
 							   &record, sizeof(TwoPhasePgStatRecord));
@@ -2710,8 +2714,8 @@ pgstat_twophase_postcommit(TransactionId xid, uint16 info,
 	pgstat_info->t_counts.t_tuples_inserted += rec->tuples_inserted;
 	pgstat_info->t_counts.t_tuples_updated += rec->tuples_updated;
 	pgstat_info->t_counts.t_tuples_deleted += rec->tuples_deleted;
-	pgstat_info->t_counts.t_truncated = rec->t_truncated;
-	if (rec->t_truncated)
+	pgstat_info->t_counts.t_truncdropped = rec->t_truncdropped;
+	if (rec->t_truncdropped)
 	{
 		/* forget live/dead stats seen by backend thus far */
 		pgstat_info->t_counts.t_delta_live_tuples = 0;
@@ -2743,11 +2747,11 @@ pgstat_twophase_postabort(TransactionId xid, uint16 info,
 	pgstat_info = get_tabstat_entry(rec->t_id, rec->t_shared);
 
 	/* Same math as in AtEOXact_PgStat, abort case */
-	if (rec->t_truncated)
+	if (rec->t_truncdropped)
 	{
-		rec->tuples_inserted = rec->inserted_pre_trunc;
-		rec->tuples_updated = rec->updated_pre_trunc;
-		rec->tuples_deleted = rec->deleted_pre_trunc;
+		rec->tuples_inserted = rec->inserted_pre_truncdrop;
+		rec->tuples_updated = rec->updated_pre_truncdrop;
+		rec->tuples_deleted = rec->deleted_pre_truncdrop;
 	}
 	pgstat_info->t_counts.t_tuples_inserted += rec->tuples_inserted;
 	pgstat_info->t_counts.t_tuples_updated += rec->tuples_updated;
@@ -5055,8 +5059,11 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_updated += tabmsg->t_counts.t_tuples_updated;
 			tabentry->tuples_deleted += tabmsg->t_counts.t_tuples_deleted;
 			tabentry->tuples_hot_updated += tabmsg->t_counts.t_tuples_hot_updated;
-			/* If table was truncated, first reset the live/dead counters */
-			if (tabmsg->t_counts.t_truncated)
+			/*
+			 * If table was truncated/dropped, first reset the live/dead
+			 * counters.
+			 */
+			if (tabmsg->t_counts.t_truncdropped)
 			{
 				tabentry->n_live_tuples = 0;
 				tabentry->n_dead_tuples = 0;
