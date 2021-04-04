@@ -463,11 +463,19 @@ spgNewHeapItem(SpGistScanOpaque so, int level, ItemPointer heapPtr,
 
 	item->level = level;
 	item->heapPtr = *heapPtr;
-	/* copy value to queue cxt out of tmp cxt */
-	/* caution: "leafValue" is of type attType not leafType */
-	item->value = isnull ? (Datum) 0 :
-		datumCopy(leafValue, so->state.attType.attbyval,
-				  so->state.attType.attlen);
+
+	/*
+	 * If we need the reconstructed value, copy it to queue cxt out of tmp
+	 * cxt.  Caution: the leaf_consistent method may not have supplied a value
+	 * if we didn't ask it to, and mildly-broken methods might supply one of
+	 * the wrong type.  The correct leafValue type is attType not leafType.
+	 */
+	if (so->want_itup)
+		item->value = isnull ? (Datum) 0 :
+			datumCopy(leafValue, so->state.attType.attbyval,
+					  so->state.attType.attlen);
+	else
+		item->value = (Datum) 0;
 	item->traversalValue = NULL;
 	item->isLeaf = true;
 	item->recheck = recheck;
