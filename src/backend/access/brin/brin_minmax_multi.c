@@ -2606,16 +2606,16 @@ brin_minmax_multi_consistent(PG_FUNCTION_ARGS)
 						 * value in the array.
 						 */
 						cmpFn = minmax_multi_get_strategy_procinfo(bdesc, attno, subtype,
-																   BTLessStrategyNumber);
-						compar = FunctionCall2Coll(cmpFn, colloid, value, minval);
+																   BTGreaterStrategyNumber);
+						compar = FunctionCall2Coll(cmpFn, colloid, minval, value);
 
 						/* smaller than the smallest value in this range */
 						if (DatumGetBool(compar))
 							break;
 
 						cmpFn = minmax_multi_get_strategy_procinfo(bdesc, attno, subtype,
-																   BTGreaterStrategyNumber);
-						compar = FunctionCall2Coll(cmpFn, colloid, value, maxval);
+																   BTLessStrategyNumber);
+						compar = FunctionCall2Coll(cmpFn, colloid, maxval, value);
 
 						/* larger than the largest value in this range */
 						if (DatumGetBool(compar))
