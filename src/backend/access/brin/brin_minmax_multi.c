@@ -2127,6 +2127,9 @@ brin_minmax_multi_distance_interval(PG_FUNCTION_ARGS)
 	Interval   *ib = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
 
+	int64		dayfraction;
+	int64		days;
+
 	result = (Interval *) palloc(sizeof(Interval));
 
 	result->month = ib->month - ia->month;
@@ -2152,16 +2155,18 @@ brin_minmax_multi_distance_interval(PG_FUNCTION_ARGS)
 				 errmsg("interval out of range")));
 
 	/*
-	 * We assume months have 31 days - we don't need to be precise, in the
-	 * worst case we'll build somewhat less efficient ranges.
+	 * Delta is (fractional) number of days between the intervals. Assume
+	 * months have 30 days for consistency with interval_cmp_internal.
+	 * We don't need to be exact, in the worst case we'll build a bit less
+	 * efficient ranges. But we should not contradict interval_cmp.
 	 */
-	delta = (float8) (result->month * 31 + result->day);
+	dayfraction = result->time % USECS_PER_DAY;
+	days = result->time / USECS_PER_DAY;
+	days += result->month * INT64CONST(30);
+	days += result->day;
 
-	/* convert to microseconds (just like the time part) */
-	delta = 24L * 3600L * delta;
-
-	/* and add the time part */
-	delta += result->time / (float8) 1000000.0;
+	/* convert to double precision */
+	delta = (double) days + dayfraction / (double) USECS_PER_DAY;
 
 	Assert(delta >= 0);
 
