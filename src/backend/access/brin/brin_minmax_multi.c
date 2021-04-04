@@ -2297,6 +2297,9 @@ brin_minmax_multi_distance_inet(PG_FUNCTION_ARGS)
 	inet	   *ipa = PG_GETARG_INET_PP(0);
 	inet	   *ipb = PG_GETARG_INET_PP(1);
 
+	int			lena,
+				lenb;
+
 	/*
 	 * If the addresses are from different families, consider them to be in
 	 * maximal possible distance (which is 1.0).
@@ -2304,23 +2307,63 @@ brin_minmax_multi_distance_inet(PG_FUNCTION_ARGS)
 	if (ip_family(ipa) != ip_family(ipb))
 		PG_RETURN_FLOAT8(1.0);
 
-	/* ipv4 or ipv6 */
-	if (ip_family(ipa) == PGSQL_AF_INET)
-		len = 4;
-	else
-		len = 16;				/* NS_IN6ADDRSZ */
+	addra = (unsigned char *) palloc(ip_addrsize(ipa));
+	memcpy(addra, ip_addr(ipa), ip_addrsize(ipa));
 
-	addra = ip_addr(ipa);
-	addrb = ip_addr(ipb);
+	addrb = (unsigned char *) palloc(ip_addrsize(ipb));
+	memcpy(addrb, ip_addr(ipb), ip_addrsize(ipb));
 
+	/*
+	 * The length is calculated from the mask length, because we sort the
+	 * addresses by first address in the range, so A.B.C.D/24 < A.B.C.1
+	 * (the first range starts at A.B.C.0, which is before A.B.C.1). We
+	 * don't want to produce negative delta in this case, so we just cut
+	 * the extra bytes.
+	 *
+	 * XXX Maybe this should be a bit more careful and cut the bits, not
+	 * just whole bytes.
+	 */
+	lena = ip_bits(ipa);
+	lenb = ip_bits(ipb);
+
+	len = ip_addrsize(ipa);
+
+	/* apply the network mask to both addresses */
+	for (i = 0; i < len; i++)
+	{
+		unsigned char	mask;
+		int				nbits;
+
+		nbits = lena - (i * 8);
+		if (nbits < 8)
+		{
+			mask = (0xFF << (8 - nbits));
+			addra[i] = (addra[i] & mask);
+		}
+
+		nbits = lenb - (i * 8);
+		if (nbits < 8)
+		{
+			mask = (0xFF << (8 - nbits));
+			addrb[i] = (addrb[i] & mask);
+		}
+	}
+
+	/* Calculate the difference between the addresses. */
 	delta = 0;
 	for (i = len - 1; i >= 0; i--)
 	{
-		delta += (float8) addrb[i] - (float8) addra[i];
+		unsigned char a = addra[i];
+		unsigned char b = addrb[i];
+
+		delta += (float8) b - (float8) a;
 		delta /= 256;
 	}
 
 	Assert((delta >= 0) && (delta <= 1));
+
+	pfree(addra);
+	pfree(addrb);
 
 	PG_RETURN_FLOAT8(delta);
 }
