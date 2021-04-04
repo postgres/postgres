@@ -2090,7 +2090,7 @@ brin_minmax_multi_distance_timetz(PG_FUNCTION_ARGS)
 	TimeTzADT  *ta = PG_GETARG_TIMETZADT_P(0);
 	TimeTzADT  *tb = PG_GETARG_TIMETZADT_P(1);
 
-	delta = tb->time - ta->time;
+	delta = (tb->time - ta->time) + (tb->zone - ta->zone) * USECS_PER_SEC;
 
 	Assert(delta >= 0);
 
