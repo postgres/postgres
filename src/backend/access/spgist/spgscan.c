@@ -446,10 +446,22 @@ spgNewHeapItem(SpGistScanOpaque so, int level, ItemPointer heapPtr,
 
 	item->level = level;
 	item->heapPtr = *heapPtr;
-	/* copy value to queue cxt out of tmp cxt */
-	item->value = isnull ? (Datum) 0 :
-		datumCopy(leafValue, so->state.attLeafType.attbyval,
-				  so->state.attLeafType.attlen);
+
+	/*
+	 * If we need the reconstructed value, copy it to queue cxt out of tmp
+	 * cxt.  Caution: the leaf_consistent method may not have supplied a value
+	 * if we didn't ask it to, and mildly-broken methods might supply one of
+	 * the wrong type.  Also, while the correct leafValue type is attType not
+	 * leafType, pre-v14 Postgres versions have historically used attLeafType
+	 * here; let's not confuse matters even more by changing that in a minor
+	 * release.
+	 */
+	if (so->want_itup)
+		item->value = isnull ? (Datum) 0 :
+			datumCopy(leafValue, so->state.attLeafType.attbyval,
+					  so->state.attLeafType.attlen);
+	else
+		item->value = (Datum) 0;
 	item->traversalValue = NULL;
 	item->isLeaf = true;
 	item->recheck = recheck;
