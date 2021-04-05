@@ -187,8 +187,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
        </para>
 
        <para>
-        Currently, the B-tree and the GiST index access methods support this
-        feature.  In B-tree and the GiST indexes, the values of columns listed
+        Currently, the B-tree, GiST and SP-GiST index access methods support
+        this feature.  In these indexes, the values of columns listed
         in the <literal>INCLUDE</literal> clause are included in leaf tuples
         which correspond to heap tuples, but are not included in upper-level
         index entries used for tree navigation.
@@ -695,7 +695,10 @@ Indexes:
 
   <para>
    Currently, only the B-tree, GiST, GIN, and BRIN index methods support
-   multicolumn indexes. Up to 32 fields can be specified by default.
+   multiple-key-column indexes.  Whether there can be multiple key
+   columns is independent of whether <literal>INCLUDE</literal> columns
+   can be added to the index.  Indexes can have up to 32 columns,
+   including <literal>INCLUDE</literal> columns.
    (This limit can be altered when building
    <productname>PostgreSQL</productname>.)  Only B-tree currently
    supports unique indexes.

@@ -39,6 +39,10 @@ typedef struct SpGistOptions
 	(BLCKSZ * (100 - SpGistGetFillFactor(relation)) / 100)
 
 
+/* SPGiST leaf tuples have one key column, optionally have included columns */
+#define spgKeyColumn 0
+#define spgFirstIncludeColumn 1
+
 /* Page numbers of fixed-location pages */
 #define SPGIST_METAPAGE_BLKNO	 (0)	/* metapage */
 #define SPGIST_ROOT_BLKNO		 (1)	/* root for normal entries */
@@ -125,16 +129,22 @@ typedef struct SpGistMetaPageData
  * search code; SpGistScanOpaque is for searches only.
  */
 
+typedef struct SpGistLeafTupleData *SpGistLeafTuple;	/* forward reference */
+
 /* Per-datatype info needed in SpGistState */
 typedef struct SpGistTypeDesc
 {
 	Oid			type;
-	bool		attbyval;
 	int16		attlen;
+	bool		attbyval;
+	char		attstorage;
+	char		attalign;
 } SpGistTypeDesc;
 
 typedef struct SpGistState
 {
+	Relation	index;			/* index we're working with */
+
 	spgConfigOut config;		/* filled in by opclass config method */
 
 	SpGistTypeDesc attType;		/* type of values to be indexed/restored */
@@ -142,17 +152,22 @@ typedef struct SpGistState
 	SpGistTypeDesc attPrefixType;	/* type of inner-tuple prefix values */
 	SpGistTypeDesc attLabelType;	/* type of node label values */
 
+	/* leafTupDesc typically points to index's tupdesc, but not always */
+	TupleDesc	leafTupDesc;	/* descriptor for leaf-level tuples */
+
 	char	   *deadTupleStorage;	/* workspace for spgFormDeadTuple */
 
 	TransactionId myXid;		/* XID to use when creating a redirect tuple */
 	bool		isBuild;		/* true if doing index build */
 } SpGistState;
 
+/* Item to be re-examined later during a search */
 typedef struct SpGistSearchItem
 {
 	pairingheap_node phNode;	/* pairing heap node */
 	Datum		value;			/* value reconstructed from parent, or
 								 * leafValue if isLeaf */
+	SpGistLeafTuple leafTuple;	/* whole leaf tuple, if needed */
 	void	   *traversalValue; /* opclass-specific traverse value */
 	int			level;			/* level of items on this page */
 	ItemPointerData heapPtr;	/* heap info, if heap tuple */
@@ -208,7 +223,7 @@ typedef struct SpGistScanOpaqueData
 
 	/* These fields are only used in amgettuple scans: */
 	bool		want_itup;		/* are we reconstructing tuples? */
-	TupleDesc	indexTupDesc;	/* if so, descriptor for reconstructed tuples */
+	TupleDesc	reconTupDesc;	/* if so, descriptor for reconstructed tuples */
 	int			nPtrs;			/* number of TIDs found on current page */
 	int			iPtr;			/* index for scanning through same */
 	ItemPointerData heapPtrs[MaxIndexTuplesPerPage];	/* TIDs from cur page */
@@ -329,23 +344,36 @@ typedef SpGistNodeTupleData *SpGistNodeTuple;
 							 PointerGetDatum(SGNTDATAPTR(x)))
 
 /*
- * SPGiST leaf tuple: carries a leaf datum and a heap tuple TID
+ * SPGiST leaf tuple: carries a leaf datum and a heap tuple TID,
+ * and optionally some "included" columns.
  *
  * In the simplest case, the leaf datum is the same as the indexed value;
  * but it could also be a suffix or some other sort of delta that permits
  * reconstruction given knowledge of the prefix path traversed to get here.
+ * Any included columns are stored without modification.
  *
- * If the leaf datum is NULL, it's not stored.  This is not represented
- * explicitly; we infer it from the tuple being stored on a nulls page.
+ * A nulls bitmap is present if there are included columns AND any of the
+ * datums are NULL.  We do not need a nulls bitmap for the case of a null
+ * leaf datum without included columns, as we can infer whether the leaf
+ * datum is null from whether the tuple is stored on a nulls page.  (This
+ * provision is mostly for backwards compatibility, but it does save space
+ * on 32-bit machines.)  As with other PG index tuple designs, if the nulls
+ * bitmap exists then it's of size INDEX_MAX_KEYS bits regardless of the
+ * actual number of attributes.  For the usual choice of INDEX_MAX_KEYS,
+ * this costs nothing because of alignment considerations.
  *
  * The size field is wider than could possibly be needed for an on-disk leaf
  * tuple, but this allows us to form leaf tuples even when the datum is too
  * wide to be stored immediately, and it costs nothing because of alignment
  * considerations.
  *
+ * t_info holds the nextOffset field (14 bits wide, enough for supported
+ * page sizes) plus the has-nulls-bitmap flag bit; another flag bit is free.
+ *
  * Normally, nextOffset links to the next tuple belonging to the same parent
- * node (which must be on the same page).  But when the root page is a leaf
- * page, we don't chain its tuples, so nextOffset is always 0 on the root.
+ * node (which must be on the same page), or it's 0 if there is no next tuple.
+ * But when the root page is a leaf page, we don't chain its tuples,
+ * so nextOffset is always 0 on the root.
  *
  * size must be a multiple of MAXALIGN; also, it must be at least SGDTSIZE
  * so that the tuple can be converted to REDIRECT status later.  (This
@@ -356,15 +384,30 @@ typedef struct SpGistLeafTupleData
 {
 	unsigned int tupstate:2,	/* LIVE/REDIRECT/DEAD/PLACEHOLDER */
 				size:30;		/* large enough for any palloc'able value */
-	OffsetNumber nextOffset;	/* next tuple in chain, or InvalidOffsetNumber */
+	uint16		t_info;			/* nextOffset, which links to the next tuple
+								 * in chain, plus two flag bits */
 	ItemPointerData heapPtr;	/* TID of represented heap tuple */
-	/* leaf datum follows on a MAXALIGN boundary */
+	/* nulls bitmap follows if the flag bit for it is set */
+	/* leaf datum, then any included datums, follows on a MAXALIGN boundary */
 } SpGistLeafTupleData;
 
-typedef SpGistLeafTupleData *SpGistLeafTuple;
+/* Macros to access nextOffset and bit fields inside t_info */
+#define SGLT_GET_NEXTOFFSET(spgLeafTuple) \
+	((spgLeafTuple)->t_info & 0x3FFF)
+#define SGLT_GET_HASNULLMASK(spgLeafTuple) \
+	(((spgLeafTuple)->t_info & 0x8000) ? true : false)
+#define SGLT_SET_NEXTOFFSET(spgLeafTuple, offsetNumber) \
+	((spgLeafTuple)->t_info = \
+	 ((spgLeafTuple)->t_info & 0xC000) | ((offsetNumber) & 0x3FFF))
+#define SGLT_SET_HASNULLMASK(spgLeafTuple, hasnulls) \
+	((spgLeafTuple)->t_info = \
+	 ((spgLeafTuple)->t_info & 0x7FFF) | ((hasnulls) ? 0x8000 : 0))
 
-#define SGLTHDRSZ			MAXALIGN(sizeof(SpGistLeafTupleData))
-#define SGLTDATAPTR(x)		(((char *) (x)) + SGLTHDRSZ)
+#define SGLTHDRSZ(hasnulls) \
+	((hasnulls) ? MAXALIGN(sizeof(SpGistLeafTupleData) + \
+						   sizeof(IndexAttributeBitMapData)) : \
+	 MAXALIGN(sizeof(SpGistLeafTupleData)))
+#define SGLTDATAPTR(x)		(((char *) (x)) + SGLTHDRSZ(SGLT_GET_HASNULLMASK(x)))
 #define SGLTDATUM(x, s)		fetch_att(SGLTDATAPTR(x), \
 									  (s)->attLeafType.attbyval, \
 									  (s)->attLeafType.attlen)
@@ -377,14 +420,14 @@ typedef SpGistLeafTupleData *SpGistLeafTuple;
  * Also, the pointer field must be in the same place as a leaf tuple's heapPtr
  * field, to satisfy some Asserts that we make when replacing a leaf tuple
  * with a dead tuple.
- * We don't use nextOffset, but it's needed to align the pointer field.
+ * We don't use t_info, but it's needed to align the pointer field.
  * pointer and xid are only valid when tupstate = REDIRECT.
  */
 typedef struct SpGistDeadTupleData
 {
 	unsigned int tupstate:2,	/* LIVE/REDIRECT/DEAD/PLACEHOLDER */
 				size:30;
-	OffsetNumber nextOffset;	/* not used in dead tuples */
+	uint16		t_info;			/* not used in dead tuples */
 	ItemPointerData pointer;	/* redirection inside index */
 	TransactionId xid;			/* ID of xact that inserted this tuple */
 } SpGistDeadTupleData;
@@ -451,6 +494,7 @@ typedef SpGistDeadTupleData *SpGistDeadTuple;
 #define SPGIST_DEFAULT_FILLFACTOR		80
 
 extern SpGistCache *spgGetCache(Relation index);
+extern TupleDesc getSpGistTupleDesc(Relation index, SpGistTypeDesc *keyType);
 extern void initSpGistState(SpGistState *state, Relation index);
 extern Buffer SpGistNewBuffer(Relation index);
 extern void SpGistUpdateMetaPage(Relation index);
@@ -461,10 +505,11 @@ extern void SpGistInitPage(Page page, uint16 f);
 extern void SpGistInitBuffer(Buffer b, uint16 f);
 extern void SpGistInitMetapage(Page page);
 extern unsigned int SpGistGetInnerTypeSize(SpGistTypeDesc *att, Datum datum);
-extern unsigned int SpGistGetLeafTypeSize(SpGistTypeDesc *att, Datum datum);
+extern Size SpGistGetLeafTupleSize(TupleDesc tupleDescriptor,
+								   Datum *datums, bool *isnulls);
 extern SpGistLeafTuple spgFormLeafTuple(SpGistState *state,
 										ItemPointer heapPtr,
-										Datum datum, bool isnull);
+										Datum *datums, bool *isnulls);
 extern SpGistNodeTuple spgFormNodeTuple(SpGistState *state,
 										Datum label, bool isnull);
 extern SpGistInnerTuple spgFormInnerTuple(SpGistState *state,
@@ -472,6 +517,9 @@ extern SpGistInnerTuple spgFormInnerTuple(SpGistState *state,
 										  int nNodes, SpGistNodeTuple *nodes);
 extern SpGistDeadTuple spgFormDeadTuple(SpGistState *state, int tupstate,
 										BlockNumber blkno, OffsetNumber offnum);
+extern void spgDeformLeafTuple(SpGistLeafTuple tup, TupleDesc tupleDescriptor,
+							   Datum *datums, bool *isnulls,
+							   bool keyColumnIsNull);
 extern Datum *spgExtractNodeLabels(SpGistState *state,
 								   SpGistInnerTuple innerTuple);
 extern OffsetNumber SpGistPageAddNewItem(SpGistState *state, Page page,
@@ -490,7 +538,7 @@ extern void spgPageIndexMultiDelete(SpGistState *state, Page page,
 									int firststate, int reststate,
 									BlockNumber blkno, OffsetNumber offnum);
 extern bool spgdoinsert(Relation index, SpGistState *state,
-						ItemPointer heapPtr, Datum datum, bool isnull);
+						ItemPointer heapPtr, Datum *datums, bool *isnulls);
 
 /* spgproc.c */
 extern double *spg_key_orderbys_distances(Datum key, bool isLeaf,

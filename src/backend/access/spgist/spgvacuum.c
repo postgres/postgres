@@ -168,23 +168,23 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 			}
 
 			/* Form predecessor map, too */
-			if (lt->nextOffset != InvalidOffsetNumber)
+			if (SGLT_GET_NEXTOFFSET(lt) != InvalidOffsetNumber)
 			{
 				/* paranoia about corrupted chain links */
-				if (lt->nextOffset < FirstOffsetNumber ||
-					lt->nextOffset > max ||
-					predecessor[lt->nextOffset] != InvalidOffsetNumber)
+				if (SGLT_GET_NEXTOFFSET(lt) < FirstOffsetNumber ||
+					SGLT_GET_NEXTOFFSET(lt) > max ||
+					predecessor[SGLT_GET_NEXTOFFSET(lt)] != InvalidOffsetNumber)
 					elog(ERROR, "inconsistent tuple chain links in page %u of index \"%s\"",
 						 BufferGetBlockNumber(buffer),
 						 RelationGetRelationName(index));
-				predecessor[lt->nextOffset] = i;
+				predecessor[SGLT_GET_NEXTOFFSET(lt)] = i;
 			}
 		}
 		else if (lt->tupstate == SPGIST_REDIRECT)
 		{
 			SpGistDeadTuple dt = (SpGistDeadTuple) lt;
 
-			Assert(dt->nextOffset == InvalidOffsetNumber);
+			Assert(SGLT_GET_NEXTOFFSET(dt) == InvalidOffsetNumber);
 			Assert(ItemPointerIsValid(&dt->pointer));
 
 			/*
@@ -201,7 +201,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 		}
 		else
 		{
-			Assert(lt->nextOffset == InvalidOffsetNumber);
+			Assert(SGLT_GET_NEXTOFFSET(lt) == InvalidOffsetNumber);
 		}
 	}
 
@@ -250,7 +250,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 		prevLive = deletable[i] ? InvalidOffsetNumber : i;
 
 		/* scan down the chain ... */
-		j = head->nextOffset;
+		j = SGLT_GET_NEXTOFFSET(head);
 		while (j != InvalidOffsetNumber)
 		{
 			SpGistLeafTuple lt;
@@ -301,7 +301,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 				interveningDeletable = false;
 			}
 
-			j = lt->nextOffset;
+			j = SGLT_GET_NEXTOFFSET(lt);
 		}
 
 		if (prevLive == InvalidOffsetNumber)
@@ -366,7 +366,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 		lt = (SpGistLeafTuple) PageGetItem(page,
 										   PageGetItemId(page, chainSrc[i]));
 		Assert(lt->tupstate == SPGIST_LIVE);
-		lt->nextOffset = chainDest[i];
+		SGLT_SET_NEXTOFFSET(lt, chainDest[i]);
 	}
 
 	MarkBufferDirty(buffer);

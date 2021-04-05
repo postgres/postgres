@@ -409,9 +409,11 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   </para>
 
   <para>
-   Currently, only the B-tree, GiST, GIN, and BRIN
-   index types support multicolumn
-   indexes.  Up to 32 columns can be specified.  (This limit can be
+   Currently, only the B-tree, GiST, GIN, and BRIN index types support
+   multiple-key-column indexes.  Whether there can be multiple key
+   columns is independent of whether <literal>INCLUDE</literal> columns
+   can be added to the index.  Indexes can have up to 32 columns,
+   including <literal>INCLUDE</literal> columns.  (This limit can be
    altered when building <productname>PostgreSQL</productname>; see the
    file <filename>pg_config_manual.h</filename>.)
   </para>
@@ -1208,8 +1210,8 @@ CREATE UNIQUE INDEX tab_x_y ON tab(x) INCLUDE (y);
    likely to not need to access the heap.  If the heap tuple must be visited
    anyway, it costs nothing more to get the column's value from there.
    Other restrictions are that expressions are not currently supported as
-   included columns, and that only B-tree and GiST indexes currently support
-   included columns.
+   included columns, and that only B-tree, GiST and SP-GiST indexes currently
+   support included columns.
   </para>
 
   <para>

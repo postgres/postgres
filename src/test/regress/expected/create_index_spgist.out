@@ -555,6 +555,35 @@ WHERE seq.dist IS DISTINCT FROM idx.dist;
 ---+------+---+---+------+---
 (0 rows)
 
+-- test KNN scan with included columns
+-- the distance numbers are not exactly the same across platforms
+SET extra_float_digits = 0;
+CREATE INDEX ON quad_point_tbl_ord_seq1 USING spgist(p) INCLUDE(dist);
+EXPLAIN (COSTS OFF)
+SELECT p, dist FROM quad_point_tbl_ord_seq1 ORDER BY p <-> '0,0' LIMIT 10;
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
+ Limit
+   ->  Index Only Scan using quad_point_tbl_ord_seq1_p_dist_idx on quad_point_tbl_ord_seq1
+         Order By: (p <-> '(0,0)'::point)
+(3 rows)
+
+SELECT p, dist FROM quad_point_tbl_ord_seq1 ORDER BY p <-> '0,0' LIMIT 10;
+     p     |       dist       
+-----------+------------------
+ (59,21)   | 62.6258732474047
+ (88,104)  | 136.235090927411
+ (39,143)  | 148.222805262888
+ (139,160) | 211.945747775227
+ (209,38)  |  212.42645786248
+ (157,156) | 221.325552072055
+ (175,150) | 230.488611432322
+ (236,34)  | 238.436574375661
+ (263,28)  | 264.486294540946
+ (322,53)  |  326.33265236565
+(10 rows)
+
+RESET extra_float_digits;
 -- check ORDER BY distance to NULL
 SELECT (SELECT p FROM kd_point_tbl ORDER BY p <-> pt, p <-> '0,0' LIMIT 1)
 FROM (VALUES (point '1,2'), (NULL), ('1234,5678')) pts(pt);

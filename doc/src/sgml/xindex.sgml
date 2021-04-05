@@ -1426,11 +1426,15 @@ CREATE OPERATOR CLASS polygon_ops
         STORAGE box;
 </programlisting>
 
-   At present, only the GiST, GIN and BRIN index methods support a
+   At present, only the GiST, SP-GiST, GIN and BRIN index methods support a
    <literal>STORAGE</literal> type that's different from the column data type.
    The GiST <function>compress</function> and <function>decompress</function> support
    routines must deal with data-type conversion when <literal>STORAGE</literal>
-   is used.  In GIN, the <literal>STORAGE</literal> type identifies the type of
+   is used.  SP-GiST likewise requires a <function>compress</function>
+   support function to convert to the storage type, when that is different;
+   if an SP-GiST opclass also supports retrieving data, the reverse
+   conversion must be handled by the <function>consistent</function> function.
+   In GIN, the <literal>STORAGE</literal> type identifies the type of
    the <quote>key</quote> values, which normally is different from the type
    of the indexed column &mdash; for example, an operator class for
    integer-array columns might have keys that are just integers.  The

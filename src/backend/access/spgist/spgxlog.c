@@ -122,8 +122,8 @@ spgRedoAddLeaf(XLogReaderState *record)
 
 				head = (SpGistLeafTuple) PageGetItem(page,
 													 PageGetItemId(page, xldata->offnumHeadLeaf));
-				Assert(head->nextOffset == leafTupleHdr.nextOffset);
-				head->nextOffset = xldata->offnumLeaf;
+				Assert(SGLT_GET_NEXTOFFSET(head) == SGLT_GET_NEXTOFFSET(&leafTupleHdr));
+				SGLT_SET_NEXTOFFSET(head, xldata->offnumLeaf);
 			}
 		}
 		else
@@ -822,7 +822,7 @@ spgRedoVacuumLeaf(XLogReaderState *record)
 			lt = (SpGistLeafTuple) PageGetItem(page,
 											   PageGetItemId(page, chainSrc[i]));
 			Assert(lt->tupstate == SPGIST_LIVE);
-			lt->nextOffset = chainDest[i];
+			SGLT_SET_NEXTOFFSET(lt, chainDest[i]);
 		}
 
 		PageSetLSN(page, lsn);

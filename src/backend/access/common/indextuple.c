@@ -446,22 +446,37 @@ void
 index_deform_tuple(IndexTuple tup, TupleDesc tupleDescriptor,
 				   Datum *values, bool *isnull)
 {
-	int			hasnulls = IndexTupleHasNulls(tup);
-	int			natts = tupleDescriptor->natts; /* number of atts to extract */
-	int			attnum;
 	char	   *tp;				/* ptr to tuple data */
-	int			off;			/* offset in tuple data */
 	bits8	   *bp;				/* ptr to null bitmap in tuple */
-	bool		slow = false;	/* can we use/set attcacheoff? */
-
-	/* Assert to protect callers who allocate fixed-size arrays */
-	Assert(natts <= INDEX_MAX_KEYS);
 
 	/* XXX "knows" t_bits are just after fixed tuple header! */
 	bp = (bits8 *) ((char *) tup + sizeof(IndexTupleData));
 
 	tp = (char *) tup + IndexInfoFindDataOffset(tup->t_info);
-	off = 0;
+
+	index_deform_tuple_internal(tupleDescriptor, values, isnull,
+								tp, bp, IndexTupleHasNulls(tup));
+}
+
+/*
+ * Convert an index tuple into Datum/isnull arrays,
+ * without assuming any specific layout of the index tuple header.
+ *
+ * Caller must supply pointer to data area, pointer to nulls bitmap
+ * (which can be NULL if !hasnulls), and hasnulls flag.
+ */
+void
+index_deform_tuple_internal(TupleDesc tupleDescriptor,
+							Datum *values, bool *isnull,
+							char *tp, bits8 *bp, int hasnulls)
+{
+	int			natts = tupleDescriptor->natts; /* number of atts to extract */
+	int			attnum;
+	int			off = 0;		/* offset in tuple data */
+	bool		slow = false;	/* can we use/set attcacheoff? */
+
+	/* Assert to protect callers who allocate fixed-size arrays */
+	Assert(natts <= INDEX_MAX_KEYS);
 
 	for (attnum = 0; attnum < natts; attnum++)
 	{

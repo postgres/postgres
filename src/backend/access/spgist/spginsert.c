@@ -56,7 +56,7 @@ spgistBuildCallback(Relation index, ItemPointer tid, Datum *values,
 	 * any temp data when retrying.
 	 */
 	while (!spgdoinsert(index, &buildstate->spgstate, tid,
-						*values, *isnull))
+						values, isnull))
 	{
 		MemoryContextReset(buildstate->tmpCtx);
 	}
@@ -227,7 +227,7 @@ spginsert(Relation index, Datum *values, bool *isnull,
 	 * to avoid cumulative memory consumption.  That means we also have to
 	 * redo initSpGistState(), but it's cheap enough not to matter.
 	 */
-	while (!spgdoinsert(index, &spgstate, ht_ctid, *values, *isnull))
+	while (!spgdoinsert(index, &spgstate, ht_ctid, values, isnull))
 	{
 		MemoryContextReset(insertCtx);
 		initSpGistState(&spgstate, index);

@@ -56,7 +56,7 @@ list and there is no free space on page, then SP-GiST creates a new inner
 tuple and distributes leaf tuples into a set of lists on, perhaps, several
 pages.
 
-Inner tuple consists of:
+An inner tuple consists of:
 
   optional prefix value - all successors must be consistent with it.
     Example:
@@ -67,14 +67,26 @@ Inner tuple consists of:
   list of nodes, where node is a (label, pointer) pair.
     Example of a label: a single character for radix tree
 
-Leaf tuple consists of:
+A leaf tuple consists of:
 
   a leaf value
     Example:
         radix tree - the rest of string (postfix)
         quad and k-d tree - the point itself
 
-  ItemPointer to the heap
+  ItemPointer to the corresponding heap tuple
+  nextOffset number of next leaf tuple in a chain on a leaf page
+
+  optional nulls bitmask
+  optional INCLUDE-column values
+
+For compatibility with pre-v14 indexes, a leaf tuple has a nulls bitmask
+only if there are null values (among the leaf value and the INCLUDE values)
+*and* there is at least one INCLUDE column.  The null-ness of the leaf
+value can be inferred from whether the tuple is on a "nulls page" (see below)
+so it is not necessary to represent it explicitly.  But we include it anyway
+in a bitmask used with INCLUDE values, so that standard tuple deconstruction
+code can be used.
 
 
 NULLS HANDLING

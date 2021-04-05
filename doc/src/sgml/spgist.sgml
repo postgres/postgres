@@ -217,6 +217,14 @@
  </para>
 
  <para>
+  When an <acronym>SP-GiST</acronym> index is created with
+  <literal>INCLUDE</literal> columns, the values of those columns are also
+  stored in leaf tuples.  The <literal>INCLUDE</literal> columns are of no
+  concern to the <acronym>SP-GiST</acronym> operator class, so they are
+  not discussed further here.
+ </para>
+
+ <para>
   Inner tuples are more complex, since they are branching points in the
   search tree.  Each inner tuple contains a set of one or more
   <firstterm>nodes</firstterm>, which represent groups of similar leaf values.
