@@ -625,7 +625,7 @@ typedef struct TableAmRoutine
 	 * There probably, in the future, needs to be a separate callback to
 	 * integrate with autovacuum's scheduling.
 	 */
-	void		(*relation_vacuum) (Relation onerel,
+	void		(*relation_vacuum) (Relation rel,
 									struct VacuumParams *params,
 									BufferAccessStrategy bstrategy);
 

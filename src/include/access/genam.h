@@ -177,11 +177,11 @@ extern bool index_getnext_slot(IndexScanDesc scan, ScanDirection direction,
 extern int64 index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap);
 
 extern IndexBulkDeleteResult *index_bulk_delete(IndexVacuumInfo *info,
-												IndexBulkDeleteResult *stats,
+												IndexBulkDeleteResult *istat,
 												IndexBulkDeleteCallback callback,
 												void *callback_state);
 extern IndexBulkDeleteResult *index_vacuum_cleanup(IndexVacuumInfo *info,
-												   IndexBulkDeleteResult *stats);
+												   IndexBulkDeleteResult *istat);
 extern bool index_can_return(Relation indexRelation, int attno);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 									uint16 procnum);

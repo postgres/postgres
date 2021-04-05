@@ -689,7 +689,7 @@ index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap)
  */
 IndexBulkDeleteResult *
 index_bulk_delete(IndexVacuumInfo *info,
-				  IndexBulkDeleteResult *stats,
+				  IndexBulkDeleteResult *istat,
 				  IndexBulkDeleteCallback callback,
 				  void *callback_state)
 {
@@ -698,7 +698,7 @@ index_bulk_delete(IndexVacuumInfo *info,
 	RELATION_CHECKS;
 	CHECK_REL_PROCEDURE(ambulkdelete);
 
-	return indexRelation->rd_indam->ambulkdelete(info, stats,
+	return indexRelation->rd_indam->ambulkdelete(info, istat,
 												 callback, callback_state);
 }
 
@@ -710,14 +710,14 @@ index_bulk_delete(IndexVacuumInfo *info,
  */
 IndexBulkDeleteResult *
 index_vacuum_cleanup(IndexVacuumInfo *info,
-					 IndexBulkDeleteResult *stats)
+					 IndexBulkDeleteResult *istat)
 {
 	Relation	indexRelation = info->index;
 
 	RELATION_CHECKS;
 	CHECK_REL_PROCEDURE(amvacuumcleanup);
 
-	return indexRelation->rd_indam->amvacuumcleanup(info, stats);
+	return indexRelation->rd_indam->amvacuumcleanup(info, istat);
 }
 
 /* ----------------
