@@ -51,6 +51,9 @@ static volatile sig_atomic_t in_restore_command = false;
 static void StartupProcTriggerHandler(SIGNAL_ARGS);
 static void StartupProcSigHupHandler(SIGNAL_ARGS);
 
+/* Callbacks */
+static void StartupProcExit(int code, Datum arg);
+
 
 /* --------------------------------
  *		signal handler routines
@@ -162,6 +165,19 @@ HandleStartupProcInterrupts(void)
 }
 
 
+/* --------------------------------
+ *		signal handler routines
+ * --------------------------------
+ */
+static void
+StartupProcExit(int code, Datum arg)
+{
+	/* Shutdown the recovery environment */
+	if (standbyState != STANDBY_DISABLED)
+		ShutdownRecoveryTransactionEnvironment();
+}
+
+
 /* ----------------------------------
  *	Startup Process main entry point
  * ----------------------------------
@@ -169,6 +185,9 @@ HandleStartupProcInterrupts(void)
 void
 StartupProcessMain(void)
 {
+	/* Arrange to clean up at startup process exit */
+	on_shmem_exit(StartupProcExit, 0);
+
 	/*
 	 * Properly accept or ignore signals the postmaster might send us.
 	 */
