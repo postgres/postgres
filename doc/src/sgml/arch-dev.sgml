@@ -27,7 +27,7 @@
    <title>The Path of a Query</title>
 
    <para>
-    Here we give a short overview of the stages a query has to pass 
+    Here we give a short overview of the stages a query has to pass
     to obtain a result.
    </para>
 
@@ -114,21 +114,25 @@
    <title>How Connections Are Established</title>
 
    <para>
-    <productname>PostgreSQL</productname> is implemented using a
-    simple <quote>process per user</quote> client/server model.  In this model
-    there is one <firstterm>client process</firstterm> connected to
-    exactly one <firstterm>server process</firstterm>.  As we do not
-    know ahead of time how many connections will be made, we have to
-    use a <firstterm>supervisor process</firstterm> (also
-    <firstterm>master process</firstterm>) that spawns a new
-    server process every time a connection is requested. This supervisor
-    process is called <literal>postmaster</literal> and listens at a
-    specified TCP/IP port for incoming connections. Whenever a request
-    for a connection is detected the <literal>postmaster</literal>
-    process spawns a new server process. The server processes
-    communicate with each other using <firstterm>semaphores</firstterm> and
-    <firstterm>shared memory</firstterm> to ensure data integrity
-    throughout concurrent data access.
+    <productname>PostgreSQL</productname> implements a
+    <quote>process per user</quote> client/server model.
+    In this model, every
+    <glossterm linkend="glossary-client">client process</glossterm>
+    connects to exactly one
+    <glossterm linkend="glossary-backend">backend process</glossterm>.
+    As we do not know ahead of time how many connections will be made,
+    we have to use a <quote>supervisor process</quote> that spawns a new
+    backend process every time a connection is requested. This supervisor
+    process is called
+    <glossterm linkend="glossary-postmaster">postmaster</glossterm>
+    and listens at a specified TCP/IP port for incoming connections.
+    Whenever it detects a request for a connection, it spawns a new
+    backend process.  Those backend processes communicate with each
+    other and with other processes of the
+    <glossterm linkend="glossary-instance">instance</glossterm>
+    using <firstterm>semaphores</firstterm> and
+    <glossterm linkend="glossary-shared-memory">shared memory</glossterm>
+    to ensure data integrity throughout concurrent data access.
    </para>
 
    <para>
@@ -141,11 +145,11 @@
    </para>
 
    <para>
-    Once a connection is established the client process can send a query
-    to the <firstterm>backend</firstterm> (server). The query is transmitted using plain text,
-    i.e., there is no parsing done in the <firstterm>frontend</firstterm> (client). The
-    server parses the query, creates an <firstterm>execution plan</firstterm>,
-    executes the plan and returns the retrieved rows to the client
+    Once a connection is established, the client process can send a query
+    to the backend process it's connected to. The query is transmitted using
+    plain text, i.e., there is no parsing done in the client. The backend
+    process parses the query, creates an <firstterm>execution plan</firstterm>,
+    executes the plan, and returns the retrieved rows to the client
     by transmitting them over the established connection.
    </para>
   </sect1>
