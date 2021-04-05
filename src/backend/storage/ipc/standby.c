@@ -127,10 +127,25 @@ InitRecoveryTransactionEnvironment(void)
  *
  * Prepare to switch from hot standby mode to normal operation. Shut down
  * recovery-time transaction tracking.
+ *
+ * This must be called even in shutdown of startup process if transaction
+ * tracking has been initialized. Otherwise some locks the tracked
+ * transactions were holding will not be released and and may interfere with
+ * the processes still running (but will exit soon later) at the exit of
+ * startup process.
  */
 void
 ShutdownRecoveryTransactionEnvironment(void)
 {
+	/*
+	 * Do nothing if RecoveryLockLists is NULL because which means that
+	 * transaction tracking has not been yet initialized or has been already
+	 * shutdowned. This prevents transaction tracking from being shutdowned
+	 * unexpectedly more than once.
+	 */
+	if (RecoveryLockLists == NULL)
+		return;
+
 	/* Mark all tracked in-progress transactions as finished. */
 	ExpireAllKnownAssignedTransactionIds();
 
