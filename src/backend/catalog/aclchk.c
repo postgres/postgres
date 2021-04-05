@@ -3925,6 +3925,27 @@ pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
 
 	ReleaseSysCache(tuple);
 
+	/*
+	 * Check if ACL_SELECT is being checked and, if so, and not set already
+	 * as part of the result, then check if the user is a member of the
+	 * pg_read_all_data role, which allows read access to all relations.
+	 */
+	if (mask & ACL_SELECT && !(result & ACL_SELECT) &&
+		has_privs_of_role(roleid, ROLE_READ_ALL_DATA))
+		result |= ACL_SELECT;
+
+	/*
+	 * Check if ACL_INSERT, ACL_UPDATE, or ACL_DELETE is being checked
+	 * and, if so, and not set already as part of the result, then check
+	 * if the user is a member of the pg_write_all_data role, which
+	 * allows INSERT/UPDATE/DELETE access to all relations (except
+	 * system catalogs, which requires superuser, see above).
+	 */
+	if (mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE) &&
+	   !(result & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
+		has_privs_of_role(roleid, ROLE_WRITE_ALL_DATA))
+		result |= (mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE));
+
 	return result;
 }
 
@@ -4251,6 +4272,16 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 
 	ReleaseSysCache(tuple);
 
+	/*
+	 * Check if ACL_USAGE is being checked and, if so, and not set already
+	 * as part of the result, then check if the user is a member of the
+	 * pg_read_all_data or pg_write_all_data roles, which allow usage
+	 * access to all schemas.
+	 */
+	if (mask & ACL_USAGE && !(result & ACL_USAGE) &&
+		(has_privs_of_role(roleid, ROLE_READ_ALL_DATA) ||
+		has_privs_of_role(roleid, ROLE_WRITE_ALL_DATA)))
+		result |= ACL_USAGE;
 	return result;
 }
 

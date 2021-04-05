@@ -16,6 +16,7 @@ DROP ROLE IF EXISTS regress_priv_user3;
 DROP ROLE IF EXISTS regress_priv_user4;
 DROP ROLE IF EXISTS regress_priv_user5;
 DROP ROLE IF EXISTS regress_priv_user6;
+DROP ROLE IF EXISTS regress_priv_user7;
 
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
 
@@ -29,6 +30,11 @@ CREATE USER regress_priv_user3;
 CREATE USER regress_priv_user4;
 CREATE USER regress_priv_user5;
 CREATE USER regress_priv_user5;	-- duplicate
+CREATE USER regress_priv_user6;
+CREATE USER regress_priv_user7;
+
+GRANT pg_read_all_data TO regress_priv_user6;
+GRANT pg_write_all_data TO regress_priv_user7;
 
 CREATE GROUP regress_priv_group1;
 CREATE GROUP regress_priv_group2 WITH USER regress_priv_user1, regress_priv_user2;
@@ -96,6 +102,22 @@ GRANT ALL ON atest1 TO PUBLIC; -- fail
 SELECT * FROM atest1 WHERE ( b IN ( SELECT col1 FROM atest2 ) );
 SELECT * FROM atest2 WHERE ( col1 IN ( SELECT b FROM atest1 ) );
 
+SET SESSION AUTHORIZATION regress_priv_user6;
+SELECT * FROM atest1; -- ok
+SELECT * FROM atest2; -- ok
+INSERT INTO atest2 VALUES ('foo', true); -- fail
+
+SET SESSION AUTHORIZATION regress_priv_user7;
+SELECT * FROM atest1; -- fail
+SELECT * FROM atest2; -- fail
+INSERT INTO atest2 VALUES ('foo', true); -- ok
+UPDATE atest2 SET col2 = true; -- ok
+DELETE FROM atest2; -- ok
+
+-- Make sure we are not able to modify system catalogs
+UPDATE pg_catalog.pg_class SET relname = '123'; -- fail
+DELETE FROM pg_catalog.pg_class; -- fail
+UPDATE pg_toast.pg_toast_1213 SET chunk_id = 1; -- fail
 
 SET SESSION AUTHORIZATION regress_priv_user3;
 SELECT session_user, current_user;
@@ -1121,6 +1143,7 @@ ALTER DEFAULT PRIVILEGES GRANT USAGE ON SCHEMAS TO regress_priv_user2;
 CREATE SCHEMA testns2;
 
 SELECT has_schema_privilege('regress_priv_user2', 'testns2', 'USAGE'); -- yes
+SELECT has_schema_privilege('regress_priv_user6', 'testns2', 'USAGE'); -- yes
 SELECT has_schema_privilege('regress_priv_user2', 'testns2', 'CREATE'); -- no
 
 ALTER DEFAULT PRIVILEGES REVOKE USAGE ON SCHEMAS FROM regress_priv_user2;
@@ -1364,6 +1387,8 @@ DROP USER regress_priv_user3;
 DROP USER regress_priv_user4;
 DROP USER regress_priv_user5;
 DROP USER regress_priv_user6;
+DROP USER regress_priv_user7;
+DROP USER regress_priv_user8; -- does not exist
 
 
 -- permissions with LOCK TABLE

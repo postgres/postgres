@@ -12,6 +12,7 @@ DROP ROLE IF EXISTS regress_priv_user3;
 DROP ROLE IF EXISTS regress_priv_user4;
 DROP ROLE IF EXISTS regress_priv_user5;
 DROP ROLE IF EXISTS regress_priv_user6;
+DROP ROLE IF EXISTS regress_priv_user7;
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
  lo_unlink 
 -----------
@@ -26,6 +27,10 @@ CREATE USER regress_priv_user4;
 CREATE USER regress_priv_user5;
 CREATE USER regress_priv_user5;	-- duplicate
 ERROR:  role "regress_priv_user5" already exists
+CREATE USER regress_priv_user6;
+CREATE USER regress_priv_user7;
+GRANT pg_read_all_data TO regress_priv_user6;
+GRANT pg_write_all_data TO regress_priv_user7;
 CREATE GROUP regress_priv_group1;
 CREATE GROUP regress_priv_group2 WITH USER regress_priv_user1, regress_priv_user2;
 ALTER GROUP regress_priv_group1 ADD USER regress_priv_user4;
@@ -131,6 +136,36 @@ SELECT * FROM atest2 WHERE ( col1 IN ( SELECT b FROM atest1 ) );
 ------+------
 (0 rows)
 
+SET SESSION AUTHORIZATION regress_priv_user6;
+SELECT * FROM atest1; -- ok
+ a |  b  
+---+-----
+ 1 | two
+ 1 | two
+(2 rows)
+
+SELECT * FROM atest2; -- ok
+ col1 | col2 
+------+------
+(0 rows)
+
+INSERT INTO atest2 VALUES ('foo', true); -- fail
+ERROR:  permission denied for table atest2
+SET SESSION AUTHORIZATION regress_priv_user7;
+SELECT * FROM atest1; -- fail
+ERROR:  permission denied for table atest1
+SELECT * FROM atest2; -- fail
+ERROR:  permission denied for table atest2
+INSERT INTO atest2 VALUES ('foo', true); -- ok
+UPDATE atest2 SET col2 = true; -- ok
+DELETE FROM atest2; -- ok
+-- Make sure we are not able to modify system catalogs
+UPDATE pg_catalog.pg_class SET relname = '123'; -- fail
+ERROR:  permission denied for table pg_class
+DELETE FROM pg_catalog.pg_class; -- fail
+ERROR:  permission denied for table pg_class
+UPDATE pg_toast.pg_toast_1213 SET chunk_id = 1; -- fail
+ERROR:  permission denied for table pg_toast_1213
 SET SESSION AUTHORIZATION regress_priv_user3;
 SELECT session_user, current_user;
     session_user    |    current_user    
@@ -1884,6 +1919,12 @@ SELECT has_schema_privilege('regress_priv_user2', 'testns2', 'USAGE'); -- yes
  t
 (1 row)
 
+SELECT has_schema_privilege('regress_priv_user6', 'testns2', 'USAGE'); -- yes
+ has_schema_privilege 
+----------------------
+ t
+(1 row)
+
 SELECT has_schema_privilege('regress_priv_user2', 'testns2', 'CREATE'); -- no
  has_schema_privilege 
 ----------------------
@@ -2284,7 +2325,9 @@ DROP USER regress_priv_user3;
 DROP USER regress_priv_user4;
 DROP USER regress_priv_user5;
 DROP USER regress_priv_user6;
-ERROR:  role "regress_priv_user6" does not exist
+DROP USER regress_priv_user7;
+DROP USER regress_priv_user8; -- does not exist
+ERROR:  role "regress_priv_user8" does not exist
 -- permissions with LOCK TABLE
 CREATE USER regress_locktable_user;
 CREATE TABLE lock_table (a int);
