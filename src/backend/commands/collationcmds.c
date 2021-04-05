@@ -577,7 +577,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 	 * We use uloc_countAvailable()/uloc_getAvailable() rather than
 	 * ucol_countAvailable()/ucol_getAvailable().  The former returns a full
 	 * set of language+region combinations, whereas the latter only returns
-	 * language+region combinations of they are distinct from the language's
+	 * language+region combinations if they are distinct from the language's
 	 * base collation.  So there might not be a de-DE or en-GB, which would be
 	 * confusing.
 	 */
