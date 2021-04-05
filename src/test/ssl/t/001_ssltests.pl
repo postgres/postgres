@@ -137,8 +137,8 @@ $common_connstr =
 # The server should not accept non-SSL connections.
 $node->connect_fails(
 	"$common_connstr sslmode=disable",
-	qr/\Qno pg_hba.conf entry\E/,
-	"server doesn't accept non-SSL connections");
+	"server doesn't accept non-SSL connections",
+	expected_stderr => qr/\Qno pg_hba.conf entry\E/);
 
 # Try without a root cert. In sslmode=require, this should work. In verify-ca
 # or verify-full mode it should fail.
@@ -147,34 +147,34 @@ $node->connect_ok(
 	"connect without server root cert sslmode=require");
 $node->connect_fails(
 	"$common_connstr sslrootcert=invalid sslmode=verify-ca",
-	qr/root certificate file "invalid" does not exist/,
-	"connect without server root cert sslmode=verify-ca");
+	"connect without server root cert sslmode=verify-ca",
+	expected_stderr => qr/root certificate file "invalid" does not exist/);
 $node->connect_fails(
 	"$common_connstr sslrootcert=invalid sslmode=verify-full",
-	qr/root certificate file "invalid" does not exist/,
-	"connect without server root cert sslmode=verify-full");
+	"connect without server root cert sslmode=verify-full",
+	expected_stderr => qr/root certificate file "invalid" does not exist/);
 
 # Try with wrong root cert, should fail. (We're using the client CA as the
 # root, but the server's key is signed by the server CA.)
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/client_ca.crt sslmode=require",
-	qr/SSL error: certificate verify failed/,
-	"connect with wrong server root cert sslmode=require");
+	"connect with wrong server root cert sslmode=require",
+	expected_stderr => qr/SSL error: certificate verify failed/);
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/client_ca.crt sslmode=verify-ca",
-	qr/SSL error: certificate verify failed/,
-	"connect with wrong server root cert sslmode=verify-ca");
+	"connect with wrong server root cert sslmode=verify-ca",
+	expected_stderr => qr/SSL error: certificate verify failed/);
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/client_ca.crt sslmode=verify-full",
-	qr/SSL error: certificate verify failed/,
-	"connect with wrong server root cert sslmode=verify-full");
+	"connect with wrong server root cert sslmode=verify-full",
+	expected_stderr => qr/SSL error: certificate verify failed/);
 
 # Try with just the server CA's cert. This fails because the root file
 # must contain the whole chain up to the root CA.
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/server_ca.crt sslmode=verify-ca",
-	qr/SSL error: certificate verify failed/,
-	"connect with server CA cert, without root CA");
+	"connect with server CA cert, without root CA",
+	expected_stderr => qr/SSL error: certificate verify failed/);
 
 # And finally, with the correct root cert.
 $node->connect_ok(
@@ -206,14 +206,14 @@ $node->connect_ok(
 # A CRL belonging to a different CA is not accepted, fails
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrl=ssl/client.crl",
-	qr/SSL error: certificate verify failed/,
-	"CRL belonging to a different CA");
+	"CRL belonging to a different CA",
+	expected_stderr => qr/SSL error: certificate verify failed/);
 
 # The same for CRL directory
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrldir=ssl/client-crldir",
-	qr/SSL error: certificate verify failed/,
-	"directory CRL belonging to a different CA");
+	"directory CRL belonging to a different CA",
+	expected_stderr => qr/SSL error: certificate verify failed/);
 
 # With the correct CRL, succeeds (this cert is not revoked)
 $node->connect_ok(
@@ -237,8 +237,10 @@ $node->connect_ok(
 	"mismatch between host name and server certificate sslmode=verify-ca");
 $node->connect_fails(
 	"$common_connstr sslmode=verify-full host=wronghost.test",
-	qr/\Qserver certificate for "common-name.pg-ssltest.test" does not match host name "wronghost.test"\E/,
-	"mismatch between host name and server certificate sslmode=verify-full");
+	"mismatch between host name and server certificate sslmode=verify-full",
+	expected_stderr =>
+	  qr/\Qserver certificate for "common-name.pg-ssltest.test" does not match host name "wronghost.test"\E/
+);
 
 # Test Subject Alternative Names.
 switch_server_cert($node, 'server-multiple-alt-names');
@@ -257,12 +259,16 @@ $node->connect_ok("$common_connstr host=foo.wildcard.pg-ssltest.test",
 
 $node->connect_fails(
 	"$common_connstr host=wronghost.alt-name.pg-ssltest.test",
-	qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 2 other names) does not match host name "wronghost.alt-name.pg-ssltest.test"\E/,
-	"host name not matching with X.509 Subject Alternative Names");
+	"host name not matching with X.509 Subject Alternative Names",
+	expected_stderr =>
+	  qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 2 other names) does not match host name "wronghost.alt-name.pg-ssltest.test"\E/
+);
 $node->connect_fails(
 	"$common_connstr host=deep.subdomain.wildcard.pg-ssltest.test",
-	qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 2 other names) does not match host name "deep.subdomain.wildcard.pg-ssltest.test"\E/,
-	"host name not matching with X.509 Subject Alternative Names wildcard");
+	"host name not matching with X.509 Subject Alternative Names wildcard",
+	expected_stderr =>
+	  qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 2 other names) does not match host name "deep.subdomain.wildcard.pg-ssltest.test"\E/
+);
 
 # Test certificate with a single Subject Alternative Name. (this gives a
 # slightly different error message, that's all)
@@ -277,12 +283,15 @@ $node->connect_ok(
 
 $node->connect_fails(
 	"$common_connstr host=wronghost.alt-name.pg-ssltest.test",
-	qr/\Qserver certificate for "single.alt-name.pg-ssltest.test" does not match host name "wronghost.alt-name.pg-ssltest.test"\E/,
-	"host name not matching with a single X.509 Subject Alternative Name");
+	"host name not matching with a single X.509 Subject Alternative Name",
+	expected_stderr =>
+	  qr/\Qserver certificate for "single.alt-name.pg-ssltest.test" does not match host name "wronghost.alt-name.pg-ssltest.test"\E/
+);
 $node->connect_fails(
 	"$common_connstr host=deep.subdomain.wildcard.pg-ssltest.test",
-	qr/\Qserver certificate for "single.alt-name.pg-ssltest.test" does not match host name "deep.subdomain.wildcard.pg-ssltest.test"\E/,
-	"host name not matching with a single X.509 Subject Alternative Name wildcard"
+	"host name not matching with a single X.509 Subject Alternative Name wildcard",
+	expected_stderr =>
+	  qr/\Qserver certificate for "single.alt-name.pg-ssltest.test" does not match host name "deep.subdomain.wildcard.pg-ssltest.test"\E/
 );
 
 # Test server certificate with a CN and SANs. Per RFCs 2818 and 6125, the CN
@@ -298,8 +307,10 @@ $node->connect_ok("$common_connstr host=dns2.alt-name.pg-ssltest.test",
 	"certificate with both a CN and SANs 2");
 $node->connect_fails(
 	"$common_connstr host=common-name.pg-ssltest.test",
-	qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 1 other name) does not match host name "common-name.pg-ssltest.test"\E/,
-	"certificate with both a CN and SANs ignores CN");
+	"certificate with both a CN and SANs ignores CN",
+	expected_stderr =>
+	  qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 1 other name) does not match host name "common-name.pg-ssltest.test"\E/
+);
 
 # Finally, test a server certificate that has no CN or SANs. Of course, that's
 # not a very sensible certificate, but libpq should handle it gracefully.
@@ -313,8 +324,9 @@ $node->connect_ok(
 $node->connect_fails(
 	$common_connstr . " "
 	  . "sslmode=verify-full host=common-name.pg-ssltest.test",
-	qr/could not get server's host name from server certificate/,
-	"server certificate without CN or SANs sslmode=verify-full");
+	"server certificate without CN or SANs sslmode=verify-full",
+	expected_stderr =>
+	  qr/could not get server's host name from server certificate/);
 
 # Test that the CRL works
 switch_server_cert($node, 'server-revoked');
@@ -328,12 +340,12 @@ $node->connect_ok(
 	"connects without client-side CRL");
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrl=ssl/root+server.crl",
-	qr/SSL error: certificate verify failed/,
-	"does not connect with client-side CRL file");
+	"does not connect with client-side CRL file",
+	expected_stderr => qr/SSL error: certificate verify failed/);
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca sslcrldir=ssl/root+server-crldir",
-	qr/SSL error: certificate verify failed/,
-	"does not connect with client-side CRL directory");
+	"does not connect with client-side CRL directory",
+	expected_stderr => qr/SSL error: certificate verify failed/);
 
 # pg_stat_ssl
 command_like(
@@ -355,16 +367,16 @@ $node->connect_ok(
 	"connection success with correct range of TLS protocol versions");
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require ssl_min_protocol_version=TLSv1.2 ssl_max_protocol_version=TLSv1.1",
-	qr/invalid SSL protocol version range/,
-	"connection failure with incorrect range of TLS protocol versions");
+	"connection failure with incorrect range of TLS protocol versions",
+	expected_stderr => qr/invalid SSL protocol version range/);
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require ssl_min_protocol_version=incorrect_tls",
-	qr/invalid ssl_min_protocol_version value/,
-	"connection failure with an incorrect SSL protocol minimum bound");
+	"connection failure with an incorrect SSL protocol minimum bound",
+	expected_stderr => qr/invalid ssl_min_protocol_version value/);
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require ssl_max_protocol_version=incorrect_tls",
-	qr/invalid ssl_max_protocol_version value/,
-	"connection failure with an incorrect SSL protocol maximum bound");
+	"connection failure with an incorrect SSL protocol maximum bound",
+	expected_stderr => qr/invalid ssl_max_protocol_version value/);
 
 ### Server-side tests.
 ###
@@ -378,8 +390,8 @@ $common_connstr =
 # no client cert
 $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=invalid",
-	qr/connection requires a valid client certificate/,
-	"certificate authorization fails without client cert");
+	"certificate authorization fails without client cert",
+	expected_stderr => qr/connection requires a valid client certificate/);
 
 # correct client cert in unencrypted PEM
 $node->connect_ok(
@@ -408,8 +420,9 @@ $node->connect_ok(
 # correct client cert in encrypted PEM with wrong password
 $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword='wrong'",
-	qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": bad decrypt\E!,
-	"certificate authorization fails with correct client cert and wrong password in encrypted PEM format"
+	"certificate authorization fails with correct client cert and wrong password in encrypted PEM format",
+	expected_stderr =>
+	  qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": bad decrypt\E!
 );
 
 
@@ -446,14 +459,16 @@ TODO:
 	# correct client cert in encrypted PEM with empty password
 	$node->connect_fails(
 		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword=''",
-		qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!,
+		expected_stderr =>
+		  qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!,
 		"certificate authorization fails with correct client cert and empty password in encrypted PEM format"
 	);
 
 	# correct client cert in encrypted PEM with no password
 	$node->connect_fails(
 		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key",
-		qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!,
+		expected_stderr =>
+		  qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!,
 		"certificate authorization fails with correct client cert and no password in encrypted PEM format"
 	);
 
@@ -485,22 +500,24 @@ SKIP:
 
 	$node->connect_fails(
 		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_wrongperms_tmp.key",
-		qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!,
-		"certificate authorization fails because of file permissions");
+		"certificate authorization fails because of file permissions",
+		expected_stderr =>
+		  qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!
+	);
 }
 
 # client cert belonging to another user
 $node->connect_fails(
 	"$common_connstr user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
-	qr/certificate authentication failed for user "anotheruser"/,
-	"certificate authorization fails with client cert belonging to another user"
-);
+	"certificate authorization fails with client cert belonging to another user",
+	expected_stderr =>
+	  qr/certificate authentication failed for user "anotheruser"/);
 
 # revoked client cert
 $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
-	qr/SSL error: sslv3 alert certificate revoked/,
-	"certificate authorization fails with revoked client cert");
+	"certificate authorization fails with revoked client cert",
+	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/);
 
 # Check that connecting with auth-option verify-full in pg_hba:
 # works, iff username matches Common Name
@@ -515,9 +532,9 @@ $node->connect_ok(
 
 $node->connect_fails(
 	"$common_connstr user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
-	qr/FATAL: .* "trust" authentication failed for user "anotheruser"/,
-	"auth_option clientcert=verify-full fails with mismatching username and Common Name"
-);
+	"auth_option clientcert=verify-full fails with mismatching username and Common Name",
+	expected_stderr =>
+	  qr/FATAL: .* "trust" authentication failed for user "anotheruser"/,);
 
 # Check that connecting with auth-optionverify-ca in pg_hba :
 # works, when username doesn't match Common Name
@@ -536,16 +553,18 @@ $node->connect_ok(
 	"intermediate client certificate is provided by client");
 $node->connect_fails(
 	$common_connstr . " " . "sslmode=require sslcert=ssl/client.crt",
-	qr/SSL error: tlsv1 alert unknown ca/, "intermediate client certificate is missing");
+	"intermediate client certificate is missing",
+	expected_stderr => qr/SSL error: tlsv1 alert unknown ca/);
 
 # test server-side CRL directory
-switch_server_cert($node, 'server-cn-only', undef, undef, 'root+client-crldir');
+switch_server_cert($node, 'server-cn-only', undef, undef,
+	'root+client-crldir');
 
 # revoked client cert
 $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
-	qr/SSL error: sslv3 alert certificate revoked/,
-	"certificate authorization fails with revoked client cert with server-side CRL directory");
+	"certificate authorization fails with revoked client cert with server-side CRL directory",
+	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/);
 
 # clean up
 foreach my $key (@keys)

@@ -46,12 +46,19 @@ sub test_role
 
 	$status_string = 'success' if ($expected_res eq 0);
 
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
+	my $connstr = "user=$role";
+	my $testname =
+	  "authentication $status_string for method $method, role $role";
 
-	my $res = $node->psql('postgres', undef, extra_params => [ '-U', $role, '-w' ]);
-	is($res, $expected_res,
-		"authentication $status_string for method $method, role $role");
-	return;
+	if ($expected_res eq 0)
+	{
+		$node->connect_ok($connstr, $testname);
+	}
+	else
+	{
+		# No checks of the error message, only the status code.
+		$node->connect_fails($connstr, $testname);
+	}
 }
 
 # Initialize primary node

@@ -1860,47 +1860,94 @@ sub interactive_psql
 
 =pod
 
-=item $node->connect_ok($connstr, $test_name)
+=item $node->connect_ok($connstr, $test_name, %params)
 
 Attempt a connection with a custom connection string.  This is expected
 to succeed.
+
+=over
+
+=item sql => B<value>
+
+If this parameter is set, this query is used for the connection attempt
+instead of the default.
+
+=item expected_stdout => B<value>
+
+If this regular expression is set, matches it with the output generated.
+
+=back
 
 =cut
 
 sub connect_ok
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
-	my ($self, $connstr, $test_name) = @_;
-	my ($ret,  $stdout,  $stderr)    = $self->psql(
+	my ($self, $connstr, $test_name, %params) = @_;
+
+	my $sql;
+	if (defined($params{sql}))
+	{
+		$sql = $params{sql};
+	}
+	else
+	{
+		$sql = "SELECT \$\$connected with $connstr\$\$";
+	}
+
+	# Never prompt for a password, any callers of this routine should
+	# have set up things properly, and this should not block.
+	my ($ret, $stdout, $stderr) = $self->psql(
 		'postgres',
-		"SELECT \$\$connected with $connstr\$\$",
+		$sql,
+		extra_params  => ['-w'],
 		connstr       => "$connstr",
 		on_error_stop => 0);
 
-	ok($ret == 0, $test_name);
+	is($ret, 0, $test_name);
+
+	if (defined($params{expected_stdout}))
+	{
+		like($stdout, $params{expected_stdout}, "$test_name: matches");
+	}
 }
 
 =pod
 
-=item $node->connect_fails($connstr, $expected_stderr, $test_name)
+=item $node->connect_fails($connstr, $test_name, %params)
 
 Attempt a connection with a custom connection string.  This is expected
-to fail with a message that matches the regular expression
-$expected_stderr.
+to fail.
+
+=over
+
+=item expected_stderr => B<value>
+
+If this regular expression is set, matches it with the output generated.
+
+=back
 
 =cut
 
 sub connect_fails
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
-	my ($self, $connstr, $expected_stderr, $test_name) = @_;
+	my ($self, $connstr, $test_name, %params) = @_;
+
+	# Never prompt for a password, any callers of this routine should
+	# have set up things properly, and this should not block.
 	my ($ret, $stdout, $stderr) = $self->psql(
 		'postgres',
 		"SELECT \$\$connected with $connstr\$\$",
-		connstr => "$connstr");
+		extra_params => ['-w'],
+		connstr      => "$connstr");
 
-	ok($ret != 0, $test_name);
-	like($stderr, $expected_stderr, "$test_name: matches");
+	isnt($ret, 0, $test_name);
+
+	if (defined($params{expected_stderr}))
+	{
+		like($stderr, $params{expected_stderr}, "$test_name: matches");
+	}
 }
 
 =pod

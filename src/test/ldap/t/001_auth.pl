@@ -163,12 +163,17 @@ note "running tests";
 sub test_access
 {
 	my ($node, $role, $expected_res, $test_name) = @_;
+	my $connstr = "user=$role";
 
-	my $res =
-	  $node->psql('postgres', undef,
-				  extra_params => [ '-U', $role, '-c', 'SELECT 1' ]);
-	is($res, $expected_res, $test_name);
-	return;
+	if ($expected_res eq 0)
+	{
+		$node->connect_ok($connstr, $test_name);
+	}
+	else
+	{
+		# No checks of the error message, only the status code.
+		$node->connect_fails($connstr, $test_name);
+	}
 }
 
 note "simple bind";

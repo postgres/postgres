@@ -20,7 +20,7 @@ use Time::HiRes qw(usleep);
 
 if ($ENV{with_gssapi} eq 'yes')
 {
-	plan tests => 26;
+	plan tests => 30;
 }
 else
 {
@@ -182,28 +182,25 @@ note "running tests";
 # Test connection success or failure, and if success, that query returns true.
 sub test_access
 {
-	my ($node, $role, $query, $expected_res, $gssencmode, $test_name, $expect_log_msg) = @_;
+	my ($node, $role, $query, $expected_res, $gssencmode, $test_name,
+		$expect_log_msg)
+	  = @_;
 
 	# need to connect over TCP/IP for Kerberos
-	my ($res, $stdoutres, $stderrres) = $node->psql(
-		'postgres',
-		"$query",
-		extra_params => [
-			'-XAtd',
-			$node->connstr('postgres')
-			  . " host=$host hostaddr=$hostaddr $gssencmode",
-			'-U',
-			$role
-		]);
+	my $connstr = $node->connstr('postgres')
+	  . " user=$role host=$host hostaddr=$hostaddr $gssencmode";
 
-	# If we get a query result back, it should be true.
-	if ($res == $expected_res and $res eq 0)
+	if ($expected_res eq 0)
 	{
-		is($stdoutres, "t", $test_name);
+		# The result is assumed to match "true", or "t", here.
+		$node->connect_ok(
+			$connstr, $test_name,
+			sql             => $query,
+			expected_stdout => qr/t/);
 	}
 	else
 	{
-		is($res, $expected_res, $test_name);
+		$node->connect_fails($connstr, $test_name);
 	}
 
 	# Verify specified log message is logged in the log file.
@@ -227,20 +224,12 @@ sub test_query
 	my ($node, $role, $query, $expected, $gssencmode, $test_name) = @_;
 
 	# need to connect over TCP/IP for Kerberos
-	my ($res, $stdoutres, $stderrres) = $node->psql(
-		'postgres',
-		"$query",
-		extra_params => [
-			'-XAtd',
-			$node->connstr('postgres')
-			  . " host=$host hostaddr=$hostaddr $gssencmode",
-			'-U',
-			$role
-		]);
+	my $connstr = $node->connstr('postgres')
+	  . " user=$role host=$host hostaddr=$hostaddr $gssencmode";
 
-	is($res, 0, $test_name);
-	like($stdoutres, $expected, $test_name);
-	is($stderrres, "", $test_name);
+	my ($stdoutres, $stderrres);
+
+	$node->connect_ok($connstr, $test_name, $query, $expected);
 	return;
 }
 

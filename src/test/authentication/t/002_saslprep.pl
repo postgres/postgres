@@ -41,12 +41,20 @@ sub test_login
 
 	$status_string = 'success' if ($expected_res eq 0);
 
+	my $connstr = "user=$role";
+	my $testname =
+	  "authentication $status_string for role $role with password $password";
+
 	$ENV{"PGPASSWORD"} = $password;
-	my $res = $node->psql('postgres', undef, extra_params => [ '-U', $role ]);
-	is($res, $expected_res,
-		"authentication $status_string for role $role with password $password"
-	);
-	return;
+	if ($expected_res eq 0)
+	{
+		$node->connect_ok($connstr, $testname);
+	}
+	else
+	{
+		# No checks of the error message, only the status code.
+		$node->connect_fails($connstr, $testname);
+	}
 }
 
 # Initialize primary node. Force UTF-8 encoding, so that we can use non-ASCII
