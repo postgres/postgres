@@ -1938,7 +1938,7 @@ sub connect_fails
 	# have set up things properly, and this should not block.
 	my ($ret, $stdout, $stderr) = $self->psql(
 		'postgres',
-		"SELECT \$\$connected with $connstr\$\$",
+		undef,
 		extra_params => ['-w'],
 		connstr      => "$connstr");
 
