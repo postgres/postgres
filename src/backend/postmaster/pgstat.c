@@ -1504,7 +1504,7 @@ pgstat_reset_replslot_counter(const char *name)
 		ReplicationSlot *slot;
 
 		/*
-		 * Check if the slot exits with the given name. It is possible that by
+		 * Check if the slot exists with the given name. It is possible that by
 		 * the time this message is executed the slot is dropped but at least
 		 * this check will ensure that the given name is for a valid slot.
 		 */
