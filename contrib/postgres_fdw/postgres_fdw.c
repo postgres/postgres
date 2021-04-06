@@ -5095,9 +5095,11 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 		 * should save a few cycles to not process excluded tables in the
 		 * first place.)
 		 *
-		 * Ignore table data for partitions and only include the definitions
-		 * of the root partitioned tables to allow access to the complete
-		 * remote data set locally in the schema imported.
+		 * Import table data for partitions only when they are explicitly
+		 * specified in LIMIT TO clause. Otherwise ignore them and only
+		 * include the definitions of the root partitioned tables to allow
+		 * access to the complete remote data set locally in the schema
+		 * imported.
 		 *
 		 * Note: because we run the connection with search_path restricted to
 		 * pg_catalog, the format_type() and pg_get_expr() outputs will always
@@ -5153,7 +5155,8 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 		deparseStringLiteral(&buf, stmt->remote_schema);
 
 		/* Partitions are supported since Postgres 10 */
-		if (PQserverVersion(conn) >= 100000)
+		if (PQserverVersion(conn) >= 100000 &&
+			stmt->list_type != FDW_IMPORT_SCHEMA_LIMIT_TO)
 			appendStringInfoString(&buf, " AND NOT c.relispartition ");
 
 		/* Apply restrictions for LIMIT TO and EXCEPT */

@@ -8228,6 +8228,8 @@ ALTER TABLE import_source."x 5" DROP COLUMN c1;
 CREATE TABLE import_source.t4 (c1 int) PARTITION BY RANGE (c1);
 CREATE TABLE import_source.t4_part PARTITION OF import_source.t4
   FOR VALUES FROM (1) TO (100);
+CREATE TABLE import_source.t4_part2 PARTITION OF import_source.t4
+  FOR VALUES FROM (100) TO (200);
 CREATE SCHEMA import_dest1;
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest1;
 \det+ import_dest1.*
@@ -8419,27 +8421,29 @@ FDW options: (schema_name 'import_source', table_name 'x 5')
 
 -- Check LIMIT TO and EXCEPT
 CREATE SCHEMA import_dest4;
-IMPORT FOREIGN SCHEMA import_source LIMIT TO (t1, nonesuch)
+IMPORT FOREIGN SCHEMA import_source LIMIT TO (t1, nonesuch, t4_part)
   FROM SERVER loopback INTO import_dest4;
 \det+ import_dest4.*
-                                     List of foreign tables
-    Schema    | Table |  Server  |                  FDW options                   | Description 
---------------+-------+----------+------------------------------------------------+-------------
- import_dest4 | t1    | loopback | (schema_name 'import_source', table_name 't1') | 
-(1 row)
+                                        List of foreign tables
+    Schema    |  Table  |  Server  |                     FDW options                     | Description 
+--------------+---------+----------+-----------------------------------------------------+-------------
+ import_dest4 | t1      | loopback | (schema_name 'import_source', table_name 't1')      | 
+ import_dest4 | t4_part | loopback | (schema_name 'import_source', table_name 't4_part') | 
+(2 rows)
 
-IMPORT FOREIGN SCHEMA import_source EXCEPT (t1, "x 4", nonesuch)
+IMPORT FOREIGN SCHEMA import_source EXCEPT (t1, "x 4", nonesuch, t4_part)
   FROM SERVER loopback INTO import_dest4;
 \det+ import_dest4.*
-                                     List of foreign tables
-    Schema    | Table |  Server  |                   FDW options                   | Description 
---------------+-------+----------+-------------------------------------------------+-------------
- import_dest4 | t1    | loopback | (schema_name 'import_source', table_name 't1')  | 
- import_dest4 | t2    | loopback | (schema_name 'import_source', table_name 't2')  | 
- import_dest4 | t3    | loopback | (schema_name 'import_source', table_name 't3')  | 
- import_dest4 | t4    | loopback | (schema_name 'import_source', table_name 't4')  | 
- import_dest4 | x 5   | loopback | (schema_name 'import_source', table_name 'x 5') | 
-(5 rows)
+                                        List of foreign tables
+    Schema    |  Table  |  Server  |                     FDW options                     | Description 
+--------------+---------+----------+-----------------------------------------------------+-------------
+ import_dest4 | t1      | loopback | (schema_name 'import_source', table_name 't1')      | 
+ import_dest4 | t2      | loopback | (schema_name 'import_source', table_name 't2')      | 
+ import_dest4 | t3      | loopback | (schema_name 'import_source', table_name 't3')      | 
+ import_dest4 | t4      | loopback | (schema_name 'import_source', table_name 't4')      | 
+ import_dest4 | t4_part | loopback | (schema_name 'import_source', table_name 't4_part') | 
+ import_dest4 | x 5     | loopback | (schema_name 'import_source', table_name 'x 5')     | 
+(6 rows)
 
 -- Assorted error cases
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest4;

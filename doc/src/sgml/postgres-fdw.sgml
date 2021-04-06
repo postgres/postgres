@@ -510,10 +510,12 @@ OPTIONS (ADD password_required 'false');
 
    <para>
     Tables or foreign tables which are partitions of some other table are
-    automatically excluded.  Partitioned tables are imported, unless they
-    are a partition of some other table.  Since all data can be accessed
-    through the partitioned table which is the root of the partitioning
-    hierarchy, this approach should allow access to all the data without
+    imported only when they are explicitly specified in
+    <literal>LIMIT TO</literal> clause.  Otherwise they are automatically
+    excluded from <xref linkend="sql-importforeignschema"/>.
+    Since all data can be accessed through the partitioned table
+    which is the root of the partitioning hierarchy, importing only
+    partitioned tables should allow access to all the data without
     creating extra objects.
    </para>
 
