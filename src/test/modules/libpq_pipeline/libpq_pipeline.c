@@ -35,8 +35,7 @@ const char *const progname = "libpq_pipeline";
 char	   *tracefile = NULL;	/* path to PQtrace() file */
 
 
-#define DEBUG
-#ifdef DEBUG
+#ifdef DEBUG_OUTPUT
 #define	pg_debug(...)  do { fprintf(stderr, __VA_ARGS__); } while (0)
 #else
 #define pg_debug(...)
