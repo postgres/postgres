@@ -99,7 +99,8 @@ typedef enum PgBenchFunction
 	PGBENCH_IS,
 	PGBENCH_CASE,
 	PGBENCH_HASH_FNV1A,
-	PGBENCH_HASH_MURMUR2
+	PGBENCH_HASH_MURMUR2,
+	PGBENCH_PERMUTE
 } PgBenchFunction;
 
 typedef struct PgBenchExpr PgBenchExpr;

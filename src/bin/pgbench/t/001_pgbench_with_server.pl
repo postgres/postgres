@@ -4,6 +4,7 @@ use warnings;
 use PostgresNode;
 use TestLib;
 use Test::More;
+use Config;
 
 # start a pgbench specific server
 my $node = get_new_node('main');
@@ -483,6 +484,17 @@ pgbench(
 		qr{command=98.: int 5432\b},                    # :random_seed
 		qr{command=99.: int -9223372036854775808\b},    # min int
 		qr{command=100.: int 9223372036854775807\b},    # max int
+		# pseudorandom permutation tests
+		qr{command=101.: boolean true\b},
+		qr{command=102.: boolean true\b},
+		qr{command=103.: boolean true\b},
+		qr{command=104.: boolean true\b},
+		qr{command=105.: boolean true\b},
+		qr{command=109.: boolean true\b},
+		qr{command=110.: boolean true\b},
+		qr{command=111.: boolean true\b},
+		qr{command=112.: int 9223372036854775797\b},
+		qr{command=113.: boolean true\b},
 	],
 	'pgbench expressions',
 	{
@@ -610,6 +622,33 @@ SELECT :v0, :v1, :v2, :v3;
 -- minint constant parsing
 \set min debug(-9223372036854775808)
 \set max debug(-(:min + 1))
+-- parametric pseudorandom permutation function
+\set t debug(permute(0, 2) + permute(1, 2) = 1)
+\set t debug(permute(0, 3) + permute(1, 3) + permute(2, 3) = 3)
+\set t debug(permute(0, 4) + permute(1, 4) + permute(2, 4) + permute(3, 4) = 6)
+\set t debug(permute(0, 5) + permute(1, 5) + permute(2, 5) + permute(3, 5) + permute(4, 5) = 10)
+\set t debug(permute(0, 16) + permute(1, 16) + permute(2, 16) + permute(3, 16) + \
+             permute(4, 16) + permute(5, 16) + permute(6, 16) + permute(7, 16) + \
+             permute(8, 16) + permute(9, 16) + permute(10, 16) + permute(11, 16) + \
+             permute(12, 16) + permute(13, 16) + permute(14, 16) + permute(15, 16) = 120)
+-- random sanity checks
+\set size random(2, 1000)
+\set v random(0, :size - 1)
+\set p permute(:v, :size)
+\set t debug(0 <= :p and :p < :size and :p = permute(:v + :size, :size) and :p <> permute(:v + 1, :size))
+-- actual values
+\set t debug(permute(:v, 1) = 0)
+\set t debug(permute(0, 2, 5432) = 0 and permute(1, 2, 5432) = 1 and \
+             permute(0, 2, 5435) = 1 and permute(1, 2, 5435) = 0)
+-- 63 bits tests
+\set size debug(:max - 10)
+\set t debug(permute(:size-1, :size, 5432) = 5301702756001087507 and \
+             permute(:size-2, :size, 5432) = 8968485976055840695 and \
+             permute(:size-3, :size, 5432) = 6708495591295582115 and \
+             permute(:size-4, :size, 5432) = 2801794404574855121 and \
+             permute(:size-5, :size, 5432) = 1489011409218895840 and \
+             permute(:size-6, :size, 5432) = 2267749475878240183 and \
+             permute(:size-7, :size, 5432) = 1300324176838786780)
 }
 	});
 
@@ -1047,6 +1086,10 @@ SELECT LEAST(} . join(', ', (':i') x 256) . q{)}
 	[
 		'bad boolean',                     2,
 		[qr{malformed variable.*trueXXX}], q{\set b :badtrue or true}
+	],
+	[
+		'invalid permute size',				2,
+		[qr{permute size parameter must be greater than zero}], q{\set i permute(0, 0)}
 	],
 
 	# GSET

@@ -66,6 +66,7 @@
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "pgbench.h"
+#include "port/pg_bitutils.h"
 #include "portability/instr_time.h"
 
 #ifndef M_PI
@@ -1125,6 +1126,113 @@ getHashMurmur2(int64 val, uint64 seed)
 	result ^= result >> MM2_ROT;
 
 	return (int64) result;
+}
+
+/*
+ * Pseudorandom permutation function
+ *
+ * For small sizes, this generates each of the (size!) possible permutations
+ * of integers in the range [0, size) with roughly equal probability.  Once
+ * the size is larger than 20, the number of possible permutations exceeds the
+ * number of distinct states of the internal pseudorandom number generators,
+ * and so not all possible permutations can be generated, but the permutations
+ * chosen should continue to give the appearance of being random.
+ *
+ * THIS FUNCTION IS NOT CRYPTOGRAPHICALLY SECURE.
+ * DO NOT USE FOR SUCH PURPOSE.
+ */
+static int64
+permute(const int64 val, const int64 isize, const int64 seed)
+{
+	RandomState random_state1;
+	RandomState random_state2;
+	uint64		size;
+	uint64		v;
+	int			masklen;
+	uint64		mask;
+	int			i;
+
+	if (isize < 2)
+		return 0;				/* nothing to permute */
+
+	/* Initialize a pair of random states using the seed */
+	random_state1.xseed[0] = seed & 0xFFFF;
+	random_state1.xseed[1] = (seed >> 16) & 0xFFFF;
+	random_state1.xseed[2] = (seed >> 32) & 0xFFFF;
+
+	random_state2.xseed[0] = (((uint64) seed) >> 48) & 0xFFFF;
+	random_state2.xseed[1] = seed & 0xFFFF;
+	random_state2.xseed[2] = (seed >> 16) & 0xFFFF;
+
+	/* Computations are performed on unsigned values */
+	size = (uint64) isize;
+	v = (uint64) val % size;
+
+	/* Mask to work modulo largest power of 2 less than or equal to size */
+	masklen = pg_leftmost_one_pos64(size);
+	mask = (((uint64) 1) << masklen) - 1;
+
+	/*
+	 * Permute the input value by applying several rounds of pseudorandom
+	 * bijective transformations.  The intention here is to distribute each
+	 * input uniformly randomly across the range, and separate adjacent inputs
+	 * approximately uniformly randomly from each other, leading to a fairly
+	 * random overall choice of permutation.
+	 *
+	 * To separate adjacent inputs, we multiply by a random number modulo
+	 * (mask + 1), which is a power of 2.  For this to be a bijection, the
+	 * multiplier must be odd.  Since this is known to lead to less randomness
+	 * in the lower bits, we also apply a rotation that shifts the topmost bit
+	 * into the least significant bit.  In the special cases where size <= 3,
+	 * mask = 1 and each of these operations is actually a no-op, so we also
+	 * XOR the value with a different random number to inject additional
+	 * randomness.  Since the size is generally not a power of 2, we apply
+	 * this bijection on overlapping upper and lower halves of the input.
+	 *
+	 * To distribute the inputs uniformly across the range, we then also apply
+	 * a random offset modulo the full range.
+	 *
+	 * Taken together, these operations resemble a modified linear
+	 * congruential generator, as is commonly used in pseudorandom number
+	 * generators.  The number of rounds is fairly arbitrary, but six has been
+	 * found empirically to give a fairly good tradeoff between performance
+	 * and uniform randomness.  For small sizes it selects each of the (size!)
+	 * possible permutations with roughly equal probability.  For larger
+	 * sizes, not all permutations can be generated, but the intended random
+	 * spread is still produced.
+	 */
+	for (i = 0; i < 6; i++)
+	{
+		uint64		m,
+					r,
+					t;
+
+		/* Random multiply (by an odd number), XOR and rotate of lower half */
+		m = (uint64) getrand(&random_state1, 0, mask) | 1;
+		r = (uint64) getrand(&random_state2, 0, mask);
+		if (v <= mask)
+		{
+			v = ((v * m) ^ r) & mask;
+			v = ((v << 1) & mask) | (v >> (masklen - 1));
+		}
+
+		/* Random multiply (by an odd number), XOR and rotate of upper half */
+		m = (uint64) getrand(&random_state1, 0, mask) | 1;
+		r = (uint64) getrand(&random_state2, 0, mask);
+		t = size - 1 - v;
+		if (t <= mask)
+		{
+			t = ((t * m) ^ r) & mask;
+			t = ((t << 1) & mask) | (t >> (masklen - 1));
+			v = size - 1 - t;
+		}
+
+		/* Random offset */
+		r = (uint64) getrand(&random_state2, 0, size - 1);
+		v = (v + r) % size;
+	}
+
+	return (int64) v;
 }
 
 /*
@@ -2472,6 +2580,29 @@ evalStandardFunc(CState *st,
 					/* cannot get here */
 					Assert(0);
 
+				return true;
+			}
+
+		case PGBENCH_PERMUTE:
+			{
+				int64		val,
+							size,
+							seed;
+
+				Assert(nargs == 3);
+
+				if (!coerceToInt(&vargs[0], &val) ||
+					!coerceToInt(&vargs[1], &size) ||
+					!coerceToInt(&vargs[2], &seed))
+					return false;
+
+				if (size <= 0)
+				{
+					pg_log_error("permute size parameter must be greater than zero");
+					return false;
+				}
+
+				setIntValue(retval, permute(val, size, seed));
 				return true;
 			}
 

@@ -1057,7 +1057,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
 
       <row>
        <entry> <literal>default_seed</literal> </entry>
-       <entry>seed used in hash functions by default</entry>
+       <entry>seed used in hash and pseudorandom permutation functions by default</entry>
       </row>
 
       <row>
@@ -1866,6 +1866,24 @@ SELECT 4 AS four \; SELECT 5 AS five \aset
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
+        <function>permute</function> ( <parameter>i</parameter>, <parameter>size</parameter> [, <parameter>seed</parameter> ] )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Permuted value of <parameter>i</parameter>, in the range
+        <literal>[0, size)</literal>.  This is the new position of
+        <parameter>i</parameter> (modulo <parameter>size</parameter>) in a
+        pseudorandom permutation of the integers <literal>0...size-1</literal>,
+        parameterized by <parameter>seed</parameter>, see below.
+       </para>
+       <para>
+        <literal>permute(0, 4)</literal>
+        <returnvalue>an integer between 0 and 3</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
         <function>pi</function> ()
         <returnvalue>double</returnvalue>
        </para>
@@ -2071,29 +2089,70 @@ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
     </listitem>
    </itemizedlist>
 
+   <note>
+    <para>
+      When designing a benchmark which selects rows non-uniformly, be aware
+      that the rows chosen may be correlated with other data such as IDs from
+      a sequence or the physical row ordering, which may skew performance
+      measurements.
+    </para>
+    <para>
+      To avoid this, you may wish to use the <function>permute</function>
+      function, or some other additional step with similar effect, to shuffle
+      the selected rows and remove such correlations.
+    </para>
+   </note>
+
   <para>
     Hash functions <literal>hash</literal>, <literal>hash_murmur2</literal> and
     <literal>hash_fnv1a</literal> accept an input value and an optional seed parameter.
     In case the seed isn't provided the value of <literal>:default_seed</literal>
     is used, which is initialized randomly unless set by the command-line
-    <literal>-D</literal> option. Hash functions can be used to scatter the
-    distribution of random functions such as <literal>random_zipfian</literal> or
-    <literal>random_exponential</literal>. For instance, the following pgbench
-    script simulates possible real world workload typical for social media and
-    blogging platforms where few accounts generate excessive load:
+    <literal>-D</literal> option.
+  </para>
+
+  <para>
+    <literal>permute</literal> accepts an input value, a size, and an optional
+    seed parameter.  It generates a pseudorandom permutation of integers in
+    the range <literal>[0, size)</literal>, and returns the index of the input
+    value in the permuted values.  The permutation chosen is parameterized by
+    the seed, which defaults to <literal>:default_seed</literal>, if not
+    specified.  Unlike the hash functions, <literal>permute</literal> ensures
+    that there are no collisions or holes in the output values.  Input values
+    outside the interval are interpreted modulo the size.  The function raises
+    an error if the size is not positive.  <function>permute</function> can be
+    used to scatter the distribution of non-uniform random functions such as
+    <literal>random_zipfian</literal> or <literal>random_exponential</literal>
+    so that values drawn more often are not trivially correlated.  For
+    instance, the following <application>pgbench</application> script
+    simulates a possible real world workload typical for social media and
+    blogging platforms where a few accounts generate excessive load:
 
 <programlisting>
-\set r random_zipfian(0, 100000000, 1.07)
-\set k abs(hash(:r)) % 1000000
+\set size 1000000
+\set r random_zipfian(1, :size, 1.07)
+\set k 1 + permute(:r, :size)
 </programlisting>
 
     In some cases several distinct distributions are needed which don't correlate
-    with each other and this is when implicit seed parameter comes in handy:
+    with each other and this is when the optional seed parameter comes in handy:
 
 <programlisting>
-\set k1 abs(hash(:r, :default_seed + 123)) % 1000000
-\set k2 abs(hash(:r, :default_seed + 321)) % 1000000
+\set k1 1 + permute(:r, :size, :default_seed + 123)
+\set k2 1 + permute(:r, :size, :default_seed + 321)
 </programlisting>
+
+    A similar behavior can also be approximated with <function>hash</function>:
+
+<programlisting>
+\set size 1000000
+\set r random_zipfian(1, 100 * :size, 1.07)
+\set k 1 + abs(hash(:r)) % :size
+</programlisting>
+
+    However, since <function>hash</function> generates collisions, some values
+    will not be reachable and others will be more frequent than expected from
+    the original distribution.
   </para>
 
   <para>

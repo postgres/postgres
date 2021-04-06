@@ -341,6 +341,16 @@ my @script_tests = (
 		'set i',
 		[ qr{set i 1 }, qr{\^ error found here} ],
 		{ 'set_i_op' => "\\set i 1 +\n" }
+	],
+	[
+		'not enough arguments to permute',
+		[qr{unexpected number of arguments \(permute\)}],
+		{ 'bad-permute-1.sql' => "\\set i permute(1)\n" }
+	],
+	[
+		'too many arguments to permute',
+		[qr{unexpected number of arguments \(permute\)}],
+		{ 'bad-permute-2.sql' => "\\set i permute(1, 2, 3, 4)\n" }
 	],);
 
 for my $t (@script_tests)

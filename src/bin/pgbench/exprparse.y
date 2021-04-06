@@ -19,6 +19,7 @@
 #define PGBENCH_NARGS_VARIABLE	(-1)
 #define PGBENCH_NARGS_CASE		(-2)
 #define PGBENCH_NARGS_HASH		(-3)
+#define PGBENCH_NARGS_PERMUTE	(-4)
 
 PgBenchExpr *expr_parse_result;
 
@@ -370,6 +371,9 @@ static const struct
 	{
 		"hash_fnv1a", PGBENCH_NARGS_HASH, PGBENCH_HASH_FNV1A
 	},
+	{
+		"permute", PGBENCH_NARGS_PERMUTE, PGBENCH_PERMUTE
+	},
 	/* keep as last array element */
 	{
 		NULL, 0, 0
@@ -476,6 +480,19 @@ make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args)
 								  PGBENCH_FUNCTIONS[fnumber].fname);
 
 			if (len == 1)
+			{
+				PgBenchExpr *var = make_variable("default_seed");
+				args = make_elist(var, args);
+			}
+			break;
+
+		/* pseudorandom permutation function with optional seed argument */
+		case PGBENCH_NARGS_PERMUTE:
+			if (len < 2 || len > 3)
+				expr_yyerror_more(yyscanner, "unexpected number of arguments",
+								  PGBENCH_FUNCTIONS[fnumber].fname);
+
+			if (len == 2)
 			{
 				PgBenchExpr *var = make_variable("default_seed");
 				args = make_elist(var, args);
