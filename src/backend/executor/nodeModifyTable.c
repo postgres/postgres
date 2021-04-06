@@ -372,6 +372,139 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 }
 
 /*
+ * ExecInitInsertProjection
+ *		Do one-time initialization of projection data for INSERT tuples.
+ *
+ * INSERT queries may need a projection to filter out junk attrs in the tlist.
+ *
+ * This is "one-time" for any given result rel, but we might touch
+ * more than one result rel in the course of a partitioned INSERT.
+ *
+ * This is also a convenient place to verify that the
+ * output of an INSERT matches the target table.
+ */
+static void
+ExecInitInsertProjection(ModifyTableState *mtstate,
+						 ResultRelInfo *resultRelInfo)
+{
+	ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
+	Plan	   *subplan = outerPlan(node);
+	EState	   *estate = mtstate->ps.state;
+	List	   *insertTargetList = NIL;
+	bool		need_projection = false;
+	ListCell   *l;
+
+	/* Extract non-junk columns of the subplan's result tlist. */
+	foreach(l, subplan->targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (!tle->resjunk)
+			insertTargetList = lappend(insertTargetList, tle);
+		else
+			need_projection = true;
+	}
+
+	/*
+	 * The junk-free list must produce a tuple suitable for the result
+	 * relation.
+	 */
+	ExecCheckPlanOutput(resultRelInfo->ri_RelationDesc, insertTargetList);
+
+	/* We'll need a slot matching the table's format. */
+	resultRelInfo->ri_newTupleSlot =
+		table_slot_create(resultRelInfo->ri_RelationDesc,
+						  &estate->es_tupleTable);
+
+	/* Build ProjectionInfo if needed (it probably isn't). */
+	if (need_projection)
+	{
+		TupleDesc	relDesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
+
+		/* need an expression context to do the projection */
+		if (mtstate->ps.ps_ExprContext == NULL)
+			ExecAssignExprContext(estate, &mtstate->ps);
+
+		resultRelInfo->ri_projectNew =
+			ExecBuildProjectionInfo(insertTargetList,
+									mtstate->ps.ps_ExprContext,
+									resultRelInfo->ri_newTupleSlot,
+									&mtstate->ps,
+									relDesc);
+	}
+
+	resultRelInfo->ri_projectNewInfoValid = true;
+}
+
+/*
+ * ExecInitUpdateProjection
+ *		Do one-time initialization of projection data for UPDATE tuples.
+ *
+ * UPDATE always needs a projection, because (1) there's always some junk
+ * attrs, and (2) we may need to merge values of not-updated columns from
+ * the old tuple into the final tuple.  In UPDATE, the tuple arriving from
+ * the subplan contains only new values for the changed columns, plus row
+ * identity info in the junk attrs.
+ *
+ * This is "one-time" for any given result rel, but we might touch more than
+ * one result rel in the course of a partitioned UPDATE, and each one needs
+ * its own projection due to possible column order variation.
+ *
+ * This is also a convenient place to verify that the output of an UPDATE
+ * matches the target table (ExecBuildUpdateProjection does that).
+ */
+static void
+ExecInitUpdateProjection(ModifyTableState *mtstate,
+						 ResultRelInfo *resultRelInfo)
+{
+	ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
+	Plan	   *subplan = outerPlan(node);
+	EState	   *estate = mtstate->ps.state;
+	TupleDesc	relDesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
+	int			whichrel;
+	List	   *updateColnos;
+
+	/*
+	 * Usually, mt_lastResultIndex matches the target rel.  If it happens not
+	 * to, we can get the index the hard way with an integer division.
+	 */
+	whichrel = mtstate->mt_lastResultIndex;
+	if (resultRelInfo != mtstate->resultRelInfo + whichrel)
+	{
+		whichrel = resultRelInfo - mtstate->resultRelInfo;
+		Assert(whichrel >= 0 && whichrel < mtstate->mt_nrels);
+	}
+
+	updateColnos = (List *) list_nth(node->updateColnosLists, whichrel);
+
+	/*
+	 * For UPDATE, we use the old tuple to fill up missing values in the tuple
+	 * produced by the subplan to get the new tuple.  We need two slots, both
+	 * matching the table's desired format.
+	 */
+	resultRelInfo->ri_oldTupleSlot =
+		table_slot_create(resultRelInfo->ri_RelationDesc,
+						  &estate->es_tupleTable);
+	resultRelInfo->ri_newTupleSlot =
+		table_slot_create(resultRelInfo->ri_RelationDesc,
+						  &estate->es_tupleTable);
+
+	/* need an expression context to do the projection */
+	if (mtstate->ps.ps_ExprContext == NULL)
+		ExecAssignExprContext(estate, &mtstate->ps);
+
+	resultRelInfo->ri_projectNew =
+		ExecBuildUpdateProjection(subplan->targetlist,
+								  updateColnos,
+								  relDesc,
+								  mtstate->ps.ps_ExprContext,
+								  resultRelInfo->ri_newTupleSlot,
+								  &mtstate->ps);
+
+	resultRelInfo->ri_projectNewInfoValid = true;
+}
+
+/*
  * ExecGetInsertNewTuple
  *		This prepares a "new" tuple ready to be inserted into given result
  *		relation, by removing any junk columns of the plan's output tuple
@@ -429,6 +562,8 @@ ExecGetUpdateNewTuple(ResultRelInfo *relinfo,
 	ProjectionInfo *newProj = relinfo->ri_projectNew;
 	ExprContext *econtext;
 
+	/* Use a few extra Asserts to protect against outside callers */
+	Assert(relinfo->ri_projectNewInfoValid);
 	Assert(planSlot != NULL && !TTS_EMPTY(planSlot));
 	Assert(oldSlot != NULL && !TTS_EMPTY(oldSlot));
 
@@ -1375,8 +1510,12 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
 		else
 		{
 			/* Fetch the most recent version of old tuple. */
-			TupleTableSlot *oldSlot = resultRelInfo->ri_oldTupleSlot;
+			TupleTableSlot *oldSlot;
 
+			/* ... but first, make sure ri_oldTupleSlot is initialized. */
+			if (unlikely(!resultRelInfo->ri_projectNewInfoValid))
+				ExecInitUpdateProjection(mtstate, resultRelInfo);
+			oldSlot = resultRelInfo->ri_oldTupleSlot;
 			if (!table_tuple_fetch_row_version(resultRelInfo->ri_RelationDesc,
 											   tupleid,
 											   SnapshotAny,
@@ -1705,6 +1844,10 @@ lreplace:;
 							if (TupIsNull(epqslot))
 								/* Tuple not passing quals anymore, exiting... */
 								return NULL;
+
+							/* Make sure ri_oldTupleSlot is initialized. */
+							if (unlikely(!resultRelInfo->ri_projectNewInfoValid))
+								ExecInitUpdateProjection(mtstate, resultRelInfo);
 
 							/* Fetch the most recent version of old tuple. */
 							oldSlot = resultRelInfo->ri_oldTupleSlot;
@@ -2388,11 +2531,17 @@ ExecModifyTable(PlanState *pstate)
 		switch (operation)
 		{
 			case CMD_INSERT:
+				/* Initialize projection info if first time for this table */
+				if (unlikely(!resultRelInfo->ri_projectNewInfoValid))
+					ExecInitInsertProjection(node, resultRelInfo);
 				slot = ExecGetInsertNewTuple(resultRelInfo, planSlot);
 				slot = ExecInsert(node, resultRelInfo, slot, planSlot,
 								  estate, node->canSetTag);
 				break;
 			case CMD_UPDATE:
+				/* Initialize projection info if first time for this table */
+				if (unlikely(!resultRelInfo->ri_projectNewInfoValid))
+					ExecInitUpdateProjection(node, resultRelInfo);
 
 				/*
 				 * Make the new tuple by combining plan's output tuple with
@@ -2665,7 +2814,64 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 															 i,
 															 eflags);
 		}
+
+		/*
+		 * For UPDATE/DELETE, find the appropriate junk attr now, either a
+		 * 'ctid' or 'wholerow' attribute depending on relkind.  For foreign
+		 * tables, the FDW might have created additional junk attr(s), but
+		 * those are no concern of ours.
+		 */
+		if (operation == CMD_UPDATE || operation == CMD_DELETE)
+		{
+			char		relkind;
+
+			relkind = resultRelInfo->ri_RelationDesc->rd_rel->relkind;
+			if (relkind == RELKIND_RELATION ||
+				relkind == RELKIND_MATVIEW ||
+				relkind == RELKIND_PARTITIONED_TABLE)
+			{
+				resultRelInfo->ri_RowIdAttNo =
+					ExecFindJunkAttributeInTlist(subplan->targetlist, "ctid");
+				if (!AttributeNumberIsValid(resultRelInfo->ri_RowIdAttNo))
+					elog(ERROR, "could not find junk ctid column");
+			}
+			else if (relkind == RELKIND_FOREIGN_TABLE)
+			{
+				/*
+				 * When there is a row-level trigger, there should be a
+				 * wholerow attribute.  We also require it to be present in
+				 * UPDATE, so we can get the values of unchanged columns.
+				 */
+				resultRelInfo->ri_RowIdAttNo =
+					ExecFindJunkAttributeInTlist(subplan->targetlist,
+												 "wholerow");
+				if (mtstate->operation == CMD_UPDATE &&
+					!AttributeNumberIsValid(resultRelInfo->ri_RowIdAttNo))
+					elog(ERROR, "could not find junk wholerow column");
+			}
+			else
+			{
+				/* Other valid target relkinds must provide wholerow */
+				resultRelInfo->ri_RowIdAttNo =
+					ExecFindJunkAttributeInTlist(subplan->targetlist,
+												 "wholerow");
+				if (!AttributeNumberIsValid(resultRelInfo->ri_RowIdAttNo))
+					elog(ERROR, "could not find junk wholerow column");
+			}
+		}
 	}
+
+	/*
+	 * If this is an inherited update/delete, there will be a junk attribute
+	 * named "tableoid" present in the subplan's targetlist.  It will be used
+	 * to identify the result relation for a given tuple to be
+	 * updated/deleted.
+	 */
+	mtstate->mt_resultOidAttno =
+		ExecFindJunkAttributeInTlist(subplan->targetlist, "tableoid");
+	Assert(AttributeNumberIsValid(mtstate->mt_resultOidAttno) || nrels == 1);
+	mtstate->mt_lastResultOid = InvalidOid; /* force lookup at first tuple */
+	mtstate->mt_lastResultIndex = 0;	/* must be zero if no such attr */
 
 	/* Get the root target relation */
 	rel = mtstate->rootResultRelInfo->ri_RelationDesc;
@@ -2841,163 +3047,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	}
 
 	EvalPlanQualSetPlan(&mtstate->mt_epqstate, subplan, arowmarks);
-
-	/*
-	 * Initialize projection(s) to create tuples suitable for result rel(s).
-	 * INSERT queries may need a projection to filter out junk attrs in the
-	 * tlist.  UPDATE always needs a projection, because (1) there's always
-	 * some junk attrs, and (2) we may need to merge values of not-updated
-	 * columns from the old tuple into the final tuple.  In UPDATE, the tuple
-	 * arriving from the subplan contains only new values for the changed
-	 * columns, plus row identity info in the junk attrs.
-	 *
-	 * If there are multiple result relations, each one needs its own
-	 * projection.  Note multiple rels are only possible for UPDATE/DELETE, so
-	 * we can't be fooled by some needing a projection and some not.
-	 *
-	 * This section of code is also a convenient place to verify that the
-	 * output of an INSERT or UPDATE matches the target table(s).
-	 */
-	for (i = 0; i < nrels; i++)
-	{
-		resultRelInfo = &mtstate->resultRelInfo[i];
-
-		/*
-		 * Prepare to generate tuples suitable for the target relation.
-		 */
-		if (operation == CMD_INSERT)
-		{
-			List	   *insertTargetList = NIL;
-			bool		need_projection = false;
-
-			foreach(l, subplan->targetlist)
-			{
-				TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-				if (!tle->resjunk)
-					insertTargetList = lappend(insertTargetList, tle);
-				else
-					need_projection = true;
-			}
-
-			/*
-			 * The junk-free list must produce a tuple suitable for the result
-			 * relation.
-			 */
-			ExecCheckPlanOutput(resultRelInfo->ri_RelationDesc,
-								insertTargetList);
-
-			/* We'll need a slot matching the table's format. */
-			resultRelInfo->ri_newTupleSlot =
-				table_slot_create(resultRelInfo->ri_RelationDesc,
-								  &mtstate->ps.state->es_tupleTable);
-
-			/* Build ProjectionInfo if needed (it probably isn't). */
-			if (need_projection)
-			{
-				TupleDesc	relDesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
-
-				/* need an expression context to do the projection */
-				if (mtstate->ps.ps_ExprContext == NULL)
-					ExecAssignExprContext(estate, &mtstate->ps);
-
-				resultRelInfo->ri_projectNew =
-					ExecBuildProjectionInfo(insertTargetList,
-											mtstate->ps.ps_ExprContext,
-											resultRelInfo->ri_newTupleSlot,
-											&mtstate->ps,
-											relDesc);
-			}
-		}
-		else if (operation == CMD_UPDATE)
-		{
-			List	   *updateColnos;
-			TupleDesc	relDesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
-
-			updateColnos = (List *) list_nth(node->updateColnosLists, i);
-
-			/*
-			 * For UPDATE, we use the old tuple to fill up missing values in
-			 * the tuple produced by the plan to get the new tuple.  We need
-			 * two slots, both matching the table's desired format.
-			 */
-			resultRelInfo->ri_oldTupleSlot =
-				table_slot_create(resultRelInfo->ri_RelationDesc,
-								  &mtstate->ps.state->es_tupleTable);
-			resultRelInfo->ri_newTupleSlot =
-				table_slot_create(resultRelInfo->ri_RelationDesc,
-								  &mtstate->ps.state->es_tupleTable);
-
-			/* need an expression context to do the projection */
-			if (mtstate->ps.ps_ExprContext == NULL)
-				ExecAssignExprContext(estate, &mtstate->ps);
-
-			resultRelInfo->ri_projectNew =
-				ExecBuildUpdateProjection(subplan->targetlist,
-										  updateColnos,
-										  relDesc,
-										  mtstate->ps.ps_ExprContext,
-										  resultRelInfo->ri_newTupleSlot,
-										  &mtstate->ps);
-		}
-
-		/*
-		 * For UPDATE/DELETE, find the appropriate junk attr now, either a
-		 * 'ctid' or 'wholerow' attribute depending on relkind.  For foreign
-		 * tables, the FDW might have created additional junk attr(s), but
-		 * those are no concern of ours.
-		 */
-		if (operation == CMD_UPDATE || operation == CMD_DELETE)
-		{
-			char		relkind;
-
-			relkind = resultRelInfo->ri_RelationDesc->rd_rel->relkind;
-			if (relkind == RELKIND_RELATION ||
-				relkind == RELKIND_MATVIEW ||
-				relkind == RELKIND_PARTITIONED_TABLE)
-			{
-				resultRelInfo->ri_RowIdAttNo =
-					ExecFindJunkAttributeInTlist(subplan->targetlist, "ctid");
-				if (!AttributeNumberIsValid(resultRelInfo->ri_RowIdAttNo))
-					elog(ERROR, "could not find junk ctid column");
-			}
-			else if (relkind == RELKIND_FOREIGN_TABLE)
-			{
-				/*
-				 * When there is a row-level trigger, there should be a
-				 * wholerow attribute.  We also require it to be present in
-				 * UPDATE, so we can get the values of unchanged columns.
-				 */
-				resultRelInfo->ri_RowIdAttNo =
-					ExecFindJunkAttributeInTlist(subplan->targetlist,
-												 "wholerow");
-				if (mtstate->operation == CMD_UPDATE &&
-					!AttributeNumberIsValid(resultRelInfo->ri_RowIdAttNo))
-					elog(ERROR, "could not find junk wholerow column");
-			}
-			else
-			{
-				/* Other valid target relkinds must provide wholerow */
-				resultRelInfo->ri_RowIdAttNo =
-					ExecFindJunkAttributeInTlist(subplan->targetlist,
-												 "wholerow");
-				if (!AttributeNumberIsValid(resultRelInfo->ri_RowIdAttNo))
-					elog(ERROR, "could not find junk wholerow column");
-			}
-		}
-	}
-
-	/*
-	 * If this is an inherited update/delete, there will be a junk attribute
-	 * named "tableoid" present in the subplan's targetlist.  It will be used
-	 * to identify the result relation for a given tuple to be
-	 * updated/deleted.
-	 */
-	mtstate->mt_resultOidAttno =
-		ExecFindJunkAttributeInTlist(subplan->targetlist, "tableoid");
-	Assert(AttributeNumberIsValid(mtstate->mt_resultOidAttno) || nrels == 1);
-	mtstate->mt_lastResultOid = InvalidOid; /* force lookup at first tuple */
-	mtstate->mt_lastResultIndex = 0;	/* must be zero if no such attr */
 
 	/*
 	 * If there are a lot of result relations, use a hash table to speed the

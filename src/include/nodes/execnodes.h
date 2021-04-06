@@ -431,6 +431,8 @@ typedef struct ResultRelInfo
 	TupleTableSlot *ri_newTupleSlot;
 	/* Slot to hold the old tuple being updated */
 	TupleTableSlot *ri_oldTupleSlot;
+	/* Have the projection and the slots above been initialized? */
+	bool		ri_projectNewInfoValid;
 
 	/* triggers to be fired, if any */
 	TriggerDesc *ri_TrigDesc;
