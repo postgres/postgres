@@ -9782,6 +9782,27 @@ get_func_sql_syntax(FuncExpr *expr, deparse_context *context)
 			appendStringInfoString(buf, "))");
 			return true;
 
+		case F_EXTRACT_TEXT_DATE:
+		case F_EXTRACT_TEXT_TIME:
+		case F_EXTRACT_TEXT_TIMETZ:
+		case F_EXTRACT_TEXT_TIMESTAMP:
+		case F_EXTRACT_TEXT_TIMESTAMPTZ:
+		case F_EXTRACT_TEXT_INTERVAL:
+			/* EXTRACT (x FROM y) */
+			appendStringInfoString(buf, "EXTRACT(");
+			{
+				Const	   *con = (Const *) linitial(expr->args);
+
+				Assert(IsA(con, Const) &&
+					   con->consttype == TEXTOID &&
+					   !con->constisnull);
+				appendStringInfoString(buf, TextDatumGetCString(con->constvalue));
+			}
+			appendStringInfoString(buf, " FROM ");
+			get_rule_expr((Node *) lsecond(expr->args), context, false);
+			appendStringInfoChar(buf, ')');
+			return true;
+
 		case F_IS_NORMALIZED:
 			/* IS xxx NORMALIZED */
 			appendStringInfoString(buf, "((");

@@ -966,66 +966,66 @@ SELECT f1 as "date",
 -- epoch
 --
 SELECT EXTRACT(EPOCH FROM DATE        '1970-01-01');     --  0
- date_part 
------------
-         0
+ extract 
+---------
+       0
 (1 row)
 
 --
 -- century
 --
 SELECT EXTRACT(CENTURY FROM DATE '0101-12-31 BC'); -- -2
- date_part 
------------
-        -2
+ extract 
+---------
+      -2
 (1 row)
 
 SELECT EXTRACT(CENTURY FROM DATE '0100-12-31 BC'); -- -1
- date_part 
------------
-        -1
+ extract 
+---------
+      -1
 (1 row)
 
 SELECT EXTRACT(CENTURY FROM DATE '0001-12-31 BC'); -- -1
- date_part 
------------
-        -1
+ extract 
+---------
+      -1
 (1 row)
 
 SELECT EXTRACT(CENTURY FROM DATE '0001-01-01');    --  1
- date_part 
------------
-         1
+ extract 
+---------
+       1
 (1 row)
 
 SELECT EXTRACT(CENTURY FROM DATE '0001-01-01 AD'); --  1
- date_part 
------------
-         1
+ extract 
+---------
+       1
 (1 row)
 
 SELECT EXTRACT(CENTURY FROM DATE '1900-12-31');    -- 19
- date_part 
------------
-        19
+ extract 
+---------
+      19
 (1 row)
 
 SELECT EXTRACT(CENTURY FROM DATE '1901-01-01');    -- 20
- date_part 
------------
-        20
+ extract 
+---------
+      20
 (1 row)
 
 SELECT EXTRACT(CENTURY FROM DATE '2000-12-31');    -- 20
- date_part 
------------
-        20
+ extract 
+---------
+      20
 (1 row)
 
 SELECT EXTRACT(CENTURY FROM DATE '2001-01-01');    -- 21
- date_part 
------------
-        21
+ extract 
+---------
+      21
 (1 row)
 
 SELECT EXTRACT(CENTURY FROM CURRENT_DATE)>=21 AS True;     -- true
@@ -1038,217 +1038,218 @@ SELECT EXTRACT(CENTURY FROM CURRENT_DATE)>=21 AS True;     -- true
 -- millennium
 --
 SELECT EXTRACT(MILLENNIUM FROM DATE '0001-12-31 BC'); -- -1
- date_part 
------------
-        -1
+ extract 
+---------
+      -1
 (1 row)
 
 SELECT EXTRACT(MILLENNIUM FROM DATE '0001-01-01 AD'); --  1
- date_part 
------------
-         1
+ extract 
+---------
+       1
 (1 row)
 
 SELECT EXTRACT(MILLENNIUM FROM DATE '1000-12-31');    --  1
- date_part 
------------
-         1
+ extract 
+---------
+       1
 (1 row)
 
 SELECT EXTRACT(MILLENNIUM FROM DATE '1001-01-01');    --  2
- date_part 
------------
-         2
+ extract 
+---------
+       2
 (1 row)
 
 SELECT EXTRACT(MILLENNIUM FROM DATE '2000-12-31');    --  2
- date_part 
------------
-         2
+ extract 
+---------
+       2
 (1 row)
 
 SELECT EXTRACT(MILLENNIUM FROM DATE '2001-01-01');    --  3
- date_part 
------------
-         3
+ extract 
+---------
+       3
 (1 row)
 
 -- next test to be fixed on the turn of the next millennium;-)
 SELECT EXTRACT(MILLENNIUM FROM CURRENT_DATE);         --  3
- date_part 
------------
-         3
+ extract 
+---------
+       3
 (1 row)
 
 --
 -- decade
 --
 SELECT EXTRACT(DECADE FROM DATE '1994-12-25');    -- 199
- date_part 
------------
-       199
+ extract 
+---------
+     199
 (1 row)
 
 SELECT EXTRACT(DECADE FROM DATE '0010-01-01');    --   1
- date_part 
------------
-         1
+ extract 
+---------
+       1
 (1 row)
 
 SELECT EXTRACT(DECADE FROM DATE '0009-12-31');    --   0
- date_part 
------------
-         0
+ extract 
+---------
+       0
 (1 row)
 
 SELECT EXTRACT(DECADE FROM DATE '0001-01-01 BC'); --   0
- date_part 
------------
-         0
+ extract 
+---------
+       0
 (1 row)
 
 SELECT EXTRACT(DECADE FROM DATE '0002-12-31 BC'); --  -1
- date_part 
------------
-        -1
+ extract 
+---------
+      -1
 (1 row)
 
 SELECT EXTRACT(DECADE FROM DATE '0011-01-01 BC'); --  -1
- date_part 
------------
-        -1
+ extract 
+---------
+      -1
 (1 row)
 
 SELECT EXTRACT(DECADE FROM DATE '0012-12-31 BC'); --  -2
- date_part 
------------
-        -2
+ extract 
+---------
+      -2
 (1 row)
 
 --
 -- all possible fields
 --
 SELECT EXTRACT(MICROSECONDS  FROM DATE '2020-08-11');
- date_part 
------------
-         0
-(1 row)
-
+ERROR:  date units "microseconds" not supported
 SELECT EXTRACT(MILLISECONDS  FROM DATE '2020-08-11');
- date_part 
------------
-         0
-(1 row)
-
+ERROR:  date units "milliseconds" not supported
 SELECT EXTRACT(SECOND        FROM DATE '2020-08-11');
- date_part 
------------
-         0
-(1 row)
-
+ERROR:  date units "second" not supported
 SELECT EXTRACT(MINUTE        FROM DATE '2020-08-11');
- date_part 
------------
-         0
-(1 row)
-
+ERROR:  date units "minute" not supported
 SELECT EXTRACT(HOUR          FROM DATE '2020-08-11');
- date_part 
------------
-         0
-(1 row)
-
+ERROR:  date units "hour" not supported
 SELECT EXTRACT(DAY           FROM DATE '2020-08-11');
- date_part 
------------
-        11
+ extract 
+---------
+      11
 (1 row)
 
 SELECT EXTRACT(MONTH         FROM DATE '2020-08-11');
- date_part 
------------
-         8
+ extract 
+---------
+       8
 (1 row)
 
 SELECT EXTRACT(YEAR          FROM DATE '2020-08-11');
- date_part 
------------
-      2020
+ extract 
+---------
+    2020
+(1 row)
+
+SELECT EXTRACT(YEAR          FROM DATE '2020-08-11 BC');
+ extract 
+---------
+   -2020
 (1 row)
 
 SELECT EXTRACT(DECADE        FROM DATE '2020-08-11');
- date_part 
------------
-       202
+ extract 
+---------
+     202
 (1 row)
 
 SELECT EXTRACT(CENTURY       FROM DATE '2020-08-11');
- date_part 
------------
-        21
+ extract 
+---------
+      21
 (1 row)
 
 SELECT EXTRACT(MILLENNIUM    FROM DATE '2020-08-11');
- date_part 
------------
-         3
+ extract 
+---------
+       3
 (1 row)
 
 SELECT EXTRACT(ISOYEAR       FROM DATE '2020-08-11');
- date_part 
------------
-      2020
+ extract 
+---------
+    2020
+(1 row)
+
+SELECT EXTRACT(ISOYEAR       FROM DATE '2020-08-11 BC');
+ extract 
+---------
+   -2020
 (1 row)
 
 SELECT EXTRACT(QUARTER       FROM DATE '2020-08-11');
- date_part 
------------
-         3
+ extract 
+---------
+       3
 (1 row)
 
 SELECT EXTRACT(WEEK          FROM DATE '2020-08-11');
- date_part 
------------
-        33
+ extract 
+---------
+      33
 (1 row)
 
 SELECT EXTRACT(DOW           FROM DATE '2020-08-11');
- date_part 
------------
-         2
+ extract 
+---------
+       2
+(1 row)
+
+SELECT EXTRACT(DOW           FROM DATE '2020-08-16');
+ extract 
+---------
+       0
 (1 row)
 
 SELECT EXTRACT(ISODOW        FROM DATE '2020-08-11');
- date_part 
------------
-         2
+ extract 
+---------
+       2
+(1 row)
+
+SELECT EXTRACT(ISODOW        FROM DATE '2020-08-16');
+ extract 
+---------
+       7
 (1 row)
 
 SELECT EXTRACT(DOY           FROM DATE '2020-08-11');
- date_part 
------------
-       224
+ extract 
+---------
+     224
 (1 row)
 
 SELECT EXTRACT(TIMEZONE      FROM DATE '2020-08-11');
-ERROR:  timestamp units "timezone" not supported
-CONTEXT:  SQL function "date_part" statement 1
+ERROR:  date units "timezone" not supported
 SELECT EXTRACT(TIMEZONE_M    FROM DATE '2020-08-11');
-ERROR:  timestamp units "timezone_m" not supported
-CONTEXT:  SQL function "date_part" statement 1
+ERROR:  date units "timezone_m" not supported
 SELECT EXTRACT(TIMEZONE_H    FROM DATE '2020-08-11');
-ERROR:  timestamp units "timezone_h" not supported
-CONTEXT:  SQL function "date_part" statement 1
+ERROR:  date units "timezone_h" not supported
 SELECT EXTRACT(EPOCH         FROM DATE '2020-08-11');
- date_part  
+  extract   
 ------------
  1597104000
 (1 row)
 
 SELECT EXTRACT(JULIAN        FROM DATE '2020-08-11');
- date_part 
------------
-   2459073
+ extract 
+---------
+ 2459073
 (1 row)
 
 --
@@ -1344,173 +1345,124 @@ select isfinite('infinity'::date), isfinite('-infinity'::date), isfinite('today'
 --
 -- oscillating fields from non-finite date:
 --
-SELECT EXTRACT(HOUR FROM DATE 'infinity');      -- NULL
- date_part 
------------
-          
+SELECT EXTRACT(DAY FROM DATE 'infinity');      -- NULL
+ extract 
+---------
+        
 (1 row)
 
-SELECT EXTRACT(HOUR FROM DATE '-infinity');     -- NULL
- date_part 
------------
-          
+SELECT EXTRACT(DAY FROM DATE '-infinity');     -- NULL
+ extract 
+---------
+        
 (1 row)
 
--- all possible fields
-SELECT EXTRACT(MICROSECONDS  FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
-(1 row)
-
-SELECT EXTRACT(MILLISECONDS  FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
-(1 row)
-
-SELECT EXTRACT(SECOND        FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
-(1 row)
-
-SELECT EXTRACT(MINUTE        FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
-(1 row)
-
-SELECT EXTRACT(HOUR          FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
-(1 row)
-
+-- all supported fields
 SELECT EXTRACT(DAY           FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
+ extract 
+---------
+        
 (1 row)
 
 SELECT EXTRACT(MONTH         FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
+ extract 
+---------
+        
 (1 row)
 
 SELECT EXTRACT(QUARTER       FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
+ extract 
+---------
+        
 (1 row)
 
 SELECT EXTRACT(WEEK          FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
+ extract 
+---------
+        
 (1 row)
 
 SELECT EXTRACT(DOW           FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
+ extract 
+---------
+        
 (1 row)
 
 SELECT EXTRACT(ISODOW        FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
+ extract 
+---------
+        
 (1 row)
 
 SELECT EXTRACT(DOY           FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
-(1 row)
-
-SELECT EXTRACT(TIMEZONE      FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
-(1 row)
-
-SELECT EXTRACT(TIMEZONE_M    FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
-(1 row)
-
-SELECT EXTRACT(TIMEZONE_H    FROM DATE 'infinity');    -- NULL
- date_part 
------------
-          
+ extract 
+---------
+        
 (1 row)
 
 --
 -- monotonic fields from non-finite date:
 --
 SELECT EXTRACT(EPOCH FROM DATE 'infinity');         --  Infinity
- date_part 
------------
-  Infinity
+ extract  
+----------
+ Infinity
 (1 row)
 
 SELECT EXTRACT(EPOCH FROM DATE '-infinity');        -- -Infinity
- date_part 
+  extract  
 -----------
  -Infinity
 (1 row)
 
--- all possible fields
+-- all supported fields
 SELECT EXTRACT(YEAR       FROM DATE 'infinity');    --  Infinity
- date_part 
------------
-  Infinity
+ extract  
+----------
+ Infinity
 (1 row)
 
 SELECT EXTRACT(DECADE     FROM DATE 'infinity');    --  Infinity
- date_part 
------------
-  Infinity
+ extract  
+----------
+ Infinity
 (1 row)
 
 SELECT EXTRACT(CENTURY    FROM DATE 'infinity');    --  Infinity
- date_part 
------------
-  Infinity
+ extract  
+----------
+ Infinity
 (1 row)
 
 SELECT EXTRACT(MILLENNIUM FROM DATE 'infinity');    --  Infinity
- date_part 
------------
-  Infinity
+ extract  
+----------
+ Infinity
 (1 row)
 
 SELECT EXTRACT(JULIAN     FROM DATE 'infinity');    --  Infinity
- date_part 
------------
-  Infinity
+ extract  
+----------
+ Infinity
 (1 row)
 
 SELECT EXTRACT(ISOYEAR    FROM DATE 'infinity');    --  Infinity
- date_part 
------------
-  Infinity
+ extract  
+----------
+ Infinity
 (1 row)
 
 SELECT EXTRACT(EPOCH      FROM DATE 'infinity');    --  Infinity
- date_part 
------------
-  Infinity
+ extract  
+----------
+ Infinity
 (1 row)
 
 --
 -- wrong fields from non-finite date:
 --
-SELECT EXTRACT(MICROSEC  FROM DATE 'infinity');     -- ERROR:  timestamp units "microsec" not recognized
-ERROR:  timestamp units "microsec" not recognized
-CONTEXT:  SQL function "date_part" statement 1
+SELECT EXTRACT(MICROSEC  FROM DATE 'infinity');     -- error
+ERROR:  date units "microsec" not recognized
 -- test constructors
 select make_date(2013, 7, 15);
  make_date  

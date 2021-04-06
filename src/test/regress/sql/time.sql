@@ -63,3 +63,10 @@ SELECT EXTRACT(DAY         FROM TIME '2020-05-26 13:30:25.575401');  -- error
 SELECT EXTRACT(FORTNIGHT   FROM TIME '2020-05-26 13:30:25.575401');  -- error
 SELECT EXTRACT(TIMEZONE    FROM TIME '2020-05-26 13:30:25.575401');  -- error
 SELECT EXTRACT(EPOCH       FROM TIME '2020-05-26 13:30:25.575401');
+
+-- date_part implementation is mostly the same as extract, so only
+-- test a few cases for additional coverage.
+SELECT date_part('microsecond', TIME '2020-05-26 13:30:25.575401');
+SELECT date_part('millisecond', TIME '2020-05-26 13:30:25.575401');
+SELECT date_part('second',      TIME '2020-05-26 13:30:25.575401');
+SELECT date_part('epoch',       TIME '2020-05-26 13:30:25.575401');

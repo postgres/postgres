@@ -261,8 +261,21 @@ SELECT d1 as "timestamp",
    date_part( 'epoch', d1) AS epoch
    FROM TIMESTAMP_TBL;
 
+-- extract implementation is mostly the same as date_part, so only
+-- test a few cases for additional coverage.
+SELECT d1 as "timestamp",
+   extract(microseconds from d1) AS microseconds,
+   extract(milliseconds from d1) AS milliseconds,
+   extract(seconds from d1) AS seconds,
+   round(extract(julian from d1)) AS julian,
+   extract(epoch from d1) AS epoch
+   FROM TIMESTAMP_TBL;
+
 -- value near upper bound uses special case in code
 SELECT date_part('epoch', '294270-01-01 00:00:00'::timestamp);
+SELECT extract(epoch from '294270-01-01 00:00:00'::timestamp);
+-- another internal overflow test case
+SELECT extract(epoch from '5000-01-01 00:00:00'::timestamp);
 
 -- TO_CHAR()
 SELECT to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon')

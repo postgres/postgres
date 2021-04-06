@@ -63,6 +63,7 @@ extern char *numeric_out_sci(Numeric num, int scale);
 extern char *numeric_normalize(Numeric num);
 
 extern Numeric int64_to_numeric(int64 val);
+extern Numeric int64_div_fast_to_numeric(int64 val1, int log10val2);
 
 extern Numeric numeric_add_opt_error(Numeric num1, Numeric num2,
 									 bool *have_error);

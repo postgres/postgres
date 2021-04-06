@@ -14020,7 +14020,7 @@ func_expr_common_subexpr:
 				{ $$ = makeTypeCast($3, $5, @1); }
 			| EXTRACT '(' extract_list ')'
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("date_part"),
+					$$ = (Node *) makeFuncCall(SystemFuncName("extract"),
 											   $3,
 											   COERCE_SQL_SYNTAX,
 											   @1);

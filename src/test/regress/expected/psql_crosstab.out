@@ -17,12 +17,12 @@ SELECT v, EXTRACT(year FROM d), count(*)
  FROM ctv_data
  GROUP BY 1, 2
  ORDER BY 1, 2;
- v  | date_part | count 
-----+-----------+-------
- v0 |      2014 |     2
- v0 |      2015 |     1
- v1 |      2015 |     3
- v2 |      2015 |     1
+ v  | extract | count 
+----+---------+-------
+ v0 |    2014 |     2
+ v0 |    2015 |     1
+ v1 |    2015 |     3
+ v2 |    2015 |     1
 (4 rows)
 
 -- basic usage with 3 columns

@@ -8872,7 +8872,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
           <primary>extract</primary>
          </indexterm>
          <function>extract</function> ( <parameter>field</parameter> <literal>from</literal> <type>timestamp</type> )
-         <returnvalue>double precision</returnvalue>
+         <returnvalue>numeric</returnvalue>
         </para>
         <para>
          Get timestamp subfield; see <xref linkend="functions-datetime-extract"/>
@@ -8886,7 +8886,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        <row>
         <entry role="func_table_entry"><para role="func_signature">
          <function>extract</function> ( <parameter>field</parameter> <literal>from</literal> <type>interval</type> )
-         <returnvalue>double precision</returnvalue>
+         <returnvalue>numeric</returnvalue>
         </para>
         <para>
          Get interval subfield; see <xref linkend="functions-datetime-extract"/>
@@ -9401,7 +9401,7 @@ EXTRACT(<replaceable>field</replaceable> FROM <replaceable>source</replaceable>)
     well.)  <replaceable>field</replaceable> is an identifier or
     string that selects what field to extract from the source value.
     The <function>extract</function> function returns values of type
-    <type>double precision</type>.
+    <type>numeric</type>.
     The following are valid field names:
 
     <!-- alphabetical -->
@@ -9825,6 +9825,10 @@ date_part('<replaceable>field</replaceable>', <replaceable>source</replaceable>)
     be a string value, not a name.  The valid field names for
     <function>date_part</function> are the same as for
     <function>extract</function>.
+    For historical reasons, the <function>date_part</function> function
+    returns values of type <type>double precision</type>.  This can result in
+    a loss of precision in certain uses.  Using <function>extract</function>
+    is recommended instead.
    </para>
 
 <screen>

@@ -131,33 +131,33 @@ HINT:  Could not choose a best candidate operator. You might need to add explici
 -- test EXTRACT
 --
 SELECT EXTRACT(MICROSECOND FROM TIME '2020-05-26 13:30:25.575401');
- date_part 
------------
-  25575401
+ extract  
+----------
+ 25575401
 (1 row)
 
 SELECT EXTRACT(MILLISECOND FROM TIME '2020-05-26 13:30:25.575401');
- date_part 
+  extract  
 -----------
  25575.401
 (1 row)
 
 SELECT EXTRACT(SECOND      FROM TIME '2020-05-26 13:30:25.575401');
- date_part 
+  extract  
 -----------
  25.575401
 (1 row)
 
 SELECT EXTRACT(MINUTE      FROM TIME '2020-05-26 13:30:25.575401');
- date_part 
------------
-        30
+ extract 
+---------
+      30
 (1 row)
 
 SELECT EXTRACT(HOUR        FROM TIME '2020-05-26 13:30:25.575401');
- date_part 
------------
-        13
+ extract 
+---------
+      13
 (1 row)
 
 SELECT EXTRACT(DAY         FROM TIME '2020-05-26 13:30:25.575401');  -- error
@@ -167,6 +167,32 @@ ERROR:  "time" units "fortnight" not recognized
 SELECT EXTRACT(TIMEZONE    FROM TIME '2020-05-26 13:30:25.575401');  -- error
 ERROR:  "time" units "timezone" not recognized
 SELECT EXTRACT(EPOCH       FROM TIME '2020-05-26 13:30:25.575401');
+   extract    
+--------------
+ 48625.575401
+(1 row)
+
+-- date_part implementation is mostly the same as extract, so only
+-- test a few cases for additional coverage.
+SELECT date_part('microsecond', TIME '2020-05-26 13:30:25.575401');
+ date_part 
+-----------
+  25575401
+(1 row)
+
+SELECT date_part('millisecond', TIME '2020-05-26 13:30:25.575401');
+ date_part 
+-----------
+ 25575.401
+(1 row)
+
+SELECT date_part('second',      TIME '2020-05-26 13:30:25.575401');
+ date_part 
+-----------
+ 25.575401
+(1 row)
+
+SELECT date_part('epoch',       TIME '2020-05-26 13:30:25.575401');
   date_part   
 --------------
  48625.575401
