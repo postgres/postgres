@@ -195,11 +195,6 @@ typedef struct LVShared
 	int			elevel;
 
 	/*
-	 * Buffer access strategy from leader
-	 */
-	BufferAccessStrategy bstrategy;
-
-	/*
 	 * An indication for vacuum workers to perform either index vacuum or
 	 * index cleanup.  first_time is true only if for_cleanup is true and
 	 * bulk-deletion is not performed yet.
@@ -3485,7 +3480,6 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 	MemSet(shared, 0, est_shared);
 	shared->relid = RelationGetRelid(vacrel->rel);
 	shared->elevel = elevel;
-	shared->bstrategy = vacrel->bstrategy;
 	shared->maintenance_work_mem_worker =
 		(nindexes_mwm > 0) ?
 		maintenance_work_mem / Min(parallel_workers, nindexes_mwm) :
@@ -3726,7 +3720,8 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	vacrel.rel = rel;
 	vacrel.indrels = indrels;
 	vacrel.nindexes = nindexes;
-	vacrel.bstrategy = lvshared->bstrategy;
+	/* Each parallel VACUUM worker gets its own access strategy */
+	vacrel.bstrategy = GetAccessStrategy(BAS_VACUUM);
 	vacrel.indstats = (IndexBulkDeleteResult **)
 		palloc0(nindexes * sizeof(IndexBulkDeleteResult *));
 
@@ -3765,6 +3760,7 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 
 	vac_close_indexes(nindexes, indrels, RowExclusiveLock);
 	table_close(rel, ShareUpdateExclusiveLock);
+	FreeAccessStrategy(vacrel.bstrategy);
 	pfree(vacrel.indstats);
 }
 
