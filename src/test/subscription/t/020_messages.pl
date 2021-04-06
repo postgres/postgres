@@ -34,6 +34,10 @@ $node_subscriber->safe_psql('postgres',
 # Ensure a transactional logical decoding message shows up on the slot
 $node_subscriber->safe_psql('postgres', "ALTER SUBSCRIPTION tap_sub DISABLE");
 
+# wait for the replication connection to drop from the publisher
+$node_publisher->poll_query_until('postgres',
+	'SELECT COUNT(*) FROM pg_catalog.pg_stat_replication', 0);
+
 $node_publisher->safe_psql('postgres',
 	"SELECT pg_logical_emit_message(true, 'pgoutput', 'a transactional message')"
 );
@@ -84,6 +88,10 @@ $node_publisher->wait_for_catchup('tap_sub');
 
 # ensure a non-transactional logical decoding message shows up on the slot
 $node_subscriber->safe_psql('postgres', "ALTER SUBSCRIPTION tap_sub DISABLE");
+
+# wait for the replication connection to drop from the publisher
+$node_publisher->poll_query_until('postgres',
+	'SELECT COUNT(*) FROM pg_catalog.pg_stat_replication', 0);
 
 $node_publisher->safe_psql('postgres', "INSERT INTO tab_test VALUES (1)");
 
