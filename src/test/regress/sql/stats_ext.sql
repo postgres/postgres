@@ -1470,6 +1470,25 @@ SELECT * FROM check_estimated_rows('SELECT * FROM expr_stats WHERE a = 0 AND (b 
 
 DROP TABLE expr_stats;
 
+-- test handling of a mix of compatible and incompatible expressions
+CREATE TABLE expr_stats_incompatible_test (
+    c0 double precision,
+    c1 boolean NOT NULL
+);
+
+CREATE STATISTICS expr_stat_comp_1 ON c0, c1 FROM expr_stats_incompatible_test;
+
+INSERT INTO expr_stats_incompatible_test VALUES (1234,false), (5678,true);
+ANALYZE expr_stats_incompatible_test;
+
+SELECT c0 FROM ONLY expr_stats_incompatible_test WHERE
+(
+  upper('x') LIKE ('x'||('[0,1]'::int4range))
+  AND
+  (c0 IN (0, 1) OR c1)
+);
+
+DROP TABLE expr_stats_incompatible_test;
 
 -- Permission tests. Users should not be able to see specific data values in
 -- the extended statistics, if they lack permission to see those values in

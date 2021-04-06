@@ -1575,6 +1575,8 @@ mcv_match_expression(Node *expr, Bitmapset *keys, List *exprs, Oid *collid)
 			   (idx <= bms_num_members(keys) + list_length(exprs)));
 	}
 
+	Assert((idx >= 0) && (idx < bms_num_members(keys) + list_length(exprs)));
+
 	return idx;
 }
 
@@ -1653,6 +1655,8 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 
 			/* match the attribute/expression to a dimension of the statistic */
 			idx = mcv_match_expression(clause_expr, keys, exprs, &collid);
+
+			Assert((idx >= 0) && (idx < bms_num_members(keys) + list_length(exprs)));
 
 			/*
 			 * Walk through the MCV items and evaluate the current clause. We
