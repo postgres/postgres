@@ -1745,7 +1745,9 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     <xref linkend="guc-wal-level"/> to <literal>minimal</literal>,
     <xref linkend="guc-archive-mode"/> to <literal>off</literal>, and
     <xref linkend="guc-max-wal-senders"/> to zero.
-    But note that changing these settings requires a server restart.
+    But note that changing these settings requires a server restart,
+    and makes any base backups taken before unavailable for archive
+    recovery and standby server, which may lead to database loss.
    </para>
 
    <para>

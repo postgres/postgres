@@ -6403,9 +6403,10 @@ CheckRequiredParameterValues(void)
 	 */
 	if (ArchiveRecoveryRequested && ControlFile->wal_level == WAL_LEVEL_MINIMAL)
 	{
-		ereport(WARNING,
-				(errmsg("WAL was generated with wal_level=minimal, data may be missing"),
-				 errhint("This happens if you temporarily set wal_level=minimal without taking a new base backup.")));
+		ereport(FATAL,
+				(errmsg("WAL was generated with wal_level=minimal, cannot continue recovering"),
+				 errdetail("This happens if you temporarily set wal_level=minimal on the server."),
+				 errhint("Use a backup taken after setting wal_level to higher than minimal.")));
 	}
 
 	/*
@@ -6414,11 +6415,6 @@ CheckRequiredParameterValues(void)
 	 */
 	if (ArchiveRecoveryRequested && EnableHotStandby)
 	{
-		if (ControlFile->wal_level < WAL_LEVEL_REPLICA)
-			ereport(ERROR,
-					(errmsg("hot standby is not possible because wal_level was not set to \"replica\" or higher on the primary server"),
-					 errhint("Either set wal_level to \"replica\" on the primary, or turn off hot_standby here.")));
-
 		/* We ignore autovacuum_max_workers when we make this test. */
 		RecoveryRequiresIntParameter("max_connections",
 									 MaxConnections,

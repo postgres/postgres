@@ -2720,6 +2720,10 @@ include_dir 'conf.d'
         data from a base backup and the WAL logs, so <literal>replica</literal> or
         higher must be used to enable WAL archiving
         (<xref linkend="guc-archive-mode"/>) and streaming replication.
+        Note that changing <varname>wal_level</varname> to
+        <literal>minimal</literal> makes any base backups taken before
+        unavailable for archive recovery and standby server, which may
+        lead to database loss.
        </para>
        <para>
         In <literal>logical</literal> level, the same information is logged as
