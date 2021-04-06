@@ -1210,6 +1210,11 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 */
 	MaintainLatestCompletedXidRecovery(running->latestCompletedXid);
 
+	/*
+	 * NB: No need to increment ShmemVariableCache->xactCompletionCount here,
+	 * nobody can see it yet.
+	 */
+
 	LWLockRelease(ProcArrayLock);
 
 	/* ShmemVariableCache->nextXid must be beyond any observed xid. */
@@ -3914,6 +3919,9 @@ XidCacheRemoveRunningXids(TransactionId xid,
 
 	/* Also advance global latestCompletedXid while holding the lock */
 	MaintainLatestCompletedXid(latestXid);
+
+	/* ... and xactCompletionCount */
+	ShmemVariableCache->xactCompletionCount++;
 
 	LWLockRelease(ProcArrayLock);
 }

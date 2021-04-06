@@ -29,7 +29,7 @@ test: strings numerology point lseg line box path polygon circle date time timet
 # geometry depends on point, lseg, box, path, polygon and circle
 # horology depends on interval, timetz, timestamp, timestamptz
 # ----------
-test: geometry horology regex type_sanity opr_sanity misc_sanity comments expressions unicode xid
+test: geometry horology regex type_sanity opr_sanity misc_sanity comments expressions unicode xid mvcc
 
 # ----------
 # These four each depend on the previous one

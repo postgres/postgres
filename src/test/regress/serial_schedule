@@ -11,6 +11,7 @@ test: int4
 test: int8
 test: oid
 test: xid
+test: mvcc
 test: float4
 test: float8
 test: bit
