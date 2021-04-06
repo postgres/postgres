@@ -459,17 +459,17 @@ TODO:
 	# correct client cert in encrypted PEM with empty password
 	$node->connect_fails(
 		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword=''",
+		"certificate authorization fails with correct client cert and empty password in encrypted PEM format",
 		expected_stderr =>
-		  qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!,
-		"certificate authorization fails with correct client cert and empty password in encrypted PEM format"
+		  qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!
 	);
 
 	# correct client cert in encrypted PEM with no password
 	$node->connect_fails(
 		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key",
+		"certificate authorization fails with correct client cert and no password in encrypted PEM format",
 		expected_stderr =>
-		  qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!,
-		"certificate authorization fails with correct client cert and no password in encrypted PEM format"
+		  qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!
 	);
 
 }

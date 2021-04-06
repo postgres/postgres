@@ -20,7 +20,7 @@ use Time::HiRes qw(usleep);
 
 if ($ENV{with_gssapi} eq 'yes')
 {
-	plan tests => 30;
+	plan tests => 32;
 }
 else
 {
@@ -196,7 +196,7 @@ sub test_access
 		$node->connect_ok(
 			$connstr, $test_name,
 			sql             => $query,
-			expected_stdout => qr/t/);
+			expected_stdout => qr/^t$/);
 	}
 	else
 	{
@@ -227,9 +227,10 @@ sub test_query
 	my $connstr = $node->connstr('postgres')
 	  . " user=$role host=$host hostaddr=$hostaddr $gssencmode";
 
-	my ($stdoutres, $stderrres);
-
-	$node->connect_ok($connstr, $test_name, $query, $expected);
+	$node->connect_ok(
+		$connstr, $test_name,
+		sql             => $query,
+		expected_stdout => $expected);
 	return;
 }
 
