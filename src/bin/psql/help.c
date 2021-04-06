@@ -410,6 +410,8 @@ helpVariables(unsigned short int pager)
 	fprintf(output, _("  SERVER_VERSION_NAME\n"
 					  "  SERVER_VERSION_NUM\n"
 					  "    server's version (in short string or numeric format)\n"));
+	fprintf(output, _("  SHOW_ALL_RESULTS\n"
+					  "    show all results of a combined query (\\;) instead of only the last\n"));
 	fprintf(output, _("  SHOW_CONTEXT\n"
 					  "    controls display of message context fields [never, errors, always]\n"));
 	fprintf(output, _("  SINGLELINE\n"

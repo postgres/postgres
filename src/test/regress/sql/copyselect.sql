@@ -84,10 +84,10 @@ drop table test1;
 -- psql handling of COPY in multi-command strings
 copy (select 1) to stdout\; select 1/0;	-- row, then error
 select 1/0\; copy (select 1) to stdout; -- error only
-copy (select 1) to stdout\; copy (select 2) to stdout\; select 0\; select 3; -- 1 2 3
+copy (select 1) to stdout\; copy (select 2) to stdout\; select 3\; select 4; -- 1 2 3 4
 
 create table test3 (c int);
-select 0\; copy test3 from stdin\; copy test3 from stdin\; select 1; -- 1
+select 0\; copy test3 from stdin\; copy test3 from stdin\; select 1; -- 0 1
 1
 \.
 2

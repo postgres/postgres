@@ -196,6 +196,7 @@ main(int argc, char *argv[])
 	SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
 	SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
 	SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
+	SetVariableBool(pset.vars, "SHOW_ALL_RESULTS");
 
 	parse_psql_options(argc, argv, &options);
 
@@ -1130,6 +1131,12 @@ verbosity_hook(const char *newval)
 	return true;
 }
 
+static bool
+show_all_results_hook(const char *newval)
+{
+	return ParseVariableBool(newval, "SHOW_ALL_RESULTS", &pset.show_all_results);
+}
+
 static char *
 show_context_substitute_hook(char *newval)
 {
@@ -1231,6 +1238,9 @@ EstablishVariableSpace(void)
 	SetVariableHooks(pset.vars, "VERBOSITY",
 					 verbosity_substitute_hook,
 					 verbosity_hook);
+	SetVariableHooks(pset.vars, "SHOW_ALL_RESULTS",
+					 bool_substitute_hook,
+					 show_all_results_hook);
 	SetVariableHooks(pset.vars, "SHOW_CONTEXT",
 					 show_context_substitute_hook,
 					 show_context_hook);

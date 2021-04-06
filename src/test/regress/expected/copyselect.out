@@ -126,7 +126,7 @@ copy (select 1) to stdout\; select 1/0;	-- row, then error
 ERROR:  division by zero
 select 1/0\; copy (select 1) to stdout; -- error only
 ERROR:  division by zero
-copy (select 1) to stdout\; copy (select 2) to stdout\; select 0\; select 3; -- 1 2 3
+copy (select 1) to stdout\; copy (select 2) to stdout\; select 3\; select 4; -- 1 2 3 4
 1
 2
  ?column? 
@@ -134,8 +134,18 @@ copy (select 1) to stdout\; copy (select 2) to stdout\; select 0\; select 3; -- 
         3
 (1 row)
 
+ ?column? 
+----------
+        4
+(1 row)
+
 create table test3 (c int);
-select 0\; copy test3 from stdin\; copy test3 from stdin\; select 1; -- 1
+select 0\; copy test3 from stdin\; copy test3 from stdin\; select 1; -- 0 1
+ ?column? 
+----------
+        0
+(1 row)
+
  ?column? 
 ----------
         1

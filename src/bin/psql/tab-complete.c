@@ -4122,7 +4122,7 @@ psql_completion(const char *text, int start, int end)
 		matches = complete_from_variables(text, "", "", false);
 	else if (TailMatchesCS("\\set", MatchAny))
 	{
-		if (TailMatchesCS("AUTOCOMMIT|ON_ERROR_STOP|QUIET|"
+		if (TailMatchesCS("AUTOCOMMIT|ON_ERROR_STOP|QUIET|SHOW_ALL_RESULTS|"
 						  "SINGLELINE|SINGLESTEP"))
 			COMPLETE_WITH_CS("on", "off");
 		else if (TailMatchesCS("COMP_KEYWORD_CASE"))

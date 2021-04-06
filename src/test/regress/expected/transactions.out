@@ -900,8 +900,18 @@ DROP TABLE abc;
 -- tests rely on the fact that psql will not break SQL commands apart at a
 -- backslash-quoted semicolon, but will send them as one Query.
 create temp table i_table (f1 int);
--- psql will show only the last result in a multi-statement Query
+-- psql will show all results of a multi-statement Query
 SELECT 1\; SELECT 2\; SELECT 3;
+ ?column? 
+----------
+        1
+(1 row)
+
+ ?column? 
+----------
+        2
+(1 row)
+
  ?column? 
 ----------
         3
@@ -916,6 +926,12 @@ insert into i_table values(1)\; select * from i_table;
 
 -- 1/0 error will cause rolling back the whole implicit transaction
 insert into i_table values(2)\; select * from i_table\; select 1/0;
+ f1 
+----
+  1
+  2
+(2 rows)
+
 ERROR:  division by zero
 select * from i_table;
  f1 
@@ -935,8 +951,18 @@ WARNING:  there is no transaction in progress
 -- begin converts implicit transaction into a regular one that
 -- can extend past the end of the Query
 select 1\; begin\; insert into i_table values(5);
+ ?column? 
+----------
+        1
+(1 row)
+
 commit;
 select 1\; begin\; insert into i_table values(6);
+ ?column? 
+----------
+        1
+(1 row)
+
 rollback;
 -- commit in implicit-transaction state commits but issues a warning.
 insert into i_table values(7)\; commit\; insert into i_table values(8)\; select 1/0;
@@ -963,22 +989,52 @@ rollback;  -- we are not in a transaction at this point
 WARNING:  there is no transaction in progress
 -- implicit transaction block is still a transaction block, for e.g. VACUUM
 SELECT 1\; VACUUM;
+ ?column? 
+----------
+        1
+(1 row)
+
 ERROR:  VACUUM cannot run inside a transaction block
 SELECT 1\; COMMIT\; VACUUM;
 WARNING:  there is no transaction in progress
+ ?column? 
+----------
+        1
+(1 row)
+
 ERROR:  VACUUM cannot run inside a transaction block
 -- we disallow savepoint-related commands in implicit-transaction state
 SELECT 1\; SAVEPOINT sp;
+ ?column? 
+----------
+        1
+(1 row)
+
 ERROR:  SAVEPOINT can only be used in transaction blocks
 SELECT 1\; COMMIT\; SAVEPOINT sp;
 WARNING:  there is no transaction in progress
+ ?column? 
+----------
+        1
+(1 row)
+
 ERROR:  SAVEPOINT can only be used in transaction blocks
 ROLLBACK TO SAVEPOINT sp\; SELECT 2;
 ERROR:  ROLLBACK TO SAVEPOINT can only be used in transaction blocks
 SELECT 2\; RELEASE SAVEPOINT sp\; SELECT 3;
+ ?column? 
+----------
+        2
+(1 row)
+
 ERROR:  RELEASE SAVEPOINT can only be used in transaction blocks
 -- but this is OK, because the BEGIN converts it to a regular xact
 SELECT 1\; BEGIN\; SAVEPOINT sp\; ROLLBACK TO SAVEPOINT sp\; COMMIT;
+ ?column? 
+----------
+        1
+(1 row)
+
 -- Tests for AND CHAIN in implicit transaction blocks
 SET TRANSACTION READ ONLY\; COMMIT AND CHAIN;  -- error
 ERROR:  COMMIT AND CHAIN can only be used in transaction blocks

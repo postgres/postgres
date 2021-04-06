@@ -1228,3 +1228,41 @@ drop role regress_partitioning_role;
 \dAo * pg_catalog.jsonb_path_ops
 \dAp+ btree float_ops
 \dAp * pg_catalog.uuid_ops
+
+--
+-- combined queries
+--
+CREATE FUNCTION warn(msg TEXT) RETURNS BOOLEAN LANGUAGE plpgsql
+AS $$
+  BEGIN RAISE NOTICE 'warn %', msg ; RETURN TRUE ; END
+$$;
+-- show both
+SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
+-- \gset applies to last query only
+SELECT 3 AS three \; SELECT warn('3.5') \; SELECT 4 AS four \gset
+\echo :three :four
+-- syntax error stops all processing
+SELECT 5 \; SELECT 6 + \; SELECT warn('6.5') \; SELECT 7 ;
+-- with aborted transaction, stop on first error
+BEGIN \; SELECT 8 AS eight \; SELECT 9/0 AS nine \; ROLLBACK \; SELECT 10 AS ten ;
+-- close previously aborted transaction
+ROLLBACK;
+-- misc SQL commands
+-- (non SELECT output is sent to stderr, thus is not shown in expected results)
+SELECT 'ok' AS "begin" \;
+CREATE TABLE psql_comics(s TEXT) \;
+INSERT INTO psql_comics VALUES ('Calvin'), ('hobbes') \;
+COPY psql_comics FROM STDIN \;
+UPDATE psql_comics SET s = 'Hobbes' WHERE s = 'hobbes' \;
+DELETE FROM psql_comics WHERE s = 'Moe' \;
+COPY psql_comics TO STDOUT \;
+TRUNCATE psql_comics \;
+DROP TABLE psql_comics \;
+SELECT 'ok' AS "done" ;
+Moe
+Susie
+\.
+\set SHOW_ALL_RESULTS off
+SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
+\set SHOW_ALL_RESULTS on
+DROP FUNCTION warn(TEXT);
