@@ -52,7 +52,8 @@ typedef struct MemoryContextCounters
  */
 
 typedef void (*MemoryStatsPrintFunc) (MemoryContext context, void *passthru,
-									  const char *stats_string);
+									  const char *stats_string,
+									  bool print_to_stderr);
 
 typedef struct MemoryContextMethods
 {
@@ -66,7 +67,8 @@ typedef struct MemoryContextMethods
 	bool		(*is_empty) (MemoryContext context);
 	void		(*stats) (MemoryContext context,
 						  MemoryStatsPrintFunc printfunc, void *passthru,
-						  MemoryContextCounters *totals);
+						  MemoryContextCounters *totals,
+						  bool print_to_stderr);
 #ifdef MEMORY_CONTEXT_CHECKING
 	void		(*check) (MemoryContext context);
 #endif

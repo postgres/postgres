@@ -135,7 +135,8 @@ static Size SlabGetChunkSpace(MemoryContext context, void *pointer);
 static bool SlabIsEmpty(MemoryContext context);
 static void SlabStats(MemoryContext context,
 					  MemoryStatsPrintFunc printfunc, void *passthru,
-					  MemoryContextCounters *totals);
+					  MemoryContextCounters *totals,
+					  bool print_to_stderr);
 #ifdef MEMORY_CONTEXT_CHECKING
 static void SlabCheck(MemoryContext context);
 #endif
@@ -632,11 +633,13 @@ SlabIsEmpty(MemoryContext context)
  * printfunc: if not NULL, pass a human-readable stats string to this.
  * passthru: pass this pointer through to printfunc.
  * totals: if not NULL, add stats about this context into *totals.
+ * print_to_stderr: print stats to stderr if true, elog otherwise.
  */
 static void
 SlabStats(MemoryContext context,
 		  MemoryStatsPrintFunc printfunc, void *passthru,
-		  MemoryContextCounters *totals)
+		  MemoryContextCounters *totals,
+		  bool print_to_stderr)
 {
 	SlabContext *slab = castNode(SlabContext, context);
 	Size		nblocks = 0;
@@ -671,7 +674,7 @@ SlabStats(MemoryContext context,
 				 "%zu total in %zd blocks; %zu free (%zd chunks); %zu used",
 				 totalspace, nblocks, freespace, freechunks,
 				 totalspace - freespace);
-		printfunc(context, passthru, stats_string);
+		printfunc(context, passthru, stats_string, print_to_stderr);
 	}
 
 	if (totals)

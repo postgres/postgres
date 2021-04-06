@@ -3327,6 +3327,9 @@ ProcessInterrupts(void)
 
 	if (ParallelMessagePending)
 		HandleParallelMessages();
+
+	if (LogMemoryContextPending)
+		ProcessLogMemoryContextInterrupt();
 }
 
 

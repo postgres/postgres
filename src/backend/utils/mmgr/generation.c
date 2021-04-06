@@ -155,7 +155,8 @@ static Size GenerationGetChunkSpace(MemoryContext context, void *pointer);
 static bool GenerationIsEmpty(MemoryContext context);
 static void GenerationStats(MemoryContext context,
 							MemoryStatsPrintFunc printfunc, void *passthru,
-							MemoryContextCounters *totals);
+							MemoryContextCounters *totals,
+							bool print_to_stderr);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void GenerationCheck(MemoryContext context);
@@ -665,6 +666,7 @@ GenerationIsEmpty(MemoryContext context)
  * printfunc: if not NULL, pass a human-readable stats string to this.
  * passthru: pass this pointer through to printfunc.
  * totals: if not NULL, add stats about this context into *totals.
+ * print_to_stderr: print stats to stderr if true, elog otherwise.
  *
  * XXX freespace only accounts for empty space at the end of the block, not
  * space of freed chunks (which is unknown).
@@ -672,7 +674,7 @@ GenerationIsEmpty(MemoryContext context)
 static void
 GenerationStats(MemoryContext context,
 				MemoryStatsPrintFunc printfunc, void *passthru,
-				MemoryContextCounters *totals)
+				MemoryContextCounters *totals, bool print_to_stderr)
 {
 	GenerationContext *set = (GenerationContext *) context;
 	Size		nblocks = 0;
@@ -704,7 +706,7 @@ GenerationStats(MemoryContext context,
 				 "%zu total in %zd blocks (%zd chunks); %zu free (%zd chunks); %zu used",
 				 totalspace, nblocks, nchunks, freespace,
 				 nfreechunks, totalspace - freespace);
-		printfunc(context, passthru, stats_string);
+		printfunc(context, passthru, stats_string, print_to_stderr);
 	}
 
 	if (totals)
