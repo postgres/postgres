@@ -66,7 +66,6 @@
 
 #include "postgres.h"
 
-#include "access/parallel.h"
 #include "common/hashfn.h"
 #include "executor/executor.h"
 #include "executor/nodeResultCache.h"

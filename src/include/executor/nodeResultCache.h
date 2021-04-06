@@ -14,6 +14,7 @@
 #ifndef NODERESULTCACHE_H
 #define NODERESULTCACHE_H
 
+#include "access/parallel.h"
 #include "nodes/execnodes.h"
 
 extern ResultCacheState *ExecInitResultCache(ResultCache *node, EState *estate, int eflags);
