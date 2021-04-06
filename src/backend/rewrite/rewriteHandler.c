@@ -1228,25 +1228,28 @@ build_column_default(Relation rel, int attrno)
 	}
 
 	/*
-	 * Scan to see if relation has a default for this column.
+	 * If relation has a default for this column, fetch that expression.
 	 */
-	if (att_tup->atthasdef && rd_att->constr &&
-		rd_att->constr->num_defval > 0)
+	if (att_tup->atthasdef)
 	{
-		AttrDefault *defval = rd_att->constr->defval;
-		int			ndef = rd_att->constr->num_defval;
-
-		while (--ndef >= 0)
+		if (rd_att->constr && rd_att->constr->num_defval > 0)
 		{
-			if (attrno == defval[ndef].adnum)
+			AttrDefault *defval = rd_att->constr->defval;
+			int			ndef = rd_att->constr->num_defval;
+
+			while (--ndef >= 0)
 			{
-				/*
-				 * Found it, convert string representation to node tree.
-				 */
-				expr = stringToNode(defval[ndef].adbin);
-				break;
+				if (attrno == defval[ndef].adnum)
+				{
+					/* Found it, convert string representation to node tree. */
+					expr = stringToNode(defval[ndef].adbin);
+					break;
+				}
 			}
 		}
+		if (expr == NULL)
+			elog(ERROR, "default expression not found for attribute %d of relation \"%s\"",
+				 attrno, RelationGetRelationName(rel));
 	}
 
 	/*

@@ -174,10 +174,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 			cpy->defval = (AttrDefault *) palloc(cpy->num_defval * sizeof(AttrDefault));
 			memcpy(cpy->defval, constr->defval, cpy->num_defval * sizeof(AttrDefault));
 			for (i = cpy->num_defval - 1; i >= 0; i--)
-			{
-				if (constr->defval[i].adbin)
-					cpy->defval[i].adbin = pstrdup(constr->defval[i].adbin);
-			}
+				cpy->defval[i].adbin = pstrdup(constr->defval[i].adbin);
 		}
 
 		if (constr->missing)
@@ -203,10 +200,8 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 			memcpy(cpy->check, constr->check, cpy->num_check * sizeof(ConstrCheck));
 			for (i = cpy->num_check - 1; i >= 0; i--)
 			{
-				if (constr->check[i].ccname)
-					cpy->check[i].ccname = pstrdup(constr->check[i].ccname);
-				if (constr->check[i].ccbin)
-					cpy->check[i].ccbin = pstrdup(constr->check[i].ccbin);
+				cpy->check[i].ccname = pstrdup(constr->check[i].ccname);
+				cpy->check[i].ccbin = pstrdup(constr->check[i].ccbin);
 				cpy->check[i].ccvalid = constr->check[i].ccvalid;
 				cpy->check[i].ccnoinherit = constr->check[i].ccnoinherit;
 			}
@@ -328,10 +323,7 @@ FreeTupleDesc(TupleDesc tupdesc)
 			AttrDefault *attrdef = tupdesc->constr->defval;
 
 			for (i = tupdesc->constr->num_defval - 1; i >= 0; i--)
-			{
-				if (attrdef[i].adbin)
-					pfree(attrdef[i].adbin);
-			}
+				pfree(attrdef[i].adbin);
 			pfree(attrdef);
 		}
 		if (tupdesc->constr->missing)
@@ -352,10 +344,8 @@ FreeTupleDesc(TupleDesc tupdesc)
 
 			for (i = tupdesc->constr->num_check - 1; i >= 0; i--)
 			{
-				if (check[i].ccname)
-					pfree(check[i].ccname);
-				if (check[i].ccbin)
-					pfree(check[i].ccbin);
+				pfree(check[i].ccname);
+				pfree(check[i].ccbin);
 			}
 			pfree(check);
 		}
@@ -412,7 +402,6 @@ bool
 equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 {
 	int			i,
-				j,
 				n;
 
 	if (tupdesc1->natts != tupdesc2->natts)
@@ -488,22 +477,13 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		n = constr1->num_defval;
 		if (n != (int) constr2->num_defval)
 			return false;
+		/* We assume here that both AttrDefault arrays are in adnum order */
 		for (i = 0; i < n; i++)
 		{
 			AttrDefault *defval1 = constr1->defval + i;
-			AttrDefault *defval2 = constr2->defval;
+			AttrDefault *defval2 = constr2->defval + i;
 
-			/*
-			 * We can't assume that the items are always read from the system
-			 * catalogs in the same order; so use the adnum field to identify
-			 * the matching item to compare.
-			 */
-			for (j = 0; j < n; defval2++, j++)
-			{
-				if (defval1->adnum == defval2->adnum)
-					break;
-			}
-			if (j >= n)
+			if (defval1->adnum != defval2->adnum)
 				return false;
 			if (strcmp(defval1->adbin, defval2->adbin) != 0)
 				return false;
@@ -534,25 +514,21 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		n = constr1->num_check;
 		if (n != (int) constr2->num_check)
 			return false;
+
+		/*
+		 * Similarly, we rely here on the ConstrCheck entries being sorted by
+		 * name.  If there are duplicate names, the outcome of the comparison
+		 * is uncertain, but that should not happen.
+		 */
 		for (i = 0; i < n; i++)
 		{
 			ConstrCheck *check1 = constr1->check + i;
-			ConstrCheck *check2 = constr2->check;
+			ConstrCheck *check2 = constr2->check + i;
 
-			/*
-			 * Similarly, don't assume that the checks are always read in the
-			 * same order; match them up by name and contents. (The name
-			 * *should* be unique, but...)
-			 */
-			for (j = 0; j < n; check2++, j++)
-			{
-				if (strcmp(check1->ccname, check2->ccname) == 0 &&
-					strcmp(check1->ccbin, check2->ccbin) == 0 &&
-					check1->ccvalid == check2->ccvalid &&
-					check1->ccnoinherit == check2->ccnoinherit)
-					break;
-			}
-			if (j >= n)
+			if (!(strcmp(check1->ccname, check2->ccname) == 0 &&
+				  strcmp(check1->ccbin, check2->ccbin) == 0 &&
+				  check1->ccvalid == check2->ccvalid &&
+				  check1->ccnoinherit == check2->ccnoinherit))
 				return false;
 		}
 	}

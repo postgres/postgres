@@ -1239,8 +1239,6 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 		 (CREATE_TABLE_LIKE_DEFAULTS | CREATE_TABLE_LIKE_GENERATED)) &&
 		constr != NULL)
 	{
-		AttrDefault *attrdef = constr->defval;
-
 		for (parent_attno = 1; parent_attno <= tupleDesc->natts;
 			 parent_attno++)
 		{
@@ -1264,6 +1262,7 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 				 (table_like_clause->options & CREATE_TABLE_LIKE_DEFAULTS)))
 			{
 				Node	   *this_default = NULL;
+				AttrDefault *attrdef = constr->defval;
 				AlterTableCmd *atsubcmd;
 				bool		found_whole_row;
 
@@ -1276,7 +1275,9 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 						break;
 					}
 				}
-				Assert(this_default != NULL);
+				if (this_default == NULL)
+					elog(ERROR, "default expression not found for attribute %d of relation \"%s\"",
+						 parent_attno, RelationGetRelationName(relation));
 
 				atsubcmd = makeNode(AlterTableCmd);
 				atsubcmd->subtype = AT_CookedColumnDefault;

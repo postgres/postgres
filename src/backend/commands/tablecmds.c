@@ -2501,21 +2501,24 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 			if (attribute->atthasdef)
 			{
 				Node	   *this_default = NULL;
-				AttrDefault *attrdef;
-				int			i;
 
 				/* Find default in constraint structure */
-				Assert(constr != NULL);
-				attrdef = constr->defval;
-				for (i = 0; i < constr->num_defval; i++)
+				if (constr != NULL)
 				{
-					if (attrdef[i].adnum == parent_attno)
+					AttrDefault *attrdef = constr->defval;
+
+					for (int i = 0; i < constr->num_defval; i++)
 					{
-						this_default = stringToNode(attrdef[i].adbin);
-						break;
+						if (attrdef[i].adnum == parent_attno)
+						{
+							this_default = stringToNode(attrdef[i].adbin);
+							break;
+						}
 					}
 				}
-				Assert(this_default != NULL);
+				if (this_default == NULL)
+					elog(ERROR, "default expression not found for attribute %d of relation \"%s\"",
+						 parent_attno, RelationGetRelationName(relation));
 
 				/*
 				 * If it's a GENERATED default, it might contain Vars that
