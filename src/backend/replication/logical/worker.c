@@ -1939,6 +1939,15 @@ apply_dispatch(StringInfo s)
 			apply_handle_origin(s);
 			return;
 
+		case LOGICAL_REP_MSG_MESSAGE:
+
+			/*
+			 * Logical replication does not use generic logical messages yet.
+			 * Although, it could be used by other applications that use this
+			 * output plugin.
+			 */
+			return;
+
 		case LOGICAL_REP_MSG_STREAM_START:
 			apply_handle_stream_start(s);
 			return;

@@ -25,6 +25,7 @@
  */
 #define LOGICALREP_IS_REPLICA_IDENTITY 1
 
+#define MESSAGE_TRANSACTIONAL (1<<0)
 #define TRUNCATE_CASCADE		(1<<0)
 #define TRUNCATE_RESTART_SEQS	(1<<1)
 
@@ -359,6 +360,33 @@ logicalrep_read_truncate(StringInfo in,
 		relids = lappend_oid(relids, pq_getmsgint(in, 4));
 
 	return relids;
+}
+
+/*
+ * Write MESSAGE to stream
+ */
+void
+logicalrep_write_message(StringInfo out, TransactionId xid, XLogRecPtr lsn,
+						 bool transactional, const char *prefix, Size sz,
+						 const char *message)
+{
+	uint8		flags = 0;
+
+	pq_sendbyte(out, LOGICAL_REP_MSG_MESSAGE);
+
+	/* encode and send message flags */
+	if (transactional)
+		flags |= MESSAGE_TRANSACTIONAL;
+
+	/* transaction ID (if not valid, we're not streaming) */
+	if (TransactionIdIsValid(xid))
+		pq_sendint32(out, xid);
+
+	pq_sendint8(out, flags);
+	pq_sendint64(out, lsn);
+	pq_sendstring(out, prefix);
+	pq_sendint32(out, sz);
+	pq_sendbytes(out, message, sz);
 }
 
 /*
