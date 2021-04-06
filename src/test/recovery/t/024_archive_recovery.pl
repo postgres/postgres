@@ -9,7 +9,7 @@ use Time::HiRes qw(usleep);
 # Initialize and start node with wal_level = replica and WAL archiving
 # enabled.
 my $node = get_new_node('orig');
-$node->init(has_archiving => 1);
+$node->init(has_archiving => 1, allows_streaming => 1);
 my $replica_config = q[
 wal_level = replica
 archive_mode = on
