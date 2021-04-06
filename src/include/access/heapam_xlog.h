@@ -51,9 +51,9 @@
  * these, too.
  */
 #define XLOG_HEAP2_REWRITE		0x00
-#define XLOG_HEAP2_CLEAN		0x10
-#define XLOG_HEAP2_FREEZE_PAGE	0x20
-#define XLOG_HEAP2_CLEANUP_INFO 0x30
+#define XLOG_HEAP2_PRUNE		0x10
+#define XLOG_HEAP2_VACUUM		0x20
+#define XLOG_HEAP2_FREEZE_PAGE	0x30
 #define XLOG_HEAP2_VISIBLE		0x40
 #define XLOG_HEAP2_MULTI_INSERT 0x50
 #define XLOG_HEAP2_LOCK_UPDATED 0x60
@@ -227,7 +227,8 @@ typedef struct xl_heap_update
 #define SizeOfHeapUpdate	(offsetof(xl_heap_update, new_offnum) + sizeof(OffsetNumber))
 
 /*
- * This is what we need to know about vacuum page cleanup/redirect
+ * This is what we need to know about page pruning (both during VACUUM and
+ * during opportunistic pruning)
  *
  * The array of OffsetNumbers following the fixed part of the record contains:
  *	* for each redirected item: the item offset, then the offset redirected to
@@ -236,29 +237,32 @@ typedef struct xl_heap_update
  * The total number of OffsetNumbers is therefore 2*nredirected+ndead+nunused.
  * Note that nunused is not explicitly stored, but may be found by reference
  * to the total record length.
+ *
+ * Requires a super-exclusive lock.
  */
-typedef struct xl_heap_clean
+typedef struct xl_heap_prune
 {
 	TransactionId latestRemovedXid;
 	uint16		nredirected;
 	uint16		ndead;
 	/* OFFSET NUMBERS are in the block reference 0 */
-} xl_heap_clean;
+} xl_heap_prune;
 
-#define SizeOfHeapClean (offsetof(xl_heap_clean, ndead) + sizeof(uint16))
+#define SizeOfHeapPrune (offsetof(xl_heap_prune, ndead) + sizeof(uint16))
 
 /*
- * Cleanup_info is required in some cases during a lazy VACUUM.
- * Used for reporting the results of HeapTupleHeaderAdvanceLatestRemovedXid()
- * see vacuumlazy.c for full explanation
+ * The vacuum page record is similar to the prune record, but can only mark
+ * already dead items as unused
+ *
+ * Used by heap vacuuming only.  Does not require a super-exclusive lock.
  */
-typedef struct xl_heap_cleanup_info
+typedef struct xl_heap_vacuum
 {
-	RelFileNode node;
-	TransactionId latestRemovedXid;
-} xl_heap_cleanup_info;
+	uint16		nunused;
+	/* OFFSET NUMBERS are in the block reference 0 */
+} xl_heap_vacuum;
 
-#define SizeOfHeapCleanupInfo (sizeof(xl_heap_cleanup_info))
+#define SizeOfHeapVacuum (offsetof(xl_heap_vacuum, nunused) + sizeof(uint16))
 
 /* flags for infobits_set */
 #define XLHL_XMAX_IS_MULTI		0x01
@@ -397,13 +401,6 @@ extern void heap2_desc(StringInfo buf, XLogReaderState *record);
 extern const char *heap2_identify(uint8 info);
 extern void heap_xlog_logical_rewrite(XLogReaderState *r);
 
-extern XLogRecPtr log_heap_cleanup_info(RelFileNode rnode,
-										TransactionId latestRemovedXid);
-extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
-								 OffsetNumber *redirected, int nredirected,
-								 OffsetNumber *nowdead, int ndead,
-								 OffsetNumber *nowunused, int nunused,
-								 TransactionId latestRemovedXid);
 extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
 								  TransactionId cutoff_xid, xl_heap_freeze_tuple *tuples,
 								  int ntuples);

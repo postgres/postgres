@@ -121,11 +121,20 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	info &= XLOG_HEAP_OPMASK;
-	if (info == XLOG_HEAP2_CLEAN)
+	if (info == XLOG_HEAP2_PRUNE)
 	{
-		xl_heap_clean *xlrec = (xl_heap_clean *) rec;
+		xl_heap_prune *xlrec = (xl_heap_prune *) rec;
 
-		appendStringInfo(buf, "latestRemovedXid %u", xlrec->latestRemovedXid);
+		appendStringInfo(buf, "latestRemovedXid %u nredirected %u ndead %u",
+						 xlrec->latestRemovedXid,
+						 xlrec->nredirected,
+						 xlrec->ndead);
+	}
+	else if (info == XLOG_HEAP2_VACUUM)
+	{
+		xl_heap_vacuum *xlrec = (xl_heap_vacuum *) rec;
+
+		appendStringInfo(buf, "nunused %u", xlrec->nunused);
 	}
 	else if (info == XLOG_HEAP2_FREEZE_PAGE)
 	{
@@ -133,12 +142,6 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "cutoff xid %u ntuples %u",
 						 xlrec->cutoff_xid, xlrec->ntuples);
-	}
-	else if (info == XLOG_HEAP2_CLEANUP_INFO)
-	{
-		xl_heap_cleanup_info *xlrec = (xl_heap_cleanup_info *) rec;
-
-		appendStringInfo(buf, "latestRemovedXid %u", xlrec->latestRemovedXid);
 	}
 	else if (info == XLOG_HEAP2_VISIBLE)
 	{
@@ -229,14 +232,14 @@ heap2_identify(uint8 info)
 
 	switch (info & ~XLR_INFO_MASK)
 	{
-		case XLOG_HEAP2_CLEAN:
-			id = "CLEAN";
+		case XLOG_HEAP2_PRUNE:
+			id = "PRUNE";
+			break;
+		case XLOG_HEAP2_VACUUM:
+			id = "VACUUM";
 			break;
 		case XLOG_HEAP2_FREEZE_PAGE:
 			id = "FREEZE_PAGE";
-			break;
-		case XLOG_HEAP2_CLEANUP_INFO:
-			id = "CLEANUP_INFO";
 			break;
 		case XLOG_HEAP2_VISIBLE:
 			id = "VISIBLE";

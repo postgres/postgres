@@ -3554,8 +3554,6 @@ xl_hash_split_complete
 xl_hash_squeeze_page
 xl_hash_update_meta_page
 xl_hash_vacuum_one_page
-xl_heap_clean
-xl_heap_cleanup_info
 xl_heap_confirm
 xl_heap_delete
 xl_heap_freeze_page
@@ -3567,9 +3565,11 @@ xl_heap_lock
 xl_heap_lock_updated
 xl_heap_multi_insert
 xl_heap_new_cid
+xl_heap_prune
 xl_heap_rewrite_mapping
 xl_heap_truncate
 xl_heap_update
+xl_heap_vacuum
 xl_heap_visible
 xl_invalid_page
 xl_invalid_page_key

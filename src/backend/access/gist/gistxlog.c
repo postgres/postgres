@@ -184,10 +184,10 @@ gistRedoDeleteRecord(XLogReaderState *record)
 	 *
 	 * GiST delete records can conflict with standby queries.  You might think
 	 * that vacuum records would conflict as well, but we've handled that
-	 * already.  XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
-	 * cleaned by the vacuum of the heap and so we can resolve any conflicts
-	 * just once when that arrives.  After that we know that no conflicts
-	 * exist from individual gist vacuum records on that index.
+	 * already.  XLOG_HEAP2_PRUNE records provide the highest xid cleaned by
+	 * the vacuum of the heap and so we can resolve any conflicts just once
+	 * when that arrives.  After that we know that no conflicts exist from
+	 * individual gist vacuum records on that index.
 	 */
 	if (InHotStandby)
 	{

@@ -182,13 +182,10 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 		 */
 		if (PageIsFull(page) || PageGetHeapFreeSpace(page) < minfree)
 		{
-			TransactionId ignore = InvalidTransactionId;	/* return value not
-															 * needed */
-
 			/* OK to prune */
 			(void) heap_page_prune(relation, buffer, vistest,
 								   limited_xmin, limited_ts,
-								   true, &ignore, NULL);
+								   true, NULL);
 		}
 
 		/* And release buffer lock */
@@ -213,8 +210,6 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * send its own new total to pgstats, and we don't want this delta applied
  * on top of that.)
  *
- * Sets latestRemovedXid for caller on return.
- *
  * off_loc is the offset location required by the caller to use in error
  * callback.
  *
@@ -225,7 +220,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 				GlobalVisState *vistest,
 				TransactionId old_snap_xmin,
 				TimestampTz old_snap_ts,
-				bool report_stats, TransactionId *latestRemovedXid,
+				bool report_stats,
 				OffsetNumber *off_loc)
 {
 	int			ndeleted = 0;
@@ -251,7 +246,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 	prstate.old_snap_xmin = old_snap_xmin;
 	prstate.old_snap_ts = old_snap_ts;
 	prstate.old_snap_used = false;
-	prstate.latestRemovedXid = *latestRemovedXid;
+	prstate.latestRemovedXid = InvalidTransactionId;
 	prstate.nredirected = prstate.ndead = prstate.nunused = 0;
 	memset(prstate.marked, 0, sizeof(prstate.marked));
 
@@ -318,17 +313,41 @@ heap_page_prune(Relation relation, Buffer buffer,
 		MarkBufferDirty(buffer);
 
 		/*
-		 * Emit a WAL XLOG_HEAP2_CLEAN record showing what we did
+		 * Emit a WAL XLOG_HEAP2_PRUNE record showing what we did
 		 */
 		if (RelationNeedsWAL(relation))
 		{
+			xl_heap_prune xlrec;
 			XLogRecPtr	recptr;
 
-			recptr = log_heap_clean(relation, buffer,
-									prstate.redirected, prstate.nredirected,
-									prstate.nowdead, prstate.ndead,
-									prstate.nowunused, prstate.nunused,
-									prstate.latestRemovedXid);
+			xlrec.latestRemovedXid = prstate.latestRemovedXid;
+			xlrec.nredirected = prstate.nredirected;
+			xlrec.ndead = prstate.ndead;
+
+			XLogBeginInsert();
+			XLogRegisterData((char *) &xlrec, SizeOfHeapPrune);
+
+			XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
+
+			/*
+			 * The OffsetNumber arrays are not actually in the buffer, but we
+			 * pretend that they are.  When XLogInsert stores the whole
+			 * buffer, the offset arrays need not be stored too.
+			 */
+			if (prstate.nredirected > 0)
+				XLogRegisterBufData(0, (char *) prstate.redirected,
+									prstate.nredirected *
+									sizeof(OffsetNumber) * 2);
+
+			if (prstate.ndead > 0)
+				XLogRegisterBufData(0, (char *) prstate.nowdead,
+									prstate.ndead * sizeof(OffsetNumber));
+
+			if (prstate.nunused > 0)
+				XLogRegisterBufData(0, (char *) prstate.nowunused,
+									prstate.nunused * sizeof(OffsetNumber));
+
+			recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_PRUNE);
 
 			PageSetLSN(BufferGetPage(buffer), recptr);
 		}
@@ -362,8 +381,6 @@ heap_page_prune(Relation relation, Buffer buffer,
 	 */
 	if (report_stats && ndeleted > prstate.ndead)
 		pgstat_update_heap_dead_tuples(relation, ndeleted - prstate.ndead);
-
-	*latestRemovedXid = prstate.latestRemovedXid;
 
 	/*
 	 * XXX Should we update the FSM information of this page ?
@@ -809,12 +826,8 @@ heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum)
 
 /*
  * Perform the actual page changes needed by heap_page_prune.
- * It is expected that the caller has suitable pin and lock on the
- * buffer, and is inside a critical section.
- *
- * This is split out because it is also used by heap_xlog_clean()
- * to replay the WAL record when needed after a crash.  Note that the
- * arguments are identical to those of log_heap_clean().
+ * It is expected that the caller has a super-exclusive lock on the
+ * buffer.
  */
 void
 heap_page_prune_execute(Buffer buffer,
@@ -825,6 +838,9 @@ heap_page_prune_execute(Buffer buffer,
 	Page		page = (Page) BufferGetPage(buffer);
 	OffsetNumber *offnum;
 	int			i;
+
+	/* Shouldn't be called unless there's something to do */
+	Assert(nredirected > 0 || ndead > 0 || nunused > 0);
 
 	/* Update all redirected line pointers */
 	offnum = redirected;
