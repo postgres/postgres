@@ -80,11 +80,20 @@ static void
 pqTraceFormatTimestamp(char *timestr, size_t ts_len)
 {
 	struct timeval tval;
+	time_t		now;
 
 	gettimeofday(&tval, NULL);
+
+	/*
+	 * MSVC's implementation of timeval uses a long for tv_sec, however,
+	 * localtime() expects a time_t pointer.  Here we'll assign tv_sec to a
+	 * local time_t variable so that we pass localtime() the correct pointer
+	 * type.
+	 */
+	now = tval.tv_sec;
 	strftime(timestr, ts_len,
 			 "%Y-%m-%d %H:%M:%S",
-			 localtime(&tval.tv_sec));
+			 localtime(&now));
 	/* append microseconds */
 	snprintf(timestr + strlen(timestr), ts_len - strlen(timestr),
 			 ".%06u", (unsigned int) (tval.tv_usec));
