@@ -1652,7 +1652,8 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER SUBSCRIPTION <name> */
 	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny))
 		COMPLETE_WITH("CONNECTION", "ENABLE", "DISABLE", "OWNER TO",
-					  "RENAME TO", "REFRESH PUBLICATION", "SET");
+					  "RENAME TO", "REFRESH PUBLICATION", "SET",
+					  "ADD PUBLICATION", "DROP PUBLICATION");
 	/* ALTER SUBSCRIPTION <name> REFRESH PUBLICATION */
 	else if (HeadMatches("ALTER", "SUBSCRIPTION", MatchAny) &&
 			 TailMatches("REFRESH", "PUBLICATION"))
@@ -1672,14 +1673,15 @@ psql_completion(const char *text, int start, int end)
 	{
 		/* complete with nothing here as this refers to remote publications */
 	}
-	/* ALTER SUBSCRIPTION <name> SET PUBLICATION <name> */
+	/* ALTER SUBSCRIPTION <name> ADD|DROP|SET PUBLICATION <name> */
 	else if (HeadMatches("ALTER", "SUBSCRIPTION", MatchAny) &&
-			 TailMatches("SET", "PUBLICATION", MatchAny))
+			 TailMatches("ADD|DROP|SET", "PUBLICATION", MatchAny))
 		COMPLETE_WITH("WITH (");
-	/* ALTER SUBSCRIPTION <name> SET PUBLICATION <name> WITH ( */
+	/* ALTER SUBSCRIPTION <name> ADD|DROP|SET PUBLICATION <name> WITH ( */
 	else if (HeadMatches("ALTER", "SUBSCRIPTION", MatchAny) &&
-			 TailMatches("SET", "PUBLICATION", MatchAny, "WITH", "("))
+			 TailMatches("ADD|DROP|SET", "PUBLICATION", MatchAny, "WITH", "("))
 		COMPLETE_WITH("copy_data", "refresh");
+
 	/* ALTER SCHEMA <name> */
 	else if (Matches("ALTER", "SCHEMA", MatchAny))
 		COMPLETE_WITH("OWNER TO", "RENAME TO");
