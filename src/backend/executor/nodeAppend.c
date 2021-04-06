@@ -1001,6 +1001,7 @@ ExecAppendAsyncEventWait(AppendState *node)
 	long		timeout = node->as_syncdone ? -1 : 0;
 	WaitEvent   occurred_event[EVENT_BUFFER_SIZE];
 	int			noccurred;
+	int			nevents;
 	int			i;
 
 	/* We should never be called when there are no valid async subplans. */
@@ -1022,8 +1023,9 @@ ExecAppendAsyncEventWait(AppendState *node)
 	}
 
 	/* Wait for at least one event to occur. */
+	nevents = Min(node->as_nasyncplans + 1, EVENT_BUFFER_SIZE);
 	noccurred = WaitEventSetWait(node->as_eventset, timeout, occurred_event,
-								 EVENT_BUFFER_SIZE, WAIT_EVENT_APPEND_READY);
+								 nevents, WAIT_EVENT_APPEND_READY);
 	FreeWaitEventSet(node->as_eventset);
 	node->as_eventset = NULL;
 	if (noccurred == 0)
