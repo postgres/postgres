@@ -512,10 +512,12 @@ typedef struct ResultRelInfo
 
 	/*
 	 * Map to convert child result relation tuples to the format of the table
-	 * actually mentioned in the query (called "root").  Set only if
-	 * transition tuple capture or update partition row movement is active.
+	 * actually mentioned in the query (called "root").  Computed only if
+	 * needed.  A NULL map value indicates that no conversion is needed, so we
+	 * must have a separate flag to show if the map has been computed.
 	 */
 	TupleConversionMap *ri_ChildToRootMap;
+	bool		ri_ChildToRootMapValid;
 
 	/* for use by copyfrom.c when performing multi-inserts */
 	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;

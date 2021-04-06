@@ -111,7 +111,6 @@ typedef struct PartitionPruneState
 } PartitionPruneState;
 
 extern PartitionTupleRouting *ExecSetupPartitionTupleRouting(EState *estate,
-															 ModifyTableState *mtstate,
 															 Relation rel);
 extern ResultRelInfo *ExecFindPartition(ModifyTableState *mtstate,
 										ResultRelInfo *rootResultRelInfo,

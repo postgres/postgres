@@ -493,6 +493,14 @@ ExecInsert(ModifyTableState *mtstate,
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/*
+	 * Open the table's indexes, if we have not done so already, so that we
+	 * can add new index entries for the inserted tuple.
+	 */
+	if (resultRelationDesc->rd_rel->relhasindex &&
+		resultRelInfo->ri_IndexRelationDescs == NULL)
+		ExecOpenIndices(resultRelInfo, onconflict != ONCONFLICT_NONE);
+
+	/*
 	 * BEFORE ROW INSERT Triggers.
 	 *
 	 * Note: We fire BEFORE ROW TRIGGERS for every attempted insertion in an
@@ -1276,7 +1284,6 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
 						 TupleTableSlot **inserted_tuple)
 {
 	EState	   *estate = mtstate->ps.state;
-	PartitionTupleRouting *proute = mtstate->mt_partition_tuple_routing;
 	TupleConversionMap *tupconv_map;
 	bool		tuple_deleted;
 	TupleTableSlot *epqslot = NULL;
@@ -1296,12 +1303,34 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
 				 errdetail("The result tuple would appear in a different partition than the original tuple.")));
 
 	/*
-	 * When an UPDATE is run on a leaf partition, we will not have partition
-	 * tuple routing set up.  In that case, fail with partition constraint
-	 * violation error.
+	 * When an UPDATE is run directly on a leaf partition, simply fail with a
+	 * partition constraint violation error.
 	 */
-	if (proute == NULL)
+	if (resultRelInfo == mtstate->rootResultRelInfo)
 		ExecPartitionCheckEmitError(resultRelInfo, slot, estate);
+
+	/* Initialize tuple routing info if not already done. */
+	if (mtstate->mt_partition_tuple_routing == NULL)
+	{
+		Relation	rootRel = mtstate->rootResultRelInfo->ri_RelationDesc;
+		MemoryContext oldcxt;
+
+		/* Things built here have to last for the query duration. */
+		oldcxt = MemoryContextSwitchTo(estate->es_query_cxt);
+
+		mtstate->mt_partition_tuple_routing =
+			ExecSetupPartitionTupleRouting(estate, rootRel);
+
+		/*
+		 * Before a partition's tuple can be re-routed, it must first be
+		 * converted to the root's format, so we'll need a slot for storing
+		 * such tuples.
+		 */
+		Assert(mtstate->mt_root_tuple_slot == NULL);
+		mtstate->mt_root_tuple_slot = table_slot_create(rootRel, NULL);
+
+		MemoryContextSwitchTo(oldcxt);
+	}
 
 	/*
 	 * Row movement, part 1.  Delete the tuple, but skip RETURNING processing.
@@ -1364,7 +1393,7 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
 	 * convert the tuple into root's tuple descriptor if needed, since
 	 * ExecInsert() starts the search from root.
 	 */
-	tupconv_map = resultRelInfo->ri_ChildToRootMap;
+	tupconv_map = ExecGetChildToRootMap(resultRelInfo);
 	if (tupconv_map != NULL)
 		slot = execute_attr_map_slot(tupconv_map->attrMap,
 									 slot,
@@ -1435,6 +1464,14 @@ ExecUpdate(ModifyTableState *mtstate,
 		elog(ERROR, "cannot UPDATE during bootstrap");
 
 	ExecMaterializeSlot(slot);
+
+	/*
+	 * Open the table's indexes, if we have not done so already, so that we
+	 * can add new index entries for the updated tuple.
+	 */
+	if (resultRelationDesc->rd_rel->relhasindex &&
+		resultRelInfo->ri_IndexRelationDescs == NULL)
+		ExecOpenIndices(resultRelInfo, false);
 
 	/* BEFORE ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
@@ -2244,38 +2281,8 @@ ExecModifyTable(PlanState *pstate)
 
 			/* If it's not the same as last time, we need to locate the rel */
 			if (resultoid != node->mt_lastResultOid)
-			{
-				if (node->mt_resultOidHash)
-				{
-					/* Use the pre-built hash table to locate the rel */
-					MTTargetRelLookup *mtlookup;
-
-					mtlookup = (MTTargetRelLookup *)
-						hash_search(node->mt_resultOidHash, &resultoid,
-									HASH_FIND, NULL);
-					if (!mtlookup)
-						elog(ERROR, "incorrect result rel OID %u", resultoid);
-					node->mt_lastResultOid = resultoid;
-					node->mt_lastResultIndex = mtlookup->relationIndex;
-					resultRelInfo = node->resultRelInfo + mtlookup->relationIndex;
-				}
-				else
-				{
-					/* With few target rels, just do a simple search */
-					int			ndx;
-
-					for (ndx = 0; ndx < node->mt_nrels; ndx++)
-					{
-						resultRelInfo = node->resultRelInfo + ndx;
-						if (RelationGetRelid(resultRelInfo->ri_RelationDesc) == resultoid)
-							break;
-					}
-					if (ndx >= node->mt_nrels)
-						elog(ERROR, "incorrect result rel OID %u", resultoid);
-					node->mt_lastResultOid = resultoid;
-					node->mt_lastResultIndex = ndx;
-				}
-			}
+				resultRelInfo = ExecLookupResultRelByOid(node, resultoid,
+														 false, true);
 		}
 
 		/*
@@ -2466,6 +2473,61 @@ ExecModifyTable(PlanState *pstate)
 	return NULL;
 }
 
+/*
+ * ExecLookupResultRelByOid
+ * 		If the table with given OID is among the result relations to be
+ * 		updated by the given ModifyTable node, return its ResultRelInfo.
+ *
+ * If not found, return NULL if missing_ok, else raise error.
+ *
+ * If update_cache is true, then upon successful lookup, update the node's
+ * one-element cache.  ONLY ExecModifyTable may pass true for this.
+ */
+ResultRelInfo *
+ExecLookupResultRelByOid(ModifyTableState *node, Oid resultoid,
+						 bool missing_ok, bool update_cache)
+{
+	if (node->mt_resultOidHash)
+	{
+		/* Use the pre-built hash table to locate the rel */
+		MTTargetRelLookup *mtlookup;
+
+		mtlookup = (MTTargetRelLookup *)
+			hash_search(node->mt_resultOidHash, &resultoid, HASH_FIND, NULL);
+		if (mtlookup)
+		{
+			if (update_cache)
+			{
+				node->mt_lastResultOid = resultoid;
+				node->mt_lastResultIndex = mtlookup->relationIndex;
+			}
+			return node->resultRelInfo + mtlookup->relationIndex;
+		}
+	}
+	else
+	{
+		/* With few target rels, just search the ResultRelInfo array */
+		for (int ndx = 0; ndx < node->mt_nrels; ndx++)
+		{
+			ResultRelInfo *rInfo = node->resultRelInfo + ndx;
+
+			if (RelationGetRelid(rInfo->ri_RelationDesc) == resultoid)
+			{
+				if (update_cache)
+				{
+					node->mt_lastResultOid = resultoid;
+					node->mt_lastResultIndex = ndx;
+				}
+				return rInfo;
+			}
+		}
+	}
+
+	if (!missing_ok)
+		elog(ERROR, "incorrect result relation OID %u", resultoid);
+	return NULL;
+}
+
 /* ----------------------------------------------------------------
  *		ExecInitModifyTable
  * ----------------------------------------------------------------
@@ -2482,7 +2544,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	ListCell   *l;
 	int			i;
 	Relation	rel;
-	bool		update_tuple_routing_needed = node->partColsUpdated;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -2554,7 +2615,17 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		Index		resultRelation = lfirst_int(l);
 
 		if (resultRelInfo != mtstate->rootResultRelInfo)
+		{
 			ExecInitResultRelation(estate, resultRelInfo, resultRelation);
+
+			/*
+			 * For child result relations, store the root result relation
+			 * pointer.  We do so for the convenience of places that want to
+			 * look at the query's original target relation but don't have the
+			 * mtstate handy.
+			 */
+			resultRelInfo->ri_RootResultRelInfo = mtstate->rootResultRelInfo;
+		}
 
 		/* Initialize the usesFdwDirectModify flag */
 		resultRelInfo->ri_usesFdwDirectModify = bms_is_member(i,
@@ -2581,32 +2652,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	{
 		resultRelInfo = &mtstate->resultRelInfo[i];
 
-		/*
-		 * If there are indices on the result relation, open them and save
-		 * descriptors in the result relation info, so that we can add new
-		 * index entries for the tuples we add/update.  We need not do this
-		 * for a DELETE, however, since deletion doesn't affect indexes. Also,
-		 * inside an EvalPlanQual operation, the indexes might be open
-		 * already, since we share the resultrel state with the original
-		 * query.
-		 */
-		if (resultRelInfo->ri_RelationDesc->rd_rel->relhasindex &&
-			operation != CMD_DELETE &&
-			resultRelInfo->ri_IndexRelationDescs == NULL)
-			ExecOpenIndices(resultRelInfo,
-							node->onConflictAction != ONCONFLICT_NONE);
-
-		/*
-		 * If this is an UPDATE and a BEFORE UPDATE trigger is present, the
-		 * trigger itself might modify the partition-key values. So arrange
-		 * for tuple routing.
-		 */
-		if (resultRelInfo->ri_TrigDesc &&
-			resultRelInfo->ri_TrigDesc->trig_update_before_row &&
-			operation == CMD_UPDATE)
-			update_tuple_routing_needed = true;
-
-		/* Also let FDWs init themselves for foreign-table result rels */
+		/* Let FDWs init themselves for foreign-table result rels */
 		if (!resultRelInfo->ri_usesFdwDirectModify &&
 			resultRelInfo->ri_FdwRoutine != NULL &&
 			resultRelInfo->ri_FdwRoutine->BeginForeignModify != NULL)
@@ -2619,52 +2665,20 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 															 i,
 															 eflags);
 		}
-
-		/*
-		 * If needed, initialize a map to convert tuples in the child format
-		 * to the format of the table mentioned in the query (root relation).
-		 * It's needed for update tuple routing, because the routing starts
-		 * from the root relation.  It's also needed for capturing transition
-		 * tuples, because the transition tuple store can only store tuples in
-		 * the root table format.
-		 *
-		 * For INSERT, the map is only initialized for a given partition when
-		 * the partition itself is first initialized by ExecFindPartition().
-		 */
-		if (update_tuple_routing_needed ||
-			(mtstate->mt_transition_capture &&
-			 mtstate->operation != CMD_INSERT))
-			resultRelInfo->ri_ChildToRootMap =
-				convert_tuples_by_name(RelationGetDescr(resultRelInfo->ri_RelationDesc),
-									   RelationGetDescr(mtstate->rootResultRelInfo->ri_RelationDesc));
 	}
 
 	/* Get the root target relation */
 	rel = mtstate->rootResultRelInfo->ri_RelationDesc;
 
 	/*
-	 * If it's not a partitioned table after all, UPDATE tuple routing should
-	 * not be attempted.
-	 */
-	if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-		update_tuple_routing_needed = false;
-
-	/*
-	 * Build state for tuple routing if it's an INSERT or if it's an UPDATE of
-	 * partition key.
+	 * Build state for tuple routing if it's a partitioned INSERT.  An UPDATE
+	 * might need this too, but only if it actually moves tuples between
+	 * partitions; in that case setup is done by ExecCrossPartitionUpdate.
 	 */
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
-		(operation == CMD_INSERT || update_tuple_routing_needed))
+		operation == CMD_INSERT)
 		mtstate->mt_partition_tuple_routing =
-			ExecSetupPartitionTupleRouting(estate, mtstate, rel);
-
-	/*
-	 * For update row movement we'll need a dedicated slot to store the tuples
-	 * that have been converted from partition format to the root table
-	 * format.
-	 */
-	if (update_tuple_routing_needed)
-		mtstate->mt_root_tuple_slot = table_slot_create(rel, NULL);
+			ExecSetupPartitionTupleRouting(estate, rel);
 
 	/*
 	 * Initialize any WITH CHECK OPTION constraints if needed.
@@ -2743,7 +2757,11 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/* Set the list of arbiter indexes if needed for ON CONFLICT */
 	resultRelInfo = mtstate->resultRelInfo;
 	if (node->onConflictAction != ONCONFLICT_NONE)
+	{
+		/* insert may only have one relation, inheritance is not expanded */
+		Assert(nrels == 1);
 		resultRelInfo->ri_onConflictArbiterIndexes = node->arbiterIndexes;
+	}
 
 	/*
 	 * If needed, Initialize target list, projection and qual for ON CONFLICT
@@ -2754,9 +2772,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		ExprContext *econtext;
 		TupleDesc	relationDesc;
 		TupleDesc	tupDesc;
-
-		/* insert may only have one relation, inheritance is not expanded */
-		Assert(nrels == 1);
 
 		/* already exists if created by RETURNING processing above */
 		if (mtstate->ps.ps_ExprContext == NULL)
@@ -3036,22 +3051,20 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 */
 	if (operation == CMD_INSERT)
 	{
+		/* insert may only have one relation, inheritance is not expanded */
+		Assert(nrels == 1);
 		resultRelInfo = mtstate->resultRelInfo;
-		for (i = 0; i < nrels; i++)
+		if (!resultRelInfo->ri_usesFdwDirectModify &&
+			resultRelInfo->ri_FdwRoutine != NULL &&
+			resultRelInfo->ri_FdwRoutine->GetForeignModifyBatchSize &&
+			resultRelInfo->ri_FdwRoutine->ExecForeignBatchInsert)
 		{
-			if (!resultRelInfo->ri_usesFdwDirectModify &&
-				resultRelInfo->ri_FdwRoutine != NULL &&
-				resultRelInfo->ri_FdwRoutine->GetForeignModifyBatchSize &&
-				resultRelInfo->ri_FdwRoutine->ExecForeignBatchInsert)
-				resultRelInfo->ri_BatchSize =
-					resultRelInfo->ri_FdwRoutine->GetForeignModifyBatchSize(resultRelInfo);
-			else
-				resultRelInfo->ri_BatchSize = 1;
-
+			resultRelInfo->ri_BatchSize =
+				resultRelInfo->ri_FdwRoutine->GetForeignModifyBatchSize(resultRelInfo);
 			Assert(resultRelInfo->ri_BatchSize >= 1);
-
-			resultRelInfo++;
 		}
+		else
+			resultRelInfo->ri_BatchSize = 1;
 	}
 
 	/*

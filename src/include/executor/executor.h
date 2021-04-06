@@ -596,6 +596,7 @@ extern int	ExecCleanTargetListLength(List *targetlist);
 extern TupleTableSlot *ExecGetTriggerOldSlot(EState *estate, ResultRelInfo *relInfo);
 extern TupleTableSlot *ExecGetTriggerNewSlot(EState *estate, ResultRelInfo *relInfo);
 extern TupleTableSlot *ExecGetReturningSlot(EState *estate, ResultRelInfo *relInfo);
+extern TupleConversionMap *ExecGetChildToRootMap(ResultRelInfo *resultRelInfo);
 
 extern Bitmapset *ExecGetInsertedCols(ResultRelInfo *relinfo, EState *estate);
 extern Bitmapset *ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate);
@@ -645,9 +646,15 @@ extern void CheckCmdReplicaIdentity(Relation rel, CmdType cmd);
 extern void CheckSubscriptionRelkind(char relkind, const char *nspname,
 									 const char *relname);
 
-/* needed by trigger.c */
+/*
+ * prototypes from functions in nodeModifyTable.c
+ */
 extern TupleTableSlot *ExecGetUpdateNewTuple(ResultRelInfo *relinfo,
 											 TupleTableSlot *planSlot,
 											 TupleTableSlot *oldSlot);
+extern ResultRelInfo *ExecLookupResultRelByOid(ModifyTableState *node,
+											   Oid resultoid,
+											   bool missing_ok,
+											   bool update_cache);
 
 #endif							/* EXECUTOR_H  */

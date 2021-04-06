@@ -697,7 +697,7 @@ CopyFrom(CopyFromState cstate)
 	 * CopyFrom tuple routing.
 	 */
 	if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-		proute = ExecSetupPartitionTupleRouting(estate, NULL, cstate->rel);
+		proute = ExecSetupPartitionTupleRouting(estate, cstate->rel);
 
 	if (cstate->whereClause)
 		cstate->qualexpr = ExecInitQual(castNode(List, cstate->whereClause),

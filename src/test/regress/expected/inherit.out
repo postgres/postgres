@@ -2492,7 +2492,7 @@ ERROR:  new row for relation "errtst_child_plaindef" violates check constraint "
 DETAIL:  Failing row contains (10, 1, 15).
 UPDATE errtst_parent SET data = data + 10 WHERE partid = 20;
 ERROR:  new row for relation "errtst_child_reorder" violates check constraint "errtst_child_reorder_data_check"
-DETAIL:  Failing row contains (15, 1, 20).
+DETAIL:  Failing row contains (20, 1, 15).
 -- direct leaf partition update, without partition id violation
 BEGIN;
 UPDATE errtst_child_fastdef SET partid = 1 WHERE partid = 0;

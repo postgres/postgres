@@ -720,7 +720,7 @@ DETAIL:  Failing row contains (a, b, c) = (aaa, null, null).
 -- simple update.
 UPDATE errtst SET b = NULL;
 ERROR:  null value in column "b" of relation "errtst_part_1" violates not-null constraint
-DETAIL:  Failing row contains (b) = (null).
+DETAIL:  Failing row contains (a, b, c) = (aaa, null, ccc).
 -- partitioning key is updated, doesn't move the row.
 UPDATE errtst SET a = 'aaa', b = NULL;
 ERROR:  null value in column "b" of relation "errtst_part_1" violates not-null constraint

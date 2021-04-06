@@ -1231,11 +1231,19 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_ReturningSlot = NULL;
 	resultRelInfo->ri_TrigOldSlot = NULL;
 	resultRelInfo->ri_TrigNewSlot = NULL;
+
+	/*
+	 * Only ExecInitPartitionInfo() and ExecInitPartitionDispatchInfo() pass
+	 * non-NULL partition_root_rri.  For child relations that are part of the
+	 * initial query rather than being dynamically added by tuple routing,
+	 * this field is filled in ExecInitModifyTable().
+	 */
 	resultRelInfo->ri_RootResultRelInfo = partition_root_rri;
 	resultRelInfo->ri_RootToPartitionMap = NULL;	/* set by
 													 * ExecInitRoutingInfo */
 	resultRelInfo->ri_PartitionTupleSlot = NULL;	/* ditto */
 	resultRelInfo->ri_ChildToRootMap = NULL;
+	resultRelInfo->ri_ChildToRootMapValid = false;
 	resultRelInfo->ri_CopyMultiInsertBuffer = NULL;
 }
 

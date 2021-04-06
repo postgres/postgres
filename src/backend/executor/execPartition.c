@@ -66,11 +66,17 @@
  *
  * partitions
  *		Array of 'max_partitions' elements containing a pointer to a
- *		ResultRelInfo for every leaf partitions touched by tuple routing.
+ *		ResultRelInfo for every leaf partition touched by tuple routing.
  *		Some of these are pointers to ResultRelInfos which are borrowed out of
- *		'subplan_resultrel_htab'.  The remainder have been built especially
- *		for tuple routing.  See comment for PartitionDispatchData->indexes for
- *		details on how this array is indexed.
+ *		the owning ModifyTableState node.  The remainder have been built
+ *		especially for tuple routing.  See comment for
+ *		PartitionDispatchData->indexes for details on how this array is
+ *		indexed.
+ *
+ * is_borrowed_rel
+ *		Array of 'max_partitions' booleans recording whether a given entry
+ *		in 'partitions' is a ResultRelInfo pointer borrowed from the owning
+ *		ModifyTableState node, rather than being built here.
  *
  * num_partitions
  *		The current number of items stored in the 'partitions' array.  Also
@@ -79,12 +85,6 @@
  *
  * max_partitions
  *		The current allocated size of the 'partitions' array.
- *
- * subplan_resultrel_htab
- *		Hash table to store subplan ResultRelInfos by Oid.  This is used to
- *		cache ResultRelInfos from targets of an UPDATE ModifyTable node;
- *		NULL in other cases.  Some of these may be useful for tuple routing
- *		to save having to build duplicates.
  *
  * memcxt
  *		Memory context used to allocate subsidiary structs.
@@ -98,9 +98,9 @@ struct PartitionTupleRouting
 	int			num_dispatch;
 	int			max_dispatch;
 	ResultRelInfo **partitions;
+	bool	   *is_borrowed_rel;
 	int			num_partitions;
 	int			max_partitions;
-	HTAB	   *subplan_resultrel_htab;
 	MemoryContext memcxt;
 };
 
@@ -153,16 +153,7 @@ typedef struct PartitionDispatchData
 	int			indexes[FLEXIBLE_ARRAY_MEMBER];
 }			PartitionDispatchData;
 
-/* struct to hold result relations coming from UPDATE subplans */
-typedef struct SubplanResultRelHashElem
-{
-	Oid			relid;			/* hash key -- must be first */
-	ResultRelInfo *rri;
-} SubplanResultRelHashElem;
 
-
-static void ExecHashSubPlanResultRelsByOid(ModifyTableState *mtstate,
-										   PartitionTupleRouting *proute);
 static ResultRelInfo *ExecInitPartitionInfo(ModifyTableState *mtstate,
 											EState *estate, PartitionTupleRouting *proute,
 											PartitionDispatch dispatch,
@@ -173,7 +164,8 @@ static void ExecInitRoutingInfo(ModifyTableState *mtstate,
 								PartitionTupleRouting *proute,
 								PartitionDispatch dispatch,
 								ResultRelInfo *partRelInfo,
-								int partidx);
+								int partidx,
+								bool is_borrowed_rel);
 static PartitionDispatch ExecInitPartitionDispatchInfo(EState *estate,
 													   PartitionTupleRouting *proute,
 													   Oid partoid, PartitionDispatch parent_pd,
@@ -215,11 +207,9 @@ static void find_matching_subplans_recurse(PartitionPruningData *prunedata,
  * it should be estate->es_query_cxt.
  */
 PartitionTupleRouting *
-ExecSetupPartitionTupleRouting(EState *estate, ModifyTableState *mtstate,
-							   Relation rel)
+ExecSetupPartitionTupleRouting(EState *estate, Relation rel)
 {
 	PartitionTupleRouting *proute;
-	ModifyTable *node = mtstate ? (ModifyTable *) mtstate->ps.plan : NULL;
 
 	/*
 	 * Here we attempt to expend as little effort as possible in setting up
@@ -240,17 +230,6 @@ ExecSetupPartitionTupleRouting(EState *estate, ModifyTableState *mtstate,
 	 */
 	ExecInitPartitionDispatchInfo(estate, proute, RelationGetRelid(rel),
 								  NULL, 0, NULL);
-
-	/*
-	 * If performing an UPDATE with tuple routing, we can reuse partition
-	 * sub-plan result rels.  We build a hash table to map the OIDs of
-	 * partitions present in mtstate->resultRelInfo to their ResultRelInfos.
-	 * Every time a tuple is routed to a partition that we've yet to set the
-	 * ResultRelInfo for, before we go to the trouble of making one, we check
-	 * for a pre-made one in the hash table.
-	 */
-	if (node && node->operation == CMD_UPDATE)
-		ExecHashSubPlanResultRelsByOid(mtstate, proute);
 
 	return proute;
 }
@@ -351,7 +330,6 @@ ExecFindPartition(ModifyTableState *mtstate,
 		is_leaf = partdesc->is_leaf[partidx];
 		if (is_leaf)
 		{
-
 			/*
 			 * We've reached the leaf -- hurray, we're done.  Look to see if
 			 * we've already got a ResultRelInfo for this partition.
@@ -364,42 +342,33 @@ ExecFindPartition(ModifyTableState *mtstate,
 			}
 			else
 			{
-				bool		found = false;
-
 				/*
-				 * We have not yet set up a ResultRelInfo for this partition,
-				 * but if we have a subplan hash table, we might have one
-				 * there.  If not, we'll have to create one.
+				 * If the partition is known in the owning ModifyTableState
+				 * node, we can re-use that ResultRelInfo instead of creating
+				 * a new one with ExecInitPartitionInfo().
 				 */
-				if (proute->subplan_resultrel_htab)
+				rri = ExecLookupResultRelByOid(mtstate,
+											   partdesc->oids[partidx],
+											   true, false);
+				if (rri)
 				{
-					Oid			partoid = partdesc->oids[partidx];
-					SubplanResultRelHashElem *elem;
+					/* Verify this ResultRelInfo allows INSERTs */
+					CheckValidResultRel(rri, CMD_INSERT);
 
-					elem = hash_search(proute->subplan_resultrel_htab,
-									   &partoid, HASH_FIND, NULL);
-					if (elem)
-					{
-						found = true;
-						rri = elem->rri;
-
-						/* Verify this ResultRelInfo allows INSERTs */
-						CheckValidResultRel(rri, CMD_INSERT);
-
-						/*
-						 * Initialize information needed to insert this and
-						 * subsequent tuples routed to this partition.
-						 */
-						ExecInitRoutingInfo(mtstate, estate, proute, dispatch,
-											rri, partidx);
-					}
+					/*
+					 * Initialize information needed to insert this and
+					 * subsequent tuples routed to this partition.
+					 */
+					ExecInitRoutingInfo(mtstate, estate, proute, dispatch,
+										rri, partidx, true);
 				}
-
-				/* We need to create a new one. */
-				if (!found)
+				else
+				{
+					/* We need to create a new one. */
 					rri = ExecInitPartitionInfo(mtstate, estate, proute,
 												dispatch,
 												rootResultRelInfo, partidx);
+				}
 			}
 			Assert(rri != NULL);
 
@@ -510,50 +479,6 @@ ExecFindPartition(ModifyTableState *mtstate,
 }
 
 /*
- * ExecHashSubPlanResultRelsByOid
- *		Build a hash table to allow fast lookups of subplan ResultRelInfos by
- *		partition Oid.  We also populate the subplan ResultRelInfo with an
- *		ri_PartitionRoot.
- */
-static void
-ExecHashSubPlanResultRelsByOid(ModifyTableState *mtstate,
-							   PartitionTupleRouting *proute)
-{
-	HASHCTL		ctl;
-	HTAB	   *htab;
-	int			i;
-
-	ctl.keysize = sizeof(Oid);
-	ctl.entrysize = sizeof(SubplanResultRelHashElem);
-	ctl.hcxt = CurrentMemoryContext;
-
-	htab = hash_create("PartitionTupleRouting table", mtstate->mt_nrels,
-					   &ctl, HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
-	proute->subplan_resultrel_htab = htab;
-
-	/* Hash all subplans by their Oid */
-	for (i = 0; i < mtstate->mt_nrels; i++)
-	{
-		ResultRelInfo *rri = &mtstate->resultRelInfo[i];
-		bool		found;
-		Oid			partoid = RelationGetRelid(rri->ri_RelationDesc);
-		SubplanResultRelHashElem *elem;
-
-		elem = (SubplanResultRelHashElem *)
-			hash_search(htab, &partoid, HASH_ENTER, &found);
-		Assert(!found);
-		elem->rri = rri;
-
-		/*
-		 * This is required in order to convert the partition's tuple to be
-		 * compatible with the root partitioned table's tuple descriptor. When
-		 * generating the per-subplan result rels, this was not set.
-		 */
-		rri->ri_RootResultRelInfo = mtstate->rootResultRelInfo;
-	}
-}
-
-/*
  * ExecInitPartitionInfo
  *		Lock the partition and initialize ResultRelInfo.  Also setup other
  *		information for the partition and store it in the next empty slot in
@@ -613,7 +538,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * didn't build the withCheckOptionList for partitions within the planner,
 	 * but simple translation of varattnos will suffice.  This only occurs for
 	 * the INSERT case or in the case of UPDATE tuple routing where we didn't
-	 * find a result rel to reuse in ExecSetupPartitionTupleRouting().
+	 * find a result rel to reuse.
 	 */
 	if (node && node->withCheckOptionLists != NIL)
 	{
@@ -676,7 +601,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * build the returningList for partitions within the planner, but simple
 	 * translation of varattnos will suffice.  This only occurs for the INSERT
 	 * case or in the case of UPDATE tuple routing where we didn't find a
-	 * result rel to reuse in ExecSetupPartitionTupleRouting().
+	 * result rel to reuse.
 	 */
 	if (node && node->returningLists != NIL)
 	{
@@ -734,7 +659,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 
 	/* Set up information needed for routing tuples to the partition. */
 	ExecInitRoutingInfo(mtstate, estate, proute, dispatch,
-						leaf_part_rri, partidx);
+						leaf_part_rri, partidx, false);
 
 	/*
 	 * If there is an ON CONFLICT clause, initialize state for it.
@@ -911,15 +836,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	}
 
 	/*
-	 * Also, if transition capture is required, store a map to convert tuples
-	 * from partition's rowtype to the root partition table's.
-	 */
-	if (mtstate->mt_transition_capture || mtstate->mt_oc_transition_capture)
-		leaf_part_rri->ri_ChildToRootMap =
-			convert_tuples_by_name(RelationGetDescr(leaf_part_rri->ri_RelationDesc),
-								   RelationGetDescr(rootResultRelInfo->ri_RelationDesc));
-
-	/*
 	 * Since we've just initialized this ResultRelInfo, it's not in any list
 	 * attached to the estate as yet.  Add it, so that it can be found later.
 	 *
@@ -949,7 +865,8 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 					PartitionTupleRouting *proute,
 					PartitionDispatch dispatch,
 					ResultRelInfo *partRelInfo,
-					int partidx)
+					int partidx,
+					bool is_borrowed_rel)
 {
 	ResultRelInfo *rootRelInfo = partRelInfo->ri_RootResultRelInfo;
 	MemoryContext oldcxt;
@@ -1029,6 +946,8 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 			proute->max_partitions = 8;
 			proute->partitions = (ResultRelInfo **)
 				palloc(sizeof(ResultRelInfo *) * proute->max_partitions);
+			proute->is_borrowed_rel = (bool *)
+				palloc(sizeof(bool) * proute->max_partitions);
 		}
 		else
 		{
@@ -1036,10 +955,14 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 			proute->partitions = (ResultRelInfo **)
 				repalloc(proute->partitions, sizeof(ResultRelInfo *) *
 						 proute->max_partitions);
+			proute->is_borrowed_rel = (bool *)
+				repalloc(proute->is_borrowed_rel, sizeof(bool) *
+						 proute->max_partitions);
 		}
 	}
 
 	proute->partitions[rri_index] = partRelInfo;
+	proute->is_borrowed_rel[rri_index] = is_borrowed_rel;
 	dispatch->indexes[partidx] = rri_index;
 
 	MemoryContextSwitchTo(oldcxt);
@@ -1199,7 +1122,6 @@ void
 ExecCleanupTupleRouting(ModifyTableState *mtstate,
 						PartitionTupleRouting *proute)
 {
-	HTAB	   *htab = proute->subplan_resultrel_htab;
 	int			i;
 
 	/*
@@ -1230,20 +1152,11 @@ ExecCleanupTupleRouting(ModifyTableState *mtstate,
 														   resultRelInfo);
 
 		/*
-		 * Check if this result rel is one belonging to the node's subplans,
-		 * if so, let ExecEndPlan() clean it up.
+		 * Close it if it's not one of the result relations borrowed from the
+		 * owning ModifyTableState; those will be closed by ExecEndPlan().
 		 */
-		if (htab)
-		{
-			Oid			partoid;
-			bool		found;
-
-			partoid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
-
-			(void) hash_search(htab, &partoid, HASH_FIND, &found);
-			if (found)
-				continue;
-		}
+		if (proute->is_borrowed_rel[i])
+			continue;
 
 		ExecCloseIndices(resultRelInfo);
 		table_close(resultRelInfo->ri_RelationDesc, NoLock);

@@ -1583,7 +1583,7 @@ apply_handle_tuple_routing(ResultRelInfo *relinfo,
 	mtstate->ps.state = estate;
 	mtstate->operation = operation;
 	mtstate->resultRelInfo = relinfo;
-	proute = ExecSetupPartitionTupleRouting(estate, mtstate, parentrel);
+	proute = ExecSetupPartitionTupleRouting(estate, parentrel);
 
 	/*
 	 * Find the partition to which the "search tuple" belongs.
