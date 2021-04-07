@@ -32,7 +32,14 @@ SELECT count(*) FROM oidtmp WHERE oid >  17;
    983
 (1 row)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX oididx ON oidtmp USING gist ( oid );
+DEBUG:  building index "oididx" on table "oidtmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX oididx_b ON oidtmp USING gist ( oid ) WITH (buffering=on);
+DEBUG:  building index "oididx_b" on table "oidtmp" serially
+DROP INDEX oididx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM oidtmp WHERE oid <  17;
  count 

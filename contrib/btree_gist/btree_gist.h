@@ -6,6 +6,7 @@
 
 #include "access/nbtree.h"
 #include "fmgr.h"
+#include "utils/sortsupport.h"
 
 #define BtreeGistNotEqualStrategyNumber 6
 

@@ -32,7 +32,14 @@ SELECT count(*) FROM bittmp WHERE a >   '011011000100010111011000110000100';
    350
 (1 row)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX bitidx ON bittmp USING GIST ( a );
+DEBUG:  building index "bitidx" on table "bittmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX bitidx_b ON bittmp USING GIST ( a ) WITH (buffering=on);
+DEBUG:  building index "bitidx_b" on table "bittmp" serially
+DROP INDEX bitidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM bittmp WHERE a <   '011011000100010111011000110000100';
  count 

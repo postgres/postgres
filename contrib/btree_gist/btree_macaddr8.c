@@ -25,6 +25,7 @@ PG_FUNCTION_INFO_V1(gbt_macad8_picksplit);
 PG_FUNCTION_INFO_V1(gbt_macad8_consistent);
 PG_FUNCTION_INFO_V1(gbt_macad8_penalty);
 PG_FUNCTION_INFO_V1(gbt_macad8_same);
+PG_FUNCTION_INFO_V1(gbt_macad8_sortsupport);
 
 
 static bool
@@ -194,4 +195,81 @@ gbt_macad8_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_macad8_sort_build_cmp(Datum a, Datum b, SortSupport ssup)
+{
+	mac8KEY    *ma = (mac8KEY *) DatumGetPointer(a);
+	mac8KEY    *mb = (mac8KEY *) DatumGetPointer(b);
+	uint64		ia = mac8_2_uint64(&ma->lower);
+	uint64		ib = mac8_2_uint64(&mb->lower);
+
+	/* for leaf items we expect lower == upper */
+
+	if (ia == ib)
+		return 0;
+
+	return (ia > ib) ? 1 : -1;
+}
+
+static Datum
+gbt_macad8_abbrev_convert(Datum original, SortSupport ssup)
+{
+	mac8KEY    *b1 = (mac8KEY *) DatumGetPointer(original);
+	uint64		z = mac8_2_uint64(&b1->lower);
+
+#if SIZEOF_DATUM == 8
+	return UInt64GetDatum(z);
+#else
+	/* use the high bits only */
+	return UInt32GetDatum(z >> 32);
+#endif
+}
+
+static int
+gbt_macad8_cmp_abbrev(Datum z1, Datum z2, SortSupport ssup)
+{
+#if SIZEOF_DATUM == 8
+	uint64		a = DatumGetUInt64(z1);
+	uint64		b = DatumGetUInt64(z2);
+#else
+	uint32		a = DatumGetUInt32(z1);
+	uint32		b = DatumGetUInt32(z2);
+#endif
+
+	if (a > b)
+		return 1;
+	else if (a < b)
+		return -1;
+	else
+		return 0;
+}
+
+static bool
+gbt_macad8_abbrev_abort(int memtupcount, SortSupport ssup)
+{
+	return false;
+}
+
+/*
+ * Sort support routine for fast GiST index build by sorting.
+ */
+Datum
+gbt_macad8_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	if (ssup->abbreviate)
+	{
+		ssup->comparator = gbt_macad8_cmp_abbrev;
+		ssup->abbrev_converter = gbt_macad8_abbrev_convert;
+		ssup->abbrev_abort = gbt_macad8_abbrev_abort;
+		ssup->abbrev_full_comparator = gbt_macad8_sort_build_cmp;
+	}
+	else
+	{
+		ssup->comparator = gbt_macad8_sort_build_cmp;
+	}
+	PG_RETURN_VOID();
 }

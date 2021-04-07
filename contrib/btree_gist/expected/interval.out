@@ -40,7 +40,14 @@ SELECT a, a <-> '199 days 21:21:23' FROM intervaltmp ORDER BY a <-> '199 days 21
  @ 220 days 19 hours 5 mins 42 secs  | @ 21 days -2 hours -15 mins -41 secs
 (3 rows)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX intervalidx ON intervaltmp USING gist ( a );
+DEBUG:  building index "intervalidx" on table "intervaltmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX intervalidx_b ON intervaltmp USING gist ( a ) WITH (buffering=on);
+DEBUG:  building index "intervalidx_b" on table "intervaltmp" serially
+DROP INDEX intervalidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM intervaltmp WHERE a <  '199 days 21:21:23'::interval;
  count 

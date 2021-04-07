@@ -42,7 +42,11 @@ INSERT INTO timetzcmp (r_id,a) SELECT 25,count(*) FROM timetztmp WHERE a >  '07:
 
 
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX timetzidx ON timetztmp USING gist ( a );
+CREATE INDEX timetzidx_b ON timetztmp USING gist ( a ) WITH (buffering=on);
+DROP INDEX timetzidx_b;
+RESET client_min_messages;
 
 SET enable_seqscan=off;
 

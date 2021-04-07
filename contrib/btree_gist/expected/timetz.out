@@ -18,7 +18,14 @@ INSERT INTO timetzcmp (r_id,a) SELECT 22,count(*) FROM timetztmp WHERE a <= '07:
 INSERT INTO timetzcmp (r_id,a) SELECT 23,count(*) FROM timetztmp WHERE a  = '07:46:45 GMT+4';
 INSERT INTO timetzcmp (r_id,a) SELECT 24,count(*) FROM timetztmp WHERE a >= '07:46:45 GMT+4';
 INSERT INTO timetzcmp (r_id,a) SELECT 25,count(*) FROM timetztmp WHERE a >  '07:46:45 GMT+4';
+SET client_min_messages = DEBUG1;
 CREATE INDEX timetzidx ON timetztmp USING gist ( a );
+DEBUG:  building index "timetzidx" on table "timetztmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX timetzidx_b ON timetztmp USING gist ( a ) WITH (buffering=on);
+DEBUG:  building index "timetzidx_b" on table "timetztmp" serially
+DROP INDEX timetzidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 UPDATE timetzcmp SET b=c FROM ( SELECT count(*) AS c FROM timetztmp WHERE a <  '07:46:45 GMT+3'::timetz ) q WHERE r_id=1 ;
 UPDATE timetzcmp SET b=c FROM ( SELECT count(*) AS c FROM timetztmp WHERE a <= '07:46:45 GMT+3'::timetz ) q WHERE r_id=2 ;

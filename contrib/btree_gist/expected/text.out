@@ -33,7 +33,14 @@ SELECT count(*) FROM texttmp WHERE a >   '31b0';
    400
 (1 row)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX textidx ON texttmp USING GIST ( a );
+DEBUG:  building index "textidx" on table "texttmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX textidx_b ON texttmp USING GIST ( a ) WITH (buffering=on);
+DEBUG:  building index "textidx_b" on table "texttmp" serially
+DROP INDEX textidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM texttmp WHERE a <   '31b0'::text;
  count 

@@ -40,7 +40,14 @@ SELECT a, a <-> '10:57:11' FROM timetmp ORDER BY a <-> '10:57:11' LIMIT 3;
  10:55:32 | @ 1 min 39 secs
 (3 rows)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX timeidx ON timetmp USING gist ( a );
+DEBUG:  building index "timeidx" on table "timetmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX timeidx_b ON timetmp USING gist ( a ) WITH (buffering=on);
+DEBUG:  building index "timeidx_b" on table "timetmp" serially
+DROP INDEX timeidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM timetmp WHERE a <  '10:57:11'::time;
  count 

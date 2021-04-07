@@ -18,6 +18,7 @@ PG_FUNCTION_INFO_V1(gbt_bytea_picksplit);
 PG_FUNCTION_INFO_V1(gbt_bytea_consistent);
 PG_FUNCTION_INFO_V1(gbt_bytea_penalty);
 PG_FUNCTION_INFO_V1(gbt_bytea_same);
+PG_FUNCTION_INFO_V1(gbt_bytea_sortsupport);
 
 
 /* define for comparison */
@@ -87,7 +88,7 @@ static const gbtree_vinfo tinfo =
 
 
 /**************************************************
- * Text ops
+ * Bytea ops
  **************************************************/
 
 
@@ -167,4 +168,27 @@ gbt_bytea_penalty(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(gbt_var_penalty(result, o, n, PG_GET_COLLATION(),
 									  &tinfo, fcinfo->flinfo));
+}
+
+static int
+gbt_bytea_sort_build_cmp(Datum a, Datum b, SortSupport ssup)
+{
+	return DatumGetInt32(DirectFunctionCall2(byteacmp,
+											 PointerGetDatum(a),
+											 PointerGetDatum(b)));
+}
+
+/*
+ * Sort support routine for fast GiST index build by sorting.
+ */
+Datum
+gbt_bytea_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_bytea_sort_build_cmp;
+	ssup->abbrev_converter = NULL;
+	ssup->abbrev_abort = NULL;
+	ssup->abbrev_full_comparator = NULL;
+	PG_RETURN_VOID();
 }

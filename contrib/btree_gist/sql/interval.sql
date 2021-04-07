@@ -18,7 +18,11 @@ SELECT count(*) FROM intervaltmp WHERE a >  '199 days 21:21:23';
 
 SELECT a, a <-> '199 days 21:21:23' FROM intervaltmp ORDER BY a <-> '199 days 21:21:23' LIMIT 3;
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX intervalidx ON intervaltmp USING gist ( a );
+CREATE INDEX intervalidx_b ON intervaltmp USING gist ( a ) WITH (buffering=on);
+DROP INDEX intervalidx_b;
+RESET client_min_messages;
 
 SET enable_seqscan=off;
 

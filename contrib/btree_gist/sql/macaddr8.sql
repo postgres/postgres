@@ -16,7 +16,11 @@ SELECT count(*) FROM macaddr8tmp WHERE a >= '22:00:5c:e5:9b:0d';
 
 SELECT count(*) FROM macaddr8tmp WHERE a >  '22:00:5c:e5:9b:0d';
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX macaddr8idx ON macaddr8tmp USING gist ( a );
+CREATE INDEX macaddr8idx_b ON macaddr8tmp USING gist ( a ) WITH (buffering=on);
+DROP INDEX macaddr8idx_b;
+RESET client_min_messages;
 
 SET enable_seqscan=off;
 

@@ -18,7 +18,11 @@ SELECT count(*) FROM float4tmp WHERE a >  -179.0;
 
 SELECT a, a <-> '-179.0' FROM float4tmp ORDER BY a <-> '-179.0' LIMIT 3;
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX float4idx ON float4tmp USING gist ( a );
+CREATE INDEX float4idx_b ON float4tmp USING gist ( a ) WITH (buffering=on);
+DROP INDEX float4idx_b;
+RESET client_min_messages;
 
 SET enable_seqscan=off;
 

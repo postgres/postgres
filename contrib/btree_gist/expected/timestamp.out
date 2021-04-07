@@ -40,7 +40,14 @@ SELECT a, a <-> '2004-10-26 08:55:08' FROM timestamptmp ORDER BY a <-> '2004-10-
  Mon Nov 29 20:12:43 2004 | @ 34 days 11 hours 17 mins 35 secs
 (3 rows)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX timestampidx ON timestamptmp USING gist ( a );
+DEBUG:  building index "timestampidx" on table "timestamptmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX timestampidx_b ON timestamptmp USING gist ( a ) WITH (buffering=on);
+DEBUG:  building index "timestampidx_b" on table "timestamptmp" serially
+DROP INDEX timestampidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM timestamptmp WHERE a <  '2004-10-26 08:55:08'::timestamp;
  count 

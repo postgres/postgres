@@ -39,7 +39,11 @@ SELECT count(*) FROM timestamptztmp WHERE a >  '2018-12-18 10:59:54 GMT+4';
 
 SELECT a, a <-> '2018-12-18 10:59:54 GMT+2' FROM timestamptztmp ORDER BY a <-> '2018-12-18 10:59:54 GMT+2' LIMIT 3;
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX timestamptzidx ON timestamptztmp USING gist ( a );
+CREATE INDEX timestamptzidx_b ON timestamptztmp USING gist ( a ) WITH (buffering=on);
+DROP INDEX timestamptzidx_b;
+RESET client_min_messages;
 
 SET enable_seqscan=off;
 

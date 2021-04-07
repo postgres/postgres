@@ -16,7 +16,11 @@ SELECT count(*) FROM inettmp WHERE a >= '89.225.196.191';
 
 SELECT count(*) FROM inettmp WHERE a >  '89.225.196.191';
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX inetidx ON inettmp USING gist ( a );
+CREATE INDEX inetidx_b ON inettmp USING gist ( a ) WITH (buffering=on);
+DROP INDEX inetidx_b;
+RESET client_min_messages;
 
 SET enable_seqscan=off;
 

@@ -100,7 +100,14 @@ SELECT a, a <-> '2018-12-18 10:59:54 GMT+2' FROM timestamptztmp ORDER BY a <-> '
  Thu Jan 24 12:28:12 2019 PST | @ 37 days 7 hours 28 mins 18 secs
 (3 rows)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX timestamptzidx ON timestamptztmp USING gist ( a );
+DEBUG:  building index "timestamptzidx" on table "timestamptztmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX timestamptzidx_b ON timestamptztmp USING gist ( a ) WITH (buffering=on);
+DEBUG:  building index "timestamptzidx_b" on table "timestamptztmp" serially
+DROP INDEX timestamptzidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM timestamptztmp WHERE a <  '2018-12-18 10:59:54 GMT+3'::timestamptz;
  count 

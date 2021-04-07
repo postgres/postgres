@@ -17,7 +17,11 @@ SELECT count(*) FROM byteatmp WHERE a >=  '31b0';
 
 SELECT count(*) FROM byteatmp WHERE a >   '31b0';
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX byteaidx ON byteatmp USING GIST ( a );
+CREATE INDEX byteaidx_b ON byteatmp USING GIST ( a ) WITH (buffering=on);
+DROP INDEX byteaidx_b;
+RESET client_min_messages;
 
 SET enable_seqscan=off;
 

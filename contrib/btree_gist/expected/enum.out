@@ -46,7 +46,14 @@ SELECT count(*) FROM enumtmp WHERE a >  'g'::rainbow;
    230
 (1 row)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX enumidx ON enumtmp USING gist ( a );
+DEBUG:  building index "enumidx" on table "enumtmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX enumidx_b ON enumtmp USING gist ( a ) WITH (buffering=on);
+DEBUG:  building index "enumidx_b" on table "enumtmp" serially
+DROP INDEX enumidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM enumtmp WHERE a <  'g'::rainbow;
  count 

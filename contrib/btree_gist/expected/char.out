@@ -32,7 +32,14 @@ SELECT count(*) FROM chartmp WHERE a >   '31b0'::char(32);
    400
 (1 row)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX charidx ON chartmp USING GIST ( a );
+DEBUG:  building index "charidx" on table "chartmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX charidx_b ON chartmp USING GIST ( a ) WITH (buffering=on);
+DEBUG:  building index "charidx_b" on table "chartmp" serially
+DROP INDEX charidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM chartmp WHERE a <   '31b0'::char(32);
  count 

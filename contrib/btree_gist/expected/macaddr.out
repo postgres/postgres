@@ -32,7 +32,14 @@ SELECT count(*) FROM macaddrtmp WHERE a >  '22:00:5c:e5:9b:0d';
    540
 (1 row)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX macaddridx ON macaddrtmp USING gist ( a );
+DEBUG:  building index "macaddridx" on table "macaddrtmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX macaddridx_b ON macaddrtmp USING gist ( a ) WITH (buffering=on);
+DEBUG:  building index "macaddridx_b" on table "macaddrtmp" serially
+DROP INDEX macaddridx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM macaddrtmp WHERE a <  '22:00:5c:e5:9b:0d'::macaddr;
  count 

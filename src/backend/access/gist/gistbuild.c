@@ -260,6 +260,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 		/*
 		 * Sort all data, build the index from bottom up.
 		 */
+		elog(DEBUG1, "using sorted GiST build");
 		buildstate.sortstate = tuplesort_begin_index_gist(heap,
 														  index,
 														  maintenance_work_mem,

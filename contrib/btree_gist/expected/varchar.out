@@ -32,7 +32,14 @@ SELECT count(*) FROM vchartmp WHERE a >   '31b0'::varchar(32);
    400
 (1 row)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX vcharidx ON vchartmp USING GIST ( text(a) );
+DEBUG:  building index "vcharidx" on table "vchartmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX vcharidx_b ON vchartmp USING GIST ( text(a) ) WITH (buffering=on);
+DEBUG:  building index "vcharidx_b" on table "vchartmp" serially
+DROP INDEX vcharidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM vchartmp WHERE a <   '31b0'::varchar(32);
  count 

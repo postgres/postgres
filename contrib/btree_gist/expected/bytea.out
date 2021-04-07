@@ -33,7 +33,14 @@ SELECT count(*) FROM byteatmp WHERE a >   '31b0';
    400
 (1 row)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX byteaidx ON byteatmp USING GIST ( a );
+DEBUG:  building index "byteaidx" on table "byteatmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX byteaidx_b ON byteatmp USING GIST ( a ) WITH (buffering=on);
+DEBUG:  building index "byteaidx_b" on table "byteatmp" serially
+DROP INDEX byteaidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM byteatmp WHERE a <   '31b0'::bytea;
  count 

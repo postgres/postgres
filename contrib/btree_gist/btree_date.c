@@ -25,6 +25,7 @@ PG_FUNCTION_INFO_V1(gbt_date_consistent);
 PG_FUNCTION_INFO_V1(gbt_date_distance);
 PG_FUNCTION_INFO_V1(gbt_date_penalty);
 PG_FUNCTION_INFO_V1(gbt_date_same);
+PG_FUNCTION_INFO_V1(gbt_date_sortsupport);
 
 static bool
 gbt_dategt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -256,4 +257,30 @@ gbt_date_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_date_sort_build_cmp(Datum a, Datum b, SortSupport ssup)
+{
+	dateKEY    *ia = (dateKEY *) PointerGetDatum(a);
+	dateKEY    *ib = (dateKEY *) PointerGetDatum(b);
+
+	return DatumGetInt32(DirectFunctionCall2(date_cmp,
+											 DateADTGetDatum(ia->lower),
+											 DateADTGetDatum(ib->lower)));
+}
+
+/*
+ * Sort support routine for fast GiST index build by sorting.
+ */
+Datum
+gbt_date_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_date_sort_build_cmp;
+	ssup->abbrev_converter = NULL;
+	ssup->abbrev_abort = NULL;
+	ssup->abbrev_full_comparator = NULL;
+	PG_RETURN_VOID();
 }

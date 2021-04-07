@@ -40,7 +40,14 @@ SELECT a, a <-> '-1890.0' FROM float8tmp ORDER BY a <-> '-1890.0' LIMIT 3;
   -1769.73634 | 120.26366000000007
 (3 rows)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX float8idx ON float8tmp USING gist ( a );
+DEBUG:  building index "float8idx" on table "float8tmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX float8idx_b ON float8tmp USING gist ( a ) WITH (buffering=on);
+DEBUG:  building index "float8idx_b" on table "float8tmp" serially
+DROP INDEX float8idx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM float8tmp WHERE a <  -1890.0::float8;
  count 

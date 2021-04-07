@@ -40,7 +40,14 @@ SELECT a, a <-> '2001-02-13' FROM datetmp ORDER BY a <-> '2001-02-13' LIMIT 3;
  03-24-2001 |       39
 (3 rows)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX dateidx ON datetmp USING gist ( a );
+DEBUG:  building index "dateidx" on table "datetmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX dateidx_b ON datetmp USING gist ( a ) WITH (buffering=on);
+DEBUG:  building index "dateidx_b" on table "datetmp" serially
+DROP INDEX dateidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM datetmp WHERE a <  '2001-02-13'::date;
  count 

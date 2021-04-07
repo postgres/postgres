@@ -23,6 +23,7 @@ PG_FUNCTION_INFO_V1(gbt_oid_consistent);
 PG_FUNCTION_INFO_V1(gbt_oid_distance);
 PG_FUNCTION_INFO_V1(gbt_oid_penalty);
 PG_FUNCTION_INFO_V1(gbt_oid_same);
+PG_FUNCTION_INFO_V1(gbt_oid_sortsupport);
 
 
 static bool
@@ -214,4 +215,73 @@ gbt_oid_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_oid_sort_build_cmp(Datum a, Datum b, SortSupport ssup)
+{
+	oidKEY	   *ia = (oidKEY *) DatumGetPointer(a);
+	oidKEY	   *ib = (oidKEY *) DatumGetPointer(b);
+
+	/* for leaf items we expect lower == upper */
+	Assert(ia->lower == ia->upper);
+	Assert(ib->lower == ib->upper);
+
+	if (ia->lower == ib->lower)
+		return 0;
+
+	return (ia->lower > ib->lower) ? 1 : -1;
+}
+
+static Datum
+gbt_oid_abbrev_convert(Datum original, SortSupport ssup)
+{
+	oidKEY	   *b1 = (oidKEY *) DatumGetPointer(original);
+
+	return ObjectIdGetDatum(b1->lower);
+}
+
+static int
+gbt_oid_cmp_abbrev(Datum z1, Datum z2, SortSupport ssup)
+{
+	Oid			a = DatumGetObjectId(z1);
+	Oid			b = DatumGetObjectId(z2);
+
+	if (a > b)
+		return 1;
+	else if (a < b)
+		return -1;
+	else
+		return 0;
+}
+
+/*
+ * We never consider aborting the abbreviation.
+ */
+static bool
+gbt_oid_abbrev_abort(int memtupcount, SortSupport ssup)
+{
+	return false;
+}
+
+/*
+ * Sort support routine for fast GiST index build by sorting.
+ */
+Datum
+gbt_oid_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	if (ssup->abbreviate)
+	{
+		ssup->comparator = gbt_oid_cmp_abbrev;
+		ssup->abbrev_converter = gbt_oid_abbrev_convert;
+		ssup->abbrev_abort = gbt_oid_abbrev_abort;
+		ssup->abbrev_full_comparator = gbt_oid_sort_build_cmp;
+	}
+	else
+	{
+		ssup->comparator = gbt_oid_sort_build_cmp;
+	}
+	PG_RETURN_VOID();
 }

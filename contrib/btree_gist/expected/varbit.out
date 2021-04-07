@@ -32,7 +32,14 @@ SELECT count(*) FROM varbittmp WHERE a >   '1110100111010';
     50
 (1 row)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX varbitidx ON varbittmp USING GIST ( a );
+DEBUG:  building index "varbitidx" on table "varbittmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX varbitidx_b ON varbittmp USING GIST ( a ) WITH (buffering=on);
+DEBUG:  building index "varbitidx_b" on table "varbittmp" serially
+DROP INDEX varbitidx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM varbittmp WHERE a <   '1110100111010'::varbit;
  count 

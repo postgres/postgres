@@ -32,7 +32,14 @@ SELECT count(*) FROM uuidtmp WHERE a >  '55e65ca2-4136-4a4b-ba78-cd3fe4678203';
    375
 (1 row)
 
+SET client_min_messages = DEBUG1;
 CREATE INDEX uuididx ON uuidtmp USING gist ( a );
+DEBUG:  building index "uuididx" on table "uuidtmp" serially
+DEBUG:  using sorted GiST build
+CREATE INDEX uuididx_b ON uuidtmp USING gist ( a ) WITH (buffering=on);
+DEBUG:  building index "uuididx_b" on table "uuidtmp" serially
+DROP INDEX uuididx_b;
+RESET client_min_messages;
 SET enable_seqscan=off;
 SELECT count(*) FROM uuidtmp WHERE a <  '55e65ca2-4136-4a4b-ba78-cd3fe4678203'::uuid;
  count 

@@ -21,6 +21,7 @@ PG_FUNCTION_INFO_V1(gbt_numeric_picksplit);
 PG_FUNCTION_INFO_V1(gbt_numeric_consistent);
 PG_FUNCTION_INFO_V1(gbt_numeric_penalty);
 PG_FUNCTION_INFO_V1(gbt_numeric_same);
+PG_FUNCTION_INFO_V1(gbt_numeric_sortsupport);
 
 
 /* define for comparison */
@@ -226,4 +227,32 @@ gbt_numeric_picksplit(PG_FUNCTION_ARGS)
 	gbt_var_picksplit(entryvec, v, PG_GET_COLLATION(),
 					  &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(v);
+}
+
+static int
+gbt_numeric_sort_build_cmp(Datum a, Datum b, SortSupport ssup)
+{
+	return DatumGetInt32(DirectFunctionCall2(numeric_cmp,
+											 PointerGetDatum(a),
+											 PointerGetDatum(b)));
+}
+
+/*
+ * Sort support routine for fast GiST index build by sorting.
+ */
+Datum
+gbt_numeric_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_numeric_sort_build_cmp;
+
+	/*
+	 * Numeric has abbreviation routines in numeric.c, but we don't try to use
+	 * them here. Maybe later.
+	 */
+	ssup->abbrev_converter = NULL;
+	ssup->abbrev_abort = NULL;
+	ssup->abbrev_full_comparator = NULL;
+	PG_RETURN_VOID();
 }

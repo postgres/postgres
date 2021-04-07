@@ -28,6 +28,7 @@ PG_FUNCTION_INFO_V1(gbt_time_distance);
 PG_FUNCTION_INFO_V1(gbt_timetz_consistent);
 PG_FUNCTION_INFO_V1(gbt_time_penalty);
 PG_FUNCTION_INFO_V1(gbt_time_same);
+PG_FUNCTION_INFO_V1(gbt_time_sortsupport);
 
 
 #ifdef USE_FLOAT8_BYVAL
@@ -331,4 +332,30 @@ gbt_time_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_time_sort_build_cmp(Datum a, Datum b, SortSupport ssup)
+{
+	timeKEY    *ia = (timeKEY *) DatumGetPointer(a);
+	timeKEY    *ib = (timeKEY *) DatumGetPointer(b);
+
+	return DatumGetInt32(DirectFunctionCall2(time_cmp,
+											 TimeADTGetDatumFast(ia->lower),
+											 TimeADTGetDatumFast(ib->lower)));
+}
+
+/*
+ * Sort support routine for fast GiST index build by sorting.
+ */
+Datum
+gbt_time_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_time_sort_build_cmp;
+	ssup->abbrev_converter = NULL;
+	ssup->abbrev_abort = NULL;
+	ssup->abbrev_full_comparator = NULL;
+	PG_RETURN_VOID();
 }

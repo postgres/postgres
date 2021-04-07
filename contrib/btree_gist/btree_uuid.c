@@ -25,6 +25,7 @@ PG_FUNCTION_INFO_V1(gbt_uuid_picksplit);
 PG_FUNCTION_INFO_V1(gbt_uuid_consistent);
 PG_FUNCTION_INFO_V1(gbt_uuid_penalty);
 PG_FUNCTION_INFO_V1(gbt_uuid_same);
+PG_FUNCTION_INFO_V1(gbt_uuid_sortsupport);
 
 
 static int
@@ -232,4 +233,28 @@ gbt_uuid_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_uuid_sort_build_cmp(Datum a, Datum b, SortSupport ssup)
+{
+	uuidKEY    *ua = (uuidKEY *) DatumGetPointer(a);
+	uuidKEY    *ub = (uuidKEY *) DatumGetPointer(b);
+
+	return uuid_internal_cmp(&ua->lower, &ub->lower);
+}
+
+/*
+ * Sort support routine for fast GiST index build by sorting.
+ */
+Datum
+gbt_uuid_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_uuid_sort_build_cmp;
+	ssup->abbrev_converter = NULL;
+	ssup->abbrev_abort = NULL;
+	ssup->abbrev_full_comparator = NULL;
+	PG_RETURN_VOID();
 }
