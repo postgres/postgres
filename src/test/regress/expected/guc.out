@@ -511,6 +511,27 @@ SET seq_page_cost TO 'NaN';
 ERROR:  invalid value for parameter "seq_page_cost": "NaN"
 SET vacuum_cost_delay TO '10s';
 ERROR:  10000 ms is outside the valid range for parameter "vacuum_cost_delay" (0 .. 100)
+SET no_such_variable TO 42;
+ERROR:  unrecognized configuration parameter "no_such_variable"
+-- Test "custom" GUCs created on the fly (which aren't really an
+-- intended feature, but many people use them).
+SET custom.my_guc = 42;
+SHOW custom.my_guc;
+ custom.my_guc 
+---------------
+ 42
+(1 row)
+
+SET custom."bad-guc" = 42;  -- disallowed because -c cannot set this name
+ERROR:  invalid configuration parameter name "custom.bad-guc"
+DETAIL:  Custom parameter names must be of the form "identifier.identifier".
+SHOW custom."bad-guc";
+ERROR:  unrecognized configuration parameter "custom.bad-guc"
+SET special."weird name" = 'foo';  -- could be allowed, but we choose not to
+ERROR:  invalid configuration parameter name "special.weird name"
+DETAIL:  Custom parameter names must be of the form "identifier.identifier".
+SHOW special."weird name";
+ERROR:  unrecognized configuration parameter "special.weird name"
 --
 -- Test DISCARD TEMP
 --

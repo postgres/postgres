@@ -147,6 +147,16 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 -- Test some simple error cases
 SET seq_page_cost TO 'NaN';
 SET vacuum_cost_delay TO '10s';
+SET no_such_variable TO 42;
+
+-- Test "custom" GUCs created on the fly (which aren't really an
+-- intended feature, but many people use them).
+SET custom.my_guc = 42;
+SHOW custom.my_guc;
+SET custom."bad-guc" = 42;  -- disallowed because -c cannot set this name
+SHOW custom."bad-guc";
+SET special."weird name" = 'foo';  -- could be allowed, but we choose not to
+SHOW special."weird name";
 
 --
 -- Test DISCARD TEMP
