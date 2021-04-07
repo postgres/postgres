@@ -163,11 +163,12 @@ sub test_access
 	# need to connect over TCP/IP for Kerberos
 	my $res = $node->psql(
 		'postgres',
-		'SELECT 1',
+		undef,
 		extra_params => [
 			'-d',
 			$node->connstr('postgres') . " host=$host hostaddr=$hostaddr",
-			'-U', $role
+			'-U', $role,
+			'-c', 'SELECT 1'
 		]);
 	is($res, $expected_res, $test_name);
 	return;
