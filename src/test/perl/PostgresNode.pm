@@ -1920,7 +1920,17 @@ sub connect_ok
 	if (@log_like or @log_unlike)
 	{
 		# Don't let previous log entries match for this connection.
-		truncate $self->logfile, 0;
+		# On Windows, the truncation would not work, so rotate the log
+		# file before restarting the server afresh.
+		if ($TestLib::windows_os)
+		{
+			$self->rotate_logfile;
+			$self->restart;
+		}
+		else
+		{
+			truncate $self->logfile, 0;
+		}
 	}
 
 	# Never prompt for a password, any callers of this routine should
@@ -1994,7 +2004,17 @@ sub connect_fails
 	if (@log_like or @log_unlike)
 	{
 		# Don't let previous log entries match for this connection.
-		truncate $self->logfile, 0;
+		# On Windows, the truncation would not work, so rotate the log
+		# file before restarting the server afresh.
+		if ($TestLib::windows_os)
+		{
+			$self->rotate_logfile;
+			$self->restart;
+		}
+		else
+		{
+			truncate $self->logfile, 0;
+		}
 	}
 
 	# Never prompt for a password, any callers of this routine should
