@@ -379,7 +379,7 @@ set_authn_id(Port *port, const char *id)
 		ereport(LOG,
 				errmsg("connection authenticated: identity=\"%s\" method=%s "
 					   "(%s:%d)",
-					   port->authn_id, hba_authname(port), HbaFileName,
+					   port->authn_id, hba_authname(port->hba->auth_method), HbaFileName,
 					   port->hba->linenumber));
 	}
 }

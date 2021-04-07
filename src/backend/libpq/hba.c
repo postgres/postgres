@@ -2607,14 +2607,8 @@ fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
 		else
 			nulls[index++] = true;
 
-		/*
-		 * Make sure UserAuthName[] tracks additions to the UserAuth enum
-		 */
-		StaticAssertStmt(lengthof(UserAuthName) == USER_AUTH_LAST + 1,
-						 "UserAuthName[] must match the UserAuth enum");
-
 		/* auth_method */
-		values[index++] = CStringGetTextDatum(UserAuthName[hba->auth_method]);
+		values[index++] = CStringGetTextDatum(hba_authname(hba->auth_method));
 
 		/* options */
 		options = gethba_options(hba);
@@ -3150,18 +3144,13 @@ hba_getauthmethod(hbaPort *port)
  * should not be freed.
  */
 const char *
-hba_authname(hbaPort *port)
+hba_authname(UserAuth auth_method)
 {
-	UserAuth	auth_method;
-
-	Assert(port->hba);
-	auth_method = port->hba->auth_method;
-
-	if (auth_method < 0 || USER_AUTH_LAST < auth_method)
-	{
-		/* Should never happen. */
-		elog(FATAL, "port has out-of-bounds UserAuth: %d", auth_method);
-	}
+	/*
+	 * Make sure UserAuthName[] tracks additions to the UserAuth enum
+	 */
+	StaticAssertStmt(lengthof(UserAuthName) == USER_AUTH_LAST + 1,
+					 "UserAuthName[] must match the UserAuth enum");
 
 	return UserAuthName[auth_method];
 }
