@@ -1390,136 +1390,18 @@ check_tuple_attribute(HeapCheckContext *ctx)
 static void
 check_tuple(HeapCheckContext *ctx)
 {
-	TransactionId xmin;
-	TransactionId xmax;
-	bool		fatal = false;
-	uint16		infomask = ctx->tuphdr->t_infomask;
-
-	/* If xmin is normal, it should be within valid range */
-	xmin = HeapTupleHeaderGetXmin(ctx->tuphdr);
-	switch (get_xid_status(xmin, ctx, NULL))
-	{
-		case XID_INVALID:
-		case XID_BOUNDS_OK:
-			break;
-		case XID_IN_FUTURE:
-			report_corruption(ctx,
-							  psprintf("xmin %u equals or exceeds next valid transaction ID %u:%u",
-									   xmin,
-									   EpochFromFullTransactionId(ctx->next_fxid),
-									   XidFromFullTransactionId(ctx->next_fxid)));
-			fatal = true;
-			break;
-		case XID_PRECEDES_CLUSTERMIN:
-			report_corruption(ctx,
-							  psprintf("xmin %u precedes oldest valid transaction ID %u:%u",
-									   xmin,
-									   EpochFromFullTransactionId(ctx->oldest_fxid),
-									   XidFromFullTransactionId(ctx->oldest_fxid)));
-			fatal = true;
-			break;
-		case XID_PRECEDES_RELMIN:
-			report_corruption(ctx,
-							  psprintf("xmin %u precedes relation freeze threshold %u:%u",
-									   xmin,
-									   EpochFromFullTransactionId(ctx->relfrozenfxid),
-									   XidFromFullTransactionId(ctx->relfrozenfxid)));
-			fatal = true;
-			break;
-	}
-
-	xmax = HeapTupleHeaderGetRawXmax(ctx->tuphdr);
-
-	if (infomask & HEAP_XMAX_IS_MULTI)
-	{
-		/* xmax is a multixact, so it should be within valid MXID range */
-		switch (check_mxid_valid_in_rel(xmax, ctx))
-		{
-			case XID_INVALID:
-				report_corruption(ctx,
-								  pstrdup("multitransaction ID is invalid"));
-				fatal = true;
-				break;
-			case XID_PRECEDES_RELMIN:
-				report_corruption(ctx,
-								  psprintf("multitransaction ID %u precedes relation minimum multitransaction ID threshold %u",
-										   xmax, ctx->relminmxid));
-				fatal = true;
-				break;
-			case XID_PRECEDES_CLUSTERMIN:
-				report_corruption(ctx,
-								  psprintf("multitransaction ID %u precedes oldest valid multitransaction ID threshold %u",
-										   xmax, ctx->oldest_mxact));
-				fatal = true;
-				break;
-			case XID_IN_FUTURE:
-				report_corruption(ctx,
-								  psprintf("multitransaction ID %u equals or exceeds next valid multitransaction ID %u",
-										   xmax,
-										   ctx->next_mxact));
-				fatal = true;
-				break;
-			case XID_BOUNDS_OK:
-				break;
-		}
-	}
-	else
-	{
-		/*
-		 * xmax is not a multixact and is normal, so it should be within the
-		 * valid XID range.
-		 */
-		switch (get_xid_status(xmax, ctx, NULL))
-		{
-			case XID_INVALID:
-			case XID_BOUNDS_OK:
-				break;
-			case XID_IN_FUTURE:
-				report_corruption(ctx,
-								  psprintf("xmax %u equals or exceeds next valid transaction ID %u:%u",
-										   xmax,
-										   EpochFromFullTransactionId(ctx->next_fxid),
-										   XidFromFullTransactionId(ctx->next_fxid)));
-				fatal = true;
-				break;
-			case XID_PRECEDES_CLUSTERMIN:
-				report_corruption(ctx,
-								  psprintf("xmax %u precedes oldest valid transaction ID %u:%u",
-										   xmax,
-										   EpochFromFullTransactionId(ctx->oldest_fxid),
-										   XidFromFullTransactionId(ctx->oldest_fxid)));
-				fatal = true;
-				break;
-			case XID_PRECEDES_RELMIN:
-				report_corruption(ctx,
-								  psprintf("xmax %u precedes relation freeze threshold %u:%u",
-										   xmax,
-										   EpochFromFullTransactionId(ctx->relfrozenfxid),
-										   XidFromFullTransactionId(ctx->relfrozenfxid)));
-				fatal = true;
-		}
-	}
-
 	/*
-	 * Cannot process tuple data if tuple header was corrupt, as the offsets
-	 * within the page cannot be trusted, leaving too much risk of reading
-	 * garbage if we continue.
-	 *
-	 * We also cannot process the tuple if the xmin or xmax were invalid
-	 * relative to relfrozenxid or relminmxid, as clog entries for the xids
-	 * may already be gone.
-	 */
-	if (fatal)
-		return;
-
-	/*
-	 * Check various forms of tuple header corruption.  If the header is too
-	 * corrupt to continue checking, or if the tuple is not visible to anyone,
-	 * we cannot continue with other checks.
+	 * Check various forms of tuple header corruption, and if the header is too
+	 * corrupt, do not continue with other checks.
 	 */
 	if (!check_tuple_header(ctx))
 		return;
 
+	/*
+	 * Check tuple visibility.  If the inserting transaction aborted, we
+	 * cannot assume our relation description matches the tuple structure, and
+	 * therefore cannot check it.
+	 */
 	if (!check_tuple_visibility(ctx))
 		return;
 
