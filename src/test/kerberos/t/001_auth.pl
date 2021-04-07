@@ -177,13 +177,15 @@ sub test_access
 	# need to connect over TCP/IP for Kerberos
 	my ($res, $stdoutres, $stderrres) = $node->psql(
 		'postgres',
-		"$query",
+		undef,
 		extra_params => [
 			'-XAtd',
 			$node->connstr('postgres')
 			  . " host=$host hostaddr=$hostaddr $gssencmode",
 			'-U',
-			$role
+			$role,
+			'-c',
+			$query
 		]);
 
 	# If we get a query result back, it should be true.
