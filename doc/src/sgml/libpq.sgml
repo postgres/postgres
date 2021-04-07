@@ -1777,6 +1777,27 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-sslsni" xreflabel="sslsni">
+      <term><literal>sslsni</literal><indexterm><primary>Server Name Indication</primary></indexterm></term>
+      <listitem>
+       <para>
+        By default, libpq sets the TLS extension <quote>Server Name
+        Indication</quote> (SNI) on SSL-enabled connections.  See <ulink
+        url="https://tools.ietf.org/html/rfc6066#section-3">RFC 6066</ulink>
+        for details.  By setting this parameter to 0, this is turned off.
+       </para>
+
+       <para>
+        The Server Name Indication can be used by SSL-aware proxies to route
+        connections without having to decrypt the SSL stream.  (Note that this
+        requires a proxy that is aware of the PostgreSQL protocol handshake,
+        not just any SSL proxy.)  However, SNI makes the destination host name
+        appear in cleartext in the network traffic, so it might be undesirable
+        in some cases.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-requirepeer" xreflabel="requirepeer">
       <term><literal>requirepeer</literal></term>
       <listitem>
@@ -7794,6 +7815,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGSSLCRL</envar>  behaves the same as the <xref
       linkend="libpq-connect-sslcrl"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGSSLSNI</envar></primary>
+      </indexterm>
+      <envar>PGSSLSNI</envar>  behaves the same as the <xref
+      linkend="libpq-connect-sslsni"/> connection parameter.
      </para>
     </listitem>
 

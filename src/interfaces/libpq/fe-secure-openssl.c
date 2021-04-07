@@ -1083,6 +1083,28 @@ initialize_SSL(PGconn *conn)
 	SSL_context = NULL;
 
 	/*
+	 * Set Server Name Indication (SNI), if enabled by connection parameters.
+	 * Per RFC 6066, do not set it if the host is a literal IP address (IPv4
+	 * or IPv6).
+	 */
+	if (conn->sslsni && conn->sslsni[0] &&
+		!(strspn(conn->pghost, "0123456789.") == strlen(conn->pghost) ||
+		  strchr(conn->pghost, ':')))
+	{
+		if (SSL_set_tlsext_host_name(conn->ssl, conn->pghost) != 1)
+		{
+			char	   *err = SSLerrmessage(ERR_get_error());
+
+			appendPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not set SSL Server Name Indication (SNI): %s\n"),
+							  err);
+			SSLerrfree(err);
+			SSL_CTX_free(SSL_context);
+			return -1;
+		}
+	}
+
+	/*
 	 * Read the SSL key. If a key is specified, treat it as an engine:key
 	 * combination if there is colon present - we don't support files with
 	 * colon in the name. The exception is if the second character is a colon,

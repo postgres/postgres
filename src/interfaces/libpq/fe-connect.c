@@ -303,6 +303,10 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"SSL-Revocation-List-Dir", "", 64,
 	offsetof(struct pg_conn, sslcrldir)},
 
+	{"sslsni", "PGSSLSNI", "1", NULL,
+		"SSL-SNI", "", 1,
+	offsetof(struct pg_conn, sslsni)},
+
 	{"requirepeer", "PGREQUIREPEER", NULL, NULL,
 		"Require-Peer", "", 10,
 	offsetof(struct pg_conn, requirepeer)},
@@ -4095,6 +4099,8 @@ freePGconn(PGconn *conn)
 		free(conn->sslcrldir);
 	if (conn->sslcompression)
 		free(conn->sslcompression);
+	if (conn->sslsni)
+		free(conn->sslsni);
 	if (conn->requirepeer)
 		free(conn->requirepeer);
 	if (conn->ssl_min_protocol_version)

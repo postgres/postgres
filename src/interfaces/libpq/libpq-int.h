@@ -383,6 +383,7 @@ struct pg_conn
 	char	   *sslrootcert;	/* root certificate filename */
 	char	   *sslcrl;			/* certificate revocation list filename */
 	char	   *sslcrldir;		/* certificate revocation list directory name */
+	char	   *sslsni;			/* use SSL SNI extension (0 or 1) */
 	char	   *requirepeer;	/* required peer credentials for local sockets */
 	char	   *gssencmode;		/* GSS mode (require,prefer,disable) */
 	char	   *krbsrvname;		/* Kerberos service name */
