@@ -15,10 +15,12 @@
 #define ANALYZE_H
 
 #include "parser/parse_node.h"
+#include "utils/queryjumble.h"
 
 /* Hook for plugins to get control at end of parse analysis */
 typedef void (*post_parse_analyze_hook_type) (ParseState *pstate,
-											  Query *query);
+											  Query *query,
+											  JumbleState *jstate);
 extern PGDLLIMPORT post_parse_analyze_hook_type post_parse_analyze_hook;
 
 

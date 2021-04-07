@@ -7622,6 +7622,31 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <title>Statistics Monitoring</title>
      <variablelist>
 
+     <varlistentry id="guc-compute-query-id" xreflabel="compute_query_id">
+      <term><varname>compute_query_id</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>compute_query_id</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables in-core computation of a query identifier.  The <xref
+        linkend="pgstatstatements"/> extension requires a query identifier
+        to be computed.  Note that an external module can alternatively
+        be used if the in-core query identifier computation method
+        isn't acceptable.  In this case, in-core computation should
+        remain disabled.  The default is <literal>off</literal>.
+       </para>
+       <note>
+        <para>
+         To ensure that a only one query identifier is calculated and
+         displayed, extensions that calculate query identifiers should
+         throw an error if a query identifier has already been computed.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><varname>log_statement_stats</varname> (<type>boolean</type>)
       <indexterm>

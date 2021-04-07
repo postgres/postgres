@@ -248,6 +248,7 @@ extern bool log_btree_build_stats;
 extern PGDLLIMPORT bool check_function_bodies;
 extern bool session_auth_is_superuser;
 
+extern bool compute_query_id;
 extern bool log_duration;
 extern int	log_parameter_max_length;
 extern int	log_parameter_max_length_on_error;

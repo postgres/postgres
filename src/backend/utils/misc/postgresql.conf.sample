@@ -596,6 +596,7 @@
 
 # - Monitoring -
 
+#compute_query_id = off
 #log_parser_stats = off
 #log_planner_stats = off
 #log_executor_stats = off

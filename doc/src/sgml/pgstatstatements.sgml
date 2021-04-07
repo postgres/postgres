@@ -21,6 +21,14 @@
  </para>
 
  <para>
+  The module will not track statistics unless query
+  identifiers are calculated.  This can be done by enabling <xref
+  linkend="guc-compute-query-id"/> or using a third-party module that
+  computes its own query identifiers.  Note that all statistics tracked
+  by this module must be reset if the query identifier method is changed.
+ </para>
+
+ <para>
    When <filename>pg_stat_statements</filename> is loaded, it tracks
    statistics across all databases of the server.  To access and manipulate
    these statistics, the module provides views
@@ -84,7 +92,7 @@
        <structfield>queryid</structfield> <type>bigint</type>
       </para>
       <para>
-       Internal hash code, computed from the statement's parse tree
+       Hash code to identify identical normalized queries.
       </para></entry>
      </row>
 
@@ -385,6 +393,16 @@
    appearing in the query.  Utility commands (that is, all other commands)
    are compared strictly on the basis of their textual query strings, however.
   </para>
+
+  <note>
+   <para>
+    The following details about constant replacement and
+    <structfield>queryid</structfield> only applies when <xref
+    linkend="guc-compute-query-id"/> is enabled.  If you use an external
+    module instead to compute <structfield>queryid</structfield>, you
+    should refer to its documentation for details.
+   </para>
+  </note>
 
   <para>
    When a constant's value has been ignored for purposes of matching the query
