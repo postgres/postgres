@@ -19,7 +19,7 @@ begin
     for ln in execute $1
     loop
         -- Replace any numeric word with just 'N'
-        ln := regexp_replace(ln, '\m\d+\M', 'N', 'g');
+        ln := regexp_replace(ln, '-?\m\d+\M', 'N', 'g');
         -- In sort output, the above won't match units-suffixed numbers
         ln := regexp_replace(ln, '\m\d+kB', 'NkB', 'g');
         -- Ignore text-mode buffers output because it varies depending
@@ -103,3 +103,6 @@ select jsonb_pretty(
 );
 
 rollback;
+
+set compute_query_id = on;
+select explain_filter('explain (verbose) select 1');

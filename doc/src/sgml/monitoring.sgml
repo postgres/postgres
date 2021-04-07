@@ -910,6 +910,22 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </para></entry>
      </row>
 
+    <row>
+     <entry role="catalog_table_entry"><para role="column_definition">
+      <structfield>queryid</structfield> <type>bigint</type>
+     </para>
+     <para>
+      Identifier of this backend's most recent query. If
+      <structfield>state</structfield> is <literal>active</literal> this
+      field shows the identifier of the currently executing query. In
+      all other states, it shows the identifier of last query that was
+      executed.  Query identifiers are not computed by default so this
+      field will be null unless <xref linkend="guc-compute-query-id"/>
+      parameter is enabled or a third-party module that computes query
+      identifiers is configured.
+     </para></entry>
+    </row>
+
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>query</structfield> <type>text</type>

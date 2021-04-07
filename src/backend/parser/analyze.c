@@ -45,6 +45,7 @@
 #include "parser/parse_type.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/backend_status.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/queryjumble.h"
@@ -130,6 +131,8 @@ parse_analyze(RawStmt *parseTree, const char *sourceText,
 
 	free_parsestate(pstate);
 
+	pgstat_report_queryid(query->queryId, false);
+
 	return query;
 }
 
@@ -166,6 +169,8 @@ parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
 		(*post_parse_analyze_hook) (pstate, query, jstate);
 
 	free_parsestate(pstate);
+
+	pgstat_report_queryid(query->queryId, false);
 
 	return query;
 }

@@ -165,6 +165,9 @@ typedef struct PgBackendStatus
 	ProgressCommandType st_progress_command;
 	Oid			st_progress_command_target;
 	int64		st_progress_param[PGSTAT_NUM_PROGRESS_PARAM];
+
+	/* query identifier, optionally computed using post_parse_analyze_hook */
+	uint64		st_queryid;
 } PgBackendStatus;
 
 
@@ -294,12 +297,14 @@ extern void pgstat_clear_backend_activity_snapshot(void);
 
 /* Activity reporting functions */
 extern void pgstat_report_activity(BackendState state, const char *cmd_str);
+extern void pgstat_report_queryid(uint64 queryId, bool force);
 extern void pgstat_report_tempfile(size_t filesize);
 extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
 extern const char *pgstat_get_crashed_backend_activity(int pid, char *buffer,
 													   int buflen);
+extern uint64 pgstat_get_my_queryid(void);
 
 
 /* ----------

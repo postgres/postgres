@@ -543,6 +543,7 @@
 					#   %t = timestamp without milliseconds
 					#   %m = timestamp with milliseconds
 					#   %n = timestamp with milliseconds (as a Unix epoch)
+					#   %Q = query ID (0 if none or not computed)
 					#   %i = command tag
 					#   %e = SQL state
 					#   %c = session ID

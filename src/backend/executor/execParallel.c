@@ -175,7 +175,7 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	 */
 	pstmt = makeNode(PlannedStmt);
 	pstmt->commandType = CMD_SELECT;
-	pstmt->queryId = UINT64CONST(0);
+	pstmt->queryId = pgstat_get_my_queryid();
 	pstmt->hasReturning = false;
 	pstmt->hasModifyingCTE = false;
 	pstmt->canSetTag = true;
@@ -1421,8 +1421,9 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	/* Setting debug_query_string for individual workers */
 	debug_query_string = queryDesc->sourceText;
 
-	/* Report workers' query for monitoring purposes */
+	/* Report workers' query and queryId for monitoring purposes */
 	pgstat_report_activity(STATE_RUNNING, debug_query_string);
+	pgstat_report_queryid(queryDesc->plannedstmt->queryId, false);
 
 	/* Attach to the dynamic shared memory area. */
 	area_space = shm_toc_lookup(toc, PARALLEL_KEY_DSA, false);

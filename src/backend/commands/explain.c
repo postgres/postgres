@@ -24,6 +24,7 @@
 #include "nodes/extensible.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/bufmgr.h"
@@ -165,6 +166,8 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 {
 	ExplainState *es = NewExplainState();
 	TupOutputState *tstate;
+	JumbleState *jstate = NULL;
+	Query		*query;
 	List	   *rewritten;
 	ListCell   *lc;
 	bool		timing_set = false;
@@ -240,6 +243,13 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 
 	/* if the summary was not set explicitly, set default value */
 	es->summary = (summary_set) ? es->summary : es->analyze;
+
+	query = castNode(Query, stmt->query);
+	if (compute_query_id)
+		jstate = JumbleQuery(query, pstate->p_sourcetext);
+
+	if (post_parse_analyze_hook)
+		(*post_parse_analyze_hook) (pstate, query, jstate);
 
 	/*
 	 * Parse analysis was done already, but we still have to run the rule
@@ -599,6 +609,14 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	/* Create textual dump of plan tree */
 	ExplainPrintPlan(es, queryDesc);
+
+	if (es->verbose && plannedstmt->queryId != UINT64CONST(0))
+	{
+		char	buf[MAXINT8LEN+1];
+
+		pg_lltoa(plannedstmt->queryId, buf);
+		ExplainPropertyText("Query Identifier", buf, es);
+	}
 
 	/* Show buffer usage in planning */
 	if (bufusage)

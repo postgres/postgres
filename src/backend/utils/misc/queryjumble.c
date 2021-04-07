@@ -39,7 +39,7 @@
 
 #define JUMBLE_SIZE				1024	/* query serialization buffer size */
 
-static uint64 compute_utility_queryid(const char *str, int query_len);
+static uint64 compute_utility_queryid(const char *str, int query_location, int query_len);
 static void AppendJumble(JumbleState *jstate,
 						 const unsigned char *item, Size size);
 static void JumbleQueryInternal(JumbleState *jstate, Query *query);
@@ -97,17 +97,9 @@ JumbleQuery(Query *query, const char *querytext)
 	JumbleState *jstate = NULL;
 	if (query->utilityStmt)
 	{
-		const char *sql;
-		int query_location = query->stmt_location;
-		int query_len = query->stmt_len;
-
-		/*
-		 * Confine our attention to the relevant part of the string, if the
-		 * query is a portion of a multi-statement source string.
-		 */
-		sql = CleanQuerytext(querytext, &query_location, &query_len);
-
-		query->queryId = compute_utility_queryid(sql, query_len);
+		query->queryId = compute_utility_queryid(querytext,
+												 query->stmt_location,
+												 query->stmt_len);
 	}
 	else
 	{
@@ -143,11 +135,18 @@ JumbleQuery(Query *query, const char *querytext)
  * Compute a query identifier for the given utility query string.
  */
 static uint64
-compute_utility_queryid(const char *str, int query_len)
+compute_utility_queryid(const char *query_text, int query_location, int query_len)
 {
 	uint64 queryId;
+	const char *sql;
 
-	queryId = DatumGetUInt64(hash_any_extended((const unsigned char *) str,
+	/*
+	 * Confine our attention to the relevant part of the string, if the
+	 * query is a portion of a multi-statement source string.
+	 */
+	sql = CleanQuerytext(query_text, &query_location, &query_len);
+
+	queryId = DatumGetUInt64(hash_any_extended((const unsigned char *) sql,
 											   query_len, 0));
 
 	/*

@@ -136,8 +136,10 @@ ROLLBACK;
       the output column list for each node in the plan tree, schema-qualify
       table and function names, always label variables in expressions with
       their range table alias, and always print the name of each trigger for
-      which statistics are displayed.  This parameter defaults to
-      <literal>FALSE</literal>.
+      which statistics are displayed.  The query identifier will also be
+      displayed if one has been computed, see <xref
+      linkend="guc-compute-query-id"/> for more details.  This parameter
+      defaults to <literal>FALSE</literal>.
      </para>
     </listitem>
    </varlistentry>

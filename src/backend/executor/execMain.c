@@ -58,6 +58,7 @@
 #include "storage/lmgr.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
+#include "utils/backend_status.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/partcache.h"
@@ -128,6 +129,14 @@ static void EvalPlanQualStart(EPQState *epqstate, Plan *planTree);
 void
 ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
+	/*
+	 * In some cases (e.g. an EXECUTE statement) a query execution will skip
+	 * parse analysis, which means that the queryid won't be reported.  Note
+	 * that it's harmless to report the queryid multiple time, as the call will
+	 * be ignored if the top level queryid has already been reported.
+	 */
+	pgstat_report_queryid(queryDesc->plannedstmt->queryId, false);
+
 	if (ExecutorStart_hook)
 		(*ExecutorStart_hook) (queryDesc, eflags);
 	else

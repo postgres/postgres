@@ -2714,6 +2714,14 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 				else
 					appendStringInfoString(buf, unpack_sql_state(edata->sqlerrcode));
 				break;
+			case 'Q':
+				if (padding != 0)
+					appendStringInfo(buf, "%*ld", padding,
+							pgstat_get_my_queryid());
+				else
+					appendStringInfo(buf, "%ld",
+							pgstat_get_my_queryid());
+				break;
 			default:
 				/* format error - ignore it */
 				break;

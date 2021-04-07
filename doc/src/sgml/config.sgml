@@ -7005,6 +7005,15 @@ local0.*    /var/log/postgresql
              <entry>no</entry>
             </row>
             <row>
+             <entry><literal>%Q</literal></entry>
+             <entry>query identifier of the current query.  Query
+             identifiers are not computed by default, so this field
+             will be zero unless <xref linkend="guc-compute-query-id"/>
+             parameter is enabled or a third-party module that computes
+             query identifiers is configured.</entry>
+             <entry>yes</entry>
+            </row>
+            <row>
              <entry><literal>%%</literal></entry>
              <entry>Literal <literal>%</literal></entry>
              <entry>no</entry>
@@ -7480,8 +7489,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Enables the collection of information on the currently
-        executing command of each session, along with the time when
-        that command began execution. This parameter is on by
+        executing command of each session, along with its identifier and the
+        time when that command began execution. This parameter is on by
         default. Note that even when enabled, this information is not
         visible to all users, only to superusers and the user owning
         the session being reported on, so it should not represent a
@@ -7630,12 +7639,16 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        Enables in-core computation of a query identifier.  The <xref
-        linkend="pgstatstatements"/> extension requires a query identifier
-        to be computed.  Note that an external module can alternatively
-        be used if the in-core query identifier computation method
-        isn't acceptable.  In this case, in-core computation should
-        remain disabled.  The default is <literal>off</literal>.
+        Enables in-core computation of a query identifier.
+        Query identifiers can be displayed in the <link
+        linkend="monitoring-pg-stat-activity-view"><structname>pg_stat_activity</structname></link>
+        view, using <command>EXPLAIN</command>, or emitted in the log if
+        configured via the <xref linkend="guc-log-line-prefix"/> parameter.
+        The <xref linkend="pgstatstatements"/> extension also requires a query
+        identifier to be computed.  Note that an external module can
+        alternatively be used if the in-core query identifier computation
+        specification isn't acceptable.  In this case, in-core computation
+        must be disabled.  The default is <literal>off</literal>.
        </para>
        <note>
         <para>
