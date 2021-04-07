@@ -524,7 +524,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 			BlockNumber pageno;
 
 			for (pageno = heapBlk;
-				 pageno <= heapBlk + opaque->bo_pagesPerRange - 1;
+				 pageno <= Min(nblocks, heapBlk + opaque->bo_pagesPerRange) - 1;
 				 pageno++)
 			{
 				MemoryContextSwitchTo(oldcxt);
