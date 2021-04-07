@@ -104,8 +104,8 @@ $node->connect_fails(
 
 # Certificate verification at the connection level should still work fine.
 $node->connect_ok(
-	"sslcert=ssl/client.crt sslkey=$client_tmp_key sslrootcert=invalid hostaddr=$SERVERHOSTADDR dbname=verifydb user=ssltestuser channel_binding=require",
-	"SCRAM with clientcert=verify-full and channel_binding=require",
+	"sslcert=ssl/client.crt sslkey=$client_tmp_key sslrootcert=invalid hostaddr=$SERVERHOSTADDR dbname=verifydb user=ssltestuser",
+	"SCRAM with clientcert=verify-full",
 	log_like => [
 		qr/connection authenticated: identity="ssltestuser" method=scram-sha-256/
 	]);
