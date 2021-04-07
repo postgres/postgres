@@ -17,7 +17,7 @@ if (!$use_unix_sockets)
 }
 else
 {
-	plan tests => 13;
+	plan tests => 23;
 }
 
 
@@ -35,15 +35,12 @@ sub reset_pg_hba
 	return;
 }
 
-# Test access for a single role, useful to wrap all tests into one.
+# Test access for a single role, useful to wrap all tests into one.  Extra
+# named parameters are passed to connect_ok/fails as-is.
 sub test_role
 {
-	my $node          = shift;
-	my $role          = shift;
-	my $method        = shift;
-	my $expected_res  = shift;
+	my ($node, $role, $method, $expected_res, %params) = @_;
 	my $status_string = 'failed';
-
 	$status_string = 'success' if ($expected_res eq 0);
 
 	my $connstr = "user=$role";
@@ -52,18 +49,19 @@ sub test_role
 
 	if ($expected_res eq 0)
 	{
-		$node->connect_ok($connstr, $testname);
+		$node->connect_ok($connstr, $testname, %params);
 	}
 	else
 	{
 		# No checks of the error message, only the status code.
-		$node->connect_fails($connstr, $testname);
+		$node->connect_fails($connstr, $testname, %params);
 	}
 }
 
 # Initialize primary node
 my $node = get_new_node('primary');
 $node->init;
+$node->append_conf('postgresql.conf', "log_connections = on\n");
 $node->start;
 
 # Create 3 roles with different password methods for each one. The same
@@ -76,26 +74,51 @@ $node->safe_psql('postgres',
 );
 $ENV{"PGPASSWORD"} = 'pass';
 
-# For "trust" method, all users should be able to connect.
+# For "trust" method, all users should be able to connect. These users are not
+# considered to be authenticated.
 reset_pg_hba($node, 'trust');
-test_role($node, 'scram_role', 'trust', 0);
-test_role($node, 'md5_role',   'trust', 0);
+test_role($node, 'scram_role', 'trust', 0,
+	log_unlike => [qr/connection authenticated:/]);
+test_role($node, 'md5_role', 'trust', 0,
+	log_unlike => [qr/connection authenticated:/]);
 
 # For plain "password" method, all users should also be able to connect.
 reset_pg_hba($node, 'password');
-test_role($node, 'scram_role', 'password', 0);
-test_role($node, 'md5_role',   'password', 0);
+test_role($node, 'scram_role', 'password', 0,
+	log_like =>
+	  [qr/connection authenticated: identity="scram_role" method=password/]);
+test_role($node, 'md5_role', 'password', 0,
+	log_like =>
+	  [qr/connection authenticated: identity="md5_role" method=password/]);
 
 # For "scram-sha-256" method, user "scram_role" should be able to connect.
 reset_pg_hba($node, 'scram-sha-256');
-test_role($node, 'scram_role', 'scram-sha-256', 0);
-test_role($node, 'md5_role',   'scram-sha-256', 2);
+test_role(
+	$node,
+	'scram_role',
+	'scram-sha-256',
+	0,
+	log_like => [
+		qr/connection authenticated: identity="scram_role" method=scram-sha-256/
+	]);
+test_role($node, 'md5_role', 'scram-sha-256', 2,
+	log_unlike => [qr/connection authenticated:/]);
+
+# Test that bad passwords are rejected.
+$ENV{"PGPASSWORD"} = 'badpass';
+test_role($node, 'scram_role', 'scram-sha-256', 2,
+	log_unlike => [qr/connection authenticated:/]);
+$ENV{"PGPASSWORD"} = 'pass';
 
 # For "md5" method, all users should be able to connect (SCRAM
 # authentication will be performed for the user with a SCRAM secret.)
 reset_pg_hba($node, 'md5');
-test_role($node, 'scram_role', 'md5', 0);
-test_role($node, 'md5_role',   'md5', 0);
+test_role($node, 'scram_role', 'md5', 0,
+	log_like =>
+	  [qr/connection authenticated: identity="scram_role" method=md5/]);
+test_role($node, 'md5_role', 'md5', 0,
+	log_like =>
+	  [qr/connection authenticated: identity="md5_role" method=md5/]);
 
 # Tests for channel binding without SSL.
 # Using the password authentication method; channel binding can't work

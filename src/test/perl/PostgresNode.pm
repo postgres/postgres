@@ -1876,6 +1876,18 @@ instead of the default.
 
 If this regular expression is set, matches it with the output generated.
 
+=item log_like => [ qr/required message/ ]
+
+If given, it must be an array reference containing a list of regular
+expressions that must match against the server log, using
+C<Test::More::like()>.
+
+=item log_unlike => [ qr/prohibited message/ ]
+
+If given, it must be an array reference containing a list of regular
+expressions that must NOT match against the server log.  They will be
+passed to C<Test::More::unlike()>.
+
 =back
 
 =cut
@@ -1895,6 +1907,22 @@ sub connect_ok
 		$sql = "SELECT \$\$connected with $connstr\$\$";
 	}
 
+	my (@log_like, @log_unlike);
+	if (defined($params{log_like}))
+	{
+		@log_like = @{ $params{log_like} };
+	}
+	if (defined($params{log_unlike}))
+	{
+		@log_unlike = @{ $params{log_unlike} };
+	}
+
+	if (@log_like or @log_unlike)
+	{
+		# Don't let previous log entries match for this connection.
+		truncate $self->logfile, 0;
+	}
+
 	# Never prompt for a password, any callers of this routine should
 	# have set up things properly, and this should not block.
 	my ($ret, $stdout, $stderr) = $self->psql(
@@ -1909,6 +1937,19 @@ sub connect_ok
 	if (defined($params{expected_stdout}))
 	{
 		like($stdout, $params{expected_stdout}, "$test_name: matches");
+	}
+	if (@log_like or @log_unlike)
+	{
+		my $log_contents = TestLib::slurp_file($self->logfile);
+
+		while (my $regex = shift @log_like)
+		{
+			like($log_contents, $regex, "$test_name: log matches");
+		}
+		while (my $regex = shift @log_unlike)
+		{
+			unlike($log_contents, $regex, "$test_name: log does not match");
+		}
 	}
 }
 
@@ -1925,6 +1966,12 @@ to fail.
 
 If this regular expression is set, matches it with the output generated.
 
+=item log_like => [ qr/required message/ ]
+
+=item log_unlike => [ qr/prohibited message/ ]
+
+See C<connect_ok(...)>, above.
+
 =back
 
 =cut
@@ -1933,6 +1980,22 @@ sub connect_fails
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 	my ($self, $connstr, $test_name, %params) = @_;
+
+	my (@log_like, @log_unlike);
+	if (defined($params{log_like}))
+	{
+		@log_like = @{ $params{log_like} };
+	}
+	if (defined($params{log_unlike}))
+	{
+		@log_unlike = @{ $params{log_unlike} };
+	}
+
+	if (@log_like or @log_unlike)
+	{
+		# Don't let previous log entries match for this connection.
+		truncate $self->logfile, 0;
+	}
 
 	# Never prompt for a password, any callers of this routine should
 	# have set up things properly, and this should not block.
@@ -1947,6 +2010,20 @@ sub connect_fails
 	if (defined($params{expected_stderr}))
 	{
 		like($stderr, $params{expected_stderr}, "$test_name: matches");
+	}
+
+	if (@log_like or @log_unlike)
+	{
+		my $log_contents = TestLib::slurp_file($self->logfile);
+
+		while (my $regex = shift @log_like)
+		{
+			like($log_contents, $regex, "$test_name: log matches");
+		}
+		while (my $regex = shift @log_unlike)
+		{
+			unlike($log_contents, $regex, "$test_name: log does not match");
+		}
 	}
 }
 

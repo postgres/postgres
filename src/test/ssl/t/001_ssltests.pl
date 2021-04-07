@@ -17,7 +17,7 @@ if ($ENV{with_ssl} ne 'openssl')
 }
 else
 {
-	plan tests => 103;
+	plan tests => 110;
 }
 
 #### Some configuration
@@ -431,7 +431,10 @@ my $dn_connstr = "$common_connstr dbname=certdb_dn";
 
 $node->connect_ok(
 	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt sslkey=ssl/client-dn_tmp.key",
-	"certificate authorization succeeds with DN mapping");
+	"certificate authorization succeeds with DN mapping",
+	log_like => [
+		qr/connection authenticated: identity="CN=ssltestuser-dn,OU=Testing,OU=Engineering,O=PGDG" method=cert/
+	],);
 
 # same thing but with a regex
 $dn_connstr = "$common_connstr dbname=certdb_dn_re";
@@ -445,7 +448,11 @@ $dn_connstr = "$common_connstr dbname=certdb_cn";
 
 $node->connect_ok(
 	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt sslkey=ssl/client-dn_tmp.key",
-	"certificate authorization succeeds with CN mapping");
+	"certificate authorization succeeds with CN mapping",
+	# the full DN should still be used as the authenticated identity
+	log_like => [
+		qr/connection authenticated: identity="CN=ssltestuser-dn,OU=Testing,OU=Engineering,O=PGDG" method=cert/
+	],);
 
 
 
@@ -511,13 +518,18 @@ $node->connect_fails(
 	"$common_connstr user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
 	"certificate authorization fails with client cert belonging to another user",
 	expected_stderr =>
-	  qr/certificate authentication failed for user "anotheruser"/);
+	  qr/certificate authentication failed for user "anotheruser"/,
+	# certificate authentication should be logged even on failure
+	log_like =>
+	  [qr/connection authenticated: identity="CN=ssltestuser" method=cert/],);
 
 # revoked client cert
 $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
 	"certificate authorization fails with revoked client cert",
-	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/);
+	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/,
+	# revoked certificates should not authenticate the user
+	log_unlike => [qr/connection authenticated:/],);
 
 # Check that connecting with auth-option verify-full in pg_hba:
 # works, iff username matches Common Name
@@ -527,21 +539,25 @@ $common_connstr =
 
 $node->connect_ok(
 	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
-	"auth_option clientcert=verify-full succeeds with matching username and Common Name"
-);
+	"auth_option clientcert=verify-full succeeds with matching username and Common Name",
+	# verify-full does not provide authentication
+	log_unlike => [qr/connection authenticated:/],);
 
 $node->connect_fails(
 	"$common_connstr user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
 	"auth_option clientcert=verify-full fails with mismatching username and Common Name",
 	expected_stderr =>
-	  qr/FATAL: .* "trust" authentication failed for user "anotheruser"/,);
+	  qr/FATAL: .* "trust" authentication failed for user "anotheruser"/,
+	# verify-full does not provide authentication
+	log_unlike => [qr/connection authenticated:/],);
 
 # Check that connecting with auth-optionverify-ca in pg_hba :
 # works, when username doesn't match Common Name
 $node->connect_ok(
 	"$common_connstr user=yetanotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
-	"auth_option clientcert=verify-ca succeeds with mismatching username and Common Name"
-);
+	"auth_option clientcert=verify-ca succeeds with mismatching username and Common Name",
+	# verify-full does not provide authentication
+	log_unlike => [qr/connection authenticated:/],);
 
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
 switch_server_cert($node, 'server-cn-only', 'root_ca');

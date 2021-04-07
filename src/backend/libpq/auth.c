@@ -34,8 +34,10 @@
 #include "libpq/scram.h"
 #include "miscadmin.h"
 #include "port/pg_bswap.h"
+#include "postmaster/postmaster.h"
 #include "replication/walsender.h"
 #include "storage/ipc.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
 
@@ -47,6 +49,7 @@ static void sendAuthRequest(Port *port, AuthRequest areq, const char *extradata,
 							int extralen);
 static void auth_failed(Port *port, int status, char *logdetail);
 static char *recv_password_packet(Port *port);
+static void set_authn_id(Port *port, const char *id);
 
 
 /*----------------------------------------------------------------
@@ -334,6 +337,51 @@ auth_failed(Port *port, int status, char *logdetail)
 			 logdetail ? errdetail_log("%s", logdetail) : 0));
 
 	/* doesn't return */
+}
+
+
+/*
+ * Sets the authenticated identity for the current user.  The provided string
+ * will be copied into the TopMemoryContext.  The ID will be logged if
+ * log_connections is enabled.
+ *
+ * Auth methods should call this routine exactly once, as soon as the user is
+ * successfully authenticated, even if they have reasons to know that
+ * authorization will fail later.
+ *
+ * The provided string will be copied into TopMemoryContext, to match the
+ * lifetime of the Port, so it is safe to pass a string that is managed by an
+ * external library.
+ */
+static void
+set_authn_id(Port *port, const char *id)
+{
+	Assert(id);
+
+	if (port->authn_id)
+	{
+		/*
+		 * An existing authn_id should never be overwritten; that means two
+		 * authentication providers are fighting (or one is fighting itself).
+		 * Don't leak any authn details to the client, but don't let the
+		 * connection continue, either.
+		 */
+		ereport(FATAL,
+				(errmsg("connection was re-authenticated"),
+				 errdetail_log("previous ID: \"%s\"; new ID: \"%s\"",
+							   port->authn_id, id)));
+	}
+
+	port->authn_id = MemoryContextStrdup(TopMemoryContext, id);
+
+	if (Log_connections)
+	{
+		ereport(LOG,
+				errmsg("connection authenticated: identity=\"%s\" method=%s "
+					   "(%s:%d)",
+					   port->authn_id, hba_authname(port), HbaFileName,
+					   port->hba->linenumber));
+	}
 }
 
 
@@ -757,6 +805,9 @@ CheckPasswordAuth(Port *port, char **logdetail)
 		pfree(shadow_pass);
 	pfree(passwd);
 
+	if (result == STATUS_OK)
+		set_authn_id(port, port->user_name);
+
 	return result;
 }
 
@@ -816,6 +867,10 @@ CheckPWChallengeAuth(Port *port, char **logdetail)
 		Assert(auth_result != STATUS_OK);
 		return STATUS_ERROR;
 	}
+
+	if (auth_result == STATUS_OK)
+		set_authn_id(port, port->user_name);
+
 	return auth_result;
 }
 
@@ -1174,8 +1229,13 @@ pg_GSS_checkauth(Port *port)
 	/*
 	 * Copy the original name of the authenticated principal into our backend
 	 * memory for display later.
+	 *
+	 * This is also our authenticated identity.  Set it now, rather than
+	 * waiting for the usermap check below, because authentication has already
+	 * succeeded and we want the log file to reflect that.
 	 */
 	port->gss->princ = MemoryContextStrdup(TopMemoryContext, gbuf.value);
+	set_authn_id(port, gbuf.value);
 
 	/*
 	 * Split the username at the realm separator
@@ -1285,6 +1345,7 @@ pg_SSPI_recvauth(Port *port)
 	DWORD		domainnamesize = sizeof(domainname);
 	SID_NAME_USE accountnameuse;
 	HMODULE		secur32;
+	char	   *authn_id;
 
 	QUERY_SECURITY_CONTEXT_TOKEN_FN _QuerySecurityContextToken;
 
@@ -1513,6 +1574,26 @@ pg_SSPI_recvauth(Port *port)
 			/* Error already reported from pg_SSPI_make_upn */
 			return status;
 	}
+
+	/*
+	 * We have all of the information necessary to construct the authenticated
+	 * identity.  Set it now, rather than waiting for check_usermap below,
+	 * because authentication has already succeeded and we want the log file
+	 * to reflect that.
+	 */
+	if (port->hba->compat_realm)
+	{
+		/* SAM-compatible format. */
+		authn_id = psprintf("%s\\%s", domainname, accountname);
+	}
+	else
+	{
+		/* Kerberos principal format. */
+		authn_id = psprintf("%s@%s", accountname, domainname);
+	}
+
+	set_authn_id(port, authn_id);
+	pfree(authn_id);
 
 	/*
 	 * Compare realm/domain if requested. In SSPI, always compare case
@@ -1901,8 +1982,15 @@ ident_inet_done:
 		pg_freeaddrinfo_all(local_addr.addr.ss_family, la);
 
 	if (ident_return)
-		/* Success! Check the usermap */
+	{
+		/*
+		 * Success!  Store the identity, then check the usermap. Note that
+		 * setting the authenticated identity is done before checking the
+		 * usermap, because at this point authentication has succeeded.
+		 */
+		set_authn_id(port, ident_user);
 		return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
+	}
 	return STATUS_ERROR;
 }
 
@@ -1926,7 +2014,6 @@ auth_peer(hbaPort *port)
 	gid_t		gid;
 #ifndef WIN32
 	struct passwd *pw;
-	char	   *peer_user;
 	int			ret;
 #endif
 
@@ -1958,12 +2045,14 @@ auth_peer(hbaPort *port)
 		return STATUS_ERROR;
 	}
 
-	/* Make a copy of static getpw*() result area. */
-	peer_user = pstrdup(pw->pw_name);
+	/*
+	 * Make a copy of static getpw*() result area; this is our authenticated
+	 * identity.  Set it before calling check_usermap, because authentication
+	 * has already succeeded and we want the log file to reflect that.
+	 */
+	set_authn_id(port, pw->pw_name);
 
-	ret = check_usermap(port->hba->usermap, port->user_name, peer_user, false);
-
-	pfree(peer_user);
+	ret = check_usermap(port->hba->usermap, port->user_name, port->authn_id, false);
 
 	return ret;
 #else
@@ -2220,6 +2309,9 @@ CheckPAMAuth(Port *port, const char *user, const char *password)
 
 	pam_passwd = NULL;			/* Unset pam_passwd */
 
+	if (retval == PAM_SUCCESS)
+		set_authn_id(port, user);
+
 	return (retval == PAM_SUCCESS ? STATUS_OK : STATUS_ERROR);
 }
 #endif							/* USE_PAM */
@@ -2255,6 +2347,7 @@ CheckBSDAuth(Port *port, char *user)
 	if (!retval)
 		return STATUS_ERROR;
 
+	set_authn_id(port, user);
 	return STATUS_OK;
 }
 #endif							/* USE_BSD_AUTH */
@@ -2761,6 +2854,9 @@ CheckLDAPAuth(Port *port)
 		return STATUS_ERROR;
 	}
 
+	/* Save the original bind DN as the authenticated identity. */
+	set_authn_id(port, fulluser);
+
 	ldap_unbind(ldap);
 	pfree(passwd);
 	pfree(fulluser);
@@ -2822,6 +2918,30 @@ CheckCertAuth(Port *port)
 				(errmsg("certificate authentication failed for user \"%s\": client certificate contains no user name",
 						port->user_name)));
 		return STATUS_ERROR;
+	}
+
+	if (port->hba->auth_method == uaCert)
+	{
+		/*
+		 * For cert auth, the client's Subject DN is always our authenticated
+		 * identity, even if we're only using its CN for authorization.  Set
+		 * it now, rather than waiting for check_usermap() below, because
+		 * authentication has already succeeded and we want the log file to
+		 * reflect that.
+		 */
+		if (!port->peer_dn)
+		{
+			/*
+			 * This should not happen as both peer_dn and peer_cn should be
+			 * set in this context.
+			 */
+			ereport(LOG,
+					(errmsg("certificate authentication failed for user \"%s\": unable to retrieve subject DN",
+							port->user_name)));
+			return STATUS_ERROR;
+		}
+
+		set_authn_id(port, port->peer_dn);
 	}
 
 	/* Just pass the certificate cn/dn to the usermap check */
@@ -2995,6 +3115,8 @@ CheckRADIUSAuth(Port *port)
 		 */
 		if (ret == STATUS_OK)
 		{
+			set_authn_id(port, port->user_name);
+
 			pfree(passwd);
 			return STATUS_OK;
 		}

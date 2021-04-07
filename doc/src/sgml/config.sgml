@@ -6755,7 +6755,8 @@ local0.*    /var/log/postgresql
       <listitem>
        <para>
         Causes each attempted connection to the server to be logged,
-        as well as successful completion of client authentication.
+        as well as successful completion of both client authentication (if
+        necessary) and authorization.
         Only superusers can change this parameter at session start,
         and it cannot be changed at all within a session.
         The default is <literal>off</literal>.
