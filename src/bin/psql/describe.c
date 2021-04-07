@@ -505,11 +505,18 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 		appendPQExpBufferStr(&buf, ",\n ");
 		printACLColumn(&buf, "p.proacl");
 		appendPQExpBuffer(&buf,
-						  ",\n l.lanname as \"%s\""
-						  ",\n p.prosrc as \"%s\""
+						  ",\n l.lanname as \"%s\"",
+						  gettext_noop("Language"));
+		if (pset.sversion >= 140000)
+			appendPQExpBuffer(&buf,
+							  ",\n COALESCE(p.prosrc, pg_catalog.pg_get_function_sqlbody(p.oid)) as \"%s\"",
+							  gettext_noop("Source code"));
+		else
+			appendPQExpBuffer(&buf,
+							  ",\n p.prosrc as \"%s\"",
+							  gettext_noop("Source code"));
+		appendPQExpBuffer(&buf,
 						  ",\n pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"",
-						  gettext_noop("Language"),
-						  gettext_noop("Source code"),
 						  gettext_noop("Description"));
 	}
 

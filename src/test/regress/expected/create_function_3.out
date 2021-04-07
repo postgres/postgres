@@ -255,6 +255,176 @@ SELECT pg_get_functiondef('functest_F_2'::regproc);
  
 (1 row)
 
+--
+-- SQL-standard body
+--
+CREATE FUNCTION functest_S_1(a text, b date) RETURNS boolean
+    LANGUAGE SQL
+    RETURN a = 'abcd' AND b > '2001-01-01';
+CREATE FUNCTION functest_S_2(a text[]) RETURNS int
+    RETURN a[1]::int;
+CREATE FUNCTION functest_S_3() RETURNS boolean
+    RETURN false;
+CREATE FUNCTION functest_S_3a() RETURNS boolean
+    BEGIN ATOMIC
+        RETURN false;
+    END;
+CREATE FUNCTION functest_S_10(a text, b date) RETURNS boolean
+    LANGUAGE SQL
+    BEGIN ATOMIC
+        SELECT a = 'abcd' AND b > '2001-01-01';
+    END;
+CREATE FUNCTION functest_S_13() RETURNS boolean
+    BEGIN ATOMIC
+        SELECT 1;
+        SELECT false;
+    END;
+-- error: duplicate function body
+CREATE FUNCTION functest_S_xxx(x int) RETURNS int
+    LANGUAGE SQL
+    AS $$ SELECT x * 2 $$
+    RETURN x * 3;
+ERROR:  duplicate function body specified
+-- polymorphic arguments not allowed in this form
+CREATE FUNCTION functest_S_xx(x anyarray) RETURNS anyelement
+    LANGUAGE SQL
+    RETURN x[1];
+ERROR:  SQL function with unquoted function body cannot have polymorphic arguments
+-- tricky parsing
+CREATE FUNCTION functest_S_15(x int) RETURNS boolean
+LANGUAGE SQL
+BEGIN ATOMIC
+    select case when x % 2 = 0 then true else false end;
+END;
+SELECT functest_S_1('abcd', '2020-01-01');
+ functest_s_1 
+--------------
+ t
+(1 row)
+
+SELECT functest_S_2(ARRAY['1', '2', '3']);
+ functest_s_2 
+--------------
+            1
+(1 row)
+
+SELECT functest_S_3();
+ functest_s_3 
+--------------
+ f
+(1 row)
+
+SELECT functest_S_10('abcd', '2020-01-01');
+ functest_s_10 
+---------------
+ t
+(1 row)
+
+SELECT functest_S_13();
+ functest_s_13 
+---------------
+ f
+(1 row)
+
+SELECT pg_get_functiondef('functest_S_1'::regproc);
+                           pg_get_functiondef                           
+------------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_s_1(a text, b date)+
+  RETURNS boolean                                                      +
+  LANGUAGE sql                                                         +
+ RETURN ((a = 'abcd'::text) AND (b > '01-01-2001'::date))              +
+ 
+(1 row)
+
+SELECT pg_get_functiondef('functest_S_2'::regproc);
+                        pg_get_functiondef                        
+------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_s_2(a text[])+
+  RETURNS integer                                                +
+  LANGUAGE sql                                                   +
+ RETURN ((a)[1])::integer                                        +
+ 
+(1 row)
+
+SELECT pg_get_functiondef('functest_S_3'::regproc);
+                    pg_get_functiondef                    
+----------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_s_3()+
+  RETURNS boolean                                        +
+  LANGUAGE sql                                           +
+ RETURN false                                            +
+ 
+(1 row)
+
+SELECT pg_get_functiondef('functest_S_3a'::regproc);
+                    pg_get_functiondef                     
+-----------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_s_3a()+
+  RETURNS boolean                                         +
+  LANGUAGE sql                                            +
+ BEGIN ATOMIC                                             +
+  RETURN false;                                           +
+ END                                                      +
+ 
+(1 row)
+
+SELECT pg_get_functiondef('functest_S_10'::regproc);
+                           pg_get_functiondef                            
+-------------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_s_10(a text, b date)+
+  RETURNS boolean                                                       +
+  LANGUAGE sql                                                          +
+ BEGIN ATOMIC                                                           +
+  SELECT ((a = 'abcd'::text) AND (b > '01-01-2001'::date));             +
+ END                                                                    +
+ 
+(1 row)
+
+SELECT pg_get_functiondef('functest_S_13'::regproc);
+                    pg_get_functiondef                     
+-----------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_s_13()+
+  RETURNS boolean                                         +
+  LANGUAGE sql                                            +
+ BEGIN ATOMIC                                             +
+  SELECT 1;                                               +
+  SELECT false AS bool;                                   +
+ END                                                      +
+ 
+(1 row)
+
+SELECT pg_get_functiondef('functest_S_15'::regproc);
+                         pg_get_functiondef                         
+--------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_s_15(x integer)+
+  RETURNS boolean                                                  +
+  LANGUAGE sql                                                     +
+ BEGIN ATOMIC                                                      +
+  SELECT                                                           +
+          CASE                                                     +
+              WHEN ((x % 2) = 0) THEN true                         +
+              ELSE false                                           +
+          END AS "case";                                           +
+ END                                                               +
+ 
+(1 row)
+
+-- test with views
+CREATE TABLE functest3 (a int);
+INSERT INTO functest3 VALUES (1), (2);
+CREATE VIEW functestv3 AS SELECT * FROM functest3;
+CREATE FUNCTION functest_S_14() RETURNS bigint
+    RETURN (SELECT count(*) FROM functestv3);
+SELECT functest_S_14();
+ functest_s_14 
+---------------
+             2
+(1 row)
+
+DROP TABLE functest3 CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to view functestv3
+drop cascades to function functest_s_14()
 -- information_schema tests
 CREATE FUNCTION functest_IS_1(a int, b int default 1, c text default 'foo')
     RETURNS int
@@ -292,6 +462,15 @@ CREATE FUNCTION functest_IS_5(x int DEFAULT nextval('functest1'))
     RETURNS int
     LANGUAGE SQL
     AS 'SELECT x';
+CREATE FUNCTION functest_IS_6()
+    RETURNS int
+    LANGUAGE SQL
+    RETURN nextval('functest1');
+CREATE TABLE functest2 (a int, b int);
+CREATE FUNCTION functest_IS_7()
+    RETURNS int
+    LANGUAGE SQL
+    RETURN (SELECT count(a) FROM functest2);
 SELECT r0.routine_name, r1.routine_name
   FROM information_schema.routine_routine_usage rru
        JOIN information_schema.routines r0 ON r0.specific_name = rru.specific_name
@@ -305,23 +484,29 @@ SELECT routine_name, sequence_name FROM information_schema.routine_sequence_usag
  routine_name  | sequence_name 
 ---------------+---------------
  functest_is_5 | functest1
+ functest_is_6 | functest1
+(2 rows)
+
+SELECT routine_name, table_name, column_name FROM information_schema.routine_column_usage;
+ routine_name  | table_name | column_name 
+---------------+------------+-------------
+ functest_is_7 | functest2  | a
 (1 row)
 
--- currently empty
-SELECT routine_name, table_name, column_name FROM information_schema.routine_column_usage;
- routine_name | table_name | column_name 
---------------+------------+-------------
-(0 rows)
-
 SELECT routine_name, table_name FROM information_schema.routine_table_usage;
- routine_name | table_name 
---------------+------------
-(0 rows)
+ routine_name  | table_name 
+---------------+------------
+ functest_is_7 | functest2
+(1 row)
 
 DROP FUNCTION functest_IS_4a CASCADE;
 NOTICE:  drop cascades to function functest_is_4b(integer)
 DROP SEQUENCE functest1 CASCADE;
-NOTICE:  drop cascades to function functest_is_5(integer)
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function functest_is_5(integer)
+drop cascades to function functest_is_6()
+DROP TABLE functest2 CASCADE;
+NOTICE:  drop cascades to function functest_is_7()
 -- overload
 CREATE FUNCTION functest_B_2(bigint) RETURNS bool LANGUAGE 'sql'
        IMMUTABLE AS 'SELECT $1 > 0';
@@ -340,6 +525,49 @@ CREATE OR REPLACE PROCEDURE functest1(a int) LANGUAGE SQL AS 'SELECT $1';
 ERROR:  cannot change routine kind
 DETAIL:  "functest1" is a function.
 DROP FUNCTION functest1(a int);
+-- inlining of set-returning functions
+CREATE FUNCTION functest_sri1() RETURNS SETOF int
+LANGUAGE SQL
+STABLE
+AS '
+    VALUES (1), (2), (3);
+';
+SELECT * FROM functest_sri1();
+ functest_sri1 
+---------------
+             1
+             2
+             3
+(3 rows)
+
+EXPLAIN (verbose, costs off) SELECT * FROM functest_sri1();
+          QUERY PLAN          
+------------------------------
+ Values Scan on "*VALUES*"
+   Output: "*VALUES*".column1
+(2 rows)
+
+CREATE FUNCTION functest_sri2() RETURNS SETOF int
+LANGUAGE SQL
+STABLE
+BEGIN ATOMIC
+    VALUES (1), (2), (3);
+END;
+SELECT * FROM functest_sri2();
+ functest_sri2 
+---------------
+             1
+             2
+             3
+(3 rows)
+
+EXPLAIN (verbose, costs off) SELECT * FROM functest_sri2();
+          QUERY PLAN          
+------------------------------
+ Values Scan on "*VALUES*"
+   Output: "*VALUES*".column1
+(2 rows)
+
 -- Check behavior of VOID-returning SQL functions
 CREATE FUNCTION voidtest1(a int) RETURNS VOID LANGUAGE SQL AS
 $$ SELECT a + 1 $$;
@@ -398,7 +626,7 @@ SELECT * FROM voidtest5(3);
 
 -- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 21 other objects
+NOTICE:  drop cascades to 30 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
@@ -414,7 +642,16 @@ drop cascades to function functest_f_1(integer)
 drop cascades to function functest_f_2(integer)
 drop cascades to function functest_f_3(integer)
 drop cascades to function functest_f_4(integer)
+drop cascades to function functest_s_1(text,date)
+drop cascades to function functest_s_2(text[])
+drop cascades to function functest_s_3()
+drop cascades to function functest_s_3a()
+drop cascades to function functest_s_10(text,date)
+drop cascades to function functest_s_13()
+drop cascades to function functest_s_15(integer)
 drop cascades to function functest_b_2(bigint)
+drop cascades to function functest_sri1()
+drop cascades to function functest_sri2()
 drop cascades to function voidtest1(integer)
 drop cascades to function voidtest2(integer,integer)
 drop cascades to function voidtest3(integer)

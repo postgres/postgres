@@ -3171,6 +3171,7 @@ _copyQuery(const Query *from)
 	COPY_SCALAR_FIELD(hasModifyingCTE);
 	COPY_SCALAR_FIELD(hasForUpdate);
 	COPY_SCALAR_FIELD(hasRowSecurity);
+	COPY_SCALAR_FIELD(isReturn);
 	COPY_NODE_FIELD(cteList);
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);
@@ -3297,6 +3298,16 @@ _copySetOperationStmt(const SetOperationStmt *from)
 	COPY_NODE_FIELD(colTypmods);
 	COPY_NODE_FIELD(colCollations);
 	COPY_NODE_FIELD(groupClauses);
+
+	return newnode;
+}
+
+static ReturnStmt *
+_copyReturnStmt(const ReturnStmt *from)
+{
+	ReturnStmt *newnode = makeNode(ReturnStmt);
+
+	COPY_NODE_FIELD(returnval);
 
 	return newnode;
 }
@@ -3684,6 +3695,7 @@ _copyCreateFunctionStmt(const CreateFunctionStmt *from)
 	COPY_NODE_FIELD(parameters);
 	COPY_NODE_FIELD(returnType);
 	COPY_NODE_FIELD(options);
+	COPY_NODE_FIELD(sql_body);
 
 	return newnode;
 }
@@ -5343,6 +5355,9 @@ copyObjectImpl(const void *from)
 			break;
 		case T_SetOperationStmt:
 			retval = _copySetOperationStmt(from);
+			break;
+		case T_ReturnStmt:
+			retval = _copyReturnStmt(from);
 			break;
 		case T_PLAssignStmt:
 			retval = _copyPLAssignStmt(from);

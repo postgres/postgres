@@ -140,6 +140,8 @@ typedef struct Query
 	bool		hasForUpdate;	/* FOR [KEY] UPDATE/SHARE was specified */
 	bool		hasRowSecurity; /* rewriter has applied some RLS policy */
 
+	bool		isReturn;		/* is a RETURN statement */
+
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
 	List	   *rtable;			/* list of range table entries */
@@ -1721,6 +1723,16 @@ typedef struct SetOperationStmt
 } SetOperationStmt;
 
 
+/*
+ * RETURN statement (inside SQL function body)
+ */
+typedef struct ReturnStmt
+{
+	NodeTag		type;
+	Node	   *returnval;
+} ReturnStmt;
+
+
 /* ----------------------
  *		PL/pgSQL Assignment Statement
  *
@@ -2924,6 +2936,7 @@ typedef struct CreateFunctionStmt
 	List	   *parameters;		/* a list of FunctionParameter */
 	TypeName   *returnType;		/* the return type */
 	List	   *options;		/* a list of DefElem */
+	Node	   *sql_body;
 } CreateFunctionStmt;
 
 typedef enum FunctionParameterMode

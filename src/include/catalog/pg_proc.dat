@@ -3718,6 +3718,10 @@
   proname => 'pg_get_function_arg_default', provolatile => 's',
   prorettype => 'text', proargtypes => 'oid int4',
   prosrc => 'pg_get_function_arg_default' },
+{ oid => '9704', descr => 'function SQL body',
+  proname => 'pg_get_function_sqlbody', provolatile => 's',
+  prorettype => 'text', proargtypes => 'oid',
+  prosrc => 'pg_get_function_sqlbody' },
 
 { oid => '1686', descr => 'list of SQL keywords',
   proname => 'pg_get_keywords', procost => '10', prorows => '500',

@@ -970,6 +970,7 @@ _equalQuery(const Query *a, const Query *b)
 	COMPARE_SCALAR_FIELD(hasModifyingCTE);
 	COMPARE_SCALAR_FIELD(hasForUpdate);
 	COMPARE_SCALAR_FIELD(hasRowSecurity);
+	COMPARE_SCALAR_FIELD(isReturn);
 	COMPARE_NODE_FIELD(cteList);
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
@@ -1084,6 +1085,14 @@ _equalSetOperationStmt(const SetOperationStmt *a, const SetOperationStmt *b)
 	COMPARE_NODE_FIELD(colTypmods);
 	COMPARE_NODE_FIELD(colCollations);
 	COMPARE_NODE_FIELD(groupClauses);
+
+	return true;
+}
+
+static bool
+_equalReturnStmt(const ReturnStmt *a, const ReturnStmt *b)
+{
+	COMPARE_NODE_FIELD(returnval);
 
 	return true;
 }
@@ -1406,6 +1415,7 @@ _equalCreateFunctionStmt(const CreateFunctionStmt *a, const CreateFunctionStmt *
 	COMPARE_NODE_FIELD(parameters);
 	COMPARE_NODE_FIELD(returnType);
 	COMPARE_NODE_FIELD(options);
+	COMPARE_NODE_FIELD(sql_body);
 
 	return true;
 }
@@ -3333,6 +3343,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_SetOperationStmt:
 			retval = _equalSetOperationStmt(a, b);
+			break;
+		case T_ReturnStmt:
+			retval = _equalReturnStmt(a, b);
 			break;
 		case T_PLAssignStmt:
 			retval = _equalPLAssignStmt(a, b);

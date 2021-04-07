@@ -153,6 +153,79 @@ SELECT pg_get_functiondef('functest_C_3'::regproc);
 SELECT pg_get_functiondef('functest_F_2'::regproc);
 
 
+--
+-- SQL-standard body
+--
+CREATE FUNCTION functest_S_1(a text, b date) RETURNS boolean
+    LANGUAGE SQL
+    RETURN a = 'abcd' AND b > '2001-01-01';
+CREATE FUNCTION functest_S_2(a text[]) RETURNS int
+    RETURN a[1]::int;
+CREATE FUNCTION functest_S_3() RETURNS boolean
+    RETURN false;
+CREATE FUNCTION functest_S_3a() RETURNS boolean
+    BEGIN ATOMIC
+        RETURN false;
+    END;
+
+CREATE FUNCTION functest_S_10(a text, b date) RETURNS boolean
+    LANGUAGE SQL
+    BEGIN ATOMIC
+        SELECT a = 'abcd' AND b > '2001-01-01';
+    END;
+
+CREATE FUNCTION functest_S_13() RETURNS boolean
+    BEGIN ATOMIC
+        SELECT 1;
+        SELECT false;
+    END;
+
+-- error: duplicate function body
+CREATE FUNCTION functest_S_xxx(x int) RETURNS int
+    LANGUAGE SQL
+    AS $$ SELECT x * 2 $$
+    RETURN x * 3;
+
+-- polymorphic arguments not allowed in this form
+CREATE FUNCTION functest_S_xx(x anyarray) RETURNS anyelement
+    LANGUAGE SQL
+    RETURN x[1];
+
+-- tricky parsing
+CREATE FUNCTION functest_S_15(x int) RETURNS boolean
+LANGUAGE SQL
+BEGIN ATOMIC
+    select case when x % 2 = 0 then true else false end;
+END;
+
+SELECT functest_S_1('abcd', '2020-01-01');
+SELECT functest_S_2(ARRAY['1', '2', '3']);
+SELECT functest_S_3();
+
+SELECT functest_S_10('abcd', '2020-01-01');
+SELECT functest_S_13();
+
+SELECT pg_get_functiondef('functest_S_1'::regproc);
+SELECT pg_get_functiondef('functest_S_2'::regproc);
+SELECT pg_get_functiondef('functest_S_3'::regproc);
+SELECT pg_get_functiondef('functest_S_3a'::regproc);
+SELECT pg_get_functiondef('functest_S_10'::regproc);
+SELECT pg_get_functiondef('functest_S_13'::regproc);
+SELECT pg_get_functiondef('functest_S_15'::regproc);
+
+-- test with views
+CREATE TABLE functest3 (a int);
+INSERT INTO functest3 VALUES (1), (2);
+CREATE VIEW functestv3 AS SELECT * FROM functest3;
+
+CREATE FUNCTION functest_S_14() RETURNS bigint
+    RETURN (SELECT count(*) FROM functestv3);
+
+SELECT functest_S_14();
+
+DROP TABLE functest3 CASCADE;
+
+
 -- information_schema tests
 
 CREATE FUNCTION functest_IS_1(a int, b int default 1, c text default 'foo')
@@ -188,17 +261,29 @@ CREATE FUNCTION functest_IS_5(x int DEFAULT nextval('functest1'))
     LANGUAGE SQL
     AS 'SELECT x';
 
+CREATE FUNCTION functest_IS_6()
+    RETURNS int
+    LANGUAGE SQL
+    RETURN nextval('functest1');
+
+CREATE TABLE functest2 (a int, b int);
+
+CREATE FUNCTION functest_IS_7()
+    RETURNS int
+    LANGUAGE SQL
+    RETURN (SELECT count(a) FROM functest2);
+
 SELECT r0.routine_name, r1.routine_name
   FROM information_schema.routine_routine_usage rru
        JOIN information_schema.routines r0 ON r0.specific_name = rru.specific_name
        JOIN information_schema.routines r1 ON r1.specific_name = rru.routine_name;
 SELECT routine_name, sequence_name FROM information_schema.routine_sequence_usage;
--- currently empty
 SELECT routine_name, table_name, column_name FROM information_schema.routine_column_usage;
 SELECT routine_name, table_name FROM information_schema.routine_table_usage;
 
 DROP FUNCTION functest_IS_4a CASCADE;
 DROP SEQUENCE functest1 CASCADE;
+DROP TABLE functest2 CASCADE;
 
 
 -- overload
@@ -216,6 +301,29 @@ CREATE FUNCTION functest1(a int) RETURNS int LANGUAGE SQL AS 'SELECT $1';
 CREATE OR REPLACE FUNCTION functest1(a int) RETURNS int LANGUAGE SQL WINDOW AS 'SELECT $1';
 CREATE OR REPLACE PROCEDURE functest1(a int) LANGUAGE SQL AS 'SELECT $1';
 DROP FUNCTION functest1(a int);
+
+
+-- inlining of set-returning functions
+
+CREATE FUNCTION functest_sri1() RETURNS SETOF int
+LANGUAGE SQL
+STABLE
+AS '
+    VALUES (1), (2), (3);
+';
+
+SELECT * FROM functest_sri1();
+EXPLAIN (verbose, costs off) SELECT * FROM functest_sri1();
+
+CREATE FUNCTION functest_sri2() RETURNS SETOF int
+LANGUAGE SQL
+STABLE
+BEGIN ATOMIC
+    VALUES (1), (2), (3);
+END;
+
+SELECT * FROM functest_sri2();
+EXPLAIN (verbose, costs off) SELECT * FROM functest_sri2();
 
 
 -- Check behavior of VOID-returning SQL functions

@@ -645,10 +645,11 @@ other			.
 
 ";"				{
 					ECHO;
-					if (cur_state->paren_depth == 0)
+					if (cur_state->paren_depth == 0 && cur_state->begin_depth == 0)
 					{
 						/* Terminate lexing temporarily */
 						cur_state->start_state = YY_START;
+						cur_state->identifier_count = 0;
 						return LEXRES_SEMI;
 					}
 				}
@@ -661,6 +662,8 @@ other			.
 "\\"[;:]		{
 					/* Force a semi-colon or colon into the query buffer */
 					psqlscan_emit(cur_state, yytext + 1, 1);
+					if (yytext[1] == ';')
+						cur_state->identifier_count = 0;
 				}
 
 "\\"			{
@@ -867,6 +870,18 @@ other			.
 
 
 {identifier}	{
+					cur_state->identifier_count++;
+					if (pg_strcasecmp(yytext, "begin") == 0
+						|| pg_strcasecmp(yytext, "case") == 0)
+					{
+						if (cur_state->identifier_count > 1)
+							cur_state->begin_depth++;
+					}
+					else if (pg_strcasecmp(yytext, "end") == 0)
+					{
+						if (cur_state->begin_depth > 0)
+							cur_state->begin_depth--;
+					}
 					ECHO;
 				}
 
@@ -1054,6 +1069,11 @@ psql_scan(PsqlScanState state,
 						result = PSCAN_INCOMPLETE;
 						*prompt = PROMPT_PAREN;
 					}
+					if (state->begin_depth > 0)
+					{
+						result = PSCAN_INCOMPLETE;
+						*prompt = PROMPT_CONTINUE;
+					}
 					else if (query_buf->len > 0)
 					{
 						result = PSCAN_EOL;
@@ -1170,6 +1190,8 @@ psql_scan_reset(PsqlScanState state)
 	if (state->dolqstart)
 		free(state->dolqstart);
 	state->dolqstart = NULL;
+	state->identifier_count = 0;
+	state->begin_depth = 0;
 }
 
 /*

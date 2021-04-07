@@ -71,6 +71,7 @@ static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 									   bool isTopLevel, List **targetlist);
 static void determineRecursiveColTypes(ParseState *pstate,
 									   Node *larg, List *nrtargetlist);
+static Query *transformReturnStmt(ParseState *pstate, ReturnStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static List *transformReturningList(ParseState *pstate, List *returningList);
 static List *transformUpdateTargetList(ParseState *pstate,
@@ -321,6 +322,10 @@ transformStmt(ParseState *pstate, Node *parseTree)
 				else
 					result = transformSetOperationStmt(pstate, n);
 			}
+			break;
+
+		case T_ReturnStmt:
+			result = transformReturnStmt(pstate, (ReturnStmt *) parseTree);
 			break;
 
 		case T_PLAssignStmt:
@@ -2241,6 +2246,36 @@ determineRecursiveColTypes(ParseState *pstate, Node *larg, List *nrtargetlist)
 
 	/* Now build CTE's output column info using dummy targetlist */
 	analyzeCTETargetList(pstate, pstate->p_parent_cte, targetList);
+}
+
+
+/*
+ * transformReturnStmt -
+ *	  transforms a return statement
+ */
+static Query *
+transformReturnStmt(ParseState *pstate, ReturnStmt *stmt)
+{
+	Query	   *qry = makeNode(Query);
+
+	qry->commandType = CMD_SELECT;
+	qry->isReturn = true;
+
+	qry->targetList = list_make1(makeTargetEntry((Expr *) transformExpr(pstate, stmt->returnval, EXPR_KIND_SELECT_TARGET),
+												 1, NULL, false));
+
+	if (pstate->p_resolve_unknowns)
+		resolveTargetListUnknowns(pstate, qry->targetList);
+	qry->rtable = pstate->p_rtable;
+	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
+	qry->hasSubLinks = pstate->p_hasSubLinks;
+	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
+	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
+	qry->hasAggs = pstate->p_hasAggs;
+
+	assign_query_collations(pstate, qry);
+
+	return qry;
 }
 
 

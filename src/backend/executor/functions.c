@@ -26,6 +26,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_func.h"
+#include "rewrite/rewriteHandler.h"
 #include "storage/proc.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
@@ -127,21 +128,6 @@ typedef struct
 } SQLFunctionCache;
 
 typedef SQLFunctionCache *SQLFunctionCachePtr;
-
-/*
- * Data structure needed by the parser callback hooks to resolve parameter
- * references during parsing of a SQL function's body.  This is separate from
- * SQLFunctionCache since we sometimes do parsing separately from execution.
- */
-typedef struct SQLFunctionParseInfo
-{
-	char	   *fname;			/* function's name */
-	int			nargs;			/* number of input arguments */
-	Oid		   *argtypes;		/* resolved types of input arguments */
-	char	  **argnames;		/* names of input arguments; NULL if none */
-	/* Note that argnames[i] can be NULL, if some args are unnamed */
-	Oid			collation;		/* function's input collation, if known */
-}			SQLFunctionParseInfo;
 
 
 /* non-export function prototypes */
@@ -607,7 +593,6 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
 	SQLFunctionCachePtr fcache;
-	List	   *raw_parsetree_list;
 	List	   *queryTree_list;
 	List	   *resulttlist;
 	ListCell   *lc;
@@ -682,9 +667,6 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 						  procedureTuple,
 						  Anum_pg_proc_prosrc,
 						  &isNull);
-	if (isNull)
-		elog(ERROR, "null prosrc for function %u", foid);
-	fcache->src = TextDatumGetCString(tmp);
 
 	/*
 	 * Parse and rewrite the queries in the function text.  Use sublists to
@@ -695,20 +677,55 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	 * but we'll not worry about it until the module is rewritten to use
 	 * plancache.c.
 	 */
-	raw_parsetree_list = pg_parse_query(fcache->src);
-
 	queryTree_list = NIL;
-	foreach(lc, raw_parsetree_list)
+	if (isNull)
 	{
-		RawStmt    *parsetree = lfirst_node(RawStmt, lc);
-		List	   *queryTree_sublist;
+		Node	   *n;
+		List	   *stored_query_list;
 
-		queryTree_sublist = pg_analyze_and_rewrite_params(parsetree,
-														  fcache->src,
-														  (ParserSetupHook) sql_fn_parser_setup,
-														  fcache->pinfo,
-														  NULL);
-		queryTree_list = lappend(queryTree_list, queryTree_sublist);
+		tmp = SysCacheGetAttr(PROCOID,
+							  procedureTuple,
+							  Anum_pg_proc_prosqlbody,
+							  &isNull);
+		if (isNull)
+			elog(ERROR, "null prosrc and prosqlbody for function %u", foid);
+
+		n = stringToNode(TextDatumGetCString(tmp));
+		if (IsA(n, List))
+			stored_query_list = linitial_node(List, castNode(List, n));
+		else
+			stored_query_list = list_make1(n);
+
+		foreach(lc, stored_query_list)
+		{
+			Query	   *parsetree = lfirst_node(Query, lc);
+			List	   *queryTree_sublist;
+
+			AcquireRewriteLocks(parsetree, true, false);
+			queryTree_sublist = pg_rewrite_query(parsetree);
+			queryTree_list = lappend(queryTree_list, queryTree_sublist);
+		}
+	}
+	else
+	{
+		List	   *raw_parsetree_list;
+
+		fcache->src = TextDatumGetCString(tmp);
+
+		raw_parsetree_list = pg_parse_query(fcache->src);
+
+		foreach(lc, raw_parsetree_list)
+		{
+			RawStmt    *parsetree = lfirst_node(RawStmt, lc);
+			List	   *queryTree_sublist;
+
+			queryTree_sublist = pg_analyze_and_rewrite_params(parsetree,
+															  fcache->src,
+															  (ParserSetupHook) sql_fn_parser_setup,
+															  fcache->pinfo,
+															  NULL);
+			queryTree_list = lappend(queryTree_list, queryTree_sublist);
+		}
 	}
 
 	/*

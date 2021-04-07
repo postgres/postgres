@@ -38,6 +38,7 @@ CREATE [ OR REPLACE ] FUNCTION
     | SET <replaceable class="parameter">configuration_parameter</replaceable> { TO <replaceable class="parameter">value</replaceable> | = <replaceable class="parameter">value</replaceable> | FROM CURRENT }
     | AS '<replaceable class="parameter">definition</replaceable>'
     | AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
+    | <replaceable class="parameter">sql_body</replaceable>
   } ...
 </synopsis>
  </refsynopsisdiv>
@@ -262,7 +263,9 @@ CREATE [ OR REPLACE ] FUNCTION
        The name of the language that the function is implemented in.
        It can be <literal>sql</literal>, <literal>c</literal>,
        <literal>internal</literal>, or the name of a user-defined
-       procedural language, e.g., <literal>plpgsql</literal>.  Enclosing the
+       procedural language, e.g., <literal>plpgsql</literal>.  The default is
+       <literal>sql</literal> if <replaceable
+       class="parameter">sql_body</replaceable> is specified.  Enclosing the
        name in single quotes is deprecated and requires matching case.
       </para>
      </listitem>
@@ -582,6 +585,44 @@ CREATE [ OR REPLACE ] FUNCTION
      </listitem>
     </varlistentry>
 
+    <varlistentry>
+     <term><replaceable class="parameter">sql_body</replaceable></term>
+
+     <listitem>
+      <para>
+       The body of a <literal>LANGUAGE SQL</literal> function.  This can
+       either be a single statement
+<programlisting>
+RETURN <replaceable>expression</replaceable>
+</programlisting>
+       or a block
+<programlisting>
+BEGIN ATOMIC
+  <replaceable>statement</replaceable>;
+  <replaceable>statement</replaceable>;
+  ...
+  <replaceable>statement</replaceable>;
+END
+</programlisting>
+      </para>
+
+      <para>
+       This is similar to writing the text of the function body as a string
+       constant (see <replaceable>definition</replaceable> above), but there
+       are some differences: This form only works for <literal>LANGUAGE
+       SQL</literal>, the string constant form works for all languages.  This
+       form is parsed at function definition time, the string constant form is
+       parsed at execution time; therefore this form cannot support
+       polymorphic argument types and other constructs that are not resolvable
+       at function definition time.  This form tracks dependencies between the
+       function and objects used in the function body, so <literal>DROP
+       ... CASCADE</literal> will work correctly, whereas the form using
+       string literals may leave dangling functions.  Finally, this form is
+       more compatible with the SQL standard and other SQL implementations.
+      </para>
+     </listitem>
+    </varlistentry>
+
    </variablelist>
  </refsect1>
 
@@ -667,6 +708,15 @@ CREATE FUNCTION add(integer, integer) RETURNS integer
     LANGUAGE SQL
     IMMUTABLE
     RETURNS NULL ON NULL INPUT;
+</programlisting>
+   The same function written in a more SQL-conforming style, using argument
+   names and an unquoted body:
+<programlisting>
+CREATE FUNCTION add(a integer, b integer) RETURNS integer
+    LANGUAGE SQL
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    RETURN a + b;
 </programlisting>
   </para>
 
@@ -797,23 +847,74 @@ COMMIT;
   <title>Compatibility</title>
 
   <para>
-   A <command>CREATE FUNCTION</command> command is defined in the SQL standard.
-   The <productname>PostgreSQL</productname> version is similar but
-   not fully compatible.  The attributes are not portable, neither are the
-   different available languages.
+   A <command>CREATE FUNCTION</command> command is defined in the SQL
+   standard.  The <productname>PostgreSQL</productname> implementation can be
+   used in a compatible way but has many extensions.  Conversely, the SQL
+   standard specifies a number of optional features that are not implemented
+   in <productname>PostgreSQL</productname>.
   </para>
 
   <para>
-   For compatibility with some other database systems,
-   <replaceable class="parameter">argmode</replaceable> can be written
-   either before or after <replaceable class="parameter">argname</replaceable>.
-   But only the first way is standard-compliant.
+   The following are important compatibility issues:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>OR REPLACE</literal> is a PostgreSQL extension.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      For compatibility with some other database systems, <replaceable
+      class="parameter">argmode</replaceable> can be written either before or
+      after <replaceable class="parameter">argname</replaceable>.  But only
+      the first way is standard-compliant.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      For parameter defaults, the SQL standard specifies only the syntax with
+      the <literal>DEFAULT</literal> key word.  The syntax with
+      <literal>=</literal> is used in T-SQL and Firebird.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The <literal>SETOF</literal> modifier is a PostgreSQL extension.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Only <literal>SQL</literal> is standardized as a language.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      All other attributes except <literal>CALLED ON NULL INPUT</literal> and
+      <literal>RETURNS NULL ON NULL INPUT</literal> are not standardized.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      For the body of <literal>LANGUAGE SQL</literal> functions, the SQL
+      standard only specifies the <replaceable>sql_body</replaceable> form.
+     </para>
+    </listitem>
+   </itemizedlist>
   </para>
 
   <para>
-   For parameter defaults, the SQL standard specifies only the syntax with
-   the <literal>DEFAULT</literal> key word.  The syntax
-   with <literal>=</literal> is used in T-SQL and Firebird.
+   Simple <literal>LANGUAGE SQL</literal> functions can be written in a way
+   that is both standard-conforming and portable to other implementations.
+   More complex functions using advanced features, optimization attributes, or
+   other languages will necessarily be specific to PostgreSQL in a significant
+   way.
   </para>
  </refsect1>
 

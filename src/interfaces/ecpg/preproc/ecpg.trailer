@@ -4,8 +4,8 @@ statements: /*EMPTY*/
 				| statements statement
 		;
 
-statement: ecpgstart at stmt ';' { connection = NULL; }
-				| ecpgstart stmt ';'
+statement: ecpgstart at toplevel_stmt ';' { connection = NULL; }
+				| ecpgstart toplevel_stmt ';'
 				| ecpgstart ECPGVarDeclaration
 				{
 					fprintf(base_yyout, "%s", $2);

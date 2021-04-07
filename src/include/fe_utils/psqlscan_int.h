@@ -114,6 +114,8 @@ typedef struct PsqlScanStateData
 	int			paren_depth;	/* depth of nesting in parentheses */
 	int			xcdepth;		/* depth of nesting in slash-star comments */
 	char	   *dolqstart;		/* current $foo$ quote start string */
+	int			identifier_count;	/* identifiers since start of statement */
+	int			begin_depth;	/* depth of begin/end routine body blocks */
 
 	/*
 	 * Callback functions provided by the program making use of the lexer,

@@ -89,6 +89,12 @@ ECPG: stmtTransactionStmt block
 		whenever_action(2);
 		free($1);
 	}
+ECPG: toplevel_stmtTransactionStmtLegacy block
+	{
+		fprintf(base_yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
+		whenever_action(2);
+		free($1);
+	}
 ECPG: stmtViewStmt rule
 	| ECPGAllocateDescr
 	{

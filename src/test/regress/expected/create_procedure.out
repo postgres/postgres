@@ -65,6 +65,48 @@ SELECT * FROM cp_test ORDER BY b COLLATE "C";
  1 | xyzzy
 (3 rows)
 
+-- SQL-standard body
+CREATE PROCEDURE ptest1s(x text)
+LANGUAGE SQL
+BEGIN ATOMIC
+  INSERT INTO cp_test VALUES (1, x);
+END;
+\df ptest1s
+                        List of functions
+ Schema |  Name   | Result data type | Argument data types | Type 
+--------+---------+------------------+---------------------+------
+ public | ptest1s |                  | x text              | proc
+(1 row)
+
+SELECT pg_get_functiondef('ptest1s'::regproc);
+                 pg_get_functiondef                 
+----------------------------------------------------
+ CREATE OR REPLACE PROCEDURE public.ptest1s(x text)+
+  LANGUAGE sql                                     +
+ BEGIN ATOMIC                                      +
+  INSERT INTO cp_test (a, b)                       +
+    VALUES (1, ptest1s.x);                         +
+ END                                               +
+ 
+(1 row)
+
+CALL ptest1s('b');
+SELECT * FROM cp_test ORDER BY b COLLATE "C";
+ a |   b   
+---+-------
+ 1 | 0
+ 1 | a
+ 1 | b
+ 1 | xyzzy
+(4 rows)
+
+-- utitlity functions currently not supported here
+CREATE PROCEDURE ptestx()
+LANGUAGE SQL
+BEGIN ATOMIC
+  CREATE TABLE x (a int);
+END;
+ERROR:  CREATE TABLE is not yet supported in unquoted SQL function body
 CREATE PROCEDURE ptest2()
 LANGUAGE SQL
 AS $$
@@ -146,6 +188,28 @@ AS $$
 SELECT a = b;
 $$;
 CALL ptest7(least('a', 'b'), 'a');
+-- empty body
+CREATE PROCEDURE ptest8(x text)
+BEGIN ATOMIC
+END;
+\df ptest8
+                        List of functions
+ Schema |  Name  | Result data type | Argument data types | Type 
+--------+--------+------------------+---------------------+------
+ public | ptest8 |                  | x text              | proc
+(1 row)
+
+SELECT pg_get_functiondef('ptest8'::regproc);
+                pg_get_functiondef                 
+---------------------------------------------------
+ CREATE OR REPLACE PROCEDURE public.ptest8(x text)+
+  LANGUAGE sql                                    +
+ BEGIN ATOMIC                                     +
+ END                                              +
+ 
+(1 row)
+
+CALL ptest8('');
 -- OUT parameters
 CREATE PROCEDURE ptest9(OUT a int)
 LANGUAGE SQL
@@ -214,6 +278,7 @@ ALTER ROUTINE ptest1a RENAME TO ptest1;
 DROP ROUTINE cp_testfunc1(int);
 -- cleanup
 DROP PROCEDURE ptest1;
+DROP PROCEDURE ptest1s;
 DROP PROCEDURE ptest2;
 DROP TABLE cp_test;
 DROP USER regress_cp_user1;

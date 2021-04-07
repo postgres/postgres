@@ -112,10 +112,13 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 	Oid			protrftypes[1] BKI_DEFAULT(_null_) BKI_LOOKUP(pg_type);
 
 	/* procedure source text */
-	text		prosrc BKI_FORCE_NOT_NULL;
+	text		prosrc;
 
 	/* secondary procedure info (can be NULL) */
 	text		probin BKI_DEFAULT(_null_);
+
+	/* pre-parsed SQL function body */
+	pg_node_tree prosqlbody BKI_DEFAULT(_null_);
 
 	/* procedure-local GUC settings */
 	text		proconfig[1] BKI_DEFAULT(_null_);
@@ -194,6 +197,7 @@ extern ObjectAddress ProcedureCreate(const char *procedureName,
 									 Oid languageValidator,
 									 const char *prosrc,
 									 const char *probin,
+									 Node *prosqlbody,
 									 char prokind,
 									 bool security_definer,
 									 bool isLeakProof,
