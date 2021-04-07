@@ -478,11 +478,11 @@ select jsonb_pretty(
 
 rollback;
 set compute_query_id = on;
-select explain_filter('explain (verbose) select 1');
-             explain_filter             
-----------------------------------------
- Result  (cost=N.N..N.N rows=N width=N)
-   Output: N
+select explain_filter('explain (verbose) select * from int8_tbl i8');
+                         explain_filter                         
+----------------------------------------------------------------
+ Seq Scan on public.int8_tbl i8  (cost=N.N..N.N rows=N width=N)
+   Output: q1, q2
  Query Identifier: N
 (3 rows)
 

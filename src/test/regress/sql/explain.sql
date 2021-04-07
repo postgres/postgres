@@ -105,4 +105,4 @@ select jsonb_pretty(
 rollback;
 
 set compute_query_id = on;
-select explain_filter('explain (verbose) select 1');
+select explain_filter('explain (verbose) select * from int8_tbl i8');
