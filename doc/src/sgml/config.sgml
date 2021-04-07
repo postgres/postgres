@@ -8644,6 +8644,39 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-vacuum-failsafe-age" xreflabel="vacuum_failsafe_age">
+      <term><varname>vacuum_failsafe_age</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>vacuum_failsafe_age</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the maximum age (in transactions) that a table's
+        <structname>pg_class</structname>.<structfield>relfrozenxid</structfield>
+        field can attain before <command>VACUUM</command> takes
+        extraordinary measures to avoid system-wide transaction ID
+        wraparound failure.  This is <command>VACUUM</command>'s
+        strategy of last resort.  The failsafe typically triggers
+        when an autovacuum to prevent transaction ID wraparound has
+        already been running for some time, though it's possible for
+        the failsafe to trigger during any <command>VACUUM</command>.
+       </para>
+       <para>
+        When the failsafe is triggered, any cost-based delay that is
+        in effect will no longer be applied, and further non-essential
+        maintenance tasks (such as index vacuuming) are bypassed.
+       </para>
+       <para>
+        The default is 1.6 billion transactions.  Although users can
+        set this value anywhere from zero to 2.1 billion,
+        <command>VACUUM</command> will silently adjust the effective
+        value to no less than 105% of <xref
+         linkend="guc-autovacuum-freeze-max-age"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-vacuum-multixact-freeze-table-age" xreflabel="vacuum_multixact_freeze_table_age">
       <term><varname>vacuum_multixact_freeze_table_age</varname> (<type>integer</type>)
       <indexterm>
@@ -8686,6 +8719,39 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         so that there is not an unreasonably short time between forced
         autovacuums.
         For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-multixact-failsafe-age" xreflabel="vacuum_multixact_failsafe_age">
+      <term><varname>vacuum_multixact_failsafe_age</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>vacuum_multixact_failsafe_age</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the maximum age (in transactions) that a table's
+        <structname>pg_class</structname>.<structfield>relminmxid</structfield>
+        field can attain before <command>VACUUM</command> takes
+        extraordinary measures to avoid system-wide multixact ID
+        wraparound failure.  This is <command>VACUUM</command>'s
+        strategy of last resort.  The failsafe typically triggers when
+        an autovacuum to prevent transaction ID wraparound has already
+        been running for some time, though it's possible for the
+        failsafe to trigger during any <command>VACUUM</command>.
+       </para>
+       <para>
+        When the failsafe is triggered, any cost-based delay that is
+        in effect will no longer be applied, and further non-essential
+        maintenance tasks (such as index vacuuming) are bypassed.
+       </para>
+       <para>
+        The default is 1.6 billion multixacts.  Although users can set
+        this value anywhere from zero to 2.1 billion,
+        <command>VACUUM</command> will silently adjust the effective
+        value to no less than 105% of <xref
+         linkend="guc-autovacuum-multixact-freeze-max-age"/>.
        </para>
       </listitem>
      </varlistentry>
