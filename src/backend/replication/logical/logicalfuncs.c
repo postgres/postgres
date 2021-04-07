@@ -250,7 +250,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("can no longer get changes from replication slot \"%s\"",
 							NameStr(*name)),
-					 errdetail("This slot has never previously reserved WAL, or has been invalidated.")));
+					 errdetail("This slot has never previously reserved WAL, or it has been invalidated.")));
 
 		MemoryContextSwitchTo(oldcontext);
 

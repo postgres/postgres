@@ -144,7 +144,7 @@ SELECT pg_replication_slot_advance('regression_slot3', '0/0'); -- invalid LSN
 ERROR:  invalid target WAL LSN
 SELECT pg_replication_slot_advance('regression_slot3', '0/1'); -- error
 ERROR:  replication slot "regression_slot3" cannot be advanced
-DETAIL:  This slot has never previously reserved WAL, or has been invalidated.
+DETAIL:  This slot has never previously reserved WAL, or it has been invalidated.
 SELECT pg_drop_replication_slot('regression_slot3');
  pg_drop_replication_slot 
 --------------------------

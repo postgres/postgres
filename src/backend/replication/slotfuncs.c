@@ -647,7 +647,7 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("replication slot \"%s\" cannot be advanced",
 						NameStr(*slotname)),
-				 errdetail("This slot has never previously reserved WAL, or has been invalidated.")));
+				 errdetail("This slot has never previously reserved WAL, or it has been invalidated.")));
 
 	/*
 	 * Check if the slot is not moving backwards.  Physical slots rely simply
