@@ -6792,8 +6792,8 @@ EXEC SQL DEALLOCATE DESCRIPTOR mydesc;
 
    <refsynopsisdiv>
 <synopsis>
-DECLARE <replaceable class="parameter">cursor_name</replaceable> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ] CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="parameter">prepared_name</replaceable>
-DECLARE <replaceable class="parameter">cursor_name</replaceable> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ] CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="parameter">query</replaceable>
+DECLARE <replaceable class="parameter">cursor_name</replaceable> [ BINARY ] [ ASENSITIVE | INSENSITIVE ] [ [ NO ] SCROLL ] CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="parameter">prepared_name</replaceable>
+DECLARE <replaceable class="parameter">cursor_name</replaceable> [ BINARY ] [ ASENSITIVE | INSENSITIVE ] [ [ NO ] SCROLL ] CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="parameter">query</replaceable>
 </synopsis>
    </refsynopsisdiv>
 

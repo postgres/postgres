@@ -26,7 +26,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]
+DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ ASENSITIVE | INSENSITIVE ] [ [ NO ] SCROLL ]
     CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="parameter">query</replaceable>
 </synopsis>
  </refsynopsisdiv>
@@ -75,14 +75,25 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
    </varlistentry>
 
    <varlistentry>
+    <term><literal>ASENSITIVE</literal></term>
     <term><literal>INSENSITIVE</literal></term>
     <listitem>
      <para>
-      Indicates that data retrieved from the cursor should be
-      unaffected by updates to the table(s) underlying the cursor that occur
-      after the cursor is created.  In <productname>PostgreSQL</productname>,
-      this is the default behavior; so this key word has no
-      effect and is only accepted for compatibility with the SQL standard.
+      Cursor sensitivity determines whether changes to the data underlying the
+      cursor, done in the same transaction, after the cursor has been
+      declared, are visible in the cursor.  <literal>INSENSITIVE</literal>
+      means they are not visible, <literal>ASENSITIVE</literal> means the
+      behavior is implementation-dependent.  A third behavior,
+      <literal>SENSITIVE</literal>, meaning that such changes are visible in
+      the cursor, is not available in <productname>PostgreSQL</productname>.
+      In <productname>PostgreSQL</productname>, all cursors are insensitive;
+      so these key words have no effect and are only accepted for
+      compatibility with the SQL standard.
+     </para>
+
+     <para>
+      Specifying <literal>INSENSITIVE</literal> together with <literal>FOR
+      UPDATE</literal> or <literal>FOR SHARE</literal> is an error.
      </para>
     </listitem>
    </varlistentry>
@@ -133,7 +144,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
   </variablelist>
 
   <para>
-   The key words <literal>BINARY</literal>,
+   The key words <literal>ASENSITIVE</literal>, <literal>BINARY</literal>,
    <literal>INSENSITIVE</literal>, and <literal>SCROLL</literal> can
    appear in any order.
   </para>
@@ -246,10 +257,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     fetched, in the same way as for a regular
     <link linkend="sql-select"><command>SELECT</command></link> command with
     these options.
-    In addition, the returned rows will be the most up-to-date versions;
-    therefore these options provide the equivalent of what the SQL standard
-    calls a <quote>sensitive cursor</quote>.  (Specifying <literal>INSENSITIVE</literal>
-    together with <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal> is an error.)
+    In addition, the returned rows will be the most up-to-date versions.
    </para>
 
    <caution>
@@ -278,7 +286,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <para>
      The main reason not to use <literal>FOR UPDATE</literal> with <literal>WHERE
      CURRENT OF</literal> is if you need the cursor to be scrollable, or to be
-     insensitive to the subsequent updates (that is, continue to show the old
+     isolated from concurrent updates (that is, continue to show the old
      data).  If this is a requirement, pay close heed to the caveats shown
      above.
     </para>
@@ -319,17 +327,18 @@ DECLARE liahona CURSOR FOR SELECT * FROM films;
   <title>Compatibility</title>
 
   <para>
-   The SQL standard says that it is implementation-dependent whether cursors
-   are sensitive to concurrent updates of the underlying data by default.  In
-   <productname>PostgreSQL</productname>, cursors are insensitive by default,
-   and can be made sensitive by specifying <literal>FOR UPDATE</literal>.  Other
-   products may work differently.
-  </para>
-
-  <para>
    The SQL standard allows cursors only in embedded
    <acronym>SQL</acronym> and in modules. <productname>PostgreSQL</productname>
    permits cursors to be used interactively.
+  </para>
+
+  <para>
+   According to the SQL standard, changes made to insensitive cursors by
+   <literal>UPDATE ... WHERE CURRENT OF</literal> and <literal>DELETE
+   ... WHERE CURRENT OF</literal> statements are visibible in that same
+   cursor.  <productname>PostgreSQL</productname> treats these statements like
+   all other data changing statements in that they are not visible in
+   insensitive cursors.
   </para>
 
   <para>

@@ -3052,7 +3052,7 @@ psql_completion(const char *text, int start, int end)
 	 * SCROLL, and CURSOR.
 	 */
 	else if (Matches("DECLARE", MatchAny))
-		COMPLETE_WITH("BINARY", "INSENSITIVE", "SCROLL", "NO SCROLL",
+		COMPLETE_WITH("BINARY", "ASENSITIVE", "INSENSITIVE", "SCROLL", "NO SCROLL",
 					  "CURSOR");
 
 	/*

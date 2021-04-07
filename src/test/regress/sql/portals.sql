@@ -382,10 +382,25 @@ DELETE FROM uctest WHERE CURRENT OF c1; -- no-op
 SELECT * FROM uctest;
 UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1; -- no-op
 SELECT * FROM uctest;
---- sensitive cursors can't currently scroll back, so this is an error:
+--- FOR UPDATE cursors can't currently scroll back, so this is an error:
 FETCH RELATIVE 0 FROM c1;
 ROLLBACK;
 SELECT * FROM uctest;
+
+-- Check insensitive cursor with INSERT
+-- (The above tests don't test the SQL notion of an insensitive cursor
+-- correctly, because per SQL standard, changes from WHERE CURRENT OF
+-- commands should be visible in the cursor.  So here we make the
+-- changes with a command that is independent of the cursor.)
+BEGIN;
+DECLARE c1 INSENSITIVE CURSOR FOR SELECT * FROM uctest;
+INSERT INTO uctest VALUES (10, 'ten');
+FETCH NEXT FROM c1;
+FETCH NEXT FROM c1;
+FETCH NEXT FROM c1;  -- insert not visible
+COMMIT;
+SELECT * FROM uctest;
+DELETE FROM uctest WHERE f1 = 10;  -- restore test table state
 
 -- Check inheritance cases
 CREATE TEMP TABLE ucchild () inherits (uctest);

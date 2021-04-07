@@ -2681,14 +2681,21 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 	Query	   *result;
 	Query	   *query;
 
-	/*
-	 * Don't allow both SCROLL and NO SCROLL to be specified
-	 */
 	if ((stmt->options & CURSOR_OPT_SCROLL) &&
 		(stmt->options & CURSOR_OPT_NO_SCROLL))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-				 errmsg("cannot specify both SCROLL and NO SCROLL")));
+				 /* translator: %s is a SQL keyword */
+				 errmsg("cannot specify both %s and %s",
+						"SCROLL", "NO SCROLL")));
+
+	if ((stmt->options & CURSOR_OPT_ASENSITIVE) &&
+		(stmt->options & CURSOR_OPT_INSENSITIVE))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+				 /* translator: %s is a SQL keyword */
+				 errmsg("cannot specify both %s and %s",
+						"ASENSITIVE", "INSENSITIVE")));
 
 	/* Transform contained query, not allowing SELECT INTO */
 	query = transformStmt(pstate, stmt->query);
@@ -2734,10 +2741,10 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 	/* FOR UPDATE and INSENSITIVE are not compatible */
 	if (query->rowMarks != NIL && (stmt->options & CURSOR_OPT_INSENSITIVE))
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 		/*------
 		  translator: %s is a SQL row locking clause such as FOR UPDATE */
-				 errmsg("DECLARE INSENSITIVE CURSOR ... %s is not supported",
+				 errmsg("DECLARE INSENSITIVE CURSOR ... %s is not valid",
 						LCS_asString(((RowMarkClause *)
 									  linitial(query->rowMarks))->strength)),
 				 errdetail("Insensitive cursors must be READ ONLY.")));
