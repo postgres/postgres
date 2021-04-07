@@ -377,9 +377,6 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
  *
  * INSERT queries may need a projection to filter out junk attrs in the tlist.
  *
- * This is "one-time" for any given result rel, but we might touch
- * more than one result rel in the course of a partitioned INSERT.
- *
  * This is also a convenient place to verify that the
  * output of an INSERT matches the target table.
  */
@@ -447,7 +444,7 @@ ExecInitInsertProjection(ModifyTableState *mtstate,
  * identity info in the junk attrs.
  *
  * This is "one-time" for any given result rel, but we might touch more than
- * one result rel in the course of a partitioned UPDATE, and each one needs
+ * one result rel in the course of an inherited UPDATE, and each one needs
  * its own projection due to possible column order variation.
  *
  * This is also a convenient place to verify that the output of an UPDATE
