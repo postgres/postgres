@@ -348,7 +348,6 @@ GinInitPage(Page page, uint32 f, Size pageSize)
 	PageInit(page, pageSize, sizeof(GinPageOpaqueData));
 
 	opaque = GinPageGetOpaque(page);
-	memset(opaque, 0, sizeof(GinPageOpaqueData));
 	opaque->flags = f;
 	opaque->rightlink = InvalidBlockNumber;
 }

@@ -677,9 +677,8 @@ SpGistInitPage(Page page, uint16 f)
 {
 	SpGistPageOpaque opaque;
 
-	PageInit(page, BLCKSZ, MAXALIGN(sizeof(SpGistPageOpaqueData)));
+	PageInit(page, BLCKSZ, sizeof(SpGistPageOpaqueData));
 	opaque = SpGistPageGetOpaque(page);
-	memset(opaque, 0, sizeof(SpGistPageOpaqueData));
 	opaque->flags = f;
 	opaque->spgist_page_id = SPGIST_PAGE_ID;
 }

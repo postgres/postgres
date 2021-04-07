@@ -63,7 +63,6 @@ flushCachedPage(Relation index, BloomBuildState *buildstate)
 static void
 initCachedPage(BloomBuildState *buildstate)
 {
-	memset(buildstate->data.data, 0, BLCKSZ);
 	BloomInitPage(buildstate->data.data, 0);
 	buildstate->count = 0;
 }
