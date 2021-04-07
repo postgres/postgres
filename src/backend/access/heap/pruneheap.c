@@ -962,6 +962,10 @@ heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 		 */
 		for (;;)
 		{
+			/* Sanity check */
+			if (nextoffnum < FirstOffsetNumber || nextoffnum > maxoff)
+				break;
+
 			lp = PageGetItemId(page, nextoffnum);
 
 			/* Check for broken chains */

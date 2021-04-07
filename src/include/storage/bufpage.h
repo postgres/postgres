@@ -441,6 +441,7 @@ extern Page PageGetTempPageCopy(Page page);
 extern Page PageGetTempPageCopySpecial(Page page);
 extern void PageRestoreTempPage(Page tempPage, Page oldPage);
 extern void PageRepairFragmentation(Page page);
+extern void PageTruncateLinePointerArray(Page page);
 extern Size PageGetFreeSpace(Page page);
 extern Size PageGetFreeSpaceForMultipleTuples(Page page, int ntups);
 extern Size PageGetExactFreeSpace(Page page);

@@ -1444,7 +1444,11 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		if (prunestate.has_lpdead_items && vacrel->do_index_vacuuming)
 		{
 			/*
-			 * Wait until lazy_vacuum_heap_rel() to save free space.
+			 * Wait until lazy_vacuum_heap_rel() to save free space.  This
+			 * doesn't just save us some cycles; it also allows us to record
+			 * any additional free space that lazy_vacuum_heap_page() will
+			 * make available in cases where it's possible to truncate the
+			 * page's line pointer array.
 			 *
 			 * Note: The one-pass (no indexes) case is only supposed to make
 			 * it this far when there were no LP_DEAD items during pruning.
@@ -2033,6 +2037,13 @@ lazy_vacuum_all_indexes(LVRelState *vacrel)
  * Pages that never had lazy_scan_prune record LP_DEAD items are not visited
  * at all.
  *
+ * We may also be able to truncate the line pointer array of the heap pages we
+ * visit.  If there is a contiguous group of LP_UNUSED items at the end of the
+ * array, it can be reclaimed as free space.  These LP_UNUSED items usually
+ * start out as LP_DEAD items recorded by lazy_scan_prune (we set items from
+ * each page to LP_UNUSED, and then consider if it's possible to truncate the
+ * page's line pointer array).
+ *
  * Note: the reason for doing this as a second pass is we cannot remove the
  * tuples until we've removed their index entries, and we want to process
  * index entry removal in batches as large as possible.
@@ -2175,7 +2186,8 @@ lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
 
 	Assert(uncnt > 0);
 
-	PageSetHasFreeLinePointers(page);
+	/* Attempt to truncate line pointer array now */
+	PageTruncateLinePointerArray(page);
 
 	/*
 	 * Mark buffer dirty before we write WAL.
