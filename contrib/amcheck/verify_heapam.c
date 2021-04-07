@@ -59,6 +59,19 @@ typedef enum SkipPages
 } SkipPages;
 
 /*
+ * Struct holding information about a toasted attribute sufficient to both
+ * check the toasted attribute and, if found to be corrupt, to report where it
+ * was encountered in the main table.
+ */
+typedef struct ToastedAttribute
+{
+	struct varatt_external toast_pointer;
+	BlockNumber blkno;			/* block in main table */
+	OffsetNumber offnum;		/* offset in main table */
+	AttrNumber	attnum;			/* attribute in main table */
+} ToastedAttribute;
+
+/*
  * Struct holding the running context information during
  * a lifetime of a verify_heapam execution.
  */
@@ -119,11 +132,11 @@ typedef struct HeapCheckContext
 	/* True if tuple's xmax makes it eligible for pruning */
 	bool		tuple_could_be_pruned;
 
-	/* Values for iterating over toast for the attribute */
-	int32		chunkno;
-	int32		attrsize;
-	int32		endchunk;
-	int32		totalchunks;
+	/*
+	 * List of ToastedAttribute structs for toasted attributes which are not
+	 * eligible for pruning and should be checked
+	 */
+	List	   *toasted_attributes;
 
 	/* Whether verify_heapam has yet encountered any corrupt tuples */
 	bool		is_corrupt;
@@ -136,13 +149,20 @@ typedef struct HeapCheckContext
 /* Internal implementation */
 static void sanity_check_relation(Relation rel);
 static void check_tuple(HeapCheckContext *ctx);
-static void check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx);
+static void check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
+							  ToastedAttribute *ta, int32 chunkno,
+							  int32 endchunk);
 
 static bool check_tuple_attribute(HeapCheckContext *ctx);
+static void check_toasted_attribute(HeapCheckContext *ctx,
+									ToastedAttribute *ta);
+
 static bool check_tuple_header(HeapCheckContext *ctx);
 static bool check_tuple_visibility(HeapCheckContext *ctx);
 
 static void report_corruption(HeapCheckContext *ctx, char *msg);
+static void report_toast_corruption(HeapCheckContext *ctx,
+									ToastedAttribute *ta, char *msg);
 static TupleDesc verify_heapam_tupdesc(void);
 static FullTransactionId FullTransactionIdFromXidAndCtx(TransactionId xid,
 														const HeapCheckContext *ctx);
@@ -253,6 +273,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 
 	memset(&ctx, 0, sizeof(HeapCheckContext));
 	ctx.cached_xid = InvalidTransactionId;
+	ctx.toasted_attributes = NIL;
 
 	/*
 	 * Any xmin newer than the xmin of our snapshot can't become all-visible
@@ -469,6 +490,19 @@ verify_heapam(PG_FUNCTION_ARGS)
 		/* clean up */
 		UnlockReleaseBuffer(ctx.buffer);
 
+		/*
+		 * Check any toast pointers from the page whose lock we just released
+		 */
+		if (ctx.toasted_attributes != NIL)
+		{
+			ListCell   *cell;
+
+			foreach(cell, ctx.toasted_attributes)
+				check_toasted_attribute(&ctx, lfirst(cell));
+			list_free_deep(ctx.toasted_attributes);
+			ctx.toasted_attributes = NIL;
+		}
+
 		if (on_error_stop && ctx.is_corrupt)
 			break;
 	}
@@ -510,14 +544,13 @@ sanity_check_relation(Relation rel)
 }
 
 /*
- * Record a single corruption found in the table.  The values in ctx should
- * reflect the location of the corruption, and the msg argument should contain
- * a human-readable description of the corruption.
- *
- * The msg argument is pfree'd by this function.
+ * Shared internal implementation for report_corruption and
+ * report_toast_corruption.
  */
 static void
-report_corruption(HeapCheckContext *ctx, char *msg)
+report_corruption_internal(Tuplestorestate *tupstore, TupleDesc tupdesc,
+						   BlockNumber blkno, OffsetNumber offnum,
+						   AttrNumber attnum, char *msg)
 {
 	Datum		values[HEAPCHECK_RELATION_COLS];
 	bool		nulls[HEAPCHECK_RELATION_COLS];
@@ -525,10 +558,10 @@ report_corruption(HeapCheckContext *ctx, char *msg)
 
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, 0, sizeof(nulls));
-	values[0] = Int64GetDatum(ctx->blkno);
-	values[1] = Int32GetDatum(ctx->offnum);
-	values[2] = Int32GetDatum(ctx->attnum);
-	nulls[2] = (ctx->attnum < 0);
+	values[0] = Int64GetDatum(blkno);
+	values[1] = Int32GetDatum(offnum);
+	values[2] = Int32GetDatum(attnum);
+	nulls[2] = (attnum < 0);
 	values[3] = CStringGetTextDatum(msg);
 
 	/*
@@ -541,8 +574,39 @@ report_corruption(HeapCheckContext *ctx, char *msg)
 	 */
 	pfree(msg);
 
-	tuple = heap_form_tuple(ctx->tupdesc, values, nulls);
-	tuplestore_puttuple(ctx->tupstore, tuple);
+	tuple = heap_form_tuple(tupdesc, values, nulls);
+	tuplestore_puttuple(tupstore, tuple);
+}
+
+/*
+ * Record a single corruption found in the main table.  The values in ctx should
+ * indicate the location of the corruption, and the msg argument should contain
+ * a human-readable description of the corruption.
+ *
+ * The msg argument is pfree'd by this function.
+ */
+static void
+report_corruption(HeapCheckContext *ctx, char *msg)
+{
+	report_corruption_internal(ctx->tupstore, ctx->tupdesc, ctx->blkno,
+							   ctx->offnum, ctx->attnum, msg);
+	ctx->is_corrupt = true;
+}
+
+/*
+ * Record corruption found in the toast table.  The values in ta should
+ * indicate the location in the main table where the toast pointer was
+ * encountered, and the msg argument should contain a human-readable
+ * description of the toast table corruption.
+ *
+ * As above, the msg argument is pfree'd by this function.
+ */
+static void
+report_toast_corruption(HeapCheckContext *ctx, ToastedAttribute *ta,
+						char *msg)
+{
+	report_corruption_internal(ctx->tupstore, ctx->tupdesc, ta->blkno,
+							   ta->offnum, ta->attnum, msg);
 	ctx->is_corrupt = true;
 }
 
@@ -1094,9 +1158,12 @@ check_tuple_visibility(HeapCheckContext *ctx)
  * tuples that store the toasted value are retrieved and checked in order, with
  * each toast tuple being checked against where we are in the sequence, as well
  * as each toast tuple having its varlena structure sanity checked.
+ *
+ * Returns whether the toast tuple passed the corruption checks.
  */
 static void
-check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx)
+check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
+				  ToastedAttribute *ta, int32 chunkno, int32 endchunk)
 {
 	int32		curchunk;
 	Pointer		chunk;
@@ -1111,7 +1178,7 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx)
 										 ctx->toast_rel->rd_att, &isnull));
 	if (isnull)
 	{
-		report_corruption(ctx,
+		report_toast_corruption(ctx, ta,
 						  pstrdup("toast chunk sequence number is null"));
 		return;
 	}
@@ -1119,7 +1186,7 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx)
 										ctx->toast_rel->rd_att, &isnull));
 	if (isnull)
 	{
-		report_corruption(ctx,
+		report_toast_corruption(ctx, ta,
 						  pstrdup("toast chunk data is null"));
 		return;
 	}
@@ -1137,7 +1204,7 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx)
 		/* should never happen */
 		uint32		header = ((varattrib_4b *) chunk)->va_4byte.va_header;
 
-		report_corruption(ctx,
+		report_toast_corruption(ctx, ta,
 						  psprintf("corrupt extended toast chunk has invalid varlena header: %0x (sequence number %d)",
 								   header, curchunk));
 		return;
@@ -1146,30 +1213,28 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx)
 	/*
 	 * Some checks on the data we've found
 	 */
-	if (curchunk != ctx->chunkno)
+	if (curchunk != chunkno)
 	{
-		report_corruption(ctx,
+		report_toast_corruption(ctx, ta,
 						  psprintf("toast chunk sequence number %u does not match the expected sequence number %u",
-								   curchunk, ctx->chunkno));
+								   curchunk, chunkno));
 		return;
 	}
-	if (curchunk > ctx->endchunk)
+	if (curchunk > endchunk)
 	{
-		report_corruption(ctx,
+		report_toast_corruption(ctx, ta,
 						  psprintf("toast chunk sequence number %u exceeds the end chunk sequence number %u",
-								   curchunk, ctx->endchunk));
+								   curchunk, endchunk));
 		return;
 	}
 
-	expected_size = curchunk < ctx->totalchunks - 1 ? TOAST_MAX_CHUNK_SIZE
-		: ctx->attrsize - ((ctx->totalchunks - 1) * TOAST_MAX_CHUNK_SIZE);
+	expected_size = curchunk < endchunk ? TOAST_MAX_CHUNK_SIZE
+		: VARATT_EXTERNAL_GET_EXTSIZE(ta->toast_pointer) - (endchunk * TOAST_MAX_CHUNK_SIZE);
+
 	if (chunksize != expected_size)
-	{
-		report_corruption(ctx,
+		report_toast_corruption(ctx, ta,
 						  psprintf("toast chunk size %u differs from the expected size %u",
 								   chunksize, expected_size));
-		return;
-	}
 }
 
 /*
@@ -1177,17 +1242,17 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx)
  * found in ctx->tupstore.
  *
  * This function follows the logic performed by heap_deform_tuple(), and in the
- * case of a toasted value, optionally continues along the logic of
- * detoast_external_attr(), checking for any conditions that would result in
- * either of those functions Asserting or crashing the backend.  The checks
- * performed by Asserts present in those two functions are also performed here.
- * In cases where those two functions are a bit cavalier in their assumptions
- * about data being correct, we perform additional checks not present in either
- * of those two functions.  Where some condition is checked in both of those
- * functions, we perform it here twice, as we parallel the logical flow of
- * those two functions.  The presence of duplicate checks seems a reasonable
- * price to pay for keeping this code tightly coupled with the code it
- * protects.
+ * case of a toasted value, optionally stores the toast pointer so later it can
+ * be checked following the logic of detoast_external_attr(), checking for any
+ * conditions that would result in either of those functions Asserting or
+ * crashing the backend.  The checks performed by Asserts present in those two
+ * functions are also performed here and in check_toasted_attribute.  In cases
+ * where those two functions are a bit cavalier in their assumptions about data
+ * being correct, we perform additional checks not present in either of those
+ * two functions.  Where some condition is checked in both of those functions,
+ * we perform it here twice, as we parallel the logical flow of those two
+ * functions.  The presence of duplicate checks seems a reasonable price to pay
+ * for keeping this code tightly coupled with the code it protects.
  *
  * Returns true if the tuple attribute is sane enough for processing to
  * continue on to the next attribute, false otherwise.
@@ -1195,12 +1260,6 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx)
 static bool
 check_tuple_attribute(HeapCheckContext *ctx)
 {
-	struct varatt_external toast_pointer;
-	ScanKeyData toastkey;
-	SysScanDesc toastscan;
-	SnapshotData SnapshotToast;
-	HeapTuple	toasttup;
-	bool		found_toasttup;
 	Datum		attdatum;
 	struct varlena *attr;
 	char	   *tp;				/* pointer to the tuple data */
@@ -1335,13 +1394,44 @@ check_tuple_attribute(HeapCheckContext *ctx)
 		return true;
 
 	/*
-	 * Must copy attr into toast_pointer for alignment considerations
+	 * If this tuple is eligible to be pruned, we cannot check the toast.
+	 * Otherwise, we push a copy of the toast tuple so we can check it after
+	 * releasing the main table buffer lock.
 	 */
-	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
+	if (!ctx->tuple_could_be_pruned)
+	{
+		ToastedAttribute *ta;
 
-	ctx->attrsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
-	ctx->endchunk = (ctx->attrsize - 1) / TOAST_MAX_CHUNK_SIZE;
-	ctx->totalchunks = ctx->endchunk + 1;
+		ta = (ToastedAttribute *) palloc0(sizeof(ToastedAttribute));
+
+		VARATT_EXTERNAL_GET_POINTER(ta->toast_pointer, attr);
+		ta->blkno = ctx->blkno;
+		ta->offnum = ctx->offnum;
+		ta->attnum = ctx->attnum;
+		ctx->toasted_attributes = lappend(ctx->toasted_attributes, ta);
+	}
+
+	return true;
+}
+
+/*
+ * For each attribute collected in ctx->toasted_attributes, look up the value
+ * in the toast table and perform checks on it.  This function should only be
+ * called on toast pointers which cannot be vacuumed away during our
+ * processing.
+ */
+static void
+check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
+{
+	SnapshotData SnapshotToast;
+	ScanKeyData toastkey;
+	SysScanDesc toastscan;
+	bool		found_toasttup;
+	HeapTuple	toasttup;
+	int32		chunkno;
+	int32		endchunk;
+
+	endchunk = (VARATT_EXTERNAL_GET_EXTSIZE(ta->toast_pointer) - 1) / TOAST_MAX_CHUNK_SIZE;
 
 	/*
 	 * Setup a scan key to find chunks in toast table with matching va_valueid
@@ -1349,7 +1439,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	ScanKeyInit(&toastkey,
 				(AttrNumber) 1,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(toast_pointer.va_valueid));
+				ObjectIdGetDatum(ta->toast_pointer.va_valueid));
 
 	/*
 	 * Check if any chunks for this toasted object exist in the toast table,
@@ -1360,27 +1450,26 @@ check_tuple_attribute(HeapCheckContext *ctx)
 										   ctx->valid_toast_index,
 										   &SnapshotToast, 1,
 										   &toastkey);
-	ctx->chunkno = 0;
+	chunkno = 0;
 	found_toasttup = false;
 	while ((toasttup =
 			systable_getnext_ordered(toastscan,
 									 ForwardScanDirection)) != NULL)
 	{
 		found_toasttup = true;
-		check_toast_tuple(toasttup, ctx);
-		ctx->chunkno++;
+		check_toast_tuple(toasttup, ctx, ta, chunkno, endchunk);
+		chunkno++;
 	}
-	if (!found_toasttup)
-		report_corruption(ctx,
-						  psprintf("toasted value for attribute %u missing from toast table",
-								   ctx->attnum));
-	else if (ctx->chunkno != (ctx->endchunk + 1))
-		report_corruption(ctx,
-						  psprintf("final toast chunk number %u differs from expected value %u",
-								   ctx->chunkno, (ctx->endchunk + 1)));
 	systable_endscan_ordered(toastscan);
 
-	return true;
+	if (!found_toasttup)
+		report_toast_corruption(ctx, ta,
+								psprintf("toasted value for attribute %u missing from toast table",
+										 ta->attnum));
+	else if (chunkno != (endchunk + 1))
+		report_toast_corruption(ctx, ta,
+								psprintf("final toast chunk number %u differs from expected value %u",
+										 chunkno, (endchunk + 1)));
 }
 
 /*
@@ -1391,8 +1480,8 @@ static void
 check_tuple(HeapCheckContext *ctx)
 {
 	/*
-	 * Check various forms of tuple header corruption, and if the header is too
-	 * corrupt, do not continue with other checks.
+	 * Check various forms of tuple header corruption, and if the header is
+	 * too corrupt, do not continue with other checks.
 	 */
 	if (!check_tuple_header(ctx))
 		return;
@@ -1423,7 +1512,10 @@ check_tuple(HeapCheckContext *ctx)
 	 * Check each attribute unless we hit corruption that confuses what to do
 	 * next, at which point we abort further attribute checks for this tuple.
 	 * Note that we don't abort for all types of corruption, only for those
-	 * types where we don't know how to continue.
+	 * types where we don't know how to continue.  We also don't abort the
+	 * checking of toasted attributes collected from the tuple prior to
+	 * aborting.  Those will still be checked later along with other toasted
+	 * attributes collected from the page.
 	 */
 	ctx->offset = 0;
 	for (ctx->attnum = 0; ctx->attnum < ctx->natts; ctx->attnum++)

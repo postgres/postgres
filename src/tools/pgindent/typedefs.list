@@ -2558,6 +2558,7 @@ TmFromChar
 TmToChar
 ToastAttrInfo
 ToastTupleContext
+ToastedAttribute
 TocEntry
 TokenAuxData
 TokenizedLine
