@@ -4882,7 +4882,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
  * case if target is an array. The assignment index will not be restricted by
  * number of elements in the array, and if there are any empty slots between
  * last element of the array and a new one they will be filled with nulls. If
- * the index is negative, it still will be considered an an index from the end
+ * the index is negative, it still will be considered an index from the end
  * of the array. Of a part of the path is not present and this part is more
  * than just one last element, this flag will instruct to create the whole
  * chain of corresponding objects and insert the value.
