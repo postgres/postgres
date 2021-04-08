@@ -106,10 +106,13 @@ find_inheritance_children(Oid parentrelId, bool include_detached,
 		 *
 		 * The reason for this check is that we want to avoid seeing the
 		 * partition as alive in RI queries during REPEATABLE READ or
-		 * SERIALIZABLE transactions.
+		 * SERIALIZABLE transactions.  (If there's no active snapshot set,
+		 * that means we're not running a user query, so it's OK to always
+		 * include detached partitions in that case.)
 		 */
 		if (((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhdetachpending &&
-			!include_detached)
+			!include_detached &&
+			ActiveSnapshotSet())
 		{
 			TransactionId xmin;
 			Snapshot snap;
