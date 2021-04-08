@@ -408,7 +408,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 {
 	IndexTuple	itup = insertstate->itup;
 	IndexTuple	curitup = NULL;
-	ItemId		curitemid;
+	ItemId		curitemid = NULL;
 	BTScanInsert itup_key = insertstate->itup_key;
 	SnapshotData SnapshotDirty;
 	OffsetNumber offset;
