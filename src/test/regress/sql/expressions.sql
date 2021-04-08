@@ -65,3 +65,88 @@ select count(*) from date_tbl
   where f1 not between symmetric '1997-01-01' and '1998-01-01';
 select count(*) from date_tbl
   where f1 not between symmetric '1997-01-01' and '1998-01-01';
+
+--
+-- Tests for ScalarArrayOpExpr with a hashfn
+--
+
+-- create a stable function so that the tests below are not
+-- evaluated using the planner's constant folding.
+begin;
+
+create function return_int_input(int) returns int as $$
+begin
+	return $1;
+end;
+$$ language plpgsql stable;
+
+create function return_text_input(text) returns text as $$
+begin
+	return $1;
+end;
+$$ language plpgsql stable;
+
+select return_int_input(1) in (10, 9, 2, 8, 3, 7, 4, 6, 5, 1);
+select return_int_input(1) in (10, 9, 2, 8, 3, 7, 4, 6, 5, null);
+select return_int_input(1) in (null, null, null, null, null, null, null, null, null, null, null);
+select return_int_input(1) in (10, 9, 2, 8, 3, 7, 4, 6, 5, 1, null);
+select return_int_input(null::int) in (10, 9, 2, 8, 3, 7, 4, 6, 5, 1);
+select return_int_input(null::int) in (10, 9, 2, 8, 3, 7, 4, 6, 5, null);
+select return_text_input('a') in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j');
+
+rollback;
+
+-- Test with non-strict equality function.
+-- We need to create our own type for this.
+
+begin;
+
+create type myint;
+create function myintin(cstring) returns myint strict immutable language
+  internal as 'int4in';
+create function myintout(myint) returns cstring strict immutable language
+  internal as 'int4out';
+create function myinthash(myint) returns integer strict immutable language
+  internal as 'hashint4';
+
+create type myint (input = myintin, output = myintout, like = int4);
+
+create cast (int4 as myint) without function;
+create cast (myint as int4) without function;
+
+create function myinteq(myint, myint) returns bool as $$
+begin
+  if $1 is null and $2 is null then
+    return true;
+  else
+    return $1::int = $2::int;
+  end if;
+end;
+$$ language plpgsql immutable;
+
+create operator = (
+  leftarg    = myint,
+  rightarg   = myint,
+  commutator = =,
+  negator    = <>,
+  procedure  = myinteq,
+  restrict   = eqsel,
+  join       = eqjoinsel,
+  merges
+);
+
+create operator class myint_ops
+default for type myint using hash as
+  operator    1   =  (myint, myint),
+  function    1   myinthash(myint);
+
+create table inttest (a myint);
+insert into inttest values(1::myint),(null);
+
+-- try an array with enough elements to cause hashing
+select * from inttest where a in (1::myint,2::myint,3::myint,4::myint,5::myint,6::myint,7::myint,8::myint,9::myint, null);
+-- ensure the result matched with the non-hashed version.  We simply remove
+-- some array elements so that we don't reach the hashing threshold.
+select * from inttest where a in (1::myint,2::myint,3::myint,4::myint,5::myint, null);
+
+rollback;

@@ -1149,6 +1149,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				FmgrInfo   *finfo;
 				FunctionCallInfo fcinfo;
 				AclResult	aclresult;
+				FmgrInfo   *hash_finfo;
+				FunctionCallInfo hash_fcinfo;
 
 				Assert(list_length(opexpr->args) == 2);
 				scalararg = (Expr *) linitial(opexpr->args);
@@ -1163,6 +1165,17 @@ ExecInitExprRec(Expr *node, ExprState *state,
 								   get_func_name(opexpr->opfuncid));
 				InvokeFunctionExecuteHook(opexpr->opfuncid);
 
+				if (OidIsValid(opexpr->hashfuncid))
+				{
+					aclresult = pg_proc_aclcheck(opexpr->hashfuncid,
+												 GetUserId(),
+												 ACL_EXECUTE);
+					if (aclresult != ACLCHECK_OK)
+						aclcheck_error(aclresult, OBJECT_FUNCTION,
+									   get_func_name(opexpr->hashfuncid));
+					InvokeFunctionExecuteHook(opexpr->hashfuncid);
+				}
+
 				/* Set up the primary fmgr lookup information */
 				finfo = palloc0(sizeof(FmgrInfo));
 				fcinfo = palloc0(SizeForFunctionCallInfo(2));
@@ -1171,26 +1184,76 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				InitFunctionCallInfoData(*fcinfo, finfo, 2,
 										 opexpr->inputcollid, NULL, NULL);
 
-				/* Evaluate scalar directly into left function argument */
-				ExecInitExprRec(scalararg, state,
-								&fcinfo->args[0].value, &fcinfo->args[0].isnull);
-
 				/*
-				 * Evaluate array argument into our return value.  There's no
-				 * danger in that, because the return value is guaranteed to
-				 * be overwritten by EEOP_SCALARARRAYOP, and will not be
-				 * passed to any other expression.
+				 * If hashfuncid is set, we create a EEOP_HASHED_SCALARARRAYOP
+				 * step instead of a EEOP_SCALARARRAYOP.  This provides much
+				 * faster lookup performance than the normal linear search
+				 * when the number of items in the array is anything but very
+				 * small.
 				 */
-				ExecInitExprRec(arrayarg, state, resv, resnull);
+				if (OidIsValid(opexpr->hashfuncid))
+				{
+					hash_finfo = palloc0(sizeof(FmgrInfo));
+					hash_fcinfo = palloc0(SizeForFunctionCallInfo(1));
+					fmgr_info(opexpr->hashfuncid, hash_finfo);
+					fmgr_info_set_expr((Node *) node, hash_finfo);
+					InitFunctionCallInfoData(*hash_fcinfo, hash_finfo,
+											 1, opexpr->inputcollid, NULL,
+											 NULL);
 
-				/* And perform the operation */
-				scratch.opcode = EEOP_SCALARARRAYOP;
-				scratch.d.scalararrayop.element_type = InvalidOid;
-				scratch.d.scalararrayop.useOr = opexpr->useOr;
-				scratch.d.scalararrayop.finfo = finfo;
-				scratch.d.scalararrayop.fcinfo_data = fcinfo;
-				scratch.d.scalararrayop.fn_addr = finfo->fn_addr;
-				ExprEvalPushStep(state, &scratch);
+					scratch.d.hashedscalararrayop.hash_finfo = hash_finfo;
+					scratch.d.hashedscalararrayop.hash_fcinfo_data = hash_fcinfo;
+					scratch.d.hashedscalararrayop.hash_fn_addr = hash_finfo->fn_addr;
+
+					/* Evaluate scalar directly into left function argument */
+					ExecInitExprRec(scalararg, state,
+									&fcinfo->args[0].value, &fcinfo->args[0].isnull);
+
+					/*
+					 * Evaluate array argument into our return value.  There's
+					 * no danger in that, because the return value is
+					 * guaranteed to be overwritten by
+					 * EEOP_HASHED_SCALARARRAYOP, and will not be passed to
+					 * any other expression.
+					 */
+					ExecInitExprRec(arrayarg, state, resv, resnull);
+
+					/* And perform the operation */
+					scratch.opcode = EEOP_HASHED_SCALARARRAYOP;
+					scratch.d.hashedscalararrayop.finfo = finfo;
+					scratch.d.hashedscalararrayop.fcinfo_data = fcinfo;
+					scratch.d.hashedscalararrayop.fn_addr = finfo->fn_addr;
+
+					scratch.d.hashedscalararrayop.hash_finfo = hash_finfo;
+					scratch.d.hashedscalararrayop.hash_fcinfo_data = hash_fcinfo;
+					scratch.d.hashedscalararrayop.hash_fn_addr = hash_finfo->fn_addr;
+
+					ExprEvalPushStep(state, &scratch);
+				}
+				else
+				{
+					/* Evaluate scalar directly into left function argument */
+					ExecInitExprRec(scalararg, state,
+									&fcinfo->args[0].value,
+									&fcinfo->args[0].isnull);
+
+					/*
+					 * Evaluate array argument into our return value.  There's
+					 * no danger in that, because the return value is
+					 * guaranteed to be overwritten by EEOP_SCALARARRAYOP, and
+					 * will not be passed to any other expression.
+					 */
+					ExecInitExprRec(arrayarg, state, resv, resnull);
+
+					/* And perform the operation */
+					scratch.opcode = EEOP_SCALARARRAYOP;
+					scratch.d.scalararrayop.element_type = InvalidOid;
+					scratch.d.scalararrayop.useOr = opexpr->useOr;
+					scratch.d.scalararrayop.finfo = finfo;
+					scratch.d.scalararrayop.fcinfo_data = fcinfo;
+					scratch.d.scalararrayop.fn_addr = finfo->fn_addr;
+					ExprEvalPushStep(state, &scratch);
+				}
 				break;
 			}
 

@@ -408,6 +408,12 @@ _equalScalarArrayOpExpr(const ScalarArrayOpExpr *a, const ScalarArrayOpExpr *b)
 		b->opfuncid != 0)
 		return false;
 
+	/* As above, hashfuncid may differ too */
+	if (a->hashfuncid != b->hashfuncid &&
+		a->hashfuncid != 0 &&
+		b->hashfuncid != 0)
+		return false;
+
 	COMPARE_SCALAR_FIELD(useOr);
 	COMPARE_SCALAR_FIELD(inputcollid);
 	COMPARE_NODE_FIELD(args);

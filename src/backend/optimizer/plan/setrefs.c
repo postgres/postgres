@@ -1674,9 +1674,13 @@ fix_expr_common(PlannerInfo *root, Node *node)
 	}
 	else if (IsA(node, ScalarArrayOpExpr))
 	{
-		set_sa_opfuncid((ScalarArrayOpExpr *) node);
-		record_plan_function_dependency(root,
-										((ScalarArrayOpExpr *) node)->opfuncid);
+		ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) node;
+
+		set_sa_opfuncid(saop);
+		record_plan_function_dependency(root, saop->opfuncid);
+
+		if (!OidIsValid(saop->hashfuncid))
+			record_plan_function_dependency(root, saop->hashfuncid);
 	}
 	else if (IsA(node, Const))
 	{
