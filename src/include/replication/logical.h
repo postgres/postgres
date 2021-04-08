@@ -29,8 +29,6 @@ typedef void (*LogicalOutputPluginWriterUpdateProgress) (struct LogicalDecodingC
 														 TransactionId xid
 );
 
-typedef struct LogicalDecodingContext LogicalDecodingContext;
-
 typedef bool (*LogicalDecodingXLogPageReadCB)(XLogReaderState *ctx);
 
 typedef struct LogicalDecodingContext
