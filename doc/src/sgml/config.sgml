@@ -7310,7 +7310,8 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         character count of the error position therein,
         location of the error in the PostgreSQL source code
         (if <varname>log_error_verbosity</varname> is set to <literal>verbose</literal>),
-        application name, backend type, and process ID of parallel group leader.
+        application name, backend type, process ID of parallel group leader,
+        and query id.
         Here is a sample table definition for storing CSV-format log output:
 
 <programlisting>
@@ -7341,6 +7342,7 @@ CREATE TABLE postgres_log
   application_name text,
   backend_type text,
   leader_pid integer,
+  query_id bigint,
   PRIMARY KEY (session_id, session_line_num)
 );
 </programlisting>

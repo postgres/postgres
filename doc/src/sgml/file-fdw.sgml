@@ -266,7 +266,8 @@ CREATE FOREIGN TABLE pglog (
   location text,
   application_name text,
   backend_type text,
-  leader_pid integer
+  leader_pid integer,
+  query_id bigint
 ) SERVER pglog
 OPTIONS ( filename 'log/pglog.csv', format 'csv' );
 </programlisting>
