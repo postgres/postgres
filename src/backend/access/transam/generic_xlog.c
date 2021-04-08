@@ -482,10 +482,10 @@ generic_redo(XLogReaderState *record)
 	uint8		block_id;
 
 	/* Protect limited size of buffers[] array */
-	Assert(record->max_block_id < MAX_GENERIC_XLOG_PAGES);
+	Assert(XLogRecMaxBlockId(record) < MAX_GENERIC_XLOG_PAGES);
 
 	/* Iterate over blocks */
-	for (block_id = 0; block_id <= record->max_block_id; block_id++)
+	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
 		XLogRedoAction action;
 
@@ -525,7 +525,7 @@ generic_redo(XLogReaderState *record)
 	}
 
 	/* Changes are done: unlock and release all buffers */
-	for (block_id = 0; block_id <= record->max_block_id; block_id++)
+	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
 		if (BufferIsValid(buffers[block_id]))
 			UnlockReleaseBuffer(buffers[block_id]);

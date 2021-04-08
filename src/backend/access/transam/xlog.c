@@ -1209,6 +1209,7 @@ XLogInsertRecord(XLogRecData *rdata,
 		StringInfoData recordBuf;
 		char	   *errormsg = NULL;
 		MemoryContext oldCxt;
+		DecodedXLogRecord *decoded;
 
 		oldCxt = MemoryContextSwitchTo(walDebugCxt);
 
@@ -1224,6 +1225,9 @@ XLogInsertRecord(XLogRecData *rdata,
 		for (; rdata != NULL; rdata = rdata->next)
 			appendBinaryStringInfo(&recordBuf, rdata->data, rdata->len);
 
+		/* How much space would it take to decode this record? */
+		decoded = palloc(DecodeXLogRecordRequiredSpace(recordBuf.len));
+
 		if (!debug_reader)
 			debug_reader = XLogReaderAllocate(wal_segment_size, NULL, NULL);
 
@@ -1231,7 +1235,9 @@ XLogInsertRecord(XLogRecData *rdata,
 		{
 			appendStringInfoString(&buf, "error decoding record: out of memory");
 		}
-		else if (!DecodeXLogRecord(debug_reader, (XLogRecord *) recordBuf.data,
+		else if (!DecodeXLogRecord(debug_reader, decoded,
+								   (XLogRecord *) recordBuf.data,
+								   EndPos,
 								   &errormsg))
 		{
 			appendStringInfo(&buf, "error decoding record: %s",
@@ -1240,10 +1246,17 @@ XLogInsertRecord(XLogRecData *rdata,
 		else
 		{
 			appendStringInfoString(&buf, " - ");
+			/*
+			 * Temporarily make this decoded record the current record for
+			 * XLogRecGetXXX() macros.
+			 */
+			debug_reader->record = decoded;
 			xlog_outdesc(&buf, debug_reader);
+			debug_reader->record = NULL;
 		}
 		elog(LOG, "%s", buf.data);
 
+		pfree(decoded);
 		pfree(buf.data);
 		pfree(recordBuf.data);
 		MemoryContextSwitchTo(oldCxt);
@@ -1417,7 +1430,7 @@ checkXLogConsistency(XLogReaderState *record)
 
 	Assert((XLogRecGetInfo(record) & XLR_CHECK_CONSISTENCY) != 0);
 
-	for (block_id = 0; block_id <= record->max_block_id; block_id++)
+	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
 		Buffer		buf;
 		Page		page;
@@ -4383,6 +4396,7 @@ ReadRecord(XLogReaderState *xlogreader, int emode,
 
 		ReadRecPtr = xlogreader->ReadRecPtr;
 		EndRecPtr = xlogreader->EndRecPtr;
+
 		if (record == NULL)
 		{
 			if (readFile >= 0)
@@ -10300,7 +10314,7 @@ xlog_redo(XLogReaderState *record)
 		 * XLOG_FPI and XLOG_FPI_FOR_HINT records, they use a different info
 		 * code just to distinguish them for statistics purposes.
 		 */
-		for (uint8 block_id = 0; block_id <= record->max_block_id; block_id++)
+		for (uint8 block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 		{
 			Buffer		buffer;
 
@@ -10435,7 +10449,7 @@ xlog_block_info(StringInfo buf, XLogReaderState *record)
 	int			block_id;
 
 	/* decode block references */
-	for (block_id = 0; block_id <= record->max_block_id; block_id++)
+	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
 		RelFileNode rnode;
 		ForkNumber	forknum;
@@ -12104,7 +12118,7 @@ XLogPageRead(XLogReaderState *state,
 	XLogRecPtr	targetPagePtr	= state->readPagePtr;
 	int			reqLen			= state->reqLen;
 	int			readLen			= 0;
-	XLogRecPtr	targetRecPtr	= state->ReadRecPtr;
+	XLogRecPtr	targetRecPtr	= state->DecodeRecPtr;
 	uint32		targetPageOff;
 	XLogSegNo	targetSegNo PG_USED_FOR_ASSERTS_ONLY;
 	int			r;
@@ -12122,6 +12136,9 @@ XLogPageRead(XLogReaderState *state,
 		/*
 		 * Request a restartpoint if we've replayed too much xlog since the
 		 * last one.
+		 *
+		 * XXX Why is this here?  Move it to recovery loop, since it's based
+		 * on replay position, not read position?
 		 */
 		if (bgwriterLaunched)
 		{
@@ -12613,6 +12630,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 * be updated on each cycle. When we are behind,
 					 * XLogReceiptTime will not advance, so the grace time
 					 * allotted to conflicting queries will decrease.
+					 *
 					 */
 					if (RecPtr < flushedUpto)
 						havedata = true;
