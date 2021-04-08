@@ -47,6 +47,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/parallel.h"
 #include "catalog/pg_authid.h"
 #include "common/hashfn.h"
 #include "executor/instrument.h"
@@ -278,8 +279,9 @@ static bool pgss_save;			/* whether to save stats across shutdown */
 
 
 #define pgss_enabled(level) \
+	(!IsParallelWorker() && \
 	(pgss_track == PGSS_TRACK_ALL || \
-	(pgss_track == PGSS_TRACK_TOP && (level) == 0))
+	(pgss_track == PGSS_TRACK_TOP && (level) == 0)))
 
 #define record_gc_qtexts() \
 	do { \

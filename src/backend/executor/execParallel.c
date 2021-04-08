@@ -1426,7 +1426,6 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 
 	/* Report workers' query and queryId for monitoring purposes */
 	pgstat_report_activity(STATE_RUNNING, debug_query_string);
-	pgstat_report_queryid(queryDesc->plannedstmt->queryId, false);
 
 	/* Attach to the dynamic shared memory area. */
 	area_space = shm_toc_lookup(toc, PARALLEL_KEY_DSA, false);
