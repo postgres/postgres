@@ -1567,7 +1567,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\df[anptwS+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\df[anptwS+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> [ <replaceable class="parameter">arg_pattern</replaceable> ... ] ]</literal></term>
 
         <listitem>
         <para>
@@ -1580,6 +1580,11 @@ testdb=&gt;
         If <replaceable
         class="parameter">pattern</replaceable> is specified, only
         functions whose names match the pattern are shown.
+        Any additional arguments are type-name patterns, which are matched
+        to the type names of the first, second, and so on arguments of the
+        function.  (Matching functions can have more arguments than what
+        you specify.  To prevent that, write a dash <literal>-</literal> as
+        the last <replaceable class="parameter">arg_pattern</replaceable>.)
         By default, only user-created
         objects are shown; supply a pattern or the <literal>S</literal>
         modifier to include system objects.
@@ -1588,14 +1593,6 @@ testdb=&gt;
         parallel safety, owner, security classification, access privileges,
         language, source code and description.
         </para>
-
-        <tip>
-        <para>
-        To look up functions taking arguments or returning values of a specific
-        data type, use your pager's search capability to scroll through the
-        <literal>\df</literal> output.
-        </para>
-        </tip>
 
         </listitem>
       </varlistentry>
@@ -1721,12 +1718,19 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\do[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\do[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> [ <replaceable class="parameter">arg_pattern</replaceable> [ <replaceable class="parameter">arg_pattern</replaceable> ] ] ]</literal></term>
         <listitem>
         <para>
         Lists operators with their operand and result types.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only operators whose names match the pattern are listed.
+        If one <replaceable class="parameter">arg_pattern</replaceable> is
+        specified, only prefix operators whose right argument's type name
+        matches that pattern are listed.
+        If two <replaceable class="parameter">arg_pattern</replaceable>s
+        are specified, only binary operators whose argument type names match
+        those patterns are listed.  (Alternatively, write <literal>-</literal>
+        for the unused argument of a unary operator.)
         By default, only user-created objects are shown; supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
@@ -4983,6 +4987,22 @@ second | three
 -[ RECORD 4 ]-
 first  | 4
 second | four
+</programlisting>
+  </para>
+
+  <para>
+   Here is an example of using the <command>\df</command> command to
+   find only functions with names matching <literal>int*pl</literal>
+   and whose second argument is of type <type>bigint</type>:
+<programlisting>
+testdb=&gt; <userinput>\df int*pl * bigint</userinput>
+                          List of functions
+   Schema   |  Name   | Result data type | Argument data types | Type
+------------+---------+------------------+---------------------+------
+ pg_catalog | int28pl | bigint           | smallint, bigint    | func
+ pg_catalog | int48pl | bigint           | integer, bigint     | func
+ pg_catalog | int8pl  | bigint           | bigint, bigint      | func
+(3 rows)
 </programlisting>
   </para>
 

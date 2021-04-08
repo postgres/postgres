@@ -5078,6 +5078,107 @@ List of access methods
  hash  | uuid_ops        | uuid                 | uuid                  |      2 | uuid_hash_extended
 (5 rows)
 
+-- check \df, \do with argument specifications
+\df *sqrt
+                             List of functions
+   Schema   |     Name     | Result data type | Argument data types | Type 
+------------+--------------+------------------+---------------------+------
+ pg_catalog | dsqrt        | double precision | double precision    | func
+ pg_catalog | numeric_sqrt | numeric          | numeric             | func
+ pg_catalog | sqrt         | double precision | double precision    | func
+ pg_catalog | sqrt         | numeric          | numeric             | func
+(4 rows)
+
+\df *sqrt num*
+                             List of functions
+   Schema   |     Name     | Result data type | Argument data types | Type 
+------------+--------------+------------------+---------------------+------
+ pg_catalog | numeric_sqrt | numeric          | numeric             | func
+ pg_catalog | sqrt         | numeric          | numeric             | func
+(2 rows)
+
+\df int*pl
+                            List of functions
+   Schema   |    Name     | Result data type | Argument data types | Type 
+------------+-------------+------------------+---------------------+------
+ pg_catalog | int24pl     | integer          | smallint, integer   | func
+ pg_catalog | int28pl     | bigint           | smallint, bigint    | func
+ pg_catalog | int2pl      | smallint         | smallint, smallint  | func
+ pg_catalog | int42pl     | integer          | integer, smallint   | func
+ pg_catalog | int48pl     | bigint           | integer, bigint     | func
+ pg_catalog | int4pl      | integer          | integer, integer    | func
+ pg_catalog | int82pl     | bigint           | bigint, smallint    | func
+ pg_catalog | int84pl     | bigint           | bigint, integer     | func
+ pg_catalog | int8pl      | bigint           | bigint, bigint      | func
+ pg_catalog | interval_pl | interval         | interval, interval  | func
+(10 rows)
+
+\df int*pl int4
+                          List of functions
+   Schema   |  Name   | Result data type | Argument data types | Type 
+------------+---------+------------------+---------------------+------
+ pg_catalog | int42pl | integer          | integer, smallint   | func
+ pg_catalog | int48pl | bigint           | integer, bigint     | func
+ pg_catalog | int4pl  | integer          | integer, integer    | func
+(3 rows)
+
+\df int*pl * pg_catalog.int8
+                          List of functions
+   Schema   |  Name   | Result data type | Argument data types | Type 
+------------+---------+------------------+---------------------+------
+ pg_catalog | int28pl | bigint           | smallint, bigint    | func
+ pg_catalog | int48pl | bigint           | integer, bigint     | func
+ pg_catalog | int8pl  | bigint           | bigint, bigint      | func
+(3 rows)
+
+\df acl* aclitem[]
+                                                                    List of functions
+   Schema   |    Name     | Result data type |                                        Argument data types                                         | Type 
+------------+-------------+------------------+----------------------------------------------------------------------------------------------------+------
+ pg_catalog | aclcontains | boolean          | aclitem[], aclitem                                                                                 | func
+ pg_catalog | aclexplode  | SETOF record     | acl aclitem[], OUT grantor oid, OUT grantee oid, OUT privilege_type text, OUT is_grantable boolean | func
+ pg_catalog | aclinsert   | aclitem[]        | aclitem[], aclitem                                                                                 | func
+ pg_catalog | aclremove   | aclitem[]        | aclitem[], aclitem                                                                                 | func
+(4 rows)
+
+\df has_database_privilege oid text
+                                  List of functions
+   Schema   |          Name          | Result data type | Argument data types | Type 
+------------+------------------------+------------------+---------------------+------
+ pg_catalog | has_database_privilege | boolean          | oid, text           | func
+ pg_catalog | has_database_privilege | boolean          | oid, text, text     | func
+(2 rows)
+
+\df has_database_privilege oid text -
+                                  List of functions
+   Schema   |          Name          | Result data type | Argument data types | Type 
+------------+------------------------+------------------+---------------------+------
+ pg_catalog | has_database_privilege | boolean          | oid, text           | func
+(1 row)
+
+\dfa bit* small*
+                          List of functions
+   Schema   |  Name   | Result data type | Argument data types | Type 
+------------+---------+------------------+---------------------+------
+ pg_catalog | bit_and | smallint         | smallint            | agg
+ pg_catalog | bit_or  | smallint         | smallint            | agg
+ pg_catalog | bit_xor | smallint         | smallint            | agg
+(3 rows)
+
+\do - pg_catalog.int4
+                               List of operators
+   Schema   | Name | Left arg type | Right arg type | Result type | Description 
+------------+------+---------------+----------------+-------------+-------------
+ pg_catalog | -    |               | integer        | integer     | negate
+(1 row)
+
+\do && anyarray *
+                               List of operators
+   Schema   | Name | Left arg type | Right arg type | Result type | Description 
+------------+------+---------------+----------------+-------------+-------------
+ pg_catalog | &&   | anyarray      | anyarray       | boolean     | overlaps
+(1 row)
+
 --
 -- combined queries
 --

@@ -19,13 +19,17 @@ extern bool describeAccessMethods(const char *pattern, bool verbose);
 extern bool describeTablespaces(const char *pattern, bool verbose);
 
 /* \df, \dfa, \dfn, \dft, \dfw, etc. */
-extern bool describeFunctions(const char *functypes, const char *pattern, bool verbose, bool showSystem);
+extern bool describeFunctions(const char *functypes, const char *func_pattern,
+							  char **arg_patterns, int num_arg_patterns,
+							  bool verbose, bool showSystem);
 
 /* \dT */
 extern bool describeTypes(const char *pattern, bool verbose, bool showSystem);
 
 /* \do */
-extern bool describeOperators(const char *pattern, bool verbose, bool showSystem);
+extern bool describeOperators(const char *oper_pattern,
+							  char **arg_patterns, int num_arg_patterns,
+							  bool verbose, bool showSystem);
 
 /* \du, \dg */
 extern bool describeRoles(const char *pattern, bool verbose, bool showSystem);

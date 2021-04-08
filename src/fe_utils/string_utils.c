@@ -1062,9 +1062,15 @@ patternToSQLRegex(int encoding, PQExpBuffer dbnamebuf, PQExpBuffer schemabuf,
 			 * regexp errors.  Outside quotes, however, let them pass through
 			 * as-is; this lets knowledgeable users build regexp expressions
 			 * that are more powerful than shell-style patterns.
+			 *
+			 * As an exception to that, though, always quote "[]", as that's
+			 * much more likely to be an attempt to write an array type name
+			 * than it is to be the start of a regexp bracket expression.
 			 */
 			if ((inquotes || force_escape) &&
 				strchr("|*+?()[]{}.^$\\", ch))
+				appendPQExpBufferChar(curbuf, '\\');
+			else if (ch == '[' && cp[1] == ']')
 				appendPQExpBufferChar(curbuf, '\\');
 			i = PQmblen(cp, encoding);
 			while (i-- && *cp)

@@ -72,6 +72,9 @@ static backslashResult exec_command_copyright(PsqlScanState scan_state, bool act
 static backslashResult exec_command_crosstabview(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_d(PsqlScanState scan_state, bool active_branch,
 									  const char *cmd);
+static bool exec_command_dfo(PsqlScanState scan_state, const char *cmd,
+							 const char *pattern,
+							 bool show_verbose, bool show_system);
 static backslashResult exec_command_edit(PsqlScanState scan_state, bool active_branch,
 										 PQExpBuffer query_buf, PQExpBuffer previous_buf);
 static backslashResult exec_command_ef_ev(PsqlScanState scan_state, bool active_branch,
@@ -790,7 +793,8 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 					case 'p':
 					case 't':
 					case 'w':
-						success = describeFunctions(&cmd[2], pattern, show_verbose, show_system);
+						success = exec_command_dfo(scan_state, cmd, pattern,
+												   show_verbose, show_system);
 						break;
 					default:
 						status = PSQL_CMD_UNKNOWN;
@@ -811,7 +815,8 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 				success = listSchemas(pattern, show_verbose, show_system);
 				break;
 			case 'o':
-				success = describeOperators(pattern, show_verbose, show_system);
+				success = exec_command_dfo(scan_state, cmd, pattern,
+										   show_verbose, show_system);
 				break;
 			case 'O':
 				success = listCollations(pattern, show_verbose, show_system);
@@ -949,6 +954,45 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 		status = PSQL_CMD_ERROR;
 
 	return status;
+}
+
+/* \df and \do; messy enough to split out of exec_command_d */
+static bool
+exec_command_dfo(PsqlScanState scan_state, const char *cmd,
+				 const char *pattern,
+				 bool show_verbose, bool show_system)
+{
+	bool		success;
+	char	   *arg_patterns[FUNC_MAX_ARGS];
+	int			num_arg_patterns = 0;
+
+	/* Collect argument-type patterns too */
+	if (pattern)				/* otherwise it was just \df or \do */
+	{
+		char	   *ap;
+
+		while ((ap = psql_scan_slash_option(scan_state,
+											OT_NORMAL, NULL, true)) != NULL)
+		{
+			arg_patterns[num_arg_patterns++] = ap;
+			if (num_arg_patterns >= FUNC_MAX_ARGS)
+				break;			/* protect limited-size array */
+		}
+	}
+
+	if (cmd[1] == 'f')
+		success = describeFunctions(&cmd[2], pattern,
+									arg_patterns, num_arg_patterns,
+									show_verbose, show_system);
+	else
+		success = describeOperators(pattern,
+									arg_patterns, num_arg_patterns,
+									show_verbose, show_system);
+
+	while (--num_arg_patterns >= 0)
+		free(arg_patterns[num_arg_patterns]);
+
+	return success;
 }
 
 /*

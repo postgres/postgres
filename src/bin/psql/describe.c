@@ -28,6 +28,7 @@
 #include "settings.h"
 #include "variables.h"
 
+static const char *map_typename_pattern(const char *pattern);
 static bool describeOneTableDetails(const char *schemaname,
 									const char *relationname,
 									const char *oid,
@@ -312,7 +313,9 @@ describeTablespaces(const char *pattern, bool verbose)
  * and you can mix and match these in any order.
  */
 bool
-describeFunctions(const char *functypes, const char *pattern, bool verbose, bool showSystem)
+describeFunctions(const char *functypes, const char *func_pattern,
+				  char **arg_patterns, int num_arg_patterns,
+				  bool verbose, bool showSystem)
 {
 	bool		showAggregate = strchr(functypes, 'a') != NULL;
 	bool		showNormal = strchr(functypes, 'n') != NULL;
@@ -524,6 +527,14 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 						 "\nFROM pg_catalog.pg_proc p"
 						 "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n");
 
+	for (int i = 0; i < num_arg_patterns; i++)
+	{
+		appendPQExpBuffer(&buf,
+						  "     LEFT JOIN pg_catalog.pg_type t%d ON t%d.oid = p.proargtypes[%d]\n"
+						  "     LEFT JOIN pg_catalog.pg_namespace nt%d ON nt%d.oid = t%d.typnamespace\n",
+						  i, i, i, i, i, i);
+	}
+
 	if (verbose)
 		appendPQExpBufferStr(&buf,
 							 "     LEFT JOIN pg_catalog.pg_language l ON l.oid = p.prolang\n");
@@ -629,11 +640,43 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 		appendPQExpBufferStr(&buf, "      )\n");
 	}
 
-	processSQLNamePattern(pset.db, &buf, pattern, have_where, false,
+	processSQLNamePattern(pset.db, &buf, func_pattern, have_where, false,
 						  "n.nspname", "p.proname", NULL,
 						  "pg_catalog.pg_function_is_visible(p.oid)");
 
-	if (!showSystem && !pattern)
+	for (int i = 0; i < num_arg_patterns; i++)
+	{
+		if (strcmp(arg_patterns[i], "-") != 0)
+		{
+			/*
+			 * Match type-name patterns against either internal or external
+			 * name, like \dT.  Unlike \dT, there seems no reason to
+			 * discriminate against arrays or composite types.
+			 */
+			char		nspname[64];
+			char		typname[64];
+			char		ft[64];
+			char		tiv[64];
+
+			snprintf(nspname, sizeof(nspname), "nt%d.nspname", i);
+			snprintf(typname, sizeof(typname), "t%d.typname", i);
+			snprintf(ft, sizeof(ft),
+					 "pg_catalog.format_type(t%d.oid, NULL)", i);
+			snprintf(tiv, sizeof(tiv),
+					 "pg_catalog.pg_type_is_visible(t%d.oid)", i);
+			processSQLNamePattern(pset.db, &buf,
+								  map_typename_pattern(arg_patterns[i]),
+								  true, false,
+								  nspname, typname, ft, tiv);
+		}
+		else
+		{
+			/* "-" pattern specifies no such parameter */
+			appendPQExpBuffer(&buf, "  AND t%d.typname IS NULL\n", i);
+		}
+	}
+
+	if (!showSystem && !func_pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
 							 "      AND n.nspname <> 'information_schema'\n");
 
@@ -746,20 +789,24 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 						 "WHERE c.oid = t.typrelid))\n");
 
 	/*
-	 * do not include array types (before 8.3 we have to use the assumption
-	 * that their names start with underscore)
+	 * do not include array types unless the pattern contains [] (before 8.3
+	 * we have to use the assumption that their names start with underscore)
 	 */
-	if (pset.sversion >= 80300)
-		appendPQExpBufferStr(&buf, "  AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type el WHERE el.oid = t.typelem AND el.typarray = t.oid)\n");
-	else
-		appendPQExpBufferStr(&buf, "  AND t.typname !~ '^_'\n");
+	if (pattern == NULL || strstr(pattern, "[]") == NULL)
+	{
+		if (pset.sversion >= 80300)
+			appendPQExpBufferStr(&buf, "  AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type el WHERE el.oid = t.typelem AND el.typarray = t.oid)\n");
+		else
+			appendPQExpBufferStr(&buf, "  AND t.typname !~ '^_'\n");
+	}
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
 							 "      AND n.nspname <> 'information_schema'\n");
 
 	/* Match name pattern against either internal or external name */
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+	processSQLNamePattern(pset.db, &buf, map_typename_pattern(pattern),
+						  true, false,
 						  "n.nspname", "t.typname",
 						  "pg_catalog.format_type(t.oid, NULL)",
 						  "pg_catalog.pg_type_is_visible(t.oid)");
@@ -781,13 +828,69 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 	return true;
 }
 
+/*
+ * Map some variant type names accepted by the backend grammar into
+ * canonical type names.
+ *
+ * Helper for \dT and other functions that take typename patterns.
+ * This doesn't completely mask the fact that these names are special;
+ * for example, a pattern of "dec*" won't magically match "numeric".
+ * But it goes a long way to reduce the surprise factor.
+ */
+static const char *
+map_typename_pattern(const char *pattern)
+{
+	static const char *const typename_map[] = {
+		/*
+		 * These names are accepted by gram.y, although they are neither the
+		 * "real" name seen in pg_type nor the canonical name printed by
+		 * format_type().
+		 */
+		"decimal", "numeric",
+		"float", "double precision",
+		"int", "integer",
+
+		/*
+		 * We also have to map the array names for cases where the canonical
+		 * name is different from what pg_type says.
+		 */
+		"bool[]", "boolean[]",
+		"decimal[]", "numeric[]",
+		"float[]", "double precision[]",
+		"float4[]", "real[]",
+		"float8[]", "double precision[]",
+		"int[]", "integer[]",
+		"int2[]", "smallint[]",
+		"int4[]", "integer[]",
+		"int8[]", "bigint[]",
+		"time[]", "time without time zone[]",
+		"timetz[]", "time with time zone[]",
+		"timestamp[]", "timestamp without time zone[]",
+		"timestamptz[]", "timestamp with time zone[]",
+		"varbit[]", "bit varying[]",
+		"varchar[]", "character varying[]",
+		NULL
+	};
+
+	if (pattern == NULL)
+		return NULL;
+	for (int i = 0; typename_map[i] != NULL; i += 2)
+	{
+		if (pg_strcasecmp(pattern, typename_map[i]) == 0)
+			return typename_map[i + 1];
+	}
+	return pattern;
+}
+
 
 /*
  * \do
  * Describe operators
  */
 bool
-describeOperators(const char *pattern, bool verbose, bool showSystem)
+describeOperators(const char *oper_pattern,
+				  char **arg_patterns, int num_arg_patterns,
+				  bool verbose, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -836,13 +939,65 @@ describeOperators(const char *pattern, bool verbose, bool showSystem)
 					  "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = o.oprnamespace\n",
 					  gettext_noop("Description"));
 
-	if (!showSystem && !pattern)
+	if (num_arg_patterns >= 2)
+	{
+		num_arg_patterns = 2;	/* ignore any additional arguments */
+		appendPQExpBufferStr(&buf,
+							 "     LEFT JOIN pg_catalog.pg_type t0 ON t0.oid = o.oprleft\n"
+							 "     LEFT JOIN pg_catalog.pg_namespace nt0 ON nt0.oid = t0.typnamespace\n"
+							 "     LEFT JOIN pg_catalog.pg_type t1 ON t1.oid = o.oprright\n"
+							 "     LEFT JOIN pg_catalog.pg_namespace nt1 ON nt1.oid = t1.typnamespace\n");
+	}
+	else if (num_arg_patterns == 1)
+	{
+		appendPQExpBufferStr(&buf,
+							 "     LEFT JOIN pg_catalog.pg_type t0 ON t0.oid = o.oprright\n"
+							 "     LEFT JOIN pg_catalog.pg_namespace nt0 ON nt0.oid = t0.typnamespace\n");
+	}
+
+	if (!showSystem && !oper_pattern)
 		appendPQExpBufferStr(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
 							 "      AND n.nspname <> 'information_schema'\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern, !showSystem && !pattern, true,
+	processSQLNamePattern(pset.db, &buf, oper_pattern,
+						  !showSystem && !oper_pattern, true,
 						  "n.nspname", "o.oprname", NULL,
 						  "pg_catalog.pg_operator_is_visible(o.oid)");
+
+	if (num_arg_patterns == 1)
+		appendPQExpBufferStr(&buf, "  AND o.oprleft = 0\n");
+
+	for (int i = 0; i < num_arg_patterns; i++)
+	{
+		if (strcmp(arg_patterns[i], "-") != 0)
+		{
+			/*
+			 * Match type-name patterns against either internal or external
+			 * name, like \dT.  Unlike \dT, there seems no reason to
+			 * discriminate against arrays or composite types.
+			 */
+			char		nspname[64];
+			char		typname[64];
+			char		ft[64];
+			char		tiv[64];
+
+			snprintf(nspname, sizeof(nspname), "nt%d.nspname", i);
+			snprintf(typname, sizeof(typname), "t%d.typname", i);
+			snprintf(ft, sizeof(ft),
+					 "pg_catalog.format_type(t%d.oid, NULL)", i);
+			snprintf(tiv, sizeof(tiv),
+					 "pg_catalog.pg_type_is_visible(t%d.oid)", i);
+			processSQLNamePattern(pset.db, &buf,
+								  map_typename_pattern(arg_patterns[i]),
+								  true, false,
+								  nspname, typname, ft, tiv);
+		}
+		else
+		{
+			/* "-" pattern specifies no such parameter */
+			appendPQExpBuffer(&buf, "  AND t%d.typname IS NULL\n", i);
+		}
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2, 3, 4;");
 
