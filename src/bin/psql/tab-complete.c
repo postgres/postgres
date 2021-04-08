@@ -3988,6 +3988,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_fdws);
 	else if (TailMatchesCS("\\df*"))
 		COMPLETE_WITH_VERSIONED_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
+	else if (HeadMatchesCS("\\df*"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
 
 	else if (TailMatchesCS("\\dFd*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_ts_dictionaries);
@@ -4005,6 +4007,9 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_languages);
 	else if (TailMatchesCS("\\dn*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
+	/* no support for completing operators, but we can complete types: */
+	else if (HeadMatchesCS("\\do*", MatchAny))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
 	else if (TailMatchesCS("\\dp") || TailMatchesCS("\\z"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_grantables, NULL);
 	else if (TailMatchesCS("\\dPi*"))
