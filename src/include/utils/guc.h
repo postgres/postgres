@@ -443,4 +443,8 @@ extern void assign_search_path(const char *newval, void *extra);
 extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
 extern void assign_xlog_sync_method(int new_sync_method, void *extra);
 
+/* in access/transam/xlogprefetch.c */
+extern void assign_recovery_prefetch(bool new_value, void *extra);
+extern void assign_recovery_prefetch_fpw(bool new_value, void *extra);
+
 #endif							/* GUC_H */

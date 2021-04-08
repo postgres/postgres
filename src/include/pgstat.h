@@ -74,6 +74,7 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_BGWRITER,
 	PGSTAT_MTYPE_WAL,
 	PGSTAT_MTYPE_SLRU,
+	PGSTAT_MTYPE_RECOVERYPREFETCH,
 	PGSTAT_MTYPE_FUNCSTAT,
 	PGSTAT_MTYPE_FUNCPURGE,
 	PGSTAT_MTYPE_RECOVERYCONFLICT,
@@ -197,6 +198,19 @@ typedef struct PgStat_TableXactStatus
 	struct PgStat_TableXactStatus *next;	/* next of same subxact */
 } PgStat_TableXactStatus;
 
+/*
+ * Recovery prefetching statistics persisted on disk by pgstat.c, but kept in
+ * shared memory by xlogprefetch.c.
+ */
+typedef struct PgStat_RecoveryPrefetchStats
+{
+	PgStat_Counter prefetch;
+	PgStat_Counter skip_hit;
+	PgStat_Counter skip_new;
+	PgStat_Counter skip_fpw;
+	PgStat_Counter skip_seq;
+	TimestampTz stat_reset_timestamp;
+} PgStat_RecoveryPrefetchStats;
 
 /* ------------------------------------------------------------
  * Message formats follow
@@ -536,6 +550,15 @@ typedef struct PgStat_MsgReplSlot
 	PgStat_Counter m_stream_bytes;
 } PgStat_MsgReplSlot;
 
+/* ----------
+ * PgStat_MsgRecoveryPrefetch			Sent by XLogPrefetch to save statistics.
+ * ----------
+ */
+typedef struct PgStat_MsgRecoveryPrefetch
+{
+	PgStat_MsgHdr m_hdr;
+	PgStat_RecoveryPrefetchStats m_stats;
+} PgStat_MsgRecoveryPrefetch;
 
 /* ----------
  * PgStat_MsgRecoveryConflict	Sent by the backend upon recovery conflict
@@ -699,6 +722,7 @@ typedef union PgStat_Msg
 	PgStat_MsgBgWriter msg_bgwriter;
 	PgStat_MsgWal msg_wal;
 	PgStat_MsgSLRU msg_slru;
+	PgStat_MsgRecoveryPrefetch msg_recoveryprefetch;
 	PgStat_MsgFuncstat msg_funcstat;
 	PgStat_MsgFuncpurge msg_funcpurge;
 	PgStat_MsgRecoveryConflict msg_recoveryconflict;
@@ -1088,6 +1112,7 @@ extern void pgstat_twophase_postabort(TransactionId xid, uint16 info,
 
 extern void pgstat_send_archiver(const char *xlog, bool failed);
 extern void pgstat_send_bgwriter(void);
+extern void pgstat_send_recoveryprefetch(PgStat_RecoveryPrefetchStats *stats);
 extern void pgstat_report_wal(void);
 extern bool pgstat_send_wal(bool force);
 
@@ -1104,6 +1129,7 @@ extern PgStat_GlobalStats *pgstat_fetch_global(void);
 extern PgStat_WalStats *pgstat_fetch_stat_wal(void);
 extern PgStat_SLRUStats *pgstat_fetch_slru(void);
 extern PgStat_ReplSlotStats *pgstat_fetch_replslot(int *nslots_p);
+extern PgStat_RecoveryPrefetchStats *pgstat_fetch_recoveryprefetch(void);
 
 extern void pgstat_count_slru_page_zeroed(int slru_idx);
 extern void pgstat_count_slru_page_hit(int slru_idx);

@@ -31,6 +31,7 @@ OBJS = \
 	xlogarchive.o \
 	xlogfuncs.o \
 	xloginsert.o \
+	xlogprefetch.o \
 	xlogreader.o \
 	xlogutils.o
 

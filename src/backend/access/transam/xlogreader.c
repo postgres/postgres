@@ -1927,6 +1927,8 @@ DecodeXLogRecord(XLogReaderState *state,
 			blk->has_image = ((fork_flags & BKPBLOCK_HAS_IMAGE) != 0);
 			blk->has_data = ((fork_flags & BKPBLOCK_HAS_DATA) != 0);
 
+			blk->recent_buffer = InvalidBuffer;
+
 			COPY_HEADER_FIELD(&blk->data_len, sizeof(uint16));
 			/* cross-check that the HAS_DATA flag is set iff data_length > 0 */
 			if (blk->has_data && blk->data_len == 0)
@@ -2135,6 +2137,15 @@ bool
 XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
 				   RelFileNode *rnode, ForkNumber *forknum, BlockNumber *blknum)
 {
+	return XLogRecGetRecentBuffer(record, block_id, rnode, forknum, blknum,
+								  NULL);
+}
+
+bool
+XLogRecGetRecentBuffer(XLogReaderState *record, uint8 block_id,
+					   RelFileNode *rnode, ForkNumber *forknum,
+					   BlockNumber *blknum, Buffer *recent_buffer)
+{
 	DecodedBkpBlock *bkpb;
 
 	if (block_id > record->record->max_block_id ||
@@ -2148,6 +2159,8 @@ XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
 		*forknum = bkpb->forknum;
 	if (blknum)
 		*blknum = bkpb->blkno;
+	if (recent_buffer)
+		*recent_buffer = bkpb->recent_buffer;
 	return true;
 }
 

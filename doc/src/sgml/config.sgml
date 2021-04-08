@@ -3565,6 +3565,89 @@ include_dir 'conf.d'
      </variablelist>
     </sect2>
 
+   <sect2 id="runtime-config-wal-recovery">
+
+    <title>Recovery</title>
+
+     <indexterm>
+      <primary>configuration</primary>
+      <secondary>of recovery</secondary>
+      <tertiary>general settings</tertiary>
+     </indexterm>
+
+    <para>
+     This section describes the settings that apply to recovery in general,
+     affecting crash recovery, streaming replication and archive-based
+     replication.
+    </para>
+
+
+    <variablelist>
+     <varlistentry id="guc-recovery-prefetch" xreflabel="recovery_prefetch">
+      <term><varname>recovery_prefetch</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>recovery_prefetch</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Whether to try to prefetch blocks that are referenced in the WAL that
+        are not yet in the buffer pool, during recovery.  Prefetching blocks
+        that will soon be needed can reduce I/O wait times in some workloads.
+        See also the <xref linkend="guc-wal-decode-buffer-size"/> and
+        <xref linkend="guc-maintenance-io-concurrency"/> settings, which limit
+        prefetching activity.
+        This setting is disabled by default.
+       </para>
+       <para>
+        This feature currently depends on an effective
+        <function>posix_fadvise</function> function, which some
+        operating systems lack.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-recovery-prefetch-fpw" xreflabel="recovery_prefetch_fpw">
+      <term><varname>recovery_prefetch_fpw</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>recovery_prefetch_fpw</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Whether to prefetch blocks that were logged with full page images,
+        during recovery.  Often this doesn't help, since such blocks will not
+        be read the first time they are needed and might remain in the buffer
+        pool after that.  However, on file systems with a block size larger
+        than
+        <productname>PostgreSQL</productname>'s, prefetching can avoid a
+        costly read-before-write when a blocks are later written.
+        The default is off.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-wal-decode-buffer-size" xreflabel="wal_decode_buffer_size">
+      <term><varname>wal_decode_buffer_size</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>wal_decode_buffer_size</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        A limit on how far ahead the server can look in the WAL, to find
+        blocks to prefetch.  Setting it too high might be counterproductive,
+        if it means that data falls out of the
+        kernel cache before it is needed.  If this value is specified without
+        units, it is taken as bytes.
+        The default is 512kB.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </sect2>
+
   <sect2 id="runtime-config-wal-archive-recovery">
 
     <title>Archive Recovery</title>

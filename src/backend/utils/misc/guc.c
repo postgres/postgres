@@ -41,6 +41,7 @@
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
+#include "access/xlogprefetch.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/storage.h"
@@ -209,6 +210,7 @@ static bool check_effective_io_concurrency(int *newval, void **extra, GucSource 
 static bool check_maintenance_io_concurrency(int *newval, void **extra, GucSource source);
 static bool check_huge_page_size(int *newval, void **extra, GucSource source);
 static bool check_client_connection_check_interval(int *newval, void **extra, GucSource source);
+static void assign_maintenance_io_concurrency(int newval, void *extra);
 static void assign_pgstat_temp_directory(const char *newval, void *extra);
 static bool check_application_name(char **newval, void **extra, GucSource source);
 static void assign_application_name(const char *newval, void *extra);
@@ -1293,6 +1295,27 @@ static struct config_bool ConfigureNamesBool[] =
 		&fullPageWrites,
 		true,
 		NULL, NULL, NULL
+	},
+	{
+		{"recovery_prefetch", PGC_SIGHUP, WAL_SETTINGS,
+			gettext_noop("Prefetch referenced blocks during recovery"),
+			gettext_noop("Read ahead of the current replay position to find uncached blocks.")
+		},
+		&recovery_prefetch,
+		false,
+		NULL, assign_recovery_prefetch, NULL
+	},
+	{
+		{"recovery_prefetch_fpw", PGC_SIGHUP, WAL_SETTINGS,
+			gettext_noop("Prefetch blocks that have full page images in the WAL"),
+			gettext_noop("On some systems, there is no benefit to prefetching pages that will be "
+						 "entirely overwritten, but if the logical page size of the filesystem is "
+						 "larger than PostgreSQL's, this can be beneficial.  This option has no "
+						 "effect unless recovery_prefetch is enabled.")
+		},
+		&recovery_prefetch_fpw,
+		false,
+		NULL, assign_recovery_prefetch_fpw, NULL
 	},
 
 	{
@@ -2749,6 +2772,17 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"wal_decode_buffer_size", PGC_POSTMASTER, WAL_ARCHIVE_RECOVERY,
+			gettext_noop("Maximum buffer size for reading ahead in the WAL during recovery."),
+			gettext_noop("This controls the maximum distance we can read ahead n the WAL to prefetch referenced blocks."),
+			GUC_UNIT_BYTE
+		},
+		&wal_decode_buffer_size,
+		512 * 1024, 64 * 1024, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"wal_keep_size", PGC_SIGHUP, REPLICATION_SENDING,
 			gettext_noop("Sets the size of WAL files held for standby servers."),
 			NULL,
@@ -3068,7 +3102,8 @@ static struct config_int ConfigureNamesInt[] =
 		0,
 #endif
 		0, MAX_IO_CONCURRENCY,
-		check_maintenance_io_concurrency, NULL, NULL
+		check_maintenance_io_concurrency, assign_maintenance_io_concurrency,
+		NULL
 	},
 
 	{
@@ -12070,6 +12105,20 @@ check_client_connection_check_interval(int *newval, void **extra, GucSource sour
 	}
 #endif
 	return true;
+}
+
+static void
+assign_maintenance_io_concurrency(int newval, void *extra)
+{
+#ifdef USE_PREFETCH
+	/*
+	 * Reconfigure recovery prefetching, because a setting it depends on
+	 * changed.
+	 */
+	maintenance_io_concurrency = newval;
+	if (AmStartupProcess())
+		XLogPrefetchReconfigure();
+#endif
 }
 
 static void

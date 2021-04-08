@@ -1879,6 +1879,17 @@ pg_stat_gssapi| SELECT s.pid,
     s.gss_enc AS encrypted
    FROM pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, wait_event_type, wait_event, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin, backend_type, ssl, sslversion, sslcipher, sslbits, ssl_client_dn, ssl_client_serial, ssl_issuer_dn, gss_auth, gss_princ, gss_enc, leader_pid, queryid)
   WHERE (s.client_port IS NOT NULL);
+pg_stat_prefetch_recovery| SELECT s.stats_reset,
+    s.prefetch,
+    s.skip_hit,
+    s.skip_new,
+    s.skip_fpw,
+    s.skip_seq,
+    s.distance,
+    s.queue_depth,
+    s.avg_distance,
+    s.avg_queue_depth
+   FROM pg_stat_get_prefetch_recovery() s(stats_reset, prefetch, skip_hit, skip_new, skip_fpw, skip_seq, distance, queue_depth, avg_distance, avg_queue_depth);
 pg_stat_progress_analyze| SELECT s.pid,
     s.datid,
     d.datname,
