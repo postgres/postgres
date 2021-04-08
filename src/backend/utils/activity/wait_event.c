@@ -313,6 +313,9 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_APPEND_READY:
 			event_name = "AppendReady";
 			break;
+		case WAIT_EVENT_BACKEND_TERMINATION:
+			event_name = "BackendTermination";
+			break;
 		case WAIT_EVENT_BACKUP_WAIT_WAL_ARCHIVE:
 			event_name = "BackupWaitWalArchive";
 			break;

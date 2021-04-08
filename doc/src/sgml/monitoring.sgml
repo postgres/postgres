@@ -1585,6 +1585,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for subplan nodes of an <literal>Append</literal> plan
        node to be ready.</entry>
      </row>
+    <row>
+      <entry><literal>BackendTermination</literal></entry>
+      <entry>Waiting for the termination of another backend.</entry>
+     </row>
      <row>
       <entry><literal>BackupWaitWalArchive</literal></entry>
       <entry>Waiting for WAL files required for a backup to be successfully
