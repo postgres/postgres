@@ -29,14 +29,6 @@ static const char *progname;
 
 static int	WalSegSz;
 
-typedef struct XLogDumpPrivate
-{
-	TimeLineID	timeline;
-	XLogRecPtr	startptr;
-	XLogRecPtr	endptr;
-	bool		endptr_reached;
-} XLogDumpPrivate;
-
 typedef struct XLogDumpConfig
 {
 	/* display options */
@@ -330,30 +322,41 @@ WALDumpCloseSegment(XLogReaderState *state)
 	state->seg.ws_file = -1;
 }
 
-/* pg_waldump's XLogReaderRoutine->page_read callback */
-static int
-WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
-				XLogRecPtr targetPtr, char *readBuff)
+/*
+ * pg_waldump's WAL page rader
+ *
+ * timeline and startptr specifies the LSN, and reads up to endptr.
+ */
+static bool
+WALDumpReadPage(XLogReaderState *state, TimeLineID timeline,
+				XLogRecPtr startptr, XLogRecPtr endptr)
 {
-	XLogDumpPrivate *private = state->private_data;
+	XLogRecPtr	targetPagePtr = state->readPagePtr;
+	int			reqLen		  = state->reqLen;
+	char	   *readBuff	  = state->readBuf;
 	int			count = XLOG_BLCKSZ;
 	WALReadError errinfo;
 
-	if (private->endptr != InvalidXLogRecPtr)
+	/* determine the number of bytes to read on the page */
+	if (endptr != InvalidXLogRecPtr)
 	{
-		if (targetPagePtr + XLOG_BLCKSZ <= private->endptr)
+		if (targetPagePtr + XLOG_BLCKSZ <= endptr)
 			count = XLOG_BLCKSZ;
-		else if (targetPagePtr + reqLen <= private->endptr)
-			count = private->endptr - targetPagePtr;
+		else if (targetPagePtr + reqLen <= endptr)
+			count = endptr - targetPagePtr;
 		else
 		{
-			private->endptr_reached = true;
-			return -1;
+			/* Notify xlogreader that we didn't read at all */
+			XLogReaderSetInputData(state,  -1);
+			return false;
 		}
 	}
 
-	if (!WALRead(state, readBuff, targetPagePtr, count, private->timeline,
-				 &errinfo))
+	/* We should read more than requested by xlogreader */
+	Assert(count >= state->readLen);
+
+	if (!WALRead(state, WALDumpOpenSegment, WALDumpCloseSegment,
+				 readBuff, targetPagePtr, count, timeline, &errinfo))
 	{
 		WALOpenSegment *seg = &errinfo.wre_seg;
 		char		fname[MAXPGPATH];
@@ -373,7 +376,9 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 						(Size) errinfo.wre_req);
 	}
 
-	return count;
+	/* Notify xlogreader of how many bytes we have read */
+	XLogReaderSetInputData(state, count);
+	return true;
 }
 
 /*
@@ -754,7 +759,10 @@ main(int argc, char **argv)
 	uint32		xlogid;
 	uint32		xrecoff;
 	XLogReaderState *xlogreader_state;
-	XLogDumpPrivate private;
+	XLogFindNextRecordState *findnext_state;
+	TimeLineID	timeline;
+	XLogRecPtr	startptr;
+	XLogRecPtr	endptr;
 	XLogDumpConfig config;
 	XLogDumpStats stats;
 	XLogRecord *record;
@@ -800,14 +808,12 @@ main(int argc, char **argv)
 		}
 	}
 
-	memset(&private, 0, sizeof(XLogDumpPrivate));
 	memset(&config, 0, sizeof(XLogDumpConfig));
 	memset(&stats, 0, sizeof(XLogDumpStats));
 
-	private.timeline = 1;
-	private.startptr = InvalidXLogRecPtr;
-	private.endptr = InvalidXLogRecPtr;
-	private.endptr_reached = false;
+	timeline = 1;
+	startptr = InvalidXLogRecPtr;
+	endptr = InvalidXLogRecPtr;
 
 	config.quiet = false;
 	config.bkp_details = false;
@@ -841,7 +847,7 @@ main(int argc, char **argv)
 								 optarg);
 					goto bad_argument;
 				}
-				private.endptr = (uint64) xlogid << 32 | xrecoff;
+				endptr = (uint64) xlogid << 32 | xrecoff;
 				break;
 			case 'f':
 				config.follow = true;
@@ -894,10 +900,10 @@ main(int argc, char **argv)
 					goto bad_argument;
 				}
 				else
-					private.startptr = (uint64) xlogid << 32 | xrecoff;
+					startptr = (uint64) xlogid << 32 | xrecoff;
 				break;
 			case 't':
-				if (sscanf(optarg, "%d", &private.timeline) != 1)
+				if (sscanf(optarg, "%d", &timeline) != 1)
 				{
 					pg_log_error("could not parse timeline \"%s\"", optarg);
 					goto bad_argument;
@@ -974,21 +980,21 @@ main(int argc, char **argv)
 		close(fd);
 
 		/* parse position from file */
-		XLogFromFileName(fname, &private.timeline, &segno, WalSegSz);
+		XLogFromFileName(fname, &timeline, &segno, WalSegSz);
 
-		if (XLogRecPtrIsInvalid(private.startptr))
-			XLogSegNoOffsetToRecPtr(segno, 0, WalSegSz, private.startptr);
-		else if (!XLByteInSeg(private.startptr, segno, WalSegSz))
+		if (XLogRecPtrIsInvalid(startptr))
+			XLogSegNoOffsetToRecPtr(segno, 0, WalSegSz, startptr);
+		else if (!XLByteInSeg(startptr, segno, WalSegSz))
 		{
 			pg_log_error("start WAL location %X/%X is not inside file \"%s\"",
-						 LSN_FORMAT_ARGS(private.startptr),
+						 LSN_FORMAT_ARGS(startptr),
 						 fname);
 			goto bad_argument;
 		}
 
 		/* no second file specified, set end position */
-		if (!(optind + 1 < argc) && XLogRecPtrIsInvalid(private.endptr))
-			XLogSegNoOffsetToRecPtr(segno + 1, 0, WalSegSz, private.endptr);
+		if (!(optind + 1 < argc) && XLogRecPtrIsInvalid(endptr))
+			XLogSegNoOffsetToRecPtr(segno + 1, 0, WalSegSz, endptr);
 
 		/* parse ENDSEG if passed */
 		if (optind + 1 < argc)
@@ -1004,26 +1010,26 @@ main(int argc, char **argv)
 			close(fd);
 
 			/* parse position from file */
-			XLogFromFileName(fname, &private.timeline, &endsegno, WalSegSz);
+			XLogFromFileName(fname, &timeline, &endsegno, WalSegSz);
 
 			if (endsegno < segno)
 				fatal_error("ENDSEG %s is before STARTSEG %s",
 							argv[optind + 1], argv[optind]);
 
-			if (XLogRecPtrIsInvalid(private.endptr))
+			if (XLogRecPtrIsInvalid(endptr))
 				XLogSegNoOffsetToRecPtr(endsegno + 1, 0, WalSegSz,
-										private.endptr);
+										endptr);
 
 			/* set segno to endsegno for check of --end */
 			segno = endsegno;
 		}
 
 
-		if (!XLByteInSeg(private.endptr, segno, WalSegSz) &&
-			private.endptr != (segno + 1) * WalSegSz)
+		if (!XLByteInSeg(endptr, segno, WalSegSz) &&
+			endptr != (segno + 1) * WalSegSz)
 		{
 			pg_log_error("end WAL location %X/%X is not inside file \"%s\"",
-						 LSN_FORMAT_ARGS(private.endptr),
+						 LSN_FORMAT_ARGS(endptr),
 						 argv[argc - 1]);
 			goto bad_argument;
 		}
@@ -1032,7 +1038,7 @@ main(int argc, char **argv)
 		waldir = identify_target_directory(waldir, NULL);
 
 	/* we don't know what to print */
-	if (XLogRecPtrIsInvalid(private.startptr))
+	if (XLogRecPtrIsInvalid(startptr))
 	{
 		pg_log_error("no start WAL location given");
 		goto bad_argument;
@@ -1042,42 +1048,56 @@ main(int argc, char **argv)
 
 	/* we have everything we need, start reading */
 	xlogreader_state =
-		XLogReaderAllocate(WalSegSz, waldir,
-						   XL_ROUTINE(.page_read = WALDumpReadPage,
-									  .segment_open = WALDumpOpenSegment,
-									  .segment_close = WALDumpCloseSegment),
-						   &private);
+		XLogReaderAllocate(WalSegSz, waldir, WALDumpCloseSegment);
+
 	if (!xlogreader_state)
 		fatal_error("out of memory");
 
-	/* first find a valid recptr to start from */
-	first_record = XLogFindNextRecord(xlogreader_state, private.startptr);
+	findnext_state =
+		InitXLogFindNextRecord(xlogreader_state, startptr);
 
+	if (!findnext_state)
+		fatal_error("out of memory");
+
+	/* first find a valid recptr to start from */
+	while (XLogFindNextRecord(findnext_state))
+	{
+		if (!WALDumpReadPage(xlogreader_state, timeline, startptr, endptr))
+			break;
+	}
+
+	first_record = findnext_state->currRecPtr;
 	if (first_record == InvalidXLogRecPtr)
 		fatal_error("could not find a valid record after %X/%X",
-					LSN_FORMAT_ARGS(private.startptr));
+					LSN_FORMAT_ARGS(startptr));
 
 	/*
 	 * Display a message that we're skipping data if `from` wasn't a pointer
 	 * to the start of a record and also wasn't a pointer to the beginning of
 	 * a segment (e.g. we were used in file mode).
 	 */
-	if (first_record != private.startptr &&
-		XLogSegmentOffset(private.startptr, WalSegSz) != 0)
+	if (first_record != startptr &&
+		XLogSegmentOffset(startptr, WalSegSz) != 0)
 		printf(ngettext("first record is after %X/%X, at %X/%X, skipping over %u byte\n",
 						"first record is after %X/%X, at %X/%X, skipping over %u bytes\n",
-						(first_record - private.startptr)),
-			   LSN_FORMAT_ARGS(private.startptr),
+						(first_record - startptr)),
+			   LSN_FORMAT_ARGS(startptr),
 			   LSN_FORMAT_ARGS(first_record),
-			   (uint32) (first_record - private.startptr));
+			   (uint32) (first_record - startptr));
 
 	for (;;)
 	{
 		/* try to read the next record */
-		record = XLogReadRecord(xlogreader_state, &errormsg);
+		while (XLogReadRecord(xlogreader_state, &record, &errormsg) ==
+			   XLREAD_NEED_DATA)
+		{
+			if (!WALDumpReadPage(xlogreader_state, timeline, startptr, endptr))
+				break;
+		}
+
 		if (!record)
 		{
-			if (!config.follow || private.endptr_reached)
+			if (!config.follow)
 				break;
 			else
 			{

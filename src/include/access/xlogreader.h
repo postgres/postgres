@@ -56,64 +56,16 @@ typedef struct WALSegmentContext
 } WALSegmentContext;
 
 typedef struct XLogReaderState XLogReaderState;
+typedef struct XLogFindNextRecordState XLogFindNextRecordState;
 
-/* Function type definitions for various xlogreader interactions */
-typedef int (*XLogPageReadCB) (XLogReaderState *xlogreader,
-							   XLogRecPtr targetPagePtr,
-							   int reqLen,
-							   XLogRecPtr targetRecPtr,
-							   char *readBuf);
+/* Function type definition for the segment cleanup callback */
+typedef void (*WALSegmentCleanupCB) (XLogReaderState *xlogreader);
+
+/* Function type definition for the open/close callbacks for WALRead() */
 typedef void (*WALSegmentOpenCB) (XLogReaderState *xlogreader,
 								  XLogSegNo nextSegNo,
 								  TimeLineID *tli_p);
 typedef void (*WALSegmentCloseCB) (XLogReaderState *xlogreader);
-
-typedef struct XLogReaderRoutine
-{
-	/*
-	 * Data input callback
-	 *
-	 * This callback shall read at least reqLen valid bytes of the xlog page
-	 * starting at targetPagePtr, and store them in readBuf.  The callback
-	 * shall return the number of bytes read (never more than XLOG_BLCKSZ), or
-	 * -1 on failure.  The callback shall sleep, if necessary, to wait for the
-	 * requested bytes to become available.  The callback will not be invoked
-	 * again for the same page unless more than the returned number of bytes
-	 * are needed.
-	 *
-	 * targetRecPtr is the position of the WAL record we're reading.  Usually
-	 * it is equal to targetPagePtr + reqLen, but sometimes xlogreader needs
-	 * to read and verify the page or segment header, before it reads the
-	 * actual WAL record it's interested in.  In that case, targetRecPtr can
-	 * be used to determine which timeline to read the page from.
-	 *
-	 * The callback shall set ->seg.ws_tli to the TLI of the file the page was
-	 * read from.
-	 */
-	XLogPageReadCB page_read;
-
-	/*
-	 * Callback to open the specified WAL segment for reading.  ->seg.ws_file
-	 * shall be set to the file descriptor of the opened segment.  In case of
-	 * failure, an error shall be raised by the callback and it shall not
-	 * return.
-	 *
-	 * "nextSegNo" is the number of the segment to be opened.
-	 *
-	 * "tli_p" is an input/output argument. WALRead() uses it to pass the
-	 * timeline in which the new segment should be found, but the callback can
-	 * use it to return the TLI that it actually opened.
-	 */
-	WALSegmentOpenCB segment_open;
-
-	/*
-	 * WAL segment close callback.  ->seg.ws_file shall be set to a negative
-	 * number.
-	 */
-	WALSegmentCloseCB segment_close;
-} XLogReaderRoutine;
-
-#define XL_ROUTINE(...) &(XLogReaderRoutine){__VA_ARGS__}
 
 typedef struct
 {
@@ -144,12 +96,36 @@ typedef struct
 	uint16		data_bufsz;
 } DecodedBkpBlock;
 
+/* Return code from XLogReadRecord */
+typedef enum XLogReadRecordResult
+{
+	XLREAD_SUCCESS,				/* record is successfully read */
+	XLREAD_NEED_DATA,			/* need more data. see XLogReadRecord. */
+	XLREAD_FAIL					/* failed during reading a record */
+}			XLogReadRecordResult;
+
+/*
+ * internal state of XLogReadRecord
+ *
+ * XLogReadState runs a state machine while reading a record. Theses states
+ * are not seen outside the function. Each state may repeat several times
+ * exiting requesting caller for new data. See the comment of XLogReadRecrod
+ * for details.
+ */
+typedef enum XLogReadRecordState
+{
+	XLREAD_NEXT_RECORD,
+	XLREAD_TOT_LEN,
+	XLREAD_FIRST_FRAGMENT,
+	XLREAD_CONTINUATION
+}			XLogReadRecordState;
+
 struct XLogReaderState
 {
 	/*
 	 * Operational callbacks
 	 */
-	XLogReaderRoutine routine;
+	WALSegmentCleanupCB cleanup_cb;
 
 	/* ----------------------------------------
 	 * Public parameters
@@ -163,18 +139,30 @@ struct XLogReaderState
 	uint64		system_identifier;
 
 	/*
-	 * Opaque data for callbacks to use.  Not used by XLogReader.
-	 */
-	void	   *private_data;
-
-	/*
 	 * Start and end point of last record read.  EndRecPtr is also used as the
 	 * position to read next.  Calling XLogBeginRead() sets EndRecPtr to the
 	 * starting position and ReadRecPtr to invalid.
 	 */
-	XLogRecPtr	ReadRecPtr;		/* start of last record read */
+	XLogRecPtr	ReadRecPtr;		/* start of last record read or being read */
 	XLogRecPtr	EndRecPtr;		/* end+1 of last record read */
+	XLogRecPtr	PrevRecPtr;		/* start of previous record read */
 
+	/* ----------------------------------------
+	 * Communication with page reader
+	 * readBuf is XLOG_BLCKSZ bytes, valid up to at least reqLen bytes.
+	 * ----------------------------------------
+	 */
+	/* variables the clients of xlogreader can examine */
+	XLogRecPtr	readPagePtr;	/* page pointer to read */
+	int32		reqLen;			/* bytes requested to the caller */
+	char	   *readBuf;		/* buffer to store data */
+	bool		page_verified;	/* is the page header on the buffer verified? */
+	bool		record_verified;/* is the current record header verified? */
+
+	/* variables set by the client of xlogreader */
+	int32		readLen;		/* actual bytes copied into readBuf by client,
+								 * which should be >= reqLen.  Client should
+								 * use XLogReaderSetInputData() to set. */
 
 	/* ----------------------------------------
 	 * Decoded representation of current record
@@ -203,13 +191,6 @@ struct XLogReaderState
 	 * ----------------------------------------
 	 */
 
-	/*
-	 * Buffer for currently read page (XLOG_BLCKSZ bytes, valid up to at least
-	 * readLen bytes)
-	 */
-	char	   *readBuf;
-	uint32		readLen;
-
 	/* last read XLOG position for data currently in readBuf */
 	WALSegmentContext segcxt;
 	WALOpenSegment seg;
@@ -222,8 +203,6 @@ struct XLogReaderState
 	XLogRecPtr	latestPagePtr;
 	TimeLineID	latestPageTLI;
 
-	/* beginning of the WAL record being read. */
-	XLogRecPtr	currRecPtr;
 	/* timeline to read it from, 0 if a lookup is required */
 	TimeLineID	currTLI;
 
@@ -250,16 +229,37 @@ struct XLogReaderState
 	char	   *readRecordBuf;
 	uint32		readRecordBufSize;
 
+	/*
+	 * XLogReadRecord() state
+	 */
+	XLogReadRecordState readRecordState;	/* state machine state */
+	int			recordGotLen;	/* amount of current record that has already
+								 * been read */
+	int			recordRemainLen;	/* length of current record that remains */
+	XLogRecPtr	recordContRecPtr;	/* where the current record continues */
+
 	/* Buffer to hold error message */
 	char	   *errormsg_buf;
 };
 
+struct XLogFindNextRecordState
+{
+	XLogReaderState *reader_state;
+	XLogRecPtr		targetRecPtr;
+	XLogRecPtr		currRecPtr;
+};
+
+/* Report that data is available for decoding. */
+static inline void
+XLogReaderSetInputData(XLogReaderState *state, int32 len)
+{
+	state->readLen = len;
+}
+
 /* Get a new XLogReader */
 extern XLogReaderState *XLogReaderAllocate(int wal_segment_size,
 										   const char *waldir,
-										   XLogReaderRoutine *routine,
-										   void *private_data);
-extern XLogReaderRoutine *LocalXLogReaderRoutine(void);
+										   WALSegmentCleanupCB cleanup_cb);
 
 /* Free an XLogReader */
 extern void XLogReaderFree(XLogReaderState *state);
@@ -267,12 +267,14 @@ extern void XLogReaderFree(XLogReaderState *state);
 /* Position the XLogReader to given record */
 extern void XLogBeginRead(XLogReaderState *state, XLogRecPtr RecPtr);
 #ifdef FRONTEND
-extern XLogRecPtr XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr);
+extern XLogFindNextRecordState *InitXLogFindNextRecord(XLogReaderState *reader_state, XLogRecPtr start_ptr);
+extern bool XLogFindNextRecord(XLogFindNextRecordState *state);
 #endif							/* FRONTEND */
 
 /* Read the next XLog record. Returns NULL on end-of-WAL or failure */
-extern struct XLogRecord *XLogReadRecord(XLogReaderState *state,
-										 char **errormsg);
+extern XLogReadRecordResult XLogReadRecord(XLogReaderState *state,
+										   XLogRecord **record,
+										   char **errormsg);
 
 /* Validate a page */
 extern bool XLogReaderValidatePageHeader(XLogReaderState *state,
@@ -292,6 +294,7 @@ typedef struct WALReadError
 } WALReadError;
 
 extern bool WALRead(XLogReaderState *state,
+					WALSegmentOpenCB segopenfn, WALSegmentCloseCB sgclosefn,
 					char *buf, XLogRecPtr startptr, Size count,
 					TimeLineID tli, WALReadError *errinfo);
 
