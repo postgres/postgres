@@ -647,7 +647,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/* Estimate space for query text. */
-	query_len = strlen(estate->es_sourceText);
+	query_len = estate->es_sourceText ? strlen(estate->es_sourceText) : 0;
 	shm_toc_estimate_chunk(&pcxt->estimator, query_len + 1);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
@@ -742,7 +742,10 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 
 	/* Store query string */
 	query_string = shm_toc_allocate(pcxt->toc, query_len + 1);
-	memcpy(query_string, estate->es_sourceText, query_len + 1);
+	if (query_len == 0)
+		query_string[0] = 0;
+	else
+		memcpy(query_string, estate->es_sourceText, query_len + 1);
 	shm_toc_insert(pcxt->toc, PARALLEL_KEY_QUERY_TEXT, query_string);
 
 	/* Store serialized PlannedStmt. */
