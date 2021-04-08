@@ -364,4 +364,25 @@ SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE 
 SELECT pg_stat_statements_reset();
 SELECT dealloc FROM pg_stat_statements_info;
 
+--
+-- top level handling
+--
+SET pg_stat_statements.track = 'top';
+DELETE FROM test;
+DO $$
+BEGIN
+    DELETE FROM test;
+END;
+$$ LANGUAGE plpgsql;
+SELECT query, toplevel, plans, calls FROM pg_stat_statements WHERE query LIKE '%DELETE%' ORDER BY query COLLATE "C", toplevel;
+
+SET pg_stat_statements.track = 'all';
+DELETE FROM test;
+DO $$
+BEGIN
+    DELETE FROM test;
+END;
+$$ LANGUAGE plpgsql;
+SELECT query, toplevel, plans, calls FROM pg_stat_statements WHERE query LIKE '%DELETE%' ORDER BY query COLLATE "C", toplevel;
+
 DROP EXTENSION pg_stat_statements;

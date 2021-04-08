@@ -89,6 +89,15 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>toplevel</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if the query was executed as a top level statement
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>queryid</structfield> <type>bigint</type>
       </para>
       <para>

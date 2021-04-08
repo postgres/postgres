@@ -901,4 +901,44 @@ SELECT dealloc FROM pg_stat_statements_info;
        0
 (1 row)
 
+--
+-- top level handling
+--
+SET pg_stat_statements.track = 'top';
+DELETE FROM test;
+DO $$
+BEGIN
+    DELETE FROM test;
+END;
+$$ LANGUAGE plpgsql;
+SELECT query, toplevel, plans, calls FROM pg_stat_statements WHERE query LIKE '%DELETE%' ORDER BY query COLLATE "C", toplevel;
+         query         | toplevel | plans | calls 
+-----------------------+----------+-------+-------
+ DELETE FROM test      | t        |     1 |     1
+ DO $$                +| t        |     0 |     1
+ BEGIN                +|          |       | 
+     DELETE FROM test;+|          |       | 
+ END;                 +|          |       | 
+ $$ LANGUAGE plpgsql   |          |       | 
+(2 rows)
+
+SET pg_stat_statements.track = 'all';
+DELETE FROM test;
+DO $$
+BEGIN
+    DELETE FROM test;
+END;
+$$ LANGUAGE plpgsql;
+SELECT query, toplevel, plans, calls FROM pg_stat_statements WHERE query LIKE '%DELETE%' ORDER BY query COLLATE "C", toplevel;
+         query         | toplevel | plans | calls 
+-----------------------+----------+-------+-------
+ DELETE FROM test      | f        |     1 |     1
+ DELETE FROM test      | t        |     2 |     2
+ DO $$                +| t        |     0 |     2
+ BEGIN                +|          |       | 
+     DELETE FROM test;+|          |       | 
+ END;                 +|          |       | 
+ $$ LANGUAGE plpgsql   |          |       | 
+(3 rows)
+
 DROP EXTENSION pg_stat_statements;
