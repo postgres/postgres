@@ -156,8 +156,8 @@ static PartitionPruneStep *gen_prune_step_op(GeneratePruningStepsContext *contex
 static PartitionPruneStep *gen_prune_step_combine(GeneratePruningStepsContext *context,
 												  List *source_stepids,
 												  PartitionPruneCombineOp combineOp);
-static PartitionPruneStep *gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
-													   List **keyclauses, Bitmapset *nullkeys);
+static List *gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
+										 List **keyclauses, Bitmapset *nullkeys);
 static PartClauseMatchStatus match_clause_to_partition_key(GeneratePruningStepsContext *context,
 														   Expr *clause, Expr *partkey, int partkeyidx,
 														   bool *clause_is_not_null,
@@ -924,22 +924,34 @@ get_matching_partitions(PartitionPruneContext *context, List *pruning_steps)
 
 /*
  * gen_partprune_steps_internal
- *		Processes 'clauses' to generate partition pruning steps.
+ *		Processes 'clauses' to generate a List of partition pruning steps.  We
+ *		return NIL when no steps were generated.
  *
- * From OpExpr clauses that are mutually AND'd, we find combinations of those
- * that match to the partition key columns and for every such combination,
- * we emit a PartitionPruneStepOp containing a vector of expressions whose
- * values are used as a look up key to search partitions by comparing the
- * values with partition bounds.  Relevant details of the operator and a
- * vector of (possibly cross-type) comparison functions is also included with
- * each step.
+ * These partition pruning steps come in 2 forms; operator steps and combine
+ * steps.
  *
- * For BoolExpr clauses, we recursively generate steps for each argument, and
- * return a PartitionPruneStepCombine of their results.
+ * Operator steps (PartitionPruneStepOp) contain details of clauses that we
+ * determined that we can use for partition pruning.  These contain details of
+ * the expression which is being compared to the partition key and the
+ * comparison function.
  *
- * The return value is a list of the steps generated, which are also added to
- * the context's steps list.  Each step is assigned a step identifier, unique
- * even across recursive calls.
+ * Combine steps (PartitionPruneStepCombine) instruct the partition pruning
+ * code how it should produce a single set of partitions from multiple input
+ * operator and other combine steps.  A PARTPRUNE_COMBINE_INTERSECT type
+ * combine step will merge its input steps to produce a result which only
+ * contains the partitions which are present in all of the input operator
+ * steps.  A PARTPRUNE_COMBINE_UNION combine step will produce a result that
+ * has all of the partitions from each of the input operator steps.
+ *
+ * For BoolExpr clauses, each argument is processed recursively. Steps
+ * generated from processing an OR BoolExpr will be combined using
+ * PARTPRUNE_COMBINE_UNION.  AND BoolExprs get combined using
+ * PARTPRUNE_COMBINE_INTERSECT.
+ *
+ * Otherwise, the list of clauses we receive we assume to be mutually ANDed.
+ * We generate all of the pruning steps we can based on these clauses and then
+ * at the end, if we have more than 1 step, we combine each step with a
+ * PARTPRUNE_COMBINE_INTERSECT combine step.  Single steps are returned as-is.
  *
  * If we find clauses that are mutually contradictory, or contradictory with
  * the partitioning constraint, or a pseudoconstant clause that contains
@@ -1046,11 +1058,16 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 
 					if (argsteps != NIL)
 					{
-						PartitionPruneStep *step;
+						/*
+						 * gen_partprune_steps_internal() always adds a single
+						 * combine step when it generates multiple steps, so
+						 * here we can just pay attention to the last one in
+						 * the list.  If it just generated one, then the last
+						 * one in the list is still the one we want.
+						 */
+						PartitionPruneStep *last = llast(argsteps);
 
-						Assert(list_length(argsteps) == 1);
-						step = (PartitionPruneStep *) linitial(argsteps);
-						arg_stepids = lappend_int(arg_stepids, step->step_id);
+						arg_stepids = lappend_int(arg_stepids, last->step_id);
 					}
 					else
 					{
@@ -1089,9 +1106,7 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 			else if (is_andclause(clause))
 			{
 				List	   *args = ((BoolExpr *) clause)->args;
-				List	   *argsteps,
-						   *arg_stepids = NIL;
-				ListCell   *lc1;
+				List	   *argsteps;
 
 				/*
 				 * args may itself contain clauses of arbitrary type, so just
@@ -1104,21 +1119,16 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 				if (context->contradictory)
 					return NIL;
 
-				foreach(lc1, argsteps)
-				{
-					PartitionPruneStep *step = lfirst(lc1);
+				/*
+				 * gen_partprune_steps_internal() always adds a single combine
+				 * step when it generates multiple steps, so here we can just
+				 * pay attention to the last one in the list.  If it just
+				 * generated one, then the last one in the list is still the
+				 * one we want.
+				 */
+				if (argsteps != NIL)
+					result = lappend(result, llast(argsteps));
 
-					arg_stepids = lappend_int(arg_stepids, step->step_id);
-				}
-
-				if (arg_stepids != NIL)
-				{
-					PartitionPruneStep *step;
-
-					step = gen_prune_step_combine(context, arg_stepids,
-												  PARTPRUNE_COMBINE_INTERSECT);
-					result = lappend(result, step);
-				}
 				continue;
 			}
 
@@ -1253,12 +1263,11 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 	}
 	else if (generate_opsteps)
 	{
-		PartitionPruneStep *step;
+		List	   *opsteps;
 
 		/* Strategy 2 */
-		step = gen_prune_steps_from_opexps(context, keyclauses, nullkeys);
-		if (step != NULL)
-			result = lappend(result, step);
+		opsteps = gen_prune_steps_from_opexps(context, keyclauses, nullkeys);
+		result = list_concat(result, opsteps);
 	}
 	else if (bms_num_members(notnullkeys) == part_scheme->partnatts)
 	{
@@ -1271,12 +1280,14 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 	}
 
 	/*
-	 * Finally, results from all entries appearing in result should be
-	 * combined using an INTERSECT combine step, if more than one.
+	 * Finally, if there are multiple steps, since the 'clauses' are mutually
+	 * ANDed, add an INTERSECT step to combine the partition sets resulting
+	 * from them and append it to the result list.
 	 */
 	if (list_length(result) > 1)
 	{
 		List	   *step_ids = NIL;
+		PartitionPruneStep *final;
 
 		foreach(lc, result)
 		{
@@ -1285,14 +1296,9 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 			step_ids = lappend_int(step_ids, step->step_id);
 		}
 
-		if (step_ids != NIL)
-		{
-			PartitionPruneStep *step;
-
-			step = gen_prune_step_combine(context, step_ids,
-										  PARTPRUNE_COMBINE_INTERSECT);
-			result = lappend(result, step);
-		}
+		final = gen_prune_step_combine(context, step_ids,
+									   PARTPRUNE_COMBINE_INTERSECT);
+		result = lappend(result, final);
 	}
 
 	return result;
@@ -1356,15 +1362,26 @@ gen_prune_step_combine(GeneratePruningStepsContext *context,
 
 /*
  * gen_prune_steps_from_opexps
- *		Generate pruning steps based on clauses for partition keys
+ *		Generate and return a list of PartitionPruneStepOp that are based on
+ *		OpExpr and BooleanTest clauses that have been matched to the partition
+ *		key.
  *
- * 'keyclauses' contains one list of clauses per partition key.  We check here
- * if we have found clauses for a valid subset of the partition key. In some
- * cases, (depending on the type of partitioning being used) if we didn't
- * find clauses for a given key, we discard clauses that may have been
- * found for any subsequent keys; see specific notes below.
+ * 'keyclauses' is an array of List pointers, indexed by the partition key's
+ * index.  Each List element in the array can contain clauses that match to
+ * the corresponding partition key column.  Partition key columns without any
+ * matched clauses will have an empty List.
+ *
+ * Some partitioning strategies allow pruning to still occur when we only have
+ * clauses for a prefix of the partition key columns, for example, RANGE
+ * partitioning.  Other strategies, such as HASH partitioning, require clauses
+ * for all partition key columns.
+ *
+ * When we return multiple pruning steps here, it's up to the caller to add a
+ * relevant "combine" step to combine the returned steps.  This is not done
+ * here as callers may wish to include additional pruning steps before
+ * combining them all.
  */
-static PartitionPruneStep *
+static List *
 gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 							List **keyclauses, Bitmapset *nullkeys)
 {
@@ -1397,7 +1414,7 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 		 */
 		if (part_scheme->strategy == PARTITION_STRATEGY_HASH &&
 			clauselist == NIL && !bms_is_member(i, nullkeys))
-			return NULL;
+			return NIL;
 
 		foreach(lc, clauselist)
 		{
@@ -1728,27 +1745,7 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 			break;
 	}
 
-	/* Lastly, add a combine step to mutually AND these op steps, if needed */
-	if (list_length(opsteps) > 1)
-	{
-		List	   *opstep_ids = NIL;
-
-		foreach(lc, opsteps)
-		{
-			PartitionPruneStep *step = lfirst(lc);
-
-			opstep_ids = lappend_int(opstep_ids, step->step_id);
-		}
-
-		if (opstep_ids != NIL)
-			return gen_prune_step_combine(context, opstep_ids,
-										  PARTPRUNE_COMBINE_INTERSECT);
-		return NULL;
-	}
-	else if (opsteps != NIL)
-		return linitial(opsteps);
-
-	return NULL;
+	return opsteps;
 }
 
 /*
@@ -1782,8 +1779,8 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
  *   true otherwise.
  *
  * * PARTCLAUSE_MATCH_STEPS if there is a match.
- *   Output arguments: *clause_steps is set to a list of PartitionPruneStep
- *   generated for the clause.
+ *   Output arguments: *clause_steps is set to the list of recursively
+ *   generated steps for the clause.
  *
  * * PARTCLAUSE_MATCH_CONTRADICT if the clause is self-contradictory, ie
  *   it provably returns FALSE or NULL.
