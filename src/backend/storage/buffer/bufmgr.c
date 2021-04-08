@@ -610,6 +610,84 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 	}
 }
 
+/*
+ * ReadRecentBuffer -- try to pin a block in a recently observed buffer
+ *
+ * Compared to ReadBuffer(), this avoids a buffer mapping lookup when it's
+ * successful.  Return true if the buffer is valid and still has the expected
+ * tag.  In that case, the buffer is pinned and the usage count is bumped.
+ */
+bool
+ReadRecentBuffer(RelFileNode rnode, ForkNumber forkNum, BlockNumber blockNum,
+				 Buffer recent_buffer)
+{
+	BufferDesc *bufHdr;
+	BufferTag	tag;
+	uint32		buf_state;
+	bool		have_private_ref;
+
+	Assert(BufferIsValid(recent_buffer));
+
+	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
+	ReservePrivateRefCountEntry();
+	INIT_BUFFERTAG(tag, rnode, forkNum, blockNum);
+
+	if (BufferIsLocal(recent_buffer))
+	{
+		bufHdr = GetBufferDescriptor(-recent_buffer - 1);
+		buf_state = pg_atomic_read_u32(&bufHdr->state);
+
+		/* Is it still valid and holding the right tag? */
+		if ((buf_state & BM_VALID) && BUFFERTAGS_EQUAL(tag, bufHdr->tag))
+		{
+			/* Bump local buffer's ref and usage counts. */
+			ResourceOwnerRememberBuffer(CurrentResourceOwner, recent_buffer);
+			LocalRefCount[-recent_buffer - 1]++;
+			if (BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
+				pg_atomic_write_u32(&bufHdr->state,
+									buf_state + BUF_USAGECOUNT_ONE);
+
+			return true;
+		}
+	}
+	else
+	{
+		bufHdr = GetBufferDescriptor(recent_buffer - 1);
+		have_private_ref = GetPrivateRefCount(recent_buffer) > 0;
+
+		/*
+		 * Do we already have this buffer pinned with a private reference?  If
+		 * so, it must be valid and it is safe to check the tag without
+		 * locking.  If not, we have to lock the header first and then check.
+		 */
+		if (have_private_ref)
+			buf_state = pg_atomic_read_u32(&bufHdr->state);
+		else
+			buf_state = LockBufHdr(bufHdr);
+
+		if ((buf_state & BM_VALID) && BUFFERTAGS_EQUAL(tag, bufHdr->tag))
+		{
+			/*
+			 * It's now safe to pin the buffer.  We can't pin first and ask
+			 * questions later, because because it might confuse code paths
+			 * like InvalidateBuffer() if we pinned a random non-matching
+			 * buffer.
+			 */
+			if (have_private_ref)
+				PinBuffer(bufHdr, NULL);	/* bump pin count */
+			else
+				PinBuffer_Locked(bufHdr);	/* pin for first time */
+
+			return true;
+		}
+
+		/* If we locked the header above, now unlock. */
+		if (!have_private_ref)
+			UnlockBufHdr(bufHdr, buf_state);
+	}
+
+	return false;
+}
 
 /*
  * ReadBuffer -- a shorthand for ReadBufferExtended, for reading from main
