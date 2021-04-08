@@ -69,6 +69,7 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_AUTOVAC_START,
 	PGSTAT_MTYPE_VACUUM,
 	PGSTAT_MTYPE_ANALYZE,
+	PGSTAT_MTYPE_ANL_ANCESTORS,
 	PGSTAT_MTYPE_ARCHIVER,
 	PGSTAT_MTYPE_BGWRITER,
 	PGSTAT_MTYPE_WAL,
@@ -106,7 +107,7 @@ typedef int64 PgStat_Counter;
  *
  * tuples_inserted/updated/deleted/hot_updated count attempted actions,
  * regardless of whether the transaction committed.  delta_live_tuples,
- * delta_dead_tuples, and changed_tuples are set depending on commit or abort.
+ * delta_dead_tuples, changed_tuples are set depending on commit or abort.
  * Note that delta_live_tuples and delta_dead_tuples can be negative!
  * ----------
  */
@@ -429,6 +430,25 @@ typedef struct PgStat_MsgAnalyze
 	PgStat_Counter m_dead_tuples;
 } PgStat_MsgAnalyze;
 
+/* ----------
+ * PgStat_MsgAnlAncestors		Sent by the backend or autovacuum daemon
+ *								to inform partitioned tables that are
+ *								ancestors of a partition, to propagate
+ *								analyze counters
+ * ----------
+ */
+#define PGSTAT_NUM_ANCESTORENTRIES    \
+	((PGSTAT_MSG_PAYLOAD - sizeof(Oid) - sizeof(Oid) - sizeof(int))	\
+	 / sizeof(Oid))
+
+typedef struct PgStat_MsgAnlAncestors
+{
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
+	Oid			m_tableoid;
+	int			m_nancestors;
+	Oid			m_ancestors[PGSTAT_NUM_ANCESTORENTRIES];
+} PgStat_MsgAnlAncestors;
 
 /* ----------
  * PgStat_MsgArchiver			Sent by the archiver to update statistics.
@@ -674,6 +694,7 @@ typedef union PgStat_Msg
 	PgStat_MsgAutovacStart msg_autovacuum_start;
 	PgStat_MsgVacuum msg_vacuum;
 	PgStat_MsgAnalyze msg_analyze;
+	PgStat_MsgAnlAncestors msg_anl_ancestors;
 	PgStat_MsgArchiver msg_archiver;
 	PgStat_MsgBgWriter msg_bgwriter;
 	PgStat_MsgWal msg_wal;
@@ -769,6 +790,7 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter n_live_tuples;
 	PgStat_Counter n_dead_tuples;
 	PgStat_Counter changes_since_analyze;
+	PgStat_Counter changes_since_analyze_reported;
 	PgStat_Counter inserts_since_vacuum;
 
 	PgStat_Counter blocks_fetched;
@@ -975,6 +997,7 @@ extern void pgstat_report_vacuum(Oid tableoid, bool shared,
 extern void pgstat_report_analyze(Relation rel,
 								  PgStat_Counter livetuples, PgStat_Counter deadtuples,
 								  bool resetcounter);
+extern void pgstat_report_anl_ancestors(Oid relid);
 
 extern void pgstat_report_recovery_conflict(int reason);
 extern void pgstat_report_deadlock(void);

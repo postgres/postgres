@@ -1807,7 +1807,7 @@ pg_stat_all_tables| SELECT c.oid AS relid,
    FROM ((pg_class c
      LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
-  WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))
+  WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char", 'p'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname;
 pg_stat_archiver| SELECT s.archived_count,
     s.last_archived_wal,
@@ -2210,7 +2210,7 @@ pg_stat_xact_all_tables| SELECT c.oid AS relid,
    FROM ((pg_class c
      LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
-  WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))
+  WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char", 'p'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname;
 pg_stat_xact_sys_tables| SELECT pg_stat_xact_all_tables.relid,
     pg_stat_xact_all_tables.schemaname,
