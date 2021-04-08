@@ -1807,9 +1807,9 @@ Inherits: fd_pt1
 
 -- TRUNCATE doesn't work on foreign tables, either directly or recursively
 TRUNCATE ft2;  -- ERROR
-ERROR:  "ft2" is not a table
+ERROR:  foreign-data wrapper "dummy" has no handler
 TRUNCATE fd_pt1;  -- ERROR
-ERROR:  "ft2" is not a table
+ERROR:  foreign-data wrapper "dummy" has no handler
 DROP TABLE fd_pt1 CASCADE;
 NOTICE:  drop cascades to foreign table ft2
 -- IMPORT FOREIGN SCHEMA
@@ -2032,9 +2032,9 @@ ALTER FOREIGN TABLE fd_pt2_1 ADD CONSTRAINT fd_pt2chk1 CHECK (c1 > 0);
 ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);
 -- TRUNCATE doesn't work on foreign tables, either directly or recursively
 TRUNCATE fd_pt2_1;  -- ERROR
-ERROR:  "fd_pt2_1" is not a table
+ERROR:  foreign-data wrapper "dummy" has no handler
 TRUNCATE fd_pt2;  -- ERROR
-ERROR:  "fd_pt2_1" is not a table
+ERROR:  foreign-data wrapper "dummy" has no handler
 DROP FOREIGN TABLE fd_pt2_1;
 DROP TABLE fd_pt2;
 -- foreign table cannot be part of partition tree made of temporary

@@ -172,9 +172,9 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ 
   </para>
 
   <para>
-   <command>TRUNCATE</command> is not currently supported for foreign tables.
-   This implies that if a specified table has any descendant tables that are
-   foreign, the command will fail.
+   <command>TRUNCATE</command> can be used for foreign tables if
+   the foreign data wrapper supports, for instance,
+   see <xref linkend="postgres-fdw"/>.
   </para>
  </refsect1>
 

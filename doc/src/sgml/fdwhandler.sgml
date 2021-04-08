@@ -1065,6 +1065,67 @@ EndDirectModify(ForeignScanState *node);
 
    </sect2>
 
+   <sect2 id="fdw-callbacks-truncate">
+    <title>FDW Routines for <command>TRUNCATE</command></title>
+
+    <para>
+<programlisting>
+void
+ExecForeignTruncate(List *rels, List *rels_extra,
+                    DropBehavior behavior, bool restart_seqs);
+</programlisting>
+
+     Truncate a set of foreign tables specified in <literal>rels</literal>.
+     This function is called when <xref linkend="sql-truncate"/> is executed
+     on foreign tables.  <literal>rels</literal> is the list of
+     <structname>Relation</structname> data structure that indicates
+     a foreign table to truncate.  <literal>rels_extra</literal> the list of
+     <literal>int</literal> value, which delivers extra information about
+     a foreign table to truncate.  Possible values are
+     <literal>TRUNCATE_REL_CONTEXT_NORMAL</literal>, which means that
+     the foreign table is specified WITHOUT <literal>ONLY</literal> clause
+     in <command>TRUNCATE</command>,
+     <literal>TRUNCATE_REL_CONTEXT_ONLY</literal>, which means that
+     the foreign table is specified WITH <literal>ONLY</literal> clause,
+     and <literal>TRUNCATE_REL_CONTEXT_CASCADING</literal>,
+     which means that the foreign table is not specified explicitly,
+     but will be truncated due to dependency (for example, partition table).
+     There is one-to-one mapping between <literal>rels</literal> and
+     <literal>rels_extra</literal>.  The number of entries is the same
+     between the two lists.
+    </para>
+
+    <para>
+     <literal>behavior</literal> defines how foreign tables should
+     be truncated, using as possible values <literal>DROP_RESTRICT</literal>,
+     which means that <literal>RESTRICT</literal> option is specified,
+     and <literal>DROP_CASCADE</literal>, which means that
+     <literal>CASCADE</literal> option is specified, in
+     <command>TRUNCATE</command> command.
+    </para>
+    
+    <para>
+     <literal>restart_seqs</literal> is set to <literal>true</literal>
+     if <literal>RESTART IDENTITY</literal> option is specified in
+     <command>TRUNCATE</command> command.  It is <literal>false</literal>
+     if <literal>CONTINUE IDENTITY</literal> option is specified.
+    </para>
+
+    <para>
+     <command>TRUNCATE</command> invokes
+     <function>ExecForeignTruncate</function> once per foreign server
+     that foreign tables to truncate belong to.  This means that all foreign
+     tables included in <literal>rels</literal> must belong to the same
+     server.
+    </para>
+
+    <para>
+     If the <function>ExecForeignTruncate</function> pointer is set to
+     <literal>NULL</literal>, attempts to truncate foreign tables will
+     fail with an error message.
+    </para>
+   </sect2>
+
    <sect2 id="fdw-callbacks-row-locking">
     <title>FDW Routines for Row Locking</title>
 

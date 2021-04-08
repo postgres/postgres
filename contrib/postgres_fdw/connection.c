@@ -92,7 +92,6 @@ static PGconn *connect_pg_server(ForeignServer *server, UserMapping *user);
 static void disconnect_pg_server(ConnCacheEntry *entry);
 static void check_conn_params(const char **keywords, const char **values, UserMapping *user);
 static void configure_remote_session(PGconn *conn);
-static void do_sql_command(PGconn *conn, const char *sql);
 static void begin_remote_xact(ConnCacheEntry *entry);
 static void pgfdw_xact_callback(XactEvent event, void *arg);
 static void pgfdw_subxact_callback(SubXactEvent event,
@@ -568,7 +567,7 @@ configure_remote_session(PGconn *conn)
 /*
  * Convenience subroutine to issue a non-data-returning SQL command to remote
  */
-static void
+void
 do_sql_command(PGconn *conn, const char *sql)
 {
 	PGresult   *res;

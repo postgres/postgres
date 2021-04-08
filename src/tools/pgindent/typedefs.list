@@ -704,6 +704,7 @@ ForeignScanState
 ForeignServer
 ForeignServerInfo
 ForeignTable
+ForeignTruncateInfo
 ForkNumber
 FormData_pg_aggregate
 FormData_pg_am

@@ -56,6 +56,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
+#include "commands/tablecmds.h"
 
 /*
  * Global context for foreign_expr_walker's search of an expression tree.
@@ -2170,6 +2171,43 @@ deparseAnalyzeSql(StringInfo buf, Relation rel, List **retrieved_attrs)
 	 */
 	appendStringInfoString(buf, " FROM ");
 	deparseRelation(buf, rel);
+}
+
+/*
+ * Construct a simple "TRUNCATE rel" statement
+ */
+void
+deparseTruncateSql(StringInfo buf,
+				   List *rels,
+				   List *rels_extra,
+				   DropBehavior behavior,
+				   bool restart_seqs)
+{
+	ListCell   *lc1,
+			   *lc2;
+
+	appendStringInfoString(buf, "TRUNCATE ");
+
+	forboth(lc1, rels, lc2, rels_extra)
+	{
+		Relation	rel = lfirst(lc1);
+		int			extra = lfirst_int(lc2);
+
+		if (lc1 != list_head(rels))
+			appendStringInfoString(buf, ", ");
+		if (extra & TRUNCATE_REL_CONTEXT_ONLY)
+			appendStringInfoString(buf, "ONLY ");
+
+		deparseRelation(buf, rel);
+	}
+
+	appendStringInfo(buf, " %s IDENTITY",
+					 restart_seqs ? "RESTART" : "CONTINUE");
+
+	if (behavior == DROP_RESTRICT)
+		appendStringInfoString(buf, " RESTRICT");
+	else if (behavior == DROP_CASCADE)
+		appendStringInfoString(buf, " CASCADE");
 }
 
 /*

@@ -634,7 +634,8 @@ typedef struct ViewOptions
  *		WAL stream.
  *
  * We don't log information for unlogged tables (since they don't WAL log
- * anyway) and for system tables (their content is hard to make sense of, and
+ * anyway), for foreign tables (since they don't WAL log, either),
+ * and for system tables (their content is hard to make sense of, and
  * it would complicate decoding slightly for little gain). Note that we *do*
  * log information for user defined catalog tables since they presumably are
  * interesting to the user...
@@ -642,6 +643,7 @@ typedef struct ViewOptions
 #define RelationIsLogicallyLogged(relation) \
 	(XLogLogicalInfoActive() && \
 	 RelationNeedsWAL(relation) && \
+	 (relation)->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&	\
 	 !IsCatalogRelation(relation))
 
 /* routines in utils/cache/relcache.c */

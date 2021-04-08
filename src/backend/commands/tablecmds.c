@@ -59,6 +59,7 @@
 #include "commands/typecmds.h"
 #include "commands/user.h"
 #include "executor/executor.h"
+#include "foreign/fdwapi.h"
 #include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -309,6 +310,21 @@ struct DropRelationCallbackState
 #define		ATT_COMPOSITE_TYPE		0x0010
 #define		ATT_FOREIGN_TABLE		0x0020
 #define		ATT_PARTITIONED_INDEX	0x0040
+
+/*
+ * ForeignTruncateInfo
+ *
+ * Information related to truncation of foreign tables.  This is used for
+ * the elements in a hash table. It uses the server OID as lookup key,
+ * and includes a per-server list of all foreign tables involved in the
+ * truncation.
+ */
+typedef struct ForeignTruncateInfo
+{
+	Oid			serverid;
+	List	   *rels;
+	List	   *rels_extra;
+} ForeignTruncateInfo;
 
 /*
  * Partition tables are expected to be dropped when the parent partitioned
@@ -1589,7 +1605,10 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
  *
  * This is a multi-relation truncate.  We first open and grab exclusive
  * lock on all relations involved, checking permissions and otherwise
- * verifying that the relation is OK for truncation.  In CASCADE mode,
+ * verifying that the relation is OK for truncation.  Note that if relations
+ * are foreign tables, at this stage, we have not yet checked that their
+ * foreign data in external data sources are OK for truncation.  These are
+ * checked when foreign data are actually truncated later.  In CASCADE mode,
  * relations having FK references to the targeted relations are automatically
  * added to the group; in RESTRICT mode, we check that all FK references are
  * internal to the group that's being truncated.  Finally all the relations
@@ -1600,6 +1619,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 {
 	List	   *rels = NIL;
 	List	   *relids = NIL;
+	List	   *relids_extra = NIL;
 	List	   *relids_logged = NIL;
 	ListCell   *cell;
 
@@ -1636,6 +1656,9 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 		rels = lappend(rels, rel);
 		relids = lappend_oid(relids, myrelid);
+		relids_extra = lappend_int(relids_extra, (recurse ?
+												  TRUNCATE_REL_CONTEXT_NORMAL :
+												  TRUNCATE_REL_CONTEXT_ONLY));
 		/* Log this relation only if needed for logical decoding */
 		if (RelationIsLogicallyLogged(rel))
 			relids_logged = lappend_oid(relids_logged, myrelid);
@@ -1683,6 +1706,8 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, childrelid);
+				relids_extra = lappend_int(relids_extra,
+										   TRUNCATE_REL_CONTEXT_CASCADING);
 				/* Log this relation only if needed for logical decoding */
 				if (RelationIsLogicallyLogged(rel))
 					relids_logged = lappend_oid(relids_logged, childrelid);
@@ -1695,7 +1720,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 					 errhint("Do not specify the ONLY keyword, or use TRUNCATE ONLY on the partitions directly.")));
 	}
 
-	ExecuteTruncateGuts(rels, relids, relids_logged,
+	ExecuteTruncateGuts(rels, relids, relids_extra, relids_logged,
 						stmt->behavior, stmt->restart_seqs);
 
 	/* And close the rels */
@@ -1716,21 +1741,28 @@ ExecuteTruncate(TruncateStmt *stmt)
  *
  * explicit_rels is the list of Relations to truncate that the command
  * specified.  relids is the list of Oids corresponding to explicit_rels.
- * relids_logged is the list of Oids (a subset of relids) that require
- * WAL-logging.  This is all a bit redundant, but the existing callers have
- * this information handy in this form.
+ * relids_extra is the list of integer values that deliver extra information
+ * about relations in explicit_rels.  relids_logged is the list of Oids
+ * (a subset of relids) that require WAL-logging.  This is all a bit redundant,
+ * but the existing callers have this information handy in this form.
  */
 void
-ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
+ExecuteTruncateGuts(List *explicit_rels,
+					List *relids,
+					List *relids_extra,
+					List *relids_logged,
 					DropBehavior behavior, bool restart_seqs)
 {
 	List	   *rels;
 	List	   *seq_relids = NIL;
+	HTAB	   *ft_htab = NULL;
 	EState	   *estate;
 	ResultRelInfo *resultRelInfos;
 	ResultRelInfo *resultRelInfo;
 	SubTransactionId mySubid;
 	ListCell   *cell;
+	ListCell   *lc1,
+			*lc2;
 	Oid		   *logrelids;
 
 	/*
@@ -1768,6 +1800,8 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 				truncate_check_activity(rel);
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, relid);
+				relids_extra = lappend_int(relids_extra,
+										   TRUNCATE_REL_CONTEXT_CASCADING);
 				/* Log this relation only if needed for logical decoding */
 				if (RelationIsLogicallyLogged(rel))
 					relids_logged = lappend_oid(relids_logged, relid);
@@ -1868,13 +1902,62 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 	 */
 	mySubid = GetCurrentSubTransactionId();
 
-	foreach(cell, rels)
+	Assert(list_length(rels) == list_length(relids_extra));
+	forboth(lc1, rels, lc2, relids_extra)
 	{
-		Relation	rel = (Relation) lfirst(cell);
+		Relation	rel = (Relation) lfirst(lc1);
+		int			extra = lfirst_int(lc2);
 
 		/* Skip partitioned tables as there is nothing to do */
 		if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 			continue;
+
+		/*
+		 * Build the lists of foreign tables belonging to each foreign server
+		 * and pass each list to the foreign data wrapper's callback function,
+		 * so that each server can truncate its all foreign tables in bulk.
+		 * Each list is saved as a single entry in a hash table that uses the
+		 * server OID as lookup key.
+		 */
+		if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+		{
+			Oid			serverid = GetForeignServerIdByRelId(RelationGetRelid(rel));
+			bool		found;
+			ForeignTruncateInfo *ft_info;
+
+			/* First time through, initialize hashtable for foreign tables */
+			if (!ft_htab)
+			{
+				HASHCTL		hctl;
+
+				memset(&hctl, 0, sizeof(HASHCTL));
+				hctl.keysize = sizeof(Oid);
+				hctl.entrysize = sizeof(ForeignTruncateInfo);
+				hctl.hcxt = CurrentMemoryContext;
+
+				ft_htab = hash_create("TRUNCATE for Foreign Tables",
+									  32,	/* start small and extend */
+									  &hctl,
+									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+			}
+
+			/* Find or create cached entry for the foreign table */
+			ft_info = hash_search(ft_htab, &serverid, HASH_ENTER, &found);
+			if (!found)
+			{
+				ft_info->serverid = serverid;
+				ft_info->rels = NIL;
+				ft_info->rels_extra = NIL;
+			}
+
+			/*
+			 * Save the foreign table in the entry of the server that the
+			 * foreign table belongs to.
+			 */
+			ft_info->rels = lappend(ft_info->rels, rel);
+			ft_info->rels_extra = lappend_int(ft_info->rels_extra, extra);
+			continue;
+		}
 
 		/*
 		 * Normally, we need a transaction-safe truncation here.  However, if
@@ -1936,6 +2019,36 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 		}
 
 		pgstat_count_truncate(rel);
+	}
+
+	/* Now go through the hash table, and truncate foreign tables */
+	if (ft_htab)
+	{
+		ForeignTruncateInfo *ft_info;
+		HASH_SEQ_STATUS seq;
+
+		hash_seq_init(&seq, ft_htab);
+
+		PG_TRY();
+		{
+			while ((ft_info = hash_seq_search(&seq)) != NULL)
+			{
+				FdwRoutine *routine = GetFdwRoutineByServerId(ft_info->serverid);
+
+				/* truncate_check_rel() has checked that already */
+				Assert(routine->ExecForeignTruncate != NULL);
+
+				routine->ExecForeignTruncate(ft_info->rels,
+											 ft_info->rels_extra,
+											 behavior,
+											 restart_seqs);
+			}
+		}
+		PG_FINALLY();
+		{
+			hash_destroy(ft_htab);
+		}
+		PG_END_TRY();
 	}
 
 	/*
@@ -2023,12 +2136,24 @@ truncate_check_rel(Oid relid, Form_pg_class reltuple)
 	char	   *relname = NameStr(reltuple->relname);
 
 	/*
-	 * Only allow truncate on regular tables and partitioned tables (although,
-	 * the latter are only being included here for the following checks; no
-	 * physical truncation will occur in their case.)
+	 * Only allow truncate on regular tables, foreign tables using foreign
+	 * data wrappers supporting TRUNCATE and partitioned tables (although, the
+	 * latter are only being included here for the following checks; no
+	 * physical truncation will occur in their case.).
 	 */
-	if (reltuple->relkind != RELKIND_RELATION &&
-		reltuple->relkind != RELKIND_PARTITIONED_TABLE)
+	if (reltuple->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		Oid			serverid = GetForeignServerIdByRelId(relid);
+		FdwRoutine *fdwroutine = GetFdwRoutineByServerId(serverid);
+
+		if (!fdwroutine->ExecForeignTruncate)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot truncate foreign table \"%s\"",
+							relname)));
+	}
+	else if (reltuple->relkind != RELKIND_RELATION &&
+			 reltuple->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table", relname)));

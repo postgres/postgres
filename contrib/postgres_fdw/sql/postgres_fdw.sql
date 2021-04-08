@@ -2352,6 +2352,107 @@ drop foreign table rem3;
 drop table loc3;
 
 -- ===================================================================
+-- test for TRUNCATE
+-- ===================================================================
+CREATE TABLE tru_rtable0 (id int primary key);
+CREATE TABLE tru_rtable1 (id int primary key);
+CREATE FOREIGN TABLE tru_ftable (id int)
+       SERVER loopback OPTIONS (table_name 'tru_rtable0');
+INSERT INTO tru_rtable0 (SELECT x FROM generate_series(1,10) x);
+
+CREATE TABLE tru_ptable (id int) PARTITION BY HASH(id);
+CREATE TABLE tru_ptable__p0 PARTITION OF tru_ptable
+                            FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE FOREIGN TABLE tru_ftable__p1 PARTITION OF tru_ptable
+                                    FOR VALUES WITH (MODULUS 2, REMAINDER 1)
+       SERVER loopback OPTIONS (table_name 'tru_rtable1');
+INSERT INTO tru_ptable (SELECT x FROM generate_series(11,20) x);
+
+CREATE TABLE tru_pk_table(id int primary key);
+CREATE TABLE tru_fk_table(fkey int references tru_pk_table(id));
+INSERT INTO tru_pk_table (SELECT x FROM generate_series(1,10) x);
+INSERT INTO tru_fk_table (SELECT x % 10 + 1 FROM generate_series(5,25) x);
+CREATE FOREIGN TABLE tru_pk_ftable (id int)
+       SERVER loopback OPTIONS (table_name 'tru_pk_table');
+
+CREATE TABLE tru_rtable_parent (id int);
+CREATE TABLE tru_rtable_child (id int);
+CREATE FOREIGN TABLE tru_ftable_parent (id int)
+       SERVER loopback OPTIONS (table_name 'tru_rtable_parent');
+CREATE FOREIGN TABLE tru_ftable_child () INHERITS (tru_ftable_parent)
+       SERVER loopback OPTIONS (table_name 'tru_rtable_child');
+INSERT INTO tru_rtable_parent (SELECT x FROM generate_series(1,8) x);
+INSERT INTO tru_rtable_child  (SELECT x FROM generate_series(10, 18) x);
+
+-- normal truncate
+SELECT sum(id) FROM tru_ftable;        -- 55
+TRUNCATE tru_ftable;
+SELECT count(*) FROM tru_rtable0;		-- 0
+SELECT count(*) FROM tru_ftable;		-- 0
+
+-- 'truncatable' option
+ALTER SERVER loopback OPTIONS (ADD truncatable 'false');
+TRUNCATE tru_ftable;			-- error
+ALTER FOREIGN TABLE tru_ftable OPTIONS (ADD truncatable 'true');
+TRUNCATE tru_ftable;			-- accepted
+ALTER FOREIGN TABLE tru_ftable OPTIONS (SET truncatable 'false');
+TRUNCATE tru_ftable;			-- error
+ALTER SERVER loopback OPTIONS (DROP truncatable);
+ALTER FOREIGN TABLE tru_ftable OPTIONS (SET truncatable 'false');
+TRUNCATE tru_ftable;			-- error
+ALTER FOREIGN TABLE tru_ftable OPTIONS (SET truncatable 'true');
+TRUNCATE tru_ftable;			-- accepted
+
+-- partitioned table with both local and foreign tables as partitions
+SELECT sum(id) FROM tru_ptable;        -- 155
+TRUNCATE tru_ptable;
+SELECT count(*) FROM tru_ptable;		-- 0
+SELECT count(*) FROM tru_ptable__p0;	-- 0
+SELECT count(*) FROM tru_ftable__p1;	-- 0
+SELECT count(*) FROM tru_rtable1;		-- 0
+
+-- 'CASCADE' option
+SELECT sum(id) FROM tru_pk_ftable;      -- 55
+TRUNCATE tru_pk_ftable;	-- failed by FK reference
+TRUNCATE tru_pk_ftable CASCADE;
+SELECT count(*) FROM tru_pk_ftable;    -- 0
+SELECT count(*) FROM tru_fk_table;		-- also truncated,0
+
+-- truncate two tables at a command
+INSERT INTO tru_ftable (SELECT x FROM generate_series(1,8) x);
+INSERT INTO tru_pk_ftable (SELECT x FROM generate_series(3,10) x);
+SELECT count(*) from tru_ftable; -- 8
+SELECT count(*) from tru_pk_ftable; -- 8
+TRUNCATE tru_ftable, tru_pk_ftable CASCADE;
+SELECT count(*) from tru_ftable; -- 0
+SELECT count(*) from tru_pk_ftable; -- 0
+
+-- truncate with ONLY clause
+TRUNCATE ONLY tru_ftable_parent;
+SELECT sum(id) FROM tru_ftable_parent;  -- 126
+TRUNCATE tru_ftable_parent;
+SELECT count(*) FROM tru_ftable_parent; -- 0
+
+-- in case when remote table has inherited children
+CREATE TABLE tru_rtable0_child () INHERITS (tru_rtable0);
+INSERT INTO tru_rtable0 (SELECT x FROM generate_series(5,9) x);
+INSERT INTO tru_rtable0_child (SELECT x FROM generate_series(10,14) x);
+SELECT sum(id) FROM tru_ftable;   -- 95
+
+TRUNCATE ONLY tru_ftable;		-- truncate only parent portion
+SELECT sum(id) FROM tru_ftable;   -- 60
+
+INSERT INTO tru_rtable0 (SELECT x FROM generate_series(21,25) x);
+SELECT sum(id) FROM tru_ftable;		-- 175
+TRUNCATE tru_ftable;			-- truncate both of parent and child
+SELECT count(*) FROM tru_ftable;    -- empty
+
+-- cleanup
+DROP FOREIGN TABLE tru_ftable_parent, tru_ftable_child, tru_pk_ftable,tru_ftable__p1,tru_ftable;
+DROP TABLE tru_rtable0, tru_rtable1, tru_ptable, tru_ptable__p0, tru_pk_table, tru_fk_table,
+tru_rtable_parent,tru_rtable_child, tru_rtable0_child;
+
+-- ===================================================================
 -- test IMPORT FOREIGN SCHEMA
 -- ===================================================================
 
