@@ -916,6 +916,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			 * least catch silly syntactic errors.
 			 */
 			raw_parsetree_list = pg_parse_query(prosrc);
+			querytree_list = NIL;
 
 			if (!haspolyarg)
 			{
@@ -928,7 +929,6 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 				/* But first, set up parameter information */
 				pinfo = prepare_sql_fn_parse_info(tuple, NULL, InvalidOid);
 
-				querytree_list = NIL;
 				foreach(lc, raw_parsetree_list)
 				{
 					RawStmt    *parsetree = lfirst_node(RawStmt, lc);
