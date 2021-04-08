@@ -440,27 +440,26 @@ SELECT DISTINCT city
     Thus far, our queries have only accessed one table at a time.
     Queries can access multiple tables at once, or access the same
     table in such a way that multiple rows of the table are being
-    processed at the same time.  A query that accesses multiple rows
-    of the same or different tables at one time is called a
-    <firstterm>join</firstterm> query.  As an example, say you wish to
-    list all the weather records together with the location of the
-    associated city.  To do that, we need to compare the <structfield>city</structfield>
+    processed at the same time.  Queries that access multiple tables
+    (or multiple instances of the same table) at one time are called
+    <firstterm>join</firstterm> queries.  They combine rows from one table
+    with rows from a second table, with an expression specifying which rows
+    are to be paired.  For example, to return all the weather records together
+    with the location of the associated city, the database needs to compare
+    the <structfield>city</structfield>
     column of each row of the <structname>weather</structname> table with the
     <structfield>name</structfield> column of all rows in the <structname>cities</structname>
-    table, and select the pairs of rows where these values match.
-    <note>
+    table, and select the pairs of rows where these values match.<footnote>
      <para>
       This  is only a conceptual model.  The join is usually performed
       in a more efficient manner than actually comparing each possible
       pair of rows, but this is invisible to the user.
      </para>
-    </note>
+    </footnote>
     This would be accomplished by the following query:
 
 <programlisting>
-SELECT *
-    FROM weather, cities
-    WHERE city = name;
+SELECT * FROM weather JOIN cities ON city = name;
 </programlisting>
 
 <screen>
@@ -497,22 +496,12 @@ SELECT *
        <literal>*</literal>:
 <programlisting>
 SELECT city, temp_lo, temp_hi, prcp, date, location
-    FROM weather, cities
-    WHERE city = name;
+    FROM weather JOIN cities ON city = name;
 </programlisting>
       </para>
      </listitem>
     </itemizedlist>
    </para>
-
-   <formalpara>
-    <title>Exercise:</title>
-
-    <para>
-     Attempt to determine the semantics of this query when the
-     <literal>WHERE</literal> clause is omitted.
-    </para>
-   </formalpara>
 
    <para>
     Since the columns all had different names, the parser
@@ -524,8 +513,7 @@ SELECT city, temp_lo, temp_hi, prcp, date, location
 <programlisting>
 SELECT weather.city, weather.temp_lo, weather.temp_hi,
        weather.prcp, weather.date, cities.location
-    FROM weather, cities
-    WHERE cities.name = weather.city;
+    FROM weather JOIN cities ON weather.city = cities.name;
 </programlisting>
 
     It is widely considered good style to qualify all column names
@@ -535,15 +523,24 @@ SELECT weather.city, weather.temp_lo, weather.temp_hi,
 
    <para>
     Join queries of the kind seen thus far can also be written in this
-    alternative form:
+    form:
 
 <programlisting>
 SELECT *
-    FROM weather INNER JOIN cities ON (weather.city = cities.name);
+    FROM weather, cities
+    WHERE city = name;
 </programlisting>
 
-    This syntax is not as commonly used as the one above, but we show
-    it here to help you understand the following topics.
+    This syntax pre-dates the <literal>JOIN</literal>/<literal>ON</literal>
+    syntax, which was introduced in SQL-92.  The tables are simply listed in
+    the <literal>FROM</literal> clause, and the comparison expression is added
+    to the <literal>WHERE</literal> clause.  The results from this older
+    implicit syntax and the newer explicit
+    <literal>JOIN</literal>/<literal>ON</literal> syntax are identical.  But
+    for a reader of the query, the explicit syntax makes its meaning easier to
+    understand: The join condition is introduced by its own key word whereas
+    previously the condition was mixed into the <literal>WHERE</literal>
+    clause together with other conditions.
    </para>
 
    <indexterm><primary>join</primary><secondary>outer</secondary></indexterm>
@@ -556,12 +553,12 @@ SELECT *
     found we want some <quote>empty values</quote> to be substituted
     for the <structname>cities</structname> table's columns.  This kind
     of query is called an <firstterm>outer join</firstterm>.  (The
-    joins we have seen so far are inner joins.)  The command looks
-    like this:
+    joins we have seen so far are <firstterm>inner joins</firstterm>.)
+    The command looks like this:
 
 <programlisting>
 SELECT *
-    FROM weather LEFT OUTER JOIN cities ON (weather.city = cities.name);
+    FROM weather LEFT OUTER JOIN cities ON weather.city = cities.name;
 </programlisting>
 
 <screen>
@@ -591,10 +588,9 @@ SELECT *
     </para>
    </formalpara>
 
+   <indexterm><primary>join</primary><secondary>self</secondary></indexterm>
+   <indexterm><primary>alias</primary><secondary>for table name in query</secondary></indexterm>
    <para>
-    <indexterm><primary>join</primary><secondary>self</secondary></indexterm>
-    <indexterm><primary>alias</primary><secondary>for table name in query</secondary></indexterm>
-
     We can also join a table against itself.  This is called a
     <firstterm>self join</firstterm>.  As an example, suppose we wish
     to find all the weather records that are in the temperature range
@@ -608,10 +604,9 @@ SELECT *
 
 <programlisting>
 SELECT w1.city, w1.temp_lo AS low, w1.temp_hi AS high,
-    w2.city, w2.temp_lo AS low, w2.temp_hi AS high
-    FROM weather w1, weather w2
-    WHERE w1.temp_lo &lt; w2.temp_lo
-    AND w1.temp_hi &gt; w2.temp_hi;
+       w2.city, w2.temp_lo AS low, w2.temp_hi AS high
+    FROM weather w1 JOIN weather w2
+        ON w1.temp_lo &lt; w2.temp_lo AND w1.temp_hi &gt; w2.temp_hi;
 </programlisting>
 
 <screen>
@@ -628,8 +623,7 @@ SELECT w1.city, w1.temp_lo AS low, w1.temp_hi AS high,
     queries to save some typing, e.g.:
 <programlisting>
 SELECT *
-    FROM weather w, cities c
-    WHERE w.city = c.name;
+    FROM weather w JOIN cities c ON w.city = c.name;
 </programlisting>
     You will encounter this style of abbreviating quite frequently.
    </para>

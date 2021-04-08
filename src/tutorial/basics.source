@@ -97,42 +97,38 @@ SELECT DISTINCT city
 
 -- The following joins the weather table and the cities table.
 
-SELECT *
-    FROM weather, cities
-    WHERE city = name;
+SELECT * FROM weather JOIN cities ON city = name;
 
 -- This prevents a duplicate city name column:
 
 SELECT city, temp_lo, temp_hi, prcp, date, location
-    FROM weather, cities
-    WHERE city = name;
+    FROM weather JOIN cities ON city = name;
 
 -- since the column names are all different, we don't have to specify the
 -- table name. If you want to be clear, you can do the following. They give
 -- identical results, of course.
 
 SELECT weather.city, weather.temp_lo, weather.temp_hi, weather.prcp, weather.date, cities.location
-    FROM weather, cities
-    WHERE cities.name = weather.city;
+    FROM weather JOIN cities ON weather.city = cities.name;
 
--- JOIN syntax
+-- Old join syntax
 
 SELECT *
-    FROM weather JOIN cities ON (weather.city = cities.name);
+    FROM weather, cities
+    WHERE city = name;
 
 -- Outer join
 
 SELECT *
-    FROM weather LEFT OUTER JOIN cities ON (weather.city = cities.name);
+    FROM weather LEFT OUTER JOIN cities ON weather.city = cities.name;
 
 -- Suppose we want to find all the records that are in the temperature range
 -- of other records.  w1 and w2 are aliases for weather.
 
 SELECT w1.city, w1.temp_lo, w1.temp_hi,
        w2.city, w2.temp_lo, w2.temp_hi
-FROM weather w1, weather w2
-WHERE w1.temp_lo < w2.temp_lo
-   and w1.temp_hi > w2.temp_hi;
+FROM weather w1 JOIN weather w2
+    ON w1.temp_lo < w2.temp_lo AND w1.temp_hi > w2.temp_hi;
 
 
 -----------------------------
