@@ -382,8 +382,7 @@ END;
    and call like this:
 <programlisting>
 CALL insert_data(1, 2);
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="sql-createprocedure-compat">

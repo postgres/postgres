@@ -223,8 +223,7 @@ CREATE EXTENSION hstore SCHEMA addons;
 <programlisting>
 SET search_path = addons;
 CREATE EXTENSION hstore;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

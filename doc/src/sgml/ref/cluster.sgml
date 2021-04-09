@@ -28,7 +28,6 @@ CLUSTER [VERBOSE]
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
     VERBOSE [ <replaceable class="parameter">boolean</replaceable> ]
-
 </synopsis>
  </refsynopsisdiv>
 
