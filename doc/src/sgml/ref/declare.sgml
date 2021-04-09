@@ -335,7 +335,7 @@ DECLARE liahona CURSOR FOR SELECT * FROM films;
   <para>
    According to the SQL standard, changes made to insensitive cursors by
    <literal>UPDATE ... WHERE CURRENT OF</literal> and <literal>DELETE
-   ... WHERE CURRENT OF</literal> statements are visibible in that same
+   ... WHERE CURRENT OF</literal> statements are visible in that same
    cursor.  <productname>PostgreSQL</productname> treats these statements like
    all other data changing statements in that they are not visible in
    insensitive cursors.

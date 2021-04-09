@@ -490,9 +490,9 @@
      any changes that happened during the initial data copy using standard
      logical replication.  During this synchronization phase, the changes
      are applied and committed in the same order as they happened on the
-     publisher.  Once the synchronization is done, the control of the
+     publisher.  Once synchronization is done, control of the
      replication of the table is given back to the main apply process where
-     the replication continues as normal.
+     replication continues as normal.
     </para>
   </sect2>
  </sect1>
@@ -602,10 +602,9 @@
   </para>
 
   <para>
-   The subscriber also requires the <varname>max_replication_slots</varname>
-   be set to configure how many replication origins can be tracked.  In this
-   case it should be set to at least the number of subscriptions that will be
-   added to the subscriber, plus some reserve for table synchronization.
+   <varname>max_replication_slots</varname> must also be set on the subscriber.
+   It should be set to at least the number of subscriptions that will be added
+   to the subscriber, plus some reserve for table synchronization.
    <varname>max_logical_replication_workers</varname> must be set to at least
    the number of subscriptions, again plus some reserve for the table
    synchronization.  Additionally the <varname>max_worker_processes</varname>

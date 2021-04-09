@@ -2723,7 +2723,7 @@ include_dir 'conf.d'
         Note that changing <varname>wal_level</varname> to
         <literal>minimal</literal> makes any base backups taken before
         unavailable for archive recovery and standby server, which may
-        lead to database loss.
+        lead to data loss.
        </para>
        <para>
         In <literal>logical</literal> level, the same information is logged as
@@ -3098,7 +3098,7 @@ include_dir 'conf.d'
       <listitem>
        <para>
         When this parameter is <literal>on</literal>, the <productname>PostgreSQL</productname>
-        server compresses a full page image written to WAL when
+        server compresses full page images written to WAL when
         <xref linkend="guc-full-page-writes"/> is on or during a base backup.
         A compressed page image will be decompressed during WAL replay.
         The default value is <literal>off</literal>.
@@ -4137,7 +4137,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
          On the subscriber side, specifies how many replication origins (see
          <xref linkend="replication-origins"/>) can be tracked simultaneously,
          effectively limiting how many logical replication subscriptions can
-         be created on the server. Setting it a lower value than the current
+         be created on the server. Setting it to a lower value than the current
          number of tracked replication origins (reflected in
          <link linkend="view-pg-replication-origin-status">pg_replication_origin_status</link>,
          not <link linkend="catalog-pg-replication-origin">pg_replication_origin</link>)
@@ -7732,12 +7732,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         The <xref linkend="pgstatstatements"/> extension also requires a query
         identifier to be computed.  Note that an external module can
         alternatively be used if the in-core query identifier computation
-        specification isn't acceptable.  In this case, in-core computation
+        method is not acceptable.  In this case, in-core computation
         must be disabled.  The default is <literal>off</literal>.
        </para>
        <note>
         <para>
-         To ensure that a only one query identifier is calculated and
+         To ensure that only one query identifier is calculated and
          displayed, extensions that calculate query identifiers should
          throw an error if a query identifier has already been computed.
         </para>

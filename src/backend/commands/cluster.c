@@ -1422,7 +1422,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 								 PROGRESS_CLUSTER_PHASE_FINAL_CLEANUP);
 
 	/*
-	 * If the relation being rebuild is pg_class, swap_relation_files()
+	 * If the relation being rebuilt is pg_class, swap_relation_files()
 	 * couldn't update pg_class's own pg_class entry (check comments in
 	 * swap_relation_files()), thus relfrozenxid was not updated. That's
 	 * annoying because a potential reason for doing a VACUUM FULL is a

@@ -1747,7 +1747,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     <xref linkend="guc-max-wal-senders"/> to zero.
     But note that changing these settings requires a server restart,
     and makes any base backups taken before unavailable for archive
-    recovery and standby server, which may lead to database loss.
+    recovery and standby server, which may lead to data loss.
    </para>
 
    <para>
@@ -1899,7 +1899,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     much faster.  The following are configuration changes you can make
     to improve performance in such cases.  Except as noted below, durability
     is still guaranteed in case of a crash of the database software;
-    only abrupt operating system stoppage creates a risk of data loss
+    only an abrupt operating system crash creates a risk of data loss
     or corruption when these settings are used.
 
     <itemizedlist>

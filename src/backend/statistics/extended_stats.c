@@ -254,7 +254,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
  * that would require additional columns.
  *
  * See statext_compute_stattarget for details about how we compute statistics
- * target for a statistics objects (from the object target, attribute targets
+ * target for a statistics object (from the object target, attribute targets
  * and default statistics target).
  */
 int

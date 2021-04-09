@@ -1927,9 +1927,10 @@ testdb=&gt;
         </para>
 
         <para>
-        The column of the kind of extended stats (e.g. Ndistinct) shows its status.
-        NULL means that it doesn't exists. "defined" means that it was requested
-        when creating the statistics.
+        The status of each kind of extended statistics is shown in a column
+        named after its statistic kind (e.g. Ndistinct).
+        "defined" means that it was requested when creating the statistics,
+        and NULL means it wasn't requested. 
         You can use pg_stats_ext if you'd like to know whether <link linkend="sql-analyze">
         <command>ANALYZE</command></link> was run and statistics are available to the
         planner.

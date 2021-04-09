@@ -3560,7 +3560,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Evaluate escaped Unicode characters in argument.  Unicode characters
+        Evaluate escaped Unicode characters in the argument.  Unicode characters
         can be specified as
         <literal>\<replaceable>XXXX</replaceable></literal> (4 hexadecimal
         digits), <literal>\+<replaceable>XXXXXX</replaceable></literal> (6
@@ -24926,12 +24926,12 @@ SELECT collation for ('foo' COLLATE "de_DE");
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        Requests to log the memory contexts whose backend process has
-        the specified process ID.  These memory contexts will be logged at
+        Requests to log the memory contexts of the backend with the
+        specified process ID.  These memory contexts will be logged at
         <literal>LOG</literal> message level. They will appear in
         the server log based on the log configuration set
         (See <xref linkend="runtime-config-logging"/> for more information),
-        but will not be sent to the client whatever the setting of
+        but will not be sent to the client regardless of
         <xref linkend="guc-client-min-messages"/>.
         Only superusers can request to log the memory contexts.
        </para></entry>
@@ -25037,7 +25037,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
    <para>
     <function>pg_log_backend_memory_contexts</function> can be used
-    to log the memory contexts of the backend process. For example,
+    to log the memory contexts of a backend process. For example:
 <programlisting>
 postgres=# SELECT pg_log_backend_memory_contexts(pg_backend_pid());
  pg_log_backend_memory_contexts 
@@ -25061,8 +25061,8 @@ LOG:  level: 1; TransactionAbortContext: 32768 total in 1 blocks; 32504 free (0 
 LOG:  level: 1; ErrorContext: 8192 total in 1 blocks; 7928 free (3 chunks); 264 used
 LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560 used
 </screen>
-    For more than 100 child contexts under the same parent one,
-    100 child contexts and a summary of the remaining ones will be logged.
+    If there are more than 100 child contexts under the same parent, the first
+    100 child contexts are logged, along with a summary of the remaining contexts.
     Note that frequent calls to this function could incur significant overhead,
     because it may generate a large number of log messages.
    </para>
@@ -25576,7 +25576,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         Returns recovery pause state.  The return values are <literal>
         not paused</literal> if pause is not requested, <literal>
         pause requested</literal> if pause is requested but recovery is
-        not yet paused and, <literal>paused</literal> if the recovery is
+        not yet paused, and <literal>paused</literal> if the recovery is
         actually paused.
        </para></entry>
       </row>

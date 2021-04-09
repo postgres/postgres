@@ -90,13 +90,12 @@ typedef enum
  * dividing line between "interactive" and "non-interactive" sources for
  * error reporting purposes.
  *
- * PGC_S_TEST is used when testing values to be used later ("doit" will always
- * be false, so this never gets stored as the actual source of any value).
- * For example, ALTER DATABASE/ROLE tests proposed per-database or per-user
- * defaults this way, and CREATE FUNCTION tests proposed function SET clauses
- * this way.  This is an interactive case, but it needs its own source value
- * because some assign hooks need to make different validity checks in this
- * case.  In particular, references to nonexistent database objects generally
+ * PGC_S_TEST is used when testing values to be used later.  For example,
+ * ALTER DATABASE/ROLE tests proposed per-database or per-user defaults this
+ * way, and CREATE FUNCTION tests proposed function SET clauses this way.
+ * This is an interactive case, but it needs its own source value because
+ * some assign hooks need to make different validity checks in this case.
+ * In particular, references to nonexistent database objects generally
  * shouldn't throw hard errors in this case, at most NOTICEs, since the
  * objects might exist by the time the setting is used for real.
  *

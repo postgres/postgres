@@ -175,7 +175,7 @@ sub write_tuple
 	seek($fh, $offset, 0)
 		or BAIL_OUT("seek failed: $!");
 	defined(syswrite($fh, $buffer, HEAPTUPLE_PACK_LENGTH))
-		or BAIL_OUT("syswrite failed: $!");;
+		or BAIL_OUT("syswrite failed: $!");
 	return;
 }
 

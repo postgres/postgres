@@ -241,7 +241,7 @@ ST_SCOPE void ST_SORT(ST_ELEMENT_TYPE *first, size_t n
 
 /*
  * Find the median of three values.  Currently, performance seems to be best
- * if the the comparator is inlined here, but the med3 function is not inlined
+ * if the comparator is inlined here, but the med3 function is not inlined
  * in the qsort function.
  */
 static pg_noinline ST_ELEMENT_TYPE *

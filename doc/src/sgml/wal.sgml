@@ -797,7 +797,7 @@
    <literal>fsync</literal>, or <literal>fsync_writethrough</literal>,
    the write operation moves WAL buffers to kernel cache and
    <function>issue_xlog_fsync</function> syncs them to disk. Regardless
-   of the setting of <varname>track_wal_io_timing</varname>, the numbers
+   of the setting of <varname>track_wal_io_timing</varname>, the number
    of times <function>XLogWrite</function> writes and
    <function>issue_xlog_fsync</function> syncs WAL data to disk are also
    counted as <literal>wal_write</literal> and <literal>wal_sync</literal>

@@ -406,7 +406,7 @@
   <note>
    <para>
     The following details about constant replacement and
-    <structfield>queryid</structfield> only applies when <xref
+    <structfield>queryid</structfield> only apply when <xref
     linkend="guc-compute-query-id"/> is enabled.  If you use an external
     module instead to compute <structfield>queryid</structfield>, you
     should refer to its documentation for details.

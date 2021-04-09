@@ -410,7 +410,7 @@ CopyMultiInsertBufferCleanup(CopyMultiInsertInfo *miinfo,
  * Once flushed we also trim the tracked buffers list down to size by removing
  * the buffers created earliest first.
  *
- * Callers should pass 'curr_rri' is the ResultRelInfo that's currently being
+ * Callers should pass 'curr_rri' as the ResultRelInfo that's currently being
  * used.  When cleaning up old buffers we'll never remove the one for
  * 'curr_rri'.
  */

@@ -617,7 +617,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	 *
 	 * We assume that VACUUM hasn't set pg_class.reltuples already, even
 	 * during a VACUUM ANALYZE.  Although VACUUM often updates pg_class,
-	 * exceptions exists.  A "VACUUM (ANALYZE, INDEX_CLEANUP OFF)" command
+	 * exceptions exist.  A "VACUUM (ANALYZE, INDEX_CLEANUP OFF)" command
 	 * will never update pg_class entries for index relations.  It's also
 	 * possible that an individual index's pg_class entry won't be updated
 	 * during VACUUM if the index AM returns NULL from its amvacuumcleanup()

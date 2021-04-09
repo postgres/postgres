@@ -460,7 +460,7 @@ PostgreSQL documentation
      <term><option>--skip=<replaceable class="parameter">option</replaceable></option></term>
      <listitem>
       <para>
-       If <literal>"all-frozen"</literal> is given, table corruption checks
+       If <literal>all-frozen</literal> is given, table corruption checks
        will skip over pages in all tables that are marked as all frozen.
       </para>
       <para>

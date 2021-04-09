@@ -1651,7 +1651,7 @@ push_null_elements(JsonbParseState **ps, int num)
  * this path. E.g. the path [a][0][b] with the new value 1 will produce the
  * structure {a: [{b: 1}]}.
  *
- * Called is responsible to make sure such path does not exist yet.
+ * Caller is responsible to make sure such path does not exist yet.
  */
 static void
 push_path(JsonbParseState **st, int level, Datum *path_elems,
@@ -4887,7 +4887,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
  * than just one last element, this flag will instruct to create the whole
  * chain of corresponding objects and insert the value.
  *
- * JB_PATH_CONSISTENT_POSITION for an array indicates that the called wants to
+ * JB_PATH_CONSISTENT_POSITION for an array indicates that the caller wants to
  * keep values with fixed indices. Indices for existing elements could be
  * changed (shifted forward) in case if the array is prepended with a new value
  * and a negative index out of the range, so this behavior will be prevented
