@@ -816,9 +816,7 @@
    prefetching mechanism is most likely to be effective on systems
    with <varname>full_page_writes</varname> set to
    <varname>off</varname> (where that is safe), and where the working
-   set is larger than RAM.  By default, prefetching in recovery is enabled
-   on operating systems that have <function>posix_fadvise</function>
-   support.
+   set is larger than RAM.  By default, prefetching in recovery is disabled.
   </para>
  </sect1>
 

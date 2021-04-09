@@ -2774,7 +2774,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wal_decode_buffer_size", PGC_POSTMASTER, WAL_ARCHIVE_RECOVERY,
 			gettext_noop("Maximum buffer size for reading ahead in the WAL during recovery."),
-			gettext_noop("This controls the maximum distance we can read ahead n the WAL to prefetch referenced blocks."),
+			gettext_noop("This controls the maximum distance we can read ahead in the WAL to prefetch referenced blocks."),
 			GUC_UNIT_BYTE
 		},
 		&wal_decode_buffer_size,

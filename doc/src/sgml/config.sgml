@@ -3621,7 +3621,7 @@ include_dir 'conf.d'
         pool after that.  However, on file systems with a block size larger
         than
         <productname>PostgreSQL</productname>'s, prefetching can avoid a
-        costly read-before-write when a blocks are later written.
+        costly read-before-write when blocks are later written.
         The default is off.
        </para>
       </listitem>

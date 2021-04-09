@@ -31,12 +31,14 @@
  * stall; this is counted with "skip_fpw".
  *
  * The only way we currently have to know that an I/O initiated with
- * PrefetchSharedBuffer() has that recovery will eventually call ReadBuffer(),
- * and perform a synchronous read.  Therefore, we track the number of
+ * PrefetchSharedBuffer() has completed is to wait for the corresponding call
+ * to XLogReadBufferInRedo() to return.  Therefore, we track the number of
  * potentially in-flight I/Os by using a circular buffer of LSNs.  When it's
- * full, we have to wait for recovery to replay records so that the queue
- * depth can be reduced, before we can do any more prefetching.  Ideally, this
- * keeps us the right distance ahead to respect maintenance_io_concurrency.
+ * full, we have to wait for recovery to replay enough records to remove some
+ * LSNs, and only then can we initiate more prefetching.  Ideally, this keeps
+ * us just the right distance ahead to respect maintenance_io_concurrency,
+ * though in practice it errs on the side of being too conservative because
+ * many I/Os complete sooner than we know.
  *
  *-------------------------------------------------------------------------
  */
