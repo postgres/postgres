@@ -1298,7 +1298,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"recovery_prefetch", PGC_SIGHUP, WAL_SETTINGS,
-			gettext_noop("Prefetch referenced blocks during recovery"),
+			gettext_noop("Prefetch referenced blocks during recovery."),
 			gettext_noop("Read ahead of the current replay position to find uncached blocks.")
 		},
 		&recovery_prefetch,
@@ -1307,7 +1307,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"recovery_prefetch_fpw", PGC_SIGHUP, WAL_SETTINGS,
-			gettext_noop("Prefetch blocks that have full page images in the WAL"),
+			gettext_noop("Prefetch blocks that have full page images in the WAL."),
 			gettext_noop("On some systems, there is no benefit to prefetching pages that will be "
 						 "entirely overwritten, but if the logical page size of the filesystem is "
 						 "larger than PostgreSQL's, this can be beneficial.  This option has no "
