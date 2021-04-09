@@ -185,7 +185,7 @@
     never issue <command>VACUUM FULL</command>.  In this approach, the idea
     is not to keep tables at their minimum size, but to maintain steady-state
     usage of disk space: each table occupies space equivalent to its
-    minimum size plus however much space gets used up between vacuumings.
+    minimum size plus however much space gets used up between vacuum runs.
     Although <command>VACUUM FULL</command> can be used to shrink a table back
     to its minimum size and return the disk space to the operating system,
     there is not much point in this if the table will just grow again in the
