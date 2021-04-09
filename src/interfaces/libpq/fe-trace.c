@@ -549,7 +549,16 @@ pqTraceOutputMessage(PGconn *conn, const char *message, bool toServer)
 	length = (int) pg_ntoh32(length);
 	logCursor += 4;
 
-	fprintf(conn->Pfdebug, "%s\t%d\t", prefix, length);
+	/*
+	 * In regress mode, suppress the length of ErrorResponse and
+	 * NoticeResponse.  The F (file name), L (line number) and R (routine
+	 * name) fields can change as server code is modified, and if their
+	 * lengths differ from the originals, that would break tests.
+	 */
+	if (regress && !toServer && (id == 'E' || id == 'N'))
+		fprintf(conn->Pfdebug, "%s\tNN\t", prefix);
+	else
+		fprintf(conn->Pfdebug, "%s\t%d\t", prefix, length);
 
 	switch (id)
 	{

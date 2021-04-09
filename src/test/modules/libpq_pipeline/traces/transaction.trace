@@ -1,5 +1,5 @@
 F	79	Query	 "DROP TABLE IF EXISTS pq_pipeline_tst;CREATE TABLE pq_pipeline_tst (id int)"
-B	122	NoticeResponse	 S "NOTICE" V "NOTICE" C "00000" M "table "pq_pipeline_tst" does not exist, skipping" F "SSSS" L "SSSS" R "SSSS" \x00
+B	NN	NoticeResponse	 S "NOTICE" V "NOTICE" C "00000" M "table "pq_pipeline_tst" does not exist, skipping" F "SSSS" L "SSSS" R "SSSS" \x00
 B	15	CommandComplete	 "DROP TABLE"
 B	17	CommandComplete	 "CREATE TABLE"
 B	5	ReadyForQuery	 I
@@ -40,9 +40,9 @@ B	4	BindComplete
 B	4	NoData
 B	10	CommandComplete	 "BEGIN"
 B	4	ParseComplete
-B	65	ErrorResponse	 S "ERROR" V "ERROR" C "22012" M "division by zero" F "SSSS" L "SSSS" R "SSSS" \x00
+B	NN	ErrorResponse	 S "ERROR" V "ERROR" C "22012" M "division by zero" F "SSSS" L "SSSS" R "SSSS" \x00
 B	5	ReadyForQuery	 E
-B	145	ErrorResponse	 S "ERROR" V "ERROR" C "25P02" M "current transaction is aborted, commands ignored until end of transaction block" F "SSSS" L "SSSS" R "SSSS" \x00
+B	NN	ErrorResponse	 S "ERROR" V "ERROR" C "25P02" M "current transaction is aborted, commands ignored until end of transaction block" F "SSSS" L "SSSS" R "SSSS" \x00
 B	5	ReadyForQuery	 E
 B	4	BindComplete
 B	4	NoData

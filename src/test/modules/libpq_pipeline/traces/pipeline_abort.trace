@@ -1,5 +1,5 @@
 F	42	Query	 "DROP TABLE IF EXISTS pq_pipeline_demo"
-B	123	NoticeResponse	 S "NOTICE" V "NOTICE" C "00000" M "table "pq_pipeline_demo" does not exist, skipping" F "SSSS" L "SSSS" R "SSSS" \x00
+B	NN	NoticeResponse	 S "NOTICE" V "NOTICE" C "00000" M "table "pq_pipeline_demo" does not exist, skipping" F "SSSS" L "SSSS" R "SSSS" \x00
 B	15	CommandComplete	 "DROP TABLE"
 B	5	ReadyForQuery	 I
 F	99	Query	 "CREATE UNLOGGED TABLE pq_pipeline_demo(id serial primary key, itemno integer,int8filler int8);"
@@ -27,7 +27,7 @@ B	4	ParseComplete
 B	4	BindComplete
 B	4	NoData
 B	15	CommandComplete	 "INSERT 0 1"
-B	217	ErrorResponse	 S "ERROR" V "ERROR" C "42883" M "function no_such_function(integer) does not exist" H "No function matches the given name and argument types. You might need to add explicit type casts." P "8" F "SSSS" L "SSSS" R "SSSS" \x00
+B	NN	ErrorResponse	 S "ERROR" V "ERROR" C "42883" M "function no_such_function(integer) does not exist" H "No function matches the given name and argument types. You might need to add explicit type casts." P "8" F "SSSS" L "SSSS" R "SSSS" \x00
 B	5	ReadyForQuery	 I
 B	4	ParseComplete
 B	4	BindComplete
@@ -39,7 +39,7 @@ F	12	Bind	 "" "" 0 0 0
 F	6	Describe	 P ""
 F	9	Execute	 "" 0
 F	4	Sync
-B	123	ErrorResponse	 S "ERROR" V "ERROR" C "42601" M "cannot insert multiple commands into a prepared statement" F "SSSS" L "SSSS" R "SSSS" \x00
+B	NN	ErrorResponse	 S "ERROR" V "ERROR" C "42601" M "cannot insert multiple commands into a prepared statement" F "SSSS" L "SSSS" R "SSSS" \x00
 B	5	ReadyForQuery	 I
 F	54	Parse	 "" "SELECT 1.0/g FROM generate_series(3, -1, -1) g" 0
 F	12	Bind	 "" "" 0 0 0
@@ -52,7 +52,7 @@ B	33	RowDescription	 1 "?column?" NNNN 0 NNNN 65535 -1 0
 B	32	DataRow	 1 22 '0.33333333333333333333'
 B	32	DataRow	 1 22 '0.50000000000000000000'
 B	32	DataRow	 1 22 '1.00000000000000000000'
-B	70	ErrorResponse	 S "ERROR" V "ERROR" C "22012" M "division by zero" F "SSSS" L "SSSS" R "SSSS" \x00
+B	NN	ErrorResponse	 S "ERROR" V "ERROR" C "22012" M "division by zero" F "SSSS" L "SSSS" R "SSSS" \x00
 B	5	ReadyForQuery	 I
 F	40	Query	 "SELECT itemno FROM pq_pipeline_demo"
 B	31	RowDescription	 1 "itemno" NNNN 2 NNNN 4 -1 0
