@@ -337,6 +337,7 @@ typedef struct ForeignTruncateInfo
 static void truncate_check_rel(Oid relid, Form_pg_class reltuple);
 static void truncate_check_perms(Oid relid, Form_pg_class reltuple);
 static void truncate_check_activity(Relation rel);
+static void truncate_update_partedrel_stats(List *parted_rels);
 static void RangeVarCallbackForTruncate(const RangeVar *relation,
 										Oid relId, Oid oldRelId, void *arg);
 static List *MergeAttributes(List *schema, List *supers, char relpersistence,
@@ -1755,6 +1756,7 @@ ExecuteTruncateGuts(List *explicit_rels,
 {
 	List	   *rels;
 	List	   *seq_relids = NIL;
+	List	   *parted_rels = NIL;
 	HTAB	   *ft_htab = NULL;
 	EState	   *estate;
 	ResultRelInfo *resultRelInfos;
@@ -1908,9 +1910,15 @@ ExecuteTruncateGuts(List *explicit_rels,
 		Relation	rel = (Relation) lfirst(lc1);
 		int			extra = lfirst_int(lc2);
 
-		/* Skip partitioned tables as there is nothing to do */
+		/*
+		 * Save OID of partitioned tables for later; nothing else to do for
+		 * them here.
+		 */
 		if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		{
+			parted_rels = lappend_oid(parted_rels, RelationGetRelid(rel));
 			continue;
+		}
 
 		/*
 		 * Build the lists of foreign tables belonging to each foreign server
@@ -2061,6 +2069,9 @@ ExecuteTruncateGuts(List *explicit_rels,
 		ResetSequence(seq_relid);
 	}
 
+	/* Reset partitioned tables' pg_class.reltuples */
+	truncate_update_partedrel_stats(parted_rels);
+
 	/*
 	 * Write a WAL record to allow this set of actions to be logically
 	 * decoded.
@@ -2205,6 +2216,40 @@ truncate_check_activity(Relation rel)
 	 * including open scans and pending AFTER trigger events.
 	 */
 	CheckTableNotInUse(rel, "TRUNCATE");
+}
+
+/*
+ * Update pg_class.reltuples for all the given partitioned tables to 0.
+ */
+static void
+truncate_update_partedrel_stats(List *parted_rels)
+{
+	Relation	pg_class;
+	ListCell   *lc;
+
+	pg_class = table_open(RelationRelationId, RowExclusiveLock);
+
+	foreach(lc, parted_rels)
+	{
+		Oid			relid = lfirst_oid(lc);
+		HeapTuple	tuple;
+		Form_pg_class rd_rel;
+
+		tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relid));
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "could not find tuple for relation %u", relid);
+		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
+		if (rd_rel->reltuples != (float4) 0)
+		{
+			rd_rel->reltuples = (float4) 0;
+
+			heap_inplace_update(pg_class, tuple);
+		}
+
+		heap_freetuple(tuple);
+	}
+
+	table_close(pg_class, RowExclusiveLock);
 }
 
 /*

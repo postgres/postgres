@@ -3209,44 +3209,7 @@ relation_needs_vacanalyze(Oid relid,
 	 */
 	if (PointerIsValid(tabentry) && AutoVacuumingActive())
 	{
-		if (classForm->relkind != RELKIND_PARTITIONED_TABLE)
-		{
-			reltuples = classForm->reltuples;
-		}
-		else
-		{
-			/*
-			 * If the relation is a partitioned table, we must add up
-			 * children's reltuples.
-			 */
-			List	   *children;
-			ListCell   *lc;
-
-			reltuples = 0;
-
-			/* Find all members of inheritance set taking AccessShareLock */
-			children = find_all_inheritors(relid, AccessShareLock, NULL);
-
-			foreach(lc, children)
-			{
-				Oid			childOID = lfirst_oid(lc);
-				HeapTuple	childtuple;
-				Form_pg_class childclass;
-
-				childtuple = SearchSysCache1(RELOID, ObjectIdGetDatum(childOID));
-				childclass = (Form_pg_class) GETSTRUCT(childtuple);
-
-				/* Skip a partitioned table and foreign partitions */
-				if (RELKIND_HAS_STORAGE(childclass->relkind))
-				{
-					/* Sum up the child's reltuples for its parent table */
-					reltuples += childclass->reltuples;
-				}
-				ReleaseSysCache(childtuple);
-			}
-
-			list_free(children);
-		}
+		reltuples = classForm->reltuples;
 		vactuples = tabentry->n_dead_tuples;
 		instuples = tabentry->inserts_since_vacuum;
 		anltuples = tabentry->changes_since_analyze;
