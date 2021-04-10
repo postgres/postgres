@@ -13,7 +13,7 @@
 #ifndef XLOGPREFETCH_H
 #define XLOGPREFETCH_H
 
-#include "access/xlogdefs.h"
+#include "access/xlogreader.h"
 
 /* GUCs */
 extern bool recovery_prefetch;
