@@ -1501,10 +1501,10 @@ AddRoleMems(const char *rolename, Oid roleid,
 	 * situation-dependent member.  There's no technical need for this
 	 * restriction.  (One could lift it and take the further step of making
 	 * pg_database_ownercheck() equivalent to has_privs_of_role(roleid,
-	 * ROLE_DATABASE_OWNER), in which case explicit,
-	 * situation-independent members could act as the owner of any database.)
+	 * ROLE_PG_DATABASE_OWNER), in which case explicit, situation-independent
+	 * members could act as the owner of any database.)
 	 */
-	if (roleid == ROLE_DATABASE_OWNER)
+	if (roleid == ROLE_PG_DATABASE_OWNER)
 		ereport(ERROR,
 				errmsg("role \"%s\" cannot have explicit members", rolename));
 
@@ -1555,7 +1555,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 		 * shared object.  (The effect of such ownership is that any owner of
 		 * another database can act as the owner of affected shared objects.)
 		 */
-		if (memberid == ROLE_DATABASE_OWNER)
+		if (memberid == ROLE_PG_DATABASE_OWNER)
 			ereport(ERROR,
 					errmsg("role \"%s\" cannot be a member of any role",
 						   get_rolespec_name(memberRole)));

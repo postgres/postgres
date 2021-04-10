@@ -3931,7 +3931,7 @@ pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
 	 * pg_read_all_data role, which allows read access to all relations.
 	 */
 	if (mask & ACL_SELECT && !(result & ACL_SELECT) &&
-		has_privs_of_role(roleid, ROLE_READ_ALL_DATA))
+		has_privs_of_role(roleid, ROLE_PG_READ_ALL_DATA))
 		result |= ACL_SELECT;
 
 	/*
@@ -3943,7 +3943,7 @@ pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
 	 */
 	if (mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE) &&
 	   !(result & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
-		has_privs_of_role(roleid, ROLE_WRITE_ALL_DATA))
+		has_privs_of_role(roleid, ROLE_PG_WRITE_ALL_DATA))
 		result |= (mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE));
 
 	return result;
@@ -4279,8 +4279,8 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	 * access to all schemas.
 	 */
 	if (mask & ACL_USAGE && !(result & ACL_USAGE) &&
-		(has_privs_of_role(roleid, ROLE_READ_ALL_DATA) ||
-		has_privs_of_role(roleid, ROLE_WRITE_ALL_DATA)))
+		(has_privs_of_role(roleid, ROLE_PG_READ_ALL_DATA) ||
+		 has_privs_of_role(roleid, ROLE_PG_WRITE_ALL_DATA)))
 		result |= ACL_USAGE;
 	return result;
 }
