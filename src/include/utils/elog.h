@@ -40,19 +40,21 @@
 #define WARNING		19			/* Warnings.  NOTICE is for expected messages
 								 * like implicit sequence creation by SERIAL.
 								 * WARNING is for unexpected messages. */
+#define PGWARNING	19			/* Must equal WARNING; see NOTE below. */
 #define WARNING_CLIENT_ONLY	20	/* Warnings to be sent to client as usual, but
 								 * never to the server log. */
 #define ERROR		21			/* user error - abort transaction; return to
 								 * known state */
-/* Save ERROR value in PGERROR so it can be restored when Win32 includes
- * modify it.  We have to use a constant rather than ERROR because macros
- * are expanded only when referenced outside macros.
- */
-#ifdef WIN32
-#define PGERROR		21
-#endif
+#define PGERROR		21			/* Must equal ERROR; see NOTE below. */
 #define FATAL		22			/* fatal error - abort process */
 #define PANIC		23			/* take down the other backends with me */
+
+/*
+ * NOTE: the alternate names PGWARNING and PGERROR are useful for dealing
+ * with third-party headers that make other definitions of WARNING and/or
+ * ERROR.  One can, for example, re-define ERROR as PGERROR after including
+ * such a header.
+ */
 
 
 /* macros for representing SQLSTATE strings compactly */
