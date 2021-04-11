@@ -2158,7 +2158,7 @@ time_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 		switch (val)
 		{
 			case DTK_MICROSEC:
-				intresult = tm->tm_sec * 1000000 + fsec;
+				intresult = tm->tm_sec * INT64CONST(1000000) + fsec;
 				break;
 
 			case DTK_MILLISEC:
@@ -2167,7 +2167,7 @@ time_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 					 * tm->tm_sec * 1000 + fsec / 1000
 					 * = (tm->tm_sec * 1'000'000 + fsec) / 1000
 					 */
-					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * 1000000LL + fsec, 3));
+					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + fsec, 3));
 				else
 					PG_RETURN_FLOAT8(tm->tm_sec * 1000.0 + fsec / 1000.0);
 				break;
@@ -2178,7 +2178,7 @@ time_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 					 * tm->tm_sec + fsec / 1'000'000
 					 * = (tm->tm_sec * 1'000'000 + fsec) / 1'000'000
 					 */
-					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * 1000000LL + fsec, 6));
+					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + fsec, 6));
 				else
 					PG_RETURN_FLOAT8(tm->tm_sec + fsec / 1000000.0);
 				break;
@@ -2940,7 +2940,7 @@ timetz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 				break;
 
 			case DTK_MICROSEC:
-				intresult = tm->tm_sec * 1000000 + fsec;
+				intresult = tm->tm_sec * INT64CONST(1000000) + fsec;
 				break;
 
 			case DTK_MILLISEC:
@@ -2949,7 +2949,7 @@ timetz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 					 * tm->tm_sec * 1000 + fsec / 1000
 					 * = (tm->tm_sec * 1'000'000 + fsec) / 1000
 					 */
-					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * 1000000LL + fsec, 3));
+					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + fsec, 3));
 				else
 					PG_RETURN_FLOAT8(tm->tm_sec * 1000.0 + fsec / 1000.0);
 				break;
@@ -2960,7 +2960,7 @@ timetz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 					 * tm->tm_sec + fsec / 1'000'000
 					 * = (tm->tm_sec * 1'000'000 + fsec) / 1'000'000
 					 */
-					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * 1000000LL + fsec, 6));
+					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + fsec, 6));
 				else
 					PG_RETURN_FLOAT8(tm->tm_sec + fsec / 1000000.0);
 				break;
@@ -2995,7 +2995,7 @@ timetz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 			 * time->time / 1'000'000 + time->zone
 			 * = (time->time + time->zone * 1'000'000) / 1'000'000
 			 */
-			PG_RETURN_NUMERIC(int64_div_fast_to_numeric(time->time + time->zone * 1000000LL, 6));
+			PG_RETURN_NUMERIC(int64_div_fast_to_numeric(time->time + time->zone * INT64CONST(1000000), 6));
 		else
 			PG_RETURN_FLOAT8(time->time / 1000000.0 + time->zone);
 	}
