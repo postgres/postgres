@@ -2246,7 +2246,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 
 	TransactionTreeSetCommitTsData(xid, nchildren, children,
 								   replorigin_session_origin_timestamp,
-								   replorigin_session_origin, false);
+								   replorigin_session_origin);
 
 	/*
 	 * We don't currently try to sleep before flush here ... nor is there any

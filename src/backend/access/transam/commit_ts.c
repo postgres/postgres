@@ -114,9 +114,6 @@ static void ActivateCommitTs(void);
 static void DeactivateCommitTs(void);
 static void WriteZeroPageXlogRec(int pageno);
 static void WriteTruncateXlogRec(int pageno, TransactionId oldestXid);
-static void WriteSetTimestampXlogRec(TransactionId mainxid, int nsubxids,
-									 TransactionId *subxids, TimestampTz timestamp,
-									 RepOriginId nodeid);
 
 /*
  * TransactionTreeSetCommitTsData
@@ -133,18 +130,11 @@ static void WriteSetTimestampXlogRec(TransactionId mainxid, int nsubxids,
  * permanent) so we need to keep the information about them here. If the
  * subtrans implementation changes in the future, we might want to revisit the
  * decision of storing timestamp info for each subxid.
- *
- * The write_xlog parameter tells us whether to include an XLog record of this
- * or not.  Normally, this is called from transaction commit routines (both
- * normal and prepared) and the information will be stored in the transaction
- * commit XLog record, and so they should pass "false" for this.  The XLog redo
- * code should use "false" here as well.  Other callers probably want to pass
- * true, so that the given values persist in case of crashes.
  */
 void
 TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 							   TransactionId *subxids, TimestampTz timestamp,
-							   RepOriginId nodeid, bool write_xlog)
+							   RepOriginId nodeid)
 {
 	int			i;
 	TransactionId headxid;
@@ -160,13 +150,6 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 	 */
 	if (!commitTsShared->commitTsActive)
 		return;
-
-	/*
-	 * Comply with the WAL-before-data rule: if caller specified it wants this
-	 * value to be recorded in WAL, do so before touching the data.
-	 */
-	if (write_xlog)
-		WriteSetTimestampXlogRec(xid, nsubxids, subxids, timestamp, nodeid);
 
 	/*
 	 * Figure out the latest Xid in this batch: either the last subxid if
@@ -994,28 +977,6 @@ WriteTruncateXlogRec(int pageno, TransactionId oldestXid)
 }
 
 /*
- * Write a SETTS xlog record
- */
-static void
-WriteSetTimestampXlogRec(TransactionId mainxid, int nsubxids,
-						 TransactionId *subxids, TimestampTz timestamp,
-						 RepOriginId nodeid)
-{
-	xl_commit_ts_set record;
-
-	record.timestamp = timestamp;
-	record.nodeid = nodeid;
-	record.mainxid = mainxid;
-
-	XLogBeginInsert();
-	XLogRegisterData((char *) &record,
-					 offsetof(xl_commit_ts_set, mainxid) +
-					 sizeof(TransactionId));
-	XLogRegisterData((char *) subxids, nsubxids * sizeof(TransactionId));
-	XLogInsert(RM_COMMIT_TS_ID, COMMIT_TS_SETTS);
-}
-
-/*
  * CommitTS resource manager's routines
  */
 void
@@ -1054,29 +1015,6 @@ commit_ts_redo(XLogReaderState *record)
 		CommitTsCtl->shared->latest_page_number = trunc->pageno;
 
 		SimpleLruTruncate(CommitTsCtl, trunc->pageno);
-	}
-	else if (info == COMMIT_TS_SETTS)
-	{
-		xl_commit_ts_set *setts = (xl_commit_ts_set *) XLogRecGetData(record);
-		int			nsubxids;
-		TransactionId *subxids;
-
-		nsubxids = ((XLogRecGetDataLen(record) - SizeOfCommitTsSet) /
-					sizeof(TransactionId));
-		if (nsubxids > 0)
-		{
-			subxids = palloc(sizeof(TransactionId) * nsubxids);
-			memcpy(subxids,
-				   XLogRecGetData(record) + SizeOfCommitTsSet,
-				   sizeof(TransactionId) * nsubxids);
-		}
-		else
-			subxids = NULL;
-
-		TransactionTreeSetCommitTsData(setts->mainxid, nsubxids, subxids,
-									   setts->timestamp, setts->nodeid, false);
-		if (subxids)
-			pfree(subxids);
 	}
 	else
 		elog(PANIC, "commit_ts_redo: unknown op code %u", info);

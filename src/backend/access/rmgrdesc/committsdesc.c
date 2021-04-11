@@ -38,31 +38,6 @@ commit_ts_desc(StringInfo buf, XLogReaderState *record)
 		appendStringInfo(buf, "pageno %d, oldestXid %u",
 						 trunc->pageno, trunc->oldestXid);
 	}
-	else if (info == COMMIT_TS_SETTS)
-	{
-		xl_commit_ts_set *xlrec = (xl_commit_ts_set *) rec;
-		int			nsubxids;
-
-		appendStringInfo(buf, "set %s/%d for: %u",
-						 timestamptz_to_str(xlrec->timestamp),
-						 xlrec->nodeid,
-						 xlrec->mainxid);
-		nsubxids = ((XLogRecGetDataLen(record) - SizeOfCommitTsSet) /
-					sizeof(TransactionId));
-		if (nsubxids > 0)
-		{
-			int			i;
-			TransactionId *subxids;
-
-			subxids = palloc(sizeof(TransactionId) * nsubxids);
-			memcpy(subxids,
-				   XLogRecGetData(record) + SizeOfCommitTsSet,
-				   sizeof(TransactionId) * nsubxids);
-			for (i = 0; i < nsubxids; i++)
-				appendStringInfo(buf, ", %u", subxids[i]);
-			pfree(subxids);
-		}
-	}
 }
 
 const char *
@@ -74,8 +49,6 @@ commit_ts_identify(uint8 info)
 			return "ZEROPAGE";
 		case COMMIT_TS_TRUNCATE:
 			return "TRUNCATE";
-		case COMMIT_TS_SETTS:
-			return "SETTS";
 		default:
 			return NULL;
 	}
