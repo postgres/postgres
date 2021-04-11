@@ -1639,15 +1639,12 @@ ExecuteTruncate(TruncateStmt *stmt)
 										   0, RangeVarCallbackForTruncate,
 										   NULL);
 
-		/* open the relation, we already hold a lock on it */
-		rel = table_open(myrelid, NoLock);
-
 		/* don't throw error for "TRUNCATE foo, foo" */
 		if (list_member_oid(relids, myrelid))
-		{
-			table_close(rel, lockmode);
 			continue;
-		}
+
+		/* open the relation, we already hold a lock on it */
+		rel = table_open(myrelid, NoLock);
 
 		/*
 		 * RangeVarGetRelidExtended() has done most checks with its callback,
