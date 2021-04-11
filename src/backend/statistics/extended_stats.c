@@ -1609,7 +1609,7 @@ statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
 
 	if (pg_class_aclcheck(rte->relid, userid, ACL_SELECT) != ACLCHECK_OK)
 	{
-		Bitmapset  *clause_attnums;
+		Bitmapset  *clause_attnums = NULL;
 
 		/* Don't have table privilege, must check individual columns */
 		if (*exprs != NIL)
