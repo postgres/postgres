@@ -600,7 +600,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 						PATH_SEPARATOR);
 
 			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
-				fprintf(script, RMDIR_CMD " %c%s%c%d%c\n", PATH_QUOTE,
+				fprintf(script, RMDIR_CMD " %c%s%c%u%c\n", PATH_QUOTE,
 						fix_path_separator(os_info.old_tablespaces[tblnum]),
 						PATH_SEPARATOR, old_cluster.dbarr.dbs[dbnum].db_oid,
 						PATH_QUOTE);
