@@ -758,8 +758,6 @@ CREATE COLLATION custom (
 CREATE TYPE myrange AS range (subtype = text);
 CREATE TYPE myrange_en_fr_ga AS range(subtype = t_en_fr_ga);
 
-CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
-
 CREATE TABLE collate_test (
     id integer,
     val text COLLATE "fr-x-icu",
@@ -770,8 +768,7 @@ CREATE TABLE collate_test (
     d_en_fr_ga d_en_fr_ga,
     d_en_fr_ga_arr d_en_fr_ga[],
     myrange myrange,
-    myrange_en_fr_ga myrange_en_fr_ga,
-    mood mood
+    myrange_en_fr_ga myrange_en_fr_ga
 );
 
 CREATE INDEX icuidx00_val ON collate_test(val);
@@ -809,7 +806,6 @@ CREATE INDEX icuidx12_custom ON collate_test(id) WHERE ('foo', 'bar')::d_custom 
 CREATE INDEX icuidx13_custom ON collate_test(id) WHERE ('foo' COLLATE custom, 'bar')::d_custom = ('foo', 'bar')::d_custom;
 CREATE INDEX icuidx14_myrange ON collate_test(myrange);
 CREATE INDEX icuidx15_myrange_en_fr_ga ON collate_test USING gist (myrange_en_fr_ga);
-CREATE INDEX icuidx16_mood ON collate_test(id) WHERE mood > 'ok' COLLATE "fr-x-icu";
 
 CREATE TABLE collate_part(id integer, val text COLLATE "en-x-icu") PARTITION BY range(id);
 CREATE TABLE collate_part_0 PARTITION OF collate_part FOR VALUES FROM (0) TO (1);

@@ -1960,7 +1960,6 @@ CREATE COLLATION custom (
 );
 CREATE TYPE myrange AS range (subtype = text);
 CREATE TYPE myrange_en_fr_ga AS range(subtype = t_en_fr_ga);
-CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
 CREATE TABLE collate_test (
     id integer,
     val text COLLATE "fr-x-icu",
@@ -1971,8 +1970,7 @@ CREATE TABLE collate_test (
     d_en_fr_ga d_en_fr_ga,
     d_en_fr_ga_arr d_en_fr_ga[],
     myrange myrange,
-    myrange_en_fr_ga myrange_en_fr_ga,
-    mood mood
+    myrange_en_fr_ga myrange_en_fr_ga
 );
 CREATE INDEX icuidx00_val ON collate_test(val);
 -- shouldn't get duplicated dependencies
@@ -2009,7 +2007,6 @@ CREATE INDEX icuidx12_custom ON collate_test(id) WHERE ('foo', 'bar')::d_custom 
 CREATE INDEX icuidx13_custom ON collate_test(id) WHERE ('foo' COLLATE custom, 'bar')::d_custom = ('foo', 'bar')::d_custom;
 CREATE INDEX icuidx14_myrange ON collate_test(myrange);
 CREATE INDEX icuidx15_myrange_en_fr_ga ON collate_test USING gist (myrange_en_fr_ga);
-CREATE INDEX icuidx16_mood ON collate_test(id) WHERE mood > 'ok' COLLATE "fr-x-icu";
 CREATE TABLE collate_part(id integer, val text COLLATE "en-x-icu") PARTITION BY range(id);
 CREATE TABLE collate_part_0 PARTITION OF collate_part FOR VALUES FROM (0) TO (1);
 CREATE TABLE collate_part_1 PARTITION OF collate_part FOR VALUES FROM (1) TO (1000000);
@@ -2085,9 +2082,8 @@ ORDER BY 1, 2, 3;
  icuidx15_myrange_en_fr_ga         | "en-x-icu" | up to date
  icuidx15_myrange_en_fr_ga         | "fr-x-icu" | up to date
  icuidx15_myrange_en_fr_ga         | "ga-x-icu" | up to date
- icuidx16_mood                     | "fr-x-icu" | up to date
  icuidx17_part                     | "en-x-icu" | up to date
-(58 rows)
+(57 rows)
 
 -- Validate that REINDEX will update the stored version.
 UPDATE pg_depend SET refobjversion = 'not a version'
