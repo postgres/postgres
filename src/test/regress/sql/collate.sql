@@ -266,6 +266,12 @@ SELECT collation for ('foo'::text);
 SELECT collation for ((SELECT a FROM collate_test1 LIMIT 1)); -- non-collatable type - error
 SELECT collation for ((SELECT b FROM collate_test1 LIMIT 1));
 
+-- old bug with not dropping COLLATE when coercing to non-collatable type
+CREATE VIEW collate_on_int AS
+SELECT c1+1 AS c1p FROM
+  (SELECT ('4' COLLATE "C")::INT AS c1) ss;
+\d+ collate_on_int
+
 
 --
 -- Clean up.  Many of these table names will be re-used if the user is
