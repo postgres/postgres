@@ -3510,6 +3510,9 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &indrels);
 	Assert(nindexes > 0);
 
+	/* Each parallel VACUUM worker gets its own access strategy */
+	vac_strategy = GetAccessStrategy(BAS_VACUUM);
+
 	/* Set dead tuple space */
 	dead_tuples = (LVDeadTuples *) shm_toc_lookup(toc,
 												  PARALLEL_VACUUM_KEY_DEAD_TUPLES,
@@ -3564,6 +3567,7 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 
 	vac_close_indexes(nindexes, indrels, RowExclusiveLock);
 	table_close(onerel, ShareUpdateExclusiveLock);
+	FreeAccessStrategy(vac_strategy);
 	pfree(stats);
 }
 
