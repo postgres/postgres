@@ -549,6 +549,18 @@ static const SchemaQuery Query_for_list_of_selectables = {
 	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
+/* Relations supporting TRUNCATE */
+static const SchemaQuery Query_for_list_of_truncatables = {
+	.catname = "pg_catalog.pg_class c",
+	.selcondition =
+	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+	CppAsString2(RELKIND_FOREIGN_TABLE) ", "
+	CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
+};
+
 /* Relations supporting GRANT are currently same as those supporting SELECT */
 #define Query_for_list_of_grantables Query_for_list_of_selectables
 
@@ -3834,14 +3846,14 @@ psql_completion(const char *text, int start, int end)
 
 /* TRUNCATE */
 	else if (Matches("TRUNCATE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_truncatables,
 								   " UNION SELECT 'TABLE'"
 								   " UNION SELECT 'ONLY'");
 	else if (Matches("TRUNCATE", "TABLE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_truncatables,
 								   " UNION SELECT 'ONLY'");
 	else if (HeadMatches("TRUNCATE") && TailMatches("ONLY"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_truncatables, NULL);
 	else if (Matches("TRUNCATE", MatchAny) ||
 			 Matches("TRUNCATE", "TABLE|ONLY", MatchAny) ||
 			 Matches("TRUNCATE", "TABLE", "ONLY", MatchAny))
