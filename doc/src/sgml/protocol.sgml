@@ -2797,9 +2797,11 @@ The commands accepted in replication mode are:
      </term>
      <listitem>
       <para>
-       Protocol version. Currently only version <literal>1</literal> is
-       supported.
-      </para>
+       Protocol version. Currently versions <literal>1</literal> and
+       <literal>2</literal> are supported. The version <literal>2</literal>
+       is supported only for server version 14 and above, and it allows
+       streaming of large in-progress transactions.
+     </para>
      </listitem>
     </varlistentry>
 
@@ -2855,7 +2857,10 @@ The commands accepted in replication mode are:
   <para>
    The logical replication protocol sends individual transactions one by one.
    This means that all messages between a pair of Begin and Commit messages
-   belong to the same transaction.
+   belong to the same transaction. It also sends changes of large in-progress
+   transactions between a pair of Stream Start and Stream Stop messages. The
+   last stream of such a transaction contains Stream Commit or Stream Abort
+   message.
   </para>
 
   <para>
@@ -6457,8 +6462,8 @@ Message
 </term>
 <listitem>
 <para>
-                Xid of the transaction. The XID is sent only when user has
-                requested streaming of in-progress transactions.
+                Xid of the transaction (only present for streamed transactions).
+                This field is available since protocol version 2.
 </para>
 </listitem>
 </varlistentry>
@@ -6647,6 +6652,17 @@ Relation
 </term>
 <listitem>
 <para>
+               Xid of the transaction (only present for streamed transactions).
+               This field is available since protocol version 2.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
                 ID of the relation.
 </para>
 </listitem>
@@ -6768,6 +6784,17 @@ Type
 </term>
 <listitem>
 <para>
+               Xid of the transaction (only present for streamed transactions).
+               This field is available since protocol version 2.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
                 ID of the data type.
 </para>
 </listitem>
@@ -6813,6 +6840,17 @@ Insert
 <listitem>
 <para>
                 Identifies the message as an insert message.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Xid of the transaction (only present for streamed transactions).
+                This field is available since protocol version 2.
 </para>
 </listitem>
 </varlistentry>
@@ -6869,6 +6907,17 @@ Update
 <listitem>
 <para>
                 Identifies the message as an update message.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+               Xid of the transaction (only present for streamed transactions).
+               This field is available since protocol version 2.
 </para>
 </listitem>
 </varlistentry>
@@ -6981,6 +7030,17 @@ Delete
 </term>
 <listitem>
 <para>
+               Xid of the transaction (only present for streamed transactions).
+               This field is available since protocol version 2.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
                 ID of the relation corresponding to the ID in the relation
                 message.
 </para>
@@ -7059,6 +7119,17 @@ Truncate
 </term>
 <listitem>
 <para>
+               Xid of the transaction (only present for streamed transactions).
+               This field is available since protocol version 2.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
                 Number of relations
 </para>
 </listitem>
@@ -7082,6 +7153,206 @@ Truncate
 <para>
                 ID of the relation corresponding to the ID in the relation
                 message.  This field is repeated for each relation.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+
+The following messages (Stream Start, Stream End, Stream Commit, and
+Stream Abort) are available since protocol version 2.
+
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term>
+Stream Start
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('S')
+</term>
+<listitem>
+<para>
+                Identifies the message as a stream start message.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Xid of the transaction.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int8
+</term>
+<listitem>
+<para>
+                A value of 1 indicates this is the first stream segment for
+                this XID, 0 for any other stream segment.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+Stream Stop
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('E')
+</term>
+<listitem>
+<para>
+                Identifies the message as a stream stop message.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+Stream Commit
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('c')
+</term>
+<listitem>
+<para>
+                Identifies the message as a stream commit message.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Xid of the transaction.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int8
+</term>
+<listitem>
+<para>
+                Flags; currently unused (must be 0).
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int64
+</term>
+<listitem>
+<para>
+                The LSN of the commit.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int64
+</term>
+<listitem>
+<para>
+                The end LSN of the transaction.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int64
+</term>
+<listitem>
+<para>
+                Commit timestamp of the transaction. The value is in number
+                of microseconds since PostgreSQL epoch (2000-01-01).
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+Stream Abort
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('A')
+</term>
+<listitem>
+<para>
+                Identifies the message as a stream abort message.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Xid of the transaction.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Xid of the subtransaction (will be same as xid of the transaction for top-level
+                transactions).
 </para>
 </listitem>
 </varlistentry>
