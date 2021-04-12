@@ -2973,18 +2973,61 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				s += strlen(s);
 				break;
 			case DCH_RM:
-				if (!tm->tm_mon)
-					break;
-				sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -4,
-						rm_months_upper[MONTHS_PER_YEAR - tm->tm_mon]);
-				s += strlen(s);
-				break;
+				/* FALLTHROUGH */
 			case DCH_rm:
-				if (!tm->tm_mon)
+
+				/*
+				 * For intervals, values like '12 month' will be reduced to 0
+				 * month and some years.  These should be processed.
+				 */
+				if (!tm->tm_mon && !tm->tm_year)
 					break;
-				sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -4,
-						rm_months_lower[MONTHS_PER_YEAR - tm->tm_mon]);
-				s += strlen(s);
+				else
+				{
+					int			mon = 0;
+					const char *const *months;
+
+					if (n->key->id == DCH_RM)
+						months = rm_months_upper;
+					else
+						months = rm_months_lower;
+
+					/*
+					 * Compute the position in the roman-numeral array.  Note
+					 * that the contents of the array are reversed, December
+					 * being first and January last.
+					 */
+					if (tm->tm_mon == 0)
+					{
+						/*
+						 * This case is special, and tracks the case of full
+						 * interval years.
+						 */
+						mon = tm->tm_year >= 0 ? 0 : MONTHS_PER_YEAR - 1;
+					}
+					else if (tm->tm_mon < 0)
+					{
+						/*
+						 * Negative case.  In this case, the calculation is
+						 * reversed, where -1 means December, -2 November,
+						 * etc.
+						 */
+						mon = -1 * (tm->tm_mon + 1);
+					}
+					else
+					{
+						/*
+						 * Common case, with a strictly positive value.  The
+						 * position in the array matches with the value of
+						 * tm_mon.
+						 */
+						mon = MONTHS_PER_YEAR - tm->tm_mon;
+					}
+
+					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -4,
+							months[mon]);
+					s += strlen(s);
+				}
 				break;
 			case DCH_W:
 				sprintf(s, "%d", (tm->tm_mday - 1) / 7 + 1);

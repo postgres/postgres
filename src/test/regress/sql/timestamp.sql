@@ -231,5 +231,11 @@ SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
 SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
    FROM TIMESTAMP_TBL;
 
+-- Roman months, with upper and lower case.
+SELECT i,
+       to_char(i * interval '1mon', 'rm'),
+       to_char(i * interval '1mon', 'RM')
+    FROM generate_series(-13, 13) i;
+
 -- timestamp numeric fields constructor
 SELECT make_timestamp(2014,12,28,6,30,45.887);
