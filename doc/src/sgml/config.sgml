@@ -6812,6 +6812,34 @@ local0.*    /var/log/postgresql
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-log-autovacuum-min-duration" xreflabel="log_autovacuum_min_duration">
+      <term><varname>log_autovacuum_min_duration</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>log_autovacuum_min_duration</varname></primary>
+       <secondary>configuration parameter</secondary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Causes each action executed by autovacuum to be logged if it ran for at
+        least the specified amount of time.  Setting this to zero logs
+        all autovacuum actions. <literal>-1</literal> (the default) disables
+        logging autovacuum actions.
+        If this value is specified without units, it is taken as milliseconds.
+        For example, if you set this to
+        <literal>250ms</literal> then all automatic vacuums and analyzes that run
+        250ms or longer will be logged.  In addition, when this parameter is
+        set to any value other than <literal>-1</literal>, a message will be
+        logged if an autovacuum action is skipped due to a conflicting lock or a
+        concurrently dropped relation.  Enabling this parameter can be helpful
+        in tracking autovacuum activity.  This parameter can only be set in
+        the <filename>postgresql.conf</filename> file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-log-checkpoints" xreflabel="log_checkpoints">
       <term><varname>log_checkpoints</varname> (<type>boolean</type>)
       <indexterm>
@@ -7823,34 +7851,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         will launch autovacuum processes if necessary to
         prevent transaction ID wraparound.  See <xref
         linkend="vacuum-for-wraparound"/> for more information.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-log-autovacuum-min-duration" xreflabel="log_autovacuum_min_duration">
-      <term><varname>log_autovacuum_min_duration</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>log_autovacuum_min_duration</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Causes each action executed by autovacuum to be logged if it ran for at
-        least the specified amount of time.  Setting this to zero logs
-        all autovacuum actions. <literal>-1</literal> (the default) disables
-        logging autovacuum actions.
-        If this value is specified without units, it is taken as milliseconds.
-        For example, if you set this to
-        <literal>250ms</literal> then all automatic vacuums and analyzes that run
-        250ms or longer will be logged.  In addition, when this parameter is
-        set to any value other than <literal>-1</literal>, a message will be
-        logged if an autovacuum action is skipped due to a conflicting lock or a
-        concurrently dropped relation.  Enabling this parameter can be helpful
-        in tracking autovacuum activity.  This parameter can only be set in
-        the <filename>postgresql.conf</filename> file or on the server command line;
-        but the setting can be overridden for individual tables by
-        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>

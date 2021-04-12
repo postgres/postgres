@@ -531,6 +531,11 @@
 #debug_print_rewritten = off
 #debug_print_plan = off
 #debug_pretty_print = on
+#log_autovacuum_min_duration = -1	# log autovacuum activity;
+					# -1 disables, 0 logs all actions and
+					# their durations, > 0 logs only
+					# actions running at least this number
+					# of milliseconds.
 #log_checkpoints = off
 #log_connections = off
 #log_disconnections = off
@@ -616,10 +621,6 @@
 
 #autovacuum = on			# Enable autovacuum subprocess?  'on'
 					# requires track_counts to also be on.
-#log_autovacuum_min_duration = -1	# -1 disables, 0 logs all actions and
-					# their durations, > 0 logs only
-					# actions running at least this number
-					# of milliseconds.
 #autovacuum_max_workers = 3		# max number of autovacuum subprocesses
 					# (change requires restart)
 #autovacuum_naptime = 1min		# time between autovacuum runs
