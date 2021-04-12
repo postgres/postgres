@@ -1703,6 +1703,42 @@ SELECT '' AS to_char_12, to_char(d, 'FF1 FF2 FF3 FF4 FF5 FF6  ff1 ff2 ff3 ff4 ff
             | 7 78 789 7890 78901 789012  7 78 789 7890 78901 789012  789 789012
 (4 rows)
 
+-- Roman months, with upper and lower case.
+SELECT i,
+       to_char(i * interval '1mon', 'rm'),
+       to_char(i * interval '1mon', 'RM')
+    FROM generate_series(-13, 13) i;
+  i  | to_char | to_char 
+-----+---------+---------
+ -13 | xii     | XII 
+ -12 | i       | I   
+ -11 | ii      | II  
+ -10 | iii     | III 
+  -9 | iv      | IV  
+  -8 | v       | V   
+  -7 | vi      | VI  
+  -6 | vii     | VII 
+  -5 | viii    | VIII
+  -4 | ix      | IX  
+  -3 | x       | X   
+  -2 | xi      | XI  
+  -1 | xii     | XII 
+   0 |         | 
+   1 | i       | I   
+   2 | ii      | II  
+   3 | iii     | III 
+   4 | iv      | IV  
+   5 | v       | V   
+   6 | vi      | VI  
+   7 | vii     | VII 
+   8 | viii    | VIII
+   9 | ix      | IX  
+  10 | x       | X   
+  11 | xi      | XI  
+  12 | xii     | XII 
+  13 | i       | I   
+(27 rows)
+
 -- timestamp numeric fields constructor
 SELECT make_timestamp(2014,12,28,6,30,45.887);
         make_timestamp        

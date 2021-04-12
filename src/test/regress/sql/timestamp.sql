@@ -239,5 +239,11 @@ SELECT '' AS to_char_12, to_char(d, 'FF1 FF2 FF3 FF4 FF5 FF6  ff1 ff2 ff3 ff4 ff
        ('2018-11-02 12:34:56.78901234')
    ) d(d);
 
+-- Roman months, with upper and lower case.
+SELECT i,
+       to_char(i * interval '1mon', 'rm'),
+       to_char(i * interval '1mon', 'RM')
+    FROM generate_series(-13, 13) i;
+
 -- timestamp numeric fields constructor
 SELECT make_timestamp(2014,12,28,6,30,45.887);
