@@ -320,7 +320,7 @@ main(int argc, char *argv[])
 				if (opts.jobs < 1)
 				{
 					fprintf(stderr,
-							"number of parallel jobs must be at least 1\n");
+							_("number of parallel jobs must be at least 1\n"));
 					exit(1);
 				}
 				break;
@@ -393,7 +393,7 @@ main(int argc, char *argv[])
 					opts.skip = "all frozen";
 				else
 				{
-					fprintf(stderr, "invalid skip option\n");
+					fprintf(stderr, _("invalid skip option\n"));
 					exit(1);
 				}
 				break;
@@ -402,13 +402,13 @@ main(int argc, char *argv[])
 				if (*endptr != '\0')
 				{
 					fprintf(stderr,
-							"invalid start block\n");
+							_("invalid start block\n"));
 					exit(1);
 				}
 				if (opts.startblock > MaxBlockNumber || opts.startblock < 0)
 				{
 					fprintf(stderr,
-							"start block out of bounds\n");
+							_("start block out of bounds\n"));
 					exit(1);
 				}
 				break;
@@ -417,13 +417,13 @@ main(int argc, char *argv[])
 				if (*endptr != '\0')
 				{
 					fprintf(stderr,
-							"invalid end block\n");
+							_("invalid end block\n"));
 					exit(1);
 				}
 				if (opts.endblock > MaxBlockNumber || opts.endblock < 0)
 				{
 					fprintf(stderr,
-							"end block out of bounds\n");
+							_("end block out of bounds\n"));
 					exit(1);
 				}
 				break;
@@ -442,7 +442,7 @@ main(int argc, char *argv[])
 				break;
 			default:
 				fprintf(stderr,
-						"Try \"%s --help\" for more information.\n",
+						_("Try \"%s --help\" for more information.\n"),
 						progname);
 				exit(1);
 		}
@@ -451,7 +451,7 @@ main(int argc, char *argv[])
 	if (opts.endblock >= 0 && opts.endblock < opts.startblock)
 	{
 		fprintf(stderr,
-				"end block precedes start block\n");
+				_("end block precedes start block\n"));
 		exit(1);
 	}
 
@@ -1116,52 +1116,52 @@ verify_btree_slot_handler(PGresult *res, PGconn *conn, void *context)
 static void
 help(const char *progname)
 {
-	printf("%s uses amcheck module to check objects in a PostgreSQL database for corruption.\n\n", progname);
-	printf("Usage:\n");
-	printf("  %s [OPTION]... [DBNAME]\n", progname);
-	printf("\nTarget Options:\n");
-	printf("  -a, --all                      check all databases\n");
-	printf("  -d, --database=PATTERN         check matching database(s)\n");
-	printf("  -D, --exclude-database=PATTERN do NOT check matching database(s)\n");
-	printf("  -i, --index=PATTERN            check matching index(es)\n");
-	printf("  -I, --exclude-index=PATTERN    do NOT check matching index(es)\n");
-	printf("  -r, --relation=PATTERN         check matching relation(s)\n");
-	printf("  -R, --exclude-relation=PATTERN do NOT check matching relation(s)\n");
-	printf("  -s, --schema=PATTERN           check matching schema(s)\n");
-	printf("  -S, --exclude-schema=PATTERN   do NOT check matching schema(s)\n");
-	printf("  -t, --table=PATTERN            check matching table(s)\n");
-	printf("  -T, --exclude-table=PATTERN    do NOT check matching table(s)\n");
-	printf("      --no-dependent-indexes     do NOT expand list of relations to include indexes\n");
-	printf("      --no-dependent-toast       do NOT expand list of relations to include toast\n");
-	printf("      --no-strict-names          do NOT require patterns to match objects\n");
-	printf("\nTable Checking Options:\n");
-	printf("      --exclude-toast-pointers   do NOT follow relation toast pointers\n");
-	printf("      --on-error-stop            stop checking at end of first corrupt page\n");
-	printf("      --skip=OPTION              do NOT check \"all-frozen\" or \"all-visible\" blocks\n");
-	printf("      --startblock=BLOCK         begin checking table(s) at the given block number\n");
-	printf("      --endblock=BLOCK           check table(s) only up to the given block number\n");
-	printf("\nBtree Index Checking Options:\n");
-	printf("      --heapallindexed           check all heap tuples are found within indexes\n");
-	printf("      --parent-check             check index parent/child relationships\n");
-	printf("      --rootdescend              search from root page to refind tuples\n");
-	printf("\nConnection options:\n");
-	printf("  -h, --host=HOSTNAME            database server host or socket directory\n");
-	printf("  -p, --port=PORT                database server port\n");
-	printf("  -U, --username=USERNAME        user name to connect as\n");
-	printf("  -w, --no-password              never prompt for password\n");
-	printf("  -W, --password                 force password prompt\n");
-	printf("      --maintenance-db=DBNAME    alternate maintenance database\n");
-	printf("\nOther Options:\n");
-	printf("  -e, --echo                     show the commands being sent to the server\n");
-	printf("  -j, --jobs=NUM                 use this many concurrent connections to the server\n");
-	printf("  -q, --quiet                    don't write any messages\n");
-	printf("  -v, --verbose                  write a lot of output\n");
-	printf("  -V, --version                  output version information, then exit\n");
-	printf("  -P, --progress                 show progress information\n");
-	printf("  -?, --help                     show this help, then exit\n");
+	printf(_("%s uses amcheck module to check objects in a PostgreSQL database for corruption.\n\n"), progname);
+	printf(_("Usage:\n"));
+	printf(_("  %s [OPTION]... [DBNAME]\n"), progname);
+	printf(_("\nTarget Options:\n"));
+	printf(_("  -a, --all                      check all databases\n"));
+	printf(_("  -d, --database=PATTERN         check matching database(s)\n"));
+	printf(_("  -D, --exclude-database=PATTERN do NOT check matching database(s)\n"));
+	printf(_("  -i, --index=PATTERN            check matching index(es)\n"));
+	printf(_("  -I, --exclude-index=PATTERN    do NOT check matching index(es)\n"));
+	printf(_("  -r, --relation=PATTERN         check matching relation(s)\n"));
+	printf(_("  -R, --exclude-relation=PATTERN do NOT check matching relation(s)\n"));
+	printf(_("  -s, --schema=PATTERN           check matching schema(s)\n"));
+	printf(_("  -S, --exclude-schema=PATTERN   do NOT check matching schema(s)\n"));
+	printf(_("  -t, --table=PATTERN            check matching table(s)\n"));
+	printf(_("  -T, --exclude-table=PATTERN    do NOT check matching table(s)\n"));
+	printf(_("      --no-dependent-indexes     do NOT expand list of relations to include indexes\n"));
+	printf(_("      --no-dependent-toast       do NOT expand list of relations to include toast\n"));
+	printf(_("      --no-strict-names          do NOT require patterns to match objects\n"));
+	printf(_("\nTable Checking Options:\n"));
+	printf(_("      --exclude-toast-pointers   do NOT follow relation toast pointers\n"));
+	printf(_("      --on-error-stop            stop checking at end of first corrupt page\n"));
+	printf(_("      --skip=OPTION              do NOT check \"all-frozen\" or \"all-visible\" blocks\n"));
+	printf(_("      --startblock=BLOCK         begin checking table(s) at the given block number\n"));
+	printf(_("      --endblock=BLOCK           check table(s) only up to the given block number\n"));
+	printf(_("\nBtree Index Checking Options:\n"));
+	printf(_("      --heapallindexed           check all heap tuples are found within indexes\n"));
+	printf(_("      --parent-check             check index parent/child relationships\n"));
+	printf(_("      --rootdescend              search from root page to refind tuples\n"));
+	printf(_("\nConnection options:\n"));
+	printf(_("  -h, --host=HOSTNAME            database server host or socket directory\n"));
+	printf(_("  -p, --port=PORT                database server port\n"));
+	printf(_("  -U, --username=USERNAME        user name to connect as\n"));
+	printf(_("  -w, --no-password              never prompt for password\n"));
+	printf(_("  -W, --password                 force password prompt\n"));
+	printf(_("      --maintenance-db=DBNAME    alternate maintenance database\n"));
+	printf(_("\nOther Options:\n"));
+	printf(_("  -e, --echo                     show the commands being sent to the server\n"));
+	printf(_("  -j, --jobs=NUM                 use this many concurrent connections to the server\n"));
+	printf(_("  -q, --quiet                    don't write any messages\n"));
+	printf(_("  -v, --verbose                  write a lot of output\n"));
+	printf(_("  -V, --version                  output version information, then exit\n"));
+	printf(_("  -P, --progress                 show progress information\n"));
+	printf(_("  -?, --help                     show this help, then exit\n"));
 
-	printf("\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
-	printf("%s home page: <%s>\n", PACKAGE_NAME, PACKAGE_URL);
+	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
+	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
 }
 
 /*
@@ -1219,7 +1219,7 @@ progress_report(uint64 relations_total, uint64 relations_checked,
 			 * last call)
 			 */
 			fprintf(stderr,
-					"%*s/%s relations (%d%%) %*s/%s pages (%d%%) %*s",
+					_("%*s/%s relations (%d%%) %*s/%s pages (%d%%) %*s"),
 					(int) strlen(total_rel),
 					checked_rel, total_rel, percent_rel,
 					(int) strlen(total_pages),
@@ -1230,7 +1230,7 @@ progress_report(uint64 relations_total, uint64 relations_checked,
 			bool		truncate = (strlen(datname) > VERBOSE_DATNAME_LENGTH);
 
 			fprintf(stderr,
-					"%*s/%s relations (%d%%) %*s/%s pages (%d%%), (%s%-*.*s)",
+					_("%*s/%s relations (%d%%) %*s/%s pages (%d%%), (%s%-*.*s)"),
 					(int) strlen(total_rel),
 					checked_rel, total_rel, percent_rel,
 					(int) strlen(total_pages),
@@ -1245,7 +1245,7 @@ progress_report(uint64 relations_total, uint64 relations_checked,
 	}
 	else
 		fprintf(stderr,
-				"%*s/%s relations (%d%%) %*s/%s pages (%d%%)",
+				_("%*s/%s relations (%d%%) %*s/%s pages (%d%%)"),
 				(int) strlen(total_rel),
 				checked_rel, total_rel, percent_rel,
 				(int) strlen(total_pages),
