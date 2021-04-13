@@ -2139,9 +2139,8 @@ lazy_vacuum(LVRelState *vacrel, bool onecall)
 		 * far in the past.
 		 *
 		 * From this point on the VACUUM operation will do no further index
-		 * vacuuming or heap vacuuming.  It will do any remaining pruning that
-		 * may be required, plus other heap-related and relation-level
-		 * maintenance tasks.  But that's it.
+		 * vacuuming or heap vacuuming.  This VACUUM operation won't end up
+		 * back here again.
 		 */
 		Assert(vacrel->do_failsafe);
 	}
@@ -2534,8 +2533,11 @@ lazy_check_needs_freeze(Buffer buf, bool *hastup, LVRelState *vacrel)
  * relfrozenxid and/or relminmxid that is dangerously far in the past.
  *
  * Triggering the failsafe makes the ongoing VACUUM bypass any further index
- * vacuuming and heap vacuuming.  It also stops the ongoing VACUUM from
- * applying any cost-based delay that may be in effect.
+ * vacuuming and heap vacuuming.  Truncating the heap is also bypassed.
+ *
+ * Any remaining work (work that VACUUM cannot just bypass) is typically sped
+ * up when the failsafe triggers.  VACUUM stops applying any cost-based delay
+ * that it started out with.
  *
  * Returns true when failsafe has been triggered.
  *
@@ -3097,14 +3099,12 @@ lazy_cleanup_one_index(Relation indrel, IndexBulkDeleteResult *istat,
  * Don't even think about it unless we have a shot at releasing a goodly
  * number of pages.  Otherwise, the time taken isn't worth it.
  *
+ * Also don't attempt it if wraparound failsafe is in effect.  It's hard to
+ * predict how long lazy_truncate_heap will take.  Don't take any chances.
+ *
  * Also don't attempt it if we are doing early pruning/vacuuming, because a
  * scan which cannot find a truncated heap page cannot determine that the
- * snapshot is too old to read that page.  We might be able to get away with
- * truncating all except one of the pages, setting its LSN to (at least) the
- * maximum of the truncated range if we also treated an index leaf tuple
- * pointing to a missing heap page as something to trigger the "snapshot too
- * old" error, but that seems fragile and seems like it deserves its own patch
- * if we consider it.
+ * snapshot is too old to read that page.
  *
  * This is split out so that we can test whether truncation is going to be
  * called for before we actually do it.  If you change the logic here, be
@@ -3116,6 +3116,9 @@ should_attempt_truncation(LVRelState *vacrel, VacuumParams *params)
 	BlockNumber possibly_freeable;
 
 	if (params->truncate == VACOPT_TERNARY_DISABLED)
+		return false;
+
+	if (vacrel->do_failsafe)
 		return false;
 
 	possibly_freeable = vacrel->rel_pages - vacrel->nonempty_pages;
