@@ -11777,8 +11777,9 @@ check_temp_buffers(int *newval, void **extra, GucSource source)
 {
 	/*
 	 * Once local buffers have been initialized, it's too late to change this.
+	 * However, if this is only a test call, allow it.
 	 */
-	if (NLocBuffer && NLocBuffer != *newval)
+	if (source != PGC_S_TEST && NLocBuffer && NLocBuffer != *newval)
 	{
 		GUC_check_errdetail("\"temp_buffers\" cannot be changed after any temporary tables have been accessed in the session.");
 		return false;
