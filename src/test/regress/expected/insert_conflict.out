@@ -248,7 +248,7 @@ insert into insertconflicttest values (1, 'Apple') on conflict (keyy) do update 
 ERROR:  column "keyy" does not exist
 LINE 1: ...nsertconflicttest values (1, 'Apple') on conflict (keyy) do ...
                                                              ^
-HINT:  Perhaps you meant to reference the column "insertconflicttest.key".
+HINT:  Perhaps you meant to reference the column "insertconflicttest.key" or the column "excluded.key".
 -- Have useful HINT for EXCLUDED.* RTE within UPDATE:
 insert into insertconflicttest values (1, 'Apple') on conflict (key) do update set fruit = excluded.fruitt;
 ERROR:  column excluded.fruitt does not exist
@@ -373,7 +373,7 @@ drop index fruit_index;
 create unique index partial_key_index on insertconflicttest(key) where fruit like '%berry';
 -- Succeeds
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) where fruit like '%berry' do update set fruit = excluded.fruit;
-insert into insertconflicttest values (23, 'Blackberry') on conflict (key) where fruit like '%berry' and fruit = 'inconsequential' do nothing;
+insert into insertconflicttest as t values (23, 'Blackberry') on conflict (key) where fruit like '%berry' and t.fruit = 'inconsequential' do nothing;
 -- fails
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) do update set fruit = excluded.fruit;
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
