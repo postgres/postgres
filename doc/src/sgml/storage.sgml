@@ -394,9 +394,9 @@ Further details appear in <xref linkend="storage-toast-inmemory"/>.
 
 <para>
 The compression technique used for either in-line or out-of-line compressed
-data is a fairly simple and very fast member
-of the LZ family of compression techniques.  See
-<filename>src/common/pg_lzcompress.c</filename> for the details.
+data can be selected using the <literal>COMPRESSION</literal> option on a per-column
+basis when creating a table. The default for columns with no explicit setting
+is taken from the value of <xref linkend="guc-default-toast-compression" />.
 </para>
 
 <sect2 id="storage-toast-ondisk">
@@ -425,8 +425,9 @@ retrieval of the values.  A pointer datum representing an out-of-line on-disk
 <acronym>TOAST</acronym>ed value therefore needs to store the OID of the
 <acronym>TOAST</acronym> table in which to look and the OID of the specific value
 (its <structfield>chunk_id</structfield>).  For convenience, pointer datums also store the
-logical datum size (original uncompressed data length) and physical stored size
-(different if compression was applied).  Allowing for the varlena header bytes,
+logical datum size (original uncompressed data length), physical stored size
+(different if compression was applied), and the compression method used, if
+any.  Allowing for the varlena header bytes,
 the total size of an on-disk <acronym>TOAST</acronym> pointer datum is therefore 18
 bytes regardless of the actual size of the represented value.
 </para>
