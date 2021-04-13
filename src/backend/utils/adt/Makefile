@@ -8,6 +8,8 @@ subdir = src/backend/utils/adt
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
+override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
+
 # keep this list arranged alphabetically or it gets to be a mess
 OBJS = acl.o amutils.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 	array_typanalyze.o array_userfuncs.o arrayutils.o ascii.o \
