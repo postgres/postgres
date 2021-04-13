@@ -313,6 +313,26 @@ $$;
 SELECT * FROM test1;
 
 
+-- operations on composite types vs. internal transactions
+DO LANGUAGE plpgsql $$
+declare
+  c test1 := row(42, 'hello');
+  r bool;
+begin
+  for i in 1..3 loop
+    r := c is not null;
+    raise notice 'r = %', r;
+    commit;
+  end loop;
+  for i in 1..3 loop
+    r := c is null;
+    raise notice 'r = %', r;
+    rollback;
+  end loop;
+end
+$$;
+
+
 -- COMMIT failures
 DO LANGUAGE plpgsql $$
 BEGIN
