@@ -198,7 +198,7 @@ my %pgdump_runs = (
 	with_extension => {
 		dump_cmd => [
 			'pg_dump', '--no-sync', "--file=$tempdir/with_extension.sql",
-			'--extension=test_pg_dump', '--no-sync', 'postgres',
+			'--extension=test_pg_dump', 'postgres',
 		],
 	},
 
@@ -206,7 +206,7 @@ my %pgdump_runs = (
 	without_extension => {
 		dump_cmd => [
 			'pg_dump', '--no-sync', "--file=$tempdir/without_extension.sql",
-			'--extension=plpgsql', '--no-sync', 'postgres',
+			'--extension=plpgsql', 'postgres',
 		],
 	},);
 
