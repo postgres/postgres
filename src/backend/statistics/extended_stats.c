@@ -2420,6 +2420,8 @@ statext_expressions_load(Oid stxoid, int idx)
 
 	/* Build a temporary HeapTuple control structure */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+	ItemPointerSetInvalid(&(tmptup.t_self));
+	tmptup.t_tableOid = InvalidOid;
 	tmptup.t_data = td;
 
 	tup = heap_copytuple(&tmptup);
