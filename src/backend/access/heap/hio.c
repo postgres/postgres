@@ -284,9 +284,13 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
  *	happen if space is freed in that page after heap_update finds there's not
  *	enough there).  In that case, the page will be pinned and locked only once.
  *
- *	For the vmbuffer and vmbuffer_other arguments, we avoid deadlock by
- *	locking them only after locking the corresponding heap page, and taking
- *	no further lwlocks while they are locked.
+ *	We also handle the possibility that the all-visible flag will need to be
+ *	cleared on one or both pages.  If so, pin on the associated visibility map
+ *	page must be acquired before acquiring buffer lock(s), to avoid possibly
+ *	doing I/O while holding buffer locks.  The pins are passed back to the
+ *	caller using the input-output arguments vmbuffer and vmbuffer_other.
+ *	Note that in some cases the caller might have already acquired such pins,
+ *	which is indicated by these arguments not being InvalidBuffer on entry.
  *
  *	We normally use FSM to help us find free space.  However,
  *	if HEAP_INSERT_SKIP_FSM is specified, we just append a new empty page to
@@ -631,6 +635,8 @@ loop:
 	if (otherBuffer != InvalidBuffer)
 	{
 		Assert(otherBuffer != buffer);
+		targetBlock = BufferGetBlockNumber(buffer);
+		Assert(targetBlock > otherBlock);
 
 		if (unlikely(!ConditionalLockBuffer(otherBuffer)))
 		{
@@ -639,10 +645,16 @@ loop:
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 			/*
-			 * Because the buffer was unlocked for a while, it's possible,
-			 * although unlikely, that the page was filled. If so, just retry
-			 * from start.
+			 * Because the buffers were unlocked for a while, it's possible,
+			 * although unlikely, that an all-visible flag became set or that
+			 * somebody used up the available space in the new page.  We can
+			 * use GetVisibilityMapPins to deal with the first case.  In the
+			 * second case, just retry from start.
 			 */
+			GetVisibilityMapPins(relation, otherBuffer, buffer,
+								 otherBlock, targetBlock, vmbuffer_other,
+								 vmbuffer);
+
 			if (len > PageGetHeapFreeSpace(page))
 			{
 				LockBuffer(otherBuffer, BUFFER_LOCK_UNLOCK);
