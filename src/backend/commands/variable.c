@@ -767,6 +767,17 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(*newval));
 	if (!HeapTupleIsValid(roleTup))
 	{
+		/*
+		 * When source == PGC_S_TEST, we don't throw a hard error for a
+		 * nonexistent user name, only a NOTICE.  See comments in guc.h.
+		 */
+		if (source == PGC_S_TEST)
+		{
+			ereport(NOTICE,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("role \"%s\" does not exist", *newval)));
+			return true;
+		}
 		GUC_check_errmsg("role \"%s\" does not exist", *newval);
 		return false;
 	}
@@ -837,10 +848,23 @@ check_role(char **newval, void **extra, GucSource source)
 			return false;
 		}
 
+		/*
+		 * When source == PGC_S_TEST, we don't throw a hard error for a
+		 * nonexistent user name or insufficient privileges, only a NOTICE.
+		 * See comments in guc.h.
+		 */
+
 		/* Look up the username */
 		roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(*newval));
 		if (!HeapTupleIsValid(roleTup))
 		{
+			if (source == PGC_S_TEST)
+			{
+				ereport(NOTICE,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("role \"%s\" does not exist", *newval)));
+				return true;
+			}
 			GUC_check_errmsg("role \"%s\" does not exist", *newval);
 			return false;
 		}
@@ -859,6 +883,14 @@ check_role(char **newval, void **extra, GucSource source)
 		if (!InitializingParallelWorker &&
 			!is_member_of_role(GetSessionUserId(), roleid))
 		{
+			if (source == PGC_S_TEST)
+			{
+				ereport(NOTICE,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("permission will be denied to set role \"%s\"",
+								*newval)));
+				return true;
+			}
 			GUC_check_errcode(ERRCODE_INSUFFICIENT_PRIVILEGE);
 			GUC_check_errmsg("permission denied to set role \"%s\"",
 							 *newval);
