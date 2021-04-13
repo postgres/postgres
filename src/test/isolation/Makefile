@@ -9,7 +9,8 @@ subdir = src/test/isolation
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) -I$(srcdir)/../regress $(CPPFLAGS)
+override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) \
+	-I$(srcdir)/../regress $(CPPFLAGS)
 
 OBJS = \
 	$(WIN32RES) \
