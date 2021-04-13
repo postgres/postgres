@@ -23,8 +23,10 @@ pgregress-python3-mangle:
 	      -e "s/def next/def __next__/g" \
 	      -e "s/LANGUAGE plpythonu/LANGUAGE plpython3u/g" \
 	      -e "s/LANGUAGE plpython2u/LANGUAGE plpython3u/g" \
-	      -e "s/EXTENSION \([^ ]*_\)*plpythonu/EXTENSION \1plpython3u/g" \
-	      -e "s/EXTENSION \([^ ]*_\)*plpython2u/EXTENSION \1plpython3u/g" \
+	      -e "s/EXTENSION plpythonu/EXTENSION plpython3u/g" \
+	      -e "s/EXTENSION plpython2u/EXTENSION plpython3u/g" \
+	      -e "s/EXTENSION \([^ ]*\)_plpythonu/EXTENSION \1_plpython3u/g" \
+	      -e "s/EXTENSION \([^ ]*\)_plpython2u/EXTENSION \1_plpython3u/g" \
 	      -e 's/installing required extension "plpython2u"/installing required extension "plpython3u"/g' \
 	    $$file >`echo $$file | sed 's,^.*/\([^/][^/]*/\)\([^/][^/]*\)$$,\1python3/\2,'` || exit; \
 	done
