@@ -3784,7 +3784,7 @@ l2:
 		 * overhead would be unchanged, that doesn't seem necessarily
 		 * worthwhile.
 		 */
-		if (PageIsAllVisible(BufferGetPage(buffer)) &&
+		if (PageIsAllVisible(page) &&
 			visibilitymap_clear(relation, block, vmbuffer,
 								VISIBILITYMAP_ALL_FROZEN))
 			cleared_all_frozen = true;
@@ -3846,36 +3846,46 @@ l2:
 		 * first".  To implement this, we must do RelationGetBufferForTuple
 		 * while not holding the lock on the old page, and we must rely on it
 		 * to get the locks on both pages in the correct order.
+		 *
+		 * Another consideration is that we need visibility map page pin(s) if
+		 * we will have to clear the all-visible flag on either page.  If we
+		 * call RelationGetBufferForTuple, we rely on it to acquire any such
+		 * pins; but if we don't, we have to handle that here.  Hence we need
+		 * a loop.
 		 */
-		if (newtupsize > pagefree)
+		for (;;)
 		{
-			/* Assume there's no chance to put heaptup on same page. */
-			newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
-											   buffer, 0, NULL,
-											   &vmbuffer_new, &vmbuffer);
-		}
-		else
-		{
+			if (newtupsize > pagefree)
+			{
+				/* It doesn't fit, must use RelationGetBufferForTuple. */
+				newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
+												   buffer, 0, NULL,
+												   &vmbuffer_new, &vmbuffer);
+				/* We're all done. */
+				break;
+			}
+			/* Acquire VM page pin if needed and we don't have it. */
+			if (vmbuffer == InvalidBuffer && PageIsAllVisible(page))
+				visibilitymap_pin(relation, block, &vmbuffer);
 			/* Re-acquire the lock on the old tuple's page. */
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 			/* Re-check using the up-to-date free space */
 			pagefree = PageGetHeapFreeSpace(page);
-			if (newtupsize > pagefree)
+			if (newtupsize > pagefree ||
+				(vmbuffer == InvalidBuffer && PageIsAllVisible(page)))
 			{
 				/*
-				 * Rats, it doesn't fit anymore.  We must now unlock and
-				 * relock to avoid deadlock.  Fortunately, this path should
-				 * seldom be taken.
+				 * Rats, it doesn't fit anymore, or somebody just now set the
+				 * all-visible flag.  We must now unlock and loop to avoid
+				 * deadlock.  Fortunately, this path should seldom be taken.
 				 */
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
-												   buffer, 0, NULL,
-												   &vmbuffer_new, &vmbuffer);
 			}
 			else
 			{
-				/* OK, it fits here, so we're done. */
+				/* We're all done. */
 				newbuf = buffer;
+				break;
 			}
 		}
 	}
