@@ -888,7 +888,7 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
       <programlisting>
        typedef void (*LogicalDecodeRollbackPreparedCB) (struct LogicalDecodingContext *ctx,
                                                         ReorderBufferTXN *txn,
-                                                        XLogRecPtr preapre_end_lsn,
+                                                        XLogRecPtr prepare_end_lsn,
                                                         TimestampTz prepare_time);
       </programlisting>
      </para>
