@@ -1773,6 +1773,7 @@ void
 UpdateDecodingStats(LogicalDecodingContext *ctx)
 {
 	ReorderBuffer *rb = ctx->reorder;
+	PgStat_ReplSlotStats repSlotStat;
 
 	/*
 	 * Nothing to do if we haven't spilled or streamed anything since the last
@@ -1790,9 +1791,15 @@ UpdateDecodingStats(LogicalDecodingContext *ctx)
 		 (long long) rb->streamCount,
 		 (long long) rb->streamBytes);
 
-	pgstat_report_replslot(NameStr(ctx->slot->data.name),
-						   rb->spillTxns, rb->spillCount, rb->spillBytes,
-						   rb->streamTxns, rb->streamCount, rb->streamBytes);
+	namestrcpy(&repSlotStat.slotname, NameStr(ctx->slot->data.name));
+	repSlotStat.spill_txns = rb->spillTxns;
+	repSlotStat.spill_count = rb->spillCount;
+	repSlotStat.spill_bytes = rb->spillBytes;
+	repSlotStat.stream_txns = rb->streamTxns;
+	repSlotStat.stream_count = rb->streamCount;
+	repSlotStat.stream_bytes = rb->streamBytes;
+
+	pgstat_report_replslot(&repSlotStat);
 	rb->spillTxns = 0;
 	rb->spillCount = 0;
 	rb->spillBytes = 0;

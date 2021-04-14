@@ -64,6 +64,7 @@
 #include "storage/pg_shmem.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
+#include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -1539,7 +1540,7 @@ pgstat_reset_replslot_counter(const char *name)
 		if (SlotIsPhysical(slot))
 			return;
 
-		strlcpy(msg.m_slotname, name, NAMEDATALEN);
+		namestrcpy(&msg.m_slotname, name);
 		msg.clearall = false;
 	}
 	else
@@ -1812,10 +1813,7 @@ pgstat_report_tempfile(size_t filesize)
  * ----------
  */
 void
-pgstat_report_replslot(const char *slotname, PgStat_Counter spilltxns,
-					   PgStat_Counter spillcount, PgStat_Counter spillbytes,
-					   PgStat_Counter streamtxns, PgStat_Counter streamcount,
-					   PgStat_Counter streambytes)
+pgstat_report_replslot(const PgStat_ReplSlotStats *repSlotStat)
 {
 	PgStat_MsgReplSlot msg;
 
@@ -1823,14 +1821,14 @@ pgstat_report_replslot(const char *slotname, PgStat_Counter spilltxns,
 	 * Prepare and send the message
 	 */
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_REPLSLOT);
-	strlcpy(msg.m_slotname, slotname, NAMEDATALEN);
+	namestrcpy(&msg.m_slotname, NameStr(repSlotStat->slotname));
 	msg.m_drop = false;
-	msg.m_spill_txns = spilltxns;
-	msg.m_spill_count = spillcount;
-	msg.m_spill_bytes = spillbytes;
-	msg.m_stream_txns = streamtxns;
-	msg.m_stream_count = streamcount;
-	msg.m_stream_bytes = streambytes;
+	msg.m_spill_txns = repSlotStat->spill_txns;
+	msg.m_spill_count = repSlotStat->spill_count;
+	msg.m_spill_bytes = repSlotStat->spill_bytes;
+	msg.m_stream_txns = repSlotStat->stream_txns;
+	msg.m_stream_count = repSlotStat->stream_count;
+	msg.m_stream_bytes = repSlotStat->stream_bytes;
 	pgstat_send(&msg, sizeof(PgStat_MsgReplSlot));
 }
 
@@ -1846,7 +1844,7 @@ pgstat_report_replslot_drop(const char *slotname)
 	PgStat_MsgReplSlot msg;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_REPLSLOT);
-	strlcpy(msg.m_slotname, slotname, NAMEDATALEN);
+	namestrcpy(&msg.m_slotname, slotname);
 	msg.m_drop = true;
 	pgstat_send(&msg, sizeof(PgStat_MsgReplSlot));
 }
@@ -5202,7 +5200,7 @@ pgstat_recv_resetreplslotcounter(PgStat_MsgResetreplslotcounter *msg,
 	else
 	{
 		/* Get the index of replication slot statistics to reset */
-		idx = pgstat_replslot_index(msg->m_slotname, false);
+		idx = pgstat_replslot_index(NameStr(msg->m_slotname), false);
 
 		/*
 		 * Nothing to do if the given slot entry is not found.  This could
@@ -5538,7 +5536,7 @@ pgstat_recv_replslot(PgStat_MsgReplSlot *msg, int len)
 	 * Get the index of replication slot statistics.  On dropping, we don't
 	 * create the new statistics.
 	 */
-	idx = pgstat_replslot_index(msg->m_slotname, !msg->m_drop);
+	idx = pgstat_replslot_index(NameStr(msg->m_slotname), !msg->m_drop);
 
 	/*
 	 * The slot entry is not found or there is no space to accommodate the new
@@ -5763,7 +5761,7 @@ pgstat_replslot_index(const char *name, bool create_it)
 	Assert(nReplSlotStats <= max_replication_slots);
 	for (i = 0; i < nReplSlotStats; i++)
 	{
-		if (strcmp(replSlotStats[i].slotname, name) == 0)
+		if (namestrcmp(&replSlotStats[i].slotname, name) == 0)
 			return i;			/* found */
 	}
 
@@ -5776,7 +5774,7 @@ pgstat_replslot_index(const char *name, bool create_it)
 
 	/* Register new slot */
 	memset(&replSlotStats[nReplSlotStats], 0, sizeof(PgStat_ReplSlotStats));
-	strlcpy(replSlotStats[nReplSlotStats].slotname, name, NAMEDATALEN);
+	namestrcpy(&replSlotStats[nReplSlotStats].slotname, name);
 
 	return nReplSlotStats++;
 }

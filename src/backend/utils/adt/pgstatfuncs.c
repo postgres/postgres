@@ -2328,7 +2328,7 @@ pg_stat_get_replication_slots(PG_FUNCTION_ARGS)
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, 0, sizeof(nulls));
 
-		values[0] = PointerGetDatum(cstring_to_text(s->slotname));
+		values[0] = CStringGetTextDatum(NameStr(s->slotname));
 		values[1] = Int64GetDatum(s->spill_txns);
 		values[2] = Int64GetDatum(s->spill_count);
 		values[3] = Int64GetDatum(s->spill_bytes);
