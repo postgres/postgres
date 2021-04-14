@@ -1060,7 +1060,7 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 	if (heapRel == NULL || heapoid != IndexGetRelation(indexoid, false))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("could not open parent table of index %s",
+				 errmsg("could not open parent table of index \"%s\"",
 						RelationGetRelationName(indexRel))));
 
 	/* OK, do it */
@@ -1137,7 +1137,7 @@ brin_desummarize_range(PG_FUNCTION_ARGS)
 	if (heapRel == NULL || heapoid != IndexGetRelation(indexoid, false))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("could not open parent table of index %s",
+				 errmsg("could not open parent table of index \"%s\"",
 						RelationGetRelationName(indexRel))));
 
 	/* the revmap does the hard work */

@@ -93,14 +93,14 @@
 #define CHECK_REL_PROCEDURE(pname) \
 do { \
 	if (indexRelation->rd_indam->pname == NULL) \
-		elog(ERROR, "function %s is not defined for index %s", \
+		elog(ERROR, "function \"%s\" is not defined for index \"%s\"", \
 			 CppAsString(pname), RelationGetRelationName(indexRelation)); \
 } while(0)
 
 #define CHECK_SCAN_PROCEDURE(pname) \
 do { \
 	if (scan->indexRelation->rd_indam->pname == NULL) \
-		elog(ERROR, "function %s is not defined for index %s", \
+		elog(ERROR, "function \"%s\" is not defined for index \"%s\"", \
 			 CppAsString(pname), RelationGetRelationName(scan->indexRelation)); \
 } while(0)
 

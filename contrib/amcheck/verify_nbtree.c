@@ -290,7 +290,7 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed,
 	if (heaprel == NULL || heapid != IndexGetRelation(indrelid, false))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("could not open parent table of index %s",
+				 errmsg("could not open parent table of index \"%s\"",
 						RelationGetRelationName(indrel))));
 
 	/* Relation suitable for checking as B-Tree? */
@@ -535,7 +535,7 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 	if (metad->btm_fastroot != metad->btm_root)
 		ereport(DEBUG1,
 				(errcode(ERRCODE_NO_DATA),
-				 errmsg_internal("harmless fast root mismatch in index %s",
+				 errmsg_internal("harmless fast root mismatch in index \"%s\"",
 						RelationGetRelationName(rel)),
 				 errdetail_internal("Fast root block %u (level %u) differs from true root block %u (level %u).",
 									metad->btm_fastroot, metad->btm_fastlevel,
@@ -2277,7 +2277,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 	{
 		ereport(DEBUG1,
 				(errcode(ERRCODE_NO_DATA),
-				 errmsg_internal("harmless interrupted page split detected in index %s",
+				 errmsg_internal("harmless interrupted page split detected in index \"%s\"",
 						RelationGetRelationName(state->rel)),
 				 errdetail_internal("Block=%u level=%u left sibling=%u page lsn=%X/%X.",
 									blkno, opaque->btpo_level,
