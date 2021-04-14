@@ -5912,51 +5912,6 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-force-parallel-mode" xreflabel="force_parallel_mode">
-      <term><varname>force_parallel_mode</varname> (<type>enum</type>)
-      <indexterm>
-       <primary><varname>force_parallel_mode</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Allows the use of parallel queries for testing purposes even in cases
-        where no performance benefit is expected.
-        The allowed values of <varname>force_parallel_mode</varname> are
-        <literal>off</literal> (use parallel mode only when it is expected to improve
-        performance), <literal>on</literal> (force parallel query for all queries
-        for which it is thought to be safe), and <literal>regress</literal> (like
-        <literal>on</literal>, but with additional behavior changes as explained
-        below).
-       </para>
-
-       <para>
-        More specifically, setting this value to <literal>on</literal> will add
-        a <literal>Gather</literal> node to the top of any query plan for which this
-        appears to be safe, so that the query runs inside of a parallel worker.
-        Even when a parallel worker is not available or cannot be used,
-        operations such as starting a subtransaction that would be prohibited
-        in a parallel query context will be prohibited unless the planner
-        believes that this will cause the query to fail.  If failures or
-        unexpected results occur when this option is set, some functions used
-        by the query may need to be marked <literal>PARALLEL UNSAFE</literal>
-        (or, possibly, <literal>PARALLEL RESTRICTED</literal>).
-       </para>
-
-       <para>
-        Setting this value to <literal>regress</literal> has all of the same effects
-        as setting it to <literal>on</literal> plus some additional effects that are
-        intended to facilitate automated regression testing.  Normally,
-        messages from a parallel worker include a context line indicating that,
-        but a setting of <literal>regress</literal> suppresses this line so that the
-        output is the same as in non-parallel execution.  Also,
-        the <literal>Gather</literal> nodes added to plans by this setting are hidden
-        in <literal>EXPLAIN</literal> output so that the output matches what
-        would be obtained if this setting were turned <literal>off</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-plan-cache_mode" xreflabel="plan_cache_mode">
       <term><varname>plan_cache_mode</varname> (<type>enum</type>)
       <indexterm>
@@ -10374,11 +10329,10 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     <title>Developer Options</title>
 
     <para>
-     The following parameters are intended for work on the
-     <productname>PostgreSQL</productname> source code, and in some cases
-     to assist with recovery of severely damaged databases.  There
-     should be no reason to use them on a production database.
-     As such, they have been excluded from the sample
+     The following parameters are intended for developer testing, and
+     should never be used on a production database.  However, some of
+     them can be used to assist with the recovery of severely damaged
+     databases.  As such, they have been excluded from the sample
      <filename>postgresql.conf</filename> file.  Note that many of these
      parameters require special source compilation flags to work at all.
     </para>
@@ -10460,6 +10414,51 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         <option>--enable-cassert</option>).  In production builds, its value
         will always be <literal>0</literal> and attempts to set it to another
         value will raise an error.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-force-parallel-mode" xreflabel="force_parallel_mode">
+      <term><varname>force_parallel_mode</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>force_parallel_mode</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Allows the use of parallel queries for testing purposes even in cases
+        where no performance benefit is expected.
+        The allowed values of <varname>force_parallel_mode</varname> are
+        <literal>off</literal> (use parallel mode only when it is expected to improve
+        performance), <literal>on</literal> (force parallel query for all queries
+        for which it is thought to be safe), and <literal>regress</literal> (like
+        <literal>on</literal>, but with additional behavior changes as explained
+        below).
+       </para>
+
+       <para>
+        More specifically, setting this value to <literal>on</literal> will add
+        a <literal>Gather</literal> node to the top of any query plan for which this
+        appears to be safe, so that the query runs inside of a parallel worker.
+        Even when a parallel worker is not available or cannot be used,
+        operations such as starting a subtransaction that would be prohibited
+        in a parallel query context will be prohibited unless the planner
+        believes that this will cause the query to fail.  If failures or
+        unexpected results occur when this option is set, some functions used
+        by the query may need to be marked <literal>PARALLEL UNSAFE</literal>
+        (or, possibly, <literal>PARALLEL RESTRICTED</literal>).
+       </para>
+
+       <para>
+        Setting this value to <literal>regress</literal> has all of the same effects
+        as setting it to <literal>on</literal> plus some additional effects that are
+        intended to facilitate automated regression testing.  Normally,
+        messages from a parallel worker include a context line indicating that,
+        but a setting of <literal>regress</literal> suppresses this line so that the
+        output is the same as in non-parallel execution.  Also,
+        the <literal>Gather</literal> nodes added to plans by this setting are hidden
+        in <literal>EXPLAIN</literal> output so that the output matches what
+        would be obtained if this setting were turned <literal>off</literal>.
        </para>
       </listitem>
      </varlistentry>
