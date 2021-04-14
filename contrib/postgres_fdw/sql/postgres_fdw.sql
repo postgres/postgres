@@ -2786,27 +2786,14 @@ ROLLBACK;
 -- reestablish new connection
 -- ===================================================================
 
--- Terminate the backend having the specified application_name and wait for
--- the termination to complete.
-CREATE OR REPLACE PROCEDURE terminate_backend_and_wait(appname text) AS $$
-BEGIN
-    PERFORM pg_terminate_backend(pid) FROM pg_stat_activity
-    WHERE application_name = appname;
-    LOOP
-        PERFORM * FROM pg_stat_activity WHERE application_name = appname;
-        EXIT WHEN NOT FOUND;
-        PERFORM pg_sleep(1), pg_stat_clear_snapshot();
-    END LOOP;
-END;
-$$ LANGUAGE plpgsql;
-
 -- Change application_name of remote connection to special one
 -- so that we can easily terminate the connection later.
 ALTER SERVER loopback OPTIONS (application_name 'fdw_retry_check');
 SELECT 1 FROM ft1 LIMIT 1;
 
--- Terminate the remote connection.
-CALL terminate_backend_and_wait('fdw_retry_check');
+-- Terminate the remote connection and wait for the termination to complete.
+SELECT pg_terminate_backend(pid, 180000) FROM pg_stat_activity
+	WHERE application_name = 'fdw_retry_check';
 
 -- This query should detect the broken connection when starting new remote
 -- transaction, reestablish new connection, and then succeed.
@@ -2816,15 +2803,14 @@ SELECT 1 FROM ft1 LIMIT 1;
 -- If the query detects the broken connection when starting new remote
 -- subtransaction, it doesn't reestablish new connection and should fail.
 -- The text of the error might vary across platforms, so don't show it.
-CALL terminate_backend_and_wait('fdw_retry_check');
+-- Terminate the remote connection and wait for the termination to complete.
+SELECT pg_terminate_backend(pid, 180000) FROM pg_stat_activity
+	WHERE application_name = 'fdw_retry_check';
 SAVEPOINT s;
 \set VERBOSITY sqlstate
 SELECT 1 FROM ft1 LIMIT 1;    -- should fail
 \set VERBOSITY default
 COMMIT;
-
--- Clean up
-DROP PROCEDURE terminate_backend_and_wait(text);
 
 -- =============================================================================
 -- test connection invalidation cases and postgres_fdw_get_connections function
