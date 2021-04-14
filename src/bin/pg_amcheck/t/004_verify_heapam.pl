@@ -480,7 +480,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 
 		$header = header(0, $offnum, 1);
 		push @expected,
-			qr/${header}attribute \d+ with length \d+ ends at offset \d+ beyond total tuple length \d+/;
+			qr/${header}attribute with length \d+ ends at offset \d+ beyond total tuple length \d+/;
 	}
 	elsif ($offnum == 13)
 	{
@@ -489,7 +489,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 
 		$header = header(0, $offnum, 2);
 		push @expected,
-			qr/${header}toasted value for attribute 2 missing from toast table/;
+			qr/${header}toast value \d+ not found in toast table/;
 	}
 	elsif ($offnum == 14)
 	{
