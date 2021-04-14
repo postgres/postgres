@@ -670,8 +670,8 @@ try_partial_nestloop_path(PlannerInfo *root,
 	/*
 	 * If the inner path is parameterized, the parameterization must be fully
 	 * satisfied by the proposed outer path.  Parameterized partial paths are
-	 * not supported.  The caller should already have verified that no
-	 * extra_lateral_rels are required here.
+	 * not supported.  The caller should already have verified that no lateral
+	 * rels are required here.
 	 */
 	Assert(bms_is_empty(joinrel->lateral_relids));
 	if (inner_path->param_info != NULL)
@@ -984,8 +984,8 @@ try_partial_hashjoin_path(PlannerInfo *root,
 	/*
 	 * If the inner path is parameterized, the parameterization must be fully
 	 * satisfied by the proposed outer path.  Parameterized partial paths are
-	 * not supported.  The caller should already have verified that no
-	 * extra_lateral_rels are required here.
+	 * not supported.  The caller should already have verified that no lateral
+	 * rels are required here.
 	 */
 	Assert(bms_is_empty(joinrel->lateral_relids));
 	if (inner_path->param_info != NULL)
@@ -1714,7 +1714,7 @@ match_unsorted_outer(PlannerInfo *root,
 	 * partial path and the joinrel is parallel-safe.  However, we can't
 	 * handle JOIN_UNIQUE_OUTER, because the outer path will be partial, and
 	 * therefore we won't be able to properly guarantee uniqueness.  Nor can
-	 * we handle extra_lateral_rels, since partial paths must not be
+	 * we handle joins needing lateral rels, since partial paths must not be
 	 * parameterized. Similarly, we can't handle JOIN_FULL and JOIN_RIGHT,
 	 * because they can produce false null extended rows.
 	 */
