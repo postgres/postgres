@@ -234,6 +234,12 @@ PostgreSQL documentation
         shell from expanding the wildcards.
        </para>
 
+       <para>
+        Any configuration relation registered by
+        <function>pg_extension_config_dump</function> is included in the
+        dump if its extension is specified by <option>--extension</option>.
+       </para>
+
        <note>
         <para>
          When <option>-e</option> is specified,

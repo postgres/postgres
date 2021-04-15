@@ -208,6 +208,34 @@ my %pgdump_runs = (
 			'pg_dump', '--no-sync', "--file=$tempdir/without_extension.sql",
 			'--extension=plpgsql', 'postgres',
 		],
+	},
+
+	# plgsql in the list of extensions blocks the dump of extension
+	# test_pg_dump.  "public" is the schema used by the extension
+	# test_pg_dump, but none of its objects should be dumped.
+	without_extension_explicit_schema => {
+		dump_cmd => [
+			'pg_dump',
+			'--no-sync',
+			"--file=$tempdir/without_extension_explicit_schema.sql",
+			'--extension=plpgsql',
+			'--schema=public',
+			'postgres',
+		],
+	},
+
+	# plgsql in the list of extensions blocks the dump of extension
+	# test_pg_dump, but not the dump of objects not dependent on the
+	# extension located on a schema maintained by the extension.
+	without_extension_internal_schema => {
+		dump_cmd => [
+			'pg_dump',
+			'--no-sync',
+			"--file=$tempdir/without_extension_internal_schema.sql",
+			'--extension=plpgsql',
+			'--schema=regress_pg_dump_schema',
+			'postgres',
+		],
 	},);
 
 ###############################################################
@@ -632,6 +660,8 @@ my %tests = (
 			pg_dumpall_globals => 1,
 			section_data       => 1,
 			section_pre_data   => 1,
+			# Excludes this schema as extension is not listed.
+			without_extension_explicit_schema => 1,
 		},
 	},
 
@@ -646,6 +676,8 @@ my %tests = (
 			pg_dumpall_globals => 1,
 			section_data       => 1,
 			section_pre_data   => 1,
+			# Excludes this schema as extension is not listed.
+			without_extension_explicit_schema => 1,
 		},
 	},
 
@@ -662,6 +694,8 @@ my %tests = (
 			%full_runs,
 			schema_only      => 1,
 			section_pre_data => 1,
+			# Excludes the extension and keeps the schema's data.
+			without_extension_internal_schema => 1,
 		},
 	},);
 
