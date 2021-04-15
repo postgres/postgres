@@ -295,6 +295,8 @@ CREATE FUNCTION functest_S_xx(x date) RETURNS boolean
     LANGUAGE SQL
     RETURN x > 1;
 ERROR:  operator does not exist: date > integer
+LINE 3:     RETURN x > 1;
+                     ^
 HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 -- tricky parsing
 CREATE FUNCTION functest_S_15(x int) RETURNS boolean
