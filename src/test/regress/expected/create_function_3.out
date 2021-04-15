@@ -290,6 +290,12 @@ CREATE FUNCTION functest_S_xx(x anyarray) RETURNS anyelement
     LANGUAGE SQL
     RETURN x[1];
 ERROR:  SQL function with unquoted function body cannot have polymorphic arguments
+-- check reporting of parse-analysis errors
+CREATE FUNCTION functest_S_xx(x date) RETURNS boolean
+    LANGUAGE SQL
+    RETURN x > 1;
+ERROR:  operator does not exist: date > integer
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 -- tricky parsing
 CREATE FUNCTION functest_S_15(x int) RETURNS boolean
 LANGUAGE SQL

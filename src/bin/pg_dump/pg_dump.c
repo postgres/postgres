@@ -12247,7 +12247,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 
 	if (fout->remoteVersion >= 140000)
 		appendPQExpBufferStr(query,
-							 "CASE WHEN prosrc IS NULL AND lanname = 'sql' THEN pg_get_function_sqlbody(p.oid) END AS prosqlbody\n");
+							 "pg_get_function_sqlbody(p.oid) AS prosqlbody\n");
 	else
 		appendPQExpBufferStr(query,
 							 "NULL AS prosqlbody\n");

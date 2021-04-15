@@ -91,10 +91,17 @@ WHERE p1.prolang = 0 OR p1.prorettype = 0 OR
 -----+---------
 (0 rows)
 
--- prosrc should never be null or empty
+-- prosrc should never be null; it can be empty only if prosqlbody isn't null
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
-WHERE prosrc IS NULL OR prosrc = '' OR prosrc = '-';
+WHERE prosrc IS NULL;
+ oid | proname 
+-----+---------
+(0 rows)
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE (prosrc = '' OR prosrc = '-') AND prosqlbody IS NULL;
  oid | proname 
 -----+---------
 (0 rows)

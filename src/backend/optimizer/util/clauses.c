@@ -4317,31 +4317,36 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 								  ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(mycxt);
 
-	/*
-	 * Setup error traceback support for ereport().  This is so that we can
-	 * finger the function that bad information came from.
-	 */
-	callback_arg.proname = NameStr(funcform->proname);
-	callback_arg.prosrc = NULL;
-
-	sqlerrcontext.callback = sql_inline_error_callback;
-	sqlerrcontext.arg = (void *) &callback_arg;
-	sqlerrcontext.previous = error_context_stack;
-	error_context_stack = &sqlerrcontext;
-
 	/* Fetch the function body */
 	tmp = SysCacheGetAttr(PROCOID,
 						  func_tuple,
 						  Anum_pg_proc_prosrc,
 						  &isNull);
 	if (isNull)
+		elog(ERROR, "null prosrc for function %u", funcid);
+	src = TextDatumGetCString(tmp);
+
+	/*
+	 * Setup error traceback support for ereport().  This is so that we can
+	 * finger the function that bad information came from.
+	 */
+	callback_arg.proname = NameStr(funcform->proname);
+	callback_arg.prosrc = src;
+
+	sqlerrcontext.callback = sql_inline_error_callback;
+	sqlerrcontext.arg = (void *) &callback_arg;
+	sqlerrcontext.previous = error_context_stack;
+	error_context_stack = &sqlerrcontext;
+
+	/* If we have prosqlbody, pay attention to that not prosrc */
+	tmp = SysCacheGetAttr(PROCOID,
+						  func_tuple,
+						  Anum_pg_proc_prosqlbody,
+						  &isNull);
+	if (!isNull)
 	{
 		Node	   *n;
 		List	   *querytree_list;
-
-		tmp = SysCacheGetAttr(PROCOID, func_tuple, Anum_pg_proc_prosqlbody, &isNull);
-		if (isNull)
-			elog(ERROR, "null prosrc and prosqlbody for function %u", funcid);
 
 		n = stringToNode(TextDatumGetCString(tmp));
 		if (IsA(n, List))
@@ -4354,10 +4359,6 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	}
 	else
 	{
-	src = TextDatumGetCString(tmp);
-
-	callback_arg.prosrc = src;
-
 	/*
 	 * Set up to handle parameters while parsing the function body.  We need a
 	 * dummy FuncExpr node containing the already-simplified arguments to pass
@@ -4658,15 +4659,12 @@ sql_inline_error_callback(void *arg)
 	int			syntaxerrposition;
 
 	/* If it's a syntax error, convert to internal syntax error report */
-	if (callback_arg->prosrc)
+	syntaxerrposition = geterrposition();
+	if (syntaxerrposition > 0)
 	{
-		syntaxerrposition = geterrposition();
-		if (syntaxerrposition > 0)
-		{
-			errposition(0);
-			internalerrposition(syntaxerrposition);
-			internalerrquery(callback_arg->prosrc);
-		}
+		errposition(0);
+		internalerrposition(syntaxerrposition);
+		internalerrquery(callback_arg->prosrc);
 	}
 
 	errcontext("SQL function \"%s\" during inlining", callback_arg->proname);
@@ -4778,6 +4776,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	Oid			func_oid;
 	HeapTuple	func_tuple;
 	Form_pg_proc funcform;
+	char	   *src;
 	Datum		tmp;
 	bool		isNull;
 	MemoryContext oldcxt;
@@ -4886,30 +4885,35 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 								  ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(mycxt);
 
-	/*
-	 * Setup error traceback support for ereport().  This is so that we can
-	 * finger the function that bad information came from.
-	 */
-	callback_arg.proname = NameStr(funcform->proname);
-	callback_arg.prosrc = NULL;
-
-	sqlerrcontext.callback = sql_inline_error_callback;
-	sqlerrcontext.arg = (void *) &callback_arg;
-	sqlerrcontext.previous = error_context_stack;
-	error_context_stack = &sqlerrcontext;
-
 	/* Fetch the function body */
 	tmp = SysCacheGetAttr(PROCOID,
 						  func_tuple,
 						  Anum_pg_proc_prosrc,
 						  &isNull);
 	if (isNull)
+		elog(ERROR, "null prosrc for function %u", func_oid);
+	src = TextDatumGetCString(tmp);
+
+	/*
+	 * Setup error traceback support for ereport().  This is so that we can
+	 * finger the function that bad information came from.
+	 */
+	callback_arg.proname = NameStr(funcform->proname);
+	callback_arg.prosrc = src;
+
+	sqlerrcontext.callback = sql_inline_error_callback;
+	sqlerrcontext.arg = (void *) &callback_arg;
+	sqlerrcontext.previous = error_context_stack;
+	error_context_stack = &sqlerrcontext;
+
+	/* If we have prosqlbody, pay attention to that not prosrc */
+	tmp = SysCacheGetAttr(PROCOID,
+						  func_tuple,
+						  Anum_pg_proc_prosqlbody,
+						  &isNull);
+	if (!isNull)
 	{
 		Node	   *n;
-
-		tmp = SysCacheGetAttr(PROCOID, func_tuple, Anum_pg_proc_prosqlbody, &isNull);
-		if (isNull)
-			elog(ERROR, "null prosrc and prosqlbody for function %u", func_oid);
 
 		n = stringToNode(TextDatumGetCString(tmp));
 		if (IsA(n, List))
@@ -4927,12 +4931,6 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	}
 	else
 	{
-	char	   *src;
-
-	src = TextDatumGetCString(tmp);
-
-	callback_arg.prosrc = src;
-
 	/*
 	 * Set up to handle parameters while parsing the function body.  We can
 	 * use the FuncExpr just created as the input for

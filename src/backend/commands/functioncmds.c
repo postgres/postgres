@@ -958,8 +958,17 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 			*sql_body_out = (Node *) q;
 		}
 
+		/*
+		 * We must put something in prosrc.  For the moment, just record an
+		 * empty string.  It might be useful to store the original text of the
+		 * CREATE FUNCTION statement --- but to make actual use of that in
+		 * error reports, we'd also have to adjust readfuncs.c to not throw
+		 * away node location fields when reading prosqlbody.
+		 */
+		*prosrc_str_p = pstrdup("");
+
+		/* But we definitely don't need probin. */
 		*probin_str_p = NULL;
-		*prosrc_str_p = NULL;
 	}
 	else
 	{

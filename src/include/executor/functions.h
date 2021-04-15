@@ -17,9 +17,6 @@
 #include "nodes/execnodes.h"
 #include "tcop/dest.h"
 
-/* This struct is known only within executor/functions.c */
-typedef struct SQLFunctionParseInfo *SQLFunctionParseInfoPtr;
-
 /*
  * Data structure needed by the parser callback hooks to resolve parameter
  * references during parsing of a SQL function's body.  This is separate from
@@ -34,6 +31,8 @@ typedef struct SQLFunctionParseInfo
 	/* Note that argnames[i] can be NULL, if some args are unnamed */
 	Oid			collation;		/* function's input collation, if known */
 }			SQLFunctionParseInfo;
+
+typedef SQLFunctionParseInfo *SQLFunctionParseInfoPtr;
 
 extern Datum fmgr_sql(PG_FUNCTION_ARGS);
 

@@ -195,6 +195,8 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			palloc0(nParamExec * sizeof(ParamExecData));
 	}
 
+	/* We now require all callers to provide sourceText */
+	Assert(queryDesc->sourceText != NULL);
 	estate->es_sourceText = queryDesc->sourceText;
 
 	/*

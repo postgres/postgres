@@ -512,7 +512,7 @@ describeFunctions(const char *functypes, const char *func_pattern,
 						  gettext_noop("Language"));
 		if (pset.sversion >= 140000)
 			appendPQExpBuffer(&buf,
-							  ",\n COALESCE(p.prosrc, pg_catalog.pg_get_function_sqlbody(p.oid)) as \"%s\"",
+							  ",\n COALESCE(pg_catalog.pg_get_function_sqlbody(p.oid), p.prosrc) as \"%s\"",
 							  gettext_noop("Source code"));
 		else
 			appendPQExpBuffer(&buf,

@@ -96,10 +96,13 @@ WHERE p1.prolang = 0 OR p1.prorettype = 0 OR
        provolatile NOT IN ('i', 's', 'v') OR
        proparallel NOT IN ('s', 'r', 'u');
 
--- prosrc should never be null or empty
+-- prosrc should never be null; it can be empty only if prosqlbody isn't null
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
-WHERE prosrc IS NULL OR prosrc = '' OR prosrc = '-';
+WHERE prosrc IS NULL;
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE (prosrc = '' OR prosrc = '-') AND prosqlbody IS NULL;
 
 -- proretset should only be set for normal functions
 SELECT p1.oid, p1.proname

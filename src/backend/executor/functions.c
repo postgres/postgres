@@ -667,6 +667,15 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 						  procedureTuple,
 						  Anum_pg_proc_prosrc,
 						  &isNull);
+	if (isNull)
+		elog(ERROR, "null prosrc for function %u", foid);
+	fcache->src = TextDatumGetCString(tmp);
+
+	/* If we have prosqlbody, pay attention to that not prosrc. */
+	tmp = SysCacheGetAttr(PROCOID,
+						  procedureTuple,
+						  Anum_pg_proc_prosqlbody,
+						  &isNull);
 
 	/*
 	 * Parse and rewrite the queries in the function text.  Use sublists to
@@ -678,17 +687,10 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	 * plancache.c.
 	 */
 	queryTree_list = NIL;
-	if (isNull)
+	if (!isNull)
 	{
 		Node	   *n;
 		List	   *stored_query_list;
-
-		tmp = SysCacheGetAttr(PROCOID,
-							  procedureTuple,
-							  Anum_pg_proc_prosqlbody,
-							  &isNull);
-		if (isNull)
-			elog(ERROR, "null prosrc and prosqlbody for function %u", foid);
 
 		n = stringToNode(TextDatumGetCString(tmp));
 		if (IsA(n, List))
@@ -709,8 +711,6 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	else
 	{
 		List	   *raw_parsetree_list;
-
-		fcache->src = TextDatumGetCString(tmp);
 
 		raw_parsetree_list = pg_parse_query(fcache->src);
 

@@ -191,6 +191,11 @@ CREATE FUNCTION functest_S_xx(x anyarray) RETURNS anyelement
     LANGUAGE SQL
     RETURN x[1];
 
+-- check reporting of parse-analysis errors
+CREATE FUNCTION functest_S_xx(x date) RETURNS boolean
+    LANGUAGE SQL
+    RETURN x > 1;
+
 -- tricky parsing
 CREATE FUNCTION functest_S_15(x int) RETURNS boolean
 LANGUAGE SQL
