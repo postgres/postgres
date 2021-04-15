@@ -1476,7 +1476,7 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 										 ta->toast_pointer.va_valueid));
 	else if (chunkno != (endchunk + 1))
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value %u was expected to end at chunk %u, but ended at chunk %u",
+								psprintf("toast value %u was expected to end at chunk %d, but ended at chunk %d",
 										 ta->toast_pointer.va_valueid,
 										 (endchunk + 1), chunkno));
 }
