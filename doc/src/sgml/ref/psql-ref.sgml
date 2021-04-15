@@ -3915,7 +3915,7 @@ bar
         or <filename>%APPDATA%\postgresql\psql_history</filename> on Windows.
         For example, putting:
 <programlisting>
-\set HISTFILE ~/.psql_history- :DBNAME
+\set HISTFILE ~/.psql_history-:DBNAME
 </programlisting>
         in <filename>~/.psqlrc</filename> will cause
         <application>psql</application> to maintain a separate history for
