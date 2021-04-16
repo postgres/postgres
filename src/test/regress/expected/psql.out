@@ -2846,7 +2846,7 @@ Access method: heap
 -- AM is displayed for tables, indexes and materialized views.
 \d+
                                                            List of relations
-     Schema      |        Name        |       Type        |        Owner         | Persistence | Access Method |  Size   | Description 
+     Schema      |        Name        |       Type        |        Owner         | Persistence | Access method |  Size   | Description 
 -----------------+--------------------+-------------------+----------------------+-------------+---------------+---------+-------------
  tableam_display | mat_view_heap_psql | materialized view | regress_display_role | permanent   | heap_psql     | 0 bytes | 
  tableam_display | tbl_heap           | table             | regress_display_role | permanent   | heap          | 0 bytes | 
@@ -2856,7 +2856,7 @@ Access method: heap
 
 \dt+
                                                   List of relations
-     Schema      |     Name      | Type  |        Owner         | Persistence | Access Method |  Size   | Description 
+     Schema      |     Name      | Type  |        Owner         | Persistence | Access method |  Size   | Description 
 -----------------+---------------+-------+----------------------+-------------+---------------+---------+-------------
  tableam_display | tbl_heap      | table | regress_display_role | permanent   | heap          | 0 bytes | 
  tableam_display | tbl_heap_psql | table | regress_display_role | permanent   | heap_psql     | 0 bytes | 
@@ -2864,7 +2864,7 @@ Access method: heap
 
 \dm+
                                                            List of relations
-     Schema      |        Name        |       Type        |        Owner         | Persistence | Access Method |  Size   | Description 
+     Schema      |        Name        |       Type        |        Owner         | Persistence | Access method |  Size   | Description 
 -----------------+--------------------+-------------------+----------------------+-------------+---------------+---------+-------------
  tableam_display | mat_view_heap_psql | materialized view | regress_display_role | permanent   | heap_psql     | 0 bytes | 
 (1 row)

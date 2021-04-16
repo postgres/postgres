@@ -4088,7 +4088,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 			(showTables || showMatViews || showIndexes))
 			appendPQExpBuffer(&buf,
 							  ",\n  am.amname as \"%s\"",
-							  gettext_noop("Access Method"));
+							  gettext_noop("Access method"));
 
 		/*
 		 * As of PostgreSQL 9.0, use pg_table_size() to show a more accurate
