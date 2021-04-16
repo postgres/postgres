@@ -2026,10 +2026,10 @@ REINDEX TABLE concur_reindex_tab; -- notice
 NOTICE:  table "concur_reindex_tab" has no indexes to reindex
 REINDEX (CONCURRENTLY) TABLE concur_reindex_tab; -- notice
 NOTICE:  table "concur_reindex_tab" has no indexes that can be reindexed concurrently
-ALTER TABLE concur_reindex_tab ADD COLUMN c2 text; -- add toast index
+ALTER TABLE concur_reindex_tab ADD COLUMN c2 text COLLATE "C"; -- add toast index
 -- Normal index with integer column
 CREATE UNIQUE INDEX concur_reindex_ind1 ON concur_reindex_tab(c1);
--- Normal index with text column
+-- Normal index with text column (with unversioned collation)
 CREATE INDEX concur_reindex_ind2 ON concur_reindex_tab(c2);
 -- UNIQUE index with expression
 CREATE UNIQUE INDEX concur_reindex_ind3 ON concur_reindex_tab(abs(c1));
@@ -2069,16 +2069,14 @@ WHERE classid = 'pg_class'::regclass AND
                    obj                    |                           objref                           | deptype 
 ------------------------------------------+------------------------------------------------------------+---------
  index concur_reindex_ind1                | constraint concur_reindex_ind1 on table concur_reindex_tab | i
- index concur_reindex_ind2                | collation "default"                                        | n
  index concur_reindex_ind2                | column c2 of table concur_reindex_tab                      | a
  index concur_reindex_ind3                | column c1 of table concur_reindex_tab                      | a
  index concur_reindex_ind3                | table concur_reindex_tab                                   | a
- index concur_reindex_ind4                | collation "default"                                        | n
  index concur_reindex_ind4                | column c1 of table concur_reindex_tab                      | a
  index concur_reindex_ind4                | column c2 of table concur_reindex_tab                      | a
  materialized view concur_reindex_matview | schema public                                              | n
  table concur_reindex_tab                 | schema public                                              | n
-(10 rows)
+(8 rows)
 
 REINDEX INDEX CONCURRENTLY concur_reindex_ind1;
 REINDEX TABLE CONCURRENTLY concur_reindex_tab;
@@ -2098,16 +2096,14 @@ WHERE classid = 'pg_class'::regclass AND
                    obj                    |                           objref                           | deptype 
 ------------------------------------------+------------------------------------------------------------+---------
  index concur_reindex_ind1                | constraint concur_reindex_ind1 on table concur_reindex_tab | i
- index concur_reindex_ind2                | collation "default"                                        | n
  index concur_reindex_ind2                | column c2 of table concur_reindex_tab                      | a
  index concur_reindex_ind3                | column c1 of table concur_reindex_tab                      | a
  index concur_reindex_ind3                | table concur_reindex_tab                                   | a
- index concur_reindex_ind4                | collation "default"                                        | n
  index concur_reindex_ind4                | column c1 of table concur_reindex_tab                      | a
  index concur_reindex_ind4                | column c2 of table concur_reindex_tab                      | a
  materialized view concur_reindex_matview | schema public                                              | n
  table concur_reindex_tab                 | schema public                                              | n
-(10 rows)
+(8 rows)
 
 -- Check that comments are preserved
 CREATE TABLE testcomment (i int);
@@ -2487,7 +2483,7 @@ WARNING:  cannot reindex system catalogs concurrently, skipping all
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  c1     | integer |           | not null | 
- c2     | text    |           |          | 
+ c2     | text    | C         |          | 
 Indexes:
     "concur_reindex_ind1" PRIMARY KEY, btree (c1)
     "concur_reindex_ind2" btree (c2)
