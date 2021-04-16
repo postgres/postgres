@@ -1917,21 +1917,7 @@ sub connect_ok
 		@log_unlike = @{ $params{log_unlike} };
 	}
 
-	if (@log_like or @log_unlike)
-	{
-		# Don't let previous log entries match for this connection.
-		# On Windows, the truncation would not work, so rotate the log
-		# file before restarting the server afresh.
-		if ($TestLib::windows_os)
-		{
-			$self->rotate_logfile;
-			$self->restart;
-		}
-		else
-		{
-			truncate $self->logfile, 0;
-		}
-	}
+	my $log_location = -s $self->logfile;
 
 	# Never prompt for a password, any callers of this routine should
 	# have set up things properly, and this should not block.
@@ -1950,7 +1936,8 @@ sub connect_ok
 	}
 	if (@log_like or @log_unlike)
 	{
-		my $log_contents = TestLib::slurp_file($self->logfile);
+		my $log_contents = TestLib::slurp_file($self->logfile,
+						       $log_location);
 
 		while (my $regex = shift @log_like)
 		{
@@ -2001,21 +1988,7 @@ sub connect_fails
 		@log_unlike = @{ $params{log_unlike} };
 	}
 
-	if (@log_like or @log_unlike)
-	{
-		# Don't let previous log entries match for this connection.
-		# On Windows, the truncation would not work, so rotate the log
-		# file before restarting the server afresh.
-		if ($TestLib::windows_os)
-		{
-			$self->rotate_logfile;
-			$self->restart;
-		}
-		else
-		{
-			truncate $self->logfile, 0;
-		}
-	}
+	my $log_location = -s $self->logfile;
 
 	# Never prompt for a password, any callers of this routine should
 	# have set up things properly, and this should not block.
@@ -2034,7 +2007,8 @@ sub connect_fails
 
 	if (@log_like or @log_unlike)
 	{
-		my $log_contents = TestLib::slurp_file($self->logfile);
+		my $log_contents = TestLib::slurp_file($self->logfile,
+						       $log_location);
 
 		while (my $regex = shift @log_like)
 		{
@@ -2194,9 +2168,6 @@ sub command_checks_all
 Run a command on the node, then verify that $expected_sql appears in the
 server log file.
 
-Reads the whole log file so be careful when working with large log outputs.
-The log file is truncated prior to running the command, however.
-
 =cut
 
 sub issues_sql_like
@@ -2207,10 +2178,11 @@ sub issues_sql_like
 
 	local %ENV = $self->_get_env();
 
-	truncate $self->logfile, 0;
+	my $log_location = -s $self->logfile;
+
 	my $result = TestLib::run_log($cmd);
 	ok($result, "@$cmd exit code 0");
-	my $log = TestLib::slurp_file($self->logfile);
+	my $log = TestLib::slurp_file($self->logfile, $log_location);
 	like($log, $expected_sql, "$test_name: SQL found in server log");
 	return;
 }
