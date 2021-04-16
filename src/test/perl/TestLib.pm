@@ -46,7 +46,7 @@ use warnings;
 use Config;
 use Cwd;
 use Exporter 'import';
-use Fcntl qw(:mode);
+use Fcntl qw(:mode :seek);
 use File::Basename;
 use File::Find;
 use File::Spec;
@@ -117,7 +117,7 @@ BEGIN
 	if ($windows_os)
 	{
 		require Win32API::File;
-		Win32API::File->import(qw(createFile OsFHandleOpen CloseHandle));
+		Win32API::File->import(qw(createFile OsFHandleOpen CloseHandle setFilePointer));
 	}
 
 	# Specifies whether to use Unix sockets for test setups.  On
@@ -402,21 +402,27 @@ sub slurp_dir
 
 =pod
 
-=item slurp_file(filename)
+=item slurp_file(filename [, $offset])
 
-Return the full contents of the specified file.
+Return the full contents of the specified file, beginning from an
+offset position if specified.
 
 =cut
 
 sub slurp_file
 {
-	my ($filename) = @_;
+	my ($filename, $offset) = @_;
 	local $/;
 	my $contents;
 	if ($Config{osname} ne 'MSWin32')
 	{
 		open(my $in, '<', $filename)
 		  or die "could not read \"$filename\": $!";
+		if (defined($offset))
+		{
+			seek($in, $offset, SEEK_SET)
+			  or die "could not seek \"$filename\": $!";
+		}
 		$contents = <$in>;
 		close $in;
 	}
@@ -426,6 +432,11 @@ sub slurp_file
 		  or die "could not open \"$filename\": $^E";
 		OsFHandleOpen(my $fh = IO::Handle->new(), $fHandle, 'r')
 		  or die "could not read \"$filename\": $^E\n";
+		if (defined($offset))
+		{
+			setFilePointer($fh, $offset, qw(FILE_BEGIN))
+			  or die "could not seek \"$filename\": $^E\n";
+		}
 		$contents = <$fh>;
 		CloseHandle($fHandle)
 		  or die "could not close \"$filename\": $^E\n";
