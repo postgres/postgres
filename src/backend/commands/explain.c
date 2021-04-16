@@ -1631,9 +1631,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		{
 			if (es->timing)
 			{
-				ExplainPropertyFloat("Actual Startup Time", "s", startup_ms,
+				ExplainPropertyFloat("Actual Startup Time", "ms", startup_ms,
 									 3, es);
-				ExplainPropertyFloat("Actual Total Time", "s", total_ms,
+				ExplainPropertyFloat("Actual Total Time", "ms", total_ms,
 									 3, es);
 			}
 			ExplainPropertyFloat("Actual Rows", NULL, rows, 0, es);
