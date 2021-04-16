@@ -2284,7 +2284,7 @@ pg_stat_get_archiver(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_replication_slots(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_GET_REPLICATION_SLOT_COLS 8
+#define PG_STAT_GET_REPLICATION_SLOT_COLS 10
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
@@ -2335,11 +2335,13 @@ pg_stat_get_replication_slots(PG_FUNCTION_ARGS)
 		values[4] = Int64GetDatum(s->stream_txns);
 		values[5] = Int64GetDatum(s->stream_count);
 		values[6] = Int64GetDatum(s->stream_bytes);
+		values[7] = Int64GetDatum(s->total_txns);
+		values[8] = Int64GetDatum(s->total_bytes);
 
 		if (s->stat_reset_timestamp == 0)
-			nulls[7] = true;
+			nulls[9] = true;
 		else
-			values[7] = TimestampTzGetDatum(s->stat_reset_timestamp);
+			values[9] = TimestampTzGetDatum(s->stat_reset_timestamp);
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}

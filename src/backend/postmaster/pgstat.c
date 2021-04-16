@@ -1829,6 +1829,8 @@ pgstat_report_replslot(const PgStat_ReplSlotStats *repSlotStat)
 	msg.m_stream_txns = repSlotStat->stream_txns;
 	msg.m_stream_count = repSlotStat->stream_count;
 	msg.m_stream_bytes = repSlotStat->stream_bytes;
+	msg.m_total_txns = repSlotStat->total_txns;
+	msg.m_total_bytes = repSlotStat->total_bytes;
 	pgstat_send(&msg, sizeof(PgStat_MsgReplSlot));
 }
 
@@ -5568,6 +5570,8 @@ pgstat_recv_replslot(PgStat_MsgReplSlot *msg, int len)
 		replSlotStats[idx].stream_txns += msg->m_stream_txns;
 		replSlotStats[idx].stream_count += msg->m_stream_count;
 		replSlotStats[idx].stream_bytes += msg->m_stream_bytes;
+		replSlotStats[idx].total_txns += msg->m_total_txns;
+		replSlotStats[idx].total_bytes += msg->m_total_bytes;
 	}
 }
 
@@ -5795,6 +5799,8 @@ pgstat_reset_replslot(int i, TimestampTz ts)
 	replSlotStats[i].stream_txns = 0;
 	replSlotStats[i].stream_count = 0;
 	replSlotStats[i].stream_bytes = 0;
+	replSlotStats[i].total_txns = 0;
+	replSlotStats[i].total_bytes = 0;
 	replSlotStats[i].stat_reset_timestamp = ts;
 }
 

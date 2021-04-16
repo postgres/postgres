@@ -8,7 +8,7 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_d
 
 CREATE TABLE stats_test(data text);
 -- function to wait for counters to advance
-CREATE FUNCTION wait_for_decode_stats(check_reset bool) RETURNS void AS $$
+CREATE FUNCTION wait_for_decode_stats(check_reset bool, check_spill_txns bool) RETURNS void AS $$
 DECLARE
   start_time timestamptz := clock_timestamp();
   updated bool;
@@ -16,12 +16,25 @@ BEGIN
   -- we don't want to wait forever; loop will exit after 30 seconds
   FOR i IN 1 .. 300 LOOP
 
-    -- check to see if all updates have been reset/updated
-    SELECT CASE WHEN check_reset THEN (spill_txns = 0)
-                ELSE (spill_txns > 0)
-           END
-    INTO updated
-    FROM pg_stat_replication_slots WHERE slot_name='regression_slot';
+    IF check_spill_txns THEN
+
+      -- check to see if all updates have been reset/updated
+      SELECT CASE WHEN check_reset THEN (spill_txns = 0)
+                  ELSE (spill_txns > 0)
+             END
+      INTO updated
+      FROM pg_stat_replication_slots WHERE slot_name='regression_slot';
+
+    ELSE
+
+      -- check to see if all updates have been reset/updated
+      SELECT CASE WHEN check_reset THEN (total_txns = 0)
+                  ELSE (total_txns > 0)
+             END
+      INTO updated
+      FROM pg_stat_replication_slots WHERE slot_name='regression_slot';
+
+    END IF;
 
     exit WHEN updated;
 
@@ -51,16 +64,16 @@ SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL,
 -- Check stats, wait for the stats collector to update. We can't test the
 -- exact stats count as that can vary if any background transaction (say by
 -- autovacuum) happens in parallel to the main transaction.
-SELECT wait_for_decode_stats(false);
+SELECT wait_for_decode_stats(false, true);
  wait_for_decode_stats 
 -----------------------
  
 (1 row)
 
-SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
-    slot_name    | spill_txns | spill_count 
------------------+------------+-------------
- regression_slot | t          | t
+SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots;
+    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
+-----------------+------------+-------------+------------+-------------
+ regression_slot | t          | t           | t          | t
 (1 row)
 
 -- reset the slot stats, and wait for stats collector to reset
@@ -70,16 +83,16 @@ SELECT pg_stat_reset_replication_slot('regression_slot');
  
 (1 row)
 
-SELECT wait_for_decode_stats(true);
+SELECT wait_for_decode_stats(true, true);
  wait_for_decode_stats 
 -----------------------
  
 (1 row)
 
-SELECT slot_name, spill_txns, spill_count FROM pg_stat_replication_slots;
-    slot_name    | spill_txns | spill_count 
------------------+------------+-------------
- regression_slot |          0 |           0
+SELECT slot_name, spill_txns, spill_count, total_txns, total_bytes FROM pg_stat_replication_slots;
+    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
+-----------------+------------+-------------+------------+-------------
+ regression_slot |          0 |           0 |          0 |           0
 (1 row)
 
 -- decode and check stats again.
@@ -89,16 +102,36 @@ SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL,
   5002
 (1 row)
 
-SELECT wait_for_decode_stats(false);
+SELECT wait_for_decode_stats(false, true);
  wait_for_decode_stats 
 -----------------------
  
 (1 row)
 
-SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
-    slot_name    | spill_txns | spill_count 
------------------+------------+-------------
- regression_slot | t          | t
+SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots;
+    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
+-----------------+------------+-------------+------------+-------------
+ regression_slot | t          | t           | t          | t
+(1 row)
+
+SELECT pg_stat_reset_replication_slot('regression_slot');
+ pg_stat_reset_replication_slot 
+--------------------------------
+ 
+(1 row)
+
+-- non-spilled xact
+INSERT INTO stats_test values(generate_series(1, 10));
+SELECT wait_for_decode_stats(false, false);
+ wait_for_decode_stats 
+-----------------------
+ 
+(1 row)
+
+SELECT slot_name, spill_txns = 0 AS spill_txns, spill_count = 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots;
+    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
+-----------------+------------+-------------+------------+-------------
+ regression_slot | f          | f           | t          | t
 (1 row)
 
 -- Ensure stats can be repeatedly accessed using the same stats snapshot. See
@@ -117,7 +150,7 @@ SELECT slot_name FROM pg_stat_replication_slots;
 (1 row)
 
 COMMIT;
-DROP FUNCTION wait_for_decode_stats(bool);
+DROP FUNCTION wait_for_decode_stats(bool, bool);
 DROP TABLE stats_test;
 SELECT pg_drop_replication_slot('regression_slot');
  pg_drop_replication_slot 

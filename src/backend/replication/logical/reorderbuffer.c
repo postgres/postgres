@@ -350,6 +350,8 @@ ReorderBufferAllocate(void)
 	buffer->streamTxns = 0;
 	buffer->streamCount = 0;
 	buffer->streamBytes = 0;
+	buffer->totalTxns = 0;
+	buffer->totalBytes = 0;
 
 	buffer->current_restart_decoding_lsn = InvalidXLogRecPtr;
 
@@ -1363,6 +1365,11 @@ ReorderBufferIterTXNNext(ReorderBuffer *rb, ReorderBufferIterTXNState *state)
 		dlist_delete(&change->node);
 		dlist_push_tail(&state->old_change, &change->node);
 
+		/*
+		 * Update the total bytes processed before releasing the current set
+		 * of changes and restoring the new set of changes.
+		 */
+		rb->totalBytes += rb->size;
 		if (ReorderBufferRestoreChanges(rb, entry->txn, &entry->file,
 										&state->entries[off].segno))
 		{
@@ -2362,6 +2369,20 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		/* clean up the iterator */
 		ReorderBufferIterTXNFinish(rb, iterstate);
 		iterstate = NULL;
+
+		/*
+		 * Update total transaction count and total transaction bytes
+		 * processed. Ensure to not count the streamed transaction multiple
+		 * times.
+		 *
+		 * Note that the statistics computation has to be done after
+		 * ReorderBufferIterTXNFinish as it releases the serialized change
+		 * which we have already accounted in ReorderBufferIterTXNNext.
+		 */
+		if (!rbtxn_is_streamed(txn))
+			rb->totalTxns++;
+
+		rb->totalBytes += rb->size;
 
 		/*
 		 * Done with current changes, send the last message for this set of

@@ -875,6 +875,8 @@ CREATE VIEW pg_stat_replication_slots AS
             s.stream_txns,
             s.stream_count,
             s.stream_bytes,
+            s.total_txns,
+            s.total_bytes,
             s.stats_reset
     FROM pg_stat_get_replication_slots() AS s;
 
