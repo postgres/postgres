@@ -43,7 +43,8 @@ SET search_path TO information_schema;
 CREATE FUNCTION _pg_expandarray(IN anyarray, OUT x anyelement, OUT n int)
     RETURNS SETOF RECORD
     LANGUAGE sql STRICT IMMUTABLE PARALLEL SAFE
-    AS 'select $1[s], s - pg_catalog.array_lower($1,1) + 1
+    AS 'select $1[s],
+        s operator(pg_catalog.-) pg_catalog.array_lower($1,1) operator(pg_catalog.+) 1
         from pg_catalog.generate_series(pg_catalog.array_lower($1,1),
                                         pg_catalog.array_upper($1,1),
                                         1) as g(s)';
@@ -52,28 +53,26 @@ CREATE FUNCTION _pg_expandarray(IN anyarray, OUT x anyelement, OUT n int)
  * column's position in the index (NULL if not there) */
 CREATE FUNCTION _pg_index_position(oid, smallint) RETURNS int
     LANGUAGE sql STRICT STABLE
-    AS $$
+BEGIN ATOMIC
 SELECT (ss.a).n FROM
   (SELECT information_schema._pg_expandarray(indkey) AS a
    FROM pg_catalog.pg_index WHERE indexrelid = $1) ss
   WHERE (ss.a).x = $2;
-$$;
+END;
 
 CREATE FUNCTION _pg_truetypid(pg_attribute, pg_type) RETURNS oid
     LANGUAGE sql
     IMMUTABLE
     PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
-    AS
-$$SELECT CASE WHEN $2.typtype = 'd' THEN $2.typbasetype ELSE $1.atttypid END$$;
+RETURN CASE WHEN $2.typtype = 'd' THEN $2.typbasetype ELSE $1.atttypid END;
 
 CREATE FUNCTION _pg_truetypmod(pg_attribute, pg_type) RETURNS int4
     LANGUAGE sql
     IMMUTABLE
     PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
-    AS
-$$SELECT CASE WHEN $2.typtype = 'd' THEN $2.typtypmod ELSE $1.atttypmod END$$;
+RETURN CASE WHEN $2.typtype = 'd' THEN $2.typtypmod ELSE $1.atttypmod END;
 
 -- these functions encapsulate knowledge about the encoding of typmod:
 
@@ -82,8 +81,7 @@ CREATE FUNCTION _pg_char_max_length(typid oid, typmod int4) RETURNS integer
     IMMUTABLE
     PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
-    AS
-$$SELECT
+RETURN
   CASE WHEN $2 = -1 /* default typmod */
        THEN null
        WHEN $1 IN (1042, 1043) /* char, varchar */
@@ -91,15 +89,14 @@ $$SELECT
        WHEN $1 IN (1560, 1562) /* bit, varbit */
        THEN $2
        ELSE null
-  END$$;
+  END;
 
 CREATE FUNCTION _pg_char_octet_length(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
     PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
-    AS
-$$SELECT
+RETURN
   CASE WHEN $1 IN (25, 1042, 1043) /* text, char, varchar */
        THEN CASE WHEN $2 = -1 /* default typmod */
                  THEN CAST(2^30 AS integer)
@@ -107,15 +104,14 @@ $$SELECT
                       pg_catalog.pg_encoding_max_length((SELECT encoding FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database()))
             END
        ELSE null
-  END$$;
+  END;
 
 CREATE FUNCTION _pg_numeric_precision(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
     PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
-    AS
-$$SELECT
+RETURN
   CASE $1
          WHEN 21 /*int2*/ THEN 16
          WHEN 23 /*int4*/ THEN 32
@@ -128,27 +124,25 @@ $$SELECT
          WHEN 700 /*float4*/ THEN 24 /*FLT_MANT_DIG*/
          WHEN 701 /*float8*/ THEN 53 /*DBL_MANT_DIG*/
          ELSE null
-  END$$;
+  END;
 
 CREATE FUNCTION _pg_numeric_precision_radix(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
     PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
-    AS
-$$SELECT
+RETURN
   CASE WHEN $1 IN (21, 23, 20, 700, 701) THEN 2
        WHEN $1 IN (1700) THEN 10
        ELSE null
-  END$$;
+  END;
 
 CREATE FUNCTION _pg_numeric_scale(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
     PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
-    AS
-$$SELECT
+RETURN
   CASE WHEN $1 IN (21, 23, 20) THEN 0
        WHEN $1 IN (1700) THEN
             CASE WHEN $2 = -1
@@ -156,15 +150,14 @@ $$SELECT
                  ELSE ($2 - 4) & 65535
                  END
        ELSE null
-  END$$;
+  END;
 
 CREATE FUNCTION _pg_datetime_precision(typid oid, typmod int4) RETURNS integer
     LANGUAGE sql
     IMMUTABLE
     PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
-    AS
-$$SELECT
+RETURN
   CASE WHEN $1 IN (1082) /* date */
            THEN 0
        WHEN $1 IN (1083, 1114, 1184, 1266) /* time, timestamp, same + tz */
@@ -172,19 +165,18 @@ $$SELECT
        WHEN $1 IN (1186) /* interval */
            THEN CASE WHEN $2 < 0 OR $2 & 65535 = 65535 THEN 6 ELSE $2 & 65535 END
        ELSE null
-  END$$;
+  END;
 
 CREATE FUNCTION _pg_interval_type(typid oid, mod int4) RETURNS text
     LANGUAGE sql
     IMMUTABLE
     PARALLEL SAFE
     RETURNS NULL ON NULL INPUT
-    AS
-$$SELECT
+RETURN
   CASE WHEN $1 IN (1186) /* interval */
            THEN pg_catalog.upper(substring(pg_catalog.format_type($1, $2) similar 'interval[()0-9]* #"%#"' escape '#'))
        ELSE null
-  END$$;
+  END;
 
 
 -- 5.2 INFORMATION_SCHEMA_CATALOG_NAME view appears later.
