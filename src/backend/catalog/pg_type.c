@@ -535,8 +535,12 @@ GetTypeCollations(Oid typeoid)
 		elog(ERROR, "cache lookup failed for type %u", typeoid);
 	typeTup = (Form_pg_type) GETSTRUCT(tuple);
 
+	/*
+	 * If the type has a typcollation attribute, report that and we're done.
+	 * Otherwise, it could be a container type that we should recurse into.
+	 */
 	if (OidIsValid(typeTup->typcollation))
-		result = list_append_unique_oid(result, typeTup->typcollation);
+		result = list_make1_oid(typeTup->typcollation);
 	else if (typeTup->typtype == TYPTYPE_COMPOSITE)
 	{
 		Relation	rel = relation_open(typeTup->typrelid, AccessShareLock);
@@ -546,6 +550,8 @@ GetTypeCollations(Oid typeoid)
 		{
 			Form_pg_attribute att = TupleDescAttr(desc, i);
 
+			if (att->attisdropped)
+				continue;
 			if (OidIsValid(att->attcollation))
 				result = list_append_unique_oid(result, att->attcollation);
 			else
@@ -558,21 +564,24 @@ GetTypeCollations(Oid typeoid)
 	else if (typeTup->typtype == TYPTYPE_DOMAIN)
 	{
 		Assert(OidIsValid(typeTup->typbasetype));
-
-		result = list_concat_unique_oid(result,
-										GetTypeCollations(typeTup->typbasetype));
+		result = GetTypeCollations(typeTup->typbasetype);
 	}
 	else if (typeTup->typtype == TYPTYPE_RANGE)
 	{
-		Oid			rangeid = get_range_subtype(typeTup->oid);
+		Oid			rangecoll = get_range_collation(typeTup->oid);
 
-		Assert(OidIsValid(rangeid));
+		if (OidIsValid(rangecoll))
+			result = list_make1_oid(rangecoll);
+		else
+		{
+			Oid			rangeid = get_range_subtype(typeTup->oid);
 
-		result = list_concat_unique_oid(result, GetTypeCollations(rangeid));
+			Assert(OidIsValid(rangeid));
+			result = GetTypeCollations(rangeid);
+		}
 	}
-	else if (OidIsValid(typeTup->typelem))
-		result = list_concat_unique_oid(result,
-										GetTypeCollations(typeTup->typelem));
+	else if (IsTrueArrayType(typeTup))
+		result = GetTypeCollations(typeTup->typelem);
 
 	ReleaseSysCache(tuple);
 

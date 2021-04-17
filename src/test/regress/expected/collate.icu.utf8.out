@@ -1958,7 +1958,7 @@ CREATE DOMAIN d_custom AS t_custom;
 CREATE COLLATION custom (
     LOCALE = 'fr-x-icu', PROVIDER = 'icu'
 );
-CREATE TYPE myrange AS range (subtype = text);
+CREATE TYPE myrange AS range (subtype = text, collation = "POSIX");
 CREATE TYPE myrange_en_fr_ga AS range(subtype = t_en_fr_ga);
 CREATE TABLE collate_test (
     id integer,
@@ -2054,36 +2054,17 @@ ORDER BY 1, 2, 3;
  icuidx05_d_en_fr_ga_arr           | "en-x-icu" | up to date
  icuidx05_d_en_fr_ga_arr           | "fr-x-icu" | up to date
  icuidx05_d_en_fr_ga_arr           | "ga-x-icu" | up to date
- icuidx06_d_en_fr_ga               | "default"  | XXX
- icuidx06_d_en_fr_ga               | "en-x-icu" | up to date
  icuidx06_d_en_fr_ga               | "fr-x-icu" | up to date
- icuidx06_d_en_fr_ga               | "ga-x-icu" | up to date
- icuidx07_d_en_fr_ga               | "default"  | XXX
- icuidx07_d_en_fr_ga               | "en-x-icu" | up to date
- icuidx07_d_en_fr_ga               | "fr-x-icu" | up to date
  icuidx07_d_en_fr_ga               | "ga-x-icu" | up to date
- icuidx08_d_en_fr_ga               | "en-x-icu" | up to date
- icuidx08_d_en_fr_ga               | "fr-x-icu" | up to date
- icuidx08_d_en_fr_ga               | "ga-x-icu" | up to date
- icuidx09_d_en_fr_ga               | "en-x-icu" | up to date
- icuidx09_d_en_fr_ga               | "fr-x-icu" | up to date
- icuidx09_d_en_fr_ga               | "ga-x-icu" | up to date
- icuidx10_d_en_fr_ga_es            | "en-x-icu" | up to date
  icuidx10_d_en_fr_ga_es            | "es-x-icu" | up to date
- icuidx10_d_en_fr_ga_es            | "fr-x-icu" | up to date
- icuidx10_d_en_fr_ga_es            | "ga-x-icu" | up to date
- icuidx11_d_es                     | "default"  | XXX
  icuidx11_d_es                     | "es-x-icu" | up to date
- icuidx12_custom                   | "default"  | XXX
  icuidx12_custom                   | custom     | up to date
- icuidx13_custom                   | "default"  | XXX
  icuidx13_custom                   | custom     | up to date
- icuidx14_myrange                  | "default"  | XXX
  icuidx15_myrange_en_fr_ga         | "en-x-icu" | up to date
  icuidx15_myrange_en_fr_ga         | "fr-x-icu" | up to date
  icuidx15_myrange_en_fr_ga         | "ga-x-icu" | up to date
  icuidx17_part                     | "en-x-icu" | up to date
-(57 rows)
+(38 rows)
 
 -- Validate that REINDEX will update the stored version.
 UPDATE pg_depend SET refobjversion = 'not a version'

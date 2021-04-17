@@ -1835,8 +1835,17 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
  * the datatype.  However we do need a type dependency if there is no such
  * indirect dependency, as for example in Const and CoerceToDomain nodes.
  *
- * Similarly, we don't need to create dependencies on collations except where
- * the collation is being freshly introduced to the expression.
+ * Collations are handled primarily by recording the inputcollid's of node
+ * types that have them, as those are the ones that are semantically
+ * significant during expression evaluation.  We also record the collation of
+ * CollateExpr nodes, since those will be needed to print such nodes even if
+ * they don't really affect semantics.  Collations of leaf nodes such as Vars
+ * can be ignored on the grounds that if they're not default, they came from
+ * the referenced object (e.g., a table column), so the dependency on that
+ * object is enough.  (Note: in a post-const-folding expression tree, a
+ * CollateExpr's collation could have been absorbed into a Const or
+ * RelabelType node.  While ruleutils.c prints such collations for clarity,
+ * we may ignore them here as they have no semantic effect.)
  */
 static bool
 find_expr_references_walker(Node *node,
@@ -1876,29 +1885,6 @@ find_expr_references_walker(Node *node,
 			/* If it's a plain relation, reference this column */
 			add_object_address(OCLASS_CLASS, rte->relid, var->varattno,
 							   context->addrs);
-
-			/* Top-level collation if valid */
-			if (OidIsValid(var->varcollid))
-				add_object_address(OCLASS_COLLATION, var->varcollid, 0,
-								   context->addrs);
-			/* Otherwise, it may be a type with internal collations */
-			else if (var->vartype >= FirstNormalObjectId)
-			{
-				List	   *collations;
-				ListCell   *lc;
-
-				collations = GetTypeCollations(var->vartype);
-
-				foreach(lc, collations)
-				{
-					Oid			coll = lfirst_oid(lc);
-
-					if (OidIsValid(coll))
-						add_object_address(OCLASS_COLLATION,
-										   lfirst_oid(lc), 0,
-										   context->addrs);
-				}
-			}
 		}
 
 		/*
@@ -1919,15 +1905,6 @@ find_expr_references_walker(Node *node,
 		/* A constant must depend on the constant's datatype */
 		add_object_address(OCLASS_TYPE, con->consttype, 0,
 						   context->addrs);
-
-		/*
-		 * We must also depend on the constant's collation: it could be
-		 * different from the datatype's, if a CollateExpr was const-folded to
-		 * a simple constant.
-		 */
-		if (OidIsValid(con->constcollid))
-			add_object_address(OCLASS_COLLATION, con->constcollid, 0,
-							   context->addrs);
 
 		/*
 		 * If it's a regclass or similar literal referring to an existing
@@ -2013,10 +1990,6 @@ find_expr_references_walker(Node *node,
 		/* A parameter must depend on the parameter's datatype */
 		add_object_address(OCLASS_TYPE, param->paramtype, 0,
 						   context->addrs);
-		/* and its collation, just as for Consts */
-		if (OidIsValid(param->paramcollid))
-			add_object_address(OCLASS_COLLATION, param->paramcollid, 0,
-							   context->addrs);
 	}
 	else if (IsA(node, FuncExpr))
 	{
@@ -2024,6 +1997,9 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_PROC, funcexpr->funcid, 0,
 						   context->addrs);
+		if (OidIsValid(funcexpr->inputcollid))
+			add_object_address(OCLASS_COLLATION, funcexpr->inputcollid, 0,
+							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, OpExpr))
@@ -2032,6 +2008,9 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_OPERATOR, opexpr->opno, 0,
 						   context->addrs);
+		if (OidIsValid(opexpr->inputcollid))
+			add_object_address(OCLASS_COLLATION, opexpr->inputcollid, 0,
+							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, DistinctExpr))
@@ -2040,6 +2019,9 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_OPERATOR, distinctexpr->opno, 0,
 						   context->addrs);
+		if (OidIsValid(distinctexpr->inputcollid))
+			add_object_address(OCLASS_COLLATION, distinctexpr->inputcollid, 0,
+							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, NullIfExpr))
@@ -2048,6 +2030,9 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_OPERATOR, nullifexpr->opno, 0,
 						   context->addrs);
+		if (OidIsValid(nullifexpr->inputcollid))
+			add_object_address(OCLASS_COLLATION, nullifexpr->inputcollid, 0,
+							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, ScalarArrayOpExpr))
@@ -2056,6 +2041,9 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_OPERATOR, opexpr->opno, 0,
 						   context->addrs);
+		if (OidIsValid(opexpr->inputcollid))
+			add_object_address(OCLASS_COLLATION, opexpr->inputcollid, 0,
+							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, Aggref))
@@ -2064,6 +2052,9 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_PROC, aggref->aggfnoid, 0,
 						   context->addrs);
+		if (OidIsValid(aggref->inputcollid))
+			add_object_address(OCLASS_COLLATION, aggref->inputcollid, 0,
+							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, WindowFunc))
@@ -2072,6 +2063,9 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_PROC, wfunc->winfnoid, 0,
 						   context->addrs);
+		if (OidIsValid(wfunc->inputcollid))
+			add_object_address(OCLASS_COLLATION, wfunc->inputcollid, 0,
+							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, SubscriptingRef))
@@ -2116,10 +2110,6 @@ find_expr_references_walker(Node *node,
 		else
 			add_object_address(OCLASS_TYPE, fselect->resulttype, 0,
 							   context->addrs);
-		/* the collation might not be referenced anywhere else, either */
-		if (OidIsValid(fselect->resultcollid))
-			add_object_address(OCLASS_COLLATION, fselect->resultcollid, 0,
-							   context->addrs);
 	}
 	else if (IsA(node, FieldStore))
 	{
@@ -2146,10 +2136,6 @@ find_expr_references_walker(Node *node,
 		/* since there is no function dependency, need to depend on type */
 		add_object_address(OCLASS_TYPE, relab->resulttype, 0,
 						   context->addrs);
-		/* the collation might not be referenced anywhere else, either */
-		if (OidIsValid(relab->resultcollid))
-			add_object_address(OCLASS_COLLATION, relab->resultcollid, 0,
-							   context->addrs);
 	}
 	else if (IsA(node, CoerceViaIO))
 	{
@@ -2158,10 +2144,6 @@ find_expr_references_walker(Node *node,
 		/* since there is no exposed function, need to depend on type */
 		add_object_address(OCLASS_TYPE, iocoerce->resulttype, 0,
 						   context->addrs);
-		/* the collation might not be referenced anywhere else, either */
-		if (OidIsValid(iocoerce->resultcollid))
-			add_object_address(OCLASS_COLLATION, iocoerce->resultcollid, 0,
-							   context->addrs);
 	}
 	else if (IsA(node, ArrayCoerceExpr))
 	{
@@ -2170,10 +2152,6 @@ find_expr_references_walker(Node *node,
 		/* as above, depend on type */
 		add_object_address(OCLASS_TYPE, acoerce->resulttype, 0,
 						   context->addrs);
-		/* the collation might not be referenced anywhere else, either */
-		if (OidIsValid(acoerce->resultcollid))
-			add_object_address(OCLASS_COLLATION, acoerce->resultcollid, 0,
-							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, ConvertRowtypeExpr))
@@ -2213,6 +2191,24 @@ find_expr_references_walker(Node *node,
 			add_object_address(OCLASS_OPFAMILY, lfirst_oid(l), 0,
 							   context->addrs);
 		}
+		foreach(l, rcexpr->inputcollids)
+		{
+			Oid			inputcollid = lfirst_oid(l);
+
+			if (OidIsValid(inputcollid))
+				add_object_address(OCLASS_COLLATION, inputcollid, 0,
+								   context->addrs);
+		}
+		/* fall through to examine arguments */
+	}
+	else if (IsA(node, MinMaxExpr))
+	{
+		MinMaxExpr *mmexpr = (MinMaxExpr *) node;
+
+		/* minmaxtype will match one of the inputs, so no need to record it */
+		if (OidIsValid(mmexpr->inputcollid))
+			add_object_address(OCLASS_COLLATION, mmexpr->inputcollid, 0,
+							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, CoerceToDomain))

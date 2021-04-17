@@ -755,7 +755,7 @@ CREATE COLLATION custom (
     LOCALE = 'fr-x-icu', PROVIDER = 'icu'
 );
 
-CREATE TYPE myrange AS range (subtype = text);
+CREATE TYPE myrange AS range (subtype = text, collation = "POSIX");
 CREATE TYPE myrange_en_fr_ga AS range(subtype = t_en_fr_ga);
 
 CREATE TABLE collate_test (
