@@ -830,10 +830,10 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
       check if the plugin has already received this <command>PREPARE</command>
       in which case it can either error out or skip the remaining changes of 
       the transaction.
-      <programlisting>
-       typedef void (*LogicalDecodeBeginPrepareCB) (struct LogicalDecodingContext *ctx,
-                                                    ReorderBufferTXN *txn);
-      </programlisting>
+<programlisting>
+typedef void (*LogicalDecodeBeginPrepareCB) (struct LogicalDecodingContext *ctx,
+                                             ReorderBufferTXN *txn);
+</programlisting>
      </para>
     </sect3>
 
@@ -847,11 +847,11 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
       rows will have been called before this, if there have been any modified
       rows. The <parameter>gid</parameter> field, which is part of the
       <parameter>txn</parameter> parameter, can be used in this callback.
-      <programlisting>
-       typedef void (*LogicalDecodePrepareCB) (struct LogicalDecodingContext *ctx,
-                                               ReorderBufferTXN *txn,
-                                               XLogRecPtr prepare_lsn);
-      </programlisting>
+<programlisting>
+typedef void (*LogicalDecodePrepareCB) (struct LogicalDecodingContext *ctx,
+                                        ReorderBufferTXN *txn,
+                                        XLogRecPtr prepare_lsn);
+</programlisting>
      </para>
     </sect3>
 
@@ -863,11 +863,11 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
       whenever a transaction <command>COMMIT PREPARED</command> has been decoded.
       The <parameter>gid</parameter> field, which is part of the
       <parameter>txn</parameter> parameter, can be used in this callback.
-      <programlisting>
-       typedef void (*LogicalDecodeCommitPreparedCB) (struct LogicalDecodingContext *ctx,
-                                                      ReorderBufferTXN *txn,
-                                                      XLogRecPtr commit_lsn);
-      </programlisting>
+<programlisting>
+typedef void (*LogicalDecodeCommitPreparedCB) (struct LogicalDecodingContext *ctx,
+                                               ReorderBufferTXN *txn,
+                                               XLogRecPtr commit_lsn);
+</programlisting>
      </para>
     </sect3>
 
@@ -885,12 +885,12 @@ typedef bool (*LogicalDecodeFilterPrepareCB) (struct LogicalDecodingContext *ctx
       it can apply the rollback, otherwise, it can skip the rollback operation. The
       <parameter>gid</parameter> alone is not sufficient because the downstream
       node can have a prepared transaction with same identifier.
-      <programlisting>
-       typedef void (*LogicalDecodeRollbackPreparedCB) (struct LogicalDecodingContext *ctx,
-                                                        ReorderBufferTXN *txn,
-                                                        XLogRecPtr prepare_end_lsn,
-                                                        TimestampTz prepare_time);
-      </programlisting>
+<programlisting>
+typedef void (*LogicalDecodeRollbackPreparedCB) (struct LogicalDecodingContext *ctx,
+                                                 ReorderBufferTXN *txn,
+                                                 XLogRecPtr prepare_end_lsn,
+                                                 TimestampTz prepare_time);
+</programlisting>
      </para>
     </sect3>
 

@@ -5437,18 +5437,18 @@ int PQpipelineSync(PGconn *conn);
     round-trip to get the results it needs. However, it's often possible to
     adjust the client design to exchange the required information server-side.
     Read-modify-write cycles are especially good candidates; for example:
-    <programlisting>
+<programlisting>
 BEGIN;
 SELECT x FROM mytable WHERE id = 42 FOR UPDATE;
 -- result: x=2
 -- client adds 1 to x:
 UPDATE mytable SET x = 3 WHERE id = 42;
 COMMIT;
-    </programlisting>
+</programlisting>
     could be much more efficiently done with:
-    <programlisting>
+<programlisting>
 UPDATE mytable SET x = x + 1 WHERE id = 42;
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
