@@ -660,6 +660,11 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal_pm(SIGCHLD, reaper);	/* handle child termination */
 
 #ifdef SIGURG
+	/*
+	 * Ignore SIGURG for now.  Child processes may change this (see
+	 * InitializeLatchSupport), but they will not receive any such signals
+	 * until they wait on a latch.
+	 */
 	pqsignal_pm(SIGURG, SIG_IGN);	/* ignored */
 #endif
 
