@@ -2722,9 +2722,9 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        </para>
        <para>
         Number of decoded transactions sent to the decoding output plugin for
-        this slot. This counter is used to maintain the top level transactions,
-        so the counter is not incremented for subtransactions. Note that this
-        includes the transactions that are streamed and/or spilled.
+        this slot. This counts toplevel transactions only, and is not incremented
+        for subtransactions. Note that this includes the transactions that are
+        streamed and/or spilled.
        </para></entry>
      </row>
 
@@ -2733,10 +2733,10 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <structfield>total_bytes</structfield><type>bigint</type>
        </para>
        <para>
-        Amount of decoded transactions data sent to the decoding output plugin
+        Amount of decoded transaction data sent to the decoding output plugin
         while decoding the changes from WAL for this slot. This can be used to
         gauge the total amount of data sent during logical decoding. Note that
-        this includes the data that is streamed and/or spilled.
+        this includes data that is streamed and/or spilled.
        </para>
       </entry>
      </row>

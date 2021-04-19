@@ -51,6 +51,45 @@ BEGIN
     extract(epoch from clock_timestamp() - start_time);
 END
 $$ LANGUAGE plpgsql;
+-- non-spilled xact
+INSERT INTO stats_test values(1);
+SELECT count(*) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'skip-empty-xacts', '1');
+ count 
+-------
+     3
+(1 row)
+
+SELECT wait_for_decode_stats(false, false);
+ wait_for_decode_stats 
+-----------------------
+ 
+(1 row)
+
+SELECT slot_name, spill_txns = 0 AS spill_txns, spill_count = 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots;
+    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
+-----------------+------------+-------------+------------+-------------
+ regression_slot | t          | t           | t          | t
+(1 row)
+
+-- reset the slot stats, and wait for stats collector's total txn to reset
+SELECT pg_stat_reset_replication_slot('regression_slot');
+ pg_stat_reset_replication_slot 
+--------------------------------
+ 
+(1 row)
+
+SELECT wait_for_decode_stats(true, false);
+ wait_for_decode_stats 
+-----------------------
+ 
+(1 row)
+
+SELECT slot_name, spill_txns, spill_count, total_txns, total_bytes FROM pg_stat_replication_slots;
+    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
+-----------------+------------+-------------+------------+-------------
+ regression_slot |          0 |           0 |          0 |           0
+(1 row)
+
 -- spilling the xact
 BEGIN;
 INSERT INTO stats_test SELECT 'serialize-topbig--1:'||g.i FROM generate_series(1, 5000) g(i);
@@ -112,26 +151,6 @@ SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count, 
     slot_name    | spill_txns | spill_count | total_txns | total_bytes 
 -----------------+------------+-------------+------------+-------------
  regression_slot | t          | t           | t          | t
-(1 row)
-
-SELECT pg_stat_reset_replication_slot('regression_slot');
- pg_stat_reset_replication_slot 
---------------------------------
- 
-(1 row)
-
--- non-spilled xact
-INSERT INTO stats_test values(generate_series(1, 10));
-SELECT wait_for_decode_stats(false, false);
- wait_for_decode_stats 
------------------------
- 
-(1 row)
-
-SELECT slot_name, spill_txns = 0 AS spill_txns, spill_count = 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots;
-    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
------------------+------------+-------------+------------+-------------
- regression_slot | f          | f           | t          | t
 (1 row)
 
 -- Ensure stats can be repeatedly accessed using the same stats snapshot. See
