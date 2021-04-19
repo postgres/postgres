@@ -526,8 +526,8 @@ process_queued_fetch_requests(libpq_source *src)
 		}
 		else
 		{
-			pg_log_debug("received chunk for file \"%s\", offset " INT64_FORMAT ", size %d",
-						 filename, chunkoff, chunksize);
+			pg_log_debug("received chunk for file \"%s\", offset %lld, size %d",
+						 filename, (long long int) chunkoff, chunksize);
 
 			if (strcmp(filename, rq->path) != 0)
 			{
@@ -535,8 +535,8 @@ process_queued_fetch_requests(libpq_source *src)
 						 filename, rq->path);
 			}
 			if (chunkoff != rq->offset)
-				pg_fatal("received data at offset " INT64_FORMAT " of file \"%s\", when requested for offset " INT64_FORMAT,
-						 chunkoff, rq->path, (int64) rq->offset);
+				pg_fatal("received data at offset %lld of file \"%s\", when requested for offset %lld",
+						 (long long int) chunkoff, rq->path, (long long int) rq->offset);
 
 			/*
 			 * We should not receive more data than we requested, or
