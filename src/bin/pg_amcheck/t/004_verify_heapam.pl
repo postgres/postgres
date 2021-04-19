@@ -4,6 +4,7 @@ use warnings;
 use PostgresNode;
 use TestLib;
 
+use Fcntl qw(:seek);
 use Test::More;
 
 # This regression test demonstrates that the pg_amcheck binary correctly
@@ -95,7 +96,7 @@ sub read_tuple
 {
 	my ($fh, $offset) = @_;
 	my ($buffer, %tup);
-	seek($fh, $offset, 0)
+	seek($fh, $offset, SEEK_SET)
 		or BAIL_OUT("seek failed: $!");
 	defined(sysread($fh, $buffer, HEAPTUPLE_PACK_LENGTH))
 		or BAIL_OUT("sysread failed: $!");
@@ -172,7 +173,7 @@ sub write_tuple
 					$tup->{c_va_extinfo},
 					$tup->{c_va_valueid},
 					$tup->{c_va_toastrelid});
-	seek($fh, $offset, 0)
+	seek($fh, $offset, SEEK_SET)
 		or BAIL_OUT("seek failed: $!");
 	defined(syswrite($fh, $buffer, HEAPTUPLE_PACK_LENGTH))
 		or BAIL_OUT("syswrite failed: $!");
