@@ -1541,7 +1541,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	elog(DEBUG1, "serializing snapshot to %s", path);
 
 	/* to make sure only we will write to this tempfile, include pid */
-	sprintf(tmppath, "pg_logical/snapshots/%X-%X.snap.%u.tmp",
+	sprintf(tmppath, "pg_logical/snapshots/%X-%X.snap.%d.tmp",
 			LSN_FORMAT_ARGS(lsn), MyProcPid);
 
 	/*

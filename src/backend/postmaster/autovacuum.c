@@ -1860,7 +1860,7 @@ autovac_balance_cost(void)
 		}
 
 		if (worker->wi_proc != NULL)
-			elog(DEBUG2, "autovac_balance_cost(pid=%u db=%u, rel=%u, dobalance=%s cost_limit=%d, cost_limit_base=%d, cost_delay=%g)",
+			elog(DEBUG2, "autovac_balance_cost(pid=%d db=%u, rel=%u, dobalance=%s cost_limit=%d, cost_limit_base=%d, cost_delay=%g)",
 				 worker->wi_proc->pid, worker->wi_dboid, worker->wi_tableoid,
 				 worker->wi_dobalance ? "yes" : "no",
 				 worker->wi_cost_limit, worker->wi_cost_limit_base,
