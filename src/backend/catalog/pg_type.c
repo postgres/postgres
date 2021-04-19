@@ -997,7 +997,7 @@ makeMultirangeTypeName(const char *rangeTypeName, Oid typeNamespace)
  * makeUniqueTypeName
  *		Generate a unique name for a prospective new type
  *
- * Given a typeName, return a new palloc'ed name by preprending underscores
+ * Given a typeName, return a new palloc'ed name by prepending underscores
  * until a non-conflicting name results.
  *
  * If tryOriginal, first try with zero underscores.

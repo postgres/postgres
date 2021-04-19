@@ -1398,7 +1398,7 @@ _bt_delitems_delete(Relation rel, Buffer buf, TransactionId latestRemovedXid,
  * _bt_delitems_delete.  These steps must take place before each function's
  * critical section begins.
  *
- * updatabable and nupdatable are inputs, though note that we will use
+ * updatable and nupdatable are inputs, though note that we will use
  * _bt_update_posting() to replace the original itup with a pointer to a final
  * version in palloc()'d memory.  Caller should free the tuples when its done.
  *
@@ -1504,7 +1504,7 @@ _bt_delitems_cmp(const void *a, const void *b)
  * some extra index tuples that were practically free for tableam to check in
  * passing (when they actually turn out to be safe to delete).  It probably
  * only makes sense for the tableam to go ahead with these extra checks when
- * it is block-orientated (otherwise the checks probably won't be practically
+ * it is block-oriented (otherwise the checks probably won't be practically
  * free, which we rely on).  The tableam interface requires the tableam side
  * to handle the problem, though, so this is okay (we as an index AM are free
  * to make the simplifying assumption that all tableams must be block-based).

@@ -375,7 +375,7 @@ main(int argc, char *const argv[])
 				}
 				cur = NULL;
 
-				/* remove old delared statements if any are still there */
+				/* remove old declared statements if any are still there */
 				for (list = g_declared_list; list != NULL;)
 				{
 					struct declared_list *this = list;

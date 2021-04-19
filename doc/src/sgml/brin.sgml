@@ -730,7 +730,7 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
      for <xref linkend="sql-altertable"/>. When set to a positive value,
      each block range is assumed to contain this number of distinct non-null
      values. When set to a negative value, which must be greater than or
-     equal to -1, the number of distinct non-null is assumed linear with
+     equal to -1, the number of distinct non-null values is assumed to grow linearly with
      the maximum possible number of tuples in the block range (about 290
      rows per block). The default value is <literal>-0.1</literal>, and
      the minimum number of distinct non-null values is <literal>16</literal>.
@@ -833,7 +833,7 @@ typedef struct BrinOpcInfo
       Returns whether all the ScanKey entries are consistent with the given
       indexed values for a range.
       The attribute number to use is passed as part of the scan key.
-      Multiple scan keys for the same attribute may be passed at once, the
+      Multiple scan keys for the same attribute may be passed at once; the
       number of entries is determined by the <literal>nkeys</literal> parameter.
      </para>
     </listitem>
@@ -1214,7 +1214,7 @@ typedef struct BrinOpcInfo
 
  <para>
   The minmax-multi operator class is also intended for data types implementing
-  a totally ordered sets, and may be seen as a simple extension of the minmax
+  a totally ordered set, and may be seen as a simple extension of the minmax
   operator class. While minmax operator class summarizes values from each block
   range into a single contiguous interval, minmax-multi allows summarization
   into multiple smaller intervals to improve handling of outlier values.

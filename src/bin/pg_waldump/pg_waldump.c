@@ -323,7 +323,7 @@ WALDumpCloseSegment(XLogReaderState *state)
 }
 
 /*
- * pg_waldump's WAL page rader
+ * pg_waldump's WAL page reader
  *
  * timeline and startptr specifies the LSN, and reads up to endptr.
  */

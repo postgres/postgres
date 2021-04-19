@@ -553,7 +553,7 @@ multirange_get_typcache(FunctionCallInfo fcinfo, Oid mltrngtypid)
 
 
 /*
- * Estimate size occupied by serialized multirage.
+ * Estimate size occupied by serialized multirange.
  */
 static Size
 multirange_size_estimate(TypeCacheEntry *rangetyp, int32 range_count,

@@ -660,7 +660,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	{
 		/*
 		 * Partitioned tables don't have storage, so we don't set any fields in
-		 * their pg_class entries except for relpages, which is necessary for
+		 * their pg_class entries except for reltuples, which is necessary for
 		 * auto-analyze to work properly.
 		 */
 		vac_update_relstats(onerel, -1, totalrows,

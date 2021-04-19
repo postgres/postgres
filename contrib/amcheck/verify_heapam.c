@@ -930,7 +930,7 @@ check_tuple_visibility(HeapCheckContext *ctx)
 			 * If xmin_status happens to be XID_IS_CURRENT_XID, then in theory
 			 * any such DDL changes ought to be visible to us, so perhaps
 			 * we could check anyway in that case. But, for now, let's be
-			 * conservate and treat this like any other uncommitted insert.
+			 * conservative and treat this like any other uncommitted insert.
 			 */
 			return false;
 		}

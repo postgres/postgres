@@ -59,7 +59,7 @@
  * SQL standard actually does it in that more complicated way), but the
  * internal representation allows us to construct it this way.)
  *
- * With a search caluse
+ * With a search clause
  *
  * SEARCH DEPTH FIRST BY col1, col2 SET sqc
  *

@@ -409,7 +409,7 @@ typedef struct BloomOpaque
 {
 	/*
 	 * XXX At this point we only need a single proc (to compute the hash), but
-	 * let's keep the array just like inclusion and minman opclasses, for
+	 * let's keep the array just like inclusion and minmax opclasses, for
 	 * consistency. We may need additional procs in the future.
 	 */
 	FmgrInfo	extra_procinfos[BLOOM_MAX_PROCNUMS];

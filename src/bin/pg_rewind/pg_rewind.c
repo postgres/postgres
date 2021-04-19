@@ -605,7 +605,7 @@ perform_rewind(filemap_t *filemap, rewind_source *source,
 	 * and the target. But if the source is a standby server, it's possible
 	 * that the last common checkpoint is *after* the standby's restartpoint.
 	 * That implies that the source server has applied the checkpoint record,
-	 * but hasn't perfomed a corresponding restartpoint yet. Make sure we
+	 * but hasn't performed a corresponding restartpoint yet. Make sure we
 	 * start at the restartpoint's redo point in that case.
 	 *
 	 * Use the old version of the source's control file for this. The server

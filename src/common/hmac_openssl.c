@@ -34,7 +34,7 @@
 
 /*
  * In backend, use an allocation in TopMemoryContext to count for resowner
- * cleanup handling if necesary.  For versions of OpenSSL where HMAC_CTX is
+ * cleanup handling if necessary.  For versions of OpenSSL where HMAC_CTX is
  * known, just use palloc().  In frontend, use malloc to be able to return
  * a failure status back to the caller.
  */

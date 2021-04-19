@@ -354,15 +354,15 @@ current=testdb1 (should be testdb1)
   </para>
 
   <para>
-  The third option is to declare sql identifier linked to
+  The third option is to declare a SQL identifier linked to
   the connection, for example:
 <programlisting>
 EXEC SQL AT <replaceable>connection-name</replaceable> DECLARE <replaceable>statement-name</replaceable> STATEMENT;
 EXEC SQL PREPARE <replaceable>statement-name</replaceable> FROM :<replaceable>dyn-string</replaceable>;
 </programlisting>
-   Once you link a sql identifier to a connection, you execute a dynamic SQL
-   without AT clause. Note that this option behaves like preprocessor directives,
-   therefore the link is enabled only in the file.
+   Once you link a SQL identifier to a connection, you execute dynamic SQL
+   without an AT clause. Note that this option behaves like preprocessor
+   directives, therefore the link is enabled only in the file.
   </para>
   <para>
    Here is an example program using this option:
@@ -6911,15 +6911,15 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
     <title>Description</title>
 
     <para>
-     <command>DECLARE STATEMENT</command> declares SQL statement identifier.
+     <command>DECLARE STATEMENT</command> declares a SQL statement identifier.
      SQL statement identifier can be associated with the connection.
-     When the identifier is used by dynamic SQL statements, these SQLs are executed
-     by using the associated connection.
-     The namespace of the declaration is the precompile unit, and multiple declarations to
-     the same SQL statement identifier is not allowed.
-
-     Note that if the precompiler run in the Informix compatibility mode and some SQL statement
-     is declared, "database" can not be used as a cursor name.
+     When the identifier is used by dynamic SQL statements, the statements
+     are executed using the associated connection.
+     The namespace of the declaration is the precompile unit, and multiple
+     declarations to the same SQL statement identifier are not allowed.
+     Note that if the precompiler runs in Informix compatibility mode and
+     some SQL statement is declared, "database" can not be used as a cursor
+     name.
     </para>
    </refsect1>
 

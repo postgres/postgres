@@ -248,7 +248,7 @@ typedef struct DistanceValue
 } DistanceValue;
 
 
-/* Cache for support and strategy procesures. */
+/* Cache for support and strategy procedures. */
 
 static FmgrInfo *minmax_multi_get_procinfo(BrinDesc *bdesc, uint16 attno,
 										   uint16 procnum);
@@ -1311,7 +1311,7 @@ compare_distances(const void *a, const void *b)
 }
 
 /*
- * Given an array of expanded ranges, compute distance of the gaps betwen
+ * Given an array of expanded ranges, compute distance of the gaps between
  * the ranges - for ncranges there are (ncranges-1) gaps.
  *
  * We simply call the "distance" function to compute the (max-min) for pairs
@@ -1623,7 +1623,7 @@ ensure_free_space_in_buffer(BrinDesc *bdesc, Oid colloid,
 	 *
 	 * We don't simply check against range->maxvalues again. The deduplication
 	 * might have freed very little space (e.g. just one value), forcing us to
-	 * do depuplication very often. In that case it's better to do compaction
+	 * do deduplication very often. In that case it's better to do compaction
 	 * and reduce more space.
 	 */
 	if (2 * range->nranges + range->nvalues <= range->maxvalues * MINMAX_BUFFER_LOAD_FACTOR)

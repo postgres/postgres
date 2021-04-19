@@ -147,7 +147,7 @@
  *
  *			For each subsequent entry in the history list, the "good_match"
  *			is lowered by 10%. So the compressor will be more happy with
- *			short matches the farer it has to go back in the history.
+ *			short matches the further it has to go back in the history.
  *			Another "speed against ratio" preference characteristic of
  *			the algorithm.
  *

@@ -2131,7 +2131,7 @@ GetSnapshotDataReuse(Snapshot snapshot)
  *			older than this are known not running any more.
  *
  * And try to advance the bounds of GlobalVis{Shared,Catalog,Data,Temp}Rels
- * for the benefit of theGlobalVisTest* family of functions.
+ * for the benefit of the GlobalVisTest* family of functions.
  *
  * Note: this function should probably not be called with an argument that's
  * not statically allocated (see xip allocation below).

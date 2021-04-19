@@ -4039,7 +4039,7 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 
 			/*
 			 * Process a simple Var expression, by matching it to keys
-			 * directly. If there's a matchine expression, we'll try
+			 * directly. If there's a matching expression, we'll try
 			 * matching it later.
 			 */
 			if (IsA(varinfo->var, Var))

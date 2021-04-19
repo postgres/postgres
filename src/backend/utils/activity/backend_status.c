@@ -1032,10 +1032,10 @@ pgstat_get_my_queryid(void)
 	if (!MyBEEntry)
 		return 0;
 
-	/* There's no need for a look around pgstat_begin_read_activity /
+	/* There's no need for a lock around pgstat_begin_read_activity /
 	 * pgstat_end_read_activity here as it's only called from
 	 * pg_stat_get_activity which is already protected, or from the same
-	 * backend which mean that there won't be concurrent write.
+	 * backend which means that there won't be concurrent writes.
 	 */
 	return MyBEEntry->st_queryid;
 }

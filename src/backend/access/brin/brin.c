@@ -596,7 +596,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 					 * and if we're violating them. In that case we can
 					 * terminate early, without invoking the support function.
 					 *
-					 * As there may be more keys, we can only detemine
+					 * As there may be more keys, we can only determine
 					 * mismatch within this loop.
 					 */
 					if (bdesc->bd_info[attno - 1]->oi_regular_nulls &&
@@ -636,7 +636,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 
 					/*
 					 * Collation from the first key (has to be the same for
-					 * all keys for the same attribue).
+					 * all keys for the same attribute).
 					 */
 					collation = keys[attno - 1][0]->sk_collation;
 

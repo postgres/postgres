@@ -115,7 +115,7 @@ typedef struct
 
 /*
  * In sorted build, we use a stack of these structs, one for each level,
- * to hold an in-memory buffer of the righmost page at the level. When the
+ * to hold an in-memory buffer of the rightmost page at the level. When the
  * page fills up, it is written out and a new page is allocated.
  */
 typedef struct GistSortedBuildPageState
