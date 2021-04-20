@@ -385,8 +385,8 @@ extern bool DecodeXLogRecord(XLogReaderState *state,
 #define XLogRecMaxBlockId(decoder) ((decoder)->record->max_block_id)
 #define XLogRecGetBlock(decoder, i) (&(decoder)->record->blocks[(i)])
 #define XLogRecHasBlockRef(decoder, block_id) \
-	((decoder)->record->max_block_id >= (block_id))  && \
-	((decoder)->record->blocks[block_id].in_use)
+	((decoder)->record->max_block_id >= (block_id) && \
+	 (decoder)->record->blocks[block_id].in_use)
 #define XLogRecHasBlockImage(decoder, block_id) \
 	((decoder)->record->blocks[block_id].has_image)
 #define XLogRecBlockImageApply(decoder, block_id) \
