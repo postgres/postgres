@@ -28,10 +28,9 @@ spg_desc(StringInfo buf, XLogReaderState *record)
 			{
 				spgxlogAddLeaf *xlrec = (spgxlogAddLeaf *) rec;
 
-				appendStringInfoString(buf, "add leaf to page");
-				appendStringInfo(buf, "; off %u; headoff %u; parentoff %u",
+				appendStringInfo(buf, "off: %u, headoff: %u, parentoff: %u, nodeI: %u",
 								 xlrec->offnumLeaf, xlrec->offnumHeadLeaf,
-								 xlrec->offnumParent);
+								 xlrec->offnumParent, xlrec->nodeI);
 				if (xlrec->newPage)
 					appendStringInfoString(buf, " (newpage)");
 				if (xlrec->storesNulls)
@@ -39,42 +38,91 @@ spg_desc(StringInfo buf, XLogReaderState *record)
 			}
 			break;
 		case XLOG_SPGIST_MOVE_LEAFS:
-			appendStringInfo(buf, "%u leafs",
-							 ((spgxlogMoveLeafs *) rec)->nMoves);
+			{
+				spgxlogMoveLeafs *xlrec = (spgxlogMoveLeafs *) rec;
+
+				appendStringInfo(buf, "nmoves: %u, parentoff: %u, nodeI: %u",
+								 xlrec->nMoves,
+								 xlrec->offnumParent, xlrec->nodeI);
+				if (xlrec->newPage)
+					appendStringInfoString(buf, " (newpage)");
+				if (xlrec->replaceDead)
+					appendStringInfoString(buf, " (replacedead)");
+				if (xlrec->storesNulls)
+					appendStringInfoString(buf, " (nulls)");
+			}
 			break;
 		case XLOG_SPGIST_ADD_NODE:
-			appendStringInfo(buf, "off %u",
-							 ((spgxlogAddNode *) rec)->offnum);
+			{
+				spgxlogAddNode *xlrec = (spgxlogAddNode *) rec;
+
+				appendStringInfo(buf, "off: %u, newoff: %u, parentBlk: %d, "
+								 "parentoff: %u, nodeI: %u",
+								 xlrec->offnum,
+								 xlrec->offnumNew,
+								 xlrec->parentBlk,
+								 xlrec->offnumParent,
+								 xlrec->nodeI);
+				if (xlrec->newPage)
+					appendStringInfoString(buf, " (newpage)");
+			}
 			break;
 		case XLOG_SPGIST_SPLIT_TUPLE:
-			appendStringInfo(buf, "prefix off: %u, postfix off: %u (same %d, new %d)",
-							 ((spgxlogSplitTuple *) rec)->offnumPrefix,
-							 ((spgxlogSplitTuple *) rec)->offnumPostfix,
-							 ((spgxlogSplitTuple *) rec)->postfixBlkSame,
-							 ((spgxlogSplitTuple *) rec)->newPage
-				);
+			{
+				spgxlogSplitTuple *xlrec = (spgxlogSplitTuple *) rec;
+
+				appendStringInfo(buf, "prefixoff: %u, postfixoff: %u",
+								 xlrec->offnumPrefix,
+								 xlrec->offnumPostfix);
+				if (xlrec->newPage)
+					appendStringInfoString(buf, " (newpage)");
+				if (xlrec->postfixBlkSame)
+					appendStringInfoString(buf, " (same)");
+			}
 			break;
 		case XLOG_SPGIST_PICKSPLIT:
 			{
 				spgxlogPickSplit *xlrec = (spgxlogPickSplit *) rec;
 
-				appendStringInfo(buf, "ndel %u; nins %u",
-								 xlrec->nDelete, xlrec->nInsert);
+				appendStringInfo(buf, "ndelete: %u, ninsert: %u, inneroff: %u, "
+								 "parentoff: %u, nodeI: %u",
+								 xlrec->nDelete, xlrec->nInsert,
+								 xlrec->offnumInner,
+								 xlrec->offnumParent, xlrec->nodeI);
 				if (xlrec->innerIsParent)
 					appendStringInfoString(buf, " (innerIsParent)");
+				if (xlrec->storesNulls)
+					appendStringInfoString(buf, " (nulls)");
 				if (xlrec->isRootSplit)
 					appendStringInfoString(buf, " (isRootSplit)");
 			}
 			break;
 		case XLOG_SPGIST_VACUUM_LEAF:
-			/* no further information */
+			{
+				spgxlogVacuumLeaf *xlrec = (spgxlogVacuumLeaf *) rec;
+
+				appendStringInfo(buf, "ndead: %u, nplaceholder: %u, nmove: %u, nchain: %u",
+								 xlrec->nDead, xlrec->nPlaceholder,
+								 xlrec->nMove, xlrec->nChain);
+			}
 			break;
 		case XLOG_SPGIST_VACUUM_ROOT:
-			/* no further information */
+			{
+				spgxlogVacuumRoot *xlrec = (spgxlogVacuumRoot *) rec;
+
+				appendStringInfo(buf, "ndelete: %u",
+								 xlrec->nDelete);
+			}
 			break;
 		case XLOG_SPGIST_VACUUM_REDIRECT:
-			appendStringInfo(buf, "newest XID %u",
-							 ((spgxlogVacuumRedirect *) rec)->newestRedirectXid);
+			{
+				spgxlogVacuumRedirect *xlrec = (spgxlogVacuumRedirect *) rec;
+
+				appendStringInfo(buf, "ntoplaceholder: %u, firstplaceholder: %u, newestredirectxid: %u",
+								 xlrec->nToPlaceholder,
+								 xlrec->firstPlaceholder,
+								 xlrec->newestRedirectXid);
+			}
 			break;
 	}
 }
