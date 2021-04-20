@@ -132,7 +132,7 @@ parse_analyze(RawStmt *parseTree, const char *sourceText,
 
 	free_parsestate(pstate);
 
-	pgstat_report_queryid(query->queryId, false);
+	pgstat_report_query_id(query->queryId, false);
 
 	return query;
 }
@@ -171,7 +171,7 @@ parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
 
 	free_parsestate(pstate);
 
-	pgstat_report_queryid(query->queryId, false);
+	pgstat_report_query_id(query->queryId, false);
 
 	return query;
 }

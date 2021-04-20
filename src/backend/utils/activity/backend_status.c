@@ -544,7 +544,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 			beentry->st_activity_start_timestamp = 0;
 			/* st_xact_start_timestamp and wait_event_info are also disabled */
 			beentry->st_xact_start_timestamp = 0;
-			beentry->st_queryid = UINT64CONST(0);
+			beentry->st_query_id = UINT64CONST(0);
 			proc->wait_event_info = 0;
 			PGSTAT_END_WRITE_ACTIVITY(beentry);
 		}
@@ -605,7 +605,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 	 * identifier.
 	 */
 	if (state == STATE_RUNNING)
-		beentry->st_queryid = UINT64CONST(0);
+		beentry->st_query_id = UINT64CONST(0);
 
 	if (cmd_str != NULL)
 	{
@@ -618,32 +618,32 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 }
 
 /* --------
- * pgstat_report_queryid() -
+ * pgstat_report_query_id() -
  *
  * Called to update top-level query identifier.
  * --------
  */
 void
-pgstat_report_queryid(uint64 queryId, bool force)
+pgstat_report_query_id(uint64 query_id, bool force)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
 	/*
-	 * if track_activities is disabled, st_queryid should already have been
+	 * if track_activities is disabled, st_query_id should already have been
 	 * reset
 	 */
 	if (!beentry || !pgstat_track_activities)
 		return;
 
 	/*
-	 * We only report the top-level query identifiers.  The stored queryid is
+	 * We only report the top-level query identifiers.  The stored query_id is
 	 * reset when a backend calls pgstat_report_activity(STATE_RUNNING), or
 	 * with an explicit call to this function using the force flag.  If the
 	 * saved query identifier is not zero it means that it's not a top-level
 	 * command, so ignore the one provided unless it's an explicit call to
 	 * reset the identifier.
 	 */
-	if (beentry->st_queryid != 0 && !force)
+	if (beentry->st_query_id != 0 && !force)
 		return;
 
 	/*
@@ -652,7 +652,7 @@ pgstat_report_queryid(uint64 queryId, bool force)
 	 * ensure the compiler doesn't try to get cute.
 	 */
 	PGSTAT_BEGIN_WRITE_ACTIVITY(beentry);
-	beentry->st_queryid = queryId;
+	beentry->st_query_id = query_id;
 	PGSTAT_END_WRITE_ACTIVITY(beentry);
 }
 
@@ -1022,12 +1022,12 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 }
 
 /* ----------
- * pgstat_get_my_queryid() -
+ * pgstat_get_my_query_id() -
  *
  * Return current backend's query identifier.
  */
 uint64
-pgstat_get_my_queryid(void)
+pgstat_get_my_query_id(void)
 {
 	if (!MyBEEntry)
 		return 0;
@@ -1037,7 +1037,7 @@ pgstat_get_my_queryid(void)
 	 * pg_stat_get_activity which is already protected, or from the same
 	 * backend which means that there won't be concurrent writes.
 	 */
-	return MyBEEntry->st_queryid;
+	return MyBEEntry->st_query_id;
 }
 
 

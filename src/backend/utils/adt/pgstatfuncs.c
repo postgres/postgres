@@ -914,10 +914,10 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				values[27] = BoolGetDatum(false);	/* GSS Encryption not in
 													 * use */
 			}
-			if (beentry->st_queryid == 0)
+			if (beentry->st_query_id == 0)
 				nulls[29] = true;
 			else
-				values[29] = UInt64GetDatum(beentry->st_queryid);
+				values[29] = UInt64GetDatum(beentry->st_query_id);
 		}
 		else
 		{

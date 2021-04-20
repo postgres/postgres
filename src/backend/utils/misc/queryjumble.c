@@ -39,7 +39,7 @@
 
 #define JUMBLE_SIZE				1024	/* query serialization buffer size */
 
-static uint64 compute_utility_queryid(const char *str, int query_location, int query_len);
+static uint64 compute_utility_query_id(const char *str, int query_location, int query_len);
 static void AppendJumble(JumbleState *jstate,
 						 const unsigned char *item, Size size);
 static void JumbleQueryInternal(JumbleState *jstate, Query *query);
@@ -97,7 +97,7 @@ JumbleQuery(Query *query, const char *querytext)
 	JumbleState *jstate = NULL;
 	if (query->utilityStmt)
 	{
-		query->queryId = compute_utility_queryid(querytext,
+		query->queryId = compute_utility_query_id(querytext,
 												 query->stmt_location,
 												 query->stmt_len);
 	}
@@ -135,7 +135,7 @@ JumbleQuery(Query *query, const char *querytext)
  * Compute a query identifier for the given utility query string.
  */
 static uint64
-compute_utility_queryid(const char *query_text, int query_location, int query_len)
+compute_utility_query_id(const char *query_text, int query_location, int query_len)
 {
 	uint64 queryId;
 	const char *sql;

@@ -2717,10 +2717,10 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 			case 'Q':
 				if (padding != 0)
 					appendStringInfo(buf, "%*lld", padding,
-							(long long) pgstat_get_my_queryid());
+							(long long) pgstat_get_my_query_id());
 				else
 					appendStringInfo(buf, "%lld",
-							(long long) pgstat_get_my_queryid());
+							(long long) pgstat_get_my_query_id());
 				break;
 			default:
 				/* format error - ignore it */
@@ -2967,7 +2967,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* query id */
-	appendStringInfo(&buf, "%lld", (long long) pgstat_get_my_queryid());
+	appendStringInfo(&buf, "%lld", (long long) pgstat_get_my_query_id());
 
 	appendStringInfoChar(&buf, '\n');
 

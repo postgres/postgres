@@ -919,7 +919,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
     <row>
      <entry role="catalog_table_entry"><para role="column_definition">
-      <structfield>queryid</structfield> <type>bigint</type>
+      <structfield>query_id</structfield> <type>bigint</type>
      </para>
      <para>
       Identifier of this backend's most recent query. If

@@ -694,7 +694,7 @@ pg_analyze_and_rewrite_params(RawStmt *parsetree,
 
 	free_parsestate(pstate);
 
-	pgstat_report_queryid(query->queryId, false);
+	pgstat_report_query_id(query->queryId, false);
 
 	if (log_parser_stats)
 		ShowUsage("PARSE ANALYSIS STATISTICS");
@@ -1031,7 +1031,7 @@ exec_simple_query(const char *query_string)
 		DestReceiver *receiver;
 		int16		format;
 
-		pgstat_report_queryid(0, true);
+		pgstat_report_query_id(0, true);
 
 		/*
 		 * Get the command name for use in status display (it also becomes the
