@@ -2697,20 +2697,19 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel,
 			EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
 
 			/*
-			 * We can only build a sort for pathkeys which contain an EC
-			 * member in the current relation's target, so ignore any suffix
-			 * of the list as soon as we find a pathkey without an EC member
-			 * in the relation.
+			 * We can only build a sort for pathkeys that contain a
+			 * safe-to-compute-early EC member computable from the current
+			 * relation's reltarget, so ignore the remainder of the list as
+			 * soon as we find a pathkey without such a member.
 			 *
-			 * By still returning the prefix of the pathkeys list that does
-			 * meet criteria of EC membership in the current relation, we
-			 * enable not just an incremental sort on the entirety of
-			 * query_pathkeys but also incremental sort below a JOIN.
+			 * It's still worthwhile to return any prefix of the pathkeys list
+			 * that meets this requirement, as we may be able to do an
+			 * incremental sort.
 			 *
-			 * If requested, ensure the expression is parallel safe too.
+			 * If requested, ensure the sort expression is parallel-safe too.
 			 */
-			if (!find_em_expr_usable_for_sorting_rel(root, pathkey_ec, rel,
-													 require_parallel_safe))
+			if (!relation_can_be_sorted_early(root, rel, pathkey_ec,
+											  require_parallel_safe))
 				break;
 
 			npathkeys++;

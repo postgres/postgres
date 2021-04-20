@@ -144,10 +144,9 @@ extern EquivalenceMember *find_computable_ec_member(PlannerInfo *root,
 													Relids relids,
 													bool require_parallel_safe);
 extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
-extern Expr *find_em_expr_usable_for_sorting_rel(PlannerInfo *root,
-												 EquivalenceClass *ec,
-												 RelOptInfo *rel,
-												 bool require_parallel_safe);
+extern bool relation_can_be_sorted_early(PlannerInfo *root, RelOptInfo *rel,
+										 EquivalenceClass *ec,
+										 bool require_parallel_safe);
 extern void generate_base_implied_equalities(PlannerInfo *root);
 extern List *generate_join_implied_equalities(PlannerInfo *root,
 											  Relids join_relids,

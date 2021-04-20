@@ -961,18 +961,21 @@ find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
 }
 
 /*
- * Find an equivalence class member expression that can be used to build
- * a sort node using the provided relation; return NULL if no candidate.
+ * relation_can_be_sorted_early
+ *		Can this relation be sorted on this EC before the final output step?
  *
  * To succeed, we must find an EC member that prepare_sort_from_pathkeys knows
  * how to sort on, given the rel's reltarget as input.  There are also a few
  * additional constraints based on the fact that the desired sort will be done
- * within the scan/join part of the plan.  Also, non-parallel-safe expressions
- * are ignored if 'require_parallel_safe'.
+ * "early", within the scan/join part of the plan.  Also, non-parallel-safe
+ * expressions are ignored if 'require_parallel_safe'.
+ *
+ * At some point we might want to return the identified EquivalenceMember,
+ * but for now, callers only want to know if there is one.
  */
-Expr *
-find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
-									RelOptInfo *rel, bool require_parallel_safe)
+bool
+relation_can_be_sorted_early(PlannerInfo *root, RelOptInfo *rel,
+							 EquivalenceClass *ec, bool require_parallel_safe)
 {
 	PathTarget *target = rel->reltarget;
 	EquivalenceMember *em;
@@ -982,7 +985,7 @@ find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
 	 * Reject volatile ECs immediately; such sorts must always be postponed.
 	 */
 	if (ec->ec_has_volatile)
-		return NULL;
+		return false;
 
 	/*
 	 * Try to find an EM directly matching some reltarget member.
@@ -1012,7 +1015,7 @@ find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
 			!is_parallel_safe(root, (Node *) em->em_expr))
 			continue;
 
-		return em->em_expr;
+		return true;
 	}
 
 	/*
@@ -1021,7 +1024,7 @@ find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
 	em = find_computable_ec_member(root, ec, target->exprs, rel->relids,
 								   require_parallel_safe);
 	if (!em)
-		return NULL;
+		return false;
 
 	/*
 	 * Reject expressions involving set-returning functions, as those can't be
@@ -1030,9 +1033,9 @@ find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
 	 * belong to multi-member ECs.)
 	 */
 	if (IS_SRF_CALL((Node *) em->em_expr))
-		return NULL;
+		return false;
 
-	return em->em_expr;
+	return true;
 }
 
 /*
