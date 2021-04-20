@@ -1271,6 +1271,28 @@ sub _get_env
 	return (%inst_env);
 }
 
+# Private routine to get an installation path qualified command.
+#
+# IPC::Run maintains a cache, %cmd_cache, mapping commands to paths.  Tests
+# which use nodes spanning more than one postgres installation path need to
+# avoid confusing which installation's binaries get run.  Setting $ENV{PATH} is
+# insufficient, as IPC::Run does not check to see if the path has changed since
+# caching a command.
+sub installed_command
+{
+    my ($self, $cmd) = @_;
+
+    # Nodes using alternate installation locations use their installation's
+    # bin/ directory explicitly
+    return join('/', $self->{_install_path}, 'bin', $cmd)
+        if defined $self->{_install_path};
+
+    # Nodes implicitly using the default installation location rely on IPC::Run
+    # to find the right binary, which should not cause %cmd_cache confusion,
+    # because no nodes with other installation paths do it that way.
+    return $cmd;
+}
+
 =pod
 
 =item get_free_port()
@@ -1568,7 +1590,8 @@ sub psql
 	}
 	$psql_connstr .= defined $replication ? " replication=$replication" : "";
 
-	my @psql_params = ('psql', '-XAtq', '-d', $psql_connstr, '-f', '-');
+	my @psql_params = ($self->installed_command('psql'),
+					   '-XAtq', '-d', $psql_connstr, '-f', '-');
 
 	# If the caller wants an array and hasn't passed stdout/stderr
 	# references, allocate temporary ones to capture them so we
@@ -1754,7 +1777,7 @@ sub background_psql
 	my $replication = $params{replication};
 
 	my @psql_params = (
-		'psql',
+		$self->installed_command('psql'),
 		'-XAtq',
 		'-d',
 		$self->connstr($dbname)
@@ -1831,7 +1854,8 @@ sub interactive_psql
 
 	local %ENV = $self->_get_env();
 
-	my @psql_params = ('psql', '-XAt', '-d', $self->connstr($dbname));
+	my @psql_params = ($self->installed_command('psql'),
+					   '-XAt', '-d', $self->connstr($dbname));
 
 	push @psql_params, @{ $params{extra_params} }
 	  if defined $params{extra_params};
@@ -2041,7 +2065,8 @@ sub poll_query_until
 
 	$expected = 't' unless defined($expected);    # default value
 
-	my $cmd = [ 'psql', '-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
+	my $cmd = [ $self->installed_command('psql'),
+				'-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
 	my ($stdout, $stderr);
 	my $max_attempts = 180 * 10;
 	my $attempts     = 0;
@@ -2461,7 +2486,8 @@ sub pg_recvlogical_upto
 	croak 'endpos must be specified'    unless defined($endpos);
 
 	my @cmd = (
-		'pg_recvlogical', '-S', $slot_name, '--dbname',
+		$self->installed_command('pg_recvlogical'),
+		'-S', $slot_name, '--dbname',
 		$self->connstr($dbname));
 	push @cmd, '--endpos', $endpos;
 	push @cmd, '-f', '-', '--no-loop', '--start';
