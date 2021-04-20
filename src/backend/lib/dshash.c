@@ -375,7 +375,7 @@ dshash_get_hash_table_handle(dshash_table *hash_table)
  * the caller must take care to ensure that the entry is not left corrupted.
  * The lock mode is either shared or exclusive depending on 'exclusive'.
  *
- * The caller must not lock a lock already.
+ * The caller must not hold a lock already.
  *
  * Note that the lock held is in fact an LWLock, so interrupts will be held on
  * return from this function, and not resumed until dshash_release_lock is
