@@ -269,9 +269,6 @@ static Plan *prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 										Oid **p_sortOperators,
 										Oid **p_collations,
 										bool **p_nullsFirst);
-static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
-												 TargetEntry *tle,
-												 Relids relids);
 static Sort *make_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 									 Relids relids);
 static IncrementalSort *make_incrementalsort_from_pathkeys(Plan *lefttree,
@@ -2110,7 +2107,7 @@ create_sort_plan(PlannerInfo *root, SortPath *best_path, int flags)
 								  flags | CP_SMALL_TLIST);
 
 	/*
-	 * make_sort_from_pathkeys() indirectly calls find_ec_member_for_tle(),
+	 * make_sort_from_pathkeys indirectly calls find_ec_member_matching_expr,
 	 * which will ignore any child EC members that don't belong to the given
 	 * relids. Thus, if this sort path is based on a child relation, we must
 	 * pass its relids.
@@ -6017,9 +6014,6 @@ make_incrementalsort(Plan *lefttree, int numCols, int nPresortedCols,
  *
  * Returns the node which is to be the input to the Sort (either lefttree,
  * or a Result stacked atop lefttree).
- *
- * Note: Restrictions on what expressions are safely sortable may also need to
- * be added to find_em_expr_usable_for_sorting_rel.
  */
 static Plan *
 prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
@@ -6089,7 +6083,7 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 			tle = get_tle_by_resno(tlist, reqColIdx[numsortkeys]);
 			if (tle)
 			{
-				em = find_ec_member_for_tle(ec, tle, relids);
+				em = find_ec_member_matching_expr(ec, tle->expr, relids);
 				if (em)
 				{
 					/* found expr at right place in tlist */
@@ -6120,7 +6114,7 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 			foreach(j, tlist)
 			{
 				tle = (TargetEntry *) lfirst(j);
-				em = find_ec_member_for_tle(ec, tle, relids);
+				em = find_ec_member_matching_expr(ec, tle->expr, relids);
 				if (em)
 				{
 					/* found expr already in tlist */
@@ -6134,56 +6128,12 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 		if (!tle)
 		{
 			/*
-			 * No matching tlist item; look for a computable expression. Note
-			 * that we treat Aggrefs as if they were variables; this is
-			 * necessary when attempting to sort the output from an Agg node
-			 * for use in a WindowFunc (since grouping_planner will have
-			 * treated the Aggrefs as variables, too).  Likewise, if we find a
-			 * WindowFunc in a sort expression, treat it as a variable.
+			 * No matching tlist item; look for a computable expression.
 			 */
-			Expr	   *sortexpr = NULL;
-
-			foreach(j, ec->ec_members)
-			{
-				EquivalenceMember *em = (EquivalenceMember *) lfirst(j);
-				List	   *exprvars;
-				ListCell   *k;
-
-				/*
-				 * We shouldn't be trying to sort by an equivalence class that
-				 * contains a constant, so no need to consider such cases any
-				 * further.
-				 */
-				if (em->em_is_const)
-					continue;
-
-				/*
-				 * Ignore child members unless they belong to the rel being
-				 * sorted.
-				 */
-				if (em->em_is_child &&
-					!bms_is_subset(em->em_relids, relids))
-					continue;
-
-				sortexpr = em->em_expr;
-				exprvars = pull_var_clause((Node *) sortexpr,
-										   PVC_INCLUDE_AGGREGATES |
-										   PVC_INCLUDE_WINDOWFUNCS |
-										   PVC_INCLUDE_PLACEHOLDERS);
-				foreach(k, exprvars)
-				{
-					if (!tlist_member_ignore_relabel(lfirst(k), tlist))
-						break;
-				}
-				list_free(exprvars);
-				if (!k)
-				{
-					pk_datatype = em->em_datatype;
-					break;		/* found usable expression */
-				}
-			}
-			if (!j)
+			em = find_computable_ec_member(NULL, ec, tlist, relids, false);
+			if (!em)
 				elog(ERROR, "could not find pathkey item to sort");
+			pk_datatype = em->em_datatype;
 
 			/*
 			 * Do we need to insert a Result node?
@@ -6203,7 +6153,7 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 			/*
 			 * Add resjunk entry to input's tlist
 			 */
-			tle = makeTargetEntry(sortexpr,
+			tle = makeTargetEntry(copyObject(em->em_expr),
 								  list_length(tlist) + 1,
 								  NULL,
 								  true);
@@ -6240,56 +6190,6 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 	*p_nullsFirst = nullsFirst;
 
 	return lefttree;
-}
-
-/*
- * find_ec_member_for_tle
- *		Locate an EquivalenceClass member matching the given TLE, if any
- *
- * Child EC members are ignored unless they belong to given 'relids'.
- */
-static EquivalenceMember *
-find_ec_member_for_tle(EquivalenceClass *ec,
-					   TargetEntry *tle,
-					   Relids relids)
-{
-	Expr	   *tlexpr;
-	ListCell   *lc;
-
-	/* We ignore binary-compatible relabeling on both ends */
-	tlexpr = tle->expr;
-	while (tlexpr && IsA(tlexpr, RelabelType))
-		tlexpr = ((RelabelType *) tlexpr)->arg;
-
-	foreach(lc, ec->ec_members)
-	{
-		EquivalenceMember *em = (EquivalenceMember *) lfirst(lc);
-		Expr	   *emexpr;
-
-		/*
-		 * We shouldn't be trying to sort by an equivalence class that
-		 * contains a constant, so no need to consider such cases any further.
-		 */
-		if (em->em_is_const)
-			continue;
-
-		/*
-		 * Ignore child members unless they belong to the rel being sorted.
-		 */
-		if (em->em_is_child &&
-			!bms_is_subset(em->em_relids, relids))
-			continue;
-
-		/* Match if same expression (after stripping relabel) */
-		emexpr = em->em_expr;
-		while (emexpr && IsA(emexpr, RelabelType))
-			emexpr = ((RelabelType *) emexpr)->arg;
-
-		if (equal(emexpr, tlexpr))
-			return em;
-	}
-
-	return NULL;
 }
 
 /*
@@ -6753,7 +6653,7 @@ make_unique_from_pathkeys(Plan *lefttree, List *pathkeys, int numCols)
 			foreach(j, plan->targetlist)
 			{
 				tle = (TargetEntry *) lfirst(j);
-				em = find_ec_member_for_tle(ec, tle, NULL);
+				em = find_ec_member_matching_expr(ec, tle->expr, NULL);
 				if (em)
 				{
 					/* found expr already in tlist */
