@@ -7139,6 +7139,16 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
 </programlisting>
         </para>
        </tip>
+
+       <note>
+        <para>
+         The <literal>%Q</literal> escape always reports a zero identifier
+         for lines output by <xref linkend="guc-log-statement"/> because
+         <varname>log_statement</varname> generates output before an
+         identifier can be calculated, including invalid statements for
+         which an identifier cannot be calculated.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 
