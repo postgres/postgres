@@ -257,6 +257,13 @@ from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub;
 explain (costs off) select sub.unique1, md5(stringu1)
 from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub
 order by 1, 2;
+-- Parallel sort with an aggregate that can be safely generated in parallel,
+-- but we can't sort by partial aggregate values.
+explain (costs off) select count(*)
+from tenk1 t1
+join tenk1 t2 on t1.unique1 = t2.unique2
+join tenk1 t3 on t2.unique1 = t3.unique1
+order by count(*);
 -- Parallel sort but with expression (correlated subquery) that
 -- is prohibited in parallel plans.
 explain (costs off) select distinct

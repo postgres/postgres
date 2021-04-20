@@ -135,6 +135,14 @@ extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 												  Index sortref,
 												  Relids rel,
 												  bool create_it);
+extern EquivalenceMember *find_ec_member_matching_expr(EquivalenceClass *ec,
+													   Expr *expr,
+													   Relids relids);
+extern EquivalenceMember *find_computable_ec_member(PlannerInfo *root,
+													EquivalenceClass *ec,
+													List *exprs,
+													Relids relids,
+													bool require_parallel_safe);
 extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
 extern Expr *find_em_expr_usable_for_sorting_rel(PlannerInfo *root,
 												 EquivalenceClass *ec,
