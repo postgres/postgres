@@ -512,7 +512,7 @@ BeginCopyTo(ParseState *pstate,
 							 CURSOR_OPT_PARALLEL_OK, NULL);
 
 		/*
-		 * With row level security and a user using "COPY relation TO", we
+		 * With row-level security and a user using "COPY relation TO", we
 		 * have to convert the "COPY relation TO" to a query-based COPY (eg:
 		 * "COPY (SELECT * FROM relation) TO"), to allow the rewriter to add
 		 * in any RLS clauses.

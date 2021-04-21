@@ -2159,7 +2159,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 						  QTW_IGNORE_RC_SUBQUERIES);
 
 	/*
-	 * Apply any row level security policies.  We do this last because it
+	 * Apply any row-level security policies.  We do this last because it
 	 * requires special recursion detection if the new quals have sublink
 	 * subqueries, and if we did it in the loop above query_tree_walker would
 	 * then recurse into those quals a second time.
@@ -2249,7 +2249,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		}
 
 		/*
-		 * Make sure the query is marked correctly if row level security
+		 * Make sure the query is marked correctly if row-level security
 		 * applies, or if the new quals had sublinks.
 		 */
 		if (hasRowSecurity)

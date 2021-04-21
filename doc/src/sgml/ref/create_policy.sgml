@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>CREATE POLICY</refname>
-  <refpurpose>define a new row level security policy for a table</refpurpose>
+  <refpurpose>define a new row-level security policy for a table</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -188,7 +188,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       Any <acronym>SQL</acronym> conditional expression (returning
       <type>boolean</type>).  The conditional expression cannot contain
       any aggregate or window functions.  This expression will be added
-      to queries that refer to the table if row level security is enabled.
+      to queries that refer to the table if row-level security is enabled.
       Rows for which the expression returns true will be visible.  Any
       rows for which the expression returns false or null will not be
       visible to the user (in a <command>SELECT</command>), and will not be
@@ -207,7 +207,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <type>boolean</type>).  The conditional expression cannot contain
       any aggregate or window functions.  This expression will be used in
       <command>INSERT</command> and <command>UPDATE</command> queries against
-      the table if row level security is enabled.  Only rows for which the
+      the table if row-level security is enabled.  Only rows for which the
       expression evaluates to true will be allowed.  An error will be thrown
       if the expression evaluates to false or null for any of the records
       inserted or any of the records that result from the update.  Note that

@@ -1,6 +1,6 @@
 /*
  * rewrite/rowsecurity.c
- *	  Routines to support policies for row level security (aka RLS).
+ *	  Routines to support policies for row-level security (aka RLS).
  *
  * Policies in PostgreSQL provide a mechanism to limit what records are
  * returned to a user and what records a user is permitted to add to a table.
@@ -100,7 +100,7 @@ row_security_policy_hook_type row_security_policy_hook_restrictive = NULL;
  * Get any row security quals and WithCheckOption checks that should be
  * applied to the specified RTE.
  *
- * In addition, hasRowSecurity is set to true if row level security is enabled
+ * In addition, hasRowSecurity is set to true if row-level security is enabled
  * (even if this RTE doesn't have any row security quals), and hasSubLinks is
  * set to true if any of the quals returned contain sublinks.
  */

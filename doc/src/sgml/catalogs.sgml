@@ -1556,7 +1556,7 @@
        <structfield>rolbypassrls</structfield> <type>bool</type>
       </para>
       <para>
-       Role bypasses every row level security policy, see
+       Role bypasses every row-level security policy, see
        <xref linkend="ddl-rowsecurity"/> for more information.
       </para></entry>
      </row>
@@ -2130,7 +2130,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>relrowsecurity</structfield> <type>bool</type>
       </para>
       <para>
-       True if table has row level security enabled; see
+       True if table has row-level security enabled; see
        <link linkend="catalog-pg-policy"><structname>pg_policy</structname></link> catalog
       </para></entry>
      </row>
@@ -2140,7 +2140,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>relforcerowsecurity</structfield> <type>bool</type>
       </para>
       <para>
-       True if row level security (when enabled) will also apply to table owner; see
+       True if row-level security (when enabled) will also apply to table owner; see
        <link linkend="catalog-pg-policy"><structname>pg_policy</structname></link> catalog
       </para></entry>
      </row>
@@ -5531,7 +5531,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </indexterm>
 
   <para>
-   The catalog <structname>pg_policy</structname> stores row level
+   The catalog <structname>pg_policy</structname> stores row-level
    security policies for tables.  A policy includes the kind of
    command that it applies to (possibly all commands), the roles that it
    applies to, the expression to be added as a security-barrier
@@ -11765,7 +11765,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>rolbypassrls</structfield> <type>bool</type>
       </para>
       <para>
-       Role bypasses every row level security policy, see
+       Role bypasses every row-level security policy, see
        <xref linkend="ddl-rowsecurity"/> for more information.
       </para></entry>
      </row>
@@ -12554,7 +12554,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>usebypassrls</structfield> <type>bool</type>
       </para>
       <para>
-       User bypasses every row level security policy, see
+       User bypasses every row-level security policy, see
        <xref linkend="ddl-rowsecurity"/> for more information.
       </para></entry>
      </row>
@@ -13667,7 +13667,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>usebypassrls</structfield> <type>bool</type>
       </para>
       <para>
-       User bypasses every row level security policy, see
+       User bypasses every row-level security policy, see
        <xref linkend="ddl-rowsecurity"/> for more information.
       </para></entry>
      </row>

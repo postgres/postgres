@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>ALTER POLICY</refname>
-  <refpurpose>change the definition of a row level security policy</refpurpose>
+  <refpurpose>change the definition of a row-level security policy</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

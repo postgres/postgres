@@ -2382,7 +2382,7 @@ INSERT INTO passwd VALUES
 INSERT INTO passwd VALUES
   ('alice','xxx',2,1,'Alice','098-765-4321',null,'/home/alice','/bin/zsh');
 
--- Be sure to enable row level security on the table
+-- Be sure to enable row-level security on the table
 ALTER TABLE passwd ENABLE ROW LEVEL SECURITY;
 
 -- Create policies
