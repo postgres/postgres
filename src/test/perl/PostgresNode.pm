@@ -1172,8 +1172,7 @@ sub get_free_port
 		if ($found == 1)
 		{
 			foreach my $addr (qw(127.0.0.1),
-               $use_tcp ? qw(127.0.0.2 127.0.0.3 0.0.0.0) : ())
-               $use_tcp && $TestLib::windows_os
+               ($use_tcp && $TestLib::windows_os)
                ? qw(127.0.0.2 127.0.0.3 0.0.0.0)
                : ())
 			{
