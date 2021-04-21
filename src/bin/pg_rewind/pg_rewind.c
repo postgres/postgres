@@ -857,7 +857,7 @@ getTimelineHistory(ControlFileData *controlFile, int *nentries)
 			TimeLineHistoryEntry *entry;
 
 			entry = &history[i];
-			pg_log_debug("%d: %X/%X - %X/%X", entry->tli,
+			pg_log_debug("%u: %X/%X - %X/%X", entry->tli,
 						 LSN_FORMAT_ARGS(entry->begin),
 						 LSN_FORMAT_ARGS(entry->end));
 		}
