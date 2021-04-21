@@ -764,6 +764,7 @@ static const SchemaQuery Query_for_list_of_collations = {
 "   FROM pg_catalog.pg_roles "\
 "  WHERE substring(pg_catalog.quote_ident(rolname),1,%d)='%s'"\
 " UNION ALL SELECT 'PUBLIC'"\
+" UNION ALL SELECT 'CURRENT_ROLE'"\
 " UNION ALL SELECT 'CURRENT_USER'"\
 " UNION ALL SELECT 'SESSION_USER'"
 
@@ -3450,7 +3451,7 @@ psql_completion(const char *text, int start, int end)
 
 	/*
 	 * Complete "GRANT/REVOKE ... TO/FROM" with username, PUBLIC,
-	 * CURRENT_USER, or SESSION_USER.
+	 * CURRENT_ROLE, CURRENT_USER, or SESSION_USER.
 	 */
 	else if ((HeadMatches("GRANT") && TailMatches("TO")) ||
 			 (HeadMatches("REVOKE") && TailMatches("FROM")))
@@ -3884,6 +3885,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("FOR");
 	else if (Matches("CREATE", "USER", "MAPPING", "FOR"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles
+							" UNION SELECT 'CURRENT_ROLE'"
 							" UNION SELECT 'CURRENT_USER'"
 							" UNION SELECT 'PUBLIC'"
 							" UNION SELECT 'USER'");
