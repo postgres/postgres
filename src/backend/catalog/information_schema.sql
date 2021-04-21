@@ -406,7 +406,8 @@ GRANT SELECT ON character_sets TO PUBLIC;
  */
 
 CREATE VIEW check_constraint_routine_usage AS
-    SELECT CAST(current_database() AS sql_identifier) AS constraint_catalog,
+    SELECT DISTINCT
+           CAST(current_database() AS sql_identifier) AS constraint_catalog,
            CAST(nc.nspname AS sql_identifier) AS constraint_schema,
            CAST(c.conname AS sql_identifier) AS constraint_name,
            CAST(current_database() AS sql_identifier) AS specific_catalog,
@@ -505,7 +506,8 @@ GRANT SELECT ON collation_character_set_applicability TO PUBLIC;
  */
 
 CREATE VIEW column_column_usage AS
-    SELECT CAST(current_database() AS sql_identifier) AS table_catalog,
+    SELECT DISTINCT
+           CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(n.nspname AS sql_identifier) AS table_schema,
            CAST(c.relname AS sql_identifier) AS table_name,
            CAST(ac.attname AS sql_identifier) AS column_name,
@@ -1325,7 +1327,8 @@ GRANT SELECT ON role_column_grants TO PUBLIC;
  */
 
 CREATE VIEW routine_column_usage AS
-    SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
+    SELECT DISTINCT
+           CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(np.nspname AS sql_identifier) AS specific_schema,
            CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
            CAST(current_database() AS sql_identifier) AS routine_catalog,
@@ -1434,7 +1437,8 @@ GRANT SELECT ON role_routine_grants TO PUBLIC;
  */
 
 CREATE VIEW routine_routine_usage AS
-    SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
+    SELECT DISTINCT
+           CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(np.nspname AS sql_identifier) AS specific_schema,
            CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
            CAST(current_database() AS sql_identifier) AS routine_catalog,
@@ -1462,7 +1466,8 @@ GRANT SELECT ON routine_routine_usage TO PUBLIC;
  */
 
 CREATE VIEW routine_sequence_usage AS
-    SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
+    SELECT DISTINCT
+           CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(np.nspname AS sql_identifier) AS specific_schema,
            CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
            CAST(current_database() AS sql_identifier) AS routine_catalog,
@@ -1493,7 +1498,8 @@ GRANT SELECT ON routine_sequence_usage TO PUBLIC;
  */
 
 CREATE VIEW routine_table_usage AS
-    SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
+    SELECT DISTINCT
+           CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(np.nspname AS sql_identifier) AS specific_schema,
            CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
            CAST(current_database() AS sql_identifier) AS routine_catalog,
