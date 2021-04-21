@@ -17915,47 +17915,42 @@ ATExecDetachPartitionFinalize(Relation rel, RangeVar *name)
  * DetachAddConstraintIfNeeded
  *		Subroutine for ATExecDetachPartition.  Create a constraint that
  *		takes the place of the partition constraint, but avoid creating
- *		a dupe if an equivalent constraint already exists.
+ *		a dupe if an constraint already exists which implies the needed
+ *		constraint.
  */
 static void
 DetachAddConstraintIfNeeded(List **wqueue, Relation partRel)
 {
-	AlteredTableInfo *tab;
-	Expr	   *constraintExpr;
-	TupleDesc	td = RelationGetDescr(partRel);
-	Constraint *n;
+	List	   *constraintExpr;
 
-	constraintExpr = make_ands_explicit(RelationGetPartitionQual(partRel));
+	constraintExpr = RelationGetPartitionQual(partRel);
+	constraintExpr = (List *) eval_const_expressions(NULL, (Node *) constraintExpr);
 
-	/* If an identical constraint exists, we don't need to create one */
-	if (td->constr && td->constr->num_check > 0)
+	/*
+	 * Avoid adding a new constraint if the needed constraint is implied by an
+	 * existing constraint
+	 */
+	if (!PartConstraintImpliedByRelConstraint(partRel, constraintExpr))
 	{
-		for (int i = 0; i < td->constr->num_check; i++)
-		{
-			Node	*thisconstr;
+		AlteredTableInfo *tab;
+		Constraint *n;
 
-			thisconstr = stringToNode(td->constr->check[i].ccbin);
+		tab = ATGetQueueEntry(wqueue, partRel);
 
-			if (equal(constraintExpr, thisconstr))
-				return;
-		}
+		/* Add constraint on partition, equivalent to the partition constraint */
+		n = makeNode(Constraint);
+		n->contype = CONSTR_CHECK;
+		n->conname = NULL;
+		n->location = -1;
+		n->is_no_inherit = false;
+		n->raw_expr = NULL;
+		n->cooked_expr = nodeToString(make_ands_explicit(constraintExpr));
+		n->initially_valid = true;
+		n->skip_validation = true;
+		/* It's a re-add, since it nominally already exists */
+		ATAddCheckConstraint(wqueue, tab, partRel, n,
+							 true, false, true, ShareUpdateExclusiveLock);
 	}
-
-	tab = ATGetQueueEntry(wqueue, partRel);
-
-	/* Add constraint on partition, equivalent to the partition constraint */
-	n = makeNode(Constraint);
-	n->contype = CONSTR_CHECK;
-	n->conname = NULL;
-	n->location = -1;
-	n->is_no_inherit = false;
-	n->raw_expr = NULL;
-	n->cooked_expr = nodeToString(constraintExpr);
-	n->initially_valid = true;
-	n->skip_validation = true;
-	/* It's a re-add, since it nominally already exists */
-	ATAddCheckConstraint(wqueue, tab, partRel, n,
-						 true, false, true, ShareUpdateExclusiveLock);
 }
 
 /*
