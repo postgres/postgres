@@ -305,7 +305,7 @@
        using <command>ALTER SUBSCRIPTION</command> before attempting to drop
        the subscription.  If the remote database instance no longer exists, no
        further action is then necessary.  If, however, the remote database
-       instance is just unreachable, the replication slot (and any still 
+       instance is just unreachable, the replication slot (and any still
        remaining table synchronization slots) should then be
        dropped manually; otherwise it/they would continue to reserve WAL and might
        eventually cause the disk to fill up.  Such cases should be carefully

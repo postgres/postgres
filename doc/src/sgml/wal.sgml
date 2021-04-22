@@ -270,7 +270,7 @@
 
    <para>
     The <link linkend="app-pgchecksums"><application>pg_checksums</application></link>
-    application can be used to enable or disable data checksums, as well as 
+    application can be used to enable or disable data checksums, as well as
     verify checksums, on an offline cluster.
    </para>
 
@@ -783,7 +783,7 @@
    <function>issue_xlog_fsync</function> syncs WAL data to disk are counted as
    <literal>wal_write_time</literal> and <literal>wal_sync_time</literal> in
    <xref linkend="pg-stat-wal-view"/>, respectively.
-   <function>XLogWrite</function> is normally called by 
+   <function>XLogWrite</function> is normally called by
    <function>XLogInsertRecord</function> (when there is no space for the new
    record in WAL buffers), <function>XLogFlush</function> and the WAL writer,
    to write WAL buffers to disk and call <function>issue_xlog_fsync</function>.

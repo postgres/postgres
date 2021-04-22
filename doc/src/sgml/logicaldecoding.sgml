@@ -477,7 +477,7 @@ typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
     <para>
     An output plugin may also define functions to support two-phase commits,
     which allows actions to be decoded on the <command>PREPARE TRANSACTION</command>.
-    The <function>begin_prepare_cb</function>, <function>prepare_cb</function>, 
+    The <function>begin_prepare_cb</function>, <function>prepare_cb</function>,
     <function>stream_prepare_cb</function>,
     <function>commit_prepared_cb</function> and <function>rollback_prepared_cb</function>
     callbacks are required, while <function>filter_prepare_cb</function> is optional.
@@ -1202,7 +1202,7 @@ stream_commit_cb(...);  &lt;-- commit of the streamed transaction
     To support the streaming of two-phase commands, an output plugin needs to
     provide additional callbacks. There are multiple two-phase commit callbacks
     that are required, (<function>begin_prepare_cb</function>,
-    <function>prepare_cb</function>, <function>commit_prepared_cb</function>, 
+    <function>prepare_cb</function>, <function>commit_prepared_cb</function>,
     <function>rollback_prepared_cb</function> and
     <function>stream_prepare_cb</function>) and an optional callback
     (<function>filter_prepare_cb</function>).

@@ -398,7 +398,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     <literal>FULL</literal> option will report its progress in the
     <structname>pg_stat_progress_vacuum</structname> view. Backends running
     <command>VACUUM FULL</command> will instead report their progress in the
-    <structname>pg_stat_progress_cluster</structname> view. See 
+    <structname>pg_stat_progress_cluster</structname> view. See
     <xref linkend="vacuum-progress-reporting"/> and
     <xref linkend="cluster-progress-reporting"/> for details.
    </para>

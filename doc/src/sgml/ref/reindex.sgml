@@ -224,7 +224,7 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
     <term><replaceable class="parameter">new_tablespace</replaceable></term>
     <listitem>
      <para>
-      The tablespace where indexes will be rebuilt. 
+      The tablespace where indexes will be rebuilt.
      </para>
     </listitem>
    </varlistentry>

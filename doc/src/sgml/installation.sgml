@@ -982,7 +982,7 @@ build-postgresql:
          <filename>configure</filename> will check for the required
          header files and libraries to make sure that your
          <productname>OpenSSL</productname> installation is sufficient
-         before proceeding. 
+         before proceeding.
         </para>
        </listitem>
       </varlistentry>

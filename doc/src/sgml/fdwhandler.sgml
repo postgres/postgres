@@ -460,7 +460,7 @@ AddForeignUpdateTargets(PlannerInfo *root,
      for a whole-row <structname>Var</structname> marked with
      <structfield>vartype</structfield> = <type>RECORD</type>,
      and <literal>wholerow<replaceable>N</replaceable></literal>
-     for a whole-row <structname>Var</structname> with 
+     for a whole-row <structname>Var</structname> with
      <structfield>vartype</structfield> equal to the table's declared rowtype.
      Re-use these names when you can (the planner will combine duplicate
      requests for identical junk columns).  If you need another kind of
@@ -1616,7 +1616,7 @@ ForeignAsyncRequest(AsyncRequest *areq);
 void
 ForeignAsyncConfigureWait(AsyncRequest *areq);
 </programlisting>
-     Configure a file descriptor event for which the 
+     Configure a file descriptor event for which the
      <structname>ForeignScan</structname> node wishes to wait.
      This function will only be called when the
      <structname>ForeignScan</structname> node has the
