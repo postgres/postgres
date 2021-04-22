@@ -338,10 +338,13 @@ handle_streamed_transaction(LogicalRepMsgType action, StringInfo s)
  * Executor state preparation for evaluation of constraint expressions,
  * indexes and triggers.
  *
- * This is based on similar code in copy.c
+ * resultRelInfo is a ResultRelInfo for the relation to be passed to the
+ * executor routines.  The caller must open and close any indexes to be
+ * updated independently of the relation registered here.
  */
 static EState *
-create_estate_for_relation(LogicalRepRelMapEntry *rel)
+create_estate_for_relation(LogicalRepRelMapEntry *rel,
+						   ResultRelInfo **resultRelInfo)
 {
 	EState	   *estate;
 	RangeTblEntry *rte;
@@ -355,12 +358,48 @@ create_estate_for_relation(LogicalRepRelMapEntry *rel)
 	rte->rellockmode = AccessShareLock;
 	ExecInitRangeTable(estate, list_make1(rte));
 
+	*resultRelInfo = makeNode(ResultRelInfo);
+
+	/*
+	 * Use Relation opened by logicalrep_rel_open() instead of opening it
+	 * again.
+	 */
+	InitResultRelInfo(*resultRelInfo, rel->localrel, 1, NULL, 0);
+
+	/*
+	 * We put the ResultRelInfo in the es_opened_result_relations list, even
+	 * though we don't populate the es_result_relations array.  That's a bit
+	 * bogus, but it's enough to make ExecGetTriggerResultRel() find them.
+	 * Also, because we did not open the Relation ourselves here, there is no
+	 * need to worry about closing it.
+	 *
+	 * ExecOpenIndices() is not called here either, each execution path doing
+	 * an apply operation being responsible for that.
+	 */
+	estate->es_opened_result_relations =
+		lappend(estate->es_opened_result_relations, *resultRelInfo);
+
 	estate->es_output_cid = GetCurrentCommandId(true);
 
 	/* Prepare to catch AFTER triggers. */
 	AfterTriggerBeginQuery();
 
 	return estate;
+}
+
+/*
+ * Finish any operations related to the executor state created by
+ * create_estate_for_relation().
+ */
+static void
+finish_estate(EState *estate)
+{
+	/* Handle any queued AFTER triggers. */
+	AfterTriggerEndQuery(estate);
+
+	/* Cleanup. */
+	ExecResetTupleTable(estate->es_tupleTable, false);
+	FreeExecutorState(estate);
 }
 
 /*
@@ -1168,12 +1207,10 @@ apply_handle_insert(StringInfo s)
 	}
 
 	/* Initialize the executor state. */
-	estate = create_estate_for_relation(rel);
+	estate = create_estate_for_relation(rel, &resultRelInfo);
 	remoteslot = ExecInitExtraTupleSlot(estate,
 										RelationGetDescr(rel->localrel),
 										&TTSOpsVirtual);
-	resultRelInfo = makeNode(ResultRelInfo);
-	InitResultRelInfo(resultRelInfo, rel->localrel, 1, NULL, 0);
 
 	/* Input functions may need an active snapshot, so get one */
 	PushActiveSnapshot(GetTransactionSnapshot());
@@ -1194,11 +1231,7 @@ apply_handle_insert(StringInfo s)
 
 	PopActiveSnapshot();
 
-	/* Handle queued AFTER triggers. */
-	AfterTriggerEndQuery(estate);
-
-	ExecResetTupleTable(estate->es_tupleTable, false);
-	FreeExecutorState(estate);
+	finish_estate(estate);
 
 	logicalrep_rel_close(rel, NoLock);
 
@@ -1293,12 +1326,10 @@ apply_handle_update(StringInfo s)
 	check_relation_updatable(rel);
 
 	/* Initialize the executor state. */
-	estate = create_estate_for_relation(rel);
+	estate = create_estate_for_relation(rel, &resultRelInfo);
 	remoteslot = ExecInitExtraTupleSlot(estate,
 										RelationGetDescr(rel->localrel),
 										&TTSOpsVirtual);
-	resultRelInfo = makeNode(ResultRelInfo);
-	InitResultRelInfo(resultRelInfo, rel->localrel, 1, NULL, 0);
 
 	/*
 	 * Populate updatedCols so that per-column triggers can fire, and so
@@ -1345,11 +1376,7 @@ apply_handle_update(StringInfo s)
 
 	PopActiveSnapshot();
 
-	/* Handle queued AFTER triggers. */
-	AfterTriggerEndQuery(estate);
-
-	ExecResetTupleTable(estate->es_tupleTable, false);
-	FreeExecutorState(estate);
+	finish_estate(estate);
 
 	logicalrep_rel_close(rel, NoLock);
 
@@ -1450,12 +1477,10 @@ apply_handle_delete(StringInfo s)
 	check_relation_updatable(rel);
 
 	/* Initialize the executor state. */
-	estate = create_estate_for_relation(rel);
+	estate = create_estate_for_relation(rel, &resultRelInfo);
 	remoteslot = ExecInitExtraTupleSlot(estate,
 										RelationGetDescr(rel->localrel),
 										&TTSOpsVirtual);
-	resultRelInfo = makeNode(ResultRelInfo);
-	InitResultRelInfo(resultRelInfo, rel->localrel, 1, NULL, 0);
 
 	PushActiveSnapshot(GetTransactionSnapshot());
 
@@ -1474,11 +1499,7 @@ apply_handle_delete(StringInfo s)
 
 	PopActiveSnapshot();
 
-	/* Handle queued AFTER triggers. */
-	AfterTriggerEndQuery(estate);
-
-	ExecResetTupleTable(estate->es_tupleTable, false);
-	FreeExecutorState(estate);
+	finish_estate(estate);
 
 	logicalrep_rel_close(rel, NoLock);
 
