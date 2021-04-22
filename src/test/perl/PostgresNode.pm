@@ -96,6 +96,7 @@ use File::Spec;
 use File::stat qw(stat);
 use File::Temp ();
 use IPC::Run;
+use PostgresVersion;
 use RecursiveCopy;
 use Socket;
 use Test::More;
@@ -350,6 +351,8 @@ sub info
 	my $_info = '';
 	open my $fh, '>', \$_info or die;
 	print $fh "Name: " . $self->name . "\n";
+	print $fh "Version: " . $self->{_pg_version} . "\n"
+	  if $self->{_pg_version};
 	print $fh "Data directory: " . $self->data_dir . "\n";
 	print $fh "Backup directory: " . $self->backup_dir . "\n";
 	print $fh "Archive directory: " . $self->archive_dir . "\n";
@@ -1196,7 +1199,60 @@ sub get_new_node
 	# Add node to list of nodes
 	push(@all_nodes, $node);
 
+	$node->_set_pg_version;
+
+	my $v = $node->{_pg_version};
+
+	carp("PostgresNode isn't fully compatible with version " . $v)
+	  if $v < 12;
+
 	return $node;
+}
+
+# Private routine to run the pg_config binary found in our environment (or in
+# our install_path, if we have one), and set the version from it
+#
+sub _set_pg_version
+{
+    my ($self) = @_;
+    my $inst = $self->{_install_path};
+    my $pg_config = "pg_config";
+
+    if (defined $inst)
+    {
+        # If the _install_path is invalid, our PATH variables might find an
+        # unrelated pg_config executable elsewhere.  Sanity check the
+        # directory.
+        BAIL_OUT("directory not found: $inst")
+            unless -d $inst;
+
+        # If the directory exists but is not the root of a postgresql
+        # installation, or if the user configured using
+        # --bindir=$SOMEWHERE_ELSE, we're not going to find pg_config, so
+        # complain about that, too.
+        $pg_config = "$inst/bin/pg_config";
+        BAIL_OUT("pg_config not found: $pg_config")
+            unless -e $pg_config;
+        BAIL_OUT("pg_config not executable: $pg_config")
+            unless -x $pg_config;
+
+        # Leave $pg_config install_path qualified, to be sure we get the right
+        # version information, below, or die trying
+    }
+
+    local %ENV = $self->_get_env();
+
+    # We only want the version field
+    open my $fh, "-|", $pg_config, "--version"
+        or
+        BAIL_OUT("$pg_config failed: $!");
+    my $version_line = <$fh>;
+    close $fh or die;
+
+    $self->{_pg_version} = PostgresVersion->new($version_line);
+
+    BAIL_OUT("could not parse pg_config --version output: $version_line")
+	  unless defined $self->{_pg_version};
 }
 
 # Private routine to return a copy of the environment with the PATH and
