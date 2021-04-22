@@ -2209,6 +2209,8 @@ psql_completion(const char *text, int start, int end)
 		completion_info_charp = prev3_wd;
 		COMPLETE_WITH_QUERY(Query_for_partition_of_table);
 	}
+	else if (Matches("ALTER", "TABLE", MatchAny, "DETACH", "PARTITION", MatchAny))
+		COMPLETE_WITH("CONCURRENTLY", "FINALIZE");
 
 	/* ALTER TABLESPACE <foo> with RENAME TO, OWNER TO, SET, RESET */
 	else if (Matches("ALTER", "TABLESPACE", MatchAny))
