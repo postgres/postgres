@@ -131,6 +131,7 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	 * concurrently, whatever this function returns will be accurate as of
 	 * some well-defined point in time.
 	 */
+	detached_exist = false;
 	inhoids = find_inheritance_children(RelationGetRelid(rel), omit_detached,
 										NoLock, &detached_exist);
 	nparts = list_length(inhoids);

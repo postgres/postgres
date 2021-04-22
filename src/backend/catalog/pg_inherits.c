@@ -53,7 +53,7 @@ typedef struct SeenRelsEntry
  * against possible DROPs of child relations.
  *
  * If a partition's pg_inherits row is marked "detach pending",
- * *detached_exist (if not null) is set true, otherwise it is set false.
+ * *detached_exist (if not null) is set true.
  *
  * If omit_detached is true and there is an active snapshot (not the same as
  * the catalog snapshot used to scan pg_inherits!) and a pg_inherits tuple
@@ -83,9 +83,6 @@ find_inheritance_children(Oid parentrelId, bool omit_detached,
 	 */
 	if (!has_subclass(parentrelId))
 		return NIL;
-
-	if (detached_exist)
-		*detached_exist = false;
 
 	/*
 	 * Scan pg_inherits and build a working array of subclass OIDs.
