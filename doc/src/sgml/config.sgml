@@ -2383,6 +2383,36 @@ include_dir 'conf.d'
      <title>Asynchronous Behavior</title>
 
      <variablelist>
+      <varlistentry id="guc-backend-flush-after" xreflabel="backend_flush_after">
+       <term><varname>backend_flush_after</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>backend_flush_after</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Whenever more than this amount of data has
+         been written by a single backend, attempt to force the OS to issue
+         these writes to the underlying storage.  Doing so will limit the
+         amount of dirty data in the kernel's page cache, reducing the
+         likelihood of stalls when an <function>fsync</function> is issued at the end of a
+         checkpoint, or when the OS writes data back in larger batches in the
+         background.  Often that will result in greatly reduced transaction
+         latency, but there also are some cases, especially with workloads
+         that are bigger than <xref linkend="guc-shared-buffers"/>, but smaller
+         than the OS's page cache, where performance might degrade.  This
+         setting may have no effect on some platforms.
+         If this value is specified without units, it is taken as blocks,
+         that is <symbol>BLCKSZ</symbol> bytes, typically 8kB.
+         The valid range is
+         between <literal>0</literal>, which disables forced writeback,
+         and <literal>2MB</literal>.  The default is <literal>0</literal>, i.e., no
+         forced writeback.  (If <symbol>BLCKSZ</symbol> is not 8kB,
+         the maximum value scales proportionally to it.)
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="guc-effective-io-concurrency" xreflabel="effective_io_concurrency">
        <term><varname>effective_io_concurrency</varname> (<type>integer</type>)
        <indexterm>
@@ -2579,32 +2609,25 @@ include_dir 'conf.d'
        </listitem>
       </varlistentry>
 
-      <varlistentry id="guc-backend-flush-after" xreflabel="backend_flush_after">
-       <term><varname>backend_flush_after</varname> (<type>integer</type>)
+      <varlistentry id="guc-parallel-leader-participation" xreflabel="parallel_leader_participation">
+       <term>
+       <varname>parallel_leader_participation</varname> (<type>boolean</type>)
        <indexterm>
-        <primary><varname>backend_flush_after</varname> configuration parameter</primary>
+        <primary><varname>parallel_leader_participation</varname> configuration parameter</primary>
        </indexterm>
        </term>
        <listitem>
         <para>
-         Whenever more than this amount of data has
-         been written by a single backend, attempt to force the OS to issue
-         these writes to the underlying storage.  Doing so will limit the
-         amount of dirty data in the kernel's page cache, reducing the
-         likelihood of stalls when an <function>fsync</function> is issued at the end of a
-         checkpoint, or when the OS writes data back in larger batches in the
-         background.  Often that will result in greatly reduced transaction
-         latency, but there also are some cases, especially with workloads
-         that are bigger than <xref linkend="guc-shared-buffers"/>, but smaller
-         than the OS's page cache, where performance might degrade.  This
-         setting may have no effect on some platforms.
-         If this value is specified without units, it is taken as blocks,
-         that is <symbol>BLCKSZ</symbol> bytes, typically 8kB.
-         The valid range is
-         between <literal>0</literal>, which disables forced writeback,
-         and <literal>2MB</literal>.  The default is <literal>0</literal>, i.e., no
-         forced writeback.  (If <symbol>BLCKSZ</symbol> is not 8kB,
-         the maximum value scales proportionally to it.)
+         Allows the leader process to execute the query plan under
+         <literal>Gather</literal> and <literal>Gather Merge</literal> nodes
+         instead of waiting for worker processes.  The default is
+         <literal>on</literal>.  Setting this value to <literal>off</literal>
+         reduces the likelihood that workers will become blocked because the
+         leader is not reading tuples fast enough, but requires the leader
+         process to wait for worker processes to start up before the first
+         tuples can be produced.  The degree to which the leader can help or
+         hinder performance depends on the plan type, number of workers and
+         query duration.
         </para>
        </listitem>
       </varlistentry>
@@ -5885,29 +5908,6 @@ SELECT * FROM parent WHERE key = 2400;
         Setting this value to <xref linkend="guc-geqo-threshold"/> or more
         may trigger use of the GEQO planner, resulting in non-optimal
         plans.  See <xref linkend="runtime-config-query-geqo"/>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-parallel-leader-participation" xreflabel="parallel_leader_participation">
-      <term>
-       <varname>parallel_leader_participation</varname> (<type>boolean</type>)
-       <indexterm>
-        <primary><varname>parallel_leader_participation</varname> configuration parameter</primary>
-       </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Allows the leader process to execute the query plan under
-        <literal>Gather</literal> and <literal>Gather Merge</literal> nodes
-        instead of waiting for worker processes.  The default is
-        <literal>on</literal>.  Setting this value to <literal>off</literal>
-        reduces the likelihood that workers will become blocked because the
-        leader is not reading tuples fast enough, but requires the leader
-        process to wait for worker processes to start up before the first
-        tuples can be produced.  The degree to which the leader can help or
-        hinder performance depends on the plan type, number of workers and
-        query duration.
        </para>
       </listitem>
      </varlistentry>
