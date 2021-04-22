@@ -795,6 +795,59 @@ DETAIL:  Failing row contains (a, 10).
 -- ok
 UPDATE list_default set a = 'x' WHERE a = 'd';
 DROP TABLE list_parted;
+-- Test retrieval of system columns with non-consistent partition row types.
+-- This is only partially supported, as seen in the results.
+create table utrtest (a int, b text) partition by list (a);
+create table utr1 (a int check (a in (1)), q text, b text);
+create table utr2 (a int check (a in (2)), b text);
+alter table utr1 drop column q;
+alter table utrtest attach partition utr1 for values in (1);
+alter table utrtest attach partition utr2 for values in (2);
+insert into utrtest values (1, 'foo')
+  returning *, tableoid::regclass, xmin = pg_current_xact_id()::xid as xmin_ok;
+ a |  b  | tableoid | xmin_ok 
+---+-----+----------+---------
+ 1 | foo | utr1     | t
+(1 row)
+
+insert into utrtest values (2, 'bar')
+  returning *, tableoid::regclass, xmin = pg_current_xact_id()::xid as xmin_ok;  -- fails
+ERROR:  cannot retrieve a system column in this context
+insert into utrtest values (2, 'bar')
+  returning *, tableoid::regclass;
+ a |  b  | tableoid 
+---+-----+----------
+ 2 | bar | utr2
+(1 row)
+
+update utrtest set b = b || b from (values (1), (2)) s(x) where a = s.x
+  returning *, tableoid::regclass, xmin = pg_current_xact_id()::xid as xmin_ok;
+ a |   b    | x | tableoid | xmin_ok 
+---+--------+---+----------+---------
+ 1 | foofoo | 1 | utr1     | t
+ 2 | barbar | 2 | utr2     | t
+(2 rows)
+
+update utrtest set a = 3 - a from (values (1), (2)) s(x) where a = s.x
+  returning *, tableoid::regclass, xmin = pg_current_xact_id()::xid as xmin_ok;  -- fails
+ERROR:  cannot retrieve a system column in this context
+update utrtest set a = 3 - a from (values (1), (2)) s(x) where a = s.x
+  returning *, tableoid::regclass;
+ a |   b    | x | tableoid 
+---+--------+---+----------
+ 2 | foofoo | 1 | utr2
+ 1 | barbar | 2 | utr1
+(2 rows)
+
+delete from utrtest
+  returning *, tableoid::regclass, xmax = pg_current_xact_id()::xid as xmax_ok;
+ a |   b    | tableoid | xmax_ok 
+---+--------+----------+---------
+ 1 | barbar | utr1     | t
+ 2 | foofoo | utr2     | t
+(2 rows)
+
+drop table utrtest;
 --------------
 -- Some more update-partition-key test scenarios below. This time use list
 -- partitions.
