@@ -146,9 +146,14 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 /*
  * ExecProcessReturning --- evaluate a RETURNING list
  *
- * resultRelInfo: current result rel
+ * projectReturning: the projection to evaluate
+ * resultRelOid: result relation's OID
  * tupleSlot: slot holding tuple actually inserted/updated/deleted
  * planSlot: slot holding tuple returned by top subplan node
+ *
+ * In cross-partition UPDATE cases, projectReturning and planSlot are as
+ * for the source partition, and tupleSlot must conform to that.  But
+ * resultRelOid is for the destination partition.
  *
  * Note: If tupleSlot is NULL, the FDW should have already provided econtext's
  * scan tuple.
@@ -156,11 +161,11 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
  * Returns a slot holding the result tuple
  */
 static TupleTableSlot *
-ExecProcessReturning(ResultRelInfo *resultRelInfo,
+ExecProcessReturning(ProjectionInfo *projectReturning,
+					 Oid resultRelOid,
 					 TupleTableSlot *tupleSlot,
 					 TupleTableSlot *planSlot)
 {
-	ProjectionInfo *projectReturning = resultRelInfo->ri_projectReturning;
 	ExprContext *econtext = projectReturning->pi_exprContext;
 
 	/*
@@ -177,12 +182,13 @@ ExecProcessReturning(ResultRelInfo *resultRelInfo,
 		HeapTuple	tuple;
 
 		/*
-		 * RETURNING expressions might reference the tableoid column, so
-		 * initialize t_tableOid before evaluating them.
+		 * RETURNING expressions might reference the tableoid column, so be
+		 * sure we expose the desired OID, ie that of the real target
+		 * relation.
 		 */
 		Assert(!TupIsNull(econtext->ecxt_scantuple));
 		tuple = ExecMaterializeSlot(econtext->ecxt_scantuple);
-		tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+		tuple->t_tableOid = resultRelOid;
 	}
 	econtext->ecxt_outertuple = planSlot;
 
@@ -256,6 +262,16 @@ ExecCheckTIDVisible(EState *estate,
  *		For INSERT, we have to insert the tuple into the target relation
  *		and insert appropriate tuples into the index relations.
  *
+ *		slot contains the new tuple value to be stored.
+ *		planSlot is the output of the ModifyTable's subplan; we use it
+ *		to access "junk" columns that are not going to be stored.
+ *		In a cross-partition UPDATE, srcSlot is the slot that held the
+ *		updated tuple for the source relation; otherwise it's NULL.
+ *
+ *		returningRelInfo is the resultRelInfo for the source relation of a
+ *		cross-partition UPDATE; otherwise it's the current result relation.
+ *		We use it to process RETURNING lists, for reasons explained below.
+ *
  *		Returns RETURNING result if any, otherwise NULL.
  * ----------------------------------------------------------------
  */
@@ -263,6 +279,8 @@ static TupleTableSlot *
 ExecInsert(ModifyTableState *mtstate,
 		   TupleTableSlot *slot,
 		   TupleTableSlot *planSlot,
+		   TupleTableSlot *srcSlot,
+		   ResultRelInfo *returningRelInfo,
 		   EState *estate,
 		   bool canSetTag)
 {
@@ -590,8 +608,66 @@ ExecInsert(ModifyTableState *mtstate,
 		ExecWithCheckOptions(WCO_VIEW_CHECK, resultRelInfo, slot, estate);
 
 	/* Process RETURNING if present */
-	if (resultRelInfo->ri_projectReturning)
-		result = ExecProcessReturning(resultRelInfo, slot, planSlot);
+	if (returningRelInfo->ri_projectReturning)
+	{
+		/*
+		 * In a cross-partition UPDATE with RETURNING, we have to use the
+		 * source partition's RETURNING list, because that matches the output
+		 * of the planSlot, while the destination partition might have
+		 * different resjunk columns.  This means we have to map the
+		 * destination tuple back to the source's format so we can apply that
+		 * RETURNING list.  This is expensive, but it should be an uncommon
+		 * corner case, so we won't spend much effort on making it fast.
+		 *
+		 * We assume that we can use srcSlot to hold the re-converted tuple.
+		 * Note that in the common case where the child partitions both match
+		 * the root's format, previous optimizations will have resulted in
+		 * slot and srcSlot being identical, cueing us that there's nothing to
+		 * do here.
+		 */
+		if (returningRelInfo != resultRelInfo && slot != srcSlot)
+		{
+			Relation	srcRelationDesc = returningRelInfo->ri_RelationDesc;
+			TupleConversionMap *map;
+
+			map = convert_tuples_by_name(RelationGetDescr(resultRelationDesc),
+										 RelationGetDescr(srcRelationDesc),
+										 gettext_noop("could not convert row type"));
+			if (map)
+			{
+				HeapTuple	origTuple = ExecMaterializeSlot(slot);
+				HeapTuple	newTuple;
+
+				newTuple = do_convert_tuple(origTuple, map);
+
+				/* do_convert_tuple doesn't copy system columns, so do that */
+				newTuple->t_self = newTuple->t_data->t_ctid =
+					origTuple->t_self;
+				newTuple->t_tableOid = origTuple->t_tableOid;
+
+				HeapTupleHeaderSetXmin(newTuple->t_data,
+									   HeapTupleHeaderGetRawXmin(origTuple->t_data));
+				HeapTupleHeaderSetCmin(newTuple->t_data,
+									   HeapTupleHeaderGetRawCommandId(origTuple->t_data));
+				HeapTupleHeaderSetXmax(newTuple->t_data,
+									   InvalidTransactionId);
+
+				if (RelationGetDescr(resultRelationDesc)->tdhasoid)
+				{
+					Assert(RelationGetDescr(srcRelationDesc)->tdhasoid);
+					HeapTupleSetOid(newTuple, HeapTupleGetOid(origTuple));
+				}
+
+				slot = ExecStoreTuple(newTuple, srcSlot, InvalidBuffer, true);
+
+				free_conversion_map(map);
+			}
+		}
+
+		result = ExecProcessReturning(returningRelInfo->ri_projectReturning,
+									  RelationGetRelid(resultRelationDesc),
+									  slot, planSlot);
+	}
 
 	return result;
 }
@@ -891,7 +967,9 @@ ldelete:;
 			ExecStoreTuple(&deltuple, slot, InvalidBuffer, false);
 		}
 
-		rslot = ExecProcessReturning(resultRelInfo, slot, planSlot);
+		rslot = ExecProcessReturning(resultRelInfo->ri_projectReturning,
+									 RelationGetRelid(resultRelationDesc),
+									 slot, planSlot);
 
 		/*
 		 * Before releasing the target tuple again, make sure rslot has a
@@ -1068,6 +1146,7 @@ lreplace:;
 		{
 			bool		tuple_deleted;
 			TupleTableSlot *ret_slot;
+			TupleTableSlot *orig_slot = slot;
 			TupleTableSlot *epqslot = NULL;
 			PartitionTupleRouting *proute = mtstate->mt_partition_tuple_routing;
 			int			map_index;
@@ -1175,6 +1254,7 @@ lreplace:;
 										   mtstate->rootResultRelInfo, slot);
 
 			ret_slot = ExecInsert(mtstate, slot, planSlot,
+								  orig_slot, resultRelInfo,
 								  estate, canSetTag);
 
 			/* Revert ExecPrepareTupleRouting's node change. */
@@ -1334,7 +1414,9 @@ lreplace:;
 
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
-		return ExecProcessReturning(resultRelInfo, slot, planSlot);
+		return ExecProcessReturning(resultRelInfo->ri_projectReturning,
+									RelationGetRelid(resultRelationDesc),
+									slot, planSlot);
 
 	return NULL;
 }
@@ -2067,7 +2149,9 @@ ExecModifyTable(PlanState *pstate)
 			 * ExecProcessReturning by IterateDirectModify, so no need to
 			 * provide it here.
 			 */
-			slot = ExecProcessReturning(resultRelInfo, NULL, planSlot);
+			slot = ExecProcessReturning(resultRelInfo->ri_projectReturning,
+										RelationGetRelid(resultRelInfo->ri_RelationDesc),
+										NULL, planSlot);
 
 			estate->es_result_relation_info = saved_resultRelInfo;
 			return slot;
@@ -2157,6 +2241,7 @@ ExecModifyTable(PlanState *pstate)
 					slot = ExecPrepareTupleRouting(node, estate, proute,
 												   resultRelInfo, slot);
 				slot = ExecInsert(node, slot, planSlot,
+								  NULL, estate->es_result_relation_info,
 								  estate, node->canSetTag);
 				/* Revert ExecPrepareTupleRouting's state change. */
 				if (proute)
