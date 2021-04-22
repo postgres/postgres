@@ -238,6 +238,31 @@ DROP VIEW upview;
 UPDATE range_parted set c = 95 WHERE a = 'b' and b > 10 and c > 100 returning (range_parted), *;
 :show_data;
 
+-- The following tests computing RETURNING when the source and the destination
+-- partitions of a UPDATE row movement operation have different tuple
+-- descriptors, which has been shown to be problematic in the cases where the
+-- RETURNING targetlist contains non-target relation attributes that are
+-- computed by referring to the source partition plan's output tuple.  Also,
+-- a trigger on the destination relation may change the tuple, which must be
+-- reflected in the RETURNING output, so we test that too.
+CREATE TABLE part_c_1_c_20 (LIKE range_parted);
+ALTER TABLE part_c_1_c_20 DROP a, DROP b, ADD a text, ADD b bigint;
+ALTER TABLE range_parted ATTACH PARTITION part_c_1_c_20 FOR VALUES FROM ('c', 1) TO ('c', 20);
+CREATE FUNCTION trigfunc () RETURNS TRIGGER LANGUAGE plpgsql as $$ BEGIN NEW.e := 'in trigfunc()'; RETURN NEW; END; $$;
+CREATE TRIGGER trig BEFORE INSERT ON part_c_1_c_20 FOR EACH ROW EXECUTE FUNCTION trigfunc();
+UPDATE range_parted r set a = 'c' FROM (VALUES ('a', 1), ('a', 10), ('b', 12)) s(x, y) WHERE s.x = r.a AND s.y = r.b RETURNING tableoid::regclass, *;
+
+DROP TRIGGER trig ON part_c_1_c_20;
+DROP FUNCTION trigfunc;
+
+:init_range_parted;
+CREATE FUNCTION trigfunc () RETURNS TRIGGER LANGUAGE plpgsql as $$ BEGIN RETURN NULL; END; $$;
+CREATE TRIGGER trig BEFORE INSERT ON part_c_1_c_20 FOR EACH ROW EXECUTE FUNCTION trigfunc();
+UPDATE range_parted r set a = 'c' FROM (VALUES ('a', 1), ('a', 10), ('b', 12)) s(x, y) WHERE s.x = r.a AND s.y = r.b RETURNING tableoid::regclass, *;
+:show_data;
+
+DROP TABLE part_c_1_c_20;
+DROP FUNCTION trigfunc;
 
 -- Transition tables with update row movement
 :init_range_parted;
