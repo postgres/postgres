@@ -34,7 +34,7 @@ PostgresVersion - class representing PostgreSQL version numbers
 
 =head1 DESCRIPTION
 
-PostgresVersion encapsulated Postgres version numbers, providing parsing
+PostgresVersion encapsulates Postgres version numbers, providing parsing
 of common version formats and comparison operations.
 
 =cut
@@ -73,25 +73,22 @@ sub new
 	my $class = shift;
 	my $arg   = shift;
 
+	chomp $arg;
+
 	# Accept standard formats, in case caller has handed us the output of a
 	# postgres command line tool
-	$arg = $1
-	  if ($arg =~ m/\(?PostgreSQL\)? (\d+(?:\.\d+)*(?:devel)?)/);
+	my $devel;
+	($arg,$devel) = ($1, $2)
+	  if ($arg =~  m/^(?:\(?PostgreSQL\)? )?(\d+(?:\.\d+)*)(devel)?/);
 
 	# Split into an array
 	my @result = split(/\./, $arg);
 
 	# Treat development versions as having a minor/micro version one less than
 	# the first released version of that branch.
-	if ($result[$#result] =~ m/^(\d+)devel$/)
-	{
-		pop(@result);
-		push(@result, $1, -1);
-	}
+	push @result, -1 if ($devel);
 
-	my $res = [@result];
-	bless $res, $class;
-	return $res;
+	return bless \@result, $class;
 }
 
 
