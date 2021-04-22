@@ -22,6 +22,7 @@ endterm=
 <link>
 	use to supply text for the link, only uses linkend, requires </link>
 	http://www.oasis-open.org/docbook/documentation/reference/html/link.html
+	can be embedded inside of <command>, unlike <xref>
 
 
 External Linking
