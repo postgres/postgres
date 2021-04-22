@@ -324,6 +324,7 @@ a
 1              
 2              
 step s1insert: insert into d4_fk values (1);
+ERROR:  insert or update on table "d4_fk" violates foreign key constraint "d4_fk_a_fkey"
 step s1c: commit;
 
 starting permutation: s2snitch s1b s1s s2detach s1cancel s3vacfreeze s1s s1insert s1c

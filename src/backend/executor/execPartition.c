@@ -991,19 +991,16 @@ ExecInitPartitionDispatchInfo(EState *estate,
 
 	/*
 	 * For data modification, it is better that executor does not include
-	 * partitions being detached, except in snapshot-isolation mode.  This
-	 * means that a read-committed transaction immediately gets a "no
-	 * partition for tuple" error when a tuple is inserted into a partition
-	 * that's being detached concurrently, but a transaction in repeatable-
-	 * read mode can still use the partition.  Note that because partition
-	 * detach uses ShareLock on the partition (which conflicts with DML),
-	 * we're certain that the detach won't be able to complete until any
-	 * inserting transaction is done.
+	 * partitions being detached, except when running in snapshot-isolation
+	 * mode.  This means that a read-committed transaction immediately gets a
+	 * "no partition for tuple" error when a tuple is inserted into a
+	 * partition that's being detached concurrently, but a transaction in
+	 * repeatable-read mode can still use such a partition.
 	 */
 	if (estate->es_partition_directory == NULL)
 		estate->es_partition_directory =
 			CreatePartitionDirectory(estate->es_query_cxt,
-									 IsolationUsesXactSnapshot());
+									 !IsolationUsesXactSnapshot());
 
 	oldcxt = MemoryContextSwitchTo(proute->memcxt);
 
@@ -1571,10 +1568,10 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 	ListCell   *lc;
 	int			i;
 
-	/* Executor must always include detached partitions */
+	/* For data reading, executor always omits detached partitions */
 	if (estate->es_partition_directory == NULL)
 		estate->es_partition_directory =
-			CreatePartitionDirectory(estate->es_query_cxt, true);
+			CreatePartitionDirectory(estate->es_query_cxt, false);
 
 	n_part_hierarchies = list_length(partitionpruneinfo->prune_infos);
 	Assert(n_part_hierarchies > 0);

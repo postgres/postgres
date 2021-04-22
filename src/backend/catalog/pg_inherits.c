@@ -52,13 +52,19 @@ typedef struct SeenRelsEntry
  * then no locks are acquired, but caller must beware of race conditions
  * against possible DROPs of child relations.
  *
- * include_detached says to include all partitions, even if they're marked
- * detached.  Passing it as false means they might or might not be included,
- * depending on the visibility of the pg_inherits row for the active snapshot.
+ * If a partition's pg_inherits row is marked "detach pending",
+ * *detached_exist (if not null) is set true, otherwise it is set false.
+ *
+ * If omit_detached is true and there is an active snapshot (not the same as
+ * the catalog snapshot used to scan pg_inherits!) and a pg_inherits tuple
+ * marked "detach pending" is visible to that snapshot, then that partition is
+ * omitted from the output list.  This makes partitions invisible depending on
+ * whether the transaction that marked those partitions as detached appears
+ * committed to the active snapshot.
  */
 List *
-find_inheritance_children(Oid parentrelId, bool include_detached,
-						  LOCKMODE lockmode)
+find_inheritance_children(Oid parentrelId, bool omit_detached,
+						  LOCKMODE lockmode, bool *detached_exist)
 {
 	List	   *list = NIL;
 	Relation	relation;
@@ -77,6 +83,9 @@ find_inheritance_children(Oid parentrelId, bool include_detached,
 	 */
 	if (!has_subclass(parentrelId))
 		return NIL;
+
+	if (detached_exist)
+		*detached_exist = false;
 
 	/*
 	 * Scan pg_inherits and build a working array of subclass OIDs.
@@ -99,29 +108,35 @@ find_inheritance_children(Oid parentrelId, bool include_detached,
 	{
 		/*
 		 * Cope with partitions concurrently being detached.  When we see a
-		 * partition marked "detach pending", we only include it in the set of
-		 * visible partitions if caller requested all detached partitions, or
-		 * if its pg_inherits tuple's xmin is still visible to the active
-		 * snapshot.
+		 * partition marked "detach pending", we omit it from the returned set
+		 * of visible partitions if caller requested that and the tuple's xmin
+		 * does not appear in progress to the active snapshot.  (If there's no
+		 * active snapshot set, that means we're not running a user query, so
+		 * it's OK to always include detached partitions in that case; if the
+		 * xmin is still running to the active snapshot, then the partition
+		 * has not been detached yet and so we include it.)
 		 *
-		 * The reason for this check is that we want to avoid seeing the
+		 * The reason for this hack is that we want to avoid seeing the
 		 * partition as alive in RI queries during REPEATABLE READ or
-		 * SERIALIZABLE transactions.  (If there's no active snapshot set,
-		 * that means we're not running a user query, so it's OK to always
-		 * include detached partitions in that case.)
+		 * SERIALIZABLE transactions: such queries use a different snapshot
+		 * than the one used by regular (user) queries.
 		 */
-		if (((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhdetachpending &&
-			!include_detached &&
-			ActiveSnapshotSet())
+		if (((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhdetachpending)
 		{
-			TransactionId xmin;
-			Snapshot snap;
+			if (detached_exist)
+				*detached_exist = true;
 
-			xmin = HeapTupleHeaderGetXmin(inheritsTuple->t_data);
-			snap = GetActiveSnapshot();
+			if (omit_detached && ActiveSnapshotSet())
+			{
+				TransactionId xmin;
+				Snapshot	snap;
 
-			if (!XidInMVCCSnapshot(xmin, snap))
-				continue;
+				xmin = HeapTupleHeaderGetXmin(inheritsTuple->t_data);
+				snap = GetActiveSnapshot();
+
+				if (!XidInMVCCSnapshot(xmin, snap))
+					continue;
+			}
 		}
 
 		inhrelid = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhrelid;
@@ -235,8 +250,8 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 		ListCell   *lc;
 
 		/* Get the direct children of this rel */
-		currentchildren = find_inheritance_children(currentrel, false,
-													lockmode);
+		currentchildren = find_inheritance_children(currentrel, true,
+													lockmode, NULL);
 
 		/*
 		 * Add to the queue only those children not already seen. This avoids

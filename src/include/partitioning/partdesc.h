@@ -17,11 +17,19 @@
 
 /*
  * Information about partitions of a partitioned table.
+ *
+ * For partitioned tables where detached partitions exist, we only cache
+ * descriptors that include all partitions, including detached; when we're
+ * requested a descriptor without the detached partitions, we create one
+ * afresh each time.  (The reason for this is that the set of detached
+ * partitions that are visible to each caller depends on the snapshot it has,
+ * so it's pretty much impossible to evict a descriptor from cache at the
+ * right time.)
  */
 typedef struct PartitionDescData
 {
 	int			nparts;			/* Number of partitions */
-	bool		includes_detached;	/* Does it include detached partitions */
+	bool		detached_exist; /* Are there any detached partitions? */
 	Oid		   *oids;			/* Array of 'nparts' elements containing
 								 * partition OIDs in order of the their bounds */
 	bool	   *is_leaf;		/* Array of 'nparts' elements storing whether
@@ -31,9 +39,9 @@ typedef struct PartitionDescData
 } PartitionDescData;
 
 
-extern PartitionDesc RelationGetPartitionDesc(Relation rel, bool include_detached);
+extern PartitionDesc RelationGetPartitionDesc(Relation rel, bool omit_detached);
 
-extern PartitionDirectory CreatePartitionDirectory(MemoryContext mcxt, bool include_detached);
+extern PartitionDirectory CreatePartitionDirectory(MemoryContext mcxt, bool omit_detached);
 extern PartitionDesc PartitionDirectoryLookup(PartitionDirectory, Relation);
 extern void DestroyPartitionDirectory(PartitionDirectory pdir);
 

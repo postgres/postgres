@@ -37,7 +37,7 @@ typedef struct PartitionDirectoryData
 {
 	MemoryContext pdir_mcxt;
 	HTAB	   *pdir_hash;
-	bool		include_detached;
+	bool		omit_detached;
 }			PartitionDirectoryData;
 
 typedef struct PartitionDirectoryEntry
@@ -47,7 +47,8 @@ typedef struct PartitionDirectoryEntry
 	PartitionDesc pd;
 } PartitionDirectoryEntry;
 
-static void RelationBuildPartitionDesc(Relation rel, bool include_detached);
+static PartitionDesc RelationBuildPartitionDesc(Relation rel,
+												bool omit_detached);
 
 
 /*
@@ -60,18 +61,29 @@ static void RelationBuildPartitionDesc(Relation rel, bool include_detached);
  * for callers to continue to use that pointer as long as (a) they hold the
  * relation open, and (b) they hold a relation lock strong enough to ensure
  * that the data doesn't become stale.
+ *
+ * The above applies to partition descriptors that are complete regarding
+ * partitions concurrently being detached.  When a descriptor that omits
+ * partitions being detached is requested (and such partitions are present),
+ * said descriptor is not part of relcache and so it isn't freed by
+ * invalidations either.  Caller must not use such a descriptor beyond the
+ * current Portal.
  */
 PartitionDesc
-RelationGetPartitionDesc(Relation rel, bool include_detached)
+RelationGetPartitionDesc(Relation rel, bool omit_detached)
 {
-	if (rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-		return NULL;
+	Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
-	if (unlikely(rel->rd_partdesc == NULL ||
-				 rel->rd_partdesc->includes_detached != include_detached))
-		RelationBuildPartitionDesc(rel, include_detached);
+	/*
+	 * If relcache has a partition descriptor, use that.  However, we can only
+	 * do so when we are asked to include all partitions including detached;
+	 * and also when we know that there are no detached partitions.
+	 */
+	if (likely(rel->rd_partdesc &&
+			   (!rel->rd_partdesc->detached_exist || !omit_detached)))
+		return rel->rd_partdesc;
 
-	return rel->rd_partdesc;
+	return RelationBuildPartitionDesc(rel, omit_detached);
 }
 
 /*
@@ -88,9 +100,15 @@ RelationGetPartitionDesc(Relation rel, bool include_detached)
  * context the current context except in very brief code sections, out of fear
  * that some of our callees allocate memory on their own which would be leaked
  * permanently.
+ *
+ * As a special case, partition descriptors that are requested to omit
+ * partitions being detached (and which contain such partitions) are transient
+ * and are not associated with the relcache entry.  Such descriptors only last
+ * through the requesting Portal, so we use the corresponding memory context
+ * for them.
  */
-static void
-RelationBuildPartitionDesc(Relation rel, bool include_detached)
+static PartitionDesc
+RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 {
 	PartitionDesc partdesc;
 	PartitionBoundInfo boundinfo = NULL;
@@ -98,6 +116,7 @@ RelationBuildPartitionDesc(Relation rel, bool include_detached)
 	PartitionBoundSpec **boundspecs = NULL;
 	Oid		   *oids = NULL;
 	bool	   *is_leaf = NULL;
+	bool		detached_exist;
 	ListCell   *cell;
 	int			i,
 				nparts;
@@ -112,8 +131,8 @@ RelationBuildPartitionDesc(Relation rel, bool include_detached)
 	 * concurrently, whatever this function returns will be accurate as of
 	 * some well-defined point in time.
 	 */
-	inhoids = find_inheritance_children(RelationGetRelid(rel), include_detached,
-										NoLock);
+	inhoids = find_inheritance_children(RelationGetRelid(rel), omit_detached,
+										NoLock, &detached_exist);
 	nparts = list_length(inhoids);
 
 	/* Allocate working arrays for OIDs, leaf flags, and boundspecs. */
@@ -234,6 +253,7 @@ RelationBuildPartitionDesc(Relation rel, bool include_detached)
 	partdesc = (PartitionDescData *)
 		MemoryContextAllocZero(new_pdcxt, sizeof(PartitionDescData));
 	partdesc->nparts = nparts;
+	partdesc->detached_exist = detached_exist;
 	/* If there are no partitions, the rest of the partdesc can stay zero */
 	if (nparts > 0)
 	{
@@ -241,7 +261,6 @@ RelationBuildPartitionDesc(Relation rel, bool include_detached)
 		partdesc->boundinfo = partition_bounds_copy(boundinfo, key);
 		partdesc->oids = (Oid *) palloc(nparts * sizeof(Oid));
 		partdesc->is_leaf = (bool *) palloc(nparts * sizeof(bool));
-		partdesc->includes_detached = include_detached;
 
 		/*
 		 * Assign OIDs from the original array into mapped indexes of the
@@ -261,22 +280,41 @@ RelationBuildPartitionDesc(Relation rel, bool include_detached)
 	}
 
 	/*
-	 * We have a fully valid partdesc ready to store into the relcache.
-	 * Reparent it so it has the right lifespan.
+	 * We have a fully valid partdesc.  Reparent it so that it has the right
+	 * lifespan, and if appropriate put it into the relation's relcache entry.
 	 */
-	MemoryContextSetParent(new_pdcxt, CacheMemoryContext);
+	if (omit_detached && detached_exist)
+	{
+		/*
+		 * A transient partition descriptor is only good for the current
+		 * statement, so make it a child of the current portal's context.
+		 */
+		MemoryContextSetParent(new_pdcxt, PortalContext);
+	}
+	else
+	{
+		/*
+		 * This partdesc goes into relcache.
+		 */
 
-	/*
-	 * But first, a kluge: if there's an old rd_pdcxt, it contains an old
-	 * partition descriptor that may still be referenced somewhere.  Preserve
-	 * it, while not leaking it, by reattaching it as a child context of the
-	 * new rd_pdcxt.  Eventually it will get dropped by either RelationClose
-	 * or RelationClearRelation.
-	 */
-	if (rel->rd_pdcxt != NULL)
-		MemoryContextSetParent(rel->rd_pdcxt, new_pdcxt);
-	rel->rd_pdcxt = new_pdcxt;
-	rel->rd_partdesc = partdesc;
+		MemoryContextSetParent(new_pdcxt, CacheMemoryContext);
+
+		/*
+		 * But first, a kluge: if there's an old rd_pdcxt, it contains an old
+		 * partition descriptor that may still be referenced somewhere.
+		 * Preserve it, while not leaking it, by reattaching it as a child
+		 * context of the new rd_pdcxt.  Eventually it will get dropped by
+		 * either RelationClose or RelationClearRelation.
+		 */
+		if (rel->rd_pdcxt != NULL)
+			MemoryContextSetParent(rel->rd_pdcxt, new_pdcxt);
+		rel->rd_pdcxt = new_pdcxt;
+
+		/* Store it into relcache */
+		rel->rd_partdesc = partdesc;
+	}
+
+	return partdesc;
 }
 
 /*
@@ -284,7 +322,7 @@ RelationBuildPartitionDesc(Relation rel, bool include_detached)
  *		Create a new partition directory object.
  */
 PartitionDirectory
-CreatePartitionDirectory(MemoryContext mcxt, bool include_detached)
+CreatePartitionDirectory(MemoryContext mcxt, bool omit_detached)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(mcxt);
 	PartitionDirectory pdir;
@@ -299,7 +337,7 @@ CreatePartitionDirectory(MemoryContext mcxt, bool include_detached)
 
 	pdir->pdir_hash = hash_create("partition directory", 256, &ctl,
 								  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
-	pdir->include_detached = include_detached;
+	pdir->omit_detached = omit_detached;
 
 	MemoryContextSwitchTo(oldcontext);
 	return pdir;
@@ -332,7 +370,7 @@ PartitionDirectoryLookup(PartitionDirectory pdir, Relation rel)
 		 */
 		RelationIncrementReferenceCount(rel);
 		pde->rel = rel;
-		pde->pd = RelationGetPartitionDesc(rel, pdir->include_detached);
+		pde->pd = RelationGetPartitionDesc(rel, pdir->omit_detached);
 		Assert(pde->pd != NULL);
 	}
 	return pde->pd;

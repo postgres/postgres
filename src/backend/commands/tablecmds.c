@@ -1041,7 +1041,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		 */
 		defaultPartOid =
 			get_default_oid_from_partdesc(RelationGetPartitionDesc(parent,
-																   false));
+																   true));
 		if (OidIsValid(defaultPartOid))
 			defaultRel = table_open(defaultPartOid, AccessExclusiveLock);
 
@@ -3507,7 +3507,7 @@ renameatt_internal(Oid myrelid,
 		 * expected_parents will only be 0 if we are not already recursing.
 		 */
 		if (expected_parents == 0 &&
-			find_inheritance_children(myrelid, false, NoLock) != NIL)
+			find_inheritance_children(myrelid, true, NoLock, NULL) != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("inherited column \"%s\" must be renamed in child tables too",
@@ -3706,7 +3706,7 @@ rename_constraint_internal(Oid myrelid,
 		else
 		{
 			if (expected_parents == 0 &&
-				find_inheritance_children(myrelid, false, NoLock) != NIL)
+				find_inheritance_children(myrelid, true, NoLock, NULL) != NIL)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("inherited constraint \"%s\" must be renamed in child tables too",
@@ -6580,7 +6580,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 */
 	if (colDef->identity &&
 		recurse &&
-		find_inheritance_children(myrelid, false, NoLock) != NIL)
+		find_inheritance_children(myrelid, true, NoLock, NULL) != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot recursively add identity column to table that has child tables")));
@@ -6826,7 +6826,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	children =
-		find_inheritance_children(RelationGetRelid(rel), false, lockmode);
+		find_inheritance_children(RelationGetRelid(rel), true, lockmode, NULL);
 
 	/*
 	 * If we are told not to recurse, there had better not be any child
@@ -6980,7 +6980,7 @@ ATPrepDropNotNull(Relation rel, bool recurse, bool recursing)
 	 */
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDesc partdesc = RelationGetPartitionDesc(rel, false);
+		PartitionDesc partdesc = RelationGetPartitionDesc(rel, true);
 
 		Assert(partdesc != NULL);
 		if (partdesc->nparts > 0 && !recurse && !recursing)
@@ -7689,7 +7689,7 @@ ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recurse, bool recurs
 	 * resulting state can be properly dumped and restored.
 	 */
 	if (!recurse &&
-		find_inheritance_children(RelationGetRelid(rel), false, lockmode))
+		find_inheritance_children(RelationGetRelid(rel), true, lockmode, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("ALTER TABLE / DROP EXPRESSION must be applied to child tables too")));
@@ -8297,7 +8297,7 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	children =
-		find_inheritance_children(RelationGetRelid(rel), false, lockmode);
+		find_inheritance_children(RelationGetRelid(rel), true, lockmode, NULL);
 
 	if (children)
 	{
@@ -8785,7 +8785,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	children =
-		find_inheritance_children(RelationGetRelid(rel), false, lockmode);
+		find_inheritance_children(RelationGetRelid(rel), true, lockmode, NULL);
 
 	/*
 	 * Check if ONLY was specified with ALTER TABLE.  If so, allow the
@@ -9400,7 +9400,7 @@ addFkRecurseReferenced(List **wqueue, Constraint *fkconstraint, Relation rel,
 	 */
 	if (pkrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDesc pd = RelationGetPartitionDesc(pkrel, false);
+		PartitionDesc pd = RelationGetPartitionDesc(pkrel, true);
 
 		for (int i = 0; i < pd->nparts; i++)
 		{
@@ -9534,7 +9534,7 @@ addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint, Relation rel,
 	}
 	else if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDesc pd = RelationGetPartitionDesc(rel, false);
+		PartitionDesc pd = RelationGetPartitionDesc(rel, true);
 
 		/*
 		 * Recurse to take appropriate action on each partition; either we
@@ -11318,8 +11318,8 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	if (!is_no_inherit_constraint)
-		children =
-			find_inheritance_children(RelationGetRelid(rel), false, lockmode);
+		children = find_inheritance_children(RelationGetRelid(rel), true,
+											 lockmode, NULL);
 	else
 		children = NIL;
 
@@ -11703,8 +11703,8 @@ ATPrepAlterColumnType(List **wqueue,
 		}
 	}
 	else if (!recursing &&
-			 find_inheritance_children(RelationGetRelid(rel), false,
-									   NoLock) != NIL)
+			 find_inheritance_children(RelationGetRelid(rel), true,
+									   NoLock, NULL) != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("type of inherited column \"%s\" must be changed in child tables too",
@@ -16875,7 +16875,7 @@ QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
 	}
 	else if (scanrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		PartitionDesc partdesc = RelationGetPartitionDesc(scanrel, false);
+		PartitionDesc partdesc = RelationGetPartitionDesc(scanrel, true);
 		int			i;
 
 		for (i = 0; i < partdesc->nparts; i++)
@@ -16935,7 +16935,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 	 * new partition will change its partition constraint.
 	 */
 	defaultPartOid =
-		get_default_oid_from_partdesc(RelationGetPartitionDesc(rel, false));
+		get_default_oid_from_partdesc(RelationGetPartitionDesc(rel, true));
 	if (OidIsValid(defaultPartOid))
 		LockRelationOid(defaultPartOid, AccessExclusiveLock);
 
@@ -17551,7 +17551,7 @@ ATExecDetachPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * will change its partition constraint.
 	 */
 	defaultPartOid =
-		get_default_oid_from_partdesc(RelationGetPartitionDesc(rel, false));
+		get_default_oid_from_partdesc(RelationGetPartitionDesc(rel, true));
 	if (OidIsValid(defaultPartOid))
 	{
 		/*
@@ -18148,7 +18148,7 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 							   RelationGetRelationName(partIdx))));
 
 		/* Make sure it indexes a partition of the other index's table */
-		partDesc = RelationGetPartitionDesc(parentTbl, false);
+		partDesc = RelationGetPartitionDesc(parentTbl, true);
 		found = false;
 		for (i = 0; i < partDesc->nparts; i++)
 		{
@@ -18302,7 +18302,7 @@ validatePartitionedIndex(Relation partedIdx, Relation partedTbl)
 	 * If we found as many inherited indexes as the partitioned table has
 	 * partitions, we're good; update pg_index to set indisvalid.
 	 */
-	if (tuples == RelationGetPartitionDesc(partedTbl, false)->nparts)
+	if (tuples == RelationGetPartitionDesc(partedTbl, true)->nparts)
 	{
 		Relation	idxRel;
 		HeapTuple	newtup;
