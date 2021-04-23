@@ -83,8 +83,14 @@ PostgreSQL documentation
     </listitem>
     <listitem>
      <para>
-      If you are using <literal>-X none</literal>, there is no guarantee that all
-      WAL files required for the backup are archived at the end of backup.
+      <application>pg_basebackup</application> cannot force the standby
+      to switch to a new WAL file at the end of backup.
+      When you are using <literal>-X none</literal>, if write activity on
+      the primary is low, <application>pg_basebackup</application> may
+      need to wait a long time for the last WAL file required for the backup
+      to be switched and archived.  In this case, it may be useful to run
+      <function>pg_switch_wal</function> on the primary in order to
+      trigger an immediate WAL file switch.
      </para>
     </listitem>
     <listitem>
