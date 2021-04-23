@@ -5359,8 +5359,8 @@ parseScriptWeight(const char *option, char **script)
 		}
 		if (wtmp > INT_MAX || wtmp < 0)
 		{
-			pg_log_fatal("weight specification out of range (0 .. %u): " INT64_FORMAT,
-						 INT_MAX, (int64) wtmp);
+			pg_log_fatal("weight specification out of range (0 .. %u): %lld",
+						 INT_MAX, (long long) wtmp);
 			exit(1);
 		}
 		weight = wtmp;
@@ -5680,7 +5680,7 @@ set_random_seed(const char *seed)
 	}
 
 	if (seed != NULL)
-		pg_log_info("setting random seed to " UINT64_FORMAT, iseed);
+		pg_log_info("setting random seed to %llu", (unsigned long long) iseed);
 	random_seed = iseed;
 
 	/* Fill base_random_sequence with low-order bits of seed */

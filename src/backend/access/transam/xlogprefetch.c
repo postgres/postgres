@@ -358,20 +358,19 @@ XLogPrefetcherFree(XLogPrefetcher *prefetcher)
 	/* Log final statistics. */
 	ereport(LOG,
 			(errmsg("recovery finished prefetching at %X/%X; "
-					"prefetch = " UINT64_FORMAT ", "
-					"skip_hit = " UINT64_FORMAT ", "
-					"skip_new = " UINT64_FORMAT ", "
-					"skip_fpw = " UINT64_FORMAT ", "
-					"skip_seq = " UINT64_FORMAT ", "
+					"prefetch = %llu, "
+					"skip_hit = %llu, "
+					"skip_new = %llu, "
+					"skip_fpw = %llu, "
+					"skip_seq = %llu, "
 					"avg_distance = %f, "
 					"avg_queue_depth = %f",
-					(uint32) (prefetcher->reader->EndRecPtr << 32),
-					(uint32) (prefetcher->reader->EndRecPtr),
-					pg_atomic_read_u64(&SharedStats->prefetch),
-					pg_atomic_read_u64(&SharedStats->skip_hit),
-					pg_atomic_read_u64(&SharedStats->skip_new),
-					pg_atomic_read_u64(&SharedStats->skip_fpw),
-					pg_atomic_read_u64(&SharedStats->skip_seq),
+					LSN_FORMAT_ARGS(prefetcher->reader->EndRecPtr),
+					(unsigned long long) pg_atomic_read_u64(&SharedStats->prefetch),
+					(unsigned long long) pg_atomic_read_u64(&SharedStats->skip_hit),
+					(unsigned long long) pg_atomic_read_u64(&SharedStats->skip_new),
+					(unsigned long long) pg_atomic_read_u64(&SharedStats->skip_fpw),
+					(unsigned long long) pg_atomic_read_u64(&SharedStats->skip_seq),
 					SharedStats->avg_distance,
 					SharedStats->avg_queue_depth)));
 	hash_destroy(prefetcher->filter_table);
