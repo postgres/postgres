@@ -1280,11 +1280,11 @@ WaitEventAdjustWin32(WaitEventSet *set, WaitEvent *event)
 		{
 			*handle = WSACreateEvent();
 			if (*handle == WSA_INVALID_EVENT)
-				elog(ERROR, "failed to create event for socket: error code %u",
+				elog(ERROR, "failed to create event for socket: error code %d",
 					 WSAGetLastError());
 		}
 		if (WSAEventSelect(event->fd, *handle, flags) != 0)
-			elog(ERROR, "failed to set up event for socket: error code %u",
+			elog(ERROR, "failed to set up event for socket: error code %d",
 				 WSAGetLastError());
 
 		Assert(event->fd != PGINVALID_SOCKET);
@@ -1971,7 +1971,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 
 		ZeroMemory(&resEvents, sizeof(resEvents));
 		if (WSAEnumNetworkEvents(cur_event->fd, handle, &resEvents) != 0)
-			elog(ERROR, "failed to enumerate network events: error code %u",
+			elog(ERROR, "failed to enumerate network events: error code %d",
 				 WSAGetLastError());
 		if ((cur_event->events & WL_SOCKET_READABLE) &&
 			(resEvents.lNetworkEvents & FD_READ))

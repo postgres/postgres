@@ -635,7 +635,7 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 		{
 			ZeroMemory(&resEvents, sizeof(resEvents));
 			if (WSAEnumNetworkEvents(sockets[i], events[i], &resEvents) != 0)
-				elog(ERROR, "failed to enumerate network events: error code %u",
+				elog(ERROR, "failed to enumerate network events: error code %d",
 					 WSAGetLastError());
 			/* Read activity? */
 			if (readfds && FD_ISSET(sockets[i], readfds))

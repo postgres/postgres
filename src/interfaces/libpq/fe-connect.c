@@ -1985,7 +1985,7 @@ setKeepalivesWin32(PGconn *conn)
 		!= 0)
 	{
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"),
+						  libpq_gettext("WSAIoctl(SIO_KEEPALIVE_VALS) failed: %d\n"),
 						  WSAGetLastError());
 		return 0;
 	}

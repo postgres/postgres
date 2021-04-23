@@ -1594,7 +1594,7 @@ pq_setkeepaliveswin32(Port *port, int idle, int interval)
 		!= 0)
 	{
 		ereport(LOG,
-				(errmsg("WSAIoctl(%s) failed: %ui",
+				(errmsg("WSAIoctl(%s) failed: %d",
 						"SIO_KEEPALIVE_VALS", WSAGetLastError())));
 		return STATUS_ERROR;
 	}
