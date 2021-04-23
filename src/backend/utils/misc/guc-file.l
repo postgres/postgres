@@ -311,7 +311,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 			/* Invalid non-custom variable, so complain */
 			ereport(elevel,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("unrecognized configuration parameter \"%s\" in file \"%s\" line %u",
+					 errmsg("unrecognized configuration parameter \"%s\" in file \"%s\" line %d",
 							item->name,
 							item->filename, item->sourceline)));
 			item->errmsg = pstrdup("unrecognized configuration parameter");
