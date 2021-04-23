@@ -952,7 +952,10 @@ ExecAppendAsyncRequest(AppendState *node, TupleTableSlot **result)
 
 	/* Nothing to do if there are no async subplans needing a new request. */
 	if (bms_is_empty(node->as_needrequest))
+	{
+		Assert(node->as_nasyncresults == 0);
 		return false;
+	}
 
 	/*
 	 * If there are any asynchronously-generated results that have not yet
@@ -998,17 +1001,16 @@ ExecAppendAsyncRequest(AppendState *node, TupleTableSlot **result)
 static void
 ExecAppendAsyncEventWait(AppendState *node)
 {
+	int			nevents = node->as_nasyncplans + 1;
 	long		timeout = node->as_syncdone ? -1 : 0;
 	WaitEvent   occurred_event[EVENT_BUFFER_SIZE];
 	int			noccurred;
-	int			nevents;
 	int			i;
 
 	/* We should never be called when there are no valid async subplans. */
 	Assert(node->as_nasyncremain > 0);
 
-	node->as_eventset = CreateWaitEventSet(CurrentMemoryContext,
-										   node->as_nasyncplans + 1);
+	node->as_eventset = CreateWaitEventSet(CurrentMemoryContext, nevents);
 	AddWaitEventToSet(node->as_eventset, WL_EXIT_ON_PM_DEATH, PGINVALID_SOCKET,
 					  NULL, NULL);
 
@@ -1022,8 +1024,14 @@ ExecAppendAsyncEventWait(AppendState *node)
 			ExecAsyncConfigureWait(areq);
 	}
 
-	/* Wait for at least one event to occur. */
-	nevents = Min(node->as_nasyncplans + 1, EVENT_BUFFER_SIZE);
+	/* We wait on at most EVENT_BUFFER_SIZE events. */
+	if (nevents > EVENT_BUFFER_SIZE)
+		nevents = EVENT_BUFFER_SIZE;
+
+	/*
+	 * If the timeout is -1, wait until at least one event occurs.  If the
+	 * timeout is 0, poll for events, but do not wait at all.
+	 */
 	noccurred = WaitEventSetWait(node->as_eventset, timeout, occurred_event,
 								 nevents, WAIT_EVENT_APPEND_READY);
 	FreeWaitEventSet(node->as_eventset);

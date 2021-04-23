@@ -5835,7 +5835,10 @@ merge_fdw_options(PgFdwRelationInfo *fpinfo,
 
 		/*
 		 * We'll prefer to consider this join async-capable if any table from
-		 * either side of the join is considered async-capable.
+		 * either side of the join is considered async-capable.  This would be
+		 * reasonable because in that case the foreign server would have its
+		 * own resources to scan that table asynchronously, and the join could
+		 * also be computed asynchronously using the resources.
 		 */
 		fpinfo->async_capable = fpinfo_o->async_capable ||
 			fpinfo_i->async_capable;
@@ -6892,6 +6895,9 @@ produce_tuple_asynchronously(AsyncRequest *areq, bool fetch)
 
 /*
  * Begin an asynchronous data fetch.
+ *
+ * Note: this function assumes there is no currently-in-progress asynchronous
+ * data fetch.
  *
  * Note: fetch_more_data must be called to fetch the result.
  */
