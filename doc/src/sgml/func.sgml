@@ -9946,13 +9946,13 @@ SELECT date_trunc('hour', INTERVAL '3 days 02:47:33');
 
    <para>
 <synopsis>
-date_trunc(<replaceable>stride</replaceable>, <replaceable>source</replaceable>, <replaceable>origin</replaceable>)
+date_bin(<replaceable>stride</replaceable>, <replaceable>source</replaceable>, <replaceable>origin</replaceable>)
 </synopsis>
     <replaceable>source</replaceable> is a value expression of type
     <type>timestamp</type> or <type>timestamp with time zone</type>.  (Values
     of type <type>date</type> are cast automatically to
     <type>timestamp</type>.)  <replaceable>stride</replaceable> is a value
-    expression of type <type> interval</type>.  The return value is likewise
+    expression of type <type>interval</type>.  The return value is likewise
     of type <type>timestamp</type> or <type>timestamp with time zone</type>,
     and it marks the beginning of the bin into which the
     <replaceable>source</replaceable> is placed.
