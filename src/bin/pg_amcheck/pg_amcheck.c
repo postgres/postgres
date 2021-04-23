@@ -319,8 +319,7 @@ main(int argc, char *argv[])
 				opts.jobs = atoi(optarg);
 				if (opts.jobs < 1)
 				{
-					fprintf(stderr,
-							_("number of parallel jobs must be at least 1\n"));
+					pg_log_error("number of parallel jobs must be at least 1");
 					exit(1);
 				}
 				break;
@@ -393,7 +392,7 @@ main(int argc, char *argv[])
 					opts.skip = "all frozen";
 				else
 				{
-					fprintf(stderr, _("invalid skip option\n"));
+					pg_log_error("invalid skip option");
 					exit(1);
 				}
 				break;
@@ -401,14 +400,12 @@ main(int argc, char *argv[])
 				opts.startblock = strtol(optarg, &endptr, 10);
 				if (*endptr != '\0')
 				{
-					fprintf(stderr,
-							_("invalid start block\n"));
+					pg_log_error("invalid start block");
 					exit(1);
 				}
 				if (opts.startblock > MaxBlockNumber || opts.startblock < 0)
 				{
-					fprintf(stderr,
-							_("start block out of bounds\n"));
+					pg_log_error("start block out of bounds");
 					exit(1);
 				}
 				break;
@@ -416,14 +413,12 @@ main(int argc, char *argv[])
 				opts.endblock = strtol(optarg, &endptr, 10);
 				if (*endptr != '\0')
 				{
-					fprintf(stderr,
-							_("invalid end block\n"));
+					pg_log_error("invalid end block");
 					exit(1);
 				}
 				if (opts.endblock > MaxBlockNumber || opts.endblock < 0)
 				{
-					fprintf(stderr,
-							_("end block out of bounds\n"));
+					pg_log_error("end block out of bounds");
 					exit(1);
 				}
 				break;
@@ -450,8 +445,7 @@ main(int argc, char *argv[])
 
 	if (opts.endblock >= 0 && opts.endblock < opts.startblock)
 	{
-		fprintf(stderr,
-				_("end block precedes start block\n"));
+		pg_log_error("end block precedes start block");
 		exit(1);
 	}
 
