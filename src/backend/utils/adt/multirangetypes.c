@@ -216,6 +216,7 @@ multirange_in(PG_FUNCTION_ARGS)
 						parse_state = MULTIRANGE_IN_RANGE_QUOTED;
 					else if (ch == '\\')
 						parse_state = MULTIRANGE_IN_RANGE_ESCAPED;
+
 					/*
 					 * We will include this character into range_str once we
 					 * find the end of the range value.
@@ -223,6 +224,7 @@ multirange_in(PG_FUNCTION_ARGS)
 				}
 				break;
 			case MULTIRANGE_IN_RANGE_ESCAPED:
+
 				/*
 				 * We will include this character into range_str once we find
 				 * the end of the range value.
@@ -242,8 +244,8 @@ multirange_in(PG_FUNCTION_ARGS)
 					parse_state = MULTIRANGE_IN_RANGE_QUOTED_ESCAPED;
 
 				/*
-				 * We will include this character into range_str once we
-				 * find the end of the range value.
+				 * We will include this character into range_str once we find
+				 * the end of the range value.
 				 */
 				break;
 			case MULTIRANGE_AFTER_RANGE:
@@ -259,6 +261,7 @@ multirange_in(PG_FUNCTION_ARGS)
 							 errdetail("Expected comma or end of multirange.")));
 				break;
 			case MULTIRANGE_IN_RANGE_QUOTED_ESCAPED:
+
 				/*
 				 * We will include this character into range_str once we find
 				 * the end of the range value.
@@ -951,14 +954,13 @@ multirange_constructor2(PG_FUNCTION_ARGS)
 		PG_RETURN_MULTIRANGE_P(make_multirange(mltrngtypid, rangetyp, 0, NULL));
 
 	/*
-	 * These checks should be guaranteed by our signature, but let's do them
-	 * just in case.
+	 * This check should be guaranteed by our signature, but let's do it just
+	 * in case.
 	 */
 
 	if (PG_ARGISNULL(0))
-		ereport(ERROR,
-				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("multirange values cannot contain NULL members")));
+		elog(ERROR,
+			 "multirange values cannot contain NULL members");
 
 	rangeArray = PG_GETARG_ARRAYTYPE_P(0);
 
@@ -1022,14 +1024,13 @@ multirange_constructor1(PG_FUNCTION_ARGS)
 	rangetyp = typcache->rngtype;
 
 	/*
-	 * These checks should be guaranteed by our signature, but let's do them
-	 * just in case.
+	 * This check should be guaranteed by our signature, but let's do it just
+	 * in case.
 	 */
 
 	if (PG_ARGISNULL(0))
-		ereport(ERROR,
-				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("multirange values cannot contain NULL members")));
+		elog(ERROR,
+			 "multirange values cannot contain NULL members");
 
 	range = PG_GETARG_RANGE_P(0);
 

@@ -1844,7 +1844,7 @@ makeMultirangeConstructors(const char *name, Oid namespace,
 							 PROKIND_FUNCTION,
 							 false, /* security_definer */
 							 false, /* leakproof */
-							 false, /* isStrict */
+							 true, /* isStrict */
 							 PROVOLATILE_IMMUTABLE, /* volatility */
 							 PROPARALLEL_SAFE,	/* parallel safety */
 							 argtypes,	/* parameterTypes */
@@ -1929,7 +1929,7 @@ makeMultirangeConstructors(const char *name, Oid namespace,
 							 PROKIND_FUNCTION,
 							 false, /* security_definer */
 							 false, /* leakproof */
-							 false, /* isStrict */
+							 true, /* isStrict */
 							 PROVOLATILE_IMMUTABLE, /* volatility */
 							 PROPARALLEL_SAFE,	/* parallel safety */
 							 argtypes,	/* parameterTypes */
