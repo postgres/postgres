@@ -406,7 +406,7 @@ pclose_check(FILE *stream)
 	{
 		/* pclose() itself failed, and hopefully set errno */
 		log_error(errcode(ERRCODE_SYSTEM_ERROR),
-				  _("pclose failed: %m"));
+				  _("%s() failed: %m"), "pclose");
 	}
 	else
 	{

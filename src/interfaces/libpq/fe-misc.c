@@ -1080,7 +1080,8 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("select() failed: %s\n"),
+						  libpq_gettext("%s() failed: %s\n"),
+						  "select",
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 	}
 

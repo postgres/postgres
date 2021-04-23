@@ -251,7 +251,7 @@ init_parallel_dump_utils(void)
 		err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (err != 0)
 		{
-			pg_log_error("WSAStartup failed: %d", err);
+			pg_log_error("%s() failed: error code %d", "WSAStartup", err);
 			exit_nicely(1);
 		}
 
@@ -1611,7 +1611,7 @@ getMessageFromWorker(ParallelState *pstate, bool do_wait, int *worker)
 	}
 
 	if (i < 0)
-		fatal("select() failed: %m");
+		fatal("%s() failed: %m", "select");
 
 	for (i = 0; i < pstate->numWorkers; i++)
 	{
@@ -1761,7 +1761,7 @@ pgpipe(int handles[2])
 	}
 	if (getsockname(s, (SOCKADDR *) &serv_addr, &len) == SOCKET_ERROR)
 	{
-		pg_log_error("pgpipe: getsockname() failed: error code %d",
+		pg_log_error("pgpipe: %s() failed: error code %d", "getsockname",
 					 WSAGetLastError());
 		closesocket(s);
 		return -1;

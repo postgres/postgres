@@ -1061,9 +1061,8 @@ WaitEventAdjustEpoll(WaitEventSet *set, WaitEvent *event, int action)
 	if (rc < 0)
 		ereport(ERROR,
 				(errcode_for_socket_access(),
-		/* translator: %s is a syscall name, such as "poll()" */
-				 errmsg("%s failed: %m",
-						"epoll_ctl()")));
+				 errmsg("%s() failed: %m",
+						"epoll_ctl")));
 }
 #endif
 
@@ -1231,9 +1230,8 @@ WaitEventAdjustKqueue(WaitEventSet *set, WaitEvent *event, int old_events)
 		else
 			ereport(ERROR,
 					(errcode_for_socket_access(),
-			/* translator: %s is a syscall name, such as "poll()" */
-					 errmsg("%s failed: %m",
-							"kevent()")));
+					 errmsg("%s() failed: %m",
+							"kevent")));
 	}
 	else if (event->events == WL_POSTMASTER_DEATH &&
 			 PostmasterPid != getppid() &&
@@ -1461,9 +1459,8 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			waiting = false;
 			ereport(ERROR,
 					(errcode_for_socket_access(),
-			/* translator: %s is a syscall name, such as "poll()" */
-					 errmsg("%s failed: %m",
-							"epoll_wait()")));
+					 errmsg("%s() failed: %m",
+							"epoll_wait")));
 		}
 		return 0;
 	}
@@ -1614,9 +1611,8 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			waiting = false;
 			ereport(ERROR,
 					(errcode_for_socket_access(),
-			/* translator: %s is a syscall name, such as "poll()" */
-					 errmsg("%s failed: %m",
-							"kevent()")));
+					 errmsg("%s() failed: %m",
+							"kevent")));
 		}
 		return 0;
 	}
@@ -1731,9 +1727,8 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			waiting = false;
 			ereport(ERROR,
 					(errcode_for_socket_access(),
-			/* translator: %s is a syscall name, such as "poll()" */
-					 errmsg("%s failed: %m",
-							"poll()")));
+					 errmsg("%s() failed: %m",
+							"poll")));
 		}
 		return 0;
 	}

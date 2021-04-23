@@ -297,7 +297,7 @@ reap_child(bool wait_for_child)
 #ifndef WIN32
 	child = waitpid(-1, &work_status, wait_for_child ? 0 : WNOHANG);
 	if (child == (pid_t) -1)
-		pg_fatal("waitpid() failed: %s\n", strerror(errno));
+		pg_fatal("%s() failed: %s\n", "waitpid", strerror(errno));
 	if (child == 0)
 		return false;			/* no children, or no dead children */
 	if (work_status != 0)

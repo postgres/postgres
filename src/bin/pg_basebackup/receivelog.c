@@ -897,7 +897,7 @@ CopyStreamPoll(PGconn *conn, long timeout_ms, pgsocket stop_socket)
 	{
 		if (errno == EINTR)
 			return 0;			/* Got a signal, so not an error */
-		pg_log_error("select() failed: %m");
+		pg_log_error("%s() failed: %m", "select");
 		return -1;
 	}
 	if (ret > 0 && FD_ISSET(connsocket, &input_mask))

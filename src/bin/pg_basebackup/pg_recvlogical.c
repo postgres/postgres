@@ -411,7 +411,7 @@ StreamLogicalLog(void)
 			}
 			else if (r < 0)
 			{
-				pg_log_error("select() failed: %m");
+				pg_log_error("%s() failed: %m", "select");
 				goto error;
 			}
 

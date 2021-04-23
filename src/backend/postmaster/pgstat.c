@@ -618,7 +618,7 @@ retry2:
 					   (char *) &old_rcvbuf, &rcvbufsize) < 0)
 		{
 			ereport(LOG,
-					(errmsg("getsockopt(%s) failed: %m", "SO_RCVBUF")));
+					(errmsg("%s(%s) failed: %m", "getsockopt", "SO_RCVBUF")));
 			/* if we can't get existing size, always try to set it */
 			old_rcvbuf = 0;
 		}
@@ -629,7 +629,7 @@ retry2:
 			if (setsockopt(pgStatSock, SOL_SOCKET, SO_RCVBUF,
 						   (char *) &new_rcvbuf, sizeof(new_rcvbuf)) < 0)
 				ereport(LOG,
-						(errmsg("setsockopt(%s) failed: %m", "SO_RCVBUF")));
+						(errmsg("%s(%s) failed: %m", "setsockopt", "SO_RCVBUF")));
 		}
 	}
 
