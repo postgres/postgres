@@ -3134,7 +3134,7 @@ PageGetItemIdCareful(BtreeCheckState *state, BlockNumber block, Page page,
 	ItemId		itemid = PageGetItemId(page, offset);
 
 	if (ItemIdGetOffset(itemid) + ItemIdGetLength(itemid) >
-		BLCKSZ - sizeof(BTPageOpaqueData))
+		BLCKSZ - MAXALIGN(sizeof(BTPageOpaqueData)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("line pointer points past end of tuple space in index \"%s\"",
