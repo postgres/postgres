@@ -79,18 +79,24 @@ sub new
 	# postgres command line tool
 	my $devel;
 	($arg,$devel) = ($1, $2)
-	  if ($arg =~  m/^(?:\(?PostgreSQL\)? )?(\d+(?:\.\d+)*)(devel)?/);
+	  if ($arg =~
+		  m!^                             # beginning of line
+          (?:\(?PostgreSQL\)?\s)?         # ignore PostgreSQL marker
+          (\d+(?:\.\d+)*)                 # version number, dotted notation
+          (devel|(?:alpha|beta|rc)\d+)?   # dev marker - see version_stamp.pl
+		 !x);
 
 	# Split into an array
-	my @result = split(/\./, $arg);
+	my @numbers = split(/\./, $arg);
 
 	# Treat development versions as having a minor/micro version one less than
 	# the first released version of that branch.
-	push @result, -1 if ($devel);
+	push @numbers, -1 if ($devel);
 
-	return bless \@result, $class;
+	$devel ||= "";
+
+	return bless  { str => "$arg$devel", num => \@numbers }, $class;
 }
-
 
 # Routine which compares the _pg_version_array obtained for the two
 # arguments and returns -1, 0, or 1, allowing comparison between two
@@ -108,27 +114,21 @@ sub _version_cmp
 
 	$b = __PACKAGE__->new($b) unless blessed($b);
 
+	my ($an, $bn) = ($a->{num}, $b->{num});
+
 	for (my $idx = 0;; $idx++)
 	{
-		return 0 unless (defined $a->[$idx] && defined $b->[$idx]);
-		return $a->[$idx] <=> $b->[$idx]
-		  if ($a->[$idx] <=> $b->[$idx]);
+		return 0 unless (defined $an->[$idx] && defined $bn->[$idx]);
+		return $an->[$idx] <=> $bn->[$idx]
+		  if ($an->[$idx] <=> $bn->[$idx]);
 	}
 }
 
-# Render the version number in the standard "joined by dots" notation if
-# interpolated into a string. Put back 'devel' if we previously turned it
-# into a -1.
+# Render the version number using the saved string.
 sub _stringify
 {
 	my $self     = shift;
-	my @sections = @$self;
-	if ($sections[-1] == -1)
-	{
-		pop @sections;
-		$sections[-1] = "$sections[-1]devel";
-	}
-	return join('.', @sections);
+	return $self->{str};
 }
 
 1;
