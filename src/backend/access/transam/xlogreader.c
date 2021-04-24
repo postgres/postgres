@@ -754,8 +754,7 @@ XLogDecodeOneRecord(XLogReaderState *state, bool allow_oversized)
 					targetRecOff == pageHeaderSize)
 				{
 					report_invalid_record(state, "contrecord is requested by %X/%X",
-										  (uint32) (state->DecodeRecPtr >> 32),
-										  (uint32) state->DecodeRecPtr);
+										  LSN_FORMAT_ARGS(state->DecodeRecPtr));
 					goto err;
 				}
 
@@ -968,10 +967,8 @@ XLogDecodeOneRecord(XLogReaderState *state, bool allow_oversized)
 						report_invalid_record(
 											  state,
 											  "there is no contrecord flag at %X/%X reading %X/%X",
-											  (uint32) (state->recordContRecPtr >> 32),
-											  (uint32) state->recordContRecPtr,
-											  (uint32) (state->DecodeRecPtr >> 32),
-											  (uint32) state->DecodeRecPtr);
+											  LSN_FORMAT_ARGS(state->recordContRecPtr),
+											  LSN_FORMAT_ARGS(state->DecodeRecPtr));
 						goto err;
 					}
 
@@ -986,10 +983,8 @@ XLogDecodeOneRecord(XLogReaderState *state, bool allow_oversized)
 											  state,
 											  "invalid contrecord length %u at %X/%X reading %X/%X, expected %u",
 											  pageHeader->xlp_rem_len,
-											  (uint32) (state->recordContRecPtr >> 32),
-											  (uint32) state->recordContRecPtr,
-											  (uint32) (state->DecodeRecPtr >> 32),
-											  (uint32) state->DecodeRecPtr,
+											  LSN_FORMAT_ARGS(state->recordContRecPtr),
+											  LSN_FORMAT_ARGS(state->DecodeRecPtr),
 											  state->recordRemainLen);
 						goto err;
 					}
