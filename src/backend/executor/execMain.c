@@ -1286,7 +1286,7 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 	Relation	rel;
 	MemoryContext oldcontext;
 
-	/* First, search through the query result relations */
+	/* Search through the query result relations */
 	foreach(l, estate->es_opened_result_relations)
 	{
 		rInfo = lfirst(l);
@@ -1295,8 +1295,8 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 	}
 
 	/*
-	 * Third, search through the result relations that were created during
-	 * tuple routing, if any.
+	 * Search through the result relations that were created during tuple
+	 * routing, if any.
 	 */
 	foreach(l, estate->es_tuple_routing_result_relations)
 	{
