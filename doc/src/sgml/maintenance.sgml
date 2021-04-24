@@ -719,7 +719,7 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     <productname>PostgreSQL</productname> has an optional but highly
     recommended feature called <firstterm>autovacuum</firstterm>,
     whose purpose is to automate the execution of
-    <command>VACUUM</command> and <command>ANALYZE </command> commands.
+    <command>VACUUM</command> and <command>ANALYZE</command> commands.
     When enabled, autovacuum checks for
     tables that have had a large number of inserted, updated or deleted
     tuples.  These checks use the statistics collection facility;

@@ -2258,7 +2258,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    The certificates of <quote>intermediate</quote> certificate authorities
    can also be appended to the file.  Doing this avoids the necessity of
    storing intermediate certificates on clients, assuming the root and
-   intermediate certificates were created with <literal>v3_ca </literal>
+   intermediate certificates were created with <literal>v3_ca</literal>
    extensions.  (This sets the certificate's basic constraint of
    <literal>CA</literal> to <literal>true</literal>.)
    This allows easier expiration of intermediate certificates.

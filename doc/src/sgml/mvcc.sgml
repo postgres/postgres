@@ -1074,7 +1074,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 
     <table tocentry="1" id="table-lock-compatibility">
-     <title> Conflicting Lock Modes</title>
+     <title>Conflicting Lock Modes</title>
      <tgroup cols="9">
       <colspec colnum="1" colwidth="1.25*"/>
       <colspec colnum="2" colwidth="1*" colname="lockst"/>
