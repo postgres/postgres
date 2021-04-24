@@ -218,6 +218,23 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>--install-missing</option></term>
+     <term><option>--install-missing=<replaceable class="parameter">schema</replaceable></option></term>
+     <listitem>
+      <para>
+       Install any missing extensions that are required to check the
+       database(s).  If not yet installed, each extension's objects will be
+       installed into the given
+       <replaceable class="parameter">schema</replaceable>, or if not specified
+       into schema <literal>pg_catalog</literal>.
+      </para>
+      <para>
+       At present, the only required extension is <xref linkend="amcheck"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-j <replaceable class="parameter">num</replaceable></option></term>
      <term><option>--jobs=<replaceable class="parameter">num</replaceable></option></term>
      <listitem>
