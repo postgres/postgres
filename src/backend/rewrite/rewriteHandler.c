@@ -681,12 +681,10 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  *
  * 2. For an UPDATE on a trigger-updatable view, add tlist entries for any
  * unassigned-to attributes, assigning them their old values.  These will
- * later get expanded to the output values of the view.  (This is equivalent
- * to what the planner's expand_targetlist() will do for UPDATE on a regular
- * table, but it's more convenient to do it here while we still have easy
- * access to the view's original RT index.)  This is only necessary for
- * trigger-updatable views, for which the view remains the result relation of
- * the query.  For auto-updatable views we must not do this, since it might
+ * later get expanded to the output values of the view.  This is only needed
+ * for trigger-updatable views, for which the view remains the result relation
+ * of the query; without it, we would not have a complete "new tuple" to pass
+ * to triggers.  For auto-updatable views we must not do this, since it might
  * add assignments to non-updatable view columns.  For rule-updatable views it
  * is unnecessary extra work, since the query will be rewritten with a
  * different result relation which will be processed when we recurse via
