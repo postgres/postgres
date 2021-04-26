@@ -763,9 +763,6 @@
   <indexterm zone="datetime-units-history">
    <primary>Gregorian calendar</primary>
   </indexterm>
-  <indexterm zone="datetime-units-history">
-   <primary>Julian date</primary>
-  </indexterm>
 
   <para>
    The SQL standard states that <quote>Within the definition of a
@@ -868,14 +865,27 @@ $ <userinput>cal 9 1752</userinput>
    festivals.
   </para>
 
+  </sect1>
+
+  <sect1 id="datetime-julian-dates">
+  <title>Julian Dates</title>
+
+  <indexterm zone="datetime-julian-dates">
+   <primary>Julian date</primary>
+  </indexterm>
+
   <para>
-   The <firstterm>Julian Date</firstterm> system is another type of
-   calendar, unrelated to the Julian calendar though it is confusingly
+   The <firstterm>Julian Date</firstterm> system is a method for
+   numbering days.  It is
+   unrelated to the Julian calendar, though it is confusingly
    named similarly to that calendar.
    The Julian Date system was invented by the French scholar
    Joseph Justus Scaliger (1540&ndash;1609)
    and probably takes its name from Scaliger's father,
    the Italian scholar Julius Caesar Scaliger (1484&ndash;1558).
+  </para>
+
+  <para>
    In the Julian Date system, each day has a sequential number, starting
    from JD 0 (which is sometimes called <emphasis>the</emphasis> Julian Date).
    JD 0 corresponds to 1 January 4713 BC in the Julian calendar, or
@@ -891,7 +901,31 @@ $ <userinput>cal 9 1752</userinput>
    input and output of dates (and also uses Julian dates for some internal
    datetime calculations), it does not observe the nicety of having dates
    run from noon to noon.  <productname>PostgreSQL</productname> treats a Julian Date
-   as running from midnight to midnight.
+   as running from local midnight to local midnight, the same as a normal
+   date.
+  </para>
+
+  <para>
+   This definition does, however, provide a way to obtain the astronomical
+   definition when you need it: do the arithmetic in time
+   zone <literal>UTC-12</literal>.  For example,
+<programlisting>
+=&gt; SELECT extract(julian from '2021-06-23 7:00:00-04'::timestamptz at time zone 'UTC-12');
+           extract
+------------------------------
+ 2459389.95833333333333333333
+(1 row)
+=&gt; SELECT extract(julian from '2021-06-23 8:00:00-04'::timestamptz at time zone 'UTC-12');
+               extract
+--------------------------------------
+ 2459390.0000000000000000000000000000
+(1 row)
+=&gt; SELECT extract(julian from date '2021-06-24');
+ extract
+---------
+ 2459390
+(1 row)
+</programlisting>
   </para>
 
  </sect1>
