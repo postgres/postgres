@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 51;
+use Test::More tests => 54;
 
 # setup
 
@@ -67,6 +67,40 @@ $node_subscriber1->safe_psql('postgres',
 	"CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub1"
 );
 
+# Add set of AFTER replica triggers for testing that they are fired
+# correctly.  This uses a table that records details of all trigger
+# activities.  Triggers are marked as enabled for a subset of the
+# partition tree.
+$node_subscriber1->safe_psql(
+	'postgres', qq{
+CREATE TABLE sub1_trigger_activity (tgtab text, tgop text,
+  tgwhen text, tglevel text, olda int, newa int);
+CREATE FUNCTION sub1_trigger_activity_func() RETURNS TRIGGER AS \$\$
+BEGIN
+  IF (TG_OP = 'INSERT') THEN
+    INSERT INTO public.sub1_trigger_activity
+      SELECT TG_RELNAME, TG_OP, TG_WHEN, TG_LEVEL, NULL, NEW.a;
+  ELSIF (TG_OP = 'UPDATE') THEN
+    INSERT INTO public.sub1_trigger_activity
+      SELECT TG_RELNAME, TG_OP, TG_WHEN, TG_LEVEL, OLD.a, NEW.a;
+  END IF;
+  RETURN NULL;
+END;
+\$\$ LANGUAGE plpgsql;
+CREATE TRIGGER sub1_tab1_log_op_trigger
+  AFTER INSERT OR UPDATE ON tab1
+  FOR EACH ROW EXECUTE PROCEDURE sub1_trigger_activity_func();
+ALTER TABLE ONLY tab1 ENABLE REPLICA TRIGGER sub1_tab1_log_op_trigger;
+CREATE TRIGGER sub1_tab1_2_log_op_trigger
+  AFTER INSERT OR UPDATE ON tab1_2
+  FOR EACH ROW EXECUTE PROCEDURE sub1_trigger_activity_func();
+ALTER TABLE ONLY tab1_2 ENABLE REPLICA TRIGGER sub1_tab1_2_log_op_trigger;
+CREATE TRIGGER sub1_tab1_2_2_log_op_trigger
+  AFTER INSERT OR UPDATE ON tab1_2_2
+  FOR EACH ROW EXECUTE PROCEDURE sub1_trigger_activity_func();
+ALTER TABLE ONLY tab1_2_2 ENABLE REPLICA TRIGGER sub1_tab1_2_2_log_op_trigger;
+});
+
 # subscriber 2
 #
 # This does not use partitioning.  The tables match the leaf tables on
@@ -86,6 +120,34 @@ $node_subscriber2->safe_psql('postgres',
 $node_subscriber2->safe_psql('postgres',
 	"CREATE SUBSCRIPTION sub2 CONNECTION '$publisher_connstr' PUBLICATION pub_all"
 );
+
+# Add set of AFTER replica triggers for testing that they are fired
+# correctly, using the same method as the first subscriber.
+$node_subscriber2->safe_psql(
+	'postgres', qq{
+CREATE TABLE sub2_trigger_activity (tgtab text,
+  tgop text, tgwhen text, tglevel text, olda int, newa int);
+CREATE FUNCTION sub2_trigger_activity_func() RETURNS TRIGGER AS \$\$
+BEGIN
+  IF (TG_OP = 'INSERT') THEN
+    INSERT INTO public.sub2_trigger_activity
+      SELECT TG_RELNAME, TG_OP, TG_WHEN, TG_LEVEL, NULL, NEW.a;
+  ELSIF (TG_OP = 'UPDATE') THEN
+    INSERT INTO public.sub2_trigger_activity
+      SELECT TG_RELNAME, TG_OP, TG_WHEN, TG_LEVEL, OLD.a, NEW.a;
+  END IF;
+  RETURN NULL;
+END;
+\$\$ LANGUAGE plpgsql;
+CREATE TRIGGER sub2_tab1_log_op_trigger
+  AFTER INSERT OR UPDATE ON tab1
+  FOR EACH ROW EXECUTE PROCEDURE sub2_trigger_activity_func();
+ALTER TABLE ONLY tab1 ENABLE REPLICA TRIGGER sub2_tab1_log_op_trigger;
+CREATE TRIGGER sub2_tab1_2_log_op_trigger
+  AFTER INSERT OR UPDATE ON tab1_2
+  FOR EACH ROW EXECUTE PROCEDURE sub2_trigger_activity_func();
+ALTER TABLE ONLY tab1_2 ENABLE REPLICA TRIGGER sub2_tab1_2_log_op_trigger;
+});
 
 # Wait for initial sync of all subscriptions
 my $synced_query =
@@ -130,6 +192,14 @@ $result = $node_subscriber2->safe_psql('postgres',
 	"SELECT c, a FROM tab1_2 ORDER BY 1, 2");
 is($result, qq(sub2_tab1_2|5), 'inserts into tab1_2 replicated');
 
+# The AFTER trigger of tab1_2 should have recorded one INSERT.
+$result = $node_subscriber2->safe_psql('postgres',
+	"SELECT * FROM sub2_trigger_activity ORDER BY tgtab, tgop, tgwhen, olda, newa;"
+);
+is( $result,
+	qq(tab1_2|INSERT|AFTER|ROW||5),
+	'check replica insert after trigger applied on subscriber');
+
 $result = $node_subscriber2->safe_psql('postgres',
 	"SELECT c, a FROM tab1_def ORDER BY 1, 2");
 is($result, qq(sub2_tab1_def|0), 'inserts into tab1_def replicated');
@@ -161,6 +231,15 @@ $result = $node_subscriber1->safe_psql('postgres',
 	"SELECT a FROM tab1_2_2 ORDER BY 1");
 is($result, qq(6), 'updates of tab1_2 replicated into tab1_2_2 correctly');
 
+# The AFTER trigger should have recorded the UPDATEs of tab1_2_2.
+$result = $node_subscriber1->safe_psql('postgres',
+	"SELECT * FROM sub1_trigger_activity ORDER BY tgtab, tgop, tgwhen, olda, newa;"
+);
+is( $result, qq(tab1_2_2|INSERT|AFTER|ROW||6
+tab1_2_2|UPDATE|AFTER|ROW|4|6
+tab1_2_2|UPDATE|AFTER|ROW|6|4),
+	'check replica update after trigger applied on subscriber');
+
 $result = $node_subscriber2->safe_psql('postgres',
 	"SELECT c, a FROM tab1_1 ORDER BY 1, 2");
 is( $result, qq(sub2_tab1_1|2
@@ -169,6 +248,16 @@ sub2_tab1_1|3), 'update of tab1_1 replicated');
 $result = $node_subscriber2->safe_psql('postgres',
 	"SELECT c, a FROM tab1_2 ORDER BY 1, 2");
 is($result, qq(sub2_tab1_2|6), 'tab1_2 updated');
+
+# The AFTER trigger should have recorded the updates of tab1_2.
+$result = $node_subscriber2->safe_psql('postgres',
+	"SELECT * FROM sub2_trigger_activity ORDER BY tgtab, tgop, tgwhen, olda, newa;"
+);
+is( $result, qq(tab1_2|INSERT|AFTER|ROW||5
+tab1_2|UPDATE|AFTER|ROW|4|6
+tab1_2|UPDATE|AFTER|ROW|5|6
+tab1_2|UPDATE|AFTER|ROW|6|4),
+	'check replica update after trigger applied on subscriber');
 
 $result = $node_subscriber2->safe_psql('postgres',
 	"SELECT c, a FROM tab1_def ORDER BY 1");
