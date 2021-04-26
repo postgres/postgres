@@ -1867,7 +1867,7 @@ ReorderBufferStreamCommit(ReorderBuffer *rb, ReorderBufferTXN *txn)
  * to truncate the changes in the subscriber. Similarly, for prepared
  * transactions, we stop decoding if concurrent abort is detected and then
  * rollback the changes when rollback prepared is encountered. See
- * DecodePreare.
+ * DecodePrepare.
  */
 static inline void
 SetupCheckXidLive(TransactionId xid)
