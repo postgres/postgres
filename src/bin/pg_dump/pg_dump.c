@@ -297,7 +297,7 @@ static const char *getAttrName(int attrnum, const TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti, PQExpBuffer buffer);
 static bool nonemptyReloptions(const char *reloptions);
 static void appendIndexCollationVersion(PQExpBuffer buffer, const IndxInfo *indxinfo,
-										int enc, bool coll_unknown,
+										bool coll_unknown,
 										Archive *fout);
 static void appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 									const char *prefix, Archive *fout);
@@ -16844,8 +16844,7 @@ dumpIndex(Archive *fout, const IndxInfo *indxinfo)
 									"INDEX", qqindxname);
 
 		if (dopt->binary_upgrade)
-			appendIndexCollationVersion(q, indxinfo, fout->encoding,
-										dopt->coll_unknown, fout);
+			appendIndexCollationVersion(q, indxinfo, dopt->coll_unknown, fout);
 
 		/* If the index defines identity, we need to record that. */
 		if (indxinfo->indisreplident)
@@ -16877,8 +16876,7 @@ dumpIndex(Archive *fout, const IndxInfo *indxinfo)
 	}
 	else if (dopt->binary_upgrade)
 	{
-		appendIndexCollationVersion(q, indxinfo, fout->encoding,
-									dopt->coll_unknown, fout);
+		appendIndexCollationVersion(q, indxinfo, dopt->coll_unknown, fout);
 
 		if (indxinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 			ArchiveEntry(fout, indxinfo->dobj.catId, indxinfo->dobj.dumpId,
@@ -18903,7 +18901,7 @@ nonemptyReloptions(const char *reloptions)
  * cluster, during a binary upgrade.
  */
 static void
-appendIndexCollationVersion(PQExpBuffer buffer, const IndxInfo *indxinfo, int enc,
+appendIndexCollationVersion(PQExpBuffer buffer, const IndxInfo *indxinfo,
 							bool coll_unknown, Archive *fout)
 {
 	char	   *inddependcollnames = indxinfo->inddependcollnames;
