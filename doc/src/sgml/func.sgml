@@ -6465,7 +6465,8 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
        <row>
         <entry><literal>J</literal></entry>
-        <entry>Julian Day (integer days since November 24, 4714 BC at midnight UTC)</entry>
+        <entry>Julian Date (integer days since November 24, 4714 BC at local
+        midnight; see <xref linkend="datetime-julian-dates"/>)</entry>
        </row>
        <row>
         <entry><literal>Q</literal></entry>
@@ -8205,6 +8206,25 @@ SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-02');
        <para>
         This field is not available in PostgreSQL releases prior to 8.3.
        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>julian</literal></term>
+      <listitem>
+       <para>
+        The <firstterm>Julian Date</firstterm> corresponding to the
+        date or timestamp (not applicable to intervals).  Timestamps
+        that are not local midnight result in a fractional value.  See
+        <xref linkend="datetime-julian-dates"/> for more information.
+       </para>
+
+<screen>
+SELECT EXTRACT(JULIAN FROM DATE '2006-01-01');
+<lineannotation>Result: </lineannotation><computeroutput>2453737</computeroutput>
+SELECT EXTRACT(JULIAN FROM TIMESTAMP '2006-01-01 12:00');
+<lineannotation>Result: </lineannotation><computeroutput>2453737.5</computeroutput>
+</screen>
       </listitem>
      </varlistentry>
 
