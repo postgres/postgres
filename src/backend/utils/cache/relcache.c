@@ -5207,6 +5207,81 @@ restart:
 }
 
 /*
+ * RelationGetIdentityKeyBitmap -- get a bitmap of replica identity attribute
+ * numbers
+ *
+ * A bitmap of index attribute numbers for the configured replica identity
+ * index is returned.
+ *
+ * See also comments of RelationGetIndexAttrBitmap().
+ *
+ * This is a special purpose function used during logical replication. Here,
+ * unlike RelationGetIndexAttrBitmap(), we don't acquire a lock on the required
+ * index as we build the cache entry using a historic snapshot and all the
+ * later changes are absorbed while decoding WAL. Due to this reason, we don't
+ * need to retry here in case of a change in the set of indexes.
+ */
+Bitmapset *
+RelationGetIdentityKeyBitmap(Relation relation)
+{
+	Bitmapset  *idindexattrs = NULL;	/* columns in the replica identity */
+	List	   *indexoidlist;
+	Relation	indexDesc;
+	int			i;
+	MemoryContext oldcxt;
+
+	/* Quick exit if we already computed the result */
+	if (relation->rd_idattr != NULL)
+		return bms_copy(relation->rd_idattr);
+
+	/* Fast path if definitely no indexes */
+	if (!RelationGetForm(relation)->relhasindex)
+		return NULL;
+
+	/* Historic snapshot must be set. */
+	Assert(HistoricSnapshotActive());
+
+	indexoidlist = RelationGetIndexList(relation);
+
+	/* Fall out if no indexes (but relhasindex was set) */
+	if (indexoidlist == NIL)
+		return NULL;
+
+	/* Add referenced attributes to idindexattrs */
+	indexDesc = RelationIdGetRelation(relation->rd_replidindex);
+	for (i = 0; i < indexDesc->rd_index->indnatts; i++)
+	{
+		int			attrnum = indexDesc->rd_index->indkey.values[i];
+
+		/*
+		 * We don't include non-key columns into idindexattrs bitmaps. See
+		 * RelationGetIndexAttrBitmap.
+		 */
+		if (attrnum != 0)
+		{
+			if (i < indexDesc->rd_index->indnkeyatts)
+				idindexattrs = bms_add_member(idindexattrs,
+											  attrnum - FirstLowInvalidHeapAttributeNumber);
+		}
+	}
+
+	RelationClose(indexDesc);
+	list_free(indexoidlist);
+
+	/* Don't leak the old values of these bitmaps, if any */
+	bms_free(relation->rd_idattr);
+	relation->rd_idattr = NULL;
+
+	/* Now save copy of the bitmap in the relcache entry */
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+	relation->rd_idattr = bms_copy(idindexattrs);
+	MemoryContextSwitchTo(oldcxt);
+
+	/* We return our original working copy for caller to play with */
+	return idindexattrs;
+}
+
+/*
  * RelationGetExclusionInfo -- get info about index's exclusion constraint
  *
  * This should be called only for an index that is known to have an

@@ -668,8 +668,7 @@ logicalrep_write_attrs(StringInfo out, Relation rel)
 	/* fetch bitmap of REPLICATION IDENTITY attributes */
 	replidentfull = (rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL);
 	if (!replidentfull)
-		idattrs = RelationGetIndexAttrBitmap(rel,
-											 INDEX_ATTR_BITMAP_IDENTITY_KEY);
+		idattrs = RelationGetIdentityKeyBitmap(rel);
 
 	/* send the attributes */
 	for (i = 0; i < desc->natts; i++)
