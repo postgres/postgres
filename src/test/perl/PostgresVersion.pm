@@ -110,9 +110,11 @@ sub new
 #
 sub _version_cmp
 {
-	my ($a, $b) = @_;
+	my ($a, $b, $swapped) = @_;
 
 	$b = __PACKAGE__->new($b) unless blessed($b);
+
+	($a, $b) = ($b, $a) if $swapped;
 
 	my ($an, $bn) = ($a->{num}, $b->{num});
 
