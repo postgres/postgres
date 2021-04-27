@@ -328,12 +328,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	 * ReplicationSlotAllocationLock.
 	 */
 	if (SlotIsLogical(slot))
-	{
-		PgStat_ReplSlotStats repSlotStat;
-		MemSet(&repSlotStat, 0, sizeof(PgStat_ReplSlotStats));
-		namestrcpy(&repSlotStat.slotname, NameStr(slot->data.name));
-		pgstat_report_replslot(&repSlotStat);
-	}
+		pgstat_report_replslot_create(NameStr(slot->data.name));
 
 	/*
 	 * Now that the slot has been marked as in_use and active, it's safe to
@@ -349,17 +344,15 @@ ReplicationSlotCreate(const char *name, bool db_specific,
  * Search for the named replication slot.
  *
  * Return the replication slot if found, otherwise NULL.
- *
- * The caller must hold ReplicationSlotControlLock in shared mode.
  */
 ReplicationSlot *
-SearchNamedReplicationSlot(const char *name)
+SearchNamedReplicationSlot(const char *name, bool need_lock)
 {
 	int			i;
-	ReplicationSlot	*slot = NULL;
+	ReplicationSlot *slot = NULL;
 
-	Assert(LWLockHeldByMeInMode(ReplicationSlotControlLock,
-								LW_SHARED));
+	if (need_lock)
+		LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 
 	for (i = 0; i < max_replication_slots; i++)
 	{
@@ -371,6 +364,9 @@ SearchNamedReplicationSlot(const char *name)
 			break;
 		}
 	}
+
+	if (need_lock)
+		LWLockRelease(ReplicationSlotControlLock);
 
 	return slot;
 }
@@ -416,7 +412,7 @@ retry:
 	 * Search for the slot with the specified name if the slot to acquire is
 	 * not given. If the slot is not found, we either return -1 or error out.
 	 */
-	s = slot ? slot : SearchNamedReplicationSlot(name);
+	s = slot ? slot : SearchNamedReplicationSlot(name, false);
 	if (s == NULL || !s->in_use)
 	{
 		LWLockRelease(ReplicationSlotControlLock);
@@ -713,6 +709,12 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	 * reduce that possibility. If the messages reached in reverse, we would
 	 * lose one statistics update message. But the next update message will
 	 * create the statistics for the replication slot.
+	 *
+	 * XXX In case, the messages for creation and drop slot of the same name
+	 * get lost and create happens before (auto)vacuum cleans up the dead
+	 * slot, the stats will be accumulated into the old slot. One can imagine
+	 * having OIDs for each slot to avoid the accumulation of stats but that
+	 * doesn't seem worth doing as in practice this won't happen frequently.
 	 */
 	if (SlotIsLogical(slot))
 		pgstat_report_replslot_drop(NameStr(slot->data.name));

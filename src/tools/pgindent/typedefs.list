@@ -1870,12 +1870,12 @@ PgStat_MsgTabstat
 PgStat_MsgTempFile
 PgStat_MsgVacuum
 PgStat_MsgWal
-PgStat_ReplSlotStats
 PgStat_SLRUStats
 PgStat_Shared_Reset_Target
 PgStat_Single_Reset_Type
 PgStat_StatDBEntry
 PgStat_StatFuncEntry
+PgStat_StatReplSlotEntry
 PgStat_StatTabEntry
 PgStat_SubXactStatus
 PgStat_TableCounts
