@@ -401,7 +401,6 @@ static void postgresExplainForeignModify(ModifyTableState *mtstate,
 static void postgresExplainDirectModify(ForeignScanState *node,
 										ExplainState *es);
 static void postgresExecForeignTruncate(List *rels,
-										List *rels_extra,
 										DropBehavior behavior,
 										bool restart_seqs);
 static bool postgresAnalyzeForeignTable(Relation relation,
@@ -2881,7 +2880,6 @@ postgresExplainDirectModify(ForeignScanState *node, ExplainState *es)
  */
 static void
 postgresExecForeignTruncate(List *rels,
-							List *rels_extra,
 							DropBehavior behavior,
 							bool restart_seqs)
 {
@@ -2964,7 +2962,7 @@ postgresExecForeignTruncate(List *rels,
 
 	/* Construct the TRUNCATE command string */
 	initStringInfo(&sql);
-	deparseTruncateSql(&sql, rels, rels_extra, behavior, restart_seqs);
+	deparseTruncateSql(&sql, rels, behavior, restart_seqs);
 
 	/* Issue the TRUNCATE command to remote server */
 	do_sql_command(conn, sql.data);

@@ -1816,7 +1816,6 @@ apply_handle_truncate(StringInfo s)
 	List	   *rels = NIL;
 	List	   *part_rels = NIL;
 	List	   *relids = NIL;
-	List	   *relids_extra = NIL;
 	List	   *relids_logged = NIL;
 	ListCell   *lc;
 
@@ -1846,7 +1845,6 @@ apply_handle_truncate(StringInfo s)
 		remote_rels = lappend(remote_rels, rel);
 		rels = lappend(rels, rel->localrel);
 		relids = lappend_oid(relids, rel->localreloid);
-		relids_extra = lappend_int(relids_extra, TRUNCATE_REL_CONTEXT_NORMAL);
 		if (RelationIsLogicallyLogged(rel->localrel))
 			relids_logged = lappend_oid(relids_logged, rel->localreloid);
 
@@ -1885,7 +1883,6 @@ apply_handle_truncate(StringInfo s)
 				rels = lappend(rels, childrel);
 				part_rels = lappend(part_rels, childrel);
 				relids = lappend_oid(relids, childrelid);
-				relids_extra = lappend_int(relids_extra, TRUNCATE_REL_CONTEXT_CASCADING);
 				/* Log this relation only if needed for logical decoding */
 				if (RelationIsLogicallyLogged(childrel))
 					relids_logged = lappend_oid(relids_logged, childrelid);
@@ -1900,7 +1897,6 @@ apply_handle_truncate(StringInfo s)
 	 */
 	ExecuteTruncateGuts(rels,
 						relids,
-						relids_extra,
 						relids_logged,
 						DROP_RESTRICT,
 						restart_seqs);

@@ -21,16 +21,6 @@
 #include "storage/lock.h"
 #include "utils/relcache.h"
 
-/*
- * These values indicate how a relation was specified as the target to
- * truncate in TRUNCATE command.
- */
-#define TRUNCATE_REL_CONTEXT_NORMAL       1 /* specified without ONLY clause */
-#define TRUNCATE_REL_CONTEXT_ONLY         2 /* specified with ONLY clause */
-#define TRUNCATE_REL_CONTEXT_CASCADING     3	/* not specified but truncated
-												 * due to dependency (e.g.,
-												 * partition table) */
-
 struct AlterTableUtilityContext;	/* avoid including tcop/utility.h here */
 
 
@@ -68,7 +58,6 @@ extern void CheckTableNotInUse(Relation rel, const char *stmt);
 extern void ExecuteTruncate(TruncateStmt *stmt);
 extern void ExecuteTruncateGuts(List *explicit_rels,
 								List *relids,
-								List *relids_extra,
 								List *relids_logged,
 								DropBehavior behavior,
 								bool restart_seqs);

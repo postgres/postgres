@@ -2179,24 +2179,19 @@ deparseAnalyzeSql(StringInfo buf, Relation rel, List **retrieved_attrs)
 void
 deparseTruncateSql(StringInfo buf,
 				   List *rels,
-				   List *rels_extra,
 				   DropBehavior behavior,
 				   bool restart_seqs)
 {
-	ListCell   *lc1,
-			   *lc2;
+	ListCell   *cell;
 
 	appendStringInfoString(buf, "TRUNCATE ");
 
-	forboth(lc1, rels, lc2, rels_extra)
+	foreach(cell, rels)
 	{
-		Relation	rel = lfirst(lc1);
-		int			extra = lfirst_int(lc2);
+		Relation	rel = lfirst(cell);
 
-		if (lc1 != list_head(rels))
+		if (cell != list_head(rels))
 			appendStringInfoString(buf, ", ");
-		if (extra & TRUNCATE_REL_CONTEXT_ONLY)
-			appendStringInfoString(buf, "ONLY ");
 
 		deparseRelation(buf, rel);
 	}

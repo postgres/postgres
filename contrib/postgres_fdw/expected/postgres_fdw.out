@@ -8218,13 +8218,13 @@ drop table loc3;
 -- test for TRUNCATE
 -- ===================================================================
 CREATE TABLE tru_rtable0 (id int primary key);
-CREATE TABLE tru_rtable1 (id int primary key);
 CREATE FOREIGN TABLE tru_ftable (id int)
        SERVER loopback OPTIONS (table_name 'tru_rtable0');
 INSERT INTO tru_rtable0 (SELECT x FROM generate_series(1,10) x);
 CREATE TABLE tru_ptable (id int) PARTITION BY HASH(id);
 CREATE TABLE tru_ptable__p0 PARTITION OF tru_ptable
                             FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE tru_rtable1 (id int primary key);
 CREATE FOREIGN TABLE tru_ftable__p1 PARTITION OF tru_ptable
                                     FOR VALUES WITH (MODULUS 2, REMAINDER 1)
        SERVER loopback OPTIONS (table_name 'tru_rtable1');
@@ -8364,6 +8364,8 @@ SELECT count(*) from tru_pk_ftable; -- 0
 (1 row)
 
 -- truncate with ONLY clause
+-- Since ONLY is specified, the table tru_ftable_child that inherits
+-- tru_ftable_parent locally is not truncated.
 TRUNCATE ONLY tru_ftable_parent;
 SELECT sum(id) FROM tru_ftable_parent;  -- 126
  sum 
@@ -8388,22 +8390,26 @@ SELECT sum(id) FROM tru_ftable;   -- 95
   95
 (1 row)
 
-TRUNCATE ONLY tru_ftable;		-- truncate only parent portion
-SELECT sum(id) FROM tru_ftable;   -- 60
- sum 
------
-  60
+-- Both parent and child tables in the foreign server are truncated
+-- even though ONLY is specified because ONLY has no effect
+-- when truncating a foreign table.
+TRUNCATE ONLY tru_ftable;
+SELECT count(*) FROM tru_ftable;   -- 0
+ count 
+-------
+     0
 (1 row)
 
 INSERT INTO tru_rtable0 (SELECT x FROM generate_series(21,25) x);
-SELECT sum(id) FROM tru_ftable;		-- 175
+INSERT INTO tru_rtable0_child (SELECT x FROM generate_series(26,30) x);
+SELECT sum(id) FROM tru_ftable;		-- 255
  sum 
 -----
- 175
+ 255
 (1 row)
 
 TRUNCATE tru_ftable;			-- truncate both of parent and child
-SELECT count(*) FROM tru_ftable;    -- empty
+SELECT count(*) FROM tru_ftable;    -- 0
  count 
 -------
      0

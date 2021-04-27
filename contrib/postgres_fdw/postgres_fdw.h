@@ -209,7 +209,6 @@ extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
 							  List **retrieved_attrs);
 extern void deparseTruncateSql(StringInfo buf,
 							   List *rels,
-							   List *rels_extra,
 							   DropBehavior behavior,
 							   bool restart_seqs);
 extern void deparseStringLiteral(StringInfo buf, const char *val);

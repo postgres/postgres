@@ -161,7 +161,6 @@ typedef List *(*ImportForeignSchema_function) (ImportForeignSchemaStmt *stmt,
 											   Oid serverOid);
 
 typedef void (*ExecForeignTruncate_function) (List *rels,
-											  List *rels_extra,
 											  DropBehavior behavior,
 											  bool restart_seqs);
 

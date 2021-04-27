@@ -323,7 +323,6 @@ typedef struct ForeignTruncateInfo
 {
 	Oid			serverid;
 	List	   *rels;
-	List	   *rels_extra;
 } ForeignTruncateInfo;
 
 /*
@@ -1620,7 +1619,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 {
 	List	   *rels = NIL;
 	List	   *relids = NIL;
-	List	   *relids_extra = NIL;
 	List	   *relids_logged = NIL;
 	ListCell   *cell;
 
@@ -1654,9 +1652,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 		rels = lappend(rels, rel);
 		relids = lappend_oid(relids, myrelid);
-		relids_extra = lappend_int(relids_extra, (recurse ?
-												  TRUNCATE_REL_CONTEXT_NORMAL :
-												  TRUNCATE_REL_CONTEXT_ONLY));
+
 		/* Log this relation only if needed for logical decoding */
 		if (RelationIsLogicallyLogged(rel))
 			relids_logged = lappend_oid(relids_logged, myrelid);
@@ -1704,8 +1700,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, childrelid);
-				relids_extra = lappend_int(relids_extra,
-										   TRUNCATE_REL_CONTEXT_CASCADING);
+
 				/* Log this relation only if needed for logical decoding */
 				if (RelationIsLogicallyLogged(rel))
 					relids_logged = lappend_oid(relids_logged, childrelid);
@@ -1718,7 +1713,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 					 errhint("Do not specify the ONLY keyword, or use TRUNCATE ONLY on the partitions directly.")));
 	}
 
-	ExecuteTruncateGuts(rels, relids, relids_extra, relids_logged,
+	ExecuteTruncateGuts(rels, relids, relids_logged,
 						stmt->behavior, stmt->restart_seqs);
 
 	/* And close the rels */
@@ -1739,15 +1734,13 @@ ExecuteTruncate(TruncateStmt *stmt)
  *
  * explicit_rels is the list of Relations to truncate that the command
  * specified.  relids is the list of Oids corresponding to explicit_rels.
- * relids_extra is the list of integer values that deliver extra information
- * about relations in explicit_rels.  relids_logged is the list of Oids
- * (a subset of relids) that require WAL-logging.  This is all a bit redundant,
- * but the existing callers have this information handy in this form.
+ * relids_logged is the list of Oids (a subset of relids) that require
+ * WAL-logging.  This is all a bit redundant, but the existing callers have
+ * this information handy in this form.
  */
 void
 ExecuteTruncateGuts(List *explicit_rels,
 					List *relids,
-					List *relids_extra,
 					List *relids_logged,
 					DropBehavior behavior, bool restart_seqs)
 {
@@ -1760,8 +1753,6 @@ ExecuteTruncateGuts(List *explicit_rels,
 	ResultRelInfo *resultRelInfo;
 	SubTransactionId mySubid;
 	ListCell   *cell;
-	ListCell   *lc1,
-			*lc2;
 	Oid		   *logrelids;
 
 	/*
@@ -1799,8 +1790,7 @@ ExecuteTruncateGuts(List *explicit_rels,
 				truncate_check_activity(rel);
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, relid);
-				relids_extra = lappend_int(relids_extra,
-										   TRUNCATE_REL_CONTEXT_CASCADING);
+
 				/* Log this relation only if needed for logical decoding */
 				if (RelationIsLogicallyLogged(rel))
 					relids_logged = lappend_oid(relids_logged, relid);
@@ -1901,11 +1891,9 @@ ExecuteTruncateGuts(List *explicit_rels,
 	 */
 	mySubid = GetCurrentSubTransactionId();
 
-	Assert(list_length(rels) == list_length(relids_extra));
-	forboth(lc1, rels, lc2, relids_extra)
+	foreach(cell, rels)
 	{
-		Relation	rel = (Relation) lfirst(lc1);
-		int			extra = lfirst_int(lc2);
+		Relation	rel = (Relation) lfirst(cell);
 
 		/*
 		 * Save OID of partitioned tables for later; nothing else to do for
@@ -1952,7 +1940,6 @@ ExecuteTruncateGuts(List *explicit_rels,
 			{
 				ft_info->serverid = serverid;
 				ft_info->rels = NIL;
-				ft_info->rels_extra = NIL;
 			}
 
 			/*
@@ -1960,7 +1947,6 @@ ExecuteTruncateGuts(List *explicit_rels,
 			 * foreign table belongs to.
 			 */
 			ft_info->rels = lappend(ft_info->rels, rel);
-			ft_info->rels_extra = lappend_int(ft_info->rels_extra, extra);
 			continue;
 		}
 
@@ -2044,7 +2030,6 @@ ExecuteTruncateGuts(List *explicit_rels,
 				Assert(routine->ExecForeignTruncate != NULL);
 
 				routine->ExecForeignTruncate(ft_info->rels,
-											 ft_info->rels_extra,
 											 behavior,
 											 restart_seqs);
 			}
