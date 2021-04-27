@@ -1076,27 +1076,25 @@ ExecForeignTruncate(List *rels,
                     bool restart_seqs);
 </programlisting>
 
-     Truncate a set of foreign tables specified in <literal>rels</literal>.
-     This function is called when <xref linkend="sql-truncate"/> is executed
-     on foreign tables.  <literal>rels</literal> is the list of
-     <structname>Relation</structname> data structure that indicates
-     a foreign table to truncate.
+     Truncate foreign tables.  This function is called when
+     <xref linkend="sql-truncate"/> is executed on a foreign table.
+     <literal>rels</literal> is a list of <structname>Relation</structname>
+     data structures of foreign tables to truncate.
     </para>
 
     <para>
-     <literal>behavior</literal> defines how foreign tables should
-     be truncated, using as possible values <literal>DROP_RESTRICT</literal>,
-     which means that <literal>RESTRICT</literal> option is specified,
-     and <literal>DROP_CASCADE</literal>, which means that
-     <literal>CASCADE</literal> option is specified, in
-     <command>TRUNCATE</command> command.
+     <literal>behavior</literal> is either <literal>DROP_RESTRICT</literal>
+     or <literal>DROP_CASCADE</literal> indicating that the
+     <literal>RESTRICT</literal> or <literal>CASCADE</literal> option was
+     requested in the original <command>TRUNCATE</command> command,
+     respectively.
     </para>
     
     <para>
-     <literal>restart_seqs</literal> is set to <literal>true</literal>
-     if <literal>RESTART IDENTITY</literal> option is specified in
-     <command>TRUNCATE</command> command.  It is <literal>false</literal>
-     if <literal>CONTINUE IDENTITY</literal> option is specified.
+     If <literal>restart_seqs</literal> is <literal>true</literal>,
+     the original <command>TRUNCATE</command> command requested the
+     <literal>RESTART IDENTITY</literal> behavior, otherwise the
+     <literal>CONTINUE IDENTITY</literal> behavior was requested.
     </para>
 
     <para>
@@ -1109,11 +1107,10 @@ ExecForeignTruncate(List *rels,
     </para>
 
     <para>
-     <command>TRUNCATE</command> invokes
-     <function>ExecForeignTruncate</function> once per foreign server
-     that foreign tables to truncate belong to.  This means that all foreign
-     tables included in <literal>rels</literal> must belong to the same
-     server.
+     <function>ExecForeignTruncate</function> is invoked once per
+     foreign server for which foreign tables are to be truncated.
+     This means that all foreign tables included in <literal>rels</literal>
+     must belong to the same server.
     </para>
 
     <para>

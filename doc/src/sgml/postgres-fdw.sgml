@@ -459,10 +459,16 @@ OPTIONS (ADD password_required 'false');
      <listitem>
       <para>
        This option controls whether <filename>postgres_fdw</filename> allows
-       foreign tables to be truncated using <command>TRUNCATE</command>
+       foreign tables to be truncated using the <command>TRUNCATE</command>
        command. It can be specified for a foreign table or a foreign server.
        A table-level option overrides a server-level option.
        The default is <literal>true</literal>.
+      </para>
+
+      <para>
+       Of course, if the remote table is not in fact truncatable, an error
+       would occur anyway.  Use of this option primarily allows the error to
+       be thrown locally without querying the remote server.
       </para>
      </listitem>
     </varlistentry>
