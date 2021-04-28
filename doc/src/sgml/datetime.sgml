@@ -908,22 +908,22 @@ $ <userinput>cal 9 1752</userinput>
   <para>
    This definition does, however, provide a way to obtain the astronomical
    definition when you need it: do the arithmetic in time
-   zone <literal>UTC-12</literal>.  For example,
+   zone <literal>UTC+12</literal>.  For example,
 <programlisting>
-=&gt; SELECT extract(julian from '2021-06-23 7:00:00-04'::timestamptz at time zone 'UTC-12');
+=&gt; SELECT extract(julian from '2021-06-23 7:00:00-04'::timestamptz at time zone 'UTC+12');
            extract
 ------------------------------
- 2459389.95833333333333333333
+ 2459388.95833333333333333333
 (1 row)
-=&gt; SELECT extract(julian from '2021-06-23 8:00:00-04'::timestamptz at time zone 'UTC-12');
+=&gt; SELECT extract(julian from '2021-06-23 8:00:00-04'::timestamptz at time zone 'UTC+12');
                extract
 --------------------------------------
- 2459390.0000000000000000000000000000
+ 2459389.0000000000000000000000000000
 (1 row)
-=&gt; SELECT extract(julian from date '2021-06-24');
+=&gt; SELECT extract(julian from date '2021-06-23');
  extract
 ---------
- 2459390
+ 2459389
 (1 row)
 </programlisting>
   </para>
