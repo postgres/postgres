@@ -5619,7 +5619,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 					break;
 				}
 				trigForm = (Form_pg_event_trigger) GETSTRUCT(tup);
-				evtname = NameStr(trigForm->evtname);
+				evtname = pstrdup(NameStr(trigForm->evtname));
 				appendStringInfoString(&buffer, quote_identifier(evtname));
 				if (objname)
 					*objname = list_make1(evtname);
