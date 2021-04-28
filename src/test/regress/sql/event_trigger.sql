@@ -378,6 +378,15 @@ ALTER POLICY p1 ON event_trigger_test USING (TRUE);
 ALTER POLICY p1 ON event_trigger_test RENAME TO p2;
 DROP POLICY p2 ON event_trigger_test;
 
+-- Check the object addresses of all the event triggers.
+SELECT
+    evtname,
+    pg_describe_object('pg_event_trigger'::regclass, oid, 0),
+    pg_identify_object('pg_event_trigger'::regclass, oid, 0),
+    pg_identify_object_as_address('pg_event_trigger'::regclass, oid, 0)
+  FROM pg_event_trigger
+  ORDER BY evtname;
+
 DROP EVENT TRIGGER start_rls_command;
 DROP EVENT TRIGGER end_rls_command;
 DROP EVENT TRIGGER sql_drop_command;

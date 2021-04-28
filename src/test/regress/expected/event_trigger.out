@@ -458,6 +458,21 @@ DROP POLICY p2 ON event_trigger_test;
 NOTICE:  DROP POLICY - ddl_command_start
 NOTICE:  DROP POLICY - sql_drop
 NOTICE:  DROP POLICY - ddl_command_end
+-- Check the object addresses of all the event triggers.
+SELECT
+    evtname,
+    pg_describe_object('pg_event_trigger'::regclass, oid, 0),
+    pg_identify_object('pg_event_trigger'::regclass, oid, 0),
+    pg_identify_object_as_address('pg_event_trigger'::regclass, oid, 0)
+  FROM pg_event_trigger
+  ORDER BY evtname;
+      evtname      |       pg_describe_object        |                   pg_identify_object                   |      pg_identify_object_as_address       
+-------------------+---------------------------------+--------------------------------------------------------+------------------------------------------
+ end_rls_command   | event trigger end_rls_command   | ("event trigger",,end_rls_command,end_rls_command)     | ("event trigger",{end_rls_command},{})
+ sql_drop_command  | event trigger sql_drop_command  | ("event trigger",,sql_drop_command,sql_drop_command)   | ("event trigger",{sql_drop_command},{})
+ start_rls_command | event trigger start_rls_command | ("event trigger",,start_rls_command,start_rls_command) | ("event trigger",{start_rls_command},{})
+(3 rows)
+
 DROP EVENT TRIGGER start_rls_command;
 DROP EVENT TRIGGER end_rls_command;
 DROP EVENT TRIGGER sql_drop_command;
