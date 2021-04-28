@@ -1157,7 +1157,10 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	relation->rd_partkey = NULL;
 	relation->rd_partkeycxt = NULL;
 	relation->rd_partdesc = NULL;
+	relation->rd_partdesc_nodetached = NULL;
+	relation->rd_partdesc_nodetached_xmin = InvalidTransactionId;
 	relation->rd_pdcxt = NULL;
+	relation->rd_pddcxt = NULL;
 	relation->rd_partcheck = NIL;
 	relation->rd_partcheckvalid = false;
 	relation->rd_partcheckcxt = NULL;
@@ -2103,10 +2106,16 @@ RelationClose(Relation relation)
 	 * stale partition descriptors it has.  This is unlikely, so check to see
 	 * if there are child contexts before expending a call to mcxt.c.
 	 */
-	if (RelationHasReferenceCountZero(relation) &&
-		relation->rd_pdcxt != NULL &&
-		relation->rd_pdcxt->firstchild != NULL)
-		MemoryContextDeleteChildren(relation->rd_pdcxt);
+	if (RelationHasReferenceCountZero(relation))
+	{
+		if (relation->rd_pdcxt != NULL &&
+			relation->rd_pdcxt->firstchild != NULL)
+			MemoryContextDeleteChildren(relation->rd_pdcxt);
+
+		if (relation->rd_pddcxt != NULL &&
+			relation->rd_pddcxt->firstchild != NULL)
+			MemoryContextDeleteChildren(relation->rd_pddcxt);
+	}
 
 #ifdef RELCACHE_FORCE_RELEASE
 	if (RelationHasReferenceCountZero(relation) &&
@@ -2390,6 +2399,8 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		MemoryContextDelete(relation->rd_partkeycxt);
 	if (relation->rd_pdcxt)
 		MemoryContextDelete(relation->rd_pdcxt);
+	if (relation->rd_pddcxt)
+		MemoryContextDelete(relation->rd_pddcxt);
 	if (relation->rd_partcheckcxt)
 		MemoryContextDelete(relation->rd_partcheckcxt);
 	pfree(relation);
@@ -2644,7 +2655,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 			SWAPFIELD(PartitionKey, rd_partkey);
 			SWAPFIELD(MemoryContext, rd_partkeycxt);
 		}
-		if (newrel->rd_pdcxt != NULL)
+		if (newrel->rd_pdcxt != NULL || newrel->rd_pddcxt != NULL)
 		{
 			/*
 			 * We are rebuilding a partitioned relation with a non-zero
@@ -2672,13 +2683,22 @@ RelationClearRelation(Relation relation, bool rebuild)
 			 * newrel.
 			 */
 			relation->rd_partdesc = NULL;	/* ensure rd_partdesc is invalid */
+			relation->rd_partdesc_nodetached = NULL;
+			relation->rd_partdesc_nodetached_xmin = InvalidTransactionId;
 			if (relation->rd_pdcxt != NULL) /* probably never happens */
 				MemoryContextSetParent(newrel->rd_pdcxt, relation->rd_pdcxt);
 			else
 				relation->rd_pdcxt = newrel->rd_pdcxt;
+			if (relation->rd_pddcxt != NULL)
+				MemoryContextSetParent(newrel->rd_pddcxt, relation->rd_pddcxt);
+			else
+				relation->rd_pddcxt = newrel->rd_pddcxt;
 			/* drop newrel's pointers so we don't destroy it below */
 			newrel->rd_partdesc = NULL;
+			newrel->rd_partdesc_nodetached = NULL;
+			newrel->rd_partdesc_nodetached_xmin = InvalidTransactionId;
 			newrel->rd_pdcxt = NULL;
+			newrel->rd_pddcxt = NULL;
 		}
 
 #undef SWAPFIELD
@@ -6017,7 +6037,10 @@ load_relcache_init_file(bool shared)
 		rel->rd_partkey = NULL;
 		rel->rd_partkeycxt = NULL;
 		rel->rd_partdesc = NULL;
+		rel->rd_partdesc_nodetached = NULL;
+		rel->rd_partdesc_nodetached_xmin = InvalidTransactionId;
 		rel->rd_pdcxt = NULL;
+		rel->rd_pddcxt = NULL;
 		rel->rd_partcheck = NIL;
 		rel->rd_partcheckvalid = false;
 		rel->rd_partcheckcxt = NULL;

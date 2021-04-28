@@ -4,12 +4,13 @@ setup
 {
   CREATE TABLE d3_listp (a int) PARTITION BY LIST(a);
   CREATE TABLE d3_listp1 PARTITION OF d3_listp FOR VALUES IN (1);
+  CREATE TABLE d3_listp2 PARTITION OF d3_listp FOR VALUES IN (2);
   CREATE TABLE d3_pid (pid int);
   INSERT INTO d3_listp VALUES (1);
 }
 
 teardown {
-    DROP TABLE IF EXISTS d3_listp, d3_listp1, d3_pid;
+    DROP TABLE IF EXISTS d3_listp, d3_listp1, d3_listp2, d3_pid;
 }
 
 session "s1"
@@ -34,6 +35,7 @@ session "s2"
 step "s2begin"		{ BEGIN; }
 step "s2snitch"		{ INSERT INTO d3_pid SELECT pg_backend_pid(); }
 step "s2detach"		{ ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; }
+step "s2detach2"	{ ALTER TABLE d3_listp DETACH PARTITION d3_listp2 CONCURRENTLY; }
 step "s2detachfinal"	{ ALTER TABLE d3_listp DETACH PARTITION d3_listp1 FINALIZE; }
 step "s2drop"		{ DROP TABLE d3_listp1; }
 step "s2commit"		{ COMMIT; }
@@ -44,10 +46,20 @@ permutation "s2snitch" "s1b" "s1s" "s2detach" "s1cancel" "s1c" "s1describe" "s1a
 permutation "s2snitch" "s1b" "s1s" "s2detach" "s1cancel" "s1insert" "s1c"
 permutation "s2snitch" "s1brr" "s1s" "s2detach" "s1cancel" "s1insert" "s1c" "s1spart"
 permutation "s2snitch" "s1b" "s1s" "s2detach" "s1cancel" "s1c" "s1insertpart"
+
+# Test partition descriptor caching
+permutation "s2snitch" "s1b" "s1s" "s2detach2" "s1cancel" "s1c" "s1brr" "s1insert" "s1s" "s1insert" "s1c"
+permutation "s2snitch" "s1b" "s1s" "s2detach2" "s1cancel" "s1c" "s1brr" "s1s" "s1insert" "s1s" "s1c"
+
 # "drop" here does both tables
 permutation "s2snitch" "s1b" "s1s" "s2detach" "s1cancel" "s1c" "s1drop" "s1list"
 # "truncate" only does parent, not partition
 permutation "s2snitch" "s1b" "s1s" "s2detach" "s1cancel" "s1c" "s1trunc" "s1spart"
+
+# If a partition pending detach exists, we cannot drop another one
+permutation "s2snitch" "s1b" "s1s" "s2detach" "s1cancel" "s2detach2" "s1c"
+permutation "s2snitch" "s1b" "s1s" "s2detach" "s1cancel" "s2detachfinal" "s1c" "s2detach2"
+permutation "s2snitch" "s1b" "s1s" "s2detach" "s1cancel" "s1c" "s1droppart" "s2detach2"
 
 # When a partition with incomplete detach is dropped, we grab lock on parent too.
 permutation "s2snitch" "s1b" "s1s" "s2detach" "s1cancel" "s1c" "s2begin" "s2drop" "s1s" "s2commit"

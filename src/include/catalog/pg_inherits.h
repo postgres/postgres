@@ -50,8 +50,10 @@ DECLARE_INDEX(pg_inherits_parent_index, 2187, on pg_inherits using btree(inhpare
 #define InheritsParentIndexId  2187
 
 
-extern List *find_inheritance_children(Oid parentrelId, bool omit_detached,
-									   LOCKMODE lockmode, bool *detached_exist);
+extern List *find_inheritance_children(Oid parentrelId, LOCKMODE lockmode);
+extern List *find_inheritance_children_extended(Oid parentrelId, bool omit_detached,
+												LOCKMODE lockmode, bool *detached_exist, TransactionId *detached_xmin);
+
 extern List *find_all_inheritors(Oid parentrelId, LOCKMODE lockmode,
 								 List **parents);
 extern bool has_subclass(Oid relationId);

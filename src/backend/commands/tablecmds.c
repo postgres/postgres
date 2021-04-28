@@ -3492,7 +3492,7 @@ renameatt_internal(Oid myrelid,
 		 * expected_parents will only be 0 if we are not already recursing.
 		 */
 		if (expected_parents == 0 &&
-			find_inheritance_children(myrelid, true, NoLock, NULL) != NIL)
+			find_inheritance_children(myrelid, NoLock) != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("inherited column \"%s\" must be renamed in child tables too",
@@ -3691,7 +3691,7 @@ rename_constraint_internal(Oid myrelid,
 		else
 		{
 			if (expected_parents == 0 &&
-				find_inheritance_children(myrelid, true, NoLock, NULL) != NIL)
+				find_inheritance_children(myrelid, NoLock) != NIL)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("inherited constraint \"%s\" must be renamed in child tables too",
@@ -6565,7 +6565,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 */
 	if (colDef->identity &&
 		recurse &&
-		find_inheritance_children(myrelid, true, NoLock, NULL) != NIL)
+		find_inheritance_children(myrelid, NoLock) != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot recursively add identity column to table that has child tables")));
@@ -6811,7 +6811,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	children =
-		find_inheritance_children(RelationGetRelid(rel), true, lockmode, NULL);
+		find_inheritance_children(RelationGetRelid(rel), lockmode);
 
 	/*
 	 * If we are told not to recurse, there had better not be any child
@@ -7674,7 +7674,7 @@ ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recurse, bool recurs
 	 * resulting state can be properly dumped and restored.
 	 */
 	if (!recurse &&
-		find_inheritance_children(RelationGetRelid(rel), true, lockmode, NULL))
+		find_inheritance_children(RelationGetRelid(rel), lockmode))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("ALTER TABLE / DROP EXPRESSION must be applied to child tables too")));
@@ -8282,7 +8282,7 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	children =
-		find_inheritance_children(RelationGetRelid(rel), true, lockmode, NULL);
+		find_inheritance_children(RelationGetRelid(rel), lockmode);
 
 	if (children)
 	{
@@ -8770,7 +8770,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	children =
-		find_inheritance_children(RelationGetRelid(rel), true, lockmode, NULL);
+		find_inheritance_children(RelationGetRelid(rel), lockmode);
 
 	/*
 	 * Check if ONLY was specified with ALTER TABLE.  If so, allow the
@@ -11303,8 +11303,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	if (!is_no_inherit_constraint)
-		children = find_inheritance_children(RelationGetRelid(rel), true,
-											 lockmode, NULL);
+		children = find_inheritance_children(RelationGetRelid(rel), lockmode);
 	else
 		children = NIL;
 
@@ -11688,8 +11687,7 @@ ATPrepAlterColumnType(List **wqueue,
 		}
 	}
 	else if (!recursing &&
-			 find_inheritance_children(RelationGetRelid(rel), true,
-									   NoLock, NULL) != NIL)
+			 find_inheritance_children(RelationGetRelid(rel), NoLock) != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("type of inherited column \"%s\" must be changed in child tables too",
@@ -14601,7 +14599,8 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
  * MarkInheritDetached
  *
  * Set inhdetachpending for a partition, for ATExecDetachPartition
- * in concurrent mode.
+ * in concurrent mode.  While at it, verify that no other partition is
+ * already pending detach.
  */
 static void
 MarkInheritDetached(Relation child_rel, Relation parent_rel)
@@ -14617,32 +14616,45 @@ MarkInheritDetached(Relation child_rel, Relation parent_rel)
 	Assert(parent_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
 	/*
-	 * Find pg_inherits entries by inhrelid.
+	 * Find pg_inherits entries by inhparent.  (We need to scan them all in
+	 * order to verify that no other partition is pending detach.)
 	 */
 	catalogRelation = table_open(InheritsRelationId, RowExclusiveLock);
 	ScanKeyInit(&key,
-				Anum_pg_inherits_inhrelid,
+				Anum_pg_inherits_inhparent,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelationGetRelid(child_rel)));
-	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndexId,
+				ObjectIdGetDatum(RelationGetRelid(parent_rel)));
+	scan = systable_beginscan(catalogRelation, InheritsParentIndexId,
 							  true, NULL, 1, &key);
 
 	while (HeapTupleIsValid(inheritsTuple = systable_getnext(scan)))
 	{
-		HeapTuple	newtup;
+		Form_pg_inherits inhForm;
 
-		if (((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhparent !=
-			RelationGetRelid(parent_rel))
-			elog(ERROR, "bad parent tuple found for partition %u",
-				 RelationGetRelid(child_rel));
+		inhForm = (Form_pg_inherits) GETSTRUCT(inheritsTuple);
+		if (inhForm->inhdetachpending)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("partition \"%s\" already pending detach in partitioned table \"%s.%s\"",
+						   get_rel_name(inhForm->inhrelid),
+						   get_namespace_name(parent_rel->rd_rel->relnamespace),
+						   RelationGetRelationName(parent_rel)),
+					errhint("Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the detach operation."));
 
-		newtup = heap_copytuple(inheritsTuple);
-		((Form_pg_inherits) GETSTRUCT(newtup))->inhdetachpending = true;
+		if (inhForm->inhrelid == RelationGetRelid(child_rel))
+		{
+			HeapTuple	newtup;
 
-		CatalogTupleUpdate(catalogRelation,
-						   &inheritsTuple->t_self,
-						   newtup);
-		found = true;
+			newtup = heap_copytuple(inheritsTuple);
+			((Form_pg_inherits) GETSTRUCT(newtup))->inhdetachpending = true;
+
+			CatalogTupleUpdate(catalogRelation,
+							   &inheritsTuple->t_self,
+							   newtup);
+			found = true;
+			heap_freetuple(newtup);
+			/* keep looking, to ensure we catch others pending detach */
+		}
 	}
 
 	/* Done */

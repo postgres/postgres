@@ -986,6 +986,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       If <literal>FINALIZE</literal> is specified, a previous
       <literal>DETACH CONCURRENTLY</literal> invocation that was cancelled or
       interrupted is completed.
+      At most one partition in a partitioned table can be pending detach at
+      a time.
      </para>
     </listitem>
    </varlistentry>

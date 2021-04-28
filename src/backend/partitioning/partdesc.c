@@ -54,6 +54,12 @@ static PartitionDesc RelationBuildPartitionDesc(Relation rel,
 /*
  * RelationGetPartitionDesc -- get partition descriptor, if relation is partitioned
  *
+ * We keep two partdescs in relcache: rd_partdesc includes all partitions
+ * (even those being concurrently marked detached), while rd_partdesc_nodetach
+ * omits (some of) those.  We store the pg_inherits.xmin value for the latter,
+ * to determine whether it can be validly reused in each case, since that
+ * depends on the active snapshot.
+ *
  * Note: we arrange for partition descriptors to not get freed until the
  * relcache entry's refcount goes to zero (see hacks in RelationClose,
  * RelationClearRelation, and RelationBuildPartitionDesc).  Therefore, even
@@ -61,13 +67,6 @@ static PartitionDesc RelationBuildPartitionDesc(Relation rel,
  * for callers to continue to use that pointer as long as (a) they hold the
  * relation open, and (b) they hold a relation lock strong enough to ensure
  * that the data doesn't become stale.
- *
- * The above applies to partition descriptors that are complete regarding
- * partitions concurrently being detached.  When a descriptor that omits
- * partitions being detached is requested (and such partitions are present),
- * said descriptor is not part of relcache and so it isn't freed by
- * invalidations either.  Caller must not use such a descriptor beyond the
- * current Portal.
  */
 PartitionDesc
 RelationGetPartitionDesc(Relation rel, bool omit_detached)
@@ -78,10 +77,35 @@ RelationGetPartitionDesc(Relation rel, bool omit_detached)
 	 * If relcache has a partition descriptor, use that.  However, we can only
 	 * do so when we are asked to include all partitions including detached;
 	 * and also when we know that there are no detached partitions.
+	 *
+	 * If there is no active snapshot, detached partitions aren't omitted
+	 * either, so we can use the cached descriptor too in that case.
 	 */
 	if (likely(rel->rd_partdesc &&
-			   (!rel->rd_partdesc->detached_exist || !omit_detached)))
+			   (!rel->rd_partdesc->detached_exist || !omit_detached ||
+				!ActiveSnapshotSet())))
 		return rel->rd_partdesc;
+
+	/*
+	 * If we're asked to omit detached partitions, we may be able to use a
+	 * cached descriptor too.  We determine that based on the pg_inherits.xmin
+	 * that was saved alongside that descriptor: if the xmin that was not in
+	 * progress for that active snapshot is also not in progress for the
+	 * current active snapshot, then we can use use it.  Otherwise build one
+	 * from scratch.
+	 */
+	if (omit_detached &&
+		rel->rd_partdesc_nodetached &&
+		TransactionIdIsValid(rel->rd_partdesc_nodetached_xmin) &&
+		ActiveSnapshotSet())
+	{
+		Snapshot	activesnap;
+
+		activesnap = GetActiveSnapshot();
+
+		if (!XidInMVCCSnapshot(rel->rd_partdesc_nodetached_xmin, activesnap))
+			return rel->rd_partdesc_nodetached;
+	}
 
 	return RelationBuildPartitionDesc(rel, omit_detached);
 }
@@ -117,6 +141,8 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	Oid		   *oids = NULL;
 	bool	   *is_leaf = NULL;
 	bool		detached_exist;
+	bool		is_omit;
+	TransactionId detached_xmin;
 	ListCell   *cell;
 	int			i,
 				nparts;
@@ -132,8 +158,11 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	 * some well-defined point in time.
 	 */
 	detached_exist = false;
-	inhoids = find_inheritance_children(RelationGetRelid(rel), omit_detached,
-										NoLock, &detached_exist);
+	detached_xmin = InvalidTransactionId;
+	inhoids = find_inheritance_children_extended(RelationGetRelid(rel),
+												 omit_detached, NoLock,
+												 &detached_exist,
+												 &detached_xmin);
 	nparts = list_length(inhoids);
 
 	/* Allocate working arrays for OIDs, leaf flags, and boundspecs. */
@@ -281,37 +310,49 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	}
 
 	/*
-	 * We have a fully valid partdesc.  Reparent it so that it has the right
-	 * lifespan, and if appropriate put it into the relation's relcache entry.
+	 * Are we working with the partition that omits detached partitions, or
+	 * the one that includes them?
 	 */
-	if (omit_detached && detached_exist)
+	is_omit = omit_detached && detached_exist && ActiveSnapshotSet();
+
+	/*
+	 * We have a fully valid partdesc.  Reparent it so that it has the right
+	 * lifespan.
+	 */
+	MemoryContextSetParent(new_pdcxt, CacheMemoryContext);
+
+	/*
+	 * Store it into relcache.
+	 *
+	 * But first, a kluge: if there's an old context for this type of
+	 * descriptor, it contains an old partition descriptor that may still be
+	 * referenced somewhere.  Preserve it, while not leaking it, by
+	 * reattaching it as a child context of the new one.  Eventually it will
+	 * get dropped by either RelationClose or RelationClearRelation.
+	 * (We keep the regular partdesc in rd_pdcxt, and the partdesc-excluding-
+	 * detached-partitions in rd_pddcxt.)
+	 */
+	if (is_omit)
 	{
+		if (rel->rd_pddcxt != NULL)
+			MemoryContextSetParent(rel->rd_pddcxt, new_pdcxt);
+		rel->rd_pddcxt = new_pdcxt;
+		rel->rd_partdesc_nodetached = partdesc;
+
 		/*
-		 * A transient partition descriptor is only good for the current
-		 * statement, so make it a child of the current portal's context.
+		 * For partdescs built excluding detached partitions, which we save
+		 * separately, we also record the pg_inherits.xmin of the detached
+		 * partition that was omitted; this informs a future potential user of
+		 * such a cached partdescs.  (This might be InvalidXid; see comments
+		 * in struct RelationData).
 		 */
-		MemoryContextSetParent(new_pdcxt, PortalContext);
+		rel->rd_partdesc_nodetached_xmin = detached_xmin;
 	}
 	else
 	{
-		/*
-		 * This partdesc goes into relcache.
-		 */
-
-		MemoryContextSetParent(new_pdcxt, CacheMemoryContext);
-
-		/*
-		 * But first, a kluge: if there's an old rd_pdcxt, it contains an old
-		 * partition descriptor that may still be referenced somewhere.
-		 * Preserve it, while not leaking it, by reattaching it as a child
-		 * context of the new rd_pdcxt.  Eventually it will get dropped by
-		 * either RelationClose or RelationClearRelation.
-		 */
 		if (rel->rd_pdcxt != NULL)
 			MemoryContextSetParent(rel->rd_pdcxt, new_pdcxt);
 		rel->rd_pdcxt = new_pdcxt;
-
-		/* Store it into relcache */
 		rel->rd_partdesc = partdesc;
 	}
 

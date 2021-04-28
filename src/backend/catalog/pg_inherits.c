@@ -52,6 +52,22 @@ typedef struct SeenRelsEntry
  * then no locks are acquired, but caller must beware of race conditions
  * against possible DROPs of child relations.
  *
+ * Partitions marked as being detached are omitted; see
+ * find_inheritance_children_extended for details.
+ */
+List *
+find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
+{
+	return find_inheritance_children_extended(parentrelId, true, lockmode,
+											  NULL, NULL);
+}
+
+/*
+ * find_inheritance_children_extended
+ *
+ * As find_inheritance_children, with more options regarding detached
+ * partitions.
+ *
  * If a partition's pg_inherits row is marked "detach pending",
  * *detached_exist (if not null) is set true.
  *
@@ -60,11 +76,13 @@ typedef struct SeenRelsEntry
  * marked "detach pending" is visible to that snapshot, then that partition is
  * omitted from the output list.  This makes partitions invisible depending on
  * whether the transaction that marked those partitions as detached appears
- * committed to the active snapshot.
+ * committed to the active snapshot.  In addition, *detached_xmin (if not null)
+ * is set to the xmin of the row of the detached partition.
  */
 List *
-find_inheritance_children(Oid parentrelId, bool omit_detached,
-						  LOCKMODE lockmode, bool *detached_exist)
+find_inheritance_children_extended(Oid parentrelId, bool omit_detached,
+								   LOCKMODE lockmode, bool *detached_exist,
+								   TransactionId *detached_xmin)
 {
 	List	   *list = NIL;
 	Relation	relation;
@@ -132,7 +150,32 @@ find_inheritance_children(Oid parentrelId, bool omit_detached,
 				snap = GetActiveSnapshot();
 
 				if (!XidInMVCCSnapshot(xmin, snap))
+				{
+					if (detached_xmin)
+					{
+						/*
+						 * Two detached partitions should not occur (see
+						 * checks in MarkInheritDetached), but if they do,
+						 * track the newer of the two.  Make sure to warn the
+						 * user, so that they can clean up.  Since this is
+						 * just a cross-check against potentially corrupt
+						 * catalogs, we don't make it a full-fledged error
+						 * message.
+						 */
+						if (*detached_xmin != InvalidTransactionId)
+						{
+							elog(WARNING, "more than one partition pending detach found for table with OID %u",
+								 parentrelId);
+							if (TransactionIdFollows(xmin, *detached_xmin))
+								*detached_xmin = xmin;
+						}
+						else
+							*detached_xmin = xmin;
+					}
+
+					/* Don't add the partition to the output list */
 					continue;
+				}
 			}
 		}
 
@@ -247,8 +290,7 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 		ListCell   *lc;
 
 		/* Get the direct children of this rel */
-		currentchildren = find_inheritance_children(currentrel, true,
-													lockmode, NULL);
+		currentchildren = find_inheritance_children(currentrel, lockmode);
 
 		/*
 		 * Add to the queue only those children not already seen. This avoids

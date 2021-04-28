@@ -129,6 +129,21 @@ typedef struct RelationData
 	PartitionDesc rd_partdesc;	/* partition descriptor, or NULL */
 	MemoryContext rd_pdcxt;		/* private context for rd_partdesc, if any */
 
+	/* Same as above, for partdescs that omit detached partitions */
+	PartitionDesc rd_partdesc_nodetached;	/* partdesc w/o detached parts */
+	MemoryContext rd_pddcxt;	/* for rd_partdesc_nodetached, if any */
+
+	/*
+	 * pg_inherits.xmin of the partition that was excluded in
+	 * rd_partdesc_nodetached.  This informs a future user of that partdesc:
+	 * if this value is not in progress for the active snapshot, then the
+	 * partdesc can be used, otherwise they have to build a new one.  (This
+	 * matches what find_inheritance_children_extended would do).  In the rare
+	 * case where the pg_inherits tuple has been frozen, this will be
+	 * InvalidXid; behave as if the partdesc is unusable in that case.
+	 */
+	TransactionId rd_partdesc_nodetached_xmin;
+
 	/* data managed by RelationGetPartitionQual: */
 	List	   *rd_partcheck;	/* partition CHECK quals */
 	bool		rd_partcheckvalid;	/* true if list has been computed */
