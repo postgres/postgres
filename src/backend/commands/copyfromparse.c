@@ -265,6 +265,7 @@ CopyGetData(CopyFromState cstate, void *databuf, int minread, int maxread)
 				{
 					/* Try to receive another message */
 					int			mtype;
+					int			maxmsglen;
 
 			readmessage:
 					HOLD_CANCEL_INTERRUPTS();
@@ -274,11 +275,33 @@ CopyGetData(CopyFromState cstate, void *databuf, int minread, int maxread)
 						ereport(ERROR,
 								(errcode(ERRCODE_CONNECTION_FAILURE),
 								 errmsg("unexpected EOF on client connection with an open transaction")));
-					if (pq_getmessage(cstate->fe_msgbuf, 0))
+					/* Validate message type and set packet size limit */
+					switch (mtype)
+					{
+						case 'd':	/* CopyData */
+							maxmsglen = PQ_LARGE_MESSAGE_LIMIT;
+							break;
+						case 'c':	/* CopyDone */
+						case 'f':	/* CopyFail */
+						case 'H':	/* Flush */
+						case 'S':	/* Sync */
+							maxmsglen = PQ_SMALL_MESSAGE_LIMIT;
+							break;
+						default:
+							ereport(ERROR,
+									(errcode(ERRCODE_PROTOCOL_VIOLATION),
+									 errmsg("unexpected message type 0x%02X during COPY from stdin",
+											mtype)));
+							maxmsglen = 0;	/* keep compiler quiet */
+							break;
+					}
+					/* Now collect the message body */
+					if (pq_getmessage(cstate->fe_msgbuf, maxmsglen))
 						ereport(ERROR,
 								(errcode(ERRCODE_CONNECTION_FAILURE),
 								 errmsg("unexpected EOF on client connection with an open transaction")));
 					RESUME_CANCEL_INTERRUPTS();
+					/* ... and process it */
 					switch (mtype)
 					{
 						case 'd':	/* CopyData */
@@ -304,11 +327,7 @@ CopyGetData(CopyFromState cstate, void *databuf, int minread, int maxread)
 							 */
 							goto readmessage;
 						default:
-							ereport(ERROR,
-									(errcode(ERRCODE_PROTOCOL_VIOLATION),
-									 errmsg("unexpected message type 0x%02X during COPY from stdin",
-											mtype)));
-							break;
+							Assert(false);	/* NOT REACHED */
 					}
 				}
 				avail = cstate->fe_msgbuf->len - cstate->fe_msgbuf->cursor;

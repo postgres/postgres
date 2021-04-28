@@ -343,6 +343,7 @@ static int
 SocketBackend(StringInfo inBuf)
 {
 	int			qtype;
+	int			maxmsglen;
 
 	/*
 	 * Get message type code from the frontend.
@@ -375,7 +376,9 @@ SocketBackend(StringInfo inBuf)
 	/*
 	 * Validate message type code before trying to read body; if we have lost
 	 * sync, better to say "command unknown" than to run out of memory because
-	 * we used garbage as a length word.
+	 * we used garbage as a length word.  We can also select a type-dependent
+	 * limit on what a sane length word could be.  (The limit could be chosen
+	 * more granularly, but it's not clear it's worth fussing over.)
 	 *
 	 * This also gives us a place to set the doing_extended_query_message flag
 	 * as soon as possible.
@@ -383,28 +386,37 @@ SocketBackend(StringInfo inBuf)
 	switch (qtype)
 	{
 		case 'Q':				/* simple query */
+			maxmsglen = PQ_LARGE_MESSAGE_LIMIT;
 			doing_extended_query_message = false;
 			break;
 
 		case 'F':				/* fastpath function call */
+			maxmsglen = PQ_LARGE_MESSAGE_LIMIT;
 			doing_extended_query_message = false;
 			break;
 
 		case 'X':				/* terminate */
+			maxmsglen = PQ_SMALL_MESSAGE_LIMIT;
 			doing_extended_query_message = false;
 			ignore_till_sync = false;
 			break;
 
 		case 'B':				/* bind */
+		case 'P':				/* parse */
+			maxmsglen = PQ_LARGE_MESSAGE_LIMIT;
+			doing_extended_query_message = true;
+			break;
+
 		case 'C':				/* close */
 		case 'D':				/* describe */
 		case 'E':				/* execute */
 		case 'H':				/* flush */
-		case 'P':				/* parse */
+			maxmsglen = PQ_SMALL_MESSAGE_LIMIT;
 			doing_extended_query_message = true;
 			break;
 
 		case 'S':				/* sync */
+			maxmsglen = PQ_SMALL_MESSAGE_LIMIT;
 			/* stop any active skip-till-Sync */
 			ignore_till_sync = false;
 			/* mark not-extended, so that a new error doesn't begin skip */
@@ -412,8 +424,13 @@ SocketBackend(StringInfo inBuf)
 			break;
 
 		case 'd':				/* copy data */
+			maxmsglen = PQ_LARGE_MESSAGE_LIMIT;
+			doing_extended_query_message = false;
+			break;
+
 		case 'c':				/* copy done */
 		case 'f':				/* copy fail */
+			maxmsglen = PQ_SMALL_MESSAGE_LIMIT;
 			doing_extended_query_message = false;
 			break;
 
@@ -427,6 +444,7 @@ SocketBackend(StringInfo inBuf)
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("invalid frontend message type %d", qtype)));
+			maxmsglen = 0;		/* keep compiler quiet */
 			break;
 	}
 
@@ -435,7 +453,7 @@ SocketBackend(StringInfo inBuf)
 	 * after the type code; we can read the message contents independently of
 	 * the type.
 	 */
-	if (pq_getmessage(inBuf, 0))
+	if (pq_getmessage(inBuf, maxmsglen))
 		return EOF;			/* suitable message already logged */
 	RESUME_CANCEL_INTERRUPTS();
 

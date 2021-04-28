@@ -1203,7 +1203,7 @@ pq_is_reading_msg(void)
  *		is removed.  Also, s->cursor is initialized to zero for convenience
  *		in scanning the message contents.
  *
- *		If maxlen is not zero, it is an upper limit on the length of the
+ *		maxlen is the upper limit on the length of the
  *		message we are willing to accept.  We abort the connection (by
  *		returning EOF) if client tries to send more than that.
  *
@@ -1230,8 +1230,7 @@ pq_getmessage(StringInfo s, int maxlen)
 
 	len = pg_ntoh32(len);
 
-	if (len < 4 ||
-		(maxlen > 0 && len > maxlen))
+	if (len < 4 || len > maxlen)
 	{
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),

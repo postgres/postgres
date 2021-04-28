@@ -21,6 +21,15 @@
 #include "storage/latch.h"
 
 
+/*
+ * Callers of pq_getmessage() must supply a maximum expected message size.
+ * By convention, if there's not any specific reason to use another value,
+ * use PQ_SMALL_MESSAGE_LIMIT for messages that shouldn't be too long, and
+ * PQ_LARGE_MESSAGE_LIMIT for messages that can be long.
+ */
+#define PQ_SMALL_MESSAGE_LIMIT	10000
+#define PQ_LARGE_MESSAGE_LIMIT	(MaxAllocSize - 1)
+
 typedef struct
 {
 	void		(*comm_reset) (void);

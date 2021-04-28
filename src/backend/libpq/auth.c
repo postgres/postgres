@@ -210,6 +210,7 @@ static int	PerformRadiusTransaction(const char *server, const char *secret, cons
 
 /*
  * Maximum accepted size of GSS and SSPI authentication tokens.
+ * We also use this as a limit on ordinary password packet lengths.
  *
  * Kerberos tickets are usually quite small, but the TGTs issued by Windows
  * domain controllers include an authorization field known as the Privilege
@@ -724,7 +725,7 @@ recv_password_packet(Port *port)
 	}
 
 	initStringInfo(&buf);
-	if (pq_getmessage(&buf, 0)) /* receive password */
+	if (pq_getmessage(&buf, PG_MAX_AUTH_TOKEN_LENGTH))	/* receive password */
 	{
 		/* EOF - pq_getmessage already logged a suitable message */
 		pfree(buf.data);
