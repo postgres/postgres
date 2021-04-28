@@ -5084,10 +5084,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 			{
 				HeapTuple	tup;
 				Form_pg_event_trigger trigForm;
-
-				/* no objname support here */
-				if (objname)
-					*objname = NIL;
+				char	   *evtname;
 
 				tup = SearchSysCache1(EVENTTRIGGEROID,
 									  ObjectIdGetDatum(object->objectId));
@@ -5095,8 +5092,10 @@ getObjectIdentityParts(const ObjectAddress *object,
 					elog(ERROR, "cache lookup failed for event trigger %u",
 						 object->objectId);
 				trigForm = (Form_pg_event_trigger) GETSTRUCT(tup);
-				appendStringInfoString(&buffer,
-									   quote_identifier(NameStr(trigForm->evtname)));
+				evtname = NameStr(trigForm->evtname);
+				appendStringInfoString(&buffer, quote_identifier(evtname));
+				if (objname)
+					*objname = list_make1(evtname);
 				ReleaseSysCache(tup);
 				break;
 			}
