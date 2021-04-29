@@ -1106,7 +1106,7 @@ psql_scan(PsqlScanState state,
 						result = PSCAN_INCOMPLETE;
 						*prompt = PROMPT_PAREN;
 					}
-					if (state->begin_depth > 0)
+					else if (state->begin_depth > 0)
 					{
 						result = PSCAN_INCOMPLETE;
 						*prompt = PROMPT_CONTINUE;
