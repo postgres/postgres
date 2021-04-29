@@ -1153,8 +1153,8 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 		pg_fatal("Your installation contains one of the reg* data types in user tables.\n"
 				 "These data types reference system OIDs that are not preserved by\n"
 				 "pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
-				 "remove the problem tables and restart the upgrade.  A list of the\n"
-				 "problem columns is in the file:\n"
+				 "drop the problem columns and restart the upgrade.\n"
+				 "A list of the problem columns is in the file:\n"
 				 "    %s\n\n", output_path);
 	}
 	else
@@ -1181,9 +1181,9 @@ check_for_jsonb_9_4_usage(ClusterInfo *cluster)
 		pg_log(PG_REPORT, "fatal\n");
 		pg_fatal("Your installation contains the \"jsonb\" data type in user tables.\n"
 				 "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
-				 "cluster cannot currently be upgraded.  You can remove the problem\n"
-				 "tables and restart the upgrade.  A list of the problem columns is\n"
-				 "in the file:\n"
+				 "cluster cannot currently be upgraded.  You can\n"
+				 "drop the problem columns and restart the upgrade.\n"
+				 "A list of the problem columns is in the file:\n"
 				 "    %s\n\n", output_path);
 	}
 	else
