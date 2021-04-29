@@ -1965,7 +1965,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
           <listitem>
            <para>
             first try to find a standby server, but if none of the listed
-            hosts is a standby server, try again in <literal>all</literal>
+            hosts is a standby server, try again in <literal>any</literal>
             mode
            </para>
           </listitem>
