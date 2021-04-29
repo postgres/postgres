@@ -18,12 +18,13 @@
 #
 # (The uppercase items must be replaced by actual values.)
 #
-# The first field is the connection type: "local" is a Unix-domain
-# socket, "host" is either a plain or SSL-encrypted TCP/IP socket,
-# "hostssl" is an SSL-encrypted TCP/IP socket, and "hostnossl" is a
-# non-SSL TCP/IP socket.  Similarly, "hostgssenc" uses a
-# GSSAPI-encrypted TCP/IP socket, while "hostnogssenc" uses a
-# non-GSSAPI socket.
+# The first field is the connection type:
+# - "local" is a Unix-domain socket
+# - "host" is a TCP/IP socket (encrypted or not)
+# - "hostssl" is a TCP/IP socket that is SSL-encrypted
+# - "hostnossl" is a TCP/IP socket that is not SSL-encrypted
+# - "hostgssenc" is a TCP/IP socket that is GSSAPI-encrypted
+# - "hostnogssenc" is a TCP/IP socket that is not GSSAPI-encrypted
 #
 # DATABASE can be "all", "sameuser", "samerole", "replication", a
 # database name, or a comma-separated list thereof. The "all"
