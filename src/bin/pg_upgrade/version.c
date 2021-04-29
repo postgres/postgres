@@ -97,17 +97,22 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 
 
 /*
- * check_for_data_type_usage
- *	Detect whether there are any stored columns depending on the given type
+ * check_for_data_types_usage()
+ *	Detect whether there are any stored columns depending on given type(s)
  *
  * If so, write a report to the given file name, and return true.
  *
- * We check for the type in tables, matviews, and indexes, but not views;
+ * base_query should be a SELECT yielding a single column named "oid",
+ * containing the pg_type OIDs of one or more types that are known to have
+ * inconsistent on-disk representations across server versions.
+ *
+ * We check for the type(s) in tables, matviews, and indexes, but not views;
  * there's no storage involved in a view.
  */
-static bool
-check_for_data_type_usage(ClusterInfo *cluster, const char *typename,
-						  char *output_path)
+bool
+check_for_data_types_usage(ClusterInfo *cluster,
+						   const char *base_query,
+						   const char *output_path)
 {
 	bool		found = false;
 	FILE	   *script = NULL;
@@ -127,7 +132,7 @@ check_for_data_type_usage(ClusterInfo *cluster, const char *typename,
 					i_attname;
 
 		/*
-		 * The type of interest might be wrapped in a domain, array,
+		 * The type(s) of interest might be wrapped in a domain, array,
 		 * composite, or range, and these container types can be nested (to
 		 * varying extents depending on server version, but that's not of
 		 * concern here).  To handle all these cases we need a recursive CTE.
@@ -135,8 +140,8 @@ check_for_data_type_usage(ClusterInfo *cluster, const char *typename,
 		initPQExpBuffer(&querybuf);
 		appendPQExpBuffer(&querybuf,
 						  "WITH RECURSIVE oids AS ( "
-		/* the target type itself */
-						  "	SELECT '%s'::pg_catalog.regtype AS oid "
+		/* start with the type(s) returned by base_query */
+						  "	%s "
 						  "	UNION ALL "
 						  "	SELECT * FROM ( "
 		/* inner WITH because we can only reference the CTE once */
@@ -154,7 +159,7 @@ check_for_data_type_usage(ClusterInfo *cluster, const char *typename,
 						  "				  c.oid = a.attrelid AND "
 						  "				  NOT a.attisdropped AND "
 						  "				  a.atttypid = x.oid ",
-						  typename);
+						  base_query);
 
 		/* Ranges were introduced in 9.2 */
 		if (GET_MAJOR_VERSION(cluster->major_version) >= 902)
@@ -218,6 +223,34 @@ check_for_data_type_usage(ClusterInfo *cluster, const char *typename,
 
 	if (script)
 		fclose(script);
+
+	return found;
+}
+
+/*
+ * check_for_data_type_usage()
+ *	Detect whether there are any stored columns depending on the given type
+ *
+ * If so, write a report to the given file name, and return true.
+ *
+ * typename should be a fully qualified type name.  This is just a
+ * trivial wrapper around check_for_data_types_usage() to convert a
+ * type name into a base query.
+ */
+bool
+check_for_data_type_usage(ClusterInfo *cluster,
+						  const char *typename,
+						  const char *output_path)
+{
+	bool		found;
+	char	   *base_query;
+
+	base_query = psprintf("SELECT '%s'::pg_catalog.regtype AS oid",
+						  typename);
+
+	found = check_for_data_types_usage(cluster, base_query, output_path);
+
+	free(base_query);
 
 	return found;
 }
