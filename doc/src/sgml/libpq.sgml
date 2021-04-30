@@ -5760,15 +5760,32 @@ typedef struct
 
   <para>
    <function>PQfn</function> always returns a valid
-   <structname>PGresult</structname> pointer. The result status should be
+   <structname>PGresult</structname> pointer, with
+   status <literal>PGRES_COMMAND_OK</literal> for success
+   or <literal>PGRES_FATAL_ERROR</literal> if some problem was encountered.
+   The result status should be
    checked before the result is used.   The caller is responsible for
    freeing  the  <structname>PGresult</structname>  with
    <xref linkend="libpq-PQclear"/> when it is no longer needed.
   </para>
 
   <para>
-   Note that it is not possible to handle null arguments, null results,
-   nor set-valued results when using this interface.
+   To pass a NULL argument to the function, set
+   the <parameter>len</parameter> field of that parameter structure
+   to <literal>-1</literal>; the <parameter>isint</parameter>
+   and <parameter>u</parameter> fields are then irrelevant.
+  </para>
+
+  <para>
+   If the function returns NULL, <parameter>*result_len</parameter> is set
+   to <literal>-1</literal>, and <parameter>*result_buf</parameter> is not
+   modified.
+  </para>
+
+  <para>
+   Note that it is not possible to handle set-valued results when using
+   this interface.  Also, the function must be a plain function, not an
+   aggregate, window function, or procedure.
   </para>
 
  </sect1>
