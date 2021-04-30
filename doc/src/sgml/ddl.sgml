@@ -916,6 +916,11 @@ CREATE TABLE orders (
    </para>
 
    <para>
+    You can assign your own name for a foreign key constraint,
+    in the usual way.
+   </para>
+
+   <para>
     A foreign key can also constrain and reference a group of columns.
     As usual, it then needs to be written in table constraint form.
     Here is a contrived syntax example:
@@ -931,9 +936,28 @@ CREATE TABLE t1 (
     match the number and type of the referenced columns.
    </para>
 
+   <indexterm>
+    <primary>foreign key</primary>
+    <secondary>self-referential</secondary>
+   </indexterm>
+
    <para>
-    You can assign your own name for a foreign key constraint,
-    in the usual way.
+    Sometimes it is useful for the <quote>other table</quote> of a
+    foreign key constraint to be the same table; this is called
+    a <firstterm>self-referential</firstterm> foreign key.  For
+    example, if you want rows of a table to represent nodes of a tree
+    structure, you could write
+<programlisting>
+CREATE TABLE tree (
+    node_id integer PRIMARY KEY,
+    parent_id integer REFERENCES tree,
+    name text,
+    ...
+);
+</programlisting>
+    A top-level node would have NULL <structfield>parent_id</structfield>,
+    but non-NULL <structfield>parent_id</structfield> entries would be
+    constrained to reference valid rows of the table.
    </para>
 
    <para>
