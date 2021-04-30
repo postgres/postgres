@@ -198,7 +198,6 @@ fetch_fp_info(Oid func_id, struct fp_info *fip)
 	HeapTuple	func_htp;
 	Form_pg_proc pp;
 
-	Assert(OidIsValid(func_id));
 	Assert(fip != NULL);
 
 	/*
@@ -212,14 +211,19 @@ fetch_fp_info(Oid func_id, struct fp_info *fip)
 	MemSet(fip, 0, sizeof(struct fp_info));
 	fip->funcid = InvalidOid;
 
-	fmgr_info(func_id, &fip->flinfo);
-
 	func_htp = SearchSysCache1(PROCOID, ObjectIdGetDatum(func_id));
 	if (!HeapTupleIsValid(func_htp))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function with OID %u does not exist", func_id)));
 	pp = (Form_pg_proc) GETSTRUCT(func_htp);
+
+	/* reject pg_proc entries that are unsafe to call via fastpath */
+	if (pp->prokind != PROKIND_FUNCTION || pp->proretset)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot call function %s via fastpath interface",
+						NameStr(pp->proname))));
 
 	/* watch out for catalog entries with more than FUNC_MAX_ARGS args */
 	if (pp->pronargs > FUNC_MAX_ARGS)
@@ -232,6 +236,8 @@ fetch_fp_info(Oid func_id, struct fp_info *fip)
 	strlcpy(fip->fname, NameStr(pp->proname), NAMEDATALEN);
 
 	ReleaseSysCache(func_htp);
+
+	fmgr_info(func_id, &fip->flinfo);
 
 	/*
 	 * This must be last!
