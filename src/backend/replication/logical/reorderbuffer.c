@@ -3362,19 +3362,22 @@ ReorderBufferLargestTXN(ReorderBuffer *rb)
  * This can be seen as an optimized version of ReorderBufferLargestTXN, which
  * should give us the same transaction (because we don't update memory account
  * for subtransaction with streaming, so it's always 0). But we can simply
- * iterate over the limited number of toplevel transactions.
+ * iterate over the limited number of toplevel transactions that have a base
+ * snapshot. There is no use of selecting a transaction that doesn't have base
+ * snapshot because we don't decode such transactions.
  *
  * Note that, we skip transactions that contains incomplete changes. There
- * is a scope of optimization here such that we can select the largest transaction
- * which has complete changes.  But that will make the code and design quite complex
- * and that might not be worth the benefit.  If we plan to stream the transactions
- * that contains incomplete changes then we need to find a way to partially
- * stream/truncate the transaction changes in-memory and build a mechanism to
- * partially truncate the spilled files.  Additionally, whenever we partially
- * stream the transaction we need to maintain the last streamed lsn and next time
- * we need to restore from that segment and the offset in WAL.  As we stream the
- * changes from the top transaction and restore them subtransaction wise, we need
- * to even remember the subxact from where we streamed the last change.
+ * is a scope of optimization here such that we can select the largest
+ * transaction which has incomplete changes.  But that will make the code and
+ * design quite complex and that might not be worth the benefit.  If we plan to
+ * stream the transactions that contains incomplete changes then we need to
+ * find a way to partially stream/truncate the transaction changes in-memory
+ * and build a mechanism to partially truncate the spilled files.
+ * Additionally, whenever we partially stream the transaction we need to
+ * maintain the last streamed lsn and next time we need to restore from that
+ * segment and the offset in WAL.  As we stream the changes from the top
+ * transaction and restore them subtransaction wise, we need to even remember
+ * the subxact from where we streamed the last change.
  */
 static ReorderBufferTXN *
 ReorderBufferLargestTopTXN(ReorderBuffer *rb)
@@ -3383,14 +3386,19 @@ ReorderBufferLargestTopTXN(ReorderBuffer *rb)
 	Size		largest_size = 0;
 	ReorderBufferTXN *largest = NULL;
 
-	/* Find the largest top-level transaction. */
-	dlist_foreach(iter, &rb->toplevel_by_lsn)
+	/* Find the largest top-level transaction having a base snapshot. */
+	dlist_foreach(iter, &rb->txns_by_base_snapshot_lsn)
 	{
 		ReorderBufferTXN *txn;
 
-		txn = dlist_container(ReorderBufferTXN, node, iter.cur);
+		txn = dlist_container(ReorderBufferTXN, base_snapshot_node, iter.cur);
 
-		if ((largest != NULL || txn->total_size > largest_size) &&
+		/* must not be a subtxn */
+		Assert(!rbtxn_is_known_subxact(txn));
+		/* base_snapshot must be set */
+		Assert(txn->base_snapshot != NULL);
+
+		if ((largest == NULL || txn->total_size > largest_size) &&
 			(txn->total_size > 0) && !(rbtxn_has_incomplete_tuple(txn)))
 		{
 			largest = txn;
