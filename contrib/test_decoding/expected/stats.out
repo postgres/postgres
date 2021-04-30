@@ -1,6 +1,6 @@
 -- predictability
 SET synchronous_commit = on;
-SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_stats', 'test_decoding');
  ?column? 
 ----------
  init
@@ -23,7 +23,7 @@ BEGIN
                   ELSE (spill_txns > 0)
              END
       INTO updated
-      FROM pg_stat_replication_slots WHERE slot_name='regression_slot';
+      FROM pg_stat_replication_slots WHERE slot_name='regression_slot_stats';
 
     ELSE
 
@@ -32,7 +32,7 @@ BEGIN
                   ELSE (total_txns > 0)
              END
       INTO updated
-      FROM pg_stat_replication_slots WHERE slot_name='regression_slot';
+      FROM pg_stat_replication_slots WHERE slot_name='regression_slot_stats';
 
     END IF;
 
@@ -52,8 +52,9 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 -- non-spilled xact
+SET logical_decoding_work_mem to '64MB';
 INSERT INTO stats_test values(1);
-SELECT count(*) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'skip-empty-xacts', '1');
+SELECT count(*) FROM pg_logical_slot_get_changes('regression_slot_stats', NULL, NULL, 'skip-empty-xacts', '1');
  count 
 -------
      3
@@ -66,13 +67,14 @@ SELECT wait_for_decode_stats(false, false);
 (1 row)
 
 SELECT slot_name, spill_txns = 0 AS spill_txns, spill_count = 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots;
-    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
------------------+------------+-------------+------------+-------------
- regression_slot | t          | t           | t          | t
+       slot_name       | spill_txns | spill_count | total_txns | total_bytes 
+-----------------------+------------+-------------+------------+-------------
+ regression_slot_stats | t          | t           | t          | t
 (1 row)
 
+RESET logical_decoding_work_mem;
 -- reset the slot stats, and wait for stats collector's total txn to reset
-SELECT pg_stat_reset_replication_slot('regression_slot');
+SELECT pg_stat_reset_replication_slot('regression_slot_stats');
  pg_stat_reset_replication_slot 
 --------------------------------
  
@@ -85,16 +87,16 @@ SELECT wait_for_decode_stats(true, false);
 (1 row)
 
 SELECT slot_name, spill_txns, spill_count, total_txns, total_bytes FROM pg_stat_replication_slots;
-    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
------------------+------------+-------------+------------+-------------
- regression_slot |          0 |           0 |          0 |           0
+       slot_name       | spill_txns | spill_count | total_txns | total_bytes 
+-----------------------+------------+-------------+------------+-------------
+ regression_slot_stats |          0 |           0 |          0 |           0
 (1 row)
 
 -- spilling the xact
 BEGIN;
 INSERT INTO stats_test SELECT 'serialize-topbig--1:'||g.i FROM generate_series(1, 5000) g(i);
 COMMIT;
-SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'skip-empty-xacts', '1');
+SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot_stats', NULL, NULL, 'skip-empty-xacts', '1');
  count 
 -------
   5002
@@ -110,13 +112,13 @@ SELECT wait_for_decode_stats(false, true);
 (1 row)
 
 SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots;
-    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
------------------+------------+-------------+------------+-------------
- regression_slot | t          | t           | t          | t
+       slot_name       | spill_txns | spill_count | total_txns | total_bytes 
+-----------------------+------------+-------------+------------+-------------
+ regression_slot_stats | t          | t           | t          | t
 (1 row)
 
 -- reset the slot stats, and wait for stats collector to reset
-SELECT pg_stat_reset_replication_slot('regression_slot');
+SELECT pg_stat_reset_replication_slot('regression_slot_stats');
  pg_stat_reset_replication_slot 
 --------------------------------
  
@@ -129,13 +131,13 @@ SELECT wait_for_decode_stats(true, true);
 (1 row)
 
 SELECT slot_name, spill_txns, spill_count, total_txns, total_bytes FROM pg_stat_replication_slots;
-    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
------------------+------------+-------------+------------+-------------
- regression_slot |          0 |           0 |          0 |           0
+       slot_name       | spill_txns | spill_count | total_txns | total_bytes 
+-----------------------+------------+-------------+------------+-------------
+ regression_slot_stats |          0 |           0 |          0 |           0
 (1 row)
 
 -- decode and check stats again.
-SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'skip-empty-xacts', '1');
+SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot_stats', NULL, NULL, 'skip-empty-xacts', '1');
  count 
 -------
   5002
@@ -148,30 +150,30 @@ SELECT wait_for_decode_stats(false, true);
 (1 row)
 
 SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots;
-    slot_name    | spill_txns | spill_count | total_txns | total_bytes 
------------------+------------+-------------+------------+-------------
- regression_slot | t          | t           | t          | t
+       slot_name       | spill_txns | spill_count | total_txns | total_bytes 
+-----------------------+------------+-------------+------------+-------------
+ regression_slot_stats | t          | t           | t          | t
 (1 row)
 
 -- Ensure stats can be repeatedly accessed using the same stats snapshot. See
 -- https://postgr.es/m/20210317230447.c7uc4g3vbs4wi32i%40alap3.anarazel.de
 BEGIN;
 SELECT slot_name FROM pg_stat_replication_slots;
-    slot_name    
------------------
- regression_slot
+       slot_name       
+-----------------------
+ regression_slot_stats
 (1 row)
 
 SELECT slot_name FROM pg_stat_replication_slots;
-    slot_name    
------------------
- regression_slot
+       slot_name       
+-----------------------
+ regression_slot_stats
 (1 row)
 
 COMMIT;
 DROP FUNCTION wait_for_decode_stats(bool, bool);
 DROP TABLE stats_test;
-SELECT pg_drop_replication_slot('regression_slot');
+SELECT pg_drop_replication_slot('regression_slot_stats');
  pg_drop_replication_slot 
 --------------------------
  
