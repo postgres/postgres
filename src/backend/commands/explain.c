@@ -3144,17 +3144,17 @@ show_resultcache_info(ResultCacheState *rcstate, List *ancestors,
 	if (!es->analyze)
 		return;
 
-	/*
-	 * mem_peak is only set when we freed memory, so we must use mem_used when
-	 * mem_peak is 0.
-	 */
-	if (rcstate->stats.mem_peak > 0)
-		memPeakKb = (rcstate->stats.mem_peak + 1023) / 1024;
-	else
-		memPeakKb = (rcstate->mem_used + 1023) / 1024;
-
 	if (rcstate->stats.cache_misses > 0)
 	{
+		/*
+		 * mem_peak is only set when we freed memory, so we must use mem_used
+		 * when mem_peak is 0.
+		 */
+		if (rcstate->stats.mem_peak > 0)
+			memPeakKb = (rcstate->stats.mem_peak + 1023) / 1024;
+		else
+			memPeakKb = (rcstate->mem_used + 1023) / 1024;
+
 		if (es->format != EXPLAIN_FORMAT_TEXT)
 		{
 			ExplainPropertyInteger("Cache Hits", NULL, rcstate->stats.cache_hits, es);
@@ -3185,6 +3185,13 @@ show_resultcache_info(ResultCacheState *rcstate, List *ancestors,
 		ResultCacheInstrumentation *si;
 
 		si = &rcstate->shared_info->sinstrument[n];
+
+		/*
+		 * Skip workers that didn't do any work.  We needn't bother checking
+		 * for cache hits as a miss will always occur before a cache hit.
+		 */
+		if (si->cache_misses == 0)
+			continue;
 
 		if (es->workers_state)
 			ExplainOpenWorker(n, es);
