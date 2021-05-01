@@ -23,15 +23,15 @@ SELECT INTERVAL '-08:00' AS "Eight hours";
 (1 row)
 
 SELECT INTERVAL '-1 +02:03' AS "22 hours ago...";
- 22 hours ago...  
-------------------
- -1 day +02:03:00
+  22 hours ago...  
+-------------------
+ -1 days +02:03:00
 (1 row)
 
 SELECT INTERVAL '-1 days +02:03' AS "22 hours ago...";
- 22 hours ago...  
-------------------
- -1 day +02:03:00
+  22 hours ago...  
+-------------------
+ -1 days +02:03:00
 (1 row)
 
 SELECT INTERVAL '1.5 weeks' AS "Ten days twelve hours";
@@ -288,7 +288,7 @@ FROM INTERVAL_MULDIV_TBL;
               product               
 ------------------------------------
  1 year 12 days 122:24:00
- -1 year -12 days +93:36:00
+ -1 years -12 days +93:36:00
  -3 days -14:24:00
  2 mons 13 days 01:22:28.8
  -10 mons +120 days 37:28:21.6567
@@ -317,7 +317,7 @@ FROM INTERVAL_MULDIV_TBL;
 ----------------------------------
  4 mons 4 days 40:48:00
  -4 mons -4 days +31:12:00
- -1 day -04:48:00
+ -1 days -04:48:00
  25 days -15:32:30.4
  -3 mons +30 days 12:29:27.2189
  12 days
@@ -785,9 +785,9 @@ SELECT  interval '+1 -1:00:00',
         interval '-1 +1:00:00',
         interval '+1-2 -3 +4:05:06.789',
         interval '-1-2 +3 -4:05:06.789';
-    interval     |     interval     |              interval               |               interval                
------------------+------------------+-------------------------------------+---------------------------------------
- 1 day -01:00:00 | -1 day +01:00:00 | 1 year 2 mons -3 days +04:05:06.789 | -1 year -2 mons +3 days -04:05:06.789
+    interval     |     interval      |              interval               |                interval                
+-----------------+-------------------+-------------------------------------+----------------------------------------
+ 1 day -01:00:00 | -1 days +01:00:00 | 1 year 2 mons -3 days +04:05:06.789 | -1 years -2 mons +3 days -04:05:06.789
 (1 row)
 
 -- test output of couple non-standard interval values in the sql style

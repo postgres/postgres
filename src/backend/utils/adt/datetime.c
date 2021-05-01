@@ -4190,7 +4190,7 @@ AddPostgresIntPart(char *cp, int value, const char *units,
 			(*is_before && value > 0) ? "+" : "",
 			value,
 			units,
-			(abs(value) != 1) ? "s" : "");
+			(value != 1) ? "s" : "");
 
 	/*
 	 * Each nonzero field sets is_before for (only) the next one.  This is a
@@ -4216,7 +4216,7 @@ AddVerboseIntPart(char *cp, int value, const char *units,
 	}
 	else if (*is_before)
 		value = -value;
-	sprintf(cp, " %d %s%s", value, units, (abs(value) == 1) ? "" : "s");
+	sprintf(cp, " %d %s%s", value, units, (value == 1) ? "" : "s");
 	*is_zero = false;
 	return cp + strlen(cp);
 }
@@ -4414,6 +4414,7 @@ EncodeInterval(struct pg_tm *tm, fsec_t fsec, int style, char *str)
 				else if (is_before)
 					*cp++ = '-';
 				cp = AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, false);
+				/* We output "ago", not negatives, so use abs(). */
 				sprintf(cp, " sec%s",
 						(abs(sec) != 1 || fsec != 0) ? "s" : "");
 				is_zero = false;
