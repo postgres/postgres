@@ -3751,8 +3751,9 @@ keep_going:						/* We will come back to here until there is
 					PQclear(res);
 
 				/* Append error report to conn->errorMessage. */
-				appendPQExpBufferStr(&conn->errorMessage,
-									 libpq_gettext("\"SHOW transaction_read_only\" failed\n"));
+				appendPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("\"%s\" failed\n"),
+								  "SHOW transaction_read_only");
 
 				/* Close connection politely. */
 				conn->status = CONNECTION_OK;
@@ -3802,8 +3803,9 @@ keep_going:						/* We will come back to here until there is
 					PQclear(res);
 
 				/* Append error report to conn->errorMessage. */
-				appendPQExpBufferStr(&conn->errorMessage,
-									 libpq_gettext("\"SELECT pg_is_in_recovery()\" failed\n"));
+				appendPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("\"%s\" failed\n"),
+								  "SELECT pg_is_in_recovery()");
 
 				/* Close connection politely. */
 				conn->status = CONNECTION_OK;
