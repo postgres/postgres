@@ -150,8 +150,8 @@ typedef struct HeapCheckContext
 static void sanity_check_relation(Relation rel);
 static void check_tuple(HeapCheckContext *ctx);
 static void check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
-							  ToastedAttribute *ta, int32 chunkno,
-							  int32 endchunk);
+							  ToastedAttribute *ta, int32 *expected_chunk_seq,
+							  uint32 extsize);
 
 static bool check_tuple_attribute(HeapCheckContext *ctx);
 static void check_toasted_attribute(HeapCheckContext *ctx,
@@ -1159,23 +1159,25 @@ check_tuple_visibility(HeapCheckContext *ctx)
  * each toast tuple being checked against where we are in the sequence, as well
  * as each toast tuple having its varlena structure sanity checked.
  *
- * Returns whether the toast tuple passed the corruption checks.
+ * On entry, *expected_chunk_seq should be the chunk_seq value that we expect
+ * to find in toasttup. On exit, it will be updated to the value the next call
+ * to this function should expect to see.
  */
 static void
 check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
-				  ToastedAttribute *ta, int32 chunkno, int32 endchunk)
+				  ToastedAttribute *ta, int32 *expected_chunk_seq,
+				  uint32 extsize)
 {
-	int32		curchunk;
+	int32		chunk_seq;
+	int32		last_chunk_seq = (extsize - 1) / TOAST_MAX_CHUNK_SIZE;
 	Pointer		chunk;
 	bool		isnull;
 	int32		chunksize;
 	int32		expected_size;
 
-	/*
-	 * Have a chunk, extract the sequence number and the data
-	 */
-	curchunk = DatumGetInt32(fastgetattr(toasttup, 2,
-										 ctx->toast_rel->rd_att, &isnull));
+	/* Sanity-check the sequence number. */
+	chunk_seq = DatumGetInt32(fastgetattr(toasttup, 2,
+										  ctx->toast_rel->rd_att, &isnull));
 	if (isnull)
 	{
 		report_toast_corruption(ctx, ta,
@@ -1183,13 +1185,25 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 										 ta->toast_pointer.va_valueid));
 		return;
 	}
+	if (chunk_seq != *expected_chunk_seq)
+	{
+		/* Either the TOAST index is corrupt, or we don't have all chunks. */
+		report_toast_corruption(ctx, ta,
+								psprintf("toast value %u index scan returned chunk %d when expecting chunk %d",
+										 ta->toast_pointer.va_valueid,
+										 chunk_seq, *expected_chunk_seq));
+	}
+	*expected_chunk_seq = chunk_seq + 1;
+
+	/* Sanity-check the chunk data. */
 	chunk = DatumGetPointer(fastgetattr(toasttup, 3,
 										ctx->toast_rel->rd_att, &isnull));
 	if (isnull)
 	{
 		report_toast_corruption(ctx, ta,
 								psprintf("toast value %u chunk %d has null data",
-										 ta->toast_pointer.va_valueid, chunkno));
+										 ta->toast_pointer.va_valueid,
+										 chunk_seq));
 		return;
 	}
 	if (!VARATT_IS_EXTENDED(chunk))
@@ -1209,40 +1223,31 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 		report_toast_corruption(ctx, ta,
 								psprintf("toast value %u chunk %d has invalid varlena header %0x",
 										 ta->toast_pointer.va_valueid,
-										 chunkno, header));
+										 chunk_seq, header));
 		return;
 	}
 
 	/*
 	 * Some checks on the data we've found
 	 */
-	if (curchunk != chunkno)
-	{
-		report_toast_corruption(ctx, ta,
-								psprintf("toast value %u chunk %d has sequence number %d, but expected sequence number %d",
-										 ta->toast_pointer.va_valueid,
-										 chunkno, curchunk, chunkno));
-		return;
-	}
-	if (chunkno > endchunk)
+	if (chunk_seq > last_chunk_seq)
 	{
 		report_toast_corruption(ctx, ta,
 								psprintf("toast value %u chunk %d follows last expected chunk %d",
 										 ta->toast_pointer.va_valueid,
-										 chunkno, endchunk));
+										 chunk_seq, last_chunk_seq));
 		return;
 	}
 
-	expected_size = curchunk < endchunk ? TOAST_MAX_CHUNK_SIZE
-		: VARATT_EXTERNAL_GET_EXTSIZE(ta->toast_pointer) - (endchunk * TOAST_MAX_CHUNK_SIZE);
+	expected_size = chunk_seq < last_chunk_seq ? TOAST_MAX_CHUNK_SIZE
+		: extsize - (last_chunk_seq * TOAST_MAX_CHUNK_SIZE);
 
 	if (chunksize != expected_size)
 		report_toast_corruption(ctx, ta,
 								psprintf("toast value %u chunk %d has size %u, but expected size %u",
 										 ta->toast_pointer.va_valueid,
-										 chunkno, chunksize, expected_size));
+										 chunk_seq, chunksize, expected_size));
 }
-
 /*
  * Check the current attribute as tracked in ctx, recording any corruption
  * found in ctx->tupstore.
@@ -1436,10 +1441,12 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 	SysScanDesc toastscan;
 	bool		found_toasttup;
 	HeapTuple	toasttup;
-	int32		chunkno;
-	int32		endchunk;
+	uint32		extsize;
+	int32		expected_chunk_seq = 0;
+	int32		last_chunk_seq;
 
-	endchunk = (VARATT_EXTERNAL_GET_EXTSIZE(ta->toast_pointer) - 1) / TOAST_MAX_CHUNK_SIZE;
+	extsize = VARATT_EXTERNAL_GET_EXTSIZE(ta->toast_pointer);
+	last_chunk_seq = (extsize - 1) / TOAST_MAX_CHUNK_SIZE;
 
 	/*
 	 * Setup a scan key to find chunks in toast table with matching va_valueid
@@ -1458,15 +1465,13 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 										   ctx->valid_toast_index,
 										   &SnapshotToast, 1,
 										   &toastkey);
-	chunkno = 0;
 	found_toasttup = false;
 	while ((toasttup =
 			systable_getnext_ordered(toastscan,
 									 ForwardScanDirection)) != NULL)
 	{
 		found_toasttup = true;
-		check_toast_tuple(toasttup, ctx, ta, chunkno, endchunk);
-		chunkno++;
+		check_toast_tuple(toasttup, ctx, ta, &expected_chunk_seq, extsize);
 	}
 	systable_endscan_ordered(toastscan);
 
@@ -1474,11 +1479,11 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 		report_toast_corruption(ctx, ta,
 								psprintf("toast value %u not found in toast table",
 										 ta->toast_pointer.va_valueid));
-	else if (chunkno != (endchunk + 1))
+	else if (expected_chunk_seq <= last_chunk_seq)
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value %u was expected to end at chunk %d, but ended at chunk %d",
+								psprintf("toast value %u was expected to end at chunk %d, but ended while expecting chunk %d",
 										 ta->toast_pointer.va_valueid,
-										 (endchunk + 1), chunkno));
+										 last_chunk_seq, expected_chunk_seq));
 }
 
 /*
