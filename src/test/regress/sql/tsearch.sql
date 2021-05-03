@@ -759,6 +759,7 @@ select websearch_to_tsquery('simple', 'abc OR_abc');
 select websearch_to_tsquery('english', '"pg_class pg');
 select websearch_to_tsquery('english', 'pg_class pg"');
 select websearch_to_tsquery('english', '"pg_class pg"');
+select websearch_to_tsquery('english', '"pg_class : pg"');
 select websearch_to_tsquery('english', 'abc "pg_class pg"');
 select websearch_to_tsquery('english', '"pg_class pg" def');
 select websearch_to_tsquery('english', 'abc "pg pg_class pg" def');

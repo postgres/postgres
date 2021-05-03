@@ -2678,9 +2678,9 @@ select websearch_to_tsquery('simple', 'abc OR_abc');
 
 -- test quotes
 select websearch_to_tsquery('english', '"pg_class pg');
-  websearch_to_tsquery   
--------------------------
- 'pg' <-> 'class' & 'pg'
+   websearch_to_tsquery    
+---------------------------
+ 'pg' <-> 'class' <-> 'pg'
 (1 row)
 
 select websearch_to_tsquery('english', 'pg_class pg"');
@@ -2690,6 +2690,12 @@ select websearch_to_tsquery('english', 'pg_class pg"');
 (1 row)
 
 select websearch_to_tsquery('english', '"pg_class pg"');
+   websearch_to_tsquery    
+---------------------------
+ 'pg' <-> 'class' <-> 'pg'
+(1 row)
+
+select websearch_to_tsquery('english', '"pg_class : pg"');
    websearch_to_tsquery    
 ---------------------------
  'pg' <-> 'class' <-> 'pg'
@@ -2708,15 +2714,15 @@ select websearch_to_tsquery('english', '"pg_class pg" def');
 (1 row)
 
 select websearch_to_tsquery('english', 'abc "pg pg_class pg" def');
-                  websearch_to_tsquery                  
---------------------------------------------------------
- 'abc' & 'pg' <-> ( 'pg' <-> 'class' ) <-> 'pg' & 'def'
+                websearch_to_tsquery                
+----------------------------------------------------
+ 'abc' & 'pg' <-> 'pg' <-> 'class' <-> 'pg' & 'def'
 (1 row)
 
 select websearch_to_tsquery('english', ' or "pg pg_class pg" or ');
-          websearch_to_tsquery          
-----------------------------------------
- 'pg' <-> ( 'pg' <-> 'class' ) <-> 'pg'
+        websearch_to_tsquery        
+------------------------------------
+ 'pg' <-> 'pg' <-> 'class' <-> 'pg'
 (1 row)
 
 select websearch_to_tsquery('english', '""pg pg_class pg""');

@@ -77,7 +77,6 @@ struct TSQueryParserStateData
 	char	   *buf;			/* current scan point */
 	int			count;			/* nesting count, incremented by (,
 								 * decremented by ) */
-	bool		in_quotes;		/* phrase in quotes "" */
 	ts_parserstate state;
 
 	/* polish (prefix) notation in list, filled in by push* functions */
@@ -234,9 +233,6 @@ static bool
 parse_or_operator(TSQueryParserState pstate)
 {
 	char	   *ptr = pstate->buf;
-
-	if (pstate->in_quotes)
-		return false;
 
 	/* it should begin with "OR" literal */
 	if (pg_strncasecmp(ptr, "or", 2) != 0)
@@ -398,38 +394,29 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 					state->buf++;
 					state->state = WAITOPERAND;
 
-					if (state->in_quotes)
-						continue;
-
 					*operator = OP_NOT;
 					return PT_OPR;
 				}
 				else if (t_iseq(state->buf, '"'))
 				{
+					/* Everything in quotes is processed as a single token */
+
+					/* skip opening quote */
 					state->buf++;
+					*strval = state->buf;
 
-					if (!state->in_quotes)
-					{
-						state->state = WAITOPERAND;
+					/* iterate to the closing quote or end of the string */
+					while (*state->buf != '\0' && !t_iseq(state->buf, '"'))
+						state->buf++;
+					*lenval = state->buf - *strval;
 
-						if (strchr(state->buf, '"'))
-						{
-							/* quoted text should be ordered <-> */
-							state->in_quotes = true;
-							return PT_OPEN;
-						}
+					/* skip closing quote if not end of the string */
+					if (*state->buf != '\0')
+						state->buf++;
 
-						/* web search tolerates missing quotes */
-						continue;
-					}
-					else
-					{
-						/* we have to provide an operand */
-						state->in_quotes = false;
-						state->state = WAITOPERATOR;
-						pushStop(state);
-						return PT_CLOSE;
-					}
+					state->state = WAITOPERATOR;
+					state->count++;
+					return PT_VAL;
 				}
 				else if (ISOPERATOR(state->buf))
 				{
@@ -467,24 +454,13 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 			case WAITOPERATOR:
 				if (t_iseq(state->buf, '"'))
 				{
-					if (!state->in_quotes)
-					{
-						/*
-						 * put implicit AND after an operand and handle this
-						 * quote in WAITOPERAND
-						 */
-						state->state = WAITOPERAND;
-						*operator = OP_AND;
-						return PT_OPR;
-					}
-					else
-					{
-						state->buf++;
-
-						/* just close quotes */
-						state->in_quotes = false;
-						return PT_CLOSE;
-					}
+					/*
+					 * put implicit AND after an operand and handle this quote
+					 * in WAITOPERAND
+					 */
+					state->state = WAITOPERAND;
+					*operator = OP_AND;
+					return PT_OPR;
 				}
 				else if (parse_or_operator(state))
 				{
@@ -498,18 +474,8 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 				}
 				else if (!t_isspace(state->buf))
 				{
-					if (state->in_quotes)
-					{
-						/* put implicit <-> after an operand */
-						*operator = OP_PHRASE;
-						*weight = 1;
-					}
-					else
-					{
-						/* put implicit AND after an operand */
-						*operator = OP_AND;
-					}
-
+					/* put implicit AND after an operand */
+					*operator = OP_AND;
 					state->state = WAITOPERAND;
 					return PT_OPR;
 				}
@@ -846,7 +812,6 @@ parse_tsquery(char *buf,
 	state.buffer = buf;
 	state.buf = buf;
 	state.count = 0;
-	state.in_quotes = false;
 	state.state = WAITFIRSTOPERAND;
 	state.polstr = NIL;
 
