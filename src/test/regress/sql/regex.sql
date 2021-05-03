@@ -135,6 +135,14 @@ select 'a' ~ '.. ()|\1';
 select 'a' ~ '()*\1';
 select 'a' ~ '()+\1';
 
+-- Add coverage for some cases in checkmatchall
+select regexp_match('xy', '.|...');
+select regexp_match('xyz', '.|...');
+select regexp_match('xy', '.*');
+select regexp_match('fooba', '(?:..)*');
+select regexp_match('xyz', repeat('.', 260));
+select regexp_match('foo', '(?:.|){99}');
+
 -- Error conditions
 select 'xyz' ~ 'x(\w)(?=\1)';  -- no backrefs in LACONs
 select 'xyz' ~ 'x(\w)(?=(\1))';

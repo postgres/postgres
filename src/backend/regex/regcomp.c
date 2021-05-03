@@ -182,8 +182,7 @@ static void markreachable(struct nfa *, struct state *, struct state *, struct s
 static void markcanreach(struct nfa *, struct state *, struct state *, struct state *);
 static long analyze(struct nfa *);
 static void checkmatchall(struct nfa *);
-static bool checkmatchall_recurse(struct nfa *, struct state *,
-								  bool, int, bool *);
+static bool checkmatchall_recurse(struct nfa *, struct state *, bool **);
 static bool check_out_colors_match(struct state *, color, color);
 static bool check_in_colors_match(struct state *, color, color);
 static void compact(struct nfa *, struct cnfa *);

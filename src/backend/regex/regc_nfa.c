@@ -3032,96 +3032,189 @@ analyze(struct nfa *nfa)
 static void
 checkmatchall(struct nfa *nfa)
 {
-	bool		hasmatch[DUPINF + 1];
-	int			minmatch,
-				maxmatch,
-				morematch;
+	bool	  **haspaths;
+	struct state *s;
+	int			i;
 
 	/*
-	 * hasmatch[i] will be set true if a match of length i is feasible, for i
-	 * from 0 to DUPINF-1.  hasmatch[DUPINF] will be set true if every match
-	 * length of DUPINF or more is feasible.
+	 * If there are too many states, don't bother trying to detect matchall.
+	 * This limit serves to bound the time and memory we could consume below.
+	 * Note that even if the graph is all-RAINBOW, if there are significantly
+	 * more than DUPINF states then it's likely that there are paths of length
+	 * more than DUPINF, which would force us to fail anyhow.  In practice,
+	 * plausible ways of writing a matchall regex with maximum finite path
+	 * length K tend not to have very many more than K states.
 	 */
-	memset(hasmatch, 0, sizeof(hasmatch));
+	if (nfa->nstates > DUPINF * 2)
+		return;
+
+	/*
+	 * First, scan all the states to verify that only RAINBOW arcs appear,
+	 * plus pseudocolor arcs adjacent to the pre and post states.  This lets
+	 * us quickly eliminate most cases that aren't matchall NFAs.
+	 */
+	for (s = nfa->states; s != NULL; s = s->next)
+	{
+		struct arc *a;
+
+		for (a = s->outs; a != NULL; a = a->outchain)
+		{
+			if (a->type != PLAIN)
+				return;			/* any LACONs make it non-matchall */
+			if (a->co != RAINBOW)
+			{
+				if (nfa->cm->cd[a->co].flags & PSEUDO)
+				{
+					/*
+					 * Pseudocolor arc: verify it's in a valid place (this
+					 * seems quite unlikely to fail, but let's be sure).
+					 */
+					if (s == nfa->pre &&
+						(a->co == nfa->bos[0] || a->co == nfa->bos[1]))
+						 /* okay BOS/BOL arc */ ;
+					else if (a->to == nfa->post &&
+							 (a->co == nfa->eos[0] || a->co == nfa->eos[1]))
+						 /* okay EOS/EOL arc */ ;
+					else
+						return; /* unexpected pseudocolor arc */
+					/* We'll check these arcs some more below. */
+				}
+				else
+					return;		/* any other color makes it non-matchall */
+			}
+		}
+		/* Also, assert that the tmp fields are available for use. */
+		assert(s->tmp == NULL);
+	}
+
+	/*
+	 * The next cheapest check we can make is to verify that the BOS/BOL
+	 * outarcs of the pre state reach the same states as its RAINBOW outarcs.
+	 * If they don't, the NFA expresses some constraints on the character
+	 * before the matched string, making it non-matchall.  Likewise, the
+	 * EOS/EOL inarcs of the post state must match its RAINBOW inarcs.
+	 */
+	if (!check_out_colors_match(nfa->pre, RAINBOW, nfa->bos[0]) ||
+		!check_out_colors_match(nfa->pre, RAINBOW, nfa->bos[1]) ||
+		!check_in_colors_match(nfa->post, RAINBOW, nfa->eos[0]) ||
+		!check_in_colors_match(nfa->post, RAINBOW, nfa->eos[1]))
+		return;
+
+	/*
+	 * Initialize an array of path-length arrays, in which
+	 * checkmatchall_recurse will return per-state results.  This lets us
+	 * memo-ize the recursive search and avoid exponential time consumption.
+	 */
+	haspaths = (bool **) MALLOC(nfa->nstates * sizeof(bool *));
+	if (haspaths == NULL)
+		return;					/* fail quietly */
+	memset(haspaths, 0, nfa->nstates * sizeof(bool *));
 
 	/*
 	 * Recursively search the graph for all-RAINBOW paths to the "post" state,
-	 * starting at the "pre" state.  The -1 initial depth accounts for the
-	 * fact that transitions out of the "pre" state are not part of the
-	 * matched string.  We likewise don't count the final transition to the
-	 * "post" state as part of the match length.  (But we still insist that
-	 * those transitions have RAINBOW arcs, otherwise there are lookbehind or
-	 * lookahead constraints at the start/end of the pattern.)
+	 * starting at the "pre" state, and computing the lengths of the paths.
+	 * (Given the preceding checks, there should be at least one such path.
+	 * However we could get back a false result anyway, in case there are
+	 * multi-state loops, paths exceeding DUPINF+1 length, or non-algorithmic
+	 * failures such as ENOMEM.)
 	 */
-	if (!checkmatchall_recurse(nfa, nfa->pre, false, -1, hasmatch))
-		return;
-
-	/*
-	 * We found some all-RAINBOW paths, and not anything that we couldn't
-	 * handle.  Now verify that pseudocolor arcs adjacent to the pre and post
-	 * states match the RAINBOW arcs there.  (We could do this while
-	 * recursing, but it's expensive and unlikely to fail, so do it last.)
-	 */
-	if (!check_out_colors_match(nfa->pre, RAINBOW, nfa->bos[0]) ||
-		!check_out_colors_match(nfa->pre, nfa->bos[0], RAINBOW) ||
-		!check_out_colors_match(nfa->pre, RAINBOW, nfa->bos[1]) ||
-		!check_out_colors_match(nfa->pre, nfa->bos[1], RAINBOW))
-		return;
-	if (!check_in_colors_match(nfa->post, RAINBOW, nfa->eos[0]) ||
-		!check_in_colors_match(nfa->post, nfa->eos[0], RAINBOW) ||
-		!check_in_colors_match(nfa->post, RAINBOW, nfa->eos[1]) ||
-		!check_in_colors_match(nfa->post, nfa->eos[1], RAINBOW))
-		return;
-
-	/*
-	 * hasmatch[] now represents the set of possible match lengths; but we
-	 * want to reduce that to a min and max value, because it doesn't seem
-	 * worth complicating regexec.c to deal with nonconsecutive possible match
-	 * lengths.  Find min and max of first run of lengths, then verify there
-	 * are no nonconsecutive lengths.
-	 */
-	for (minmatch = 0; minmatch <= DUPINF; minmatch++)
+	if (checkmatchall_recurse(nfa, nfa->pre, haspaths))
 	{
-		if (hasmatch[minmatch])
-			break;
-	}
-	assert(minmatch <= DUPINF); /* else checkmatchall_recurse lied */
-	for (maxmatch = minmatch; maxmatch < DUPINF; maxmatch++)
-	{
-		if (!hasmatch[maxmatch + 1])
-			break;
-	}
-	for (morematch = maxmatch + 1; morematch <= DUPINF; morematch++)
-	{
-		if (hasmatch[morematch])
-			return;				/* fail, there are nonconsecutive lengths */
+		/* The useful result is the path length array for the pre state */
+		bool	   *haspath = haspaths[nfa->pre->no];
+		int			minmatch,
+					maxmatch,
+					morematch;
+
+		assert(haspath != NULL);
+
+		/*
+		 * haspath[] now represents the set of possible path lengths; but we
+		 * want to reduce that to a min and max value, because it doesn't seem
+		 * worth complicating regexec.c to deal with nonconsecutive possible
+		 * match lengths.  Find min and max of first run of lengths, then
+		 * verify there are no nonconsecutive lengths.
+		 */
+		for (minmatch = 0; minmatch <= DUPINF + 1; minmatch++)
+		{
+			if (haspath[minmatch])
+				break;
+		}
+		assert(minmatch <= DUPINF + 1); /* else checkmatchall_recurse lied */
+		for (maxmatch = minmatch; maxmatch < DUPINF + 1; maxmatch++)
+		{
+			if (!haspath[maxmatch + 1])
+				break;
+		}
+		for (morematch = maxmatch + 1; morematch <= DUPINF + 1; morematch++)
+		{
+			if (haspath[morematch])
+			{
+				haspath = NULL; /* fail, there are nonconsecutive lengths */
+				break;
+			}
+		}
+
+		if (haspath != NULL)
+		{
+			/*
+			 * Success, so record the info.  Here we have a fine point: the
+			 * path length from the pre state includes the pre-to-initial
+			 * transition, so it's one more than the actually matched string
+			 * length.  (We avoided counting the final-to-post transition
+			 * within checkmatchall_recurse, but not this one.)  This is why
+			 * checkmatchall_recurse allows one more level of path length than
+			 * might seem necessary.  This decrement also takes care of
+			 * converting checkmatchall_recurse's definition of "infinity" as
+			 * "DUPINF+1" to our normal representation as "DUPINF".
+			 */
+			assert(minmatch > 0);	/* else pre and post states were adjacent */
+			nfa->minmatchall = minmatch - 1;
+			nfa->maxmatchall = maxmatch - 1;
+			nfa->flags |= MATCHALL;
+		}
 	}
 
-	/* Success, so record the info */
-	nfa->minmatchall = minmatch;
-	nfa->maxmatchall = maxmatch;
-	nfa->flags |= MATCHALL;
+	/* Clean up */
+	for (i = 0; i < nfa->nstates; i++)
+	{
+		if (haspaths[i] != NULL)
+			FREE(haspaths[i]);
+	}
+	FREE(haspaths);
 }
 
 /*
  * checkmatchall_recurse - recursive search for checkmatchall
  *
- * s is the current state
- * foundloop is true if any predecessor state has a loop-to-self
- * depth is the current recursion depth (starting at -1)
- * hasmatch[] is the output area for recording feasible match lengths
+ * s is the state to be examined in this recursion level.
+ * haspaths[] is an array of per-state exit path length arrays.
  *
- * We return true if there is at least one all-RAINBOW path to the "post"
- * state and no non-matchall paths; otherwise false.  Note we assume that
- * any dead-end paths have already been removed, else we might return
- * false unnecessarily.
+ * We return true if the search was performed successfully, false if
+ * we had to fail because of multi-state loops or other internal reasons.
+ * (Because "dead" states that can't reach the post state have been
+ * eliminated, and we already verified that only RAINBOW and matching
+ * pseudocolor arcs exist, every state should have RAINBOW path(s) to
+ * the post state.  Hence we take a false result from recursive calls
+ * as meaning that we'd better fail altogether, not just that that
+ * particular state can't reach the post state.)
+ *
+ * On success, we store a malloc'd result array in haspaths[s->no],
+ * showing the possible path lengths from s to the post state.
+ * Each state's haspath[] array is of length DUPINF+2.  The entries from
+ * k = 0 to DUPINF are true if there is an all-RAINBOW path of length k
+ * from this state to the string end.  haspath[DUPINF+1] is true if all
+ * path lengths >= DUPINF+1 are possible.  (Situations that cannot be
+ * represented under these rules cause failure.)
+ *
+ * checkmatchall is responsible for eventually freeing the haspath[] arrays.
  */
 static bool
-checkmatchall_recurse(struct nfa *nfa, struct state *s,
-					  bool foundloop, int depth,
-					  bool *hasmatch)
+checkmatchall_recurse(struct nfa *nfa, struct state *s, bool **haspaths)
 {
 	bool		result = false;
+	bool		foundloop = false;
+	bool	   *haspath;
 	struct arc *a;
 
 	/*
@@ -3131,61 +3224,20 @@ checkmatchall_recurse(struct nfa *nfa, struct state *s,
 	if (STACK_TOO_DEEP(nfa->v->re))
 		return false;
 
-	/*
-	 * Likewise, if we get to a depth too large to represent correctly in
-	 * maxmatchall, fail quietly.
-	 */
-	if (depth >= DUPINF)
-		return false;
-
-	/*
-	 * Scan the outarcs to detect cases we can't handle, and to see if there
-	 * is a loop-to-self here.  We need to know about any such loop before we
-	 * recurse, so it's hard to avoid making two passes over the outarcs.  In
-	 * any case, checking for showstoppers before we recurse is probably best.
-	 */
-	for (a = s->outs; a != NULL; a = a->outchain)
+	/* In case the search takes a long time, check for cancel */
+	if (CANCEL_REQUESTED(nfa->v->re))
 	{
-		if (a->type != PLAIN)
-			return false;		/* any LACONs make it non-matchall */
-		if (a->co != RAINBOW)
-		{
-			if (nfa->cm->cd[a->co].flags & PSEUDO)
-			{
-				/*
-				 * Pseudocolor arc: verify it's in a valid place (this seems
-				 * quite unlikely to fail, but let's be sure).
-				 */
-				if (s == nfa->pre &&
-					(a->co == nfa->bos[0] || a->co == nfa->bos[1]))
-					 /* okay BOS/BOL arc */ ;
-				else if (a->to == nfa->post &&
-						 (a->co == nfa->eos[0] || a->co == nfa->eos[1]))
-					 /* okay EOS/EOL arc */ ;
-				else
-					return false;	/* unexpected pseudocolor arc */
-				/* We'll finish checking these arcs after the recursion */
-				continue;
-			}
-			return false;		/* any other color makes it non-matchall */
-		}
-		if (a->to == s)
-		{
-			/*
-			 * We found a cycle of length 1, so remember that to pass down to
-			 * successor states.  (It doesn't matter if there was also such a
-			 * loop at a predecessor state.)
-			 */
-			foundloop = true;
-		}
-		else if (a->to->tmp)
-		{
-			/* We found a cycle of length > 1, so fail. */
-			return false;
-		}
+		NERR(REG_CANCEL);
+		return false;
 	}
 
-	/* We need to recurse, so mark state as under consideration */
+	/* Create a haspath array for this state */
+	haspath = (bool *) MALLOC((DUPINF + 2) * sizeof(bool));
+	if (haspath == NULL)
+		return false;			/* again, treat as non-matchall */
+	memset(haspath, 0, (DUPINF + 2) * sizeof(bool));
+
+	/* Mark this state as being visited */
 	assert(s->tmp == NULL);
 	s->tmp = s;
 
@@ -3197,95 +3249,202 @@ checkmatchall_recurse(struct nfa *nfa, struct state *s,
 		{
 			/* We found an all-RAINBOW path to the post state */
 			result = true;
-			/* ... which should not be adjacent to the pre state */
-			if (depth < 0)
-			{
-				NERR(REG_ASSERT);
-				return false;
-			}
-			/* Record potential match lengths */
-			hasmatch[depth] = true;
-			if (foundloop)
-			{
-				/* A predecessor loop makes all larger lengths match, too */
-				int			i;
 
-				for (i = depth + 1; i <= DUPINF; i++)
-					hasmatch[i] = true;
-			}
+			/*
+			 * Mark this state as being zero steps away from the string end
+			 * (the transition to the post state isn't counted).
+			 */
+			haspath[0] = true;
 		}
-		else if (a->to != s)
+		else if (a->to == s)
 		{
-			/* This is a new path forward; recurse to investigate */
-			result = checkmatchall_recurse(nfa, a->to,
-										   foundloop, depth + 1,
-										   hasmatch);
-			/* Fail if any recursive path fails */
-			if (!result)
+			/* We found a cycle of length 1, which we'll deal with below. */
+			foundloop = true;
+		}
+		else if (a->to->tmp != NULL)
+		{
+			/* It's busy, so we found a cycle of length > 1, so fail. */
+			result = false;
+			break;
+		}
+		else
+		{
+			/* Consider paths forward through this to-state. */
+			bool	   *nexthaspath;
+			int			i;
+
+			/* If to-state was not already visited, recurse */
+			if (haspaths[a->to->no] == NULL)
+			{
+				result = checkmatchall_recurse(nfa, a->to, haspaths);
+				/* Fail if any recursive path fails */
+				if (!result)
+					break;
+			}
+			else
+			{
+				/* The previous visit must have found path(s) to the end */
+				result = true;
+			}
+			assert(a->to->tmp == NULL);
+			nexthaspath = haspaths[a->to->no];
+			assert(nexthaspath != NULL);
+
+			/*
+			 * Now, for every path of length i from a->to to the string end,
+			 * there is a path of length i + 1 from s to the string end.
+			 */
+			if (nexthaspath[DUPINF] != nexthaspath[DUPINF + 1])
+			{
+				/*
+				 * a->to has a path of length exactly DUPINF, but not longer;
+				 * or it has paths of all lengths > DUPINF but not one of
+				 * exactly that length.  In either case, we cannot represent
+				 * the possible path lengths from s correctly, so fail.
+				 */
+				result = false;
 				break;
+			}
+			/* Merge knowledge of these path lengths into what we have */
+			for (i = 0; i < DUPINF; i++)
+				haspath[i + 1] |= nexthaspath[i];
+			/* Infinity + 1 is still infinity */
+			haspath[DUPINF + 1] |= nexthaspath[DUPINF + 1];
 		}
 	}
 
+	if (result && foundloop)
+	{
+		/*
+		 * If there is a length-1 loop at this state, then find the shortest
+		 * known path length to the end.  The loop means that every larger
+		 * path length is possible, too.  (It doesn't matter whether any of
+		 * the longer lengths were already known possible.)
+		 */
+		int			i;
+
+		for (i = 0; i <= DUPINF; i++)
+		{
+			if (haspath[i])
+				break;
+		}
+		for (i++; i <= DUPINF + 1; i++)
+			haspath[i] = true;
+	}
+
+	/* Report out the completed path length map */
+	assert(s->no < nfa->nstates);
+	assert(haspaths[s->no] == NULL);
+	haspaths[s->no] = haspath;
+
+	/* Mark state no longer busy */
 	s->tmp = NULL;
+
 	return result;
 }
 
 /*
  * check_out_colors_match - subroutine for checkmatchall
  *
- * Check if every s outarc of color co1 has a matching outarc of color co2.
- * (checkmatchall_recurse already verified that all of the outarcs are PLAIN,
- * so we need not examine arc types here.  Also, since it verified that there
- * are only RAINBOW and pseudocolor arcs, there shouldn't be enough arcs for
- * this brute-force O(N^2) implementation to cause problems.)
+ * Check whether the set of states reachable from s by arcs of color co1
+ * is equivalent to the set reachable by arcs of color co2.
+ * checkmatchall already verified that all of the NFA's arcs are PLAIN,
+ * so we need not examine arc types here.
  */
 static bool
 check_out_colors_match(struct state *s, color co1, color co2)
 {
-	struct arc *a1;
-	struct arc *a2;
+	bool		result = true;
+	struct arc *a;
 
-	for (a1 = s->outs; a1 != NULL; a1 = a1->outchain)
+	/*
+	 * To do this in linear time, we assume that the NFA contains no duplicate
+	 * arcs.  Run through the out-arcs, marking states reachable by arcs of
+	 * color co1.  Run through again, un-marking states reachable by arcs of
+	 * color co2; if we see a not-marked state, we know this co2 arc is
+	 * unmatched.  Then run through again, checking for still-marked states,
+	 * and in any case leaving all the tmp fields reset to NULL.
+	 */
+	for (a = s->outs; a != NULL; a = a->outchain)
 	{
-		if (a1->co != co1)
-			continue;
-		for (a2 = s->outs; a2 != NULL; a2 = a2->outchain)
+		if (a->co == co1)
 		{
-			if (a2->co == co2 && a2->to == a1->to)
-				break;
+			assert(a->to->tmp == NULL);
+			a->to->tmp = a->to;
 		}
-		if (a2 == NULL)
-			return false;
 	}
-	return true;
+	for (a = s->outs; a != NULL; a = a->outchain)
+	{
+		if (a->co == co2)
+		{
+			if (a->to->tmp != NULL)
+				a->to->tmp = NULL;
+			else
+				result = false; /* unmatched co2 arc */
+		}
+	}
+	for (a = s->outs; a != NULL; a = a->outchain)
+	{
+		if (a->co == co1)
+		{
+			if (a->to->tmp != NULL)
+			{
+				result = false; /* unmatched co1 arc */
+				a->to->tmp = NULL;
+			}
+		}
+	}
+	return result;
 }
 
 /*
  * check_in_colors_match - subroutine for checkmatchall
  *
- * Check if every s inarc of color co1 has a matching inarc of color co2.
- * (For paranoia's sake, ignore any non-PLAIN arcs here.  But we're still
- * not expecting very many arcs.)
+ * Check whether the set of states that can reach s by arcs of color co1
+ * is equivalent to the set that can reach s by arcs of color co2.
+ * checkmatchall already verified that all of the NFA's arcs are PLAIN,
+ * so we need not examine arc types here.
  */
 static bool
 check_in_colors_match(struct state *s, color co1, color co2)
 {
-	struct arc *a1;
-	struct arc *a2;
+	bool		result = true;
+	struct arc *a;
 
-	for (a1 = s->ins; a1 != NULL; a1 = a1->inchain)
+	/*
+	 * Identical algorithm to check_out_colors_match, except examine the
+	 * from-states of s' inarcs.
+	 */
+	for (a = s->ins; a != NULL; a = a->inchain)
 	{
-		if (a1->type != PLAIN || a1->co != co1)
-			continue;
-		for (a2 = s->ins; a2 != NULL; a2 = a2->inchain)
+		if (a->co == co1)
 		{
-			if (a2->type == PLAIN && a2->co == co2 && a2->from == a1->from)
-				break;
+			assert(a->from->tmp == NULL);
+			a->from->tmp = a->from;
 		}
-		if (a2 == NULL)
-			return false;
 	}
-	return true;
+	for (a = s->ins; a != NULL; a = a->inchain)
+	{
+		if (a->co == co2)
+		{
+			if (a->from->tmp != NULL)
+				a->from->tmp = NULL;
+			else
+				result = false; /* unmatched co2 arc */
+		}
+	}
+	for (a = s->ins; a != NULL; a = a->inchain)
+	{
+		if (a->co == co1)
+		{
+			if (a->from->tmp != NULL)
+			{
+				result = false; /* unmatched co1 arc */
+				a->from->tmp = NULL;
+			}
+		}
+	}
+	return result;
 }
 
 /*

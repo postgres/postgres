@@ -567,6 +567,43 @@ select 'a' ~ '()+\1';
  t
 (1 row)
 
+-- Add coverage for some cases in checkmatchall
+select regexp_match('xy', '.|...');
+ regexp_match 
+--------------
+ {x}
+(1 row)
+
+select regexp_match('xyz', '.|...');
+ regexp_match 
+--------------
+ {xyz}
+(1 row)
+
+select regexp_match('xy', '.*');
+ regexp_match 
+--------------
+ {xy}
+(1 row)
+
+select regexp_match('fooba', '(?:..)*');
+ regexp_match 
+--------------
+ {foob}
+(1 row)
+
+select regexp_match('xyz', repeat('.', 260));
+ regexp_match 
+--------------
+ 
+(1 row)
+
+select regexp_match('foo', '(?:.|){99}');
+ regexp_match 
+--------------
+ {foo}
+(1 row)
+
 -- Error conditions
 select 'xyz' ~ 'x(\w)(?=\1)';  -- no backrefs in LACONs
 ERROR:  invalid regular expression: invalid backreference number
