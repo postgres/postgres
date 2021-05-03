@@ -70,7 +70,6 @@ static List *rewriteTargetListIU(List *targetList,
 								 CmdType commandType,
 								 OverridingKind override,
 								 Relation target_relation,
-								 int result_rti,
 								 RangeTblEntry *values_rte,
 								 int values_rte_index,
 								 Bitmapset **unused_values_attrnos);
@@ -709,7 +708,6 @@ rewriteTargetListIU(List *targetList,
 					CmdType commandType,
 					OverridingKind override,
 					Relation target_relation,
-					int result_rti,
 					RangeTblEntry *values_rte,
 					int values_rte_index,
 					Bitmapset **unused_values_attrnos)
@@ -3696,7 +3694,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 															parsetree->commandType,
 															parsetree->override,
 															rt_entry_relation,
-															parsetree->resultRelation,
 															values_rte,
 															values_rte_index,
 															&unused_values_attrnos);
@@ -3714,7 +3711,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 										parsetree->commandType,
 										parsetree->override,
 										rt_entry_relation,
-										parsetree->resultRelation,
 										NULL, 0, NULL);
 			}
 
@@ -3726,7 +3722,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 										CMD_UPDATE,
 										parsetree->override,
 										rt_entry_relation,
-										parsetree->resultRelation,
 										NULL, 0, NULL);
 			}
 		}
@@ -3737,7 +3732,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 									parsetree->commandType,
 									parsetree->override,
 									rt_entry_relation,
-									parsetree->resultRelation,
 									NULL, 0, NULL);
 
 			/* Also populate extraUpdatedCols (for generated columns) */
