@@ -19206,7 +19206,7 @@ SELECT NULLIF(value, '(none)') ...
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-         <primary>multirange</primary>
+         <primary>multirange (function)</primary>
         </indexterm>
         <function>multirange</function> ( <type>anyrange</type> )
         <returnvalue>anymultirange</returnvalue>

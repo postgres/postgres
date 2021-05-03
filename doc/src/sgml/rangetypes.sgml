@@ -7,6 +7,10 @@
   <primary>range type</primary>
  </indexterm>
 
+ <indexterm>
+  <primary>multirange type</primary>
+ </indexterm>
+
  <para>
   Range types are data types representing a range of values of some
   element type (called the range's <firstterm>subtype</firstterm>).
