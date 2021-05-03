@@ -385,4 +385,56 @@ END;
 $$ LANGUAGE plpgsql;
 SELECT query, toplevel, plans, calls FROM pg_stat_statements WHERE query LIKE '%DELETE%' ORDER BY query COLLATE "C", toplevel;
 
+-- FROM [ONLY]
+CREATE TABLE tbl_inh(id integer);
+CREATE TABLE tbl_inh_1() INHERITS (tbl_inh);
+INSERT INTO tbl_inh_1 SELECT 1;
+
+SELECT * FROM tbl_inh;
+SELECT * FROM ONLY tbl_inh;
+
+SELECT COUNT(*) FROM pg_stat_statements WHERE query LIKE '%FROM%tbl_inh%';
+
+-- WITH TIES
+CREATE TABLE limitoption AS SELECT 0 AS val FROM generate_series(1, 10);
+SELECT *
+FROM limitoption
+WHERE val < 2
+ORDER BY val
+FETCH FIRST 2 ROWS WITH TIES;
+
+SELECT *
+FROM limitoption
+WHERE val < 2
+ORDER BY val
+FETCH FIRST 2 ROW ONLY;
+
+SELECT COUNT(*) FROM pg_stat_statements WHERE query LIKE '%FETCH FIRST%';
+
+-- GROUP BY [DISTINCT]
+SELECT a, b, c
+FROM (VALUES (1, 2, 3), (4, NULL, 6), (7, 8, 9)) AS t (a, b, c)
+GROUP BY ROLLUP(a, b), rollup(a, c)
+ORDER BY a, b, c;
+SELECT a, b, c
+FROM (VALUES (1, 2, 3), (4, NULL, 6), (7, 8, 9)) AS t (a, b, c)
+GROUP BY DISTINCT ROLLUP(a, b), rollup(a, c)
+ORDER BY a, b, c;
+
+SELECT COUNT(*) FROM pg_stat_statements WHERE query LIKE '%GROUP BY%ROLLUP%';
+
+-- GROUPING SET agglevelsup
+SELECT (
+  SELECT (
+    SELECT GROUPING(a,b) FROM (VALUES (1)) v2(c)
+  ) FROM (VALUES (1,2)) v1(a,b) GROUP BY (a,b)
+) FROM (VALUES(6,7)) v3(e,f) GROUP BY ROLLUP(e,f);
+SELECT (
+  SELECT (
+    SELECT GROUPING(e,f) FROM (VALUES (1)) v2(c)
+  ) FROM (VALUES (1,2)) v1(a,b) GROUP BY (a,b)
+) FROM (VALUES(6,7)) v3(e,f) GROUP BY ROLLUP(e,f);
+
+SELECT COUNT(*) FROM pg_stat_statements WHERE query LIKE '%SELECT GROUPING%';
+
 DROP EXTENSION pg_stat_statements;

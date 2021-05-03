@@ -230,6 +230,7 @@ JumbleQueryInternal(JumbleState *jstate, Query *query)
 	JumbleExpr(jstate, (Node *) query->onConflict);
 	JumbleExpr(jstate, (Node *) query->returningList);
 	JumbleExpr(jstate, (Node *) query->groupClause);
+	APP_JUMB(query->groupDistinct);
 	JumbleExpr(jstate, (Node *) query->groupingSets);
 	JumbleExpr(jstate, query->havingQual);
 	JumbleExpr(jstate, (Node *) query->windowClause);
@@ -237,6 +238,7 @@ JumbleQueryInternal(JumbleState *jstate, Query *query)
 	JumbleExpr(jstate, (Node *) query->sortClause);
 	JumbleExpr(jstate, query->limitOffset);
 	JumbleExpr(jstate, query->limitCount);
+	APP_JUMB(query->limitOption);
 	JumbleRowMarks(jstate, query->rowMarks);
 	JumbleExpr(jstate, query->setOperations);
 }
@@ -259,6 +261,7 @@ JumbleRangeTable(JumbleState *jstate, List *rtable)
 			case RTE_RELATION:
 				APP_JUMB(rte->relid);
 				JumbleExpr(jstate, (Node *) rte->tablesample);
+				APP_JUMB(rte->inh);
 				break;
 			case RTE_SUBQUERY:
 				JumbleQueryInternal(jstate, rte->subquery);
@@ -399,6 +402,7 @@ JumbleExpr(JumbleState *jstate, Node *node)
 				GroupingFunc *grpnode = (GroupingFunc *) node;
 
 				JumbleExpr(jstate, (Node *) grpnode->refs);
+				APP_JUMB(grpnode->agglevelsup);
 			}
 			break;
 		case T_WindowFunc:
