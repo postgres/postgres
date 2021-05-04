@@ -415,9 +415,8 @@
    the purpose of very fast similarity searches.  These index types support
    the above-described similarity operators, and additionally support
    trigram-based index searches for <literal>LIKE</literal>, <literal>ILIKE</literal>,
-   <literal>~</literal> and <literal>~*</literal> queries.  Beginning in
-   <productname>PostgreSQL</productname> 14, these indexes also support
-   the equality operator (inequality operators are not supported).
+   <literal>~</literal>, <literal>~*</literal> and <literal>=</literal> queries.
+   Inequality operators are not supported.
    Note that those indexes may not be as efficient as regular B-tree indexes
    for equality operator.
   </para>
