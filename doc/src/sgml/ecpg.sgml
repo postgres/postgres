@@ -371,14 +371,14 @@ EXEC SQL PREPARE <replaceable>statement-name</replaceable> FROM :<replaceable>dy
 
 EXEC SQL BEGIN DECLARE SECTION;
 char dbname[128];
-char *dym_sql = "SELECT current_database()";
+char *dyn_sql = "SELECT current_database()";
 EXEC SQL END DECLARE SECTION;
 
 int main(){
   EXEC SQL CONNECT TO postgres AS con1;
   EXEC SQL CONNECT TO testdb AS con2;
   EXEC SQL AT con1 DECLARE stmt STATEMENT;
-  EXEC SQL PREPARE stmt FROM :dym_sql;
+  EXEC SQL PREPARE stmt FROM :dyn_sql;
   EXEC SQL EXECUTE stmt INTO :dbname;
   printf("%s\n", dbname);
 
