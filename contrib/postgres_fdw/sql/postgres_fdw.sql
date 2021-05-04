@@ -2795,6 +2795,14 @@ ROLLBACK;
 -- Change application_name of remote connection to special one
 -- so that we can easily terminate the connection later.
 ALTER SERVER loopback OPTIONS (application_name 'fdw_retry_check');
+
+-- If debug_invalidate_system_caches_always is active, it results in
+-- dropping remote connections after every transaction, making it
+-- impossible to test termination meaningfully.  So turn that off
+-- for this test.
+SET debug_invalidate_system_caches_always = 0;
+
+-- Make sure we have a remote connection.
 SELECT 1 FROM ft1 LIMIT 1;
 
 -- Terminate the remote connection and wait for the termination to complete.
@@ -2806,17 +2814,19 @@ SELECT pg_terminate_backend(pid, 180000) FROM pg_stat_activity
 BEGIN;
 SELECT 1 FROM ft1 LIMIT 1;
 
--- If the query detects the broken connection when starting new remote
--- subtransaction, it doesn't reestablish new connection and should fail.
--- The text of the error might vary across platforms, so don't show it.
+-- If we detect the broken connection when starting a new remote
+-- subtransaction, we should fail instead of establishing a new connection.
 -- Terminate the remote connection and wait for the termination to complete.
 SELECT pg_terminate_backend(pid, 180000) FROM pg_stat_activity
 	WHERE application_name = 'fdw_retry_check';
 SAVEPOINT s;
+-- The text of the error might vary across platforms, so only show SQLSTATE.
 \set VERBOSITY sqlstate
 SELECT 1 FROM ft1 LIMIT 1;    -- should fail
 \set VERBOSITY default
 COMMIT;
+
+RESET debug_invalidate_system_caches_always;
 
 -- =============================================================================
 -- test connection invalidation cases and postgres_fdw_get_connections function
