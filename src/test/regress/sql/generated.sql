@@ -113,10 +113,24 @@ INSERT INTO gtest_normal (a) VALUES (1);
 INSERT INTO gtest_normal_child (a) VALUES (2);
 SELECT * FROM gtest_normal;
 
+CREATE TABLE gtest_normal_child2 (a int, b int GENERATED ALWAYS AS (a * 3) STORED);
+ALTER TABLE gtest_normal_child2 INHERIT gtest_normal;
+INSERT INTO gtest_normal_child2 (a) VALUES (3);
+SELECT * FROM gtest_normal;
+
 -- test inheritance mismatches between parent and child
 CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS (a * 22) STORED) INHERITS (gtest1);  -- error
 CREATE TABLE gtestx (x int, b int DEFAULT 10) INHERITS (gtest1);  -- error
 CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS IDENTITY) INHERITS (gtest1);  -- error
+
+CREATE TABLE gtestxx_1 (a int NOT NULL, b int);
+ALTER TABLE gtestxx_1 INHERIT gtest1;  -- error
+CREATE TABLE gtestxx_2 (a int NOT NULL, b int GENERATED ALWAYS AS (a * 22) STORED);
+ALTER TABLE gtestxx_2 INHERIT gtest1;  -- error
+CREATE TABLE gtestxx_3 (a int NOT NULL, b int GENERATED ALWAYS AS (a * 2) STORED);
+ALTER TABLE gtestxx_3 INHERIT gtest1;  -- ok
+CREATE TABLE gtestxx_4 (b int GENERATED ALWAYS AS (a * 2) STORED, a int NOT NULL);
+ALTER TABLE gtestxx_4 INHERIT gtest1;  -- ok
 
 -- test multiple inheritance mismatches
 CREATE TABLE gtesty (x int, b int);
