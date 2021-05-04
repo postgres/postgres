@@ -446,9 +446,11 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
  * - Detect child columns that have a generation expression when their parents
  *   also have one.  Generation expressions are always inherited, so there is
  *   no need to set them again in child tables, and there is no syntax for it
- *   either.  (Exception: In binary upgrade mode we dump them because
- *   inherited tables are recreated standalone first and then reattached to
- *   the parent.)
+ *   either.  Exceptions: If it's a partition or we are in binary upgrade
+ *   mode, we dump them because in those cases inherited tables are recreated
+ *   standalone first and then reattached to the parent.  (See also the logic
+ *   in dumpTableSchema().)  In that situation, the generation expressions
+ *   must match the parent, enforced by ALTER TABLE.
  *
  * modifies tblinfo
  */
@@ -551,7 +553,7 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 			}
 
 			/* Remove generation expression from child */
-			if (foundGenerated && !dopt->binary_upgrade)
+			if (foundGenerated && !tbinfo->ispartition && !dopt->binary_upgrade)
 				tbinfo->attrdefs[j] = NULL;
 		}
 	}
