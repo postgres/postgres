@@ -2888,7 +2888,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_skip_threshold", PGC_USERSET, WAL_SETTINGS,
-			gettext_noop("Size of new file to fsync instead of writing WAL."),
+			gettext_noop("Minimum size of new file to fsync instead of writing WAL."),
 			NULL,
 			GUC_UNIT_KB
 		},
@@ -3843,9 +3843,8 @@ static struct config_real ConfigureNamesReal[] =
 
 	{
 		{"log_transaction_sample_rate", PGC_SUSET, LOGGING_WHEN,
-			gettext_noop("Sets the fraction of transactions to log for new transactions."),
-			gettext_noop("Logs all statements from a fraction of transactions. "
-						 "Use a value between 0.0 (never log) and 1.0 (log all "
+			gettext_noop("Sets the fraction of transactions from which to log all statements."),
+			gettext_noop("Use a value between 0.0 (never log) and 1.0 (log all "
 						 "statements for all transactions).")
 		},
 		&log_xact_sample_rate,
