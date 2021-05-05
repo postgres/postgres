@@ -14429,8 +14429,9 @@ SELECT xmltable.*
     <function>table_to_xml</function> maps the content of the named
     table, passed as parameter <parameter>table</parameter>.  The
     <type>regclass</type> type accepts strings identifying tables using the
-    usual notation, including optional schema qualifications and
-    double quotes.  <function>query_to_xml</function> executes the
+    usual notation, including optional schema qualification and
+    double quotes (see <xref linkend="datatype-oid"/> for details).
+    <function>query_to_xml</function> executes the
     query whose text is passed as parameter
     <parameter>query</parameter> and maps the result set.
     <function>cursor_to_xml</function> fetches the indicated number of
@@ -17316,49 +17317,9 @@ SELECT setval('myseq', 42, false);    <lineannotation>Next <function>nextval</fu
    a <type>regclass</type> argument, which is simply the OID of the sequence in the
    <structname>pg_class</structname> system catalog.  You do not have to look up the
    OID by hand, however, since the <type>regclass</type> data type's input
-   converter will do the work for you.  Just write the sequence name enclosed
-   in single quotes so that it looks like a literal constant.  For
-   compatibility with the handling of ordinary
-   <acronym>SQL</acronym> names, the string will be converted to lower case
-   unless it contains double quotes around the sequence name.  Thus:
-<programlisting>
-nextval('foo')      <lineannotation>operates on sequence <literal>foo</literal></lineannotation>
-nextval('FOO')      <lineannotation>operates on sequence <literal>foo</literal></lineannotation>
-nextval('"Foo"')    <lineannotation>operates on sequence <literal>Foo</literal></lineannotation>
-</programlisting>
-   The sequence name can be schema-qualified if necessary:
-<programlisting>
-nextval('myschema.foo')     <lineannotation>operates on <literal>myschema.foo</literal></lineannotation>
-nextval('"myschema".foo')   <lineannotation>same as above</lineannotation>
-nextval('foo')              <lineannotation>searches search path for <literal>foo</literal></lineannotation>
-</programlisting>
-   See <xref linkend="datatype-oid"/> for more information about
-   <type>regclass</type>.
+   converter will do the work for you.  See <xref linkend="datatype-oid"/>
+   for details.
   </para>
-
-  <note>
-   <para>
-    When you write the argument of a sequence function as an unadorned
-    literal string, it becomes a constant of type <type>regclass</type>.
-    Since this is really just an OID, it will track the originally
-    identified sequence despite later renaming, schema reassignment,
-    etc.  This <quote>early binding</quote> behavior is usually desirable for
-    sequence references in column defaults and views.  But sometimes you might
-    want <quote>late binding</quote> where the sequence reference is resolved
-    at run time.  To get late-binding behavior, force the constant to be
-    stored as a <type>text</type> constant instead of <type>regclass</type>:
-<programlisting>
-nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at runtime</lineannotation>
-</programlisting>
-   </para>
-
-   <para>
-    Of course, the argument of a sequence function can be an expression
-    as well as a constant.  If it is a text expression then the implicit
-    coercion will result in a run-time lookup.
-   </para>
-  </note>
-
  </sect1>
 
 
@@ -26474,11 +26435,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     <type>regclass</type> argument, which is simply the OID of the table or index
     in the <structname>pg_class</structname> system catalog.  You do not have to look up
     the OID by hand, however, since the <type>regclass</type> data type's input
-    converter will do the work for you.  Just write the table name enclosed in
-    single quotes so that it looks like a literal constant.  For compatibility
-    with the handling of ordinary <acronym>SQL</acronym> names, the string
-    will be converted to lower case unless it contains double quotes around
-    the table name.
+    converter will do the work for you.  See <xref linkend="datatype-oid"/>
+    for details.
    </para>
 
    <para>

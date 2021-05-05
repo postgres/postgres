@@ -4632,7 +4632,8 @@ INSERT INTO mytable VALUES(-1);  -- fails
     <productname>PostgreSQL</productname> as primary keys for various
     system tables.
     Type <type>oid</type> represents an object identifier.  There are also
-    several alias types for <type>oid</type> named <type>reg<replaceable>something</replaceable></type>.
+    several alias types for <type>oid</type>, each
+    named <type>reg<replaceable>something</replaceable></type>.
     <xref linkend="datatype-oid-table"/> shows an
     overview.
    </para>
@@ -4780,16 +4781,101 @@ SELECT * FROM pg_attribute
     </table>
 
    <para>
-    All of the OID alias types for objects grouped by namespace accept
-    schema-qualified names, and will
+    All of the OID alias types for objects that are grouped by namespace
+    accept schema-qualified names, and will
     display schema-qualified names on output if the object would not
     be found in the current search path without being qualified.
+    For example, <literal>myschema.mytable</literal> is acceptable input
+    for <type>regclass</type> (if there is such a table).  That value
+    might be output as <literal>myschema.mytable</literal>, or
+    just <literal>mytable</literal>, depending on the current search path.
     The <type>regproc</type> and <type>regoper</type> alias types will only
     accept input names that are unique (not overloaded), so they are
     of limited use; for most uses <type>regprocedure</type> or
     <type>regoperator</type> are more appropriate.  For <type>regoperator</type>,
     unary operators are identified by writing <literal>NONE</literal> for the unused
     operand.
+   </para>
+
+   <para>
+    The input functions for these types allow whitespace between tokens,
+    and will fold upper-case letters to lower case, except within double
+    quotes; this is done to make the syntax rules similar to the way
+    object names are written in SQL.  Conversely, the output functions
+    will use double quotes if needed to make the output be a valid SQL
+    identifier.  For example, the OID of a function
+    named <literal>Foo</literal> (with upper case <literal>F</literal>)
+    taking two integer arguments could be entered as
+    <literal>' "Foo" ( int, integer ) '::regprocedure</literal>.  The
+    output would look like <literal>"Foo"(integer,integer)</literal>.
+    Both the function name and the argument type names could be
+    schema-qualified, too.
+   </para>
+
+   <para>
+    Many built-in <productname>PostgreSQL</productname> functions accept
+    the OID of a table, or another kind of database object, and for
+    convenience are declared as taking <type>regclass</type> (or the
+    appropriate OID alias type).  This means you do not have to look up
+    the object's OID by hand, but can just enter its name as a string
+    literal.  For example, the <function>nextval(regclass)</function> function
+    takes a sequence relation's OID, so you could call it like this:
+<programlisting>
+nextval('foo')              <lineannotation>operates on sequence <literal>foo</literal></lineannotation>
+nextval('FOO')              <lineannotation>same as above</lineannotation>
+nextval('"Foo"')            <lineannotation>operates on sequence <literal>Foo</literal></lineannotation>
+nextval('myschema.foo')     <lineannotation>operates on <literal>myschema.foo</literal></lineannotation>
+nextval('"myschema".foo')   <lineannotation>same as above</lineannotation>
+nextval('foo')              <lineannotation>searches search path for <literal>foo</literal></lineannotation>
+</programlisting>
+   </para>
+
+   <note>
+    <para>
+     When you write the argument of such a function as an unadorned
+     literal string, it becomes a constant of type <type>regclass</type>
+     (or the appropriate type).
+     Since this is really just an OID, it will track the originally
+     identified object despite later renaming, schema reassignment,
+     etc.  This <quote>early binding</quote> behavior is usually desirable for
+     object references in column defaults and views.  But sometimes you might
+     want <quote>late binding</quote> where the object reference is resolved
+     at run time.  To get late-binding behavior, force the constant to be
+     stored as a <type>text</type> constant instead of <type>regclass</type>:
+<programlisting>
+nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at runtime</lineannotation>
+</programlisting>
+     The <function>to_regclass()</function> function and its siblings
+     can also be used to perform run-time lookups.  See
+     <xref linkend="functions-info-catalog-table"/>.
+    </para>
+   </note>
+
+   <para>
+    Another practical example of use of <type>regclass</type>
+    is to look up the OID of a table listed in
+    the <literal>information_schema</literal> views, which don't supply
+    such OIDs directly.  One might for example wish to call
+    the <function>pg_relation_size()</function> function, which requires
+    the table OID.  Taking the above rules into account, the correct way
+    to do that is
+<programlisting>
+SELECT table_schema, table_name,
+       pg_relation_size((quote_ident(table_schema) || '.' ||
+                         quote_ident(table_name))::regclass)
+FROM information_schema.tables
+WHERE ...
+</programlisting>
+    The <function>quote_ident()</function> function will take care of
+    double-quoting the identifiers where needed.  The seemingly easier
+<programlisting>
+SELECT pg_relation_size(table_name)
+FROM information_schema.tables
+WHERE ...
+</programlisting>
+    is <emphasis>not recommended</emphasis>, because it will fail for
+    tables that are outside your search path or have names that require
+    quoting.
    </para>
 
    <para>
@@ -4801,19 +4887,13 @@ SELECT * FROM pg_attribute
     expression <literal>nextval('my_seq'::regclass)</literal>,
     <productname>PostgreSQL</productname>
     understands that the default expression depends on the sequence
-    <literal>my_seq</literal>; the system will not let the sequence be dropped
-    without first removing the default expression.
-    <type>regrole</type> is the only exception for the property. Constants of this
-    type are not allowed in such expressions.
+    <literal>my_seq</literal>, so the system will not let the sequence
+    be dropped without first removing the default expression.  The
+    alternative of <literal>nextval('my_seq'::text)</literal> does not
+    create a dependency.
+    (<type>regrole</type> is an exception to this property. Constants of this
+    type are not allowed in stored expressions.)
    </para>
-
-   <note>
-   <para>
-    The OID alias types do not completely follow transaction isolation
-    rules. The planner also treats them as simple constants, which may
-    result in sub-optimal planning.
-   </para>
-   </note>
 
    <para>
     Another identifier type used by the system is <type>xid</type>, or transaction
