@@ -1409,6 +1409,47 @@ INSERT INTO fkpart8.tbl2 VALUES(1);
 ALTER TABLE fkpart8.tbl2 DROP CONSTRAINT tbl2_f1_fkey;
 COMMIT;
 
+CREATE SCHEMA fkpart9;
+SET search_path TO fkpart9;
+-- Verify constraint deferrability when changed by ALTER
+-- Partitioned table at referencing end
+CREATE TABLE pt(f1 int, f2 int, f3 int, PRIMARY KEY(f1,f2));
+CREATE TABLE ref(f1 int, f2 int, f3 int)
+  PARTITION BY list(f1);
+CREATE TABLE ref1 PARTITION OF ref FOR VALUES IN (1);
+CREATE TABLE ref2 PARTITION OF ref FOR VALUES in (2);
+ALTER TABLE ref ADD FOREIGN KEY(f1,f2) REFERENCES pt;
+ALTER TABLE ref ALTER CONSTRAINT ref_f1_fkey
+  DEFERRABLE INITIALLY DEFERRED;
+INSERT INTO pt VALUES(1,2,3);
+INSERT INTO ref VALUES(1,2,3);
+BEGIN;
+DELETE FROM pt;
+DELETE FROM ref;
+ABORT;
+DROP TABLE pt, ref;
+-- Multi-level partitioning at referencing end
+CREATE TABLE pt(f1 int, f2 int, f3 int, PRIMARY KEY(f1,f2));
+CREATE TABLE ref(f1 int, f2 int, f3 int)
+  PARTITION BY list(f1);
+CREATE TABLE ref1_2 PARTITION OF ref FOR VALUES IN (1, 2) PARTITION BY list (f2);
+CREATE TABLE ref1 PARTITION OF ref1_2 FOR VALUES IN (1);
+CREATE TABLE ref2 PARTITION OF ref1_2 FOR VALUES IN (2) PARTITION BY list (f2);
+CREATE TABLE ref22 PARTITION OF ref2 FOR VALUES IN (2);
+ALTER TABLE ref ADD FOREIGN KEY(f1,f2) REFERENCES pt;
+INSERT INTO pt VALUES(1,2,3);
+INSERT INTO ref VALUES(1,2,3);
+ALTER TABLE ref22 ALTER CONSTRAINT ref_f1_fkey
+  DEFERRABLE INITIALLY IMMEDIATE;	-- fails
+ALTER TABLE ref ALTER CONSTRAINT ref_f1_fkey
+  DEFERRABLE INITIALLY DEFERRED;
+BEGIN;
+DELETE FROM pt;
+DELETE FROM ref;
+ABORT;
+DROP TABLE pt, ref;
+RESET search_path;
+
 \set VERBOSITY terse	\\ -- suppress cascade details
-drop schema fkpart0, fkpart1, fkpart2, fkpart3, fkpart8 cascade;
+drop schema fkpart0, fkpart1, fkpart2, fkpart3, fkpart8, fkpart9 cascade;
 \set VERBOSITY default
