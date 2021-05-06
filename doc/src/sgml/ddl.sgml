@@ -3915,18 +3915,25 @@ DROP TABLE measurement_y2006m02;
    <para>
      Another option that is often preferable is to remove the partition from
      the partitioned table but retain access to it as a table in its own
-     right:
+     right.  This has two forms:
 
 <programlisting>
 ALTER TABLE measurement DETACH PARTITION measurement_y2006m02;
+ALTER TABLE measurement DETACH PARTITION measurement_y2006m02 CONCURRENTLY;
 </programlisting>
 
-     This allows further operations to be performed on the data before
+     These allow further operations to be performed on the data before
      it is dropped. For example, this is often a useful time to back up
      the data using <command>COPY</command>, <application>pg_dump</application>, or
      similar tools. It might also be a useful time to aggregate data
      into smaller formats, perform other data manipulations, or run
-     reports.
+     reports.  The first form of the command requires an
+     <literal>ACCESS EXCLUSIVE</literal> lock on the parent table.
+     Adding the <literal>CONCURRENTLY</literal> qualifier as in the second
+     form allows the detach operation to require only
+     <literal>SHARE UPDATE EXCLUSIVE</literal> lock on the parent table, but see
+     <link linkend="sql-altertable-detach-partition"><literal>ALTER TABLE ... DETACH PARTITION</literal></link>
+     for details on the restrictions.
    </para>
 
    <para>
@@ -4161,17 +4168,6 @@ ALTER INDEX measurement_city_id_logdate_key
         manner of the user's choosing.  (Note, however, that if constraint
         exclusion is unable to prune child tables effectively, query performance
         might be poor.)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Some operations require a stronger lock when using declarative
-        partitioning than when using table inheritance.  For example,
-        removing a partition from a partitioned table requires taking
-        an <literal>ACCESS EXCLUSIVE</literal> lock on the parent table,
-        whereas a <literal>SHARE UPDATE EXCLUSIVE</literal> lock is enough
-        in the case of regular inheritance.
        </para>
       </listitem>
      </itemizedlist>

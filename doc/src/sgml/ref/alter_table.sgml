@@ -967,7 +967,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altertable-detach-partition">
     <term><literal>DETACH PARTITION <replaceable class="parameter">partition_name</replaceable> [ CONCURRENTLY | FINALIZE ]</literal></term>
 
     <listitem>
