@@ -96,11 +96,11 @@ RelationGetPartitionDesc(Relation rel, bool omit_detached)
 	 */
 	if (omit_detached &&
 		rel->rd_partdesc_nodetached &&
-		TransactionIdIsValid(rel->rd_partdesc_nodetached_xmin) &&
 		ActiveSnapshotSet())
 	{
 		Snapshot	activesnap;
 
+		Assert(TransactionIdIsValid(rel->rd_partdesc_nodetached_xmin));
 		activesnap = GetActiveSnapshot();
 
 		if (!XidInMVCCSnapshot(rel->rd_partdesc_nodetached_xmin, activesnap))
@@ -163,6 +163,7 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 												 omit_detached, NoLock,
 												 &detached_exist,
 												 &detached_xmin);
+
 	nparts = list_length(inhoids);
 
 	/* Allocate working arrays for OIDs, leaf flags, and boundspecs. */
@@ -310,10 +311,17 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	}
 
 	/*
-	 * Are we working with the partition that omits detached partitions, or
-	 * the one that includes them?
+	 * Are we working with the partdesc that omits the detached partition, or
+	 * the one that includes it?
+	 *
+	 * Note that if a partition was found by the catalog's scan to have been
+	 * detached, but the pg_inherit tuple saying so was not visible to the
+	 * active snapshot (find_inheritance_children_extended will not have set
+	 * detached_xmin in that case), we consider there to be no "omittable"
+	 * detached partitions.
 	 */
-	is_omit = omit_detached && detached_exist && ActiveSnapshotSet();
+	is_omit = omit_detached && detached_exist && ActiveSnapshotSet() &&
+		TransactionIdIsValid(detached_xmin);
 
 	/*
 	 * We have a fully valid partdesc.  Reparent it so that it has the right
@@ -343,9 +351,11 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 		 * For partdescs built excluding detached partitions, which we save
 		 * separately, we also record the pg_inherits.xmin of the detached
 		 * partition that was omitted; this informs a future potential user of
-		 * such a cached partdescs.  (This might be InvalidXid; see comments
-		 * in struct RelationData).
+		 * such a cached partdesc to only use it after cross-checking that the
+		 * xmin is indeed visible to the snapshot it is going to be working
+		 * with.
 		 */
+		Assert(TransactionIdIsValid(detached_xmin));
 		rel->rd_partdesc_nodetached_xmin = detached_xmin;
 	}
 	else
