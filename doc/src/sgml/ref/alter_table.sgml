@@ -391,7 +391,21 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </term>
     <listitem>
      <para>
-      This sets the compression method for a column.  The supported compression
+      This sets the compression method to be used for data inserted into a column.
+
+      This does not cause the table to be rewritten, so existing data may still
+      be compressed with other compression methods.  If the table is rewritten with
+      <command>VACUUM FULL</command> or <command>CLUSTER</command>, or restored
+      with <application>pg_restore</application>, then all tuples are rewritten
+      with the configured compression methods.
+
+      Also, note that when data is inserted from another relation (for example,
+      by <command>INSERT ... SELECT</command>), tuples from the source data are
+      not necessarily detoasted, and any previously compressed data is retained
+      with its existing compression method, rather than recompressing with the
+      compression methods of the target columns.
+
+      The supported compression
       methods are <literal>pglz</literal> and <literal>lz4</literal>.
       <literal>lz4</literal> is available only if <literal>--with-lz4</literal>
       was used when building <productname>PostgreSQL</productname>.
