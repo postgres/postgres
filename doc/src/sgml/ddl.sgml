@@ -956,7 +956,7 @@ CREATE TABLE tree (
 );
 </programlisting>
     A top-level node would have NULL <structfield>parent_id</structfield>,
-    but non-NULL <structfield>parent_id</structfield> entries would be
+    while non-NULL <structfield>parent_id</structfield> entries would be
     constrained to reference valid rows of the table.
    </para>
 
