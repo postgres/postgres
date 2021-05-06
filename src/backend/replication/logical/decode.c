@@ -746,9 +746,10 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	}
 
 	/*
-	 * Update the decoding stats at transaction prepare/commit/abort. It is
-	 * not clear that sending more or less frequently than this would be
-	 * better.
+	 * Update the decoding stats at transaction prepare/commit/abort.
+	 * Additionally we send the stats when we spill or stream the changes to
+	 * avoid losing them in case the decoding is interrupted. It is not clear
+	 * that sending more or less frequently than this would be better.
 	 */
 	UpdateDecodingStats(ctx);
 }
@@ -828,9 +829,10 @@ DecodePrepare(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	ReorderBufferPrepare(ctx->reorder, xid, parsed->twophase_gid);
 
 	/*
-	 * Update the decoding stats at transaction prepare/commit/abort. It is
-	 * not clear that sending more or less frequently than this would be
-	 * better.
+	 * Update the decoding stats at transaction prepare/commit/abort.
+	 * Additionally we send the stats when we spill or stream the changes to
+	 * avoid losing them in case the decoding is interrupted. It is not clear
+	 * that sending more or less frequently than this would be better.
 	 */
 	UpdateDecodingStats(ctx);
 }

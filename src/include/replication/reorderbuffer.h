@@ -617,14 +617,14 @@ struct ReorderBuffer
 	/* Statistics about transactions streamed to the decoding output plugin */
 	int64		streamTxns;		/* number of transactions streamed */
 	int64		streamCount;	/* streaming invocation counter */
-	int64		streamBytes;	/* amount of data streamed */
+	int64		streamBytes;	/* amount of data decoded */
 
 	/*
 	 * Statistics about all the transactions sent to the decoding output
 	 * plugin
 	 */
 	int64		totalTxns;		/* total number of transactions sent */
-	int64		totalBytes;		/* total amount of data sent */
+	int64		totalBytes;		/* total amount of data decoded */
 };
 
 

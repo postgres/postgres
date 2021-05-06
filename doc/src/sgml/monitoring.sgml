@@ -2708,10 +2708,10 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <structfield>stream_bytes</structfield><type>bigint</type>
        </para>
        <para>
-        Amount of decoded in-progress transaction data streamed to the decoding
-        output plugin while decoding changes from WAL for this slot. This and other
-        streaming counters for this slot can be used to gauge the network I/O which
-        occurred during logical decoding and allow tuning <literal>logical_decoding_work_mem</literal>.
+        Amount of transaction data decoded for streaming in-progress
+        transactions to the decoding output plugin while decoding changes from
+        WAL for this slot. This and other streaming counters for this slot can
+        be used to tune <literal>logical_decoding_work_mem</literal>.
        </para>
       </entry>
      </row>
@@ -2733,10 +2733,9 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <structfield>total_bytes</structfield><type>bigint</type>
        </para>
        <para>
-        Amount of decoded transaction data sent to the decoding output plugin
-        while decoding the changes from WAL for this slot. This can be used to
-        gauge the total amount of data sent during logical decoding. Note that
-        this includes data that is streamed and/or spilled.
+        Amount of transaction data decoded for sending transactions to the
+        decoding output plugin while decoding changes from WAL for this slot.
+        Note that this includes data that is streamed and/or spilled.
        </para>
       </entry>
      </row>

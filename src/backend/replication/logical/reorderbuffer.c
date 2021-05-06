@@ -3559,6 +3559,9 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 
 		/* don't consider already serialized transactions */
 		rb->spillTxns += (rbtxn_is_serialized(txn) || rbtxn_is_serialized_clear(txn)) ? 0 : 1;
+
+		/* update the decoding stats */
+		UpdateDecodingStats((LogicalDecodingContext *) rb->private_data);
 	}
 
 	Assert(spilled == txn->nentries_mem);
@@ -3927,6 +3930,9 @@ ReorderBufferStreamTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 
 	/* Don't consider already streamed transaction. */
 	rb->streamTxns += (txn_is_streamed) ? 0 : 1;
+
+	/* update the decoding stats */
+	UpdateDecodingStats((LogicalDecodingContext *) rb->private_data);
 
 	Assert(dlist_is_empty(&txn->changes));
 	Assert(txn->nentries == 0);
