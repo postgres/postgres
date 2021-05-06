@@ -59,7 +59,6 @@ in both master and the branch.
 
 * Ports
 	o update ports list in doc/src/sgml/installation.sgml
-	o update platform-specific FAQ's, if needed
 
 
 Pre-Beta Tasks
@@ -69,13 +68,15 @@ These things should be done at least once per development cycle.
 Typically we do them between feature freeze and start of beta test,
 but there may be reasons to do them at other times as well.
 
+* Run mechanical code beautification tools:
+  pgindent, pgperltidy, and "make reformat-dat-files"
+  (see src/tools/pgindent/README)
+
 * Renumber any manually-assigned OIDs between 8000 and 9999
   to lower numbers, using renumber_oids.pl (see notes in bki.sgml)
 
 * Update config.guess and config.sub
   (from https://savannah.gnu.org/projects/config)
-
-* Update inet/cidr data types with newest Bind patches
 
 * Update Unicode data: Edit UNICODE_VERSION and CLDR_VERSION in
   src/Makefile.global.in, run make update-unicode, and commit.
@@ -84,7 +85,8 @@ but there may be reasons to do them at other times as well.
 Starting a New Development Cycle
 ================================
 
-* Typically, we do pgindent and perltidy runs just before branching
+* Typically, we do pgindent and perltidy runs just before branching,
+  as well as before beta
 
 * Create a branch in git for maintenance of the previous release
 	o on master branch, do:
