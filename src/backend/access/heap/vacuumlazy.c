@@ -1344,7 +1344,6 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		lazy_scan_prune(vacrel, buf, blkno, page, vistest, &prunestate);
 
 		Assert(!prunestate.all_visible || !prunestate.has_lpdead_items);
-		Assert(!all_visible_according_to_vm || prunestate.all_visible);
 
 		/* Remember the location of the last page with nonremovable tuples */
 		if (prunestate.hastup)
