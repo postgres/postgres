@@ -2492,17 +2492,18 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		 * abort of the (sub)transaction we are streaming or preparing. We
 		 * need to do the cleanup and return gracefully on this error, see
 		 * SetupCheckXidLive.
+		 *
+		 * This error code can be thrown by one of the callbacks we call during
+		 * decoding so we need to ensure that we return gracefully only when we are
+		 * sending the data in streaming mode and the streaming is not finished yet
+		 * or when we are sending the data out on a PREPARE during a two-phase
+		 * commit.
 		 */
-		if (errdata->sqlerrcode == ERRCODE_TRANSACTION_ROLLBACK)
+		if (errdata->sqlerrcode == ERRCODE_TRANSACTION_ROLLBACK &&
+			(stream_started || rbtxn_prepared(txn)))
 		{
-			/*
-			 * This error can occur either when we are sending the data in
-			 * streaming mode and the streaming is not finished yet or when we
-			 * are sending the data out on a PREPARE during a two-phase
-			 * commit.
-			 */
-			Assert(streaming || rbtxn_prepared(txn));
-			Assert(stream_started || rbtxn_prepared(txn));
+			/* curtxn must be set for streaming or prepared transactions */
+			Assert(curtxn);
 
 			/* Cleanup the temporary error state. */
 			FlushErrorState();
