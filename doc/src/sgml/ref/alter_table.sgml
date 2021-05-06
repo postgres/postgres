@@ -422,6 +422,9 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       endterm="sql-altertable-notes-title"> below for an explanation of the
       usefulness of this command.)
      </para>
+     <para>
+      This command acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
+     </para>
     </listitem>
    </varlistentry>
 
