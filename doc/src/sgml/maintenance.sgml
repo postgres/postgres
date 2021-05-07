@@ -330,7 +330,8 @@
 
     <para>
      Also, by default there is limited information available about
-     the selectivity of functions.  However, if you create an expression
+     the selectivity of functions.  However, if you create a statistics
+     object or an expression
      index that uses a function call, useful statistics will be
      gathered about the function, which can greatly improve query
      plans that use the expression index.
