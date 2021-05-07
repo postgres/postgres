@@ -517,6 +517,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 	List	   *subrel_states;
 	Oid		   *subrel_local_oids;
 	Oid		   *pubrel_local_oids;
+	WalReceiverConn *wrconn;
 	ListCell   *lc;
 	int			off;
 
@@ -835,7 +836,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	char		originname[NAMEDATALEN];
 	char	   *err = NULL;
 	RepOriginId originid;
-	WalReceiverConn *wrconn = NULL;
+	WalReceiverConn *wrconn;
 	StringInfoData cmd;
 	Form_pg_subscription form;
 
