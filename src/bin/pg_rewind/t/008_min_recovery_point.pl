@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 #
 # Test situation where a target data directory contains
 # WAL records beyond both the last checkpoint and the divergence

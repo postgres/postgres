@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test logical replication behavior with heap rewrites
 use strict;
 use warnings;

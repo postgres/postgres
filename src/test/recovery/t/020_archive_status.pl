@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 #
 # Tests related to WAL archiving and recovery.
 #

@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Minimal test testing synchronous replication sync_state transition
 use strict;
 use warnings;

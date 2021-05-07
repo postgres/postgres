@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test TRUNCATE
 use strict;
 use warnings;

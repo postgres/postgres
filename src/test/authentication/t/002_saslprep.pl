@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test password normalization in SCRAM.
 #
 # This test can only run with Unix-domain sockets.

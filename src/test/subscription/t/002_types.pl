@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # This tests that more complex datatypes are replicated correctly
 # by logical replication
 use strict;

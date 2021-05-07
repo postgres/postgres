@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test how pg_rewind reacts to extra files and directories in the data dirs.
 
 use strict;

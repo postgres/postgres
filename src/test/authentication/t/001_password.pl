@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Set of tests for authentication and pg_hba.conf. The following password
 # methods are checked through this test:
 # - Plain

@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Testing of commit timestamps preservation across restarts
 use strict;
 use warnings;

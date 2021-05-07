@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Tests that logical decoding messages
 use strict;
 use warnings;

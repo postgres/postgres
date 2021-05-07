@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Sets up a KDC and then runs a variety of tests to make sure that the
 # GSSAPI/Kerberos authentication and encryption are working properly,
 # that the options in pg_hba.conf and pg_ident.conf are handled correctly,

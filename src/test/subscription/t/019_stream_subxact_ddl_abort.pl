@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test streaming of large transaction with subtransactions, DDLs, DMLs, and
 # rollbacks
 use strict;

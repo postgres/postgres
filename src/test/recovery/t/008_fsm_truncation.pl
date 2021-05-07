@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test WAL replay of FSM changes.
 #
 # FSM changes don't normally need to be WAL-logged, except for truncation.

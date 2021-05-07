@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test for replication slot limit
 # Ensure that max_slot_wal_keep_size limits the number of WAL files to
 # be kept by replication slots.

@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 #  src/pl/plperl/plc_perlboot.pl
 
 use strict;

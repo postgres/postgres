@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # This module sets up a test server, for the SSL regression tests.
 #
 # The server is configured as follows:

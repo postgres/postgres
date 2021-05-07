@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Tests dedicated to subtransactions in recovery
 use strict;
 use warnings;

@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 #
 # Tests restarts of postgres due to crashes of a subprocess.
 #

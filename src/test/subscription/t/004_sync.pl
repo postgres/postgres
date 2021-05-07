@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Tests for logical replication table syncing
 use strict;
 use warnings;

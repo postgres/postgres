@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Verify the behavior of assorted pg_verifybackup options.
 
 use strict;

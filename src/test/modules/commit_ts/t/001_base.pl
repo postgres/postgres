@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Single-node test: value can be set, and is still present after recovery
 
 use strict;

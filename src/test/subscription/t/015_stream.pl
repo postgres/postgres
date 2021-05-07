@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test streaming of simple large transaction
 use strict;
 use warnings;

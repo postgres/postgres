@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # This regression test checks the behavior of the btree validation in the
 # presence of breaking sort order changes.
 #

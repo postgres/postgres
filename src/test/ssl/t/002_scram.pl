@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test SCRAM authentication and TLS channel binding types
 
 use strict;

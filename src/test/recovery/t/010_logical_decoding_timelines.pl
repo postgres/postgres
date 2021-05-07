@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Demonstrate that logical can follow timeline switches.
 #
 # Logical replication slots can follow timeline switches but it's

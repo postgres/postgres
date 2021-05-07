@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test generic xlog record work for bloom index replication.
 use strict;
 use warnings;

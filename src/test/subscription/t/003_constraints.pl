@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # This test checks that constraints work on subscriber
 use strict;
 use warnings;

@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Tests that unlogged tables are properly reinitialized after a crash.
 #
 # The behavior should be the same when restoring from a backup, but

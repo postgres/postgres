@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test remove of temporary files after a crash.
 use strict;
 use warnings;

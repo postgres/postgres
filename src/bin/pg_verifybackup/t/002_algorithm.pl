@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Verify that we can take and verify backups with various checksum types.
 
 use strict;

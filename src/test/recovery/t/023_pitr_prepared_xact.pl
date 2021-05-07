@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test for point-in-time-recovery (PITR) with prepared transactions
 use strict;
 use warnings;

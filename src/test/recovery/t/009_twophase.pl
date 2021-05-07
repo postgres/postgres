@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Tests dedicated to two-phase commit in recovery
 use strict;
 use warnings;

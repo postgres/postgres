@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # test for archiving with hot standby
 use strict;
 use warnings;

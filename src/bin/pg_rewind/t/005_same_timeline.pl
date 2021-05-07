@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 #
 # Test that running pg_rewind with the source and target clusters
 # on the same timeline runs successfully.

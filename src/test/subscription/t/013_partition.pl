@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test logical replication with partitioned tables
 use strict;
 use warnings;

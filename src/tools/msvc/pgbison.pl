@@ -1,5 +1,8 @@
 # -*-perl-*- hey - emacs - this is a perl file
 
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # src/tools/msvc/pgbison.pl
 
 use strict;

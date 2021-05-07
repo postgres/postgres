@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test for archive recovery of WAL generated with wal_level=minimal
 use strict;
 use warnings;

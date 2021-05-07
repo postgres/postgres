@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Test pg_verifybackup's WAL verification.
 
 use strict;

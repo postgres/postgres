@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 #
 # Script that parses Unix style build environment and generates build files
 # for building with Visual Studio.

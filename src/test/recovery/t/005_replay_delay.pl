@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Checks for recovery_min_apply_delay
 use strict;
 use warnings;

@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Checks that snapshots on standbys behave in a minimally reasonable
 # way.
 use strict;

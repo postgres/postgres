@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Testing of logical decoding using SQL interface and/or pg_recvlogical
 #
 # Most logical decoding tests are in contrib/test_decoding. This module

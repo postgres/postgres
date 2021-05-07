@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Verify that ALTER TABLE optimizes certain operations as expected
 
 use strict;

@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 # Configuration arguments for vcbuild.
 use strict;
 use warnings;

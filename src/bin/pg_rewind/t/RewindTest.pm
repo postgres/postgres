@@ -1,3 +1,6 @@
+
+# Copyright (c) 2021, PostgreSQL Global Development Group
+
 package RewindTest;
 
 # Test driver for pg_rewind. Each test consists of a cycle where a new cluster
