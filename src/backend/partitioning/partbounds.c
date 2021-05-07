@@ -2899,7 +2899,7 @@ check_new_partition_bound(char *relname, Relation parent,
 								ereport(ERROR,
 										(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 										 errmsg("every hash partition modulus must be a factor of the next larger modulus"),
-										 errdetail("The new modulus %d is not factor of %d, the modulus of existing partition \"%s\".",
+										 errdetail("The new modulus %d is not a factor of %d, the modulus of existing partition \"%s\".",
 												   spec->modulus, next_modulus,
 												   get_rel_name(partdesc->oids[boundinfo->indexes[offset + 1]]))));
 						}
