@@ -1945,7 +1945,7 @@ generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 	 * simply append them after simple column references.
 	 *
 	 * XXX Some places during build/estimation treat expressions as if they
-	 * are before atttibutes, but for the CREATE command that's entirely
+	 * are before attributes, but for the CREATE command that's entirely
 	 * irrelevant.
 	 */
 	datum = SysCacheGetAttr(STATEXTOID, ht_stats,

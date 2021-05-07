@@ -1796,7 +1796,7 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 				continue;
 
 			/*
-			 * Now we know the clause is compatible (we have either atttnums
+			 * Now we know the clause is compatible (we have either attnums
 			 * or expressions extracted from it), and was not estimated yet.
 			 */
 
