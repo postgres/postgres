@@ -362,7 +362,7 @@ CreateConstraintEntry(const char *constraintName,
 		 */
 		recordDependencyOnSingleRelExpr(&conobject, conExpr, relId,
 										DEPENDENCY_NORMAL,
-										DEPENDENCY_NORMAL, false, true);
+										DEPENDENCY_NORMAL, false);
 	}
 
 	/* Post creation hook for new constraint */

@@ -2026,10 +2026,10 @@ REINDEX TABLE concur_reindex_tab; -- notice
 NOTICE:  table "concur_reindex_tab" has no indexes to reindex
 REINDEX (CONCURRENTLY) TABLE concur_reindex_tab; -- notice
 NOTICE:  table "concur_reindex_tab" has no indexes that can be reindexed concurrently
-ALTER TABLE concur_reindex_tab ADD COLUMN c2 text COLLATE "C"; -- add toast index
+ALTER TABLE concur_reindex_tab ADD COLUMN c2 text; -- add toast index
 -- Normal index with integer column
 CREATE UNIQUE INDEX concur_reindex_ind1 ON concur_reindex_tab(c1);
--- Normal index with text column (with unversioned collation)
+-- Normal index with text column
 CREATE INDEX concur_reindex_ind2 ON concur_reindex_tab(c2);
 -- UNIQUE index with expression
 CREATE UNIQUE INDEX concur_reindex_ind3 ON concur_reindex_tab(abs(c1));
@@ -2483,7 +2483,7 @@ WARNING:  cannot reindex system catalogs concurrently, skipping all
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  c1     | integer |           | not null | 
- c2     | text    | C         |          | 
+ c2     | text    |           |          | 
 Indexes:
     "concur_reindex_ind1" PRIMARY KEY, btree (c1)
     "concur_reindex_ind2" btree (c2)

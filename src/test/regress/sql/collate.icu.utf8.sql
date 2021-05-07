@@ -405,6 +405,11 @@ DROP SCHEMA test_schema;
 DROP ROLE regress_test_role;
 
 
+-- ALTER
+
+ALTER COLLATION "en-x-icu" REFRESH VERSION;
+
+
 -- dependencies
 
 CREATE COLLATION test0 FROM "C";
@@ -742,134 +747,6 @@ INSERT INTO test33 VALUES (2, 'DEF');
 -- they end up in the same partition (but it's platform-dependent which one)
 SELECT (SELECT count(*) FROM test33_0) <> (SELECT count(*) FROM test33_1);
 
--- collation versioning support
-CREATE TYPE t_en_fr AS (fr text COLLATE "fr-x-icu", en text COLLATE "en-x-icu");
-CREATE DOMAIN d_en_fr AS t_en_fr;
-CREATE DOMAIN d_es AS text COLLATE "es-x-icu";
-CREATE TYPE t_en_fr_ga AS (en_fr t_en_fr, ga text COLLATE "ga-x-icu");
-CREATE DOMAIN d_en_fr_ga AS t_en_fr_ga;
-CREATE TYPE t_custom AS (meh text, meh2 text);
-CREATE DOMAIN d_custom AS t_custom;
-
-CREATE COLLATION custom (
-    LOCALE = 'fr-x-icu', PROVIDER = 'icu'
-);
-
-CREATE TYPE myrange AS range (subtype = text, collation = "POSIX");
-CREATE TYPE myrange_en_fr_ga AS range(subtype = t_en_fr_ga);
-
-CREATE TABLE collate_test (
-    id integer,
-    val text COLLATE "fr-x-icu",
-    t_en_fr t_en_fr,
-    d_en_fr d_en_fr,
-    d_es d_es,
-    t_en_fr_ga t_en_fr_ga,
-    d_en_fr_ga d_en_fr_ga,
-    d_en_fr_ga_arr d_en_fr_ga[],
-    myrange myrange,
-    myrange_en_fr_ga myrange_en_fr_ga
-);
-
-CREATE INDEX icuidx00_val ON collate_test(val);
--- shouldn't get duplicated dependencies
-CREATE INDEX icuidx00_val_val ON collate_test(val, val);
--- shouldn't track version
-CREATE INDEX icuidx00_val_pattern ON collate_test(val text_pattern_ops);
--- should have single dependency, no version
-CREATE INDEX icuidx00_val_pattern_val_pattern ON collate_test(val text_pattern_ops, val text_pattern_ops);
--- should have single dependency, with version
-CREATE INDEX icuidx00_val_pattern_val ON collate_test(val text_pattern_ops, val);
--- should have single dependency, with version
-CREATE INDEX icuidx00_val_val_pattern ON collate_test(val, val text_pattern_ops);
--- two rows expected, only one a version, because we don't try to merge these yet
-CREATE INDEX icuidx00_val_pattern_where ON collate_test(val text_pattern_ops) WHERE val >= val;
--- two rows expected with version, because we don't try to merge these yet
-CREATE INDEX icuidx00_val_where ON collate_test(val) WHERE val >= val;
--- two rows expected with version (expression walker + attribute)
-CREATE INDEX icuidx00_val_pattern_expr ON collate_test(val varchar_pattern_ops, (val || val));
--- two rows expected, one with a version (expression walker + attribute)
-CREATE INDEX icuidx00_val_pattern_expr_pattern ON collate_test(val varchar_pattern_ops, (val || val) text_pattern_ops);
--- should have single dependency, with version tracked
-CREATE INDEX icuidx01_t_en_fr__d_es ON collate_test (t_en_fr, d_es);
-CREATE INDEX icuidx02_d_en_fr ON collate_test (d_en_fr);
-CREATE INDEX icuidx03_t_en_fr_ga ON collate_test (t_en_fr_ga);
-CREATE INDEX icuidx04_d_en_fr_ga ON collate_test (d_en_fr_ga);
-CREATE INDEX icuidx05_d_en_fr_ga_arr ON collate_test (d_en_fr_ga_arr);
-CREATE INDEX icuidx06_d_en_fr_ga ON collate_test(id) WHERE (d_en_fr_ga).en_fr.fr = 'foo';
-CREATE INDEX icuidx07_d_en_fr_ga ON collate_test(id) WHERE (d_en_fr_ga).ga = 'foo';
-CREATE INDEX icuidx08_d_en_fr_ga ON collate_test(id) WHERE (t_en_fr_ga) = ('foo', 'bar', 'baz');
-CREATE INDEX icuidx09_d_en_fr_ga ON collate_test(id) WHERE (d_en_fr_ga) = ('foo', 'bar', 'baz');
-CREATE INDEX icuidx10_d_en_fr_ga_es ON collate_test(id) WHERE (d_en_fr_ga) = ('foo', 'bar', 'baz' COLLATE "es-x-icu");
-CREATE INDEX icuidx11_d_es ON collate_test(id) WHERE (d_es) = ('foo');
-CREATE INDEX icuidx12_custom ON collate_test(id) WHERE ('foo', 'bar')::d_custom = ('foo', 'bar' COLLATE custom)::d_custom;
-CREATE INDEX icuidx13_custom ON collate_test(id) WHERE ('foo' COLLATE custom, 'bar')::d_custom = ('foo', 'bar')::d_custom;
-CREATE INDEX icuidx14_myrange ON collate_test(myrange);
-CREATE INDEX icuidx15_myrange_en_fr_ga ON collate_test USING gist (myrange_en_fr_ga);
-
-CREATE TABLE collate_part(id integer, val text COLLATE "en-x-icu") PARTITION BY range(id);
-CREATE TABLE collate_part_0 PARTITION OF collate_part FOR VALUES FROM (0) TO (1);
-CREATE TABLE collate_part_1 PARTITION OF collate_part FOR VALUES FROM (1) TO (1000000);
-CREATE INDEX icuidx17_part ON collate_part_1 (val);
-
-SELECT objid::regclass::text collate "C", refobjid::regcollation::text collate "C",
-CASE
-WHEN refobjid = 'default'::regcollation THEN 'XXX' -- depends on libc version support
-WHEN refobjversion IS NULL THEN 'version not tracked'
-WHEN refobjversion = pg_collation_actual_version(refobjid) THEN 'up to date'
-ELSE 'out of date'
-END AS version
-FROM pg_depend d
-LEFT JOIN pg_class c ON c.oid = d.objid
-WHERE refclassid = 'pg_collation'::regclass
-AND coalesce(relkind, 'i') = 'i'
-AND relname LIKE 'icuidx%'
-ORDER BY 1, 2, 3;
-
--- Validate that REINDEX will update the stored version.
-UPDATE pg_depend SET refobjversion = 'not a version'
-WHERE refclassid = 'pg_collation'::regclass
-AND objid::regclass::text LIKE 'icuidx%'
-AND refobjversion IS NOT NULL;
-
-REINDEX TABLE collate_test;
-REINDEX TABLE collate_part_0;
-REINDEX TABLE collate_part_1;
-
-SELECT objid::regclass FROM pg_depend WHERE refobjversion = 'not a version';
-
--- Validate that REINDEX CONCURRENTLY will update the stored version.
-UPDATE pg_depend SET refobjversion = 'not a version'
-WHERE refclassid = 'pg_collation'::regclass
-AND objid::regclass::text LIKE 'icuidx%'
-AND refobjversion IS NOT NULL;
-REINDEX TABLE CONCURRENTLY collate_test;
-REINDEX TABLE CONCURRENTLY collate_part_0;
-REINDEX INDEX CONCURRENTLY icuidx17_part;
-
-SELECT objid::regclass FROM pg_depend WHERE refobjversion = 'not a version';
-
--- Validate that VACUUM FULL will update the stored version.
-UPDATE pg_depend SET refobjversion = 'not a version'
-WHERE refclassid = 'pg_collation'::regclass
-AND objid::regclass::text LIKE 'icuidx%'
-AND refobjversion IS NOT NULL;
-VACUUM FULL collate_test;
-VACUUM FULL collate_part_0;
-VACUUM FULL collate_part_1;
-
-SELECT objid::regclass FROM pg_depend WHERE refobjversion = 'not a version';
-
--- Test ALTER INDEX name ALTER COLLATION name REFRESH VERSION
-UPDATE pg_depend SET refobjversion = 'not a version'
-WHERE refclassid = 'pg_collation'::regclass
-AND objid::regclass::text = 'icuidx17_part'
-AND refobjversion IS NOT NULL;
-SELECT objid::regclass FROM pg_depend WHERE refobjversion = 'not a version';
-ALTER INDEX icuidx17_part ALTER COLLATION "en-x-icu" REFRESH VERSION;
-SELECT objid::regclass, refobjversion = 'not a version' AS ver FROM pg_depend
-WHERE refclassid = 'pg_collation'::regclass
-AND objid::regclass::text = 'icuidx17_part';
 
 -- cleanup
 RESET search_path;
@@ -879,8 +756,3 @@ RESET client_min_messages;
 
 -- leave a collation for pg_upgrade test
 CREATE COLLATION coll_icu_upgrade FROM "und-x-icu";
-
--- Test user-visible function for inspecting versions
-SELECT pg_collation_actual_version('"en-x-icu"'::regcollation) is not null;
--- Invalid OIDs are silently ignored
-SELECT pg_collation_actual_version(0) is null;

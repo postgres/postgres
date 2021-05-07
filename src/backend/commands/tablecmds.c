@@ -94,7 +94,6 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/partcache.h"
-#include "utils/pg_locale.h"
 #include "utils/relcache.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
@@ -602,7 +601,6 @@ static void refuseDupeIndexAttach(Relation parentIdx, Relation partIdx,
 								  Relation partitionTbl);
 static List *GetParentedForeignKeyRefs(Relation partition);
 static void ATDetachCheckNoForeignKeyRefs(Relation partition);
-static void ATExecAlterCollationRefreshVersion(Relation rel, List *coll);
 static char GetAttributeCompression(Form_pg_attribute att, char *compression);
 
 
@@ -4333,10 +4331,6 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = AccessShareLock;
 				break;
 
-			case AT_AlterCollationRefreshVersion:
-				cmd_lockmode = AccessExclusiveLock;
-				break;
-
 			default:			/* oops */
 				elog(ERROR, "unrecognized alter table type: %d",
 					 (int) cmd->subtype);
@@ -4521,12 +4515,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_SetOptions:		/* ALTER COLUMN SET ( options ) */
 		case AT_ResetOptions:	/* ALTER COLUMN RESET ( options ) */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW | ATT_INDEX | ATT_FOREIGN_TABLE);
-			/* This command never recurses */
-			pass = AT_PASS_MISC;
-			break;
-		case AT_AlterCollationRefreshVersion:	/* ALTER COLLATION ... REFRESH
-												 * VERSION */
-			ATSimplePermissions(rel, ATT_INDEX);
 			/* This command never recurses */
 			pass = AT_PASS_MISC;
 			break;
@@ -5138,11 +5126,6 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 			break;
 		case AT_DetachPartitionFinalize:
 			ATExecDetachPartitionFinalize(rel, ((PartitionCmd *) cmd->def)->name);
-			break;
-		case AT_AlterCollationRefreshVersion:
-			/* ATPrepCmd ensured it must be an index */
-			Assert(rel->rd_rel->relkind == RELKIND_INDEX);
-			ATExecAlterCollationRefreshVersion(rel, cmd->object);
 			break;
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
@@ -18624,20 +18607,6 @@ ATDetachCheckNoForeignKeyRefs(Relation partition)
 
 		table_close(rel, NoLock);
 	}
-}
-
-/*
- * ALTER INDEX ... ALTER COLLATION ... REFRESH VERSION
- *
- * Update refobjversion to the current collation version by force.  This clears
- * warnings about version mismatches without the need to run REINDEX,
- * potentially hiding corruption due to ordering changes.
- */
-static void
-ATExecAlterCollationRefreshVersion(Relation rel, List *coll)
-{
-	index_update_collation_versions(rel->rd_id, get_collation_oid(coll, false));
-	CacheInvalidateRelcache(rel);
 }
 
 /*

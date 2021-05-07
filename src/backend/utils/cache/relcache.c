@@ -42,7 +42,6 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
-#include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/partition.h"
@@ -6069,7 +6068,6 @@ load_relcache_init_file(bool shared)
 		rel->rd_idattr = NULL;
 		rel->rd_pubactions = NULL;
 		rel->rd_statvalid = false;
-		rel->rd_version_checked = false;
 		rel->rd_statlist = NIL;
 		rel->rd_fkeyvalid = false;
 		rel->rd_fkeylist = NIL;

@@ -3347,12 +3347,21 @@ _copyAlterTableCmd(const AlterTableCmd *from)
 
 	COPY_SCALAR_FIELD(subtype);
 	COPY_STRING_FIELD(name);
-	COPY_NODE_FIELD(object);
 	COPY_SCALAR_FIELD(num);
 	COPY_NODE_FIELD(newowner);
 	COPY_NODE_FIELD(def);
 	COPY_SCALAR_FIELD(behavior);
 	COPY_SCALAR_FIELD(missing_ok);
+
+	return newnode;
+}
+
+static AlterCollationStmt *
+_copyAlterCollationStmt(const AlterCollationStmt *from)
+{
+	AlterCollationStmt *newnode = makeNode(AlterCollationStmt);
+
+	COPY_NODE_FIELD(collname);
 
 	return newnode;
 }
@@ -5368,6 +5377,9 @@ copyObjectImpl(const void *from)
 			break;
 		case T_AlterTableCmd:
 			retval = _copyAlterTableCmd(from);
+			break;
+		case T_AlterCollationStmt:
+			retval = _copyAlterCollationStmt(from);
 			break;
 		case T_AlterDomainStmt:
 			retval = _copyAlterDomainStmt(from);

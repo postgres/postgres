@@ -76,7 +76,6 @@
 #include "rewrite/rewriteRemove.h"
 #include "storage/lmgr.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -432,84 +431,6 @@ performMultipleDeletions(const ObjectAddresses *objects,
 	/* And clean up */
 	free_object_addresses(targetObjects);
 
-	table_close(depRel, RowExclusiveLock);
-}
-
-/*
- * Call a function for all objects that 'object' depend on.  If the function
- * returns true, refobjversion will be updated in the catalog.
- */
-void
-visitDependenciesOf(const ObjectAddress *object,
-					VisitDependenciesOfCB callback,
-					void *userdata)
-{
-	Relation	depRel;
-	ScanKeyData key[3];
-	SysScanDesc scan;
-	HeapTuple	tup;
-	ObjectAddress otherObject;
-
-	ScanKeyInit(&key[0],
-				Anum_pg_depend_classid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object->classId));
-	ScanKeyInit(&key[1],
-				Anum_pg_depend_objid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object->objectId));
-	ScanKeyInit(&key[2],
-				Anum_pg_depend_objsubid,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(object->objectSubId));
-
-	depRel = table_open(DependRelationId, RowExclusiveLock);
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
-							  NULL, 3, key);
-
-	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
-		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
-		char	   *new_version;
-		Datum		depversion;
-		bool		isnull;
-
-		otherObject.classId = foundDep->refclassid;
-		otherObject.objectId = foundDep->refobjid;
-		otherObject.objectSubId = foundDep->refobjsubid;
-
-		depversion = heap_getattr(tup, Anum_pg_depend_refobjversion,
-								  RelationGetDescr(depRel), &isnull);
-
-		/* Does the callback want to update the version? */
-		if (callback(&otherObject,
-					 isnull ? NULL : TextDatumGetCString(depversion),
-					 &new_version,
-					 userdata))
-		{
-			Datum		values[Natts_pg_depend];
-			bool		nulls[Natts_pg_depend];
-			bool		replaces[Natts_pg_depend];
-
-			memset(values, 0, sizeof(values));
-			memset(nulls, false, sizeof(nulls));
-			memset(replaces, false, sizeof(replaces));
-
-			if (new_version)
-				values[Anum_pg_depend_refobjversion - 1] =
-					CStringGetTextDatum(new_version);
-			else
-				nulls[Anum_pg_depend_refobjversion - 1] = true;
-			replaces[Anum_pg_depend_refobjversion - 1] = true;
-
-			tup = heap_modify_tuple(tup, RelationGetDescr(depRel), values,
-									nulls, replaces);
-			CatalogTupleUpdate(depRel, &tup->t_self, tup);
-
-			heap_freetuple(tup);
-		}
-	}
-	systable_endscan(scan);
 	table_close(depRel, RowExclusiveLock);
 }
 
@@ -1640,38 +1561,6 @@ ReleaseDeletionLock(const ObjectAddress *object)
 }
 
 /*
- * Record dependencies on a list of collations, optionally with their current
- * version.
- */
-void
-recordDependencyOnCollations(ObjectAddress *myself,
-							 List *collations,
-							 bool record_version)
-{
-	ObjectAddresses *addrs;
-	ListCell   *lc;
-
-	if (list_length(collations) == 0)
-		return;
-
-	addrs = new_object_addresses();
-	foreach(lc, collations)
-	{
-		ObjectAddress referenced;
-
-		ObjectAddressSet(referenced, CollationRelationId, lfirst_oid(lc));
-
-		add_exact_object_address(&referenced, addrs);
-	}
-
-	eliminate_duplicate_dependencies(addrs);
-	recordMultipleDependencies(myself, addrs->refs, addrs->numrefs,
-							   DEPENDENCY_NORMAL, record_version);
-
-	free_object_addresses(addrs);
-}
-
-/*
  * recordDependencyOnExpr - find expression dependencies
  *
  * This is used to find the dependencies of rules, constraint expressions,
@@ -1705,10 +1594,8 @@ recordDependencyOnExpr(const ObjectAddress *depender,
 
 	/* And record 'em */
 	recordMultipleDependencies(depender,
-							   context.addrs->refs,
-							   context.addrs->numrefs,
-							   behavior,
-							   false);
+							   context.addrs->refs, context.addrs->numrefs,
+							   behavior);
 
 	free_object_addresses(context.addrs);
 }
@@ -1735,8 +1622,7 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 								Node *expr, Oid relId,
 								DependencyType behavior,
 								DependencyType self_behavior,
-								bool reverse_self,
-								bool record_version)
+								bool reverse_self)
 {
 	find_expr_references_context context;
 	RangeTblEntry rte;
@@ -1795,10 +1681,8 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 		/* Record the self-dependencies with the appropriate direction */
 		if (!reverse_self)
 			recordMultipleDependencies(depender,
-									   self_addrs->refs,
-									   self_addrs->numrefs,
-									   self_behavior,
-									   record_version);
+									   self_addrs->refs, self_addrs->numrefs,
+									   self_behavior);
 		else
 		{
 			/* Can't use recordMultipleDependencies, so do it the hard way */
@@ -1817,10 +1701,8 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 
 	/* Record the external dependencies */
 	recordMultipleDependencies(depender,
-							   context.addrs->refs,
-							   context.addrs->numrefs,
-							   behavior,
-							   record_version);
+							   context.addrs->refs, context.addrs->numrefs,
+							   behavior);
 
 	free_object_addresses(context.addrs);
 }
@@ -1835,17 +1717,8 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
  * the datatype.  However we do need a type dependency if there is no such
  * indirect dependency, as for example in Const and CoerceToDomain nodes.
  *
- * Collations are handled primarily by recording the inputcollid's of node
- * types that have them, as those are the ones that are semantically
- * significant during expression evaluation.  We also record the collation of
- * CollateExpr nodes, since those will be needed to print such nodes even if
- * they don't really affect semantics.  Collations of leaf nodes such as Vars
- * can be ignored on the grounds that if they're not default, they came from
- * the referenced object (e.g., a table column), so the dependency on that
- * object is enough.  (Note: in a post-const-folding expression tree, a
- * CollateExpr's collation could have been absorbed into a Const or
- * RelabelType node.  While ruleutils.c prints such collations for clarity,
- * we may ignore them here as they have no semantic effect.)
+ * Similarly, we don't need to create dependencies on collations except where
+ * the collation is being freshly introduced to the expression.
  */
 static bool
 find_expr_references_walker(Node *node,
@@ -1905,6 +1778,17 @@ find_expr_references_walker(Node *node,
 		/* A constant must depend on the constant's datatype */
 		add_object_address(OCLASS_TYPE, con->consttype, 0,
 						   context->addrs);
+
+		/*
+		 * We must also depend on the constant's collation: it could be
+		 * different from the datatype's, if a CollateExpr was const-folded to
+		 * a simple constant.  However we can save work in the most common
+		 * case where the collation is "default", since we know that's pinned.
+		 */
+		if (OidIsValid(con->constcollid) &&
+			con->constcollid != DEFAULT_COLLATION_OID)
+			add_object_address(OCLASS_COLLATION, con->constcollid, 0,
+							   context->addrs);
 
 		/*
 		 * If it's a regclass or similar literal referring to an existing
@@ -1990,6 +1874,11 @@ find_expr_references_walker(Node *node,
 		/* A parameter must depend on the parameter's datatype */
 		add_object_address(OCLASS_TYPE, param->paramtype, 0,
 						   context->addrs);
+		/* and its collation, just as for Consts */
+		if (OidIsValid(param->paramcollid) &&
+			param->paramcollid != DEFAULT_COLLATION_OID)
+			add_object_address(OCLASS_COLLATION, param->paramcollid, 0,
+							   context->addrs);
 	}
 	else if (IsA(node, FuncExpr))
 	{
@@ -1997,9 +1886,6 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_PROC, funcexpr->funcid, 0,
 						   context->addrs);
-		if (OidIsValid(funcexpr->inputcollid))
-			add_object_address(OCLASS_COLLATION, funcexpr->inputcollid, 0,
-							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, OpExpr))
@@ -2008,9 +1894,6 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_OPERATOR, opexpr->opno, 0,
 						   context->addrs);
-		if (OidIsValid(opexpr->inputcollid))
-			add_object_address(OCLASS_COLLATION, opexpr->inputcollid, 0,
-							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, DistinctExpr))
@@ -2019,9 +1902,6 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_OPERATOR, distinctexpr->opno, 0,
 						   context->addrs);
-		if (OidIsValid(distinctexpr->inputcollid))
-			add_object_address(OCLASS_COLLATION, distinctexpr->inputcollid, 0,
-							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, NullIfExpr))
@@ -2030,9 +1910,6 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_OPERATOR, nullifexpr->opno, 0,
 						   context->addrs);
-		if (OidIsValid(nullifexpr->inputcollid))
-			add_object_address(OCLASS_COLLATION, nullifexpr->inputcollid, 0,
-							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, ScalarArrayOpExpr))
@@ -2041,9 +1918,6 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_OPERATOR, opexpr->opno, 0,
 						   context->addrs);
-		if (OidIsValid(opexpr->inputcollid))
-			add_object_address(OCLASS_COLLATION, opexpr->inputcollid, 0,
-							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, Aggref))
@@ -2052,9 +1926,6 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_PROC, aggref->aggfnoid, 0,
 						   context->addrs);
-		if (OidIsValid(aggref->inputcollid))
-			add_object_address(OCLASS_COLLATION, aggref->inputcollid, 0,
-							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, WindowFunc))
@@ -2063,9 +1934,6 @@ find_expr_references_walker(Node *node,
 
 		add_object_address(OCLASS_PROC, wfunc->winfnoid, 0,
 						   context->addrs);
-		if (OidIsValid(wfunc->inputcollid))
-			add_object_address(OCLASS_COLLATION, wfunc->inputcollid, 0,
-							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, SubscriptingRef))
@@ -2110,6 +1978,11 @@ find_expr_references_walker(Node *node,
 		else
 			add_object_address(OCLASS_TYPE, fselect->resulttype, 0,
 							   context->addrs);
+		/* the collation might not be referenced anywhere else, either */
+		if (OidIsValid(fselect->resultcollid) &&
+			fselect->resultcollid != DEFAULT_COLLATION_OID)
+			add_object_address(OCLASS_COLLATION, fselect->resultcollid, 0,
+							   context->addrs);
 	}
 	else if (IsA(node, FieldStore))
 	{
@@ -2136,6 +2009,11 @@ find_expr_references_walker(Node *node,
 		/* since there is no function dependency, need to depend on type */
 		add_object_address(OCLASS_TYPE, relab->resulttype, 0,
 						   context->addrs);
+		/* the collation might not be referenced anywhere else, either */
+		if (OidIsValid(relab->resultcollid) &&
+			relab->resultcollid != DEFAULT_COLLATION_OID)
+			add_object_address(OCLASS_COLLATION, relab->resultcollid, 0,
+							   context->addrs);
 	}
 	else if (IsA(node, CoerceViaIO))
 	{
@@ -2144,6 +2022,11 @@ find_expr_references_walker(Node *node,
 		/* since there is no exposed function, need to depend on type */
 		add_object_address(OCLASS_TYPE, iocoerce->resulttype, 0,
 						   context->addrs);
+		/* the collation might not be referenced anywhere else, either */
+		if (OidIsValid(iocoerce->resultcollid) &&
+			iocoerce->resultcollid != DEFAULT_COLLATION_OID)
+			add_object_address(OCLASS_COLLATION, iocoerce->resultcollid, 0,
+							   context->addrs);
 	}
 	else if (IsA(node, ArrayCoerceExpr))
 	{
@@ -2152,6 +2035,11 @@ find_expr_references_walker(Node *node,
 		/* as above, depend on type */
 		add_object_address(OCLASS_TYPE, acoerce->resulttype, 0,
 						   context->addrs);
+		/* the collation might not be referenced anywhere else, either */
+		if (OidIsValid(acoerce->resultcollid) &&
+			acoerce->resultcollid != DEFAULT_COLLATION_OID)
+			add_object_address(OCLASS_COLLATION, acoerce->resultcollid, 0,
+							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, ConvertRowtypeExpr))
@@ -2191,24 +2079,6 @@ find_expr_references_walker(Node *node,
 			add_object_address(OCLASS_OPFAMILY, lfirst_oid(l), 0,
 							   context->addrs);
 		}
-		foreach(l, rcexpr->inputcollids)
-		{
-			Oid			inputcollid = lfirst_oid(l);
-
-			if (OidIsValid(inputcollid))
-				add_object_address(OCLASS_COLLATION, inputcollid, 0,
-								   context->addrs);
-		}
-		/* fall through to examine arguments */
-	}
-	else if (IsA(node, MinMaxExpr))
-	{
-		MinMaxExpr *mmexpr = (MinMaxExpr *) node;
-
-		/* minmaxtype will match one of the inputs, so no need to record it */
-		if (OidIsValid(mmexpr->inputcollid))
-			add_object_address(OCLASS_COLLATION, mmexpr->inputcollid, 0,
-							   context->addrs);
 		/* fall through to examine arguments */
 	}
 	else if (IsA(node, CoerceToDomain))
@@ -2255,7 +2125,8 @@ find_expr_references_walker(Node *node,
 		if (OidIsValid(wc->endInRangeFunc))
 			add_object_address(OCLASS_PROC, wc->endInRangeFunc, 0,
 							   context->addrs);
-		if (OidIsValid(wc->inRangeColl))
+		if (OidIsValid(wc->inRangeColl) &&
+			wc->inRangeColl != DEFAULT_COLLATION_OID)
 			add_object_address(OCLASS_COLLATION, wc->inRangeColl, 0,
 							   context->addrs);
 		/* fall through to examine substructure */
@@ -2415,7 +2286,7 @@ find_expr_references_walker(Node *node,
 		{
 			Oid			collid = lfirst_oid(ct);
 
-			if (OidIsValid(collid))
+			if (OidIsValid(collid) && collid != DEFAULT_COLLATION_OID)
 				add_object_address(OCLASS_COLLATION, collid, 0,
 								   context->addrs);
 		}
@@ -2437,7 +2308,7 @@ find_expr_references_walker(Node *node,
 		{
 			Oid			collid = lfirst_oid(ct);
 
-			if (OidIsValid(collid))
+			if (OidIsValid(collid) && collid != DEFAULT_COLLATION_OID)
 				add_object_address(OCLASS_COLLATION, collid, 0,
 								   context->addrs);
 		}
@@ -2834,8 +2705,7 @@ record_object_address_dependencies(const ObjectAddress *depender,
 	eliminate_duplicate_dependencies(referenced);
 	recordMultipleDependencies(depender,
 							   referenced->refs, referenced->numrefs,
-							   behavior,
-							   false);
+							   behavior);
 }
 
 /*

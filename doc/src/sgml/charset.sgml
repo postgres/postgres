@@ -948,54 +948,6 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
     </tip>
    </sect3>
   </sect2>
-
-  <sect2 id="collation-versions">
-   <title>Collation Versions</title>
-
-   <para>
-    The sort order defined by a collation is not necessarily fixed over time.
-    <productname>PostgreSQL</productname> relies on external libraries that
-    are subject to operating system upgrades, and can also differ between
-    servers involved in binary replication and file-system-level migration.
-    Persistent data structures such as B-trees that depend on sort order might
-    be corrupted by any resulting change.
-    <productname>PostgreSQL</productname> defends against this by recording the
-    current version of each referenced collation for any index that depends on
-    it in the
-    <link linkend="catalog-pg-depend"><structname>pg_depend</structname></link>
-    catalog, if the collation provider makes that information available.  If the
-    provider later begins to report a different version, a warning will be
-    issued when the index is accessed, until either the
-    <xref linkend="sql-reindex"/> command or the
-    <xref linkend="sql-alterindex"/> command is used to update the version.
-   </para>
-   <para>
-    Version information is available from the
-    <literal>icu</literal> provider on all operating systems.  For the
-    <literal>libc</literal> provider, versions are currently only available
-    on systems using the GNU C library (most Linux systems), FreeBSD and
-    Windows.
-   </para>
-
-   <note>
-    <para>
-     When using the GNU C library for collations, the C library's version
-     is used as a proxy for the collation version.  Many Linux distributions
-     change collation definitions only when upgrading the C library, but this
-     approach is imperfect as maintainers are free to back-port newer
-     collation definitions to older C library releases.
-    </para>
-    <para>
-     When using Windows collations, version information is only available for
-     collations defined with BCP 47 language tags such as
-     <literal>en-US</literal>.  Currently, <command>initdb</command> selects
-     a default locale using a traditional Windows language and country
-     string such as <literal>English_United States.1252</literal>.  The
-     <literal>--lc-collate</literal> option can be used to provide an explicit
-     locale name in BCP 47 format.
-    </para>
-   </note>
-  </sect2>
  </sect1>
 
  <sect1 id="multibyte">

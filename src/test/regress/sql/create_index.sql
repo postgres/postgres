@@ -797,10 +797,10 @@ CREATE TABLE concur_reindex_tab (c1 int);
 -- REINDEX
 REINDEX TABLE concur_reindex_tab; -- notice
 REINDEX (CONCURRENTLY) TABLE concur_reindex_tab; -- notice
-ALTER TABLE concur_reindex_tab ADD COLUMN c2 text COLLATE "C"; -- add toast index
+ALTER TABLE concur_reindex_tab ADD COLUMN c2 text; -- add toast index
 -- Normal index with integer column
 CREATE UNIQUE INDEX concur_reindex_ind1 ON concur_reindex_tab(c1);
--- Normal index with text column (with unversioned collation)
+-- Normal index with text column
 CREATE INDEX concur_reindex_ind2 ON concur_reindex_tab(c2);
 -- UNIQUE index with expression
 CREATE UNIQUE INDEX concur_reindex_ind3 ON concur_reindex_tab(abs(c1));

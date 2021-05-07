@@ -2948,8 +2948,6 @@ dlist_head
 dlist_iter
 dlist_mutable_iter
 dlist_node
-do_collation_version_check_context
-do_collation_version_update_context
 ds_state
 dsa_area
 dsa_area_control

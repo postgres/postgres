@@ -62,12 +62,14 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	DefElem    *lcctypeEl = NULL;
 	DefElem    *providerEl = NULL;
 	DefElem    *deterministicEl = NULL;
+	DefElem    *versionEl = NULL;
 	char	   *collcollate = NULL;
 	char	   *collctype = NULL;
 	char	   *collproviderstr = NULL;
 	bool		collisdeterministic = true;
 	int			collencoding = 0;
 	char		collprovider = 0;
+	char	   *collversion = NULL;
 	Oid			newoid;
 	ObjectAddress address;
 
@@ -95,6 +97,8 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 			defelp = &providerEl;
 		else if (strcmp(defel->defname, "deterministic") == 0)
 			defelp = &deterministicEl;
+		else if (strcmp(defel->defname, "version") == 0)
+			defelp = &versionEl;
 		else
 		{
 			ereport(ERROR,
@@ -163,6 +167,9 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	if (deterministicEl)
 		collisdeterministic = defGetBoolean(deterministicEl);
 
+	if (versionEl)
+		collversion = defGetString(versionEl);
+
 	if (collproviderstr)
 	{
 		if (pg_strcasecmp(collproviderstr, "icu") == 0)
@@ -209,6 +216,9 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 		}
 	}
 
+	if (!collversion)
+		collversion = get_collation_actual_version(collprovider, collcollate);
+
 	newoid = CollationCreate(collName,
 							 collNamespace,
 							 GetUserId(),
@@ -217,6 +227,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 							 collencoding,
 							 collcollate,
 							 collctype,
+							 collversion,
 							 if_not_exists,
 							 false);	/* not quiet */
 
@@ -267,13 +278,101 @@ IsThereCollationInNamespace(const char *collname, Oid nspOid)
 						collname, get_namespace_name(nspOid))));
 }
 
+/*
+ * ALTER COLLATION
+ */
+ObjectAddress
+AlterCollation(AlterCollationStmt *stmt)
+{
+	Relation	rel;
+	Oid			collOid;
+	HeapTuple	tup;
+	Form_pg_collation collForm;
+	Datum		collversion;
+	bool		isnull;
+	char	   *oldversion;
+	char	   *newversion;
+	ObjectAddress address;
+
+	rel = table_open(CollationRelationId, RowExclusiveLock);
+	collOid = get_collation_oid(stmt->collname, false);
+
+	if (!pg_collation_ownercheck(collOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_COLLATION,
+					   NameListToString(stmt->collname));
+
+	tup = SearchSysCacheCopy1(COLLOID, ObjectIdGetDatum(collOid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for collation %u", collOid);
+
+	collForm = (Form_pg_collation) GETSTRUCT(tup);
+	collversion = SysCacheGetAttr(COLLOID, tup, Anum_pg_collation_collversion,
+								  &isnull);
+	oldversion = isnull ? NULL : TextDatumGetCString(collversion);
+
+	newversion = get_collation_actual_version(collForm->collprovider, NameStr(collForm->collcollate));
+
+	/* cannot change from NULL to non-NULL or vice versa */
+	if ((!oldversion && newversion) || (oldversion && !newversion))
+		elog(ERROR, "invalid collation version change");
+	else if (oldversion && newversion && strcmp(newversion, oldversion) != 0)
+	{
+		bool		nulls[Natts_pg_collation];
+		bool		replaces[Natts_pg_collation];
+		Datum		values[Natts_pg_collation];
+
+		ereport(NOTICE,
+				(errmsg("changing version from %s to %s",
+						oldversion, newversion)));
+
+		memset(values, 0, sizeof(values));
+		memset(nulls, false, sizeof(nulls));
+		memset(replaces, false, sizeof(replaces));
+
+		values[Anum_pg_collation_collversion - 1] = CStringGetTextDatum(newversion);
+		replaces[Anum_pg_collation_collversion - 1] = true;
+
+		tup = heap_modify_tuple(tup, RelationGetDescr(rel),
+								values, nulls, replaces);
+	}
+	else
+		ereport(NOTICE,
+				(errmsg("version has not changed")));
+
+	CatalogTupleUpdate(rel, &tup->t_self, tup);
+
+	InvokeObjectPostAlterHook(CollationRelationId, collOid, 0);
+
+	ObjectAddressSet(address, CollationRelationId, collOid);
+
+	heap_freetuple(tup);
+	table_close(rel, NoLock);
+
+	return address;
+}
+
+
 Datum
 pg_collation_actual_version(PG_FUNCTION_ARGS)
 {
 	Oid			collid = PG_GETARG_OID(0);
+	HeapTuple	tp;
+	char	   *collcollate;
+	char		collprovider;
 	char	   *version;
 
-	version = get_collation_version_for_oid(collid, true);
+	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+	if (!HeapTupleIsValid(tp))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("collation with OID %u does not exist", collid)));
+
+	collcollate = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
+	collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
+
+	ReleaseSysCache(tp);
+
+	version = get_collation_actual_version(collprovider, collcollate);
 
 	if (version)
 		PG_RETURN_TEXT_P(cstring_to_text(version));
@@ -495,6 +594,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			collid = CollationCreate(localebuf, nspid, GetUserId(),
 									 COLLPROVIDER_LIBC, true, enc,
 									 localebuf, localebuf,
+									 get_collation_actual_version(COLLPROVIDER_LIBC, localebuf),
 									 true, true);
 			if (OidIsValid(collid))
 			{
@@ -555,6 +655,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			collid = CollationCreate(alias, nspid, GetUserId(),
 									 COLLPROVIDER_LIBC, true, enc,
 									 locale, locale,
+									 get_collation_actual_version(COLLPROVIDER_LIBC, locale),
 									 true, true);
 			if (OidIsValid(collid))
 			{
@@ -616,6 +717,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 									 nspid, GetUserId(),
 									 COLLPROVIDER_ICU, true, -1,
 									 collcollate, collcollate,
+									 get_collation_actual_version(COLLPROVIDER_ICU, collcollate),
 									 true, true);
 			if (OidIsValid(collid))
 			{

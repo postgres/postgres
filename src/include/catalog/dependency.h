@@ -167,8 +167,7 @@ extern void recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 											Node *expr, Oid relId,
 											DependencyType behavior,
 											DependencyType self_behavior,
-											bool reverse_self,
-											bool record_version);
+											bool reverse_self);
 
 extern ObjectClass getObjectClass(const ObjectAddress *object);
 
@@ -188,30 +187,16 @@ extern void sort_object_addresses(ObjectAddresses *addrs);
 
 extern void free_object_addresses(ObjectAddresses *addrs);
 
-typedef bool(*VisitDependenciesOfCB) (const ObjectAddress *otherObject,
-									  const char *version,
-									  char **new_version,
-									  void *data);
-
-extern void visitDependenciesOf(const ObjectAddress *object,
-								VisitDependenciesOfCB callback,
-								void *data);
-
 /* in pg_depend.c */
 
 extern void recordDependencyOn(const ObjectAddress *depender,
 							   const ObjectAddress *referenced,
 							   DependencyType behavior);
 
-extern void recordDependencyOnCollations(ObjectAddress *myself,
-										 List *collations,
-										 bool record_version);
-
 extern void recordMultipleDependencies(const ObjectAddress *depender,
 									   const ObjectAddress *referenced,
 									   int nreferenced,
-									   DependencyType behavior,
-									   bool record_version);
+									   DependencyType behavior);
 
 extern void recordDependencyOnCurrentExtension(const ObjectAddress *object,
 											   bool isReplace);
@@ -232,6 +217,7 @@ extern long changeDependencyFor(Oid classId, Oid objectId,
 
 extern long changeDependenciesOf(Oid classId, Oid oldObjectId,
 								 Oid newObjectId);
+
 extern long changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
 								 Oid newRefObjectId);
 

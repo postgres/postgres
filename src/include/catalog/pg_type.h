@@ -390,8 +390,6 @@ extern void GenerateTypeDependencies(HeapTuple typeTuple,
 									 bool isDependentType,
 									 bool rebuild);
 
-extern List *GetTypeCollations(Oid typeObjectid);
-
 extern void RenameTypeInternal(Oid typeOid, const char *newTypeName,
 							   Oid typeNamespace);
 

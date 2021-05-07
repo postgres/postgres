@@ -63,9 +63,6 @@ CATALOG(pg_depend,2608,DependRelationId)
 	 * field.  See DependencyType in catalog/dependency.h.
 	 */
 	char		deptype;		/* see codes in dependency.h */
-#ifdef CATALOG_VARLEN
-	text		refobjversion;	/* version of referenced object */
-#endif
 } FormData_pg_depend;
 
 /* ----------------
@@ -74,8 +71,6 @@ CATALOG(pg_depend,2608,DependRelationId)
  * ----------------
  */
 typedef FormData_pg_depend *Form_pg_depend;
-
-DECLARE_TOAST(pg_depend, 8888, 8889);
 
 DECLARE_INDEX(pg_depend_depender_index, 2673, on pg_depend using btree(classid oid_ops, objid oid_ops, objsubid int4_ops));
 #define DependDependerIndexId  2673

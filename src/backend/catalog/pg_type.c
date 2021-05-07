@@ -15,7 +15,6 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "access/relation.h"
 #include "access/table.h"
 #include "access/xact.h"
 #include "catalog/binary_upgrade.h"
@@ -518,74 +517,6 @@ TypeCreate(Oid newTypeOid,
 	table_close(pg_type_desc, RowExclusiveLock);
 
 	return address;
-}
-
-/*
- * Get a list of all distinct collations that the given type depends on.
- */
-List *
-GetTypeCollations(Oid typeoid)
-{
-	List	   *result = NIL;
-	HeapTuple	tuple;
-	Form_pg_type typeTup;
-
-	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeoid));
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for type %u", typeoid);
-	typeTup = (Form_pg_type) GETSTRUCT(tuple);
-
-	/*
-	 * If the type has a typcollation attribute, report that and we're done.
-	 * Otherwise, it could be a container type that we should recurse into.
-	 */
-	if (OidIsValid(typeTup->typcollation))
-		result = list_make1_oid(typeTup->typcollation);
-	else if (typeTup->typtype == TYPTYPE_COMPOSITE)
-	{
-		Relation	rel = relation_open(typeTup->typrelid, AccessShareLock);
-		TupleDesc	desc = RelationGetDescr(rel);
-
-		for (int i = 0; i < RelationGetNumberOfAttributes(rel); i++)
-		{
-			Form_pg_attribute att = TupleDescAttr(desc, i);
-
-			if (att->attisdropped)
-				continue;
-			if (OidIsValid(att->attcollation))
-				result = list_append_unique_oid(result, att->attcollation);
-			else
-				result = list_concat_unique_oid(result,
-												GetTypeCollations(att->atttypid));
-		}
-
-		relation_close(rel, NoLock);
-	}
-	else if (typeTup->typtype == TYPTYPE_DOMAIN)
-	{
-		Assert(OidIsValid(typeTup->typbasetype));
-		result = GetTypeCollations(typeTup->typbasetype);
-	}
-	else if (typeTup->typtype == TYPTYPE_RANGE)
-	{
-		Oid			rangecoll = get_range_collation(typeTup->oid);
-
-		if (OidIsValid(rangecoll))
-			result = list_make1_oid(rangecoll);
-		else
-		{
-			Oid			rangeid = get_range_subtype(typeTup->oid);
-
-			Assert(OidIsValid(rangeid));
-			result = GetTypeCollations(rangeid);
-		}
-	}
-	else if (IsTrueArrayType(typeTup))
-		result = GetTypeCollations(typeTup->typelem);
-
-	ReleaseSysCache(tuple);
-
-	return result;
 }
 
 /*
