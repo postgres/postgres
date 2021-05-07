@@ -1,5 +1,4 @@
 
-
 # Copyright (c) 2021, PostgreSQL Global Development Group
 
 =pod
