@@ -556,18 +556,19 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 		char		state;
 	} SubRemoveRels;
 	SubRemoveRels *sub_remove_rels;
+	WalReceiverConn *wrconn;
 
 	/* Load the library providing us libpq calls. */
 	load_file("libpqwalreceiver", false);
 
+	/* Try to connect to the publisher. */
+	wrconn = walrcv_connect(sub->conninfo, true, sub->name, &err);
+	if (!wrconn)
+		ereport(ERROR,
+				(errmsg("could not connect to the publisher: %s", err)));
+
 	PG_TRY();
 	{
-		/* Try to connect to the publisher. */
-		wrconn = walrcv_connect(sub->conninfo, true, sub->name, &err);
-		if (!wrconn)
-			ereport(ERROR,
-					(errmsg("could not connect to the publisher: %s", err)));
-
 		/* Get the table list from publisher. */
 		pubrel_names = fetch_table_list(wrconn, sub->publications);
 
@@ -737,8 +738,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 	}
 	PG_FINALLY();
 	{
-		if (wrconn)
-			walrcv_disconnect(wrconn);
+		walrcv_disconnect(wrconn);
 	}
 	PG_END_TRY();
 
@@ -1062,7 +1062,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	ListCell   *lc;
 	char		originname[NAMEDATALEN];
 	char	   *err = NULL;
-	WalReceiverConn *wrconn = NULL;
+	WalReceiverConn *wrconn;
 	Form_pg_subscription form;
 	List	   *rstates;
 
