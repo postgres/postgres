@@ -129,12 +129,24 @@ HINT:  Rebuild all objects affected by this collation and run ALTER COLLATION pg
    correctly.
   </para>
   <para>
-   When using collations provided by <literal>libc</literal> and
-   <productname>PostgreSQL</productname> was built with the GNU C library, the
-   C library's version is used as a collation version.  Since collation
-   definitions typically change only with GNU C library releases, this provides
-   some defense against corruption, but it is not completely reliable.
+   When using collations provided by <literal>libc</literal>, version
+   information is recorded on systems using the GNU C library (most Linux
+   systems), FreeBSD and Windows.
   </para>
+  <note>
+   <para>
+    When using the GNU C library for collations, the C library's version
+    is used as a proxy for the collation version.  Many Linux distributions
+    change collation definitions only when upgrading the C library, but this
+    approach is imperfect as maintainers are free to back-port newer
+    collation definitions to older C library releases.
+   </para>
+   <para>
+    When using Windows for collations, version information is only available
+    for collations defined with BCP 47 language tags such as
+    <literal>en-US</literal>. 
+   </para>
+  </note>
   <para>
    Currently, there is no version tracking for the database default collation.
   </para>
