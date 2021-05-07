@@ -3903,7 +3903,10 @@ create_foreign_modify(EState *estate,
 	/* Set up remote query information. */
 	fmstate->query = query;
 	if (operation == CMD_INSERT)
+	{
+		fmstate->query = pstrdup(fmstate->query);
 		fmstate->orig_query = pstrdup(fmstate->query);
+	}
 	fmstate->target_attrs = target_attrs;
 	fmstate->values_end = values_end;
 	fmstate->has_returning = has_returning;
