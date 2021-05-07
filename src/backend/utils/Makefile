@@ -88,6 +88,16 @@ $(top_builddir)/src/include/utils/probes.h: probes.h
 	cd '$(dir $@)' && rm -f $(notdir $@) && \
 	    $(LN_S) "../../../$(subdir)/probes.h" .
 
+# Recipe for rebuilding the Perl version of Gen_dummy_probes
+# Nothing depends on it, so it will never be called unless explicitly requested
+# The last two lines of the recipe format the script according to  our
+# standard and put back some blank lines for improved readability.
+Gen_dummy_probes.pl: Gen_dummy_probes.sed
+	perl -ni -e ' print; exit if /^\$$0/;' $@
+	s2p -f $<  | sed -e 1,4d -e '/# #/d' -e '$$d' >> $@
+	perltidy --profile=../../tools/pgindent/perltidyrc $@
+	perl -pi -e '!$$lb && ( /^\t+#/  || /^# prototypes/ ) && print qq{\n};'\
+		-e '$$lb = m/^\n/; ' $@
 
 .PHONY: install-data
 install-data: errcodes.txt installdirs
