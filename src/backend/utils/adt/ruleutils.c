@@ -1759,9 +1759,9 @@ pg_get_statisticsobjdef_expressions(PG_FUNCTION_ARGS)
 	statexttup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statextid));
 
 	if (!HeapTupleIsValid(statexttup))
-		elog(ERROR, "cache lookup failed for statistics object %u", statextid);
+		PG_RETURN_NULL();
 
-	/* has the statistics expressions? */
+	/* Does the stats object have expressions? */
 	has_exprs = !heap_attisnull(statexttup, Anum_pg_statistic_ext_stxexprs, NULL);
 
 	/* no expressions? we're done */
