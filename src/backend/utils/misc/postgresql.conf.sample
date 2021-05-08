@@ -85,6 +85,10 @@
 #tcp_user_timeout = 0			# TCP_USER_TIMEOUT, in milliseconds;
 					# 0 selects the system default
 
+#client_connection_check_interval = 0	# time between checks for client
+					# disconnection while running queries;
+					# 0 for never
+
 # - Authentication -
 
 #authentication_timeout = 1min		# 1s-600s
@@ -178,17 +182,17 @@
 
 # - Asynchronous Behavior -
 
+#backend_flush_after = 0		# measured in pages, 0 disables
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 #maintenance_io_concurrency = 10	# 1-1000; 0 disables prefetching
 #max_worker_processes = 8		# (change requires restart)
-#max_parallel_maintenance_workers = 2	# taken from max_parallel_workers
 #max_parallel_workers_per_gather = 2	# taken from max_parallel_workers
-#parallel_leader_participation = on
+#max_parallel_maintenance_workers = 2	# taken from max_parallel_workers
 #max_parallel_workers = 8		# maximum number of max_worker_processes that
 					# can be used in parallel operations
+#parallel_leader_participation = on
 #old_snapshot_threshold = -1		# 1min-60d; -1 disables; 0 is immediate
 					# (change requires restart)
-#backend_flush_after = 0		# measured in pages, 0 disables
 
 
 #------------------------------------------------------------------------------
@@ -212,9 +216,9 @@
 					#   fsync_writethrough
 					#   open_sync
 #full_page_writes = on			# recover from partial page writes
-#wal_compression = off			# enable compression of full-page writes
 #wal_log_hints = off			# also do full page writes of non-critical updates
 					# (change requires restart)
+#wal_compression = off			# enable compression of full-page writes
 #wal_init_zero = on			# zero-fill new WAL files
 #wal_recycle = on			# recycle WAL files
 #wal_buffers = -1			# min 32kB, -1 sets based on shared_buffers
@@ -229,17 +233,11 @@
 # - Checkpoints -
 
 #checkpoint_timeout = 5min		# range 30s-1d
-#max_wal_size = 1GB
-#min_wal_size = 80MB
 #checkpoint_completion_target = 0.9	# checkpoint target duration, 0.0 - 1.0
 #checkpoint_flush_after = 0		# measured in pages, 0 disables
 #checkpoint_warning = 30s		# 0 disables
-
-# - Prefetching during recovery -
-
-#wal_decode_buffer_size = 512kB		# lookahead window used for prefetching
-#recovery_prefetch = off		# prefetch pages referenced in the WAL?
-#recovery_prefetch_fpw = off		# even pages logged with full page?
+#max_wal_size = 1GB
+#min_wal_size = 80MB
 
 # - Archiving -
 
@@ -251,6 +249,12 @@
 				# e.g. 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'
 #archive_timeout = 0		# force a logfile segment switch after this
 				# number of seconds; 0 disables
+
+# - Recovery -
+
+#recovery_prefetch = off		# prefetch pages referenced in the WAL?
+#recovery_prefetch_fpw = off		# even pages logged with full page?
+#wal_decode_buffer_size = 512kB		# lookahead window used for prefetching
 
 # - Archive Recovery -
 
@@ -298,12 +302,11 @@
 
 #max_wal_senders = 10		# max number of walsender processes
 				# (change requires restart)
+#max_replication_slots = 10	# max number of replication slots
+				# (change requires restart)
 #wal_keep_size = 0		# in megabytes; 0 disables
 #max_slot_wal_keep_size = -1	# in megabytes; -1 disables
 #wal_sender_timeout = 60s	# in milliseconds; 0 disables
-
-#max_replication_slots = 10	# max number of replication slots
-				# (change requires restart)
 #track_commit_timestamp = off	# collect timestamp of transaction commit
 				# (change requires restart)
 
@@ -360,25 +363,26 @@
 
 # - Planner Method Configuration -
 
+#enable_async_append = on
 #enable_bitmapscan = on
+#enable_gathermerge = on
 #enable_hashagg = on
 #enable_hashjoin = on
+#enable_incremental_sort = on
 #enable_indexscan = on
 #enable_indexonlyscan = on
 #enable_material = on
+#enable_resultcache = on
 #enable_mergejoin = on
 #enable_nestloop = on
 #enable_parallel_append = on
-#enable_seqscan = on
-#enable_sort = on
-#enable_incremental_sort = on
-#enable_resultcache = on
-#enable_tidscan = on
-#enable_partitionwise_join = off
-#enable_partitionwise_aggregate = off
 #enable_parallel_hash = on
 #enable_partition_pruning = on
-#enable_async_append = on
+#enable_partitionwise_join = off
+#enable_partitionwise_aggregate = off
+#enable_seqscan = on
+#enable_sort = on
+#enable_tidscan = on
 
 # - Planner Cost Constants -
 
@@ -387,8 +391,11 @@
 #cpu_tuple_cost = 0.01			# same scale as above
 #cpu_index_tuple_cost = 0.005		# same scale as above
 #cpu_operator_cost = 0.0025		# same scale as above
-#parallel_tuple_cost = 0.1		# same scale as above
 #parallel_setup_cost = 1000.0	# same scale as above
+#parallel_tuple_cost = 0.1		# same scale as above
+#min_parallel_table_scan_size = 8MB
+#min_parallel_index_scan_size = 512kB
+#effective_cache_size = 4GB
 
 #jit_above_cost = 100000		# perform JIT compilation if available
 					# and query more expensive than this;
@@ -398,10 +405,6 @@
 #jit_optimize_above_cost = 500000	# use expensive JIT optimizations if
 					# query is more expensive than this;
 					# -1 disables
-
-#min_parallel_table_scan_size = 8MB
-#min_parallel_index_scan_size = 512kB
-#effective_cache_size = 4GB
 
 # - Genetic Query Optimizer -
 
@@ -419,9 +422,9 @@
 #constraint_exclusion = partition	# on, off, or partition
 #cursor_tuple_fraction = 0.1		# range 0.0-1.0
 #from_collapse_limit = 8
+#jit = on				# allow JIT compilation
 #join_collapse_limit = 8		# 1 disables collapsing of explicit
 					# JOIN clauses
-#jit = on				# allow JIT compilation
 #plan_cache_mode = auto			# auto, force_generic_plan or
 					# force_custom_plan
 
@@ -450,6 +453,11 @@
 					# can include strftime() escapes
 #log_file_mode = 0600			# creation mode for log files,
 					# begin with 0 to use octal notation
+#log_rotation_age = 1d			# Automatic rotation of logfiles will
+					# happen after that time.  0 disables.
+#log_rotation_size = 10MB		# Automatic rotation of logfiles will
+					# happen after that much log output.
+					# 0 disables.
 #log_truncate_on_rotation = off		# If on, an existing log file with the
 					# same name as the new log file will be
 					# truncated rather than appended to.
@@ -458,11 +466,6 @@
 					# or size-driven rotation.  Default is
 					# off, meaning append to existing files
 					# in all cases.
-#log_rotation_age = 1d			# Automatic rotation of logfiles will
-					# happen after that time.  0 disables.
-#log_rotation_size = 10MB		# Automatic rotation of logfiles will
-					# happen after that much log output.
-					# 0 disables.
 
 # These are relevant when logging to syslog:
 #syslog_facility = 'LOCAL0'
@@ -470,7 +473,7 @@
 #syslog_sequence_numbers = on
 #syslog_split_messages = on
 
-# This is only relevant when logging to eventlog (win32):
+# This is only relevant when logging to eventlog (Windows):
 # (change requires restart)
 #event_source = 'PostgreSQL'
 
@@ -597,21 +600,21 @@
 # - Query and Index Statistics Collector -
 
 #track_activities = on
+#track_activity_query_size = 1024	# (change requires restart)
 #track_counts = on
 #track_io_timing = off
 #track_wal_io_timing = off
 #track_functions = none			# none, pl, all
-#track_activity_query_size = 1024	# (change requires restart)
 #stats_temp_directory = 'pg_stat_tmp'
 
 
 # - Monitoring -
 
 #compute_query_id = off
+#log_statement_stats = off
 #log_parser_stats = off
 #log_planner_stats = off
 #log_executor_stats = off
-#log_statement_stats = off
 
 
 #------------------------------------------------------------------------------
@@ -665,11 +668,11 @@
 					#   error
 #search_path = '"$user", public'	# schema names
 #row_security = on
+#default_table_access_method = 'heap'
 #default_tablespace = ''		# a tablespace name, '' uses the default
+#default_toast_compression = 'pglz'	# 'pglz' or 'lz4'
 #temp_tablespaces = ''			# a list of tablespace names, '' uses
 					# only default tablespace
-#default_table_access_method = 'heap'
-#default_toast_compression = 'pglz'	# 'pglz' or 'lz4'
 #check_function_bodies = on
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
@@ -679,16 +682,15 @@
 #lock_timeout = 0			# in milliseconds, 0 is disabled
 #idle_in_transaction_session_timeout = 0	# in milliseconds, 0 is disabled
 #idle_session_timeout = 0		# in milliseconds, 0 is disabled
-#vacuum_freeze_min_age = 50000000
 #vacuum_freeze_table_age = 150000000
-#vacuum_multixact_freeze_min_age = 5000000
-#vacuum_multixact_freeze_table_age = 150000000
+#vacuum_freeze_min_age = 50000000
 #vacuum_failsafe_age = 1600000000
+#vacuum_multixact_freeze_table_age = 150000000
+#vacuum_multixact_freeze_min_age = 5000000
 #vacuum_multixact_failsafe_age = 1600000000
 #bytea_output = 'hex'			# hex, escape
 #xmlbinary = 'base64'
 #xmloption = 'content'
-#gin_fuzzy_search_limit = 0
 #gin_pending_list_limit = 4MB
 
 # - Locale and Formatting -
@@ -720,18 +722,15 @@
 
 # - Shared Library Preloading -
 
-#shared_preload_libraries = ''	# (change requires restart)
 #local_preload_libraries = ''
 #session_preload_libraries = ''
+#shared_preload_libraries = ''	# (change requires restart)
 #jit_provider = 'llvmjit'		# JIT library to use
 
 # - Other Defaults -
 
 #dynamic_library_path = '$libdir'
-
-#client_connection_check_interval = 0	# time between checks for client
-					# disconnection while running queries;
-					# 0 for never
+#gin_fuzzy_search_limit = 0
 
 #------------------------------------------------------------------------------
 # LOCK MANAGEMENT
@@ -775,10 +774,10 @@
 #restart_after_crash = on		# reinitialize after backend crash?
 #remove_temp_files_after_crash = on	# remove temporary files after
 					# backend crash?
-#recovery_init_sync_method = fsync	# fsync, syncfs (Linux 5.8+)
 #data_sync_retry = off			# retry or panic on failure to fsync
 					# data?
 					# (change requires restart)
+#recovery_init_sync_method = fsync	# fsync, syncfs (Linux 5.8+)
 
 
 #------------------------------------------------------------------------------

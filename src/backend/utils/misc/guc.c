@@ -703,16 +703,12 @@ const char *const config_group_names[] =
 	gettext_noop("Ungrouped"),
 	/* FILE_LOCATIONS */
 	gettext_noop("File Locations"),
-	/* CONN_AUTH */
-	gettext_noop("Connections and Authentication"),
 	/* CONN_AUTH_SETTINGS */
 	gettext_noop("Connections and Authentication / Connection Settings"),
 	/* CONN_AUTH_AUTH */
 	gettext_noop("Connections and Authentication / Authentication"),
 	/* CONN_AUTH_SSL */
 	gettext_noop("Connections and Authentication / SSL"),
-	/* RESOURCES */
-	gettext_noop("Resource Usage"),
 	/* RESOURCES_MEM */
 	gettext_noop("Resource Usage / Memory"),
 	/* RESOURCES_DISK */
@@ -725,20 +721,18 @@ const char *const config_group_names[] =
 	gettext_noop("Resource Usage / Background Writer"),
 	/* RESOURCES_ASYNCHRONOUS */
 	gettext_noop("Resource Usage / Asynchronous Behavior"),
-	/* WAL */
-	gettext_noop("Write-Ahead Log"),
 	/* WAL_SETTINGS */
 	gettext_noop("Write-Ahead Log / Settings"),
 	/* WAL_CHECKPOINTS */
 	gettext_noop("Write-Ahead Log / Checkpoints"),
 	/* WAL_ARCHIVING */
 	gettext_noop("Write-Ahead Log / Archiving"),
+	/* WAL_RECOVERY */
+	gettext_noop("Write-Ahead Log / Recovery"),
 	/* WAL_ARCHIVE_RECOVERY */
 	gettext_noop("Write-Ahead Log / Archive Recovery"),
 	/* WAL_RECOVERY_TARGET */
 	gettext_noop("Write-Ahead Log / Recovery Target"),
-	/* REPLICATION */
-	gettext_noop("Replication"),
 	/* REPLICATION_SENDING */
 	gettext_noop("Replication / Sending Servers"),
 	/* REPLICATION_PRIMARY */
@@ -747,8 +741,6 @@ const char *const config_group_names[] =
 	gettext_noop("Replication / Standby Servers"),
 	/* REPLICATION_SUBSCRIBERS */
 	gettext_noop("Replication / Subscribers"),
-	/* QUERY_TUNING */
-	gettext_noop("Query Tuning"),
 	/* QUERY_TUNING_METHOD */
 	gettext_noop("Query Tuning / Planner Method Configuration"),
 	/* QUERY_TUNING_COST */
@@ -757,8 +749,6 @@ const char *const config_group_names[] =
 	gettext_noop("Query Tuning / Genetic Query Optimizer"),
 	/* QUERY_TUNING_OTHER */
 	gettext_noop("Query Tuning / Other Planner Options"),
-	/* LOGGING */
-	gettext_noop("Reporting and Logging"),
 	/* LOGGING_WHERE */
 	gettext_noop("Reporting and Logging / Where to Log"),
 	/* LOGGING_WHEN */
@@ -766,17 +756,13 @@ const char *const config_group_names[] =
 	/* LOGGING_WHAT */
 	gettext_noop("Reporting and Logging / What to Log"),
 	/* PROCESS_TITLE */
-	gettext_noop("Process Title"),
-	/* STATS */
-	gettext_noop("Statistics"),
+	gettext_noop("Reporting and Logging / Process Title"),
 	/* STATS_MONITORING */
 	gettext_noop("Statistics / Monitoring"),
 	/* STATS_COLLECTOR */
 	gettext_noop("Statistics / Query and Index Statistics Collector"),
 	/* AUTOVACUUM */
 	gettext_noop("Autovacuum"),
-	/* CLIENT_CONN */
-	gettext_noop("Client Connection Defaults"),
 	/* CLIENT_CONN_STATEMENT */
 	gettext_noop("Client Connection Defaults / Statement Behavior"),
 	/* CLIENT_CONN_LOCALE */
@@ -787,8 +773,6 @@ const char *const config_group_names[] =
 	gettext_noop("Client Connection Defaults / Other Defaults"),
 	/* LOCK_MANAGEMENT */
 	gettext_noop("Lock Management"),
-	/* COMPAT_OPTIONS */
-	gettext_noop("Version and Platform Compatibility"),
 	/* COMPAT_OPTIONS_PREVIOUS */
 	gettext_noop("Version and Platform Compatibility / Previous PostgreSQL Versions"),
 	/* COMPAT_OPTIONS_CLIENT */
@@ -1188,7 +1172,7 @@ static struct config_bool ConfigureNamesBool[] =
 		check_bonjour, NULL, NULL
 	},
 	{
-		{"track_commit_timestamp", PGC_POSTMASTER, REPLICATION,
+		{"track_commit_timestamp", PGC_POSTMASTER, REPLICATION_SENDING,
 			gettext_noop("Collects transaction commit time."),
 			NULL
 		},
@@ -1297,7 +1281,7 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"recovery_prefetch", PGC_SIGHUP, WAL_SETTINGS,
+		{"recovery_prefetch", PGC_SIGHUP, WAL_RECOVERY,
 			gettext_noop("Prefetch referenced blocks during recovery."),
 			gettext_noop("Read ahead of the current replay position to find uncached blocks.")
 		},
@@ -1306,7 +1290,7 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, assign_recovery_prefetch, NULL
 	},
 	{
-		{"recovery_prefetch_fpw", PGC_SIGHUP, WAL_SETTINGS,
+		{"recovery_prefetch_fpw", PGC_SIGHUP, WAL_RECOVERY,
 			gettext_noop("Prefetch blocks that have full page images in the WAL."),
 			gettext_noop("On some systems, there is no benefit to prefetching pages that will be "
 						 "entirely overwritten, but if the logical page size of the filesystem is "
@@ -1869,7 +1853,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"integer_datetimes", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Datetimes are integer based."),
+			gettext_noop("Shows whether datetimes are integer based."),
 			NULL,
 			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
@@ -2416,7 +2400,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"data_directory_mode", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Mode of the data directory."),
+			gettext_noop("Shows the mode of the data directory."),
 			gettext_noop("The parameter value is a numeric mode specification "
 						 "in the form accepted by the chmod and umask system "
 						 "calls. (To use the customary octal format the number "
@@ -2772,7 +2756,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"wal_decode_buffer_size", PGC_POSTMASTER, WAL_ARCHIVE_RECOVERY,
+		{"wal_decode_buffer_size", PGC_POSTMASTER, WAL_RECOVERY,
 			gettext_noop("Maximum buffer size for reading ahead in the WAL during recovery."),
 			gettext_noop("This controls the maximum distance we can read ahead in the WAL to prefetch referenced blocks."),
 			GUC_UNIT_BYTE
@@ -3393,7 +3377,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"tcp_keepalives_idle", PGC_USERSET, CLIENT_CONN_OTHER,
+		{"tcp_keepalives_idle", PGC_USERSET, CONN_AUTH_SETTINGS,
 			gettext_noop("Time between issuing TCP keepalives."),
 			gettext_noop("A value of 0 uses the system default."),
 			GUC_UNIT_S
@@ -3404,7 +3388,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"tcp_keepalives_interval", PGC_USERSET, CLIENT_CONN_OTHER,
+		{"tcp_keepalives_interval", PGC_USERSET, CONN_AUTH_SETTINGS,
 			gettext_noop("Time between TCP keepalive retransmits."),
 			gettext_noop("A value of 0 uses the system default."),
 			GUC_UNIT_S
@@ -3426,7 +3410,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"tcp_keepalives_count", PGC_USERSET, CLIENT_CONN_OTHER,
+		{"tcp_keepalives_count", PGC_USERSET, CONN_AUTH_SETTINGS,
 			gettext_noop("Maximum number of TCP keepalive retransmits."),
 			gettext_noop("This controls the number of consecutive keepalive retransmits that can be "
 						 "lost before a connection is considered dead. A value of 0 uses the "
@@ -3506,7 +3490,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"track_activity_query_size", PGC_POSTMASTER, RESOURCES_MEM,
+		{"track_activity_query_size", PGC_POSTMASTER, STATS_COLLECTOR,
 			gettext_noop("Sets the size reserved for pg_stat_activity.query, in bytes."),
 			NULL,
 			GUC_UNIT_BYTE
@@ -3528,7 +3512,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"tcp_user_timeout", PGC_USERSET, CLIENT_CONN_OTHER,
+		{"tcp_user_timeout", PGC_USERSET, CONN_AUTH_SETTINGS,
 			gettext_noop("TCP user timeout."),
 			gettext_noop("A value of 0 uses the system default."),
 			GUC_UNIT_MS
@@ -3573,7 +3557,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"client_connection_check_interval", PGC_USERSET, CLIENT_CONN_OTHER,
+		{"client_connection_check_interval", PGC_USERSET, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the time interval between checks for disconnection while running queries."),
 			NULL,
 			GUC_UNIT_MS
@@ -4102,7 +4086,7 @@ static struct config_string ConfigureNamesString[] =
 	/* See main.c about why defaults for LC_foo are not all alike */
 
 	{
-		{"lc_collate", PGC_INTERNAL, CLIENT_CONN_LOCALE,
+		{"lc_collate", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the collation order locale."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
@@ -4113,7 +4097,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"lc_ctype", PGC_INTERNAL, CLIENT_CONN_LOCALE,
+		{"lc_ctype", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the character classification and case conversion locale."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
@@ -4209,8 +4193,8 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		/* Can't be set in postgresql.conf */
-		{"server_encoding", PGC_INTERNAL, CLIENT_CONN_LOCALE,
-			gettext_noop("Sets the server (database) character set encoding."),
+		{"server_encoding", PGC_INTERNAL, PRESET_OPTIONS,
+			gettext_noop("Shows the server (database) character set encoding."),
 			NULL,
 			GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
@@ -4429,7 +4413,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"ssl_library", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Name of the SSL library."),
+			gettext_noop("Shows the name of the SSL library."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
