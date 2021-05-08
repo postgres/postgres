@@ -298,41 +298,6 @@ remove_cache_entry(ResultCacheState *rcstate, ResultCacheEntry *entry)
 
 	dlist_delete(&entry->key->lru_node);
 
-#ifdef USE_ASSERT_CHECKING
-
-	/*
-	 * Validate the memory accounting code is correct in assert builds. XXX is
-	 * this too expensive for USE_ASSERT_CHECKING?
-	 */
-	{
-		int			i,
-					count;
-		uint64		mem = 0;
-
-		count = 0;
-		for (i = 0; i < rcstate->hashtable->size; i++)
-		{
-			ResultCacheEntry *entry = &rcstate->hashtable->data[i];
-
-			if (entry->status == resultcache_SH_IN_USE)
-			{
-				ResultCacheTuple *tuple = entry->tuplehead;
-
-				mem += EMPTY_ENTRY_MEMORY_BYTES(entry);
-				while (tuple != NULL)
-				{
-					mem += CACHE_TUPLE_BYTES(tuple);
-					tuple = tuple->next;
-				}
-				count++;
-			}
-		}
-
-		Assert(count == rcstate->hashtable->members);
-		Assert(mem == rcstate->mem_used);
-	}
-#endif
-
 	/* Remove all of the tuples from this entry */
 	entry_purge_tuples(rcstate, entry);
 
@@ -977,6 +942,35 @@ ExecInitResultCache(ResultCache *node, EState *estate, int eflags)
 void
 ExecEndResultCache(ResultCacheState *node)
 {
+#ifdef USE_ASSERT_CHECKING
+	/* Validate the memory accounting code is correct in assert builds. */
+	{
+		int			count;
+		uint64		mem = 0;
+		resultcache_iterator i;
+		ResultCacheEntry *entry;
+
+		resultcache_start_iterate(node->hashtable, &i);
+
+		count = 0;
+		while ((entry = resultcache_iterate(node->hashtable, &i)) != NULL)
+		{
+			ResultCacheTuple *tuple = entry->tuplehead;
+
+			mem += EMPTY_ENTRY_MEMORY_BYTES(entry);
+			while (tuple != NULL)
+			{
+				mem += CACHE_TUPLE_BYTES(tuple);
+				tuple = tuple->next;
+			}
+			count++;
+		}
+
+		Assert(count == node->hashtable->members);
+		Assert(mem == node->mem_used);
+	}
+#endif
+
 	/*
 	 * When ending a parallel worker, copy the statistics gathered by the
 	 * worker back into shared memory so that it can be picked up by the main
