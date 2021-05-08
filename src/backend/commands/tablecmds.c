@@ -18640,7 +18640,7 @@ GetAttributeCompression(Form_pg_attribute att, char *compression)
 	cmethod = CompressionNameToMethod(compression);
 	if (!CompressionMethodIsValid(cmethod))
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid compression method \"%s\"", compression)));
 
 	return cmethod;
