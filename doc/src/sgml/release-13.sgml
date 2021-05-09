@@ -229,7 +229,6 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [25936fd46] 2021-02-27 18:09:15 -0300
 Branch: REL_13_STABLE [2688852a4] 2021-02-27 18:09:15 -0300
 Branch: REL_12_STABLE [262eb990c] 2021-02-27 18:09:15 -0300
-Branch: REL_11_STABLE [d1c6edd31] 2021-02-27 18:09:15 -0300
 -->
      <para>
       Fix use-after-free bug in saving tuples for <literal>AFTER</literal>
@@ -509,6 +508,25 @@ Branch: REL9_6_STABLE [e3bf96216] 2021-04-06 02:27:48 +0900
 
     <listitem>
 <!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [4e8c0f1a0] 2021-05-07 11:46:37 -0400
+Branch: REL_13_STABLE [ef70b6f8e] 2021-05-07 11:46:37 -0400
+Branch: REL_12_STABLE [cfebc7080] 2021-05-07 11:46:37 -0400
+Branch: REL_11_STABLE [b40865ebd] 2021-05-07 11:46:37 -0400
+Branch: REL_10_STABLE [1803c7626] 2021-05-07 11:46:37 -0400
+-->
+     <para>
+      Fix crash when a logical replication worker does <command>ALTER
+      SUBSCRIPTION REFRESH</command> (Peter Smith)
+     </para>
+
+     <para>
+      The core code won't do this, but a replica trigger could.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Thomas Munro <tmunro@postgresql.org>
 Branch: master [f900a79ec] 2021-02-15 16:04:59 +1300
 Branch: REL_13_STABLE [6c23e5ae9] 2021-02-15 16:05:42 +1300
@@ -596,25 +614,6 @@ Branch: REL9_6_STABLE [8a07e5bd8] 2021-02-15 14:22:19 +1300
      <para>
       This error could result in temporary files not being cleaned up
       promptly after a parallel query.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL_12_STABLE [992cba94d] 2021-03-20 12:38:22 -0400
-Branch: REL_11_STABLE [c49e287a8] 2021-03-20 12:38:22 -0400
-Branch: REL_10_STABLE [7d9629ed2] 2021-03-20 12:38:22 -0400
--->
-     <para>
-      Fix memory leak while initializing server's SSL parameters (Michael
-      Paquier)
-     </para>
-
-     <para>
-      This is ordinarily insignificant, but if the postmaster is
-      repeatedly sent <systemitem>SIGHUP</systemitem> signals, the leak
-      can build up over time.
      </para>
     </listitem>
 
@@ -768,8 +767,8 @@ Branch: REL9_6_STABLE [4f670c64e] 2021-03-23 14:27:50 -0400
      <para>
       A previous bug fix caused environment variables (such
       as <varname>PGPORT</varname>) to override entries in the service
-      file in this context.  Previously, and in other contexts, the
-      priority is the other way around; so restore that behavior.
+      file in this context.  Restore the previous behavior, in which the
+      priority is the other way around.
      </para>
     </listitem>
 
