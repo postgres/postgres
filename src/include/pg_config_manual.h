@@ -279,11 +279,17 @@
  * enables detection of buffer accesses that take place without holding a
  * buffer pin (or without holding a buffer lock in the case of index access
  * methods that superimpose their own custom client requests on top of the
- * generic bufmgr.c requests).  See also src/tools/valgrind.supp.
+ * generic bufmgr.c requests).
  *
  * "make installcheck" is significantly slower under Valgrind.  The client
  * requests fall in hot code paths, so USE_VALGRIND slows execution by a few
  * percentage points even when not run under Valgrind.
+ *
+ * Do not try to test the server under Valgrind without having built the
+ * server with USE_VALGRIND; else you will get false positives from sinval
+ * messaging (see comments in AddCatcacheInvalidationMessage).  It's also
+ * important to use the suppression file src/tools/valgrind.supp to
+ * exclude other known false positives.
  *
  * You should normally use MEMORY_CONTEXT_CHECKING with USE_VALGRIND;
  * instrumentation of repalloc() is inferior without it.
