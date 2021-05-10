@@ -135,6 +135,12 @@ sub Run()
 			$CondReg ||= $s;
 		}
 
+		# s/$/ do {} while (0)/
+		{
+			$s = s /$/ do {} while (0)/s;
+			$CondReg ||= $s;
+		}
+
 		# P
 		{
 			if (/^(.*)/) { print $1, "\n"; }
