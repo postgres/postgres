@@ -36,6 +36,69 @@
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [f02b9085a] 2021-05-10 10:44:38 -0400
+Branch: REL_13_STABLE [467395bfd] 2021-05-10 10:44:38 -0400
+Branch: REL_12_STABLE [3b0f6a7ae] 2021-05-10 10:44:38 -0400
+Branch: REL_11_STABLE [06bfbe854] 2021-05-10 10:44:38 -0400
+Branch: REL_10_STABLE [2fb809d3e] 2021-05-10 10:44:38 -0400
+Branch: REL9_6_STABLE [0c1caa48d] 2021-05-10 10:44:38 -0400
+-->
+     <para>
+      Prevent integer overflows in array subscripting calculations
+      (Tom Lane)
+     </para>
+
+     <para>
+      The array code previously did not complain about cases where an
+      array's lower bound plus length overflows an integer.  This resulted
+      in later entries in the array becoming inaccessible (since their
+      subscripts could not be written as integers), but more importantly
+      it confused subsequent assignment operations.  This could lead to
+      memory overwrites, with ensuing crashes or unwanted data
+      modifications.
+      (CVE-2021-32027)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [049e1e2ed] 2021-05-10 11:02:29 -0400
+Branch: REL_13_STABLE [4a8656a7e] 2021-05-10 11:02:29 -0400
+Branch: REL_12_STABLE [a5fa3e067] 2021-05-10 11:02:29 -0400
+Branch: REL_11_STABLE [b7d1f32ff] 2021-05-10 11:02:29 -0400
+Branch: REL_10_STABLE [52a441362] 2021-05-10 11:02:30 -0400
+Branch: REL9_6_STABLE [0fcb8e2e0] 2021-05-10 11:02:30 -0400
+-->
+     <para>
+      Fix mishandling of <quote>junk</quote> columns in <literal>INSERT
+      ... ON CONFLICT ... UPDATE</literal> target lists (Tom Lane)
+     </para>
+
+     <para>
+      If the <literal>UPDATE</literal> list contains any multi-column
+      sub-selects (which give rise to junk columns in addition to the
+      results proper), the <literal>UPDATE</literal> path would end up
+      storing tuples that include the values of the extra junk columns.
+      That's fairly harmless in the short run, but if new columns are
+      added to the table then the values would become accessible, possibly
+      leading to malfunctions if they don't match the datatypes of the
+      added columns.
+     </para>
+
+     <para>
+      In addition, in versions supporting cross-partition updates,
+      a cross-partition update triggered by such a case had the reverse
+      problem: the junk columns were removed from the target list,
+      typically causing an immediate crash due to malfunction of the
+      multi-column sub-select mechanism.
+      (CVE-2021-32028)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: REL_13_STABLE [a71cfc56b] 2021-04-22 11:46:41 -0400
 Branch: REL_12_STABLE [3fb93103a] 2021-04-22 11:46:41 -0400
 Branch: REL_11_STABLE [27835b547] 2021-04-22 11:46:41 -0400
@@ -58,6 +121,7 @@ Branch: REL_12_STABLE [05ce4bf8b] 2021-04-22 17:30:42 -0400
       could produce errors or wrong answers.  No error is observed unless
       the <command>UPDATE</command> involves other tables being joined to
       the target table.
+      (CVE-2021-32029)
      </para>
     </listitem>
 
