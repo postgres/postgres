@@ -48,6 +48,10 @@ variant without links and references to the main documentation.
   <xsl:text>the documentation</xsl:text>
 </xsl:template>
 
+<xsl:template match="xref[@linkend='guc-default-toast-compression']">
+  <xsl:text>the configuration parameter default_toast_compression</xsl:text>
+</xsl:template>
+
 <xsl:template match="xref[@linkend='install-windows']">
   <xsl:text>the documentation</xsl:text>
 </xsl:template>
