@@ -304,7 +304,7 @@ pqTraceOutputD(FILE *f, bool toServer, const char *message, int *cursor)
 /* NoticeResponse / ErrorResponse */
 static void
 pqTraceOutputNR(FILE *f, const char *type, const char *message, int *cursor,
-				int length, bool regress)
+				bool regress)
 {
 	fprintf(f, "%s\t", type);
 	for (;;)
@@ -324,7 +324,7 @@ pqTraceOutputNR(FILE *f, const char *type, const char *message, int *cursor,
 
 /* Execute(F) or ErrorResponse(B) */
 static void
-pqTraceOutputE(FILE *f, bool toServer, const char *message, int *cursor, int length, bool regress)
+pqTraceOutputE(FILE *f, bool toServer, const char *message, int *cursor, bool regress)
 {
 	if (toServer)
 	{
@@ -333,7 +333,7 @@ pqTraceOutputE(FILE *f, bool toServer, const char *message, int *cursor, int len
 		pqTraceOutputInt32(f, message, cursor, false);
 	}
 	else
-		pqTraceOutputNR(f, "ErrorResponse", message, cursor, length, regress);
+		pqTraceOutputNR(f, "ErrorResponse", message, cursor, regress);
 }
 
 /* CopyFail */
@@ -595,7 +595,7 @@ pqTraceOutputMessage(PGconn *conn, const char *message, bool toServer)
 			break;
 		case 'E':				/* Execute(F) or Error Response(B) */
 			pqTraceOutputE(conn->Pfdebug, toServer, message, &logCursor,
-						   length, regress);
+						   regress);
 			break;
 		case 'f':				/* Copy Fail */
 			pqTraceOutputf(conn->Pfdebug, message, &logCursor);
@@ -625,7 +625,7 @@ pqTraceOutputMessage(PGconn *conn, const char *message, bool toServer)
 			break;
 		case 'N':
 			pqTraceOutputNR(conn->Pfdebug, "NoticeResponse", message,
-							&logCursor, length, regress);
+							&logCursor, regress);
 			break;
 		case 'P':				/* Parse */
 			pqTraceOutputP(conn->Pfdebug, message, &logCursor, regress);
