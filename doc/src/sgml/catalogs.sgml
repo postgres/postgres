@@ -1363,7 +1363,7 @@
        The current compression method of the column.  If it is an invalid
        compression method (<literal>'\0'</literal>) then column data will not
        be compressed.  Otherwise, <literal>'p'</literal> = pglz compression or
-       <literal>'l'</literal> = lz4 compression.
+       <literal>'l'</literal> = <productname>LZ4</productname> compression.
       </para></entry>
      </row>
 
