@@ -564,6 +564,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			 * care of at compilation time.  But see EEOP_INNER_VAR comments.
 			 */
 			Assert(attnum >= 0 && attnum < innerslot->tts_nvalid);
+			Assert(resultnum >= 0 && resultnum < resultslot->tts_tupleDescriptor->natts);
 			resultslot->tts_values[resultnum] = innerslot->tts_values[attnum];
 			resultslot->tts_isnull[resultnum] = innerslot->tts_isnull[attnum];
 
@@ -580,6 +581,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			 * care of at compilation time.  But see EEOP_INNER_VAR comments.
 			 */
 			Assert(attnum >= 0 && attnum < outerslot->tts_nvalid);
+			Assert(resultnum >= 0 && resultnum < resultslot->tts_tupleDescriptor->natts);
 			resultslot->tts_values[resultnum] = outerslot->tts_values[attnum];
 			resultslot->tts_isnull[resultnum] = outerslot->tts_isnull[attnum];
 
@@ -596,6 +598,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			 * care of at compilation time.  But see EEOP_INNER_VAR comments.
 			 */
 			Assert(attnum >= 0 && attnum < scanslot->tts_nvalid);
+			Assert(resultnum >= 0 && resultnum < resultslot->tts_tupleDescriptor->natts);
 			resultslot->tts_values[resultnum] = scanslot->tts_values[attnum];
 			resultslot->tts_isnull[resultnum] = scanslot->tts_isnull[attnum];
 
@@ -606,6 +609,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			int			resultnum = op->d.assign_tmp.resultnum;
 
+			Assert(resultnum >= 0 && resultnum < resultslot->tts_tupleDescriptor->natts);
 			resultslot->tts_values[resultnum] = state->resvalue;
 			resultslot->tts_isnull[resultnum] = state->resnull;
 
@@ -616,6 +620,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			int			resultnum = op->d.assign_tmp.resultnum;
 
+			Assert(resultnum >= 0 && resultnum < resultslot->tts_tupleDescriptor->natts);
 			resultslot->tts_isnull[resultnum] = state->resnull;
 			if (!resultslot->tts_isnull[resultnum])
 				resultslot->tts_values[resultnum] =
@@ -1747,8 +1752,10 @@ ExecJustAssignInnerVar(ExprState *state, ExprContext *econtext, bool *isnull)
 	 *
 	 * Since we use slot_getattr(), we don't need to implement the FETCHSOME
 	 * step explicitly, and we also needn't Assert that the attnum is in range
-	 * --- slot_getattr() will take care of any problems.
+	 * --- slot_getattr() will take care of any problems.  Nonetheless, check
+	 * that resultnum is in range.
 	 */
+	Assert(resultnum >= 0 && resultnum < outslot->tts_tupleDescriptor->natts);
 	outslot->tts_values[resultnum] =
 		slot_getattr(inslot, attnum, &outslot->tts_isnull[resultnum]);
 	return 0;
@@ -1765,6 +1772,7 @@ ExecJustAssignOuterVar(ExprState *state, ExprContext *econtext, bool *isnull)
 	TupleTableSlot *outslot = state->resultslot;
 
 	/* See comments in ExecJustAssignInnerVar */
+	Assert(resultnum >= 0 && resultnum < outslot->tts_tupleDescriptor->natts);
 	outslot->tts_values[resultnum] =
 		slot_getattr(inslot, attnum, &outslot->tts_isnull[resultnum]);
 	return 0;
@@ -1781,6 +1789,7 @@ ExecJustAssignScanVar(ExprState *state, ExprContext *econtext, bool *isnull)
 	TupleTableSlot *outslot = state->resultslot;
 
 	/* See comments in ExecJustAssignInnerVar */
+	Assert(resultnum >= 0 && resultnum < outslot->tts_tupleDescriptor->natts);
 	outslot->tts_values[resultnum] =
 		slot_getattr(inslot, attnum, &outslot->tts_isnull[resultnum]);
 	return 0;

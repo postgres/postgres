@@ -2135,7 +2135,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	if (node->onConflictAction == ONCONFLICT_UPDATE)
 	{
 		ExprContext *econtext;
-		TupleDesc	tupDesc;
 
 		/* insert may only have one plan, inheritance is not expanded */
 		Assert(nplans == 1);
@@ -2155,16 +2154,25 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->mt_excludedtlist = node->exclRelTlist;
 
 		/* create target slot for UPDATE SET projection */
-		tupDesc = ExecTypeFromTL((List *) node->onConflictSet,
-								 resultRelInfo->ri_RelationDesc->rd_rel->relhasoids);
 		mtstate->mt_conflproj = ExecInitExtraTupleSlot(mtstate->ps.state);
-		ExecSetSlotDescriptor(mtstate->mt_conflproj, tupDesc);
+		ExecSetSlotDescriptor(mtstate->mt_conflproj,
+							  resultRelInfo->ri_RelationDesc->rd_att);
+
+		/*
+		 * The onConflictSet tlist should already have been adjusted to emit
+		 * the table's exact column list.  It could also contain resjunk
+		 * columns, which should be evaluated but not included in the
+		 * projection result.
+		 */
+		ExecCheckPlanOutput(resultRelInfo->ri_RelationDesc,
+							node->onConflictSet);
 
 		/* build UPDATE SET projection state */
 		resultRelInfo->ri_onConflictSetProj =
-			ExecBuildProjectionInfo(node->onConflictSet, econtext,
-									mtstate->mt_conflproj, &mtstate->ps,
-									resultRelInfo->ri_RelationDesc->rd_att);
+			ExecBuildProjectionInfoExt(node->onConflictSet, econtext,
+									   mtstate->mt_conflproj, false,
+									   &mtstate->ps,
+									   resultRelInfo->ri_RelationDesc->rd_att);
 
 		/* build DO UPDATE WHERE clause expression */
 		if (node->onConflictWhere)
