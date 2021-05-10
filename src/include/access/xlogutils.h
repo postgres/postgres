@@ -42,13 +42,14 @@ extern XLogRedoAction XLogReadBufferForRedoExtended(XLogReaderState *record,
 													Buffer *buf);
 
 extern Buffer XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
-									 BlockNumber blkno, ReadBufferMode mode,
-									 Buffer recent_buffer);
+									 BlockNumber blkno, ReadBufferMode mode);
 
 extern Relation CreateFakeRelcacheEntry(RelFileNode rnode);
 extern void FreeFakeRelcacheEntry(Relation fakerel);
 
-extern bool read_local_xlog_page(XLogReaderState *state);
+extern int	read_local_xlog_page(XLogReaderState *state,
+								 XLogRecPtr targetPagePtr, int reqLen,
+								 XLogRecPtr targetRecPtr, char *cur_page);
 extern void wal_segment_open(XLogReaderState *state,
 							 XLogSegNo nextSegNo,
 							 TimeLineID *tli_p);

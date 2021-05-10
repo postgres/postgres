@@ -6287,14 +6287,6 @@
   prorettype => 'text', proargtypes => '',
   prosrc => 'pg_get_wal_replay_pause_state' },
 
-{ oid => '9085', descr => 'statistics: information about WAL prefetching',
-  proname => 'pg_stat_get_prefetch_recovery', prorows => '1', provolatile => 'v',
-  proretset => 't', prorettype => 'record', proargtypes => '',
-  proallargtypes => '{timestamptz,int8,int8,int8,int8,int8,int4,int4,float4,float4}',
-  proargmodes => '{o,o,o,o,o,o,o,o,o,o}',
-  proargnames => '{stats_reset,prefetch,skip_hit,skip_new,skip_fpw,skip_seq,distance,queue_depth,avg_distance,avg_queue_depth}',
-  prosrc => 'pg_stat_get_prefetch_recovery' },
-
 { oid => '2621', descr => 'reload configuration files',
   proname => 'pg_reload_conf', provolatile => 'v', prorettype => 'bool',
   proargtypes => '', prosrc => 'pg_reload_conf' },

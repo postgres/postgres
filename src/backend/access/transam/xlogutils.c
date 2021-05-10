@@ -335,13 +335,11 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 	RelFileNode rnode;
 	ForkNumber	forknum;
 	BlockNumber blkno;
-	Buffer		recent_buffer;
 	Page		page;
 	bool		zeromode;
 	bool		willinit;
 
-	if (!XLogRecGetRecentBuffer(record, block_id, &rnode, &forknum, &blkno,
-								&recent_buffer))
+	if (!XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blkno))
 	{
 		/* Caller specified a bogus block_id */
 		elog(PANIC, "failed to locate backup block with ID %d", block_id);
@@ -352,7 +350,7 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 	 * going to initialize it. And vice versa.
 	 */
 	zeromode = (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK);
-	willinit = (record->record->blocks[block_id].flags & BKPBLOCK_WILL_INIT) != 0;
+	willinit = (record->blocks[block_id].flags & BKPBLOCK_WILL_INIT) != 0;
 	if (willinit && !zeromode)
 		elog(PANIC, "block with WILL_INIT flag in WAL record must be zeroed by redo routine");
 	if (!willinit && zeromode)
@@ -363,8 +361,7 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 	{
 		Assert(XLogRecHasBlockImage(record, block_id));
 		*buf = XLogReadBufferExtended(rnode, forknum, blkno,
-									  get_cleanup_lock ? RBM_ZERO_AND_CLEANUP_LOCK : RBM_ZERO_AND_LOCK,
-									  recent_buffer);
+									  get_cleanup_lock ? RBM_ZERO_AND_CLEANUP_LOCK : RBM_ZERO_AND_LOCK);
 		page = BufferGetPage(*buf);
 		if (!RestoreBlockImage(record, block_id, page))
 			elog(ERROR, "failed to restore block image");
@@ -393,8 +390,7 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 	}
 	else
 	{
-		*buf = XLogReadBufferExtended(rnode, forknum, blkno, mode,
-									  recent_buffer);
+		*buf = XLogReadBufferExtended(rnode, forknum, blkno, mode);
 		if (BufferIsValid(*buf))
 		{
 			if (mode != RBM_ZERO_AND_LOCK && mode != RBM_ZERO_AND_CLEANUP_LOCK)
@@ -441,23 +437,13 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
  */
 Buffer
 XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
-					   BlockNumber blkno, ReadBufferMode mode,
-					   Buffer recent_buffer)
+					   BlockNumber blkno, ReadBufferMode mode)
 {
 	BlockNumber lastblock;
 	Buffer		buffer;
 	SMgrRelation smgr;
 
 	Assert(blkno != P_NEW);
-
-	/* Do we have a clue where the buffer might be already? */
-	if (BufferIsValid(recent_buffer) &&
-		mode == RBM_NORMAL &&
-		ReadRecentBuffer(rnode, forknum, blkno, recent_buffer))
-	{
-		buffer = recent_buffer;
-		goto recent_buffer_fast_path;
-	}
 
 	/* Open the relation at smgr level */
 	smgr = smgropen(rnode, InvalidBackendId);
@@ -517,7 +503,6 @@ XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 		}
 	}
 
-recent_buffer_fast_path:
 	if (mode == RBM_NORMAL)
 	{
 		/* check that page has been initialized */
@@ -701,7 +686,8 @@ XLogTruncateRelation(RelFileNode rnode, ForkNumber forkNum,
 void
 XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wantLength)
 {
-	const XLogRecPtr lastReadPage = state->readPagePtr;
+	const XLogRecPtr lastReadPage = (state->seg.ws_segno *
+									 state->segcxt.ws_segsize + state->segoff);
 
 	Assert(wantPage != InvalidXLogRecPtr && wantPage % XLOG_BLCKSZ == 0);
 	Assert(wantLength <= XLOG_BLCKSZ);
@@ -716,7 +702,7 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
 	 * current TLI has since become historical.
 	 */
 	if (lastReadPage == wantPage &&
-		state->page_verified &&
+		state->readLen != 0 &&
 		lastReadPage + state->readLen >= wantPage + Min(wantLength, XLOG_BLCKSZ - 1))
 		return;
 
@@ -838,12 +824,10 @@ wal_segment_close(XLogReaderState *state)
  * exists for normal backends, so we have to do a check/sleep/repeat style of
  * loop for now.
  */
-bool
-read_local_xlog_page(XLogReaderState *state)
+int
+read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
+					 int reqLen, XLogRecPtr targetRecPtr, char *cur_page)
 {
-	XLogRecPtr	targetPagePtr = state->readPagePtr;
-	int			reqLen		  = state->reqLen;
-	char	   *cur_page	  = state->readBuf;
 	XLogRecPtr	read_upto,
 				loc;
 	TimeLineID	tli;
@@ -942,8 +926,7 @@ read_local_xlog_page(XLogReaderState *state)
 	else if (targetPagePtr + reqLen > read_upto)
 	{
 		/* not enough data there */
-		XLogReaderSetInputData(state,  -1);
-		return false;
+		return -1;
 	}
 	else
 	{
@@ -956,14 +939,12 @@ read_local_xlog_page(XLogReaderState *state)
 	 * as 'count', read the whole page anyway. It's guaranteed to be
 	 * zero-padded up to the page boundary if it's incomplete.
 	 */
-	if (!WALRead(state, wal_segment_open, wal_segment_close,
-				 cur_page, targetPagePtr, XLOG_BLCKSZ, tli, &errinfo))
+	if (!WALRead(state, cur_page, targetPagePtr, XLOG_BLCKSZ, tli,
+				 &errinfo))
 		WALReadRaiseError(&errinfo);
 
 	/* number of valid bytes in the buffer */
-	state->readPagePtr = targetPagePtr;
-	XLogReaderSetInputData(state, count);
-	return true;
+	return count;
 }
 
 /*

@@ -250,12 +250,6 @@
 #archive_timeout = 0		# force a logfile segment switch after this
 				# number of seconds; 0 disables
 
-# - Recovery -
-
-#recovery_prefetch = off		# prefetch pages referenced in the WAL?
-#recovery_prefetch_fpw = off		# even pages logged with full page?
-#wal_decode_buffer_size = 512kB		# lookahead window used for prefetching
-
 # - Archive Recovery -
 
 # These are only used in recovery mode.

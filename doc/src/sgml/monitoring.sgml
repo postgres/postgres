@@ -338,13 +338,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_prefetch_recovery</structname><indexterm><primary>pg_stat_prefetch_recovery</primary></indexterm></entry>
-      <entry>Only one row, showing statistics about blocks prefetched during recovery.
-       See <xref linkend="pg-stat-prefetch-recovery-view"/> for details.
-      </entry>
-     </row>
-
-     <row>
       <entry><structname>pg_stat_subscription</structname><indexterm><primary>pg_stat_subscription</primary></indexterm></entry>
       <entry>At least one row per subscription, showing information about
        the subscription workers.
@@ -2948,78 +2941,6 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    copy of the subscribed tables.
   </para>
 
-  <table id="pg-stat-prefetch-recovery-view" xreflabel="pg_stat_prefetch_recovery">
-   <title><structname>pg_stat_prefetch_recovery</structname> View</title>
-   <tgroup cols="3">
-    <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-   <tbody>
-    <row>
-     <entry><structfield>prefetch</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks prefetched because they were not in the buffer pool</entry>
-    </row>
-    <row>
-     <entry><structfield>skip_hit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks not prefetched because they were already in the buffer pool</entry>
-    </row>
-    <row>
-     <entry><structfield>skip_new</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks not prefetched because they were new (usually relation extension)</entry>
-    </row>
-    <row>
-     <entry><structfield>skip_fpw</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks not prefetched because a full page image was included in the WAL and <xref linkend="guc-recovery-prefetch-fpw"/> was set to <literal>off</literal></entry>
-    </row>
-    <row>
-     <entry><structfield>skip_seq</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks not prefetched because of repeated access</entry>
-    </row>
-    <row>
-     <entry><structfield>distance</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>How far ahead of recovery the prefetcher is currently reading, in bytes</entry>
-    </row>
-    <row>
-     <entry><structfield>queue_depth</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>How many prefetches have been initiated but are not yet known to have completed</entry>
-    </row>
-    <row>
-     <entry><structfield>avg_distance</structfield></entry>
-     <entry><type>float4</type></entry>
-     <entry>How far ahead of recovery the prefetcher is on average, while recovery is not idle</entry>
-    </row>
-    <row>
-     <entry><structfield>avg_queue_depth</structfield></entry>
-     <entry><type>float4</type></entry>
-     <entry>Average number of prefetches in flight while recovery is not idle</entry>
-    </row>
-    </tbody>
-   </tgroup>
-  </table>
-
-  <para>
-   The <structname>pg_stat_prefetch_recovery</structname> view will contain only
-   one row.  It is filled with nulls if recovery is not running or WAL
-   prefetching is not enabled.  See <xref linkend="guc-recovery-prefetch"/>
-   for more information.  The counters in this view are reset whenever the
-   <xref linkend="guc-recovery-prefetch"/>,
-   <xref linkend="guc-recovery-prefetch-fpw"/> or
-   <xref linkend="guc-maintenance-io-concurrency"/> setting is changed and
-   the server configuration is reloaded.
-  </para>
-
   <table id="pg-stat-subscription" xreflabel="pg_stat_subscription">
    <title><structname>pg_stat_subscription</structname> View</title>
    <tgroup cols="1">
@@ -5152,11 +5073,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         all the counters shown in
         the <structname>pg_stat_bgwriter</structname>
         view, <literal>archiver</literal> to reset all the counters shown in
-        the <structname>pg_stat_archiver</structname> view,
-        <literal>wal</literal> to reset all the counters shown in the
-        <structname>pg_stat_wal</structname> view or
-        <literal>prefetch_recovery</literal> to reset all the counters shown
-        in the <structname>pg_stat_prefetch_recovery</structname> view.
+        the <structname>pg_stat_archiver</structname> view or <literal>wal</literal>
+        to reset all the counters shown in the <structname>pg_stat_wal</structname> view.
        </para>
        <para>
         This function is restricted to superusers by default, but other users

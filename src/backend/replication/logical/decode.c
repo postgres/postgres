@@ -123,7 +123,7 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogReaderState *recor
 	{
 		ReorderBufferAssignChild(ctx->reorder,
 								 txid,
-								 XLogRecGetXid(record),
+								 record->decoded_record->xl_xid,
 								 buf.origptr);
 	}
 

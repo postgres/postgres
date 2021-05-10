@@ -2804,10 +2804,6 @@ XLogPageHeader
 XLogPageHeaderData
 XLogPageReadCB
 XLogPageReadPrivate
-XLogPrefetcher
-XLogPrefetcherFilter
-XLogPrefetchState
-XLogPrefetchStats
 XLogReaderRoutine
 XLogReaderState
 XLogRecData
