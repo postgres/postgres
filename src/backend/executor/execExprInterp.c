@@ -2731,6 +2731,10 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 			lbs[i] = elem_lbs[i - 1];
 		}
 
+		/* check for subscript overflow */
+		(void) ArrayGetNItems(ndims, dims);
+		ArrayCheckBounds(ndims, dims, lbs);
+
 		if (havenulls)
 		{
 			dataoffset = ARR_OVERHEAD_WITHNULLS(ndims, nitems);

@@ -371,6 +371,8 @@ array_in(PG_FUNCTION_ARGS)
 
 	/* This checks for overflow of the array dimensions */
 	nitems = ArrayGetNItems(ndim, dim);
+	ArrayCheckBounds(ndim, dim, lBound);
+
 	/* Empty array? */
 	if (nitems == 0)
 		PG_RETURN_ARRAYTYPE_P(construct_empty_array(element_type));
@@ -1320,24 +1322,11 @@ array_recv(PG_FUNCTION_ARGS)
 	{
 		dim[i] = pq_getmsgint(buf, 4);
 		lBound[i] = pq_getmsgint(buf, 4);
-
-		/*
-		 * Check overflow of upper bound. (ArrayGetNItems() below checks that
-		 * dim[i] >= 0)
-		 */
-		if (dim[i] != 0)
-		{
-			int			ub = lBound[i] + dim[i] - 1;
-
-			if (lBound[i] > ub)
-				ereport(ERROR,
-						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("integer out of range")));
-		}
 	}
 
 	/* This checks for overflow of array dimensions */
 	nitems = ArrayGetNItems(ndim, dim);
+	ArrayCheckBounds(ndim, dim, lBound);
 
 	/*
 	 * We arrange to look up info about element type, including its receive
@@ -2242,7 +2231,7 @@ array_set_element(Datum arraydatum,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("wrong number of array subscripts")));
 
-		if (indx[0] < 0 || indx[0] * elmlen >= arraytyplen)
+		if (indx[0] < 0 || indx[0] >= arraytyplen / elmlen)
 			ereport(ERROR,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("array subscript out of range")));
@@ -2357,10 +2346,13 @@ array_set_element(Datum arraydatum,
 		}
 	}
 
+	/* This checks for overflow of the array dimensions */
+	newnitems = ArrayGetNItems(ndim, dim);
+	ArrayCheckBounds(ndim, dim, lb);
+
 	/*
 	 * Compute sizes of items and areas to copy
 	 */
-	newnitems = ArrayGetNItems(ndim, dim);
 	if (newhasnulls)
 		overheadlen = ARR_OVERHEAD_WITHNULLS(ndim, newnitems);
 	else
@@ -2613,6 +2605,13 @@ array_set_element_expanded(Datum arraydatum,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 						 errmsg("array subscript out of range")));
 		}
+	}
+
+	/* Check for overflow of the array dimensions */
+	if (dimschanged)
+	{
+		(void) ArrayGetNItems(ndim, dim);
+		ArrayCheckBounds(ndim, dim, lb);
 	}
 
 	/* Now we can calculate linear offset of target item in array */
@@ -2933,6 +2932,7 @@ array_set_slice(Datum arraydatum,
 
 	/* Do this mainly to check for overflow */
 	nitems = ArrayGetNItems(ndim, dim);
+	ArrayCheckBounds(ndim, dim, lb);
 
 	/*
 	 * Make sure source array has enough entries.  Note we ignore the shape of
@@ -3347,7 +3347,9 @@ construct_md_array(Datum *elems,
 				 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
 						ndims, MAXDIM)));
 
+	/* This checks for overflow of the array dimensions */
 	nelems = ArrayGetNItems(ndims, dims);
+	ArrayCheckBounds(ndims, dims, lbs);
 
 	/* if ndims <= 0 or any dims[i] == 0, return empty array */
 	if (nelems <= 0)
@@ -5421,6 +5423,10 @@ makeArrayResultArr(ArrayBuildStateArr *astate,
 		int			dataoffset,
 					nbytes;
 
+		/* Check for overflow of the array dimensions */
+		(void) ArrayGetNItems(astate->ndims, astate->dims);
+		ArrayCheckBounds(astate->ndims, astate->dims, astate->lbs);
+
 		/* Compute required space */
 		nbytes = astate->nbytes;
 		if (astate->nullbitmap != NULL)
@@ -5850,7 +5856,9 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 		lbsv = deflbs;
 	}
 
+	/* This checks for overflow of the array dimensions */
 	nitems = ArrayGetNItems(ndims, dimv);
+	ArrayCheckBounds(ndims, dimv, lbsv);
 
 	/* fast track for empty array */
 	if (nitems <= 0)
