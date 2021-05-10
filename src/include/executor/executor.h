@@ -265,6 +265,12 @@ extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
 											   TupleTableSlot *slot,
 											   PlanState *parent,
 											   TupleDesc inputDesc);
+extern ProjectionInfo *ExecBuildProjectionInfoExt(List *targetList,
+												  ExprContext *econtext,
+												  TupleTableSlot *slot,
+												  bool assignJunkEntries,
+												  PlanState *parent,
+												  TupleDesc inputDesc);
 extern ExprState *ExecPrepareExpr(Expr *node, EState *estate);
 extern ExprState *ExecPrepareQual(List *qual, EState *estate);
 extern ExprState *ExecPrepareCheck(List *qual, EState *estate);

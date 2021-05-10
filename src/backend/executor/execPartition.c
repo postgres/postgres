@@ -788,6 +788,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		 */
 		if (node->onConflictAction == ONCONFLICT_UPDATE)
 		{
+			OnConflictSetState *onconfl = makeNode(OnConflictSetState);
 			TupleConversionMap *map;
 
 			map = leaf_part_rri->ri_PartitionInfo->pi_RootToPartitionMap;
@@ -795,14 +796,14 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 			Assert(node->onConflictSet != NIL);
 			Assert(rootResultRelInfo->ri_onConflict != NULL);
 
-			leaf_part_rri->ri_onConflict = makeNode(OnConflictSetState);
+			leaf_part_rri->ri_onConflict = onconfl;
 
 			/*
 			 * Need a separate existing slot for each partition, as the
 			 * partition could be of a different AM, even if the tuple
 			 * descriptors match.
 			 */
-			leaf_part_rri->ri_onConflict->oc_Existing =
+			onconfl->oc_Existing =
 				table_slot_create(leaf_part_rri->ri_RelationDesc,
 								  &mtstate->ps.state->es_tupleTable);
 
@@ -822,17 +823,16 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				 * Projections and where clauses themselves don't store state
 				 * / are independent of the underlying storage.
 				 */
-				leaf_part_rri->ri_onConflict->oc_ProjSlot =
+				onconfl->oc_ProjSlot =
 					rootResultRelInfo->ri_onConflict->oc_ProjSlot;
-				leaf_part_rri->ri_onConflict->oc_ProjInfo =
+				onconfl->oc_ProjInfo =
 					rootResultRelInfo->ri_onConflict->oc_ProjInfo;
-				leaf_part_rri->ri_onConflict->oc_WhereClause =
+				onconfl->oc_WhereClause =
 					rootResultRelInfo->ri_onConflict->oc_WhereClause;
 			}
 			else
 			{
 				List	   *onconflset;
-				TupleDesc	tupDesc;
 				bool		found_whole_row;
 
 				/*
@@ -842,7 +842,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				 * pseudo-relation (INNER_VAR), and second to handle the main
 				 * target relation (firstVarno).
 				 */
-				onconflset = (List *) copyObject((Node *) node->onConflictSet);
+				onconflset = copyObject(node->onConflictSet);
 				if (part_attnos == NULL)
 					part_attnos =
 						convert_tuples_by_name_map(RelationGetDescr(partrel),
@@ -865,20 +865,19 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 										&found_whole_row);
 				/* We ignore the value of found_whole_row. */
 
-				/* Finally, adjust this tlist to match the partition. */
+				/* Finally, reorder the tlist to match the partition. */
 				onconflset = adjust_partition_tlist(onconflset, map);
 
 				/* create the tuple slot for the UPDATE SET projection */
-				tupDesc = ExecTypeFromTL(onconflset);
-				leaf_part_rri->ri_onConflict->oc_ProjSlot =
-					ExecInitExtraTupleSlot(mtstate->ps.state, tupDesc,
-										   &TTSOpsVirtual);
+				onconfl->oc_ProjSlot =
+					table_slot_create(partrel,
+									  &mtstate->ps.state->es_tupleTable);
 
 				/* build UPDATE SET projection state */
-				leaf_part_rri->ri_onConflict->oc_ProjInfo =
-					ExecBuildProjectionInfo(onconflset, econtext,
-											leaf_part_rri->ri_onConflict->oc_ProjSlot,
-											&mtstate->ps, partrelDesc);
+				onconfl->oc_ProjInfo =
+					ExecBuildProjectionInfoExt(onconflset, econtext,
+											   onconfl->oc_ProjSlot, false,
+											   &mtstate->ps, partrelDesc);
 
 				/*
 				 * If there is a WHERE clause, initialize state where it will
@@ -907,7 +906,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 											RelationGetForm(partrel)->reltype,
 											&found_whole_row);
 					/* We ignore the value of found_whole_row. */
-					leaf_part_rri->ri_onConflict->oc_WhereClause =
+					onconfl->oc_WhereClause =
 						ExecInitQual((List *) clause, &mtstate->ps);
 				}
 			}
@@ -1498,18 +1497,15 @@ ExecBuildSlotPartitionKeyDescription(Relation rel,
 
 /*
  * adjust_partition_tlist
- *		Adjust the targetlist entries for a given partition to account for
- *		attribute differences between parent and the partition
+ *		Re-order the targetlist entries for a given partition to account for
+ *		column position differences between the parent and the partition.
  *
- * The expressions have already been fixed, but here we fix the list to make
- * target resnos match the partition's attribute numbers.  This results in a
- * copy of the original target list in which the entries appear in resno
- * order, including both the existing entries (that may have their resno
- * changed in-place) and the newly added entries for columns that don't exist
- * in the parent.
+ * The expressions have already been fixed, but we must now re-order the
+ * entries in case the partition has different column order, and possibly
+ * add or remove dummy entries for dropped columns.
  *
- * Scribbles on the input tlist, so callers must make sure to make a copy
- * before passing it to us.
+ * Although a new List is returned, this feels free to scribble on resno
+ * fields of the given tlist, so that should be a working copy.
  */
 static List *
 adjust_partition_tlist(List *tlist, TupleConversionMap *map)
@@ -1518,31 +1514,35 @@ adjust_partition_tlist(List *tlist, TupleConversionMap *map)
 	TupleDesc	tupdesc = map->outdesc;
 	AttrNumber *attrMap = map->attrMap;
 	AttrNumber	attrno;
+	ListCell   *lc;
 
 	for (attrno = 1; attrno <= tupdesc->natts; attrno++)
 	{
 		Form_pg_attribute att_tup = TupleDescAttr(tupdesc, attrno - 1);
+		AttrNumber	parentattrno = attrMap[attrno - 1];
 		TargetEntry *tle;
 
-		if (attrMap[attrno - 1] != InvalidAttrNumber)
+		if (parentattrno != InvalidAttrNumber)
 		{
-			Assert(!att_tup->attisdropped);
-
 			/*
 			 * Use the corresponding entry from the parent's tlist, adjusting
-			 * the resno the match the partition's attno.
+			 * the resno to match the partition's attno.
 			 */
-			tle = (TargetEntry *) list_nth(tlist, attrMap[attrno - 1] - 1);
+			Assert(!att_tup->attisdropped);
+			tle = (TargetEntry *) list_nth(tlist, parentattrno - 1);
+			Assert(!tle->resjunk);
+			Assert(tle->resno == parentattrno);
 			tle->resno = attrno;
 		}
 		else
 		{
-			Const	   *expr;
-
 			/*
 			 * For a dropped attribute in the partition, generate a dummy
-			 * entry with resno matching the partition's attno.
+			 * entry with resno matching the partition's attno.  This should
+			 * match what expand_targetlist() does.
 			 */
+			Const	   *expr;
+
 			Assert(att_tup->attisdropped);
 			expr = makeConst(INT4OID,
 							 -1,
@@ -1558,6 +1558,18 @@ adjust_partition_tlist(List *tlist, TupleConversionMap *map)
 		}
 
 		new_tlist = lappend(new_tlist, tle);
+	}
+
+	/* Finally, attach any resjunk entries to the end of the new tlist */
+	foreach(lc, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		if (tle->resjunk)
+		{
+			tle->resno = list_length(new_tlist) + 1;
+			new_tlist = lappend(new_tlist, tle);
+		}
 	}
 
 	return new_tlist;
