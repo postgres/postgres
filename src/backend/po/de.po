@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2021-02-08 07:18+0000\n"
+"POT-Creation-Date: 2021-05-06 22:05+0000\n"
 "PO-Revision-Date: 2021-02-08 14:57+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
@@ -485,7 +485,7 @@ msgstr "Anzahl der Indexspalten (%d) überschreitet Maximum (%d)"
 msgid "index row requires %zu bytes, maximum size is %zu"
 msgstr "Indexzeile benötigt %zu Bytes, Maximalgröße ist %zu"
 
-#: access/common/printtup.c:292 tcop/fastpath.c:182 tcop/fastpath.c:532
+#: access/common/printtup.c:292 tcop/fastpath.c:182 tcop/fastpath.c:538
 #: tcop/postgres.c:1734
 #, c-format
 msgid "unsupported format code: %d"
@@ -1841,9 +1841,9 @@ msgstr "Parameter »%s« erfordert einen Zeitwert"
 #: commands/tablecmds.c:801 commands/tablecmds.c:9720 commands/user.c:1059
 #: commands/view.c:498 libpq/auth.c:308 replication/syncrep.c:947
 #: storage/lmgr/deadlock.c:1145 storage/lmgr/proc.c:1283 utils/adt/acl.c:5364
-#: utils/misc/guc.c:5675 utils/misc/guc.c:5768 utils/misc/guc.c:9794
-#: utils/misc/guc.c:9828 utils/misc/guc.c:9862 utils/misc/guc.c:9896
-#: utils/misc/guc.c:9931
+#: utils/misc/guc.c:5675 utils/misc/guc.c:5768 utils/misc/guc.c:9803
+#: utils/misc/guc.c:9837 utils/misc/guc.c:9871 utils/misc/guc.c:9914
+#: utils/misc/guc.c:9956
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -3294,7 +3294,7 @@ msgstr "Relation mit OID %u existiert nicht"
 msgid "database with OID %u does not exist"
 msgstr "Datenbank mit OID %u existiert nicht"
 
-#: catalog/aclchk.c:3793 catalog/aclchk.c:4637 tcop/fastpath.c:223
+#: catalog/aclchk.c:3793 catalog/aclchk.c:4637 tcop/fastpath.c:220
 #, c-format
 msgid "function with OID %u does not exist"
 msgstr "Funktion mit OID %u existiert nicht"
@@ -3800,7 +3800,7 @@ msgid "cannot create temporary tables during a parallel operation"
 msgstr "während einer parallelen Operation können keine temporären Tabellen erzeugt werden"
 
 #: catalog/namespace.c:3964 commands/tablespace.c:1175 commands/variable.c:63
-#: utils/misc/guc.c:9961
+#: utils/misc/guc.c:9986
 #, c-format
 msgid "List syntax is invalid."
 msgstr "Die Listensyntax ist ungültig."
@@ -7629,9 +7629,9 @@ msgstr "geerbte Spalte »%s« hat Typkonflikt"
 
 #: commands/tablecmds.c:1659 commands/tablecmds.c:1682
 #: commands/tablecmds.c:1880 commands/tablecmds.c:1904
-#: parser/parse_coerce.c:1630 parser/parse_coerce.c:1650
-#: parser/parse_coerce.c:1670 parser/parse_coerce.c:1715
-#: parser/parse_coerce.c:1752 parser/parse_param.c:218
+#: parser/parse_coerce.c:1637 parser/parse_coerce.c:1657
+#: parser/parse_coerce.c:1677 parser/parse_coerce.c:1722
+#: parser/parse_coerce.c:1759 parser/parse_param.c:218
 #, c-format
 msgid "%s versus %s"
 msgstr "%s gegen %s"
@@ -9167,9 +9167,10 @@ msgstr "keine Berechtigung, um Rolle zu entfernen"
 msgid "cannot use special role specifier in DROP ROLE"
 msgstr "in DROP ROLE kann kein Rollenplatzhalter verwendet werden"
 
-#: commands/user.c:1004 commands/user.c:1161 commands/variable.c:825
-#: commands/variable.c:897 utils/adt/acl.c:5204 utils/adt/acl.c:5256
-#: utils/adt/acl.c:5289 utils/adt/acl.c:5307 utils/init/miscinit.c:510
+#: commands/user.c:1004 commands/user.c:1161 commands/variable.c:833
+#: commands/variable.c:836 commands/variable.c:918 commands/variable.c:921
+#: utils/adt/acl.c:5204 utils/adt/acl.c:5256 utils/adt/acl.c:5289
+#: utils/adt/acl.c:5307 utils/init/miscinit.c:510
 #, c-format
 msgid "role \"%s\" does not exist"
 msgstr "Rolle »%s« existiert nicht"
@@ -9444,7 +9445,7 @@ msgstr "»%s«: von %u auf %u Seiten verkürzt"
 msgid "\"%s\": suspending truncate due to conflicting lock request"
 msgstr "»%s«: Truncate wird ausgesetzt wegen Sperrkonflikt"
 
-#: commands/variable.c:164 utils/misc/guc.c:9985
+#: commands/variable.c:164 utils/misc/guc.c:10010
 #, c-format
 msgid "Unrecognized key word: \"%s\"."
 msgstr "Unbekanntes Schlüsselwort: »%s«."
@@ -9539,7 +9540,12 @@ msgstr "»client_encoding« kann jetzt nicht geändert werden."
 msgid "cannot change client_encoding during a parallel operation"
 msgstr "client_encoding kann nicht während einer parallelen Operation geändert werden"
 
-#: commands/variable.c:915
+#: commands/variable.c:942
+#, c-format
+msgid "permission will be denied to set role \"%s\""
+msgstr "Berechtigung fehlt, um Rolle »%s« zu setzen"
+
+#: commands/variable.c:947
 #, c-format
 msgid "permission denied to set role \"%s\""
 msgstr "keine Berechtigung, um Rolle »%s« zu setzen"
@@ -10491,8 +10497,8 @@ msgstr "%s kann hier nicht als Rollenname verwendet werden"
 msgid "improper use of \"*\""
 msgstr "unzulässige Verwendung von »*«"
 
-#: gram.y:14452 gram.y:14469 tsearch/spell.c:956 tsearch/spell.c:973
-#: tsearch/spell.c:990 tsearch/spell.c:1007 tsearch/spell.c:1072
+#: gram.y:14452 gram.y:14469 tsearch/spell.c:982 tsearch/spell.c:999
+#: tsearch/spell.c:1016 tsearch/spell.c:1033 tsearch/spell.c:1098
 #, c-format
 msgid "syntax error"
 msgstr "Syntaxfehler"
@@ -12143,8 +12149,8 @@ msgstr "erweiterbarer Knotentyp »%s« existiert bereits"
 msgid "ExtensibleNodeMethods \"%s\" was not registered"
 msgstr "ExtensibleNodeMethods »%s« wurde nicht registriert"
 
-#: nodes/nodeFuncs.c:124 nodes/nodeFuncs.c:155 parser/parse_coerce.c:1820
-#: parser/parse_coerce.c:1848 parser/parse_coerce.c:1924
+#: nodes/nodeFuncs.c:124 nodes/nodeFuncs.c:155 parser/parse_coerce.c:1827
+#: parser/parse_coerce.c:1855 parser/parse_coerce.c:1931
 #: parser/parse_expr.c:2019 parser/parse_func.c:597 parser/parse_oper.c:952
 #: utils/fmgr/funcapi.c:465
 #, c-format
@@ -12904,111 +12910,111 @@ msgstr "Operator %s ist kein gültiger Sortieroperator"
 msgid "Ordering operators must be \"<\" or \">\" members of btree operator families."
 msgstr "Sortieroperatoren müssen die Mitglieder »<« oder »>« einer »btree«-Operatorfamilie sein."
 
-#: parser/parse_coerce.c:971 parser/parse_coerce.c:1001
-#: parser/parse_coerce.c:1019 parser/parse_coerce.c:1034
+#: parser/parse_coerce.c:978 parser/parse_coerce.c:1008
+#: parser/parse_coerce.c:1026 parser/parse_coerce.c:1041
 #: parser/parse_expr.c:2053 parser/parse_expr.c:2577 parser/parse_target.c:885
 #, c-format
 msgid "cannot cast type %s to %s"
 msgstr "kann Typ %s nicht in Typ %s umwandeln"
 
-#: parser/parse_coerce.c:1004
+#: parser/parse_coerce.c:1011
 #, c-format
 msgid "Input has too few columns."
 msgstr "Eingabe hat zu wenige Spalten."
 
-#: parser/parse_coerce.c:1022
+#: parser/parse_coerce.c:1029
 #, c-format
 msgid "Cannot cast type %s to %s in column %d."
 msgstr "Kann in Spalte %3$d Typ %1$s nicht in Typ %2$s umwandeln."
 
-#: parser/parse_coerce.c:1037
+#: parser/parse_coerce.c:1044
 #, c-format
 msgid "Input has too many columns."
 msgstr "Eingabe hat zu viele Spalten."
 
 #. translator: first %s is name of a SQL construct, eg WHERE
-#: parser/parse_coerce.c:1080
+#: parser/parse_coerce.c:1087
 #, c-format
 msgid "argument of %s must be type boolean, not type %s"
 msgstr "Argument von %s muss Typ boolean haben, nicht Typ %s"
 
 #. translator: %s is name of a SQL construct, eg WHERE
 #. translator: %s is name of a SQL construct, eg LIMIT
-#: parser/parse_coerce.c:1090 parser/parse_coerce.c:1139
+#: parser/parse_coerce.c:1097 parser/parse_coerce.c:1146
 #, c-format
 msgid "argument of %s must not return a set"
 msgstr "Argument von %s darf keine Ergebnismenge zurückgeben"
 
 #. translator: first %s is name of a SQL construct, eg LIMIT
-#: parser/parse_coerce.c:1127
+#: parser/parse_coerce.c:1134
 #, c-format
 msgid "argument of %s must be type %s, not type %s"
 msgstr "Argument von %s muss Typ %s haben, nicht Typ %s"
 
 #. translator: first %s is name of a SQL construct, eg CASE
-#: parser/parse_coerce.c:1260
+#: parser/parse_coerce.c:1267
 #, c-format
 msgid "%s types %s and %s cannot be matched"
 msgstr "%s-Typen %s und %s passen nicht zusammen"
 
 #. translator: first %s is name of a SQL construct, eg CASE
-#: parser/parse_coerce.c:1327
+#: parser/parse_coerce.c:1334
 #, c-format
 msgid "%s could not convert type %s to %s"
 msgstr "%s konnte Typ %s nicht in %s umwandeln"
 
-#: parser/parse_coerce.c:1629
+#: parser/parse_coerce.c:1636
 #, c-format
 msgid "arguments declared \"anyelement\" are not all alike"
 msgstr "als »anyelement« deklariert Argumente sind nicht alle gleich"
 
-#: parser/parse_coerce.c:1649
+#: parser/parse_coerce.c:1656
 #, c-format
 msgid "arguments declared \"anyarray\" are not all alike"
 msgstr "als »anyarray« deklarierte Argumente sind nicht alle gleich"
 
-#: parser/parse_coerce.c:1669
+#: parser/parse_coerce.c:1676
 #, c-format
 msgid "arguments declared \"anyrange\" are not all alike"
 msgstr "als »anyrange« deklarierte Argumente sind nicht alle gleich"
 
-#: parser/parse_coerce.c:1698 parser/parse_coerce.c:1909
-#: parser/parse_coerce.c:1943
+#: parser/parse_coerce.c:1705 parser/parse_coerce.c:1916
+#: parser/parse_coerce.c:1950
 #, c-format
 msgid "argument declared \"anyarray\" is not an array but type %s"
 msgstr "als »anyarray« deklariertes Argument ist kein Array sondern Typ %s"
 
-#: parser/parse_coerce.c:1714
+#: parser/parse_coerce.c:1721
 #, c-format
 msgid "argument declared \"anyarray\" is not consistent with argument declared \"anyelement\""
 msgstr "als »anyarray« deklariertes Argument ist nicht mit als »anyelement« deklariertem Argument konsistent"
 
-#: parser/parse_coerce.c:1735 parser/parse_coerce.c:1956
+#: parser/parse_coerce.c:1742 parser/parse_coerce.c:1963
 #, c-format
 msgid "argument declared \"anyrange\" is not a range type but type %s"
 msgstr "als »anyrange« deklariertes Argument ist kein Bereichstyp sondern Typ %s"
 
-#: parser/parse_coerce.c:1751
+#: parser/parse_coerce.c:1758
 #, c-format
 msgid "argument declared \"anyrange\" is not consistent with argument declared \"anyelement\""
 msgstr "als »anyrange« deklariertes Argument ist nicht mit als »anyelement« deklariertem Argument konsistent"
 
-#: parser/parse_coerce.c:1771
+#: parser/parse_coerce.c:1778
 #, c-format
 msgid "could not determine polymorphic type because input has type \"unknown\""
 msgstr "konnte polymorphischen Typ nicht bestimmen, weil Eingabe Typ »unknown« hat"
 
-#: parser/parse_coerce.c:1781
+#: parser/parse_coerce.c:1788
 #, c-format
 msgid "type matched to anynonarray is an array type: %s"
 msgstr "mit »anynonarray« gepaarter Typ ist ein Array-Typ: %s"
 
-#: parser/parse_coerce.c:1791
+#: parser/parse_coerce.c:1798
 #, c-format
 msgid "type matched to anyenum is not an enum type: %s"
 msgstr "mit »anyenum« gepaarter Typ ist kein Enum-Typ: %s"
 
-#: parser/parse_coerce.c:1831 parser/parse_coerce.c:1861
+#: parser/parse_coerce.c:1838 parser/parse_coerce.c:1868
 #, c-format
 msgid "could not find range type for data type %s"
 msgstr "konnte Bereichstyp für Datentyp %s nicht finden"
@@ -14659,7 +14665,7 @@ msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr "nicht unterstütztes Frontend-Protokoll %u.%u: Server unterstützt %u.0 bis %u.%u"
 
 #: postmaster/postmaster.c:2110 utils/misc/guc.c:5673 utils/misc/guc.c:5766
-#: utils/misc/guc.c:7113 utils/misc/guc.c:9891 utils/misc/guc.c:9925
+#: utils/misc/guc.c:7113 utils/misc/guc.c:9909 utils/misc/guc.c:9950
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "ungültiger Wert für Parameter »%s«: »%s«"
@@ -16571,12 +16577,12 @@ msgstr "ShmemIndex-Eintraggröße ist falsch für Datenstruktur »%s«: erwartet
 msgid "requested shared memory size overflows size_t"
 msgstr "angeforderte Shared-Memory-Größe übersteigt Kapazität von size_t"
 
-#: storage/ipc/standby.c:657 tcop/postgres.c:3013
+#: storage/ipc/standby.c:672 tcop/postgres.c:3013
 #, c-format
 msgid "canceling statement due to conflict with recovery"
 msgstr "storniere Anfrage wegen Konflikt mit der Wiederherstellung"
 
-#: storage/ipc/standby.c:658 tcop/postgres.c:2278
+#: storage/ipc/standby.c:673 tcop/postgres.c:2278
 #, c-format
 msgid "User transaction caused buffer deadlock with recovery."
 msgstr "Benutzertransaktion hat Verklemmung (Deadlock) mit Wiederherstellung verursacht."
@@ -16981,45 +16987,50 @@ msgstr "konnte Datei »%s« nicht öffnen (Zielblock %u): vorhergehendes Segment
 msgid "could not open file \"%s\" (target block %u): %m"
 msgstr "konnte Datei »%s« nicht öffnen (Zielblock %u): %m"
 
-#: tcop/fastpath.c:111 tcop/fastpath.c:463 tcop/fastpath.c:593
+#: tcop/fastpath.c:111 tcop/fastpath.c:469 tcop/fastpath.c:599
 #, c-format
 msgid "invalid argument size %d in function call message"
 msgstr "ungültige Argumentgröße %d in Funktionsaufruf-Message"
 
-#: tcop/fastpath.c:281 tcop/postgres.c:1007 tcop/postgres.c:1316
+#: tcop/fastpath.c:227
+#, c-format
+msgid "cannot call function %s via fastpath interface"
+msgstr "Funktion %s kann nicht via Fastpath-Interface aufgerufen werden"
+
+#: tcop/fastpath.c:287 tcop/postgres.c:1007 tcop/postgres.c:1316
 #: tcop/postgres.c:1574 tcop/postgres.c:1979 tcop/postgres.c:2346
 #: tcop/postgres.c:2421
 #, c-format
 msgid "current transaction is aborted, commands ignored until end of transaction block"
 msgstr "aktuelle Transaktion wurde abgebrochen, Befehle werden bis zum Ende der Transaktion ignoriert"
 
-#: tcop/fastpath.c:309
+#: tcop/fastpath.c:315
 #, c-format
 msgid "fastpath function call: \"%s\" (OID %u)"
 msgstr "Fastpath-Funktionsaufruf: »%s« (OID %u)"
 
-#: tcop/fastpath.c:391 tcop/postgres.c:1178 tcop/postgres.c:1441
+#: tcop/fastpath.c:397 tcop/postgres.c:1178 tcop/postgres.c:1441
 #: tcop/postgres.c:1820 tcop/postgres.c:2037
 #, c-format
 msgid "duration: %s ms"
 msgstr "Dauer: %s ms"
 
-#: tcop/fastpath.c:395
+#: tcop/fastpath.c:401
 #, c-format
 msgid "duration: %s ms  fastpath function call: \"%s\" (OID %u)"
 msgstr "Dauer: %s ms  Fastpath-Funktionsaufruf: »%s« (OID %u)"
 
-#: tcop/fastpath.c:431 tcop/fastpath.c:558
+#: tcop/fastpath.c:437 tcop/fastpath.c:564
 #, c-format
 msgid "function call message contains %d arguments but function requires %d"
 msgstr "Funktionsaufruf-Message enthält %d Argumente, aber Funktion benötigt %d"
 
-#: tcop/fastpath.c:439
+#: tcop/fastpath.c:445
 #, c-format
 msgid "function call message contains %d argument formats but %d arguments"
 msgstr "Funktionsaufruf-Message enthält %d Argumentformate aber %d Argumente"
 
-#: tcop/fastpath.c:526 tcop/fastpath.c:609
+#: tcop/fastpath.c:532 tcop/fastpath.c:615
 #, c-format
 msgid "incorrect binary data format in function argument %d"
 msgstr "falsches Binärdatenformat in Funktionsargument %d"
@@ -17458,12 +17469,12 @@ msgid "missing Dictionary parameter"
 msgstr "Parameter »Dictionary« fehlt"
 
 #: tsearch/spell.c:380 tsearch/spell.c:397 tsearch/spell.c:406
-#: tsearch/spell.c:1036
+#: tsearch/spell.c:1062
 #, c-format
 msgid "invalid affix flag \"%s\""
 msgstr "ungültiges Affix-Flag »%s«"
 
-#: tsearch/spell.c:384 tsearch/spell.c:1040
+#: tsearch/spell.c:384 tsearch/spell.c:1066
 #, c-format
 msgid "affix flag \"%s\" is out of range"
 msgstr "Affix-Flag »%s« ist außerhalb des gültigen Bereichs"
@@ -17483,33 +17494,33 @@ msgstr "ungültiges Affix-Flag »%s« mit Flag-Wert »long«"
 msgid "could not open dictionary file \"%s\": %m"
 msgstr "konnte Wörterbuchdatei »%s« nicht öffnen: %m"
 
-#: tsearch/spell.c:742 utils/adt/regexp.c:208
+#: tsearch/spell.c:763 utils/adt/regexp.c:208
 #, c-format
 msgid "invalid regular expression: %s"
 msgstr "ungültiger regulärer Ausdruck: %s"
 
-#: tsearch/spell.c:1163 tsearch/spell.c:1175 tsearch/spell.c:1729
-#: tsearch/spell.c:1734 tsearch/spell.c:1739
+#: tsearch/spell.c:1189 tsearch/spell.c:1201 tsearch/spell.c:1755
+#: tsearch/spell.c:1760 tsearch/spell.c:1765
 #, c-format
 msgid "invalid affix alias \"%s\""
 msgstr "ungültiges Affixalias »%s«"
 
-#: tsearch/spell.c:1216 tsearch/spell.c:1287 tsearch/spell.c:1431
+#: tsearch/spell.c:1242 tsearch/spell.c:1313 tsearch/spell.c:1457
 #, c-format
 msgid "could not open affix file \"%s\": %m"
 msgstr "konnte Affixdatei »%s« nicht öffnen: %m"
 
-#: tsearch/spell.c:1270
+#: tsearch/spell.c:1296
 #, c-format
 msgid "Ispell dictionary supports only \"default\", \"long\", and \"num\" flag values"
 msgstr "Ispell-Wörterbuch unterstützt nur die Flag-Werte »default«, »long« und »num«"
 
-#: tsearch/spell.c:1314
+#: tsearch/spell.c:1340
 #, c-format
 msgid "invalid number of flag vector aliases"
 msgstr "ungültige Anzahl Flag-Vektor-Aliasse"
 
-#: tsearch/spell.c:1547
+#: tsearch/spell.c:1573
 #, c-format
 msgid "affix file contains both old-style and new-style commands"
 msgstr "Affixdatei enthält Befehle im alten und im neuen Stil"
@@ -18075,8 +18086,8 @@ msgstr "Präzision von TIME(%d)%s auf erlaubten Höchstwert %d reduziert"
 msgid "date/time value \"current\" is no longer supported"
 msgstr "Datum/Zeitwert »current« wird nicht mehr unterstützt"
 
-#: utils/adt/date.c:167 utils/adt/date.c:175 utils/adt/formatting.c:3519
-#: utils/adt/formatting.c:3528
+#: utils/adt/date.c:167 utils/adt/date.c:175 utils/adt/formatting.c:3562
+#: utils/adt/formatting.c:3571
 #, c-format
 msgid "date out of range: \"%s\""
 msgstr "date ist außerhalb des gültigen Bereichs: »%s«"
@@ -18110,8 +18121,8 @@ msgstr "Datum ist außerhalb des gültigen Bereichs für Typ »timestamp«"
 
 #: utils/adt/date.c:1022 utils/adt/date.c:1068 utils/adt/date.c:1678
 #: utils/adt/date.c:1714 utils/adt/date.c:1748 utils/adt/date.c:2592
-#: utils/adt/datetime.c:1762 utils/adt/formatting.c:3394
-#: utils/adt/formatting.c:3426 utils/adt/formatting.c:3494
+#: utils/adt/datetime.c:1762 utils/adt/formatting.c:3437
+#: utils/adt/formatting.c:3469 utils/adt/formatting.c:3537
 #: utils/adt/json.c:1535 utils/adt/json.c:1557 utils/adt/jsonb.c:824
 #: utils/adt/jsonb.c:848 utils/adt/nabstime.c:458 utils/adt/nabstime.c:501
 #: utils/adt/nabstime.c:531 utils/adt/nabstime.c:574 utils/adt/timestamp.c:225
@@ -18579,37 +18590,37 @@ msgstr "Der angegebene Wert stimmte mit keinem der für dieses Feld zulässigen 
 msgid "localized string format value too long"
 msgstr "lokalisierter Formatwert ist zu lang"
 
-#: utils/adt/formatting.c:3041
+#: utils/adt/formatting.c:3084
 #, c-format
 msgid "\"TZ\"/\"tz\"/\"OF\" format patterns are not supported in to_date"
 msgstr "Formatmuster »TZ«/»tz«/»OF« werden in to_date nicht unterstützt"
 
-#: utils/adt/formatting.c:3150
+#: utils/adt/formatting.c:3193
 #, c-format
 msgid "invalid input string for \"Y,YYY\""
 msgstr "ungültige Eingabe für »Y,YYY«"
 
-#: utils/adt/formatting.c:3658
+#: utils/adt/formatting.c:3701
 #, c-format
 msgid "hour \"%d\" is invalid for the 12-hour clock"
 msgstr "Stunde »%d« ist bei einer 12-Stunden-Uhr ungültig"
 
-#: utils/adt/formatting.c:3660
+#: utils/adt/formatting.c:3703
 #, c-format
 msgid "Use the 24-hour clock, or give an hour between 1 and 12."
 msgstr "Verwenden Sie die 24-Stunden-Uhr oder geben Sie eine Stunde zwischen 1 und 12 an."
 
-#: utils/adt/formatting.c:3758
+#: utils/adt/formatting.c:3801
 #, c-format
 msgid "cannot calculate day of year without year information"
 msgstr "kann Tag des Jahres nicht berechnen ohne Jahrinformationen"
 
-#: utils/adt/formatting.c:4607
+#: utils/adt/formatting.c:4650
 #, c-format
 msgid "\"EEEE\" not supported for input"
 msgstr "»E« wird nicht bei der Eingabe unterstützt"
 
-#: utils/adt/formatting.c:4619
+#: utils/adt/formatting.c:4662
 #, c-format
 msgid "\"RN\" not supported for input"
 msgstr "»RN« wird nicht bei der Eingabe unterstützt"
@@ -21573,8 +21584,8 @@ msgid "A page write in process during an operating system crash might be only pa
 msgstr "Ein Seitenschreibvorgang während eines Betriebssystemabsturzes könnte eventuell nur teilweise geschrieben worden sein. Bei der Wiederherstellung sind die im WAL gespeicherten Zeilenänderungen nicht ausreichend. Diese Option schreibt Seiten, sobald sie nach einem Checkpoint geändert worden sind, damit eine volle Wiederherstellung möglich ist."
 
 #: utils/misc/guc.c:996
-msgid "Writes full pages to WAL when first modified after a checkpoint, even for a non-critical modifications."
-msgstr "Schreibt volle Seiten in den WAL, sobald sie nach einem Checkpoint geändert werden, auch für nicht kritische Änderungen."
+msgid "Writes full pages to WAL when first modified after a checkpoint, even for a non-critical modification."
+msgstr "Schreibt volle Seiten in den WAL, sobald sie nach einem Checkpoint geändert werden, auch für eine nicht kritische Änderung."
 
 #: utils/misc/guc.c:1006
 msgid "Compresses full-page writes written in WAL file."
@@ -22841,7 +22852,7 @@ msgstr "während einer parallelen Operation können keine Parameter gesetzt werd
 
 #: utils/misc/guc.c:5871 utils/misc/guc.c:6650 utils/misc/guc.c:6702
 #: utils/misc/guc.c:6751 utils/misc/guc.c:7084 utils/misc/guc.c:7844
-#: utils/misc/guc.c:8012 utils/misc/guc.c:9711
+#: utils/misc/guc.c:8012 utils/misc/guc.c:9720
 #, c-format
 msgid "unrecognized configuration parameter \"%s\""
 msgstr "unbekannter Konfigurationsparameter »%s«"
@@ -22856,7 +22867,7 @@ msgstr "Parameter »%s« kann nicht geändert werden"
 msgid "parameter \"%s\" cannot be changed now"
 msgstr "Parameter »%s« kann jetzt nicht geändert werden"
 
-#: utils/misc/guc.c:5937 utils/misc/guc.c:5983 utils/misc/guc.c:9727
+#: utils/misc/guc.c:5937 utils/misc/guc.c:5983 utils/misc/guc.c:9736
 #, c-format
 msgid "permission denied to set parameter \"%s\""
 msgstr "keine Berechtigung, um Parameter »%s« zu setzen"
@@ -22916,47 +22927,47 @@ msgstr "Versuch, den Parameter »%s« zu redefinieren"
 msgid "while setting parameter \"%s\" to \"%s\""
 msgstr "beim Setzen von Parameter »%s« auf »%s«"
 
-#: utils/misc/guc.c:9341
+#: utils/misc/guc.c:9343
 #, c-format
 msgid "parameter \"%s\" could not be set"
 msgstr "Parameter »%s« kann nicht gesetzt werden"
 
-#: utils/misc/guc.c:9431
+#: utils/misc/guc.c:9435
 #, c-format
 msgid "could not parse setting for parameter \"%s\""
 msgstr "konnte Wert von Parameter »%s« nicht lesen"
 
-#: utils/misc/guc.c:9789 utils/misc/guc.c:9823
+#: utils/misc/guc.c:9798 utils/misc/guc.c:9832
 #, c-format
 msgid "invalid value for parameter \"%s\": %d"
 msgstr "ungültiger Wert für Parameter »%s«: %d"
 
-#: utils/misc/guc.c:9857
+#: utils/misc/guc.c:9866
 #, c-format
 msgid "invalid value for parameter \"%s\": %g"
 msgstr "ungültiger Wert für Parameter »%s«: %g"
 
-#: utils/misc/guc.c:10061
+#: utils/misc/guc.c:10087
 #, c-format
 msgid "\"temp_buffers\" cannot be changed after any temporary tables have been accessed in the session."
 msgstr "»temp_buffers« kann nicht geändert werden, nachdem in der Sitzung auf temporäre Tabellen zugriffen wurde."
 
-#: utils/misc/guc.c:10073
+#: utils/misc/guc.c:10099
 #, c-format
 msgid "Bonjour is not supported by this build"
 msgstr "Bonjour wird von dieser Installation nicht unterstützt"
 
-#: utils/misc/guc.c:10086
+#: utils/misc/guc.c:10112
 #, c-format
 msgid "SSL is not supported by this build"
 msgstr "SSL wird von dieser Installation nicht unterstützt"
 
-#: utils/misc/guc.c:10098
+#: utils/misc/guc.c:10124
 #, c-format
 msgid "Cannot enable parameter when \"log_statement_stats\" is true."
 msgstr "Kann Parameter nicht einschalten, wenn »log_statement_stats« an ist."
 
-#: utils/misc/guc.c:10110
+#: utils/misc/guc.c:10136
 #, c-format
 msgid "Cannot enable \"log_statement_stats\" when \"log_parser_stats\", \"log_planner_stats\", or \"log_executor_stats\" is true."
 msgstr "Kann »log_statement_stats« nicht einschalten, wenn »log_parser_stats«, »log_planner_stats« oder »log_executor_stats« an ist."
