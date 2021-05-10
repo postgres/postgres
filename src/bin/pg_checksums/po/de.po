@@ -1,14 +1,14 @@
 # German message translation file for pg_checksums
-# Copyright (C) 2020 PostgreSQL Global Development Group
+# Copyright (C) 2021 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Peter Eisentraut <peter@eisentraut.org>, 2018 - 2020.
+# Peter Eisentraut <peter@eisentraut.org>, 2018 - 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-09 10:17+0000\n"
-"PO-Revision-Date: 2020-04-09 15:12+0200\n"
+"POT-Creation-Date: 2021-01-12 03:47+0000\n"
+"PO-Revision-Date: 2021-01-12 09:21+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -139,127 +139,127 @@ msgstr "%s Homepage: <%s>\n"
 msgid "%*s/%s MB (%d%%) computed"
 msgstr "%*s/%s MB (%d%%) berechnet"
 
-#: pg_checksums.c:204
+#: pg_checksums.c:207
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
 
-#: pg_checksums.c:220
+#: pg_checksums.c:223
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
 msgstr "konnte Block %u in Datei »%s« nicht lesen: %m"
 
-#: pg_checksums.c:223
+#: pg_checksums.c:226
 #, c-format
 msgid "could not read block %u in file \"%s\": read %d of %d"
 msgstr "konnte Block %u in Datei »%s« nicht lesen: %d von %d gelesen"
 
-#: pg_checksums.c:240
+#: pg_checksums.c:243
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
 msgstr "Prüfsummenprüfung fehlgeschlagen in Datei »%s«, Block %u: berechnete Prüfsumme ist %X, aber der Block enthält %X"
 
-#: pg_checksums.c:255
+#: pg_checksums.c:258
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
 msgstr "seek fehlgeschlagen für Block %u in Datei »%s«: %m"
 
-#: pg_checksums.c:264
+#: pg_checksums.c:267
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
 msgstr "konnte Block %u in Datei »%s« nicht schreiben: %m"
 
-#: pg_checksums.c:267
+#: pg_checksums.c:270
 #, c-format
 msgid "could not write block %u in file \"%s\": wrote %d of %d"
 msgstr "konnte Block %u in Datei »%s« nicht schreiben: %d von %d geschrieben"
 
-#: pg_checksums.c:280
+#: pg_checksums.c:283
 #, c-format
 msgid "checksums verified in file \"%s\""
 msgstr "Prüfsummen wurden überprüft in Datei »%s«"
 
-#: pg_checksums.c:282
+#: pg_checksums.c:285
 #, c-format
 msgid "checksums enabled in file \"%s\""
 msgstr "Prüfsummen wurden eingeschaltet in Datei »%s«"
 
-#: pg_checksums.c:307
+#: pg_checksums.c:310
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
 
-#: pg_checksums.c:334 pg_checksums.c:413
+#: pg_checksums.c:337 pg_checksums.c:416
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
 
-#: pg_checksums.c:361
+#: pg_checksums.c:364
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
 msgstr "ungültige Segmentnummer %d in Dateiname »%s«"
 
-#: pg_checksums.c:494
+#: pg_checksums.c:497
 #, c-format
 msgid "invalid filenode specification, must be numeric: %s"
 msgstr "ungültige Relfilenode-Angabe, muss numerisch sein: %s"
 
-#: pg_checksums.c:512 pg_checksums.c:528 pg_checksums.c:538 pg_checksums.c:547
+#: pg_checksums.c:515 pg_checksums.c:531 pg_checksums.c:541 pg_checksums.c:550
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
-#: pg_checksums.c:527
+#: pg_checksums.c:530
 #, c-format
 msgid "no data directory specified"
 msgstr "kein Datenverzeichnis angegeben"
 
-#: pg_checksums.c:536
+#: pg_checksums.c:539
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "zu viele Kommandozeilenargumente (das erste ist »%s«)"
 
-#: pg_checksums.c:546
+#: pg_checksums.c:549
 #, c-format
 msgid "option -f/--filenode can only be used with --check"
 msgstr "Option -f/--filenode kann nur mit --check verwendet werden"
 
-#: pg_checksums.c:556
+#: pg_checksums.c:559
 #, c-format
 msgid "pg_control CRC value is incorrect"
 msgstr "CRC-Wert in pg_control ist falsch"
 
-#: pg_checksums.c:562
+#: pg_checksums.c:565
 #, c-format
 msgid "cluster is not compatible with this version of pg_checksums"
 msgstr "die Cluster sind nicht mit dieser Version von pg_checksums kompatibel"
 
-#: pg_checksums.c:568
+#: pg_checksums.c:571
 #, c-format
 msgid "database cluster is not compatible"
 msgstr "Datenbank-Cluster ist nicht kompatibel"
 
-#: pg_checksums.c:569
+#: pg_checksums.c:572
 #, c-format
 msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.\n"
 msgstr "Der Datenbank-Cluster wurde mit Blockgröße %u initialisiert, aber pg_checksums wurde mit Blockgröße %u kompiliert.\n"
 
-#: pg_checksums.c:582
+#: pg_checksums.c:585
 #, c-format
 msgid "cluster must be shut down"
 msgstr "Cluster muss heruntergefahren sein"
 
-#: pg_checksums.c:589
+#: pg_checksums.c:592
 #, c-format
 msgid "data checksums are not enabled in cluster"
 msgstr "Datenprüfsummen sind im Cluster nicht eingeschaltet"
 
-#: pg_checksums.c:596
+#: pg_checksums.c:599
 #, c-format
 msgid "data checksums are already disabled in cluster"
 msgstr "Datenprüfsummen sind im Cluster bereits ausgeschaltet"
 
-#: pg_checksums.c:603
+#: pg_checksums.c:606
 #, c-format
 msgid "data checksums are already enabled in cluster"
 msgstr "Datenprüfsummen sind im Cluster bereits eingeschaltet"
@@ -286,8 +286,8 @@ msgstr "Falsche Prüfsummen:     %s\n"
 
 #: pg_checksums.c:638 pg_checksums.c:665
 #, c-format
-msgid "Data checksum version: %d\n"
-msgstr "Datenprüfsummenversion: %d\n"
+msgid "Data checksum version: %u\n"
+msgstr "Datenprüfsummenversion: %u\n"
 
 #: pg_checksums.c:657
 #, c-format

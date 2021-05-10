@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-11 01:08+0000\n"
-"PO-Revision-Date: 2020-04-11 08:43+0200\n"
+"POT-Creation-Date: 2020-06-21 02:08+0000\n"
+"PO-Revision-Date: 2020-06-21 11:27+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -760,7 +760,7 @@ msgstr "för många INTO-variabler angivna"
 
 #: pl_gram.y:3752
 #, c-format
-msgid "end label \"%s\" specified for unlabelled block"
+msgid "end label \"%s\" specified for unlabeled block"
 msgstr "slutetikett \"%s\" angiven för block utan etikett"
 
 #: pl_gram.y:3759

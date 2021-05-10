@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:44+0000\n"
-"PO-Revision-Date: 2019-06-06 17:22-0400\n"
+"POT-Creation-Date: 2020-09-13 10:45+0000\n"
+"PO-Revision-Date: 2020-09-12 22:54-0300\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -265,12 +265,12 @@ msgstr ""
 #: pg_config.c:105
 #, c-format
 msgid "Report bugs to <%s>.\n"
-msgstr ""
+msgstr "Reporte errores a <%s>.\n"
 
 #: pg_config.c:106
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
+msgstr "Sitio web de %s: <%s>\n"
 
 #: pg_config.c:112
 #, c-format
@@ -286,6 +286,3 @@ msgstr "%s: no se pudo encontrar el ejecutable propio\n"
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: el argumento no es válido: %s\n"
-
-#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"

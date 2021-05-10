@@ -1,14 +1,14 @@
 # German message translation file for pg_config
-# Peter Eisentraut <peter@eisentraut.org>, 2004 - 2020.
+# Peter Eisentraut <peter@eisentraut.org>, 2004 - 2021.
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 13\n"
+"Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-09 10:14+0000\n"
-"PO-Revision-Date: 2020-04-09 15:12+0200\n"
+"POT-Creation-Date: 2021-04-29 03:16+0000\n"
+"PO-Revision-Date: 2021-04-29 06:58+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -23,42 +23,42 @@ msgstr ""
 msgid "not recorded"
 msgstr "nicht aufgezeichnet"
 
-#: ../../common/exec.c:137 ../../common/exec.c:254 ../../common/exec.c:300
+#: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %m"
 
-#: ../../common/exec.c:156
+#: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "ungültige Programmdatei »%s«"
 
-#: ../../common/exec.c:206
+#: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "konnte Programmdatei »%s« nicht lesen"
 
-#: ../../common/exec.c:214
+#: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "konnte kein »%s« zum Ausführen finden"
 
-#: ../../common/exec.c:270 ../../common/exec.c:309
+#: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "konnte nicht in Verzeichnis »%s« wechseln: %m"
 
-#: ../../common/exec.c:287
+#: ../../common/exec.c:286
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "konnte symbolische Verknüpfung »%s« nicht lesen: %m"
 
-#: ../../common/exec.c:410
+#: ../../common/exec.c:409
 #, c-format
-msgid "pclose failed: %m"
-msgstr "pclose fehlgeschlagen: %m"
+msgid "%s() failed: %m"
+msgstr "%s() fehlgeschlagen: %m"
 
-#: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
+#: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 

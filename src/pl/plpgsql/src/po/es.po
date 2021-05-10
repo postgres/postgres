@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:38+0000\n"
-"PO-Revision-Date: 2019-06-06 17:26-0400\n"
+"POT-Creation-Date: 2020-09-13 10:39+0000\n"
+"PO-Revision-Date: 2020-09-18 18:36-0300\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -766,7 +766,7 @@ msgstr "se especificaron demasiadas variables INTO"
 
 #: pl_gram.y:3752
 #, c-format
-msgid "end label \"%s\" specified for unlabelled block"
+msgid "end label \"%s\" specified for unlabeled block"
 msgstr "etiqueta de término «%s» especificada para un bloque sin etiqueta"
 
 #: pl_gram.y:3759

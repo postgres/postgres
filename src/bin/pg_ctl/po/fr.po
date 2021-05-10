@@ -9,52 +9,52 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-16 06:15+0000\n"
-"PO-Revision-Date: 2020-04-16 14:06+0200\n"
+"POT-Creation-Date: 2021-04-26 06:46+0000\n"
+"PO-Revision-Date: 2021-04-26 11:37+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.4.2\n"
 
-#: ../../common/exec.c:137 ../../common/exec.c:254 ../../common/exec.c:300
+#: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "n'a pas pu identifier le répertoire courant : %m"
 
-#: ../../common/exec.c:156
+#: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binaire « %s » invalide"
 
-#: ../../common/exec.c:206
+#: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "n'a pas pu lire le binaire « %s »"
 
-#: ../../common/exec.c:214
+#: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "n'a pas pu trouver un « %s » à exécuter"
 
-#: ../../common/exec.c:270 ../../common/exec.c:309
+#: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "n'a pas pu modifier le répertoire par « %s » : %m"
 
-#: ../../common/exec.c:287
+#: ../../common/exec.c:286
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "n'a pas pu lire le lien symbolique « %s » : %m"
 
-#: ../../common/exec.c:410
+#: ../../common/exec.c:409
 #, c-format
-msgid "pclose failed: %m"
-msgstr "échec de pclose : %m"
+msgid "%s() failed: %m"
+msgstr "échec de %s() : %m"
 
-#: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
+#: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
 msgstr "mémoire épuisée"
 
@@ -172,7 +172,7 @@ msgstr "%s : n'a pas pu lire le fichier « %s »\n"
 msgid "%s: option file \"%s\" must have exactly one line\n"
 msgstr "%s : le fichier d'options « %s » ne doit comporter qu'une seule ligne\n"
 
-#: pg_ctl.c:785 pg_ctl.c:976 pg_ctl.c:1072
+#: pg_ctl.c:785 pg_ctl.c:974 pg_ctl.c:1070
 #, c-format
 msgid "%s: could not send stop signal (PID: %ld): %s\n"
 msgstr "%s : n'a pas pu envoyer le signal d'arrêt (PID : %ld) : %s\n"
@@ -188,7 +188,7 @@ msgstr ""
 "dans le même répertoire que « %s ».\n"
 "Vérifiez votre installation.\n"
 
-#: pg_ctl.c:819
+#: pg_ctl.c:818
 #, c-format
 msgid ""
 "The program \"%s\" was found by \"%s\"\n"
@@ -199,40 +199,40 @@ msgstr ""
 "que %s.\n"
 "Vérifiez votre installation.\n"
 
-#: pg_ctl.c:852
+#: pg_ctl.c:851
 #, c-format
 msgid "%s: database system initialization failed\n"
 msgstr "%s : l'initialisation du système a échoué\n"
 
-#: pg_ctl.c:867
+#: pg_ctl.c:866
 #, c-format
 msgid "%s: another server might be running; trying to start server anyway\n"
 msgstr ""
 "%s : un autre serveur semble en cours d'exécution ; le démarrage du serveur\n"
 "va toutefois être tenté\n"
 
-#: pg_ctl.c:916
+#: pg_ctl.c:914
 msgid "waiting for server to start..."
 msgstr "en attente du démarrage du serveur..."
 
-#: pg_ctl.c:921 pg_ctl.c:1026 pg_ctl.c:1118 pg_ctl.c:1248
+#: pg_ctl.c:919 pg_ctl.c:1024 pg_ctl.c:1116 pg_ctl.c:1241
 msgid " done\n"
 msgstr " effectué\n"
 
-#: pg_ctl.c:922
+#: pg_ctl.c:920
 msgid "server started\n"
 msgstr "serveur démarré\n"
 
-#: pg_ctl.c:925 pg_ctl.c:931 pg_ctl.c:1253
+#: pg_ctl.c:923 pg_ctl.c:929 pg_ctl.c:1246
 msgid " stopped waiting\n"
 msgstr " attente arrêtée\n"
 
-#: pg_ctl.c:926
+#: pg_ctl.c:924
 #, c-format
 msgid "%s: server did not start in time\n"
 msgstr "%s : le serveur ne s'est pas lancé à temps\n"
 
-#: pg_ctl.c:932
+#: pg_ctl.c:930
 #, c-format
 msgid ""
 "%s: could not start server\n"
@@ -241,31 +241,31 @@ msgstr ""
 "%s : n'a pas pu démarrer le serveur\n"
 "Examinez le journal applicatif.\n"
 
-#: pg_ctl.c:940
+#: pg_ctl.c:938
 msgid "server starting\n"
 msgstr "serveur en cours de démarrage\n"
 
-#: pg_ctl.c:961 pg_ctl.c:1048 pg_ctl.c:1139 pg_ctl.c:1178 pg_ctl.c:1277
+#: pg_ctl.c:959 pg_ctl.c:1046 pg_ctl.c:1137 pg_ctl.c:1176 pg_ctl.c:1270
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
 msgstr "%s : le fichier de PID « %s » n'existe pas\n"
 
-#: pg_ctl.c:962 pg_ctl.c:1050 pg_ctl.c:1140 pg_ctl.c:1179 pg_ctl.c:1278
+#: pg_ctl.c:960 pg_ctl.c:1048 pg_ctl.c:1138 pg_ctl.c:1177 pg_ctl.c:1271
 msgid "Is server running?\n"
 msgstr "Le serveur est-il en cours d'exécution ?\n"
 
-#: pg_ctl.c:968
+#: pg_ctl.c:966
 #, c-format
 msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
 msgstr ""
 "%s : ne peut pas arrêter le serveur ; le serveur mono-utilisateur est en\n"
 "cours d'exécution (PID : %ld)\n"
 
-#: pg_ctl.c:983
+#: pg_ctl.c:981
 msgid "server shutting down\n"
 msgstr "serveur en cours d'arrêt\n"
 
-#: pg_ctl.c:998 pg_ctl.c:1087
+#: pg_ctl.c:996 pg_ctl.c:1085
 msgid ""
 "WARNING: online backup mode is active\n"
 "Shutdown will not complete until pg_stop_backup() is called.\n"
@@ -275,20 +275,20 @@ msgstr ""
 "L'arrêt ne surviendra qu'au moment où pg_stop_backup() sera appelé.\n"
 "\n"
 
-#: pg_ctl.c:1002 pg_ctl.c:1091
+#: pg_ctl.c:1000 pg_ctl.c:1089
 msgid "waiting for server to shut down..."
 msgstr "en attente de l'arrêt du serveur..."
 
-#: pg_ctl.c:1018 pg_ctl.c:1109
+#: pg_ctl.c:1016 pg_ctl.c:1107
 msgid " failed\n"
 msgstr " a échoué\n"
 
-#: pg_ctl.c:1020 pg_ctl.c:1111
+#: pg_ctl.c:1018 pg_ctl.c:1109
 #, c-format
 msgid "%s: server does not shut down\n"
 msgstr "%s : le serveur ne s'est pas arrêté\n"
 
-#: pg_ctl.c:1022 pg_ctl.c:1113
+#: pg_ctl.c:1020 pg_ctl.c:1111
 msgid ""
 "HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 "waiting for session-initiated disconnection.\n"
@@ -296,253 +296,253 @@ msgstr ""
 "ASTUCE : l'option « -m fast » déconnecte immédiatement les sessions plutôt que\n"
 "d'attendre la déconnexion des sessions déjà présentes.\n"
 
-#: pg_ctl.c:1028 pg_ctl.c:1119
+#: pg_ctl.c:1026 pg_ctl.c:1117
 msgid "server stopped\n"
 msgstr "serveur arrêté\n"
 
-#: pg_ctl.c:1051
+#: pg_ctl.c:1049
 msgid "trying to start server anyway\n"
 msgstr "tentative de lancement du serveur malgré tout\n"
 
-#: pg_ctl.c:1060
+#: pg_ctl.c:1058
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
 msgstr ""
 "%s : ne peut pas relancer le serveur ; le serveur mono-utilisateur est en\n"
 "cours d'exécution (PID : %ld)\n"
 
-#: pg_ctl.c:1063 pg_ctl.c:1149
+#: pg_ctl.c:1061 pg_ctl.c:1147
 msgid "Please terminate the single-user server and try again.\n"
 msgstr "Merci d'arrêter le serveur mono-utilisateur et de réessayer.\n"
 
-#: pg_ctl.c:1123
+#: pg_ctl.c:1121
 #, c-format
 msgid "%s: old server process (PID: %ld) seems to be gone\n"
 msgstr "%s : l'ancien processus serveur (PID : %ld) semble être parti\n"
 
-#: pg_ctl.c:1125
+#: pg_ctl.c:1123
 msgid "starting server anyway\n"
 msgstr "lancement du serveur malgré tout\n"
 
-#: pg_ctl.c:1146
+#: pg_ctl.c:1144
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
 msgstr ""
 "%s : ne peut pas recharger le serveur ; le serveur mono-utilisateur est en\n"
 "cours d'exécution (PID : %ld)\n"
 
-#: pg_ctl.c:1155
+#: pg_ctl.c:1153
 #, c-format
 msgid "%s: could not send reload signal (PID: %ld): %s\n"
 msgstr "%s : n'a pas pu envoyer le signal de rechargement (PID : %ld) : %s\n"
 
-#: pg_ctl.c:1160
+#: pg_ctl.c:1158
 msgid "server signaled\n"
 msgstr "envoi d'un signal au serveur\n"
 
-#: pg_ctl.c:1185
+#: pg_ctl.c:1183
 #, c-format
 msgid "%s: cannot promote server; single-user server is running (PID: %ld)\n"
 msgstr ""
 "%s : ne peut pas promouvoir le serveur ; le serveur mono-utilisateur est en\n"
 "cours d'exécution (PID : %ld)\n"
 
-#: pg_ctl.c:1193
+#: pg_ctl.c:1191
 #, c-format
 msgid "%s: cannot promote server; server is not in standby mode\n"
 msgstr "%s : ne peut pas promouvoir le serveur ; le serveur n'est pas en standby\n"
 
-#: pg_ctl.c:1208
+#: pg_ctl.c:1201
 #, c-format
 msgid "%s: could not create promote signal file \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le fichier « %s » signalant la promotion : %s\n"
 
-#: pg_ctl.c:1214
+#: pg_ctl.c:1207
 #, c-format
 msgid "%s: could not write promote signal file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire le fichier « %s » signalant la promotion : %s\n"
 
-#: pg_ctl.c:1222
+#: pg_ctl.c:1215
 #, c-format
 msgid "%s: could not send promote signal (PID: %ld): %s\n"
 msgstr "%s : n'a pas pu envoyer le signal de promotion (PID : %ld) : %s\n"
 
-#: pg_ctl.c:1225
+#: pg_ctl.c:1218
 #, c-format
 msgid "%s: could not remove promote signal file \"%s\": %s\n"
 msgstr "%s : n'a pas pu supprimer le fichier « %s » signalant la promotion : %s\n"
 
-#: pg_ctl.c:1235
+#: pg_ctl.c:1228
 msgid "waiting for server to promote..."
 msgstr "en attente du serveur à promouvoir..."
 
-#: pg_ctl.c:1249
+#: pg_ctl.c:1242
 msgid "server promoted\n"
 msgstr "serveur promu\n"
 
-#: pg_ctl.c:1254
+#: pg_ctl.c:1247
 #, c-format
 msgid "%s: server did not promote in time\n"
 msgstr "%s : le serveur ne s'est pas promu à temps\n"
 
-#: pg_ctl.c:1260
+#: pg_ctl.c:1253
 msgid "server promoting\n"
 msgstr "serveur en cours de promotion\n"
 
-#: pg_ctl.c:1284
+#: pg_ctl.c:1277
 #, c-format
 msgid "%s: cannot rotate log file; single-user server is running (PID: %ld)\n"
 msgstr ""
 "%s : ne peut pas faire une rotation de fichier de traces ; le serveur mono-utilisateur est en\n"
 "cours d'exécution (PID : %ld)\n"
 
-#: pg_ctl.c:1294
+#: pg_ctl.c:1287
 #, c-format
 msgid "%s: could not create log rotation signal file \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le fichier « %s » de demande de rotation des fichiers de trace : %s\n"
 
-#: pg_ctl.c:1300
+#: pg_ctl.c:1293
 #, c-format
 msgid "%s: could not write log rotation signal file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire le fichier « %s » de demande de rotation des fichiers de trace : %s\n"
 
-#: pg_ctl.c:1308
+#: pg_ctl.c:1301
 #, c-format
 msgid "%s: could not send log rotation signal (PID: %ld): %s\n"
 msgstr "%s : n'a pas pu envoyer le signal de rotation des fichiers de trace (PID : %ld) : %s\n"
 
-#: pg_ctl.c:1311
+#: pg_ctl.c:1304
 #, c-format
 msgid "%s: could not remove log rotation signal file \"%s\": %s\n"
 msgstr "%s : n'a pas pu supprimer le fichier « %s » signalant la demande de rotation des fichiers de trace : %s\n"
 
-#: pg_ctl.c:1316
+#: pg_ctl.c:1309
 msgid "server signaled to rotate log file\n"
 msgstr "envoi d'un signal au serveur pour faire une rotation des traces\n"
 
-#: pg_ctl.c:1363
+#: pg_ctl.c:1356
 #, c-format
 msgid "%s: single-user server is running (PID: %ld)\n"
 msgstr "%s : le serveur mono-utilisateur est en cours d'exécution (PID : %ld)\n"
 
-#: pg_ctl.c:1377
+#: pg_ctl.c:1370
 #, c-format
 msgid "%s: server is running (PID: %ld)\n"
 msgstr "%s : le serveur est en cours d'exécution (PID : %ld)\n"
 
-#: pg_ctl.c:1393
+#: pg_ctl.c:1386
 #, c-format
 msgid "%s: no server running\n"
 msgstr "%s : aucun serveur en cours d'exécution\n"
 
-#: pg_ctl.c:1410
+#: pg_ctl.c:1403
 #, c-format
 msgid "%s: could not send signal %d (PID: %ld): %s\n"
 msgstr "%s : n'a pas pu envoyer le signal %d (PID : %ld) : %s\n"
 
-#: pg_ctl.c:1441
+#: pg_ctl.c:1434
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s : n'a pas pu trouver l'exécutable du programme\n"
 
-#: pg_ctl.c:1451
+#: pg_ctl.c:1444
 #, c-format
 msgid "%s: could not find postgres program executable\n"
 msgstr "%s : n'a pas pu trouver l'exécutable postgres\n"
 
-#: pg_ctl.c:1521 pg_ctl.c:1555
+#: pg_ctl.c:1514 pg_ctl.c:1548
 #, c-format
 msgid "%s: could not open service manager\n"
 msgstr "%s : n'a pas pu ouvrir le gestionnaire de services\n"
 
-#: pg_ctl.c:1527
+#: pg_ctl.c:1520
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
 msgstr "%s : le service « %s » est déjà enregistré\n"
 
-#: pg_ctl.c:1538
+#: pg_ctl.c:1531
 #, c-format
 msgid "%s: could not register service \"%s\": error code %lu\n"
 msgstr "%s : n'a pas pu enregistrer le service « %s » : code d'erreur %lu\n"
 
-#: pg_ctl.c:1561
+#: pg_ctl.c:1554
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
 msgstr "%s : le service « %s » n'est pas enregistré\n"
 
-#: pg_ctl.c:1568
+#: pg_ctl.c:1561
 #, c-format
 msgid "%s: could not open service \"%s\": error code %lu\n"
 msgstr "%s :  n'a pas pu ouvrir le service « %s » : code d'erreur %lu\n"
 
-#: pg_ctl.c:1577
+#: pg_ctl.c:1570
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %lu\n"
 msgstr "%s : n'a pas pu supprimer le service « %s » : code d'erreur %lu\n"
 
-#: pg_ctl.c:1664
+#: pg_ctl.c:1657
 msgid "Waiting for server startup...\n"
 msgstr "En attente du démarrage du serveur...\n"
 
-#: pg_ctl.c:1667
+#: pg_ctl.c:1660
 msgid "Timed out waiting for server startup\n"
 msgstr "Dépassement du délai pour le démarrage du serveur\n"
 
-#: pg_ctl.c:1671
+#: pg_ctl.c:1664
 msgid "Server started and accepting connections\n"
 msgstr "Serveur lancé et acceptant les connexions\n"
 
-#: pg_ctl.c:1726
+#: pg_ctl.c:1719
 #, c-format
 msgid "%s: could not start service \"%s\": error code %lu\n"
 msgstr "%s : n'a pas pu démarrer le service « %s » : code d'erreur %lu\n"
 
-#: pg_ctl.c:1796
+#: pg_ctl.c:1789
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
 msgstr "%s : ATTENTION : ne peut pas créer les jetons restreints sur cette plateforme\n"
 
-#: pg_ctl.c:1809
+#: pg_ctl.c:1802
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
 msgstr "%s : n'a pas pu ouvrir le jeton du processus : code d'erreur %lu\n"
 
-#: pg_ctl.c:1823
+#: pg_ctl.c:1816
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
 msgstr "%s : n'a pas pu allouer les SID : code d'erreur %lu\n"
 
-#: pg_ctl.c:1850
+#: pg_ctl.c:1843
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
 msgstr "%s : n'a pas pu créer le jeton restreint : code d'erreur %lu\n"
 
-#: pg_ctl.c:1881
+#: pg_ctl.c:1874
 #, c-format
 msgid "%s: WARNING: could not locate all job object functions in system API\n"
 msgstr "%s : ATTENTION : n'a pas pu localiser toutes les fonctions objet de job dans l'API système\n"
 
-#: pg_ctl.c:1978
+#: pg_ctl.c:1971
 #, c-format
 msgid "%s: could not get LUIDs for privileges: error code %lu\n"
 msgstr "%s :  n'a pas pu obtenir les LUID pour les droits : code d'erreur %lu\n"
 
-#: pg_ctl.c:1986 pg_ctl.c:2001
+#: pg_ctl.c:1979 pg_ctl.c:1994
 #, c-format
 msgid "%s: could not get token information: error code %lu\n"
 msgstr "%s : n'a pas pu obtenir l'information sur le jeton : code d'erreur %lu\n"
 
-#: pg_ctl.c:1995
+#: pg_ctl.c:1988
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s : mémoire épuisée\n"
 
-#: pg_ctl.c:2025
+#: pg_ctl.c:2018
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayer « %s --help » pour plus d'informations.\n"
 
-#: pg_ctl.c:2033
+#: pg_ctl.c:2026
 #, c-format
 msgid ""
 "%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
@@ -552,17 +552,17 @@ msgstr ""
 "PostgreSQL.\n"
 "\n"
 
-#: pg_ctl.c:2034
+#: pg_ctl.c:2027
 #, c-format
 msgid "Usage:\n"
 msgstr "Usage :\n"
 
-#: pg_ctl.c:2035
+#: pg_ctl.c:2028
 #, c-format
 msgid "  %s init[db]   [-D DATADIR] [-s] [-o OPTIONS]\n"
 msgstr "  %s init[db]   [-D RÉP_DONNÉES] [-s] [-o OPTIONS]\n"
 
-#: pg_ctl.c:2036
+#: pg_ctl.c:2029
 #, c-format
 msgid ""
 "  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
@@ -571,12 +571,12 @@ msgstr ""
 "  %s start    [-D RÉP_DONNÉES] [-l NOM_FICHIER] [-W] [-t SECS] [-s]\n"
 "                  [-o OPTIONS] [-p CHEMIN] [-c]\n"
 
-#: pg_ctl.c:2038
+#: pg_ctl.c:2031
 #, c-format
 msgid "  %s stop       [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 msgstr "  %s stop     [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
 
-#: pg_ctl.c:2039
+#: pg_ctl.c:2032
 #, c-format
 msgid ""
 "  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
@@ -585,32 +585,32 @@ msgstr ""
 "  %s restart  [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
 "                  [-o OPTIONS] [-c]\n"
 
-#: pg_ctl.c:2041
+#: pg_ctl.c:2034
 #, c-format
 msgid "  %s reload     [-D DATADIR] [-s]\n"
 msgstr "  %s reload   [-D RÉP_DONNÉES] [-s]\n"
 
-#: pg_ctl.c:2042
+#: pg_ctl.c:2035
 #, c-format
 msgid "  %s status     [-D DATADIR]\n"
 msgstr "  %s status   [-D RÉP_DONNÉES]\n"
 
-#: pg_ctl.c:2043
+#: pg_ctl.c:2036
 #, c-format
 msgid "  %s promote    [-D DATADIR] [-W] [-t SECS] [-s]\n"
 msgstr "  %s promote  [-D RÉP_DONNÉES] [-W] [-t SECS] [-s]\n"
 
-#: pg_ctl.c:2044
+#: pg_ctl.c:2037
 #, c-format
 msgid "  %s logrotate  [-D DATADIR] [-s]\n"
 msgstr "  %s reload   [-D RÉP_DONNÉES] [-s]\n"
 
-#: pg_ctl.c:2045
+#: pg_ctl.c:2038
 #, c-format
 msgid "  %s kill       SIGNALNAME PID\n"
 msgstr "  %s kill     NOM_SIGNAL PID\n"
 
-#: pg_ctl.c:2047
+#: pg_ctl.c:2040
 #, c-format
 msgid ""
 "  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
@@ -619,12 +619,12 @@ msgstr ""
 "  %s register [-D RÉP_DONNÉES] [-N NOM_SERVICE] [-U NOM_UTILISATEUR] [-P MOT_DE_PASSE]\n"
 "                  [-S TYPE_DÉMARRAGE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
 
-#: pg_ctl.c:2049
+#: pg_ctl.c:2042
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
 msgstr "  %s unregister [-N NOM_SERVICE]\n"
 
-#: pg_ctl.c:2052
+#: pg_ctl.c:2045
 #, c-format
 msgid ""
 "\n"
@@ -633,58 +633,58 @@ msgstr ""
 "\n"
 "Options générales :\n"
 
-#: pg_ctl.c:2053
+#: pg_ctl.c:2046
 #, c-format
 msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
 msgstr "  -D, --pgdata=RÉP_DONNÉES emplacement de stockage du cluster\n"
 
-#: pg_ctl.c:2055
+#: pg_ctl.c:2048
 #, c-format
 msgid "  -e SOURCE              event source for logging when running as a service\n"
 msgstr ""
 "  -e SOURCE                source de l'événement pour la trace lors de\n"
 "                           l'exécution en tant que service\n"
 
-#: pg_ctl.c:2057
+#: pg_ctl.c:2050
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
 msgstr ""
 "  -s, --silent             affiche uniquement les erreurs, aucun message\n"
 "                           d'informations\n"
 
-#: pg_ctl.c:2058
+#: pg_ctl.c:2051
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
 msgstr ""
 "  -t, --timeout=SECS       durée en secondes à attendre lors de\n"
 "                           l'utilisation de l'option -w\n"
 
-#: pg_ctl.c:2059
+#: pg_ctl.c:2052
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version              affiche la version puis quitte\n"
 
-#: pg_ctl.c:2060
+#: pg_ctl.c:2053
 #, c-format
 msgid "  -w, --wait             wait until operation completes (default)\n"
 msgstr "  -w, --wait             attend la fin de l'opération (par défaut)\n"
 
-#: pg_ctl.c:2061
+#: pg_ctl.c:2054
 #, c-format
 msgid "  -W, --no-wait          do not wait until operation completes\n"
 msgstr "  -W, --no-wait          n'attend pas la fin de l'opération\n"
 
-#: pg_ctl.c:2062
+#: pg_ctl.c:2055
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help                 affiche cette aide puis quitte\n"
 
-#: pg_ctl.c:2063
+#: pg_ctl.c:2056
 #, c-format
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
 msgstr "Si l'option -D est omise, la variable d'environnement PGDATA est utilisée.\n"
 
-#: pg_ctl.c:2065
+#: pg_ctl.c:2058
 #, c-format
 msgid ""
 "\n"
@@ -693,24 +693,24 @@ msgstr ""
 "\n"
 "Options pour le démarrage ou le redémarrage :\n"
 
-#: pg_ctl.c:2067
+#: pg_ctl.c:2060
 #, c-format
 msgid "  -c, --core-files       allow postgres to produce core files\n"
 msgstr "  -c, --core-files         autorise postgres à produire des fichiers core\n"
 
-#: pg_ctl.c:2069
+#: pg_ctl.c:2062
 #, c-format
 msgid "  -c, --core-files       not applicable on this platform\n"
 msgstr "  -c, --core-files         non applicable à cette plateforme\n"
 
-#: pg_ctl.c:2071
+#: pg_ctl.c:2064
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
 msgstr ""
 "  -l, --log=NOM_FICHIER    écrit (ou ajoute) le journal du serveur dans\n"
 "                           NOM_FICHIER\n"
 
-#: pg_ctl.c:2072
+#: pg_ctl.c:2065
 #, c-format
 msgid ""
 "  -o, --options=OPTIONS  command line options to pass to postgres\n"
@@ -720,12 +720,12 @@ msgstr ""
 "                           postgres (exécutable du serveur PostgreSQL)\n"
 "                           ou à initdb\n"
 
-#: pg_ctl.c:2074
+#: pg_ctl.c:2067
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
 msgstr "  -p CHEMIN_POSTGRES       normalement pas nécessaire\n"
 
-#: pg_ctl.c:2075
+#: pg_ctl.c:2068
 #, c-format
 msgid ""
 "\n"
@@ -734,14 +734,14 @@ msgstr ""
 "\n"
 "Options pour l'arrêt ou le redémarrage :\n"
 
-#: pg_ctl.c:2076
+#: pg_ctl.c:2069
 #, c-format
 msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
 msgstr ""
 "  -m, --mode=MODE          MODE peut valoir « smart », « fast » ou\n"
 "                           « immediate »\n"
 
-#: pg_ctl.c:2078
+#: pg_ctl.c:2071
 #, c-format
 msgid ""
 "\n"
@@ -750,24 +750,24 @@ msgstr ""
 "\n"
 "Les modes d'arrêt sont :\n"
 
-#: pg_ctl.c:2079
+#: pg_ctl.c:2072
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
 msgstr "  smart                    quitte après déconnexion de tous les clients\n"
 
-#: pg_ctl.c:2080
+#: pg_ctl.c:2073
 #, c-format
 msgid "  fast        quit directly, with proper shutdown (default)\n"
 msgstr "  fast                     quitte directement, et arrête correctement (par défaut)\n"
 
-#: pg_ctl.c:2081
+#: pg_ctl.c:2074
 #, c-format
 msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
 msgstr ""
 "  immediate                quitte sans arrêt complet ; entraîne une\n"
 "                           restauration au démarrage suivant\n"
 
-#: pg_ctl.c:2083
+#: pg_ctl.c:2076
 #, c-format
 msgid ""
 "\n"
@@ -776,7 +776,7 @@ msgstr ""
 "\n"
 "Signaux autorisés pour kill :\n"
 
-#: pg_ctl.c:2087
+#: pg_ctl.c:2080
 #, c-format
 msgid ""
 "\n"
@@ -785,35 +785,35 @@ msgstr ""
 "\n"
 "Options d'enregistrement ou de dés-enregistrement :\n"
 
-#: pg_ctl.c:2088
+#: pg_ctl.c:2081
 #, c-format
 msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
 msgstr ""
 "  -N NOM_SERVICE           nom du service utilisé pour l'enregistrement du\n"
 "                           serveur PostgreSQL\n"
 
-#: pg_ctl.c:2089
+#: pg_ctl.c:2082
 #, c-format
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
 msgstr ""
 "  -P MOT_DE_PASSE          mot de passe du compte utilisé pour\n"
 "                           l'enregistrement du serveur PostgreSQL\n"
 
-#: pg_ctl.c:2090
+#: pg_ctl.c:2083
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
 msgstr ""
 "  -U NOM_UTILISATEUR       nom de l'utilisateur du compte utilisé pour\n"
 "                           l'enregistrement du serveur PostgreSQL\n"
 
-#: pg_ctl.c:2091
+#: pg_ctl.c:2084
 #, c-format
 msgid "  -S START-TYPE   service start type to register PostgreSQL server\n"
 msgstr ""
 "  -S TYPE_DÉMARRAGE        type de démarrage du service pour enregistrer le\n"
 "                           serveur PostgreSQL\n"
 
-#: pg_ctl.c:2093
+#: pg_ctl.c:2086
 #, c-format
 msgid ""
 "\n"
@@ -822,19 +822,19 @@ msgstr ""
 "\n"
 "Les types de démarrage sont :\n"
 
-#: pg_ctl.c:2094
+#: pg_ctl.c:2087
 #, c-format
 msgid "  auto       start service automatically during system startup (default)\n"
 msgstr ""
 "  auto       démarre le service automatiquement lors du démarrage du système\n"
 "             (par défaut)\n"
 
-#: pg_ctl.c:2095
+#: pg_ctl.c:2088
 #, c-format
 msgid "  demand     start service on demand\n"
 msgstr "  demand     démarre le service à la demande\n"
 
-#: pg_ctl.c:2098
+#: pg_ctl.c:2091
 #, c-format
 msgid ""
 "\n"
@@ -843,37 +843,37 @@ msgstr ""
 "\n"
 "Rapporter les bogues à <%s>.\n"
 
-#: pg_ctl.c:2099
+#: pg_ctl.c:2092
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "page d'accueil %s : %s\n"
 
-#: pg_ctl.c:2124
+#: pg_ctl.c:2117
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
 msgstr "%s : mode d'arrêt non reconnu « %s »\n"
 
-#: pg_ctl.c:2153
+#: pg_ctl.c:2146
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
 msgstr "%s : signal non reconnu « %s »\n"
 
-#: pg_ctl.c:2170
+#: pg_ctl.c:2163
 #, c-format
 msgid "%s: unrecognized start type \"%s\"\n"
 msgstr "%s : type de redémarrage « %s » non reconnu\n"
 
-#: pg_ctl.c:2225
+#: pg_ctl.c:2218
 #, c-format
 msgid "%s: could not determine the data directory using command \"%s\"\n"
 msgstr "%s : n'a pas déterminer le répertoire des données en utilisant la commande « %s »\n"
 
-#: pg_ctl.c:2249
+#: pg_ctl.c:2242
 #, c-format
 msgid "%s: control file appears to be corrupt\n"
 msgstr "%s : le fichier de contrôle semble corrompu\n"
 
-#: pg_ctl.c:2317
+#: pg_ctl.c:2310
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -884,78 +884,78 @@ msgstr ""
 "Connectez-vous (par exemple en utilisant « su ») sous l'utilisateur (non\n"
 " privilégié) qui sera propriétaire du processus serveur.\n"
 
-#: pg_ctl.c:2401
+#: pg_ctl.c:2393
 #, c-format
 msgid "%s: -S option not supported on this platform\n"
 msgstr "%s : option -S non supportée sur cette plateforme\n"
 
-#: pg_ctl.c:2438
+#: pg_ctl.c:2430
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
 
-#: pg_ctl.c:2464
+#: pg_ctl.c:2456
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
 msgstr "%s : arguments manquant pour le mode kill\n"
 
-#: pg_ctl.c:2482
+#: pg_ctl.c:2474
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
 msgstr "%s : mode d'opération « %s » non reconnu\n"
 
-#: pg_ctl.c:2492
+#: pg_ctl.c:2484
 #, c-format
 msgid "%s: no operation specified\n"
 msgstr "%s : aucune opération indiquée\n"
 
-#: pg_ctl.c:2513
+#: pg_ctl.c:2505
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr ""
 "%s : aucun répertoire de bases de données indiqué et variable\n"
 "d'environnement PGDATA non initialisée\n"
 
-#~ msgid ""
-#~ "\n"
-#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s : l'option -w n'est pas supportée lors du démarrage d'un serveur pré-9.1\n"
+#~ msgid "%s: could not create log file \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu créer le fichier de traces « %s » : %s\n"
 
 #~ msgid ""
 #~ "\n"
-#~ "%s: -w option cannot use a relative socket directory specification\n"
+#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
 #~ msgstr ""
 #~ "\n"
-#~ "%s : l'option -w ne peut pas utiliser un chemin relatif vers le répertoire de\n"
-#~ "la socket\n"
+#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
 
-#~ msgid "%s: could not wait for server because of misconfiguration\n"
-#~ msgstr "%s : n'a pas pu attendre le serveur à cause d'une mauvaise configuration\n"
+#~ msgid "could not change directory to \"%s\": %s"
+#~ msgstr "n'a pas pu modifier le répertoire par « %s » : %s"
 
-#~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-#~ msgstr ""
-#~ "  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l NOM_FICHIER]\n"
-#~ "                [-o \"OPTIONS\"]\n"
+#~ msgid "could not read symbolic link \"%s\""
+#~ msgstr "n'a pas pu lire le lien symbolique « %s »"
 
-#~ msgid ""
-#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
-#~ "\n"
-#~ msgstr ""
-#~ "(Le comportement par défaut attend l'arrêt, pas le démarrage ou le\n"
-#~ "redémarrage.)\n"
-#~ "\n"
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "le processus fils a été terminé par le signal %s"
+
+#~ msgid "server is still starting up\n"
+#~ msgstr "le serveur est toujours en cours de démarrage\n"
 
 #~ msgid ""
 #~ "\n"
-#~ "Options for stop, restart, or promote:\n"
+#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
 #~ msgstr ""
 #~ "\n"
-#~ "Options pour l'arrêt, le redémarrage ou la promotion :\n"
+#~ "%s : ce répertoire des données semble être utilisé par un postmaster déjà existant\n"
 
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "n'a pas pu accéder au répertoire « %s »"
+#~ msgid "%s: could not start server: exit code was %d\n"
+#~ msgstr "%s : n'a pas pu démarrer le serveur : le code de sortie est %d\n"
+
+#~ msgid "%s: could not open process token: %lu\n"
+#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : %lu\n"
+
+#~ msgid "  --help                 show this help, then exit\n"
+#~ msgstr "  --help                   affiche cette aide et quitte\n"
+
+#~ msgid "  --version              output version information, then exit\n"
+#~ msgstr "  --version                affiche la version et quitte\n"
 
 #~ msgid ""
 #~ "%s is a utility to start, stop, restart, reload configuration files,\n"
@@ -967,43 +967,46 @@ msgstr ""
 #~ "ou d'envoyer un signal à un processus PostgreSQL\n"
 #~ "\n"
 
-#~ msgid "  --version              output version information, then exit\n"
-#~ msgstr "  --version                affiche la version et quitte\n"
-
-#~ msgid "  --help                 show this help, then exit\n"
-#~ msgstr "  --help                   affiche cette aide et quitte\n"
-
-#~ msgid "%s: could not open process token: %lu\n"
-#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : %lu\n"
-
-#~ msgid "%s: could not start server: exit code was %d\n"
-#~ msgstr "%s : n'a pas pu démarrer le serveur : le code de sortie est %d\n"
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "n'a pas pu accéder au répertoire « %s »"
 
 #~ msgid ""
 #~ "\n"
-#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
+#~ "Options for stop, restart, or promote:\n"
 #~ msgstr ""
 #~ "\n"
-#~ "%s : ce répertoire des données semble être utilisé par un postmaster déjà existant\n"
+#~ "Options pour l'arrêt, le redémarrage ou la promotion :\n"
 
-#~ msgid "server is still starting up\n"
-#~ msgstr "le serveur est toujours en cours de démarrage\n"
+#~ msgid ""
+#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
+#~ "\n"
+#~ msgstr ""
+#~ "(Le comportement par défaut attend l'arrêt, pas le démarrage ou le\n"
+#~ "redémarrage.)\n"
+#~ "\n"
 
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "le processus fils a été terminé par le signal %s"
+#~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
+#~ msgstr ""
+#~ "  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l NOM_FICHIER]\n"
+#~ "                [-o \"OPTIONS\"]\n"
 
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "n'a pas pu lire le lien symbolique « %s »"
-
-#~ msgid "could not change directory to \"%s\": %s"
-#~ msgstr "n'a pas pu modifier le répertoire par « %s » : %s"
+#~ msgid "%s: could not wait for server because of misconfiguration\n"
+#~ msgstr "%s : n'a pas pu attendre le serveur à cause d'une mauvaise configuration\n"
 
 #~ msgid ""
 #~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ "%s: -w option cannot use a relative socket directory specification\n"
 #~ msgstr ""
 #~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
+#~ "%s : l'option -w ne peut pas utiliser un chemin relatif vers le répertoire de\n"
+#~ "la socket\n"
 
-#~ msgid "%s: could not create log file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu créer le fichier de traces « %s » : %s\n"
+#~ msgid ""
+#~ "\n"
+#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
+#~ msgstr ""
+#~ "\n"
+#~ "%s : l'option -w n'est pas supportée lors du démarrage d'un serveur pré-9.1\n"
+
+#~ msgid "pclose failed: %m"
+#~ msgstr "échec de pclose : %m"

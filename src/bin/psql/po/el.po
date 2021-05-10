@@ -1,0 +1,6753 @@
+# Greek message translation file for psql
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the psql (PostgreSQL) package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: psql (PostgreSQL) 13\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-02-25 07:44+0000\n"
+"PO-Revision-Date: 2021-03-11 10:07+0100\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 2.4.2\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language: el\n"
+
+#: ../../../src/common/logging.c:236
+#, c-format
+msgid "fatal: "
+msgstr "κρίσιμο:"
+
+#: ../../../src/common/logging.c:243
+#, c-format
+msgid "error: "
+msgstr "σφάλμα:"
+
+#: ../../../src/common/logging.c:250
+#, c-format
+msgid "warning: "
+msgstr "προειδοποίηση:"
+
+#: ../../common/exec.c:137 ../../common/exec.c:254 ../../common/exec.c:300
+#, c-format
+msgid "could not identify current directory: %m"
+msgstr "δεν ήταν δυνατή η αναγνώριση του τρέχοντος καταλόγου: %m"
+
+#: ../../common/exec.c:156
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "μη έγκυρο δυαδικό αρχείο “%s”"
+
+#: ../../common/exec.c:206
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου  “%s”"
+
+#: ../../common/exec.c:214
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "δεν βρέθηκε το αρχείο “%s”  για να εκτελεστεί"
+
+#: ../../common/exec.c:270 ../../common/exec.c:309
+#, c-format
+msgid "could not change directory to \"%s\": %m"
+msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο “%s”: %m"
+
+#: ../../common/exec.c:287
+#, c-format
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου  “%s”: %m"
+
+#: ../../common/exec.c:410
+#, c-format
+msgid "pclose failed: %m"
+msgstr "απέτυχε η εντολή pclose:  %m"
+
+#: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
+#: command.c:1255 command.c:3173 command.c:3222 command.c:3339 input.c:227
+#: mainloop.c:81 mainloop.c:402
+#, c-format
+msgid "out of memory"
+msgstr "έλλειψη μνήμης"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#, c-format
+msgid "out of memory\n"
+msgstr "έλλειψη μνήμης\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "δεν ήταν δυνατή η αντιγραφή δείκτη null (εσωτερικό σφάλμα)\n"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "δεν ήταν δυνατή η αναζήτηση ενεργής ταυτότητας χρήστη %ld: %s"
+
+#: ../../common/username.c:45 command.c:559
+msgid "user does not exist"
+msgstr "ο χρήστης δεν υπάρχει"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "αποτυχία αναζήτησης ονόματος χρήστη: κωδικός σφάλματος % lu"
+
+#: ../../common/wait_error.c:45
+#, c-format
+msgid "command not executable"
+msgstr "εντολή μη εκτελέσιμη"
+
+#: ../../common/wait_error.c:49
+#, c-format
+msgid "command not found"
+msgstr "εντολή δεν βρέθηκε"
+
+#: ../../common/wait_error.c:54
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "απόγονος διεργασίας τερμάτισε με κωδικό εξόδου %d"
+
+#: ../../common/wait_error.c:62
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "απόγονος διεργασίας τερματίστηκε με εξαίρεση 0x%X"
+
+#: ../../common/wait_error.c:66
+#, c-format
+msgid "child process was terminated by signal %d: %s"
+msgstr "απόγονος διεργασίας τερματίστηκε με σήμα %d: %s"
+
+#: ../../common/wait_error.c:72
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "απόγονος διεργασίας τερμάτισε με μη αναγνωρίσιμη κατάσταση %d"
+
+#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+msgid "Cancel request sent\n"
+msgstr "Αίτηση ακύρωσης εστάλη\n"
+
+#: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
+msgid "Could not send cancel request: "
+msgstr "Δεν ήταν δυνατή η αποστολή αίτησης ακύρωσης"
+
+#: ../../fe_utils/print.c:350
+#, c-format
+msgid "(%lu row)"
+msgid_plural "(%lu rows)"
+msgstr[0] "(%lu σειρά)"
+msgstr[1] "(%lu σειρές)"
+
+#: ../../fe_utils/print.c:3055
+#, c-format
+msgid "Interrupted\n"
+msgstr "Διακόπηκε\n"
+
+#: ../../fe_utils/print.c:3119
+#, c-format
+msgid "Cannot add header to table content: column count of %d exceeded.\n"
+msgstr ""
+"Δεν είναι δυνατή η προσθήκη κεφαλίδας σε περιεχόμενο πίνακα: υπέρβαση του "
+"πλήθους στηλών %d.\n"
+
+#: ../../fe_utils/print.c:3159
+#, c-format
+msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
+msgstr ""
+"Δεν είναι δυνατή η προσθήκη κελιού σε περιεχόμενο πίνακα: υπέρβαση του "
+"συνολικού αριθμού κελιών %d.\n"
+
+#: ../../fe_utils/print.c:3414
+#, c-format
+msgid "invalid output format (internal error): %d"
+msgstr "μη έγκυρη μορφή εξόδου (εσωτερικό σφάλμα): %d"
+
+#: ../../fe_utils/psqlscan.l:694
+#, c-format
+msgid "skipping recursive expansion of variable \"%s\""
+msgstr "Παραλείπεται η αναδρομική επέκταση της μεταβλητής “%s”"
+
+#: command.c:224
+#, c-format
+msgid "invalid command \\%s"
+msgstr "μη έγκυρη εντολή “%s”"
+
+#: command.c:226
+#, c-format
+msgid "Try \\? for help."
+msgstr "Δοκιμάστε \\? για βοήθεια."
+
+#: command.c:244
+#, c-format
+msgid "\\%s: extra argument \"%s\" ignored"
+msgstr "\\%s: επιπλέον παράμετρος “%s” αγνοείται"
+
+#: command.c:296
+#, c-format
+msgid "\\%s command ignored; use \\endif or Ctrl-C to exit current \\if block"
+msgstr ""
+"\\%s εντολή αγνοείται, χρησιμοποιείστε \\endif ή Ctrl-C για να εξέλθετε από "
+"το παρόν μπλοκ \\if"
+
+#: command.c:557
+#, c-format
+msgid "could not get home directory for user ID %ld: %s"
+msgstr ""
+"δεν ήταν δυνατή η ανάλληψη προσωπικού καταλόγου για τον χρήστη με ID %ld: %s"
+
+#: command.c:575
+#, c-format
+msgid "\\%s: could not change directory to \"%s\": %m"
+msgstr "\\%s: δεν ήταν δυνατή η μετάβαση στον κατάλογο “%s”: %m"
+
+#: command.c:600
+#, c-format
+msgid "You are currently not connected to a database.\n"
+msgstr "Αυτή τη στιγμή δεν είστε συνδεδεμένοι σε μία βάση δεδομένων.\n"
+
+#: command.c:613
+#, c-format
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" on address \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"Είστε συνδεδεμένοι στη βάση δεδομένων “%s” ως χρήστης “%s” στην διεύθυνση "
+"“%s” στη θύρα “%s”.\n"
+
+#: command.c:616
+#, c-format
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"Είστε συνδεδεμένοι στη βάση δεδομένων “%s” ως χρήστης “%s” μέσω του υποδεχέα "
+"“%s” στη θύρα “%s”.\n"
+
+#: command.c:622
+#, c-format
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" on host \"%s\" (address "
+"\"%s\") at port \"%s\".\n"
+msgstr ""
+"Είστε συνδεδεμένοι στη βάση δεδομένων \"%s\" ως χρήστης \"%s\" στον κεντρικό "
+"υπολογιστή \"%s\" (διεύθυνση \"%s\") στη θύρα \"%s\".\n"
+
+#: command.c:625
+#, c-format
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port "
+"\"%s\".\n"
+msgstr ""
+"Είστε συνδεδεμένοι στη βάση δεδομένων “%s” ως χρήστης “%s” στον κεντρικό "
+"υπολογιστή “%s” στη θύρα “%s”.\n"
+
+#: command.c:965 command.c:1061 command.c:2550
+#, c-format
+msgid "no query buffer"
+msgstr "μη ενδιάμεση μνήμη ερώτησης"
+
+#: command.c:998 command.c:5171
+#, c-format
+msgid "invalid line number: %s"
+msgstr "μη έγκυρος αριθμός γραμμής “%s”"
+
+#: command.c:1052
+#, c-format
+msgid "The server (version %s) does not support editing function source."
+msgstr ""
+"Ο διακομιστής (έκδοση %s) δεν υποστηρίζει την επεξεργασία πηγών συναρτήσεων."
+
+#: command.c:1055
+#, c-format
+msgid "The server (version %s) does not support editing view definitions."
+msgstr ""
+"Ο διακομιστής (έκδοση %s) δεν υποστηρίζει την επεξεργασία ορισμών προβολής."
+
+#: command.c:1137
+msgid "No changes"
+msgstr "Καθόλου αλλάγες"
+
+#: command.c:1216
+#, c-format
+msgid "%s: invalid encoding name or conversion procedure not found"
+msgstr ""
+"%s: μη έγκυρη ονομασία κωδικοποίησης ή δεν βρέθηκε η διεργασία μετατροπής"
+
+#: command.c:1251 command.c:1992 command.c:3169 command.c:3361 command.c:5273
+#: common.c:174 common.c:223 common.c:388 common.c:1244 common.c:1272
+#: common.c:1381 common.c:1488 common.c:1526 copy.c:488 copy.c:707 help.c:62
+#: large_obj.c:157 large_obj.c:192 large_obj.c:254 startup.c:299
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:1258
+msgid "There is no previous error."
+msgstr "Δεν υπάρχει προηγούμενο σφάλμα."
+
+#: command.c:1371
+#, c-format
+msgid "\\%s: missing right parenthesis"
+msgstr "\\%s: λείπει δεξιά παρένθεση"
+
+#: command.c:1548 command.c:1853 command.c:1867 command.c:1884 command.c:2044
+#: command.c:2281 command.c:2517 command.c:2557
+#, c-format
+msgid "\\%s: missing required argument"
+msgstr "\\%s: λείπει αναγκαία παράμετρος"
+
+#: command.c:1679
+#, c-format
+msgid "\\elif: cannot occur after \\else"
+msgstr "\\elif: δεν δύναται να προκύψει μετά \\else"
+
+#: command.c:1684
+#, c-format
+msgid "\\elif: no matching \\if"
+msgstr "\\elif: δεν υπάρχει αντίστοιχο \\if"
+
+#: command.c:1748
+#, c-format
+msgid "\\else: cannot occur after \\else"
+msgstr "\\else: δεν δύναται να προκύψει μετά \\else"
+
+#: command.c:1753
+#, c-format
+msgid "\\else: no matching \\if"
+msgstr "\\else: δεν υπάρχει αντίστοιχο \\if"
+
+#: command.c:1793
+#, c-format
+msgid "\\endif: no matching \\if"
+msgstr "\\endif: δεν υπάρχει αντίστοιχο \\if"
+
+#: command.c:1948
+msgid "Query buffer is empty."
+msgstr "Άδεια ενδιάμεση μνήμη ερώτησης."
+
+#: command.c:1970
+msgid "Enter new password: "
+msgstr "Εισάγετε νέο κωδικό πρόσβασης: "
+
+#: command.c:1971
+msgid "Enter it again: "
+msgstr "Εισάγετε ξανά: "
+
+#: command.c:1975
+#, c-format
+msgid "Passwords didn't match."
+msgstr "Οι κωδικοί πρόσβασης δεν είναι ίδιοι."
+
+#: command.c:2074
+#, c-format
+msgid "\\%s: could not read value for variable"
+msgstr "\\%s: δεν ήταν δυνατή η ανάγνωση τιμής για την μεταβλητή"
+
+#: command.c:2177
+msgid "Query buffer reset (cleared)."
+msgstr "Μηδενισμός ενδιάμεσης μνήμη ερώτησης (καθάρισμα)."
+
+#: command.c:2199
+#, c-format
+msgid "Wrote history to file \"%s\".\n"
+msgstr "‘Εγραψε την ιστορία στο αρχείο “%s”.\n"
+
+#: command.c:2286
+#, c-format
+msgid "\\%s: environment variable name must not contain \"=\""
+msgstr ""
+"\\%s: η ονομασία μεταβλητή περιβάλλοντος environment δεν δύναται να "
+"εμπεριέχει “=“"
+
+#: command.c:2347
+#, c-format
+msgid "The server (version %s) does not support showing function source."
+msgstr ""
+"Ο διακομιστής (έκδοση %s) δεν υποστηρίζει την εμφάνιση του κώδικα της "
+"συνάρτησης."
+
+#: command.c:2350
+#, c-format
+msgid "The server (version %s) does not support showing view definitions."
+msgstr ""
+"Ο διακομιστής (έκδοση %s) δεν υποστηρίζει την επεξεργασία ορισμών προβολής."
+
+#: command.c:2357
+#, c-format
+msgid "function name is required"
+msgstr "η ονομασία συνάρτησης είναι αναγκαία"
+
+#: command.c:2359
+#, c-format
+msgid "view name is required"
+msgstr "η ονομασία ορισμού είναι αναγκαία"
+
+#: command.c:2489
+msgid "Timing is on."
+msgstr "Η χρονομέτρηση είναι ενεργή."
+
+#: command.c:2491
+msgid "Timing is off."
+msgstr "Η χρονομέτρηση είναι ανενεργή."
+
+#: command.c:2576 command.c:2604 command.c:3771 command.c:3774 command.c:3777
+#: command.c:3783 command.c:3785 command.c:3793 command.c:3803 command.c:3812
+#: command.c:3826 command.c:3843 command.c:3901 common.c:70 copy.c:331
+#: copy.c:403 psqlscanslash.l:784 psqlscanslash.l:795 psqlscanslash.l:805
+#, c-format
+msgid "%s: %m"
+msgstr "%s: %m"
+
+#: command.c:2988 startup.c:236 startup.c:287
+msgid "Password: "
+msgstr "Κωδικός πρόσβασης: "
+
+#: command.c:2993 startup.c:284
+#, c-format
+msgid "Password for user %s: "
+msgstr "Κωδικός πρόσβασης για τον χρήστη %s: "
+
+#: command.c:3047
+#, c-format
+msgid ""
+"All connection parameters must be supplied because no database connection "
+"exists"
+msgstr ""
+"Πρέπει να δωθούν όλες οι παρέμετροι γιατί δεν υπάρχει σύνδεση με τη βάση "
+"δεδομένων"
+
+#: command.c:3367
+#, c-format
+msgid "Previous connection kept"
+msgstr "Κρατήθηκε η προηγούμενη σύνδεση"
+
+#: command.c:3373
+#, c-format
+msgid "\\connect: %s"
+msgstr "\\connect: %s"
+
+#: command.c:3420
+#, c-format
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" on address \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"Τώρα είστε συνδεδεμένοι στη βάση δεδομένων “%s” ως χρήστης “%s” στη "
+"διεύθυνση “%s” στη θύρα “%s”.\n"
+"=\n"
+
+#: command.c:3423
+#, c-format
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
+"at port \"%s\".\n"
+msgstr ""
+"Τώρα είστε συνδεδεμένοι στη βάση δεδομένων “%s” ως χρήστης “%s” μέσω του "
+"υποδεχέα “%s” στη θύρα “%s”.\n"
+
+#: command.c:3429
+#, c-format
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" on host \"%s"
+"\" (address \"%s\") at port \"%s\".\n"
+msgstr ""
+"Τώρα είστε συνδεδεμένοι στη βάση δεδομένων \"%s\" ως χρήστης \"%s\" στον "
+"κεντρικό υπολογιστή \"%s\" (διεύθυνση \"%s\") στη θύρα \"%s\".\n"
+
+#: command.c:3432
+#, c-format
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"Τώρα είστε συνδεδεμένοι στη βάση δεδομένων “%s” ως χρήστης “%s” στον "
+"κεντρικό υπολογιστή “%s” στη θύρα “%s”.\n"
+
+#: command.c:3437
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\".\n"
+msgstr "Τώρα είστε συνδεδεμένοι στη βάση δεδομένων “%s” ως χρήστης “%s”.\n"
+
+#: command.c:3470
+#, c-format
+msgid "%s (%s, server %s)\n"
+msgstr "%s (%s, διακομιστής %s)\n"
+
+#: command.c:3478
+#, c-format
+msgid ""
+"WARNING: %s major version %s, server major version %s.\n"
+"         Some psql features might not work.\n"
+msgstr ""
+"ΠΡΟΕΙΔΟΠΟΙΗΣΗ: %s κύρια έκδοση %s, %s κύρια έκδοση διακομιστή.\n"
+"         Ορισμένες δυνατότητες psql ενδέχεται να μην λειτουργούν.\n"
+
+#: command.c:3517
+#, c-format
+msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
+msgstr "SSL σύνδεση (πρωτόκολλο: %s, cipher: %s, bits: %s, συμπίεση: %s)\n"
+
+#: command.c:3518 command.c:3519 command.c:3520
+msgid "unknown"
+msgstr "άγνωστο"
+
+#: command.c:3521 help.c:45
+msgid "off"
+msgstr "κλειστό"
+
+#: command.c:3521 help.c:45
+msgid "on"
+msgstr "ανοικτό"
+
+#: command.c:3535
+#, c-format
+msgid "GSSAPI-encrypted connection\n"
+msgstr "GSSAPI-κρυπτογραφημένη σύνδεση\n"
+
+#: command.c:3555
+#, c-format
+msgid ""
+"WARNING: Console code page (%u) differs from Windows code page (%u)\n"
+"         8-bit characters might not work correctly. See psql reference\n"
+"         page \"Notes for Windows users\" for details.\n"
+msgstr ""
+"ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Ο πηγαίος κώδικας της κονσόλας (%u) διαφέρει από τον πηγαίο "
+"κώδικα των Windows(%u)\n"
+"         Χαρακτήρες 8-bit δύναται να μην λειτουργούν ορθά. Δείτε την αναφορά "
+"στη σελίδα\n"
+"         psql με τίτλο “Σημειώσεις για χρήστες Windows” για πληροφορίες.\n"
+
+#: command.c:3659
+#, c-format
+msgid ""
+"environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a "
+"line number"
+msgstr ""
+"η μεταβλητή περιβάλλοντος PSQL_EDITOR_LINENUMBER_ARG πρέπει να έχει οριστεί "
+"για να ορίσετε αριθμό σειράς"
+
+#: command.c:3688
+#, c-format
+msgid "could not start editor \"%s\""
+msgstr "δεν μπόρεσε να εκκινήσει τον editor “%s”"
+
+#: command.c:3690
+#, c-format
+msgid "could not start /bin/sh"
+msgstr "δεν μπόρεσε να εκκινήσει το /bin/sh"
+
+#: command.c:3728
+#, c-format
+msgid "could not locate temporary directory: %s"
+msgstr "δεν ήταν δυνατός ο εντοπισμός του προσωρινού καταλόγου %s"
+
+#: command.c:3755
+#, c-format
+msgid "could not open temporary file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του προσωρινού αρχείου “%s”: %m"
+
+#: command.c:4060
+#, c-format
+msgid "\\pset: ambiguous abbreviation \"%s\" matches both \"%s\" and \"%s\""
+msgstr "\\pset: διφορούμενης συντόμευση “%s” ταιριάζει τόσο “%s” όσο “%s”"
+
+#: command.c:4080
+#, c-format
+msgid ""
+"\\pset: allowed formats are aligned, asciidoc, csv, html, latex, latex-"
+"longtable, troff-ms, unaligned, wrapped"
+msgstr ""
+"\\pset: επιτρεπόμενες μορφές είναι aligned, asciidoc, csv, html, latex, "
+"latex-longtable, troff-ms, unaligned, wrapped"
+
+#: command.c:4099
+#, c-format
+msgid "\\pset: allowed line styles are ascii, old-ascii, unicode"
+msgstr "\\pset: επιτρεπόμενες μορφές γραμμών είναι ascii, old-ascii, unicode"
+
+#: command.c:4114
+#, c-format
+msgid "\\pset: allowed Unicode border line styles are single, double"
+msgstr "\\pset: επιτρεπόμενες μορφές Unicode border line είναι single, double"
+
+#: command.c:4129
+#, c-format
+msgid "\\pset: allowed Unicode column line styles are single, double"
+msgstr "\\pset: επιτρεπόμενες μορφές Unicode column line είναι single, double"
+
+#: command.c:4144
+#, c-format
+msgid "\\pset: allowed Unicode header line styles are single, double"
+msgstr "\\pset: επιτρεπόμενες μορφές Unicode header line είναι single, double"
+
+#: command.c:4187
+#, c-format
+msgid "\\pset: csv_fieldsep must be a single one-byte character"
+msgstr "\\pset: csv_fieldsep πρέπει να είναι ένας χαρακτήρας ενός-byte"
+
+#: command.c:4192
+#, c-format
+msgid ""
+"\\pset: csv_fieldsep cannot be a double quote, a newline, or a carriage "
+"return"
+msgstr ""
+"\\pset: csv_fieldsep δεν μπορεί να είναι διπλά εισαγωγικά, νέα γραμμή, ή "
+"carriage return"
+
+#: command.c:4329 command.c:4517
+#, c-format
+msgid "\\pset: unknown option: %s"
+msgstr "\\pset: άγνωστη επιλογή: %s"
+
+#: command.c:4349
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "Border style είναι %d.\n"
+
+#: command.c:4355
+#, c-format
+msgid "Target width is unset.\n"
+msgstr "Target width δεν είναι ορισμένο.\n"
+
+#: command.c:4357
+#, c-format
+msgid "Target width is %d.\n"
+msgstr "Target width είναι %d.\n"
+
+#: command.c:4364
+#, c-format
+msgid "Expanded display is on.\n"
+msgstr "Εκτεταμένη οθόνη είναι ενεργή.\n"
+
+#: command.c:4366
+#, c-format
+msgid "Expanded display is used automatically.\n"
+msgstr "Εκτεταμένη οθόνη χρησιμοποιείται αυτόματα.\n"
+
+#: command.c:4368
+#, c-format
+msgid "Expanded display is off.\n"
+msgstr "Εκτεταμένη οθόνη είναι ανενεργή.\n"
+
+#: command.c:4374
+#, c-format
+msgid "Field separator for CSV is \"%s\".\n"
+msgstr "Διαχωριστής πεδίων CSV είναι ο “%s”.\n"
+
+#: command.c:4382 command.c:4390
+#, c-format
+msgid "Field separator is zero byte.\n"
+msgstr "Διαχωριστής πεδίων είναι το μηδενικό byte\n"
+
+#: command.c:4384
+#, c-format
+msgid "Field separator is \"%s\".\n"
+msgstr "Διαχωριστής πεδίων είναι ο “%s”.\n"
+
+#: command.c:4397
+#, c-format
+msgid "Default footer is on.\n"
+msgstr "Προκαθορισμένο υποσέλιδο είναι ενεργό.\n"
+
+#: command.c:4399
+#, c-format
+msgid "Default footer is off.\n"
+msgstr "Προκαθορισμένο υποσέλιδο είναι ανενεργό.\n"
+
+#: command.c:4405
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "Η μορφή εξόδου είναι %s.\n"
+
+#: command.c:4411
+#, c-format
+msgid "Line style is %s.\n"
+msgstr "Η μορφή γραμμής είναι %s.\n"
+
+#: command.c:4418
+#, c-format
+msgid "Null display is \"%s\".\n"
+msgstr "Εμφάνιση Null είναι “%s”.\n"
+
+#: command.c:4426
+#, c-format
+msgid "Locale-adjusted numeric output is on.\n"
+msgstr "Η κατά εντοπιότητα διορθωμένη μορφή αριθμητικής εξόδου είναι ενεργή.\n"
+
+#: command.c:4428
+#, c-format
+msgid "Locale-adjusted numeric output is off.\n"
+msgstr ""
+"Η κατά εντοπιότητα διορθωμένη μορφή αριθμητικής εξόδου είναι ανενεργή.\n"
+
+#: command.c:4435
+#, c-format
+msgid "Pager is used for long output.\n"
+msgstr "Χρησιμοποιείται Pager για μεγάλη έξοδο.\n"
+
+#: command.c:4437
+#, c-format
+msgid "Pager is always used.\n"
+msgstr "Χρησιμοποιείται Pager συνέχεια.\n"
+
+#: command.c:4439
+#, c-format
+msgid "Pager usage is off.\n"
+msgstr "Η χρήση Pager είναι ανενεργή.\n"
+
+#: command.c:4445
+#, c-format
+msgid "Pager won't be used for less than %d line.\n"
+msgid_plural "Pager won't be used for less than %d lines.\n"
+msgstr[0] "Ο Pager δεν θα χρησιμοποιηθεί για λιγότερο από %d γραμμή.\n"
+msgstr[1] "Ο Pager δεν θα χρησιμοποιηθεί για λιγότερες από %d γραμμές.\n"
+
+#: command.c:4455 command.c:4465
+#, c-format
+msgid "Record separator is zero byte.\n"
+msgstr "Διαχωριστής εγγραφών είναι το μηδενικό byte\n"
+
+#: command.c:4457
+#, c-format
+msgid "Record separator is <newline>.\n"
+msgstr "Διαχωριστής εγγραφών είναι ο <newline>.\n"
+
+#: command.c:4459
+#, c-format
+msgid "Record separator is \"%s\".\n"
+msgstr "Διαχωριστής εγγραφών είναι ο/η “%s”.\n"
+
+#: command.c:4472
+#, c-format
+msgid "Table attributes are \"%s\".\n"
+msgstr "Τα χαρακτηριστικά του πίνακα είναι “%s”.\n"
+
+#: command.c:4475
+#, c-format
+msgid "Table attributes unset.\n"
+msgstr "Χαρακτηριστικά πίνακα μη ορισμένα.\n"
+
+#: command.c:4482
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "Ο τίτλος είναι “%s”.\n"
+
+#: command.c:4484
+#, c-format
+msgid "Title is unset.\n"
+msgstr "Ο τίτλος δεν είναι ορισμένος.\n"
+
+#: command.c:4491
+#, c-format
+msgid "Tuples only is on.\n"
+msgstr "Ενεργή όψη μόνο πλειάδων.\n"
+
+#: command.c:4493
+#, c-format
+msgid "Tuples only is off.\n"
+msgstr "Ανενεργή όψη μόνο πλειάδων.\n"
+
+#: command.c:4499
+#, c-format
+msgid "Unicode border line style is \"%s\".\n"
+msgstr "Το στυλ περιγράμματος γραμμής Unicode είναι \"%s\".\n"
+
+#: command.c:4505
+#, c-format
+msgid "Unicode column line style is \"%s\".\n"
+msgstr "Το στυλ περιγράμματος στήλης Unicode είναι “%s”.\n"
+
+#: command.c:4511
+#, c-format
+msgid "Unicode header line style is \"%s\".\n"
+msgstr "Το στυλ περιγράμματος γραμμής κεφαλίδας Unicode είναι “%s”.\n"
+
+#: command.c:4744
+#, c-format
+msgid "\\!: failed"
+msgstr "\\!: απέτυχε"
+
+#: command.c:4769 common.c:648
+#, c-format
+msgid "\\watch cannot be used with an empty query"
+msgstr "\\watch δεν μπορεί να χρησιμοποιηθεί με κενή ερώτηση"
+
+#: command.c:4810
+#, c-format
+msgid "%s\t%s (every %gs)\n"
+msgstr "%s\t%s (κάθε %gs)\n"
+
+#: command.c:4813
+#, c-format
+msgid "%s (every %gs)\n"
+msgstr ""
+"%s (κάθε %gs)\n"
+"\n"
+
+#: command.c:4867 command.c:4874 common.c:548 common.c:555 common.c:1227
+#, c-format
+msgid ""
+"********* QUERY **********\n"
+"%s\n"
+"**************************\n"
+"\n"
+msgstr ""
+"********* ΕΡΩΤΗΣΗ **********\n"
+"%s\n"
+"**************************\n"
+"\n"
+
+#: command.c:5066
+#, c-format
+msgid "\"%s.%s\" is not a view"
+msgstr "“%s.%s” δεν είναι μία όψη"
+
+#: command.c:5082
+#, c-format
+msgid "could not parse reloptions array"
+msgstr "δεν ήταν δυνατή η ανάλυση συστυχίας reloptions"
+
+#: common.c:159
+#, c-format
+msgid "cannot escape without active connection"
+msgstr "δεν είναι δυνατή η διαφυγή χωρίς ενεργή σύνδεση"
+
+#: common.c:200
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\""
+msgstr ""
+"παράμετρος της εντολής κελύφους περιέχει μια νέα γραμμή ή μια επιστροφή "
+"μεταφοράς: \"%s\""
+
+#: common.c:304
+#, c-format
+msgid "connection to server was lost"
+msgstr "χάθηκε η σύνδεση στον διακομιστή"
+
+#: common.c:308
+#, c-format
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "Χάθηκε η σύνδεση στον διακομιστή. Προσπάθεια επαναφοράς: "
+
+#: common.c:313
+#, c-format
+msgid "Failed.\n"
+msgstr "Απέτυχε.\n"
+
+#: common.c:326
+#, c-format
+msgid "Succeeded.\n"
+msgstr "Πέτυχε.\n"
+
+#: common.c:378 common.c:945 common.c:1162
+#, c-format
+msgid "unexpected PQresultStatus: %d"
+msgstr "μη αναμενόμενο PQresultStatus: %d"
+
+#: common.c:487
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "Χρόνος: %.3f ms\n"
+
+#: common.c:502
+#, c-format
+msgid "Time: %.3f ms (%02d:%06.3f)\n"
+msgstr "Χρόνος: %.3f ms (%02d:%06.3f)\n"
+
+#: common.c:511
+#, c-format
+msgid "Time: %.3f ms (%02d:%02d:%06.3f)\n"
+msgstr "Χρόνος: %.3f ms (%02d:%02d:%06.3f)\n"
+
+#: common.c:518
+#, c-format
+msgid "Time: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"
+msgstr "Χρόνος: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"
+
+#: common.c:542 common.c:600 common.c:1198
+#, c-format
+msgid "You are currently not connected to a database."
+msgstr "Αυτή τη στιγμή δεν είστε συνδεδεμένοι σε μία βάση δεδομένων."
+
+#: common.c:655
+#, c-format
+msgid "\\watch cannot be used with COPY"
+msgstr "\\watch δεν μπορεί να χρησιμοποιηθεί μαζί με COPY"
+
+#: common.c:660
+#, c-format
+msgid "unexpected result status for \\watch"
+msgstr "μη αναμενόμενη κατάσταση αποτελέσματος για \\watch"
+
+#: common.c:690
+#, c-format
+msgid ""
+"Asynchronous notification \"%s\" with payload \"%s\" received from server "
+"process with PID %d.\n"
+msgstr ""
+"Ελήφθει ασύγχρονη ειδοποίηση \"%s\" με ωφέλιμο φορτίο \"%s\" από τη "
+"διαδικασία διακομιστή με %d PID.\n"
+
+#: common.c:693
+#, c-format
+msgid ""
+"Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgstr ""
+"Ελήφθει ασύγχρονη ειδοποίηση “%s” από τη διαδικασία διακομιστή με %d PID.\n"
+
+#: common.c:726 common.c:743
+#, c-format
+msgid "could not print result table: %m"
+msgstr "δεν μπόρεσε να εκτυπώσει τον πίνακα αποτελέσματος: %m"
+
+#: common.c:764
+#, c-format
+msgid "no rows returned for \\gset"
+msgstr "δεν επιστράφηκαν σειρές για \\gset"
+
+#: common.c:769
+#, c-format
+msgid "more than one row returned for \\gset"
+msgstr "περισσότερες από μία γραμμές επιστράφηκαν για \\gset"
+
+#: common.c:787
+#, c-format
+msgid "attempt to \\gset into specially treated variable \"%s\" ignored"
+msgstr ""
+"αγνοείται η προσπάθεια να τεθεί \\gset στην ειδικά διαμορφωμένη μεταβλητή "
+"“%s”"
+
+#: common.c:1207
+#, c-format
+msgid ""
+"***(Single step mode: verify "
+"command)*******************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to "
+"cancel)********************\n"
+msgstr ""
+"***(Λειτουργία μονού βήματος: επιβεβαιώστε την "
+"εντολή)*******************************************\n"
+"%s\n"
+"***(πατήστε return για να συνεχίσετε ή εισάγετε x και return για να "
+"ακυρώσετε)********************\n"
+
+#: common.c:1262
+#, c-format
+msgid ""
+"The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK."
+msgstr ""
+"Ο διακομιστής (έκδοση %s) δεν υποστηρίζει savepoints για ON_ERROR_ROLLBACK."
+
+#: common.c:1325
+#, c-format
+msgid "STATEMENT:  %s"
+msgstr "ΔΗΛΩΣΗ: %s"
+
+#: common.c:1369
+#, c-format
+msgid "unexpected transaction status (%d)"
+msgstr "μη αναμενόμενη κατάσταση συναλλαγής: %d"
+
+#: common.c:1510 describe.c:2001
+msgid "Column"
+msgstr "Στήλη"
+
+#: common.c:1511 describe.c:177 describe.c:393 describe.c:411 describe.c:456
+#: describe.c:473 describe.c:962 describe.c:1126 describe.c:1711
+#: describe.c:1735 describe.c:2002 describe.c:3733 describe.c:3943
+#: describe.c:4176 describe.c:5382
+msgid "Type"
+msgstr "Τύπος"
+
+#: common.c:1560
+#, c-format
+msgid "The command has no result, or the result has no columns.\n"
+msgstr "Η εντολή δεν έχει αποτέλεσμα, η το αποτέλεσμα δεν έχει στήλες.\n"
+
+#: copy.c:98
+#, c-format
+msgid "\\copy: arguments required"
+msgstr "\\copy: παράμετροι επιβάλλονται"
+
+#: copy.c:253
+#, c-format
+msgid "\\copy: parse error at \"%s\""
+msgstr "\\copy: σφάλμα ανάλυσης σε “%s”"
+
+#: copy.c:255
+#, c-format
+msgid "\\copy: parse error at end of line"
+msgstr "\\copy: σφάλμα ανάλυσης στο τέλος γραμμής"
+
+#: copy.c:328
+#, c-format
+msgid "could not execute command \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εκτέλεση της εντολής “%s”: %m"
+
+#: copy.c:344
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο “%s”: %m"
+
+#: copy.c:348
+#, c-format
+msgid "%s: cannot copy from/to a directory"
+msgstr "%s: δεν μπορεί να αντιγράψει από/προς κατάλογο"
+
+#: copy.c:385
+#, c-format
+msgid "could not close pipe to external command: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο της διοχέτευσης σε εξωτερική εντολή: %m"
+
+#: copy.c:390
+#, c-format
+msgid "%s: %s"
+msgstr "%s: %s"
+
+#: copy.c:453 copy.c:463
+#, c-format
+msgid "could not write COPY data: %m"
+msgstr "δεν ήταν δυνατή η εγγραφή δεδομένων COPY: %m"
+
+#: copy.c:469
+#, c-format
+msgid "COPY data transfer failed: %s"
+msgstr "Μεταφορά δεδομένων μέσω COPY απέτυχε: %s"
+
+#: copy.c:530
+msgid "canceled by user"
+msgstr "ακυρώθηκε από τον χρήστη"
+
+#: copy.c:541
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself, or an EOF signal."
+msgstr ""
+"Εισαγάγετε τα δεδομένα που θα αντιγραφούν ακολουθούμενα από νέα γραμμή.\n"
+"Τερματίστε με μια ανάστροφη κάθετο και μια τελεία σε μια ξεχωριστή γραμμή, ή "
+"ένα σήμα EOF."
+
+#: copy.c:669
+msgid "aborted because of read failure"
+msgstr "ματαιώθηκε λόγω σφάλματος κατά την ανάγνωση"
+
+#: copy.c:703
+msgid "trying to exit copy mode"
+msgstr "προσπαθεί να τερματίσει τη λειτουργία αντιγραφής"
+
+#: crosstabview.c:123
+#, c-format
+msgid "\\crosstabview: statement did not return a result set"
+msgstr "\\crosstabview: η δήλωση δεν επέστρεψε σετ αποτελεσμάτων"
+
+#: crosstabview.c:129
+#, c-format
+msgid "\\crosstabview: query must return at least three columns"
+msgstr ""
+"\\crosstabview: η ερώτηση πρέπει να επιστρέψει τουλάχιστον τρεις στήλες"
+
+#: crosstabview.c:156
+#, c-format
+msgid ""
+"\\crosstabview: vertical and horizontal headers must be different columns"
+msgstr ""
+"\\crosstabview: κάθετες και οριζόντιες κεφαλίδες πρέπει να βρίσκονται σε "
+"διαφορετικές στήλες"
+
+#: crosstabview.c:172
+#, c-format
+msgid ""
+"\\crosstabview: data column must be specified when query returns more than "
+"three columns"
+msgstr ""
+"\\crosstabview: επιβάλλεται να έχει οριστεί στήλη δεδομένων όταν η ερώτηση "
+"επιστρέφει περισσότερες από τρεις στήλες"
+
+#: crosstabview.c:228
+#, c-format
+msgid "\\crosstabview: maximum number of columns (%d) exceeded"
+msgstr "\\crosstabview: υπερβλήθηκε ο μέγιστος αριθμός στηλών (%d)"
+
+#: crosstabview.c:397
+#, c-format
+msgid ""
+"\\crosstabview: query result contains multiple data values for row \"%s\", "
+"column \"%s\""
+msgstr ""
+"\\crosstabview: το αποτέλεσμα της ερώτησης περιλαμβάνει πολλαπλές τιμές "
+"δεδομένων για την σειρά “%s”, στήλη “%s”"
+
+#: crosstabview.c:645
+#, c-format
+msgid "\\crosstabview: column number %d is out of range 1..%d"
+msgstr "\\crosstabview: αριθμός στήλης %d βρίσκεται εκτός διαστήματος 1..%d"
+
+#: crosstabview.c:670
+#, c-format
+msgid "\\crosstabview: ambiguous column name: \"%s\""
+msgstr "\\crosstabview: αμφίσημο όνομα στήλης: “%s”"
+
+#: crosstabview.c:678
+#, c-format
+msgid "\\crosstabview: column name not found: \"%s\""
+msgstr "\\crosstabview: όνομα στήλης δεν βρέθηκε: “%s”"
+
+#: describe.c:75 describe.c:373 describe.c:678 describe.c:810 describe.c:954
+#: describe.c:1115 describe.c:1187 describe.c:3722 describe.c:3930
+#: describe.c:4174 describe.c:4265 describe.c:4532 describe.c:4692
+#: describe.c:4933 describe.c:5008 describe.c:5019 describe.c:5081
+#: describe.c:5506 describe.c:5589
+msgid "Schema"
+msgstr "Σχήμα"
+
+#: describe.c:76 describe.c:174 describe.c:242 describe.c:250 describe.c:374
+#: describe.c:679 describe.c:811 describe.c:872 describe.c:955 describe.c:1188
+#: describe.c:3723 describe.c:3931 describe.c:4097 describe.c:4175
+#: describe.c:4266 describe.c:4345 describe.c:4533 describe.c:4617
+#: describe.c:4693 describe.c:4934 describe.c:5009 describe.c:5020
+#: describe.c:5082 describe.c:5279 describe.c:5363 describe.c:5587
+#: describe.c:5759 describe.c:5999
+msgid "Name"
+msgstr "Όνομα"
+
+#: describe.c:77 describe.c:386 describe.c:404 describe.c:450 describe.c:467
+msgid "Result data type"
+msgstr "Τύπος δεδομένων αποτελεσμάτων"
+
+#: describe.c:85 describe.c:98 describe.c:102 describe.c:387 describe.c:405
+#: describe.c:451 describe.c:468
+msgid "Argument data types"
+msgstr "Τύπος δεδομένων παραμέτρων"
+
+#: describe.c:110 describe.c:117 describe.c:185 describe.c:273 describe.c:513
+#: describe.c:727 describe.c:826 describe.c:897 describe.c:1190 describe.c:2020
+#: describe.c:3510 describe.c:3783 describe.c:3977 describe.c:4128
+#: describe.c:4202 describe.c:4275 describe.c:4358 describe.c:4441
+#: describe.c:4560 describe.c:4626 describe.c:4694 describe.c:4835
+#: describe.c:4877 describe.c:4950 describe.c:5012 describe.c:5021
+#: describe.c:5083 describe.c:5305 describe.c:5385 describe.c:5520
+#: describe.c:5590 large_obj.c:290 large_obj.c:300
+msgid "Description"
+msgstr "Περιγραφή"
+
+#: describe.c:135
+msgid "List of aggregate functions"
+msgstr "Λίστα των συγκεντρωτικών συναρτήσεων"
+
+#: describe.c:160
+#, c-format
+msgid "The server (version %s) does not support access methods."
+msgstr "Ο διακομιστής (έκδοση %s) δεν υποστηρίζει μεθόδους πρόσβασης."
+
+#: describe.c:175
+msgid "Index"
+msgstr "Ευρετήριο"
+
+#: describe.c:176 describe.c:3741 describe.c:3956 describe.c:5507
+msgid "Table"
+msgstr "Πίνακας"
+
+#: describe.c:184 describe.c:5284
+msgid "Handler"
+msgstr "Διαχειριστής"
+
+#: describe.c:203
+msgid "List of access methods"
+msgstr "Λίστα μεθόδων πρόσβασης"
+
+#: describe.c:229
+#, c-format
+msgid "The server (version %s) does not support tablespaces."
+msgstr "Ο διακομιστής (έκδοση %s) δεν υποστηρίζει tablespaces."
+
+#: describe.c:243 describe.c:251 describe.c:501 describe.c:717 describe.c:873
+#: describe.c:1114 describe.c:3734 describe.c:3932 describe.c:4101
+#: describe.c:4347 describe.c:4618 describe.c:5280 describe.c:5364
+#: describe.c:5760 describe.c:5897 describe.c:6000 describe.c:6115
+#: describe.c:6194 large_obj.c:289
+msgid "Owner"
+msgstr "Ιδιοκτήτης"
+
+#: describe.c:244 describe.c:252
+msgid "Location"
+msgstr "Τοποθεσία"
+
+#: describe.c:263 describe.c:3327
+msgid "Options"
+msgstr "Επιλογές"
+
+#: describe.c:268 describe.c:690 describe.c:889 describe.c:3775 describe.c:3779
+msgid "Size"
+msgstr "Μέγεθος"
+
+#: describe.c:290
+msgid "List of tablespaces"
+msgstr "Λίστα tablespaces"
+
+#: describe.c:333
+#, c-format
+msgid "\\df only takes [anptwS+] as options"
+msgstr "\\df λαμβάνει μόνο [anptwS+] ως επιλογές"
+
+#: describe.c:341 describe.c:352
+#, c-format
+msgid "\\df does not take a \"%c\" option with server version %s"
+msgstr "\\df δεν λαμβάνει την επιλογή “%c” στην έκδοση διακομιστή %s"
+
+#. translator: "agg" is short for "aggregate"
+#: describe.c:389 describe.c:407 describe.c:453 describe.c:470
+msgid "agg"
+msgstr "agg"
+
+#: describe.c:390 describe.c:408
+msgid "window"
+msgstr "window"
+
+#: describe.c:391
+msgid "proc"
+msgstr "proc"
+
+#: describe.c:392 describe.c:410 describe.c:455 describe.c:472
+msgid "func"
+msgstr "func"
+
+#: describe.c:409 describe.c:454 describe.c:471 describe.c:1324
+msgid "trigger"
+msgstr "trigger"
+
+#: describe.c:483
+msgid "immutable"
+msgstr "immutable"
+
+#: describe.c:484
+msgid "stable"
+msgstr "stable"
+
+#: describe.c:485
+msgid "volatile"
+msgstr "volatile"
+
+#: describe.c:486
+msgid "Volatility"
+msgstr "Προσωρινή"
+
+#: describe.c:494
+msgid "restricted"
+msgstr "περιορισμένη"
+
+#: describe.c:495
+msgid "safe"
+msgstr "ασφαλής"
+
+#: describe.c:496
+msgid "unsafe"
+msgstr "ανασφαλής"
+
+#: describe.c:497
+msgid "Parallel"
+msgstr "Παράλληλη"
+
+#: describe.c:502
+msgid "definer"
+msgstr "definer"
+
+#: describe.c:503
+msgid "invoker"
+msgstr "invoker"
+
+#: describe.c:504
+msgid "Security"
+msgstr "Ασφάλεια"
+
+#: describe.c:511
+msgid "Language"
+msgstr "Γλώσσα"
+
+#: describe.c:512
+msgid "Source code"
+msgstr "Πηγαίος κώδικας"
+
+#: describe.c:641
+msgid "List of functions"
+msgstr "Λίστα συναρτήσεων"
+
+#: describe.c:689
+msgid "Internal name"
+msgstr "Εσωτερική ονομασία"
+
+#: describe.c:711
+msgid "Elements"
+msgstr "Στοιχεία"
+
+#: describe.c:768
+msgid "List of data types"
+msgstr "Λίστα τύπων δεδομένων"
+
+#: describe.c:812
+msgid "Left arg type"
+msgstr "Τύπος αριστερής παραμέτρου"
+
+#: describe.c:813
+msgid "Right arg type"
+msgstr "Τύπος δεξιάς παραμέτρου"
+
+#: describe.c:814
+msgid "Result type"
+msgstr "Τύπος αποτελέσματος"
+
+#: describe.c:819 describe.c:4353 describe.c:4418 describe.c:4424
+#: describe.c:4834 describe.c:6366 describe.c:6370
+msgid "Function"
+msgstr "Συνάρτηση"
+
+#: describe.c:844
+msgid "List of operators"
+msgstr "Λίστα operators"
+
+#: describe.c:874
+msgid "Encoding"
+msgstr "Κωδικοποίηση"
+
+#: describe.c:879 describe.c:4534
+msgid "Collate"
+msgstr "Σύνθεση"
+
+#: describe.c:880 describe.c:4535
+msgid "Ctype"
+msgstr "Ctype"
+
+#: describe.c:893
+msgid "Tablespace"
+msgstr "Tablespace"
+
+#: describe.c:915
+msgid "List of databases"
+msgstr "Λίστα βάσεων δεδομένων"
+
+#: describe.c:956 describe.c:1117 describe.c:3724
+msgid "table"
+msgstr "πίνακας"
+
+#: describe.c:957 describe.c:3725
+msgid "view"
+msgstr "όψη"
+
+#: describe.c:958 describe.c:3726
+msgid "materialized view"
+msgstr "υλοποιημένη όψη"
+
+#: describe.c:959 describe.c:1119 describe.c:3728
+msgid "sequence"
+msgstr "ακολουθία"
+
+#: describe.c:960 describe.c:3730
+msgid "foreign table"
+msgstr "ξένος πίνακας"
+
+#: describe.c:961 describe.c:3731 describe.c:3941
+msgid "partitioned table"
+msgstr "κατατμημένος πίνακας"
+
+#: describe.c:973
+msgid "Column privileges"
+msgstr "Προνόμια στήλης"
+
+#: describe.c:1004 describe.c:1038
+msgid "Policies"
+msgstr "Πολιτικές"
+
+#: describe.c:1070 describe.c:6056 describe.c:6060
+msgid "Access privileges"
+msgstr "Προνόμια πρόσβασης"
+
+#: describe.c:1101
+#, c-format
+msgid "The server (version %s) does not support altering default privileges."
+msgstr ""
+"Ο διακομιστής (έκδοση %s) δεν υποστηρίζει την τροποποίηση προεπιλεγμένων "
+"δικαιωμάτων."
+
+#: describe.c:1121
+msgid "function"
+msgstr "συνάρτηση"
+
+#: describe.c:1123
+msgid "type"
+msgstr "τύπος"
+
+#: describe.c:1125
+msgid "schema"
+msgstr "σχήμα"
+
+#: describe.c:1149
+msgid "Default access privileges"
+msgstr "Προεπιλεγμένες επιλογές δικαιωμάτων"
+
+#: describe.c:1189
+msgid "Object"
+msgstr "Ατνικείμενο"
+
+#: describe.c:1203
+msgid "table constraint"
+msgstr "περιορισμός πίνακα"
+
+#: describe.c:1225
+msgid "domain constraint"
+msgstr "περιορισμός πεδίου"
+
+#: describe.c:1253
+msgid "operator class"
+msgstr "κλάση χειριστή"
+
+#: describe.c:1282
+msgid "operator family"
+msgstr "οικογένεια χειριστή"
+
+#: describe.c:1304
+msgid "rule"
+msgstr "περιγραφή"
+
+#: describe.c:1346
+msgid "Object descriptions"
+msgstr "Περιγραφές αντικειμένου"
+
+#: describe.c:1402 describe.c:3847
+#, c-format
+msgid "Did not find any relation named \"%s\"."
+msgstr "Δεν βρέθηκε καμία σχέση με όνομα “%s”."
+
+#: describe.c:1405 describe.c:3850
+#, c-format
+msgid "Did not find any relations."
+msgstr "Δεν βρέθηκαν καθόλου σχέσεις."
+
+#: describe.c:1660
+#, c-format
+msgid "Did not find any relation with OID %s."
+msgstr "Δεν βρέθηκαν καθόλου σχέσεις με OID %s."
+
+#: describe.c:1712 describe.c:1736
+msgid "Start"
+msgstr "Εκκίνηση"
+
+#: describe.c:1713 describe.c:1737
+msgid "Minimum"
+msgstr "Ελάχιστο"
+
+#: describe.c:1714 describe.c:1738
+msgid "Maximum"
+msgstr "Μέγιστο"
+
+#: describe.c:1715 describe.c:1739
+msgid "Increment"
+msgstr "Επαύξηση"
+
+#: describe.c:1716 describe.c:1740 describe.c:1871 describe.c:4269
+#: describe.c:4435 describe.c:4549 describe.c:4554 describe.c:6103
+msgid "yes"
+msgstr "ναι"
+
+#: describe.c:1717 describe.c:1741 describe.c:1872 describe.c:4269
+#: describe.c:4432 describe.c:4549 describe.c:6104
+msgid "no"
+msgstr "όχι"
+
+#: describe.c:1718 describe.c:1742
+msgid "Cycles?"
+msgstr "Κύκλοι;"
+
+#: describe.c:1719 describe.c:1743
+msgid "Cache"
+msgstr "Προσωρινή μνήμη"
+
+#: describe.c:1786
+#, c-format
+msgid "Owned by: %s"
+msgstr "Ανήκει σε: %s"
+
+#: describe.c:1790
+#, c-format
+msgid "Sequence for identity column: %s"
+msgstr "Ακολουθία για τη στήλη ταυτότητας: %s"
+
+#: describe.c:1797
+#, c-format
+msgid "Sequence \"%s.%s\""
+msgstr "Ακολουθία “%s.%s”"
+
+#: describe.c:1933
+#, c-format
+msgid "Unlogged table \"%s.%s\""
+msgstr "Ακαταχώρητος πίνακας “%s.%s”"
+
+#: describe.c:1936
+#, c-format
+msgid "Table \"%s.%s\""
+msgstr "Πίνακας  “%s.%s”"
+
+#: describe.c:1940
+#, c-format
+msgid "View \"%s.%s\""
+msgstr "Όψη “%s.%s”"
+
+#: describe.c:1945
+#, c-format
+msgid "Unlogged materialized view \"%s.%s\""
+msgstr "Ακαταχώρητη υλοποιημένη όψη “%s.%s”"
+
+#: describe.c:1948
+#, c-format
+msgid "Materialized view \"%s.%s\""
+msgstr "Υλοποιημένη όψη “%s.%s”"
+
+#: describe.c:1953
+#, c-format
+msgid "Unlogged index \"%s.%s\""
+msgstr "Ακαταχώρητο ευρετήριο “%s.%s”"
+
+#: describe.c:1956
+#, c-format
+msgid "Index \"%s.%s\""
+msgstr "Ευρετήριο “%s.%s”"
+
+#: describe.c:1961
+#, c-format
+msgid "Unlogged partitioned index \"%s.%s\""
+msgstr "Ακαταχώρητο κατατετμημένο ευρετήριο “%s.%s”"
+
+#: describe.c:1964
+#, c-format
+msgid "Partitioned index \"%s.%s\""
+msgstr "Κατατετμημένο ευρετήριο “%s.%s”"
+
+#: describe.c:1969
+#, c-format
+msgid "Special relation \"%s.%s\""
+msgstr "Ειδική σχέση “%s.%s”"
+
+#: describe.c:1973
+#, c-format
+msgid "TOAST table \"%s.%s\""
+msgstr "TOAST πίνακας “%s.%s”"
+
+#: describe.c:1977
+#, c-format
+msgid "Composite type \"%s.%s\""
+msgstr "Συνθετικός τύπος “%s.%s”"
+
+#: describe.c:1981
+#, c-format
+msgid "Foreign table \"%s.%s\""
+msgstr "Ξενικός πίνακας “%s.%s”"
+
+#: describe.c:1986
+#, c-format
+msgid "Unlogged partitioned table \"%s.%s\""
+msgstr "Ακαταχώρητος κατατετμημένος πίνακας “%s.%s”"
+
+#: describe.c:1989
+#, c-format
+msgid "Partitioned table \"%s.%s\""
+msgstr "Κατατετμημένος πίνακας “%s.%s”"
+
+#: describe.c:2005 describe.c:4182
+msgid "Collation"
+msgstr "Σύνθεση"
+
+#: describe.c:2006 describe.c:4189
+msgid "Nullable"
+msgstr "Nullable"
+
+#: describe.c:2007 describe.c:4190
+msgid "Default"
+msgstr "Προκαθορισμένο"
+
+#: describe.c:2010
+msgid "Key?"
+msgstr "Κλειδί;"
+
+#: describe.c:2012
+msgid "Definition"
+msgstr "Ορισμός"
+
+#: describe.c:2014 describe.c:5300 describe.c:5384 describe.c:5455
+#: describe.c:5519
+msgid "FDW options"
+msgstr "Επιλογές FDW"
+
+#: describe.c:2016
+msgid "Storage"
+msgstr "Αποθήκευση"
+
+#: describe.c:2018
+msgid "Stats target"
+msgstr "Στόχος στατιστικών"
+
+#: describe.c:2135
+#, c-format
+msgid "Partition of: %s %s"
+msgstr "Κατάτμηση του: %s %s"
+
+#: describe.c:2147
+msgid "No partition constraint"
+msgstr "Κανένας περιορισμός κατάτμησης"
+
+#: describe.c:2149
+#, c-format
+msgid "Partition constraint: %s"
+msgstr "Περιορισμός κατάτμησης: %s"
+
+#: describe.c:2173
+#, c-format
+msgid "Partition key: %s"
+msgstr "Κλειδί κατάτμησης: %s"
+
+#: describe.c:2199
+#, c-format
+msgid "Owning table: \"%s.%s\""
+msgstr "Ιδιοκτήτης πίνακα “%s.%s”"
+
+#: describe.c:2270
+msgid "primary key, "
+msgstr "Κύριο κλειδί, "
+
+#: describe.c:2272
+msgid "unique, "
+msgstr "μοναδικό, "
+
+#: describe.c:2278
+#, c-format
+msgid "for table \"%s.%s\""
+msgstr "για πίνακα “%s.%s”"
+
+#: describe.c:2282
+#, c-format
+msgid ", predicate (%s)"
+msgstr ", πρόβλεψη (%s)"
+
+#: describe.c:2285
+msgid ", clustered"
+msgstr ", συσταδοποιημένο"
+
+#: describe.c:2288
+msgid ", invalid"
+msgstr ", άκυρο"
+
+#: describe.c:2291
+msgid ", deferrable"
+msgstr ", αναβαλλόμενο"
+
+#: describe.c:2294
+msgid ", initially deferred"
+msgstr ", αρχικά αναβαλλόμενο"
+
+#: describe.c:2297
+msgid ", replica identity"
+msgstr ", ταυτότητα πανομοιόματος"
+
+#: describe.c:2364
+msgid "Indexes:"
+msgstr "Ευρετήρια:"
+
+#: describe.c:2448
+msgid "Check constraints:"
+msgstr "Περιορισμοί ελέγχου:"
+
+#: describe.c:2516
+msgid "Foreign-key constraints:"
+msgstr "Περιορισμοί ξενικών κλειδιών:"
+
+#: describe.c:2579
+msgid "Referenced by:"
+msgstr "Αναφέρεται από:"
+
+#: describe.c:2629
+msgid "Policies:"
+msgstr "Πολιτικές:"
+
+#: describe.c:2632
+msgid "Policies (forced row security enabled):"
+msgstr "Πολιτικές (ενεργοποιημένη επιβολή ασφάλειας γραμμών):"
+
+#: describe.c:2635
+msgid "Policies (row security enabled): (none)"
+msgstr "Πολιτικές (ενεργοποιημένη ασφάλεια γραμμών): (καμία)"
+
+#: describe.c:2638
+msgid "Policies (forced row security enabled): (none)"
+msgstr "Πολιτικές (ενεργοποιημένη επιβολή ασφάλειας γραμμών): (καμία)"
+
+#: describe.c:2641
+msgid "Policies (row security disabled):"
+msgstr "Πολιτικές (απενεργοποιημένη ασφάλεια γραμμών):"
+
+#: describe.c:2709
+msgid "Statistics objects:"
+msgstr "Αντικείμενα στατιστικών:"
+
+#: describe.c:2823 describe.c:2927
+msgid "Rules:"
+msgstr "Κανόνες"
+
+#: describe.c:2826
+msgid "Disabled rules:"
+msgstr "Απενεργοποιημένοι κανόνες:"
+
+#: describe.c:2829
+msgid "Rules firing always:"
+msgstr "Κανόνες πάντα σε χρήση:"
+
+#: describe.c:2832
+msgid "Rules firing on replica only:"
+msgstr "Κανόνες σε χρήση μόνο στο ομοίωμα:"
+
+#: describe.c:2872
+msgid "Publications:"
+msgstr "Δημοσιεύσεις:"
+
+#: describe.c:2910
+msgid "View definition:"
+msgstr "Ορισμός όψης:"
+
+#: describe.c:3057
+msgid "Triggers:"
+msgstr "Triggers:"
+
+#: describe.c:3061
+msgid "Disabled user triggers:"
+msgstr "Απενεργοποιημένες triggers χρήστη:"
+
+#: describe.c:3063
+msgid "Disabled triggers:"
+msgstr "Απενεργοποιημένες triggers:"
+
+#: describe.c:3066
+msgid "Disabled internal triggers:"
+msgstr "Απενεργοποιημένες εσωτερικές triggers:"
+
+#: describe.c:3069
+msgid "Triggers firing always:"
+msgstr "Triggers πάντα σε χρήση:"
+
+#: describe.c:3072
+msgid "Triggers firing on replica only:"
+msgstr "Triggers σε χρήση μόνο στο ομοίωμα:"
+
+#: describe.c:3144
+#, c-format
+msgid "Server: %s"
+msgstr "Διακομιστής: %s"
+
+#: describe.c:3152
+#, c-format
+msgid "FDW options: (%s)"
+msgstr "FDW επιλογές: (%s)"
+
+#: describe.c:3173
+msgid "Inherits"
+msgstr "Κληρονομεί"
+
+#: describe.c:3233
+#, c-format
+msgid "Number of partitions: %d"
+msgstr "Αριθμός κατατμήσεων: %d"
+
+#: describe.c:3242
+#, c-format
+msgid "Number of partitions: %d (Use \\d+ to list them.)"
+msgstr ""
+"Αριθμός κατατμήσεων: %d (Χρησιμοποιείστε \\d+ για να τους απαριθμήσετε.)"
+
+#: describe.c:3244
+#, c-format
+msgid "Number of child tables: %d (Use \\d+ to list them.)"
+msgstr ""
+"Αριθμός απογονικών πινάκων: %d (Χρησιμοποιείστε \\d+ για να τους "
+"απαριθμήσετε.)"
+
+#: describe.c:3251
+msgid "Child tables"
+msgstr "Απογονικοί πίνακες"
+
+#: describe.c:3251
+msgid "Partitions"
+msgstr "Κατατμήσεις"
+
+#: describe.c:3280
+#, c-format
+msgid "Typed table of type: %s"
+msgstr "Τυποποιημένος πίνακας τύπου: %s"
+
+#: describe.c:3296
+msgid "Replica Identity"
+msgstr "Ταυτότητα Ομοιόματος"
+
+#: describe.c:3309
+msgid "Has OIDs: yes"
+msgstr "Έχει OIDs: ναι"
+
+#: describe.c:3318
+#, c-format
+msgid "Access method: %s"
+msgstr "Μέθοδος πρόσβασης: %s"
+
+#: describe.c:3398
+#, c-format
+msgid "Tablespace: \"%s\""
+msgstr "Χώρος πινάκα: “%s”"
+
+#. translator: before this string there's an index description like
+#. '"foo_pkey" PRIMARY KEY, btree (a)'
+#: describe.c:3410
+#, c-format
+msgid ", tablespace \"%s\""
+msgstr ", χώρος πίνακα “%s”"
+
+#: describe.c:3503
+msgid "List of roles"
+msgstr "Λίστα ρόλων"
+
+#: describe.c:3505
+msgid "Role name"
+msgstr "Όνομα ρόλου"
+
+#: describe.c:3506
+msgid "Attributes"
+msgstr "Χαρακτηριστικά"
+
+#: describe.c:3507
+msgid "Member of"
+msgstr "Μέλος του"
+
+#: describe.c:3518
+msgid "Superuser"
+msgstr "Υπερχρήστης"
+
+#: describe.c:3521
+msgid "No inheritance"
+msgstr "Καμία κληρονιμιά"
+
+#: describe.c:3524
+msgid "Create role"
+msgstr "Δημιουργήστε ρόλο"
+
+#: describe.c:3527
+msgid "Create DB"
+msgstr "Δημιουργήστε βάση δεδομένων"
+
+#: describe.c:3530
+msgid "Cannot login"
+msgstr "Δεν δύναται σύνδεση"
+
+#: describe.c:3534
+msgid "Replication"
+msgstr "Αντιγραφή"
+
+#: describe.c:3538
+msgid "Bypass RLS"
+msgstr "Παράκαμψη RLS"
+
+#: describe.c:3547
+msgid "No connections"
+msgstr "Καθόλου συνδέσεις"
+
+#: describe.c:3549
+#, c-format
+msgid "%d connection"
+msgid_plural "%d connections"
+msgstr[0] "%d σύνδεση"
+msgstr[1] "%d συνδέσεις"
+
+#: describe.c:3559
+msgid "Password valid until "
+msgstr "Κωδικός πρόσβασης ενεργός μέχρι "
+
+#: describe.c:3609
+#, c-format
+msgid "The server (version %s) does not support per-database role settings."
+msgstr ""
+"Ο διακομιστής (έκδοση %s) δεν υποστηρίζει ρυθμίσεις ρόλων ανά βάση δεδομένων."
+
+#: describe.c:3622
+msgid "Role"
+msgstr "Ρόλος"
+
+#: describe.c:3623
+msgid "Database"
+msgstr "Βάση δεδομένων"
+
+#: describe.c:3624
+msgid "Settings"
+msgstr "Ρυθμίσεις"
+
+#: describe.c:3645
+#, c-format
+msgid "Did not find any settings for role \"%s\" and database \"%s\"."
+msgstr ""
+"Δεν βρέθηκαν ρυθμίσεις για το ρόλο \"%s\" και τη βάση δεδομένων \"%s\"."
+
+#: describe.c:3648
+#, c-format
+msgid "Did not find any settings for role \"%s\"."
+msgstr "Δεν βρέθηκαν ρυθμίσεις για το ρόλο “%s”."
+
+#: describe.c:3651
+#, c-format
+msgid "Did not find any settings."
+msgstr "Δεν βρέθηκαν ρυθμίσεις."
+
+#: describe.c:3656
+msgid "List of settings"
+msgstr "Λίστα ρυθμίσεων"
+
+#: describe.c:3727
+msgid "index"
+msgstr "ευρετήριο"
+
+#: describe.c:3729
+msgid "special"
+msgstr "ειδικό"
+
+#: describe.c:3732 describe.c:3942
+msgid "partitioned index"
+msgstr "κατατετμημένο ευρετήριο"
+
+#: describe.c:3756
+msgid "permanent"
+msgstr "μόνιμο"
+
+#: describe.c:3757
+msgid "temporary"
+msgstr "προσωρινό"
+
+#: describe.c:3758
+msgid "unlogged"
+msgstr "ακαταχώρητο"
+
+#: describe.c:3759
+msgid "Persistence"
+msgstr "Διάρκεια"
+
+#: describe.c:3855
+msgid "List of relations"
+msgstr "Λίστα σχέσεων"
+
+#: describe.c:3903
+#, c-format
+msgid ""
+"The server (version %s) does not support declarative table partitioning."
+msgstr ""
+"Ο διακομιστής (έκδοση %s) δεν υποστηρίζει την δηλωτική δημιουργία "
+"κατατμήσεων πίνακα."
+
+#: describe.c:3914
+msgid "List of partitioned indexes"
+msgstr "Λίστα κατατμημένων ευρετηρίων"
+
+#: describe.c:3916
+msgid "List of partitioned tables"
+msgstr "Λίστα κατατμημένων πινάκων"
+
+#: describe.c:3920
+msgid "List of partitioned relations"
+msgstr "Λίστα κατατμημένων σχέσεων"
+
+#: describe.c:3951
+msgid "Parent name"
+msgstr "Γονικό όνομα"
+
+#: describe.c:3964
+msgid "Leaf partition size"
+msgstr "Μέγεθος φύλλου κατάτμησης"
+
+#: describe.c:3967 describe.c:3973
+msgid "Total size"
+msgstr "Συνολικό μέγεθος"
+
+#: describe.c:4105
+msgid "Trusted"
+msgstr "Εμπιστευόμενο"
+
+#: describe.c:4113
+msgid "Internal language"
+msgstr "Εσωτερική γλώσσα"
+
+#: describe.c:4114
+msgid "Call handler"
+msgstr "Πρόγραμμα χειρισμού κλήσεων"
+
+#: describe.c:4115 describe.c:5287
+msgid "Validator"
+msgstr "Ελεκτής"
+
+#: describe.c:4118
+msgid "Inline handler"
+msgstr "Ενσωματωμένος χειριστής"
+
+#: describe.c:4146
+msgid "List of languages"
+msgstr "Λίστα γλωσσών"
+
+#: describe.c:4191
+msgid "Check"
+msgstr "Έλεγχος"
+
+#: describe.c:4233
+msgid "List of domains"
+msgstr "Λίστα πεδίων"
+
+#: describe.c:4267
+msgid "Source"
+msgstr "Πηγή"
+
+#: describe.c:4268
+msgid "Destination"
+msgstr "Προορισμός"
+
+#: describe.c:4270 describe.c:6105
+msgid "Default?"
+msgstr "Προεπιλογή;"
+
+#: describe.c:4307
+msgid "List of conversions"
+msgstr "Λίστα μετατροπών"
+
+#: describe.c:4346
+msgid "Event"
+msgstr "Συμβάν"
+
+#: describe.c:4348
+msgid "enabled"
+msgstr "ενεγροποιημένο"
+
+#: describe.c:4349
+msgid "replica"
+msgstr "ομοίωμα"
+
+#: describe.c:4350
+msgid "always"
+msgstr "πάντα"
+
+#: describe.c:4351
+msgid "disabled"
+msgstr "απενεργοποιημένο"
+
+#: describe.c:4352 describe.c:6001
+msgid "Enabled"
+msgstr "Ενεργοποιημένο"
+
+#: describe.c:4354
+msgid "Tags"
+msgstr "Ετικέτες"
+
+#: describe.c:4373
+msgid "List of event triggers"
+msgstr "Λίστα ενεργοποιήσεων συμβάντων"
+
+#: describe.c:4402
+msgid "Source type"
+msgstr "Τύπος πηγής"
+
+#: describe.c:4403
+msgid "Target type"
+msgstr "Τύπος προοριστμού"
+
+#: describe.c:4434
+msgid "in assignment"
+msgstr "σε ανάθεση"
+
+#: describe.c:4436
+msgid "Implicit?"
+msgstr "Έμμεσα;"
+
+#: describe.c:4491
+msgid "List of casts"
+msgstr "Λίστα casts"
+
+#: describe.c:4519
+#, c-format
+msgid "The server (version %s) does not support collations."
+msgstr "Ο διακομιστής (έκδοση %s) δεν υποστηρίζει συρραφές."
+
+#: describe.c:4540 describe.c:4544
+msgid "Provider"
+msgstr "Πάροχος"
+
+#: describe.c:4550 describe.c:4555
+msgid "Deterministic?"
+msgstr "Ντετερμινιστικό;"
+
+#: describe.c:4590
+msgid "List of collations"
+msgstr "Λίστα συρραφών"
+
+#: describe.c:4649
+msgid "List of schemas"
+msgstr "Λίστα σχημάτων"
+
+#: describe.c:4674 describe.c:4921 describe.c:4992 describe.c:5063
+#, c-format
+msgid "The server (version %s) does not support full text search."
+msgstr "Ο διακομιστής (έκδοση %s) δεν υποστηρίζει αναζήτηση πλήρους κειμένου."
+
+#: describe.c:4709
+msgid "List of text search parsers"
+msgstr "Λίστα αναλυτών αναζήτησης κειμένου"
+
+#: describe.c:4754
+#, c-format
+msgid "Did not find any text search parser named \"%s\"."
+msgstr "Δεν βρήκε ανάλυση αναζήτησης κειμένου με το όνομα \"%s\"."
+
+#: describe.c:4757
+#, c-format
+msgid "Did not find any text search parsers."
+msgstr "Δεν βρήκε ανάλυση αναζήτησης κειμένου."
+
+#: describe.c:4832
+msgid "Start parse"
+msgstr "Εκκίνηση ανάλυσης"
+
+#: describe.c:4833
+msgid "Method"
+msgstr "Μέθοδος"
+
+#: describe.c:4837
+msgid "Get next token"
+msgstr "Λήψη επόμενου ενδεικτικού"
+
+#: describe.c:4839
+msgid "End parse"
+msgstr "Τέλος ανάλυσης"
+
+#: describe.c:4841
+msgid "Get headline"
+msgstr "Λήψη επικεφαλίδας"
+
+#: describe.c:4843
+msgid "Get token types"
+msgstr "Λήψη τύπων ενδεικτικών"
+
+#: describe.c:4854
+#, c-format
+msgid "Text search parser \"%s.%s\""
+msgstr "Αναλυτής αναζήτης κειμένου “%s.%s”"
+
+#: describe.c:4857
+#, c-format
+msgid "Text search parser \"%s\""
+msgstr "Αναλυτής αναζήτης κειμένου “%s”"
+
+#: describe.c:4876
+msgid "Token name"
+msgstr "Ονομασία ενδεικτικού"
+
+#: describe.c:4887
+#, c-format
+msgid "Token types for parser \"%s.%s\""
+msgstr "Τύποι ενδεικτικών αναλυτή “%s.%s”"
+
+#: describe.c:4890
+#, c-format
+msgid "Token types for parser \"%s\""
+msgstr "Τύποι ενδεικτικών αναλυτή “%s”"
+
+#: describe.c:4944
+msgid "Template"
+msgstr "Πρότυπο"
+
+#: describe.c:4945
+msgid "Init options"
+msgstr "Επιλογές εκκίνησης"
+
+#: describe.c:4967
+msgid "List of text search dictionaries"
+msgstr "Λίστα λεξικών αναζήτησης κειμένου"
+
+#: describe.c:5010
+msgid "Init"
+msgstr "Εκκίνηση"
+
+#: describe.c:5011
+msgid "Lexize"
+msgstr "Lexize"
+
+#: describe.c:5038
+msgid "List of text search templates"
+msgstr "Λίστα προτύπων αναζήτησης κειμένου"
+
+#: describe.c:5098
+msgid "List of text search configurations"
+msgstr "Λίστα ρυθμίσεων αναζήτησης κειμένου"
+
+#: describe.c:5144
+#, c-format
+msgid "Did not find any text search configuration named \"%s\"."
+msgstr "Δεν βρέθηκαν ρυθμίσεις αναζήτησης κειμένου με όνομα “%s”."
+
+#: describe.c:5147
+#, c-format
+msgid "Did not find any text search configurations."
+msgstr "Δεν βρέθηκαν ρυθμίσεις αναζήτησης κειμένου."
+
+#: describe.c:5213
+msgid "Token"
+msgstr "Ενδεικτικό"
+
+#: describe.c:5214
+msgid "Dictionaries"
+msgstr "Λεξικά"
+
+#: describe.c:5225
+#, c-format
+msgid "Text search configuration \"%s.%s\""
+msgstr "Ρύθμιση αναζήτησης κειμένου “%s.%s”"
+
+#: describe.c:5228
+#, c-format
+msgid "Text search configuration \"%s\""
+msgstr "Ρύθμιση αναζήτησης κειμένου “%s”"
+
+#: describe.c:5232
+#, c-format
+msgid ""
+"\n"
+"Parser: \"%s.%s\""
+msgstr ""
+"\n"
+"Αναλυτής: “%s.%s”"
+
+#: describe.c:5235
+#, c-format
+msgid ""
+"\n"
+"Parser: \"%s\""
+msgstr ""
+"\n"
+"Αναλυτής: “%s”"
+
+#: describe.c:5269
+#, c-format
+msgid "The server (version %s) does not support foreign-data wrappers."
+msgstr "Ο διακομιστής (έκδοση %s) δεν υποστηρίζει περιτύλιξη ξένων δεδομένων."
+
+#: describe.c:5327
+msgid "List of foreign-data wrappers"
+msgstr "Λίστα περιτύλιξης ξένων δεδομένων"
+
+#: describe.c:5352
+#, c-format
+msgid "The server (version %s) does not support foreign servers."
+msgstr "Ο διακομιστής (έκδοση %s) δεν ξενικούς διακομιστές."
+
+#: describe.c:5365
+msgid "Foreign-data wrapper"
+msgstr "Περιτύλιξη ξένων δεδομένων"
+
+#: describe.c:5383 describe.c:5588
+msgid "Version"
+msgstr "Έκδοση"
+
+#: describe.c:5409
+msgid "List of foreign servers"
+msgstr "Λίστα ξενικών διακομιστών"
+
+#: describe.c:5434
+#, c-format
+msgid "The server (version %s) does not support user mappings."
+msgstr "Ο διακομιστής (έκδοση %s) δεν υποστηρίζει αντιστοιχίσεις χρηστών."
+
+#: describe.c:5444 describe.c:5508
+msgid "Server"
+msgstr "Διακομιστής"
+
+#: describe.c:5445
+msgid "User name"
+msgstr "Όνομα χρήστη"
+
+#: describe.c:5470
+msgid "List of user mappings"
+msgstr "Λίστα αντιστοιχιών χρηστών"
+
+#: describe.c:5495
+#, c-format
+msgid "The server (version %s) does not support foreign tables."
+msgstr "Ο διακομιστής (έκδοση %s) δεν ξενικούς πίνακες."
+
+#: describe.c:5548
+msgid "List of foreign tables"
+msgstr "Λίστα ξενικών πινάκων"
+
+#: describe.c:5573 describe.c:5630
+#, c-format
+msgid "The server (version %s) does not support extensions."
+msgstr "Ο διακομιστής (έκδοση %s) δεν υποστηρίζει επεκτάσεις."
+
+#: describe.c:5605
+msgid "List of installed extensions"
+msgstr "Λίστα εγκατεστημένων επεκτάσεων"
+
+#: describe.c:5658
+#, c-format
+msgid "Did not find any extension named \"%s\"."
+msgstr "Δεν βρέθηκε καμία επέκταση με το όνομα \"%s\"."
+
+#: describe.c:5661
+#, c-format
+msgid "Did not find any extensions."
+msgstr "Δεν βρέθηκαν επεκτάσεις."
+
+#: describe.c:5705
+msgid "Object description"
+msgstr "Περιγραφή αντικειμένου"
+
+#: describe.c:5715
+#, c-format
+msgid "Objects in extension \"%s\""
+msgstr "Αντικείμενα στην επέκταση \"%s\""
+
+#: describe.c:5744 describe.c:5820
+#, c-format
+msgid "The server (version %s) does not support publications."
+msgstr "Ο διακομιστής (έκδοση %s) δεν υποστηρίζει δημοσιεύσεις."
+
+#: describe.c:5761 describe.c:5898
+msgid "All tables"
+msgstr "Όλοι οι πίνακες"
+
+#: describe.c:5762 describe.c:5899
+msgid "Inserts"
+msgstr "Εισαγωγές"
+
+#: describe.c:5763 describe.c:5900
+msgid "Updates"
+msgstr "Ενημερώσεις"
+
+#: describe.c:5764 describe.c:5901
+msgid "Deletes"
+msgstr "Διαγραφές"
+
+#: describe.c:5768 describe.c:5903
+msgid "Truncates"
+msgstr "Περικοπές"
+
+#: describe.c:5772 describe.c:5905
+msgid "Via root"
+msgstr "Διαμέσου υπερχρήστη"
+
+#: describe.c:5789
+msgid "List of publications"
+msgstr "Λίστα δημοσιεύσεων"
+
+#: describe.c:5862
+#, c-format
+msgid "Did not find any publication named \"%s\"."
+msgstr "Δεν βρέθηκε καμία δημοσίευση με όνομα \"%s\"."
+
+#: describe.c:5865
+#, c-format
+msgid "Did not find any publications."
+msgstr "Δεν βρέθηκε καμία δημοσίευση."
+
+#: describe.c:5894
+#, c-format
+msgid "Publication %s"
+msgstr "Δημοσίευση %s"
+
+#: describe.c:5942
+msgid "Tables:"
+msgstr "Πίνακες:"
+
+#: describe.c:5986
+#, c-format
+msgid "The server (version %s) does not support subscriptions."
+msgstr "Ο διακομιστής (έκδοση %s) δεν υποστηρίζει συνδρομές."
+
+#: describe.c:6002
+msgid "Publication"
+msgstr "Δημοσίευση"
+
+#: describe.c:6009
+msgid "Synchronous commit"
+msgstr "Σύγχρονη δέσμευση"
+
+#: describe.c:6010
+msgid "Conninfo"
+msgstr "Conninfo"
+
+#: describe.c:6032
+msgid "List of subscriptions"
+msgstr "Λίστα συνδρομών"
+
+#: describe.c:6099 describe.c:6188 describe.c:6274 describe.c:6357
+msgid "AM"
+msgstr "ΑΜ"
+
+#: describe.c:6100
+msgid "Input type"
+msgstr "Τύπος εισόδου"
+
+#: describe.c:6101
+msgid "Storage type"
+msgstr "Τύπος αποθήκευσης"
+
+#: describe.c:6102
+msgid "Operator class"
+msgstr "Κλάση χειριστή"
+
+#: describe.c:6114 describe.c:6189 describe.c:6275 describe.c:6358
+msgid "Operator family"
+msgstr "Οικογένεια χειριστή"
+
+#: describe.c:6147
+msgid "List of operator classes"
+msgstr "Λίστα οικογένειας κλάσεων"
+
+#: describe.c:6190
+msgid "Applicable types"
+msgstr "Εφαρμόσιμοι τύποι"
+
+#: describe.c:6229
+msgid "List of operator families"
+msgstr "Λίστα οικογενειών χειριστών"
+
+#: describe.c:6276
+msgid "Operator"
+msgstr "Χειριστής"
+
+#: describe.c:6277
+msgid "Strategy"
+msgstr "Στρατηγική"
+
+#: describe.c:6278
+msgid "ordering"
+msgstr "Διάταξη"
+
+#: describe.c:6279
+msgid "search"
+msgstr "αναζήτηση"
+
+#: describe.c:6280
+msgid "Purpose"
+msgstr "Στόχος"
+
+#: describe.c:6285
+msgid "Sort opfamily"
+msgstr "Διάταξη opfamily"
+
+#: describe.c:6316
+msgid "List of operators of operator families"
+msgstr "Λίστα χειριστών των οικογενειών χειριστών"
+
+#: describe.c:6359
+msgid "Registered left type"
+msgstr "Καταχωρημένος αριστερός τύπος"
+
+#: describe.c:6360
+msgid "Registered right type"
+msgstr "Καταχωρημένος δεξιός τύπος"
+
+#: describe.c:6361
+msgid "Number"
+msgstr "Αριθμός"
+
+#: describe.c:6397
+msgid "List of support functions of operator families"
+msgstr "Λίστα συναρτήσεων υποστήριξης των οικογενειών χειριστών"
+
+#: help.c:73
+#, c-format
+msgid ""
+"psql is the PostgreSQL interactive terminal.\n"
+"\n"
+msgstr ""
+"psql είναι το διαδραστικό τερματικό της PostgreSQL.\n"
+"\n"
+
+#: help.c:74 help.c:355 help.c:431 help.c:474
+#, c-format
+msgid "Usage:\n"
+msgstr "Χρήση:\n"
+
+#: help.c:75
+#, c-format
+msgid ""
+"  psql [OPTION]... [DBNAME [USERNAME]]\n"
+"\n"
+msgstr ""
+"  psql [OPTION]… [DBNAME [USERNAME]]\n"
+"\n"
+
+#: help.c:77
+#, c-format
+msgid "General options:\n"
+msgstr "Γενικές επιλογές:\n"
+
+#: help.c:82
+#, c-format
+msgid ""
+"  -c, --command=COMMAND    run only single command (SQL or internal) and "
+"exit\n"
+msgstr ""
+"  -c, —command=COMMAND    εκτέλεσε μόνο μία μονή εντολή (SQL ή εσωτερική) "
+"και, στη συνέχεια, εξέλθετε\n"
+
+#: help.c:83
+#, c-format
+msgid ""
+"  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
+msgstr ""
+"  -d, —dbname=DBNAME      ονομασία βάσης δεδομένων στην οποία θα συνδεθείτε "
+"(προεπιλογή: “%s”)\n"
+
+#: help.c:84
+#, c-format
+msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
+msgstr ""
+"  -f, —file=FILENAME      εκτέλεσε εντολές από αρχείο και, στη συνέχεια, "
+"έξοδος\n"
+
+#: help.c:85
+#, c-format
+msgid "  -l, --list               list available databases, then exit\n"
+msgstr ""
+"  -l, —list               απαρίθμησε τις διαθέσιμες βάσεις δεδομένων και, "
+"στη συνέχεια, έξοδος\n"
+
+#: help.c:86
+#, c-format
+msgid ""
+"  -v, --set=, --variable=NAME=VALUE\n"
+"                           set psql variable NAME to VALUE\n"
+"                           (e.g., -v ON_ERROR_STOP=1)\n"
+msgstr ""
+"  -v, —set=, —variable=NAME=VALUE\n"
+"                           όρισε την μεταβλητή της psql NAME στην τιμή "
+"VALUE\n"
+"                           (π.χ., -v ON_ERROR_STOP=1)\n"
+
+#: help.c:89
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr ""
+"  -V, —version             εμφάνισε πληροφορίες έκδοσης και, στη συνέχεια, "
+"έξοδος\n"
+
+#: help.c:90
+#, c-format
+msgid "  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"
+msgstr ""
+"  -X, --no-psqlrc          να μην διαβαστεί το αρχείο εκκίνησης (~/.psqlrc)\n"
+
+#: help.c:91
+#, c-format
+msgid ""
+"  -1 (\"one\"), --single-transaction\n"
+"                           execute as a single transaction (if non-"
+"interactive)\n"
+msgstr ""
+"  -1 (“one”), —single-transaction\n"
+"                           εκτέλεσε ως μεμονωμένη συναλλαγή (εάν δεν είναι "
+"διαδραστική)\n"
+
+#: help.c:93
+#, c-format
+msgid "  -?, --help[=options]     show this help, then exit\n"
+msgstr ""
+"  -?, —help[=options]     εμφάνισε αυτής της βοήθειας και, στη συνέχεια, "
+"έξοδος\n"
+
+#: help.c:94
+#, c-format
+msgid "      --help=commands      list backslash commands, then exit\n"
+msgstr ""
+"      —help=commands      απαρίθμησε τις εντολές ανάποδης καθέτου και, στη "
+"συνέχεια, έξοδος\n"
+
+#: help.c:95
+#, c-format
+msgid "      --help=variables     list special variables, then exit\n"
+msgstr ""
+"      —help=variables     απαρίθμησε τις ειδικές μεταβλητές και, στη "
+"συνέχεια, έξοδος\n"
+
+#: help.c:97
+#, c-format
+msgid ""
+"\n"
+"Input and output options:\n"
+msgstr ""
+"\n"
+"Επιλογές εισόδου και εξόδου:\n"
+
+#: help.c:98
+#, c-format
+msgid "  -a, --echo-all           echo all input from script\n"
+msgstr "  -a, —echo-all           echo όλη την είσοδο από σενάριο\n"
+
+#: help.c:99
+#, c-format
+msgid "  -b, --echo-errors        echo failed commands\n"
+msgstr "  -b, —echo-errors        echo όλες τις αποτυχημένες εντολές\n"
+
+#: help.c:100
+#, c-format
+msgid "  -e, --echo-queries       echo commands sent to server\n"
+msgstr ""
+"  -e, —echo-queries       echo τις εντολές που αποστέλλονται στο διακομιστή\n"
+
+#: help.c:101
+#, c-format
+msgid ""
+"  -E, --echo-hidden        display queries that internal commands generate\n"
+msgstr ""
+"  -E, —echo-hidden        εμφάνισε ερωτήματα που δημιουργούνται από "
+"εσωτερικές εντολές\n"
+
+#: help.c:102
+#, c-format
+msgid "  -L, --log-file=FILENAME  send session log to file\n"
+msgstr ""
+"  -L, —log-file=FILENAME  στείλε την καταγραφή της συνεδρίας στο αρχείο\n"
+
+#: help.c:103
+#, c-format
+msgid ""
+"  -n, --no-readline        disable enhanced command line editing (readline)\n"
+msgstr ""
+"  -n, —no-readline        απενεργοποιήσε την βελτιωμένη επεξεργασία γραμμής "
+"εντολών (readline)\n"
+
+#: help.c:104
+#, c-format
+msgid "  -o, --output=FILENAME    send query results to file (or |pipe)\n"
+msgstr ""
+"  -o, —output=FILENAME    στείλε τα αποτελέσματα ερωτημάτων σε αρχείο (ή |"
+"pipe)\n"
+
+#: help.c:105
+#, c-format
+msgid ""
+"  -q, --quiet              run quietly (no messages, only query output)\n"
+msgstr ""
+"  -q, —quiet              εκτέλεσε σιωπηλά (καθόλου μηνύματα, μόνο έξοδος "
+"ερωτημάτων)\n"
+
+#: help.c:106
+#, c-format
+msgid "  -s, --single-step        single-step mode (confirm each query)\n"
+msgstr ""
+"  -s, —single-step        λειτουργία μονού βήματος (επιβεβαίωσε κάθε "
+"ερώτημα)\n"
+
+#: help.c:107
+#, c-format
+msgid ""
+"  -S, --single-line        single-line mode (end of line terminates SQL "
+"command)\n"
+msgstr ""
+"  -S, —single-line        λειτουργία μονής γραμμής (το τέλος της γραμμής "
+"τερματίζει την εντολή SQL)\n"
+
+#: help.c:109
+#, c-format
+msgid ""
+"\n"
+"Output format options:\n"
+msgstr ""
+"\n"
+"Επιλογές μορφής εξόδου:\n"
+
+#: help.c:110
+#, c-format
+msgid "  -A, --no-align           unaligned table output mode\n"
+msgstr ""
+"  -A, —no-align           λειτουργία εξόδου πίνακα μη ευθυγραμμισμένη "
+"λειτουργία εξόδου πίνακα\n"
+
+#: help.c:111
+#, c-format
+msgid ""
+"      --csv                CSV (Comma-Separated Values) table output mode\n"
+msgstr ""
+"      —csv                 λειτουργία εξόδου πίνακα CSV (τιμές διαχωρισμένες "
+"με κόμματα)\n"
+
+#: help.c:112
+#, c-format
+msgid ""
+"  -F, --field-separator=STRING\n"
+"                           field separator for unaligned output (default: "
+"\"%s\")\n"
+msgstr ""
+"  -F, —field-separator=STRING\n"
+"                           διαχωριστικό πεδίου για μη ευθυγραμμισμένη έξοδο "
+"(προεπιλογή: \"%s\")\n"
+
+#: help.c:115
+#, c-format
+msgid "  -H, --html               HTML table output mode\n"
+msgstr "  -H, —html               λειτουργία εξόδου πίνακα HTML\n"
+
+#: help.c:116
+#, c-format
+msgid ""
+"  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset "
+"command)\n"
+msgstr ""
+"  -P, --pset=VAR[=ARG]     όρισε την επιλογή εκτύπωσης VAR σε ARG (δείτε την "
+"εντολή \\pset)\n"
+
+#: help.c:117
+#, c-format
+msgid ""
+"  -R, --record-separator=STRING\n"
+"                           record separator for unaligned output (default: "
+"newline)\n"
+msgstr ""
+"  -R, —record-separator=STRING\n"
+"                           διαχωριστικό εγγραφών για μη ευθυγραμμισμένη "
+"έξοδο (προεπιλογή: νέα γραμμή)\n"
+
+#: help.c:119
+#, c-format
+msgid "  -t, --tuples-only        print rows only\n"
+msgstr "  -t, —tuples-only        εκτύπωσε μόνο γραμμές\n"
+
+#: help.c:120
+#, c-format
+msgid ""
+"  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, "
+"border)\n"
+msgstr ""
+"  -T, —table-attr=TEXT    όρισε τα χαρακτηριστικά ετικετών πίνακα HTML (π.χ. "
+"πλάτος, περίγραμμα)\n"
+
+#: help.c:121
+#, c-format
+msgid "  -x, --expanded           turn on expanded table output\n"
+msgstr ""
+"  -x, —expanded           ενεργοποίησε λειτουργία εκτεταμένης εξόδου πίνακα\n"
+
+#: help.c:122
+#, c-format
+msgid ""
+"  -z, --field-separator-zero\n"
+"                           set field separator for unaligned output to zero "
+"byte\n"
+msgstr ""
+"  -z, —field-separator-zero\n"
+"                           όρισε το διαχωριστικό πεδίου για μη "
+"ευθυγραμμισμένη έξοδο στο μηδενικό byte\n"
+
+#: help.c:124
+#, c-format
+msgid ""
+"  -0, --record-separator-zero\n"
+"                           set record separator for unaligned output to zero "
+"byte\n"
+msgstr ""
+"  -0, —record-separator-zero\n"
+"                           όρισε το διαχωριστικό εγγραφών για μη "
+"ευθυγραμμισμένη έξοδο στο μηδενικό byte\n"
+
+#: help.c:127
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Επιλογές σύνδεσης:\n"
+
+#: help.c:130
+#, c-format
+msgid ""
+"  -h, --host=HOSTNAME      database server host or socket directory "
+"(default: \"%s\")\n"
+msgstr ""
+"  -h, —host=HOSTNAME      κεντρικός υπολογιστής διακομιστή βάσης δεδομένων ή "
+"κατάλογος υποδοχών (προεπιλογή: \"%s\")\n"
+
+#: help.c:131
+msgid "local socket"
+msgstr "τοπική υποδοχή"
+
+#: help.c:134
+#, c-format
+msgid "  -p, --port=PORT          database server port (default: \"%s\")\n"
+msgstr ""
+"  -p, —port=PORT          θύρα διακομιστή βάσης δεδομένων (προεπιλογή: \"%s"
+"\")\n"
+
+#: help.c:140
+#, c-format
+msgid "  -U, --username=USERNAME  database user name (default: \"%s\")\n"
+msgstr ""
+"  -U, —username=USERNAME  όνομα χρήστη βάσης δεδομένων (προεπιλογή: \"%s\")\n"
+
+#: help.c:141
+#, c-format
+msgid "  -w, --no-password        never prompt for password\n"
+msgstr "  -w, —no-password        να μην ζητείται ποτέ κωδικός πρόσβασης\n"
+
+#: help.c:142
+#, c-format
+msgid ""
+"  -W, --password           force password prompt (should happen "
+"automatically)\n"
+msgstr ""
+"  -W, —password           αναγκαστική προτροπή κωδικού πρόσβασης (πρέπει να "
+"συμβεί αυτόματα)\n"
+
+#: help.c:144
+#, c-format
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help"
+"\" (for SQL\n"
+"commands) from within psql, or consult the psql section in the PostgreSQL\n"
+"documentation.\n"
+"\n"
+msgstr ""
+"\n"
+"Για περισσότερες πληροφορίες, πληκτρολογήστε \"\\?\" (για εσωτερικές "
+"εντολές) ή “\\help” (για SQL\n"
+"εντολές) μέσα από το psql, ή συμβουλευτείτε την ενότητα psql στην τεκμηρίωση "
+"της PostgreSQL\n"
+"\n"
+
+#: help.c:147
+#, c-format
+msgid "Report bugs to <%s>.\n"
+msgstr "Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
+
+#: help.c:148
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s αρχική σελίδα: <%s>\n"
+
+#: help.c:174
+#, c-format
+msgid "General\n"
+msgstr "Γενικά\n"
+
+#: help.c:175
+#, c-format
+msgid ""
+"  \\copyright             show PostgreSQL usage and distribution terms\n"
+msgstr ""
+"  \\copyright             εμφάνισε τους όρους χρήσης και διανομής της "
+"PostgreSQL\n"
+
+#: help.c:176
+#, c-format
+msgid ""
+"  \\crosstabview [COLUMNS] execute query and display results in crosstab\n"
+msgstr ""
+"  \\crosstabview [COLUMNS] εκτέλεσε την ερώτηση και execute query and "
+"εμφάνισε τα αποτελέσματα σε μορφή crosstab\n"
+
+#: help.c:177
+#, c-format
+msgid ""
+"  \\errverbose            show most recent error message at maximum "
+"verbosity\n"
+msgstr ""
+"  \\errverbose            εμφάνισε το πιο πρόσφατο μήνυμα σφάλματος στη "
+"μέγιστη λεπτομέρεια\n"
+
+#: help.c:178
+#, c-format
+msgid ""
+"  \\g [(OPTIONS)] [FILE]  execute query (and send results to file or |"
+"pipe);\n"
+"                         \\g with no arguments is equivalent to a semicolon\n"
+msgstr ""
+"  \\g [(OPTIONS)] [FILE]  εκτέλεσε το ερώτημα (και στείλτε αποτελέσματα σε "
+"αρχείο ή |pipe).\n"
+"                         \\g χωρίς επιλογές ισοδυναμεί με το ερωματικό\n"
+
+#: help.c:180
+#, c-format
+msgid ""
+"  \\gdesc                 describe result of query, without executing it\n"
+msgstr ""
+"  \\gdesc                 περίγραψε το αποτέλεσμα του ερωτήματος, χωρίς να "
+"εκτελεστεί\n"
+
+#: help.c:181
+#, c-format
+msgid ""
+"  \\gexec                 execute query, then execute each value in its "
+"result\n"
+msgstr ""
+"  \\gexec                 εκτέλεσε το ερώτημα και, στη συνέχεια, εκτέλεσε "
+"κάθε τιμή του αποτελέσματός της\n"
+
+#: help.c:182
+#, c-format
+msgid ""
+"  \\gset [PREFIX]         execute query and store results in psql variables\n"
+msgstr ""
+"  \\gset [PREFIX]         εκτέλεσε το ερώτημα και αποθήκευσε τα αποτελέσματα "
+"σε μεταβλητές της psql\n"
+
+#: help.c:183
+#, c-format
+msgid "  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n"
+msgstr ""
+"  \\gx [(OPTIONS)] [FILE] όμοια με \\g, αλλά επιβάλλει λειτουργία "
+"εκτεταμένης εξόδου\n"
+
+#: help.c:184
+#, c-format
+msgid "  \\q                     quit psql\n"
+msgstr "  \\q                     τερμάτισε psql\n"
+
+#: help.c:185
+#, c-format
+msgid "  \\watch [SEC]           execute query every SEC seconds\n"
+msgstr ""
+"  \\watch [SEC]           εκτέλεση του ερωτήματος κάθε SEC δευτερόλεπτα\n"
+
+#: help.c:188
+#, c-format
+msgid "Help\n"
+msgstr "Βοήθεια\n"
+
+#: help.c:190
+#, c-format
+msgid "  \\? [commands]          show help on backslash commands\n"
+msgstr ""
+"  \\? [commands]          εμφάνισε την βοήθεια για τις εντολές ανάποδης "
+"καθέτου\n"
+
+#: help.c:191
+#, c-format
+msgid "  \\? options             show help on psql command-line options\n"
+msgstr ""
+"  \\? options             εμφάνισε την βοήθεια για τις επιλογές εντολών "
+"γραμμής της psql\n"
+
+#: help.c:192
+#, c-format
+msgid "  \\? variables           show help on special variables\n"
+msgstr ""
+"  \\? variables           εμφάνισε την βοήθεια για τις ειδικές μεταβλητές\n"
+
+#: help.c:193
+#, c-format
+msgid ""
+"  \\h [NAME]              help on syntax of SQL commands, * for all "
+"commands\n"
+msgstr ""
+"  \\h [NAME]              βοήθεια για την σύνταξη των εντολών SQL, * για "
+"όλες τις εντολών\n"
+
+#: help.c:196
+#, c-format
+msgid "Query Buffer\n"
+msgstr "Ενδιάμεση μνήμη Ερωτήματος\n"
+
+#: help.c:197
+#, c-format
+msgid ""
+"  \\e [FILE] [LINE]       edit the query buffer (or file) with external "
+"editor\n"
+msgstr ""
+"  \\e [FILE] [LINE]       επεξεργάσου την ενδιάμεση μνήμη (ή αρχείο) "
+"ερωτήματος με εξωτερικό επεξεργαστή κειμένου\n"
+
+#: help.c:198
+#, c-format
+msgid ""
+"  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
+msgstr ""
+"  \\ef [FUNCNAME [LINE]]  επεξεργάσου τον ορισμό της συνάρτησης με εξωτερικό "
+"επεξεργαστή κειμένου\n"
+
+#: help.c:199
+#, c-format
+msgid "  \\ev [VIEWNAME [LINE]]  edit view definition with external editor\n"
+msgstr ""
+"  \\ef [FUNCNAME [LINE]]  επεξεργάσου τον ορισμό της όψης με εξωτερικό "
+"επεξεργαστή κειμένου\n"
+
+#: help.c:200
+#, c-format
+msgid "  \\p                     show the contents of the query buffer\n"
+msgstr ""
+"  \\p                     εμφάνισε τα περιοχόμενα της ενδιάμεσης μνήμης "
+"ερωτήματος\n"
+
+#: help.c:201
+#, c-format
+msgid "  \\r                     reset (clear) the query buffer\n"
+msgstr ""
+"  \\r                     επαναφορά (αρχικοποίηση) της ενδιάμεσης μνήμης "
+"ερωτήματος\n"
+
+#: help.c:203
+#, c-format
+msgid "  \\s [FILE]              display history or save it to file\n"
+msgstr ""
+"  \\s [FILE]              εμφάνισε το ιστορικό η αποθήκευσε το σε αρχείο\n"
+
+#: help.c:205
+#, c-format
+msgid "  \\w FILE                write query buffer to file\n"
+msgstr ""
+"  \\w FILE                γράψε την ενδιάμεση μνήμη ερωτήματος σε αρχείο\n"
+
+#: help.c:208
+#, c-format
+msgid "Input/Output\n"
+msgstr "Είσοδος/Έξοδος\n"
+
+#: help.c:209
+#, c-format
+msgid ""
+"  \\copy ...              perform SQL COPY with data stream to the client "
+"host\n"
+msgstr ""
+"  \\copy …              εκτέλεσε SQL COPY με ροή δεδομένων σε διακομιστή "
+"πελάτη\n"
+
+#: help.c:210
+#, c-format
+msgid ""
+"  \\echo [-n] [STRING]    write string to standard output (-n for no "
+"newline)\n"
+msgstr ""
+"  \\echo [-n] [STRING]    γράψε την στοιχειοσειρά στην τυπική έξοδο (-n για "
+"παράληψη νέας γραμμής)\n"
+
+#: help.c:211
+#, c-format
+msgid "  \\i FILE                execute commands from file\n"
+msgstr "  \\i FILE                εκτέλεσε εντολές από αρχείο\n"
+
+#: help.c:212
+#, c-format
+msgid ""
+"  \\ir FILE               as \\i, but relative to location of current "
+"script\n"
+msgstr ""
+"  \\ir FILE               όπως \\i, αλλά σε σχέση με την τοποθεσία του "
+"τρέχοντος σεναρίου\n"
+
+#: help.c:213
+#, c-format
+msgid "  \\o [FILE]              send all query results to file or |pipe\n"
+msgstr ""
+"  \\o [FILE]              στείλε όλα τα αποτελέσματα ερωτημάτων σε αρχείο ή |"
+"pipe\n"
+
+#: help.c:214
+#, c-format
+msgid ""
+"  \\qecho [-n] [STRING]   write string to \\o output stream (-n for no "
+"newline)\n"
+msgstr ""
+"  \\qecho [-n] [STRING]   γράψε την στοιχειοσειρά στην ροή εξόδου \\o (-n "
+"για παράληψη νέας γραμμής)\n"
+
+#: help.c:215
+#, c-format
+msgid ""
+"  \\warn [-n] [STRING]    write string to standard error (-n for no "
+"newline)\n"
+msgstr ""
+"  \\warn [-n] [STRING]    γράψε την στοιχειοσειρά στο τυπικό σφάλμα (-n για "
+"παράληψη νέας γραμμής)\n"
+
+#: help.c:218
+#, c-format
+msgid "Conditional\n"
+msgstr "Υπό συνθήκη\n"
+
+#: help.c:219
+#, c-format
+msgid "  \\if EXPR               begin conditional block\n"
+msgstr "  \\if EXPR               έναρξη υπό συνθήκης μπλοκ\n"
+
+#: help.c:220
+#, c-format
+msgid ""
+"  \\elif EXPR             alternative within current conditional block\n"
+msgstr ""
+"  \\elif EXPR             εναλλακτική λύση εντός του τρέχοντος μπλοκ υπό "
+"όρους\n"
+
+#: help.c:221
+#, c-format
+msgid ""
+"  \\else                  final alternative within current conditional "
+"block\n"
+msgstr ""
+"  \\else                  τελική εναλλακτική λύση εντός του τρέχοντος μπλοκ "
+"υπό όρους\n"
+
+#: help.c:222
+#, c-format
+msgid "  \\endif                 end conditional block\n"
+msgstr "  \\endif                 τερματισμός μπλοκ υπό όρους\n"
+
+#: help.c:225
+#, c-format
+msgid "Informational\n"
+msgstr "Πληροφοριακά\n"
+
+#: help.c:226
+#, c-format
+msgid "  (options: S = show system objects, + = additional detail)\n"
+msgstr ""
+"  (επιλογές: S = εμφάνισε αντικείμενα συστήματος, + = επιπλέον λεπτομέριες)\n"
+
+#: help.c:227
+#, c-format
+msgid "  \\d[S+]                 list tables, views, and sequences\n"
+msgstr "  \\d[S+]                 εμφάνισε πίνακες, όψεις και σειρές\n"
+
+#: help.c:228
+#, c-format
+msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
+msgstr "  \\d[S+]  NAME           περιέγραψε πίνακα, όψη, σειρά, ή ευρετήριο\n"
+
+#: help.c:229
+#, c-format
+msgid "  \\da[S]  [PATTERN]      list aggregates\n"
+msgstr "  \\da[S]  [PATTERN]      απαρίθμησε συγκεντρωτικά\n"
+
+#: help.c:230
+#, c-format
+msgid "  \\dA[+]  [PATTERN]      list access methods\n"
+msgstr "  \\dA[+]  [PATTERN]      απαρίθμησε μεθόδους πρόσβασης\n"
+
+#: help.c:231
+#, c-format
+msgid "  \\dAc[+] [AMPTRN [TYPEPTRN]]  list operator classes\n"
+msgstr "  \\dAc[+] [AMPTRN [TYPEPTRN]]  απαρίθμησε κλάσεις χειριστή\n"
+
+#: help.c:232
+#, c-format
+msgid "  \\dAf[+] [AMPTRN [TYPEPTRN]]  list operator families\n"
+msgstr "  \\dAf[+] [AMPTRN [TYPEPTRN]]  απαρίθμησε οικογένειες χειριστών\n"
+
+#: help.c:233
+#, c-format
+msgid "  \\dAo[+] [AMPTRN [OPFPTRN]]   list operators of operator families\n"
+msgstr ""
+"  \\dAo[+] [AMPTRN [OPFPTRN]]   απαρίθμησε χειριστές των οικογενειών "
+"χειριστών\n"
+
+#: help.c:234
+#, c-format
+msgid ""
+"  \\dAp    [AMPTRN [OPFPTRN]]   list support functions of operator families\n"
+msgstr ""
+"  \\dAp    [AMPTRN [OPFPTRN]]   απαρίθμησε συναρτήσεις των οικογενειών "
+"χειριστών\n"
+
+#: help.c:235
+#, c-format
+msgid "  \\db[+]  [PATTERN]      list tablespaces\n"
+msgstr "  \\db[+]  [PATTERN]      απαρίθμησε πινακοχώρους\n"
+
+#: help.c:236
+#, c-format
+msgid "  \\dc[S+] [PATTERN]      list conversions\n"
+msgstr "  \\dc[S+] [PATTERN]      απαρίθμησε μετατροπές\n"
+
+#: help.c:237
+#, c-format
+msgid "  \\dC[+]  [PATTERN]      list casts\n"
+msgstr "  \\dC[+]  [PATTERN]      απαρίθμησε casts\n"
+
+#: help.c:238
+#, c-format
+msgid ""
+"  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"
+msgstr ""
+"  \\dd[S]  [PATTERN]      εμφάνισε περιγραφές αντικειμένων που δεν φαίνονται "
+"πουθενά αλλού\n"
+
+#: help.c:239
+#, c-format
+msgid "  \\dD[S+] [PATTERN]      list domains\n"
+msgstr "  \\dD[S+] [PATTERN]      απαρίθμησε πεδία\n"
+
+#: help.c:240
+#, c-format
+msgid "  \\ddp    [PATTERN]      list default privileges\n"
+msgstr "  \\ddp    [PATTERN]      απαρίθμησε προεπιλεγμένα προνόμια\n"
+
+#: help.c:241
+#, c-format
+msgid "  \\dE[S+] [PATTERN]      list foreign tables\n"
+msgstr "  \\dE[S+] [PATTERN]      απαρίθμησε ξενικούς πίνακες\n"
+
+#: help.c:242
+#, c-format
+msgid "  \\det[+] [PATTERN]      list foreign tables\n"
+msgstr "  \\det[+] [PATTERN]      απαρίθμησε ξενικούς πίνακες\n"
+
+#: help.c:243
+#, c-format
+msgid "  \\des[+] [PATTERN]      list foreign servers\n"
+msgstr "  \\des[+] [PATTERN]      απαρίθμησε ξενικούς διακομιστές\n"
+
+#: help.c:244
+#, c-format
+msgid "  \\deu[+] [PATTERN]      list user mappings\n"
+msgstr "  \\deu[+] [PATTERN]      απαρίθμησε αντιστοιχίες χρηστών\n"
+
+#: help.c:245
+#, c-format
+msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
+msgstr "  \\dew[+] [PATTERN]      απαρίθμησε περιτυλίξεις ξένων δεδομένων\n"
+
+#: help.c:246
+#, c-format
+msgid ""
+"  \\df[anptw][S+] [PATRN] list [only agg/normal/procedures/trigger/window] "
+"functions\n"
+msgstr ""
+"  \\df[anptw][S+] [PATRN] απαρίθμησε συναρτήσεις [μόνο agg/normal/procedures/"
+"trigger/window]\n"
+
+#: help.c:247
+#, c-format
+msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
+msgstr "  \\dF[+]  [PATTERN]      απαρίθμησε ρυθμίσεις αναζήτησης κειμένου\n"
+
+#: help.c:248
+#, c-format
+msgid "  \\dFd[+] [PATTERN]      list text search dictionaries\n"
+msgstr "  \\dFd[+] [PATTERN]      απαρίθμησε λεξικά αναζήτησης κειμένου\n"
+
+#: help.c:249
+#, c-format
+msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
+msgstr "  \\dFp[+] [PATTERN]      απαρίθμησε αναλυτές αναζήτησης κειμένου\n"
+
+#: help.c:250
+#, c-format
+msgid "  \\dFt[+] [PATTERN]      list text search templates\n"
+msgstr "  \\dFt[+] [PATTERN]      απαρίθμησε πρότυπα αναζήτησης κειμένου\n"
+
+#: help.c:251
+#, c-format
+msgid "  \\dg[S+] [PATTERN]      list roles\n"
+msgstr "  \\dg[S+] [PATTERN]      απαρίθμησε ρόλους\n"
+
+#: help.c:252
+#, c-format
+msgid "  \\di[S+] [PATTERN]      list indexes\n"
+msgstr "  \\di[S+] [PATTERN]      απαρίθμησε ευρετήρια\n"
+
+#: help.c:253
+#, c-format
+msgid "  \\dl                    list large objects, same as \\lo_list\n"
+msgstr ""
+"  \\dl                    απαρίθμησε μεγάλα αντικείμενα, όπως \\lo_list\n"
+
+#: help.c:254
+#, c-format
+msgid "  \\dL[S+] [PATTERN]      list procedural languages\n"
+msgstr "  \\dL[S+] [PATTERN]      απαρίθμησε διαδικαστικές γλώσσες\n"
+
+#: help.c:255
+#, c-format
+msgid "  \\dm[S+] [PATTERN]      list materialized views\n"
+msgstr "  \\dm[S+] [PATTERN]      απαρίθμησε υλοποιημένες όψεις\n"
+
+#: help.c:256
+#, c-format
+msgid "  \\dn[S+] [PATTERN]      list schemas\n"
+msgstr "  \\dn[S+] [PATTERN]      απαρίθμησε σχήματα\n"
+
+#: help.c:257
+#, c-format
+msgid "  \\do[S]  [PATTERN]      list operators\n"
+msgstr "  \\do[S]  [PATTERN]      απαρίθμησε χειριστές\n"
+
+#: help.c:258
+#, c-format
+msgid "  \\dO[S+] [PATTERN]      list collations\n"
+msgstr "  \\dO[S+] [PATTERN]      απαρίθμησε συρραφές\n"
+
+#: help.c:259
+#, c-format
+msgid ""
+"  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
+msgstr ""
+"  \\dp     [PATTERN]      απαρίθμησε προνόμια πρόσβασης πίνακα, όψης και "
+"σειράς\n"
+
+#: help.c:260
+#, c-format
+msgid ""
+"  \\dP[itn+] [PATTERN]    list [only index/table] partitioned relations "
+"[n=nested]\n"
+msgstr ""
+"  \\dP[itn+] [PATTERN]    απαρίθμησε διαχωρισμένες σχέσεις [μόνο ευρετήριο/"
+"πίνακα] [n=nested]\n"
+
+#: help.c:261
+#, c-format
+msgid "  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"
+msgstr ""
+"  \\drds [PATRN1 [PATRN2]] απαρίθμησε ρυθμίσεις ρόλου ανά βάση δεδομένων\n"
+
+#: help.c:262
+#, c-format
+msgid "  \\dRp[+] [PATTERN]      list replication publications\n"
+msgstr "  \\dRp[+] [PATTERN]      απαρίθμησε δημοσιεύσεις αναπαραγωγής\n"
+
+#: help.c:263
+#, c-format
+msgid "  \\dRs[+] [PATTERN]      list replication subscriptions\n"
+msgstr "  \\dRs[+] [PATTERN]      απαρίθμησε συνδρομές αναπαραγωγής\n"
+
+#: help.c:264
+#, c-format
+msgid "  \\ds[S+] [PATTERN]      list sequences\n"
+msgstr "  \\ds[S+] [PATTERN]      απαρίθμησε ακολουθίες\n"
+
+#: help.c:265
+#, c-format
+msgid "  \\dt[S+] [PATTERN]      list tables\n"
+msgstr "  \\dt[S+] [PATTERN]      απαρίθμησε πίνακες\n"
+
+#: help.c:266
+#, c-format
+msgid "  \\dT[S+] [PATTERN]      list data types\n"
+msgstr "  \\dT[S+] [PATTERN]      απαρίθμησε τύπους δεδομένων\n"
+
+#: help.c:267
+#, c-format
+msgid "  \\du[S+] [PATTERN]      list roles\n"
+msgstr "  \\du[S+] [PATTERN]      απαρίθμησε ρόλους\n"
+
+#: help.c:268
+#, c-format
+msgid "  \\dv[S+] [PATTERN]      list views\n"
+msgstr "  \\dv[S+] [PATTERN]      απαρίθμησε όψεις\n"
+
+#: help.c:269
+#, c-format
+msgid "  \\dx[+]  [PATTERN]      list extensions\n"
+msgstr "  \\dx[+]  [PATTERN]      απαρίθμησε προεκτάσεις\n"
+
+#: help.c:270
+#, c-format
+msgid "  \\dy     [PATTERN]      list event triggers\n"
+msgstr "  \\dy     [PATTERN]      απαρίθμησε εναύσματα συμβάντων\n"
+
+#: help.c:271
+#, c-format
+msgid "  \\l[+]   [PATTERN]      list databases\n"
+msgstr "  \\l[+]   [PATTERN]      απαρίθμησε βάσεις δεδομένων\n"
+
+#: help.c:272
+#, c-format
+msgid "  \\sf[+]  FUNCNAME       show a function's definition\n"
+msgstr "  \\sf[+]  FUNCNAME       εμφάνισε τον ορισμό μίας συνάρτησης\n"
+
+#: help.c:273
+#, c-format
+msgid "  \\sv[+]  VIEWNAME       show a view's definition\n"
+msgstr "  \\sv[+]  VIEWNAME       εμφάνισε τον ορισμό μίας όψης\n"
+
+#: help.c:274
+#, c-format
+msgid "  \\z      [PATTERN]      same as \\dp\n"
+msgstr "  \\z      [PATTERN]      όπως \\dp\n"
+
+#: help.c:277
+#, c-format
+msgid "Formatting\n"
+msgstr "Μορφοποίηση\n"
+
+#: help.c:278
+#, c-format
+msgid ""
+"  \\a                     toggle between unaligned and aligned output mode\n"
+msgstr ""
+"  \\a                     εναλλαγή μεταξύ μη ευθυγραμμισμένης και "
+"ευθυγραμμισμένης μορφής εξόδου\n"
+
+#: help.c:279
+#, c-format
+msgid "  \\C [STRING]            set table title, or unset if none\n"
+msgstr "  \\C [STRING]            όρισε τίτλο πίνακα, ή αναίρεσε εάν κενό\n"
+
+#: help.c:280
+#, c-format
+msgid ""
+"  \\f [STRING]            show or set field separator for unaligned query "
+"output\n"
+msgstr ""
+"  \\f [STRING]            εμφάνισε ή όρισε τον διαχωριστή πεδίου για μη "
+"ευθυγραμμισμένη έξοδο ερωτήματος\n"
+
+#: help.c:281
+#, c-format
+msgid "  \\H                     toggle HTML output mode (currently %s)\n"
+msgstr ""
+"  \\H                     εναλλαγή λειτουργίας εξόδου HTML (επί του παρόντος"
+"% s)\n"
+
+#: help.c:283
+#, c-format
+msgid ""
+"  \\pset [NAME [VALUE]]   set table output option\n"
+"                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
+"                         fieldsep_zero|footer|format|linestyle|null|\n"
+"                         numericlocale|pager|pager_min_lines|recordsep|\n"
+"                         recordsep_zero|tableattr|title|tuples_only|\n"
+"                         unicode_border_linestyle|unicode_column_linestyle|\n"
+"                         unicode_header_linestyle)\n"
+msgstr ""
+"  \\pset [NAME [VALUE]]   όρισε την επιλογή εξόδου πίνακα\n"
+"                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
+"                         fieldsep_zero|footer|format|linestyle|null|\n"
+"                         numericlocale|pager|pager_min_lines|recordsep|\n"
+"                         recordsep_zero|tableattr|title|tuples_only|\n"
+"                         unicode_border_linestyle|unicode_column_linestyle|\n"
+"                         unicode_header_linestyle)\n"
+
+#: help.c:290
+#, c-format
+msgid "  \\t [on|off]            show only rows (currently %s)\n"
+msgstr ""
+"  \\t [on|off]            εμφάνισε μόνο γραμμές (επί του παρόντος %s)\n"
+
+#: help.c:292
+#, c-format
+msgid ""
+"  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
+msgstr ""
+"\\T [STRING]            ορίστε χαρακτηριστικά ετικέτας πίνακα HTML, ή "
+"αναίρεσε εάν δεν υπάρχουν\n"
+
+#: help.c:293
+#, c-format
+msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
+msgstr ""
+"  \\x [on|off|auto]       εναλλαγή τιμής διευρυμένης εξόδου (επί του "
+"παρόντος %s)\n"
+
+#: help.c:297
+#, c-format
+msgid "Connection\n"
+msgstr "Σύνδεση\n"
+
+#: help.c:299
+#, c-format
+msgid ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         connect to new database (currently \"%s\")\n"
+msgstr ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         σύνδεση σε νέα βάση δεδομένων (επί του παρόντος "
+"“%s”)\n"
+
+#: help.c:303
+#, c-format
+msgid ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         connect to new database (currently no connection)\n"
+msgstr ""
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         σύνδεση σε νέα βάση δεδομένων (επί του παρόντος "
+"καμία σύνδεση)\n"
+
+#: help.c:305
+#, c-format
+msgid ""
+"  \\conninfo              display information about current connection\n"
+msgstr ""
+"  \\conninfo              εμφάνιση πληροφοριών σχετικά με την παρούσα "
+"σύνδεση\n"
+
+#: help.c:306
+#, c-format
+msgid "  \\encoding [ENCODING]   show or set client encoding\n"
+msgstr ""
+"  -E, —encoding=ENCODING   εμφάνισε ή όρισε την κωδικοποίηση του πελάτη\n"
+
+#: help.c:307
+#, c-format
+msgid "  \\password [USERNAME]   securely change the password for a user\n"
+msgstr ""
+"  \\password [USERNAME]   άλλαξε με ασφάλεια τον κωδικό πρόσβασης ενός "
+"χρήστη\n"
+
+#: help.c:310
+#, c-format
+msgid "Operating System\n"
+msgstr "Λειτουργικό σύστημα\n"
+
+#: help.c:311
+#, c-format
+msgid "  \\cd [DIR]              change the current working directory\n"
+msgstr "  \\cd [DIR]              άλλαξε τον παρόν κατάλογο εργασίας\n"
+
+#: help.c:312
+#, c-format
+msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
+msgstr "  \\setenv NAME [VALUE]   όρισε ή αναίρεσε μεταβλητή περιβάλλοντος\n"
+
+#: help.c:313
+#, c-format
+msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
+msgstr ""
+"  \\timing [on|off]       εναλλαγή χρονισμού των εντολών (επί του παρόντος "
+"%s)\n"
+
+#: help.c:315
+#, c-format
+msgid ""
+"  \\! [COMMAND]           execute command in shell or start interactive "
+"shell\n"
+msgstr ""
+"  \\! [COMMAND]           εκτέλεσε εντολή σε κέλυφος ή ξεκίνησε διαδραστικό "
+"κέλυφος\n"
+
+#: help.c:318
+#, c-format
+msgid "Variables\n"
+msgstr "Μεταβλητές\n"
+
+#: help.c:319
+#, c-format
+msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
+msgstr ""
+"  \\prompt [TEXT] NAME    προέτρεψε τον χρήστη να ορίσει εσωτερική "
+"μεταβλητή\n"
+
+#: help.c:320
+#, c-format
+msgid ""
+"  \\set [NAME [VALUE]]    set internal variable, or list all if no "
+"parameters\n"
+msgstr ""
+"  \\set [NAME [VALUE]]    όρισε εσωτερική μεταβλητή, ή απαρίθμησέ τες όλες "
+"εάν δεν υπάρχουν παράμετροι\n"
+
+#: help.c:321
+#, c-format
+msgid "  \\unset NAME            unset (delete) internal variable\n"
+msgstr "  \\unset NAME            αναίρεσε (διέγραψε) εσωτερική μεταβλητή\n"
+
+#: help.c:324
+#, c-format
+msgid "Large Objects\n"
+msgstr "Μεγάλα αντικείμενα\n"
+
+#: help.c:325
+#, c-format
+msgid ""
+"  \\lo_export LOBOID FILE\n"
+"  \\lo_import FILE [COMMENT]\n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID      large object operations\n"
+msgstr ""
+"  \\lo_export LOBOID FILE\n"
+"  \\lo_import FILE [COMMENT]\n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID      λειτουργίες μεγάλου αντικειμένου\n"
+
+#: help.c:352
+#, c-format
+msgid ""
+"List of specially treated variables\n"
+"\n"
+msgstr ""
+"Απαρίθμηση των ειδικά επεξεργασμένων μεταβλητών\n"
+"\n"
+
+#: help.c:354
+#, c-format
+msgid "psql variables:\n"
+msgstr "psql μεταβλητές:\n"
+
+#: help.c:356
+#, c-format
+msgid ""
+"  psql --set=NAME=VALUE\n"
+"  or \\set NAME VALUE inside psql\n"
+"\n"
+msgstr ""
+"  psql —set=NAME=VALUE\n"
+"  ή \\set NAME VALUE μέσα σε psql\n"
+"\n"
+
+#: help.c:358
+#, c-format
+msgid ""
+"  AUTOCOMMIT\n"
+"    if set, successful SQL commands are automatically committed\n"
+msgstr ""
+"  AUTOCOMMIT\n"
+"    εφόσον ορισμένο, επιτυχημένες εντολές SQL ολοκληρώνονται αυτόματα\n"
+
+#: help.c:360
+#, c-format
+msgid ""
+"  COMP_KEYWORD_CASE\n"
+"    determines the case used to complete SQL key words\n"
+"    [lower, upper, preserve-lower, preserve-upper]\n"
+msgstr ""
+"  COMP_KEYWORD_CASE\n"
+"    καθορίζει τον τύπο (πεζά, κεφαλαία) για την ολοκλήρωση όρων SQL\n"
+"    [lower, upper, preserve-lower, preserve-upper]\n"
+
+#: help.c:363
+#, c-format
+msgid ""
+"  DBNAME\n"
+"    the currently connected database name\n"
+msgstr ""
+"  DBNAME\n"
+"    ονομασία της συνδεδεμένης βάσης δεδομένων\n"
+
+#: help.c:365
+#, c-format
+msgid ""
+"  ECHO\n"
+"    controls what input is written to standard output\n"
+"    [all, errors, none, queries]\n"
+msgstr ""
+"  ECHO\n"
+"    ελέγχει ποία είσοδος γράφεται στην τυπική έξοδο\n"
+"    [all, errors, none, queries]\n"
+"\n"
+
+#: help.c:368
+#, c-format
+msgid ""
+"  ECHO_HIDDEN\n"
+"    if set, display internal queries executed by backslash commands;\n"
+"    if set to \"noexec\", just show them without execution\n"
+msgstr ""
+"  ECHO_HIDDEN\n"
+"    εάν έχει οριστεί, εμφανίστε εσωτερικά ερωτήματα που εκτελούνται από "
+"εντολές ανάστρωσής τους.\n"
+"    εάν οριστεί σε \"noexec\", απλά δείξτε τους χωρίς εκτέλεση\n"
+
+#: help.c:371
+#, c-format
+msgid ""
+"  ENCODING\n"
+"    current client character set encoding\n"
+msgstr ""
+"  ENCODING\n"
+"    τρέχουσα κωδικοποίηση χαρακτήρων του προγράμματος-πελάτη\n"
+
+#: help.c:373
+#, c-format
+msgid ""
+"  ERROR\n"
+"    true if last query failed, else false\n"
+msgstr ""
+"  ERROR\n"
+"    αληθές εάν το τελευταίο ερώτημα απέτυχε, διαφορετικά ψευδές\n"
+
+#: help.c:375
+#, c-format
+msgid ""
+"  FETCH_COUNT\n"
+"    the number of result rows to fetch and display at a time (0 = "
+"unlimited)\n"
+msgstr ""
+"  FETCH_COUNT\n"
+"    αριθμός των σειρών αποτελεσμάτων για λήψη και εμφάνιση ανά επανάλληψη (0 "
+"= απεριόριστος)\n"
+
+#: help.c:377
+#, c-format
+msgid ""
+"  HIDE_TABLEAM\n"
+"    if set, table access methods are not displayed\n"
+msgstr ""
+"  HIDE_TABLEAM\n"
+"    εάν έχει οριστεί, δεν εμφανίζονται μέθοδοι πρόσβασης πίνακα\n"
+
+#: help.c:379
+#, c-format
+msgid ""
+"  HISTCONTROL\n"
+"    controls command history [ignorespace, ignoredups, ignoreboth]\n"
+msgstr ""
+"  HISTCONTROL\n"
+"    ελέγχει το ιστορικό εντολών [ignorespace, ignoredups, ignoreboth]\n"
+
+#: help.c:381
+#, c-format
+msgid ""
+"  HISTFILE\n"
+"    file name used to store the command history\n"
+msgstr ""
+"  HISTFILE\n"
+"    όνομα αρχείου που χρησιμοποιείται για την αποθήκευση του ιστορικού "
+"εντολών\n"
+
+#: help.c:383
+#, c-format
+msgid ""
+"  HISTSIZE\n"
+"    maximum number of commands to store in the command history\n"
+msgstr ""
+"  HISTSIZE\n"
+"    μέγιστος αριθμός εντολών που θα αποθηκευτούν στο ιστορικό εντολών\n"
+
+#: help.c:385
+#, c-format
+msgid ""
+"  HOST\n"
+"    the currently connected database server host\n"
+msgstr ""
+"  HOST\n"
+"    ο συνδεδεμένος κεντρικός υπολογιστής διακομιστή βάσης δεδομένων\n"
+
+#: help.c:387
+#, c-format
+msgid ""
+"  IGNOREEOF\n"
+"    number of EOFs needed to terminate an interactive session\n"
+msgstr ""
+"  IGNOREEOF\n"
+"    αριθμός των EOF που απαιτούνται για τον τερματισμό μιας διαδραστικής "
+"συνεδρίας\n"
+
+#: help.c:389
+#, c-format
+msgid ""
+"  LASTOID\n"
+"    value of the last affected OID\n"
+msgstr ""
+"  LASTOID\n"
+"    τιμή του τελευταίου επηρεασμένου OID\n"
+
+#: help.c:391
+#, c-format
+msgid ""
+"  LAST_ERROR_MESSAGE\n"
+"  LAST_ERROR_SQLSTATE\n"
+"    message and SQLSTATE of last error, or empty string and \"00000\" if "
+"none\n"
+msgstr ""
+"  LAST_ERROR_MESSAGE\n"
+"  LAST_ERROR_SQLSTATE\n"
+"    μήνυμα και SQLSTATE του τελευταίου σφάλματος, ή κενή συμβολοσειρά και "
+"\"00000\" εάν δεν\n"
+
+#: help.c:394
+#, c-format
+msgid ""
+"  ON_ERROR_ROLLBACK\n"
+"    if set, an error doesn't stop a transaction (uses implicit savepoints)\n"
+msgstr ""
+"  ON_ERROR_ROLLBACK\n"
+"    εάν έχει οριστεί, ένα σφάλμα δεν διακόπτει μια συναλλαγή (χρησιμοποιεί "
+"έμμεσα σημεία αποθήκευσης)\n"
+
+#: help.c:396
+#, c-format
+msgid ""
+"  ON_ERROR_STOP\n"
+"    stop batch execution after error\n"
+msgstr ""
+"  ON_ERROR_STOP\n"
+"    σταμάτησε την ομαδική εκτέλεση μετά από σφάλμα\n"
+
+#: help.c:398
+#, c-format
+msgid ""
+"  PORT\n"
+"    server port of the current connection\n"
+msgstr ""
+"  PORT\n"
+"    θύρα διακομιστή της τρέχουσας σύνδεσης\n"
+
+#: help.c:400
+#, c-format
+msgid ""
+"  PROMPT1\n"
+"    specifies the standard psql prompt\n"
+msgstr ""
+"  PROMPT1\n"
+"    ορίζει την τυπική προτροπή psql\n"
+
+#: help.c:402
+#, c-format
+msgid ""
+"  PROMPT2\n"
+"    specifies the prompt used when a statement continues from a previous "
+"line\n"
+msgstr ""
+"  PROMPT2\n"
+"    καθορίζει την προτροπή που χρησιμοποιείται όταν μια πρόταση συνεχίζεται "
+"από προηγούμενη γραμμή\n"
+
+#: help.c:404
+#, c-format
+msgid ""
+"  PROMPT3\n"
+"    specifies the prompt used during COPY ... FROM STDIN\n"
+msgstr ""
+"  PROMPT3\n"
+"    καθορίζει την προτροπή που χρησιμοποιείται κατά την διάρκεια COPY … FROM "
+"STDIN\n"
+
+#: help.c:406
+#, c-format
+msgid ""
+"  QUIET\n"
+"    run quietly (same as -q option)\n"
+msgstr ""
+"  QUIET\n"
+"    σιωπηλή εκτέλεση(όμοια με την επιλογή -q)\n"
+
+#: help.c:408
+#, c-format
+msgid ""
+"  ROW_COUNT\n"
+"    number of rows returned or affected by last query, or 0\n"
+msgstr ""
+"  ROW_COUNT\n"
+"    αριθμός των επηρεασμένων ή επιστρεφομένων σειρών του τελευταίου "
+"ερωτήματος, ή 0\n"
+
+#: help.c:410
+#, c-format
+msgid ""
+"  SERVER_VERSION_NAME\n"
+"  SERVER_VERSION_NUM\n"
+"    server's version (in short string or numeric format)\n"
+msgstr ""
+"  SERVER_VERSION_NAME\n"
+"  SERVER_VERSION_NUM\n"
+"   έκδοση διακομιστή (σε σύντομη συμβολοσειρά ή αριθμητική μορφή)\n"
+
+#: help.c:413
+#, c-format
+msgid ""
+"  SHOW_CONTEXT\n"
+"    controls display of message context fields [never, errors, always]\n"
+msgstr ""
+"  SHOW_CONTEXT\n"
+"    ελέγχει την εμφάνιση των πεδίων του περιεχομένου μηνύματος [never, "
+"errors, always]\n"
+
+#: help.c:415
+#, c-format
+msgid ""
+"  SINGLELINE\n"
+"    if set, end of line terminates SQL commands (same as -S option)\n"
+msgstr ""
+"  SINGLELINE\n"
+"    εάν έχει οριστεί, το τέλος γραμμής ολοκληρώνει τα ερωτήματα SQL (όμοια "
+"με την επιλογή -S)\n"
+
+#: help.c:417
+#, c-format
+msgid ""
+"  SINGLESTEP\n"
+"    single-step mode (same as -s option)\n"
+msgstr ""
+"  SINGLESTEP\n"
+"     λειτουργία μονού-βήματος(όμοια με την επιλογή -s)\n"
+
+#: help.c:419
+#, c-format
+msgid ""
+"  SQLSTATE\n"
+"    SQLSTATE of last query, or \"00000\" if no error\n"
+msgstr ""
+"  SQLSTATE\n"
+"    SQLSTATE του τελευταίου ερωτήματος, ή “00000” εάν δεν υπήρξαν σφάλματα\n"
+
+#: help.c:421
+#, c-format
+msgid ""
+"  USER\n"
+"    the currently connected database user\n"
+msgstr ""
+"  USER\n"
+"    ο τρέχων συνδεδεμένος χρήστης βάσης δεδομένων\n"
+
+#: help.c:423
+#, c-format
+msgid ""
+"  VERBOSITY\n"
+"    controls verbosity of error reports [default, verbose, terse, sqlstate]\n"
+msgstr ""
+"  VERBOSITY\n"
+"    ελέγχει την περιφραστικότητα των αναφορών σφαλμάτων  [default, verbose, "
+"terse, sqlstate]\n"
+
+#: help.c:425
+#, c-format
+msgid ""
+"  VERSION\n"
+"  VERSION_NAME\n"
+"  VERSION_NUM\n"
+"    psql's version (in verbose string, short string, or numeric format)\n"
+msgstr ""
+"  VERSION\n"
+"  VERSION_NAME\n"
+"  VERSION_NUM\n"
+"    η έκδοση της psql (σε περιγραφική συμβολοσειρά, σύντομη συμβολοσειρά, ή "
+"αριθμητική μορφή)\n"
+
+#: help.c:430
+#, c-format
+msgid ""
+"\n"
+"Display settings:\n"
+msgstr ""
+"\n"
+"Ρυθμίσεις εμφάνισης:\n"
+
+#: help.c:432
+#, c-format
+msgid ""
+"  psql --pset=NAME[=VALUE]\n"
+"  or \\pset NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  psql —set=NAME=VALUE\n"
+"  ή \\set NAME VALUE μέσα σε συνεδρία psql\n"
+"\n"
+
+#: help.c:434
+#, c-format
+msgid ""
+"  border\n"
+"    border style (number)\n"
+msgstr ""
+"  border\n"
+"    στυλ περιγράμματος (αριθμός)\n"
+
+#: help.c:436
+#, c-format
+msgid ""
+"  columns\n"
+"    target width for the wrapped format\n"
+msgstr ""
+"  columns\n"
+"    πλάτος προορισμού κατά την εμφάνιση αναδιπλωμένης μορφής\n"
+
+#: help.c:438
+#, c-format
+msgid ""
+"  expanded (or x)\n"
+"    expanded output [on, off, auto]\n"
+msgstr ""
+"  expanded (ή x)\n"
+"    διευρυμένη έξοδος [on, off, auto]\n"
+
+#: help.c:440
+#, c-format
+msgid ""
+"  fieldsep\n"
+"    field separator for unaligned output (default \"%s\")\n"
+msgstr ""
+"  fieldsep\n"
+"    διαχωριστικό πεδίου σε μορφή μή ευθυγραμισμένης εξόδου (προκαθοριμένο "
+"“%s”)\n"
+
+#: help.c:443
+#, c-format
+msgid ""
+"  fieldsep_zero\n"
+"    set field separator for unaligned output to a zero byte\n"
+msgstr ""
+"  fieldsep_zero\n"
+"    ορίζει το διαχωριστικό πεδίου για τη μορφή μη ευθυγραμμισμένης εξόδου "
+"στο μηδενικό byte\n"
+
+#: help.c:445
+#, c-format
+msgid ""
+"  footer\n"
+"    enable or disable display of the table footer [on, off]\n"
+msgstr ""
+"  footer\n"
+"    ενεργοποιεί ή απενεργοποιεί την εμφάνιση του υποσέλιδου σε πίνακα [on, "
+"off]\n"
+
+#: help.c:447
+#, c-format
+msgid ""
+"  format\n"
+"    set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
+msgstr ""
+"  format\n"
+"    ορίζει τη μορφή εξόδου [unaligned, aligned, wrapped, html, asciidoc, …]\n"
+
+#: help.c:449
+#, c-format
+msgid ""
+"  linestyle\n"
+"    set the border line drawing style [ascii, old-ascii, unicode]\n"
+msgstr ""
+"  linestyle\n"
+"    ορίζει τη μορφή περιγράμματος [ascii, old-ascii, unicode]\n"
+
+#: help.c:451
+#, c-format
+msgid ""
+"  null\n"
+"    set the string to be printed in place of a null value\n"
+msgstr ""
+"  null\n"
+"    ορίζει τη συμβολοσειρά που θα εκτυπωθεί στη θέση κενής τιμής\n"
+
+#: help.c:453
+#, c-format
+msgid ""
+"  numericlocale\n"
+"    enable display of a locale-specific character to separate groups of "
+"digits\n"
+msgstr ""
+"numericlocale\n"
+"    ενεργοποίηση εμφάνισης ενός χαρακτήρα εντοπιότητας για το διαχωρισμό "
+"ομάδων ψηφίων\n"
+
+#: help.c:455
+#, c-format
+msgid ""
+"  pager\n"
+"    control when an external pager is used [yes, no, always]\n"
+msgstr ""
+"  Pager\n"
+"    ελέγχει πότε χρησιμοποιείται εξωτερικός σελιδοποιητής [yes, no, always]\n"
+
+#: help.c:457
+#, c-format
+msgid ""
+"  recordsep\n"
+"    record (line) separator for unaligned output\n"
+msgstr ""
+"  recordsep\n"
+"    διαχωριστικό εγγραφών (σειράς) κατά την έξοδο μη ευθυγραμμισμένης "
+"μορφής\n"
+
+#: help.c:459
+#, c-format
+msgid ""
+"  recordsep_zero\n"
+"    set record separator for unaligned output to a zero byte\n"
+msgstr ""
+"  recordsep_zero\n"
+"    ορίζει το διαχωριστικό εγγραφών στο μηδενικό byte κατά την έξοδο μη "
+"ευθυγραμμισμένης μορφής\n"
+
+#: help.c:461
+#, c-format
+msgid ""
+"  tableattr (or T)\n"
+"    specify attributes for table tag in html format, or proportional\n"
+"    column widths for left-aligned data types in latex-longtable format\n"
+msgstr ""
+"  tableattr (ή T)\n"
+"    καθορίζει τα χαρακτηριστικά ενός πίνακα tag σε μορφή HTML, ή καθορίζει\n"
+"    αναλογικό πλάτος στηλών για τύπους δεδομένων με αριστερή στοίχιση σε "
+"μορφή latex-longtable\n"
+
+#: help.c:464
+#, c-format
+msgid ""
+"  title\n"
+"    set the table title for subsequently printed tables\n"
+msgstr ""
+"  title\n"
+"    ορίζει τον τίτλο πίνακα για χρήση στους επόμενα εκτυπωμένους πίνακες\n"
+
+#: help.c:466
+#, c-format
+msgid ""
+"  tuples_only\n"
+"    if set, only actual table data is shown\n"
+msgstr ""
+"  tuples_only\n"
+"    εάν έχει ορισθεί, τότε εμφανίζονται μόνο τα δεδομένα πίνακα\n"
+
+#: help.c:468
+#, c-format
+msgid ""
+"  unicode_border_linestyle\n"
+"  unicode_column_linestyle\n"
+"  unicode_header_linestyle\n"
+"    set the style of Unicode line drawing [single, double]\n"
+msgstr ""
+"  unicode_border_linestyle\n"
+"  unicode_column_linestyle\n"
+"  unicode_header_linestyle\n"
+"    ορισμός του στυλ γραμμής Unicode [single, double]\n"
+
+#: help.c:473
+#, c-format
+msgid ""
+"\n"
+"Environment variables:\n"
+msgstr ""
+"\n"
+"Μεταβλητές περιβάλλοντος:\n"
+
+#: help.c:477
+#, c-format
+msgid ""
+"  NAME=VALUE [NAME=VALUE] psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  NAME=VALUE [NAME=VALUE] psql …\n"
+"  ή \\setenv ΟΝΟΜΑ [ΤΙΜΗ] μέσα σε συνεδρία psql\n"
+"\n"
+
+#: help.c:479
+#, c-format
+msgid ""
+"  set NAME=VALUE\n"
+"  psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  ορίστε NAME=VALUE\n"
+"  psql ...\n"
+"  ή \\setenv NAME [VALUE] μέσα σε συνεδρία psql\n"
+"\n"
+
+#: help.c:482
+#, c-format
+msgid ""
+"  COLUMNS\n"
+"    number of columns for wrapped format\n"
+msgstr ""
+"  COLUMNS\n"
+"    αριθμός στηλών για αναδιπλωμένη μορφή\n"
+
+#: help.c:484
+#, c-format
+msgid ""
+"  PGAPPNAME\n"
+"    same as the application_name connection parameter\n"
+msgstr ""
+"  PGAPPNAME\n"
+"    όμοια με την παράμετρο σύνδεσης application_name\n"
+
+#: help.c:486
+#, c-format
+msgid ""
+"  PGDATABASE\n"
+"    same as the dbname connection parameter\n"
+msgstr ""
+"  PGDATABASE\n"
+"    όμοια με την παράμετρο σύνδεσης dbname\n"
+
+#: help.c:488
+#, c-format
+msgid ""
+"  PGHOST\n"
+"    same as the host connection parameter\n"
+msgstr ""
+"  PGHOST\n"
+"    όμοια με την παράμετρο της σύνδεσης κεντρικού υπολογιστή\n"
+
+#: help.c:490
+#, c-format
+msgid ""
+"  PGPASSWORD\n"
+"    connection password (not recommended)\n"
+msgstr ""
+"  PGPASSWORD\n"
+"    κωδικός πρόσβασης σύνδεσης (δεν συνιστάται)\n"
+
+#: help.c:492
+#, c-format
+msgid ""
+"  PGPASSFILE\n"
+"    password file name\n"
+msgstr ""
+"  PGPASSFILE\n"
+"    αρχείο κωδικών πρόσβασης\n"
+
+#: help.c:494
+#, c-format
+msgid ""
+"  PGPORT\n"
+"    same as the port connection parameter\n"
+msgstr ""
+"    PGPORT\n"
+"    όμοια με την παράμετρο σύνδεσης θύρας\n"
+
+#: help.c:496
+#, c-format
+msgid ""
+"  PGUSER\n"
+"    same as the user connection parameter\n"
+msgstr ""
+"  PGUSER\n"
+"    όμοια με την παράμετρο σύνδεσης χρήστη\n"
+
+#: help.c:498
+#, c-format
+msgid ""
+"  PSQL_EDITOR, EDITOR, VISUAL\n"
+"    editor used by the \\e, \\ef, and \\ev commands\n"
+msgstr ""
+"  PSQL_EDITOR, EDITOR, VISUAL\n"
+"    πρόγραμμα επεξεργασίας κειμένου που χρησιμοποιείται από τις εντολές \\e, "
+"\\ef και \\ev\n"
+
+#: help.c:500
+#, c-format
+msgid ""
+"  PSQL_EDITOR_LINENUMBER_ARG\n"
+"    how to specify a line number when invoking the editor\n"
+msgstr ""
+"  PSQL_EDITOR_LINENUMBER_ARG\n"
+"    τρόπος καθορισμού αριθμού γραμμής κατά την κλήση του προγράμματος "
+"επεξεργασίας κειμένου\n"
+
+#: help.c:502
+#, c-format
+msgid ""
+"  PSQL_HISTORY\n"
+"    alternative location for the command history file\n"
+msgstr ""
+"  PSQL_HISTORY\n"
+"    εναλλακτική τοποθεσία για το αρχείο ιστορικού εντολών\n"
+
+#: help.c:504
+#, c-format
+msgid ""
+"  PSQL_PAGER, PAGER\n"
+"    name of external pager program\n"
+msgstr ""
+"  PSQL_PAGER, PAGER\n"
+"    όνομα του εξωτερικού προγράμματος σελιδοποίησης\n"
+
+#: help.c:506
+#, c-format
+msgid ""
+"  PSQLRC\n"
+"    alternative location for the user's .psqlrc file\n"
+msgstr ""
+"  PSQLRC\n"
+"    εναλλακτική τοποθεσία για το αρχείο .psqlrc του χρήστη\n"
+
+#: help.c:508
+#, c-format
+msgid ""
+"  SHELL\n"
+"    shell used by the \\! command\n"
+msgstr ""
+"  SHELL\n"
+"    shell που χρησιμοποιείται κατά την εντολή \\!\n"
+
+#: help.c:510
+#, c-format
+msgid ""
+"  TMPDIR\n"
+"    directory for temporary files\n"
+msgstr ""
+"  TMPDIR\n"
+"    κατάλογος για προσωρινά αρχεία\n"
+
+#: help.c:555
+msgid "Available help:\n"
+msgstr "Διαθέσιμη βοήθεια:\n"
+
+#: help.c:650
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+"URL: %s\n"
+"\n"
+msgstr ""
+"Εντολή: %s\n"
+"Περιγραφή: %s\n"
+"Σύνταξη:\n"
+"%s\n"
+"\n"
+"Διεύθυνση URL: %s\n"
+"\n"
+
+#: help.c:673
+#, c-format
+msgid ""
+"No help available for \"%s\".\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"Δεν υπάρχει διαθέσιμη βοήθεια για το \"%s\".\n"
+"Δοκιμάστε \\h χωρίς παραμέτρους για να δείτε τη διαθέσιμη βοήθεια.\n"
+
+#: input.c:217
+#, c-format
+msgid "could not read from input file: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση από αρχείο: %m"
+
+#: input.c:471 input.c:509
+#, c-format
+msgid "could not save history to file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η αποθήκευση του ιστορικού στο αρχείο “%s”: %m"
+
+#: input.c:528
+#, c-format
+msgid "history is not supported by this installation"
+msgstr "το ιστορικό δεν υποστηρίζεται από την παρούσα εγκατάσταση"
+
+#: large_obj.c:65
+#, c-format
+msgid "%s: not connected to a database"
+msgstr "%s: δεν είναι συνδεμένο σε μία βάση δεδομένων"
+
+#: large_obj.c:84
+#, c-format
+msgid "%s: current transaction is aborted"
+msgstr "%s: η τρέχουσα συναλλαγή ματαιώθηκε"
+
+#: large_obj.c:87
+#, c-format
+msgid "%s: unknown transaction status"
+msgstr "%s: άγνωστη κατάσταση συναλλαγής"
+
+#: large_obj.c:288 large_obj.c:299
+msgid "ID"
+msgstr "ID"
+
+#: large_obj.c:309
+msgid "Large objects"
+msgstr "Μεγάλα αντικείμενα"
+
+#: mainloop.c:136
+#, c-format
+msgid "\\if: escaped"
+msgstr "\\if: με διαφυγή"
+
+#: mainloop.c:195
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "Χρησιμοποιείστε “\\q” για να εξέλθετε %s.\n"
+
+#: mainloop.c:217
+msgid ""
+"The input is a PostgreSQL custom-format dump.\n"
+"Use the pg_restore command-line client to restore this dump to a database.\n"
+msgstr ""
+"Η είσοδος είναι μια απόθεση PostgreSQL προσαρμοσμένης μορφής.\n"
+"Χρησιμοποιήστε το πρόγραμμα γραμμής εντολών pg_restore για να επαναφέρετε "
+"αυτήν την απόθεση σε μια βάση δεδομένων.\n"
+
+#: mainloop.c:298
+msgid "Use \\? for help or press control-C to clear the input buffer."
+msgstr ""
+"Χρησιμοποιείστε \\? για βοήθεια ή πληκτρολογήστε control-C για να αδειάσετε "
+"την ενδιάμεση μνήμη εισόδου."
+
+#: mainloop.c:300
+msgid "Use \\? for help."
+msgstr "Χρησιμοποιείστε \\? για βοήθεια."
+
+#: mainloop.c:304
+msgid "You are using psql, the command-line interface to PostgreSQL."
+msgstr "Χρησιμοποιείτε psql, τη διασύνδεση γραμμής εντολών της PostgreSQL."
+
+#: mainloop.c:305
+#, c-format
+msgid ""
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help with psql commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+msgstr ""
+"Πληκτρολογείστε: \\copyright για τους όρους διανομής\n"
+"       \\h για βοήθεια σχετικά με τις εντολές SQL\n"
+"       \\? για βοήθεια σχετικά με τις εντολές psql\n"
+"       \\g ή ολοκληρώστε με ερωτηματικό για να εκτελέσετε ερώτημα\n"
+"       \\q για έξοδο\n"
+
+#: mainloop.c:329
+msgid "Use \\q to quit."
+msgstr "Χρησιμοποιείστε “\\q” για να εξέλθετε."
+
+#: mainloop.c:332 mainloop.c:356
+msgid "Use control-D to quit."
+msgstr "Πληκτρολογείστε control-D για να εξέλθετε."
+
+#: mainloop.c:334 mainloop.c:358
+msgid "Use control-C to quit."
+msgstr "Πληκτρολογείστε control-D για να εξέλθετε."
+
+#: mainloop.c:465 mainloop.c:613
+#, c-format
+msgid "query ignored; use \\endif or Ctrl-C to exit current \\if block"
+msgstr ""
+"το ερώτημα παραβλέφθηκε· χρησιμοποιήστε το \\endif ή το Ctrl-C για να "
+"κλείσετε το τρέχον υπό συνθήκη \\if μπλοκ"
+
+#: mainloop.c:631
+#, c-format
+msgid "reached EOF without finding closing \\endif(s)"
+msgstr "έφτασε στο EOF χωρίς να βρεθούν τελικά \\endif(s)"
+
+#: psqlscanslash.l:638
+#, c-format
+msgid "unterminated quoted string"
+msgstr "ανολοκλήρωτη συμβολοσειρά με εισαγωγικά"
+
+#: psqlscanslash.l:811
+#, c-format
+msgid "%s: out of memory"
+msgstr "%s: έλλειψη μνήμης"
+
+#: sql_help.c:35 sql_help.c:38 sql_help.c:41 sql_help.c:65 sql_help.c:66
+#: sql_help.c:68 sql_help.c:70 sql_help.c:81 sql_help.c:83 sql_help.c:85
+#: sql_help.c:111 sql_help.c:117 sql_help.c:119 sql_help.c:121 sql_help.c:123
+#: sql_help.c:126 sql_help.c:128 sql_help.c:130 sql_help.c:235 sql_help.c:237
+#: sql_help.c:238 sql_help.c:240 sql_help.c:242 sql_help.c:245 sql_help.c:247
+#: sql_help.c:249 sql_help.c:251 sql_help.c:263 sql_help.c:264 sql_help.c:265
+#: sql_help.c:267 sql_help.c:316 sql_help.c:318 sql_help.c:320 sql_help.c:322
+#: sql_help.c:391 sql_help.c:396 sql_help.c:398 sql_help.c:440 sql_help.c:442
+#: sql_help.c:445 sql_help.c:447 sql_help.c:515 sql_help.c:520 sql_help.c:525
+#: sql_help.c:530 sql_help.c:535 sql_help.c:588 sql_help.c:590 sql_help.c:592
+#: sql_help.c:594 sql_help.c:596 sql_help.c:599 sql_help.c:601 sql_help.c:604
+#: sql_help.c:615 sql_help.c:617 sql_help.c:658 sql_help.c:660 sql_help.c:662
+#: sql_help.c:665 sql_help.c:667 sql_help.c:669 sql_help.c:702 sql_help.c:706
+#: sql_help.c:710 sql_help.c:729 sql_help.c:732 sql_help.c:735 sql_help.c:764
+#: sql_help.c:776 sql_help.c:784 sql_help.c:787 sql_help.c:790 sql_help.c:805
+#: sql_help.c:808 sql_help.c:837 sql_help.c:842 sql_help.c:847 sql_help.c:852
+#: sql_help.c:857 sql_help.c:879 sql_help.c:881 sql_help.c:883 sql_help.c:885
+#: sql_help.c:888 sql_help.c:890 sql_help.c:931 sql_help.c:975 sql_help.c:980
+#: sql_help.c:985 sql_help.c:990 sql_help.c:995 sql_help.c:1014 sql_help.c:1025
+#: sql_help.c:1027 sql_help.c:1046 sql_help.c:1056 sql_help.c:1058
+#: sql_help.c:1060 sql_help.c:1072 sql_help.c:1076 sql_help.c:1078
+#: sql_help.c:1090 sql_help.c:1092 sql_help.c:1094 sql_help.c:1096
+#: sql_help.c:1112 sql_help.c:1114 sql_help.c:1118 sql_help.c:1121
+#: sql_help.c:1122 sql_help.c:1123 sql_help.c:1126 sql_help.c:1128
+#: sql_help.c:1262 sql_help.c:1264 sql_help.c:1267 sql_help.c:1270
+#: sql_help.c:1272 sql_help.c:1274 sql_help.c:1277 sql_help.c:1280
+#: sql_help.c:1391 sql_help.c:1393 sql_help.c:1395 sql_help.c:1398
+#: sql_help.c:1419 sql_help.c:1422 sql_help.c:1425 sql_help.c:1428
+#: sql_help.c:1432 sql_help.c:1434 sql_help.c:1436 sql_help.c:1438
+#: sql_help.c:1452 sql_help.c:1455 sql_help.c:1457 sql_help.c:1459
+#: sql_help.c:1469 sql_help.c:1471 sql_help.c:1481 sql_help.c:1483
+#: sql_help.c:1493 sql_help.c:1496 sql_help.c:1519 sql_help.c:1521
+#: sql_help.c:1523 sql_help.c:1525 sql_help.c:1528 sql_help.c:1530
+#: sql_help.c:1533 sql_help.c:1536 sql_help.c:1586 sql_help.c:1629
+#: sql_help.c:1632 sql_help.c:1634 sql_help.c:1636 sql_help.c:1639
+#: sql_help.c:1641 sql_help.c:1643 sql_help.c:1646 sql_help.c:1696
+#: sql_help.c:1712 sql_help.c:1933 sql_help.c:2002 sql_help.c:2021
+#: sql_help.c:2034 sql_help.c:2091 sql_help.c:2098 sql_help.c:2108
+#: sql_help.c:2129 sql_help.c:2155 sql_help.c:2173 sql_help.c:2200
+#: sql_help.c:2295 sql_help.c:2340 sql_help.c:2364 sql_help.c:2387
+#: sql_help.c:2391 sql_help.c:2425 sql_help.c:2445 sql_help.c:2467
+#: sql_help.c:2481 sql_help.c:2501 sql_help.c:2524 sql_help.c:2554
+#: sql_help.c:2579 sql_help.c:2625 sql_help.c:2903 sql_help.c:2916
+#: sql_help.c:2933 sql_help.c:2949 sql_help.c:2989 sql_help.c:3041
+#: sql_help.c:3045 sql_help.c:3047 sql_help.c:3053 sql_help.c:3071
+#: sql_help.c:3098 sql_help.c:3133 sql_help.c:3145 sql_help.c:3154
+#: sql_help.c:3198 sql_help.c:3212 sql_help.c:3240 sql_help.c:3248
+#: sql_help.c:3260 sql_help.c:3270 sql_help.c:3278 sql_help.c:3286
+#: sql_help.c:3294 sql_help.c:3302 sql_help.c:3311 sql_help.c:3322
+#: sql_help.c:3330 sql_help.c:3338 sql_help.c:3346 sql_help.c:3354
+#: sql_help.c:3364 sql_help.c:3373 sql_help.c:3382 sql_help.c:3390
+#: sql_help.c:3400 sql_help.c:3411 sql_help.c:3419 sql_help.c:3428
+#: sql_help.c:3439 sql_help.c:3448 sql_help.c:3456 sql_help.c:3464
+#: sql_help.c:3472 sql_help.c:3480 sql_help.c:3488 sql_help.c:3496
+#: sql_help.c:3504 sql_help.c:3512 sql_help.c:3520 sql_help.c:3528
+#: sql_help.c:3545 sql_help.c:3554 sql_help.c:3562 sql_help.c:3579
+#: sql_help.c:3594 sql_help.c:3869 sql_help.c:3920 sql_help.c:3949
+#: sql_help.c:3962 sql_help.c:4407 sql_help.c:4455 sql_help.c:4596
+msgid "name"
+msgstr "ονομασία"
+
+#: sql_help.c:36 sql_help.c:39 sql_help.c:42 sql_help.c:327 sql_help.c:1783
+#: sql_help.c:3213 sql_help.c:4193
+msgid "aggregate_signature"
+msgstr "aggregate_signature"
+
+#: sql_help.c:37 sql_help.c:67 sql_help.c:82 sql_help.c:118 sql_help.c:250
+#: sql_help.c:268 sql_help.c:399 sql_help.c:446 sql_help.c:524 sql_help.c:571
+#: sql_help.c:589 sql_help.c:616 sql_help.c:666 sql_help.c:731 sql_help.c:786
+#: sql_help.c:807 sql_help.c:846 sql_help.c:891 sql_help.c:932 sql_help.c:984
+#: sql_help.c:1016 sql_help.c:1026 sql_help.c:1059 sql_help.c:1079
+#: sql_help.c:1093 sql_help.c:1129 sql_help.c:1271 sql_help.c:1392
+#: sql_help.c:1435 sql_help.c:1456 sql_help.c:1470 sql_help.c:1482
+#: sql_help.c:1495 sql_help.c:1522 sql_help.c:1587 sql_help.c:1640
+msgid "new_name"
+msgstr "new_name"
+
+#: sql_help.c:40 sql_help.c:69 sql_help.c:84 sql_help.c:120 sql_help.c:248
+#: sql_help.c:266 sql_help.c:397 sql_help.c:482 sql_help.c:529 sql_help.c:618
+#: sql_help.c:627 sql_help.c:685 sql_help.c:705 sql_help.c:734 sql_help.c:789
+#: sql_help.c:851 sql_help.c:889 sql_help.c:989 sql_help.c:1028 sql_help.c:1057
+#: sql_help.c:1077 sql_help.c:1091 sql_help.c:1127 sql_help.c:1332
+#: sql_help.c:1394 sql_help.c:1437 sql_help.c:1458 sql_help.c:1520
+#: sql_help.c:1635 sql_help.c:2889
+msgid "new_owner"
+msgstr "new_owner"
+
+#: sql_help.c:43 sql_help.c:71 sql_help.c:86 sql_help.c:252 sql_help.c:319
+#: sql_help.c:448 sql_help.c:534 sql_help.c:668 sql_help.c:709 sql_help.c:737
+#: sql_help.c:792 sql_help.c:856 sql_help.c:994 sql_help.c:1061 sql_help.c:1095
+#: sql_help.c:1273 sql_help.c:1439 sql_help.c:1460 sql_help.c:1472
+#: sql_help.c:1484 sql_help.c:1524 sql_help.c:1642
+msgid "new_schema"
+msgstr "new_schema"
+
+#: sql_help.c:44 sql_help.c:1847 sql_help.c:3214 sql_help.c:4222
+msgid "where aggregate_signature is:"
+msgstr "όπου aggregate_signature είναι:"
+
+#: sql_help.c:45 sql_help.c:48 sql_help.c:51 sql_help.c:337 sql_help.c:350
+#: sql_help.c:354 sql_help.c:370 sql_help.c:373 sql_help.c:376 sql_help.c:516
+#: sql_help.c:521 sql_help.c:526 sql_help.c:531 sql_help.c:536 sql_help.c:838
+#: sql_help.c:843 sql_help.c:848 sql_help.c:853 sql_help.c:858 sql_help.c:976
+#: sql_help.c:981 sql_help.c:986 sql_help.c:991 sql_help.c:996 sql_help.c:1801
+#: sql_help.c:1818 sql_help.c:1824 sql_help.c:1848 sql_help.c:1851
+#: sql_help.c:1854 sql_help.c:2003 sql_help.c:2022 sql_help.c:2025
+#: sql_help.c:2296 sql_help.c:2502 sql_help.c:3215 sql_help.c:3218
+#: sql_help.c:3221 sql_help.c:3312 sql_help.c:3401 sql_help.c:3429
+#: sql_help.c:3753 sql_help.c:4101 sql_help.c:4199 sql_help.c:4206
+#: sql_help.c:4212 sql_help.c:4223 sql_help.c:4226 sql_help.c:4229
+msgid "argmode"
+msgstr "argmode"
+
+#: sql_help.c:46 sql_help.c:49 sql_help.c:52 sql_help.c:338 sql_help.c:351
+#: sql_help.c:355 sql_help.c:371 sql_help.c:374 sql_help.c:377 sql_help.c:517
+#: sql_help.c:522 sql_help.c:527 sql_help.c:532 sql_help.c:537 sql_help.c:839
+#: sql_help.c:844 sql_help.c:849 sql_help.c:854 sql_help.c:859 sql_help.c:977
+#: sql_help.c:982 sql_help.c:987 sql_help.c:992 sql_help.c:997 sql_help.c:1802
+#: sql_help.c:1819 sql_help.c:1825 sql_help.c:1849 sql_help.c:1852
+#: sql_help.c:1855 sql_help.c:2004 sql_help.c:2023 sql_help.c:2026
+#: sql_help.c:2297 sql_help.c:2503 sql_help.c:3216 sql_help.c:3219
+#: sql_help.c:3222 sql_help.c:3313 sql_help.c:3402 sql_help.c:3430
+#: sql_help.c:4200 sql_help.c:4207 sql_help.c:4213 sql_help.c:4224
+#: sql_help.c:4227 sql_help.c:4230
+msgid "argname"
+msgstr "argname"
+
+#: sql_help.c:47 sql_help.c:50 sql_help.c:53 sql_help.c:339 sql_help.c:352
+#: sql_help.c:356 sql_help.c:372 sql_help.c:375 sql_help.c:378 sql_help.c:518
+#: sql_help.c:523 sql_help.c:528 sql_help.c:533 sql_help.c:538 sql_help.c:840
+#: sql_help.c:845 sql_help.c:850 sql_help.c:855 sql_help.c:860 sql_help.c:978
+#: sql_help.c:983 sql_help.c:988 sql_help.c:993 sql_help.c:998 sql_help.c:1803
+#: sql_help.c:1820 sql_help.c:1826 sql_help.c:1850 sql_help.c:1853
+#: sql_help.c:1856 sql_help.c:2298 sql_help.c:2504 sql_help.c:3217
+#: sql_help.c:3220 sql_help.c:3223 sql_help.c:3314 sql_help.c:3403
+#: sql_help.c:3431 sql_help.c:4201 sql_help.c:4208 sql_help.c:4214
+#: sql_help.c:4225 sql_help.c:4228 sql_help.c:4231
+msgid "argtype"
+msgstr "argtype"
+
+#: sql_help.c:112 sql_help.c:394 sql_help.c:471 sql_help.c:483 sql_help.c:926
+#: sql_help.c:1074 sql_help.c:1453 sql_help.c:1581 sql_help.c:1613
+#: sql_help.c:1665 sql_help.c:1904 sql_help.c:1911 sql_help.c:2203
+#: sql_help.c:2245 sql_help.c:2252 sql_help.c:2261 sql_help.c:2341
+#: sql_help.c:2555 sql_help.c:2647 sql_help.c:2918 sql_help.c:3099
+#: sql_help.c:3121 sql_help.c:3261 sql_help.c:3616 sql_help.c:3788
+#: sql_help.c:3961 sql_help.c:4658
+msgid "option"
+msgstr "επιλογή"
+
+#: sql_help.c:113 sql_help.c:927 sql_help.c:1582 sql_help.c:2342
+#: sql_help.c:2556 sql_help.c:3100 sql_help.c:3262
+msgid "where option can be:"
+msgstr "όπου option μπορεί να είναι:"
+
+#: sql_help.c:114 sql_help.c:2137
+msgid "allowconn"
+msgstr "allowconn"
+
+#: sql_help.c:115 sql_help.c:928 sql_help.c:1583 sql_help.c:2138
+#: sql_help.c:2343 sql_help.c:2557 sql_help.c:3101
+msgid "connlimit"
+msgstr "connlimit"
+
+#: sql_help.c:116 sql_help.c:2139
+msgid "istemplate"
+msgstr "istemplate"
+
+#: sql_help.c:122 sql_help.c:606 sql_help.c:671 sql_help.c:1276 sql_help.c:1325
+msgid "new_tablespace"
+msgstr "new_tablespace"
+
+#: sql_help.c:124 sql_help.c:127 sql_help.c:129 sql_help.c:544 sql_help.c:546
+#: sql_help.c:547 sql_help.c:863 sql_help.c:865 sql_help.c:866 sql_help.c:935
+#: sql_help.c:939 sql_help.c:942 sql_help.c:1003 sql_help.c:1005
+#: sql_help.c:1006 sql_help.c:1140 sql_help.c:1143 sql_help.c:1590
+#: sql_help.c:1594 sql_help.c:1597 sql_help.c:2308 sql_help.c:2508
+#: sql_help.c:3980 sql_help.c:4396
+msgid "configuration_parameter"
+msgstr "configuration_parameter"
+
+#: sql_help.c:125 sql_help.c:395 sql_help.c:466 sql_help.c:472 sql_help.c:484
+#: sql_help.c:545 sql_help.c:598 sql_help.c:677 sql_help.c:683 sql_help.c:864
+#: sql_help.c:887 sql_help.c:936 sql_help.c:1004 sql_help.c:1075
+#: sql_help.c:1117 sql_help.c:1120 sql_help.c:1125 sql_help.c:1141
+#: sql_help.c:1142 sql_help.c:1307 sql_help.c:1327 sql_help.c:1375
+#: sql_help.c:1397 sql_help.c:1454 sql_help.c:1538 sql_help.c:1591
+#: sql_help.c:1614 sql_help.c:2204 sql_help.c:2246 sql_help.c:2253
+#: sql_help.c:2262 sql_help.c:2309 sql_help.c:2310 sql_help.c:2372
+#: sql_help.c:2375 sql_help.c:2409 sql_help.c:2509 sql_help.c:2510
+#: sql_help.c:2527 sql_help.c:2648 sql_help.c:2678 sql_help.c:2783
+#: sql_help.c:2796 sql_help.c:2810 sql_help.c:2851 sql_help.c:2875
+#: sql_help.c:2892 sql_help.c:2919 sql_help.c:3122 sql_help.c:3789
+#: sql_help.c:4397 sql_help.c:4398
+msgid "value"
+msgstr "value"
+
+#: sql_help.c:197
+msgid "target_role"
+msgstr "target_role"
+
+#: sql_help.c:198 sql_help.c:2188 sql_help.c:2603 sql_help.c:2608
+#: sql_help.c:3735 sql_help.c:3742 sql_help.c:3756 sql_help.c:3762
+#: sql_help.c:4083 sql_help.c:4090 sql_help.c:4104 sql_help.c:4110
+msgid "schema_name"
+msgstr "schema_name"
+
+#: sql_help.c:199
+msgid "abbreviated_grant_or_revoke"
+msgstr "abbreviated_grant_or_revoke"
+
+#: sql_help.c:200
+msgid "where abbreviated_grant_or_revoke is one of:"
+msgstr "όπου abbreviated_grant_or_revoke είναι ένα από:"
+
+#: sql_help.c:201 sql_help.c:202 sql_help.c:203 sql_help.c:204 sql_help.c:205
+#: sql_help.c:206 sql_help.c:207 sql_help.c:208 sql_help.c:209 sql_help.c:210
+#: sql_help.c:569 sql_help.c:605 sql_help.c:670 sql_help.c:810 sql_help.c:946
+#: sql_help.c:1275 sql_help.c:1601 sql_help.c:2346 sql_help.c:2347
+#: sql_help.c:2348 sql_help.c:2349 sql_help.c:2350 sql_help.c:2483
+#: sql_help.c:2560 sql_help.c:2561 sql_help.c:2562 sql_help.c:2563
+#: sql_help.c:2564 sql_help.c:3104 sql_help.c:3105 sql_help.c:3106
+#: sql_help.c:3107 sql_help.c:3108 sql_help.c:3768 sql_help.c:3772
+#: sql_help.c:4116 sql_help.c:4120 sql_help.c:4417
+msgid "role_name"
+msgstr "role_name"
+
+#: sql_help.c:236 sql_help.c:459 sql_help.c:1291 sql_help.c:1293
+#: sql_help.c:1342 sql_help.c:1354 sql_help.c:1379 sql_help.c:1631
+#: sql_help.c:2158 sql_help.c:2162 sql_help.c:2265 sql_help.c:2270
+#: sql_help.c:2368 sql_help.c:2778 sql_help.c:2791 sql_help.c:2805
+#: sql_help.c:2814 sql_help.c:2826 sql_help.c:2855 sql_help.c:3820
+#: sql_help.c:3835 sql_help.c:3837 sql_help.c:4282 sql_help.c:4283
+#: sql_help.c:4292 sql_help.c:4333 sql_help.c:4334 sql_help.c:4335
+#: sql_help.c:4336 sql_help.c:4337 sql_help.c:4338 sql_help.c:4371
+#: sql_help.c:4372 sql_help.c:4377 sql_help.c:4382 sql_help.c:4521
+#: sql_help.c:4522 sql_help.c:4531 sql_help.c:4572 sql_help.c:4573
+#: sql_help.c:4574 sql_help.c:4575 sql_help.c:4576 sql_help.c:4577
+#: sql_help.c:4624 sql_help.c:4626 sql_help.c:4685 sql_help.c:4741
+#: sql_help.c:4742 sql_help.c:4751 sql_help.c:4792 sql_help.c:4793
+#: sql_help.c:4794 sql_help.c:4795 sql_help.c:4796 sql_help.c:4797
+msgid "expression"
+msgstr "expression"
+
+#: sql_help.c:239
+msgid "domain_constraint"
+msgstr "domain_constraint"
+
+#: sql_help.c:241 sql_help.c:243 sql_help.c:246 sql_help.c:474 sql_help.c:475
+#: sql_help.c:1268 sql_help.c:1313 sql_help.c:1314 sql_help.c:1315
+#: sql_help.c:1341 sql_help.c:1353 sql_help.c:1370 sql_help.c:1789
+#: sql_help.c:1791 sql_help.c:2161 sql_help.c:2264 sql_help.c:2269
+#: sql_help.c:2813 sql_help.c:2825 sql_help.c:3832
+msgid "constraint_name"
+msgstr "constraint_name"
+
+#: sql_help.c:244 sql_help.c:1269
+msgid "new_constraint_name"
+msgstr "new_constraint_name"
+
+#: sql_help.c:317 sql_help.c:1073
+msgid "new_version"
+msgstr "new_version"
+
+#: sql_help.c:321 sql_help.c:323
+msgid "member_object"
+msgstr "member_object"
+
+#: sql_help.c:324
+msgid "where member_object is:"
+msgstr "όπου member_object είναι:"
+
+#: sql_help.c:325 sql_help.c:330 sql_help.c:331 sql_help.c:332 sql_help.c:333
+#: sql_help.c:334 sql_help.c:335 sql_help.c:340 sql_help.c:344 sql_help.c:346
+#: sql_help.c:348 sql_help.c:357 sql_help.c:358 sql_help.c:359 sql_help.c:360
+#: sql_help.c:361 sql_help.c:362 sql_help.c:363 sql_help.c:364 sql_help.c:367
+#: sql_help.c:368 sql_help.c:1781 sql_help.c:1786 sql_help.c:1793
+#: sql_help.c:1794 sql_help.c:1795 sql_help.c:1796 sql_help.c:1797
+#: sql_help.c:1798 sql_help.c:1799 sql_help.c:1804 sql_help.c:1806
+#: sql_help.c:1810 sql_help.c:1812 sql_help.c:1816 sql_help.c:1821
+#: sql_help.c:1822 sql_help.c:1829 sql_help.c:1830 sql_help.c:1831
+#: sql_help.c:1832 sql_help.c:1833 sql_help.c:1834 sql_help.c:1835
+#: sql_help.c:1836 sql_help.c:1837 sql_help.c:1838 sql_help.c:1839
+#: sql_help.c:1844 sql_help.c:1845 sql_help.c:4189 sql_help.c:4194
+#: sql_help.c:4195 sql_help.c:4196 sql_help.c:4197 sql_help.c:4203
+#: sql_help.c:4204 sql_help.c:4209 sql_help.c:4210 sql_help.c:4215
+#: sql_help.c:4216 sql_help.c:4217 sql_help.c:4218 sql_help.c:4219
+#: sql_help.c:4220
+msgid "object_name"
+msgstr "object_name"
+
+#: sql_help.c:326 sql_help.c:1782 sql_help.c:4192
+msgid "aggregate_name"
+msgstr "aggregate_name"
+
+#: sql_help.c:328 sql_help.c:1784 sql_help.c:2068 sql_help.c:2072
+#: sql_help.c:2074 sql_help.c:3231
+msgid "source_type"
+msgstr "source_type"
+
+#: sql_help.c:329 sql_help.c:1785 sql_help.c:2069 sql_help.c:2073
+#: sql_help.c:2075 sql_help.c:3232
+msgid "target_type"
+msgstr "source_type"
+
+#: sql_help.c:336 sql_help.c:774 sql_help.c:1800 sql_help.c:2070
+#: sql_help.c:2111 sql_help.c:2176 sql_help.c:2426 sql_help.c:2457
+#: sql_help.c:2995 sql_help.c:4100 sql_help.c:4198 sql_help.c:4311
+#: sql_help.c:4315 sql_help.c:4319 sql_help.c:4322 sql_help.c:4550
+#: sql_help.c:4554 sql_help.c:4558 sql_help.c:4561 sql_help.c:4770
+#: sql_help.c:4774 sql_help.c:4778 sql_help.c:4781
+msgid "function_name"
+msgstr "function_name"
+
+#: sql_help.c:341 sql_help.c:767 sql_help.c:1807 sql_help.c:2450
+msgid "operator_name"
+msgstr "operator_name"
+
+#: sql_help.c:342 sql_help.c:703 sql_help.c:707 sql_help.c:711 sql_help.c:1808
+#: sql_help.c:2427 sql_help.c:3355
+msgid "left_type"
+msgstr "source_type"
+
+#: sql_help.c:343 sql_help.c:704 sql_help.c:708 sql_help.c:712 sql_help.c:1809
+#: sql_help.c:2428 sql_help.c:3356
+msgid "right_type"
+msgstr "source_type"
+
+#: sql_help.c:345 sql_help.c:347 sql_help.c:730 sql_help.c:733 sql_help.c:736
+#: sql_help.c:765 sql_help.c:777 sql_help.c:785 sql_help.c:788 sql_help.c:791
+#: sql_help.c:1359 sql_help.c:1811 sql_help.c:1813 sql_help.c:2447
+#: sql_help.c:2468 sql_help.c:2831 sql_help.c:3365 sql_help.c:3374
+msgid "index_method"
+msgstr "source_type"
+
+#: sql_help.c:349 sql_help.c:1817 sql_help.c:4205
+msgid "procedure_name"
+msgstr "procedure_name"
+
+#: sql_help.c:353 sql_help.c:1823 sql_help.c:3752 sql_help.c:4211
+msgid "routine_name"
+msgstr "routine_name"
+
+#: sql_help.c:365 sql_help.c:1331 sql_help.c:1840 sql_help.c:2304
+#: sql_help.c:2507 sql_help.c:2786 sql_help.c:2962 sql_help.c:3536
+#: sql_help.c:3766 sql_help.c:4114
+msgid "type_name"
+msgstr "type_name"
+
+#: sql_help.c:366 sql_help.c:1841 sql_help.c:2303 sql_help.c:2506
+#: sql_help.c:2963 sql_help.c:3189 sql_help.c:3537 sql_help.c:3758
+#: sql_help.c:4106
+msgid "lang_name"
+msgstr "lang_name"
+
+#: sql_help.c:369
+msgid "and aggregate_signature is:"
+msgstr "και aggregate_signature είναι:"
+
+#: sql_help.c:392 sql_help.c:1935 sql_help.c:2201
+msgid "handler_function"
+msgstr "handler_function"
+
+#: sql_help.c:393 sql_help.c:2202
+msgid "validator_function"
+msgstr "validator_function"
+
+#: sql_help.c:441 sql_help.c:519 sql_help.c:659 sql_help.c:841 sql_help.c:979
+#: sql_help.c:1263 sql_help.c:1529
+msgid "action"
+msgstr "action"
+
+#: sql_help.c:443 sql_help.c:450 sql_help.c:454 sql_help.c:455 sql_help.c:458
+#: sql_help.c:460 sql_help.c:461 sql_help.c:462 sql_help.c:464 sql_help.c:467
+#: sql_help.c:469 sql_help.c:470 sql_help.c:663 sql_help.c:673 sql_help.c:675
+#: sql_help.c:678 sql_help.c:680 sql_help.c:1055 sql_help.c:1265
+#: sql_help.c:1283 sql_help.c:1287 sql_help.c:1288 sql_help.c:1292
+#: sql_help.c:1294 sql_help.c:1295 sql_help.c:1296 sql_help.c:1297
+#: sql_help.c:1299 sql_help.c:1302 sql_help.c:1303 sql_help.c:1305
+#: sql_help.c:1308 sql_help.c:1310 sql_help.c:1355 sql_help.c:1357
+#: sql_help.c:1364 sql_help.c:1373 sql_help.c:1378 sql_help.c:1630
+#: sql_help.c:1633 sql_help.c:1637 sql_help.c:1673 sql_help.c:1788
+#: sql_help.c:1901 sql_help.c:1907 sql_help.c:1920 sql_help.c:1921
+#: sql_help.c:1922 sql_help.c:2243 sql_help.c:2256 sql_help.c:2301
+#: sql_help.c:2367 sql_help.c:2373 sql_help.c:2406 sql_help.c:2633
+#: sql_help.c:2661 sql_help.c:2662 sql_help.c:2769 sql_help.c:2777
+#: sql_help.c:2787 sql_help.c:2790 sql_help.c:2800 sql_help.c:2804
+#: sql_help.c:2827 sql_help.c:2829 sql_help.c:2836 sql_help.c:2849
+#: sql_help.c:2854 sql_help.c:2872 sql_help.c:2998 sql_help.c:3134
+#: sql_help.c:3737 sql_help.c:3738 sql_help.c:3819 sql_help.c:3834
+#: sql_help.c:3836 sql_help.c:3838 sql_help.c:4085 sql_help.c:4086
+#: sql_help.c:4191 sql_help.c:4342 sql_help.c:4581 sql_help.c:4623
+#: sql_help.c:4625 sql_help.c:4627 sql_help.c:4673 sql_help.c:4801
+msgid "column_name"
+msgstr "column_name"
+
+#: sql_help.c:444 sql_help.c:664 sql_help.c:1266 sql_help.c:1638
+msgid "new_column_name"
+msgstr "new_column_name"
+
+#: sql_help.c:449 sql_help.c:540 sql_help.c:672 sql_help.c:862 sql_help.c:1000
+#: sql_help.c:1282 sql_help.c:1539
+msgid "where action is one of:"
+msgstr "όπου action είναι ένα από:"
+
+#: sql_help.c:451 sql_help.c:456 sql_help.c:1047 sql_help.c:1284
+#: sql_help.c:1289 sql_help.c:1541 sql_help.c:1545 sql_help.c:2156
+#: sql_help.c:2244 sql_help.c:2446 sql_help.c:2626 sql_help.c:2770
+#: sql_help.c:3043 sql_help.c:3921
+msgid "data_type"
+msgstr "data_type"
+
+#: sql_help.c:452 sql_help.c:457 sql_help.c:1285 sql_help.c:1290
+#: sql_help.c:1542 sql_help.c:1546 sql_help.c:2157 sql_help.c:2247
+#: sql_help.c:2369 sql_help.c:2771 sql_help.c:2779 sql_help.c:2792
+#: sql_help.c:2806 sql_help.c:3044 sql_help.c:3050 sql_help.c:3829
+msgid "collation"
+msgstr "collation"
+
+#: sql_help.c:453 sql_help.c:1286 sql_help.c:2248 sql_help.c:2257
+#: sql_help.c:2772 sql_help.c:2788 sql_help.c:2801
+msgid "column_constraint"
+msgstr "column_constraint"
+
+#: sql_help.c:463 sql_help.c:603 sql_help.c:674 sql_help.c:1304 sql_help.c:4670
+msgid "integer"
+msgstr "integer"
+
+#: sql_help.c:465 sql_help.c:468 sql_help.c:676 sql_help.c:679 sql_help.c:1306
+#: sql_help.c:1309
+msgid "attribute_option"
+msgstr "attribute_option"
+
+#: sql_help.c:473 sql_help.c:1311 sql_help.c:2249 sql_help.c:2258
+#: sql_help.c:2773 sql_help.c:2789 sql_help.c:2802
+msgid "table_constraint"
+msgstr "table_constraint"
+
+#: sql_help.c:476 sql_help.c:477 sql_help.c:478 sql_help.c:479 sql_help.c:1316
+#: sql_help.c:1317 sql_help.c:1318 sql_help.c:1319 sql_help.c:1842
+msgid "trigger_name"
+msgstr "trigger_name"
+
+#: sql_help.c:480 sql_help.c:481 sql_help.c:1329 sql_help.c:1330
+#: sql_help.c:2250 sql_help.c:2255 sql_help.c:2776 sql_help.c:2799
+msgid "parent_table"
+msgstr "parent_table"
+
+#: sql_help.c:539 sql_help.c:595 sql_help.c:661 sql_help.c:861 sql_help.c:999
+#: sql_help.c:1498 sql_help.c:2187
+msgid "extension_name"
+msgstr "extension_name"
+
+#: sql_help.c:541 sql_help.c:1001 sql_help.c:2305
+msgid "execution_cost"
+msgstr "execution_cost"
+
+#: sql_help.c:542 sql_help.c:1002 sql_help.c:2306
+msgid "result_rows"
+msgstr "result_rows"
+
+#: sql_help.c:543 sql_help.c:2307
+msgid "support_function"
+msgstr "support_function"
+
+#: sql_help.c:564 sql_help.c:566 sql_help.c:925 sql_help.c:933 sql_help.c:937
+#: sql_help.c:940 sql_help.c:943 sql_help.c:1580 sql_help.c:1588
+#: sql_help.c:1592 sql_help.c:1595 sql_help.c:1598 sql_help.c:2604
+#: sql_help.c:2606 sql_help.c:2609 sql_help.c:2610 sql_help.c:3736
+#: sql_help.c:3740 sql_help.c:3743 sql_help.c:3745 sql_help.c:3747
+#: sql_help.c:3749 sql_help.c:3751 sql_help.c:3757 sql_help.c:3759
+#: sql_help.c:3761 sql_help.c:3763 sql_help.c:3765 sql_help.c:3767
+#: sql_help.c:3769 sql_help.c:3770 sql_help.c:4084 sql_help.c:4088
+#: sql_help.c:4091 sql_help.c:4093 sql_help.c:4095 sql_help.c:4097
+#: sql_help.c:4099 sql_help.c:4105 sql_help.c:4107 sql_help.c:4109
+#: sql_help.c:4111 sql_help.c:4113 sql_help.c:4115 sql_help.c:4117
+#: sql_help.c:4118
+msgid "role_specification"
+msgstr "role_specification"
+
+#: sql_help.c:565 sql_help.c:567 sql_help.c:1611 sql_help.c:2130
+#: sql_help.c:2612 sql_help.c:3119 sql_help.c:3570 sql_help.c:4427
+msgid "user_name"
+msgstr "user_name"
+
+#: sql_help.c:568 sql_help.c:945 sql_help.c:1600 sql_help.c:2611
+#: sql_help.c:3771 sql_help.c:4119
+msgid "where role_specification can be:"
+msgstr "όπου role_specification μπορεί να είναι:"
+
+#: sql_help.c:570
+msgid "group_name"
+msgstr "group_name"
+
+#: sql_help.c:591 sql_help.c:1376 sql_help.c:2136 sql_help.c:2376
+#: sql_help.c:2410 sql_help.c:2784 sql_help.c:2797 sql_help.c:2811
+#: sql_help.c:2852 sql_help.c:2876 sql_help.c:2888 sql_help.c:3764
+#: sql_help.c:4112
+msgid "tablespace_name"
+msgstr "group_name"
+
+#: sql_help.c:593 sql_help.c:681 sql_help.c:1324 sql_help.c:1333
+#: sql_help.c:1371 sql_help.c:1722
+msgid "index_name"
+msgstr "index_name"
+
+#: sql_help.c:597 sql_help.c:600 sql_help.c:682 sql_help.c:684 sql_help.c:1326
+#: sql_help.c:1328 sql_help.c:1374 sql_help.c:2374 sql_help.c:2408
+#: sql_help.c:2782 sql_help.c:2795 sql_help.c:2809 sql_help.c:2850
+#: sql_help.c:2874
+msgid "storage_parameter"
+msgstr "storage_parameter"
+
+#: sql_help.c:602
+msgid "column_number"
+msgstr "column_number"
+
+#: sql_help.c:626 sql_help.c:1805 sql_help.c:4202
+msgid "large_object_oid"
+msgstr "large_object_oid"
+
+#: sql_help.c:713 sql_help.c:2431
+msgid "res_proc"
+msgstr "res_proc"
+
+#: sql_help.c:714 sql_help.c:2432
+msgid "join_proc"
+msgstr "join_proc"
+
+#: sql_help.c:766 sql_help.c:778 sql_help.c:2449
+msgid "strategy_number"
+msgstr "strategy_number"
+
+#: sql_help.c:768 sql_help.c:769 sql_help.c:772 sql_help.c:773 sql_help.c:779
+#: sql_help.c:780 sql_help.c:782 sql_help.c:783 sql_help.c:2451 sql_help.c:2452
+#: sql_help.c:2455 sql_help.c:2456
+msgid "op_type"
+msgstr "op_type"
+
+#: sql_help.c:770 sql_help.c:2453
+msgid "sort_family_name"
+msgstr "index_name"
+
+#: sql_help.c:771 sql_help.c:781 sql_help.c:2454
+msgid "support_number"
+msgstr "support_number"
+
+#: sql_help.c:775 sql_help.c:2071 sql_help.c:2458 sql_help.c:2965
+#: sql_help.c:2967
+msgid "argument_type"
+msgstr "argument_type"
+
+#: sql_help.c:806 sql_help.c:809 sql_help.c:880 sql_help.c:882 sql_help.c:884
+#: sql_help.c:1015 sql_help.c:1054 sql_help.c:1494 sql_help.c:1497
+#: sql_help.c:1672 sql_help.c:1721 sql_help.c:1790 sql_help.c:1815
+#: sql_help.c:1828 sql_help.c:1843 sql_help.c:1900 sql_help.c:1906
+#: sql_help.c:2242 sql_help.c:2254 sql_help.c:2365 sql_help.c:2405
+#: sql_help.c:2482 sql_help.c:2525 sql_help.c:2581 sql_help.c:2632
+#: sql_help.c:2663 sql_help.c:2768 sql_help.c:2785 sql_help.c:2798
+#: sql_help.c:2871 sql_help.c:2991 sql_help.c:3168 sql_help.c:3391
+#: sql_help.c:3440 sql_help.c:3546 sql_help.c:3734 sql_help.c:3739
+#: sql_help.c:3785 sql_help.c:3817 sql_help.c:4082 sql_help.c:4087
+#: sql_help.c:4190 sql_help.c:4297 sql_help.c:4299 sql_help.c:4348
+#: sql_help.c:4387 sql_help.c:4536 sql_help.c:4538 sql_help.c:4587
+#: sql_help.c:4621 sql_help.c:4672 sql_help.c:4756 sql_help.c:4758
+#: sql_help.c:4807
+msgid "table_name"
+msgstr "table_name"
+
+#: sql_help.c:811 sql_help.c:2484
+msgid "using_expression"
+msgstr "using_expression"
+
+#: sql_help.c:812 sql_help.c:2485
+msgid "check_expression"
+msgstr "check_expression"
+
+#: sql_help.c:886 sql_help.c:2526
+msgid "publication_parameter"
+msgstr "publication_parameter"
+
+#: sql_help.c:929 sql_help.c:1584 sql_help.c:2344 sql_help.c:2558
+#: sql_help.c:3102
+msgid "password"
+msgstr "password"
+
+#: sql_help.c:930 sql_help.c:1585 sql_help.c:2345 sql_help.c:2559
+#: sql_help.c:3103
+msgid "timestamp"
+msgstr "timestamp"
+
+#: sql_help.c:934 sql_help.c:938 sql_help.c:941 sql_help.c:944 sql_help.c:1589
+#: sql_help.c:1593 sql_help.c:1596 sql_help.c:1599 sql_help.c:3744
+#: sql_help.c:4092
+msgid "database_name"
+msgstr "database_name"
+
+#: sql_help.c:1048 sql_help.c:2627
+msgid "increment"
+msgstr "increment"
+
+#: sql_help.c:1049 sql_help.c:2628
+msgid "minvalue"
+msgstr "minvalue"
+
+#: sql_help.c:1050 sql_help.c:2629
+msgid "maxvalue"
+msgstr "maxvalue"
+
+#: sql_help.c:1051 sql_help.c:2630 sql_help.c:4295 sql_help.c:4385
+#: sql_help.c:4534 sql_help.c:4689 sql_help.c:4754
+msgid "start"
+msgstr "start"
+
+#: sql_help.c:1052 sql_help.c:1301
+msgid "restart"
+msgstr "restart"
+
+#: sql_help.c:1053 sql_help.c:2631
+msgid "cache"
+msgstr "cache"
+
+#: sql_help.c:1097
+msgid "new_target"
+msgstr "new_target"
+
+#: sql_help.c:1113 sql_help.c:2675
+msgid "conninfo"
+msgstr "conninfo"
+
+#: sql_help.c:1115 sql_help.c:2676
+msgid "publication_name"
+msgstr "publication_name"
+
+#: sql_help.c:1116
+msgid "set_publication_option"
+msgstr "set_publication_option"
+
+#: sql_help.c:1119
+msgid "refresh_option"
+msgstr "refresh_option"
+
+#: sql_help.c:1124 sql_help.c:2677
+msgid "subscription_parameter"
+msgstr "subscription_parameter"
+
+#: sql_help.c:1278 sql_help.c:1281
+msgid "partition_name"
+msgstr "partition_name"
+
+#: sql_help.c:1279 sql_help.c:2259 sql_help.c:2803
+msgid "partition_bound_spec"
+msgstr "partition_bound_spec"
+
+#: sql_help.c:1298 sql_help.c:1345 sql_help.c:2817
+msgid "sequence_options"
+msgstr "sequence_options"
+
+#: sql_help.c:1300
+msgid "sequence_option"
+msgstr "sequence_option"
+
+#: sql_help.c:1312
+msgid "table_constraint_using_index"
+msgstr "table_constraint_using_index"
+
+#: sql_help.c:1320 sql_help.c:1321 sql_help.c:1322 sql_help.c:1323
+msgid "rewrite_rule_name"
+msgstr "rewrite_rule_name"
+
+#: sql_help.c:1334 sql_help.c:2842
+msgid "and partition_bound_spec is:"
+msgstr "και partition_bound_spec είναι:"
+
+#: sql_help.c:1335 sql_help.c:1336 sql_help.c:1337 sql_help.c:2843
+#: sql_help.c:2844 sql_help.c:2845
+msgid "partition_bound_expr"
+msgstr "partition_bound_expr"
+
+#: sql_help.c:1338 sql_help.c:1339 sql_help.c:2846 sql_help.c:2847
+msgid "numeric_literal"
+msgstr "numeric_literal"
+
+#: sql_help.c:1340
+msgid "and column_constraint is:"
+msgstr "και column_constraint είναι:"
+
+#: sql_help.c:1343 sql_help.c:2266 sql_help.c:2299 sql_help.c:2505
+#: sql_help.c:2815
+msgid "default_expr"
+msgstr "default_expr"
+
+#: sql_help.c:1344 sql_help.c:2267 sql_help.c:2816
+msgid "generation_expr"
+msgstr "generation_expr"
+
+#: sql_help.c:1346 sql_help.c:1347 sql_help.c:1356 sql_help.c:1358
+#: sql_help.c:1362 sql_help.c:2818 sql_help.c:2819 sql_help.c:2828
+#: sql_help.c:2830 sql_help.c:2834
+msgid "index_parameters"
+msgstr "index_parameters"
+
+#: sql_help.c:1348 sql_help.c:1365 sql_help.c:2820 sql_help.c:2837
+msgid "reftable"
+msgstr "reftable"
+
+#: sql_help.c:1349 sql_help.c:1366 sql_help.c:2821 sql_help.c:2838
+msgid "refcolumn"
+msgstr "refcolumn"
+
+#: sql_help.c:1350 sql_help.c:1351 sql_help.c:1367 sql_help.c:1368
+#: sql_help.c:2822 sql_help.c:2823 sql_help.c:2839 sql_help.c:2840
+msgid "referential_action"
+msgstr "referential_action"
+
+#: sql_help.c:1352 sql_help.c:2268 sql_help.c:2824
+msgid "and table_constraint is:"
+msgstr "και table_constraint είναι:"
+
+#: sql_help.c:1360 sql_help.c:2832
+msgid "exclude_element"
+msgstr "exclude_element"
+
+#: sql_help.c:1361 sql_help.c:2833 sql_help.c:4293 sql_help.c:4383
+#: sql_help.c:4532 sql_help.c:4687 sql_help.c:4752
+msgid "operator"
+msgstr "operator"
+
+#: sql_help.c:1363 sql_help.c:2377 sql_help.c:2835
+msgid "predicate"
+msgstr "predicate"
+
+#: sql_help.c:1369
+msgid "and table_constraint_using_index is:"
+msgstr "και table_constraint_using_index είναι:"
+
+#: sql_help.c:1372 sql_help.c:2848
+msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
+msgstr ""
+"index_parameters για περιορισμούς UNIQUE, PRIMARY KEY και EXCLUDE είναι:"
+
+#: sql_help.c:1377 sql_help.c:2853
+msgid "exclude_element in an EXCLUDE constraint is:"
+msgstr "exclude_element σε έναν περιορισμό τύπου EXCLUDE είναι:"
+
+#: sql_help.c:1380 sql_help.c:2370 sql_help.c:2780 sql_help.c:2793
+#: sql_help.c:2807 sql_help.c:2856 sql_help.c:3830
+msgid "opclass"
+msgstr "opclass"
+
+#: sql_help.c:1396 sql_help.c:1399 sql_help.c:2891
+msgid "tablespace_option"
+msgstr "tablespace_option"
+
+#: sql_help.c:1420 sql_help.c:1423 sql_help.c:1429 sql_help.c:1433
+msgid "token_type"
+msgstr "token_type"
+
+#: sql_help.c:1421 sql_help.c:1424
+msgid "dictionary_name"
+msgstr "dictionary_name"
+
+#: sql_help.c:1426 sql_help.c:1430
+msgid "old_dictionary"
+msgstr "old_dictionary"
+
+#: sql_help.c:1427 sql_help.c:1431
+msgid "new_dictionary"
+msgstr "new_dictionary"
+
+#: sql_help.c:1526 sql_help.c:1540 sql_help.c:1543 sql_help.c:1544
+#: sql_help.c:3042
+msgid "attribute_name"
+msgstr "attribute_name"
+
+#: sql_help.c:1527
+msgid "new_attribute_name"
+msgstr "new_attribute_name"
+
+#: sql_help.c:1531 sql_help.c:1535
+msgid "new_enum_value"
+msgstr "new_enum_value"
+
+#: sql_help.c:1532
+msgid "neighbor_enum_value"
+msgstr "neighbor_enum_value"
+
+#: sql_help.c:1534
+msgid "existing_enum_value"
+msgstr "existing_enum_value"
+
+#: sql_help.c:1537
+msgid "property"
+msgstr "property"
+
+#: sql_help.c:1612 sql_help.c:2251 sql_help.c:2260 sql_help.c:2643
+#: sql_help.c:3120 sql_help.c:3571 sql_help.c:3750 sql_help.c:3786
+#: sql_help.c:4098
+msgid "server_name"
+msgstr "server_name"
+
+#: sql_help.c:1644 sql_help.c:1647 sql_help.c:3135
+msgid "view_option_name"
+msgstr "view_option_name"
+
+#: sql_help.c:1645 sql_help.c:3136
+msgid "view_option_value"
+msgstr "view_option_value"
+
+#: sql_help.c:1666 sql_help.c:1667 sql_help.c:4659 sql_help.c:4660
+msgid "table_and_columns"
+msgstr "table_and_columns"
+
+#: sql_help.c:1668 sql_help.c:1912 sql_help.c:3619 sql_help.c:3963
+#: sql_help.c:4661
+msgid "where option can be one of:"
+msgstr "όπου option μπορεί να είναι ένα από:"
+
+#: sql_help.c:1669 sql_help.c:1670 sql_help.c:1914 sql_help.c:1917
+#: sql_help.c:2096 sql_help.c:3620 sql_help.c:3621 sql_help.c:3622
+#: sql_help.c:3623 sql_help.c:3624 sql_help.c:3625 sql_help.c:3626
+#: sql_help.c:3627 sql_help.c:4662 sql_help.c:4663 sql_help.c:4664
+#: sql_help.c:4665 sql_help.c:4666 sql_help.c:4667 sql_help.c:4668
+#: sql_help.c:4669
+msgid "boolean"
+msgstr "boolean"
+
+#: sql_help.c:1671 sql_help.c:4671
+msgid "and table_and_columns is:"
+msgstr "και table_and_columns είναι:"
+
+#: sql_help.c:1687 sql_help.c:4443 sql_help.c:4445 sql_help.c:4469
+msgid "transaction_mode"
+msgstr "transaction_mode"
+
+#: sql_help.c:1688 sql_help.c:4446 sql_help.c:4470
+msgid "where transaction_mode is one of:"
+msgstr "όπου transaction_mode είναι ένα από:"
+
+#: sql_help.c:1697 sql_help.c:4303 sql_help.c:4312 sql_help.c:4316
+#: sql_help.c:4320 sql_help.c:4323 sql_help.c:4542 sql_help.c:4551
+#: sql_help.c:4555 sql_help.c:4559 sql_help.c:4562 sql_help.c:4762
+#: sql_help.c:4771 sql_help.c:4775 sql_help.c:4779 sql_help.c:4782
+msgid "argument"
+msgstr "argument"
+
+#: sql_help.c:1787
+msgid "relation_name"
+msgstr "relation_name"
+
+#: sql_help.c:1792 sql_help.c:3746 sql_help.c:4094
+msgid "domain_name"
+msgstr "domain_name"
+
+#: sql_help.c:1814
+msgid "policy_name"
+msgstr "policy_name"
+
+#: sql_help.c:1827
+msgid "rule_name"
+msgstr "rule_name"
+
+#: sql_help.c:1846
+msgid "text"
+msgstr "text"
+
+#: sql_help.c:1871 sql_help.c:3930 sql_help.c:4135
+msgid "transaction_id"
+msgstr "transaction_id"
+
+#: sql_help.c:1902 sql_help.c:1909 sql_help.c:3856
+msgid "filename"
+msgstr "filename"
+
+#: sql_help.c:1903 sql_help.c:1910 sql_help.c:2583 sql_help.c:2584
+#: sql_help.c:2585
+msgid "command"
+msgstr "command"
+
+#: sql_help.c:1905 sql_help.c:2582 sql_help.c:2994 sql_help.c:3171
+#: sql_help.c:3840 sql_help.c:4286 sql_help.c:4288 sql_help.c:4376
+#: sql_help.c:4378 sql_help.c:4525 sql_help.c:4527 sql_help.c:4630
+#: sql_help.c:4745 sql_help.c:4747
+msgid "condition"
+msgstr "condition"
+
+#: sql_help.c:1908 sql_help.c:2411 sql_help.c:2877 sql_help.c:3137
+#: sql_help.c:3155 sql_help.c:3821
+msgid "query"
+msgstr "query"
+
+#: sql_help.c:1913
+msgid "format_name"
+msgstr "format_name"
+
+#: sql_help.c:1915
+msgid "delimiter_character"
+msgstr "delimiter_character"
+
+#: sql_help.c:1916
+msgid "null_string"
+msgstr "null_string"
+
+#: sql_help.c:1918
+msgid "quote_character"
+msgstr "quote_character"
+
+#: sql_help.c:1919
+msgid "escape_character"
+msgstr "escape_character"
+
+#: sql_help.c:1923
+msgid "encoding_name"
+msgstr "encoding_name"
+
+#: sql_help.c:1934
+msgid "access_method_type"
+msgstr "access_method_type"
+
+#: sql_help.c:2005 sql_help.c:2024 sql_help.c:2027
+msgid "arg_data_type"
+msgstr "arg_data_type"
+
+#: sql_help.c:2006 sql_help.c:2028 sql_help.c:2036
+msgid "sfunc"
+msgstr "sfunc"
+
+#: sql_help.c:2007 sql_help.c:2029 sql_help.c:2037
+msgid "state_data_type"
+msgstr "state_data_type"
+
+#: sql_help.c:2008 sql_help.c:2030 sql_help.c:2038
+msgid "state_data_size"
+msgstr "state_data_size"
+
+#: sql_help.c:2009 sql_help.c:2031 sql_help.c:2039
+msgid "ffunc"
+msgstr "ffunc"
+
+#: sql_help.c:2010 sql_help.c:2040
+msgid "combinefunc"
+msgstr "combinefunc"
+
+#: sql_help.c:2011 sql_help.c:2041
+msgid "serialfunc"
+msgstr "serialfunc"
+
+#: sql_help.c:2012 sql_help.c:2042
+msgid "deserialfunc"
+msgstr "deserialfunc"
+
+#: sql_help.c:2013 sql_help.c:2032 sql_help.c:2043
+msgid "initial_condition"
+msgstr "initial_condition"
+
+#: sql_help.c:2014 sql_help.c:2044
+msgid "msfunc"
+msgstr "msfunc"
+
+#: sql_help.c:2015 sql_help.c:2045
+msgid "minvfunc"
+msgstr "minvfunc"
+
+#: sql_help.c:2016 sql_help.c:2046
+msgid "mstate_data_type"
+msgstr "mstate_data_type"
+
+#: sql_help.c:2017 sql_help.c:2047
+msgid "mstate_data_size"
+msgstr "mstate_data_size"
+
+#: sql_help.c:2018 sql_help.c:2048
+msgid "mffunc"
+msgstr "mffunc"
+
+#: sql_help.c:2019 sql_help.c:2049
+msgid "minitial_condition"
+msgstr "minitial_condition"
+
+#: sql_help.c:2020 sql_help.c:2050
+msgid "sort_operator"
+msgstr "sort_operator"
+
+#: sql_help.c:2033
+msgid "or the old syntax"
+msgstr "ή την παλαιά σύνταξη"
+
+#: sql_help.c:2035
+msgid "base_type"
+msgstr "base_type"
+
+#: sql_help.c:2092 sql_help.c:2133
+msgid "locale"
+msgstr "locale"
+
+#: sql_help.c:2093 sql_help.c:2134
+msgid "lc_collate"
+msgstr "lc_collate"
+
+#: sql_help.c:2094 sql_help.c:2135
+msgid "lc_ctype"
+msgstr "lc_ctype"
+
+#: sql_help.c:2095 sql_help.c:4188
+msgid "provider"
+msgstr "provider"
+
+#: sql_help.c:2097 sql_help.c:2189
+msgid "version"
+msgstr "version"
+
+#: sql_help.c:2099
+msgid "existing_collation"
+msgstr "existing_collation"
+
+#: sql_help.c:2109
+msgid "source_encoding"
+msgstr "source_encoding"
+
+#: sql_help.c:2110
+msgid "dest_encoding"
+msgstr "dest_encoding"
+
+#: sql_help.c:2131 sql_help.c:2917
+msgid "template"
+msgstr "template"
+
+#: sql_help.c:2132
+msgid "encoding"
+msgstr "dest_encoding"
+
+#: sql_help.c:2159
+msgid "constraint"
+msgstr "constraint"
+
+#: sql_help.c:2160
+msgid "where constraint is:"
+msgstr "όπου constraint είναι:"
+
+#: sql_help.c:2174 sql_help.c:2580 sql_help.c:2990
+msgid "event"
+msgstr "event"
+
+#: sql_help.c:2175
+msgid "filter_variable"
+msgstr "filter_variable"
+
+#: sql_help.c:2263 sql_help.c:2812
+msgid "where column_constraint is:"
+msgstr "όπου column_constraint είναι:"
+
+#: sql_help.c:2300
+msgid "rettype"
+msgstr "rettype"
+
+#: sql_help.c:2302
+msgid "column_type"
+msgstr "column_type"
+
+#: sql_help.c:2311 sql_help.c:2511
+msgid "definition"
+msgstr "definition"
+
+#: sql_help.c:2312 sql_help.c:2512
+msgid "obj_file"
+msgstr "obj_file"
+
+#: sql_help.c:2313 sql_help.c:2513
+msgid "link_symbol"
+msgstr "link_symbol"
+
+#: sql_help.c:2351 sql_help.c:2565 sql_help.c:3109
+msgid "uid"
+msgstr "uid"
+
+#: sql_help.c:2366 sql_help.c:2407 sql_help.c:2781 sql_help.c:2794
+#: sql_help.c:2808 sql_help.c:2873
+msgid "method"
+msgstr "method"
+
+#: sql_help.c:2371
+msgid "opclass_parameter"
+msgstr "opclass_parameter"
+
+#: sql_help.c:2388
+msgid "call_handler"
+msgstr "call_handler"
+
+#: sql_help.c:2389
+msgid "inline_handler"
+msgstr "inline_handler"
+
+#: sql_help.c:2390
+msgid "valfunction"
+msgstr "valfunction"
+
+#: sql_help.c:2429
+msgid "com_op"
+msgstr "com_op"
+
+#: sql_help.c:2430
+msgid "neg_op"
+msgstr "neg_op"
+
+#: sql_help.c:2448
+msgid "family_name"
+msgstr "family_name"
+
+#: sql_help.c:2459
+msgid "storage_type"
+msgstr "storage_type"
+
+#: sql_help.c:2586 sql_help.c:2997
+msgid "where event can be one of:"
+msgstr "όπου event μπορεί να είναι ένα από:"
+
+#: sql_help.c:2605 sql_help.c:2607
+msgid "schema_element"
+msgstr "schema_element"
+
+#: sql_help.c:2644
+msgid "server_type"
+msgstr "server_type"
+
+#: sql_help.c:2645
+msgid "server_version"
+msgstr "server_version"
+
+#: sql_help.c:2646 sql_help.c:3748 sql_help.c:4096
+msgid "fdw_name"
+msgstr "fdw_name"
+
+#: sql_help.c:2659
+msgid "statistics_name"
+msgstr "statistics_name"
+
+#: sql_help.c:2660
+msgid "statistics_kind"
+msgstr "statistics_kind"
+
+#: sql_help.c:2674
+msgid "subscription_name"
+msgstr "subscription_name"
+
+#: sql_help.c:2774
+msgid "source_table"
+msgstr "source_table"
+
+#: sql_help.c:2775
+msgid "like_option"
+msgstr "like_option"
+
+#: sql_help.c:2841
+msgid "and like_option is:"
+msgstr "και like_option είναι:"
+
+#: sql_help.c:2890
+msgid "directory"
+msgstr "directory"
+
+#: sql_help.c:2904
+msgid "parser_name"
+msgstr "parser_name"
+
+#: sql_help.c:2905
+msgid "source_config"
+msgstr "source_config"
+
+#: sql_help.c:2934
+msgid "start_function"
+msgstr "start_function"
+
+#: sql_help.c:2935
+msgid "gettoken_function"
+msgstr "gettoken_function"
+
+#: sql_help.c:2936
+msgid "end_function"
+msgstr "end_function"
+
+#: sql_help.c:2937
+msgid "lextypes_function"
+msgstr "lextypes_function"
+
+#: sql_help.c:2938
+msgid "headline_function"
+msgstr "headline_function"
+
+#: sql_help.c:2950
+msgid "init_function"
+msgstr "init_function"
+
+#: sql_help.c:2951
+msgid "lexize_function"
+msgstr "lexize_function"
+
+#: sql_help.c:2964
+msgid "from_sql_function_name"
+msgstr "from_sql_function_name"
+
+#: sql_help.c:2966
+msgid "to_sql_function_name"
+msgstr "to_sql_function_name"
+
+#: sql_help.c:2992
+msgid "referenced_table_name"
+msgstr "referenced_table_name"
+
+#: sql_help.c:2993
+msgid "transition_relation_name"
+msgstr "transition_relation_name"
+
+#: sql_help.c:2996
+msgid "arguments"
+msgstr "arguments"
+
+#: sql_help.c:3046 sql_help.c:4221
+msgid "label"
+msgstr "label"
+
+#: sql_help.c:3048
+msgid "subtype"
+msgstr "subtype"
+
+#: sql_help.c:3049
+msgid "subtype_operator_class"
+msgstr "subtype_operator_class"
+
+#: sql_help.c:3051
+msgid "canonical_function"
+msgstr "canonical_function"
+
+#: sql_help.c:3052
+msgid "subtype_diff_function"
+msgstr "subtype_diff_function"
+
+#: sql_help.c:3054
+msgid "input_function"
+msgstr "input_function"
+
+#: sql_help.c:3055
+msgid "output_function"
+msgstr "output_function"
+
+#: sql_help.c:3056
+msgid "receive_function"
+msgstr "receive_function"
+
+#: sql_help.c:3057
+msgid "send_function"
+msgstr "send_function"
+
+#: sql_help.c:3058
+msgid "type_modifier_input_function"
+msgstr "type_modifier_input_function"
+
+#: sql_help.c:3059
+msgid "type_modifier_output_function"
+msgstr "type_modifier_output_function"
+
+#: sql_help.c:3060
+msgid "analyze_function"
+msgstr "analyze_function"
+
+#: sql_help.c:3061
+msgid "internallength"
+msgstr "internallength"
+
+#: sql_help.c:3062
+msgid "alignment"
+msgstr "alignment"
+
+#: sql_help.c:3063
+msgid "storage"
+msgstr "storage"
+
+#: sql_help.c:3064
+msgid "like_type"
+msgstr "like_type"
+
+#: sql_help.c:3065
+msgid "category"
+msgstr "category"
+
+#: sql_help.c:3066
+msgid "preferred"
+msgstr "preferred"
+
+#: sql_help.c:3067
+msgid "default"
+msgstr "default"
+
+#: sql_help.c:3068
+msgid "element"
+msgstr "element"
+
+#: sql_help.c:3069
+msgid "delimiter"
+msgstr "delimiter"
+
+#: sql_help.c:3070
+msgid "collatable"
+msgstr "collatable"
+
+#: sql_help.c:3167 sql_help.c:3816 sql_help.c:4281 sql_help.c:4370
+#: sql_help.c:4520 sql_help.c:4620 sql_help.c:4740
+msgid "with_query"
+msgstr "with_query"
+
+#: sql_help.c:3169 sql_help.c:3818 sql_help.c:4300 sql_help.c:4306
+#: sql_help.c:4309 sql_help.c:4313 sql_help.c:4317 sql_help.c:4325
+#: sql_help.c:4539 sql_help.c:4545 sql_help.c:4548 sql_help.c:4552
+#: sql_help.c:4556 sql_help.c:4564 sql_help.c:4622 sql_help.c:4759
+#: sql_help.c:4765 sql_help.c:4768 sql_help.c:4772 sql_help.c:4776
+#: sql_help.c:4784
+msgid "alias"
+msgstr "alias"
+
+#: sql_help.c:3170 sql_help.c:4285 sql_help.c:4327 sql_help.c:4329
+#: sql_help.c:4375 sql_help.c:4524 sql_help.c:4566 sql_help.c:4568
+#: sql_help.c:4629 sql_help.c:4744 sql_help.c:4786 sql_help.c:4788
+msgid "from_item"
+msgstr "from_item"
+
+#: sql_help.c:3172 sql_help.c:3653 sql_help.c:3897 sql_help.c:4631
+msgid "cursor_name"
+msgstr "cursor_name"
+
+#: sql_help.c:3173 sql_help.c:3824 sql_help.c:4632
+msgid "output_expression"
+msgstr "output_expression"
+
+#: sql_help.c:3174 sql_help.c:3825 sql_help.c:4284 sql_help.c:4373
+#: sql_help.c:4523 sql_help.c:4633 sql_help.c:4743
+msgid "output_name"
+msgstr "output_name"
+
+#: sql_help.c:3190
+msgid "code"
+msgstr "code"
+
+#: sql_help.c:3595
+msgid "parameter"
+msgstr "parameter"
+
+#: sql_help.c:3617 sql_help.c:3618 sql_help.c:3922
+msgid "statement"
+msgstr "statement"
+
+#: sql_help.c:3652 sql_help.c:3896
+msgid "direction"
+msgstr "direction"
+
+#: sql_help.c:3654 sql_help.c:3898
+msgid "where direction can be empty or one of:"
+msgstr "όπου direction μπορεί να είναι άδειο ή ένα από:"
+
+#: sql_help.c:3655 sql_help.c:3656 sql_help.c:3657 sql_help.c:3658
+#: sql_help.c:3659 sql_help.c:3899 sql_help.c:3900 sql_help.c:3901
+#: sql_help.c:3902 sql_help.c:3903 sql_help.c:4294 sql_help.c:4296
+#: sql_help.c:4384 sql_help.c:4386 sql_help.c:4533 sql_help.c:4535
+#: sql_help.c:4688 sql_help.c:4690 sql_help.c:4753 sql_help.c:4755
+msgid "count"
+msgstr "count"
+
+#: sql_help.c:3741 sql_help.c:4089
+msgid "sequence_name"
+msgstr "sequence_name"
+
+#: sql_help.c:3754 sql_help.c:4102
+msgid "arg_name"
+msgstr "arg_name"
+
+#: sql_help.c:3755 sql_help.c:4103
+msgid "arg_type"
+msgstr "arg_type"
+
+#: sql_help.c:3760 sql_help.c:4108
+msgid "loid"
+msgstr "loid"
+
+#: sql_help.c:3784
+msgid "remote_schema"
+msgstr "remote_schema"
+
+#: sql_help.c:3787
+msgid "local_schema"
+msgstr "local_schema"
+
+#: sql_help.c:3822
+msgid "conflict_target"
+msgstr "conflict_target"
+
+#: sql_help.c:3823
+msgid "conflict_action"
+msgstr "conflict_action"
+
+#: sql_help.c:3826
+msgid "where conflict_target can be one of:"
+msgstr "όπου conflict_target μπορεί να είναι ένα από:"
+
+#: sql_help.c:3827
+msgid "index_column_name"
+msgstr "index_column_name"
+
+#: sql_help.c:3828
+msgid "index_expression"
+msgstr "index_expression"
+
+#: sql_help.c:3831
+msgid "index_predicate"
+msgstr "index_predicate"
+
+#: sql_help.c:3833
+msgid "and conflict_action is one of:"
+msgstr "και conflict_action είναι ένα από:"
+
+#: sql_help.c:3839 sql_help.c:4628
+msgid "sub-SELECT"
+msgstr "sub-SELECT"
+
+#: sql_help.c:3848 sql_help.c:3911 sql_help.c:4604
+msgid "channel"
+msgstr "channel"
+
+#: sql_help.c:3870
+msgid "lockmode"
+msgstr "lockmode"
+
+#: sql_help.c:3871
+msgid "where lockmode is one of:"
+msgstr "όπου lockmode είναι ένα από:"
+
+#: sql_help.c:3912
+msgid "payload"
+msgstr "payload"
+
+#: sql_help.c:3939
+msgid "old_role"
+msgstr "old_role"
+
+#: sql_help.c:3940
+msgid "new_role"
+msgstr "new_role"
+
+#: sql_help.c:3971 sql_help.c:4143 sql_help.c:4151
+msgid "savepoint_name"
+msgstr "savepoint_name"
+
+#: sql_help.c:4287 sql_help.c:4339 sql_help.c:4526 sql_help.c:4578
+#: sql_help.c:4746 sql_help.c:4798
+msgid "grouping_element"
+msgstr "grouping_element"
+
+#: sql_help.c:4289 sql_help.c:4379 sql_help.c:4528 sql_help.c:4748
+msgid "window_name"
+msgstr "window_name"
+
+#: sql_help.c:4290 sql_help.c:4380 sql_help.c:4529 sql_help.c:4749
+msgid "window_definition"
+msgstr "window_definition"
+
+#: sql_help.c:4291 sql_help.c:4305 sql_help.c:4343 sql_help.c:4381
+#: sql_help.c:4530 sql_help.c:4544 sql_help.c:4582 sql_help.c:4750
+#: sql_help.c:4764 sql_help.c:4802
+msgid "select"
+msgstr "select"
+
+#: sql_help.c:4298 sql_help.c:4537 sql_help.c:4757
+msgid "where from_item can be one of:"
+msgstr "όπου from_item μπορεί να είναι ένα από:"
+
+#: sql_help.c:4301 sql_help.c:4307 sql_help.c:4310 sql_help.c:4314
+#: sql_help.c:4326 sql_help.c:4540 sql_help.c:4546 sql_help.c:4549
+#: sql_help.c:4553 sql_help.c:4565 sql_help.c:4760 sql_help.c:4766
+#: sql_help.c:4769 sql_help.c:4773 sql_help.c:4785
+msgid "column_alias"
+msgstr "column_alias"
+
+#: sql_help.c:4302 sql_help.c:4541 sql_help.c:4761
+msgid "sampling_method"
+msgstr "sampling_method"
+
+#: sql_help.c:4304 sql_help.c:4543 sql_help.c:4763
+msgid "seed"
+msgstr "seed"
+
+#: sql_help.c:4308 sql_help.c:4341 sql_help.c:4547 sql_help.c:4580
+#: sql_help.c:4767 sql_help.c:4800
+msgid "with_query_name"
+msgstr "with_query_name"
+
+#: sql_help.c:4318 sql_help.c:4321 sql_help.c:4324 sql_help.c:4557
+#: sql_help.c:4560 sql_help.c:4563 sql_help.c:4777 sql_help.c:4780
+#: sql_help.c:4783
+msgid "column_definition"
+msgstr "column_definition"
+
+#: sql_help.c:4328 sql_help.c:4567 sql_help.c:4787
+msgid "join_type"
+msgstr "join_type"
+
+#: sql_help.c:4330 sql_help.c:4569 sql_help.c:4789
+msgid "join_condition"
+msgstr "join_condition"
+
+#: sql_help.c:4331 sql_help.c:4570 sql_help.c:4790
+msgid "join_column"
+msgstr "join_column"
+
+#: sql_help.c:4332 sql_help.c:4571 sql_help.c:4791
+msgid "and grouping_element can be one of:"
+msgstr "και grouping_element μπορεί να είναι ένα από:"
+
+#: sql_help.c:4340 sql_help.c:4579 sql_help.c:4799
+msgid "and with_query is:"
+msgstr "και with_query είναι:"
+
+#: sql_help.c:4344 sql_help.c:4583 sql_help.c:4803
+msgid "values"
+msgstr "values"
+
+#: sql_help.c:4345 sql_help.c:4584 sql_help.c:4804
+msgid "insert"
+msgstr "insert"
+
+#: sql_help.c:4346 sql_help.c:4585 sql_help.c:4805
+msgid "update"
+msgstr "update"
+
+#: sql_help.c:4347 sql_help.c:4586 sql_help.c:4806
+msgid "delete"
+msgstr "delete"
+
+#: sql_help.c:4374
+msgid "new_table"
+msgstr "new_table"
+
+#: sql_help.c:4399
+msgid "timezone"
+msgstr "timezone"
+
+#: sql_help.c:4444
+msgid "snapshot_id"
+msgstr "snapshot_id"
+
+#: sql_help.c:4686
+msgid "sort_expression"
+msgstr "sort_expression"
+
+#: sql_help.c:4813 sql_help.c:5791
+msgid "abort the current transaction"
+msgstr "ματαιώστε την τρέχουσα συναλλαγή"
+
+#: sql_help.c:4819
+msgid "change the definition of an aggregate function"
+msgstr "αλλάξτε τον ορισμό μιας συνάρτησης συγκεντρωτικών αποτελεσμάτων"
+
+#: sql_help.c:4825
+msgid "change the definition of a collation"
+msgstr "αλλάξτε τον ορισμό συρραφής"
+
+#: sql_help.c:4831
+msgid "change the definition of a conversion"
+msgstr "αλλάξτε τον ορισμό μίας μετατροπής"
+
+#: sql_help.c:4837
+msgid "change a database"
+msgstr "αλλάξτε μία βάση δεδομένων"
+
+#: sql_help.c:4843
+msgid "define default access privileges"
+msgstr "ορίσθε τα προεπιλεγμένα δικαιώματα πρόσβασης"
+
+#: sql_help.c:4849
+msgid "change the definition of a domain"
+msgstr "αλλάξτε τον ορισμό ενός τομέα"
+
+#: sql_help.c:4855
+msgid "change the definition of an event trigger"
+msgstr "αλλάξτε τον ορισμό μιας ενεργοποίησης συμβάντος"
+
+#: sql_help.c:4861
+msgid "change the definition of an extension"
+msgstr "αλλάξτε τον ορισμό μίας προέκτασης"
+
+#: sql_help.c:4867
+msgid "change the definition of a foreign-data wrapper"
+msgstr "αλλάξτε τον ορισιμό μιας περιτύλιξης ξένων δεδομένων"
+
+#: sql_help.c:4873
+msgid "change the definition of a foreign table"
+msgstr "αλλάξτε τον ορισιμό ενός ξενικού πίνακα"
+
+#: sql_help.c:4879
+msgid "change the definition of a function"
+msgstr "αλλάξτε τον ορισμό μιας συνάρτησης"
+
+#: sql_help.c:4885
+msgid "change role name or membership"
+msgstr "αλλάξτε το όνομα ρόλου ή ιδιότητας μέλους"
+
+#: sql_help.c:4891
+msgid "change the definition of an index"
+msgstr "αλλάξτε τον ορισμό ενός ευρετηρίου"
+
+#: sql_help.c:4897
+msgid "change the definition of a procedural language"
+msgstr "αλλάξτε τον ορισμό μιας διαδικαστικής γλώσσας"
+
+#: sql_help.c:4903
+msgid "change the definition of a large object"
+msgstr "αλλάξτε τον ορισιμό ενός μεγάλου αντικειμένου"
+
+#: sql_help.c:4909
+msgid "change the definition of a materialized view"
+msgstr "αλλάξτε τον ορισμό μίας υλοποιημένης όψης"
+
+#: sql_help.c:4915
+msgid "change the definition of an operator"
+msgstr "αλλάξτε τον ορισμό ενός χειριστή"
+
+#: sql_help.c:4921
+msgid "change the definition of an operator class"
+msgstr "αλλάξτε τον ορισμό μίας κλάσης χειριστή"
+
+#: sql_help.c:4927
+msgid "change the definition of an operator family"
+msgstr "αλλάξτε τον ορισμό μίας οικογένειας χειριστή"
+
+#: sql_help.c:4933
+msgid "change the definition of a row level security policy"
+msgstr "αλλάξτε τον ορισιμό μιας πολιτική ασφάλειας επιπέδου σειράς"
+
+#: sql_help.c:4939
+msgid "change the definition of a procedure"
+msgstr "αλλάξτε τον ορισμό μίας διαδικασίας"
+
+#: sql_help.c:4945
+msgid "change the definition of a publication"
+msgstr "αλλάξτε τον ορισμό μίας δημοσίευσης"
+
+#: sql_help.c:4951 sql_help.c:5053
+msgid "change a database role"
+msgstr "αλλάξτε τον ρόλο μίας βάσης δεδομένων"
+
+#: sql_help.c:4957
+msgid "change the definition of a routine"
+msgstr "αλλάξτε τον ορισμό μιας ρουτίνας"
+
+#: sql_help.c:4963
+msgid "change the definition of a rule"
+msgstr "αλλάξτε τον ορισμό ενός κανόνα"
+
+#: sql_help.c:4969
+msgid "change the definition of a schema"
+msgstr "αλλάξτε τον ορισμό ενός σχήματος"
+
+#: sql_help.c:4975
+msgid "change the definition of a sequence generator"
+msgstr "αλλάξτε τον ορισμό μίας γεννήτριας ακολουθίας"
+
+#: sql_help.c:4981
+msgid "change the definition of a foreign server"
+msgstr "αλλάξτε τον ορισμό ενός ξενικού διακομιστή"
+
+#: sql_help.c:4987
+msgid "change the definition of an extended statistics object"
+msgstr "αλλάξτε τον ορισμό ενός εκτεταμένου αντικειμένου στατιστικών"
+
+#: sql_help.c:4993
+msgid "change the definition of a subscription"
+msgstr "αλλάξτε τον ορισμό μιας συνδρομής"
+
+#: sql_help.c:4999
+msgid "change a server configuration parameter"
+msgstr "αλλάξτε μία παράμετρο διαμόρφωσης διακομιστή"
+
+#: sql_help.c:5005
+msgid "change the definition of a table"
+msgstr "αλλάξτε τον ορισμό ενός πίνακα"
+
+#: sql_help.c:5011
+msgid "change the definition of a tablespace"
+msgstr "αλλάξτε τον ορισμό ενός πινακοχώρου"
+
+#: sql_help.c:5017
+msgid "change the definition of a text search configuration"
+msgstr "αλλάξτε τον ορισμό μίας διαμόρφωσης αναζήτησης κειμένου"
+
+#: sql_help.c:5023
+msgid "change the definition of a text search dictionary"
+msgstr "αλλάξτε τον ορισμό ενός λεξικού αναζήτησης κειμένου"
+
+#: sql_help.c:5029
+msgid "change the definition of a text search parser"
+msgstr "αλλάξτε τον ορισμό ενός αναλυτή αναζήτησης κειμένου"
+
+#: sql_help.c:5035
+msgid "change the definition of a text search template"
+msgstr "αλλάξτε τον ορισμό ενός προτύπου αναζήτησης κειμένου"
+
+#: sql_help.c:5041
+msgid "change the definition of a trigger"
+msgstr "αλλάξτε τον ορισμό μιας ενεργοποίησης"
+
+#: sql_help.c:5047
+msgid "change the definition of a type"
+msgstr "αλλάξτε τον ορισμό ενός τύπου"
+
+#: sql_help.c:5059
+msgid "change the definition of a user mapping"
+msgstr "αλλάξτε τον ορισμό μίας αντιστοίχισης χρήστη"
+
+#: sql_help.c:5065
+msgid "change the definition of a view"
+msgstr "αλλάξτε τον ορισμό μίας όψης"
+
+#: sql_help.c:5071
+msgid "collect statistics about a database"
+msgstr "συλλέξτε στατιστικά σχετικά με μία βάση δεδομένων"
+
+#: sql_help.c:5077 sql_help.c:5869
+msgid "start a transaction block"
+msgstr "εκκινήστε ένα μπλοκ συναλλαγής"
+
+#: sql_help.c:5083
+msgid "invoke a procedure"
+msgstr "κλήση διαδικασίας"
+
+#: sql_help.c:5089
+msgid "force a write-ahead log checkpoint"
+msgstr ""
+"επιβάλλετε εισαγωγή ενός σημείου ελέγχου (checkpoint) του write-ahead log"
+
+#: sql_help.c:5095
+msgid "close a cursor"
+msgstr "κλείστε έναν δρομέα"
+
+#: sql_help.c:5101
+msgid "cluster a table according to an index"
+msgstr "δημιουργείστε συστάδα ενός πίνακα σύμφωνα με ένα ευρετήριο"
+
+#: sql_help.c:5107
+msgid "define or change the comment of an object"
+msgstr "ορίσετε ή αλλάξτε το σχόλιο ενός αντικειμένου"
+
+#: sql_help.c:5113 sql_help.c:5671
+msgid "commit the current transaction"
+msgstr "ολοκληρώστε την τρέχουσας συναλλαγής"
+
+#: sql_help.c:5119
+msgid "commit a transaction that was earlier prepared for two-phase commit"
+msgstr ""
+"ολοκληρώστε μία συναλλαγή που είχε προετοιμαστεί νωρίτερα για ολοκλήρωση σε "
+"δύο φάσεις"
+
+#: sql_help.c:5125
+msgid "copy data between a file and a table"
+msgstr "αντιγράψτε δεδομένα μεταξύ ενός αρχείου και ενός πίνακα"
+
+#: sql_help.c:5131
+msgid "define a new access method"
+msgstr "ορίσετε μία νέα μέθοδο πρόσβασης"
+
+#: sql_help.c:5137
+msgid "define a new aggregate function"
+msgstr "ορίσετε μία νέα συνάρτηση συγκεντρωτικών αποτελεσμάτων"
+
+#: sql_help.c:5143
+msgid "define a new cast"
+msgstr "ορίσετε ένα νέο καστ"
+
+#: sql_help.c:5149
+msgid "define a new collation"
+msgstr "ορίσετε μία νέα συρραφή"
+
+#: sql_help.c:5155
+msgid "define a new encoding conversion"
+msgstr "ορίσετε μία νέα μετατροπή κωδικοποίησης"
+
+#: sql_help.c:5161
+msgid "create a new database"
+msgstr "δημιουργήστε μία νέα βάση δεδομένων"
+
+#: sql_help.c:5167
+msgid "define a new domain"
+msgstr "ορίσετε ένα νέο πεδίο"
+
+#: sql_help.c:5173
+msgid "define a new event trigger"
+msgstr "ορίσετε μία νέα ενεργοποίησης συμβάντος"
+
+#: sql_help.c:5179
+msgid "install an extension"
+msgstr "εγκαταστήστε μία νέα προέκταση"
+
+#: sql_help.c:5185
+msgid "define a new foreign-data wrapper"
+msgstr "ορίσετε μία νέα περιτύλιξη ξένων δεδομένων"
+
+#: sql_help.c:5191
+msgid "define a new foreign table"
+msgstr "ορίσετε ένα νέο ξενικό πίνακα"
+
+#: sql_help.c:5197
+msgid "define a new function"
+msgstr "ορίσετε μία νέα συνάρτηση"
+
+#: sql_help.c:5203 sql_help.c:5263 sql_help.c:5365
+msgid "define a new database role"
+msgstr "ορίστε έναν νέο ρόλο βάσης δεδομένων"
+
+#: sql_help.c:5209
+msgid "define a new index"
+msgstr "ορίστε ένα νέο ευρετήριο"
+
+#: sql_help.c:5215
+msgid "define a new procedural language"
+msgstr "ορίστε μία νέα διαδικαστική γλώσσα"
+
+#: sql_help.c:5221
+msgid "define a new materialized view"
+msgstr "Ορίστε μία νέα υλοποιημένη όψη"
+
+#: sql_help.c:5227
+msgid "define a new operator"
+msgstr "ορίστε έναν νέο χειριστή"
+
+#: sql_help.c:5233
+msgid "define a new operator class"
+msgstr "ορίστε μία νέα κλάση χειριστή"
+
+#: sql_help.c:5239
+msgid "define a new operator family"
+msgstr "ορίστε μία νέα οικογένεια χειριστή"
+
+#: sql_help.c:5245
+msgid "define a new row level security policy for a table"
+msgstr "ορίστε μία νέα πολιτική προστασίας σειράς για έναν πίνακα"
+
+#: sql_help.c:5251
+msgid "define a new procedure"
+msgstr "ορίστε μία νέα διαδικασία"
+
+#: sql_help.c:5257
+msgid "define a new publication"
+msgstr "ορίστε μία νέα κοινοποιήση"
+
+#: sql_help.c:5269
+msgid "define a new rewrite rule"
+msgstr "ορίστε ένα νέο κανόνα επανεγγραφής"
+
+#: sql_help.c:5275
+msgid "define a new schema"
+msgstr "ορίστε ένα νέο σχήμα"
+
+#: sql_help.c:5281
+msgid "define a new sequence generator"
+msgstr "ορίστε ένα νέο παραγωγό ακολουθίων"
+
+#: sql_help.c:5287
+msgid "define a new foreign server"
+msgstr "ορίστε ένα νέο ξενικό διακομιστή"
+
+#: sql_help.c:5293
+msgid "define extended statistics"
+msgstr "ορίστε εκτεταμένα στατιστικά στοιχεία"
+
+#: sql_help.c:5299
+msgid "define a new subscription"
+msgstr "ορίστε μία νέα συνδρομή"
+
+#: sql_help.c:5305
+msgid "define a new table"
+msgstr "ορίσετε ένα νέο πίνακα"
+
+#: sql_help.c:5311 sql_help.c:5827
+msgid "define a new table from the results of a query"
+msgstr "ορίστε ένα νέο πίνακα από τα αποτελέσματα ενός ερωτήματος"
+
+#: sql_help.c:5317
+msgid "define a new tablespace"
+msgstr "ορίστε ένα νέο πινακοχώρο"
+
+#: sql_help.c:5323
+msgid "define a new text search configuration"
+msgstr "ορίστε μία νέα διαμόρφωση αναζήτησης κειμένου"
+
+#: sql_help.c:5329
+msgid "define a new text search dictionary"
+msgstr "ορίστε ένα νέο λεξικό αναζήτησης κειμένου"
+
+#: sql_help.c:5335
+msgid "define a new text search parser"
+msgstr "ορίστε ένα νέο αναλυτή αναζήτησης κειμένου"
+
+#: sql_help.c:5341
+msgid "define a new text search template"
+msgstr "ορίστε ένα νέο πρότυπο αναζήτησης κειμένου"
+
+#: sql_help.c:5347
+msgid "define a new transform"
+msgstr "ορίστε μία νέα μετατροπή"
+
+#: sql_help.c:5353
+msgid "define a new trigger"
+msgstr "ορίσετε μία νέα ενεργοποίηση"
+
+#: sql_help.c:5359
+msgid "define a new data type"
+msgstr "ορίσετε ένα νέο τύπο δεδομένων"
+
+#: sql_help.c:5371
+msgid "define a new mapping of a user to a foreign server"
+msgstr "ορίστε μία νέα αντιστοίχιση ενός χρήστη σε έναν ξένο διακομιστή"
+
+#: sql_help.c:5377
+msgid "define a new view"
+msgstr "ορίστε μία νέα όψη"
+
+#: sql_help.c:5383
+msgid "deallocate a prepared statement"
+msgstr "καταργήστε μία προετοιμασμένη δήλωση"
+
+#: sql_help.c:5389
+msgid "define a cursor"
+msgstr "ορίστε έναν δρομέα"
+
+#: sql_help.c:5395
+msgid "delete rows of a table"
+msgstr "διαγράψτε σειρές ενός πίνακα"
+
+#: sql_help.c:5401
+msgid "discard session state"
+msgstr "καταργήστε την κατάσταση συνεδρίας"
+
+#: sql_help.c:5407
+msgid "execute an anonymous code block"
+msgstr "εκτελέστε ανώνυμο μπλοκ κώδικα"
+
+#: sql_help.c:5413
+msgid "remove an access method"
+msgstr "αφαιρέστε μία μέθοδο πρόσβασης"
+
+#: sql_help.c:5419
+msgid "remove an aggregate function"
+msgstr "αφαιρέστε μία συνάρτηση συγκεντρωτικών αποτελεσμάτων"
+
+#: sql_help.c:5425
+msgid "remove a cast"
+msgstr "αφαιρέστε ένα καστ"
+
+#: sql_help.c:5431
+msgid "remove a collation"
+msgstr "αφαιρέστε μία συρραφή"
+
+#: sql_help.c:5437
+msgid "remove a conversion"
+msgstr "αφαιρέστε μία μετατροπή"
+
+#: sql_help.c:5443
+msgid "remove a database"
+msgstr "αφαιρέστε μία βάση δεδομένων"
+
+#: sql_help.c:5449
+msgid "remove a domain"
+msgstr "αφαιρέστε ένα πεδίο"
+
+#: sql_help.c:5455
+msgid "remove an event trigger"
+msgstr "αφαιρέστε μία ενεργοποίηση συμβάντος"
+
+#: sql_help.c:5461
+msgid "remove an extension"
+msgstr "αφαιρέστε μία προέκταση"
+
+#: sql_help.c:5467
+msgid "remove a foreign-data wrapper"
+msgstr "αφαιρέστε μία περιτύλιξη ξένων δεδομένων"
+
+#: sql_help.c:5473
+msgid "remove a foreign table"
+msgstr "αφαιρέστε έναν ξενικό πίνακα"
+
+#: sql_help.c:5479
+msgid "remove a function"
+msgstr "αφαιρέστε μία συνάρτηση"
+
+#: sql_help.c:5485 sql_help.c:5551 sql_help.c:5653
+msgid "remove a database role"
+msgstr "αφαιρέστε έναν ρόλο μίας βάσης δεδομένων"
+
+#: sql_help.c:5491
+msgid "remove an index"
+msgstr "αφαιρέστε ένα ευρετήριο"
+
+#: sql_help.c:5497
+msgid "remove a procedural language"
+msgstr "αφαιρέστε μία διαδικαστική γλώσσα"
+
+#: sql_help.c:5503
+msgid "remove a materialized view"
+msgstr "αφαιρέστε μία υλοποιημένη όψη"
+
+#: sql_help.c:5509
+msgid "remove an operator"
+msgstr "αφαιρέστε έναν χειριστή"
+
+#: sql_help.c:5515
+msgid "remove an operator class"
+msgstr "αφαιρέστε μία κλάση χειριστή"
+
+#: sql_help.c:5521
+msgid "remove an operator family"
+msgstr "αφαιρέστε μία οικογένεια χειριστή"
+
+#: sql_help.c:5527
+msgid "remove database objects owned by a database role"
+msgstr ""
+"αφαιρέστε αντικειμένα βάσης δεδομένων που ανήκουν σε ρόλο βάσης δεδομένων"
+
+#: sql_help.c:5533
+msgid "remove a row level security policy from a table"
+msgstr "αφαιρέστε μία πολιτική ασφαλείας επιπέδου γραμμής από έναν πίνακα"
+
+#: sql_help.c:5539
+msgid "remove a procedure"
+msgstr "αφαιρέστε μία διαδικασία"
+
+#: sql_help.c:5545
+msgid "remove a publication"
+msgstr "αφαιρέστε μία δημοσίευση"
+
+#: sql_help.c:5557
+msgid "remove a routine"
+msgstr "αφαιρέστε μία ρουτίνα"
+
+#: sql_help.c:5563
+msgid "remove a rewrite rule"
+msgstr "αφαιρέστε έναν κανόνα επανεγγραφής"
+
+#: sql_help.c:5569
+msgid "remove a schema"
+msgstr "αφαιρέστε ένα σχήμα"
+
+#: sql_help.c:5575
+msgid "remove a sequence"
+msgstr "αφαιρέστε μία ακολουθία"
+
+#: sql_help.c:5581
+msgid "remove a foreign server descriptor"
+msgstr "αφαιρέστε έναν περιγραφέα ξενικού διακομιστή"
+
+#: sql_help.c:5587
+msgid "remove extended statistics"
+msgstr "αφαιρέστε εκτεταμένα στατιστικά στοιχεία"
+
+#: sql_help.c:5593
+msgid "remove a subscription"
+msgstr "αφαιρέστε μία συνδρομή"
+
+#: sql_help.c:5599
+msgid "remove a table"
+msgstr "αφαιρέστε έναν πίνακα"
+
+#: sql_help.c:5605
+msgid "remove a tablespace"
+msgstr "αφαιρέστε έναν πινακοχώρο"
+
+#: sql_help.c:5611
+msgid "remove a text search configuration"
+msgstr "αφαιρέστε μία διαμόρφωση αναζήτησης κειμένου"
+
+#: sql_help.c:5617
+msgid "remove a text search dictionary"
+msgstr "αφαιρέστε ένα λεξικό αναζήτησης κειμένου"
+
+#: sql_help.c:5623
+msgid "remove a text search parser"
+msgstr "αφαιρέστε έναν αναλυτή αναζήτησης κειμένου"
+
+#: sql_help.c:5629
+msgid "remove a text search template"
+msgstr "αφαιρέστε ένα πρότυπο αναζήτησης κειμένου"
+
+#: sql_help.c:5635
+msgid "remove a transform"
+msgstr "αφαιρέστε μία μετατροπή"
+
+#: sql_help.c:5641
+msgid "remove a trigger"
+msgstr "αφαιρέστε μία ενεργοποίηση"
+
+#: sql_help.c:5647
+msgid "remove a data type"
+msgstr "αφαιρέστε έναν τύπο δεδομένων"
+
+#: sql_help.c:5659
+msgid "remove a user mapping for a foreign server"
+msgstr "αφαιρέστε μία αντιστοίχιση χρήστη για ξένο διακομιστή"
+
+#: sql_help.c:5665
+msgid "remove a view"
+msgstr "αφαιρέστε μία όψη"
+
+#: sql_help.c:5677
+msgid "execute a prepared statement"
+msgstr "εκτελέστε μία προεπιλεγμένη δήλωση"
+
+#: sql_help.c:5683
+msgid "show the execution plan of a statement"
+msgstr "εμφανίστε το πλάνο εκτέλεσης μίας δήλωσης"
+
+#: sql_help.c:5689
+msgid "retrieve rows from a query using a cursor"
+msgstr "ανακτήστε σειρές από ερώτημα μέσω δρομέα"
+
+#: sql_help.c:5695
+msgid "define access privileges"
+msgstr "ορίσθε δικαιώματα πρόσβασης"
+
+#: sql_help.c:5701
+msgid "import table definitions from a foreign server"
+msgstr "εισαγωγή ορισμών πίνακα από ξένο διακομιστή"
+
+#: sql_help.c:5707
+msgid "create new rows in a table"
+msgstr "δημιουργήστε καινούργιες σειρές σε έναν πίνακα"
+
+#: sql_help.c:5713
+msgid "listen for a notification"
+msgstr "ακούστε για μία κοινοποίηση"
+
+#: sql_help.c:5719
+msgid "load a shared library file"
+msgstr "φορτώστε ένα αρχείο κοινόχρηστης βιβλιοθήκης"
+
+#: sql_help.c:5725
+msgid "lock a table"
+msgstr "κλειδώστε έναν πίνακα"
+
+#: sql_help.c:5731
+msgid "position a cursor"
+msgstr "τοποθετήστε έναν δρομέα"
+
+#: sql_help.c:5737
+msgid "generate a notification"
+msgstr "δημιουργήστε μία κοινοποίηση"
+
+#: sql_help.c:5743
+msgid "prepare a statement for execution"
+msgstr "προετοιμάστε μία δήλωση για εκτέλεση"
+
+#: sql_help.c:5749
+msgid "prepare the current transaction for two-phase commit"
+msgstr "προετοιμάστε την τρέχουσας συναλλαγής για ολοκλήρωση σε δύο φάσεις"
+
+#: sql_help.c:5755
+msgid "change the ownership of database objects owned by a database role"
+msgstr ""
+"αλλάξτε την κυριότητα αντικειμένων βάσης δεδομένων που ανήκουν σε ρόλο βάσης "
+"δεδομένων"
+
+#: sql_help.c:5761
+msgid "replace the contents of a materialized view"
+msgstr "αντικαθαστήστε τα περιεχόμενα μίας υλοποιημένης όψης"
+
+#: sql_help.c:5767
+msgid "rebuild indexes"
+msgstr "επανακατασκευάστε ευρετήρια"
+
+#: sql_help.c:5773
+msgid "destroy a previously defined savepoint"
+msgstr "καταστρέψτε ένα προηγούμενα ορισμένο σημείο αποθήκευσης"
+
+#: sql_help.c:5779
+msgid "restore the value of a run-time parameter to the default value"
+msgstr ""
+"επαναφορά της τιμής μιας παραμέτρου χρόνου εκτέλεσης στην προεπιλεγμένη τιμή"
+
+#: sql_help.c:5785
+msgid "remove access privileges"
+msgstr "αφαιρέστε δικαιώματα πρόσβασης"
+
+#: sql_help.c:5797
+msgid "cancel a transaction that was earlier prepared for two-phase commit"
+msgstr ""
+"Ακύρωση συναλλαγής που είχε προετοιμαστεί προηγουμένως για ολοκλήρωση σε δύο "
+"φάσεις"
+
+#: sql_help.c:5803
+msgid "roll back to a savepoint"
+msgstr "επαναφορά σε σημείο αποθήκευσης"
+
+#: sql_help.c:5809
+msgid "define a new savepoint within the current transaction"
+msgstr ""
+"ορίστε ένα νέο σημείο αποθήκευσης (savepoint) μέσα στην τρέχουσα συναλλαγή"
+
+#: sql_help.c:5815
+msgid "define or change a security label applied to an object"
+msgstr ""
+"ορίστε ή αλλάξτε μία ετικέτα ασφαλείας που εφαρμόζεται σε ένα αντικείμενο"
+
+#: sql_help.c:5821 sql_help.c:5875 sql_help.c:5911
+msgid "retrieve rows from a table or view"
+msgstr "ανακτήστε σειρές από πίνακα ή όψη"
+
+#: sql_help.c:5833
+msgid "change a run-time parameter"
+msgstr "αλλάξτε μία παράμετρο χρόνου εκτέλεσης"
+
+#: sql_help.c:5839
+msgid "set constraint check timing for the current transaction"
+msgstr "ορίστε τον χρονισμό ελέγχου περιορισμού για την τρέχουσα συναλλαγή"
+
+#: sql_help.c:5845
+msgid "set the current user identifier of the current session"
+msgstr "ορίστε το αναγνωριστικό τρέχοντος χρήστη της τρέχουσας συνεδρίας"
+
+#: sql_help.c:5851
+msgid ""
+"set the session user identifier and the current user identifier of the "
+"current session"
+msgstr ""
+"ορίστε το αναγνωριστικό χρήστη συνεδρίας και το αναγνωριστικό τρέχοντος "
+"χρήστη της τρέχουσας συνεδρίας"
+
+#: sql_help.c:5857
+msgid "set the characteristics of the current transaction"
+msgstr "ορίστε τα χαρακτηριστικά της τρέχουσας συναλλαγής"
+
+#: sql_help.c:5863
+msgid "show the value of a run-time parameter"
+msgstr "εμφάνιση της τιμής μιας παραμέτρου χρόνου εκτέλεσης"
+
+#: sql_help.c:5881
+msgid "empty a table or set of tables"
+msgstr "αδειάστε έναν πίνακα ή ένα σύνολο πινάκων"
+
+#: sql_help.c:5887
+msgid "stop listening for a notification"
+msgstr "σταματήστε να ακούτε μια κοινοποίηση"
+
+#: sql_help.c:5893
+msgid "update rows of a table"
+msgstr "ενημέρωση σειρών πίνακα"
+
+#: sql_help.c:5899
+msgid "garbage-collect and optionally analyze a database"
+msgstr "συλλογή απορριμμάτων και προαιρετική ανάλυση βάσης δεδομένων"
+
+#: sql_help.c:5905
+msgid "compute a set of rows"
+msgstr "υπολογίστε ένα σύνολο σειρών"
+
+#: startup.c:212
+#, c-format
+msgid "-1 can only be used in non-interactive mode"
+msgstr "-1 μπορεί να χρησιμοποιηθεί μόνο σε μη διαδραστική λειτουργία"
+
+#: startup.c:327
+#, c-format
+msgid "could not open log file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου καταγραφής “%s”: %m"
+
+#: startup.c:439
+#, c-format
+msgid ""
+"Type \"help\" for help.\n"
+"\n"
+msgstr ""
+"Γράψτε “help” για βοήθεια.\n"
+"\n"
+
+#: startup.c:589
+#, c-format
+msgid "could not set printing parameter \"%s\""
+msgstr "δεν ήταν δυνατός ο ορισμός παραμέτρου εκτύπωσης “%s”"
+
+#: startup.c:697
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"
+
+#: startup.c:714
+#, c-format
+msgid "extra command-line argument \"%s\" ignored"
+msgstr "παραβλέπεται η πρόσθετη παράμετρος γραμμής εντολών \"%s\""
+
+#: startup.c:763
+#, c-format
+msgid "could not find own program executable"
+msgstr "δεν ήταν δυνατή η εύρεση του ιδίου εκτελέσιμου προγράμματος"
+
+#: tab-complete.c:4640
+#, c-format
+msgid ""
+"tab completion query failed: %s\n"
+"Query was:\n"
+"%s"
+msgstr ""
+"ολοκλήρωσης καρτέλας ερωτήματος απέτυχε: %s\n"
+"Το ερώτημα ήταν:\n"
+"%s"
+
+#: variables.c:139
+#, c-format
+msgid "unrecognized value \"%s\" for \"%s\": Boolean expected"
+msgstr "μη αναγνωρίσιμη τιμή \"%s\" για \"%s\": αναμένεται Boolean"
+
+#: variables.c:176
+#, c-format
+msgid "invalid value \"%s\" for \"%s\": integer expected"
+msgstr "άκυρη τιμή \"%s\" για \"%s\": αναμένεται ακέραιος"
+
+#: variables.c:224
+#, c-format
+msgid "invalid variable name: \"%s\""
+msgstr "άκυρη ονομασία παραμέτρου “%s”"
+
+#: variables.c:419
+#, c-format
+msgid ""
+"unrecognized value \"%s\" for \"%s\"\n"
+"Available values are: %s."
+msgstr ""
+"Μη αναγνωρίσιμη τιμή \"%s\" για \"%s\"\n"
+"Οι διαθέσιμες τιμές είναι: %s."

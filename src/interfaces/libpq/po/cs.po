@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-27 08:09+0000\n"
-"PO-Revision-Date: 2019-09-27 16:46+0200\n"
+"POT-Creation-Date: 2020-10-31 16:09+0000\n"
+"PO-Revision-Date: 2020-10-31 21:45+0100\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -18,238 +18,285 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.4.1\n"
 
-#: fe-auth-scram.c:183
+#: fe-auth-scram.c:212
 msgid "malformed SCRAM message (empty message)\n"
 msgstr "poškozená SCRAM zpráva (prázdná zpráva)\n"
 
-#: fe-auth-scram.c:189
+#: fe-auth-scram.c:218
 msgid "malformed SCRAM message (length mismatch)\n"
 msgstr "poškozená SCRAM zpráva (délka neodpovídá)\n"
 
-#: fe-auth-scram.c:238
+#: fe-auth-scram.c:265
 msgid "incorrect server signature\n"
 msgstr "chybná signatura serveru\n"
 
-#: fe-auth-scram.c:247
+#: fe-auth-scram.c:274
 msgid "invalid SCRAM exchange state\n"
 msgstr "chybný stav SCRAM výměny\n"
 
-#: fe-auth-scram.c:270
+#: fe-auth-scram.c:296
 #, c-format
 msgid "malformed SCRAM message (attribute \"%c\" expected)\n"
 msgstr "poškozená SCRAM zpráva (očekáván atribut \"%c\")\n"
 
-#: fe-auth-scram.c:279
+#: fe-auth-scram.c:305
 #, c-format
 msgid "malformed SCRAM message (expected character \"=\" for attribute \"%c\")\n"
 msgstr "poškozená SCRAM zpráva (očekáván znak \"=\" pro atribut \"%c\")\n"
 
-#: fe-auth-scram.c:320
+#: fe-auth-scram.c:346
 msgid "could not generate nonce\n"
 msgstr "nelze vygenerovat nonce\n"
 
-#: fe-auth-scram.c:328 fe-auth-scram.c:395 fe-auth-scram.c:517
-#: fe-auth-scram.c:537 fe-auth-scram.c:563 fe-auth-scram.c:577
-#: fe-auth-scram.c:626 fe-auth-scram.c:660 fe-auth.c:290 fe-auth.c:360
-#: fe-auth.c:395 fe-auth.c:581 fe-auth.c:740 fe-auth.c:1052 fe-auth.c:1200
-#: fe-connect.c:858 fe-connect.c:1320 fe-connect.c:1496 fe-connect.c:2083
-#: fe-connect.c:2106 fe-connect.c:2829 fe-connect.c:4511 fe-connect.c:4763
-#: fe-connect.c:4882 fe-connect.c:5136 fe-connect.c:5216 fe-connect.c:5315
-#: fe-connect.c:5571 fe-connect.c:5600 fe-connect.c:5672 fe-connect.c:5696
-#: fe-connect.c:5714 fe-connect.c:5815 fe-connect.c:5824 fe-connect.c:6180
-#: fe-connect.c:6330 fe-exec.c:2748 fe-exec.c:3495 fe-exec.c:3660
-#: fe-gssapi-common.c:111 fe-lobj.c:895 fe-protocol2.c:1213 fe-protocol3.c:999
-#: fe-protocol3.c:1703 fe-secure-common.c:110 fe-secure-openssl.c:438
-#: fe-secure-openssl.c:1025
+#: fe-auth-scram.c:356 fe-auth-scram.c:431 fe-auth-scram.c:579
+#: fe-auth-scram.c:600 fe-auth-scram.c:626 fe-auth-scram.c:641
+#: fe-auth-scram.c:691 fe-auth-scram.c:725 fe-auth.c:289 fe-auth.c:359
+#: fe-auth.c:394 fe-auth.c:611 fe-auth.c:770 fe-auth.c:1129 fe-auth.c:1277
+#: fe-connect.c:892 fe-connect.c:1419 fe-connect.c:1595 fe-connect.c:2200
+#: fe-connect.c:2223 fe-connect.c:2952 fe-connect.c:4601 fe-connect.c:4857
+#: fe-connect.c:4976 fe-connect.c:5229 fe-connect.c:5309 fe-connect.c:5408
+#: fe-connect.c:5664 fe-connect.c:5693 fe-connect.c:5765 fe-connect.c:5789
+#: fe-connect.c:5807 fe-connect.c:5908 fe-connect.c:5917 fe-connect.c:6273
+#: fe-connect.c:6423 fe-exec.c:2747 fe-exec.c:3494 fe-exec.c:3659
+#: fe-gssapi-common.c:111 fe-lobj.c:895 fe-protocol2.c:1207 fe-protocol3.c:995
+#: fe-protocol3.c:1699 fe-secure-common.c:110 fe-secure-gssapi.c:504
+#: fe-secure-openssl.c:440 fe-secure-openssl.c:1091
 msgid "out of memory\n"
 msgstr "nedostatek paměti\n"
 
-#: fe-auth-scram.c:555
+#: fe-auth-scram.c:364
+msgid "could not encode nonce\n"
+msgstr "nelze zakódovat nonce\n"
+
+#: fe-auth-scram.c:563
+msgid "could not encode client proof\n"
+msgstr "nelze zakódovat client proof\n"
+
+#: fe-auth-scram.c:618
 msgid "invalid SCRAM response (nonce mismatch)\n"
 msgstr "chybná SCRAM odpověď (nonce neodpovídá)\n"
 
-#: fe-auth-scram.c:586
+#: fe-auth-scram.c:651
 msgid "malformed SCRAM message (invalid salt)\n"
 msgstr "poškozená SCRAM zpráva (chybná salt hodnota)\n"
 
-#: fe-auth-scram.c:600
+#: fe-auth-scram.c:665
 msgid "malformed SCRAM message (invalid iteration count)\n"
 msgstr "poškozená SCRAM zpráva (chybný počet iterací)\n"
 
-#: fe-auth-scram.c:606
+#: fe-auth-scram.c:671
 msgid "malformed SCRAM message (garbage at end of server-first-message)\n"
 msgstr "poškozená SCRAM zpráva (smetí na konci server-first-message)\n"
 
-#: fe-auth-scram.c:637
+#: fe-auth-scram.c:702
 #, c-format
 msgid "error received from server in SCRAM exchange: %s\n"
 msgstr "server zaslal chybu v rámci SCRAM výměny: %s\n"
 
-#: fe-auth-scram.c:653
+#: fe-auth-scram.c:718
 msgid "malformed SCRAM message (garbage at end of server-final-message)\n"
 msgstr "poškozená SCRAM zpráva (smetí na konci server-final-message)\n"
 
-#: fe-auth-scram.c:671
+#: fe-auth-scram.c:737
 msgid "malformed SCRAM message (invalid server signature)\n"
 msgstr "poškozená SCRAM zpráva (chybná signatura serveru)\n"
 
-#: fe-auth.c:77
+#: fe-auth.c:76
 #, c-format
 msgid "out of memory allocating GSSAPI buffer (%d)\n"
 msgstr "při alokaci GSSAPI bufferu došla paměť (%d)\n"
 
-#: fe-auth.c:132
+#: fe-auth.c:131
 msgid "GSSAPI continuation error"
 msgstr "Přetrvávající chyba GSSAPI"
 
-#: fe-auth.c:159 fe-auth.c:389 fe-gssapi-common.c:98 fe-secure-common.c:98
+#: fe-auth.c:158 fe-auth.c:388 fe-gssapi-common.c:98 fe-secure-common.c:98
 msgid "host name must be specified\n"
 msgstr "host musí být specifikován\n"
 
-#: fe-auth.c:166
+#: fe-auth.c:165
 msgid "duplicate GSS authentication request\n"
 msgstr "duplikátní GSS autentizační požadavek\n"
 
-#: fe-auth.c:231
+#: fe-auth.c:230
 #, c-format
 msgid "out of memory allocating SSPI buffer (%d)\n"
 msgstr "při alokaci SSPI bufferu došla paměť (%d)\n"
 
-#: fe-auth.c:279
+#: fe-auth.c:278
 msgid "SSPI continuation error"
 msgstr "Přetrvávající chyba SSPI"
 
-#: fe-auth.c:350
+#: fe-auth.c:349
 msgid "duplicate SSPI authentication request\n"
 msgstr "duplicitní SSPI autentizační požadavek\n"
 
-#: fe-auth.c:375
+#: fe-auth.c:374
 msgid "could not acquire SSPI credentials"
 msgstr "nelze získat SSPI credentials"
 
 #: fe-auth.c:429
+msgid "channel binding required, but SSL not in use\n"
+msgstr "channel binding vyžadováno, ale SSL není zapnuto\n"
+
+#: fe-auth.c:436
 msgid "duplicate SASL authentication request\n"
 msgstr "duplicitní SASL autentizační požadavek\n"
 
-#: fe-auth.c:487
+#: fe-auth.c:492
+msgid "channel binding is required, but client does not support it\n"
+msgstr "channel binding je vyžadován, ale klient ho nepodporuje\n"
+
+#: fe-auth.c:509
 msgid "server offered SCRAM-SHA-256-PLUS authentication over a non-SSL connection\n"
 msgstr "server nabídl SCRAM-SHA-256-PLUS authentizaci přes ne-SSL spojení\n"
 
-#: fe-auth.c:499
+#: fe-auth.c:521
 msgid "none of the server's SASL authentication mechanisms are supported\n"
 msgstr "žádný ze SASL authentizačních mechanismů serveru není podporován\n"
 
-#: fe-auth.c:605
+#: fe-auth.c:529
+msgid "channel binding is required, but server did not offer an authentication method that supports channel binding\n"
+msgstr "channel binding je vyžadováno, ale server nenabídl methodu autentizace které channel binding podporuje\n"
+
+#: fe-auth.c:635
 #, c-format
 msgid "out of memory allocating SASL buffer (%d)\n"
 msgstr "při alokaci SASL bufferu došla paměť (%d)\n"
 
-#: fe-auth.c:630
+#: fe-auth.c:660
 msgid "AuthenticationSASLFinal received from server, but SASL authentication was not completed\n"
 msgstr "AuthenticationSASLFinal obdržena od serveru, ale SASL authentizace nebyla dokončena\n"
 
-#: fe-auth.c:707
+#: fe-auth.c:737
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "SCM_CRED metoda autentizace není podporována\n"
 
-#: fe-auth.c:798
+#: fe-auth.c:836
+msgid "channel binding required, but server authenticated client without channel binding\n"
+msgstr "channel binding vyžadováno, ale server authentizoval klienta bez channel binding\n"
+
+#: fe-auth.c:842
+msgid "channel binding required but not supported by server's authentication request\n"
+msgstr "channel binding je vyžadován ale není podporován autentizační metodou serveru\n"
+
+#: fe-auth.c:875
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Kerberos 4 autentizace není podporována\n"
 
-#: fe-auth.c:803
+#: fe-auth.c:880
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Kerberos 5 autentizace není podporována\n"
 
-#: fe-auth.c:874
+#: fe-auth.c:951
 msgid "GSSAPI authentication not supported\n"
 msgstr "GSSAPI autentizace není podporována\n"
 
-#: fe-auth.c:906
+#: fe-auth.c:983
 msgid "SSPI authentication not supported\n"
 msgstr "SSPI autentizace není podporována\n"
 
-#: fe-auth.c:914
+#: fe-auth.c:991
 msgid "Crypt authentication not supported\n"
 msgstr "Crypt autentizace není podporována\n"
 
-#: fe-auth.c:980
+#: fe-auth.c:1057
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "autentizační metoda %u není podporována\n"
 
-#: fe-auth.c:1027
+#: fe-auth.c:1104
 #, c-format
 msgid "user name lookup failure: error code %lu\n"
 msgstr "vyhledání uživatele selhalo: chybový kód %lu\n"
 
-#: fe-auth.c:1037 fe-connect.c:2716
+#: fe-auth.c:1114 fe-connect.c:2834
 #, c-format
 msgid "could not look up local user ID %d: %s\n"
 msgstr "nelze vyhledat lokálního uživatele ID %d: %s\n"
 
-#: fe-auth.c:1042 fe-connect.c:2721
+#: fe-auth.c:1119 fe-connect.c:2839
 #, c-format
 msgid "local user with ID %d does not exist\n"
 msgstr "lokální uživatel s ID %d neexistuje\n"
 
-#: fe-auth.c:1144
+#: fe-auth.c:1221
 msgid "unexpected shape of result set returned for SHOW\n"
 msgstr "neočekávaná podoba výsledku pro SHOW\n"
 
-#: fe-auth.c:1153
+#: fe-auth.c:1230
 msgid "password_encryption value too long\n"
 msgstr "hodnota password_encryption je příliš dlouhá\n"
 
-#: fe-auth.c:1193
+#: fe-auth.c:1270
 #, c-format
 msgid "unrecognized password encryption algorithm \"%s\"\n"
 msgstr "neznámý algoritmus pro šifrování hesla \"%s\"\n"
 
-#: fe-connect.c:1041
+#: fe-connect.c:1075
 #, c-format
 msgid "could not match %d host names to %d hostaddr values\n"
 msgstr "nelze napárovat %d jmen hostů na %d hostaddr hodnot\n"
 
-#: fe-connect.c:1117
+#: fe-connect.c:1156
 #, c-format
 msgid "could not match %d port numbers to %d hosts\n"
 msgstr "nelze napárovat %d čísel portů na %d hostů\n"
 
-#: fe-connect.c:1213
+#: fe-connect.c:1249
+#, c-format
+#| msgid "invalid channel binding type\n"
+msgid "invalid channel_binding value: \"%s\"\n"
+msgstr "neplatná hodnota channel_binding: \"%s\"\n"
+
+#: fe-connect.c:1275
 #, c-format
 msgid "invalid sslmode value: \"%s\"\n"
 msgstr "neplatná hodnota sslmode: \"%s\"\n"
 
-#: fe-connect.c:1234
+#: fe-connect.c:1296
 #, c-format
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
 msgstr "hodnota sslmode \"%s\" je neplatná pokud není zakompilována podpora SSL\n"
 
-#: fe-connect.c:1258
+#: fe-connect.c:1317
+#, c-format
+msgid "invalid ssl_min_protocol_version value: \"%s\"\n"
+msgstr "neplatná hodnodta ssl_min_protocol_version: \"%s\"\n"
+
+#: fe-connect.c:1325
 #, c-format
 #| msgid "invalid sslmode value: \"%s\"\n"
+msgid "invalid ssl_max_protocol_version value: \"%s\"\n"
+msgstr "neplatná hodnota ssl_max_protocol_version: \"%s\"\n"
+
+#: fe-connect.c:1342
+msgid "invalid SSL protocol version range\n"
+msgstr "neplatný rozsah verzí SSL protokolu\n"
+
+#: fe-connect.c:1357
+#, c-format
 msgid "invalid gssencmode value: \"%s\"\n"
 msgstr "invalid gssencmode gssencmode: \"%s\"\n"
 
-#: fe-connect.c:1267
+#: fe-connect.c:1366
 #, c-format
-#| msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
 msgid "gssencmode value \"%s\" invalid when GSSAPI support is not compiled in\n"
 msgstr "gssencmode hodnota \"%s\" je neplatná při nezakompilované GSSAPI podpoře\n"
 
-#: fe-connect.c:1302
+#: fe-connect.c:1401
 #, c-format
 msgid "invalid target_session_attrs value: \"%s\"\n"
 msgstr "neplatná hodnota target_session_attrs: \"%s\"\n"
 
-#: fe-connect.c:1520
+#: fe-connect.c:1619
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
 msgstr "nelze nastavit \"no delay\" mód TCP soketu: %s\n"
 
-#: fe-connect.c:1581
+#: fe-connect.c:1680
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -260,7 +307,7 @@ msgstr ""
 "\tJe spuštěn server lokálně a akceptuje\n"
 "\tspojení pomocí Unix soketu \"%s\"?\n"
 
-#: fe-connect.c:1618
+#: fe-connect.c:1717
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -271,7 +318,7 @@ msgstr ""
 "\tJe server na \"%s\" (%s) spuštěn a akceptuje\n"
 "\tTCP/IP spojení na portu %s?\n"
 
-#: fe-connect.c:1626
+#: fe-connect.c:1725
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -282,435 +329,433 @@ msgstr ""
 "\tJe server na \"%s\" spuštěn a akceptuje\n"
 "\tTCP/IP spojení na portu %s?\n"
 
-#: fe-connect.c:1677
+#: fe-connect.c:1795
 #, c-format
-#| msgid "invalid connection option \"%s\"\n"
 msgid "invalid integer value \"%s\" for connection option \"%s\"\n"
 msgstr "chybná integer hodnota \"%s\" pro volbu spojení \"%s\"\n"
 
-#: fe-connect.c:1707 fe-connect.c:1741 fe-connect.c:1776 fe-connect.c:1863
-#: fe-connect.c:2506
+#: fe-connect.c:1825 fe-connect.c:1859 fe-connect.c:1894 fe-connect.c:1981
+#: fe-connect.c:2623
 #, c-format
 msgid "setsockopt(%s) failed: %s\n"
 msgstr "setsockopt(%s) selhalo: %s\n"
 
-#: fe-connect.c:1829
+#: fe-connect.c:1947
 #, c-format
 msgid "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"
 msgstr "WSAIoctl(SIO_KEEPALIVE_VALS) selhalo: %ui\n"
 
-#: fe-connect.c:2197
+#: fe-connect.c:2313
 msgid "invalid connection state, probably indicative of memory corruption\n"
 msgstr "neplatný stav spojení, pravděpodobně způsobený poškozením paměti\n"
 
-#: fe-connect.c:2265
+#: fe-connect.c:2379
 #, c-format
 msgid "invalid port number: \"%s\"\n"
 msgstr "neplatné číslo portu: \"%s\"\n"
 
-#: fe-connect.c:2281
+#: fe-connect.c:2395
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
 msgstr "nemohu přeložit jméno hostitele \"%s\" na adresu: %s\n"
 
-#: fe-connect.c:2294
+#: fe-connect.c:2408
 #, c-format
 msgid "could not parse network address \"%s\": %s\n"
 msgstr "nelze naparsovat síťovou adresu \"%s\": %s\n"
 
-#: fe-connect.c:2307
+#: fe-connect.c:2421
 #, c-format
 msgid "Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"
 msgstr "Cesta k unixovému \"%s\" je příliš dlouhá (maximum %d bytů)\n"
 
-#: fe-connect.c:2322
+#: fe-connect.c:2436
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
 msgstr "nemohu přeložit cestu Unix-domain soketu \"%s\" na adresu: %s\n"
 
-#: fe-connect.c:2443
+#: fe-connect.c:2560
 #, c-format
 msgid "could not create socket: %s\n"
 msgstr "nelze vytvořit soket: %s\n"
 
-#: fe-connect.c:2465
+#: fe-connect.c:2582
 #, c-format
 msgid "could not set socket to nonblocking mode: %s\n"
 msgstr "soket nelze nastavit do neblokujícího módu: %s\n"
 
-#: fe-connect.c:2475
+#: fe-connect.c:2592
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s\n"
 msgstr "nelze nastavit soket do close-on-exec módu: %s\n"
 
-#: fe-connect.c:2493
+#: fe-connect.c:2610
 msgid "keepalives parameter must be an integer\n"
 msgstr "parametr keepalives musí být celé číslo\n"
 
-#: fe-connect.c:2633
+#: fe-connect.c:2750
 #, c-format
 msgid "could not get socket error status: %s\n"
 msgstr "nelze obdržet chybový status soketu: %s\n"
 
-#: fe-connect.c:2661
+#: fe-connect.c:2778
 #, c-format
 msgid "could not get client address from socket: %s\n"
 msgstr "nelze získat adresu klienta ze soketu: %s\n"
 
-#: fe-connect.c:2703
+#: fe-connect.c:2820
 msgid "requirepeer parameter is not supported on this platform\n"
 msgstr "parametr requirepeer není na této platformě podporován\n"
 
-#: fe-connect.c:2706
+#: fe-connect.c:2823
 #, c-format
 msgid "could not get peer credentials: %s\n"
 msgstr "nelze získat informace (credentials) protistrany: %s\n"
 
-#: fe-connect.c:2729
+#: fe-connect.c:2847
 #, c-format
 msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"
 msgstr "requirepeer obsahuje \"%s\", ale skutečné jméno peera je \"%s\"\n"
 
-#: fe-connect.c:2764
+#: fe-connect.c:2887
 #, c-format
-#| msgid "could not send SSL negotiation packet: %s\n"
 msgid "could not send GSSAPI negotiation packet: %s\n"
 msgstr "nelze zaslat GSSAPI negociační packet: %s\n"
 
-#: fe-connect.c:2776
+#: fe-connect.c:2899
 msgid "GSSAPI encryption required but was impossible (possibly no credential cache, no server support, or using a local socket)\n"
 msgstr "GSSAPI šifrování je vyžadováno ale bylo nemožné (možná kvůli chybějící credential cache, podpoře na serveru, nebo používání lokálního socketu)\n"
 
-#: fe-connect.c:2803
+#: fe-connect.c:2926
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "nelze poslat SSL \"negotiation paket\": %s\n"
 
-#: fe-connect.c:2842
+#: fe-connect.c:2965
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "nelze poslat počáteční paket: %s\n"
 
-#: fe-connect.c:2912
+#: fe-connect.c:3035
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "server nepodporuje SSL, leč SSL je vyžadováno\n"
 
-#: fe-connect.c:2938
+#: fe-connect.c:3061
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "přijata neplatná odpověď na SSL negotiation: %c\n"
 
-#: fe-connect.c:3028
+#: fe-connect.c:3151
 msgid "server doesn't support GSSAPI encryption, but it was required\n"
 msgstr "server nepodporuje GSSAPI šifrování, to ale bylo vyžadováno\n"
 
-#: fe-connect.c:3039
+#: fe-connect.c:3162
 #, c-format
 msgid "received invalid response to GSSAPI negotiation: %c\n"
 msgstr "přijata neplatná odpověď na GSSAPI negotiation: %c\n"
 
-#: fe-connect.c:3107 fe-connect.c:3140
+#: fe-connect.c:3229 fe-connect.c:3260
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr "očekáván byl autentizační dotaz ze serveru, ale přijat byl %c\n"
 
-#: fe-connect.c:3387
+#: fe-connect.c:3502
 msgid "unexpected message from server during startup\n"
 msgstr "neočekávaná zpráva ze serveru během startu\n"
 
-#: fe-connect.c:3614
+#: fe-connect.c:3707
 #, c-format
 msgid "could not make a writable connection to server \"%s:%s\"\n"
 msgstr "nelze otevřít zapisovatelné spojení na server \"%s:%s\"\n"
 
-#: fe-connect.c:3660
+#: fe-connect.c:3753
 #, c-format
 msgid "test \"SHOW transaction_read_only\" failed on server \"%s:%s\"\n"
 msgstr "test \"SHOW transaction_read_only\" selhal na serveru \"%s:%s\"\n"
 
-#: fe-connect.c:3675
+#: fe-connect.c:3768
 #, c-format
 msgid "invalid connection state %d, probably indicative of memory corruption\n"
 msgstr "neplatný stav spojení %d, pravděpodobně způsobený poškozením paměti\n"
 
-#: fe-connect.c:4117 fe-connect.c:4177
+#: fe-connect.c:4207 fe-connect.c:4267
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
 msgstr "PGEventProc \"%s\" selhalo během události PGEVT_CONNRESET\n"
 
-#: fe-connect.c:4524
+#: fe-connect.c:4614
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "naplatné LDAP URL \"%s\": schéma musí být ldap://\n"
 
-#: fe-connect.c:4539
+#: fe-connect.c:4629
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "neplatné LDAP URL \"%s\": chybí rozlišující jméno\n"
 
-#: fe-connect.c:4550 fe-connect.c:4603
+#: fe-connect.c:4641 fe-connect.c:4696
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "neplatné LDAP URL \"%s\": musí mít právě jeden atribut\n"
 
-#: fe-connect.c:4560 fe-connect.c:4617
+#: fe-connect.c:4652 fe-connect.c:4711
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr "naplatné LDAP URL \"%s\": musí mít vyhledávací rozsah (base/one/sub)\n"
 
-#: fe-connect.c:4571
+#: fe-connect.c:4663
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "naplatné LDAP URL \"%s\": není filter\n"
 
-#: fe-connect.c:4592
+#: fe-connect.c:4684
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "naplatné LDAP URL \"%s\": neplatný číslo portu\n"
 
-#: fe-connect.c:4626
+#: fe-connect.c:4720
 msgid "could not create LDAP structure\n"
 msgstr "nelze vytvořit LDAP strukturu\n"
 
-#: fe-connect.c:4702
+#: fe-connect.c:4796
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "vyhledávání na LDAP serveru selhalo: %s\n"
 
-#: fe-connect.c:4713
+#: fe-connect.c:4807
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "nalezen více jak jeden záznam při LDAP vyhledávání\n"
 
-#: fe-connect.c:4714 fe-connect.c:4726
+#: fe-connect.c:4808 fe-connect.c:4820
 msgid "no entry found on LDAP lookup\n"
 msgstr "nebyl nalezen žádný záznam při LDAP vyhledávání\n"
 
-#: fe-connect.c:4737 fe-connect.c:4750
+#: fe-connect.c:4831 fe-connect.c:4844
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "atribut nemá žádnou hodnotu při LDAP vyhledávání\n"
 
-#: fe-connect.c:4802 fe-connect.c:4821 fe-connect.c:5354
+#: fe-connect.c:4896 fe-connect.c:4915 fe-connect.c:5447
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "chybné \"=\" po \"%s\" v informačním řetězci spojení\n"
 
-#: fe-connect.c:4894 fe-connect.c:5539 fe-connect.c:6313
+#: fe-connect.c:4988 fe-connect.c:5632 fe-connect.c:6406
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "neplatný parametr spojení \"%s\"\n"
 
-#: fe-connect.c:4910 fe-connect.c:5403
+#: fe-connect.c:5004 fe-connect.c:5496
 msgid "unterminated quoted string in connection info string\n"
 msgstr "neukončený řetězec v uvozovkách v informačním řetězci spojení\n"
 
-#: fe-connect.c:4993
+#: fe-connect.c:5087
 #, c-format
 msgid "definition of service \"%s\" not found\n"
 msgstr "definice služby \"%s\" nenalezena\n"
 
-#: fe-connect.c:5016
+#: fe-connect.c:5110
 #, c-format
 msgid "service file \"%s\" not found\n"
 msgstr "soubor se seznamem služeb \"%s\" nebyl nalezen\n"
 
-#: fe-connect.c:5031
+#: fe-connect.c:5125
 #, c-format
 msgid "line %d too long in service file \"%s\"\n"
 msgstr "řádek %d v souboru se seznamem služeb \"%s\" je příliš dlouhý\n"
 
-#: fe-connect.c:5104 fe-connect.c:5148
+#: fe-connect.c:5197 fe-connect.c:5241
 #, c-format
 msgid "syntax error in service file \"%s\", line %d\n"
 msgstr "syntaktická chyba v souboru se seznamu služeb \"%s\", řádek %d\n"
 
-#: fe-connect.c:5115
+#: fe-connect.c:5208
 #, c-format
 msgid "nested service specifications not supported in service file \"%s\", line %d\n"
 msgstr "vnořené specifikace služeb nejsou podporovány v service souboru \"%s\", řádek %d\n"
 
-#: fe-connect.c:5835
+#: fe-connect.c:5928
 #, c-format
 msgid "invalid URI propagated to internal parser routine: \"%s\"\n"
 msgstr "neplatné URI propagované do interní procedury parseru: \"%s\"\n"
 
-#: fe-connect.c:5912
+#: fe-connect.c:6005
 #, c-format
 msgid "end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\"\n"
 msgstr "při hledání odpovídajícího znaku \"]\" v IPv6 adrese hostitele byl dosažen konec řetězce URI: \"%s\"\n"
 
-#: fe-connect.c:5919
+#: fe-connect.c:6012
 #, c-format
 msgid "IPv6 host address may not be empty in URI: \"%s\"\n"
 msgstr "IPv6 adresa hostitele v URI nesmí být prázdná: \"%s\"\n"
 
-#: fe-connect.c:5934
+#: fe-connect.c:6027
 #, c-format
 msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\"\n"
 msgstr "neočekávaný znak \"%c\" na pozici %d v URI (očekáváno \":\" nebo \"/\"): \"%s\"\n"
 
-#: fe-connect.c:6063
+#: fe-connect.c:6156
 #, c-format
 msgid "extra key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "přebytečný oddělovač klíče/hodnoty \"=\" v URI parametru dotazu: \"%s\"\n"
 
-#: fe-connect.c:6083
+#: fe-connect.c:6176
 #, c-format
 msgid "missing key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "chybějící oddělovač klíče/hodnoty \"=\" v URI parametru dotazu: \"%s\"\n"
 
-#: fe-connect.c:6134
+#: fe-connect.c:6227
 #, c-format
 msgid "invalid URI query parameter: \"%s\"\n"
 msgstr "neplatný parametr v URI dotazu: \"%s\"\n"
 
-#: fe-connect.c:6208
+#: fe-connect.c:6301
 #, c-format
 msgid "invalid percent-encoded token: \"%s\"\n"
 msgstr "neplatný procenty-kódovaný token \"%s\"\n"
 
-#: fe-connect.c:6218
+#: fe-connect.c:6311
 #, c-format
 msgid "forbidden value %%00 in percent-encoded value: \"%s\"\n"
 msgstr "zakázaná hodnota %%00 v procenty-k´odované hodnotě: \"%s\"\n"
 
-#: fe-connect.c:6581
+#: fe-connect.c:6674
 msgid "connection pointer is NULL\n"
 msgstr "pointer spojení je NULL\n"
 
-#: fe-connect.c:6879
+#: fe-connect.c:6970
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "VAROVÁNÍ: soubor s hesly \"%s\" není prostý (plain) soubor\n"
 
-#: fe-connect.c:6888
+#: fe-connect.c:6979
 #, c-format
 msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr "UPOZORNĚNÍ: Soubor s hesly \"%s\" má přístupová práva pro čtení pro skupinu nebo všechny uživatele; práva by měla být u=rw (0600)\n"
 
-#: fe-connect.c:6982
+#: fe-connect.c:7087
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "heslo načteno ze souboru \"%s\"\n"
 
-#: fe-exec.c:445 fe-exec.c:2822
+#: fe-exec.c:444 fe-exec.c:2821
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "číslo řádky %d je mimo rozsah 0..%d"
 
-#: fe-exec.c:506 fe-protocol2.c:502 fe-protocol2.c:537 fe-protocol2.c:1056
-#: fe-protocol3.c:208 fe-protocol3.c:235 fe-protocol3.c:252 fe-protocol3.c:332
-#: fe-protocol3.c:727 fe-protocol3.c:958
+#: fe-exec.c:505 fe-protocol2.c:497 fe-protocol2.c:532 fe-protocol2.c:1050
+#: fe-protocol3.c:206 fe-protocol3.c:233 fe-protocol3.c:250 fe-protocol3.c:330
+#: fe-protocol3.c:723 fe-protocol3.c:954
 msgid "out of memory"
 msgstr "nedostatek paměti"
 
-#: fe-exec.c:507 fe-protocol2.c:1402 fe-protocol3.c:1911
+#: fe-exec.c:506 fe-protocol2.c:1396 fe-protocol3.c:1907
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-exec.c:816
+#: fe-exec.c:815
 msgid "write to server failed\n"
 msgstr "zápis na server selhal\n"
 
-#: fe-exec.c:897
+#: fe-exec.c:896
 msgid "NOTICE"
 msgstr "POZNÁMKA"
 
-#: fe-exec.c:955
+#: fe-exec.c:954
 msgid "PGresult cannot support more than INT_MAX tuples"
 msgstr "PGresult nemůže podporovat více než INT_MAX řádek"
 
-#: fe-exec.c:967
+#: fe-exec.c:966
 msgid "size_t overflow"
 msgstr "size_t přetečení"
 
-#: fe-exec.c:1244 fe-exec.c:1302 fe-exec.c:1348
+#: fe-exec.c:1243 fe-exec.c:1301 fe-exec.c:1347
 msgid "command string is a null pointer\n"
 msgstr "řetězec příkazu je prázdný ukazatel\n"
 
-#: fe-exec.c:1308 fe-exec.c:1354 fe-exec.c:1449
+#: fe-exec.c:1307 fe-exec.c:1353 fe-exec.c:1448
 msgid "number of parameters must be between 0 and 65535\n"
 msgstr "počet parametrů musí být mezi 0 a 65535\n"
 
-#: fe-exec.c:1342 fe-exec.c:1443
+#: fe-exec.c:1341 fe-exec.c:1442
 msgid "statement name is a null pointer\n"
 msgstr "název výrazu je prázdný ukazatel\n"
 
-#: fe-exec.c:1362 fe-exec.c:1525 fe-exec.c:2234 fe-exec.c:2436
+#: fe-exec.c:1361 fe-exec.c:1524 fe-exec.c:2233 fe-exec.c:2435
 msgid "function requires at least protocol version 3.0\n"
 msgstr "funkce vyžaduje protokol alespoň 3.0 a vyšší\n"
 
-#: fe-exec.c:1480
+#: fe-exec.c:1479
 msgid "no connection to the server\n"
 msgstr "není spojení se serverem\n"
 
-#: fe-exec.c:1487
+#: fe-exec.c:1486
 msgid "another command is already in progress\n"
 msgstr "zpracovává se již jiný příkaz\n"
 
-#: fe-exec.c:1601
+#: fe-exec.c:1600
 msgid "length must be given for binary parameter\n"
 msgstr "délka musí být specifikována pro binarní parametr\n"
 
-#: fe-exec.c:1864
+#: fe-exec.c:1863
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "neočekávaný asyncStatus: %d\n"
 
-#: fe-exec.c:1884
+#: fe-exec.c:1883
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
 msgstr "PGEventProc \"%s\" selhala během události PGEVT_RESULTCREATE\n"
 
-#: fe-exec.c:2044
+#: fe-exec.c:2043
 msgid "COPY terminated by new PQexec"
 msgstr "COPY bylo ukončeno novým PQexec"
 
-#: fe-exec.c:2052
+#: fe-exec.c:2051
 msgid "COPY IN state must be terminated first\n"
 msgstr "COPY IN status musí být nejdříve ukončen\n"
 
-#: fe-exec.c:2072
+#: fe-exec.c:2071
 msgid "COPY OUT state must be terminated first\n"
 msgstr "COPY OUT status musí být nejdříve ukončen\n"
 
-#: fe-exec.c:2080
+#: fe-exec.c:2079
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "PQexec není povoleno během COPY BOTH\n"
 
-#: fe-exec.c:2326 fe-exec.c:2393 fe-exec.c:2483 fe-protocol2.c:1359
-#: fe-protocol3.c:1842
+#: fe-exec.c:2325 fe-exec.c:2392 fe-exec.c:2482 fe-protocol2.c:1353
+#: fe-protocol3.c:1838
 msgid "no COPY in progress\n"
 msgstr "COPY se neprovádí\n"
 
-#: fe-exec.c:2673
+#: fe-exec.c:2672
 msgid "connection in wrong state\n"
 msgstr "spojení je ve špatném stavu\n"
 
-#: fe-exec.c:2704
+#: fe-exec.c:2703
 msgid "invalid ExecStatusType code"
 msgstr "neplatný ExecStatusType kód"
 
-#: fe-exec.c:2731
+#: fe-exec.c:2730
 msgid "PGresult is not an error result\n"
 msgstr "PGresult není chybový výsledek\n"
 
-#: fe-exec.c:2806 fe-exec.c:2829
+#: fe-exec.c:2805 fe-exec.c:2828
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "číslo sloupce %d je mimo rozsah 0..%d"
 
-#: fe-exec.c:2844
+#: fe-exec.c:2843
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "číslo parametru %d je mimo rozsah 0..%d"
 
-#: fe-exec.c:3154
+#: fe-exec.c:3153
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "nelze interpretovat výsledek ze serveru: %s"
 
-#: fe-exec.c:3393 fe-exec.c:3477
+#: fe-exec.c:3392 fe-exec.c:3476
 msgid "incomplete multibyte character\n"
 msgstr "nekompletní multibyte znak\n"
 
@@ -801,22 +846,22 @@ msgstr "nelze určit OID funkce loread\n"
 msgid "cannot determine OID of function lowrite\n"
 msgstr "nelze určit OID funkce lowrite\n"
 
-#: fe-misc.c:290
+#: fe-misc.c:289
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "pqGetInt nepodporuje integer velikosti %lu"
 
-#: fe-misc.c:326
+#: fe-misc.c:325
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "pqPutInt nepodporuje integer velikosti %lu"
 
-#: fe-misc.c:637 fe-misc.c:859
+#: fe-misc.c:636 fe-misc.c:869
 msgid "connection not open\n"
 msgstr "spojení není otevřeno\n"
 
-#: fe-misc.c:807 fe-secure-openssl.c:206 fe-secure-openssl.c:314
-#: fe-secure.c:268 fe-secure.c:385
+#: fe-misc.c:805 fe-secure-openssl.c:209 fe-secure-openssl.c:316
+#: fe-secure.c:267 fe-secure.c:383
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -826,181 +871,181 @@ msgstr ""
 "\tToto pravděpodobně znamená, že byl ukončen nestandardně\n"
 "\tpřed nebo během vykonávání požadavku.\n"
 
-#: fe-misc.c:1046
+#: fe-misc.c:1063
 msgid "timeout expired\n"
 msgstr "časový limit (timeout) uběhl\n"
 
-#: fe-misc.c:1091
+#: fe-misc.c:1108
 msgid "invalid socket\n"
 msgstr "chybný socket\n"
 
-#: fe-misc.c:1114
+#: fe-misc.c:1131
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() selhal: %s\n"
 
-#: fe-protocol2.c:90
+#: fe-protocol2.c:87
 #, c-format
 msgid "invalid setenv state %c, probably indicative of memory corruption\n"
 msgstr "neplatný status spojení %c, pravděpodobně způsobený poškozením paměti\n"
 
-#: fe-protocol2.c:389
+#: fe-protocol2.c:384
 #, c-format
 msgid "invalid state %c, probably indicative of memory corruption\n"
 msgstr "neplatný status  %c, pravděpodobně způsobený poškozením paměti\n"
 
-#: fe-protocol2.c:478 fe-protocol3.c:185
+#: fe-protocol2.c:473 fe-protocol3.c:183
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "zpráva typu 0x%02x přišla ze serveru během nečinnosti"
 
-#: fe-protocol2.c:528
+#: fe-protocol2.c:523
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
 msgstr "neočekávaný znak %c následuje prázdnou odezvu dotazu(\"I\" zpráva)"
 
-#: fe-protocol2.c:594
+#: fe-protocol2.c:589
 #, c-format
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
 msgstr "server odeslal data (\"D\" zpráva) bez předcházejícího popisu řádky (\"T\" zpráva)"
 
-#: fe-protocol2.c:612
+#: fe-protocol2.c:607
 #, c-format
 msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
 msgstr "server odeslal binární data (\"B\" zpráva) bez předchozího popisu řádky (\"T\" zpráva)"
 
-#: fe-protocol2.c:632 fe-protocol3.c:411
+#: fe-protocol2.c:626 fe-protocol3.c:408
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr "neočekávaná odpověď serveru; předchozí znak byl \"%c\"\n"
 
-#: fe-protocol2.c:761 fe-protocol2.c:936 fe-protocol3.c:626 fe-protocol3.c:853
+#: fe-protocol2.c:755 fe-protocol2.c:930 fe-protocol3.c:622 fe-protocol3.c:849
 msgid "out of memory for query result"
 msgstr "nedostatek paměti pro výsledek dotazu"
 
-#: fe-protocol2.c:1414
+#: fe-protocol2.c:1408
 #, c-format
 msgid "lost synchronization with server, resetting connection"
 msgstr "ztráta synchronizace se serverem, resetuji spojení"
 
-#: fe-protocol2.c:1536 fe-protocol2.c:1568 fe-protocol3.c:2099
+#: fe-protocol2.c:1530 fe-protocol2.c:1562 fe-protocol3.c:2095
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "chyba protokolu: id=0x%x\n"
 
-#: fe-protocol3.c:367
+#: fe-protocol3.c:365
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
 msgstr "server odeslal data (\"D\" zpráva) bez předchozího popisu řádky (\"T\" zpráva)\n"
 
-#: fe-protocol3.c:432
+#: fe-protocol3.c:429
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
 msgstr "obsah zprávy nesouhlasí s délkou v typu zprávy \"%c\"\n"
 
-#: fe-protocol3.c:453
+#: fe-protocol3.c:449
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr "ztracena synchronizace se serverem: obdržena zpráva typu \"%c\", délky %d\n"
 
-#: fe-protocol3.c:504 fe-protocol3.c:544
+#: fe-protocol3.c:500 fe-protocol3.c:540
 msgid "insufficient data in \"T\" message"
 msgstr "nedostatek dat v \"T\" zprávě"
 
-#: fe-protocol3.c:577
+#: fe-protocol3.c:573
 msgid "extraneous data in \"T\" message"
 msgstr "přebytečná data v \"T\" zprávě"
 
-#: fe-protocol3.c:690
+#: fe-protocol3.c:686
 msgid "extraneous data in \"t\" message"
 msgstr "přebytečná data v \"t\" zprávě"
 
-#: fe-protocol3.c:761 fe-protocol3.c:793 fe-protocol3.c:811
+#: fe-protocol3.c:757 fe-protocol3.c:789 fe-protocol3.c:807
 msgid "insufficient data in \"D\" message"
 msgstr "nedostatek dat v \"D\" zprávě"
 
-#: fe-protocol3.c:767
+#: fe-protocol3.c:763
 msgid "unexpected field count in \"D\" message"
 msgstr "neočekávaný počet položek v \"D\" zprávě"
 
-#: fe-protocol3.c:820
+#: fe-protocol3.c:816
 msgid "extraneous data in \"D\" message"
 msgstr "přebytečná data v \"D\" zprávě"
 
-#: fe-protocol3.c:1012
+#: fe-protocol3.c:1008
 msgid "no error message available\n"
 msgstr "chybová zpráva není k dispozici\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1060 fe-protocol3.c:1079
+#: fe-protocol3.c:1056 fe-protocol3.c:1075
 #, c-format
 msgid " at character %s"
 msgstr " na znaku %s"
 
-#: fe-protocol3.c:1092
+#: fe-protocol3.c:1088
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "DETAIL:  %s\n"
 
-#: fe-protocol3.c:1095
+#: fe-protocol3.c:1091
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "DOPORUČENÍ:  %s\n"
 
-#: fe-protocol3.c:1098
+#: fe-protocol3.c:1094
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "DOTAZ:  %s\n"
 
-#: fe-protocol3.c:1105
+#: fe-protocol3.c:1101
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "KONTEXT:  %s\n"
 
-#: fe-protocol3.c:1114
+#: fe-protocol3.c:1110
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "NÁZEV SCHÉMATU:  %s\n"
 
-#: fe-protocol3.c:1118
+#: fe-protocol3.c:1114
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "NÁZEV TABULKY:  %s\n"
 
-#: fe-protocol3.c:1122
+#: fe-protocol3.c:1118
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "NÁZEV SLOUPCE:  %s\n"
 
-#: fe-protocol3.c:1126
+#: fe-protocol3.c:1122
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "NÁZEV DATOVÉHO TYPU:  %s\n"
 
-#: fe-protocol3.c:1130
+#: fe-protocol3.c:1126
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "NÁZEV OMEZENÍ:  %s\n"
 
-#: fe-protocol3.c:1142
+#: fe-protocol3.c:1138
 msgid "LOCATION:  "
 msgstr "UMÍSTĚNÍ:  "
 
-#: fe-protocol3.c:1144
+#: fe-protocol3.c:1140
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1146
+#: fe-protocol3.c:1142
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1341
+#: fe-protocol3.c:1337
 #, c-format
 msgid "LINE %d: "
 msgstr "ŘÁDKA %d: "
 
-#: fe-protocol3.c:1736
+#: fe-protocol3.c:1732
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: not doing text COPY OUT\n"
 
@@ -1021,85 +1066,81 @@ msgstr "serverový certifikát pro \"%s\" nesouhlasí s jménem serveru (host na
 msgid "could not get server's host name from server certificate\n"
 msgstr "ze serverového certifikátu nelze získat host name serveru\n"
 
-#: fe-secure-gssapi.c:160
-#| msgid "GSSAPI name import error"
+#: fe-secure-gssapi.c:201
 msgid "GSSAPI wrap error"
 msgstr "GSSAPI wrap error"
 
-#: fe-secure-gssapi.c:166
+#: fe-secure-gssapi.c:209
 msgid "outgoing GSSAPI message would not use confidentiality\n"
 msgstr "odchozí GSSAPI zpráva by nepoužívala důvěrnost (confidentiality)\n"
 
-#: fe-secure-gssapi.c:173
+#: fe-secure-gssapi.c:217
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
 msgstr "klient se pokusil zaslat příliš velký GSSAPI packet (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:291 fe-secure-gssapi.c:497
+#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:596
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
 msgstr "příliš velký GSSAPI packet zaslán serverem (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:327
+#: fe-secure-gssapi.c:393
 msgid "GSSAPI unwrap error"
 msgstr "GSSAPI unwrap error"
 
-#: fe-secure-gssapi.c:335
+#: fe-secure-gssapi.c:403
 msgid "incoming GSSAPI message did not use confidentiality\n"
 msgstr "příchozí GSSAPI zpráva nepoužívala důvěrnost (confidentiality)\n"
 
-#: fe-secure-gssapi.c:543
-#| msgid "could not create SSL context: %s\n"
+#: fe-secure-gssapi.c:642
 msgid "could not initiate GSSAPI security context"
 msgstr "nelze inicializovat GSSAPI bezpečnostní kontext"
 
-#: fe-secure-gssapi.c:568
-#| msgid "GSSAPI name import error"
+#: fe-secure-gssapi.c:673
 msgid "GSSAPI size check error"
 msgstr "GSSAPI size check error"
 
-#: fe-secure-gssapi.c:577
-#| msgid "GSSAPI continuation error"
+#: fe-secure-gssapi.c:684
 msgid "GSSAPI context establishment error"
 msgstr "GSSAPI context establishment error"
 
-#: fe-secure-openssl.c:211 fe-secure-openssl.c:319 fe-secure-openssl.c:1219
+#: fe-secure-openssl.c:214 fe-secure-openssl.c:321 fe-secure-openssl.c:1291
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL SYSCALL chyba: %s\n"
 
-#: fe-secure-openssl.c:218 fe-secure-openssl.c:326 fe-secure-openssl.c:1223
+#: fe-secure-openssl.c:221 fe-secure-openssl.c:328 fe-secure-openssl.c:1295
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL SYSCALL chyba: detekován EOF\n"
 
-#: fe-secure-openssl.c:229 fe-secure-openssl.c:337 fe-secure-openssl.c:1232
+#: fe-secure-openssl.c:232 fe-secure-openssl.c:339 fe-secure-openssl.c:1304
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSL chyba: %s\n"
 
-#: fe-secure-openssl.c:244 fe-secure-openssl.c:352
+#: fe-secure-openssl.c:247 fe-secure-openssl.c:354
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "SSL spojení bylo neočekávaně ukončeno\n"
 
-#: fe-secure-openssl.c:250 fe-secure-openssl.c:358 fe-secure-openssl.c:1241
+#: fe-secure-openssl.c:253 fe-secure-openssl.c:360 fe-secure-openssl.c:1354
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "neznámý chybový kód SSL: %d\n"
 
-#: fe-secure-openssl.c:398
+#: fe-secure-openssl.c:400
 msgid "could not determine server certificate signature algorithm\n"
 msgstr "nelze určit podepisovací algoritmus serverového certifikátu\n"
 
-#: fe-secure-openssl.c:419
+#: fe-secure-openssl.c:421
 #, c-format
 msgid "could not find digest for NID %s\n"
 msgstr "nelze nalézt digest pro NID %s\n"
 
-#: fe-secure-openssl.c:429
+#: fe-secure-openssl.c:431
 msgid "could not generate peer certificate hash\n"
 msgstr "nelze vygenerovat hash peer cerfitikátu\n"
 
-#: fe-secure-openssl.c:486
+#: fe-secure-openssl.c:488
 msgid "SSL certificate's name entry is missing\n"
 msgstr "SSL certifikátu chybí položka name\n"
 
@@ -1108,17 +1149,35 @@ msgstr "SSL certifikátu chybí položka name\n"
 msgid "could not create SSL context: %s\n"
 msgstr "nelze vytvořit SSL kontext: %s\n"
 
-#: fe-secure-openssl.c:852
+#: fe-secure-openssl.c:854
+#, c-format
+#| msgid "invalid integer value \"%s\" for connection option \"%s\"\n"
+msgid "invalid value \"%s\" for minimum SSL protocol version\n"
+msgstr "neplatná hodnota \"%s\" pro minimální verzi SSL protokolu\n"
+
+#: fe-secure-openssl.c:865
+#, c-format
+#| msgid "could not establish SSL connection: %s\n"
+msgid "could not set minimum SSL protocol version: %s\n"
+msgstr "nelze nastavit minimální verzi SSL protokolu: %s\n"
+
+#: fe-secure-openssl.c:883
+#, c-format
+msgid "invalid value \"%s\" for maximum SSL protocol version\n"
+msgstr "neplatná hodnota \"%s\" pro maximální verzi SSL protokolu\n"
+
+#: fe-secure-openssl.c:894
+#, c-format
+#| msgid "could not establish SSL connection: %s\n"
+msgid "could not set maximum SSL protocol version: %s\n"
+msgstr "nelze nastavit maximální verzi SSL protokolu: %s\n"
+
+#: fe-secure-openssl.c:930
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "nelze číst soubor s kořenovým certifikátem \"%s\": %s\n"
 
-#: fe-secure-openssl.c:880
-#, c-format
-msgid "SSL library does not support CRL certificates (file \"%s\")\n"
-msgstr "knihovna SSL nepodporuje CRL certifikáty (soubor \"%s\")\n"
-
-#: fe-secure-openssl.c:908
+#: fe-secure-openssl.c:974
 msgid ""
 "could not get home directory to locate root certificate file\n"
 "Either provide the file or change sslmode to disable server certificate verification.\n"
@@ -1126,7 +1185,7 @@ msgstr ""
 "nelze určit domácí adresář pro nalezení souboru s kořenovým certifikátem\n"
 "Buď poskytněte soubor nebo změňte ssl mód tak, aby neověřoval certifkát serveru.\n"
 
-#: fe-secure-openssl.c:912
+#: fe-secure-openssl.c:978
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -1135,134 +1194,141 @@ msgstr ""
 "soubor s kořenovým certifikátem  \"%s\" neexistuje\n"
 "poskytněnte soubor nebo změntě ssl mód tak, aby neověřoval certifkát serveru.\n"
 
-#: fe-secure-openssl.c:943
+#: fe-secure-openssl.c:1009
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "nelze otevřít soubor s certifikátem \"%s\": %s\n"
 
-#: fe-secure-openssl.c:962
+#: fe-secure-openssl.c:1028
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "nelze číst soubor s certifikátem \"%s\": %s\n"
 
-#: fe-secure-openssl.c:987
+#: fe-secure-openssl.c:1053
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "nelze vytvořit SSL spojení: %s\n"
 
-#: fe-secure-openssl.c:1041
+#: fe-secure-openssl.c:1107
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "nelze nahrát SSL engine \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1053
+#: fe-secure-openssl.c:1119
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "nelze inicializovat SSL engine \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1069
+#: fe-secure-openssl.c:1135
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "nelze číst soubor privátního klíče \"%s\" z enginu \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1083
+#: fe-secure-openssl.c:1149
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "nelze načíst soubor privátního klíče \"%s\" z enginu \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1120
+#: fe-secure-openssl.c:1186
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "certifikát je přítomen, ale soubor privátního klíče ne \"%s\"\n"
 
-#: fe-secure-openssl.c:1128
+#: fe-secure-openssl.c:1194
 #, c-format
 msgid "private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr "soubor s privátním klíčem \"%s\" má povolená přístupová práva pro skupinu nebo všechny uživatele; práva by měla být u=rw (0600) nebo přísnější\n"
 
-#: fe-secure-openssl.c:1139
+#: fe-secure-openssl.c:1219
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "nelze načíst soubor privátního klíče \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1153
+#: fe-secure-openssl.c:1237
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "certifikát nesouhlasí se souborem privátního klíče \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1262
+#: fe-secure-openssl.c:1337
+#, c-format
+msgid "This may indicate that the server does not support any SSL protocol version between %s and %s.\n"
+msgstr "Toto může znamenat že server nepodporuje verzi SSL protokolu mezi %s a %s.\n"
+
+#: fe-secure-openssl.c:1373
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "certifikát nelze získat: %s\n"
 
-#: fe-secure-openssl.c:1351
+#: fe-secure-openssl.c:1462
 #, c-format
 msgid "no SSL error reported"
 msgstr "žádný chybový kód SSL nebyl hlášený"
 
-#: fe-secure-openssl.c:1360
+#: fe-secure-openssl.c:1471
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL chybový kód %lu"
 
-#: fe-secure.c:276
+#: fe-secure-openssl.c:1718
+#, c-format
+msgid "WARNING: sslpassword truncated\n"
+msgstr "WARNING: hodnota sslpassword oříznuta\n"
+
+#: fe-secure.c:275
 #, c-format
 msgid "could not receive data from server: %s\n"
 msgstr "nelze přijmout data ze serveru: %s\n"
 
-#: fe-secure.c:392
+#: fe-secure.c:390
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "nelze poslat data na server: %s\n"
 
-#: win32.c:317
+#: win32.c:314
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "neznámá chyba socketu: 0x%08X/%d"
-
-#~ msgid "could not get home directory to locate client certificate files"
-#~ msgstr "nelze získat domovský adresář pro nalezení klientského certifikátu"
-
-#~ msgid "could not open private key file \"%s\": %s\n"
-#~ msgstr "nelze otevřít soubor s privátním klíčem \"%s\": %s\n"
-
-#~ msgid "private key file \"%s\" changed during execution\n"
-#~ msgstr "soubor privátního klíče \"%s\" byl za chodu změněn\n"
-
-#~ msgid "unrecognized return value from row processor"
-#~ msgstr "nerozpoznaná návratová hodnota z processoru řádek"
-
-#~ msgid "socket not open\n"
-#~ msgstr "soket není otevřen\n"
-
-#~ msgid "could not get home directory to locate service definition file"
-#~ msgstr "nelze získat domovský adresář pro nalezení kořenového certifikátu"
-
-#~ msgid "setsockopt(SO_KEEPALIVE) failed: %s\n"
-#~ msgstr "setsockopt(SO_KEEPALIVE) selhalo: %s\n"
-
-#~ msgid "setsockopt(TCP_KEEPINTVL) failed: %s\n"
-#~ msgstr "setsockopt(TCP_KEEPINTVL) selhalo: %s\n"
-
-#~ msgid "setsockopt(TCP_KEEPALIVE) failed: %s\n"
-#~ msgstr "setsockopt(TCP_KEEPALIVE) selhalo: %s\n"
-
-#~ msgid "setsockopt(TCP_KEEPIDLE) failed: %s\n"
-#~ msgstr "setsockopt(TCP_KEEPIDLE) selhalo: %s\n"
-
-#~ msgid "Kerberos 5 authentication rejected: %*s\n"
-#~ msgstr "Kerberos 5 autentizace odmítnuta: %*s\n"
-
-#~ msgid "could not set socket to blocking mode: %s\n"
-#~ msgstr "nelze nastavit soket do blokujícího módu: %s\n"
-
-#~ msgid "channel binding type \"tls-server-end-point\" is not supported by this build\n"
-#~ msgstr "channel binding typu \"tls-server-end-point\" není tímto buildem podporován\n"
 
 #~ msgid "empty channel binding data for channel binding type \"%s\"\n"
 #~ msgstr ""
 #~ "prázdná \"channel binding data\" pro channel binding typu \"%s\"\n"
 #~ "\n"
 
-#~ msgid "invalid channel binding type\n"
-#~ msgstr "neplatný channel binding typ\n"
+#~ msgid "could not set socket to blocking mode: %s\n"
+#~ msgstr "nelze nastavit soket do blokujícího módu: %s\n"
+
+#~ msgid "Kerberos 5 authentication rejected: %*s\n"
+#~ msgstr "Kerberos 5 autentizace odmítnuta: %*s\n"
+
+#~ msgid "setsockopt(TCP_KEEPIDLE) failed: %s\n"
+#~ msgstr "setsockopt(TCP_KEEPIDLE) selhalo: %s\n"
+
+#~ msgid "setsockopt(TCP_KEEPALIVE) failed: %s\n"
+#~ msgstr "setsockopt(TCP_KEEPALIVE) selhalo: %s\n"
+
+#~ msgid "setsockopt(TCP_KEEPINTVL) failed: %s\n"
+#~ msgstr "setsockopt(TCP_KEEPINTVL) selhalo: %s\n"
+
+#~ msgid "setsockopt(SO_KEEPALIVE) failed: %s\n"
+#~ msgstr "setsockopt(SO_KEEPALIVE) selhalo: %s\n"
+
+#~ msgid "could not get home directory to locate service definition file"
+#~ msgstr "nelze získat domovský adresář pro nalezení kořenového certifikátu"
+
+#~ msgid "socket not open\n"
+#~ msgstr "soket není otevřen\n"
+
+#~ msgid "unrecognized return value from row processor"
+#~ msgstr "nerozpoznaná návratová hodnota z processoru řádek"
+
+#~ msgid "private key file \"%s\" changed during execution\n"
+#~ msgstr "soubor privátního klíče \"%s\" byl za chodu změněn\n"
+
+#~ msgid "could not open private key file \"%s\": %s\n"
+#~ msgstr "nelze otevřít soubor s privátním klíčem \"%s\": %s\n"
+
+#~ msgid "could not get home directory to locate client certificate files"
+#~ msgstr "nelze získat domovský adresář pro nalezení klientského certifikátu"
+
+#~ msgid "SSL library does not support CRL certificates (file \"%s\")\n"
+#~ msgstr "knihovna SSL nepodporuje CRL certifikáty (soubor \"%s\")\n"

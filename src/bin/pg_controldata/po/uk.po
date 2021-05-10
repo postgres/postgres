@@ -1,87 +1,108 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-12-04 20:35+0100\n"
-"PO-Revision-Date: 2019-07-11 16:20\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2020-09-21 21:17+0000\n"
+"PO-Revision-Date: 2020-09-22 13:43\n"
 "Last-Translator: pasha_golub\n"
 "Language-Team: Ukrainian\n"
-"Language: uk_UA\n"
+"Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
-"X-Generator: crowdin.com\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_11_STABLE/src/bin/pg_controldata/po/pg_controldata.pot\n"
+"X-Crowdin-File: /DEV_13/pg_controldata.pot\n"
+"X-Crowdin-File-ID: 496\n"
 
-#: ../../common/controldata_utils.c:62
+#: ../../common/controldata_utils.c:73
 #, c-format
-msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: не вдалося відкрити файл \"%s\" для читання: %s\n"
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "не вдалося відкрити файл \"%s\" для читання: %m"
 
-#: ../../common/controldata_utils.c:78
+#: ../../common/controldata_utils.c:89
 #, c-format
-msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: не вдалося прочитати файл \"%s\": %s\n"
+msgid "could not read file \"%s\": %m"
+msgstr "не вдалося прочитати файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:90
+#: ../../common/controldata_utils.c:101
 #, c-format
-msgid "%s: could not read file \"%s\": read %d of %d\n"
-msgstr "%s: не вдалося прочитати файл \"%s\": прочитано %d з %d\n"
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "не вдалося прочитати файл \"%s\": прочитано %d з %zu"
 
-#: ../../common/controldata_utils.c:112
+#: ../../common/controldata_utils.c:117 ../../common/controldata_utils.c:259
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "неможливо закрити файл \"%s\": %m"
+
+#: ../../common/controldata_utils.c:135
 msgid "byte ordering mismatch"
 msgstr "неправильний порядок байтів"
 
-#: ../../common/controldata_utils.c:114
+#: ../../common/controldata_utils.c:137
 #, c-format
-msgid "WARNING: possible byte ordering mismatch\n"
+msgid "possible byte ordering mismatch\n"
 "The byte ordering used to store the pg_control file might not match the one\n"
 "used by this program.  In that case the results below would be incorrect, and\n"
-"the PostgreSQL installation would be incompatible with this data directory.\n"
-msgstr "УВАГА: можлива помилка у послідовності байтів \n"
-"Порядок байтів, що використовують для зберігання файлу pg_control може не відповідати тому, який використовується цією програмою.  У такому випадку результати нижче будуть неправильним, і інсталяція PostgreSQL буде несумісною з цим каталогом даних.\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr "можлива помилка у послідовності байтів.\n"
+"Порядок байтів, що використовують для зберігання файлу pg_control, може не відповідати тому, який використовується цією програмою. У такому випадку результати нижче будуть неправильним, і інсталяція PostgreSQL буде несумісною з цим каталогом даних."
 
-#: pg_controldata.c:34
+#: ../../common/controldata_utils.c:203
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "не можливо відкрити файл \"%s\": %m"
+
+#: ../../common/controldata_utils.c:224
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "не вдалося записати файл \"%s\": %m"
+
+#: ../../common/controldata_utils.c:245
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "не вдалося fsync файл \"%s\": %m"
+
+#: pg_controldata.c:35
 #, c-format
 msgid "%s displays control information of a PostgreSQL database cluster.\n\n"
 msgstr "%s відображає контрольну інформацію щодо кластеру PostgreSQL.\n\n"
 
-#: pg_controldata.c:35
+#: pg_controldata.c:36
 #, c-format
 msgid "Usage:\n"
 msgstr "Використання:\n"
 
-#: pg_controldata.c:36
+#: pg_controldata.c:37
 #, c-format
 msgid "  %s [OPTION] [DATADIR]\n"
 msgstr "  %s [OPTION] [DATADIR]\n"
 
-#: pg_controldata.c:37
+#: pg_controldata.c:38
 #, c-format
 msgid "\n"
 "Options:\n"
 msgstr "\n"
 "Параметри:\n"
 
-#: pg_controldata.c:38
+#: pg_controldata.c:39
 #, c-format
 msgid " [-D, --pgdata=]DATADIR  data directory\n"
 msgstr " [-D, --pgdata=]DATADIR  каталог з даними\n"
 
-#: pg_controldata.c:39
+#: pg_controldata.c:40
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version вивести інформацію про версію і вийти\n"
+msgstr "  -V, --version            вивести інформацію про версію і вийти\n"
 
-#: pg_controldata.c:40
+#: pg_controldata.c:41
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help              показати цю довідку потім вийти\n"
 
-#: pg_controldata.c:41
+#: pg_controldata.c:42
 #, c-format
 msgid "\n"
 "If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
@@ -89,75 +110,80 @@ msgid "\n"
 msgstr "\n"
 "Якщо каталог даних не вказано (DATADIR), використовується змінна середовища PGDATA.\n\n"
 
-#: pg_controldata.c:43
+#: pg_controldata.c:44
 #, c-format
-msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "Про помилки повідомляйте <pgsql-bugs@postgresql.org>.\n"
+msgid "Report bugs to <%s>.\n"
+msgstr "Повідомляти про помилки на <%s>.\n"
 
-#: pg_controldata.c:53
+#: pg_controldata.c:45
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Домашня сторінка %s: <%s>\n"
+
+#: pg_controldata.c:55
 msgid "starting up"
 msgstr "запуск"
 
-#: pg_controldata.c:55
+#: pg_controldata.c:57
 msgid "shut down"
 msgstr "завершення роботи"
 
-#: pg_controldata.c:57
+#: pg_controldata.c:59
 msgid "shut down in recovery"
 msgstr "завершення роботи у відновленні"
 
-#: pg_controldata.c:59
+#: pg_controldata.c:61
 msgid "shutting down"
 msgstr "завершення роботи"
 
-#: pg_controldata.c:61
+#: pg_controldata.c:63
 msgid "in crash recovery"
 msgstr "відновлення при збої"
 
-#: pg_controldata.c:63
+#: pg_controldata.c:65
 msgid "in archive recovery"
 msgstr "відновлення в архіві"
 
-#: pg_controldata.c:65
+#: pg_controldata.c:67
 msgid "in production"
 msgstr "у виробництві"
 
-#: pg_controldata.c:67
+#: pg_controldata.c:69
 msgid "unrecognized status code"
 msgstr "невизнаний код статусу"
 
-#: pg_controldata.c:82
+#: pg_controldata.c:84
 msgid "unrecognized wal_level"
 msgstr "невизнаний wal_рівень"
 
-#: pg_controldata.c:136 pg_controldata.c:154 pg_controldata.c:162
+#: pg_controldata.c:137 pg_controldata.c:155 pg_controldata.c:163
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
 
-#: pg_controldata.c:152
+#: pg_controldata.c:153
 #, c-format
-msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: забагато аргументів у командному рядку (перший \"%s\")\n"
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "забагато аргументів у командному рядку (перший \"%s\")"
 
-#: pg_controldata.c:161
+#: pg_controldata.c:162
 #, c-format
-msgid "%s: no data directory specified\n"
-msgstr "%s: каталог даних не вказано\n"
+msgid "no data directory specified"
+msgstr "каталог даних не вказано"
 
-#: pg_controldata.c:169
+#: pg_controldata.c:170
 #, c-format
 msgid "WARNING: Calculated CRC checksum does not match value stored in file.\n"
 "Either the file is corrupt, or it has a different layout than this program\n"
 "is expecting.  The results below are untrustworthy.\n\n"
 msgstr "ПОПЕРЕДЖЕННЯ: Контрольна сума CRC не відповідає збереженому значенню у файлі. Або файл пошкоджено, або він містить іншу структуру, ніж очікує ця програма. Результати нижче є недостовірними.\n\n"
 
-#: pg_controldata.c:178
+#: pg_controldata.c:179
 #, c-format
 msgid "WARNING: invalid WAL segment size\n"
 msgstr "ПОПЕРЕДЖЕННЯ: неправильний розмір WAL сегменту \n"
 
-#: pg_controldata.c:179
+#: pg_controldata.c:180
 #, c-format
 msgid "The WAL segment size stored in the file, %d byte, is not a power of two\n"
 "between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
@@ -170,284 +196,284 @@ msgstr[1] "Розмір WAL сегменту збережений у файлі,
 msgstr[2] "Розмір WAL сегменту збережений у файлі, %d байтів, не є степенем двійки між 1 MB та 1 GB. Файл пошкоджено та результати нижче є недостовірними.\n\n"
 msgstr[3] "Розмір WAL сегменту збережений у файлі, %d байта, не є степенем двійки між 1 MB та 1 GB. Файл пошкоджено та результати нижче є недостовірними.\n\n"
 
-#: pg_controldata.c:221
+#: pg_controldata.c:222
 msgid "???"
 msgstr "???"
 
-#: pg_controldata.c:234
+#: pg_controldata.c:228
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control номер версії:            %u\n"
 
-#: pg_controldata.c:236
+#: pg_controldata.c:230
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Номер версії каталогу:               %u\n"
 
-#: pg_controldata.c:238
+#: pg_controldata.c:232
 #, c-format
-msgid "Database system identifier:           %s\n"
-msgstr "Системний ідентифікатор бази даних:         %s\n"
+msgid "Database system identifier:           %llu\n"
+msgstr "Системний ідентифікатор бази даних:           %llu\n"
 
-#: pg_controldata.c:240
+#: pg_controldata.c:234
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "Стан кластеру бази даних:              %s\n"
 
-#: pg_controldata.c:242
+#: pg_controldata.c:236
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "pg_control був модифікований востаннє:         %s\n"
 
-#: pg_controldata.c:244
+#: pg_controldata.c:238
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "Останнє місце знаходження контрольної точки: %X/%X\n"
 
-#: pg_controldata.c:247
+#: pg_controldata.c:241
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "Розташування останньої контрольної точки: %X%X\n"
 
-#: pg_controldata.c:250
+#: pg_controldata.c:244
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
 msgstr "Останній файл контрольної точки REDO WAL:  %s\n"
 
-#: pg_controldata.c:252
+#: pg_controldata.c:246
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Останній TimeLineID контрольної точки: %u\n"
 
-#: pg_controldata.c:254
+#: pg_controldata.c:248
 #, c-format
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
 msgstr "Останній PrevTimeLineID контрольної точки: %u\n"
 
-#: pg_controldata.c:256
+#: pg_controldata.c:250
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "Останній full_page_writes контрольної точки: %s\n"
 
-#: pg_controldata.c:257 pg_controldata.c:302 pg_controldata.c:312
+#: pg_controldata.c:251 pg_controldata.c:296 pg_controldata.c:308
 msgid "off"
-msgstr "вимк."
+msgstr "вимк"
 
-#: pg_controldata.c:257 pg_controldata.c:302 pg_controldata.c:312
+#: pg_controldata.c:251 pg_controldata.c:296 pg_controldata.c:308
 msgid "on"
-msgstr "увімк."
+msgstr "увімк"
 
-#: pg_controldata.c:258
+#: pg_controldata.c:252
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "Останній NextXID контрольної точки: %u%u\n"
 
-#: pg_controldata.c:261
+#: pg_controldata.c:255
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "Останній NextOID контрольної точки: %u\n"
 
-#: pg_controldata.c:263
+#: pg_controldata.c:257
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "Останній NextMultiXactId контрольної точки: %u\n"
 
-#: pg_controldata.c:265
+#: pg_controldata.c:259
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "Останній NextMultiOffset контрольної точки: %u\n"
 
-#: pg_controldata.c:267
+#: pg_controldata.c:261
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "Останній oldestXID контрольної точки: %u\n"
 
-#: pg_controldata.c:269
+#: pg_controldata.c:263
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "Остання DB останнього oldestXID контрольної точки: %u\n"
 
-#: pg_controldata.c:271
+#: pg_controldata.c:265
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "Останній oldestActiveXID контрольної точки: %u\n"
 
-#: pg_controldata.c:273
+#: pg_controldata.c:267
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "Останній oldestMultiXid контрольної точки: %u \n"
 
-#: pg_controldata.c:275
+#: pg_controldata.c:269
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "Остання DB останньої oldestMulti контрольної точки: %u\n"
 
-#: pg_controldata.c:277
+#: pg_controldata.c:271
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "Останній oldestCommitTsXid контрольної точки:%u\n"
 
-#: pg_controldata.c:279
+#: pg_controldata.c:273
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "Останній newestCommitTsXid контрольної точки: %u\n"
 
-#: pg_controldata.c:281
+#: pg_controldata.c:275
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Час останньої контрольної точки: %s\n"
 
-#: pg_controldata.c:283
+#: pg_controldata.c:277
 #, c-format
 msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
 msgstr "Фіктивний LSN для таблиць без журналювання: %X/%X\n"
 
-#: pg_controldata.c:286
+#: pg_controldata.c:280
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Мінімальне розташування кінця відновлення: %X/%X\n"
 
-#: pg_controldata.c:289
+#: pg_controldata.c:283
 #, c-format
 msgid "Min recovery ending loc's timeline:   %u\n"
 msgstr "Мінімальна позиція історії часу завершення відновлення: %u\n"
 
-#: pg_controldata.c:291
+#: pg_controldata.c:285
 #, c-format
 msgid "Backup start location:                %X/%X\n"
 msgstr "Початкове розташування резервного копіювання: %X/%X\n"
 
-#: pg_controldata.c:294
+#: pg_controldata.c:288
 #, c-format
 msgid "Backup end location:                  %X/%X\n"
 msgstr "Кінцеве розташування резервного копіювання: %X/%X\n"
 
-#: pg_controldata.c:297
+#: pg_controldata.c:291
 #, c-format
 msgid "End-of-backup record required:        %s\n"
 msgstr "Вимагається запис кінця резервного копіювання: %s\n"
 
-#: pg_controldata.c:298
+#: pg_controldata.c:292
 msgid "no"
 msgstr "ні"
 
-#: pg_controldata.c:298
+#: pg_controldata.c:292
 msgid "yes"
 msgstr "так"
 
-#: pg_controldata.c:299
+#: pg_controldata.c:293
 #, c-format
 msgid "wal_level setting:                    %s\n"
 msgstr "налаштування wal_рівня: %s\n"
 
-#: pg_controldata.c:301
+#: pg_controldata.c:295
 #, c-format
 msgid "wal_log_hints setting:                %s\n"
 msgstr "налаштування wal_log_hints: %s\n"
 
-#: pg_controldata.c:303
+#: pg_controldata.c:297
 #, c-format
 msgid "max_connections setting:              %d\n"
 msgstr "налаштування max_connections: %d\n"
 
-#: pg_controldata.c:305
+#: pg_controldata.c:299
 #, c-format
 msgid "max_worker_processes setting:         %d\n"
 msgstr "налаштування max_worker_processes: %d\n"
 
-#: pg_controldata.c:307
+#: pg_controldata.c:301
+#, c-format
+msgid "max_wal_senders setting:              %d\n"
+msgstr "налаштування max_wal_senders: %d\n"
+
+#: pg_controldata.c:303
 #, c-format
 msgid "max_prepared_xacts setting:           %d\n"
 msgstr "налаштування max_prepared_xacts: %d\n"
 
-#: pg_controldata.c:309
+#: pg_controldata.c:305
 #, c-format
 msgid "max_locks_per_xact setting:           %d\n"
 msgstr "налаштування max_locks_per_xact: %d\n"
 
-#: pg_controldata.c:311
+#: pg_controldata.c:307
 #, c-format
 msgid "track_commit_timestamp setting:       %s\n"
 msgstr "налаштування track_commit_timestamp: %s\n"
 
-#: pg_controldata.c:313
+#: pg_controldata.c:309
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Максимальне вирівнювання даних: %u\n"
 
-#: pg_controldata.c:316
+#: pg_controldata.c:312
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Розмір блоку бази даних: %u\n"
 
-#: pg_controldata.c:318
+#: pg_controldata.c:314
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Блоків на сегмент великого відношення: %u\n"
 
-#: pg_controldata.c:320
+#: pg_controldata.c:316
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Pозмір блоку WAL: %u\n"
 
-#: pg_controldata.c:322
+#: pg_controldata.c:318
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Байтів на сегмент WAL: %u\n"
 
-#: pg_controldata.c:324
+#: pg_controldata.c:320
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Максимальна довжина ідентифікаторів:  %u\n"
 
-#: pg_controldata.c:326
+#: pg_controldata.c:322
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Максимальна кількість стовпців в індексі: %u\n"
 
-#: pg_controldata.c:328
+#: pg_controldata.c:324
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Максимальний розмір сегменту TOAST: %u\n"
 
-#: pg_controldata.c:330
+#: pg_controldata.c:326
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
 msgstr "Розмір сегменту великих обїєктів: %u\n"
 
-#: pg_controldata.c:333
+#: pg_controldata.c:329
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Дата/час типу сховища: %s\n"
 
-#: pg_controldata.c:334
+#: pg_controldata.c:330
 msgid "64-bit integers"
 msgstr "64-бітні цілі"
 
-#: pg_controldata.c:335
-#, c-format
-msgid "Float4 argument passing:              %s\n"
-msgstr "Передача аргументу Float4: %s\n"
-
-#: pg_controldata.c:336 pg_controldata.c:338
-msgid "by reference"
-msgstr "за посиланням"
-
-#: pg_controldata.c:336 pg_controldata.c:338
-msgid "by value"
-msgstr "за значенням"
-
-#: pg_controldata.c:337
+#: pg_controldata.c:331
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Передача аргументу Float8:      %s\n"
 
-#: pg_controldata.c:339
+#: pg_controldata.c:332
+msgid "by reference"
+msgstr "за посиланням"
+
+#: pg_controldata.c:332
+msgid "by value"
+msgstr "за значенням"
+
+#: pg_controldata.c:333
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "Версія контрольних сум сторінок даних:      %u\n"
 
-#: pg_controldata.c:341
+#: pg_controldata.c:335
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Імітувати нонс для аутентифікації: %s\n"

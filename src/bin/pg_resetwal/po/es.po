@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:46+0000\n"
+"POT-Creation-Date: 2020-09-13 10:46+0000\n"
 "PO-Revision-Date: 2019-06-06 17:24-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -39,16 +39,14 @@ msgid "warning: "
 msgstr "precaución: "
 
 #: ../../common/restricted_token.c:64
-#, fuzzy, c-format
-#| msgid "could not load library \"%s\": %s"
+#, c-format
 msgid "could not load library \"%s\": error code %lu"
-msgstr "no se pudo cargar la biblioteca «%s»: %s"
+msgstr "no se pudo cargar la biblioteca «%s»: código de error %lu"
 
 #: ../../common/restricted_token.c:73
-#, fuzzy, c-format
-#| msgid "cannot create restricted tokens on this platform"
+#, c-format
 msgid "cannot create restricted tokens on this platform: error code %lu"
-msgstr "no se pueden crear tokens restrigidos en esta plataforma"
+msgstr "no se pueden crear tokens restrigidos en esta plataforma: código de error %lu"
 
 #: ../../common/restricted_token.c:82
 #, c-format
@@ -287,10 +285,9 @@ msgid "Catalog version number:               %u\n"
 msgstr "Número de versión de catálogo:                   %u\n"
 
 #: pg_resetwal.c:752
-#, fuzzy, c-format
-#| msgid "Database system identifier:           %s\n"
+#, c-format
 msgid "Database system identifier:           %llu\n"
-msgstr "Identificador de sistema:                   %s\n"
+msgstr "Identificador de sistema:                   %llu\n"
 
 #: pg_resetwal.c:754
 #, c-format
@@ -657,24 +654,10 @@ msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
+"\n"
+"Reporte errores a <%s>.\n"
 
 #: pg_resetwal.c:1227
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
-
-#~ msgid "cannot create restricted tokens on this platform"
-#~ msgstr "no se pueden crear tokens restrigidos en esta plataforma"
-
-#~ msgid "Database system identifier:           %s\n"
-#~ msgstr "Identificador de sistema:                        %s\n"
-
-#~ msgid "Float4 argument passing:              %s\n"
-#~ msgstr "Paso de parámetros float4:                       %s\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr "Sitio web de %s: <%s>\n"

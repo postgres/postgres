@@ -9,15 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-16 06:14+0000\n"
-"PO-Revision-Date: 2020-04-16 14:06+0200\n"
+"POT-Creation-Date: 2021-04-26 06:46+0000\n"
+"PO-Revision-Date: 2021-04-26 11:37+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: ../../common/config_info.c:134 ../../common/config_info.c:142
 #: ../../common/config_info.c:150 ../../common/config_info.c:158
@@ -26,42 +26,42 @@ msgstr ""
 msgid "not recorded"
 msgstr "non enregistré"
 
-#: ../../common/exec.c:137 ../../common/exec.c:254 ../../common/exec.c:300
+#: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "n'a pas pu identifier le répertoire courant : %m"
 
-#: ../../common/exec.c:156
+#: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binaire « %s » invalide"
 
-#: ../../common/exec.c:206
+#: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "n'a pas pu lire le binaire « %s »"
 
-#: ../../common/exec.c:214
+#: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "n'a pas pu trouver un « %s » à exécuter"
 
-#: ../../common/exec.c:270 ../../common/exec.c:309
+#: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "n'a pas pu modifier le répertoire par « %s » : %m"
 
-#: ../../common/exec.c:287
+#: ../../common/exec.c:286
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "n'a pas pu lire le lien symbolique « %s » : %m"
 
-#: ../../common/exec.c:410
+#: ../../common/exec.c:409
 #, c-format
-msgid "pclose failed: %m"
-msgstr "échec de pclose : %m"
+msgid "%s() failed: %m"
+msgstr "échec de %s() : %m"
 
-#: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
+#: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
 msgstr "mémoire épuisée"
 
@@ -289,32 +289,35 @@ msgstr "%s : n'a pas pu trouver son propre exécutable\n"
 msgid "%s: invalid argument: %s\n"
 msgstr "%s : argument invalide : %s\n"
 
-#~ msgid "could not change directory to \"%s\": %s"
-#~ msgstr "n'a pas pu changer le répertoire par « %s » : %s"
-
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "n'a pas pu lire le lien symbolique « %s »"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "n'a pas pu accéder au répertoire « %s »"
-
-#~ msgid "child process exited with exit code %d"
-#~ msgstr "le processus fils a quitté avec le code de sortie %d"
-
-#~ msgid "child process was terminated by exception 0x%X"
-#~ msgstr "le processus fils a été terminé par l'exception 0x%X"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "le processus fils a été terminé par le signal %s"
-
-#~ msgid "child process was terminated by signal %d"
-#~ msgstr "le processus fils a été terminé par le signal %d"
-
-#~ msgid "child process exited with unrecognized status %d"
-#~ msgstr "le processus fils a quitté avec un statut %d non reconnu"
+#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgstr "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
 
 #~ msgid "  --help                show this help, then exit\n"
 #~ msgstr "  --help                affiche cette aide puis quitte\n"
 
-#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgid "child process exited with unrecognized status %d"
+#~ msgstr "le processus fils a quitté avec un statut %d non reconnu"
+
+#~ msgid "child process was terminated by signal %d"
+#~ msgstr "le processus fils a été terminé par le signal %d"
+
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "le processus fils a été terminé par le signal %s"
+
+#~ msgid "child process was terminated by exception 0x%X"
+#~ msgstr "le processus fils a été terminé par l'exception 0x%X"
+
+#~ msgid "child process exited with exit code %d"
+#~ msgstr "le processus fils a quitté avec le code de sortie %d"
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "n'a pas pu accéder au répertoire « %s »"
+
+#~ msgid "could not read symbolic link \"%s\""
+#~ msgstr "n'a pas pu lire le lien symbolique « %s »"
+
+#~ msgid "could not change directory to \"%s\": %s"
+#~ msgstr "n'a pas pu changer le répertoire par « %s » : %s"
+
+#~ msgid "pclose failed: %m"
+#~ msgstr "échec de pclose : %m"

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-09 08:47+0000\n"
-"PO-Revision-Date: 2020-05-09 13:54+0200\n"
+"POT-Creation-Date: 2020-10-20 16:46+0000\n"
+"PO-Revision-Date: 2020-10-20 20:32+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -362,38 +362,38 @@ msgstr "kunde inte stänga komprimeringsbiblioteket: %s"
 msgid "could not read from input file: %s"
 msgstr "kunde inte läsa från infilen: %s"
 
-#: compress_io.c:623 pg_backup_custom.c:575 pg_backup_directory.c:534
+#: compress_io.c:623 pg_backup_custom.c:646 pg_backup_directory.c:552
 #: pg_backup_tar.c:793 pg_backup_tar.c:816
 #, c-format
 msgid "could not read from input file: end of file"
 msgstr "kunde inte läsa från infilen: slut på filen"
 
-#: parallel.c:267
+#: parallel.c:254
 #, c-format
 msgid "WSAStartup failed: %d"
 msgstr "WSAStartup misslyckades: %d"
 
-#: parallel.c:978
+#: parallel.c:964
 #, c-format
 msgid "could not create communication channels: %m"
 msgstr "kunde inte skapa kommunikationskanaler: %m"
 
-#: parallel.c:1035
+#: parallel.c:1021
 #, c-format
 msgid "could not create worker process: %m"
 msgstr "kunde inte skapa arbetsprocess: %m"
 
-#: parallel.c:1165
+#: parallel.c:1151
 #, c-format
 msgid "unrecognized command received from master: \"%s\""
 msgstr "okänt kommando mottaget från master: \"%s\""
 
-#: parallel.c:1208 parallel.c:1446
+#: parallel.c:1194 parallel.c:1432
 #, c-format
 msgid "invalid message received from worker: \"%s\""
 msgstr "ogiltigt meddelande mottaget från arbetare: \"%s\""
 
-#: parallel.c:1340
+#: parallel.c:1326
 #, c-format
 msgid ""
 "could not obtain lock on relation \"%s\"\n"
@@ -403,681 +403,661 @@ msgstr ""
 "Dette beror oftast på att någon tagit ett ACCESS EXCLUSIVE-lås på tabellen\n"
 "efter att pg_dumps föräldraprocess tagit ett ACCESS SHARE-lås på tabellen."
 
-#: parallel.c:1429
+#: parallel.c:1415
 #, c-format
 msgid "a worker process died unexpectedly"
 msgstr "en arbetsprocess dog oväntat"
 
-#: parallel.c:1551 parallel.c:1669
+#: parallel.c:1537 parallel.c:1655
 #, c-format
 msgid "could not write to the communication channel: %m"
 msgstr "kunde inte skriva till kommunikationskanal: %m"
 
-#: parallel.c:1628
+#: parallel.c:1614
 #, c-format
 msgid "select() failed: %m"
 msgstr "select() misslyckades: %m"
 
-#: parallel.c:1753
+#: parallel.c:1739
 #, c-format
 msgid "pgpipe: could not create socket: error code %d"
 msgstr "pgpipe: kunde inte skapa uttag (socket): felkod %d"
 
-#: parallel.c:1764
+#: parallel.c:1750
 #, c-format
 msgid "pgpipe: could not bind: error code %d"
 msgstr "pgpipe: kunde inte göra \"bind\": felkod %d"
 
-#: parallel.c:1771
+#: parallel.c:1757
 #, c-format
 msgid "pgpipe: could not listen: error code %d"
 msgstr "pgpipe: kunde inte göra \"listen\": felkod %d"
 
-#: parallel.c:1778
+#: parallel.c:1764
 #, c-format
 msgid "pgpipe: getsockname() failed: error code %d"
 msgstr "pgpipe: getsockname() misslyckades: felkod %d"
 
-#: parallel.c:1789
+#: parallel.c:1775
 #, c-format
 msgid "pgpipe: could not create second socket: error code %d"
 msgstr "pgpipe: kunde inte skapa ett andra uttag (socket): felkod %d"
 
-#: parallel.c:1798
+#: parallel.c:1784
 #, c-format
 msgid "pgpipe: could not connect socket: error code %d"
 msgstr "pgpipe: kunde itne ansluta till uttag (socket): felkod %d"
 
-#: parallel.c:1807
+#: parallel.c:1793
 #, c-format
 msgid "pgpipe: could not accept connection: error code %d"
 msgstr "pgpipe: kunde inte acceptera anslutning: felkod %d"
 
-#: pg_backup_archiver.c:271 pg_backup_archiver.c:1591
+#: pg_backup_archiver.c:277 pg_backup_archiver.c:1587
 #, c-format
 msgid "could not close output file: %m"
 msgstr "kunde inte stänga utdatafilen: %m"
 
-#: pg_backup_archiver.c:315 pg_backup_archiver.c:319
+#: pg_backup_archiver.c:321 pg_backup_archiver.c:325
 #, c-format
 msgid "archive items not in correct section order"
 msgstr "arkivobjekten är inte i korrekt sektionsordning"
 
-#: pg_backup_archiver.c:325
+#: pg_backup_archiver.c:331
 #, c-format
 msgid "unexpected section code %d"
 msgstr "oväntad sektionskod %d"
 
-#: pg_backup_archiver.c:362
+#: pg_backup_archiver.c:368
 #, c-format
 msgid "parallel restore is not supported with this archive file format"
 msgstr "parallell återställning stöds inte med detta arkivformat"
 
-#: pg_backup_archiver.c:366
+#: pg_backup_archiver.c:372
 #, c-format
 msgid "parallel restore is not supported with archives made by pre-8.0 pg_dump"
 msgstr "parallell återställning stöds inte med arkiv som skapats av en pre-8.0 pg_dump"
 
-#: pg_backup_archiver.c:384
+#: pg_backup_archiver.c:390
 #, c-format
 msgid "cannot restore from compressed archive (compression not supported in this installation)"
 msgstr "kan inte återställa från komprimerat arkiv (inte konfigurerad med stöd för komprimering)"
 
-#: pg_backup_archiver.c:401
+#: pg_backup_archiver.c:407
 #, c-format
 msgid "connecting to database for restore"
 msgstr "kopplar upp mot databas för återställning"
 
-#: pg_backup_archiver.c:403
+#: pg_backup_archiver.c:409
 #, c-format
 msgid "direct database connections are not supported in pre-1.3 archives"
 msgstr "direkta databasuppkopplingar stöds inte i arkiv från före version 1.3"
 
-#: pg_backup_archiver.c:448
+#: pg_backup_archiver.c:452
 #, c-format
 msgid "implied data-only restore"
 msgstr "implicerad återställning av enbart data"
 
-#: pg_backup_archiver.c:514
+#: pg_backup_archiver.c:518
 #, c-format
 msgid "dropping %s %s"
 msgstr "tar bort %s %s"
 
-#: pg_backup_archiver.c:609
+#: pg_backup_archiver.c:613
 #, c-format
 msgid "could not find where to insert IF EXISTS in statement \"%s\""
 msgstr "kunde inte hitta var IF EXISTS skulle stoppas in i sats \"%s\""
 
-#: pg_backup_archiver.c:765 pg_backup_archiver.c:767
+#: pg_backup_archiver.c:769 pg_backup_archiver.c:771
 #, c-format
 msgid "warning from original dump file: %s"
 msgstr "varning från orginaldumpfilen: %s"
 
-#: pg_backup_archiver.c:782
+#: pg_backup_archiver.c:786
 #, c-format
 msgid "creating %s \"%s.%s\""
 msgstr "skapar %s \"%s.%s\""
 
-#: pg_backup_archiver.c:785
+#: pg_backup_archiver.c:789
 #, c-format
 msgid "creating %s \"%s\""
 msgstr "skapar %s \"%s\""
 
-#: pg_backup_archiver.c:842
+#: pg_backup_archiver.c:839
 #, c-format
 msgid "connecting to new database \"%s\""
 msgstr "kopplar upp mot ny databas \"%s\""
 
-#: pg_backup_archiver.c:870
+#: pg_backup_archiver.c:866
 #, c-format
 msgid "processing %s"
 msgstr "processar %s"
 
-#: pg_backup_archiver.c:890
+#: pg_backup_archiver.c:886
 #, c-format
 msgid "processing data for table \"%s.%s\""
 msgstr "processar data för tabell \"%s.%s\""
 
-#: pg_backup_archiver.c:952
+#: pg_backup_archiver.c:948
 #, c-format
 msgid "executing %s %s"
 msgstr "kör %s %s"
 
-#: pg_backup_archiver.c:991
+#: pg_backup_archiver.c:987
 #, c-format
 msgid "disabling triggers for %s"
 msgstr "stänger av utlösare för %s"
 
-#: pg_backup_archiver.c:1017
+#: pg_backup_archiver.c:1013
 #, c-format
 msgid "enabling triggers for %s"
 msgstr "slår på utlösare för %s"
 
-#: pg_backup_archiver.c:1045
+#: pg_backup_archiver.c:1041
 #, c-format
 msgid "internal error -- WriteData cannot be called outside the context of a DataDumper routine"
 msgstr "internt fel -- WriteData kan inte anropas utanför kontexten av en DataDumper-rutin"
 
-#: pg_backup_archiver.c:1228
+#: pg_backup_archiver.c:1224
 #, c-format
 msgid "large-object output not supported in chosen format"
 msgstr "utmatning av stora objekt stöds inte i det valda formatet"
 
-#: pg_backup_archiver.c:1286
+#: pg_backup_archiver.c:1282
 #, c-format
 msgid "restored %d large object"
 msgid_plural "restored %d large objects"
 msgstr[0] "återställde %d stor objekt"
 msgstr[1] "återställde %d stora objekt"
 
-#: pg_backup_archiver.c:1307 pg_backup_tar.c:736
+#: pg_backup_archiver.c:1303 pg_backup_tar.c:736
 #, c-format
 msgid "restoring large object with OID %u"
 msgstr "återställer stort objekt med OID %u"
 
-#: pg_backup_archiver.c:1319
+#: pg_backup_archiver.c:1315
 #, c-format
 msgid "could not create large object %u: %s"
 msgstr "kunde inte skapa stort objekt %u: %s"
 
-#: pg_backup_archiver.c:1324 pg_dump.c:3549
+#: pg_backup_archiver.c:1320 pg_dump.c:3552
 #, c-format
 msgid "could not open large object %u: %s"
 msgstr "kunde inte öppna stort objekt %u: %s"
 
-#: pg_backup_archiver.c:1381
+#: pg_backup_archiver.c:1377
 #, c-format
 msgid "could not open TOC file \"%s\": %m"
 msgstr "kunde inte öppna TOC-filen \"%s\": %m"
 
-#: pg_backup_archiver.c:1421
+#: pg_backup_archiver.c:1417
 #, c-format
 msgid "line ignored: %s"
 msgstr "rad ignorerad: %s"
 
-#: pg_backup_archiver.c:1428
+#: pg_backup_archiver.c:1424
 #, c-format
 msgid "could not find entry for ID %d"
 msgstr "kunde inte hitta en post för ID %d"
 
-#: pg_backup_archiver.c:1449 pg_backup_directory.c:222
-#: pg_backup_directory.c:580
+#: pg_backup_archiver.c:1445 pg_backup_directory.c:222
+#: pg_backup_directory.c:598
 #, c-format
 msgid "could not close TOC file: %m"
 msgstr "kunde inte stänga TOC-filen: %m"
 
-#: pg_backup_archiver.c:1563 pg_backup_custom.c:158 pg_backup_directory.c:332
-#: pg_backup_directory.c:567 pg_backup_directory.c:630
-#: pg_backup_directory.c:649 pg_dumpall.c:484
+#: pg_backup_archiver.c:1559 pg_backup_custom.c:156 pg_backup_directory.c:332
+#: pg_backup_directory.c:585 pg_backup_directory.c:648
+#: pg_backup_directory.c:667 pg_dumpall.c:484
 #, c-format
 msgid "could not open output file \"%s\": %m"
 msgstr "kunde inte öppna utdatafilen \"%s\": %m"
 
-#: pg_backup_archiver.c:1565 pg_backup_custom.c:164
+#: pg_backup_archiver.c:1561 pg_backup_custom.c:162
 #, c-format
 msgid "could not open output file: %m"
 msgstr "kunde inte öppna utdatafilen: %m"
 
-#: pg_backup_archiver.c:1658
+#: pg_backup_archiver.c:1654
 #, c-format
 msgid "wrote %lu byte of large object data (result = %lu)"
 msgid_plural "wrote %lu bytes of large object data (result = %lu)"
 msgstr[0] "skrev %lu byte av stort objekt-data (resultat = %lu)"
 msgstr[1] "skrev %lu bytes av stort objekt-data (resultat = %lu)"
 
-#: pg_backup_archiver.c:1663
+#: pg_backup_archiver.c:1659
 #, c-format
 msgid "could not write to large object (result: %lu, expected: %lu)"
 msgstr "kunde inte skriva till stort objekt (resultat: %lu, förväntat: %lu)"
 
-#: pg_backup_archiver.c:1753
+#: pg_backup_archiver.c:1749
 #, c-format
 msgid "while INITIALIZING:"
 msgstr "vid INITIERING:"
 
-#: pg_backup_archiver.c:1758
+#: pg_backup_archiver.c:1754
 #, c-format
 msgid "while PROCESSING TOC:"
 msgstr "vid HANTERING AV TOC:"
 
-#: pg_backup_archiver.c:1763
+#: pg_backup_archiver.c:1759
 #, c-format
 msgid "while FINALIZING:"
 msgstr "vid SLUTFÖRANDE:"
 
-#: pg_backup_archiver.c:1768
+#: pg_backup_archiver.c:1764
 #, c-format
 msgid "from TOC entry %d; %u %u %s %s %s"
 msgstr "från TOC-post %d; %u %u %s %s %s"
 
-#: pg_backup_archiver.c:1844
+#: pg_backup_archiver.c:1840
 #, c-format
 msgid "bad dumpId"
 msgstr "felaktigt dumpId"
 
-#: pg_backup_archiver.c:1865
+#: pg_backup_archiver.c:1861
 #, c-format
 msgid "bad table dumpId for TABLE DATA item"
 msgstr "felaktig tabell-dumpId för TABLE DATA-objekt"
 
-#: pg_backup_archiver.c:1957
+#: pg_backup_archiver.c:1953
 #, c-format
 msgid "unexpected data offset flag %d"
 msgstr "oväntad data-offset-flagga %d"
 
-#: pg_backup_archiver.c:1970
+#: pg_backup_archiver.c:1966
 #, c-format
 msgid "file offset in dump file is too large"
 msgstr "fil-offset i dumpfilen är för stort"
 
-#: pg_backup_archiver.c:2107 pg_backup_archiver.c:2117
+#: pg_backup_archiver.c:2103 pg_backup_archiver.c:2113
 #, c-format
 msgid "directory name too long: \"%s\""
 msgstr "katalognamn för långt: \"%s\""
 
-#: pg_backup_archiver.c:2125
+#: pg_backup_archiver.c:2121
 #, c-format
 msgid "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not exist)"
 msgstr "katalogen \"%s\" verkar inte vara ett giltigt arkiv (\"toc.dat\" finns inte)"
 
-#: pg_backup_archiver.c:2133 pg_backup_custom.c:175 pg_backup_custom.c:753
-#: pg_backup_directory.c:207 pg_backup_directory.c:388
+#: pg_backup_archiver.c:2129 pg_backup_custom.c:173 pg_backup_custom.c:812
+#: pg_backup_directory.c:207 pg_backup_directory.c:394
 #, c-format
 msgid "could not open input file \"%s\": %m"
 msgstr "kunde inte öppna indatafilen \"%s\": %m"
 
-#: pg_backup_archiver.c:2140 pg_backup_custom.c:181
+#: pg_backup_archiver.c:2136 pg_backup_custom.c:179
 #, c-format
 msgid "could not open input file: %m"
 msgstr "kan inte öppna infil: %m"
 
-#: pg_backup_archiver.c:2146
+#: pg_backup_archiver.c:2142
 #, c-format
 msgid "could not read input file: %m"
 msgstr "kan inte läsa infilen: %m"
 
-#: pg_backup_archiver.c:2148
+#: pg_backup_archiver.c:2144
 #, c-format
 msgid "input file is too short (read %lu, expected 5)"
 msgstr "indatafilen är för kort (läste %lu, förväntade 5)"
 
-#: pg_backup_archiver.c:2233
+#: pg_backup_archiver.c:2229
 #, c-format
 msgid "input file appears to be a text format dump. Please use psql."
 msgstr "indatafilen verkar vara en dump i textformat. Använd psql."
 
-#: pg_backup_archiver.c:2239
+#: pg_backup_archiver.c:2235
 #, c-format
 msgid "input file does not appear to be a valid archive (too short?)"
 msgstr "indatafilen verkar inte vara ett korrekt arkiv (för kort?)"
 
-#: pg_backup_archiver.c:2245
+#: pg_backup_archiver.c:2241
 #, c-format
 msgid "input file does not appear to be a valid archive"
 msgstr "indatafilen verkar inte vara ett korrekt arkiv"
 
-#: pg_backup_archiver.c:2265
+#: pg_backup_archiver.c:2261
 #, c-format
 msgid "could not close input file: %m"
 msgstr "kunde inte stänga indatafilen: %m"
 
-#: pg_backup_archiver.c:2379
+#: pg_backup_archiver.c:2373
 #, c-format
 msgid "unrecognized file format \"%d\""
 msgstr "känner inte igen filformat \"%d\""
 
-#: pg_backup_archiver.c:2461 pg_backup_archiver.c:4473
+#: pg_backup_archiver.c:2455 pg_backup_archiver.c:4458
 #, c-format
 msgid "finished item %d %s %s"
 msgstr "klar med objekt %d %s %s"
 
-#: pg_backup_archiver.c:2465 pg_backup_archiver.c:4486
+#: pg_backup_archiver.c:2459 pg_backup_archiver.c:4471
 #, c-format
 msgid "worker process failed: exit code %d"
 msgstr "arbetsprocess misslyckades: felkod %d"
 
-#: pg_backup_archiver.c:2585
+#: pg_backup_archiver.c:2579
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC"
 msgstr "post-ID %d utanför sitt intervall -- kanske en trasig TOC"
 
-#: pg_backup_archiver.c:2652
+#: pg_backup_archiver.c:2646
 #, c-format
 msgid "restoring tables WITH OIDS is not supported anymore"
 msgstr "återeställa tabeller med WITH OIDS stöds inte längre"
 
-#: pg_backup_archiver.c:2734
+#: pg_backup_archiver.c:2728
 #, c-format
 msgid "unrecognized encoding \"%s\""
 msgstr "okänd teckenkodning \"%s\""
 
-#: pg_backup_archiver.c:2739
+#: pg_backup_archiver.c:2733
 #, c-format
 msgid "invalid ENCODING item: %s"
 msgstr "ogiltigt ENCODING-val: %s"
 
-#: pg_backup_archiver.c:2757
+#: pg_backup_archiver.c:2751
 #, c-format
 msgid "invalid STDSTRINGS item: %s"
 msgstr "ogiltigt STDSTRINGS-val: %s"
 
-#: pg_backup_archiver.c:2782
+#: pg_backup_archiver.c:2776
 #, c-format
 msgid "schema \"%s\" not found"
 msgstr "schema \"%s\" hittades inte"
 
-#: pg_backup_archiver.c:2789
+#: pg_backup_archiver.c:2783
 #, c-format
 msgid "table \"%s\" not found"
 msgstr "tabell \"%s\" hittades inte"
 
-#: pg_backup_archiver.c:2796
+#: pg_backup_archiver.c:2790
 #, c-format
 msgid "index \"%s\" not found"
 msgstr "index \"%s\" hittades inte"
 
-#: pg_backup_archiver.c:2803
+#: pg_backup_archiver.c:2797
 #, c-format
 msgid "function \"%s\" not found"
 msgstr "funktion \"%s\" hittades inte"
 
-#: pg_backup_archiver.c:2810
+#: pg_backup_archiver.c:2804
 #, c-format
 msgid "trigger \"%s\" not found"
 msgstr "utlösare \"%s\" hittades inte"
 
-#: pg_backup_archiver.c:3202
+#: pg_backup_archiver.c:3196
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "kunde inte sätta sessionsanvändare till \"%s\": %s"
 
-#: pg_backup_archiver.c:3341
+#: pg_backup_archiver.c:3328
 #, c-format
 msgid "could not set search_path to \"%s\": %s"
 msgstr "kunde inte sätta search_path till \"%s\": %s"
 
-#: pg_backup_archiver.c:3403
+#: pg_backup_archiver.c:3390
 #, c-format
 msgid "could not set default_tablespace to %s: %s"
 msgstr "kunde inte sätta default_tablespace till %s: %s"
 
-#: pg_backup_archiver.c:3448
+#: pg_backup_archiver.c:3435
 #, c-format
 msgid "could not set default_table_access_method: %s"
 msgstr "kunde inte sätta default_table_access_method: %s"
 
-#: pg_backup_archiver.c:3540 pg_backup_archiver.c:3698
+#: pg_backup_archiver.c:3527 pg_backup_archiver.c:3685
 #, c-format
 msgid "don't know how to set owner for object type \"%s\""
 msgstr "vet inte hur man sätter ägare för objekttyp \"%s\""
 
-#: pg_backup_archiver.c:3802
+#: pg_backup_archiver.c:3789
 #, c-format
 msgid "did not find magic string in file header"
 msgstr "kunde inte hitta den magiska strängen i filhuvudet"
 
-#: pg_backup_archiver.c:3815
+#: pg_backup_archiver.c:3802
 #, c-format
 msgid "unsupported version (%d.%d) in file header"
 msgstr "ej supportad version (%d.%d) i filhuvudet"
 
-#: pg_backup_archiver.c:3820
+#: pg_backup_archiver.c:3807
 #, c-format
 msgid "sanity check on integer size (%lu) failed"
 msgstr "riktighetskontroll på heltalsstorlek (%lu) misslyckades"
 
-#: pg_backup_archiver.c:3824
+#: pg_backup_archiver.c:3811
 #, c-format
 msgid "archive was made on a machine with larger integers, some operations might fail"
 msgstr "arkivet skapades på en maskin med större heltal, en del operationer kan misslyckas"
 
-#: pg_backup_archiver.c:3834
+#: pg_backup_archiver.c:3821
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)"
 msgstr "förväntat format (%d) skiljer sig från formatet som fanns i filen (%d)"
 
-#: pg_backup_archiver.c:3850
+#: pg_backup_archiver.c:3837
 #, c-format
 msgid "archive is compressed, but this installation does not support compression -- no data will be available"
 msgstr "arkivet är komprimerat, men denna installation stödjer inte komprimering -- ingen data kommer kunna läsas"
 
-#: pg_backup_archiver.c:3868
+#: pg_backup_archiver.c:3855
 #, c-format
 msgid "invalid creation date in header"
 msgstr "ogiltig skapandedatum i huvud"
 
-#: pg_backup_archiver.c:3996
+#: pg_backup_archiver.c:3983
 #, c-format
 msgid "processing item %d %s %s"
 msgstr "processar objekt %d %s %s"
 
-#: pg_backup_archiver.c:4075
+#: pg_backup_archiver.c:4062
 #, c-format
 msgid "entering main parallel loop"
 msgstr "går in i parallella huvudloopen"
 
-#: pg_backup_archiver.c:4086
+#: pg_backup_archiver.c:4073
 #, c-format
 msgid "skipping item %d %s %s"
 msgstr "hoppar över objekt %d %s %s"
 
-#: pg_backup_archiver.c:4095
+#: pg_backup_archiver.c:4082
 #, c-format
 msgid "launching item %d %s %s"
 msgstr "startar objekt %d %s %s"
 
-#: pg_backup_archiver.c:4149
+#: pg_backup_archiver.c:4136
 #, c-format
 msgid "finished main parallel loop"
 msgstr "klar med parallella huvudloopen"
 
-#: pg_backup_archiver.c:4187
+#: pg_backup_archiver.c:4172
 #, c-format
 msgid "processing missed item %d %s %s"
 msgstr "processar saknat objekt %d %s %s"
 
-#: pg_backup_archiver.c:4792
+#: pg_backup_archiver.c:4777
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data"
 msgstr "tabell \"%s\" kunde inte skapas, dess data kommer ej återställas"
 
-#: pg_backup_custom.c:374 pg_backup_null.c:147
+#: pg_backup_custom.c:378 pg_backup_null.c:147
 #, c-format
 msgid "invalid OID for large object"
 msgstr "ogiltig OID för stort objekt"
 
-#: pg_backup_custom.c:444
-#, c-format
-msgid "unrecognized data block type (%d) while searching archive"
-msgstr "känner inte igen datablocktyp (%d) vid genomsökning av arkiv"
-
-#: pg_backup_custom.c:455 pg_backup_custom.c:811
+#: pg_backup_custom.c:441 pg_backup_custom.c:507 pg_backup_custom.c:632
+#: pg_backup_custom.c:870 pg_backup_tar.c:1086 pg_backup_tar.c:1091
 #, c-format
 msgid "error during file seek: %m"
 msgstr "fel vid sökning: %m"
 
-#: pg_backup_custom.c:464
+#: pg_backup_custom.c:480
 #, c-format
-msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to lack of data offsets in archive"
-msgstr "kunde inte hitta block ID %d i arkiv -- kanske på grund av en återställningbegäran i oordning vilket inte kan hanteras då det saknas dataoffsets i arkivet"
+msgid "data block %d has wrong seek position"
+msgstr "datablock %d har fel sökposition"
 
-#: pg_backup_custom.c:469
+#: pg_backup_custom.c:497
+#, c-format
+msgid "unrecognized data block type (%d) while searching archive"
+msgstr "känner inte igen datablocktyp (%d) vid genomsökning av arkiv"
+
+#: pg_backup_custom.c:519
 #, c-format
 msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to non-seekable input file"
 msgstr "kunde inte hitta block ID %d i arkiv -- kanske på grund av en återställningbegäran i oordning vilket inte kan hanteras då inputfilen inte är sökbar"
 
-#: pg_backup_custom.c:474
+#: pg_backup_custom.c:524
 #, c-format
 msgid "could not find block ID %d in archive -- possibly corrupt archive"
 msgstr "kunde inte hitta block ID %d i arkiv -- möjligen ett trasigt arkiv"
 
-#: pg_backup_custom.c:481
+#: pg_backup_custom.c:531
 #, c-format
 msgid "found unexpected block ID (%d) when reading data -- expected %d"
 msgstr "hittade oväntat block-ID (%d) vid läsning av data -- förväntade %d"
 
-#: pg_backup_custom.c:495
+#: pg_backup_custom.c:545
 #, c-format
 msgid "unrecognized data block type %d while restoring archive"
 msgstr "ej igenkänd datablockstyp %d vid återställande av arkiv"
 
-#: pg_backup_custom.c:577
+#: pg_backup_custom.c:648
 #, c-format
 msgid "could not read from input file: %m"
 msgstr "kunde inte läsa från infilen: %m"
 
-#: pg_backup_custom.c:691 pg_backup_custom.c:744 pg_backup_custom.c:884
-#: pg_backup_tar.c:1088
+#: pg_backup_custom.c:751 pg_backup_custom.c:803 pg_backup_custom.c:948
+#: pg_backup_tar.c:1089
 #, c-format
 msgid "could not determine seek position in archive file: %m"
 msgstr "kunde inte bestämma sökposition i arkivfil: %m"
 
-#: pg_backup_custom.c:708 pg_backup_custom.c:748
+#: pg_backup_custom.c:767 pg_backup_custom.c:807
 #, c-format
 msgid "could not close archive file: %m"
 msgstr "kan inte stänga arkivfilen: %m"
 
-#: pg_backup_custom.c:731
+#: pg_backup_custom.c:790
 #, c-format
 msgid "can only reopen input archives"
 msgstr "kan inte återöppna indataarkiven"
 
-#: pg_backup_custom.c:738
+#: pg_backup_custom.c:797
 #, c-format
 msgid "parallel restore from standard input is not supported"
 msgstr "parallell återställning från standard in stöds inte"
 
-#: pg_backup_custom.c:740
+#: pg_backup_custom.c:799
 #, c-format
 msgid "parallel restore from non-seekable file is not supported"
 msgstr "parallell återställning för en icke sökbar fil stöds inte"
 
-#: pg_backup_custom.c:756
+#: pg_backup_custom.c:815
 #, c-format
 msgid "could not set seek position in archive file: %m"
 msgstr "kunde inte söka till rätt position i arkivfilen: %m"
 
-#: pg_backup_custom.c:832
+#: pg_backup_custom.c:894
 #, c-format
 msgid "compressor active"
 msgstr "komprimerare aktiv"
 
-#: pg_backup_custom.c:887
-#, c-format
-msgid "ftell mismatch with expected position -- ftell used"
-msgstr "ftell stämmer inte med förväntad position -- ftell använd"
-
-#: pg_backup_db.c:42
+#: pg_backup_db.c:41
 #, c-format
 msgid "could not get server_version from libpq"
 msgstr "kunde inte hämta serverversionen från libpq"
 
-#: pg_backup_db.c:53 pg_dumpall.c:1826
+#: pg_backup_db.c:52 pg_dumpall.c:1826
 #, c-format
 msgid "server version: %s; %s version: %s"
 msgstr "server version: %s; %s version: %s"
 
-#: pg_backup_db.c:55 pg_dumpall.c:1828
+#: pg_backup_db.c:54 pg_dumpall.c:1828
 #, c-format
 msgid "aborting because of server version mismatch"
 msgstr "avbryter då serverversionerna i matchar"
 
-#: pg_backup_db.c:138
+#: pg_backup_db.c:124
 #, c-format
-msgid "connecting to database \"%s\" as user \"%s\""
-msgstr "kopplar upp mot databas \"%s\" som användare \"%s\""
+msgid "already connected to a database"
+msgstr "är redan uppkopplad mot en databas"
 
-#: pg_backup_db.c:145 pg_backup_db.c:194 pg_backup_db.c:255 pg_backup_db.c:296
-#: pg_dumpall.c:1651 pg_dumpall.c:1764
+#: pg_backup_db.c:133 pg_backup_db.c:185 pg_dumpall.c:1651 pg_dumpall.c:1764
 msgid "Password: "
 msgstr "Lösenord: "
 
 #: pg_backup_db.c:177
 #, c-format
-msgid "could not reconnect to database"
-msgstr "kunde inte återuppkoppla mot databasen"
-
-#: pg_backup_db.c:182
-#, c-format
-msgid "could not reconnect to database: %s"
-msgstr "kunde inte återuppkoppla mot databasen: %s"
-
-#: pg_backup_db.c:198
-#, c-format
-msgid "connection needs password"
-msgstr "anslutningen kräver lösenord"
-
-#: pg_backup_db.c:249
-#, c-format
-msgid "already connected to a database"
-msgstr "är redan uppkopplad mot en databas"
-
-#: pg_backup_db.c:288
-#, c-format
 msgid "could not connect to database"
 msgstr "kunde inte ansluta till databasen"
 
-#: pg_backup_db.c:304
+#: pg_backup_db.c:195
+#, c-format
+msgid "reconnection to database \"%s\" failed: %s"
+msgstr "återuppkoppling mot databas \"%s\" misslyckades: %s"
+
+#: pg_backup_db.c:199
 #, c-format
 msgid "connection to database \"%s\" failed: %s"
 msgstr "uppkoppling mot databas \"%s\" misslyckades: %s"
 
-#: pg_backup_db.c:376 pg_dumpall.c:1684
+#: pg_backup_db.c:272 pg_dumpall.c:1684
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_backup_db.c:383 pg_dumpall.c:1889 pg_dumpall.c:1912
+#: pg_backup_db.c:279 pg_dumpall.c:1889 pg_dumpall.c:1912
 #, c-format
 msgid "query failed: %s"
 msgstr "fråga misslyckades: %s"
 
-#: pg_backup_db.c:385 pg_dumpall.c:1890 pg_dumpall.c:1913
+#: pg_backup_db.c:281 pg_dumpall.c:1890 pg_dumpall.c:1913
 #, c-format
 msgid "query was: %s"
 msgstr "frågan var: %s"
 
-#: pg_backup_db.c:426
+#: pg_backup_db.c:322
 #, c-format
 msgid "query returned %d row instead of one: %s"
 msgid_plural "query returned %d rows instead of one: %s"
 msgstr[0] "fråga gav %d rad istället för en: %s"
 msgstr[1] "fråga gav %d rader istället för en: %s"
 
-#: pg_backup_db.c:462
+#: pg_backup_db.c:358
 #, c-format
 msgid "%s: %sCommand was: %s"
 msgstr "%s: %sKommandot var: %s"
 
-#: pg_backup_db.c:518 pg_backup_db.c:592 pg_backup_db.c:599
+#: pg_backup_db.c:414 pg_backup_db.c:488 pg_backup_db.c:495
 msgid "could not execute query"
 msgstr "kunde inte utföra fråga"
 
-#: pg_backup_db.c:571
+#: pg_backup_db.c:467
 #, c-format
 msgid "error returned by PQputCopyData: %s"
 msgstr "fel returnerat av PQputCopyData: %s"
 
-#: pg_backup_db.c:620
+#: pg_backup_db.c:516
 #, c-format
 msgid "error returned by PQputCopyEnd: %s"
 msgstr "fel returnerat av PQputCopyEnd: %s"
 
-#: pg_backup_db.c:626
+#: pg_backup_db.c:522
 #, c-format
 msgid "COPY failed for table \"%s\": %s"
 msgstr "COPY misslyckades för tabell \"%s\": %s"
 
-#: pg_backup_db.c:632 pg_dump.c:1991
+#: pg_backup_db.c:528 pg_dump.c:1988
 #, c-format
 msgid "unexpected extra results during COPY of table \"%s\""
 msgstr "oväntade extraresultat under kopiering (COPY) av tabell \"%s\""
 
-#: pg_backup_db.c:644
+#: pg_backup_db.c:540
 msgid "could not start database transaction"
 msgstr "kunde inte starta databastransaktionen"
 
-#: pg_backup_db.c:652
+#: pg_backup_db.c:548
 msgid "could not commit database transaction"
 msgstr "kunde inte genomföra databastransaktionen"
 
@@ -1101,43 +1081,43 @@ msgstr "kunde inte stänga katalog \"%s\": %m"
 msgid "could not create directory \"%s\": %m"
 msgstr "kunde inte skapa katalog \"%s\": %m"
 
-#: pg_backup_directory.c:350 pg_backup_directory.c:485
-#: pg_backup_directory.c:515
+#: pg_backup_directory.c:355 pg_backup_directory.c:496
+#: pg_backup_directory.c:532
 #, c-format
 msgid "could not write to output file: %s"
 msgstr "kunde inte skriva till utdatafil: %s"
 
-#: pg_backup_directory.c:400
+#: pg_backup_directory.c:406
 #, c-format
 msgid "could not close data file \"%s\": %m"
 msgstr "kan inte stänga datafil \"%s\": %m"
 
-#: pg_backup_directory.c:440
+#: pg_backup_directory.c:446
 #, c-format
 msgid "could not open large object TOC file \"%s\" for input: %m"
 msgstr "kunde inte öppna stora objekts TOC-fil \"%s\" för läsning: %m"
 
-#: pg_backup_directory.c:451
+#: pg_backup_directory.c:457
 #, c-format
 msgid "invalid line in large object TOC file \"%s\": \"%s\""
 msgstr "ogiltig rad i stora objekts TOC-fil \"%s\": \"%s\""
 
-#: pg_backup_directory.c:460
+#: pg_backup_directory.c:466
 #, c-format
 msgid "error reading large object TOC file \"%s\""
 msgstr "fel vid lösning av stora objekts TOC-fil \"%s\""
 
-#: pg_backup_directory.c:464
+#: pg_backup_directory.c:470
 #, c-format
 msgid "could not close large object TOC file \"%s\": %m"
 msgstr "kunde inte stänga stora objekts TOC-fil \"%s\": %m"
 
-#: pg_backup_directory.c:671
+#: pg_backup_directory.c:689
 #, c-format
 msgid "could not write to blobs TOC file"
 msgstr "kunde inte skriva till blobbars TOC-fil"
 
-#: pg_backup_directory.c:703
+#: pg_backup_directory.c:721
 #, c-format
 msgid "file name too long: \"%s\""
 msgstr "filnamnet är för långt: \"%s\""
@@ -1202,34 +1182,34 @@ msgstr "oväntad COPY-satssyntax: \"%s\""
 msgid "invalid OID for large object (%u)"
 msgstr "ogiltig OID för stort objekt (%u)"
 
-#: pg_backup_tar.c:1103
+#: pg_backup_tar.c:1105
 #, c-format
 msgid "could not close temporary file: %m"
 msgstr "kunde inte stänga temporär fil: %m"
 
-#: pg_backup_tar.c:1112
+#: pg_backup_tar.c:1114
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)"
 msgstr "verklig fillängd (%s) matchar inte det förväntade (%s)"
 
-#: pg_backup_tar.c:1169 pg_backup_tar.c:1199
+#: pg_backup_tar.c:1171 pg_backup_tar.c:1201
 #, c-format
 msgid "could not find header for file \"%s\" in tar archive"
 msgstr "kunde inte hitta filhuvud för fil \"%s\" i tar-arkiv"
 
-#: pg_backup_tar.c:1187
+#: pg_backup_tar.c:1189
 #, c-format
 msgid "restoring data out of order is not supported in this archive format: \"%s\" is required, but comes before \"%s\" in the archive file."
 msgstr "dumpa data i oordning stöds inte av detta arkivformat: \"%s\" krävs, men kommer före \"%s\" i denna arkivfil."
 
-#: pg_backup_tar.c:1232
+#: pg_backup_tar.c:1234
 #, c-format
 msgid "incomplete tar header found (%lu byte)"
 msgid_plural "incomplete tar header found (%lu bytes)"
 msgstr[0] "inkomplett tar-huvud hittat (%lu byte)"
 msgstr[1] "inkomplett tar-huvud hittat (%lu bytes)"
 
-#: pg_backup_tar.c:1283
+#: pg_backup_tar.c:1285
 #, c-format
 msgid "corrupt tar header found in %s (expected %d, computed %d) file position %s"
 msgstr "trasigt tar-huvud hittat i %s (förväntade %d, beräknad %d) filposition %s"
@@ -1239,7 +1219,7 @@ msgstr "trasigt tar-huvud hittat i %s (förväntade %d, beräknad %d) filpositio
 msgid "unrecognized section name: \"%s\""
 msgstr "okänt sektionsnamn: \"%s\""
 
-#: pg_backup_utils.c:55 pg_dump.c:615 pg_dump.c:632 pg_dumpall.c:338
+#: pg_backup_utils.c:55 pg_dump.c:607 pg_dump.c:624 pg_dumpall.c:338
 #: pg_dumpall.c:348 pg_dumpall.c:357 pg_dumpall.c:366 pg_dumpall.c:374
 #: pg_dumpall.c:388 pg_dumpall.c:464 pg_restore.c:284 pg_restore.c:300
 #: pg_restore.c:318
@@ -1252,72 +1232,72 @@ msgstr "Försök med \"%s --help\" för mer information.\n"
 msgid "out of on_exit_nicely slots"
 msgstr "slut på on_exit_nicely-slottar"
 
-#: pg_dump.c:541
+#: pg_dump.c:533
 #, c-format
 msgid "compression level must be in range 0..9"
 msgstr "komprimeringsnivå måste vara i intervallet 0..9"
 
-#: pg_dump.c:579
+#: pg_dump.c:571
 #, c-format
 msgid "extra_float_digits must be in range -15..3"
 msgstr "extra_float_digits måste vara i intervallet -15..3"
 
-#: pg_dump.c:602
+#: pg_dump.c:594
 #, c-format
 msgid "rows-per-insert must be in range %d..%d"
 msgstr "rows-per-insert måste vara i intervallet %d..%d"
 
-#: pg_dump.c:630 pg_dumpall.c:346 pg_restore.c:298
+#: pg_dump.c:622 pg_dumpall.c:346 pg_restore.c:298
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "för många kommandoradsargument (första är \"%s\")"
 
-#: pg_dump.c:651 pg_restore.c:327
+#: pg_dump.c:643 pg_restore.c:327
 #, c-format
 msgid "options -s/--schema-only and -a/--data-only cannot be used together"
 msgstr "flaggorna \"bara schema\" (-s) och \"bara data\" (-a) kan inte användas tillsammans"
 
-#: pg_dump.c:656
+#: pg_dump.c:648
 #, c-format
 msgid "options -s/--schema-only and --include-foreign-data cannot be used together"
 msgstr "flaggorna -s/--schema-only och --include-foreign-data kan inte användas tillsammans"
 
-#: pg_dump.c:659
+#: pg_dump.c:651
 #, c-format
 msgid "option --include-foreign-data is not supported with parallel backup"
 msgstr "flaggan --include-foreign-data stöds inte med parallell backup"
 
-#: pg_dump.c:663 pg_restore.c:333
+#: pg_dump.c:655 pg_restore.c:333
 #, c-format
 msgid "options -c/--clean and -a/--data-only cannot be used together"
 msgstr "flaggorna \"nollställ\" (-c) och \"bara data\" (-a) kan inte användas tillsammans"
 
-#: pg_dump.c:668 pg_dumpall.c:381 pg_restore.c:382
+#: pg_dump.c:660 pg_dumpall.c:381 pg_restore.c:382
 #, c-format
 msgid "option --if-exists requires option -c/--clean"
 msgstr "flaggan --if-exists kräver flaggan -c/--clean"
 
-#: pg_dump.c:675
+#: pg_dump.c:667
 #, c-format
 msgid "option --on-conflict-do-nothing requires option --inserts, --rows-per-insert, or --column-inserts"
 msgstr "flagga --on-conflict-do-nothing kräver --inserts, --rows-per-insert eller --column-inserts"
 
-#: pg_dump.c:697
+#: pg_dump.c:689
 #, c-format
 msgid "requested compression not available in this installation -- archive will be uncompressed"
 msgstr "efterfrågad komprimering finns inte i denna installation -- arkivet kommer sparas okomprimerat"
 
-#: pg_dump.c:718 pg_restore.c:349
+#: pg_dump.c:710 pg_restore.c:349
 #, c-format
 msgid "invalid number of parallel jobs"
 msgstr "felaktigt antal parallella job"
 
-#: pg_dump.c:722
+#: pg_dump.c:714
 #, c-format
 msgid "parallel backup only supported by the directory format"
 msgstr "parallell backup stöds bara med katalogformat"
 
-#: pg_dump.c:777
+#: pg_dump.c:769
 #, c-format
 msgid ""
 "Synchronized snapshots are not supported by this server version.\n"
@@ -1328,27 +1308,27 @@ msgstr ""
 "Kör med --no-synchronized-snapshots istället om du inte kräver\n"
 "synkroniserade snapshots."
 
-#: pg_dump.c:783
+#: pg_dump.c:775
 #, c-format
 msgid "Exported snapshots are not supported by this server version."
 msgstr "Exporterade snapshots stöds inte i denna serverversion."
 
-#: pg_dump.c:795
+#: pg_dump.c:787
 #, c-format
 msgid "last built-in OID is %u"
 msgstr "sista inbyggda OID är %u"
 
-#: pg_dump.c:804
+#: pg_dump.c:796
 #, c-format
 msgid "no matching schemas were found"
 msgstr "hittade inga matchande scheman"
 
-#: pg_dump.c:818
+#: pg_dump.c:810
 #, c-format
 msgid "no matching tables were found"
 msgstr "hittade inga matchande tabeller"
 
-#: pg_dump.c:993
+#: pg_dump.c:990
 #, c-format
 msgid ""
 "%s dumps a database as a text file or to other formats.\n"
@@ -1357,17 +1337,17 @@ msgstr ""
 "%s dumpar en databas som en textfil eller i andra format.\n"
 "\n"
 
-#: pg_dump.c:994 pg_dumpall.c:617 pg_restore.c:462
+#: pg_dump.c:991 pg_dumpall.c:617 pg_restore.c:462
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: pg_dump.c:995
+#: pg_dump.c:992
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [FLAGGA]... [DBNAMN]\n"
 
-#: pg_dump.c:997 pg_dumpall.c:620 pg_restore.c:465
+#: pg_dump.c:994 pg_dumpall.c:620 pg_restore.c:465
 #, c-format
 msgid ""
 "\n"
@@ -1376,12 +1356,12 @@ msgstr ""
 "\n"
 "Allmänna flaggor:\n"
 
-#: pg_dump.c:998
+#: pg_dump.c:995
 #, c-format
 msgid "  -f, --file=FILENAME          output file or directory name\n"
 msgstr "  -f, --file=FILENAME          fil eller katalognamn för utdata\n"
 
-#: pg_dump.c:999
+#: pg_dump.c:996
 #, c-format
 msgid ""
 "  -F, --format=c|d|t|p         output file format (custom, directory, tar,\n"
@@ -1390,42 +1370,42 @@ msgstr ""
 "  -F, --format=c|d|t|p         utdatans filformat (egen (c), katalog (d), tar (t),\n"
 "                               ren text (p) (standard))\n"
 
-#: pg_dump.c:1001
+#: pg_dump.c:998
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
 msgstr "  -j, --jobs=NUM               använd så här många parellella job för att dumpa\n"
 
-#: pg_dump.c:1002 pg_dumpall.c:622
+#: pg_dump.c:999 pg_dumpall.c:622
 #, c-format
 msgid "  -v, --verbose                verbose mode\n"
 msgstr "  -v, --verbose                visa mer information\n"
 
-#: pg_dump.c:1003 pg_dumpall.c:623
+#: pg_dump.c:1000 pg_dumpall.c:623
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                visa versionsinformation, avsluta sedan\n"
 
-#: pg_dump.c:1004
+#: pg_dump.c:1001
 #, c-format
 msgid "  -Z, --compress=0-9           compression level for compressed formats\n"
 msgstr "  -Z, --compress=0-9           komprimeringsnivå för komprimerade format\n"
 
-#: pg_dump.c:1005 pg_dumpall.c:624
+#: pg_dump.c:1002 pg_dumpall.c:624
 #, c-format
 msgid "  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"
 msgstr "  --lock-wait-timeout=TIMEOUT  misslyckas efter att ha väntat i TIMEOUT på tabellås\n"
 
-#: pg_dump.c:1006 pg_dumpall.c:651
+#: pg_dump.c:1003 pg_dumpall.c:651
 #, c-format
 msgid "  --no-sync                    do not wait for changes to be written safely to disk\n"
 msgstr "  --no-sync                    vänta inte på att ändingar säkert skrivits till disk\n"
 
-#: pg_dump.c:1007 pg_dumpall.c:625
+#: pg_dump.c:1004 pg_dumpall.c:625
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   visa denna hjälp, avsluta sedan\n"
 
-#: pg_dump.c:1009 pg_dumpall.c:626
+#: pg_dump.c:1006 pg_dumpall.c:626
 #, c-format
 msgid ""
 "\n"
@@ -1434,47 +1414,47 @@ msgstr ""
 "\n"
 "Flaggor som styr utmatning:\n"
 
-#: pg_dump.c:1010 pg_dumpall.c:627
+#: pg_dump.c:1007 pg_dumpall.c:627
 #, c-format
 msgid "  -a, --data-only              dump only the data, not the schema\n"
 msgstr "  -a, --data-only              dumpa bara data, inte schema\n"
 
-#: pg_dump.c:1011
+#: pg_dump.c:1008
 #, c-format
 msgid "  -b, --blobs                  include large objects in dump\n"
 msgstr "  -b, --blobs                  inkludera stora objekt i dumpen\n"
 
-#: pg_dump.c:1012
+#: pg_dump.c:1009
 #, c-format
 msgid "  -B, --no-blobs               exclude large objects in dump\n"
 msgstr "  -B, --no-blobs               exkludera stora objekt i dumpen\n"
 
-#: pg_dump.c:1013 pg_restore.c:476
+#: pg_dump.c:1010 pg_restore.c:476
 #, c-format
 msgid "  -c, --clean                  clean (drop) database objects before recreating\n"
-msgstr "  -c, --clean                  nollställ (drop) databaser innan återskapande\n"
+msgstr "  -c, --clean                  nollställ (drop) databasobjekt innan återskapande\n"
 
-#: pg_dump.c:1014
+#: pg_dump.c:1011
 #, c-format
 msgid "  -C, --create                 include commands to create database in dump\n"
 msgstr "  -C, --create                 inkludera kommandon för att skapa databasen i dumpen\n"
 
-#: pg_dump.c:1015 pg_dumpall.c:629
+#: pg_dump.c:1012 pg_dumpall.c:629
 #, c-format
 msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
 msgstr "  -E, --encoding=KODNING       dumpa data i teckenkodning KODNING\n"
 
-#: pg_dump.c:1016
+#: pg_dump.c:1013
 #, c-format
 msgid "  -n, --schema=PATTERN         dump the specified schema(s) only\n"
 msgstr "  -n, --schema=MALL            dumpa bara de angivna scheman\n"
 
-#: pg_dump.c:1017
+#: pg_dump.c:1014
 #, c-format
 msgid "  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"
 msgstr "  -N, --exclude-schema=MALL    dumpa INTE de angivna scheman\n"
 
-#: pg_dump.c:1018
+#: pg_dump.c:1015
 #, c-format
 msgid ""
 "  -O, --no-owner               skip restoration of object ownership in\n"
@@ -1483,52 +1463,52 @@ msgstr ""
 "  -O, --no-owner               hoppa över återställande av objektägare i\n"
 "                               textformatdumpar\n"
 
-#: pg_dump.c:1020 pg_dumpall.c:633
+#: pg_dump.c:1017 pg_dumpall.c:633
 #, c-format
 msgid "  -s, --schema-only            dump only the schema, no data\n"
 msgstr "  -s, --schema-only            dumpa bara scheman, inte data\n"
 
-#: pg_dump.c:1021
+#: pg_dump.c:1018
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
 msgstr "  -S, --superuser=NAME         superanvändarens namn för textformatdumpar\n"
 
-#: pg_dump.c:1022
+#: pg_dump.c:1019
 #, c-format
 msgid "  -t, --table=PATTERN          dump the specified table(s) only\n"
 msgstr "  -t, --table=MALL             dumpa bara de angivna tabellerna\n"
 
-#: pg_dump.c:1023
+#: pg_dump.c:1020
 #, c-format
 msgid "  -T, --exclude-table=PATTERN  do NOT dump the specified table(s)\n"
 msgstr "  -T, --exclude-table=MALL     dumpa INTE de angivna tabellerna\n"
 
-#: pg_dump.c:1024 pg_dumpall.c:636
+#: pg_dump.c:1021 pg_dumpall.c:636
 #, c-format
 msgid "  -x, --no-privileges          do not dump privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges          dumpa inte rättigheter (grant/revoke)\n"
 
-#: pg_dump.c:1025 pg_dumpall.c:637
+#: pg_dump.c:1022 pg_dumpall.c:637
 #, c-format
 msgid "  --binary-upgrade             for use by upgrade utilities only\n"
 msgstr "  --binary-upgrade             används bara av uppgraderingsverktyg\n"
 
-#: pg_dump.c:1026 pg_dumpall.c:638
+#: pg_dump.c:1023 pg_dumpall.c:638
 #, c-format
 msgid "  --column-inserts             dump data as INSERT commands with column names\n"
 msgstr "  --column-inserts             dumpa data som INSERT med kolumnnamn\n"
 
-#: pg_dump.c:1027 pg_dumpall.c:639
+#: pg_dump.c:1024 pg_dumpall.c:639
 #, c-format
 msgid "  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"
 msgstr "  --disable-dollar-quoting     slå av dollar-citering, använd standard SQL-citering\n"
 
-#: pg_dump.c:1028 pg_dumpall.c:640 pg_restore.c:493
+#: pg_dump.c:1025 pg_dumpall.c:640 pg_restore.c:493
 #, c-format
 msgid "  --disable-triggers           disable triggers during data-only restore\n"
 msgstr "  --disable-triggers           slå av utlösare vid återställning av enbart data\n"
 
-#: pg_dump.c:1029
+#: pg_dump.c:1026
 #, c-format
 msgid ""
 "  --enable-row-security        enable row security (dump only content user has\n"
@@ -1537,22 +1517,22 @@ msgstr ""
 "  --enable-row-security        slå på radsäkerhet (dumpa bara data användaren\n"
 "                               har rätt till)\n"
 
-#: pg_dump.c:1031
+#: pg_dump.c:1028
 #, c-format
 msgid "  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"
 msgstr "  --exclude-table-data=MALL    dumpa INTE data för de angivna tabellerna\n"
 
-#: pg_dump.c:1032 pg_dumpall.c:642
+#: pg_dump.c:1029 pg_dumpall.c:642
 #, c-format
 msgid "  --extra-float-digits=NUM     override default setting for extra_float_digits\n"
 msgstr "  --extra-float-digits=NUM     övertrumfa standardinställningen för extra_float_digits\n"
 
-#: pg_dump.c:1033 pg_dumpall.c:643 pg_restore.c:495
+#: pg_dump.c:1030 pg_dumpall.c:643 pg_restore.c:495
 #, c-format
 msgid "  --if-exists                  use IF EXISTS when dropping objects\n"
 msgstr "  --if-exists                  använd IF EXISTS när objekt droppas\n"
 
-#: pg_dump.c:1034
+#: pg_dump.c:1031
 #, c-format
 msgid ""
 "  --include-foreign-data=PATTERN\n"
@@ -1563,82 +1543,82 @@ msgstr ""
 "                               inkludera data i främmande tabeller från\n"
 "                               främmande servrar som matchar MALL\n"
 
-#: pg_dump.c:1037 pg_dumpall.c:644
+#: pg_dump.c:1034 pg_dumpall.c:644
 #, c-format
 msgid "  --inserts                    dump data as INSERT commands, rather than COPY\n"
 msgstr "  --inserts                    dumpa data som INSERT, istället för COPY\n"
 
-#: pg_dump.c:1038 pg_dumpall.c:645
+#: pg_dump.c:1035 pg_dumpall.c:645
 #, c-format
 msgid "  --load-via-partition-root    load partitions via the root table\n"
 msgstr "  --load-via-partition-root    ladda partitioner via root-tabellen\n"
 
-#: pg_dump.c:1039 pg_dumpall.c:646
+#: pg_dump.c:1036 pg_dumpall.c:646
 #, c-format
 msgid "  --no-comments                do not dump comments\n"
 msgstr "  --no-comments                dumpa inte kommentarer\n"
 
-#: pg_dump.c:1040 pg_dumpall.c:647
+#: pg_dump.c:1037 pg_dumpall.c:647
 #, c-format
 msgid "  --no-publications            do not dump publications\n"
 msgstr "  --no-publications            dumpa inte publiceringar\n"
 
-#: pg_dump.c:1041 pg_dumpall.c:649
+#: pg_dump.c:1038 pg_dumpall.c:649
 #, c-format
 msgid "  --no-security-labels         do not dump security label assignments\n"
 msgstr "  --no-security-labels         dumpa inte tilldelning av säkerhetsetiketter\n"
 
-#: pg_dump.c:1042 pg_dumpall.c:650
+#: pg_dump.c:1039 pg_dumpall.c:650
 #, c-format
 msgid "  --no-subscriptions           do not dump subscriptions\n"
 msgstr "  --no-subscriptions           dumpa inte prenumereringar\n"
 
-#: pg_dump.c:1043
+#: pg_dump.c:1040
 #, c-format
 msgid "  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"
 msgstr "  --no-synchronized-snapshots  använd inte synkroniserade snapshots i parallella job\n"
 
-#: pg_dump.c:1044 pg_dumpall.c:652
+#: pg_dump.c:1041 pg_dumpall.c:652
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
 msgstr "  --no-tablespaces             dumpa inte användning av tabellutymmen\n"
 
-#: pg_dump.c:1045 pg_dumpall.c:653
+#: pg_dump.c:1042 pg_dumpall.c:653
 #, c-format
 msgid "  --no-unlogged-table-data     do not dump unlogged table data\n"
 msgstr "  --no-unlogged-table-data     dumpa inte ologgad tabelldata\n"
 
-#: pg_dump.c:1046 pg_dumpall.c:654
+#: pg_dump.c:1043 pg_dumpall.c:654
 #, c-format
 msgid "  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"
 msgstr "  --on-conflict-do-nothing     addera ON CONFLICT DO NOTHING till INSERT-kommandon\n"
 
-#: pg_dump.c:1047 pg_dumpall.c:655
+#: pg_dump.c:1044 pg_dumpall.c:655
 #, c-format
 msgid "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
 msgstr "  --quote-all-identifiers      citera alla identifierar, även om de inte är nyckelord\n"
 
-#: pg_dump.c:1048 pg_dumpall.c:656
+#: pg_dump.c:1045 pg_dumpall.c:656
 #, c-format
 msgid "  --rows-per-insert=NROWS      number of rows per INSERT; implies --inserts\n"
 msgstr "  --rows-per-insert=NRADER     antal rader per INSERT; implicerar --inserts\n"
 
-#: pg_dump.c:1049
+#: pg_dump.c:1046
 #, c-format
 msgid "  --section=SECTION            dump named section (pre-data, data, or post-data)\n"
 msgstr "  --section=SEKTION            dumpa namngiven sektion (pre-data, data eller post-data)\n"
 
-#: pg_dump.c:1050
+#: pg_dump.c:1047
 #, c-format
 msgid "  --serializable-deferrable    wait until the dump can run without anomalies\n"
 msgstr "  --serializable-deferrable    wait until the dump can run without anomalies\n"
 
-#: pg_dump.c:1051
+#: pg_dump.c:1048
 #, c-format
 msgid "  --snapshot=SNAPSHOT          use given snapshot for the dump\n"
 msgstr "  --snapshot=SNAPSHOT          använda namngivet snapshot för att dumpa\n"
 
-#: pg_dump.c:1052 pg_restore.c:504
+#: pg_dump.c:1049 pg_restore.c:504
 #, c-format
 msgid ""
 "  --strict-names               require table and/or schema include patterns to\n"
@@ -1647,7 +1627,7 @@ msgstr ""
 "  --strict-names               kräv att mallar för tabeller och/eller scheman matchar\n"
 "                               minst en sak var\n"
 
-#: pg_dump.c:1054 pg_dumpall.c:657 pg_restore.c:506
+#: pg_dump.c:1051 pg_dumpall.c:657 pg_restore.c:506
 #, c-format
 msgid ""
 "  --use-set-session-authorization\n"
@@ -1658,7 +1638,7 @@ msgstr ""
 "                               använd kommandot SET SESSION AUTHORIZATION istället för\n"
 "                               kommandot ALTER OWNER för att sätta ägare\n"
 
-#: pg_dump.c:1058 pg_dumpall.c:661 pg_restore.c:510
+#: pg_dump.c:1055 pg_dumpall.c:661 pg_restore.c:510
 #, c-format
 msgid ""
 "\n"
@@ -1667,42 +1647,42 @@ msgstr ""
 "\n"
 "Flaggor för anslutning:\n"
 
-#: pg_dump.c:1059
+#: pg_dump.c:1056
 #, c-format
 msgid "  -d, --dbname=DBNAME      database to dump\n"
 msgstr "  -d, --dbname=DBNAMN      databasens som skall dumpas\n"
 
-#: pg_dump.c:1060 pg_dumpall.c:663 pg_restore.c:511
+#: pg_dump.c:1057 pg_dumpall.c:663 pg_restore.c:511
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr "  -h, --host=VÄRDNAMN      databasens värdnamn eller socketkatalog\n"
 
-#: pg_dump.c:1061 pg_dumpall.c:665 pg_restore.c:512
+#: pg_dump.c:1058 pg_dumpall.c:665 pg_restore.c:512
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
 msgstr "  -p, --port=PORT          databasens värdport\n"
 
-#: pg_dump.c:1062 pg_dumpall.c:666 pg_restore.c:513
+#: pg_dump.c:1059 pg_dumpall.c:666 pg_restore.c:513
 #, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
 msgstr "  -U, --username=NAMN      anslut med datta användarnamn mot databasen\n"
 
-#: pg_dump.c:1063 pg_dumpall.c:667 pg_restore.c:514
+#: pg_dump.c:1060 pg_dumpall.c:667 pg_restore.c:514
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
 msgstr "  -w, --no-password        fråga aldrig efter lösenord\n"
 
-#: pg_dump.c:1064 pg_dumpall.c:668 pg_restore.c:515
+#: pg_dump.c:1061 pg_dumpall.c:668 pg_restore.c:515
 #, c-format
 msgid "  -W, --password           force password prompt (should happen automatically)\n"
 msgstr "  -W, --password           fråga om lösenord (borde ske automatiskt)\n"
 
-#: pg_dump.c:1065 pg_dumpall.c:669
+#: pg_dump.c:1062 pg_dumpall.c:669
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before dump\n"
 msgstr "  --role=ROLLNAMN          gör SET ROLE innan dumpen\n"
 
-#: pg_dump.c:1067
+#: pg_dump.c:1064
 #, c-format
 msgid ""
 "\n"
@@ -1715,22 +1695,22 @@ msgstr ""
 "PGDATABASE att användas.\n"
 "\n"
 
-#: pg_dump.c:1069 pg_dumpall.c:673 pg_restore.c:522
+#: pg_dump.c:1066 pg_dumpall.c:673 pg_restore.c:522
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "Rapportera fel till <%s>.\n"
 
-#: pg_dump.c:1070 pg_dumpall.c:674 pg_restore.c:523
+#: pg_dump.c:1067 pg_dumpall.c:674 pg_restore.c:523
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "hemsida för %s: <%s>\n"
 
-#: pg_dump.c:1089 pg_dumpall.c:499
+#: pg_dump.c:1086 pg_dumpall.c:499
 #, c-format
 msgid "invalid client encoding \"%s\" specified"
 msgstr "ogiltig klientteckenkodning \"%s\" angiven"
 
-#: pg_dump.c:1235
+#: pg_dump.c:1232
 #, c-format
 msgid ""
 "Synchronized snapshots on standby servers are not supported by this server version.\n"
@@ -1741,456 +1721,456 @@ msgstr ""
 "Kör med --no-synchronized-snapshots istället om du inte behöver\n"
 "synkroniserade snapshots."
 
-#: pg_dump.c:1304
+#: pg_dump.c:1301
 #, c-format
 msgid "invalid output format \"%s\" specified"
 msgstr "ogiltigt utdataformat \"%s\" angivet"
 
-#: pg_dump.c:1342
+#: pg_dump.c:1339
 #, c-format
 msgid "no matching schemas were found for pattern \"%s\""
 msgstr "hittade inga matchande scheman för mallen \"%s\""
 
-#: pg_dump.c:1389
+#: pg_dump.c:1386
 #, c-format
 msgid "no matching foreign servers were found for pattern \"%s\""
 msgstr "hittade inga matchande främmande servrar för mallen \"%s\""
 
-#: pg_dump.c:1452
+#: pg_dump.c:1449
 #, c-format
 msgid "no matching tables were found for pattern \"%s\""
 msgstr "hittade inga matchande tabeller för mallen \"%s\""
 
-#: pg_dump.c:1865
+#: pg_dump.c:1862
 #, c-format
 msgid "dumping contents of table \"%s.%s\""
 msgstr "dumpar innehållet i tabell \"%s.%s\""
 
-#: pg_dump.c:1972
+#: pg_dump.c:1969
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed."
 msgstr "Dumpning av innehållet i tabellen \"%s\" misslyckades: PQendcopy() misslyckades."
 
-#: pg_dump.c:1973 pg_dump.c:1983
+#: pg_dump.c:1970 pg_dump.c:1980
 #, c-format
 msgid "Error message from server: %s"
 msgstr "Felmeddelandet från servern: %s"
 
-#: pg_dump.c:1974 pg_dump.c:1984
+#: pg_dump.c:1971 pg_dump.c:1981
 #, c-format
 msgid "The command was: %s"
 msgstr "Kommandot var: %s"
 
-#: pg_dump.c:1982
+#: pg_dump.c:1979
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetResult() failed."
 msgstr "Dumpning av innehållet i tabellen \"%s\" misslyckades: PQgetResult() misslyckades."
 
-#: pg_dump.c:2736
+#: pg_dump.c:2739
 #, c-format
 msgid "saving database definition"
 msgstr "sparar databasdefinition"
 
-#: pg_dump.c:3208
+#: pg_dump.c:3211
 #, c-format
 msgid "saving encoding = %s"
 msgstr "sparar kodning = %s"
 
-#: pg_dump.c:3233
+#: pg_dump.c:3236
 #, c-format
 msgid "saving standard_conforming_strings = %s"
 msgstr "sparar standard_conforming_strings = %s"
 
-#: pg_dump.c:3272
+#: pg_dump.c:3275
 #, c-format
 msgid "could not parse result of current_schemas()"
 msgstr "kunde inte parsa resultat från current_schemas()"
 
-#: pg_dump.c:3291
+#: pg_dump.c:3294
 #, c-format
 msgid "saving search_path = %s"
 msgstr "sparar search_path = %s"
 
-#: pg_dump.c:3331
+#: pg_dump.c:3334
 #, c-format
 msgid "reading large objects"
 msgstr "läser stora objekt"
 
-#: pg_dump.c:3513
+#: pg_dump.c:3516
 #, c-format
 msgid "saving large objects"
 msgstr "sparar stora objekt"
 
-#: pg_dump.c:3559
+#: pg_dump.c:3562
 #, c-format
 msgid "error reading large object %u: %s"
 msgstr "fel vid läsning av stort objekt %u: %s"
 
-#: pg_dump.c:3611
+#: pg_dump.c:3614
 #, c-format
 msgid "reading row security enabled for table \"%s.%s\""
 msgstr "läser aktiverad radsäkerhet för tabell \"%s.%s\""
 
-#: pg_dump.c:3642
+#: pg_dump.c:3645
 #, c-format
 msgid "reading policies for table \"%s.%s\""
 msgstr "läser policys för tabell \"%s.%s\""
 
-#: pg_dump.c:3794
+#: pg_dump.c:3797
 #, c-format
 msgid "unexpected policy command type: %c"
 msgstr "oväntad kommandotyp för policy: %c"
 
-#: pg_dump.c:3945
+#: pg_dump.c:3948
 #, c-format
 msgid "owner of publication \"%s\" appears to be invalid"
 msgstr "ägare av publicering \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:4091
+#: pg_dump.c:4093
 #, c-format
 msgid "reading publication membership for table \"%s.%s\""
 msgstr "läser publiceringsmedlemskap för tabell \"%s.%s\""
 
-#: pg_dump.c:4234
+#: pg_dump.c:4236
 #, c-format
 msgid "subscriptions not dumped because current user is not a superuser"
 msgstr "prenumerationer har inte dumpats få aktuell användare inte är en superanvändare"
 
-#: pg_dump.c:4288
+#: pg_dump.c:4290
 #, c-format
 msgid "owner of subscription \"%s\" appears to be invalid"
 msgstr "ägare av prenumeration \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:4332
+#: pg_dump.c:4334
 #, c-format
 msgid "could not parse subpublications array"
 msgstr "kunde inte parsa arrayen för subpubliceringar"
 
-#: pg_dump.c:4654
+#: pg_dump.c:4656
 #, c-format
 msgid "could not find parent extension for %s %s"
 msgstr "kunde inte hitta föräldrautökning för %s %s"
 
-#: pg_dump.c:4786
+#: pg_dump.c:4788
 #, c-format
 msgid "owner of schema \"%s\" appears to be invalid"
 msgstr "ägare av schema \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:4809
+#: pg_dump.c:4811
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "schema med OID %u existerar inte"
 
-#: pg_dump.c:5134
+#: pg_dump.c:5136
 #, c-format
 msgid "owner of data type \"%s\" appears to be invalid"
 msgstr "ägare av datatyp \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:5219
+#: pg_dump.c:5221
 #, c-format
 msgid "owner of operator \"%s\" appears to be invalid"
 msgstr "ägare av operator \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:5521
+#: pg_dump.c:5523
 #, c-format
 msgid "owner of operator class \"%s\" appears to be invalid"
 msgstr "ägare av operatorklass \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:5605
+#: pg_dump.c:5607
 #, c-format
 msgid "owner of operator family \"%s\" appears to be invalid"
 msgstr "ägare av operator-familj \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:5774
+#: pg_dump.c:5776
 #, c-format
 msgid "owner of aggregate function \"%s\" appears to be invalid"
 msgstr "ägare av aggregatfunktion \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:6034
+#: pg_dump.c:6036
 #, c-format
 msgid "owner of function \"%s\" appears to be invalid"
 msgstr "ägare av funktion \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:6862
+#: pg_dump.c:6864
 #, c-format
 msgid "owner of table \"%s\" appears to be invalid"
 msgstr "ägare av tabell \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:6904 pg_dump.c:17330
+#: pg_dump.c:6906 pg_dump.c:17386
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "misslyckades med riktighetskontroll, föräldratabell med OID %u för sekvens med OID %u hittas inte"
 
-#: pg_dump.c:7046
+#: pg_dump.c:7048
 #, c-format
 msgid "reading indexes for table \"%s.%s\""
 msgstr "läser index för tabell \"%s.%s\""
 
-#: pg_dump.c:7458
+#: pg_dump.c:7463
 #, c-format
 msgid "reading foreign key constraints for table \"%s.%s\""
 msgstr "läser främmande nyckel-villkor för tabell \"%s.%s\""
 
-#: pg_dump.c:7713
+#: pg_dump.c:7744
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "misslyckades med riktighetskontroll, föräldratabell med OID %u för pg_rewrite-rad med OID %u hittades inte"
 
-#: pg_dump.c:7796
+#: pg_dump.c:7827
 #, c-format
 msgid "reading triggers for table \"%s.%s\""
 msgstr "läser utlösare för tabell \"%s.%s\""
 
-#: pg_dump.c:7929
+#: pg_dump.c:7960
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)"
 msgstr "fråga producerade null som refererad tabell för främmande nyckel-utlösare \"%s\" i tabell \"%s\" (OID för tabell : %u)"
 
-#: pg_dump.c:8484
+#: pg_dump.c:8515
 #, c-format
 msgid "finding the columns and types of table \"%s.%s\""
 msgstr "hittar kolumner och typer för tabell \"%s.%s\""
 
-#: pg_dump.c:8620
+#: pg_dump.c:8651
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "ogiltigt kolumnnumrering i tabell \"%s\""
 
-#: pg_dump.c:8657
+#: pg_dump.c:8688
 #, c-format
 msgid "finding default expressions of table \"%s.%s\""
 msgstr "hittar default-uttryck för tabell \"%s.%s\""
 
-#: pg_dump.c:8679
+#: pg_dump.c:8710
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "felaktigt adnum-värde %d för tabell \"%s\""
 
-#: pg_dump.c:8744
+#: pg_dump.c:8775
 #, c-format
 msgid "finding check constraints for table \"%s.%s\""
 msgstr "hittar check-villkor för tabell \"%s.%s\""
 
-#: pg_dump.c:8793
+#: pg_dump.c:8824
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] "förväntade %d check-villkor för tabell \"%s\" men hittade %d"
 msgstr[1] "förväntade %d check-villkor för tabell \"%s\" men hittade %d"
 
-#: pg_dump.c:8797
+#: pg_dump.c:8828
 #, c-format
 msgid "(The system catalogs might be corrupted.)"
 msgstr "(systemkatalogerna kan vara trasiga.)"
 
-#: pg_dump.c:10383
+#: pg_dump.c:10414
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "typtype för datatyp \"%s\" verkar vara ogiltig"
 
-#: pg_dump.c:11737
+#: pg_dump.c:11768
 #, c-format
 msgid "bogus value in proargmodes array"
 msgstr "felaktigt värde i arrayen proargmodes"
 
-#: pg_dump.c:12109
+#: pg_dump.c:12140
 #, c-format
 msgid "could not parse proallargtypes array"
 msgstr "kunde inte tolka arrayen proallargtypes"
 
-#: pg_dump.c:12125
+#: pg_dump.c:12156
 #, c-format
 msgid "could not parse proargmodes array"
 msgstr "kunde inte tolka arrayen proargmodes"
 
-#: pg_dump.c:12139
+#: pg_dump.c:12170
 #, c-format
 msgid "could not parse proargnames array"
 msgstr "kunde inte tolka arrayen proargnames"
 
-#: pg_dump.c:12150
+#: pg_dump.c:12181
 #, c-format
 msgid "could not parse proconfig array"
 msgstr "kunde inte tolka arrayen proconfig"
 
-#: pg_dump.c:12230
+#: pg_dump.c:12261
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "okänt provolatile-värde för funktion \"%s\""
 
-#: pg_dump.c:12280 pg_dump.c:14338
+#: pg_dump.c:12311 pg_dump.c:14369
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "okänt proparallel-värde för funktion \"%s\""
 
-#: pg_dump.c:12419 pg_dump.c:12528 pg_dump.c:12535
+#: pg_dump.c:12450 pg_dump.c:12559 pg_dump.c:12566
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "kunde inte hitta funktionsdefinitionen för funktion med OID %u"
 
-#: pg_dump.c:12458
+#: pg_dump.c:12489
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "felaktigt värde i fältet pg_cast.castfunc eller pg_cast.castmethod"
 
-#: pg_dump.c:12461
+#: pg_dump.c:12492
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "felaktigt värde i fältet pg_cast.castmethod"
 
-#: pg_dump.c:12554
+#: pg_dump.c:12585
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "felaktig transform-definition, minst en av trffromsql och trftosql måste vara ickenoll"
 
-#: pg_dump.c:12571
+#: pg_dump.c:12602
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "felaktigt värde i fältet pg_transform.trffromsql"
 
-#: pg_dump.c:12592
+#: pg_dump.c:12623
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "felaktigt värde i fältet pg_transform.trftosql"
 
-#: pg_dump.c:12908
+#: pg_dump.c:12939
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "kunde inte hitta en operator med OID %s."
 
-#: pg_dump.c:12976
+#: pg_dump.c:13007
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "ogiltig typ \"%c\" för accessmetod \"%s\""
 
-#: pg_dump.c:13730
+#: pg_dump.c:13761
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "okänd jämförelseleverantör: %s"
 
-#: pg_dump.c:14202
+#: pg_dump.c:14233
 #, c-format
 msgid "aggregate function %s could not be dumped correctly for this database version; ignored"
 msgstr "aggregatfunktion %s kunde inte dumpas korrekt för denna databasversion; ignorerad"
 
-#: pg_dump.c:14257
+#: pg_dump.c:14288
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "okänt aggfinalmodify-värde för aggregat \"%s\""
 
-#: pg_dump.c:14313
+#: pg_dump.c:14344
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "okänt aggmfinalmodify-värde för aggregat \"%s\""
 
-#: pg_dump.c:15035
+#: pg_dump.c:15066
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "okänd objekttyp i standardrättigheter: %d"
 
-#: pg_dump.c:15053
+#: pg_dump.c:15084
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "kunde inte parsa standard-ACL-lista (%s)"
 
-#: pg_dump.c:15133
+#: pg_dump.c:15169
 #, c-format
 msgid "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) for object \"%s\" (%s)"
 msgstr "kunde inte parsa initial GRANT ACL-lista (%s) eller initial REVOKE ACL-lista (%s) för objekt \"%s\" (%s)"
 
-#: pg_dump.c:15141
+#: pg_dump.c:15177
 #, c-format
 msgid "could not parse GRANT ACL list (%s) or REVOKE ACL list (%s) for object \"%s\" (%s)"
 msgstr "kunde inte parsa GRANT ACL-lista (%s) eller REVOKE ACL-lista (%s) för objekt \"%s\" (%s)"
 
-#: pg_dump.c:15638
+#: pg_dump.c:15692
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "fråga för att hämta definition av vy \"%s\" returnerade ingen data"
 
-#: pg_dump.c:15641
+#: pg_dump.c:15695
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "fråga för att hämta definition av vy \"%s\" returnerade mer än en definition"
 
-#: pg_dump.c:15648
+#: pg_dump.c:15702
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "definition av vy \"%s\" verkar vara tom (längd noll)"
 
-#: pg_dump.c:15730
+#: pg_dump.c:15786
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDS stöds inte längre (tabell \"%s\")"
 
-#: pg_dump.c:16210
+#: pg_dump.c:16266
 #, c-format
 msgid "invalid number of parents %d for table \"%s\""
 msgstr "ogiltigt antal (%d) föräldrar för tabell \"%s\""
 
-#: pg_dump.c:16533
+#: pg_dump.c:16589
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "ogiltigt kolumnnummer %d för tabell \"%s\""
 
-#: pg_dump.c:16818
+#: pg_dump.c:16874
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "saknar index för integritetsvillkor \"%s\""
 
-#: pg_dump.c:17043
+#: pg_dump.c:17099
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "oväntad integritetsvillkorstyp: %c"
 
-#: pg_dump.c:17175 pg_dump.c:17395
+#: pg_dump.c:17231 pg_dump.c:17451
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "fråga för att hämta data för sekvens \"%s\" returnerade %d rad (förväntade 1)"
 msgstr[1] "fråga för att hämta data för sekvens \"%s\" returnerade %d rader (förväntade 1)"
 
-#: pg_dump.c:17209
+#: pg_dump.c:17265
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "okänd sekvenstyp: %s"
 
-#: pg_dump.c:17493
+#: pg_dump.c:17549
 #, c-format
 msgid "unexpected tgtype value: %d"
 msgstr "oväntat tgtype-värde: %d"
 
-#: pg_dump.c:17567
+#: pg_dump.c:17623
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
 msgstr "felaktig argumentsträng (%s) för utlösare \"%s\" i tabell \"%s\""
 
-#: pg_dump.c:17803
+#: pg_dump.c:17859
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "fråga för att hämta regel \"%s\" för tabell \"%s\" misslyckades: fel antal rader returnerades"
 
-#: pg_dump.c:17965
+#: pg_dump.c:18021
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "kunde inte hitta refererad utökning %u"
 
-#: pg_dump.c:18177
+#: pg_dump.c:18233
 #, c-format
 msgid "reading dependency data"
 msgstr "läser beroendedata"
 
-#: pg_dump.c:18270
+#: pg_dump.c:18326
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "inget refererande objekt %u %u"
 
-#: pg_dump.c:18281
+#: pg_dump.c:18337
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "inget refererat objekt %u %u"
 
-#: pg_dump.c:18654
+#: pg_dump.c:18710
 #, c-format
 msgid "could not parse reloptions array"
 msgstr "kunde inte parsa arrayen reloptions"
@@ -2315,7 +2295,7 @@ msgstr "  -f, --file=FILENAME          utdatafilnamn\n"
 #: pg_dumpall.c:628
 #, c-format
 msgid "  -c, --clean                  clean (drop) databases before recreating\n"
-msgstr "  -c, --clean                  nollställa (droppa) databaser innan återskapning\n"
+msgstr "  -c, --clean                  nollställ (drop) databaser innan återskapning\n"
 
 #: pg_dumpall.c:630
 #, c-format
@@ -2672,6 +2652,12 @@ msgstr ""
 "Om inget indatafilnamn är angivet, så kommer standard in att användas.\n"
 "\n"
 
+#~ msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to lack of data offsets in archive"
+#~ msgstr "kunde inte hitta block ID %d i arkiv -- kanske på grund av en återställningbegäran i oordning vilket inte kan hanteras då det saknas dataoffsets i arkivet"
+
+#~ msgid "ftell mismatch with expected position -- ftell used"
+#~ msgstr "ftell stämmer inte med förväntad position -- ftell använd"
+
 #~ msgid ""
 #~ "The program \"pg_dump\" was found by \"%s\"\n"
 #~ "but was not the same version as %s.\n"
@@ -2692,3 +2678,15 @@ msgstr ""
 
 #~ msgid "internal error -- neither th nor fh specified in _tarReadRaw()"
 #~ msgstr "internt fel -- varken th eller fh angiven i _tarReadRaw()"
+
+#~ msgid "connection needs password"
+#~ msgstr "anslutningen kräver lösenord"
+
+#~ msgid "could not reconnect to database: %s"
+#~ msgstr "kunde inte återuppkoppla mot databasen: %s"
+
+#~ msgid "could not reconnect to database"
+#~ msgstr "kunde inte återuppkoppla mot databasen"
+
+#~ msgid "connecting to database \"%s\" as user \"%s\""
+#~ msgstr "kopplar upp mot databas \"%s\" som användare \"%s\""

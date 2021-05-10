@@ -9,14 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_checksums (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:47+0000\n"
-"PO-Revision-Date: 2019-09-29 22:13-0300\n"
+"POT-Creation-Date: 2020-09-13 10:48+0000\n"
+"PO-Revision-Date: 2020-09-12 10:54-0500\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: pgsql-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.3\n"
 
 #: ../../../src/common/logging.c:236
 #, c-format
@@ -127,139 +128,139 @@ msgstr ""
 #: pg_checksums.c:91
 #, c-format
 msgid "Report bugs to <%s>.\n"
-msgstr ""
+msgstr "Reportar errores a <%s>.\n"
 
 #: pg_checksums.c:92
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
+msgstr "Sitio web de %s: <%s>\n"
 
 #: pg_checksums.c:161
 #, c-format
 msgid "%*s/%s MB (%d%%) computed"
 msgstr "%*s/%s MB (%d%%) calculado"
 
-#: pg_checksums.c:204
+#: pg_checksums.c:207
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: pg_checksums.c:220
+#: pg_checksums.c:223
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
 msgstr "no se pudo leer el bloque %u del archivo «%s»: %m"
 
-#: pg_checksums.c:223
+#: pg_checksums.c:226
 #, c-format
 msgid "could not read block %u in file \"%s\": read %d of %d"
 msgstr "no se pudo leer bloque %u en archivo «%s»: leídos %d de %d"
 
-#: pg_checksums.c:240
+#: pg_checksums.c:243
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
 msgstr "verificación de checksums falló en archivo «%s», bloque %u: checksum calculado %X pero bloque contiene %X"
 
-#: pg_checksums.c:255
+#: pg_checksums.c:258
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
 msgstr "posicionamiento (seek) falló para el bloque %u en archivo «%s»: %m"
 
-#: pg_checksums.c:264
+#: pg_checksums.c:267
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
 msgstr "no se pudo escribir el bloque %u en el archivo «%s»: %m"
 
-#: pg_checksums.c:267
+#: pg_checksums.c:270
 #, c-format
 msgid "could not write block %u in file \"%s\": wrote %d of %d"
 msgstr "no se pudo escribir el bloque %u en el archivo «%s»: se escribieron %d de %d"
 
-#: pg_checksums.c:280
+#: pg_checksums.c:283
 #, c-format
 msgid "checksums verified in file \"%s\""
 msgstr "checksums verificados en archivo «%s»"
 
-#: pg_checksums.c:282
+#: pg_checksums.c:285
 #, c-format
 msgid "checksums enabled in file \"%s\""
 msgstr "checksums activados en archivo «%s»"
 
-#: pg_checksums.c:307
+#: pg_checksums.c:310
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: pg_checksums.c:334 pg_checksums.c:413
+#: pg_checksums.c:337 pg_checksums.c:416
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
-#: pg_checksums.c:361
+#: pg_checksums.c:364
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
 msgstr "número de segmento %d no válido en nombre de archivo «%s»"
 
-#: pg_checksums.c:494
+#: pg_checksums.c:497
 #, c-format
 msgid "invalid filenode specification, must be numeric: %s"
 msgstr "especificación de filenode no válida: deben ser numérica: %s"
 
-#: pg_checksums.c:512 pg_checksums.c:528 pg_checksums.c:538 pg_checksums.c:547
+#: pg_checksums.c:515 pg_checksums.c:531 pg_checksums.c:541 pg_checksums.c:550
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Pruebe «%s --help» para mayor información.\n"
 
-#: pg_checksums.c:527
+#: pg_checksums.c:530
 #, c-format
 msgid "no data directory specified"
 msgstr "no se especificó el directorio de datos"
 
-#: pg_checksums.c:536
+#: pg_checksums.c:539
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)"
 
-#: pg_checksums.c:546
+#: pg_checksums.c:549
 #, c-format
 msgid "option -f/--filenode can only be used with --check"
 msgstr "la opción -f/--filenode sólo puede usarse con --check"
 
-#: pg_checksums.c:556
+#: pg_checksums.c:559
 #, c-format
 msgid "pg_control CRC value is incorrect"
 msgstr "el valor de CRC de pg_control es incorrecto"
 
-#: pg_checksums.c:562
+#: pg_checksums.c:565
 #, c-format
 msgid "cluster is not compatible with this version of pg_checksums"
 msgstr "el clúster no es compatible con esta versión de pg_checksums"
 
-#: pg_checksums.c:568
+#: pg_checksums.c:571
 #, c-format
 msgid "database cluster is not compatible"
 msgstr "el clúster de bases de datos no es compatible"
 
-#: pg_checksums.c:569
+#: pg_checksums.c:572
 #, c-format
 msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.\n"
 msgstr "El clúster fue inicializado con tamaño de bloque %u, pero pg_checksums fue compilado con tamaño de bloques %u.\n"
 
-#: pg_checksums.c:582
+#: pg_checksums.c:585
 #, c-format
 msgid "cluster must be shut down"
 msgstr "el clúster debe estar apagado"
 
-#: pg_checksums.c:589
+#: pg_checksums.c:592
 #, c-format
 msgid "data checksums are not enabled in cluster"
 msgstr "los checksums de datos no están activados en el clúster"
 
-#: pg_checksums.c:596
+#: pg_checksums.c:599
 #, c-format
 msgid "data checksums are already disabled in cluster"
 msgstr "los checksums de datos ya están desactivados en el clúster"
 
-#: pg_checksums.c:603
+#: pg_checksums.c:606
 #, c-format
 msgid "data checksums are already enabled in cluster"
 msgstr "los checksums de datos ya están activados en el clúster"
@@ -308,6 +309,3 @@ msgstr "Checksums activos en el clúster\n"
 #, c-format
 msgid "Checksums disabled in cluster\n"
 msgstr "Checksums inactivos en el clúster\n"
-
-#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"

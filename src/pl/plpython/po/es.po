@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:38+0000\n"
+"POT-Creation-Date: 2020-09-13 10:38+0000\n"
 "PO-Revision-Date: 2019-06-06 17:26-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -21,49 +21,49 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Poedit 2.0.2\n"
 
-#: plpy_cursorobject.c:74
+#: plpy_cursorobject.c:72
 #, c-format
 msgid "plpy.cursor expected a query or a plan"
 msgstr "plpy.cursor espera una consulta o un plan"
 
-#: plpy_cursorobject.c:157
+#: plpy_cursorobject.c:155
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor lleva una secuencia como segundo argumento"
 
-#: plpy_cursorobject.c:173 plpy_spi.c:207
+#: plpy_cursorobject.c:171 plpy_spi.c:207
 #, c-format
 msgid "could not execute plan"
 msgstr "no se pudo ejecutar el plan"
 
-#: plpy_cursorobject.c:176 plpy_spi.c:210
+#: plpy_cursorobject.c:174 plpy_spi.c:210
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
 msgstr[0] "Se esperaba una secuencia de %d argumento, se obtuvo %d: %s"
 msgstr[1] "Se esperaba una secuencia de %d argumentos, se obtuvo %d: %s"
 
-#: plpy_cursorobject.c:323
+#: plpy_cursorobject.c:321
 #, c-format
 msgid "iterating a closed cursor"
 msgstr "iterando un cursor cerrado"
 
-#: plpy_cursorobject.c:331 plpy_cursorobject.c:397
+#: plpy_cursorobject.c:329 plpy_cursorobject.c:395
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "iterando un cursor en una subtransacción abortada"
 
-#: plpy_cursorobject.c:389
+#: plpy_cursorobject.c:387
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "haciendo «fetch» en un cursor cerrado"
 
-#: plpy_cursorobject.c:432 plpy_spi.c:403
+#: plpy_cursorobject.c:430 plpy_spi.c:403
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
 msgstr "el resultado de la consulta tiene demasiados registros y no entran en una lista de Python"
 
-#: plpy_cursorobject.c:484
+#: plpy_cursorobject.c:482
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "cerrando un cursor en una subtransacción abortada"
@@ -298,7 +298,7 @@ msgstr "no se pudo compilar la función PL/Python «%s»"
 msgid "could not compile anonymous PL/Python code block"
 msgstr "no se pudo compilar el bloque anónimo PL/Python"
 
-#: plpy_resultobject.c:119 plpy_resultobject.c:145 plpy_resultobject.c:171
+#: plpy_resultobject.c:117 plpy_resultobject.c:143 plpy_resultobject.c:169
 #, c-format
 msgid "command did not produce a result set"
 msgstr "la orden no produjo un conjunto de resultados"
@@ -333,22 +333,22 @@ msgstr "falló SPI_execute_plan: %s"
 msgid "SPI_execute failed: %s"
 msgstr "falló SPI_execute: %s"
 
-#: plpy_subxactobject.c:93
+#: plpy_subxactobject.c:92
 #, c-format
 msgid "this subtransaction has already been entered"
 msgstr "ya se ha entrado en esta subtransacción"
 
-#: plpy_subxactobject.c:99 plpy_subxactobject.c:157
+#: plpy_subxactobject.c:98 plpy_subxactobject.c:156
 #, c-format
 msgid "this subtransaction has already been exited"
 msgstr "ya se ha salido de esta subtransacción"
 
-#: plpy_subxactobject.c:151
+#: plpy_subxactobject.c:150
 #, c-format
 msgid "this subtransaction has not been entered"
 msgstr "no se ha entrado en esta subtransacción"
 
-#: plpy_subxactobject.c:163
+#: plpy_subxactobject.c:162
 #, c-format
 msgid "there is no subtransaction to exit from"
 msgstr "no hay una subtransacción de la cual salir"

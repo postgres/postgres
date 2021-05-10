@@ -1,104 +1,110 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-12-05 10:35+0100\n"
-"PO-Revision-Date: 2019-03-01 16:07\n"
-"Last-Translator: pasha_golub <pavlo.golub@gmail.com>\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2020-09-21 21:08+0000\n"
+"PO-Revision-Date: 2020-09-22 13:43\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
-"X-Generator: crowdin.com\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_11_STABLE/src/pl/tcl/po/pltcl.pot\n"
+"X-Crowdin-File: /DEV_13/pltcl.pot\n"
+"X-Crowdin-File-ID: 522\n"
 
-#: pltcl.c:466
+#: pltcl.c:465
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "Функція PL/Tcl використовується для виклику коли pltcl вперше використаний."
 
-#: pltcl.c:473
+#: pltcl.c:472
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "Функція PL/TclU використовується для виклику коли pltclu вперше використаний."
 
-#: pltcl.c:640
+#: pltcl.c:636
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "функція «%s» написана неправильною мовою"
 
-#: pltcl.c:651
+#: pltcl.c:647
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "функція \"%s\" не має бути SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:685
+#: pltcl.c:681
 #, c-format
 msgid "processing %s parameter"
 msgstr "обробляється параметр %s"
 
-#: pltcl.c:846
+#: pltcl.c:835
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr ""
+msgstr "функція \"set-valued\" викликана в контексті, де йому немає місця"
 
-#: pltcl.c:1019
+#: pltcl.c:1008
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
-msgstr ""
+msgstr "функція, що повертає набір, викликана у контексті, що не приймає тип запис"
 
-#: pltcl.c:1296
+#: pltcl.c:1292
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "не вдалося розділити повернене значення з тригера: %s"
 
-#: pltcl.c:1376 pltcl.c:1806
+#: pltcl.c:1373 pltcl.c:1803
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1377
+#: pltcl.c:1374
 #, c-format
 msgid "%s\n"
 "in PL/Tcl function \"%s\""
 msgstr "%s\n"
 "у функції PL/Tcl \"%s\""
 
-#: pltcl.c:1541
+#: pltcl.c:1538
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "функція тригер може викликатися лише як тригер"
+msgstr "тригер-функція може викликатися лише як тригер"
 
-#: pltcl.c:1545
+#: pltcl.c:1542
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "Функції PL/Tcl не можуть повертати тип %s"
 
-#: pltcl.c:1584
+#: pltcl.c:1581
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "Функції PL/Tcl не можуть приймати тип %s"
 
-#: pltcl.c:1698
+#: pltcl.c:1695
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "не вдалося створити внутрішню процедуру \"%s\": %s"
 
-#: pltcl.c:3220
+#: pltcl.c:3199
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "список імен і значень стовпців повинен мати парну кількість елементів"
 
-#: pltcl.c:3238
+#: pltcl.c:3217
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "список імен і значень стовпців містить неіснуєче ім'я стовпця \"%s\""
 
-#: pltcl.c:3245
+#: pltcl.c:3224
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "не вдалося встановити системний атрибут \"%s\""
+
+#: pltcl.c:3230
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "неможливо оновити згенерований стовпець \"%s\""
 

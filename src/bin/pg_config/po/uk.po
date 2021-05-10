@@ -1,63 +1,67 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-12-04 20:35+0100\n"
-"PO-Revision-Date: 2019-05-07 12:57\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2020-09-21 21:14+0000\n"
+"PO-Revision-Date: 2020-09-22 13:43\n"
 "Last-Translator: pasha_golub\n"
 "Language-Team: Ukrainian\n"
-"Language: uk_UA\n"
+"Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
-"X-Generator: crowdin.com\n"
 "X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_11_STABLE/src/bin/pg_config/po/pg_config.pot\n"
+"X-Crowdin-File: /DEV_13/pg_config.pot\n"
+"X-Crowdin-File-ID: 494\n"
 
-#: ../../common/config_info.c:130 ../../common/config_info.c:138
-#: ../../common/config_info.c:146 ../../common/config_info.c:154
-#: ../../common/config_info.c:162 ../../common/config_info.c:170
-#: ../../common/config_info.c:178 ../../common/config_info.c:186
-#: ../../common/config_info.c:194
+#: ../../common/config_info.c:134 ../../common/config_info.c:142
+#: ../../common/config_info.c:150 ../../common/config_info.c:158
+#: ../../common/config_info.c:166 ../../common/config_info.c:174
+#: ../../common/config_info.c:182 ../../common/config_info.c:190
 msgid "not recorded"
 msgstr "не записано"
 
-#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#: ../../common/exec.c:137 ../../common/exec.c:254 ../../common/exec.c:300
 #, c-format
-msgid "could not identify current directory: %s"
-msgstr "не вдалося визначити поточний каталог: %s"
+msgid "could not identify current directory: %m"
+msgstr "не вдалося визначити поточний каталог: %m"
 
-#: ../../common/exec.c:146
+#: ../../common/exec.c:156
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "невірний бінарний файл \"%s\""
 
-#: ../../common/exec.c:195
+#: ../../common/exec.c:206
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "неможливо прочитати бінарний файл \"%s\""
 
-#: ../../common/exec.c:202
+#: ../../common/exec.c:214
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "неможливо знайти \"%s\" для виконання"
 
-#: ../../common/exec.c:257 ../../common/exec.c:293
+#: ../../common/exec.c:270 ../../common/exec.c:309
 #, c-format
-msgid "could not change directory to \"%s\": %s"
-msgstr "неможливо змінити директорію на \"%s\": %s"
+msgid "could not change directory to \"%s\": %m"
+msgstr "не вдалося змінити каталог на \"%s\": %m"
 
-#: ../../common/exec.c:272
+#: ../../common/exec.c:287
 #, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "неможливо прочитати символічне посилання \"%s\""
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "не можливо прочитати символічне послання \"%s\": %m"
 
-#: ../../common/exec.c:523
+#: ../../common/exec.c:410
 #, c-format
-msgid "pclose failed: %s"
-msgstr "помилка pclose: %s"
+msgid "pclose failed: %m"
+msgstr "помилка pclose: %m"
+
+#: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
+msgid "out of memory"
+msgstr "недостатньо пам'яті"
 
 #: pg_config.c:74
 #, c-format
@@ -212,21 +216,29 @@ msgstr "\n"
 
 #: pg_config.c:105
 #, c-format
-msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "Про помилки повідомляйте <pgsql-bugs@postgresql.org>.\n"
+msgid "Report bugs to <%s>.\n"
+msgstr "Повідомляти про помилки на <%s>.\n"
 
-#: pg_config.c:111
+#: pg_config.c:106
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Домашня сторінка %s: <%s>\n"
+
+#: pg_config.c:112
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
 
-#: pg_config.c:153
+#: pg_config.c:154
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: не вдалося знайти ехе файл власної програми\n"
 
-#: pg_config.c:180
+#: pg_config.c:181
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: недопустимий аргумент: %s\n"
+
+#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgstr "Про помилки повідомляйте на <pgsql-bugs@lists.postgresql.org>.\n"
 

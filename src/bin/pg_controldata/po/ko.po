@@ -3,10 +3,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL) 12\n"
+"Project-Id-Version: pg_controldata (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-02-09 20:16+0000\n"
-"PO-Revision-Date: 2019-11-01 11:32+0900\n"
+"POT-Creation-Date: 2020-10-05 20:46+0000\n"
+"PO-Revision-Date: 2020-10-06 11:18+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -68,7 +68,7 @@ msgstr "\"%s\" 파일을 쓸 수 없습니다: %m"
 msgid "could not fsync file \"%s\": %m"
 msgstr "\"%s\" 파일을 fsync 할 수 없습니다: %m"
 
-#: pg_controldata.c:36
+#: pg_controldata.c:35
 #, c-format
 msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
@@ -77,17 +77,17 @@ msgstr ""
 "%s 프로그램은 PostgreSQL 데이터베이스 클러스터의 제어정보를 보여줌.\n"
 "\n"
 
-#: pg_controldata.c:37
+#: pg_controldata.c:36
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: pg_controldata.c:38
+#: pg_controldata.c:37
 #, c-format
 msgid "  %s [OPTION] [DATADIR]\n"
 msgstr "  %s [옵션] [DATADIR]\n"
 
-#: pg_controldata.c:39
+#: pg_controldata.c:38
 #, c-format
 msgid ""
 "\n"
@@ -96,22 +96,22 @@ msgstr ""
 "\n"
 "옵션들:\n"
 
-#: pg_controldata.c:40
+#: pg_controldata.c:39
 #, c-format
 msgid " [-D, --pgdata=]DATADIR  data directory\n"
 msgstr " [-D, --pgdata=]DATADIR  데이터 디렉터리\n"
 
-#: pg_controldata.c:41
+#: pg_controldata.c:40
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          버전 정보 보여주고 마침\n"
 
-#: pg_controldata.c:42
+#: pg_controldata.c:41
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             이 도움말을 보여주고 마침\n"
 
-#: pg_controldata.c:43
+#: pg_controldata.c:42
 #, c-format
 msgid ""
 "\n"
@@ -125,10 +125,15 @@ msgstr ""
 "사용합니다.\n"
 "\n"
 
+#: pg_controldata.c:44
+#, c-format
+msgid "Report bugs to <%s>.\n"
+msgstr "문제점 보고 주소: <%s>\n"
+
 #: pg_controldata.c:45
 #, c-format
-msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-msgstr "오류보고: <pgsql-bugs@lists.postgresql.org>.\n"
+msgid "%s home page: <%s>\n"
+msgstr "%s 홈페이지: <%s>\n"
 
 #: pg_controldata.c:55
 msgid "starting up"
@@ -166,22 +171,22 @@ msgstr "알수 없는 상태 코드"
 msgid "unrecognized wal_level"
 msgstr "알 수 없는 wal_level"
 
-#: pg_controldata.c:138 pg_controldata.c:156 pg_controldata.c:164
+#: pg_controldata.c:137 pg_controldata.c:155 pg_controldata.c:163
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "보다 자세한 정보는 \"%s --help\"\n"
 
-#: pg_controldata.c:154
+#: pg_controldata.c:153
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "너무 많은 명령행 인수를 지정했습니다. (처음 \"%s\")"
 
-#: pg_controldata.c:163
+#: pg_controldata.c:162
 #, c-format
 msgid "no data directory specified"
 msgstr "데이터 디렉터리를 지정하지 않았습니다"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:170
 #, c-format
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
@@ -194,12 +199,12 @@ msgstr ""
 "경우입니다. 결과값들은 믿지 못할 값들이 출력될 수 있습니다.\n"
 "\n"
 
-#: pg_controldata.c:180
+#: pg_controldata.c:179
 #, c-format
 msgid "WARNING: invalid WAL segment size\n"
 msgstr "경고: 잘못된 WAL 조각 크기\n"
 
-#: pg_controldata.c:181
+#: pg_controldata.c:180
 #, c-format
 msgid ""
 "The WAL segment size stored in the file, %d byte, is not a power of two\n"
@@ -216,289 +221,284 @@ msgstr[0] ""
 "2^n 값이 아닙니다.  파일이 손상되었으며, 결과 또한 믿을 수 없습니다.\n"
 "\n"
 
-#: pg_controldata.c:223
+#: pg_controldata.c:222
 msgid "???"
 msgstr "???"
 
-#: pg_controldata.c:236
+#: pg_controldata.c:228
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control 버전 번호:                 %u\n"
 
-#: pg_controldata.c:238
+#: pg_controldata.c:230
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "카탈로그 버전 번호:                   %u\n"
 
-#: pg_controldata.c:240
+#: pg_controldata.c:232
 #, c-format
-msgid "Database system identifier:           %s\n"
-msgstr "데이터베이스 시스템 식별자:           %s\n"
+msgid "Database system identifier:           %llu\n"
+msgstr "데이터베이스 시스템 식별자:           %llu\n"
 
-#: pg_controldata.c:242
+#: pg_controldata.c:234
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "데이터베이스 클러스터 상태:           %s\n"
 
-#: pg_controldata.c:244
+#: pg_controldata.c:236
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "pg_control 마지막 변경시간:           %s\n"
 
-#: pg_controldata.c:246
+#: pg_controldata.c:238
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "마지막 체크포인트 위치:               %X/%X\n"
 
-#: pg_controldata.c:249
+#: pg_controldata.c:241
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "마지막 체크포인트 REDO 위치:          %X/%X\n"
 
-#: pg_controldata.c:252
+#: pg_controldata.c:244
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
 msgstr "마지막 체크포인트 REDO WAL 파일:      %s\n"
 
-#: pg_controldata.c:254
+#: pg_controldata.c:246
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "마지막 체크포인트 TimeLineID:         %u\n"
 
-#: pg_controldata.c:256
+#: pg_controldata.c:248
 #, c-format
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
 msgstr "마지막 체크포인트 PrevTimeLineID:     %u\n"
 
-#: pg_controldata.c:258
+#: pg_controldata.c:250
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "마지막 체크포인트 full_page_writes:   %s\n"
 
-#: pg_controldata.c:259 pg_controldata.c:304 pg_controldata.c:316
+#: pg_controldata.c:251 pg_controldata.c:296 pg_controldata.c:308
 msgid "off"
 msgstr "off"
 
-#: pg_controldata.c:259 pg_controldata.c:304 pg_controldata.c:316
+#: pg_controldata.c:251 pg_controldata.c:296 pg_controldata.c:308
 msgid "on"
 msgstr "on"
 
-#: pg_controldata.c:260
+#: pg_controldata.c:252
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "마지막 체크포인트 NextXID:            %u:%u\n"
 
-#: pg_controldata.c:263
+#: pg_controldata.c:255
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "마지막 체크포인트 NextOID:            %u\n"
 
-#: pg_controldata.c:265
+#: pg_controldata.c:257
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "마지막 체크포인트 NextMultiXactId:    %u\n"
 
-#: pg_controldata.c:267
+#: pg_controldata.c:259
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "마지막 체크포인트 NextMultiOffset:    %u\n"
 
-#: pg_controldata.c:269
+#: pg_controldata.c:261
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "마지막 체크포인트 제일오래된XID:      %u\n"
 
-#: pg_controldata.c:271
+#: pg_controldata.c:263
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "마지막 체크포인트 제일오래된XID의 DB: %u\n"
 
-#: pg_controldata.c:273
+#: pg_controldata.c:265
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "마지막 체크포인트 제일오래된ActiveXID:%u\n"
 
-#: pg_controldata.c:275
+#: pg_controldata.c:267
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "마지막 체크포인트 제일오래된MultiXid: %u\n"
 
-#: pg_controldata.c:277
+#: pg_controldata.c:269
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "마지막 체크포인트 제일오래된멀티Xid DB:%u\n"
 
-#: pg_controldata.c:279
+#: pg_controldata.c:271
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "마지막 체크포인트 제일오래된CommitTsXid:%u\n"
 
-#: pg_controldata.c:281
+#: pg_controldata.c:273
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "마지막 체크포인트 최신CommitTsXid:    %u\n"
 
-#: pg_controldata.c:283
+#: pg_controldata.c:275
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "마지막 체크포인트 시간:               %s\n"
 
-#: pg_controldata.c:285
+#: pg_controldata.c:277
 #, c-format
 msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
 msgstr "언로그 릴레이션의 가짜 LSN 카운터:    %X/%X\n"
 
-#: pg_controldata.c:288
+#: pg_controldata.c:280
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "최소 복구 마지막 위치:                %X/%X\n"
 
-#: pg_controldata.c:291
+#: pg_controldata.c:283
 #, c-format
 msgid "Min recovery ending loc's timeline:   %u\n"
 msgstr "최소 복구 종료 위치의 타임라인:       %u\n"
 
-#: pg_controldata.c:293
+#: pg_controldata.c:285
 #, c-format
 msgid "Backup start location:                %X/%X\n"
 msgstr "백업 시작 위치:                       %X/%X\n"
 
-#: pg_controldata.c:296
+#: pg_controldata.c:288
 #, c-format
 msgid "Backup end location:                  %X/%X\n"
 msgstr "백업 종료 위치:                       %X/%X\n"
 
-#: pg_controldata.c:299
+#: pg_controldata.c:291
 #, c-format
 msgid "End-of-backup record required:        %s\n"
 msgstr "백업 종료 레코드 필요 여부:           %s\n"
 
-#: pg_controldata.c:300
+#: pg_controldata.c:292
 msgid "no"
 msgstr "아니오"
 
-#: pg_controldata.c:300
+#: pg_controldata.c:292
 msgid "yes"
 msgstr "예"
 
-#: pg_controldata.c:301
+#: pg_controldata.c:293
 #, c-format
 msgid "wal_level setting:                    %s\n"
 msgstr "wal_level 설정값:                     %s\n"
 
-#: pg_controldata.c:303
+#: pg_controldata.c:295
 #, c-format
 msgid "wal_log_hints setting:                %s\n"
 msgstr "wal_log_hints 설정값:                 %s\n"
 
-#: pg_controldata.c:305
+#: pg_controldata.c:297
 #, c-format
 msgid "max_connections setting:              %d\n"
 msgstr "max_connections 설정값:               %d\n"
 
-#: pg_controldata.c:307
+#: pg_controldata.c:299
 #, c-format
 msgid "max_worker_processes setting:         %d\n"
 msgstr "max_worker_processes 설정값:          %d\n"
 
-#: pg_controldata.c:309
+#: pg_controldata.c:301
 #, c-format
 msgid "max_wal_senders setting:              %d\n"
 msgstr "max_wal_senders 설정값:               %d\n"
 
-#: pg_controldata.c:311
+#: pg_controldata.c:303
 #, c-format
 msgid "max_prepared_xacts setting:           %d\n"
 msgstr "max_prepared_xacts 설정값:            %d\n"
 
-#: pg_controldata.c:313
+#: pg_controldata.c:305
 #, c-format
 msgid "max_locks_per_xact setting:           %d\n"
 msgstr "max_locks_per_xact 설정값:            %d\n"
 
-#: pg_controldata.c:315
+#: pg_controldata.c:307
 #, c-format
 msgid "track_commit_timestamp setting:       %s\n"
 msgstr "track_commit_timestamp 설정값:        %s\n"
 
-#: pg_controldata.c:317
+#: pg_controldata.c:309
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "최대 자료 정렬:                       %u\n"
 
-#: pg_controldata.c:320
+#: pg_controldata.c:312
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "데이터베이스 블록 크기:               %u\n"
 
-#: pg_controldata.c:322
+#: pg_controldata.c:314
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "대형 릴레이션의 세그먼트당 블럭 개수: %u\n"
 
-#: pg_controldata.c:324
+#: pg_controldata.c:316
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WAL 블록 크기:                        %u\n"
 
-#: pg_controldata.c:326
+#: pg_controldata.c:318
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "WAL 세그먼트의 크기(byte):            %u\n"
 
-#: pg_controldata.c:328
+#: pg_controldata.c:320
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "식별자 최대 길이:                     %u\n"
 
-#: pg_controldata.c:330
+#: pg_controldata.c:322
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "인덱스에서 사용하는 최대 열 수:       %u\n"
 
-#: pg_controldata.c:332
+#: pg_controldata.c:324
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "TOAST 청크 최대 크기:                 %u\n"
 
-#: pg_controldata.c:334
+#: pg_controldata.c:326
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
 msgstr "대형 객체 청크 크기:                  %u\n"
 
-#: pg_controldata.c:337
+#: pg_controldata.c:329
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "날짜/시간형 자료의 저장방식:          %s\n"
 
-#: pg_controldata.c:338
+#: pg_controldata.c:330
 msgid "64-bit integers"
 msgstr "64-비트 정수"
 
-#: pg_controldata.c:339
-#, c-format
-msgid "Float4 argument passing:              %s\n"
-msgstr "Float4 인수 전달:                     %s\n"
-
-#: pg_controldata.c:340 pg_controldata.c:342
-msgid "by reference"
-msgstr "참조별"
-
-#: pg_controldata.c:340 pg_controldata.c:342
-msgid "by value"
-msgstr "값별"
-
-#: pg_controldata.c:341
+#: pg_controldata.c:331
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Float8 인수 전달:                     %s\n"
 
-#: pg_controldata.c:343
+#: pg_controldata.c:332
+msgid "by reference"
+msgstr "참조별"
+
+#: pg_controldata.c:332
+msgid "by value"
+msgstr "값별"
+
+#: pg_controldata.c:333
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "데이터 페이지 체크섬 버전:            %u\n"
 
-#: pg_controldata.c:345
+#: pg_controldata.c:335
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "임시 모의 인증:                       %s\n"

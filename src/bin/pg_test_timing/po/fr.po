@@ -6,9 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 12\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-11-06 09:45+0000\n"
-"PO-Revision-Date: 2017-11-11 14:21+0100\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-04-22 04:17+0000\n"
+"PO-Revision-Date: 2021-04-22 10:10+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -16,64 +16,72 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
-"X-Generator: Poedit 2.0.3\n"
+"X-Generator: Poedit 2.4.2\n"
 
-#: pg_test_timing.c:55
+#: pg_test_timing.c:59
 #, c-format
 msgid "Usage: %s [-d DURATION]\n"
 msgstr "Usage: %s [-d DURÉE]\n"
 
-#: pg_test_timing.c:75 pg_test_timing.c:87 pg_test_timing.c:104
+#: pg_test_timing.c:81
+#, c-format
+msgid "%s: invalid argument for option %s\n"
+msgstr "%s : argument invalide pour l'option %s\n"
+
+#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
-#: pg_test_timing.c:85
+#: pg_test_timing.c:90
+#, c-format
+msgid "%s: %s must be in range %u..%u\n"
+msgstr "%s : %s doit être compris entre %u et %u\n"
+
+#: pg_test_timing.c:107
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
 
-#: pg_test_timing.c:94
+#: pg_test_timing.c:115
 #, c-format
-msgid "Testing timing overhead for %d second.\n"
-msgid_plural "Testing timing overhead for %d seconds.\n"
-msgstr[0] "Test du coût du chronométrage pour %d seconde.\n"
-msgstr[1] "Test du coût du chronométrage pour %d secondes.\n"
+msgid "Testing timing overhead for %u second.\n"
+msgid_plural "Testing timing overhead for %u seconds.\n"
+msgstr[0] "Test du coût du chronométrage pour %u seconde.\n"
+msgstr[1] "Test du coût du chronométrage pour %u secondes.\n"
 
-#: pg_test_timing.c:102
-#, c-format
-msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
-msgstr "%s : la durée doit être un entier positif (la durée est « %d »)\n"
-
-#: pg_test_timing.c:140
+#: pg_test_timing.c:151
 #, c-format
 msgid "Detected clock going backwards in time.\n"
 msgstr "Détection d'une horloge partant à rebours.\n"
 
-#: pg_test_timing.c:141
+#: pg_test_timing.c:152
 #, c-format
 msgid "Time warp: %d ms\n"
 msgstr "Décalage de temps : %d ms\n"
 
-#: pg_test_timing.c:164
+#: pg_test_timing.c:175
 #, c-format
 msgid "Per loop time including overhead: %0.2f ns\n"
 msgstr "Durée par boucle incluant le coût : %0.2f ns\n"
 
-#: pg_test_timing.c:175
+#: pg_test_timing.c:186
 msgid "< us"
 msgstr "< us"
 
-#: pg_test_timing.c:176
+#: pg_test_timing.c:187
 #, no-c-format
 msgid "% of total"
 msgstr "% du total"
 
-#: pg_test_timing.c:177
+#: pg_test_timing.c:188
 msgid "count"
 msgstr "nombre"
 
-#: pg_test_timing.c:186
+#: pg_test_timing.c:197
 #, c-format
 msgid "Histogram of timing durations:\n"
 msgstr "Histogramme des durées de chronométrage\n"
+
+#~ msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
+#~ msgstr "%s : la durée doit être un entier positif (la durée est « %d »)\n"

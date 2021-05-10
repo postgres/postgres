@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:46+0000\n"
-"PO-Revision-Date: 2019-09-29 22:06-0300\n"
+"POT-Creation-Date: 2020-09-13 10:46+0000\n"
+"PO-Revision-Date: 2020-06-08 15:50-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -124,16 +124,14 @@ msgid "could not close directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
 #: ../../common/restricted_token.c:64
-#, fuzzy, c-format
-#| msgid "could not load library \"%s\": %s"
+#, c-format
 msgid "could not load library \"%s\": error code %lu"
-msgstr "no se pudo cargar la biblioteca «%s»: %s"
+msgstr "no se pudo cargar la biblioteca «%s»: código de error %lu"
 
 #: ../../common/restricted_token.c:73
-#, fuzzy, c-format
-#| msgid "cannot create restricted tokens on this platform"
+#, c-format
 msgid "cannot create restricted tokens on this platform: error code %lu"
-msgstr "no se pueden crear tokens restrigidos en esta plataforma"
+msgstr "no se pueden crear tokens restrigidos en esta plataforma: código de error %lu"
 
 #: ../../common/restricted_token.c:82
 #, c-format
@@ -670,11 +668,13 @@ msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
+"\n"
+"Reporte errores a <%s>.\n"
 
 #: initdb.c:2326
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
+msgstr "Sitio web de %s: <%s>\n"
 
 #: initdb.c:2354
 #, c-format
@@ -710,6 +710,9 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation."
 msgstr ""
+"%s necesita el programa «%s», pero no pudo encontrarlo en el mismo\n"
+"directorio que «%s».\n"
+"Verifique su instalación."
 
 #: initdb.c:2439
 #, c-format
@@ -718,6 +721,9 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation."
 msgstr ""
+"El programa «%s» fue encontrado por «%s»,\n"
+"pero no es de la misma versión que %s.\n"
+"Verifique su instalación."
 
 #: initdb.c:2458
 #, c-format
@@ -1017,28 +1023,3 @@ msgstr ""
 "\n"
 "    %s\n"
 "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid ""
-#~ "The program \"postgres\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "%s necesita el programa «postgres», pero no pudo encontrarlo en el mismo\n"
-#~ "directorio que «%s».\n"
-#~ "Verifique su instalación."
-
-#~ msgid ""
-#~ "The program \"postgres\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "El programa «postgres» fue encontrado por %s, pero no es\n"
-#~ "de la misma versión que «%s».\n"
-#~ "Verifique su instalación."

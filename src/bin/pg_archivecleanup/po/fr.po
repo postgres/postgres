@@ -5,7 +5,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 12\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-04-16 06:16+0000\n"
 "PO-Revision-Date: 2020-04-16 13:39+0200\n"

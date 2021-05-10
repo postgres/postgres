@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-17 02:45+0000\n"
-"PO-Revision-Date: 2019-06-06 17:25-0400\n"
+"POT-Creation-Date: 2020-09-13 10:45+0000\n"
+"PO-Revision-Date: 2020-09-18 18:35-0300\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -68,22 +68,20 @@ msgid "could not find any WAL file"
 msgstr "no se pudo encontrar ningún archivo WAL"
 
 #: pg_waldump.c:318
-#, fuzzy, c-format
-#| msgid "could not find file \"%s\": %s"
+#, c-format
 msgid "could not find file \"%s\": %m"
-msgstr "no se pudo encontrar el archivo «%s»: %s"
+msgstr "no se pudo encontrar el archivo «%s»: %m"
 
 #: pg_waldump.c:367
-#, fuzzy, c-format
-#| msgid "Could not read from file \"%s\" at offset %u: %m."
+#, c-format
 msgid "could not read from file %s, offset %u: %m"
-msgstr "No se pudo leer desde el archivo «%s» en la posición %u: %m."
+msgstr "no se pudo leer desde el archivo «%s» en la posición %u: %m"
 
+# XXX why talk about "log segment" instead of "file"?
 #: pg_waldump.c:371
-#, fuzzy, c-format
-#| msgid "could not read from log file %s, offset %u: read %d of %zu"
+#, c-format
 msgid "could not read from file %s, offset %u: read %d of %zu"
-msgstr "no se pudo leer del archivo de log %s, posición %u: leído %d de %zu"
+msgstr "no se pudo leer del archivo %s, posición %u: leídos %d de %zu"
 
 #: pg_waldump.c:720
 #, c-format
@@ -145,10 +143,9 @@ msgstr ""
 "                           (por omisión: directorio actual, ./pg_wal, $PGDATA/pg_wal)\n"
 
 #: pg_waldump.c:732
-#, fuzzy, c-format
-#| msgid "  -q, --quiet               don't write any messages\n"
+#, c-format
 msgid "  -q, --quiet            do not print any output, except for errors\n"
-msgstr "  -q, --quiet               no escribir ningún mensaje\n"
+msgstr "  -q, --quiet                 no escribir ningún mensaje, excepto errores\n"
 
 #: pg_waldump.c:733
 #, c-format
@@ -203,11 +200,13 @@ msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
+"\n"
+"Reporte errores a <%s>.\n"
 
 #: pg_waldump.c:744
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
+msgstr "Sitio web de %s: <%s>\n"
 
 #: pg_waldump.c:821
 #, c-format
@@ -310,28 +309,3 @@ msgstr "error en registro de WAL en %X/%X: %s"
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Pruebe «%s --help» para mayor información.\n"
-
-#~ msgid "could not open file \"%s\": %s"
-#~ msgstr "no se pudo abrir el archivo «%s»: %s"
-
-#~ msgid "could not read file \"%s\": %s"
-#~ msgstr "no se pudo leer el archivo «%s»: %s"
-
-#~ msgid "could not seek in log file %s to offset %u: %s"
-#~ msgstr "no se pudo posicionar (seek) en el archivo de log %s a la posición %u: %s"
-
-#~ msgid "could not read from log file %s, offset %u, length %d: %s"
-#~ msgstr "no se pudo leer del archivo de log %s, posición %u, longitud %d: %s"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "path \"%s\" could not be opened: %s"
-#~ msgstr "la ruta «%s» no se pudo abrir: %s"
-
-#~ msgid "could not open directory \"%s\": %s"
-#~ msgstr "no se pudo abrir el directorio «%s»: %s"
