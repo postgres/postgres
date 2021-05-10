@@ -1233,6 +1233,10 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	/* Project the new tuple version */
 	ExecProject(resultRelInfo->ri_onConflictSetProj, NULL);
 
+	if (mtstate->mt_confljunk)
+		(void) ExecFilterJunk(mtstate->mt_confljunk,
+							  resultRelInfo->ri_onConflictSetProj->pi_slot);
+
 	/*
 	 * Note that it is possible that the target tuple has been modified in
 	 * this session, after the above heap_lock_tuple. We choose to not error
@@ -1744,7 +1748,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	{
 		ExprContext *econtext;
 		ExprState  *setexpr;
-		TupleDesc	tupDesc;
 
 		/* insert may only have one plan, inheritance is not expanded */
 		Assert(nplans == 1);
@@ -1764,17 +1767,54 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->mt_excludedtlist = node->exclRelTlist;
 
 		/* create target slot for UPDATE SET projection */
-		tupDesc = ExecTypeFromTL((List *) node->onConflictSet,
-						 resultRelInfo->ri_RelationDesc->rd_rel->relhasoids);
 		mtstate->mt_conflproj = ExecInitExtraTupleSlot(mtstate->ps.state);
-		ExecSetSlotDescriptor(mtstate->mt_conflproj, tupDesc);
+		ExecSetSlotDescriptor(mtstate->mt_conflproj,
+							  resultRelInfo->ri_RelationDesc->rd_att);
 
-		/* build UPDATE SET expression and projection state */
+		/* initialize UPDATE SET tlist expressions */
 		setexpr = ExecInitExpr((Expr *) node->onConflictSet, &mtstate->ps);
-		resultRelInfo->ri_onConflictSetProj =
-			ExecBuildProjectionInfo((List *) setexpr, econtext,
-									mtstate->mt_conflproj,
-									resultRelInfo->ri_RelationDesc->rd_att);
+
+		/*
+		 * The onConflictSet tlist should already have been adjusted to emit
+		 * the table's exact column list.
+		 */
+		ExecCheckPlanOutput(resultRelInfo->ri_RelationDesc,
+							node->onConflictSet);
+
+		/*
+		 * However, it might also contain resjunk columns, in which case we'll
+		 * need a junkfilter to get rid of those.
+		 */
+		if (ExecCleanTargetListLength(node->onConflictSet) ==
+			list_length(node->onConflictSet))
+		{
+			/* No junk columns, so we'll just project into mt_conflproj. */
+			resultRelInfo->ri_onConflictSetProj =
+				ExecBuildProjectionInfo((List *) setexpr, econtext,
+										mtstate->mt_conflproj,
+										resultRelInfo->ri_RelationDesc->rd_att);
+			mtstate->mt_confljunk = NULL;
+		}
+		else
+		{
+			/*
+			 * Project into a slot matching the tlist's output rowtype, then
+			 * apply a junkfilter.
+			 */
+			TupleDesc	tupDesc = ExecTypeFromTL(node->onConflictSet, false);
+			TupleTableSlot *ocsSlot;
+
+			ocsSlot = ExecInitExtraTupleSlot(mtstate->ps.state);
+			ExecSetSlotDescriptor(ocsSlot, tupDesc);
+			resultRelInfo->ri_onConflictSetProj =
+				ExecBuildProjectionInfo((List *) setexpr, econtext,
+										ocsSlot,
+										resultRelInfo->ri_RelationDesc->rd_att);
+			mtstate->mt_confljunk =
+				ExecInitJunkFilter(node->onConflictSet,
+								   resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
+								   mtstate->mt_conflproj);
+		}
 
 		/* build DO UPDATE WHERE clause expression */
 		if (node->onConflictWhere)

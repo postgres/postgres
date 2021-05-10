@@ -1141,6 +1141,7 @@ typedef struct ModifyTableState
 										 * tlist  */
 	TupleTableSlot *mt_conflproj;		/* CONFLICT ... SET ... projection
 										 * target */
+	JunkFilter *mt_confljunk;	/* CONFLICT ... SET might need a junkfilter */
 } ModifyTableState;
 
 /* ----------------
