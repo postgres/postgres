@@ -492,6 +492,7 @@ ExecInitUpdateProjection(ModifyTableState *mtstate,
 
 	resultRelInfo->ri_projectNew =
 		ExecBuildUpdateProjection(subplan->targetlist,
+								  false,	/* subplan did the evaluation */
 								  updateColnos,
 								  relDesc,
 								  mtstate->ps.ps_ExprContext,
@@ -2972,9 +2973,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 */
 	if (node->onConflictAction == ONCONFLICT_UPDATE)
 	{
+		OnConflictSetState *onconfl = makeNode(OnConflictSetState);
 		ExprContext *econtext;
 		TupleDesc	relationDesc;
-		TupleDesc	tupDesc;
 
 		/* already exists if created by RETURNING processing above */
 		if (mtstate->ps.ps_ExprContext == NULL)
@@ -2984,10 +2985,10 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		relationDesc = resultRelInfo->ri_RelationDesc->rd_att;
 
 		/* create state for DO UPDATE SET operation */
-		resultRelInfo->ri_onConflict = makeNode(OnConflictSetState);
+		resultRelInfo->ri_onConflict = onconfl;
 
 		/* initialize slot for the existing tuple */
-		resultRelInfo->ri_onConflict->oc_Existing =
+		onconfl->oc_Existing =
 			table_slot_create(resultRelInfo->ri_RelationDesc,
 							  &mtstate->ps.state->es_tupleTable);
 
@@ -2997,17 +2998,19 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * into the table, and for RETURNING processing - which may access
 		 * system attributes.
 		 */
-		tupDesc = ExecTypeFromTL((List *) node->onConflictSet);
-		resultRelInfo->ri_onConflict->oc_ProjSlot =
-			ExecInitExtraTupleSlot(mtstate->ps.state, tupDesc,
-								   table_slot_callbacks(resultRelInfo->ri_RelationDesc));
+		onconfl->oc_ProjSlot =
+			table_slot_create(resultRelInfo->ri_RelationDesc,
+							  &mtstate->ps.state->es_tupleTable);
 
 		/* build UPDATE SET projection state */
-		resultRelInfo->ri_onConflict->oc_ProjInfo =
-			ExecBuildProjectionInfo(node->onConflictSet, econtext,
-									resultRelInfo->ri_onConflict->oc_ProjSlot,
-									&mtstate->ps,
-									relationDesc);
+		onconfl->oc_ProjInfo =
+			ExecBuildUpdateProjection(node->onConflictSet,
+									  true,
+									  node->onConflictCols,
+									  relationDesc,
+									  econtext,
+									  onconfl->oc_ProjSlot,
+									  &mtstate->ps);
 
 		/* initialize state to evaluate the WHERE clause, if any */
 		if (node->onConflictWhere)
@@ -3016,7 +3019,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 			qualexpr = ExecInitQual((List *) node->onConflictWhere,
 									&mtstate->ps);
-			resultRelInfo->ri_onConflict->oc_WhereClause = qualexpr;
+			onconfl->oc_WhereClause = qualexpr;
 		}
 	}
 

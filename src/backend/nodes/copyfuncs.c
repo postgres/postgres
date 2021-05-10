@@ -217,6 +217,7 @@ _copyModifyTable(const ModifyTable *from)
 	COPY_SCALAR_FIELD(onConflictAction);
 	COPY_NODE_FIELD(arbiterIndexes);
 	COPY_NODE_FIELD(onConflictSet);
+	COPY_NODE_FIELD(onConflictCols);
 	COPY_NODE_FIELD(onConflictWhere);
 	COPY_SCALAR_FIELD(exclRelRTI);
 	COPY_NODE_FIELD(exclRelTlist);

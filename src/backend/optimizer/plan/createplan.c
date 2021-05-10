@@ -34,6 +34,7 @@
 #include "optimizer/placeholder.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
+#include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
@@ -6909,6 +6910,7 @@ make_modifytable(PlannerInfo *root, Plan *subplan,
 	{
 		node->onConflictAction = ONCONFLICT_NONE;
 		node->onConflictSet = NIL;
+		node->onConflictCols = NIL;
 		node->onConflictWhere = NULL;
 		node->arbiterIndexes = NIL;
 		node->exclRelRTI = 0;
@@ -6917,7 +6919,16 @@ make_modifytable(PlannerInfo *root, Plan *subplan,
 	else
 	{
 		node->onConflictAction = onconflict->action;
+
+		/*
+		 * Here we convert the ON CONFLICT UPDATE tlist, if any, to the
+		 * executor's convention of having consecutive resno's.  The actual
+		 * target column numbers are saved in node->onConflictCols.  (This
+		 * could be done earlier, but there seems no need to.)
+		 */
 		node->onConflictSet = onconflict->onConflictSet;
+		node->onConflictCols =
+			extract_update_targetlist_colnos(node->onConflictSet);
 		node->onConflictWhere = onconflict->onConflictWhere;
 
 		/*
