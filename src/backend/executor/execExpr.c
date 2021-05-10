@@ -352,6 +352,32 @@ ExecBuildProjectionInfo(List *targetList,
 						PlanState *parent,
 						TupleDesc inputDesc)
 {
+	return ExecBuildProjectionInfoExt(targetList,
+									  econtext,
+									  slot,
+									  true,
+									  parent,
+									  inputDesc);
+}
+
+/*
+ *		ExecBuildProjectionInfoExt
+ *
+ * As above, with one additional option.
+ *
+ * If assignJunkEntries is true (the usual case), resjunk entries in the tlist
+ * are not handled specially: they are evaluated and assigned to the proper
+ * column of the result slot.  If assignJunkEntries is false, resjunk entries
+ * are evaluated, but their result is discarded without assignment.
+ */
+ProjectionInfo *
+ExecBuildProjectionInfoExt(List *targetList,
+						   ExprContext *econtext,
+						   TupleTableSlot *slot,
+						   bool assignJunkEntries,
+						   PlanState *parent,
+						   TupleDesc inputDesc)
+{
 	ProjectionInfo *projInfo = makeNode(ProjectionInfo);
 	ExprState  *state;
 	ExprEvalStep scratch = {0};
@@ -388,7 +414,8 @@ ExecBuildProjectionInfo(List *targetList,
 		 */
 		if (tle->expr != NULL &&
 			IsA(tle->expr, Var) &&
-			((Var *) tle->expr)->varattno > 0)
+			((Var *) tle->expr)->varattno > 0 &&
+			(assignJunkEntries || !tle->resjunk))
 		{
 			/* Non-system Var, but how safe is it? */
 			variable = (Var *) tle->expr;
@@ -451,6 +478,10 @@ ExecBuildProjectionInfo(List *targetList,
 			 */
 			ExecInitExprRec(tle->expr, state,
 							&state->resvalue, &state->resnull);
+
+			/* This makes it easy to discard resjunk results when told to. */
+			if (!assignJunkEntries && tle->resjunk)
+				continue;
 
 			/*
 			 * Column might be referenced multiple times in upper nodes, so

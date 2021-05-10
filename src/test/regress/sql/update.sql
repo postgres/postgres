@@ -100,21 +100,45 @@ UPDATE update_test t
 SELECT a, b, char_length(c) FROM update_test;
 
 -- Test ON CONFLICT DO UPDATE
-INSERT INTO upsert_test VALUES(1, 'Boo');
+
+INSERT INTO upsert_test VALUES(1, 'Boo'), (3, 'Zoo');
 -- uncorrelated  sub-select:
 WITH aaa AS (SELECT 1 AS a, 'Foo' AS b) INSERT INTO upsert_test
   VALUES (1, 'Bar') ON CONFLICT(a)
   DO UPDATE SET (b, a) = (SELECT b, a FROM aaa) RETURNING *;
 -- correlated sub-select:
-INSERT INTO upsert_test VALUES (1, 'Baz') ON CONFLICT(a)
+INSERT INTO upsert_test VALUES (1, 'Baz'), (3, 'Zaz') ON CONFLICT(a)
   DO UPDATE SET (b, a) = (SELECT b || ', Correlated', a from upsert_test i WHERE i.a = upsert_test.a)
   RETURNING *;
 -- correlated sub-select (EXCLUDED.* alias):
-INSERT INTO upsert_test VALUES (1, 'Bat') ON CONFLICT(a)
+INSERT INTO upsert_test VALUES (1, 'Bat'), (3, 'Zot') ON CONFLICT(a)
   DO UPDATE SET (b, a) = (SELECT b || ', Excluded', a from upsert_test i WHERE i.a = excluded.a)
   RETURNING *;
 
 DROP TABLE update_test;
+DROP TABLE upsert_test;
+
+-- Test ON CONFLICT DO UPDATE with partitioned table and non-identical children
+
+CREATE TABLE upsert_test (
+    a   INT PRIMARY KEY,
+    b   TEXT
+) PARTITION BY LIST (a);
+
+CREATE TABLE upsert_test_1 PARTITION OF upsert_test FOR VALUES IN (1);
+CREATE TABLE upsert_test_2 (b TEXT, a INT PRIMARY KEY);
+ALTER TABLE upsert_test ATTACH PARTITION upsert_test_2 FOR VALUES IN (2);
+
+INSERT INTO upsert_test VALUES(1, 'Boo'), (2, 'Zoo');
+-- uncorrelated sub-select:
+WITH aaa AS (SELECT 1 AS a, 'Foo' AS b) INSERT INTO upsert_test
+  VALUES (1, 'Bar') ON CONFLICT(a)
+  DO UPDATE SET (b, a) = (SELECT b, a FROM aaa) RETURNING *;
+-- correlated sub-select:
+WITH aaa AS (SELECT 1 AS ctea, ' Foo' AS cteb) INSERT INTO upsert_test
+  VALUES (1, 'Bar'), (2, 'Baz') ON CONFLICT(a)
+  DO UPDATE SET (b, a) = (SELECT upsert_test.b||cteb, upsert_test.a FROM aaa) RETURNING *;
+
 DROP TABLE upsert_test;
 
 
