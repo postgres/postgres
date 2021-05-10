@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-09-14 06:46+0000\n"
-"PO-Revision-Date: 2020-09-14 11:33+0200\n"
+"PO-Revision-Date: 2021-04-18 21:32+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -937,8 +937,8 @@ msgstr "  -i, --index=INDEX         nur bestimmte(n) Index(e) erneuern\n"
 #, c-format
 msgid "  -j, --jobs=NUM            use this many concurrent connections to reindex\n"
 msgstr ""
-"  -j, --jobs=NUM                  so viele parallele Verbindungen zum\n"
-"                                  Reindizieren verwenden\n"
+"  -j, --jobs=NUM            so viele parallele Verbindungen zum\n"
+"                            Reindizieren verwenden\n"
 
 #: reindexdb.c:763
 #, c-format

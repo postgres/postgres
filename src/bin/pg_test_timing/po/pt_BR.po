@@ -1,0 +1,80 @@
+# Brazilian Portuguese message translation file for pg_test_timing
+#
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Euler Taveira <euler@eulerto.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 13\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-05-09 12:34-0300\n"
+"PO-Revision-Date: 2020-08-29 20:18-0300\n"
+"Last-Translator: Euler Taveira <euler@eulerto.com>\n"
+"Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n>1);\n"
+
+#: pg_test_timing.c:55
+#, c-format
+msgid "Usage: %s [-d DURATION]\n"
+msgstr "Uso: %s [-d DURAÇÃO]\n"
+
+#: pg_test_timing.c:75 pg_test_timing.c:87 pg_test_timing.c:104
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Tente \"%s --help\" para obter informações adicionais.\n"
+
+#: pg_test_timing.c:85
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: muitos argumentos de linha de comando (primeiro é \"%s\")\n"
+
+#: pg_test_timing.c:94
+#, c-format
+msgid "Testing timing overhead for %d second.\n"
+msgid_plural "Testing timing overhead for %d seconds.\n"
+msgstr[0] "Teste de sobrecarga de tempo por %d segundo.\n"
+msgstr[1] "Teste de sobrecarga de tempo por %d segundo.\n"
+
+#: pg_test_timing.c:102
+#, c-format
+msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
+msgstr "%s: duração deve ser um inteiro positivo (duração é \"%d\")\n"
+
+#: pg_test_timing.c:140
+#, c-format
+msgid "Detected clock going backwards in time.\n"
+msgstr "Relógio detectado retrocedendo no tempo.\n"
+
+#: pg_test_timing.c:141
+#, c-format
+msgid "Time warp: %d ms\n"
+msgstr "Distorção do tempo: %d ms\n"
+
+#: pg_test_timing.c:164
+#, c-format
+msgid "Per loop time including overhead: %0.2f ns\n"
+msgstr "Tempo por laço incluindo sobrecarga: %0.2f ns\n"
+
+#: pg_test_timing.c:175
+msgid "< us"
+msgstr "< us"
+
+#: pg_test_timing.c:176
+#, no-c-format
+msgid "% of total"
+msgstr "% do total"
+
+#: pg_test_timing.c:177
+msgid "count"
+msgstr "contador"
+
+#: pg_test_timing.c:186
+#, c-format
+msgid "Histogram of timing durations:\n"
+msgstr "Histograma de durações de tempo:\n"
