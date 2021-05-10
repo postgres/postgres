@@ -233,6 +233,13 @@ my %pgdump_runs = (
 			'--exclude-database', '*dump_test*', '--no-sync',
 		],
 	},
+	no_toast_compression => {
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			"--file=$tempdir/no_toast_compression.sql",
+			'--no-toast-compression', 'postgres',
+		],
+	},
 	no_blobs => {
 		dump_cmd => [
 			'pg_dump',                      '--no-sync',
@@ -377,6 +384,10 @@ my %pgdump_runs = (
 # of the pg_dump runs happening.  This is what "seeds" the
 # system with objects to be dumped out.
 #
+# There can be a flag called 'lz4', which can be set if the test
+# case depends on LZ4.  Tests marked with this flag are skipped if
+# the build used does not support LZ4.
+#
 # Building of this hash takes a bit of time as all of the regexps
 # included in it are compiled.  This greatly improves performance
 # as the regexps are used for each run the test applies to.
@@ -397,6 +408,7 @@ my %full_runs = (
 	exclude_dump_test_schema => 1,
 	exclude_test_table       => 1,
 	exclude_test_table_data  => 1,
+	no_toast_compression     => 1,
 	no_blobs                 => 1,
 	no_owner                 => 1,
 	no_privs                 => 1,
@@ -2071,6 +2083,28 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
+	'CREATE MATERIALIZED VIEW matview_compression' => {
+		create_order => 20,
+		create_sql   => 'CREATE MATERIALIZED VIEW
+						   dump_test.matview_compression (col2) AS
+						   SELECT col2 FROM dump_test.test_table;
+						   ALTER MATERIALIZED VIEW dump_test.matview_compression
+						   ALTER COLUMN col2 SET COMPRESSION lz4;',
+		regexp => qr/^
+			\QCREATE MATERIALIZED VIEW dump_test.matview_compression AS\E
+			\n\s+\QSELECT test_table.col2\E
+			\n\s+\QFROM dump_test.test_table\E
+			\n\s+\QWITH NO DATA;\E
+			.*
+			\QALTER TABLE ONLY dump_test.matview_compression ALTER COLUMN col2 SET COMPRESSION lz4;\E\n
+			/xms,
+		lz4 => 1,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike =>
+		  { exclude_dump_test_schema => 1, no_toast_compression => 1, },
+	},
+
 	'CREATE POLICY p1 ON test_table' => {
 		create_order => 22,
 		create_sql   => 'CREATE POLICY p1 ON dump_test.test_table
@@ -2279,7 +2313,7 @@ my %tests = (
 		create_order => 3,
 		create_sql   => 'CREATE TABLE dump_test.test_table (
 						   col1 serial primary key,
-						   col2 text,
+						   col2 text COMPRESSION pglz,
 						   col3 text,
 						   col4 text,
 						   CHECK (col1 <= 1000)
@@ -2335,6 +2369,27 @@ my %tests = (
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, },
+	},
+
+	'CREATE TABLE test_compression' => {
+		create_order => 3,
+		create_sql   => 'CREATE TABLE dump_test.test_compression (
+						   col1 int,
+						   col2 text COMPRESSION lz4
+					   );',
+		regexp => qr/^
+			\QCREATE TABLE dump_test.test_compression (\E\n
+			\s+\Qcol1 integer,\E\n
+			\s+\Qcol2 text\E\n
+			\);\n
+			.*
+			\QALTER TABLE ONLY dump_test.test_compression ALTER COLUMN col2 SET COMPRESSION lz4;\E\n
+			/xms,
+		lz4 => 1,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike =>
+		  { exclude_dump_test_schema => 1, no_toast_compression => 1, },
 	},
 
 	'CREATE TABLE measurement PARTITIONED BY' => {
@@ -2686,6 +2741,7 @@ my %tests = (
 			defaults                => 1,
 			exclude_test_table      => 1,
 			exclude_test_table_data => 1,
+			no_toast_compression    => 1,
 			no_blobs                => 1,
 			no_privs                => 1,
 			no_owner                => 1,
@@ -2758,6 +2814,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table       => 1,
 			exclude_test_table_data  => 1,
+			no_toast_compression     => 1,
 			no_blobs                 => 1,
 			no_privs                 => 1,
 			no_owner                 => 1,
@@ -3391,6 +3448,9 @@ if ($collation_check_stderr !~ /ERROR: /)
 	$collation_support = 1;
 }
 
+# Determine whether build supports LZ4.
+my $supports_lz4 = check_pg_config("#define HAVE_LIBLZ4 1");
+
 # Create a second database for certain tests to work against
 $node->psql('postgres', 'create database regress_pg_dump_test;');
 
@@ -3448,6 +3508,13 @@ foreach my $run (sort keys %pgdump_runs)
 			next;
 		}
 
+		# Skip tests specific to LZ4 if this build does not support
+		# this option.
+		if (!$supports_lz4 && defined($tests{$test}->{lz4}))
+		{
+			next;
+		}
+
 		# If there is a like entry, but no unlike entry, then we will test the like case
 		if ($tests{$test}->{like}->{$test_key}
 			&& !defined($tests{$test}->{unlike}->{$test_key}))
@@ -3501,6 +3568,13 @@ foreach my $test (
 
 		# Skip any collation-related commands if there is no collation support
 		if (!$collation_support && defined($tests{$test}->{collation}))
+		{
+			next;
+		}
+
+		# Skip tests specific to LZ4 if this build does not support
+		# this option.
+		if (!$supports_lz4 && defined($tests{$test}->{lz4}))
 		{
 			next;
 		}
@@ -3599,6 +3673,13 @@ foreach my $run (sort keys %pgdump_runs)
 
 		# Skip any collation-related commands if there is no collation support
 		if (!$collation_support && defined($tests{$test}->{collation}))
+		{
+			next;
+		}
+
+		# Skip tests specific to LZ4 if this build does not support
+		# this option.
+		if (!$supports_lz4 && defined($tests{$test}->{lz4}))
 		{
 			next;
 		}
