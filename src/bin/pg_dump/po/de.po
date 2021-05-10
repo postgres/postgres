@@ -628,7 +628,7 @@ msgstr[1] "%lu Bytes Large-Object-Daten geschrieben (Ergebnis = %lu)"
 #: pg_backup_archiver.c:1663
 #, c-format
 msgid "could not write to large object (result: %lu, expected: %lu)"
-msgstr "konnte Large Object nicht schreiben (Ergebis: %lu, erwartet: %lu)"
+msgstr "konnte Large Object nicht schreiben (Ergebnis: %lu, erwartet: %lu)"
 
 #: pg_backup_archiver.c:1755
 #, c-format
