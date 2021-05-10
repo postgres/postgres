@@ -112,6 +112,33 @@ ArrayGetNItems(int ndim, const int *dims)
 }
 
 /*
+ * Verify sanity of proposed lower-bound values for an array
+ *
+ * The lower-bound values must not be so large as to cause overflow when
+ * calculating subscripts, e.g. lower bound 2147483640 with length 10
+ * must be disallowed.  We actually insist that dims[i] + lb[i] be
+ * computable without overflow, meaning that an array with last subscript
+ * equal to INT_MAX will be disallowed.
+ *
+ * It is assumed that the caller already called ArrayGetNItems, so that
+ * overflowed (negative) dims[] values have been eliminated.
+ */
+void
+ArrayCheckBounds(int ndim, const int *dims, const int *lb)
+{
+	int			i;
+
+	for (i = 0; i < ndim; i++)
+	{
+		if (dims[i] + lb[i] < lb[i])
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("array lower bound is too large: %d",
+							lb[i])));
+	}
+}
+
+/*
  * Compute ranges (sub-array dimensions) for an array slice
  *
  * We assume caller has validated slice endpoints, so overflow is impossible
