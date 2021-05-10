@@ -411,6 +411,7 @@ array_cat(PG_FUNCTION_ARGS)
 
 	/* Do this mainly for overflow checking */
 	nitems = ArrayGetNItems(ndims, dims);
+	ArrayCheckBounds(ndims, dims, lbs);
 
 	/* build the result array */
 	ndatabytes = ndatabytes1 + ndatabytes2;
