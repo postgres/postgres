@@ -265,7 +265,7 @@ DefineOperator(List *names, List *parameters)
 }
 
 /*
- * Look up a restriction estimator function ny name, and verify that it has
+ * Look up a restriction estimator function by name, and verify that it has
  * the correct signature and we have the permissions to attach it to an
  * operator.
  */
@@ -300,7 +300,7 @@ ValidateRestrictionEstimator(List *restrictionName)
 }
 
 /*
- * Look up a join estimator function ny name, and verify that it has the
+ * Look up a join estimator function by name, and verify that it has the
  * correct signature and we have the permissions to attach it to an
  * operator.
  */
