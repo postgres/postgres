@@ -106,6 +106,12 @@ exit 0;
 sub installcheck_internal
 {
 	my ($schedule, @EXTRA_REGRESS_OPTS) = @_;
+	# for backwards compatibility, "serial" runs the tests in
+	# parallel_schedule one by one.
+	my $maxconn = $maxconn;
+	$maxconn = "--max_connections=1" if $schedule eq 'serial';
+	$schedule = 'parallel' if $schedule eq 'serial';
+
 	my @args = (
 		"../../../$Config/pg_regress/pg_regress",
 		"--dlpath=.",
@@ -132,6 +138,12 @@ sub installcheck
 sub check
 {
 	my $schedule = shift || 'parallel';
+	# for backwards compatibility, "serial" runs the tests in
+	# parallel_schedule one by one.
+	my $maxconn = $maxconn;
+	$maxconn = "--max_connections=1" if $schedule eq 'serial';
+	$schedule = 'parallel' if $schedule eq 'serial';
+
 	InstallTemp();
 	chdir "${topdir}/src/test/regress";
 	my @args = (
