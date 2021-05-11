@@ -20,16 +20,17 @@ test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeri
 # strings depends on char, varchar and text
 # numerology depends on int2, int4, int8, float4, float8
 # multirangetypes depends on rangetypes
-# multirangetypes shouldn't be in the one group with type_sanity
+# multirangetypes shouldn't run concurrently with type_sanity
 # ----------
-test: strings numerology point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 tstypes multirangetypes
+test: strings numerology point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 multirangetypes create_function_0
 
 # ----------
 # Another group of parallel tests
 # geometry depends on point, lseg, box, path, polygon and circle
 # horology depends on interval, timetz, timestamp, timestamptz
+# opr_sanity depends on create_function_0
 # ----------
-test: geometry horology regex type_sanity opr_sanity misc_sanity comments expressions unicode xid mvcc
+test: geometry horology tstypes regex type_sanity opr_sanity misc_sanity comments expressions unicode xid mvcc
 
 # ----------
 # These four each depend on the previous one

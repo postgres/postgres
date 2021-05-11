@@ -465,7 +465,7 @@ FROM pg_range p1 JOIN pg_type t ON t.oid = p1.rngsubtype
 WHERE (rngcollation = 0) != (typcollation = 0);
 
 -- opclass had better be a btree opclass accepting the subtype.
--- We must allow anyarray matches, cf opr_sanity's binary_coercible()
+-- We must allow anyarray matches, cf IsBinaryCoercible()
 
 SELECT p1.rngtypid, p1.rngsubtype, o.opcmethod, o.opcname
 FROM pg_range p1 JOIN pg_opclass o ON o.oid = p1.rngsubopc

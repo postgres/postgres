@@ -36,6 +36,7 @@
 #include "nodes/supportnodes.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/plancat.h"
+#include "parser/parse_coerce.h"
 #include "port/atomics.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
@@ -1193,4 +1194,15 @@ test_enc_conversion(PG_FUNCTION_ARGS)
 	tuple = heap_form_tuple(tupdesc, values, nulls);
 
 	PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
+}
+
+/* Provide SQL access to IsBinaryCoercible() */
+PG_FUNCTION_INFO_V1(binary_coercible);
+Datum
+binary_coercible(PG_FUNCTION_ARGS)
+{
+	Oid			srctype = PG_GETARG_OID(0);
+	Oid			targettype = PG_GETARG_OID(1);
+
+	PG_RETURN_BOOL(IsBinaryCoercible(srctype, targettype));
 }

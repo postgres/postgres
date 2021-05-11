@@ -1,0 +1,88 @@
+--
+-- CREATE_FUNCTION_0
+--
+-- Create a bunch of C functions that will be used by later tests:
+CREATE FUNCTION check_primary_key ()
+	RETURNS trigger
+	AS '@libdir@/refint@DLSUFFIX@'
+	LANGUAGE C;
+CREATE FUNCTION check_foreign_key ()
+	RETURNS trigger
+	AS '@libdir@/refint@DLSUFFIX@'
+	LANGUAGE C;
+CREATE FUNCTION autoinc ()
+	RETURNS trigger
+	AS '@libdir@/autoinc@DLSUFFIX@'
+	LANGUAGE C;
+CREATE FUNCTION trigger_return_old ()
+        RETURNS trigger
+        AS '@libdir@/regress@DLSUFFIX@'
+        LANGUAGE C;
+CREATE FUNCTION ttdummy ()
+        RETURNS trigger
+        AS '@libdir@/regress@DLSUFFIX@'
+        LANGUAGE C;
+CREATE FUNCTION set_ttdummy (int4)
+        RETURNS int4
+        AS '@libdir@/regress@DLSUFFIX@'
+        LANGUAGE C STRICT;
+CREATE FUNCTION make_tuple_indirect (record)
+        RETURNS record
+        AS '@libdir@/regress@DLSUFFIX@'
+        LANGUAGE C STRICT;
+CREATE FUNCTION test_atomic_ops()
+    RETURNS bool
+    AS '@libdir@/regress@DLSUFFIX@'
+    LANGUAGE C;
+CREATE FUNCTION test_fdw_handler()
+    RETURNS fdw_handler
+    AS '@libdir@/regress@DLSUFFIX@', 'test_fdw_handler'
+    LANGUAGE C;
+CREATE FUNCTION test_support_func(internal)
+    RETURNS internal
+    AS '@libdir@/regress@DLSUFFIX@', 'test_support_func'
+    LANGUAGE C STRICT;
+CREATE FUNCTION test_opclass_options_func(internal)
+    RETURNS void
+    AS '@libdir@/regress@DLSUFFIX@', 'test_opclass_options_func'
+    LANGUAGE C;
+CREATE FUNCTION test_enc_conversion(bytea, name, name, bool, validlen OUT int, result OUT bytea)
+    AS '@libdir@/regress@DLSUFFIX@', 'test_enc_conversion'
+    LANGUAGE C STRICT;
+CREATE FUNCTION binary_coercible(oid, oid)
+    RETURNS bool
+    AS '@libdir@/regress@DLSUFFIX@', 'binary_coercible'
+    LANGUAGE C STRICT STABLE PARALLEL SAFE;
+-- Things that shouldn't work:
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS 'SELECT ''not an integer'';';
+ERROR:  return type mismatch in function declared to return integer
+DETAIL:  Actual return type is text.
+CONTEXT:  SQL function "test1"
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS 'not even SQL';
+ERROR:  syntax error at or near "not"
+LINE 2:     AS 'not even SQL';
+                ^
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS 'SELECT 1, 2, 3;';
+ERROR:  return type mismatch in function declared to return integer
+DETAIL:  Final statement must return exactly one column.
+CONTEXT:  SQL function "test1"
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS 'SELECT $2;';
+ERROR:  there is no parameter $2
+LINE 2:     AS 'SELECT $2;';
+                       ^
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS 'a', 'b';
+ERROR:  only one AS item needed for language "sql"
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE C
+    AS 'nosuchfile';
+ERROR:  could not access file "nosuchfile": No such file or directory
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE C
+    AS '@libdir@/regress@DLSUFFIX@', 'nosuchsymbol';
+ERROR:  could not find function "nosuchsymbol" in file "@libdir@/regress@DLSUFFIX@"
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE internal
+    AS 'nosuch';
+ERROR:  there is no built-in function named "nosuch"

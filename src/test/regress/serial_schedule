@@ -10,8 +10,6 @@ test: int2
 test: int4
 test: int8
 test: oid
-test: xid
-test: mvcc
 test: float4
 test: float8
 test: bit
@@ -21,7 +19,6 @@ test: uuid
 test: enum
 test: money
 test: rangetypes
-test: multirangetypes
 test: pg_lsn
 test: regproc
 test: strings
@@ -42,9 +39,11 @@ test: interval
 test: inet
 test: macaddr
 test: macaddr8
-test: tstypes
+test: multirangetypes
+test: create_function_0
 test: geometry
 test: horology
+test: tstypes
 test: regex
 test: type_sanity
 test: opr_sanity
@@ -52,6 +51,8 @@ test: misc_sanity
 test: comments
 test: expressions
 test: unicode
+test: xid
+test: mvcc
 test: create_function_1
 test: create_type
 test: create_table
@@ -92,7 +93,6 @@ test: select_distinct_on
 test: select_implicit
 test: select_having
 test: subselect
-test: incremental_sort
 test: union
 test: case
 test: join
@@ -109,8 +109,6 @@ test: delete
 test: namespace
 test: prepared_xacts
 test: brin
-test: brin_bloom
-test: brin_multi
 test: gin
 test: gist
 test: spgist
@@ -130,6 +128,8 @@ test: password
 test: identity
 test: generated
 test: join_hash
+test: brin_bloom
+test: brin_multi
 test: create_table_like
 test: alter_generic
 test: alter_operator
@@ -143,6 +143,7 @@ test: tid
 test: tidscan
 test: tidrangescan
 test: collate.icu.utf8
+test: incremental_sort
 test: rules
 test: psql
 test: psql_crosstab
