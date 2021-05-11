@@ -81,15 +81,47 @@ Disallow single-quoting of the language name in the CREATE/DROP LANGUAGE command
 <listitem>
 <!--
 Author: Alexander Korotkov <akorotkov@postgresql.org>
+2021-01-31 [0c4f355c6] Fix parsing of complex morphs to tsquery
+-->
+
+<para>
+Fix to_tsquery() and websearch_to_tsquery() to properly parse certain discarded tokens in quotes (Alexander Korotkov)
+</para>
+
+<para>
+Certain discarded tokens, like underscore, caused the output of these functions to produce incorrect tsquery output, e.g., websearch_to_tsquery('"pg_class pg"') used to output '( pg &amp; class )
+&lt;-&gt; pg',but now outputs 'pg &lt;-&gt; class &lt;-&gt; pg'.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
 2021-05-03 [eb086056f] Make websearch_to_tsquery() parse text in quotes as a si
 -->
 
 <para>
-Make websearch_to_tsquery() parse text in quotes as a single token (Alexander Korotkov)
+Fix websearch_to_tsquery() to properly parse multiple adjacent discarded tokens in quotes (Alexander Korotkov)
 </para>
 
 <para>
-DETAILS?  ALREADY CHANGED ABOVE.
+Previously, quoted text that contained multiple adjacent discarded tokens were treated as multiple tokens, causing incorrect tsquery output, e.g., websearch_to_tsquery('"aaa: bbb"') used to output 
+'aaa &lt;2&gt; bbb', but now  outputs 'aaa &lt;-&gt; bbb'.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2020-06-10 [c7eab0e97] Change default of password_encryption to scram-sha-256
+-->
+
+<para>
+Change password_encryption's default to scram-sha-256 (Peter Eisentraut)
+</para>
+
+<para>
+Previously it was md5.  All new passwords will be stored as SHA256 unless this server variable is changed or the password is already md5-hashed.
 </para>
 </listitem>
 
@@ -266,16 +298,27 @@ This previously was allowed but produced incorrect results.
 
 <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-04-07 [3db826bd5] Tighten up allowed names for custom GUC parameters.
+-->
+
+<para>
+Force custom server variable names to match the pattern used for unquoted SQL identifiers (Tom Lane)
+</para>
+</listitem>
+
+<listitem>
+<!--
 Author: Joe Conway <mail@joeconway.com>
 2021-03-31 [b12bd4869] Fix has_column_privilege function corner case
 -->
 
 <para>
-Return false for has_column_privilege() checks on non-existent or dropped columns (Joe Conway)
+Return false for has_column_privilege() checks on non-existent or dropped columns when using attribute numbers (Joe Conway)
 </para>
 
 <para>
-Previously such columns returned an invalid column error.
+Previously such attribute numbers returned an invalid column error.
 </para>
 </listitem>
 
@@ -347,7 +390,7 @@ Remove support for postfix (right-unary) operators (Mark Dilger)
 </para>
 
 <para>
-pg_dump and pg_upgrade will warn if post-fix operators are being dumped.
+pg_dump and pg_upgrade will warn if postfix operators are being dumped.
 </para>
 </listitem>
 
@@ -374,22 +417,6 @@ Remove operator_precedence_warning setting (Tom Lane)
 
 <para>
 This was needed for warning applications about PostgreSQL 9.5 changes.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Peter Geoghegan <pg@bowt.ie>
-2020-07-02 [947456a82] Initialize work_mem using current guc.c default.
--->
-
-<para>
-Initialize work_mem and maintenance_work_mem using current guc.c default (Peter Geoghegan)
-</para>
-
-<para>
-Oversight in commit 848ae330a49, which increased the previous defaults
-for work_mem and maintenance_work_mem by 4X.  IS THIS A BEHAVIORAL CHANGE?
 </para>
 </listitem>
 
@@ -479,6 +506,21 @@ Cause vacuum operations to be aggressive if the table is near xid or multixact w
 
 <para>
 This is controlled by vacuum_failsafe_age and vacuum_multixact_failsafe_age.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+2021-03-21 [9dd963ae2] Recycle nbtree pages deleted during same VACUUM.
+-->
+
+<para>
+Allow VACUUM to eagerly add newly deleted btree pages in the free space map (Peter Geoghegan)
+</para>
+
+<para>
+Previously VACUUM could only place preexisting deleted pages in the free space map.
 </para>
 </listitem>
 
@@ -623,7 +665,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
 <para>
-Remove expired btree index entries to prevent page splits (Peter Geoghegan)
+Allow index additions to remove expired btree index entries to prevent page splits (Peter Geoghegan)
 </para>
 
 <para>
@@ -679,7 +721,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 -->
 
 <para>
-Allow some GiST index to be built by presorting the data (Andrey Borodin)
+Allow some GiST indexes to be built by presorting the data (Andrey Borodin)
 </para>
 
 <para>
@@ -802,7 +844,7 @@ Add ability to use LZ4 compression on TOAST data (Dilip Kumar)
 </para>
 
 <para>
-This can be set at the column level, or set as a default via server setting default_toast_compression.  The server must be compiled with --with-lz4 support to enable this feature;  the default is still pglz.
+This can be set at the column level, or set as a default via server setting default_toast_compression.  The server must be compiled with --with-lz4 to support this feature;  the default is still pglz.
 </para>
 </listitem>
 
@@ -874,7 +916,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Speed truncation of small tables on large shared buffer servers (Kirk Jamison)
+Speed truncation of small tables during recovery on clusters with a large number of shared buffers (Kirk Jamison)
 </para>
 </listitem>
 
@@ -896,7 +938,7 @@ Author: David Rowley <drowley@postgresql.org>
 -->
 
 <para>
-Allow windowing functions to perform incremental sorts (David Rowley)
+Allow window functions to perform incremental sorts (David Rowley)
 </para>
 </listitem>
 
@@ -1005,7 +1047,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve pg_stat_activity reporting for walsenders processes (Tom Lane)
+Improve pg_stat_activity reporting for walsender processes (Tom Lane)
 </para>
 
 <para>
@@ -1076,7 +1118,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Add system view pg_stat_replication_slots to report replication slot activity (Sawada Masahiko, Amit Kapila)
+Add system view pg_stat_replication_slots to report replication slot activity (Sawada Masahiko, Amit Kapila, Vignesh C)
 </para>
 
 <para>
@@ -1127,21 +1169,6 @@ Add wait event WalReceiverExit to report WAL receiver exit wait time (Fujii Masa
      <title><acronym>Authentication</acronym></title>
 
      <itemizedlist>
-
-<listitem>
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2020-06-10 [c7eab0e97] Change default of password_encryption to scram-sha-256
--->
-
-<para>
-Change password_encryption's default to scram-sha-256 (Peter Eisentraut)
-</para>
-
-<para>
-Previously it was md5.
-</para>
-</listitem>
 
 <listitem>
 <!--
@@ -1210,17 +1237,6 @@ This is similar to idle_in_transaction_session_timeout.
 
 <listitem>
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-04-07 [3db826bd5] Tighten up allowed names for custom GUC parameters.
--->
-
-<para>
-Force custom server variable names to match the pattern used for unquoted SQL identifiers (Tom Lane)
-</para>
-</listitem>
-
-<listitem>
-<!--
 Author: Stephen Frost <sfrost@snowman.net>
 2021-03-24 [bbcc4eb2e] Change checkpoint_completion_target default to 0.9
 -->
@@ -1260,7 +1276,7 @@ Add Set Server Name Indication (SNI) for SSL connection packets (Peter Eisentrau
 </para>
 
 <para>
-This can be disabled by turning client options "sslsni" off.
+This can be disabled by turning client option "sslsni" off.
 </para>
 </listitem>
 
@@ -1355,7 +1371,7 @@ Increase warning time and hard limit before transaction id and multi-transaction
 </para>
 
 <para>
-This should reduce the number of failures without warning.
+This should reduce the possibility of failures that occur without having issued warnings about wraparound.
 </para>
 </listitem>
 
@@ -1442,11 +1458,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Allow multiple xacts during table sync in logical replication (Peter Smith, Amit Kapila, and Takamichi Osumi)
-</para>
-
-<para>
-IMPORTANT?
+Allow multiple transactions during table sync in logical replication (Peter Smith, Amit Kapila, and Takamichi Osumi)
 </para>
 </listitem>
 
@@ -1485,21 +1497,12 @@ Author: Amit Kapila <akapila@postgresql.org>
 2020-12-30 [0aa8a01d0] Extend the output plugin API to allow decoding of prepar
 Author: Amit Kapila <akapila@postgresql.org>
 2021-01-04 [a271a1b50] Allow decoding at prepare time in ReorderBuffer.
--->
-
-<para>
-Add support for streaming to built-in logical replication (Vondra, Dilip Kumar, Amit Kapila, Ajin Cherian, Nikhil Sontakke, Stas Kelvich)
-</para>
-</listitem>
-
-<listitem>
-<!--
 Author: Amit Kapila <akapila@postgresql.org>
 2020-08-08 [7259736a6] Implement streaming mode in ReorderBuffer.
 -->
 
 <para>
-Allow logical replication to stream long transactions to standbys (Dilip Kumar, Tomas Vondra, Amit Kapila, Nikhil Sontakke)
+Allow logical replication to stream long in-progress transactions to standbys (Tomas Vondra, Dilip Kumar, Amit Kapila, Ajin Cherian, Nikhil Sontakke, Stas Kelvich)
 </para>
 
 <para>
@@ -1570,7 +1573,7 @@ Allow replication origin functions to be controlled using standard function perm
 </para>
 
 <para>
-Previously these functions could only be executed by super-users, and still defaults do that.
+Previously these functions could only be executed by super-users, and this is still the default.
 </para>
 </listitem>
 
@@ -1596,7 +1599,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Improve the logical replication API to allow streaming large in-progress transactions (Tomas Vondra, Dilip Kumar, Amit Kapila)
+Enhance the logical replication API to allow streaming large in-progress transactions (Tomas Vondra, Dilip Kumar, Amit Kapila)
 </para>
 
 <para>
@@ -1622,15 +1625,34 @@ Previously the standby would shut down immediately.
 <listitem>
 <!--
 Author: Amit Kapila <akapila@postgresql.org>
+2020-12-30 [0aa8a01d0] Extend the output plugin API to allow decoding of prepar
+Author: Amit Kapila <akapila@postgresql.org>
+2021-01-04 [a271a1b50] Allow decoding at prepare time in ReorderBuffer.
+Author: Amit Kapila <akapila@postgresql.org>
 2021-03-03 [19890a064] Add option to enable two_phase commits via pg_create_log
 -->
 
 <para>
-Enable logical replication  to handle two phase commits (Ajin Cherian)
+Enhance logical decoding APIs to handle two-phase commits (Ajin Cherian, Amit Kapila, Nikhil Sontakke, Stas Kelvich)
 </para>
 
 <para>
 This is controlled via pg_create_logical_replication_slot().
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2020-10-15 [d7eb52d71] Execute invalidation messages for each XLOG_XACT_INVALID
+-->
+
+<para>
+Allow logical decoding to more efficiently process cache invalidation messages
+</para>
+
+<para>
+This allows Logical decoding to work efficiently in presence of a large amount of DDL.
 </para>
 </listitem>
 
@@ -1714,7 +1736,7 @@ Allow DISTINCT to be added to GROUP BY to remove duplicate GROUPING SET combinat
 </para>
 
 <para>
-For example, GROUP BY CUBE (a,b), CUBE (b,c) will generated duplicate grouping combinations without DISTINCT.
+For example, GROUP BY CUBE (a,b), CUBE (b,c) will generate duplicate grouping combinations without DISTINCT.
 </para>
 </listitem>
 
@@ -1827,21 +1849,6 @@ Author: Thomas Munro <tmunro@postgresql.org>
 
 <para>
 Allow REFRESH MATERIALIZED VIEW to use parallelism (Bharath Rupireddy)
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Peter Geoghegan <pg@bowt.ie>
-2021-02-25 [237636183] VACUUM VERBOSE: Count "newly deleted" index pages.
--->
-
-<para>
-Allow VACUUM VERBOSE to report page deletion counts for each scan of an index (Peter Geoghegan)
-</para>
-
-<para>
-Previously only total page count deletion was reported.
 </para>
 </listitem>
 
@@ -1966,7 +1973,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Allow REINDEX to process all child tables and indexes of a partitioned table (Justin Pryzby, Michael Paquier)
+Allow REINDEX to process all child tables or indexes of a partitioned relation (Justin Pryzby, Michael Paquier)
 </para>
 </listitem>
 
@@ -2341,21 +2348,6 @@ Subscripting can be used to extract from and assign to jsonb documents.
 
 <listitem>
 <!--
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2021-01-31 [0c4f355c6] Fix parsing of complex morphs to tsquery
--->
-
-<para>
-Improve to_tsquery() and websearch_to_tsquery() handling (Alexander Korotkov)
-</para>
-
-<para>
-NEED TEXT HERE
-</para>
-</listitem>
-
-<listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2021-01-18 [a6cf3df4e] Add bytea equivalents of ltrim() and rtrim().
 -->
@@ -2387,7 +2379,7 @@ Support negative indexes in split_part() (Nikhil Benesch)
 </para>
 
 <para>
-Negative values count from the last field going forward.
+Negative values start from the last field and count backward.
 </para>
 </listitem>
 
@@ -2597,7 +2589,7 @@ Add pipeline mode to libpq (Craig Ringer, Matthieu Garrigues, Álvaro Herrera)
 </para>
 
 <para>
-This allows multiple queries to be send and only wait for completion when a specific synchronization message is sent.
+This allows multiple queries to be sent and only wait for completion when a specific synchronization message is sent.
 </para>
 </listitem>
 
@@ -2610,7 +2602,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Enhance libpq libpq's target_session_attrs parameter options (Haribabu Kommi, Greg Nancarrow, Vignesh C, Tom Lane)
+Enhance libpq's target_session_attrs parameter options (Haribabu Kommi, Greg Nancarrow, Vignesh C, Tom Lane)
 </para>
 
 <para>
@@ -2959,7 +2951,7 @@ Add documentation for the factorial() function (Peter Eisentraut)
 </para>
 
 <para>
-With the removal of the ! operator in this release, factorial() is the only built-in way to computer a factorial.
+With the removal of the ! operator in this release, factorial() is the only built-in way to compute a factorial.
 </para>
 </listitem>
 
@@ -2979,7 +2971,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add configure option --with-openssl to behave like --with-ssl={openssl} (Daniel Gustafsson, Michael Paquier)
+Add configure option --with-ssl={openssl} to behave like --with-openssl (Daniel Gustafsson, Michael Paquier)
 </para>
 
 <para>
@@ -3174,7 +3166,7 @@ Allow postgres_fdw to import table partitions if specified by IMPORT FOREIGN SCH
 </para>
 
 <para>
-By default, only the root of partitioned tables are imported.
+By default, only the root of partitioned tables is imported.
 </para>
 </listitem>
 
