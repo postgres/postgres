@@ -189,16 +189,18 @@ This was already disabled by default in previous Postgres releases, and most mod
 
 <listitem>
 <!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2020-11-03 [2f70fdb06] Remove deprecated containment operators for built-in typ
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2021-03-05 [112d411fb] Remove deprecated containment operators for contrib type
 -->
 
 <para>
-Remove containment operators @ and ~ from contrib modules cube, hstore, intarray, and seg (Justin Pryzby)
+Remove deprecated containment operators @ and ~ for built-in geometric data types and contrib modules cube, hstore, intarray, and seg (Justin Pryzby)
 </para>
 
 <para>
-The more consistent containment operators &lt;@  and @&gt; have been supported since PostgreSQL 8.2 (year 2006).
+The more consistent &lt;@ and @&gt; have been recommended for many years.
 </para>
 </listitem>
 
@@ -264,29 +266,27 @@ This previously was allowed but produced incorrect results.
 
 <listitem>
 <!--
-Author: Thomas Munro <tmunro@postgresql.org>
-2021-01-29 [514b411a2] Retire pg_standby.
+Author: Joe Conway <mail@joeconway.com>
+2021-03-31 [b12bd4869] Fix has_column_privilege function corner case
 -->
 
 <para>
-Remove contrib program pg_standby (Justin Pryzby)
+Return false for has_column_privilege() checks on non-existent or dropped columns (Joe Conway)
+</para>
+
+<para>
+Previously such columns returned an invalid column error.
 </para>
 </listitem>
 
 <listitem>
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
-2020-11-03 [cd6f479e7] Add pg_depend.refobjversion.
-Author: Peter Eisentraut <peter@eisentraut.org>
-2020-11-03 [2f70fdb06] Remove deprecated containment operators for built-in typ
+2021-01-29 [514b411a2] Retire pg_standby.
 -->
 
 <para>
-Remove deprecated containment operators for built-in geometry data types (Justin Pryzby)
-</para>
-
-<para>
-The more consistent &lt;@ and @&gt; have been recommended for many years.
+Remove contrib program pg_standby (Justin Pryzby)
 </para>
 </listitem>
 
@@ -353,21 +353,6 @@ pg_dump and pg_upgrade will warn if post-fix operators are being dumped.
 
 <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2020-09-16 [5423853fe] Avoid retrieval of CHECK constraints and DEFAULT exprs i
--->
-
-<para>
-Avoid retrieval of CHECK constraints and DEFAULT exprs in data-only dump (Julien Rouhaud)
-</para>
-
-<para>
-IS THIS BACKWARD INCOMPATIBLE?
-</para>
-</listitem>
-
-<listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2020-07-07 [f3faf35f3] Don't create pg_type entries for sequences or toast tabl
 -->
@@ -415,11 +400,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Remove password_encryption's support for boolean values, e.g. true (Peter Eisentraut)
+Limit the ways password_encryption can enable md5 hashing (Peter Eisentraut)
 </para>
 
 <para>
-Previous boolean values enabled md5.  Now, only the md5 string does this.
+Previously on/true/yes/1 values enabled md5.  Now, only the string md5 does this.
 </para>
 </listitem>
 
@@ -463,7 +448,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Improve autovacuum's analyze of partitioned tables (Yuzuko Hosoya)
+Autovacuum now analyzes partitioned tables (Yuzuko Hosoya)
 </para>
 
 <para>
@@ -538,7 +523,7 @@ Add long-running queries to be canceled if the client disconnects (Sergey Cherka
 </para>
 
 <para>
-The server variable check_client_connection_interval allows supporting operating systems, e.g., Linux, to automatically cancel queries by disconnected clients.
+The server variable client_connection_check_interval allows supporting operating systems, e.g., Linux, to automatically cancel queries by disconnected clients.
 </para>
 </listitem>
 
@@ -554,6 +539,32 @@ Remove temporary files after backend crashes (Euler Taveira)
 
 <para>
 These files were previously retained for debugging purposes;  deletion can be disabled with remove_temp_files_after_crash.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+2021-04-07 [3c3b8a4b2] Truncate line pointer array during VACUUM.
+-->
+
+<para>
+Deallocate space reserved by trailing unused heap line pointers (Matthias van de Meent, Peter Geoghegan)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+2021-03-30 [0ff8bbdee] Accept slightly-filled pages for tuples larger than fill
+-->
+
+<para>
+Allow wide tuples to be always added to almost-empty heap pages (John Naylor, Floris van Nee)
+</para>
+
+<para>
+Previously tuples whose insertion would have exceeded the page's fill factor were instead added to new pages.
 </para>
 </listitem>
 
@@ -616,7 +627,7 @@ Remove expired btree index entries to prevent page splits (Peter Geoghegan)
 </para>
 
 <para>
-This is particularly helpful for reducing index bloat on tables that frequently update indexed columns.
+This is particularly helpful for reducing index bloat on tables whose indexed columns are frequently updated.
 </para>
 </listitem>
 
@@ -757,7 +768,7 @@ Author: David Rowley <drowley@postgresql.org>
 -->
 
 <para>
-Add executor method to cache results from the inner-side of joins (David Rowley)
+Add executor method to cache results from the inner-side of nested loop joins (David Rowley)
 </para>
 
 <para>
@@ -772,7 +783,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
 -->
 
 <para>
-Allow multiple foreign table scans to be run in parallel (Robert Haas, Kyotaro Horiguchi, Thomas Munro, Etsuro Fujita)
+Allow a query referencing multiple foreign tables to perform foreign table scans in parallel (Robert Haas, Kyotaro Horiguchi, Thomas Munro, Etsuro Fujita)
 </para>
 
 <para>
@@ -817,7 +828,7 @@ Author: David Rowley <drowley@postgresql.org>
 -->
 
 <para>
-Improve the performance of parallel sequential scans (Thomas Munro, David Rowley)
+Improve the I/O performance of parallel sequential scans (Thomas Munro, David Rowley)
 </para>
 
 <para>
@@ -912,6 +923,10 @@ Author: Bruce Momjian <bruce@momjian.us>
 
 <para>
 If server variable compute_query_id is enabled, display the hash in pg_stat_activity, EXPLAIN VERBOSE, csvlog, and optionally in log_line_prefix (Julien Rouhaud)
+</para>
+
+<para>
+A query id computed by an extension will also be displayed.
 </para>
 </listitem>
 
@@ -1066,7 +1081,6 @@ Add system view pg_stat_replication_slots to report replication slot activity (S
 
 <para>
 Function pg_stat_reset_replication_slot() resets slot statistics.
-THIS IS LOGICAL ONLY, BUT NO "LOGICAL" IN THE NAME?  IS "ACTIVITY" THE RIGHT WORD?
 </para>
 </listitem>
 
@@ -1136,7 +1150,7 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 -->
 
 <para>
-Allow more than the common name (CN) to be matched for client certificate authentication (Andrew Dunstan)
+Allow the certificate's distinguished name (DN) to be matched for client certificate authentication (Andrew Dunstan)
 </para>
 
 <para>
@@ -1415,7 +1429,9 @@ Allow file system sync at the start of crash recovery on Linux (Thomas Munro)
 </para>
 
 <para>
-This allows for faster recovery on systems with many database files and is enabled via recovery_init_sync_method,
+By default, Postgres opens and fsyncs every data file at the start of crash recovery.
+This new setting, recovery_init_sync_method=syncfs, instead syncs each filesystem used by the database cluster.
+This allows for faster recovery on systems with many database files.
 </para>
 </listitem>
 
@@ -2274,7 +2290,7 @@ Author: David Rowley <drowley@postgresql.org>
 -->
 
 <para>
-Allow efficient retrieval of heap rows via tid (Edmund Horner, David Rowley)
+Allow efficient heap scanning of a range of tids (Edmund Horner, David Rowley)
 </para>
 
 <para>
@@ -2466,7 +2482,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Make built-in type coercion functions as leakproof where possible (Tom Lane)
+Mark built-in type coercion functions as leakproof where possible (Tom Lane)
 </para>
 
 <para>
@@ -2711,11 +2727,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-When using \e in psql, if the buffer is not modified by the editor, ignore the editor contents and leave the buffer unchanged (Laurenz Albe)
+When editing the previous query or a file with psql's \e, or using \ef and \ev, ignore the contents if the editor exits without saving (Laurenz Albe)
 </para>
 
 <para>
-The \ef and \ev commands also now have this behavior.  DOCS SAY BUFFER IS CLEARED.
+Previously, such edits would still execute the editor contents.
 </para>
 </listitem>
 
@@ -2821,7 +2837,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Improve tab completion (Vignesh C,, Michael Paquier, Justin Pryzby, Georgios Kokolatos, Julien Rouhaud, ADD NAMES)
+Improve tab completion (Vignesh C, Michael Paquier, Justin Pryzby, Georgios Kokolatos, Julien Rouhaud, ADD NAMES)
 </para>
 </listitem>
 
@@ -3127,8 +3143,8 @@ Move query hash computation from pg_stat_statements to the core server (Julien R
 </para>
 
 <para>
-Extension pg_stat_statements will need to enable hash computation via the compute_query_id server variable to function properly.
-pg_stat_statements can now use a custom hash computation method.
+Extension pg_stat_statements will now need to enable query hash computation to function properly.
+This can be done by enabling the server variable compute_query_id or by using an extension with a custom hash computation method.
 </para>
 </listitem>
 
