@@ -524,7 +524,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 				   cte->cycle_clause->cycle_path_column) == 0)
 			ereport(ERROR,
 					errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("search_sequence column name and cycle path column name are the same"),
+					errmsg("search sequence column name and cycle path column name are the same"),
 					parser_errposition(pstate, cte->search_clause->location));
 	}
 }

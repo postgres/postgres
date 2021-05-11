@@ -1253,7 +1253,7 @@ with recursive search_graph(f, t, label) as (
 ) search depth first by f, t set foo
   cycle f, t set is_cycle to true default false using foo
 select * from search_graph;
-ERROR:  search_sequence column name and cycle path column name are the same
+ERROR:  search sequence column name and cycle path column name are the same
 LINE 7: ) search depth first by f, t set foo
           ^
 -- test ruleutils and view expansion
