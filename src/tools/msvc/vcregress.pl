@@ -71,7 +71,7 @@ else
 }
 
 my $maxconn = "";
-$maxconn = "--max_connections=$ENV{MAX_CONNECTIONS}"
+$maxconn = "--max-connections=$ENV{MAX_CONNECTIONS}"
   if $ENV{MAX_CONNECTIONS};
 
 my $temp_config = "";
@@ -109,7 +109,7 @@ sub installcheck_internal
 	# for backwards compatibility, "serial" runs the tests in
 	# parallel_schedule one by one.
 	my $maxconn = $maxconn;
-	$maxconn = "--max_connections=1" if $schedule eq 'serial';
+	$maxconn = "--max-connections=1" if $schedule eq 'serial';
 	$schedule = 'parallel' if $schedule eq 'serial';
 
 	my @args = (
@@ -141,7 +141,7 @@ sub check
 	# for backwards compatibility, "serial" runs the tests in
 	# parallel_schedule one by one.
 	my $maxconn = $maxconn;
-	$maxconn = "--max_connections=1" if $schedule eq 'serial';
+	$maxconn = "--max-connections=1" if $schedule eq 'serial';
 	$schedule = 'parallel' if $schedule eq 'serial';
 
 	InstallTemp();
