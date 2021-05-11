@@ -305,6 +305,16 @@ $ENV{MSBFLAGS}="/m";
     </varlistentry>
 
     <varlistentry>
+     <term><productname>LZ4</productname></term>
+     <listitem><para>
+      Required for supporting <productname>LZ4</productname> compression
+      method for compressing the table data. Binaries and source can be
+      downloaded from
+      <ulink url="https://github.com/lz4/lz4/releases"></ulink>.
+     </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><productname>OpenSSL</productname></term>
      <listitem><para>
       Required for SSL support. Binaries can be downloaded from
