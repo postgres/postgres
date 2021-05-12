@@ -704,8 +704,8 @@ static void
 logicalrep_worker_onexit(int code, Datum arg)
 {
 	/* Disconnect gracefully from the remote side. */
-	if (wrconn)
-		walrcv_disconnect(wrconn);
+	if (LogRepWorkerWalRcvConn)
+		walrcv_disconnect(LogRepWorkerWalRcvConn);
 
 	logicalrep_worker_detach();
 
