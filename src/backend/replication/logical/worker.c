@@ -96,7 +96,7 @@ typedef struct SlotErrCallbackArg
 static MemoryContext ApplyMessageContext = NULL;
 MemoryContext ApplyContext = NULL;
 
-WalReceiverConn *wrconn = NULL;
+WalReceiverConn *LogRepWorkerWalRcvConn = NULL;
 
 Subscription *MySubscription = NULL;
 bool		MySubscriptionValid = false;
@@ -1158,7 +1158,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 
 		MemoryContextSwitchTo(ApplyMessageContext);
 
-		len = walrcv_receive(wrconn, &buf, &fd);
+		len = walrcv_receive(LogRepWorkerWalRcvConn, &buf, &fd);
 
 		if (len != 0)
 		{
@@ -1238,7 +1238,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 					MemoryContextReset(ApplyMessageContext);
 				}
 
-				len = walrcv_receive(wrconn, &buf, &fd);
+				len = walrcv_receive(LogRepWorkerWalRcvConn, &buf, &fd);
 			}
 		}
 
@@ -1268,7 +1268,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 		{
 			TimeLineID	tli;
 
-			walrcv_endstreaming(wrconn, &tli);
+			walrcv_endstreaming(LogRepWorkerWalRcvConn, &tli);
 			break;
 		}
 
@@ -1431,7 +1431,8 @@ send_feedback(XLogRecPtr recvpos, bool force, bool requestReply)
 		 (uint32) (flushpos >> 32), (uint32) flushpos
 		);
 
-	walrcv_send(wrconn, reply_message->data, reply_message->len);
+	walrcv_send(LogRepWorkerWalRcvConn,
+				reply_message->data, reply_message->len);
 
 	if (recvpos > last_recvpos)
 		last_recvpos = recvpos;
@@ -1743,9 +1744,9 @@ ApplyWorkerMain(Datum main_arg)
 		origin_startpos = replorigin_session_get_progress(false);
 		CommitTransactionCommand();
 
-		wrconn = walrcv_connect(MySubscription->conninfo, true, MySubscription->name,
-								&err);
-		if (wrconn == NULL)
+		LogRepWorkerWalRcvConn = walrcv_connect(MySubscription->conninfo, true,
+												MySubscription->name, &err);
+		if (LogRepWorkerWalRcvConn == NULL)
 			ereport(ERROR,
 					(errmsg("could not connect to the publisher: %s", err)));
 
@@ -1753,8 +1754,7 @@ ApplyWorkerMain(Datum main_arg)
 		 * We don't really use the output identify_system for anything but it
 		 * does some initializations on the upstream so let's still call it.
 		 */
-		(void) walrcv_identify_system(wrconn, &startpointTLI);
-
+		(void) walrcv_identify_system(LogRepWorkerWalRcvConn, &startpointTLI);
 	}
 
 	/*
@@ -1773,7 +1773,7 @@ ApplyWorkerMain(Datum main_arg)
 	options.proto.logical.publication_names = MySubscription->publications;
 
 	/* Start normal logical streaming replication. */
-	walrcv_startstreaming(wrconn, &options);
+	walrcv_startstreaming(LogRepWorkerWalRcvConn, &options);
 
 	/* Run the main loop. */
 	LogicalRepApplyLoop(origin_startpos);
