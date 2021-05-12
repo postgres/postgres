@@ -23,3 +23,5 @@ on Fedora it can be installed using `cpan App::s2p` or
 
 The Makefile contains a recipe for regenerating Gen_dummy_probes.pl, so all
 you need to do is once you have s2p installed is `make Gen_dummy_probes.pl`
+Note that in a VPATH build this will generate the file in the vpath tree,
+not the source tree.
