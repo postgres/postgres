@@ -28,7 +28,7 @@ static void WalUsageAdd(WalUsage *dst, WalUsage *add);
 
 /* Allocate new instrumentation structure(s) */
 Instrumentation *
-InstrAlloc(int n, int instrument_options)
+InstrAlloc(int n, int instrument_options, bool async_mode)
 {
 	Instrumentation *instr;
 
@@ -46,6 +46,7 @@ InstrAlloc(int n, int instrument_options)
 			instr[i].need_bufusage = need_buffers;
 			instr[i].need_walusage = need_wal;
 			instr[i].need_timer = need_timer;
+			instr[i].async_mode = async_mode;
 		}
 	}
 
@@ -82,6 +83,7 @@ InstrStartNode(Instrumentation *instr)
 void
 InstrStopNode(Instrumentation *instr, double nTuples)
 {
+	double		save_tuplecount = instr->tuplecount;
 	instr_time	endtime;
 
 	/* count the returned tuples */
@@ -114,6 +116,23 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 		instr->running = true;
 		instr->firsttuple = INSTR_TIME_GET_DOUBLE(instr->counter);
 	}
+	else
+	{
+		/*
+		 * In async mode, if the plan node hadn't emitted any tuples before,
+		 * this might be the first tuple
+		 */
+		if (instr->async_mode && save_tuplecount < 1.0)
+			instr->firsttuple = INSTR_TIME_GET_DOUBLE(instr->counter);
+	}
+}
+
+/* Update tuple count */
+void
+InstrUpdateTupleCount(Instrumentation *instr, double nTuples)
+{
+	/* count the returned tuples */
+	instr->tuplecount += nTuples;
 }
 
 /* Finish a run cycle for a plan node */

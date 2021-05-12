@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "executor/execAsync.h"
+#include "executor/executor.h"
 #include "executor/nodeAppend.h"
 #include "executor/nodeForeignscan.h"
 
@@ -24,6 +25,13 @@
 void
 ExecAsyncRequest(AsyncRequest *areq)
 {
+	if (areq->requestee->chgParam != NULL)	/* something changed? */
+		ExecReScan(areq->requestee);		/* let ReScan handle this */
+
+	/* must provide our own instrumentation support */
+	if (areq->requestee->instrument)
+		InstrStartNode(areq->requestee->instrument);
+
 	switch (nodeTag(areq->requestee))
 	{
 		case T_ForeignScanState:
@@ -36,6 +44,11 @@ ExecAsyncRequest(AsyncRequest *areq)
 	}
 
 	ExecAsyncResponse(areq);
+
+	/* must provide our own instrumentation support */
+	if (areq->requestee->instrument)
+		InstrStopNode(areq->requestee->instrument,
+					  TupIsNull(areq->result) ? 0.0 : 1.0);
 }
 
 /*
@@ -48,6 +61,10 @@ ExecAsyncRequest(AsyncRequest *areq)
 void
 ExecAsyncConfigureWait(AsyncRequest *areq)
 {
+	/* must provide our own instrumentation support */
+	if (areq->requestee->instrument)
+		InstrStartNode(areq->requestee->instrument);
+
 	switch (nodeTag(areq->requestee))
 	{
 		case T_ForeignScanState:
@@ -58,6 +75,10 @@ ExecAsyncConfigureWait(AsyncRequest *areq)
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(areq->requestee));
 	}
+
+	/* must provide our own instrumentation support */
+	if (areq->requestee->instrument)
+		InstrStopNode(areq->requestee->instrument, 0.0);
 }
 
 /*
@@ -66,6 +87,10 @@ ExecAsyncConfigureWait(AsyncRequest *areq)
 void
 ExecAsyncNotify(AsyncRequest *areq)
 {
+	/* must provide our own instrumentation support */
+	if (areq->requestee->instrument)
+		InstrStartNode(areq->requestee->instrument);
+
 	switch (nodeTag(areq->requestee))
 	{
 		case T_ForeignScanState:
@@ -78,6 +103,11 @@ ExecAsyncNotify(AsyncRequest *areq)
 	}
 
 	ExecAsyncResponse(areq);
+
+	/* must provide our own instrumentation support */
+	if (areq->requestee->instrument)
+		InstrStopNode(areq->requestee->instrument,
+					  TupIsNull(areq->result) ? 0.0 : 1.0);
 }
 
 /*

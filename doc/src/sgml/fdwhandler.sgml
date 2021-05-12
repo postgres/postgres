@@ -1597,7 +1597,7 @@ ForeignAsyncRequest(AsyncRequest *areq);
      <literal>areq-&gt;callback_pending</literal> to <literal>true</literal>
      for the <structname>ForeignScan</structname> node to get a callback from
      the callback functions described below.  If no more tuples are available,
-     set the slot to NULL, and the
+     set the slot to NULL or an empty slot, and the
      <literal>areq-&gt;request_complete</literal> flag to
      <literal>true</literal>.  It's recommended to use
      <function>ExecAsyncRequestDone</function> or

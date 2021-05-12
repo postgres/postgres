@@ -10051,6 +10051,21 @@ SELECT * FROM async_pt t1 WHERE t1.b === 505 LIMIT 1;
                Filter: (t1_3.b === 505)
 (14 rows)
 
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+SELECT * FROM async_pt t1 WHERE t1.b === 505 LIMIT 1;
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Limit (actual rows=1 loops=1)
+   ->  Append (actual rows=1 loops=1)
+         ->  Async Foreign Scan on async_p1 t1_1 (actual rows=0 loops=1)
+               Filter: (b === 505)
+         ->  Async Foreign Scan on async_p2 t1_2 (actual rows=0 loops=1)
+               Filter: (b === 505)
+         ->  Seq Scan on async_p3 t1_3 (actual rows=1 loops=1)
+               Filter: (b === 505)
+               Rows Removed by Filter: 101
+(9 rows)
+
 SELECT * FROM async_pt t1 WHERE t1.b === 505 LIMIT 1;
   a   |  b  |  c   
 ------+-----+------
@@ -10132,18 +10147,32 @@ SELECT * FROM join_tbl ORDER BY a1;
 (3 rows)
 
 DELETE FROM join_tbl;
-RESET enable_mergejoin;
-RESET enable_hashjoin;
--- Clean up
-DROP TABLE async_pt;
-DROP TABLE base_tbl1;
-DROP TABLE base_tbl2;
-DROP TABLE result_tbl;
 DROP TABLE local_tbl;
 DROP FOREIGN TABLE remote_tbl;
 DROP FOREIGN TABLE insert_tbl;
 DROP TABLE base_tbl3;
 DROP TABLE base_tbl4;
+RESET enable_mergejoin;
+RESET enable_hashjoin;
+-- Check EXPLAIN ANALYZE for a query that scans empty partitions asynchronously
+DELETE FROM async_p1;
+DELETE FROM async_p2;
+DELETE FROM async_p3;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+SELECT * FROM async_pt;
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Append (actual rows=0 loops=1)
+   ->  Async Foreign Scan on async_p1 async_pt_1 (actual rows=0 loops=1)
+   ->  Async Foreign Scan on async_p2 async_pt_2 (actual rows=0 loops=1)
+   ->  Seq Scan on async_p3 async_pt_3 (actual rows=0 loops=1)
+(4 rows)
+
+-- Clean up
+DROP TABLE async_pt;
+DROP TABLE base_tbl1;
+DROP TABLE base_tbl2;
+DROP TABLE result_tbl;
 DROP TABLE join_tbl;
 ALTER SERVER loopback OPTIONS (DROP async_capable);
 ALTER SERVER loopback2 OPTIONS (DROP async_capable);

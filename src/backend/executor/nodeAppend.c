@@ -362,9 +362,9 @@ ExecAppend(PlanState *pstate)
 		}
 
 		/*
-		 * wait or poll async events if any. We do this before checking for
-		 * the end of iteration, because it might drain the remaining async
-		 * subplans.
+		 * wait or poll for async events if any. We do this before checking
+		 * for the end of iteration, because it might drain the remaining
+		 * async subplans.
 		 */
 		if (node->as_nasyncremain > 0)
 			ExecAppendAsyncEventWait(node);
@@ -440,7 +440,7 @@ ExecReScanAppend(AppendState *node)
 
 		/*
 		 * If chgParam of subnode is not null then plan will be re-scanned by
-		 * first ExecProcNode.
+		 * first ExecProcNode or by first ExecAsyncRequest.
 		 */
 		if (subnode->chgParam == NULL)
 			ExecReScan(subnode);
@@ -911,7 +911,7 @@ ExecAppendAsyncGetNext(AppendState *node, TupleTableSlot **result)
 	{
 		CHECK_FOR_INTERRUPTS();
 
-		/* Wait or poll async events. */
+		/* Wait or poll for async events. */
 		ExecAppendAsyncEventWait(node);
 
 		/* Request a tuple asynchronously. */
@@ -1084,7 +1084,7 @@ ExecAsyncAppendResponse(AsyncRequest *areq)
 	/* Nothing to do if the request is pending. */
 	if (!areq->request_complete)
 	{
-		/* The request would have been pending for a callback */
+		/* The request would have been pending for a callback. */
 		Assert(areq->callback_pending);
 		return;
 	}

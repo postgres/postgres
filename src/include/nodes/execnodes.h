@@ -538,7 +538,8 @@ typedef struct AsyncRequest
 	int			request_index;	/* Scratch space for requestor */
 	bool		callback_pending;	/* Callback is needed */
 	bool		request_complete;	/* Request complete, result valid */
-	TupleTableSlot *result;		/* Result (NULL if no more tuples) */
+	TupleTableSlot *result;		/* Result (NULL or an empty slot if no more
+								 * tuples) */
 } AsyncRequest;
 
 /* ----------------
@@ -1002,6 +1003,8 @@ typedef struct PlanState
 	TupleTableSlot *ps_ResultTupleSlot; /* slot for my result tuples */
 	ExprContext *ps_ExprContext;	/* node's expression-evaluation context */
 	ProjectionInfo *ps_ProjInfo;	/* info for doing tuple projection */
+
+	bool		async_capable;	/* true if node is async-capable */
 
 	/*
 	 * Scanslot's descriptor if known. This is a bit of a hack, but otherwise

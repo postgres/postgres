@@ -1542,7 +1542,7 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 							 &fsstate->param_values);
 
 	/* Set the async-capable flag */
-	fsstate->async_capable = node->ss.ps.plan->async_capable;
+	fsstate->async_capable = node->ss.ps.async_capable;
 }
 
 /*
@@ -6867,7 +6867,7 @@ produce_tuple_asynchronously(AsyncRequest *areq, bool fetch)
 	}
 
 	/* Get a tuple from the ForeignScan node */
-	result = ExecProcNode((PlanState *) node);
+	result = areq->requestee->ExecProcNodeReal(areq->requestee);
 	if (!TupIsNull(result))
 	{
 		/* Mark the request as complete */
@@ -6955,6 +6955,11 @@ process_pending_request(AsyncRequest *areq)
 
 	/* Unlike AsyncNotify, we call ExecAsyncResponse ourselves */
 	ExecAsyncResponse(areq);
+
+	/* Also, we do instrumentation ourselves, if required */
+	if (areq->requestee->instrument)
+		InstrUpdateTupleCount(areq->requestee->instrument,
+							  TupIsNull(areq->result) ? 0.0 : 1.0);
 
 	MemoryContextSwitchTo(oldcontext);
 }

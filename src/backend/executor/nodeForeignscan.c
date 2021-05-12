@@ -210,6 +210,13 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 		ExecInitQual(node->fdw_recheck_quals, (PlanState *) scanstate);
 
 	/*
+	 * Determine whether to scan the foreign relation asynchronously or not;
+	 * this has to be kept in sync with the code in ExecInitAppend().
+	 */
+	scanstate->ss.ps.async_capable = (((Plan *) node)->async_capable &&
+									  estate->es_epq_active == NULL);
+
+	/*
 	 * Initialize FDW-related state.
 	 */
 	scanstate->fdwroutine = fdwroutine;
