@@ -3526,17 +3526,17 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage, bool planning)
 			{
 				appendStringInfoString(es->str, " shared");
 				if (usage->shared_blks_hit > 0)
-					appendStringInfo(es->str, " hit=%ld",
-									 usage->shared_blks_hit);
+					appendStringInfo(es->str, " hit=%lld",
+									 (long long) usage->shared_blks_hit);
 				if (usage->shared_blks_read > 0)
-					appendStringInfo(es->str, " read=%ld",
-									 usage->shared_blks_read);
+					appendStringInfo(es->str, " read=%lld",
+									 (long long) usage->shared_blks_read);
 				if (usage->shared_blks_dirtied > 0)
-					appendStringInfo(es->str, " dirtied=%ld",
-									 usage->shared_blks_dirtied);
+					appendStringInfo(es->str, " dirtied=%lld",
+									 (long long) usage->shared_blks_dirtied);
 				if (usage->shared_blks_written > 0)
-					appendStringInfo(es->str, " written=%ld",
-									 usage->shared_blks_written);
+					appendStringInfo(es->str, " written=%lld",
+									 (long long) usage->shared_blks_written);
 				if (has_local || has_temp)
 					appendStringInfoChar(es->str, ',');
 			}
@@ -3544,17 +3544,17 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage, bool planning)
 			{
 				appendStringInfoString(es->str, " local");
 				if (usage->local_blks_hit > 0)
-					appendStringInfo(es->str, " hit=%ld",
-									 usage->local_blks_hit);
+					appendStringInfo(es->str, " hit=%lld",
+									 (long long) usage->local_blks_hit);
 				if (usage->local_blks_read > 0)
-					appendStringInfo(es->str, " read=%ld",
-									 usage->local_blks_read);
+					appendStringInfo(es->str, " read=%lld",
+									 (long long) usage->local_blks_read);
 				if (usage->local_blks_dirtied > 0)
-					appendStringInfo(es->str, " dirtied=%ld",
-									 usage->local_blks_dirtied);
+					appendStringInfo(es->str, " dirtied=%lld",
+									 (long long) usage->local_blks_dirtied);
 				if (usage->local_blks_written > 0)
-					appendStringInfo(es->str, " written=%ld",
-									 usage->local_blks_written);
+					appendStringInfo(es->str, " written=%lld",
+									 (long long) usage->local_blks_written);
 				if (has_temp)
 					appendStringInfoChar(es->str, ',');
 			}
@@ -3562,11 +3562,11 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage, bool planning)
 			{
 				appendStringInfoString(es->str, " temp");
 				if (usage->temp_blks_read > 0)
-					appendStringInfo(es->str, " read=%ld",
-									 usage->temp_blks_read);
+					appendStringInfo(es->str, " read=%lld",
+									 (long long) usage->temp_blks_read);
 				if (usage->temp_blks_written > 0)
-					appendStringInfo(es->str, " written=%ld",
-									 usage->temp_blks_written);
+					appendStringInfo(es->str, " written=%lld",
+									 (long long) usage->temp_blks_written);
 			}
 			appendStringInfoChar(es->str, '\n');
 		}
@@ -3638,11 +3638,11 @@ show_wal_usage(ExplainState *es, const WalUsage *usage)
 			appendStringInfoString(es->str, "WAL:");
 
 			if (usage->wal_records > 0)
-				appendStringInfo(es->str, " records=%ld",
-								 usage->wal_records);
+				appendStringInfo(es->str, " records=%lld",
+								 (long long) usage->wal_records);
 			if (usage->wal_fpi > 0)
-				appendStringInfo(es->str, " fpi=%ld",
-								 usage->wal_fpi);
+				appendStringInfo(es->str, " fpi=%lld",
+								 (long long) usage->wal_fpi);
 			if (usage->wal_bytes > 0)
 				appendStringInfo(es->str, " bytes=" UINT64_FORMAT,
 								 usage->wal_bytes);

@@ -830,9 +830,9 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			}
 			appendStringInfo(&buf, _("system usage: %s\n"), pg_rusage_show(&ru0));
 			appendStringInfo(&buf,
-							 _("WAL usage: %ld records, %ld full page images, %llu bytes"),
-							 walusage.wal_records,
-							 walusage.wal_fpi,
+							 _("WAL usage: %lld records, %lld full page images, %llu bytes"),
+							 (long long) walusage.wal_records,
+							 (long long) walusage.wal_fpi,
 							 (unsigned long long) walusage.wal_bytes);
 
 			ereport(LOG,

@@ -18,24 +18,24 @@
 
 typedef struct BufferUsage
 {
-	long		shared_blks_hit;	/* # of shared buffer hits */
-	long		shared_blks_read;	/* # of shared disk blocks read */
-	long		shared_blks_dirtied;	/* # of shared blocks dirtied */
-	long		shared_blks_written;	/* # of shared disk blocks written */
-	long		local_blks_hit; /* # of local buffer hits */
-	long		local_blks_read;	/* # of local disk blocks read */
-	long		local_blks_dirtied; /* # of local blocks dirtied */
-	long		local_blks_written; /* # of local disk blocks written */
-	long		temp_blks_read; /* # of temp blocks read */
-	long		temp_blks_written;	/* # of temp blocks written */
+	int64		shared_blks_hit;	/* # of shared buffer hits */
+	int64		shared_blks_read;	/* # of shared disk blocks read */
+	int64		shared_blks_dirtied;	/* # of shared blocks dirtied */
+	int64		shared_blks_written;	/* # of shared disk blocks written */
+	int64		local_blks_hit; /* # of local buffer hits */
+	int64		local_blks_read;	/* # of local disk blocks read */
+	int64		local_blks_dirtied; /* # of local blocks dirtied */
+	int64		local_blks_written; /* # of local disk blocks written */
+	int64		temp_blks_read; /* # of temp blocks read */
+	int64		temp_blks_written;	/* # of temp blocks written */
 	instr_time	blk_read_time;	/* time spent reading */
 	instr_time	blk_write_time; /* time spent writing */
 } BufferUsage;
 
 typedef struct WalUsage
 {
-	long		wal_records;	/* # of WAL records produced */
-	long		wal_fpi;		/* # of WAL full page images produced */
+	int64		wal_records;	/* # of WAL records produced */
+	int64		wal_fpi;		/* # of WAL full page images produced */
 	uint64		wal_bytes;		/* size of WAL records produced */
 } WalUsage;
 
