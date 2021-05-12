@@ -607,72 +607,119 @@ AS 'unicode_is_normalized';
 -- can later change who can access these functions, or leave them as only
 -- available to superuser / cluster owner, if they choose.
 --
+
 REVOKE EXECUTE ON FUNCTION pg_start_backup(text, boolean, boolean) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_stop_backup() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_stop_backup(boolean, boolean) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_create_restore_point(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_switch_wal() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_wal_replay_pause() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_wal_replay_resume() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_rotate_logfile() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_reload_conf() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_current_logfile() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_current_logfile(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_promote(boolean, integer) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_stat_reset() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_shared(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_slru(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_table_counters(oid) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_function_counters(oid) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_replication_slot(text) FROM public;
 
 REVOKE EXECUTE ON FUNCTION lo_import(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION lo_import(text, oid) FROM public;
+
 REVOKE EXECUTE ON FUNCTION lo_export(oid, text) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_ls_logdir() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_ls_waldir() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_ls_archive_statusdir() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_ls_tmpdir() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_ls_tmpdir(oid) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_read_file(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_read_file(text,bigint,bigint) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_read_file(text,bigint,bigint,boolean) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text,bigint,bigint) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text,bigint,bigint,boolean) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_advance(text, pg_lsn) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_create(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_drop(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_oid(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_progress(text, boolean) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_is_setup() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_progress(boolean) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_reset() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_setup(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_xact_reset() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_xact_setup(pg_lsn, timestamp with time zone) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_show_replication_origin_status() FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_stat_file(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_stat_file(text,boolean) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_ls_dir(text) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_ls_dir(text,boolean,boolean) FROM public;
 
 --
 -- We also set up some things as accessible to standard roles.
 --
+
 GRANT EXECUTE ON FUNCTION pg_ls_logdir() TO pg_monitor;
+
 GRANT EXECUTE ON FUNCTION pg_ls_waldir() TO pg_monitor;
+
 GRANT EXECUTE ON FUNCTION pg_ls_archive_statusdir() TO pg_monitor;
+
 GRANT EXECUTE ON FUNCTION pg_ls_tmpdir() TO pg_monitor;
+
 GRANT EXECUTE ON FUNCTION pg_ls_tmpdir(oid) TO pg_monitor;
 
 GRANT pg_read_all_settings TO pg_monitor;
+
 GRANT pg_read_all_stats TO pg_monitor;
+
 GRANT pg_stat_scan_tables TO pg_monitor;

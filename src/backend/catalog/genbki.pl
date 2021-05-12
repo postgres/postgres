@@ -678,7 +678,8 @@ die
 
 foreach my $c (@system_constraints)
 {
-	print $constraints $c, "\n";
+	# leave blank lines to localize any bootstrap error messages better
+	print $constraints $c, "\n\n";
 }
 
 # Now generate schemapg.h
