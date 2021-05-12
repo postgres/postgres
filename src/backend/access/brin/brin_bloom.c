@@ -258,7 +258,7 @@ typedef struct BloomFilter
 	/* data of the bloom filter */
 	char		data[FLEXIBLE_ARRAY_MEMBER];
 
-}			BloomFilter;
+} BloomFilter;
 
 
 /*
@@ -341,7 +341,7 @@ bloom_init(int ndistinct, double false_positive_rate)
  * 		Add value to the bloom filter.
  */
 static BloomFilter *
-bloom_add_value(BloomFilter * filter, uint32 value, bool *updated)
+bloom_add_value(BloomFilter *filter, uint32 value, bool *updated)
 {
 	int			i;
 	uint64		h1,
@@ -378,7 +378,7 @@ bloom_add_value(BloomFilter * filter, uint32 value, bool *updated)
  * 		Check if the bloom filter contains a particular value.
  */
 static bool
-bloom_contains_value(BloomFilter * filter, uint32 value)
+bloom_contains_value(BloomFilter *filter, uint32 value)
 {
 	int			i;
 	uint64		h1,
@@ -414,7 +414,7 @@ typedef struct BloomOpaque
 	 */
 	FmgrInfo	extra_procinfos[BLOOM_MAX_PROCNUMS];
 	bool		extra_proc_missing[BLOOM_MAX_PROCNUMS];
-}			BloomOpaque;
+} BloomOpaque;
 
 static FmgrInfo *bloom_get_procinfo(BrinDesc *bdesc, uint16 attno,
 									uint16 procnum);

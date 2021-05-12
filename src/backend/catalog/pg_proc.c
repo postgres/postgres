@@ -903,10 +903,10 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		else
 		{
 			/*
-			 * We can't do full prechecking of the function definition if there
-			 * are any polymorphic input types, because actual datatypes of
-			 * expression results will be unresolvable.  The check will be done at
-			 * runtime instead.
+			 * We can't do full prechecking of the function definition if
+			 * there are any polymorphic input types, because actual datatypes
+			 * of expression results will be unresolvable.  The check will be
+			 * done at runtime instead.
 			 *
 			 * We can run the text through the raw parser though; this will at
 			 * least catch silly syntactic errors.
@@ -917,8 +917,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			if (!haspolyarg)
 			{
 				/*
-				 * OK to do full precheck: analyze and rewrite the queries, then
-				 * verify the result type.
+				 * OK to do full precheck: analyze and rewrite the queries,
+				 * then verify the result type.
 				 */
 				SQLFunctionParseInfoPtr pinfo;
 

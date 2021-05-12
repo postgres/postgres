@@ -330,7 +330,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			stats->statypid[slot_idx] = typcache->type_id;
 			stats->statyplen[slot_idx] = typcache->typlen;
 			stats->statypbyval[slot_idx] = typcache->typbyval;
-			stats->statypalign[slot_idx] =  typcache->typalign;
+			stats->statypalign[slot_idx] = typcache->typalign;
 
 			slot_idx++;
 		}

@@ -61,7 +61,7 @@
  */
 typedef struct
 {
-	volatile pid_t		pss_pid;
+	volatile pid_t pss_pid;
 	volatile sig_atomic_t pss_signalFlags[NUM_PROCSIGNALS];
 	pg_atomic_uint64 pss_barrierGeneration;
 	pg_atomic_uint32 pss_barrierCheckMask;
@@ -454,7 +454,7 @@ ProcessProcSignalBarrier(void)
 {
 	uint64		local_gen;
 	uint64		shared_gen;
-	volatile uint32		flags;
+	volatile uint32 flags;
 
 	Assert(MyProcSignalSlot);
 
@@ -484,15 +484,15 @@ ProcessProcSignalBarrier(void)
 	 * extract the flags, and that any subsequent state changes happen
 	 * afterward.
 	 *
-	 * NB: In order to avoid race conditions, we must zero pss_barrierCheckMask
-	 * first and only afterwards try to do barrier processing. If we did it
-	 * in the other order, someone could send us another barrier of some
-	 * type right after we called the barrier-processing function but before
-	 * we cleared the bit. We would have no way of knowing that the bit needs
-	 * to stay set in that case, so the need to call the barrier-processing
-	 * function again would just get forgotten. So instead, we tentatively
-	 * clear all the bits and then put back any for which we don't manage
-	 * to successfully absorb the barrier.
+	 * NB: In order to avoid race conditions, we must zero
+	 * pss_barrierCheckMask first and only afterwards try to do barrier
+	 * processing. If we did it in the other order, someone could send us
+	 * another barrier of some type right after we called the
+	 * barrier-processing function but before we cleared the bit. We would
+	 * have no way of knowing that the bit needs to stay set in that case, so
+	 * the need to call the barrier-processing function again would just get
+	 * forgotten. So instead, we tentatively clear all the bits and then put
+	 * back any for which we don't manage to successfully absorb the barrier.
 	 */
 	flags = pg_atomic_exchange_u32(&MyProcSignalSlot->pss_barrierCheckMask, 0);
 
@@ -503,15 +503,15 @@ ProcessProcSignalBarrier(void)
 	 */
 	if (flags != 0)
 	{
-		bool	success = true;
+		bool		success = true;
 
 		PG_TRY();
 		{
 			/*
 			 * Process each type of barrier. The barrier-processing functions
-			 * should normally return true, but may return false if the barrier
-			 * can't be absorbed at the current time. This should be rare,
-			 * because it's pretty expensive.  Every single
+			 * should normally return true, but may return false if the
+			 * barrier can't be absorbed at the current time. This should be
+			 * rare, because it's pretty expensive.  Every single
 			 * CHECK_FOR_INTERRUPTS() will return here until we manage to
 			 * absorb the barrier, and that cost will add up in a hurry.
 			 *
@@ -521,8 +521,8 @@ ProcessProcSignalBarrier(void)
 			 */
 			while (flags != 0)
 			{
-				ProcSignalBarrierType	type;
-				bool processed = true;
+				ProcSignalBarrierType type;
+				bool		processed = true;
 
 				type = (ProcSignalBarrierType) pg_rightmost_one_pos32(flags);
 				switch (type)
@@ -533,8 +533,8 @@ ProcessProcSignalBarrier(void)
 				}
 
 				/*
-				 * To avoid an infinite loop, we must always unset the bit
-				 * in flags.
+				 * To avoid an infinite loop, we must always unset the bit in
+				 * flags.
 				 */
 				BARRIER_CLEAR_BIT(flags, type);
 

@@ -27,10 +27,13 @@ sub run_test
 
 	# Create a subdir and files that will be present in both
 	mkdir "$test_primary_datadir/tst_both_dir";
-	append_to_file "$test_primary_datadir/tst_both_dir/both_file1", "in both1";
-	append_to_file "$test_primary_datadir/tst_both_dir/both_file2", "in both2";
+	append_to_file "$test_primary_datadir/tst_both_dir/both_file1",
+	  "in both1";
+	append_to_file "$test_primary_datadir/tst_both_dir/both_file2",
+	  "in both2";
 	mkdir "$test_primary_datadir/tst_both_dir/both_subdir/";
-	append_to_file "$test_primary_datadir/tst_both_dir/both_subdir/both_file3",
+	append_to_file
+	  "$test_primary_datadir/tst_both_dir/both_subdir/both_file3",
 	  "in both3";
 
 	RewindTest::create_standby($test_mode);

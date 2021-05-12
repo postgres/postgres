@@ -41,8 +41,8 @@ my $common_connstr;
 # This changes ssl/client.key to ssl/client_tmp.key etc for the rest
 # of the tests.
 my @keys = (
-	"client",     "client-revoked",
-	"client-der", "client-encrypted-pem",
+	"client",               "client-revoked",
+	"client-der",           "client-encrypted-pem",
 	"client-encrypted-der", "client-dn");
 foreach my $key (@keys)
 {

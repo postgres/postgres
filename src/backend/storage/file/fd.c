@@ -3288,7 +3288,7 @@ looks_like_temp_rel_name(const char *name)
 static void
 do_syncfs(const char *path)
 {
-	int		fd;
+	int			fd;
 
 	fd = OpenTransientFile(path, O_RDONLY);
 	if (fd < 0)
@@ -3394,7 +3394,7 @@ SyncDataDirectory(void)
 			do_syncfs("pg_wal");
 		return;
 	}
-#endif		/* !HAVE_SYNCFS */
+#endif							/* !HAVE_SYNCFS */
 
 	/*
 	 * If possible, hint to the kernel that we're soon going to fsync the data

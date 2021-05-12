@@ -381,7 +381,7 @@ sub print_radix_table
 		header  => "Dummy map, for invalid values",
 		min_idx => 0,
 		max_idx => $widest_range,
-		label => "dummy map"
+		label   => "dummy map"
 	  };
 
 	###

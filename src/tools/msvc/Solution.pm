@@ -184,7 +184,7 @@ sub GenerateFiles
 		elsif (/\bAC_DEFINE\(OPENSSL_API_COMPAT, \[([0-9xL]+)\]/)
 		{
 			$ac_define_openssl_api_compat_found = 1;
-			$openssl_api_compat = $1;
+			$openssl_api_compat                 = $1;
 		}
 	}
 	close($c);

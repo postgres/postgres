@@ -824,7 +824,7 @@ test_spinlock(void)
 			char		data_before[4];
 			slock_t		lock;
 			char		data_after[4];
-		} struct_w_lock;
+		}			struct_w_lock;
 
 		memcpy(struct_w_lock.data_before, "abcd", 4);
 		memcpy(struct_w_lock.data_after, "ef12", 4);
@@ -872,28 +872,28 @@ test_spinlock(void)
 	}
 
 	/*
-	 * Ensure that allocating more than INT32_MAX emulated spinlocks
-	 * works. That's interesting because the spinlock emulation uses a 32bit
-	 * integer to map spinlocks onto semaphores. There've been bugs...
+	 * Ensure that allocating more than INT32_MAX emulated spinlocks works.
+	 * That's interesting because the spinlock emulation uses a 32bit integer
+	 * to map spinlocks onto semaphores. There've been bugs...
 	 */
 #ifndef HAVE_SPINLOCKS
 	{
 		/*
-		 * Initialize enough spinlocks to advance counter close to
-		 * wraparound. It's too expensive to perform acquire/release for each,
-		 * as those may be syscalls when the spinlock emulation is used (and
-		 * even just atomic TAS would be expensive).
+		 * Initialize enough spinlocks to advance counter close to wraparound.
+		 * It's too expensive to perform acquire/release for each, as those
+		 * may be syscalls when the spinlock emulation is used (and even just
+		 * atomic TAS would be expensive).
 		 */
 		for (uint32 i = 0; i < INT32_MAX - 100000; i++)
 		{
-			slock_t lock;
+			slock_t		lock;
 
 			SpinLockInit(&lock);
 		}
 
 		for (uint32 i = 0; i < 200000; i++)
 		{
-			slock_t lock;
+			slock_t		lock;
 
 			SpinLockInit(&lock);
 
@@ -923,7 +923,7 @@ test_spinlock(void)
 static void
 test_atomic_spin_nest(void)
 {
-	slock_t lock;
+	slock_t		lock;
 #define NUM_TEST_ATOMICS (NUM_SPINLOCK_SEMAPHORES + NUM_ATOMICS_SEMAPHORES + 27)
 	pg_atomic_uint32 atomics32[NUM_TEST_ATOMICS];
 	pg_atomic_uint64 atomics64[NUM_TEST_ATOMICS];

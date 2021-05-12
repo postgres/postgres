@@ -281,4 +281,4 @@ pgstat_report_wait_end(void)
 }
 
 
-#endif /* WAIT_EVENT_H */
+#endif							/* WAIT_EVENT_H */

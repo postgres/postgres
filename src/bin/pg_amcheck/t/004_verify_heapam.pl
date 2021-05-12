@@ -85,7 +85,7 @@ use Test::More;
 # constants here, where they can be compared easily against the layout.
 
 use constant HEAPTUPLE_PACK_CODE => 'LLLSSSSSCCLLCCCCCCCCCCllLL';
-use constant HEAPTUPLE_PACK_LENGTH => 58;     # Total size
+use constant HEAPTUPLE_PACK_LENGTH => 58;    # Total size
 
 # Read a tuple of our table from a heap page.
 #
@@ -100,39 +100,40 @@ sub read_tuple
 	my ($fh, $offset) = @_;
 	my ($buffer, %tup);
 	seek($fh, $offset, SEEK_SET)
-		or BAIL_OUT("seek failed: $!");
+	  or BAIL_OUT("seek failed: $!");
 	defined(sysread($fh, $buffer, HEAPTUPLE_PACK_LENGTH))
-		or BAIL_OUT("sysread failed: $!");
+	  or BAIL_OUT("sysread failed: $!");
 
 	@_ = unpack(HEAPTUPLE_PACK_CODE, $buffer);
-	%tup = (t_xmin => shift,
-			t_xmax => shift,
-			t_field3 => shift,
-			bi_hi => shift,
-			bi_lo => shift,
-			ip_posid => shift,
-			t_infomask2 => shift,
-			t_infomask => shift,
-			t_hoff => shift,
-			t_bits => shift,
-			a_1 => shift,
-			a_2 => shift,
-			b_header => shift,
-			b_body1 => shift,
-			b_body2 => shift,
-			b_body3 => shift,
-			b_body4 => shift,
-			b_body5 => shift,
-			b_body6 => shift,
-			b_body7 => shift,
-			c_va_header => shift,
-			c_va_vartag => shift,
-			c_va_rawsize => shift,
-			c_va_extinfo => shift,
-			c_va_valueid => shift,
-			c_va_toastrelid => shift);
+	%tup = (
+		t_xmin          => shift,
+		t_xmax          => shift,
+		t_field3        => shift,
+		bi_hi           => shift,
+		bi_lo           => shift,
+		ip_posid        => shift,
+		t_infomask2     => shift,
+		t_infomask      => shift,
+		t_hoff          => shift,
+		t_bits          => shift,
+		a_1             => shift,
+		a_2             => shift,
+		b_header        => shift,
+		b_body1         => shift,
+		b_body2         => shift,
+		b_body3         => shift,
+		b_body4         => shift,
+		b_body5         => shift,
+		b_body6         => shift,
+		b_body7         => shift,
+		c_va_header     => shift,
+		c_va_vartag     => shift,
+		c_va_rawsize    => shift,
+		c_va_extinfo    => shift,
+		c_va_valueid    => shift,
+		c_va_toastrelid => shift);
 	# Stitch together the text for column 'b'
-	$tup{b} = join('', map { chr($tup{"b_body$_"}) } (1..7));
+	$tup{b} = join('', map { chr($tup{"b_body$_"}) } (1 .. 7));
 	return \%tup;
 }
 
@@ -149,37 +150,25 @@ sub read_tuple
 sub write_tuple
 {
 	my ($fh, $offset, $tup) = @_;
-	my $buffer = pack(HEAPTUPLE_PACK_CODE,
-					$tup->{t_xmin},
-					$tup->{t_xmax},
-					$tup->{t_field3},
-					$tup->{bi_hi},
-					$tup->{bi_lo},
-					$tup->{ip_posid},
-					$tup->{t_infomask2},
-					$tup->{t_infomask},
-					$tup->{t_hoff},
-					$tup->{t_bits},
-					$tup->{a_1},
-					$tup->{a_2},
-					$tup->{b_header},
-					$tup->{b_body1},
-					$tup->{b_body2},
-					$tup->{b_body3},
-					$tup->{b_body4},
-					$tup->{b_body5},
-					$tup->{b_body6},
-					$tup->{b_body7},
-					$tup->{c_va_header},
-					$tup->{c_va_vartag},
-					$tup->{c_va_rawsize},
-					$tup->{c_va_extinfo},
-					$tup->{c_va_valueid},
-					$tup->{c_va_toastrelid});
+	my $buffer = pack(
+		HEAPTUPLE_PACK_CODE,
+		$tup->{t_xmin},       $tup->{t_xmax},
+		$tup->{t_field3},     $tup->{bi_hi},
+		$tup->{bi_lo},        $tup->{ip_posid},
+		$tup->{t_infomask2},  $tup->{t_infomask},
+		$tup->{t_hoff},       $tup->{t_bits},
+		$tup->{a_1},          $tup->{a_2},
+		$tup->{b_header},     $tup->{b_body1},
+		$tup->{b_body2},      $tup->{b_body3},
+		$tup->{b_body4},      $tup->{b_body5},
+		$tup->{b_body6},      $tup->{b_body7},
+		$tup->{c_va_header},  $tup->{c_va_vartag},
+		$tup->{c_va_rawsize}, $tup->{c_va_extinfo},
+		$tup->{c_va_valueid}, $tup->{c_va_toastrelid});
 	seek($fh, $offset, SEEK_SET)
-		or BAIL_OUT("seek failed: $!");
+	  or BAIL_OUT("seek failed: $!");
 	defined(syswrite($fh, $buffer, HEAPTUPLE_PACK_LENGTH))
-		or BAIL_OUT("syswrite failed: $!");
+	  or BAIL_OUT("syswrite failed: $!");
 	return;
 }
 
@@ -196,7 +185,7 @@ $node->append_conf('postgresql.conf', 'autovacuum=off');
 # Start the node and load the extensions.  We depend on both
 # amcheck and pageinspect for this test.
 $node->start;
-my $port = $node->port;
+my $port   = $node->port;
 my $pgdata = $node->data_dir;
 $node->safe_psql('postgres', "CREATE EXTENSION amcheck");
 $node->safe_psql('postgres', "CREATE EXTENSION pageinspect");
@@ -224,12 +213,14 @@ $node->safe_psql(
 		VACUUM FREEZE public.junk
 	));
 
-my $rel = $node->safe_psql('postgres', qq(SELECT pg_relation_filepath('public.test')));
+my $rel = $node->safe_psql('postgres',
+	qq(SELECT pg_relation_filepath('public.test')));
 my $relpath = "$pgdata/$rel";
 
 # Insert data and freeze public.test
 use constant ROWCOUNT => 16;
-$node->safe_psql('postgres', qq(
+$node->safe_psql(
+	'postgres', qq(
 	INSERT INTO public.test (a, b, c)
 		VALUES (
 			x'DEADF9F9DEADF9F9'::bigint,
@@ -237,7 +228,7 @@ $node->safe_psql('postgres', qq(
 			repeat('w', 10000)
 		);
 	VACUUM FREEZE public.test
-	)) for (1..ROWCOUNT);
+	)) for (1 .. ROWCOUNT);
 
 my $relfrozenxid = $node->safe_psql('postgres',
 	q(select relfrozenxid from pg_class where relname = 'test'));
@@ -250,15 +241,19 @@ my $datfrozenxid = $node->safe_psql('postgres',
 if ($datfrozenxid <= 3 || $datfrozenxid >= $relfrozenxid)
 {
 	$node->clean_node;
-	plan skip_all => "Xid thresholds not as expected: got datfrozenxid = $datfrozenxid, relfrozenxid = $relfrozenxid";
+	plan skip_all =>
+	  "Xid thresholds not as expected: got datfrozenxid = $datfrozenxid, relfrozenxid = $relfrozenxid";
 	exit;
 }
 
 # Find where each of the tuples is located on the page.
 my @lp_off;
-for my $tup (0..ROWCOUNT-1)
+for my $tup (0 .. ROWCOUNT - 1)
 {
-	push (@lp_off, $node->safe_psql('postgres', qq(
+	push(
+		@lp_off,
+		$node->safe_psql(
+			'postgres', qq(
 select lp_off from heap_page_items(get_raw_page('test', 'main', 0))
 	offset $tup limit 1)));
 }
@@ -269,26 +264,28 @@ select lp_off from heap_page_items(get_raw_page('test', 'main', 0))
 $node->stop;
 my $file;
 open($file, '+<', $relpath)
-	or BAIL_OUT("open failed: $!");
+  or BAIL_OUT("open failed: $!");
 binmode $file;
 
 my $ENDIANNESS;
 for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 {
-	my $offnum = $tupidx + 1;  # offnum is 1-based, not zero-based
+	my $offnum = $tupidx + 1;        # offnum is 1-based, not zero-based
 	my $offset = $lp_off[$tupidx];
 	my $tup = read_tuple($file, $offset);
 
 	# Sanity-check that the data appears on the page where we expect.
 	my $a_1 = $tup->{a_1};
 	my $a_2 = $tup->{a_2};
-	my $b = $tup->{b};
+	my $b   = $tup->{b};
 	if ($a_1 != 0xDEADF9F9 || $a_2 != 0xDEADF9F9 || $b ne 'abcdefg')
 	{
-		close($file);  # ignore errors on close; we're exiting anyway
+		close($file);    # ignore errors on close; we're exiting anyway
 		$node->clean_node;
-		plan skip_all => sprintf("Page layout differs from our expectations: expected (%x, %x, \"%s\"), got (%x, %x, \"%s\")",
-								 0xDEADF9F9, 0xDEADF9F9, "abcdefg", $a_1, $a_2, $b);
+		plan skip_all =>
+		  sprintf(
+			"Page layout differs from our expectations: expected (%x, %x, \"%s\"), got (%x, %x, \"%s\")",
+			0xDEADF9F9, 0xDEADF9F9, "abcdefg", $a_1, $a_2, $b);
 		exit;
 	}
 
@@ -296,44 +293,47 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 	$ENDIANNESS = $tup->{b_header} == 0x11 ? "little" : "big";
 }
 close($file)
-	or BAIL_OUT("close failed: $!");
+  or BAIL_OUT("close failed: $!");
 $node->start;
 
 # Ok, Xids and page layout look ok.  We can run corruption tests.
 plan tests => 19;
 
 # Check that pg_amcheck runs against the uncorrupted table without error.
-$node->command_ok(['pg_amcheck', '-p', $port, 'postgres'],
-				  'pg_amcheck test table, prior to corruption');
+$node->command_ok(
+	[ 'pg_amcheck', '-p', $port, 'postgres' ],
+	'pg_amcheck test table, prior to corruption');
 
 # Check that pg_amcheck runs against the uncorrupted table and index without error.
-$node->command_ok(['pg_amcheck', '-p', $port, 'postgres'],
-				  'pg_amcheck test table and index, prior to corruption');
+$node->command_ok([ 'pg_amcheck', '-p', $port, 'postgres' ],
+	'pg_amcheck test table and index, prior to corruption');
 
 $node->stop;
 
 # Some #define constants from access/htup_details.h for use while corrupting.
-use constant HEAP_HASNULL            => 0x0001;
-use constant HEAP_XMAX_LOCK_ONLY     => 0x0080;
-use constant HEAP_XMIN_COMMITTED     => 0x0100;
-use constant HEAP_XMIN_INVALID       => 0x0200;
-use constant HEAP_XMAX_COMMITTED     => 0x0400;
-use constant HEAP_XMAX_INVALID       => 0x0800;
-use constant HEAP_NATTS_MASK         => 0x07FF;
-use constant HEAP_XMAX_IS_MULTI      => 0x1000;
-use constant HEAP_KEYS_UPDATED       => 0x2000;
+use constant HEAP_HASNULL        => 0x0001;
+use constant HEAP_XMAX_LOCK_ONLY => 0x0080;
+use constant HEAP_XMIN_COMMITTED => 0x0100;
+use constant HEAP_XMIN_INVALID   => 0x0200;
+use constant HEAP_XMAX_COMMITTED => 0x0400;
+use constant HEAP_XMAX_INVALID   => 0x0800;
+use constant HEAP_NATTS_MASK     => 0x07FF;
+use constant HEAP_XMAX_IS_MULTI  => 0x1000;
+use constant HEAP_KEYS_UPDATED   => 0x2000;
 
 # Helper function to generate a regular expression matching the header we
 # expect verify_heapam() to return given which fields we expect to be non-null.
 sub header
 {
 	my ($blkno, $offnum, $attnum) = @_;
-	return qr/heap table "postgres"\."public"\."test", block $blkno, offset $offnum, attribute $attnum:\s+/ms
-		if (defined $attnum);
-	return qr/heap table "postgres"\."public"\."test", block $blkno, offset $offnum:\s+/ms
-		if (defined $offnum);
+	return
+	  qr/heap table "postgres"\."public"\."test", block $blkno, offset $offnum, attribute $attnum:\s+/ms
+	  if (defined $attnum);
+	return
+	  qr/heap table "postgres"\."public"\."test", block $blkno, offset $offnum:\s+/ms
+	  if (defined $offnum);
 	return qr/heap table "postgres"\."public"\."test", block $blkno:\s+/ms
-		if (defined $blkno);
+	  if (defined $blkno);
 	return qr/heap table "postgres"\."public"\."test":\s+/ms;
 }
 
@@ -344,12 +344,12 @@ sub header
 #
 my @expected;
 open($file, '+<', $relpath)
-	or BAIL_OUT("open failed: $!");
+  or BAIL_OUT("open failed: $!");
 binmode $file;
 
 for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 {
-	my $offnum = $tupidx + 1;  # offnum is 1-based, not zero-based
+	my $offnum = $tupidx + 1;        # offnum is 1-based, not zero-based
 	my $offset = $lp_off[$tupidx];
 	my $tup = read_tuple($file, $offset);
 
@@ -364,7 +364,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 
 		# Expected corruption report
 		push @expected,
-			qr/${header}xmin $xmin precedes relation freeze threshold 0:\d+/;
+		  qr/${header}xmin $xmin precedes relation freeze threshold 0:\d+/;
 	}
 	if ($offnum == 2)
 	{
@@ -375,7 +375,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_infomask} &= ~HEAP_XMIN_INVALID;
 
 		push @expected,
-			qr/${$header}xmin $xmin precedes oldest valid transaction ID 0:\d+/;
+		  qr/${$header}xmin $xmin precedes oldest valid transaction ID 0:\d+/;
 	}
 	elsif ($offnum == 3)
 	{
@@ -387,7 +387,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_infomask} &= ~HEAP_XMIN_INVALID;
 
 		push @expected,
-			qr/${$header}xmin 4026531839 equals or exceeds next valid transaction ID 0:\d+/;
+		  qr/${$header}xmin 4026531839 equals or exceeds next valid transaction ID 0:\d+/;
 	}
 	elsif ($offnum == 4)
 	{
@@ -396,7 +396,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_infomask} &= ~HEAP_XMAX_INVALID;
 
 		push @expected,
-			qr/${$header}xmax 4026531839 equals or exceeds next valid transaction ID 0:\d+/;
+		  qr/${$header}xmax 4026531839 equals or exceeds next valid transaction ID 0:\d+/;
 	}
 	elsif ($offnum == 5)
 	{
@@ -404,8 +404,8 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_hoff} += 128;
 
 		push @expected,
-			qr/${$header}data begins at offset 152 beyond the tuple length 58/,
-			qr/${$header}tuple data should begin at byte 24, but actually begins at byte 152 \(3 attributes, no nulls\)/;
+		  qr/${$header}data begins at offset 152 beyond the tuple length 58/,
+		  qr/${$header}tuple data should begin at byte 24, but actually begins at byte 152 \(3 attributes, no nulls\)/;
 	}
 	elsif ($offnum == 6)
 	{
@@ -413,7 +413,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_hoff} += 3;
 
 		push @expected,
-			qr/${$header}tuple data should begin at byte 24, but actually begins at byte 27 \(3 attributes, no nulls\)/;
+		  qr/${$header}tuple data should begin at byte 24, but actually begins at byte 27 \(3 attributes, no nulls\)/;
 	}
 	elsif ($offnum == 7)
 	{
@@ -421,7 +421,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_hoff} -= 8;
 
 		push @expected,
-			qr/${$header}tuple data should begin at byte 24, but actually begins at byte 16 \(3 attributes, no nulls\)/;
+		  qr/${$header}tuple data should begin at byte 24, but actually begins at byte 16 \(3 attributes, no nulls\)/;
 	}
 	elsif ($offnum == 8)
 	{
@@ -429,7 +429,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_hoff} -= 3;
 
 		push @expected,
-			qr/${$header}tuple data should begin at byte 24, but actually begins at byte 21 \(3 attributes, no nulls\)/;
+		  qr/${$header}tuple data should begin at byte 24, but actually begins at byte 21 \(3 attributes, no nulls\)/;
 	}
 	elsif ($offnum == 9)
 	{
@@ -437,30 +437,30 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_infomask2} |= HEAP_NATTS_MASK;
 
 		push @expected,
-			qr/${$header}number of attributes 2047 exceeds maximum expected for table 3/;
+		  qr/${$header}number of attributes 2047 exceeds maximum expected for table 3/;
 	}
 	elsif ($offnum == 10)
 	{
 		# Corrupt the tuple to look like it has lots of attributes, some of
 		# them null.  This falsely creates the impression that the t_bits
 		# array is longer than just one byte, but t_hoff still says otherwise.
-		$tup->{t_infomask} |= HEAP_HASNULL;
+		$tup->{t_infomask}  |= HEAP_HASNULL;
 		$tup->{t_infomask2} |= HEAP_NATTS_MASK;
 		$tup->{t_bits} = 0xAA;
 
 		push @expected,
-			qr/${$header}tuple data should begin at byte 280, but actually begins at byte 24 \(2047 attributes, has nulls\)/;
+		  qr/${$header}tuple data should begin at byte 280, but actually begins at byte 24 \(2047 attributes, has nulls\)/;
 	}
 	elsif ($offnum == 11)
 	{
 		# Same as above, but this time t_hoff plays along
-		$tup->{t_infomask} |= HEAP_HASNULL;
+		$tup->{t_infomask}  |= HEAP_HASNULL;
 		$tup->{t_infomask2} |= (HEAP_NATTS_MASK & 0x40);
 		$tup->{t_bits} = 0xAA;
 		$tup->{t_hoff} = 32;
 
 		push @expected,
-			qr/${$header}number of attributes 67 exceeds maximum expected for table 3/;
+		  qr/${$header}number of attributes 67 exceeds maximum expected for table 3/;
 	}
 	elsif ($offnum == 12)
 	{
@@ -478,13 +478,13 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		# bytes with 0xFF using 0x3FFFFFFF.
 		#
 		$tup->{b_header} = $ENDIANNESS eq 'little' ? 0xFC : 0x3F;
-		$tup->{b_body1} = 0xFF;
-		$tup->{b_body2} = 0xFF;
-		$tup->{b_body3} = 0xFF;
+		$tup->{b_body1}  = 0xFF;
+		$tup->{b_body2}  = 0xFF;
+		$tup->{b_body3}  = 0xFF;
 
 		$header = header(0, $offnum, 1);
 		push @expected,
-			qr/${header}attribute with length \d+ ends at offset \d+ beyond total tuple length \d+/;
+		  qr/${header}attribute with length \d+ ends at offset \d+ beyond total tuple length \d+/;
 	}
 	elsif ($offnum == 13)
 	{
@@ -492,8 +492,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{c_va_valueid} = 0xFFFFFFFF;
 
 		$header = header(0, $offnum, 2);
-		push @expected,
-			qr/${header}toast value \d+ not found in toast table/;
+		push @expected, qr/${header}toast value \d+ not found in toast table/;
 	}
 	elsif ($offnum == 14)
 	{
@@ -503,9 +502,9 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_xmax} = 4;
 
 		push @expected,
-			qr/${header}multitransaction ID 4 equals or exceeds next valid multitransaction ID 1/;
+		  qr/${header}multitransaction ID 4 equals or exceeds next valid multitransaction ID 1/;
 	}
-	elsif ($offnum == 15)	# Last offnum must equal ROWCOUNT
+	elsif ($offnum == 15)    # Last offnum must equal ROWCOUNT
 	{
 		# Set both HEAP_XMAX_COMMITTED and HEAP_XMAX_IS_MULTI
 		$tup->{t_infomask} |= HEAP_XMAX_COMMITTED;
@@ -513,22 +512,19 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		$tup->{t_xmax} = 4000000000;
 
 		push @expected,
-			qr/${header}multitransaction ID 4000000000 precedes relation minimum multitransaction ID threshold 1/;
+		  qr/${header}multitransaction ID 4000000000 precedes relation minimum multitransaction ID threshold 1/;
 	}
 	write_tuple($file, $offset, $tup);
 }
 close($file)
-	or BAIL_OUT("close failed: $!");
+  or BAIL_OUT("close failed: $!");
 $node->start;
 
 # Run pg_amcheck against the corrupt table with epoch=0, comparing actual
 # corruption messages against the expected messages
 $node->command_checks_all(
-	['pg_amcheck', '--no-dependent-indexes', '-p', $port, 'postgres'],
-	2,
-	[ @expected ],
-	[ ],
-	'Expected corruption message output');
+	[ 'pg_amcheck', '--no-dependent-indexes', '-p', $port, 'postgres' ],
+	2, [@expected], [], 'Expected corruption message output');
 
 $node->teardown_node;
 $node->clean_node;

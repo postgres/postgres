@@ -94,18 +94,21 @@ sub ParseHeader
 			push @{ $catalog{toasting} },
 			  { parent_table => $1, toast_oid => $2, toast_index_oid => $3 };
 		}
-		elsif (/^DECLARE_(UNIQUE_)?INDEX(_PKEY)?\(\s*(\w+),\s*(\d+),\s*(.+)\)/)
+		elsif (
+			/^DECLARE_(UNIQUE_)?INDEX(_PKEY)?\(\s*(\w+),\s*(\d+),\s*(.+)\)/)
 		{
 			push @{ $catalog{indexing} },
-			{
+			  {
 				is_unique => $1 ? 1 : 0,
-				is_pkey => $2 ? 1 : 0,
+				is_pkey   => $2 ? 1 : 0,
 				index_name => $3,
 				index_oid  => $4,
 				index_decl => $5
 			  };
 		}
-		elsif (/^DECLARE_(ARRAY_)?FOREIGN_KEY(_OPT)?\(\s*\(([^)]+)\),\s*(\w+),\s*\(([^)]+)\)\)/)
+		elsif (
+			/^DECLARE_(ARRAY_)?FOREIGN_KEY(_OPT)?\(\s*\(([^)]+)\),\s*(\w+),\s*\(([^)]+)\)\)/
+		  )
 		{
 			push @{ $catalog{foreign_keys} },
 			  {

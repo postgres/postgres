@@ -78,9 +78,9 @@ sub new
 	# Accept standard formats, in case caller has handed us the output of a
 	# postgres command line tool
 	my $devel;
-	($arg,$devel) = ($1, $2)
-	  if ($arg =~
-		  m!^                             # beginning of line
+	($arg, $devel) = ($1, $2)
+	  if (
+		$arg =~ m!^                             # beginning of line
           (?:\(?PostgreSQL\)?\s)?         # ignore PostgreSQL marker
           (\d+(?:\.\d+)*)                 # version number, dotted notation
           (devel|(?:alpha|beta|rc)\d+)?   # dev marker - see version_stamp.pl
@@ -95,7 +95,7 @@ sub new
 
 	$devel ||= "";
 
-	return bless  { str => "$arg$devel", num => \@numbers }, $class;
+	return bless { str => "$arg$devel", num => \@numbers }, $class;
 }
 
 # Routine which compares the _pg_version_array obtained for the two
@@ -129,7 +129,7 @@ sub _version_cmp
 # Render the version number using the saved string.
 sub _stringify
 {
-	my $self     = shift;
+	my $self = shift;
 	return $self->{str};
 }
 

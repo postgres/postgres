@@ -6577,8 +6577,8 @@ threadRun(void *arg)
 				 * GO before proceeding to the "done" path which will cleanup,
 				 * so as to avoid locking the process.
 				 *
-				 * It is unclear whether it is worth doing anything rather than
-				 * coldly exiting with an error message.
+				 * It is unclear whether it is worth doing anything rather
+				 * than coldly exiting with an error message.
 				 */
 				THREAD_BARRIER_WAIT(&barrier);
 				goto done;

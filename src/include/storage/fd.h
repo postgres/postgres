@@ -45,10 +45,11 @@
 
 #include <dirent.h>
 
-typedef enum RecoveryInitSyncMethod {
+typedef enum RecoveryInitSyncMethod
+{
 	RECOVERY_INIT_SYNC_METHOD_FSYNC,
 	RECOVERY_INIT_SYNC_METHOD_SYNCFS
-} RecoveryInitSyncMethod;
+}			RecoveryInitSyncMethod;
 
 struct iovec;					/* avoid including port/pg_iovec.h here */
 
@@ -58,7 +59,7 @@ typedef int File;
 /* GUC parameter */
 extern PGDLLIMPORT int max_files_per_process;
 extern PGDLLIMPORT bool data_sync_retry;
-extern int recovery_init_sync_method;
+extern int	recovery_init_sync_method;
 
 /*
  * This is private to fd.c, but exported for save/restore_backend_variables()

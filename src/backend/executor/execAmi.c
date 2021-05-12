@@ -427,6 +427,7 @@ ExecSupportsMarkRestore(Path *pathnode)
 	{
 		case T_IndexScan:
 		case T_IndexOnlyScan:
+
 			/*
 			 * Not all index types support mark/restore.
 			 */

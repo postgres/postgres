@@ -356,7 +356,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 		 * than just being recursive.  It basically means the query expression
 		 * looks like
 		 *
-		 *     non-recursive query UNION [ALL] recursive query
+		 * non-recursive query UNION [ALL] recursive query
 		 *
 		 * and that the recursive query is not itself a set operation.
 		 *

@@ -74,7 +74,8 @@ sub run_test
 	primary_psql("VACUUM tail_tbl");
 
 	# Drop drop_tbl. pg_rewind should copy it back.
-	primary_psql("insert into drop_tbl values ('in primary, after promotion')");
+	primary_psql(
+		"insert into drop_tbl values ('in primary, after promotion')");
 	primary_psql("DROP TABLE drop_tbl");
 
 	# Before running pg_rewind, do a couple of extra tests with several
@@ -83,7 +84,7 @@ sub run_test
 	# in "local" mode for simplicity's sake.
 	if ($test_mode eq 'local')
 	{
-		my $primary_pgdata  = $node_primary->data_dir;
+		my $primary_pgdata = $node_primary->data_dir;
 		my $standby_pgdata = $node_standby->data_dir;
 
 		# First check that pg_rewind fails if the target cluster is

@@ -420,7 +420,7 @@ ProcessSyncRequests(void)
 					ereport(DEBUG1,
 							(errcode_for_file_access(),
 							 errmsg_internal("could not fsync file \"%s\" but retrying: %m",
-									path)));
+											 path)));
 
 				/*
 				 * Absorb incoming requests and check to see if a cancel

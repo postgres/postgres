@@ -2278,7 +2278,7 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid,
 	/* Log the info */
 	ereport(DEBUG1,
 			(errmsg_internal("MultiXactId wrap limit is %u, limited by database with OID %u",
-					multiWrapLimit, oldest_datoid)));
+							 multiWrapLimit, oldest_datoid)));
 
 	/*
 	 * Computing the actual limits is only possible once the data directory is
@@ -2612,7 +2612,7 @@ SetOffsetVacuumLimit(bool is_startup)
 		if (oldestOffsetKnown)
 			ereport(DEBUG1,
 					(errmsg_internal("oldest MultiXactId member is at offset %u",
-							oldestOffset)));
+									 oldestOffset)));
 		else
 			ereport(LOG,
 					(errmsg("MultiXact member wraparound protections are disabled because oldest checkpointed MultiXact %u does not exist on disk",
@@ -2641,7 +2641,7 @@ SetOffsetVacuumLimit(bool is_startup)
 
 		ereport(DEBUG1,
 				(errmsg_internal("MultiXact member stop limit is now %u based on MultiXact %u",
-						offsetStopLimit, oldestMultiXactId)));
+								 offsetStopLimit, oldestMultiXactId)));
 	}
 	else if (prevOldestOffsetKnown)
 	{
@@ -3283,9 +3283,9 @@ multixact_redo(XLogReaderState *record)
 								  xlrec->moff + xlrec->nmembers);
 
 		/*
-		 * Make sure nextXid is beyond any XID mentioned in the record.
-		 * This should be unnecessary, since any XID found here ought to have
-		 * other evidence in the XLOG, but let's be safe.
+		 * Make sure nextXid is beyond any XID mentioned in the record. This
+		 * should be unnecessary, since any XID found here ought to have other
+		 * evidence in the XLOG, but let's be safe.
 		 */
 		max_xid = XLogRecGetXid(record);
 		for (i = 0; i < xlrec->nmembers; i++)

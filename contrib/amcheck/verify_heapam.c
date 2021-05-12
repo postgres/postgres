@@ -839,13 +839,16 @@ check_tuple_visibility(HeapCheckContext *ctx)
 					return false;
 
 				case XID_COMMITTED:
+
 					/*
 					 * The tuple is dead, because the xvac transaction moved
-					 * it off and committed. It's checkable, but also prunable.
+					 * it off and committed. It's checkable, but also
+					 * prunable.
 					 */
 					return true;
 
 				case XID_ABORTED:
+
 					/*
 					 * The original xmin must have committed, because the xvac
 					 * transaction tried to move it later. Since xvac is
@@ -905,6 +908,7 @@ check_tuple_visibility(HeapCheckContext *ctx)
 					return false;
 
 				case XID_COMMITTED:
+
 					/*
 					 * The original xmin must have committed, because the xvac
 					 * transaction moved it later. Whether it's still alive
@@ -913,9 +917,11 @@ check_tuple_visibility(HeapCheckContext *ctx)
 					break;
 
 				case XID_ABORTED:
+
 					/*
 					 * The tuple is dead, because the xvac transaction moved
-					 * it off and committed. It's checkable, but also prunable.
+					 * it off and committed. It's checkable, but also
+					 * prunable.
 					 */
 					return true;
 			}
@@ -924,12 +930,12 @@ check_tuple_visibility(HeapCheckContext *ctx)
 		{
 			/*
 			 * Inserting transaction is not in progress, and not committed, so
-			 * it might have changed the TupleDesc in ways we don't know about.
-			 * Thus, don't try to check the tuple structure.
+			 * it might have changed the TupleDesc in ways we don't know
+			 * about. Thus, don't try to check the tuple structure.
 			 *
 			 * If xmin_status happens to be XID_IS_CURRENT_XID, then in theory
-			 * any such DDL changes ought to be visible to us, so perhaps
-			 * we could check anyway in that case. But, for now, let's be
+			 * any such DDL changes ought to be visible to us, so perhaps we
+			 * could check anyway in that case. But, for now, let's be
 			 * conservative and treat this like any other uncommitted insert.
 			 */
 			return false;
@@ -945,18 +951,19 @@ check_tuple_visibility(HeapCheckContext *ctx)
 	{
 		/*
 		 * xmax is a multixact, so sanity-check the MXID. Note that we do this
-		 * prior to checking for HEAP_XMAX_INVALID or HEAP_XMAX_IS_LOCKED_ONLY.
-		 * This might therefore complain about things that wouldn't actually
-		 * be a problem during a normal scan, but eventually we're going to
-		 * have to freeze, and that process will ignore hint bits.
+		 * prior to checking for HEAP_XMAX_INVALID or
+		 * HEAP_XMAX_IS_LOCKED_ONLY. This might therefore complain about
+		 * things that wouldn't actually be a problem during a normal scan,
+		 * but eventually we're going to have to freeze, and that process will
+		 * ignore hint bits.
 		 *
 		 * Even if the MXID is out of range, we still know that the original
 		 * insert committed, so we can check the tuple itself. However, we
 		 * can't rule out the possibility that this tuple is dead, so don't
 		 * clear ctx->tuple_could_be_pruned. Possibly we should go ahead and
 		 * clear that flag anyway if HEAP_XMAX_INVALID is set or if
-		 * HEAP_XMAX_IS_LOCKED_ONLY is true, but for now we err on the side
-		 * of avoiding possibly-bogus complaints about missing TOAST entries.
+		 * HEAP_XMAX_IS_LOCKED_ONLY is true, but for now we err on the side of
+		 * avoiding possibly-bogus complaints about missing TOAST entries.
 		 */
 		xmax = HeapTupleHeaderGetRawXmax(tuphdr);
 		switch (check_mxid_valid_in_rel(xmax, ctx))
@@ -1066,9 +1073,10 @@ check_tuple_visibility(HeapCheckContext *ctx)
 				 * away depends on how old the deleting transaction is.
 				 */
 				ctx->tuple_could_be_pruned = TransactionIdPrecedes(xmax,
-																 ctx->safe_xmin);
+																   ctx->safe_xmin);
 				break;
 			case XID_ABORTED:
+
 				/*
 				 * The delete aborted or crashed.  The tuple is still live.
 				 */
@@ -1127,15 +1135,17 @@ check_tuple_visibility(HeapCheckContext *ctx)
 			break;
 
 		case XID_COMMITTED:
+
 			/*
 			 * The delete committed.  Whether the toast can be vacuumed away
 			 * depends on how old the deleting transaction is.
 			 */
 			ctx->tuple_could_be_pruned = TransactionIdPrecedes(xmax,
-															 ctx->safe_xmin);
+															   ctx->safe_xmin);
 			break;
 
 		case XID_ABORTED:
+
 			/*
 			 * The delete aborted or crashed.  The tuple is still live.
 			 */
@@ -1248,6 +1258,7 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 										 ta->toast_pointer.va_valueid,
 										 chunk_seq, chunksize, expected_size));
 }
+
 /*
  * Check the current attribute as tracked in ctx, recording any corruption
  * found in ctx->tupstore.

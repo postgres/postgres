@@ -239,7 +239,8 @@ SysLoggerMain(int argc, char *argv[])
 	 * broken backends...
 	 */
 
-	pqsignal(SIGHUP, SignalHandlerForConfigReload);	/* set flag to read config file */
+	pqsignal(SIGHUP, SignalHandlerForConfigReload); /* set flag to read config
+													 * file */
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN);
 	pqsignal(SIGQUIT, SIG_IGN);

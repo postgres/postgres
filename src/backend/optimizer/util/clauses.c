@@ -2563,9 +2563,9 @@ eval_const_expressions_mutator(Node *node,
 			}
 		case T_NullIfExpr:
 			{
-				NullIfExpr	   *expr;
-				ListCell	   *arg;
-				bool			has_nonconst_input = false;
+				NullIfExpr *expr;
+				ListCell   *arg;
+				bool		has_nonconst_input = false;
 
 				/* Copy the node and const-simplify its arguments */
 				expr = (NullIfExpr *) ece_generic_processing(node);
@@ -4359,49 +4359,49 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	}
 	else
 	{
-	/*
-	 * Set up to handle parameters while parsing the function body.  We need a
-	 * dummy FuncExpr node containing the already-simplified arguments to pass
-	 * to prepare_sql_fn_parse_info.  (In some cases we don't really need
-	 * that, but for simplicity we always build it.)
-	 */
-	fexpr = makeNode(FuncExpr);
-	fexpr->funcid = funcid;
-	fexpr->funcresulttype = result_type;
-	fexpr->funcretset = false;
-	fexpr->funcvariadic = funcvariadic;
-	fexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
-	fexpr->funccollid = result_collid;	/* doesn't matter */
-	fexpr->inputcollid = input_collid;
-	fexpr->args = args;
-	fexpr->location = -1;
+		/*
+		 * Set up to handle parameters while parsing the function body.  We
+		 * need a dummy FuncExpr node containing the already-simplified
+		 * arguments to pass to prepare_sql_fn_parse_info.  (In some cases we
+		 * don't really need that, but for simplicity we always build it.)
+		 */
+		fexpr = makeNode(FuncExpr);
+		fexpr->funcid = funcid;
+		fexpr->funcresulttype = result_type;
+		fexpr->funcretset = false;
+		fexpr->funcvariadic = funcvariadic;
+		fexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
+		fexpr->funccollid = result_collid;	/* doesn't matter */
+		fexpr->inputcollid = input_collid;
+		fexpr->args = args;
+		fexpr->location = -1;
 
-	pinfo = prepare_sql_fn_parse_info(func_tuple,
-									  (Node *) fexpr,
-									  input_collid);
+		pinfo = prepare_sql_fn_parse_info(func_tuple,
+										  (Node *) fexpr,
+										  input_collid);
 
-	/* fexpr also provides a convenient way to resolve a composite result */
-	(void) get_expr_result_type((Node *) fexpr,
-								NULL,
-								&rettupdesc);
+		/* fexpr also provides a convenient way to resolve a composite result */
+		(void) get_expr_result_type((Node *) fexpr,
+									NULL,
+									&rettupdesc);
 
-	/*
-	 * We just do parsing and parse analysis, not rewriting, because rewriting
-	 * will not affect table-free-SELECT-only queries, which is all that we
-	 * care about.  Also, we can punt as soon as we detect more than one
-	 * command in the function body.
-	 */
-	raw_parsetree_list = pg_parse_query(src);
-	if (list_length(raw_parsetree_list) != 1)
-		goto fail;
+		/*
+		 * We just do parsing and parse analysis, not rewriting, because
+		 * rewriting will not affect table-free-SELECT-only queries, which is
+		 * all that we care about.  Also, we can punt as soon as we detect
+		 * more than one command in the function body.
+		 */
+		raw_parsetree_list = pg_parse_query(src);
+		if (list_length(raw_parsetree_list) != 1)
+			goto fail;
 
-	pstate = make_parsestate(NULL);
-	pstate->p_sourcetext = src;
-	sql_fn_parser_setup(pstate, pinfo);
+		pstate = make_parsestate(NULL);
+		pstate->p_sourcetext = src;
+		sql_fn_parser_setup(pstate, pinfo);
 
-	querytree = transformTopLevelStmt(pstate, linitial(raw_parsetree_list));
+		querytree = transformTopLevelStmt(pstate, linitial(raw_parsetree_list));
 
-	free_parsestate(pstate);
+		free_parsestate(pstate);
 	}
 
 	/*
@@ -4931,31 +4931,31 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	}
 	else
 	{
-	/*
-	 * Set up to handle parameters while parsing the function body.  We can
-	 * use the FuncExpr just created as the input for
-	 * prepare_sql_fn_parse_info.
-	 */
-	pinfo = prepare_sql_fn_parse_info(func_tuple,
-									  (Node *) fexpr,
-									  fexpr->inputcollid);
+		/*
+		 * Set up to handle parameters while parsing the function body.  We
+		 * can use the FuncExpr just created as the input for
+		 * prepare_sql_fn_parse_info.
+		 */
+		pinfo = prepare_sql_fn_parse_info(func_tuple,
+										  (Node *) fexpr,
+										  fexpr->inputcollid);
 
-	/*
-	 * Parse, analyze, and rewrite (unlike inline_function(), we can't skip
-	 * rewriting here).  We can fail as soon as we find more than one query,
-	 * though.
-	 */
-	raw_parsetree_list = pg_parse_query(src);
-	if (list_length(raw_parsetree_list) != 1)
-		goto fail;
+		/*
+		 * Parse, analyze, and rewrite (unlike inline_function(), we can't
+		 * skip rewriting here).  We can fail as soon as we find more than one
+		 * query, though.
+		 */
+		raw_parsetree_list = pg_parse_query(src);
+		if (list_length(raw_parsetree_list) != 1)
+			goto fail;
 
-	querytree_list = pg_analyze_and_rewrite_params(linitial(raw_parsetree_list),
-												   src,
-												   (ParserSetupHook) sql_fn_parser_setup,
-												   pinfo, NULL);
-	if (list_length(querytree_list) != 1)
-		goto fail;
-	querytree = linitial(querytree_list);
+		querytree_list = pg_analyze_and_rewrite_params(linitial(raw_parsetree_list),
+													   src,
+													   (ParserSetupHook) sql_fn_parser_setup,
+													   pinfo, NULL);
+		if (list_length(querytree_list) != 1)
+			goto fail;
+		querytree = linitial(querytree_list);
 	}
 
 	/*

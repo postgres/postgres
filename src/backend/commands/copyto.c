@@ -104,7 +104,7 @@ typedef struct CopyToStateData
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
-	CopyToState	cstate;			/* CopyToStateData for the command */
+	CopyToState cstate;			/* CopyToStateData for the command */
 	uint64		processed;		/* # of tuples processed */
 } DR_copy;
 
@@ -348,7 +348,7 @@ BeginCopyTo(ParseState *pstate,
 			List *attnamelist,
 			List *options)
 {
-	CopyToState	cstate;
+	CopyToState cstate;
 	bool		pipe = (filename == NULL);
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
@@ -415,7 +415,7 @@ BeginCopyTo(ParseState *pstate,
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
 
 	/* Extract options from the statement node tree */
-	ProcessCopyOptions(pstate, &cstate->opts, false /* is_from */, options);
+	ProcessCopyOptions(pstate, &cstate->opts, false /* is_from */ , options);
 
 	/* Process the source/target relation or query */
 	if (rel)
@@ -793,7 +793,7 @@ DoCopyTo(CopyToState cstate)
 	else
 		tupDesc = cstate->queryDesc->tupDesc;
 	num_phys_attrs = tupDesc->natts;
-	cstate->opts.null_print_client = cstate->opts.null_print; /* default */
+	cstate->opts.null_print_client = cstate->opts.null_print;	/* default */
 
 	/* We use fe_msgbuf as a per-row buffer regardless of copy_dest */
 	cstate->fe_msgbuf = makeStringInfo();
@@ -850,8 +850,8 @@ DoCopyTo(CopyToState cstate)
 		 */
 		if (cstate->need_transcoding)
 			cstate->opts.null_print_client = pg_server_to_any(cstate->opts.null_print,
-														 cstate->opts.null_print_len,
-														 cstate->file_encoding);
+															  cstate->opts.null_print_len,
+															  cstate->file_encoding);
 
 		/* if a header has been requested send the line */
 		if (cstate->opts.header_line)
@@ -1265,7 +1265,7 @@ static bool
 copy_dest_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_copy    *myState = (DR_copy *) self;
-	CopyToState	cstate = myState->cstate;
+	CopyToState cstate = myState->cstate;
 
 	/* Send the data */
 	CopyOneRowTo(cstate, slot);

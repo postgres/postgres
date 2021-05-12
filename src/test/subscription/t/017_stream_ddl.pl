@@ -11,7 +11,8 @@ use Test::More tests => 3;
 # Create publisher node
 my $node_publisher = get_new_node('publisher');
 $node_publisher->init(allows_streaming => 'logical');
-$node_publisher->append_conf('postgresql.conf', 'logical_decoding_work_mem = 64kB');
+$node_publisher->append_conf('postgresql.conf',
+	'logical_decoding_work_mem = 64kB');
 $node_publisher->start;
 
 # Create subscriber node
@@ -26,31 +27,36 @@ $node_publisher->safe_psql('postgres',
 	"INSERT INTO test_tab VALUES (1, 'foo'), (2, 'bar')");
 
 # Setup structure on subscriber
-$node_subscriber->safe_psql('postgres', "CREATE TABLE test_tab (a int primary key, b text, c INT, d INT, e INT, f INT)");
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE test_tab (a int primary key, b text, c INT, d INT, e INT, f INT)"
+);
 
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
-$node_publisher->safe_psql('postgres', "CREATE PUBLICATION tap_pub FOR TABLE test_tab");
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub FOR TABLE test_tab");
 
 my $appname = 'tap_sub';
 $node_subscriber->safe_psql('postgres',
-"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (streaming = on)"
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (streaming = on)"
 );
 
 $node_publisher->wait_for_catchup($appname);
 
 # Also wait for initial table sync to finish
 my $synced_query =
-"SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
+  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
 $node_subscriber->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for subscriber to synchronize data";
 
 my $result =
-  $node_subscriber->safe_psql('postgres', "SELECT count(*), count(c), count(d = 999) FROM test_tab");
+  $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
 is($result, qq(2|0|0), 'check initial data was copied to subscriber');
 
 # a small (non-streamed) transaction with DDL and DML
-$node_publisher->safe_psql('postgres', q{
+$node_publisher->safe_psql(
+	'postgres', q{
 BEGIN;
 INSERT INTO test_tab VALUES (3, md5(3::text));
 ALTER TABLE test_tab ADD COLUMN c INT;
@@ -60,7 +66,8 @@ COMMIT;
 });
 
 # large (streamed) transaction with DDL and DML
-$node_publisher->safe_psql('postgres', q{
+$node_publisher->safe_psql(
+	'postgres', q{
 BEGIN;
 INSERT INTO test_tab SELECT i, md5(i::text), -i FROM generate_series(5, 1000) s(i);
 ALTER TABLE test_tab ADD COLUMN d INT;
@@ -70,7 +77,8 @@ COMMIT;
 });
 
 # a small (non-streamed) transaction with DDL and DML
-$node_publisher->safe_psql('postgres', q{
+$node_publisher->safe_psql(
+	'postgres', q{
 BEGIN;
 INSERT INTO test_tab VALUES (2001, md5(2001::text), -2001, 2*2001);
 ALTER TABLE test_tab ADD COLUMN e INT;
@@ -82,13 +90,17 @@ COMMIT;
 $node_publisher->wait_for_catchup($appname);
 
 $result =
-  $node_subscriber->safe_psql('postgres', "SELECT count(*), count(c), count(d), count(e) FROM test_tab");
-is($result, qq(2002|1999|1002|1), 'check data was copied to subscriber in streaming mode and extra columns contain local defaults');
+  $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), count(c), count(d), count(e) FROM test_tab");
+is($result, qq(2002|1999|1002|1),
+	'check data was copied to subscriber in streaming mode and extra columns contain local defaults'
+);
 
 # A large (streamed) transaction with DDL and DML. One of the DDL is performed
 # after DML to ensure that we invalidate the schema sent for test_tab so that
 # the next transaction has to send the schema again.
-$node_publisher->safe_psql('postgres', q{
+$node_publisher->safe_psql(
+	'postgres', q{
 BEGIN;
 INSERT INTO test_tab SELECT i, md5(i::text), -i, 2*i, -3*i FROM generate_series(2003,5000) s(i);
 ALTER TABLE test_tab ADD COLUMN f INT;
@@ -97,7 +109,8 @@ COMMIT;
 
 # A small transaction that won't get streamed. This is just to ensure that we
 # send the schema again to reflect the last column added in the previous test.
-$node_publisher->safe_psql('postgres', q{
+$node_publisher->safe_psql(
+	'postgres', q{
 BEGIN;
 INSERT INTO test_tab SELECT i, md5(i::text), -i, 2*i, -3*i, 4*i FROM generate_series(5001,5005) s(i);
 COMMIT;
@@ -106,8 +119,11 @@ COMMIT;
 $node_publisher->wait_for_catchup($appname);
 
 $result =
-  $node_subscriber->safe_psql('postgres', "SELECT count(*), count(c), count(d), count(e), count(f) FROM test_tab");
-is($result, qq(5005|5002|4005|3004|5), 'check data was copied to subscriber for both streaming and non-streaming transactions');
+  $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), count(c), count(d), count(e), count(f) FROM test_tab");
+is($result, qq(5005|5002|4005|3004|5),
+	'check data was copied to subscriber for both streaming and non-streaming transactions'
+);
 
 $node_subscriber->stop;
 $node_publisher->stop;

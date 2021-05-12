@@ -35,9 +35,9 @@ static bool rtree_internal_consistent(BOX *key, BOX *query,
 static uint64 point_zorder_internal(float4 x, float4 y);
 static uint64 part_bits32_by2(uint32 x);
 static uint32 ieee_float32_to_uint32(float f);
-static int gist_bbox_zorder_cmp(Datum a, Datum b, SortSupport ssup);
+static int	gist_bbox_zorder_cmp(Datum a, Datum b, SortSupport ssup);
 static Datum gist_bbox_zorder_abbrev_convert(Datum original, SortSupport ssup);
-static int gist_bbox_zorder_cmp_abbrev(Datum z1, Datum z2, SortSupport ssup);
+static int	gist_bbox_zorder_cmp_abbrev(Datum z1, Datum z2, SortSupport ssup);
 static bool gist_bbox_zorder_abbrev_abort(int memtupcount, SortSupport ssup);
 
 

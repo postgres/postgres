@@ -181,7 +181,7 @@ static int	numSharedInvalidMessagesArray;
 static int	maxSharedInvalidMessagesArray;
 
 /* GUC storage */
-int debug_invalidate_system_caches_always = 0;
+int			debug_invalidate_system_caches_always = 0;
 
 /*
  * Dynamically-registered callback functions.  Current implementation
@@ -692,26 +692,27 @@ AcceptInvalidationMessages(void)
 	/*
 	 * Test code to force cache flushes anytime a flush could happen.
 	 *
-	 * This helps detect intermittent faults caused by code that reads a
-	 * cache entry and then performs an action that could invalidate the entry,
-	 * but rarely actually does so.  This can spot issues that would otherwise
+	 * This helps detect intermittent faults caused by code that reads a cache
+	 * entry and then performs an action that could invalidate the entry, but
+	 * rarely actually does so.  This can spot issues that would otherwise
 	 * only arise with badly timed concurrent DDL, for example.
 	 *
-	 * The default debug_invalidate_system_caches_always = 0 does no forced cache flushes.
+	 * The default debug_invalidate_system_caches_always = 0 does no forced
+	 * cache flushes.
 	 *
-	 * If used with CLOBBER_FREED_MEMORY, debug_invalidate_system_caches_always = 1
-	 * (CLOBBER_CACHE_ALWAYS) provides a fairly thorough test that the system
-	 * contains no cache-flush hazards.  However, it also makes the system
-	 * unbelievably slow --- the regression tests take about 100 times longer
-	 * than normal.
+	 * If used with CLOBBER_FREED_MEMORY,
+	 * debug_invalidate_system_caches_always = 1 (CLOBBER_CACHE_ALWAYS)
+	 * provides a fairly thorough test that the system contains no cache-flush
+	 * hazards.  However, it also makes the system unbelievably slow --- the
+	 * regression tests take about 100 times longer than normal.
 	 *
-	 * If you're a glutton for punishment, try debug_invalidate_system_caches_always = 3
-	 * (CLOBBER_CACHE_RECURSIVELY).  This slows things by at least a factor
-	 * of 10000, so I wouldn't suggest trying to run the entire regression
-	 * tests that way.  It's useful to try a few simple tests, to make sure
-	 * that cache reload isn't subject to internal cache-flush hazards, but
-	 * after you've done a few thousand recursive reloads it's unlikely
-	 * you'll learn more.
+	 * If you're a glutton for punishment, try
+	 * debug_invalidate_system_caches_always = 3 (CLOBBER_CACHE_RECURSIVELY).
+	 * This slows things by at least a factor of 10000, so I wouldn't suggest
+	 * trying to run the entire regression tests that way.  It's useful to try
+	 * a few simple tests, to make sure that cache reload isn't subject to
+	 * internal cache-flush hazards, but after you've done a few thousand
+	 * recursive reloads it's unlikely you'll learn more.
 	 */
 #ifdef CLOBBER_CACHE_ENABLED
 	{

@@ -93,7 +93,7 @@ typedef struct ParallelBlockTableScanWorkerData
 	uint32		phsw_chunk_remaining;	/* # blocks left in this chunk */
 	uint32		phsw_chunk_size;	/* The number of blocks to allocate in
 									 * each I/O chunk for the scan */
-}			ParallelBlockTableScanWorkerData;
+} ParallelBlockTableScanWorkerData;
 typedef struct ParallelBlockTableScanWorkerData *ParallelBlockTableScanWorker;
 
 /*

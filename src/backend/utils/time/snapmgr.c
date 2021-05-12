@@ -1808,8 +1808,8 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 		if (ts == threshold_timestamp)
 		{
 			/*
-			 * Current timestamp is in same bucket as the last limit that
-			 * was applied. Reuse.
+			 * Current timestamp is in same bucket as the last limit that was
+			 * applied. Reuse.
 			 */
 			xlimit = threshold_xid;
 		}
@@ -1965,13 +1965,13 @@ MaintainOldSnapshotTimeMapping(TimestampTz whenTaken, TransactionId xmin)
 		 * number of minutes of difference between ts and the current
 		 * head_timestamp.
 		 *
-		 * The distance from the current head to the current tail is one
-		 * less than the number of entries in the mapping, because the
-		 * entry at the head_offset is for 0 minutes after head_timestamp.
+		 * The distance from the current head to the current tail is one less
+		 * than the number of entries in the mapping, because the entry at the
+		 * head_offset is for 0 minutes after head_timestamp.
 		 *
-		 * The difference between these two values is the number of minutes
-		 * by which we need to advance the mapping, either adding new entries
-		 * or rotating old ones out.
+		 * The difference between these two values is the number of minutes by
+		 * which we need to advance the mapping, either adding new entries or
+		 * rotating old ones out.
 		 */
 		distance_to_new_tail =
 			(ts - oldSnapshotControl->head_timestamp) / USECS_PER_MINUTE;

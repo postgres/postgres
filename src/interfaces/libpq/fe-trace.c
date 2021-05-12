@@ -644,7 +644,7 @@ pqTraceOutputMessage(PGconn *conn, const char *message, bool toServer)
 			if (!toServer)
 				pqTraceOutputS(conn->Pfdebug, message, &logCursor);
 			else
-				fprintf(conn->Pfdebug, "Sync");	/* no message content */
+				fprintf(conn->Pfdebug, "Sync"); /* no message content */
 			break;
 		case 't':				/* Parameter Description */
 			pqTraceOutputt(conn->Pfdebug, message, &logCursor, regress);

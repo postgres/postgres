@@ -486,8 +486,8 @@ check_databases_are_compatible(void)
 static void
 check_for_new_tablespace_dir(ClusterInfo *new_cluster)
 {
-	int		tblnum;
-	char	new_tablespace_dir[MAXPGPATH];
+	int			tblnum;
+	char		new_tablespace_dir[MAXPGPATH];
 
 	prep_status("Checking for new cluster tablespace directories");
 
@@ -496,8 +496,8 @@ check_for_new_tablespace_dir(ClusterInfo *new_cluster)
 		struct stat statbuf;
 
 		snprintf(new_tablespace_dir, MAXPGPATH, "%s%s",
-				os_info.old_tablespaces[tblnum],
-				new_cluster->tablespace_suffix);
+				 os_info.old_tablespaces[tblnum],
+				 new_cluster->tablespace_suffix);
 
 		if (stat(new_tablespace_dir, &statbuf) == 0 || errno != ENOENT)
 			pg_fatal("new cluster tablespace directory already exists: \"%s\"\n",

@@ -50,8 +50,8 @@ my $walfile_to_be_archived = $node->safe_psql('postgres',
 
 # Make WAL segment eligible for archival
 $node->safe_psql('postgres', 'SELECT pg_switch_wal()');
-my $archive_wait_query
-  = "SELECT '$walfile_to_be_archived' <= last_archived_wal FROM pg_stat_archiver;";
+my $archive_wait_query =
+  "SELECT '$walfile_to_be_archived' <= last_archived_wal FROM pg_stat_archiver;";
 
 # Wait until the WAL segment has been archived.
 $node->poll_query_until('postgres', $archive_wait_query)
@@ -69,13 +69,17 @@ sub test_recovery_wal_level_minimal
 	my $recovery_node = get_new_node($node_name);
 	$recovery_node->init_from_backup(
 		$node, $backup_name,
-		has_restoring => 1, standby => $standby_setting);
+		has_restoring => 1,
+		standby       => $standby_setting);
 
 	# Use run_log instead of recovery_node->start because this test expects
 	# that the server ends with an error during recovery.
 	run_log(
-		['pg_ctl','-D', $recovery_node->data_dir, '-l',
-		 $recovery_node->logfile, 'start']);
+		[
+			'pg_ctl',                 '-D',
+			$recovery_node->data_dir, '-l',
+			$recovery_node->logfile,  'start'
+		]);
 
 	# Wait up to 180s for postgres to terminate
 	foreach my $i (0 .. 1800)
@@ -87,8 +91,9 @@ sub test_recovery_wal_level_minimal
 	# Confirm that the archive recovery fails with an expected error
 	my $logfile = slurp_file($recovery_node->logfile());
 	ok( $logfile =~
-		qr/FATAL: .* WAL was generated with wal_level=minimal, cannot continue recovering/,
-		"$node_text ends with an error because it finds WAL generated with wal_level=minimal");
+		  qr/FATAL: .* WAL was generated with wal_level=minimal, cannot continue recovering/,
+		"$node_text ends with an error because it finds WAL generated with wal_level=minimal"
+	);
 }
 
 # Test for archive recovery

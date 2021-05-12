@@ -99,8 +99,8 @@ ReplicationSlot *MyReplicationSlot = NULL;
 int			max_replication_slots = 0;	/* the maximum number of replication
 										 * slots */
 
-static int ReplicationSlotAcquireInternal(ReplicationSlot *slot,
-										  const char *name, SlotAcquireBehavior behavior);
+static int	ReplicationSlotAcquireInternal(ReplicationSlot *slot,
+										   const char *name, SlotAcquireBehavior behavior);
 static void ReplicationSlotDropAcquired(void);
 static void ReplicationSlotDropPtr(ReplicationSlot *slot);
 
@@ -451,8 +451,8 @@ retry:
 
 	/*
 	 * If we found the slot but it's already active in another process, we
-	 * either error out, return the PID of the owning process, or retry
-	 * after a short wait, as caller specified.
+	 * either error out, return the PID of the owning process, or retry after
+	 * a short wait, as caller specified.
 	 */
 	if (active_pid != MyProcPid)
 	{
@@ -471,7 +471,7 @@ retry:
 		goto retry;
 	}
 	else if (behavior == SAB_Block)
-		ConditionVariableCancelSleep();	/* no sleep needed after all */
+		ConditionVariableCancelSleep(); /* no sleep needed after all */
 
 	/* Let everybody know we've modified this slot */
 	ConditionVariableBroadcast(&s->active_cv);
@@ -1180,8 +1180,8 @@ restart:
 		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
 		XLogRecPtr	restart_lsn = InvalidXLogRecPtr;
 		NameData	slotname;
-		int		wspid;
-		int		last_signaled_pid = 0;
+		int			wspid;
+		int			last_signaled_pid = 0;
 
 		if (!s->in_use)
 			continue;
@@ -1204,20 +1204,20 @@ restart:
 			/*
 			 * Try to mark this slot as used by this process.
 			 *
-			 * Note that ReplicationSlotAcquireInternal(SAB_Inquire)
-			 * should not cancel the prepared condition variable
-			 * if this slot is active in other process. Because in this case
-			 * we have to wait on that CV for the process owning
-			 * the slot to be terminated, later.
+			 * Note that ReplicationSlotAcquireInternal(SAB_Inquire) should
+			 * not cancel the prepared condition variable if this slot is
+			 * active in other process. Because in this case we have to wait
+			 * on that CV for the process owning the slot to be terminated,
+			 * later.
 			 */
 			wspid = ReplicationSlotAcquireInternal(s, NULL, SAB_Inquire);
 
 			/*
-			 * Exit the loop if we successfully acquired the slot or
-			 * the slot was dropped during waiting for the owning process
-			 * to be terminated. For example, the latter case is likely to
-			 * happen when the slot is temporary because it's automatically
-			 * dropped by the termination of the owning process.
+			 * Exit the loop if we successfully acquired the slot or the slot
+			 * was dropped during waiting for the owning process to be
+			 * terminated. For example, the latter case is likely to happen
+			 * when the slot is temporary because it's automatically dropped
+			 * by the termination of the owning process.
 			 */
 			if (wspid <= 0)
 				break;
@@ -1225,13 +1225,13 @@ restart:
 			/*
 			 * Signal to terminate the process that owns the slot.
 			 *
-			 * There is the race condition where other process may own
-			 * the slot after the process using it was terminated and before
-			 * this process owns it. To handle this case, we signal again
-			 * if the PID of the owning process is changed than the last.
+			 * There is the race condition where other process may own the
+			 * slot after the process using it was terminated and before this
+			 * process owns it. To handle this case, we signal again if the
+			 * PID of the owning process is changed than the last.
 			 *
-			 * XXX This logic assumes that the same PID is not reused
-			 * very quickly.
+			 * XXX This logic assumes that the same PID is not reused very
+			 * quickly.
 			 */
 			if (last_signaled_pid != wspid)
 			{
@@ -1248,8 +1248,8 @@ restart:
 		ConditionVariableCancelSleep();
 
 		/*
-		 * Do nothing here and start from scratch if the slot has
-		 * already been dropped.
+		 * Do nothing here and start from scratch if the slot has already been
+		 * dropped.
 		 */
 		if (wspid == -1)
 			goto restart;

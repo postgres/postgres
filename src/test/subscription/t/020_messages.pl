@@ -28,7 +28,8 @@ $node_subscriber->safe_psql('postgres',
 
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
-$node_publisher->safe_psql('postgres', "CREATE PUBLICATION tap_pub FOR TABLE tab_test");
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub FOR TABLE tab_test");
 
 $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub"
@@ -55,7 +56,7 @@ my $result = $node_publisher->safe_psql(
 ));
 
 # 66 77 67 == B M C == BEGIN MESSAGE COMMIT
-is($result, qq(66
+is( $result, qq(66
 77
 67),
 	'messages on slot are B M C with message option');
@@ -82,9 +83,10 @@ $result = $node_publisher->safe_psql(
 ));
 
 # 66 67 == B C == BEGIN COMMIT
-is($result, qq(66
+is( $result, qq(66
 67),
-	'option messages defaults to false so message (M) is not available on slot');
+	'option messages defaults to false so message (M) is not available on slot'
+);
 
 $node_subscriber->safe_psql('postgres', "ALTER SUBSCRIPTION tap_sub ENABLE");
 $node_publisher->wait_for_catchup('tap_sub');
@@ -99,7 +101,8 @@ $node_publisher->poll_query_until('postgres',
 $node_publisher->safe_psql('postgres', "INSERT INTO tab_test VALUES (1)");
 
 my $message_lsn = $node_publisher->safe_psql('postgres',
-	"SELECT pg_logical_emit_message(false, 'pgoutput', 'a non-transactional message')");
+	"SELECT pg_logical_emit_message(false, 'pgoutput', 'a non-transactional message')"
+);
 
 $node_publisher->safe_psql('postgres', "INSERT INTO tab_test VALUES (2)");
 
@@ -151,7 +154,7 @@ $result = $node_publisher->safe_psql(
 			'messages', 'true')
 ));
 
-is($result, qq(77|0
+is( $result, qq(77|0
 77|0),
 	'non-transactional message on slot from aborted transaction is M');
 

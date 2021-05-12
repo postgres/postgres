@@ -2056,7 +2056,7 @@ GetSnapshotDataInitOldSnapshot(Snapshot snapshot)
 static bool
 GetSnapshotDataReuse(Snapshot snapshot)
 {
-	uint64 curXactCompletionCount;
+	uint64		curXactCompletionCount;
 
 	Assert(LWLockHeldByMe(ProcArrayLock));
 
@@ -2080,8 +2080,8 @@ GetSnapshotDataReuse(Snapshot snapshot)
 	 * holding ProcArrayLock) exclusively). Thus the xactCompletionCount check
 	 * ensures we would detect if the snapshot would have changed.
 	 *
-	 * As the snapshot contents are the same as it was before, it is safe
-	 * to re-enter the snapshot's xmin into the PGPROC array. None of the rows
+	 * As the snapshot contents are the same as it was before, it is safe to
+	 * re-enter the snapshot's xmin into the PGPROC array. None of the rows
 	 * visible under the snapshot could already have been removed (that'd
 	 * require the set of running transactions to change) and it fulfills the
 	 * requirement that concurrent GetSnapshotData() calls yield the same
@@ -2259,10 +2259,10 @@ GetSnapshotData(Snapshot snapshot)
 				continue;
 
 			/*
-			 * The only way we are able to get here with a non-normal xid
-			 * is during bootstrap - with this backend using
-			 * BootstrapTransactionId. But the above test should filter
-			 * that out.
+			 * The only way we are able to get here with a non-normal xid is
+			 * during bootstrap - with this backend using
+			 * BootstrapTransactionId. But the above test should filter that
+			 * out.
 			 */
 			Assert(TransactionIdIsNormal(xid));
 

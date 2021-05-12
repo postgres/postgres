@@ -433,6 +433,7 @@ RemoveSubscriptionRel(Oid subid, Oid relid)
 							get_subscription_name(subrel->srsubid, false)),
 					 errdetail("Table synchronization for relation \"%s\" is in progress and is in state \"%c\".",
 							   get_rel_name(relid), subrel->srsubstate),
+
 			/*
 			 * translator: first %s is a SQL ALTER command and second %s is a
 			 * SQL DROP command

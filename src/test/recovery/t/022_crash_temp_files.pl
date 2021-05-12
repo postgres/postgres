@@ -41,9 +41,7 @@ $node->safe_psql(
 				   SELECT pg_reload_conf();]);
 
 # create table, insert rows
-$node->safe_psql(
-	'postgres',
-	q[CREATE TABLE tab_crash (a integer UNIQUE);]);
+$node->safe_psql('postgres', q[CREATE TABLE tab_crash (a integer UNIQUE);]);
 
 # Run psql, keeping session alive, so we have an alive backend to kill.
 my ($killme_stdin, $killme_stdout, $killme_stderr) = ('', '', '');
@@ -118,7 +116,8 @@ DECLARE
   c INT;
 BEGIN
   LOOP
-    SELECT COUNT(*) INTO c FROM pg_locks WHERE pid = ] . $pid . q[ AND NOT granted;
+    SELECT COUNT(*) INTO c FROM pg_locks WHERE pid = ] . $pid
+  . q[ AND NOT granted;
     IF c > 0 THEN
       EXIT;
     END IF;
@@ -143,10 +142,10 @@ $killme2->finish;
 $node->poll_query_until('postgres', 'SELECT 1', '1');
 
 # Check for temporary files
-is($node->safe_psql(
-	'postgres',
-	'SELECT COUNT(1) FROM pg_ls_dir($$base/pgsql_tmp$$)'),
-	qq(0), 'no temporary files');
+is( $node->safe_psql(
+		'postgres', 'SELECT COUNT(1) FROM pg_ls_dir($$base/pgsql_tmp$$)'),
+	qq(0),
+	'no temporary files');
 
 #
 # Test old behavior (don't remove temporary files after crash)
@@ -206,7 +205,8 @@ DECLARE
   c INT;
 BEGIN
   LOOP
-    SELECT COUNT(*) INTO c FROM pg_locks WHERE pid = ] . $pid . q[ AND NOT granted;
+    SELECT COUNT(*) INTO c FROM pg_locks WHERE pid = ] . $pid
+  . q[ AND NOT granted;
     IF c > 0 THEN
       EXIT;
     END IF;
@@ -231,19 +231,19 @@ $killme2->finish;
 $node->poll_query_until('postgres', 'SELECT 1', '1');
 
 # Check for temporary files -- should be there
-is($node->safe_psql(
-	'postgres',
-	'SELECT COUNT(1) FROM pg_ls_dir($$base/pgsql_tmp$$)'),
-	qq(1), 'one temporary file');
+is( $node->safe_psql(
+		'postgres', 'SELECT COUNT(1) FROM pg_ls_dir($$base/pgsql_tmp$$)'),
+	qq(1),
+	'one temporary file');
 
 # Restart should remove the temporary files
 $node->restart();
 
 # Check the temporary files -- should be gone
-is($node->safe_psql(
-	'postgres',
-	'SELECT COUNT(1) FROM pg_ls_dir($$base/pgsql_tmp$$)'),
-	qq(0), 'temporary file was removed');
+is( $node->safe_psql(
+		'postgres', 'SELECT COUNT(1) FROM pg_ls_dir($$base/pgsql_tmp$$)'),
+	qq(0),
+	'temporary file was removed');
 
 $node->stop();
 

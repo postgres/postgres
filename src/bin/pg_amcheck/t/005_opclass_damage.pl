@@ -15,7 +15,8 @@ $node->init;
 $node->start;
 
 # Create a custom operator class and an index which uses it.
-$node->safe_psql('postgres', q(
+$node->safe_psql(
+	'postgres', q(
 	CREATE EXTENSION amcheck;
 
 	CREATE FUNCTION int4_asc_cmp (a int4, b int4) RETURNS int LANGUAGE sql AS $$
@@ -39,7 +40,8 @@ $node->command_like(
 
 # Change the operator class to use a function which sorts in a different
 # order to corrupt the btree index
-$node->safe_psql('postgres', q(
+$node->safe_psql(
+	'postgres', q(
 	CREATE FUNCTION int4_desc_cmp (int4, int4) RETURNS int LANGUAGE sql AS $$
 		SELECT CASE WHEN $1 = $2 THEN 0 WHEN $1 > $2 THEN -1 ELSE 1 END; $$;
 	UPDATE pg_catalog.pg_amproc
@@ -51,7 +53,7 @@ $node->safe_psql('postgres', q(
 $node->command_checks_all(
 	[ 'pg_amcheck', '-p', $node->port, 'postgres' ],
 	2,
-	[ qr/item order invariant violated for index "fickleidx"/ ],
-	[ ],
+	[qr/item order invariant violated for index "fickleidx"/],
+	[],
 	'pg_amcheck all schemas, tables and indexes reports fickleidx corruption'
 );

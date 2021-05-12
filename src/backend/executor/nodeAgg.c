@@ -349,7 +349,7 @@ typedef struct HashAggSpill
 	int64	   *ntuples;		/* number of tuples in each partition */
 	uint32		mask;			/* mask to find partition from hash value */
 	int			shift;			/* after masking, shift by this amount */
-	hyperLogLogState *hll_card;	/* cardinality estimate for contents */
+	hyperLogLogState *hll_card; /* cardinality estimate for contents */
 } HashAggSpill;
 
 /*
@@ -374,9 +374,9 @@ typedef struct HashAggBatch
 /* used to find referenced colnos */
 typedef struct FindColsContext
 {
-	bool	   is_aggref;		/* is under an aggref */
-	Bitmapset *aggregated;		/* column references under an aggref */
-	Bitmapset *unaggregated;	/* other column references */
+	bool		is_aggref;		/* is under an aggref */
+	Bitmapset  *aggregated;		/* column references under an aggref */
+	Bitmapset  *unaggregated;	/* other column references */
 } FindColsContext;
 
 static void select_current_set(AggState *aggstate, int setno, bool is_hash);
@@ -1397,7 +1397,7 @@ project_aggregates(AggState *aggstate)
 static void
 find_cols(AggState *aggstate, Bitmapset **aggregated, Bitmapset **unaggregated)
 {
-	Agg *agg = (Agg *) aggstate->ss.ps.plan;
+	Agg		   *agg = (Agg *) aggstate->ss.ps.plan;
 	FindColsContext context;
 
 	context.is_aggref = false;
@@ -1579,7 +1579,8 @@ find_hash_columns(AggState *aggstate)
 
 	for (int i = 0; i < scanDesc->natts; i++)
 	{
-		int colno = i + 1;
+		int			colno = i + 1;
+
 		if (bms_is_member(colno, aggstate->colnos_needed))
 			aggstate->max_colno_needed = colno;
 		else
@@ -3158,10 +3159,10 @@ hashagg_spill_finish(AggState *aggstate, HashAggSpill *spill, int setno)
 
 	for (i = 0; i < spill->npartitions; i++)
 	{
-		LogicalTapeSet	*tapeset = aggstate->hash_tapeinfo->tapeset;
-		int				 tapenum = spill->partitions[i];
-		HashAggBatch	*new_batch;
-		double			 cardinality;
+		LogicalTapeSet *tapeset = aggstate->hash_tapeinfo->tapeset;
+		int			tapenum = spill->partitions[i];
+		HashAggBatch *new_batch;
+		double		cardinality;
 
 		/* if the partition is empty, don't create a new batch of work */
 		if (spill->ntuples[i] == 0)

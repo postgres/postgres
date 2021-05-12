@@ -898,8 +898,8 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 		 * top parent link when deleting leafbuf because it's the last page
 		 * we'll delete in the subtree undergoing deletion.
 		 */
-		Buffer				leafbuf;
-		IndexTupleData		trunctuple;
+		Buffer		leafbuf;
+		IndexTupleData trunctuple;
 
 		Assert(!isleaf);
 

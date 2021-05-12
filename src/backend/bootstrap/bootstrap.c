@@ -160,7 +160,7 @@ struct typmap
 	FormData_pg_type am_typ;
 };
 
-static List *Typ = NIL; /* List of struct typmap* */
+static List *Typ = NIL;			/* List of struct typmap* */
 static struct typmap *Ap = NULL;
 
 static Datum values[MAXATTR];	/* current row's attribute values */
@@ -926,11 +926,12 @@ gettype(char *type)
 {
 	if (Typ != NIL)
 	{
-		ListCell *lc;
+		ListCell   *lc;
 
-		foreach (lc, Typ)
+		foreach(lc, Typ)
 		{
 			struct typmap *app = lfirst(lc);
+
 			if (strncmp(NameStr(app->am_typ.typname), type, NAMEDATALEN) == 0)
 			{
 				Ap = app;
@@ -948,12 +949,13 @@ gettype(char *type)
 		populate_typ_list();
 
 		/*
-		 * Calling gettype would result in infinite recursion for types missing
-		 * in pg_type, so just repeat the lookup.
+		 * Calling gettype would result in infinite recursion for types
+		 * missing in pg_type, so just repeat the lookup.
 		 */
-		foreach (lc, Typ)
+		foreach(lc, Typ)
 		{
 			struct typmap *app = lfirst(lc);
+
 			if (strncmp(NameStr(app->am_typ.typname), type, NAMEDATALEN) == 0)
 			{
 				Ap = app;
@@ -1004,9 +1006,9 @@ boot_get_type_io_data(Oid typid,
 	{
 		/* We have the boot-time contents of pg_type, so use it */
 		struct typmap *ap = NULL;
-		ListCell *lc;
+		ListCell   *lc;
 
-		foreach (lc, Typ)
+		foreach(lc, Typ)
 		{
 			ap = lfirst(lc);
 			if (ap->am_oid == typid)

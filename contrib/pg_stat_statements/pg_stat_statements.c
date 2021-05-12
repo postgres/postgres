@@ -1074,9 +1074,10 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 	 * Force utility statements to get queryId zero.  We do this even in cases
 	 * where the statement contains an optimizable statement for which a
 	 * queryId could be derived (such as EXPLAIN or DECLARE CURSOR).  For such
-	 * cases, runtime control will first go through ProcessUtility and then the
-	 * executor, and we don't want the executor hooks to do anything, since we
-	 * are already measuring the statement's costs at the utility level.
+	 * cases, runtime control will first go through ProcessUtility and then
+	 * the executor, and we don't want the executor hooks to do anything,
+	 * since we are already measuring the statement's costs at the utility
+	 * level.
 	 *
 	 * Note that this is only done if pg_stat_statements is enabled and
 	 * configured to track utility statements, in the unlikely possibility

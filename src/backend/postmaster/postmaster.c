@@ -660,6 +660,7 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal_pm(SIGCHLD, reaper);	/* handle child termination */
 
 #ifdef SIGURG
+
 	/*
 	 * Ignore SIGURG for now.  Child processes may change this (see
 	 * InitializeLatchSupport), but they will not receive any such signals
@@ -5780,7 +5781,7 @@ do_start_bgworker(RegisteredBgWorker *rw)
 
 	ereport(DEBUG1,
 			(errmsg_internal("starting background worker process \"%s\"",
-					rw->rw_worker.bgw_name)));
+							 rw->rw_worker.bgw_name)));
 
 #ifdef EXEC_BACKEND
 	switch ((worker_pid = bgworker_forkexec(rw->rw_shmem_slot)))

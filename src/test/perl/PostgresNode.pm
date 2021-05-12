@@ -568,8 +568,10 @@ sub backup
 
 	print "# Taking pg_basebackup $backup_name from node \"$name\"\n";
 	TestLib::system_or_bail(
-		'pg_basebackup', '-D', $backup_path, '-h',
-		$self->host,     '-p', $self->port,  '--checkpoint',
+		'pg_basebackup', '-D',
+		$backup_path,    '-h',
+		$self->host,     '-p',
+		$self->port,     '--checkpoint',
 		'fast',          '--no-sync',
 		@{ $params{backup_options} });
 	print "# Backup finished\n";
@@ -713,9 +715,10 @@ sub init_from_backup
 		TestLib::system_or_bail($params{tar_program}, 'xf',
 			$backup_path . '/base.tar',
 			'-C', $data_path);
-		TestLib::system_or_bail($params{tar_program}, 'xf',
-			$backup_path . '/pg_wal.tar',
-			'-C', $data_path . '/pg_wal');
+		TestLib::system_or_bail(
+			$params{tar_program},         'xf',
+			$backup_path . '/pg_wal.tar', '-C',
+			$data_path . '/pg_wal');
 	}
 	else
 	{
@@ -1216,44 +1219,43 @@ sub get_new_node
 #
 sub _set_pg_version
 {
-    my ($self) = @_;
-    my $inst = $self->{_install_path};
-    my $pg_config = "pg_config";
+	my ($self)    = @_;
+	my $inst      = $self->{_install_path};
+	my $pg_config = "pg_config";
 
-    if (defined $inst)
-    {
-        # If the _install_path is invalid, our PATH variables might find an
-        # unrelated pg_config executable elsewhere.  Sanity check the
-        # directory.
-        BAIL_OUT("directory not found: $inst")
-            unless -d $inst;
+	if (defined $inst)
+	{
+		# If the _install_path is invalid, our PATH variables might find an
+		# unrelated pg_config executable elsewhere.  Sanity check the
+		# directory.
+		BAIL_OUT("directory not found: $inst")
+		  unless -d $inst;
 
-        # If the directory exists but is not the root of a postgresql
-        # installation, or if the user configured using
-        # --bindir=$SOMEWHERE_ELSE, we're not going to find pg_config, so
-        # complain about that, too.
-        $pg_config = "$inst/bin/pg_config";
-        BAIL_OUT("pg_config not found: $pg_config")
-            unless -e $pg_config;
-        BAIL_OUT("pg_config not executable: $pg_config")
-            unless -x $pg_config;
+		# If the directory exists but is not the root of a postgresql
+		# installation, or if the user configured using
+		# --bindir=$SOMEWHERE_ELSE, we're not going to find pg_config, so
+		# complain about that, too.
+		$pg_config = "$inst/bin/pg_config";
+		BAIL_OUT("pg_config not found: $pg_config")
+		  unless -e $pg_config;
+		BAIL_OUT("pg_config not executable: $pg_config")
+		  unless -x $pg_config;
 
-        # Leave $pg_config install_path qualified, to be sure we get the right
-        # version information, below, or die trying
-    }
+		# Leave $pg_config install_path qualified, to be sure we get the right
+		# version information, below, or die trying
+	}
 
-    local %ENV = $self->_get_env();
+	local %ENV = $self->_get_env();
 
-    # We only want the version field
-    open my $fh, "-|", $pg_config, "--version"
-        or
-        BAIL_OUT("$pg_config failed: $!");
-    my $version_line = <$fh>;
-    close $fh or die;
+	# We only want the version field
+	open my $fh, "-|", $pg_config, "--version"
+	  or BAIL_OUT("$pg_config failed: $!");
+	my $version_line = <$fh>;
+	close $fh or die;
 
-    $self->{_pg_version} = PostgresVersion->new($version_line);
+	$self->{_pg_version} = PostgresVersion->new($version_line);
 
-    BAIL_OUT("could not parse pg_config --version output: $version_line")
+	BAIL_OUT("could not parse pg_config --version output: $version_line")
 	  unless defined $self->{_pg_version};
 }
 
@@ -1277,7 +1279,7 @@ sub _set_pg_version
 # a common parent directory.
 sub _get_env
 {
-	my $self     = shift;
+	my $self = shift;
 	my %inst_env = (%ENV, PGHOST => $self->{_host}, PGPORT => $self->{_port});
 	# the remaining arguments are modifications to make to the environment
 	my %mods = (@_);
@@ -1338,17 +1340,17 @@ sub _get_env
 # caching a command.
 sub installed_command
 {
-    my ($self, $cmd) = @_;
+	my ($self, $cmd) = @_;
 
-    # Nodes using alternate installation locations use their installation's
-    # bin/ directory explicitly
-    return join('/', $self->{_install_path}, 'bin', $cmd)
-        if defined $self->{_install_path};
+	# Nodes using alternate installation locations use their installation's
+	# bin/ directory explicitly
+	return join('/', $self->{_install_path}, 'bin', $cmd)
+	  if defined $self->{_install_path};
 
-    # Nodes implicitly using the default installation location rely on IPC::Run
-    # to find the right binary, which should not cause %cmd_cache confusion,
-    # because no nodes with other installation paths do it that way.
-    return $cmd;
+	# Nodes implicitly using the default installation location rely on IPC::Run
+	# to find the right binary, which should not cause %cmd_cache confusion,
+	# because no nodes with other installation paths do it that way.
+	return $cmd;
 }
 
 =pod
@@ -1402,9 +1404,9 @@ sub get_free_port
 		if ($found == 1)
 		{
 			foreach my $addr (qw(127.0.0.1),
-               ($use_tcp && $TestLib::windows_os)
-               ? qw(127.0.0.2 127.0.0.3 0.0.0.0)
-               : ())
+				($use_tcp && $TestLib::windows_os)
+				  ? qw(127.0.0.2 127.0.0.3 0.0.0.0)
+				  : ())
 			{
 				if (!can_bind($addr, $port))
 				{
@@ -1650,8 +1652,9 @@ sub psql
 	}
 	$psql_connstr .= defined $replication ? " replication=$replication" : "";
 
-	my @psql_params = ($self->installed_command('psql'),
-					   '-XAtq', '-d', $psql_connstr, '-f', '-');
+	my @psql_params = (
+		$self->installed_command('psql'),
+		'-XAtq', '-d', $psql_connstr, '-f', '-');
 
 	# If the caller wants an array and hasn't passed stdout/stderr
 	# references, allocate temporary ones to capture them so we
@@ -1914,8 +1917,9 @@ sub interactive_psql
 
 	local %ENV = $self->_get_env();
 
-	my @psql_params = ($self->installed_command('psql'),
-					   '-XAt', '-d', $self->connstr($dbname));
+	my @psql_params = (
+		$self->installed_command('psql'),
+		'-XAt', '-d', $self->connstr($dbname));
 
 	push @psql_params, @{ $params{extra_params} }
 	  if defined $params{extra_params};
@@ -2020,8 +2024,7 @@ sub connect_ok
 	}
 	if (@log_like or @log_unlike)
 	{
-		my $log_contents = TestLib::slurp_file($self->logfile,
-						       $log_location);
+		my $log_contents = TestLib::slurp_file($self->logfile, $log_location);
 
 		while (my $regex = shift @log_like)
 		{
@@ -2091,8 +2094,7 @@ sub connect_fails
 
 	if (@log_like or @log_unlike)
 	{
-		my $log_contents = TestLib::slurp_file($self->logfile,
-						       $log_location);
+		my $log_contents = TestLib::slurp_file($self->logfile, $log_location);
 
 		while (my $regex = shift @log_like)
 		{
@@ -2125,8 +2127,10 @@ sub poll_query_until
 
 	$expected = 't' unless defined($expected);    # default value
 
-	my $cmd = [ $self->installed_command('psql'),
-				'-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
+	my $cmd = [
+		$self->installed_command('psql'),
+		'-XAt', '-c', $query, '-d', $self->connstr($dbname)
+	];
 	my ($stdout, $stderr);
 	my $max_attempts = 180 * 10;
 	my $attempts     = 0;
@@ -2547,8 +2551,7 @@ sub pg_recvlogical_upto
 
 	my @cmd = (
 		$self->installed_command('pg_recvlogical'),
-		'-S', $slot_name, '--dbname',
-		$self->connstr($dbname));
+		'-S', $slot_name, '--dbname', $self->connstr($dbname));
 	push @cmd, '--endpos', $endpos;
 	push @cmd, '-f', '-', '--no-loop', '--start';
 

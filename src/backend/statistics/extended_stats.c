@@ -91,9 +91,9 @@ typedef struct AnlExprData
 } AnlExprData;
 
 static void compute_expr_stats(Relation onerel, double totalrows,
-							   AnlExprData * exprdata, int nexprs,
+							   AnlExprData *exprdata, int nexprs,
 							   HeapTuple *rows, int numrows);
-static Datum serialize_expr_stats(AnlExprData * exprdata, int nexprs);
+static Datum serialize_expr_stats(AnlExprData *exprdata, int nexprs);
 static Datum expr_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static AnlExprData *build_expr_data(List *exprs, int stattarget);
 
@@ -539,9 +539,9 @@ examine_attribute(Node *expr)
 
 	/*
 	 * When analyzing an expression, believe the expression tree's type not
-	 * the column datatype --- the latter might be the opckeytype storage
-	 * type of the opclass, which is not interesting for our purposes.  (Note:
-	 * if we did anything with non-expression statistics columns, we'd need to
+	 * the column datatype --- the latter might be the opckeytype storage type
+	 * of the opclass, which is not interesting for our purposes.  (Note: if
+	 * we did anything with non-expression statistics columns, we'd need to
 	 * figure out where to get the correct type info from, but for now that's
 	 * not a problem.)	It's not clear whether anyone will care about the
 	 * typmod, but we store that too just in case.
@@ -1788,16 +1788,16 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 			 * attnums of expressions from it. Ignore it if it's not fully
 			 * covered by the chosen statistics.
 			 *
-			 * We need to check both attributes and expressions, and reject
-			 * if either is not covered.
+			 * We need to check both attributes and expressions, and reject if
+			 * either is not covered.
 			 */
 			if (!bms_is_subset(list_attnums[listidx], stat->keys) ||
 				!stat_covers_expressions(stat, list_exprs[listidx], NULL))
 				continue;
 
 			/*
-			 * Now we know the clause is compatible (we have either attnums
-			 * or expressions extracted from it), and was not estimated yet.
+			 * Now we know the clause is compatible (we have either attnums or
+			 * expressions extracted from it), and was not estimated yet.
 			 */
 
 			/* record simple clauses (single column or expression) */

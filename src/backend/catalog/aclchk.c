@@ -3926,8 +3926,8 @@ pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
 	ReleaseSysCache(tuple);
 
 	/*
-	 * Check if ACL_SELECT is being checked and, if so, and not set already
-	 * as part of the result, then check if the user is a member of the
+	 * Check if ACL_SELECT is being checked and, if so, and not set already as
+	 * part of the result, then check if the user is a member of the
 	 * pg_read_all_data role, which allows read access to all relations.
 	 */
 	if (mask & ACL_SELECT && !(result & ACL_SELECT) &&
@@ -3935,14 +3935,14 @@ pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
 		result |= ACL_SELECT;
 
 	/*
-	 * Check if ACL_INSERT, ACL_UPDATE, or ACL_DELETE is being checked
-	 * and, if so, and not set already as part of the result, then check
-	 * if the user is a member of the pg_write_all_data role, which
-	 * allows INSERT/UPDATE/DELETE access to all relations (except
-	 * system catalogs, which requires superuser, see above).
+	 * Check if ACL_INSERT, ACL_UPDATE, or ACL_DELETE is being checked and, if
+	 * so, and not set already as part of the result, then check if the user
+	 * is a member of the pg_write_all_data role, which allows
+	 * INSERT/UPDATE/DELETE access to all relations (except system catalogs,
+	 * which requires superuser, see above).
 	 */
 	if (mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE) &&
-	   !(result & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
+		!(result & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
 		has_privs_of_role(roleid, ROLE_PG_WRITE_ALL_DATA))
 		result |= (mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE));
 
@@ -4273,10 +4273,10 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	ReleaseSysCache(tuple);
 
 	/*
-	 * Check if ACL_USAGE is being checked and, if so, and not set already
-	 * as part of the result, then check if the user is a member of the
-	 * pg_read_all_data or pg_write_all_data roles, which allow usage
-	 * access to all schemas.
+	 * Check if ACL_USAGE is being checked and, if so, and not set already as
+	 * part of the result, then check if the user is a member of the
+	 * pg_read_all_data or pg_write_all_data roles, which allow usage access
+	 * to all schemas.
 	 */
 	if (mask & ACL_USAGE && !(result & ACL_USAGE) &&
 		(has_privs_of_role(roleid, ROLE_PG_READ_ALL_DATA) ||
@@ -4568,7 +4568,7 @@ pg_attribute_aclcheck(Oid table_oid, AttrNumber attnum,
  */
 AclResult
 pg_attribute_aclcheck_ext(Oid table_oid, AttrNumber attnum,
-					  Oid roleid, AclMode mode, bool *is_missing)
+						  Oid roleid, AclMode mode, bool *is_missing)
 {
 	if (pg_attribute_aclmask_ext(table_oid, attnum, roleid, mode,
 								 ACLMASK_ANY, is_missing) != 0)

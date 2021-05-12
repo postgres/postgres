@@ -1173,8 +1173,8 @@ vacuum_xid_failsafe_check(TransactionId relfrozenxid, MultiXactId relminmxid)
 
 	/*
 	 * Similar to above, determine the index skipping age to use for
-	 * multixact. In any case no less than autovacuum_multixact_freeze_max_age
-	 * * 1.05.
+	 * multixact. In any case no less than autovacuum_multixact_freeze_max_age *
+	 * 1.05.
 	 */
 	skip_index_vacuum = Max(vacuum_multixact_failsafe_age,
 							autovacuum_multixact_freeze_max_age * 1.05);

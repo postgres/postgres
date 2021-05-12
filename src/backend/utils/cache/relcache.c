@@ -1016,9 +1016,9 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	 *
 	 * When cache clobbering is enabled or when forced to by
 	 * RECOVER_RELATION_BUILD_MEMORY=1, arrange to allocate the junk in a
-	 * temporary context that we'll free before returning.  Make it a child
-	 * of caller's context so that it will get cleaned up appropriately if
-	 * we error out partway through.
+	 * temporary context that we'll free before returning.  Make it a child of
+	 * caller's context so that it will get cleaned up appropriately if we
+	 * error out partway through.
 	 */
 #ifdef MAYBE_RECOVER_RELATION_BUILD_MEMORY
 	MemoryContext tmpcxt = NULL;

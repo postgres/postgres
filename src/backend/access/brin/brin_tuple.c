@@ -177,15 +177,15 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 			 datumno < brdesc->bd_info[keyno]->oi_nstored;
 			 datumno++)
 		{
-			Datum value = tuple->bt_columns[keyno].bv_values[datumno];
+			Datum		value = tuple->bt_columns[keyno].bv_values[datumno];
 
 #ifdef TOAST_INDEX_HACK
 
 			/* We must look at the stored type, not at the index descriptor. */
-			TypeCacheEntry	*atttype = brdesc->bd_info[keyno]->oi_typcache[datumno];
+			TypeCacheEntry *atttype = brdesc->bd_info[keyno]->oi_typcache[datumno];
 
 			/* Do we need to free the value at the end? */
-			bool free_value = false;
+			bool		free_value = false;
 
 			/* For non-varlena types we don't need to do anything special */
 			if (atttype->typlen != -1)
@@ -201,9 +201,9 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 			 * If value is stored EXTERNAL, must fetch it so we are not
 			 * depending on outside storage.
 			 *
-			 * XXX Is this actually true? Could it be that the summary is
-			 * NULL even for range with non-NULL data? E.g. degenerate bloom
-			 * filter may be thrown away, etc.
+			 * XXX Is this actually true? Could it be that the summary is NULL
+			 * even for range with non-NULL data? E.g. degenerate bloom filter
+			 * may be thrown away, etc.
 			 */
 			if (VARATT_IS_EXTERNAL(DatumGetPointer(value)))
 			{
@@ -213,16 +213,16 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 			}
 
 			/*
-			 * If value is above size target, and is of a compressible datatype,
-			 * try to compress it in-line.
+			 * If value is above size target, and is of a compressible
+			 * datatype, try to compress it in-line.
 			 */
 			if (!VARATT_IS_EXTENDED(DatumGetPointer(value)) &&
 				VARSIZE(DatumGetPointer(value)) > TOAST_INDEX_TARGET &&
 				(atttype->typstorage == TYPSTORAGE_EXTENDED ||
 				 atttype->typstorage == TYPSTORAGE_MAIN))
 			{
-				Datum	cvalue;
-				char	compression;
+				Datum		cvalue;
+				char		compression;
 				Form_pg_attribute att = TupleDescAttr(brdesc->bd_tupdesc,
 													  keyno);
 

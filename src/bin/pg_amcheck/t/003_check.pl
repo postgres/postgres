@@ -20,8 +20,8 @@ sub relation_filepath
 	my ($dbname, $relname) = @_;
 
 	my $pgdata = $node->data_dir;
-	my $rel = $node->safe_psql($dbname,
-							   qq(SELECT pg_relation_filepath('$relname')));
+	my $rel =
+	  $node->safe_psql($dbname, qq(SELECT pg_relation_filepath('$relname')));
 	die "path not found for relation $relname" unless defined $rel;
 	return "$pgdata/$rel";
 }
@@ -33,7 +33,8 @@ sub relation_toast
 {
 	my ($dbname, $relname) = @_;
 
-	my $rel = $node->safe_psql($dbname, qq(
+	my $rel = $node->safe_psql(
+		$dbname, qq(
 		SELECT c.reltoastrelid::regclass
 			FROM pg_catalog.pg_class c
 			WHERE c.oid = '$relname'::regclass
@@ -83,23 +84,22 @@ sub corrupt_first_page
 
 	my $fh;
 	open($fh, '+<', $relpath)
-		or BAIL_OUT("open failed: $!");
+	  or BAIL_OUT("open failed: $!");
 	binmode $fh;
 
 	# Corrupt some line pointers.  The values are chosen to hit the
 	# various line-pointer-corruption checks in verify_heapam.c
 	# on both little-endian and big-endian architectures.
 	seek($fh, 32, SEEK_SET)
-		or BAIL_OUT("seek failed: $!");
+	  or BAIL_OUT("seek failed: $!");
 	syswrite(
 		$fh,
 		pack("L*",
-			0xAAA15550, 0xAAA0D550, 0x00010000,
-			0x00008000, 0x0000800F, 0x001e8000,
-			0xFFFFFFFF)
+			0xAAA15550, 0xAAA0D550, 0x00010000, 0x00008000,
+			0x0000800F, 0x001e8000, 0xFFFFFFFF)
 	) or BAIL_OUT("syswrite failed: $!");
 	close($fh)
-		or BAIL_OUT("close failed: $!");
+	  or BAIL_OUT("close failed: $!");
 }
 
 # Stops the node, performs all the corruptions previously planned, and
@@ -137,7 +137,8 @@ for my $dbname (qw(db1 db2 db3))
 	# check that pg_amcheck does not get confused by them.  Create functions in
 	# schema public that look like amcheck functions to check that pg_amcheck
 	# does not use them.
-	$node->safe_psql($dbname, q(
+	$node->safe_psql(
+		$dbname, q(
 		CREATE SCHEMA amcheck_schema;
 		CREATE EXTENSION amcheck WITH SCHEMA amcheck_schema;
 		CREATE TABLE amcheck_schema.pg_database (junk text);
@@ -187,7 +188,8 @@ for my $dbname (qw(db1 db2 db3))
 	#
 	for my $schema (qw(s1 s2 s3 s4 s5))
 	{
-		$node->safe_psql($dbname, qq(
+		$node->safe_psql(
+			$dbname, qq(
 			CREATE SCHEMA $schema;
 			CREATE SEQUENCE $schema.seq1;
 			CREATE SEQUENCE $schema.seq2;
@@ -318,21 +320,18 @@ plan_to_remove_relation_file('db2', 's1.t1_btree');
 my @cmd = ('pg_amcheck', '--quiet', '-p', $port);
 
 # Regular expressions to match various expected output
-my $no_output_re = qr/^$/;
+my $no_output_re               = qr/^$/;
 my $line_pointer_corruption_re = qr/line pointer/;
 my $missing_file_re = qr/could not open file ".*": No such file or directory/;
-my $index_missing_relation_fork_re = qr/index ".*" lacks a main relation fork/;
+my $index_missing_relation_fork_re =
+  qr/index ".*" lacks a main relation fork/;
 
 # We have created test databases with tables populated with data, but have not
 # yet corrupted anything.  As such, we expect no corruption and verify that
 # none is reported
 #
-$node->command_checks_all(
-	[ @cmd, '-d', 'db1', '-d', 'db2', '-d', 'db3' ],
-	0,
-	[ $no_output_re ],
-	[ $no_output_re ],
-	'pg_amcheck prior to corruption');
+$node->command_checks_all([ @cmd, '-d', 'db1', '-d', 'db2', '-d', 'db3' ],
+	0, [$no_output_re], [$no_output_re], 'pg_amcheck prior to corruption');
 
 # Perform the corruptions we planned above using only a single database restart.
 #
@@ -347,22 +346,23 @@ perform_all_corruptions();
 $node->command_checks_all(
 	[ @cmd, 'db1' ],
 	2,
-	[ $index_missing_relation_fork_re,
-	  $line_pointer_corruption_re,
-	  $missing_file_re,
+	[
+		$index_missing_relation_fork_re, $line_pointer_corruption_re,
+		$missing_file_re,
 	],
-	[ $no_output_re ],
+	[$no_output_re],
 	'pg_amcheck all schemas, tables and indexes in database db1');
 
 $node->command_checks_all(
 	[ @cmd, '-d', 'db1', '-d', 'db2', '-d', 'db3' ],
 	2,
-	[ $index_missing_relation_fork_re,
-	  $line_pointer_corruption_re,
-	  $missing_file_re,
+	[
+		$index_missing_relation_fork_re, $line_pointer_corruption_re,
+		$missing_file_re,
 	],
-	[ $no_output_re ],
-	'pg_amcheck all schemas, tables and indexes in databases db1, db2, and db3');
+	[$no_output_re],
+	'pg_amcheck all schemas, tables and indexes in databases db1, db2, and db3'
+);
 
 # Scans of indexes in s1 should detect the specific corruption that we created
 # above.  For missing relation forks, we know what the error message looks
@@ -376,15 +376,17 @@ $node->command_checks_all(
 $node->command_checks_all(
 	[ @cmd, '--all', '-s', 's1', '-i', 't1_btree' ],
 	2,
-	[ $index_missing_relation_fork_re ],
-	[ qr/pg_amcheck: warning: skipping database "postgres": amcheck is not installed/ ],
+	[$index_missing_relation_fork_re],
+	[
+		qr/pg_amcheck: warning: skipping database "postgres": amcheck is not installed/
+	],
 	'pg_amcheck index s1.t1_btree reports missing main relation fork');
 
 $node->command_checks_all(
 	[ @cmd, '-d', 'db1', '-s', 's1', '-i', 't2_btree' ],
 	2,
-	[ qr/.+/ ],			# Any non-empty error message is acceptable
-	[ $no_output_re ],
+	[qr/.+/],    # Any non-empty error message is acceptable
+	[$no_output_re],
 	'pg_amcheck index s1.s2 reports index corruption');
 
 # Checking db1.s1 with indexes excluded should show no corruptions because we
@@ -393,18 +395,14 @@ $node->command_checks_all(
 #
 $node->command_checks_all(
 	[ @cmd, '-t', 's1.*', '--no-dependent-indexes', 'db1' ],
-	0,
-	[ $no_output_re ],
-	[ $no_output_re ],
+	0, [$no_output_re], [$no_output_re],
 	'pg_amcheck of db1.s1 excluding indexes');
 
 # Checking db2.s1 should show table corruptions if indexes are excluded
 #
 $node->command_checks_all(
 	[ @cmd, '-t', 's1.*', '--no-dependent-indexes', 'db2' ],
-	2,
-	[ $missing_file_re ],
-	[ $no_output_re ],
+	2, [$missing_file_re], [$no_output_re],
 	'pg_amcheck of db2.s1 excluding indexes');
 
 # In schema db1.s3, the tables and indexes are both corrupt.  We should see
@@ -413,36 +411,33 @@ $node->command_checks_all(
 $node->command_checks_all(
 	[ @cmd, '-s', 's3', 'db1' ],
 	2,
-	[ $index_missing_relation_fork_re,
-	  $line_pointer_corruption_re,
-	  $missing_file_re,
+	[
+		$index_missing_relation_fork_re, $line_pointer_corruption_re,
+		$missing_file_re,
 	],
-	[ $no_output_re ],
+	[$no_output_re],
 	'pg_amcheck schema s3 reports table and index errors');
 
 # In schema db1.s4, only toast tables are corrupt.  Check that under default
 # options the toast corruption is reported, but when excluding toast we get no
 # error reports.
-$node->command_checks_all(
-	[ @cmd, '-s', 's4', 'db1' ],
-	2,
-	[ $missing_file_re ],
-	[ $no_output_re ],
+$node->command_checks_all([ @cmd, '-s', 's4', 'db1' ],
+	2, [$missing_file_re], [$no_output_re],
 	'pg_amcheck in schema s4 reports toast corruption');
 
 $node->command_checks_all(
-	[ @cmd, '--no-dependent-toast', '--exclude-toast-pointers', '-s', 's4', 'db1' ],
+	[
+		@cmd, '--no-dependent-toast', '--exclude-toast-pointers', '-s', 's4',
+		'db1'
+	],
 	0,
-	[ $no_output_re ],
-	[ $no_output_re ],
+	[$no_output_re],
+	[$no_output_re],
 	'pg_amcheck in schema s4 excluding toast reports no corruption');
 
 # Check that no corruption is reported in schema db1.s5
-$node->command_checks_all(
-	[ @cmd, '-s', 's5', 'db1' ],
-	0,
-	[ $no_output_re ],
-	[ $no_output_re ],
+$node->command_checks_all([ @cmd, '-s', 's5', 'db1' ],
+	0, [$no_output_re], [$no_output_re],
 	'pg_amcheck over schema s5 reports no corruption');
 
 # In schema db1.s1, only indexes are corrupt.  Verify that when we exclude
@@ -451,9 +446,10 @@ $node->command_checks_all(
 $node->command_checks_all(
 	[ @cmd, '-s', 's1', '-I', 't1_btree', '-I', 't2_btree', 'db1' ],
 	0,
-	[ $no_output_re ],
-	[ $no_output_re ],
-	'pg_amcheck over schema s1 with corrupt indexes excluded reports no corruption');
+	[$no_output_re],
+	[$no_output_re],
+	'pg_amcheck over schema s1 with corrupt indexes excluded reports no corruption'
+);
 
 # In schema db1.s1, only indexes are corrupt.  Verify that when we provide only
 # table inclusions, and disable index expansion, no corruption is reported
@@ -462,9 +458,10 @@ $node->command_checks_all(
 $node->command_checks_all(
 	[ @cmd, '-t', 's1.*', '--no-dependent-indexes', 'db1' ],
 	0,
-	[ $no_output_re ],
-	[ $no_output_re ],
-	'pg_amcheck over schema s1 with all indexes excluded reports no corruption');
+	[$no_output_re],
+	[$no_output_re],
+	'pg_amcheck over schema s1 with all indexes excluded reports no corruption'
+);
 
 # In schema db1.s2, only tables are corrupt.  Verify that when we exclude those
 # tables that no corruption is reported.
@@ -472,9 +469,10 @@ $node->command_checks_all(
 $node->command_checks_all(
 	[ @cmd, '-s', 's2', '-T', 't1', '-T', 't2', 'db1' ],
 	0,
-	[ $no_output_re ],
-	[ $no_output_re ],
-	'pg_amcheck over schema s2 with corrupt tables excluded reports no corruption');
+	[$no_output_re],
+	[$no_output_re],
+	'pg_amcheck over schema s2 with corrupt tables excluded reports no corruption'
+);
 
 # Check errors about bad block range command line arguments.  We use schema s5
 # to avoid getting messages about corrupt tables or indexes.
@@ -501,20 +499,21 @@ command_fails_like(
 $node->command_checks_all(
 	[ @cmd, '-s', 's1', '-i', 't1_btree', '--parent-check', 'db1' ],
 	2,
-	[ $index_missing_relation_fork_re ],
-	[ $no_output_re ],
+	[$index_missing_relation_fork_re],
+	[$no_output_re],
 	'pg_amcheck smoke test --parent-check');
 
 $node->command_checks_all(
-	[ @cmd, '-s', 's1', '-i', 't1_btree', '--heapallindexed', '--rootdescend', 'db1' ],
+	[
+		@cmd, '-s', 's1', '-i', 't1_btree', '--heapallindexed',
+		'--rootdescend', 'db1'
+	],
 	2,
-	[ $index_missing_relation_fork_re ],
-	[ $no_output_re ],
+	[$index_missing_relation_fork_re],
+	[$no_output_re],
 	'pg_amcheck smoke test --heapallindexed --rootdescend');
 
 $node->command_checks_all(
 	[ @cmd, '-d', 'db1', '-d', 'db2', '-d', 'db3', '-S', 's*' ],
-	0,
-	[ $no_output_re ],
-	[ $no_output_re ],
+	0, [$no_output_re], [$no_output_re],
 	'pg_amcheck excluding all corrupt schemas');

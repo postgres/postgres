@@ -63,19 +63,19 @@ my %replace_types = (
 	'opt_array_bounds' => '<index>',
 
 	# "ignore" means: do not create type and rules for this non-term-id
-	'parse_toplevel'     => 'ignore',
-	'stmtmulti'          => 'ignore',
-	'CreateAsStmt'       => 'ignore',
-	'DeallocateStmt'     => 'ignore',
-	'ColId'              => 'ignore',
-	'type_function_name' => 'ignore',
-	'ColLabel'           => 'ignore',
-	'Sconst'             => 'ignore',
+	'parse_toplevel'      => 'ignore',
+	'stmtmulti'           => 'ignore',
+	'CreateAsStmt'        => 'ignore',
+	'DeallocateStmt'      => 'ignore',
+	'ColId'               => 'ignore',
+	'type_function_name'  => 'ignore',
+	'ColLabel'            => 'ignore',
+	'Sconst'              => 'ignore',
 	'opt_distinct_clause' => 'ignore',
-	'PLpgSQL_Expr'       => 'ignore',
-	'PLAssignStmt'       => 'ignore',
-	'plassign_target'    => 'ignore',
-	'plassign_equals'    => 'ignore',);
+	'PLpgSQL_Expr'        => 'ignore',
+	'PLAssignStmt'        => 'ignore',
+	'plassign_target'     => 'ignore',
+	'plassign_equals'     => 'ignore',);
 
 # these replace_line commands excise certain keywords from the core keyword
 # lists.  Be sure to account for these in ColLabel and related productions.

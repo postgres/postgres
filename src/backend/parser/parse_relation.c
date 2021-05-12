@@ -2360,8 +2360,8 @@ addRangeTableEntryForCTE(ParseState *pstate,
 	 * list --- caller must do that if appropriate.
 	 */
 	psi = buildNSItemFromLists(rte, list_length(pstate->p_rtable),
-								rte->coltypes, rte->coltypmods,
-								rte->colcollations);
+							   rte->coltypes, rte->coltypmods,
+							   rte->colcollations);
 
 	/*
 	 * The columns added by search and cycle clauses are not included in star

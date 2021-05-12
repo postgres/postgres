@@ -1134,9 +1134,9 @@ EndPrepare(GlobalTransaction gxact)
 	gxact->prepare_start_lsn = ProcLastRecPtr;
 
 	/*
-	 * Mark the prepared transaction as valid.  As soon as xact.c marks
-	 * MyProc as not running our XID (which it will do immediately after
-	 * this function returns), others can commit/rollback the xact.
+	 * Mark the prepared transaction as valid.  As soon as xact.c marks MyProc
+	 * as not running our XID (which it will do immediately after this
+	 * function returns), others can commit/rollback the xact.
 	 *
 	 * NB: a side effect of this is to make a dummy ProcArray entry for the
 	 * prepared XID.  This must happen before we clear the XID from MyProc /

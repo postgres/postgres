@@ -2326,7 +2326,7 @@ WalSndLoop(WalSndSendDataCallback send_data)
 			{
 				ereport(DEBUG1,
 						(errmsg_internal("\"%s\" has now caught up with upstream server",
-								application_name)));
+										 application_name)));
 				WalSndSetState(WALSNDSTATE_STREAMING);
 			}
 
@@ -3139,7 +3139,7 @@ WalSndWakeup(void)
 static void
 WalSndWait(uint32 socket_events, long timeout, uint32 wait_event)
 {
-	WaitEvent event;
+	WaitEvent	event;
 
 	ModifyWaitEvent(FeBeWaitSet, FeBeWaitSetSocketPos, socket_events, NULL);
 	if (WaitEventSetWait(FeBeWaitSet, timeout, &event, 1, wait_event) == 1 &&

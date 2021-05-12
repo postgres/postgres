@@ -176,11 +176,11 @@
 
 #ifdef ST_COMPARE_RUNTIME_POINTER
 typedef int (*ST_COMPARATOR_TYPE_NAME) (const ST_ELEMENT_TYPE *,
-										const ST_ELEMENT_TYPE *ST_SORT_PROTO_ARG);
+										const ST_ELEMENT_TYPE * ST_SORT_PROTO_ARG);
 #endif
 
 /* Declare the sort function.  Note optional arguments at end. */
-ST_SCOPE void ST_SORT(ST_ELEMENT_TYPE *first, size_t n
+ST_SCOPE void ST_SORT(ST_ELEMENT_TYPE * first, size_t n
 					  ST_SORT_PROTO_ELEMENT_SIZE
 					  ST_SORT_PROTO_COMPARE
 					  ST_SORT_PROTO_ARG);
@@ -245,9 +245,9 @@ ST_SCOPE void ST_SORT(ST_ELEMENT_TYPE *first, size_t n
  * in the qsort function.
  */
 static pg_noinline ST_ELEMENT_TYPE *
-ST_MED3(ST_ELEMENT_TYPE *a,
-		ST_ELEMENT_TYPE *b,
-		ST_ELEMENT_TYPE *c
+ST_MED3(ST_ELEMENT_TYPE * a,
+		ST_ELEMENT_TYPE * b,
+		ST_ELEMENT_TYPE * c
 		ST_SORT_PROTO_COMPARE
 		ST_SORT_PROTO_ARG)
 {
@@ -257,7 +257,7 @@ ST_MED3(ST_ELEMENT_TYPE *a,
 }
 
 static inline void
-ST_SWAP(ST_POINTER_TYPE *a, ST_POINTER_TYPE *b)
+ST_SWAP(ST_POINTER_TYPE * a, ST_POINTER_TYPE * b)
 {
 	ST_POINTER_TYPE tmp = *a;
 
@@ -266,7 +266,7 @@ ST_SWAP(ST_POINTER_TYPE *a, ST_POINTER_TYPE *b)
 }
 
 static inline void
-ST_SWAPN(ST_POINTER_TYPE *a, ST_POINTER_TYPE *b, size_t n)
+ST_SWAPN(ST_POINTER_TYPE * a, ST_POINTER_TYPE * b, size_t n)
 {
 	for (size_t i = 0; i < n; ++i)
 		ST_SWAP(&a[i], &b[i]);
@@ -276,7 +276,7 @@ ST_SWAPN(ST_POINTER_TYPE *a, ST_POINTER_TYPE *b, size_t n)
  * Sort an array.
  */
 ST_SCOPE void
-ST_SORT(ST_ELEMENT_TYPE *data, size_t n
+ST_SORT(ST_ELEMENT_TYPE * data, size_t n
 		ST_SORT_PROTO_ELEMENT_SIZE
 		ST_SORT_PROTO_COMPARE
 		ST_SORT_PROTO_ARG)

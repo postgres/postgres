@@ -267,8 +267,8 @@ static void
 SharedFileSetDeleteOnProcExit(int status, Datum arg)
 {
 	/*
-	 * Remove all the pending shared fileset entries. We don't use foreach() here
-	 * because SharedFileSetDeleteAll will remove the current element in
+	 * Remove all the pending shared fileset entries. We don't use foreach()
+	 * here because SharedFileSetDeleteAll will remove the current element in
 	 * filesetlist. Though we have used foreach_delete_current() to remove the
 	 * element from filesetlist it could only fix up the state of one of the
 	 * loops, see SharedFileSetUnregister.

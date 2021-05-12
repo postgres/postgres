@@ -142,7 +142,11 @@ EnableLockPagesPrivilege(int elevel)
 	{
 		ereport(elevel,
 				(errmsg("could not enable user right \"%s\": error code %lu",
-						/* translator: This is a term from Windows and should be translated to match the Windows localization. */
+
+		/*
+		 * translator: This is a term from Windows and should be translated to
+		 * match the Windows localization.
+		 */
 						_("Lock pages in memory"),
 						GetLastError()),
 				 errdetail("Failed system call was %s.", "OpenProcessToken")));

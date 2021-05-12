@@ -564,8 +564,8 @@ main(int argc, char *argv[])
 		 */
 		if (opts.install_missing)
 		{
-			char *schema;
-			char *install_sql;
+			char	   *schema;
+			char	   *install_sql;
 
 			/*
 			 * Must re-escape the schema name for each database, as the

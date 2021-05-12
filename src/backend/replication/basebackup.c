@@ -414,7 +414,7 @@ perform_base_backup(basebackup_options *opt)
 			if (ti->path == NULL)
 			{
 				struct stat statbuf;
-				bool	sendtblspclinks = true;
+				bool		sendtblspclinks = true;
 
 				/* In the main tar, include the backup_label first... */
 				sendFileWithContent(BACKUP_LABEL_FILE, labelfile->data,

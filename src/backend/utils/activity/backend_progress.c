@@ -10,7 +10,7 @@
  */
 #include "postgres.h"
 
-#include "port/atomics.h" /* for memory barriers */
+#include "port/atomics.h"		/* for memory barriers */
 #include "utils/backend_progress.h"
 #include "utils/backend_status.h"
 

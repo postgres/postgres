@@ -12,7 +12,7 @@
 
 #include "datatype/timestamp.h"
 #include "libpq/pqcomm.h"
-#include "miscadmin.h" /* for BackendType */
+#include "miscadmin.h"			/* for BackendType */
 #include "utils/backend_progress.h"
 
 
@@ -273,7 +273,7 @@ extern PGDLLIMPORT int pgstat_track_activity_query_size;
  * Other global variables
  * ----------
  */
-extern PGDLLIMPORT  PgBackendStatus *MyBEEntry;
+extern PGDLLIMPORT PgBackendStatus *MyBEEntry;
 
 
 /* ----------
@@ -318,4 +318,4 @@ extern LocalPgBackendStatus *pgstat_fetch_stat_local_beentry(int beid);
 extern char *pgstat_clip_activity(const char *raw_activity);
 
 
-#endif /* BACKEND_STATUS_H */
+#endif							/* BACKEND_STATUS_H */

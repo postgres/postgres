@@ -307,7 +307,7 @@ byteain(PG_FUNCTION_ARGS)
 		size_t		len = strlen(inputText);
 		uint64		dstlen = pg_hex_dec_len(len - 2);
 
-		bc = dstlen + VARHDRSZ;	/* maximum possible length */
+		bc = dstlen + VARHDRSZ; /* maximum possible length */
 		result = palloc(bc);
 
 		bc = pg_hex_decode(inputText + 2, len - 2, VARDATA(result), dstlen);

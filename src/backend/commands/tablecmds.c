@@ -563,7 +563,7 @@ static void ATExecGenericOptions(Relation rel, List *options);
 static void ATExecSetRowSecurity(Relation rel, bool rls);
 static void ATExecForceNoForceRowSecurity(Relation rel, bool force_rls);
 static ObjectAddress ATExecSetCompression(AlteredTableInfo *tab, Relation rel,
-					 const char *column, Node *newValue, LOCKMODE lockmode);
+										  const char *column, Node *newValue, LOCKMODE lockmode);
 
 static void index_copy_data(Relation rel, RelFileNode newrnode);
 static const char *storage_name(char c);
@@ -2593,7 +2593,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				if (CompressionMethodIsValid(attribute->attcompression))
 				{
 					const char *compression =
-						GetCompressionMethodName(attribute->attcompression);
+					GetCompressionMethodName(attribute->attcompression);
 
 					if (def->compression == NULL)
 						def->compression = pstrdup(compression);
@@ -2641,7 +2641,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				def->location = -1;
 				if (CompressionMethodIsValid(attribute->attcompression))
 					def->compression = pstrdup(GetCompressionMethodName(
-													attribute->attcompression));
+																		attribute->attcompression));
 				else
 					def->compression = NULL;
 				inhSchema = lappend(inhSchema, def);
@@ -4524,7 +4524,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
-		case AT_SetCompression:	/* ALTER COLUMN SET COMPRESSION */
+		case AT_SetCompression: /* ALTER COLUMN SET COMPRESSION */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW);
 			/* This command never recurses */
 			/* No command-specific prep needed */
@@ -5666,11 +5666,11 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		if (newrel)
 			ereport(DEBUG1,
 					(errmsg_internal("rewriting table \"%s\"",
-							RelationGetRelationName(oldrel))));
+									 RelationGetRelationName(oldrel))));
 		else
 			ereport(DEBUG1,
 					(errmsg_internal("verifying table \"%s\"",
-							RelationGetRelationName(oldrel))));
+									 RelationGetRelationName(oldrel))));
 
 		if (newrel)
 		{
@@ -7297,7 +7297,7 @@ NotNullImpliedByRelConstraints(Relation rel, Form_pg_attribute attr)
 	{
 		ereport(DEBUG1,
 				(errmsg_internal("existing constraints on column \"%s.%s\" are sufficient to prove that it does not contain nulls",
-						RelationGetRelationName(rel), NameStr(attr->attname))));
+								 RelationGetRelationName(rel), NameStr(attr->attname))));
 		return true;
 	}
 
@@ -12876,7 +12876,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 		}
 		else if (IsA(stm, CreateStatsStmt))
 		{
-			CreateStatsStmt  *stmt = (CreateStatsStmt *) stm;
+			CreateStatsStmt *stmt = (CreateStatsStmt *) stm;
 			AlterTableCmd *newcmd;
 
 			/* keep the statistics object's comment */
@@ -14539,9 +14539,9 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
 
 				if (strcmp(child_expr, parent_expr) != 0)
 					ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("column \"%s\" in child table has a conflicting generation expression",
-								attributeName)));
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("column \"%s\" in child table has a conflicting generation expression",
+									attributeName)));
 			}
 
 			/*
@@ -14769,7 +14769,7 @@ static void
 MarkInheritDetached(Relation child_rel, Relation parent_rel)
 {
 	Relation	catalogRelation;
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	ScanKeyData key;
 	HeapTuple	inheritsTuple;
 	bool		found = false;
@@ -15645,7 +15645,7 @@ ATExecSetCompression(AlteredTableInfo *tab,
 	if (!IsStorageCompressible(typstorage))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("column data type %s does not support compression",
+				 errmsg("column data type %s does not support compression",
 						format_type_be(atttableform->atttypid))));
 
 	/* get the attribute compression method. */
@@ -17010,11 +17010,11 @@ QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
 		if (!validate_default)
 			ereport(DEBUG1,
 					(errmsg_internal("partition constraint for table \"%s\" is implied by existing constraints",
-							RelationGetRelationName(scanrel))));
+									 RelationGetRelationName(scanrel))));
 		else
 			ereport(DEBUG1,
 					(errmsg_internal("updated partition constraint for default partition \"%s\" is implied by existing constraints",
-							RelationGetRelationName(scanrel))));
+									 RelationGetRelationName(scanrel))));
 		return;
 	}
 
@@ -17745,8 +17745,8 @@ ATExecDetachPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 						   AccessExclusiveLock);
 
 	/*
-	 * Check inheritance conditions and either delete the pg_inherits row
-	 * (in non-concurrent mode) or just set the inhdetachpending flag.
+	 * Check inheritance conditions and either delete the pg_inherits row (in
+	 * non-concurrent mode) or just set the inhdetachpending flag.
 	 */
 	if (!concurrent)
 		RemoveInheritance(partRel, rel, false);
@@ -17771,11 +17771,11 @@ ATExecDetachPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 */
 	if (concurrent)
 	{
-		Oid		partrelid,
-				parentrelid;
+		Oid			partrelid,
+					parentrelid;
 		LOCKTAG		tag;
-		char   *parentrelname;
-		char   *partrelname;
+		char	   *parentrelname;
+		char	   *partrelname;
 
 		/*
 		 * Add a new constraint to the partition being detached, which
@@ -17815,10 +17815,10 @@ ATExecDetachPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		StartTransactionCommand();
 
 		/*
-		 * Now wait.  This ensures that all queries that were planned including
-		 * the partition are finished before we remove the rest of catalog
-		 * entries.  We don't need or indeed want to acquire this lock, though
-		 * -- that would block later queries.
+		 * Now wait.  This ensures that all queries that were planned
+		 * including the partition are finished before we remove the rest of
+		 * catalog entries.  We don't need or indeed want to acquire this
+		 * lock, though -- that would block later queries.
 		 *
 		 * We don't need to concern ourselves with waiting for a lock on the
 		 * partition itself, since we will acquire AccessExclusiveLock below.
@@ -18046,7 +18046,7 @@ DetachPartitionFinalize(Relation rel, Relation partRel, bool concurrent,
 static ObjectAddress
 ATExecDetachPartitionFinalize(Relation rel, RangeVar *name)
 {
-	Relation    partRel;
+	Relation	partRel;
 	ObjectAddress address;
 	Snapshot	snap = GetActiveSnapshot();
 

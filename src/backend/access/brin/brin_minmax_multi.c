@@ -114,7 +114,7 @@ typedef struct MinmaxMultiOpaque
 	bool		extra_proc_missing[MINMAX_MAX_PROCNUMS];
 	Oid			cached_subtype;
 	FmgrInfo	strategy_procinfos[BTMaxStrategyNumber];
-}			MinmaxMultiOpaque;
+} MinmaxMultiOpaque;
 
 /*
  * Storage type for BRIN's minmax reloptions
@@ -261,7 +261,7 @@ typedef struct compare_context
 {
 	FmgrInfo   *cmpFn;
 	Oid			colloid;
-}			compare_context;
+} compare_context;
 
 static int	compare_values(const void *a, const void *b, void *arg);
 
@@ -670,11 +670,11 @@ range_serialize(Ranges *range)
 			/*
 			 * For values passed by value, we need to copy just the
 			 * significant bytes - we can't use memcpy directly, as that
-			 * assumes little endian behavior.  store_att_byval does
-			 * almost what we need, but it requires properly aligned
-			 * buffer - the output buffer does not guarantee that. So we
-			 * simply use a local Datum variable (which guarantees proper
-			 * alignment), and then copy the value from it.
+			 * assumes little endian behavior.  store_att_byval does almost
+			 * what we need, but it requires properly aligned buffer - the
+			 * output buffer does not guarantee that. So we simply use a local
+			 * Datum variable (which guarantees proper alignment), and then
+			 * copy the value from it.
 			 */
 			store_att_byval(&tmp, range->values[i], typlen);
 
@@ -771,7 +771,7 @@ range_deserialize(int maxvalues, SerializedRanges *serialized)
 	dataptr = NULL;
 	for (i = 0; (i < nvalues) && (!typbyval); i++)
 	{
-		if (typlen > 0)	/* fixed-length by-ref types */
+		if (typlen > 0)			/* fixed-length by-ref types */
 			datalen += MAXALIGN(typlen);
 		else if (typlen == -1)	/* varlena */
 		{
@@ -824,7 +824,8 @@ range_deserialize(int maxvalues, SerializedRanges *serialized)
 		}
 		else if (typlen == -2)	/* cstring */
 		{
-			Size	slen = strlen(ptr) + 1;
+			Size		slen = strlen(ptr) + 1;
+
 			range->values[i] = PointerGetDatum(dataptr);
 
 			memcpy(dataptr, ptr, slen);
@@ -2156,8 +2157,8 @@ brin_minmax_multi_distance_interval(PG_FUNCTION_ARGS)
 
 	/*
 	 * Delta is (fractional) number of days between the intervals. Assume
-	 * months have 30 days for consistency with interval_cmp_internal.
-	 * We don't need to be exact, in the worst case we'll build a bit less
+	 * months have 30 days for consistency with interval_cmp_internal. We
+	 * don't need to be exact, in the worst case we'll build a bit less
 	 * efficient ranges. But we should not contradict interval_cmp.
 	 */
 	dayfraction = result->time % USECS_PER_DAY;
@@ -2315,13 +2316,12 @@ brin_minmax_multi_distance_inet(PG_FUNCTION_ARGS)
 
 	/*
 	 * The length is calculated from the mask length, because we sort the
-	 * addresses by first address in the range, so A.B.C.D/24 < A.B.C.1
-	 * (the first range starts at A.B.C.0, which is before A.B.C.1). We
-	 * don't want to produce negative delta in this case, so we just cut
-	 * the extra bytes.
+	 * addresses by first address in the range, so A.B.C.D/24 < A.B.C.1 (the
+	 * first range starts at A.B.C.0, which is before A.B.C.1). We don't want
+	 * to produce negative delta in this case, so we just cut the extra bytes.
 	 *
-	 * XXX Maybe this should be a bit more careful and cut the bits, not
-	 * just whole bytes.
+	 * XXX Maybe this should be a bit more careful and cut the bits, not just
+	 * whole bytes.
 	 */
 	lena = ip_bits(ipa);
 	lenb = ip_bits(ipb);
@@ -2331,8 +2331,8 @@ brin_minmax_multi_distance_inet(PG_FUNCTION_ARGS)
 	/* apply the network mask to both addresses */
 	for (i = 0; i < len; i++)
 	{
-		unsigned char	mask;
-		int				nbits;
+		unsigned char mask;
+		int			nbits;
 
 		nbits = lena - (i * 8);
 		if (nbits < 8)

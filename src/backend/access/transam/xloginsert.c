@@ -1065,8 +1065,8 @@ log_newpages(RelFileNode *rnode, ForkNumber forkNum, int num_pages,
 		for (j = batch_start; j < i; j++)
 		{
 			/*
-			 * The page may be uninitialized. If so, we can't set the LSN because that
-			 * would corrupt the page.
+			 * The page may be uninitialized. If so, we can't set the LSN
+			 * because that would corrupt the page.
 			 */
 			if (!PageIsNew(pages[j]))
 			{

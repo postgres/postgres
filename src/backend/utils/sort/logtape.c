@@ -1275,6 +1275,7 @@ LogicalTapeSetBlocks(LogicalTapeSet *lts)
 	for (int i = 0; i < lts->nTapes; i++)
 	{
 		LogicalTape *lt = &lts->tapes[i];
+
 		Assert(!lt->writing || lt->buffer == NULL);
 	}
 #endif

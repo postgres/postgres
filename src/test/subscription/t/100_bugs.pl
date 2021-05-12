@@ -137,10 +137,9 @@ $node_twoways->safe_psql(
 	INSERT INTO t SELECT * FROM generate_series(1, $rows);
 	INSERT INTO t2 SELECT * FROM generate_series(1, $rows);
 	});
-$node_twoways->safe_psql(
-	'd1', 'ALTER PUBLICATION testpub ADD TABLE t2');
-$node_twoways->safe_psql(
-	'd2', 'ALTER SUBSCRIPTION testsub REFRESH PUBLICATION');
+$node_twoways->safe_psql('d1', 'ALTER PUBLICATION testpub ADD TABLE t2');
+$node_twoways->safe_psql('d2',
+	'ALTER SUBSCRIPTION testsub REFRESH PUBLICATION');
 
 # We cannot rely solely on wait_for_catchup() here; it isn't sufficient
 # when tablesync workers might still be running. So in addition to that,

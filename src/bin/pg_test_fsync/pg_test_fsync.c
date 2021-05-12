@@ -401,6 +401,7 @@ test_sync(int writes_per_op)
 							  buf,
 							  XLOG_BLCKSZ,
 							  writes * XLOG_BLCKSZ) != XLOG_BLCKSZ)
+
 					/*
 					 * This can generate write failures if the filesystem has
 					 * a large block size, e.g. 4k, and there is no support

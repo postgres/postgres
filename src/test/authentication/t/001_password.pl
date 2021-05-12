@@ -141,7 +141,8 @@ delete $ENV{"PGCHANNELBINDING"};
 $ENV{"PGPASSFILE"} = $pgpassfile;
 
 unlink($pgpassfile);
-append_to_file($pgpassfile, qq!
+append_to_file(
+	$pgpassfile, qq!
 # This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file. This very long comment is just here to exercise handling of long lines in the file.
 *:*:postgres:scram_role:pass:this is not part of the password.
 !);
@@ -151,8 +152,9 @@ reset_pg_hba($node, 'password');
 test_role($node, 'scram_role', 'password from pgpass', 0);
 test_role($node, 'md5_role',   'password from pgpass', 2);
 
-append_to_file($pgpassfile, qq!
+append_to_file(
+	$pgpassfile, qq!
 *:*:*:md5_role:p\\ass
 !);
 
-test_role($node, 'md5_role',   'password from pgpass', 0);
+test_role($node, 'md5_role', 'password from pgpass', 0);

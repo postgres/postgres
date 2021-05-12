@@ -164,7 +164,8 @@ $node_publisher->safe_psql('postgres',
 # from the publication.
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_ins");
-is($result, qq(1052|1|1002), 'check rows on subscriber before table drop from publication');
+is($result, qq(1052|1|1002),
+	'check rows on subscriber before table drop from publication');
 
 # Drop the table from publication
 $node_publisher->safe_psql('postgres',
@@ -179,7 +180,8 @@ $node_publisher->wait_for_catchup('tap_sub');
 # publication, so row count should remain the same.
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_ins");
-is($result, qq(1052|1|1002), 'check rows on subscriber after table drop from publication');
+is($result, qq(1052|1|1002),
+	'check rows on subscriber after table drop from publication');
 
 # Delete the inserted row in publisher
 $node_publisher->safe_psql('postgres', "DELETE FROM tab_ins WHERE a = 8888");
@@ -205,7 +207,8 @@ $node_subscriber->safe_psql('postgres', "CREATE TABLE temp2 (a int)");
 
 # Setup logical replication that will only be used for this test
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub_temp1 FOR TABLE temp1 WITH (publish = insert)");
+	"CREATE PUBLICATION tap_pub_temp1 FOR TABLE temp1 WITH (publish = insert)"
+);
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_temp2 FOR TABLE temp2");
 $node_subscriber->safe_psql('postgres',
@@ -221,9 +224,10 @@ $node_subscriber->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for subscriber to synchronize data";
 
 # Subscriber table will have no rows initially
-$result = $node_subscriber->safe_psql('postgres',
-	"SELECT count(*) FROM temp1");
-is($result, qq(0), 'check initial rows on subscriber with multiple publications');
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM temp1");
+is($result, qq(0),
+	'check initial rows on subscriber with multiple publications');
 
 # Insert a row into the table that's part of first publication in subscriber
 # list of publications.
@@ -232,8 +236,8 @@ $node_publisher->safe_psql('postgres', "INSERT INTO temp1 VALUES (1)");
 $node_publisher->wait_for_catchup('tap_sub_temp1');
 
 # Subscriber should receive the inserted row
-$result = $node_subscriber->safe_psql('postgres',
-	"SELECT count(*) FROM temp1");
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM temp1");
 is($result, qq(1), 'check rows on subscriber with multiple publications');
 
 # Drop subscription as we don't need it anymore

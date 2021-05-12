@@ -612,8 +612,8 @@ systable_endscan(SysScanDesc sysscan)
 		UnregisterSnapshot(sysscan->snapshot);
 
 	/*
-	 * Reset the bsysscan flag at the end of the systable scan.  See
-	 * detailed comments in xact.c where these variables are declared.
+	 * Reset the bsysscan flag at the end of the systable scan.  See detailed
+	 * comments in xact.c where these variables are declared.
 	 */
 	if (TransactionIdIsValid(CheckXidAlive))
 		bsysscan = false;

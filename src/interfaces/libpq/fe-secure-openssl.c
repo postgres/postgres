@@ -943,8 +943,8 @@ initialize_SSL(PGconn *conn)
 
 		if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
 		{
-			char   *fname = NULL;
-			char   *dname = NULL;
+			char	   *fname = NULL;
+			char	   *dname = NULL;
 
 			if (conn->sslcrl && strlen(conn->sslcrl) > 0)
 				fname = conn->sslcrl;
@@ -1467,8 +1467,8 @@ pgtls_close(PGconn *conn)
 	{
 		/*
 		 * In the non-SSL case, just remove the crypto callbacks if the
-		 * connection has then loaded.  This code path has no dependency
-		 * on any pending SSL calls.
+		 * connection has then loaded.  This code path has no dependency on
+		 * any pending SSL calls.
 		 */
 		if (conn->crypto_loaded)
 			destroy_needed = true;

@@ -36,7 +36,7 @@ sub test_sync_state
 sub start_standby_and_wait
 {
 	my ($primary, $standby) = @_;
-	my $primary_name  = $primary->name;
+	my $primary_name = $primary->name;
 	my $standby_name = $standby->name;
 	my $query =
 	  "SELECT count(1) = 1 FROM pg_stat_replication WHERE application_name = '$standby_name'";

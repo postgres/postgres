@@ -30,7 +30,7 @@ typedef struct SQLFunctionParseInfo
 	char	  **argnames;		/* names of input arguments; NULL if none */
 	/* Note that argnames[i] can be NULL, if some args are unnamed */
 	Oid			collation;		/* function's input collation, if known */
-}			SQLFunctionParseInfo;
+} SQLFunctionParseInfo;
 
 typedef SQLFunctionParseInfo *SQLFunctionParseInfoPtr;
 

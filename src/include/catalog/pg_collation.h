@@ -42,9 +42,9 @@ CATALOG(pg_collation,3456,CollationRelationId)
 	NameData	collcollate;	/* LC_COLLATE setting */
 	NameData	collctype;		/* LC_CTYPE setting */
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text		collversion BKI_DEFAULT(_null_);	/* provider-dependent */
-													/* version of */
-													/* collation data */
+	text		collversion BKI_DEFAULT(_null_);	/* provider-dependent
+													 * version of collation
+													 * data */
 #endif
 } FormData_pg_collation;
 

@@ -379,6 +379,7 @@ main(int argc, char *const argv[])
 				for (list = g_declared_list; list != NULL;)
 				{
 					struct declared_list *this = list;
+
 					list = list->next;
 					free(this);
 				}

@@ -35,8 +35,8 @@ pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 		return -1;
 	return readv(fd, iov, iovcnt);
 #else
-	ssize_t 	sum = 0;
-	ssize_t 	part;
+	ssize_t		sum = 0;
+	ssize_t		part;
 
 	for (int i = 0; i < iovcnt; ++i)
 	{

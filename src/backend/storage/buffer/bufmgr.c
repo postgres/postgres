@@ -3071,7 +3071,7 @@ DropRelFileNodeBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
 	int			j;
 	RelFileNodeBackend rnode;
 	BlockNumber nForkBlock[MAX_FORKNUM];
-	uint64 		nBlocksToInvalidate = 0;
+	uint64		nBlocksToInvalidate = 0;
 
 	rnode = smgr_reln->smgr_rnode;
 
@@ -3195,7 +3195,7 @@ DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
 	int			n = 0;
 	SMgrRelation *rels;
 	BlockNumber (*block)[MAX_FORKNUM + 1];
-	uint64 		nBlocksToInvalidate = 0;
+	uint64		nBlocksToInvalidate = 0;
 	RelFileNode *nodes;
 	bool		cached = true;
 	bool		use_bsearch;

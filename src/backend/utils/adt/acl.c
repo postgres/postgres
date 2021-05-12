@@ -2453,9 +2453,9 @@ column_privilege_check(Oid tableoid, AttrNumber attnum,
 		return -1;
 
 	/*
-	 * Check for column-level privileges first. This serves in
-	 * part as a check on whether the column even exists, so we
-	 * need to do it before checking table-level privilege.
+	 * Check for column-level privileges first. This serves in part as a check
+	 * on whether the column even exists, so we need to do it before checking
+	 * table-level privilege.
 	 */
 	aclresult = pg_attribute_aclcheck_ext(tableoid, attnum, roleid,
 										  mode, &is_missing);

@@ -41,4 +41,4 @@ extern void pgstat_progress_update_multi_param(int nparam, const int *index,
 extern void pgstat_progress_end_command(void);
 
 
-#endif /* BACKEND_PROGRESS_H */
+#endif							/* BACKEND_PROGRESS_H */

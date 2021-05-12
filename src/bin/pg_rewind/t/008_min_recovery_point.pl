@@ -42,7 +42,8 @@ my $tmp_folder = TestLib::tempdir;
 
 my $node_1 = get_new_node('node_1');
 $node_1->init(allows_streaming => 1);
-$node_1->append_conf('postgresql.conf', qq(
+$node_1->append_conf(
+	'postgresql.conf', qq(
 wal_keep_size='100 MB'
 ));
 
@@ -60,13 +61,11 @@ my $backup_name = 'my_backup';
 $node_1->backup($backup_name);
 
 my $node_2 = get_new_node('node_2');
-$node_2->init_from_backup($node_1, $backup_name,
-	has_streaming => 1);
+$node_2->init_from_backup($node_1, $backup_name, has_streaming => 1);
 $node_2->start;
 
 my $node_3 = get_new_node('node_3');
-$node_3->init_from_backup($node_1, $backup_name,
-	has_streaming => 1);
+$node_3->init_from_backup($node_1, $backup_name, has_streaming => 1);
 $node_3->start;
 
 # Wait until node 3 has connected and caught up
@@ -88,14 +87,16 @@ $node_3->safe_psql('postgres', "checkpoint");
 
 # reconfigure node_1 as a standby following node_3
 my $node_3_connstr = $node_3->connstr;
-$node_1->append_conf('postgresql.conf', qq(
+$node_1->append_conf(
+	'postgresql.conf', qq(
 primary_conninfo='$node_3_connstr'
 ));
 $node_1->set_standby_mode();
 $node_1->start();
 
 # also reconfigure node_2 to follow node_3
-$node_2->append_conf('postgresql.conf', qq(
+$node_2->append_conf(
+	'postgresql.conf', qq(
 primary_conninfo='$node_3_connstr'
 ));
 $node_2->restart();
@@ -117,17 +118,21 @@ $node_1->safe_psql('postgres', "checkpoint");
 # demonstratively create a split brain. After the rewind, we should only
 # see the insert on 1, as the insert on node 3 is rewound away.
 #
-$node_1->safe_psql('postgres', "INSERT INTO public.foo (t) VALUES ('keep this')");
+$node_1->safe_psql('postgres',
+	"INSERT INTO public.foo (t) VALUES ('keep this')");
 # 'bar' is unmodified in node 1, so it won't be overwritten by replaying the
 # WAL from node 1.
-$node_3->safe_psql('postgres', "INSERT INTO public.bar (t) VALUES ('rewind this')");
+$node_3->safe_psql('postgres',
+	"INSERT INTO public.bar (t) VALUES ('rewind this')");
 
 # Insert more rows in node 1, to bump up the XID counter. Otherwise, if
 # rewind doesn't correctly rewind the changes made on the other node,
 # we might fail to notice if the inserts are invisible because the XIDs
 # are not marked as committed.
-$node_1->safe_psql('postgres', "INSERT INTO public.foo (t) VALUES ('and this')");
-$node_1->safe_psql('postgres', "INSERT INTO public.foo (t) VALUES ('and this too')");
+$node_1->safe_psql('postgres',
+	"INSERT INTO public.foo (t) VALUES ('and this')");
+$node_1->safe_psql('postgres',
+	"INSERT INTO public.foo (t) VALUES ('and this too')");
 
 # Wait for node 2 to catch up
 $node_2->poll_query_until('postgres',
@@ -138,7 +143,7 @@ $node_2->poll_query_until('postgres',
 $node_2->stop('fast');
 $node_3->stop('fast');
 
-my $node_2_pgdata = $node_2->data_dir;
+my $node_2_pgdata  = $node_2->data_dir;
 my $node_1_connstr = $node_1->connstr;
 
 # Keep a temporary postgresql.conf or it would be overwritten during the rewind.
@@ -147,12 +152,10 @@ copy(
 	"$tmp_folder/node_2-postgresql.conf.tmp");
 
 command_ok(
-    [
-        'pg_rewind',
-        "--source-server=$node_1_connstr",
-	    "--target-pgdata=$node_2_pgdata",
-	    "--debug"
-    ],
+	[
+		'pg_rewind',                      "--source-server=$node_1_connstr",
+		"--target-pgdata=$node_2_pgdata", "--debug"
+	],
 	'run pg_rewind');
 
 # Now move back postgresql.conf with old settings
@@ -166,7 +169,7 @@ $node_2->start;
 # before rewind should've been overwritten with the data from node 1.
 my $result;
 $result = $node_2->safe_psql('postgres', 'SELECT * FROM public.foo');
-is($result, qq(keep this
+is( $result, qq(keep this
 and this
 and this too), 'table foo after rewind');
 

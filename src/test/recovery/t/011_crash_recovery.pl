@@ -61,4 +61,4 @@ is($node->safe_psql('postgres', qq[SELECT pg_xact_status('$xid');]),
 	'aborted', 'xid is aborted after crash');
 
 $stdin .= "\\q\n";
-$tx->finish; # wait for psql to quit gracefully
+$tx->finish;    # wait for psql to quit gracefully

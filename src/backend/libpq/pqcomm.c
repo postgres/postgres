@@ -175,8 +175,8 @@ WaitEventSet *FeBeWaitSet;
 void
 pq_init(void)
 {
-	int		socket_pos PG_USED_FOR_ASSERTS_ONLY;
-	int		latch_pos PG_USED_FOR_ASSERTS_ONLY;
+	int			socket_pos PG_USED_FOR_ASSERTS_ONLY;
+	int			latch_pos PG_USED_FOR_ASSERTS_ONLY;
 
 	/* initialize state variables */
 	PqSendBufferSize = PQ_SEND_BUFFER_SIZE;

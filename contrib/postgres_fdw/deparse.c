@@ -1779,7 +1779,8 @@ rebuildInsertSql(StringInfo buf, char *orig_query,
 				 int values_end_len, int num_cols,
 				 int num_rows)
 {
-	int			i, j;
+	int			i,
+				j;
 	int			pindex;
 	bool		first;
 
@@ -1790,8 +1791,8 @@ rebuildInsertSql(StringInfo buf, char *orig_query,
 	appendBinaryStringInfo(buf, orig_query, values_end_len);
 
 	/*
-	 * Add records to VALUES clause (we already have parameters for the
-	 * first row, so start at the right offset).
+	 * Add records to VALUES clause (we already have parameters for the first
+	 * row, so start at the right offset).
 	 */
 	pindex = num_cols + 1;
 	for (i = 0; i < num_rows; i++)

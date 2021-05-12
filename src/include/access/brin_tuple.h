@@ -33,7 +33,7 @@ typedef struct BrinValues
 	bool		bv_allnulls;	/* are all values nulls in the page range? */
 	Datum	   *bv_values;		/* current accumulated values */
 	Datum		bv_mem_value;	/* expanded accumulated values */
-	MemoryContext	bv_context;
+	MemoryContext bv_context;
 	brin_serialize_callback_type bv_serialize;
 } BrinValues;
 

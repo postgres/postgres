@@ -1655,9 +1655,9 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 				 (cur_kqueue_event->fflags & NOTE_EXIT) != 0)
 		{
 			/*
-			 * The kernel will tell this kqueue object only once about the exit
-			 * of the postmaster, so let's remember that for next time so that
-			 * we provide level-triggered semantics.
+			 * The kernel will tell this kqueue object only once about the
+			 * exit of the postmaster, so let's remember that for next time so
+			 * that we provide level-triggered semantics.
 			 */
 			set->report_postmaster_not_running = true;
 

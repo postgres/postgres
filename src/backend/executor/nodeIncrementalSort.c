@@ -1162,8 +1162,8 @@ ExecReScanIncrementalSort(IncrementalSortState *node)
 	}
 
 	/*
-	 * If chgParam of subnode is not null, then the plan will be re-scanned
-	 * by the first ExecProcNode.
+	 * If chgParam of subnode is not null, then the plan will be re-scanned by
+	 * the first ExecProcNode.
 	 */
 	if (outerPlan->chgParam == NULL)
 		ExecReScan(outerPlan);

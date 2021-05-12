@@ -357,8 +357,8 @@
  * memory even when clobber is off, or to 0 to never free relation cache
  * memory even when clobbering is on.
  */
-/* #define RECOVER_RELATION_BUILD_MEMORY 0 */ /* Force disable */
-/* #define RECOVER_RELATION_BUILD_MEMORY 1 */ /* Force enable */
+ /* #define RECOVER_RELATION_BUILD_MEMORY 0 */	/* Force disable */
+ /* #define RECOVER_RELATION_BUILD_MEMORY 1 */	/* Force enable */
 
 /*
  * Define this to force all parse and plan trees to be passed through

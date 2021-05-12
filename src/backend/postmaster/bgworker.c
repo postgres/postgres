@@ -403,7 +403,7 @@ BackgroundWorkerStateChange(bool allow_new_workers)
 		/* Log it! */
 		ereport(DEBUG1,
 				(errmsg_internal("registering background worker \"%s\"",
-						rw->rw_worker.bgw_name)));
+								 rw->rw_worker.bgw_name)));
 
 		slist_push_head(&BackgroundWorkerList, &rw->rw_lnode);
 	}
@@ -435,7 +435,7 @@ ForgetBackgroundWorker(slist_mutable_iter *cur)
 
 	ereport(DEBUG1,
 			(errmsg_internal("unregistering background worker \"%s\"",
-					rw->rw_worker.bgw_name)));
+							 rw->rw_worker.bgw_name)));
 
 	slist_delete_current(cur);
 	free(rw);

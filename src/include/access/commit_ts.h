@@ -57,7 +57,7 @@ typedef struct xl_commit_ts_set
 	RepOriginId nodeid;
 	TransactionId mainxid;
 	/* subxact Xids follow */
-} xl_commit_ts_set;
+}			xl_commit_ts_set;
 
 #define SizeOfCommitTsSet	(offsetof(xl_commit_ts_set, mainxid) + \
 							 sizeof(TransactionId))

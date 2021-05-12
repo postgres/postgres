@@ -223,7 +223,7 @@ sub promote_standby
 sub run_pg_rewind
 {
 	my $test_mode       = shift;
-	my $primary_pgdata   = $node_primary->data_dir;
+	my $primary_pgdata  = $node_primary->data_dir;
 	my $standby_pgdata  = $node_standby->data_dir;
 	my $standby_connstr = $node_standby->connstr('postgres');
 	my $tmp_folder      = TestLib::tempdir;
@@ -286,8 +286,8 @@ sub run_pg_rewind
 		# recovery configuration automatically.
 		command_ok(
 			[
-				'pg_rewind',                      "--debug",
-				"--source-server",                $standby_connstr,
+				'pg_rewind',                       "--debug",
+				"--source-server",                 $standby_connstr,
 				"--target-pgdata=$primary_pgdata", "--no-sync",
 				"--write-recovery-conf"
 			],

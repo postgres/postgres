@@ -48,7 +48,7 @@ toast_compress_datum(Datum value, char cmethod)
 {
 	struct varlena *tmp = NULL;
 	int32		valsize;
-	ToastCompressionId	cmid = TOAST_INVALID_COMPRESSION_ID;
+	ToastCompressionId cmid = TOAST_INVALID_COMPRESSION_ID;
 
 	Assert(!VARATT_IS_EXTERNAL(DatumGetPointer(value)));
 	Assert(!VARATT_IS_COMPRESSED(DatumGetPointer(value)));

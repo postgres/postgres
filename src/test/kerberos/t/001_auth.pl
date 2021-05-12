@@ -79,8 +79,8 @@ my $kdc_datadir = "${TestLib::tmp_check}/krb5kdc";
 my $kdc_pidfile = "${TestLib::tmp_check}/krb5kdc.pid";
 my $keytab      = "${TestLib::tmp_check}/krb5.keytab";
 
-my $dbname = 'postgres';
-my $username = 'test1';
+my $dbname      = 'postgres';
+my $username    = 'test1';
 my $application = '001_auth.pl';
 
 note "setting up Kerberos";
@@ -193,9 +193,7 @@ sub test_access
 	my $connstr = $node->connstr('postgres')
 	  . " user=$role host=$host hostaddr=$hostaddr $gssencmode";
 
-	my %params = (
-		sql => $query,
-	);
+	my %params = (sql => $query,);
 
 	if (@expect_log_msgs)
 	{

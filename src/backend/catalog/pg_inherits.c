@@ -578,7 +578,7 @@ DeleteInheritsTuple(Oid inhrelid, Oid inhparent, bool expect_detach_pending,
 		parent = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhparent;
 		if (!OidIsValid(inhparent) || parent == inhparent)
 		{
-			bool	detach_pending;
+			bool		detach_pending;
 
 			detach_pending =
 				((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhdetachpending;
@@ -640,7 +640,7 @@ PartitionHasPendingDetach(Oid partoid)
 
 	while (HeapTupleIsValid(inheritsTuple = systable_getnext(scan)))
 	{
-		bool	detached;
+		bool		detached;
 
 		detached =
 			((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhdetachpending;

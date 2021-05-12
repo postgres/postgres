@@ -3847,8 +3847,8 @@ timestamp_bin(PG_FUNCTION_ARGS)
 	tm_delta = tm_diff - tm_diff % stride_usecs;
 
 	/*
-	 * Make sure the returned timestamp is at the start of the bin,
-	 * even if the origin is in the future.
+	 * Make sure the returned timestamp is at the start of the bin, even if
+	 * the origin is in the future.
 	 */
 	if (origin > timestamp && stride_usecs > 1)
 		tm_delta -= stride_usecs;
@@ -4025,8 +4025,8 @@ timestamptz_bin(PG_FUNCTION_ARGS)
 	tm_delta = tm_diff - tm_diff % stride_usecs;
 
 	/*
-	 * Make sure the returned timestamp is at the start of the bin,
-	 * even if the origin is in the future.
+	 * Make sure the returned timestamp is at the start of the bin, even if
+	 * the origin is in the future.
 	 */
 	if (origin > timestamp && stride_usecs > 1)
 		tm_delta -= stride_usecs;

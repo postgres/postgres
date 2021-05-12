@@ -711,17 +711,16 @@ recv_password_packet(Port *port)
 	if (mtype != 'p')
 	{
 		/*
-		 * If the client just disconnects without offering a password,
-		 * don't make a log entry.  This is legal per protocol spec and in
-		 * fact commonly done by psql, so complaining just clutters the
-		 * log.
+		 * If the client just disconnects without offering a password, don't
+		 * make a log entry.  This is legal per protocol spec and in fact
+		 * commonly done by psql, so complaining just clutters the log.
 		 */
 		if (mtype != EOF)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("expected password response, got message type %d",
 							mtype)));
-		return NULL;		/* EOF or bad message type */
+		return NULL;			/* EOF or bad message type */
 	}
 
 	initStringInfo(&buf);

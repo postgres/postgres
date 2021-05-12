@@ -382,8 +382,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 * For expression columns, set attcompression invalid, since
 			 * there's no table column from which to copy the value. Whenever
 			 * we actually need to compress a value, we'll use whatever the
-			 * current value of default_compression_method is at that point
-			 * in time.
+			 * current value of default_compression_method is at that point in
+			 * time.
 			 */
 			to->attcompression = InvalidCompressionMethod;
 
@@ -2927,14 +2927,14 @@ index_build(Relation heapRelation,
 	if (indexInfo->ii_ParallelWorkers == 0)
 		ereport(DEBUG1,
 				(errmsg_internal("building index \"%s\" on table \"%s\" serially",
-						RelationGetRelationName(indexRelation),
-						RelationGetRelationName(heapRelation))));
+								 RelationGetRelationName(indexRelation),
+								 RelationGetRelationName(heapRelation))));
 	else
 		ereport(DEBUG1,
 				(errmsg_internal("building index \"%s\" on table \"%s\" with request for %d parallel workers",
-							   RelationGetRelationName(indexRelation),
-							   RelationGetRelationName(heapRelation),
-							   indexInfo->ii_ParallelWorkers)));
+								 RelationGetRelationName(indexRelation),
+								 RelationGetRelationName(heapRelation),
+								 indexInfo->ii_ParallelWorkers)));
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
@@ -3619,8 +3619,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		SetRelationTableSpace(iRel, params->tablespaceOid, InvalidOid);
 
 		/*
-		 * Schedule unlinking of the old index storage at transaction
-		 * commit.
+		 * Schedule unlinking of the old index storage at transaction commit.
 		 */
 		RelationDropStorage(iRel);
 		RelationAssumeNewRelfilenode(iRel);

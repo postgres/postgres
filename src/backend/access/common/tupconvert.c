@@ -236,7 +236,7 @@ execute_attr_map_slot(AttrMap *attrMap,
 Bitmapset *
 execute_attr_map_cols(AttrMap *attrMap, Bitmapset *in_cols)
 {
-	Bitmapset *out_cols;
+	Bitmapset  *out_cols;
 	int			out_attnum;
 
 	/* fast path for the common trivial case */

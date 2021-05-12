@@ -602,6 +602,7 @@ aloop:
 			port->peer_cn = NULL;
 			return -1;
 		}
+
 		/*
 		 * RFC2253 is the closest thing to an accepted standard format for
 		 * DNs. We have documented how to produce this format from a

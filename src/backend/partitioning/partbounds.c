@@ -2876,7 +2876,10 @@ check_new_partition_bound(char *relname, Relation parent,
 					{
 						int			prev_modulus;
 
-						/* We found the largest modulus less than or equal to ours. */
+						/*
+						 * We found the largest modulus less than or equal to
+						 * ours.
+						 */
 						prev_modulus = DatumGetInt32(boundinfo->datums[offset][0]);
 
 						if (spec->modulus % prev_modulus != 0)
@@ -3171,7 +3174,7 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 	{
 		ereport(DEBUG1,
 				(errmsg_internal("updated partition constraint for default partition \"%s\" is implied by existing constraints",
-						RelationGetRelationName(default_rel))));
+								 RelationGetRelationName(default_rel))));
 		return;
 	}
 
@@ -3222,7 +3225,7 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 			{
 				ereport(DEBUG1,
 						(errmsg_internal("updated partition constraint for default partition \"%s\" is implied by existing constraints",
-								RelationGetRelationName(part_rel))));
+										 RelationGetRelationName(part_rel))));
 
 				table_close(part_rel, NoLock);
 				continue;

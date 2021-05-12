@@ -700,9 +700,9 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 	Assert(tup);
 
 	/* Build the TupleTableSlot for the given tuple */
-	ExecStoreMinimalTuple(tup,		/* tuple to store */
-						  gm_state->gm_slots[reader],	/* slot in which to store
-														 * the tuple */
+	ExecStoreMinimalTuple(tup,	/* tuple to store */
+						  gm_state->gm_slots[reader],	/* slot in which to
+														 * store the tuple */
 						  true);	/* pfree tuple when done with it */
 
 	return true;

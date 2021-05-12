@@ -11,7 +11,7 @@ use Test::More tests => 4;
 use PostgresNode;
 
 my $bkplabel = 'backup';
-my $primary   = get_new_node('primary');
+my $primary  = get_new_node('primary');
 $primary->init(allows_streaming => 1);
 
 $primary->append_conf(

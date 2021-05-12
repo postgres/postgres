@@ -3708,7 +3708,7 @@ pgstat_write_statsfiles(bool permanent, bool allDbs)
 		{
 			fputc('R', fpout);
 			rc = fwrite(slotent, sizeof(PgStat_StatReplSlotEntry), 1, fpout);
-			(void) rc;				/* we'll check for error with ferror */
+			(void) rc;			/* we'll check for error with ferror */
 		}
 	}
 

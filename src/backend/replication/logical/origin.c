@@ -576,8 +576,8 @@ CheckPointReplicationOrigin(void)
 						tmppath)));
 
 	/*
-	 * no other backend can perform this at the same time; only one
-	 * checkpoint can happen at a time.
+	 * no other backend can perform this at the same time; only one checkpoint
+	 * can happen at a time.
 	 */
 	tmpfd = OpenTransientFile(tmppath,
 							  O_CREAT | O_EXCL | O_WRONLY | PG_BINARY);

@@ -723,7 +723,7 @@ typedef struct XLogCtlData
 	 */
 	TimestampTz currentChunkStartTime;
 	/* Recovery pause state */
-	RecoveryPauseState	recoveryPauseState;
+	RecoveryPauseState recoveryPauseState;
 	ConditionVariable recoveryNotPausedCV;
 
 	/*
@@ -2858,8 +2858,8 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 
 			ereport(DEBUG2,
 					(errmsg_internal("updated min recovery point to %X/%X on timeline %u",
-							LSN_FORMAT_ARGS(minRecoveryPoint),
-							newMinRecoveryPointTLI)));
+									 LSN_FORMAT_ARGS(minRecoveryPoint),
+									 newMinRecoveryPointTLI)));
 		}
 	}
 	LWLockRelease(ControlFileLock);
@@ -3357,7 +3357,7 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 		blocks = wal_segment_size / XLOG_BLCKSZ;
 		for (int i = 0; i < blocks;)
 		{
-			int 		iovcnt = Min(blocks - i, lengthof(iov));
+			int			iovcnt = Min(blocks - i, lengthof(iov));
 			off_t		offset = i * XLOG_BLCKSZ;
 
 			if (pg_pwritev_with_retry(fd, iov, iovcnt, offset) < 0)
@@ -3814,8 +3814,8 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, XLogSource source)
 	 * however, unless we actually find a valid segment.  That way if there is
 	 * neither a timeline history file nor a WAL segment in the archive, and
 	 * streaming replication is set up, we'll read the timeline history file
-	 * streamed from the primary when we start streaming, instead of recovering
-	 * with a dummy history generated here.
+	 * streamed from the primary when we start streaming, instead of
+	 * recovering with a dummy history generated here.
 	 */
 	if (expectedTLEs)
 		tles = expectedTLEs;
@@ -4229,7 +4229,7 @@ RemoveXlogFile(const char *segname, XLogSegNo recycleSegNo,
 	{
 		ereport(DEBUG2,
 				(errmsg_internal("recycled write-ahead log file \"%s\"",
-						segname)));
+								 segname)));
 		CheckpointStats.ckpt_segs_recycled++;
 		/* Needn't recheck that slot on future iterations */
 		(*endlogSegNo)++;
@@ -4241,7 +4241,7 @@ RemoveXlogFile(const char *segname, XLogSegNo recycleSegNo,
 
 		ereport(DEBUG2,
 				(errmsg_internal("removing write-ahead log file \"%s\"",
-						segname)));
+								 segname)));
 
 #ifdef WIN32
 
@@ -6093,7 +6093,7 @@ recoveryPausesHere(bool endOfRecovery)
 RecoveryPauseState
 GetRecoveryPauseState(void)
 {
-	RecoveryPauseState	state;
+	RecoveryPauseState state;
 
 	SpinLockAcquire(&XLogCtl->info_lck);
 	state = XLogCtl->recoveryPauseState;
@@ -6347,7 +6347,11 @@ RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue
 						ereport(WARNING,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("promotion is not possible because of insufficient parameter settings"),
-								 /* Repeat the detail from above so it's easy to find in the log. */
+
+						/*
+						 * Repeat the detail from above so it's easy to find
+						 * in the log.
+						 */
 								 errdetail("%s = %d is a lower setting than on the primary server, where its value was %d.",
 										   param_name,
 										   currValue,
@@ -6357,15 +6361,15 @@ RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue
 				}
 
 				/*
-				 * If recovery pause is requested then set it paused.  While we
-				 * are in the loop, user might resume and pause again so set
-				 * this every time.
+				 * If recovery pause is requested then set it paused.  While
+				 * we are in the loop, user might resume and pause again so
+				 * set this every time.
 				 */
 				ConfirmRecoveryPaused();
 
 				/*
-				 * We wait on a condition variable that will wake us as soon as
-				 * the pause ends, but we use a timeout so we can check the
+				 * We wait on a condition variable that will wake us as soon
+				 * as the pause ends, but we use a timeout so we can check the
 				 * above conditions periodically too.
 				 */
 				ConditionVariableTimedSleep(&XLogCtl->recoveryNotPausedCV, 1000,
@@ -6377,7 +6381,7 @@ RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue
 		ereport(FATAL,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("recovery aborted because of insufficient parameter settings"),
-				 /* Repeat the detail from above so it's easy to find in the log. */
+		/* Repeat the detail from above so it's easy to find in the log. */
 				 errdetail("%s = %d is a lower setting than on the primary server, where its value was %d.",
 						   param_name,
 						   currValue,
@@ -6920,9 +6924,8 @@ StartupXLOG(void)
 	StartupReorderBuffer();
 
 	/*
-	 * Startup CLOG. This must be done after ShmemVariableCache->nextXid
-	 * has been initialized and before we accept connections or begin WAL
-	 * replay.
+	 * Startup CLOG. This must be done after ShmemVariableCache->nextXid has
+	 * been initialized and before we accept connections or begin WAL replay.
 	 */
 	StartupCLOG();
 
@@ -6969,11 +6972,11 @@ StartupXLOG(void)
 	 * ourselves - the history file of the recovery target timeline covers all
 	 * the previous timelines in the history too - a cascading standby server
 	 * might be interested in them. Or, if you archive the WAL from this
-	 * server to a different archive than the primary, it'd be good for all the
-	 * history files to get archived there after failover, so that you can use
-	 * one of the old timelines as a PITR target. Timeline history files are
-	 * small, so it's better to copy them unnecessarily than not copy them and
-	 * regret later.
+	 * server to a different archive than the primary, it'd be good for all
+	 * the history files to get archived there after failover, so that you can
+	 * use one of the old timelines as a PITR target. Timeline history files
+	 * are small, so it's better to copy them unnecessarily than not copy them
+	 * and regret later.
 	 */
 	restoreTimeLineHistoryFiles(ThisTimeLineID, recoveryTargetTLI);
 
@@ -7196,9 +7199,9 @@ StartupXLOG(void)
 			ProcArrayInitRecovery(XidFromFullTransactionId(ShmemVariableCache->nextXid));
 
 			/*
-			 * Startup subtrans only.  CLOG, MultiXact and commit
-			 * timestamp have already been started up and other SLRUs are not
-			 * maintained during recovery and need not be started yet.
+			 * Startup subtrans only.  CLOG, MultiXact and commit timestamp
+			 * have already been started up and other SLRUs are not maintained
+			 * during recovery and need not be started yet.
 			 */
 			StartupSUBTRANS(oldestActiveXID);
 
@@ -7400,8 +7403,7 @@ StartupXLOG(void)
 				error_context_stack = &errcallback;
 
 				/*
-				 * ShmemVariableCache->nextXid must be beyond record's
-				 * xid.
+				 * ShmemVariableCache->nextXid must be beyond record's xid.
 				 */
 				AdvanceNextFullTransactionIdPastXid(record->xl_xid);
 
@@ -8092,10 +8094,10 @@ StartupXLOG(void)
 	WalSndWakeup();
 
 	/*
-	 * If this was a promotion, request an (online) checkpoint now. This
-	 * isn't required for consistency, but the last restartpoint might be far
-	 * back, and in case of a crash, recovering from it might take a longer
-	 * than is appropriate now that we're not in standby mode anymore.
+	 * If this was a promotion, request an (online) checkpoint now. This isn't
+	 * required for consistency, but the last restartpoint might be far back,
+	 * and in case of a crash, recovering from it might take a longer than is
+	 * appropriate now that we're not in standby mode anymore.
 	 */
 	if (promoted)
 		RequestCheckpoint(CHECKPOINT_FORCE);
@@ -8674,7 +8676,7 @@ LogCheckpointStart(int flags, bool restartpoint)
 {
 	if (restartpoint)
 		ereport(LOG,
-				/* translator: the placeholders show checkpoint options */
+		/* translator: the placeholders show checkpoint options */
 				(errmsg("restartpoint starting:%s%s%s%s%s%s%s%s",
 						(flags & CHECKPOINT_IS_SHUTDOWN) ? " shutdown" : "",
 						(flags & CHECKPOINT_END_OF_RECOVERY) ? " end-of-recovery" : "",
@@ -8686,7 +8688,7 @@ LogCheckpointStart(int flags, bool restartpoint)
 						(flags & CHECKPOINT_FLUSH_ALL) ? " flush-all" : "")));
 	else
 		ereport(LOG,
-				/* translator: the placeholders show checkpoint options */
+		/* translator: the placeholders show checkpoint options */
 				(errmsg("checkpoint starting:%s%s%s%s%s%s%s%s",
 						(flags & CHECKPOINT_IS_SHUTDOWN) ? " shutdown" : "",
 						(flags & CHECKPOINT_END_OF_RECOVERY) ? " end-of-recovery" : "",
@@ -11851,12 +11853,12 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 	if (fscanf(lfp, "START TIME: %127[^\n]\n", backuptime) == 1)
 		ereport(DEBUG1,
 				(errmsg_internal("backup time %s in file \"%s\"",
-						backuptime, BACKUP_LABEL_FILE)));
+								 backuptime, BACKUP_LABEL_FILE)));
 
 	if (fscanf(lfp, "LABEL: %1023[^\n]\n", backuplabel) == 1)
 		ereport(DEBUG1,
 				(errmsg_internal("backup label %s in file \"%s\"",
-						backuplabel, BACKUP_LABEL_FILE)));
+								 backuplabel, BACKUP_LABEL_FILE)));
 
 	/*
 	 * START TIMELINE is new as of 11. Its parsing is not mandatory, still use
@@ -11873,7 +11875,7 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 
 		ereport(DEBUG1,
 				(errmsg_internal("backup timeline %u in file \"%s\"",
-						tli_from_file, BACKUP_LABEL_FILE)));
+								 tli_from_file, BACKUP_LABEL_FILE)));
 	}
 
 	if (ferror(lfp) || FreeFile(lfp))
@@ -12177,8 +12179,8 @@ retry:
 	Assert(readFile != -1);
 
 	/*
-	 * If the current segment is being streamed from the primary, calculate how
-	 * much of the current page we have received already. We know the
+	 * If the current segment is being streamed from the primary, calculate
+	 * how much of the current page we have received already. We know the
 	 * requested record has been received, but this is for the benefit of
 	 * future calls, to allow quick exit at the top of this function.
 	 */
@@ -12239,12 +12241,13 @@ retry:
 	 * and replay reaches a record that's split across two WAL segments. The
 	 * first page is only available locally, in pg_wal, because it's already
 	 * been recycled on the primary. The second page, however, is not present
-	 * in pg_wal, and we should stream it from the primary. There is a recycled
-	 * WAL segment present in pg_wal, with garbage contents, however. We would
-	 * read the first page from the local WAL segment, but when reading the
-	 * second page, we would read the bogus, recycled, WAL segment. If we
-	 * didn't catch that case here, we would never recover, because
-	 * ReadRecord() would retry reading the whole record from the beginning.
+	 * in pg_wal, and we should stream it from the primary. There is a
+	 * recycled WAL segment present in pg_wal, with garbage contents, however.
+	 * We would read the first page from the local WAL segment, but when
+	 * reading the second page, we would read the bogus, recycled, WAL
+	 * segment. If we didn't catch that case here, we would never recover,
+	 * because ReadRecord() would retry reading the whole record from the
+	 * beginning.
 	 *
 	 * Of course, this only catches errors in the page header, which is what
 	 * happens in the case of a recycled WAL segment. Other kinds of errors or
@@ -12399,15 +12402,15 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 * Failure while streaming. Most likely, we got here
 					 * because streaming replication was terminated, or
 					 * promotion was triggered. But we also get here if we
-					 * find an invalid record in the WAL streamed from the primary,
-					 * in which case something is seriously wrong. There's
-					 * little chance that the problem will just go away, but
-					 * PANIC is not good for availability either, especially
-					 * in hot standby mode. So, we treat that the same as
-					 * disconnection, and retry from archive/pg_wal again. The
-					 * WAL in the archive should be identical to what was
-					 * streamed, so it's unlikely that it helps, but one can
-					 * hope...
+					 * find an invalid record in the WAL streamed from the
+					 * primary, in which case something is seriously wrong.
+					 * There's little chance that the problem will just go
+					 * away, but PANIC is not good for availability either,
+					 * especially in hot standby mode. So, we treat that the
+					 * same as disconnection, and retry from archive/pg_wal
+					 * again. The WAL in the archive should be identical to
+					 * what was streamed, so it's unlikely that it helps, but
+					 * one can hope...
 					 */
 
 					/*

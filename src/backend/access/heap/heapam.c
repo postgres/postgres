@@ -432,11 +432,11 @@ heapgetpage(TableScanDesc sscan, BlockNumber page)
 	 * transactions on the primary might still be invisible to a read-only
 	 * transaction in the standby. We partly handle this problem by tracking
 	 * the minimum xmin of visible tuples as the cut-off XID while marking a
-	 * page all-visible on the primary and WAL log that along with the visibility
-	 * map SET operation. In hot standby, we wait for (or abort) all
-	 * transactions that can potentially may not see one or more tuples on the
-	 * page. That's how index-only scans work fine in hot standby. A crucial
-	 * difference between index-only scans and heap scans is that the
+	 * page all-visible on the primary and WAL log that along with the
+	 * visibility map SET operation. In hot standby, we wait for (or abort)
+	 * all transactions that can potentially may not see one or more tuples on
+	 * the page. That's how index-only scans work fine in hot standby. A
+	 * crucial difference between index-only scans and heap scans is that the
 	 * index-only scan completely relies on the visibility map where as heap
 	 * scan looks at the page-level PD_ALL_VISIBLE flag. We are not sure if
 	 * the page-level flag can be trusted in the same way, because it might
@@ -2095,11 +2095,11 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 
 
 	/*
-	 * If we're inserting frozen entry into an empty page,
-	 * set visibility map bits and PageAllVisible() hint.
+	 * If we're inserting frozen entry into an empty page, set visibility map
+	 * bits and PageAllVisible() hint.
 	 *
-	 * If we're inserting frozen entry into already all_frozen page,
-	 * preserve this state.
+	 * If we're inserting frozen entry into already all_frozen page, preserve
+	 * this state.
 	 */
 	if (options & HEAP_INSERT_FROZEN)
 	{
@@ -2109,7 +2109,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 
 		if (visibilitymap_pin_ok(BufferGetBlockNumber(buffer), vmbuffer))
 			vmstatus = visibilitymap_get_status(relation,
-								 BufferGetBlockNumber(buffer), &vmbuffer);
+												BufferGetBlockNumber(buffer), &vmbuffer);
 
 		if ((starting_with_empty_page || vmstatus & VISIBILITYMAP_ALL_FROZEN))
 			all_frozen_set = true;
@@ -2139,8 +2139,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 						 (options & HEAP_INSERT_SPECULATIVE) != 0);
 
 	/*
-	 * If the page is all visible, need to clear that, unless we're only
-	 * going to add further frozen rows to it.
+	 * If the page is all visible, need to clear that, unless we're only going
+	 * to add further frozen rows to it.
 	 *
 	 * If we're only adding already frozen rows to a page that was empty or
 	 * marked as all visible, mark it as all-visible.
@@ -2258,11 +2258,11 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	END_CRIT_SECTION();
 
 	/*
-	 * If we've frozen everything on the page, update the visibilitymap.
-	 * We're already holding pin on the vmbuffer.
+	 * If we've frozen everything on the page, update the visibilitymap. We're
+	 * already holding pin on the vmbuffer.
 	 *
-	 * No need to update the visibilitymap if it had all_frozen bit set
-	 * before this insertion.
+	 * No need to update the visibilitymap if it had all_frozen bit set before
+	 * this insertion.
 	 */
 	if (all_frozen_set && ((vmstatus & VISIBILITYMAP_ALL_FROZEN) == 0))
 	{
@@ -2270,14 +2270,14 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		Assert(visibilitymap_pin_ok(BufferGetBlockNumber(buffer), vmbuffer));
 
 		/*
-		 * It's fine to use InvalidTransactionId here - this is only used
-		 * when HEAP_INSERT_FROZEN is specified, which intentionally
-		 * violates visibility rules.
+		 * It's fine to use InvalidTransactionId here - this is only used when
+		 * HEAP_INSERT_FROZEN is specified, which intentionally violates
+		 * visibility rules.
 		 */
 		visibilitymap_set(relation, BufferGetBlockNumber(buffer), buffer,
-							InvalidXLogRecPtr, vmbuffer,
-							InvalidTransactionId,
-							VISIBILITYMAP_ALL_VISIBLE | VISIBILITYMAP_ALL_FROZEN);
+						  InvalidXLogRecPtr, vmbuffer,
+						  InvalidTransactionId,
+						  VISIBILITYMAP_ALL_VISIBLE | VISIBILITYMAP_ALL_FROZEN);
 	}
 
 	UnlockReleaseBuffer(buffer);
@@ -2547,7 +2547,7 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 			tupledata = scratchptr;
 
 			/* check that the mutually exclusive flags are not both set */
-			Assert (!(all_visible_cleared && all_frozen_set));
+			Assert(!(all_visible_cleared && all_frozen_set));
 
 			xlrec->flags = 0;
 			if (all_visible_cleared)
@@ -3063,7 +3063,10 @@ l1:
 		xl_heap_header xlhdr;
 		XLogRecPtr	recptr;
 
-		/* For logical decode we need combo CIDs to properly decode the catalog */
+		/*
+		 * For logical decode we need combo CIDs to properly decode the
+		 * catalog
+		 */
 		if (RelationIsAccessibleInLogicalDecoding(relation))
 			log_heap_new_cid(relation, &tp);
 
@@ -7932,16 +7935,16 @@ bottomup_sort_and_shrink(TM_IndexDeleteOp *delstate)
 	 * TIDs as each other.  The goal is to ignore relatively small differences
 	 * in the total number of promising entries, so that the whole process can
 	 * give a little weight to heapam factors (like heap block locality)
-	 * instead.  This isn't a trade-off, really -- we have nothing to lose.
-	 * It would be foolish to interpret small differences in npromisingtids
+	 * instead.  This isn't a trade-off, really -- we have nothing to lose. It
+	 * would be foolish to interpret small differences in npromisingtids
 	 * values as anything more than noise.
 	 *
 	 * We tiebreak on nhtids when sorting block group subsets that have the
 	 * same npromisingtids, but this has the same issues as npromisingtids,
-	 * and so nhtids is subject to the same power-of-two bucketing scheme.
-	 * The only reason that we don't fix nhtids in the same way here too is
-	 * that we'll need accurate nhtids values after the sort.  We handle
-	 * nhtids bucketization dynamically instead (in the sort comparator).
+	 * and so nhtids is subject to the same power-of-two bucketing scheme. The
+	 * only reason that we don't fix nhtids in the same way here too is that
+	 * we'll need accurate nhtids values after the sort.  We handle nhtids
+	 * bucketization dynamically instead (in the sort comparator).
 	 *
 	 * See bottomup_nblocksfavorable() for a full explanation of when and how
 	 * heap locality/favorable blocks can significantly influence when and how
@@ -8944,8 +8947,8 @@ heap_xlog_insert(XLogReaderState *record)
 	ItemPointerSetOffsetNumber(&target_tid, xlrec->offnum);
 
 	/* check that the mutually exclusive flags are not both set */
-	Assert (!((xlrec->flags & XLH_INSERT_ALL_VISIBLE_CLEARED) &&
-			  (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET)));
+	Assert(!((xlrec->flags & XLH_INSERT_ALL_VISIBLE_CLEARED) &&
+			 (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET)));
 
 	/*
 	 * The visibility map may need to be fixed even if the heap page is
@@ -9072,8 +9075,8 @@ heap_xlog_multi_insert(XLogReaderState *record)
 	XLogRecGetBlockTag(record, 0, &rnode, NULL, &blkno);
 
 	/* check that the mutually exclusive flags are not both set */
-	Assert (!((xlrec->flags & XLH_INSERT_ALL_VISIBLE_CLEARED) &&
-			  (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET)));
+	Assert(!((xlrec->flags & XLH_INSERT_ALL_VISIBLE_CLEARED) &&
+			 (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET)));
 
 	/*
 	 * The visibility map may need to be fixed even if the heap page is

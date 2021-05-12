@@ -259,7 +259,7 @@ PageAddItemExtended(Page page,
 			 * group at the end of the line pointer array.
 			 */
 			for (offsetNumber = FirstOffsetNumber;
-				 offsetNumber < limit;		/* limit is maxoff+1 */
+				 offsetNumber < limit;	/* limit is maxoff+1 */
 				 offsetNumber++)
 			{
 				itemId = PageGetItemId(phdr, offsetNumber);

@@ -361,7 +361,7 @@ void
 recordDependencyOnTablespace(Oid classId, Oid objectId, Oid tablespace)
 {
 	ObjectAddress myself,
-				  referenced;
+				referenced;
 
 	ObjectAddressSet(myself, classId, objectId);
 	ObjectAddressSet(referenced, TableSpaceRelationId, tablespace);

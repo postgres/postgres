@@ -371,6 +371,7 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	regBuf = ReadBuffer(idxrel, ItemPointerGetBlockNumber(iptr));
 	LockBuffer(regBuf, BUFFER_LOCK_EXCLUSIVE);
 	regPg = BufferGetPage(regBuf);
+
 	/*
 	 * We're only removing data, not reading it, so there's no need to
 	 * TestForOldSnapshot here.

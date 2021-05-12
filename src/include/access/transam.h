@@ -238,7 +238,7 @@ typedef struct VariableCacheData
 	 * GetSnapshotData() needs to recompute the contents of the snapshot, or
 	 * not. There are likely other users of this.  Always above 1.
 	 */
-	uint64 xactCompletionCount;
+	uint64		xactCompletionCount;
 
 	/*
 	 * These fields are protected by XactTruncationLock

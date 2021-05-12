@@ -1929,7 +1929,7 @@ typedef enum AlterTableType
 	AT_GenericOptions,			/* OPTIONS (...) */
 	AT_AttachPartition,			/* ATTACH PARTITION */
 	AT_DetachPartition,			/* DETACH PARTITION */
-	AT_DetachPartitionFinalize,	/* DETACH PARTITION FINALIZE */
+	AT_DetachPartitionFinalize, /* DETACH PARTITION FINALIZE */
 	AT_AddIdentity,				/* ADD IDENTITY */
 	AT_SetIdentity,				/* SET identity column options */
 	AT_DropIdentity,			/* DROP IDENTITY */

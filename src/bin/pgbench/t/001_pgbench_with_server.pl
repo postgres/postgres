@@ -487,7 +487,7 @@ pgbench(
 		qr{command=98.: int 5432\b},                    # :random_seed
 		qr{command=99.: int -9223372036854775808\b},    # min int
 		qr{command=100.: int 9223372036854775807\b},    # max int
-		# pseudorandom permutation tests
+		    # pseudorandom permutation tests
 		qr{command=101.: boolean true\b},
 		qr{command=102.: boolean true\b},
 		qr{command=103.: boolean true\b},
@@ -1091,8 +1091,10 @@ SELECT LEAST(} . join(', ', (':i') x 256) . q{)}
 		[qr{malformed variable.*trueXXX}], q{\set b :badtrue or true}
 	],
 	[
-		'invalid permute size',				2,
-		[qr{permute size parameter must be greater than zero}], q{\set i permute(0, 0)}
+		'invalid permute size',
+		2,
+		[qr{permute size parameter must be greater than zero}],
+		q{\set i permute(0, 0)}
 	],
 
 	# GSET

@@ -1103,7 +1103,7 @@ typedef struct PathTarget
 	Index	   *sortgrouprefs;	/* corresponding sort/group refnos, or 0 */
 	QualCost	cost;			/* cost of evaluating the expressions */
 	int			width;			/* estimated avg width of result tuples */
-	VolatileFunctionStatus	has_volatile_expr;	/* indicates if exprs contain
+	VolatileFunctionStatus has_volatile_expr;	/* indicates if exprs contain
 												 * any volatile functions. */
 } PathTarget;
 
@@ -2054,7 +2054,7 @@ typedef struct RestrictInfo
 
 	bool		leakproof;		/* true if known to contain no leaked Vars */
 
-	VolatileFunctionStatus	has_volatile;	/* to indicate if clause contains
+	VolatileFunctionStatus has_volatile;	/* to indicate if clause contains
 											 * any volatile functions. */
 
 	Index		security_level; /* see comment above */

@@ -26,7 +26,7 @@ void
 ExecAsyncRequest(AsyncRequest *areq)
 {
 	if (areq->requestee->chgParam != NULL)	/* something changed? */
-		ExecReScan(areq->requestee);		/* let ReScan handle this */
+		ExecReScan(areq->requestee);	/* let ReScan handle this */
 
 	/* must provide our own instrumentation support */
 	if (areq->requestee->instrument)
@@ -124,7 +124,7 @@ ExecAsyncResponse(AsyncRequest *areq)
 		default:
 			/* If the node doesn't support async, caller messed up. */
 			elog(ERROR, "unrecognized node type: %d",
-				(int) nodeTag(areq->requestor));
+				 (int) nodeTag(areq->requestor));
 	}
 }
 

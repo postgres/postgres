@@ -917,8 +917,8 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 		partRelInfo->ri_FdwRoutine->BeginForeignInsert(mtstate, partRelInfo);
 
 	/*
-	 * Determine if the FDW supports batch insert and determine the batch
-	 * size (a FDW may support batching, but it may be disabled for the
+	 * Determine if the FDW supports batch insert and determine the batch size
+	 * (a FDW may support batching, but it may be disabled for the
 	 * server/table or for this particular query).
 	 *
 	 * If the FDW does not support batching, we set the batch size to 1.

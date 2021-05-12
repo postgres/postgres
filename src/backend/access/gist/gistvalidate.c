@@ -267,7 +267,7 @@ gistvalidate(Oid opclassoid)
 			continue;			/* got it */
 		if (i == GIST_DISTANCE_PROC || i == GIST_FETCH_PROC ||
 			i == GIST_COMPRESS_PROC || i == GIST_DECOMPRESS_PROC ||
-			i == GIST_OPTIONS_PROC  || i == GIST_SORTSUPPORT_PROC)
+			i == GIST_OPTIONS_PROC || i == GIST_SORTSUPPORT_PROC)
 			continue;			/* optional methods */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),

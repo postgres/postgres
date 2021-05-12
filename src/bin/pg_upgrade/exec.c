@@ -416,11 +416,11 @@ check_bin_dir(ClusterInfo *cluster, bool check_versions)
 static void
 check_exec(const char *dir, const char *program, bool check_version)
 {
-	char	path[MAXPGPATH];
-	char	line[MAXPGPATH];
-	char	cmd[MAXPGPATH];
-	char	versionstr[128];
-	int		ret;
+	char		path[MAXPGPATH];
+	char		line[MAXPGPATH];
+	char		cmd[MAXPGPATH];
+	char		versionstr[128];
+	int			ret;
 
 	snprintf(path, sizeof(path), "%s/%s", dir, program);
 

@@ -786,9 +786,9 @@ close $fk_info;
 close $constraints;
 
 # Finally, rename the completed files into place.
-Catalog::RenameTempFile($bkifile,    $tmpext);
-Catalog::RenameTempFile($schemafile, $tmpext);
-Catalog::RenameTempFile($fk_info_file, $tmpext);
+Catalog::RenameTempFile($bkifile,          $tmpext);
+Catalog::RenameTempFile($schemafile,       $tmpext);
+Catalog::RenameTempFile($fk_info_file,     $tmpext);
 Catalog::RenameTempFile($constraints_file, $tmpext);
 
 exit 0;

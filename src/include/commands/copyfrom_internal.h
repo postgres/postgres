@@ -129,23 +129,23 @@ typedef struct CopyFromStateData
 	/*
 	 * input_buf holds input data, already converted to database encoding.
 	 *
-	 * In text mode, CopyReadLine parses this data sufficiently to locate
-	 * line boundaries, then transfers the data to line_buf. We guarantee
-	 * that there is a \0 at input_buf[input_buf_len] at all times.  (In
-	 * binary mode, input_buf is not used.)
+	 * In text mode, CopyReadLine parses this data sufficiently to locate line
+	 * boundaries, then transfers the data to line_buf. We guarantee that
+	 * there is a \0 at input_buf[input_buf_len] at all times.  (In binary
+	 * mode, input_buf is not used.)
 	 *
 	 * If encoding conversion is not required, input_buf is not a separate
 	 * buffer but points directly to raw_buf.  In that case, input_buf_len
 	 * tracks the number of bytes that have been verified as valid in the
-	 * database encoding, and raw_buf_len is the total number of bytes
-	 * stored in the buffer.
+	 * database encoding, and raw_buf_len is the total number of bytes stored
+	 * in the buffer.
 	 */
 #define INPUT_BUF_SIZE 65536	/* we palloc INPUT_BUF_SIZE+1 bytes */
 	char	   *input_buf;
 	int			input_buf_index;	/* next byte to process */
-	int			input_buf_len;		/* total # of bytes stored */
+	int			input_buf_len;	/* total # of bytes stored */
 	bool		input_reached_eof;	/* true if we reached EOF */
-	bool		input_reached_error; /* true if a conversion error happened */
+	bool		input_reached_error;	/* true if a conversion error happened */
 	/* Shorthand for number of unconsumed bytes available in input_buf */
 #define INPUT_BUF_BYTES(cstate) ((cstate)->input_buf_len - (cstate)->input_buf_index)
 

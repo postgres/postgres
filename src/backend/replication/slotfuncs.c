@@ -415,11 +415,11 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 			nulls[i++] = true;
 		else
 		{
-			XLogSegNo   targetSeg;
-			uint64   slotKeepSegs;
-			uint64   keepSegs;
-			XLogSegNo   failSeg;
-			XLogRecPtr  failLSN;
+			XLogSegNo	targetSeg;
+			uint64		slotKeepSegs;
+			uint64		keepSegs;
+			XLogSegNo	failSeg;
+			XLogRecPtr	failLSN;
 
 			XLByteToSeg(slot_contents.data.restart_lsn, targetSeg, wal_segment_size);
 

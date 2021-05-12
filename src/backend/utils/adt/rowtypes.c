@@ -1802,8 +1802,8 @@ hash_record(PG_FUNCTION_ARGS)
 	tuple.t_data = record;
 
 	/*
-	 * We arrange to look up the needed hashing info just once per series
-	 * of calls, assuming the record type doesn't change underneath us.
+	 * We arrange to look up the needed hashing info just once per series of
+	 * calls, assuming the record type doesn't change underneath us.
 	 */
 	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
@@ -1923,8 +1923,8 @@ hash_record_extended(PG_FUNCTION_ARGS)
 	tuple.t_data = record;
 
 	/*
-	 * We arrange to look up the needed hashing info just once per series
-	 * of calls, assuming the record type doesn't change underneath us.
+	 * We arrange to look up the needed hashing info just once per series of
+	 * calls, assuming the record type doesn't change underneath us.
 	 */
 	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||

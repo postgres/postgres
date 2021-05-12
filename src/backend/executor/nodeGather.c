@@ -266,7 +266,7 @@ gather_getnext(GatherState *gatherstate)
 	PlanState  *outerPlan = outerPlanState(gatherstate);
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *fslot = gatherstate->funnel_slot;
-	MinimalTuple	tup;
+	MinimalTuple tup;
 
 	while (gatherstate->nreaders > 0 || gatherstate->need_to_scan_locally)
 	{
@@ -278,7 +278,7 @@ gather_getnext(GatherState *gatherstate)
 
 			if (HeapTupleIsValid(tup))
 			{
-				ExecStoreMinimalTuple(tup, /* tuple to store */
+				ExecStoreMinimalTuple(tup,	/* tuple to store */
 									  fslot,	/* slot to store the tuple */
 									  false);	/* don't pfree tuple  */
 				return fslot;

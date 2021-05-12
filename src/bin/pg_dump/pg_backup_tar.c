@@ -1187,7 +1187,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		/* Header doesn't match, so read to next header */
 		len = th->fileLen;
 		len += tarPaddingBytesRequired(th->fileLen);
-		blks = len / TAR_BLOCK_SIZE;		/* # of tar blocks */
+		blks = len / TAR_BLOCK_SIZE;	/* # of tar blocks */
 
 		for (i = 0; i < blks; i++)
 			_tarReadRaw(AH, &header[0], TAR_BLOCK_SIZE, NULL, ctx->tarFH);

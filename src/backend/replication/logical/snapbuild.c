@@ -1395,8 +1395,8 @@ SnapBuildWaitSnapshot(xl_running_xacts *running, TransactionId cutoff)
 	/*
 	 * All transactions we needed to finish finished - try to ensure there is
 	 * another xl_running_xacts record in a timely manner, without having to
-	 * wait for bgwriter or checkpointer to log one.  During recovery we
-	 * can't enforce that, so we'll have to wait.
+	 * wait for bgwriter or checkpointer to log one.  During recovery we can't
+	 * enforce that, so we'll have to wait.
 	 */
 	if (!RecoveryInProgress())
 	{

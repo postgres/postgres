@@ -126,7 +126,8 @@ BEGIN
 	if ($windows_os)
 	{
 		require Win32API::File;
-		Win32API::File->import(qw(createFile OsFHandleOpen CloseHandle setFilePointer));
+		Win32API::File->import(
+			qw(createFile OsFHandleOpen CloseHandle setFilePointer));
 	}
 
 	# Specifies whether to use Unix sockets for test setups.  On
@@ -165,7 +166,7 @@ INIT
 	# TESTDIR environment variable, which is normally set by the invoking
 	# Makefile.
 	$tmp_check = $ENV{TESTDIR} ? "$ENV{TESTDIR}/tmp_check" : "tmp_check";
-	$log_path  = "$tmp_check/log";
+	$log_path = "$tmp_check/log";
 
 	mkdir $tmp_check;
 	mkdir $log_path;
@@ -739,7 +740,7 @@ sub command_exit_is
 	# long as the process was not terminated by an exception. To work around
 	# that, use $h->full_results on Windows instead.
 	my $result =
-		($Config{osname} eq "MSWin32")
+	    ($Config{osname} eq "MSWin32")
 	  ? ($h->full_results)[0]
 	  : $h->result(0);
 	is($result, $expected, $test_name);

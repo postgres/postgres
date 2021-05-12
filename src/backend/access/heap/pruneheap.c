@@ -95,8 +95,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 
 	/*
 	 * We can't write WAL in recovery mode, so there's no point trying to
-	 * clean the page. The primary will likely issue a cleaning WAL record soon
-	 * anyway, so this is no particular loss.
+	 * clean the page. The primary will likely issue a cleaning WAL record
+	 * soon anyway, so this is no particular loss.
 	 */
 	if (RecoveryInProgress())
 		return;

@@ -241,8 +241,8 @@ dependency_degree(StatsBuildData *data, int k, AttrNumber *dependency)
 	mss = multi_sort_init(k);
 
 	/*
-	 * Translate the array of indexes to regular attnums for the dependency (we
-	 * will need this to identify the columns in StatsBuildData).
+	 * Translate the array of indexes to regular attnums for the dependency
+	 * (we will need this to identify the columns in StatsBuildData).
 	 */
 	attnums_dep = (AttrNumber *) palloc(k * sizeof(AttrNumber));
 	for (i = 0; i < k; i++)

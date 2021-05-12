@@ -645,11 +645,11 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 					 * range values; if so, have the pages in the range added
 					 * to the output bitmap.
 					 *
-					 * The opclass may or may not support processing of multiple
-					 * scan keys. We can determine that based on the number of
-					 * arguments - functions with extra parameter (number of scan
-					 * keys) do support this, otherwise we have to simply pass the
-					 * scan keys one by one.
+					 * The opclass may or may not support processing of
+					 * multiple scan keys. We can determine that based on the
+					 * number of arguments - functions with extra parameter
+					 * (number of scan keys) do support this, otherwise we
+					 * have to simply pass the scan keys one by one.
 					 */
 					if (consistentFn[attno - 1].fn_nargs >= 4)
 					{
@@ -667,10 +667,10 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 						/*
 						 * Check keys one by one
 						 *
-						 * When there are multiple scan keys, failure to meet the
-						 * criteria for a single one of them is enough to discard
-						 * the range as a whole, so break out of the loop as soon
-						 * as a false return value is obtained.
+						 * When there are multiple scan keys, failure to meet
+						 * the criteria for a single one of them is enough to
+						 * discard the range as a whole, so break out of the
+						 * loop as soon as a false return value is obtained.
 						 */
 						int			keyno;
 

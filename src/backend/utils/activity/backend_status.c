@@ -16,13 +16,13 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
-#include "port/atomics.h" /* for memory barriers */
+#include "port/atomics.h"		/* for memory barriers */
 #include "storage/ipc.h"
-#include "storage/proc.h" /* for MyProc */
+#include "storage/proc.h"		/* for MyProc */
 #include "storage/sinvaladt.h"
 #include "utils/ascii.h"
 #include "utils/backend_status.h"
-#include "utils/guc.h" /* for application_name */
+#include "utils/guc.h"			/* for application_name */
 #include "utils/memutils.h"
 
 
@@ -498,8 +498,8 @@ pgstat_setup_backend_status_context(void)
 {
 	if (!backendStatusSnapContext)
 		backendStatusSnapContext = AllocSetContextCreate(TopMemoryContext,
-													 "Backend Status Snapshot",
-													 ALLOCSET_SMALL_SIZES);
+														 "Backend Status Snapshot",
+														 ALLOCSET_SMALL_SIZES);
 }
 
 
@@ -1033,7 +1033,8 @@ pgstat_get_my_query_id(void)
 	if (!MyBEEntry)
 		return 0;
 
-	/* There's no need for a lock around pgstat_begin_read_activity /
+	/*
+	 * There's no need for a lock around pgstat_begin_read_activity /
 	 * pgstat_end_read_activity here as it's only called from
 	 * pg_stat_get_activity which is already protected, or from the same
 	 * backend which means that there won't be concurrent writes.

@@ -351,9 +351,8 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	table_close(class_rel, RowExclusiveLock);
 
 	/*
-	 * Register dependency from the toast table to the main, so that the
-	 * toast table will be deleted if the main is.  Skip this in bootstrap
-	 * mode.
+	 * Register dependency from the toast table to the main, so that the toast
+	 * table will be deleted if the main is.  Skip this in bootstrap mode.
 	 */
 	if (!IsBootstrapProcessingMode())
 	{
@@ -396,9 +395,9 @@ needs_toast_table(Relation rel)
 
 	/*
 	 * Ignore attempts to create toast tables on catalog tables after initdb.
-	 * Which catalogs get toast tables is explicitly chosen in
-	 * catalog/pg_*.h.  (We could get here via some ALTER TABLE command if
-	 * the catalog doesn't have a toast table.)
+	 * Which catalogs get toast tables is explicitly chosen in catalog/pg_*.h.
+	 * (We could get here via some ALTER TABLE command if the catalog doesn't
+	 * have a toast table.)
 	 */
 	if (IsCatalogRelation(rel) && !IsBootstrapProcessingMode())
 		return false;

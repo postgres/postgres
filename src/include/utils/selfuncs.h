@@ -79,7 +79,7 @@
 
 typedef struct EstimationInfo
 {
-	uint32			flags;		/* Flags, as defined above to mark special
+	uint32		flags;			/* Flags, as defined above to mark special
 								 * properties of the estimation. */
 } EstimationInfo;
 

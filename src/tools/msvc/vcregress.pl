@@ -109,8 +109,8 @@ sub installcheck_internal
 	# for backwards compatibility, "serial" runs the tests in
 	# parallel_schedule one by one.
 	my $maxconn = $maxconn;
-	$maxconn = "--max-connections=1" if $schedule eq 'serial';
-	$schedule = 'parallel' if $schedule eq 'serial';
+	$maxconn  = "--max-connections=1" if $schedule eq 'serial';
+	$schedule = 'parallel'            if $schedule eq 'serial';
 
 	my @args = (
 		"../../../$Config/pg_regress/pg_regress",
@@ -141,8 +141,8 @@ sub check
 	# for backwards compatibility, "serial" runs the tests in
 	# parallel_schedule one by one.
 	my $maxconn = $maxconn;
-	$maxconn = "--max-connections=1" if $schedule eq 'serial';
-	$schedule = 'parallel' if $schedule eq 'serial';
+	$maxconn  = "--max-connections=1" if $schedule eq 'serial';
+	$schedule = 'parallel'            if $schedule eq 'serial';
 
 	InstallTemp();
 	chdir "${topdir}/src/test/regress";
@@ -225,9 +225,9 @@ sub tap_check
 
 	# Fetch and adjust PROVE_TESTS, applying glob() to each element
 	# defined to build a list of all the tests matching patterns.
-	my $prove_tests_val   = $ENV{PROVE_TESTS} || "t/*.pl";
+	my $prove_tests_val = $ENV{PROVE_TESTS} || "t/*.pl";
 	my @prove_tests_array = split(/\s+/, $prove_tests_val);
-	my @prove_tests       = ();
+	my @prove_tests = ();
 	foreach (@prove_tests_array)
 	{
 		push(@prove_tests, glob($_));
@@ -235,7 +235,7 @@ sub tap_check
 
 	# Fetch and adjust PROVE_FLAGS, handling multiple arguments.
 	my $prove_flags_val = $ENV{PROVE_FLAGS} || "";
-	my @prove_flags     = split(/\s+/, $prove_flags_val);
+	my @prove_flags = split(/\s+/, $prove_flags_val);
 
 	my @args = ("prove", @flags, @prove_tests, @prove_flags);
 
@@ -598,7 +598,7 @@ sub upgradecheck
 	$ENV{PGDATA} = "$data.old";
 	my $outputdir          = "$tmp_root/regress";
 	my @EXTRA_REGRESS_OPTS = ("--outputdir=$outputdir");
-	mkdir "$outputdir"                || die $!;
+	mkdir "$outputdir" || die $!;
 
 	my $logdir = "$topdir/src/bin/pg_upgrade/log";
 	rmtree($logdir);

@@ -600,7 +600,7 @@ pg_is_wal_replay_paused(PG_FUNCTION_ARGS)
 Datum
 pg_get_wal_replay_pause_state(PG_FUNCTION_ARGS)
 {
-	char	*statestr = NULL;
+	char	   *statestr = NULL;
 
 	if (!RecoveryInProgress())
 		ereport(ERROR,
@@ -609,7 +609,7 @@ pg_get_wal_replay_pause_state(PG_FUNCTION_ARGS)
 				 errhint("Recovery control functions can only be executed during recovery.")));
 
 	/* get the recovery pause state */
-	switch(GetRecoveryPauseState())
+	switch (GetRecoveryPauseState())
 	{
 		case RECOVERY_NOT_PAUSED:
 			statestr = "not paused";

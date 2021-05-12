@@ -30,7 +30,7 @@ $ENV{PGCLIENTENCODING} = 'LATIN1';
 # The odds of finding something interesting by testing all ASCII letters
 # seem too small to justify the cycles of testing a fifth name.
 my $dbname1 =
-	'regression'
+    'regression'
   . generate_ascii_string(1,  9)
   . generate_ascii_string(11, 12)
   . generate_ascii_string(14, 33)

@@ -87,10 +87,10 @@ typedef TupleTableSlot *(*ExecForeignInsert_function) (EState *estate,
 													   TupleTableSlot *planSlot);
 
 typedef TupleTableSlot **(*ExecForeignBatchInsert_function) (EState *estate,
-													   ResultRelInfo *rinfo,
-													   TupleTableSlot **slots,
-													   TupleTableSlot **planSlots,
-													   int *numSlots);
+															 ResultRelInfo *rinfo,
+															 TupleTableSlot **slots,
+															 TupleTableSlot **planSlots,
+															 int *numSlots);
 
 typedef int (*GetForeignModifyBatchSize_function) (ResultRelInfo *rinfo);
 

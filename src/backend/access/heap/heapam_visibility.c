@@ -1608,8 +1608,8 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 
 		/*
 		 * another transaction might have (tried to) delete this tuple or
-		 * cmin/cmax was stored in a combo CID. So we need to lookup the actual
-		 * values externally.
+		 * cmin/cmax was stored in a combo CID. So we need to lookup the
+		 * actual values externally.
 		 */
 		resolved = ResolveCminCmaxDuringDecoding(HistoricSnapshotGetTupleCids(), snapshot,
 												 htup, buffer,
@@ -1629,8 +1629,8 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 		 * elog inside ResolveCminCmaxDuringDecoding.
 		 *
 		 * XXX For the streaming case, we can track the largest combo CID
-		 * assigned, and error out based on this (when unable to resolve
-		 * combo CID below that observed maximum value).
+		 * assigned, and error out based on this (when unable to resolve combo
+		 * CID below that observed maximum value).
 		 */
 		if (!resolved)
 			return false;
@@ -1717,8 +1717,8 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 		 * elog inside ResolveCminCmaxDuringDecoding.
 		 *
 		 * XXX For the streaming case, we can track the largest combo CID
-		 * assigned, and error out based on this (when unable to resolve
-		 * combo CID below that observed maximum value).
+		 * assigned, and error out based on this (when unable to resolve combo
+		 * CID below that observed maximum value).
 		 */
 		if (!resolved || cmax == InvalidCommandId)
 			return true;

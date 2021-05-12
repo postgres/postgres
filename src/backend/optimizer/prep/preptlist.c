@@ -350,34 +350,34 @@ expand_insert_targetlist(List *tlist, Relation rel)
 			Oid			attcollation = att_tup->attcollation;
 			Node	   *new_expr;
 
-					if (!att_tup->attisdropped)
-					{
-						new_expr = (Node *) makeConst(atttype,
-													  -1,
-													  attcollation,
-													  att_tup->attlen,
-													  (Datum) 0,
-													  true, /* isnull */
-													  att_tup->attbyval);
-						new_expr = coerce_to_domain(new_expr,
-													InvalidOid, -1,
-													atttype,
-													COERCION_IMPLICIT,
-													COERCE_IMPLICIT_CAST,
-													-1,
-													false);
-					}
-					else
-					{
-						/* Insert NULL for dropped column */
-						new_expr = (Node *) makeConst(INT4OID,
-													  -1,
-													  InvalidOid,
-													  sizeof(int32),
-													  (Datum) 0,
-													  true, /* isnull */
-													  true /* byval */ );
-					}
+			if (!att_tup->attisdropped)
+			{
+				new_expr = (Node *) makeConst(atttype,
+											  -1,
+											  attcollation,
+											  att_tup->attlen,
+											  (Datum) 0,
+											  true, /* isnull */
+											  att_tup->attbyval);
+				new_expr = coerce_to_domain(new_expr,
+											InvalidOid, -1,
+											atttype,
+											COERCION_IMPLICIT,
+											COERCE_IMPLICIT_CAST,
+											-1,
+											false);
+			}
+			else
+			{
+				/* Insert NULL for dropped column */
+				new_expr = (Node *) makeConst(INT4OID,
+											  -1,
+											  InvalidOid,
+											  sizeof(int32),
+											  (Datum) 0,
+											  true, /* isnull */
+											  true /* byval */ );
+			}
 
 			new_tle = makeTargetEntry((Expr *) new_expr,
 									  attrno,

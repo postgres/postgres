@@ -51,8 +51,7 @@ detects_heap_corruption(
 #
 fresh_test_table('test');
 $node->safe_psql('postgres', q(VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) test));
-detects_no_corruption(
-	"verify_heapam('test')",
+detects_no_corruption("verify_heapam('test')",
 	"all-frozen not corrupted table");
 corrupt_first_page('test');
 detects_heap_corruption("verify_heapam('test')",

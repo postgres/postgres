@@ -81,12 +81,12 @@ sub test_target_session_attrs
 	my $mode        = shift;
 	my $status      = shift;
 
-	my $node1_host = $node1->host;
-	my $node1_port = $node1->port;
-	my $node1_name = $node1->name;
-	my $node2_host = $node2->host;
-	my $node2_port = $node2->port;
-	my $node2_name = $node2->name;
+	my $node1_host  = $node1->host;
+	my $node1_port  = $node1->port;
+	my $node1_name  = $node1->name;
+	my $node2_host  = $node2->host;
+	my $node2_port  = $node2->port;
+	my $node2_name  = $node2->name;
 	my $target_port = undef;
 	$target_port = $target_node->port if (defined $target_node);
 	my $target_name = undef;
@@ -202,8 +202,8 @@ $node_primary->psql(
 	'postgres', "
 CREATE ROLE repl_role REPLICATION LOGIN;
 GRANT pg_read_all_settings TO repl_role;");
-my $primary_host    = $node_primary->host;
-my $primary_port    = $node_primary->port;
+my $primary_host   = $node_primary->host;
+my $primary_port   = $node_primary->port;
 my $connstr_common = "host=$primary_host port=$primary_port user=repl_role";
 my $connstr_rep    = "$connstr_common replication=1";
 my $connstr_db     = "$connstr_common replication=database dbname=postgres";

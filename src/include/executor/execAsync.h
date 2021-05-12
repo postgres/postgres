@@ -22,4 +22,4 @@ extern void ExecAsyncResponse(AsyncRequest *areq);
 extern void ExecAsyncRequestDone(AsyncRequest *areq, TupleTableSlot *result);
 extern void ExecAsyncRequestPending(AsyncRequest *areq);
 
-#endif   /* EXECASYNC_H */
+#endif							/* EXECASYNC_H */

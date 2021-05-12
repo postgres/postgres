@@ -234,7 +234,7 @@ namestrcpy(Name name, const char *str)
 {
 	/* NB: We need to zero-pad the destination. */
 	strncpy(NameStr(*name), str, NAMEDATALEN);
-	NameStr(*name)[NAMEDATALEN-1] = '\0';
+	NameStr(*name)[NAMEDATALEN - 1] = '\0';
 }
 
 /*

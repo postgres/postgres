@@ -2493,11 +2493,11 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		 * need to do the cleanup and return gracefully on this error, see
 		 * SetupCheckXidLive.
 		 *
-		 * This error code can be thrown by one of the callbacks we call during
-		 * decoding so we need to ensure that we return gracefully only when we are
-		 * sending the data in streaming mode and the streaming is not finished yet
-		 * or when we are sending the data out on a PREPARE during a two-phase
-		 * commit.
+		 * This error code can be thrown by one of the callbacks we call
+		 * during decoding so we need to ensure that we return gracefully only
+		 * when we are sending the data in streaming mode and the streaming is
+		 * not finished yet or when we are sending the data out on a PREPARE
+		 * during a two-phase commit.
 		 */
 		if (errdata->sqlerrcode == ERRCODE_TRANSACTION_ROLLBACK &&
 			(stream_started || rbtxn_prepared(txn)))

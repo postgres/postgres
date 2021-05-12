@@ -132,7 +132,7 @@ typedef struct Plan
 	/*
 	 * information needed for asynchronous execution
 	 */
-	bool		async_capable; 	/* engage asynchronous-capable logic? */
+	bool		async_capable;	/* engage asynchronous-capable logic? */
 
 	/*
 	 * Common structural data for all Plan types.

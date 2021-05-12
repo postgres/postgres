@@ -336,8 +336,8 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	 * descriptor, it contains an old partition descriptor that may still be
 	 * referenced somewhere.  Preserve it, while not leaking it, by
 	 * reattaching it as a child context of the new one.  Eventually it will
-	 * get dropped by either RelationClose or RelationClearRelation.
-	 * (We keep the regular partdesc in rd_pdcxt, and the partdesc-excluding-
+	 * get dropped by either RelationClose or RelationClearRelation. (We keep
+	 * the regular partdesc in rd_pdcxt, and the partdesc-excluding-
 	 * detached-partitions in rd_pddcxt.)
 	 */
 	if (is_omit)

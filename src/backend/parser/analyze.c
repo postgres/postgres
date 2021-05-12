@@ -2752,7 +2752,7 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 		(stmt->options & CURSOR_OPT_NO_SCROLL))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-				 /* translator: %s is a SQL keyword */
+		/* translator: %s is a SQL keyword */
 				 errmsg("cannot specify both %s and %s",
 						"SCROLL", "NO SCROLL")));
 
@@ -2760,7 +2760,7 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 		(stmt->options & CURSOR_OPT_INSENSITIVE))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-				 /* translator: %s is a SQL keyword */
+		/* translator: %s is a SQL keyword */
 				 errmsg("cannot specify both %s and %s",
 						"ASENSITIVE", "INSENSITIVE")));
 

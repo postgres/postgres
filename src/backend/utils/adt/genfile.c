@@ -160,16 +160,15 @@ read_binary_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 #define MIN_READ_SIZE 4096
 
 			/*
-			 * If not at end of file, and sbuf.len is equal to
-			 * MaxAllocSize - 1, then either the file is too large, or
-			 * there is nothing left to read. Attempt to read one more
-			 * byte to see if the end of file has been reached. If not,
-			 * the file is too large; we'd rather give the error message
-			 * for that ourselves.
+			 * If not at end of file, and sbuf.len is equal to MaxAllocSize -
+			 * 1, then either the file is too large, or there is nothing left
+			 * to read. Attempt to read one more byte to see if the end of
+			 * file has been reached. If not, the file is too large; we'd
+			 * rather give the error message for that ourselves.
 			 */
 			if (sbuf.len == MaxAllocSize - 1)
 			{
-				char	rbuf[1];
+				char		rbuf[1];
 
 				if (fread(rbuf, 1, 1, file) != 0 || !feof(file))
 					ereport(ERROR,

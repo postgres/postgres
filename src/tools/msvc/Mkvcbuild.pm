@@ -40,9 +40,9 @@ my @contrib_uselibpq =
   ('dblink', 'oid2name', 'postgres_fdw', 'vacuumlo', 'libpq_pipeline');
 my @contrib_uselibpgport   = ('libpq_pipeline', 'oid2name', 'vacuumlo');
 my @contrib_uselibpgcommon = ('libpq_pipeline', 'oid2name', 'vacuumlo');
-my $contrib_extralibs      = { 'libpq_pipeline' => ['ws2_32.lib'] };
-my $contrib_extraincludes = { 'dblink' => ['src/backend'] };
-my $contrib_extrasource = {
+my $contrib_extralibs     = { 'libpq_pipeline' => ['ws2_32.lib'] };
+my $contrib_extraincludes = { 'dblink'         => ['src/backend'] };
+my $contrib_extrasource   = {
 	'cube' => [ 'contrib/cube/cubescan.l', 'contrib/cube/cubeparse.y' ],
 	'seg'  => [ 'contrib/seg/segscan.l',   'contrib/seg/segparse.y' ],
 };
@@ -58,15 +58,18 @@ my @contrib_excludes = (
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
-my @frontend_uselibpq = ('pg_amcheck', 'pg_ctl', 'pg_upgrade', 'pgbench', 'psql', 'initdb');
+my @frontend_uselibpq =
+  ('pg_amcheck', 'pg_ctl', 'pg_upgrade', 'pgbench', 'psql', 'initdb');
 my @frontend_uselibpgport = (
-	'pg_amcheck',        'pg_archivecleanup', 'pg_test_fsync',
-	'pg_test_timing',    'pg_upgrade',
-	'pg_waldump',        'pgbench');
+	'pg_amcheck',    'pg_archivecleanup',
+	'pg_test_fsync', 'pg_test_timing',
+	'pg_upgrade',    'pg_waldump',
+	'pgbench');
 my @frontend_uselibpgcommon = (
-	'pg_amcheck',        'pg_archivecleanup', 'pg_test_fsync',
-	'pg_test_timing',    'pg_upgrade',
-	'pg_waldump',        'pgbench');
+	'pg_amcheck',    'pg_archivecleanup',
+	'pg_test_fsync', 'pg_test_timing',
+	'pg_upgrade',    'pg_waldump',
+	'pgbench');
 my $frontend_extralibs = {
 	'initdb'     => ['ws2_32.lib'],
 	'pg_amcheck' => ['ws2_32.lib'],

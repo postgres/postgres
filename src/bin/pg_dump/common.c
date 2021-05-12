@@ -522,7 +522,7 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 		{
 			bool		foundNotNull;	/* Attr was NOT NULL in a parent */
 			bool		foundDefault;	/* Found a default in a parent */
-			bool		foundGenerated;	/* Found a generated in a parent */
+			bool		foundGenerated; /* Found a generated in a parent */
 
 			/* no point in examining dropped columns */
 			if (tbinfo->attisdropped[j])

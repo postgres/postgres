@@ -16,7 +16,7 @@ sub test_recovery_standby
 {
 	my $test_name       = shift;
 	my $node_name       = shift;
-	my $node_primary     = shift;
+	my $node_primary    = shift;
 	my $recovery_params = shift;
 	my $num_rows        = shift;
 	my $until_lsn       = shift;

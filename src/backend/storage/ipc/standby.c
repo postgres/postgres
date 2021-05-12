@@ -482,7 +482,7 @@ ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXi
 	 * snapshots that still see it.
 	 */
 	FullTransactionId nextXid = ReadNextFullTransactionId();
-	uint64			  diff;
+	uint64		diff;
 
 	diff = U64FromFullTransactionId(nextXid) -
 		U64FromFullTransactionId(latestRemovedFullXid);
