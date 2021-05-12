@@ -31,7 +31,7 @@ int	   default_toast_compression = TOAST_PGLZ_COMPRESSION;
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
 			 errmsg("unsupported LZ4 compression method"), \
 			 errdetail("This functionality requires the server to be built with lz4 support."), \
-			 errhint("You need to rebuild PostgreSQL using --with-lz4.")))
+			 errhint("You need to rebuild PostgreSQL using %s.", "--with-lz4")))
 
 /*
  * Compress a varlena using PGLZ.

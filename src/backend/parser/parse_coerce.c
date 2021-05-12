@@ -2086,7 +2086,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			if (OidIsValid(elem_typeid) && actual_type != elem_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("arguments declared \"anyelement\" are not all alike"),
+						 errmsg("arguments declared \"%s\" are not all alike", "anyelement"),
 						 errdetail("%s versus %s",
 								   format_type_be(elem_typeid),
 								   format_type_be(actual_type))));
@@ -2106,7 +2106,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("arguments declared \"anyarray\" are not all alike"),
+						 errmsg("arguments declared \"%s\" are not all alike", "anyarray"),
 						 errdetail("%s versus %s",
 								   format_type_be(array_typeid),
 								   format_type_be(actual_type))));
@@ -2126,7 +2126,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			if (OidIsValid(range_typeid) && actual_type != range_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("arguments declared \"anyrange\" are not all alike"),
+						 errmsg("arguments declared \"%s\" are not all alike", "anyrange"),
 						 errdetail("%s versus %s",
 								   format_type_be(range_typeid),
 								   format_type_be(actual_type))));
@@ -2146,7 +2146,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			if (OidIsValid(multirange_typeid) && actual_type != multirange_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("arguments declared \"anymultirange\" are not all alike"),
+						 errmsg("arguments declared \"%s\" are not all alike", "anymultirange"),
 						 errdetail("%s versus %s",
 								   format_type_be(multirange_typeid),
 								   format_type_be(actual_type))));
@@ -2201,7 +2201,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 				if (anycompatible_range_typeid != actual_type)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("arguments declared \"anycompatiblerange\" are not all alike"),
+							 errmsg("arguments declared \"%s\" are not all alike", "anycompatiblerange"),
 							 errdetail("%s versus %s",
 									   format_type_be(anycompatible_range_typeid),
 									   format_type_be(actual_type))));
@@ -2234,7 +2234,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 				if (anycompatible_multirange_typeid != actual_type)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("arguments declared \"anycompatiblemultirange\" are not all alike"),
+							 errmsg("arguments declared \"%s\" are not all alike", "anycompatiblemultirange"),
 							 errdetail("%s versus %s",
 									   format_type_be(anycompatible_multirange_typeid),
 									   format_type_be(actual_type))));

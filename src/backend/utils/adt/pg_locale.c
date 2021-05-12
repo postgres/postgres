@@ -1586,7 +1586,7 @@ pg_newlocale_from_collation(Oid collid)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("ICU is not supported in this build"), \
-					 errhint("You need to rebuild PostgreSQL using --with-icu.")));
+					 errhint("You need to rebuild PostgreSQL using %s.", "--with-icu")));
 #endif							/* not USE_ICU */
 		}
 

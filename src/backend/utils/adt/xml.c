@@ -221,7 +221,7 @@ const TableFuncRoutine XmlTableRoutine =
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
 			 errmsg("unsupported XML feature"), \
 			 errdetail("This functionality requires the server to be built with libxml support."), \
-			 errhint("You need to rebuild PostgreSQL using --with-libxml.")))
+			 errhint("You need to rebuild PostgreSQL using %s.", "--with-libxml")))
 
 
 /* from SQL/XML:2008 section 4.9 */
