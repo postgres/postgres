@@ -38,6 +38,11 @@ ALTER GROUP regress_priv_group2 ADD USER regress_priv_user2;	-- duplicate
 NOTICE:  role "regress_priv_user2" is already a member of role "regress_priv_group2"
 ALTER GROUP regress_priv_group2 DROP USER regress_priv_user2;
 GRANT regress_priv_group2 TO regress_priv_user4 WITH ADMIN OPTION;
+-- prepare non-leakproof function for later
+CREATE FUNCTION leak(integer,integer) RETURNS boolean
+  AS 'int4lt'
+  LANGUAGE internal IMMUTABLE STRICT;  -- but deliberately not LEAKPROOF
+ALTER FUNCTION leak(integer,integer) OWNER TO regress_priv_user1;
 -- test owner privileges
 SET SESSION AUTHORIZATION regress_priv_user1;
 SELECT session_user, current_user;
@@ -233,9 +238,6 @@ ALTER TABLE atest12 SET (autovacuum_enabled = off);
 SET default_statistics_target = 10000;
 VACUUM ANALYZE atest12;
 RESET default_statistics_target;
-CREATE FUNCTION leak(integer,integer) RETURNS boolean
-  AS $$begin return $1 < $2; end$$
-  LANGUAGE plpgsql immutable;
 CREATE OPERATOR <<< (procedure = leak, leftarg = integer, rightarg = integer,
                      restrict = scalarltsel);
 -- views with leaky operator
