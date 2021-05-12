@@ -55,7 +55,7 @@ CATALOG(pg_collation,3456,CollationRelationId)
  */
 typedef FormData_pg_collation *Form_pg_collation;
 
-DECLARE_TOAST(pg_collation, 8888, 8889);
+DECLARE_TOAST(pg_collation, 6175, 6176);
 
 DECLARE_UNIQUE_INDEX(pg_collation_name_enc_nsp_index, 3164, on pg_collation using btree(collname name_ops, collencoding int4_ops, collnamespace oid_ops));
 #define CollationNameEncNspIndexId 3164

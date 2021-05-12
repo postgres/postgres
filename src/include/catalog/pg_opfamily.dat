@@ -76,7 +76,7 @@
   opfmethod => 'hash', opfname => 'oidvector_ops' },
 { oid => '2994',
   opfmethod => 'btree', opfname => 'record_ops' },
-{ oid => '9611',
+{ oid => '6194',
   opfmethod => 'hash', opfname => 'record_ops' },
 { oid => '3194',
   opfmethod => 'btree', opfname => 'record_image_ops' },
@@ -302,7 +302,7 @@
   opfmethod => 'btree', opfname => 'multirange_ops' },
 { oid => '4225',
   opfmethod => 'hash', opfname => 'multirange_ops' },
-{ oid => '8021',
+{ oid => '6158',
   opfmethod => 'gist', opfname => 'multirange_ops' },
 
 ]
