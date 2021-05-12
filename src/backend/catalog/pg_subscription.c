@@ -461,19 +461,18 @@ GetSubscriptionRelations(Oid subid)
 	List	   *res = NIL;
 	Relation	rel;
 	HeapTuple	tup;
-	int			nkeys = 0;
-	ScanKeyData skey[2];
+	ScanKeyData skey[1];
 	SysScanDesc scan;
 
 	rel = table_open(SubscriptionRelRelationId, AccessShareLock);
 
-	ScanKeyInit(&skey[nkeys++],
+	ScanKeyInit(&skey[0],
 				Anum_pg_subscription_rel_srsubid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(subid));
 
 	scan = systable_beginscan(rel, InvalidOid, false,
-							  NULL, nkeys, skey);
+							  NULL, 1, skey);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
