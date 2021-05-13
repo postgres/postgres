@@ -111,48 +111,10 @@ SELECT wait_for_decode_stats(false, true);
  
 (1 row)
 
-SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots;
-       slot_name       | spill_txns | spill_count | total_txns | total_bytes 
------------------------+------------+-------------+------------+-------------
- regression_slot_stats | t          | t           | t          | t
-(1 row)
-
--- reset the slot stats, and wait for stats collector to reset
-SELECT pg_stat_reset_replication_slot('regression_slot_stats');
- pg_stat_reset_replication_slot 
---------------------------------
- 
-(1 row)
-
-SELECT wait_for_decode_stats(true, true);
- wait_for_decode_stats 
------------------------
- 
-(1 row)
-
-SELECT slot_name, spill_txns, spill_count, total_txns, total_bytes FROM pg_stat_replication_slots;
-       slot_name       | spill_txns | spill_count | total_txns | total_bytes 
------------------------+------------+-------------+------------+-------------
- regression_slot_stats |          0 |           0 |          0 |           0
-(1 row)
-
--- decode and check stats again.
-SELECT count(*) FROM pg_logical_slot_peek_changes('regression_slot_stats', NULL, NULL, 'skip-empty-xacts', '1');
- count 
--------
-  5002
-(1 row)
-
-SELECT wait_for_decode_stats(false, true);
- wait_for_decode_stats 
------------------------
- 
-(1 row)
-
-SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count, total_txns > 0 AS total_txns, total_bytes > 0 AS total_bytes FROM pg_stat_replication_slots;
-       slot_name       | spill_txns | spill_count | total_txns | total_bytes 
------------------------+------------+-------------+------------+-------------
- regression_slot_stats | t          | t           | t          | t
+SELECT slot_name, spill_txns > 0 AS spill_txns, spill_count > 0 AS spill_count FROM pg_stat_replication_slots;
+       slot_name       | spill_txns | spill_count 
+-----------------------+------------+-------------
+ regression_slot_stats | t          | t
 (1 row)
 
 -- Ensure stats can be repeatedly accessed using the same stats snapshot. See
