@@ -402,7 +402,7 @@ main(int argc, char *argv[])
 					opts.skip = "all frozen";
 				else
 				{
-					pg_log_error("invalid skip option");
+					pg_log_error("invalid argument for option %s", "--skip");
 					exit(1);
 				}
 				break;
@@ -1114,7 +1114,7 @@ verify_btree_slot_handler(PGresult *res, PGconn *conn, void *context)
 						   rel->datinfo->datname, rel->nspname, rel->relname, ntups);
 			if (opts.verbose)
 				pg_log_info("query was: %s", rel->sql);
-			pg_log_warning("are %s's and amcheck's versions compatible?",
+			pg_log_warning("Are %s's and amcheck's versions compatible?",
 						   progname);
 			progress_since_last_stderr = false;
 		}
@@ -1148,50 +1148,50 @@ verify_btree_slot_handler(PGresult *res, PGconn *conn, void *context)
 static void
 help(const char *progname)
 {
-	printf(_("%s uses amcheck module to check objects in a PostgreSQL database for corruption.\n\n"), progname);
+	printf(_("%s checks objects in a PostgreSQL database for corruption.\n\n"), progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [DBNAME]\n"), progname);
-	printf(_("\nTarget Options:\n"));
-	printf(_("  -a, --all                      check all databases\n"));
-	printf(_("  -d, --database=PATTERN         check matching database(s)\n"));
-	printf(_("  -D, --exclude-database=PATTERN do NOT check matching database(s)\n"));
-	printf(_("  -i, --index=PATTERN            check matching index(es)\n"));
-	printf(_("  -I, --exclude-index=PATTERN    do NOT check matching index(es)\n"));
-	printf(_("  -r, --relation=PATTERN         check matching relation(s)\n"));
-	printf(_("  -R, --exclude-relation=PATTERN do NOT check matching relation(s)\n"));
-	printf(_("  -s, --schema=PATTERN           check matching schema(s)\n"));
-	printf(_("  -S, --exclude-schema=PATTERN   do NOT check matching schema(s)\n"));
-	printf(_("  -t, --table=PATTERN            check matching table(s)\n"));
-	printf(_("  -T, --exclude-table=PATTERN    do NOT check matching table(s)\n"));
-	printf(_("      --no-dependent-indexes     do NOT expand list of relations to include indexes\n"));
-	printf(_("      --no-dependent-toast       do NOT expand list of relations to include toast\n"));
-	printf(_("      --no-strict-names          do NOT require patterns to match objects\n"));
-	printf(_("\nTable Checking Options:\n"));
-	printf(_("      --exclude-toast-pointers   do NOT follow relation toast pointers\n"));
-	printf(_("      --on-error-stop            stop checking at end of first corrupt page\n"));
-	printf(_("      --skip=OPTION              do NOT check \"all-frozen\" or \"all-visible\" blocks\n"));
-	printf(_("      --startblock=BLOCK         begin checking table(s) at the given block number\n"));
-	printf(_("      --endblock=BLOCK           check table(s) only up to the given block number\n"));
-	printf(_("\nBtree Index Checking Options:\n"));
-	printf(_("      --heapallindexed           check all heap tuples are found within indexes\n"));
-	printf(_("      --parent-check             check index parent/child relationships\n"));
-	printf(_("      --rootdescend              search from root page to refind tuples\n"));
+	printf(_("\nTarget options:\n"));
+	printf(_("  -a, --all                       check all databases\n"));
+	printf(_("  -d, --database=PATTERN          check matching database(s)\n"));
+	printf(_("  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"));
+	printf(_("  -i, --index=PATTERN             check matching index(es)\n"));
+	printf(_("  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"));
+	printf(_("  -r, --relation=PATTERN          check matching relation(s)\n"));
+	printf(_("  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"));
+	printf(_("  -s, --schema=PATTERN            check matching schema(s)\n"));
+	printf(_("  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"));
+	printf(_("  -t, --table=PATTERN             check matching table(s)\n"));
+	printf(_("  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"));
+	printf(_("      --no-dependent-indexes      do NOT expand list of relations to include indexes\n"));
+	printf(_("      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"));
+	printf(_("      --no-strict-names           do NOT require patterns to match objects\n"));
+	printf(_("\nTable checking options:\n"));
+	printf(_("      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"));
+	printf(_("      --on-error-stop             stop checking at end of first corrupt page\n"));
+	printf(_("      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"));
+	printf(_("      --startblock=BLOCK          begin checking table(s) at the given block number\n"));
+	printf(_("      --endblock=BLOCK            check table(s) only up to the given block number\n"));
+	printf(_("\nB-tree index checking options:\n"));
+	printf(_("      --heapallindexed            check all heap tuples are found within indexes\n"));
+	printf(_("      --parent-check              check index parent/child relationships\n"));
+	printf(_("      --rootdescend               search from root page to refind tuples\n"));
 	printf(_("\nConnection options:\n"));
-	printf(_("  -h, --host=HOSTNAME            database server host or socket directory\n"));
-	printf(_("  -p, --port=PORT                database server port\n"));
-	printf(_("  -U, --username=USERNAME        user name to connect as\n"));
-	printf(_("  -w, --no-password              never prompt for password\n"));
-	printf(_("  -W, --password                 force password prompt\n"));
-	printf(_("      --maintenance-db=DBNAME    alternate maintenance database\n"));
-	printf(_("\nOther Options:\n"));
-	printf(_("  -e, --echo                     show the commands being sent to the server\n"));
-	printf(_("  -j, --jobs=NUM                 use this many concurrent connections to the server\n"));
-	printf(_("  -q, --quiet                    don't write any messages\n"));
-	printf(_("  -v, --verbose                  write a lot of output\n"));
-	printf(_("  -V, --version                  output version information, then exit\n"));
-	printf(_("  -P, --progress                 show progress information\n"));
-	printf(_("  -?, --help                     show this help, then exit\n"));
-	printf(_("      --install-missing          install missing extensions\n"));
+	printf(_("  -h, --host=HOSTNAME             database server host or socket directory\n"));
+	printf(_("  -p, --port=PORT                 database server port\n"));
+	printf(_("  -U, --username=USERNAME         user name to connect as\n"));
+	printf(_("  -w, --no-password               never prompt for password\n"));
+	printf(_("  -W, --password                  force password prompt\n"));
+	printf(_("      --maintenance-db=DBNAME     alternate maintenance database\n"));
+	printf(_("\nOther options:\n"));
+	printf(_("  -e, --echo                      show the commands being sent to the server\n"));
+	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to the server\n"));
+	printf(_("  -q, --quiet                     don't write any messages\n"));
+	printf(_("  -v, --verbose                   write a lot of output\n"));
+	printf(_("  -V, --version                   output version information, then exit\n"));
+	printf(_("  -P, --progress                  show progress information\n"));
+	printf(_("  -?, --help                      show this help, then exit\n"));
+	printf(_("      --install-missing           install missing extensions\n"));
 
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
@@ -1547,7 +1547,7 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 
 		/* This database is included.  Add to list */
 		if (opts.verbose)
-			pg_log_info("including database: \"%s\"", initial_dbname);
+			pg_log_info("including database \"%s\"", initial_dbname);
 
 		dat->datname = pstrdup(initial_dbname);
 		simple_ptr_list_append(databases, dat);
@@ -1689,7 +1689,7 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 
 			/* This database is included.  Add to list */
 			if (opts.verbose)
-				pg_log_info("including database: \"%s\"", datname);
+				pg_log_info("including database \"%s\"", datname);
 
 			dat = (DatabaseInfo *) pg_malloc0(sizeof(DatabaseInfo));
 			dat->datname = pstrdup(datname);
