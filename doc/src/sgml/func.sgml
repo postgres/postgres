@@ -17130,9 +17130,10 @@ $[*] ? (@ like_regex "^[aeiou]" flag "i")
      is a JSON path string literal, written according to the rules given in
      <xref linkend="datatype-jsonpath"/>.  This means in particular that any
      backslashes you want to use in the regular expression must be doubled.
-     For example, to match strings that contain only digits:
+     For example, to match string values of the root document that contain
+     only digits:
 <programlisting>
-$ ? (@ like_regex "^\\d+$")
+$.* ? (@ like_regex "^\\d+$")
 </programlisting>
     </para>
    </sect3>
