@@ -777,6 +777,8 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 (long long) VacuumPageDirty);
 			if (vacrel->rel_pages > 0)
 			{
+				BlockNumber orig_rel_pages;
+
 				if (vacrel->do_index_vacuuming)
 				{
 					msgfmt = _(" %u pages from table (%.2f%% of total) had %lld dead item identifiers removed\n");
@@ -795,9 +797,10 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 					else
 						appendStringInfo(&buf, _("index scan bypassed by failsafe:"));
 				}
+				orig_rel_pages = vacrel->rel_pages + vacrel->pages_removed;
 				appendStringInfo(&buf, msgfmt,
 								 vacrel->lpdead_item_pages,
-								 100.0 * vacrel->lpdead_item_pages / vacrel->rel_pages,
+								 100.0 * vacrel->lpdead_item_pages / orig_rel_pages,
 								 (long long) vacrel->lpdead_items);
 			}
 			for (int i = 0; i < vacrel->nindexes; i++)
