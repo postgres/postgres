@@ -3237,6 +3237,14 @@ DROP TABLE base_tbl4;
 RESET enable_mergejoin;
 RESET enable_hashjoin;
 
+-- Test that UPDATE/DELETE with inherited target works with async_capable enabled
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE async_pt SET c = c || c WHERE b = 0 RETURNING *;
+UPDATE async_pt SET c = c || c WHERE b = 0 RETURNING *;
+EXPLAIN (VERBOSE, COSTS OFF)
+DELETE FROM async_pt WHERE b = 0 RETURNING *;
+DELETE FROM async_pt WHERE b = 0 RETURNING *;
+
 -- Check EXPLAIN ANALYZE for a query that scans empty partitions asynchronously
 DELETE FROM async_p1;
 DELETE FROM async_p2;

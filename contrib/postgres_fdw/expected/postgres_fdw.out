@@ -10154,6 +10154,61 @@ DROP TABLE base_tbl3;
 DROP TABLE base_tbl4;
 RESET enable_mergejoin;
 RESET enable_hashjoin;
+-- Test that UPDATE/DELETE with inherited target works with async_capable enabled
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE async_pt SET c = c || c WHERE b = 0 RETURNING *;
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
+ Update on public.async_pt
+   Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+   Foreign Update on public.async_p1 async_pt_1
+   Foreign Update on public.async_p2 async_pt_2
+   Update on public.async_p3 async_pt_3
+   ->  Append
+         ->  Foreign Update on public.async_p1 async_pt_1
+               Remote SQL: UPDATE public.base_tbl1 SET c = (c || c) WHERE ((b = 0)) RETURNING a, b, c
+         ->  Foreign Update on public.async_p2 async_pt_2
+               Remote SQL: UPDATE public.base_tbl2 SET c = (c || c) WHERE ((b = 0)) RETURNING a, b, c
+         ->  Seq Scan on public.async_p3 async_pt_3
+               Output: (async_pt_3.c || async_pt_3.c), async_pt_3.tableoid, async_pt_3.ctid, NULL::record
+               Filter: (async_pt_3.b = 0)
+(13 rows)
+
+UPDATE async_pt SET c = c || c WHERE b = 0 RETURNING *;
+  a   | b |    c     
+------+---+----------
+ 1000 | 0 | 00000000
+ 2000 | 0 | 00000000
+ 3000 | 0 | 00000000
+(3 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+DELETE FROM async_pt WHERE b = 0 RETURNING *;
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Delete on public.async_pt
+   Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+   Foreign Delete on public.async_p1 async_pt_1
+   Foreign Delete on public.async_p2 async_pt_2
+   Delete on public.async_p3 async_pt_3
+   ->  Append
+         ->  Foreign Delete on public.async_p1 async_pt_1
+               Remote SQL: DELETE FROM public.base_tbl1 WHERE ((b = 0)) RETURNING a, b, c
+         ->  Foreign Delete on public.async_p2 async_pt_2
+               Remote SQL: DELETE FROM public.base_tbl2 WHERE ((b = 0)) RETURNING a, b, c
+         ->  Seq Scan on public.async_p3 async_pt_3
+               Output: async_pt_3.tableoid, async_pt_3.ctid
+               Filter: (async_pt_3.b = 0)
+(13 rows)
+
+DELETE FROM async_pt WHERE b = 0 RETURNING *;
+  a   | b |    c     
+------+---+----------
+ 1000 | 0 | 00000000
+ 2000 | 0 | 00000000
+ 3000 | 0 | 00000000
+(3 rows)
+
 -- Check EXPLAIN ANALYZE for a query that scans empty partitions asynchronously
 DELETE FROM async_p1;
 DELETE FROM async_p2;
