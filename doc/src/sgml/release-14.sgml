@@ -663,7 +663,7 @@ Improve the performance of updates/deletes on partitioned tables when only a few
 </para>
 
 <para>
-This also allows run-time pruning of updates/deletes on partitioned tables.
+This also allows updates/deletes on partitioned tables to use execution-time partition pruning.
 </para>
 </listitem>
 
