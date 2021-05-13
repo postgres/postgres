@@ -85,12 +85,12 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
 <para>
-Fix to_tsquery() and websearch_to_tsquery() to properly parse certain discarded tokens in quotes (Alexander Korotkov)
+Fix to_tsquery() and websearch_to_tsquery() to properly parse query text containing discarded tokens (Alexander Korotkov)
 </para>
 
 <para>
-Certain discarded tokens, like underscore, caused the output of these functions to produce incorrect tsquery output, e.g., websearch_to_tsquery('"pg_class pg"') used to output '( pg &amp; class )
-&lt;-&gt; pg',but now outputs 'pg &lt;-&gt; class &lt;-&gt; pg'.
+Certain discarded tokens, like underscore, caused the output of these functions to produce incorrect tsquery output, e.g., both websearch_to_tsquery('"pg_class pg"') and to_tsquery('pg_class &lt;-&gt;
+pg') used to output '( pg &amp; class ) &lt;-&gt; pg', but now both output 'pg &lt;-&gt; class &lt;-&gt; pg'.
 </para>
 </listitem>
 
@@ -117,11 +117,12 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Change password_encryption's default to scram-sha-256 (Peter Eisentraut)
+Change the default of the password_encryption server parameter to scram-sha-256 (Peter Eisentraut)
 </para>
 
 <para>
 Previously it was md5.  All new passwords will be stored as SHA256 unless this server variable is changed or the password is already md5-hashed.
+Also, the legacy (and undocumented) boolean-like values which were previously synonyms of <literal>md5</literal> are no longer accepted.
 </para>
 </listitem>
 
@@ -516,7 +517,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
 <para>
-Allow VACUUM to eagerly add newly deleted btree pages in the free space map (Peter Geoghegan)
+Allow VACUUM to eagerly add newly deleted btree pages to the free space map (Peter Geoghegan)
 </para>
 
 <para>
@@ -644,6 +645,25 @@ Allow the arbitrary collations of partition boundary values (Tom Lane)
 
 <para>
 Previously it had to match the collation of the partition key.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-03-31 [86dc90056] Rework planning and execution of UPDATE and DELETE.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-04-06 [a1115fa07] Postpone some more stuff out of ExecInitModifyTable.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-04-06 [c5b7ba4e6] Postpone some stuff out of ExecInitModifyTable.
+-->
+
+<para>
+Improve the performance of updates/deletes on partitioned tables when only a few partitions are affected (Amit Langote, Tom Lane)
+</para>
+
+<para>
+This also allows run-time pruning of updates/deletes on partitioned tables.
 </para>
 </listitem>
 
@@ -942,6 +962,23 @@ Allow window functions to perform incremental sorts (David Rowley)
 </para>
 </listitem>
 
+<listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2020-10-11 [80f8eb79e] Use perfect hash for NFC and NFKC Unicode Normalization 
+Author: Michael Paquier <michael@paquier.xyz>
+2020-10-23 [783f0cc64] Improve performance of Unicode {de,re}composition in the
+-->
+
+<para>
+Dramatically improve Unicode normalization (John Naylor)
+</para>
+
+<para>
+This speeds normalize() and IS NORMALIZED.
+</para>
+</listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -1161,6 +1198,17 @@ Add wait event WalReceiverExit to report WAL receiver exit wait time (Fujii Masa
 </para>
 </listitem>
 
+<listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2021-02-17 [f40c6969d] Routine usage information schema tables
+-->
+
+<para>
+Implement information schema view routine_column_usage to track columns referenced by function and procedure default expressions (Peter Eisentraut)
+</para>
+</listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -1181,7 +1229,7 @@ Allow the certificate's distinguished name (DN) to be matched for client certifi
 </para>
 
 <para>
-The new pg_hba.conf keyword "clientname=DN" allows comparison with non-CN certificate attributes and can be combined with ident maps.
+The new pg_hba.conf keyword "clientname=DN" allows comparison with certificate attributes beyond the CN and can be combined with ident maps.
 </para>
 </listitem>
 
@@ -1502,7 +1550,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Allow logical replication to stream long in-progress transactions to standbys (Tomas Vondra, Dilip Kumar, Amit Kapila, Ajin Cherian, Nikhil Sontakke, Stas Kelvich)
+Allow logical replication to stream long in-progress transactions to subscribers (Tomas Vondra, Dilip Kumar, Amit Kapila, Ajin Cherian, Nikhil Sontakke, Stas Kelvich)
 </para>
 
 <para>
@@ -1648,7 +1696,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Allow logical decoding to more efficiently process cache invalidation messages
+Allow logical decoding to more efficiently process cache invalidation messages (Dilip Kumar)
 </para>
 
 <para>
@@ -2234,7 +2282,7 @@ Add date_bin function (John Naylor)
 </para>
 
 <para>
-WHAT DOES THIS DO?
+The function date_bin "bins" the input timestamp into a specified interval aligned with a specified origin.
 </para>
 </listitem>
 
@@ -2338,11 +2386,11 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
 <para>
-Allow subscripting of jsonb (Dmitry Dolgov)
+Allow subscripting of JSONB and simplify the implementation of subscripting (Dmitry Dolgov)
 </para>
 
 <para>
-Subscripting can be used to extract from and assign to jsonb documents.
+JSONB subscripting can be used to extract from and assign to JSONB documents.  Extensions and built-in data types can now implement subscripting more easily.
 </para>
 </listitem>
 
@@ -2406,21 +2454,6 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <para>
 Allow more flexible data types for default values of lead() and lag() window functions (Vik Fearing)
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2020-10-23 [783f0cc64] Improve performance of Unicode {de,re}composition in the
--->
-
-<para>
-Dramatically improve Unicode normalization (John Naylor)
-</para>
-
-<para>
-WHAT OPERATIONS USE THIS?
 </para>
 </listitem>
 
