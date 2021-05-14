@@ -27,6 +27,12 @@ select * from t
   where f1 > 'binary_upgrade_set_n' and f1 < 'binary_upgrade_set_p'
   order by 1;
 
+-- Verify clean failure when INCLUDE'd columns result in overlength tuple
+-- The error message details are platform-dependent, so show only SQLSTATE
+\set VERBOSITY sqlstate
+insert into t values(repeat('xyzzy', 12), 42, repeat('xyzzy', 4000));
+\set VERBOSITY default
+
 drop index t_f1_f2_f3_idx;
 
 create index on t using spgist(f1 name_ops_old) include(f2, f3);
@@ -39,3 +45,7 @@ select * from t
 select * from t
   where f1 > 'binary_upgrade_set_n' and f1 < 'binary_upgrade_set_p'
   order by 1;
+
+\set VERBOSITY sqlstate
+insert into t values(repeat('xyzzy', 12), 42, repeat('xyzzy', 4000));
+\set VERBOSITY default

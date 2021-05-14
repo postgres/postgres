@@ -978,6 +978,18 @@ LANGUAGE C STRICT;
    fails to do that, the <acronym>SP-GiST</acronym> core resorts to
    extraordinary measures described in <xref linkend="spgist-all-the-same"/>.
   </para>
+
+  <para>
+   When <structfield>longValuesOK</structfield> is true, it is expected
+   that successive levels of the <acronym>SP-GiST</acronym> tree will
+   absorb more and more information into the prefixes and node labels of
+   the inner tuples, making the required leaf datum smaller and smaller,
+   so that eventually it will fit on a page.
+   To prevent bugs in operator classes from causing infinite insertion
+   loops, the <acronym>SP-GiST</acronym> core will raise an error if the
+   leaf datum does not become any smaller within ten cycles
+   of <function>choose</function> method calls.
+  </para>
  </sect2>
 
  <sect2 id="spgist-null-labels">
