@@ -632,6 +632,17 @@ VACUUM now has a PROCESS_TOAST which can be set to false to disable TOAST proces
 
 <listitem>
 <!--
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+2021-01-17 [7db0cd214] Set PD_ALL_VISIBLE and visibility map bits in COPY FREEZ
+-->
+
+<para>
+Have COPY FREEZE appropriately update page visibility bits (Anastasia Lubennikova, Pavan Deolasee, Jeff Janes)
+</para>
+</listitem>
+
+<listitem>
+<!--
 Author: Peter Geoghegan <pg@bowt.ie>
 2021-04-07 [1e55e7d17] Add wraparound failsafe to VACUUM.
 -->
@@ -2012,6 +2023,17 @@ The postgres_fdw module also now supports this.
 
 <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-12-11 [8c15a2974] Allow ALTER TYPE to update an existing type's typsubscri
+-->
+
+<para>
+Allow ALTER TYPE to specify or remove a SUBSCRIPT handler (Tom Lane)
+</para>
+</listitem>
+
+<listitem>
+<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2021-04-06 [82ed7748b] ALTER SUBSCRIPTION ... ADD/DROP PUBLICATION
 -->
@@ -3288,6 +3310,8 @@ Previously it only checked B-Tree index pages.
 <!--
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2021-01-13 [756ab2912] Add functions to 'pageinspect' to inspect GiST indexes.
+Author: Peter Geoghegan <pg@bowt.ie>
+2021-02-14 [9e596b65f] Add "LP_DEAD item?" column to GiST pageinspect functions
 -->
 
 <para>
@@ -3331,7 +3355,7 @@ Mark btree_gist functions as parallel safe (Steven Winfield)
     </itemizedlist>
 
     <sect4>
-     <title>Postgres_fdw</title>
+     <title>postgres_fdw</title>
 
      <itemizedlist>
 
