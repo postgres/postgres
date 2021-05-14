@@ -1024,7 +1024,19 @@ _bt_swap_posting(IndexTuple newitem, IndexTuple oposting, int postingoff)
 
 	nhtids = BTreeTupleGetNPosting(oposting);
 	Assert(_bt_posting_valid(oposting));
-	Assert(postingoff > 0 && postingoff < nhtids);
+
+	/*
+	 * The postingoff argument originated as a _bt_binsrch_posting() return
+	 * value.  It will be 0 in the event of corruption that makes a leaf page
+	 * contain a non-pivot tuple that's somehow identical to newitem (no two
+	 * non-pivot tuples should ever have the same TID).  This has been known
+	 * to happen in the field from time to time.
+	 *
+	 * Perform a basic sanity check to catch this case now.
+	 */
+	if (!(postingoff > 0 && postingoff < nhtids))
+		elog(ERROR, "posting list tuple with %d items cannot be split at offset %d",
+			 nhtids, postingoff);
 
 	/*
 	 * Move item pointers in posting list to make a gap for the new item's
