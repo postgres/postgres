@@ -186,7 +186,7 @@ Branch: REL_10_STABLE [e5794cd59] 2021-03-12 11:08:42 -0500
      </para>
 
      <para>
-      <literal>GENERATED ALWAYS AS IDENTITY</literal> implies <literal>NOT
+      <literal>GENERATED ... AS IDENTITY</literal> implies <literal>NOT
       NULL</literal>, so don't allow it to be combined with an
       explicit <literal>NULL</literal> specification.
      </para>
