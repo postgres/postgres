@@ -1884,13 +1884,14 @@ spgSplitNodeAction(Relation index, SpGistState *state,
  * Insert one item into the index.
  *
  * Returns true on success, false if we failed to complete the insertion
- * because of conflict with a concurrent insert.  In the latter case,
- * caller should re-call spgdoinsert() with the same args.
+ * (typically because of conflict with a concurrent insert).  In the latter
+ * case, caller should re-call spgdoinsert() with the same args.
  */
 bool
 spgdoinsert(Relation index, SpGistState *state,
 			ItemPointer heapPtr, Datum datum, bool isnull)
 {
+	bool		result = true;
 	int			level = 0;
 	Datum		leafDatum;
 	int			leafSize;
@@ -1974,6 +1975,14 @@ spgdoinsert(Relation index, SpGistState *state,
 	parent.offnum = InvalidOffsetNumber;
 	parent.node = -1;
 
+	/*
+	 * Before entering the loop, try to clear any pending interrupt condition.
+	 * If a query cancel is pending, we might as well accept it now not later;
+	 * while if a non-canceling condition is pending, servicing it here avoids
+	 * having to restart the insertion and redo all the work so far.
+	 */
+	CHECK_FOR_INTERRUPTS();
+
 	for (;;)
 	{
 		bool		isNew = false;
@@ -1981,9 +1990,18 @@ spgdoinsert(Relation index, SpGistState *state,
 		/*
 		 * Bail out if query cancel is pending.  We must have this somewhere
 		 * in the loop since a broken opclass could produce an infinite
-		 * picksplit loop.
+		 * picksplit loop.  However, because we'll be holding buffer lock(s)
+		 * after the first iteration, ProcessInterrupts() wouldn't be able to
+		 * throw a cancel error here.  Hence, if we see that an interrupt is
+		 * pending, break out of the loop and deal with the situation below.
+		 * Set result = false because we must restart the insertion if the
+		 * interrupt isn't a query-cancel-or-die case.
 		 */
-		CHECK_FOR_INTERRUPTS();
+		if (INTERRUPTS_PENDING_CONDITION())
+		{
+			result = false;
+			break;
+		}
 
 		if (current.blkno == InvalidBlockNumber)
 		{
@@ -2102,10 +2120,14 @@ spgdoinsert(Relation index, SpGistState *state,
 			 * spgAddNode and spgSplitTuple cases will loop back to here to
 			 * complete the insertion operation.  Just in case the choose
 			 * function is broken and produces add or split requests
-			 * repeatedly, check for query cancel.
+			 * repeatedly, check for query cancel (see comments above).
 			 */
 	process_inner_tuple:
-			CHECK_FOR_INTERRUPTS();
+			if (INTERRUPTS_PENDING_CONDITION())
+			{
+				result = false;
+				break;
+			}
 
 			innerTuple = (SpGistInnerTuple) PageGetItem(current.page,
 														PageGetItemId(current.page, current.offnum));
@@ -2228,5 +2250,21 @@ spgdoinsert(Relation index, SpGistState *state,
 		UnlockReleaseBuffer(parent.buffer);
 	}
 
-	return true;
+	/*
+	 * We do not support being called while some outer function is holding a
+	 * buffer lock (or any other reason to postpone query cancels).  If that
+	 * were the case, telling the caller to retry would create an infinite
+	 * loop.
+	 */
+	Assert(INTERRUPTS_CAN_BE_PROCESSED());
+
+	/*
+	 * Finally, check for interrupts again.  If there was a query cancel,
+	 * ProcessInterrupts() will be able to throw the error here.  If it was
+	 * some other kind of interrupt that can just be cleared, return false to
+	 * tell our caller to retry.
+	 */
+	CHECK_FOR_INTERRUPTS();
+
+	return result;
 }
