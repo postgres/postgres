@@ -669,7 +669,8 @@ checkAllTheSame(spgPickSplitIn *in, spgPickSplitOut *out, bool tooBig,
  * will eventually terminate if lack of balance is the issue.  If the tuple
  * is too big, we assume that repeated picksplit operations will eventually
  * make it small enough by repeated prefix-stripping.  A broken opclass could
- * make this an infinite loop, though.
+ * make this an infinite loop, though, so spgdoinsert() checks that the
+ * leaf datums get smaller each time.
  */
 static bool
 doPickSplit(Relation index, SpGistState *state,
@@ -1895,6 +1896,8 @@ spgdoinsert(Relation index, SpGistState *state,
 	int			level = 0;
 	Datum		leafDatum;
 	int			leafSize;
+	int			bestLeafSize;
+	int			numNoProgressCycles = 0;
 	SPPageDesc	current,
 				parent;
 	FmgrInfo   *procinfo = NULL;
@@ -1944,7 +1947,7 @@ spgdoinsert(Relation index, SpGistState *state,
 	 * Compute space needed for a leaf tuple containing the given datum.
 	 *
 	 * If it isn't gonna fit, and the opclass can't reduce the datum size by
-	 * suffixing, bail out now rather than getting into an endless loop.
+	 * suffixing, bail out now rather than doing a lot of useless work.
 	 */
 	if (!isnull)
 		leafSize = SGLTHDRSZ + sizeof(ItemIdData) +
@@ -1952,7 +1955,8 @@ spgdoinsert(Relation index, SpGistState *state,
 	else
 		leafSize = SGDTSIZE + sizeof(ItemIdData);
 
-	if (leafSize > SPGIST_PAGE_CAPACITY && !state->config.longValuesOK)
+	if (leafSize > SPGIST_PAGE_CAPACITY &&
+		(isnull || !state->config.longValuesOK))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
@@ -1960,6 +1964,7 @@ spgdoinsert(Relation index, SpGistState *state,
 						SPGIST_PAGE_CAPACITY - sizeof(ItemIdData),
 						RelationGetRelationName(index)),
 				 errhint("Values larger than a buffer page cannot be indexed.")));
+	bestLeafSize = leafSize;
 
 	/* Initialize "current" to the appropriate root page */
 	current.blkno = isnull ? SPGIST_NULL_BLKNO : SPGIST_ROOT_BLKNO;
@@ -2188,18 +2193,52 @@ spgdoinsert(Relation index, SpGistState *state,
 					}
 
 					/*
+					 * Check new tuple size; fail if it can't fit, unless the
+					 * opclass says it can handle the situation by suffixing.
+					 *
+					 * A buggy opclass might not ever make the leaf datum
+					 * small enough, causing an infinite loop.  To detect such
+					 * a loop, check to see if we are making progress by
+					 * reducing the leafSize in each pass.  This is a bit
+					 * tricky though.  Because of alignment considerations,
+					 * the total tuple size might not decrease on every pass.
+					 * Also, there are edge cases where the choose method
+					 * might seem to not make progress for a cycle or two.
+					 * Somewhat arbitrarily, we allow up to 10 no-progress
+					 * iterations before failing.  (This limit should be more
+					 * than MAXALIGN, to accommodate opclasses that trim one
+					 * byte from the leaf datum per pass.)
+					 */
+					if (leafSize > SPGIST_PAGE_CAPACITY)
+					{
+						bool		ok = false;
+
+						if (state->config.longValuesOK && !isnull)
+						{
+							if (leafSize < bestLeafSize)
+							{
+								ok = true;
+								bestLeafSize = leafSize;
+								numNoProgressCycles = 0;
+							}
+							else if (++numNoProgressCycles < 10)
+								ok = true;
+						}
+						if (!ok)
+							ereport(ERROR,
+									(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+									 errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+											leafSize - sizeof(ItemIdData),
+											SPGIST_PAGE_CAPACITY - sizeof(ItemIdData),
+											RelationGetRelationName(index)),
+									 errhint("Values larger than a buffer page cannot be indexed.")));
+					}
+
+					/*
 					 * Loop around and attempt to insert the new leafDatum at
 					 * "current" (which might reference an existing child
 					 * tuple, or might be invalid to force us to find a new
 					 * page for the tuple).
-					 *
-					 * Note: if the opclass sets longValuesOK, we rely on the
-					 * choose function to eventually shorten the leafDatum
-					 * enough to fit on a page.  We could add a test here to
-					 * complain if the datum doesn't get visibly shorter each
-					 * time, but that could get in the way of opclasses that
-					 * "simplify" datums in a way that doesn't necessarily
-					 * lead to physical shortening on every cycle.
 					 */
 					break;
 				case spgAddNode:
