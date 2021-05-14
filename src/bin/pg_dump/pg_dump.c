@@ -1070,7 +1070,7 @@ help(const char *progname)
 	printf(_("  --no-subscriptions           do not dump subscriptions\n"));
 	printf(_("  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
-	printf(_("  --no-toast-compression       do not dump toast compression methods\n"));
+	printf(_("  --no-toast-compression       do not dump TOAST compression methods\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
 	printf(_("  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"));
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
@@ -16758,7 +16758,7 @@ dumpIndex(Archive *fout, const IndxInfo *indxinfo)
 			if (!parsePGArray(indstatvals, &indstatvalsarray, &nstatvals))
 				fatal("could not parse index statistic values");
 			if (nstatcols != nstatvals)
-				fatal("mismatched number of columns and values for index stats");
+				fatal("mismatched number of columns and values for index statistics");
 
 			for (j = 0; j < nstatcols; j++)
 			{

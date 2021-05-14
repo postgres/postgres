@@ -561,7 +561,7 @@ perform_rewind(filemap_t *filemap, rewind_source *source,
 				break;
 
 			case FILE_ACTION_UNDECIDED:
-				pg_fatal("no action decided for \"%s\"", entry->path);
+				pg_fatal("no action decided for file \"%s\"", entry->path);
 				break;
 		}
 	}
