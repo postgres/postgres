@@ -3174,11 +3174,9 @@ Author: Bruce Momjian <bruce@momjian.us>
 Move query hash computation from pg_stat_statements to the core server (Julien Rouhaud)
 </para>
 
-<!--
 <para>
 The new server variable compute_query_id's default of 'auto' will automatically enable query id computation when this extension is loaded.
 </para>
--->
 </listitem>
 
 <listitem>
