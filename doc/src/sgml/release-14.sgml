@@ -3181,10 +3181,12 @@ Author: Bruce Momjian <bruce@momjian.us>
 Move query hash computation from pg_stat_statements to the core server (Julien Rouhaud)
 </para>
 
+<!--
 <para>
 Extension pg_stat_statements will now need to enable query hash computation to function properly.
 This can be done by enabling the server variable compute_query_id or by using an extension with a custom hash computation method.
 </para>
+-->
 </listitem>
 
 <listitem>

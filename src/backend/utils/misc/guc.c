@@ -101,6 +101,7 @@
 #include "utils/plancache.h"
 #include "utils/portal.h"
 #include "utils/ps_status.h"
+#include "utils/queryjumble.h"
 #include "utils/rls.h"
 #include "utils/snapmgr.h"
 #include "utils/tzparser.h"
@@ -403,6 +404,23 @@ static const struct config_enum_entry backslash_quote_options[] = {
 };
 
 /*
+ * Although only "on", "off", and "auto" are documented, we accept
+ * all the likely variants of "on" and "off".
+ */
+static const struct config_enum_entry compute_query_id_options[] = {
+	{"auto", COMPUTE_QUERY_ID_AUTO, false},
+	{"on", COMPUTE_QUERY_ID_ON, false},
+	{"off", COMPUTE_QUERY_ID_OFF, false},
+	{"true", COMPUTE_QUERY_ID_ON, true},
+	{"false", COMPUTE_QUERY_ID_OFF, true},
+	{"yes", COMPUTE_QUERY_ID_ON, true},
+	{"no", COMPUTE_QUERY_ID_OFF, true},
+	{"1", COMPUTE_QUERY_ID_ON, true},
+	{"0", COMPUTE_QUERY_ID_OFF, true},
+	{NULL, 0, false}
+};
+
+/*
  * Although only "on", "off", and "partition" are documented, we
  * accept all the likely variants of "on" and "off".
  */
@@ -534,7 +552,6 @@ extern const struct config_enum_entry dynamic_shared_memory_options[];
 /*
  * GUC option variables that are exported from this module
  */
-bool		compute_query_id = false;
 bool		log_duration = false;
 bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
@@ -1439,15 +1456,6 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&Debug_pretty_print,
 		true,
-		NULL, NULL, NULL
-	},
-	{
-		{"compute_query_id", PGC_SUSET, STATS_MONITORING,
-			gettext_noop("Compute query identifiers."),
-			NULL
-		},
-		&compute_query_id,
-		false,
 		NULL, NULL, NULL
 	},
 	{
@@ -4616,6 +4624,16 @@ static struct config_enum ConfigureNamesEnum[] =
 		},
 		&client_min_messages,
 		NOTICE, client_message_level_options,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"compute_query_id", PGC_SUSET, STATS_MONITORING,
+			gettext_noop("Compute query identifiers."),
+			NULL
+		},
+		&compute_query_id,
+		COMPUTE_QUERY_ID_AUTO, compute_query_id_options,
 		NULL, NULL, NULL
 	},
 

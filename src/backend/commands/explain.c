@@ -245,7 +245,7 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 	es->summary = (summary_set) ? es->summary : es->analyze;
 
 	query = castNode(Query, stmt->query);
-	if (compute_query_id)
+	if (IsQueryIdEnabled())
 		jstate = JumbleQuery(query, pstate->p_sourcetext);
 
 	if (post_parse_analyze_hook)

@@ -18,18 +18,14 @@
   <xref linkend="guc-shared-preload-libraries"/> in
   <filename>postgresql.conf</filename>, because it requires additional shared memory.
   This means that a server restart is needed to add or remove the module.
+  In addition, query identifier calculation must be enabled in order for the
+  module to be active, which is done automatically if <xref linkend="guc-compute-query-id"/>
+  is set to <literal>auto</literal> or <literal>on</literal>, or any third-party
+  module that calculates query identifiers is loaded.
  </para>
 
  <para>
-  The module will not track statistics unless query
-  identifiers are calculated.  This can be done by enabling <xref
-  linkend="guc-compute-query-id"/> or using a third-party module that
-  computes its own query identifiers.  Note that all statistics tracked
-  by this module must be reset if the query identifier method is changed.
- </para>
-
- <para>
-   When <filename>pg_stat_statements</filename> is loaded, it tracks
+   When <filename>pg_stat_statements</filename> is active, it tracks
    statistics across all databases of the server.  To access and manipulate
    these statistics, the module provides views
    <structname>pg_stat_statements</structname> and

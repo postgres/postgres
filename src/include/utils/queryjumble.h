@@ -52,7 +52,36 @@ typedef struct JumbleState
 	int			highest_extern_param_id;
 } JumbleState;
 
-const char *CleanQuerytext(const char *query, int *location, int *len);
-JumbleState *JumbleQuery(Query *query, const char *querytext);
+/* Values for the compute_query_id GUC */
+typedef enum
+{
+	COMPUTE_QUERY_ID_OFF,
+	COMPUTE_QUERY_ID_ON,
+	COMPUTE_QUERY_ID_AUTO
+} ComputeQueryIdType;
+
+/* GUC parameters */
+extern int	compute_query_id;
+
+
+extern const char *CleanQuerytext(const char *query, int *location, int *len);
+extern JumbleState *JumbleQuery(Query *query, const char *querytext);
+extern void EnableQueryId(void);
+
+extern bool query_id_enabled;
+
+/*
+ * Returns whether query identifier computation has been enabled, either
+ * directly in the GUC or by a module when the setting is 'auto'.
+ */
+static inline bool
+IsQueryIdEnabled(void)
+{
+	if (compute_query_id == COMPUTE_QUERY_ID_OFF)
+		return false;
+	if (compute_query_id == COMPUTE_QUERY_ID_ON)
+		return true;
+	return query_id_enabled;
+}
 
 #endif							/* QUERYJUMBLE_H */

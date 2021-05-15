@@ -7627,7 +7627,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <variablelist>
 
      <varlistentry id="guc-compute-query-id" xreflabel="compute_query_id">
-      <term><varname>compute_query_id</varname> (<type>boolean</type>)
+      <term><varname>compute_query_id</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>compute_query_id</varname> configuration parameter</primary>
       </indexterm>
@@ -7643,7 +7643,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         identifier to be computed.  Note that an external module can
         alternatively be used if the in-core query identifier computation
         method is not acceptable.  In this case, in-core computation
-        must be disabled.  The default is <literal>off</literal>.
+        must be always disabled.
+        Valid values are <literal>off</literal> (always disabled),
+        <literal>on</literal> (always enabled) and <literal>auto</literal>,
+        which lets modules such as <xref linkend="pgstatstatements"/>
+        automatically enable it.
+        The default is <literal>auto</literal>.
        </para>
        <note>
         <para>

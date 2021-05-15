@@ -604,7 +604,7 @@
 
 # - Monitoring -
 
-#compute_query_id = off
+#compute_query_id = auto
 #log_statement_stats = off
 #log_parser_stats = off
 #log_planner_stats = off

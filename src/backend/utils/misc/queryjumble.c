@@ -39,6 +39,12 @@
 
 #define JUMBLE_SIZE				1024	/* query serialization buffer size */
 
+/* GUC parameters */
+int			compute_query_id = COMPUTE_QUERY_ID_AUTO;
+
+/* True when compute_query_id is ON, or AUTO and a module requests them */
+bool		query_id_enabled = false;
+
 static uint64 compute_utility_query_id(const char *str, int query_location, int query_len);
 static void AppendJumble(JumbleState *jstate,
 						 const unsigned char *item, Size size);
@@ -96,6 +102,8 @@ JumbleQuery(Query *query, const char *querytext)
 {
 	JumbleState *jstate = NULL;
 
+	Assert(IsQueryIdEnabled());
+
 	if (query->utilityStmt)
 	{
 		query->queryId = compute_utility_query_id(querytext,
@@ -130,6 +138,19 @@ JumbleQuery(Query *query, const char *querytext)
 	}
 
 	return jstate;
+}
+
+/*
+ * Enables query identifier computation.
+ *
+ * Third-party plugins can use this function to inform core that they require
+ * a query identifier to be computed.
+ */
+void
+EnableQueryId(void)
+{
+	if (compute_query_id != COMPUTE_QUERY_ID_OFF)
+		query_id_enabled = true;
 }
 
 /*

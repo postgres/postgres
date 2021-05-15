@@ -370,6 +370,12 @@ _PG_init(void)
 		return;
 
 	/*
+	 * Inform the postmaster that we want to enable query_id calculation if
+	 * compute_query_id is set to auto.
+	 */
+	EnableQueryId();
+
+	/*
 	 * Define (or redefine) custom GUC variables.
 	 */
 	DefineCustomIntVariable("pg_stat_statements.max",
