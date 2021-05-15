@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2021-??-?? (AS OF 2021-05-09)</para>
+   <para>2021-??-?? (AS OF 2021-05-15)</para>
   </formalpara>
 
   <sect2>
@@ -1108,10 +1108,12 @@ Author: Bruce Momjian <bruce@momjian.us>
 2021-04-20 [9660834dd] adjust query id feature to use pg_stat_activity.query_id
 Author: Bruce Momjian <bruce@momjian.us>
 2021-05-03 [f7a97b6ec] Update query_id computation
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2021-05-15 [cafde58b3] Allow compute_query_id to be set to 'auto' and make it d
 -->
 
 <para>
-If server variable compute_query_id is enabled, display the hash in pg_stat_activity, EXPLAIN VERBOSE, csvlog, and optionally in log_line_prefix (Julien Rouhaud)
+If server variable compute_query_id is enabled, display the hash in pg_stat_activity, EXPLAIN VERBOSE, csvlog, and optionally in log_line_prefix (Julien Rouhaud, Álvaro Herrera)
 </para>
 
 <para>
@@ -2023,17 +2025,6 @@ The postgres_fdw module also now supports this.
 
 <listitem>
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-12-11 [8c15a2974] Allow ALTER TYPE to update an existing type's typsubscri
--->
-
-<para>
-Allow ALTER TYPE to specify or remove a SUBSCRIPT handler (Tom Lane)
-</para>
-</listitem>
-
-<listitem>
-<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2021-04-06 [82ed7748b] ALTER SUBSCRIPTION ... ADD/DROP PUBLICATION
 -->
@@ -2893,6 +2884,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 2021-04-21 [22b2dec31] Add CURRENT_ROLE to list of roles for tab completion of 
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 2021-04-26 [6dd1042ed] psql: tab-complete ALTER ... DETACH CONCURRENTLY / FINAL
+Author: Michael Paquier <michael@paquier.xyz>
+2021-05-13 [1906cc07d] Make saner the tab completion of INSERT and DELETE in ps
 -->
 
 <para>
@@ -3183,8 +3176,7 @@ Move query hash computation from pg_stat_statements to the core server (Julien R
 
 <!--
 <para>
-Extension pg_stat_statements will now need to enable query hash computation to function properly.
-This can be done by enabling the server variable compute_query_id or by using an extension with a custom hash computation method.
+The new server variable compute_query_id's default of 'auto' will automatically enable query id computation when this extension is loaded.
 </para>
 -->
 </listitem>
