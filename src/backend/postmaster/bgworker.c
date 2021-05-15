@@ -328,9 +328,11 @@ BackgroundWorkerStateChange(bool allow_new_workers)
 			notify_pid = slot->worker.bgw_notify_pid;
 			if ((slot->worker.bgw_flags & BGWORKER_CLASS_PARALLEL) != 0)
 				BackgroundWorkerData->parallel_terminate_count++;
-			pg_memory_barrier();
 			slot->pid = 0;
+
+			pg_memory_barrier();
 			slot->in_use = false;
+
 			if (notify_pid != 0)
 				kill(notify_pid, SIGUSR1);
 
@@ -417,6 +419,8 @@ BackgroundWorkerStateChange(bool allow_new_workers)
  * points to it.  This convention allows deletion of workers during
  * searches of the worker list, and saves having to search the list again.
  *
+ * Caller is responsible for notifying bgw_notify_pid, if appropriate.
+ *
  * This function must be invoked only in the postmaster.
  */
 void
@@ -429,9 +433,16 @@ ForgetBackgroundWorker(slist_mutable_iter *cur)
 
 	Assert(rw->rw_shmem_slot < max_worker_processes);
 	slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
+	Assert(slot->in_use);
+
+	/*
+	 * We need a memory barrier here to make sure that the update of
+	 * parallel_terminate_count completes before the store to in_use.
+	 */
 	if ((rw->rw_worker.bgw_flags & BGWORKER_CLASS_PARALLEL) != 0)
 		BackgroundWorkerData->parallel_terminate_count++;
 
+	pg_memory_barrier();
 	slot->in_use = false;
 
 	ereport(DEBUG1,
