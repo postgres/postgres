@@ -88,4 +88,8 @@ extern bool set_plan_disabling_options(const char *arg,
 									   GucContext context, GucSource source);
 extern const char *get_stats_option_name(const char *arg);
 
+extern void WalRedoMain(int argc, char *argv[],
+						const char *dbname,
+						const char *username);
+
 #endif							/* TCOPPROT_H */

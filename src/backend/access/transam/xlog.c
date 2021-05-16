@@ -10316,10 +10316,20 @@ xlog_redo(XLogReaderState *record)
 		for (uint8 block_id = 0; block_id <= record->max_block_id; block_id++)
 		{
 			Buffer		buffer;
+			XLogRedoAction result;
 
-			if (XLogReadBufferForRedo(record, block_id, &buffer) != BLK_RESTORED)
+			result = XLogReadBufferForRedo(record, block_id, &buffer);
+			if (result == BLK_DONE && !IsUnderPostmaster)
+			{
+				/*
+				 * In the special WAL process, blocks that are being ignored
+				 * return BLK_DONE. Accept that.
+				 */
+			}
+			else if (result != BLK_RESTORED)
 				elog(ERROR, "unexpected XLogReadBufferForRedo result when restoring backup block");
-			UnlockReleaseBuffer(buffer);
+			if (buffer != InvalidBuffer)
+				UnlockReleaseBuffer(buffer);
 		}
 	}
 	else if (info == XLOG_BACKUP_END)
