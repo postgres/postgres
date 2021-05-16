@@ -350,6 +350,9 @@ extern XLogRecPtr GetFlushRecPtr(void);
 extern XLogRecPtr GetLastImportantRecPtr(void);
 extern void RemovePromoteSignalFiles(void);
 
+extern void SetLastWrittenPageLSN(XLogRecPtr lsn);
+extern XLogRecPtr GetLastWrittenPageLSN(void);
+
 extern bool PromoteIsTriggered(void);
 extern bool CheckPromoteSignal(void);
 extern void WakeupRecovery(void);

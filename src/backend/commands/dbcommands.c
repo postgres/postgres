@@ -663,7 +663,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 			/* Record the filesystem change in XLOG */
 			{
 				xl_dbase_create_rec xlrec;
-
+				XLogRecPtr lsn;
 				xlrec.db_id = dboid;
 				xlrec.tablespace_id = dsttablespace;
 				xlrec.src_db_id = src_dboid;
@@ -672,8 +672,9 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 				XLogBeginInsert();
 				XLogRegisterData((char *) &xlrec, sizeof(xl_dbase_create_rec));
 
-				(void) XLogInsert(RM_DBASE_ID,
-								  XLOG_DBASE_CREATE | XLR_SPECIAL_REL_UPDATE);
+				lsn = XLogInsert(RM_DBASE_ID,
+								 XLOG_DBASE_CREATE | XLR_SPECIAL_REL_UPDATE);
+				SetLastWrittenPageLSN(lsn);
 			}
 		}
 		table_endscan(scan);

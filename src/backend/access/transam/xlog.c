@@ -731,6 +731,7 @@ typedef struct XLogCtlData
 	 * XLOG_FPW_CHANGE record that instructs full_page_writes is disabled.
 	 */
 	XLogRecPtr	lastFpwDisableRecPtr;
+	XLogRecPtr  lastWrittenPageLSN;
 
 	slock_t		info_lck;		/* locks shared variables shown above */
 } XLogCtlData;
@@ -8555,6 +8556,35 @@ GetInsertRecPtr(void)
 
 	return recptr;
 }
+
+/*
+ * GetLastWrittenPageLSN -- Returns maximal LSN of written page
+ */
+XLogRecPtr
+GetLastWrittenPageLSN(void)
+{
+	XLogRecPtr lsn;
+	SpinLockAcquire(&XLogCtl->info_lck);
+	lsn = XLogCtl->lastWrittenPageLSN;
+	SpinLockRelease(&XLogCtl->info_lck);
+
+	return lsn;
+}
+
+/*
+ * SetLastWrittenPageLSN -- Set maximal LSN of written page
+ */
+void
+SetLastWrittenPageLSN(XLogRecPtr lsn)
+{
+	SpinLockAcquire(&XLogCtl->info_lck);
+	if (lsn > XLogCtl->lastWrittenPageLSN)
+		XLogCtl->lastWrittenPageLSN = lsn;
+	SpinLockRelease(&XLogCtl->info_lck);
+}
+
+
+
 
 /*
  * GetFlushRecPtr -- Returns the current flush position, ie, the last WAL
