@@ -182,7 +182,24 @@ typedef PageHeaderData *PageHeader;
 #define PD_ALL_VISIBLE		0x0004	/* all tuples on page are visible to
 									 * everyone */
 
-#define PD_VALID_FLAG_BITS	0x0007	/* OR of all valid pd_flags bits */
+/* Zenith XXX:
+ * Some operations in PostgreSQL are not WAL-logged at all (i.e. hint bits)
+ * or delay wal-logging till the end of operation (i.e. index build).
+ *
+ * So if such page is evicted, we will lose the update.
+ * To fix it, we introduce PD_WAL_LOGGED bit to track whether the page was wal-logged.
+ * If page is evicted before it has been wal-logged, then pagestore_smgr creates FPI for it.
+ *
+ * List of such operations:
+ * - GIN/GiST/SP-GiST index build
+ * - page and heaptuple hint bits
+ * - Clearing visibility map bits
+ * - FSM changes
+ * - ???
+ */
+#define PD_WAL_LOGGED       0x0008  /* Page is wal-logged */
+#define PD_VALID_FLAG_BITS	0x000F	/* OR of all valid pd_flags bits */
+
 
 /*
  * Page layout version number 0 is for pre-7.3 Postgres releases.

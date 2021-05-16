@@ -54,6 +54,8 @@ mask_page_hint_bits(Page page)
 	PageClearFull(page);
 	PageClearHasFreeLinePointers(page);
 
+	phdr->pd_flags &= ~PD_WAL_LOGGED;
+
 	/*
 	 * During replay, if the page LSN has advanced past our XLOG record's LSN,
 	 * we don't mark the page all-visible. See heap_xlog_visible() for
