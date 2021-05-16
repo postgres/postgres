@@ -157,6 +157,9 @@ int			checkpoint_flush_after = 0;
 int			bgwriter_flush_after = 0;
 int			backend_flush_after = 0;
 
+/* Evict unpinned pages (for better test coverage) */
+bool		zenith_test_evict = false;
+
 /* local state for StartBufferIO and related functions */
 static BufferDesc *InProgressBuf = NULL;
 static bool IsForInput;
@@ -1911,6 +1914,32 @@ UnpinBuffer(BufferDesc *buf, bool fixOwner)
 				UnlockBufHdr(buf, buf_state);
 		}
 		ForgetPrivateRefCountEntry(ref);
+
+		if (zenith_test_evict && !InRecovery)
+		{
+			buf_state = LockBufHdr(buf);
+			if (BUF_STATE_GET_REFCOUNT(buf_state) == 0)
+			{
+				if (buf_state & BM_DIRTY)
+				{
+					ReservePrivateRefCountEntry();
+					PinBuffer_Locked(buf);
+					if (LWLockConditionalAcquire(BufferDescriptorGetContentLock(buf),
+												 LW_SHARED))
+					{
+						FlushOneBuffer(b);
+						LWLockRelease(BufferDescriptorGetContentLock(buf));
+					}
+					UnpinBuffer(buf, true);
+				}
+				else
+				{
+					InvalidateBuffer(buf);
+				}
+			}
+			else
+				UnlockBufHdr(buf, buf_state);
+		}
 	}
 }
 
