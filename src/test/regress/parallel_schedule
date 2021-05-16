@@ -5,6 +5,7 @@
 # this limits the number of connections needed to run the tests.
 # ----------
 
+test: zenith-cid
 test: zenith-rel-truncate
 
 # run tablespace by itself, and first, because it forces a checkpoint;
