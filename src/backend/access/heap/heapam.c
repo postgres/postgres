@@ -8944,7 +8944,7 @@ heap_xlog_insert(XLogReaderState *record)
 
 	XLogRecGetBlockTag(record, 0, &target_node, NULL, &blkno);
 	ItemPointerSetBlockNumber(&target_tid, blkno);
-	ItemPointerSetOffsetNumber(&target_tid, xlrec->offnum);
+	ItemPointerSetOffsetNumber(&target_tid, (xlrec->flags & XLH_INSERT_IS_SPECULATIVE) ? SpecTokenOffsetNumber : xlrec->offnum);
 
 	/* check that the mutually exclusive flags are not both set */
 	Assert(!((xlrec->flags & XLH_INSERT_ALL_VISIBLE_CLEARED) &&
