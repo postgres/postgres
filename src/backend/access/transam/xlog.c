@@ -209,6 +209,8 @@ bool		InRecovery = false;
 /* Are we in Hot Standby mode? Only valid in startup process, see xlog.h */
 HotStandbyState standbyState = STANDBY_DISABLED;
 
+static bool	enable_nonrelwal_reading = true;
+
 static XLogRecPtr LastRec;
 
 /* Local copy of WalRcv->flushedUpto */
@@ -4384,6 +4386,23 @@ ReadRecord(XLogReaderState *xlogreader, int emode,
 	/* This is the first attempt to read this page. */
 	lastSourceFailed = false;
 
+	/*
+	 * If we have partial non-rel WAL for this position, use it.
+	 */
+	if (enable_nonrelwal_reading)
+	{
+		record = nonrelwal_read_record(xlogreader, emode, fetching_ckpt);
+		if (record)
+		{
+			if (!expectedTLEs)
+				expectedTLEs = readTimeLineHistory(recoveryTargetTLI);
+
+			ReadRecPtr = xlogreader->ReadRecPtr;
+			EndRecPtr = xlogreader->EndRecPtr;
+			return record;
+		}
+	}
+
 	for (;;)
 	{
 		char	   *errormsg;
@@ -7653,8 +7672,18 @@ StartupXLOG(void)
 	 * Re-fetch the last valid or last applied record, so we can identify the
 	 * exact endpoint of what we consider the valid portion of WAL.
 	 */
+
+	/*
+	 * Make sure we read the record from the original WAL segment, not the special
+	 * non-rel WAL. We use the last WAL page to initialize the WAL for writing,
+	 * so we better have it in memory.
+	 */
+	enable_nonrelwal_reading = false;
+
 	XLogBeginRead(xlogreader, LastRec);
 	record = ReadRecord(xlogreader, PANIC, false);
+	if (!record)
+		elog(PANIC, "could not re-read last record");
 	EndOfLog = EndRecPtr;
 
 	/*

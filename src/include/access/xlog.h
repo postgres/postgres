@@ -364,6 +364,10 @@ extern void XLogRequestWalReceiverReply(void);
 extern void assign_max_wal_size(int newval, void *extra);
 extern void assign_checkpoint_completion_target(double newval, void *extra);
 
+/* in zenith_nonrelxlogreader.c */
+extern XLogRecord *nonrelwal_read_record(XLogReaderState *xlogreader, int emode,  bool fetching_ckpt);
+
+
 /*
  * Routines to start, stop, and get status of a base backup.
  */
