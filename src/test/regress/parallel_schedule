@@ -5,6 +5,8 @@
 # this limits the number of connections needed to run the tests.
 # ----------
 
+test: zenith-rel-truncate
+
 # run tablespace by itself, and first, because it forces a checkpoint;
 # we'd prefer not to have checkpoints later in the tests because that
 # interferes with crash-recovery testing.
@@ -53,12 +55,13 @@ test: copy copyselect copydml insert insert_conflict
 # ----------
 test: create_misc create_operator create_procedure
 # These depend on create_misc and create_operator
-test: create_index create_index_spgist create_view index_including index_including_gist
+test: create_index create_index_spgist create_view index_including index_including_gist zenith-vacuum-full zenith-clog
 
 # ----------
 # Another group of parallel tests
 # ----------
-test: create_aggregate create_function_3 create_cast constraints triggers select inherit typed_table vacuum drop_if_exists updatable_views roleattributes create_am hash_func errors infinite_recurse
+#test: create_aggregate create_function_3 create_cast constraints triggers select inherit typed_table vacuum drop_if_exists updatable_views roleattributes create_am hash_func errors infinite_recurse
+test: create_aggregate create_function_3 create_cast constraints triggers select inherit typed_table drop_if_exists updatable_views roleattributes create_am hash_func errors infinite_recurse
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
