@@ -1,0 +1,110 @@
+# Greek message translation file for pltcl
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pltcl (PostgreSQL) package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pltcl (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-04-29 07:38+0000\n"
+"PO-Revision-Date: 2021-05-04 13:48+0200\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.4.3\n"
+
+#: pltcl.c:463
+msgid "PL/Tcl function to call once when pltcl is first used."
+msgstr "Συνάρτηση PL/Tcl για να καλέσει μία μόνο φορά όταν χρησιμοποιείται pltcl για πρώτη φορά."
+
+#: pltcl.c:470
+msgid "PL/TclU function to call once when pltclu is first used."
+msgstr "Συνάρτηση PL/Tcl για να καλέσει μία μόνο φορά όταν χρησιμοποιείται pltclu για πρώτη φορά ."
+
+#: pltcl.c:634
+#, c-format
+msgid "function \"%s\" is in the wrong language"
+msgstr "η συνάρτηση \"%s\" βρίσκεται σε λάθος γλώσσα"
+
+#: pltcl.c:645
+#, c-format
+msgid "function \"%s\" must not be SECURITY DEFINER"
+msgstr "η συνάρτηση \"%s\" δεν πρέπει να είναι SECURITY DEFINER"
+
+#. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
+#: pltcl.c:679
+#, c-format
+msgid "processing %s parameter"
+msgstr "επεξεργάζεται παράμετρο %s"
+
+#: pltcl.c:833
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "set-valued συνάρτηση καλείται σε περιεχόμενο που δεν μπορεί να δεχτεί ένα σύνολο"
+
+#: pltcl.c:1006
+#, c-format
+msgid "function returning record called in context that cannot accept type record"
+msgstr "συνάρτηση που επιστρέφει εγγραφή καλείται σε περιεχόμενο που δεν δύναται να αποδεχτεί τύπο εγγραφής"
+
+#: pltcl.c:1290
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "δεν ήταν δυνατός ο διαχωρισμός επιστρεφόμενης τιμής από έναυσμα: %s"
+
+#: pltcl.c:1371 pltcl.c:1801
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1372
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"στη συνάρτηση PL/Tcl «%s»"
+
+#: pltcl.c:1536
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "συναρτήσεις εναυσμάτων μπορούν να κληθούν μόνο ως εναύσματα"
+
+#: pltcl.c:1540
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "συναρτήσεις PL/Tcl δεν είναι δυνατό να επιστρέψουν τύπο %s"
+
+#: pltcl.c:1579
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "συναρτήσεις PL/Tcl δεν είναι δυνατό να δεχτούν τύπο %s"
+
+#: pltcl.c:1693
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "δεν ήταν δυνατή η δημιουργία εσωτερικής διαδικασίας \"%s\": %s"
+
+#: pltcl.c:3197
+#, c-format
+msgid "column name/value list must have even number of elements"
+msgstr "λίστα ονόματος/τιμής στήλης πρέπει να έχει άρτιο αριθμό στοιχείων"
+
+#: pltcl.c:3215
+#, c-format
+msgid "column name/value list contains nonexistent column name \"%s\""
+msgstr "λίστα ονόματος/τιμής στήλης περιέχει ανύπαρκτο όνομα στήλης \"%s\""
+
+#: pltcl.c:3222
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "δεν είναι δυνατός ο ορισμός του χαρακτηριστικού συστήματος \"%s\""
+
+#: pltcl.c:3228
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "δεν είναι δυνατός ο ορισμός δημιουργημένης στήλης \"%s\""

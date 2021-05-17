@@ -1,0 +1,83 @@
+# Greek message translation file for pg_test_timing
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_test_timing (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-04-27 06:17+0000\n"
+"PO-Revision-Date: 2021-04-28 10:43+0200\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.4.2\n"
+
+#: pg_test_timing.c:59
+#, c-format
+msgid "Usage: %s [-d DURATION]\n"
+msgstr "Χρήση: %s [-d DURATION]\n"
+
+#: pg_test_timing.c:81
+#, c-format
+msgid "%s: invalid argument for option %s\n"
+msgstr "%s: μη έγκυρη παράμετρος για την επιλογή %s\n"
+
+#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"
+
+#: pg_test_timing.c:90
+#, c-format
+msgid "%s: %s must be in range %u..%u\n"
+msgstr "%s: %s πρέπει να βρίσκεται εντός εύρους %u..%u\n"
+
+#: pg_test_timing.c:107
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (πρώτη είναι η “%s”)\n"
+
+#: pg_test_timing.c:115
+#, c-format
+msgid "Testing timing overhead for %u second.\n"
+msgid_plural "Testing timing overhead for %u seconds.\n"
+msgstr[0] "Έλεγχος επίφορτου χρονισμού για %u δευτερόλεπτο.\n"
+msgstr[1] "Έλεγχος επίφορτου χρονισμού για %u δευτερόλεπτα.\n"
+
+#: pg_test_timing.c:151
+#, c-format
+msgid "Detected clock going backwards in time.\n"
+msgstr "Εντοπίστηκε ρολόι που πηγαίνει προς τα πίσω στο χρόνο.\n"
+
+#: pg_test_timing.c:152
+#, c-format
+msgid "Time warp: %d ms\n"
+msgstr "Χρονική στρέβλωση: %d ms\n"
+
+#: pg_test_timing.c:175
+#, c-format
+msgid "Per loop time including overhead: %0.2f ns\n"
+msgstr "Χρόνος ανά βρόχο συμπεριλαμβανομένου επίφορτου: %0.2f ns\n"
+
+#: pg_test_timing.c:186
+msgid "< us"
+msgstr "< us"
+
+#: pg_test_timing.c:187
+#, no-c-format
+msgid "% of total"
+msgstr "% of συνολικά"
+
+#: pg_test_timing.c:188
+msgid "count"
+msgstr "count"
+
+#: pg_test_timing.c:197
+#, c-format
+msgid "Histogram of timing durations:\n"
+msgstr "Ιστόγραμμα διαρκειών χρονισμού\n"

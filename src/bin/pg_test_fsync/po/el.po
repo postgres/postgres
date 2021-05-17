@@ -1,0 +1,175 @@
+# Greek message translation file for pg_test_fsync
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_test_fsync (PostgreSQL) package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_test_fsync (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-05-05 06:49+0000\n"
+"PO-Revision-Date: 2021-05-05 10:54+0200\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.4.3\n"
+
+#. translator: maintain alignment with NA_FORMAT
+#: pg_test_fsync.c:31
+#, c-format
+msgid "%13.3f ops/sec  %6.0f usecs/op\n"
+msgstr "%13.3f ops/sec %6.0f usecs/op\n"
+
+#: pg_test_fsync.c:159
+#, c-format
+msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
+msgstr "Χρήση: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
+
+#: pg_test_fsync.c:186 pg_test_fsync.c:200 pg_test_fsync.c:211
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"
+
+#: pg_test_fsync.c:216
+#, c-format
+msgid "%u second per test\n"
+msgid_plural "%u seconds per test\n"
+msgstr[0] "%u δευτερόλεπτο ανά τεστ\n"
+msgstr[1] "%u δευτερόλεπτα ανά τεστ\n"
+
+#: pg_test_fsync.c:221
+#, c-format
+msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
+msgstr "O_DIRECT υποστηρίζεται σε αυτήν την πλατφόρμα για open_datasync και open_sync.\n"
+
+#: pg_test_fsync.c:223
+#, c-format
+msgid "Direct I/O is not supported on this platform.\n"
+msgstr "Άμεσο I/O δεν υποστηρίζεται σε αυτήν την πλατφόρμα.\n"
+
+#: pg_test_fsync.c:248 pg_test_fsync.c:314 pg_test_fsync.c:339
+#: pg_test_fsync.c:363 pg_test_fsync.c:506 pg_test_fsync.c:518
+#: pg_test_fsync.c:534 pg_test_fsync.c:540 pg_test_fsync.c:562
+msgid "could not open output file"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου εξόδου"
+
+#: pg_test_fsync.c:252 pg_test_fsync.c:297 pg_test_fsync.c:323
+#: pg_test_fsync.c:348 pg_test_fsync.c:372 pg_test_fsync.c:410
+#: pg_test_fsync.c:469 pg_test_fsync.c:508 pg_test_fsync.c:536
+#: pg_test_fsync.c:567
+msgid "write failed"
+msgstr "απέτυχε η εγγραφή"
+
+#: pg_test_fsync.c:256 pg_test_fsync.c:350 pg_test_fsync.c:374
+#: pg_test_fsync.c:510 pg_test_fsync.c:542
+msgid "fsync failed"
+msgstr "fsync απέτυχε"
+
+#: pg_test_fsync.c:270
+#, c-format
+msgid ""
+"\n"
+"Compare file sync methods using one %dkB write:\n"
+msgstr ""
+"\n"
+"Συγκρίνετε τις μεθόδους συγχρονισμού αρχείων χρησιμοποιώντας μία εγγραφή %dkB:\n"
+
+#: pg_test_fsync.c:272
+#, c-format
+msgid ""
+"\n"
+"Compare file sync methods using two %dkB writes:\n"
+msgstr ""
+"\n"
+"Συγκρίνετε τις μεθόδους συγχρονισμού αρχείων χρησιμοποιώντας δύο εγγραφές %dkB:\n"
+
+#: pg_test_fsync.c:273
+#, c-format
+msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
+msgstr "(με wal_sync_method σειρά προτίμησης, εκτός από fdatasync είναι η προεπιλογή σε Linux)\n"
+
+#: pg_test_fsync.c:284 pg_test_fsync.c:391 pg_test_fsync.c:457
+msgid "n/a*"
+msgstr "n/a*"
+
+#: pg_test_fsync.c:303 pg_test_fsync.c:329 pg_test_fsync.c:379
+#: pg_test_fsync.c:416 pg_test_fsync.c:475
+msgid "n/a"
+msgstr "n/a"
+
+#: pg_test_fsync.c:421
+#, c-format
+msgid ""
+"* This file system and its mount options do not support direct\n"
+"  I/O, e.g. ext4 in journaled mode.\n"
+msgstr ""
+"* Αυτό το σύστημα αρχείων και οι επιλογές  προσάρτησής του δεν υποστηρίζουν\n"
+"  άμεσο I/O, π.χ. ext4 σε λειτουργία journal.\n"
+
+#: pg_test_fsync.c:429
+#, c-format
+msgid ""
+"\n"
+"Compare open_sync with different write sizes:\n"
+msgstr ""
+"\n"
+"Συγκρίνετε open_sync με διαφορετικά μεγέθη εγγραφής:\n"
+
+#: pg_test_fsync.c:430
+#, c-format
+msgid ""
+"(This is designed to compare the cost of writing 16kB in different write\n"
+"open_sync sizes.)\n"
+msgstr ""
+"(Αυτό έχει σχεδιαστεί για να συγκρίνει το κόστος της γραφής 16kB σε διαφορετικά\n"
+"μεγέθη open_sync.)\n"
+
+#: pg_test_fsync.c:433
+msgid " 1 * 16kB open_sync write"
+msgstr " 1 * 16kB open_sync εγγραφή"
+
+#: pg_test_fsync.c:434
+msgid " 2 *  8kB open_sync writes"
+msgstr " 2 * 8kB open_sync εγγραφές"
+
+#: pg_test_fsync.c:435
+msgid " 4 *  4kB open_sync writes"
+msgstr " 4 * 4kB open_sync εγγραφές"
+
+#: pg_test_fsync.c:436
+msgid " 8 *  2kB open_sync writes"
+msgstr " 8 * 2kB open_sync εγγραφές"
+
+#: pg_test_fsync.c:437
+msgid "16 *  1kB open_sync writes"
+msgstr "16 * 1kB open_sync εγγραφές"
+
+#: pg_test_fsync.c:491
+#, c-format
+msgid ""
+"\n"
+"Test if fsync on non-write file descriptor is honored:\n"
+msgstr ""
+"\n"
+"Ελέγξτε εάν τηρείται το fsync σε μη-εγγράψιμο περιγραφέα αρχείων:\n"
+
+#: pg_test_fsync.c:492
+#, c-format
+msgid ""
+"(If the times are similar, fsync() can sync data written on a different\n"
+"descriptor.)\n"
+msgstr ""
+"(Εάν οι χρόνοι είναι παρόμοιοι, το fsync() μπορεί να συγχρονίσει δεδομένα εγγεγραμμένα\n"
+"σε διαφορετικό περιγραφέα.)\n"
+
+#: pg_test_fsync.c:557
+#, c-format
+msgid ""
+"\n"
+"Non-sync'ed %dkB writes:\n"
+msgstr ""
+"\n"
+"Μη-συγχρονισμένες %dkB εγγραφές:\n"
