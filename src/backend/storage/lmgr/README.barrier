@@ -103,7 +103,7 @@ performed before the barrier, and vice-versa.
 
 Although this code will work, it is needlessly inefficient.  On systems with
 strong memory ordering (such as x86), the CPU never reorders loads with other
-loads, nor stores with other stores.  It can, however, allow a load to
+loads, nor stores with other stores.  It can, however, allow a load to be
 performed before a subsequent store.  To avoid emitting unnecessary memory
 instructions, we provide two additional primitives: pg_read_barrier(), and
 pg_write_barrier().  When a memory barrier is being used to separate two
@@ -155,18 +155,16 @@ Although this may compile down to a single machine-language instruction,
 the CPU will execute that instruction by reading the current value of foo,
 adding one to it, and then storing the result back to the original address.
 If two CPUs try to do this simultaneously, both may do their reads before
-either one does their writes.  Eventually we might be able to use an atomic
-fetch-and-add instruction for this specific case on architectures that support
-it, but we can't rely on that being available everywhere, and we currently
-have no support for it at all.  Use a lock.
+either one does their writes.  Such a case could be made safe by using an
+atomic variable and an atomic add.  See port/atomics.h.
 
 2. Eight-byte loads and stores aren't necessarily atomic.  We assume in
 various places in the source code that an aligned four-byte load or store is
 atomic, and that other processes therefore won't see a half-set value.
 Sadly, the same can't be said for eight-byte value: on some platforms, an
 aligned eight-byte load or store will generate two four-byte operations.  If
-you need an atomic eight-byte read or write, you must make it atomic with a
-lock.
+you need an atomic eight-byte read or write, you must either serialize access
+with a lock or use an atomic variable.
 
 3. No ordering guarantees.  While memory barriers ensure that any given
 process performs loads and stores to shared memory in order, they don't
