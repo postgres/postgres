@@ -1141,7 +1141,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add function pg_backend_memory_contexts() to output the memory contexts of arbitrary backends (Atsushi Torikoshi)
+Add function pg_log_backend_memory_contexts() to output the memory contexts of arbitrary backends (Atsushi Torikoshi)
 </para>
 </listitem>
 
@@ -1222,7 +1222,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add lock wait time to pg_locks (Atsushi Torikoshi)
+Add lock wait start time to pg_locks (Atsushi Torikoshi)
 </para>
 </listitem>
 
