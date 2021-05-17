@@ -128,7 +128,7 @@ Change the default of the password_encryption server parameter to scram-sha-256 
 </para>
 
 <para>
-Previously it was md5.  All new passwords will be stored as SHA256 unless this server variable is changed or the password is already md5-hashed.
+Previously it was md5.  All new passwords will be stored as SHA256 unless this server variable is changed or the password is specified in md5 format.
 Also, the legacy (and undocumented) boolean-like values which were previously synonyms for <literal>md5</literal> are no longer accepted.
 </para>
 </listitem>
@@ -678,11 +678,11 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Autovacuum now analyzes partitioned tables (Yuzuko Hosoya)
+Autovacuum now analyzes partitioned tables (Yuzuko Hosoya, Álvaro Herrera)
 </para>
 
 <para>
-DETAILS?
+Insert, update, and delete tuple counts from partitions are now propagated to their parent tables so autovacuum knows when to process them.
 </para>
 </listitem>
 
@@ -1113,7 +1113,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-If server variable compute_query_id is enabled, display the hash in pg_stat_activity, EXPLAIN VERBOSE, csvlog, and optionally in log_line_prefix (Julien Rouhaud, Álvaro Herrera)
+If server variable compute_query_id is enabled, display the query id in pg_stat_activity, EXPLAIN VERBOSE, csvlog, and optionally in log_line_prefix (Julien Rouhaud)
 </para>
 
 <para>
@@ -2077,6 +2077,41 @@ Allow CURRENT_ROLE every place CURRENT_USER is accepted (Peter Eisentraut)
 
 <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-12-09 [c7aba7c14] Support subscripting of arbitrary types, not only arrays
+-->
+
+<para>
+Allow extensions and built-in data types to implement subscripting (Dmitry Dolgov)
+</para>
+
+<para>
+Previously subscript handling was hard-coded into the server, so that subscripting could only be applied to array types.  This change allows subscript notation to be used to extract or
+assign portions of a value of any type for which the concept makes sense.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2021-01-31 [676887a3b] Implementation of subscripting for jsonb
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2021-01-31 [81fcc72e6] Filling array gaps during jsonb subscripting
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2021-01-31 [aa6e46daf] Throw error when assigning jsonb scalar instead of a com
+-->
+
+<para>
+Allow subscripting of JSONB (Dmitry Dolgov)
+</para>
+
+<para>
+JSONB subscripting can be used to extract and assign to portions of JSONB documents.
+</para>
+</listitem>
+
+<listitem>
+<!--
 Author: Author: Alexander Korotkov <akorotkov@postgresql.org>
 2020-12-20 [6df7a9698] Multirange datatypes
 Author: Alexander Korotkov <akorotkov@postgresql.org>
@@ -2263,25 +2298,6 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <para>
 Allow procedures to have OUT parameters (Peter Eisentraut)
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2021-01-31 [676887a3b] Implementation of subscripting for jsonb
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2021-01-31 [81fcc72e6] Filling array gaps during jsonb subscripting
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2021-01-31 [aa6e46daf] Throw error when assigning jsonb scalar instead of a com
--->
-
-<para>
-Allow subscripting of JSONB and simplify the implementation of subscripting (Dmitry Dolgov)
-</para>
-
-<para>
-JSONB subscripting can be used to extract from and assign to JSONB documents.  Extensions and built-in data types can now implement subscripting more easily.
 </para>
 </listitem>
 
@@ -2638,7 +2654,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Improve the output format of libpq's PQtrace() (Aya Iwata)
+Improve the output format of libpq's PQtrace() (Aya Iwata, Álvaro Herrera)
 </para>
 </listitem>
 
