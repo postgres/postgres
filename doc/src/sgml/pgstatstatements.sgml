@@ -89,8 +89,8 @@
       </para>
       <para>
        True if the query was executed as a top level statement
-       (if <varname>pg_stat_statements.track</varname> is set to
-       <literal>all</literal>, otherwise always false)
+       (always true if <varname>pg_stat_statements.track</varname> is set to
+       <literal>top</literal>)
       </para></entry>
      </row>
 
