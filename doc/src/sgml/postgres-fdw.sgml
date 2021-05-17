@@ -401,6 +401,16 @@ OPTIONS (ADD password_required 'false');
        A table-level option overrides a server-level option.
        The default is <literal>false</literal>.
       </para>
+
+      <para>
+       In order to ensure that the data being returned from a foreign server
+       is consistent, <filename>postgres_fdw</filename> will only open one
+       connection for a given foreign server and will run all queries against
+       that server sequentially even if there are multiple foreign tables
+       involved, unless those tables are subject to different user mappings.
+       In such a case, it may be more performant to disable this option to
+       eliminate the overhead associated with running queries asynchronously.
+      </para>
      </listitem>
     </varlistentry>
 
