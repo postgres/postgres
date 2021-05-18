@@ -344,6 +344,23 @@ Force custom server variable names to match the pattern used for unquoted SQL id
 
 <listitem>
 <!--
+Author: Peter Geoghegan <pg@bowt.ie>
+2021-03-10 [9f3665fbf] Don't consider newly inserted tuples in nbtree VACUUM.
+Author: Peter Geoghegan <pg@bowt.ie>
+2021-03-11 [effdd3f3b] Add back vacuum_cleanup_index_scale_factor parameter.
+-->
+
+<para>
+Remove server variable vacuum_cleanup_index_scale_factor (Peter Geoghegan)
+</para>
+
+<para>
+This setting was disabled in PostgreSQL version 13.3.
+</para>
+</listitem>
+
+<listitem>
+<!--
 Author: Joe Conway <mail@joeconway.com>
 2021-03-31 [b12bd4869] Fix has_column_privilege function corner case
 -->
