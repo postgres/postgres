@@ -916,11 +916,14 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		 */
 		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 		if (!PageIsNew((Page) bufBlock))
-			ereport(ERROR,
+		{
+			 // XXX-ZENITH
+			 MemSet((char *) bufBlock, 0, BLCKSZ);
+			 ereport(DEBUG1,
 					(errmsg("unexpected data beyond EOF in block %u of relation %s",
 							blockNum, relpath(smgr->smgr_rnode, forkNum)),
 					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
-
+		}
 		/*
 		 * We *must* do smgrextend before succeeding, else the page will not
 		 * be reserved by the kernel, and the next P_NEW call will decide to
