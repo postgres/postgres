@@ -459,6 +459,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-toast-compression</option></term>
+      <listitem>
+       <para>
+        Do not output commands to set <acronym>TOAST</acronym> compression
+        methods.
+        With this option, all objects will be created using whichever
+        compression method is the default during restore.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
       <term><option>--no-unlogged-table-data</option></term>
       <listitem>
        <para>
