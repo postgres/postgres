@@ -58,7 +58,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Prevent the containment operators (&lt;@ and @&gt;) for contrib/intarray from using GiST indexes (Tom Lane)
+Prevent the containment operators (&lt;@ and @&gt;) for <xref linkend="intarray"/> from using GiST indexes (Tom Lane)
 </para>
 
 <para>
@@ -75,7 +75,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Remove deprecated containment operators @ and ~ for built-in geometric data types and contrib modules cube, hstore, intarray, and seg (Justin Pryzby)
+Remove deprecated containment operators @ and ~ for built-in <link linkend="functions-geometry">geometric data types</link> and contrib modules <xref linkend="cube"/>, <xref linkend="hstore"/>,
+<xref linkend="intarray"/>, and <xref linkend="seg"/> (Justin Pryzby)
 </para>
 
 <para>
@@ -90,7 +91,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
 <para>
-Fix to_tsquery() and websearch_to_tsquery() to properly parse query text containing discarded tokens (Alexander Korotkov)
+Fix <function><link linkend="functions-textsearch">to_tsquery()</link></function> and <function>websearch_to_tsquery()</function> to properly parse query text containing discarded tokens (Alexander Korotkov)
 </para>
 
 <para>
@@ -106,7 +107,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
 <para>
-Fix websearch_to_tsquery() to properly parse multiple adjacent discarded tokens in quotes (Alexander Korotkov)
+Fix <function><link linkend="functions-textsearch">websearch_to_tsquery()</link></function> to properly parse multiple adjacent discarded tokens in quotes (Alexander Korotkov)
 </para>
 
 <para>
@@ -124,11 +125,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Change the default of the password_encryption server parameter to scram-sha-256 (Peter Eisentraut)
+Change the default of the <xref linkend="guc-password-encryption"/> server parameter to <literal>scram-sha-256</literal> (Peter Eisentraut)
 </para>
 
 <para>
-Previously it was md5.  All new passwords will be stored as SHA256 unless this server variable is changed or the password is specified in md5 format.
+Previously it was <literal>md5</literal>.  All new passwords will be stored as SHA256 unless this server variable is changed or the password is specified in md5 format.
 Also, the legacy (and undocumented) boolean-like values which were previously synonyms for <literal>md5</literal> are no longer accepted.
 </para>
 </listitem>
@@ -140,12 +141,12 @@ Author: Bruce Momjian <bruce@momjian.us>
 -->
 
 <para>
-Overhaul the specification of clientcert in pg_hba.conf (Kyotaro Horiguchi)
+Overhaul the specification of <literal>clientcert</literal> in <filename><link linkend="auth-pg-hba-conf">pg_hba.conf</link></filename> (Kyotaro Horiguchi)
 </para>
 
 <para>
-Values 1/0/no-verify are no longer supported;  only the strings verify-ca and verify-full can be used.  Also, disallow verify-ca if cert authentication is enabled since cert requires verify-full
-checking.
+Values <literal>1</literal>/<literal>0</literal>/<literal>no-verify</literal> are no longer supported;  only the strings <literal>verify-ca</literal> and <literal>verify-full</literal> can be used.  Also, disallow <literal>verify-ca</literal> if cert
+authentication is enabled since cert requires <literal>verify-full</literal> checking.
 </para>
 </listitem>
 
@@ -158,11 +159,11 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Remove support for SSL compression (Daniel Gustafsson, Michael Paquier)
+Remove support for <acronym><link linkend="runtime-config-connection-ssl">SSL</link></acronym> compression (Daniel Gustafsson, Michael Paquier)
 </para>
 
 <para>
-This was already disabled by default in previous Postgres releases, and most modern OpenSSL and TLS versions no longer support it.
+This was already disabled by default in previous Postgres releases, and most modern OpenSSL and <acronym>TLS</acronym> versions no longer support it.
 </para>
 </listitem>
 
@@ -173,7 +174,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 -->
 
 <para>
-Remove server and libpq support for the version 2 wire protocol (Heikki Linnakangas)
+Remove server and <xref linkend="libpq"/> support for the version 2 <link linkend="protocol">wire protocol</link> (Heikki Linnakangas)
 </para>
 
 <para>
@@ -188,11 +189,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Change EXTRACT to return the NUMERIC data type (Peter Eisentraut)
+Change <function><link linkend="functions-datetime">EXTRACT</link></function> to return the <type>NUMERIC</type> data type (Peter Eisentraut)
 </para>
 
 <para>
-EXTRACT(date) now throws an error for units that are not part of the date data type.
+<function>EXTRACT(date)</function> now throws an error for units that are not part of the date data type.
 </para>
 </listitem>
 
@@ -203,11 +204,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Fix handling of infinite window function ranges (Tom Lane)
+Fix handling of infinite <link linkend="syntax-window-functions">window function</link> ranges (Tom Lane)
 </para>
 
 <para>
-Previously window frame clauses like 'inf' PRECEDING AND 'inf' FOLLOWING returned incorrect results.
+Previously window frame clauses like <literal>'inf' PRECEDING AND 'inf' FOLLOWING</literal> returned incorrect results.
 </para>
 </listitem>
 
@@ -218,7 +219,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Prevent tablefunc's function normal_rand() from accepting negative values (Ashutosh Bapat)
+Prevent <xref linkend="tablefunc"/>'s function <function>normal_rand()</function> from accepting negative values (Ashutosh Bapat)
 </para>
 
 <para>
@@ -233,11 +234,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Change var_samp() and stddev_samp() with numeric parameters to return NULL for a single NaN value (Tom Lane)
+Change <function><link linkend="functions-aggregate">var_samp()</link></function> and <function>stddev_samp()</function> with numeric parameters to return NULL for a single NaN value (Tom Lane)
 </para>
 
 <para>
-Previously NaN was returned.
+Previously <literal>NaN</literal> was returned.
 </para>
 </listitem>
 
@@ -248,11 +249,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Remove factorial operators ! and !! (Mark Dilger)
+Remove factorial operators <literal>!</literal> and <literal>!!</literal> (Mark Dilger)
 </para>
 
 <para>
-The factorial() function is still supported.  Also remove function numeric_fac().
+The <function><link linkend="functions-math">factorial()</link></function> function is still supported.  Also remove function <function>numeric_fac()</function>.
 </para>
 </listitem>
 
@@ -263,7 +264,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Disallow factorial() of negative numbers (Peter Eisentraut)
+Disallow <function>factorial()</function> of negative numbers (Peter Eisentraut)
 </para>
 
 <para>
@@ -278,11 +279,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Remove support for postfix (right-unary) operators (Mark Dilger)
+Remove support for <link linkend="sql-createoperator">postfix</link> (right-unary) operators (Mark Dilger)
 </para>
 
 <para>
-pg_dump and pg_upgrade will warn if postfix operators are being dumped.
+<application>pg_dump</application> and <application>pg_upgrade</application> will warn if postfix operators are being dumped.
 </para>
 </listitem>
 
@@ -293,11 +294,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow \D and \W shorthands to match newlines in newline-sensitive mode (Tom Lane)
+Allow <literal>\D</literal> and <literal>\W</literal> shorthands to match newlines in <link linkend="functions-similarto-regexp">regular expression</link> newline-sensitive mode (Tom Lane)
 </para>
 
 <para>
-Previously they did not match;  [^[:digit:]] or [^[:word:]] can be used to get the old behavior.
+Previously they did not match;  <literal>[^[:digit:]]</literal> or <literal>[^[:word:]]</literal> can be used to get the old behavior.
 </para>
 </listitem>
 
@@ -312,7 +313,7 @@ Improve handling of regular expression back-references (Tom Lane)
 </para>
 
 <para>
-For example, disregard ^ in its expansion in \1 in "(^\d+).*\1".
+For example, disregard <literal>^</literal> in its expansion in <literal>\1</literal> in <literal>(^\d+).*\1</literal>.
 </para>
 </listitem>
 
@@ -323,7 +324,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Disallow \w as range start/end in character classes (Tom Lane)
+Disallow <literal>\w</literal> as range start/end in character classes (Tom Lane)
 </para>
 
 <para>
@@ -338,7 +339,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Force custom server variable names to match the pattern used for unquoted SQL identifiers (Tom Lane)
+Force <link linkend="runtime-config-custom">custom server variable</link> names to match the pattern used for unquoted <acronym>SQL</acronym> identifiers (Tom Lane)
 </para>
 </listitem>
 
@@ -351,11 +352,11 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
 <para>
-Remove server variable vacuum_cleanup_index_scale_factor (Peter Geoghegan)
+Remove server variable <varname>vacuum_cleanup_index_scale_factor</varname> (Peter Geoghegan)
 </para>
 
 <para>
-This setting was disabled in PostgreSQL version 13.3.
+This setting was disabled in <productname>PostgreSQL</productname> version 13.3.
 </para>
 </listitem>
 
@@ -366,7 +367,7 @@ Author: Joe Conway <mail@joeconway.com>
 -->
 
 <para>
-Return false for has_column_privilege() checks on non-existent or dropped columns when using attribute numbers (Joe Conway)
+Return false for <function><link linkend="functions-info">has_column_privilege()</link></function> checks on non-existent or dropped columns when using attribute numbers (Joe Conway)
 </para>
 
 <para>
@@ -383,11 +384,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Pass doubled quote marks in ecpg SQL command strings literally (Tom Lane)
+Pass doubled quote marks in <xref linkend="ecpg"/> <acronym>SQL</acronym> command strings literally (Tom Lane)
 </para>
 
 <para>
-Previously 'abc''def' was passed to the server as 'abc'def', and "abc""def" was passed as "abc"def".
+Previously <literal>'abc''def'</literal> was passed to the server as <literal>'abc'def'</literal>, and <literal>"abc""def"</literal> was passed as <literal>"abc"def"</literal>.
 </para>
 </listitem>
 
@@ -398,7 +399,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Disallow single-quoting of the language name in the CREATE/DROP LANGUAGE command (Peter Eisentraut)
+Disallow single-quoting of the language name in the <command><link linkend="sql-createlanguage">CREATE/DROP LANGUAGE</link></command> command (Peter Eisentraut)
 </para>
 </listitem>
 
@@ -409,7 +410,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Remove contrib program pg_standby (Justin Pryzby)
+Remove contrib program <application>pg_standby</application> (Justin Pryzby)
 </para>
 </listitem>
 
@@ -420,7 +421,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Remove composite types for sequences or toast tables (Tom Lane)
+Remove <link linkend="xfunc-sql-composite-functions">composite types</link> for sequences or toast tables (Tom Lane)
 </para>
 </listitem>
 
@@ -431,11 +432,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Remove operator_precedence_warning setting (Tom Lane)
+Remove <varname>operator_precedence_warning</varname> setting (Tom Lane)
 </para>
 
 <para>
-This was needed for warning applications about PostgreSQL 9.5 changes.
+This was needed for warning applications about <productname>PostgreSQL</productname> 9.5 changes.
 </para>
 </listitem>
 
@@ -464,7 +465,7 @@ Author: Stephen Frost <sfrost@snowman.net>
 -->
 
 <para>
-Add predefined roles pg_read_all_data and pg_write_all_data (Stephen Frost)
+Add predefined roles <structname>pg_read_all_data</structname> and <structname>pg_write_all_data</structname> (Stephen Frost)
 </para>
 
 <para>
@@ -483,7 +484,7 @@ Add a predefined role to match the database owner (Noah Misch)
 </para>
 
 <para>
-It is called pg_database_owner;  this is useful in template databases.
+It is called <literal>pg_database_owner</literal>;  this is useful in template databases.
 </para>
 </listitem>
 
@@ -498,7 +499,7 @@ Remove temporary files after backend crashes (Euler Taveira)
 </para>
 
 <para>
-These files were previously retained for debugging purposes;  deletion can be disabled with remove_temp_files_after_crash.
+These files were previously retained for debugging purposes;  deletion can be disabled with <varname>remove_temp_files_after_crash</varname>.
 </para>
 </listitem>
 
@@ -513,7 +514,7 @@ Add long-running queries to be canceled if the client disconnects (Sergey Cherka
 </para>
 
 <para>
-The server variable client_connection_check_interval allows supporting operating systems, e.g., Linux, to automatically cancel queries by disconnected clients.
+The server variable <varname>client_connection_check_interval</varname> allows supporting operating systems, e.g., Linux, to automatically cancel queries by disconnected clients.
 </para>
 </listitem>
 
@@ -524,11 +525,11 @@ Author: Magnus Hagander <magnus@hagander.net>
 -->
 
 <para>
-Add function pg_wait_for_backend_termination() that waits for session exit (Bharath Rupireddy)
+Add function <function>pg_wait_for_backend_termination()</function> that waits for session exit (Bharath Rupireddy)
 </para>
 
 <para>
-Also add a similar optional wait parameter to pg_terminate_backend().
+Also add a similar optional wait parameter to <function>pg_terminate_backend()</function>.
 </para>
 </listitem>
 
@@ -554,7 +555,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add Set Server Name Indication (SNI) for SSL connection packets (Peter Eisentraut)
+Add Set Server Name Indication (<acronym>SNI</acronym>) for <acronym>SSL</acronym> connection packets (Peter Eisentraut)
 </para>
 
 <para>
@@ -587,11 +588,11 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
 <para>
-Allow VACUUM to eagerly add newly deleted btree pages to the free space map (Peter Geoghegan)
+Allow <command>VACUUM</command> to eagerly add newly deleted btree pages to the free space map (Peter Geoghegan)
 </para>
 
 <para>
-Previously VACUUM could only place preexisting deleted pages in the free space map.
+Previously <command>VACUUM</command> could only place preexisting deleted pages in the free space map.
 </para>
 </listitem>
 
@@ -624,7 +625,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
 <para>
-Reduce the default value of vacuum_cost_page_miss (Peter Geoghegan)
+Reduce the default value of <varname>vacuum_cost_page_miss</varname> (Peter Geoghegan)
 </para>
 
 <para>
@@ -639,11 +640,11 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add ability to skip vacuuming of TOAST tables (Nathan Bossart)
+Add ability to skip vacuuming of <acronym>TOAST</acronym> tables (Nathan Bossart)
 </para>
 
 <para>
-VACUUM now has a PROCESS_TOAST which can be set to false to disable TOAST processing, and vacuumdb has a --no-process-toast option.
+<command>VACUUM</command> now has a <literal>PROCESS_TOAST</literal> which can be set to false to disable <acronym>TOAST</acronym> processing, and vacuumdb has a <option>--no-process-toast</option> option.
 </para>
 </listitem>
 
@@ -654,7 +655,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
 <para>
-Have COPY FREEZE appropriately update page visibility bits (Anastasia Lubennikova, Pavan Deolasee, Jeff Janes)
+Have <command>COPY FREEZE</command> appropriately update page visibility bits (Anastasia Lubennikova, Pavan Deolasee, Jeff Janes)
 </para>
 </listitem>
 
@@ -669,7 +670,7 @@ Cause vacuum operations to be aggressive if the table is near xid or multixact w
 </para>
 
 <para>
-This is controlled by vacuum_failsafe_age and vacuum_multixact_failsafe_age.
+This is controlled by <varname>vacuum_failsafe_age</varname> and <varname>vacuum_multixact_failsafe_age</varname>.
 </para>
 </listitem>
 
@@ -752,7 +753,7 @@ Allow partitions to be detached in a non-blocking manner (Álvaro Herrera)
 </para>
 
 <para>
-The syntax is ALTER TABLE ... DETACH PARTITION ... CONCURRENTLY, and FINALIZE.
+The syntax is <command>ALTER TABLE ... DETACH PARTITION ... CONCURRENTLY</command>, and <command>FINALIZE</command>.
 </para>
 </listitem>
 
@@ -804,7 +805,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
 <para>
-Allow BRIN indexes to record multiple min/max values per range (Tomas Vondra)
+Allow <acronym>BRIN</acronym> indexes to record multiple min/max values per range (Tomas Vondra)
 </para>
 
 <para>
@@ -819,7 +820,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
 <para>
-Allow BRIN indexes to use bloom filters (Tomas Vondra)
+Allow <acronym>BRIN</acronym> indexes to use bloom filters (Tomas Vondra)
 </para>
 
 <para>
@@ -849,7 +850,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow SP-GiST to use INCLUDE'd columns (Pavel Borisov)
+Allow SP-GiST to use <literal>INCLUDE</literal>'d columns (Pavel Borisov)
 </para>
 </listitem>
 
@@ -869,7 +870,7 @@ Author: David Rowley <drowley@postgresql.org>
 -->
 
 <para>
-Allow hash lookup of IN clause with many constants (James Coleman, David Rowley)
+Allow hash lookup of <literal>IN</literal> clause with many constants (James Coleman, David Rowley)
 </para>
 
 <para>
@@ -888,7 +889,7 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 -->
 
 <para>
-Increase the number of places extended statistics can be used for OR clause estimation (Tomas Vondra, Dean Rasheed)
+Increase the number of places extended statistics can be used for <literal>OR</literal> clause estimation (Tomas Vondra, Dean Rasheed)
 </para>
 </listitem>
 
@@ -903,8 +904,8 @@ Allow extended statistics on expressions (Tomas Vondra)
 </para>
 
 <para>
-This allows statistics on a group of expressions and columns, rather than only columns like previously.  System view pg_stats_ext_exprs reports such statistics.
-ALTER TABLE ... ALTER COLUMN ... TYPE RESETS STASTISTICS?
+This allows statistics on a group of expressions and columns, rather than only columns like previously.  System view <structname>pg_stats_ext_exprs</structname> reports such statistics.
+<literal>ALTER TABLE ... ALTER COLUMN ... TYPE RESETS STASTISTICS</literal>?
 </para>
 </listitem>
 
@@ -930,11 +931,11 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Fix EXPLAIN CREATE TABLE AS and EXPLAIN CREATE MATERIALIZED VIEW to honor IF NOT EXISTS (Bharath Rupireddy)
+Fix <command>EXPLAIN CREATE TABLE AS</command> and <command>EXPLAIN CREATE MATERIALIZED VIEW</command> to honor <literal>IF NOT EXISTS</literal> (Bharath Rupireddy)
 </para>
 
 <para>
-Previously, if the object already exists, EXPLAIN would fail.
+Previously, if the object already exists, <command>EXPLAIN</command> would fail.
 </para>
 </listitem>
 
@@ -964,7 +965,7 @@ Author: Andres Freund <andres@anarazel.de>
 -->
 
 <para>
-Improve the speed of computing MVCC visibility snapshots on systems with many CPUs and high session counts (Andres Freund)
+Improve the speed of computing <acronym>MVCC</acronym> visibility snapshots on systems with many CPUs and high session counts (Andres Freund)
 </para>
 
 <para>
@@ -1024,7 +1025,7 @@ Allow a query referencing multiple foreign tables to perform foreign table scans
 </para>
 
 <para>
-The postgres_fdw supports these type of scans if "async_capable" is set.
+The <application>postgres_fdw</application> supports these type of scans if <literal>async_capable</literal> is set.
 </para>
 </listitem>
 
@@ -1039,7 +1040,7 @@ Allow analyze to do page prefetching (Stephen Frost)
 </para>
 
 <para>
-This is controlled by maintenance_io_concurrency.
+This is controlled by <varname>maintenance_io_concurrency</varname>.
 </para>
 </listitem>
 
@@ -1087,7 +1088,7 @@ Dramatically improve Unicode normalization (John Naylor)
 </para>
 
 <para>
-This speeds normalize() and IS NORMALIZED.
+This speeds <function>normalize()</function> and <literal>IS NORMALIZED</literal>.
 </para>
 </listitem>
 
@@ -1098,11 +1099,11 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
 <para>
-Add ability to use LZ4 compression on TOAST data (Dilip Kumar)
+Add ability to use LZ4 compression on <acronym>TOAST</acronym> data (Dilip Kumar)
 </para>
 
 <para>
-This can be set at the column level, or set as a default via server setting default_toast_compression.  The server must be compiled with --with-lz4 to support this feature;  the default is still pglz.
+This can be set at the column level, or set as a default via server setting <varname>default_toast_compression</varname>.  The server must be compiled with <option>--with-lz4</option> to support this feature;  the default is still pglz.
 </para>
 </listitem>
 
@@ -1130,7 +1131,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-If server variable compute_query_id is enabled, display the query id in pg_stat_activity, EXPLAIN VERBOSE, csvlog, and optionally in log_line_prefix (Julien Rouhaud)
+If server variable <varname>compute_query_id</varname> is enabled, display the query id in <structname>pg_stat_activity</structname>, <command>EXPLAIN VERBOSE</command>, csvlog, and optionally in <varname>log_line_prefix</varname> (Julien Rouhaud)
 </para>
 
 <para>
@@ -1147,7 +1148,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add system view pg_backend_memory_contexts to report session memory usage (Atsushi Torikoshi, Fujii Masao)
+Add system view <structname>pg_backend_memory_contexts</structname> to report session memory usage (Atsushi Torikoshi, Fujii Masao)
 </para>
 </listitem>
 
@@ -1158,7 +1159,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add function pg_log_backend_memory_contexts() to output the memory contexts of arbitrary backends (Atsushi Torikoshi)
+Add function <function>pg_log_backend_memory_contexts()</function> to output the memory contexts of arbitrary backends (Atsushi Torikoshi)
 </para>
 </listitem>
 
@@ -1173,7 +1174,7 @@ Improve logging of auto-vacuum and auto-analyze (Stephen Frost, Jakub Wartak)
 </para>
 
 <para>
-This reports I/O timings for auto-vacuum and auto-analyze if track_io_timing is enabled.  Also, report buffer read and dirty rates for auto-analyze.
+This reports I/O timings for auto-vacuum and auto-analyze if <varname>track_io_timing</varname> is enabled.  Also, report buffer read and dirty rates for auto-analyze.
 </para>
 </listitem>
 
@@ -1184,7 +1185,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add information about the original user name supplied by the client to the output of log_connections (Jacob Champion)
+Add information about the original user name supplied by the client to the output of <varname>log_connections</varname> (Jacob Champion)
 </para>
 </listitem>
 
@@ -1206,7 +1207,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add view pg_stat_progress_copy to report COPY progress (Josef Šimánek, Matthias van de Meent)
+Add view <structname>pg_stat_progress_copy</structname> to report <command>COPY</command> progress (Josef Šimánek, Matthias van de Meent)
 </para>
 </listitem>
 
@@ -1217,7 +1218,7 @@ Author: Magnus Hagander <magnus@hagander.net>
 -->
 
 <para>
-Add session statistics to the pg_stat_database system view (Laurenz Albe)
+Add session statistics to the <structname>pg_stat_database</structname> system view (Laurenz Albe)
 </para>
 </listitem>
 
@@ -1228,7 +1229,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add columns to pg_prepared_statements to report generic and custom plan counts (Atsushi Torikoshi, Kyotaro Horiguchi)
+Add columns to <structname>pg_prepared_statements</structname> to report generic and custom plan counts (Atsushi Torikoshi, Kyotaro Horiguchi)
 </para>
 </listitem>
 
@@ -1239,7 +1240,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add lock wait start time to pg_locks (Atsushi Torikoshi)
+Add lock wait start time to <structname>pg_locks</structname> (Atsushi Torikoshi)
 </para>
 </listitem>
 
@@ -1254,7 +1255,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add system view pg_stat_wal which reports WAL activity (Masahiro Ikeda)
+Add system view <structname>pg_stat_wal</structname> which reports <acronym>WAL</acronym> activity (Masahiro Ikeda)
 </para>
 </listitem>
 
@@ -1271,11 +1272,11 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Add system view pg_stat_replication_slots to report replication slot activity (Sawada Masahiko, Amit Kapila, Vignesh C)
+Add system view <structname>pg_stat_replication_slots</structname> to report replication slot activity (Sawada Masahiko, Amit Kapila, Vignesh C)
 </para>
 
 <para>
-Function pg_stat_reset_replication_slot() resets slot statistics.
+Function <function>pg_stat_reset_replication_slot()</function> resets slot statistics.
 </para>
 </listitem>
 
@@ -1286,11 +1287,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve pg_stat_activity reporting of walsender processes (Tom Lane)
+Improve <structname>pg_stat_activity</structname> reporting of walsender processes (Tom Lane)
 </para>
 
 <para>
-Previously only SQL commands were reported.
+Previously only <acronym>SQL</acronym> commands were reported.
 </para>
 </listitem>
 
@@ -1301,7 +1302,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Make the archiver process visible in pg_stat_activity (Kyotaro Horiguchi)
+Make the archiver process visible in <structname>pg_stat_activity</structname> (Kyotaro Horiguchi)
 </para>
 </listitem>
 
@@ -1312,7 +1313,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add wait event WalReceiverExit to report WAL receiver exit wait time (Fujii Masao)
+Add wait event WalReceiverExit to report <acronym>WAL</acronym> receiver exit wait time (Fujii Masao)
 </para>
 </listitem>
 
@@ -1323,7 +1324,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Implement information schema view routine_column_usage to track columns referenced by function and procedure default expressions (Peter Eisentraut)
+Implement information schema view <structname>routine_column_usage</structname> to track columns referenced by function and procedure default expressions (Peter Eisentraut)
 </para>
 </listitem>
 
@@ -1343,11 +1344,11 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 -->
 
 <para>
-Allow the certificate's distinguished name (DN) to be matched for client certificate authentication (Andrew Dunstan)
+Allow the certificate's distinguished name (<acronym>DN</acronym>) to be matched for client certificate authentication (Andrew Dunstan)
 </para>
 
 <para>
-The new pg_hba.conf keyword "clientname=DN" allows comparison with certificate attributes beyond the CN and can be combined with ident maps.
+The new <filename>pg_hba.conf</filename> keyword <literal>clientname=DN</literal> allows comparison with certificate attributes beyond the <literal>CN</literal> and can be combined with ident maps.
 </para>
 </listitem>
 
@@ -1358,7 +1359,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow pg_hba.conf and pg_ident.conf records to span multiple lines (Fabien Coelho)
+Allow <filename>pg_hba.conf</filename> and <filename>pg_ident.conf</filename> records to span multiple lines (Fabien Coelho)
 </para>
 
 <para>
@@ -1373,11 +1374,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Allow the specification of a certificate revocation list (CRL) directory (Kyotaro Horiguchi)
+Allow the specification of a certificate revocation list (<acronym>CRL</acronym>) directory (Kyotaro Horiguchi)
 </para>
 
 <para>
-This is controlled by server variable ssl_crl_dir and libpq connection option sslcrldir.  Previously only CRL files could be specified.
+This is controlled by server variable <varname>ssl_crl_dir</varname> and libpq connection option sslcrldir.  Previously only <acronym>CRL</acronym> files could be specified.
 </para>
 </listitem>
 
@@ -1408,11 +1409,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add server setting idle_session_timeout to close idle sessions (Li Japin)
+Add server setting <varname>idle_session_timeout</varname> to close idle sessions (Li Japin)
 </para>
 
 <para>
-This is similar to idle_in_transaction_session_timeout.
+This is similar to <varname>idle_in_transaction_session_timeout</varname>.
 </para>
 </listitem>
 
@@ -1423,7 +1424,7 @@ Author: Stephen Frost <sfrost@snowman.net>
 -->
 
 <para>
-Change checkpoint_completion_target default to 0.9 (Stephen Frost)
+Change <varname>checkpoint_completion_target</varname> default to 0.9 (Stephen Frost)
 </para>
 
 <para>
@@ -1438,7 +1439,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add %P to log_line_prefix to report the parallel group leader (Justin Pryzby)
+Add %P to <varname>log_line_prefix</varname> to report the parallel group leader (Justin Pryzby)
 </para>
 </listitem>
 
@@ -1449,7 +1450,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Allow unix_socket_directories to specify paths as individual, comma-separated quoted strings (Ian Lawrence Barwick)
+Allow <varname>unix_socket_directories</varname> to specify paths as individual, comma-separated quoted strings (Ian Lawrence Barwick)
 </para>
 
 <para>
@@ -1468,7 +1469,7 @@ Allow startup allocation of dynamic shared memory (Thomas Munro)
 </para>
 
 <para>
-This is controlled by min_dynamic_shared_memory.   This allows more use of huge pages.
+This is controlled by <varname>min_dynamic_shared_memory</varname>.   This allows more use of huge pages.
 </para>
 </listitem>
 
@@ -1479,7 +1480,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Add setting huge_page_size to control the size of huge pages used on Linux (Odin Ugedal)
+Add setting <varname>huge_page_size</varname> to control the size of huge pages used on Linux (Odin Ugedal)
 </para>
 </listitem>
 
@@ -1501,7 +1502,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 -->
 
 <para>
-Allow standby servers to be rewound via pg_rewind (Heikki Linnakangas)
+Allow standby servers to be rewound via <application>pg_rewind</application> (Heikki Linnakangas)
 </para>
 </listitem>
 
@@ -1512,11 +1513,11 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Allow restore_command setting to be changed during a server reload (Sergei Kornilov)
+Allow <varname>restore_command</varname> setting to be changed during a server reload (Sergei Kornilov)
 </para>
 
 <para>
-You can also set restore_command to an empty string and reload to force recovery to only read from the pg_wal directory.
+You can also set <varname>restore_command</varname> to an empty string and reload to force recovery to only read from the <filename>pg_wal</filename> directory.
 </para>
 </listitem>
 
@@ -1529,7 +1530,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add server variable log_recovery_conflict_waits to report long recovery conflict wait times (Bertrand Drouvot, Masahiko Sawada)
+Add server variable <varname>log_recovery_conflict_waits</varname> to report long recovery conflict wait times (Bertrand Drouvot, Masahiko Sawada)
 </para>
 </listitem>
 
@@ -1555,11 +1556,11 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
 <para>
-Add function pg_get_wal_replay_pause_state() to report the recovery state (Dilip Kumar)
+Add function <function>pg_get_wal_replay_pause_state()</function> to report the recovery state (Dilip Kumar)
 </para>
 
 <para>
-It gives more detailed information than pg_is_wal_replay_paused(), which still exists.
+It gives more detailed information than <function>pg_is_wal_replay_paused()</function>, which still exists.
 </para>
 </listitem>
 
@@ -1570,7 +1571,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add new server-side variable in_hot_standby (Haribabu Kommi, Greg Nancarrow, Tom Lane)
+Add new server-side variable <varname>in_hot_standby</varname> (Haribabu Kommi, Greg Nancarrow, Tom Lane)
 </para>
 </listitem>
 
@@ -1597,7 +1598,7 @@ Allow file system sync at the start of crash recovery on Linux (Thomas Munro)
 
 <para>
 By default, Postgres opens and fsyncs every data file at the start of crash recovery.
-This new setting, recovery_init_sync_method=syncfs, instead syncs each filesystem used by the database cluster.
+This new setting, <literal>recovery_init_sync_method=syncfs</literal>, instead syncs each filesystem used by the database cluster.
 This allows for faster recovery on systems with many database files.
 </para>
 </listitem>
@@ -1609,7 +1610,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add function pg_xact_commit_timestamp_origin() to return the commit timestamp and replication origin of the specified transaction (Movead Li)
+Add function <function>pg_xact_commit_timestamp_origin()</function> to return the commit timestamp and replication origin of the specified transaction (Movead Li)
 </para>
 </listitem>
 
@@ -1620,7 +1621,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add the replication origin to the record returned by pg_last_committed_xact() (Movead Li)
+Add the replication origin to the record returned by <function>pg_last_committed_xact()</function> (Movead Li)
 </para>
 </listitem>
 
@@ -1679,7 +1680,7 @@ Allow logical replication to stream long in-progress transactions to subscribers
 </para>
 
 <para>
-Previously transactions that exceeded logical_decoding_work_mem were written to disk until the transaction completed.
+Previously transactions that exceeded <varname>logical_decoding_work_mem</varname> were written to disk until the transaction completed.
 </para>
 </listitem>
 
@@ -1690,11 +1691,11 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Enhance the logical replication API to allow streaming large in-progress transactions (Tomas Vondra, Dilip Kumar, Amit Kapila)
+Enhance the logical replication <acronym>API</acronym> to allow streaming large in-progress transactions (Tomas Vondra, Dilip Kumar, Amit Kapila)
 </para>
 
 <para>
-The output functions begin with "stream".  test_decoding also supports these.
+The output functions begin with <literal>stream</literal>.  <application>test_decoding</application> also supports these.
 </para>
 </listitem>
 
@@ -1716,7 +1717,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Immediately WAL-log subtransaction and top-level XID association (Tomas Vondra, Dilip Kumar, Amit Kapila)
+Immediately <acronym>WAL</acronym>-log subtransaction and top-level <type>XID</type> association (Tomas Vondra, Dilip Kumar, Amit Kapila)
 </para>
 
 <para>
@@ -1739,7 +1740,7 @@ Enhance logical decoding APIs to handle two-phase commits (Ajin Cherian, Amit Ka
 </para>
 
 <para>
-This is controlled via pg_create_logical_replication_slot().
+This is controlled via <function>pg_create_logical_replication_slot()</function>.
 </para>
 </listitem>
 
@@ -1750,11 +1751,11 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Generate WAL invalidations message during command completion when using logical replication (Dilip Kumar, Tomas Vondra, Amit Kapila)
+Generate <acronym>WAL</acronym> invalidations message during command completion when using logical replication (Dilip Kumar, Tomas Vondra, Amit Kapila)
 </para>
 
 <para>
-When logical replication is disabled, WAL invalidation messages are generated at transaction completion.  This allows logical streaming of in-progress transactions.
+When logical replication is disabled, <acronym>WAL</acronym> invalidation messages are generated at transaction completion.  This allows logical streaming of in-progress transactions.
 </para>
 </listitem>
 
@@ -1769,7 +1770,7 @@ Allow logical decoding to more efficiently process cache invalidation messages (
 </para>
 
 <para>
-This allows Logical decoding to work efficiently in presence of a large amount of DDL.
+This allows Logical decoding to work efficiently in presence of a large amount of <acronym>DDL</acronym>.
 </para>
 </listitem>
 
@@ -1816,7 +1817,7 @@ Allow logical decoding to be filtered by xid (Markus Wanner)
    </sect3>
 
    <sect3>
-    <title>SELECT, INSERT</title>
+    <title><command>SELECT</command>, <command>INSERT</command></title>
 
     <itemizedlist>
 
@@ -1827,7 +1828,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Reduce the number of keywords that can't be used as column labels without "AS" (Mark Dilger)
+Reduce the number of keywords that can't be used as column labels without <literal>AS</literal> (Mark Dilger)
 </para>
 
 <para>
@@ -1838,15 +1839,15 @@ There are now 90% fewer restricted keywords.
 <listitem>
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
-2021-03-31 [055fee7eb] Allow an alias to be attached to a JOIN ... USING
+2021-03-31 [055fee7eb] Allow an alias to be attached to a <literal>JOIN ... USING</literal>
 -->
 
 <para>
-Allow an alias to be specified for JOIN's USING clause (Peter Eisentraut)
+Allow an alias to be specified for <literal>JOIN</literal>'s <literal>USING</literal> clause (Peter Eisentraut)
 </para>
 
 <para>
-The alias is created by using AS after the USING clause and represents an alias for the USING columns.
+The alias is created by using <literal>AS</literal> after the <literal>USING</literal> clause and represents an alias for the <literal>USING</literal> columns.
 </para>
 </listitem>
 
@@ -1857,22 +1858,22 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
 <para>
-Allow DISTINCT to be added to GROUP BY to remove duplicate GROUPING SET combinations (Vik Fearing)
+Allow <literal>DISTINCT</literal> to be added to <literal>GROUP BY</literal> to remove duplicate <literal>GROUPING SET</literal> combinations (Vik Fearing)
 </para>
 
 <para>
-For example, GROUP BY CUBE (a,b), CUBE (b,c) will generate duplicate grouping combinations without DISTINCT.
+For example, <literal>GROUP BY CUBE (a,b), CUBE (b,c)</literal> will generate duplicate grouping combinations without <literal>DISTINCT</literal>.
 </para>
 </listitem>
 
 <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-11-22 [17958972f] Allow a multi-row INSERT to specify DEFAULTs for a gener
+2020-11-22 [17958972f] Allow a multi-row <command>INSERT</command> to specify DEFAULTs for a gener
 -->
 
 <para>
-Properly handle DEFAULT values for columns in multi-column inserts (Dean Rasheed)
+Properly handle <literal>DEFAULT</literal> values for columns in multi-column inserts (Dean Rasheed)
 </para>
 
 <para>
@@ -1889,7 +1890,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add SQL-standard SEARCH and CYCLE clauses for common table expressions (Peter Eisentraut)
+Add <acronym>SQL</acronym>-standard <literal>SEARCH</literal> and <literal>CYCLE</literal> clauses for common table expressions (Peter Eisentraut)
 </para>
 
 <para>
@@ -1904,7 +1905,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow the WHERE clause of ON CONFLICT to be table-qualified (Tom Lane)
+Allow the <literal>WHERE</literal> clause of <literal>ON CONFLICT</literal> to be table-qualified (Tom Lane)
 </para>
 
 <para>
@@ -1928,7 +1929,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Allow REFRESH MATERIALIZED VIEW to use parallelism (Bharath Rupireddy)
+Allow <command>REFRESH MATERIALIZED VIEW</command> to use parallelism (Bharath Rupireddy)
 </para>
 </listitem>
 
@@ -1939,11 +1940,11 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Allow REINDEX to change the tablespace of the new index (Alexey Kondratov, Michael Paquier, Justin Pryzby)
+Allow <command>REINDEX</command> to change the tablespace of the new index (Alexey Kondratov, Michael Paquier, Justin Pryzby)
 </para>
 
 <para>
-This is done by specifying a TABLESPACE clause.
+This is done by specifying a <literal>TABLESPACE</literal> clause.
 </para>
 </listitem>
 
@@ -1954,7 +1955,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Allow REINDEX to process all child tables or indexes of a partitioned relation (Justin Pryzby, Michael Paquier)
+Allow <command>REINDEX</command> to process all child tables or indexes of a partitioned relation (Justin Pryzby, Michael Paquier)
 </para>
 </listitem>
 
@@ -1965,7 +1966,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve the performance of COPY FROM in binary mode (Bharath Rupireddy, Amit Langote)
+Improve the performance of <command>COPY FROM</command> in binary mode (Bharath Rupireddy, Amit Langote)
 </para>
 </listitem>
 
@@ -1976,11 +1977,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Preserve SQL standard syntax in view definitions, if possible (Tom Lane)
+Preserve <acronym>SQL</acronym> standard syntax in view definitions, if possible (Tom Lane)
 </para>
 
 <para>
-Previously non-function call SQL standard syntax, e.g. EXTRACT, were converted to non-SQL standard function calls.
+Previously non-function call <acronym>SQL</acronym> standard syntax, e.g. <function>EXTRACT</function>, were converted to non-<acronym>SQL</acronym> standard function calls.
 </para>
 </listitem>
 
@@ -1991,7 +1992,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add the SQL-standard clause GRANTED BY to GRANT and REVOKE (Peter Eisentraut)
+Add the <acronym>SQL</acronym>-standard clause <literal>GRANTED BY</literal> to <command>GRANT</command> and <command>REVOKE</command> (Peter Eisentraut)
 </para>
 </listitem>
 
@@ -2002,7 +2003,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add OR REPLACE for CREATE TRIGGER (Takamichi Osumi)
+Add <literal>OR REPLACE</literal> for <command>CREATE TRIGGER</command> (Takamichi Osumi)
 </para>
 
 <para>
@@ -2021,7 +2022,7 @@ Allow control over whether foreign servers keep connections open after transacti
 </para>
 
 <para>
-This is controlled by keep_connections and defaults to on.
+This is controlled by <varname>keep_connections</varname> and defaults to on.
 </para>
 </listitem>
 
@@ -2032,11 +2033,11 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Allow TRUNCATE to operate on foreign tables (Kazutaka Onishi, Kohei KaiGai)
+Allow <command>TRUNCATE</command> to operate on foreign tables (Kazutaka Onishi, Kohei KaiGai)
 </para>
 
 <para>
-The postgres_fdw module also now supports this.
+The <application>postgres_fdw</application> module also now supports this.
 </para>
 </listitem>
 
@@ -2051,7 +2052,7 @@ Allow publications to be more easily added and removed (Japin Li)
 </para>
 
 <para>
-The new syntax is ALTER SUBSCRIPTION ... ADD/DROP PUBLICATION.  This avoids having to specify all publications to add/remove entries.
+The new syntax is <command>ALTER SUBSCRIPTION ... ADD/DROP PUBLICATION</command>.  This avoids having to specify all publications to add/remove entries.
 </para>
 </listitem>
 
@@ -2068,7 +2069,7 @@ Add primary keys, unique constraints, and foreign keys to system catalogs (Peter
 </para>
 
 <para>
-This helps GUI tools analyze the system tables.
+This helps <acronym>GUI</acronym> tools analyze the system tables.
 </para>
 </listitem>
 
@@ -2079,7 +2080,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Allow CURRENT_ROLE every place CURRENT_USER is accepted (Peter Eisentraut)
+Allow <literal>CURRENT_ROLE</literal> every place <literal>CURRENT_USER</literal> is accepted (Peter Eisentraut)
 </para>
 </listitem>
 
@@ -2119,11 +2120,11 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
 <para>
-Allow subscripting of JSONB (Dmitry Dolgov)
+Allow subscripting of <type>JSONB</type> (Dmitry Dolgov)
 </para>
 
 <para>
-JSONB subscripting can be used to extract and assign to portions of JSONB documents.
+<type>JSONB</type> subscripting can be used to extract and assign to portions of <type>JSONB</type> documents.
 </para>
 </listitem>
 
@@ -2188,7 +2189,7 @@ Allow tsearch data files to have unlimited line lengths (Tom Lane)
 </para>
 
 <para>
-The previous limit was 4k bytes.  Also remove function t_readline().
+The previous limit was 4k bytes.  Also remove function <function>t_readline()</function>.
 </para>
 </listitem>
 
@@ -2199,7 +2200,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add support for infinity and -infinity values to the numeric data type (Tom Lane)
+Add support for infinity and <literal>-infinity</literal> values to the numeric data type (Tom Lane)
 </para>
 
 <para>
@@ -2255,7 +2256,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add operators to add and subtract LSN and numeric (byte) values (Fujii Masao)
+Add operators to add and subtract <type>LSN</type> and numeric (byte) values (Fujii Masao)
 </para>
 </listitem>
 
@@ -2266,7 +2267,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow binary data transfer to be more forgiving of array and record OID mismatches (Tom Lane)
+Allow binary data transfer to be more forgiving of array and record <type>OID</type> mismatches (Tom Lane)
 </para>
 </listitem>
 
@@ -2297,7 +2298,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Allow SQL-language functions and procedures to use SQL-standard function bodies (Peter Eisentraut)
+Allow <acronym>SQL</acronym>-language functions and procedures to use <acronym>SQL</acronym>-standard function bodies (Peter Eisentraut)
 </para>
 
 <para>
@@ -2314,7 +2315,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Allow procedures to have OUT parameters (Peter Eisentraut)
+Allow procedures to have <literal>OUT</literal> parameters (Peter Eisentraut)
 </para>
 </listitem>
 
@@ -2329,7 +2330,7 @@ Allow some array functions to operate on a mix of compatible data types (Tom Lan
 </para>
 
 <para>
-The functions are array_append() array_prepend(), array_cat(), array_position(), array_positions(), array_remove(), array_replace(), and width_bucket().  Previously only identical data types could be used.
+The functions are <function>array_append()</function> <function>array_prepend()</function>, <function>array_cat()</function>, <function>array_position()</function>, <function>array_positions()</function>, <function>array_remove()</function>, <function>array_replace()</function>, and <function>width_bucket()</function>.  Previously only identical data types could be used.
 </para>
 </listitem>
 
@@ -2340,7 +2341,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add SQL-standard trim_array() function (Vik Fearing)
+Add <acronym>SQL</acronym>-standard <function>trim_array()</function> function (Vik Fearing)
 </para>
 
 <para>
@@ -2355,7 +2356,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add bytea equivalents of ltrim() and rtrim() (Joel Jacobson)
+Add bytea equivalents of <function>ltrim()</function> and <function>rtrim()</function> (Joel Jacobson)
 </para>
 </listitem>
 
@@ -2366,7 +2367,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Support negative indexes in split_part() (Nikhil Benesch)
+Support negative indexes in <function>split_part()</function> (Nikhil Benesch)
 </para>
 
 <para>
@@ -2381,11 +2382,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-A string_to_table() function to split a string on delimiters (Pavel Stehule)
+A <function>string_to_table()</function> function to split a string on delimiters (Pavel Stehule)
 </para>
 
 <para>
-This is similar to the regexp_split_to_table() function.
+This is similar to the <function>regexp_split_to_table()</function> function.
 </para>
 </listitem>
 
@@ -2396,7 +2397,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add unistr() function to allow Unicode characters to be specified as backslash-hex escapes in strings (Pavel Stehule)
+Add <function>unistr()</function> function to allow Unicode characters to be specified as backslash-hex escapes in strings (Pavel Stehule)
 </para>
 
 <para>
@@ -2411,7 +2412,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add bit_xor XOR aggregate function (Alexey Bashtanov)
+Add <function>bit_xor()</function> XOR aggregate function (Alexey Bashtanov)
 </para>
 </listitem>
 
@@ -2422,7 +2423,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add function bit_count() to return the number of bits set in a bit or byte string (David Fetter)
+Add function <function>bit_count()</function> to return the number of bits set in a bit or byte string (David Fetter)
 </para>
 </listitem>
 
@@ -2435,11 +2436,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add date_bin function (John Naylor)
+Add <function>date_bin()</function> function (John Naylor)
 </para>
 
 <para>
-The function date_bin "bins" the input timestamp into a specified interval aligned with a specified origin.
+The function <function>date_bin()</function> "bins" the input timestamp into a specified interval aligned with a specified origin.
 </para>
 </listitem>
 
@@ -2450,11 +2451,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow make_timestamp/make_timestamptz to accept negative years (Peter Eisentraut)
+Allow <function>make_timestamp()</function>/<function>make_timestamptz()</function> to accept negative years (Peter Eisentraut)
 </para>
 
 <para>
-They are interpreted as BC years.
+They are interpreted as <literal>BC</literal> years.
 </para>
 </listitem>
 
@@ -2465,11 +2466,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add newer regular expression substring() syntax (Peter Eisentraut)
+Add newer regular expression <function>substring()</function> syntax (Peter Eisentraut)
 </para>
 
 <para>
-The new syntax is SUBSTRING(text SIMILAR pattern ESCAPE escapechar).  The previous standard syntax was SUBSTRING(text FROM pattern FOR escapechar), and is still supported by Postgres.
+The new syntax is <literal>SUBSTRING(text SIMILAR pattern ESCAPE escapechar)</literal>.  The previous standard syntax was <literal>SUBSTRING(text FROM pattern FOR escapechar)</literal>, and is still supported by Postgres.
 </para>
 </listitem>
 
@@ -2502,7 +2503,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow more flexible data types for default values of lead() and lag() window functions (Vik Fearing)
+Allow more flexible data types for default values of <function>lead()</function> and <function>lag()</function> window functions (Vik Fearing)
 </para>
 </listitem>
 
@@ -2517,7 +2518,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Cause exp() and power() for negative-infinity exponents to return zero (Tom Lane)
+Cause <function>exp()</function> and <function>power()</function> for negative-infinity exponents to return zero (Tom Lane)
 </para>
 
 <para>
@@ -2547,7 +2548,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Mark pg_stat_get_subscription() as returning a set (Tom Lane)
+Mark <function>pg_stat_get_subscription()</function> as returning a set (Tom Lane)
 </para>
 
 <para>
@@ -2562,7 +2563,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Prevent inet_server_addr() and inet_server_port() from being run by parallel workers (Masahiko Sawada)
+Prevent <function>inet_server_addr()</function> and <function>inet_server_port()</function> from being run by parallel workers (Masahiko Sawada)
 </para>
 </listitem>
 
@@ -2573,7 +2574,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Change pg_describe_object(), pg_identify_object(), and pg_identify_object_as_address() to always report helpful error messages for non-existent objects (Michael Paquier)
+Change <function>pg_describe_object()</function>, <function>pg_identify_object()</function>, and <function>pg_identify_object_as_address()</function> to always report helpful error messages for non-existent objects (Michael Paquier)
 </para>
 </listitem>
 
@@ -2608,7 +2609,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow plpgsql's RETURN QUERY to execute its query using parallelism (Tom Lane)
+Allow plpgsql's <literal>RETURN QUERY</literal> to execute its query using parallelism (Tom Lane)
 </para>
 </listitem>
 
@@ -2656,11 +2657,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Enhance libpq's target_session_attrs parameter options (Haribabu Kommi, Greg Nancarrow, Vignesh C, Tom Lane)
+Enhance libpq's <option>target_session_attrs</option> parameter options (Haribabu Kommi, Greg Nancarrow, Vignesh C, Tom Lane)
 </para>
 
 <para>
-New options are "read-only", "primary", "standby", and "prefer-standby".
+New options are <literal>read-only</literal>, <literal>primary</literal>, <literal>standby</literal>, and <literal>prefer-standby</literal>.
 </para>
 </listitem>
 
@@ -2671,7 +2672,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Improve the output format of libpq's PQtrace() (Aya Iwata, Álvaro Herrera)
+Improve the output format of libpq's <function>PQtrace()</function> (Aya Iwata, Álvaro Herrera)
 </para>
 </listitem>
 
@@ -2697,11 +2698,11 @@ Author: Michael Meskes <meskes@postgresql.org>
 -->
 
 <para>
-Allow an ECPG SQL identifier to be linked to a specific connection (Hayato Kuroda)
+Allow an <literal>ECPG SQL</literal> identifier to be linked to a specific connection (Hayato Kuroda)
 </para>
 
 <para>
-This is done via DECLARE ... STATEMENT.
+This is done via <literal>DECLARE ... STATEMENT</literal>.
 </para>
 </listitem>
 
@@ -2725,7 +2726,7 @@ Allow reindexdb to change the tablespace of the new index (Michael Paquier)
 </para>
 
 <para>
-This is done by specifying --tablespace.
+This is done by specifying <option>--tablespace</option>.
 </para>
 </listitem>
 
@@ -2740,7 +2741,7 @@ Allow vacuumdb to skip index cleanup and truncation (Nathan Bossart)
 </para>
 
 <para>
-The options are --no-index-cleanup and --no-truncate.
+The options are <option>--no-index-cleanup</option> and <option>--no-truncate</option>.
 </para>
 </listitem>
 
@@ -2751,11 +2752,11 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Allow pg_dump to dump only certain extensions (Guillaume Lelarge)
+Allow <application>pg_dump</application> to dump only certain extensions (Guillaume Lelarge)
 </para>
 
 <para>
-This is controlled by option --extension.
+This is controlled by option <option>--extension</option>.
 </para>
 </listitem>
 
@@ -2766,7 +2767,7 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 -->
 
 <para>
-Add pgbench permute() function to randomly shuffle values (Fabien Coelho, Hironobu Suzuki, Dean Rasheed)
+Add pgbench <function>permute()</function> function to randomly shuffle values (Fabien Coelho, Hironobu Suzuki, Dean Rasheed)
 </para>
 </listitem>
 
@@ -2777,11 +2778,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow multiple verbose option specifications (-v) to increase the logging verbosity (Tom Lane)
+Allow multiple verbose option specifications (<option>-v</option>) to increase the logging verbosity (Tom Lane)
 </para>
 
 <para>
-This is now supported by pg_dump, pg_dumpall, and pg_restore.
+This is now supported by <application>pg_dump</application>, <application>pg_dumpall</application>, and <application>pg_restore</application>.
 </para>
 </listitem>
 
@@ -2799,7 +2800,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow psql's \df and \do commands to specify function and operator argument types (Greg Sabino Mullane, Tom Lane)
+Allow <application>psql</application>'s \df and \do commands to specify function and operator argument types (Greg Sabino Mullane, Tom Lane)
 </para>
 
 <para>
@@ -2814,7 +2815,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add an access method column to psql's \d[i|m|t]+ output (Georgios Kokolatos)
+Add an access method column to <application>psql</application>'s \d[i|m|t]+ output (Georgios Kokolatos)
 </para>
 </listitem>
 
@@ -2825,7 +2826,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow psql's \dt and \di to show TOAST tables and their indexes (Justin Pryzby)
+Allow <application>psql</application>'s \dt and \di to show <acronym>TOAST</acronym> tables and their indexes (Justin Pryzby)
 </para>
 </listitem>
 
@@ -2836,7 +2837,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
 <para>
-Add psql command \dX to list extended statistics objects (Tatsuro Yamada)
+Add <application>psql</application> command \dX to list extended statistics objects (Tatsuro Yamada)
 </para>
 </listitem>
 
@@ -2847,7 +2848,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Fix psql's \dT to understand array syntax and backend grammar aliases, like "int" for "integer" (Greg Sabino Mullane, Tom Lane)
+Fix <application>psql</application>'s \dT to understand array syntax and backend grammar aliases, like "int" for "integer" (Greg Sabino Mullane, Tom Lane)
 </para>
 </listitem>
 
@@ -2858,7 +2859,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-When editing the previous query or a file with psql's \e, or using \ef and \ev, ignore the contents if the editor exits without saving (Laurenz Albe)
+When editing the previous query or a file with <application>psql</application>'s \e, or using \ef and \ev, ignore the contents if the editor exits without saving (Laurenz Albe)
 </para>
 
 <para>
@@ -2873,7 +2874,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve psql's handling of \connect with -reuse-previous (Tom Lane)
+Improve <application>psql</application>'s handling of \connect with <option>-reuse-previous</option> (Tom Lane)
 </para>
 
 <para>
@@ -2944,7 +2945,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
 <para>
-Add command-line utility pg_amcheck to simplify running contrib/amcheck operations on many relations (Mark Dilger)
+Add command-line utility <application>pg_amcheck</application> to simplify running contrib/amcheck operations on many relations (Mark Dilger)
 </para>
 </listitem>
 
@@ -2955,7 +2956,7 @@ Author: Magnus Hagander <magnus@hagander.net>
 -->
 
 <para>
-Add --no-instructions option to initdb (Magnus Hagander)
+Add <option>--no-instructions</option> option to initdb (Magnus Hagander)
 </para>
 
 <para>
@@ -2970,7 +2971,7 @@ Author: Magnus Hagander <magnus@hagander.net>
 -->
 
 <para>
-Stop pg_upgrade from creating analyze_new_cluster script (Michael Paquier)
+Stop <application>pg_upgrade</application> from creating analyze_new_cluster script (Michael Paquier)
 </para>
 
 <para>
@@ -2985,7 +2986,7 @@ Author: Magnus Hagander <magnus@hagander.net>
 -->
 
 <para>
-Remove support for the postmaster -o option (Magnus Hagander)
+Remove support for the postmaster <option>-o</option> option (Magnus Hagander)
 </para>
 
 <para>
@@ -3020,11 +3021,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add documentation for the factorial() function (Peter Eisentraut)
+Add documentation for the <function>factorial()</function> function (Peter Eisentraut)
 </para>
 
 <para>
-With the removal of the ! operator in this release, factorial() is the only built-in way to compute a factorial.
+With the removal of the ! operator in this release, <function>factorial()</function> is the only built-in way to compute a factorial.
 </para>
 </listitem>
 
@@ -3044,11 +3045,11 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add configure option --with-ssl={openssl} to behave like --with-openssl (Daniel Gustafsson, Michael Paquier)
+Add configure option <literal>--with-ssl={openssl}</literal> to behave like <option>--with-openssl</option> (Daniel Gustafsson, Michael Paquier)
 </para>
 
 <para>
-The option --with-openssl is kept for compatibility.
+The option <option>--with-openssl</option> is kept for compatibility.
 </para>
 </listitem>
 
@@ -3074,7 +3075,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add debug_invalidate_system_caches_always to control cache overwriting (Craig Ringer)
+Add <varname>debug_invalidate_system_caches_always</varname> to control cache overwriting (Craig Ringer)
 </para>
 
 <para>
@@ -3115,7 +3116,7 @@ Author: Andres Freund <andres@anarazel.de>
 -->
 
 <para>
-Add support for LLVM 12 (Andres Freund)
+Add support for <productname>LLVM</productname> version 12 (Andres Freund)
 </para>
 </listitem>
 
@@ -3132,11 +3133,11 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Change SHA1, SHA2, and MD5 hash computations to use the OpenSSL EVP API (Michael Paquier)
+Change SHA1, SHA2, and MD5 hash computations to use the OpenSSL <acronym>EVP API</acronym> (Michael Paquier)
 </para>
 
 <para>
-This is more modern and supports FIPS mode.
+This is more modern and supports <acronym>FIPS</acronym> mode.
 </para>
 </listitem>
 
@@ -3158,7 +3159,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 -->
 
 <para>
-Add direct conversion routines between EUC_TW and Big5 (Heikki Linnakangas)
+Add direct conversion routines between <literal>EUC_TW</literal> and Big5 (Heikki Linnakangas)
 </para>
 </listitem>
 
@@ -3180,7 +3181,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add "amadjustmembers" to the index access method API (Tom Lane)
+Add "amadjustmembers" to the index access method <acronym>API</acronym> (Tom Lane)
 </para>
 
 <para>
@@ -3204,11 +3205,11 @@ Author: Bruce Momjian <bruce@momjian.us>
 -->
 
 <para>
-Move query hash computation from pg_stat_statements to the core server (Julien Rouhaud)
+Move query hash computation from <application>pg_stat_statements</application> to the core server (Julien Rouhaud)
 </para>
 
 <para>
-The new server variable compute_query_id's default of 'auto' will automatically enable query id computation when this extension is loaded.
+The new server variable <varname>compute_query_id</varname>'s default of 'auto' will automatically enable query id computation when this extension is loaded.
 </para>
 </listitem>
 
@@ -3219,7 +3220,7 @@ Author: Magnus Hagander <magnus@hagander.net>
 -->
 
 <para>
-Allow pg_stat_statements to track top and nested statements independently (Julien Rohaud)
+Allow <application>pg_stat_statements</application> to track top and nested statements independently (Julien Rohaud)
 </para>
 
 <para>
@@ -3236,7 +3237,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add row counts for utility commands to pg_stat_statements (Fujii Masao, Katsuragi Yuta, Seino Yuki)
+Add row counts for utility commands to <structname>pg_stat_statements</structname>> (Fujii Masao, Katsuragi Yuta, Seino Yuki)
 </para>
 </listitem>
 
@@ -3249,7 +3250,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add pg_stat_statements_info system view to show pg_stat_statements activity (Katsuragi Yuta, Yuki Seino, Naoki Nakamichi)
+Add <structname>pg_stat_statements_info</structname> system view to show <structname>pg_stat_statements</structname> activity (Katsuragi Yuta, Yuki Seino, Naoki Nakamichi)
 </para>
 </listitem>
 
@@ -3271,11 +3272,11 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
 <para>
-Allow GiST/GIN pg_trgm indexes to do equality lookups (Julien Rouhaud)
+Allow GiST/GIN <application>pg_trgm</application> indexes to do equality lookups (Julien Rouhaud)
 </para>
 
 <para>
-This is similar to LIKE except no wildcards are honored.
+This is similar to <literal>LIKE</literal> except no wildcards are honored.
 </para>
 </listitem>
 
@@ -3297,7 +3298,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
 <para>
-Add contrib module pg_surgery which allows changes to row visibility (Ashutosh Sharma)
+Add contrib module <application>pg_surgery</application> which allows changes to row visibility (Ashutosh Sharma)
 </para>
 
 <para>
@@ -3312,7 +3313,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
 <para>
-Add contrib module old_snapshot to report the XID/time mapping used by an active old_snapshot_threshold (Robert Haas)
+Add contrib module <application>old_snapshot</application> to report the <type>XID</type>/time mapping used by an active <varname>old_snapshot_threshold</varname> (Robert Haas)
 </para>
 </listitem>
 
@@ -3362,7 +3363,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Allow pgstattuple_approx() to report on TOAST tables (Peter Eisentraut)
+Allow <function>pgstattuple_approx()</function> to report on <acronym>TOAST</acronym> tables (Peter Eisentraut)
 </para>
 </listitem>
 
@@ -3373,7 +3374,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
 <para>
-Mark btree_gist functions as parallel safe (Steven Winfield)
+Mark <application>btree_gist</application> functions as parallel safe (Steven Winfield)
 </para>
 </listitem>
 
@@ -3393,7 +3394,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
 <para>
-Allow postgres_fdw to INSERT rows in bulk (Takayuki Tsunakawa, Tomas Vondra, Amit Langote)
+Allow <application>postgres_fdw</application> to <command>INSERT</command> rows in bulk (Takayuki Tsunakawa, Tomas Vondra, Amit Langote)
 </para>
 </listitem>
 
@@ -3404,7 +3405,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Allow postgres_fdw to import table partitions if specified by IMPORT FOREIGN SCHEMA ... LIMIT TO (Matthias van de Meent)
+Allow <application>postgres_fdw</application> to import table partitions if specified by <command>IMPORT FOREIGN SCHEMA ... LIMIT TO</command> (Matthias van de Meent)
 </para>
 
 <para>
@@ -3419,7 +3420,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add postgres_fdw function postgres_fdw_get_connections to report open foreign server connections (Bharath Rupireddy)
+Add <application>postgres_fdw</application> function postgres_fdw_get_connections to report open foreign server connections (Bharath Rupireddy)
 </para>
 </listitem>
 
@@ -3430,7 +3431,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add postgres_fdw functions to discard cached connections (Bharath Rupireddy)
+Add <application>postgres_fdw</application> functions to discard cached connections (Bharath Rupireddy)
 </para>
 </listitem>
 
@@ -3443,7 +3444,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Allow postgres_fdw to reestablish foreign server connections if necessary (Bharath Rupireddy)
+Allow <application>postgres_fdw</application> to reestablish foreign server connections if necessary (Bharath Rupireddy)
 </para>
 
 <para>
