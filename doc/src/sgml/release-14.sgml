@@ -174,7 +174,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 -->
 
 <para>
-Remove server and <xref linkend="libpq"/> support for the version 2 <link linkend="protocol">wire protocol</link> (Heikki Linnakangas)
+Remove server and <link linkend="libpq">libpq</link> support for the version 2 <link linkend="protocol">wire protocol</link> (Heikki Linnakangas)
 </para>
 
 <para>
