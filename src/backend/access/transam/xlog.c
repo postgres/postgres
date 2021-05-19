@@ -12825,6 +12825,14 @@ SetPromoteIsTriggered(void)
 	XLogCtl->SharedPromoteIsTriggered = true;
 	SpinLockRelease(&XLogCtl->info_lck);
 
+	/*
+	 * Mark the recovery pause state as 'not paused' because the paused state
+	 * ends and promotion continues if a promotion is triggered while recovery
+	 * is paused. Otherwise pg_get_wal_replay_pause_state() can mistakenly
+	 * return 'paused' while a promotion is ongoing.
+	 */
+	SetRecoveryPause(false);
+
 	LocalPromoteIsTriggered = true;
 }
 
