@@ -16,6 +16,11 @@
 #include "portability/instr_time.h"
 
 
+/*
+ * BufferUsage and WalUsage counters keep being incremented infinitely,
+ * i.e., must never be reset to zero, so that we can calculate how much
+ * the counters are incremented in an arbitrary period.
+ */
 typedef struct BufferUsage
 {
 	int64		shared_blks_hit;	/* # of shared buffer hits */
@@ -32,6 +37,13 @@ typedef struct BufferUsage
 	instr_time	blk_write_time; /* time spent writing */
 } BufferUsage;
 
+/*
+ * WalUsage tracks only WAL activity like WAL records generation that
+ * can be measured per query and is displayed by EXPLAIN command,
+ * pg_stat_statements extension, etc. It does not track other WAL activity
+ * like WAL writes that it's not worth measuring per query. That's tracked
+ * by WAL global statistics counters in WalStats, instead.
+ */
 typedef struct WalUsage
 {
 	int64		wal_records;	/* # of WAL records produced */

@@ -133,8 +133,8 @@ PgStat_MsgWal WalStats;
 
 /*
  * WAL usage counters saved from pgWALUsage at the previous call to
- * pgstat_report_wal(). This is used to calculate how much WAL usage
- * happens between pgstat_report_wal() calls, by substracting
+ * pgstat_send_wal(). This is used to calculate how much WAL usage
+ * happens between pgstat_send_wal() calls, by substracting
  * the previous counters from the current ones.
  */
 static WalUsage prevWalUsage;
@@ -852,9 +852,19 @@ pgstat_report_stat(bool disconnect)
 	TabStatusArray *tsa;
 	int			i;
 
-	/* Don't expend a clock check if nothing to do */
+	/*
+	 * Don't expend a clock check if nothing to do.
+	 *
+	 * To determine whether any WAL activity has occurred since last time, not
+	 * only the number of generated WAL records but also the numbers of WAL
+	 * writes and syncs need to be checked. Because even transaction that
+	 * generates no WAL records can write or sync WAL data when flushing the
+	 * data pages.
+	 */
 	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0) &&
 		pgStatXactCommit == 0 && pgStatXactRollback == 0 &&
+		pgWalUsage.wal_records == prevWalUsage.wal_records &&
+		WalStats.m_wal_write == 0 && WalStats.m_wal_sync == 0 &&
 		!have_function_stats && !disconnect)
 		return;
 
@@ -948,7 +958,7 @@ pgstat_report_stat(bool disconnect)
 	pgstat_send_funcstats();
 
 	/* Send WAL statistics */
-	pgstat_report_wal();
+	pgstat_send_wal(true);
 
 	/* Finally send SLRU statistics */
 	pgstat_send_slru();
@@ -2918,7 +2928,7 @@ void
 pgstat_initialize(void)
 {
 	/*
-	 * Initialize prevWalUsage with pgWalUsage so that pgstat_report_wal() can
+	 * Initialize prevWalUsage with pgWalUsage so that pgstat_send_wal() can
 	 * calculate how much pgWalUsage counters are increased by substracting
 	 * prevWalUsage from pgWalUsage.
 	 */
@@ -3031,68 +3041,45 @@ pgstat_send_bgwriter(void)
 }
 
 /* ----------
- * pgstat_report_wal() -
- *
- * Calculate how much WAL usage counters are increased and send
- * WAL statistics to the collector.
- *
- * Must be called by processes that generate WAL.
- * ----------
- */
-void
-pgstat_report_wal(void)
-{
-	WalUsage	walusage;
-
-	/*
-	 * Calculate how much WAL usage counters are increased by substracting the
-	 * previous counters from the current ones. Fill the results in WAL stats
-	 * message.
-	 */
-	MemSet(&walusage, 0, sizeof(WalUsage));
-	WalUsageAccumDiff(&walusage, &pgWalUsage, &prevWalUsage);
-
-	WalStats.m_wal_records = walusage.wal_records;
-	WalStats.m_wal_fpi = walusage.wal_fpi;
-	WalStats.m_wal_bytes = walusage.wal_bytes;
-
-	/*
-	 * Send WAL stats message to the collector.
-	 */
-	if (!pgstat_send_wal(true))
-		return;
-
-	/*
-	 * Save the current counters for the subsequent calculation of WAL usage.
-	 */
-	prevWalUsage = pgWalUsage;
-}
-
-/* ----------
  * pgstat_send_wal() -
  *
  *	Send WAL statistics to the collector.
  *
  * If 'force' is not set, WAL stats message is only sent if enough time has
  * passed since last one was sent to reach PGSTAT_STAT_INTERVAL.
- *
- * Return true if the message is sent, and false otherwise.
  * ----------
  */
-bool
+void
 pgstat_send_wal(bool force)
 {
-	/* We assume this initializes to zeroes */
-	static const PgStat_MsgWal all_zeroes;
 	static TimestampTz sendTime = 0;
 
 	/*
 	 * This function can be called even if nothing at all has happened. In
 	 * this case, avoid sending a completely empty message to the stats
 	 * collector.
+	 *
+	 * Check wal_records counter to determine whether any WAL activity has
+	 * happened since last time. Note that other WalUsage counters don't need
+	 * to be checked because they are incremented always together with
+	 * wal_records counter.
+	 *
+	 * m_wal_buffers_full also doesn't need to be checked because it's
+	 * incremented only when at least one WAL record is generated (i.e.,
+	 * wal_records counter is incremented). But for safely, we assert that
+	 * m_wal_buffers_full is always zero when no WAL record is generated
+	 *
+	 * This function can be called by a process like walwriter that normally
+	 * generates no WAL records. To determine whether any WAL activity has
+	 * happened at that process since the last time, the numbers of WAL writes
+	 * and syncs are also checked.
 	 */
-	if (memcmp(&WalStats, &all_zeroes, sizeof(PgStat_MsgWal)) == 0)
-		return false;
+	if (pgWalUsage.wal_records == prevWalUsage.wal_records &&
+		WalStats.m_wal_write == 0 && WalStats.m_wal_sync == 0)
+	{
+		Assert(WalStats.m_wal_buffers_full == 0);
+		return;
+	}
 
 	if (!force)
 	{
@@ -3100,11 +3087,39 @@ pgstat_send_wal(bool force)
 
 		/*
 		 * Don't send a message unless it's been at least PGSTAT_STAT_INTERVAL
-		 * msec since we last sent one.
+		 * msec since we last sent one to avoid overloading the stats
+		 * collector.
 		 */
 		if (!TimestampDifferenceExceeds(sendTime, now, PGSTAT_STAT_INTERVAL))
-			return false;
+			return;
 		sendTime = now;
+	}
+
+	/*
+	 * Set the counters related to generated WAL data if the counters were
+	 * updated.
+	 */
+	if (pgWalUsage.wal_records != prevWalUsage.wal_records)
+	{
+		WalUsage	walusage;
+
+		/*
+		 * Calculate how much WAL usage counters were increased by
+		 * substracting the previous counters from the current ones. Fill the
+		 * results in WAL stats message.
+		 */
+		MemSet(&walusage, 0, sizeof(WalUsage));
+		WalUsageAccumDiff(&walusage, &pgWalUsage, &prevWalUsage);
+
+		WalStats.m_wal_records = walusage.wal_records;
+		WalStats.m_wal_fpi = walusage.wal_fpi;
+		WalStats.m_wal_bytes = walusage.wal_bytes;
+
+		/*
+		 * Save the current counters for the subsequent calculation of WAL
+		 * usage.
+		 */
+		prevWalUsage = pgWalUsage;
 	}
 
 	/*
@@ -3117,8 +3132,6 @@ pgstat_send_wal(bool force)
 	 * Clear out the statistics buffer, so it can be re-used.
 	 */
 	MemSet(&WalStats, 0, sizeof(WalStats));
-
-	return true;
 }
 
 /* ----------

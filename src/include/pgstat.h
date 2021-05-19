@@ -1091,8 +1091,7 @@ extern void pgstat_twophase_postabort(TransactionId xid, uint16 info,
 
 extern void pgstat_send_archiver(const char *xlog, bool failed);
 extern void pgstat_send_bgwriter(void);
-extern void pgstat_report_wal(void);
-extern bool pgstat_send_wal(bool force);
+extern void pgstat_send_wal(bool force);
 
 /* ----------
  * Support functions for the SQL-callable functions to
