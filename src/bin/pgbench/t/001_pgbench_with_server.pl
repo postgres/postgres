@@ -496,8 +496,6 @@ pgbench(
 		qr{command=109.: boolean true\b},
 		qr{command=110.: boolean true\b},
 		qr{command=111.: boolean true\b},
-		qr{command=112.: int 9223372036854775797\b},
-		qr{command=113.: boolean true\b},
 	],
 	'pgbench expressions',
 	{
@@ -643,15 +641,6 @@ SELECT :v0, :v1, :v2, :v3;
 \set t debug(permute(:v, 1) = 0)
 \set t debug(permute(0, 2, 5432) = 0 and permute(1, 2, 5432) = 1 and \
              permute(0, 2, 5435) = 1 and permute(1, 2, 5435) = 0)
--- 63 bits tests
-\set size debug(:max - 10)
-\set t debug(permute(:size-1, :size, 5432) = 5301702756001087507 and \
-             permute(:size-2, :size, 5432) = 8968485976055840695 and \
-             permute(:size-3, :size, 5432) = 6708495591295582115 and \
-             permute(:size-4, :size, 5432) = 2801794404574855121 and \
-             permute(:size-5, :size, 5432) = 1489011409218895840 and \
-             permute(:size-6, :size, 5432) = 2267749475878240183 and \
-             permute(:size-7, :size, 5432) = 1300324176838786780)
 }
 	});
 
