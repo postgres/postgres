@@ -2425,8 +2425,21 @@ init_toast_snapshot(Snapshot toast_snapshot)
 {
 	Snapshot	snapshot = GetOldestSnapshot();
 
+	/*
+	 * GetOldestSnapshot returns NULL if the session has no active snapshots.
+	 * We can get that if, for example, a procedure fetches a toasted value
+	 * into a local variable, commits, and then tries to detoast the value.
+	 * Such coding is unsafe, because once we commit there is nothing to
+	 * prevent the toast data from being deleted.  Detoasting *must* happen in
+	 * the same transaction that originally fetched the toast pointer.  Hence,
+	 * rather than trying to band-aid over the problem, throw an error.  (This
+	 * is not very much protection, because in many scenarios the procedure
+	 * would have already created a new transaction snapshot, preventing us
+	 * from detecting the problem.  But it's better than nothing, and for sure
+	 * we shouldn't expend code on masking the problem more.)
+	 */
 	if (snapshot == NULL)
-		elog(ERROR, "no known snapshots");
+		elog(ERROR, "cannot fetch toast data without an active snapshot");
 
 	InitToastSnapshot(*toast_snapshot, snapshot->lsn, snapshot->whenTaken);
 }

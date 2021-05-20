@@ -192,3 +192,46 @@ pg_advisory_unlock
 t              
 s1: NOTICE:  length(r) = 6002
 step assign5: <... completed>
+
+starting permutation: lock assign6 vacuum unlock
+pg_advisory_unlock_all
+
+               
+pg_advisory_unlock_all
+
+               
+step lock: 
+    SELECT pg_advisory_lock(1);
+
+pg_advisory_lock
+
+               
+step assign6: 
+do $$
+  declare
+    r record;
+  begin
+    insert into test1 values (2, repeat('bar', 3000));
+    insert into test1 values (3, repeat('baz', 4000));
+    for r in select test1.b from test1 loop
+      delete from test1;
+      commit;
+      perform pg_advisory_lock(1);
+      raise notice 'length(r) = %', length(r::text);
+    end loop;
+  end;
+$$;
+ <waiting ...>
+step vacuum: 
+    VACUUM test1;
+
+step unlock: 
+    SELECT pg_advisory_unlock(1);
+
+pg_advisory_unlock
+
+t              
+s1: NOTICE:  length(r) = 6002
+s1: NOTICE:  length(r) = 9002
+s1: NOTICE:  length(r) = 12002
+step assign6: <... completed>
