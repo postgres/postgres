@@ -112,6 +112,25 @@ do $$
 $$;
 }
 
+# FOR loop must not hold any fetched-but-not-detoasted values across commit
+step "assign6"
+{
+do $$
+  declare
+    r record;
+  begin
+    insert into test1 values (2, repeat('bar', 3000));
+    insert into test1 values (3, repeat('baz', 4000));
+    for r in select test1.b from test1 loop
+      delete from test1;
+      commit;
+      perform pg_advisory_lock(1);
+      raise notice 'length(r) = %', length(r::text);
+    end loop;
+  end;
+$$;
+}
+
 session "s2"
 setup
 {
@@ -135,3 +154,4 @@ permutation "lock" "assign2" "vacuum" "unlock"
 permutation "lock" "assign3" "vacuum" "unlock"
 permutation "lock" "assign4" "vacuum" "unlock"
 permutation "lock" "assign5" "vacuum" "unlock"
+permutation "lock" "assign6" "vacuum" "unlock"

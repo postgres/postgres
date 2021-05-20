@@ -5827,6 +5827,17 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	PinPortal(portal);
 
 	/*
+	 * In a non-atomic context, we dare not prefetch, even if it would
+	 * otherwise be safe.  Aside from any semantic hazards that that might
+	 * create, if we prefetch toasted data and then the user commits the
+	 * transaction, the toast references could turn into dangling pointers.
+	 * (Rows we haven't yet fetched from the cursor are safe, because the
+	 * PersistHoldablePortal mechanism handles this scenario.)
+	 */
+	if (!estate->atomic)
+		prefetch_ok = false;
+
+	/*
 	 * Fetch the initial tuple(s).  If prefetching is allowed then we grab a
 	 * few more rows to avoid multiple trips through executor startup
 	 * overhead.
