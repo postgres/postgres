@@ -339,7 +339,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Force <link linkend="runtime-config-custom">custom server variable</link> names to match the pattern used for unquoted <acronym>SQL</acronym> identifiers (Tom Lane)
+Require <link linkend="runtime-config-custom">custom server variable</link> names to match the pattern used for unquoted <acronym>SQL</acronym> identifiers (Tom Lane)
 </para>
 </listitem>
 
@@ -356,7 +356,7 @@ Remove server variable <varname>vacuum_cleanup_index_scale_factor</varname> (Pet
 </para>
 
 <para>
-This setting was disabled in <productname>PostgreSQL</productname> version 13.3.
+This setting was ignored starting in <productname>PostgreSQL</productname> version 13.3.
 </para>
 </listitem>
 
@@ -510,11 +510,11 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Add long-running queries to be canceled if the client disconnects (Sergey Cherkashin, Thomas Munro)
+Allow long-running queries to be canceled if the client disconnects (Sergey Cherkashin, Thomas Munro)
 </para>
 
 <para>
-The server variable <varname>client_connection_check_interval</varname> allows supporting operating systems, e.g., Linux, to automatically cancel queries by disconnected clients.
+The server variable <varname>client_connection_check_interval</varname> allows some supported operating systems to automatically cancel queries by disconnected clients.
 </para>
 </listitem>
 
@@ -559,7 +559,7 @@ Add Set Server Name Indication (<acronym>SNI</acronym>) for <acronym>SSL</acrony
 </para>
 
 <para>
-This can be disabled by turning client option "sslsni" off.
+This can be disabled by turning off client option "sslsni".
 </para>
 </listitem>
 
@@ -1439,7 +1439,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add %P to <varname>log_line_prefix</varname> to report the parallel group leader (Justin Pryzby)
+Allow %P in <varname>log_line_prefix</varname> to report the parallel group leader (Justin Pryzby)
 </para>
 </listitem>
 
