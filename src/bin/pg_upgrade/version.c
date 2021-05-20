@@ -233,20 +233,20 @@ check_for_data_types_usage(ClusterInfo *cluster,
  *
  * If so, write a report to the given file name, and return true.
  *
- * typename should be a fully qualified type name.  This is just a
+ * type_name should be a fully qualified type name.  This is just a
  * trivial wrapper around check_for_data_types_usage() to convert a
  * type name into a base query.
  */
 bool
 check_for_data_type_usage(ClusterInfo *cluster,
-						  const char *typename,
+						  const char *type_name,
 						  const char *output_path)
 {
 	bool		found;
 	char	   *base_query;
 
 	base_query = psprintf("SELECT '%s'::pg_catalog.regtype AS oid",
-						  typename);
+						  type_name);
 
 	found = check_for_data_types_usage(cluster, base_query, output_path);
 

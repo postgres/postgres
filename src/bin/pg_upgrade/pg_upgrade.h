@@ -443,7 +443,7 @@ bool		check_for_data_types_usage(ClusterInfo *cluster,
 									   const char *base_query,
 									   const char *output_path);
 bool		check_for_data_type_usage(ClusterInfo *cluster,
-									  const char *typename,
+									  const char *type_name,
 									  const char *output_path);
 void		new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
 													 bool check_mode);
