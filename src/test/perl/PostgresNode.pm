@@ -1248,10 +1248,8 @@ sub _set_pg_version
 	local %ENV = $self->_get_env();
 
 	# We only want the version field
-	open my $fh, "-|", $pg_config, "--version"
-	  or BAIL_OUT("$pg_config failed: $!");
-	my $version_line = <$fh>;
-	close $fh or die;
+	my $version_line = qx{$pg_config --version};
+	BAIL_OUT("$pg_config failed: $!") if $?;
 
 	$self->{_pg_version} = PostgresVersion->new($version_line);
 
