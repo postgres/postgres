@@ -46,6 +46,13 @@ ERROR:  cannot use generated column "b" in column generation expression
 LINE 1: ...AYS AS (a * 2) STORED, c int GENERATED ALWAYS AS (b * 3) STO...
                                                              ^
 DETAIL:  A generated column cannot reference another generated column.
+-- a whole-row var is a self-reference on steroids, so disallow that too
+CREATE TABLE gtest_err_2c (a int PRIMARY KEY,
+    b int GENERATED ALWAYS AS (num_nulls(gtest_err_2c)) STORED);
+ERROR:  cannot use whole-row variable in column generation expression
+LINE 2:     b int GENERATED ALWAYS AS (num_nulls(gtest_err_2c)) STOR...
+                                                 ^
+DETAIL:  This would cause the generated column to depend on its own value.
 -- invalid reference
 CREATE TABLE gtest_err_3 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (c * 2) STORED);
 ERROR:  column "c" does not exist
