@@ -374,10 +374,10 @@ helpVariables(unsigned short int pager)
 					  "    true if last query failed, else false\n"));
 	fprintf(output, _("  FETCH_COUNT\n"
 					  "    the number of result rows to fetch and display at a time (0 = unlimited)\n"));
-	fprintf(output, _("  HIDE_TOAST_COMPRESSION\n"
-					  "    if set, compression methods are not displayed\n"));
 	fprintf(output, _("  HIDE_TABLEAM\n"
 					  "    if set, table access methods are not displayed\n"));
+	fprintf(output, _("  HIDE_TOAST_COMPRESSION\n"
+					  "    if set, compression methods are not displayed\n"));
 	fprintf(output, _("  HISTCONTROL\n"
 					  "    controls command history [ignorespace, ignoredups, ignoreboth]\n"));
 	fprintf(output, _("  HISTFILE\n"
@@ -489,10 +489,10 @@ helpVariables(unsigned short int pager)
 					  "    same as the dbname connection parameter\n"));
 	fprintf(output, _("  PGHOST\n"
 					  "    same as the host connection parameter\n"));
-	fprintf(output, _("  PGPASSWORD\n"
-					  "    connection password (not recommended)\n"));
 	fprintf(output, _("  PGPASSFILE\n"
 					  "    password file name\n"));
+	fprintf(output, _("  PGPASSWORD\n"
+					  "    connection password (not recommended)\n"));
 	fprintf(output, _("  PGPORT\n"
 					  "    same as the port connection parameter\n"));
 	fprintf(output, _("  PGUSER\n"
