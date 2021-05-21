@@ -1248,6 +1248,7 @@ apply_handle_truncate(StringInfo s)
 	List	   *relids = NIL;
 	List	   *relids_logged = NIL;
 	ListCell   *lc;
+	LOCKMODE    lockmode = AccessExclusiveLock;
 
 	ensure_transaction();
 
@@ -1258,14 +1259,14 @@ apply_handle_truncate(StringInfo s)
 		LogicalRepRelId relid = lfirst_oid(lc);
 		LogicalRepRelMapEntry *rel;
 
-		rel = logicalrep_rel_open(relid, RowExclusiveLock);
+		rel = logicalrep_rel_open(relid, lockmode);
 		if (!should_apply_changes_for_rel(rel))
 		{
 			/*
 			 * The relation can't become interesting in the middle of the
 			 * transaction so it's safe to unlock it.
 			 */
-			logicalrep_rel_close(rel, RowExclusiveLock);
+			logicalrep_rel_close(rel, lockmode);
 			continue;
 		}
 
@@ -1283,7 +1284,7 @@ apply_handle_truncate(StringInfo s)
 		{
 			ListCell   *child;
 			List	   *children = find_all_inheritors(rel->localreloid,
-													   RowExclusiveLock,
+													   lockmode,
 													   NULL);
 
 			foreach(child, children)
@@ -1303,7 +1304,7 @@ apply_handle_truncate(StringInfo s)
 				 */
 				if (RELATION_IS_OTHER_TEMP(childrel))
 				{
-					table_close(childrel, RowExclusiveLock);
+					table_close(childrel, lockmode);
 					continue;
 				}
 
