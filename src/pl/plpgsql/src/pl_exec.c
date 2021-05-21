@@ -2134,7 +2134,6 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 	PLpgSQL_variable *volatile cur_target = stmt->target;
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
-	volatile bool pushed_active_snap = false;
 	volatile int rc;
 
 	/*
@@ -2172,9 +2171,8 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 			Assert(!expr->expr_simple_expr);
 
 			/*
-			 * The procedure call could end transactions, which would upset
-			 * the snapshot management in SPI_execute*, so don't let it do it.
-			 * Instead, we set the snapshots ourselves below.
+			 * Tell SPI to allow non-atomic execution.  (The field name is a
+			 * legacy choice.)
 			 */
 			plan->no_snapshots = true;
 
@@ -2316,16 +2314,6 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 
 		before_lxid = MyProc->lxid;
 
-		/*
-		 * Set snapshot only for non-read-only procedures, similar to SPI
-		 * behavior.
-		 */
-		if (!estate->readonly_func)
-		{
-			PushActiveSnapshot(GetTransactionSnapshot());
-			pushed_active_snap = true;
-		}
-
 		rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 											 estate->readonly_func, 0);
 	}
@@ -2360,17 +2348,7 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 
 	after_lxid = MyProc->lxid;
 
-	if (before_lxid == after_lxid)
-	{
-		/*
-		 * If we are still in the same transaction after the call, pop the
-		 * snapshot that we might have pushed.  (If it's a new transaction,
-		 * then all the snapshots are gone already.)
-		 */
-		if (pushed_active_snap)
-			PopActiveSnapshot();
-	}
-	else
+	if (before_lxid != after_lxid)
 	{
 		/*
 		 * If we are in a new transaction after the call, we need to build new
@@ -4926,6 +4904,7 @@ exec_stmt_rollback(PLpgSQL_execstate *estate, PLpgSQL_stmt_rollback *stmt)
  *
  * We just parse and execute the statement normally, but we have to do it
  * without setting a snapshot, for things like SET TRANSACTION.
+ * XXX spi.c now handles this correctly, so we no longer need a special case.
  */
 static int
 exec_stmt_set(PLpgSQL_execstate *estate, PLpgSQL_stmt_set *stmt)
@@ -4934,10 +4913,7 @@ exec_stmt_set(PLpgSQL_execstate *estate, PLpgSQL_stmt_set *stmt)
 	int			rc;
 
 	if (expr->plan == NULL)
-	{
 		exec_prepare_plan(estate, expr, 0, true);
-		expr->plan->no_snapshots = true;
-	}
 
 	rc = SPI_execute_plan(expr->plan, NULL, NULL, estate->readonly_func, 0);
 

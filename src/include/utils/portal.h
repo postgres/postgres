@@ -192,6 +192,14 @@ typedef struct PortalData
 	/* Presentation data, primarily used by the pg_cursors system view */
 	TimestampTz creation_time;	/* time at which this portal was defined */
 	bool		visible;		/* include this portal in pg_cursors? */
+
+	/*
+	 * Outermost ActiveSnapshot for execution of the portal's queries.  For
+	 * all but a few utility commands, we require such a snapshot to exist.
+	 * This ensures that TOAST references in query results can be detoasted,
+	 * and helps to reduce thrashing of the process's exposed xmin.
+	 */
+	Snapshot	portalSnapshot; /* active snapshot, or NULL if none */
 }			PortalData;
 
 /*
@@ -235,5 +243,6 @@ extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);
 extern bool ThereAreNoReadyPortals(void);
 extern void HoldPinnedPortals(void);
+extern void ForgetPortalSnapshots(void);
 
 #endif							/* PORTAL_H */
