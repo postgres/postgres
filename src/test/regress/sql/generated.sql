@@ -17,6 +17,9 @@ CREATE TABLE gtest_err_1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) S
 -- references to other generated columns, including self-references
 CREATE TABLE gtest_err_2a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (b * 2) STORED);
 CREATE TABLE gtest_err_2b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED, c int GENERATED ALWAYS AS (b * 3) STORED);
+-- a whole-row var is a self-reference on steroids, so disallow that too
+CREATE TABLE gtest_err_2c (a int PRIMARY KEY,
+    b int GENERATED ALWAYS AS (num_nulls(gtest_err_2c)) STORED);
 
 -- invalid reference
 CREATE TABLE gtest_err_3 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (c * 2) STORED);
