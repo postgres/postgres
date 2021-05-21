@@ -2217,6 +2217,16 @@ dbase_redo(XLogReaderState *record)
 		 * We don't need to copy subdirectories
 		 */
 		copydir(src_path, dst_path, false);
+
+		/*
+		 * Make sure any future requests to the page server see the new
+		 * database.
+		 */
+		{
+			XLogRecPtr	lsn = record->EndRecPtr;
+
+			SetLastWrittenPageLSN(lsn);
+		}
 	}
 	else if (info == XLOG_DBASE_DROP)
 	{
