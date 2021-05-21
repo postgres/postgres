@@ -235,3 +235,30 @@ s1: NOTICE:  length(r) = 6002
 s1: NOTICE:  length(r) = 9002
 s1: NOTICE:  length(r) = 12002
 step assign6: <... completed>
+
+starting permutation: fetch-after-commit
+pg_advisory_unlock_all
+
+               
+pg_advisory_unlock_all
+
+               
+s1: NOTICE:  length(t) = 6000
+s1: NOTICE:  length(t) = 9000
+s1: NOTICE:  length(t) = 12000
+step fetch-after-commit: 
+do $$
+  declare
+    r record;
+    t text;
+  begin
+    insert into test1 values (2, repeat('bar', 3000));
+    insert into test1 values (3, repeat('baz', 4000));
+    for r in select test1.a from test1 loop
+      commit;
+      select b into t from test1 where a = r.a;
+      raise notice 'length(t) = %', length(t);
+    end loop;
+  end;
+$$;
+
