@@ -61,6 +61,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "pgstat.h"
+#include "tcop/pquery.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -2341,6 +2342,20 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 
 		if (fcinfo.isnull)
 			elog(ERROR, "procedure returned null record");
+
+		/*
+		 * Ensure there's an active snapshot whilst we execute whatever's
+		 * involved here.  Note that this is *not* sufficient to make the
+		 * world safe for TOAST pointers to be included in the returned data:
+		 * the referenced data could have gone away while we didn't hold a
+		 * snapshot.  Hence, it's incumbent on PLs that can do COMMIT/ROLLBACK
+		 * to not return TOAST pointers, unless those pointers were fetched
+		 * after the last COMMIT/ROLLBACK in the procedure.
+		 *
+		 * XXX that is a really nasty, hard-to-test requirement.  Is there a
+		 * way to remove it?
+		 */
+		EnsurePortalSnapshotExists();
 
 		td = DatumGetHeapTupleHeader(retval);
 		tupType = HeapTupleHeaderGetTypeId(td);

@@ -17,6 +17,8 @@
 #include "nodes/parsenodes.h"
 #include "utils/portal.h"
 
+struct PlannedStmt;				/* avoid including plannodes.h here */
+
 
 extern PGDLLIMPORT Portal ActivePortal;
 
@@ -41,5 +43,9 @@ extern uint64 PortalRunFetch(Portal portal,
 			   FetchDirection fdirection,
 			   long count,
 			   DestReceiver *dest);
+
+extern bool PlannedStmtRequiresSnapshot(struct PlannedStmt *pstmt);
+
+extern void EnsurePortalSnapshotExists(void);
 
 #endif							/* PQUERY_H */
