@@ -161,6 +161,14 @@ typedef struct PortalData
 	int16	   *formats;		/* a format code for each column */
 
 	/*
+	 * Outermost ActiveSnapshot for execution of the portal's queries.  For
+	 * all but a few utility commands, we require such a snapshot to exist.
+	 * This ensures that TOAST references in query results can be detoasted,
+	 * and helps to reduce thrashing of the process's exposed xmin.
+	 */
+	Snapshot	portalSnapshot; /* active snapshot, or NULL if none */
+
+	/*
 	 * Where we store tuples for a held cursor or a PORTAL_ONE_RETURNING or
 	 * PORTAL_UTIL_SELECT query.  (A cursor held past the end of its
 	 * transaction no longer has any active executor state.)
@@ -237,5 +245,6 @@ extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);
 extern bool ThereAreNoReadyPortals(void);
 extern void HoldPinnedPortals(void);
+extern void ForgetPortalSnapshots(void);
 
 #endif							/* PORTAL_H */

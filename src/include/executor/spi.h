@@ -47,7 +47,7 @@ typedef struct SPIExecuteOptions
 {
 	ParamListInfo params;
 	bool		read_only;
-	bool		no_snapshots;
+	bool		allow_nonatomic;
 	uint64		tcount;
 	DestReceiver *dest;
 	ResourceOwner owner;

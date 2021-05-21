@@ -730,11 +730,11 @@ int SPI_execute_extended(const char *<parameter>command</parameter>,
    </varlistentry>
 
    <varlistentry>
-    <term><literal>bool <parameter>no_snapshots</parameter></literal></term>
+    <term><literal>bool <parameter>allow_nonatomic</parameter></literal></term>
     <listitem>
      <para>
-      <literal>true</literal> prevents SPI from managing snapshots for
-      execution of the query; use with extreme caution
+      <literal>true</literal> allows non-atomic execution of CALL and DO
+      statements
      </para>
     </listitem>
    </varlistentry>
@@ -1860,11 +1860,11 @@ int SPI_execute_plan_extended(SPIPlanPtr <parameter>plan</parameter>,
    </varlistentry>
 
    <varlistentry>
-    <term><literal>bool <parameter>no_snapshots</parameter></literal></term>
+    <term><literal>bool <parameter>allow_nonatomic</parameter></literal></term>
     <listitem>
      <para>
-      <literal>true</literal> prevents SPI from managing snapshots for
-      execution of the query; use with extreme caution
+      <literal>true</literal> allows non-atomic execution of CALL and DO
+      statements
      </para>
     </listitem>
    </varlistentry>

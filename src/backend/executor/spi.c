@@ -66,7 +66,7 @@ static void _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan);
 
 static int	_SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 							  Snapshot snapshot, Snapshot crosscheck_snapshot,
-							  bool read_only, bool no_snapshots,
+							  bool read_only, bool allow_nonatomic,
 							  bool fire_triggers, uint64 tcount,
 							  DestReceiver *caller_dest,
 							  ResourceOwner plan_owner);
@@ -260,12 +260,8 @@ _SPI_commit(bool chain)
 	/* Start the actual commit */
 	_SPI_current->internal_xact = true;
 
-	/*
-	 * Before committing, pop all active snapshots to avoid error about
-	 * "snapshot %p still active".
-	 */
-	while (ActiveSnapshotSet())
-		PopActiveSnapshot();
+	/* Release snapshots associated with portals */
+	ForgetPortalSnapshots();
 
 	if (chain)
 		SaveTransactionCharacteristics();
@@ -321,6 +317,9 @@ _SPI_rollback(bool chain)
 
 	/* Start the actual rollback */
 	_SPI_current->internal_xact = true;
+
+	/* Release snapshots associated with portals */
+	ForgetPortalSnapshots();
 
 	if (chain)
 		SaveTransactionCharacteristics();
@@ -567,7 +566,7 @@ SPI_execute_extended(const char *src,
 
 	res = _SPI_execute_plan(&plan, options->params,
 							InvalidSnapshot, InvalidSnapshot,
-							options->read_only, options->no_snapshots,
+							options->read_only, options->allow_nonatomic,
 							true, options->tcount,
 							options->dest, options->owner);
 
@@ -627,7 +626,7 @@ SPI_execute_plan_extended(SPIPlanPtr plan,
 
 	res = _SPI_execute_plan(plan, options->params,
 							InvalidSnapshot, InvalidSnapshot,
-							options->read_only, options->no_snapshots,
+							options->read_only, options->allow_nonatomic,
 							true, options->tcount,
 							options->dest, options->owner);
 
@@ -2264,7 +2263,7 @@ _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan)
  *		behavior of taking a new snapshot for each query.
  * crosscheck_snapshot: for RI use, all others pass InvalidSnapshot
  * read_only: true for read-only execution (no CommandCounterIncrement)
- * no_snapshots: true to skip snapshot management
+ * allow_nonatomic: true to allow nonatomic CALL/DO execution
  * fire_triggers: true to fire AFTER triggers at end of query (normal case);
  *		false means any AFTER triggers are postponed to end of outer query
  * tcount: execution tuple-count limit, or 0 for none
@@ -2275,7 +2274,7 @@ _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan)
 static int
 _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
-				  bool read_only, bool no_snapshots,
+				  bool read_only, bool allow_nonatomic,
 				  bool fire_triggers, uint64 tcount,
 				  DestReceiver *caller_dest, ResourceOwner plan_owner)
 {
@@ -2318,11 +2317,12 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 	 * In the first two cases, we can just push the snap onto the stack once
 	 * for the whole plan list.
 	 *
-	 * But if no_snapshots is true, then don't manage snapshots at all here.
-	 * The caller must then take care of that.
+	 * Note that snapshot != InvalidSnapshot implies an atomic execution
+	 * context.
 	 */
-	if (snapshot != InvalidSnapshot && !no_snapshots)
+	if (snapshot != InvalidSnapshot)
 	{
+		Assert(!allow_nonatomic);
 		if (read_only)
 		{
 			PushActiveSnapshot(snapshot);
@@ -2408,15 +2408,39 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 		stmt_list = cplan->stmt_list;
 
 		/*
-		 * In the default non-read-only case, get a new snapshot, replacing
-		 * any that we pushed in a previous cycle.
+		 * If we weren't given a specific snapshot to use, and the statement
+		 * list requires a snapshot, set that up.
 		 */
-		if (snapshot == InvalidSnapshot && !read_only && !no_snapshots)
+		if (snapshot == InvalidSnapshot &&
+			(list_length(stmt_list) > 1 ||
+			 (list_length(stmt_list) == 1 &&
+			  PlannedStmtRequiresSnapshot(linitial_node(PlannedStmt,
+														stmt_list)))))
 		{
-			if (pushed_active_snap)
-				PopActiveSnapshot();
-			PushActiveSnapshot(GetTransactionSnapshot());
-			pushed_active_snap = true;
+			/*
+			 * First, ensure there's a Portal-level snapshot.  This back-fills
+			 * the snapshot stack in case the previous operation was a COMMIT
+			 * or ROLLBACK inside a procedure or DO block.  (We can't put back
+			 * the Portal snapshot any sooner, or we'd break cases like doing
+			 * SET or LOCK just after COMMIT.)  It's enough to check once per
+			 * statement list, since COMMIT/ROLLBACK/CALL/DO can't appear
+			 * within a multi-statement list.
+			 */
+			EnsurePortalSnapshotExists();
+
+			/*
+			 * In the default non-read-only case, get a new per-statement-list
+			 * snapshot, replacing any that we pushed in a previous cycle.
+			 * Skip it when doing non-atomic execution, though (we rely
+			 * entirely on the Portal snapshot in that case).
+			 */
+			if (!read_only && !allow_nonatomic)
+			{
+				if (pushed_active_snap)
+					PopActiveSnapshot();
+				PushActiveSnapshot(GetTransactionSnapshot());
+				pushed_active_snap = true;
+			}
 		}
 
 		foreach(lc2, stmt_list)
@@ -2434,6 +2458,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			_SPI_current->processed = 0;
 			_SPI_current->tuptable = NULL;
 
+			/* Check for unsupported cases. */
 			if (stmt->utilityStmt)
 			{
 				if (IsA(stmt->utilityStmt, CopyStmt))
@@ -2462,9 +2487,10 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 
 			/*
 			 * If not read-only mode, advance the command counter before each
-			 * command and update the snapshot.
+			 * command and update the snapshot.  (But skip it if the snapshot
+			 * isn't under our control.)
 			 */
-			if (!read_only && !no_snapshots)
+			if (!read_only && pushed_active_snap)
 			{
 				CommandCounterIncrement();
 				UpdateActiveSnapshotCommandId();
@@ -2507,13 +2533,11 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				QueryCompletion qc;
 
 				/*
-				 * If the SPI context is atomic, or we are asked to manage
-				 * snapshots, then we are in an atomic execution context.
-				 * Conversely, to propagate a nonatomic execution context, the
-				 * caller must be in a nonatomic SPI context and manage
-				 * snapshots itself.
+				 * If the SPI context is atomic, or we were not told to allow
+				 * nonatomic operations, tell ProcessUtility this is an atomic
+				 * execution context.
 				 */
-				if (_SPI_current->atomic || !no_snapshots)
+				if (_SPI_current->atomic || !allow_nonatomic)
 					context = PROCESS_UTILITY_QUERY;
 				else
 					context = PROCESS_UTILITY_QUERY_NONATOMIC;

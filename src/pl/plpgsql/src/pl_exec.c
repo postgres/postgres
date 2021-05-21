@@ -2159,7 +2159,6 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 	PLpgSQL_expr *expr = stmt->expr;
 	LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
-	bool		pushed_active_snap = false;
 	ParamListInfo paramLI;
 	SPIExecuteOptions options;
 	int			rc;
@@ -2190,26 +2189,16 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 	before_lxid = MyProc->lxid;
 
 	/*
-	 * The procedure call could end transactions, which would upset the
-	 * snapshot management in SPI_execute*, so handle snapshots here instead.
-	 * Set a snapshot only for non-read-only procedures, similar to SPI
-	 * behavior.
-	 */
-	if (!estate->readonly_func)
-	{
-		PushActiveSnapshot(GetTransactionSnapshot());
-		pushed_active_snap = true;
-	}
-
-	/*
 	 * If we have a procedure-lifespan resowner, use that to hold the refcount
 	 * for the plan.  This avoids refcount leakage complaints if the called
 	 * procedure ends the current transaction.
+	 *
+	 * Also, tell SPI to allow non-atomic execution.
 	 */
 	memset(&options, 0, sizeof(options));
 	options.params = paramLI;
 	options.read_only = estate->readonly_func;
-	options.no_snapshots = true;	/* disable SPI's snapshot management */
+	options.allow_nonatomic = true;
 	options.owner = estate->procedure_resowner;
 
 	rc = SPI_execute_plan_extended(expr->plan, &options);
@@ -2220,17 +2209,7 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 
 	after_lxid = MyProc->lxid;
 
-	if (before_lxid == after_lxid)
-	{
-		/*
-		 * If we are still in the same transaction after the call, pop the
-		 * snapshot that we might have pushed.  (If it's a new transaction,
-		 * then all the snapshots are gone already.)
-		 */
-		if (pushed_active_snap)
-			PopActiveSnapshot();
-	}
-	else
+	if (before_lxid != after_lxid)
 	{
 		/*
 		 * If we are in a new transaction after the call, we need to build new
@@ -4954,6 +4933,7 @@ exec_stmt_rollback(PLpgSQL_execstate *estate, PLpgSQL_stmt_rollback *stmt)
  *
  * We just parse and execute the statement normally, but we have to do it
  * without setting a snapshot, for things like SET TRANSACTION.
+ * XXX spi.c now handles this correctly, so we no longer need a special case.
  */
 static int
 exec_stmt_set(PLpgSQL_execstate *estate, PLpgSQL_stmt_set *stmt)
@@ -4967,7 +4947,6 @@ exec_stmt_set(PLpgSQL_execstate *estate, PLpgSQL_stmt_set *stmt)
 
 	memset(&options, 0, sizeof(options));
 	options.read_only = estate->readonly_func;
-	options.no_snapshots = true;	/* disable SPI's snapshot management */
 
 	rc = SPI_execute_plan_extended(expr->plan, &options);
 
