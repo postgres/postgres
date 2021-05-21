@@ -5762,6 +5762,14 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 					newslot->tts_isnull[lfirst_int(lc)] = true;
 
 				/*
+				 * Constraints and GENERATED expressions might reference the
+				 * tableoid column, so fill tts_tableOid with the desired
+				 * value.  (We must do this each time, because it gets
+				 * overwritten with newrel's OID during storing.)
+				 */
+				newslot->tts_tableOid = RelationGetRelid(oldrel);
+
+				/*
 				 * Process supplied expressions to replace selected columns.
 				 *
 				 * First, evaluate expressions whose inputs come from the old
@@ -5804,11 +5812,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 									   &newslot->tts_isnull[ex->attnum - 1]);
 				}
 
-				/*
-				 * Constraints might reference the tableoid column, so
-				 * initialize t_tableOid before evaluating them.
-				 */
-				newslot->tts_tableOid = RelationGetRelid(oldrel);
 				insertslot = newslot;
 			}
 			else
