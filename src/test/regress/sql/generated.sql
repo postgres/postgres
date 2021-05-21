@@ -29,6 +29,7 @@ CREATE TABLE gtest_err_5a (a int PRIMARY KEY, b int DEFAULT 5 GENERATED ALWAYS A
 CREATE TABLE gtest_err_5b (a int PRIMARY KEY, b int GENERATED ALWAYS AS identity GENERATED ALWAYS AS (a * 2) STORED);
 
 -- reference to system column not allowed in generated column
+-- (except tableoid, which we test below)
 CREATE TABLE gtest_err_6a (a int PRIMARY KEY, b bool GENERATED ALWAYS AS (xmin <> 37) STORED);
 
 -- various prohibited constructs
@@ -201,9 +202,11 @@ DROP TYPE double_int;
 -- using tableoid is allowed
 CREATE TABLE gtest_tableoid (
   a int PRIMARY KEY,
-  b bool GENERATED ALWAYS AS (tableoid <> 0) STORED
+  b bool GENERATED ALWAYS AS (tableoid = 'gtest_tableoid'::regclass) STORED
 );
 INSERT INTO gtest_tableoid VALUES (1), (2);
+ALTER TABLE gtest_tableoid ADD COLUMN
+  c regclass GENERATED ALWAYS AS (tableoid) STORED;
 SELECT * FROM gtest_tableoid;
 
 -- drop column behavior
