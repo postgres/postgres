@@ -127,8 +127,7 @@ typedef enum PLpgSQL_stmt_type
 	PLPGSQL_STMT_PERFORM,
 	PLPGSQL_STMT_CALL,
 	PLPGSQL_STMT_COMMIT,
-	PLPGSQL_STMT_ROLLBACK,
-	PLPGSQL_STMT_SET
+	PLPGSQL_STMT_ROLLBACK
 } PLpgSQL_stmt_type;
 
 /*
@@ -565,17 +564,6 @@ typedef struct PLpgSQL_stmt_rollback
 	unsigned int stmtid;
 	bool		chain;
 } PLpgSQL_stmt_rollback;
-
-/*
- * SET statement
- */
-typedef struct PLpgSQL_stmt_set
-{
-	PLpgSQL_stmt_type cmd_type;
-	int			lineno;
-	unsigned int stmtid;
-	PLpgSQL_expr *expr;
-} PLpgSQL_stmt_set;
 
 /*
  * GET DIAGNOSTICS item
