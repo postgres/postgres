@@ -2286,7 +2286,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Allow <acronym>SQL</acronym>-language functions and procedures to use <acronym>SQL</acronym>-standard function bodies (Peter Eisentraut)
+Allow <acronym>SQL</acronym>-language <link linkend="sql-createfunction">functions</link> and <link linkend="sql-createprocedure">procedures</link> to use <acronym>SQL</acronym>-standard function bodies (Peter Eisentraut)
 </para>
 
 <para>
@@ -2303,7 +2303,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Allow procedures to have <literal>OUT</literal> parameters (Peter Eisentraut)
+Allow <link linkend="sql-createprocedure">procedures</link> to have <literal>OUT</literal> parameters (Peter Eisentraut)
 </para>
 </listitem>
 
@@ -2318,7 +2318,9 @@ Allow some array functions to operate on a mix of compatible data types (Tom Lan
 </para>
 
 <para>
-The functions are <function>array_append()</function> <function>array_prepend()</function>, <function>array_cat()</function>, <function>array_position()</function>, <function>array_positions()</function>, <function>array_remove()</function>, <function>array_replace()</function>, and <function>width_bucket()</function>.  Previously only identical data types could be used.
+The functions are <link linkend="functions-array"><function>array_append()</function></link>, <function>array_prepend()</function>, <function>array_cat()</function>, <function>array_position()</function>,
+<function>array_positions()</function>, <function>array_remove()</function>, <function>array_replace()</function>, and
+<link linkend="functions-math"><function>width_bucket()</function></link>.  Previously only identical data types could be used.
 </para>
 </listitem>
 
@@ -2329,7 +2331,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add <acronym>SQL</acronym>-standard <function>trim_array()</function> function (Vik Fearing)
+Add <acronym>SQL</acronym>-standard <link linkend="functions-array"><function>trim_array()</function></link> function (Vik Fearing)
 </para>
 
 <para>
@@ -2344,7 +2346,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add bytea equivalents of <function>ltrim()</function> and <function>rtrim()</function> (Joel Jacobson)
+Add bytea equivalents of <link linkend="functions-binarystring"><function>ltrim()</function></link> and <function>rtrim()</function> (Joel Jacobson)
 </para>
 </listitem>
 
@@ -2355,7 +2357,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Support negative indexes in <function>split_part()</function> (Nikhil Benesch)
+Support negative indexes in <link linkend="functions-string"><function>split_part()</function></link> (Nikhil Benesch)
 </para>
 
 <para>
@@ -2370,11 +2372,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-A <function>string_to_table()</function> function to split a string on delimiters (Pavel Stehule)
+Add <link linkend="functions-string"><function>string_to_table()</function></link> function to split a string on delimiters (Pavel Stehule)
 </para>
 
 <para>
-This is similar to the <function>regexp_split_to_table()</function> function.
+This is similar to the <link linkend="functions-string"><function>regexp_split_to_table()</function></link> function.
 </para>
 </listitem>
 
@@ -2385,7 +2387,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add <function>unistr()</function> function to allow Unicode characters to be specified as backslash-hex escapes in strings (Pavel Stehule)
+Add <link linkend="functions-string"><function>unistr()</function></link> function to allow Unicode characters to be specified as backslash-hex escapes in strings (Pavel Stehule)
 </para>
 
 <para>
@@ -2400,7 +2402,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add <function>bit_xor()</function> XOR aggregate function (Alexey Bashtanov)
+Add <link linkend="functions-aggregate"><function>bit_xor()</function></link> XOR aggregate function (Alexey Bashtanov)
 </para>
 </listitem>
 
@@ -2411,7 +2413,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add function <function>bit_count()</function> to return the number of bits set in a bit or byte string (David Fetter)
+Add function <link linkend="functions-binarystring"><function>bit_count()</function></link> to return the number of bits set in a bit or byte string (David Fetter)
 </para>
 </listitem>
 
@@ -2424,7 +2426,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add <function>date_bin()</function> function (John Naylor)
+Add <link linkend="functions-datetime-bin"><function>date_bin()</function></link> function (John Naylor)
 </para>
 
 <para>
@@ -2439,7 +2441,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow <function>make_timestamp()</function>/<function>make_timestamptz()</function> to accept negative years (Peter Eisentraut)
+Allow <link linkend="functions-datetime"><function>make_timestamp()</function></link>/<function>make_timestamptz()</function> to accept negative years (Peter Eisentraut)
 </para>
 
 <para>
@@ -2454,7 +2456,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add newer regular expression <function>substring()</function> syntax (Peter Eisentraut)
+Add newer regular expression <link linkend="functions-string"><function>substring()</function></link> syntax (Peter Eisentraut)
 </para>
 
 <para>
@@ -2469,7 +2471,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow complemented character class escapes \D, \S, and \W within regex brackets (Tom Lane)
+Allow complemented character class escapes <link linkend="posix-escape-sequences">\D</link>, <literal>\S</literal>, and <literal>\W</literal> within regex brackets (Tom Lane)
 </para>
 </listitem>
 
@@ -2480,7 +2482,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add [[:word:]] as a character class to match \w (Tom Lane)
+Add <link linkend="posix-escape-sequences"><literal>[[:word:]]</literal></link> as a character class to match \w (Tom Lane)
 </para>
 </listitem>
 
@@ -2491,7 +2493,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow more flexible data types for default values of <function>lead()</function> and <function>lag()</function> window functions (Vik Fearing)
+Allow more flexible data types for default values of <link linkend="functions-window"><function>lead()</function></link> and <function>lag()</function> window functions (Vik Fearing)
 </para>
 </listitem>
 
@@ -2506,7 +2508,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Cause <function>exp()</function> and <function>power()</function> for negative-infinity exponents to return zero (Tom Lane)
+Cause <link linkend="functions-math"><function>exp()</function></link> and <function>power()</function> for negative-infinity exponents to return zero (Tom Lane)
 </para>
 
 <para>
@@ -2540,7 +2542,7 @@ Mark <function>pg_stat_get_subscription()</function> as returning a set (Tom Lan
 </para>
 
 <para>
-While it worked in previous releases, it didn't report proper optimizer statistics and couldn't be used in the target list.
+While it worked in previous releases, it didn't report proper optimizer statistics and couldn't be used in the target list.  FUNCTION NOT DOCUMENTED.
 </para>
 </listitem>
 
@@ -2551,7 +2553,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Prevent <function>inet_server_addr()</function> and <function>inet_server_port()</function> from being run by parallel workers (Masahiko Sawada)
+Prevent <link linkend="functions-info"><function>inet_server_addr()</function></link> and <function>inet_server_port()</function> from being run by parallel workers (Masahiko Sawada)
 </para>
 </listitem>
 
@@ -2562,7 +2564,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Change <function>pg_describe_object()</function>, <function>pg_identify_object()</function>, and <function>pg_identify_object_as_address()</function> to always report helpful error messages for non-existent objects (Michael Paquier)
+Change <link linkend="functions-info"><function>pg_describe_object()</function></link>, <function>pg_identify_object()</function>, and 
+<function>pg_identify_object_as_address()</function> to always report helpful error messages for non-existent objects (Michael Paquier)
 </para>
 </listitem>
 
@@ -2582,7 +2585,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve PL/pgSQL's expression and assignment parsing (Tom Lane)
+Improve PL/pgSQL's <link linkend="plpgsql-expressions">expression</link> and <link linkend="plpgsql-statements-assignment">assignment</link> parsing (Tom Lane)
 </para>
 
 <para>
@@ -2597,7 +2600,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow plpgsql's <literal>RETURN QUERY</literal> to execute its query using parallelism (Tom Lane)
+Allow plpgsql's <link linkend="plpgsql-control-structures"><literal>RETURN QUERY</literal></link> to execute its query using parallelism (Tom Lane)
 </para>
 </listitem>
 
@@ -2608,7 +2611,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve performance of repeated CALLs within plpgsql procedures (Pavel Stehule, Tom Lane)
+Improve performance of repeated <link linkend="plpgsql-transactions">CALL</link>s within plpgsql procedures (Pavel Stehule, Tom Lane)
 </para>
 </listitem>
 
@@ -2628,7 +2631,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Add pipeline mode to libpq (Craig Ringer, Matthieu Garrigues, Álvaro Herrera)
+Add <link linkend="libpq-pipeline-sending">pipeline</link> mode to libpq (Craig Ringer, Matthieu Garrigues, Álvaro Herrera)
 </para>
 
 <para>
@@ -2645,7 +2648,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Enhance libpq's <option>target_session_attrs</option> parameter options (Haribabu Kommi, Greg Nancarrow, Vignesh C, Tom Lane)
+Enhance libpq's <link linkend="libpq-paramkeywords"><option>target_session_attrs</option></link> parameter options (Haribabu Kommi, Greg Nancarrow, Vignesh C, Tom Lane)
 </para>
 
 <para>
@@ -2660,7 +2663,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Improve the output format of libpq's <function>PQtrace()</function> (Aya Iwata, Álvaro Herrera)
+Improve the output format of libpq's <link linkend="libpq-control"><function>PQtrace()</function></link> (Aya Iwata, Álvaro Herrera)
 </para>
 </listitem>
 
@@ -2671,7 +2674,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow libpq service files to have unlimited line lengths (Daniel Gustafsson)
+Allow the libpq <link linkend="libpq-pgservice">service file</link> to have unlimited line lengths (Daniel Gustafsson)
 </para>
 
 <para>
@@ -2690,7 +2693,7 @@ Allow an <literal>ECPG SQL</literal> identifier to be linked to a specific conne
 </para>
 
 <para>
-This is done via <literal>DECLARE ... STATEMENT</literal>.
+This is done via <link linkend="ecpg-sql-declare-statement"><literal>DECLARE ... STATEMENT</literal></link>.
 </para>
 </listitem>
 
@@ -2710,7 +2713,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Allow reindexdb to change the tablespace of the new index (Michael Paquier)
+Allow <link linkend="app-reindexdb"><application>reindexdb</application></link> to change the tablespace of the new index (Michael Paquier)
 </para>
 
 <para>
@@ -2725,7 +2728,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Allow vacuumdb to skip index cleanup and truncation (Nathan Bossart)
+Allow <link linkend="app-vacuumdb"><application>vacuumdb</application></link> to skip index cleanup and truncation (Nathan Bossart)
 </para>
 
 <para>
@@ -2740,7 +2743,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Allow <application>pg_dump</application> to dump only certain extensions (Guillaume Lelarge)
+Allow <link linkend="app-pgdump"><application>pg_dump</application></link> to dump only certain extensions (Guillaume Lelarge)
 </para>
 
 <para>
@@ -2755,7 +2758,7 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 -->
 
 <para>
-Add pgbench <function>permute()</function> function to randomly shuffle values (Fabien Coelho, Hironobu Suzuki, Dean Rasheed)
+Add <link linkend="pgbench"><application>pgbench</application></link> <function>permute()</function> function to randomly shuffle values (Fabien Coelho, Hironobu Suzuki, Dean Rasheed)
 </para>
 </listitem>
 
@@ -2770,7 +2773,8 @@ Allow multiple verbose option specifications (<option>-v</option>) to increase t
 </para>
 
 <para>
-This is now supported by <application>pg_dump</application>, <application>pg_dumpall</application>, and <application>pg_restore</application>.
+This is now supported by <link linkend="app-pgdump"><application>pg_dump</application></link>, <link linkend="app-pg-dumpall"><application>pg_dumpall</application></link>, 
+and <link linkend="app-pgrestore"><application>pg_restore</application></link>.
 </para>
 </listitem>
 
@@ -2933,7 +2937,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
 <para>
-Add command-line utility <application>pg_amcheck</application> to simplify running contrib/amcheck operations on many relations (Mark Dilger)
+Add command-line utility <link linkend="app-pgamcheck"><application>pg_amcheck</application></link> to simplify running contrib/amcheck operations on many relations (Mark Dilger)
 </para>
 </listitem>
 
@@ -2944,7 +2948,7 @@ Author: Magnus Hagander <magnus@hagander.net>
 -->
 
 <para>
-Add <option>--no-instructions</option> option to initdb (Magnus Hagander)
+Add <option>--no-instructions</option> option to <link linkend="app-initdb"><application>initdb</application></link> (Magnus Hagander)
 </para>
 
 <para>
@@ -2959,11 +2963,11 @@ Author: Magnus Hagander <magnus@hagander.net>
 -->
 
 <para>
-Stop <application>pg_upgrade</application> from creating analyze_new_cluster script (Michael Paquier)
+Stop <link linkend="pgupgrade"><application>pg_upgrade</application></link> from creating <filename>analyze_new_cluster</filename> script (Michael Paquier)
 </para>
 
 <para>
-Instead, give comparable vacuumdb instructions.
+Instead, give comparable <link linkend="app-vacuumdb"><application>vacuumdb</application></link> instructions.
 </para>
 </listitem>
 
@@ -2974,7 +2978,7 @@ Author: Magnus Hagander <magnus@hagander.net>
 -->
 
 <para>
-Remove support for the postmaster <option>-o</option> option (Magnus Hagander)
+Remove support for the <link linkend="app-postgres"><application>postmaster</application></link> <option>-o</option> option (Magnus Hagander)
 </para>
 
 <para>
@@ -2998,7 +3002,7 @@ Author: Stephen Frost <sfrost@snowman.net>
 -->
 
 <para>
-Rename Default Roles to Predefined Roles (Bruce Momjian, Stephen Frost)
+Rename "Default Roles" to <link linkend="predefined-roles">"Predefined Roles"</link> (Bruce Momjian, Stephen Frost)
 </para>
 </listitem>
 
@@ -3009,7 +3013,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add documentation for the <function>factorial()</function> function (Peter Eisentraut)
+Add documentation for the <link linkend="function-factorial"><function>factorial()</function></link> function (Peter Eisentraut)
 </para>
 
 <para>
@@ -3033,7 +3037,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add configure option <literal>--with-ssl={openssl}</literal> to behave like <option>--with-openssl</option> (Daniel Gustafsson, Michael Paquier)
+Add configure option <link linkend="configure-options-features"><literal>--with-ssl={openssl}</literal></link> to behave like <option>--with-openssl</option> (Daniel Gustafsson, Michael Paquier)
 </para>
 
 <para>
@@ -3048,11 +3052,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add support for abstract Unix-domain sockets (Peter Eisentraut)
+Add support for <link linkend="guc-unix-socket-directories">abstract Unix-domain sockets</link> (Peter Eisentraut)
 </para>
 
 <para>
-This is currently supported on Linux and Windows.
+This is currently supported on <productname>Linux</productname> and <productname>Windows</productname>.
 </para>
 </listitem>
 
@@ -3063,7 +3067,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add <varname>debug_invalidate_system_caches_always</varname> to control cache overwriting (Craig Ringer)
+Add <xref linkend="guc-debug-invalidate-system-caches-always"/> to control cache overwriting (Craig Ringer)
 </para>
 
 <para>
@@ -3082,7 +3086,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
 <para>
-Various improvements in valgrind detection (Álvaro Herrera, Peter Geoghegan)
+Various improvements in <productname>valgrind</productname> detection (Álvaro Herrera, Peter Geoghegan)
 </para>
 </listitem>
 
@@ -3121,7 +3125,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Change SHA1, SHA2, and MD5 hash computations to use the OpenSSL <acronym>EVP API</acronym> (Michael Paquier)
+Change SHA1, SHA2, and MD5 hash computations to use the <productname>OpenSSL</productname> <acronym>EVP API</acronym> (Michael Paquier)
 </para>
 
 <para>
@@ -3147,7 +3151,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 -->
 
 <para>
-Add direct conversion routines between <literal>EUC_TW</literal> and Big5 (Heikki Linnakangas)
+Add direct conversion routines between EUC_TW and Big5 (Heikki Linnakangas)
 </para>
 </listitem>
 
@@ -3158,7 +3162,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Add collation versions for FreeBSD (Thomas Munro)
+Add collation versions for <productname>FreeBSD</productname> (Thomas Munro)
 </para>
 </listitem>
 
@@ -3169,7 +3173,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Add "amadjustmembers" to the index access method <acronym>API</acronym> (Tom Lane)
+Add <link linkend="index-api"><structfield>amadjustmembers</structfield></link> to the index access method <acronym>API</acronym> (Tom Lane)
 </para>
 
 <para>
@@ -3188,6 +3192,137 @@ REMOVE?
 
 <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-12-11 [0ec5f7e78] Allow subscripting of hstore values.
+-->
+
+<para>
+Allow subscripting of <link linkend="hstore"><application>hstore</application></link> values (Tom Lane, Dmitry Dolgov)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2020-11-15 [935f66665] Handle equality operator in contrib/pg_trgm
+-->
+
+<para>
+Allow GiST/GIN <link linkend="pgtrgm"><application>pg_trgm</application></link> indexes to do equality lookups (Julien Rouhaud)
+</para>
+
+<para>
+This is similar to <literal>LIKE</literal> except no wildcards are honored.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-03-06 [1265a9c8f] Add binary I/O capability for cube datatype.
+-->
+
+<para>
+Allow the <link linkend="cube"><application>cube</application></link> data type to be transferred in binary mode (KaiGai Kohei)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2020-06-30 [ee0202d55] pgstattuple: Have pgstattuple_approx accept TOAST tables
+-->
+
+<para>
+Allow <function>pgstattuple_approx()</function> to report on <acronym>TOAST</acronym> tables (Peter Eisentraut)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2020-09-10 [34a947ca1] New contrib module, pg_surgery, with heap surgery functi
+-->
+
+<para>
+Add contrib module <link linkend="pgsurgery"><application>pg_surgery</application></link> which allows changes to row visibility (Ashutosh Sharma)
+</para>
+
+<para>
+This is useful for correcting database corruption.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2020-09-24 [aecf5ee2b] Add new 'old_snapshot' contrib module.
+-->
+
+<para>
+Add contrib module <link linkend="oldsnapshot"><application>old_snapshot</application></link> to report the <type>XID</type>/time mapping used by an active <xref linkend="guc-old-snapshot-threshold"/> (Robert Haas)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+2020-10-22 [866e24d47] Extend amcheck to check heap pages.
+-->
+
+<para>
+Allow <link linkend="amcheck"><application>amcheck</application></link> to also check heap pages (Mark Dilger)
+</para>
+
+<para>
+Previously it only checked B-Tree index pages.
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2021-01-13 [756ab2912] Add functions to 'pageinspect' to inspect GiST indexes.
+Author: Peter Geoghegan <pg@bowt.ie>
+2021-02-14 [9e596b65f] Add "LP_DEAD item?" column to GiST pageinspect functions
+-->
+
+<para>
+Allow <link linkend="pageinspect"><application>pageinspect</application></link> to inspect GiST indexes (Andrey Borodin, Heikki Linnakangas)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2021-01-19 [f18aa1b20] pageinspect: Change block number arguments to bigint
+-->
+
+<para>
+Change <application>pageinspect</application> block numbers to be <link linkend="datatype-int"><type>bigints</type></link> (Peter Eisentraut)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2020-07-20 [d98c08cdc] Update btree_gist extension for parallel query
+-->
+
+<para>
+Mark <link linkend="btree-gist"><application>btree_gist</application></link> functions as parallel safe (Steven Winfield)
+</para>
+</listitem>
+
+    </itemizedlist>
+
+    <sect4>
+     <title><link linkend="pgstatstatements">pg_stat_statements</link></title>
+
+     <itemizedlist>
+
+<listitem>
+<!--
 Author: Bruce Momjian <bruce@momjian.us>
 2021-04-07 [5fd9dfa5f] Move pg_stat_statements query jumbling to core.
 -->
@@ -3197,7 +3332,7 @@ Move query hash computation from <application>pg_stat_statements</application> t
 </para>
 
 <para>
-The new server variable <varname>compute_query_id</varname>'s default of 'auto' will automatically enable query id computation when this extension is loaded.
+The new server variable <xref linkend="guc-compute-query-id"/>'s default of <literal>auto</literal> will automatically enable query id computation when this extension is loaded.
 </para>
 </listitem>
 
@@ -3242,134 +3377,12 @@ Add <structname>pg_stat_statements_info</structname> system view to show <struct
 </para>
 </listitem>
 
-<listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-12-11 [0ec5f7e78] Allow subscripting of hstore values.
--->
-
-<para>
-Allow subscripting of hstore values (Tom Lane, Dmitry Dolgov)
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2020-11-15 [935f66665] Handle equality operator in contrib/pg_trgm
--->
-
-<para>
-Allow GiST/GIN <application>pg_trgm</application> indexes to do equality lookups (Julien Rouhaud)
-</para>
-
-<para>
-This is similar to <literal>LIKE</literal> except no wildcards are honored.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-03-06 [1265a9c8f] Add binary I/O capability for cube datatype.
--->
-
-<para>
-Allow the cube data type to be transferred in binary mode (KaiGai Kohei)
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2020-09-10 [34a947ca1] New contrib module, pg_surgery, with heap surgery functi
--->
-
-<para>
-Add contrib module <application>pg_surgery</application> which allows changes to row visibility (Ashutosh Sharma)
-</para>
-
-<para>
-This is useful for correcting database corruption.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2020-09-24 [aecf5ee2b] Add new 'old_snapshot' contrib module.
--->
-
-<para>
-Add contrib module <application>old_snapshot</application> to report the <type>XID</type>/time mapping used by an active <varname>old_snapshot_threshold</varname> (Robert Haas)
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-2020-10-22 [866e24d47] Extend amcheck to check heap pages.
--->
-
-<para>
-Allow amcheck to also check heap pages (Mark Dilger)
-</para>
-
-<para>
-Previously it only checked B-Tree index pages.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-2021-01-13 [756ab2912] Add functions to 'pageinspect' to inspect GiST indexes.
-Author: Peter Geoghegan <pg@bowt.ie>
-2021-02-14 [9e596b65f] Add "LP_DEAD item?" column to GiST pageinspect functions
--->
-
-<para>
-Allow pageinspect to inspect GiST indexes (Andrey Borodin, Heikki Linnakangas)
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2021-01-19 [f18aa1b20] pageinspect: Change block number arguments to bigint
--->
-
-<para>
-Change pageinspect block numbers to be bigints (Peter Eisentraut)
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2020-06-30 [ee0202d55] pgstattuple: Have pgstattuple_approx accept TOAST tables
--->
-
-<para>
-Allow <function>pgstattuple_approx()</function> to report on <acronym>TOAST</acronym> tables (Peter Eisentraut)
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2020-07-20 [d98c08cdc] Update btree_gist extension for parallel query
--->
-
-<para>
-Mark <application>btree_gist</application> functions as parallel safe (Steven Winfield)
-</para>
-</listitem>
-
     </itemizedlist>
 
+    </sect4>
+
     <sect4>
-     <title>postgres_fdw</title>
+     <title><link linkend="postgres-fdw"><application>postgres_fdw</application></link></title>
 
      <itemizedlist>
 
@@ -3393,7 +3406,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Allow <application>postgres_fdw</application> to import table partitions if specified by <command>IMPORT FOREIGN SCHEMA ... LIMIT TO</command> (Matthias van de Meent)
+Allow <application>postgres_fdw</application> to import table partitions if specified by <link linkend="sql-importforeignschema"><command>IMPORT FOREIGN SCHEMA ... LIMIT TO</command></link> (Matthias van de Meent)
 </para>
 
 <para>
@@ -3408,7 +3421,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Add <application>postgres_fdw</application> function postgres_fdw_get_connections to report open foreign server connections (Bharath Rupireddy)
+Add <application>postgres_fdw</application> function <function>postgres_fdw_get_connections()</function> to report open foreign server connections (Bharath Rupireddy)
 </para>
 </listitem>
 
