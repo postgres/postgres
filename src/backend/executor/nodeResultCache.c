@@ -760,7 +760,7 @@ ExecResultCache(PlanState *pstate)
 				/*
 				 * Validate if the planner properly set the singlerow flag. It
 				 * should only set that if each cache entry can, at most,
-				 * return 1 row.  XXX maybe this should be an Assert?
+				 * return 1 row.
 				 */
 				if (unlikely(entry->complete))
 					elog(ERROR, "cache entry already complete");
