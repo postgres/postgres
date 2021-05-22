@@ -625,11 +625,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
 <para>
-Reduce the default value of <xref linkend="guc-vacuum-cost-page-miss"/> from 10 milliseconds to 2 (Peter Geoghegan)
-</para>
-
-<para>
-This new default better reflects current hardware capabilities.
+Reduce the default value of <xref linkend="guc-vacuum-cost-page-miss"/> to better reflects current hardware capabilities (Peter Geoghegan)
 </para>
 </listitem>
 
