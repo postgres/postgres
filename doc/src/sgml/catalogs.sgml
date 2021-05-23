@@ -1238,6 +1238,15 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>attalign</structfield> <type>char</type>
+      </para>
+      <para>
+       A copy of <literal>pg_type.typalign</literal> of this column's type
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>attstorage</structfield> <type>char</type>
       </para>
       <para>
@@ -1249,10 +1258,13 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>attalign</structfield> <type>char</type>
+       <structfield>attcompression</structfield> <type>char</type>
       </para>
       <para>
-       A copy of <literal>pg_type.typalign</literal> of this column's type
+       The current compression method of the column.  If it is an invalid
+       compression method (<literal>'\0'</literal>) then column data will not
+       be compressed.  Otherwise, <literal>'p'</literal> = pglz compression or
+       <literal>'l'</literal> = <productname>LZ4</productname> compression.
       </para></entry>
      </row>
 
@@ -1352,18 +1364,6 @@
       <para>
        The defined collation of the column, or zero if the column is
        not of a collatable data type
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>attcompression</structfield> <type>char</type>
-      </para>
-      <para>
-       The current compression method of the column.  If it is an invalid
-       compression method (<literal>'\0'</literal>) then column data will not
-       be compressed.  Otherwise, <literal>'p'</literal> = pglz compression or
-       <literal>'l'</literal> = <productname>LZ4</productname> compression.
       </para></entry>
      </row>
 

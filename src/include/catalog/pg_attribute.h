@@ -111,6 +111,12 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	 */
 	bool		attbyval;
 
+	/*
+	 * attalign is a copy of the typalign field from pg_type for this
+	 * attribute.  See atttypid comments above.
+	 */
+	char		attalign;
+
 	/*----------
 	 * attstorage tells for VARLENA attributes, what the heap access
 	 * methods can do to it if a given tuple doesn't fit into a page.
@@ -120,10 +126,10 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	char		attstorage;
 
 	/*
-	 * attalign is a copy of the typalign field from pg_type for this
-	 * attribute.  See atttypid comments above.
+	 * Compression method.  Must be InvalidCompressionMethod if and only if
+	 * typstorage is 'plain' or 'external'.
 	 */
-	char		attalign;
+	char		attcompression BKI_DEFAULT('\0');
 
 	/* This flag represents the "NOT NULL" constraint */
 	bool		attnotnull;
@@ -160,12 +166,6 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	/* attribute's collation, if any */
 	Oid			attcollation BKI_LOOKUP_OPT(pg_collation);
 
-	/*
-	 * compression method.  Must be InvalidCompressionMethod if and only if
-	 * typstorage is 'plain' or 'external'.
-	 */
-	char		attcompression BKI_DEFAULT('\0');
-
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* NOTE: The following fields are not present in tuple descriptors. */
 
@@ -190,10 +190,10 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
  * ATTRIBUTE_FIXED_PART_SIZE is the size of the fixed-layout,
  * guaranteed-not-null part of a pg_attribute row.  This is in fact as much
  * of the row as gets copied into tuple descriptors, so don't expect you
- * can access fields beyond attcollation except in a real tuple!
+ * can access the variable-length fields except in a real tuple!
  */
 #define ATTRIBUTE_FIXED_PART_SIZE \
-	(offsetof(FormData_pg_attribute,attcompression) + sizeof(char))
+	(offsetof(FormData_pg_attribute,attcollation) + sizeof(Oid))
 
 /* ----------------
  *		Form_pg_attribute corresponds to a pointer to a tuple with

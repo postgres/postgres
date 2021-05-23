@@ -897,8 +897,11 @@ sub morph_row_for_pgattr
 	$row->{atttypid}   = $type->{oid};
 	$row->{attlen}     = $type->{typlen};
 	$row->{attbyval}   = $type->{typbyval};
-	$row->{attstorage} = $type->{typstorage};
 	$row->{attalign}   = $type->{typalign};
+	$row->{attstorage} = $type->{typstorage};
+
+	$row->{attcompression} =
+	  $type->{typstorage} ne 'p' && $type->{typstorage} ne 'e' ? 'p' : '\0';
 
 	# set attndims if it's an array type
 	$row->{attndims} = $type->{typcategory} eq 'A' ? '1' : '0';
@@ -906,9 +909,6 @@ sub morph_row_for_pgattr
 	# collation-aware catalog columns must use C collation
 	$row->{attcollation} =
 	  $type->{typcollation} ne '0' ? $C_COLLATION_OID : 0;
-
-	$row->{attcompression} =
-	  $type->{typstorage} ne 'p' && $type->{typstorage} ne 'e' ? 'p' : '\0';
 
 	if (defined $attr->{forcenotnull})
 	{

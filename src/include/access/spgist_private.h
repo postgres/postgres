@@ -137,8 +137,8 @@ typedef struct SpGistTypeDesc
 	Oid			type;
 	int16		attlen;
 	bool		attbyval;
-	char		attstorage;
 	char		attalign;
+	char		attstorage;
 } SpGistTypeDesc;
 
 typedef struct SpGistState

@@ -699,8 +699,8 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 		attrtypes[attnum]->atttypid = Ap->am_oid;
 		attrtypes[attnum]->attlen = Ap->am_typ.typlen;
 		attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
-		attrtypes[attnum]->attstorage = Ap->am_typ.typstorage;
 		attrtypes[attnum]->attalign = Ap->am_typ.typalign;
+		attrtypes[attnum]->attstorage = Ap->am_typ.typstorage;
 		attrtypes[attnum]->attcollation = Ap->am_typ.typcollation;
 		/* if an array type, assume 1-dimensional attribute */
 		if (Ap->am_typ.typelem != InvalidOid && Ap->am_typ.typlen < 0)
@@ -713,8 +713,8 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 		attrtypes[attnum]->atttypid = TypInfo[typeoid].oid;
 		attrtypes[attnum]->attlen = TypInfo[typeoid].len;
 		attrtypes[attnum]->attbyval = TypInfo[typeoid].byval;
-		attrtypes[attnum]->attstorage = TypInfo[typeoid].storage;
 		attrtypes[attnum]->attalign = TypInfo[typeoid].align;
+		attrtypes[attnum]->attstorage = TypInfo[typeoid].storage;
 		attrtypes[attnum]->attcollation = TypInfo[typeoid].collation;
 		/* if an array type, assume 1-dimensional attribute */
 		if (TypInfo[typeoid].elem != InvalidOid &&
@@ -723,6 +723,11 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 		else
 			attrtypes[attnum]->attndims = 0;
 	}
+
+	if (IsStorageCompressible(attrtypes[attnum]->attstorage))
+		attrtypes[attnum]->attcompression = GetDefaultToastCompression();
+	else
+		attrtypes[attnum]->attcompression = InvalidCompressionMethod;
 
 	/*
 	 * If a system catalog column is collation-aware, force it to use C
@@ -737,10 +742,6 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
 	attrtypes[attnum]->attislocal = true;
-	if (IsStorageCompressible(attrtypes[attnum]->attstorage))
-		attrtypes[attnum]->attcompression = GetDefaultToastCompression();
-	else
-		attrtypes[attnum]->attcompression = InvalidCompressionMethod;
 
 	if (nullness == BOOTCOL_NULL_FORCE_NOT_NULL)
 	{

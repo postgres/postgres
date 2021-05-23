@@ -2640,8 +2640,8 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				def->constraints = NIL;
 				def->location = -1;
 				if (CompressionMethodIsValid(attribute->attcompression))
-					def->compression = pstrdup(GetCompressionMethodName(
-																		attribute->attcompression));
+					def->compression =
+						pstrdup(GetCompressionMethodName(attribute->attcompression));
 				else
 					def->compression = NULL;
 				inhSchema = lappend(inhSchema, def);
@@ -6596,12 +6596,19 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	attribute.atttypid = typeOid;
 	attribute.attstattarget = (newattnum > 0) ? -1 : 0;
 	attribute.attlen = tform->typlen;
-	attribute.atttypmod = typmod;
 	attribute.attnum = newattnum;
-	attribute.attbyval = tform->typbyval;
 	attribute.attndims = list_length(colDef->typeName->arrayBounds);
-	attribute.attstorage = tform->typstorage;
+	attribute.atttypmod = typmod;
+	attribute.attbyval = tform->typbyval;
 	attribute.attalign = tform->typalign;
+	attribute.attstorage = tform->typstorage;
+	/* do not set compression in views etc */
+	if (rel->rd_rel->relkind == RELKIND_RELATION ||
+		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		attribute.attcompression = GetAttributeCompression(&attribute,
+														   colDef->compression);
+	else
+		attribute.attcompression = InvalidCompressionMethod;
 	attribute.attnotnull = colDef->is_not_null;
 	attribute.atthasdef = false;
 	attribute.atthasmissing = false;
@@ -6611,17 +6618,6 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	attribute.attislocal = colDef->is_local;
 	attribute.attinhcount = colDef->inhcount;
 	attribute.attcollation = collOid;
-
-	/*
-	 * lookup attribute's compression method and store it in the
-	 * attr->attcompression.
-	 */
-	if (rel->rd_rel->relkind == RELKIND_RELATION ||
-		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-		attribute.attcompression = GetAttributeCompression(&attribute,
-														   colDef->compression);
-	else
-		attribute.attcompression = InvalidCompressionMethod;
 
 	/* attribute.attacl is handled by InsertPgAttributeTuples() */
 

@@ -146,7 +146,8 @@ static Node *cookConstraint(ParseState *pstate,
 /*
  * The initializers below do not include trailing variable length fields,
  * but that's OK - we're never going to reference anything beyond the
- * fixed-size portion of the structure anyway.
+ * fixed-size portion of the structure anyway.  Fields that can default
+ * to zeroes are also not mentioned.
  */
 
 static const FormData_pg_attribute a1 = {
@@ -157,8 +158,8 @@ static const FormData_pg_attribute a1 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = false,
-	.attstorage = TYPSTORAGE_PLAIN,
 	.attalign = TYPALIGN_SHORT,
+	.attstorage = TYPSTORAGE_PLAIN,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -171,8 +172,8 @@ static const FormData_pg_attribute a2 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
-	.attstorage = TYPSTORAGE_PLAIN,
 	.attalign = TYPALIGN_INT,
+	.attstorage = TYPSTORAGE_PLAIN,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -185,8 +186,8 @@ static const FormData_pg_attribute a3 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
-	.attstorage = TYPSTORAGE_PLAIN,
 	.attalign = TYPALIGN_INT,
+	.attstorage = TYPSTORAGE_PLAIN,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -199,8 +200,8 @@ static const FormData_pg_attribute a4 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
-	.attstorage = TYPSTORAGE_PLAIN,
 	.attalign = TYPALIGN_INT,
+	.attstorage = TYPSTORAGE_PLAIN,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -213,8 +214,8 @@ static const FormData_pg_attribute a5 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
-	.attstorage = TYPSTORAGE_PLAIN,
 	.attalign = TYPALIGN_INT,
+	.attstorage = TYPSTORAGE_PLAIN,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -233,8 +234,8 @@ static const FormData_pg_attribute a6 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
-	.attstorage = TYPSTORAGE_PLAIN,
 	.attalign = TYPALIGN_INT,
+	.attstorage = TYPSTORAGE_PLAIN,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -779,8 +780,9 @@ InsertPgAttributeTuples(Relation pg_attribute_rel,
 		slot[slotCount]->tts_values[Anum_pg_attribute_attcacheoff - 1] = Int32GetDatum(-1);
 		slot[slotCount]->tts_values[Anum_pg_attribute_atttypmod - 1] = Int32GetDatum(attrs->atttypmod);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attbyval - 1] = BoolGetDatum(attrs->attbyval);
-		slot[slotCount]->tts_values[Anum_pg_attribute_attstorage - 1] = CharGetDatum(attrs->attstorage);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attalign - 1] = CharGetDatum(attrs->attalign);
+		slot[slotCount]->tts_values[Anum_pg_attribute_attstorage - 1] = CharGetDatum(attrs->attstorage);
+		slot[slotCount]->tts_values[Anum_pg_attribute_attcompression - 1] = CharGetDatum(attrs->attcompression);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attnotnull - 1] = BoolGetDatum(attrs->attnotnull);
 		slot[slotCount]->tts_values[Anum_pg_attribute_atthasdef - 1] = BoolGetDatum(attrs->atthasdef);
 		slot[slotCount]->tts_values[Anum_pg_attribute_atthasmissing - 1] = BoolGetDatum(attrs->atthasmissing);
@@ -790,7 +792,6 @@ InsertPgAttributeTuples(Relation pg_attribute_rel,
 		slot[slotCount]->tts_values[Anum_pg_attribute_attislocal - 1] = BoolGetDatum(attrs->attislocal);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attinhcount - 1] = Int32GetDatum(attrs->attinhcount);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attcollation - 1] = ObjectIdGetDatum(attrs->attcollation);
-		slot[slotCount]->tts_values[Anum_pg_attribute_attcompression - 1] = CharGetDatum(attrs->attcompression);
 		if (attoptions && attoptions[natts] != (Datum) 0)
 			slot[slotCount]->tts_values[Anum_pg_attribute_attoptions - 1] = attoptions[natts];
 		else

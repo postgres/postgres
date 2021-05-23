@@ -424,7 +424,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		 * general it seems safer to check them always.
 		 *
 		 * attcacheoff must NOT be checked since it's possibly not set in both
-		 * copies.
+		 * copies.  We also intentionally ignore atthasmissing, since that's
+		 * not very relevant in tupdescs, which lack the attmissingval field.
 		 */
 		if (strcmp(NameStr(attr1->attname), NameStr(attr2->attname)) != 0)
 			return false;
@@ -440,9 +441,11 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attbyval != attr2->attbyval)
 			return false;
+		if (attr1->attalign != attr2->attalign)
+			return false;
 		if (attr1->attstorage != attr2->attstorage)
 			return false;
-		if (attr1->attalign != attr2->attalign)
+		if (attr1->attcompression != attr2->attcompression)
 			return false;
 		if (attr1->attnotnull != attr2->attnotnull)
 			return false;
@@ -460,7 +463,7 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attcollation != attr2->attcollation)
 			return false;
-		/* attacl, attoptions and attfdwoptions are not even present... */
+		/* variable-length fields are not even present... */
 	}
 
 	if (tupdesc1->constr != NULL)
@@ -639,12 +642,11 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attbyval = typeForm->typbyval;
 	att->attalign = typeForm->typalign;
 	att->attstorage = typeForm->typstorage;
-	att->attcollation = typeForm->typcollation;
-
 	if (IsStorageCompressible(typeForm->typstorage))
 		att->attcompression = GetDefaultToastCompression();
 	else
 		att->attcompression = InvalidCompressionMethod;
+	att->attcollation = typeForm->typcollation;
 
 	ReleaseSysCache(tuple);
 }
@@ -709,6 +711,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 			att->attbyval = false;
 			att->attalign = TYPALIGN_INT;
 			att->attstorage = TYPSTORAGE_EXTENDED;
+			att->attcompression = GetDefaultToastCompression();
 			att->attcollation = DEFAULT_COLLATION_OID;
 			break;
 
@@ -717,6 +720,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 			att->attbyval = true;
 			att->attalign = TYPALIGN_CHAR;
 			att->attstorage = TYPSTORAGE_PLAIN;
+			att->attcompression = InvalidCompressionMethod;
 			att->attcollation = InvalidOid;
 			break;
 
@@ -725,6 +729,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 			att->attbyval = true;
 			att->attalign = TYPALIGN_INT;
 			att->attstorage = TYPSTORAGE_PLAIN;
+			att->attcompression = InvalidCompressionMethod;
 			att->attcollation = InvalidOid;
 			break;
 
@@ -733,6 +738,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 			att->attbyval = FLOAT8PASSBYVAL;
 			att->attalign = TYPALIGN_DOUBLE;
 			att->attstorage = TYPSTORAGE_PLAIN;
+			att->attcompression = InvalidCompressionMethod;
 			att->attcollation = InvalidOid;
 			break;
 

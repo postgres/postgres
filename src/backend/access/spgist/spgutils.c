@@ -165,8 +165,8 @@ fillTypeDesc(SpGistTypeDesc *desc, Oid type)
 	typtup = (Form_pg_type) GETSTRUCT(tp);
 	desc->attlen = typtup->typlen;
 	desc->attbyval = typtup->typbyval;
-	desc->attstorage = typtup->typstorage;
 	desc->attalign = typtup->typalign;
+	desc->attstorage = typtup->typstorage;
 	ReleaseSysCache(tp);
 }
 
@@ -304,8 +304,8 @@ getSpGistTupleDesc(Relation index, SpGistTypeDesc *keyType)
 		att->attalign = keyType->attalign;
 		att->attstorage = keyType->attstorage;
 		/* We shouldn't need to bother with making these valid: */
-		att->attcollation = InvalidOid;
 		att->attcompression = InvalidCompressionMethod;
+		att->attcollation = InvalidOid;
 		/* In case we changed typlen, we'd better reset following offsets */
 		for (int i = spgFirstIncludeColumn; i < outTupDesc->natts; i++)
 			TupleDescAttr(outTupDesc, i)->attcacheoff = -1;
