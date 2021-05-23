@@ -4219,6 +4219,8 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 				{
 					rInfo = ExecGetTriggerResultRel(estate, evtshared->ats_relid);
 					rel = rInfo->ri_RelationDesc;
+					/* Catch calls with insufficient relcache refcounting */
+					Assert(!RelationHasReferenceCountZero(rel));
 					trigdesc = rInfo->ri_TrigDesc;
 					finfo = rInfo->ri_TrigFunctions;
 					instr = rInfo->ri_TrigInstrument;
