@@ -469,7 +469,7 @@ Add predefined roles <link linkend="predefined-roles"><structname>pg_read_all_da
 </para>
 
 <para>
-These non-login roles give read-only/write-only access to all objects.
+These non-login roles can be used to give read or write permission to all tables, views, and sequences.
 </para>
 </listitem>
 
