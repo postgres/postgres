@@ -530,8 +530,9 @@ get_resultcache_path(PlannerInfo *root, RelOptInfo *innerrel,
 	 * considering doing that?
 	 */
 	if (extra->inner_unique &&
-		list_length(inner_path->param_info->ppi_clauses) <
-		list_length(extra->restrictlist))
+		(inner_path->param_info == NULL ||
+		 list_length(inner_path->param_info->ppi_clauses) <
+		 list_length(extra->restrictlist)))
 		return NULL;
 
 	/*
