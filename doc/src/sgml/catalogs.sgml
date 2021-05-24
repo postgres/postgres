@@ -7518,10 +7518,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>stxexprs</structfield> <type>pg_node_tree</type>
+       <structfield>stxdexpr</structfield> <type>pg_statistic[]</type>
       </para>
       <para>
-       A list of any expressions covered by this statistics object.
+       Per-expression statistics, serialized as an array of
+       <structname>pg_statistic</structname> type
       </para></entry>
      </row>
     </tbody>
@@ -7675,16 +7676,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        Array of subscribed publication names. These reference
        publications defined in the upstream database. For more on publications
        see <xref linkend="logical-replication-publication"/>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>stxdexpr</structfield> <type>pg_statistic[]</type>
-      </para>
-      <para>
-       Per-expression statistics, serialized as an array of
-       <structname>pg_statistic</structname> type
       </para></entry>
      </row>
     </tbody>
@@ -12751,18 +12742,9 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attname</structfield>)
       </para>
       <para>
-       Names of the columns included in the extended statistics object
+       Name of column described by this row
       </para></entry>
      </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>exprs</structfield> <type>text[]</type>
-      </para>
-      <para>
-       Expressions included in the extended statistics object
-      </para></entry>
-      </row>
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
@@ -13003,9 +12985,18 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attname</structfield>)
       </para>
       <para>
-       Names of the columns the extended statistics object is defined on
+       Names of the columns included in the extended statistics object
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>exprs</structfield> <type>text[]</type>
+      </para>
+      <para>
+       Expressions included in the extended statistics object
+      </para></entry>
+      </row>
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
