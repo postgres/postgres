@@ -110,10 +110,9 @@
 #define BYPASS_THRESHOLD_PAGES	0.02	/* i.e. 2% of rel_pages */
 
 /*
- * When a table is small (i.e. smaller than this), save cycles by avoiding
- * repeated failsafe checks
+ * Perform a failsafe check every 4GB during the heap scan, approximately
  */
-#define FAILSAFE_MIN_PAGES \
+#define FAILSAFE_EVERY_PAGES \
 	((BlockNumber) (((uint64) 4 * 1024 * 1024 * 1024) / BLCKSZ))
 
 /*
@@ -890,6 +889,7 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 	BlockNumber nblocks,
 				blkno,
 				next_unskippable_block,
+				next_failsafe_block,
 				next_fsm_block_to_vacuum;
 	PGRUsage	ru0;
 	Buffer		vmbuffer = InvalidBuffer;
@@ -919,6 +919,7 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 
 	nblocks = RelationGetNumberOfBlocks(vacrel->rel);
 	next_unskippable_block = 0;
+	next_failsafe_block = 0;
 	next_fsm_block_to_vacuum = 0;
 	vacrel->rel_pages = nblocks;
 	vacrel->scanned_pages = 0;
@@ -1129,6 +1130,20 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		}
 
 		vacuum_delay_point();
+
+		/*
+		 * Regularly check if wraparound failsafe should trigger.
+		 *
+		 * There is a similar check inside lazy_vacuum_all_indexes(), but
+		 * relfrozenxid might start to look dangerously old before we reach
+		 * that point.  This check also provides failsafe coverage for the
+		 * one-pass strategy case.
+		 */
+		if (blkno - next_failsafe_block >= FAILSAFE_EVERY_PAGES)
+		{
+			lazy_check_wraparound_failsafe(vacrel);
+			next_failsafe_block = blkno;
+		}
 
 		/*
 		 * Consider if we definitely have enough space to process TIDs on page
@@ -1375,17 +1390,12 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 				 * Periodically perform FSM vacuuming to make newly-freed
 				 * space visible on upper FSM pages.  Note we have not yet
 				 * performed FSM processing for blkno.
-				 *
-				 * Call lazy_check_wraparound_failsafe() here, too, since we
-				 * also don't want to do that too frequently, or too
-				 * infrequently.
 				 */
 				if (blkno - next_fsm_block_to_vacuum >= VACUUM_FSM_EVERY_PAGES)
 				{
 					FreeSpaceMapVacuumRange(vacrel->rel, next_fsm_block_to_vacuum,
 											blkno);
 					next_fsm_block_to_vacuum = blkno;
-					lazy_check_wraparound_failsafe(vacrel);
 				}
 
 				/*
@@ -2558,7 +2568,6 @@ lazy_check_needs_freeze(Buffer buf, bool *hastup, LVRelState *vacrel)
 /*
  * Trigger the failsafe to avoid wraparound failure when vacrel table has a
  * relfrozenxid and/or relminmxid that is dangerously far in the past.
- *
  * Triggering the failsafe makes the ongoing VACUUM bypass any further index
  * vacuuming and heap vacuuming.  Truncating the heap is also bypassed.
  *
@@ -2567,24 +2576,10 @@ lazy_check_needs_freeze(Buffer buf, bool *hastup, LVRelState *vacrel)
  * that it started out with.
  *
  * Returns true when failsafe has been triggered.
- *
- * Caller is expected to call here before and after vacuuming each index in
- * the case of two-pass VACUUM, or every VACUUM_FSM_EVERY_PAGES blocks in the
- * case of no-indexes/one-pass VACUUM.
- *
- * There is also a precheck before the first pass over the heap begins, which
- * is helpful when the failsafe initially triggers during a non-aggressive
- * VACUUM -- the automatic aggressive vacuum to prevent wraparound that
- * follows can independently trigger the failsafe right away.
  */
 static bool
 lazy_check_wraparound_failsafe(LVRelState *vacrel)
 {
-	/* Avoid calling vacuum_xid_failsafe_check() very frequently */
-	if (vacrel->num_index_scans == 0 &&
-		vacrel->rel_pages <= FAILSAFE_MIN_PAGES)
-		return false;
-
 	/* Don't warn more than once per VACUUM */
 	if (vacrel->do_failsafe)
 		return true;
@@ -2600,7 +2595,7 @@ lazy_check_wraparound_failsafe(LVRelState *vacrel)
 		vacrel->do_failsafe = true;
 
 		ereport(WARNING,
-				(errmsg("abandoned index vacuuming of table \"%s.%s.%s\" as a failsafe after %d index scans",
+				(errmsg("bypassing nonessential maintenance of table \"%s.%s.%s\" as a failsafe after %d index scans",
 						get_database_name(MyDatabaseId),
 						vacrel->relnamespace,
 						vacrel->relname,
