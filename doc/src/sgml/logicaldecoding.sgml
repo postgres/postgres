@@ -400,7 +400,10 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
     <structname>pg_stat_replication</structname></link>
     view provide information about the current state of replication slots and
     streaming replication connections respectively. These views apply to both physical and
-    logical replication.
+    logical replication. The
+    <link linkend="monitoring-pg-stat-replication-slots-view">
+    <structname>pg_stat_replication_slots</structname></link>
+    view provides statistics information about the logical replication slots.
    </para>
   </sect1>
 
