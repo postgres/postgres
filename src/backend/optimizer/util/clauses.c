@@ -4317,6 +4317,22 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 								  ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(mycxt);
 
+	/*
+	 * We need a dummy FuncExpr node containing the already-simplified
+	 * arguments.  (In some cases we don't really need it, but building it is
+	 * cheap enough that it's not worth contortions to avoid.)
+	 */
+	fexpr = makeNode(FuncExpr);
+	fexpr->funcid = funcid;
+	fexpr->funcresulttype = result_type;
+	fexpr->funcretset = false;
+	fexpr->funcvariadic = funcvariadic;
+	fexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
+	fexpr->funccollid = result_collid;	/* doesn't matter */
+	fexpr->inputcollid = input_collid;
+	fexpr->args = args;
+	fexpr->location = -1;
+
 	/* Fetch the function body */
 	tmp = SysCacheGetAttr(PROCOID,
 						  func_tuple,
@@ -4359,31 +4375,10 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	}
 	else
 	{
-		/*
-		 * Set up to handle parameters while parsing the function body.  We
-		 * need a dummy FuncExpr node containing the already-simplified
-		 * arguments to pass to prepare_sql_fn_parse_info.  (In some cases we
-		 * don't really need that, but for simplicity we always build it.)
-		 */
-		fexpr = makeNode(FuncExpr);
-		fexpr->funcid = funcid;
-		fexpr->funcresulttype = result_type;
-		fexpr->funcretset = false;
-		fexpr->funcvariadic = funcvariadic;
-		fexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
-		fexpr->funccollid = result_collid;	/* doesn't matter */
-		fexpr->inputcollid = input_collid;
-		fexpr->args = args;
-		fexpr->location = -1;
-
+		/* Set up to handle parameters while parsing the function body. */
 		pinfo = prepare_sql_fn_parse_info(func_tuple,
 										  (Node *) fexpr,
 										  input_collid);
-
-		/* fexpr also provides a convenient way to resolve a composite result */
-		(void) get_expr_result_type((Node *) fexpr,
-									NULL,
-									&rettupdesc);
 
 		/*
 		 * We just do parsing and parse analysis, not rewriting, because
@@ -4433,6 +4428,11 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 		querytree->setOperations ||
 		list_length(querytree->targetList) != 1)
 		goto fail;
+
+	/* If the function result is composite, resolve it */
+	(void) get_expr_result_type((Node *) fexpr,
+								NULL,
+								&rettupdesc);
 
 	/*
 	 * Make sure the function (still) returns what it's declared to.  This
