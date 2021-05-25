@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 				vacopts.parallel_workers = atoi(optarg);
 				if (vacopts.parallel_workers < 0)
 				{
-					pg_log_error("parallel vacuum degree must be a non-negative integer");
+					pg_log_error("parallel workers for vacuum must be greater than or equal to zero");
 					exit(1);
 				}
 				break;
@@ -920,7 +920,7 @@ help(const char *progname)
 	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"));
 	printf(_("      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"));
 	printf(_("      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"));
-	printf(_("  -P, --parallel=PARALLEL_DEGREE  use this many background workers for vacuum, if available\n"));
+	printf(_("  -P, --parallel=PARALLEL_WORKERS use this many background workers for vacuum, if available\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
 	printf(_("      --skip-locked               skip relations that cannot be immediately locked\n"));
 	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"));
