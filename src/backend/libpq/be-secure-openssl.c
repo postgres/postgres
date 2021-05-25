@@ -278,6 +278,16 @@ be_tls_init(void)
 	/* disallow SSL session caching, too */
 	SSL_CTX_set_session_cache_mode(SSL_context, SSL_SESS_CACHE_OFF);
 
+#ifdef SSL_OP_NO_RENEGOTIATION
+
+	/*
+	 * Disallow SSL renegotiation, option available since 1.1.0h.  This
+	 * concerns only TLSv1.2 and older protocol versions, as TLSv1.3 has no
+	 * support for renegotiation.
+	 */
+	SSL_CTX_set_options(SSL_context, SSL_OP_NO_RENEGOTIATION);
+#endif
+
 	/* set up ephemeral ECDH keys */
 	initialize_ecdh();
 
