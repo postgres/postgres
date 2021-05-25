@@ -2463,24 +2463,27 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 	TupleDesc	newTupDesc = RelationGetDescr(NewHeap);
 	HeapTuple	copiedTuple;
 	int			i;
+	bool		values_free[MaxTupleAttributeNumber];
+
+	memset(values_free, 0, newTupDesc->natts * sizeof(bool));
 
 	heap_deform_tuple(tuple, oldTupDesc, values, isnull);
 
-	/* Be sure to null out any dropped columns */
 	for (i = 0; i < newTupDesc->natts; i++)
 	{
+		/* Be sure to null out any dropped columns */
 		if (TupleDescAttr(newTupDesc, i)->attisdropped)
 			isnull[i] = true;
-
-		/*
-		 * Use this opportunity to force recompression of any data that's
-		 * compressed with some TOAST compression method other than the one
-		 * configured for the column.  We don't actually need to perform the
-		 * compression here; we just need to decompress. That will trigger
-		 * recompression later on.
-		 */
 		else if (!isnull[i] && TupleDescAttr(newTupDesc, i)->attlen == -1)
 		{
+			/*
+			 * Use this opportunity to force recompression of any data that's
+			 * compressed with some TOAST compression method other than the
+			 * one configured for the column.  We don't actually need to
+			 * perform the compression here; we just need to decompress.  That
+			 * will trigger recompression later on.
+			 */
+
 			struct varlena *new_value;
 			ToastCompressionId cmid;
 			char		cmethod;
@@ -2507,7 +2510,10 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 
 			/* if compression method doesn't match then detoast the value */
 			if (TupleDescAttr(newTupDesc, i)->attcompression != cmethod)
+			{
 				values[i] = PointerGetDatum(detoast_attr(new_value));
+				values_free[i] = true;
+			}
 		}
 	}
 
@@ -2515,6 +2521,13 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 
 	/* The heap rewrite module does the rest */
 	rewrite_heap_tuple(rwstate, tuple, copiedTuple);
+
+	/* Free any value detoasted previously */
+	for (i = 0; i < newTupDesc->natts; i++)
+	{
+		if (values_free[i])
+			pfree(DatumGetPointer(values[i]));
+	}
 
 	heap_freetuple(copiedTuple);
 }
