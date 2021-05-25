@@ -4216,8 +4216,8 @@ where t1.f1 = ss.f1;
                     QUERY PLAN                    
 --------------------------------------------------
  Nested Loop
-   Output: t1.f1, i8.q1, i8.q2, q1, f1
-   Join Filter: (t1.f1 = f1)
+   Output: t1.f1, i8.q1, i8.q2, (i8.q1), t2.f1
+   Join Filter: (t1.f1 = t2.f1)
    ->  Nested Loop Left Join
          Output: t1.f1, i8.q1, i8.q2
          ->  Seq Scan on public.text_tbl t1
@@ -4228,7 +4228,7 @@ where t1.f1 = ss.f1;
                      Output: i8.q1, i8.q2
                      Filter: (i8.q2 = 123)
    ->  Result Cache
-         Output: q1, f1
+         Output: (i8.q1), t2.f1
          Cache Key: i8.q1
          ->  Limit
                Output: (i8.q1), t2.f1
@@ -4255,13 +4255,13 @@ select * from
   lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss1,
   lateral (select ss1.* from text_tbl t3 limit 1) as ss2
 where t1.f1 = ss2.f1;
-                       QUERY PLAN                       
---------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Nested Loop
-   Output: t1.f1, i8.q1, i8.q2, q1, f1, q1, f1
-   Join Filter: (t1.f1 = f1)
+   Output: t1.f1, i8.q1, i8.q2, (i8.q1), t2.f1, ((i8.q1)), (t2.f1)
+   Join Filter: (t1.f1 = (t2.f1))
    ->  Nested Loop
-         Output: t1.f1, i8.q1, i8.q2, q1, f1
+         Output: t1.f1, i8.q1, i8.q2, (i8.q1), t2.f1
          ->  Nested Loop Left Join
                Output: t1.f1, i8.q1, i8.q2
                ->  Seq Scan on public.text_tbl t1
@@ -4272,19 +4272,19 @@ where t1.f1 = ss2.f1;
                            Output: i8.q1, i8.q2
                            Filter: (i8.q2 = 123)
          ->  Result Cache
-               Output: q1, f1
+               Output: (i8.q1), t2.f1
                Cache Key: i8.q1
                ->  Limit
                      Output: (i8.q1), t2.f1
                      ->  Seq Scan on public.text_tbl t2
                            Output: i8.q1, t2.f1
    ->  Result Cache
-         Output: q1, f1
-         Cache Key: q1, f1
+         Output: ((i8.q1)), (t2.f1)
+         Cache Key: (i8.q1), t2.f1
          ->  Limit
-               Output: (q1), (f1)
+               Output: ((i8.q1)), (t2.f1)
                ->  Seq Scan on public.text_tbl t3
-                     Output: q1, f1
+                     Output: (i8.q1), t2.f1
 (28 rows)
 
 select * from

@@ -756,6 +756,12 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			{
 				ResultCache *rcplan = (ResultCache *) plan;
 
+				/*
+				 * Result Cache does not evaluate its targetlist.  It just
+				 * uses the same targetlist from its outer subnode.
+				 */
+				set_dummy_tlist_references(plan, rtoffset);
+
 				rcplan->param_exprs = fix_scan_list(root, rcplan->param_exprs,
 													rtoffset,
 													NUM_EXEC_TLIST(plan));
