@@ -275,11 +275,11 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-P <replaceable class="parameter">parallel_degree</replaceable></option></term>
-      <term><option>--parallel=<replaceable class="parameter">parallel_degree</replaceable></option></term>
+      <term><option>-P <replaceable class="parameter">parallel_workers</replaceable></option></term>
+      <term><option>--parallel=<replaceable class="parameter">parallel_workers</replaceable></option></term>
       <listitem>
        <para>
-        Specify the parallel degree of <firstterm>parallel vacuum</firstterm>.
+        Specify the number of parallel workers for <firstterm>parallel vacuum</firstterm>.
         This allows the vacuum to leverage multiple CPUs to process indexes.
         See <xref linkend="sql-vacuum"/>.
        </para>

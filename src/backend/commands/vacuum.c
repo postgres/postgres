@@ -165,7 +165,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 				if (nworkers < 0 || nworkers > MAX_PARALLEL_WORKER_LIMIT)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("parallel vacuum degree must be between 0 and %d",
+							 errmsg("parallel workers for vacuum must be between 0 and %d",
 									MAX_PARALLEL_WORKER_LIMIT),
 							 parser_errposition(pstate, opt->location)));
 

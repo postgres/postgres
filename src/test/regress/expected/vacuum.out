@@ -110,7 +110,7 @@ VACUUM (PARALLEL 2) pvactst;
 UPDATE pvactst SET i = i WHERE i < 1000;
 VACUUM (PARALLEL 0) pvactst; -- disable parallel vacuum
 VACUUM (PARALLEL -1) pvactst; -- error
-ERROR:  parallel vacuum degree must be between 0 and 1024
+ERROR:  parallel workers for vacuum must be between 0 and 1024
 LINE 1: VACUUM (PARALLEL -1) pvactst;
                 ^
 VACUUM (PARALLEL 2, INDEX_CLEANUP FALSE) pvactst;
