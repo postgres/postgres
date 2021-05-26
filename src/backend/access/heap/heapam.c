@@ -2356,7 +2356,7 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 }
 
 /*
- *	heap_multi_insert	- insert multiple tuple into a heap
+ *	heap_multi_insert	- insert multiple tuples into a heap
  *
  * This is like heap_insert(), but inserts multiple tuples in one operation.
  * That's faster than calling heap_insert() in a loop, because when multiple
