@@ -8,14 +8,13 @@ use Config;
 use PostgresNode;
 use TestLib;
 use Test::More;
-use Cwd;
 
 my $node = get_new_node('main');
 $node->init;
 $node->start;
 
 my $numrows = 700;
-$ENV{PATH} = "$ENV{PATH}:" . getcwd();
+$ENV{PATH} = "$ENV{TESTDIR}:$ENV{PATH}";
 
 my ($out, $err) = run_command([ 'libpq_pipeline', 'tests' ]);
 die "oops: $err" unless $err eq '';
