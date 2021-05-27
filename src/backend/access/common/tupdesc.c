@@ -642,10 +642,7 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attbyval = typeForm->typbyval;
 	att->attalign = typeForm->typalign;
 	att->attstorage = typeForm->typstorage;
-	if (IsStorageCompressible(typeForm->typstorage))
-		att->attcompression = GetDefaultToastCompression();
-	else
-		att->attcompression = InvalidCompressionMethod;
+	att->attcompression = InvalidCompressionMethod;
 	att->attcollation = typeForm->typcollation;
 
 	ReleaseSysCache(tuple);
@@ -711,7 +708,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 			att->attbyval = false;
 			att->attalign = TYPALIGN_INT;
 			att->attstorage = TYPSTORAGE_EXTENDED;
-			att->attcompression = GetDefaultToastCompression();
+			att->attcompression = InvalidCompressionMethod;
 			att->attcollation = DEFAULT_COLLATION_OID;
 			break;
 

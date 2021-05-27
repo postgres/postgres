@@ -232,11 +232,10 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 				 * same compression method. Otherwise we have to use the
 				 * default method.
 				 */
-				if (att->atttypid == atttype->type_id &&
-					CompressionMethodIsValid(att->attcompression))
+				if (att->atttypid == atttype->type_id)
 					compression = att->attcompression;
 				else
-					compression = GetDefaultToastCompression();
+					compression = InvalidCompressionMethod;
 
 				cvalue = toast_compress_datum(value, compression);
 

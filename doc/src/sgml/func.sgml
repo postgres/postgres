@@ -26253,10 +26253,10 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
          <primary>pg_column_compression</primary>
         </indexterm>
         <function>pg_column_compression</function> ( <type>"any"</type> )
-        <returnvalue>integer</returnvalue>
+        <returnvalue>text</returnvalue>
        </para>
        <para>
-        Shows the compression algorithm that was used to compress a
+        Shows the compression algorithm that was used to compress
         an individual variable-length value. Returns <literal>NULL</literal>
         if the value is not compressed.
        </para></entry>

@@ -1719,8 +1719,6 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 		/* Unset this so no one tries to look up the generation expression */
 		attStruct->attgenerated = '\0';
 
-		attStruct->attcompression = InvalidCompressionMethod;
-
 		/*
 		 * Change the column name to something that isn't likely to conflict
 		 */

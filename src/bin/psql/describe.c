@@ -1636,9 +1636,9 @@ describeOneTableDetails(const char *schemaname,
 				indexdef_col = -1,
 				fdwopts_col = -1,
 				attstorage_col = -1,
+				attcompression_col = -1,
 				attstattarget_col = -1,
-				attdescr_col = -1,
-				attcompression_col = -1;
+				attdescr_col = -1;
 	int			numrows;
 	struct
 	{
@@ -2055,7 +2055,7 @@ describeOneTableDetails(const char *schemaname,
 		appendPQExpBufferStr(&buf, ",\n  a.attstorage");
 		attstorage_col = cols++;
 
-		/* compression info */
+		/* compression info, if relevant to relkind */
 		if (pset.sversion >= 140000 &&
 			!pset.hide_compression &&
 			(tableinfo.relkind == RELKIND_RELATION ||
@@ -2259,7 +2259,7 @@ describeOneTableDetails(const char *schemaname,
 		if (fdwopts_col >= 0)
 			printTableAddCell(&cont, PQgetvalue(res, i, fdwopts_col), false, false);
 
-		/* Storage and Description */
+		/* Storage mode, if relevant */
 		if (attstorage_col >= 0)
 		{
 			char	   *storage = PQgetvalue(res, i, attstorage_col);
@@ -2273,7 +2273,7 @@ describeOneTableDetails(const char *schemaname,
 							  false, false);
 		}
 
-		/* Column compression. */
+		/* Column compression, if relevant */
 		if (attcompression_col >= 0)
 		{
 			char	   *compression = PQgetvalue(res, i, attcompression_col);

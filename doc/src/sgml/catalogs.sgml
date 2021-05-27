@@ -1261,10 +1261,14 @@
        <structfield>attcompression</structfield> <type>char</type>
       </para>
       <para>
-       The current compression method of the column.  If it is an invalid
-       compression method (<literal>'\0'</literal>) then column data will not
-       be compressed.  Otherwise, <literal>'p'</literal> = pglz compression or
-       <literal>'l'</literal> = <productname>LZ4</productname> compression.
+       The current compression method of the column.  Typically this is
+       <literal>'\0'</literal> to specify use of the current default setting
+       (see <xref linkend="guc-default-toast-compression"/>).  Otherwise,
+       <literal>'p'</literal> selects pglz compression, while
+       <literal>'l'</literal> selects <productname>LZ4</productname>
+       compression.  However, this field is ignored
+       whenever <structfield>attstorage</structfield> does not allow
+       compression.
       </para></entry>
      </row>
 

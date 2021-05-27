@@ -4651,13 +4651,13 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"default_toast_compression", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the default compression for new columns."),
-			NULL,
-			GUC_IS_NAME
+			gettext_noop("Sets the default compression method for compressible values."),
+			NULL
 		},
 		&default_toast_compression,
 		TOAST_PGLZ_COMPRESSION,
-		default_toast_compression_options, NULL, NULL
+		default_toast_compression_options,
+		NULL, NULL, NULL
 	},
 
 	{

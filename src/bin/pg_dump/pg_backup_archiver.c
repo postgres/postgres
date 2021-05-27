@@ -86,7 +86,6 @@ static void _selectTableAccessMethod(ArchiveHandle *AH, const char *tableam);
 static void processEncodingEntry(ArchiveHandle *AH, TocEntry *te);
 static void processStdStringsEntry(ArchiveHandle *AH, TocEntry *te);
 static void processSearchPathEntry(ArchiveHandle *AH, TocEntry *te);
-static void processToastCompressionEntry(ArchiveHandle *AH, TocEntry *te);
 static int	_tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH);
 static RestorePass _tocEntryRestorePass(TocEntry *te);
 static bool _tocEntryIsACL(TocEntry *te);
@@ -2638,8 +2637,6 @@ ReadToc(ArchiveHandle *AH)
 			processStdStringsEntry(AH, te);
 		else if (strcmp(te->desc, "SEARCHPATH") == 0)
 			processSearchPathEntry(AH, te);
-		else if (strcmp(te->desc, "TOASTCOMPRESSION") == 0)
-			processToastCompressionEntry(AH, te);
 	}
 }
 
@@ -2695,29 +2692,6 @@ processSearchPathEntry(ArchiveHandle *AH, TocEntry *te)
 	 * verbatim for use later.
 	 */
 	AH->public.searchpath = pg_strdup(te->defn);
-}
-
-static void
-processToastCompressionEntry(ArchiveHandle *AH, TocEntry *te)
-{
-	/* te->defn should have the form SET default_toast_compression = 'x'; */
-	char	   *defn = pg_strdup(te->defn);
-	char	   *ptr1;
-	char	   *ptr2 = NULL;
-
-	ptr1 = strchr(defn, '\'');
-	if (ptr1)
-		ptr2 = strchr(++ptr1, '\'');
-	if (ptr2)
-	{
-		*ptr2 = '\0';
-		AH->public.default_toast_compression = pg_strdup(ptr1);
-	}
-	else
-		fatal("invalid TOASTCOMPRESSION item: %s",
-			  te->defn);
-
-	free(defn);
 }
 
 static void
@@ -2779,8 +2753,7 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 	/* These items are treated specially */
 	if (strcmp(te->desc, "ENCODING") == 0 ||
 		strcmp(te->desc, "STDSTRINGS") == 0 ||
-		strcmp(te->desc, "SEARCHPATH") == 0 ||
-		strcmp(te->desc, "TOASTCOMPRESSION") == 0)
+		strcmp(te->desc, "SEARCHPATH") == 0)
 		return REQ_SPECIAL;
 
 	/*
@@ -3102,11 +3075,6 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 	/* Select the dump-time search_path */
 	if (AH->public.searchpath)
 		ahprintf(AH, "%s", AH->public.searchpath);
-
-	/* Select the dump-time default_toast_compression */
-	if (AH->public.default_toast_compression)
-		ahprintf(AH, "SET default_toast_compression = '%s';\n",
-				 AH->public.default_toast_compression);
 
 	/* Make sure function checking is disabled */
 	ahprintf(AH, "SET check_function_bodies = false;\n");

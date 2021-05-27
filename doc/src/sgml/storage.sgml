@@ -377,6 +377,16 @@ the content of the <acronym>TOAST</acronym> pointer tells that, instead.
 </para>
 
 <para>
+The compression technique used for either in-line or out-of-line compressed
+data can be selected for each column by setting
+the <literal>COMPRESSION</literal> column option in <command>CREATE
+TABLE</command> or <command>ALTER TABLE</command>.  The default for columns
+with no explicit setting is to consult the
+<xref linkend="guc-default-toast-compression"/> parameter at the time data is
+inserted.
+</para>
+
+<para>
 As mentioned, there are multiple types of <acronym>TOAST</acronym> pointer datums.
 The oldest and most common type is a pointer to out-of-line data stored in
 a <firstterm><acronym>TOAST</acronym> table</firstterm> that is separate from, but
@@ -390,13 +400,6 @@ out-of-line data that appears elsewhere in memory.  Such datums are
 necessarily short-lived, and will never appear on-disk, but they are very
 useful for avoiding copying and redundant processing of large data values.
 Further details appear in <xref linkend="storage-toast-inmemory"/>.
-</para>
-
-<para>
-The compression technique used for either in-line or out-of-line compressed
-data can be selected using the <literal>COMPRESSION</literal> option on a per-column
-basis when creating a table. The default for columns with no explicit setting
-is taken from the value of <xref linkend="guc-default-toast-compression" />.
 </para>
 
 <sect2 id="storage-toast-ondisk">

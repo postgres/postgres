@@ -561,6 +561,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <node>	TableConstraint TableLikeClause
 %type <ival>	TableLikeOptionList TableLikeOption
+%type <str>		column_compression opt_column_compression
 %type <list>	ColQualList
 %type <node>	ColConstraint ColConstraintElem ConstraintAttr
 %type <ival>	key_actions key_delete key_match key_update key_action
@@ -609,7 +610,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>		hash_partbound
 %type <defelt>		hash_partbound_elem
 
-%type <str>	optColumnCompression
 
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
@@ -2302,6 +2302,15 @@ alter_table_cmd:
 					n->def = (Node *) makeString($6);
 					$$ = (Node *)n;
 				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET COMPRESSION <cm> */
+			| ALTER opt_column ColId SET column_compression
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_SetCompression;
+					n->name = $3;
+					n->def = (Node *) makeString($5);
+					$$ = (Node *)n;
+				}
 			/* ALTER TABLE <name> ALTER [COLUMN] <colname> ADD GENERATED ... AS IDENTITY ... */
 			| ALTER opt_column ColId ADD_P GENERATED generated_when AS IDENTITY_P OptParenthesizedSeqOptList
 				{
@@ -2344,15 +2353,6 @@ alter_table_cmd:
 					n->subtype = AT_DropIdentity;
 					n->name = $3;
 					n->missing_ok = true;
-					$$ = (Node *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET (COMPRESSION <cm>) */
-			| ALTER opt_column ColId SET optColumnCompression
-				{
-					AlterTableCmd *n = makeNode(AlterTableCmd);
-					n->subtype = AT_SetCompression;
-					n->name = $3;
-					n->def = (Node *) makeString($5);
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> DROP [COLUMN] IF EXISTS <colname> [RESTRICT|CASCADE] */
@@ -3462,7 +3462,7 @@ TypedTableElement:
 			| TableConstraint					{ $$ = $1; }
 		;
 
-columnDef:	ColId Typename optColumnCompression create_generic_options ColQualList
+columnDef:	ColId Typename opt_column_compression create_generic_options ColQualList
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
@@ -3522,13 +3522,15 @@ columnOptions:	ColId ColQualList
 				}
 		;
 
-optColumnCompression:
-					COMPRESSION name
-					{
-						$$ = $2;
-					}
-					| /*EMPTY*/	{ $$ = NULL; }
-				;
+column_compression:
+			COMPRESSION ColId						{ $$ = $2; }
+			| COMPRESSION DEFAULT					{ $$ = pstrdup("default"); }
+		;
+
+opt_column_compression:
+			column_compression						{ $$ = $1; }
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
 
 ColQualList:
 			ColQualList ColConstraint				{ $$ = lappend($1, $2); }

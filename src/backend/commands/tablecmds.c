@@ -601,7 +601,7 @@ static void refuseDupeIndexAttach(Relation parentIdx, Relation partIdx,
 								  Relation partitionTbl);
 static List *GetParentedForeignKeyRefs(Relation partition);
 static void ATDetachCheckNoForeignKeyRefs(Relation partition);
-static char GetAttributeCompression(Form_pg_attribute att, char *compression);
+static char GetAttributeCompression(Oid atttypid, char *compression);
 
 
 /* ----------------------------------------------------------------
@@ -897,17 +897,9 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		if (colDef->generated)
 			attr->attgenerated = colDef->generated;
 
-		/*
-		 * lookup attribute's compression method and store it in the
-		 * attr->attcompression.
-		 */
-		if (relkind == RELKIND_RELATION ||
-			relkind == RELKIND_PARTITIONED_TABLE ||
-			relkind == RELKIND_MATVIEW)
-			attr->attcompression =
-				GetAttributeCompression(attr, colDef->compression);
-		else
-			attr->attcompression = InvalidCompressionMethod;
+		if (colDef->compression)
+			attr->attcompression = GetAttributeCompression(attr->atttypid,
+														   colDef->compression);
 	}
 
 	/*
@@ -6602,13 +6594,8 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	attribute.attbyval = tform->typbyval;
 	attribute.attalign = tform->typalign;
 	attribute.attstorage = tform->typstorage;
-	/* do not set compression in views etc */
-	if (rel->rd_rel->relkind == RELKIND_RELATION ||
-		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-		attribute.attcompression = GetAttributeCompression(&attribute,
-														   colDef->compression);
-	else
-		attribute.attcompression = InvalidCompressionMethod;
+	attribute.attcompression = GetAttributeCompression(typeOid,
+													   colDef->compression);
 	attribute.attnotnull = colDef->is_not_null;
 	attribute.atthasdef = false;
 	attribute.atthasmissing = false;
@@ -7995,23 +7982,24 @@ ATExecSetOptions(Relation rel, const char *colName, Node *options,
 /*
  * Helper function for ATExecSetStorage and ATExecSetCompression
  *
- * Set the attcompression and/or attstorage for the respective index attribute
- * if the respective input values are valid.
+ * Set the attstorage and/or attcompression fields for index columns
+ * associated with the specified table column.
  */
 static void
 SetIndexStorageProperties(Relation rel, Relation attrelation,
-						  AttrNumber attnum, char newcompression,
-						  char newstorage, LOCKMODE lockmode)
+						  AttrNumber attnum,
+						  bool setstorage, char newstorage,
+						  bool setcompression, char newcompression,
+						  LOCKMODE lockmode)
 {
-	HeapTuple	tuple;
 	ListCell   *lc;
-	Form_pg_attribute attrtuple;
 
 	foreach(lc, RelationGetIndexList(rel))
 	{
 		Oid			indexoid = lfirst_oid(lc);
 		Relation	indrel;
 		AttrNumber	indattnum = 0;
+		HeapTuple	tuple;
 
 		indrel = index_open(indexoid, lockmode);
 
@@ -8034,13 +8022,13 @@ SetIndexStorageProperties(Relation rel, Relation attrelation,
 
 		if (HeapTupleIsValid(tuple))
 		{
-			attrtuple = (Form_pg_attribute) GETSTRUCT(tuple);
+			Form_pg_attribute attrtuple = (Form_pg_attribute) GETSTRUCT(tuple);
 
-			if (CompressionMethodIsValid(newcompression))
-				attrtuple->attcompression = newcompression;
-
-			if (newstorage != '\0')
+			if (setstorage)
 				attrtuple->attstorage = newstorage;
+
+			if (setcompression)
+				attrtuple->attcompression = newcompression;
 
 			CatalogTupleUpdate(attrelation, &tuple->t_self, tuple);
 
@@ -8134,8 +8122,9 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue, LOCKMODE loc
 	 * matching behavior of index.c ConstructTupleDescriptor()).
 	 */
 	SetIndexStorageProperties(rel, attrelation, attnum,
-							  InvalidCompressionMethod,
-							  newstorage, lockmode);
+							  true, newstorage,
+							  false, 0,
+							  lockmode);
 
 	table_close(attrelation, RowExclusiveLock);
 
@@ -12299,23 +12288,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	attTup->attbyval = tform->typbyval;
 	attTup->attalign = tform->typalign;
 	attTup->attstorage = tform->typstorage;
-
-	/* Setup attribute compression */
-	if (rel->rd_rel->relkind == RELKIND_RELATION ||
-		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-	{
-		/*
-		 * No compression for plain/external storage, otherwise, default
-		 * compression method if it is not already set, refer comments atop
-		 * attcompression parameter in pg_attribute.h.
-		 */
-		if (!IsStorageCompressible(tform->typstorage))
-			attTup->attcompression = InvalidCompressionMethod;
-		else if (!CompressionMethodIsValid(attTup->attcompression))
-			attTup->attcompression = GetDefaultToastCompression();
-	}
-	else
-		attTup->attcompression = InvalidCompressionMethod;
+	attTup->attcompression = InvalidCompressionMethod;
 
 	ReleaseSysCache(typeTuple);
 
@@ -15613,7 +15586,6 @@ ATExecSetCompression(AlteredTableInfo *tab,
 	Form_pg_attribute atttableform;
 	AttrNumber	attnum;
 	char	   *compression;
-	char		typstorage;
 	char		cmethod;
 	ObjectAddress address;
 
@@ -15638,17 +15610,11 @@ ATExecSetCompression(AlteredTableInfo *tab,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot alter system column \"%s\"", column)));
 
-	typstorage = get_typstorage(atttableform->atttypid);
-
-	/* prevent from setting compression methods for uncompressible type */
-	if (!IsStorageCompressible(typstorage))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("column data type %s does not support compression",
-						format_type_be(atttableform->atttypid))));
-
-	/* get the attribute compression method. */
-	cmethod = GetAttributeCompression(atttableform, compression);
+	/*
+	 * Check that column type is compressible, then get the attribute
+	 * compression method code
+	 */
+	cmethod = GetAttributeCompression(atttableform->atttypid, compression);
 
 	/* update pg_attribute entry */
 	atttableform->attcompression = cmethod;
@@ -15662,7 +15628,10 @@ ATExecSetCompression(AlteredTableInfo *tab,
 	 * Apply the change to indexes as well (only for simple index columns,
 	 * matching behavior of index.c ConstructTupleDescriptor()).
 	 */
-	SetIndexStorageProperties(rel, attrel, attnum, cmethod, '\0', lockmode);
+	SetIndexStorageProperties(rel, attrel, attnum,
+							  false, 0,
+							  true, cmethod,
+							  lockmode);
 
 	heap_freetuple(tuple);
 
@@ -18612,29 +18581,30 @@ ATDetachCheckNoForeignKeyRefs(Relation partition)
  * resolve column compression specification to compression method.
  */
 static char
-GetAttributeCompression(Form_pg_attribute att, char *compression)
+GetAttributeCompression(Oid atttypid, char *compression)
 {
-	char		typstorage = get_typstorage(att->atttypid);
 	char		cmethod;
 
-	/*
-	 * No compression for plain/external storage, refer comments atop
-	 * attcompression parameter in pg_attribute.h
-	 */
-	if (!IsStorageCompressible(typstorage))
-	{
-		if (compression == NULL)
-			return InvalidCompressionMethod;
+	if (compression == NULL || strcmp(compression, "default") == 0)
+		return InvalidCompressionMethod;
 
+	/*
+	 * To specify a nondefault method, the column data type must be toastable.
+	 * Note this says nothing about whether the column's attstorage setting
+	 * permits compression; we intentionally allow attstorage and
+	 * attcompression to be independent.  But with a non-toastable type,
+	 * attstorage could not be set to a value that would permit compression.
+	 *
+	 * We don't actually need to enforce this, since nothing bad would happen
+	 * if attcompression were non-default; it would never be consulted.  But
+	 * it seems more user-friendly to complain about a certainly-useless
+	 * attempt to set the property.
+	 */
+	if (!TypeIsToastable(atttypid))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("column data type %s does not support compression",
-						format_type_be(att->atttypid))));
-	}
-
-	/* fallback to default compression if it's not specified */
-	if (compression == NULL)
-		return GetDefaultToastCompression();
+						format_type_be(atttypid))));
 
 	cmethod = CompressionNameToMethod(compression);
 	if (!CompressionMethodIsValid(cmethod))

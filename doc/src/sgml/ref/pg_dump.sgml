@@ -975,8 +975,8 @@ PostgreSQL documentation
        <para>
         Do not output commands to set <acronym>TOAST</acronym> compression
         methods.
-        With this option, all objects will be created using whichever
-        compression method is the default during restore.
+        With this option, all columns will be restored with the default
+        compression setting.
        </para>
       </listitem>
      </varlistentry>

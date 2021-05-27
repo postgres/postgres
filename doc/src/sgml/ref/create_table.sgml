@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable> ( [
-  { <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ COLLATE <replaceable>collation</replaceable> ] [ COMPRESSION <replaceable>compression_method</replaceable> ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
+  { <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ COMPRESSION <replaceable>compression_method</replaceable> ] [ COLLATE <replaceable>collation</replaceable> ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
     | LIKE <replaceable>source_table</replaceable> [ <replaceable>like_option</replaceable> ... ] }
     [, ... ]
@@ -293,17 +293,22 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       The <literal>COMPRESSION</literal> clause sets the compression method
-      for a column.  Compression is supported only for variable-width data
-      types, and is used only for columns whose storage type is main or
-      extended. (See <xref linkend="sql-altertable"/> for information on
-      column storage types.) Setting this property for a partitioned table
+      for the column.  Compression is supported only for variable-width data
+      types, and is used only when the column's storage mode
+      is <literal>main</literal> or <literal>extended</literal>.
+      (See <xref linkend="sql-altertable"/> for information on
+      column storage modes.) Setting this property for a partitioned table
       has no direct effect, because such tables have no storage of their own,
-      but the configured value is inherited by newly-created partitions.
+      but the configured value will be inherited by newly-created partitions.
       The supported compression methods are <literal>pglz</literal> and
-      <literal>lz4</literal>.  <literal>lz4</literal> is available only if
-      <literal>--with-lz4</literal> was used when building
-      <productname>PostgreSQL</productname>. The default
-      is <literal>pglz</literal>.
+      <literal>lz4</literal>.  (<literal>lz4</literal> is available only if
+      <option>--with-lz4</option> was used when building
+      <productname>PostgreSQL</productname>.)  In addition,
+      <replaceable class="parameter">compression_method</replaceable>
+      can be <literal>default</literal> to explicitly specify the default
+      behavior, which is to consult the
+      <xref linkend="guc-default-toast-compression"/> setting at the time of
+      data insertion to determine the method to use.
      </para>
     </listitem>
    </varlistentry>

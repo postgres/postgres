@@ -2483,10 +2483,10 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 			 * perform the compression here; we just need to decompress.  That
 			 * will trigger recompression later on.
 			 */
-
 			struct varlena *new_value;
 			ToastCompressionId cmid;
 			char		cmethod;
+			char		targetmethod;
 
 			new_value = (struct varlena *) DatumGetPointer(values[i]);
 			cmid = toast_get_compression_id(new_value);
@@ -2495,7 +2495,7 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 			if (cmid == TOAST_INVALID_COMPRESSION_ID)
 				continue;
 
-			/* convert compression id to compression method */
+			/* convert existing compression id to compression method */
 			switch (cmid)
 			{
 				case TOAST_PGLZ_COMPRESSION_ID:
@@ -2506,10 +2506,16 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 					break;
 				default:
 					elog(ERROR, "invalid compression method id %d", cmid);
+					cmethod = '\0'; /* keep compiler quiet */
 			}
 
+			/* figure out what the target method is */
+			targetmethod = TupleDescAttr(newTupDesc, i)->attcompression;
+			if (!CompressionMethodIsValid(targetmethod))
+				targetmethod = default_toast_compression;
+
 			/* if compression method doesn't match then detoast the value */
-			if (TupleDescAttr(newTupDesc, i)->attcompression != cmethod)
+			if (targetmethod != cmethod)
 			{
 				values[i] = PointerGetDatum(detoast_attr(new_value));
 				values_free[i] = true;

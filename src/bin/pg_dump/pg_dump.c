@@ -276,7 +276,6 @@ static void dumpDatabaseConfig(Archive *AH, PQExpBuffer outbuf,
 static void dumpEncoding(Archive *AH);
 static void dumpStdStrings(Archive *AH);
 static void dumpSearchPath(Archive *AH);
-static void dumpToastCompression(Archive *AH);
 static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 													 PQExpBuffer upgrade_buffer,
 													 Oid pg_type_oid,
@@ -925,13 +924,11 @@ main(int argc, char **argv)
 	 */
 
 	/*
-	 * First the special entries for ENCODING, STDSTRINGS, SEARCHPATH and
-	 * TOASTCOMPRESSION.
+	 * First the special entries for ENCODING, STDSTRINGS, and SEARCHPATH.
 	 */
 	dumpEncoding(fout);
 	dumpStdStrings(fout);
 	dumpSearchPath(fout);
-	dumpToastCompression(fout);
 
 	/* The database items are always next, unless we don't want them at all */
 	if (dopt.outputCreateDB)
@@ -3396,58 +3393,6 @@ dumpSearchPath(Archive *AH)
 	PQclear(res);
 	destroyPQExpBuffer(qry);
 	destroyPQExpBuffer(path);
-}
-
-/*
- * dumpToastCompression: save the dump-time default TOAST compression in the
- * archive
- */
-static void
-dumpToastCompression(Archive *AH)
-{
-	char	   *toast_compression;
-	PQExpBuffer qry;
-
-	if (AH->dopt->no_toast_compression)
-	{
-		/* we don't intend to dump the info, so no need to fetch it either */
-		return;
-	}
-
-	if (AH->remoteVersion < 140000)
-	{
-		/* pre-v14, the only method was pglz */
-		toast_compression = pg_strdup("pglz");
-	}
-	else
-	{
-		PGresult   *res;
-
-		res = ExecuteSqlQueryForSingleRow(AH, "SHOW default_toast_compression");
-		toast_compression = pg_strdup(PQgetvalue(res, 0, 0));
-		PQclear(res);
-	}
-
-	qry = createPQExpBuffer();
-	appendPQExpBufferStr(qry, "SET default_toast_compression = ");
-	appendStringLiteralAH(qry, toast_compression, AH);
-	appendPQExpBufferStr(qry, ";\n");
-
-	pg_log_info("saving default_toast_compression = %s", toast_compression);
-
-	ArchiveEntry(AH, nilCatalogId, createDumpId(),
-				 ARCHIVE_OPTS(.tag = "TOASTCOMPRESSION",
-							  .description = "TOASTCOMPRESSION",
-							  .section = SECTION_PRE_DATA,
-							  .createStmt = qry->data));
-
-	/*
-	 * Also save it in AH->default_toast_compression, in case we're doing
-	 * plain text dump.
-	 */
-	AH->default_toast_compression = toast_compression;
-
-	destroyPQExpBuffer(qry);
 }
 
 
@@ -16399,6 +16344,33 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 			}
 
 			/*
+			 * Dump per-column compression, if it's been set.
+			 */
+			if (!dopt->no_toast_compression)
+			{
+				const char *cmname;
+
+				switch (tbinfo->attcompression[j])
+				{
+					case 'p':
+						cmname = "pglz";
+						break;
+					case 'l':
+						cmname = "lz4";
+						break;
+					default:
+						cmname = NULL;
+						break;
+				}
+
+				if (cmname != NULL)
+					appendPQExpBuffer(q, "ALTER %sTABLE ONLY %s ALTER COLUMN %s SET COMPRESSION %s;\n",
+									  foreign, qualrelname,
+									  fmtId(tbinfo->attnames[j]),
+									  cmname);
+			}
+
+			/*
 			 * Dump per-column attributes.
 			 */
 			if (tbinfo->attoptions[j][0] != '\0')
@@ -16419,35 +16391,6 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 								  qualrelname,
 								  fmtId(tbinfo->attnames[j]),
 								  tbinfo->attfdwoptions[j]);
-
-			/*
-			 * Dump per-column compression, if different from default.
-			 */
-			if (!dopt->no_toast_compression)
-			{
-				const char *cmname;
-
-				switch (tbinfo->attcompression[j])
-				{
-					case 'p':
-						cmname = "pglz";
-						break;
-					case 'l':
-						cmname = "lz4";
-						break;
-					default:
-						cmname = NULL;
-						break;
-				}
-
-				if (cmname != NULL &&
-					(fout->default_toast_compression == NULL ||
-					 strcmp(cmname, fout->default_toast_compression) != 0))
-					appendPQExpBuffer(q, "ALTER %sTABLE ONLY %s ALTER COLUMN %s SET COMPRESSION %s;\n",
-									  foreign, qualrelname,
-									  fmtId(tbinfo->attnames[j]),
-									  cmname);
-			}
 		}						/* end loop over columns */
 
 		if (ftoptions)

@@ -53,9 +53,11 @@ toast_compress_datum(Datum value, char cmethod)
 	Assert(!VARATT_IS_EXTERNAL(DatumGetPointer(value)));
 	Assert(!VARATT_IS_COMPRESSED(DatumGetPointer(value)));
 
-	Assert(CompressionMethodIsValid(cmethod));
-
 	valsize = VARSIZE_ANY_EXHDR(DatumGetPointer(value));
+
+	/* If the compression method is not valid, use the current default */
+	if (!CompressionMethodIsValid(cmethod))
+		cmethod = default_toast_compression;
 
 	/*
 	 * Call appropriate compression routine for the compression method.

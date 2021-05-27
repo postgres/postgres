@@ -50,7 +50,7 @@ SELECT * INTO cmmove1 FROM cmdata;
                                         Table "public.cmmove1"
  Column | Type | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
 --------+------+-----------+----------+---------+----------+-------------+--------------+-------------
- f1     | text |           |          |         | extended | pglz        |              | 
+ f1     | text |           |          |         | extended |             |              | 
 
 SELECT pg_column_compression(f1) FROM cmmove1;
  pg_column_compression 
@@ -144,7 +144,7 @@ ALTER TABLE cmdata2 ALTER COLUMN f1 TYPE varchar;
                                               Table "public.cmdata2"
  Column |       Type        | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
 --------+-------------------+-----------+----------+---------+----------+-------------+--------------+-------------
- f1     | character varying |           |          |         | extended | pglz        |              | 
+ f1     | character varying |           |          |         | extended |             |              | 
 
 ALTER TABLE cmdata2 ALTER COLUMN f1 TYPE int USING f1::integer;
 \d+ cmdata2
@@ -156,6 +156,7 @@ ALTER TABLE cmdata2 ALTER COLUMN f1 TYPE int USING f1::integer;
 --changing column storage should not impact the compression method
 --but the data should not be compressed
 ALTER TABLE cmdata2 ALTER COLUMN f1 TYPE varchar;
+ALTER TABLE cmdata2 ALTER COLUMN f1 SET COMPRESSION pglz;
 \d+ cmdata2
                                               Table "public.cmdata2"
  Column |       Type        | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
@@ -177,18 +178,18 @@ SELECT pg_column_compression(f1) FROM cmdata2;
 (1 row)
 
 -- test compression with materialized view
-CREATE MATERIALIZED VIEW mv(x) AS SELECT * FROM cmdata1;
+CREATE MATERIALIZED VIEW compressmv(x) AS SELECT * FROM cmdata1;
 ERROR:  relation "cmdata1" does not exist
-LINE 1: CREATE MATERIALIZED VIEW mv(x) AS SELECT * FROM cmdata1;
-                                                        ^
-\d+ mv
+LINE 1: ...TE MATERIALIZED VIEW compressmv(x) AS SELECT * FROM cmdata1;
+                                                               ^
+\d+ compressmv
 SELECT pg_column_compression(f1) FROM cmdata1;
 ERROR:  relation "cmdata1" does not exist
 LINE 1: SELECT pg_column_compression(f1) FROM cmdata1;
                                               ^
-SELECT pg_column_compression(x) FROM mv;
-ERROR:  relation "mv" does not exist
-LINE 1: SELECT pg_column_compression(x) FROM mv;
+SELECT pg_column_compression(x) FROM compressmv;
+ERROR:  relation "compressmv" does not exist
+LINE 1: SELECT pg_column_compression(x) FROM compressmv;
                                              ^
 -- test compression with partition
 CREATE TABLE cmpart(f1 text COMPRESSION lz4) PARTITION BY HASH(f1);
@@ -217,7 +218,7 @@ SELECT pg_column_compression(f1) FROM cmpart2;
 -----------------------
 (0 rows)
 
--- test compression with inheritence, error
+-- test compression with inheritance, error
 CREATE TABLE cminh() INHERITS(cmdata, cmdata1);
 ERROR:  relation "cmdata1" does not exist
 CREATE TABLE cminh(f1 TEXT COMPRESSION lz4) INHERITS(cmdata);
@@ -234,14 +235,6 @@ HINT:  Available values: pglz.
 SET default_toast_compression = 'lz4';
 ERROR:  invalid value for parameter "default_toast_compression": "lz4"
 HINT:  Available values: pglz.
-DROP TABLE cmdata2;
-CREATE TABLE cmdata2 (f1 text);
-\d+ cmdata2
-                                        Table "public.cmdata2"
- Column | Type | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
---------+------+-----------+----------+---------+----------+-------------+--------------+-------------
- f1     | text |           |          |         | extended | pglz        |              | 
-
 SET default_toast_compression = 'pglz';
 -- test alter compression method
 ALTER TABLE cmdata ALTER COLUMN f1 SET COMPRESSION lz4;
@@ -264,11 +257,18 @@ SELECT pg_column_compression(f1) FROM cmdata;
  pglz
 (2 rows)
 
--- test alter compression method for the materialized view
-ALTER MATERIALIZED VIEW mv ALTER COLUMN x SET COMPRESSION lz4;
-ERROR:  relation "mv" does not exist
-\d+ mv
--- test alter compression method for the partitioned table
+ALTER TABLE cmdata2 ALTER COLUMN f1 SET COMPRESSION default;
+\d+ cmdata2
+                                              Table "public.cmdata2"
+ Column |       Type        | Collation | Nullable | Default | Storage | Compression | Stats target | Description 
+--------+-------------------+-----------+----------+---------+---------+-------------+--------------+-------------
+ f1     | character varying |           |          |         | plain   |             |              | 
+
+-- test alter compression method for materialized views
+ALTER MATERIALIZED VIEW compressmv ALTER COLUMN x SET COMPRESSION lz4;
+ERROR:  relation "compressmv" does not exist
+\d+ compressmv
+-- test alter compression method for partitioned tables
 ALTER TABLE cmpart1 ALTER COLUMN f1 SET COMPRESSION pglz;
 ERROR:  relation "cmpart1" does not exist
 ALTER TABLE cmpart2 ALTER COLUMN f1 SET COMPRESSION lz4;

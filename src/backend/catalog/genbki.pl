@@ -899,9 +899,7 @@ sub morph_row_for_pgattr
 	$row->{attbyval}   = $type->{typbyval};
 	$row->{attalign}   = $type->{typalign};
 	$row->{attstorage} = $type->{typstorage};
-
-	$row->{attcompression} =
-	  $type->{typstorage} ne 'p' && $type->{typstorage} ne 'e' ? 'p' : '\0';
+	$row->{attcompression} = '\0';
 
 	# set attndims if it's an array type
 	$row->{attndims} = $type->{typcategory} eq 'A' ? '1' : '0';
