@@ -167,15 +167,17 @@ foreach my $oid (keys %oidcounts)
 die "found $found duplicate OID(s) in catalog data\n" if $found;
 
 
-# Oids not specified in the input files are automatically assigned,
+# OIDs not specified in the input files are automatically assigned,
 # starting at FirstGenbkiObjectId, extending up to FirstBootstrapObjectId.
+# We allow such OIDs to be assigned independently within each catalog.
 my $FirstGenbkiObjectId =
   Catalog::FindDefinedSymbol('access/transam.h', $include_path,
 	'FirstGenbkiObjectId');
 my $FirstBootstrapObjectId =
   Catalog::FindDefinedSymbol('access/transam.h', $include_path,
 	'FirstBootstrapObjectId');
-my $GenbkiNextOid = $FirstGenbkiObjectId;
+# Hash of next available OID, indexed by catalog name.
+my %GenbkiNextOids;
 
 
 # Fetch some special data that we will substitute into the output file.
@@ -563,8 +565,7 @@ EOM
 			# Assign oid if oid column exists and no explicit assignment in row
 			if ($attname eq "oid" and not defined $bki_values{$attname})
 			{
-				$bki_values{$attname} = $GenbkiNextOid;
-				$GenbkiNextOid++;
+				$bki_values{$attname} = assign_next_oid($catname);
 			}
 
 			# Replace OID synonyms with OIDs per the appropriate lookup rule.
@@ -668,11 +669,6 @@ foreach my $declaration (@index_decls)
 
 # last command in the BKI file: build the indexes declared above
 print $bki "build indices\n";
-
-# check that we didn't overrun available OIDs
-die
-  "genbki OID counter reached $GenbkiNextOid, overrunning FirstBootstrapObjectId\n"
-  if $GenbkiNextOid > $FirstBootstrapObjectId;
 
 # Now generate system_constraints.sql
 
@@ -1077,6 +1073,25 @@ sub form_pg_type_symbol
 	my $arraystr = $1 ? 'ARRAY' : '';
 	my $name = uc $2;
 	return $name . $arraystr . 'OID';
+}
+
+# Assign an unused OID within the specified catalog.
+sub assign_next_oid
+{
+	my $catname = shift;
+
+	# Initialize, if no previous request for this catalog.
+	$GenbkiNextOids{$catname} = $FirstGenbkiObjectId
+	  if !defined($GenbkiNextOids{$catname});
+
+	my $result = $GenbkiNextOids{$catname}++;
+
+	# Check that we didn't overrun available OIDs
+	die
+	  "genbki OID counter for $catname reached $result, overrunning FirstBootstrapObjectId\n"
+	  if $result >= $FirstBootstrapObjectId;
+
+	return $result;
 }
 
 sub usage

@@ -418,11 +418,11 @@
    <para>
     If <filename>genbki.pl</filename> needs to assign an OID to a catalog
     entry that does not have a manually-assigned OID, it will use a value in
-    the range 10000&mdash;12999.  The server's OID counter is set to 13000
+    the range 10000&mdash;11999.  The server's OID counter is set to 12000
     at the start of a bootstrap run.  Thus objects created by regular SQL
     commands during the later phases of bootstrap, such as objects created
     while running the <filename>information_schema.sql</filename> script,
-    receive OIDs of 13000 or above.
+    receive OIDs of 12000 or above.
    </para>
 
    <para>
