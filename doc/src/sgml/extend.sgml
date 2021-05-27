@@ -1673,6 +1673,16 @@ include $(PGXS)
      </varlistentry>
 
      <varlistentry>
+      <term><varname>NO_INSTALL</varname></term>
+      <listitem>
+       <para>
+        don't define an <literal>install</literal> target, useful for test
+        modules that don't need their build products to be installed
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>NO_INSTALLCHECK</varname></term>
       <listitem>
        <para>

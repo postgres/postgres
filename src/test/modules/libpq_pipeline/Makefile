@@ -3,6 +3,8 @@
 PROGRAM = libpq_pipeline
 OBJS = libpq_pipeline.o
 
+NO_INSTALL = 1
+
 PG_CPPFLAGS = -I$(libpq_srcdir)
 PG_LIBS_INTERNAL += $(libpq_pgport)
 

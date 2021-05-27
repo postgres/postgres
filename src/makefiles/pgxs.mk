@@ -49,6 +49,8 @@
 #   TAP_TESTS -- switch to enable TAP tests
 #   ISOLATION -- list of isolation test cases
 #   ISOLATION_OPTS -- additional switches to pass to pg_isolation_regress
+#   NO_INSTALL -- don't define an install target, useful for test modules
+#     that don't need their build products to be installed
 #   NO_INSTALLCHECK -- don't define an installcheck target, useful e.g. if
 #     tests require special configuration, or don't use pg_regress
 #   EXTRA_CLEAN -- extra files to remove in 'make clean'
@@ -227,6 +229,8 @@ all: all-lib
 endif # MODULE_big
 
 
+ifndef NO_INSTALL
+
 install: all installdirs
 ifneq (,$(EXTENSION))
 	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(addsuffix .control, $(EXTENSION))) '$(DESTDIR)$(datadir)/extension/'
@@ -335,6 +339,15 @@ endif # with_llvm
 
 uninstall: uninstall-lib
 endif # MODULE_big
+
+else # NO_INSTALL
+
+# Need this so that temp-install builds artifacts not meant for
+# installation (Normally, check should depend on all, but we don't do
+# that because of parallel make risk (dbf2ec1a1c0).)
+install: all
+
+endif # NO_INSTALL
 
 
 clean:
