@@ -1472,6 +1472,11 @@ include_dir 'conf.d'
         The default is <literal>TLSv1.2</literal>, which satisfies industry
         best practices as of this writing.
        </para>
+
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -1489,6 +1494,11 @@ include_dir 'conf.d'
         allow any version.  Setting the maximum protocol version is mainly
         useful for testing or if some component has issues working with a
         newer protocol.
+       </para>
+
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -1703,7 +1713,7 @@ include_dir 'conf.d'
         <xref linkend="guc-huge-pages"/>.
         The default is zero (<literal>0</literal>).
         When set to <literal>0</literal>, the default huge page size on the
-        system will be used.
+        system will be used. This parameter can only be set at server start.
        </para>
        <para>
         Some commonly available page sizes on modern 64 bit server architectures include:
@@ -1900,6 +1910,9 @@ include_dir 'conf.d'
         the value of <xref linkend="guc-maintenance-work-mem"/> should
         be used instead.  The setting has no effect on the behavior of
         <command>VACUUM</command> when run in other contexts.
+        This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command
+        line.
        </para>
       </listitem>
      </varlistentry>
@@ -2029,7 +2042,8 @@ include_dir 'conf.d'
         the <varname>huge_pages</varname> setting on operating systems where
         that is supported, and may be more likely to benefit from larger pages
         on operating systems where that is managed automatically.
-        The default value is <literal>0</literal> (none).
+        The default value is <literal>0</literal> (none). This parameter can
+        only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -4794,7 +4808,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         <varname>max_worker_processes</varname>.
        </para>
        <para>
-        The default value is 4.
+        The default value is 4. This parameter can only be set at server
+        start.
        </para>
       </listitem>
      </varlistentry>
@@ -4819,7 +4834,9 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         <varname>max_logical_replication_workers</varname>.
        </para>
        <para>
-        The default value is 2.
+        The default value is 2. This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command
+        line.
        </para>
       </listitem>
      </varlistentry>
@@ -9836,6 +9853,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         useful to disable the restart so that the clusterware can gain
         control and take any actions it deems appropriate.
        </para>
+
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -9852,6 +9874,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         temporary files after a backend crash. If disabled, the files will be
         retained and may be used for debugging, for example. Repeated crashes
         may however result in accumulation of useless files.
+       </para>
+
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -9920,6 +9947,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         while writing data to disk may not be reported to
         <productname>PostgreSQL</productname>, and relevant error messages may
         appear only in kernel logs.
+       </para>
+       <para>
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>

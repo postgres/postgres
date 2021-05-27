@@ -774,6 +774,7 @@
 					# data?
 					# (change requires restart)
 #recovery_init_sync_method = fsync	# fsync, syncfs (Linux 5.8+)
+					# (change requires restart)
 
 
 #------------------------------------------------------------------------------
