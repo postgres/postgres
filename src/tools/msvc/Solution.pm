@@ -899,7 +899,7 @@ sub GetFakeConfigure
 	$cfg .= ' --with-perl'          if ($self->{options}->{perl});
 	$cfg .= ' --with-python'        if ($self->{options}->{python});
 	my $port = $self->{options}->{'--with-pgport'};
-	$cfg .= " --with-pgport=$port" if defined($port)
+	$cfg .= " --with-pgport=$port" if defined($port);
 
 	return $cfg;
 }
