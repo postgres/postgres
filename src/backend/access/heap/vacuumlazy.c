@@ -2153,7 +2153,7 @@ lazy_vacuum(LVRelState *vacrel, bool onecall)
 		vacrel->do_index_vacuuming = false;
 		ereport(elevel,
 				(errmsg("\"%s\": index scan bypassed: %u pages from table (%.2f%% of total) have %lld dead item identifiers",
-						vacrel->relname, vacrel->rel_pages,
+						vacrel->relname, vacrel->lpdead_item_pages,
 						100.0 * vacrel->lpdead_item_pages / vacrel->rel_pages,
 						(long long) vacrel->lpdead_items)));
 	}
