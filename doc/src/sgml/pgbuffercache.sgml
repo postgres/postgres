@@ -96,7 +96,7 @@
       </para>
       <para>
        Fork number within the relation;  see
-       <filename>include/common/relpath.h</filename>
+       <filename>common/relpath.h</filename>
       </para></entry>
      </row>
 

@@ -102,7 +102,7 @@
  <para>
   The tools for building using <productname>Visual C++</productname> or
   <productname>Platform SDK</productname> are in the
-  <filename>src/tools/msvc</filename> directory. When building, make sure
+  <filename>src\tools\msvc</filename> directory. When building, make sure
   there are no tools from <productname>MinGW</productname> or
   <productname>Cygwin</productname> present in your system PATH. Also, make
   sure you have all the required Visual C++ tools available in the PATH. In
