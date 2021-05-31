@@ -146,7 +146,7 @@ multirange_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed multirange literal: \"%s\"",
 						input_str),
-				 errdetail("Missing left bracket.")));
+				 errdetail("Missing left brace.")));
 
 	/* consume ranges */
 	parse_state = MULTIRANGE_BEFORE_RANGE;
@@ -282,7 +282,7 @@ multirange_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed multirange literal: \"%s\"",
 						input_str),
-				 errdetail("Junk after right bracket.")));
+				 errdetail("Junk after right brace.")));
 
 	ret = make_multirange(mltrngtypoid, rangetyp, range_count, ranges);
 	PG_RETURN_MULTIRANGE_P(ret);

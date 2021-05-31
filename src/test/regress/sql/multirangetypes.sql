@@ -7,6 +7,7 @@
 -- negative tests; should fail
 select ''::textmultirange;
 select '{,}'::textmultirange;
+select '{(,)}.'::textmultirange;
 select '{[a,c),}'::textmultirange;
 select '{,[a,c)}'::textmultirange;
 select '{-[a,z)}'::textmultirange;
