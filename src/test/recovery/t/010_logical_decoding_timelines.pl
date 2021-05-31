@@ -158,7 +158,7 @@ like(
 ($ret, $stdout, $stderr) = $node_replica->psql(
 	'postgres',
 	"SELECT data FROM pg_logical_slot_peek_changes('before_basebackup', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');",
-	timeout => 30);
+	timeout => 180);
 is($ret, 0, 'replay from slot before_basebackup succeeds');
 
 my $final_expected_output_bb = q(BEGIN
