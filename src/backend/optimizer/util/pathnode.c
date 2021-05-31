@@ -2632,7 +2632,23 @@ create_projection_path(PlannerInfo *root,
 					   PathTarget *target)
 {
 	ProjectionPath *pathnode = makeNode(ProjectionPath);
-	PathTarget *oldtarget = subpath->pathtarget;
+	PathTarget *oldtarget;
+
+	/*
+	 * We mustn't put a ProjectionPath directly above another; it's useless
+	 * and will confuse create_projection_plan.  Rather than making sure all
+	 * callers handle that, let's implement it here, by stripping off any
+	 * ProjectionPath in what we're given.  Given this rule, there won't be
+	 * more than one.
+	 */
+	if (IsA(subpath, ProjectionPath))
+	{
+		ProjectionPath *subpp = (ProjectionPath *) subpath;
+
+		Assert(subpp->path.parent == rel);
+		subpath = subpp->subpath;
+		Assert(!IsA(subpath, ProjectionPath));
+	}
 
 	pathnode->path.pathtype = T_Result;
 	pathnode->path.parent = rel;
@@ -2658,6 +2674,7 @@ create_projection_path(PlannerInfo *root,
 	 * Note: in the latter case, create_projection_plan has to recheck our
 	 * conclusion; see comments therein.
 	 */
+	oldtarget = subpath->pathtarget;
 	if (is_projection_capable_path(subpath) ||
 		equal(oldtarget->exprs, target->exprs))
 	{

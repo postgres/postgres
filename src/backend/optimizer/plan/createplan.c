@@ -1976,6 +1976,7 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 		 */
 		subplan = create_plan_recurse(root, best_path->subpath,
 									  CP_IGNORE_TLIST);
+		Assert(is_projection_capable_plan(subplan));
 		tlist = build_path_tlist(root, &best_path->path);
 	}
 	else

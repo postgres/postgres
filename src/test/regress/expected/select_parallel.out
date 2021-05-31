@@ -1126,6 +1126,29 @@ ORDER BY 1, 2, 3;
 ------------------------------+---------------------------+-------------+--------------
 (0 rows)
 
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT generate_series(1, two), array(select generate_series(1, two))
+  FROM tenk1 ORDER BY tenthous;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ ProjectSet
+   Output: generate_series(1, tenk1.two), (SubPlan 1), tenk1.tenthous
+   ->  Gather Merge
+         Output: tenk1.two, tenk1.tenthous
+         Workers Planned: 4
+         ->  Result
+               Output: tenk1.two, tenk1.tenthous
+               ->  Sort
+                     Output: tenk1.tenthous, tenk1.two
+                     Sort Key: tenk1.tenthous
+                     ->  Parallel Seq Scan on public.tenk1
+                           Output: tenk1.tenthous, tenk1.two
+   SubPlan 1
+     ->  ProjectSet
+           Output: generate_series(1, tenk1.two)
+           ->  Result
+(16 rows)
+
 -- test passing expanded-value representations to workers
 CREATE FUNCTION make_some_array(int,int) returns int[] as
 $$declare x int[];

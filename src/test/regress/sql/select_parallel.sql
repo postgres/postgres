@@ -429,6 +429,10 @@ ORDER BY 1;
 SELECT * FROM information_schema.foreign_data_wrapper_options
 ORDER BY 1, 2, 3;
 
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT generate_series(1, two), array(select generate_series(1, two))
+  FROM tenk1 ORDER BY tenthous;
+
 -- test passing expanded-value representations to workers
 CREATE FUNCTION make_some_array(int,int) returns int[] as
 $$declare x int[];
