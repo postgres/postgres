@@ -16,9 +16,9 @@
   There are three fundamentally different approaches to backing up
   <productname>PostgreSQL</productname> data:
   <itemizedlist>
-   <listitem><para><acronym>SQL</acronym> dump</para></listitem>
+   <listitem><para><acronym>SQL</acronym> dump (Logical Backup)</para></listitem>
    <listitem><para>File system level backup</para></listitem>
-   <listitem><para>Continuous archiving</para></listitem>
+   <listitem><para>Continuous archiving (Physical Backup)</para></listitem>
   </itemizedlist>
   Each has its own strengths and weaknesses; each is discussed in turn
   in the following sections.
