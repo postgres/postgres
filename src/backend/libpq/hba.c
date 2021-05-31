@@ -144,8 +144,6 @@ static List *tokenize_inc_file(List *tokens, const char *outer_filename,
 							   const char *inc_filename, int elevel, char **err_msg);
 static bool parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 							   int elevel, char **err_msg);
-static bool verify_option_list_length(List *options, const char *optionname,
-									  List *comparelist, const char *comparename, int line_num);
 static ArrayType *gethba_options(HbaLine *hba);
 static void fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
 						  int lineno, HbaLine *hba, const char *err_msg);
@@ -1607,21 +1605,23 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 
 		if (list_length(parsedline->radiusservers) < 1)
 		{
-			ereport(LOG,
+			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("list of RADIUS servers cannot be empty"),
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
+			*err_msg = "list of RADIUS servers cannot be empty";
 			return NULL;
 		}
 
 		if (list_length(parsedline->radiussecrets) < 1)
 		{
-			ereport(LOG,
+			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("list of RADIUS secrets cannot be empty"),
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
+			*err_msg = "list of RADIUS secrets cannot be empty";
 			return NULL;
 		}
 
@@ -1630,24 +1630,53 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 		 * but that's already checked above), 1 (use the same value
 		 * everywhere) or the same as the number of servers.
 		 */
-		if (!verify_option_list_length(parsedline->radiussecrets,
-									   "RADIUS secrets",
-									   parsedline->radiusservers,
-									   "RADIUS servers",
-									   line_num))
+		if (!(list_length(parsedline->radiussecrets) == 1 ||
+			  list_length(parsedline->radiussecrets) == list_length(parsedline->radiusservers)))
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("the number of RADIUS secrets (%d) must be 1 or the same as the number of RADIUS servers (%d)",
+							list_length(parsedline->radiussecrets),
+							list_length(parsedline->radiusservers)),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			*err_msg = psprintf("the number of RADIUS secrets (%d) must be 1 or the same as the number of RADIUS servers (%d)",
+								list_length(parsedline->radiussecrets),
+								list_length(parsedline->radiusservers));
 			return NULL;
-		if (!verify_option_list_length(parsedline->radiusports,
-									   "RADIUS ports",
-									   parsedline->radiusservers,
-									   "RADIUS servers",
-									   line_num))
+		}
+		if (!(list_length(parsedline->radiusports) == 0 ||
+			  list_length(parsedline->radiusports) == 1 ||
+			  list_length(parsedline->radiusports) == list_length(parsedline->radiusservers)))
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("the number of RADIUS ports (%d) must be 1 or the same as the number of RADIUS servers (%d)",
+							list_length(parsedline->radiusports),
+							list_length(parsedline->radiusservers)),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			*err_msg = psprintf("the number of RADIUS ports (%d) must be 1 or the same as the number of RADIUS servers (%d)",
+								list_length(parsedline->radiusports),
+								list_length(parsedline->radiusservers));
 			return NULL;
-		if (!verify_option_list_length(parsedline->radiusidentifiers,
-									   "RADIUS identifiers",
-									   parsedline->radiusservers,
-									   "RADIUS servers",
-									   line_num))
+		}
+		if (!(list_length(parsedline->radiusidentifiers) == 0 ||
+			  list_length(parsedline->radiusidentifiers) == 1 ||
+			  list_length(parsedline->radiusidentifiers) == list_length(parsedline->radiusservers)))
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("the number of RADIUS identifiers (%d) must be 1 or the same as the number of RADIUS servers (%d)",
+							list_length(parsedline->radiusidentifiers),
+							list_length(parsedline->radiusservers)),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			*err_msg = psprintf("the number of RADIUS identifiers (%d) must be 1 or the same as the number of RADIUS servers (%d)",
+								list_length(parsedline->radiusidentifiers),
+								list_length(parsedline->radiusservers));
 			return NULL;
+		}
 	}
 
 	/*
@@ -1661,29 +1690,6 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	return parsedline;
 }
 
-
-static bool
-verify_option_list_length(List *options, const char *optionname,
-						  List *comparelist, const char *comparename,
-						  int line_num)
-{
-	if (list_length(options) == 0 ||
-		list_length(options) == 1 ||
-		list_length(options) == list_length(comparelist))
-		return true;
-
-	ereport(LOG,
-			(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			 errmsg("the number of %s (%d) must be 1 or the same as the number of %s (%d)",
-					optionname,
-					list_length(options),
-					comparename,
-					list_length(comparelist)
-					),
-			 errcontext("line %d of configuration file \"%s\"",
-						line_num, HbaFileName)));
-	return false;
-}
 
 /*
  * Parse one name-value pair as an authentication option into the given
