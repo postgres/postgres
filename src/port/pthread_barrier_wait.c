@@ -18,19 +18,17 @@
 int
 pthread_barrier_init(pthread_barrier_t *barrier, const void *attr, int count)
 {
+	int			error;
+
 	barrier->sense = false;
 	barrier->count = count;
 	barrier->arrived = 0;
-	if (pthread_cond_init(&barrier->cond, NULL) < 0)
-		return -1;
-	if (pthread_mutex_init(&barrier->mutex, NULL) < 0)
+	if ((error = pthread_cond_init(&barrier->cond, NULL)) != 0)
+		return error;
+	if ((error = pthread_mutex_init(&barrier->mutex, NULL)) != 0)
 	{
-		int			save_errno = errno;
-
 		pthread_cond_destroy(&barrier->cond);
-		errno = save_errno;
-
-		return -1;
+		return error;
 	}
 
 	return 0;
