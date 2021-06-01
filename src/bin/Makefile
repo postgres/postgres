@@ -30,7 +30,6 @@ SUBDIRS = \
 	pg_upgrade \
 	pg_verifybackup \
 	pg_waldump \
-	safekeeper \
 	pgbench \
 	psql \
 	scripts

@@ -24,7 +24,7 @@ typedef struct WalMessage WalMessage;
 
 extern char *zenith_timeline_walproposer;
 
-/* WalKeeper_proxy states */
+/* WAL safekeeper state */
 typedef enum
 {
 	SS_OFFLINE,
@@ -47,11 +47,11 @@ typedef struct NodeId
 } NodeId;
 
 /*
- * Information about Postgres server broadcasted by walkeeper_proxy to walkeeper
+ * Information about Postgres server broadcasted by WAL proposer to walkeeper
  */
 typedef struct ServerInfo
 {
-	uint32     protocolVersion;   /* proxy-walkeeper protocol version */
+	uint32     protocolVersion;   /* proposer-walkeeper protocol version */
 	uint32     pgVersion;         /* Postgres server version */
 	NodeId     nodeId;
 	uint64     systemId;          /* Postgres system identifier */
@@ -62,7 +62,7 @@ typedef struct ServerInfo
 } ServerInfo;
 
 /*
- * Vote request sent from proxy to walkeepers
+ * Vote request sent from proposer to walkeepers
  */
 typedef struct RequestVote
 {
@@ -97,14 +97,14 @@ typedef struct HotStandbyFeedback
 
 
 /*
- * Request with WAL message sent from proxy to walkeeper.
+ * Request with WAL message sent from proposer to walkeeper.
  */
 typedef struct WalKeeperRequest
 {
 	NodeId     senderId;    /* Sender's node identifier (looks like we do not need it for TCP streaming connection) */
 	XLogRecPtr beginLsn;    /* start position of message in WAL */
 	XLogRecPtr endLsn;      /* end position of message in WAL */
-	XLogRecPtr restartLsn;  /* restart LSN position  (minimal LSN which may be needed by proxy to perform recovery) */
+	XLogRecPtr restartLsn;  /* restart LSN position  (minimal LSN which may be needed by proposer to perform recovery) */
 	XLogRecPtr commitLsn;   /* LSN committed by quorum of walkeepers */
 } WalKeeperRequest;
 
@@ -121,7 +121,7 @@ struct WalMessage
 };
 
 /*
- * Report walkeeper state to proxy
+ * Report walkeeper state to proposer
  */
 typedef struct WalKeeperResponse
 {

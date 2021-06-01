@@ -287,7 +287,7 @@ WalProposerMain(Datum main_arg)
 
 	last_reconnect_attempt = GetCurrentTimestamp();
 
-	application_name = (char*)"safekeeper_proxy"; /* for synchronous_standby_names */
+	application_name = (char *) "walproposer"; /* for synchronous_standby_names */
 	am_wal_proposer = true;
 	am_walsender = true;
 	InitWalSender();
