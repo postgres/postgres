@@ -437,6 +437,10 @@ extern size_t strnlen(const char *str, size_t maxlen);
 extern long random(void);
 #endif
 
+#ifndef HAVE_SETENV
+extern int setenv(const char *name, const char *value, int overwrite);
+#endif
+
 #ifndef HAVE_UNSETENV
 extern void unsetenv(const char *name);
 #endif

@@ -471,6 +471,7 @@ extern void _dosmaperr(unsigned long);
 
 /* in port/win32env.c */
 extern int	pgwin32_putenv(const char *);
+extern int	pgwin32_setenv(const char *name, const char *value, int overwrite);
 extern void pgwin32_unsetenv(const char *);
 
 /* in port/win32security.c */
@@ -481,6 +482,7 @@ extern int	pgwin32_is_admin(void);
 extern BOOL AddUserToTokenDacl(HANDLE hToken);
 
 #define putenv(x) pgwin32_putenv(x)
+#define setenv(x,y,z) pgwin32_setenv(x,y,z)
 #define unsetenv(x) pgwin32_unsetenv(x)
 
 /* Things that exist in MinGW headers, but need to be added to MSVC */
