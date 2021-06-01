@@ -37,6 +37,10 @@ select * from pg_database where pg_database.datname = nonesuch;
 -- bad attribute name in select distinct on
 select distinct on (foobar) * from pg_database;
 
+-- grouping with FOR UPDATE
+select null from pg_database group by datname for update;
+select null from pg_database group by grouping sets (()) for update;
+
 
 --
 -- DELETE
