@@ -74,7 +74,8 @@ static void send_relation_and_attrs(Relation relation, TransactionId xid,
 /*
  * Entry in the map used to remember which relation schemas we sent.
  *
- * The schema_sent flag determines if the current schema record was already
+ * The schema_sent flag determines if the current schema record for the
+ * relation (and for its ancestor if publish_as_relid is set) was already
  * sent to the subscriber (in which case we don't need to send it again).
  *
  * The schema cache on downstream is however updated only at commit time,
@@ -92,10 +93,6 @@ typedef struct RelationSyncEntry
 {
 	Oid			relid;			/* relation oid */
 
-	/*
-	 * Did we send the schema?  If ancestor relid is set, its schema must also
-	 * have been sent for this to be true.
-	 */
 	bool		schema_sent;
 	List	   *streamed_txns;	/* streamed toplevel transactions with this
 								 * schema */
@@ -437,10 +434,17 @@ maybe_send_schema(LogicalDecodingContext *ctx,
 	else
 		schema_sent = relentry->schema_sent;
 
+	/* Nothing to do if we already sent the schema. */
 	if (schema_sent)
 		return;
 
-	/* If needed, send the ancestor's schema first. */
+	/*
+	 * Nope, so send the schema.  If the changes will be published using an
+	 * ancestor's schema, not the relation's own, send that ancestor's schema
+	 * before sending relation's own (XXX - maybe sending only the former
+	 * suffices?).  This is also a good place to set the map that will be used
+	 * to convert the relation's tuples into the ancestor's format, if needed.
+	 */
 	if (relentry->publish_as_relid != RelationGetRelid(relation))
 	{
 		Relation	ancestor = RelationIdGetRelation(relentry->publish_as_relid);
@@ -450,8 +454,21 @@ maybe_send_schema(LogicalDecodingContext *ctx,
 
 		/* Map must live as long as the session does. */
 		oldctx = MemoryContextSwitchTo(CacheMemoryContext);
-		relentry->map = convert_tuples_by_name(CreateTupleDescCopy(indesc),
-											   CreateTupleDescCopy(outdesc));
+
+		/*
+		 * Make copies of the TupleDescs that will live as long as the map
+		 * does before putting into the map.
+		 */
+		indesc = CreateTupleDescCopy(indesc);
+		outdesc = CreateTupleDescCopy(outdesc);
+		relentry->map = convert_tuples_by_name(indesc, outdesc);
+		if (relentry->map == NULL)
+		{
+			/* Map not necessary, so free the TupleDescs too. */
+			FreeTupleDesc(indesc);
+			FreeTupleDesc(outdesc);
+		}
+
 		MemoryContextSwitchTo(oldctx);
 		send_relation_and_attrs(ancestor, xid, ctx);
 		RelationClose(ancestor);
@@ -1011,6 +1028,7 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 		entry->pubactions.pubinsert = entry->pubactions.pubupdate =
 			entry->pubactions.pubdelete = entry->pubactions.pubtruncate = false;
 		entry->publish_as_relid = InvalidOid;
+		entry->map = NULL;	/* will be set by maybe_send_schema() if needed */
 	}
 
 	/* Validate the entry */
@@ -1191,12 +1209,24 @@ rel_sync_cache_relation_cb(Datum arg, Oid relid)
 
 	/*
 	 * Reset schema sent status as the relation definition may have changed.
+	 * Also free any objects that depended on the earlier definition.
 	 */
 	if (entry != NULL)
 	{
 		entry->schema_sent = false;
 		list_free(entry->streamed_txns);
 		entry->streamed_txns = NIL;
+		if (entry->map)
+		{
+			/*
+			 * Must free the TupleDescs contained in the map explicitly,
+			 * because free_conversion_map() doesn't.
+			 */
+			FreeTupleDesc(entry->map->indesc);
+			FreeTupleDesc(entry->map->outdesc);
+			free_conversion_map(entry->map);
+		}
+		entry->map = NULL;
 	}
 }
 

@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 54;
+use Test::More tests => 56;
 
 # setup
 
@@ -624,3 +624,29 @@ is($result, qq(), 'truncate of tab3 replicated');
 
 $result = $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab3_1");
 is($result, qq(), 'truncate of tab3_1 replicated');
+
+# check that the map to convert tuples from leaf partition to the root
+# table is correctly rebuilt when a new column is added
+$node_publisher->safe_psql('postgres',
+	"ALTER TABLE tab2 DROP b, ADD COLUMN c text DEFAULT 'pub_tab2', ADD b text");
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tab2 (a, b) VALUES (1, 'xxx'), (3, 'yyy'), (5, 'zzz')");
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tab2 (a, b, c) VALUES (6, 'aaa', 'xxx_c')");
+
+$node_publisher->wait_for_catchup('sub_viaroot');
+$node_publisher->wait_for_catchup('sub2');
+
+$result = $node_subscriber1->safe_psql('postgres',
+	"SELECT c, a, b FROM tab2 ORDER BY 1, 2");
+is( $result, qq(pub_tab2|1|xxx
+pub_tab2|3|yyy
+pub_tab2|5|zzz
+xxx_c|6|aaa), 'inserts into tab2 replicated');
+
+$result = $node_subscriber2->safe_psql('postgres',
+	"SELECT c, a, b FROM tab2 ORDER BY 1, 2");
+is( $result, qq(pub_tab2|1|xxx
+pub_tab2|3|yyy
+pub_tab2|5|zzz
+xxx_c|6|aaa), 'inserts into tab2 replicated');
