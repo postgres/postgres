@@ -407,19 +407,19 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		 * target.
 		 */
 		targetBlock = GetPageWithFreeSpace(relation, targetFreeSpace);
-	}
 
-	/*
-	 * If the FSM knows nothing of the rel, try the last page before we give
-	 * up and extend.  This avoids one-tuple-per-page syndrome during
-	 * bootstrapping or in a recently-started system.
-	 */
-	if (targetBlock == InvalidBlockNumber)
-	{
-		BlockNumber nblocks = RelationGetNumberOfBlocks(relation);
+		/*
+		 * If the FSM knows nothing of the rel, try the last page before we
+		 * give up and extend.  This avoids one-tuple-per-page syndrome during
+		 * bootstrapping or in a recently-started system.
+		 */
+		if (targetBlock == InvalidBlockNumber)
+		{
+			BlockNumber nblocks = RelationGetNumberOfBlocks(relation);
 
-		if (nblocks > 0)
-			targetBlock = nblocks - 1;
+			if (nblocks > 0)
+				targetBlock = nblocks - 1;
+		}
 	}
 
 loop:
