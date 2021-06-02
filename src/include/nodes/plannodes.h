@@ -1086,9 +1086,9 @@ typedef enum RowMarkType
  * When the planner discovers that a relation is the root of an inheritance
  * tree, it sets isParent true, and adds an additional PlanRowMark to the
  * list for each child relation (including the target rel itself in its role
- * as a child).  isParent is also set to true for the partitioned child
- * relations, which are not scanned just like the root parent.  The child
- * entries have rti == child rel's RT index and prti == parent's RT index,
+ * as a child, if it is not a partitioned table).  Any non-leaf partitioned
+ * child relations will also have entries with isParent = true.  The child
+ * entries have rti == child rel's RT index and prti == top parent's RT index,
  * and can therefore be recognized as children by the fact that prti != rti.
  * The parent's allMarkTypes field gets the OR of (1<<markType) across all
  * its children (this definition allows children to use different markTypes).
@@ -1109,8 +1109,7 @@ typedef enum RowMarkType
  * means we needn't renumber rowmarkIds when flattening subqueries, which
  * would require finding and renaming the resjunk columns as well.)
  * Note this means that all tables in an inheritance hierarchy share the
- * same resjunk column names.  However, in an inherited UPDATE/DELETE the
- * columns could have different physical column numbers in each subplan.
+ * same resjunk column names.
  */
 typedef struct PlanRowMark
 {
