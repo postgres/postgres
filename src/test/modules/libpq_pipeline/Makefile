@@ -1,7 +1,10 @@
 # src/test/modules/libpq_pipeline/Makefile
 
+PGFILEDESC = "libpq_pipeline - test program for pipeline execution"
+PGAPPICON = win32
+
 PROGRAM = libpq_pipeline
-OBJS = libpq_pipeline.o
+OBJS = $(WIN32RES) libpq_pipeline.o
 
 NO_INSTALL = 1
 
