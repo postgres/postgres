@@ -232,8 +232,25 @@ expand_inherited_rtentry(PlannerInfo *root, RelOptInfo *rel,
 		char		resname[32];
 		List	   *newvars = NIL;
 
-		/* The old PlanRowMark should already have necessitated adding TID */
-		Assert(old_allMarkTypes & ~(1 << ROW_MARK_COPY));
+		/* Add TID junk Var if needed, unless we had it already */
+		if (new_allMarkTypes & ~(1 << ROW_MARK_COPY) &&
+			!(old_allMarkTypes & ~(1 << ROW_MARK_COPY)))
+		{
+			/* Need to fetch TID */
+			var = makeVar(oldrc->rti,
+						  SelfItemPointerAttributeNumber,
+						  TIDOID,
+						  -1,
+						  InvalidOid,
+						  0);
+			snprintf(resname, sizeof(resname), "ctid%u", oldrc->rowmarkId);
+			tle = makeTargetEntry((Expr *) var,
+								  list_length(root->processed_tlist) + 1,
+								  pstrdup(resname),
+								  true);
+			root->processed_tlist = lappend(root->processed_tlist, tle);
+			newvars = lappend(newvars, var);
+		}
 
 		/* Add whole-row junk Var if needed, unless we had it already */
 		if ((new_allMarkTypes & (1 << ROW_MARK_COPY)) &&
