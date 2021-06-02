@@ -16,13 +16,13 @@
 
 #include <ctype.h>
 #include <limits.h>
+#include <sys/time.h>
 #include <time.h>
 
 #ifdef WIN32
 #include "win32.h"
 #else
 #include <unistd.h>
-#include <sys/time.h>
 #endif
 
 #include "libpq-fe.h"
