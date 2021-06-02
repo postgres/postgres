@@ -151,8 +151,13 @@ SET no_such_variable TO 42;
 
 -- Test "custom" GUCs created on the fly (which aren't really an
 -- intended feature, but many people use them).
+SHOW custom.my_guc;  -- error, not known yet
 SET custom.my_guc = 42;
 SHOW custom.my_guc;
+RESET custom.my_guc;  -- this makes it go to empty, not become unknown again
+SHOW custom.my_guc;
+SET custom.my.qualified.guc = 'foo';
+SHOW custom.my.qualified.guc;
 SET custom."bad-guc" = 42;  -- disallowed because -c cannot set this name
 SHOW custom."bad-guc";
 SET special."weird name" = 'foo';  -- could be allowed, but we choose not to

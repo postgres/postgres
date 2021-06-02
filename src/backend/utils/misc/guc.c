@@ -5368,13 +5368,14 @@ add_guc_variable(struct config_generic *var, int elevel)
 /*
  * Decide whether a proposed custom variable name is allowed.
  *
- * It must be "identifier.identifier", where the rules for what is an
- * identifier agree with scan.l.
+ * It must be two or more identifiers separated by dots, where the rules
+ * for what is an identifier agree with scan.l.  (If you change this rule,
+ * adjust the errdetail in find_option().)
  */
 static bool
 valid_custom_variable_name(const char *name)
 {
-	int			num_sep = 0;
+	bool		saw_sep = false;
 	bool		name_start = true;
 
 	for (const char *p = name; *p; p++)
@@ -5383,7 +5384,7 @@ valid_custom_variable_name(const char *name)
 		{
 			if (name_start)
 				return false;	/* empty name component */
-			num_sep++;
+			saw_sep = true;
 			name_start = true;
 		}
 		else if (strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -5400,8 +5401,8 @@ valid_custom_variable_name(const char *name)
 	}
 	if (name_start)
 		return false;			/* empty name component */
-	/* OK if we had exactly one separator */
-	return (num_sep == 1);
+	/* OK if we found at least one separator */
+	return saw_sep;
 }
 
 /*
@@ -5516,7 +5517,7 @@ find_option(const char *name, bool create_placeholders, bool skip_errors,
 						(errcode(ERRCODE_INVALID_NAME),
 						 errmsg("invalid configuration parameter name \"%s\"",
 								name),
-						 errdetail("Custom parameter names must be of the form \"identifier.identifier\".")));
+						 errdetail("Custom parameter names must be two or more simple identifiers separated by dots.")));
 			return NULL;
 		}
 	}
