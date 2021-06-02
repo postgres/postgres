@@ -17,7 +17,6 @@ use PostgresNode;
 use TestLib;
 use Test::More;
 use Config;
-use Time::HiRes qw(usleep);
 
 plan tests => 18;
 
