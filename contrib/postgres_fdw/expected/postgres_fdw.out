@@ -7190,6 +7190,92 @@ select * from bar where f1 in (select f1 from foo) for share;
   4 | 44
 (4 rows)
 
+-- Now check SELECT FOR UPDATE/SHARE with an inherited source table,
+-- where the parent is itself a foreign table
+create table loct4 (f1 int, f2 int, f3 int);
+create foreign table foo2child (f3 int) inherits (foo2)
+  server loopback options (table_name 'loct4');
+NOTICE:  moving and merging column "f3" with inherited definition
+DETAIL:  User-specified column moved to the position of the inherited column.
+explain (verbose, costs off)
+select * from bar where f1 in (select f1 from foo2) for share;
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ LockRows
+   Output: bar.f1, bar.f2, bar.ctid, foo2.*, bar.*, bar.tableoid, foo2.tableoid
+   ->  Hash Join
+         Output: bar.f1, bar.f2, bar.ctid, foo2.*, bar.*, bar.tableoid, foo2.tableoid
+         Inner Unique: true
+         Hash Cond: (bar.f1 = foo2.f1)
+         ->  Append
+               ->  Seq Scan on public.bar
+                     Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid
+               ->  Foreign Scan on public.bar2
+                     Output: bar2.f1, bar2.f2, bar2.ctid, bar2.*, bar2.tableoid
+                     Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR SHARE
+         ->  Hash
+               Output: foo2.*, foo2.f1, foo2.tableoid
+               ->  HashAggregate
+                     Output: foo2.*, foo2.f1, foo2.tableoid
+                     Group Key: foo2.f1
+                     ->  Append
+                           ->  Foreign Scan on public.foo2
+                                 Output: foo2.*, foo2.f1, foo2.tableoid
+                                 Remote SQL: SELECT f1, f2, f3 FROM public.loct1
+                           ->  Foreign Scan on public.foo2child
+                                 Output: foo2child.*, foo2child.f1, foo2child.tableoid
+                                 Remote SQL: SELECT f1, f2, f3 FROM public.loct4
+(24 rows)
+
+select * from bar where f1 in (select f1 from foo2) for share;
+ f1 | f2 
+----+----
+  2 | 22
+  4 | 44
+(2 rows)
+
+drop foreign table foo2child;
+-- And with a local child relation of the foreign table parent
+create table foo2child (f3 int) inherits (foo2);
+NOTICE:  moving and merging column "f3" with inherited definition
+DETAIL:  User-specified column moved to the position of the inherited column.
+explain (verbose, costs off)
+select * from bar where f1 in (select f1 from foo2) for share;
+                                              QUERY PLAN                                               
+-------------------------------------------------------------------------------------------------------
+ LockRows
+   Output: bar.f1, bar.f2, bar.ctid, foo2.*, bar.*, bar.tableoid, foo2.ctid, foo2.tableoid
+   ->  Hash Join
+         Output: bar.f1, bar.f2, bar.ctid, foo2.*, bar.*, bar.tableoid, foo2.ctid, foo2.tableoid
+         Inner Unique: true
+         Hash Cond: (bar.f1 = foo2.f1)
+         ->  Append
+               ->  Seq Scan on public.bar
+                     Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid
+               ->  Foreign Scan on public.bar2
+                     Output: bar2.f1, bar2.f2, bar2.ctid, bar2.*, bar2.tableoid
+                     Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR SHARE
+         ->  Hash
+               Output: foo2.*, foo2.f1, foo2.ctid, foo2.tableoid
+               ->  HashAggregate
+                     Output: foo2.*, foo2.f1, foo2.ctid, foo2.tableoid
+                     Group Key: foo2.f1
+                     ->  Append
+                           ->  Foreign Scan on public.foo2
+                                 Output: foo2.*, foo2.f1, foo2.ctid, foo2.tableoid
+                                 Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
+                           ->  Seq Scan on public.foo2child
+                                 Output: foo2child.*, foo2child.f1, foo2child.ctid, foo2child.tableoid
+(23 rows)
+
+select * from bar where f1 in (select f1 from foo2) for share;
+ f1 | f2 
+----+----
+  2 | 22
+  4 | 44
+(2 rows)
+
+drop table foo2child;
 -- Check UPDATE with inherited target and an inherited source table
 explain (verbose, costs off)
 update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
