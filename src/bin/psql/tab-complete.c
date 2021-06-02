@@ -2959,7 +2959,7 @@ psql_completion(const char *text, int start, int end)
 	{
 		if (TailMatches("(|*,"))
 			COMPLETE_WITH("INPUT", "OUTPUT", "RECEIVE", "SEND",
-						  "TYPMOD_IN", "TYPMOD_OUT", "ANALYZE",
+						  "TYPMOD_IN", "TYPMOD_OUT", "ANALYZE", "SUBSCRIPT",
 						  "INTERNALLENGTH", "PASSEDBYVALUE", "ALIGNMENT",
 						  "STORAGE", "LIKE", "CATEGORY", "PREFERRED",
 						  "DEFAULT", "ELEMENT", "DELIMITER",
@@ -2973,7 +2973,8 @@ psql_completion(const char *text, int start, int end)
 	{
 		if (TailMatches("(|*,"))
 			COMPLETE_WITH("SUBTYPE", "SUBTYPE_OPCLASS", "COLLATION",
-						  "CANONICAL", "SUBTYPE_DIFF");
+						  "CANONICAL", "SUBTYPE_DIFF",
+						  "MULTIRANGE_TYPE_NAME");
 		else if (TailMatches("(*|*,", MatchAnyExcept("*=")))
 			COMPLETE_WITH("=");
 		else if (TailMatches("=", MatchAnyExcept("*)")))
