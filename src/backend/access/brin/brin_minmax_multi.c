@@ -3084,7 +3084,7 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 
 		a = FunctionCall1(&fmgrinfo, ranges_deserialized->values[idx++]);
 
-		appendStringInfo(&str, "%s", DatumGetPointer(a));
+		appendStringInfoString(&str, DatumGetPointer(a));
 
 		b = cstring_to_text(str.data);
 

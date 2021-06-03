@@ -2934,7 +2934,7 @@ describeOneTableDetails(const char *schemaname,
 
 					if (has_some && !has_all)
 					{
-						appendPQExpBuffer(&buf, " (");
+						appendPQExpBufferStr(&buf, " (");
 
 						/* options */
 						if (has_ndistinct)
@@ -2954,7 +2954,7 @@ describeOneTableDetails(const char *schemaname,
 							appendPQExpBuffer(&buf, "%smcv", gotone ? ", " : "");
 						}
 
-						appendPQExpBuffer(&buf, ")");
+						appendPQExpBufferChar(&buf, ')');
 					}
 
 					appendPQExpBuffer(&buf, " ON %s FROM %s",
@@ -3577,7 +3577,7 @@ describeOneTableDetails(const char *schemaname,
 					child_relkind == RELKIND_PARTITIONED_INDEX)
 					appendPQExpBufferStr(&buf, ", PARTITIONED");
 				if (strcmp(PQgetvalue(result, i, 2), "t") == 0)
-					appendPQExpBuffer(&buf, " (DETACH PENDING)");
+					appendPQExpBufferStr(&buf, " (DETACH PENDING)");
 				if (i < tuples - 1)
 					appendPQExpBufferChar(&buf, ',');
 

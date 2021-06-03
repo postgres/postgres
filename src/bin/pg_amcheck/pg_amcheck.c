@@ -844,7 +844,7 @@ prepare_heap_command(PQExpBuffer sql, RelationInfo *rel, PGconn *conn)
 	if (opts.endblock >= 0)
 		appendPQExpBuffer(sql, ", endblock := " INT64_FORMAT, opts.endblock);
 
-	appendPQExpBuffer(sql, ")");
+	appendPQExpBufferChar(sql, ')');
 }
 
 /*

@@ -783,18 +783,18 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 					msgfmt = _(" %u pages from table (%.2f%% of total) had %lld dead item identifiers removed\n");
 
 					if (vacrel->nindexes == 0 || vacrel->num_index_scans == 0)
-						appendStringInfo(&buf, _("index scan not needed:"));
+						appendStringInfoString(&buf, _("index scan not needed:"));
 					else
-						appendStringInfo(&buf, _("index scan needed:"));
+						appendStringInfoString(&buf, _("index scan needed:"));
 				}
 				else
 				{
 					msgfmt = _(" %u pages from table (%.2f%% of total) have %lld dead item identifiers\n");
 
 					if (!vacrel->do_failsafe)
-						appendStringInfo(&buf, _("index scan bypassed:"));
+						appendStringInfoString(&buf, _("index scan bypassed:"));
 					else
-						appendStringInfo(&buf, _("index scan bypassed by failsafe:"));
+						appendStringInfoString(&buf, _("index scan bypassed by failsafe:"));
 				}
 				orig_rel_pages = vacrel->rel_pages + vacrel->pages_removed;
 				appendStringInfo(&buf, msgfmt,
