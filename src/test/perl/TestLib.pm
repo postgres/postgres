@@ -51,16 +51,31 @@ BEGIN
 	delete $ENV{LC_ALL};
 	$ENV{LC_MESSAGES} = 'C';
 
-	delete $ENV{PGCONNECT_TIMEOUT};
-	delete $ENV{PGDATA};
-	delete $ENV{PGDATABASE};
-	delete $ENV{PGHOSTADDR};
-	delete $ENV{PGREQUIRESSL};
-	delete $ENV{PGSERVICE};
-	delete $ENV{PGSSLMODE};
-	delete $ENV{PGUSER};
-	delete $ENV{PGPORT};
-	delete $ENV{PGHOST};
+	my @envkeys = qw (
+	  PGCLIENTENCODING
+	  PGCONNECT_TIMEOUT
+	  PGDATA
+	  PGDATABASE
+	  PGGSSLIB
+	  PGHOSTADDR
+	  PGKRBSRVNAME
+	  PGPASSFILE
+	  PGPASSWORD
+	  PGREQUIREPEER
+	  PGREQUIRESSL
+	  PGSERVICE
+	  PGSERVICEFILE
+	  PGSSLCERT
+	  PGSSLCRL
+	  PGSSLCRLDIR
+	  PGSSLKEY
+	  PGSSLMODE
+	  PGSSLROOTCERT
+	  PGUSER
+	  PGPORT
+	  PGHOST
+	);
+	delete @ENV{@envkeys};
 
 	# Must be set early
 	$windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
