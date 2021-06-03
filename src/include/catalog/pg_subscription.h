@@ -34,7 +34,10 @@
  * them to be able to start the workers, so we have to put them in a shared,
  * nailed catalog.
  *
- * NOTE:  When adding a column, also update system_views.sql.
+ * CAUTION:  There is a GRANT in system_views.sql to grant public select
+ * access on all columns except subconninfo.  When you add a new column
+ * here, be sure to update that (or, if the new column is not to be publicly
+ * readable, update associated comments and catalogs.sgml instead).
  */
 CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(6101,SubscriptionRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
