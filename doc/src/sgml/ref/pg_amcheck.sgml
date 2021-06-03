@@ -73,7 +73,7 @@ PostgreSQL documentation
   <title>Options</title>
 
   <para>
-   pg_amcheck accepts the following command-line arguments:
+   The following command-line options control what is checked:
 
    <variablelist>
     <varlistentry>
@@ -113,78 +113,6 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>-e</option></term>
-     <term><option>--echo</option></term>
-     <listitem>
-      <para>
-      Echo to stdout all SQL sent to the server.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--endblock=<replaceable class="parameter">block</replaceable></option></term>
-     <listitem>
-      <para>
-       End checking at the specified block number.  An error will occur if the
-       table relation being checked has fewer than this number of blocks.
-       This option does not apply to indexes, and is probably only useful when
-       checking a single table relation. If both a regular table and a toast
-       table are checked, this option will apply to both, but higher-numbered
-       toast blocks may still be accessed while validating toast pointers,
-       unless that is suppressed using
-       <option>--exclude-toast-pointers</option>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--exclude-toast-pointers</option></term>
-     <listitem>
-      <para>
-       By default, whenever a toast pointer is encountered in a table,
-       a lookup is performed to ensure that it references apparently-valid
-       entries in the toast table. These checks can be quite slow, and this
-       option can be used to skip them.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--heapallindexed</option></term>
-     <listitem>
-      <para>
-       For each index checked, verify the presence of all heap tuples as index
-       tuples in the index using <xref linkend="amcheck"/>'s
-       <option>heapallindexed</option> option.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>-?</option></term>
-     <term><option>--help</option></term>
-     <listitem>
-      <para>
-       Show help about <application>pg_amcheck</application> command line
-       arguments, and exit.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>-h <replaceable class="parameter">hostname</replaceable></option></term>
-     <term><option>--host=<replaceable class="parameter">hostname</replaceable></option></term>
-     <listitem>
-      <para>
-       Specifies the host name of the machine on which the server is running.
-       If the value begins with a slash, it is used as the directory for the
-       Unix domain socket.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><option>-i <replaceable class="parameter">pattern</replaceable></option></term>
      <term><option>--index=<replaceable class="parameter">pattern</replaceable></option></term>
      <listitem>
@@ -213,161 +141,6 @@ PostgreSQL documentation
       <para>
        This is similar to the <option>--exclude-relation</option> option,
        except that it applies only to indexes, not tables.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--install-missing</option></term>
-     <term><option>--install-missing=<replaceable class="parameter">schema</replaceable></option></term>
-     <listitem>
-      <para>
-       Install any missing extensions that are required to check the
-       database(s).  If not yet installed, each extension's objects will be
-       installed into the given
-       <replaceable class="parameter">schema</replaceable>, or if not specified
-       into schema <literal>pg_catalog</literal>.
-      </para>
-      <para>
-       At present, the only required extension is <xref linkend="amcheck"/>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>-j <replaceable class="parameter">num</replaceable></option></term>
-     <term><option>--jobs=<replaceable class="parameter">num</replaceable></option></term>
-     <listitem>
-      <para>
-       Use <replaceable>num</replaceable> concurrent connections to the server,
-       or one per object to be checked, whichever is less.
-      </para>
-      <para>
-       The default is to use a single connection.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--maintenance-db=<replaceable class="parameter">dbname</replaceable></option></term>
-     <listitem>
-      <para>
-       Specifies a database or
-       <link linkend="libpq-connstring">connection string</link> to be
-       used to discover the list of databases to be checked. If neither
-       <option>--all</option> nor any option including a database pattern is
-       used, no such connection is required and this option does nothing.
-       Otherwise, any connection string parameters other than
-       the database name which are included in the value for this option
-       will also be used when connecting to the databases
-       being checked. If this option is omitted, the default is
-       <literal>postgres</literal> or, if that fails,
-       <literal>template1</literal>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--no-dependent-indexes</option></term>
-     <listitem>
-      <para>
-       By default, if a table is checked, any btree indexes of that table
-       will also be checked, even if they are not explicitly selected by
-       an option such as <literal>--index</literal> or
-       <literal>--relation</literal>. This option suppresses that behavior.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--no-strict-names</option></term>
-     <listitem>
-      <para>
-       By default, if an argument to <literal>--database</literal>,
-       <literal>--table</literal>, <literal>--index</literal>,
-       or <literal>--relation</literal> matches no objects, it is a fatal
-       error. This option downgrades that error to a warning.
-       If this option is used with <literal>--quiet</literal>, the warning
-       will be supressed as well.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--no-dependent-toast</option></term>
-     <listitem>
-      <para>
-       By default, if a table is checked, its toast table, if any, will also
-       be checked, even if it is not explicitly selected by an option
-       such as <literal>--table</literal> or <literal>--relation</literal>.
-       This option suppresses that behavior.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--on-error-stop</option></term>
-     <listitem>
-      <para>
-       After reporting all corruptions on the first page of a table where
-       corruption is found, stop processing that table relation and move on
-       to the next table or index.
-      </para>
-      <para>
-       Note that index checking always stops after the first corrupt page.
-       This option only has meaning relative to table relations.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--parent-check</option></term>
-     <listitem>
-      <para>
-       For each btree index checked, use <xref linkend="amcheck"/>'s
-       <function>bt_index_parent_check</function> function, which performs
-       additional checks of parent/child relationships during index checking.
-      </para>
-      <para>
-       The default is to use <application>amcheck</application>'s
-       <function>bt_index_check</function> function, but note that use of the
-       <option>--rootdescend</option> option implicitly selects
-       <function>bt_index_parent_check</function>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
-     <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
-     <listitem>
-      <para>
-       Specifies the TCP port or local Unix domain socket file extension on
-       which the server is listening for connections.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>-P</option></term>
-     <term><option>--progress</option></term>
-     <listitem>
-      <para>
-       Show progress information. Progress information includes the number
-       of relations for which checking has been completed, and the total
-       size of those relations. It also includes the total number of relations
-       that will eventually be checked, and the estimated size of those
-       relations.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>-q</option></term>
-     <term><option>--quiet</option></term>
-     <listitem>
-      <para>
-       Print fewer messages, and less detail regarding any server errors.
       </para>
      </listitem>
     </varlistentry>
@@ -406,28 +179,6 @@ PostgreSQL documentation
        As with <option>--relation</option>, the
        <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> may be unqualified, schema-qualified,
        or database- and schema-qualified.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--rootdescend</option></term>
-     <listitem>
-      <para>
-       For each index checked, re-find tuples on the leaf level by performing a
-       new search from the root page for each tuple using
-       <xref linkend="amcheck"/>'s <option>rootdescend</option> option.
-      </para>
-      <para>
-       Use of this option implicitly also selects the
-       <option>--parent-check</option> option.
-      </para>
-      <para>
-       This form of verification was originally written to help in the
-       development of btree index features.  It may be of limited use or even
-       of no use in helping detect the kinds of corruption that occur in
-       practice.  It may also cause corruption checking to take considerably
-       longer and consume considerably more resources on the server.
       </para>
      </listitem>
     </varlistentry>
@@ -474,38 +225,6 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>--skip=<replaceable class="parameter">option</replaceable></option></term>
-     <listitem>
-      <para>
-       If <literal>all-frozen</literal> is given, table corruption checks
-       will skip over pages in all tables that are marked as all frozen.
-      </para>
-      <para>
-       If <literal>all-visible</literal> is given, table corruption checks
-       will skip over pages in all tables that are marked as all visible.
-      </para>
-      <para>
-       By default, no pages are skipped.  This can be specified as
-       <literal>none</literal>, but since this is the default, it need not be
-       mentioned.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--startblock=<replaceable class="parameter">block</replaceable></option></term>
-     <listitem>
-      <para>
-       Start checking at the specified block number. An error will occur if
-       the table relation being checked has fewer than this number of blocks.
-       This option does not apply to indexes, and is probably only useful
-       when checking a single table relation. See <literal>--endblock</literal>
-       for further caveats.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><option>-t <replaceable class="parameter">pattern</replaceable></option></term>
      <term><option>--table=<replaceable class="parameter">pattern</replaceable></option></term>
      <listitem>
@@ -539,33 +258,215 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>--no-dependent-indexes</option></term>
+     <listitem>
+      <para>
+       By default, if a table is checked, any btree indexes of that table
+       will also be checked, even if they are not explicitly selected by
+       an option such as <literal>--index</literal> or
+       <literal>--relation</literal>. This option suppresses that behavior.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--no-dependent-toast</option></term>
+     <listitem>
+      <para>
+       By default, if a table is checked, its toast table, if any, will also
+       be checked, even if it is not explicitly selected by an option
+       such as <literal>--table</literal> or <literal>--relation</literal>.
+       This option suppresses that behavior.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--no-strict-names</option></term>
+     <listitem>
+      <para>
+       By default, if an argument to <literal>--database</literal>,
+       <literal>--table</literal>, <literal>--index</literal>,
+       or <literal>--relation</literal> matches no objects, it is a fatal
+       error. This option downgrades that error to a warning.
+       If this option is used with <literal>--quiet</literal>, the warning
+       will be supressed as well.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   The following command-line options control checking of tables:
+
+   <variablelist>
+    <varlistentry>
+     <term><option>--exclude-toast-pointers</option></term>
+     <listitem>
+      <para>
+       By default, whenever a toast pointer is encountered in a table,
+       a lookup is performed to ensure that it references apparently-valid
+       entries in the toast table. These checks can be quite slow, and this
+       option can be used to skip them.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--on-error-stop</option></term>
+     <listitem>
+      <para>
+       After reporting all corruptions on the first page of a table where
+       corruption is found, stop processing that table relation and move on
+       to the next table or index.
+      </para>
+      <para>
+       Note that index checking always stops after the first corrupt page.
+       This option only has meaning relative to table relations.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--skip=<replaceable class="parameter">option</replaceable></option></term>
+     <listitem>
+      <para>
+       If <literal>all-frozen</literal> is given, table corruption checks
+       will skip over pages in all tables that are marked as all frozen.
+      </para>
+      <para>
+       If <literal>all-visible</literal> is given, table corruption checks
+       will skip over pages in all tables that are marked as all visible.
+      </para>
+      <para>
+       By default, no pages are skipped.  This can be specified as
+       <literal>none</literal>, but since this is the default, it need not be
+       mentioned.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--startblock=<replaceable class="parameter">block</replaceable></option></term>
+     <listitem>
+      <para>
+       Start checking at the specified block number. An error will occur if
+       the table relation being checked has fewer than this number of blocks.
+       This option does not apply to indexes, and is probably only useful
+       when checking a single table relation. See <literal>--endblock</literal>
+       for further caveats.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--endblock=<replaceable class="parameter">block</replaceable></option></term>
+     <listitem>
+      <para>
+       End checking at the specified block number.  An error will occur if the
+       table relation being checked has fewer than this number of blocks.
+       This option does not apply to indexes, and is probably only useful when
+       checking a single table relation. If both a regular table and a toast
+       table are checked, this option will apply to both, but higher-numbered
+       toast blocks may still be accessed while validating toast pointers,
+       unless that is suppressed using
+       <option>--exclude-toast-pointers</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   The following command-line options control checking of B-tree indexes:
+
+   <variablelist>
+    <varlistentry>
+     <term><option>--heapallindexed</option></term>
+     <listitem>
+      <para>
+       For each index checked, verify the presence of all heap tuples as index
+       tuples in the index using <xref linkend="amcheck"/>'s
+       <option>heapallindexed</option> option.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--parent-check</option></term>
+     <listitem>
+      <para>
+       For each btree index checked, use <xref linkend="amcheck"/>'s
+       <function>bt_index_parent_check</function> function, which performs
+       additional checks of parent/child relationships during index checking.
+      </para>
+      <para>
+       The default is to use <application>amcheck</application>'s
+       <function>bt_index_check</function> function, but note that use of the
+       <option>--rootdescend</option> option implicitly selects
+       <function>bt_index_parent_check</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--rootdescend</option></term>
+     <listitem>
+      <para>
+       For each index checked, re-find tuples on the leaf level by performing a
+       new search from the root page for each tuple using
+       <xref linkend="amcheck"/>'s <option>rootdescend</option> option.
+      </para>
+      <para>
+       Use of this option implicitly also selects the
+       <option>--parent-check</option> option.
+      </para>
+      <para>
+       This form of verification was originally written to help in the
+       development of btree index features.  It may be of limited use or even
+       of no use in helping detect the kinds of corruption that occur in
+       practice.  It may also cause corruption checking to take considerably
+       longer and consume considerably more resources on the server.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   The following command-line options control the connection to the server:
+
+   <variablelist>
+    <varlistentry>
+     <term><option>-h <replaceable class="parameter">hostname</replaceable></option></term>
+     <term><option>--host=<replaceable class="parameter">hostname</replaceable></option></term>
+     <listitem>
+      <para>
+       Specifies the host name of the machine on which the server is running.
+       If the value begins with a slash, it is used as the directory for the
+       Unix domain socket.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
+     <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
+     <listitem>
+      <para>
+       Specifies the TCP port or local Unix domain socket file extension on
+       which the server is listening for connections.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-U</option></term>
      <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
      <listitem>
       <para>
        User name to connect as.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>-v</option></term>
-     <term><option>--verbose</option></term>
-     <listitem>
-      <para>
-       Print more messages. In particular, this will print a message for
-       each relation being checked, and will increase the level of detail
-       shown for server errors.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>-V</option></term>
-     <term><option>--version</option></term>
-     <listitem>
-      <para>
-       Print the <application>pg_amcheck</application> version and exit.
       </para>
      </listitem>
     </varlistentry>
@@ -603,6 +504,128 @@ PostgreSQL documentation
      </listitem>
     </varlistentry>
 
+    <varlistentry>
+     <term><option>--maintenance-db=<replaceable class="parameter">dbname</replaceable></option></term>
+     <listitem>
+      <para>
+       Specifies a database or
+       <link linkend="libpq-connstring">connection string</link> to be
+       used to discover the list of databases to be checked. If neither
+       <option>--all</option> nor any option including a database pattern is
+       used, no such connection is required and this option does nothing.
+       Otherwise, any connection string parameters other than
+       the database name which are included in the value for this option
+       will also be used when connecting to the databases
+       being checked. If this option is omitted, the default is
+       <literal>postgres</literal> or, if that fails,
+       <literal>template1</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   Other options are also available:
+
+   <variablelist>
+    <varlistentry>
+     <term><option>-e</option></term>
+     <term><option>--echo</option></term>
+     <listitem>
+      <para>
+      Echo to stdout all SQL sent to the server.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-j <replaceable class="parameter">num</replaceable></option></term>
+     <term><option>--jobs=<replaceable class="parameter">num</replaceable></option></term>
+     <listitem>
+      <para>
+       Use <replaceable>num</replaceable> concurrent connections to the server,
+       or one per object to be checked, whichever is less.
+      </para>
+      <para>
+       The default is to use a single connection.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-q</option></term>
+     <term><option>--quiet</option></term>
+     <listitem>
+      <para>
+       Print fewer messages, and less detail regarding any server errors.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-P</option></term>
+     <term><option>--progress</option></term>
+     <listitem>
+      <para>
+       Show progress information. Progress information includes the number
+       of relations for which checking has been completed, and the total
+       size of those relations. It also includes the total number of relations
+       that will eventually be checked, and the estimated size of those
+       relations.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-v</option></term>
+     <term><option>--verbose</option></term>
+     <listitem>
+      <para>
+       Print more messages. In particular, this will print a message for
+       each relation being checked, and will increase the level of detail
+       shown for server errors.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-V</option></term>
+     <term><option>--version</option></term>
+     <listitem>
+      <para>
+       Print the <application>pg_amcheck</application> version and exit.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--install-missing</option></term>
+     <term><option>--install-missing=<replaceable class="parameter">schema</replaceable></option></term>
+     <listitem>
+      <para>
+       Install any missing extensions that are required to check the
+       database(s).  If not yet installed, each extension's objects will be
+       installed into the given
+       <replaceable class="parameter">schema</replaceable>, or if not specified
+       into schema <literal>pg_catalog</literal>.
+      </para>
+      <para>
+       At present, the only required extension is <xref linkend="amcheck"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-?</option></term>
+     <term><option>--help</option></term>
+     <listitem>
+      <para>
+       Show help about <application>pg_amcheck</application> command line
+       arguments, and exit.
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
  </refsect1>

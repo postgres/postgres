@@ -1187,11 +1187,11 @@ help(const char *progname)
 	printf(_("  -e, --echo                      show the commands being sent to the server\n"));
 	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to the server\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
+	printf(_("  -P, --progress                  show progress information\n"));
 	printf(_("  -v, --verbose                   write a lot of output\n"));
 	printf(_("  -V, --version                   output version information, then exit\n"));
-	printf(_("  -P, --progress                  show progress information\n"));
-	printf(_("  -?, --help                      show this help, then exit\n"));
 	printf(_("      --install-missing           install missing extensions\n"));
+	printf(_("  -?, --help                      show this help, then exit\n"));
 
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
