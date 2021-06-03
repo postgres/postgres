@@ -2127,7 +2127,7 @@ sub poll_query_until
 
 	my $cmd = [
 		$self->installed_command('psql'),
-		'-XAt', '-c', $query, '-d', $self->connstr($dbname)
+		'-XAt', '-d', $self->connstr($dbname)
 	];
 	my ($stdout, $stderr);
 	my $max_attempts = 180 * 10;
@@ -2135,7 +2135,8 @@ sub poll_query_until
 
 	while ($attempts < $max_attempts)
 	{
-		my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+		my $result = IPC::Run::run $cmd, '<', \$query,
+		  '>', \$stdout, '2>', \$stderr;
 
 		$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		chomp($stdout);
