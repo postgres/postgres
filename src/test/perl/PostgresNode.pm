@@ -1360,8 +1360,9 @@ sub poll_query_until
 	while ($attempts < $max_attempts)
 	{
 		my $cmd =
-		  [ 'psql', '-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
-		my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+		  [ 'psql', '-XAt', '-d', $self->connstr($dbname) ];
+		my $result = IPC::Run::run $cmd, '<', \$query,
+		  '>', \$stdout, '2>', \$stderr;
 
 		$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		chomp($stdout);
