@@ -386,7 +386,7 @@ OPTIONS (ADD password_required 'false');
     <filename>postgres_fdw</filename> supports asynchronous execution, which
     runs multiple parts of an <structname>Append</structname> node
     concurrently rather than serially to improve performance.
-    This execution can be controled using the following option:
+    This execution can be controlled using the following option:
    </para>
 
    <variablelist>

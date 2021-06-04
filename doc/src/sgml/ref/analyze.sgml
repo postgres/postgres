@@ -255,7 +255,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
    in addition, it will recurse into each partition and update its statistics.
    (However, in multi-level partitioning scenarios, each leaf partition
    will only be analyzed once.)
-   By constrast, if the table being analyzed has inheritance children,
+   By contrast, if the table being analyzed has inheritance children,
    <command>ANALYZE</command> will gather statistics for it twice:
    once on the rows of the parent table only, and a second time on the
    rows of the parent table with all of its children.  This second set of

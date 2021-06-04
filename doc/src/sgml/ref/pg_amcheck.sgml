@@ -290,7 +290,7 @@ PostgreSQL documentation
        or <literal>--relation</literal> matches no objects, it is a fatal
        error. This option downgrades that error to a warning.
        If this option is used with <literal>--quiet</literal>, the warning
-       will be supressed as well.
+       will be suppressed as well.
       </para>
      </listitem>
     </varlistentry>
