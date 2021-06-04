@@ -29,7 +29,7 @@ env:
   MTEST_ARGS: --print-errorlogs --no-rebuild -C build
   PGCTLTIMEOUT: 120 # avoids spurious failures during parallel tests
   TEMP_CONFIG: ${CIRRUS_WORKING_DIR}/src/tools/ci/pg_ci_base.conf
-  PG_TEST_EXTRA: kerberos ldap ssl libpq_encryption load_balance oauth
+  PG_TEST_EXTRA: kerberos ldap ssl libpq_encryption load_balance oauth python
 
 
 # What files to preserve in case tests fail
@@ -444,8 +444,9 @@ task:
     EOF
 
   setup_additional_packages_script: |
-    #apt-get update
-    #DEBIAN_FRONTEND=noninteractive apt-get -y install ...
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get -y install \
+      python3-venv \
 
   matrix:
     # SPECIAL:
@@ -553,8 +554,11 @@ task:
       # can easily provide some here by running one of the sets of tests that
       # way. Newer versions of python insist on changing the LC_CTYPE away
       # from C, prevent that with PYTHONCOERCECLOCALE.
+      # XXX 32-bit Python tests are currently disabled, as the system's 64-bit
+      # Python modules can't link against libpq.
       test_world_32_script: |
         su postgres <<-EOF
+          export PG_TEST_EXTRA="${PG_TEST_EXTRA//python}"
           ulimit -c unlimited
           PYTHONCOERCECLOCALE=0 LANG=C meson test $MTEST_ARGS -C build-32 --num-processes ${TEST_JOBS}
         EOF

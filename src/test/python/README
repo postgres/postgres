@@ -1,0 +1,66 @@
+A test suite for exercising both the libpq client and the server backend at the
+protocol level, based on pytest and Construct.
+
+WARNING! This suite takes superuser-level control of the cluster under test,
+writing to the server config, creating and destroying databases, etc. It also
+spins up various ephemeral TCP services. This is not safe for production servers
+and therefore must be explicitly opted into by setting PG_TEST_EXTRA=python in
+the environment.
+
+The test suite currently assumes that the standard PG* environment variables
+point to the database under test and are sufficient to log in a superuser on
+that system. In other words, a bare `psql` needs to Just Work before the test
+suite can do its thing. For a newly built dev cluster, typically all that I need
+to do is a
+
+    export PGDATABASE=postgres
+
+but you can adjust as needed for your setup. See also 'Advanced Usage' below.
+
+## Requirements
+
+A supported version (3.6+) of Python.
+
+The first run of
+
+    make installcheck PG_TEST_EXTRA=python
+
+will install a local virtual environment and all needed dependencies. During
+development, if libpq changes incompatibly, you can issue
+
+    $ make rebuild-psycopg2
+
+to force a rebuild of the client library.
+
+## Hacking
+
+The code style is enforced by a _very_ opinionated autoformatter. Running the
+
+    make indent
+
+recipe will invoke it for you automatically. Don't fight the tool; part of the
+zen is in knowing that if the formatter makes your code ugly, there's probably a
+cleaner way to write your code.
+
+## Advanced Usage
+
+The Makefile is there for convenience, but you don't have to use it. Activate
+the virtualenv to be able to use pytest directly:
+
+    $ export PG_TEST_EXTRA=python
+    $ source venv/bin/activate
+    $ py.test -k oauth
+    ...
+    $ py.test ./server/test_server.py
+    ...
+    $ deactivate  # puts the PATH et al back the way it was before
+
+To make quick smoke tests possible, slow tests have been marked explicitly. You
+can skip them by saying e.g.
+
+    $ py.test -m 'not slow'
+
+If you'd rather not test against an existing server, you can have the suite spin
+up a temporary one using whatever pg_ctl it finds in PATH:
+
+    $ py.test --temp-instance=./tmp_check

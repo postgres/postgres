@@ -1,0 +1,11 @@
+black
+# cryptography 35.x and later add many platform/toolchain restrictions, beware
+cryptography~=3.4.8
+# TODO: figure out why 2.10.70 broke things
+# (probably https://github.com/construct/construct/pull/1015)
+construct==2.10.69
+isort~=5.6
+# TODO: update to psycopg[c] 3.1
+psycopg2~=2.9.7
+pytest~=7.3
+pytest-asyncio~=0.21.0

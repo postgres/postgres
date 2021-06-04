@@ -8,6 +8,7 @@ subdir('postmaster')
 subdir('recovery')
 subdir('subscription')
 subdir('modules')
+subdir('python')
 
 if ssl.found()
   subdir('ssl')

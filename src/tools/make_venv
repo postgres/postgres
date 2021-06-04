@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import os
+import platform
+import sys
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--requirements', help='path to pip requirements file', type=str)
+parser.add_argument('--privatedir', help='private directory for target', type=str)
+parser.add_argument('venv_path', help='desired venv location')
+
+args = parser.parse_args()
+
+# Decide whether or not to capture stdout into a log file. We only do this if
+# we've been given our own private directory.
+#
+# FIXME Unfortunately this interferes with debugging on Cirrus, because the
+# private directory isn't uploaded in the sanity check's artifacts. When we
+# don't capture the log file, it gets spammed to stdout during build... Is there
+# a way to push this into the meson-log somehow? For now, the capture
+# implementation is commented out.
+logfile = None
+
+if args.privatedir:
+    if not os.path.isdir(args.privatedir):
+        os.mkdir(args.privatedir)
+
+    # FIXME see above comment
+    # logpath = os.path.join(args.privatedir, 'stdout.txt')
+    # logfile = open(logpath, 'w')
+
+def run(*args):
+    kwargs = dict(check=True)
+    if logfile:
+        kwargs.update(stdout=logfile)
+
+    subprocess.run(args, **kwargs)
+
+# Create the virtualenv first.
+run(sys.executable, '-m', 'venv', args.venv_path)
+
+# Update pip next. This helps avoid old pip bugs; the version inside system
+# Pythons tends to be pretty out of date.
+bindir = 'Scripts' if platform.system() == 'Windows' else 'bin'
+python = os.path.join(args.venv_path, bindir, 'python3')
+run(python, '-m', 'pip', 'install', '-U', 'pip')
+
+# Finally, install the test's requirements. We need pytest and pytest-tap, no
+# matter what the test needs.
+pip = os.path.join(args.venv_path, bindir, 'pip')
+run(pip, 'install', 'pytest', 'pytest-tap')
+if args.requirements:
+    run(pip, 'install', '-r', args.requirements)
