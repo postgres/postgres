@@ -634,7 +634,7 @@ range_serialize(Ranges *range)
 		for (i = 0; i < nvalues; i++)
 		{
 			/* don't forget to include the null terminator ;-) */
-			len += strlen(DatumGetPointer(range->values[i])) + 1;
+			len += strlen(DatumGetCString(range->values[i])) + 1;
 		}
 	}
 	else						/* fixed-length types (even by-reference) */
@@ -695,9 +695,9 @@ range_serialize(Ranges *range)
 		}
 		else if (typlen == -2)	/* cstring */
 		{
-			int			tmp = strlen(DatumGetPointer(range->values[i])) + 1;
+			int			tmp = strlen(DatumGetCString(range->values[i])) + 1;
 
-			memcpy(ptr, DatumGetPointer(range->values[i]), tmp);
+			memcpy(ptr, DatumGetCString(range->values[i]), tmp);
 			ptr += tmp;
 		}
 
@@ -780,8 +780,10 @@ range_deserialize(int maxvalues, SerializedRanges *serialized)
 		}
 		else if (typlen == -2)	/* cstring */
 		{
-			datalen += MAXALIGN(strlen(DatumGetPointer(ptr)) + 1);
-			ptr += strlen(DatumGetPointer(ptr)) + 1;
+			Size		slen = strlen(DatumGetCString(ptr)) + 1;
+
+			datalen += MAXALIGN(slen);
+			ptr += slen;
 		}
 	}
 
@@ -830,7 +832,7 @@ range_deserialize(int maxvalues, SerializedRanges *serialized)
 
 			memcpy(dataptr, ptr, slen);
 			dataptr += MAXALIGN(slen);
-			ptr += (slen);
+			ptr += slen;
 		}
 
 		/* make sure we haven't overflown the buffer end */
@@ -3032,19 +3034,17 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 	idx = 0;
 	for (i = 0; i < ranges_deserialized->nranges; i++)
 	{
-		Datum		a,
-					b;
+		char	   *a,
+				   *b;
 		text	   *c;
 		StringInfoData str;
 
 		initStringInfo(&str);
 
-		a = FunctionCall1(&fmgrinfo, ranges_deserialized->values[idx++]);
-		b = FunctionCall1(&fmgrinfo, ranges_deserialized->values[idx++]);
+		a = OutputFunctionCall(&fmgrinfo, ranges_deserialized->values[idx++]);
+		b = OutputFunctionCall(&fmgrinfo, ranges_deserialized->values[idx++]);
 
-		appendStringInfo(&str, "%s ... %s",
-						 DatumGetPointer(a),
-						 DatumGetPointer(b));
+		appendStringInfo(&str, "%s ... %s", a, b);
 
 		c = cstring_to_text(str.data);
 
@@ -3084,7 +3084,7 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 
 		a = FunctionCall1(&fmgrinfo, ranges_deserialized->values[idx++]);
 
-		appendStringInfoString(&str, DatumGetPointer(a));
+		appendStringInfoString(&str, DatumGetCString(a));
 
 		b = cstring_to_text(str.data);
 
