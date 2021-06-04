@@ -7839,6 +7839,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     <listitem>
      <para>
       <indexterm>
+       <primary><envar>PGSSLCRLDIR</envar></primary>
+      </indexterm>
+      <envar>PGSSLCRLDIR</envar> behaves the same as the <xref
+      linkend="libpq-connect-sslcrldir"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
        <primary><envar>PGSSLSNI</envar></primary>
       </indexterm>
       <envar>PGSSLSNI</envar>  behaves the same as the <xref
