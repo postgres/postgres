@@ -129,10 +129,8 @@ COMMENT ON
     <term><replaceable class="parameter">trigger_name</replaceable></term>
     <listitem>
      <para>
-      The name of the object to be commented.  Names of tables,
-      aggregates, collations, conversions, domains, foreign tables, functions,
-      indexes, operators, operator classes, operator families, procedures, routines, sequences,
-      statistics, text search objects, types, and views can be
+      The name of the object to be commented.  Names of objects that reside in
+      schemas (tables, functions, etc.) can be
       schema-qualified. When commenting on a column,
       <replaceable class="parameter">relation_name</replaceable> must refer
       to a table, view, composite type, or foreign table.

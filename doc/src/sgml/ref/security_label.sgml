@@ -99,9 +99,8 @@ SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
     <term><replaceable class="parameter">routine_name</replaceable></term>
     <listitem>
      <para>
-      The name of the object to be labeled.  Names of tables,
-      aggregates, domains, foreign tables, functions, procedures, routines, sequences, types, and
-      views can be schema-qualified.
+      The name of the object to be labeled.  Names of objects that reside in
+      schemas (tables, functions, etc.) can be schema-qualified.
      </para>
     </listitem>
    </varlistentry>
