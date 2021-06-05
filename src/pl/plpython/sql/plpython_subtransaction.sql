@@ -158,8 +158,11 @@ $$ LANGUAGE plpythonu;
 
 CREATE FUNCTION subtransaction_exit_subtransaction_in_with() RETURNS void
 AS $$
-with plpy.subtransaction() as s:
-    s.__exit__(None, None, None)
+try:
+    with plpy.subtransaction() as s:
+        s.__exit__(None, None, None)
+except ValueError as e:
+    raise ValueError(e)
 $$ LANGUAGE plpythonu;
 
 SELECT subtransaction_exit_without_enter();
