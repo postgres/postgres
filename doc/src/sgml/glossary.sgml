@@ -1448,7 +1448,7 @@
       known as <firstterm>local objects</firstterm>.
      </para>
      <para>
-      Most local objects belong to a specific
+      Most local objects reside in a specific
       <glossterm linkend="glossary-schema">schema</glossterm> in their
       containing database, such as
       <glossterm linkend="glossary-relation">relations</glossterm> (all types),
@@ -1458,7 +1458,7 @@
       are enforced to be unique.
      </para>
      <para>
-      There also exist local objects that do not belong to schemas; some examples are
+      There also exist local objects that do not reside in schemas; some examples are
       <glossterm linkend="glossary-extension">extensions</glossterm>,
       <glossterm linkend="glossary-cast">data type casts</glossterm>, and
       <glossterm linkend="glossary-foreign-data-wrapper">foreign data wrappers</glossterm>.
