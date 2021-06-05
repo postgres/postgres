@@ -1381,7 +1381,6 @@ ParsePrepareRecord(uint8 info, char *xlrec, xl_xact_parsed_prepare *parsed)
  * particularly if this routine is called for the end-of-recovery checkpoint
  * in the checkpointer itself, so save the current timeline number value
  * and restore it once done.
->>>>>>> 9477be0b57 (Fix handling of end-of-recovery checkpoint with 2PC transactions)
  */
 static void
 XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
