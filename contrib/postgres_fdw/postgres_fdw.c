@@ -1440,6 +1440,57 @@ postgresGetForeignPlan(PlannerInfo *root,
 }
 
 /*
+ * Construct a tuple descriptor for the scan tuples handled by a foreign join.
+ */
+static TupleDesc
+get_tupdesc_for_join_scan_tuples(ForeignScanState *node)
+{
+	ForeignScan *fsplan = (ForeignScan *) node->ss.ps.plan;
+	EState	   *estate = node->ss.ps.state;
+	TupleDesc	tupdesc;
+
+	/*
+	 * The core code has already set up a scan tuple slot based on
+	 * fsplan->fdw_scan_tlist, and this slot's tupdesc is mostly good enough,
+	 * but there's one case where it isn't.  If we have any whole-row row
+	 * identifier Vars, they may have vartype RECORD, and we need to replace
+	 * that with the associated table's actual composite type.  This ensures
+	 * that when we read those ROW() expression values from the remote server,
+	 * we can convert them to a composite type the local server knows.
+	 */
+	tupdesc = CreateTupleDescCopy(node->ss.ss_ScanTupleSlot->tts_tupleDescriptor);
+	for (int i = 0; i < tupdesc->natts; i++)
+	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		Var		   *var;
+		RangeTblEntry *rte;
+		Oid			reltype;
+
+		/* Nothing to do if it's not a generic RECORD attribute */
+		if (att->atttypid != RECORDOID || att->atttypmod >= 0)
+			continue;
+
+		/*
+		 * If we can't identify the referenced table, do nothing.  This'll
+		 * likely lead to failure later, but perhaps we can muddle through.
+		 */
+		var = (Var *) list_nth_node(TargetEntry, fsplan->fdw_scan_tlist,
+									i)->expr;
+		if (!IsA(var, Var) || var->varattno != 0)
+			continue;
+		rte = list_nth(estate->es_range_table, var->varno - 1);
+		if (rte->rtekind != RTE_RELATION)
+			continue;
+		reltype = get_rel_type_id(rte->relid);
+		if (!OidIsValid(reltype))
+			continue;
+		att->atttypid = reltype;
+		/* shouldn't need to change anything else */
+	}
+	return tupdesc;
+}
+
+/*
  * postgresBeginForeignScan
  *		Initiate an executor scan of a foreign PostgreSQL table.
  */
@@ -1523,7 +1574,7 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 	else
 	{
 		fsstate->rel = NULL;
-		fsstate->tupdesc = node->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
+		fsstate->tupdesc = get_tupdesc_for_join_scan_tuples(node);
 	}
 
 	fsstate->attinmeta = TupleDescGetAttInMetadata(fsstate->tupdesc);
@@ -2631,7 +2682,7 @@ postgresBeginDirectModify(ForeignScanState *node, int eflags)
 		TupleDesc	tupdesc;
 
 		if (fsplan->scan.scanrelid == 0)
-			tupdesc = node->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
+			tupdesc = get_tupdesc_for_join_scan_tuples(node);
 		else
 			tupdesc = RelationGetDescr(dmstate->rel);
 

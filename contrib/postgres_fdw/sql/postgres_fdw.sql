@@ -1255,6 +1255,14 @@ UPDATE ft2 AS target SET (c2) = (
         WHERE target.c1 = src.c1
 ) WHERE c1 > 1100;
 
+-- Test UPDATE involving a join that can be pushed down,
+-- but a SET clause that can't be
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE ft2 d SET c2 = CASE WHEN random() >= 0 THEN d.c2 ELSE 0 END
+  FROM ft2 AS t WHERE d.c1 = t.c1 AND d.c1 > 1100;
+UPDATE ft2 d SET c2 = CASE WHEN random() >= 0 THEN d.c2 ELSE 0 END
+  FROM ft2 AS t WHERE d.c1 = t.c1 AND d.c1 > 1100;
+
 -- Test UPDATE/DELETE with WHERE or JOIN/ON conditions containing
 -- user-defined operators/functions
 ALTER SERVER loopback OPTIONS (DROP extensions);
