@@ -543,7 +543,6 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 				!fc->agg_star &&
 				!fc->agg_distinct &&
 				!fc->func_variadic &&
-				fc->funcformat == COERCE_EXPLICIT_CALL &&
 				coldeflist == NIL)
 			{
 				ListCell   *lc;

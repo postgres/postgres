@@ -222,7 +222,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 						   agg_order == NIL && agg_filter == NULL &&
 						   !agg_star && !agg_distinct && over == NULL &&
 						   !func_variadic && argnames == NIL &&
-						   funcformat == COERCE_EXPLICIT_CALL &&
 						   list_length(funcname) == 1 &&
 						   (actual_arg_types[0] == RECORDOID ||
 							ISCOMPLEX(actual_arg_types[0])));
