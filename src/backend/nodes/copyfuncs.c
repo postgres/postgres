@@ -775,6 +775,7 @@ _copyForeignScan(const ForeignScan *from)
 	 * copy remainder of node
 	 */
 	COPY_SCALAR_FIELD(operation);
+	COPY_SCALAR_FIELD(resultRelation);
 	COPY_SCALAR_FIELD(fs_server);
 	COPY_NODE_FIELD(fdw_exprs);
 	COPY_NODE_FIELD(fdw_private);
@@ -782,7 +783,6 @@ _copyForeignScan(const ForeignScan *from)
 	COPY_NODE_FIELD(fdw_recheck_quals);
 	COPY_BITMAPSET_FIELD(fs_relids);
 	COPY_SCALAR_FIELD(fsSystemCol);
-	COPY_SCALAR_FIELD(resultRelation);
 
 	return newnode;
 }
