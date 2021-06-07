@@ -36,6 +36,7 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 
+#define PQmblenBounded(s, e)  strnlen(s, PQmblen(s, e))
 
 static void do_field(const PQprintOpt *po, const PGresult *res,
 		 const int i, const int j, const int fs_len,
@@ -365,7 +366,7 @@ do_field(const PQprintOpt *po, const PGresult *res,
 			/* Detect whether field contains non-numeric data */
 			char		ch = '0';
 
-			for (p = pval; *p; p += PQmblen(p, res->client_encoding))
+			for (p = pval; *p; p += PQmblenBounded(p, res->client_encoding))
 			{
 				ch = *p;
 				if (!((ch >= '0' && ch <= '9') ||

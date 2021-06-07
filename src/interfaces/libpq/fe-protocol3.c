@@ -41,6 +41,8 @@
 	((id) == 'T' || (id) == 'D' || (id) == 'd' || (id) == 'V' || \
 	 (id) == 'E' || (id) == 'N' || (id) == 'A')
 
+#define PQmblenBounded(s, e)  strnlen(s, PQmblen(s, e))
+
 
 static void handleSyncLoss(PGconn *conn, char id, int msgLength);
 static int	getRowDescriptions(PGconn *conn, int msgLength);
@@ -1227,7 +1229,7 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 			if (w <= 0)
 				w = 1;
 			scroffset += w;
-			qoffset += pg_encoding_mblen(encoding, &wquery[qoffset]);
+			qoffset += PQmblenBounded(&wquery[qoffset], encoding);
 		}
 		else
 		{
@@ -1295,7 +1297,7 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 		 * width.
 		 */
 		scroffset = 0;
-		for (; i < msg->len; i += pg_encoding_mblen(encoding, &msg->data[i]))
+		for (; i < msg->len; i += PQmblenBounded(&msg->data[i], encoding))
 		{
 			int			w = pg_encoding_dsplen(encoding, &msg->data[i]);
 
