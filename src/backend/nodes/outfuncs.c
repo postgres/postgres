@@ -1860,6 +1860,16 @@ _outTidPath(StringInfo str, const TidPath *node)
 }
 
 static void
+_outTidRangePath(StringInfo str, const TidRangePath *node)
+{
+	WRITE_NODE_TYPE("TIDRANGEPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(tidrangequals);
+}
+
+static void
 _outSubqueryScanPath(StringInfo str, const SubqueryScanPath *node)
 {
 	WRITE_NODE_TYPE("SUBQUERYSCANPATH");
@@ -4165,6 +4175,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_TidPath:
 				_outTidPath(str, obj);
+				break;
+			case T_TidRangePath:
+				_outTidRangePath(str, obj);
 				break;
 			case T_SubqueryScanPath:
 				_outSubqueryScanPath(str, obj);
