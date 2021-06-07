@@ -57,6 +57,8 @@ extern char *filename_completion_function();
 #define completion_matches rl_completion_matches
 #endif
 
+#define PQmblenBounded(s, e)  strnlen(s, PQmblen(s, e))
+
 /* word break characters */
 #define WORD_BREAKS		"\t\n@$><=;|&{() "
 
@@ -3308,7 +3310,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		while (*pstr)
 		{
 			char_length++;
-			pstr += PQmblen(pstr, pset.encoding);
+			pstr += PQmblenBounded(pstr, pset.encoding);
 		}
 
 		/* Free any prior result */

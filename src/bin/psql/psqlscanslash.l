@@ -26,6 +26,8 @@
 %{
 #include "fe_utils/psqlscan_int.h"
 
+#define PQmblenBounded(s, e)  strnlen(s, PQmblen(s, e))
+
 /*
  * We must have a typedef YYSTYPE for yylex's first argument, but this lexer
  * doesn't presently make use of that argument, so just declare it as int.
@@ -681,7 +683,7 @@ dequote_downcase_identifier(char *str, bool downcase, int encoding)
 		{
 			if (downcase && !inquotes)
 				*cp = pg_tolower((unsigned char) *cp);
-			cp += PQmblen(cp, encoding);
+			cp += PQmblenBounded(cp, encoding);
 		}
 	}
 }

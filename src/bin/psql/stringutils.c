@@ -12,6 +12,8 @@
 #include "common.h"
 #include "stringutils.h"
 
+#define PQmblenBounded(s, e)  strnlen(s, PQmblen(s, e))
+
 
 /*
  * Replacement for strtok() (a.k.a. poor man's flex)
@@ -143,7 +145,7 @@ strtokx(const char *s,
 		/* okay, we have a quoted token, now scan for the closer */
 		char		thisquote = *p++;
 
-		for (; *p; p += PQmblen(p, encoding))
+		for (; *p; p += PQmblenBounded(p, encoding))
 		{
 			if (*p == escape && p[1] != '\0')
 				p++;			/* process escaped anything */
@@ -262,7 +264,7 @@ strip_quotes(char *source, char quote, char escape, int encoding)
 		else if (c == escape && src[1] != '\0')
 			src++;				/* process escaped character */
 
-		i = PQmblen(src, encoding);
+		i = PQmblenBounded(src, encoding);
 		while (i--)
 			*dst++ = *src++;
 	}
@@ -322,7 +324,7 @@ quote_if_needed(const char *source, const char *entails_quote,
 		else if (strchr(entails_quote, c))
 			need_quotes = true;
 
-		i = PQmblen(src, encoding);
+		i = PQmblenBounded(src, encoding);
 		while (i--)
 			*dst++ = *src++;
 	}
