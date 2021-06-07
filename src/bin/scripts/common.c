@@ -23,6 +23,8 @@
 #include "fe_utils/string_utils.h"
 
 
+#define PQmblenBounded(s, e)  strnlen(s, PQmblen(s, e))
+
 static PGcancel *volatile cancelConn = NULL;
 bool		CancelRequested = false;
 
@@ -300,7 +302,7 @@ splitTableColumnsSpec(const char *spec, int encoding,
 			cp++;
 		}
 		else
-			cp += PQmblen(cp, encoding);
+			cp += PQmblenBounded(cp, encoding);
 	}
 	*table = pg_strdup(spec);
 	(*table)[cp - spec] = '\0'; /* no strndup */

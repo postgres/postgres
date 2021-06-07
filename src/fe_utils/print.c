@@ -3653,6 +3653,9 @@ strlen_max_width(unsigned char *str, int *target_width, int encoding)
 		curr_width += char_width;
 
 		str += PQmblen((char *) str, encoding);
+
+		if (str > end)			/* Don't overrun invalid string */
+			str = end;
 	}
 
 	*target_width = curr_width;
