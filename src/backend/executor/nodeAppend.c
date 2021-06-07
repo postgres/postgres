@@ -240,10 +240,12 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	appendstate->as_asyncplans = asyncplans;
 	appendstate->as_nasyncplans = nasyncplans;
 	appendstate->as_asyncrequests = NULL;
-	appendstate->as_asyncresults = (TupleTableSlot **)
-		palloc0(nasyncplans * sizeof(TupleTableSlot *));
+	appendstate->as_asyncresults = NULL;
+	appendstate->as_nasyncresults = 0;
+	appendstate->as_nasyncremain = 0;
 	appendstate->as_needrequest = NULL;
 	appendstate->as_eventset = NULL;
+	appendstate->as_valid_asyncplans = NULL;
 
 	if (nasyncplans > 0)
 	{
@@ -265,6 +267,12 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 
 			appendstate->as_asyncrequests[i] = areq;
 		}
+
+		appendstate->as_asyncresults = (TupleTableSlot **)
+			palloc0(nasyncplans * sizeof(TupleTableSlot *));
+
+		if (appendstate->as_valid_subplans != NULL)
+			classify_matching_subplans(appendstate);
 	}
 
 	/*
@@ -459,6 +467,8 @@ ExecReScanAppend(AppendState *node)
 			areq->result = NULL;
 		}
 
+		node->as_nasyncresults = 0;
+		node->as_nasyncremain = 0;
 		bms_free(node->as_needrequest);
 		node->as_needrequest = NULL;
 	}
@@ -861,15 +871,24 @@ ExecAppendAsyncBegin(AppendState *node)
 	/* Backward scan is not supported by async-aware Appends. */
 	Assert(ScanDirectionIsForward(node->ps.state->es_direction));
 
+	/* We should never be called when there are no subplans */
+	Assert(node->as_nplans > 0);
+
 	/* We should never be called when there are no async subplans. */
 	Assert(node->as_nasyncplans > 0);
 
 	/* If we've yet to determine the valid subplans then do so now. */
 	if (node->as_valid_subplans == NULL)
+	{
 		node->as_valid_subplans =
 			ExecFindMatchingSubPlans(node->as_prune_state);
 
-	classify_matching_subplans(node);
+		classify_matching_subplans(node);
+	}
+
+	/* Initialize state variables. */
+	node->as_syncdone = bms_is_empty(node->as_valid_subplans);
+	node->as_nasyncremain = bms_num_members(node->as_valid_asyncplans);
 
 	/* Nothing to do if there are no valid async subplans. */
 	if (node->as_nasyncremain == 0)
@@ -1148,9 +1167,7 @@ classify_matching_subplans(AppendState *node)
 	/* Adjust the valid subplans to contain sync subplans only. */
 	node->as_valid_subplans = bms_del_members(node->as_valid_subplans,
 											  valid_asyncplans);
-	node->as_syncdone = bms_is_empty(node->as_valid_subplans);
 
 	/* Save valid async subplans. */
 	node->as_valid_asyncplans = valid_asyncplans;
-	node->as_nasyncremain = bms_num_members(valid_asyncplans);
 }

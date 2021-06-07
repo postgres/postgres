@@ -9973,6 +9973,48 @@ SELECT * FROM join_tbl ORDER BY a1;
 
 DELETE FROM join_tbl;
 RESET enable_partitionwise_join;
+-- Test rescan of an async Append node with do_exec_prune=false
+SET enable_hashjoin TO false;
+EXPLAIN (VERBOSE, COSTS OFF)
+INSERT INTO join_tbl SELECT * FROM async_p1 t1, async_pt t2 WHERE t1.a = t2.a AND t1.b = t2.b AND t1.b % 100 = 0;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Insert on public.join_tbl
+   ->  Nested Loop
+         Output: t1.a, t1.b, t1.c, t2.a, t2.b, t2.c
+         Join Filter: ((t1.a = t2.a) AND (t1.b = t2.b))
+         ->  Foreign Scan on public.async_p1 t1
+               Output: t1.a, t1.b, t1.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE (((b % 100) = 0))
+         ->  Append
+               ->  Async Foreign Scan on public.async_p1 t2_1
+                     Output: t2_1.a, t2_1.b, t2_1.c
+                     Remote SQL: SELECT a, b, c FROM public.base_tbl1
+               ->  Async Foreign Scan on public.async_p2 t2_2
+                     Output: t2_2.a, t2_2.b, t2_2.c
+                     Remote SQL: SELECT a, b, c FROM public.base_tbl2
+               ->  Seq Scan on public.async_p3 t2_3
+                     Output: t2_3.a, t2_3.b, t2_3.c
+(16 rows)
+
+INSERT INTO join_tbl SELECT * FROM async_p1 t1, async_pt t2 WHERE t1.a = t2.a AND t1.b = t2.b AND t1.b % 100 = 0;
+SELECT * FROM join_tbl ORDER BY a1;
+  a1  | b1  |  c1  |  a2  | b2  |  c2  
+------+-----+------+------+-----+------
+ 1000 |   0 | 0000 | 1000 |   0 | 0000
+ 1100 | 100 | 0100 | 1100 | 100 | 0100
+ 1200 | 200 | 0200 | 1200 | 200 | 0200
+ 1300 | 300 | 0300 | 1300 | 300 | 0300
+ 1400 | 400 | 0400 | 1400 | 400 | 0400
+ 1500 | 500 | 0500 | 1500 | 500 | 0500
+ 1600 | 600 | 0600 | 1600 | 600 | 0600
+ 1700 | 700 | 0700 | 1700 | 700 | 0700
+ 1800 | 800 | 0800 | 1800 | 800 | 0800
+ 1900 | 900 | 0900 | 1900 | 900 | 0900
+(10 rows)
+
+DELETE FROM join_tbl;
+RESET enable_hashjoin;
 -- Test interaction of async execution with plan-time partition pruning
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM async_pt WHERE a < 3000;

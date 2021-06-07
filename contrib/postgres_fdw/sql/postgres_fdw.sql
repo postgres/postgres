@@ -3157,6 +3157,18 @@ DELETE FROM join_tbl;
 
 RESET enable_partitionwise_join;
 
+-- Test rescan of an async Append node with do_exec_prune=false
+SET enable_hashjoin TO false;
+
+EXPLAIN (VERBOSE, COSTS OFF)
+INSERT INTO join_tbl SELECT * FROM async_p1 t1, async_pt t2 WHERE t1.a = t2.a AND t1.b = t2.b AND t1.b % 100 = 0;
+INSERT INTO join_tbl SELECT * FROM async_p1 t1, async_pt t2 WHERE t1.a = t2.a AND t1.b = t2.b AND t1.b % 100 = 0;
+
+SELECT * FROM join_tbl ORDER BY a1;
+DELETE FROM join_tbl;
+
+RESET enable_hashjoin;
+
 -- Test interaction of async execution with plan-time partition pruning
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM async_pt WHERE a < 3000;
