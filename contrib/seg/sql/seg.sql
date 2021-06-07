@@ -217,9 +217,11 @@ CREATE TABLE test_seg (s seg);
 
 CREATE INDEX test_seg_ix ON test_seg USING gist (s);
 
+SET enable_indexscan = false;
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
 SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
+RESET enable_indexscan;
 
 SET enable_bitmapscan = false;
 EXPLAIN (COSTS OFF)
