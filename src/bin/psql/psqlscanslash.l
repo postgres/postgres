@@ -753,7 +753,7 @@ dequote_downcase_identifier(char *str, bool downcase, int encoding)
 		{
 			if (downcase && !inquotes)
 				*cp = pg_tolower((unsigned char) *cp);
-			cp += PQmblen(cp, encoding);
+			cp += PQmblenBounded(cp, encoding);
 		}
 	}
 }

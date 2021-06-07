@@ -365,7 +365,7 @@ do_field(const PQprintOpt *po, const PGresult *res,
 			/* Detect whether field contains non-numeric data */
 			char		ch = '0';
 
-			for (p = pval; *p; p += PQmblen(p, res->client_encoding))
+			for (p = pval; *p; p += PQmblenBounded(p, res->client_encoding))
 			{
 				ch = *p;
 				if (!((ch >= '0' && ch <= '9') ||

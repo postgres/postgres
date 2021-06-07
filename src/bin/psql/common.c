@@ -1846,7 +1846,7 @@ skip_white_space(const char *query)
 
 	while (*query)
 	{
-		int			mblen = PQmblen(query, pset.encoding);
+		int			mblen = PQmblenBounded(query, pset.encoding);
 
 		/*
 		 * Note: we assume the encoding is a superset of ASCII, so that for
@@ -1883,7 +1883,7 @@ skip_white_space(const char *query)
 					query++;
 					break;
 				}
-				query += PQmblen(query, pset.encoding);
+				query += PQmblenBounded(query, pset.encoding);
 			}
 		}
 		else if (cnestlevel > 0)
@@ -1918,7 +1918,7 @@ command_no_begin(const char *query)
 	 */
 	wordlen = 0;
 	while (isalpha((unsigned char) query[wordlen]))
-		wordlen += PQmblen(&query[wordlen], pset.encoding);
+		wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
 	/*
 	 * Transaction control commands.  These should include every keyword that
@@ -1949,7 +1949,7 @@ command_no_begin(const char *query)
 
 		wordlen = 0;
 		while (isalpha((unsigned char) query[wordlen]))
-			wordlen += PQmblen(&query[wordlen], pset.encoding);
+			wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
 		if (wordlen == 11 && pg_strncasecmp(query, "transaction", 11) == 0)
 			return true;
@@ -1983,7 +1983,7 @@ command_no_begin(const char *query)
 
 		wordlen = 0;
 		while (isalpha((unsigned char) query[wordlen]))
-			wordlen += PQmblen(&query[wordlen], pset.encoding);
+			wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
 		if (wordlen == 8 && pg_strncasecmp(query, "database", 8) == 0)
 			return true;
@@ -1999,7 +1999,7 @@ command_no_begin(const char *query)
 
 			wordlen = 0;
 			while (isalpha((unsigned char) query[wordlen]))
-				wordlen += PQmblen(&query[wordlen], pset.encoding);
+				wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 		}
 
 		if (wordlen == 5 && pg_strncasecmp(query, "index", 5) == 0)
@@ -2010,7 +2010,7 @@ command_no_begin(const char *query)
 
 			wordlen = 0;
 			while (isalpha((unsigned char) query[wordlen]))
-				wordlen += PQmblen(&query[wordlen], pset.encoding);
+				wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
 			if (wordlen == 12 && pg_strncasecmp(query, "concurrently", 12) == 0)
 				return true;
@@ -2027,7 +2027,7 @@ command_no_begin(const char *query)
 
 		wordlen = 0;
 		while (isalpha((unsigned char) query[wordlen]))
-			wordlen += PQmblen(&query[wordlen], pset.encoding);
+			wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
 		/* ALTER SYSTEM isn't allowed in xacts */
 		if (wordlen == 6 && pg_strncasecmp(query, "system", 6) == 0)
@@ -2050,7 +2050,7 @@ command_no_begin(const char *query)
 
 		wordlen = 0;
 		while (isalpha((unsigned char) query[wordlen]))
-			wordlen += PQmblen(&query[wordlen], pset.encoding);
+			wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
 		if (wordlen == 8 && pg_strncasecmp(query, "database", 8) == 0)
 			return true;
@@ -2065,7 +2065,7 @@ command_no_begin(const char *query)
 			query = skip_white_space(query);
 			wordlen = 0;
 			while (isalpha((unsigned char) query[wordlen]))
-				wordlen += PQmblen(&query[wordlen], pset.encoding);
+				wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
 			/*
 			 * REINDEX [ TABLE | INDEX ] CONCURRENTLY are not allowed in
@@ -2084,7 +2084,7 @@ command_no_begin(const char *query)
 
 			wordlen = 0;
 			while (isalpha((unsigned char) query[wordlen]))
-				wordlen += PQmblen(&query[wordlen], pset.encoding);
+				wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
 			if (wordlen == 12 && pg_strncasecmp(query, "concurrently", 12) == 0)
 				return true;
@@ -2104,7 +2104,7 @@ command_no_begin(const char *query)
 
 		wordlen = 0;
 		while (isalpha((unsigned char) query[wordlen]))
-			wordlen += PQmblen(&query[wordlen], pset.encoding);
+			wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
 		if (wordlen == 3 && pg_strncasecmp(query, "all", 3) == 0)
 			return true;
@@ -2140,7 +2140,7 @@ is_select_command(const char *query)
 	 */
 	wordlen = 0;
 	while (isalpha((unsigned char) query[wordlen]))
-		wordlen += PQmblen(&query[wordlen], pset.encoding);
+		wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
 	if (wordlen == 6 && pg_strncasecmp(query, "select", 6) == 0)
 		return true;

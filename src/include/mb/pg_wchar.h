@@ -574,6 +574,7 @@ extern int	pg_valid_server_encoding_id(int encoding);
  * earlier in this file are also available from libpgcommon.
  */
 extern int	pg_encoding_mblen(int encoding, const char *mbstr);
+extern int	pg_encoding_mblen_bounded(int encoding, const char *mbstr);
 extern int	pg_encoding_dsplen(int encoding, const char *mbstr);
 extern int	pg_encoding_verifymbchar(int encoding, const char *mbstr, int len);
 extern int	pg_encoding_verifymbstr(int encoding, const char *mbstr, int len);

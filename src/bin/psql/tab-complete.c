@@ -4397,7 +4397,7 @@ _complete_from_query(const char *simple_query,
 		while (*pstr)
 		{
 			char_length++;
-			pstr += PQmblen(pstr, pset.encoding);
+			pstr += PQmblenBounded(pstr, pset.encoding);
 		}
 
 		/* Free any prior result */

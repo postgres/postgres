@@ -52,7 +52,7 @@ splitTableColumnsSpec(const char *spec, int encoding,
 			cp++;
 		}
 		else
-			cp += PQmblen(cp, encoding);
+			cp += PQmblenBounded(cp, encoding);
 	}
 	*table = pnstrdup(spec, cp - spec);
 	*columns = cp;

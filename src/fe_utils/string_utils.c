@@ -1072,12 +1072,9 @@ patternToSQLRegex(int encoding, PQExpBuffer dbnamebuf, PQExpBuffer schemabuf,
 				appendPQExpBufferChar(curbuf, '\\');
 			else if (ch == '[' && cp[1] == ']')
 				appendPQExpBufferChar(curbuf, '\\');
-			i = PQmblen(cp, encoding);
-			while (i-- && *cp)
-			{
-				appendPQExpBufferChar(curbuf, *cp);
-				cp++;
-			}
+			i = PQmblenBounded(cp, encoding);
+			while (i--)
+				appendPQExpBufferChar(curbuf, *cp++);
 		}
 	}
 	appendPQExpBufferStr(curbuf, ")$");

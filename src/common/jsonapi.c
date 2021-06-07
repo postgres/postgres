@@ -740,7 +740,7 @@ json_lex_string(JsonLexContext *lex)
 						ch = (ch * 16) + (*s - 'A') + 10;
 					else
 					{
-						lex->token_terminator = s + pg_encoding_mblen(lex->input_encoding, s);
+						lex->token_terminator = s + pg_encoding_mblen_bounded(lex->input_encoding, s);
 						return JSON_UNICODE_ESCAPE_FORMAT;
 					}
 				}
@@ -846,7 +846,7 @@ json_lex_string(JsonLexContext *lex)
 					default:
 						/* Not a valid string escape, so signal error. */
 						lex->token_start = s;
-						lex->token_terminator = s + pg_encoding_mblen(lex->input_encoding, s);
+						lex->token_terminator = s + pg_encoding_mblen_bounded(lex->input_encoding, s);
 						return JSON_ESCAPING_INVALID;
 				}
 			}
@@ -860,7 +860,7 @@ json_lex_string(JsonLexContext *lex)
 				 * shown it's not a performance win.
 				 */
 				lex->token_start = s;
-				lex->token_terminator = s + pg_encoding_mblen(lex->input_encoding, s);
+				lex->token_terminator = s + pg_encoding_mblen_bounded(lex->input_encoding, s);
 				return JSON_ESCAPING_INVALID;
 			}
 

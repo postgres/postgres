@@ -1911,6 +1911,11 @@ const pg_wchar_tbl pg_wchar_table[] = {
 
 /*
  * Returns the byte length of a multibyte character.
+ *
+ * Caution: when dealing with text that is not certainly valid in the
+ * specified encoding, the result may exceed the actual remaining
+ * string length.  Callers that are not prepared to deal with that
+ * should use pg_encoding_mblen_bounded() instead.
  */
 int
 pg_encoding_mblen(int encoding, const char *mbstr)
@@ -1918,6 +1923,16 @@ pg_encoding_mblen(int encoding, const char *mbstr)
 	return (PG_VALID_ENCODING(encoding) ?
 			pg_wchar_table[encoding].mblen((const unsigned char *) mbstr) :
 			pg_wchar_table[PG_SQL_ASCII].mblen((const unsigned char *) mbstr));
+}
+
+/*
+ * Returns the byte length of a multibyte character; but not more than
+ * the distance to end of string.
+ */
+int
+pg_encoding_mblen_bounded(int encoding, const char *mbstr)
+{
+	return strnlen(mbstr, pg_encoding_mblen(encoding, mbstr));
 }
 
 /*

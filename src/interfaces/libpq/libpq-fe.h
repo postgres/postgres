@@ -625,6 +625,9 @@ extern int	PQlibVersion(void);
 /* Determine length of multibyte encoded char at *s */
 extern int	PQmblen(const char *s, int encoding);
 
+/* Same, but not more than the distance to the end of string s */
+extern int	PQmblenBounded(const char *s, int encoding);
+
 /* Determine display length of multibyte encoded char at *s */
 extern int	PQdsplen(const char *s, int encoding);
 
