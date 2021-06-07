@@ -954,7 +954,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		 */
 		ReplicationSlotCreate(cmd->slotname, true,
 							  cmd->temporary ? RS_TEMPORARY : RS_EPHEMERAL,
-							  cmd->two_phase);
+							  false);
 	}
 
 	if (cmd->kind == REPLICATION_KIND_LOGICAL)
