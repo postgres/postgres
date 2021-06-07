@@ -930,6 +930,7 @@ SELECT '1'::seg <@ '-1 .. 1'::seg AS bool;
 CREATE TABLE test_seg (s seg);
 \copy test_seg from 'data/test_seg.data'
 CREATE INDEX test_seg_ix ON test_seg USING gist (s);
+SET enable_indexscan = false;
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
                       QUERY PLAN                       
@@ -947,6 +948,7 @@ SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
    143
 (1 row)
 
+RESET enable_indexscan;
 SET enable_bitmapscan = false;
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
