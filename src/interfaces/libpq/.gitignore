@@ -12,6 +12,7 @@
 /snprintf.c
 /strerror.c
 /strlcpy.c
+/strnlen.c
 /system.c
 /thread.c
 /win32error.c

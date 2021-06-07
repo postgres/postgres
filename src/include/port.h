@@ -404,6 +404,10 @@ extern size_t strlcat(char *dst, const char *src, size_t siz);
 extern size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif
 
+#if !HAVE_DECL_STRNLEN
+extern size_t strnlen(const char *str, size_t maxlen);
+#endif
+
 #if !defined(HAVE_RANDOM) && !defined(__BORLANDC__)
 extern long random(void);
 #endif
