@@ -25,6 +25,8 @@
 
 #define ERRCODE_UNDEFINED_TABLE  "42P01"
 
+#define PQmblenBounded(s, e)  strnlen(s, PQmblen(s, e))
+
 /*
  * Provide strictly harmonized handling of --help and --version
  * options.
@@ -368,7 +370,7 @@ splitTableColumnsSpec(const char *spec, int encoding,
 			cp++;
 		}
 		else
-			cp += PQmblen(cp, encoding);
+			cp += PQmblenBounded(cp, encoding);
 	}
 	*table = pnstrdup(spec, cp - spec);
 	*columns = cp;

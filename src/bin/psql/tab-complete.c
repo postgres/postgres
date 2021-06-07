@@ -73,6 +73,8 @@
 #define USE_FILENAME_QUOTING_FUNCTIONS 1
 #endif
 
+#define PQmblenBounded(s, e)  strnlen(s, PQmblen(s, e))
+
 /* word break characters */
 #define WORD_BREAKS		"\t\n@$><=;|&{() "
 
@@ -4140,7 +4142,7 @@ _complete_from_query(const char *simple_query,
 		while (*pstr)
 		{
 			char_length++;
-			pstr += PQmblen(pstr, pset.encoding);
+			pstr += PQmblenBounded(pstr, pset.encoding);
 		}
 
 		/* Free any prior result */
