@@ -175,7 +175,15 @@ Datum
 pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
 {
 	int			pid = PG_GETARG_INT32(0);
-	PGPROC	   *proc = BackendPidGetProc(pid);
+	PGPROC	   *proc;
+
+	/* Only allow superusers to log memory contexts. */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be a superuser to log memory contexts")));
+
+	proc = BackendPidGetProc(pid);
 
 	/*
 	 * BackendPidGetProc returns NULL if the pid isn't valid; but by the time
@@ -196,12 +204,6 @@ pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
 				(errmsg("PID %d is not a PostgreSQL server process", pid)));
 		PG_RETURN_BOOL(false);
 	}
-
-	/* Only allow superusers to log memory contexts. */
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be a superuser to log memory contexts")));
 
 	if (SendProcSignal(pid, PROCSIG_LOG_MEMORY_CONTEXT, proc->backendId) < 0)
 	{
