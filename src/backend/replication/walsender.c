@@ -73,6 +73,7 @@
 #include "replication/slot.h"
 #include "replication/snapbuild.h"
 #include "replication/syncrep.h"
+#include "replication/walproposer.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
@@ -234,7 +235,7 @@ static XLogRecPtr GetStandbyFlushRecPtr(void);
 static void IdentifySystem(void);
 static void CreateReplicationSlot(CreateReplicationSlotCmd *cmd);
 static void DropReplicationSlot(DropReplicationSlotCmd *cmd);
-static void StartReplication(StartReplicationCmd *cmd);
+void StartReplication(StartReplicationCmd *cmd);
 static void StartLogicalReplication(StartReplicationCmd *cmd);
 static void ProcessStandbyMessage(void);
 static void ProcessStandbyReplyMessage(void);
@@ -567,7 +568,7 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
  * At the moment, this never returns, but an ereport(ERROR) will take us back
  * to the main loop.
  */
-static void
+void
 StartReplication(StartReplicationCmd *cmd)
 {
 	StringInfoData buf;
@@ -708,11 +709,14 @@ StartReplication(StartReplicationCmd *cmd)
 		WalSndSetState(WALSNDSTATE_CATCHUP);
 
 		/* Send a CopyBothResponse message, and start streaming */
-		pq_beginmessage(&buf, 'W');
-		pq_sendbyte(&buf, 0);
-		pq_sendint16(&buf, 0);
-		pq_endmessage(&buf);
-		pq_flush();
+		if (!am_wal_proposer)
+		{
+			pq_beginmessage(&buf, 'W');
+			pq_sendbyte(&buf, 0);
+			pq_sendint16(&buf, 0);
+			pq_endmessage(&buf);
+			pq_flush();
+		}
 
 		/*
 		 * Don't allow a request to stream from a future point in WAL that
@@ -1324,7 +1328,7 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 		}
 
 		/* Try to flush pending output to the client */
-		if (pq_flush_if_writable() != 0)
+		if (!am_wal_proposer && pq_flush_if_writable() != 0)
 			WalSndShutdown();
 	}
 
@@ -1707,6 +1711,9 @@ ProcessRepliesIfAny(void)
 	int			r;
 	bool		received = false;
 
+	if (am_wal_proposer)
+		return;
+
 	last_processing = GetCurrentTimestamp();
 
 	/*
@@ -1882,14 +1889,7 @@ ProcessStandbyReplyMessage(void)
 				flushPtr,
 				applyPtr;
 	bool		replyRequested;
-	TimeOffset	writeLag,
-				flushLag,
-				applyLag;
-	bool		clearLagTimes;
-	TimestampTz now;
 	TimestampTz replyTime;
-
-	static bool fullyAppliedLastTime = false;
 
 	/* the caller already consumed the msgtype byte */
 	writePtr = pq_getmsgint64(&reply_message);
@@ -1897,6 +1897,26 @@ ProcessStandbyReplyMessage(void)
 	applyPtr = pq_getmsgint64(&reply_message);
 	replyTime = pq_getmsgint64(&reply_message);
 	replyRequested = pq_getmsgbyte(&reply_message);
+	ProcessStandbyReply(writePtr,
+						flushPtr,
+						applyPtr,
+						replyTime,
+						replyRequested);
+}
+
+void
+ProcessStandbyReply(XLogRecPtr	writePtr,
+					XLogRecPtr	flushPtr,
+					XLogRecPtr	applyPtr,
+					TimestampTz replyTime,
+					bool		replyRequested)
+{
+	TimeOffset	writeLag,
+				flushLag,
+				applyLag;
+	bool		clearLagTimes;
+	TimestampTz now;
+	static bool fullyAppliedLastTime = false;
 
 	if (message_level_is_interesting(DEBUG2))
 	{
@@ -2079,7 +2099,16 @@ ProcessStandbyHSFeedbackMessage(void)
 	feedbackEpoch = pq_getmsgint(&reply_message, 4);
 	feedbackCatalogXmin = pq_getmsgint(&reply_message, 4);
 	feedbackCatalogEpoch = pq_getmsgint(&reply_message, 4);
+	ProcessStandbyHSFeedback(replyTime, feedbackXmin, feedbackEpoch, feedbackCatalogXmin, feedbackCatalogEpoch);
+}
 
+void
+ProcessStandbyHSFeedback(TimestampTz   replyTime,
+						 TransactionId feedbackXmin,
+						 uint32		feedbackEpoch,
+						 TransactionId feedbackCatalogXmin,
+						 uint32		feedbackCatalogEpoch)
+{
 	if (message_level_is_interesting(DEBUG2))
 	{
 		char	   *replyTimeStr;
@@ -2286,6 +2315,19 @@ WalSndLoop(WalSndSendDataCallback send_data)
 
 		/* Check for input from the client */
 		ProcessRepliesIfAny();
+
+		if (am_wal_proposer)
+		{
+			send_data();
+			if (WalSndCaughtUp)
+			{
+				if (MyWalSnd->state == WALSNDSTATE_CATCHUP)
+					WalSndSetState(WALSNDSTATE_STREAMING);
+				WalProposerPoll();
+				WalSndCaughtUp = false;
+			}
+			continue;
+		}
 
 		/*
 		 * If we have received CopyDone from the client, sent CopyDone
@@ -2748,9 +2790,12 @@ XLogSendPhysical(void)
 	/*
 	 * OK to read and send the slice.
 	 */
-	resetStringInfo(&output_message);
-	pq_sendbyte(&output_message, 'w');
+	if (output_message.data)
+		resetStringInfo(&output_message);
+	else
+		initStringInfo(&output_message);
 
+	pq_sendbyte(&output_message, 'w');
 	pq_sendint64(&output_message, startptr);	/* dataStart */
 	pq_sendint64(&output_message, SendRqstPtr); /* walEnd */
 	pq_sendint64(&output_message, 0);	/* sendtime, filled in last */
@@ -2803,16 +2848,22 @@ retry:
 	output_message.len += nbytes;
 	output_message.data[output_message.len] = '\0';
 
-	/*
-	 * Fill the send timestamp last, so that it is taken as late as possible.
-	 */
-	resetStringInfo(&tmpbuf);
-	pq_sendint64(&tmpbuf, GetCurrentTimestamp());
-	memcpy(&output_message.data[1 + sizeof(int64) + sizeof(int64)],
-		   tmpbuf.data, sizeof(int64));
+	if (am_wal_proposer)
+	{
+		WalProposerBroadcast(startptr, output_message.data, output_message.len);
+	}
+	else
+	{
+		/*
+		 * Fill the send timestamp last, so that it is taken as late as possible.
+		 */
+		resetStringInfo(&tmpbuf);
+		pq_sendint64(&tmpbuf, GetCurrentTimestamp());
+		memcpy(&output_message.data[1 + sizeof(int64) + sizeof(int64)],
+			   tmpbuf.data, sizeof(int64));
 
-	pq_putmessage_noblock('d', output_message.data, output_message.len);
-
+		pq_putmessage_noblock('d', output_message.data, output_message.len);
+	}
 	sentPtr = endptr;
 
 	/* Update shared memory status */

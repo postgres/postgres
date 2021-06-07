@@ -209,6 +209,8 @@ bool		InRecovery = false;
 /* Are we in Hot Standby mode? Only valid in startup process, see xlog.h */
 HotStandbyState standbyState = STANDBY_DISABLED;
 
+static bool	enable_nonrelwal_reading = true;
+
 static XLogRecPtr LastRec;
 
 /* Local copy of WalRcv->flushedUpto */
@@ -731,6 +733,7 @@ typedef struct XLogCtlData
 	 * XLOG_FPW_CHANGE record that instructs full_page_writes is disabled.
 	 */
 	XLogRecPtr	lastFpwDisableRecPtr;
+	XLogRecPtr  lastWrittenPageLSN;
 
 	slock_t		info_lck;		/* locks shared variables shown above */
 } XLogCtlData;
@@ -4383,6 +4386,23 @@ ReadRecord(XLogReaderState *xlogreader, int emode,
 	/* This is the first attempt to read this page. */
 	lastSourceFailed = false;
 
+	/*
+	 * If we have partial non-rel WAL for this position, use it.
+	 */
+	if (enable_nonrelwal_reading)
+	{
+		record = nonrelwal_read_record(xlogreader, emode, fetching_ckpt);
+		if (record)
+		{
+			if (!expectedTLEs)
+				expectedTLEs = readTimeLineHistory(recoveryTargetTLI);
+
+			ReadRecPtr = xlogreader->ReadRecPtr;
+			EndRecPtr = xlogreader->EndRecPtr;
+			return record;
+		}
+	}
+
 	for (;;)
 	{
 		char	   *errormsg;
@@ -7652,8 +7672,18 @@ StartupXLOG(void)
 	 * Re-fetch the last valid or last applied record, so we can identify the
 	 * exact endpoint of what we consider the valid portion of WAL.
 	 */
+
+	/*
+	 * Make sure we read the record from the original WAL segment, not the special
+	 * non-rel WAL. We use the last WAL page to initialize the WAL for writing,
+	 * so we better have it in memory.
+	 */
+	enable_nonrelwal_reading = false;
+
 	XLogBeginRead(xlogreader, LastRec);
 	record = ReadRecord(xlogreader, PANIC, false);
+	if (!record)
+		elog(PANIC, "could not re-read last record");
 	EndOfLog = EndRecPtr;
 
 	/*
@@ -8555,6 +8585,35 @@ GetInsertRecPtr(void)
 
 	return recptr;
 }
+
+/*
+ * GetLastWrittenPageLSN -- Returns maximal LSN of written page
+ */
+XLogRecPtr
+GetLastWrittenPageLSN(void)
+{
+	XLogRecPtr lsn;
+	SpinLockAcquire(&XLogCtl->info_lck);
+	lsn = XLogCtl->lastWrittenPageLSN;
+	SpinLockRelease(&XLogCtl->info_lck);
+
+	return lsn;
+}
+
+/*
+ * SetLastWrittenPageLSN -- Set maximal LSN of written page
+ */
+void
+SetLastWrittenPageLSN(XLogRecPtr lsn)
+{
+	SpinLockAcquire(&XLogCtl->info_lck);
+	if (lsn > XLogCtl->lastWrittenPageLSN)
+		XLogCtl->lastWrittenPageLSN = lsn;
+	SpinLockRelease(&XLogCtl->info_lck);
+}
+
+
+
 
 /*
  * GetFlushRecPtr -- Returns the current flush position, ie, the last WAL
@@ -10316,10 +10375,20 @@ xlog_redo(XLogReaderState *record)
 		for (uint8 block_id = 0; block_id <= record->max_block_id; block_id++)
 		{
 			Buffer		buffer;
+			XLogRedoAction result;
 
-			if (XLogReadBufferForRedo(record, block_id, &buffer) != BLK_RESTORED)
+			result = XLogReadBufferForRedo(record, block_id, &buffer);
+			if (result == BLK_DONE && !IsUnderPostmaster)
+			{
+				/*
+				 * In the special WAL process, blocks that are being ignored
+				 * return BLK_DONE. Accept that.
+				 */
+			}
+			else if (result != BLK_RESTORED)
 				elog(ERROR, "unexpected XLogReadBufferForRedo result when restoring backup block");
-			UnlockReleaseBuffer(buffer);
+			if (buffer != InvalidBuffer)
+				UnlockReleaseBuffer(buffer);
 		}
 	}
 	else if (info == XLOG_BACKUP_END)

@@ -79,6 +79,7 @@
 #include "replication/syncrep.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
+#include "replication/walproposer.h"
 #include "storage/bufmgr.h"
 #include "storage/dsm_impl.h"
 #include "storage/fd.h"
@@ -86,6 +87,7 @@
 #include "storage/pg_shmem.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
+#include "storage/smgr.h"
 #include "storage/standby.h"
 #include "tcop/tcopprot.h"
 #include "tsearch/ts_cache.h"
@@ -183,6 +185,7 @@ static int	syslog_facility = 0;
 static void assign_syslog_facility(int newval, void *extra);
 static void assign_syslog_ident(const char *newval, void *extra);
 static void assign_session_replication_role(int newval, void *extra);
+
 static bool check_temp_buffers(int *newval, void **extra, GucSource source);
 static bool check_bonjour(bool *newval, void **extra, GucSource source);
 static bool check_ssl(bool *newval, void **extra, GucSource source);
@@ -2109,6 +2112,16 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"zenith_test_evict", PGC_POSTMASTER, UNGROUPED,
+			gettext_noop("Evict unpinned pages (for better test coverage)"),
+		},
+		&zenith_test_evict,
+		false,
+		NULL, NULL, NULL
+	},
+
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL, NULL
@@ -2280,6 +2293,17 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&wal_receiver_timeout,
 		60 * 1000, 0, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"wal_acceptor_reconnect", PGC_SIGHUP, REPLICATION_STANDBY,
+			gettext_noop("Timeout for reconnecting to ofline wal acceptor."),
+			NULL,
+			GUC_UNIT_MS
+		},
+		&wal_acceptor_reconnect_timeout,
+		1000, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
@@ -4585,6 +4609,17 @@ static struct config_string ConfigureNamesString[] =
 		&backtrace_functions,
 		"",
 		check_backtrace_functions, assign_backtrace_functions, NULL
+	},
+
+	{
+		{"wal_acceptors", PGC_POSTMASTER, UNGROUPED,
+			gettext_noop("List of Zenith WAL acceptors (host:port)"),
+			NULL,
+			GUC_LIST_INPUT | GUC_LIST_QUOTE
+		},
+		&wal_acceptors_list,
+		"",
+		NULL, NULL, NULL
 	},
 
 	/* End-of-list marker */
@@ -11737,6 +11772,7 @@ assign_session_replication_role(int newval, void *extra)
 	if (SessionReplicationRole != newval)
 		ResetPlanCache();
 }
+
 
 static bool
 check_temp_buffers(int *newval, void **extra, GucSource source)

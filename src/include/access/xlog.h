@@ -350,6 +350,9 @@ extern XLogRecPtr GetFlushRecPtr(void);
 extern XLogRecPtr GetLastImportantRecPtr(void);
 extern void RemovePromoteSignalFiles(void);
 
+extern void SetLastWrittenPageLSN(XLogRecPtr lsn);
+extern XLogRecPtr GetLastWrittenPageLSN(void);
+
 extern bool PromoteIsTriggered(void);
 extern bool CheckPromoteSignal(void);
 extern void WakeupRecovery(void);
@@ -360,6 +363,10 @@ extern void XLogRequestWalReceiverReply(void);
 
 extern void assign_max_wal_size(int newval, void *extra);
 extern void assign_checkpoint_completion_target(double newval, void *extra);
+
+/* in zenith_nonrelxlogreader.c */
+extern XLogRecord *nonrelwal_read_record(XLogReaderState *xlogreader, int emode,  bool fetching_ckpt);
+
 
 /*
  * Routines to start, stop, and get status of a base backup.

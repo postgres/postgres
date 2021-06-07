@@ -69,7 +69,8 @@ brin_xlog_insert_update(XLogReaderState *record,
 	}
 
 	/* need this page's blkno to store in revmap */
-	regpgno = BufferGetBlockNumber(buffer);
+	//ZENITH XXX Don't use BufferGetBlockNumber because wal-redo doesn't pin buffer.
+	XLogRecGetBlockTag(record, 0, NULL, NULL, &regpgno);
 
 	/* insert the index item into the page */
 	if (action == BLK_NEEDS_REDO)

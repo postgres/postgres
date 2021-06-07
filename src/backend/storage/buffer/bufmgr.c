@@ -157,6 +157,9 @@ int			checkpoint_flush_after = 0;
 int			bgwriter_flush_after = 0;
 int			backend_flush_after = 0;
 
+/* Evict unpinned pages (for better test coverage) */
+bool		zenith_test_evict = false;
+
 /* local state for StartBufferIO and related functions */
 static BufferDesc *InProgressBuf = NULL;
 static bool IsForInput;
@@ -913,11 +916,14 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		 */
 		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 		if (!PageIsNew((Page) bufBlock))
-			ereport(ERROR,
+		{
+			 // XXX-ZENITH
+			 MemSet((char *) bufBlock, 0, BLCKSZ);
+			 ereport(DEBUG1,
 					(errmsg("unexpected data beyond EOF in block %u of relation %s",
 							blockNum, relpath(smgr->smgr_rnode, forkNum)),
 					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
-
+		}
 		/*
 		 * We *must* do smgrextend before succeeding, else the page will not
 		 * be reserved by the kernel, and the next P_NEW call will decide to
@@ -1606,6 +1612,11 @@ MarkBufferDirty(Buffer buffer)
 		if (VacuumCostActive)
 			VacuumCostBalance += VacuumCostPageDirty;
 	}
+	/*
+	 * Clear PD_WAL_LOGGED flag so that if dirty page is evicted from page pool
+	 * before been WAL logged, FPI WAL record will be enforced.
+	 */
+	((PageHeader)BufferGetPage(buffer))->pd_flags &= ~PD_WAL_LOGGED;
 }
 
 /*
@@ -1906,6 +1917,32 @@ UnpinBuffer(BufferDesc *buf, bool fixOwner)
 				UnlockBufHdr(buf, buf_state);
 		}
 		ForgetPrivateRefCountEntry(ref);
+
+		if (zenith_test_evict && !InRecovery)
+		{
+			buf_state = LockBufHdr(buf);
+			if (BUF_STATE_GET_REFCOUNT(buf_state) == 0)
+			{
+				if (buf_state & BM_DIRTY)
+				{
+					ReservePrivateRefCountEntry();
+					PinBuffer_Locked(buf);
+					if (LWLockConditionalAcquire(BufferDescriptorGetContentLock(buf),
+												 LW_SHARED))
+					{
+						FlushOneBuffer(b);
+						LWLockRelease(BufferDescriptorGetContentLock(buf));
+					}
+					UnpinBuffer(buf, true);
+				}
+				else
+				{
+					InvalidateBuffer(buf);
+				}
+			}
+			else
+				UnlockBufHdr(buf, buf_state);
+		}
 	}
 }
 
@@ -1994,6 +2031,15 @@ BufferSync(int flags)
 			item->forkNum = bufHdr->tag.forkNum;
 			item->blockNum = bufHdr->tag.blockNum;
 		}
+
+		/* Zenith XXX
+		 * Consider marking this page as not WAL-logged,
+		 * so that pagestore_smgr issued a log record before eviction
+		 * and persisted hint changes.
+		 * TODO: check performance impacts of this approach
+		 * since extra wal-logging may worsen the performance.
+		 */
+		//((PageHeader)page)->pd_flags &= ~PD_WAL_LOGGED;
 
 		UnlockBufHdr(bufHdr, buf_state);
 

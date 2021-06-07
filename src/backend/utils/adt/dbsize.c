@@ -23,6 +23,7 @@
 #include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
+#include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/numeric.h"
@@ -272,39 +273,12 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 static int64
 calculate_relation_size(RelFileNode *rfn, BackendId backend, ForkNumber forknum)
 {
-	int64		totalsize = 0;
-	char	   *relationpath;
-	char		pathname[MAXPGPATH];
-	unsigned int segcount = 0;
-
-	relationpath = relpathbackend(*rfn, backend, forknum);
-
-	for (segcount = 0;; segcount++)
-	{
-		struct stat fst;
-
-		CHECK_FOR_INTERRUPTS();
-
-		if (segcount == 0)
-			snprintf(pathname, MAXPGPATH, "%s",
-					 relationpath);
-		else
-			snprintf(pathname, MAXPGPATH, "%s.%u",
-					 relationpath, segcount);
-
-		if (stat(pathname, &fst) < 0)
-		{
-			if (errno == ENOENT)
-				break;
-			else
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not stat file \"%s\": %m", pathname)));
-		}
-		totalsize += fst.st_size;
+	SMgrRelation  srel = smgropen(*rfn, backend);
+	if (smgrexists(srel, forknum))	{
+		BlockNumber n = smgrnblocks(srel, forknum);
+		return (int64)n*BLCKSZ;
 	}
-
-	return totalsize;
+	return 0;
 }
 
 Datum
