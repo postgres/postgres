@@ -239,12 +239,14 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ ASENSITIV
 
    <caution>
     <para>
-     Scrollable and <literal>WITH HOLD</literal> cursors may give unexpected
+     Scrollable cursors may give unexpected
      results if they invoke any volatile functions (see <xref
      linkend="xfunc-volatility"/>).  When a previously fetched row is
      re-fetched, the functions might be re-executed, perhaps leading to
-     results different from the first time.  One workaround for such cases
-     is to declare the cursor <literal>WITH HOLD</literal> and commit the
+     results different from the first time.  It's best to
+     specify <literal>NO SCROLL</literal> for a query involving volatile
+     functions.  If that is not practical, one workaround
+     is to declare the cursor <literal>SCROLL WITH HOLD</literal> and commit the
      transaction before reading any rows from it.  This will force the
      entire output of the cursor to be materialized in temporary storage,
      so that volatile functions are executed exactly once for each row.
