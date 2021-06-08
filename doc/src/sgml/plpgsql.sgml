@@ -3005,6 +3005,15 @@ DECLARE
      is said to be <firstterm>unbound</firstterm> since it is not bound to
      any particular query.
     </para>
+
+    <para>
+     The <literal>SCROLL</literal> option cannot be used when the cursor's
+     query uses <literal>FOR UPDATE/SHARE</literal>.  Also, it is
+     best to use <literal>NO SCROLL</literal> with a query that involves
+     volatile functions.  The implementation of <literal>SCROLL</literal>
+     assumes that re-reading the query's output will give consistent
+     results, which a volatile function might not do.
+    </para>
    </sect2>
 
    <sect2 id="plpgsql-cursor-opening">
