@@ -4540,7 +4540,7 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 	int			rc;
 
 	portal = exec_dynquery_with_params(estate, stmt->query, stmt->params,
-									   NULL, 0);
+									   NULL, CURSOR_OPT_NO_SCROLL);
 
 	/*
 	 * Execute the loop
@@ -5883,14 +5883,21 @@ exec_run_select(PLpgSQL_execstate *estate,
 	 * On the first call for this expression generate the plan.
 	 *
 	 * If we don't need to return a portal, then we're just going to execute
-	 * the query once, which means it's OK to use a parallel plan, even if the
-	 * number of rows being fetched is limited.  If we do need to return a
-	 * portal, the caller might do cursor operations, which parallel query
-	 * can't support.
+	 * the query immediately, which means it's OK to use a parallel plan, even
+	 * if the number of rows being fetched is limited.  If we do need to
+	 * return a portal (i.e., this is for a FOR loop), the user's code might
+	 * invoke additional operations inside the FOR loop, making parallel query
+	 * unsafe.  In any case, we don't expect any cursor operations to be done,
+	 * so specify NO_SCROLL for efficiency and semantic safety.
 	 */
 	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr,
-						  portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
+	{
+		int			cursorOptions = CURSOR_OPT_NO_SCROLL;
+
+		if (portalP == NULL)
+			cursorOptions |= CURSOR_OPT_PARALLEL_OK;
+		exec_prepare_plan(estate, expr, cursorOptions, true);
+	}
 
 	/*
 	 * Set up ParamListInfo to pass to executor
