@@ -273,6 +273,47 @@ SELECT * FROM test2;
 SELECT * FROM pg_cursors;
 
 
+-- interaction of FOR UPDATE cursor with subsequent updates (bug #17050)
+TRUNCATE test1;
+
+INSERT INTO test1 VALUES (1,'one'), (2,'two'), (3,'three');
+
+DO LANGUAGE plpgsql $$
+DECLARE
+    l_cur CURSOR FOR SELECT a FROM test1 ORDER BY 1 FOR UPDATE;
+BEGIN
+    FOR r IN l_cur LOOP
+      UPDATE test1 SET b = b || ' ' || b WHERE a = r.a;
+      COMMIT;
+    END LOOP;
+END;
+$$;
+
+SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
+
+
+-- like bug #17050, but with implicit cursor
+TRUNCATE test1;
+
+INSERT INTO test1 VALUES (1,'one'), (2,'two'), (3,'three');
+
+DO LANGUAGE plpgsql $$
+DECLARE r RECORD;
+BEGIN
+    FOR r IN SELECT a FROM test1 FOR UPDATE LOOP
+      UPDATE test1 SET b = b || ' ' || b WHERE a = r.a;
+      COMMIT;
+    END LOOP;
+END;
+$$;
+
+SELECT * FROM test1;
+
+SELECT * FROM pg_cursors;
+
+
 -- commit inside block with exception handler
 TRUNCATE test1;
 

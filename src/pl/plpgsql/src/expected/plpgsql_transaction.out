@@ -335,6 +335,57 @@ SELECT * FROM pg_cursors;
 ------+-----------+-------------+-----------+---------------+---------------
 (0 rows)
 
+-- interaction of FOR UPDATE cursor with subsequent updates (bug #17050)
+TRUNCATE test1;
+INSERT INTO test1 VALUES (1,'one'), (2,'two'), (3,'three');
+DO LANGUAGE plpgsql $$
+DECLARE
+    l_cur CURSOR FOR SELECT a FROM test1 ORDER BY 1 FOR UPDATE;
+BEGIN
+    FOR r IN l_cur LOOP
+      UPDATE test1 SET b = b || ' ' || b WHERE a = r.a;
+      COMMIT;
+    END LOOP;
+END;
+$$;
+SELECT * FROM test1;
+ a |      b      
+---+-------------
+ 1 | one one
+ 2 | two two
+ 3 | three three
+(3 rows)
+
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
+(0 rows)
+
+-- like bug #17050, but with implicit cursor
+TRUNCATE test1;
+INSERT INTO test1 VALUES (1,'one'), (2,'two'), (3,'three');
+DO LANGUAGE plpgsql $$
+DECLARE r RECORD;
+BEGIN
+    FOR r IN SELECT a FROM test1 FOR UPDATE LOOP
+      UPDATE test1 SET b = b || ' ' || b WHERE a = r.a;
+      COMMIT;
+    END LOOP;
+END;
+$$;
+SELECT * FROM test1;
+ a |      b      
+---+-------------
+ 1 | one one
+ 2 | two two
+ 3 | three three
+(3 rows)
+
+SELECT * FROM pg_cursors;
+ name | statement | is_holdable | is_binary | is_scrollable | creation_time 
+------+-----------+-------------+-----------+---------------+---------------
+(0 rows)
+
 -- commit inside block with exception handler
 TRUNCATE test1;
 DO LANGUAGE plpgsql $$
