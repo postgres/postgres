@@ -16,6 +16,7 @@
 
 #include "access/xlog.h"
 #include "access/xloginsert.h"
+#include "access/xlog_internal.h"
 #include "pagestore_client.h"
 #include "storage/relfilenode.h"
 #include "storage/smgr.h"
@@ -359,10 +360,10 @@ zenith_init(void)
 }
 
 /*
- * GetXLogInsertRecPtr uses XLogBytePosToRecPtr to conert logical insert (reserved) poistion
+ * GetXLogInsertRecPtr uses XLogBytePosToRecPtr to convert logical insert (reserved) position
  * to physical position in WAL. It always adds SizeOfXLogShortPHD:
  *		seg_offset += fullpages * XLOG_BLCKSZ + bytesleft + SizeOfXLogShortPHD;
- * so even if there are no records on the page, offset will be izeOfXLogShortPHD.
+ * so even if there are no records on the page, offset will be SizeOfXLogShortPHD.
  * It may cause problems with XLogFlush. So return pointer backward to the origin of the page.
  */
 static XLogRecPtr
