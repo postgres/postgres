@@ -2030,7 +2030,7 @@ postgresGetForeignModifyBatchSize(ResultRelInfo *resultRelInfo)
 	Assert(fmstate == NULL || fmstate->aux_fmstate == NULL);
 
 	/*
-	 * In EXPLAIN without ANALYZE, ri_fdwstate is NULL, so we have to lookup
+	 * In EXPLAIN without ANALYZE, ri_FdwState is NULL, so we have to lookup
 	 * the option directly in server/table options. Otherwise just use the
 	 * value we determined earlier.
 	 */
@@ -2045,7 +2045,14 @@ postgresGetForeignModifyBatchSize(ResultRelInfo *resultRelInfo)
 		 resultRelInfo->ri_TrigDesc->trig_insert_after_row))
 		return 1;
 
-	/* Otherwise use the batch size specified for server/table. */
+	/*
+	 * Otherwise use the batch size specified for server/table. The number of
+	 * parameters in a batch is limited to 65535 (uint16), so make sure we
+	 * don't exceed this limit by using the maximum batch_size possible.
+	 */
+	if (fmstate && fmstate->p_nums > 0)
+		batch_size = Min(batch_size, PQ_QUERY_PARAM_MAX_LIMIT / fmstate->p_nums);
+
 	return batch_size;
 }
 

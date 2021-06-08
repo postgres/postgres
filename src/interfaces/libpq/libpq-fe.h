@@ -429,6 +429,8 @@ extern PGresult *PQexecPrepared(PGconn *conn,
 								int resultFormat);
 
 /* Interface for multiple-result or asynchronous queries */
+#define PQ_QUERY_PARAM_MAX_LIMIT 65535
+
 extern int	PQsendQuery(PGconn *conn, const char *query);
 extern int	PQsendQueryParams(PGconn *conn,
 							  const char *command,

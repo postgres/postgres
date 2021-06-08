@@ -372,6 +372,17 @@ OPTIONS (ADD password_required 'false');
        overrides an option specified for the server.
        The default is <literal>1</literal>.
       </para>
+
+      <para>
+       Note the actual number of rows <filename>postgres_fdw</filename> inserts at
+       once depends on the number of columns and the provided
+       <literal>batch_size</literal> value. The batch is executed as a single
+       query, and the libpq protocol (which <filename>postgres_fdw</filename>
+       uses to connect to a remote server) limits the number of parameters in a
+       single query to 65535. When the number of columns * <literal>batch_size</literal>
+       exceeds the limit, the <literal>batch_size</literal> will be adjusted to
+       avoid an error.
+      </para>
      </listitem>
     </varlistentry>
 
