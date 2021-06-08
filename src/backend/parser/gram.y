@@ -7990,7 +7990,11 @@ opt_routine_body:
 routine_body_stmt_list:
 			routine_body_stmt_list routine_body_stmt ';'
 				{
-					$$ = lappend($1, $2);
+					/* As in stmtmulti, discard empty statements */
+					if ($2 != NULL)
+						$$ = lappend($1, $2);
+					else
+						$$ = $1;
 				}
 			| /*EMPTY*/
 				{

@@ -165,7 +165,7 @@ CREATE FUNCTION functest_S_3() RETURNS boolean
     RETURN false;
 CREATE FUNCTION functest_S_3a() RETURNS boolean
     BEGIN ATOMIC
-        RETURN false;
+        ;;RETURN false;;
     END;
 
 CREATE FUNCTION functest_S_10(a text, b date) RETURNS boolean
