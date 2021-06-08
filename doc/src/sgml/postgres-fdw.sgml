@@ -411,6 +411,19 @@ OPTIONS (ADD password_required 'false');
        In such a case, it may be more performant to disable this option to
        eliminate the overhead associated with running queries asynchronously.
       </para>
+
+      <para>
+       Asynchronous execution is applied even when an
+       <structname>Append</structname> node contains subplan(s) executed
+       synchronously as well as subplan(s) executed asynchronously.
+       In such a case, if the asynchronous subplans are ones processed using
+       <filename>postgres_fdw</filename>, tuples from the asynchronous
+       subplans are not returned until after at least one synchronous subplan
+       returns all tuples, as that subplan is executed while the asynchronous
+       subplans are waiting for the results of asynchronous queries sent to
+       foreign servers.
+       This behavior might change in a future release.
+      </para>
      </listitem>
     </varlistentry>
 
