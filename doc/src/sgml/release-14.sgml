@@ -213,7 +213,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
      </para>
 
      <para>
-      This was last used as the default in Postgres 7.2 (year 2002).
+      This was last used as the default in Postgres 7.3 (year 2002).
      </para>
     </listitem>
 
