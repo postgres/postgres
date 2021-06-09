@@ -538,8 +538,11 @@ sub append_conf
 =item $node->backup(backup_name)
 
 Create a hot backup with B<pg_basebackup> in subdirectory B<backup_name> of
-B<< $node->backup_dir >>, including the WAL. WAL files
-fetched at the end of the backup, not streamed.
+B<< $node->backup_dir >>, including the WAL.
+
+By default, WAL files are fetched at the end of the backup, not streamed.
+You can adjust that and other things by passing an array of additional
+B<pg_basebackup> command line options in the keyword parameter backup_options.
 
 You'll have to configure a suitable B<max_wal_senders> on the
 target server since it isn't done by default.
@@ -548,7 +551,7 @@ target server since it isn't done by default.
 
 sub backup
 {
-	my ($self, $backup_name) = @_;
+	my ($self, $backup_name, %params) = @_;
 	my $backup_path = $self->backup_dir . '/' . $backup_name;
 	my $name        = $self->name;
 
@@ -556,7 +559,8 @@ sub backup
 	TestLib::system_or_bail(
 		'pg_basebackup', '-D', $backup_path, '-h',
 		$self->host,     '-p', $self->port,  '--checkpoint',
-		'fast',          '--no-sync');
+		'fast',          '--no-sync',
+		@{ $params{backup_options} });
 	print "# Backup finished\n";
 	return;
 }
