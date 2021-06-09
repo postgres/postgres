@@ -1,0 +1,10 @@
+#!/usr/bin/perl
+
+use File::Copy;
+use strict;
+use warnings;
+
+die "wrong number of arguments" if @ARGV != 2;
+my ($source, $target) = @ARGV;
+exit if $source !~ /history/;
+copy($source, $target) or die "couldn't copy $source to $target: $!";
