@@ -296,8 +296,12 @@ WalProposerMain(Datum main_arg)
 	InitWalSender();
 	ResetWalProposerEventSet();
 
-	ReplicationSlotCreate(WAL_PROPOSER_SLOT_NAME, false, RS_PERSISTENT, false);
-	ReplicationSlotRelease();
+	/* Create replication slot for WAL proposer if not exists */
+	if (SearchNamedReplicationSlot(WAL_PROPOSER_SLOT_NAME, false) == NULL)
+	{
+		ReplicationSlotCreate(WAL_PROPOSER_SLOT_NAME, false, RS_PERSISTENT, false);
+		ReplicationSlotRelease();
+	}
 
 	/* Initiate connections to all walkeeper nodes */
 	for (int i = 0; i < n_walkeepers; i++)
@@ -541,8 +545,8 @@ WalProposerRecovery(int leader, TimeLineID timeline, XLogRecPtr startpos, XLogRe
 	WalReceiverConn *wrconn;
 	WalRcvStreamOptions options;
 
-	sprintf(conninfo, "host=%s port=%s dbname=replication",
-			walkeeper[leader].host, walkeeper[leader].port);
+	sprintf(conninfo, "host=%s port=%s dbname=replication options='-c ztimelineid=%s'",
+			walkeeper[leader].host, walkeeper[leader].port, zenith_timeline_walproposer);
 	wrconn = walrcv_connect(conninfo, false, "wal_proposer_recovery", &err);
 	if (!wrconn)
 	{
