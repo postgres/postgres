@@ -212,10 +212,10 @@ statext_mcv_build(StatsBuildData *data, double totalrows, int stattarget)
 	groups = build_distinct_groups(nitems, items, mss, &ngroups);
 
 	/*
-	 * Maximum number of MCV items to store, based on the statistics target we
-	 * computed for the statistics object (from target set for the object
-	 * itself, attributes and the system default). In any case, we can't keep
-	 * more groups than we have available.
+	 * The maximum number of MCV items to store, based on the statistics
+	 * target we computed for the statistics object (from the target set for
+	 * the object itself, attributes and the system default). In any case, we
+	 * can't keep more groups than we have available.
 	 */
 	nitems = stattarget;
 	if (nitems > ngroups)
@@ -234,7 +234,7 @@ statext_mcv_build(StatsBuildData *data, double totalrows, int stattarget)
 	 * to consider unexpectedly uncommon items (again, compared to the base
 	 * frequency), and the single-column algorithm does not have to.
 	 *
-	 * We simply decide how many items to keep by computing minimum count
+	 * We simply decide how many items to keep by computing the minimum count
 	 * using get_mincount_for_mcv_list() and then keep all items that seem to
 	 * be more common than that.
 	 */
@@ -255,9 +255,9 @@ statext_mcv_build(StatsBuildData *data, double totalrows, int stattarget)
 	}
 
 	/*
-	 * At this point we know the number of items for the MCV list. There might
-	 * be none (for uniform distribution with many groups), and in that case
-	 * there will be no MCV list. Otherwise construct the MCV list.
+	 * At this point, we know the number of items for the MCV list. There
+	 * might be none (for uniform distribution with many groups), and in that
+	 * case, there will be no MCV list. Otherwise, construct the MCV list.
 	 */
 	if (nitems > 0)
 	{
@@ -345,7 +345,7 @@ statext_mcv_build(StatsBuildData *data, double totalrows, int stattarget)
 
 /*
  * build_mss
- *	build MultiSortSupport for the attributes passed in attrs
+ *		Build a MultiSortSupport for the given StatsBuildData.
  */
 static MultiSortSupport
 build_mss(StatsBuildData *data)
@@ -375,7 +375,7 @@ build_mss(StatsBuildData *data)
 
 /*
  * count_distinct_groups
- *	count distinct combinations of SortItems in the array
+ *		Count distinct combinations of SortItems in the array.
  *
  * The array is assumed to be sorted according to the MultiSortSupport.
  */
@@ -400,7 +400,8 @@ count_distinct_groups(int numrows, SortItem *items, MultiSortSupport mss)
 
 /*
  * compare_sort_item_count
- *	comparator for sorting items by count (frequencies) in descending order
+ *		Comparator for sorting items by count (frequencies) in descending
+ *		order.
  */
 static int
 compare_sort_item_count(const void *a, const void *b)
@@ -418,9 +419,10 @@ compare_sort_item_count(const void *a, const void *b)
 
 /*
  * build_distinct_groups
- *	build an array of SortItems for distinct groups and counts matching items
+ *		Build an array of SortItems for distinct groups and counts matching
+ *		items.
  *
- * The input array is assumed to be sorted
+ * The 'items' array is assumed to be sorted.
  */
 static SortItem *
 build_distinct_groups(int numrows, SortItem *items, MultiSortSupport mss,
@@ -477,7 +479,7 @@ sort_item_compare(const void *a, const void *b, void *arg)
 
 /*
  * build_column_frequencies
- *	compute frequencies of values in each column
+ *		Compute frequencies of values in each column.
  *
  * This returns an array of SortItems for each attribute the MCV is built
  * on, with a frequency (number of occurrences) for each value. This is
@@ -554,7 +556,7 @@ build_column_frequencies(SortItem *groups, int ngroups,
 
 /*
  * statext_mcv_load
- *		Load the MCV list for the indicated pg_statistic_ext tuple
+ *		Load the MCV list for the indicated pg_statistic_ext tuple.
  */
 MCVList *
 statext_mcv_load(Oid mvoid)
@@ -598,10 +600,11 @@ statext_mcv_load(Oid mvoid)
  * | header fields | dimension info | deduplicated values | items |
  * +---------------+----------------+---------------------+-------+
  *
- * Where dimension info stores information about type of K-th attribute (e.g.
- * typlen, typbyval and length of deduplicated values).  Deduplicated values
- * store deduplicated values for each attribute.  And items store the actual
- * MCV list items, with values replaced by indexes into the arrays.
+ * Where dimension info stores information about the type of the K-th
+ * attribute (e.g. typlen, typbyval and length of deduplicated values).
+ * Deduplicated values store deduplicated values for each attribute.  And
+ * items store the actual MCV list items, with values replaced by indexes into
+ * the arrays.
  *
  * When serializing the items, we use uint16 indexes. The number of MCV items
  * is limited by the statistics target (which is capped to 10k at the moment).
@@ -641,10 +644,10 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 	/*
 	 * We'll include some rudimentary information about the attribute types
 	 * (length, by-val flag), so that we don't have to look them up while
-	 * deserializating the MCV list (we already have the type OID in the
-	 * header).  This is safe, because when changing type of the attribute the
-	 * statistics gets dropped automatically.  We need to store the info about
-	 * the arrays of deduplicated values anyway.
+	 * deserializing the MCV list (we already have the type OID in the
+	 * header).  This is safe because when changing the type of the attribute
+	 * the statistics gets dropped automatically.  We need to store the info
+	 * about the arrays of deduplicated values anyway.
 	 */
 	info = (DimensionInfo *) palloc0(sizeof(DimensionInfo) * ndims);
 
@@ -697,8 +700,8 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 
 		/*
 		 * Walk through the array and eliminate duplicate values, but keep the
-		 * ordering (so that we can do bsearch later). We know there's at
-		 * least one item as (counts[dim] != 0), so we can skip the first
+		 * ordering (so that we can do a binary search later). We know there's
+		 * at least one item as (counts[dim] != 0), so we can skip the first
 		 * element.
 		 */
 		ndistinct = 1;			/* number of distinct values */
@@ -787,10 +790,10 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 				Size		len;
 
 				/*
-				 * For cstring, we do similar thing as for varlena - first we
-				 * store the length as uint32 and then the data. We don't care
-				 * about alignment, which means that during deserialization we
-				 * need to copy the fields and only access the copies.
+				 * cstring is handled similar to varlena - first we store the
+				 * length as uint32 and then the data. We don't care about
+				 * alignment, which means that during deserialization we need
+				 * to copy the fields and only access the copies.
 				 */
 
 				/* c-strings include terminator, so +1 byte */
@@ -874,13 +877,13 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 				Datum		tmp;
 
 				/*
-				 * For values passed by value, we need to copy just the
-				 * significant bytes - we can't use memcpy directly, as that
-				 * assumes little endian behavior.  store_att_byval does
-				 * almost what we need, but it requires properly aligned
-				 * buffer - the output buffer does not guarantee that. So we
-				 * simply use a local Datum variable (which guarantees proper
-				 * alignment), and then copy the value from it.
+				 * For byval types, we need to copy just the significant bytes
+				 * - we can't use memcpy directly, as that assumes
+				 * little-endian behavior.  store_att_byval does almost what
+				 * we need, but it requires a properly aligned buffer - the
+				 * output buffer does not guarantee that. So we simply use a
+				 * local Datum variable (which guarantees proper alignment),
+				 * and then copy the value from it.
 				 */
 				store_att_byval(&tmp, value, info[dim].typlen);
 
@@ -1698,7 +1701,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 				 * we can use the collation for the attribute itself, as
 				 * stored in varcollid. We do reset the statistics after a
 				 * type change (including collation change), so this is OK.
-				 * For expressions we use the collation extracted from the
+				 * For expressions, we use the collation extracted from the
 				 * expression itself.
 				 */
 				if (expronleft)
@@ -1805,8 +1808,8 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 					}
 
 					/*
-					 * Stop evaluating the array elements once we reach match
-					 * value that can't change - ALL() is the same as
+					 * Stop evaluating the array elements once we reach a
+					 * matching value that can't change - ALL() is the same as
 					 * AND-list, ANY() is the same as OR-list.
 					 */
 					if (RESULT_IS_FINAL(match, expr->useOr))

@@ -21,7 +21,7 @@
  *
  *   [1000,2000] and [1000000,1000000]
  *
- * This allow us to still eliminate the page range when the scan keys hit
+ * This allows us to still eliminate the page range when the scan keys hit
  * the gap between 2000 and 1000000, making it useful in cases when the
  * simple minmax opclass gets inefficient.
  *
@@ -39,7 +39,7 @@
  * arbitrary threshold and may be changed easily).
  *
  * To pick the closest intervals we use the "distance" support procedure,
- * which measures space between two ranges (i.e. length of an interval).
+ * which measures space between two ranges (i.e. the length of an interval).
  * The computed value may be an approximation - in the worst case we will
  * merge two ranges that are slightly less optimal at that step, but the
  * index should still produce correct results.
@@ -56,7 +56,7 @@
  */
 #include "postgres.h"
 
-/* needef for PGSQL_AF_INET */
+/* needed for PGSQL_AF_INET */
 #include <sys/socket.h>
 
 #include "access/genam.h"
@@ -125,7 +125,7 @@ typedef struct MinMaxMultiOptions
 	int			valuesPerRange; /* number of values per range */
 } MinMaxMultiOptions;
 
-#define MINMAX_MULTI_DEFAULT_VALUES_PER_PAGE           32
+#define MINMAX_MULTI_DEFAULT_VALUES_PER_PAGE		32
 
 #define MinMaxMultiGetValuesPerRange(opts) \
 		((opts) && (((MinMaxMultiOptions *) (opts))->valuesPerRange != 0) ? \
@@ -180,7 +180,7 @@ typedef struct Ranges
 	/*
 	 * We simply add the values into a large buffer, without any expensive
 	 * steps (sorting, deduplication, ...). The buffer is a multiple of the
-	 * target number of values, so the compaction happen less often,
+	 * target number of values, so the compaction happens less often,
 	 * amortizing the costs. We keep the actual target and compact to the
 	 * requested number of values at the very end, before serializing to
 	 * on-disk representation.
@@ -456,7 +456,7 @@ AssertCheckExpandedRanges(BrinDesc *bdesc, Oid colloid, AttrNumber attno,
 	}
 
 	/*
-	 * And the ranges should be ordered and must nor overlap, i.e. upper <
+	 * And the ranges should be ordered and must not overlap, i.e. upper <
 	 * lower for boundaries of consecutive ranges.
 	 */
 	for (i = 0; i < nranges - 1; i++)
@@ -668,13 +668,12 @@ range_serialize(Ranges *range)
 			Datum		tmp;
 
 			/*
-			 * For values passed by value, we need to copy just the
-			 * significant bytes - we can't use memcpy directly, as that
-			 * assumes little endian behavior.  store_att_byval does almost
-			 * what we need, but it requires properly aligned buffer - the
-			 * output buffer does not guarantee that. So we simply use a local
-			 * Datum variable (which guarantees proper alignment), and then
-			 * copy the value from it.
+			 * For byval types, we need to copy just the significant bytes -
+			 * we can't use memcpy directly, as that assumes little-endian
+			 * behavior.  store_att_byval does almost what we need, but it
+			 * requires a properly aligned buffer - the output buffer does not
+			 * guarantee that. So we simply use a local Datum variable (which
+			 * guarantees proper alignment), and then copy the value from it.
 			 */
 			store_att_byval(&tmp, range->values[i], typlen);
 
@@ -757,7 +756,7 @@ range_deserialize(int maxvalues, SerializedRanges *serialized)
 	/*
 	 * And now deconstruct the values into Datum array. We have to copy the
 	 * data because the serialized representation ignores alignment, and we
-	 * don't want to rely it will be kept around anyway.
+	 * don't want to rely on it being kept around anyway.
 	 */
 	ptr = serialized->data;
 
@@ -850,10 +849,10 @@ range_deserialize(int maxvalues, SerializedRanges *serialized)
  * compare_expanded_ranges
  *	  Compare the expanded ranges - first by minimum, then by maximum.
  *
- * We do guarantee that ranges in a single Range object do not overlap,
- * so it may seem strange that we don't order just by minimum. But when
- * merging two Ranges (which happens in the union function), the ranges
- * may in fact overlap. So we do compare both.
+ * We do guarantee that ranges in a single Ranges object do not overlap, so it
+ * may seem strange that we don't order just by minimum. But when merging two
+ * Ranges (which happens in the union function), the ranges may in fact
+ * overlap. So we do compare both.
  */
 static int
 compare_expanded_ranges(const void *a, const void *b, void *arg)
@@ -1062,9 +1061,9 @@ range_contains_value(BrinDesc *bdesc, Oid colloid,
 	/*
 	 * There is no matching range, so let's inspect the sorted values.
 	 *
-	 * We do a sequential search for small number of values, and binary search
-	 * once we have more than 16 values. This threshold is somewhat arbitrary,
-	 * as it depends on how expensive the comparison function is.
+	 * We do a sequential search for small numbers of values, and binary
+	 * search once we have more than 16 values. This threshold is somewhat
+	 * arbitrary, as it depends on how expensive the comparison function is.
 	 *
 	 * XXX If we use the threshold here, maybe we should do the same thing in
 	 * has_matching_range? Or maybe we should do the bin search all the time?
@@ -1206,7 +1205,7 @@ sort_expanded_ranges(FmgrInfo *cmp, Oid colloid,
 		if (!compare_expanded_ranges(&eranges[i - 1], &eranges[i], (void *) &cxt))
 			continue;
 
-		/* otherwise copy it to n-th place (if not already there) */
+		/* otherwise, copy it to n-th place (if not already there) */
 		if (i != n)
 			memcpy(&eranges[n], &eranges[i], sizeof(ExpandedRange));
 
@@ -1314,8 +1313,8 @@ compare_distances(const void *a, const void *b)
 }
 
 /*
- * Given an array of expanded ranges, compute distance of the gaps between
- * the ranges - for ncranges there are (ncranges-1) gaps.
+ * Given an array of expanded ranges, compute size of the gaps between each
+ * range.  For neranges there are (neranges-1) gaps.
  *
  * We simply call the "distance" function to compute the (max-min) for pairs
  * of consecutive ranges. The function may be fairly expensive, so we do that
@@ -1337,8 +1336,8 @@ build_distances(FmgrInfo *distanceFn, Oid colloid,
 	distances = (DistanceValue *) palloc0(sizeof(DistanceValue) * ndistances);
 
 	/*
-	 * Walk though the ranges once and compute distance between the ranges so
-	 * that we can sort them once.
+	 * Walk through the ranges once and compute the distance between the
+	 * ranges so that we can sort them once.
 	 */
 	for (i = 0; i < ndistances; i++)
 	{
@@ -1394,7 +1393,7 @@ build_expanded_ranges(FmgrInfo *cmp, Oid colloid, Ranges *ranges,
 	/* sort and deduplicate the expanded ranges */
 	neranges = sort_expanded_ranges(cmp, colloid, eranges, neranges);
 
-	/* remember how many cranges we built */
+	/* remember how many ranges we built */
 	*nranges = neranges;
 
 	return eranges;
@@ -1430,7 +1429,7 @@ count_values(ExpandedRange *cranges, int ncranges)
  *
  * Combines ranges until the number of boundary values drops below the
  * threshold specified by max_values. This happens by merging enough
- * ranges by distance between them.
+ * ranges by the distance between them.
  *
  * Returns the number of result ranges.
  *
@@ -1448,7 +1447,7 @@ count_values(ExpandedRange *cranges, int ncranges)
  * are of equal (or very similar) length.
  *
  * Consider for example points 1, 2, 3, .., 64, which have gaps of the
- * same length 1 of course. In that case we tend to pick the first
+ * same length 1 of course. In that case, we tend to pick the first
  * gap of that length, which leads to this:
  *
  *    step 1:  [1, 2], 3, 4, 5, .., 64
@@ -1484,7 +1483,7 @@ reduce_expanded_ranges(ExpandedRange *eranges, int neranges,
 	int			keep = (max_values / 2 - 1);
 
 	/*
-	 * Maybe we have sufficiently low number of ranges already?
+	 * Maybe we have a sufficiently low number of ranges already?
 	 *
 	 * XXX This should happen before we actually do the expensive stuff like
 	 * sorting, so maybe this should be just an assert.
@@ -1519,7 +1518,7 @@ reduce_expanded_ranges(ExpandedRange *eranges, int neranges,
 		Assert(nvalues <= max_values);
 	}
 
-	/* We should have even number of range values. */
+	/* We should have an even number of range values. */
 	Assert(nvalues % 2 == 0);
 
 	/*
@@ -1545,7 +1544,7 @@ reduce_expanded_ranges(ExpandedRange *eranges, int neranges,
 }
 
 /*
- * Store the boundary values from ExpandedRanges back into Range (using
+ * Store the boundary values from ExpandedRanges back into 'ranges' (using
  * only the minimal number of values needed).
  */
 static void
@@ -1618,16 +1617,16 @@ ensure_free_space_in_buffer(BrinDesc *bdesc, Oid colloid,
 	cmpFn = minmax_multi_get_strategy_procinfo(bdesc, attno, attr->atttypid,
 											   BTLessStrategyNumber);
 
-	/* deduplicate values, if there's unsorted part */
+	/* deduplicate values, if there's an unsorted part */
 	range_deduplicate_values(range);
 
 	/*
-	 * did we reduce enough free space by just the deduplication?
+	 * Did we reduce enough free space by just the deduplication?
 	 *
 	 * We don't simply check against range->maxvalues again. The deduplication
 	 * might have freed very little space (e.g. just one value), forcing us to
-	 * do deduplication very often. In that case it's better to do compaction
-	 * and reduce more space.
+	 * do deduplication very often. In that case, it's better to do the
+	 * compaction and reduce more space.
 	 */
 	if (2 * range->nranges + range->nvalues <= range->maxvalues * MINMAX_BUFFER_LOAD_FACTOR)
 		return true;
@@ -1713,8 +1712,8 @@ range_add_value(BrinDesc *bdesc, Oid colloid,
 	 * rule that we never have duplicates with the ranges or sorted values.
 	 *
 	 * We might also deduplicate and recheck if the value is contained, but
-	 * that seems like an overkill. We'd need to deduplicate anyway, so why
-	 * not do it now.
+	 * that seems like overkill. We'd need to deduplicate anyway, so why not
+	 * do it now.
 	 */
 	modified = ensure_free_space_in_buffer(bdesc, colloid,
 										   attno, attr, ranges);
@@ -1805,10 +1804,10 @@ compactify_ranges(BrinDesc *bdesc, Ranges *ranges, int max_values)
 
 	/*
 	 * The distanceFn calls (which may internally call e.g. numeric_le) may
-	 * allocate quite a bit of memory, and we must not leak it. Otherwise we'd
-	 * have problems e.g. when building indexes. So we create a local memory
-	 * context and make sure we free the memory before leaving this function
-	 * (not after every call).
+	 * allocate quite a bit of memory, and we must not leak it. Otherwise,
+	 * we'd have problems e.g. when building indexes. So we create a local
+	 * memory context and make sure we free the memory before leaving this
+	 * function (not after every call).
 	 */
 	ctx = AllocSetContextCreate(CurrentMemoryContext,
 								"minmax-multi context",
@@ -1865,7 +1864,7 @@ brin_minmax_multi_opcinfo(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute distance between two float4 values (plain subtraction).
+ * Compute the distance between two float4 values (plain subtraction).
  */
 Datum
 brin_minmax_multi_distance_float4(PG_FUNCTION_ARGS)
@@ -1883,7 +1882,7 @@ brin_minmax_multi_distance_float4(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute distance between two float8 values (plain subtraction).
+ * Compute the distance between two float8 values (plain subtraction).
  */
 Datum
 brin_minmax_multi_distance_float8(PG_FUNCTION_ARGS)
@@ -1901,7 +1900,7 @@ brin_minmax_multi_distance_float8(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute distance between two int2 values (plain subtraction).
+ * Compute the distance between two int2 values (plain subtraction).
  */
 Datum
 brin_minmax_multi_distance_int2(PG_FUNCTION_ARGS)
@@ -1919,7 +1918,7 @@ brin_minmax_multi_distance_int2(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute distance between two int4 values (plain subtraction).
+ * Compute the distance between two int4 values (plain subtraction).
  */
 Datum
 brin_minmax_multi_distance_int4(PG_FUNCTION_ARGS)
@@ -1937,7 +1936,7 @@ brin_minmax_multi_distance_int4(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute distance between two int8 values (plain subtraction).
+ * Compute the distance between two int8 values (plain subtraction).
  */
 Datum
 brin_minmax_multi_distance_int8(PG_FUNCTION_ARGS)
@@ -1955,8 +1954,8 @@ brin_minmax_multi_distance_int8(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute distance between two tid values (by mapping them to float8
- * and then subtracting them).
+ * Compute the distance between two tid values (by mapping them to float8 and
+ * then subtracting them).
  */
 Datum
 brin_minmax_multi_distance_tid(PG_FUNCTION_ARGS)
@@ -1987,7 +1986,7 @@ brin_minmax_multi_distance_tid(PG_FUNCTION_ARGS)
 }
 
 /*
- * Computes distance between two numeric values (plain subtraction).
+ * Compute the distance between two numeric values (plain subtraction).
  */
 Datum
 brin_minmax_multi_distance_numeric(PG_FUNCTION_ARGS)
@@ -2008,7 +2007,7 @@ brin_minmax_multi_distance_numeric(PG_FUNCTION_ARGS)
 }
 
 /*
- * Computes approximate distance between two UUID values.
+ * Compute the approximate distance between two UUID values.
  *
  * XXX We do not need a perfectly accurate value, so we approximate the
  * deltas (which would have to be 128-bit integers) with a 64-bit float.
@@ -2046,7 +2045,7 @@ brin_minmax_multi_distance_uuid(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute approximate distance between two dates.
+ * Compute the approximate distance between two dates.
  */
 Datum
 brin_minmax_multi_distance_date(PG_FUNCTION_ARGS)
@@ -2061,7 +2060,7 @@ brin_minmax_multi_distance_date(PG_FUNCTION_ARGS)
 }
 
 /*
- * Computes approximate distance between two time (without tz) values.
+ * Compute the approximate distance between two time (without tz) values.
  *
  * TimeADT is just an int64, so we simply subtract the values directly.
  */
@@ -2081,7 +2080,7 @@ brin_minmax_multi_distance_time(PG_FUNCTION_ARGS)
 }
 
 /*
- * Computes approximate distance between two timetz values.
+ * Compute the approximate distance between two timetz values.
  *
  * Simply subtracts the TimeADT (int64) values embedded in TimeTzADT.
  */
@@ -2100,6 +2099,9 @@ brin_minmax_multi_distance_timetz(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(delta);
 }
 
+/*
+ * Compute the distance between two timestamp values.
+ */
 Datum
 brin_minmax_multi_distance_timestamp(PG_FUNCTION_ARGS)
 {
@@ -2119,7 +2121,7 @@ brin_minmax_multi_distance_timestamp(PG_FUNCTION_ARGS)
 }
 
 /*
- * Computes distance between two interval values.
+ * Compute the distance between two interval values.
  */
 Datum
 brin_minmax_multi_distance_interval(PG_FUNCTION_ARGS)
@@ -2177,7 +2179,7 @@ brin_minmax_multi_distance_interval(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute distance between two pg_lsn values.
+ * Compute the distance between two pg_lsn values.
  *
  * LSN is just an int64 encoding position in the stream, so just subtract
  * those int64 values directly.
@@ -2198,7 +2200,7 @@ brin_minmax_multi_distance_pg_lsn(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute distance between two macaddr values.
+ * Compute the distance between two macaddr values.
  *
  * mac addresses are treated as 6 unsigned chars, so do the same thing we
  * already do for UUID values.
@@ -2235,7 +2237,7 @@ brin_minmax_multi_distance_macaddr(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute distance between two macaddr8 values.
+ * Compute the distance between two macaddr8 values.
  *
  * macaddr8 addresses are 8 unsigned chars, so do the same thing we
  * already do for UUID values.
@@ -2278,15 +2280,15 @@ brin_minmax_multi_distance_macaddr8(PG_FUNCTION_ARGS)
 }
 
 /*
- * Compute distance between two inet values.
+ * Compute the distance between two inet values.
  *
- * The distance is defined as difference between 32-bit/128-bit values,
+ * The distance is defined as the difference between 32-bit/128-bit values,
  * depending on the IP version. The distance is computed by subtracting
  * the bytes and normalizing it to [0,1] range for each IP family.
  * Addresses from different families are considered to be in maximum
  * distance, which is 1.0.
  *
- * XXX Does this need to consider the mask (bits)? For now it's ignored.
+ * XXX Does this need to consider the mask (bits)?  For now, it's ignored.
  */
 Datum
 brin_minmax_multi_distance_inet(PG_FUNCTION_ARGS)
@@ -2320,7 +2322,8 @@ brin_minmax_multi_distance_inet(PG_FUNCTION_ARGS)
 	 * The length is calculated from the mask length, because we sort the
 	 * addresses by first address in the range, so A.B.C.D/24 < A.B.C.1 (the
 	 * first range starts at A.B.C.0, which is before A.B.C.1). We don't want
-	 * to produce negative delta in this case, so we just cut the extra bytes.
+	 * to produce a negative delta in this case, so we just cut the extra
+	 * bytes.
 	 *
 	 * XXX Maybe this should be a bit more careful and cut the bits, not just
 	 * whole bytes.
@@ -2396,11 +2399,11 @@ brin_minmax_multi_get_values(BrinDesc *bdesc, MinMaxMultiOptions *opts)
 }
 
 /*
- * Examine the given index tuple (which contains partial status of a certain
- * page range) by comparing it to the given value that comes from another heap
- * tuple.  If the new value is outside the min/max range specified by the
- * existing tuple values, update the index tuple and return true.  Otherwise,
- * return false and do not modify in this case.
+ * Examine the given index tuple (which contains the partial status of a
+ * certain page range) by comparing it to the given value that comes from
+ * another heap tuple.  If the new value is outside the min/max range
+ * specified by the existing tuple values, update the index tuple and return
+ * true.  Otherwise, return false and do not modify in this case.
  */
 Datum
 brin_minmax_multi_add_value(PG_FUNCTION_ARGS)
@@ -2427,13 +2430,13 @@ brin_minmax_multi_add_value(PG_FUNCTION_ARGS)
 
 	/*
 	 * If this is the first non-null value, we need to initialize the range
-	 * list. Otherwise just extract the existing range list from BrinValues.
+	 * list. Otherwise, just extract the existing range list from BrinValues.
 	 *
 	 * When starting with an empty range, we assume this is a batch mode and
 	 * we use a larger buffer. The buffer size is derived from the BRIN range
-	 * size, number of rows per page, with some sensible min/max values. Small
-	 * buffer would be bad for performance, but large buffer might require a
-	 * lot of memory (because of keeping all the values).
+	 * size, number of rows per page, with some sensible min/max values. A
+	 * small buffer would be bad for performance, but a large buffer might
+	 * require a lot of memory (because of keeping all the values).
 	 */
 	if (column->bv_allnulls)
 	{
@@ -2624,8 +2627,8 @@ brin_minmax_multi_consistent(PG_FUNCTION_ARGS)
 							break;
 
 						/*
-						 * haven't managed to eliminate this range, so
-						 * consider it matching
+						 * We haven't managed to eliminate this range, so
+						 * consider it matching.
 						 */
 						matches = true;
 
@@ -2713,9 +2716,7 @@ brin_minmax_multi_consistent(PG_FUNCTION_ARGS)
 				break;
 		}
 
-		/*
-		 * have we found a range matching all scan keys? if yes, we're done
-		 */
+		/* have we found a range matching all scan keys? if yes, we're done */
 		if (matching)
 			PG_RETURN_DATUM(BoolGetDatum(true));
 	}
@@ -2769,10 +2770,10 @@ brin_minmax_multi_union(PG_FUNCTION_ARGS)
 
 	/*
 	 * The distanceFn calls (which may internally call e.g. numeric_le) may
-	 * allocate quite a bit of memory, and we must not leak it. Otherwise we'd
-	 * have problems e.g. when building indexes. So we create a local memory
-	 * context and make sure we free the memory before leaving this function
-	 * (not after every call).
+	 * allocate quite a bit of memory, and we must not leak it. Otherwise,
+	 * we'd have problems e.g. when building indexes. So we create a local
+	 * memory context and make sure we free the memory before leaving this
+	 * function (not after every call).
 	 */
 	ctx = AllocSetContextCreate(CurrentMemoryContext,
 								"minmax-multi context",
