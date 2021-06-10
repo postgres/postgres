@@ -154,30 +154,41 @@ should_apply_changes_for_rel(LogicalRepRelMapEntry *rel)
 }
 
 /*
- * Make sure that we started local transaction.
+ * Begin one step (one INSERT, UPDATE, etc) of a replication transaction.
  *
- * Also switches to ApplyMessageContext as necessary.
+ * Start a transaction, if this is the first step (else we keep using the
+ * existing transaction).
+ * Also provide a global snapshot and ensure we run in ApplyMessageContext.
  */
-static bool
-ensure_transaction(void)
+static void
+begin_replication_step(void)
 {
-	if (IsTransactionState())
+	SetCurrentStatementStartTimestamp();
+
+	if (!IsTransactionState())
 	{
-		SetCurrentStatementStartTimestamp();
-
-		if (CurrentMemoryContext != ApplyMessageContext)
-			MemoryContextSwitchTo(ApplyMessageContext);
-
-		return false;
+		StartTransactionCommand();
+		maybe_reread_subscription();
 	}
 
-	SetCurrentStatementStartTimestamp();
-	StartTransactionCommand();
-
-	maybe_reread_subscription();
+	PushActiveSnapshot(GetTransactionSnapshot());
 
 	MemoryContextSwitchTo(ApplyMessageContext);
-	return true;
+}
+
+/*
+ * Finish up one step of a replication transaction.
+ * Callers of begin_replication_step() must also call this.
+ *
+ * We don't close out the transaction here, but we should increment
+ * the command counter to make the effects of this step visible.
+ */
+static void
+end_replication_step(void)
+{
+	PopActiveSnapshot();
+
+	CommandCounterIncrement();
 }
 
 
@@ -193,13 +204,6 @@ create_estate_for_relation(LogicalRepRelMapEntry *rel)
 	EState	   *estate;
 	ResultRelInfo *resultRelInfo;
 	RangeTblEntry *rte;
-
-	/*
-	 * Input functions may need an active snapshot, as may AFTER triggers
-	 * invoked during finish_estate.  For safety, ensure an active snapshot
-	 * exists throughout all our usage of the executor.
-	 */
-	PushActiveSnapshot(GetTransactionSnapshot());
 
 	estate = CreateExecutorState();
 
@@ -241,7 +245,6 @@ finish_estate(EState *estate)
 	/* Cleanup. */
 	ExecResetTupleTable(estate->es_tupleTable, false);
 	FreeExecutorState(estate);
-	PopActiveSnapshot();
 }
 
 /*
@@ -631,7 +634,7 @@ apply_handle_insert(StringInfo s)
 	TupleTableSlot *remoteslot;
 	MemoryContext oldctx;
 
-	ensure_transaction();
+	begin_replication_step();
 
 	relid = logicalrep_read_insert(s, &newtup);
 	rel = logicalrep_rel_open(relid, RowExclusiveLock);
@@ -642,6 +645,7 @@ apply_handle_insert(StringInfo s)
 		 * transaction so it's safe to unlock it.
 		 */
 		logicalrep_rel_close(rel, RowExclusiveLock);
+		end_replication_step();
 		return;
 	}
 
@@ -668,7 +672,7 @@ apply_handle_insert(StringInfo s)
 
 	logicalrep_rel_close(rel, NoLock);
 
-	CommandCounterIncrement();
+	end_replication_step();
 }
 
 /*
@@ -727,7 +731,7 @@ apply_handle_update(StringInfo s)
 	bool		found;
 	MemoryContext oldctx;
 
-	ensure_transaction();
+	begin_replication_step();
 
 	relid = logicalrep_read_update(s, &has_oldtup, &oldtup,
 								   &newtup);
@@ -739,6 +743,7 @@ apply_handle_update(StringInfo s)
 		 * transaction so it's safe to unlock it.
 		 */
 		logicalrep_rel_close(rel, RowExclusiveLock);
+		end_replication_step();
 		return;
 	}
 
@@ -840,7 +845,7 @@ apply_handle_update(StringInfo s)
 
 	logicalrep_rel_close(rel, NoLock);
 
-	CommandCounterIncrement();
+	end_replication_step();
 }
 
 /*
@@ -862,7 +867,7 @@ apply_handle_delete(StringInfo s)
 	bool		found;
 	MemoryContext oldctx;
 
-	ensure_transaction();
+	begin_replication_step();
 
 	relid = logicalrep_read_delete(s, &oldtup);
 	rel = logicalrep_rel_open(relid, RowExclusiveLock);
@@ -873,6 +878,7 @@ apply_handle_delete(StringInfo s)
 		 * transaction so it's safe to unlock it.
 		 */
 		logicalrep_rel_close(rel, RowExclusiveLock);
+		end_replication_step();
 		return;
 	}
 
@@ -934,7 +940,7 @@ apply_handle_delete(StringInfo s)
 
 	logicalrep_rel_close(rel, NoLock);
 
-	CommandCounterIncrement();
+	end_replication_step();
 }
 
 /*
@@ -955,7 +961,7 @@ apply_handle_truncate(StringInfo s)
 	ListCell   *lc;
 	LOCKMODE	lockmode = AccessExclusiveLock;
 
-	ensure_transaction();
+	begin_replication_step();
 
 	remote_relids = logicalrep_read_truncate(s, &cascade, &restart_seqs);
 
@@ -996,7 +1002,7 @@ apply_handle_truncate(StringInfo s)
 		logicalrep_rel_close(rel, NoLock);
 	}
 
-	CommandCounterIncrement();
+	end_replication_step();
 }
 
 
