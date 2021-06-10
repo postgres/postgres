@@ -59,7 +59,11 @@ lnext:
 	slot = ExecProcNode(outerPlan);
 
 	if (TupIsNull(slot))
+	{
+		/* Release any resources held by EPQ mechanism before exiting */
+		EvalPlanQualEnd(&node->lr_epqstate);
 		return NULL;
+	}
 
 	/* We don't need EvalPlanQual unless we get updated tuple version(s) */
 	epq_needed = false;
@@ -381,6 +385,7 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 void
 ExecEndLockRows(LockRowsState *node)
 {
+	/* We may have shut down EPQ already, but no harm in another call */
 	EvalPlanQualEnd(&node->lr_epqstate);
 	ExecEndNode(outerPlanState(node));
 }
