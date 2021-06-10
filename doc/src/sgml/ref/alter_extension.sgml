@@ -212,12 +212,11 @@ ALTER EXTENSION <replaceable class="parameter">name</replaceable> DROP <replacea
        argument: <literal>IN</literal>, <literal>OUT</literal>,
        <literal>INOUT</literal>, or <literal>VARIADIC</literal>.
        If omitted, the default is <literal>IN</literal>.
-       Note that <command>ALTER EXTENSION</command> does not actually pay any
-       attention to <literal>OUT</literal> arguments for functions and
-       aggregates (but not procedures), since only the input arguments are
-       needed to determine the function's identity.  So it is sufficient to
-       list the <literal>IN</literal>, <literal>INOUT</literal>, and
-       <literal>VARIADIC</literal> arguments for functions and aggregates.
+       Note that <command>ALTER EXTENSION</command> does not actually pay
+       any attention to <literal>OUT</literal> arguments, since only the input
+       arguments are needed to determine the function's identity.
+       So it is sufficient to list the <literal>IN</literal>, <literal>INOUT</literal>,
+       and <literal>VARIADIC</literal> arguments.
       </para>
      </listitem>
     </varlistentry>

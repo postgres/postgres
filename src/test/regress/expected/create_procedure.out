@@ -19,17 +19,17 @@ $$;
                         List of functions
  Schema |  Name  | Result data type | Argument data types | Type 
 --------+--------+------------------+---------------------+------
- public | ptest1 |                  | x text              | proc
+ public | ptest1 |                  | IN x text           | proc
 (1 row)
 
 SELECT pg_get_functiondef('ptest1'::regproc);
-                pg_get_functiondef                 
----------------------------------------------------
- CREATE OR REPLACE PROCEDURE public.ptest1(x text)+
-  LANGUAGE sql                                    +
- AS $procedure$                                   +
- INSERT INTO cp_test VALUES (1, x);               +
- $procedure$                                      +
+                  pg_get_functiondef                  
+------------------------------------------------------
+ CREATE OR REPLACE PROCEDURE public.ptest1(IN x text)+
+  LANGUAGE sql                                       +
+ AS $procedure$                                      +
+ INSERT INTO cp_test VALUES (1, x);                  +
+ $procedure$                                         +
  
 (1 row)
 
@@ -46,7 +46,7 @@ SELECT pg_get_functiondef('ptest1'::regproc);
                         List of functions
  Schema |  Name  | Result data type | Argument data types | Type 
 --------+--------+------------------+---------------------+------
- public | ptest1 |                  | x text              | proc
+ public | ptest1 |                  | IN x text           | proc
 (1 row)
 
 SELECT ptest1('x');  -- error
@@ -75,18 +75,18 @@ END;
                         List of functions
  Schema |  Name   | Result data type | Argument data types | Type 
 --------+---------+------------------+---------------------+------
- public | ptest1s |                  | x text              | proc
+ public | ptest1s |                  | IN x text           | proc
 (1 row)
 
 SELECT pg_get_functiondef('ptest1s'::regproc);
-                 pg_get_functiondef                 
-----------------------------------------------------
- CREATE OR REPLACE PROCEDURE public.ptest1s(x text)+
-  LANGUAGE sql                                     +
- BEGIN ATOMIC                                      +
-  INSERT INTO cp_test (a, b)                       +
-    VALUES (1, ptest1s.x);                         +
- END                                               +
+                  pg_get_functiondef                   
+-------------------------------------------------------
+ CREATE OR REPLACE PROCEDURE public.ptest1s(IN x text)+
+  LANGUAGE sql                                        +
+ BEGIN ATOMIC                                         +
+  INSERT INTO cp_test (a, b)                          +
+    VALUES (1, ptest1s.x);                            +
+ END                                                  +
  
 (1 row)
 
@@ -196,16 +196,16 @@ END;
                         List of functions
  Schema |  Name  | Result data type | Argument data types | Type 
 --------+--------+------------------+---------------------+------
- public | ptest8 |                  | x text              | proc
+ public | ptest8 |                  | IN x text           | proc
 (1 row)
 
 SELECT pg_get_functiondef('ptest8'::regproc);
-                pg_get_functiondef                 
----------------------------------------------------
- CREATE OR REPLACE PROCEDURE public.ptest8(x text)+
-  LANGUAGE sql                                    +
- BEGIN ATOMIC                                     +
- END                                              +
+                  pg_get_functiondef                  
+------------------------------------------------------
+ CREATE OR REPLACE PROCEDURE public.ptest8(IN x text)+
+  LANGUAGE sql                                       +
+ BEGIN ATOMIC                                        +
+ END                                                 +
  
 (1 row)
 
@@ -217,12 +217,105 @@ AS $$
 INSERT INTO cp_test VALUES (1, 'a');
 SELECT 1;
 $$;
+-- standard way to do a call:
 CALL ptest9(NULL);
  a 
 ---
  1
 (1 row)
 
+-- you can write an expression, but it's not evaluated
+CALL ptest9(1/0);  -- no error
+ a 
+---
+ 1
+(1 row)
+
+-- ... and it had better match the type of the parameter
+CALL ptest9(1./0.);  -- error
+ERROR:  procedure ptest9(numeric) does not exist
+LINE 1: CALL ptest9(1./0.);
+             ^
+HINT:  No procedure matches the given name and argument types. You might need to add explicit type casts.
+-- check named-parameter matching
+CREATE PROCEDURE ptest10(OUT a int, IN b int, IN c int)
+LANGUAGE SQL AS $$ SELECT b - c $$;
+CALL ptest10(null, 7, 4);
+ a 
+---
+ 3
+(1 row)
+
+CALL ptest10(a => null, b => 8, c => 2);
+ a 
+---
+ 6
+(1 row)
+
+CALL ptest10(null, 7, c => 2);
+ a 
+---
+ 5
+(1 row)
+
+CALL ptest10(null, c => 4, b => 11);
+ a 
+---
+ 7
+(1 row)
+
+CALL ptest10(b => 8, c => 2, a => 0);
+ a 
+---
+ 6
+(1 row)
+
+CREATE PROCEDURE ptest11(a OUT int, VARIADIC b int[]) LANGUAGE SQL
+  AS $$ SELECT b[1] + b[2] $$;
+CALL ptest11(null, 11, 12, 13);
+ a  
+----
+ 23
+(1 row)
+
+-- check resolution of ambiguous DROP commands
+CREATE PROCEDURE ptest10(IN a int, IN b int, IN c int)
+LANGUAGE SQL AS $$ SELECT a + b - c $$;
+\df ptest10
+                                   List of functions
+ Schema |  Name   | Result data type |            Argument data types            | Type 
+--------+---------+------------------+-------------------------------------------+------
+ public | ptest10 |                  | IN a integer, IN b integer, IN c integer  | proc
+ public | ptest10 |                  | OUT a integer, IN b integer, IN c integer | proc
+(2 rows)
+
+drop procedure ptest10;  -- fail
+ERROR:  procedure name "ptest10" is not unique
+HINT:  Specify the argument list to select the procedure unambiguously.
+drop procedure ptest10(int, int, int);  -- fail
+ERROR:  procedure name "ptest10" is not unique
+begin;
+drop procedure ptest10(out int, int, int);
+\df ptest10
+                                   List of functions
+ Schema |  Name   | Result data type |           Argument data types            | Type 
+--------+---------+------------------+------------------------------------------+------
+ public | ptest10 |                  | IN a integer, IN b integer, IN c integer | proc
+(1 row)
+
+drop procedure ptest10(int, int, int);  -- now this would work
+rollback;
+begin;
+drop procedure ptest10(in int, int, int);
+\df ptest10
+                                   List of functions
+ Schema |  Name   | Result data type |            Argument data types            | Type 
+--------+---------+------------------+-------------------------------------------+------
+ public | ptest10 |                  | OUT a integer, IN b integer, IN c integer | proc
+(1 row)
+
+drop procedure ptest10(int, int, int);  -- now this would work
+rollback;
 -- various error cases
 CALL version();  -- error: not a procedure
 ERROR:  version() is not a procedure
@@ -242,6 +335,12 @@ CREATE PROCEDURE ptestx() LANGUAGE SQL STRICT AS $$ INSERT INTO cp_test VALUES (
 ERROR:  invalid attribute in procedure definition
 LINE 1: CREATE PROCEDURE ptestx() LANGUAGE SQL STRICT AS $$ INSERT I...
                                                ^
+CREATE PROCEDURE ptestx(a VARIADIC int[], b OUT int) LANGUAGE SQL
+  AS $$ SELECT a[1] $$;
+ERROR:  VARIADIC parameter must be the last parameter
+CREATE PROCEDURE ptestx(a int DEFAULT 42, b OUT int) LANGUAGE SQL
+  AS $$ SELECT a $$;
+ERROR:  procedure OUT parameters cannot appear after one with a default value
 ALTER PROCEDURE ptest1(text) STRICT;
 ERROR:  invalid attribute in procedure definition
 LINE 1: ALTER PROCEDURE ptest1(text) STRICT;

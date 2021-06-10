@@ -480,7 +480,7 @@ $$ LANGUAGE plpgsql;
 
      <para>
       To call a function with <literal>OUT</literal> parameters, omit the
-      output parameter in the function call:
+      output parameter(s) in the function call:
 <programlisting>
 SELECT sales_tax(100.00);
 </programlisting>
@@ -523,16 +523,20 @@ $$ LANGUAGE plpgsql;
 </programlisting>
 
       In a call to a procedure, all the parameters must be specified.  For
-      output parameters, <literal>NULL</literal> may be specified.
+      output parameters, <literal>NULL</literal> may be specified when
+      calling the procedure from plain SQL:
 <programlisting>
 CALL sum_n_product(2, 4, NULL, NULL);
  sum | prod
 -----+------
    6 |    8
 </programlisting>
-      Output parameters in procedures become more interesting in nested calls,
-      where they can be assigned to variables.  See <xref
-      linkend="plpgsql-statements-calling-procedure"/> for details.
+
+      However, when calling a procedure
+      from <application>PL/pgSQL</application>, you should instead write a
+      variable for any output parameter; the variable will receive the result
+      of the call.  See <xref linkend="plpgsql-statements-calling-procedure"/>
+      for details.
      </para>
 
      <para>
@@ -2030,6 +2034,9 @@ BEGIN
 END;
 $$;
 </programlisting>
+     The variable corresponding to an output parameter can be a simple
+     variable or a field of a composite-type variable.  Currently,
+     it cannot be an element of an array.
     </para>
    </sect2>
 

@@ -48,9 +48,10 @@ static void unify_hypothetical_args(ParseState *pstate,
 static Oid	FuncNameAsType(List *funcname);
 static Node *ParseComplexProjection(ParseState *pstate, const char *funcname,
 									Node *first_arg, int location);
-static Oid	LookupFuncNameInternal(List *funcname, int nargs,
-								   const Oid *argtypes,
-								   bool missing_ok, FuncLookupError *lookupError);
+static Oid	LookupFuncNameInternal(ObjectType objtype, List *funcname,
+								   int nargs, const Oid *argtypes,
+								   bool include_out_arguments, bool missing_ok,
+								   FuncLookupError *lookupError);
 
 
 /*
@@ -82,7 +83,8 @@ static Oid	LookupFuncNameInternal(List *funcname, int nargs,
  *	contain any SRF calls, last_srf can just be pstate->p_last_srf.
  *
  *	proc_call is true if we are considering a CALL statement, so that the
- *	name must resolve to a procedure name, not anything else.
+ *	name must resolve to a procedure name, not anything else.  This flag
+ *	also specifies that the argument list includes any OUT-mode arguments.
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
@@ -263,7 +265,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	fdresult = func_get_detail(funcname, fargs, argnames, nargs,
 							   actual_arg_types,
-							   !func_variadic, true,
+							   !func_variadic, true, proc_call,
 							   &funcid, &rettype, &retset,
 							   &nvargs, &vatype,
 							   &declared_arg_types, &argdefaults);
@@ -1395,6 +1397,7 @@ func_get_detail(List *funcname,
 				Oid *argtypes,
 				bool expand_variadic,
 				bool expand_defaults,
+				bool include_out_arguments,
 				Oid *funcid,	/* return value */
 				Oid *rettype,	/* return value */
 				bool *retset,	/* return value */
@@ -1419,7 +1422,7 @@ func_get_detail(List *funcname,
 	/* Get list of possible candidates from namespace search */
 	raw_candidates = FuncnameGetCandidates(funcname, nargs, fargnames,
 										   expand_variadic, expand_defaults,
-										   false);
+										   include_out_arguments, false);
 
 	/*
 	 * Quickly check if there is an exact match to the input datatypes (there
@@ -1667,7 +1670,7 @@ func_get_detail(List *funcname,
 					defargnumbers = bms_add_member(defargnumbers,
 												   firstdefarg[i]);
 				newdefaults = NIL;
-				i = pform->pronargs - pform->pronargdefaults;
+				i = best_candidate->nominalnargs - pform->pronargdefaults;
 				foreach(lc, defaults)
 				{
 					if (bms_is_member(i, defargnumbers))
@@ -2041,12 +2044,15 @@ func_signature_string(List *funcname, int nargs,
  *
  * Possible errors:
  *	FUNCLOOKUP_NOSUCHFUNC: we can't find a function of this name.
- *	FUNCLOOKUP_AMBIGUOUS: nargs == -1 and more than one function matches.
+ *	FUNCLOOKUP_AMBIGUOUS: more than one function matches.
  */
 static Oid
-LookupFuncNameInternal(List *funcname, int nargs, const Oid *argtypes,
-					   bool missing_ok, FuncLookupError *lookupError)
+LookupFuncNameInternal(ObjectType objtype, List *funcname,
+					   int nargs, const Oid *argtypes,
+					   bool include_out_arguments, bool missing_ok,
+					   FuncLookupError *lookupError)
 {
+	Oid			result = InvalidOid;
 	FuncCandidateList clist;
 
 	/* NULL argtypes allowed for nullary functions only */
@@ -2055,43 +2061,62 @@ LookupFuncNameInternal(List *funcname, int nargs, const Oid *argtypes,
 	/* Always set *lookupError, to forestall uninitialized-variable warnings */
 	*lookupError = FUNCLOOKUP_NOSUCHFUNC;
 
+	/* Get list of candidate objects */
 	clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false,
-								  missing_ok);
+								  include_out_arguments, missing_ok);
 
-	/*
-	 * If no arguments were specified, the name must yield a unique candidate.
-	 */
-	if (nargs < 0)
+	/* Scan list for a match to the arg types (if specified) and the objtype */
+	for (; clist != NULL; clist = clist->next)
 	{
-		if (clist)
+		/* Check arg type match, if specified */
+		if (nargs >= 0)
 		{
-			/* If there is a second match then it's ambiguous */
-			if (clist->next)
-			{
-				*lookupError = FUNCLOOKUP_AMBIGUOUS;
-				return InvalidOid;
-			}
-			/* Otherwise return the match */
-			return clist->oid;
+			/* if nargs==0, argtypes can be null; don't pass that to memcmp */
+			if (nargs > 0 &&
+				memcmp(argtypes, clist->args, nargs * sizeof(Oid)) != 0)
+				continue;
 		}
-		else
+
+		/* Check for duplicates reported by FuncnameGetCandidates */
+		if (!OidIsValid(clist->oid))
+		{
+			*lookupError = FUNCLOOKUP_AMBIGUOUS;
 			return InvalidOid;
+		}
+
+		/* Check objtype match, if specified */
+		switch (objtype)
+		{
+			case OBJECT_FUNCTION:
+			case OBJECT_AGGREGATE:
+				/* Ignore procedures */
+				if (get_func_prokind(clist->oid) == PROKIND_PROCEDURE)
+					continue;
+				break;
+			case OBJECT_PROCEDURE:
+				/* Ignore non-procedures */
+				if (get_func_prokind(clist->oid) != PROKIND_PROCEDURE)
+					continue;
+				break;
+			case OBJECT_ROUTINE:
+				/* no restriction */
+				break;
+			default:
+				Assert(false);
+		}
+
+		/* Check for multiple matches */
+		if (OidIsValid(result))
+		{
+			*lookupError = FUNCLOOKUP_AMBIGUOUS;
+			return InvalidOid;
+		}
+
+		/* OK, we have a candidate */
+		result = clist->oid;
 	}
 
-	/*
-	 * Otherwise, look for a match to the arg types.  FuncnameGetCandidates
-	 * has ensured that there's at most one match in the returned list.
-	 */
-	while (clist)
-	{
-		/* if nargs==0, argtypes can be null; don't pass that to memcmp */
-		if (nargs == 0 ||
-			memcmp(argtypes, clist->args, nargs * sizeof(Oid)) == 0)
-			return clist->oid;
-		clist = clist->next;
-	}
-
-	return InvalidOid;
+	return result;
 }
 
 /*
@@ -2111,6 +2136,10 @@ LookupFuncNameInternal(List *funcname, int nargs, const Oid *argtypes,
  * If nargs == -1 and multiple functions are found matching this function name
  * we will raise an ambiguous-function error, regardless of what missing_ok is
  * set to.
+ *
+ * Only functions will be found; procedures will be ignored even if they
+ * match the name and argument types.  (However, we don't trouble to reject
+ * aggregates or window functions here.)
  */
 Oid
 LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool missing_ok)
@@ -2118,7 +2147,9 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool missing_ok)
 	Oid			funcoid;
 	FuncLookupError lookupError;
 
-	funcoid = LookupFuncNameInternal(funcname, nargs, argtypes, missing_ok,
+	funcoid = LookupFuncNameInternal(OBJECT_FUNCTION,
+									 funcname, nargs, argtypes,
+									 false, missing_ok,
 									 &lookupError);
 
 	if (OidIsValid(funcoid))
@@ -2207,10 +2238,14 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 								   FUNC_MAX_ARGS)));
 	}
 
+	/*
+	 * First, perform a lookup considering only input arguments (traditional
+	 * Postgres rules).
+	 */
 	i = 0;
 	foreach(args_item, func->objargs)
 	{
-		TypeName   *t = (TypeName *) lfirst(args_item);
+		TypeName   *t = lfirst_node(TypeName, args_item);
 
 		argoids[i] = LookupTypeNameOid(NULL, t, missing_ok);
 		if (!OidIsValid(argoids[i]))
@@ -2224,8 +2259,82 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 	 */
 	nargs = func->args_unspecified ? -1 : argcount;
 
-	oid = LookupFuncNameInternal(func->objname, nargs, argoids, missing_ok,
+	/*
+	 * In args_unspecified mode, also tell LookupFuncNameInternal to consider
+	 * the object type, since there seems no reason not to.  However, if we
+	 * have an argument list, disable the objtype check, because we'd rather
+	 * complain about "object is of wrong type" than "object doesn't exist".
+	 * (Note that with args, FuncnameGetCandidates will have ensured there's
+	 * only one argtype match, so we're not risking an ambiguity failure via
+	 * this choice.)
+	 */
+	oid = LookupFuncNameInternal(func->args_unspecified ? objtype : OBJECT_ROUTINE,
+								 func->objname, nargs, argoids,
+								 false, missing_ok,
 								 &lookupError);
+
+	/*
+	 * If PROCEDURE or ROUTINE was specified, and we have an argument list
+	 * that contains no parameter mode markers, and we didn't already discover
+	 * that there's ambiguity, perform a lookup considering all arguments.
+	 * (Note: for a zero-argument procedure, or in args_unspecified mode, the
+	 * normal lookup is sufficient; so it's OK to require non-NIL objfuncargs
+	 * to perform this lookup.)
+	 */
+	if ((objtype == OBJECT_PROCEDURE || objtype == OBJECT_ROUTINE) &&
+		func->objfuncargs != NIL &&
+		lookupError != FUNCLOOKUP_AMBIGUOUS)
+	{
+		bool		have_param_mode = false;
+
+		/*
+		 * Check for non-default parameter mode markers.  If there are any,
+		 * then the command does not conform to SQL-spec syntax, so we may
+		 * assume that the traditional Postgres lookup method of considering
+		 * only input parameters is sufficient.  (Note that because the spec
+		 * doesn't have OUT arguments for functions, we also don't need this
+		 * hack in FUNCTION or AGGREGATE mode.)
+		 */
+		foreach(args_item, func->objfuncargs)
+		{
+			FunctionParameter *fp = lfirst_node(FunctionParameter, args_item);
+
+			if (fp->mode != FUNC_PARAM_DEFAULT)
+			{
+				have_param_mode = true;
+				break;
+			}
+		}
+
+		if (!have_param_mode)
+		{
+			Oid			poid;
+
+			/* Without mode marks, objargs surely includes all params */
+			Assert(list_length(func->objfuncargs) == argcount);
+
+			/* For objtype == OBJECT_PROCEDURE, we can ignore non-procedures */
+			poid = LookupFuncNameInternal(objtype, func->objname,
+										  argcount, argoids,
+										  true, missing_ok,
+										  &lookupError);
+
+			/* Combine results, handling ambiguity */
+			if (OidIsValid(poid))
+			{
+				if (OidIsValid(oid) && oid != poid)
+				{
+					/* oops, we got hits both ways, on different objects */
+					oid = InvalidOid;
+					lookupError = FUNCLOOKUP_AMBIGUOUS;
+				}
+				else
+					oid = poid;
+			}
+			else if (lookupError == FUNCLOOKUP_AMBIGUOUS)
+				oid = InvalidOid;
+		}
+	}
 
 	if (OidIsValid(oid))
 	{
@@ -2235,6 +2344,10 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 		 * we allow the objtype of FUNCTION to include aggregates and window
 		 * functions; but we draw the line if the object is a procedure.  That
 		 * is a new enough feature that this historical rule does not apply.
+		 *
+		 * (This check is partially redundant with the objtype check in
+		 * LookupFuncNameInternal; but not entirely, since we often don't tell
+		 * LookupFuncNameInternal to apply that check at all.)
 		 */
 		switch (objtype)
 		{
@@ -2345,28 +2458,32 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 								(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 								 errmsg("function name \"%s\" is not unique",
 										NameListToString(func->objname)),
-								 errhint("Specify the argument list to select the function unambiguously.")));
+								 func->args_unspecified ?
+								 errhint("Specify the argument list to select the function unambiguously.") : 0));
 						break;
 					case OBJECT_PROCEDURE:
 						ereport(ERROR,
 								(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 								 errmsg("procedure name \"%s\" is not unique",
 										NameListToString(func->objname)),
-								 errhint("Specify the argument list to select the procedure unambiguously.")));
+								 func->args_unspecified ?
+								 errhint("Specify the argument list to select the procedure unambiguously.") : 0));
 						break;
 					case OBJECT_AGGREGATE:
 						ereport(ERROR,
 								(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 								 errmsg("aggregate name \"%s\" is not unique",
 										NameListToString(func->objname)),
-								 errhint("Specify the argument list to select the aggregate unambiguously.")));
+								 func->args_unspecified ?
+								 errhint("Specify the argument list to select the aggregate unambiguously.") : 0));
 						break;
 					case OBJECT_ROUTINE:
 						ereport(ERROR,
 								(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 								 errmsg("routine name \"%s\" is not unique",
 										NameListToString(func->objname)),
-								 errhint("Specify the argument list to select the routine unambiguously.")));
+								 func->args_unspecified ?
+								 errhint("Specify the argument list to select the routine unambiguously.") : 0));
 						break;
 
 					default:

@@ -245,8 +245,7 @@ prepare_sql_fn_parse_info(HeapTuple procedureTuple,
 		if (isNull)
 			proargmodes = PointerGetDatum(NULL);	/* just to be sure */
 
-		n_arg_names = get_func_input_arg_names(procedureStruct->prokind,
-											   proargnames, proargmodes,
+		n_arg_names = get_func_input_arg_names(proargnames, proargmodes,
 											   &pinfo->argnames);
 
 		/* Paranoia: ignore the result if too few array entries */
@@ -1536,7 +1535,7 @@ check_sql_fn_statements(List *queryTreeLists)
 			Query	   *query = lfirst_node(Query, lc2);
 
 			/*
-			 * Disallow procedures with output arguments.  The current
+			 * Disallow calling procedures with output arguments.  The current
 			 * implementation would just throw the output values away, unless
 			 * the statement is the last one.  Per SQL standard, we should
 			 * assign the output values by name.  By disallowing this here, we
@@ -1545,31 +1544,12 @@ check_sql_fn_statements(List *queryTreeLists)
 			if (query->commandType == CMD_UTILITY &&
 				IsA(query->utilityStmt, CallStmt))
 			{
-				CallStmt   *stmt = castNode(CallStmt, query->utilityStmt);
-				HeapTuple	tuple;
-				int			numargs;
-				Oid		   *argtypes;
-				char	  **argnames;
-				char	   *argmodes;
-				int			i;
+				CallStmt   *stmt = (CallStmt *) query->utilityStmt;
 
-				tuple = SearchSysCache1(PROCOID,
-										ObjectIdGetDatum(stmt->funcexpr->funcid));
-				if (!HeapTupleIsValid(tuple))
-					elog(ERROR, "cache lookup failed for function %u",
-						 stmt->funcexpr->funcid);
-				numargs = get_func_arg_info(tuple,
-											&argtypes, &argnames, &argmodes);
-				ReleaseSysCache(tuple);
-
-				for (i = 0; i < numargs; i++)
-				{
-					if (argmodes && (argmodes[i] == PROARGMODE_INOUT ||
-									 argmodes[i] == PROARGMODE_OUT))
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("calling procedures with output arguments is not supported in SQL functions")));
-				}
+				if (stmt->outargs != NIL)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("calling procedures with output arguments is not supported in SQL functions")));
 			}
 		}
 	}

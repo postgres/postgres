@@ -272,7 +272,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				/* proc->nargs was initialized to 0 above */
 				for (i = 0; i < total; i++)
 				{
-					if ((modes[i] != PROARGMODE_OUT || proc->is_procedure) &&
+					if (modes[i] != PROARGMODE_OUT &&
 						modes[i] != PROARGMODE_TABLE)
 						(proc->nargs)++;
 				}
@@ -288,7 +288,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				Form_pg_type argTypeStruct;
 
 				if (modes &&
-					((modes[i] == PROARGMODE_OUT && !proc->is_procedure) ||
+					(modes[i] == PROARGMODE_OUT ||
 					 modes[i] == PROARGMODE_TABLE))
 					continue;	/* skip OUT arguments */
 

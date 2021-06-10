@@ -846,7 +846,7 @@ lookup_agg_function(List *fnName,
 	 * the function.
 	 */
 	fdresult = func_get_detail(fnName, NIL, NIL,
-							   nargs, input_types, false, false,
+							   nargs, input_types, false, false, false,
 							   &fnOid, rettype, &retset,
 							   &nvargs, &vatype,
 							   &true_oid_array, NULL);

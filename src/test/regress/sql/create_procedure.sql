@@ -153,8 +153,47 @@ INSERT INTO cp_test VALUES (1, 'a');
 SELECT 1;
 $$;
 
+-- standard way to do a call:
 CALL ptest9(NULL);
+-- you can write an expression, but it's not evaluated
+CALL ptest9(1/0);  -- no error
+-- ... and it had better match the type of the parameter
+CALL ptest9(1./0.);  -- error
 
+-- check named-parameter matching
+CREATE PROCEDURE ptest10(OUT a int, IN b int, IN c int)
+LANGUAGE SQL AS $$ SELECT b - c $$;
+
+CALL ptest10(null, 7, 4);
+CALL ptest10(a => null, b => 8, c => 2);
+CALL ptest10(null, 7, c => 2);
+CALL ptest10(null, c => 4, b => 11);
+CALL ptest10(b => 8, c => 2, a => 0);
+
+CREATE PROCEDURE ptest11(a OUT int, VARIADIC b int[]) LANGUAGE SQL
+  AS $$ SELECT b[1] + b[2] $$;
+
+CALL ptest11(null, 11, 12, 13);
+
+-- check resolution of ambiguous DROP commands
+
+CREATE PROCEDURE ptest10(IN a int, IN b int, IN c int)
+LANGUAGE SQL AS $$ SELECT a + b - c $$;
+
+\df ptest10
+
+drop procedure ptest10;  -- fail
+drop procedure ptest10(int, int, int);  -- fail
+begin;
+drop procedure ptest10(out int, int, int);
+\df ptest10
+drop procedure ptest10(int, int, int);  -- now this would work
+rollback;
+begin;
+drop procedure ptest10(in int, int, int);
+\df ptest10
+drop procedure ptest10(int, int, int);  -- now this would work
+rollback;
 
 -- various error cases
 
@@ -163,6 +202,10 @@ CALL sum(1);  -- error: not a procedure
 
 CREATE PROCEDURE ptestx() LANGUAGE SQL WINDOW AS $$ INSERT INTO cp_test VALUES (1, 'a') $$;
 CREATE PROCEDURE ptestx() LANGUAGE SQL STRICT AS $$ INSERT INTO cp_test VALUES (1, 'a') $$;
+CREATE PROCEDURE ptestx(a VARIADIC int[], b OUT int) LANGUAGE SQL
+  AS $$ SELECT a[1] $$;
+CREATE PROCEDURE ptestx(a int DEFAULT 42, b OUT int) LANGUAGE SQL
+  AS $$ SELECT a $$;
 
 ALTER PROCEDURE ptest1(text) STRICT;
 ALTER FUNCTION ptest1(text) VOLATILE;  -- error: not a function

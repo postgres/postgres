@@ -53,7 +53,7 @@ CALL test_proc6(2, 3, 4);
 CREATE PROCEDURE test_proc9(IN a int, OUT b int)
 LANGUAGE pltcl
 AS $$
-elog NOTICE "a: $1, b: $2"
+elog NOTICE "a: $1"
 return [list b [expr {$1 * 2}]]
 $$;
 DO $$
@@ -64,7 +64,7 @@ BEGIN
   RAISE NOTICE '_a: %, _b: %', _a, _b;
 END
 $$;
-NOTICE:  a: 10, b: 
+NOTICE:  a: 10
 NOTICE:  _a: 10, _b: 20
 DROP PROCEDURE test_proc1;
 DROP PROCEDURE test_proc2;

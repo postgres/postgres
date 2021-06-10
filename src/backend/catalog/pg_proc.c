@@ -471,12 +471,10 @@ ProcedureCreate(const char *procedureName,
 			if (isnull)
 				proargmodes = PointerGetDatum(NULL);	/* just to be sure */
 
-			n_old_arg_names = get_func_input_arg_names(prokind,
-													   proargnames,
+			n_old_arg_names = get_func_input_arg_names(proargnames,
 													   proargmodes,
 													   &old_arg_names);
-			n_new_arg_names = get_func_input_arg_names(prokind,
-													   parameterNames,
+			n_new_arg_names = get_func_input_arg_names(parameterNames,
 													   parameterModes,
 													   &new_arg_names);
 			for (j = 0; j < n_old_arg_names; j++)

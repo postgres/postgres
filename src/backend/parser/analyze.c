@@ -25,6 +25,7 @@
 #include "postgres.h"
 
 #include "access/sysattr.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -50,6 +51,7 @@
 #include "utils/guc.h"
 #include "utils/queryjumble.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 
 
 /* Hook for plugins to get control at end of parse analysis */
@@ -2933,8 +2935,6 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 
 /*
  * transform a CallStmt
- *
- * We need to do parse analysis on the procedure call and its arguments.
  */
 static Query *
 transformCallStmt(ParseState *pstate, CallStmt *stmt)
@@ -2942,8 +2942,17 @@ transformCallStmt(ParseState *pstate, CallStmt *stmt)
 	List	   *targs;
 	ListCell   *lc;
 	Node	   *node;
+	FuncExpr   *fexpr;
+	HeapTuple	proctup;
+	Datum		proargmodes;
+	bool		isNull;
+	List	   *outargs = NIL;
 	Query	   *result;
 
+	/*
+	 * First, do standard parse analysis on the procedure call and its
+	 * arguments, allowing us to identify the called procedure.
+	 */
 	targs = NIL;
 	foreach(lc, stmt->funccall->args)
 	{
@@ -2962,8 +2971,85 @@ transformCallStmt(ParseState *pstate, CallStmt *stmt)
 
 	assign_expr_collations(pstate, node);
 
-	stmt->funcexpr = castNode(FuncExpr, node);
+	fexpr = castNode(FuncExpr, node);
 
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fexpr->funcid));
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", fexpr->funcid);
+
+	/*
+	 * Expand the argument list to deal with named-argument notation and
+	 * default arguments.  For ordinary FuncExprs this'd be done during
+	 * planning, but a CallStmt doesn't go through planning, and there seems
+	 * no good reason not to do it here.
+	 */
+	fexpr->args = expand_function_arguments(fexpr->args,
+											true,
+											fexpr->funcresulttype,
+											proctup);
+
+	/* Fetch proargmodes; if it's null, there are no output args */
+	proargmodes = SysCacheGetAttr(PROCOID, proctup,
+								  Anum_pg_proc_proargmodes,
+								  &isNull);
+	if (!isNull)
+	{
+		/*
+		 * Split the list into input arguments in fexpr->args and output
+		 * arguments in stmt->outargs.  INOUT arguments appear in both lists.
+		 */
+		ArrayType  *arr;
+		int			numargs;
+		char	   *argmodes;
+		List	   *inargs;
+		int			i;
+
+		arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
+		numargs = list_length(fexpr->args);
+		if (ARR_NDIM(arr) != 1 ||
+			ARR_DIMS(arr)[0] != numargs ||
+			ARR_HASNULL(arr) ||
+			ARR_ELEMTYPE(arr) != CHAROID)
+			elog(ERROR, "proargmodes is not a 1-D char array of length %d or it contains nulls",
+				 numargs);
+		argmodes = (char *) ARR_DATA_PTR(arr);
+
+		inargs = NIL;
+		i = 0;
+		foreach(lc, fexpr->args)
+		{
+			Node	   *n = lfirst(lc);
+
+			switch (argmodes[i])
+			{
+				case PROARGMODE_IN:
+				case PROARGMODE_VARIADIC:
+					inargs = lappend(inargs, n);
+					break;
+				case PROARGMODE_OUT:
+					outargs = lappend(outargs, n);
+					break;
+				case PROARGMODE_INOUT:
+					inargs = lappend(inargs, n);
+					outargs = lappend(outargs, copyObject(n));
+					break;
+				default:
+					/* note we don't support PROARGMODE_TABLE */
+					elog(ERROR, "invalid argmode %c for procedure",
+						 argmodes[i]);
+					break;
+			}
+			i++;
+		}
+		fexpr->args = inargs;
+	}
+
+	stmt->funcexpr = fexpr;
+	stmt->outargs = outargs;
+
+	ReleaseSysCache(proctup);
+
+	/* represent the command as a utility Query */
 	result = makeNode(Query);
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;

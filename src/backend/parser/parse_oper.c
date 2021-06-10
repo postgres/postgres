@@ -150,8 +150,8 @@ LookupOperWithArgs(ObjectWithArgs *oper, bool noError)
 				rightoid;
 
 	Assert(list_length(oper->objargs) == 2);
-	oprleft = linitial(oper->objargs);
-	oprright = lsecond(oper->objargs);
+	oprleft = linitial_node(TypeName, oper->objargs);
+	oprright = lsecond_node(TypeName, oper->objargs);
 
 	if (oprleft == NULL)
 		leftoid = InvalidOid;

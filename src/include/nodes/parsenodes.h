@@ -2024,18 +2024,29 @@ typedef struct GrantStmt
 } GrantStmt;
 
 /*
- * Note: ObjectWithArgs carries only the types of the input parameters of the
- * function.  So it is sufficient to identify an existing function, but it
- * is not enough info to define a function nor to call it.
+ * ObjectWithArgs represents a function/procedure/operator name plus parameter
+ * identification.
+ *
+ * objargs includes only the types of the input parameters of the object.
+ * In some contexts, that will be all we have, and it's enough to look up
+ * objects according to the traditional Postgres rules (i.e., when only input
+ * arguments matter).
+ *
+ * objfuncargs, if not NIL, carries the full specification of the parameter
+ * list, including parameter mode annotations.
+ *
+ * Some grammar productions can set args_unspecified = true instead of
+ * providing parameter info.  In this case, lookup will succeed only if
+ * the object name is unique.  Note that otherwise, NIL parameter lists
+ * mean zero arguments.
  */
 typedef struct ObjectWithArgs
 {
 	NodeTag		type;
 	List	   *objname;		/* qualified name of function/operator */
-	List	   *objargs;		/* list of Typename nodes */
-	bool		args_unspecified;	/* argument list was omitted, so name must
-									 * be unique (note that objargs == NIL
-									 * means zero args) */
+	List	   *objargs;		/* list of Typename nodes (input args only) */
+	List	   *objfuncargs;	/* list of FunctionParameter nodes */
+	bool		args_unspecified;	/* argument list was omitted? */
 } ObjectWithArgs;
 
 /*
@@ -2955,7 +2966,9 @@ typedef enum FunctionParameterMode
 	FUNC_PARAM_OUT = 'o',		/* output only */
 	FUNC_PARAM_INOUT = 'b',		/* both */
 	FUNC_PARAM_VARIADIC = 'v',	/* variadic (always input) */
-	FUNC_PARAM_TABLE = 't'		/* table function output column */
+	FUNC_PARAM_TABLE = 't',		/* table function output column */
+	/* this is not used in pg_proc: */
+	FUNC_PARAM_DEFAULT = 'd'	/* default; effectively same as IN */
 } FunctionParameterMode;
 
 typedef struct FunctionParameter
@@ -2998,13 +3011,19 @@ typedef struct InlineCodeBlock
 
 /* ----------------------
  *		CALL statement
+ *
+ * OUT-mode arguments are removed from the transformed funcexpr.  The outargs
+ * list contains copies of the expressions for all output arguments, in the
+ * order of the procedure's declared arguments.  (outargs is never evaluated,
+ * but is useful to the caller as a reference for what to assign to.)
  * ----------------------
  */
 typedef struct CallStmt
 {
 	NodeTag		type;
 	FuncCall   *funccall;		/* from the parser */
-	FuncExpr   *funcexpr;		/* transformed */
+	FuncExpr   *funcexpr;		/* transformed call, with only input args */
+	List	   *outargs;		/* transformed output-argument expressions */
 } CallStmt;
 
 typedef struct CallContext

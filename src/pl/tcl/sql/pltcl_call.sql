@@ -57,7 +57,7 @@ CALL test_proc6(2, 3, 4);
 CREATE PROCEDURE test_proc9(IN a int, OUT b int)
 LANGUAGE pltcl
 AS $$
-elog NOTICE "a: $1, b: $2"
+elog NOTICE "a: $1"
 return [list b [expr {$1 * 2}]]
 $$;
 

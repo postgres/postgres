@@ -59,7 +59,7 @@ CALL test_proc6(2, 3, 4);
 CREATE PROCEDURE test_proc9(IN a int, OUT b int)
 LANGUAGE plpythonu
 AS $$
-plpy.notice("a: %s, b: %s" % (a, b))
+plpy.notice("a: %s" % (a))
 return (a * 2,)
 $$;
 

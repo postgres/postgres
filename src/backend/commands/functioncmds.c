@@ -169,16 +169,16 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 }
 
 /*
- * Interpret the function parameter list of a CREATE FUNCTION or
- * CREATE AGGREGATE statement.
+ * Interpret the function parameter list of a CREATE FUNCTION,
+ * CREATE PROCEDURE, or CREATE AGGREGATE statement.
  *
  * Input parameters:
  * parameters: list of FunctionParameter structs
  * languageOid: OID of function language (InvalidOid if it's CREATE AGGREGATE)
- * objtype: needed only to determine error handling and required result type
+ * objtype: identifies type of object being created
  *
  * Results are stored into output parameters.  parameterTypes must always
- * be created, but the other arrays are set to NULL if not needed.
+ * be created, but the other arrays/lists can be NULL pointers if not needed.
  * variadicArgType is set to the variadic array type if there's a VARIADIC
  * parameter (there can be only one); or to InvalidOid if not.
  * requiredResultType is set to InvalidOid if there are no OUT parameters,
@@ -200,8 +200,8 @@ interpret_function_parameter_list(ParseState *pstate,
 								  Oid *requiredResultType)
 {
 	int			parameterCount = list_length(parameters);
-	Oid		   *sigArgTypes;
-	int			sigArgCount = 0;
+	Oid		   *inTypes;
+	int			inCount = 0;
 	Datum	   *allTypes;
 	Datum	   *paramModes;
 	Datum	   *paramNames;
@@ -215,7 +215,7 @@ interpret_function_parameter_list(ParseState *pstate,
 	*variadicArgType = InvalidOid;	/* default result */
 	*requiredResultType = InvalidOid;	/* default result */
 
-	sigArgTypes = (Oid *) palloc(parameterCount * sizeof(Oid));
+	inTypes = (Oid *) palloc(parameterCount * sizeof(Oid));
 	allTypes = (Datum *) palloc(parameterCount * sizeof(Datum));
 	paramModes = (Datum *) palloc(parameterCount * sizeof(Datum));
 	paramNames = (Datum *) palloc0(parameterCount * sizeof(Datum));
@@ -227,10 +227,15 @@ interpret_function_parameter_list(ParseState *pstate,
 	{
 		FunctionParameter *fp = (FunctionParameter *) lfirst(x);
 		TypeName   *t = fp->argType;
+		FunctionParameterMode fpmode = fp->mode;
 		bool		isinput = false;
 		Oid			toid;
 		Type		typtup;
 		AclResult	aclresult;
+
+		/* For our purposes here, a defaulted mode spec is identical to IN */
+		if (fpmode == FUNC_PARAM_DEFAULT)
+			fpmode = FUNC_PARAM_IN;
 
 		typtup = LookupTypeName(NULL, t, NULL, false);
 		if (typtup)
@@ -288,37 +293,42 @@ interpret_function_parameter_list(ParseState *pstate,
 		}
 
 		/* handle input parameters */
-		if (fp->mode != FUNC_PARAM_OUT && fp->mode != FUNC_PARAM_TABLE)
+		if (fpmode != FUNC_PARAM_OUT && fpmode != FUNC_PARAM_TABLE)
 		{
+			/* other input parameters can't follow a VARIADIC parameter */
+			if (varCount > 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("VARIADIC parameter must be the last input parameter")));
+			inTypes[inCount++] = toid;
 			isinput = true;
 			if (parameterTypes_list)
 				*parameterTypes_list = lappend_oid(*parameterTypes_list, toid);
 		}
 
-		/* handle signature parameters */
-		if (fp->mode == FUNC_PARAM_IN || fp->mode == FUNC_PARAM_INOUT ||
-			(objtype == OBJECT_PROCEDURE && fp->mode == FUNC_PARAM_OUT) ||
-			fp->mode == FUNC_PARAM_VARIADIC)
-		{
-			/* other signature parameters can't follow a VARIADIC parameter */
-			if (varCount > 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("VARIADIC parameter must be the last signature parameter")));
-			sigArgTypes[sigArgCount++] = toid;
-		}
-
 		/* handle output parameters */
-		if (fp->mode != FUNC_PARAM_IN && fp->mode != FUNC_PARAM_VARIADIC)
+		if (fpmode != FUNC_PARAM_IN && fpmode != FUNC_PARAM_VARIADIC)
 		{
 			if (objtype == OBJECT_PROCEDURE)
+			{
+				/*
+				 * We disallow OUT-after-VARIADIC only for procedures.  While
+				 * such a case causes no confusion in ordinary function calls,
+				 * it would cause confusion in a CALL statement.
+				 */
+				if (varCount > 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("VARIADIC parameter must be the last parameter")));
+				/* Procedures with output parameters always return RECORD */
 				*requiredResultType = RECORDOID;
+			}
 			else if (outCount == 0) /* save first output param's type */
 				*requiredResultType = toid;
 			outCount++;
 		}
 
-		if (fp->mode == FUNC_PARAM_VARIADIC)
+		if (fpmode == FUNC_PARAM_VARIADIC)
 		{
 			*variadicArgType = toid;
 			varCount++;
@@ -341,7 +351,7 @@ interpret_function_parameter_list(ParseState *pstate,
 
 		allTypes[i] = ObjectIdGetDatum(toid);
 
-		paramModes[i] = CharGetDatum(fp->mode);
+		paramModes[i] = CharGetDatum(fpmode);
 
 		if (fp->name && fp->name[0])
 		{
@@ -356,19 +366,24 @@ interpret_function_parameter_list(ParseState *pstate,
 			foreach(px, parameters)
 			{
 				FunctionParameter *prevfp = (FunctionParameter *) lfirst(px);
+				FunctionParameterMode prevfpmode;
 
 				if (prevfp == fp)
 					break;
+				/* as above, default mode is IN */
+				prevfpmode = prevfp->mode;
+				if (prevfpmode == FUNC_PARAM_DEFAULT)
+					prevfpmode = FUNC_PARAM_IN;
 				/* pure in doesn't conflict with pure out */
-				if ((fp->mode == FUNC_PARAM_IN ||
-					 fp->mode == FUNC_PARAM_VARIADIC) &&
-					(prevfp->mode == FUNC_PARAM_OUT ||
-					 prevfp->mode == FUNC_PARAM_TABLE))
+				if ((fpmode == FUNC_PARAM_IN ||
+					 fpmode == FUNC_PARAM_VARIADIC) &&
+					(prevfpmode == FUNC_PARAM_OUT ||
+					 prevfpmode == FUNC_PARAM_TABLE))
 					continue;
-				if ((prevfp->mode == FUNC_PARAM_IN ||
-					 prevfp->mode == FUNC_PARAM_VARIADIC) &&
-					(fp->mode == FUNC_PARAM_OUT ||
-					 fp->mode == FUNC_PARAM_TABLE))
+				if ((prevfpmode == FUNC_PARAM_IN ||
+					 prevfpmode == FUNC_PARAM_VARIADIC) &&
+					(fpmode == FUNC_PARAM_OUT ||
+					 fpmode == FUNC_PARAM_TABLE))
 					continue;
 				if (prevfp->name && prevfp->name[0] &&
 					strcmp(prevfp->name, fp->name) == 0)
@@ -432,13 +447,23 @@ interpret_function_parameter_list(ParseState *pstate,
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("input parameters after one with a default value must also have defaults")));
+
+			/*
+			 * For procedures, we also can't allow OUT parameters after one
+			 * with a default, because the same sort of confusion arises in a
+			 * CALL statement.
+			 */
+			if (objtype == OBJECT_PROCEDURE && have_defaults)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("procedure OUT parameters cannot appear after one with a default value")));
 		}
 
 		i++;
 	}
 
 	/* Now construct the proper outputs as needed */
-	*parameterTypes = buildoidvector(sigArgTypes, sigArgCount);
+	*parameterTypes = buildoidvector(inTypes, inCount);
 
 	if (outCount > 0 || varCount > 0)
 	{
@@ -2179,9 +2204,6 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 	int			nargs;
 	int			i;
 	AclResult	aclresult;
-	Oid		   *argtypes;
-	char	  **argnames;
-	char	   *argmodes;
 	FmgrInfo	flinfo;
 	CallContext *callcontext;
 	EState	   *estate;
@@ -2224,29 +2246,10 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 	if (((Form_pg_proc) GETSTRUCT(tp))->prosecdef)
 		callcontext->atomic = true;
 
-	/*
-	 * Expand named arguments, defaults, etc.  We do not want to scribble on
-	 * the passed-in CallStmt parse tree, so first flat-copy fexpr, allowing
-	 * us to replace its args field.  (Note that expand_function_arguments
-	 * will not modify any of the passed-in data structure.)
-	 */
-	{
-		FuncExpr   *nexpr = makeNode(FuncExpr);
-
-		memcpy(nexpr, fexpr, sizeof(FuncExpr));
-		fexpr = nexpr;
-	}
-
-	fexpr->args = expand_function_arguments(fexpr->args,
-											fexpr->funcresulttype,
-											tp);
-	nargs = list_length(fexpr->args);
-
-	get_func_arg_info(tp, &argtypes, &argnames, &argmodes);
-
 	ReleaseSysCache(tp);
 
 	/* safety check; see ExecInitFunc() */
+	nargs = list_length(fexpr->args);
 	if (nargs > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
@@ -2273,24 +2276,16 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 	i = 0;
 	foreach(lc, fexpr->args)
 	{
-		if (argmodes && argmodes[i] == PROARGMODE_OUT)
-		{
-			fcinfo->args[i].value = 0;
-			fcinfo->args[i].isnull = true;
-		}
-		else
-		{
-			ExprState  *exprstate;
-			Datum		val;
-			bool		isnull;
+		ExprState  *exprstate;
+		Datum		val;
+		bool		isnull;
 
-			exprstate = ExecPrepareExpr(lfirst(lc), estate);
+		exprstate = ExecPrepareExpr(lfirst(lc), estate);
 
-			val = ExecEvalExprSwitchContext(exprstate, econtext, &isnull);
+		val = ExecEvalExprSwitchContext(exprstate, econtext, &isnull);
 
-			fcinfo->args[i].value = val;
-			fcinfo->args[i].isnull = isnull;
-		}
+		fcinfo->args[i].value = val;
+		fcinfo->args[i].isnull = isnull;
 
 		i++;
 	}

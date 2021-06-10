@@ -96,7 +96,7 @@ ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="para
       The name of an argument.
       Note that <command>ALTER PROCEDURE</command> does not actually pay
       any attention to argument names, since only the argument data
-      types are needed to determine the procedure's identity.
+      types are used to determine the procedure's identity.
      </para>
     </listitem>
    </varlistentry>
@@ -108,6 +108,8 @@ ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="para
      <para>
       The data type(s) of the procedure's arguments (optionally
       schema-qualified), if any.
+      See <xref linkend="sql-dropprocedure"/> for the details of how
+      the procedure is looked up using the argument data type(s).
      </para>
     </listitem>
    </varlistentry>

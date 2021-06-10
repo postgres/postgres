@@ -765,7 +765,7 @@ DROP FUNCTION sum_n_product (int, int);
      parameter serves as both an input parameter (part of the calling
      argument list) and an output parameter (part of the result record type).
      <literal>VARIADIC</literal> parameters are input parameters, but are treated
-     specially as described next.
+     specially as described below.
     </para>
    </sect2>
 
@@ -779,12 +779,8 @@ DROP FUNCTION sum_n_product (int, int);
 
     <para>
      Output parameters are also supported in procedures, but they work a bit
-     differently from functions.  Notably, output parameters
-     <emphasis>are</emphasis> included in the signature of a procedure and
-     must be specified in the procedure call.
-    </para>
-
-    <para>
+     differently from functions.  In <command>CALL</command> commands,
+     output parameters must be included in the argument list.
      For example, the bank account debiting routine from earlier could be
      written like this:
 <programlisting>
@@ -795,17 +791,21 @@ CREATE PROCEDURE tp1 (accountno integer, debit numeric, OUT new_balance numeric)
     RETURNING balance;
 $$ LANGUAGE SQL;
 </programlisting>
-     To call this procedure, it is irrelevant what is passed as the argument
-     of the <literal>OUT</literal> parameter, so you could pass
+     To call this procedure, an argument matching the <literal>OUT</literal>
+     parameter must be included.  It's customary to write
      <literal>NULL</literal>:
 <programlisting>
 CALL tp1(17, 100.0, NULL);
 </programlisting>
+     If you write something else, it must be an expression that is implicitly
+     coercible to the declared type of the parameter, just as for input
+     parameters.  Note however that such an expression will not be evaluated.
     </para>
 
     <para>
-     Procedures with output parameters are more useful in PL/pgSQL, where the
-     output parameters can be assigned to variables.  See <xref
+     When calling a procedure from <application>PL/pgSQL</application>,
+     instead of writing <literal>NULL</literal> you must write a variable
+     that will receive the procedure's output.  See <xref
      linkend="plpgsql-statements-calling-procedure"/> for details.
     </para>
    </sect2>

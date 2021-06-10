@@ -100,9 +100,12 @@ DECLARE
 BEGIN
     CALL test_proc6(2, x, y);
     RAISE INFO 'x = %, y = %', x, y;
+    CALL test_proc6(2, c => y, b => x);
+    RAISE INFO 'x = %, y = %', x, y;
 END;
 $$;
 INFO:  x = 6, y = 8
+INFO:  x = 12, y = 16
 DO
 LANGUAGE plpgsql
 $$
@@ -304,6 +307,79 @@ END
 $$;
 NOTICE:  a: 10, b: <NULL>
 NOTICE:  _a: 10, _b: 20
+CREATE PROCEDURE test_proc10(IN a int, OUT b int, IN c int DEFAULT 11)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE NOTICE 'a: %, b: %, c: %', a, b, c;
+  b := a - c;
+END;
+$$;
+DO $$
+DECLARE _a int; _b int; _c int;
+BEGIN
+  _a := 10; _b := 30; _c := 7;
+  CALL test_proc10(_a, _b, _c);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+
+  _a := 10; _b := 30; _c := 7;
+  CALL test_proc10(_a, _b, c => _c);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+
+  _a := 10; _b := 30; _c := 7;
+  CALL test_proc10(a => _a, b => _b, c => _c);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+
+  _a := 10; _b := 30; _c := 7;
+  CALL test_proc10(_a, c => _c, b => _b);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+
+  _a := 10; _b := 30; _c := 7;
+  CALL test_proc10(_a, _b);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+
+  _a := 10; _b := 30; _c := 7;
+  CALL test_proc10(_a, b => _b);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+
+  _a := 10; _b := 30; _c := 7;
+  CALL test_proc10(b => _b, a => _a);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+END
+$$;
+NOTICE:  a: 10, b: <NULL>, c: 7
+NOTICE:  _a: 10, _b: 3, _c: 7
+NOTICE:  a: 10, b: <NULL>, c: 7
+NOTICE:  _a: 10, _b: 3, _c: 7
+NOTICE:  a: 10, b: <NULL>, c: 7
+NOTICE:  _a: 10, _b: 3, _c: 7
+NOTICE:  a: 10, b: <NULL>, c: 7
+NOTICE:  _a: 10, _b: 3, _c: 7
+NOTICE:  a: 10, b: <NULL>, c: 11
+NOTICE:  _a: 10, _b: -1, _c: 7
+NOTICE:  a: 10, b: <NULL>, c: 11
+NOTICE:  _a: 10, _b: -1, _c: 7
+NOTICE:  a: 10, b: <NULL>, c: 11
+NOTICE:  _a: 10, _b: -1, _c: 7
+-- OUT + VARIADIC
+CREATE PROCEDURE test_proc11(a OUT int, VARIADIC b int[])
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE NOTICE 'a: %, b: %', a, b;
+  a := b[1] + b[2];
+END;
+$$;
+DO $$
+DECLARE _a int; _b int; _c int;
+BEGIN
+  _a := 10; _b := 30; _c := 7;
+  CALL test_proc11(_a, _b, _c);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+END
+$$;
+NOTICE:  a: <NULL>, b: {30,7}
+NOTICE:  _a: 37, _b: 30, _c: 7
 -- transition variable assignment
 TRUNCATE test1;
 CREATE FUNCTION triggerfunc1() RETURNS trigger

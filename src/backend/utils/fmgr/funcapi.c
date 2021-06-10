@@ -1409,8 +1409,7 @@ get_func_trftypes(HeapTuple procTup,
  * are set to NULL.  You don't get anything if proargnames is NULL.
  */
 int
-get_func_input_arg_names(char prokind,
-						 Datum proargnames, Datum proargmodes,
+get_func_input_arg_names(Datum proargnames, Datum proargmodes,
 						 char ***arg_names)
 {
 	ArrayType  *arr;
@@ -1469,7 +1468,6 @@ get_func_input_arg_names(char prokind,
 		if (argmodes == NULL ||
 			argmodes[i] == PROARGMODE_IN ||
 			argmodes[i] == PROARGMODE_INOUT ||
-			(argmodes[i] == PROARGMODE_OUT && prokind == PROKIND_PROCEDURE) ||
 			argmodes[i] == PROARGMODE_VARIADIC)
 		{
 			char	   *pname = TextDatumGetCString(argnames[i]);

@@ -30,12 +30,41 @@ DROP ROUTINE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ (
   <title>Description</title>
 
   <para>
-   <command>DROP ROUTINE</command> removes the definition of an existing
-   routine, which can be an aggregate function, a normal function, or a
-   procedure.  See
+   <command>DROP ROUTINE</command> removes the definition of one or more
+   existing routines.  The term <quote>routine</quote> includes
+   aggregate functions, normal functions, and procedures.  See
    under <xref linkend="sql-dropaggregate"/>, <xref linkend="sql-dropfunction"/>,
    and <xref linkend="sql-dropprocedure"/> for the description of the
    parameters, more examples, and further details.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-droproutine-notes">
+  <title>Notes</title>
+
+  <para>
+   The lookup rules used by <command>DROP ROUTINE</command> are
+   fundamentally the same as for <command>DROP PROCEDURE</command>; in
+   particular, <command>DROP ROUTINE</command> shares that command's
+   behavior of considering an argument list that has
+   no <replaceable class="parameter">argmode</replaceable> markers to be
+   possibly using the SQL standard's definition that <literal>OUT</literal>
+   arguments are included in the list.  (<command>DROP AGGREGATE</command>
+   and <command>DROP FUNCTION</command> do not do that.)
+  </para>
+
+  <para>
+   In some cases where the same name is shared by routines of different
+   kinds, it is possible for <command>DROP ROUTINE</command> to fail with
+   an ambiguity error when a more specific command (<command>DROP
+   FUNCTION</command>, etc.) would work.  Specifying the argument type
+   list more carefully will also resolve such problems.
+  </para>
+
+  <para>
+   These lookup rules are also used by other commands that
+   act on existing routines, such as <command>ALTER ROUTINE</command>
+   and <command>COMMENT ON ROUTINE</command>.
   </para>
  </refsect1>
 
@@ -64,13 +93,14 @@ DROP ROUTINE foo(integer);
      <para>The standard only allows one routine to be dropped per command.</para>
     </listitem>
     <listitem>
-     <para>The <literal>IF EXISTS</literal> option</para>
+     <para>The <literal>IF EXISTS</literal> option is an extension.</para>
     </listitem>
     <listitem>
-     <para>The ability to specify argument modes and names</para>
+     <para>The ability to specify argument modes and names is an
+     extension, and the lookup rules differ when modes are given.</para>
     </listitem>
     <listitem>
-     <para>Aggregate functions are an extension.</para>
+     <para>User-definable aggregate functions are an extension.</para>
     </listitem>
    </itemizedlist></para>
  </refsect1>

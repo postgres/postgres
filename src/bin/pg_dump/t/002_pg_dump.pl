@@ -1898,7 +1898,7 @@ my %tests = (
 		create_sql   => 'CREATE PROCEDURE dump_test.ptest1(a int)
 					   LANGUAGE SQL AS $$ INSERT INTO dump_test.test_table (col1) VALUES (a) $$;',
 		regexp => qr/^
-			\QCREATE PROCEDURE dump_test.ptest1(a integer)\E
+			\QCREATE PROCEDURE dump_test.ptest1(IN a integer)\E
 			\n\s+\QLANGUAGE sql\E
 			\n\s+AS\ \$\$\Q INSERT INTO dump_test.test_table (col1) VALUES (a) \E\$\$;
 			/xm,
