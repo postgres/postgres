@@ -86,12 +86,8 @@ main(void)
 #line 41 "test5.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "" , "regress_ecpg_user2" , "insecure" , "main", 0); }
-#line 43 "test5.pgc"
-
-	{ ECPGdisconnect(__LINE__, "main");}
-#line 44 "test5.pgc"
-
+	/* exec sql connect to as main user regress_ecpg_user2/insecure;
+	exec sql disconnect main; */
 
 	{ ECPGconnect(__LINE__, 0, "ecpg2_regression" , "regress_ecpg_user1" , "connectpw" , "main", 0); }
 #line 46 "test5.pgc"
@@ -135,7 +131,7 @@ main(void)
 #line 62 "test5.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/" , "regress_ecpg_user2" , "insecure" , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/?gssencmode=disable" , "regress_ecpg_user2" , "insecure" , "main", 0); }
 #line 64 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
