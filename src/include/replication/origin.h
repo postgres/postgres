@@ -38,9 +38,9 @@ extern PGDLLIMPORT XLogRecPtr replorigin_session_origin_lsn;
 extern PGDLLIMPORT TimestampTz replorigin_session_origin_timestamp;
 
 /* API for querying & manipulating replication origins */
-extern RepOriginId replorigin_by_name(char *name, bool missing_ok);
-extern RepOriginId replorigin_create(char *name);
-extern void replorigin_drop_by_name(char *name, bool missing_ok, bool nowait);
+extern RepOriginId replorigin_by_name(const char *name, bool missing_ok);
+extern RepOriginId replorigin_create(const char *name);
+extern void replorigin_drop_by_name(const char *name, bool missing_ok, bool nowait);
 extern bool replorigin_by_oid(RepOriginId roident, bool missing_ok,
 							  char **roname);
 

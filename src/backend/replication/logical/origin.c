@@ -206,7 +206,7 @@ replorigin_check_prerequisites(bool check_slots, bool recoveryOK)
  * Returns InvalidOid if the node isn't known yet and missing_ok is true.
  */
 RepOriginId
-replorigin_by_name(char *roname, bool missing_ok)
+replorigin_by_name(const char *roname, bool missing_ok)
 {
 	Form_pg_replication_origin ident;
 	Oid			roident = InvalidOid;
@@ -237,7 +237,7 @@ replorigin_by_name(char *roname, bool missing_ok)
  * Needs to be called in a transaction.
  */
 RepOriginId
-replorigin_create(char *roname)
+replorigin_create(const char *roname)
 {
 	Oid			roident;
 	HeapTuple	tuple = NULL;
@@ -411,7 +411,7 @@ restart:
  * Needs to be called in a transaction.
  */
 void
-replorigin_drop_by_name(char *name, bool missing_ok, bool nowait)
+replorigin_drop_by_name(const char *name, bool missing_ok, bool nowait)
 {
 	RepOriginId roident;
 	Relation	rel;
