@@ -27,6 +27,7 @@ $perlbin =~ s{\\}{\\\\}g if ($TestLib::windows_os);
 my $archivedir_primary = $node_primary->archive_dir;
 $node_primary->append_conf('postgresql.conf', qq(
 archive_command = '$perlbin "$FindBin::RealBin/cp_history_files" "%p" "$archivedir_primary/%f"'
+wal_keep_size=128MB
 ));
 $node_primary->start;
 
