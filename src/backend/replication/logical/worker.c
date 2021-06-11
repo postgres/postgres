@@ -898,12 +898,13 @@ apply_handle_update_internal(ResultRelInfo *relinfo,
 	else
 	{
 		/*
-		 * The tuple to be updated could not be found.
+		 * The tuple to be updated could not be found.  Do nothing except for
+		 * emitting a log message.
 		 *
-		 * TODO what to do here, change the log level to LOG perhaps?
+		 * XXX should this be promoted to ereport(LOG) perhaps?
 		 */
 		elog(DEBUG1,
-			 "logical replication did not find row for update "
+			 "logical replication did not find row to be updated "
 			 "in replication target relation \"%s\"",
 			 RelationGetRelationName(localrel));
 	}
@@ -1001,9 +1002,14 @@ apply_handle_delete_internal(ResultRelInfo *relinfo, EState *estate,
 	}
 	else
 	{
-		/* The tuple to be deleted could not be found. */
+		/*
+		 * The tuple to be deleted could not be found.  Do nothing except for
+		 * emitting a log message.
+		 *
+		 * XXX should this be promoted to ereport(LOG) perhaps?
+		 */
 		elog(DEBUG1,
-			 "logical replication could not find row for delete "
+			 "logical replication did not find row to be deleted "
 			 "in replication target relation \"%s\"",
 			 RelationGetRelationName(localrel));
 	}
@@ -1145,29 +1151,30 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 				found = FindReplTupleInLocalRel(estate, partrel,
 												&part_entry->remoterel,
 												remoteslot_part, &localslot);
-
-				oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-				if (found)
-				{
-					/* Apply the update.  */
-					slot_modify_cstrings(remoteslot_part, localslot,
-										 part_entry,
-										 newtup->values, newtup->changed);
-					MemoryContextSwitchTo(oldctx);
-				}
-				else
+				if (!found)
 				{
 					/*
-					 * The tuple to be updated could not be found.
+					 * The tuple to be updated could not be found.  Do nothing
+					 * except for emitting a log message.
 					 *
-					 * TODO what to do here, change the log level to LOG
-					 * perhaps?
+					 * XXX should this be promoted to ereport(LOG) perhaps?
 					 */
 					elog(DEBUG1,
-						 "logical replication did not find row for update "
-						 "in replication target relation \"%s\"",
+						 "logical replication did not find row to be updated "
+						 "in replication target relation's partition \"%s\"",
 						 RelationGetRelationName(partrel));
+					return;
 				}
+
+				/*
+				 * Apply the update to the local tuple, putting the result in
+				 * remoteslot_part.
+				 */
+				oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+				slot_modify_cstrings(remoteslot_part, localslot,
+									 part_entry,
+									 newtup->values, newtup->changed);
+				MemoryContextSwitchTo(oldctx);
 
 				/*
 				 * Does the updated tuple still satisfy the current
