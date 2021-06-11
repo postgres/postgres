@@ -313,6 +313,16 @@ WalProposerMain(Datum main_arg)
 		WalProposerPoll();
 }
 
+static bool
+WalSegmentExists(XLogRecPtr startpos)
+{
+	char path[MAXPGPATH];
+	XLogSegNo segNo;
+	XLByteToSeg(startpos, segNo, serverInfo.walSegSize);
+	XLogFilePath(path, serverInfo.timeline, segNo, serverInfo.walSegSize);
+	return access(path, F_OK) == 0;
+}
+
 static void
 WalProposerStartStreaming(XLogRecPtr startpos)
 {
@@ -322,6 +332,14 @@ WalProposerStartStreaming(XLogRecPtr startpos)
 	 */
 	startpos -= XLogSegmentOffset(startpos, serverInfo.walSegSize);
 
+	/* Requested segment may not exists because we generate new segment at node startup (aka pg_resetwal).
+	 * So just skip it.
+	 */
+	if (!WalSegmentExists(startpos) && WalSegmentExists(startpos + serverInfo.walSegSize))
+	{
+		elog(LOG, "Advance start position %llx to next segment", startpos);
+		startpos += serverInfo.walSegSize;
+	}
 	cmd.slotname = WAL_PROPOSER_SLOT_NAME;
 	cmd.timeline = serverInfo.timeline;
 	cmd.startpoint = startpos;

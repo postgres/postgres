@@ -2298,7 +2298,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_acceptor_reconnect", PGC_SIGHUP, REPLICATION_STANDBY,
-			gettext_noop("Timeout for reconnecting to ofline wal acceptor."),
+			gettext_noop("Timeout for reconnecting to offline wal acceptor."),
 			NULL,
 			GUC_UNIT_MS
 		},
