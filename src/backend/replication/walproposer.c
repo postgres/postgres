@@ -233,6 +233,7 @@ WalProposerMain(Datum main_arg)
 	char* port;
 
 	/* Establish signal handlers. */
+	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGTERM, die);
 
@@ -535,13 +536,33 @@ StartElection(void)
 	prop.epoch += 1;
 }
 
+/*
+ * How much milliseconds left till we should attempt reconnection to
+ * safekeepers? Returns 0 if it is already high time, -1 if we never reconnect
+ * (do we actually need this?).
+ */
+static long
+TimeToReconnect(TimestampTz now)
+{
+	TimestampTz passed;
+	TimestampTz till_reconnect;
+
+	if (wal_acceptor_reconnect_timeout <= 0)
+		return -1;
+
+	passed = now - last_reconnect_attempt;
+	till_reconnect = wal_acceptor_reconnect_timeout * 1000 - passed;
+	if (till_reconnect <= 0)
+		return 0;
+	return (long) (till_reconnect / 1000);
+}
 
 static void
 ReconnectWalKeepers(void)
 {
 	/* Initiate reconnect if timeout is expired */
 	TimestampTz now = GetCurrentTimestamp();
-	if (wal_acceptor_reconnect_timeout > 0 && now - last_reconnect_attempt > wal_acceptor_reconnect_timeout*1000)
+	if (TimeToReconnect(now) == 0)
 	{
 		last_reconnect_attempt = now;
 		for (int i = 0; i < n_walkeepers; i++)
@@ -633,22 +654,18 @@ WalProposerRecovery(int leader, TimeLineID timeline, XLogRecPtr startpos, XLogRe
 	return true;
 }
 
+/* Advance the WAL proposer state machine. */
 void
 WalProposerPoll(void)
 {
 	while (true)
 	{
 		WaitEvent	event;
-		int rc = WaitEventSetWait(waitEvents, -1, &event, 1, WAIT_EVENT_WAL_SENDER_MAIN);
-		WalKeeper*  wk = (WalKeeper*)event.user_data;
+		TimestampTz now = GetCurrentTimestamp();
+		int rc = WaitEventSetWait(waitEvents, TimeToReconnect(now),
+								  &event, 1, WAIT_EVENT_WAL_SENDER_MAIN);
+		WalKeeper*  wk = (WalKeeper*) event.user_data;
 		int i = (int)(wk - walkeeper);
-
-		/* If wait is terminated by error, postmaster die or latch event, then exit loop */
-		if (rc <= 0 || (event.events & (WL_POSTMASTER_DEATH|WL_LATCH_SET)) != 0)
-		{
-			ResetLatch(MyLatch);
-			break;
-		}
 
 		/* communication with walkeepers */
 		if (event.events & WL_SOCKET_READABLE)
@@ -869,7 +886,20 @@ WalProposerPoll(void)
 					elog(FATAL, "Unexpected write state %d", wk->state);
 			}
 		}
+
 		ReconnectWalKeepers();
+
+		/*
+		 * If wait is terminated by latch set (walsenders' latch is set on
+		 * each wal flush), then exit loop. (no need for pm death check due to
+		 * WL_EXIT_ON_PM_DEATH)
+		 */
+		if (event.events & (WL_LATCH_SET) != 0)
+		{
+			ResetLatch(MyLatch);
+			break;
+		}
+
 	}
 }
 
