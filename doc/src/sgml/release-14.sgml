@@ -170,12 +170,12 @@ Author: Bruce Momjian <bruce@momjian.us>
 
      <para>
       Values
-     <literal>1</literal>/<literal>0</literal>/<literal>no-verify</literal>
+      <literal>1</literal>/<literal>0</literal>/<literal>no-verify</literal>
       are no longer supported;  only the strings
-     <literal>verify-ca</literal> and <literal>verify-full</literal>
+      <literal>verify-ca</literal> and <literal>verify-full</literal>
       can be used.  Also, disallow <literal>verify-ca</literal> if cert
       authentication is enabled since cert requires
-     <literal>verify-full</literal> checking.
+      <literal>verify-full</literal> checking.
      </para>
     </listitem>
 
@@ -230,7 +230,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
      </para>
 
      <para>
-     <function>EXTRACT(date)</function> now throws an error for units
+      <function>EXTRACT(date)</function> now throws an error for units
       that are not part of the date data type.
      </para>
     </listitem>
@@ -261,7 +261,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
      <para>
       Prevent <xref linkend="tablefunc"/>'s function
-     <function>normal_rand()</function> from accepting negative values
+      <function>normal_rand()</function> from accepting negative values
       (Ashutosh Bapat)
      </para>
 
@@ -296,14 +296,14 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       Remove factorial operators <literal>!</literal> and
-     <literal>!!</literal> (Mark Dilger)
+      <literal>!!</literal> (Mark Dilger)
      </para>
 
      <para>
       The <link
       linkend="functions-math"><function>factorial()</function></link>
       function is still supported.  Also remove function
-     <function>numeric_fac()</function>.
+      <function>numeric_fac()</function>.
      </para>
     </listitem>
 
@@ -335,8 +335,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
      </para>
 
      <para>
-     <application>pg_dump</application> and
-     <application>pg_upgrade</application> will warn if postfix operators
+      <application>pg_dump</application> and
+      <application>pg_upgrade</application> will warn if postfix operators
       are being dumped.
      </para>
     </listitem>
@@ -371,7 +371,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       For example, disregard <literal>^</literal> in its expansion in
-     <literal>\1</literal> in <literal>(^\d+).*\1</literal>.
+      <literal>\1</literal> in <literal>(^\d+).*\1</literal>.
      </para>
     </listitem>
 
@@ -400,7 +400,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
      <para>
       Require <link linkend="runtime-config-custom">custom server
       variable</link> names to match the pattern used for unquoted
-     <acronym>SQL</acronym> identifiers (Tom Lane)
+      <acronym>SQL</acronym> identifiers (Tom Lane)
      </para>
     </listitem>
 
@@ -414,12 +414,12 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
      <para>
       Remove server variable
-     <varname>vacuum_cleanup_index_scale_factor</varname> (Peter Geoghegan)
+      <varname>vacuum_cleanup_index_scale_factor</varname> (Peter Geoghegan)
      </para>
 
      <para>
       This setting was ignored starting in
-     <productname>PostgreSQL</productname> version 13.3.
+      <productname>PostgreSQL</productname> version 13.3.
      </para>
     </listitem>
 
@@ -451,7 +451,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       Pass doubled quote marks in <xref linkend="ecpg"/>
-     <acronym>SQL</acronym> command strings literally (Tom Lane)
+      <acronym>SQL</acronym> command strings literally (Tom Lane)
      </para>
 
      <para>
@@ -469,7 +469,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
      <para>
       Disallow single-quoting of the language name in the
-     <link linkend="sql-createlanguage"><command>CREATE/DROP
+      <link linkend="sql-createlanguage"><command>CREATE/DROP
       LANGUAGE</command></link> command (Peter Eisentraut)
      </para>
     </listitem>
@@ -511,7 +511,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       This was needed for warning applications about
-     <productname>PostgreSQL</productname> 9.5 changes.
+      <productname>PostgreSQL</productname> 9.5 changes.
      </para>
     </listitem>
 
@@ -523,9 +523,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
    <title>Changes</title>
 
      <para>
-        Below you will find a detailed account of the changes between
-       <productname>PostgreSQL</productname> 14 and the previous major
-        release.
+      Below you will find a detailed account of the changes between
+      <productname>PostgreSQL</productname> 14 and the previous major
+      release.
      </para>
 
    <sect3>
@@ -635,7 +635,7 @@ Author: Noah Misch <noah@leadboat.com>
 
       <para>
        Previously tuples whose insertion would have exceeded the page's
-      <link linkend="sql-createtable">fill factor</link> were instead
+       <link linkend="sql-createtable">fill factor</link> were instead
        added to new pages.
       </para>
      </listitem>
@@ -648,7 +648,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <para>
        Add Set Server Name Indication (<acronym>SNI</acronym>) for
-      <acronym>SSL</acronym> connection packets (Peter Eisentraut)
+       <acronym>SSL</acronym> connection packets (Peter Eisentraut)
       </para>
 
       <para>
@@ -742,7 +742,7 @@ Author: Michael Paquier <michael@paquier.xyz>
        </para>
 
        <para>
-       <link linkend="sql-vacuum"><command>VACUUM</command></link>
+        <link linkend="sql-vacuum"><command>VACUUM</command></link>
         now has a <literal>PROCESS_TOAST</literal> which can be set to
         false to disable <acronym>TOAST</acronym> processing, and <link
         linkend="app-vacuumdb"><application>vacuumdb</application></link>
@@ -804,7 +804,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
        <para>
-       <link linkend="autovacuum">Autovacuum</link> now analyzes
+        <link linkend="autovacuum">Autovacuum</link> now analyzes
         partitioned tables (Yuzuko Hosoya, Álvaro Herrera)
        </para>
 
@@ -978,7 +978,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
        <para>
         Allow <link linkend="spgist">SP-GiST</link> to use
-       <literal>INCLUDE</literal>'d columns (Pavel Borisov)
+        <literal>INCLUDE</literal>'d columns (Pavel Borisov)
        </para>
       </listitem>
 
@@ -1060,7 +1060,7 @@ Author: David Rowley <drowley@postgresql.org>
 
        <para>
         Previously a sequential scan was required for non-equality
-       <type>TID</type> specifications.
+        <type>TID</type> specifications.
        </para>
       </listitem>
 
@@ -1302,10 +1302,10 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
         If server variable <xref linkend="guc-compute-query-id"/>
         is enabled, display the query id in <link
         linkend="monitoring-pg-stat-activity-view"><structname>pg_stat_activity</structname></link>,
-       <link linkend="sql-explain"><command>EXPLAIN
+        <link linkend="sql-explain"><command>EXPLAIN
         VERBOSE</command></link>, <link
         linkend="runtime-config-logging">csvlog</link>, and optionally in
-       <xref linkend="guc-log-line-prefix"/> (Julien Rouhaud)
+        <xref linkend="guc-log-line-prefix"/> (Julien Rouhaud)
        </para>
 
        <para>
@@ -1506,7 +1506,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
        <para>
         Make the archiver process visible in
-       <structname>pg_stat_activity</structname> (Kyotaro Horiguchi)
+        <structname>pg_stat_activity</structname> (Kyotaro Horiguchi)
        </para>
       </listitem>
 
@@ -1960,7 +1960,7 @@ Author: Amit Kapila <akapila@postgresql.org>
        <para>
         The output functions begin with <link
         linkend="logicaldecoding-output-plugin-stream-start"><literal>stream</literal></link>.
-       <application>test_decoding</application> also supports these.
+        <application>test_decoding</application> also supports these.
        </para>
       </listitem>
 
@@ -1984,7 +1984,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
        <para>
         Immediately <acronym>WAL</acronym>-log subtransaction and top-level
-       <type>XID</type> association (Tomas Vondra, Dilip Kumar, Amit
+        <type>XID</type> association (Tomas Vondra, Dilip Kumar, Amit
         Kapila)
        </para>
 
@@ -2047,7 +2047,7 @@ Author: Amit Kapila <akapila@postgresql.org>
        <para>
         This allows <link linkend="logicaldecoding">logical decoding</link>
         to work efficiently in presence of a large amount of
-       <acronym>DDL</acronym>.
+        <acronym>DDL</acronym>.
        </para>
       </listitem>
 
@@ -2124,13 +2124,13 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <para>
        Allow an alias to be specified for <literal>JOIN</literal>'s
-      <literal>USING</literal> clause (Peter Eisentraut)
+       <literal>USING</literal> clause (Peter Eisentraut)
       </para>
 
       <para>
        The alias is created by using <literal>AS</literal> after the
-      <literal>USING</literal> clause and represents an alias for the
-      <literal>USING</literal> columns.
+       <literal>USING</literal> clause and represents an alias for the
+       <literal>USING</literal> columns.
       </para>
      </listitem>
 
@@ -2149,7 +2149,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
       <para>
        For example, <literal>GROUP BY CUBE (a,b), CUBE (b,c)</literal>
        will generate duplicate grouping combinations without
-      <literal>DISTINCT</literal>.
+       <literal>DISTINCT</literal>.
       </para>
      </listitem>
 
@@ -2283,7 +2283,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
       <para>
        Previously non-function call
-      <acronym>SQL</acronym> standard syntax, e.g. <link
+       <acronym>SQL</acronym> standard syntax, e.g. <link
        linkend="functions-formatting"><function>EXTRACT</function></link>,
        were converted to non-<acronym>SQL</acronym> standard function
        calls.
@@ -2435,7 +2435,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
       </para>
 
       <para>
-      <type>JSONB</type> subscripting can be used to extract and assign
+       <type>JSONB</type> subscripting can be used to extract and assign
        to portions of <type>JSONB</type> documents.
       </para>
      </listitem>
@@ -2513,7 +2513,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
       <para>
        The previous limit was 4k bytes.  Also remove function
-      <function>t_readline()</function>.
+       <function>t_readline()</function>.
       </para>
      </listitem>
 
@@ -2601,7 +2601,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <para>
        Allow <link linkend="protocol-format-codes">binary data
        transfer</link> to be more forgiving of array and record
-      <type>OID</type> mismatches (Tom Lane)
+       <type>OID</type> mismatches (Tom Lane)
       </para>
      </listitem>
 
@@ -2636,7 +2636,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
        Allow <acronym>SQL</acronym>-language <link
        linkend="sql-createfunction">functions</link> and <link
        linkend="sql-createprocedure">procedures</link> to use
-      <acronym>SQL</acronym>-standard function bodies (Peter Eisentraut)
+       <acronym>SQL</acronym>-standard function bodies (Peter Eisentraut)
       </para>
 
       <para>
@@ -2655,7 +2655,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <para>
        Allow <link linkend="sql-createprocedure">procedures</link> to have
-      <literal>OUT</literal> parameters (Peter Eisentraut)
+       <literal>OUT</literal> parameters (Peter Eisentraut)
       </para>
      </listitem>
 
@@ -2673,12 +2673,12 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <para>
        The functions are <link
        linkend="functions-array"><function>array_append()</function></link>,
-      <function>array_prepend()</function>,
-      <function>array_cat()</function>,
-      <function>array_position()</function>,
-      <function>array_positions()</function>,
-      <function>array_remove()</function>,
-      <function>array_replace()</function>, and <link
+       <function>array_prepend()</function>,
+       <function>array_cat()</function>,
+       <function>array_position()</function>,
+       <function>array_positions()</function>,
+       <function>array_remove()</function>,
+       <function>array_replace()</function>, and <link
        linkend="functions-math"><function>width_bucket()</function></link>.
        Previously only identical data types could be used.
       </para>
@@ -2847,7 +2847,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       <para>
        The new syntax is <literal>SUBSTRING(text SIMILAR pattern ESCAPE
        escapechar)</literal>.  The previous standard syntax was
-      <literal>SUBSTRING(text FROM pattern FOR escapechar)</literal>,
+       <literal>SUBSTRING(text FROM pattern FOR escapechar)</literal>,
        and is still supported by Postgres.
       </para>
      </listitem>
@@ -2904,7 +2904,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <para>
        Cause <link
        linkend="functions-math"><function>exp()</function></link> and
-      <function>power()</function> for negative-infinity exponents to
+       <function>power()</function> for negative-infinity exponents to
        return zero (Tom Lane)
       </para>
 
@@ -2971,8 +2971,8 @@ Author: Michael Paquier <michael@paquier.xyz>
       <para>
        Change <link
        linkend="functions-info"><function>pg_describe_object()</function></link>,
-      <function>pg_identify_object()</function>, and
-      <function>pg_identify_object_as_address()</function> to always report
+       <function>pg_identify_object()</function>, and
+       <function>pg_identify_object_as_address()</function> to always report
        helpful error messages for non-existent objects (Michael Paquier)
       </para>
      </listitem>
@@ -3074,8 +3074,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
       <para>
        New options are <literal>read-only</literal>,
-      <literal>primary</literal>, <literal>standby</literal>, and
-      <literal>prefer-standby</literal>.
+       <literal>primary</literal>, <literal>standby</literal>, and
+       <literal>prefer-standby</literal>.
       </para>
      </listitem>
 
@@ -3166,7 +3166,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
       <para>
        The options are <option>--no-index-cleanup</option> and
-      <option>--no-truncate</option>.
+       <option>--no-truncate</option>.
       </para>
      </listitem>
 
@@ -3196,7 +3196,7 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
       <para>
        Add <link
        linkend="pgbench"><application>pgbench</application></link>
-      <function>permute()</function> function to randomly shuffle values
+       <function>permute()</function> function to randomly shuffle values
        (Fabien Coelho, Hironobu Suzuki, Dean Rasheed)
       </para>
      </listitem>
@@ -3266,7 +3266,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
        <para>
         Allow <application>psql</application>'s \dt and \di to show
-       <acronym>TOAST</acronym> tables and their indexes (Justin Pryzby)
+        <acronym>TOAST</acronym> tables and their indexes (Justin Pryzby)
        </para>
       </listitem>
 
@@ -3303,7 +3303,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
        <para>
         When editing the previous query or a file with
-       <application>psql</application>'s \e, or using \ef and \ev, ignore
+        <application>psql</application>'s \e, or using \ef and \ev, ignore
         the contents if the editor exits without saving (Laurenz Albe)
        </para>
 
@@ -3446,7 +3446,7 @@ Author: Magnus Hagander <magnus@hagander.net>
       <para>
        Remove support for the <link
        linkend="app-postgres"><application>postmaster</application></link>
-      <option>-o</option> option (Magnus Hagander)
+       <option>-o</option> option (Magnus Hagander)
       </para>
 
       <para>
@@ -3491,7 +3491,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <para>
        With the removal of the ! operator in this release,
-      <function>factorial()</function> is the only built-in way to compute
+       <function>factorial()</function> is the only built-in way to compute
        a factorial.
       </para>
      </listitem>
@@ -3611,7 +3611,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
       <para>
        Change SHA1, SHA2, and MD5 hash computations to use the
-      <productname>OpenSSL</productname> <acronym>EVP API</acronym>
+       <productname>OpenSSL</productname> <acronym>EVP API</acronym>
        (Michael Paquier)
       </para>
 
@@ -3734,7 +3734,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <para>
        Allow <function>pgstattuple_approx()</function> to report on
-      <acronym>TOAST</acronym> tables (Peter Eisentraut)
+       <acronym>TOAST</acronym> tables (Peter Eisentraut)
       </para>
      </listitem>
 
@@ -3842,7 +3842,7 @@ Author: Bruce Momjian <bruce@momjian.us>
 
       <para>
        Move query hash computation from
-      <application>pg_stat_statements</application> to the core server
+       <application>pg_stat_statements</application> to the core server
        (Julien Rouhaud)
       </para>
 
@@ -3880,7 +3880,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
       <para>
        Add row counts for utility commands to
-      <structname>pg_stat_statements</structname>> (Fujii Masao, Katsuragi
+       <structname>pg_stat_statements</structname>> (Fujii Masao, Katsuragi
        Yuta, Seino Yuki)
       </para>
      </listitem>
@@ -3919,7 +3919,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 
        <para>
         Allow <application>postgres_fdw</application> to
-       <command>INSERT</command> rows in bulk (Takayuki Tsunakawa, Tomas
+        <command>INSERT</command> rows in bulk (Takayuki Tsunakawa, Tomas
         Vondra, Amit Langote)
        </para>
       </listitem>
@@ -3950,7 +3950,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
        <para>
         Add <application>postgres_fdw</application> function
-       <function>postgres_fdw_get_connections()</function> to report open
+        <function>postgres_fdw_get_connections()</function> to report open
         foreign server connections (Bharath Rupireddy)
        </para>
       </listitem>
