@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 28;
+use Test::More tests => 31;
 
 # Initialize publisher node
 my $node_publisher = get_new_node('publisher');
@@ -118,7 +118,7 @@ $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_mixed VALUES (2, 'bar', 2.2)");
 
 $node_publisher->safe_psql('postgres',
-	"INSERT INTO tab_full_pk VALUES (1, 'foo')");
+	"INSERT INTO tab_full_pk VALUES (1, 'foo'), (2, 'baz')");
 
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_nothing VALUES (generate_series(1,20))");
@@ -296,6 +296,38 @@ $result = $node_subscriber->safe_psql('postgres',
 is( $result, qq(local|1.1|baz|1
 local|2.2|bar|2),
 	'update works with different column order and subscriber local values');
+
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT * FROM tab_full_pk ORDER BY a");
+is( $result, qq(1|bar
+2|baz),
+	'update works with REPLICA IDENTITY FULL and a primary key');
+
+# Check that subscriber handles cases where update/delete target tuple
+# is missing.  We have to look for the DEBUG1 log messages about that,
+# so temporarily bump up the log verbosity.
+$node_subscriber->append_conf('postgresql.conf', "log_min_messages = debug1");
+$node_subscriber->reload;
+
+$node_subscriber->safe_psql('postgres', "DELETE FROM tab_full_pk");
+
+$node_publisher->safe_psql('postgres',
+	"UPDATE tab_full_pk SET b = 'quux' WHERE a = 1");
+$node_publisher->safe_psql('postgres', "DELETE FROM tab_full_pk WHERE a = 2");
+
+$node_publisher->wait_for_catchup('tap_sub');
+
+my $logfile = slurp_file($node_subscriber->logfile());
+ok( $logfile =~
+	  qr/logical replication did not find row to be updated in replication target relation "tab_full_pk"/,
+	'update target row is missing');
+ok( $logfile =~
+	  qr/logical replication did not find row to be deleted in replication target relation "tab_full_pk"/,
+	'delete target row is missing');
+
+$node_subscriber->append_conf('postgresql.conf',
+	"log_min_messages = warning");
+$node_subscriber->reload;
 
 # check behavior with toasted values
 

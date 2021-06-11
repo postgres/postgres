@@ -620,7 +620,9 @@ logicalrep_partmap_init(void)
  * logicalrep_partition_open
  *
  * Returned entry reuses most of the values of the root table's entry, save
- * the attribute map, which can be different for the partition.
+ * the attribute map, which can be different for the partition.  However,
+ * we must physically copy all the data, in case the root table's entry
+ * gets freed/rebuilt.
  *
  * Note there's no logicalrep_partition_close, because the caller closes the
  * component relation.
@@ -656,7 +658,7 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 
 	part_entry->partoid = partOid;
 
-	/* Remote relation is used as-is from the root entry. */
+	/* Remote relation is copied as-is from the root entry. */
 	entry = &part_entry->relmapentry;
 	entry->remoterel.remoteid = remoterel->remoteid;
 	entry->remoterel.nspname = pstrdup(remoterel->nspname);
@@ -699,7 +701,12 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 		}
 	}
 	else
-		entry->attrmap = attrmap;
+	{
+		/* Lacking copy_attmap, do this the hard way. */
+		entry->attrmap = make_attrmap(attrmap->maplen);
+		memcpy(entry->attrmap->attnums, attrmap->attnums,
+			   attrmap->maplen * sizeof(AttrNumber));
+	}
 
 	entry->updatable = root->updatable;
 

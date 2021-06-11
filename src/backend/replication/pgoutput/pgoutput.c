@@ -612,8 +612,11 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 					/* Convert tuples if needed. */
 					if (relentry->map)
 					{
-						oldtuple = execute_attr_map_tuple(oldtuple, relentry->map);
-						newtuple = execute_attr_map_tuple(newtuple, relentry->map);
+						if (oldtuple)
+							oldtuple = execute_attr_map_tuple(oldtuple,
+															  relentry->map);
+						newtuple = execute_attr_map_tuple(newtuple,
+														  relentry->map);
 					}
 				}
 

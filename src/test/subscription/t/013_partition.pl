@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 56;
+use Test::More tests => 62;
 
 # setup
 
@@ -347,6 +347,46 @@ $result =
   $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab1 ORDER BY 1");
 is($result, qq(), 'truncate of tab1 replicated');
 
+# Check that subscriber handles cases where update/delete target tuple
+# is missing.  We have to look for the DEBUG1 log messages about that,
+# so temporarily bump up the log verbosity.
+$node_subscriber1->append_conf('postgresql.conf',
+	"log_min_messages = debug1");
+$node_subscriber1->reload;
+
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tab1 VALUES (1, 'foo'), (4, 'bar'), (10, 'baz')");
+
+$node_publisher->wait_for_catchup('sub1');
+$node_publisher->wait_for_catchup('sub2');
+
+$node_subscriber1->safe_psql('postgres', "DELETE FROM tab1");
+
+$node_publisher->safe_psql('postgres',
+	"UPDATE tab1 SET b = 'quux' WHERE a = 4");
+$node_publisher->safe_psql('postgres', "DELETE FROM tab1");
+
+$node_publisher->wait_for_catchup('sub1');
+$node_publisher->wait_for_catchup('sub2');
+
+my $logfile = slurp_file($node_subscriber1->logfile());
+ok( $logfile =~
+	  qr/logical replication did not find row to be updated in replication target relation's partition "tab1_2_2"/,
+	'update target row is missing in tab1_2_2');
+ok( $logfile =~
+	  qr/logical replication did not find row to be deleted in replication target relation "tab1_1"/,
+	'delete target row is missing in tab1_1');
+ok( $logfile =~
+	  qr/logical replication did not find row to be deleted in replication target relation "tab1_2_2"/,
+	'delete target row is missing in tab1_2_2');
+ok( $logfile =~
+	  qr/logical replication did not find row to be deleted in replication target relation "tab1_def"/,
+	'delete target row is missing in tab1_def');
+
+$node_subscriber1->append_conf('postgresql.conf',
+	"log_min_messages = warning");
+$node_subscriber1->reload;
+
 # Tests for replication using root table identity and schema
 
 # publisher
@@ -650,3 +690,32 @@ is( $result, qq(pub_tab2|1|xxx
 pub_tab2|3|yyy
 pub_tab2|5|zzz
 xxx_c|6|aaa), 'inserts into tab2 replicated');
+
+# Check that subscriber handles cases where update/delete target tuple
+# is missing.  We have to look for the DEBUG1 log messages about that,
+# so temporarily bump up the log verbosity.
+$node_subscriber1->append_conf('postgresql.conf',
+	"log_min_messages = debug1");
+$node_subscriber1->reload;
+
+$node_subscriber1->safe_psql('postgres', "DELETE FROM tab2");
+
+$node_publisher->safe_psql('postgres',
+	"UPDATE tab2 SET b = 'quux' WHERE a = 5");
+$node_publisher->safe_psql('postgres', "DELETE FROM tab2 WHERE a = 1");
+
+$node_publisher->wait_for_catchup('sub_viaroot');
+$node_publisher->wait_for_catchup('sub2');
+
+$logfile = slurp_file($node_subscriber1->logfile());
+ok( $logfile =~
+	  qr/logical replication did not find row to be updated in replication target relation's partition "tab2_1"/,
+	'update target row is missing in tab2_1');
+ok( $logfile =~
+	  qr/logical replication did not find row to be deleted in replication target relation "tab2_1"/,
+	'delete target row is missing in tab2_1');
+
+# No need for this until more tests are added.
+# $node_subscriber1->append_conf('postgresql.conf',
+# 	"log_min_messages = warning");
+# $node_subscriber1->reload;
