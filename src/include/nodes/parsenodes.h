@@ -2912,8 +2912,8 @@ typedef struct CreateStatsStmt
 	List	   *exprs;			/* expressions to build statistics on */
 	List	   *relations;		/* rels to build stats on (list of RangeVar) */
 	char	   *stxcomment;		/* comment to apply to stats, or NULL */
-	bool		if_not_exists;	/* do nothing if stats name already exists */
 	bool		transformed;	/* true when transformStatsStmt is finished */
+	bool		if_not_exists;	/* do nothing if stats name already exists */
 } CreateStatsStmt;
 
 /*

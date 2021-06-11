@@ -1980,8 +1980,8 @@ generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 	stats->exprs = def_names;
 	stats->relations = list_make1(heapRel);
 	stats->stxcomment = NULL;
-	stats->if_not_exists = false;
 	stats->transformed = true;	/* don't need transformStatsStmt again */
+	stats->if_not_exists = false;
 
 	/* Clean up */
 	ReleaseSysCache(ht_stats);
