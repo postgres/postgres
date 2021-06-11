@@ -1538,7 +1538,7 @@ SELECT '\xDEADBEEF';
    <para>
     The reason that single quotes must be doubled, as shown
     in <xref linkend="datatype-binary-sqlesc"/>, is that this
-    is true for any string literal in a SQL command.  The generic
+    is true for any string literal in an SQL command.  The generic
     string-literal parser consumes the outermost single quotes
     and reduces any pair of single quotes to one data character.
     What the <type>bytea</type> input function sees is just one

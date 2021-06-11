@@ -515,7 +515,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    as <literal>ON UPDATE CASCADE</literal> or <literal>ON DELETE SET NULL</literal>, are
    treated as part of the SQL command that caused them (note that such
    actions are never deferred).  Relevant triggers on the affected table will
-   be fired, so that this provides another way in which a SQL command might
+   be fired, so that this provides another way in which an SQL command might
    fire triggers not directly matching its type.  In simple cases, triggers
    that request transition relations will see all changes caused in their
    table by a single original SQL command as a single transition relation.

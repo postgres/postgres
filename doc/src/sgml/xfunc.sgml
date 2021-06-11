@@ -194,7 +194,7 @@
      must be a <command>SELECT</command> or have a <literal>RETURNING</literal>
      clause that returns whatever is
      specified as the function's return type.  Alternatively, if you
-     want to define a SQL function that performs actions but has no
+     want to define an SQL function that performs actions but has no
      useful value to return, you can define it as returning <type>void</type>.
      For example, this function removes rows with negative salaries from
      the <literal>emp</literal> table:
@@ -234,8 +234,8 @@ CALL clean_emp();
 
     <note>
      <para>
-      The entire body of a SQL function is parsed before any of it is
-      executed.  While a SQL function can contain commands that alter
+      The entire body of an SQL function is parsed before any of it is
+      executed.  While an SQL function can contain commands that alter
       the system catalogs (e.g., <command>CREATE TABLE</command>), the effects
       of such commands will not be visible during parse analysis of
       later commands in the function.  Thus, for example,
@@ -243,7 +243,7 @@ CALL clean_emp();
       will not work as desired if packaged up into a single SQL function,
       since <structname>foo</structname> won't exist yet when the <command>INSERT</command>
       command is parsed.  It's recommended to use <application>PL/pgSQL</application>
-      instead of a SQL function in this type of situation.
+      instead of an SQL function in this type of situation.
      </para>
    </note>
 
@@ -267,7 +267,7 @@ CALL clean_emp();
    </indexterm>
 
     <para>
-     Arguments of a SQL function can be referenced in the function
+     Arguments of an SQL function can be referenced in the function
      body using either names or numbers.  Examples of both methods appear
      below.
     </para>
@@ -1473,7 +1473,7 @@ SELECT concat_values('|', 1, 4, 2);
     </indexterm>
 
     <para>
-     When a SQL function has one or more parameters of collatable data types,
+     When an SQL function has one or more parameters of collatable data types,
      a collation is identified for each function call depending on the
      collations assigned to the actual arguments, as described in <xref
      linkend="collation"/>.  If a collation is successfully identified
@@ -1508,7 +1508,7 @@ $$ LANGUAGE SQL;
 
     <para>
      If no common collation can be identified among the actual arguments,
-     then a SQL function treats its parameters as having their data types'
+     then an SQL function treats its parameters as having their data types'
      default collation (which is usually the database's default collation,
      but could be different for parameters of domain types).
     </para>
@@ -2952,7 +2952,7 @@ HeapTupleGetDatum(HeapTuple tuple)
      save enough state across calls to remember what it was doing and
      return the correct next item on each call.
      In the other method, called <firstterm>Materialize</firstterm> mode,
-     a SRF fills and returns a tuplestore object containing its
+     an SRF fills and returns a tuplestore object containing its
      entire result; then only one call occurs for the whole result, and
      no inter-call state is needed.
     </para>
@@ -3375,7 +3375,7 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
      There is a variant of polymorphism that is only available to C-language
      functions: they can be declared to take parameters of type
      <literal>"any"</literal>.  (Note that this type name must be double-quoted,
-     since it's also a SQL reserved word.)  This works like
+     since it's also an SQL reserved word.)  This works like
      <type>anyelement</type> except that it does not constrain different
      <literal>"any"</literal> arguments to be the same type, nor do they help
      determine the function's result type.  A C-language function can also
@@ -3544,7 +3544,7 @@ if (!ptr)
 
    <para>
     It is also possible to attach a <firstterm>planner support
-    function</firstterm> to a SQL-callable function (called
+    function</firstterm> to an SQL-callable function (called
     its <firstterm>target function</firstterm>), and thereby provide
     knowledge about the target function that is too complex to be
     represented declaratively.  Planner support functions have to be

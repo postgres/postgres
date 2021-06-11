@@ -511,13 +511,13 @@ init_execution_state(List *queryTree_list,
 					((CopyStmt *) stmt->utilityStmt)->filename == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot COPY to/from client in a SQL function")));
+							 errmsg("cannot COPY to/from client in an SQL function")));
 
 				if (IsA(stmt->utilityStmt, TransactionStmt))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					/* translator: %s is a SQL statement name */
-							 errmsg("%s is not allowed in a SQL function",
+							 errmsg("%s is not allowed in an SQL function",
 									CreateCommandName(stmt->utilityStmt))));
 			}
 

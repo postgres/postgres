@@ -136,7 +136,7 @@ test=# SELECT page_checksum(get_raw_page('pg_class', 0), 0);
     <listitem>
      <para>
       <function>fsm_page_contents</function> shows the internal node structure
-      of a FSM page.  For example:
+      of an FSM page.  For example:
 <screen>
 test=# SELECT fsm_page_contents(get_raw_page('pg_class', 'fsm', 0));
 </screen>

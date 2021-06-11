@@ -1790,7 +1790,7 @@ SELECT ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
       <listitem>
        <para>
         This form of <function>ts_rewrite</function> accepts a starting
-        <replaceable>query</replaceable> and a SQL <replaceable>select</replaceable> command, which
+        <replaceable>query</replaceable> and an SQL <replaceable>select</replaceable> command, which
         is given as a text string.  The <replaceable>select</replaceable> must yield two
         columns of <type>tsquery</type> type.  For each row of the
         <replaceable>select</replaceable> result, occurrences of the first column value

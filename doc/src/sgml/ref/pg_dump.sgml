@@ -1413,7 +1413,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   <title>Examples</title>
 
   <para>
-   To dump a database called <literal>mydb</literal> into a SQL-script file:
+   To dump a database called <literal>mydb</literal> into an SQL-script file:
 <screen>
 <prompt>$</prompt> <userinput>pg_dump mydb &gt; db.sql</userinput>
 </screen>

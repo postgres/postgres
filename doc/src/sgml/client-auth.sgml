@@ -1462,7 +1462,7 @@ omicron         bryanh                  guest1
       <listitem>
        <para>
         Allows for mapping between system and database user names. See
-        <xref linkend="auth-username-maps"/> for details.  For a SSPI/Kerberos
+        <xref linkend="auth-username-maps"/> for details.  For an SSPI/Kerberos
         principal, such as <literal>username@EXAMPLE.COM</literal> (or, less
         commonly, <literal>username/hostbased@EXAMPLE.COM</literal>), the
         user name used for mapping is

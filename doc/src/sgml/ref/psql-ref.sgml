@@ -1044,7 +1044,7 @@ testdb=&gt;
         For <literal>\copy ... from stdin</literal>, data rows are read from the same
         source that issued the command, continuing until <literal>\.</literal>
         is read or the stream reaches <acronym>EOF</acronym>. This option is useful
-        for populating tables in-line within a SQL script file.
+        for populating tables in-line within an SQL script file.
         For <literal>\copy ... to stdout</literal>, output is sent to the same place
         as <application>psql</application> command output, and
         the <literal>COPY <replaceable>count</replaceable></literal> command status is
@@ -2243,7 +2243,7 @@ Tue Oct 26 21:40:57 CEST 1999
         <listitem>
         <para>
          Sends the current query buffer to the server, then treats
-         each column of each row of the query's output (if any) as a SQL
+         each column of each row of the query's output (if any) as an SQL
          statement to be executed.  For example, to create an index on each
          column of <structname>my_table</structname>:
 <programlisting>
@@ -3510,7 +3510,7 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         </para>
 
         <para>
-        Normally, <application>psql</application> will dispatch a SQL command to the
+        Normally, <application>psql</application> will dispatch an SQL command to the
         server as soon as it reaches the command-ending semicolon, even if
         more input remains on the current line.  Thus for example entering
 <programlisting>

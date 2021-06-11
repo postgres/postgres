@@ -208,7 +208,7 @@ EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 0);
 
   <para>
    Create table <structname>t2</structname> with two perfectly correlated columns
-   (containing identical data), and a MCV list on those columns:
+   (containing identical data), and an MCV list on those columns:
 
 <programlisting>
 CREATE TABLE t2 (

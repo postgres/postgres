@@ -51,7 +51,7 @@
        In general, enclose the value in single quotes, doubling any single
        quotes within the value.  Quotes can usually be omitted if the value
        is a simple number or identifier, however.
-       (Values that match a SQL keyword require quoting in some contexts.)
+       (Values that match an SQL keyword require quoting in some contexts.)
       </para>
      </listitem>
 
@@ -222,7 +222,7 @@ shared_buffers = 128MB
       <productname>PostgreSQL</productname> provides three SQL
       commands to establish configuration defaults.
       The already-mentioned <command>ALTER SYSTEM</command> command
-      provides a SQL-accessible means of changing global defaults; it is
+      provides an SQL-accessible means of changing global defaults; it is
       functionally equivalent to editing <filename>postgresql.conf</filename>.
       In addition, there are two commands that allow setting of defaults
       on a per-database or per-role basis:
@@ -9625,7 +9625,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         <literal>\'</literal>. However, use of <literal>\'</literal> creates security risks
         because in some client character set encodings, there are multibyte
         characters in which the last byte is numerically equivalent to ASCII
-        <literal>\</literal>.  If client-side code does escaping incorrectly then a
+        <literal>\</literal>.  If client-side code does escaping incorrectly then an
         SQL-injection attack is possible.  This risk can be prevented by
         making the server reject queries in which a quote mark appears to be
         escaped by a backslash.

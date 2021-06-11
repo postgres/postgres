@@ -5149,7 +5149,7 @@ ParseScript(const char *script, const char *desc, int weight)
 
 					if (index == 0)
 						syntax_error(desc, lineno, NULL, NULL,
-									 "\\gset must follow a SQL command",
+									 "\\gset must follow an SQL command",
 									 NULL, -1);
 
 					cmd = ps.commands[index - 1];
@@ -5157,7 +5157,7 @@ ParseScript(const char *script, const char *desc, int weight)
 					if (cmd->type != SQL_COMMAND ||
 						cmd->varprefix != NULL)
 						syntax_error(desc, lineno, NULL, NULL,
-									 "\\gset must follow a SQL command",
+									 "\\gset must follow an SQL command",
 									 cmd->first_line, -1);
 
 					/* get variable prefix */

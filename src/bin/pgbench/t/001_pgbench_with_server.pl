@@ -1091,10 +1091,10 @@ SELECT LEAST(} . join(', ', (':i') x 256) . q{)}
 		'gset no row',                   2,
 		[qr{expected one row, got 0\b}], q{SELECT WHERE FALSE \gset}
 	],
-	[ 'gset alone', 1, [qr{gset must follow a SQL command}], q{\gset} ],
+	[ 'gset alone', 1, [qr{gset must follow an SQL command}], q{\gset} ],
 	[
 		'gset no SQL',                        1,
-		[qr{gset must follow a SQL command}], q{\set i +1
+		[qr{gset must follow an SQL command}], q{\set i +1
 \gset}
 	],
 	[
@@ -1103,7 +1103,7 @@ SELECT LEAST(} . join(', ', (':i') x 256) . q{)}
 	],
 	[
 		'gset after gset',                    1,
-		[qr{gset must follow a SQL command}], q{SELECT 1 AS i \gset
+		[qr{gset must follow an SQL command}], q{SELECT 1 AS i \gset
 \gset}
 	],
 	[

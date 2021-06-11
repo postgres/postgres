@@ -1441,7 +1441,7 @@ include $(PGXS)
     and include the global <acronym>PGXS</acronym> makefile.
     Here is an example that builds an extension module named
     <literal>isbn_issn</literal>, consisting of a shared library containing
-    some C code, an extension control file, a SQL script, an include file
+    some C code, an extension control file, an SQL script, an include file
     (only needed if other modules might need to access the extension functions
     without going via SQL), and a documentation text file:
 <programlisting>

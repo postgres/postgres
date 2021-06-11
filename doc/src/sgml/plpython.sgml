@@ -577,7 +577,7 @@ AS $$
 $$ LANGUAGE plpythonu;
 </programlisting>
 
-       To return a SQL null for any column, insert <symbol>None</symbol> at
+       To return an SQL null for any column, insert <symbol>None</symbol> at
        the corresponding position.
       </para>
       <para>
@@ -605,7 +605,7 @@ $$ LANGUAGE plpythonu;
 
        Any extra dictionary key/value pairs are ignored. Missing keys are
        treated as errors.
-       To return a SQL null value for any column, insert
+       To return an SQL null value for any column, insert
        <symbol>None</symbol> with the corresponding column name as the key.
       </para>
      </listitem>

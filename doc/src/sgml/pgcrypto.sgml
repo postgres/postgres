@@ -521,7 +521,7 @@ gen_salt(type text [, iter_count integer ]) returns text
    </listitem>
    <listitem>
     <para>
-     An SHA1 hash of the random prefix and data is appended.
+     A SHA1 hash of the random prefix and data is appended.
     </para>
    </listitem>
    <listitem>

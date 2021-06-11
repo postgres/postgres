@@ -1222,7 +1222,7 @@ section consider all of their inputs in one resolution step.
 
 <para>
 The rules given in the preceding sections will result in assignment
-of non-<type>unknown</type> data types to all expressions in a SQL query,
+of non-<type>unknown</type> data types to all expressions in an SQL query,
 except for unspecified-type literals that appear as simple output
 columns of a <command>SELECT</command> command.  For example, in
 

@@ -28,7 +28,7 @@ method_name(internal) RETURNS tsm_handler
   The name of the function is the same method name appearing in the
   <literal>TABLESAMPLE</literal> clause.  The <type>internal</type> argument is a dummy
   (always having value zero) that simply serves to prevent this function from
-  being called directly from a SQL command.
+  being called directly from an SQL command.
   The result of the function must be a palloc'd struct of
   type <type>TsmRoutine</type>, which contains pointers to support functions for
   the sampling method.  These support functions are plain C functions and

@@ -3468,7 +3468,7 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
           <listitem>
            <para>
             The text of a failed internally-generated command.  This could
-            be, for example, a SQL query issued by a PL/pgSQL function.
+            be, for example, an SQL query issued by a PL/pgSQL function.
            </para>
           </listitem>
          </varlistentry>
@@ -5468,7 +5468,7 @@ UPDATE mytable SET x = x + 1 WHERE id = 42;
   </indexterm>
 
   <para>
-   Ordinarily, <application>libpq</application> collects a SQL command's
+   Ordinarily, <application>libpq</application> collects an SQL command's
    entire result and returns it to the application as a single
    <structname>PGresult</structname>.  This can be unworkable for commands
    that return a large number of rows.  For such cases, applications can use

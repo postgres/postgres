@@ -1482,14 +1482,14 @@ dblink_get_result(text connname [, bool fail_on_error]) returns setof record
    <title>Return Value</title>
 
    <para>
-    For an async query (that is, a SQL statement returning rows),
+    For an async query (that is, an SQL statement returning rows),
     the function returns the row(s) produced by the query.  To use this
     function, you will need to specify the expected set of columns,
     as previously discussed for <function>dblink</function>.
    </para>
 
    <para>
-    For an async command (that is, a SQL statement not returning rows),
+    For an async command (that is, an SQL statement not returning rows),
     the function returns a single row with a single text column containing
     the command's status string.  It is still necessary to specify that
     the result will have a single text column in the calling <literal>FROM</literal>
@@ -1777,7 +1777,7 @@ dblink_build_sql_insert(text relname,
    <para>
     <function>dblink_build_sql_insert</function> can be useful in doing selective
     replication of a local table to a remote database.  It selects a row
-    from the local table based on primary key, and then builds a SQL
+    from the local table based on primary key, and then builds an SQL
     <command>INSERT</command> command that will duplicate that row, but with
     the primary key values replaced by the values in the last argument.
     (To make an exact copy of the row, just specify the same values for
@@ -1909,7 +1909,7 @@ dblink_build_sql_delete(text relname,
 
    <para>
     <function>dblink_build_sql_delete</function> can be useful in doing selective
-    replication of a local table to a remote database.  It builds a SQL
+    replication of a local table to a remote database.  It builds an SQL
     <command>DELETE</command> command that will delete the row with the given
     primary key values.
    </para>
@@ -2029,7 +2029,7 @@ dblink_build_sql_update(text relname,
    <para>
     <function>dblink_build_sql_update</function> can be useful in doing selective
     replication of a local table to a remote database.  It selects a row
-    from the local table based on primary key, and then builds a SQL
+    from the local table based on primary key, and then builds an SQL
     <command>UPDATE</command> command that will duplicate that row, but with
     the primary key values replaced by the values in the last argument.
     (To make an exact copy of the row, just specify the same values for

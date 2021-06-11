@@ -804,7 +804,7 @@ ltreetest=&gt; SELECT subpath(path,0,2)||'Space'||subpath(path,2) FROM test WHER
   </para>
 
   <para>
-   We could simplify this by creating a SQL function that inserts a label
+   We could simplify this by creating an SQL function that inserts a label
    at a specified position in a path:
 <screen>
 CREATE FUNCTION ins_label(ltree, int, text) RETURNS ltree

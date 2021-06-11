@@ -269,7 +269,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
   </para>
 
   <para>
-   The operators should not be defined by SQL functions.  A SQL function
+   The operators should not be defined by SQL functions.  An SQL function
    is likely to be inlined into the calling query, which will prevent
    the optimizer from recognizing that the query matches an index.
   </para>

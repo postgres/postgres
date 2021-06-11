@@ -354,13 +354,13 @@ current=testdb1 (should be testdb1)
   </para>
 
   <para>
-  The third option is to declare a SQL identifier linked to
+  The third option is to declare an SQL identifier linked to
   the connection, for example:
 <programlisting>
 EXEC SQL AT <replaceable>connection-name</replaceable> DECLARE <replaceable>statement-name</replaceable> STATEMENT;
 EXEC SQL PREPARE <replaceable>statement-name</replaceable> FROM :<replaceable>dyn-string</replaceable>;
 </programlisting>
-   Once you link a SQL identifier to a connection, you execute dynamic SQL
+   Once you link an SQL identifier to a connection, you execute dynamic SQL
    without an AT clause. Note that this option behaves like preprocessor
    directives, therefore the link is enabled only in the file.
   </para>
@@ -1542,7 +1542,7 @@ EXEC SQL END DECLARE SECTION;
      variables and vice-versa.  However, when creating a statement ecpg does
      not know the types of the columns, so that it cannot check if a C array
      is input into a corresponding SQL-level array.  When processing the
-     output of a SQL statement, ecpg has the necessary information and thus
+     output of an SQL statement, ecpg has the necessary information and thus
      checks if both are arrays.
     </para>
 
@@ -4348,7 +4348,7 @@ switch (v.sqltype)
       parameters to a prepared query are:
      </para>
      <step><simpara>Create a prepared query (prepared statement)</simpara></step>
-     <step><simpara>Declare a sqlda_t structure as an input SQLDA.</simpara></step>
+     <step><simpara>Declare an sqlda_t structure as an input SQLDA.</simpara></step>
      <step><simpara>Allocate memory area (as sqlda_t structure) for the input SQLDA.</simpara></step>
      <step><simpara>Set (copy) input values in the allocated memory.</simpara></step>
      <step><simpara>Open a cursor with specifying the input SQLDA.</simpara></step>
@@ -4630,7 +4630,7 @@ main(void)
     EXEC SQL PREPARE stmt1 FROM :query;
     EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
 
-    /* Create a SQLDA structure for an input parameter */
+    /* Create an SQLDA structure for an input parameter */
     sqlda2 = (sqlda_t *)malloc(sizeof(sqlda_t) + sizeof(sqlvar_t));
     memset(sqlda2, 0, sizeof(sqlda_t) + sizeof(sqlvar_t));
     sqlda2->sqln = 2; /* a number of input variables */
@@ -6911,7 +6911,7 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
     <title>Description</title>
 
     <para>
-     <command>DECLARE STATEMENT</command> declares a SQL statement identifier.
+     <command>DECLARE STATEMENT</command> declares an SQL statement identifier.
      SQL statement identifier can be associated with the connection.
      When the identifier is used by dynamic SQL statements, the statements
      are executed using the associated connection.
@@ -6945,7 +6945,7 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
       <term><replaceable class="parameter">statement_name</replaceable></term>
       <listitem>
        <para>
-        The name of a SQL statement identifier, either as an SQL identifier or a host variable.
+        The name of an SQL statement identifier, either as an SQL identifier or a host variable.
        </para>
       </listitem>
      </varlistentry>

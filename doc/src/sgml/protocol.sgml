@@ -349,7 +349,7 @@
       <term>AuthenticationSSPI</term>
       <listitem>
        <para>
-        The frontend must now initiate a SSPI negotiation. The frontend
+        The frontend must now initiate an SSPI negotiation. The frontend
         will send a GSSResponse with the first part of the SSPI
         data stream in response to this. If further messages are needed,
         the server will respond with AuthenticationGSSContinue.
@@ -1605,7 +1605,7 @@ more details on SCRAM-SHA-256 and SCRAM-SHA-256-PLUS.
 <para>
   One or more server-challenge and client-response message will follow. Each
   server-challenge is sent in an AuthenticationSASLContinue message, followed
-  by a response from client in an SASLResponse message. The particulars of
+  by a response from client in a SASLResponse message. The particulars of
   the messages are mechanism specific.
 </para>
 </step>
@@ -6226,7 +6226,7 @@ message.
 <listitem>
 <para>
         Internal query: the text of a failed internally-generated command.
-        This could be, for example, a SQL query issued by a PL/pgSQL function.
+        This could be, for example, an SQL query issued by a PL/pgSQL function.
 </para>
 </listitem>
 </varlistentry>

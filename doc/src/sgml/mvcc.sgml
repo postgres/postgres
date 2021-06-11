@@ -703,7 +703,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     transactions might do, or it will not successfully commit.  It is
     important that an environment which uses this technique have a
     generalized way of handling serialization failures (which always return
-    with a SQLSTATE value of '40001'), because it will be very hard to
+    with an SQLSTATE value of '40001'), because it will be very hard to
     predict exactly which transactions might contribute to the read/write
     dependencies and need to be rolled back to prevent serialization
     anomalies.  The monitoring of read/write dependencies has a cost, as does

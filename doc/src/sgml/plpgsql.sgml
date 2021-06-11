@@ -1099,7 +1099,7 @@ PERFORM <replaceable>query</replaceable>;
       One might expect that writing <command>SELECT</command> directly
       would accomplish this result, but at
       present the only accepted way to do it is
-      <command>PERFORM</command>.  A SQL command that can return rows,
+      <command>PERFORM</command>.  An SQL command that can return rows,
       such as <command>SELECT</command>, will be rejected as an error
       unless it has an <literal>INTO</literal> clause as discussed in the
       next section.
@@ -1128,7 +1128,7 @@ PERFORM create_mv('cs_session_page_requests_mv', my_query);
     </indexterm>
 
     <para>
-     The result of a SQL command yielding a single row (possibly of multiple
+     The result of an SQL command yielding a single row (possibly of multiple
      columns) can be assigned to a record variable, row-type variable, or list
      of scalar variables.  This is done by writing the base SQL command and
      adding an <literal>INTO</literal> clause.  For example,
@@ -1317,7 +1317,7 @@ EXECUTE <replaceable class="command">command-string</replaceable> <optional> INT
 
     <para>
      The <literal>INTO</literal> clause specifies where the results of
-     a SQL command returning rows should be assigned. If a row variable
+     an SQL command returning rows should be assigned. If a row variable
      or variable list is provided, it must exactly match the structure
      of the command's results; if a
      record variable is provided, it will configure itself to match the
@@ -2659,7 +2659,7 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
 
     <para>
      The <literal>FOREACH</literal> loop is much like a <literal>FOR</literal> loop,
-     but instead of iterating through the rows returned by a SQL query,
+     but instead of iterating through the rows returned by an SQL query,
      it iterates through the elements of an array value.
      (In general, <literal>FOREACH</literal> is meant for looping through
      components of a composite-valued expression; variants for looping
@@ -4726,7 +4726,7 @@ INSERT INTO foo (foo) VALUES (foo(foo));
 
    <para>
     Another way to understand this is that variable substitution can only
-    insert data values into a SQL command; it cannot dynamically change which
+    insert data values into an SQL command; it cannot dynamically change which
     database objects are referenced by the command.  (If you want to do
     that, you must build a command string dynamically, as explained in
     <xref linkend="plpgsql-statements-executing-dyn"/>.)
@@ -4748,7 +4748,7 @@ INSERT INTO dest (col) SELECT foo + bar FROM src;
 
    <para>
     By default, <application>PL/pgSQL</application> will report an error if a name
-    in a SQL statement could refer to either a variable or a table column.
+    in an SQL statement could refer to either a variable or a table column.
     You can fix such a problem by renaming the variable or column,
     or by qualifying the ambiguous reference, or by telling
     <application>PL/pgSQL</application> which interpretation to prefer.
@@ -5384,7 +5384,7 @@ HINT:  Make sure the query returns the exact list of columns.
     <itemizedlist>
      <listitem>
       <para>
-       If a name used in a SQL command could be either a column name of a
+       If a name used in an SQL command could be either a column name of a
        table used in the command or a reference to a variable of the function,
        <application>PL/SQL</application> treats it as a column name.
        By default, <application>PL/pgSQL</application> will throw an error

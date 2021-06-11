@@ -411,7 +411,7 @@
        trigger <emphasis>will</emphasis> see the effects of data
        changes for rows previously processed in the same outer
        command.  This requires caution, since the ordering of these
-       change events is not in general predictable; a SQL command that
+       change events is not in general predictable; an SQL command that
        affects multiple rows can visit the rows in any order.
       </para>
      </listitem>

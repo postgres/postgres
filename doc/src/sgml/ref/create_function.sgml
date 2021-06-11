@@ -701,7 +701,7 @@ CREATE FUNCTION foo(int, int default 42) ...
   <title>Examples</title>
 
   <para>
-   Add two integers using a SQL function:
+   Add two integers using an SQL function:
 <programlisting>
 CREATE FUNCTION add(integer, integer) RETURNS integer
     AS 'select $1 + $2;'

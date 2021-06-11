@@ -15196,7 +15196,7 @@ table2-mapping
         <returnvalue>json</returnvalue>
        </para>
        <para>
-        Converts a SQL array to a JSON array.  The behavior is the same
+        Converts an SQL array to a JSON array.  The behavior is the same
         as <function>to_json</function> except that line feeds will be added
         between top-level array elements if the optional boolean parameter is
         true.
@@ -15216,7 +15216,7 @@ table2-mapping
         <returnvalue>json</returnvalue>
        </para>
        <para>
-        Converts a SQL composite value to a JSON object.  The behavior is the
+        Converts an SQL composite value to a JSON object.  The behavior is the
         same as <function>to_json</function> except that line feeds will be
         added between top-level elements if the optional boolean parameter is
         true.
@@ -15629,7 +15629,7 @@ table2-mapping
         <itemizedlist spacing="compact">
          <listitem>
           <para>
-           A JSON null value is converted to a SQL null in all cases.
+           A JSON null value is converted to an SQL null in all cases.
           </para>
          </listitem>
          <listitem>
@@ -16152,7 +16152,7 @@ table2-mapping
         <literal>string</literal>, <literal>number</literal>,
         <literal>boolean</literal>, and <literal>null</literal>.
         (The <literal>null</literal> result should not be confused
-        with a SQL NULL; see the examples.)
+        with an SQL NULL; see the examples.)
        </para>
        <para>
         <literal>json_typeof('-123.4')</literal>

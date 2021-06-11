@@ -338,7 +338,7 @@ aminsert (Relation indexRelation,
 
   <para>
    If the index AM wishes to cache data across successive index insertions
-   within a SQL statement, it can allocate space
+   within an SQL statement, it can allocate space
    in <literal>indexInfo-&gt;ii_Context</literal> and store a pointer to the
    data in <literal>indexInfo-&gt;ii_AmCache</literal> (which will be NULL
    initially).

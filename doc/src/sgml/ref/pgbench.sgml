@@ -1012,7 +1012,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
     Before <productname>PostgreSQL</productname> 9.6, SQL commands in script files
     were terminated by newlines, and so they could not be continued across
     lines.  Now a semicolon is <emphasis>required</emphasis> to separate consecutive
-    SQL commands (though a SQL command does not need one if it is followed
+    SQL commands (though an SQL command does not need one if it is followed
     by a meta command).  If you need to create a script file that works with
     both old and new versions of <application>pgbench</application>, be sure to write
     each SQL command on a single line ending with a semicolon.
@@ -1030,7 +1030,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
    <xref linkend="pgbench-automatic-variables"/>. A value specified for these
    variables using <option>-D</option> takes precedence over the automatic presets.
    Once set, a variable's
-   value can be inserted into a SQL command by writing
+   value can be inserted into an SQL command by writing
    <literal>:</literal><replaceable>variablename</replaceable>.  When running more than
    one client session, each session has its own set of variables.
    <application>pgbench</application> supports up to 255 variable uses in one
