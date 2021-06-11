@@ -38,6 +38,7 @@ F	26	Parse	 "" "SELECT 1; SELECT 2" 0
 F	12	Bind	 "" "" 0 0 0
 F	6	Describe	 P ""
 F	9	Execute	 "" 0
+F	6	Close	 P ""
 F	4	Sync
 B	NN	ErrorResponse	 S "ERROR" V "ERROR" C "42601" M "cannot insert multiple commands into a prepared statement" F "SSSS" L "SSSS" R "SSSS" \x00
 B	5	ReadyForQuery	 I
@@ -45,6 +46,7 @@ F	54	Parse	 "" "SELECT 1.0/g FROM generate_series(3, -1, -1) g" 0
 F	12	Bind	 "" "" 0 0 0
 F	6	Describe	 P ""
 F	9	Execute	 "" 0
+F	6	Close	 P ""
 F	4	Sync
 B	4	ParseComplete
 B	4	BindComplete

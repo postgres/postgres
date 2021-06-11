@@ -1329,7 +1329,8 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 	{
 		/*
 		 * In pipeline mode we cannot use the simple protocol, so we send
-		 * Parse, Bind, Describe Portal, Execute.
+		 * Parse, Bind, Describe Portal, Execute, Close Portal (with the
+		 * unnamed portal).
 		 */
 		if (pqPutMsgStart('P', conn) < 0 ||
 			pqPuts("", conn) < 0 ||
@@ -1353,6 +1354,11 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 		if (pqPutMsgStart('E', conn) < 0 ||
 			pqPuts("", conn) < 0 ||
 			pqPutInt(0, 4, conn) < 0 ||
+			pqPutMsgEnd(conn) < 0)
+			goto sendFailed;
+		if (pqPutMsgStart('C', conn) < 0 ||
+			pqPutc('P', conn) < 0 ||
+			pqPuts("", conn) < 0 ||
 			pqPutMsgEnd(conn) < 0)
 			goto sendFailed;
 
