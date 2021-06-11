@@ -61,7 +61,7 @@ PQuntrace(PGconn *conn)
 
 /* Set flags for current tracing session */
 void
-PQtraceSetFlags(PGconn *conn, int flags)
+PQsetTraceFlags(PGconn *conn, int flags)
 {
 	if (conn == NULL)
 		return;

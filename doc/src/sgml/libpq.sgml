@@ -6533,14 +6533,14 @@ void PQtrace(PGconn *conn, FILE *stream);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-PQtraceSetFlags">
-    <term><function>PQtraceSetFlags</function><indexterm><primary>PQtraceSetFlags</primary></indexterm></term>
+   <varlistentry id="libpq-PQsetTraceFlags">
+    <term><function>PQsetTraceFlags</function><indexterm><primary>PQtraceSetFlags</primary></indexterm></term>
 
     <listitem>
      <para>
       Controls the tracing behavior of client/server communication.
 <synopsis>
-void PQtraceSetFlags(PGconn *conn, int flags);
+void PQsetTraceFlags(PGconn *conn, int flags);
 </synopsis>
      </para>
 

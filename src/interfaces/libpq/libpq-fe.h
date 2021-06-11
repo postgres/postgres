@@ -403,7 +403,7 @@ extern void PQuntrace(PGconn *conn);
 #define PQTRACE_SUPPRESS_TIMESTAMPS		(1<<0)
 /* redact portions of some messages, for testing frameworks */
 #define PQTRACE_REGRESS_MODE			(1<<1)
-extern void PQtraceSetFlags(PGconn *conn, int flags);
+extern void PQsetTraceFlags(PGconn *conn, int flags);
 
 /* === in fe-exec.c === */
 

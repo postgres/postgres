@@ -1326,7 +1326,7 @@ main(int argc, char **argv)
 		setvbuf(trace, NULL, PG_IOLBF, 0);
 
 		PQtrace(conn, trace);
-		PQtraceSetFlags(conn,
+		PQsetTraceFlags(conn,
 						PQTRACE_SUPPRESS_TIMESTAMPS | PQTRACE_REGRESS_MODE);
 	}
 
