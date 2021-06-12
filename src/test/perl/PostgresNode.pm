@@ -2140,8 +2140,10 @@ sub poll_query_until
 
 		$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		chomp($stdout);
+		$stderr =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
+		chomp($stderr);
 
-		if ($stdout eq $expected)
+		if ($stdout eq $expected && $stderr eq '')
 		{
 			return 1;
 		}
@@ -2154,8 +2156,6 @@ sub poll_query_until
 
 	# The query result didn't change in 180 seconds. Give up. Print the
 	# output from the last attempt, hopefully that's useful for debugging.
-	$stderr =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
-	chomp($stderr);
 	diag qq(poll_query_until timed out executing this query:
 $query
 expecting this output:

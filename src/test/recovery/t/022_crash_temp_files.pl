@@ -139,7 +139,7 @@ $killme->finish;
 $killme2->finish;
 
 # Wait till server restarts
-$node->poll_query_until('postgres', 'SELECT 1', '1');
+$node->poll_query_until('postgres', undef, '');
 
 # Check for temporary files
 is( $node->safe_psql(
@@ -228,7 +228,7 @@ $killme->finish;
 $killme2->finish;
 
 # Wait till server restarts
-$node->poll_query_until('postgres', 'SELECT 1', '1');
+$node->poll_query_until('postgres', undef, '');
 
 # Check for temporary files -- should be there
 is( $node->safe_psql(
