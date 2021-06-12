@@ -362,6 +362,11 @@ $node_publisher->wait_for_catchup('sub2');
 
 $node_subscriber1->safe_psql('postgres', "DELETE FROM tab1");
 
+# Note that the current location of the log file is not grabbed immediately
+# after reloading the configuration, but after sending one SQL command to
+# the node so as we are sure that the reloading has taken effect.
+my $log_location = -s $node_subscriber1->logfile;
+
 $node_publisher->safe_psql('postgres',
 	"UPDATE tab1 SET b = 'quux' WHERE a = 4");
 $node_publisher->safe_psql('postgres', "DELETE FROM tab1");
@@ -369,7 +374,7 @@ $node_publisher->safe_psql('postgres', "DELETE FROM tab1");
 $node_publisher->wait_for_catchup('sub1');
 $node_publisher->wait_for_catchup('sub2');
 
-my $logfile = slurp_file($node_subscriber1->logfile());
+my $logfile = slurp_file($node_subscriber1->logfile(), $log_location);
 ok( $logfile =~
 	  qr/logical replication did not find row to be updated in replication target relation's partition "tab1_2_2"/,
 	'update target row is missing in tab1_2_2');
@@ -700,6 +705,11 @@ $node_subscriber1->reload;
 
 $node_subscriber1->safe_psql('postgres', "DELETE FROM tab2");
 
+# Note that the current location of the log file is not grabbed immediately
+# after reloading the configuration, but after sending one SQL command to
+# the node so as we are sure that the reloading has taken effect.
+$log_location = -s $node_subscriber1->logfile;
+
 $node_publisher->safe_psql('postgres',
 	"UPDATE tab2 SET b = 'quux' WHERE a = 5");
 $node_publisher->safe_psql('postgres', "DELETE FROM tab2 WHERE a = 1");
@@ -707,7 +717,7 @@ $node_publisher->safe_psql('postgres', "DELETE FROM tab2 WHERE a = 1");
 $node_publisher->wait_for_catchup('sub_viaroot');
 $node_publisher->wait_for_catchup('sub2');
 
-$logfile = slurp_file($node_subscriber1->logfile());
+$logfile = slurp_file($node_subscriber1->logfile(), $log_location);
 ok( $logfile =~
 	  qr/logical replication did not find row to be updated in replication target relation's partition "tab2_1"/,
 	'update target row is missing in tab2_1');

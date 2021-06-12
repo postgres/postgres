@@ -311,13 +311,18 @@ $node_subscriber->reload;
 
 $node_subscriber->safe_psql('postgres', "DELETE FROM tab_full_pk");
 
+# Note that the current location of the log file is not grabbed immediately
+# after reloading the configuration, but after sending one SQL command to
+# the node so as we are sure that the reloading has taken effect.
+my $log_location = -s $node_subscriber->logfile;
+
 $node_publisher->safe_psql('postgres',
 	"UPDATE tab_full_pk SET b = 'quux' WHERE a = 1");
 $node_publisher->safe_psql('postgres', "DELETE FROM tab_full_pk WHERE a = 2");
 
 $node_publisher->wait_for_catchup('tap_sub');
 
-my $logfile = slurp_file($node_subscriber->logfile());
+my $logfile = slurp_file($node_subscriber->logfile, $log_location);
 ok( $logfile =~
 	  qr/logical replication did not find row to be updated in replication target relation "tab_full_pk"/,
 	'update target row is missing');
