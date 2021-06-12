@@ -501,7 +501,14 @@ apply_handle_commit(StringInfo s)
 
 	logicalrep_read_commit(s, &commit_data);
 
-	Assert(commit_data.commit_lsn == remote_final_lsn);
+	if (commit_data.commit_lsn != remote_final_lsn)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg_internal("incorrect commit LSN %X/%X in commit message (expected %X/%X)",
+								 (uint32) (commit_data.commit_lsn >> 32),
+								 (uint32) commit_data.commit_lsn,
+								 (uint32) (remote_final_lsn >> 32),
+								 (uint32) remote_final_lsn)));
 
 	/* The synchronization worker runs in single transaction. */
 	if (IsTransactionState() && !am_tablesync_worker())
