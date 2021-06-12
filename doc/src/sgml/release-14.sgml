@@ -3880,7 +3880,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
       <para>
        Add row counts for utility commands to
-       <structname>pg_stat_statements</structname>> (Fujii Masao, Katsuragi
+       <structname>pg_stat_statements</structname> (Fujii Masao, Katsuragi
        Yuta, Seino Yuki)
       </para>
      </listitem>
