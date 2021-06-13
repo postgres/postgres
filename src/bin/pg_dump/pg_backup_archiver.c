@@ -3718,7 +3718,6 @@ ReadHead(ArchiveHandle *AH)
 				vmin,
 				vrev;
 	int			fmt;
-	struct tm	crtm;
 
 	/*
 	 * If we haven't already read the header, do so.
@@ -3786,6 +3785,8 @@ ReadHead(ArchiveHandle *AH)
 
 	if (AH->version >= K_VERS_1_4)
 	{
+		struct tm	crtm;
+
 		crtm.tm_sec = ReadInt(AH);
 		crtm.tm_min = ReadInt(AH);
 		crtm.tm_hour = ReadInt(AH);
@@ -3794,12 +3795,32 @@ ReadHead(ArchiveHandle *AH)
 		crtm.tm_year = ReadInt(AH);
 		crtm.tm_isdst = ReadInt(AH);
 
-		AH->archdbname = ReadStr(AH);
-
+		/*
+		 * Newer versions of glibc have mktime() report failure if tm_isdst is
+		 * inconsistent with the prevailing timezone, e.g. tm_isdst = 1 when
+		 * TZ=UTC.  This is problematic when restoring an archive under a
+		 * different timezone setting.  If we get a failure, try again with
+		 * tm_isdst set to -1 ("don't know").
+		 *
+		 * XXX with or without this hack, we reconstruct createDate
+		 * incorrectly when the prevailing timezone is different from
+		 * pg_dump's.  Next time we bump the archive version, we should flush
+		 * this representation and store a plain seconds-since-the-Epoch
+		 * timestamp instead.
+		 */
 		AH->createDate = mktime(&crtm);
-
 		if (AH->createDate == (time_t) -1)
-			pg_log_warning("invalid creation date in header");
+		{
+			crtm.tm_isdst = -1;
+			AH->createDate = mktime(&crtm);
+			if (AH->createDate == (time_t) -1)
+				pg_log_warning("invalid creation date in header");
+		}
+	}
+
+	if (AH->version >= K_VERS_1_4)
+	{
+		AH->archdbname = ReadStr(AH);
 	}
 
 	if (AH->version >= K_VERS_1_10)
