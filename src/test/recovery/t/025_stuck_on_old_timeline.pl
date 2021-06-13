@@ -31,6 +31,7 @@ if ($^O eq 'msys')
 }
 $perlbin =~ s!\\!/!g if $TestLib::windows_os;
 my $archivedir_primary = $node_primary->archive_dir;
+$archivedir_primary =~ s!\\!/!g if $TestLib::windows_os;
 $node_primary->append_conf('postgresql.conf', qq(
 archive_command = '"$perlbin" "$FindBin::RealBin/cp_history_files" "%p" "$archivedir_primary/%f"'
 wal_keep_segments=8
@@ -81,8 +82,7 @@ $node_standby->safe_psql('postgres', 'SELECT pg_switch_wal()');
 # WAL segment, this is enough to guarantee that the history file was
 # archived.
 my $archive_wait_query =
-  "SELECT coalesce('$walfile_to_be_archived' <= last_archived_wal, false) " .
-  "FROM pg_stat_archiver";
+  "SELECT '$walfile_to_be_archived' <= last_archived_wal FROM pg_stat_archiver";
 $node_standby->poll_query_until('postgres', $archive_wait_query)
   or die "Timed out while waiting for WAL segment to be archived";
 my $last_archived_wal_file = $walfile_to_be_archived;
