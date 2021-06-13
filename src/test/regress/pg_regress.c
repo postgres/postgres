@@ -819,14 +819,38 @@ initialize_environment(void)
 		 * we also use psql's -X switch consistently, so that ~/.psqlrc files
 		 * won't mess things up.)  Also, set PGPORT to the temp port, and set
 		 * PGHOST depending on whether we are using TCP or Unix sockets.
+		 *
+		 * This list should be kept in sync with TestLib.pm.
 		 */
-		unsetenv("PGDATABASE");
-		unsetenv("PGUSER");
-		unsetenv("PGSERVICE");
-		unsetenv("PGSSLMODE");
-		unsetenv("PGREQUIRESSL");
+		unsetenv("PGCHANNELBINDING");
+		/* PGCLIENTENCODING, see above */
 		unsetenv("PGCONNECT_TIMEOUT");
 		unsetenv("PGDATA");
+		unsetenv("PGDATABASE");
+		unsetenv("PGGSSENCMODE");
+		unsetenv("PGGSSLIB");
+		/* PGHOSTADDR, see below */
+		unsetenv("PGKRBSRVNAME");
+		unsetenv("PGPASSFILE");
+		unsetenv("PGPASSWORD");
+		unsetenv("PGREQUIREPEER");
+		unsetenv("PGREQUIRESSL");
+		unsetenv("PGSERVICE");
+		unsetenv("PGSERVICEFILE");
+		unsetenv("PGSSLCERT");
+		unsetenv("PGSSLCRL");
+		unsetenv("PGSSLCRLDIR");
+		unsetenv("PGSSLKEY");
+		unsetenv("PGSSLMAXPROTOCOLVERSION");
+		unsetenv("PGSSLMINPROTOCOLVERSION");
+		unsetenv("PGSSLMODE");
+		unsetenv("PGSSLROOTCERT");
+		unsetenv("PGSSLSNI");
+		unsetenv("PGTARGETSESSIONATTRS");
+		unsetenv("PGUSER");
+		/* PGPORT, see below */
+		/* PGHOST, see below */
+
 #ifdef HAVE_UNIX_SOCKETS
 		if (hostname != NULL)
 			setenv("PGHOST", hostname, 1);

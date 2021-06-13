@@ -104,6 +104,7 @@ BEGIN
 	delete $ENV{LC_ALL};
 	$ENV{LC_MESSAGES} = 'C';
 
+	# This list should be kept in sync with pg_regress.c.
 	my @envkeys = qw (
 	  PGCHANNELBINDING
 	  PGCLIENTENCODING
