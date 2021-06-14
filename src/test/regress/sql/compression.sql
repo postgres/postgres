@@ -126,7 +126,7 @@ INSERT INTO cmpart VALUES (repeat('123456789', 4004));
 SELECT pg_column_compression(f1) FROM cmpart1;
 SELECT pg_column_compression(f1) FROM cmpart2;
 
---vacuum full to recompress the data
+-- VACUUM FULL does not recompress
 SELECT pg_column_compression(f1) FROM cmdata;
 VACUUM FULL cmdata;
 SELECT pg_column_compression(f1) FROM cmdata;

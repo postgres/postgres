@@ -297,7 +297,7 @@ SELECT pg_column_compression(f1) FROM cmpart2;
  lz4
 (2 rows)
 
---vacuum full to recompress the data
+-- VACUUM FULL does not recompress
 SELECT pg_column_compression(f1) FROM cmdata;
  pg_column_compression 
 -----------------------
@@ -309,7 +309,7 @@ VACUUM FULL cmdata;
 SELECT pg_column_compression(f1) FROM cmdata;
  pg_column_compression 
 -----------------------
- lz4
+ pglz
  lz4
 (2 rows)
 

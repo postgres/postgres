@@ -394,8 +394,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       values inserted in future will be compressed (if the storage mode
       permits compression at all).
       This does not cause the table to be rewritten, so existing data may still
-      be compressed with other compression methods.  If the table is rewritten with
-      <command>VACUUM FULL</command> or <command>CLUSTER</command>, or restored
+      be compressed with other compression methods.  If the table is restored
       with <application>pg_restore</application>, then all values are rewritten
       with the configured compression method.
       However, when data is inserted from another relation (for example,

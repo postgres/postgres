@@ -19,7 +19,6 @@
  */
 #include "postgres.h"
 
-#include "access/detoast.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/heaptoast.h"
@@ -27,7 +26,6 @@
 #include "access/rewriteheap.h"
 #include "access/syncscan.h"
 #include "access/tableam.h"
-#include "access/toast_compression.h"
 #include "access/tsmapi.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
@@ -2463,77 +2461,20 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 	TupleDesc	newTupDesc = RelationGetDescr(NewHeap);
 	HeapTuple	copiedTuple;
 	int			i;
-	bool		values_free[MaxTupleAttributeNumber];
-
-	memset(values_free, 0, newTupDesc->natts * sizeof(bool));
 
 	heap_deform_tuple(tuple, oldTupDesc, values, isnull);
 
+	/* Be sure to null out any dropped columns */
 	for (i = 0; i < newTupDesc->natts; i++)
 	{
-		/* Be sure to null out any dropped columns */
 		if (TupleDescAttr(newTupDesc, i)->attisdropped)
 			isnull[i] = true;
-		else if (!isnull[i] && TupleDescAttr(newTupDesc, i)->attlen == -1)
-		{
-			/*
-			 * Use this opportunity to force recompression of any data that's
-			 * compressed with some TOAST compression method other than the
-			 * one configured for the column.  We don't actually need to
-			 * perform the compression here; we just need to decompress.  That
-			 * will trigger recompression later on.
-			 */
-			struct varlena *new_value;
-			ToastCompressionId cmid;
-			char		cmethod;
-			char		targetmethod;
-
-			new_value = (struct varlena *) DatumGetPointer(values[i]);
-			cmid = toast_get_compression_id(new_value);
-
-			/* nothing to be done for uncompressed data */
-			if (cmid == TOAST_INVALID_COMPRESSION_ID)
-				continue;
-
-			/* convert existing compression id to compression method */
-			switch (cmid)
-			{
-				case TOAST_PGLZ_COMPRESSION_ID:
-					cmethod = TOAST_PGLZ_COMPRESSION;
-					break;
-				case TOAST_LZ4_COMPRESSION_ID:
-					cmethod = TOAST_LZ4_COMPRESSION;
-					break;
-				default:
-					elog(ERROR, "invalid compression method id %d", cmid);
-					cmethod = '\0'; /* keep compiler quiet */
-			}
-
-			/* figure out what the target method is */
-			targetmethod = TupleDescAttr(newTupDesc, i)->attcompression;
-			if (!CompressionMethodIsValid(targetmethod))
-				targetmethod = default_toast_compression;
-
-			/* if compression method doesn't match then detoast the value */
-			if (targetmethod != cmethod)
-			{
-				values[i] = PointerGetDatum(detoast_attr(new_value));
-				values_free[i] = true;
-			}
-		}
 	}
 
 	copiedTuple = heap_form_tuple(newTupDesc, values, isnull);
 
 	/* The heap rewrite module does the rest */
 	rewrite_heap_tuple(rwstate, tuple, copiedTuple);
-
-	/* Free any value detoasted previously */
-	for (i = 0; i < newTupDesc->natts; i++)
-	{
-		if (values_free[i])
-			pfree(DatumGetPointer(values[i]));
-	}
 
 	heap_freetuple(copiedTuple);
 }
