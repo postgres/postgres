@@ -676,7 +676,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
       <para>
-       Add Set Server Name Indication (<acronym>SNI</acronym>) for
+       Add Server Name Indication (<acronym>SNI</acronym>) for
        <acronym>SSL</acronym> connection packets (Peter Eisentraut)
       </para>
 
@@ -729,7 +729,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
        <para>
-        Allow vacuum to deallocate space reserved by trailing unused heap
+        Allow vacuum to reclaim space used by unused trailing heap
         line pointers (Matthias van de Meent, Peter Geoghegan)
        </para>
       </listitem>
@@ -771,8 +771,8 @@ Author: Michael Paquier <michael@paquier.xyz>
        </para>
 
        <para>
-        <link linkend="sql-vacuum"><command>VACUUM</command></link>
-        now has a <literal>PROCESS_TOAST</literal> which can be set to
+        <link linkend="sql-vacuum"><command>VACUUM</command></link> now
+        has a <literal>PROCESS_TOAST</literal> option which can be set to
         false to disable <acronym>TOAST</acronym> processing, and <link
         linkend="app-vacuumdb"><application>vacuumdb</application></link>
         has a <option>--no-process-toast</option> option.
@@ -799,7 +799,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
        <para>
-        Cause vacuum operations to be aggressive if the table is near
+        Cause vacuum operations to be more aggressive if the table is near
         xid or multixact wraparound (Masahiko Sawada, Peter Geoghegan)
        </para>
 
@@ -911,8 +911,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Allow the arbitrary collations of partition boundary values
-        (Tom Lane)
+        Allow arbitrary collations of partition boundary values (Tom Lane)
        </para>
 
        <para>
@@ -1107,7 +1106,7 @@ Author: Michael Paquier <michael@paquier.xyz>
        </para>
 
        <para>
-        Previously, if the object already exists,
+        Previously, if the object already existed,
         <command>EXPLAIN</command> would fail.
        </para>
       </listitem>
@@ -1504,7 +1503,7 @@ Author: Amit Kapila <akapila@postgresql.org>
        </para>
 
        <para>
-        Function <link
+        The function <link
         linkend="monitoring-stats-functions"><function>pg_stat_reset_replication_slot()</function></link>
         resets slot statistics.
        </para>
@@ -2050,7 +2049,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
        <para>
-        Generate <acronym>WAL</acronym> invalidations message during
+        Generate <acronym>WAL</acronym> invalidation messages during
         command completion when using logical replication (Dilip Kumar,
         Tomas Vondra, Amit Kapila)
        </para>
@@ -2260,6 +2259,8 @@ Author: Thomas Munro <tmunro@postgresql.org>
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2021-02-04 [c5b286047] Add TABLESPACE option to REINDEX
+Author: Michael Paquier <michael@paquier.xyz>
+2021-03-03 [57e6db706] Add - -tablespace option to reindexdb
 -->
 
       <para>
@@ -2270,6 +2271,9 @@ Author: Michael Paquier <michael@paquier.xyz>
 
       <para>
        This is done by specifying a <literal>TABLESPACE</literal> clause.
+       A <option>--tablespace</option> option was also added to <link
+       linkend="app-reindexdb"><application>reindexdb</application></link>
+       to control this.
       </para>
      </listitem>
 
@@ -2553,9 +2557,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Add support for infinity and <literal>-infinity</literal> values
-       to the <link linkend="datatype-numeric">numeric data type</link>
-       (Tom Lane)
+       Add support for <literal>infinity</literal> and
+       <literal>-infinity</literal> values to the <link
+       linkend="datatype-numeric">numeric data type</link> (Tom Lane)
       </para>
 
       <para>
@@ -3102,7 +3106,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       </para>
 
       <para>
-       New options are <literal>read-only</literal>,
+       The new options are <literal>read-only</literal>,
        <literal>primary</literal>, <literal>standby</literal>, and
        <literal>prefer-standby</literal>.
       </para>
@@ -3163,23 +3167,6 @@ Author: Michael Meskes <meskes@postgresql.org>
     <title>Client Applications</title>
 
     <itemizedlist>
-
-     <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2021-03-03 [57e6db706] Add - -tablespace option to reindexdb
--->
-
-      <para>
-       Allow <link
-       linkend="app-reindexdb"><application>reindexdb</application></link>
-       to change the tablespace of the new index (Michael Paquier)
-      </para>
-
-      <para>
-       This is done by specifying <option>--tablespace</option>.
-      </para>
-     </listitem>
 
      <listitem>
 <!--
@@ -3525,69 +3512,69 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       </para>
      </listitem>
 
-     </itemizedlist>
+    </itemizedlist>
 
-  </sect3>
+   </sect3>
 
-  <sect3>
-  <title>Source Code</title>
+   <sect3>
+   <title>Source Code</title>
 
-  <itemizedlist>
+   <itemizedlist>
 
-    <listitem>
+     <listitem>
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2021-02-01 [fe61df7f8] Introduce - -with-ssl={openssl} as a configure option
 -->
 
-      <para>
-       Add configure option <link
-       linkend="configure-options-features"><literal>--with-ssl={openssl}</literal></link>
-       to behave like <option>--with-openssl</option> (Daniel Gustafsson,
-       Michael Paquier)
-      </para>
+       <para>
+        Add configure option <link
+        linkend="configure-options-features"><literal>--with-ssl={openssl}</literal></link>
+        to behave like <option>--with-openssl</option> (Daniel Gustafsson,
+        Michael Paquier)
+       </para>
 
-      <para>
-       The option <option>--with-openssl</option> is kept for
-       compatibility.
-      </para>
-     </listitem>
+       <para>
+        The option <option>--with-openssl</option> is kept for
+        compatibility.
+       </para>
+      </listitem>
 
-     <listitem>
+      <listitem>
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2020-11-25 [c9f0624bc] Add support for abstract Unix-domain sockets
 -->
 
-      <para>
-       Add support for <link linkend="guc-unix-socket-directories">abstract
-       Unix-domain sockets</link> (Peter Eisentraut)
-      </para>
+       <para>
+        Add support for <link linkend="guc-unix-socket-directories">abstract
+        Unix-domain sockets</link> (Peter Eisentraut)
+       </para>
 
-      <para>
-       This is currently supported on <productname>Linux</productname>
-       and <productname>Windows</productname>.
-      </para>
-     </listitem>
+       <para>
+        This is currently supported on <productname>Linux</productname>
+        and <productname>Windows</productname>.
+       </para>
+      </listitem>
 
-     <listitem>
+      <listitem>
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2021-01-06 [4656e3d66] Replace CLOBBER_CACHE_ALWAYS with run-time GUC
 -->
 
-      <para>
-       Add <xref linkend="guc-debug-invalidate-system-caches-always"/>
-       to control cache overwriting (Craig Ringer)
-      </para>
+       <para>
+        Add <xref linkend="guc-debug-invalidate-system-caches-always"/>
+        to control cache overwriting (Craig Ringer)
+       </para>
 
-      <para>
-       Previously this could only be controlled at compile time and is
-       enabled only in assert builds.
-      </para>
-     </listitem>
+       <para>
+        Previously this could only be controlled at compile time and is
+        enabled only in assert builds.
+       </para>
+      </listitem>
 
-     <listitem>
+      <listitem>
 <!--
 Author: Peter Geoghegan <pg@bowt.ie>
 2020-07-17 [1e0dfd166] Add Valgrind buffer access instrumentation.
@@ -3597,36 +3584,36 @@ Author: Peter Geoghegan <pg@bowt.ie>
 2020-07-19 [a766d6ca2] Avoid harmless Valgrind no-buffer-pin errors.
 -->
 
-      <para>
-       Various improvements in <productname>valgrind</productname>
-       detection (Álvaro Herrera, Peter Geoghegan)
-      </para>
-     </listitem>
+       <para>
+        Various improvements in <productname>valgrind</productname>
+        detection (Álvaro Herrera, Peter Geoghegan)
+       </para>
+      </listitem>
 
-     <listitem>
+      <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2021-01-06 [ca8217c10] Add a test module for the regular expression package.
 -->
 
-      <para>
-       Add a test module for the regular expression package (Tom Lane)
-      </para>
-     </listitem>
+       <para>
+        Add a test module for the regular expression package (Tom Lane)
+       </para>
+      </listitem>
 
-     <listitem>
+      <listitem>
 <!--
 Author: Andres Freund <andres@anarazel.de>
 2020-11-09 [6c57f2ed1] jit: Add support for LLVM 12.
 -->
 
-      <para>
-       Add support for <productname>LLVM</productname> version 12
-       (Andres Freund)
-      </para>
-     </listitem>
+       <para>
+        Add support for <productname>LLVM</productname> version 12
+        (Andres Freund)
+       </para>
+      </listitem>
 
-     <listitem>
+      <listitem>
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2020-12-04 [4f48a6fbe] Change SHA2 implementation based on OpenSSL to use EVP d
@@ -3638,71 +3625,71 @@ Author: Michael Paquier <michael@paquier.xyz>
 2021-04-03 [e6bdfd970] Refactor HMAC implementations
 -->
 
-      <para>
-       Change SHA1, SHA2, and MD5 hash computations to use the
-       <productname>OpenSSL</productname> <acronym>EVP API</acronym>
-       (Michael Paquier)
-      </para>
+       <para>
+        Change SHA1, SHA2, and MD5 hash computations to use the
+        <productname>OpenSSL</productname> <acronym>EVP API</acronym>
+        (Michael Paquier)
+       </para>
 
-      <para>
-       This is more modern and supports <acronym>FIPS</acronym> mode.
-      </para>
-     </listitem>
+       <para>
+        This is more modern and supports <acronym>FIPS</acronym> mode.
+       </para>
+      </listitem>
 
-     <listitem>
+      <listitem>
 <!--
 Author: Magnus Hagander <magnus@hagander.net>
 2020-11-20 [16f96c74d] Remove ability to independently select random number gen
 -->
 
-      <para>
-       Remove build control over the random library used (Daniel
-       Gustafsson)
-      </para>
-     </listitem>
+       <para>
+        Remove build control over the random library used (Daniel
+        Gustafsson)
+       </para>
+      </listitem>
 
-     <listitem>
+      <listitem>
 <!--
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2021-01-28 [6c5576075] Add direct conversion routines between EUC_TW and Big5.
 -->
 
-      <para>
-       Add direct conversion routines between EUC_TW and Big5 (Heikki
-       Linnakangas)
-      </para>
-     </listitem>
+       <para>
+        Add direct conversion routines between EUC_TW and Big5 (Heikki
+        Linnakangas)
+       </para>
+      </listitem>
 
-     <listitem>
+      <listitem>
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2020-11-20 [ca051d8b1] Add collation versions for FreeBSD.
 -->
 
-      <para>
-       Add collation versions for <productname>FreeBSD</productname>
-       (Thomas Munro)
-      </para>
-     </listitem>
+       <para>
+        Add collation versions for <productname>FreeBSD</productname>
+        (Thomas Munro)
+       </para>
+      </listitem>
 
-     <listitem>
+      <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2020-08-01 [9f9682783] Invent "amadjustmembers" AM method for validating opclas
 -->
 
-      <para>
-       Add <link
-       linkend="index-api"><structfield>amadjustmembers</structfield></link>
-       to the index access method <acronym>API</acronym> (Tom Lane)
-      </para>
+       <para>
+        Add <link
+        linkend="index-api"><structfield>amadjustmembers</structfield></link>
+        to the index access method <acronym>API</acronym> (Tom Lane)
+       </para>
 
-      <para>
-       REMOVE?
-      </para>
-     </listitem>
+       <para>
+        REMOVE?
+       </para>
+      </listitem>
 
-    </itemizedlist>
+     </itemizedlist>
 
    </sect3>
 
