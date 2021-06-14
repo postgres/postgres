@@ -291,6 +291,35 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-11-04 [9e38c2bb5] Declare assorted array functions using anycompatible not
+-->
+
+     <para>
+      User-defined objects that reference some built-in array functions
+      along with their argument types must be recreated (Tom Lane)
+     </para>
+
+     <para>
+      Specifically, <link
+      linkend="functions-array"><function>array_append()</function></link>,
+      <function>array_prepend()</function>,
+      <function>array_cat()</function>,
+      <function>array_position()</function>,
+      <function>array_positions()</function>,
+      <function>array_remove()</function>,
+      <function>array_replace()</function>, or <link
+      linkend="functions-math"><function>width_bucket()</function></link>
+      used to take <type>anyarray</type> arguments but now take
+      <type>anycompatiblearray</type>.  Therefore, user-defined objects
+      like aggregates and operators that reference old array function
+      signatures must be dropped before upgrading and recreated once the
+      upgrade completes.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
 2020-09-17 [76f412ab3] Remove factorial operators, leaving only the factorial()
 -->
 
