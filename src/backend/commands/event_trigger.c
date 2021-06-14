@@ -1936,8 +1936,19 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 					else if (cmd->type == SCT_AlterTSConfig)
 						addr = cmd->d.atscfg.address;
 
-					type = getObjectTypeDescription(&addr, false);
-					identity = getObjectIdentity(&addr, false);
+					/*
+					 * If an object was dropped in the same command we may end
+					 * up in a situation where we generated a message but can
+					 * no longer look for the object information, so skip it
+					 * rather than failing.  This can happen for example with
+					 * some subcommand combinations of ALTER TABLE.
+					 */
+					identity = getObjectIdentity(&addr, true);
+					if (identity == NULL)
+						continue;
+
+					/* The type can never be NULL. */
+					type = getObjectTypeDescription(&addr, true);
 
 					/*
 					 * Obtain schema name, if any ("pg_temp" if a temp

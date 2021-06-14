@@ -366,6 +366,7 @@ SELECT * FROM dropped_objects WHERE type = 'schema';
 DROP ROLE regress_evt_user;
 DROP EVENT TRIGGER regress_event_trigger_drop_objects;
 DROP EVENT TRIGGER undroppable;
+-- Event triggers on relations.
 CREATE OR REPLACE FUNCTION event_trigger_report_dropped()
  RETURNS event_trigger
  LANGUAGE plpgsql
@@ -384,41 +385,90 @@ BEGIN
 END; $$;
 CREATE EVENT TRIGGER regress_event_trigger_report_dropped ON sql_drop
     EXECUTE PROCEDURE event_trigger_report_dropped();
+CREATE OR REPLACE FUNCTION event_trigger_report_end()
+ RETURNS event_trigger
+ LANGUAGE plpgsql
+AS $$
+DECLARE r RECORD;
+BEGIN
+    FOR r IN SELECT * FROM pg_event_trigger_ddl_commands()
+    LOOP
+        RAISE NOTICE 'END: command_tag=% type=% identity=%',
+            r.command_tag, r.object_type, r.object_identity;
+    END LOOP;
+END; $$;
+CREATE EVENT TRIGGER regress_event_trigger_report_end ON ddl_command_end
+  EXECUTE PROCEDURE event_trigger_report_end();
 CREATE SCHEMA evttrig
-	CREATE TABLE one (col_a SERIAL PRIMARY KEY, col_b text DEFAULT 'forty two')
+	CREATE TABLE one (col_a SERIAL PRIMARY KEY, col_b text DEFAULT 'forty two', col_c SERIAL)
 	CREATE INDEX one_idx ON one (col_b)
-	CREATE TABLE two (col_c INTEGER CHECK (col_c > 0) REFERENCES one DEFAULT 42);
+	CREATE TABLE two (col_c INTEGER CHECK (col_c > 0) REFERENCES one DEFAULT 42)
+	CREATE TABLE id (col_d int NOT NULL GENERATED ALWAYS AS IDENTITY);
+NOTICE:  END: command_tag=CREATE SCHEMA type=schema identity=evttrig
+NOTICE:  END: command_tag=CREATE SEQUENCE type=sequence identity=evttrig.one_col_a_seq
+NOTICE:  END: command_tag=CREATE SEQUENCE type=sequence identity=evttrig.one_col_c_seq
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.one
+NOTICE:  END: command_tag=CREATE INDEX type=index identity=evttrig.one_pkey
+NOTICE:  END: command_tag=ALTER SEQUENCE type=sequence identity=evttrig.one_col_a_seq
+NOTICE:  END: command_tag=ALTER SEQUENCE type=sequence identity=evttrig.one_col_c_seq
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.two
+NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.two
+NOTICE:  END: command_tag=CREATE SEQUENCE type=sequence identity=evttrig.id_col_d_seq
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.id
+NOTICE:  END: command_tag=ALTER SEQUENCE type=sequence identity=evttrig.id_col_d_seq
+NOTICE:  END: command_tag=CREATE INDEX type=index identity=evttrig.one_idx
 -- Partitioned tables with a partitioned index
 CREATE TABLE evttrig.parted (
     id int PRIMARY KEY)
     PARTITION BY RANGE (id);
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.parted
+NOTICE:  END: command_tag=CREATE INDEX type=index identity=evttrig.parted_pkey
 CREATE TABLE evttrig.part_1_10 PARTITION OF evttrig.parted (id)
   FOR VALUES FROM (1) TO (10);
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.part_1_10
 CREATE TABLE evttrig.part_10_20 PARTITION OF evttrig.parted (id)
   FOR VALUES FROM (10) TO (20) PARTITION BY RANGE (id);
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.part_10_20
 CREATE TABLE evttrig.part_10_15 PARTITION OF evttrig.part_10_20 (id)
   FOR VALUES FROM (10) TO (15);
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.part_10_15
 CREATE TABLE evttrig.part_15_20 PARTITION OF evttrig.part_10_20 (id)
   FOR VALUES FROM (15) TO (20);
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=evttrig.part_15_20
 ALTER TABLE evttrig.two DROP COLUMN col_c;
 NOTICE:  NORMAL: orig=t normal=f istemp=f type=table column identity=evttrig.two.col_c name={evttrig,two,col_c} args={}
 NOTICE:  NORMAL: orig=f normal=t istemp=f type=table constraint identity=two_col_c_check on evttrig.two name={evttrig,two,two_col_c_check} args={}
+NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.two
 ALTER TABLE evttrig.one ALTER COLUMN col_b DROP DEFAULT;
 NOTICE:  NORMAL: orig=t normal=f istemp=f type=default value identity=for evttrig.one.col_b name={evttrig,one,col_b} args={}
+NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.one
 ALTER TABLE evttrig.one DROP CONSTRAINT one_pkey;
 NOTICE:  NORMAL: orig=t normal=f istemp=f type=table constraint identity=one_pkey on evttrig.one name={evttrig,one,one_pkey} args={}
+NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.one
+ALTER TABLE evttrig.one DROP COLUMN col_c;
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=table column identity=evttrig.one.col_c name={evttrig,one,col_c} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=default value identity=for evttrig.one.col_c name={evttrig,one,col_c} args={}
+NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.one
+ALTER TABLE evttrig.id ALTER COLUMN col_d SET DATA TYPE bigint;
+NOTICE:  END: command_tag=ALTER SEQUENCE type=sequence identity=evttrig.id_col_d_seq
+NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.id
+ALTER TABLE evttrig.id ALTER COLUMN col_d DROP IDENTITY,
+  ALTER COLUMN col_d SET DATA TYPE int;
+NOTICE:  END: command_tag=ALTER TABLE type=table identity=evttrig.id
 DROP INDEX evttrig.one_idx;
 NOTICE:  NORMAL: orig=t normal=f istemp=f type=index identity=evttrig.one_idx name={evttrig,one_idx} args={}
 DROP SCHEMA evttrig CASCADE;
-NOTICE:  drop cascades to 3 other objects
+NOTICE:  drop cascades to 4 other objects
 DETAIL:  drop cascades to table evttrig.one
 drop cascades to table evttrig.two
+drop cascades to table evttrig.id
 drop cascades to table evttrig.parted
 NOTICE:  NORMAL: orig=t normal=f istemp=f type=schema identity=evttrig name={evttrig} args={}
 NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.one name={evttrig,one} args={}
 NOTICE:  NORMAL: orig=f normal=t istemp=f type=sequence identity=evttrig.one_col_a_seq name={evttrig,one_col_a_seq} args={}
 NOTICE:  NORMAL: orig=f normal=t istemp=f type=default value identity=for evttrig.one.col_a name={evttrig,one,col_a} args={}
 NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.two name={evttrig,two} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.id name={evttrig,id} args={}
 NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.parted name={evttrig,parted} args={}
 NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_1_10 name={evttrig,part_1_10} args={}
 NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_10_20 name={evttrig,part_10_20} args={}
@@ -427,6 +477,7 @@ NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_15_20
 DROP TABLE a_temp_tbl;
 NOTICE:  NORMAL: orig=t normal=f istemp=t type=table identity=pg_temp.a_temp_tbl name={pg_temp,a_temp_tbl} args={}
 DROP EVENT TRIGGER regress_event_trigger_report_dropped;
+DROP EVENT TRIGGER regress_event_trigger_report_end;
 -- only allowed from within an event trigger function, should fail
 select pg_event_trigger_table_rewrite_oid();
 ERROR:  pg_event_trigger_table_rewrite_oid() can only be called in a table_rewrite event trigger function
