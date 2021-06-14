@@ -410,9 +410,9 @@ retry:
 	if (IsUnderPostmaster)
 	{
 		/*
-		 * Get ready to sleep on the slot in case it is active if SAB_Block.
-		 * (We may end up not sleeping, but we don't want to do this while
-		 * holding the spinlock.)
+		 * Get ready to sleep on the slot in case it is active.  (We may end
+		 * up not sleeping, but we don't want to do this while holding the
+		 * spinlock.)
 		 */
 		if (!nowait)
 			ConditionVariablePrepareToSleep(&s->active_cv);
@@ -429,22 +429,24 @@ retry:
 
 	/*
 	 * If we found the slot but it's already active in another process, we
-	 * either error out, return the PID of the owning process, or retry after
-	 * a short wait, as caller specified.
+	 * wait until the owning process signals us that it's been released, or
+	 * error out.
 	 */
 	if (active_pid != MyProcPid)
 	{
 		if (!nowait)
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_IN_USE),
-					 errmsg("replication slot \"%s\" is active for PID %d",
-							NameStr(s->data.name), active_pid)));
+		{
+			/* Wait here until we get signaled, and then restart */
+			ConditionVariableSleep(&s->active_cv,
+								   WAIT_EVENT_REPLICATION_SLOT_DROP);
+			ConditionVariableCancelSleep();
+			goto retry;
+		}
 
-		/* Wait here until we get signaled, and then restart */
-		ConditionVariableSleep(&s->active_cv,
-							   WAIT_EVENT_REPLICATION_SLOT_DROP);
-		ConditionVariableCancelSleep();
-		goto retry;
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("replication slot \"%s\" is active for PID %d",
+						NameStr(s->data.name), active_pid)));
 	}
 	else if (!nowait)
 		ConditionVariableCancelSleep(); /* no sleep needed after all */
