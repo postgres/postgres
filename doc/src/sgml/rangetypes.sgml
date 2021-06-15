@@ -269,6 +269,18 @@ SELECT '{[3,7), [8,9)}'::int4multirange;
 </programlisting>
   </para>
 
+  <para>
+   A multirange can be cast to an array of ranges of the same type.
+  </para>
+
+  <para>
+  Examples:
+<programlisting>
+SELECT '{[3,7), [8,9)}'::int4multirange::int4range[];
+SELECT '{[1.0,14.0), [20.0,25.0)}'::nummultirange::numrange[];
+</programlisting>
+  </para>
+
  </sect2>
 
  <sect2 id="rangetypes-construct">
