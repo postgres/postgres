@@ -25002,23 +25002,6 @@ SELECT collation for ('foo' COLLATE "de_DE");
         <literal>false</literal> is returned.
        </para></entry>
       </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>pg_wait_for_backend_termination</primary>
-        </indexterm>
-        <function>pg_wait_for_backend_termination</function> ( <parameter>pid</parameter> <type>integer</type>, <parameter>timeout</parameter> <type>bigint</type> <literal>DEFAULT</literal> <literal>5000</literal> )
-        <returnvalue>boolean</returnvalue>
-       </para>
-       <para>
-        Waits for the backend process with the specified Process ID to
-        terminate.  If the process terminates before
-        the <parameter>timeout</parameter> (in milliseconds)
-        expires, <literal>true</literal> is returned.  On timeout, a warning
-        is emitted and <literal>false</literal> is returned.
-       </para></entry>
-      </row>
      </tbody>
     </tgroup>
    </table>

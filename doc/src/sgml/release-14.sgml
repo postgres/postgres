@@ -640,13 +640,7 @@ Author: Magnus Hagander <magnus@hagander.net>
 -->
 
       <para>
-       Add function <link
-       linkend="functions-admin-signal"><function>pg_wait_for_backend_termination()</function></link>
-       that waits for session exit (Bharath Rupireddy)
-      </para>
-
-      <para>
-       Also add a similar optional wait parameter to <link
+       Add an optional timeout parameter to <link
        linkend="functions-admin-signal"><function>pg_terminate_backend()</function></link>
       </para>
      </listitem>
