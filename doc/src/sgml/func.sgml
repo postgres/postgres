@@ -24998,7 +24998,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         milliseconds) and greater than zero, the function waits until the
         process is actually terminated or until the given time has passed. If
         the process is terminated, the function
-        returns <literal>true</literal>.  On timeout a warning is emitted and
+        returns <literal>true</literal>.  On timeout, a warning is emitted and
         <literal>false</literal> is returned.
        </para></entry>
       </row>
