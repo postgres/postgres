@@ -351,7 +351,6 @@ typedef struct LVRelState
 	BlockNumber pages_removed;	/* pages remove by truncation */
 	BlockNumber lpdead_item_pages;	/* # pages with LP_DEAD items */
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
-	bool		lock_waiter_detected;
 
 	/* Statistics output by us, for table */
 	double		new_rel_tuples; /* new estimated total # of tuples */
@@ -439,7 +438,8 @@ static IndexBulkDeleteResult *lazy_cleanup_one_index(Relation indrel,
 static bool should_attempt_truncation(LVRelState *vacrel,
 									  VacuumParams *params);
 static void lazy_truncate_heap(LVRelState *vacrel);
-static BlockNumber count_nondeletable_pages(LVRelState *vacrel);
+static BlockNumber count_nondeletable_pages(LVRelState *vacrel,
+											bool *lock_waiter_detected);
 static long compute_max_dead_tuples(BlockNumber relblocks, bool hasindex);
 static void lazy_space_alloc(LVRelState *vacrel, int nworkers,
 							 BlockNumber relblocks);
@@ -929,7 +929,6 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 	vacrel->pages_removed = 0;
 	vacrel->lpdead_item_pages = 0;
 	vacrel->nonempty_pages = 0;
-	vacrel->lock_waiter_detected = false;
 
 	/* Initialize instrumentation counters */
 	vacrel->num_index_scans = 0;
@@ -3165,6 +3164,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 {
 	BlockNumber old_rel_pages = vacrel->rel_pages;
 	BlockNumber new_rel_pages;
+	bool		lock_waiter_detected;
 	int			lock_retry;
 
 	/* Report that we are now truncating */
@@ -3187,7 +3187,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 		 * (which is quite possible considering we already hold a lower-grade
 		 * lock).
 		 */
-		vacrel->lock_waiter_detected = false;
+		lock_waiter_detected = false;
 		lock_retry = 0;
 		while (true)
 		{
@@ -3207,7 +3207,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 				 * We failed to establish the lock in the specified number of
 				 * retries. This means we give up truncating.
 				 */
-				vacrel->lock_waiter_detected = true;
+				lock_waiter_detected = true;
 				ereport(elevel,
 						(errmsg("\"%s\": stopping truncate due to conflicting lock request",
 								vacrel->relname)));
@@ -3242,7 +3242,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 		 * other backends could have added tuples to these pages whilst we
 		 * were vacuuming.
 		 */
-		new_rel_pages = count_nondeletable_pages(vacrel);
+		new_rel_pages = count_nondeletable_pages(vacrel, &lock_waiter_detected);
 		vacrel->blkno = new_rel_pages;
 
 		if (new_rel_pages >= old_rel_pages)
@@ -3281,8 +3281,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 				 errdetail_internal("%s",
 									pg_rusage_show(&ru0))));
 		old_rel_pages = new_rel_pages;
-	} while (new_rel_pages > vacrel->nonempty_pages &&
-			 vacrel->lock_waiter_detected);
+	} while (new_rel_pages > vacrel->nonempty_pages && lock_waiter_detected);
 }
 
 /*
@@ -3291,7 +3290,7 @@ lazy_truncate_heap(LVRelState *vacrel)
  * Returns number of nondeletable pages (last nonempty page + 1).
  */
 static BlockNumber
-count_nondeletable_pages(LVRelState *vacrel)
+count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 {
 	BlockNumber blkno;
 	BlockNumber prefetchedUntil;
@@ -3343,7 +3342,7 @@ count_nondeletable_pages(LVRelState *vacrel)
 							(errmsg("\"%s\": suspending truncate due to conflicting lock request",
 									vacrel->relname)));
 
-					vacrel->lock_waiter_detected = true;
+					*lock_waiter_detected = true;
 					return blkno;
 				}
 				starttime = currenttime;
