@@ -18165,7 +18165,7 @@ SELECT NULLIF(value, '(none)') ...
   </sect1>
 
  <sect1 id="functions-range">
-  <title>Range Functions and Operators</title>
+  <title>Range/Multirange Functions and Operators</title>
 
   <para>
    See <xref linkend="rangetypes"/> for an overview of range types.
