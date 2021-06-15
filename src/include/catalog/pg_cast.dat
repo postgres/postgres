@@ -548,24 +548,4 @@
 { castsource => 'tstzrange', casttarget => 'tstzmultirange',
   castfunc => 'tstzmultirange(tstzrange)', castcontext => 'e',
   castmethod => 'f' },
-
-# multirange to array
-{ castsource => 'int4multirange', casttarget => '_int4range',
-  castfunc => 'multirange_to_array(int4multirange)', castcontext => 'e',
-  castmethod => 'f' }
-{ castsource => 'int8multirange', casttarget => '_int8range',
-  castfunc => 'multirange_to_array(int8multirange)', castcontext => 'e',
-  castmethod => 'f' }
-{ castsource => 'nummultirange', casttarget => '_numrange',
-  castfunc => 'multirange_to_array(nummultirange)', castcontext => 'e',
-  castmethod => 'f' }
-{ castsource => 'datemultirange', casttarget => '_daterange',
-  castfunc => 'multirange_to_array(datemultirange)', castcontext => 'e',
-  castmethod => 'f' }
-{ castsource => 'tsmultirange', casttarget => '_tsrange',
-  castfunc => 'multirange_to_array(tsmultirange)', castcontext => 'e',
-  castmethod => 'f' }
-{ castsource => 'tstzmultirange', casttarget => '_tstzrange',
-  castfunc => 'multirange_to_array(tstzmultirange)', castcontext => 'e',
-  castmethod => 'f' }
 ]

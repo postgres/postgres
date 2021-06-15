@@ -127,8 +127,6 @@ WHERE p1.oid != p2.oid AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     p1.prosrc NOT LIKE E'multirange\\_constructor_' AND
     p2.prosrc NOT LIKE E'multirange\\_constructor_' AND
-    p1.prosrc != 'multirange_to_array' AND
-    p2.prosrc != 'multirange_to_array' AND
     (p1.prorettype < p2.prorettype)
 ORDER BY 1, 2;
 
@@ -142,8 +140,6 @@ WHERE p1.oid != p2.oid AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     p1.prosrc NOT LIKE E'multirange\\_constructor_' AND
     p2.prosrc NOT LIKE E'multirange\\_constructor_' AND
-    p1.prosrc != 'multirange_to_array' AND
-    p2.prosrc != 'multirange_to_array' AND
     (p1.proargtypes[0] < p2.proargtypes[0])
 ORDER BY 1, 2;
 
@@ -157,8 +153,6 @@ WHERE p1.oid != p2.oid AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     p1.prosrc NOT LIKE E'multirange\\_constructor_' AND
     p2.prosrc NOT LIKE E'multirange\\_constructor_' AND
-    p1.prosrc != 'multirange_to_array' AND
-    p2.prosrc != 'multirange_to_array' AND
     (p1.proargtypes[1] < p2.proargtypes[1])
 ORDER BY 1, 2;
 

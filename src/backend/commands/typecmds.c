@@ -114,11 +114,7 @@ static void makeRangeConstructors(const char *name, Oid namespace,
 								  Oid rangeOid, Oid subtype);
 static void makeMultirangeConstructors(const char *name, Oid namespace,
 									   Oid multirangeOid, Oid rangeOid,
-									   Oid rangeArrayOid,
-									   Oid *oneArgContructorOid);
-static void makeMultirangeCasts(const char *name, Oid namespace,
-								Oid multirangeOid, Oid rangeOid,
-								Oid rangeArrayOid, Oid singleArgContructorOid);
+									   Oid rangeArrayOid, Oid *castFuncOid);
 static Oid	findTypeInputFunction(List *procname, Oid typeOid);
 static Oid	findTypeOutputFunction(List *procname, Oid typeOid);
 static Oid	findTypeReceiveFunction(List *procname, Oid typeOid);
@@ -1369,7 +1365,7 @@ DefineRange(CreateRangeStmt *stmt)
 	ListCell   *lc;
 	ObjectAddress address;
 	ObjectAddress mltrngaddress PG_USED_FOR_ASSERTS_ONLY;
-	Oid			singleArgContructorOid;
+	Oid			castFuncOid;
 
 	/* Convert list of names to a name and namespace */
 	typeNamespace = QualifiedNameGetCreationNamespace(stmt->typeName,
@@ -1721,12 +1717,10 @@ DefineRange(CreateRangeStmt *stmt)
 	makeRangeConstructors(typeName, typeNamespace, typoid, rangeSubtype);
 	makeMultirangeConstructors(multirangeTypeName, typeNamespace,
 							   multirangeOid, typoid, rangeArrayOid,
-							   &singleArgContructorOid);
+							   &castFuncOid);
 
-	/* Create casts for this multirange type */
-	makeMultirangeCasts(multirangeTypeName, typeNamespace,
-						multirangeOid, typoid, rangeArrayOid,
-						singleArgContructorOid);
+	/* Create cast from the range type to its multirange type */
+	CastCreate(typoid, multirangeOid, castFuncOid, 'e', 'f', DEPENDENCY_INTERNAL);
 
 	pfree(multirangeTypeName);
 	pfree(multirangeArrayName);
@@ -1814,13 +1808,13 @@ makeRangeConstructors(const char *name, Oid namespace,
  * If we had an anyrangearray polymorphic type we could use it here,
  * but since each type has its own constructor name there's no need.
  *
- * Sets oneArgContructorOid to the oid of the new constructor that can be used
+ * Sets castFuncOid to the oid of the new constructor that can be used
  * to cast from a range to a multirange.
  */
 static void
 makeMultirangeConstructors(const char *name, Oid namespace,
 						   Oid multirangeOid, Oid rangeOid, Oid rangeArrayOid,
-						   Oid *oneArgContructorOid)
+						   Oid *castFuncOid)
 {
 	ObjectAddress myself,
 				referenced;
@@ -1910,7 +1904,7 @@ makeMultirangeConstructors(const char *name, Oid namespace,
 	/* ditto */
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
 	pfree(argtypes);
-	*oneArgContructorOid = myself.objectId;
+	*castFuncOid = myself.objectId;
 
 	/* n-arg constructor - vararg */
 	argtypes = buildoidvector(&rangeArrayOid, 1);
@@ -1953,76 +1947,6 @@ makeMultirangeConstructors(const char *name, Oid namespace,
 	pfree(argtypes);
 	pfree(allParameterTypes);
 	pfree(parameterModes);
-}
-
-/*
- * Create casts for the multirange type.  The first cast makes multirange from
- * range, and it's based on the single-argument constructor.  The second cast
- * makes an array of ranges from multirange.
- */
-static void
-makeMultirangeCasts(const char *name, Oid namespace,
-					Oid multirangeOid, Oid rangeOid, Oid rangeArrayOid,
-					Oid singleArgContructorOid)
-{
-	ObjectAddress myself,
-				referenced;
-	oidvector  *argtypes;
-
-	/*
-	 * Create cast from range to multirange using the existing single-argument
-	 * constructor procedure.
-	 */
-	CastCreate(rangeOid, multirangeOid, singleArgContructorOid, 'e', 'f',
-			   DEPENDENCY_INTERNAL);
-
-	referenced.classId = TypeRelationId;
-	referenced.objectId = multirangeOid;
-	referenced.objectSubId = 0;
-
-	/* multirange_to_array() function */
-	argtypes = buildoidvector(&multirangeOid, 1);
-	myself = ProcedureCreate("multirange_to_array", /* name */
-							 namespace,
-							 false, /* replace */
-							 false, /* returns set */
-							 rangeArrayOid, /* return type */
-							 BOOTSTRAP_SUPERUSERID, /* proowner */
-							 INTERNALlanguageId,	/* language */
-							 F_FMGR_INTERNAL_VALIDATOR,
-							 "multirange_to_array", /* prosrc */
-							 NULL,	/* probin */
-							 NULL,	/* prosqlbody */
-							 PROKIND_FUNCTION,
-							 false, /* security_definer */
-							 false, /* leakproof */
-							 true,	/* isStrict */
-							 PROVOLATILE_IMMUTABLE, /* volatility */
-							 PROPARALLEL_SAFE,	/* parallel safety */
-							 argtypes,	/* parameterTypes */
-							 PointerGetDatum(NULL), /* allParameterTypes */
-							 PointerGetDatum(NULL), /* parameterModes */
-							 PointerGetDatum(NULL), /* parameterNames */
-							 NIL,	/* parameterDefaults */
-							 PointerGetDatum(NULL), /* trftypes */
-							 PointerGetDatum(NULL), /* proconfig */
-							 InvalidOid,	/* prosupport */
-							 1.0,	/* procost */
-							 0.0);	/* prorows */
-
-	/*
-	 * Make the multirange_to_array() function internally-dependent on the
-	 * multirange type so that they go away silently when the type is dropped.
-	 */
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
-	pfree(argtypes);
-
-	/*
-	 * Create cast from multirange to the array of ranges using
-	 * multirange_to_array() function.
-	 */
-	CastCreate(multirangeOid, rangeArrayOid, myself.objectId, 'e', 'f',
-			   DEPENDENCY_INTERNAL);
 }
 
 /*

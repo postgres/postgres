@@ -19181,29 +19181,6 @@ SELECT NULLIF(value, '(none)') ...
         <returnvalue>{[1,2)}</returnvalue>
        </para></entry>
       </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>unnest</primary>
-         <secondary>for multirange</secondary>
-        </indexterm>
-        <function>unnest</function> ( <type>anymultirange</type> )
-        <returnvalue>setof anyrange</returnvalue>
-       </para>
-       <para>
-        Expands a multirange into a set of ranges.
-        The ranges are read out in storage order (ascending).
-       </para>
-       <para>
-        <literal>unnest('{[1,2), [3,4)}'::int4multirange)</literal>
-        <returnvalue></returnvalue>
-<programlisting>
- [1,2)
- [3,4)
-</programlisting>
-       </para></entry>
-      </row>
      </tbody>
     </tgroup>
    </table>
