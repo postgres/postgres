@@ -24,11 +24,11 @@ my $node_primary = get_new_node('primary');
 # the timeline history file reaches the archive but before any of the WAL files
 # get there.
 $node_primary->init(allows_streaming => 1, has_archiving => 1);
-my $perlbin = $^X;
-if ($^O eq 'msys')
-{
-	$perlbin = TestLib::perl2host(dirname($^X)) . '\\' . basename($^X);
-}
+
+# Note: consistent use of forward slashes here avoids any escaping problems
+# that arise from use of backslashes. That means we need to double-quote all
+# the paths in the archive_command
+my $perlbin = TestLib::perl2host($^X);
 $perlbin =~ s!\\!/!g if $TestLib::windows_os;
 my $archivedir_primary = $node_primary->archive_dir;
 $archivedir_primary =~ s!\\!/!g if $TestLib::windows_os;
@@ -36,6 +36,8 @@ $node_primary->append_conf('postgresql.conf', qq(
 archive_command = '"$perlbin" "$FindBin::RealBin/cp_history_files" "%p" "$archivedir_primary/%f"'
 wal_keep_size=128MB
 ));
+# Make sure that Msys perl doesn't complain about difficulty in setting locale
+# when called from the archive_command.
 local $ENV{PERL_BADLANG}=0;
 $node_primary->start;
 
