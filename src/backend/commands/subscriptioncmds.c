@@ -468,7 +468,8 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 		wrconn = walrcv_connect(conninfo, true, stmt->subname, &err);
 		if (!wrconn)
 			ereport(ERROR,
-					(errmsg("could not connect to the publisher: %s", err)));
+					(errcode(ERRCODE_CONNECTION_FAILURE),
+					 errmsg("could not connect to the publisher: %s", err)));
 
 		PG_TRY();
 		{
@@ -565,7 +566,8 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 	wrconn = walrcv_connect(sub->conninfo, true, sub->name, &err);
 	if (!wrconn)
 		ereport(ERROR,
-				(errmsg("could not connect to the publisher: %s", err)));
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("could not connect to the publisher: %s", err)));
 
 	PG_TRY();
 	{
@@ -820,7 +822,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel)
 				{
 					if (sub->enabled && !slotname)
 						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 								 errmsg("cannot set %s for enabled subscription",
 										"slot_name = NONE")));
 
@@ -876,7 +878,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel)
 
 				if (!sub->slotname && enabled)
 					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
+							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 							 errmsg("cannot enable subscription that does not have a slot name")));
 
 				values[Anum_pg_subscription_subenabled - 1] =
@@ -928,7 +930,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel)
 				{
 					if (!sub->enabled)
 						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 								 errmsg("ALTER SUBSCRIPTION with refresh is not allowed for disabled subscriptions"),
 								 errhint("Use ALTER SUBSCRIPTION ... SET PUBLICATION ... WITH (refresh = false).")));
 
@@ -976,7 +978,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel)
 				{
 					if (!sub->enabled)
 						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 								 errmsg("ALTER SUBSCRIPTION with refresh is not allowed for disabled subscriptions"),
 								 errhint("Use ALTER SUBSCRIPTION ... SET PUBLICATION ... WITH (refresh = false).")));
 
@@ -997,7 +999,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel)
 
 				if (!sub->enabled)
 					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
+							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 							 errmsg("ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions")));
 
 				parse_subscription_options(stmt->options,
@@ -1354,7 +1356,8 @@ ReplicationSlotDropAtPubNode(WalReceiverConn *wrconn, char *slotname, bool missi
 		{
 			/* ERROR. */
 			ereport(ERROR,
-					(errmsg("could not drop replication slot \"%s\" on publisher: %s",
+					(errcode(ERRCODE_CONNECTION_FAILURE),
+					 errmsg("could not drop replication slot \"%s\" on publisher: %s",
 							slotname, res->err)));
 		}
 
@@ -1505,7 +1508,8 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 
 	if (res->status != WALRCV_OK_TUPLES)
 		ereport(ERROR,
-				(errmsg("could not receive list of replicated tables from the publisher: %s",
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("could not receive list of replicated tables from the publisher: %s",
 						res->err)));
 
 	/* Process tables. */
@@ -1569,7 +1573,8 @@ ReportSlotConnectionError(List *rstates, Oid subid, char *slotname, char *err)
 	}
 
 	ereport(ERROR,
-			(errmsg("could not connect to publisher when attempting to "
+			(errcode(ERRCODE_CONNECTION_FAILURE),
+			 errmsg("could not connect to publisher when attempting to "
 					"drop replication slot \"%s\": %s", slotname, err),
 	/* translator: %s is an SQL ALTER command */
 			 errhint("Use %s to disassociate the subscription from the slot.",
@@ -1601,7 +1606,7 @@ check_duplicates_in_publist(List *publist, Datum *datums)
 
 			if (strcmp(name, pname) == 0)
 				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
 						 errmsg("publication name \"%s\" used more than once",
 								pname)));
 		}
@@ -1659,7 +1664,7 @@ merge_publications(List *oldpublist, List *newpublist, bool addpub, const char *
 			oldpublist = lappend(oldpublist, makeString(name));
 		else if (!addpub && !found)
 			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("publication \"%s\" is not in subscription \"%s\"",
 							name, subname)));
 	}

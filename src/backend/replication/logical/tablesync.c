@@ -723,13 +723,15 @@ fetch_remote_table_info(char *nspname, char *relname,
 
 	if (res->status != WALRCV_OK_TUPLES)
 		ereport(ERROR,
-				(errmsg("could not fetch table info for table \"%s.%s\" from publisher: %s",
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("could not fetch table info for table \"%s.%s\" from publisher: %s",
 						nspname, relname, res->err)));
 
 	slot = MakeSingleTupleTableSlot(res->tupledesc, &TTSOpsMinimalTuple);
 	if (!tuplestore_gettupleslot(res->tuplestore, true, false, slot))
 		ereport(ERROR,
-				(errmsg("table \"%s.%s\" not found on publisher",
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("table \"%s.%s\" not found on publisher",
 						nspname, relname)));
 
 	lrel->remoteid = DatumGetObjectId(slot_getattr(slot, 1, &isnull));
@@ -764,7 +766,8 @@ fetch_remote_table_info(char *nspname, char *relname,
 
 	if (res->status != WALRCV_OK_TUPLES)
 		ereport(ERROR,
-				(errmsg("could not fetch table info for table \"%s.%s\" from publisher: %s",
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("could not fetch table info for table \"%s.%s\" from publisher: %s",
 						nspname, relname, res->err)));
 
 	/* We don't know the number of rows coming, so allocate enough space. */
@@ -851,7 +854,8 @@ copy_table(Relation rel)
 	pfree(cmd.data);
 	if (res->status != WALRCV_OK_COPY_OUT)
 		ereport(ERROR,
-				(errmsg("could not start initial contents copy for table \"%s.%s\": %s",
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("could not start initial contents copy for table \"%s.%s\": %s",
 						lrel.nspname, lrel.relname, res->err)));
 	walrcv_clear_result(res);
 
@@ -967,7 +971,8 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 		walrcv_connect(MySubscription->conninfo, true, slotname, &err);
 	if (LogRepWorkerWalRcvConn == NULL)
 		ereport(ERROR,
-				(errmsg("could not connect to the publisher: %s", err)));
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("could not connect to the publisher: %s", err)));
 
 	Assert(MyLogicalRepWorker->relstate == SUBREL_STATE_INIT ||
 		   MyLogicalRepWorker->relstate == SUBREL_STATE_DATASYNC ||
@@ -1050,7 +1055,8 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 					  0, NULL);
 	if (res->status != WALRCV_OK_COMMAND)
 		ereport(ERROR,
-				(errmsg("table copy could not start transaction on publisher: %s",
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("table copy could not start transaction on publisher: %s",
 						res->err)));
 	walrcv_clear_result(res);
 
@@ -1110,7 +1116,8 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	res = walrcv_exec(LogRepWorkerWalRcvConn, "COMMIT", 0, NULL);
 	if (res->status != WALRCV_OK_COMMAND)
 		ereport(ERROR,
-				(errmsg("table copy could not finish transaction on publisher: %s",
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("table copy could not finish transaction on publisher: %s",
 						res->err)));
 	walrcv_clear_result(res);
 

@@ -2388,7 +2388,8 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 
 				if (now >= timeout)
 					ereport(ERROR,
-							(errmsg("terminating logical replication worker due to timeout")));
+							(errcode(ERRCODE_CONNECTION_FAILURE),
+							 errmsg("terminating logical replication worker due to timeout")));
 
 				/* Check to see if it's time for a ping. */
 				if (!ping_sent)
@@ -3207,7 +3208,8 @@ ApplyWorkerMain(Datum main_arg)
 												MySubscription->name, &err);
 		if (LogRepWorkerWalRcvConn == NULL)
 			ereport(ERROR,
-					(errmsg("could not connect to the publisher: %s", err)));
+					(errcode(ERRCODE_CONNECTION_FAILURE),
+					 errmsg("could not connect to the publisher: %s", err)));
 
 		/*
 		 * We don't really use the output identify_system for anything but it
