@@ -717,17 +717,19 @@ ExecInsert(ModifyTableState *mtstate,
 
 				resultRelInfo->ri_Slots[resultRelInfo->ri_NumSlots] =
 					MakeSingleTupleTableSlot(tdesc, slot->tts_ops);
-				ExecCopySlot(resultRelInfo->ri_Slots[resultRelInfo->ri_NumSlots],
-							 slot);
 
 				resultRelInfo->ri_PlanSlots[resultRelInfo->ri_NumSlots] =
 					MakeSingleTupleTableSlot(tdesc, planSlot->tts_ops);
-				ExecCopySlot(resultRelInfo->ri_PlanSlots[resultRelInfo->ri_NumSlots],
-							 planSlot);
 
 				/* remember how many batch slots we initialized */
 				resultRelInfo->ri_NumSlotsInitialized++;
 			}
+
+			ExecCopySlot(resultRelInfo->ri_Slots[resultRelInfo->ri_NumSlots],
+						 slot);
+
+			ExecCopySlot(resultRelInfo->ri_PlanSlots[resultRelInfo->ri_NumSlots],
+						 planSlot);
 
 			resultRelInfo->ri_NumSlots++;
 

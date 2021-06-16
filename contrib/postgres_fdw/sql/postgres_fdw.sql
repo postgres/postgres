@@ -3083,7 +3083,34 @@ UPDATE batch_cp_upd_test t SET a = 1 FROM (VALUES (1), (2)) s(a) WHERE t.a = s.a
 SELECT tableoid::regclass, * FROM batch_cp_upd_test;
 
 -- Clean up
-DROP TABLE batch_table, batch_cp_upd_test CASCADE;
+DROP TABLE batch_table, batch_cp_upd_test, batch_table_p0, batch_table_p1 CASCADE;
+
+-- Use partitioning
+ALTER SERVER loopback OPTIONS (ADD batch_size '10');
+
+CREATE TABLE batch_table ( x int, field1 text, field2 text) PARTITION BY HASH (x);
+
+CREATE TABLE batch_table_p0 (LIKE batch_table);
+ALTER TABLE batch_table_p0 ADD CONSTRAINT p0_pkey PRIMARY KEY (x);
+CREATE FOREIGN TABLE batch_table_p0f
+	PARTITION OF batch_table
+	FOR VALUES WITH (MODULUS 2, REMAINDER 0)
+	SERVER loopback
+	OPTIONS (table_name 'batch_table_p0');
+
+CREATE TABLE batch_table_p1 (LIKE batch_table);
+ALTER TABLE batch_table_p1 ADD CONSTRAINT p1_pkey PRIMARY KEY (x);
+CREATE FOREIGN TABLE batch_table_p1f
+	PARTITION OF batch_table
+	FOR VALUES WITH (MODULUS 2, REMAINDER 1)
+	SERVER loopback
+	OPTIONS (table_name 'batch_table_p1');
+
+INSERT INTO batch_table SELECT i, 'test'||i, 'test'|| i FROM generate_series(1, 50) i;
+SELECT COUNT(*) FROM batch_table;
+SELECT * FROM batch_table ORDER BY x;
+
+ALTER SERVER loopback OPTIONS (DROP batch_size);
 
 -- ===================================================================
 -- test asynchronous execution
