@@ -247,6 +247,17 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	plan_list = cplan->stmt_list;
 
 	/*
+	 * DO NOT add any logic that could possibly throw an error between
+	 * GetCachedPlan and PortalDefineQuery, or you'll leak the plan refcount.
+	 */
+	PortalDefineQuery(portal,
+					  NULL,
+					  query_string,
+					  entry->plansource->commandTag,
+					  plan_list,
+					  cplan);
+
+	/*
 	 * For CREATE TABLE ... AS EXECUTE, we must verify that the prepared
 	 * statement is one that produces tuples.  Currently we insist that it be
 	 * a plain old SELECT.  In future we might consider supporting other
@@ -288,13 +299,6 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 		eflags = 0;
 		count = FETCH_ALL;
 	}
-
-	PortalDefineQuery(portal,
-					  NULL,
-					  query_string,
-					  entry->plansource->commandTag,
-					  plan_list,
-					  cplan);
 
 	/*
 	 * Run the portal as appropriate.
