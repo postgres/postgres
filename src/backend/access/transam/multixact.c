@@ -1241,7 +1241,10 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	debug_elog3(DEBUG2, "GetMembers: asked for %u", multi);
 
 	if (!MultiXactIdIsValid(multi) || from_pgupgrade)
+	{
+		*members = NULL;
 		return -1;
+	}
 
 	/* See if the MultiXactId is in the local cache */
 	length = mXactCacheGetById(multi, members);
@@ -1292,13 +1295,10 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	LWLockRelease(MultiXactGenLock);
 
 	if (MultiXactIdPrecedes(multi, oldestMXact))
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("MultiXactId %u does no longer exist -- apparent wraparound",
 						multi)));
-		return -1;
-	}
 
 	if (!MultiXactIdPrecedes(multi, nextMXact))
 		ereport(ERROR,
@@ -1398,7 +1398,6 @@ retry:
 	LWLockRelease(MultiXactOffsetSLRULock);
 
 	ptr = (MultiXactMember *) palloc(length * sizeof(MultiXactMember));
-	*members = ptr;
 
 	/* Now get the members themselves. */
 	LWLockAcquire(MultiXactMemberSLRULock, LW_EXCLUSIVE);
@@ -1443,6 +1442,9 @@ retry:
 
 	LWLockRelease(MultiXactMemberSLRULock);
 
+	/* A multixid with zero members should not happen */
+	Assert(truelength > 0);
+
 	/*
 	 * Copy the result into the local cache.
 	 */
@@ -1450,6 +1452,7 @@ retry:
 
 	debug_elog3(DEBUG2, "GetMembers: no cache for %s",
 				mxid_to_string(multi, truelength, ptr));
+	*members = ptr;
 	return truelength;
 }
 
@@ -1550,7 +1553,6 @@ mXactCacheGetById(MultiXactId multi, MultiXactMember **members)
 
 			size = sizeof(MultiXactMember) * entry->nmembers;
 			ptr = (MultiXactMember *) palloc(size);
-			*members = ptr;
 
 			memcpy(ptr, entry->members, size);
 
@@ -1566,6 +1568,7 @@ mXactCacheGetById(MultiXactId multi, MultiXactMember **members)
 			 */
 			dlist_move_head(&MXactCache, iter.cur);
 
+			*members = ptr;
 			return entry->nmembers;
 		}
 	}
