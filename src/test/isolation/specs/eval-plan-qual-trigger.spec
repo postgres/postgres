@@ -113,7 +113,7 @@ session "s2"
 step "s2_b_rc"     { BEGIN ISOLATION LEVEL READ COMMITTED; SELECT 1; }
 step "s2_b_rr"     { BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT 1; }
 step "s2_c"     { COMMIT; }
-step "s2_r"     { ROLLBACK; }
+#step "s2_r"     { ROLLBACK; }
 step "s2_ins_a" { INSERT INTO trigtest VALUES ('key-a', 'val-a-s2') RETURNING *; }
 step "s2_del_a" {
     DELETE FROM trigtest
@@ -153,25 +153,25 @@ step "s2_upsert_a_data" {
     RETURNING *;
 }
 
-session "s3"
+#session "s3"
 #setup          {  }
-step "s3_b_rc"     { BEGIN ISOLATION LEVEL READ COMMITTED; SELECT 1; }
-step "s3_c"     { COMMIT; }
-step "s3_r"     { ROLLBACK; }
-step "s3_del_a" {
-    DELETE FROM trigtest
-    WHERE
-        noisy_oper('upd', key, '=', 'key-a') AND
-        noisy_oper('upk', data, '<>', 'mismatch')
-    RETURNING *
-}
-step "s3_upd_a_data" {
-    UPDATE trigtest SET data = data || '-ups3'
-    WHERE
-        noisy_oper('upd', key, '=', 'key-a') AND
-        noisy_oper('upk', data, '<>', 'mismatch')
-    RETURNING *;
-}
+#step "s3_b_rc"     { BEGIN ISOLATION LEVEL READ COMMITTED; SELECT 1; }
+#step "s3_c"     { COMMIT; }
+#step "s3_r"     { ROLLBACK; }
+#step "s3_del_a" {
+#    DELETE FROM trigtest
+#    WHERE
+#        noisy_oper('upd', key, '=', 'key-a') AND
+#        noisy_oper('upk', data, '<>', 'mismatch')
+#    RETURNING *
+#}
+#step "s3_upd_a_data" {
+#    UPDATE trigtest SET data = data || '-ups3'
+#    WHERE
+#        noisy_oper('upd', key, '=', 'key-a') AND
+#        noisy_oper('upk', data, '<>', 'mismatch')
+#    RETURNING *;
+#}
 
 ### base case verifying that triggers see performed modifications
 # s1 updates, s1 commits, s2 updates

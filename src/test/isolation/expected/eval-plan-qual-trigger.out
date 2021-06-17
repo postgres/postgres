@@ -1,4 +1,4 @@
-Parsed test spec with 4 sessions
+Parsed test spec with 3 sessions
 
 starting permutation: s1_trig_rep_b_u s1_trig_rep_a_u s1_ins_a s1_ins_b s1_b_rc s2_b_rc s1_upd_a_data s1_c s2_upd_a_data s2_c s0_rep
 step s1_trig_rep_b_u: CREATE TRIGGER rep_b_u BEFORE UPDATE ON trigtest FOR EACH ROW EXECUTE PROCEDURE trig_report();
