@@ -145,6 +145,7 @@ step:
 				$$ = malloc(sizeof(Step));
 				$$->name = $2;
 				$$->sql = $3;
+				$$->used = false;
 				$$->errormsg = NULL;
 			}
 		;
