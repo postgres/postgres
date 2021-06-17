@@ -57,7 +57,6 @@ step "s1r"	{ ROLLBACK; }
 
 session "s2"
 step "s2b"	{ BEGIN ISOLATION LEVEL READ COMMITTED; }
-step "s2u"	{ UPDATE foo SET b='EFG' WHERE a=1; }
 step "s2u2"	{ UPDATE footrg SET b='XYZ' WHERE a=1; }
 step "s2i"	{ INSERT INTO bar VALUES(7); }
 step "s2d"	{ DELETE FROM foo WHERE a=1; }

@@ -15,7 +15,6 @@ setup           { BEGIN; }
 step "s1alter"  { ALTER SEQUENCE seq1 MAXVALUE 10; }
 step "s1alter2" { ALTER SEQUENCE seq1 MAXVALUE 20; }
 step "s1restart" { ALTER SEQUENCE seq1 RESTART WITH 5; }
-step "s1setval" { SELECT setval('seq1', 5); }
 step "s1commit" { COMMIT; }
 
 session "s2"
