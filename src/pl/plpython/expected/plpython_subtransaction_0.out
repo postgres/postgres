@@ -222,11 +222,14 @@ ERROR:  could not compile PL/Python function "subtransaction_enter_subtransactio
 DETAIL:  SyntaxError: invalid syntax (line 3)
 CREATE FUNCTION subtransaction_exit_subtransaction_in_with() RETURNS void
 AS $$
-with plpy.subtransaction() as s:
-    s.__exit__(None, None, None)
+try:
+    with plpy.subtransaction() as s:
+        s.__exit__(None, None, None)
+except ValueError, e:
+    raise ValueError(e)
 $$ LANGUAGE plpythonu;
 ERROR:  could not compile PL/Python function "subtransaction_exit_subtransaction_in_with"
-DETAIL:  SyntaxError: invalid syntax (line 3)
+DETAIL:  SyntaxError: invalid syntax (line 4)
 SELECT subtransaction_exit_without_enter();
 ERROR:  ValueError: this subtransaction has not been entered
 CONTEXT:  Traceback (most recent call last):
