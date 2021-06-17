@@ -1066,28 +1066,83 @@ OutputPluginWrite(ctx, true);
 
   <sect1 id="logicaldecoding-synchronous">
    <title>Synchronous Replication Support for Logical Decoding</title>
+   <sect2>
+    <title>Overview</title>
 
-   <para>
-    Logical decoding can be used to build
-    <link linkend="synchronous-replication">synchronous
-    replication</link> solutions with the same user interface as synchronous
-    replication for <link linkend="streaming-replication">streaming
-    replication</link>.  To do this, the streaming replication interface
-    (see <xref linkend="logicaldecoding-walsender"/>) must be used to stream out
-    data. Clients have to send <literal>Standby status update (F)</literal>
-    (see <xref linkend="protocol-replication"/>) messages, just like streaming
-    replication clients do.
-   </para>
-
-   <note>
     <para>
-     A synchronous replica receiving changes via logical decoding will work in
-     the scope of a single database. Since, in contrast to
-     that, <parameter>synchronous_standby_names</parameter> currently is
-     server wide, this means this technique will not work properly if more
-     than one database is actively used.
+     Logical decoding can be used to build
+     <link linkend="synchronous-replication">synchronous
+     replication</link> solutions with the same user interface as synchronous
+     replication for <link linkend="streaming-replication">streaming
+     replication</link>.  To do this, the streaming replication interface
+     (see <xref linkend="logicaldecoding-walsender"/>) must be used to stream out
+     data. Clients have to send <literal>Standby status update (F)</literal>
+     (see <xref linkend="protocol-replication"/>) messages, just like streaming
+     replication clients do.
+    </para>
+
+    <note>
+     <para>
+      A synchronous replica receiving changes via logical decoding will work in
+      the scope of a single database. Since, in contrast to
+      that, <parameter>synchronous_standby_names</parameter> currently is
+      server wide, this means this technique will not work properly if more
+      than one database is actively used.
      </para>
-   </note>
+    </note>
+   </sect2>
+
+   <sect2 id="logicaldecoding-synchronous-caveats">
+    <title>Caveats</title>
+
+    <para>
+     In synchronous replication setup, a deadlock can happen, if the transaction
+     has locked [user] catalog tables exclusively. This is because logical decoding of
+     transactions can lock catalog tables to access them. To avoid this users
+     must refrain from taking an exclusive lock on [user] catalog tables. This can
+     happen in the following ways:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+        Issuing an explicit <command>LOCK</command> on <structname>pg_class</structname>
+        (or any other catalog table) in a transaction.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Perform <command>CLUSTER</command> on <structname>pg_class</structname> in
+        a transaction.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        <command>PREPARE TRANSACTION</command> after <command>LOCK</command> command
+        on <structname>pg_class</structname> and allow logical decoding of two-phase
+        transactions.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        <command>PREPARE TRANSACTION</command> after <command>CLUSTER</command>
+        command on <structname>pg_trigger</structname> and allow logical decoding of
+        two-phase transactions. This will lead to deadlock only when published table
+        have a trigger.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Executing <command>TRUNCATE</command> on [user] catalog table in a
+        transaction.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </sect2>
   </sect1>
 
   <sect1 id="logicaldecoding-streaming">
@@ -1253,9 +1308,10 @@ stream_commit_cb(...);  &lt;-- commit of the streamed transaction
       <para>
        The logical replication solution that builds distributed two phase commit
        using this feature can deadlock if the prepared transaction has locked
-       [user] catalog tables exclusively. They need to inform users to not have
-       locks on catalog tables (via explicit <command>LOCK</command> command) in
-       such transactions.
+       [user] catalog tables exclusively. To avoid this users must refrain from
+       having locks on catalog tables (e.g. explicit <command>LOCK</command> command)
+       in such transactions.
+       (See <xref linkend="logicaldecoding-synchronous-caveats"/> for the details.)
       </para>
      </listitem>
     </itemizedlist>
