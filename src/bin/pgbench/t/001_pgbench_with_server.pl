@@ -100,7 +100,7 @@ pgbench(
 	'no such database');
 
 pgbench(
-	'-S -t 1', 1, [qr{^$}],
+	'-S -t 1', 1, [],
 	[qr{Perhaps you need to do initialization}],
 	'run without init');
 
