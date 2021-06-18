@@ -552,6 +552,7 @@ RelationBuildTupleDesc(Relation relation)
 	{
 		Form_pg_attribute attp;
 		int			attnum;
+		bool        atthasmissing;
 
 		attp = (Form_pg_attribute) GETSTRUCT(pg_attribute_tuple);
 
@@ -564,6 +565,22 @@ RelationBuildTupleDesc(Relation relation)
 		memcpy(TupleDescAttr(relation->rd_att, attnum - 1),
 			   attp,
 			   ATTRIBUTE_FIXED_PART_SIZE);
+
+		/*
+		 * Fix atthasmissing flag - it's only for plain tables. Others
+		 * should not have missing values set, but there may be some left from
+		 * before when we placed that check, so this code defensively ignores
+		 * such values.
+		 */
+		atthasmissing = attp->atthasmissing;
+		if (relation->rd_rel->relkind != RELKIND_RELATION && atthasmissing)
+		{
+			Form_pg_attribute nattp;
+
+			atthasmissing = false;
+			nattp = TupleDescAttr(relation->rd_att, attnum - 1);
+			nattp->atthasmissing = false;
+		}
 
 		/* Update constraint/default info */
 		if (attp->attnotnull)
@@ -586,7 +603,7 @@ RelationBuildTupleDesc(Relation relation)
 		}
 
 		/* Likewise for a missing value */
-		if (attp->atthasmissing)
+		if (atthasmissing)
 		{
 			Datum		missingval;
 			bool		missingNull;
