@@ -299,14 +299,8 @@ ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
 		 * rewriter.  We do not do AcquireRewriteLocks: we assume the query
 		 * either came straight from the parser, or suitable locks were
 		 * acquired by plancache.c.
-		 *
-		 * Because the rewriter and planner tend to scribble on the input, we
-		 * make a preliminary copy of the source querytree.  This prevents
-		 * problems in the case that CTAS is in a portal or plpgsql function
-		 * and is executed repeatedly.  (See also the same hack in EXPLAIN and
-		 * PREPARE.)
 		 */
-		rewritten = QueryRewrite(copyObject(query));
+		rewritten = QueryRewrite(query);
 
 		/* SELECT should never rewrite to more or less than one SELECT query */
 		if (list_length(rewritten) != 1)

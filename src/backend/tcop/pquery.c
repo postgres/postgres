@@ -1146,6 +1146,7 @@ PortalRunUtility(Portal portal, PlannedStmt *pstmt,
 
 	ProcessUtility(pstmt,
 				   portal->sourceText,
+				   (portal->cplan != NULL), /* protect tree if in plancache */
 				   isTopLevel ? PROCESS_UTILITY_TOPLEVEL : PROCESS_UTILITY_QUERY,
 				   portal->portalParams,
 				   portal->queryEnv,

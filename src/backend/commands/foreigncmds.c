@@ -1570,8 +1570,7 @@ ImportForeignSchema(ImportForeignSchemaStmt *stmt)
 			pstmt->stmt_len = rs->stmt_len;
 
 			/* Execute statement */
-			ProcessUtility(pstmt,
-						   cmd,
+			ProcessUtility(pstmt, cmd, false,
 						   PROCESS_UTILITY_SUBCOMMAND, NULL, NULL,
 						   None_Receiver, NULL);
 

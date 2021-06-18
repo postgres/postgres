@@ -78,12 +78,9 @@ PrepareQuery(ParseState *pstate, PrepareStmt *stmt,
 	/*
 	 * Need to wrap the contained statement in a RawStmt node to pass it to
 	 * parse analysis.
-	 *
-	 * Because parse analysis scribbles on the raw querytree, we must make a
-	 * copy to ensure we don't modify the passed-in tree.  FIXME someday.
 	 */
 	rawstmt = makeNode(RawStmt);
-	rawstmt->stmt = (Node *) copyObject(stmt->query);
+	rawstmt->stmt = stmt->query;
 	rawstmt->stmt_location = stmt_location;
 	rawstmt->stmt_len = stmt_len;
 

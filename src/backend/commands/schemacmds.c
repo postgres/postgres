@@ -191,6 +191,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 		/* do this step */
 		ProcessUtility(wrapper,
 					   queryString,
+					   false,
 					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
 					   NULL,

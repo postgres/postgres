@@ -11,10 +11,6 @@
  * Hence these functions are now called at the start of execution of their
  * respective utility commands.
  *
- * NOTE: in general we must avoid scribbling on the passed-in raw parse
- * tree, since it might be in a plan cache.  The simplest solution is
- * a quick copyObject() call before manipulating the query tree.
- *
  *
  * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -176,12 +172,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	Oid			namespaceid;
 	Oid			existing_relid;
 	ParseCallbackState pcbstate;
-
-	/*
-	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
-	 * overkill, but easy.)
-	 */
-	stmt = copyObject(stmt);
 
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
@@ -2824,12 +2814,6 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	if (stmt->transformed)
 		return stmt;
 
-	/*
-	 * We must not scribble on the passed-in IndexStmt, so copy it.  (This is
-	 * overkill, but easy.)
-	 */
-	stmt = copyObject(stmt);
-
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
@@ -2925,12 +2909,6 @@ transformStatsStmt(Oid relid, CreateStatsStmt *stmt, const char *queryString)
 	if (stmt->transformed)
 		return stmt;
 
-	/*
-	 * We must not scribble on the passed-in CreateStatsStmt, so copy it.
-	 * (This is overkill, but easy.)
-	 */
-	stmt = copyObject(stmt);
-
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
@@ -2993,9 +2971,6 @@ transformStatsStmt(Oid relid, CreateStatsStmt *stmt, const char *queryString)
  *
  * actions and whereClause are output parameters that receive the
  * transformed results.
- *
- * Note that we must not scribble on the passed-in RuleStmt, so we do
- * copyObject() on the actions and WHERE clause.
  */
 void
 transformRuleStmt(RuleStmt *stmt, const char *queryString,
@@ -3070,7 +3045,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 
 	/* take care of the where clause */
 	*whereClause = transformWhereClause(pstate,
-										(Node *) copyObject(stmt->whereClause),
+										stmt->whereClause,
 										EXPR_KIND_WHERE,
 										"WHERE");
 	/* we have to fix its collations too */
@@ -3142,8 +3117,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 			addNSItemToQuery(sub_pstate, newnsitem, false, true, false);
 
 			/* Transform the rule action statement */
-			top_subqry = transformStmt(sub_pstate,
-									   (Node *) copyObject(action));
+			top_subqry = transformStmt(sub_pstate, action);
 
 			/*
 			 * We cannot support utility-statement actions (eg NOTIFY) with
@@ -3324,12 +3298,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	bool		skipValidation = true;
 	AlterTableCmd *newcmd;
 	ParseNamespaceItem *nsitem;
-
-	/*
-	 * We must not scribble on the passed-in AlterTableStmt, so copy it. (This
-	 * is overkill, but easy.)
-	 */
-	stmt = copyObject(stmt);
 
 	/* Caller is responsible for locking the relation */
 	rel = relation_open(relid, NoLock);

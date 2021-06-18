@@ -256,14 +256,8 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query either
 	 * came straight from the parser, or suitable locks were acquired by
 	 * plancache.c.
-	 *
-	 * Because the rewriter and planner tend to scribble on the input, we make
-	 * a preliminary copy of the source querytree.  This prevents problems in
-	 * the case that the EXPLAIN is in a portal or plpgsql function and is
-	 * executed repeatedly.  (See also the same hack in DECLARE CURSOR and
-	 * PREPARE.)  XXX FIXME someday.
 	 */
-	rewritten = QueryRewrite(castNode(Query, copyObject(stmt->query)));
+	rewritten = QueryRewrite(castNode(Query, stmt->query));
 
 	/* emit opening boilerplate */
 	ExplainBeginOutput(es);
@@ -427,7 +421,8 @@ ExplainOneQuery(Query *query, int cursorOptions,
  * "into" is NULL unless we are explaining the contents of a CreateTableAsStmt.
  *
  * This is exported because it's called back from prepare.c in the
- * EXPLAIN EXECUTE case.
+ * EXPLAIN EXECUTE case.  In that case, we'll be dealing with a statement
+ * that's in the plan cache, so we have to ensure we don't modify it.
  */
 void
 ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
@@ -441,8 +436,7 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 	{
 		/*
 		 * We have to rewrite the contained SELECT and then pass it back to
-		 * ExplainOneQuery.  It's probably not really necessary to copy the
-		 * contained parsetree another time, but let's be safe.
+		 * ExplainOneQuery.  Copy to be safe in the EXPLAIN EXECUTE case.
 		 */
 		CreateTableAsStmt *ctas = (CreateTableAsStmt *) utilityStmt;
 		List	   *rewritten;

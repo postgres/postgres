@@ -69,17 +69,21 @@ typedef struct AlterTableUtilityContext
 
 /* Hook for plugins to get control in ProcessUtility() */
 typedef void (*ProcessUtility_hook_type) (PlannedStmt *pstmt,
-										  const char *queryString, ProcessUtilityContext context,
+										  const char *queryString,
+										  bool readOnlyTree,
+										  ProcessUtilityContext context,
 										  ParamListInfo params,
 										  QueryEnvironment *queryEnv,
 										  DestReceiver *dest, QueryCompletion *qc);
 extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
 
 extern void ProcessUtility(PlannedStmt *pstmt, const char *queryString,
+						   bool readOnlyTree,
 						   ProcessUtilityContext context, ParamListInfo params,
 						   QueryEnvironment *queryEnv,
 						   DestReceiver *dest, QueryCompletion *qc);
 extern void standard_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
+									bool readOnlyTree,
 									ProcessUtilityContext context, ParamListInfo params,
 									QueryEnvironment *queryEnv,
 									DestReceiver *dest, QueryCompletion *qc);

@@ -76,14 +76,8 @@ PerformCursorOpen(ParseState *pstate, DeclareCursorStmt *cstmt, ParamListInfo pa
 	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query either
 	 * came straight from the parser, or suitable locks were acquired by
 	 * plancache.c.
-	 *
-	 * Because the rewriter and planner tend to scribble on the input, we make
-	 * a preliminary copy of the source querytree.  This prevents problems in
-	 * the case that the DECLARE CURSOR is in a portal or plpgsql function and
-	 * is executed repeatedly.  (See also the same hack in EXPLAIN and
-	 * PREPARE.)  XXX FIXME someday.
 	 */
-	rewritten = QueryRewrite((Query *) copyObject(query));
+	rewritten = QueryRewrite(query);
 
 	/* SELECT should never rewrite to more or less than one query */
 	if (list_length(rewritten) != 1)
