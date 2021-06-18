@@ -1765,7 +1765,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        </para>
 
        <para>
-        The directory needs to be prepared with the OpenSSL command
+        The directory needs to be prepared with the
+        <productname>OpenSSL</productname> command
         <literal>openssl rehash</literal> or <literal>c_rehash</literal>.  See
         its documentation for details.
        </para>

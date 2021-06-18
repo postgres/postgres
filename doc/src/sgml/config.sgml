@@ -1276,7 +1276,8 @@ include_dir 'conf.d'
        </para>
 
        <para>
-        The directory needs to be prepared with the OpenSSL command
+        The directory needs to be prepared with the
+        <productname>OpenSSL</productname> command
         <literal>openssl rehash</literal> or <literal>c_rehash</literal>.  See
         its documentation for details.
        </para>
@@ -1320,7 +1321,7 @@ include_dir 'conf.d'
         Specifies a list of <acronym>SSL</acronym> cipher suites that are
         allowed to be used by SSL connections.  See the
         <citerefentry><refentrytitle>ciphers</refentrytitle></citerefentry>
-        manual page in the <application>OpenSSL</application> package for the
+        manual page in the <productname>OpenSSL</productname> package for the
         syntax of this setting and a list of supported values.  Only
         connections using TLS version 1.2 and lower are affected.  There is
         currently no setting that controls the cipher choices used by TLS
@@ -1389,9 +1390,9 @@ include_dir 'conf.d'
         Available cipher suite details will vary across
         <productname>OpenSSL</productname> versions.  Use the command
         <literal>openssl ciphers -v 'HIGH:MEDIUM:+3DES:!aNULL'</literal> to
-        see actual details for the currently installed <application>OpenSSL</application>
-        version.  Note that this list is filtered at run time based on the
-        server key type.
+        see actual details for the currently installed
+        <productname>OpenSSL</productname> version.  Note that this list is
+        filtered at run time based on the server key type.
        </para>
       </listitem>
      </varlistentry>
