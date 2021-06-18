@@ -524,8 +524,22 @@ SET LOCAL enable_seqscan = false;
 SELECT * FROM t WHERE a IS NULL;
 ROLLBACK;
 
+-- verify that a default set on a non-plain table doesn't set a missing
+-- value on the attribute
+CREATE FOREIGN DATA WRAPPER dummy;
+CREATE SERVER s0 FOREIGN DATA WRAPPER dummy;
+CREATE FOREIGN TABLE ft1 (c1 integer NOT NULL) SERVER s0;
+ALTER FOREIGN TABLE ft1 ADD COLUMN c8 integer DEFAULT 0;
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE char(10);
+SELECT count(*)
+  FROM pg_attribute
+  WHERE attrelid = 'ft1'::regclass AND
+    (attmissingval IS NOT NULL OR atthasmissing);
 
 -- cleanup
+DROP FOREIGN TABLE ft1;
+DROP SERVER s0;
+DROP FOREIGN DATA WRAPPER dummy;
 DROP TABLE vtype;
 DROP TABLE vtype2;
 DROP TABLE follower;
