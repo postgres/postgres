@@ -685,7 +685,20 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 	Assert(entry != NULL);
 
 	/* Not found means schema wasn't sent */
-	if (!found || !entry->replicate_valid)
+	if (!found)
+	{
+		/*
+		 * immediately make a new entry valid enough to satisfy callbacks
+		 */
+		entry->schema_sent = false;
+		entry->replicate_valid = false;
+		entry->pubactions.pubinsert = entry->pubactions.pubupdate =
+			entry->pubactions.pubdelete = entry->pubactions.pubtruncate = false;
+		entry->publish_as_relid = InvalidOid;
+		entry->map = NULL;	/* will be set by maybe_send_schema() if needed */
+	}
+
+	if (!entry->replicate_valid)
 	{
 		List	   *pubids = GetRelationPublications(relid);
 		ListCell   *lc;
@@ -782,12 +795,8 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 		list_free(pubids);
 
 		entry->publish_as_relid = publish_as_relid;
-		entry->map = NULL;	/* will be set by maybe_send_schema() if needed */
 		entry->replicate_valid = true;
 	}
-
-	if (!found)
-		entry->schema_sent = false;
 
 	return entry;
 }
