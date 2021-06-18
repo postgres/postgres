@@ -912,10 +912,12 @@ DefineDomain(CreateDomainStmt *stmt)
 					pstate = make_parsestate(NULL);
 
 					/*
-					 * Cook the constr->raw_expr into an expression. Note:
-					 * name is strictly for error message
+					 * Cook the constr->raw_expr into an expression; copy it
+					 * in case the input is in plan cache.  Note: name is used
+					 * only for error messages.
 					 */
-					defaultExpr = cookDefault(pstate, constr->raw_expr,
+					defaultExpr = cookDefault(pstate,
+											  copyObject(constr->raw_expr),
 											  basetypeoid,
 											  basetypeMod,
 											  domainName,
@@ -2248,10 +2250,10 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 		pstate = make_parsestate(NULL);
 
 		/*
-		 * Cook the colDef->raw_expr into an expression. Note: Name is
-		 * strictly for error message
+		 * Cook the raw default into an expression; copy it in case the input
+		 * is in plan cache.  Note: name is used only for error messages.
 		 */
-		defaultExpr = cookDefault(pstate, defaultRaw,
+		defaultExpr = cookDefault(pstate, copyObject(defaultRaw),
 								  typTup->typbasetype,
 								  typTup->typtypmod,
 								  NameStr(typTup->typname),
@@ -3140,7 +3142,12 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	pstate->p_pre_columnref_hook = replace_domain_constraint_value;
 	pstate->p_ref_hook_state = (void *) domVal;
 
-	expr = transformExpr(pstate, constr->raw_expr, EXPR_KIND_DOMAIN_CHECK);
+	/*
+	 * Transform the expression; first we must copy the input, in case it's in
+	 * plan cache.
+	 */
+	expr = transformExpr(pstate, copyObject(constr->raw_expr),
+						 EXPR_KIND_DOMAIN_CHECK);
 
 	/*
 	 * Make sure it yields a boolean result.
