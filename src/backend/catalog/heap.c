@@ -2068,7 +2068,7 @@ SetAttrMissing(Oid relid, char *attname, char *value)
 	/* Don't do anything unless it's a plain table */
 	if (tablerel->rd_rel->relkind != RELKIND_RELATION)
 	{
-		table_close(tablerel, AccessExclusiveLock);
+		heap_close(tablerel, AccessExclusiveLock);
 		return;
 	}
 
