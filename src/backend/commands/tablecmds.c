@@ -10315,10 +10315,11 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * Here we go --- change the recorded column type and collation.  (Note
-	 * heapTup is a copy of the syscache entry, so okay to scribble on.)
-	 * First fix up the missing value if any.
+	 * heapTup is a copy of the syscache entry, so okay to scribble on.) First
+	 * fix up the missing value if any. There shouldn't be any missing values
+	 * for anything except plain tables, but if there are, ignore them.
 	 */
-	if (attTup->atthasmissing)
+	if (rel->rd_rel->relkind == RELKIND_RELATION  && attTup->atthasmissing)
 	{
 		Datum       missingval;
 		bool        missingNull;

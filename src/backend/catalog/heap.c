@@ -2065,6 +2065,13 @@ SetAttrMissing(Oid relid, char *attname, char *value)
 	/* lock the table the attribute belongs to */
 	tablerel = heap_open(relid, AccessExclusiveLock);
 
+	/* Don't do anything unless it's a plain table */
+	if (tablerel->rd_rel->relkind != RELKIND_RELATION)
+	{
+		table_close(tablerel, AccessExclusiveLock);
+		return;
+	}
+
 	/* Lock the attribute row and get the data */
 	attrrel = heap_open(AttributeRelationId, RowExclusiveLock);
 	atttup = SearchSysCacheAttName(relid, attname);
@@ -2198,7 +2205,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 		valuesAtt[Anum_pg_attribute_atthasdef - 1] = true;
 		replacesAtt[Anum_pg_attribute_atthasdef - 1] = true;
 
-		if (add_column_mode)
+		if (rel->rd_rel->relkind == RELKIND_RELATION  && add_column_mode)
 		{
 			expr2 = expression_planner(expr2);
 			estate = CreateExecutorState();
