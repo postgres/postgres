@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 31;
+use Test::More tests => 32;
 
 # Initialize publisher node
 my $node_publisher = get_new_node('publisher');
@@ -50,6 +50,10 @@ $node_publisher->safe_psql('postgres', "CREATE TABLE tab_nothing (a int)");
 $node_publisher->safe_psql('postgres',
 	"ALTER TABLE tab_nothing REPLICA IDENTITY NOTHING");
 
+# Replicate the changes without replica identity index
+$node_publisher->safe_psql('postgres', "CREATE TABLE tab_no_replidentity_index(c1 int)");
+$node_publisher->safe_psql('postgres', "CREATE INDEX idx_no_replidentity_index ON tab_no_replidentity_index(c1)");
+
 # Setup structure on subscriber
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_notrep (a int)");
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_ins (a int)");
@@ -73,13 +77,17 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_include (a int, b text, CONSTRAINT covering PRIMARY KEY(a) INCLUDE(b))"
 );
 
+# replication of the table without replica identity index
+$node_subscriber->safe_psql('postgres', "CREATE TABLE tab_no_replidentity_index(c1 int)");
+$node_subscriber->safe_psql('postgres', "CREATE INDEX idx_no_replidentity_index ON tab_no_replidentity_index(c1)");
+
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres', "CREATE PUBLICATION tap_pub");
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_ins_only WITH (publish = insert)");
 $node_publisher->safe_psql('postgres',
-	"ALTER PUBLICATION tap_pub ADD TABLE tab_rep, tab_full, tab_full2, tab_mixed, tab_include, tab_nothing, tab_full_pk"
+	"ALTER PUBLICATION tap_pub ADD TABLE tab_rep, tab_full, tab_full2, tab_mixed, tab_include, tab_nothing, tab_full_pk, tab_no_replidentity_index"
 );
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub_ins_only ADD TABLE tab_ins");
@@ -129,6 +137,8 @@ $node_publisher->safe_psql('postgres',
 	"DELETE FROM tab_include WHERE a > 20");
 $node_publisher->safe_psql('postgres', "UPDATE tab_include SET a = -a");
 
+$node_publisher->safe_psql('postgres', "INSERT INTO tab_no_replidentity_index VALUES(1)");
+
 $node_publisher->wait_for_catchup('tap_sub');
 
 $result = $node_subscriber->safe_psql('postgres',
@@ -151,6 +161,9 @@ $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_include");
 is($result, qq(20|-20|-1),
 	'check replicated changes with primary key index with included columns');
+
+is($node_subscriber->safe_psql('postgres', q(SELECT c1 FROM tab_no_replidentity_index)),
+   1, "value replicated to subscriber without replica identity index");
 
 # insert some duplicate rows
 $node_publisher->safe_psql('postgres',

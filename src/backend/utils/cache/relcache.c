@@ -5266,8 +5266,18 @@ RelationGetIdentityKeyBitmap(Relation relation)
 	if (indexoidlist == NIL)
 		return NULL;
 
-	/* Add referenced attributes to idindexattrs */
+	/* Fall out if there is no replica identity index */
+	if (!OidIsValid(relation->rd_replidindex))
+		return NULL;
+
+	/* Look up the description for the replica identity index */
 	indexDesc = RelationIdGetRelation(relation->rd_replidindex);
+
+	if (!RelationIsValid(indexDesc))
+		elog(ERROR, "could not open relation with OID %u",
+			 relation->rd_replidindex);
+
+	/* Add referenced attributes to idindexattrs */
 	for (i = 0; i < indexDesc->rd_index->indnatts; i++)
 	{
 		int			attrnum = indexDesc->rd_index->indkey.values[i];
