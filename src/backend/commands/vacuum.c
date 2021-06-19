@@ -88,7 +88,7 @@ static void vac_truncate_clog(TransactionId frozenXID,
 							  MultiXactId lastSaneMinMulti);
 static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params);
 static double compute_parallel_delay(void);
-static VacOptTernaryValue get_vacopt_ternary_value(DefElem *def);
+static VacOptValue get_vacoptval_from_boolean(DefElem *def);
 
 /*
  * Primary entry point for manual VACUUM and ANALYZE commands
@@ -109,9 +109,9 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	bool		process_toast = true;
 	ListCell   *lc;
 
-	/* Set default value */
-	params.index_cleanup = VACOPT_TERNARY_DEFAULT;
-	params.truncate = VACOPT_TERNARY_DEFAULT;
+	/* index_cleanup and truncate values unspecified for now */
+	params.index_cleanup = VACOPTVALUE_UNSPECIFIED;
+	params.truncate = VACOPTVALUE_UNSPECIFIED;
 
 	/* By default parallel vacuum is enabled */
 	params.nworkers = 0;
@@ -142,11 +142,25 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 		else if (strcmp(opt->defname, "disable_page_skipping") == 0)
 			disable_page_skipping = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "index_cleanup") == 0)
-			params.index_cleanup = get_vacopt_ternary_value(opt);
+		{
+			/* Interpret no string as the default, which is 'auto' */
+			if (!opt->arg)
+				params.index_cleanup = VACOPTVALUE_AUTO;
+			else
+			{
+				char	   *sval = defGetString(opt);
+
+				/* Try matching on 'auto' string, or fall back on boolean */
+				if (pg_strcasecmp(sval, "auto") == 0)
+					params.index_cleanup = VACOPTVALUE_AUTO;
+				else
+					params.index_cleanup = get_vacoptval_from_boolean(opt);
+			}
+		}
 		else if (strcmp(opt->defname, "process_toast") == 0)
 			process_toast = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "truncate") == 0)
-			params.truncate = get_vacopt_ternary_value(opt);
+			params.truncate = get_vacoptval_from_boolean(opt);
 		else if (strcmp(opt->defname, "parallel") == 0)
 		{
 			if (opt->arg == NULL)
@@ -1938,24 +1952,43 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	lockrelid = rel->rd_lockInfo.lockRelId;
 	LockRelationIdForSession(&lockrelid, lmode);
 
-	/* Set index cleanup option based on reloptions if not yet */
-	if (params->index_cleanup == VACOPT_TERNARY_DEFAULT)
+	/*
+	 * Set index_cleanup option based on index_cleanup reloption if it wasn't
+	 * specified in VACUUM command, or when running in an autovacuum worker
+	 */
+	if (params->index_cleanup == VACOPTVALUE_UNSPECIFIED)
 	{
-		if (rel->rd_options == NULL ||
-			((StdRdOptions *) rel->rd_options)->vacuum_index_cleanup)
-			params->index_cleanup = VACOPT_TERNARY_ENABLED;
+		StdRdOptIndexCleanup vacuum_index_cleanup;
+
+		if (rel->rd_options == NULL)
+			vacuum_index_cleanup = STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO;
 		else
-			params->index_cleanup = VACOPT_TERNARY_DISABLED;
+			vacuum_index_cleanup =
+				((StdRdOptions *) rel->rd_options)->vacuum_index_cleanup;
+
+		if (vacuum_index_cleanup == STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO)
+			params->index_cleanup = VACOPTVALUE_AUTO;
+		else if (vacuum_index_cleanup == STDRD_OPTION_VACUUM_INDEX_CLEANUP_ON)
+			params->index_cleanup = VACOPTVALUE_ENABLED;
+		else
+		{
+			Assert(vacuum_index_cleanup ==
+				   STDRD_OPTION_VACUUM_INDEX_CLEANUP_OFF);
+			params->index_cleanup = VACOPTVALUE_DISABLED;
+		}
 	}
 
-	/* Set truncate option based on reloptions if not yet */
-	if (params->truncate == VACOPT_TERNARY_DEFAULT)
+	/*
+	 * Set truncate option based on truncate reloption if it wasn't specified
+	 * in VACUUM command, or when running in an autovacuum worker
+	 */
+	if (params->truncate == VACOPTVALUE_UNSPECIFIED)
 	{
 		if (rel->rd_options == NULL ||
 			((StdRdOptions *) rel->rd_options)->vacuum_truncate)
-			params->truncate = VACOPT_TERNARY_ENABLED;
+			params->truncate = VACOPTVALUE_ENABLED;
 		else
-			params->truncate = VACOPT_TERNARY_DISABLED;
+			params->truncate = VACOPTVALUE_DISABLED;
 	}
 
 	/*
@@ -2217,11 +2250,11 @@ compute_parallel_delay(void)
 /*
  * A wrapper function of defGetBoolean().
  *
- * This function returns VACOPT_TERNARY_ENABLED and VACOPT_TERNARY_DISABLED
- * instead of true and false.
+ * This function returns VACOPTVALUE_ENABLED and VACOPTVALUE_DISABLED instead
+ * of true and false.
  */
-static VacOptTernaryValue
-get_vacopt_ternary_value(DefElem *def)
+static VacOptValue
+get_vacoptval_from_boolean(DefElem *def)
 {
-	return defGetBoolean(def) ? VACOPT_TERNARY_ENABLED : VACOPT_TERNARY_DISABLED;
+	return defGetBoolean(def) ? VACOPTVALUE_ENABLED : VACOPTVALUE_DISABLED;
 }

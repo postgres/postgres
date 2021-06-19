@@ -39,7 +39,8 @@ typedef struct vacuumingOptions
 	int			min_mxid_age;
 	int			parallel_workers;	/* >= 0 indicates user specified the
 									 * parallel degree, otherwise -1 */
-	bool		do_index_cleanup;
+	bool		no_index_cleanup;
+	bool		force_index_cleanup;
 	bool		do_truncate;
 	bool		process_toast;
 } vacuumingOptions;
@@ -99,8 +100,9 @@ main(int argc, char *argv[])
 		{"min-xid-age", required_argument, NULL, 6},
 		{"min-mxid-age", required_argument, NULL, 7},
 		{"no-index-cleanup", no_argument, NULL, 8},
-		{"no-truncate", no_argument, NULL, 9},
-		{"no-process-toast", no_argument, NULL, 10},
+		{"force-index-cleanup", no_argument, NULL, 9},
+		{"no-truncate", no_argument, NULL, 10},
+		{"no-process-toast", no_argument, NULL, 11},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -126,7 +128,8 @@ main(int argc, char *argv[])
 	/* initialize options */
 	memset(&vacopts, 0, sizeof(vacopts));
 	vacopts.parallel_workers = -1;
-	vacopts.do_index_cleanup = true;
+	vacopts.no_index_cleanup = false;
+	vacopts.force_index_cleanup = false;
 	vacopts.do_truncate = true;
 	vacopts.process_toast = true;
 
@@ -233,12 +236,15 @@ main(int argc, char *argv[])
 				}
 				break;
 			case 8:
-				vacopts.do_index_cleanup = false;
+				vacopts.no_index_cleanup = true;
 				break;
 			case 9:
-				vacopts.do_truncate = false;
+				vacopts.force_index_cleanup = true;
 				break;
 			case 10:
+				vacopts.do_truncate = false;
+				break;
+			case 11:
 				vacopts.process_toast = false;
 				break;
 			default:
@@ -285,10 +291,16 @@ main(int argc, char *argv[])
 						 "disable-page-skipping");
 			exit(1);
 		}
-		if (!vacopts.do_index_cleanup)
+		if (vacopts.no_index_cleanup)
 		{
 			pg_log_error("cannot use the \"%s\" option when performing only analyze",
 						 "no-index-cleanup");
+			exit(1);
+		}
+		if (vacopts.force_index_cleanup)
+		{
+			pg_log_error("cannot use the \"%s\" option when performing only analyze",
+						 "force-index-cleanup");
 			exit(1);
 		}
 		if (!vacopts.do_truncate)
@@ -321,6 +333,14 @@ main(int argc, char *argv[])
 						 "parallel");
 			exit(1);
 		}
+	}
+
+	/* Prohibit --no-index-cleanup and --force-index-cleanup together */
+	if (vacopts.no_index_cleanup && vacopts.force_index_cleanup)
+	{
+		pg_log_error("cannot use the \"%s\" option with the \"%s\" option",
+					 "no-index-cleanup", "force-index-cleanup");
+		exit(1);
 	}
 
 	/* fill cparams except for dbname, which is set below */
@@ -453,11 +473,19 @@ vacuum_one_database(ConnParams *cparams,
 		exit(1);
 	}
 
-	if (!vacopts->do_index_cleanup && PQserverVersion(conn) < 120000)
+	if (vacopts->no_index_cleanup && PQserverVersion(conn) < 120000)
 	{
 		PQfinish(conn);
 		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
 					 "no-index-cleanup", "12");
+		exit(1);
+	}
+
+	if (vacopts->force_index_cleanup && PQserverVersion(conn) < 120000)
+	{
+		PQfinish(conn);
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+					 "force-index-cleanup", "12");
 		exit(1);
 	}
 
@@ -878,11 +906,27 @@ prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 				appendPQExpBuffer(sql, "%sDISABLE_PAGE_SKIPPING", sep);
 				sep = comma;
 			}
-			if (!vacopts->do_index_cleanup)
+			if (vacopts->no_index_cleanup)
 			{
-				/* INDEX_CLEANUP is supported since v12 */
+				/* "INDEX_CLEANUP FALSE" has been supported since v12 */
 				Assert(serverVersion >= 120000);
+				Assert(!vacopts->force_index_cleanup);
 				appendPQExpBuffer(sql, "%sINDEX_CLEANUP FALSE", sep);
+				sep = comma;
+			}
+			if (vacopts->force_index_cleanup)
+			{
+				/*
+				 * "INDEX_CLEANUP TRUE" has been supported since v12.
+				 *
+				 * Though --force-index-cleanup was added to vacuumdb in v14,
+				 * the "INDEX_CLEANUP TRUE" server/VACUUM behavior has never
+				 * changed.  No reason not to support --force-index-cleanup on
+				 * v12+.
+				 */
+				Assert(serverVersion >= 120000);
+				Assert(!vacopts->no_index_cleanup);
+				appendPQExpBuffer(sql, "%sINDEX_CLEANUP TRUE", sep);
 				sep = comma;
 			}
 			if (!vacopts->do_truncate)
@@ -998,6 +1042,7 @@ help(const char *progname)
 	printf(_("      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"));
 	printf(_("      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"));
 	printf(_("      --no-index-cleanup          don't remove index entries that point to dead tuples\n"));
+	printf(_("      --force-index-cleanup       always remove index entries that point to dead tuples\n"));
 	printf(_("      --no-process-toast          skip the TOAST table associated with the table to vacuum\n"));
 	printf(_("      --no-truncate               don't truncate empty pages at the end of the table\n"));
 	printf(_("  -P, --parallel=PARALLEL_WORKERS use this many background workers for vacuum, if available\n"));

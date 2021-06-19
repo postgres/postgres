@@ -185,17 +185,20 @@ typedef struct VacAttrStats
 #define VACOPT_DISABLE_PAGE_SKIPPING 0x80	/* don't skip any pages */
 
 /*
- * A ternary value used by vacuum parameters.
+ * Values used by index_cleanup and truncate params.
  *
- * DEFAULT value is used to determine the value based on other
- * configurations, e.g. reloptions.
+ * VACOPTVALUE_UNSPECIFIED is used as an initial placeholder when VACUUM
+ * command has no explicit value.  When that happens the final usable value
+ * comes from the corresponding reloption (though the reloption default is
+ * usually used).
  */
-typedef enum VacOptTernaryValue
+typedef enum VacOptValue
 {
-	VACOPT_TERNARY_DEFAULT = 0,
-	VACOPT_TERNARY_DISABLED,
-	VACOPT_TERNARY_ENABLED,
-} VacOptTernaryValue;
+	VACOPTVALUE_UNSPECIFIED = 0,
+	VACOPTVALUE_AUTO,
+	VACOPTVALUE_DISABLED,
+	VACOPTVALUE_ENABLED,
+} VacOptValue;
 
 /*
  * Parameters customizing behavior of VACUUM and ANALYZE.
@@ -216,10 +219,8 @@ typedef struct VacuumParams
 	int			log_min_duration;	/* minimum execution threshold in ms at
 									 * which  verbose logs are activated, -1
 									 * to use default */
-	VacOptTernaryValue index_cleanup;	/* Do index vacuum and cleanup,
-										 * default value depends on reloptions */
-	VacOptTernaryValue truncate;	/* Truncate empty pages at the end,
-									 * default value depends on reloptions */
+	VacOptValue index_cleanup;	/* Do index vacuum and cleanup */
+	VacOptValue truncate;		/* Truncate empty pages at the end */
 
 	/*
 	 * The number of parallel vacuum workers.  0 by default which means choose

@@ -32,7 +32,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     ANALYZE [ <replaceable class="parameter">boolean</replaceable> ]
     DISABLE_PAGE_SKIPPING [ <replaceable class="parameter">boolean</replaceable> ]
     SKIP_LOCKED [ <replaceable class="parameter">boolean</replaceable> ]
-    INDEX_CLEANUP [ <replaceable class="parameter">boolean</replaceable> ]
+    INDEX_CLEANUP { AUTO | ON | OFF }
     PROCESS_TOAST [ <replaceable class="parameter">boolean</replaceable> ]
     TRUNCATE [ <replaceable class="parameter">boolean</replaceable> ]
     PARALLEL <replaceable class="parameter">integer</replaceable>
@@ -193,20 +193,45 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     <term><literal>INDEX_CLEANUP</literal></term>
     <listitem>
      <para>
-      Specifies that <command>VACUUM</command> should attempt to remove
-      index entries pointing to dead tuples.  This is normally the desired
-      behavior and is the default unless the
-      <literal>vacuum_index_cleanup</literal> option has been set to false
-      for the table to be vacuumed.  Setting this option to false may be
-      useful when it is necessary to make vacuum run as quickly as possible,
-      for example to avoid imminent transaction ID wraparound
-      (see <xref linkend="vacuum-for-wraparound"/>).  However, if index
-      cleanup is not performed regularly, performance may suffer, because
-      as the table is modified, indexes will accumulate dead tuples
-      and the table itself will accumulate dead line pointers that cannot be
-      removed until index cleanup is completed.  This option has no effect
-      for tables that do not have an index and is ignored if the
-      <literal>FULL</literal> option is used.
+      Normally, <command>VACUUM</command> will skip index vacuuming
+      when there are very few dead tuples in the table.  The cost of
+      processing all of the table's indexes is expected to greatly
+      exceed the benefit of removing dead index tuples when this
+      happens.  This option can be used to force
+      <command>VACUUM</command> to process indexes when there are more
+      than zero dead tuples.  The default is <literal>AUTO</literal>,
+      which allows <command>VACUUM</command> to skip index vacuuming
+      when appropriate.  If <literal>INDEX_CLEANUP</literal> is set to
+      <literal>ON</literal>, <command>VACUUM</command> will
+      conservatively remove all dead tuples from indexes.  This may be
+      useful for backwards compatibility with earlier releases of
+      <productname>PostgreSQL</productname> where this was the
+      standard behavior.
+     </para>
+     <para>
+      <literal>INDEX_CLEANUP</literal> can also be set to
+      <literal>OFF</literal> to force <command>VACUUM</command> to
+      <emphasis>always</emphasis> skip index vacuuming, even when
+      there are many dead tuples in the table.  This may be useful
+      when it is necessary to make <command>VACUUM</command> run as
+      quickly as possible to avoid imminent transaction ID wraparound
+      (see <xref linkend="vacuum-for-wraparound"/>).  However, the
+      wraparound failsafe mechanism controlled by <xref
+       linkend="guc-vacuum-failsafe-age"/>  will generally trigger
+      automatically to avoid transaction ID wraparound failure, and
+      should be preferred.  If index cleanup is not performed
+      regularly, performance may suffer, because as the table is
+      modified indexes will accumulate dead tuples and the table
+      itself will accumulate dead line pointers that cannot be removed
+      until index cleanup is completed.
+     </para>
+     <para>
+      This option has no effect for tables that have no index and is
+      ignored if the <literal>FULL</literal> option is used.  It also
+      has no effect on the transaction ID wraparound failsafe
+      mechanism.  When triggered it will skip index vacuuming, even
+      when <literal>INDEX_CLEANUP</literal> is set to
+      <literal>ON</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -217,7 +242,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
      <para>
       Specifies that <command>VACUUM</command> should attempt to process the
       corresponding <literal>TOAST</literal> table for each relation, if one
-      exists. This is normally the desired behavior and is the default.
+      exists. This is usually the desired behavior and is the default.
       Setting this option to false may be useful when it is only necessary to
       vacuum the main relation. This option is required when the
       <literal>FULL</literal> option is used.
