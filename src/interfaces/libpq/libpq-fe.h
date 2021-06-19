@@ -29,6 +29,15 @@ extern "C"
 #include "postgres_ext.h"
 
 /*
+ * These symbols may be used in compile-time #ifdef tests for the availability
+ * of newer libpq features.
+ */
+/* Indicates presence of PQenterPipelineMode and friends */
+#define LIBPQ_HAS_PIPELINING 1
+/* Indicates presence of PQsetTraceFlags; also new PQtrace output format */
+#define LIBPQ_HAS_TRACE_FLAGS 1
+
+/*
  * Option flags for PQcopyResult
  */
 #define PG_COPYRES_ATTRS		  0x01
@@ -98,7 +107,7 @@ typedef enum
 	PGRES_COPY_BOTH,			/* Copy In/Out data transfer in progress */
 	PGRES_SINGLE_TUPLE,			/* single tuple from larger resultset */
 	PGRES_PIPELINE_SYNC,		/* pipeline synchronization point */
-	PGRES_PIPELINE_ABORTED,		/* Command didn't run because of an abort
+	PGRES_PIPELINE_ABORTED		/* Command didn't run because of an abort
 								 * earlier in a pipeline */
 } ExecStatusType;
 
@@ -398,7 +407,7 @@ extern pgthreadlock_t PQregisterThreadLock(pgthreadlock_t newhandler);
 extern void PQtrace(PGconn *conn, FILE *debug_port);
 extern void PQuntrace(PGconn *conn);
 
-/* flags controlling trace output */
+/* flags controlling trace output: */
 /* omit timestamps from each line */
 #define PQTRACE_SUPPRESS_TIMESTAMPS		(1<<0)
 /* redact portions of some messages, for testing frameworks */
