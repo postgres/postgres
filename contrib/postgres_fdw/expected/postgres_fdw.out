@@ -5535,7 +5535,7 @@ UPDATE ft2 AS target SET (c2) = (
 -- but a SET clause that can't be
 EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE ft2 d SET c2 = CASE WHEN random() >= 0 THEN d.c2 ELSE 0 END
-  FROM ft2 AS t WHERE d.c1 = t.c1 AND d.c1 > 1100;
+  FROM ft2 AS t WHERE d.c1 = t.c1 AND d.c1 > 1000;
                                                                                                                                                                                        QUERY PLAN                                                                                                                                                                                        
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Update on public.ft2 d
@@ -5543,19 +5543,22 @@ UPDATE ft2 d SET c2 = CASE WHEN random() >= 0 THEN d.c2 ELSE 0 END
    ->  Foreign Scan
          Output: CASE WHEN (random() >= '0'::double precision) THEN d.c2 ELSE 0 END, d.ctid, d.*, t.*
          Relations: (public.ft2 d) INNER JOIN (public.ft2 t)
-         Remote SQL: SELECT r1.c2, r1.ctid, CASE WHEN (r1.*)::text IS NOT NULL THEN ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8) END, CASE WHEN (r2.*)::text IS NOT NULL THEN ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) END FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1")) AND ((r1."C 1" > 1100)))) FOR UPDATE OF r1
-         ->  Nested Loop
+         Remote SQL: SELECT r1.c2, r1.ctid, CASE WHEN (r1.*)::text IS NOT NULL THEN ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8) END, CASE WHEN (r2.*)::text IS NOT NULL THEN ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) END FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1")) AND ((r1."C 1" > 1000)))) FOR UPDATE OF r1
+         ->  Hash Join
                Output: d.c2, d.ctid, d.*, t.*
+               Hash Cond: (d.c1 = t.c1)
                ->  Foreign Scan on public.ft2 d
                      Output: d.c2, d.ctid, d.*, d.c1
-                     Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8, ctid FROM "S 1"."T 1" WHERE (("C 1" > 1100)) ORDER BY "C 1" ASC NULLS LAST FOR UPDATE
-               ->  Foreign Scan on public.ft2 t
+                     Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8, ctid FROM "S 1"."T 1" WHERE (("C 1" > 1000)) ORDER BY "C 1" ASC NULLS LAST FOR UPDATE
+               ->  Hash
                      Output: t.*, t.c1
-                     Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (($1::integer = "C 1"))
-(14 rows)
+                     ->  Foreign Scan on public.ft2 t
+                           Output: t.*, t.c1
+                           Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1"
+(17 rows)
 
 UPDATE ft2 d SET c2 = CASE WHEN random() >= 0 THEN d.c2 ELSE 0 END
-  FROM ft2 AS t WHERE d.c1 = t.c1 AND d.c1 > 1100;
+  FROM ft2 AS t WHERE d.c1 = t.c1 AND d.c1 > 1000;
 -- Test UPDATE/DELETE with WHERE or JOIN/ON conditions containing
 -- user-defined operators/functions
 ALTER SERVER loopback OPTIONS (DROP extensions);
