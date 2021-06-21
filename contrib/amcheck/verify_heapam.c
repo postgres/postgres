@@ -298,7 +298,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 	rsinfo->setDesc = ctx.tupdesc;
 	MemoryContextSwitchTo(old_context);
 
-	/* Open relation, check relkind and access method, and check privileges */
+	/* Open relation, check relkind and access method */
 	ctx.rel = relation_open(relid, AccessShareLock);
 	sanity_check_relation(ctx.rel);
 
@@ -524,8 +524,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 }
 
 /*
- * Check that a relation's relkind and access method are both supported,
- * and that the caller has select privilege on the relation.
+ * Check that a relation's relkind and access method are both supported.
  */
 static void
 sanity_check_relation(Relation rel)
