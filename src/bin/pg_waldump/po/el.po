@@ -1,0 +1,308 @@
+# Greek message translation file for pg_waldump
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_waldump (PostgreSQL) package.
+# Georgios Kokolatos <gkokolatos@pm.me>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_waldump (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-05-12 06:16+0000\n"
+"PO-Revision-Date: 2021-05-17 10:40+0200\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.4.3\n"
+
+#: ../../../src/common/logging.c:259
+#, c-format
+msgid "fatal: "
+msgstr "κρίσιμο:"
+
+#: ../../../src/common/logging.c:266
+#, c-format
+msgid "error: "
+msgstr "σφάλμα:"
+
+#: ../../../src/common/logging.c:273
+#, c-format
+msgid "warning: "
+msgstr "προειδοποίηση:"
+
+#: pg_waldump.c:146
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου “%s”: %m"
+
+#: pg_waldump.c:202
+#, c-format
+msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
+msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
+msgstr[0] "η τιμή του μεγέθους τμήματος WAL πρέπει να ανήκει σε δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά η κεφαλίδα \"%s\" του αρχείου WAL καθορίζει %d byte"
+msgstr[1] "η τιμή του μεγέθους τμήματος WAL πρέπει να ανήκει σε δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά η κεφαλίδα “%s” του αρχείου WAL καθορίζει %d bytes"
+
+#: pg_waldump.c:210
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου \"%s\": %m"
+
+#: pg_waldump.c:213
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου \"%s\": ανέγνωσε %d από %zu"
+
+#: pg_waldump.c:275
+#, c-format
+msgid "could not locate WAL file \"%s\""
+msgstr "δεν ήταν δυνατός ο εντοπισμός του αρχείου WAL \"%s\""
+
+#: pg_waldump.c:277
+#, c-format
+msgid "could not find any WAL file"
+msgstr "δεν ήταν δυνατή η εύρεση οποιουδήποτε αρχείου WAL"
+
+#: pg_waldump.c:318
+#, c-format
+msgid "could not find file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εύρεση του αρχείου \"%s\": %m"
+
+#: pg_waldump.c:367
+#, c-format
+msgid "could not read from file %s, offset %u: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση από αρχείο %s, μετατόπιση %u: %m"
+
+#: pg_waldump.c:371
+#, c-format
+msgid "could not read from file %s, offset %u: read %d of %zu"
+msgstr "δεν ήταν δυνατή η ανάγνωση από αρχείο %s, μετατόπιση %u: ανέγνωσε %d από %zu"
+
+#: pg_waldump.c:724
+#, c-format
+msgid ""
+"%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
+"\n"
+msgstr ""
+"%s αποκωδικοποιεί και εμφανίζει αρχεία καταγραφής εμπρόσθιας-εγγραφής PostgreSQL για αποσφαλμάτωση.\n"
+"\n"
+
+#: pg_waldump.c:726
+#, c-format
+msgid "Usage:\n"
+msgstr "Χρήση:\n"
+
+#: pg_waldump.c:727
+#, c-format
+msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]… [STARTSEG [ENDSEG]]\n"
+
+#: pg_waldump.c:728
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Επιλογές:\n"
+
+#: pg_waldump.c:729
+#, c-format
+msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
+msgstr "  -b, —bkp-details      πάραγε λεπτομερείς πληροφορίες σχετικά με τα μπλοκ αντιγράφων ασφαλείας\n"
+
+#: pg_waldump.c:730
+#, c-format
+msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
+msgstr "  -e, —end=RECPTR       σταμάτησε την ανάγνωση στη τοποθεσία WAL RECPTR\n"
+
+#: pg_waldump.c:731
+#, c-format
+msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
+msgstr "  -f, —follow           εξακολούθησε την προσπάθεια μετά την επίτευξη του τέλους του WAL\n"
+
+#: pg_waldump.c:732
+#, c-format
+msgid "  -n, --limit=N          number of records to display\n"
+msgstr "  -n, —limit=N          αριθμός των εγγραφών για εμφάνιση\n"
+
+#: pg_waldump.c:733
+#, c-format
+msgid ""
+"  -p, --path=PATH        directory in which to find log segment files or a\n"
+"                         directory with a ./pg_wal that contains such files\n"
+"                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"
+msgstr ""
+"  -p, —path=PATH        κατάλογος στον οποίο βρίσκονται αρχεία τμήματος καταγραφής ή\n"
+"                         ένα κατάλογο με ./pg_wal που περιέχει τέτοια αρχεία\n"
+"                         (προεπιλογή: τρέχων κατάλογος, ./pg_wal, $PGDATA/pg_wal)\n"
+
+#: pg_waldump.c:736
+#, c-format
+msgid "  -q, --quiet            do not print any output, except for errors\n"
+msgstr "  -q, —quiet            να μην εκτυπωθεί καμία έξοδος, εκτός από σφάλματα\n"
+
+#: pg_waldump.c:737
+#, c-format
+msgid ""
+"  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
+"                         use --rmgr=list to list valid resource manager names\n"
+msgstr ""
+"  -r, —rmgr=RMGR        εμφάνισε μόνο εγγραφές που δημιουργούνται από τον διαχειριστή πόρων RMGR·\n"
+"                         χρησιμοποίησε --rmgr=list για την παράθεση έγκυρων ονομάτων διαχειριστών πόρων\n"
+
+#: pg_waldump.c:739
+#, c-format
+msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
+msgstr "  -s, —start=RECPTR     άρχισε την ανάγνωση WAL από την τοποθεσία RECPTR\n"
+
+#: pg_waldump.c:740
+#, c-format
+msgid ""
+"  -t, --timeline=TLI     timeline from which to read log records\n"
+"                         (default: 1 or the value used in STARTSEG)\n"
+msgstr ""
+"  -t, —timeline=TLI     χρονογραμή από την οποία να αναγνωστούν εγγραφές καταγραφής\n"
+"                         (προεπιλογή: 1 ή η τιμή που χρησιμοποιήθηκε στο STARTSEG)\n"
+
+#: pg_waldump.c:742
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, —version          εμφάνισε πληροφορίες έκδοσης και, στη συνέχεια, έξοδος\n"
+
+#: pg_waldump.c:743
+#, c-format
+msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
+msgstr "  -x, —xid=XID          εμφάνισε μόνο εγγραφές με ID συναλλαγής XID\n"
+
+#: pg_waldump.c:744
+#, c-format
+msgid ""
+"  -z, --stats[=record]   show statistics instead of records\n"
+"                         (optionally, show per-record statistics)\n"
+msgstr ""
+"  -z, —stats[=record]   εμφάνισε στατιστικά στοιχεία αντί για εγγραφές\n"
+"                         (προαιρετικά, εμφάνισε στατιστικά στοιχεία ανά εγγραφή)\n"
+
+#: pg_waldump.c:746
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, —help                εμφάνισε αυτό το μήνυμα βοήθειας, και μετά έξοδος\n"
+
+#: pg_waldump.c:747
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
+
+#: pg_waldump.c:748
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s αρχική σελίδα: <%s>\n"
+
+#: pg_waldump.c:825
+#, c-format
+msgid "no arguments specified"
+msgstr "δεν καθορίστηκαν παράμετροι"
+
+#: pg_waldump.c:840
+#, c-format
+msgid "could not parse end WAL location \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση της τελικής τοποθεσίας WAL \"%s\""
+
+#: pg_waldump.c:852
+#, c-format
+msgid "could not parse limit \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση του ορίου \"%s\""
+
+#: pg_waldump.c:883
+#, c-format
+msgid "resource manager \"%s\" does not exist"
+msgstr "ο διαχειριστής πόρων \"%s\" δεν υπάρχει"
+
+#: pg_waldump.c:892
+#, c-format
+msgid "could not parse start WAL location \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση της αρχικής τοποθεσίας WAL “%s”"
+
+#: pg_waldump.c:902
+#, c-format
+msgid "could not parse timeline \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση της χρονογραμμής “%s”"
+
+#: pg_waldump.c:909
+#, c-format
+msgid "could not parse \"%s\" as a transaction ID"
+msgstr "δεν ήταν δυνατή η ανάλυση του \"%s\" ως ID συναλλαγής"
+
+#: pg_waldump.c:924
+#, c-format
+msgid "unrecognized argument to --stats: %s"
+msgstr "μη αναγνωρισμένη παράμετρος για —stats: %s"
+
+#: pg_waldump.c:937
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (ο πρώτη είναι η “%s”)"
+
+#: pg_waldump.c:947 pg_waldump.c:967
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου “%s”: %m"
+
+#: pg_waldump.c:973 pg_waldump.c:1003
+#, c-format
+msgid "could not open file \"%s\""
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου \"%s\""
+
+#: pg_waldump.c:983
+#, c-format
+msgid "start WAL location %X/%X is not inside file \"%s\""
+msgstr "τοποθεσία εκκίνησης WAL %X/%X δεν βρίσκεται μέσα στο αρχείο \"%s\""
+
+#: pg_waldump.c:1010
+#, c-format
+msgid "ENDSEG %s is before STARTSEG %s"
+msgstr "ENDSEG %s βρίσκεται πριν από STARTSEG %s"
+
+#: pg_waldump.c:1025
+#, c-format
+msgid "end WAL location %X/%X is not inside file \"%s\""
+msgstr "η τελική τοποθεσία WAL %X/%X δεν βρίσκεται μέσα στο αρχείο \"%s\""
+
+#: pg_waldump.c:1037
+#, c-format
+msgid "no start WAL location given"
+msgstr "δεν δόθηκε καμία τοποθεσία έναρξης WAL"
+
+#: pg_waldump.c:1051
+#, c-format
+msgid "out of memory"
+msgstr "έλλειψη μνήμης"
+
+#: pg_waldump.c:1057
+#, c-format
+msgid "could not find a valid record after %X/%X"
+msgstr "δεν ήταν δυνατή η εύρεση έγκυρης εγγραφής μετά %X/%X"
+
+#: pg_waldump.c:1067
+#, c-format
+msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
+msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
+msgstr[0] "πρώτη εγγραφή βρίσκεται μετά από %X/%X, σε %X/%X, παρακάμπτοντας %u byte\n"
+msgstr[1] "πρώτη εγγραφή βρίσκεται μετά από %X/%X, σε %X/%X, παρακάμπτοντας %u bytes\n"
+
+#: pg_waldump.c:1118
+#, c-format
+msgid "error in WAL record at %X/%X: %s"
+msgstr "σφάλμα στην εγγραφή WAL στο %X/%X: %s"
+
+#: pg_waldump.c:1127
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"

@@ -2,21 +2,22 @@
 # Copyright (C) 2020 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_verifybackup (PostgreSQL) package.
 # Álvaro Herrera <alvherre@alvh.no-ip.org>, 2020.
+# Carlos Chapi <carloswaldo@babelruins.org>, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:45+0000\n"
-"PO-Revision-Date: 2020-10-16 16:01-0300\n"
-"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"PO-Revision-Date: 2021-05-24 16:53-0500\n"
+"Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.4.3\n"
 
 #: ../../../src/common/logging.c:259
 #, c-format
@@ -148,8 +149,6 @@ msgid "expected version indicator"
 msgstr "se esperaba indicador de versión"
 
 #: parse_manifest.c:328
-#, fuzzy
-#| msgid "unknown toplevel field"
 msgid "unrecognized top-level field"
 msgstr "campo de nivel superior no reconocido"
 
@@ -158,10 +157,8 @@ msgid "unexpected file field"
 msgstr "campo de archivo inesperado"
 
 #: parse_manifest.c:361
-#, fuzzy
-#| msgid "unexpected wal range field"
 msgid "unexpected WAL range field"
-msgstr "campo de rango de wal inesperado"
+msgstr "campo de rango de WAL inesperado"
 
 #: parse_manifest.c:367
 msgid "unexpected object field"
@@ -176,16 +173,12 @@ msgid "unexpected scalar"
 msgstr "escalar inesperado"
 
 #: parse_manifest.c:472
-#, fuzzy
-#| msgid "missing pathname"
 msgid "missing path name"
 msgstr "ruta de archivo faltante"
 
 #: parse_manifest.c:475
-#, fuzzy
-#| msgid "both pathname and encoded pathname"
 msgid "both path name and encoded path name"
-msgstr "hay ambos ruta de archivo (pathname) y ruta codificada (encoded pathname)"
+msgstr "hay ambos ruta de archivo (path name) y ruta codificada (encoded path name)"
 
 #: parse_manifest.c:477
 msgid "missing size"
@@ -196,8 +189,6 @@ msgid "checksum without algorithm"
 msgstr "suma de comprobación sin algoritmo"
 
 #: parse_manifest.c:494
-#, fuzzy
-#| msgid "unable to decode filename"
 msgid "could not decode file name"
 msgstr "no se pudo decodificar el nombre del archivo"
 
@@ -232,14 +223,10 @@ msgid "timeline is not an integer"
 msgstr "el timeline no es un número entero"
 
 #: parse_manifest.c:585
-#, fuzzy
-#| msgid "unable to parse start LSN"
 msgid "could not parse start LSN"
 msgstr "no se pudo interpretar el LSN de inicio"
 
 #: parse_manifest.c:588
-#, fuzzy
-#| msgid "unable to parse end LSN"
 msgid "could not parse end LSN"
 msgstr "no se pudo interpretar el LSN de término"
 
@@ -257,22 +244,19 @@ msgid "out of memory"
 msgstr "memoria agotada"
 
 #: parse_manifest.c:659
-#, fuzzy, c-format
-#| msgid "could not initialize globals"
+#, c-format
 msgid "could not initialize checksum of manifest"
-msgstr "no se pudo inicializar las globales"
+msgstr "no se pudo inicializar la suma de verificación del manifiesto"
 
 #: parse_manifest.c:661
-#, fuzzy, c-format
-#| msgid "could not parse backup manifest: %s"
+#, c-format
 msgid "could not update checksum of manifest"
-msgstr "no se pudo analizar el manifiesto de la copia de seguridad: %s"
+msgstr "no se pudo actualizar la suma de verificación del manifiesto"
 
 #: parse_manifest.c:664
-#, fuzzy, c-format
-#| msgid "could not parse backup manifest: %s"
+#, c-format
 msgid "could not finalize checksum of manifest"
-msgstr "no se pudo analizar el manifiesto de la copia de seguridad: %s"
+msgstr "no se pudo finalizar la suma de verificación del manifiesto"
 
 #: parse_manifest.c:668
 #, c-format
@@ -352,14 +336,12 @@ msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
 
 #: pg_verifybackup.c:414
-#, fuzzy, c-format
-#| msgid "could not read file \"%s\": read %d of %zu"
+#, c-format
 msgid "could not read file \"%s\": read %d of %lld"
-msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
+msgstr "no se pudo leer el archivo «%s»: leídos %d de %lld"
 
 #: pg_verifybackup.c:474
-#, fuzzy, c-format
-#| msgid "duplicate pathname in backup manifest: \"%s\""
+#, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "nombre de ruta duplicado en el manifiesto de la copia de seguridad: \"%s\""
 
@@ -389,10 +371,9 @@ msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "\"%s\" está presente en el disco pero no en el manifiesto"
 
 #: pg_verifybackup.c:641
-#, fuzzy, c-format
-#| msgid "\"%s\" has size %zu on disk but size %zu in the manifest"
+#, c-format
 msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
-msgstr "\"%s\" tiene un tamaño %zu en el disco pero un tamaño %zu en el manifiesto"
+msgstr "\"%s\" tiene un tamaño %lld en el disco pero un tamaño %zu en el manifiesto"
 
 #: pg_verifybackup.c:668
 #, c-format
@@ -400,16 +381,14 @@ msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\" está presente en el manifiesto pero no en el disco"
 
 #: pg_verifybackup.c:731
-#, fuzzy, c-format
-#| msgid "could not parse contents of file \"%s\""
+#, c-format
 msgid "could not initialize checksum of file \"%s\""
-msgstr "no se pudo interpretar el contenido del archivo «%s»"
+msgstr "no se pudo inicializar la suma de verificación para el archivo «%s»"
 
 #: pg_verifybackup.c:743
-#, fuzzy, c-format
-#| msgid "could not parse contents of file \"%s\""
+#, c-format
 msgid "could not update checksum of file \"%s\""
-msgstr "no se pudo interpretar el contenido del archivo «%s»"
+msgstr "no se pudo actualizar la suma de verificación para el archivo «%s»"
 
 #: pg_verifybackup.c:758
 #, c-format
@@ -422,10 +401,9 @@ msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
 msgstr "el archivo \"%s\" debe contener %zu bytes, pero se leyeron %zu bytes"
 
 #: pg_verifybackup.c:787
-#, fuzzy, c-format
-#| msgid "could not parse contents of file \"%s\""
+#, c-format
 msgid "could not finalize checksum of file \"%s\""
-msgstr "no se pudo interpretar el contenido del archivo «%s»"
+msgstr "no se pudo finalizar la suma de verificación para el archivo «%s»"
 
 #: pg_verifybackup.c:795
 #, c-format

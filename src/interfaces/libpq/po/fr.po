@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-11 07:39+0000\n"
-"PO-Revision-Date: 2021-05-11 10:17+0200\n"
+"POT-Creation-Date: 2021-06-14 06:09+0000\n"
+"PO-Revision-Date: 2021-06-14 16:10+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
@@ -62,10 +62,10 @@ msgstr "n'a pas pu générer le nonce\n"
 #: fe-connect.c:5364 fe-connect.c:5463 fe-connect.c:5719 fe-connect.c:5748
 #: fe-connect.c:5820 fe-connect.c:5844 fe-connect.c:5862 fe-connect.c:5963
 #: fe-connect.c:5972 fe-connect.c:6330 fe-connect.c:6480 fe-exec.c:1209
-#: fe-exec.c:2993 fe-exec.c:3145 fe-exec.c:3918 fe-exec.c:4083
+#: fe-exec.c:3002 fe-exec.c:3154 fe-exec.c:3927 fe-exec.c:4092
 #: fe-gssapi-common.c:110 fe-lobj.c:881 fe-protocol3.c:1016 fe-protocol3.c:1724
 #: fe-secure-common.c:110 fe-secure-gssapi.c:504 fe-secure-openssl.c:440
-#: fe-secure-openssl.c:1129
+#: fe-secure-openssl.c:1133
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
 
@@ -629,7 +629,7 @@ msgstr ""
 msgid "password retrieved from file \"%s\"\n"
 msgstr "mot de passe récupéré dans le fichier « %s »\n"
 
-#: fe-exec.c:449 fe-exec.c:3219
+#: fe-exec.c:449 fe-exec.c:3228
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "le numéro de ligne %d est en dehors des limites 0..%d"
@@ -660,108 +660,109 @@ msgstr "PGresult ne supporte pas plus de INT_MAX lignes"
 msgid "size_t overflow"
 msgstr "saturation de size_t"
 
-#: fe-exec.c:1302 fe-exec.c:1403 fe-exec.c:1451
+#: fe-exec.c:1302 fe-exec.c:1409 fe-exec.c:1458
 msgid "command string is a null pointer\n"
 msgstr "la chaîne de commande est un pointeur nul\n"
 
-#: fe-exec.c:1409 fe-exec.c:1457 fe-exec.c:1554
-msgid "number of parameters must be between 0 and 65535\n"
-msgstr "le nombre de paramètres doit être compris entre 0 et 65535\n"
+#: fe-exec.c:1415 fe-exec.c:1464 fe-exec.c:1562
+#, c-format
+msgid "number of parameters must be between 0 and %d\n"
+msgstr "le nombre de paramètres doit être compris entre 0 et %d\n"
 
-#: fe-exec.c:1445 fe-exec.c:1548
+#: fe-exec.c:1452 fe-exec.c:1556
 msgid "statement name is a null pointer\n"
 msgstr "le nom de l'instruction est un pointeur nul\n"
 
-#: fe-exec.c:1589
+#: fe-exec.c:1598
 msgid "no connection to the server\n"
 msgstr "aucune connexion au serveur\n"
 
-#: fe-exec.c:1598
+#: fe-exec.c:1607
 msgid "another command is already in progress\n"
 msgstr "une autre commande est déjà en cours\n"
 
-#: fe-exec.c:1627
+#: fe-exec.c:1636
 msgid "cannot queue commands during COPY\n"
 msgstr "ne peut pas mettre en queue les commandes lors du COPY\n"
 
-#: fe-exec.c:1745
+#: fe-exec.c:1754
 msgid "length must be given for binary parameter\n"
 msgstr "la longueur doit être indiquée pour les paramètres binaires\n"
 
-#: fe-exec.c:2066
+#: fe-exec.c:2075
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "asyncStatus inattendu : %d\n"
 
-#: fe-exec.c:2086
+#: fe-exec.c:2095
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
 msgstr "échec de PGEventProc « %s » lors de l'événement PGEVT_RESULTCREATE\n"
 
-#: fe-exec.c:2234
+#: fe-exec.c:2243
 msgid "synchronous command execution functions are not allowed in pipeline mode\n"
 msgstr "les fonctions d'exécution de commande synchrone ne sont pas autorisées en mode pipeline\n"
 
-#: fe-exec.c:2256
+#: fe-exec.c:2265
 msgid "COPY terminated by new PQexec"
 msgstr "COPY terminé par un nouveau PQexec"
 
-#: fe-exec.c:2273
+#: fe-exec.c:2282
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "PQexec non autorisé pendant COPY BOTH\n"
 
-#: fe-exec.c:2502 fe-exec.c:2558 fe-exec.c:2627 fe-protocol3.c:1863
+#: fe-exec.c:2511 fe-exec.c:2567 fe-exec.c:2636 fe-protocol3.c:1863
 msgid "no COPY in progress\n"
 msgstr "aucun COPY en cours\n"
 
-#: fe-exec.c:2804
+#: fe-exec.c:2813
 msgid "PQfn not allowed in pipeline mode\n"
 msgstr "PQfn non autorisé dans le mode pipeline\n"
 
-#: fe-exec.c:2812
+#: fe-exec.c:2821
 msgid "connection in wrong state\n"
 msgstr "connexion dans un état erroné\n"
 
-#: fe-exec.c:2856
+#: fe-exec.c:2865
 msgid "cannot enter pipeline mode, connection not idle\n"
 msgstr "ne peut pas entrer dans le mode pipeline, connexion active\n"
 
-#: fe-exec.c:2890 fe-exec.c:2907
+#: fe-exec.c:2899 fe-exec.c:2916
 msgid "cannot exit pipeline mode with uncollected results\n"
 msgstr "ne peut pas sortir du mode pipeline avec des résultats non récupérés\n"
 
-#: fe-exec.c:2895
+#: fe-exec.c:2904
 msgid "cannot exit pipeline mode while busy\n"
 msgstr "ne peut pas sortir du mode pipeline alors qu'il est occupé\n"
 
-#: fe-exec.c:3037
+#: fe-exec.c:3046
 msgid "cannot send pipeline when not in pipeline mode\n"
 msgstr "ne peut pas envoyer le pipeline lorsqu'il n'est pas en mode pipeline\n"
 
-#: fe-exec.c:3108
+#: fe-exec.c:3117
 msgid "invalid ExecStatusType code"
 msgstr "code ExecStatusType invalide"
 
-#: fe-exec.c:3135
+#: fe-exec.c:3144
 msgid "PGresult is not an error result\n"
 msgstr "PGresult n'est pas un résultat d'erreur\n"
 
-#: fe-exec.c:3203 fe-exec.c:3226
+#: fe-exec.c:3212 fe-exec.c:3235
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "le numéro de colonne %d est en dehors des limites 0..%d"
 
-#: fe-exec.c:3241
+#: fe-exec.c:3250
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "le numéro de paramètre %d est en dehors des limites 0..%d"
 
-#: fe-exec.c:3551
+#: fe-exec.c:3560
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "n'a pas pu interpréter la réponse du serveur : %s"
 
-#: fe-exec.c:3811 fe-exec.c:3900
+#: fe-exec.c:3820 fe-exec.c:3909
 msgid "incomplete multibyte character\n"
 msgstr "caractère multi-octet incomplet\n"
 
@@ -1035,16 +1036,16 @@ msgstr "erreur de vérification de la taille GSSAPI"
 msgid "GSSAPI context establishment error"
 msgstr "erreur d'établissement du contexte GSSAPI"
 
-#: fe-secure-openssl.c:214 fe-secure-openssl.c:321 fe-secure-openssl.c:1329
+#: fe-secure-openssl.c:214 fe-secure-openssl.c:321 fe-secure-openssl.c:1333
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "erreur SYSCALL SSL : %s\n"
 
-#: fe-secure-openssl.c:221 fe-secure-openssl.c:328 fe-secure-openssl.c:1333
+#: fe-secure-openssl.c:221 fe-secure-openssl.c:328 fe-secure-openssl.c:1337
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "erreur SYSCALL SSL : EOF détecté\n"
 
-#: fe-secure-openssl.c:232 fe-secure-openssl.c:339 fe-secure-openssl.c:1342
+#: fe-secure-openssl.c:232 fe-secure-openssl.c:339 fe-secure-openssl.c:1346
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "erreur SSL : %s\n"
@@ -1053,7 +1054,7 @@ msgstr "erreur SSL : %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "la connexion SSL a été fermée de façon inattendu\n"
 
-#: fe-secure-openssl.c:253 fe-secure-openssl.c:360 fe-secure-openssl.c:1392
+#: fe-secure-openssl.c:253 fe-secure-openssl.c:360 fe-secure-openssl.c:1396
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "code d'erreur SSL inconnu : %d\n"
@@ -1139,37 +1140,37 @@ msgstr "n'a pas pu lire le certificat « %s » : %s\n"
 msgid "could not establish SSL connection: %s\n"
 msgstr "n'a pas pu établir la connexion SSL : %s\n"
 
-#: fe-secure-openssl.c:1099
+#: fe-secure-openssl.c:1103
 #, c-format
 msgid "could not set SSL Server Name Indication (SNI): %s\n"
 msgstr "n'a pas pu configurer le SSL Server Name Indication (SNI) : %s\n"
 
-#: fe-secure-openssl.c:1145
+#: fe-secure-openssl.c:1149
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "n'a pas pu charger le moteur SSL « %s » : %s\n"
 
-#: fe-secure-openssl.c:1157
+#: fe-secure-openssl.c:1161
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "n'a pas pu initialiser le moteur SSL « %s » : %s\n"
 
-#: fe-secure-openssl.c:1173
+#: fe-secure-openssl.c:1177
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "n'a pas pu lire la clé privée SSL « %s » à partir du moteur « %s » : %s\n"
 
-#: fe-secure-openssl.c:1187
+#: fe-secure-openssl.c:1191
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "n'a pas pu charger la clé privée SSL « %s » à partir du moteur « %s » : %s\n"
 
-#: fe-secure-openssl.c:1224
+#: fe-secure-openssl.c:1228
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "le certificat est présent, mais la clé privée « %s » est absente\n"
 
-#: fe-secure-openssl.c:1232
+#: fe-secure-openssl.c:1236
 #, c-format
 msgid "private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr ""
@@ -1177,37 +1178,37 @@ msgstr ""
 "pour le groupe ou universel ; les droits devraient être u=rw (0600)\n"
 "ou inférieur\n"
 
-#: fe-secure-openssl.c:1257
+#: fe-secure-openssl.c:1261
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "n'a pas pu charger le fichier de clé privée « %s » : %s\n"
 
-#: fe-secure-openssl.c:1275
+#: fe-secure-openssl.c:1279
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "le certificat ne correspond pas à la clé privée « %s » : %s\n"
 
-#: fe-secure-openssl.c:1375
+#: fe-secure-openssl.c:1379
 #, c-format
 msgid "This may indicate that the server does not support any SSL protocol version between %s and %s.\n"
 msgstr "Ceci pourrait indiquer que le serveur ne supporte aucune des versions du protocole SSL entre %s et %s.\n"
 
-#: fe-secure-openssl.c:1411
+#: fe-secure-openssl.c:1415
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "le certificat n'a pas pu être obtenu : %s\n"
 
-#: fe-secure-openssl.c:1517
+#: fe-secure-openssl.c:1521
 #, c-format
 msgid "no SSL error reported"
 msgstr "aucune erreur SSL reportée"
 
-#: fe-secure-openssl.c:1526
+#: fe-secure-openssl.c:1530
 #, c-format
 msgid "SSL error code %lu"
 msgstr "erreur SSL %lu"
 
-#: fe-secure-openssl.c:1773
+#: fe-secure-openssl.c:1777
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "ATTENTION : sslpassword tronqué\n"
@@ -1227,172 +1228,29 @@ msgstr "n'a pas pu transmettre les données au serveur : %s\n"
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "erreur de socket non reconnue : 0x%08X/%d"
 
-#~ msgid "setsockopt(%s) failed: %s\n"
-#~ msgstr "setsockopt(%s) a échoué : %s\n"
+#~ msgid "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %d\n"
+#~ msgstr "échec de WSAIoctl(SIO_KEEPALIVE_VALS)  : %d\n"
 
-#~ msgid "select() failed: %s\n"
-#~ msgstr "échec de select() : %s\n"
+#~ msgid "\"SHOW transaction_read_only\" failed\n"
+#~ msgstr "\"SHOW transaction_read_only\" a échoué\n"
 
-#~ msgid "extraneous data in \"T\" message"
-#~ msgstr "données supplémentaires dans le message « T »"
+#~ msgid "\"SELECT pg_is_in_recovery()\" failed\n"
+#~ msgstr "\"SELECT pg_is_in_recovery()\" a échoué\n"
 
-#~ msgid "extraneous data in \"t\" message"
-#~ msgstr "données supplémentaires dans le message « t »"
+#~ msgid "invalid channel_binding value: \"%s\"\n"
+#~ msgstr "valeur de channel_binding invalide : « %s »\n"
 
-#~ msgid "extraneous data in \"D\" message"
-#~ msgstr "données supplémentaires dans le message « D »"
+#~ msgid "invalid ssl_min_protocol_version value: \"%s\"\n"
+#~ msgstr "valeur ssl_min_protocol_version invalide : « %s »\n"
 
-#~ msgid "no GSSAPI support; cannot require GSSAPI\n"
-#~ msgstr "pas de support de GSSAPI : ne peut pas nécessiter GSSAPI\n"
+#~ msgid "invalid ssl_max_protocol_version value: \"%s\"\n"
+#~ msgstr "valeur ssl_max_protocol_version invalide : « %s »\n"
 
-#~ msgid "failed to generate nonce\n"
-#~ msgstr "échec pour la génération de nonce\n"
+#~ msgid "invalid gssencmode value: \"%s\"\n"
+#~ msgstr "valeur gssencmode invalide : « %s »\n"
 
-#~ msgid "socket not open\n"
-#~ msgstr "socket non ouvert\n"
-
-#~ msgid "could not set socket to blocking mode: %s\n"
-#~ msgstr "n'a pas pu activer le mode bloquant pour la socket : %s\n"
-
-#~ msgid "Kerberos 5 authentication rejected: %*s\n"
-#~ msgstr "authentification Kerberos 5 rejetée : %*s\n"
-
-#~ msgid "could not restore nonblocking mode on socket: %s\n"
-#~ msgstr "n'a pas pu rétablir le mode non-bloquant pour la socket : %s\n"
-
-#~ msgid "could not get home directory to locate client certificate files\n"
-#~ msgstr ""
-#~ "n'a pas pu récupérer le répertoire personnel pour trouver les certificats\n"
-#~ "du client\n"
-
-#~ msgid "verified SSL connections are only supported when connecting to a host name\n"
-#~ msgstr ""
-#~ "les connexions SSL vérifiées ne sont supportées que lors de la connexion\n"
-#~ "à un alias hôte\n"
-
-#~ msgid "could not open private key file \"%s\": %s\n"
-#~ msgstr "n'a pas pu ouvrir le fichier de clé privée « %s » : %s\n"
-
-#~ msgid "private key file \"%s\" changed during execution\n"
-#~ msgstr "la clé privée « %s » a été modifiée durant l'exécution\n"
-
-#~ msgid "could not read private key file \"%s\": %s\n"
-#~ msgstr "n'a pas pu lire la clé privée « %s » : %s\n"
-
-#~ msgid "invalid appname state %d, probably indicative of memory corruption\n"
-#~ msgstr "état appname %d invalide, indiquant probablement une corruption de la mémoire\n"
-
-#~ msgid "unrecognized return value from row processor"
-#~ msgstr "valeur de retour du traitement de la ligne non reconnue"
-
-#~ msgid "could not acquire mutex: %s\n"
-#~ msgstr "n'a pas pu acquérir le mutex : %s\n"
-
-#~ msgid "setsockopt(SO_KEEPALIVE) failed: %s\n"
-#~ msgstr "setsockopt(SO_KEEPALIVE) a échoué : %s\n"
-
-#~ msgid "setsockopt(TCP_KEEPINTVL) failed: %s\n"
-#~ msgstr "setsockopt(TCP_KEEPINTVL) a échoué : %s\n"
-
-#~ msgid "setsockopt(TCP_KEEPALIVE) failed: %s\n"
-#~ msgstr "setsockopt(TCP_KEEPALIVE) a échoué : %s\n"
-
-#~ msgid "setsockopt(TCP_KEEPIDLE) failed: %s\n"
-#~ msgstr "setsockopt(TCP_KEEPIDLE) a échoué : %s\n"
-
-#~ msgid "could not get home directory to locate service definition file"
-#~ msgstr ""
-#~ "n'a pas pu obtenir le répertoire personnel pour trouver le certificat de\n"
-#~ "définition du service"
-
-#~ msgid "could not get home directory to locate password file\n"
-#~ msgstr ""
-#~ "n'a pas pu obtenir le répertoire personnel pour trouver le fichier de\n"
-#~ "mot de passe\n"
-
-#~ msgid "SSL library does not support CRL certificates (file \"%s\")\n"
-#~ msgstr "la bibliothèque SSL ne supporte pas les certificats CRL (fichier « %s »)\n"
-
-#~ msgid "could not set maximum version of SSL protocol: %s\n"
-#~ msgstr "n'a pas pu mettre en place la version maximale du protocole SSL : %s\n"
-
-#~ msgid "could not set minimum version of SSL protocol: %s\n"
-#~ msgstr "n'a pas pu mettre en place la version minimale du protocole SSL : %s\n"
-
-#~ msgid "WARNING: line %d too long in password file \"%s\"\n"
-#~ msgstr "ATTENTION : ligne %d trop longue dans le fichier de mots de passe « %s »\n"
-
-#~ msgid "lost synchronization with server, resetting connection"
-#~ msgstr "synchronisation perdue avec le serveur, réinitialisation de la connexion"
-
-#~ msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
-#~ msgstr ""
-#~ "le serveur a envoyé des données binaires (message « B ») sans description\n"
-#~ "préalable de la ligne (message « T »)"
-
-#~ msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
-#~ msgstr ""
-#~ "le serveur a envoyé des données (message « D ») sans description préalable\n"
-#~ "de la ligne (message « T »)"
-
-#~ msgid "unexpected character %c following empty query response (\"I\" message)"
-#~ msgstr ""
-#~ "caractère %c inattendu à la suite d'une réponse de requête vide (message\n"
-#~ "« I »)"
-
-#~ msgid "invalid state %c, probably indicative of memory corruption\n"
-#~ msgstr "état %c invalide, indiquant probablement une corruption de la mémoire\n"
-
-#~ msgid "invalid setenv state %c, probably indicative of memory corruption\n"
-#~ msgstr "état setenv %c invalide, indiquant probablement une corruption de la mémoire\n"
-
-#~ msgid "cannot determine OID of function lowrite\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction lowrite\n"
-
-#~ msgid "cannot determine OID of function loread\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction loread\n"
-
-#~ msgid "cannot determine OID of function lo_lseek\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_lseek\n"
-
-#~ msgid "cannot determine OID of function lo_unlink\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_unlink\n"
-
-#~ msgid "cannot determine OID of function lo_creat\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_creat\n"
-
-#~ msgid "cannot determine OID of function lo_open\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_open\n"
-
-#~ msgid "cannot determine OID of function lo_tell64\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_tell64\n"
-
-#~ msgid "cannot determine OID of function lo_create\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_create\n"
-
-#~ msgid "cannot determine OID of function lo_lseek64\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_lseek64\n"
-
-#~ msgid "cannot determine OID of function lo_truncate64\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_truncate64\n"
-
-#~ msgid "cannot determine OID of function lo_truncate\n"
-#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_truncate\n"
-
-#~ msgid "COPY OUT state must be terminated first\n"
-#~ msgstr "l'état COPY OUT doit d'abord être terminé\n"
-
-#~ msgid "COPY IN state must be terminated first\n"
-#~ msgstr "l'état COPY IN doit d'abord être terminé\n"
-
-#~ msgid "function requires at least protocol version 3.0\n"
-#~ msgstr "la fonction nécessite au minimum le protocole 3.0\n"
-
-#~ msgid "line %d too long in service file \"%s\"\n"
-#~ msgstr "ligne %d trop longue dans le fichier service « %s »\n"
-
-#~ msgid "could not make a writable connection to server \"%s:%s\"\n"
-#~ msgstr "n'a pas pu réaliser une connexion en écriture au serveur « %s » : %s\n"
+#~ msgid "invalid target_session_attrs value: \"%s\"\n"
+#~ msgstr "valeur target_session_attrs invalide : « %s »\n"
 
 #~ msgid ""
 #~ "could not connect to server: %s\n"
@@ -1403,26 +1261,169 @@ msgstr "erreur de socket non reconnue : 0x%08X/%d"
 #~ "\tLe serveur est-il actif sur l'hôte « %s » (%s)\n"
 #~ "\tet accepte-t-il les connexionsTCP/IP sur le port %s ?\n"
 
-#~ msgid "invalid target_session_attrs value: \"%s\"\n"
-#~ msgstr "valeur target_session_attrs invalide : « %s »\n"
+#~ msgid "could not make a writable connection to server \"%s:%s\"\n"
+#~ msgstr "n'a pas pu réaliser une connexion en écriture au serveur « %s » : %s\n"
 
-#~ msgid "invalid gssencmode value: \"%s\"\n"
-#~ msgstr "valeur gssencmode invalide : « %s »\n"
+#~ msgid "line %d too long in service file \"%s\"\n"
+#~ msgstr "ligne %d trop longue dans le fichier service « %s »\n"
 
-#~ msgid "invalid ssl_max_protocol_version value: \"%s\"\n"
-#~ msgstr "valeur ssl_max_protocol_version invalide : « %s »\n"
+#~ msgid "function requires at least protocol version 3.0\n"
+#~ msgstr "la fonction nécessite au minimum le protocole 3.0\n"
 
-#~ msgid "invalid ssl_min_protocol_version value: \"%s\"\n"
-#~ msgstr "valeur ssl_min_protocol_version invalide : « %s »\n"
+#~ msgid "COPY IN state must be terminated first\n"
+#~ msgstr "l'état COPY IN doit d'abord être terminé\n"
 
-#~ msgid "invalid channel_binding value: \"%s\"\n"
-#~ msgstr "valeur de channel_binding invalide : « %s »\n"
+#~ msgid "COPY OUT state must be terminated first\n"
+#~ msgstr "l'état COPY OUT doit d'abord être terminé\n"
 
-#~ msgid "\"SELECT pg_is_in_recovery()\" failed\n"
-#~ msgstr "\"SELECT pg_is_in_recovery()\" a échoué\n"
+#~ msgid "cannot determine OID of function lo_truncate\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_truncate\n"
 
-#~ msgid "\"SHOW transaction_read_only\" failed\n"
-#~ msgstr "\"SHOW transaction_read_only\" a échoué\n"
+#~ msgid "cannot determine OID of function lo_truncate64\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_truncate64\n"
 
-#~ msgid "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %d\n"
-#~ msgstr "échec de WSAIoctl(SIO_KEEPALIVE_VALS)  : %d\n"
+#~ msgid "cannot determine OID of function lo_lseek64\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_lseek64\n"
+
+#~ msgid "cannot determine OID of function lo_create\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_create\n"
+
+#~ msgid "cannot determine OID of function lo_tell64\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_tell64\n"
+
+#~ msgid "cannot determine OID of function lo_open\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_open\n"
+
+#~ msgid "cannot determine OID of function lo_creat\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_creat\n"
+
+#~ msgid "cannot determine OID of function lo_unlink\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_unlink\n"
+
+#~ msgid "cannot determine OID of function lo_lseek\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction lo_lseek\n"
+
+#~ msgid "cannot determine OID of function loread\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction loread\n"
+
+#~ msgid "cannot determine OID of function lowrite\n"
+#~ msgstr "ne peut pas déterminer l'OID de la fonction lowrite\n"
+
+#~ msgid "invalid setenv state %c, probably indicative of memory corruption\n"
+#~ msgstr "état setenv %c invalide, indiquant probablement une corruption de la mémoire\n"
+
+#~ msgid "invalid state %c, probably indicative of memory corruption\n"
+#~ msgstr "état %c invalide, indiquant probablement une corruption de la mémoire\n"
+
+#~ msgid "unexpected character %c following empty query response (\"I\" message)"
+#~ msgstr ""
+#~ "caractère %c inattendu à la suite d'une réponse de requête vide (message\n"
+#~ "« I »)"
+
+#~ msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
+#~ msgstr ""
+#~ "le serveur a envoyé des données (message « D ») sans description préalable\n"
+#~ "de la ligne (message « T »)"
+
+#~ msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
+#~ msgstr ""
+#~ "le serveur a envoyé des données binaires (message « B ») sans description\n"
+#~ "préalable de la ligne (message « T »)"
+
+#~ msgid "lost synchronization with server, resetting connection"
+#~ msgstr "synchronisation perdue avec le serveur, réinitialisation de la connexion"
+
+#~ msgid "WARNING: line %d too long in password file \"%s\"\n"
+#~ msgstr "ATTENTION : ligne %d trop longue dans le fichier de mots de passe « %s »\n"
+
+#~ msgid "could not set minimum version of SSL protocol: %s\n"
+#~ msgstr "n'a pas pu mettre en place la version minimale du protocole SSL : %s\n"
+
+#~ msgid "could not set maximum version of SSL protocol: %s\n"
+#~ msgstr "n'a pas pu mettre en place la version maximale du protocole SSL : %s\n"
+
+#~ msgid "SSL library does not support CRL certificates (file \"%s\")\n"
+#~ msgstr "la bibliothèque SSL ne supporte pas les certificats CRL (fichier « %s »)\n"
+
+#~ msgid "could not get home directory to locate password file\n"
+#~ msgstr ""
+#~ "n'a pas pu obtenir le répertoire personnel pour trouver le fichier de\n"
+#~ "mot de passe\n"
+
+#~ msgid "could not get home directory to locate service definition file"
+#~ msgstr ""
+#~ "n'a pas pu obtenir le répertoire personnel pour trouver le certificat de\n"
+#~ "définition du service"
+
+#~ msgid "setsockopt(TCP_KEEPIDLE) failed: %s\n"
+#~ msgstr "setsockopt(TCP_KEEPIDLE) a échoué : %s\n"
+
+#~ msgid "setsockopt(TCP_KEEPALIVE) failed: %s\n"
+#~ msgstr "setsockopt(TCP_KEEPALIVE) a échoué : %s\n"
+
+#~ msgid "setsockopt(TCP_KEEPINTVL) failed: %s\n"
+#~ msgstr "setsockopt(TCP_KEEPINTVL) a échoué : %s\n"
+
+#~ msgid "setsockopt(SO_KEEPALIVE) failed: %s\n"
+#~ msgstr "setsockopt(SO_KEEPALIVE) a échoué : %s\n"
+
+#~ msgid "could not acquire mutex: %s\n"
+#~ msgstr "n'a pas pu acquérir le mutex : %s\n"
+
+#~ msgid "unrecognized return value from row processor"
+#~ msgstr "valeur de retour du traitement de la ligne non reconnue"
+
+#~ msgid "invalid appname state %d, probably indicative of memory corruption\n"
+#~ msgstr "état appname %d invalide, indiquant probablement une corruption de la mémoire\n"
+
+#~ msgid "could not read private key file \"%s\": %s\n"
+#~ msgstr "n'a pas pu lire la clé privée « %s » : %s\n"
+
+#~ msgid "private key file \"%s\" changed during execution\n"
+#~ msgstr "la clé privée « %s » a été modifiée durant l'exécution\n"
+
+#~ msgid "could not open private key file \"%s\": %s\n"
+#~ msgstr "n'a pas pu ouvrir le fichier de clé privée « %s » : %s\n"
+
+#~ msgid "verified SSL connections are only supported when connecting to a host name\n"
+#~ msgstr ""
+#~ "les connexions SSL vérifiées ne sont supportées que lors de la connexion\n"
+#~ "à un alias hôte\n"
+
+#~ msgid "could not get home directory to locate client certificate files\n"
+#~ msgstr ""
+#~ "n'a pas pu récupérer le répertoire personnel pour trouver les certificats\n"
+#~ "du client\n"
+
+#~ msgid "could not restore nonblocking mode on socket: %s\n"
+#~ msgstr "n'a pas pu rétablir le mode non-bloquant pour la socket : %s\n"
+
+#~ msgid "Kerberos 5 authentication rejected: %*s\n"
+#~ msgstr "authentification Kerberos 5 rejetée : %*s\n"
+
+#~ msgid "could not set socket to blocking mode: %s\n"
+#~ msgstr "n'a pas pu activer le mode bloquant pour la socket : %s\n"
+
+#~ msgid "socket not open\n"
+#~ msgstr "socket non ouvert\n"
+
+#~ msgid "failed to generate nonce\n"
+#~ msgstr "échec pour la génération de nonce\n"
+
+#~ msgid "no GSSAPI support; cannot require GSSAPI\n"
+#~ msgstr "pas de support de GSSAPI : ne peut pas nécessiter GSSAPI\n"
+
+#~ msgid "extraneous data in \"D\" message"
+#~ msgstr "données supplémentaires dans le message « D »"
+
+#~ msgid "extraneous data in \"t\" message"
+#~ msgstr "données supplémentaires dans le message « t »"
+
+#~ msgid "extraneous data in \"T\" message"
+#~ msgstr "données supplémentaires dans le message « T »"
+
+#~ msgid "select() failed: %s\n"
+#~ msgstr "échec de select() : %s\n"
+
+#~ msgid "setsockopt(%s) failed: %s\n"
+#~ msgstr "setsockopt(%s) a échoué : %s\n"

@@ -1,0 +1,460 @@
+# Greek message translation file for plpython
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the plpython (PostgreSQL) package.
+# Georgios Kokolatos <gkokolatos@pm.me>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: plpython (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-05-24 01:08+0000\n"
+"PO-Revision-Date: 2021-05-26 09:57+0200\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.4.3\n"
+
+#: plpy_cursorobject.c:72
+#, c-format
+msgid "plpy.cursor expected a query or a plan"
+msgstr "plpy.cursor ανέμενε ένα ερώτημα ή ένα σχέδιο"
+
+#: plpy_cursorobject.c:155
+#, c-format
+msgid "plpy.cursor takes a sequence as its second argument"
+msgstr "plpy.cursor λαμβάνει μια ακολουθία ως τη δεύτερη παράμετρο"
+
+#: plpy_cursorobject.c:171 plpy_spi.c:207
+#, c-format
+msgid "could not execute plan"
+msgstr "δεν ήταν δυνατή η εκτέλεση του σχεδίου"
+
+#: plpy_cursorobject.c:174 plpy_spi.c:210
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "Ανέμενε ακολουθία %d παραμέτρου, έλαβε %d: %s"
+msgstr[1] "Ανέμενε ακολουθία %d παραμέτρων, έλαβε %d: %s"
+
+#: plpy_cursorobject.c:321
+#, c-format
+msgid "iterating a closed cursor"
+msgstr "επαναλαμβάνει έναν κλειστό δρομέα"
+
+#: plpy_cursorobject.c:329 plpy_cursorobject.c:395
+#, c-format
+msgid "iterating a cursor in an aborted subtransaction"
+msgstr "επαναλαμβάνει ένα δρομέα σε μία ματαιωμένη υποσυναλλαγή"
+
+#: plpy_cursorobject.c:387
+#, c-format
+msgid "fetch from a closed cursor"
+msgstr "ανάκτηση από κλειστό δρομέα"
+
+#: plpy_cursorobject.c:430 plpy_spi.c:403
+#, c-format
+msgid "query result has too many rows to fit in a Python list"
+msgstr "το αποτέλεσμα του ερωτήματος έχει πάρα πολλές σειρές για να χωρέσει σε μια λίστα Python"
+
+#: plpy_cursorobject.c:482
+#, c-format
+msgid "closing a cursor in an aborted subtransaction"
+msgstr "κλείσιμο ενός δρομέα σε μία ματαιωμένη υποσυναλλαγή"
+
+#: plpy_elog.c:125 plpy_elog.c:126 plpy_plpymodule.c:548
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpy_exec.c:139
+#, c-format
+msgid "unsupported set function return mode"
+msgstr "μη υποστηριζόμενο είδος επιστροφής συνάρτησης συνόλου"
+
+#: plpy_exec.c:140
+#, c-format
+msgid "PL/Python set-returning functions only support returning one value per call."
+msgstr "Οι λειτουργίες επιστροφής συνόλου PL/Python υποστηρίζουν μόνο την επιστροφή μίας τιμής ανά κλήση."
+
+#: plpy_exec.c:153
+#, c-format
+msgid "returned object cannot be iterated"
+msgstr "το επιστρεφόμενο αντικείμενο δεν μπορεί να επαναληφθεί"
+
+#: plpy_exec.c:154
+#, c-format
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr "Οι συναρτήσεις επιστροφής συνόλου PL/Python επιβάλλεται να επιστρέφουν ένα επαναλαμβανόμενο αντικείμενο."
+
+#: plpy_exec.c:168
+#, c-format
+msgid "error fetching next item from iterator"
+msgstr "σφάλμα κατά τη λήψη του επόμενου στοιχείου από το πρόγραμμα λήψης"
+
+#: plpy_exec.c:211
+#, c-format
+msgid "PL/Python procedure did not return None"
+msgstr "διεργασία PL/Python δεν επέστρεψε None"
+
+#: plpy_exec.c:215
+#, c-format
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr "συνάρτηση PL/Python με τύπο επιστροφής “void” δεν επέστρεψε None"
+
+#: plpy_exec.c:371 plpy_exec.c:397
+#, c-format
+msgid "unexpected return value from trigger procedure"
+msgstr "μη αναμενόμενη τιμή επιστροφής από διεργασία εναύσματος"
+
+#: plpy_exec.c:372
+#, c-format
+msgid "Expected None or a string."
+msgstr "Αναμενόταν None ή μία συμβολοσειρά."
+
+#: plpy_exec.c:387
+#, c-format
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "συνάρτηση εναύσματος PL/Python επέστρεψε \"MODIFY\" σε ένα έναυσμα DELETE -- παραβλέφθηκε"
+
+#: plpy_exec.c:398
+#, c-format
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "Αναμενόταν None, “OK”, “SKIP”, ή “MODIFY”."
+
+#: plpy_exec.c:443
+#, c-format
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "PyList_SetItem() απέτυχε, κατά τη διάρκεια ετοιμασίας των παραμέτρων"
+
+#: plpy_exec.c:447
+#, c-format
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "PyDict_SetItemString() απέτυχε, κατά τη διάρκεια ετοιμασίας των παραμέτρων"
+
+#: plpy_exec.c:459
+#, c-format
+msgid "function returning record called in context that cannot accept type record"
+msgstr "συνάρτηση που επιστρέφει εγγραφή καλείται σε περιεχόμενο που δεν δύναται να αποδεχτεί τύπο εγγραφής"
+
+#: plpy_exec.c:676
+#, c-format
+msgid "while creating return value"
+msgstr "κατά τη δημιουργία τιμής επιστροφής"
+
+#: plpy_exec.c:910
+#, c-format
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "TD[“new”] διαγράφηκε, δεν είναι δυνατή η μετατροπή σειράς"
+
+#: plpy_exec.c:915
+#, c-format
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[“new”] δεν είναι ένα λεξικό"
+
+#: plpy_exec.c:942
+#, c-format
+msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
+msgstr "TD[“new”] κλειδί λεξικού στη τακτή θέση %d δεν είναι μία συμβολοσειρά"
+
+#: plpy_exec.c:949
+#, c-format
+msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
+msgstr "κλειδί \"%s\" που βρίσκεται στο TD[\"New\"] δεν υπάρχει ως στήλη στη γραμμή εναύσματος"
+
+#: plpy_exec.c:954
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "δεν είναι δυνατός ο ορισμός του χαρακτηριστικού συστήματος \"%s\""
+
+#: plpy_exec.c:959
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "δεν είναι δυνατός ο ορισμός δημιουργημένης στήλης \"%s\""
+
+#: plpy_exec.c:1017
+#, c-format
+msgid "while modifying trigger row"
+msgstr "κατά την τροποποίηση εναύσματος σειράς"
+
+#: plpy_exec.c:1075
+#, c-format
+msgid "forcibly aborting a subtransaction that has not been exited"
+msgstr "βίαιη ματαίωση μιας υποσυναλλαγής που δεν έχει εξέλθει"
+
+#: plpy_main.c:121
+#, c-format
+msgid "multiple Python libraries are present in session"
+msgstr "υπάρχουν πολλαπλές βιβλιοθήκες Python στη συνεδρία"
+
+#: plpy_main.c:122
+#, c-format
+msgid "Only one Python major version can be used in one session."
+msgstr "Μόνο μία κύρια έκδοση Python μπορεί να χρησιμοποιηθεί σε μία συνεδρία."
+
+#: plpy_main.c:138
+#, c-format
+msgid "untrapped error in initialization"
+msgstr "μη παγιδευμένο σφάλμα κατά την προετοιμασία"
+
+#: plpy_main.c:161
+#, c-format
+msgid "could not import \"__main__\" module"
+msgstr "δεν ήταν δυνατή η εισαγωγή του αρθρώματος “__main__”"
+
+#: plpy_main.c:170
+#, c-format
+msgid "could not initialize globals"
+msgstr "δεν ήταν δυνατή η αρχικοποίηση καθολικών μεταβλητών"
+
+#: plpy_main.c:393
+#, c-format
+msgid "PL/Python procedure \"%s\""
+msgstr "διεργασία PL/Python “%s”"
+
+#: plpy_main.c:396
+#, c-format
+msgid "PL/Python function \"%s\""
+msgstr "συνάρτηση PL/Python “%s”"
+
+#: plpy_main.c:404
+#, c-format
+msgid "PL/Python anonymous code block"
+msgstr "ονώνυμο μπλοκ κώδικα PL/Python"
+
+#: plpy_plpymodule.c:182 plpy_plpymodule.c:185
+#, c-format
+msgid "could not import \"plpy\" module"
+msgstr "δεν ήταν δυνατή η εισαγωγή του αρθρώματος “plpy”"
+
+#: plpy_plpymodule.c:200
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "δεν ήταν δυνατή η δημιουργία του αρθρώματος spiexceptions"
+
+#: plpy_plpymodule.c:208
+#, c-format
+msgid "could not add the spiexceptions module"
+msgstr "δεν ήταν δυνατή η πρόσθεση του αρθρώματος spiexceptions"
+
+#: plpy_plpymodule.c:275
+#, c-format
+msgid "could not generate SPI exceptions"
+msgstr "δεν ήταν δυνατή η  του αρθρώματος spiexceptions"
+
+#: plpy_plpymodule.c:443
+#, c-format
+msgid "could not unpack arguments in plpy.elog"
+msgstr "δεν ήταν δυνατή η αποσυσκευασία παραμέτρων στο plpy.elog"
+
+#: plpy_plpymodule.c:452
+msgid "could not parse error message in plpy.elog"
+msgstr "δεν ήταν δυνατή η ανάλυση μηνυμάτος σφάλματος στο plpy.elog"
+
+#: plpy_plpymodule.c:469
+#, c-format
+msgid "argument 'message' given by name and position"
+msgstr "παράμετρος «μήνυμα» που δόθηκε με όνομα και θέση"
+
+#: plpy_plpymodule.c:496
+#, c-format
+msgid "'%s' is an invalid keyword argument for this function"
+msgstr "‘%s’ είναι μία άκυρη παράμετρος με λέξη-κλειδί για αυτή τη συνάρτηση"
+
+#: plpy_plpymodule.c:507 plpy_plpymodule.c:513
+#, c-format
+msgid "invalid SQLSTATE code"
+msgstr "μη έγκυρος κωδικός SQLSTATE"
+
+#: plpy_procedure.c:225
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "συναρτήσεις εναυσμάτων μπορούν να κληθούν μόνο ως εναύσματα"
+
+#: plpy_procedure.c:229
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "οι συναρτήσεις PL/Python δεν μπορούν να επιστρέψουν τύπο %s"
+
+#: plpy_procedure.c:307
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "οι συναρτήσεις PL/Python δεν μπορούν να δεχθούν τύπο %s"
+
+#: plpy_procedure.c:397
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "δεν ήταν δυνατή η μεταγλώττιση της συνάρτησης PL/Python \"%s\""
+
+#: plpy_procedure.c:400
+#, c-format
+msgid "could not compile anonymous PL/Python code block"
+msgstr "δεν ήταν δυνατή η μεταγλώττιση ανώνυμου μπλοκ κώδικα PL/Python"
+
+#: plpy_resultobject.c:117 plpy_resultobject.c:143 plpy_resultobject.c:169
+#, c-format
+msgid "command did not produce a result set"
+msgstr "η εντολή δεν παρήγαγε ένα σύνολο αποτελάσματων"
+
+#: plpy_spi.c:56
+#, c-format
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "η δεύτερη παράμετρος του plpy.prepare επιβάλλεται να είναι μία ακολουθία"
+
+#: plpy_spi.c:100
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr "plpy.prepare: το όνομα τύπου στη τακτή θέση %d δεν είναι συμβολοσειρά"
+
+#: plpy_spi.c:172
+#, c-format
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute ανέμενε ένα ερώτημα ή ένα σχέδιο"
+
+#: plpy_spi.c:191
+#, c-format
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute λαμβάνει μια ακολουθία ως δεύτερη παράμετρό του"
+
+#: plpy_spi.c:299
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "SPI_execute_plan απέτυχε: %s"
+
+#: plpy_spi.c:341
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "SPI_execute απέτυχε: %s"
+
+#: plpy_subxactobject.c:92
+#, c-format
+msgid "this subtransaction has already been entered"
+msgstr "έχει εισέλθει ήδη σε αυτή τη υποσυναλλάγή"
+
+#: plpy_subxactobject.c:98 plpy_subxactobject.c:156
+#, c-format
+msgid "this subtransaction has already been exited"
+msgstr "έχει εξέλθει ήδη από αυτή τη υποσυναλλάγή"
+
+#: plpy_subxactobject.c:150
+#, c-format
+msgid "this subtransaction has not been entered"
+msgstr "δεν έχει εισέλθει σε αυτή τη υποσυναλλάγή"
+
+#: plpy_subxactobject.c:162
+#, c-format
+msgid "there is no subtransaction to exit from"
+msgstr "δεν υπάρχει υποσυναλλαγή από την οποία να εξέλθει"
+
+#: plpy_typeio.c:587
+#, c-format
+msgid "could not import a module for Decimal constructor"
+msgstr "δεν ήταν δυνατή η εισαγωγή αρθρώματος για τον κατασκευαστή Decimal"
+
+#: plpy_typeio.c:591
+#, c-format
+msgid "no Decimal attribute in module"
+msgstr "καμία ιδιότητα Decimal στο άρθρωμα"
+
+#: plpy_typeio.c:597
+#, c-format
+msgid "conversion from numeric to Decimal failed"
+msgstr "μετατροπή από αριθμητικό σε Decimal απέτυχε"
+
+#: plpy_typeio.c:911
+#, c-format
+msgid "could not create bytes representation of Python object"
+msgstr "δεν ήταν δυνατή η δημιουργία bytes αναπαράστασης του αντικειμένου Python"
+
+#: plpy_typeio.c:1056
+#, c-format
+msgid "could not create string representation of Python object"
+msgstr "δεν ήταν δυνατή η δημιουργία string αναπαράστασης του αντικειμένου Python"
+
+#: plpy_typeio.c:1067
+#, c-format
+msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
+msgstr "δεν ήταν δυνατή η μετατροπή του αντικειμένου Python σε cstring: Η αναπαράσταση συμβολοσειράς Python φαίνεται να περιέχει null bytes"
+
+#: plpy_typeio.c:1178
+#, c-format
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "o αριθμός των διαστάσεων συστοιχίας υπερβαίνει το μέγιστο επιτρεπόμενο (%d)"
+
+#: plpy_typeio.c:1183
+#, c-format
+msgid "could not determine sequence length for function return value"
+msgstr "δεν ήταν δυνατός ο προσδιορισμός του μήκους της ακολουθίας για την τιμή επιστροφής της συνάρτησης"
+
+#: plpy_typeio.c:1188 plpy_typeio.c:1194
+#, c-format
+msgid "array size exceeds the maximum allowed"
+msgstr "το μέγεθος συστοιχίας υπερβαίνει το μέγιστο επιτρεπόμενο"
+
+#: plpy_typeio.c:1222
+#, c-format
+msgid "return value of function with array return type is not a Python sequence"
+msgstr "η τιμή επιστροφής της συνάρτησης με τύπο επιστροφής συστυχίας δεν είναι μία ακολουθία Python"
+
+#: plpy_typeio.c:1269
+#, c-format
+msgid "wrong length of inner sequence: has length %d, but %d was expected"
+msgstr "λάθος μήκος της εσωτερικής ακολουθίας: έχει μήκος %d , αλλά αναμενόταν %d"
+
+#: plpy_typeio.c:1271
+#, c-format
+msgid "To construct a multidimensional array, the inner sequences must all have the same length."
+msgstr "Για να κατασκευαστεί μια πολυδιάστατη συστυχία, οι εσωτερικές ακολουθίες πρέπει να έχουν όλες το ίδιο μήκος."
+
+#: plpy_typeio.c:1350
+#, c-format
+msgid "malformed record literal: \"%s\""
+msgstr "κακοσχηματισμένο εγγραφή: “%s”"
+
+#: plpy_typeio.c:1351
+#, c-format
+msgid "Missing left parenthesis."
+msgstr "Λείπει δεξιά παρένθεση."
+
+#: plpy_typeio.c:1352 plpy_typeio.c:1553
+#, c-format
+msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
+msgstr "Για να επιστρέψετε έναν σύνθετο τύπο σε μία συστυχία, επιστρέψτε τον σύνθετο τύπο ως πλειάδα Python, π.χ. “[(‘foo’,)”."
+
+#: plpy_typeio.c:1399
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "κλειδί “%s” δεν βρέθηκε σε αντιστοίχιση"
+
+#: plpy_typeio.c:1400
+#, c-format
+msgid "To return null in a column, add the value None to the mapping with the key named after the column."
+msgstr "Για να επιστρέψετε null σε μια στήλη, προσθέστε την τιμή None στην αντιστοίχιση με το κλειδί που ονομάστηκε από τη στήλη."
+
+#: plpy_typeio.c:1453
+#, c-format
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "το μήκος της ακολουθίας που επιστράφηκε δεν ταίριαζε με τον αριθμό των στηλών στη γραμμή"
+
+#: plpy_typeio.c:1551
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "η ιδιότητα “%s” δεν υπάρχει στο αντικείμενο Python"
+
+#: plpy_typeio.c:1554
+#, c-format
+msgid "To return null in a column, let the returned object have an attribute named after column with value None."
+msgstr "Για να επιστρέψετε null σε μια στήλη, αφήστε το αντικείμενο που επιστράφηκε να έχει ένα χαρακτηριστικό που ονομάζεται από την στήλη με τιμή None."
+
+#: plpy_util.c:31
+#, c-format
+msgid "could not convert Python Unicode object to bytes"
+msgstr "δεν ήταν δυνατή η μετατροπή του αντικειμένου Python Unicode σε bytes"
+
+#: plpy_util.c:37
+#, c-format
+msgid "could not extract bytes from encoded string"
+msgstr "δεν ήταν δυνατή η εξόρυξη bytes από κωδικοποιημένη συμβολοσειρά"

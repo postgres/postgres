@@ -4,21 +4,21 @@
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Álvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2013
-# Carlos Chapi <carloswaldo@babelruins.org>, 2014, 2018
+# Carlos Chapi <carloswaldo@babelruins.org>, 2014-2021
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:47+0000\n"
-"PO-Revision-Date: 2020-06-08 15:50-0400\n"
+"PO-Revision-Date: 2021-05-19 22:22-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: BlackCAT 1.0\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: ../../../src/common/logging.c:259
 #, c-format
@@ -66,10 +66,9 @@ msgid "could not read symbolic link \"%s\": %m"
 msgstr "no se pudo leer el enlace simbólico «%s»: %m"
 
 #: ../../common/exec.c:409
-#, fuzzy, c-format
-#| msgid "%s failed: %m"
+#, c-format
 msgid "%s() failed: %m"
-msgstr "%s falló: %m"
+msgstr "%s() falló: %m"
 
 #: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 #: initdb.c:328
@@ -344,7 +343,7 @@ msgstr "el archivo «%s» no es un archivo regular"
 #: initdb.c:947
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
-msgstr "seleccionando implementación de memoria compartida dinámica ..."
+msgstr "seleccionando implementación de memoria compartida dinámica ... "
 
 #: initdb.c:956
 #, c-format
@@ -624,10 +623,9 @@ msgid "  -N, --no-sync             do not wait for changes to be written safely 
 msgstr "  -N, --no-sync             no esperar que los cambios se sincronicen a disco\n"
 
 #: initdb.c:2270
-#, fuzzy, c-format
-#| msgid "  --no-subscriptions           do not restore subscriptions\n"
+#, c-format
 msgid "      --no-instructions     do not print instructions for next steps\n"
-msgstr "  --no-subscriptions           no restaurar suscripciones\n"
+msgstr "      --no-instructions     no mostrar instrucciones para los siguientes pasos\n"
 
 #: initdb.c:2271
 #, c-format
@@ -689,12 +687,9 @@ msgid "invalid authentication method \"%s\" for \"%s\" connections"
 msgstr "método de autentificación «%s» no válido para conexiones «%s»"
 
 #: initdb.c:2323
-#, fuzzy, c-format
-#| msgid "must specify a password for the superuser to enable %s authentication"
+#, c-format
 msgid "must specify a password for the superuser to enable password authentication"
-msgstr ""
-"debe especificar una contraseña al superusuario para activar\n"
-"autentificación %s"
+msgstr "debe especificar una contraseña al superusuario para activar autentificación mediante contraseña"
 
 #: initdb.c:2344
 #, c-format
@@ -712,10 +707,9 @@ msgstr ""
 "Hágalo usando la opción -D o la variable de ambiente PGDATA.\n"
 
 #: initdb.c:2364
-#, fuzzy, c-format
-#| msgid "could not set printing parameter \"%s\""
+#, c-format
 msgid "could not set environment"
-msgstr "no se pudo definir parámetro de impresión «%s»"
+msgstr "no se pudo establecer el ambiente"
 
 #: initdb.c:2384
 #, c-format

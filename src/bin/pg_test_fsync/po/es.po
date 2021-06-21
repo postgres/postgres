@@ -3,14 +3,14 @@
 # Copyright (c) 2017-2019, PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Carlos Chapi <carloswaldo@babelruins.org>, 2017.
+# Carlos Chapi <carloswaldo@babelruins.org>, 2017, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_fsync (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:49+0000\n"
-"PO-Revision-Date: 2019-06-06 17:25-0400\n"
+"PO-Revision-Date: 2021-05-21 23:25-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: BlackCAT 1.0\n"
+"X-Generator: Poedit 2.4.3\n"
 
 #. translator: maintain alignment with NA_FORMAT
 #: pg_test_fsync.c:31
@@ -37,13 +37,11 @@ msgid "Try \"%s --help\" for more information.\n"
 msgstr "Pruebe «%s --help» para mayor información.\n"
 
 #: pg_test_fsync.c:216
-#, fuzzy, c-format
-#| msgid "%d second per test\n"
-#| msgid_plural "%d seconds per test\n"
+#, c-format
 msgid "%u second per test\n"
 msgid_plural "%u seconds per test\n"
-msgstr[0] "%d segundo por prueba\n"
-msgstr[1] "%d segundos por prueba\n"
+msgstr[0] "%u segundo por prueba\n"
+msgstr[1] "%u segundos por prueba\n"
 
 #: pg_test_fsync.c:221
 #, c-format

@@ -4,20 +4,21 @@
 #
 # This file is distributed under the same license as the pg_checksums (PostgreSQL) package.
 # Álvaro Herrera <alvherre@alvh.no-ip.org>, 2019.
+# Carlos Chapi <carloswaldo@babelruins.org>, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_checksums (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:49+0000\n"
-"PO-Revision-Date: 2020-09-12 10:54-0500\n"
-"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"PO-Revision-Date: 2021-05-20 21:25-0500\n"
+"Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: pgsql-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: ../../../src/common/logging.c:259
 #, c-format
@@ -286,10 +287,9 @@ msgid "Bad checksums:  %s\n"
 msgstr "Checksums incorrectos: %s\n"
 
 #: pg_checksums.c:645 pg_checksums.c:672
-#, fuzzy, c-format
-#| msgid "Data checksum version: %d\n"
+#, c-format
 msgid "Data checksum version: %u\n"
-msgstr "Versión de checksums de datos: %d\n"
+msgstr "Versión de checksums de datos: %u\n"
 
 #: pg_checksums.c:664
 #, c-format

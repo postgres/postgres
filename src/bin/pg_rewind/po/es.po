@@ -4,21 +4,21 @@
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Álvaro Herrera <alvherre@alvh.no-ip.org>, 2015.
-# Carlos Chapi <carloswaldo@babelruins.org>, 2017.
+# Carlos Chapi <carloswaldo@babelruins.org>, 2017, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:49+0000\n"
-"PO-Revision-Date: 2020-10-16 15:59-0300\n"
+"PO-Revision-Date: 2021-05-21 23:23-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: BlackCAT 1.0\n"
+"X-Generator: Poedit 2.4.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ../../../src/common/logging.c:259
@@ -88,16 +88,14 @@ msgid "could not get exit code from subprocess: error code %lu"
 msgstr "no se pudo obtener el código de salida del subproceso»: código de error %lu"
 
 #: ../../fe_utils/archive.c:53
-#, fuzzy, c-format
-#| msgid "could not use restore_command with %%r alias"
+#, c-format
 msgid "cannot use restore_command with %%r placeholder"
-msgstr "no se puede usar restore_command con el alias %%r"
+msgstr "no se puede usar restore_command con el marcador %%r"
 
 #: ../../fe_utils/archive.c:74
-#, fuzzy, c-format
-#| msgid "unexpected file size for \"%s\": %lu instead of %lu"
+#, c-format
 msgid "unexpected file size for \"%s\": %lld instead of %lld"
-msgstr "el archivo «%s» tiene tamaño inesperado: %lu en lugar de %lu"
+msgstr "el archivo «%s» tiene tamaño inesperado: %lld en lugar de %lld"
 
 #: ../../fe_utils/archive.c:85
 #, c-format
@@ -110,10 +108,9 @@ msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
 #: ../../fe_utils/archive.c:112
-#, fuzzy, c-format
-#| msgid "restore_command failed due to the signal: %s"
+#, c-format
 msgid "restore_command failed: %s"
-msgstr "restore_command falló debido a la señal: %s"
+msgstr "restore_command falló: %s"
 
 #: ../../fe_utils/archive.c:121
 #, c-format
@@ -164,10 +161,9 @@ msgid "could not write file \"%s\": %m"
 msgstr "no se pudo escribir el archivo «%s»: %m"
 
 #: file_ops.c:150 file_ops.c:177
-#, fuzzy, c-format
-#| msgid "unrecognized file format \"%d\""
+#, c-format
 msgid "undefined file type for \"%s\""
-msgstr "formato de archivo no reconocido «%d»"
+msgstr "tipo de archivo no definido para «%s»"
 
 #: file_ops.c:173
 #, c-format
@@ -260,34 +256,29 @@ msgid "data file \"%s\" in source is not a regular file"
 msgstr "el archivo de datos «%s» en el origen no es un archivo regular"
 
 #: filemap.c:242 filemap.c:275
-#, fuzzy, c-format
-#| msgid "duplicate option \"%s\""
+#, c-format
 msgid "duplicate source file \"%s\""
-msgstr "nombre de opción «%s» duplicada"
+msgstr "archivo origen duplicado «%s»"
 
 #: filemap.c:330
-#, fuzzy, c-format
-#| msgid "unexpected page modification for directory or symbolic link \"%s\""
+#, c-format
 msgid "unexpected page modification for non-regular file \"%s\""
-msgstr "modificación de página inesperada para el directorio o link simbólico «%s»"
+msgstr "modificación de página inesperada para el archivo no regular «%s»"
 
 #: filemap.c:680 filemap.c:774
-#, fuzzy, c-format
-#| msgid "Token types for parser \"%s\""
+#, c-format
 msgid "unknown file type for \"%s\""
-msgstr "Tipos de elemento para el analizador «%s»"
+msgstr "tipo de archivo desconocido para «%s»"
 
 #: filemap.c:707
-#, fuzzy, c-format
-#| msgid "table \"%s\" has different type for column \"%s\""
+#, c-format
 msgid "file \"%s\" is of different type in source and target"
-msgstr "la tabla «%s» tiene un tipo diferente para la columna «%s»"
+msgstr "el archivo «%s» tiene un tipo diferente en el origen y en el destino"
 
 #: filemap.c:779
-#, fuzzy, c-format
-#| msgid "could not seek to end of file \"%s\": %m"
+#, c-format
 msgid "could not decide what to do with file \"%s\""
-msgstr "no se pudo posicionar (seek) al fin del archivo «%s»: %m"
+msgstr "no se pudo decidir qué hacer con el archivo «%s»"
 
 #: libpq_source.c:128
 #, c-format
@@ -300,10 +291,9 @@ msgid "full_page_writes must be enabled in the source server"
 msgstr "full_page_writes debe estar activado en el servidor de origen"
 
 #: libpq_source.c:150
-#, fuzzy, c-format
-#| msgid "could not parse contents of file \"%s\""
+#, c-format
 msgid "could not prepare statement to fetch file contents: %s"
-msgstr "no se pudo interpretar el contenido del archivo «%s»"
+msgstr "no se pudo preparar sentencia para obtener el contenido del archivo: %s"
 
 #: libpq_source.c:169
 #, c-format
@@ -351,10 +341,9 @@ msgid "unexpected result while fetching remote files: %s"
 msgstr "resultados inesperados mientras se obtenían archivos remotos: %s"
 
 #: libpq_source.c:473
-#, fuzzy, c-format
-#| msgid "received immediate shutdown request"
+#, c-format
 msgid "received more data chunks than requested"
-msgstr "se recibió petición de apagado inmediato"
+msgstr "se recibieron más trozos de datos que los solicitados"
 
 #: libpq_source.c:477
 #, c-format
@@ -384,24 +373,22 @@ msgstr "largo del resultado inesperado mientras se obtenían los archivos remoto
 #: libpq_source.c:534
 #, c-format
 msgid "received data for file \"%s\", when requested for \"%s\""
-msgstr ""
+msgstr "se recibieron datos para el archivo «%s», cuando se solicitó para «%s»"
 
 #: libpq_source.c:538
 #, c-format
 msgid "received data at offset %lld of file \"%s\", when requested for offset %lld"
-msgstr ""
+msgstr "se recibieron datos en la posición %lld del archivo «%s», cuando se solicitó para la posición %lld"
 
 #: libpq_source.c:550
-#, fuzzy, c-format
-#| msgid "removed orphan archive status file \"%s\""
+#, c-format
 msgid "received more than requested for file \"%s\""
-msgstr "eliminando archivo de estado huérfano «%s»"
+msgstr "se recibió más de lo solicitado para el archivo «%s»"
 
 #: libpq_source.c:563
-#, fuzzy, c-format
-#| msgid "unexpected end of line or lexeme"
+#, c-format
 msgid "unexpected number of data chunks received"
-msgstr "fin de línea o lexema inesperado"
+msgstr "se recibió un número inesperado de trozos de datos"
 
 #: libpq_source.c:606
 #, c-format
@@ -681,15 +668,14 @@ msgid "Done!"
 msgstr "¡Listo!"
 
 #: pg_rewind.c:564
-#, fuzzy, c-format
-#| msgid "permission denied for database \"%s\""
+#, c-format
 msgid "no action decided for file \"%s\""
-msgstr "permiso denegado a la base de datos «%s»"
+msgstr "no se decidió una acción para el archivo «%s»"
 
 #: pg_rewind.c:596
 #, c-format
 msgid "source system was modified while pg_rewind was running"
-msgstr ""
+msgstr "el sistema origen fue modificado mientras pg_rewind estaba en ejecución"
 
 #: pg_rewind.c:600
 #, c-format
@@ -699,7 +685,7 @@ msgstr "creando etiqueta de respaldo y actualizando archivo de control"
 #: pg_rewind.c:650
 #, c-format
 msgid "source system was in unexpected state at end of rewind"
-msgstr ""
+msgstr "el sistema origen estaba en un estado inesperado al final del rebobinado"
 
 #: pg_rewind.c:681
 #, c-format
@@ -866,10 +852,9 @@ msgid "there is no contrecord flag at %X/%X"
 msgstr "no hay bandera de contrecord en %X/%X"
 
 #: xlogreader.c:466
-#, fuzzy, c-format
-#| msgid "invalid contrecord length %u at %X/%X"
+#, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
-msgstr "largo de contrecord %u no válido en %X/%X"
+msgstr "largo de contrecord %u no válido (se esperaba %lld) en %X/%X"
 
 #: xlogreader.c:703
 #, c-format

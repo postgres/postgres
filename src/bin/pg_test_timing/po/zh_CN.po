@@ -5,74 +5,76 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL) 12\n"
+"Project-Id-Version: pg_test_timing (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-22 17:56+0800\n"
-"PO-Revision-Date: 2019-05-31 18:50+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
-"Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
+"POT-Creation-Date: 2021-06-09 21:17+0000\n"
+"PO-Revision-Date: 2021-06-10 10:50+0800\n"
+"Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
+"Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: zh_CN\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: pg_test_timing.c:55
+#: pg_test_timing.c:59
 #, c-format
 msgid "Usage: %s [-d DURATION]\n"
 msgstr "用法: %s [-d 持续时间]\n"
 
-#: pg_test_timing.c:75 pg_test_timing.c:87 pg_test_timing.c:104
+#: pg_test_timing.c:81
+msgid "%s: invalid argument for option %s\n"
+msgstr "%s: 选项%s的参数无效\n"
+
+#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "请用 \"%s --help\" 获取更多的信息.\n"
 
-#: pg_test_timing.c:85
+#: pg_test_timing.c:90
+msgid "%s: %s must be in range %u..%u\n"
+msgstr "%s: %s必须位于%u..%u的范围内\n"
+
+#: pg_test_timing.c:107
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
 
-#: pg_test_timing.c:94
-#, c-format
-msgid "Testing timing overhead for %d second.\n"
-msgid_plural "Testing timing overhead for %d seconds.\n"
-msgstr[0] "测试%d秒的计时开销.\n"
-msgstr[1] "测试%d秒的计时开销.\n"
+#: pg_test_timing.c:115
+msgid "Testing timing overhead for %u second.\n"
+msgid_plural "Testing timing overhead for %u seconds.\n"
+msgstr[0] "测试%u秒的计时开销.\n"
+msgstr[1] "测试%u秒的计时开销.\n"
 
-#: pg_test_timing.c:102
-#, c-format
-msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
-msgstr "%s: 持续时间必须是正整数(持续时间是 \"%d\")\n"
-
-#: pg_test_timing.c:140
+#: pg_test_timing.c:151
 #, c-format
 msgid "Detected clock going backwards in time.\n"
 msgstr "检测到时钟时间倒转.\n"
 
-#: pg_test_timing.c:141
+#: pg_test_timing.c:152
 #, c-format
 msgid "Time warp: %d ms\n"
 msgstr "时间错位: %d 毫秒\n"
 
-#: pg_test_timing.c:164
+#: pg_test_timing.c:175
 #, c-format
 msgid "Per loop time including overhead: %0.2f ns\n"
 msgstr "每次循环的平均开销: %0.2f 纳秒\n"
 
-#: pg_test_timing.c:175
+#: pg_test_timing.c:186
 msgid "< us"
 msgstr "< 微秒"
 
-#: pg_test_timing.c:176
+#: pg_test_timing.c:187
 #, no-c-format
 msgid "% of total"
 msgstr "总计的 %"
 
-#: pg_test_timing.c:177
+#: pg_test_timing.c:188
 msgid "count"
 msgstr "计数"
 
-#: pg_test_timing.c:186
+#: pg_test_timing.c:197
 #, c-format
 msgid "Histogram of timing durations:\n"
 msgstr "持续时间的柱状图:\n"

@@ -1,0 +1,521 @@
+# Greek message translation file for pg_controldata
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_controldata (PostgreSQL) package.
+# Georgios Kokolatos <gkokolatos@pm.me>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_controldata (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-05-26 00:19+0000\n"
+"PO-Revision-Date: 2021-05-31 11:02+0200\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.4.3\n"
+
+#: ../../common/controldata_utils.c:73
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου “%s” για ανάγνωση: %m"
+
+#: ../../common/controldata_utils.c:89
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου \"%s\": %m"
+
+#: ../../common/controldata_utils.c:101
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου \"%s\": ανέγνωσε %d από %zu"
+
+#: ../../common/controldata_utils.c:117 ../../common/controldata_utils.c:259
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου “%s”: %m"
+
+#: ../../common/controldata_utils.c:135
+msgid "byte ordering mismatch"
+msgstr "αναντιστοιχία διάταξης byte"
+
+#: ../../common/controldata_utils.c:137
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"πιθανή αναντιστοιχία διάταξης byte\n"
+"Η διάταξη byte που χρησιμοποιείται για την αποθήκευση του αρχείου pg_control "
+"ενδέχεται να μην ταιριάζει με αυτήν\n"
+"που χρησιμοποιείται από αυτό το πρόγραμμα.  Στην περίπτωση αυτή, τα παρακάτω "
+"αποτελέσματα θα ήταν εσφαλμένα, και\n"
+"η εγκατάσταση PostgreSQL θα ήταν ασύμβατη με αυτόν τον κατάλογο δεδομένων."
+
+#: ../../common/controldata_utils.c:203
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου “%s”: %m"
+
+#: ../../common/controldata_utils.c:224
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εγγραφή αρχείου “%s”: %m"
+
+#: ../../common/controldata_utils.c:245
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εκτέλεση της εντολής fsync στο αρχείο “%s”: %m"
+
+#: pg_controldata.c:35
+#, c-format
+msgid ""
+"%s displays control information of a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s εμφανίζει πληροφορίες ελέγχου μίας συστάδας βάσεων δεδομένων PostgreSQL.\n"
+"\n"
+
+#: pg_controldata.c:36
+#, c-format
+msgid "Usage:\n"
+msgstr "Χρήση:\n"
+
+#: pg_controldata.c:37
+#, c-format
+msgid "  %s [OPTION] [DATADIR]\n"
+msgstr "  %s [OPTION] [DATADIR]\n"
+
+#: pg_controldata.c:38
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Επιλογές:\n"
+
+#: pg_controldata.c:39
+#, c-format
+msgid " [-D, --pgdata=]DATADIR  data directory\n"
+msgstr " [-D, —pgdata=]DATADIR  κατάλογος δεδομένων\n"
+
+#: pg_controldata.c:40
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, —version          εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+
+#: pg_controldata.c:41
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, —help             εμφάνισε αυτό το μήνυμα βοήθειας, μετά έξοδος\n"
+
+#: pg_controldata.c:42
+#, c-format
+msgid ""
+"\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Εάν δεν έχει καθοριστεί κατάλογος δεδομένων (DATADIR), χρησιμοποιείται η\n"
+"μεταβλητή περιβάλλοντος PGDATA.\n"
+"\n"
+
+#: pg_controldata.c:44
+#, c-format
+msgid "Report bugs to <%s>.\n"
+msgstr "Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
+
+#: pg_controldata.c:45
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s αρχική σελίδα: <%s>\n"
+
+#: pg_controldata.c:55
+msgid "starting up"
+msgstr "εκκίνηση"
+
+#: pg_controldata.c:57
+msgid "shut down"
+msgstr "τερματισμός"
+
+#: pg_controldata.c:59
+msgid "shut down in recovery"
+msgstr "τερματισμός σε αποκατάσταση"
+
+#: pg_controldata.c:61
+msgid "shutting down"
+msgstr "τερματίζει"
+
+#: pg_controldata.c:63
+msgid "in crash recovery"
+msgstr "σε αποκατάσταση από κρασάρισμα"
+
+#: pg_controldata.c:65
+msgid "in archive recovery"
+msgstr "σε αποκατάσταση αρχειοθήκης"
+
+#: pg_controldata.c:67
+msgid "in production"
+msgstr "στην παραγωγή"
+
+#: pg_controldata.c:69
+msgid "unrecognized status code"
+msgstr "μη αναγνωρίσιμος κωδικός κατάστασης"
+
+#: pg_controldata.c:84
+msgid "unrecognized wal_level"
+msgstr "μη αναγνωρίσιμο wal_level"
+
+#: pg_controldata.c:137 pg_controldata.c:155 pg_controldata.c:163
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"
+
+#: pg_controldata.c:153
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (ο πρώτη είναι η “%s”)"
+
+#: pg_controldata.c:162
+#, c-format
+msgid "no data directory specified"
+msgstr "δεν ορίστηκε κατάλογος δεδομένων"
+
+#: pg_controldata.c:170
+#, c-format
+msgid ""
+"WARNING: Calculated CRC checksum does not match value stored in file.\n"
+"Either the file is corrupt, or it has a different layout than this program\n"
+"is expecting.  The results below are untrustworthy.\n"
+"\n"
+msgstr ""
+"ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Το υπολογιζόμενο άθροισμα ελέγχου CRC δεν συμφωνεί με την τιμή που "
+"είναι αποθηκευμένη στο αρχείο.\n"
+"Είτε το αρχείο είναι αλλοιωμένο είτε έχει διαφορετική διάταξη από αυτή που "
+"περιμένει\n"
+"αυτό το πρόγραμμα.  Τα παρακάτω αποτελέσματα είναι αναξιόπιστα.\n"
+"\n"
+
+#: pg_controldata.c:179
+#, c-format
+msgid "WARNING: invalid WAL segment size\n"
+msgstr "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: μη έγκυρο μέγεθος τμήματος WAL\n"
+
+#: pg_controldata.c:180
+#, c-format
+msgid ""
+"The WAL segment size stored in the file, %d byte, is not a power of two\n"
+"between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
+"untrustworthy.\n"
+"\n"
+msgid_plural ""
+"The WAL segment size stored in the file, %d bytes, is not a power of two\n"
+"between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
+"untrustworthy.\n"
+"\n"
+msgstr[0] ""
+"Το μέγεθος τμήματος WAL που είναι αποθηκευμένο στο αρχείο, %d byte, δεν είναι "
+"δύναμη\n"
+"του δύο μεταξύ 1 MB και 1 GB.  Το αρχείο είναι αλλοιωμένο και τα παρακάτω "
+"αποτελέσματα\n"
+"είναι αναξιόπιστα.\n"
+"\n"
+msgstr[1] ""
+"Το μέγεθος τμήματος WAL που είναι αποθηκευμένο στο αρχείο, %d bytes, δεν είναι "
+"δύναμη\n"
+"του δύο μεταξύ 1 MB και 1 GB.  Το αρχείο είναι αλλοιωμένο και τα παρακάτω "
+"αποτελέσματα\n"
+"είναι αναξιόπιστα.\n"
+"\n"
+
+#: pg_controldata.c:222
+msgid "???"
+msgstr "???"
+
+#: pg_controldata.c:228
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr ""
+"pg_control αριθμός έκδοσης:            %u\n"
+"\n"
+
+#: pg_controldata.c:230
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "Αριθμός έκδοσης καταλόγου:               %u\n"
+
+#: pg_controldata.c:232
+#, c-format
+msgid "Database system identifier:           %llu\n"
+msgstr "Αναγνωριστικό συστήματος βάσης δεδομένων:            %llu\n"
+
+#: pg_controldata.c:234
+#, c-format
+msgid "Database cluster state:               %s\n"
+msgstr "Κατάσταση συστάδας βάσης δεδομένων:               %s\n"
+
+#: pg_controldata.c:236
+#, c-format
+msgid "pg_control last modified:             %s\n"
+msgstr "πιο πρόσφατη μετατροπή pg_control:             %s\n"
+
+#: pg_controldata.c:238
+#, c-format
+msgid "Latest checkpoint location:           %X/%X\n"
+msgstr "Πιο πρόσφατη τοποθεσία σημείου ελέγχου:           %X/%X\n"
+
+#: pg_controldata.c:240
+#, c-format
+msgid "Latest checkpoint's REDO location:    %X/%X\n"
+msgstr "Πιο πρόσφατη τοποθεσία REDO του σημείου ελέγχου: %X/%X\n"
+
+#: pg_controldata.c:242
+#, c-format
+msgid "Latest checkpoint's REDO WAL file:    %s\n"
+msgstr "Πιο πρόσφατο αρχείο REDO WAL του σημείου ελέγχου: %s\n"
+
+#: pg_controldata.c:244
+#, c-format
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "Πιο πρόσφατο TimeLineID του σημείου ελέγχου: %u\n"
+
+#: pg_controldata.c:246
+#, c-format
+msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
+msgstr "Πιο πρόσφατο PrevTimeLineID του σημείου ελέγχου: %u\n"
+
+#: pg_controldata.c:248
+#, c-format
+msgid "Latest checkpoint's full_page_writes: %s\n"
+msgstr "Πιο πρόσφατο full_page_writes του σημείου ελέγχου: %s\n"
+
+#: pg_controldata.c:249 pg_controldata.c:290 pg_controldata.c:302
+msgid "off"
+msgstr "κλειστό"
+
+#: pg_controldata.c:249 pg_controldata.c:290 pg_controldata.c:302
+msgid "on"
+msgstr "ανοικτό"
+
+#: pg_controldata.c:250
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u:%u\n"
+msgstr "Πιο πρόσφατο NextXID του σημείου ελέγχου:          %u:%u\n"
+
+#: pg_controldata.c:253
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "Πιο πρόσφατο NextOID του σημείου ελέγχου:          %u\n"
+
+#: pg_controldata.c:255
+#, c-format
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "Πιο πρόσφατο NextMultiXactId του σημείου ελέγχου:  %u\n"
+
+#: pg_controldata.c:257
+#, c-format
+msgid "Latest checkpoint's NextMultiOffset:  %u\n"
+msgstr "Πιο πρόσφατο NextMultiOffset του σημείου ελέγχου:  %u\n"
+
+#: pg_controldata.c:259
+#, c-format
+msgid "Latest checkpoint's oldestXID:        %u\n"
+msgstr "Πιο πρόσφατο oldestXID του σημείου ελέγχου:         %u\n"
+
+#: pg_controldata.c:261
+#, c-format
+msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgstr "Πιο πρόσφατο oldestXID’s DB του σημείου ελέγχου:   %u\n"
+
+#: pg_controldata.c:263
+#, c-format
+msgid "Latest checkpoint's oldestActiveXID:  %u\n"
+msgstr "Πιο πρόσφατο oldestActiveXID του σημείου ελέγχου:  %u\n"
+
+#: pg_controldata.c:265
+#, c-format
+msgid "Latest checkpoint's oldestMultiXid:   %u\n"
+msgstr "Πιο πρόσφατο oldestMultiXid του σημείου ελέγχου:   %u\n"
+
+#: pg_controldata.c:267
+#, c-format
+msgid "Latest checkpoint's oldestMulti's DB: %u\n"
+msgstr "Πιο πρόσφατο oldestMulti’s DB του σημείου ελέγχου: %u\n"
+
+#: pg_controldata.c:269
+#, c-format
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "Πιο πρόσφατο oldestCommitTsXid του σημείου ελέγχου: %u\n"
+
+#: pg_controldata.c:271
+#, c-format
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "Πιο πρόσφατο newestCommitTsXid του σημείου ελέγχου: %u\n"
+
+#: pg_controldata.c:273
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "Ώρα του πιο πρόσφατου σημείου ελέγχου:            %s\n"
+
+#: pg_controldata.c:275
+#, c-format
+msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
+msgstr "Ψεύτικος μετρητής LSN για μη κενές rels:   %X/%X\n"
+
+#: pg_controldata.c:277
+#, c-format
+msgid "Minimum recovery ending location:     %X/%X\n"
+msgstr "Ελάχιστη τοποθεσία τερματισμού ανάκαμψης:     %X/%X\n"
+
+#: pg_controldata.c:279
+#, c-format
+msgid "Min recovery ending loc's timeline:   %u\n"
+msgstr "Χρονογραμμή ελάχιστης τοποθεσίας τερματισμού ανάκαμψης: %u\n"
+
+#: pg_controldata.c:281
+#, c-format
+msgid "Backup start location:                %X/%X\n"
+msgstr "Τοποθεσία εκκίνησης Backup:                %X/%X\n"
+
+#: pg_controldata.c:283
+#, c-format
+msgid "Backup end location:                  %X/%X\n"
+msgstr "Τοποθεσία τερματισμου Backup:            %X/%X\n"
+
+#: pg_controldata.c:285
+#, c-format
+msgid "End-of-backup record required:        %s\n"
+msgstr "Απαιτείται εγγραφή end-of-backup:             %s\n"
+
+#: pg_controldata.c:286
+msgid "no"
+msgstr "όχι"
+
+#: pg_controldata.c:286
+msgid "yes"
+msgstr "ναι"
+
+#: pg_controldata.c:287
+#, c-format
+msgid "wal_level setting:                    %s\n"
+msgstr "ρύθμιση wal_level:                                  %s\n"
+
+#: pg_controldata.c:289
+#, c-format
+msgid "wal_log_hints setting:                %s\n"
+msgstr "ρύθμιση wal_log_hints:                          %s\n"
+
+#: pg_controldata.c:291
+#, c-format
+msgid "max_connections setting:              %d\n"
+msgstr "ρύθμιση max_connections:                    %d\n"
+
+#: pg_controldata.c:293
+#, c-format
+msgid "max_worker_processes setting:         %d\n"
+msgstr "ρύθμιση max_worker_processes:          %d\n"
+
+#: pg_controldata.c:295
+#, c-format
+msgid "max_wal_senders setting:              %d\n"
+msgstr "ρύθμιση max_wal_senders:                    %d\n"
+
+#: pg_controldata.c:297
+#, c-format
+msgid "max_prepared_xacts setting:           %d\n"
+msgstr "ρύθμιση max_prepared_xacts:               %d\n"
+
+#: pg_controldata.c:299
+#, c-format
+msgid "max_locks_per_xact setting:           %d\n"
+msgstr "ρύθμιση max_locks_per_xact:                %d\n"
+
+#: pg_controldata.c:301
+#, c-format
+msgid "track_commit_timestamp setting:       %s\n"
+msgstr "ρύθμιση track_commit_timestamp:        %s\n"
+
+#: pg_controldata.c:303
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "Μέγιστη στοίχιση δεδομένων:                %u\n"
+
+#: pg_controldata.c:306
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "Μέγεθος μπλοκ βάσης δεδομένων:        %u\n"
+
+#: pg_controldata.c:308
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "Μπλοκ ανά τμήμα μεγάλης σχέσης:       %u\n"
+
+#: pg_controldata.c:310
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "Μέγεθος μπλοκ WAL:                       %u\n"
+
+#: pg_controldata.c:312
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "Bytes ανά τμήμα WAL:                     %u\n"
+
+#: pg_controldata.c:314
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "Μέγιστο μήκος αναγνωριστικών: %u\n"
+
+#: pg_controldata.c:316
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "Μέγιστες στήλες σε ένα ευρετήριο: %u\n"
+
+#: pg_controldata.c:318
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "Μέγιστο μέγεθος ενός τμήματος TOAST: %u\n"
+
+#: pg_controldata.c:320
+#, c-format
+msgid "Size of a large-object chunk:         %u\n"
+msgstr "Μέγεθος τμήματος μεγάλου αντικειμένου: %u\n"
+
+#: pg_controldata.c:323
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "Τύπος αποθήκευσης ημερομηνίας/ώρας: %s\n"
+
+#: pg_controldata.c:324
+msgid "64-bit integers"
+msgstr "Ακέραιοι 64-bit"
+
+#: pg_controldata.c:325
+#, c-format
+msgid "Float8 argument passing:              %s\n"
+msgstr "Μεταβλητή Float8 τέθηκε: %s\n"
+
+#: pg_controldata.c:326
+msgid "by reference"
+msgstr "με αναφορά"
+
+#: pg_controldata.c:326
+msgid "by value"
+msgstr "με τιμή"
+
+#: pg_controldata.c:327
+#, c-format
+msgid "Data page checksum version:           %u\n"
+msgstr "Έκδοση αθροίσματος ελέγχου σελίδας δεδομένων:           %u\n"
+
+#: pg_controldata.c:329
+#, c-format
+msgid "Mock authentication nonce:            %s\n"
+msgstr "Μακέτα (mock) nonce ταυτοποίησης:             %s\n"

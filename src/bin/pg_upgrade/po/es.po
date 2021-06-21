@@ -4,19 +4,21 @@
 #
 # This file is distributed under the same license as the PostgreSQL package.
 # Álvaro Herrera <alvherre@alvh.no-ip.org>, 2017.
+# Carlos Chapi <carloswaldo@babelruins.org>, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:47+0000\n"
-"PO-Revision-Date: 2020-09-18 18:34-0300\n"
-"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"PO-Revision-Date: 2021-05-24 16:35-0500\n"
+"Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.4.3\n"
 
 #: check.c:70
 #, c-format
@@ -57,21 +59,16 @@ msgstr ""
 "en el clúster nuevo antes de continuar.\n"
 
 #: check.c:262
-#, fuzzy, c-format
-#| msgid ""
-#| "Optimizer statistics are not transferred by pg_upgrade so,\n"
-#| "once you start the new server, consider running:\n"
-#| "    %s\n"
-#| "\n"
+#, c-format
 msgid ""
 "Optimizer statistics are not transferred by pg_upgrade.\n"
 "Once you start the new server, consider running:\n"
 "    %s/vacuumdb %s--all --analyze-in-stages\n"
 "\n"
 msgstr ""
-"Las estadísticas para el optimizador no son transferidas por pg_upgrade,\n"
-"de manera que una vez que inicie el servidor nuevo considere ejecutar:\n"
-"    %s\n"
+"Las estadísticas para el optimizador no son transferidas por pg_upgrade.\n"
+"Una vez que inicie el servidor nuevo, considere ejecutar:\n"
+"    %s/vacuumdb %s--all --analyze-in-stages\n"
 "\n"
 
 #: check.c:268
@@ -161,16 +158,14 @@ msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\"\n"
 msgstr "La base de datos «%s» del clúster nuevo no está vacía: se encontró la relación «%s.%s»\n"
 
 #: check.c:492
-#, fuzzy, c-format
-#| msgid "Checking cluster versions"
+#, c-format
 msgid "Checking for new cluster tablespace directories"
-msgstr "Verificando las versiones de los clústers"
+msgstr "Verificando los directorios de tablespaces para el nuevo clúster"
 
 #: check.c:503
-#, fuzzy, c-format
-#| msgid "could not stat tablespace directory \"%s\": %s\n"
+#, c-format
 msgid "new cluster tablespace directory already exists: \"%s\"\n"
-msgstr "no se pudo hace stat al directorio de tablespace «%s»: %s\n"
+msgstr "directorio de tablespace para el nuevo clúster ya existe: «%s»\n"
 
 #: check.c:536
 #, c-format
@@ -292,20 +287,12 @@ msgstr ""
 "\n"
 
 #: check.c:883
-#, fuzzy, c-format
-#| msgid "reading user-defined operators"
+#, c-format
 msgid "Checking for user-defined postfix operators"
-msgstr "leyendo los operadores definidos por el usuario"
+msgstr "Verificando operadores postfix definidos por el usuario"
 
 #: check.c:961
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains tables declared WITH OIDS, which is not\n"
-#| "supported anymore.  Consider removing the oid column using\n"
-#| "    ALTER TABLE ... SET WITHOUT OIDS;\n"
-#| "A list of tables with the problem is in the file:\n"
-#| "    %s\n"
-#| "\n"
+#, c-format
 msgid ""
 "Your installation contains user-defined postfix operators, which are not\n"
 "supported anymore.  Consider dropping the postfix operators and replacing\n"
@@ -314,10 +301,10 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene tablas declaradas WITH OIDS, que ya no está\n"
-"soportado. Considere eliminar la columna oid usando\n"
-"    ALTER TABLE ... SET WITHOUT OIDS;\n"
-"Una lista de tablas con este problema aparece en el archivo:\n"
+"Su instalación contiene operadores postfix definidos por el usuario, los\n"
+"cuales ya no están soportados. Considere eliminar los operadores postfix\n"
+"y reemplazarlos con operadores de prefijo o llamadas a funciones.\n"
+"Una lista de operadores postfix definidos por el usuario aparece en el archivo:\n"
 "    %s\n"
 "\n"
 
@@ -344,20 +331,12 @@ msgstr ""
 "\n"
 
 #: check.c:1065
-#, fuzzy, c-format
-#| msgid "Checking for reg* data types in user tables"
+#, c-format
 msgid "Checking for system-defined composite types in user tables"
-msgstr "Verificando tipos de datos reg* en datos de usuario"
+msgstr "Verificando tipos compuestos definidos por el sistema en tablas de usuario"
 
 #: check.c:1094
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains the \"unknown\" data type in user tables.  This\n"
-#| "data type is no longer allowed in tables, so this cluster cannot currently\n"
-#| "be upgraded.  You can remove the problem tables and restart the upgrade.\n"
-#| "A list of the problem columns is in the file:\n"
-#| "    %s\n"
-#| "\n"
+#, c-format
 msgid ""
 "Your installation contains system-defined composite type(s) in user tables.\n"
 "These type OIDs are not stable across PostgreSQL versions,\n"
@@ -367,10 +346,11 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene el tipo «unknown» en tablas de usuario. Este tipo\n"
-"ya no es permitido en tablas, por lo que este clúster no puede ser actualizado.\n"
-"Puede eliminar las tablas y reiniciar la actualización.\n"
-"Un listado de columnas problemáticas está en el archivo:\n"
+"Su instalación contiene uno o varios tipos compuestos definidos por el sistema en\n"
+"tablas de usuario. Los OIDs de estos tipos no son estables entre diferentes\n"
+"versiones de PostgreSQL, por lo que este clúster no puede ser actualizado.\n"
+"Puede eliminar las columnas problemáticas y reiniciar la actualización.\n"
+"Un listado de las columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
 
@@ -380,15 +360,7 @@ msgid "Checking for reg* data types in user tables"
 msgstr "Verificando tipos de datos reg* en datos de usuario"
 
 #: check.c:1153
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains one of the reg* data types in user tables.\n"
-#| "These data types reference system OIDs that are not preserved by\n"
-#| "pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
-#| "remove the problem tables and restart the upgrade.  A list of the\n"
-#| "problem columns is in the file:\n"
-#| "    %s\n"
-#| "\n"
+#, c-format
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
 "These data types reference system OIDs that are not preserved by\n"
@@ -401,8 +373,8 @@ msgstr ""
 "Su instalación contiene uno de los tipos reg* en tablas de usuario. Estos tipos\n"
 "de dato hacen referencia a OIDs de sistema que no son preservados por pg_upgrade,\n"
 "por lo que este clúster no puede ser actualizado.\n"
-"Puede eliminar las tablas y reiniciar la actualización.\n"
-"Un listado de columnas problemáticas está en el archivo:\n"
+"Puede eliminar las columnas problemáticas y reiniciar la actualización.\n"
+"Un listado de las columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
 
@@ -412,15 +384,7 @@ msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "Verificando datos de usuario en tipo «jsonb» incompatible"
 
 #: check.c:1182
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains the \"jsonb\" data type in user tables.\n"
-#| "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
-#| "cluster cannot currently be upgraded.  You can remove the problem\n"
-#| "tables and restart the upgrade.  A list of the problem columns is\n"
-#| "in the file:\n"
-#| "    %s\n"
-#| "\n"
+#, c-format
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
 "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
@@ -430,11 +394,11 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene el tipo «jsonb» en tablas de usuario. Este tipo\n"
-"El formato interno de «jsonb» cambió durante 9.4 beta, por lo que este clúster\n"
-"no puede ser actualizado.\n"
-"Puede eliminar las tablas y reiniciar la actualización.\n"
-"Un listado de columnas problemáticas está en el archivo:\n"
+"Su instalación contiene el tipo «jsonb» en tablas de usuario.\n"
+"El formato interno de «jsonb» cambió durante 9.4 beta,\n"
+"por lo que este clúster no puede ser actualizado.\n"
+"Puede eliminar las columnas problemáticas y reiniciar la actualización.\n"
+"Un listado de las columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
 
@@ -454,21 +418,12 @@ msgid "The target cluster contains roles starting with \"pg_\"\n"
 msgstr "El clúster de destino contiene roles que empiezan con «pg_»\n"
 
 #: check.c:1237
-#, fuzzy, c-format
-#| msgid "reading user-defined conversions"
+#, c-format
 msgid "Checking for user-defined encoding conversions"
-msgstr "leyendo las conversiones definidas por el usuario"
+msgstr "Verificando conversiones de codificación definidas por el usuario"
 
 #: check.c:1300
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains the \"jsonb\" data type in user tables.\n"
-#| "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
-#| "cluster cannot currently be upgraded.  You can remove the problem\n"
-#| "tables and restart the upgrade.  A list of the problem columns is\n"
-#| "in the file:\n"
-#| "    %s\n"
-#| "\n"
+#, c-format
 msgid ""
 "Your installation contains user-defined encoding conversions.\n"
 "The conversion function parameters changed in PostgreSQL version 14\n"
@@ -478,11 +433,11 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene el tipo «jsonb» en tablas de usuario. Este tipo\n"
-"El formato interno de «jsonb» cambió durante 9.4 beta, por lo que este clúster\n"
-"no puede ser actualizado.\n"
-"Puede eliminar las tablas y reiniciar la actualización.\n"
-"Un listado de columnas problemáticas está en el archivo:\n"
+"Su instalación contiene conversiones de codificación definidas por el usuario.\n"
+"Los parámetros de la función de conversión cambiaron en PostgreSQL 14\n"
+"por lo que este clúster no puede ser actualizado. Puede eliminar\n"
+"las conversiones de codificación en el clúster antiguo y reiniciar la actualización.\n"
+"Un listado de las conversiones de codificación definidas por el usuario está en el archivo:\n"
 "    %s\n"
 "\n"
 
@@ -867,16 +822,14 @@ msgid "check for \"%s\" failed: cannot execute (permission denied)\n"
 msgstr "La comprobación de «%s» falló: no se puede ejecutar (permiso denegado)\n"
 
 #: exec.c:439
-#, fuzzy, c-format
-#| msgid "check for \"%s\" failed: cannot execute (permission denied)\n"
+#, c-format
 msgid "check for \"%s\" failed: cannot execute\n"
-msgstr "La comprobación de «%s» falló: no se puede ejecutar (permiso denegado)\n"
+msgstr "La comprobación de «%s» falló: no se puede ejecutar\n"
 
 #: exec.c:449
-#, fuzzy, c-format
-#| msgid "check for \"%s\" failed: cannot execute (permission denied)\n"
+#, c-format
 msgid "check for \"%s\" failed: incorrect version: found \"%s\", expected \"%s\"\n"
-msgstr "La comprobación de «%s» falló: no se puede ejecutar (permiso denegado)\n"
+msgstr "La comprobación de «%s» falló: versión incorrecta: se encontró «%s», se esperaba «%s»\n"
 
 #: file.c:43 file.c:61
 #, c-format
@@ -1448,10 +1401,9 @@ msgid "could not create worker thread: %s\n"
 msgstr "no se pudo crear el thread: %s\n"
 
 #: parallel.c:300
-#, fuzzy, c-format
-#| msgid "%s failed: %s"
+#, c-format
 msgid "%s() failed: %s\n"
-msgstr "%s falló: %s"
+msgstr "%s() falló: %s\n"
 
 #: parallel.c:304
 #, c-format
@@ -1665,12 +1617,13 @@ msgid "could not parse version file \"%s\"\n"
 msgstr "no se pudo interpretar el archivo de versión «%s»\n"
 
 #: server.c:298
-#, fuzzy, c-format
-#| msgid "%s"
+#, c-format
 msgid ""
 "\n"
 "%s"
-msgstr "%s"
+msgstr ""
+"\n"
+"%s"
 
 #: server.c:302
 #, c-format
@@ -1801,15 +1754,7 @@ msgid "Checking for incompatible \"line\" data type"
 msgstr "Verificando datos de usuario de tipo «line» incompatible"
 
 #: version.c:279
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains the \"line\" data type in user tables.  This\n"
-#| "data type changed its internal and input/output format between your old\n"
-#| "and new clusters so this cluster cannot currently be upgraded.  You can\n"
-#| "remove the problem tables and restart the upgrade.  A list of the problem\n"
-#| "columns is in the file:\n"
-#| "    %s\n"
-#| "\n"
+#, c-format
 msgid ""
 "Your installation contains the \"line\" data type in user tables.\n"
 "This data type changed its internal and input/output format\n"
@@ -1823,7 +1768,7 @@ msgstr ""
 "Su instalación contiene el tipo de dato «line» en tablas de usuario.  Este\n"
 "tipo de dato cambió su formato interno y de entrada/salida entre las\n"
 "versiones de sus clústers antiguo y nuevo, por lo que este clúster no puede\n"
-"actualmente ser actualizado.  Puede eliminar las tablas problemáticas y\n"
+"actualmente ser actualizado.  Puede eliminar las columnas problemáticas y\n"
 "reiniciar la actualización.  Un listado de las columnas problemáticas está\n"
 "en el archivo:\n"
 "    %s\n"
@@ -1835,14 +1780,7 @@ msgid "Checking for invalid \"unknown\" user columns"
 msgstr "Verificando columnas de usuario del tipo no válido «unknown»"
 
 #: version.c:317
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains the \"unknown\" data type in user tables.  This\n"
-#| "data type is no longer allowed in tables, so this cluster cannot currently\n"
-#| "be upgraded.  You can remove the problem tables and restart the upgrade.\n"
-#| "A list of the problem columns is in the file:\n"
-#| "    %s\n"
-#| "\n"
+#, c-format
 msgid ""
 "Your installation contains the \"unknown\" data type in user tables.\n"
 "This data type is no longer allowed in tables, so this\n"
@@ -1852,10 +1790,11 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene el tipo «unknown» en tablas de usuario. Este tipo\n"
-"ya no es permitido en tablas, por lo que este clúster no puede ser actualizado.\n"
-"Puede eliminar las tablas y reiniciar la actualización.\n"
-"Un listado de columnas problemáticas está en el archivo:\n"
+"Su instalación contiene el tipo «unknown» en tablas de usuario.\n"
+"Este tipo ya no es permitido en tablas,\n"
+"por lo que este clúster no puede ser actualizado. Puede\n"
+"eliminar las columnas problemáticas y reiniciar la actualización.\n"
+"Un listado de las columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
 
@@ -1908,15 +1847,7 @@ msgid "Checking for invalid \"sql_identifier\" user columns"
 msgstr "Verificando columnas de usuario del tipo «sql_identifier»"
 
 #: version.c:461
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains the \"sql_identifier\" data type in user tables\n"
-#| "and/or indexes.  The on-disk format for this data type has changed, so this\n"
-#| "cluster cannot currently be upgraded.  You can remove the problem tables or\n"
-#| "change the data type to \"name\" and restart the upgrade.\n"
-#| "A list of the problem columns is in the file:\n"
-#| "    %s\n"
-#| "\n"
+#, c-format
 msgid ""
 "Your installation contains the \"sql_identifier\" data type in user tables.\n"
 "The on-disk format for this data type has changed, so this\n"
@@ -1926,12 +1857,11 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"Su instalación contiene el tipo «sql_identifier» en tablas de usuario y/o índices.\n"
-"Este tipo ya no es permitido en tablas, por lo que este clúster no puede ser\n"
-"actualizado.\n"
-"Puede eliminar las tablas o cambiar el tipo a «name» y reiniciar la\n"
-"actualización.\n"
-"Un listado de columnas problemáticas está en el archivo:\n"
+"Su instalación contiene el tipo de dato «sql_identifier» en tablas de usuario.\n"
+"El formato en disco para este tipo de dato ha cambiado, por lo que\n"
+"este clúster no puede ser actualizado.\n"
+"Puede eliminar las columnas problemáticas y reiniciar la actualización\n"
+"Un listado de las columnas problemáticas está en el archivo:\n"
 "    %s\n"
 "\n"
 

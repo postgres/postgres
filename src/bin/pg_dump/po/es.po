@@ -5,14 +5,14 @@
 #
 # Manuel Sugawara <masm@fciencias.unam.mx>, 2003.
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2007, 2009-2013
-# Carlos Chapi <carloswaldo@babelruins.org>, 2014, 2017
+# Carlos Chapi <carloswaldo@babelruins.org>, 2014, 2017, 2021
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:48+0000\n"
-"PO-Revision-Date: 2020-09-14 12:57-0300\n"
+"PO-Revision-Date: 2021-05-20 23:35-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: ../../../src/common/logging.c:259
 #, c-format
@@ -68,10 +68,9 @@ msgid "could not read symbolic link \"%s\": %m"
 msgstr "no se pudo leer el enlace simbólico «%s»: %m"
 
 #: ../../common/exec.c:409 parallel.c:1614
-#, fuzzy, c-format
-#| msgid "%s failed: %m"
+#, c-format
 msgid "%s() failed: %m"
-msgstr "%s falló: %m"
+msgstr "%s() falló: %m"
 
 #: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
@@ -381,10 +380,9 @@ msgid "could not read from input file: end of file"
 msgstr "no se pudo leer desde el archivo de entrada: fin de archivo"
 
 #: parallel.c:254
-#, fuzzy, c-format
-#| msgid "pgpipe: getsockname() failed: error code %d"
+#, c-format
 msgid "%s() failed: error code %d"
-msgstr "pgpipe: getsockname() falló: código de error %d"
+msgstr "%s() falló: código de error %d"
 
 #: parallel.c:964
 #, c-format
@@ -397,10 +395,9 @@ msgid "could not create worker process: %m"
 msgstr "no se pudo crear el proceso hijo: %m"
 
 #: parallel.c:1151
-#, fuzzy, c-format
-#| msgid "unrecognized command received from master: \"%s\""
+#, c-format
 msgid "unrecognized command received from leader: \"%s\""
-msgstr "orden no reconocida recibida del servidor: «%s»"
+msgstr "orden no reconocida recibida del servidor principal: «%s»"
 
 #: parallel.c:1194 parallel.c:1432
 #, c-format
@@ -442,10 +439,9 @@ msgid "pgpipe: could not listen: error code %d"
 msgstr "pgpipe: no se pudo escuchar: código de error %d"
 
 #: parallel.c:1764
-#, fuzzy, c-format
-#| msgid "pgpipe: getsockname() failed: error code %d"
+#, c-format
 msgid "pgpipe: %s() failed: error code %d"
-msgstr "pgpipe: getsockname() falló: código de error %d"
+msgstr "pgpipe: %s() falló: código de error %d"
 
 #: parallel.c:1775
 #, c-format
@@ -628,19 +624,16 @@ msgid "could not open output file: %m"
 msgstr "no se pudo abrir el archivo de salida: %m"
 
 #: pg_backup_archiver.c:1644
-#, fuzzy, c-format
-#| msgid "wrote %lu byte of large object data (result = %lu)"
-#| msgid_plural "wrote %lu bytes of large object data (result = %lu)"
+#, c-format
 msgid "wrote %zu byte of large object data (result = %d)"
 msgid_plural "wrote %zu bytes of large object data (result = %d)"
-msgstr[0] "se escribió %lu byte de los datos del objeto grande (resultado = %lu)"
-msgstr[1] "se escribieron %lu bytes de los datos del objeto grande (resultado = %lu)"
+msgstr[0] "se escribió %zu byte de los datos del objeto grande (resultado = %d)"
+msgstr[1] "se escribieron %zu bytes de los datos del objeto grande (resultado = %d)"
 
 #: pg_backup_archiver.c:1650
-#, fuzzy, c-format
-#| msgid "could not create large object %u: %s"
+#, c-format
 msgid "could not write to large object: %s"
-msgstr "no se pudo crear el objeto grande %u: %s"
+msgstr "no se pudo escribir en objeto grande: %s"
 
 #: pg_backup_archiver.c:1740
 #, c-format
@@ -774,10 +767,9 @@ msgid "invalid STDSTRINGS item: %s"
 msgstr "elemento STDSTRINGS no válido: %s"
 
 #: pg_backup_archiver.c:2717
-#, fuzzy, c-format
-#| msgid "invalid STDSTRINGS item: %s"
+#, c-format
 msgid "invalid TOASTCOMPRESSION item: %s"
-msgstr "elemento STDSTRINGS no válido: %s"
+msgstr "elemento TOASTCOMPRESSION no válido: %s"
 
 #: pg_backup_archiver.c:2734
 #, c-format
@@ -1011,10 +1003,9 @@ msgid "could not connect to database"
 msgstr "no se pudo hacer la conexión a la base de datos"
 
 #: pg_backup_db.c:191
-#, fuzzy, c-format
-#| msgid "collation failed: %s"
+#, c-format
 msgid "reconnection failed: %s"
-msgstr "el ordenamiento falló: %s"
+msgstr "falló la reconexión: %s"
 
 #: pg_backup_db.c:194 pg_backup_db.c:269 pg_dumpall.c:1681 pg_dumpall.c:1771
 #, c-format
@@ -1342,10 +1333,9 @@ msgid "no matching tables were found"
 msgstr "no se encontraron tablas coincidentes"
 
 #: pg_dump.c:848
-#, fuzzy, c-format
-#| msgid "no matching tables were found"
+#, c-format
 msgid "no matching extensions were found"
-msgstr "no se encontraron tablas coincidentes"
+msgstr "no se encontraron extensiones coincidentes"
 
 #: pg_dump.c:1020
 #, c-format
@@ -1461,10 +1451,9 @@ msgstr ""
 "                               en la extracción\n"
 
 #: pg_dump.c:1042
-#, fuzzy, c-format
-#| msgid "  -t, --table=PATTERN          dump the specified table(s) only\n"
+#, c-format
 msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
-msgstr "  -t, --table=PATRÓN           extrae sólo la o las tablas nombradas\n"
+msgstr "  -e, --extension=PATRÓN       extrae sólo la o las extensiones nombradas\n"
 
 #: pg_dump.c:1043 pg_dumpall.c:630
 #, c-format
@@ -1619,10 +1608,9 @@ msgid "  --no-tablespaces             do not dump tablespace assignments\n"
 msgstr "  --no-tablespaces             no volcar asignaciones de tablespace\n"
 
 #: pg_dump.c:1073
-#, fuzzy, c-format
-#| msgid "  --no-comments                do not dump comments\n"
+#, c-format
 msgid "  --no-toast-compression       do not dump TOAST compression methods\n"
-msgstr "  --no-comments                no volcar los comentarios\n"
+msgstr "  --no-toast-compression       no volcar métodos de compresión TOAST\n"
 
 #: pg_dump.c:1074 pg_dumpall.c:654
 #, c-format
@@ -1782,10 +1770,9 @@ msgid "no matching schemas were found for pattern \"%s\""
 msgstr "no se encontraron esquemas coincidentes para el patrón «%s»"
 
 #: pg_dump.c:1418
-#, fuzzy, c-format
-#| msgid "no matching tables were found for pattern \"%s\""
+#, c-format
 msgid "no matching extensions were found for pattern \"%s\""
-msgstr "no se encontraron tablas coincidentes para el patrón «%s»"
+msgstr "no se encontraron extensiones coincidentes para el patrón «%s»"
 
 #: pg_dump.c:1465
 #, c-format
@@ -1850,7 +1837,7 @@ msgstr "salvando search_path = %s"
 #: pg_dump.c:3436
 #, c-format
 msgid "saving default_toast_compression = %s"
-msgstr ""
+msgstr "salvando default_toast_compression = %s"
 
 #: pg_dump.c:3475
 #, c-format
@@ -2090,10 +2077,9 @@ msgid "bogus value in pg_transform.trftosql field"
 msgstr "valor erróneo en el campo pg_transform.trftosql"
 
 #: pg_dump.c:12909
-#, fuzzy, c-format
-#| msgid "nondeterministic collations are not supported for operator class \"%s\""
+#, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
-msgstr "los ordenamientos no determinísticos no están soportados para la clase de operadores «%s»"
+msgstr "los operadores postfix ya no están soportados (operador «%s»)"
 
 #: pg_dump.c:13079
 #, c-format
@@ -2166,21 +2152,19 @@ msgid "invalid column number %d for table \"%s\""
 msgstr "el número de columna %d no es válido para la tabla «%s»"
 
 #: pg_dump.c:16757
-#, fuzzy, c-format
-#| msgid "could not parse end position \"%s\""
+#, c-format
 msgid "could not parse index statistic columns"
-msgstr "no se pudo interpretar la posición final «%s»"
+msgstr "no se pudieron interpretar columnas de estadísticas de índices"
 
 #: pg_dump.c:16759
-#, fuzzy, c-format
-#| msgid "could not parse end position \"%s\""
+#, c-format
 msgid "could not parse index statistic values"
-msgstr "no se pudo interpretar la posición final «%s»"
+msgstr "no se pudieron interpretar valores de estadísticas de índices"
 
 #: pg_dump.c:16761
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
-msgstr ""
+msgstr "no coincide el número de columnas con el de valores para estadísticas de índices"
 
 #: pg_dump.c:16978
 #, c-format
@@ -2225,21 +2209,19 @@ msgid "could not find referenced extension %u"
 msgstr "no se pudo encontrar la extensión referenciada %u"
 
 #: pg_dump.c:18219
-#, fuzzy, c-format
-#| msgid "could not parse proconfig array"
+#, c-format
 msgid "could not parse extension configuration array"
-msgstr "no se pudo interpretar el arreglo proconfig"
+msgstr "no se pudo interpretar el arreglo de configuración de extensión"
 
 #: pg_dump.c:18221
-#, fuzzy, c-format
-#| msgid "could not parse reloptions array"
+#, c-format
 msgid "could not parse extension condition array"
-msgstr "no se pudo interpretar el arreglo reloptions"
+msgstr "no se pudo interpretar el arreglo de condición de extensión"
 
 #: pg_dump.c:18223
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
-msgstr ""
+msgstr "no coincide el número de configuraciones con el de condiciones para extensión"
 
 #: pg_dump.c:18355
 #, c-format

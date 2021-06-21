@@ -6,14 +6,14 @@
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009-2012
 # Franco Catena, <francocatena@gmail.com>, 2009
-# Carlos Chapi <carloswaldo@babelruins.org>, 2018
+# Carlos Chapi <carloswaldo@babelruins.org>, 2018-2021
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:39+0000\n"
-"PO-Revision-Date: 2020-06-08 13:04-0400\n"
+"PO-Revision-Date: 2021-05-19 22:22-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: BlackCAT 1.0\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: descriptor.c:64
 #, c-format
@@ -257,10 +257,9 @@ msgid "invalid bit string literal"
 msgstr "cadena de bits no válida"
 
 #: pgc.l:607
-#, fuzzy, c-format
-#| msgid "invalid bit string literal"
+#, c-format
 msgid "invalid hex string literal"
-msgstr "cadena de bits no válida"
+msgstr "cadena hexadecimal no válida"
 
 #: pgc.l:625
 #, c-format
@@ -444,10 +443,9 @@ msgid "COPY FROM STDIN is not implemented"
 msgstr "COPY FROM STDIN no está implementado"
 
 #: preproc.y:10031 preproc.y:17257
-#, fuzzy, c-format
-#| msgid "%s cannot be used as a role name here"
+#, c-format
 msgid "\"database\" cannot be used as cursor name in INFORMIX mode"
-msgstr "%s no puede ser usado como nombre de rol aquí"
+msgstr "no se puede usar «database» como nombre de cursor en modo INFORMIX"
 
 #: preproc.y:10038 preproc.y:17267
 #, c-format
@@ -525,10 +523,9 @@ msgid "unrecognized token \"%s\""
 msgstr "elemento «%s» no reconocido"
 
 #: preproc.y:17219
-#, fuzzy, c-format
-#| msgid "type \"%s\" is already defined"
+#, c-format
 msgid "name \"%s\" is already declared"
-msgstr "el tipo «%s» ya está definido"
+msgstr "el nombre «%s» ya está declarado"
 
 #: preproc.y:17485
 #, c-format
