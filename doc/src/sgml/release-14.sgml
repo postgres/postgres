@@ -3553,6 +3553,25 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-10-09 [bed90759f] Fix our Windows stat() emulation to handle file sizes >
+-->
+
+       <para>
+        Allow Windows to properly handle files larger than four gigabytes
+        (Juan José Santamaría Flecha)
+       </para>
+
+       <para>
+        For example this allows <link
+        linkend="sql-copy"><command>COPY,</command></link> <link
+        linkend="configure-options-misc"><acronym>WAL</acronym></link>
+        files, and relation segment files to be larger than four gigabytes.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2021-01-06 [4656e3d66] Replace CLOBBER_CACHE_ALWAYS with run-time GUC
 -->
