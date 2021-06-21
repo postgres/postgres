@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2021-??-?? (AS OF 2021-05-15)</para>
+   <para>2021-??-?? (AS OF 2021-06-20)</para>
   </formalpara>
 
   <sect2>
@@ -424,12 +424,14 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2021-04-07 [3db826bd5] Tighten up allowed names for custom GUC parameters.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-04-07 [3db826bd5] Tighten up allowed names for custom GUC parameters.
 -->
 
      <para>
       Require <link linkend="runtime-config-custom">custom server
-      variable</link> names to match the pattern used for unquoted
-      <acronym>SQL</acronym> identifiers (Tom Lane)
+      variable</link> names to use only character which are valid for
+      unquoted <acronym>SQL</acronym> identifiers (Tom Lane)
      </para>
     </listitem>
 
@@ -691,11 +693,19 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 <!--
 Author: Peter Geoghegan <pg@bowt.ie>
 2021-04-07 [5100010ee] Teach VACUUM to bypass unnecessary index vacuuming.
+Author: Peter Geoghegan <pg@bowt.ie>
+2021-06-18 [3499df0de] Support disabling index bypassing by VACUUM.
 -->
 
        <para>
         Allow vacuum to skip index vacuuming when the number of removable
         index entries is insignificant (Masahiko Sawada, Peter Geoghegan)
+       </para>
+
+       <para>
+        The vacuum parameter <link
+        linkend="sql-vacuum"><literal>INDEX_CLEANUP</literal></link> has a
+        new default of <literal>auto</literal> to enable this optimization.
        </para>
       </listitem>
 
