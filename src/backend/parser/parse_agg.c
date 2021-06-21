@@ -1855,7 +1855,7 @@ expand_grouping_sets(List *groupingSets, bool groupDistinct, int limit)
 		list_sort(result, cmp_list_len_contents_asc);
 
 		/* Finally, remove duplicates */
-		prev = linitial_node(List, result);
+		prev = linitial(result);
 		for_each_from(cell, result, 1)
 		{
 			if (equal(lfirst(cell), prev))
