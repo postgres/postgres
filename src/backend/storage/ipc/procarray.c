@@ -1971,9 +1971,10 @@ GetOldestNonRemovableTransactionId(Relation rel)
 	ComputeXidHorizons(&horizons);
 
 	/* select horizon appropriate for relation */
-	if (rel == NULL || rel->rd_rel->relisshared)
+	if (rel == NULL || rel->rd_rel->relisshared || RecoveryInProgress())
 		return horizons.shared_oldest_nonremovable;
-	else if (RelationIsAccessibleInLogicalDecoding(rel))
+	else if (IsCatalogRelation(rel) ||
+		 RelationIsAccessibleInLogicalDecoding(rel))
 		return horizons.catalog_oldest_nonremovable;
 	else if (RELATION_IS_LOCAL(rel))
 		return horizons.temp_oldest_nonremovable;
