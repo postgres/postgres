@@ -1162,7 +1162,8 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		 * There is a similar check inside lazy_vacuum_all_indexes(), but
 		 * relfrozenxid might start to look dangerously old before we reach
 		 * that point.  This check also provides failsafe coverage for the
-		 * one-pass strategy case.
+		 * one-pass strategy, and the two-pass strategy with the index_cleanup
+		 * param set to 'off'.
 		 */
 		if (blkno - next_failsafe_block >= FAILSAFE_EVERY_PAGES)
 		{
@@ -2611,9 +2612,6 @@ lazy_check_wraparound_failsafe(LVRelState *vacrel)
 	if (unlikely(vacuum_xid_failsafe_check(vacrel->relfrozenxid,
 										   vacrel->relminmxid)))
 	{
-		Assert(vacrel->do_index_vacuuming);
-		Assert(vacrel->do_index_cleanup);
-
 		vacrel->failsafe_active = true;
 
 		/* Disable index vacuuming, index cleanup, and heap rel truncation */
