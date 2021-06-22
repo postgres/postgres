@@ -35,6 +35,7 @@
 #include "parser/parse_type.h"
 #include "parser/scansup.h"
 #include "storage/proc.h"
+#include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/array.h"
@@ -6152,6 +6153,15 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 */
 	if (expr->expr_simple_in_use && expr->expr_simple_lxid == curlxid)
 		return false;
+
+	/*
+	 * Ensure that there's a portal-level snapshot, in case this simple
+	 * expression is the first thing evaluated after a COMMIT or ROLLBACK.
+	 * We'd have to do this anyway before executing the expression, so we
+	 * might as well do it now to ensure that any possible replanning doesn't
+	 * need to take a new snapshot.
+	 */
+	EnsurePortalSnapshotExists();
 
 	/*
 	 * Revalidate cached plan, so that we will notice if it became stale. (We
