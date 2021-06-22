@@ -38,6 +38,7 @@
 #include "plpgsql.h"
 #include "storage/proc.h"
 #include "tcop/cmdtag.h"
+#include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/array.h"
@@ -5957,6 +5958,15 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	if (unlikely(expr->expr_simple_in_use) &&
 		expr->expr_simple_lxid == curlxid)
 		return false;
+
+	/*
+	 * Ensure that there's a portal-level snapshot, in case this simple
+	 * expression is the first thing evaluated after a COMMIT or ROLLBACK.
+	 * We'd have to do this anyway before executing the expression, so we
+	 * might as well do it now to ensure that any possible replanning doesn't
+	 * need to take a new snapshot.
+	 */
+	EnsurePortalSnapshotExists();
 
 	/*
 	 * Check to see if the cached plan has been invalidated.  If not, and this
