@@ -72,6 +72,10 @@ but there may be reasons to do them at other times as well.
   pgindent, pgperltidy, and "make reformat-dat-files"
   (see src/tools/pgindent/README)
 
+* Update .git-blame-ignore-revs. It should contain all of the newly
+  created code beautification commits.  Make sure that you use
+  full-length commit hashes for this.
+
 * Renumber any manually-assigned OIDs between 8000 and 9999
   to lower numbers, using renumber_oids.pl (see notes in bki.sgml)
 

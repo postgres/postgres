@@ -80,6 +80,11 @@ VALIDATION:
 When you're done, "git commit" everything including the typedefs.list file
 you used.
 
+4) Add the newly created commits to the .git-blame-ignore-revs file so
+   that "git blame" ignores the commits (for anybody that has opted-in
+   to using the ignore file).
+
+Another "git commit" will be required for your ignore file changes.
 
 ---------------------------------------------------------------------------
 
