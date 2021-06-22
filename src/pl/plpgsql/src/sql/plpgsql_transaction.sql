@@ -354,6 +354,27 @@ $$;
 SELECT * FROM test1;
 
 
+-- detoast result of simple expression after commit
+CREATE TEMP TABLE test4(f1 text);
+ALTER TABLE test4 ALTER COLUMN f1 SET STORAGE EXTERNAL; -- disable compression
+INSERT INTO test4 SELECT repeat('xyzzy', 2000);
+
+-- immutable mark is a bit of a lie, but it serves to make call a simple expr
+-- that will return a still-toasted value
+CREATE FUNCTION data_source(i int) RETURNS TEXT LANGUAGE sql
+AS 'select f1 from test4' IMMUTABLE;
+
+DO $$
+declare x text;
+begin
+  for i in 1..3 loop
+    x := data_source(i);
+    commit;
+  end loop;
+  raise notice 'length(x) = %', length(x);
+end $$;
+
+
 -- operations on composite types vs. internal transactions
 DO LANGUAGE plpgsql $$
 declare
