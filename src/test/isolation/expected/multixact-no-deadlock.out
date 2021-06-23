@@ -2,23 +2,31 @@ Parsed test spec with 3 sessions
 
 starting permutation: s1lock s2lock s1svpt s3lock s1lock2 s2c s1c s3c
 step s1lock: SELECT * FROM justthis FOR SHARE;
-value          
+value
+-----
+    1
+(1 row)
 
-1              
 step s2lock: SELECT * FROM justthis FOR SHARE;
-value          
+value
+-----
+    1
+(1 row)
 
-1              
 step s1svpt: SAVEPOINT foo;
 step s3lock: SELECT * FROM justthis FOR UPDATE; <waiting ...>
 step s1lock2: SELECT * FROM justthis FOR SHARE;
-value          
+value
+-----
+    1
+(1 row)
 
-1              
 step s2c: COMMIT;
 step s1c: COMMIT;
 step s3lock: <... completed>
-value          
+value
+-----
+    1
+(1 row)
 
-1              
 step s3c: COMMIT;

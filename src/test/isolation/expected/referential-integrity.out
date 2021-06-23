@@ -2,35 +2,47 @@ Parsed test spec with 2 sessions
 
 starting permutation: rx1 wy1 c1 rx2 ry2 wx2 c2
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step c1: COMMIT;
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+   1
+(1 row)
 
-1              
 step wx2: DELETE FROM a WHERE i = 1;
 step c2: COMMIT;
 
 starting permutation: rx1 wy1 rx2 c1 ry2 wx2 c2
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step c1: COMMIT;
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -38,16 +50,22 @@ step c2: COMMIT;
 
 starting permutation: rx1 wy1 rx2 ry2 c1 wx2 c2
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step c1: COMMIT;
 step wx2: DELETE FROM a WHERE i = 1;
@@ -56,16 +74,22 @@ step c2: COMMIT;
 
 starting permutation: rx1 wy1 rx2 ry2 wx2 c1 c2
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step c1: COMMIT;
@@ -74,16 +98,22 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 wy1 rx2 ry2 wx2 c2 c1
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step c2: COMMIT;
@@ -92,17 +122,23 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 rx2 wy1 c1 ry2 wx2 c2
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step c1: COMMIT;
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -110,16 +146,22 @@ step c2: COMMIT;
 
 starting permutation: rx1 rx2 wy1 ry2 c1 wx2 c2
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step c1: COMMIT;
 step wx2: DELETE FROM a WHERE i = 1;
@@ -128,16 +170,22 @@ step c2: COMMIT;
 
 starting permutation: rx1 rx2 wy1 ry2 wx2 c1 c2
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step c1: COMMIT;
@@ -146,16 +194,22 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 rx2 wy1 ry2 wx2 c2 c1
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step c2: COMMIT;
@@ -164,15 +218,21 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 rx2 ry2 wy1 c1 wx2 c2
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wy1: INSERT INTO b VALUES (1);
 step c1: COMMIT;
@@ -182,15 +242,21 @@ step c2: COMMIT;
 
 starting permutation: rx1 rx2 ry2 wy1 wx2 c1 c2
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wy1: INSERT INTO b VALUES (1);
 step wx2: DELETE FROM a WHERE i = 1;
@@ -200,15 +266,21 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 rx2 ry2 wy1 wx2 c2 c1
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wy1: INSERT INTO b VALUES (1);
 step wx2: DELETE FROM a WHERE i = 1;
@@ -218,15 +290,21 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 rx2 ry2 wx2 wy1 c1 c2
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step wy1: INSERT INTO b VALUES (1);
@@ -236,15 +314,21 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 rx2 ry2 wx2 wy1 c2 c1
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step wy1: INSERT INTO b VALUES (1);
@@ -254,15 +338,21 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 rx2 ry2 wx2 c2 wy1 c1
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step c2: COMMIT;
@@ -272,17 +362,23 @@ step c1: COMMIT;
 
 starting permutation: rx2 rx1 wy1 c1 ry2 wx2 c2
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step c1: COMMIT;
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -290,16 +386,22 @@ step c2: COMMIT;
 
 starting permutation: rx2 rx1 wy1 ry2 c1 wx2 c2
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step c1: COMMIT;
 step wx2: DELETE FROM a WHERE i = 1;
@@ -308,16 +410,22 @@ step c2: COMMIT;
 
 starting permutation: rx2 rx1 wy1 ry2 wx2 c1 c2
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step c1: COMMIT;
@@ -326,16 +434,22 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 rx1 wy1 ry2 wx2 c2 c1
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step c2: COMMIT;
@@ -344,15 +458,21 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 rx1 ry2 wy1 c1 wx2 c2
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wy1: INSERT INTO b VALUES (1);
 step c1: COMMIT;
@@ -362,15 +482,21 @@ step c2: COMMIT;
 
 starting permutation: rx2 rx1 ry2 wy1 wx2 c1 c2
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wy1: INSERT INTO b VALUES (1);
 step wx2: DELETE FROM a WHERE i = 1;
@@ -380,15 +506,21 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 rx1 ry2 wy1 wx2 c2 c1
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wy1: INSERT INTO b VALUES (1);
 step wx2: DELETE FROM a WHERE i = 1;
@@ -398,15 +530,21 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 rx1 ry2 wx2 wy1 c1 c2
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step wy1: INSERT INTO b VALUES (1);
@@ -416,15 +554,21 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 rx1 ry2 wx2 wy1 c2 c1
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step wy1: INSERT INTO b VALUES (1);
@@ -434,15 +578,21 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 rx1 ry2 wx2 c2 wy1 c1
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step c2: COMMIT;
@@ -452,16 +602,22 @@ step c1: COMMIT;
 
 starting permutation: rx2 ry2 rx1 wy1 c1 wx2 c2
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step c1: COMMIT;
 step wx2: DELETE FROM a WHERE i = 1;
@@ -470,16 +626,22 @@ step c2: COMMIT;
 
 starting permutation: rx2 ry2 rx1 wy1 wx2 c1 c2
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step wx2: DELETE FROM a WHERE i = 1;
 step c1: COMMIT;
@@ -488,16 +650,22 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 ry2 rx1 wy1 wx2 c2 c1
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step wx2: DELETE FROM a WHERE i = 1;
 step c2: COMMIT;
@@ -506,16 +674,22 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 ry2 rx1 wx2 wy1 c1 c2
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wx2: DELETE FROM a WHERE i = 1;
 step wy1: INSERT INTO b VALUES (1);
 step c1: COMMIT;
@@ -524,16 +698,22 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 ry2 rx1 wx2 wy1 c2 c1
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wx2: DELETE FROM a WHERE i = 1;
 step wy1: INSERT INTO b VALUES (1);
 step c2: COMMIT;
@@ -542,16 +722,22 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 ry2 rx1 wx2 c2 wy1 c1
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wx2: DELETE FROM a WHERE i = 1;
 step c2: COMMIT;
 step wy1: INSERT INTO b VALUES (1);
@@ -560,17 +746,23 @@ step c1: COMMIT;
 
 starting permutation: rx2 ry2 wx2 rx1 wy1 c1 c2
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step c1: COMMIT;
 step c2: COMMIT;
@@ -578,17 +770,23 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 ry2 wx2 rx1 wy1 c2 c1
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step wy1: INSERT INTO b VALUES (1);
 step c2: COMMIT;
 step c1: COMMIT;
@@ -596,17 +794,23 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx2 ry2 wx2 rx1 c2 wy1 c1
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step c2: COMMIT;
 step wy1: INSERT INTO b VALUES (1);
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -614,16 +818,22 @@ step c1: COMMIT;
 
 starting permutation: rx2 ry2 wx2 c2 rx1 wy1 c1
 step rx2: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+1
+(1 row)
 
-1              
 step ry2: SELECT a_id FROM b WHERE a_id = 1;
-a_id           
+a_id
+----
+(0 rows)
 
 step wx2: DELETE FROM a WHERE i = 1;
 step c2: COMMIT;
 step rx1: SELECT i FROM a WHERE i = 1;
-i              
+i
+-
+(0 rows)
 
 step wy1: INSERT INTO b VALUES (1);
 step c1: COMMIT;

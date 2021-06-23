@@ -2,13 +2,17 @@ Parsed test spec with 4 sessions
 
 starting permutation: d1a1 d2a2 e1l e2l d1a2 d2a1 d1c e1c d2c e2c
 step d1a1: SELECT lock_share(1,x), lock_excl(3,x) FROM bigt LIMIT 1;
-lock_share     lock_excl      
+lock_share|lock_excl
+----------+---------
+         1|        1
+(1 row)
 
-1              1              
 step d2a2: select lock_share(2,x) FROM bigt LIMIT 1;
-lock_share     
+lock_share
+----------
+         1
+(1 row)
 
-1              
 step e1l: SELECT lock_excl(1,x) FROM bigt LIMIT 1; <waiting ...>
 step e2l: SELECT lock_excl(2,x) FROM bigt LIMIT 1; <waiting ...>
 step d1a2: SET force_parallel_mode = on;
@@ -30,25 +34,35 @@ step d2a1: SET force_parallel_mode = on;
 			  RESET parallel_tuple_cost;
 			  SELECT lock_share(3,x) FROM bigt LIMIT 1; <waiting ...>
 step d1a2: <... completed>
-sum            
+  sum
+-----
+10000
+(1 row)
 
-10000          
 step d1c: COMMIT;
 step e1l: <... completed>
-lock_excl      
+lock_excl
+---------
+        1
+(1 row)
 
-1              
 step d2a1: <... completed>
-sum            
+  sum
+-----
+10000
+(1 row)
 
-10000          
-lock_share     
+lock_share
+----------
+         1
+(1 row)
 
-1              
 step e1c: COMMIT;
 step d2c: COMMIT;
 step e2l: <... completed>
-lock_excl      
+lock_excl
+---------
+        1
+(1 row)
 
-1              
 step e2c: COMMIT;
