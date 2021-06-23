@@ -19,30 +19,30 @@ teardown {
     drop table smalltbl;
 }
 
-session "worker"
-step "open" {
+session worker
+step open {
     begin;
     declare c1 cursor for select 1 as dummy from smalltbl;
 }
-step "fetch1" {
+step fetch1 {
     fetch next from c1;
 }
-step "close" {
+step close {
     commit;
 }
-step "stats" {
+step stats {
     select relpages, reltuples from pg_class
      where oid='smalltbl'::regclass;
 }
 
-session "vacuumer"
-step "vac" {
+session vacuumer
+step vac {
     vacuum smalltbl;
 }
-step "modify" {
+step modify {
     insert into smalltbl select max(id)+1 from smalltbl;
 }
 
-permutation "modify" "vac" "stats"
-permutation "modify" "open" "fetch1" "vac" "close" "stats"
-permutation "modify" "vac" "stats"
+permutation modify vac stats
+permutation modify open fetch1 vac close stats
+permutation modify vac stats
