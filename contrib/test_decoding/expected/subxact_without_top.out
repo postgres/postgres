@@ -15,25 +15,35 @@ step s2_checkpoint: CHECKPOINT;
 step s1_begin: BEGIN;
 step s1_dml: INSERT INTO harvest VALUES (43);
 step s0_many_subxacts: select subxacts();
-subxacts       
+subxacts
+--------
+        
+(1 row)
 
-               
 step s0_commit: COMMIT;
 step s2_checkpoint: CHECKPOINT;
 step s2_get_changes_suppress_output: SELECT null n FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1') GROUP BY n;
-n              
+n
+-
+ 
+(1 row)
 
-               
 step s2_get_changes_suppress_output: SELECT null n FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1') GROUP BY n;
-n              
+n
+-
+(0 rows)
 
 step s1_commit: COMMIT;
 step s2_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
-data           
-
-BEGIN          
+data                                            
+------------------------------------------------
+BEGIN                                           
 table public.harvest: INSERT: apples[integer]:43
-COMMIT         
-?column?       
+COMMIT                                          
+(3 rows)
 
-stop           
+?column?
+--------
+stop    
+(1 row)
+

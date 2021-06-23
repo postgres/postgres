@@ -2,114 +2,152 @@ Parsed test spec with 2 sessions
 
 starting permutation: s2b s1l s2u s2_blocker1 s2_unlock s2c
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
 step s2_blocker1: DELETE FROM foo;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2c: COMMIT;
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+(0 rows)
 
 
 starting permutation: s2b s1l s2u s2_blocker2 s2_unlock s2c
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
 step s2_blocker2: UPDATE foo SET key = 2 WHERE key = 1;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2c: COMMIT;
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+(0 rows)
 
 
 starting permutation: s2b s1l s2u s2_blocker3 s2_unlock s2c
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
 step s2_blocker3: UPDATE foo SET value = 2 WHERE key = 1;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+  1|    1
+(1 row)
 
-1              1              
 step s2c: COMMIT;
 
 starting permutation: s2b s1l s2u s2_blocker1 s2_unlock s2r
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
 step s2_blocker1: DELETE FROM foo;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2r: ROLLBACK;
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+  1|    1
+(1 row)
 
-1              1              
 
 starting permutation: s2b s1l s2u s2_blocker2 s2_unlock s2r
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
 step s2_blocker2: UPDATE foo SET key = 2 WHERE key = 1;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2r: ROLLBACK;
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+  1|    1
+(1 row)
 
-1              1              
 
 starting permutation: s2b s1l s2u s2_blocker3 s2_unlock s2r
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
 step s2_blocker3: UPDATE foo SET value = 2 WHERE key = 1;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+  1|    1
+(1 row)
 
-1              1              
 step s2r: ROLLBACK;
 
 starting permutation: s2b s1l s2u s2_blocker1 s2c s2_unlock
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
@@ -117,16 +155,22 @@ step s2_blocker1: DELETE FROM foo;
 step s2c: COMMIT;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+(0 rows)
 
 
 starting permutation: s2b s1l s2u s2_blocker2 s2c s2_unlock
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
@@ -134,16 +178,22 @@ step s2_blocker2: UPDATE foo SET key = 2 WHERE key = 1;
 step s2c: COMMIT;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+(0 rows)
 
 
 starting permutation: s2b s1l s2u s2_blocker3 s2c s2_unlock
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
@@ -151,17 +201,23 @@ step s2_blocker3: UPDATE foo SET value = 2 WHERE key = 1;
 step s2c: COMMIT;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+  1|    1
+(1 row)
 
-1              1              
 
 starting permutation: s2b s1l s2u s2_blocker1 s2r s2_unlock
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
@@ -169,17 +225,23 @@ step s2_blocker1: DELETE FROM foo;
 step s2r: ROLLBACK;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+  1|    1
+(1 row)
 
-1              1              
 
 starting permutation: s2b s1l s2u s2_blocker2 s2r s2_unlock
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
@@ -187,17 +249,23 @@ step s2_blocker2: UPDATE foo SET key = 2 WHERE key = 1;
 step s2r: ROLLBACK;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+  1|    1
+(1 row)
 
-1              1              
 
 starting permutation: s2b s1l s2u s2_blocker3 s2r s2_unlock
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2b: BEGIN;
 step s1l: SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; <waiting ...>
 step s2u: UPDATE foo SET value = 2 WHERE key = 1;
@@ -205,9 +273,13 @@ step s2_blocker3: UPDATE foo SET value = 2 WHERE key = 1;
 step s2r: ROLLBACK;
 step s2_unlock: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1l: <... completed>
-key            value          
+key|value
+---+-----
+  1|    1
+(1 row)
 
-1              1              

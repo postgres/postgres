@@ -2,13 +2,17 @@ Parsed test spec with 2 sessions
 
 starting permutation: s1a s2a s2b s1b s2c
 step s1a: SELECT * FROM foo FOR SHARE NOWAIT;
-id             data           
+id|data
+--+----
+ 1|x   
+(1 row)
 
-1              x              
 step s2a: SELECT * FROM foo FOR SHARE NOWAIT;
-id             data           
+id|data
+--+----
+ 1|x   
+(1 row)
 
-1              x              
 step s2b: SELECT * FROM foo FOR UPDATE NOWAIT;
 ERROR:  could not obtain lock on row in relation "foo"
 step s1b: COMMIT;
@@ -16,13 +20,17 @@ step s2c: COMMIT;
 
 starting permutation: s2a s1a s2b s1b s2c
 step s2a: SELECT * FROM foo FOR SHARE NOWAIT;
-id             data           
+id|data
+--+----
+ 1|x   
+(1 row)
 
-1              x              
 step s1a: SELECT * FROM foo FOR SHARE NOWAIT;
-id             data           
+id|data
+--+----
+ 1|x   
+(1 row)
 
-1              x              
 step s2b: SELECT * FROM foo FOR UPDATE NOWAIT;
 ERROR:  could not obtain lock on row in relation "foo"
 step s1b: COMMIT;
@@ -30,13 +38,17 @@ step s2c: COMMIT;
 
 starting permutation: s2a s2b s1a s1b s2c
 step s2a: SELECT * FROM foo FOR SHARE NOWAIT;
-id             data           
+id|data
+--+----
+ 1|x   
+(1 row)
 
-1              x              
 step s2b: SELECT * FROM foo FOR UPDATE NOWAIT;
-id             data           
+id|data
+--+----
+ 1|x   
+(1 row)
 
-1              x              
 step s1a: SELECT * FROM foo FOR SHARE NOWAIT;
 ERROR:  could not obtain lock on row in relation "foo"
 step s1b: COMMIT;

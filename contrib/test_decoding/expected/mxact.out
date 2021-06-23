@@ -2,65 +2,89 @@ Parsed test spec with 3 sessions
 
 starting permutation: s0init s0start s1begin s1sharepgclass s2begin s2sharepgclass s0w s0start s2commit s1commit
 step s0init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
-?column?       
+?column?
+--------
+init    
+(1 row)
 
-init           
 step s0start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
-data           
+data
+----
+(0 rows)
 
 step s1begin: BEGIN;
 step s1sharepgclass: SELECT count(*) > 1 FROM (SELECT * FROM pg_class FOR SHARE) s;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s2begin: BEGIN;
 step s2sharepgclass: SELECT count(*) > 1 FROM (SELECT * FROM pg_class FOR SHARE) s;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s0w: INSERT INTO do_write DEFAULT VALUES;
 step s0start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
-data           
-
-BEGIN          
+data                                        
+--------------------------------------------
+BEGIN                                       
 table public.do_write: INSERT: id[integer]:1
-COMMIT         
+COMMIT                                      
+(3 rows)
+
 step s2commit: COMMIT;
 step s1commit: COMMIT;
-?column?       
+?column?
+--------
+stop    
+(1 row)
 
-stop           
 
 starting permutation: s0init s0start s1begin s1keysharepgclass s2begin s2keysharepgclass s0alter s0w s0start s2commit s1commit
 step s0init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
-?column?       
+?column?
+--------
+init    
+(1 row)
 
-init           
 step s0start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
-data           
+data
+----
+(0 rows)
 
 step s1begin: BEGIN;
 step s1keysharepgclass: SELECT count(*) > 1 FROM (SELECT * FROM pg_class FOR KEY SHARE) s;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s2begin: BEGIN;
 step s2keysharepgclass: SELECT count(*) > 1 FROM (SELECT * FROM pg_class FOR KEY SHARE) s;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s0alter: ALTER TABLE do_write ADD column ts timestamptz;
 step s0w: INSERT INTO do_write DEFAULT VALUES;
 step s0start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
-data           
-
-BEGIN          
-COMMIT         
-BEGIN          
+data                                                                          
+------------------------------------------------------------------------------
+BEGIN                                                                         
+COMMIT                                                                        
+BEGIN                                                                         
 table public.do_write: INSERT: id[integer]:1 ts[timestamp with time zone]:null
-COMMIT         
+COMMIT                                                                        
+(5 rows)
+
 step s2commit: COMMIT;
 step s1commit: COMMIT;
-?column?       
+?column?
+--------
+stop    
+(1 row)
 
-stop           

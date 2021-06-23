@@ -4,9 +4,11 @@ starting permutation: wxry1 c1 r2 wyrx2 c2
 step wxry1: INSERT INTO child (parent_id) VALUES (0);
 step c1: COMMIT;
 step r2: SELECT TRUE;
-bool           
+bool
+----
+t   
+(1 row)
 
-t              
 step wyrx2: DELETE FROM parent WHERE parent_id = 0;
 ERROR:  child row exists
 step c2: COMMIT;
@@ -14,9 +16,11 @@ step c2: COMMIT;
 starting permutation: wxry1 r2 c1 wyrx2 c2
 step wxry1: INSERT INTO child (parent_id) VALUES (0);
 step r2: SELECT TRUE;
-bool           
+bool
+----
+t   
+(1 row)
 
-t              
 step c1: COMMIT;
 step wyrx2: DELETE FROM parent WHERE parent_id = 0;
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -25,9 +29,11 @@ step c2: COMMIT;
 starting permutation: wxry1 r2 wyrx2 c1 c2
 step wxry1: INSERT INTO child (parent_id) VALUES (0);
 step r2: SELECT TRUE;
-bool           
+bool
+----
+t   
+(1 row)
 
-t              
 step wyrx2: DELETE FROM parent WHERE parent_id = 0;
 step c1: COMMIT;
 step c2: COMMIT;
@@ -36,9 +42,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 starting permutation: wxry1 r2 wyrx2 c2 c1
 step wxry1: INSERT INTO child (parent_id) VALUES (0);
 step r2: SELECT TRUE;
-bool           
+bool
+----
+t   
+(1 row)
 
-t              
 step wyrx2: DELETE FROM parent WHERE parent_id = 0;
 step c2: COMMIT;
 step c1: COMMIT;
@@ -46,9 +54,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: r2 wxry1 c1 wyrx2 c2
 step r2: SELECT TRUE;
-bool           
+bool
+----
+t   
+(1 row)
 
-t              
 step wxry1: INSERT INTO child (parent_id) VALUES (0);
 step c1: COMMIT;
 step wyrx2: DELETE FROM parent WHERE parent_id = 0;
@@ -57,9 +67,11 @@ step c2: COMMIT;
 
 starting permutation: r2 wxry1 wyrx2 c1 c2
 step r2: SELECT TRUE;
-bool           
+bool
+----
+t   
+(1 row)
 
-t              
 step wxry1: INSERT INTO child (parent_id) VALUES (0);
 step wyrx2: DELETE FROM parent WHERE parent_id = 0;
 step c1: COMMIT;
@@ -68,9 +80,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: r2 wxry1 wyrx2 c2 c1
 step r2: SELECT TRUE;
-bool           
+bool
+----
+t   
+(1 row)
 
-t              
 step wxry1: INSERT INTO child (parent_id) VALUES (0);
 step wyrx2: DELETE FROM parent WHERE parent_id = 0;
 step c2: COMMIT;
@@ -79,9 +93,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: r2 wyrx2 wxry1 c1 c2
 step r2: SELECT TRUE;
-bool           
+bool
+----
+t   
+(1 row)
 
-t              
 step wyrx2: DELETE FROM parent WHERE parent_id = 0;
 step wxry1: INSERT INTO child (parent_id) VALUES (0);
 step c1: COMMIT;
@@ -90,9 +106,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: r2 wyrx2 wxry1 c2 c1
 step r2: SELECT TRUE;
-bool           
+bool
+----
+t   
+(1 row)
 
-t              
 step wyrx2: DELETE FROM parent WHERE parent_id = 0;
 step wxry1: INSERT INTO child (parent_id) VALUES (0);
 step c2: COMMIT;
@@ -101,9 +119,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: r2 wyrx2 c2 wxry1 c1
 step r2: SELECT TRUE;
-bool           
+bool
+----
+t   
+(1 row)
 
-t              
 step wyrx2: DELETE FROM parent WHERE parent_id = 0;
 step c2: COMMIT;
 step wxry1: INSERT INTO child (parent_id) VALUES (0);

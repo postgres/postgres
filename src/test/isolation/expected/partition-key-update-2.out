@@ -9,10 +9,12 @@ step s2donothing: <... completed>
 step s3donothing: <... completed>
 step s2c: COMMIT;
 step s3select: SELECT * FROM foo ORDER BY a;
-a              b              
+a|b                                  
+-+-----------------------------------
+1|session-2 donothing                
+2|initial tuple -> moved by session-1
+(2 rows)
 
-1              session-2 donothing
-2              initial tuple -> moved by session-1
 step s3c: COMMIT;
 
 starting permutation: s2donothing s1u s3donothing s1c s2c s3select s3c
@@ -23,7 +25,9 @@ step s1c: COMMIT;
 step s3donothing: <... completed>
 step s2c: COMMIT;
 step s3select: SELECT * FROM foo ORDER BY a;
-a              b              
+a|b                                  
+-+-----------------------------------
+2|initial tuple -> moved by session-1
+(1 row)
 
-2              initial tuple -> moved by session-1
 step s3c: COMMIT;

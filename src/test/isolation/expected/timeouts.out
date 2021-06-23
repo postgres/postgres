@@ -2,10 +2,12 @@ Parsed test spec with 2 sessions
 
 starting permutation: rdtbl sto locktbl
 step rdtbl: SELECT * FROM accounts;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    600
+savings  |    600
+(2 rows)
 
-checking       600            
-savings        600            
 step sto: SET statement_timeout = '10ms';
 step locktbl: LOCK TABLE accounts; <waiting ...>
 step locktbl: <... completed>
@@ -13,10 +15,12 @@ ERROR:  canceling statement due to statement timeout
 
 starting permutation: rdtbl lto locktbl
 step rdtbl: SELECT * FROM accounts;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    600
+savings  |    600
+(2 rows)
 
-checking       600            
-savings        600            
 step lto: SET lock_timeout = '10ms';
 step locktbl: LOCK TABLE accounts; <waiting ...>
 step locktbl: <... completed>
@@ -24,10 +28,12 @@ ERROR:  canceling statement due to lock timeout
 
 starting permutation: rdtbl lsto locktbl
 step rdtbl: SELECT * FROM accounts;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    600
+savings  |    600
+(2 rows)
 
-checking       600            
-savings        600            
 step lsto: SET lock_timeout = '10ms'; SET statement_timeout = '10s';
 step locktbl: LOCK TABLE accounts; <waiting ...>
 step locktbl: <... completed>
@@ -35,10 +41,12 @@ ERROR:  canceling statement due to lock timeout
 
 starting permutation: rdtbl slto locktbl
 step rdtbl: SELECT * FROM accounts;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    600
+savings  |    600
+(2 rows)
 
-checking       600            
-savings        600            
 step slto: SET lock_timeout = '10s'; SET statement_timeout = '10ms';
 step locktbl: LOCK TABLE accounts; <waiting ...>
 step locktbl: <... completed>

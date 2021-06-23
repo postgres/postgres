@@ -7,10 +7,12 @@ step c1: COMMIT;
 step wx2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    850
+savings  |    600
+(2 rows)
 
-checking       850            
-savings        600            
 
 starting permutation: wy1 wy2 c1 c2 read
 step wy1: UPDATE accounts SET balance = balance + 500 WHERE accountid = 'checking';
@@ -19,10 +21,12 @@ step c1: COMMIT;
 step wy2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1100
+savings  |    600
+(2 rows)
 
-checking       1100           
-savings        600            
 
 starting permutation: upsert1 upsert2 c1 c2 read
 step upsert1: 
@@ -45,32 +49,38 @@ step c1: COMMIT;
 step upsert2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    600
+savings  |   2334
+(2 rows)
 
-checking       600            
-savings        2334           
 
 starting permutation: readp1 writep1 readp2 c1 c2
 step readp1: SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE;
-tableoid       ctid           a              b              c              
+tableoid|ctid |a|b|c
+--------+-----+-+-+-
+c1      |(0,1)|0|0|0
+c1      |(0,4)|0|1|0
+c2      |(0,1)|1|0|0
+c2      |(0,4)|1|1|0
+c3      |(0,1)|2|0|0
+c3      |(0,4)|2|1|0
+(6 rows)
 
-c1             (0,1)          0              0              0              
-c1             (0,4)          0              1              0              
-c2             (0,1)          1              0              0              
-c2             (0,4)          1              1              0              
-c3             (0,1)          2              0              0              
-c3             (0,4)          2              1              0              
 step writep1: UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0;
 step readp2: SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE; <waiting ...>
 step c1: COMMIT;
 step readp2: <... completed>
-tableoid       ctid           a              b              c              
+tableoid|ctid |a|b|c
+--------+-----+-+-+-
+c1      |(0,1)|0|0|0
+c1      |(0,4)|0|1|0
+c2      |(0,1)|1|0|0
+c3      |(0,1)|2|0|0
+c3      |(0,4)|2|1|0
+(5 rows)
 
-c1             (0,1)          0              0              0              
-c1             (0,4)          0              1              0              
-c2             (0,1)          1              0              0              
-c3             (0,1)          2              0              0              
-c3             (0,4)          2              1              0              
 step c2: COMMIT;
 
 starting permutation: writep2 returningp1 c1 c2
@@ -81,28 +91,30 @@ step returningp1:
  <waiting ...>
 step c1: COMMIT;
 step returningp1: <... completed>
-a              b              c              
+a| b|c
+-+--+-
+1| 0|0
+1| 0|1
+1| 0|2
+1|-1|0
+1| 1|1
+1| 1|2
+1|-2|0
+1| 2|1
+1| 2|2
+1|-3|0
+2| 0|0
+2| 0|1
+2| 0|2
+2| 1|0
+2| 1|1
+2| 1|2
+2| 2|0
+2| 2|1
+2| 2|2
+2| 3|0
+(20 rows)
 
-1              0              0              
-1              0              1              
-1              0              2              
-1              -1             0              
-1              1              1              
-1              1              2              
-1              -2             0              
-1              2              1              
-1              2              2              
-1              -3             0              
-2              0              0              
-2              0              1              
-2              0              2              
-2              1              0              
-2              1              1              
-2              1              2              
-2              2              0              
-2              2              1              
-2              2              2              
-2              3              0              
 step c2: COMMIT;
 
 starting permutation: wx2 partiallock c2 c1 read
@@ -114,16 +126,20 @@ step partiallock:
  <waiting ...>
 step c2: COMMIT;
 step partiallock: <... completed>
-accountid      balance        accountid      balance        
+accountid|balance|accountid|balance
+---------+-------+---------+-------
+checking |   1050|checking |    600
+savings  |    600|savings  |    600
+(2 rows)
 
-checking       1050           checking       600            
-savings        600            savings        600            
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1050
+savings  |    600
+(2 rows)
 
-checking       1050           
-savings        600            
 
 starting permutation: wx2 lockwithvalues c2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking';
@@ -134,16 +150,20 @@ step lockwithvalues:
  <waiting ...>
 step c2: COMMIT;
 step lockwithvalues: <... completed>
-accountid      balance        id             
+accountid|balance|id      
+---------+-------+--------
+checking |   1050|checking
+savings  |    600|savings 
+(2 rows)
 
-checking       1050           checking       
-savings        600            savings        
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1050
+savings  |    600
+(2 rows)
 
-checking       1050           
-savings        600            
 
 starting permutation: wx2_ext partiallock_ext c2 c1 read_ext
 step wx2_ext: UPDATE accounts_ext SET balance = balance + 450;
@@ -154,16 +174,20 @@ step partiallock_ext:
  <waiting ...>
 step c2: COMMIT;
 step partiallock_ext: <... completed>
-accountid      balance        other          newcol         newcol2        accountid      balance        other          newcol         newcol2        
+accountid|balance|other|newcol|newcol2|accountid|balance|other|newcol|newcol2
+---------+-------+-----+------+-------+---------+-------+-----+------+-------
+checking |   1050|other|    42|       |checking |    600|other|    42|       
+savings  |   1150|     |    42|       |savings  |    700|     |    42|       
+(2 rows)
 
-checking       1050           other          42                            checking       600            other          42                            
-savings        1150                          42                            savings        700                           42                            
 step c1: COMMIT;
 step read_ext: SELECT * FROM accounts_ext ORDER BY accountid;
-accountid      balance        other          newcol         newcol2        
+accountid|balance|other|newcol|newcol2
+---------+-------+-----+------+-------
+checking |   1050|other|    42|       
+savings  |   1150|     |    42|       
+(2 rows)
 
-checking       1050           other          42                            
-savings        1150                          42                            
 
 starting permutation: updateforss readforss c1 c2
 step updateforss: 
@@ -179,9 +203,11 @@ step readforss:
  <waiting ...>
 step c1: COMMIT;
 step readforss: <... completed>
-ta_id          ta_value       tb_row         
+ta_id|ta_value      |tb_row         
+-----+--------------+---------------
+    1|newTableAValue|(1,tableBValue)
+(1 row)
 
-1              newTableAValue (1,tableBValue)
 step c2: COMMIT;
 
 starting permutation: updateforcip updateforcip2 c1 c2 read_a
@@ -195,9 +221,11 @@ step c1: COMMIT;
 step updateforcip2: <... completed>
 step c2: COMMIT;
 step read_a: SELECT * FROM table_a ORDER BY id;
-id             value          
+id|value   
+--+--------
+ 1|newValue
+(1 row)
 
-1              newValue       
 
 starting permutation: updateforcip updateforcip3 c1 c2 read_a
 step updateforcip: 
@@ -211,9 +239,11 @@ step c1: COMMIT;
 step updateforcip3: <... completed>
 step c2: COMMIT;
 step read_a: SELECT * FROM table_a ORDER BY id;
-id             value          
+id|value   
+--+--------
+ 1|newValue
+(1 row)
 
-1              newValue       
 
 starting permutation: wrtwcte readwcte c1 c2
 step wrtwcte: UPDATE table_a SET value = 'tableAValue2' WHERE id = 1;
@@ -232,9 +262,11 @@ step readwcte:
 step c1: COMMIT;
 step c2: COMMIT;
 step readwcte: <... completed>
-id             value          
+id|value       
+--+------------
+ 1|tableAValue2
+(1 row)
 
-1              tableAValue2   
 
 starting permutation: wrjt selectjoinforupdate c2 c1
 step wrjt: UPDATE jointest SET data = 42 WHERE id = 7;
@@ -248,25 +280,29 @@ step selectjoinforupdate:
  <waiting ...>
 step c2: COMMIT;
 step selectjoinforupdate: <... completed>
-QUERY PLAN     
-
-LockRows       
-  ->  Merge Join
-        Merge Cond: (a.id = b.id)
+QUERY PLAN                                                
+----------------------------------------------------------
+LockRows                                                  
+  ->  Merge Join                                          
+        Merge Cond: (a.id = b.id)                         
         ->  Index Scan using jointest_id_idx on jointest a
         ->  Index Scan using jointest_id_idx on jointest b
-id             data           id             data           
+(5 rows)
 
-1              0              1              0              
-2              0              2              0              
-3              0              3              0              
-4              0              4              0              
-5              0              5              0              
-6              0              6              0              
-7              42             7              42             
-8              0              8              0              
-9              0              9              0              
-10             0              10             0              
+id|data|id|data
+--+----+--+----
+ 1|   0| 1|   0
+ 2|   0| 2|   0
+ 3|   0| 3|   0
+ 4|   0| 4|   0
+ 5|   0| 5|   0
+ 6|   0| 6|   0
+ 7|  42| 7|  42
+ 8|   0| 8|   0
+ 9|   0| 9|   0
+10|   0|10|   0
+(10 rows)
+
 step c1: COMMIT;
 
 starting permutation: wrtwcte multireadwcte c1 c2
@@ -280,9 +316,11 @@ step multireadwcte:
 step c1: COMMIT;
 step c2: COMMIT;
 step multireadwcte: <... completed>
-subid          id             
+subid|id
+-----+--
+    1| 1
+(1 row)
 
-1              1              
 
 starting permutation: simplepartupdate complexpartupdate c1 c2
 step simplepartupdate: 
