@@ -34,7 +34,8 @@ pg_GSS_error_int(PQExpBuffer str, OM_uint32 stat, int type)
 		if (gss_display_status(&lmin_s, stat, type, GSS_C_NO_OID,
 							   &msg_ctx, &lmsg) != GSS_S_COMPLETE)
 			break;
-		appendPQExpBuffer(str, " %s", (char *) lmsg.value);
+		appendPQExpBufferChar(str, ' ');
+		appendBinaryPQExpBuffer(str, lmsg.value, lmsg.length);
 		gss_release_buffer(&lmin_s, &lmsg);
 	} while (msg_ctx);
 }
