@@ -1213,6 +1213,7 @@ pg_GSS_checkauth(Port *port)
 				min_stat,
 				lmin_s;
 	gss_buffer_desc gbuf;
+	char	   *princ;
 
 	/*
 	 * Get the name of the user that authenticated, and compare it to the pg
@@ -1227,6 +1228,15 @@ pg_GSS_checkauth(Port *port)
 	}
 
 	/*
+	 * gbuf.value might not be null-terminated, so turn it into a regular
+	 * null-terminated string.
+	 */
+	princ = palloc(gbuf.length + 1);
+	memcpy(princ, gbuf.value, gbuf.length);
+	princ[gbuf.length] = '\0';
+	gss_release_buffer(&lmin_s, &gbuf);
+
+	/*
 	 * Copy the original name of the authenticated principal into our backend
 	 * memory for display later.
 	 *
@@ -1234,15 +1244,15 @@ pg_GSS_checkauth(Port *port)
 	 * waiting for the usermap check below, because authentication has already
 	 * succeeded and we want the log file to reflect that.
 	 */
-	port->gss->princ = MemoryContextStrdup(TopMemoryContext, gbuf.value);
-	set_authn_id(port, gbuf.value);
+	port->gss->princ = MemoryContextStrdup(TopMemoryContext, princ);
+	set_authn_id(port, princ);
 
 	/*
 	 * Split the username at the realm separator
 	 */
-	if (strchr(gbuf.value, '@'))
+	if (strchr(princ, '@'))
 	{
-		char	   *cp = strchr(gbuf.value, '@');
+		char	   *cp = strchr(princ, '@');
 
 		/*
 		 * If we are not going to include the realm in the username that is
@@ -1269,7 +1279,7 @@ pg_GSS_checkauth(Port *port)
 				elog(DEBUG2,
 					 "GSSAPI realm (%s) and configured realm (%s) don't match",
 					 cp, port->hba->krb_realm);
-				gss_release_buffer(&lmin_s, &gbuf);
+				pfree(princ);
 				return STATUS_ERROR;
 			}
 		}
@@ -1278,15 +1288,14 @@ pg_GSS_checkauth(Port *port)
 	{
 		elog(DEBUG2,
 			 "GSSAPI did not return realm but realm matching was requested");
-
-		gss_release_buffer(&lmin_s, &gbuf);
+		pfree(princ);
 		return STATUS_ERROR;
 	}
 
-	ret = check_usermap(port->hba->usermap, port->user_name, gbuf.value,
+	ret = check_usermap(port->hba->usermap, port->user_name, princ,
 						pg_krb_caseins_users);
 
-	gss_release_buffer(&lmin_s, &gbuf);
+	pfree(princ);
 
 	return ret;
 }
