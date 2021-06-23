@@ -44,33 +44,33 @@ teardown
   DROP TABLE triglog;
 }
 
-session "s1"
-step "s1b"	 { BEGIN ISOLATION LEVEL READ COMMITTED; }
-step "s1u"   { UPDATE foo SET a = a + 1, b = b || ' update1' WHERE b like '%ABC%'; }
-step "s1ut"  { UPDATE footrg SET a = a + 1, b = b || ' update1' WHERE b like '%ABC%'; }
-step "s1s"   { SELECT tableoid::regclass, * FROM foo ORDER BY a; }
-step "s1st"  { SELECT tableoid::regclass, * FROM footrg ORDER BY a; }
-step "s1stl"  { SELECT * FROM triglog ORDER BY a; }
-step "s1c"	 { COMMIT; }
+session s1
+step s1b	{ BEGIN ISOLATION LEVEL READ COMMITTED; }
+step s1u	{ UPDATE foo SET a = a + 1, b = b || ' update1' WHERE b like '%ABC%'; }
+step s1ut	{ UPDATE footrg SET a = a + 1, b = b || ' update1' WHERE b like '%ABC%'; }
+step s1s	{ SELECT tableoid::regclass, * FROM foo ORDER BY a; }
+step s1st	{ SELECT tableoid::regclass, * FROM footrg ORDER BY a; }
+step s1stl	{ SELECT * FROM triglog ORDER BY a; }
+step s1c	{ COMMIT; }
 
-session "s2"
-step "s2b"	 { BEGIN ISOLATION LEVEL READ COMMITTED; }
-step "s2u1"  { UPDATE foo SET b = b || ' update2' WHERE a = 1; }
-step "s2u2"  { UPDATE foo SET b = 'EFG' WHERE a = 1; }
-step "s2ut1" { UPDATE footrg SET b = b || ' update2' WHERE a = 1; }
-step "s2ut2" { UPDATE footrg SET b = 'EFG' WHERE a = 1; }
-step "s2c"	 { COMMIT; }
+session s2
+step s2b	{ BEGIN ISOLATION LEVEL READ COMMITTED; }
+step s2u1	{ UPDATE foo SET b = b || ' update2' WHERE a = 1; }
+step s2u2	{ UPDATE foo SET b = 'EFG' WHERE a = 1; }
+step s2ut1	{ UPDATE footrg SET b = b || ' update2' WHERE a = 1; }
+step s2ut2	{ UPDATE footrg SET b = 'EFG' WHERE a = 1; }
+step s2c	{ COMMIT; }
 
 
 # Session s1 is moving a row into another partition, but is waiting for
 # another session s2 that is updating the original row. The row that ends up
 # in the new partition should contain the changes made by session s2.
-permutation "s1b" "s2b" "s2u1" "s1u" "s2c" "s1c" "s1s"
+permutation s1b s2b s2u1 s1u s2c s1c s1s
 
 # Same as above, except, session s1 is waiting in GetTupleForTrigger().
-permutation "s1b" "s2b" "s2ut1" "s1ut" "s2c" "s1c" "s1st" "s1stl"
+permutation s1b s2b s2ut1 s1ut s2c s1c s1st s1stl
 
 # Below two cases are similar to the above two; except that the session s1
 # fails EvalPlanQual() test, so partition key update does not happen.
-permutation "s1b" "s2b" "s2u2" "s1u" "s2c" "s1c" "s1s"
-permutation "s1b" "s2b" "s2ut2" "s1ut" "s2c" "s1c" "s1st" "s1stl"
+permutation s1b s2b s2u2 s1u s2c s1c s1s
+permutation s1b s2b s2ut2 s1ut s2c s1c s1st s1stl

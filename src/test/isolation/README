@@ -80,7 +80,7 @@ teardown { <SQL> }
   this to clean up in preparation for the next permutation, e.g dropping
   any test tables created by setup. This part is optional.
 
-session "<name>"
+session <name>
 
   There are normally several "session" parts in a spec file. Each
   session is executed in its own connection. A session part consists
@@ -91,17 +91,17 @@ session "<name>"
 
   Each step has the syntax
 
-  step "<name>" { <SQL> }
+  step <name> { <SQL> }
 
-  where <name> is a name identifying this step, and SQL is a SQL statement
+  where <name> is a name identifying this step, and <SQL> is a SQL statement
   (or statements, separated by semicolons) that is executed in the step.
   Step names must be unique across the whole spec file.
 
-permutation "<step name>" ...
+permutation <step name> ...
 
   A permutation line specifies a list of steps that are run in that order.
   Any number of permutation lines can appear.  If no permutation lines are
-  given, the test program automatically generates all possible orderings
+  given, the test program automatically runs all possible interleavings
   of the steps from each session (running the steps of any one session in
   order).  Note that the list of steps in a manually specified
   "permutation" line doesn't actually have to be a permutation of the
@@ -109,7 +109,17 @@ permutation "<step name>" ...
   or leave others out.  Also, each step name can be annotated with some
   parenthesized markers, which are described below.
 
-Lines beginning with a # are considered comments.
+Session and step names are SQL identifiers, either plain or double-quoted.
+A difference from standard SQL is that no case-folding occurs, so that
+FOO and "FOO" are the same name while FOO and Foo are different,
+whether you quote them or not.  You must use quotes if you want to use
+an isolation test keyword (such as "permutation") as a name.
+
+A # character begins a comment, which extends to the end of the line.
+(This does not work inside <SQL> blocks, however.  Use the usual SQL
+comment conventions there.)
+
+There is no way to include a "}" character in an <SQL> block.
 
 For each permutation of the session steps (whether these are manually
 specified in the spec file, or automatically generated), the isolation

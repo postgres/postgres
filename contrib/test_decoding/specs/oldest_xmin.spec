@@ -39,4 +39,4 @@ step "s1_commit" { COMMIT; }
 # composite type is a rare form of DDL which allows T1 to see the tuple which
 # will be removed (xmax set) before T1 commits. That is, interlocking doesn't
 # forbid modifying catalog after someone read it (and didn't commit yet).
-permutation "s0_begin" "s0_getxid" "s1_begin" "s1_insert" "s0_alter" "s0_commit" "s0_checkpoint" "s0_get_changes" "s0_get_changes""s1_commit" "s0_vacuum" "s0_get_changes"
+permutation "s0_begin" "s0_getxid" "s1_begin" "s1_insert" "s0_alter" "s0_commit" "s0_checkpoint" "s0_get_changes" "s0_get_changes" "s1_commit" "s0_vacuum" "s0_get_changes"
