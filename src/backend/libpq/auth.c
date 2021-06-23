@@ -1039,44 +1039,67 @@ static GSS_DLLIMP gss_OID GSS_C_NT_USER_NAME = &GSS_C_NT_USER_NAME_desc;
 
 
 /*
- * Generate an error for GSSAPI authentication.  The caller should apply
- * _() to errmsg to make it translatable.
+ * Fetch all errors of a specific type and append to "s" (buffer of size len).
+ * If we obtain more than one string, separate them with spaces.
+ * Call once for GSS_CODE and once for MECH_CODE.
+ */
+static void
+pg_GSS_error_int(char *s, size_t len, OM_uint32 stat, int type)
+{
+	gss_buffer_desc gmsg;
+	size_t		i = 0;
+	OM_uint32	lmin_s,
+				msg_ctx = 0;
+
+	do
+	{
+		if (gss_display_status(&lmin_s, stat, type, GSS_C_NO_OID,
+							   &msg_ctx, &gmsg) != GSS_S_COMPLETE)
+			break;
+		if (i > 0)
+		{
+			if (i < len)
+				s[i] = ' ';
+			i++;
+		}
+		if (i < len)
+			memcpy(s + i, gmsg.value, Min(len - i, gmsg.length));
+		i += gmsg.length;
+		gss_release_buffer(&lmin_s, &gmsg);
+	}
+	while (msg_ctx);
+
+	/* add nul termination */
+	if (i < len)
+		s[i] = '\0';
+	else
+	{
+		elog(COMMERROR, "incomplete GSS error report");
+		s[len - 1] = '\0';
+	}
+}
+
+/*
+ * Report the GSSAPI error described by maj_stat/min_stat.
+ *
+ * errmsg should be an already-translated primary error message.
+ * The GSSAPI info is appended as errdetail.
+ *
+ * To avoid memory allocation, total error size is capped (at 128 bytes for
+ * each of major and minor).  No known mechanisms will produce error messages
+ * beyond this cap.
  */
 static void
 pg_GSS_error(int severity, const char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 {
-	gss_buffer_desc gmsg;
-	OM_uint32	lmin_s,
-				msg_ctx;
 	char		msg_major[128],
 				msg_minor[128];
 
 	/* Fetch major status message */
-	msg_ctx = 0;
-	gss_display_status(&lmin_s, maj_stat, GSS_C_GSS_CODE,
-					   GSS_C_NO_OID, &msg_ctx, &gmsg);
-	strlcpy(msg_major, gmsg.value, sizeof(msg_major));
-	gss_release_buffer(&lmin_s, &gmsg);
-
-	if (msg_ctx)
-
-		/*
-		 * More than one message available. XXX: Should we loop and read all
-		 * messages? (same below)
-		 */
-		ereport(WARNING,
-				(errmsg_internal("incomplete GSS error report")));
+	pg_GSS_error_int(msg_major, sizeof(msg_major), maj_stat, GSS_C_GSS_CODE);
 
 	/* Fetch mechanism minor status message */
-	msg_ctx = 0;
-	gss_display_status(&lmin_s, min_stat, GSS_C_MECH_CODE,
-					   GSS_C_NO_OID, &msg_ctx, &gmsg);
-	strlcpy(msg_minor, gmsg.value, sizeof(msg_minor));
-	gss_release_buffer(&lmin_s, &gmsg);
-
-	if (msg_ctx)
-		ereport(WARNING,
-				(errmsg_internal("incomplete GSS minor error report")));
+	pg_GSS_error_int(msg_minor, sizeof(msg_minor), min_stat, GSS_C_MECH_CODE);
 
 	/*
 	 * errmsg_internal, since translation of the first part must be done
@@ -1098,6 +1121,7 @@ pg_GSS_recvauth(Port *port)
 	int			ret;
 	StringInfoData buf;
 	gss_buffer_desc gbuf;
+	char	   *princ;
 
 	/*
 	 * GSS auth is not supported for protocol versions before 3, because it
@@ -1262,11 +1286,20 @@ pg_GSS_recvauth(Port *port)
 					 maj_stat, min_stat);
 
 	/*
+	 * gbuf.value might not be null-terminated, so turn it into a regular
+	 * null-terminated string.
+	 */
+	princ = palloc(gbuf.length + 1);
+	memcpy(princ, gbuf.value, gbuf.length);
+	princ[gbuf.length] = '\0';
+	gss_release_buffer(&lmin_s, &gbuf);
+
+	/*
 	 * Split the username at the realm separator
 	 */
-	if (strchr(gbuf.value, '@'))
+	if (strchr(princ, '@'))
 	{
-		char	   *cp = strchr(gbuf.value, '@');
+		char	   *cp = strchr(princ, '@');
 
 		/*
 		 * If we are not going to include the realm in the username that is
@@ -1293,7 +1326,7 @@ pg_GSS_recvauth(Port *port)
 				elog(DEBUG2,
 					 "GSSAPI realm (%s) and configured realm (%s) don't match",
 					 cp, port->hba->krb_realm);
-				gss_release_buffer(&lmin_s, &gbuf);
+				pfree(princ);
 				return STATUS_ERROR;
 			}
 		}
@@ -1302,15 +1335,14 @@ pg_GSS_recvauth(Port *port)
 	{
 		elog(DEBUG2,
 			 "GSSAPI did not return realm but realm matching was requested");
-
-		gss_release_buffer(&lmin_s, &gbuf);
+		pfree(princ);
 		return STATUS_ERROR;
 	}
 
-	ret = check_usermap(port->hba->usermap, port->user_name, gbuf.value,
+	ret = check_usermap(port->hba->usermap, port->user_name, princ,
 						pg_krb_caseins_users);
 
-	gss_release_buffer(&lmin_s, &gbuf);
+	pfree(princ);
 
 	return ret;
 }
