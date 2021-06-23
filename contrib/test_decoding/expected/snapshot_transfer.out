@@ -4,32 +4,40 @@ starting permutation: s0_begin s0_begin_sub0 s0_log_assignment s0_sub_get_base_s
 step s0_begin: BEGIN;
 step s0_begin_sub0: SAVEPOINT s0;
 step s0_log_assignment: SELECT pg_current_xact_id() IS NULL;
-?column?       
+?column?
+--------
+f       
+(1 row)
 
-f              
 step s0_sub_get_base_snap: INSERT INTO dummy VALUES (0);
 step s1_produce_new_snap: ALTER TABLE harvest ADD COLUMN mangos int;
 step s0_insert: INSERT INTO harvest VALUES (1, 2, 3);
 step s0_end_sub0: RELEASE SAVEPOINT s0;
 step s0_commit: COMMIT;
 step s0_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
-data           
-
-BEGIN          
-table public.dummy: INSERT: i[integer]:0
+data                                                                              
+----------------------------------------------------------------------------------
+BEGIN                                                                             
+table public.dummy: INSERT: i[integer]:0                                          
 table public.harvest: INSERT: apples[integer]:1 pears[integer]:2 mangos[integer]:3
-COMMIT         
-?column?       
+COMMIT                                                                            
+(4 rows)
 
-stop           
+?column?
+--------
+stop    
+(1 row)
+
 
 starting permutation: s0_begin s0_begin_sub0 s0_log_assignment s0_begin_sub1 s0_sub_get_base_snap s1_produce_new_snap s0_insert s0_end_sub1 s0_end_sub0 s0_commit s0_get_changes
 step s0_begin: BEGIN;
 step s0_begin_sub0: SAVEPOINT s0;
 step s0_log_assignment: SELECT pg_current_xact_id() IS NULL;
-?column?       
+?column?
+--------
+f       
+(1 row)
 
-f              
 step s0_begin_sub1: SAVEPOINT s1;
 step s0_sub_get_base_snap: INSERT INTO dummy VALUES (0);
 step s1_produce_new_snap: ALTER TABLE harvest ADD COLUMN mangos int;
@@ -38,12 +46,16 @@ step s0_end_sub1: RELEASE SAVEPOINT s1;
 step s0_end_sub0: RELEASE SAVEPOINT s0;
 step s0_commit: COMMIT;
 step s0_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
-data           
-
-BEGIN          
-table public.dummy: INSERT: i[integer]:0
+data                                                                              
+----------------------------------------------------------------------------------
+BEGIN                                                                             
+table public.dummy: INSERT: i[integer]:0                                          
 table public.harvest: INSERT: apples[integer]:1 pears[integer]:2 mangos[integer]:3
-COMMIT         
-?column?       
+COMMIT                                                                            
+(4 rows)
 
-stop           
+?column?
+--------
+stop    
+(1 row)
+

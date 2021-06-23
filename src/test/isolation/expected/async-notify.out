@@ -8,9 +8,11 @@ step notify2: NOTIFY c2, 'payload';
 notifier: NOTIFY "c2" with payload "payload" from notifier
 step notify3: NOTIFY c3, 'payload3';
 step notifyf: SELECT pg_notify('c2', NULL);
-pg_notify      
+pg_notify
+---------
+         
+(1 row)
 
-               
 notifier: NOTIFY "c2" with payload "" from notifier
 
 starting permutation: listenc notifyd1 notifyd2 notifys1
@@ -51,13 +53,17 @@ step notify1: NOTIFY c1;
 step notify2: NOTIFY c2, 'payload';
 step notify3: NOTIFY c3, 'payload3';
 step notifyf: SELECT pg_notify('c2', NULL);
-pg_notify      
+pg_notify
+---------
+         
+(1 row)
 
-               
 step lcheck: SELECT 1 AS x;
-x              
+x
+-
+1
+(1 row)
 
-1              
 listener: NOTIFY "c1" with payload "" from notifier
 listener: NOTIFY "c2" with payload "payload" from notifier
 listener: NOTIFY "c2" with payload "" from notifier
@@ -71,14 +77,18 @@ step notify2: NOTIFY c2, 'payload';
 notifier: NOTIFY "c2" with payload "payload" from notifier
 step notify3: NOTIFY c3, 'payload3';
 step notifyf: SELECT pg_notify('c2', NULL);
-pg_notify      
+pg_notify
+---------
+         
+(1 row)
 
-               
 notifier: NOTIFY "c2" with payload "" from notifier
 step lcheck: SELECT 1 AS x;
-x              
+x
+-
+1
+(1 row)
 
-1              
 listener: NOTIFY "c1" with payload "" from notifier
 listener: NOTIFY "c2" with payload "payload" from notifier
 listener: NOTIFY "c2" with payload "" from notifier
@@ -98,14 +108,20 @@ starting permutation: llisten lbegin usage bignotify usage
 step llisten: LISTEN c1; LISTEN c2;
 step lbegin: BEGIN;
 step usage: SELECT pg_notification_queue_usage() > 0 AS nonzero;
-nonzero        
+nonzero
+-------
+f      
+(1 row)
 
-f              
 step bignotify: SELECT count(pg_notify('c1', s::text)) FROM generate_series(1, 1000) s;
-count          
+count
+-----
+ 1000
+(1 row)
 
-1000           
 step usage: SELECT pg_notification_queue_usage() > 0 AS nonzero;
-nonzero        
+nonzero
+-------
+t      
+(1 row)
 
-t              

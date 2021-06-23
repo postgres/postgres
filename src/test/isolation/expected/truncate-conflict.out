@@ -3,9 +3,11 @@ Parsed test spec with 2 sessions
 starting permutation: s1_begin s1_tab_lookup s2_auth s2_truncate s1_commit s2_reset
 step s1_begin: BEGIN;
 step s1_tab_lookup: SELECT count(*) >= 0 FROM truncate_tab;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s2_auth: SET ROLE regress_truncate_conflict;
 step s2_truncate: TRUNCATE truncate_tab;
 ERROR:  permission denied for table truncate_tab
@@ -18,9 +20,11 @@ step s2_auth: SET ROLE regress_truncate_conflict;
 step s2_truncate: TRUNCATE truncate_tab;
 ERROR:  permission denied for table truncate_tab
 step s1_tab_lookup: SELECT count(*) >= 0 FROM truncate_tab;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s1_commit: COMMIT;
 step s2_reset: RESET ROLE;
 
@@ -28,9 +32,11 @@ starting permutation: s1_begin s2_auth s1_tab_lookup s2_truncate s1_commit s2_re
 step s1_begin: BEGIN;
 step s2_auth: SET ROLE regress_truncate_conflict;
 step s1_tab_lookup: SELECT count(*) >= 0 FROM truncate_tab;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s2_truncate: TRUNCATE truncate_tab;
 ERROR:  permission denied for table truncate_tab
 step s1_commit: COMMIT;
@@ -42,18 +48,22 @@ step s2_truncate: TRUNCATE truncate_tab;
 ERROR:  permission denied for table truncate_tab
 step s1_begin: BEGIN;
 step s1_tab_lookup: SELECT count(*) >= 0 FROM truncate_tab;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s1_commit: COMMIT;
 step s2_reset: RESET ROLE;
 
 starting permutation: s1_begin s1_tab_lookup s2_grant s2_auth s2_truncate s1_commit s2_reset
 step s1_begin: BEGIN;
 step s1_tab_lookup: SELECT count(*) >= 0 FROM truncate_tab;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s2_grant: GRANT TRUNCATE ON truncate_tab TO regress_truncate_conflict;
 step s2_auth: SET ROLE regress_truncate_conflict;
 step s2_truncate: TRUNCATE truncate_tab; <waiting ...>
@@ -67,9 +77,11 @@ step s2_grant: GRANT TRUNCATE ON truncate_tab TO regress_truncate_conflict;
 step s2_auth: SET ROLE regress_truncate_conflict;
 step s2_truncate: TRUNCATE truncate_tab;
 step s1_tab_lookup: SELECT count(*) >= 0 FROM truncate_tab;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s1_commit: COMMIT;
 step s2_reset: RESET ROLE;
 
@@ -78,9 +90,11 @@ step s1_begin: BEGIN;
 step s2_grant: GRANT TRUNCATE ON truncate_tab TO regress_truncate_conflict;
 step s2_auth: SET ROLE regress_truncate_conflict;
 step s1_tab_lookup: SELECT count(*) >= 0 FROM truncate_tab;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s2_truncate: TRUNCATE truncate_tab; <waiting ...>
 step s1_commit: COMMIT;
 step s2_truncate: <... completed>
@@ -92,8 +106,10 @@ step s2_auth: SET ROLE regress_truncate_conflict;
 step s2_truncate: TRUNCATE truncate_tab;
 step s1_begin: BEGIN;
 step s1_tab_lookup: SELECT count(*) >= 0 FROM truncate_tab;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s1_commit: COMMIT;
 step s2_reset: RESET ROLE;

@@ -2,16 +2,20 @@ Parsed test spec with 3 sessions
 
 starting permutation: s1a s2a s3a s1b s2b s3b
 step s1a: SELECT * FROM foo FOR UPDATE;
-id             data           
+id|data
+--+----
+ 1|x   
+(1 row)
 
-1              x              
 step s2a: SELECT * FROM foo FOR UPDATE; <waiting ...>
 step s3a: SELECT * FROM foo FOR UPDATE NOWAIT;
 ERROR:  could not obtain lock on row in relation "foo"
 step s1b: COMMIT;
 step s2a: <... completed>
-id             data           
+id|data
+--+----
+ 1|x   
+(1 row)
 
-1              x              
 step s2b: COMMIT;
 step s3b: COMMIT;

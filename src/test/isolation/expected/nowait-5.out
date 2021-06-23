@@ -8,8 +8,10 @@ step upd_getlock:
 	SELECT pg_advisory_lock(0);
 
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step sl1_exec: 
 	BEGIN ISOLATION LEVEL READ COMMITTED;
 	EXECUTE sl1_run;
@@ -24,14 +26,18 @@ step lk1_doforshare:
 	BEGIN ISOLATION LEVEL READ COMMITTED;
 	SELECT id FROM test_nowait WHERE id % 2 = 0 FOR SHARE;
 
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step upd_releaselock: 
 	SELECT pg_advisory_unlock(0);
 
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step sl1_exec: <... completed>
 ERROR:  could not obtain lock on row in relation "test_nowait"

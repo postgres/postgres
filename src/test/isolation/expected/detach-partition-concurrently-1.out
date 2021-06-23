@@ -3,120 +3,154 @@ Parsed test spec with 3 sessions
 starting permutation: s1b s1s s2detach s1s s1c s1s
 step s1b: BEGIN;
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1c: COMMIT;
 step s2detach: <... completed>
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1b s1s s2detach s1s s3s s3i s1c s3i s2drop s1s
 step s1b: BEGIN;
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s3s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s3i: SELECT relpartbound IS NULL FROM pg_class where relname = 'd_listp2';
-?column?       
+?column?
+--------
+f       
+(1 row)
 
-f              
 step s1c: COMMIT;
 step s2detach: <... completed>
 step s3i: SELECT relpartbound IS NULL FROM pg_class where relname = 'd_listp2';
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step s2drop: DROP TABLE d_listp2;
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1b s1s s2detach s1ins s1s s1c
 step s1b: BEGIN;
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1ins: INSERT INTO d_listp VALUES (1);
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+1
+(2 rows)
 
-1              
-1              
 step s1c: COMMIT;
 step s2detach: <... completed>
 
 starting permutation: s1b s1s s1ins2 s2detach s1ins s1s s1c
 step s1b: BEGIN;
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s1ins2: INSERT INTO d_listp VALUES (2);
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1ins: INSERT INTO d_listp VALUES (1);
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+1
+(2 rows)
 
-1              
-1              
 step s1c: COMMIT;
 step s2detach: <... completed>
 
 starting permutation: s1brr s1s s2detach s1ins s1s s1c
 step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1ins: INSERT INTO d_listp VALUES (1);
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+1
+2
+(3 rows)
 
-1              
-1              
-2              
 step s1c: COMMIT;
 step s2detach: <... completed>
 
 starting permutation: s1brr s1s s2detach s1s s1c
 step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s1c: COMMIT;
 step s2detach: <... completed>
 
@@ -133,21 +167,27 @@ starting permutation: s1brr s1prep s1s s2detach s1s s1exec1 s3s s1dealloc s1c
 step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1prep: PREPARE f(int) AS INSERT INTO d_listp VALUES ($1);
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s1exec1: EXECUTE f(1);
 step s3s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1dealloc: DEALLOCATE f;
 step s1c: COMMIT;
 step s2detach: <... completed>
@@ -158,16 +198,20 @@ step s1prep: PREPARE f(int) AS INSERT INTO d_listp VALUES ($1);
 step s1exec2: EXECUTE f(2);
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+2
+(3 rows)
 
-1              
-2              
-2              
 step s1exec2: EXECUTE f(2);
 step s3s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1c: COMMIT;
 step s2detach: <... completed>
 step s1dealloc: DEALLOCATE f;
@@ -176,16 +220,20 @@ starting permutation: s1brr s1prep s1s s2detach s1s s1exec2 s1c s1dealloc
 step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1prep: PREPARE f(int) AS INSERT INTO d_listp VALUES ($1);
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s1exec2: EXECUTE f(2);
 step s1c: COMMIT;
 step s2detach: <... completed>
@@ -196,10 +244,12 @@ step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1prep: PREPARE f(int) AS INSERT INTO d_listp VALUES ($1);
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s1exec2: EXECUTE f(2);
 step s1c: COMMIT;
 step s2detach: <... completed>
@@ -210,10 +260,12 @@ step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1prep1: PREPARE f(int) AS INSERT INTO d_listp VALUES (1);
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s1exec2: EXECUTE f(2);
 step s1c: COMMIT;
 step s2detach: <... completed>
@@ -224,10 +276,12 @@ step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1prep2: PREPARE f(int) AS INSERT INTO d_listp VALUES (2);
 step s2detach: ALTER TABLE d_listp DETACH PARTITION d_listp2 CONCURRENTLY; <waiting ...>
 step s1s: SELECT * FROM d_listp;
-a              
+a
+-
+1
+2
+(2 rows)
 
-1              
-2              
 step s1exec2: EXECUTE f(2);
 step s1c: COMMIT;
 step s2detach: <... completed>

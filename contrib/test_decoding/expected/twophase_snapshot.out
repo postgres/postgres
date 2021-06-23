@@ -3,39 +3,51 @@ Parsed test spec with 3 sessions
 starting permutation: s2b s2txid s1init s3b s3txid s2c s2b s2insert s2p s3c s1insert s1start s2cp s1start
 step s2b: BEGIN;
 step s2txid: SELECT pg_current_xact_id() IS NULL;
-?column?       
+?column?
+--------
+f       
+(1 row)
 
-f              
 step s1init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding', false, true); <waiting ...>
 step s3b: BEGIN;
 step s3txid: SELECT pg_current_xact_id() IS NULL;
-?column?       
+?column?
+--------
+f       
+(1 row)
 
-f              
 step s2c: COMMIT;
 step s2b: BEGIN;
 step s2insert: INSERT INTO do_write DEFAULT VALUES;
 step s2p: PREPARE TRANSACTION 'test1';
 step s3c: COMMIT;
 step s1init: <... completed>
-?column?       
+?column?
+--------
+init    
+(1 row)
 
-init           
 step s1insert: INSERT INTO do_write DEFAULT VALUES;
 step s1start: SELECT data  FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'skip-empty-xacts', '1');
-data           
-
-BEGIN          
+data                                        
+--------------------------------------------
+BEGIN                                       
 table public.do_write: INSERT: id[integer]:2
-COMMIT         
+COMMIT                                      
+(3 rows)
+
 step s2cp: COMMIT PREPARED 'test1';
 step s1start: SELECT data  FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'skip-empty-xacts', '1');
-data           
-
-BEGIN          
+data                                        
+--------------------------------------------
+BEGIN                                       
 table public.do_write: INSERT: id[integer]:1
-PREPARE TRANSACTION 'test1'
-COMMIT PREPARED 'test1'
-?column?       
+PREPARE TRANSACTION 'test1'                 
+COMMIT PREPARED 'test1'                     
+(4 rows)
 
-stop           
+?column?
+--------
+stop    
+(1 row)
+

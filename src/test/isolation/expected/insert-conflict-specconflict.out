@@ -2,16 +2,20 @@ Parsed test spec with 3 sessions
 
 starting permutation: controller_locks controller_show s1_upsert s2_upsert controller_show controller_unlock_1_1 controller_unlock_2_1 controller_unlock_1_3 controller_unlock_2_3 controller_show controller_unlock_2_2 controller_show controller_unlock_1_2 controller_show
 step controller_locks: SELECT pg_advisory_lock(sess, lock), sess, lock FROM generate_series(1, 2) a(sess), generate_series(1,3) b(lock);
-pg_advisory_locksess           lock           
+pg_advisory_lock|sess|lock
+----------------+----+----
+                |   1|   1
+                |   1|   2
+                |   1|   3
+                |   2|   1
+                |   2|   2
+                |   2|   3
+(6 rows)
 
-               1              1              
-               1              2              
-               1              3              
-               2              1              
-               2              2              
-               2              3              
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 3
@@ -20,66 +24,90 @@ s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 3
 step s2_upsert: INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s2') ON CONFLICT (blurt_and_lock_123(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s2'; <waiting ...>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_1_1: SELECT pg_advisory_unlock(1, 1);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step controller_unlock_2_1: SELECT pg_advisory_unlock(2, 1);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step controller_unlock_1_3: SELECT pg_advisory_unlock(1, 3);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_2_2: SELECT pg_advisory_unlock(2, 2);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2_upsert: <... completed>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data       
+---+-----------
+k1 |inserted s2
+(1 row)
 
-k1             inserted s2    
 step controller_unlock_1_2: SELECT pg_advisory_unlock(1, 2);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 step s1_upsert: <... completed>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data                               
+---+-----------------------------------
+k1 |inserted s2 with conflict update s1
+(1 row)
 
-k1             inserted s2 with conflict update s1
 
 starting permutation: controller_locks controller_show s1_upsert s2_upsert controller_show controller_unlock_1_1 controller_unlock_2_1 controller_unlock_1_3 controller_unlock_2_3 controller_show controller_unlock_1_2 controller_show controller_unlock_2_2 controller_show
 step controller_locks: SELECT pg_advisory_lock(sess, lock), sess, lock FROM generate_series(1, 2) a(sess), generate_series(1,3) b(lock);
-pg_advisory_locksess           lock           
+pg_advisory_lock|sess|lock
+----------------+----+----
+                |   1|   1
+                |   1|   2
+                |   1|   3
+                |   2|   1
+                |   2|   2
+                |   2|   3
+(6 rows)
 
-               1              1              
-               1              2              
-               1              3              
-               2              1              
-               2              2              
-               2              3              
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 3
@@ -88,66 +116,90 @@ s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 3
 step s2_upsert: INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s2') ON CONFLICT (blurt_and_lock_123(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s2'; <waiting ...>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_1_1: SELECT pg_advisory_unlock(1, 1);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step controller_unlock_2_1: SELECT pg_advisory_unlock(2, 1);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step controller_unlock_1_3: SELECT pg_advisory_unlock(1, 3);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_1_2: SELECT pg_advisory_unlock(1, 2);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1_upsert: <... completed>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data       
+---+-----------
+k1 |inserted s1
+(1 row)
 
-k1             inserted s1    
 step controller_unlock_2_2: SELECT pg_advisory_unlock(2, 2);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 step s2_upsert: <... completed>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data                               
+---+-----------------------------------
+k1 |inserted s1 with conflict update s2
+(1 row)
 
-k1             inserted s1 with conflict update s2
 
 starting permutation: controller_locks controller_show s1_insert_toast s2_insert_toast controller_show controller_unlock_1_1 controller_unlock_2_1 controller_unlock_1_3 controller_unlock_2_3 controller_show controller_unlock_1_2 controller_show_count controller_unlock_2_2 controller_show_count
 step controller_locks: SELECT pg_advisory_lock(sess, lock), sess, lock FROM generate_series(1, 2) a(sess), generate_series(1,3) b(lock);
-pg_advisory_locksess           lock           
+pg_advisory_lock|sess|lock
+----------------+----+----
+                |   1|   1
+                |   1|   2
+                |   1|   3
+                |   2|   1
+                |   2|   2
+                |   2|   3
+(6 rows)
 
-               1              1              
-               1              2              
-               1              3              
-               2              1              
-               2              2              
-               2              3              
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 s1: NOTICE:  blurt_and_lock_123() called for k2 in session 1
 s1: NOTICE:  acquiring advisory lock on 3
@@ -156,66 +208,90 @@ s2: NOTICE:  blurt_and_lock_123() called for k2 in session 2
 s2: NOTICE:  acquiring advisory lock on 3
 step s2_insert_toast: INSERT INTO upserttest VALUES('k2', ctoast_large_val()) ON CONFLICT DO NOTHING; <waiting ...>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_1_1: SELECT pg_advisory_unlock(1, 1);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step controller_unlock_2_1: SELECT pg_advisory_unlock(2, 1);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step controller_unlock_1_3: SELECT pg_advisory_unlock(1, 3);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s1: NOTICE:  blurt_and_lock_123() called for k2 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s2: NOTICE:  blurt_and_lock_123() called for k2 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_1_2: SELECT pg_advisory_unlock(1, 2);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1_insert_toast: <... completed>
 step controller_show_count: SELECT COUNT(*) FROM upserttest;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step controller_unlock_2_2: SELECT pg_advisory_unlock(2, 2);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s2: NOTICE:  blurt_and_lock_123() called for k2 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 s2: NOTICE:  blurt_and_lock_123() called for k2 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 step s2_insert_toast: <... completed>
 step controller_show_count: SELECT COUNT(*) FROM upserttest;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 
 starting permutation: controller_locks controller_show s1_begin s2_begin s1_upsert s2_upsert controller_show controller_unlock_1_1 controller_unlock_2_1 controller_unlock_1_3 controller_unlock_2_3 controller_show controller_unlock_1_2 controller_show controller_unlock_2_2 controller_show s1_commit controller_show s2_commit controller_show
 step controller_locks: SELECT pg_advisory_lock(sess, lock), sess, lock FROM generate_series(1, 2) a(sess), generate_series(1,3) b(lock);
-pg_advisory_locksess           lock           
+pg_advisory_lock|sess|lock
+----------------+----+----
+                |   1|   1
+                |   1|   2
+                |   1|   3
+                |   2|   1
+                |   2|   2
+                |   2|   3
+(6 rows)
 
-               1              1              
-               1              2              
-               1              3              
-               2              1              
-               2              2              
-               2              3              
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step s1_begin: BEGIN;
 step s2_begin: BEGIN;
@@ -226,81 +302,111 @@ s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 3
 step s2_upsert: INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s2') ON CONFLICT (blurt_and_lock_123(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s2'; <waiting ...>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_1_1: SELECT pg_advisory_unlock(1, 1);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step controller_unlock_2_1: SELECT pg_advisory_unlock(2, 1);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step controller_unlock_1_3: SELECT pg_advisory_unlock(1, 3);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_1_2: SELECT pg_advisory_unlock(1, 2);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1_upsert: <... completed>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_2_2: SELECT pg_advisory_unlock(2, 2);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step s1_commit: COMMIT;
 s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 step s2_upsert: <... completed>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data       
+---+-----------
+k1 |inserted s1
+(1 row)
 
-k1             inserted s1    
 step s2_commit: COMMIT;
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data                               
+---+-----------------------------------
+k1 |inserted s1 with conflict update s2
+(1 row)
 
-k1             inserted s1 with conflict update s2
 
 starting permutation: s1_create_non_unique_index s1_confirm_index_order controller_locks controller_show s2_begin s1_upsert s2_upsert controller_show controller_unlock_1_1 controller_unlock_2_1 controller_unlock_1_3 controller_unlock_2_3 controller_show controller_lock_2_4 controller_unlock_2_2 controller_show controller_unlock_1_2 controller_print_speculative_locks controller_unlock_2_4 s2_noop controller_print_speculative_locks s2_commit s1_noop controller_show controller_print_speculative_locks
 step s1_create_non_unique_index: CREATE INDEX upserttest_key_idx ON upserttest((blurt_and_lock_4(key)));
 step s1_confirm_index_order: SELECT 'upserttest_key_uniq_idx'::regclass::int8 < 'upserttest_key_idx'::regclass::int8;
-?column?       
+?column?
+--------
+t       
+(1 row)
 
-t              
 step controller_locks: SELECT pg_advisory_lock(sess, lock), sess, lock FROM generate_series(1, 2) a(sess), generate_series(1,3) b(lock);
-pg_advisory_locksess           lock           
+pg_advisory_lock|sess|lock
+----------------+----+----
+                |   1|   1
+                |   1|   2
+                |   1|   3
+                |   2|   1
+                |   2|   2
+                |   2|   3
+(6 rows)
 
-               1              1              
-               1              2              
-               1              3              
-               2              1              
-               2              2              
-               2              3              
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step s2_begin: BEGIN;
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
@@ -310,48 +416,68 @@ s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 3
 step s2_upsert: INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s2') ON CONFLICT (blurt_and_lock_123(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s2'; <waiting ...>
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_1_1: SELECT pg_advisory_unlock(1, 1);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step controller_unlock_2_1: SELECT pg_advisory_unlock(2, 1);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step controller_unlock_1_3: SELECT pg_advisory_unlock(1, 3);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s2: NOTICE:  blurt_and_lock_123() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 2
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_lock_2_4: SELECT pg_advisory_lock(2, 4);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step controller_unlock_2_2: SELECT pg_advisory_unlock(2, 2);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s2: NOTICE:  blurt_and_lock_4() called for k1 in session 2
 s2: NOTICE:  acquiring advisory lock on 4
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data
+---+----
+(0 rows)
 
 step controller_unlock_1_2: SELECT pg_advisory_unlock(1, 2);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s1: NOTICE:  blurt_and_lock_4() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 4
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
@@ -367,16 +493,20 @@ step controller_print_speculative_locks:
         AND pa.application_name LIKE 'isolation/insert-conflict-specconflict-s%'
     ORDER BY 1, 2, 3, 4;
 
-application_namelocktype       mode           granted        
+application_name                         |locktype     |mode         |granted
+-----------------------------------------+-------------+-------------+-------
+isolation/insert-conflict-specconflict-s1|spectoken    |ShareLock    |f      
+isolation/insert-conflict-specconflict-s1|transactionid|ExclusiveLock|t      
+isolation/insert-conflict-specconflict-s2|spectoken    |ExclusiveLock|t      
+isolation/insert-conflict-specconflict-s2|transactionid|ExclusiveLock|t      
+(4 rows)
 
-isolation/insert-conflict-specconflict-s1spectoken      ShareLock      f              
-isolation/insert-conflict-specconflict-s1transactionid  ExclusiveLock  t              
-isolation/insert-conflict-specconflict-s2spectoken      ExclusiveLock  t              
-isolation/insert-conflict-specconflict-s2transactionid  ExclusiveLock  t              
 step controller_unlock_2_4: SELECT pg_advisory_unlock(2, 4);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 step s2_upsert: <... completed>
@@ -390,20 +520,24 @@ step controller_print_speculative_locks:
         AND pa.application_name LIKE 'isolation/insert-conflict-specconflict-s%'
     ORDER BY 1, 2, 3, 4;
 
-application_namelocktype       mode           granted        
+application_name                         |locktype     |mode         |granted
+-----------------------------------------+-------------+-------------+-------
+isolation/insert-conflict-specconflict-s1|transactionid|ExclusiveLock|t      
+isolation/insert-conflict-specconflict-s1|transactionid|ShareLock    |f      
+isolation/insert-conflict-specconflict-s2|transactionid|ExclusiveLock|t      
+(3 rows)
 
-isolation/insert-conflict-specconflict-s1transactionid  ExclusiveLock  t              
-isolation/insert-conflict-specconflict-s1transactionid  ShareLock      f              
-isolation/insert-conflict-specconflict-s2transactionid  ExclusiveLock  t              
 step s2_commit: COMMIT;
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 step s1_upsert: <... completed>
 step s1_noop: 
 step controller_show: SELECT * FROM upserttest;
-key            data           
+key|data                               
+---+-----------------------------------
+k1 |inserted s2 with conflict update s1
+(1 row)
 
-k1             inserted s2 with conflict update s1
 step controller_print_speculative_locks: 
     SELECT pa.application_name, locktype, mode, granted
     FROM pg_locks pl JOIN pg_stat_activity pa USING (pid)
@@ -413,5 +547,7 @@ step controller_print_speculative_locks:
         AND pa.application_name LIKE 'isolation/insert-conflict-specconflict-s%'
     ORDER BY 1, 2, 3, 4;
 
-application_namelocktype       mode           granted        
+application_name|locktype|mode|granted
+----------------+--------+----+-------
+(0 rows)
 

@@ -9,12 +9,16 @@ step s1_toast_insert: INSERT INTO stream_test SELECT large_val();
 step s2_ddl: CREATE TABLE stream_test2(data text);
 step s1_commit: COMMIT;
 step s1_get_stream_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL,NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'stream-changes', '1');
-data           
-
+data                                    
+----------------------------------------
 opening a streamed block for transaction
-streaming change for transaction
+streaming change for transaction        
 closing a streamed block for transaction
-committing streamed transaction
-?column?       
+committing streamed transaction         
+(4 rows)
 
-stop           
+?column?
+--------
+stop    
+(1 row)
+

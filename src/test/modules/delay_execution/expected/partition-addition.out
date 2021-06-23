@@ -3,8 +3,10 @@ Parsed test spec with 2 sessions
 starting permutation: s2lock s1exec s2addp s2unlock
 step s2lock: SELECT pg_advisory_lock(12345);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1exec: LOAD 'delay_execution';
 		  SET delay_execution.post_planning_lock_id = 12345;
 		  SELECT * FROM foo WHERE a <> 1 AND a <> (SELECT 3); <waiting ...>
@@ -13,9 +15,13 @@ step s2addp: CREATE TABLE foo2 (LIKE foo);
 		  INSERT INTO foo VALUES (2, 'ADD2');
 step s2unlock: SELECT pg_advisory_unlock(12345);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1exec: <... completed>
-a              b              
+a|b  
+-+---
+4|GHI
+(1 row)
 
-4              GHI            

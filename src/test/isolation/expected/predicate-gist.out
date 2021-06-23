@@ -2,79 +2,99 @@ Parsed test spec with 2 sessions
 
 starting permutation: rxy1 wx1 c1 rxy2 wy2 c2
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step c1: commit;
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2233750
+(1 row)
 
-2233750        
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step c2: commit;
 
 starting permutation: rxy2 wy2 c2 rxy1 wx1 c1
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step c2: commit;
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+316250
+(1 row)
 
-316250         
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step c1: commit;
 
 starting permutation: rxy3 wx3 c1 rxy4 wy4 c2
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step c1: commit;
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step c2: commit;
 
 starting permutation: rxy4 wy4 c2 rxy3 wx3 c1
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step c2: commit;
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step c1: commit;
 
 starting permutation: rxy1 wx1 rxy2 c1 wy2 c2
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step c1: commit;
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
@@ -83,15 +103,19 @@ step c2: commit;
 
 starting permutation: rxy1 wx1 rxy2 wy2 c1 c2
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step c1: commit;
@@ -100,15 +124,19 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy1 wx1 rxy2 wy2 c2 c1
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step c2: commit;
@@ -117,13 +145,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy1 rxy2 wx1 c1 wy2 c2
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step c1: commit;
@@ -134,13 +166,17 @@ step c2: commit;
 
 starting permutation: rxy1 rxy2 wx1 wy2 c1 c2
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step wy2: insert into gist_point_tbl (id, p)
@@ -151,13 +187,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy1 rxy2 wx1 wy2 c2 c1
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step wy2: insert into gist_point_tbl (id, p)
@@ -168,13 +208,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy1 rxy2 wy2 wx1 c1 c2
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step wx1: insert into gist_point_tbl (id, p)
@@ -185,13 +229,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy1 rxy2 wy2 wx1 c2 c1
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step wx1: insert into gist_point_tbl (id, p)
@@ -202,13 +250,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy1 rxy2 wy2 c2 wx1 c1
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step c2: commit;
@@ -219,13 +271,17 @@ step c1: commit;
 
 starting permutation: rxy2 rxy1 wx1 c1 wy2 c2
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step c1: commit;
@@ -236,13 +292,17 @@ step c2: commit;
 
 starting permutation: rxy2 rxy1 wx1 wy2 c1 c2
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step wy2: insert into gist_point_tbl (id, p)
@@ -253,13 +313,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy2 rxy1 wx1 wy2 c2 c1
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step wy2: insert into gist_point_tbl (id, p)
@@ -270,13 +334,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy2 rxy1 wy2 wx1 c1 c2
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step wx1: insert into gist_point_tbl (id, p)
@@ -287,13 +355,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy2 rxy1 wy2 wx1 c2 c1
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step wx1: insert into gist_point_tbl (id, p)
@@ -304,13 +376,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy2 rxy1 wy2 c2 wx1 c1
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step c2: commit;
@@ -321,15 +397,19 @@ step c1: commit;
 
 starting permutation: rxy2 wy2 rxy1 wx1 c1 c2
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step c1: commit;
@@ -338,15 +418,19 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy2 wy2 rxy1 wx1 c2 c1
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
 step c2: commit;
@@ -355,15 +439,19 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rxy2 wy2 rxy1 c2 wx1 c1
 step rxy2: select sum(p[0]) from gist_point_tbl where p >> point(7500,7500);
-sum            
+    sum
+-------
+2188750
+(1 row)
 
-2188750        
 step wy2: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(1, 5) g;
 step rxy1: select sum(p[0]) from gist_point_tbl where p << point(2500, 2500);
-sum            
+   sum
+------
+311250
+(1 row)
 
-311250         
 step c2: commit;
 step wx1: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(15, 20) g;
@@ -372,15 +460,19 @@ step c1: commit;
 
 starting permutation: rxy3 wx3 rxy4 c1 wy4 c2
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step c1: commit;
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
@@ -388,15 +480,19 @@ step c2: commit;
 
 starting permutation: rxy3 wx3 rxy4 wy4 c1 c2
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step c1: commit;
@@ -404,15 +500,19 @@ step c2: commit;
 
 starting permutation: rxy3 wx3 rxy4 wy4 c2 c1
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step c2: commit;
@@ -420,13 +520,17 @@ step c1: commit;
 
 starting permutation: rxy3 rxy4 wx3 c1 wy4 c2
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step c1: commit;
@@ -436,13 +540,17 @@ step c2: commit;
 
 starting permutation: rxy3 rxy4 wx3 wy4 c1 c2
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step wy4: insert into gist_point_tbl (id, p)
@@ -452,13 +560,17 @@ step c2: commit;
 
 starting permutation: rxy3 rxy4 wx3 wy4 c2 c1
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step wy4: insert into gist_point_tbl (id, p)
@@ -468,13 +580,17 @@ step c1: commit;
 
 starting permutation: rxy3 rxy4 wy4 wx3 c1 c2
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step wx3: insert into gist_point_tbl (id, p)
@@ -484,13 +600,17 @@ step c2: commit;
 
 starting permutation: rxy3 rxy4 wy4 wx3 c2 c1
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step wx3: insert into gist_point_tbl (id, p)
@@ -500,13 +620,17 @@ step c1: commit;
 
 starting permutation: rxy3 rxy4 wy4 c2 wx3 c1
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step c2: commit;
@@ -516,13 +640,17 @@ step c1: commit;
 
 starting permutation: rxy4 rxy3 wx3 c1 wy4 c2
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step c1: commit;
@@ -532,13 +660,17 @@ step c2: commit;
 
 starting permutation: rxy4 rxy3 wx3 wy4 c1 c2
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step wy4: insert into gist_point_tbl (id, p)
@@ -548,13 +680,17 @@ step c2: commit;
 
 starting permutation: rxy4 rxy3 wx3 wy4 c2 c1
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step wy4: insert into gist_point_tbl (id, p)
@@ -564,13 +700,17 @@ step c1: commit;
 
 starting permutation: rxy4 rxy3 wy4 wx3 c1 c2
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step wx3: insert into gist_point_tbl (id, p)
@@ -580,13 +720,17 @@ step c2: commit;
 
 starting permutation: rxy4 rxy3 wy4 wx3 c2 c1
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step wx3: insert into gist_point_tbl (id, p)
@@ -596,13 +740,17 @@ step c1: commit;
 
 starting permutation: rxy4 rxy3 wy4 c2 wx3 c1
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step c2: commit;
@@ -612,15 +760,19 @@ step c1: commit;
 
 starting permutation: rxy4 wy4 rxy3 wx3 c1 c2
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step c1: commit;
@@ -628,15 +780,19 @@ step c2: commit;
 
 starting permutation: rxy4 wy4 rxy3 wx3 c2 c1
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;
 step c2: commit;
@@ -644,15 +800,19 @@ step c1: commit;
 
 starting permutation: rxy4 wy4 rxy3 c2 wx3 c1
 step rxy4: select sum(p[0]) from gist_point_tbl where p << point(1000,1000);
-sum            
+  sum
+-----
+49500
+(1 row)
 
-49500          
 step wy4: insert into gist_point_tbl (id, p)
 			  select g, point(g*50, g*50) from generate_series(1, 20) g;
 step rxy3: select sum(p[0]) from gist_point_tbl where p >> point(6000,6000);
-sum            
+    sum
+-------
+3202000
+(1 row)
 
-3202000        
 step c2: commit;
 step wx3: insert into gist_point_tbl (id, p)
 			  select g, point(g*500, g*500) from generate_series(12, 18) g;

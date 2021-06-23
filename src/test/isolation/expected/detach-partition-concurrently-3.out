@@ -4,24 +4,30 @@ starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s1describe s1alter
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1describe: SELECT 'd3_listp' AS root, * FROM pg_partition_tree('d3_listp')
 					  UNION ALL SELECT 'd3_listp1', * FROM pg_partition_tree('d3_listp1');
-root           relid          parentrelid    isleaf         level          
+root     |relid    |parentrelid|isleaf|level
+---------+---------+-----------+------+-----
+d3_listp |d3_listp |           |f     |    0
+d3_listp |d3_listp2|d3_listp   |t     |    1
+d3_listp1|d3_listp1|           |t     |    0
+(3 rows)
 
-d3_listp       d3_listp                      f              0              
-d3_listp       d3_listp2      d3_listp       t              1              
-d3_listp1      d3_listp1                     t              0              
 step s1alter: ALTER TABLE d3_listp1 ALTER a DROP NOT NULL;
 ERROR:  cannot alter partition "d3_listp1" with an incomplete detach
 
@@ -29,14 +35,18 @@ starting permutation: s2snitch s1b s1s s2detach s1cancel s1insert s1c
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1insert: INSERT INTO d3_listp VALUES (1);
@@ -47,36 +57,46 @@ starting permutation: s2snitch s1brr s1s s2detach s1cancel s1insert s1c s1spart
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1insert: INSERT INTO d3_listp VALUES (1);
 step s1c: COMMIT;
 step s1spart: SELECT * FROM d3_listp1;
-a              
+a
+-
+1
+1
+(2 rows)
 
-1              
-1              
 
 starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s1insertpart
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
@@ -86,24 +106,30 @@ starting permutation: s2snitch s1b s1s s2detach2 s1cancel s1c s1brr s1insert s1s
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach2: ALTER TABLE d3_listp DETACH PARTITION d3_listp2 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach2: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1insert: INSERT INTO d3_listp VALUES (1);
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+1
+(2 rows)
 
-1              
-1              
 step s1insert: INSERT INTO d3_listp VALUES (1);
 step s1c: COMMIT;
 
@@ -111,84 +137,108 @@ starting permutation: s2snitch s1b s1s s2detach2 s1cancel s1c s1brr s1s s1insert
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach2: ALTER TABLE d3_listp DETACH PARTITION d3_listp2 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach2: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1insert: INSERT INTO d3_listp VALUES (1);
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+1
+(2 rows)
 
-1              
-1              
 step s1c: COMMIT;
 
 starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s1drop s1list
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1drop: DROP TABLE d3_listp;
 step s1list: SELECT relname FROM pg_catalog.pg_class
 					  WHERE relname LIKE 'd3_listp%' ORDER BY 1;
-relname        
+relname
+-------
+(0 rows)
 
 
 starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s1trunc s1spart
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1trunc: TRUNCATE TABLE d3_listp;
 step s1spart: SELECT * FROM d3_listp1;
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s2snitch s1b s1s s2detach s1cancel s1noop s2detach2 s1c
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1noop: 
@@ -200,14 +250,18 @@ starting permutation: s2snitch s1b s1s s2detach s1cancel s1noop s2detachfinal s1
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1noop: 
@@ -220,14 +274,18 @@ starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s1droppart s2detach
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
@@ -238,14 +296,18 @@ starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s2begin s2drop s1s 
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
@@ -254,29 +316,37 @@ step s2drop: DROP TABLE d3_listp1;
 step s1s: SELECT * FROM d3_listp; <waiting ...>
 step s2commit: COMMIT;
 step s1s: <... completed>
-a              
+a
+-
+(0 rows)
 
 
 starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s1b s1spart s2detachfinal s1c
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1b: BEGIN;
 step s1spart: SELECT * FROM d3_listp1;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detachfinal: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 FINALIZE; <waiting ...>
 step s1c: COMMIT;
 step s2detachfinal: <... completed>
@@ -285,20 +355,26 @@ starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s1b s1s s2detachfin
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+(0 rows)
 
 step s2detachfinal: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 FINALIZE;
 step s1c: COMMIT;
@@ -307,22 +383,28 @@ starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s1b s1spart s2detac
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1b: BEGIN;
 step s1spart: SELECT * FROM d3_listp1;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detachfinal: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 FINALIZE; <waiting ...>
 step s1c: COMMIT;
 step s2detachfinal: <... completed>
@@ -331,14 +413,18 @@ starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s2begin s2detachfin
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
@@ -350,14 +436,18 @@ starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s2begin s2detachfin
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;
@@ -366,22 +456,28 @@ step s2detachfinal: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 FINALIZE;
 step s1spart: SELECT * FROM d3_listp1; <waiting ...>
 step s2commit: COMMIT;
 step s1spart: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s2snitch s1b s1s s2detach s1cancel s1c s2begin s2detachfinal s1insertpart s2commit
 step s2snitch: INSERT INTO d3_pid SELECT pg_backend_pid();
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
 step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
 pg_cancel_backend
+-----------------
+t                
+(1 row)
 
-t              
 step s2detach: <... completed>
 ERROR:  canceling statement due to user request
 step s1c: COMMIT;

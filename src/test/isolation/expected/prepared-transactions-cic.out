@@ -13,6 +13,8 @@ step r2:
     SET enable_bitmapscan to off;
     SELECT * FROM cic_test WHERE a = 1;
 
-a              
+a
+-
+1
+(1 row)
 
-1              
