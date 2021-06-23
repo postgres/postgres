@@ -34,4 +34,4 @@ pg_advisory_unlock
 
 t              
 step sl1_exec: <... completed>
-error in steps upd_releaselock sl1_exec: ERROR:  could not obtain lock on row in relation "test_nowait"
+ERROR:  could not obtain lock on row in relation "test_nowait"

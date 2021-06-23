@@ -8,5 +8,5 @@ insert_unique
 step rw2: SELECT insert_unique(1, '2'); <waiting ...>
 step c1: COMMIT;
 step rw2: <... completed>
-error in steps c1 rw2: ERROR:  could not serialize access due to read/write dependencies among transactions
+ERROR:  could not serialize access due to read/write dependencies among transactions
 step c2: COMMIT;

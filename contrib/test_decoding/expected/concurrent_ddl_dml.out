@@ -257,7 +257,7 @@ step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
 step s2_alter_tbl1_boolean: ALTER TABLE tbl1 ALTER COLUMN val2 TYPE boolean; <waiting ...>
 step s1_commit: COMMIT;
 step s2_alter_tbl1_boolean: <... completed>
-error in steps s1_commit s2_alter_tbl1_boolean: ERROR:  column "val2" cannot be cast automatically to type boolean
+ERROR:  column "val2" cannot be cast automatically to type boolean
 step s2_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 data           
 

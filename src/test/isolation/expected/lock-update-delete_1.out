@@ -14,7 +14,7 @@ pg_advisory_unlock
 t              
 step s2c: COMMIT;
 step s1l: <... completed>
-error in steps s2c s1l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 
 starting permutation: s2b s1l s2u s2_blocker2 s2_unlock s2c
 pg_advisory_lock
@@ -30,7 +30,7 @@ pg_advisory_unlock
 t              
 step s2c: COMMIT;
 step s1l: <... completed>
-error in steps s2c s1l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 
 starting permutation: s2b s1l s2u s2_blocker3 s2_unlock s2c
 pg_advisory_lock
@@ -118,7 +118,7 @@ pg_advisory_unlock
 
 t              
 step s1l: <... completed>
-error in steps s2_unlock s1l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 
 starting permutation: s2b s1l s2u s2_blocker2 s2c s2_unlock
 pg_advisory_lock
@@ -134,7 +134,7 @@ pg_advisory_unlock
 
 t              
 step s1l: <... completed>
-error in steps s2_unlock s1l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 
 starting permutation: s2b s1l s2u s2_blocker3 s2c s2_unlock
 pg_advisory_lock

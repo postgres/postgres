@@ -54,7 +54,7 @@ i
 step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s1a s1b s2a s1c s1d s2b s2c s2d
@@ -97,7 +97,7 @@ i
 step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s1a s1b s2a s2b s1c s1d s2c s2d
@@ -126,7 +126,7 @@ step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s1a s1b s2a s2b s2c s1c s1d s2d
@@ -141,7 +141,7 @@ step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s1a s2a s1b s1c s1d s2b s2c s2d
@@ -184,7 +184,7 @@ i
 step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s1a s2a s1b s2b s1c s1d s2c s2d
@@ -213,7 +213,7 @@ step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s1a s2a s1b s2b s2c s1c s1d s2d
@@ -228,7 +228,7 @@ step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s1a s2a s2b s1b s1c s1d s2c s2d
@@ -257,7 +257,7 @@ step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s1a s2a s2b s1b s2c s1c s1d s2d
@@ -272,7 +272,7 @@ step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s1a s2a s2b s2c s1b s1c s1d s2d
@@ -371,7 +371,7 @@ i
 step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s2a s1a s1b s2b s1c s1d s2c s2d
@@ -400,7 +400,7 @@ step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s2a s1a s1b s2b s2c s1c s1d s2d
@@ -415,7 +415,7 @@ step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s2a s1a s2b s1b s1c s1d s2c s2d
@@ -444,7 +444,7 @@ step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s2a s1a s2b s1b s2c s1c s1d s2d
@@ -459,7 +459,7 @@ step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s2a s1a s2b s2c s1b s1c s1d s2d
@@ -544,7 +544,7 @@ step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s2a s2b s1a s1b s2c s1c s1d s2d
@@ -559,7 +559,7 @@ step s2c: INSERT INTO a VALUES (0); <waiting ...>
 step s1c: ALTER TABLE a ENABLE TRIGGER t;
 step s1d: COMMIT;
 step s2c: <... completed>
-error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
+ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
 starting permutation: s2a s2b s1a s2c s1b s1c s1d s2d

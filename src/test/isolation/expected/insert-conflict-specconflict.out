@@ -284,7 +284,7 @@ key            data
 
 k1             inserted s1 with conflict update s2
 
-starting permutation: s1_create_non_unique_index s1_confirm_index_order controller_locks controller_show s2_begin s1_upsert s2_upsert controller_show controller_unlock_1_1 controller_unlock_2_1 controller_unlock_1_3 controller_unlock_2_3 controller_show controller_lock_2_4 controller_unlock_2_2 controller_show controller_unlock_1_2 controller_print_speculative_locks controller_unlock_2_4 controller_print_speculative_locks s2_commit controller_show controller_print_speculative_locks
+starting permutation: s1_create_non_unique_index s1_confirm_index_order controller_locks controller_show s2_begin s1_upsert s2_upsert controller_show controller_unlock_1_1 controller_unlock_2_1 controller_unlock_1_3 controller_unlock_2_3 controller_show controller_lock_2_4 controller_unlock_2_2 controller_show controller_unlock_1_2 controller_print_speculative_locks controller_unlock_2_4 s2_noop controller_print_speculative_locks s2_commit s1_noop controller_show controller_print_speculative_locks
 step s1_create_non_unique_index: CREATE INDEX upserttest_key_idx ON upserttest((blurt_and_lock_4(key)));
 step s1_confirm_index_order: SELECT 'upserttest_key_uniq_idx'::regclass::int8 < 'upserttest_key_idx'::regclass::int8;
 ?column?       
@@ -380,6 +380,7 @@ t
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 step s2_upsert: <... completed>
+step s2_noop: 
 step controller_print_speculative_locks: 
     SELECT pa.application_name, locktype, mode, granted
     FROM pg_locks pl JOIN pg_stat_activity pa USING (pid)
@@ -398,6 +399,7 @@ step s2_commit: COMMIT;
 s1: NOTICE:  blurt_and_lock_123() called for k1 in session 1
 s1: NOTICE:  acquiring advisory lock on 2
 step s1_upsert: <... completed>
+step s1_noop: 
 step controller_show: SELECT * FROM upserttest;
 key            data           
 

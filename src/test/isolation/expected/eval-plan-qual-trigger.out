@@ -1,3 +1,9 @@
+unused step name: s2_r
+unused step name: s3_b_rc
+unused step name: s3_c
+unused step name: s3_del_a
+unused step name: s3_r
+unused step name: s3_upd_a_data
 Parsed test spec with 4 sessions
 
 starting permutation: s1_trig_rep_b_u s1_trig_rep_a_u s1_ins_a s1_ins_b s1_b_rc s2_b_rc s1_upd_a_data s1_c s2_upd_a_data s2_c s0_rep
@@ -609,7 +615,7 @@ s2: NOTICE:  trigger: name rep_b_i; when: BEFORE; lev: ROWs; op: INSERT; old: <N
 step s2_ins_a: INSERT INTO trigtest VALUES ('key-a', 'val-a-s2') RETURNING *; <waiting ...>
 step s1_c: COMMIT;
 step s2_ins_a: <... completed>
-error in steps s1_c s2_ins_a: ERROR:  duplicate key value violates unique constraint "trigtest_pkey"
+ERROR:  duplicate key value violates unique constraint "trigtest_pkey"
 step s2_c: COMMIT;
 step s0_rep: SELECT * FROM trigtest ORDER BY key, data
 key            data           
@@ -2023,7 +2029,7 @@ step s2_upd_a_data:
  <waiting ...>
 step s1_c: COMMIT;
 step s2_upd_a_data: <... completed>
-error in steps s1_c s2_upd_a_data: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2_c: COMMIT;
 step s0_rep: SELECT * FROM trigtest ORDER BY key, data
 key            data           
@@ -2136,7 +2142,7 @@ step s2_upd_a_data:
  <waiting ...>
 step s1_c: COMMIT;
 step s2_upd_a_data: <... completed>
-error in steps s1_c s2_upd_a_data: ERROR:  could not serialize access due to concurrent delete
+ERROR:  could not serialize access due to concurrent delete
 step s2_c: COMMIT;
 step s0_rep: SELECT * FROM trigtest ORDER BY key, data
 key            data           
@@ -2202,9 +2208,3 @@ key            data
 
 key-a          val-a-s1-ups2  
 key-b          val-b-s1       
-unused step name: s2_r
-unused step name: s3_b_rc
-unused step name: s3_c
-unused step name: s3_del_a
-unused step name: s3_r
-unused step name: s3_upd_a_data

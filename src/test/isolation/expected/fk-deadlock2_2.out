@@ -14,7 +14,7 @@ step s1u2: UPDATE B SET Col2 = 1 WHERE BID = 2;
 step s2u1: UPDATE B SET Col2 = 1 WHERE BID = 2; <waiting ...>
 step s1c: COMMIT;
 step s2u1: <... completed>
-error in steps s1c s2u1: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2u2: UPDATE B SET Col2 = 1 WHERE BID = 2;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 step s2c: COMMIT;
@@ -26,7 +26,7 @@ step s1u2: UPDATE B SET Col2 = 1 WHERE BID = 2; <waiting ...>
 step s2u2: UPDATE B SET Col2 = 1 WHERE BID = 2;
 step s2c: COMMIT;
 step s1u2: <... completed>
-error in steps s2c s1u2: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s1c: COMMIT;
 
 starting permutation: s1u1 s2u1 s2u2 s1u2 s2c s1c
@@ -36,7 +36,7 @@ step s2u2: UPDATE B SET Col2 = 1 WHERE BID = 2;
 step s1u2: UPDATE B SET Col2 = 1 WHERE BID = 2; <waiting ...>
 step s2c: COMMIT;
 step s1u2: <... completed>
-error in steps s2c s1u2: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s1c: COMMIT;
 
 starting permutation: s1u1 s2u1 s2u2 s2c s1u2 s1c
@@ -55,7 +55,7 @@ step s1u2: UPDATE B SET Col2 = 1 WHERE BID = 2; <waiting ...>
 step s2u2: UPDATE B SET Col2 = 1 WHERE BID = 2;
 step s2c: COMMIT;
 step s1u2: <... completed>
-error in steps s2c s1u2: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s1c: COMMIT;
 
 starting permutation: s2u1 s1u1 s2u2 s1u2 s2c s1c
@@ -65,7 +65,7 @@ step s2u2: UPDATE B SET Col2 = 1 WHERE BID = 2;
 step s1u2: UPDATE B SET Col2 = 1 WHERE BID = 2; <waiting ...>
 step s2c: COMMIT;
 step s1u2: <... completed>
-error in steps s2c s1u2: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s1c: COMMIT;
 
 starting permutation: s2u1 s1u1 s2u2 s2c s1u2 s1c
@@ -84,7 +84,7 @@ step s1u1: UPDATE A SET Col1 = 1 WHERE AID = 1;
 step s1u2: UPDATE B SET Col2 = 1 WHERE BID = 2; <waiting ...>
 step s2c: COMMIT;
 step s1u2: <... completed>
-error in steps s2c s1u2: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s1c: COMMIT;
 
 starting permutation: s2u1 s2u2 s1u1 s2c s1u2 s1c

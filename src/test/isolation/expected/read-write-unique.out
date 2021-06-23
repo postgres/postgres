@@ -11,7 +11,7 @@ step w1: INSERT INTO test VALUES (42);
 step w2: INSERT INTO test VALUES (42); <waiting ...>
 step c1: COMMIT;
 step w2: <... completed>
-error in steps c1 w2: ERROR:  could not serialize access due to read/write dependencies among transactions
+ERROR:  could not serialize access due to read/write dependencies among transactions
 step c2: COMMIT;
 
 starting permutation: r1 w1 c1 r2 w2 c2

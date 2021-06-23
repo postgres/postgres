@@ -50,7 +50,7 @@ step s1modc1a: ALTER TABLE c1 ALTER COLUMN a TYPE float;
 step s2sel: SELECT SUM(a) FROM p; <waiting ...>
 step s1c: COMMIT;
 step s2sel: <... completed>
-error in steps s1c s2sel: ERROR:  attribute "a" of relation "c1" does not match parent's type
+ERROR:  attribute "a" of relation "c1" does not match parent's type
 step s2sel: SELECT SUM(a) FROM p;
 sum            
 
