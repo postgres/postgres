@@ -29,8 +29,6 @@ pg_GSS_error_int(char *s, size_t len, OM_uint32 stat, int type)
 	OM_uint32	lmin_s,
 				msg_ctx = 0;
 
-	s[0] = '\0';				/* just in case gss_display_status fails */
-
 	do
 	{
 		if (gss_display_status(&lmin_s, stat, type, GSS_C_NO_OID,
@@ -43,16 +41,19 @@ pg_GSS_error_int(char *s, size_t len, OM_uint32 stat, int type)
 			i++;
 		}
 		if (i < len)
-			strlcpy(s + i, gmsg.value, len - i);
+			memcpy(s + i, gmsg.value, Min(len - i, gmsg.length));
 		i += gmsg.length;
 		gss_release_buffer(&lmin_s, &gmsg);
 	}
 	while (msg_ctx);
 
-	if (i >= len)
+	/* add nul termination */
+	if (i < len)
+		s[i] = '\0';
+	else
 	{
 		elog(COMMERROR, "incomplete GSS error report");
-		s[len - 1] = '\0';		/* ensure string is nul-terminated */
+		s[len - 1] = '\0';
 	}
 }
 
