@@ -34,6 +34,10 @@ static void addlitchar(char c);
 %x sql
 %x qstr
 
+digit			[0123456789]
+
+self			[,()*]
+
 non_newline		[^\n\r]
 space			[ \t\r\f]
 
@@ -46,11 +50,19 @@ comment			("#"{non_newline}*)
 	litbufsize = LITBUF_INIT;
 %}
 
-permutation		{ return(PERMUTATION); }
-session			{ return(SESSION); }
-setup			{ return(SETUP); }
-step			{ return(STEP); }
-teardown		{ return(TEARDOWN); }
+notices			{ return NOTICES; }
+permutation		{ return PERMUTATION; }
+session			{ return SESSION; }
+setup			{ return SETUP; }
+step			{ return STEP; }
+teardown		{ return TEARDOWN; }
+
+{digit}+		{
+					yylval.integer = atoi(yytext);
+					return INTEGER;
+				}
+
+{self}			{ return yytext[0]; }
 
 [\n]			{ yyline++; }
 {comment}		{ /* ignore */ }
@@ -63,7 +75,7 @@ teardown		{ return(TEARDOWN); }
 				}
 <qstr>\"		{
 					litbuf[litbufpos] = '\0';
-					yylval.str = strdup(litbuf);
+					yylval.str = pg_strdup(litbuf);
 					BEGIN(INITIAL);
 					return(string_literal);
 				}
@@ -79,7 +91,7 @@ teardown		{ return(TEARDOWN); }
 				}
 <sql>{space}*"}" {
 					litbuf[litbufpos] = '\0';
-					yylval.str = strdup(litbuf);
+					yylval.str = pg_strdup(litbuf);
 					BEGIN(INITIAL);
 					return(sqlblock);
 				}

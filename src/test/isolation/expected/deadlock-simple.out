@@ -5,7 +5,7 @@ step s1as: LOCK TABLE a1 IN ACCESS SHARE MODE;
 step s2as: LOCK TABLE a1 IN ACCESS SHARE MODE;
 step s1ae: LOCK TABLE a1 IN ACCESS EXCLUSIVE MODE; <waiting ...>
 step s2ae: LOCK TABLE a1 IN ACCESS EXCLUSIVE MODE;
+ERROR:  deadlock detected
 step s1ae: <... completed>
-error in steps s2ae s1ae: ERROR:  deadlock detected
 step s1c: COMMIT;
 step s2c: COMMIT;
