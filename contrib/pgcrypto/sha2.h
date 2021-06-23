@@ -39,6 +39,9 @@
 #define _SHA2_H
 
 /* avoid conflict with OpenSSL */
+#define SHA224_Init pg_SHA224_Init
+#define SHA224_Update pg_SHA224_Update
+#define SHA224_Final pg_SHA224_Final
 #define SHA256_Init pg_SHA256_Init
 #define SHA256_Update pg_SHA256_Update
 #define SHA256_Final pg_SHA256_Final
