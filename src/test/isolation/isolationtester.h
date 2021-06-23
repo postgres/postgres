@@ -14,31 +14,62 @@
 #ifndef ISOLATIONTESTER_H
 #define ISOLATIONTESTER_H
 
-typedef struct Session Session;
+/*
+ * The structs declared here are used in the output of specparse.y.
+ * Except where noted, all fields are set in the grammar and not
+ * changed thereafter.
+ */
 typedef struct Step Step;
 
-struct Session
+typedef struct
 {
 	char	   *name;
 	char	   *setupsql;
 	char	   *teardownsql;
 	Step	  **steps;
 	int			nsteps;
-};
+} Session;
 
 struct Step
 {
-	int			session;
-	bool		used;
 	char	   *name;
 	char	   *sql;
-	char	   *errormsg;
+	/* These fields are filled by check_testspec(): */
+	int			session;		/* identifies owning session */
+	bool		used;			/* has step been used in a permutation? */
 };
+
+typedef enum
+{
+	PSB_ONCE,					/* force step to wait once */
+	PSB_OTHER_STEP,				/* wait for another step to complete first */
+	PSB_NUM_NOTICES				/* wait for N notices from another session */
+} PermutationStepBlockerType;
+
+typedef struct
+{
+	char	   *stepname;
+	PermutationStepBlockerType blocktype;
+	int			num_notices;	/* only used for PSB_NUM_NOTICES */
+	/* These fields are filled by check_testspec(): */
+	Step	   *step;			/* link to referenced step (if any) */
+	/* These fields are runtime workspace: */
+	int			target_notices; /* total notices needed from other session */
+} PermutationStepBlocker;
+
+typedef struct
+{
+	char	   *name;			/* name of referenced Step */
+	PermutationStepBlocker **blockers;
+	int			nblockers;
+	/* These fields are filled by check_testspec(): */
+	Step	   *step;			/* link to referenced Step */
+} PermutationStep;
 
 typedef struct
 {
 	int			nsteps;
-	char	  **stepnames;
+	PermutationStep **steps;
 } Permutation;
 
 typedef struct
@@ -50,8 +81,6 @@ typedef struct
 	int			nsessions;
 	Permutation **permutations;
 	int			npermutations;
-	Step	  **allsteps;
-	int			nallsteps;
 } TestSpec;
 
 extern TestSpec parseresult;

@@ -192,7 +192,7 @@ pg_advisory_unlock
 
 t              
 step s2l: <... completed>
-error in steps s1ul s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 pg_advisory_unlock_all
 
@@ -216,7 +216,7 @@ pg_advisory_unlock
 
 t              
 step s2l: <... completed>
-error in steps s1ul s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 pg_advisory_unlock_all
 
@@ -240,7 +240,7 @@ t
 step s2l: SELECT * FROM lcku_table WHERE pg_advisory_lock(578902068) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1c: COMMIT;
 step s2l: <... completed>
-error in steps s1c s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 pg_advisory_unlock_all
 
@@ -269,7 +269,7 @@ pg_advisory_unlock
 
 t              
 step s2l: <... completed>
-error in steps s1ul s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 pg_advisory_unlock_all
 
@@ -298,7 +298,7 @@ pg_advisory_unlock
 
 t              
 step s2l: <... completed>
-error in steps s1ul s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 pg_advisory_unlock_all
 
@@ -322,7 +322,7 @@ t
 step s2l: SELECT * FROM lcku_table WHERE pg_advisory_lock(578902068) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1c: COMMIT;
 step s2l: <... completed>
-error in steps s1c s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s1hint: SELECT * FROM lcku_table;
 id             value          
 
@@ -351,7 +351,7 @@ pg_advisory_unlock
 
 t              
 step s2l: <... completed>
-error in steps s1ul s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 pg_advisory_unlock_all
 
@@ -375,7 +375,7 @@ pg_advisory_unlock
 
 t              
 step s2l: <... completed>
-error in steps s1ul s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 pg_advisory_unlock_all
 
@@ -399,7 +399,7 @@ t
 step s2l: SELECT * FROM lcku_table WHERE pg_advisory_lock(578902068) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1c: COMMIT;
 step s2l: <... completed>
-error in steps s1c s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 pg_advisory_unlock_all
 
@@ -428,7 +428,7 @@ pg_advisory_unlock
 
 t              
 step s2l: <... completed>
-error in steps s1ul s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 pg_advisory_unlock_all
 
@@ -457,7 +457,7 @@ pg_advisory_unlock
 
 t              
 step s2l: <... completed>
-error in steps s1ul s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 pg_advisory_unlock_all
 
@@ -481,7 +481,7 @@ t
 step s2l: SELECT * FROM lcku_table WHERE pg_advisory_lock(578902068) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1c: COMMIT;
 step s2l: <... completed>
-error in steps s1c s2l: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s1hint: SELECT * FROM lcku_table;
 id             value          
 
