@@ -41,13 +41,13 @@ teardown
  DROP FUNCTION ri_child();
 }
 
-session "s1"
+session s1
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "wxry1"	{ INSERT INTO child (parent_id) VALUES (0); }
-step "c1"	{ COMMIT; }
+step wxry1	{ INSERT INTO child (parent_id) VALUES (0); }
+step c1		{ COMMIT; }
 
-session "s2"
+session s2
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "r2"	{ SELECT TRUE; }
-step "wyrx2"	{ DELETE FROM parent WHERE parent_id = 0; }
-step "c2"	{ COMMIT; }
+step r2		{ SELECT TRUE; }
+step wyrx2	{ DELETE FROM parent WHERE parent_id = 0; }
+step c2		{ COMMIT; }

@@ -17,63 +17,63 @@ teardown
  DROP FUNCTION f();
 }
 
-session "s1"
-step "s1a" { BEGIN; }
-step "s1b" { ALTER TABLE a DISABLE TRIGGER t; }
-step "s1c" { ALTER TABLE a ENABLE TRIGGER t; }
-step "s1d" { COMMIT; }
+session s1
+step s1a { BEGIN; }
+step s1b { ALTER TABLE a DISABLE TRIGGER t; }
+step s1c { ALTER TABLE a ENABLE TRIGGER t; }
+step s1d { COMMIT; }
 
-session "s2"
-step "s2a" { BEGIN; }
-step "s2b" { SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE; }
-step "s2c" { INSERT INTO a VALUES (0); }
-step "s2d" { COMMIT; }
+session s2
+step s2a { BEGIN; }
+step s2b { SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE; }
+step s2c { INSERT INTO a VALUES (0); }
+step s2d { COMMIT; }
 
-permutation "s1a" "s1b" "s1c" "s1d" "s2a" "s2b" "s2c" "s2d"
-permutation "s1a" "s1b" "s1c" "s2a" "s1d" "s2b" "s2c" "s2d"
-permutation "s1a" "s1b" "s1c" "s2a" "s2b" "s1d" "s2c" "s2d"
-permutation "s1a" "s1b" "s1c" "s2a" "s2b" "s2c" "s1d" "s2d"
-permutation "s1a" "s1b" "s2a" "s1c" "s1d" "s2b" "s2c" "s2d"
-permutation "s1a" "s1b" "s2a" "s1c" "s2b" "s1d" "s2c" "s2d"
-permutation "s1a" "s1b" "s2a" "s1c" "s2b" "s2c" "s1d" "s2d"
-permutation "s1a" "s1b" "s2a" "s2b" "s1c" "s1d" "s2c" "s2d"
-permutation "s1a" "s1b" "s2a" "s2b" "s1c" "s2c" "s1d" "s2d"
-permutation "s1a" "s1b" "s2a" "s2b" "s2c" "s1c" "s1d" "s2d"
-permutation "s1a" "s2a" "s1b" "s1c" "s1d" "s2b" "s2c" "s2d"
-permutation "s1a" "s2a" "s1b" "s1c" "s2b" "s1d" "s2c" "s2d"
-permutation "s1a" "s2a" "s1b" "s1c" "s2b" "s2c" "s1d" "s2d"
-permutation "s1a" "s2a" "s1b" "s2b" "s1c" "s1d" "s2c" "s2d"
-permutation "s1a" "s2a" "s1b" "s2b" "s1c" "s2c" "s1d" "s2d"
-permutation "s1a" "s2a" "s1b" "s2b" "s2c" "s1c" "s1d" "s2d"
-permutation "s1a" "s2a" "s2b" "s1b" "s1c" "s1d" "s2c" "s2d"
-permutation "s1a" "s2a" "s2b" "s1b" "s1c" "s2c" "s1d" "s2d"
-permutation "s1a" "s2a" "s2b" "s1b" "s2c" "s1c" "s1d" "s2d"
-permutation "s1a" "s2a" "s2b" "s2c" "s1b" "s1c" "s1d" "s2d"
-permutation "s1a" "s2a" "s2b" "s2c" "s1b" "s1c" "s2d" "s1d"
-permutation "s1a" "s2a" "s2b" "s2c" "s1b" "s2d" "s1c" "s1d"
-permutation "s1a" "s2a" "s2b" "s2c" "s2d" "s1b" "s1c" "s1d"
-permutation "s2a" "s1a" "s1b" "s1c" "s1d" "s2b" "s2c" "s2d"
-permutation "s2a" "s1a" "s1b" "s1c" "s2b" "s1d" "s2c" "s2d"
-permutation "s2a" "s1a" "s1b" "s1c" "s2b" "s2c" "s1d" "s2d"
-permutation "s2a" "s1a" "s1b" "s2b" "s1c" "s1d" "s2c" "s2d"
-permutation "s2a" "s1a" "s1b" "s2b" "s1c" "s2c" "s1d" "s2d"
-permutation "s2a" "s1a" "s1b" "s2b" "s2c" "s1c" "s1d" "s2d"
-permutation "s2a" "s1a" "s2b" "s1b" "s1c" "s1d" "s2c" "s2d"
-permutation "s2a" "s1a" "s2b" "s1b" "s1c" "s2c" "s1d" "s2d"
-permutation "s2a" "s1a" "s2b" "s1b" "s2c" "s1c" "s1d" "s2d"
-permutation "s2a" "s1a" "s2b" "s2c" "s1b" "s1c" "s1d" "s2d"
-permutation "s2a" "s1a" "s2b" "s2c" "s1b" "s1c" "s2d" "s1d"
-permutation "s2a" "s1a" "s2b" "s2c" "s1b" "s2d" "s1c" "s1d"
-permutation "s2a" "s1a" "s2b" "s2c" "s2d" "s1b" "s1c" "s1d"
-permutation "s2a" "s2b" "s1a" "s1b" "s1c" "s1d" "s2c" "s2d"
-permutation "s2a" "s2b" "s1a" "s1b" "s1c" "s2c" "s1d" "s2d"
-permutation "s2a" "s2b" "s1a" "s1b" "s2c" "s1c" "s1d" "s2d"
-permutation "s2a" "s2b" "s1a" "s2c" "s1b" "s1c" "s1d" "s2d"
-permutation "s2a" "s2b" "s1a" "s2c" "s1b" "s1c" "s2d" "s1d"
-permutation "s2a" "s2b" "s1a" "s2c" "s1b" "s2d" "s1c" "s1d"
-permutation "s2a" "s2b" "s1a" "s2c" "s2d" "s1b" "s1c" "s1d"
-permutation "s2a" "s2b" "s2c" "s1a" "s1b" "s1c" "s1d" "s2d"
-permutation "s2a" "s2b" "s2c" "s1a" "s1b" "s1c" "s2d" "s1d"
-permutation "s2a" "s2b" "s2c" "s1a" "s1b" "s2d" "s1c" "s1d"
-permutation "s2a" "s2b" "s2c" "s1a" "s2d" "s1b" "s1c" "s1d"
-permutation "s2a" "s2b" "s2c" "s2d" "s1a" "s1b" "s1c" "s1d"
+permutation s1a s1b s1c s1d s2a s2b s2c s2d
+permutation s1a s1b s1c s2a s1d s2b s2c s2d
+permutation s1a s1b s1c s2a s2b s1d s2c s2d
+permutation s1a s1b s1c s2a s2b s2c s1d s2d
+permutation s1a s1b s2a s1c s1d s2b s2c s2d
+permutation s1a s1b s2a s1c s2b s1d s2c s2d
+permutation s1a s1b s2a s1c s2b s2c s1d s2d
+permutation s1a s1b s2a s2b s1c s1d s2c s2d
+permutation s1a s1b s2a s2b s1c s2c s1d s2d
+permutation s1a s1b s2a s2b s2c s1c s1d s2d
+permutation s1a s2a s1b s1c s1d s2b s2c s2d
+permutation s1a s2a s1b s1c s2b s1d s2c s2d
+permutation s1a s2a s1b s1c s2b s2c s1d s2d
+permutation s1a s2a s1b s2b s1c s1d s2c s2d
+permutation s1a s2a s1b s2b s1c s2c s1d s2d
+permutation s1a s2a s1b s2b s2c s1c s1d s2d
+permutation s1a s2a s2b s1b s1c s1d s2c s2d
+permutation s1a s2a s2b s1b s1c s2c s1d s2d
+permutation s1a s2a s2b s1b s2c s1c s1d s2d
+permutation s1a s2a s2b s2c s1b s1c s1d s2d
+permutation s1a s2a s2b s2c s1b s1c s2d s1d
+permutation s1a s2a s2b s2c s1b s2d s1c s1d
+permutation s1a s2a s2b s2c s2d s1b s1c s1d
+permutation s2a s1a s1b s1c s1d s2b s2c s2d
+permutation s2a s1a s1b s1c s2b s1d s2c s2d
+permutation s2a s1a s1b s1c s2b s2c s1d s2d
+permutation s2a s1a s1b s2b s1c s1d s2c s2d
+permutation s2a s1a s1b s2b s1c s2c s1d s2d
+permutation s2a s1a s1b s2b s2c s1c s1d s2d
+permutation s2a s1a s2b s1b s1c s1d s2c s2d
+permutation s2a s1a s2b s1b s1c s2c s1d s2d
+permutation s2a s1a s2b s1b s2c s1c s1d s2d
+permutation s2a s1a s2b s2c s1b s1c s1d s2d
+permutation s2a s1a s2b s2c s1b s1c s2d s1d
+permutation s2a s1a s2b s2c s1b s2d s1c s1d
+permutation s2a s1a s2b s2c s2d s1b s1c s1d
+permutation s2a s2b s1a s1b s1c s1d s2c s2d
+permutation s2a s2b s1a s1b s1c s2c s1d s2d
+permutation s2a s2b s1a s1b s2c s1c s1d s2d
+permutation s2a s2b s1a s2c s1b s1c s1d s2d
+permutation s2a s2b s1a s2c s1b s1c s2d s1d
+permutation s2a s2b s1a s2c s1b s2d s1c s1d
+permutation s2a s2b s1a s2c s2d s1b s1c s1d
+permutation s2a s2b s2c s1a s1b s1c s1d s2d
+permutation s2a s2b s2c s1a s1b s1c s2d s1d
+permutation s2a s2b s2c s1a s1b s2d s1c s1d
+permutation s2a s2b s2c s1a s2d s1b s1c s1d
+permutation s2a s2b s2c s2d s1a s1b s1c s1d

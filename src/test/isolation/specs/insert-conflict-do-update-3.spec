@@ -37,12 +37,12 @@ teardown
   DROP TABLE colors;
 }
 
-session "s1"
+session s1
 setup
 {
   BEGIN ISOLATION LEVEL READ COMMITTED;
 }
-step "insert1" {
+step insert1 {
     WITH t AS (
         INSERT INTO colors(key, color, is_active)
         VALUES(1, 'Brown', true), (2, 'Gray', true)
@@ -50,20 +50,20 @@ step "insert1" {
         SET color = EXCLUDED.color
         WHERE colors.is_active)
     SELECT * FROM colors ORDER BY key;}
-step "select1surprise" { SELECT * FROM colors ORDER BY key; }
-step "c1" { COMMIT; }
+step select1surprise { SELECT * FROM colors ORDER BY key; }
+step c1 { COMMIT; }
 
-session "s2"
+session s2
 setup
 {
   BEGIN ISOLATION LEVEL READ COMMITTED;
 }
-step "update2" { UPDATE colors SET is_active = true WHERE key = 1; }
-step "c2" { COMMIT; }
+step update2 { UPDATE colors SET is_active = true WHERE key = 1; }
+step c2 { COMMIT; }
 
 # Perhaps surprisingly, the session 1 MVCC-snapshot-visible tuple (the tuple
 # with the pre-populated color 'Red') is denied the opportunity to prevent the
 # UPDATE from taking place -- only the conclusively-locked tuple version
 # matters, and so the tuple with key value 1 was updated to 'Brown' (but not
 # tuple with key value 2, since nothing changed there):
-permutation "update2" "insert1" "c2" "select1surprise" "c1"
+permutation update2 insert1 c2 select1surprise c1

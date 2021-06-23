@@ -53,33 +53,33 @@ teardown
   drop table bigt;
 }
 
-session "d1"
+session d1
 setup		{ BEGIN isolation level repeatable read;
 			  SET force_parallel_mode = off;
 			  SET deadlock_timeout = '10s';
 }
 # these locks will be taken in the leader, so they will persist:
-step "d1a1"	{ SELECT lock_share(1,x), lock_excl(3,x) FROM bigt LIMIT 1; }
+step d1a1	{ SELECT lock_share(1,x), lock_excl(3,x) FROM bigt LIMIT 1; }
 # this causes all the parallel workers to take locks:
-step "d1a2"	{ SET force_parallel_mode = on;
+step d1a2	{ SET force_parallel_mode = on;
 			  SET parallel_setup_cost = 0;
 			  SET parallel_tuple_cost = 0;
 			  SET min_parallel_table_scan_size = 0;
 			  SET parallel_leader_participation = off;
 			  SET max_parallel_workers_per_gather = 3;
 			  SELECT sum(lock_share(2,x)) FROM bigt; }
-step "d1c"	{ COMMIT; }
+step d1c	{ COMMIT; }
 
-session "d2"
+session d2
 setup		{ BEGIN isolation level repeatable read;
 			  SET force_parallel_mode = off;
 			  SET deadlock_timeout = '10ms';
 }
 # this lock will be taken in the leader, so it will persist:
-step "d2a2"	{ select lock_share(2,x) FROM bigt LIMIT 1; }
+step d2a2	{ select lock_share(2,x) FROM bigt LIMIT 1; }
 # this causes all the parallel workers to take locks;
 # after which, make the leader take lock 3 to prevent client-driven deadlock
-step "d2a1"	{ SET force_parallel_mode = on;
+step d2a1	{ SET force_parallel_mode = on;
 			  SET parallel_setup_cost = 0;
 			  SET parallel_tuple_cost = 0;
 			  SET min_parallel_table_scan_size = 0;
@@ -90,24 +90,24 @@ step "d2a1"	{ SET force_parallel_mode = on;
 			  RESET parallel_setup_cost;
 			  RESET parallel_tuple_cost;
 			  SELECT lock_share(3,x) FROM bigt LIMIT 1; }
-step "d2c"	{ COMMIT; }
+step d2c	{ COMMIT; }
 
-session "e1"
+session e1
 setup		{ BEGIN isolation level repeatable read;
 			  SET force_parallel_mode = on;
 			  SET deadlock_timeout = '10s';
 }
 # this lock will be taken in a parallel worker, but we don't need it to persist
-step "e1l"	{ SELECT lock_excl(1,x) FROM bigt LIMIT 1; }
-step "e1c"	{ COMMIT; }
+step e1l	{ SELECT lock_excl(1,x) FROM bigt LIMIT 1; }
+step e1c	{ COMMIT; }
 
-session "e2"
+session e2
 setup		{ BEGIN isolation level repeatable read;
 			  SET force_parallel_mode = on;
 			  SET deadlock_timeout = '10s';
 }
 # this lock will be taken in a parallel worker, but we don't need it to persist
-step "e2l"	{ SELECT lock_excl(2,x) FROM bigt LIMIT 1; }
-step "e2c"	{ COMMIT; }
+step e2l	{ SELECT lock_excl(2,x) FROM bigt LIMIT 1; }
+step e2c	{ COMMIT; }
 
-permutation "d1a1" "d2a2" "e1l" "e2l" "d1a2" "d2a1" "d1c" "e1c" "d2c" "e2c"
+permutation d1a1 d2a2 e1l e2l d1a2 d2a1 d1c e1c d2c e2c
