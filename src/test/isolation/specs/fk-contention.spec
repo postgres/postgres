@@ -10,10 +10,10 @@ teardown
   DROP TABLE foo, bar;
 }
 
-session "s1"
+session s1
 setup		{ BEGIN; }
-step "ins"	{ INSERT INTO bar VALUES (42); }
-step "com"	{ COMMIT; }
+step ins	{ INSERT INTO bar VALUES (42); }
+step com	{ COMMIT; }
 
-session "s2"
-step "upd"	{ UPDATE foo SET b = 'Hello World'; }
+session s2
+step upd	{ UPDATE foo SET b = 'Hello World'; }

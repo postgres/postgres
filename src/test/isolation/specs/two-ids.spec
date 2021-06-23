@@ -24,17 +24,17 @@ teardown
  DROP TABLE D1, D2;
 }
 
-session "s1"
+session s1
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "wx1"	{ update D1 set id = id + 1; }
-step "c1"	{ COMMIT; }
+step wx1	{ update D1 set id = id + 1; }
+step c1		{ COMMIT; }
 
-session "s2"
+session s2
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "rxwy2"	{ update D2 set id = (select id+1 from D1); }
-step "c2"	{ COMMIT; }
+step rxwy2	{ update D2 set id = (select id+1 from D1); }
+step c2		{ COMMIT; }
 
-session "s3"
+session s3
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "ry3"	{ select id from D2; }
-step "c3"	{ COMMIT; }
+step ry3	{ select id from D2; }
+step c3		{ COMMIT; }

@@ -15,26 +15,26 @@ teardown
   DROP TABLE a1, a2;
 }
 
-session "d1"
+session d1
 setup		{ BEGIN; SET deadlock_timeout = '10s'; }
-step "d1a1"	{ LOCK TABLE a1 IN ACCESS SHARE MODE; }
-step "d1a2"	{ LOCK TABLE a2 IN ACCESS SHARE MODE; }
-step "d1c"	{ COMMIT; }
+step d1a1	{ LOCK TABLE a1 IN ACCESS SHARE MODE; }
+step d1a2	{ LOCK TABLE a2 IN ACCESS SHARE MODE; }
+step d1c	{ COMMIT; }
 
-session "d2"
+session d2
 setup		{ BEGIN; SET deadlock_timeout = '10ms'; }
-step "d2a2"	{ LOCK TABLE a2 IN ACCESS SHARE MODE; }
-step "d2a1"	{ LOCK TABLE a1 IN ACCESS SHARE MODE; }
-step "d2c"	{ COMMIT; }
+step d2a2	{ LOCK TABLE a2 IN ACCESS SHARE MODE; }
+step d2a1	{ LOCK TABLE a1 IN ACCESS SHARE MODE; }
+step d2c	{ COMMIT; }
 
-session "e1"
+session e1
 setup		{ BEGIN; SET deadlock_timeout = '10s'; }
-step "e1l"	{ LOCK TABLE a1 IN ACCESS EXCLUSIVE MODE; }
-step "e1c"	{ COMMIT; }
+step e1l	{ LOCK TABLE a1 IN ACCESS EXCLUSIVE MODE; }
+step e1c	{ COMMIT; }
 
-session "e2"
+session e2
 setup		{ BEGIN; SET deadlock_timeout = '10s'; }
-step "e2l"	{ LOCK TABLE a2 IN ACCESS EXCLUSIVE MODE; }
-step "e2c"	{ COMMIT; }
+step e2l	{ LOCK TABLE a2 IN ACCESS EXCLUSIVE MODE; }
+step e2c	{ COMMIT; }
 
-permutation "d1a1" "d2a2" "e1l" "e2l" "d1a2" "d2a1" "d1c" "e1c" "d2c" "e2c"
+permutation d1a1 d2a2 e1l e2l d1a2 d2a1 d1c e1c d2c e2c

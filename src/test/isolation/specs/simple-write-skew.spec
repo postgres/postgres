@@ -19,12 +19,12 @@ teardown
   DROP TABLE test;
 }
 
-session "s1"
+session s1
 setup { BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "rwx1" { UPDATE test SET t = 'apple' WHERE t = 'pear'; }
-step "c1" { COMMIT; }
+step rwx1 { UPDATE test SET t = 'apple' WHERE t = 'pear'; }
+step c1 { COMMIT; }
 
-session "s2"
+session s2
 setup { BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "rwx2" { UPDATE test SET t = 'pear' WHERE t = 'apple'}
-step "c2" { COMMIT; }
+step rwx2 { UPDATE test SET t = 'pear' WHERE t = 'apple'}
+step c2 { COMMIT; }

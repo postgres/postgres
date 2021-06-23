@@ -18,15 +18,15 @@ teardown
  DROP TABLE a, b;
 }
 
-session "s1"
+session s1
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "rx1"	{ SELECT i FROM a WHERE i = 1; }
-step "wy1"	{ INSERT INTO b VALUES (1); }
-step "c1"	{ COMMIT; }
+step rx1	{ SELECT i FROM a WHERE i = 1; }
+step wy1	{ INSERT INTO b VALUES (1); }
+step c1		{ COMMIT; }
 
-session "s2"
+session s2
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "rx2"	{ SELECT i FROM a WHERE i = 1; }
-step "ry2"	{ SELECT a_id FROM b WHERE a_id = 1; }
-step "wx2"	{ DELETE FROM a WHERE i = 1; }
-step "c2"	{ COMMIT; }
+step rx2	{ SELECT i FROM a WHERE i = 1; }
+step ry2	{ SELECT a_id FROM b WHERE a_id = 1; }
+step wx2	{ DELETE FROM a WHERE i = 1; }
+step c2		{ COMMIT; }

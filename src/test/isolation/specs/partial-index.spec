@@ -19,14 +19,14 @@ teardown
  DROP TABLE test_t;
 }
 
-session "s1"
+session s1
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "rxy1"	{ select * from test_t where val2 = 1; }
-step "wx1"	{ update test_t set val2 = 2 where val2 = 1 and id = 10; }
-step "c1"	{ COMMIT; }
+step rxy1	{ select * from test_t where val2 = 1; }
+step wx1	{ update test_t set val2 = 2 where val2 = 1 and id = 10; }
+step c1		{ COMMIT; }
 
-session "s2"
+session s2
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "wy2"	{ update test_t set val2 = 2 where val2 = 1 and id = 9; }
-step "rxy2"	{ select * from test_t where val2 = 1; }
-step "c2"	{ COMMIT; }
+step wy2	{ update test_t set val2 = 2 where val2 = 1 and id = 9; }
+step rxy2	{ select * from test_t where val2 = 1; }
+step c2		{ COMMIT; }

@@ -30,18 +30,18 @@ teardown
   DROP TABLE ctl, receipt;
 }
 
-session "s1"
+session s1
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "rxwy1"	{ INSERT INTO receipt VALUES (3, (SELECT deposit_date FROM ctl WHERE k = 'receipt'), 4.00); }
-step "c1"	{ COMMIT; }
+step rxwy1	{ INSERT INTO receipt VALUES (3, (SELECT deposit_date FROM ctl WHERE k = 'receipt'), 4.00); }
+step c1		{ COMMIT; }
 
-session "s2"
+session s2
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "wx2"	{ UPDATE ctl SET deposit_date = DATE '2008-12-23' WHERE k = 'receipt'; }
-step "c2"	{ COMMIT; }
+step wx2	{ UPDATE ctl SET deposit_date = DATE '2008-12-23' WHERE k = 'receipt'; }
+step c2		{ COMMIT; }
 
-session "s3"
+session s3
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE, READ ONLY; }
-step "rx3"	{ SELECT * FROM ctl WHERE k = 'receipt'; }
-step "ry3"	{ SELECT * FROM receipt WHERE deposit_date = DATE '2008-12-22'; }
-step "c3"	{ COMMIT; }
+step rx3	{ SELECT * FROM ctl WHERE k = 'receipt'; }
+step ry3	{ SELECT * FROM receipt WHERE deposit_date = DATE '2008-12-22'; }
+step c3		{ COMMIT; }

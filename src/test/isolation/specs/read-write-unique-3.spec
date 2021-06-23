@@ -20,14 +20,14 @@ teardown
   DROP TABLE test;
 }
 
-session "s1"
+session s1
 setup { BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "rw1" { SELECT insert_unique(1, '1'); }
-step "c1" { COMMIT; }
+step rw1 { SELECT insert_unique(1, '1'); }
+step c1 { COMMIT; }
 
-session "s2"
+session s2
 setup { BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "rw2" { SELECT insert_unique(1, '2'); }
-step "c2" { COMMIT; }
+step rw2 { SELECT insert_unique(1, '2'); }
+step c2 { COMMIT; }
 
-permutation "rw1" "rw2" "c1" "c2"
+permutation rw1 rw2 c1 c2
