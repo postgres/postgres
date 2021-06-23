@@ -75,7 +75,9 @@ pg_GSS_error_int(PQExpBuffer str, const char *mprefix,
 	{
 		gss_display_status(&lmin_s, stat, type,
 						   GSS_C_NO_OID, &msg_ctx, &lmsg);
-		appendPQExpBuffer(str, "%s: %s\n", mprefix, (char *) lmsg.value);
+		appendPQExpBuffer(str, "%s: ", mprefix);
+		appendBinaryPQExpBuffer(str, lmsg.value, lmsg.length);
+		appendPQExpBufferChar(str, '\n');
 		gss_release_buffer(&lmin_s, &lmsg);
 	} while (msg_ctx);
 }
