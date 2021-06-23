@@ -83,7 +83,7 @@ step s1_commit: COMMIT;
 step s3_fornokeyupd: SELECT * FROM dont_forget FOR NO KEY UPDATE; <waiting ...>
 step s2_commit: COMMIT;
 step s3_fornokeyupd: <... completed>
-error in steps s2_commit s3_fornokeyupd: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 
 starting permutation: s1_lock s2_update s2_abort s3_forupd s1_commit
 step s1_lock: SELECT * FROM dont_forget FOR KEY SHARE;
@@ -123,4 +123,4 @@ step s1_commit: COMMIT;
 step s3_forupd: SELECT * FROM dont_forget FOR UPDATE; <waiting ...>
 step s2_commit: COMMIT;
 step s3_forupd: <... completed>
-error in steps s2_commit s3_forupd: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update

@@ -12,8 +12,9 @@ step s1i:
 step s2i: 
 		CREATE INDEX CONCURRENTLY mcic_two_pkey ON mcic_two (id)
 		WHERE unlck();
-
+ <waiting ...>
 step s1i: <... completed>
+step s2i: <... completed>
 unlck          
 
 t              

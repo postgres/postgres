@@ -609,7 +609,7 @@ s2: NOTICE:  trigger: name rep_b_i; when: BEFORE; lev: ROWs; op: INSERT; old: <N
 step s2_ins_a: INSERT INTO trigtest VALUES ('key-a', 'val-a-s2') RETURNING *; <waiting ...>
 step s1_c: COMMIT;
 step s2_ins_a: <... completed>
-error in steps s1_c s2_ins_a: ERROR:  duplicate key value violates unique constraint "trigtest_pkey"
+ERROR:  duplicate key value violates unique constraint "trigtest_pkey"
 step s2_c: COMMIT;
 step s0_rep: SELECT * FROM trigtest ORDER BY key, data
 key            data           
@@ -2023,7 +2023,7 @@ step s2_upd_a_data:
  <waiting ...>
 step s1_c: COMMIT;
 step s2_upd_a_data: <... completed>
-error in steps s1_c s2_upd_a_data: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2_c: COMMIT;
 step s0_rep: SELECT * FROM trigtest ORDER BY key, data
 key            data           
@@ -2136,7 +2136,7 @@ step s2_upd_a_data:
  <waiting ...>
 step s1_c: COMMIT;
 step s2_upd_a_data: <... completed>
-error in steps s1_c s2_upd_a_data: ERROR:  could not serialize access due to concurrent delete
+ERROR:  could not serialize access due to concurrent delete
 step s2_c: COMMIT;
 step s0_rep: SELECT * FROM trigtest ORDER BY key, data
 key            data           

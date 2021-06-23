@@ -18,19 +18,22 @@ step s1_grablock: SELECT * FROM pktab FOR KEY SHARE;
 id             data           
 
 1              2              
-step s1_advunlock1: SELECT pg_advisory_unlock(142857);
+step s1_advunlock1: SELECT pg_advisory_unlock(142857); <waiting ...>
+step s2_update: <... completed>
+step s1_advunlock1: <... completed>
 pg_advisory_unlock
 
 t              
-step s2_update: <... completed>
-step s1_advunlock2: SELECT pg_sleep(5), pg_advisory_unlock(285714);
-pg_sleep       pg_advisory_unlock
-
-               t              
+step s1_advunlock2: SELECT pg_advisory_unlock(285714); <waiting ...>
 step s3_update: <... completed>
-step s1_advunlock3: SELECT pg_sleep(5), pg_advisory_unlock(571428);
-pg_sleep       pg_advisory_unlock
+step s1_advunlock2: <... completed>
+pg_advisory_unlock
 
-               t              
+t              
+step s1_advunlock3: SELECT pg_advisory_unlock(571428); <waiting ...>
 step s4_update: <... completed>
+step s1_advunlock3: <... completed>
+pg_advisory_unlock
+
+t              
 step s1_commit: COMMIT;
