@@ -14,12 +14,12 @@ teardown
   DROP TABLE foo;
 }
 
-session "s1"
+session s1
 setup		{ BEGIN; }
-step "s1a"	{ SELECT * FROM foo FOR UPDATE NOWAIT; }
-step "s1b"	{ COMMIT; }
+step s1a	{ SELECT * FROM foo FOR UPDATE NOWAIT; }
+step s1b	{ COMMIT; }
 
-session "s2"
+session s2
 setup		{ BEGIN; }
-step "s2a"	{ SELECT * FROM foo FOR UPDATE NOWAIT; }
-step "s2b"	{ COMMIT; }
+step s2a	{ SELECT * FROM foo FOR UPDATE NOWAIT; }
+step s2b	{ COMMIT; }

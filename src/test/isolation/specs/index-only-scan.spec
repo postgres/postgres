@@ -23,7 +23,7 @@ teardown
   DROP TABLE taby;
 }
 
-session "s1"
+session s1
 setup
 {
   BEGIN ISOLATION LEVEL SERIALIZABLE;
@@ -31,10 +31,10 @@ setup
   SET LOCAL random_page_cost = 0.1;
   SET LOCAL cpu_tuple_cost = 0.03;
 }
-step "rxwy1" { DELETE FROM taby WHERE id = (SELECT min(id) FROM tabx); }
-step "c1" { COMMIT; }
+step rxwy1 { DELETE FROM taby WHERE id = (SELECT min(id) FROM tabx); }
+step c1 { COMMIT; }
 
-session "s2"
+session s2
 setup
 {
   BEGIN ISOLATION LEVEL SERIALIZABLE;
@@ -42,5 +42,5 @@ setup
   SET LOCAL random_page_cost = 0.1;
   SET LOCAL cpu_tuple_cost = 0.03;
 }
-step "rywx2" { DELETE FROM tabx WHERE id = (SELECT min(id) FROM taby); }
-step "c2" { COMMIT; }
+step rywx2 { DELETE FROM tabx WHERE id = (SELECT min(id) FROM taby); }
+step c2 { COMMIT; }

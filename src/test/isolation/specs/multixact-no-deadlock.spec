@@ -15,21 +15,21 @@ teardown
   DROP TABLE justthis;
 }
 
-session "s1"
+session s1
 setup			{ BEGIN; }
-step "s1lock"	{ SELECT * FROM justthis FOR SHARE; }
-step "s1svpt"	{ SAVEPOINT foo; }
-step "s1lock2"	{ SELECT * FROM justthis FOR SHARE; }
-step "s1c"		{ COMMIT; }
+step s1lock		{ SELECT * FROM justthis FOR SHARE; }
+step s1svpt		{ SAVEPOINT foo; }
+step s1lock2	{ SELECT * FROM justthis FOR SHARE; }
+step s1c		{ COMMIT; }
 
-session "s2"
+session s2
 setup			{ BEGIN; }
-step "s2lock"	{ SELECT * FROM justthis FOR SHARE; }	# ensure it's a multi
-step "s2c"		{ COMMIT; }
+step s2lock		{ SELECT * FROM justthis FOR SHARE; }	# ensure it's a multi
+step s2c		{ COMMIT; }
 
-session "s3"
+session s3
 setup			{ BEGIN; }
-step "s3lock"	{ SELECT * FROM justthis FOR UPDATE; }
-step "s3c"		{ COMMIT; }
+step s3lock		{ SELECT * FROM justthis FOR UPDATE; }
+step s3c		{ COMMIT; }
 
-permutation "s1lock" "s2lock" "s1svpt" "s3lock" "s1lock2" "s2c" "s1c" "s3c"
+permutation s1lock s2lock s1svpt s3lock s1lock2 s2c s1c s3c

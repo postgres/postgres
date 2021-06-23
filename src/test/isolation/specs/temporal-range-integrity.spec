@@ -25,14 +25,14 @@ teardown
   DROP TABLE statute, offense;
 }
 
-session "s1"
+session s1
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "rx1"	{ SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15'); }
-step "wy1"	{ INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15'); }
-step "c1"	{ COMMIT; }
+step rx1	{ SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15'); }
+step wy1	{ INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15'); }
+step c1		{ COMMIT; }
 
-session "s2"
+session s2
 setup		{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "ry2"	{ SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01'; }
-step "wx2"	{ DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01'; }
-step "c2"	{ COMMIT; }
+step ry2	{ SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01'; }
+step wx2	{ DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01'; }
+step c2		{ COMMIT; }
