@@ -6,13 +6,17 @@ step s1delc1: ALTER TABLE c1 NO INHERIT p;
 step s2sel: SELECT SUM(a) FROM p; <waiting ...>
 step s1c: COMMIT;
 step s2sel: <... completed>
-sum            
+sum
+---
+ 11
+(1 row)
 
-11             
 step s2sel: SELECT SUM(a) FROM p;
-sum            
+sum
+---
+  1
+(1 row)
 
-1              
 
 starting permutation: s1b s1delc1 s1addc2 s2sel s1c s2sel
 step s1b: BEGIN;
@@ -21,13 +25,17 @@ step s1addc2: ALTER TABLE c2 INHERIT p;
 step s2sel: SELECT SUM(a) FROM p; <waiting ...>
 step s1c: COMMIT;
 step s2sel: <... completed>
-sum            
+sum
+---
+ 11
+(1 row)
 
-11             
 step s2sel: SELECT SUM(a) FROM p;
-sum            
+sum
+---
+101
+(1 row)
 
-101            
 
 starting permutation: s1b s1dropc1 s2sel s1c s2sel
 step s1b: BEGIN;
@@ -35,13 +43,17 @@ step s1dropc1: DROP TABLE c1;
 step s2sel: SELECT SUM(a) FROM p; <waiting ...>
 step s1c: COMMIT;
 step s2sel: <... completed>
-sum            
+sum
+---
+  1
+(1 row)
 
-1              
 step s2sel: SELECT SUM(a) FROM p;
-sum            
+sum
+---
+  1
+(1 row)
 
-1              
 
 starting permutation: s1b s1delc1 s1modc1a s2sel s1c s2sel
 step s1b: BEGIN;
@@ -52,6 +64,8 @@ step s1c: COMMIT;
 step s2sel: <... completed>
 ERROR:  attribute "a" of relation "c1" does not match parent's type
 step s2sel: SELECT SUM(a) FROM p;
-sum            
+sum
+---
+  1
+(1 row)
 
-1              

@@ -2,261 +2,353 @@ Parsed test spec with 3 sessions
 
 starting permutation: wx1 wx2 c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
 step c1: COMMIT;
 step wx2: <... completed>
-balance        
+balance
+-------
+    850
+(1 row)
 
-850            
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    850
+savings  |    600
+(2 rows)
 
-checking       850            
-savings        600            
 
 starting permutation: wy1 wy2 c1 c2 read
 step wy1: UPDATE accounts SET balance = balance + 500 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1100
+(1 row)
 
-1100           
 step wy2: UPDATE accounts SET balance = balance + 1000 WHERE accountid = 'checking' AND balance < 1000  RETURNING balance; <waiting ...>
 step c1: COMMIT;
 step wy2: <... completed>
-balance        
+balance
+-------
+(0 rows)
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1100
+savings  |    600
+(2 rows)
 
-checking       1100           
-savings        600            
 
 starting permutation: wx1 wx2 r1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
 step r1: ROLLBACK;
 step wx2: <... completed>
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1050
+savings  |    600
+(2 rows)
 
-checking       1050           
-savings        600            
 
 starting permutation: wy1 wy2 r1 c2 read
 step wy1: UPDATE accounts SET balance = balance + 500 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1100
+(1 row)
 
-1100           
 step wy2: UPDATE accounts SET balance = balance + 1000 WHERE accountid = 'checking' AND balance < 1000  RETURNING balance; <waiting ...>
 step r1: ROLLBACK;
 step wy2: <... completed>
-balance        
+balance
+-------
+   1600
+(1 row)
 
-1600           
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1600
+savings  |    600
+(2 rows)
 
-checking       1600           
-savings        600            
 
 starting permutation: wx1 d1 wx2 c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
 step c1: COMMIT;
 step wx2: <... completed>
-balance        
+balance
+-------
+(0 rows)
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+savings  |    600
+(1 row)
 
-savings        600            
 
 starting permutation: wx2 d1 c2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
 step c2: COMMIT;
 step d1: <... completed>
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+savings  |    600
+(1 row)
 
-savings        600            
 
 starting permutation: wx2 wx2 d1 c2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1500
+(1 row)
 
-1500           
 step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
 step c2: COMMIT;
 step d1: <... completed>
-balance        
+balance
+-------
+(0 rows)
 
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1500
+savings  |    600
+(2 rows)
 
-checking       1500           
-savings        600            
 
 starting permutation: wx2 d2 d1 c2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step d2: DELETE FROM accounts WHERE accountid = 'checking';
 step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
 step c2: COMMIT;
 step d1: <... completed>
-balance        
+balance
+-------
+(0 rows)
 
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+savings  |    600
+(1 row)
 
-savings        600            
 
 starting permutation: wx1 d1 wx2 r1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
 step r1: ROLLBACK;
 step wx2: <... completed>
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1050
+savings  |    600
+(2 rows)
 
-checking       1050           
-savings        600            
 
 starting permutation: wx2 d1 r2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
 step r2: ROLLBACK;
 step d1: <... completed>
-balance        
+balance
+-------
+    600
+(1 row)
 
-600            
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+savings  |    600
+(1 row)
 
-savings        600            
 
 starting permutation: wx2 wx2 d1 r2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1500
+(1 row)
 
-1500           
 step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
 step r2: ROLLBACK;
 step d1: <... completed>
-balance        
+balance
+-------
+    600
+(1 row)
 
-600            
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+savings  |    600
+(1 row)
 
-savings        600            
 
 starting permutation: wx2 d2 d1 r2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step d2: DELETE FROM accounts WHERE accountid = 'checking';
 step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
 step r2: ROLLBACK;
 step d1: <... completed>
-balance        
+balance
+-------
+    600
+(1 row)
 
-600            
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+savings  |    600
+(1 row)
 
-savings        600            
 
 starting permutation: d1 wx2 c1 c2 read
 step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance;
-balance        
+balance
+-------
+    600
+(1 row)
 
-600            
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
 step c1: COMMIT;
 step wx2: <... completed>
-balance        
+balance
+-------
+(0 rows)
 
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+savings  |    600
+(1 row)
 
-savings        600            
 
 starting permutation: d1 wx2 r1 c2 read
 step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance;
-balance        
+balance
+-------
+    600
+(1 row)
 
-600            
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
 step r1: ROLLBACK;
 step wx2: <... completed>
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1050
+savings  |    600
+(2 rows)
 
-checking       1050           
-savings        600            
 
 starting permutation: wnested2 c1 c2 read
 s2: WARNING:  upid: text checking = text checking: t
@@ -279,20 +371,26 @@ step wnested2:
 step c1: COMMIT;
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   -600
+savings  |    600
+(2 rows)
 
-checking       -600           
-savings        600            
 
 starting permutation: wx1 wxext1 wnested2 c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 s2: WARNING:  upid: text checking = text checking: t
 s2: WARNING:  up: numeric 600 > numeric 200.0: t
 s2: WARNING:  lock_id: text checking = text checking: t
@@ -322,24 +420,32 @@ s2: WARNING:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   -800
+savings  |    600
+(2 rows)
 
-checking       -800           
-savings        600            
 
 starting permutation: wx1 wx1 wxext1 wnested2 c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    200
+(1 row)
 
-200            
 step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 s2: WARNING:  upid: text checking = text checking: t
 s2: WARNING:  up: numeric 600 > numeric 200.0: t
 s2: WARNING:  lock_id: text checking = text checking: t
@@ -365,28 +471,38 @@ s2: WARNING:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    200
+savings  |    600
+(2 rows)
 
-checking       200            
-savings        600            
 
 starting permutation: wx1 wx1 wxext1 wxext1 wnested2 c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    200
+(1 row)
 
-200            
 step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    200
+(1 row)
 
-200            
 s2: WARNING:  upid: text checking = text checking: t
 s2: WARNING:  up: numeric 600 > numeric 200.0: t
 s2: WARNING:  lock_id: text checking = text checking: t
@@ -411,24 +527,32 @@ s2: WARNING:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    200
+savings  |    600
+(2 rows)
 
-checking       200            
-savings        600            
 
 starting permutation: wx1 wxext1 wxext1 wnested2 c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    200
+(1 row)
 
-200            
 s2: WARNING:  upid: text checking = text checking: t
 s2: WARNING:  up: numeric 600 > numeric 200.0: t
 s2: WARNING:  lock_id: text checking = text checking: t
@@ -453,16 +577,20 @@ s2: WARNING:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    400
+savings  |    600
+(2 rows)
 
-checking       400            
-savings        600            
 
 starting permutation: wx1 tocds1 wnested2 c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step tocds1: UPDATE accounts SET accountid = 'cds' WHERE accountid = 'checking';
 s2: WARNING:  upid: text checking = text checking: t
 s2: WARNING:  up: numeric 600 > numeric 200.0: t
@@ -486,16 +614,20 @@ s2: WARNING:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+cds      |    400
+savings  |    600
+(2 rows)
 
-cds            400            
-savings        600            
 
 starting permutation: wx1 tocdsext1 wnested2 c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step tocdsext1: UPDATE accounts_ext SET accountid = 'cds' WHERE accountid = 'checking';
 s2: WARNING:  upid: text checking = text checking: t
 s2: WARNING:  up: numeric 600 > numeric 200.0: t
@@ -520,77 +652,99 @@ s2: WARNING:  upid: text savings = text checking: f
 step wnested2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    400
+savings  |    600
+(2 rows)
 
-checking       400            
-savings        600            
 
 starting permutation: wx1 updwcte c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step updwcte: WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *) UPDATE accounts a SET balance = doup.balance + 100 FROM doup RETURNING *; <waiting ...>
 step c1: COMMIT;
 step updwcte: <... completed>
-accountid      balance        accountid      balance        
+accountid|balance|accountid|balance
+---------+-------+---------+-------
+savings  |   1600|checking |   1500
+(1 row)
 
-savings        1600           checking       1500           
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1500
+savings  |   1600
+(2 rows)
 
-checking       1500           
-savings        1600           
 
 starting permutation: wx1 updwctefail c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step updwctefail: WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *, update_checking(999)) UPDATE accounts a SET balance = doup.balance + 100 FROM doup RETURNING *; <waiting ...>
 step c1: COMMIT;
 step updwctefail: <... completed>
 ERROR:  tuple to be updated was already modified by an operation triggered by the current command
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    400
+savings  |    600
+(2 rows)
 
-checking       400            
-savings        600            
 
 starting permutation: wx1 delwcte c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step delwcte: WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *) DELETE FROM accounts a USING doup RETURNING *; <waiting ...>
 step c1: COMMIT;
 step delwcte: <... completed>
-accountid      balance        accountid      balance        
+accountid|balance|accountid|balance
+---------+-------+---------+-------
+savings  |    600|checking |   1500
+(1 row)
 
-savings        600            checking       1500           
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1500
+(1 row)
 
-checking       1500           
 
 starting permutation: wx1 delwctefail c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+    400
+(1 row)
 
-400            
 step delwctefail: WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *, update_checking(999)) DELETE FROM accounts a USING doup RETURNING *; <waiting ...>
 step c1: COMMIT;
 step delwctefail: <... completed>
 ERROR:  tuple to be deleted was already modified by an operation triggered by the current command
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    400
+savings  |    600
+(2 rows)
 
-checking       400            
-savings        600            
 
 starting permutation: upsert1 upsert2 c1 c2 read
 step upsert1: 
@@ -613,32 +767,38 @@ step c1: COMMIT;
 step upsert2: <... completed>
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |    600
+savings  |   2334
+(2 rows)
 
-checking       600            
-savings        2334           
 
 starting permutation: readp1 writep1 readp2 c1 c2
 step readp1: SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE;
-tableoid       ctid           a              b              c              
+tableoid|ctid |a|b|c
+--------+-----+-+-+-
+c1      |(0,1)|0|0|0
+c1      |(0,4)|0|1|0
+c2      |(0,1)|1|0|0
+c2      |(0,4)|1|1|0
+c3      |(0,1)|2|0|0
+c3      |(0,4)|2|1|0
+(6 rows)
 
-c1             (0,1)          0              0              0              
-c1             (0,4)          0              1              0              
-c2             (0,1)          1              0              0              
-c2             (0,4)          1              1              0              
-c3             (0,1)          2              0              0              
-c3             (0,4)          2              1              0              
 step writep1: UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0;
 step readp2: SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE; <waiting ...>
 step c1: COMMIT;
 step readp2: <... completed>
-tableoid       ctid           a              b              c              
+tableoid|ctid |a|b|c
+--------+-----+-+-+-
+c1      |(0,1)|0|0|0
+c1      |(0,4)|0|1|0
+c2      |(0,1)|1|0|0
+c3      |(0,1)|2|0|0
+c3      |(0,4)|2|1|0
+(5 rows)
 
-c1             (0,1)          0              0              0              
-c1             (0,4)          0              1              0              
-c2             (0,1)          1              0              0              
-c3             (0,1)          2              0              0              
-c3             (0,4)          2              1              0              
 step c2: COMMIT;
 
 starting permutation: writep2 returningp1 c1 c2
@@ -649,28 +809,30 @@ step returningp1:
  <waiting ...>
 step c1: COMMIT;
 step returningp1: <... completed>
-a              b              c              
+a| b|c
+-+--+-
+1| 0|0
+1| 0|1
+1| 0|2
+1|-1|0
+1| 1|1
+1| 1|2
+1|-2|0
+1| 2|1
+1| 2|2
+1|-3|0
+2| 0|0
+2| 0|1
+2| 0|2
+2| 1|0
+2| 1|1
+2| 1|2
+2| 2|0
+2| 2|1
+2| 2|2
+2| 3|0
+(20 rows)
 
-1              0              0              
-1              0              1              
-1              0              2              
-1              -1             0              
-1              1              1              
-1              1              2              
-1              -2             0              
-1              2              1              
-1              2              2              
-1              -3             0              
-2              0              0              
-2              0              1              
-2              0              2              
-2              1              0              
-2              1              1              
-2              1              2              
-2              2              0              
-2              2              1              
-2              2              2              
-2              3              0              
 step c2: COMMIT;
 
 starting permutation: writep3a writep3b c1 c2
@@ -682,9 +844,11 @@ step c2: COMMIT;
 
 starting permutation: wx2 partiallock c2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step partiallock: 
 	SELECT * FROM accounts a1, accounts a2
 	  WHERE a1.accountid = a2.accountid
@@ -692,22 +856,28 @@ step partiallock:
  <waiting ...>
 step c2: COMMIT;
 step partiallock: <... completed>
-accountid      balance        accountid      balance        
+accountid|balance|accountid|balance
+---------+-------+---------+-------
+checking |   1050|checking |    600
+savings  |    600|savings  |    600
+(2 rows)
 
-checking       1050           checking       600            
-savings        600            savings        600            
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1050
+savings  |    600
+(2 rows)
 
-checking       1050           
-savings        600            
 
 starting permutation: wx2 lockwithvalues c2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
-balance        
+balance
+-------
+   1050
+(1 row)
 
-1050           
 step lockwithvalues: 
 	-- Reference rowmark column that differs in type from targetlist at some attno.
 	-- See CAHU7rYZo_C4ULsAx_LAj8az9zqgrD8WDd4hTegDTMM1LMqrBsg@mail.gmail.com
@@ -717,16 +887,20 @@ step lockwithvalues:
  <waiting ...>
 step c2: COMMIT;
 step lockwithvalues: <... completed>
-accountid      balance        id             
+accountid|balance|id      
+---------+-------+--------
+checking |   1050|checking
+savings  |    600|savings 
+(2 rows)
 
-checking       1050           checking       
-savings        600            savings        
 step c1: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
-accountid      balance        
+accountid|balance
+---------+-------
+checking |   1050
+savings  |    600
+(2 rows)
 
-checking       1050           
-savings        600            
 
 starting permutation: wx2_ext partiallock_ext c2 c1 read_ext
 step wx2_ext: UPDATE accounts_ext SET balance = balance + 450;
@@ -737,16 +911,20 @@ step partiallock_ext:
  <waiting ...>
 step c2: COMMIT;
 step partiallock_ext: <... completed>
-accountid      balance        other          newcol         newcol2        accountid      balance        other          newcol         newcol2        
+accountid|balance|other|newcol|newcol2|accountid|balance|other|newcol|newcol2
+---------+-------+-----+------+-------+---------+-------+-----+------+-------
+checking |   1050|other|    42|       |checking |    600|other|    42|       
+savings  |   1150|     |    42|       |savings  |    700|     |    42|       
+(2 rows)
 
-checking       1050           other          42                            checking       600            other          42                            
-savings        1150                          42                            savings        700                           42                            
 step c1: COMMIT;
 step read_ext: SELECT * FROM accounts_ext ORDER BY accountid;
-accountid      balance        other          newcol         newcol2        
+accountid|balance|other|newcol|newcol2
+---------+-------+-----+------+-------
+checking |   1050|other|    42|       
+savings  |   1150|     |    42|       
+(2 rows)
 
-checking       1050           other          42                            
-savings        1150                          42                            
 
 starting permutation: updateforss readforss c1 c2
 step updateforss: 
@@ -762,9 +940,11 @@ step readforss:
  <waiting ...>
 step c1: COMMIT;
 step readforss: <... completed>
-ta_id          ta_value       tb_row         
+ta_id|ta_value      |tb_row         
+-----+--------------+---------------
+    1|newTableAValue|(1,tableBValue)
+(1 row)
 
-1              newTableAValue (1,tableBValue)
 step c2: COMMIT;
 
 starting permutation: updateforcip updateforcip2 c1 c2 read_a
@@ -778,9 +958,11 @@ step c1: COMMIT;
 step updateforcip2: <... completed>
 step c2: COMMIT;
 step read_a: SELECT * FROM table_a ORDER BY id;
-id             value          
+id|value   
+--+--------
+ 1|newValue
+(1 row)
 
-1              newValue       
 
 starting permutation: updateforcip updateforcip3 c1 c2 read_a
 step updateforcip: 
@@ -794,9 +976,11 @@ step c1: COMMIT;
 step updateforcip3: <... completed>
 step c2: COMMIT;
 step read_a: SELECT * FROM table_a ORDER BY id;
-id             value          
+id|value   
+--+--------
+ 1|newValue
+(1 row)
 
-1              newValue       
 
 starting permutation: wrtwcte readwcte c1 c2
 step wrtwcte: UPDATE table_a SET value = 'tableAValue2' WHERE id = 1;
@@ -815,9 +999,11 @@ step readwcte:
 step c1: COMMIT;
 step c2: COMMIT;
 step readwcte: <... completed>
-id             value          
+id|value       
+--+------------
+ 1|tableAValue2
+(1 row)
 
-1              tableAValue2   
 
 starting permutation: wrjt selectjoinforupdate c2 c1
 step wrjt: UPDATE jointest SET data = 42 WHERE id = 7;
@@ -831,25 +1017,29 @@ step selectjoinforupdate:
  <waiting ...>
 step c2: COMMIT;
 step selectjoinforupdate: <... completed>
-QUERY PLAN     
-
-LockRows       
-  ->  Merge Join
-        Merge Cond: (a.id = b.id)
+QUERY PLAN                                                
+----------------------------------------------------------
+LockRows                                                  
+  ->  Merge Join                                          
+        Merge Cond: (a.id = b.id)                         
         ->  Index Scan using jointest_id_idx on jointest a
         ->  Index Scan using jointest_id_idx on jointest b
-id             data           id             data           
+(5 rows)
 
-1              0              1              0              
-2              0              2              0              
-3              0              3              0              
-4              0              4              0              
-5              0              5              0              
-6              0              6              0              
-7              42             7              42             
-8              0              8              0              
-9              0              9              0              
-10             0              10             0              
+id|data|id|data
+--+----+--+----
+ 1|   0| 1|   0
+ 2|   0| 2|   0
+ 3|   0| 3|   0
+ 4|   0| 4|   0
+ 5|   0| 5|   0
+ 6|   0| 6|   0
+ 7|  42| 7|  42
+ 8|   0| 8|   0
+ 9|   0| 9|   0
+10|   0|10|   0
+(10 rows)
+
 step c1: COMMIT;
 
 starting permutation: wrjt selectresultforupdate c2 c1
@@ -868,27 +1058,33 @@ step selectresultforupdate:
  <waiting ...>
 step c2: COMMIT;
 step selectresultforupdate: <... completed>
-x              y              id             value          id             data           
+x|y|id|value      |id|data
+-+-+--+-----------+--+----
+1|7| 1|tableAValue| 7|   0
+(1 row)
 
-1              7              1              tableAValue    7              0              
-QUERY PLAN     
-
-LockRows       
-  Output: 1, 7, a.id, a.value, jt.id, jt.data, jt.ctid, a.ctid
-  ->  Nested Loop Left Join
+QUERY PLAN                                                          
+--------------------------------------------------------------------
+LockRows                                                            
+  Output: 1, 7, a.id, a.value, jt.id, jt.data, jt.ctid, a.ctid      
+  ->  Nested Loop Left Join                                         
         Output: 1, 7, a.id, a.value, jt.id, jt.data, jt.ctid, a.ctid
-        ->  Nested Loop
-              Output: jt.id, jt.data, jt.ctid
-              ->  Seq Scan on public.jointest jt
-                    Output: jt.id, jt.data, jt.ctid
-                    Filter: (jt.id = 7)
-              ->  Result
-        ->  Seq Scan on public.table_a a
-              Output: a.id, a.value, a.ctid
-              Filter: (a.id = 1)
-x              y              id             value          id             data           
+        ->  Nested Loop                                             
+              Output: jt.id, jt.data, jt.ctid                       
+              ->  Seq Scan on public.jointest jt                    
+                    Output: jt.id, jt.data, jt.ctid                 
+                    Filter: (jt.id = 7)                             
+              ->  Result                                            
+        ->  Seq Scan on public.table_a a                            
+              Output: a.id, a.value, a.ctid                         
+              Filter: (a.id = 1)                                    
+(13 rows)
 
-1              7              1              tableAValue    7              42             
+x|y|id|value      |id|data
+-+-+--+-----------+--+----
+1|7| 1|tableAValue| 7|  42
+(1 row)
+
 step c1: COMMIT;
 
 starting permutation: wrtwcte multireadwcte c1 c2
@@ -902,9 +1098,11 @@ step multireadwcte:
 step c1: COMMIT;
 step c2: COMMIT;
 step multireadwcte: <... completed>
-subid          id             
+subid|id
+-----+--
+    1| 1
+(1 row)
 
-1              1              
 
 starting permutation: simplepartupdate complexpartupdate c1 c2
 step simplepartupdate: 
@@ -922,9 +1120,11 @@ starting permutation: simplepartupdate_route1to2 complexpartupdate_route_err1 c1
 step simplepartupdate_route1to2: 
 	update parttbl set a = 2 where c = 1 returning *;
 
-a              b              c              
+a|b|c
+-+-+-
+2|1|1
+(1 row)
 
-2              1              1              
 step complexpartupdate_route_err1: 
 	with u as (update another_parttbl set a = 1 returning another_parttbl.*)
 	update parttbl p set a = u.a from u where p.a = u.a and p.c = 1 returning p.*;
@@ -938,34 +1138,42 @@ starting permutation: simplepartupdate_noroute complexpartupdate_route c1 c2
 step simplepartupdate_noroute: 
 	update parttbl set b = 2 where c = 1 returning *;
 
-a              b              c              
+a|b|c
+-+-+-
+1|2|1
+(1 row)
 
-1              2              1              
 step complexpartupdate_route: 
 	with u as (update another_parttbl set a = 1 returning another_parttbl.*)
 	update parttbl p set a = p.b from u where p.a = u.a and p.c = 1 returning p.*;
  <waiting ...>
 step c1: COMMIT;
 step complexpartupdate_route: <... completed>
-a              b              c              
+a|b|c
+-+-+-
+2|2|1
+(1 row)
 
-2              2              1              
 step c2: COMMIT;
 
 starting permutation: simplepartupdate_noroute complexpartupdate_doesnt_route c1 c2
 step simplepartupdate_noroute: 
 	update parttbl set b = 2 where c = 1 returning *;
 
-a              b              c              
+a|b|c
+-+-+-
+1|2|1
+(1 row)
 
-1              2              1              
 step complexpartupdate_doesnt_route: 
 	with u as (update another_parttbl set a = 1 returning another_parttbl.*)
 	update parttbl p set a = 3 - p.b from u where p.a = u.a and p.c = 1 returning p.*;
  <waiting ...>
 step c1: COMMIT;
 step complexpartupdate_doesnt_route: <... completed>
-a              b              c              
+a|b|c
+-+-+-
+1|2|1
+(1 row)
 
-1              2              1              
 step c2: COMMIT;

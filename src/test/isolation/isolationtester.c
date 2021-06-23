@@ -1090,23 +1090,13 @@ step_has_blocker(PermutationStep *pstep)
 static void
 printResultSet(PGresult *res)
 {
-	int			nFields;
-	int			i,
-				j;
+	PQprintOpt	popt;
 
-	/* first, print out the attribute names */
-	nFields = PQnfields(res);
-	for (i = 0; i < nFields; i++)
-		printf("%-15s", PQfname(res, i));
-	printf("\n\n");
-
-	/* next, print out the rows */
-	for (i = 0; i < PQntuples(res); i++)
-	{
-		for (j = 0; j < nFields; j++)
-			printf("%-15s", PQgetvalue(res, i, j));
-		printf("\n");
-	}
+	memset(&popt, 0, sizeof(popt));
+	popt.header = true;
+	popt.align = true;
+	popt.fieldSep = "|";
+	PQprint(stdout, res, &popt);
 }
 
 /* notice processor for regular user sessions */

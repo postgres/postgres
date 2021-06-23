@@ -2,48 +2,66 @@ Parsed test spec with 2 sessions
 
 starting permutation: s1a s2a s2b s1b s2c
 step s1a: SELECT * FROM queue ORDER BY id FOR SHARE SKIP LOCKED LIMIT 1;
-id             data           status         
+id|data|status
+--+----+------
+ 1|foo |NEW   
+(1 row)
 
-1              foo            NEW            
 step s2a: SELECT * FROM queue ORDER BY id FOR SHARE SKIP LOCKED LIMIT 1;
-id             data           status         
+id|data|status
+--+----+------
+ 1|foo |NEW   
+(1 row)
 
-1              foo            NEW            
 step s2b: SELECT * FROM queue ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1;
-id             data           status         
+id|data|status
+--+----+------
+ 2|bar |NEW   
+(1 row)
 
-2              bar            NEW            
 step s1b: COMMIT;
 step s2c: COMMIT;
 
 starting permutation: s2a s1a s2b s1b s2c
 step s2a: SELECT * FROM queue ORDER BY id FOR SHARE SKIP LOCKED LIMIT 1;
-id             data           status         
+id|data|status
+--+----+------
+ 1|foo |NEW   
+(1 row)
 
-1              foo            NEW            
 step s1a: SELECT * FROM queue ORDER BY id FOR SHARE SKIP LOCKED LIMIT 1;
-id             data           status         
+id|data|status
+--+----+------
+ 1|foo |NEW   
+(1 row)
 
-1              foo            NEW            
 step s2b: SELECT * FROM queue ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1;
-id             data           status         
+id|data|status
+--+----+------
+ 2|bar |NEW   
+(1 row)
 
-2              bar            NEW            
 step s1b: COMMIT;
 step s2c: COMMIT;
 
 starting permutation: s2a s2b s1a s1b s2c
 step s2a: SELECT * FROM queue ORDER BY id FOR SHARE SKIP LOCKED LIMIT 1;
-id             data           status         
+id|data|status
+--+----+------
+ 1|foo |NEW   
+(1 row)
 
-1              foo            NEW            
 step s2b: SELECT * FROM queue ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1;
-id             data           status         
+id|data|status
+--+----+------
+ 1|foo |NEW   
+(1 row)
 
-1              foo            NEW            
 step s1a: SELECT * FROM queue ORDER BY id FOR SHARE SKIP LOCKED LIMIT 1;
-id             data           status         
+id|data|status
+--+----+------
+ 2|bar |NEW   
+(1 row)
 
-2              bar            NEW            
 step s1b: COMMIT;
 step s2c: COMMIT;

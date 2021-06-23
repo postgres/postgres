@@ -6,9 +6,11 @@ step insert2: INSERT INTO upsert(key, payload) VALUES('FOOFOO', 'insert2') ON CO
 step c1: COMMIT;
 step insert2: <... completed>
 step select2: SELECT * FROM upsert;
-key            payload        
+key   |payload                   
+------+--------------------------
+FOOFOO|insert1 updated by insert2
+(1 row)
 
-FOOFOO         insert1 updated by insert2
 step c2: COMMIT;
 
 starting permutation: insert1 insert2 a1 select2 c2
@@ -17,7 +19,9 @@ step insert2: INSERT INTO upsert(key, payload) VALUES('FOOFOO', 'insert2') ON CO
 step a1: ABORT;
 step insert2: <... completed>
 step select2: SELECT * FROM upsert;
-key            payload        
+key   |payload
+------+-------
+FOOFOO|insert2
+(1 row)
 
-FOOFOO         insert2        
 step c2: COMMIT;

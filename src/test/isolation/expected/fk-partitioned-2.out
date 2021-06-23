@@ -14,9 +14,11 @@ starting permutation: s1b s1d s2bs s2i s1c s2c
 step s1b: begin;
 step s1d: delete from ppk where a = 1;
 step s2bs: begin isolation level serializable; select 1;
-?column?       
+?column?
+--------
+       1
+(1 row)
 
-1              
 step s2i: insert into pfk values (1); <waiting ...>
 step s1c: commit;
 step s2i: <... completed>
@@ -36,9 +38,11 @@ step s2c: commit;
 starting permutation: s1b s2bs s1d s2i s1c s2c
 step s1b: begin;
 step s2bs: begin isolation level serializable; select 1;
-?column?       
+?column?
+--------
+       1
+(1 row)
 
-1              
 step s1d: delete from ppk where a = 1;
 step s2i: insert into pfk values (1); <waiting ...>
 step s1c: commit;
@@ -59,9 +63,11 @@ step s1c: commit;
 starting permutation: s1b s2bs s2i s1d s2c s1c
 step s1b: begin;
 step s2bs: begin isolation level serializable; select 1;
-?column?       
+?column?
+--------
+       1
+(1 row)
 
-1              
 step s2i: insert into pfk values (1);
 step s1d: delete from ppk where a = 1; <waiting ...>
 step s2c: commit;

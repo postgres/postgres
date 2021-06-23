@@ -10,11 +10,13 @@ step s2i: <... completed>
 ERROR:  new row for relation "tpart_default" violates partition constraint
 step s2c: commit;
 step s2s: select tableoid::regclass, * from tpart;
-tableoid       i              j              
+tableoid|  i|j  
+--------+---+---
+tpart_2 |110|xxx
+tpart_2 |120|yyy
+tpart_2 |150|zzz
+(3 rows)
 
-tpart_2        110            xxx            
-tpart_2        120            yyy            
-tpart_2        150            zzz            
 
 starting permutation: s1b s1a s2b s2i2 s1c s2c s2s
 step s1b: begin;
@@ -26,11 +28,13 @@ step s2i2: <... completed>
 ERROR:  new row for relation "tpart_default" violates partition constraint
 step s2c: commit;
 step s2s: select tableoid::regclass, * from tpart;
-tableoid       i              j              
+tableoid|  i|j  
+--------+---+---
+tpart_2 |110|xxx
+tpart_2 |120|yyy
+tpart_2 |150|zzz
+(3 rows)
 
-tpart_2        110            xxx            
-tpart_2        120            yyy            
-tpart_2        150            zzz            
 
 starting permutation: s1b s2b s2i s1a s2c s1c s2s
 step s1b: begin;
@@ -42,8 +46,10 @@ step s1a: <... completed>
 ERROR:  updated partition constraint for default partition would be violated by some row
 step s1c: commit;
 step s2s: select tableoid::regclass, * from tpart;
-tableoid       i              j              
+tableoid             |  i|j  
+---------------------+---+---
+tpart_default_default|110|xxx
+tpart_default_default|120|yyy
+tpart_default_default|150|zzz
+(3 rows)
 
-tpart_default_default110            xxx            
-tpart_default_default120            yyy            
-tpart_default_default150            zzz            
