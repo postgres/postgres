@@ -3,19 +3,25 @@ Parsed test spec with 2 sessions
 starting permutation: s2a s1a s2b s2c s2d s2e s1b s2f
 step s2a: SELECT pg_advisory_lock(0);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1a: SELECT * FROM foo WHERE pg_advisory_lock(0) IS NOT NULL ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED; <waiting ...>
 step s2b: UPDATE foo SET data = data WHERE id = 1;
 step s2c: BEGIN;
 step s2d: UPDATE foo SET data = data WHERE id = 1;
 step s2e: SELECT pg_advisory_unlock(0);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s1a: <... completed>
-id             data           
+id|data
+--+----
+ 2|x   
+(1 row)
 
-2              x              
 step s1b: COMMIT;
 step s2f: COMMIT;

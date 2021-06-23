@@ -5,663 +5,927 @@ step s1b: BEGIN;
 step s2b1: BEGIN ISOLATION LEVEL READ COMMITTED;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b1 s1l s1u s2l s1c s1ul s2c
 step s1b: BEGIN;
 step s2b1: BEGIN ISOLATION LEVEL READ COMMITTED;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1c: COMMIT;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b1 s1l s2l s1ul s1u s1c s2c
 step s1b: BEGIN;
 step s2b1: BEGIN ISOLATION LEVEL READ COMMITTED;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b1 s1l s1u s1ul s2l s1c s2c
 step s1b: BEGIN;
 step s2b1: BEGIN ISOLATION LEVEL READ COMMITTED;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE;
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1c: COMMIT;
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b1 s1l s2l s1u s1c s1hint s1ul s2c
 step s1b: BEGIN;
 step s2b1: BEGIN ISOLATION LEVEL READ COMMITTED;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b1 s1l s1u s2l s1c s1hint s1ul s2c
 step s1b: BEGIN;
 step s2b1: BEGIN ISOLATION LEVEL READ COMMITTED;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b1 s1l s2l s1ul s1u s1c s1hint s2c
 step s1b: BEGIN;
 step s2b1: BEGIN ISOLATION LEVEL READ COMMITTED;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b1 s1l s1u s1ul s2l s1c s1hint s2c
 step s1b: BEGIN;
 step s2b1: BEGIN ISOLATION LEVEL READ COMMITTED;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE;
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b2 s1l s2l s1u s1c s1ul s2c
 step s1b: BEGIN;
 step s2b2: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b2 s1l s1u s2l s1c s1ul s2c
 step s1b: BEGIN;
 step s2b2: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1c: COMMIT;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b2 s1l s2l s1ul s1u s1c s2c
 step s1b: BEGIN;
 step s2b2: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b2 s1l s1u s1ul s2l s1c s2c
 step s1b: BEGIN;
 step s2b2: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE;
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1c: COMMIT;
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b2 s1l s2l s1u s1c s1hint s1ul s2c
 step s1b: BEGIN;
 step s2b2: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b2 s1l s1u s2l s1c s1hint s1ul s2c
 step s1b: BEGIN;
 step s2b2: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b2 s1l s2l s1ul s1u s1c s1hint s2c
 step s1b: BEGIN;
 step s2b2: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b2 s1l s1u s1ul s2l s1c s1hint s2c
 step s1b: BEGIN;
 step s2b2: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE;
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b3 s1l s2l s1u s1c s1ul s2c
 step s1b: BEGIN;
 step s2b3: BEGIN ISOLATION LEVEL SERIALIZABLE;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b3 s1l s1u s2l s1c s1ul s2c
 step s1b: BEGIN;
 step s2b3: BEGIN ISOLATION LEVEL SERIALIZABLE;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1c: COMMIT;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b3 s1l s2l s1ul s1u s1c s2c
 step s1b: BEGIN;
 step s2b3: BEGIN ISOLATION LEVEL SERIALIZABLE;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b3 s1l s1u s1ul s2l s1c s2c
 step s1b: BEGIN;
 step s2b3: BEGIN ISOLATION LEVEL SERIALIZABLE;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE;
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1c: COMMIT;
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b3 s1l s2l s1u s1c s1hint s1ul s2c
 step s1b: BEGIN;
 step s2b3: BEGIN ISOLATION LEVEL SERIALIZABLE;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b3 s1l s1u s2l s1c s1hint s1ul s2c
 step s1b: BEGIN;
 step s2b3: BEGIN ISOLATION LEVEL SERIALIZABLE;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b3 s1l s2l s1ul s1u s1c s1hint s2c
 step s1b: BEGIN;
 step s2b3: BEGIN ISOLATION LEVEL SERIALIZABLE;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE; <waiting ...>
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: <... completed>
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 
 starting permutation: s1b s2b3 s1l s1u s1ul s2l s1c s1hint s2c
 step s1b: BEGIN;
 step s2b3: BEGIN ISOLATION LEVEL SERIALIZABLE;
 step s1l: SELECT pg_advisory_lock(380170116);
 pg_advisory_lock
+----------------
+                
+(1 row)
 
-               
 step s1u: UPDATE lcu_table SET value = 'two' WHERE id = 1;
 step s1ul: SELECT pg_advisory_unlock(380170116);
 pg_advisory_unlock
+------------------
+t                 
+(1 row)
 
-t              
 step s2l: SELECT * FROM lcu_table WHERE pg_advisory_lock(380170116) IS NOT NULL FOR KEY SHARE;
-id             value          
+id|value
+--+-----
+ 1|one  
+(1 row)
 
-1              one            
 step s1c: COMMIT;
 step s1hint: SELECT * FROM lcu_table;
-id             value          
+id|value
+--+-----
+ 1|two  
+(1 row)
 
-1              two            
 step s2c: COMMIT;
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               
 pg_advisory_unlock_all
+----------------------
+                      
+(1 row)
 
-               

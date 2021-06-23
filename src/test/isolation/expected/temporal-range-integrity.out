@@ -2,28 +2,36 @@ Parsed test spec with 2 sessions
 
 starting permutation: rx1 wy1 c1 ry2 wx2 c2
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step c1: COMMIT;
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step c2: COMMIT;
 
 starting permutation: rx1 wy1 ry2 c1 wx2 c2
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step c1: COMMIT;
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -31,14 +39,18 @@ step c2: COMMIT;
 
 starting permutation: rx1 wy1 ry2 wx2 c1 c2
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step c1: COMMIT;
 step c2: COMMIT;
@@ -46,14 +58,18 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 wy1 ry2 wx2 c2 c1
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step c2: COMMIT;
 step c1: COMMIT;
@@ -61,13 +77,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 ry2 wy1 c1 wx2 c2
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step c1: COMMIT;
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
@@ -76,13 +96,17 @@ step c2: COMMIT;
 
 starting permutation: rx1 ry2 wy1 wx2 c1 c2
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step c1: COMMIT;
@@ -91,13 +115,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 ry2 wy1 wx2 c2 c1
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step c2: COMMIT;
@@ -106,13 +134,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 ry2 wx2 wy1 c1 c2
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step c1: COMMIT;
@@ -121,13 +153,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 ry2 wx2 wy1 c2 c1
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step c2: COMMIT;
@@ -136,13 +172,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 ry2 wx2 c2 wy1 c1
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step c2: COMMIT;
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
@@ -151,13 +191,17 @@ step c1: COMMIT;
 
 starting permutation: ry2 rx1 wy1 c1 wx2 c2
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step c1: COMMIT;
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
@@ -166,13 +210,17 @@ step c2: COMMIT;
 
 starting permutation: ry2 rx1 wy1 wx2 c1 c2
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step c1: COMMIT;
@@ -181,13 +229,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 rx1 wy1 wx2 c2 c1
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step c2: COMMIT;
@@ -196,13 +248,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 rx1 wx2 wy1 c1 c2
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step c1: COMMIT;
@@ -211,13 +267,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 rx1 wx2 wy1 c2 c1
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step c2: COMMIT;
@@ -226,13 +286,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 rx1 wx2 c2 wy1 c1
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step c2: COMMIT;
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
@@ -241,14 +305,18 @@ step c1: COMMIT;
 
 starting permutation: ry2 wx2 rx1 wy1 c1 c2
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step c1: COMMIT;
 step c2: COMMIT;
@@ -256,14 +324,18 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 wx2 rx1 wy1 c2 c1
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step c2: COMMIT;
 step c1: COMMIT;
@@ -271,14 +343,18 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 wx2 rx1 c2 wy1 c1
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step c2: COMMIT;
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -286,14 +362,18 @@ step c1: COMMIT;
 
 starting permutation: ry2 wx2 c2 rx1 wy1 c1
 step ry2: SELECT count(*) FROM offense WHERE statute_cite = '123.45(1)a' AND offense_date >= DATE '2008-01-01';
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: DELETE FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date = DATE '2008-01-01';
 step c2: COMMIT;
 step rx1: SELECT count(*) FROM statute WHERE statute_cite = '123.45(1)a' AND eff_date <= DATE '2009-05-15' AND (exp_date IS NULL OR exp_date > DATE '2009-05-15');
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wy1: INSERT INTO offense VALUES (1, '123.45(1)a', DATE '2009-05-15');
 step c1: COMMIT;

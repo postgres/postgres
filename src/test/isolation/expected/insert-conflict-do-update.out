@@ -6,9 +6,11 @@ step insert2: INSERT INTO upsert(key, val) VALUES(1, 'insert2') ON CONFLICT (key
 step c1: COMMIT;
 step insert2: <... completed>
 step select2: SELECT * FROM upsert;
-key            val            
+key|val                       
+---+--------------------------
+  1|insert1 updated by insert2
+(1 row)
 
-1              insert1 updated by insert2
 step c2: COMMIT;
 
 starting permutation: insert1 insert2 a1 select2 c2
@@ -17,7 +19,9 @@ step insert2: INSERT INTO upsert(key, val) VALUES(1, 'insert2') ON CONFLICT (key
 step a1: ABORT;
 step insert2: <... completed>
 step select2: SELECT * FROM upsert;
-key            val            
+key|val    
+---+-------
+  1|insert2
+(1 row)
 
-1              insert2        
 step c2: COMMIT;

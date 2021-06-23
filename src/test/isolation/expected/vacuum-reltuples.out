@@ -11,9 +11,11 @@ step stats:
     select relpages, reltuples from pg_class
      where oid='smalltbl'::regclass;
 
-relpages       reltuples      
+relpages|reltuples
+--------+---------
+       1|       21
+(1 row)
 
-1              21             
 
 starting permutation: modify open fetch1 vac close stats
 step modify: 
@@ -26,9 +28,11 @@ step open:
 step fetch1: 
     fetch next from c1;
 
-dummy          
+dummy
+-----
+    1
+(1 row)
 
-1              
 step vac: 
     vacuum smalltbl;
 
@@ -39,9 +43,11 @@ step stats:
     select relpages, reltuples from pg_class
      where oid='smalltbl'::regclass;
 
-relpages       reltuples      
+relpages|reltuples
+--------+---------
+       1|       20
+(1 row)
 
-1              20             
 
 starting permutation: modify vac stats
 step modify: 
@@ -54,6 +60,8 @@ step stats:
     select relpages, reltuples from pg_class
      where oid='smalltbl'::regclass;
 
-relpages       reltuples      
+relpages|reltuples
+--------+---------
+       1|       21
+(1 row)
 
-1              21             

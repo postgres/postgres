@@ -3,467 +3,627 @@ Parsed test spec with 2 sessions
 starting permutation: s1_begin s1_lcksvpt s1_tuplock1 s2_tuplock1 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock1 s2_tuplock2 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock1 s2_tuplock3 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock1 s2_tuplock4 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock4: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock2 s2_tuplock1 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock2 s2_tuplock2 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock2 s2_tuplock3 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock3: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock2 s2_tuplock4 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock4: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock3 s2_tuplock1 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock3 s2_tuplock2 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock2: SELECT * FROM multixact_conflict FOR SHARE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock2: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock3 s2_tuplock3 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock3: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock3 s2_tuplock4 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock4: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock4 s2_tuplock1 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock1: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock4 s2_tuplock2 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock2: SELECT * FROM multixact_conflict FOR SHARE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock2: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock4 s2_tuplock3 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock3: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_lcksvpt s1_tuplock4 s2_tuplock4 s1_commit
 step s1_begin: BEGIN;
 step s1_lcksvpt: SELECT * FROM multixact_conflict FOR KEY SHARE; SAVEPOINT foo;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock4: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_tuplock1 s2_tuplock1 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_tuplock1 s2_tuplock2 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_tuplock1 s2_tuplock3 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_tuplock1 s2_tuplock4 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock4: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_tuplock2 s2_tuplock1 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_tuplock2 s2_tuplock2 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_tuplock2 s2_tuplock3 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock3: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_tuplock2 s2_tuplock4 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock2: SELECT * FROM multixact_conflict FOR SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock4: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_tuplock3 s2_tuplock1 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s1_commit: COMMIT;
 
 starting permutation: s1_begin s1_tuplock3 s2_tuplock2 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock2: SELECT * FROM multixact_conflict FOR SHARE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock2: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_tuplock3 s2_tuplock3 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock3: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_tuplock3 s2_tuplock4 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock4: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_tuplock4 s2_tuplock1 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock1: SELECT * FROM multixact_conflict FOR KEY SHARE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock1: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_tuplock4 s2_tuplock2 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock2: SELECT * FROM multixact_conflict FOR SHARE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock2: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_tuplock4 s2_tuplock3 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock3: SELECT * FROM multixact_conflict FOR NO KEY UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock3: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
 
 starting permutation: s1_begin s1_tuplock4 s2_tuplock4 s1_commit
 step s1_begin: BEGIN;
 step s1_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE;
-a              
+a
+-
+1
+(1 row)
 
-1              
 step s2_tuplock4: SELECT * FROM multixact_conflict FOR UPDATE; <waiting ...>
 step s1_commit: COMMIT;
 step s2_tuplock4: <... completed>
-a              
+a
+-
+1
+(1 row)
 
-1              
