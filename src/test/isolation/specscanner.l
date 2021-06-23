@@ -34,16 +34,20 @@ static void addlitchar(char c);
 
 
 %x sql
-%x qstr
-
-digit			[0123456789]
-
-self			[,()*]
+%x qident
 
 non_newline		[^\n\r]
 space			[ \t\r\f]
 
 comment			("#"{non_newline}*)
+
+digit			[0-9]
+ident_start		[A-Za-z\200-\377_]
+ident_cont		[A-Za-z\200-\377_0-9\$]
+
+identifier		{ident_start}{ident_cont}*
+
+self			[,()*]
 
 %%
 
@@ -52,6 +56,7 @@ comment			("#"{non_newline}*)
 	litbufsize = LITBUF_INIT;
 %}
 
+ /* Keywords (must appear before the {identifier} rule!) */
 notices			{ return NOTICES; }
 permutation		{ return PERMUTATION; }
 session			{ return SESSION; }
@@ -59,33 +64,35 @@ setup			{ return SETUP; }
 step			{ return STEP; }
 teardown		{ return TEARDOWN; }
 
-{digit}+		{
-					yylval.integer = atoi(yytext);
-					return INTEGER;
-				}
-
-{self}			{ return yytext[0]; }
-
+ /* Whitespace and comments */
 [\n]			{ yyline++; }
 {comment}		{ /* ignore */ }
 {space}			{ /* ignore */ }
 
- /* Quoted strings: "foo" */
+ /* Plain identifiers */
+{identifier}	{
+					yylval.str = pg_strdup(yytext);
+					return(identifier);
+				}
+
+ /* Quoted identifiers: "foo" */
 \"				{
 					litbufpos = 0;
-					BEGIN(qstr);
+					BEGIN(qident);
 				}
-<qstr>\"		{
+<qident>\"\"	{ addlitchar(yytext[0]); }
+<qident>\"		{
 					litbuf[litbufpos] = '\0';
 					yylval.str = pg_strdup(litbuf);
 					BEGIN(INITIAL);
-					return(string_literal);
+					return(identifier);
 				}
-<qstr>.			{ addlitchar(yytext[0]); }
-<qstr>\n		{ yyerror("unexpected newline in quoted string"); }
-<qstr><<EOF>>	{ yyerror("unterminated quoted string"); }
+<qident>.		{ addlitchar(yytext[0]); }
+<qident>\n		{ yyerror("unexpected newline in quoted identifier"); }
+<qident><<EOF>>	{ yyerror("unterminated quoted identifier"); }
 
  /* SQL blocks: { UPDATE ... } */
+ /* We trim leading/trailing whitespace, otherwise they're unprocessed */
 "{"{space}*		{
 
 					litbufpos = 0;
@@ -108,6 +115,15 @@ teardown		{ return TEARDOWN; }
 					yyerror("unterminated sql block");
 				}
 
+ /* Numbers and punctuation */
+{digit}+		{
+					yylval.integer = atoi(yytext);
+					return INTEGER;
+				}
+
+{self}			{ return yytext[0]; }
+
+ /* Anything else is an error */
 .				{
 					fprintf(stderr, "syntax error at line %d: unexpected character \"%s\"\n", yyline, yytext);
 					exit(1);

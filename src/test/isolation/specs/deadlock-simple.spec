@@ -14,16 +14,16 @@ teardown
   DROP TABLE a1;
 }
 
-session "s1"
+session s1
 setup		{ BEGIN; }
-step "s1as"	{ LOCK TABLE a1 IN ACCESS SHARE MODE; }
-step "s1ae"	{ LOCK TABLE a1 IN ACCESS EXCLUSIVE MODE; }
-step "s1c"	{ COMMIT; }
+step s1as	{ LOCK TABLE a1 IN ACCESS SHARE MODE; }
+step s1ae	{ LOCK TABLE a1 IN ACCESS EXCLUSIVE MODE; }
+step s1c	{ COMMIT; }
 
-session "s2"
+session s2
 setup		{ BEGIN; }
-step "s2as"	{ LOCK TABLE a1 IN ACCESS SHARE MODE; }
-step "s2ae"	{ LOCK TABLE a1 IN ACCESS EXCLUSIVE MODE; }
-step "s2c"	{ COMMIT; }
+step s2as	{ LOCK TABLE a1 IN ACCESS SHARE MODE; }
+step s2ae	{ LOCK TABLE a1 IN ACCESS EXCLUSIVE MODE; }
+step s2c	{ COMMIT; }
 
-permutation "s1as" "s2as" "s1ae" "s2ae" "s1c" "s2c"
+permutation s1as s2as s1ae s2ae s1c s2c

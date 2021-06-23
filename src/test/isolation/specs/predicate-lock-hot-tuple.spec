@@ -22,16 +22,16 @@ teardown
   DROP TABLE test;
 }
 
-session "s1"
-step "b1" { BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "r1" { SELECT * FROM test WHERE i IN (5, 7) }
-step "w1" { UPDATE test SET t = 'pear_xact1' WHERE i = 7 }
-step "c1" { COMMIT; }
+session s1
+step b1 { BEGIN ISOLATION LEVEL SERIALIZABLE; }
+step r1 { SELECT * FROM test WHERE i IN (5, 7) }
+step w1 { UPDATE test SET t = 'pear_xact1' WHERE i = 7 }
+step c1 { COMMIT; }
 
-session "s2"
-step "b2" { BEGIN ISOLATION LEVEL SERIALIZABLE; }
-step "r2" { SELECT * FROM test WHERE i IN (5, 7) }
-step "w2" { UPDATE test SET t = 'apple_xact2' WHERE i = 5 }
-step "c2" { COMMIT; }
+session s2
+step b2 { BEGIN ISOLATION LEVEL SERIALIZABLE; }
+step r2 { SELECT * FROM test WHERE i IN (5, 7) }
+step w2 { UPDATE test SET t = 'apple_xact2' WHERE i = 5 }
+step c2 { COMMIT; }
 
-permutation "b1" "b2" "r1" "r2" "w1" "w2" "c1" "c2"
+permutation b1 b2 r1 r2 w1 w2 c1 c2
