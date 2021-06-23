@@ -83,6 +83,7 @@ step "s1_confirm_index_order" { SELECT 'upserttest_key_uniq_idx'::regclass::int8
 step "s1_upsert" { INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s1') ON CONFLICT (blurt_and_lock_123(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s1'; }
 step "s1_insert_toast" { INSERT INTO upserttest VALUES('k2', ctoast_large_val()) ON CONFLICT DO NOTHING; }
 step "s1_commit"  { COMMIT; }
+step "s1_noop"    { }
 
 session "s2"
 setup
@@ -95,6 +96,7 @@ step "s2_begin"  { BEGIN; }
 step "s2_upsert" { INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s2') ON CONFLICT (blurt_and_lock_123(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s2'; }
 step "s2_insert_toast" { INSERT INTO upserttest VALUES('k2', ctoast_large_val()) ON CONFLICT DO NOTHING; }
 step "s2_commit"  { COMMIT; }
+step "s2_noop"    { }
 
 # Test that speculative locks are correctly acquired and released, s2
 # inserts, s1 updates.
@@ -223,7 +225,8 @@ permutation
    "controller_show"
    "s2_begin"
    # Both sessions wait on advisory locks
-   "s1_upsert" "s2_upsert"
+   # (but don't show s2_upsert as complete till we've seen all of s1's notices)
+   "s1_upsert" "s2_upsert" ("s1_upsert" notices 10)
    "controller_show"
    # Switch both sessions to wait on the other lock next time (the speculative insertion)
    "controller_unlock_1_1" "controller_unlock_2_1"
@@ -244,14 +247,15 @@ permutation
    "controller_unlock_1_2"
    # Should report s1 is waiting on speculative lock
    "controller_print_speculative_locks"
-   # Allow s2 to insert into the non-unique index and complete s1 will
+   # Allow s2 to insert into the non-unique index and complete.  s1 will
    # no longer wait on speculative lock, but proceed to wait on the
-   # transaction to finish.
-   "controller_unlock_2_4"
-   # Should report that s1 is now waiting for s1 to commit
+   # transaction to finish.  The no-op step is needed to ensure that
+   # we don't advance to the reporting step until s2_upsert has completed.
+   "controller_unlock_2_4" "s2_noop"
+   # Should report that s1 is now waiting for s2 to commit
    "controller_print_speculative_locks"
    # Once s2 commits, s1 is finally free to continue to update
-   "s2_commit"
+   "s2_commit" "s1_noop"
    # This should now show a successful UPSERT
    "controller_show"
    # Ensure no unexpected locks survive

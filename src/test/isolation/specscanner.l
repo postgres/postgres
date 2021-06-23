@@ -36,6 +36,10 @@ static void addlitchar(char c);
 %x sql
 %x qstr
 
+digit			[0123456789]
+
+self			[,()*]
+
 non_newline		[^\n\r]
 space			[ \t\r\f]
 
@@ -48,11 +52,19 @@ comment			("#"{non_newline}*)
 	litbufsize = LITBUF_INIT;
 %}
 
+notices			{ return NOTICES; }
 permutation		{ return PERMUTATION; }
 session			{ return SESSION; }
 setup			{ return SETUP; }
 step			{ return STEP; }
 teardown		{ return TEARDOWN; }
+
+{digit}+		{
+					yylval.integer = atoi(yytext);
+					return INTEGER;
+				}
+
+{self}			{ return yytext[0]; }
 
 [\n]			{ yyline++; }
 {comment}		{ /* ignore */ }

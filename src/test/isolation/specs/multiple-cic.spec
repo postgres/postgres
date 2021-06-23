@@ -37,4 +37,7 @@ step "s2i"	{
 		WHERE unlck();
 	}
 
-permutation "s2l" "s1i" "s2i"
+# (*) marker ensures that s2i is reported as "waiting", even if it
+# completes very quickly
+
+permutation "s2l" "s1i" "s2i"(*)

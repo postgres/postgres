@@ -18,8 +18,8 @@ step s6a7: LOCK TABLE a7; <waiting ...>
 step s7a8: LOCK TABLE a8; <waiting ...>
 step s8a1: LOCK TABLE a1; <waiting ...>
 step s8a1: <... completed>
+ERROR:  deadlock detected
 step s7a8: <... completed>
-error in steps s8a1 s7a8: ERROR:  deadlock detected
 step s8c: COMMIT;
 step s7c: COMMIT;
 step s6a7: <... completed>

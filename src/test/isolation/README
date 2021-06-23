@@ -57,11 +57,16 @@ Test specification
 ==================
 
 Each isolation test is defined by a specification file, stored in the specs
-subdirectory. A test specification consists of four parts, in this order:
+subdirectory.  A test specification defines some SQL "steps", groups them
+into "sessions" (where all the steps of one session will be run in the
+same backend), and specifies the "permutations" or orderings of the steps
+that are to be run.
+
+A test specification consists of four parts, in this order:
 
 setup { <SQL> }
 
-  The given SQL block is executed once, in one session only, before running
+  The given SQL block is executed once (per permutation) before running
   the test.  Create any test tables or other required objects here.  This
   part is optional.  Multiple setup blocks are allowed if needed; each is
   run separately, in the given order.  (The reason for allowing multiple
@@ -81,8 +86,8 @@ session "<name>"
   session is executed in its own connection. A session part consists
   of three parts: setup, teardown and one or more "steps". The per-session
   setup and teardown parts have the same syntax as the per-test setup and
-  teardown described above, but they are executed in each session. The
-  setup part typically contains a "BEGIN" command to begin a transaction.
+  teardown described above, but they are executed in each session. The setup
+  part might, for example, contain a "BEGIN" command to begin a transaction.
 
   Each step has the syntax
 
@@ -101,7 +106,8 @@ permutation "<step name>" ...
   order).  Note that the list of steps in a manually specified
   "permutation" line doesn't actually have to be a permutation of the
   available steps; it could for instance repeat some steps more than once,
-  or leave others out.
+  or leave others out.  Also, each step name can be annotated with some
+  parenthesized markers, which are described below.
 
 Lines beginning with a # are considered comments.
 
@@ -110,7 +116,8 @@ specified in the spec file, or automatically generated), the isolation
 tester runs the main setup part, then per-session setup parts, then
 the selected session steps, then per-session teardown, then the main
 teardown script.  Each selected step is sent to the connection associated
-with its session.
+with its session.  The main setup and teardown scripts are run in a
+separate "control" session.
 
 
 Support for blocking commands
@@ -129,3 +136,69 @@ tests take a very long time to run, and they serve no useful testing purpose.
 Note that isolationtester recognizes that a command has blocked by looking
 to see if it is shown as waiting in the pg_locks view; therefore, only
 blocks on heavyweight locks will be detected.
+
+
+Dealing with race conditions
+============================
+
+In some cases, the isolationtester's output for a test script may vary
+due to timing issues.  One way to deal with that is to create variant
+expected-files, which follow the usual PG convention that variants for
+foo.spec are named foo_1.out, foo_2.out, etc.  However, this method is
+discouraged since the extra files are a nuisance for maintenance.
+Instead, it's usually possible to stabilize the test output by applying
+special markers to some of the step names listed in a permutation line.
+
+The general form of a permutation entry is
+
+	<step name> [ ( <marker> [ , <marker> ... ] ) ]
+
+where each marker defines a "blocking condition".  The step will not be
+reported as completed before all the blocking conditions are satisfied.
+The possible markers are:
+
+	*
+	<other step name>
+	<other step name> notices <n>
+
+An asterisk marker, such as mystep(*), forces the isolationtester to
+report the step as "waiting" as soon as it's been launched, regardless of
+whether it would have been detected as waiting later.  This is useful for
+stabilizing cases that are sometimes reported as waiting and other times
+reported as immediately completing, depending on the relative speeds of
+the step and the isolationtester's status-monitoring queries.
+
+A marker consisting solely of a step name indicates that this step may
+not be reported as completing until that other step has completed.
+This allows stabilizing cases where two queries might be seen to complete
+in either order.  Note that this step can be *launched* before the other
+step has completed.  (If the other step is used more than once in the
+current permutation, this step cannot complete while any of those
+instances is active.)
+
+A marker of the form "<other step name> notices <n>" (where <n> is a
+positive integer) indicates that this step may not be reported as
+completing until the other step's session has returned at least <n>
+NOTICE messages, counting from when this step is launched.  This is useful
+for stabilizing cases where a step can return NOTICE messages before it
+actually completes, and those messages must be synchronized with the
+completions of other steps.
+
+Notice that these markers can only delay reporting of the completion
+of a step, not the launch of a step.  The isolationtester will launch
+the next step in a permutation as soon as (A) all prior steps of the
+same session are done, and (B) the immediately preceding step in the
+permutation is done or deemed blocked.  For this purpose, "deemed
+blocked" means that it has been seen to be waiting on a database lock,
+or that it is complete but the report of its completion is delayed by
+one of these markers.
+
+In some cases it is important not to launch a step until after the
+completion of a step in another session that could have been deemed
+blocked.  An example is that if step s1 in session A is issuing a
+cancel for step s2 in session B, we'd better not launch B's next step
+till we're sure s1 is done.  If s1 is blockable, trouble could ensue.
+The best way to prevent that is to create an empty step in session A
+and run it, without any markers, just before the next session B step.
+The empty step cannot be launched until s1 is done, and in turn the
+next session B step cannot be launched until the empty step finishes.

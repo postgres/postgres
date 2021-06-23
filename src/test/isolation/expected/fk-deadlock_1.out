@@ -24,7 +24,7 @@ step s2i: INSERT INTO child VALUES (2, 1);
 step s2u: UPDATE parent SET aux = 'baz'; <waiting ...>
 step s1c: COMMIT;
 step s2u: <... completed>
-error in steps s1c s2u: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 
 starting permutation: s1i s2i s1u s1c s2u s2c
@@ -43,7 +43,7 @@ step s1u: UPDATE parent SET aux = 'bar';
 step s2u: UPDATE parent SET aux = 'baz'; <waiting ...>
 step s1c: COMMIT;
 step s2u: <... completed>
-error in steps s1c s2u: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 
 starting permutation: s1i s2i s2u s1u s2c s1c
@@ -53,7 +53,7 @@ step s2u: UPDATE parent SET aux = 'baz';
 step s1u: UPDATE parent SET aux = 'bar'; <waiting ...>
 step s2c: COMMIT;
 step s1u: <... completed>
-error in steps s2c s1u: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s1c: COMMIT;
 
 starting permutation: s1i s2i s2u s2c s1u s1c
@@ -81,7 +81,7 @@ step s1u: UPDATE parent SET aux = 'bar';
 step s2u: UPDATE parent SET aux = 'baz'; <waiting ...>
 step s1c: COMMIT;
 step s2u: <... completed>
-error in steps s1c s2u: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s2c: COMMIT;
 
 starting permutation: s2i s1i s2u s1u s2c s1c
@@ -91,7 +91,7 @@ step s2u: UPDATE parent SET aux = 'baz';
 step s1u: UPDATE parent SET aux = 'bar'; <waiting ...>
 step s2c: COMMIT;
 step s1u: <... completed>
-error in steps s2c s1u: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s1c: COMMIT;
 
 starting permutation: s2i s1i s2u s2c s1u s1c
@@ -110,7 +110,7 @@ step s1i: INSERT INTO child VALUES (1, 1);
 step s1u: UPDATE parent SET aux = 'bar'; <waiting ...>
 step s2c: COMMIT;
 step s1u: <... completed>
-error in steps s2c s1u: ERROR:  could not serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 step s1c: COMMIT;
 
 starting permutation: s2i s2u s1i s2c s1u s1c
