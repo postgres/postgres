@@ -8,9 +8,11 @@ step c1: COMMIT;
 step donothing2: INSERT INTO ints(key, val) VALUES(1, 'donothing2'), (1, 'donothing3') ON CONFLICT DO NOTHING;
 step c2: COMMIT;
 step show: SELECT * FROM ints;
-key            val            
+key|val       
+---+----------
+  1|donothing1
+(1 row)
 
-1              donothing1     
 
 starting permutation: beginrr1 beginrr2 donothing2 c2 donothing1 c1 show
 step beginrr1: BEGIN ISOLATION LEVEL REPEATABLE READ;
@@ -20,9 +22,11 @@ step c2: COMMIT;
 step donothing1: INSERT INTO ints(key, val) VALUES(1, 'donothing1') ON CONFLICT DO NOTHING;
 step c1: COMMIT;
 step show: SELECT * FROM ints;
-key            val            
+key|val       
+---+----------
+  1|donothing2
+(1 row)
 
-1              donothing2     
 
 starting permutation: beginrr1 beginrr2 donothing1 donothing2 c1 c2 show
 step beginrr1: BEGIN ISOLATION LEVEL REPEATABLE READ;
@@ -34,9 +38,11 @@ step donothing2: <... completed>
 ERROR:  could not serialize access due to concurrent update
 step c2: COMMIT;
 step show: SELECT * FROM ints;
-key            val            
+key|val       
+---+----------
+  1|donothing1
+(1 row)
 
-1              donothing1     
 
 starting permutation: beginrr1 beginrr2 donothing2 donothing1 c2 c1 show
 step beginrr1: BEGIN ISOLATION LEVEL REPEATABLE READ;
@@ -48,9 +54,11 @@ step donothing1: <... completed>
 ERROR:  could not serialize access due to concurrent update
 step c1: COMMIT;
 step show: SELECT * FROM ints;
-key            val            
+key|val       
+---+----------
+  1|donothing2
+(1 row)
 
-1              donothing2     
 
 starting permutation: begins1 begins2 donothing1 c1 donothing2 c2 show
 step begins1: BEGIN ISOLATION LEVEL SERIALIZABLE;
@@ -60,9 +68,11 @@ step c1: COMMIT;
 step donothing2: INSERT INTO ints(key, val) VALUES(1, 'donothing2'), (1, 'donothing3') ON CONFLICT DO NOTHING;
 step c2: COMMIT;
 step show: SELECT * FROM ints;
-key            val            
+key|val       
+---+----------
+  1|donothing1
+(1 row)
 
-1              donothing1     
 
 starting permutation: begins1 begins2 donothing2 c2 donothing1 c1 show
 step begins1: BEGIN ISOLATION LEVEL SERIALIZABLE;
@@ -72,9 +82,11 @@ step c2: COMMIT;
 step donothing1: INSERT INTO ints(key, val) VALUES(1, 'donothing1') ON CONFLICT DO NOTHING;
 step c1: COMMIT;
 step show: SELECT * FROM ints;
-key            val            
+key|val       
+---+----------
+  1|donothing2
+(1 row)
 
-1              donothing2     
 
 starting permutation: begins1 begins2 donothing1 donothing2 c1 c2 show
 step begins1: BEGIN ISOLATION LEVEL SERIALIZABLE;
@@ -86,9 +98,11 @@ step donothing2: <... completed>
 ERROR:  could not serialize access due to concurrent update
 step c2: COMMIT;
 step show: SELECT * FROM ints;
-key            val            
+key|val       
+---+----------
+  1|donothing1
+(1 row)
 
-1              donothing1     
 
 starting permutation: begins1 begins2 donothing2 donothing1 c2 c1 show
 step begins1: BEGIN ISOLATION LEVEL SERIALIZABLE;
@@ -100,6 +114,8 @@ step donothing1: <... completed>
 ERROR:  could not serialize access due to concurrent update
 step c1: COMMIT;
 step show: SELECT * FROM ints;
-key            val            
+key|val       
+---+----------
+  1|donothing2
+(1 row)
 
-1              donothing2     

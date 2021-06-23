@@ -4,39 +4,51 @@ starting permutation: noseq chkiso prepi preps begin explaini explains select2 d
 step noseq: SET enable_seqscan = false;
 step chkiso: SELECT (setting in ('read committed','read uncommitted')) AS is_read_committed FROM pg_settings WHERE name = 'default_transaction_isolation';
 is_read_committed
+-----------------
+f                
+(1 row)
 
-f              
 step prepi: PREPARE getrow_idx AS SELECT * FROM test_dc WHERE data=34 ORDER BY id,data;
 step preps: PREPARE getrow_seq AS SELECT * FROM test_dc WHERE data::text=34::text ORDER BY id,data;
 step begin: BEGIN;
 step explaini: EXPLAIN (COSTS OFF) EXECUTE getrow_idx;
-QUERY PLAN     
-
-Sort           
-  Sort Key: id 
+QUERY PLAN                                    
+----------------------------------------------
+Sort                                          
+  Sort Key: id                                
   ->  Index Scan using test_dc_data on test_dc
-        Index Cond: (data = 34)
+        Index Cond: (data = 34)               
+(4 rows)
+
 step explains: EXPLAIN (COSTS OFF) EXECUTE getrow_seq;
-QUERY PLAN     
-
-Sort           
-  Sort Key: id, data
-  ->  Seq Scan on test_dc
+QUERY PLAN                                 
+-------------------------------------------
+Sort                                       
+  Sort Key: id, data                       
+  ->  Seq Scan on test_dc                  
         Filter: ((data)::text = '34'::text)
-step select2: SELECT * FROM test_dc WHERE data=34 ORDER BY id,data;
-id             data           
+(4 rows)
 
-34             34             
+step select2: SELECT * FROM test_dc WHERE data=34 ORDER BY id,data;
+id|data
+--+----
+34|  34
+(1 row)
+
 step drop: DROP INDEX CONCURRENTLY test_dc_data; <waiting ...>
 step insert2: INSERT INTO test_dc(data) SELECT * FROM generate_series(1, 100);
 step end2: COMMIT;
 step selecti: EXECUTE getrow_idx;
-id             data           
+id|data
+--+----
+34|  34
+(1 row)
 
-34             34             
 step selects: EXECUTE getrow_seq;
-id             data           
+id|data
+--+----
+34|  34
+(1 row)
 
-34             34             
 step end: COMMIT;
 step drop: <... completed>

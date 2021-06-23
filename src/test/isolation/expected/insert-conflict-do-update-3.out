@@ -12,15 +12,19 @@ step insert1:
     SELECT * FROM colors ORDER BY key; <waiting ...>
 step c2: COMMIT;
 step insert1: <... completed>
-key            color          is_active      
+key|color|is_active
+---+-----+---------
+  1|Red  |f        
+  2|Green|f        
+  3|Blue |f        
+(3 rows)
 
-1              Red            f              
-2              Green          f              
-3              Blue           f              
 step select1surprise: SELECT * FROM colors ORDER BY key;
-key            color          is_active      
+key|color|is_active
+---+-----+---------
+  1|Brown|t        
+  2|Green|f        
+  3|Blue |f        
+(3 rows)
 
-1              Brown          t              
-2              Green          f              
-3              Blue           f              
 step c1: COMMIT;

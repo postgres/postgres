@@ -6,33 +6,45 @@ step s1w: INSERT INTO do_write DEFAULT VALUES;
 step s2init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding'); <waiting ...>
 step s1c: COMMIT;
 step s2init: <... completed>
-?column?       
+?column?
+--------
+init    
+(1 row)
 
-init           
 step s2start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
-data           
+data
+----
+(0 rows)
 
 step s1b: BEGIN ISOLATION LEVEL SERIALIZABLE;
 step s1w: INSERT INTO do_write DEFAULT VALUES;
 step s1c: COMMIT;
 step s2start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
-data           
-
-BEGIN          
+data                                        
+--------------------------------------------
+BEGIN                                       
 table public.do_write: INSERT: id[integer]:2
-COMMIT         
+COMMIT                                      
+(3 rows)
+
 step s1b: BEGIN ISOLATION LEVEL SERIALIZABLE;
 step s1w: INSERT INTO do_write DEFAULT VALUES;
 step s2start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
-data           
+data
+----
+(0 rows)
 
 step s1c: COMMIT;
 step s2start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
-data           
-
-BEGIN          
+data                                        
+--------------------------------------------
+BEGIN                                       
 table public.do_write: INSERT: id[integer]:3
-COMMIT         
-?column?       
+COMMIT                                      
+(3 rows)
 
-stop           
+?column?
+--------
+stop    
+(1 row)
+

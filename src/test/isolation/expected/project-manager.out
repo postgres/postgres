@@ -2,28 +2,36 @@ Parsed test spec with 2 sessions
 
 starting permutation: rx1 wy1 c1 ry2 wx2 c2
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step c1: COMMIT;
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step c2: COMMIT;
 
 starting permutation: rx1 wy1 ry2 c1 wx2 c2
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step c1: COMMIT;
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -31,14 +39,18 @@ step c2: COMMIT;
 
 starting permutation: rx1 wy1 ry2 wx2 c1 c2
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step c1: COMMIT;
 step c2: COMMIT;
@@ -46,14 +58,18 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 wy1 ry2 wx2 c2 c1
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step c2: COMMIT;
 step c1: COMMIT;
@@ -61,13 +77,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 ry2 wy1 c1 wx2 c2
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step c1: COMMIT;
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
@@ -76,13 +96,17 @@ step c2: COMMIT;
 
 starting permutation: rx1 ry2 wy1 wx2 c1 c2
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step c1: COMMIT;
@@ -91,13 +115,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 ry2 wy1 wx2 c2 c1
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step c2: COMMIT;
@@ -106,13 +134,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 ry2 wx2 wy1 c1 c2
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step c1: COMMIT;
@@ -121,13 +153,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 ry2 wx2 wy1 c2 c1
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step c2: COMMIT;
@@ -136,13 +172,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: rx1 ry2 wx2 c2 wy1 c1
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step c2: COMMIT;
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
@@ -151,13 +191,17 @@ step c1: COMMIT;
 
 starting permutation: ry2 rx1 wy1 c1 wx2 c2
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step c1: COMMIT;
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
@@ -166,13 +210,17 @@ step c2: COMMIT;
 
 starting permutation: ry2 rx1 wy1 wx2 c1 c2
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step c1: COMMIT;
@@ -181,13 +229,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 rx1 wy1 wx2 c2 c1
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step c2: COMMIT;
@@ -196,13 +248,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 rx1 wx2 wy1 c1 c2
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step c1: COMMIT;
@@ -211,13 +267,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 rx1 wx2 wy1 c2 c1
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step c2: COMMIT;
@@ -226,13 +286,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 rx1 wx2 c2 wy1 c1
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step c2: COMMIT;
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
@@ -241,14 +305,18 @@ step c1: COMMIT;
 
 starting permutation: ry2 wx2 rx1 wy1 c1 c2
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step c1: COMMIT;
 step c2: COMMIT;
@@ -256,14 +324,18 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 wx2 rx1 wy1 c2 c1
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step c2: COMMIT;
 step c1: COMMIT;
@@ -271,14 +343,18 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry2 wx2 rx1 c2 wy1 c1
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    1
+(1 row)
 
-1              
 step c2: COMMIT;
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -286,14 +362,18 @@ step c1: COMMIT;
 
 starting permutation: ry2 wx2 c2 rx1 wy1 c1
 step ry2: SELECT count(*) FROM project WHERE project_manager = 1;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wx2: UPDATE person SET is_project_manager = false WHERE person_id = 1;
 step c2: COMMIT;
 step rx1: SELECT count(*) FROM person WHERE person_id = 1 AND is_project_manager;
-count          
+count
+-----
+    0
+(1 row)
 
-0              
 step wy1: INSERT INTO project VALUES (101, 'Build Great Wall', 1);
 step c1: COMMIT;

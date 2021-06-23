@@ -6,9 +6,11 @@ step c1: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 3
+(1 row)
 
-3              
 step c3: COMMIT;
 
 starting permutation: wx1 c1 rxwy2 ry3 c2 c3
@@ -16,9 +18,11 @@ step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c2: COMMIT;
 step c3: COMMIT;
 
@@ -27,9 +31,11 @@ step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step c2: COMMIT;
 
@@ -37,9 +43,11 @@ starting permutation: wx1 c1 ry3 rxwy2 c2 c3
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step c3: COMMIT;
@@ -48,9 +56,11 @@ starting permutation: wx1 c1 ry3 rxwy2 c3 c2
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c3: COMMIT;
 step c2: COMMIT;
@@ -59,9 +69,11 @@ starting permutation: wx1 c1 ry3 c3 rxwy2 c2
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
@@ -72,9 +84,11 @@ step rxwy2: update D2 set id = (select id+1 from D1);
 step c1: COMMIT;
 step c2: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c3: COMMIT;
 
 starting permutation: wx1 rxwy2 c1 ry3 c2 c3
@@ -82,9 +96,11 @@ step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c1: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 step c3: COMMIT;
@@ -94,9 +110,11 @@ step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c1: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -107,9 +125,11 @@ step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step c1: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c3: COMMIT;
 
 starting permutation: wx1 rxwy2 c2 ry3 c1 c3
@@ -117,9 +137,11 @@ step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c1: COMMIT;
 step c3: COMMIT;
 
@@ -128,9 +150,11 @@ step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c3: COMMIT;
 step c1: COMMIT;
 
@@ -138,9 +162,11 @@ starting permutation: wx1 rxwy2 ry3 c1 c2 c3
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c1: COMMIT;
 step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -150,9 +176,11 @@ starting permutation: wx1 rxwy2 ry3 c1 c3 c2
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c1: COMMIT;
 step c3: COMMIT;
 step c2: COMMIT;
@@ -162,9 +190,11 @@ starting permutation: wx1 rxwy2 ry3 c2 c1 c3
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c2: COMMIT;
 step c1: COMMIT;
 step c3: COMMIT;
@@ -173,9 +203,11 @@ starting permutation: wx1 rxwy2 ry3 c2 c3 c1
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c2: COMMIT;
 step c3: COMMIT;
 step c1: COMMIT;
@@ -184,9 +216,11 @@ starting permutation: wx1 rxwy2 ry3 c3 c1 c2
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step c1: COMMIT;
 step c2: COMMIT;
@@ -195,9 +229,11 @@ starting permutation: wx1 rxwy2 ry3 c3 c2 c1
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step c2: COMMIT;
 step c1: COMMIT;
@@ -205,9 +241,11 @@ step c1: COMMIT;
 starting permutation: wx1 ry3 c1 rxwy2 c2 c3
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c1: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
@@ -216,9 +254,11 @@ step c3: COMMIT;
 starting permutation: wx1 ry3 c1 rxwy2 c3 c2
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c1: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c3: COMMIT;
@@ -227,9 +267,11 @@ step c2: COMMIT;
 starting permutation: wx1 ry3 c1 c3 rxwy2 c2
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c1: COMMIT;
 step c3: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
@@ -238,9 +280,11 @@ step c2: COMMIT;
 starting permutation: wx1 ry3 rxwy2 c1 c2 c3
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c1: COMMIT;
 step c2: COMMIT;
@@ -250,9 +294,11 @@ step c3: COMMIT;
 starting permutation: wx1 ry3 rxwy2 c1 c3 c2
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c1: COMMIT;
 step c3: COMMIT;
@@ -262,9 +308,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 starting permutation: wx1 ry3 rxwy2 c2 c1 c3
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step c1: COMMIT;
@@ -273,9 +321,11 @@ step c3: COMMIT;
 starting permutation: wx1 ry3 rxwy2 c2 c3 c1
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step c3: COMMIT;
@@ -284,9 +334,11 @@ step c1: COMMIT;
 starting permutation: wx1 ry3 rxwy2 c3 c1 c2
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c3: COMMIT;
 step c1: COMMIT;
@@ -295,9 +347,11 @@ step c2: COMMIT;
 starting permutation: wx1 ry3 rxwy2 c3 c2 c1
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c3: COMMIT;
 step c2: COMMIT;
@@ -306,9 +360,11 @@ step c1: COMMIT;
 starting permutation: wx1 ry3 c3 c1 rxwy2 c2
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step c1: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
@@ -317,9 +373,11 @@ step c2: COMMIT;
 starting permutation: wx1 ry3 c3 rxwy2 c1 c2
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c1: COMMIT;
@@ -328,9 +386,11 @@ step c2: COMMIT;
 starting permutation: wx1 ry3 c3 rxwy2 c2 c1
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
@@ -342,9 +402,11 @@ step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step c2: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c3: COMMIT;
 
 starting permutation: rxwy2 wx1 c1 ry3 c2 c3
@@ -352,9 +414,11 @@ step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
 step c3: COMMIT;
@@ -364,9 +428,11 @@ step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -377,9 +443,11 @@ step wx1: update D1 set id = id + 1;
 step c2: COMMIT;
 step c1: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c3: COMMIT;
 
 starting permutation: rxwy2 wx1 c2 ry3 c1 c3
@@ -387,9 +455,11 @@ step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step c2: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c1: COMMIT;
 step c3: COMMIT;
 
@@ -398,9 +468,11 @@ step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step c2: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c3: COMMIT;
 step c1: COMMIT;
 
@@ -408,9 +480,11 @@ starting permutation: rxwy2 wx1 ry3 c1 c2 c3
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c1: COMMIT;
 step c2: COMMIT;
 ERROR:  could not serialize access due to read/write dependencies among transactions
@@ -420,9 +494,11 @@ starting permutation: rxwy2 wx1 ry3 c1 c3 c2
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c1: COMMIT;
 step c3: COMMIT;
 step c2: COMMIT;
@@ -432,9 +508,11 @@ starting permutation: rxwy2 wx1 ry3 c2 c1 c3
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c2: COMMIT;
 step c1: COMMIT;
 step c3: COMMIT;
@@ -443,9 +521,11 @@ starting permutation: rxwy2 wx1 ry3 c2 c3 c1
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c2: COMMIT;
 step c3: COMMIT;
 step c1: COMMIT;
@@ -454,9 +534,11 @@ starting permutation: rxwy2 wx1 ry3 c3 c1 c2
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step c1: COMMIT;
 step c2: COMMIT;
@@ -465,9 +547,11 @@ starting permutation: rxwy2 wx1 ry3 c3 c2 c1
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step c2: COMMIT;
 step c1: COMMIT;
@@ -478,9 +562,11 @@ step c2: COMMIT;
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c3: COMMIT;
 
 starting permutation: rxwy2 c2 wx1 ry3 c1 c3
@@ -488,9 +574,11 @@ step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c1: COMMIT;
 step c3: COMMIT;
 
@@ -499,9 +587,11 @@ step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step wx1: update D1 set id = id + 1;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c3: COMMIT;
 step c1: COMMIT;
 
@@ -509,9 +599,11 @@ starting permutation: rxwy2 c2 ry3 wx1 c1 c3
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step c3: COMMIT;
@@ -520,9 +612,11 @@ starting permutation: rxwy2 c2 ry3 wx1 c3 c1
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step wx1: update D1 set id = id + 1;
 step c3: COMMIT;
 step c1: COMMIT;
@@ -531,9 +625,11 @@ starting permutation: rxwy2 c2 ry3 c3 wx1 c1
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step ry3: select id from D2;
-id             
+id
+--
+ 2
+(1 row)
 
-2              
 step c3: COMMIT;
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
@@ -541,9 +637,11 @@ step c1: COMMIT;
 starting permutation: rxwy2 ry3 wx1 c1 c2 c3
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step c2: COMMIT;
@@ -553,9 +651,11 @@ step c3: COMMIT;
 starting permutation: rxwy2 ry3 wx1 c1 c3 c2
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step c3: COMMIT;
@@ -565,9 +665,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 starting permutation: rxwy2 ry3 wx1 c2 c1 c3
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c2: COMMIT;
 step c1: COMMIT;
@@ -576,9 +678,11 @@ step c3: COMMIT;
 starting permutation: rxwy2 ry3 wx1 c2 c3 c1
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c2: COMMIT;
 step c3: COMMIT;
@@ -587,9 +691,11 @@ step c1: COMMIT;
 starting permutation: rxwy2 ry3 wx1 c3 c1 c2
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c3: COMMIT;
 step c1: COMMIT;
@@ -598,9 +704,11 @@ step c2: COMMIT;
 starting permutation: rxwy2 ry3 wx1 c3 c2 c1
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c3: COMMIT;
 step c2: COMMIT;
@@ -609,9 +717,11 @@ step c1: COMMIT;
 starting permutation: rxwy2 ry3 c2 wx1 c1 c3
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c2: COMMIT;
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
@@ -620,9 +730,11 @@ step c3: COMMIT;
 starting permutation: rxwy2 ry3 c2 wx1 c3 c1
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c2: COMMIT;
 step wx1: update D1 set id = id + 1;
 step c3: COMMIT;
@@ -631,9 +743,11 @@ step c1: COMMIT;
 starting permutation: rxwy2 ry3 c2 c3 wx1 c1
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c2: COMMIT;
 step c3: COMMIT;
 step wx1: update D1 set id = id + 1;
@@ -642,9 +756,11 @@ step c1: COMMIT;
 starting permutation: rxwy2 ry3 c3 wx1 c1 c2
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
@@ -653,9 +769,11 @@ step c2: COMMIT;
 starting permutation: rxwy2 ry3 c3 wx1 c2 c1
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step wx1: update D1 set id = id + 1;
 step c2: COMMIT;
@@ -664,9 +782,11 @@ step c1: COMMIT;
 starting permutation: rxwy2 ry3 c3 c2 wx1 c1
 step rxwy2: update D2 set id = (select id+1 from D1);
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step c2: COMMIT;
 step wx1: update D1 set id = id + 1;
@@ -674,9 +794,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 wx1 c1 rxwy2 c2 c3
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
@@ -685,9 +807,11 @@ step c3: COMMIT;
 
 starting permutation: ry3 wx1 c1 rxwy2 c3 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
@@ -696,9 +820,11 @@ step c2: COMMIT;
 
 starting permutation: ry3 wx1 c1 c3 rxwy2 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
 step c3: COMMIT;
@@ -707,9 +833,11 @@ step c2: COMMIT;
 
 starting permutation: ry3 wx1 rxwy2 c1 c2 c3
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c1: COMMIT;
@@ -719,9 +847,11 @@ step c3: COMMIT;
 
 starting permutation: ry3 wx1 rxwy2 c1 c3 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c1: COMMIT;
@@ -731,9 +861,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry3 wx1 rxwy2 c2 c1 c3
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
@@ -742,9 +874,11 @@ step c3: COMMIT;
 
 starting permutation: ry3 wx1 rxwy2 c2 c3 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
@@ -753,9 +887,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 wx1 rxwy2 c3 c1 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c3: COMMIT;
@@ -764,9 +900,11 @@ step c2: COMMIT;
 
 starting permutation: ry3 wx1 rxwy2 c3 c2 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c3: COMMIT;
@@ -775,9 +913,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 wx1 c3 c1 rxwy2 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c3: COMMIT;
 step c1: COMMIT;
@@ -786,9 +926,11 @@ step c2: COMMIT;
 
 starting permutation: ry3 wx1 c3 rxwy2 c1 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c3: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
@@ -797,9 +939,11 @@ step c2: COMMIT;
 
 starting permutation: ry3 wx1 c3 rxwy2 c2 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step wx1: update D1 set id = id + 1;
 step c3: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
@@ -808,9 +952,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 rxwy2 wx1 c1 c2 c3
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
@@ -820,9 +966,11 @@ step c3: COMMIT;
 
 starting permutation: ry3 rxwy2 wx1 c1 c3 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
@@ -832,9 +980,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
 starting permutation: ry3 rxwy2 wx1 c2 c1 c3
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step c2: COMMIT;
@@ -843,9 +993,11 @@ step c3: COMMIT;
 
 starting permutation: ry3 rxwy2 wx1 c2 c3 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step c2: COMMIT;
@@ -854,9 +1006,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 rxwy2 wx1 c3 c1 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step c3: COMMIT;
@@ -865,9 +1019,11 @@ step c2: COMMIT;
 
 starting permutation: ry3 rxwy2 wx1 c3 c2 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
 step c3: COMMIT;
@@ -876,9 +1032,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 rxwy2 c2 wx1 c1 c3
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step wx1: update D1 set id = id + 1;
@@ -887,9 +1045,11 @@ step c3: COMMIT;
 
 starting permutation: ry3 rxwy2 c2 wx1 c3 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step wx1: update D1 set id = id + 1;
@@ -898,9 +1058,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 rxwy2 c2 c3 wx1 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;
 step c3: COMMIT;
@@ -909,9 +1071,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 rxwy2 c3 wx1 c1 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c3: COMMIT;
 step wx1: update D1 set id = id + 1;
@@ -920,9 +1084,11 @@ step c2: COMMIT;
 
 starting permutation: ry3 rxwy2 c3 wx1 c2 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c3: COMMIT;
 step wx1: update D1 set id = id + 1;
@@ -931,9 +1097,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 rxwy2 c3 c2 wx1 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c3: COMMIT;
 step c2: COMMIT;
@@ -942,9 +1110,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 c3 wx1 c1 rxwy2 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step wx1: update D1 set id = id + 1;
 step c1: COMMIT;
@@ -953,9 +1123,11 @@ step c2: COMMIT;
 
 starting permutation: ry3 c3 wx1 rxwy2 c1 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
@@ -964,9 +1136,11 @@ step c2: COMMIT;
 
 starting permutation: ry3 c3 wx1 rxwy2 c2 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step wx1: update D1 set id = id + 1;
 step rxwy2: update D2 set id = (select id+1 from D1);
@@ -975,9 +1149,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 c3 rxwy2 wx1 c1 c2
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
@@ -986,9 +1162,11 @@ step c2: COMMIT;
 
 starting permutation: ry3 c3 rxwy2 wx1 c2 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step wx1: update D1 set id = id + 1;
@@ -997,9 +1175,11 @@ step c1: COMMIT;
 
 starting permutation: ry3 c3 rxwy2 c2 wx1 c1
 step ry3: select id from D2;
-id             
+id
+--
+ 1
+(1 row)
 
-1              
 step c3: COMMIT;
 step rxwy2: update D2 set id = (select id+1 from D1);
 step c2: COMMIT;

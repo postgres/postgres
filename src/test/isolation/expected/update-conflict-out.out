@@ -2,7 +2,9 @@ Parsed test spec with 3 sessions
 
 starting permutation: foo_select bar_insert foo_insert foo_commit trouble_update bar_select bar_commit trouble_abort
 step foo_select: SELECT * FROM txn0 WHERE id = 42;
-id             val            
+id|val
+--+---
+(0 rows)
 
 step bar_insert: INSERT INTO txn0 SELECT 42, 'bar_insert';
 step foo_insert: INSERT INTO txn1 SELECT 7, 'foo_insert';
@@ -15,7 +17,9 @@ step trouble_abort: ABORT;
 
 starting permutation: foo_select bar_insert foo_insert foo_commit trouble_delete bar_select bar_commit trouble_abort
 step foo_select: SELECT * FROM txn0 WHERE id = 42;
-id             val            
+id|val
+--+---
+(0 rows)
 
 step bar_insert: INSERT INTO txn0 SELECT 42, 'bar_insert';
 step foo_insert: INSERT INTO txn1 SELECT 7, 'foo_insert';
