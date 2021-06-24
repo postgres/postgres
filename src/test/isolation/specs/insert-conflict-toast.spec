@@ -48,4 +48,8 @@ step s3insert {
   INSERT INTO ctoast (key, val) VALUES (1, ctoast_large_val()) ON CONFLICT DO NOTHING;
 }
 
-permutation s2insert s3insert s1commit
+# s1's commit will release s2 and s3 at the same time, so there's a
+# race condition as to which finishes first.  Annotate the permutation
+# to always report s2 first.
+
+permutation s2insert s3insert(s2insert) s1commit
