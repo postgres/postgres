@@ -6498,6 +6498,18 @@ Message
 </para>
 </listitem>
 </varlistentry>
+
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Length of the content.
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry>
 <term>
         Byte<replaceable>n</replaceable>
@@ -7430,6 +7442,19 @@ TupleData
 </para>
 </listitem>
 </varlistentry>
+</variablelist>
+        Or
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('b')
+</term>
+<listitem>
+<para>
+                Identifies the data as binary formatted value.
+</para>
+</listitem>
+</varlistentry>
 <varlistentry>
 <term>
         Int32
@@ -7446,8 +7471,8 @@ TupleData
 </term>
 <listitem>
 <para>
-                The value of the column, in text format.  (A future release
-                might support additional formats.)
+                The value of the column, either in binary or in text format.
+                (As specified in the preceding format byte).
                 <replaceable>n</replaceable> is the above length.
 
 </para>
