@@ -2746,7 +2746,7 @@ CREATE FOREIGN TABLE ft1_nopw (
 	c8 user_enum
 ) SERVER loopback_nopw OPTIONS (schema_name 'public', table_name 'ft1');
 
-SELECT * FROM ft1_nopw LIMIT 1;
+SELECT 1 FROM ft1_nopw LIMIT 1;
 
 -- If we add a password to the connstr it'll fail, because we don't allow passwords
 -- in connstrs only in user mappings.
@@ -2764,13 +2764,13 @@ $d$;
 
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD password 'dummypw');
 
-SELECT * FROM ft1_nopw LIMIT 1;
+SELECT 1 FROM ft1_nopw LIMIT 1;
 
 -- Unpriv user cannot make the mapping passwordless
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD password_required 'false');
 
 
-SELECT * FROM ft1_nopw LIMIT 1;
+SELECT 1 FROM ft1_nopw LIMIT 1;
 
 RESET ROLE;
 
@@ -2780,7 +2780,7 @@ ALTER USER MAPPING FOR regress_nosuper SERVER loopback_nopw OPTIONS (ADD passwor
 SET ROLE regress_nosuper;
 
 -- Should finally work now
-SELECT * FROM ft1_nopw LIMIT 1;
+SELECT 1 FROM ft1_nopw LIMIT 1;
 
 -- unpriv user also cannot set sslcert / sslkey on the user mapping
 -- first set password_required so we see the right error messages
@@ -2794,13 +2794,13 @@ DROP USER MAPPING FOR CURRENT_USER SERVER loopback_nopw;
 
 -- This will fail again as it'll resolve the user mapping for public, which
 -- lacks password_required=false
-SELECT * FROM ft1_nopw LIMIT 1;
+SELECT 1 FROM ft1_nopw LIMIT 1;
 
 RESET ROLE;
 
 -- The user mapping for public is passwordless and lacks the password_required=false
 -- mapping option, but will work because the current user is a superuser.
-SELECT * FROM ft1_nopw LIMIT 1;
+SELECT 1 FROM ft1_nopw LIMIT 1;
 
 -- cleanup
 DROP USER MAPPING FOR public SERVER loopback_nopw;

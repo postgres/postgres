@@ -9225,7 +9225,7 @@ CREATE FOREIGN TABLE ft1_nopw (
 	c7 char(10) default 'ft1',
 	c8 user_enum
 ) SERVER loopback_nopw OPTIONS (schema_name 'public', table_name 'ft1');
-SELECT * FROM ft1_nopw LIMIT 1;
+SELECT 1 FROM ft1_nopw LIMIT 1;
 ERROR:  password is required
 DETAIL:  Non-superusers must provide a password in the user mapping.
 -- If we add a password to the connstr it'll fail, because we don't allow passwords
@@ -9244,7 +9244,7 @@ PL/pgSQL function inline_code_block line 3 at EXECUTE
 --
 -- This won't work with installcheck, but neither will most of the FDW checks.
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD password 'dummypw');
-SELECT * FROM ft1_nopw LIMIT 1;
+SELECT 1 FROM ft1_nopw LIMIT 1;
 ERROR:  password is required
 DETAIL:  Non-superuser cannot connect if the server does not request a password.
 HINT:  Target server's authentication method must be changed or password_required=false set in the user mapping attributes.
@@ -9252,7 +9252,7 @@ HINT:  Target server's authentication method must be changed or password_require
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD password_required 'false');
 ERROR:  password_required=false is superuser-only
 HINT:  User mappings with the password_required option set to false may only be created or modified by the superuser
-SELECT * FROM ft1_nopw LIMIT 1;
+SELECT 1 FROM ft1_nopw LIMIT 1;
 ERROR:  password is required
 DETAIL:  Non-superuser cannot connect if the server does not request a password.
 HINT:  Target server's authentication method must be changed or password_required=false set in the user mapping attributes.
@@ -9261,10 +9261,10 @@ RESET ROLE;
 ALTER USER MAPPING FOR regress_nosuper SERVER loopback_nopw OPTIONS (ADD password_required 'false');
 SET ROLE regress_nosuper;
 -- Should finally work now
-SELECT * FROM ft1_nopw LIMIT 1;
-  c1  | c2 | c3 | c4 | c5 | c6 |     c7     | c8 
-------+----+----+----+----+----+------------+----
- 1111 |  2 |    |    |    |    | ft1        | 
+SELECT 1 FROM ft1_nopw LIMIT 1;
+ ?column? 
+----------
+        1
 (1 row)
 
 -- unpriv user also cannot set sslcert / sslkey on the user mapping
@@ -9281,16 +9281,16 @@ HINT:  User mappings with the sslcert or sslkey options set may only be created 
 DROP USER MAPPING FOR CURRENT_USER SERVER loopback_nopw;
 -- This will fail again as it'll resolve the user mapping for public, which
 -- lacks password_required=false
-SELECT * FROM ft1_nopw LIMIT 1;
+SELECT 1 FROM ft1_nopw LIMIT 1;
 ERROR:  password is required
 DETAIL:  Non-superusers must provide a password in the user mapping.
 RESET ROLE;
 -- The user mapping for public is passwordless and lacks the password_required=false
 -- mapping option, but will work because the current user is a superuser.
-SELECT * FROM ft1_nopw LIMIT 1;
-  c1  | c2 | c3 | c4 | c5 | c6 |     c7     | c8 
-------+----+----+----+----+----+------------+----
- 1111 |  2 |    |    |    |    | ft1        | 
+SELECT 1 FROM ft1_nopw LIMIT 1;
+ ?column? 
+----------
+        1
 (1 row)
 
 -- cleanup
