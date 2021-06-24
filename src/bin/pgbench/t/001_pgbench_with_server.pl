@@ -855,7 +855,12 @@ sub list_files
 	return map { $dir . '/' . $_ } @files;
 }
 
-# check log contents and cleanup
+# Check log contents and clean them up:
+#   $dir: directory holding logs
+#   $prefix: file prefix for per-thread logs
+#   $nb: number of expected files
+#   $min/$max: minimum and maximum number of lines in log files
+#   $re: regular expression each log line has to match
 sub check_pgbench_logs
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
@@ -876,7 +881,7 @@ sub check_pgbench_logs
 			my $clen     = @contents;
 			ok( $min <= $clen && $clen <= $max,
 				"transaction count for $log ($clen)");
-			ok( grep($re, @contents) == $clen,
+			ok( grep(/$re/, @contents) == $clen,
 				"transaction format for $prefix");
 			close $fh or die "$@";
 		};
@@ -887,25 +892,25 @@ sub check_pgbench_logs
 
 my $bdir = $node->basedir;
 
-# with sampling rate
+# Run with sampling rate, 2 clients with 50 transactions each.
 pgbench(
 	"-n -S -t 50 -c 2 --log --sampling-rate=0.5", 0,
 	[ qr{select only}, qr{processed: 100/100} ], [qr{^$}],
 	'pgbench logs', undef,
 	"--log-prefix=$bdir/001_pgbench_log_2");
-
+# The IDs of the clients (1st field) in the logs should be either 0 or 1.
 check_pgbench_logs($bdir, '001_pgbench_log_2', 1, 8, 92,
-	qr{^0 \d{1,2} \d+ \d \d+ \d+$});
+	qr{^[01] \d{1,2} \d+ \d \d+ \d+$});
 
-# check log file in some detail
+# Run with different read-only option pattern, 1 client with 10 transactions.
 pgbench(
-	"-n -b se -t 10 -l", 0,
+	"-n -b select-only -t 10 -l", 0,
 	[ qr{select only}, qr{processed: 10/10} ], [qr{^$}],
 	'pgbench logs contents', undef,
 	"--log-prefix=$bdir/001_pgbench_log_3");
-
+# The ID of a single client (1st field) should match 0.
 check_pgbench_logs($bdir, '001_pgbench_log_3', 1, 10, 10,
-	qr{^\d \d{1,2} \d+ \d \d+ \d+$});
+	qr{^0 \d{1,2} \d+ \d \d+ \d+$});
 
 # done
 $node->stop;
