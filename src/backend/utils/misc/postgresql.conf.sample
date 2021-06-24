@@ -768,8 +768,6 @@
 
 #exit_on_error = off			# terminate session on any error?
 #restart_after_crash = on		# reinitialize after backend crash?
-#remove_temp_files_after_crash = on	# remove temporary files after
-					# backend crash?
 #data_sync_retry = off			# retry or panic on failure to fsync
 					# data?
 					# (change requires restart)

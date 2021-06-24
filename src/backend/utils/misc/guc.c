@@ -1404,9 +1404,10 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"remove_temp_files_after_crash", PGC_SIGHUP, ERROR_HANDLING_OPTIONS,
+		{"remove_temp_files_after_crash", PGC_SIGHUP, DEVELOPER_OPTIONS,
 			gettext_noop("Remove temporary files after backend crash."),
-			NULL
+			NULL,
+			GUC_NOT_IN_SAMPLE
 		},
 		&remove_temp_files_after_crash,
 		true,
