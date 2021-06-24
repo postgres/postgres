@@ -42,6 +42,10 @@
 #include "utils/pg_locale.h"
 #include "utils/ps_status.h"
 
+#ifdef HAVE_LIBSECCOMP
+#include "common/seccomp.h"
+#endif
+
 
 const char *progname;
 
@@ -209,6 +213,10 @@ main(int argc, char *argv[])
 		WalRedoMain(argc, argv,
 					 NULL,		/* no dbname */
 					 strdup(get_user_name_or_exit(progname)));	/* does not return */
+#ifdef HAVE_LIBSECCOMP
+	else if (argc > 1 && strcmp(argv[1], "--test-seccomp") == 0)
+		test_seccomp();
+#endif
 	else
 		PostmasterMain(argc, argv); /* does not return */
 	abort();					/* should not get here */

@@ -186,6 +186,7 @@ with_tcl	= @with_tcl@
 with_ssl	= @with_ssl@
 with_readline	= @with_readline@
 with_selinux	= @with_selinux@
+with_libseccomp = @with_libseccomp@
 with_systemd	= @with_systemd@
 with_gssapi	= @with_gssapi@
 with_krb_srvnam	= @with_krb_srvnam@

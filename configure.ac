@@ -861,6 +861,14 @@ AC_SUBST(with_selinux)
 AC_MSG_RESULT([$with_selinux])
 
 #
+# libseccomp
+#
+AC_MSG_CHECKING([whether to build with libseccomp support])
+PGAC_ARG_BOOL(with, libseccomp, no, [build with libseccomp support])
+AC_SUBST(with_libseccomp)
+AC_MSG_RESULT([$with_libseccomp])
+
+#
 # Systemd
 #
 AC_MSG_CHECKING([whether to build with systemd support])
@@ -1497,6 +1505,11 @@ dnl but right now, what that would mainly accomplish is to encourage
 dnl people to try to use the avahi implementation, which does not work.
 dnl If you want to use Apple's own Bonjour code on another platform,
 dnl just add -ldns_sd to LIBS manually.
+fi
+
+if test "$with_libseccomp" = yes ; then
+  AC_CHECK_LIB(seccomp, seccomp_init, [],
+               [AC_MSG_ERROR([library 'libseccomp' is required for Seccomp BPF support])])
 fi
 
 # for contrib/uuid-ossp

@@ -62,6 +62,11 @@
 #include <sys/resource.h>
 #endif
 
+#if defined(HAVE_LIBSECCOMP) && defined(__GLIBC__)
+#define MALLOC_NO_MMAP
+#include <malloc.h>
+#endif
+
 #ifndef HAVE_GETRUSAGE
 #include "rusagestub.h"
 #endif
@@ -69,13 +74,14 @@
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xlogutils.h"
+#include "common/seccomp.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "postmaster/postmaster.h"
-#include "storage/ipc.h"
-#include "storage/bufmgr.h"
 #include "storage/buf_internals.h"
+#include "storage/bufmgr.h"
+#include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
@@ -92,6 +98,41 @@ static void GetPage(StringInfo input_message);
 static BufferTag target_redo_tag;
 
 #define TRACE DEBUG5
+
+#ifdef HAVE_LIBSECCOMP
+static int
+enter_seccomp(void)
+{
+	PgSeccompRule syscalls[] =
+	{
+		/* Hard requirements */
+		PG_SCMP_ALLOW(exit_group),
+		PG_SCMP_ALLOW(pselect6),
+		PG_SCMP_ALLOW(read),
+		PG_SCMP_ALLOW(write),
+
+		/* Memory allocation */
+		PG_SCMP_ALLOW(brk),
+#ifndef MALLOC_NO_MMAP
+		/* TODO: musl doesn't have mallopt */
+		PG_SCMP_ALLOW(mmap),
+#endif
+
+		/* TODO: do something about the shutdown sequence */
+		PG_SCMP_ALLOW(munmap),
+		PG_SCMP_ALLOW(shmctl),
+		PG_SCMP_ALLOW(shmdt),
+		PG_SCMP_ALLOW(unlink), /* shm_unlink */
+	};
+
+#ifdef MALLOC_NO_MMAP
+	/* Ask glibc not to use mmap() */
+	mallopt(M_MMAP_MAX, 0);
+#endif
+
+	return seccomp_load_rules(syscalls, lengthof(syscalls));
+}
+#endif
 
 /* ----------------------------------------------------------------
  * FIXME comment
@@ -244,6 +285,16 @@ WalRedoMain(int argc, char *argv[],
 		if (RmgrTable[rmid].rm_startup != NULL)
 			RmgrTable[rmid].rm_startup();
 	}
+
+#ifdef HAVE_LIBSECCOMP
+	/* Enter Linux seccomp mode, which blocks most syscalls. */
+	if (enter_seccomp() != 0)
+	{
+		ereport(ERROR, (errcode(ERRCODE_SYSTEM_ERROR), errmsg("prctl failed")));
+		proc_exit(1);
+	}
+	ereport(LOG, (errmsg("seccomp enabled")));
+#endif
 
 	/*
 	 * Main processing loop
@@ -636,8 +687,7 @@ GetPage(StringInfo input_message)
 	/* single thread, so don't bother locking the page */
 
 	/* Response: Page content */
-	fwrite(page, 1, BLCKSZ, stdout); /* FIXME: check errors */
-	fflush(stdout);
+	write(STDOUT_FILENO, page, BLCKSZ); /* FIXME: check errors */
 
 	ReleaseBuffer(buf);
 	DropDatabaseBuffers(rnode.dbNode);

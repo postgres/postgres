@@ -94,6 +94,11 @@ OBJS_COMMON += \
 	sha2.o
 endif
 
+ifeq ($(with_libseccomp),yes)
+OBJS_COMMON += \
+	seccomp.o
+endif
+
 # A few files are currently only built for frontend, not server
 # (Mkvcbuild.pm has a copy of this list, too).  logging.c is excluded
 # from OBJS_FRONTEND_SHLIB (shared library) as a matter of policy,

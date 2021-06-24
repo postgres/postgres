@@ -337,6 +337,9 @@
 /* Define if you have a function readline library */
 #undef HAVE_LIBREADLINE
 
+/* Define to 1 if you have the `seccomp' library (-lseccomp). */
+#undef HAVE_LIBSECCOMP
+
 /* Define to 1 if you have the `selinux' library (-lselinux). */
 #undef HAVE_LIBSELINUX
 
