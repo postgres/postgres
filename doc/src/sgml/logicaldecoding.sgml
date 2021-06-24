@@ -1097,16 +1097,18 @@ OutputPluginWrite(ctx, true);
 
     <para>
      In synchronous replication setup, a deadlock can happen, if the transaction
-     has locked [user] catalog tables exclusively. This is because logical decoding of
-     transactions can lock catalog tables to access them. To avoid this users
-     must refrain from taking an exclusive lock on [user] catalog tables. This can
-     happen in the following ways:
+     has locked [user] catalog tables exclusively. See
+     <xref linkend="logicaldecoding-capabilities"/> for information on user
+     catalog tables. This is because logical decoding of transactions can lock
+     catalog tables to access them. To avoid this users must refrain from taking
+     an exclusive lock on [user] catalog tables. This can happen in the following
+     ways:
 
      <itemizedlist>
       <listitem>
        <para>
         Issuing an explicit <command>LOCK</command> on <structname>pg_class</structname>
-        (or any other catalog table) in a transaction.
+        in a transaction.
        </para>
       </listitem>
 
@@ -1141,6 +1143,10 @@ OutputPluginWrite(ctx, true);
        </para>
       </listitem>
      </itemizedlist>
+
+     Note that these commands that can cause deadlock apply to not only explicitly
+     indicated system catalog tables above but also to any other [user] catalog
+     table.
     </para>
    </sect2>
   </sect1>
@@ -1311,7 +1317,7 @@ stream_commit_cb(...);  &lt;-- commit of the streamed transaction
        [user] catalog tables exclusively. To avoid this users must refrain from
        having locks on catalog tables (e.g. explicit <command>LOCK</command> command)
        in such transactions.
-       (See <xref linkend="logicaldecoding-synchronous-caveats"/> for the details.)
+       See <xref linkend="logicaldecoding-synchronous-caveats"/> for the details.
       </para>
      </listitem>
     </itemizedlist>
