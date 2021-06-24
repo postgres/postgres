@@ -122,7 +122,7 @@ static void apply_map_update(RelMapFile *map, Oid relationId, Oid fileNode,
 				 bool add_okay);
 static void merge_map_updates(RelMapFile *map, const RelMapFile *updates,
 				  bool add_okay);
-static void load_relmap_file(bool shared);
+static void load_relmap_file(bool shared, bool lock_held);
 static void write_relmap_file(bool shared, RelMapFile *newmap,
 				  bool write_wal, bool send_sinval, bool preserve_files,
 				  Oid dbid, Oid tsid, const char *dbpath);
@@ -388,12 +388,12 @@ RelationMapInvalidate(bool shared)
 	if (shared)
 	{
 		if (shared_map.magic == RELMAPPER_FILEMAGIC)
-			load_relmap_file(true);
+			load_relmap_file(true, false);
 	}
 	else
 	{
 		if (local_map.magic == RELMAPPER_FILEMAGIC)
-			load_relmap_file(false);
+			load_relmap_file(false, false);
 	}
 }
 
@@ -408,9 +408,9 @@ void
 RelationMapInvalidateAll(void)
 {
 	if (shared_map.magic == RELMAPPER_FILEMAGIC)
-		load_relmap_file(true);
+		load_relmap_file(true, false);
 	if (local_map.magic == RELMAPPER_FILEMAGIC)
-		load_relmap_file(false);
+		load_relmap_file(false, false);
 }
 
 /*
@@ -589,7 +589,7 @@ RelationMapInitializePhase2(void)
 	/*
 	 * Load the shared map file, die on error.
 	 */
-	load_relmap_file(true);
+	load_relmap_file(true, false);
 }
 
 /*
@@ -610,7 +610,7 @@ RelationMapInitializePhase3(void)
 	/*
 	 * Load the local map file, die on error.
 	 */
-	load_relmap_file(false);
+	load_relmap_file(false, false);
 }
 
 /*
@@ -622,7 +622,7 @@ RelationMapInitializePhase3(void)
  * Note that the local case requires DatabasePath to be set up.
  */
 static void
-load_relmap_file(bool shared)
+load_relmap_file(bool shared, bool lock_held)
 {
 	RelMapFile *map;
 	char		mapfilename[MAXPGPATH];
@@ -652,17 +652,23 @@ load_relmap_file(bool shared)
 						mapfilename)));
 
 	/*
-	 * Note: we could take RelationMappingLock in shared mode here, but it
-	 * seems unnecessary since our read() should be atomic against any
-	 * concurrent updater's write().  If the file is updated shortly after we
-	 * look, the sinval signaling mechanism will make us re-read it before we
-	 * are able to access any relation that's affected by the change.
+	 * Grab the lock to prevent the file from being updated while we read it,
+	 * unless the caller is already holding the lock.  If the file is updated
+	 * shortly after we look, the sinval signaling mechanism will make us
+	 * re-read it before we are able to access any relation that's affected by
+	 * the change.
 	 */
+	if (!lock_held)
+		LWLockAcquire(RelationMappingLock, LW_SHARED);
+
 	if (read(fd, map, sizeof(RelMapFile)) != sizeof(RelMapFile))
 		ereport(FATAL,
 				(errcode_for_file_access(),
 				 errmsg("could not read relation mapping file \"%s\": %m",
 						mapfilename)));
+
+	if (!lock_held)
+		LWLockRelease(RelationMappingLock);
 
 	CloseTransientFile(fd);
 
@@ -880,7 +886,7 @@ perform_relmap_update(bool shared, const RelMapFile *updates)
 	LWLockAcquire(RelationMappingLock, LW_EXCLUSIVE);
 
 	/* Be certain we see any other updates just made */
-	load_relmap_file(shared);
+	load_relmap_file(shared, true);
 
 	/* Prepare updated data in a local variable */
 	if (shared)
