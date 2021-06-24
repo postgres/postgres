@@ -1030,12 +1030,13 @@ relmap_redo(XLogReaderState *record)
 		 * preserve files, either.
 		 *
 		 * There shouldn't be anyone else updating relmaps during WAL replay,
-		 * so we don't bother to take the RelationMappingLock.  We would need
-		 * to do so if load_relmap_file needed to interlock against writers.
+		 * but grab the lock to interlock against load_relmap_file().
 		 */
+		LWLockAcquire(RelationMappingLock, LW_EXCLUSIVE);
 		write_relmap_file((xlrec->dbid == InvalidOid), &newmap,
 						  false, true, false,
 						  xlrec->dbid, xlrec->tsid, dbpath);
+		LWLockRelease(RelationMappingLock);
 
 		pfree(dbpath);
 	}
