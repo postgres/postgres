@@ -404,13 +404,12 @@ RemovePolicyById(Oid policy_id)
 
 /*
  * RemoveRoleFromObjectPolicy -
- *	 remove a role from a policy by its OID.  If the role is not a member of
- *	 the policy then an error is raised.  False is returned to indicate that
- *	 the role could not be removed due to being the only role on the policy
- *	 and therefore the entire policy should be removed.
+ *	 remove a role from a policy's applicable-roles list.
  *
- * Note that a warning will be thrown and true will be returned on a
- * permission error, as the policy should not be removed in that case.
+ * Returns true if the role was successfully removed from the policy.
+ * Returns false if the role was not removed because it would have left
+ * polroles empty (which is disallowed, though perhaps it should not be).
+ * On false return, the caller should instead drop the policy altogether.
  *
  * roleid - the oid of the role to remove
  * classid - should always be PolicyRelationId
@@ -424,11 +423,15 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
 	Oid			relid;
-	Relation	rel;
 	ArrayType  *policy_roles;
 	Datum		roles_datum;
+	Oid		   *roles;
+	int			num_roles;
+	Datum	   *role_oids;
 	bool		attr_isnull;
 	bool		keep_policy = true;
+	int			i,
+				j;
 
 	Assert(classid == PolicyRelationId);
 
@@ -451,25 +454,8 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for policy %u", policy_id);
 
-	/*
-	 * Open and exclusive-lock the relation the policy belongs to.
-	 */
+	/* Identify rel the policy belongs to */
 	relid = ((Form_pg_policy) GETSTRUCT(tuple))->polrelid;
-
-	rel = relation_open(relid, AccessExclusiveLock);
-
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
-						RelationGetRelationName(rel))));
-
-	if (!allowSystemTableMods && IsSystemRelation(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied: \"%s\" is a system catalog",
-						RelationGetRelationName(rel))));
 
 	/* Get the current set of roles */
 	roles_datum = heap_getattr(tuple,
@@ -480,34 +466,31 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 	Assert(!attr_isnull);
 
 	policy_roles = DatumGetArrayTypePCopy(roles_datum);
+	roles = (Oid *) ARR_DATA_PTR(policy_roles);
+	num_roles = ARR_DIMS(policy_roles)[0];
 
-	/* Must own relation. */
-	if (!pg_class_ownercheck(relid, GetUserId()))
-		ereport(WARNING,
-				(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-				 errmsg("role \"%s\" could not be removed from policy \"%s\" on \"%s\"",
-						GetUserNameFromId(roleid, false),
-						NameStr(((Form_pg_policy) GETSTRUCT(tuple))->polname),
-						RelationGetRelationName(rel))));
-	else
+	/*
+	 * Rebuild the polroles array, without any mentions of the target role.
+	 * Ordinarily there'd be exactly one, but we must cope with duplicate
+	 * mentions, since CREATE/ALTER POLICY historically have allowed that.
+	 */
+	role_oids = (Datum *) palloc(num_roles * sizeof(Datum));
+	for (i = 0, j = 0; i < num_roles; i++)
 	{
-		int			i,
-					j;
-		Oid		   *roles = (Oid *) ARR_DATA_PTR(policy_roles);
-		int			num_roles = ARR_DIMS(policy_roles)[0];
-		Datum	   *role_oids;
-		char	   *qual_value;
-		Node	   *qual_expr;
-		List	   *qual_parse_rtable = NIL;
-		char	   *with_check_value;
-		Node	   *with_check_qual;
-		List	   *with_check_parse_rtable = NIL;
+		if (roles[i] != roleid)
+			role_oids[j++] = ObjectIdGetDatum(roles[i]);
+	}
+	num_roles = j;
+
+	/* If any roles remain, update the policy entry. */
+	if (num_roles > 0)
+	{
+		ArrayType  *role_ids;
 		Datum		values[Natts_pg_policy];
 		bool		isnull[Natts_pg_policy];
 		bool		replaces[Natts_pg_policy];
-		Datum		value_datum;
-		ArrayType  *role_ids;
 		HeapTuple	new_tuple;
+		HeapTuple	reltup;
 		ObjectAddress target;
 		ObjectAddress myself;
 
@@ -516,77 +499,6 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 		memset(replaces, 0, sizeof(replaces));
 		memset(isnull, 0, sizeof(isnull));
 
-		/*
-		 * All of the dependencies will be removed from the policy and then
-		 * re-added.  In order to get them correct, we need to extract out the
-		 * expressions in the policy and construct a parsestate just enough to
-		 * build the range table(s) to then pass to recordDependencyOnExpr().
-		 */
-
-		/* Get policy qual, to update dependencies */
-		value_datum = heap_getattr(tuple, Anum_pg_policy_polqual,
-								   RelationGetDescr(pg_policy_rel), &attr_isnull);
-		if (!attr_isnull)
-		{
-			ParseState *qual_pstate;
-
-			/* parsestate is built just to build the range table */
-			qual_pstate = make_parsestate(NULL);
-
-			qual_value = TextDatumGetCString(value_datum);
-			qual_expr = stringToNode(qual_value);
-
-			/* Add this rel to the parsestate's rangetable, for dependencies */
-			(void) addRangeTableEntryForRelation(qual_pstate, rel,
-												 AccessShareLock,
-												 NULL, false, false);
-
-			qual_parse_rtable = qual_pstate->p_rtable;
-			free_parsestate(qual_pstate);
-		}
-		else
-			qual_expr = NULL;
-
-		/* Get WITH CHECK qual, to update dependencies */
-		value_datum = heap_getattr(tuple, Anum_pg_policy_polwithcheck,
-								   RelationGetDescr(pg_policy_rel), &attr_isnull);
-		if (!attr_isnull)
-		{
-			ParseState *with_check_pstate;
-
-			/* parsestate is built just to build the range table */
-			with_check_pstate = make_parsestate(NULL);
-
-			with_check_value = TextDatumGetCString(value_datum);
-			with_check_qual = stringToNode(with_check_value);
-
-			/* Add this rel to the parsestate's rangetable, for dependencies */
-			(void) addRangeTableEntryForRelation(with_check_pstate, rel,
-												 AccessShareLock,
-												 NULL, false, false);
-
-			with_check_parse_rtable = with_check_pstate->p_rtable;
-			free_parsestate(with_check_pstate);
-		}
-		else
-			with_check_qual = NULL;
-
-		/*
-		 * Rebuild the roles array, without any mentions of the target role.
-		 * Ordinarily there'd be exactly one, but we must cope with duplicate
-		 * mentions, since CREATE/ALTER POLICY historically have allowed that.
-		 */
-		role_oids = (Datum *) palloc(num_roles * sizeof(Datum));
-		for (i = 0, j = 0; i < num_roles; i++)
-		{
-			if (roles[i] != roleid)
-				role_oids[j++] = ObjectIdGetDatum(roles[i]);
-		}
-		num_roles = j;
-
-		/* If any roles remain, update the policy entry. */
-		if (num_roles > 0)
-		{
 		/* This is the array for the new tuple */
 		role_ids = construct_array(role_oids, num_roles, OIDOID,
 								   sizeof(Oid), true, TYPALIGN_INT);
@@ -599,33 +511,14 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 									  values, isnull, replaces);
 		CatalogTupleUpdate(pg_policy_rel, &new_tuple->t_self, new_tuple);
 
-		/* Remove all old dependencies. */
-		deleteDependencyRecordsFor(PolicyRelationId, policy_id, false);
-
-		/* Record the new set of dependencies */
-		target.classId = RelationRelationId;
-		target.objectId = relid;
-		target.objectSubId = 0;
-
-		myself.classId = PolicyRelationId;
-		myself.objectId = policy_id;
-		myself.objectSubId = 0;
-
-		recordDependencyOn(&myself, &target, DEPENDENCY_AUTO);
-
-		if (qual_expr)
-			recordDependencyOnExpr(&myself, qual_expr, qual_parse_rtable,
-								   DEPENDENCY_NORMAL);
-
-		if (with_check_qual)
-			recordDependencyOnExpr(&myself, with_check_qual,
-								   with_check_parse_rtable,
-								   DEPENDENCY_NORMAL);
-
 		/* Remove all the old shared dependencies (roles) */
 		deleteSharedDependencyRecordsFor(PolicyRelationId, policy_id, 0);
 
 		/* Record the new shared dependencies (roles) */
+		myself.classId = PolicyRelationId;
+		myself.objectId = policy_id;
+		myself.objectSubId = 0;
+
 		target.classId = AuthIdRelationId;
 		target.objectSubId = 0;
 		for (i = 0; i < num_roles; i++)
@@ -644,20 +537,26 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 		/* Make updates visible */
 		CommandCounterIncrement();
 
-		/* Invalidate Relation Cache */
-		CacheInvalidateRelcache(rel);
-		}
-		else
+		/*
+		 * Invalidate relcache entry for rel the policy belongs to, to force
+		 * redoing any dependent plans.  In case of a race condition where the
+		 * rel was just dropped, we need do nothing.
+		 */
+		reltup = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+		if (HeapTupleIsValid(reltup))
 		{
-			/* No roles would remain, so drop the policy instead */
-			keep_policy = false;
+			CacheInvalidateRelcacheByTuple(reltup);
+			ReleaseSysCache(reltup);
 		}
+	}
+	else
+	{
+		/* No roles would remain, so drop the policy instead. */
+		keep_policy = false;
 	}
 
 	/* Clean up. */
 	systable_endscan(sscan);
-
-	relation_close(rel, NoLock);
 
 	table_close(pg_policy_rel, RowExclusiveLock);
 
