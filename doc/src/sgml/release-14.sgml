@@ -1515,23 +1515,6 @@ Author: Amit Kapila <akapila@postgresql.org>
 
       <listitem>
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-09-14 [f560209c6] Make walsenders show their replication commands in pg_st
--->
-
-       <para>
-        Improve <link
-        linkend="monitoring-pg-stat-activity-view"><structname>pg_stat_activity</structname></link>
-        reporting of walsender processes (Tom Lane)
-       </para>
-
-       <para>
-        Previously only <acronym>SQL</acronym> commands were reported.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 Author: Fujii Masao <fujii@postgresql.org>
 2021-03-15 [d75288fb2] Make archiver process an auxiliary process.
 -->
