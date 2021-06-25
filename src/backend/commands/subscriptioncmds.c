@@ -953,8 +953,6 @@ AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel)
 				bool		refresh;
 				List	   *publist;
 
-				publist = merge_publications(sub->publications, stmt->publication, isadd, stmt->subname);
-
 				parse_subscription_options(stmt->options,
 										   NULL,	/* no "connect" */
 										   NULL, NULL,	/* no "enabled" */
@@ -966,6 +964,8 @@ AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel)
 										   &refresh,
 										   NULL, NULL,	/* no "binary" */
 										   NULL, NULL); /* no "streaming" */
+
+				publist = merge_publications(sub->publications, stmt->publication, isadd, stmt->subname);
 
 				values[Anum_pg_subscription_subpublications - 1] =
 					publicationListToArray(publist);
@@ -1676,7 +1676,7 @@ merge_publications(List *oldpublist, List *newpublist, bool addpub, const char *
 	if (!oldpublist)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("subscription must contain at least one publication")));
+				 errmsg("cannot drop all the publications from a subscription")));
 
 	return oldpublist;
 }

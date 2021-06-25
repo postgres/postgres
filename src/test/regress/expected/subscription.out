@@ -223,7 +223,7 @@ ALTER SUBSCRIPTION regress_testsub DROP PUBLICATION testpub1, testpub1 WITH (ref
 ERROR:  publication name "testpub1" used more than once
 -- fail - all publications are deleted
 ALTER SUBSCRIPTION regress_testsub DROP PUBLICATION testpub, testpub1, testpub2 WITH (refresh = false);
-ERROR:  subscription must contain at least one publication
+ERROR:  cannot drop all the publications from a subscription
 -- fail - publication does not exist in subscription
 ALTER SUBSCRIPTION regress_testsub DROP PUBLICATION testpub3 WITH (refresh = false);
 ERROR:  publication "testpub3" is not in subscription "regress_testsub"

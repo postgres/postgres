@@ -22,9 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> CONNECTION '<replaceable>conninfo</replaceable>'
-ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> SET PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="parameter">set_publication_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
-ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> ADD PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="parameter">set_publication_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
-ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> DROP PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="parameter">set_publication_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> SET PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="parameter">publication_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> ADD PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="parameter">publication_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> DROP PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="parameter">publication_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> REFRESH PUBLICATION [ WITH ( <replaceable class="parameter">refresh_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> ENABLE
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> DISABLE
@@ -102,17 +102,17 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
      <para>
       Changes the list of subscribed publications.  <literal>SET</literal>
       replaces the entire list of publications with a new list,
-      <literal>ADD</literal> adds additional publications,
-      <literal>DROP</literal> removes publications from the list of
-      publications.  See <xref linkend="sql-createsubscription"/> for more
-      information.  By default, this command will also act like
+      <literal>ADD</literal> adds additional publications to the list of
+      publications, and <literal>DROP</literal> removes the publications from
+      the list of publications.  See <xref linkend="sql-createsubscription"/>
+      for more information.  By default, this command will also act like
       <literal>REFRESH PUBLICATION</literal>, except that in case of
       <literal>ADD</literal> or <literal>DROP</literal>, only the added or
       dropped publications are refreshed.
      </para>
 
      <para>
-      <replaceable>set_publication_option</replaceable> specifies additional
+      <replaceable>publication_option</replaceable> specifies additional
       options for this operation.  The supported options are:
 
       <variablelist>
@@ -129,7 +129,8 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       </variablelist>
 
       Additionally, refresh options as described
-      under <literal>REFRESH PUBLICATION</literal> may be specified.
+      under <literal>REFRESH PUBLICATION</literal> may be specified,
+      except in the case of <literal>DROP PUBLICATION</literal>.
      </para>
     </listitem>
    </varlistentry>
