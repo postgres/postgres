@@ -1378,7 +1378,7 @@ include_dir 'conf.d'
           <listitem>
            <para>
             Disables anonymous cipher suites that do no authentication.  Such
-            cipher suites are vulnerable to man-in-the-middle attacks and
+            cipher suites are vulnerable to <acronym>MITM</acronym> attacks and
             therefore should not be used.
            </para>
           </listitem>

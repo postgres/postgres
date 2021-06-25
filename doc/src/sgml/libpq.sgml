@@ -1783,18 +1783,17 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <listitem>
        <para>
         By default, libpq sets the TLS extension <quote>Server Name
-        Indication</quote> (SNI) on SSL-enabled connections.  See <ulink
-        url="https://tools.ietf.org/html/rfc6066#section-3">RFC 6066</ulink>
-        for details.  By setting this parameter to 0, this is turned off.
+        Indication</quote> (<acronym>SNI</acronym>) on SSL-enabled connections.
+        By setting this parameter to 0, this is turned off.
        </para>
 
        <para>
         The Server Name Indication can be used by SSL-aware proxies to route
         connections without having to decrypt the SSL stream.  (Note that this
         requires a proxy that is aware of the PostgreSQL protocol handshake,
-        not just any SSL proxy.)  However, SNI makes the destination host name
-        appear in cleartext in the network traffic, so it might be undesirable
-        in some cases.
+        not just any SSL proxy.)  However, <acronym>SNI</acronym> makes the
+        destination host name appear in cleartext in the network traffic, so
+        it might be undesirable in some cases.
        </para>
       </listitem>
      </varlistentry>
@@ -8430,7 +8429,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
     </varlistentry>
 
     <varlistentry>
-     <term>Man in the middle (<acronym>MITM</acronym>)</term>
+     <term>Man-in-the-middle (<acronym>MITM</acronym>)</term>
      <listitem>
       <para>If a third party can modify the data while passing between the
        client and server, it can pretend to be the server and therefore see and
