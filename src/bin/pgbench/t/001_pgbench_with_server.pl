@@ -875,18 +875,27 @@ sub check_pgbench_logs
 	my $log_number = 0;
 	for my $log (sort @logs)
 	{
-		eval {
-			open my $fh, '<', $log or die "$@";
-			my @contents = <$fh>;
-			my $clen     = @contents;
-			ok( $min <= $clen && $clen <= $max,
-				"transaction count for $log ($clen)");
-			ok( grep(/$re/, @contents) == $clen,
-				"transaction format for $prefix");
-			close $fh or die "$@";
-		};
+		# Check the contents of each log file.
+		my $contents_raw = slurp_file($log);
+
+		my @contents = split(/\n/, $contents_raw);
+		my $clen     = @contents;
+		ok( $min <= $clen && $clen <= $max,
+			"transaction count for $log ($clen)");
+		my $clen_match = grep(/$re/, @contents);
+		ok($clen_match == $clen, "transaction format for $prefix");
+
+		# Show more information if some logs don't match
+		# to help with debugging.
+		if ($clen_match != $clen)
+		{
+			foreach my $log (@contents)
+			{
+				print "# Log entry not matching: $log\n"
+				  unless $log =~ /$re/;
+			}
+		}
 	}
-	ok(unlink(@logs), "remove log files");
 	return;
 }
 
