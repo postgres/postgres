@@ -756,9 +756,8 @@ void
 gistinitpage(Page page, uint32 f)
 {
 	GISTPageOpaque opaque;
-	Size		pageSize = BLCKSZ;
 
-	PageInit(page, pageSize, sizeof(GISTPageOpaqueData));
+	PageInit(page, BLCKSZ, sizeof(GISTPageOpaqueData));
 
 	opaque = GistPageGetOpaque(page);
 	opaque->rightlink = InvalidBlockNumber;
