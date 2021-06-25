@@ -1179,7 +1179,7 @@ OutputPluginWrite(ctx, true);
     (<function>stream_start_cb</function>, <function>stream_stop_cb</function>,
     <function>stream_abort_cb</function>, <function>stream_commit_cb</function>
     and <function>stream_change_cb</function>) and two optional callbacks
-    (<function>stream_message_cb</function>) and (<function>stream_truncate_cb</function>).
+    (<function>stream_message_cb</function> and <function>stream_truncate_cb</function>).
    </para>
 
    <para>
