@@ -21,7 +21,6 @@ mkdir $testdir
 sub pgbench
 {
 	my ($opts, $stat, $out, $err, $name) = @_;
-	print STDERR "opts=$opts, stat=$stat, out=$out, err=$err, name=$name";
 	command_checks_all([ 'pgbench', split(/\s+/, $opts) ],
 		$stat, $out, $err, $name);
 	return;
