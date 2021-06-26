@@ -3114,22 +3114,6 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 
      <listitem>
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-09-22 [c0cb87fbb] Remove arbitrary line length limit for libpq service fil
--->
-
-      <para>
-       Allow the libpq <link linkend="libpq-pgservice">service file</link>
-       to have unlimited line lengths (Daniel Gustafsson)
-      </para>
-
-      <para>
-       The previous limit was 255 bytes.
-      </para>
-     </listitem>
-
-     <listitem>
-<!--
 Author: Michael Meskes <meskes@postgresql.org>
 2021-03-24 [ad8305a43] Add DECLARE STATEMENT command to ECPG
 -->
