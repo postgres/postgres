@@ -52,8 +52,12 @@ self			[,()*]
 %%
 
 %{
-	litbuf = pg_malloc(LITBUF_INIT);
-	litbufsize = LITBUF_INIT;
+	/* Allocate litbuf in first call of yylex() */
+	if (litbuf == NULL)
+	{
+		litbuf = pg_malloc(LITBUF_INIT);
+		litbufsize = LITBUF_INIT;
+	}
 %}
 
  /* Keywords (must appear before the {identifier} rule!) */
