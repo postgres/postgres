@@ -4182,11 +4182,11 @@ numeric_int4_opt_error(Numeric num, bool *have_error)
 			if (NUMERIC_IS_NAN(num))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot convert NaN to integer")));
+						 errmsg("cannot convert NaN to %s", "integer")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot convert infinity to integer")));
+						 errmsg("cannot convert infinity to %s", "integer")));
 		}
 	}
 
@@ -4260,11 +4260,11 @@ numeric_int8(PG_FUNCTION_ARGS)
 		if (NUMERIC_IS_NAN(num))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert NaN to bigint")));
+					 errmsg("cannot convert NaN to %s", "bigint")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert infinity to bigint")));
+					 errmsg("cannot convert infinity to %s", "bigint")));
 	}
 
 	/* Convert to variable format and thence to int8 */
@@ -4301,11 +4301,11 @@ numeric_int2(PG_FUNCTION_ARGS)
 		if (NUMERIC_IS_NAN(num))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert NaN to smallint")));
+					 errmsg("cannot convert NaN to %s", "smallint")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert infinity to smallint")));
+					 errmsg("cannot convert infinity to %s", "smallint")));
 	}
 
 	/* Convert to variable format and thence to int8 */
@@ -4496,11 +4496,11 @@ numeric_pg_lsn(PG_FUNCTION_ARGS)
 		if (NUMERIC_IS_NAN(num))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert NaN to pg_lsn")));
+					 errmsg("cannot convert NaN to %s", "pg_lsn")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert infinity to pg_lsn")));
+					 errmsg("cannot convert infinity to %s", "pg_lsn")));
 	}
 
 	/* Convert to variable format and thence to pg_lsn */

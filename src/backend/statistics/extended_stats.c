@@ -2274,7 +2274,8 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 	if (!OidIsValid(typOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("relation \"pg_statistic\" does not have a composite type")));
+				 errmsg("relation \"%s\" does not have a composite type",
+						"pg_statistic")));
 
 	for (exprno = 0; exprno < nexprs; exprno++)
 	{
