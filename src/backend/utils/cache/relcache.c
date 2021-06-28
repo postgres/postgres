@@ -5244,9 +5244,9 @@ Bitmapset *
 RelationGetIdentityKeyBitmap(Relation relation)
 {
 	Bitmapset  *idindexattrs = NULL;	/* columns in the replica identity */
-	List	   *indexoidlist;
 	Relation	indexDesc;
 	int			i;
+	Oid			replidindex;
 	MemoryContext oldcxt;
 
 	/* Quick exit if we already computed the result */
@@ -5260,18 +5260,14 @@ RelationGetIdentityKeyBitmap(Relation relation)
 	/* Historic snapshot must be set. */
 	Assert(HistoricSnapshotActive());
 
-	indexoidlist = RelationGetIndexList(relation);
-
-	/* Fall out if no indexes (but relhasindex was set) */
-	if (indexoidlist == NIL)
-		return NULL;
+	replidindex = RelationGetReplicaIndex(relation);
 
 	/* Fall out if there is no replica identity index */
-	if (!OidIsValid(relation->rd_replidindex))
+	if (!OidIsValid(replidindex))
 		return NULL;
 
 	/* Look up the description for the replica identity index */
-	indexDesc = RelationIdGetRelation(relation->rd_replidindex);
+	indexDesc = RelationIdGetRelation(replidindex);
 
 	if (!RelationIsValid(indexDesc))
 		elog(ERROR, "could not open relation with OID %u",
@@ -5295,7 +5291,6 @@ RelationGetIdentityKeyBitmap(Relation relation)
 	}
 
 	RelationClose(indexDesc);
-	list_free(indexoidlist);
 
 	/* Don't leak the old values of these bitmaps, if any */
 	bms_free(relation->rd_idattr);
