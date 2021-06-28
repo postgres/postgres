@@ -759,7 +759,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 					 " ORDER BY a.attnum",
 					 lrel->remoteid,
 					 (walrcv_server_version(LogRepWorkerWalRcvConn) >= 120000 ?
-						 "AND a.attgenerated = ''" : ""),
+					  "AND a.attgenerated = ''" : ""),
 					 lrel->remoteid);
 	res = walrcv_exec(LogRepWorkerWalRcvConn, cmd.data,
 					  lengthof(attrRow), attrRow);

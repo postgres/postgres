@@ -51,8 +51,11 @@ $node_publisher->safe_psql('postgres',
 	"ALTER TABLE tab_nothing REPLICA IDENTITY NOTHING");
 
 # Replicate the changes without replica identity index
-$node_publisher->safe_psql('postgres', "CREATE TABLE tab_no_replidentity_index(c1 int)");
-$node_publisher->safe_psql('postgres', "CREATE INDEX idx_no_replidentity_index ON tab_no_replidentity_index(c1)");
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE tab_no_replidentity_index(c1 int)");
+$node_publisher->safe_psql('postgres',
+	"CREATE INDEX idx_no_replidentity_index ON tab_no_replidentity_index(c1)"
+);
 
 # Setup structure on subscriber
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_notrep (a int)");
@@ -78,8 +81,11 @@ $node_subscriber->safe_psql('postgres',
 );
 
 # replication of the table without replica identity index
-$node_subscriber->safe_psql('postgres', "CREATE TABLE tab_no_replidentity_index(c1 int)");
-$node_subscriber->safe_psql('postgres', "CREATE INDEX idx_no_replidentity_index ON tab_no_replidentity_index(c1)");
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE tab_no_replidentity_index(c1 int)");
+$node_subscriber->safe_psql('postgres',
+	"CREATE INDEX idx_no_replidentity_index ON tab_no_replidentity_index(c1)"
+);
 
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
@@ -137,7 +143,8 @@ $node_publisher->safe_psql('postgres',
 	"DELETE FROM tab_include WHERE a > 20");
 $node_publisher->safe_psql('postgres', "UPDATE tab_include SET a = -a");
 
-$node_publisher->safe_psql('postgres', "INSERT INTO tab_no_replidentity_index VALUES(1)");
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tab_no_replidentity_index VALUES(1)");
 
 $node_publisher->wait_for_catchup('tap_sub');
 
@@ -162,8 +169,10 @@ $result = $node_subscriber->safe_psql('postgres',
 is($result, qq(20|-20|-1),
 	'check replicated changes with primary key index with included columns');
 
-is($node_subscriber->safe_psql('postgres', q(SELECT c1 FROM tab_no_replidentity_index)),
-   1, "value replicated to subscriber without replica identity index");
+is( $node_subscriber->safe_psql(
+		'postgres', q(SELECT c1 FROM tab_no_replidentity_index)),
+	1,
+	"value replicated to subscriber without replica identity index");
 
 # insert some duplicate rows
 $node_publisher->safe_psql('postgres',

@@ -197,11 +197,9 @@ $node_publisher->safe_psql('postgres', "SELECT pg_reload_conf()");
 # test that truncate works for logical replication when there are multiple
 # subscriptions for a single table
 
-$node_publisher->safe_psql('postgres',
-	"CREATE TABLE tab5 (a int)");
+$node_publisher->safe_psql('postgres', "CREATE TABLE tab5 (a int)");
 
-$node_subscriber->safe_psql('postgres',
-	"CREATE TABLE tab5 (a int)");
+$node_subscriber->safe_psql('postgres', "CREATE TABLE tab5 (a int)");
 
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION pub5 FOR TABLE tab5");
@@ -235,8 +233,7 @@ $node_publisher->wait_for_catchup('sub5_2');
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab5");
-is($result, qq(0||),
-	'truncate replicated for multiple subscriptions');
+is($result, qq(0||), 'truncate replicated for multiple subscriptions');
 
 # check deadlocks
 $result = $node_subscriber->safe_psql('postgres',

@@ -704,16 +704,16 @@ ExecInsert(ModifyTableState *mtstate,
 			}
 
 			/*
-			 * Initialize the batch slots. We don't know how many slots will be
-			 * needed, so we initialize them as the batch grows, and we keep
-			 * them across batches. To mitigate an inefficiency in how resource
-			 * owner handles objects with many references (as with many slots
-			 * all referencing the same tuple descriptor) we copy the tuple
-			 * descriptor for each slot.
+			 * Initialize the batch slots. We don't know how many slots will
+			 * be needed, so we initialize them as the batch grows, and we
+			 * keep them across batches. To mitigate an inefficiency in how
+			 * resource owner handles objects with many references (as with
+			 * many slots all referencing the same tuple descriptor) we copy
+			 * the tuple descriptor for each slot.
 			 */
 			if (resultRelInfo->ri_NumSlots >= resultRelInfo->ri_NumSlotsInitialized)
 			{
-				TupleDesc tdesc = CreateTupleDescCopy(slot->tts_tupleDescriptor);
+				TupleDesc	tdesc = CreateTupleDescCopy(slot->tts_tupleDescriptor);
 
 				resultRelInfo->ri_Slots[resultRelInfo->ri_NumSlots] =
 					MakeSingleTupleTableSlot(tdesc, slot->tts_ops);
@@ -3173,7 +3173,7 @@ ExecEndModifyTable(ModifyTableState *node)
 	 */
 	for (i = 0; i < node->mt_nrels; i++)
 	{
-		int j;
+		int			j;
 		ResultRelInfo *resultRelInfo = node->resultRelInfo + i;
 
 		if (!resultRelInfo->ri_usesFdwDirectModify &&
@@ -3183,8 +3183,9 @@ ExecEndModifyTable(ModifyTableState *node)
 														   resultRelInfo);
 
 		/*
-		 * Cleanup the initialized batch slots. This only matters for FDWs with
-		 * batching, but the other cases will have ri_NumSlotsInitialized == 0.
+		 * Cleanup the initialized batch slots. This only matters for FDWs
+		 * with batching, but the other cases will have ri_NumSlotsInitialized
+		 * == 0.
 		 */
 		for (j = 0; j < resultRelInfo->ri_NumSlotsInitialized; j++)
 		{

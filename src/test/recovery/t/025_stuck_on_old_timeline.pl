@@ -32,13 +32,14 @@ my $perlbin = TestLib::perl2host($^X);
 $perlbin =~ s!\\!/!g if $TestLib::windows_os;
 my $archivedir_primary = $node_primary->archive_dir;
 $archivedir_primary =~ s!\\!/!g if $TestLib::windows_os;
-$node_primary->append_conf('postgresql.conf', qq(
+$node_primary->append_conf(
+	'postgresql.conf', qq(
 archive_command = '"$perlbin" "$FindBin::RealBin/cp_history_files" "%p" "$archivedir_primary/%f"'
 wal_keep_size=128MB
 ));
 # Make sure that Msys perl doesn't complain about difficulty in setting locale
 # when called from the archive_command.
-local $ENV{PERL_BADLANG}=0;
+local $ENV{PERL_BADLANG} = 0;
 $node_primary->start;
 
 # Take backup from primary
@@ -47,8 +48,11 @@ $node_primary->backup($backup_name);
 
 # Create streaming standby linking to primary
 my $node_standby = get_new_node('standby');
-$node_standby->init_from_backup($node_primary, $backup_name,
-	allows_streaming => 1, has_streaming => 1, has_archiving => 1);
+$node_standby->init_from_backup(
+	$node_primary, $backup_name,
+	allows_streaming => 1,
+	has_streaming    => 1,
+	has_archiving    => 1);
 $node_standby->start;
 
 # Take backup of standby, use -Xnone so that pg_wal is empty.
@@ -60,7 +64,8 @@ my $node_cascade = get_new_node('cascade');
 $node_cascade->init_from_backup($node_standby, $backup_name,
 	has_streaming => 1);
 $node_cascade->enable_restoring($node_primary);
-$node_cascade->append_conf('postgresql.conf', qq(
+$node_cascade->append_conf(
+	'postgresql.conf', qq(
 recovery_target_timeline='latest'
 ));
 
@@ -68,9 +73,8 @@ recovery_target_timeline='latest'
 $node_standby->promote;
 
 # Wait for promotion to complete
-$node_standby->poll_query_until('postgres',
-								"SELECT NOT pg_is_in_recovery();")
-	or die "Timed out while waiting for promotion";
+$node_standby->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery();")
+  or die "Timed out while waiting for promotion";
 
 # Find next WAL segment to be archived
 my $walfile_to_be_archived = $node_standby->safe_psql('postgres',

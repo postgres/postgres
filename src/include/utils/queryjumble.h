@@ -53,12 +53,12 @@ typedef struct JumbleState
 } JumbleState;
 
 /* Values for the compute_query_id GUC */
-typedef enum
+enum ComputeQueryIdType
 {
 	COMPUTE_QUERY_ID_OFF,
 	COMPUTE_QUERY_ID_ON,
 	COMPUTE_QUERY_ID_AUTO
-} ComputeQueryIdType;
+};
 
 /* GUC parameters */
 extern int	compute_query_id;

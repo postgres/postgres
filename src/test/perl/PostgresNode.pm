@@ -2126,8 +2126,8 @@ sub poll_query_until
 	$expected = 't' unless defined($expected);    # default value
 
 	my $cmd = [
-		$self->installed_command('psql'),
-		'-XAt', '-d', $self->connstr($dbname)
+		$self->installed_command('psql'), '-XAt',
+		'-d',                             $self->connstr($dbname)
 	];
 	my ($stdout, $stderr);
 	my $max_attempts = 180 * 10;

@@ -64,9 +64,10 @@ $node_standby2->init_from_backup($node_primary, $backup_name,
 $node_standby2->start;
 
 # Recovery is not yet paused.
-is($node_standby2->safe_psql('postgres',
-	"SELECT pg_get_wal_replay_pause_state()"),
-	'not paused', 'pg_get_wal_replay_pause_state() reports not paused');
+is( $node_standby2->safe_psql(
+		'postgres', "SELECT pg_get_wal_replay_pause_state()"),
+	'not paused',
+	'pg_get_wal_replay_pause_state() reports not paused');
 
 # Request to pause recovery and wait until it's actually paused.
 $node_standby2->safe_psql('postgres', "SELECT pg_wal_replay_pause()");
@@ -74,28 +75,28 @@ $node_primary->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(21,30))");
 $node_standby2->poll_query_until('postgres',
 	"SELECT pg_get_wal_replay_pause_state() = 'paused'")
-	or die "Timed out while waiting for recovery to be paused";
+  or die "Timed out while waiting for recovery to be paused";
 
 # Even if new WAL records are streamed from the primary,
 # recovery in the paused state doesn't replay them.
-my $receive_lsn = $node_standby2->safe_psql('postgres',
-	"SELECT pg_last_wal_receive_lsn()");
-my $replay_lsn = $node_standby2->safe_psql('postgres',
-	"SELECT pg_last_wal_replay_lsn()");
+my $receive_lsn =
+  $node_standby2->safe_psql('postgres', "SELECT pg_last_wal_receive_lsn()");
+my $replay_lsn =
+  $node_standby2->safe_psql('postgres', "SELECT pg_last_wal_replay_lsn()");
 $node_primary->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(31,40))");
 $node_standby2->poll_query_until('postgres',
 	"SELECT '$receive_lsn'::pg_lsn < pg_last_wal_receive_lsn()")
-	or die "Timed out while waiting for new WAL to be streamed";
-is($node_standby2->safe_psql('postgres',
-	"SELECT pg_last_wal_replay_lsn()"),
-	qq($replay_lsn), 'no WAL is replayed in the paused state');
+  or die "Timed out while waiting for new WAL to be streamed";
+is( $node_standby2->safe_psql('postgres', "SELECT pg_last_wal_replay_lsn()"),
+	qq($replay_lsn),
+	'no WAL is replayed in the paused state');
 
 # Request to resume recovery and wait until it's actually resumed.
 $node_standby2->safe_psql('postgres', "SELECT pg_wal_replay_resume()");
 $node_standby2->poll_query_until('postgres',
-	"SELECT pg_get_wal_replay_pause_state() = 'not paused' AND pg_last_wal_replay_lsn() > '$replay_lsn'::pg_lsn")
-	or die "Timed out while waiting for recovery to be resumed";
+	"SELECT pg_get_wal_replay_pause_state() = 'not paused' AND pg_last_wal_replay_lsn() > '$replay_lsn'::pg_lsn"
+) or die "Timed out while waiting for recovery to be resumed";
 
 # Check that the paused state ends and promotion continues if a promotion
 # is triggered while recovery is paused.
@@ -107,6 +108,5 @@ $node_standby2->poll_query_until('postgres',
   or die "Timed out while waiting for recovery to be paused";
 
 $node_standby2->promote;
-$node_standby2->poll_query_until('postgres',
-	"SELECT NOT pg_is_in_recovery()")
+$node_standby2->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
   or die "Timed out while waiting for promotion to finish";

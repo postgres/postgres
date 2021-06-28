@@ -1093,7 +1093,7 @@ SELECT LEAST(} . join(', ', (':i') x 256) . q{)}
 	],
 	[ 'gset alone', 1, [qr{gset must follow an SQL command}], q{\gset} ],
 	[
-		'gset no SQL',                        1,
+		'gset no SQL',                         1,
 		[qr{gset must follow an SQL command}], q{\set i +1
 \gset}
 	],
@@ -1102,7 +1102,7 @@ SELECT LEAST(} . join(', ', (':i') x 256) . q{)}
 		[qr{too many arguments}],  q{SELECT 1 \gset a b}
 	],
 	[
-		'gset after gset',                    1,
+		'gset after gset',                     1,
 		[qr{gset must follow an SQL command}], q{SELECT 1 AS i \gset
 \gset}
 	],
@@ -1197,7 +1197,7 @@ sub check_pgbench_logs
 		my $contents_raw = slurp_file($log);
 
 		my @contents = split(/\n/, $contents_raw);
-		my $clen     = @contents;
+		my $clen = @contents;
 		ok( $min <= $clen && $clen <= $max,
 			"transaction count for $log ($clen)");
 		my $clen_match = grep(/$re/, @contents);

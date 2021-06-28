@@ -11,8 +11,7 @@ use Test::More tests => 5;
 # Create publisher node
 my $node_publisher = get_new_node('publisher');
 $node_publisher->init(allows_streaming => 'logical');
-$node_publisher->append_conf('postgresql.conf',
-	'autovacuum = off');
+$node_publisher->append_conf('postgresql.conf', 'autovacuum = off');
 $node_publisher->start;
 
 # Create subscriber node
@@ -43,8 +42,10 @@ $node_publisher->wait_for_catchup('tap_sub');
 $node_subscriber->safe_psql('postgres', "ALTER SUBSCRIPTION tap_sub DISABLE");
 
 # wait for the replication slot to become inactive in the publisher
-$node_publisher->poll_query_until('postgres',
-	"SELECT COUNT(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = 'tap_sub' AND active='f'", 1);
+$node_publisher->poll_query_until(
+	'postgres',
+	"SELECT COUNT(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = 'tap_sub' AND active='f'",
+	1);
 
 $node_publisher->safe_psql('postgres',
 	"SELECT pg_logical_emit_message(true, 'pgoutput', 'a transactional message')"

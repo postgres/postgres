@@ -410,8 +410,8 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	}
 
 	/*
-	 * If the FSM knows nothing of the rel, try the last page before we
-	 * give up and extend.  This avoids one-tuple-per-page syndrome during
+	 * If the FSM knows nothing of the rel, try the last page before we give
+	 * up and extend.  This avoids one-tuple-per-page syndrome during
 	 * bootstrapping or in a recently-started system.
 	 */
 	if (targetBlock == InvalidBlockNumber)

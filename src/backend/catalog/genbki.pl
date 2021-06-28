@@ -890,11 +890,11 @@ sub morph_row_for_pgattr
 	# Copy the type data from pg_type, and add some type-dependent items
 	my $type = $types{$atttype};
 
-	$row->{atttypid}   = $type->{oid};
-	$row->{attlen}     = $type->{typlen};
-	$row->{attbyval}   = $type->{typbyval};
-	$row->{attalign}   = $type->{typalign};
-	$row->{attstorage} = $type->{typstorage};
+	$row->{atttypid}       = $type->{oid};
+	$row->{attlen}         = $type->{typlen};
+	$row->{attbyval}       = $type->{typbyval};
+	$row->{attalign}       = $type->{typalign};
+	$row->{attstorage}     = $type->{typstorage};
 	$row->{attcompression} = '\0';
 
 	# set attndims if it's an array type

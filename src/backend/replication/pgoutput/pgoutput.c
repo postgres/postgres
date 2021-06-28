@@ -1031,7 +1031,8 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 		entry->pubactions.pubinsert = entry->pubactions.pubupdate =
 			entry->pubactions.pubdelete = entry->pubactions.pubtruncate = false;
 		entry->publish_as_relid = InvalidOid;
-		entry->map = NULL;	/* will be set by maybe_send_schema() if needed */
+		entry->map = NULL;		/* will be set by maybe_send_schema() if
+								 * needed */
 	}
 
 	/* Validate the entry */
