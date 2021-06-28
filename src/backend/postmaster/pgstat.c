@@ -1457,7 +1457,7 @@ pgstat_reset_shared_counters(const char *target)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("unrecognized reset target: \"%s\"", target),
-				 errhint("Target must be \"archiver\", \"bgwriter\" or \"wal\".")));
+				 errhint("Target must be \"archiver\", \"bgwriter\", or \"wal\".")));
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSHAREDCOUNTER);
 	pgstat_send(&msg, sizeof(msg));

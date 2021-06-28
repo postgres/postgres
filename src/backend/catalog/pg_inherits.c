@@ -593,7 +593,7 @@ DeleteInheritsTuple(Oid inhrelid, Oid inhparent, bool expect_detach_pending,
 						 errmsg("cannot detach partition \"%s\"",
 								childname ? childname : "unknown relation"),
 						 errdetail("The partition is being detached concurrently or has an unfinished detach."),
-						 errhint("Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the pending detach operation")));
+						 errhint("Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the pending detach operation.")));
 			if (!detach_pending && expect_detach_pending)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

@@ -3295,13 +3295,13 @@ do_syncfs(const char *path)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not open %s: %m", path)));
+				 errmsg("could not open file \"%s\": %m", path)));
 		return;
 	}
 	if (syncfs(fd) < 0)
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not sync filesystem for \"%s\": %m", path)));
+				 errmsg("could not synchronize file system for file \"%s\": %m", path)));
 	CloseTransientFile(fd);
 }
 #endif

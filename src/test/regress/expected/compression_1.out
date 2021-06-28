@@ -14,7 +14,7 @@ Indexes:
     "idx" btree (f1)
 
 CREATE TABLE cmdata1(f1 TEXT COMPRESSION lz4);
-ERROR:  unsupported LZ4 compression method
+ERROR:  compression method lz4 not supported
 DETAIL:  This functionality requires the server to be built with lz4 support.
 HINT:  You need to rebuild PostgreSQL using --with-lz4.
 INSERT INTO cmdata1 VALUES(repeat('1234567890', 1004));
@@ -193,7 +193,7 @@ LINE 1: SELECT pg_column_compression(x) FROM compressmv;
                                              ^
 -- test compression with partition
 CREATE TABLE cmpart(f1 text COMPRESSION lz4) PARTITION BY HASH(f1);
-ERROR:  unsupported LZ4 compression method
+ERROR:  compression method lz4 not supported
 DETAIL:  This functionality requires the server to be built with lz4 support.
 HINT:  You need to rebuild PostgreSQL using --with-lz4.
 CREATE TABLE cmpart1 PARTITION OF cmpart FOR VALUES WITH (MODULUS 2, REMAINDER 0);
@@ -238,7 +238,7 @@ HINT:  Available values: pglz.
 SET default_toast_compression = 'pglz';
 -- test alter compression method
 ALTER TABLE cmdata ALTER COLUMN f1 SET COMPRESSION lz4;
-ERROR:  unsupported LZ4 compression method
+ERROR:  compression method lz4 not supported
 DETAIL:  This functionality requires the server to be built with lz4 support.
 HINT:  You need to rebuild PostgreSQL using --with-lz4.
 INSERT INTO cmdata VALUES (repeat('123456789', 4004));
@@ -272,7 +272,7 @@ ERROR:  relation "compressmv" does not exist
 ALTER TABLE cmpart1 ALTER COLUMN f1 SET COMPRESSION pglz;
 ERROR:  relation "cmpart1" does not exist
 ALTER TABLE cmpart2 ALTER COLUMN f1 SET COMPRESSION lz4;
-ERROR:  unsupported LZ4 compression method
+ERROR:  compression method lz4 not supported
 DETAIL:  This functionality requires the server to be built with lz4 support.
 HINT:  You need to rebuild PostgreSQL using --with-lz4.
 -- new data should be compressed with the current compression method
@@ -312,7 +312,7 @@ SELECT pg_column_compression(f1) FROM cmdata;
 -- test expression index
 DROP TABLE cmdata2;
 CREATE TABLE cmdata2 (f1 TEXT COMPRESSION pglz, f2 TEXT COMPRESSION lz4);
-ERROR:  unsupported LZ4 compression method
+ERROR:  compression method lz4 not supported
 DETAIL:  This functionality requires the server to be built with lz4 support.
 HINT:  You need to rebuild PostgreSQL using --with-lz4.
 CREATE UNIQUE INDEX idx1 ON cmdata2 ((f1 || f2));

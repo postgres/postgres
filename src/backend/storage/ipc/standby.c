@@ -303,7 +303,7 @@ LogRecoveryConflict(ProcSignalReason reason, TimestampTz wait_start,
 	{
 		ereport(LOG,
 				errmsg("recovery still waiting after %ld.%03d ms: %s",
-					   msecs, usecs, _(get_recovery_conflict_desc(reason))),
+					   msecs, usecs, get_recovery_conflict_desc(reason)),
 				nprocs > 0 ? errdetail_log_plural("Conflicting process: %s.",
 												  "Conflicting processes: %s.",
 												  nprocs, buf.data) : 0);
@@ -312,7 +312,7 @@ LogRecoveryConflict(ProcSignalReason reason, TimestampTz wait_start,
 	{
 		ereport(LOG,
 				errmsg("recovery finished waiting after %ld.%03d ms: %s",
-					   msecs, usecs, _(get_recovery_conflict_desc(reason))));
+					   msecs, usecs, get_recovery_conflict_desc(reason)));
 	}
 
 	if (nprocs > 0)
@@ -1418,27 +1418,27 @@ LogStandbyInvalidations(int nmsgs, SharedInvalidationMessage *msgs,
 static const char *
 get_recovery_conflict_desc(ProcSignalReason reason)
 {
-	const char *reasonDesc = gettext_noop("unknown reason");
+	const char *reasonDesc = _("unknown reason");
 
 	switch (reason)
 	{
 		case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
-			reasonDesc = gettext_noop("recovery conflict on buffer pin");
+			reasonDesc = _("recovery conflict on buffer pin");
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_LOCK:
-			reasonDesc = gettext_noop("recovery conflict on lock");
+			reasonDesc = _("recovery conflict on lock");
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
-			reasonDesc = gettext_noop("recovery conflict on tablespace");
+			reasonDesc = _("recovery conflict on tablespace");
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_SNAPSHOT:
-			reasonDesc = gettext_noop("recovery conflict on snapshot");
+			reasonDesc = _("recovery conflict on snapshot");
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK:
-			reasonDesc = gettext_noop("recovery conflict on buffer deadlock");
+			reasonDesc = _("recovery conflict on buffer deadlock");
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_DATABASE:
-			reasonDesc = gettext_noop("recovery conflict on database");
+			reasonDesc = _("recovery conflict on database");
 			break;
 		default:
 			break;

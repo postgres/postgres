@@ -17,7 +17,7 @@ select '{(,)}.'::textmultirange;
 ERROR:  malformed multirange literal: "{(,)}."
 LINE 1: select '{(,)}.'::textmultirange;
                ^
-DETAIL:  Junk after right brace.
+DETAIL:  Junk after closing right brace.
 select '{[a,c),}'::textmultirange;
 ERROR:  malformed multirange literal: "{[a,c),}"
 LINE 1: select '{[a,c),}'::textmultirange;

@@ -145,7 +145,7 @@ fetch_fp_info(Oid func_id, struct fp_info *fip)
 	if (pp->prokind != PROKIND_FUNCTION || pp->proretset)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot call function %s via fastpath interface",
+				 errmsg("cannot call function \"%s\" via fastpath interface",
 						NameStr(pp->proname))));
 
 	/* watch out for catalog entries with more than FUNC_MAX_ARGS args */

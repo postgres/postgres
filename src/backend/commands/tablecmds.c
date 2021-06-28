@@ -14773,7 +14773,7 @@ MarkInheritDetached(Relation child_rel, Relation parent_rel)
 						   get_rel_name(inhForm->inhrelid),
 						   get_namespace_name(parent_rel->rd_rel->relnamespace),
 						   RelationGetRelationName(parent_rel)),
-					errhint("Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the detach operation."));
+					errhint("Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the pending detach operation."));
 
 		if (inhForm->inhrelid == RelationGetRelid(child_rel))
 		{

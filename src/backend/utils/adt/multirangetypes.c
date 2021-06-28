@@ -282,7 +282,7 @@ multirange_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed multirange literal: \"%s\"",
 						input_str),
-				 errdetail("Junk after right brace.")));
+				 errdetail("Junk after closing right brace.")));
 
 	ret = make_multirange(mltrngtypoid, rangetyp, range_count, ranges);
 	PG_RETURN_MULTIRANGE_P(ret);
@@ -968,7 +968,7 @@ multirange_constructor2(PG_FUNCTION_ARGS)
 	if (dims > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_CARDINALITY_VIOLATION),
-				 errmsg("multiranges cannot be constructed from multi-dimensional arrays")));
+				 errmsg("multiranges cannot be constructed from multidimensional arrays")));
 
 	rngtypid = ARR_ELEMTYPE(rangeArray);
 	if (rngtypid != rangetyp->type_id)
