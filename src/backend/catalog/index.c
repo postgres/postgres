@@ -3384,18 +3384,10 @@ validate_index_callback(ItemPointer itemptr, void *opaque)
  * index_set_state_flags - adjust pg_index state flags
  *
  * This is used during CREATE/DROP INDEX CONCURRENTLY to adjust the pg_index
- * flags that denote the index's state.  Because the update is not
- * transactional and will not roll back on error, this must only be used as
- * the last step in a transaction that has not made any transactional catalog
- * updates!
+ * flags that denote the index's state.
  *
- * Note that heap_inplace_update does send a cache inval message for the
+ * Note that CatalogTupleUpdate() sends a cache invalidation message for the
  * tuple, so other sessions will hear about the update as soon as we commit.
- *
- * NB: In releases prior to PostgreSQL 9.4, the use of a non-transactional
- * update here would have been unsafe; now that MVCC rules apply even for
- * system catalog scans, we could potentially use a transactional update here
- * instead.
  */
 void
 index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
@@ -3403,9 +3395,6 @@ index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
 	Relation	pg_index;
 	HeapTuple	indexTuple;
 	Form_pg_index indexForm;
-
-	/* Assert that current xact hasn't done any transactional updates */
-	Assert(GetTopTransactionIdIfAny() == InvalidTransactionId);
 
 	/* Open pg_index and fetch a writable copy of the index's tuple */
 	pg_index = table_open(IndexRelationId, RowExclusiveLock);
@@ -3465,8 +3454,8 @@ index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
 			break;
 	}
 
-	/* ... and write it back in-place */
-	heap_inplace_update(pg_index, indexTuple);
+	/* ... and update it */
+	CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
 
 	table_close(pg_index, RowExclusiveLock);
 }
