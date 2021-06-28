@@ -949,7 +949,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel)
 		case ALTER_SUBSCRIPTION_DROP_PUBLICATION:
 			{
 				bool		isadd = stmt->kind == ALTER_SUBSCRIPTION_ADD_PUBLICATION;
-				bool		copy_data;
+				bool		copy_data = false;
 				bool		refresh;
 				List	   *publist;
 
