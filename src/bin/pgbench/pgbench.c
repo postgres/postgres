@@ -2450,7 +2450,8 @@ evalStandardFunc(CState *st,
 		case PGBENCH_RANDOM_ZIPFIAN:
 			{
 				int64		imin,
-							imax;
+							imax,
+							delta;
 
 				Assert(nargs >= 2);
 
@@ -2459,12 +2460,13 @@ evalStandardFunc(CState *st,
 					return false;
 
 				/* check random range */
-				if (imin > imax)
+				if (unlikely(imin > imax))
 				{
 					pg_log_error("empty range given to random");
 					return false;
 				}
-				else if (imax - imin < 0 || (imax - imin) + 1 < 0)
+				else if (unlikely(pg_sub_s64_overflow(imax, imin, &delta) ||
+								  pg_add_s64_overflow(delta, 1, &delta)))
 				{
 					/* prevent int overflows in random functions */
 					pg_log_error("random range is too large");
