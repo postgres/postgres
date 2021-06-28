@@ -107,8 +107,14 @@ Starting a New Development Cycle
   placeholder), "git rm" the previous one, and update release.sgml and
   filelist.sgml to match.
 
+* Notify the private committers email list, to ensure all committers
+  are aware of the new branch even if they're not paying close attention
+  to pgsql-hackers.
+
 * Get the buildfarm's 'branches_of_interest.txt' file updated with the new
-  branch.
+  branch.  Once the buildfarm server is accepting reports, notify the
+  buildfarm owners' email list, for the benefit of owners who use manual
+  branch scheduling.
 
 
 Creating Back-Branch Release Notes
@@ -141,8 +147,12 @@ Creating Back-Branch Release Notes
 Retiring a Branch
 =================
 
+* Notify the private committers email list, to ensure all committers
+  are aware of the branch being dead.
+
 * Get the buildfarm's 'branches_of_interest.txt' file updated to remove
-  the retired branch.
+  the retired branch.  Then notify the buildfarm owners' email list,
+  for the benefit of owners who use manual branch scheduling.
 
 
 
