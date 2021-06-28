@@ -70,11 +70,7 @@ but there may be reasons to do them at other times as well.
 
 * Run mechanical code beautification tools:
   pgindent, pgperltidy, and "make reformat-dat-files"
-  (see src/tools/pgindent/README)
-
-* Update .git-blame-ignore-revs. It should contain all of the newly
-  created code beautification commits.  Make sure that you use
-  full-length commit hashes for this.
+  (complete steps from src/tools/pgindent/README)
 
 * Renumber any manually-assigned OIDs between 8000 and 9999
   to lower numbers, using renumber_oids.pl (see notes in bki.sgml)
@@ -90,7 +86,7 @@ Starting a New Development Cycle
 ================================
 
 * Typically, we do pgindent and perltidy runs just before branching,
-  as well as before beta
+  as well as before beta (complete steps from src/tools/pgindent/README)
 
 * Create a branch in git for maintenance of the previous release
 	o on master branch, do:
