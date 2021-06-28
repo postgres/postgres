@@ -4946,7 +4946,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"recovery_init_sync_method", PGC_POSTMASTER, ERROR_HANDLING_OPTIONS,
+		{"recovery_init_sync_method", PGC_SIGHUP, ERROR_HANDLING_OPTIONS,
 			gettext_noop("Sets the method for synchronizing the data directory before crash recovery."),
 		},
 		&recovery_init_sync_method,
