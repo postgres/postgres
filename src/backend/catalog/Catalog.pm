@@ -95,7 +95,7 @@ sub ParseHeader
 			  { parent_table => $1, toast_oid => $2, toast_index_oid => $3 };
 		}
 		elsif (
-			/^DECLARE_(UNIQUE_)?INDEX(_PKEY)?\(\s*(\w+),\s*(\d+),\s*(.+)\)/)
+			/^DECLARE_(UNIQUE_)?INDEX(_PKEY)?\(\s*(\w+),\s*(\d+),\s*(\w+),\s*(.+)\)/)
 		{
 			push @{ $catalog{indexing} },
 			  {
@@ -103,7 +103,8 @@ sub ParseHeader
 				is_pkey   => $2 ? 1 : 0,
 				index_name => $3,
 				index_oid  => $4,
-				index_decl => $5
+				index_oid_macro => $5,
+				index_decl => $6
 			  };
 		}
 		elsif (

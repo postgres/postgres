@@ -42,9 +42,7 @@ CATALOG(pg_transform,3576,TransformRelationId)
  */
 typedef FormData_pg_transform *Form_pg_transform;
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_transform_oid_index, 3574, on pg_transform using btree(oid oid_ops));
-#define TransformOidIndexId 3574
-DECLARE_UNIQUE_INDEX(pg_transform_type_lang_index, 3575, on pg_transform using btree(trftype oid_ops, trflang oid_ops));
-#define TransformTypeLangIndexId  3575
+DECLARE_UNIQUE_INDEX_PKEY(pg_transform_oid_index, 3574, TransformOidIndexId, on pg_transform using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_transform_type_lang_index, 3575, TransformTypeLangIndexId, on pg_transform using btree(trftype oid_ops, trflang oid_ops));
 
 #endif							/* PG_TRANSFORM_H */

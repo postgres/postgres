@@ -49,9 +49,7 @@ typedef FormData_pg_user_mapping *Form_pg_user_mapping;
 
 DECLARE_TOAST(pg_user_mapping, 4173, 4174);
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_user_mapping_oid_index, 174, on pg_user_mapping using btree(oid oid_ops));
-#define UserMappingOidIndexId	174
-DECLARE_UNIQUE_INDEX(pg_user_mapping_user_server_index, 175, on pg_user_mapping using btree(umuser oid_ops, umserver oid_ops));
-#define UserMappingUserServerIndexId	175
+DECLARE_UNIQUE_INDEX_PKEY(pg_user_mapping_oid_index, 174, UserMappingOidIndexId, on pg_user_mapping using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_user_mapping_user_server_index, 175, UserMappingUserServerIndexId, on pg_user_mapping using btree(umuser oid_ops, umserver oid_ops));
 
 #endif							/* PG_USER_MAPPING_H */

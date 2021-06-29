@@ -47,9 +47,7 @@ CATALOG(pg_ts_config,3602,TSConfigRelationId)
 
 typedef FormData_pg_ts_config *Form_pg_ts_config;
 
-DECLARE_UNIQUE_INDEX(pg_ts_config_cfgname_index, 3608, on pg_ts_config using btree(cfgname name_ops, cfgnamespace oid_ops));
-#define TSConfigNameNspIndexId	3608
-DECLARE_UNIQUE_INDEX_PKEY(pg_ts_config_oid_index, 3712, on pg_ts_config using btree(oid oid_ops));
-#define TSConfigOidIndexId	3712
+DECLARE_UNIQUE_INDEX(pg_ts_config_cfgname_index, 3608, TSConfigNameNspIndexId, on pg_ts_config using btree(cfgname name_ops, cfgnamespace oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_ts_config_oid_index, 3712, TSConfigOidIndexId, on pg_ts_config using btree(oid oid_ops));
 
 #endif							/* PG_TS_CONFIG_H */

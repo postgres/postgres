@@ -82,10 +82,8 @@ CATALOG(pg_operator,2617,OperatorRelationId)
  */
 typedef FormData_pg_operator *Form_pg_operator;
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_operator_oid_index, 2688, on pg_operator using btree(oid oid_ops));
-#define OperatorOidIndexId	2688
-DECLARE_UNIQUE_INDEX(pg_operator_oprname_l_r_n_index, 2689, on pg_operator using btree(oprname name_ops, oprleft oid_ops, oprright oid_ops, oprnamespace oid_ops));
-#define OperatorNameNspIndexId	2689
+DECLARE_UNIQUE_INDEX_PKEY(pg_operator_oid_index, 2688, OperatorOidIndexId, on pg_operator using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_operator_oprname_l_r_n_index, 2689, OperatorNameNspIndexId, on pg_operator using btree(oprname name_ops, oprleft oid_ops, oprright oid_ops, oprnamespace oid_ops));
 
 
 extern ObjectAddress OperatorCreate(const char *operatorName,

@@ -54,9 +54,7 @@ CATALOG(pg_ts_parser,3601,TSParserRelationId)
 
 typedef FormData_pg_ts_parser *Form_pg_ts_parser;
 
-DECLARE_UNIQUE_INDEX(pg_ts_parser_prsname_index, 3606, on pg_ts_parser using btree(prsname name_ops, prsnamespace oid_ops));
-#define TSParserNameNspIndexId	3606
-DECLARE_UNIQUE_INDEX_PKEY(pg_ts_parser_oid_index, 3607, on pg_ts_parser using btree(oid oid_ops));
-#define TSParserOidIndexId	3607
+DECLARE_UNIQUE_INDEX(pg_ts_parser_prsname_index, 3606, TSParserNameNspIndexId, on pg_ts_parser using btree(prsname name_ops, prsnamespace oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_ts_parser_oid_index, 3607, TSParserOidIndexId, on pg_ts_parser using btree(oid oid_ops));
 
 #endif							/* PG_TS_PARSER_H */

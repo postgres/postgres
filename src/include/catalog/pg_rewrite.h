@@ -53,9 +53,7 @@ typedef FormData_pg_rewrite *Form_pg_rewrite;
 
 DECLARE_TOAST(pg_rewrite, 2838, 2839);
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_rewrite_oid_index, 2692, on pg_rewrite using btree(oid oid_ops));
-#define RewriteOidIndexId  2692
-DECLARE_UNIQUE_INDEX(pg_rewrite_rel_rulename_index, 2693, on pg_rewrite using btree(ev_class oid_ops, rulename name_ops));
-#define RewriteRelRulenameIndexId  2693
+DECLARE_UNIQUE_INDEX_PKEY(pg_rewrite_oid_index, 2692, RewriteOidIndexId, on pg_rewrite using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_rewrite_rel_rulename_index, 2693, RewriteRelRulenameIndexId, on pg_rewrite using btree(ev_class oid_ops, rulename name_ops));
 
 #endif							/* PG_REWRITE_H */

@@ -82,9 +82,7 @@ CATALOG(pg_opclass,2616,OperatorClassRelationId)
  */
 typedef FormData_pg_opclass *Form_pg_opclass;
 
-DECLARE_UNIQUE_INDEX(pg_opclass_am_name_nsp_index, 2686, on pg_opclass using btree(opcmethod oid_ops, opcname name_ops, opcnamespace oid_ops));
-#define OpclassAmNameNspIndexId  2686
-DECLARE_UNIQUE_INDEX_PKEY(pg_opclass_oid_index, 2687, on pg_opclass using btree(oid oid_ops));
-#define OpclassOidIndexId  2687
+DECLARE_UNIQUE_INDEX(pg_opclass_am_name_nsp_index, 2686, OpclassAmNameNspIndexId, on pg_opclass using btree(opcmethod oid_ops, opcname name_ops, opcnamespace oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_opclass_oid_index, 2687, OpclassOidIndexId, on pg_opclass using btree(oid oid_ops));
 
 #endif							/* PG_OPCLASS_H */

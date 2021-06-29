@@ -262,10 +262,8 @@ typedef FormData_pg_type *Form_pg_type;
 
 DECLARE_TOAST(pg_type, 4171, 4172);
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_type_oid_index, 2703, on pg_type using btree(oid oid_ops));
-#define TypeOidIndexId	2703
-DECLARE_UNIQUE_INDEX(pg_type_typname_nsp_index, 2704, on pg_type using btree(typname name_ops, typnamespace oid_ops));
-#define TypeNameNspIndexId	2704
+DECLARE_UNIQUE_INDEX_PKEY(pg_type_oid_index, 2703, TypeOidIndexId, on pg_type using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_type_typname_nsp_index, 2704, TypeNameNspIndexId, on pg_type using btree(typname name_ops, typnamespace oid_ops));
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 

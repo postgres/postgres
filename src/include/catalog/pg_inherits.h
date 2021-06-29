@@ -44,10 +44,8 @@ CATALOG(pg_inherits,2611,InheritsRelationId)
  */
 typedef FormData_pg_inherits *Form_pg_inherits;
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_inherits_relid_seqno_index, 2680, on pg_inherits using btree(inhrelid oid_ops, inhseqno int4_ops));
-#define InheritsRelidSeqnoIndexId  2680
-DECLARE_INDEX(pg_inherits_parent_index, 2187, on pg_inherits using btree(inhparent oid_ops));
-#define InheritsParentIndexId  2187
+DECLARE_UNIQUE_INDEX_PKEY(pg_inherits_relid_seqno_index, 2680, InheritsRelidSeqnoIndexId, on pg_inherits using btree(inhrelid oid_ops, inhseqno int4_ops));
+DECLARE_INDEX(pg_inherits_parent_index, 2187, InheritsParentIndexId, on pg_inherits using btree(inhparent oid_ops));
 
 
 extern List *find_inheritance_children(Oid parentrelId, LOCKMODE lockmode);

@@ -56,10 +56,8 @@ CATALOG(pg_cast,2605,CastRelationId)
  */
 typedef FormData_pg_cast *Form_pg_cast;
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_cast_oid_index, 2660, on pg_cast using btree(oid oid_ops));
-#define CastOidIndexId	2660
-DECLARE_UNIQUE_INDEX(pg_cast_source_target_index, 2661, on pg_cast using btree(castsource oid_ops, casttarget oid_ops));
-#define CastSourceTargetIndexId  2661
+DECLARE_UNIQUE_INDEX_PKEY(pg_cast_oid_index, 2660, CastOidIndexId, on pg_cast using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_cast_source_target_index, 2661, CastSourceTargetIndexId, on pg_cast using btree(castsource oid_ops, casttarget oid_ops));
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 

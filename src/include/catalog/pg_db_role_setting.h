@@ -50,8 +50,7 @@ DECLARE_TOAST(pg_db_role_setting, 2966, 2967);
 #define PgDbRoleSettingToastTable 2966
 #define PgDbRoleSettingToastIndex 2967
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_db_role_setting_databaseid_rol_index, 2965, on pg_db_role_setting using btree(setdatabase oid_ops, setrole oid_ops));
-#define DbRoleSettingDatidRolidIndexId	2965
+DECLARE_UNIQUE_INDEX_PKEY(pg_db_role_setting_databaseid_rol_index, 2965, DbRoleSettingDatidRolidIndexId, on pg_db_role_setting using btree(setdatabase oid_ops, setrole oid_ops));
 
 /*
  * prototypes for functions in pg_db_role_setting.h

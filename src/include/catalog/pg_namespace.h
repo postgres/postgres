@@ -53,10 +53,8 @@ typedef FormData_pg_namespace *Form_pg_namespace;
 
 DECLARE_TOAST(pg_namespace, 4163, 4164);
 
-DECLARE_UNIQUE_INDEX(pg_namespace_nspname_index, 2684, on pg_namespace using btree(nspname name_ops));
-#define NamespaceNameIndexId  2684
-DECLARE_UNIQUE_INDEX_PKEY(pg_namespace_oid_index, 2685, on pg_namespace using btree(oid oid_ops));
-#define NamespaceOidIndexId  2685
+DECLARE_UNIQUE_INDEX(pg_namespace_nspname_index, 2684, NamespaceNameIndexId, on pg_namespace using btree(nspname name_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_namespace_oid_index, 2685, NamespaceOidIndexId, on pg_namespace using btree(oid oid_ops));
 
 /*
  * prototypes for functions in pg_namespace.c

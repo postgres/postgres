@@ -76,9 +76,9 @@
  *
  * The macro definitions are just to keep the C compiler from spitting up.
  */
-#define DECLARE_INDEX(name,oid,decl) extern int no_such_variable
-#define DECLARE_UNIQUE_INDEX(name,oid,decl) extern int no_such_variable
-#define DECLARE_UNIQUE_INDEX_PKEY(name,oid,decl) extern int no_such_variable
+#define DECLARE_INDEX(name,oid,oidmacro,decl) extern int no_such_variable
+#define DECLARE_UNIQUE_INDEX(name,oid,oidmacro,decl) extern int no_such_variable
+#define DECLARE_UNIQUE_INDEX_PKEY(name,oid,oidmacro,decl) extern int no_such_variable
 
 /*
  * These lines are processed by genbki.pl to create a table for use

@@ -39,7 +39,6 @@ CATALOG(pg_sequence,2224,SequenceRelationId)
  */
 typedef FormData_pg_sequence *Form_pg_sequence;
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_sequence_seqrelid_index, 5002, on pg_sequence using btree(seqrelid oid_ops));
-#define SequenceRelidIndexId	5002
+DECLARE_UNIQUE_INDEX_PKEY(pg_sequence_seqrelid_index, 5002, SequenceRelidIndexId, on pg_sequence using btree(seqrelid oid_ops));
 
 #endif							/* PG_SEQUENCE_H */

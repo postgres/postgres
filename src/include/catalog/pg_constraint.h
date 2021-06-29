@@ -160,16 +160,11 @@ typedef FormData_pg_constraint *Form_pg_constraint;
 
 DECLARE_TOAST(pg_constraint, 2832, 2833);
 
-DECLARE_INDEX(pg_constraint_conname_nsp_index, 2664, on pg_constraint using btree(conname name_ops, connamespace oid_ops));
-#define ConstraintNameNspIndexId  2664
-DECLARE_UNIQUE_INDEX(pg_constraint_conrelid_contypid_conname_index, 2665, on pg_constraint using btree(conrelid oid_ops, contypid oid_ops, conname name_ops));
-#define ConstraintRelidTypidNameIndexId	2665
-DECLARE_INDEX(pg_constraint_contypid_index, 2666, on pg_constraint using btree(contypid oid_ops));
-#define ConstraintTypidIndexId	2666
-DECLARE_UNIQUE_INDEX_PKEY(pg_constraint_oid_index, 2667, on pg_constraint using btree(oid oid_ops));
-#define ConstraintOidIndexId  2667
-DECLARE_INDEX(pg_constraint_conparentid_index, 2579, on pg_constraint using btree(conparentid oid_ops));
-#define ConstraintParentIndexId	2579
+DECLARE_INDEX(pg_constraint_conname_nsp_index, 2664, ConstraintNameNspIndexId, on pg_constraint using btree(conname name_ops, connamespace oid_ops));
+DECLARE_UNIQUE_INDEX(pg_constraint_conrelid_contypid_conname_index, 2665, ConstraintRelidTypidNameIndexId, on pg_constraint using btree(conrelid oid_ops, contypid oid_ops, conname name_ops));
+DECLARE_INDEX(pg_constraint_contypid_index, 2666, ConstraintTypidIndexId, on pg_constraint using btree(contypid oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_constraint_oid_index, 2667, ConstraintOidIndexId, on pg_constraint using btree(oid oid_ops));
+DECLARE_INDEX(pg_constraint_conparentid_index, 2579, ConstraintParentIndexId, on pg_constraint using btree(conparentid oid_ops));
 
 /* conkey can contain zero (InvalidAttrNumber) if a whole-row Var is used */
 DECLARE_ARRAY_FOREIGN_KEY_OPT((conrelid, conkey), pg_attribute, (attrelid, attnum));

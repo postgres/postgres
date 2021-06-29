@@ -42,9 +42,7 @@ CATALOG(pg_auth_members,1261,AuthMemRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_
  */
 typedef FormData_pg_auth_members *Form_pg_auth_members;
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_auth_members_role_member_index, 2694, on pg_auth_members using btree(roleid oid_ops, member oid_ops));
-#define AuthMemRoleMemIndexId	2694
-DECLARE_UNIQUE_INDEX(pg_auth_members_member_role_index, 2695, on pg_auth_members using btree(member oid_ops, roleid oid_ops));
-#define AuthMemMemRoleIndexId	2695
+DECLARE_UNIQUE_INDEX_PKEY(pg_auth_members_role_member_index, 2694, AuthMemRoleMemIndexId, on pg_auth_members using btree(roleid oid_ops, member oid_ops));
+DECLARE_UNIQUE_INDEX(pg_auth_members_member_role_index, 2695, AuthMemMemRoleIndexId, on pg_auth_members using btree(member oid_ops, roleid oid_ops));
 
 #endif							/* PG_AUTH_MEMBERS_H */

@@ -67,9 +67,7 @@ CATALOG(pg_amproc,2603,AccessMethodProcedureRelationId)
  */
 typedef FormData_pg_amproc *Form_pg_amproc;
 
-DECLARE_UNIQUE_INDEX(pg_amproc_fam_proc_index, 2655, on pg_amproc using btree(amprocfamily oid_ops, amproclefttype oid_ops, amprocrighttype oid_ops, amprocnum int2_ops));
-#define AccessMethodProcedureIndexId  2655
-DECLARE_UNIQUE_INDEX_PKEY(pg_amproc_oid_index, 2757, on pg_amproc using btree(oid oid_ops));
-#define AccessMethodProcedureOidIndexId  2757
+DECLARE_UNIQUE_INDEX(pg_amproc_fam_proc_index, 2655, AccessMethodProcedureIndexId, on pg_amproc using btree(amprocfamily oid_ops, amproclefttype oid_ops, amprocrighttype oid_ops, amprocnum int2_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_amproc_oid_index, 2757, AccessMethodProcedureOidIndexId, on pg_amproc using btree(oid oid_ops));
 
 #endif							/* PG_AMPROC_H */

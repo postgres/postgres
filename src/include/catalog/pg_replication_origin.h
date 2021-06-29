@@ -58,9 +58,7 @@ DECLARE_TOAST(pg_replication_origin, 4181, 4182);
 #define PgReplicationOriginToastTable 4181
 #define PgReplicationOriginToastIndex 4182
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_replication_origin_roiident_index, 6001, on pg_replication_origin using btree(roident oid_ops));
-#define ReplicationOriginIdentIndex 6001
-DECLARE_UNIQUE_INDEX(pg_replication_origin_roname_index, 6002, on pg_replication_origin using btree(roname text_ops));
-#define ReplicationOriginNameIndex 6002
+DECLARE_UNIQUE_INDEX_PKEY(pg_replication_origin_roiident_index, 6001, ReplicationOriginIdentIndex, on pg_replication_origin using btree(roident oid_ops));
+DECLARE_UNIQUE_INDEX(pg_replication_origin_roname_index, 6002, ReplicationOriginNameIndex, on pg_replication_origin using btree(roname text_ops));
 
 #endif							/* PG_REPLICATION_ORIGIN_H */

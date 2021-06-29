@@ -469,6 +469,14 @@ EOM
 	printf $def "#define %s %s\n",
 	  $catalog->{rowtype_oid_macro}, $catalog->{rowtype_oid}
 	  if $catalog->{rowtype_oid_macro};
+
+	foreach my $index (@{ $catalog->{indexing} })
+	{
+		printf $def "#define %s %s\n",
+		  $index->{index_oid_macro}, $index->{index_oid}
+		  if $index->{index_oid_macro};
+	}
+
 	print $def "\n";
 
 	# .bki CREATE command for this catalog
