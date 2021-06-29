@@ -983,9 +983,19 @@ my %tests = (
 
 	'COMMENT ON SCHEMA public' => {
 		regexp => qr/^COMMENT ON SCHEMA public IS .+;/m,
+		# regress_public_owner emits this, due to create_sql of next test
+		like => {
+			pg_dumpall_dbprivs => 1,
+			pg_dumpall_exclude => 1,
+		},
+	},
 
-		# this shouldn't ever get emitted
-		like => {},
+	'COMMENT ON SCHEMA public IS NULL' => {
+		database     => 'regress_public_owner',
+		create_order => 100,
+		create_sql   => 'COMMENT ON SCHEMA public IS NULL;',
+		regexp       => qr/^COMMENT ON SCHEMA public IS '';/m,
+		like         => { defaults_public_owner => 1 },
 	},
 
 	'COMMENT ON TABLE dump_test.test_table' => {

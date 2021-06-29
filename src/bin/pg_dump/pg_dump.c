@@ -169,9 +169,15 @@ static NamespaceInfo *findNamespace(Oid nsoid);
 static void dumpTableData(Archive *fout, const TableDataInfo *tdinfo);
 static void refreshMatViewData(Archive *fout, const TableDataInfo *tdinfo);
 static void guessConstraintInheritance(TableInfo *tblinfo, int numTables);
-static void dumpComment(Archive *fout, const char *type, const char *name,
-						const char *namespace, const char *owner,
-						CatalogId catalogId, int subid, DumpId dumpId);
+static void dumpCommentExtended(Archive *fout, const char *type,
+								const char *name, const char *namespace,
+								const char *owner, CatalogId catalogId,
+								int subid, DumpId dumpId,
+								const char *initdb_comment);
+static inline void dumpComment(Archive *fout, const char *type,
+							   const char *name, const char *namespace,
+							   const char *owner, CatalogId catalogId,
+							   int subid, DumpId dumpId);
 static int	findComments(Archive *fout, Oid classoid, Oid objoid,
 						 CommentItem **items);
 static int	collectComments(Archive *fout, CommentItem **items);
@@ -1638,16 +1644,13 @@ selectDumpableNamespace(NamespaceInfo *nsinfo, Archive *fout)
 	{
 		/*
 		 * The public schema is a strange beast that sits in a sort of
-		 * no-mans-land between being a system object and a user object.  We
-		 * don't want to dump creation or comment commands for it, because
-		 * that complicates matters for non-superuser use of pg_dump.  But we
-		 * should dump any ownership changes, security labels, and ACL
-		 * changes, and of course we should dump contained objects.  pg_dump
-		 * ties ownership to DUMP_COMPONENT_DEFINITION.  Hence, unless the
-		 * owner is the default, dump a "definition" bearing just a comment.
+		 * no-mans-land between being a system object and a user object.
+		 * CREATE SCHEMA would fail, so its DUMP_COMPONENT_DEFINITION is just
+		 * a comment and an indication of ownership.  If the owner is the
+		 * default, that DUMP_COMPONENT_DEFINITION is superfluous.
 		 */
 		nsinfo->create = false;
-		nsinfo->dobj.dump = DUMP_COMPONENT_ALL & ~DUMP_COMPONENT_COMMENT;
+		nsinfo->dobj.dump = DUMP_COMPONENT_ALL;
 		if (nsinfo->nspowner == BOOTSTRAP_SUPERUSERID)
 			nsinfo->dobj.dump &= ~DUMP_COMPONENT_DEFINITION;
 		nsinfo->dobj.dump_contains = DUMP_COMPONENT_ALL;
@@ -9873,7 +9876,7 @@ getDefaultACLs(Archive *fout, int *numDefaultACLs)
 }
 
 /*
- * dumpComment --
+ * dumpCommentExtended --
  *
  * This routine is used to dump any comments associated with the
  * object handed to this routine. The routine takes the object type
@@ -9896,9 +9899,11 @@ getDefaultACLs(Archive *fout, int *numDefaultACLs)
  * calling ArchiveEntry() for the specified object.
  */
 static void
-dumpComment(Archive *fout, const char *type, const char *name,
-			const char *namespace, const char *owner,
-			CatalogId catalogId, int subid, DumpId dumpId)
+dumpCommentExtended(Archive *fout, const char *type,
+					const char *name, const char *namespace,
+					const char *owner, CatalogId catalogId,
+					int subid, DumpId dumpId,
+					const char *initdb_comment)
 {
 	DumpOptions *dopt = fout->dopt;
 	CommentItem *comments;
@@ -9934,6 +9939,25 @@ dumpComment(Archive *fout, const char *type, const char *name,
 		ncomments--;
 	}
 
+	if (initdb_comment != NULL)
+	{
+		static CommentItem empty_comment = {.descr = ""};
+
+		/*
+		 * initdb creates this object with a comment.  Skip dumping the
+		 * initdb-provided comment, which would complicate matters for
+		 * non-superuser use of pg_dump.  When the DBA has removed initdb's
+		 * comment, replicate that.
+		 */
+		if (ncomments == 0)
+		{
+			comments = &empty_comment;
+			ncomments = 1;
+		}
+		else if (strcmp(comments->descr, initdb_comment) == 0)
+			ncomments = 0;
+	}
+
 	/* If a comment exists, build COMMENT ON statement */
 	if (ncomments > 0)
 	{
@@ -9967,6 +9991,21 @@ dumpComment(Archive *fout, const char *type, const char *name,
 		destroyPQExpBuffer(query);
 		destroyPQExpBuffer(tag);
 	}
+}
+
+/*
+ * dumpComment --
+ *
+ * Typical simplification of the above function.
+ */
+static inline void
+dumpComment(Archive *fout, const char *type,
+			const char *name, const char *namespace,
+			const char *owner, CatalogId catalogId,
+			int subid, DumpId dumpId)
+{
+	dumpCommentExtended(fout, type, name, namespace, owner,
+						catalogId, subid, dumpId, NULL);
 }
 
 /*
@@ -10426,9 +10465,18 @@ dumpNamespace(Archive *fout, const NamespaceInfo *nspinfo)
 
 	/* Dump Schema Comments and Security Labels */
 	if (nspinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
-		dumpComment(fout, "SCHEMA", qnspname,
-					NULL, nspinfo->rolname,
-					nspinfo->dobj.catId, 0, nspinfo->dobj.dumpId);
+	{
+		const char *initdb_comment = NULL;
+
+		if (!nspinfo->create && strcmp(qnspname, "public") == 0)
+			initdb_comment = (fout->remoteVersion >= 80300 ?
+							  "standard public schema" :
+							  "Standard public schema");
+		dumpCommentExtended(fout, "SCHEMA", qnspname,
+							NULL, nspinfo->rolname,
+							nspinfo->dobj.catId, 0, nspinfo->dobj.dumpId,
+							initdb_comment);
+	}
 
 	if (nspinfo->dobj.dump & DUMP_COMPONENT_SECLABEL)
 		dumpSecLabel(fout, "SCHEMA", qnspname,
