@@ -894,7 +894,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 
 			/* Create/use new log file */
 			XLByteToSeg(recptr, recvSegNo, wal_segment_size);
-			recvFile = XLogFileInit(recvSegNo, &use_existent, true);
+			recvFile = XLogFileInit(recvSegNo, &use_existent);
 			recvFileTLI = ThisTimeLineID;
 		}
 
