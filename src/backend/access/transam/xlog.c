@@ -917,8 +917,7 @@ static void AdvanceXLInsertBuffer(XLogRecPtr upto, bool opportunistic);
 static bool XLogCheckpointNeeded(XLogSegNo new_segno);
 static void XLogWrite(XLogwrtRqst WriteRqst, bool flexible);
 static bool InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
-								   bool find_free, XLogSegNo max_segno,
-								   bool use_lock);
+								   bool find_free, XLogSegNo max_segno);
 static int	XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 						 XLogSource source, bool notfoundOk);
 static int	XLogFileReadAnyTLI(XLogSegNo segno, int emode, XLogSource source);
@@ -2509,7 +2508,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 
 			/* create/use new log file */
 			use_existent = true;
-			openLogFile = XLogFileInit(openLogSegNo, &use_existent, true);
+			openLogFile = XLogFileInit(openLogSegNo, &use_existent);
 			ReserveExternalFD();
 		}
 
@@ -3263,10 +3262,6 @@ XLogNeedsFlush(XLogRecPtr record)
  * pre-existing file will be deleted).  On return, true if a pre-existing
  * file was used.
  *
- * use_lock: if true, acquire ControlFileLock while moving file into
- * place.  This should be true except during bootstrap log creation.  The
- * caller must *not* hold the lock at call.
- *
  * Returns FD of opened file.
  *
  * Note: errors here are ERROR not PANIC because we might or might not be
@@ -3275,7 +3270,7 @@ XLogNeedsFlush(XLogRecPtr record)
  * in a critical section.
  */
 int
-XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
+XLogFileInit(XLogSegNo logsegno, bool *use_existent)
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
@@ -3420,8 +3415,7 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	 */
 	max_segno = logsegno + CheckPointSegments;
 	if (!InstallXLogFileSegment(&installed_segno, tmppath,
-								*use_existent, max_segno,
-								use_lock))
+								*use_existent, max_segno))
 	{
 		/*
 		 * No need for any more future segments, or InstallXLogFileSegment()
@@ -3578,7 +3572,7 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 	/*
 	 * Now move the segment into place with its final name.
 	 */
-	if (!InstallXLogFileSegment(&destsegno, tmppath, false, 0, false))
+	if (!InstallXLogFileSegment(&destsegno, tmppath, false, 0))
 		elog(ERROR, "InstallXLogFileSegment should not have failed");
 }
 
@@ -3602,29 +3596,20 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
  * free slot is found between *segno and max_segno. (Ignored when find_free
  * is false.)
  *
- * use_lock: if true, acquire ControlFileLock while moving file into
- * place.  This should be true except during bootstrap log creation.  The
- * caller must *not* hold the lock at call.
- *
  * Returns true if the file was installed successfully.  false indicates that
  * max_segno limit was exceeded, or an error occurred while renaming the
  * file into place.
  */
 static bool
 InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
-					   bool find_free, XLogSegNo max_segno,
-					   bool use_lock)
+					   bool find_free, XLogSegNo max_segno)
 {
 	char		path[MAXPGPATH];
 	struct stat stat_buf;
 
 	XLogFilePath(path, ThisTimeLineID, *segno, wal_segment_size);
 
-	/*
-	 * We want to be sure that only one process does this at a time.
-	 */
-	if (use_lock)
-		LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
+	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 
 	if (!find_free)
 	{
@@ -3639,8 +3624,7 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 			if ((*segno) >= max_segno)
 			{
 				/* Failed to find a free slot within specified range */
-				if (use_lock)
-					LWLockRelease(ControlFileLock);
+				LWLockRelease(ControlFileLock);
 				return false;
 			}
 			(*segno)++;
@@ -3651,14 +3635,12 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 	Assert(access(path, F_OK) != 0 && errno == ENOENT);
 	if (durable_rename(tmppath, path, LOG) != 0)
 	{
-		if (use_lock)
-			LWLockRelease(ControlFileLock);
+		LWLockRelease(ControlFileLock);
 		/* durable_rename already emitted log message */
 		return false;
 	}
 
-	if (use_lock)
-		LWLockRelease(ControlFileLock);
+	LWLockRelease(ControlFileLock);
 
 	return true;
 }
@@ -3929,7 +3911,7 @@ PreallocXlogFiles(XLogRecPtr endptr)
 	{
 		_logSegNo++;
 		use_existent = true;
-		lf = XLogFileInit(_logSegNo, &use_existent, true);
+		lf = XLogFileInit(_logSegNo, &use_existent);
 		close(lf);
 		if (!use_existent)
 			CheckpointStats.ckpt_segs_added++;
@@ -4206,7 +4188,7 @@ RemoveXlogFile(const char *segname, XLogRecPtr lastredoptr, XLogRecPtr endptr)
 		endlogSegNo <= recycleSegNo &&
 		lstat(path, &statbuf) == 0 && S_ISREG(statbuf.st_mode) &&
 		InstallXLogFileSegment(&endlogSegNo, path,
-							   true, recycleSegNo, true))
+							   true, recycleSegNo))
 	{
 		ereport(DEBUG2,
 				(errmsg("recycled write-ahead log file \"%s\"",
@@ -5342,7 +5324,7 @@ BootStrapXLOG(void)
 
 	/* Create first XLOG segment file */
 	use_existent = false;
-	openLogFile = XLogFileInit(1, &use_existent, false);
+	openLogFile = XLogFileInit(1, &use_existent);
 
 	/*
 	 * We needn't bother with Reserve/ReleaseExternalFD here, since we'll
@@ -5651,7 +5633,7 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 		bool		use_existent = true;
 		int			fd;
 
-		fd = XLogFileInit(startLogSegNo, &use_existent, true);
+		fd = XLogFileInit(startLogSegNo, &use_existent);
 
 		if (close(fd) != 0)
 		{
