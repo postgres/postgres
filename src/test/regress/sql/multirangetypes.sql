@@ -435,7 +435,25 @@ SET enable_seqscan    = t;
 SET enable_indexscan  = f;
 SET enable_bitmapscan = f;
 
+select count(*) from test_multirange_gist where mr = '{}'::int4multirange;
 select count(*) from test_multirange_gist where mr @> 'empty'::int4range;
+select count(*) from test_multirange_gist where mr && 'empty'::int4range;
+select count(*) from test_multirange_gist where mr <@ 'empty'::int4range;
+select count(*) from test_multirange_gist where mr << 'empty'::int4range;
+select count(*) from test_multirange_gist where mr >> 'empty'::int4range;
+select count(*) from test_multirange_gist where mr &< 'empty'::int4range;
+select count(*) from test_multirange_gist where mr &> 'empty'::int4range;
+select count(*) from test_multirange_gist where mr -|- 'empty'::int4range;
+select count(*) from test_multirange_gist where mr @> '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr @> '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr && '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr <@ '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr << '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr >> '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr &< '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr &> '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr -|- '{}'::int4multirange;
+
 select count(*) from test_multirange_gist where mr = int4multirange(int4range(10,20), int4range(30,40), int4range(50,60));
 select count(*) from test_multirange_gist where mr @> 10;
 select count(*) from test_multirange_gist where mr @> int4range(10,20);
@@ -460,6 +478,25 @@ select count(*) from test_multirange_gist where mr -|- int4multirange(int4range(
 SET enable_seqscan    = f;
 SET enable_indexscan  = t;
 SET enable_bitmapscan = f;
+
+select count(*) from test_multirange_gist where mr = '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr @> 'empty'::int4range;
+select count(*) from test_multirange_gist where mr && 'empty'::int4range;
+select count(*) from test_multirange_gist where mr <@ 'empty'::int4range;
+select count(*) from test_multirange_gist where mr << 'empty'::int4range;
+select count(*) from test_multirange_gist where mr >> 'empty'::int4range;
+select count(*) from test_multirange_gist where mr &< 'empty'::int4range;
+select count(*) from test_multirange_gist where mr &> 'empty'::int4range;
+select count(*) from test_multirange_gist where mr -|- 'empty'::int4range;
+select count(*) from test_multirange_gist where mr @> '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr @> '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr && '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr <@ '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr << '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr >> '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr &< '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr &> '{}'::int4multirange;
+select count(*) from test_multirange_gist where mr -|- '{}'::int4multirange;
 
 select count(*) from test_multirange_gist where mr @> 'empty'::int4range;
 select count(*) from test_multirange_gist where mr = int4multirange(int4range(10,20), int4range(30,40), int4range(50,60));

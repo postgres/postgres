@@ -347,16 +347,15 @@ calc_multirangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 		switch (operator)
 		{
 				/* these return false if either argument is empty */
-			case OID_RANGE_OVERLAPS_MULTIRANGE_OP:
 			case OID_MULTIRANGE_OVERLAPS_RANGE_OP:
 			case OID_MULTIRANGE_OVERLAPS_MULTIRANGE_OP:
-			case OID_RANGE_OVERLAPS_LEFT_MULTIRANGE_OP:
 			case OID_MULTIRANGE_OVERLAPS_LEFT_RANGE_OP:
 			case OID_MULTIRANGE_OVERLAPS_LEFT_MULTIRANGE_OP:
-			case OID_RANGE_OVERLAPS_RIGHT_MULTIRANGE_OP:
 			case OID_MULTIRANGE_OVERLAPS_RIGHT_RANGE_OP:
 			case OID_MULTIRANGE_OVERLAPS_RIGHT_MULTIRANGE_OP:
+			case OID_MULTIRANGE_LEFT_RANGE_OP:
 			case OID_MULTIRANGE_LEFT_MULTIRANGE_OP:
+			case OID_MULTIRANGE_RIGHT_RANGE_OP:
 			case OID_MULTIRANGE_RIGHT_MULTIRANGE_OP:
 				/* nothing is less than an empty multirange */
 			case OID_MULTIRANGE_LESS_OP:
@@ -367,7 +366,7 @@ calc_multirangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 				 * only empty multiranges can be contained by an empty
 				 * multirange
 				 */
-			case OID_MULTIRANGE_RANGE_CONTAINED_OP:
+			case OID_RANGE_MULTIRANGE_CONTAINED_OP:
 			case OID_MULTIRANGE_MULTIRANGE_CONTAINED_OP:
 				/* only empty ranges are <= an empty multirange */
 			case OID_MULTIRANGE_LESS_EQUAL_OP:
@@ -388,8 +387,18 @@ calc_multirangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 				break;
 
 				/* an element cannot be empty */
-			case OID_MULTIRANGE_ELEM_CONTAINED_OP:
 			case OID_MULTIRANGE_CONTAINS_ELEM_OP:
+
+				/* filtered out by multirangesel() */
+			case OID_RANGE_OVERLAPS_MULTIRANGE_OP:
+			case OID_RANGE_OVERLAPS_LEFT_MULTIRANGE_OP:
+			case OID_RANGE_OVERLAPS_RIGHT_MULTIRANGE_OP:
+			case OID_RANGE_LEFT_MULTIRANGE_OP:
+			case OID_RANGE_RIGHT_MULTIRANGE_OP:
+			case OID_RANGE_CONTAINS_MULTIRANGE_OP:
+			case OID_MULTIRANGE_ELEM_CONTAINED_OP:
+			case OID_MULTIRANGE_RANGE_CONTAINED_OP:
+
 			default:
 				elog(ERROR, "unexpected operator %u", operator);
 				selec = 0.0;	/* keep compiler quiet */
@@ -416,8 +425,7 @@ calc_multirangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 		 * calculations, realizing that the histogram covers only the
 		 * non-null, non-empty values.
 		 */
-		if (operator == OID_MULTIRANGE_ELEM_CONTAINED_OP ||
-			operator == OID_MULTIRANGE_RANGE_CONTAINED_OP ||
+		if (operator == OID_RANGE_MULTIRANGE_CONTAINED_OP ||
 			operator == OID_MULTIRANGE_MULTIRANGE_CONTAINED_OP)
 		{
 			/* empty is contained by anything non-empty */
@@ -575,7 +583,6 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 												 hist_lower, nhist, true);
 			break;
 
-		case OID_RANGE_LEFT_MULTIRANGE_OP:
 		case OID_MULTIRANGE_LEFT_RANGE_OP:
 		case OID_MULTIRANGE_LEFT_MULTIRANGE_OP:
 			/* var << const when upper(var) < lower(const) */
@@ -584,7 +591,6 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 											 hist_upper, nhist, false);
 			break;
 
-		case OID_RANGE_RIGHT_MULTIRANGE_OP:
 		case OID_MULTIRANGE_RIGHT_RANGE_OP:
 		case OID_MULTIRANGE_RIGHT_MULTIRANGE_OP:
 			/* var >> const when lower(var) > upper(const) */
@@ -593,7 +599,6 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 												 hist_lower, nhist, true);
 			break;
 
-		case OID_RANGE_OVERLAPS_RIGHT_MULTIRANGE_OP:
 		case OID_MULTIRANGE_OVERLAPS_RIGHT_RANGE_OP:
 		case OID_MULTIRANGE_OVERLAPS_RIGHT_MULTIRANGE_OP:
 			/* compare lower bounds */
@@ -602,7 +607,6 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 												 hist_lower, nhist, false);
 			break;
 
-		case OID_RANGE_OVERLAPS_LEFT_MULTIRANGE_OP:
 		case OID_MULTIRANGE_OVERLAPS_LEFT_RANGE_OP:
 		case OID_MULTIRANGE_OVERLAPS_LEFT_MULTIRANGE_OP:
 			/* compare upper bounds */
@@ -611,7 +615,6 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 											 hist_upper, nhist, true);
 			break;
 
-		case OID_RANGE_OVERLAPS_MULTIRANGE_OP:
 		case OID_MULTIRANGE_OVERLAPS_RANGE_OP:
 		case OID_MULTIRANGE_OVERLAPS_MULTIRANGE_OP:
 		case OID_MULTIRANGE_CONTAINS_ELEM_OP:
@@ -647,7 +650,6 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 											   lslot.values, lslot.nvalues);
 			break;
 
-		case OID_MULTIRANGE_RANGE_CONTAINED_OP:
 		case OID_MULTIRANGE_MULTIRANGE_CONTAINED_OP:
 		case OID_RANGE_MULTIRANGE_CONTAINED_OP:
 			if (const_lower.infinite)
@@ -674,6 +676,16 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 													lslot.values, lslot.nvalues);
 			}
 			break;
+
+			/* filtered out by multirangesel() */
+		case OID_RANGE_OVERLAPS_MULTIRANGE_OP:
+		case OID_RANGE_OVERLAPS_LEFT_MULTIRANGE_OP:
+		case OID_RANGE_OVERLAPS_RIGHT_MULTIRANGE_OP:
+		case OID_RANGE_LEFT_MULTIRANGE_OP:
+		case OID_RANGE_RIGHT_MULTIRANGE_OP:
+		case OID_RANGE_CONTAINS_MULTIRANGE_OP:
+		case OID_MULTIRANGE_ELEM_CONTAINED_OP:
+		case OID_MULTIRANGE_RANGE_CONTAINED_OP:
 
 		default:
 			elog(ERROR, "unknown multirange operator %u", operator);
