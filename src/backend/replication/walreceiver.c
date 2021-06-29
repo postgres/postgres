@@ -885,7 +885,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 
 		if (recvFile < 0 || !XLByteInSeg(recptr, recvSegNo, wal_segment_size))
 		{
-			bool		use_existent;
+			bool		added;
 
 			/*
 			 * fsync() and close current file before we switch to next one. We
@@ -923,8 +923,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 
 			/* Create/use new log file */
 			XLByteToSeg(recptr, recvSegNo, wal_segment_size);
-			use_existent = true;
-			recvFile = XLogFileInit(recvSegNo, &use_existent);
+			recvFile = XLogFileInit(recvSegNo, &added);
 			recvFileTLI = ThisTimeLineID;
 		}
 
