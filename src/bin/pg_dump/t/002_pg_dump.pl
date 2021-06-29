@@ -1431,7 +1431,7 @@ my %tests = (
 	'CREATE ROLE regress_quoted...' => {
 		create_order => 1,
 		create_sql   => 'CREATE ROLE "regress_quoted  \"" role";',
-		regexp       => qr/^\QCREATE ROLE "regress_quoted  \"" role";\E/m,
+		regexp       => qr/^CREATE ROLE "regress_quoted  \\"" role";/m,
 		like         => {
 			pg_dumpall_dbprivs       => 1,
 			pg_dumpall_exclude       => 1,
@@ -3421,7 +3421,7 @@ my %tests = (
 			ALTER SCHEMA public OWNER TO "regress_quoted  \"" role";
 			REVOKE ALL ON SCHEMA public FROM "regress_quoted  \"" role";',
 		regexp => qr/^
-			\QREVOKE ALL ON SCHEMA public FROM "regress_quoted  \"" role";\E
+			\QREVOKE ALL ON SCHEMA public FROM "regress_quoted  \E\\""\ role";
 			\n\QREVOKE ALL ON SCHEMA public FROM PUBLIC;\E
 			\n\QGRANT USAGE ON SCHEMA public TO PUBLIC;\E
 			/xm,
