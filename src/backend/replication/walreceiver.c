@@ -918,11 +918,9 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 
 		if (recvFile < 0)
 		{
-			bool		added = true;
-
 			/* Create/use new log file */
 			XLByteToSeg(recptr, recvSegNo, wal_segment_size);
-			recvFile = XLogFileInit(recvSegNo, &added);
+			recvFile = XLogFileInit(recvSegNo);
 			recvFileTLI = ThisTimeLineID;
 		}
 
