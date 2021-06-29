@@ -2838,12 +2838,15 @@ check_new_partition_bound(char *relname, Relation parent,
 
 					/*
 					 * Check rule that every modulus must be a factor of the
-					 * next larger modulus.  For example, if you have a bunch
+					 * next larger modulus.  (For example, if you have a bunch
 					 * of partitions that all have modulus 5, you can add a
 					 * new partition with modulus 10 or a new partition with
 					 * modulus 15, but you cannot add both a partition with
 					 * modulus 10 and a partition with modulus 15, because 10
-					 * is not a factor of 15.
+					 * is not a factor of 15.)  We need only check the next
+					 * smaller and next larger existing moduli, relying on
+					 * previous enforcement of this rule to be sure that the
+					 * rest are in line.
 					 */
 
 					/*
@@ -2870,15 +2873,16 @@ check_new_partition_bound(char *relname, Relation parent,
 									 errmsg("every hash partition modulus must be a factor of the next larger modulus"),
 									 errdetail("The new modulus %d is not a factor of %d, the modulus of existing partition \"%s\".",
 											   spec->modulus, next_modulus,
-											   get_rel_name(partdesc->oids[boundinfo->indexes[0]]))));
+											   get_rel_name(partdesc->oids[0]))));
 					}
 					else
 					{
 						int			prev_modulus;
 
 						/*
-						 * We found the largest modulus less than or equal to
-						 * ours.
+						 * We found the largest (modulus, remainder) pair less
+						 * than or equal to the new one.  That modulus must be
+						 * a divisor of, or equal to, the new modulus.
 						 */
 						prev_modulus = DatumGetInt32(boundinfo->datums[offset][0]);
 
@@ -2889,13 +2893,19 @@ check_new_partition_bound(char *relname, Relation parent,
 									 errdetail("The new modulus %d is not divisible by %d, the modulus of existing partition \"%s\".",
 											   spec->modulus,
 											   prev_modulus,
-											   get_rel_name(partdesc->oids[boundinfo->indexes[offset]]))));
+											   get_rel_name(partdesc->oids[offset]))));
 
 						if (offset + 1 < boundinfo->ndatums)
 						{
 							int			next_modulus;
 
-							/* Look at the next higher modulus */
+							/*
+							 * Look at the next higher (modulus, remainder)
+							 * pair.  That could have the same modulus and a
+							 * larger remainder than the new pair, in which
+							 * case we're good.  If it has a larger modulus,
+							 * the new modulus must divide that one.
+							 */
 							next_modulus = DatumGetInt32(boundinfo->datums[offset + 1][0]);
 
 							if (next_modulus % spec->modulus != 0)
@@ -2904,7 +2914,7 @@ check_new_partition_bound(char *relname, Relation parent,
 										 errmsg("every hash partition modulus must be a factor of the next larger modulus"),
 										 errdetail("The new modulus %d is not a factor of %d, the modulus of existing partition \"%s\".",
 												   spec->modulus, next_modulus,
-												   get_rel_name(partdesc->oids[boundinfo->indexes[offset + 1]]))));
+												   get_rel_name(partdesc->oids[offset + 1]))));
 						}
 					}
 
