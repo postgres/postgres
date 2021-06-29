@@ -194,9 +194,9 @@ Author: Michael Paquier <michael@paquier.xyz>
      </para>
 
      <para>
-      This was already disabled by default in previous Postgres releases,
-      and most modern OpenSSL and <acronym>TLS</acronym> versions no
-      longer support it.
+      This was already disabled by default in previous
+      <productname>PostgreSQL</productname> releases, and most modern
+      OpenSSL and <acronym>TLS</acronym> versions no longer support it.
      </para>
     </listitem>
 
@@ -213,7 +213,8 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
      </para>
 
      <para>
-      This was last used as the default in Postgres 7.3 (year 2002).
+      This was last used as the default in
+      <productname>PostgreSQL</productname> 7.3 (year 2002).
      </para>
     </listitem>
 
@@ -231,7 +232,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
      <para>
       <function>EXTRACT(date)</function> now throws an error for units
-      that are not part of the date data type.
+      that are not part of the <type>date</type> data type.
      </para>
     </listitem>
 
@@ -395,7 +396,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
      <para>
-      Improve handling of regular expression back-references (Tom Lane)
+      Improve handling of regular expression <link
+      linkend="posix-escape-sequences">back-references</link> (Tom Lane)
      </para>
 
      <para>
@@ -430,7 +432,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       Require <link linkend="runtime-config-custom">custom server
-      variable</link> names to use only character which are valid for
+      variable</link> names to use only characters which are valid for
       unquoted <acronym>SQL</acronym> identifiers (Tom Lane)
      </para>
     </listitem>
@@ -481,7 +483,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
      <para>
-      Pass doubled quote marks in <xref linkend="ecpg"/>
+      Pass doubled quote marks in <link linkend="ecpg">ecpg</link>
       <acronym>SQL</acronym> command strings literally (Tom Lane)
      </para>
 
@@ -1164,7 +1166,8 @@ Author: David Rowley <drowley@postgresql.org>
 
        <para>
         This is useful if only a small percentage of rows is checked on
-        the inner side.
+        the inner side and is controlled by <xref
+        linkend="guc-enable-resultcache"/>.
        </para>
       </listitem>
 
@@ -1211,7 +1214,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
        </para>
 
        <para>
-        The <link
+        <link
         linkend="postgres-fdw"><application>postgres_fdw</application></link>
         supports these type of scans if <literal>async_capable</literal>
         is set.
@@ -1614,8 +1617,9 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
        <para>
         This is controlled by server variable <xref
-        linkend="guc-ssl-crl-dir"/> and libpq connection option sslcrldir.
-        Previously only <acronym>CRL</acronym> files could be specified.
+        linkend="guc-ssl-crl-dir"/> and libpq connection option
+        <xref linkend='libpq-connect-sslcrldir'/>.  Previously only
+        <acronym>CRL</acronym> files could be specified.
        </para>
       </listitem>
 
@@ -1859,8 +1863,9 @@ Author: Thomas Munro <tmunro@postgresql.org>
       </para>
 
       <para>
-       By default, Postgres opens and fsyncs every data file
-       at the start of crash recovery.  This new setting, <xref
+       By default, <productname>PostgreSQL</productname>
+       opens and fsyncs every data file at the
+       start of crash recovery.  This new setting, <xref
        linkend="guc-recovery-init-sync-method"/><literal>=syncfs</literal>,
        instead syncs each filesystem used by the database cluster.
        This allows for faster recovery on systems with many database files.
@@ -2784,7 +2789,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       </para>
 
       <para>
-       This is similar to how Unicode can be specified in literal string.
+       This is similar to how Unicode can be specified in literal strings.
       </para>
      </listitem>
 
@@ -2868,7 +2873,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
        The new syntax is <literal>SUBSTRING(text SIMILAR pattern ESCAPE
        escapechar)</literal>.  The previous standard syntax was
        <literal>SUBSTRING(text FROM pattern FOR escapechar)</literal>,
-       and is still supported by Postgres.
+       and is still supported by <productname>PostgreSQL</productname>.
       </para>
      </listitem>
 
@@ -2894,7 +2899,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <para>
        Add <link
        linkend="posix-escape-sequences"><literal>[[:word:]]</literal></link>
-       as a character class to match \w (Tom Lane)
+       as a character class to match <literal>\w</literal> (Tom Lane)
       </para>
      </listitem>
 
@@ -3223,9 +3228,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Allow <application>psql</application>'s \df and \do commands to
-        specify function and operator argument types (Greg Sabino Mullane,
-        Tom Lane)
+        Allow <application>psql</application>'s <literal>\df</literal>
+        and <literal>\do</literal> commands to specify function and
+        operator argument types (Greg Sabino Mullane, Tom Lane)
        </para>
 
        <para>
@@ -3252,8 +3257,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Allow <application>psql</application>'s \dt and \di to show
-        <acronym>TOAST</acronym> tables and their indexes (Justin Pryzby)
+        Allow <application>psql</application>'s <literal>\dt</literal>
+        and <literal>\di</literal> to show <acronym>TOAST</acronym>
+        tables and their indexes (Justin Pryzby)
        </para>
       </listitem>
 
@@ -3264,8 +3270,8 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
        <para>
-        Add <application>psql</application> command \dX to list extended
-        statistics objects (Tatsuro Yamada)
+        Add <application>psql</application> command <literal>\dX</literal>
+        to list extended statistics objects (Tatsuro Yamada)
        </para>
       </listitem>
 
@@ -3276,9 +3282,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Fix <application>psql</application>'s \dT to understand array
-        syntax and backend grammar aliases, like "int" for "integer"
-        (Greg Sabino Mullane, Tom Lane)
+        Fix <application>psql</application>'s <literal>\dT</literal> to
+        understand array syntax and backend grammar aliases, like "int"
+        for "integer" (Greg Sabino Mullane, Tom Lane)
        </para>
       </listitem>
 
@@ -3290,8 +3296,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
        <para>
         When editing the previous query or a file with
-        <application>psql</application>'s \e, or using \ef and \ev, ignore
-        the contents if the editor exits without saving (Laurenz Albe)
+        <application>psql</application>'s <literal>\e</literal>, or using
+        <literal>\ef</literal> and <literal>\ev</literal>, ignore the
+        contents if the editor exits without saving (Laurenz Albe)
        </para>
 
        <para>
@@ -3306,8 +3313,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Improve <application>psql</application>'s handling of \connect
-        with <option>-reuse-previous</option> (Tom Lane)
+        Improve <application>psql</application>'s handling of
+        <literal>\connect</literal> with <option>-reuse-previous</option>
+        (Tom Lane)
        </para>
 
        <para>
@@ -3414,7 +3422,7 @@ Author: Magnus Hagander <magnus@hagander.net>
        Stop <link
        linkend="pgupgrade"><application>pg_upgrade</application></link>
        from creating <filename>analyze_new_cluster</filename> script
-       (Michael Paquier)
+       (Magnus Hagander)
       </para>
 
       <para>
@@ -3739,8 +3747,9 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
       <para>
-       Allow <function>pgstattuple_approx()</function> to report on
-       <acronym>TOAST</acronym> tables (Peter Eisentraut)
+       Allow <link
+       linkend="pgstattuple"><function>pgstattuple_approx()</function></link>
+       to report on <acronym>TOAST</acronym> tables (Peter Eisentraut)
       </para>
      </listitem>
 
