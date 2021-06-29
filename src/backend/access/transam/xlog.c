@@ -2440,7 +2440,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 	bool		ispartialpage;
 	bool		last_iteration;
 	bool		finishing_seg;
-	bool		use_existent;
+	bool		added;
 	int			curridx;
 	int			npages;
 	int			startidx;
@@ -2507,8 +2507,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 							wal_segment_size);
 
 			/* create/use new log file */
-			use_existent = true;
-			openLogFile = XLogFileInit(openLogSegNo, &use_existent);
+			openLogFile = XLogFileInit(openLogSegNo, &added);
 			ReserveExternalFD();
 		}
 
@@ -3258,9 +3257,7 @@ XLogNeedsFlush(XLogRecPtr record)
  *
  * logsegno: identify segment to be created/opened.
  *
- * *use_existent: if true, OK to use a pre-existing file (else, any
- * pre-existing file will be deleted).  On return, false iff this call added
- * some segment on disk.
+ * *added: on return, true if this call raised the number of extant segments.
  *
  * Returns FD of opened file.
  *
@@ -3270,7 +3267,7 @@ XLogNeedsFlush(XLogRecPtr record)
  * in a critical section.
  */
 int
-XLogFileInit(XLogSegNo logsegno, bool *use_existent)
+XLogFileInit(XLogSegNo logsegno, bool *added)
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
@@ -3286,19 +3283,17 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent)
 	/*
 	 * Try to use existent file (checkpoint maker may have created it already)
 	 */
-	if (*use_existent)
+	*added = false;
+	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method));
+	if (fd < 0)
 	{
-		fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method));
-		if (fd < 0)
-		{
-			if (errno != ENOENT)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not open file \"%s\": %m", path)));
-		}
-		else
-			return fd;
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not open file \"%s\": %m", path)));
 	}
+	else
+		return fd;
 
 	/*
 	 * Initialize an empty (all zeroes) segment.  NOTE: it is possible that
@@ -3395,12 +3390,9 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent)
 				 errmsg("could not close file \"%s\": %m", tmppath)));
 
 	/*
-	 * Now move the segment into place with its final name.
-	 *
-	 * If caller didn't want to use a pre-existing file, get rid of any
-	 * pre-existing file.  Otherwise, cope with possibility that someone else
-	 * has created the file while we were filling ours: if so, use ours to
-	 * pre-create a future log segment.
+	 * Now move the segment into place with its final name.  Cope with
+	 * possibility that someone else has created the file while we were
+	 * filling ours: if so, use ours to pre-create a future log segment.
 	 */
 	installed_segno = logsegno;
 
@@ -3414,9 +3406,8 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent)
 	 * CheckPointSegments.
 	 */
 	max_segno = logsegno + CheckPointSegments;
-	if (InstallXLogFileSegment(&installed_segno, tmppath,
-							   *use_existent, max_segno))
-		*use_existent = false;
+	if (InstallXLogFileSegment(&installed_segno, tmppath, true, max_segno))
+		*added = true;
 	else
 	{
 		/*
@@ -3901,7 +3892,7 @@ PreallocXlogFiles(XLogRecPtr endptr)
 {
 	XLogSegNo	_logSegNo;
 	int			lf;
-	bool		use_existent;
+	bool		added;
 	uint64		offset;
 
 	XLByteToPrevSeg(endptr, _logSegNo, wal_segment_size);
@@ -3909,10 +3900,9 @@ PreallocXlogFiles(XLogRecPtr endptr)
 	if (offset >= (uint32) (0.75 * wal_segment_size))
 	{
 		_logSegNo++;
-		use_existent = true;
-		lf = XLogFileInit(_logSegNo, &use_existent);
+		lf = XLogFileInit(_logSegNo, &added);
 		close(lf);
-		if (!use_existent)
+		if (added)
 			CheckpointStats.ckpt_segs_added++;
 	}
 }
@@ -5225,7 +5215,7 @@ BootStrapXLOG(void)
 	XLogLongPageHeader longpage;
 	XLogRecord *record;
 	char	   *recptr;
-	bool		use_existent;
+	bool		added;
 	uint64		sysidentifier;
 	struct timeval tv;
 	pg_crc32c	crc;
@@ -5322,8 +5312,7 @@ BootStrapXLOG(void)
 	record->xl_crc = crc;
 
 	/* Create first XLOG segment file */
-	use_existent = false;
-	openLogFile = XLogFileInit(1, &use_existent);
+	openLogFile = XLogFileInit(1, &added);
 
 	/*
 	 * We needn't bother with Reserve/ReleaseExternalFD here, since we'll
@@ -5629,10 +5618,10 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 		 * The switch happened at a segment boundary, so just create the next
 		 * segment on the new timeline.
 		 */
-		bool		use_existent = true;
+		bool		added;
 		int			fd;
 
-		fd = XLogFileInit(startLogSegNo, &use_existent);
+		fd = XLogFileInit(startLogSegNo, &added);
 
 		if (close(fd) != 0)
 		{

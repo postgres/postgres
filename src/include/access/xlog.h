@@ -286,7 +286,7 @@ extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata,
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
-extern int	XLogFileInit(XLogSegNo segno, bool *use_existent);
+extern int	XLogFileInit(XLogSegNo segno, bool *added);
 extern int	XLogFileOpen(XLogSegNo segno);
 
 extern void CheckXLogRemoved(XLogSegNo segno, TimeLineID tli);
