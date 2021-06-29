@@ -2452,7 +2452,6 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 	bool		ispartialpage;
 	bool		last_iteration;
 	bool		finishing_seg;
-	bool		added;
 	int			curridx;
 	int			npages;
 	int			startidx;
@@ -2518,7 +2517,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 							wal_segment_size);
 
 			/* create/use new log file */
-			openLogFile = XLogFileInit(openLogSegNo, &added);
+			openLogFile = XLogFileInit(openLogSegNo);
 			ReserveExternalFD();
 		}
 
@@ -3283,23 +3282,21 @@ XLogNeedsFlush(XLogRecPtr record)
 }
 
 /*
- * Create a new XLOG file segment, or open a pre-existing one.
+ * Try to make a given XLOG file segment exist.
  *
- * logsegno: identify segment to be created/opened.
+ * logsegno: identify segment.
  *
  * *added: on return, true if this call raised the number of extant segments.
  *
- * Returns FD of opened file.
+ * path: on return, this char[MAXPGPATH] has the path to the logsegno file.
  *
- * Note: errors here are ERROR not PANIC because we might or might not be
- * inside a critical section (eg, during checkpoint there is no reason to
- * take down the system on failure).  They will promote to PANIC if we are
- * in a critical section.
+ * Returns -1 or FD of opened file.  A -1 here is not an error; a caller
+ * wanting an open segment should attempt to open "path", which usually will
+ * succeed.  (This is weird, but it's efficient for the callers.)
  */
-int
-XLogFileInit(XLogSegNo logsegno, bool *added)
+static int
+XLogFileInitInternal(XLogSegNo logsegno, bool *added, char *path)
 {
-	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
 	PGAlignedXLogBlock zbuffer;
 	XLogSegNo	installed_segno;
@@ -3452,16 +3449,46 @@ XLogFileInit(XLogSegNo logsegno, bool *added)
 	 */
 	max_segno = logsegno + CheckPointSegments;
 	if (InstallXLogFileSegment(&installed_segno, tmppath, true, max_segno))
+	{
 		*added = true;
+		elog(DEBUG2, "done creating and filling new WAL file");
+	}
 	else
 	{
 		/*
 		 * No need for any more future segments, or InstallXLogFileSegment()
-		 * failed to rename the file into place. If the rename failed, opening
-		 * the file below will fail.
+		 * failed to rename the file into place. If the rename failed, a
+		 * caller opening the file may fail.
 		 */
 		unlink(tmppath);
+		elog(DEBUG2, "abandoned new WAL file");
 	}
+
+	return -1;
+}
+
+/*
+ * Create a new XLOG file segment, or open a pre-existing one.
+ *
+ * logsegno: identify segment to be created/opened.
+ *
+ * Returns FD of opened file.
+ *
+ * Note: errors here are ERROR not PANIC because we might or might not be
+ * inside a critical section (eg, during checkpoint there is no reason to
+ * take down the system on failure).  They will promote to PANIC if we are
+ * in a critical section.
+ */
+int
+XLogFileInit(XLogSegNo logsegno)
+{
+	bool		ignore_added;
+	char		path[MAXPGPATH];
+	int			fd;
+
+	fd = XLogFileInitInternal(logsegno, &ignore_added, path);
+	if (fd >= 0)
+		return fd;
 
 	/* Now open original target segment (might not be file I just made) */
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method));
@@ -3469,9 +3496,6 @@ XLogFileInit(XLogSegNo logsegno, bool *added)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", path)));
-
-	elog(DEBUG2, "done creating and filling new WAL file");
-
 	return fd;
 }
 
@@ -3928,6 +3952,15 @@ XLogFileClose(void)
  * High-volume systems will be OK once they've built up a sufficient set of
  * recycled log segments, but the startup transient is likely to include
  * a lot of segment creations by foreground processes, which is not so good.
+ *
+ * XLogFileInitInternal() can ereport(ERROR).  All known causes indicate big
+ * trouble; for example, a full filesystem is one cause.  The checkpoint WAL
+ * and/or ControlFile updates already completed.  If a RequestCheckpoint()
+ * initiated the present checkpoint and an ERROR ends this function, the
+ * command that called RequestCheckpoint() fails.  That's not ideal, but it's
+ * not worth contorting more functions to use caller-specified elevel values.
+ * (With or without RequestCheckpoint(), an ERROR forestalls some inessential
+ * reporting and resource reclamation.)
  */
 static void
 PreallocXlogFiles(XLogRecPtr endptr)
@@ -3935,6 +3968,7 @@ PreallocXlogFiles(XLogRecPtr endptr)
 	XLogSegNo	_logSegNo;
 	int			lf;
 	bool		added;
+	char		path[MAXPGPATH];
 	uint64		offset;
 
 	XLByteToPrevSeg(endptr, _logSegNo, wal_segment_size);
@@ -3942,8 +3976,9 @@ PreallocXlogFiles(XLogRecPtr endptr)
 	if (offset >= (uint32) (0.75 * wal_segment_size))
 	{
 		_logSegNo++;
-		lf = XLogFileInit(_logSegNo, &added);
-		close(lf);
+		lf = XLogFileInitInternal(_logSegNo, &added, path);
+		if (lf >= 0)
+			close(lf);
 		if (added)
 			CheckpointStats.ckpt_segs_added++;
 	}
@@ -5258,7 +5293,6 @@ BootStrapXLOG(void)
 	XLogLongPageHeader longpage;
 	XLogRecord *record;
 	char	   *recptr;
-	bool		added;
 	uint64		sysidentifier;
 	struct timeval tv;
 	pg_crc32c	crc;
@@ -5355,7 +5389,7 @@ BootStrapXLOG(void)
 	record->xl_crc = crc;
 
 	/* Create first XLOG segment file */
-	openLogFile = XLogFileInit(1, &added);
+	openLogFile = XLogFileInit(1);
 
 	/*
 	 * We needn't bother with Reserve/ReleaseExternalFD here, since we'll
@@ -5661,10 +5695,9 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 		 * The switch happened at a segment boundary, so just create the next
 		 * segment on the new timeline.
 		 */
-		bool		added;
 		int			fd;
 
-		fd = XLogFileInit(startLogSegNo, &added);
+		fd = XLogFileInit(startLogSegNo);
 
 		if (close(fd) != 0)
 		{
