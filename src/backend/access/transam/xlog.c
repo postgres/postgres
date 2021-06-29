@@ -3259,8 +3259,8 @@ XLogNeedsFlush(XLogRecPtr record)
  * logsegno: identify segment to be created/opened.
  *
  * *use_existent: if true, OK to use a pre-existing file (else, any
- * pre-existing file will be deleted).  On return, true if a pre-existing
- * file was used.
+ * pre-existing file will be deleted).  On return, false iff this call added
+ * some segment on disk.
  *
  * Returns FD of opened file.
  *
@@ -3414,8 +3414,10 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent)
 	 * CheckPointSegments.
 	 */
 	max_segno = logsegno + CheckPointSegments;
-	if (!InstallXLogFileSegment(&installed_segno, tmppath,
-								*use_existent, max_segno))
+	if (InstallXLogFileSegment(&installed_segno, tmppath,
+							   *use_existent, max_segno))
+		*use_existent = false;
+	else
 	{
 		/*
 		 * No need for any more future segments, or InstallXLogFileSegment()
@@ -3424,9 +3426,6 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent)
 		 */
 		unlink(tmppath);
 	}
-
-	/* Set flag to tell caller there was no existent file */
-	*use_existent = false;
 
 	/* Now open original target segment (might not be file I just made) */
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method));
